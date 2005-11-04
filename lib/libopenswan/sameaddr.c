@@ -16,6 +16,7 @@
  */
 #include "internal.h"
 #include "openswan.h"
+#include "constants.h"
 
 static int samenbits(const ip_address *a, const ip_address *b, int n);
 
@@ -50,7 +51,7 @@ const ip_address *b;
 /*
  - sameaddr - are two addresses the same?
  */
-int
+bool
 sameaddr(a, b)
 const ip_address *a;
 const ip_address *b;
@@ -61,7 +62,7 @@ const ip_address *b;
 /*
  - samesubnet - are two subnets the same?
  */
-int
+bool
 samesubnet(a, b)
 const ip_subnet *a;
 const ip_subnet *b;
@@ -76,7 +77,7 @@ const ip_subnet *b;
 /*
  - subnetishost - is a subnet in fact a single host?
  */
-int
+bool
 subnetishost(a)
 const ip_subnet *a;
 {
@@ -86,7 +87,7 @@ const ip_subnet *a;
 /*
  - samesaid - are two SA IDs the same?
  */
-int
+bool
 samesaid(a, b)
 const ip_said *a;
 const ip_said *b;
@@ -103,7 +104,7 @@ const ip_said *b;
 /*
  - sameaddrtype - do two addresses have the same type?
  */
-int
+bool
 sameaddrtype(a, b)
 const ip_address *a;
 const ip_address *b;
@@ -114,7 +115,7 @@ const ip_address *b;
 /*
  - samesubnettype - do two subnets have the same type?
  */
-int
+bool
 samesubnettype(a, b)
 const ip_subnet *a;
 const ip_subnet *b;
@@ -125,7 +126,7 @@ const ip_subnet *b;
 /*
  - addrinsubnet - is this address in this subnet?
  */
-int
+bool
 addrinsubnet(a, s)
 const ip_address *a;
 const ip_subnet *s;
@@ -140,7 +141,7 @@ const ip_subnet *s;
 /*
  - subnetinsubnet - is one subnet within another?
  */
-int
+bool
 subnetinsubnet(a, b)
 const ip_subnet *a;
 const ip_subnet *b;
@@ -157,7 +158,7 @@ const ip_subnet *b;
 /*
  - samenbits - do two addresses have the same first n bits?
  */
-static int
+static bool
 samenbits(a, b, nbits)
 const ip_address *a;
 const ip_address *b;
