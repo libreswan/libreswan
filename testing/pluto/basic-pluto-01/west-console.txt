@@ -107,18 +107,13 @@ west NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
 esp0xKLIPSPIK@192.1.2.23 ESP_3DES_HMAC_MD5: dir=out src=192.1.2.45 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=128 aklen=128 eklen=192 natencap=none natsport=0 natdport=0  
-esp0xKLIPSPIK@192.1.2.45 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=128 aklen=128 eklen=192 natencap=none natsport=0 natdport=0  
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> natencap=none natsport=0 natdport=0  
-Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
-0.0.0.0         192.1.2.254     0.0.0.0         UG       99 0          0 eth1
-0.0.0.0         192.1.2.254     128.0.0.0       UG       99 0          0 ipsec0
-128.0.0.0       192.1.2.254     128.0.0.0       UG       99 0          0 ipsec0
-192.0.2.0       192.1.2.23      255.255.255.0   UG       99 0          0 ipsec0
-192.1.2.0       0.0.0.0         255.255.255.0   U        99 0          0 eth1
-192.1.2.0       0.0.0.0         255.255.255.0   U        99 0          0 ipsec0
-west:~#
- echo done
-done
+esp0xKLIPSPIK@192.1.2.45 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64   alen=128 aklen=128 eklen=192  natencap=none natsport=0 natdport=0  
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<>  natencap=none natsport=0 natdport=0  
+ROUTING TABLE
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45 
+192.0.2.0/24 dev ipsec0  scope link 
+default via 192.1.2.254 dev eth1 
 west:~#
  
 
