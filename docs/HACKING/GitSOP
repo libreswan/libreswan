@@ -1,0 +1,43 @@
+-*- emacs-wiki -*-
+
+For a number of months the Openswan project will move from GIT to CVS.
+
+This is the operating proceedure for working with the two trees.
+
+First, the GIT tree is the master tree.
+
+The CVS tree is the public release tree. The CVS tree is duplicated via rsync
+to anoncvs.openswan.org. Anything committed to that tree will become public 
+without 30 minutes.
+
+The GIT tree has a branch called "public" which is pushed to 
+	http://git.openswan.org/public/scm/openswan.git/
+
+Anything placed on that branch will be made public.
+
+To generate patches from CVS to apply to the public branch, you need to figure it out.
+There is nothing simple to automate this. Dates can be used, as in:
+	"cvs diff -u -Dyesterday | (cd ../public.git && patch -p0)
+	cg-commit
+	git checkout cvs
+	git pull . public
+	git checkout public
+
+To determine what patches might need to be pulled up to the public branch,
+another branch is also used, called "cvs". The process is to pull the code
+up to the public branch, and then to do:
+	cd public.git
+	git-format-patch cvs
+
+this generates patches to be applied to CVS. After the patches have been applied,
+the state of the CVS should be updated:
+	git checkout cvs
+	git pull . public
+	git checkout public
+
+
+
+
+
+
+
