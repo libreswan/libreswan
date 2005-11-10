@@ -1,0 +1,36 @@
+-*- emacs-wiki -*-
+
+You need a machine on a public IP that can run either anonymous rsync (somewhat
+deprecated) or http. 
+
+It's better if you have a machine on which you can ssh into and on which you
+can install git, or at least git-init and git-unpack-objects. 
+
+If you don't have that, but can FTP mirror to it, or rsync to it (perhaps
+over SSH), then you can make it work. Just pretend your local machine is the
+remote machine, make a new directory, and arrange to push that directory to
+your web server.
+
+So, you start by doing this on your laptop/desktop:
+     cd /someplace
+     cg-clone http://git.openswan.org/public/scm/openswan.git/
+
+This creates a directory openswan.git, and sets up the "origin" branch to
+point to the above url. To do the equivalent of "cvs update", you run
+"git pull" (or cg-fetch).
+
+Next, you login to your web server, and do:
+     ssh mywebserver
+     cd /var/www
+     mkdir -p scm/openswan.git
+     cd scm/openswan.git
+     git init
+
+On your laptop you can now do:
+     cd /someplace/openswan.git
+     cg-branch-add public git+ssh://mywebserver/var/www/scm/openswan.git
+     cg-push public
+     (it should copy everything to your web server)
+
+
+
