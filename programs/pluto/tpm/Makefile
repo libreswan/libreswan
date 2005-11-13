@@ -22,7 +22,7 @@ include ${OPENSWANSRCDIR}/Makefile.inc
 include ${OPENSWANSRCDIR}/Makefile.ver
 
 
-SRCS=tpm.c state.i pbs.c
+SRCS=tpm.c state.i pbs.c stock.c
 
 OBJS=$(filter %.o,$(SRCS:.c=.o) $(SRCS:.i=.o))
 

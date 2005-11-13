@@ -43,6 +43,8 @@ void init_tpm(void)
 
     PlutoInterp = Tcl_CreateInterp();
     State_SafeInit(PlutoInterp);
+  
+    tpm_initCallbacks(PlutoInterp);
 
     snprintf(initfile, sizeof(initfile), "%s/tpm.tcl", ipsec_dir);
     if(access(initfile, R_OK)!=0) {
