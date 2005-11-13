@@ -1,0 +1,287 @@
+east:~#
+ TESTNAME=tpm-accept-01
+east:~#
+ TESTING=${TESTING-/testing}
+east:~#
+ mkdir -p /tmp/$TESTNAME
+east:~#
+ mkdir -p /tmp/$TESTNAME/ipsec.d/cacerts
+east:~#
+ mkdir -p /tmp/$TESTNAME/ipsec.d/crls
+east:~#
+ mkdir -p /tmp/$TESTNAME/ipsec.d/certs
+east:~#
+ mkdir -p /tmp/UML.d/private
+east:~#
+ cp /etc/ipsec.secrets                    /tmp/$TESTNAME
+east:~#
+ if [ -f ${TESTING}/pluto/$TESTNAME/east.secrets ]; then cat ${TESTING}/pluto/$TESTNAME/east.secrets >>/tmp/$TESTNAME/ipsec.secrets; fi
+east:~#
+ if [ -f ${TESTING}/pluto/$TESTNAME/east.tpm.tcl ]; then cp ${TESTING}/pluto/$TESTNAME/east.tpm.tcl /tmp/$TESTNAME/ipsec.d/tpm.tcl; fi
+east:~#
+ IPSEC_CONFS=/tmp/$TESTNAME export IPSEC_CONFS
+east:~#
+ PATH=/usr/local/sbin:$PATH
+east:~#
+ export PATH
+east:~#
+ rm -f /var/run/pluto/pluto.pid 
+east:~#
+ echo "Starting Openswan IPsec pluto"
+Starting Openswan IPsec pluto
+east:~#
+ (cd /tmp && /usr/local/libexec/ipsec/pluto --nofork --secretsfile /tmp/$TESTNAME/ipsec.secrets --ipsecdir /tmp/$TESTNAME/ipsec.d --use-nostack --uniqueids --nhelpers 0 --stderrlog 2>/tmp/pluto.log ) &
+Pluto initialized
+[1] 832
+east:~#
+ sleep 1
+east:~#
+ ipsec whack --listen
+002 listening for IKE messages
+002 adding interface virtual127.0.0.1/lo 127.0.0.1:500
+002 adding interface virtual192.9.2.23/eth2 192.9.2.23:500
+002 adding interface virtual192.1.2.23/eth1 192.1.2.23:500
+002 adding interface virtual192.0.2.254/eth0 192.0.2.254:500
+002 loading secrets from "/tmp/tpm-accept-01/ipsec.secrets"
+east:~#
+ echo "Adding 1DES policy"
+Adding 1DES policy
+east:~#
+ ipsec whack --name west--east-psk-1des --delete
+021 no connection named "west--east-psk-1des"
+east:~#
+ ipsec whack --name west--east-psk-3des --delete
+021 no connection named "west--east-psk-3des"
+east:~#
+ ipsec whack --name west--east-psk-1des --encrypt --tunnel --pfs --dpdaction "hold" --psk --host "192.1.2.45" --nexthop "192.1.2.23" --updown "ipsec _updown" --id "192.1.2.45"  --sendcert "always" --to --host "192.1.2.23" --nexthop "192.1.2.45" --updown "ipsec _updown" --id "192.1.2.23"  --sendcert "always" --ipseclifetime "28800" --rekeymargin "540" --ikealg "des" --impair-die-oninfo --keyingtries "0"    
+002 added connection description "west--east-psk-1des"
+east:~#
+ ipsec whack --name west--east-psk-1des --initiate
+002 "west--east-psk-1des": extra debugging enabled for connection: impair-die-oninfo
+002 "west--east-psk-1des" #1: extra debugging enabled for connection: none
+002 "west--east-psk-1des" #1: initiating Main Mode
+104 "west--east-psk-1des" #1: STATE_MAIN_I1: initiate
+002 "west--east-psk-1des" #1: extra debugging enabled for connection: impair-die-oninfo
+002 "west--east-psk-1des" #1: tcl callout: "recvMessage" (from process_packet:2095)
+002 "west--east-psk-1des" #1: TPM result: 
+003 "west--east-psk-1des" #1: ignoring informational payload, type NO_PROPOSAL_CHOSEN st=0x816d158
+003 "west--east-psk-1des" #1: received and failed on unknown informational message
+002 "west--east-psk-1des" #1: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+002 "west--east-psk-1des" #1: TPM result: 
+037 "west--east-psk-1des" #1: encountered fatal error in state STATE_MAIN_I1
+east:~#
+ echo "Switching to 3DES policy"
+Switching to 3DES policy
+east:~#
+ ipsec whack --name west--east-psk-1des --delete
+002 "west--east-psk-1des": extra debugging enabled for connection: impair-die-oninfo
+002 "west--east-psk-1des": deleting connection
+east:~#
+ ipsec whack --name west--east-psk-3des --delete
+021 no connection named "west--east-psk-3des"
+east:~#
+ ipsec whack --name west--east-psk-3des --encrypt --tunnel --pfs --dpdaction "hold" --psk --host "192.1.2.45" --nexthop "192.1.2.23" --updown "ipsec _updown" --id "192.1.2.45"  --sendcert "always" --to --host "192.1.2.23" --nexthop "192.1.2.45" --updown "ipsec _updown" --id "192.1.2.23"  --sendcert "always" --ipseclifetime "28800" --rekeymargin "540" --ikealg "3des" --keyingtries "0"    
+002 added connection description "west--east-psk-3des"
+east:~#
+ ipsec whack --name west--east-psk-3des --initiate
+002 "west--east-psk-3des" #2: initiating Main Mode
+104 "west--east-psk-3des" #2: STATE_MAIN_I1: initiate
+002 "west--east-psk-3des" #2: tcl callout: "recvMessage" (from process_packet:2095)
+002 "west--east-psk-3des" #2: TPM result: 
+003 "west--east-psk-3des" #2: received Vendor ID payload [Openswan 
+003 "west--east-psk-3des" #2: received Vendor ID payload [Dead Peer Detection]
+002 "west--east-psk-3des" #2: tcl callout: "changeState" (from process_packet:2371)
+002 "west--east-psk-3des" #2: TPM result: 
+002 "west--east-psk-3des" #2: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+002 "west--east-psk-3des" #2: TPM result: 
+002 "west--east-psk-3des" #2: transition from state STATE_MAIN_I1 to state STATE_MAIN_I2
+002 "west--east-psk-3des" #2: tcl callout: "avoidEmitting" (from complete_state_transition:2512)
+002 "west--east-psk-3des" #2: TPM result: 
+106 "west--east-psk-3des" #2: STATE_MAIN_I2: sent MI2, expecting MR2
+002 "west--east-psk-3des" #2: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+002 "west--east-psk-3des" #2: TPM result: 
+002 "west--east-psk-3des" #2: tcl callout: "recvMessage" (from process_packet:2095)
+002 "west--east-psk-3des" #2: TPM result: 
+002 "west--east-psk-3des" #2: tcl callout: "changeState" (from process_packet:2371)
+002 "west--east-psk-3des" #2: TPM result: 
+002 "west--east-psk-3des" #2: I did not send a certificate because I do not have one.
+002 "west--east-psk-3des" #2: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+002 "west--east-psk-3des" #2: TPM result: 
+002 "west--east-psk-3des" #2: transition from state STATE_MAIN_I2 to state STATE_MAIN_I3
+002 "west--east-psk-3des" #2: tcl callout: "avoidEmitting" (from complete_state_transition:2512)
+002 "west--east-psk-3des" #2: TPM result: 
+108 "west--east-psk-3des" #2: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "west--east-psk-3des" #2: tcl callout: "recvMessage" (from process_packet:2095)
+002 "west--east-psk-3des" #2: TPM result: 
+002 "west--east-psk-3des" #2: tcl callout: "changeState" (from process_packet:2371)
+002 "west--east-psk-3des" #2: TPM result: 
+002 "west--east-psk-3des" #2: Main mode peer ID is ID_IPV4_ADDR: '192.1.2.45'
+002 "west--east-psk-3des" #2: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+002 "west--east-psk-3des" #2: TPM result: 
+002 "west--east-psk-3des" #2: transition from state STATE_MAIN_I3 to state STATE_MAIN_I4
+004 "west--east-psk-3des" #2: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_PRESHARED_KEY cipher=oakley_3des_cbc_192 prf=oakley_md5 group=modp1536}
+002 "west--east-psk-3des" #3: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP
+117 "west--east-psk-3des" #3: STATE_QUICK_I1: initiate
+002 "west--east-psk-3des" #3: tcl callout: "recvMessage" (from process_packet:2095)
+002 "west--east-psk-3des" #3: TPM result: 
+002 "west--east-psk-3des" #3: tcl callout: "changeState" (from process_packet:2371)
+002 "west--east-psk-3des" #3: TPM result: 
+002 "west--east-psk-3des" #3: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+002 "west--east-psk-3des" #3: TPM result: 
+002 "west--east-psk-3des" #3: transition from state STATE_QUICK_I1 to state STATE_QUICK_I2
+002 "west--east-psk-3des" #3: tcl callout: "avoidEmitting" (from complete_state_transition:2512)
+002 "west--east-psk-3des" #3: TPM result: 
+004 "west--east-psk-3des" #3: STATE_QUICK_I2: sent QI2, IPsec SA established
+east:~#
+ 
+
+east:~#
+east:~#
+ cat /tmp/pluto.log
+Starting Pluto (Openswan Version cvs2005Sep18_01:26:40 X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR; Vendor ID OE]q^NWXhhQy)
+@(#) built on DATE by PERSON
+WARNING: 1DES is enabled
+Setting NAT-Traversal port-4500 floating to off
+   port floating activation criteria nat_t=0/port_fload=1
+  including NAT-Traversal patch (Version 0.6c) [disabled]
+ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC_SSH: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_SERPENT_CBC: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_BLOWFISH_CBC: Ok (ret=0)
+ike_alg_register_hash(): Activating OAKLEY_SHA2_512: Ok (ret=0)
+ike_alg_register_hash(): Activating OAKLEY_SHA2_256: Ok (ret=0)
+no helpers will be started, all cryptographic operations will be done inline
+Loading TPM file: '/tmp/tpm-accept-01/ipsec.d/tpm.tcl' 
+Changing to directory '/tmp/tpm-accept-01/ipsec.d/cacerts'
+Could not change to directory '/tmp/tpm-accept-01/ipsec.d/aacerts'
+Could not change to directory '/tmp/tpm-accept-01/ipsec.d/ocspcerts'
+Changing to directory '/tmp/tpm-accept-01/ipsec.d/crls'
+  Warning: empty directory
+listening for IKE messages
+adding interface virtual127.0.0.1/lo 127.0.0.1:500
+adding interface virtual192.9.2.23/eth2 192.9.2.23:500
+adding interface virtual192.1.2.23/eth1 192.1.2.23:500
+adding interface virtual192.0.2.254/eth0 192.0.2.254:500
+loading secrets from "/tmp/tpm-accept-01/ipsec.secrets"
+  loaded private key file '/etc/ipsec.d/private/east.pem' (963 bytes)
+added connection description "west--east-psk-1des"
+"west--east-psk-1des": extra debugging enabled for connection: impair-die-oninfo
+| processing connection west--east-psk-1des
+"west--east-psk-1des" #1: extra debugging enabled for connection: none
+| processing connection west--east-psk-1des
+"west--east-psk-1des" #1: initiating Main Mode
+packet from 192.1.2.45:500: tcl callout: "processRawPacket" (from process_packet:1481)
+md: _POINTER_p_msg_digest
+tcl says packet from: 192.1.2.23
+packet from 192.1.2.45:500: TPM result: 
+"west--east-psk-1des" #1: extra debugging enabled for connection: impair-die-oninfo
+| processing connection west--east-psk-1des
+"west--east-psk-1des" #1: tcl callout: "recvMessage" (from process_packet:2095)
+recvMessage NULL NULL _POINTER_p_msg_digest
+"west--east-psk-1des" #1: TPM result: 
+"west--east-psk-1des" #1: ignoring informational payload, type NO_PROPOSAL_CHOSEN st=0x816d158
+"west--east-psk-1des" #1: received and failed on unknown informational message
+"west--east-psk-1des" #1: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest: state 4
+"west--east-psk-1des" #1: TPM result: 
+"west--east-psk-1des" #1: extra debugging enabled for connection: none
+| processing connection west--east-psk-1des
+"west--east-psk-1des": extra debugging enabled for connection: impair-die-oninfo
+| processing connection west--east-psk-1des
+"west--east-psk-1des": deleting connection
+added connection description "west--east-psk-3des"
+"west--east-psk-3des" #2: initiating Main Mode
+packet from 192.1.2.45:500: tcl callout: "processRawPacket" (from process_packet:1481)
+md: _POINTER_p_msg_digest
+tcl says packet from: 192.1.2.23
+packet from 192.1.2.45:500: TPM result: 
+"west--east-psk-3des" #2: tcl callout: "recvMessage" (from process_packet:2095)
+recvMessage NULL NULL _POINTER_p_msg_digest
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: received Vendor ID payload [Openswan (this version) cvs2005Sep18_01:26:40  X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR]
+"west--east-psk-3des" #2: received Vendor ID payload [Dead Peer Detection]
+"west--east-psk-3des" #2: tcl callout: "changeState" (from process_packet:2371)
+changeState _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest: state 4
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: transition from state STATE_MAIN_I1 to state STATE_MAIN_I2
+"west--east-psk-3des" #2: tcl callout: "avoidEmitting" (from complete_state_transition:2512)
+avoidEmitting _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: STATE_MAIN_I2: sent MI2, expecting MR2
+"west--east-psk-3des" #2: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest: state 6
+"west--east-psk-3des" #2: TPM result: 
+packet from 192.1.2.45:500: tcl callout: "processRawPacket" (from process_packet:1481)
+md: _POINTER_p_msg_digest
+tcl says packet from: 192.1.2.23
+packet from 192.1.2.45:500: TPM result: 
+"west--east-psk-3des" #2: tcl callout: "recvMessage" (from process_packet:2095)
+recvMessage NULL NULL _POINTER_p_msg_digest
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: tcl callout: "changeState" (from process_packet:2371)
+changeState _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: I did not send a certificate because I do not have one.
+"west--east-psk-3des" #2: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest: state 6
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: transition from state STATE_MAIN_I2 to state STATE_MAIN_I3
+"west--east-psk-3des" #2: tcl callout: "avoidEmitting" (from complete_state_transition:2512)
+avoidEmitting _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: STATE_MAIN_I3: sent MI3, expecting MR3
+packet from 192.1.2.45:500: tcl callout: "processRawPacket" (from process_packet:1481)
+md: _POINTER_p_msg_digest
+tcl says packet from: 192.1.2.23
+packet from 192.1.2.45:500: TPM result: 
+"west--east-psk-3des" #2: tcl callout: "recvMessage" (from process_packet:2095)
+recvMessage NULL NULL _POINTER_p_msg_digest
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: tcl callout: "changeState" (from process_packet:2371)
+changeState _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: Main mode peer ID is ID_IPV4_ADDR: '192.1.2.45'
+"west--east-psk-3des" #2: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest: state 8
+"west--east-psk-3des" #2: TPM result: 
+"west--east-psk-3des" #2: transition from state STATE_MAIN_I3 to state STATE_MAIN_I4
+"west--east-psk-3des" #2: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_PRESHARED_KEY cipher=oakley_3des_cbc_192 prf=oakley_md5 group=modp1536}
+"west--east-psk-3des" #3: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP
+packet from 192.1.2.45:500: tcl callout: "processRawPacket" (from process_packet:1481)
+md: _POINTER_p_msg_digest
+tcl says packet from: 192.1.2.23
+packet from 192.1.2.45:500: TPM result: 
+"west--east-psk-3des" #3: tcl callout: "recvMessage" (from process_packet:2095)
+recvMessage NULL NULL _POINTER_p_msg_digest
+"west--east-psk-3des" #3: TPM result: 
+"west--east-psk-3des" #3: tcl callout: "changeState" (from process_packet:2371)
+changeState _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+"west--east-psk-3des" #3: TPM result: 
+"west--east-psk-3des" #3: tcl callout: "adjustFailure" (from complete_state_transition:2416)
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+adjustFailure _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest: state 17
+| outspi: 0xOUTSOUTS DATA
+| outspi: 0xOUTSOUTS DATA
+| outspi: 0xOUTSOUTS DATA
+|  inspi: 0xININININ DATA
+|  inspi: 0xININININ DATA
+|  inspi: 0xININININ DATA
+"west--east-psk-3des" #3: TPM result: 
+"west--east-psk-3des" #3: transition from state STATE_QUICK_I1 to state STATE_QUICK_I2
+"west--east-psk-3des" #3: tcl callout: "avoidEmitting" (from complete_state_transition:2512)
+avoidEmitting _POINTER_p_state _POINTER_p_connection _POINTER_p_msg_digest
+"west--east-psk-3des" #3: TPM result: 
+"west--east-psk-3des" #3: STATE_QUICK_I2: sent QI2, IPsec SA established
+east:~#
+ if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+east:~#
+

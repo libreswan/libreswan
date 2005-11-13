@@ -1,0 +1,76 @@
+west:~#
+ TESTNAME=tpm-accept-01
+west:~#
+ source /testing/pluto/bin/westlocal.sh
+west:~#
+ ipsec setup start
+ipsec_setup: Starting Openswan IPsec VERSION
+west:~#
+ ipsec auto --add west--east-psk
+west:~#
+ echo done
+done
+west:~#
+ 
+
+west:~#
+west:~#
+ cat /tmp/pluto.log
+Plutorun started on DATE
+Starting Pluto (Openswan Version cvs2005Nov02_14:08:00 X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR; Vendor ID OEkk{aJYsmTs)
+@(#) built on DATE by PERSON
+Setting NAT-Traversal port-4500 floating to off
+   port floating activation criteria nat_t=0/port_float=1
+   including NAT-Traversal patch (Version 0.6c) [disabled]
+ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC_SSH: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_SERPENT_CBC: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_BLOWFISH_CBC: Ok (ret=0)
+ike_alg_register_hash(): Activating OAKLEY_SHA2_512: Ok (ret=0)
+ike_alg_register_hash(): Activating OAKLEY_SHA2_256: Ok (ret=0)
+starting up 1 cryptographic helpers
+started helper pid=999 (fd:9)
+No file '/tmp/tpm-accept-01/ipsec.d/tpm.tcl' found, TPM disabled 
+Changing to directory '/tmp/tpm-accept-01/ipsec.d/cacerts'
+  loaded CA cert file 'caCert.pem' (4854 bytes)
+Changing to directory '/tmp/tpm-accept-01/ipsec.d/aacerts'
+Changing to directory '/tmp/tpm-accept-01/ipsec.d/ocspcerts'
+Changing to directory '/tmp/tpm-accept-01/ipsec.d/crls'
+  loaded crl file 'nic.crl' (642 bytes)
+  loaded crl file 'crashcrl-3.pem' (690 bytes)
+crl issuer cacert not found for (file:///tmp/tpm-accept-01/ipsec.d/crls/crashcrl-3.pem)
+  loaded crl file 'crashcrl-2.pem' (528 bytes)
+crl issuer cacert not found for (file:///tmp/tpm-accept-01/ipsec.d/crls/crashcrl-2.pem)
+  loaded crl file 'crashcrl-1.pem' (1053 bytes)
+crl issuer cacert not found for (file:///tmp/tpm-accept-01/ipsec.d/crls/crashcrl-1.pem)
+added connection description "west--east-psk"
+listening for IKE messages
+adding interface ipsec0/eth1 192.1.2.45:500
+loading secrets from "/tmp/tpm-accept-01/ipsec.secrets"
+  loaded private key file '/etc/ipsec.d/private/west.pem' (963 bytes)
+packet from 192.1.2.23:500: received Vendor ID payload [Openswan (this version) cvs2005Nov02_14:08:00  X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR]
+packet from 192.1.2.23:500: received Vendor ID payload [Dead Peer Detection]
+"west--east-psk" #1: responding to Main Mode
+"west--east-psk" #1: transition from state STATE_MAIN_R0 to state STATE_MAIN_R1
+"west--east-psk" #1: STATE_MAIN_R1: sent MR1, expecting MI2
+"west--east-psk" #1: transition from state STATE_MAIN_R1 to state STATE_MAIN_R2
+"west--east-psk" #1: STATE_MAIN_R2: sent MR2, expecting MI3
+"west--east-psk" #1: Main mode peer ID is ID_IPV4_ADDR: '192.1.2.23'
+"west--east-psk" #1: I did not send a certificate because digital signatures are not being used. (PSK)
+"west--east-psk" #1: transition from state STATE_MAIN_R2 to state STATE_MAIN_R3
+"west--east-psk" #1: STATE_MAIN_R3: sent MR3, ISAKMP SA established {auth=OAKLEY_PRESHARED_KEY cipher=oakley_3des_cbc_192 prf=oakley_md5 group=modp1536}
+"west--east-psk" #2: responding to Quick Mode 
+"west--east-psk" #2: transition from state STATE_QUICK_R0 to state STATE_QUICK_R1
+"west--east-psk" #2: STATE_QUICK_R1: sent QR1, inbound IPsec SA installed, expecting QI2
+"west--east-psk" #2: transition from state STATE_QUICK_R1 to state STATE_QUICK_R2
+"west--east-psk" #2: STATE_QUICK_R2: IPsec SA established
+"west--east-psk" #1: received Delete SA(0xSPI1SPI1) payload: deleting IPSEC State #NUM
+"west--east-psk" #1: received and ignored informational message
+"west--east-psk" #1: received Delete SA payload: deleting ISAKMP State #1
+packet from 192.1.2.23:500: received and ignored informational message
+ERROR: asynchronous network error report on eth1 (sport=500) for message to 192.1.2.23 port 500, complainant 192.1.2.23: Connection refused [errno 111, origin ICMP type 3 code 3 (not authenticated)]
+west:~#
+ if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+west:~#
+

@@ -69,7 +69,3 @@ proc adjustFailure {state conn md} {
     
 }
 
-proc avoidEmitting {state conn md} {
-    puts stderr "avoidEmitting $state $conn $md"
-}
-
