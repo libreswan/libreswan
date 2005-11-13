@@ -130,29 +130,24 @@ out_sa(pb_stream *outs
     struct db_sa *revised_sadb;
 
 
-    {
+    if(oakley_mode) {
 	const char *modestr;
 	const char *alginfo;
 
-	if(oakley_mode) {
-	    revised_sadb=oakley_alg_makedb(st->st_connection->alg_info_ike
-					   , sadb
-					   , aggressive_mode ? 1 : -1);
-	    modestr = "ike";
-	    alginfo = st->st_connection->alg_ike;
-	} else {
-	    revised_sadb=kernel_alg_makedb(st->st_connection->alg_info_esp, TRUE);
+	revised_sadb=oakley_alg_makedb(st->st_connection->alg_info_ike
+				       , sadb
+				       , aggressive_mode ? 1 : -1);
+	modestr = "ike";
+	alginfo = st->st_connection->alg_ike;
 
-	    modestr = "esp";
-	    alginfo = st->st_connection->alg_esp;
-	}
-	
 	/* this is really checked upon load, but we double check here. */
 	if(revised_sadb == NULL) {
-	    loglog(RC_NOALGO, "%s algorithm string: \"%s\" results in no valid algorithms"
+	    loglog(RC_NOALGO, "%s algorithm string: \"%s\" results in no permitted algorithms"
 		   , modestr, alginfo ? alginfo : "empty");
 	    return FALSE;
 	}
+    } else {
+	revised_sadb=kernel_alg_makedb(st->st_connection->alg_info_esp, TRUE);
     }
 
     /* more sanity */
