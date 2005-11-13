@@ -1203,7 +1203,7 @@ add_connection(const struct whack_message *wm)
 		|| alg_info_ike->alg_info_cnt==0)) {
 	if (alg_info_ike!= NULL && alg_info_ike->alg_info_cnt==0) {
 	    loglog(RC_NOALGO
-		   , "got 0 transforms for esp=\"%s\""
+		   , "got 0 transforms for ike=\"%s\""
 		   , wm->esp);
 	    return;
 	} 
@@ -1262,6 +1262,7 @@ add_connection(const struct whack_message *wm)
 				, ugh? ugh : "Unknown");
 			return;
 		}
+		c->alg_esp = clone_str(wm->esp, "esp string");
 	}
 #endif	
 
@@ -1278,6 +1279,20 @@ add_connection(const struct whack_message *wm)
 				 (struct alg_info *)c->alg_info_ike, TRUE);
 		DBG_log("ike string values: %s", buf);
 		);
+	    if (c->alg_info_ike) {
+		if (c->alg_info_ike->alg_info_cnt==0) {
+		    loglog(RC_NOALGO
+			   , "got 0 transforms for ike=\"%s\""
+			   , wm->ike);
+		    return;
+		}
+	    } else {
+		loglog(RC_NOALGO
+		       , "ike string error: %s"
+		       , ugh? ugh : "Unknown");
+		return;
+	    }
+	    c->alg_ike = clone_str(wm->ike, "ike string");
 	}
 #endif
 	c->sa_ike_life_seconds = wm->sa_ike_life_seconds;

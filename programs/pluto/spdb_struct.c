@@ -129,14 +129,33 @@ out_sa(pb_stream *outs
 	, ipcomp_cpi_generated = FALSE;
     struct db_sa *revised_sadb;
 
-    if(oakley_mode) {
-	revised_sadb=oakley_alg_makedb(st->st_connection->alg_info_ike
-				       , sadb
-				       , aggressive_mode ? 1 : -1);
-    } else {
-	revised_sadb=kernel_alg_makedb(st->st_connection->alg_info_esp, TRUE);
+
+    {
+	const char *modestr;
+	const char *alginfo;
+
+	if(oakley_mode) {
+	    revised_sadb=oakley_alg_makedb(st->st_connection->alg_info_ike
+					   , sadb
+					   , aggressive_mode ? 1 : -1);
+	    modestr = "ike";
+	    alginfo = st->st_connection->alg_ike;
+	} else {
+	    revised_sadb=kernel_alg_makedb(st->st_connection->alg_info_esp, TRUE);
+
+	    modestr = "esp";
+	    alginfo = st->st_connection->alg_esp;
+	}
+	
+	/* this is really checked upon load, but we double check here. */
+	if(revised_sadb == NULL) {
+	    loglog(RC_NOALGO, "%s algorithm string: \"%s\" results in no valid algorithms"
+		   , modestr, alginfo ? alginfo : "empty");
+	    return FALSE;
+	}
     }
 
+    /* more sanity */
     if(revised_sadb != NULL) {
 	sadb = revised_sadb;
     }
