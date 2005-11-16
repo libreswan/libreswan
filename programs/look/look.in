@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: look.in,v 1.35 2005/08/25 22:27:06 paul Exp $
+# RCSID $Id: look.in,v 1.33.2.1 2005/08/18 14:10:09 ken Exp $
 
 info=/var/run/pluto/ipsec.info
 me="ipsec look"
@@ -82,12 +82,11 @@ fi
 pat="^Dest"
 if test " $defaultroutephys" != " "
 then
-	pat="$pat|$defaultroutephys|$defaultroutevirt"
+	pat="$pat|$defaultroutephys\$|$defaultroutevirt\$"
 else
 	for i in `echo "$IPSECinterfaces" | sed 's/=/ /'`
 	do
-		pat="$pat|$i"
+		pat="$pat|$i\$"
 	done
 fi
-ip route | egrep "$pat"
-
+netstat -nr | egrep "$pat" | sed '/^Dest/s/^/ /' | sort | sed '/^ Dest/s/ //'

@@ -1,6 +1,6 @@
 #!/bin/sh
 # NOTE: this is shared by a number of tests
-: ==== start ====
+
 hostname road.uml.freeswan.org
 
 ifconfig eth0 inet 192.1.3.213

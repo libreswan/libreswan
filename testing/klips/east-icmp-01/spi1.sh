@@ -1,4 +1,3 @@
-: ==== start ====
 #!/bin/sh
 TZ=GMT export TZ
 
@@ -26,4 +25,4 @@ ipsec look
 
 # magic route command
 route add -host 192.0.1.1 gw 192.1.2.45 dev ipsec0
-: ==== end ====
+

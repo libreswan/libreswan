@@ -14,7 +14,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: kernel_noklips.c,v 1.11 2005/08/14 21:58:09 mcr Exp $
+ * RCSID $Id: kernel_noklips.c,v 1.10 2005/07/08 17:55:28 mcr Exp $
  */
 
 #include <errno.h>
@@ -28,12 +28,12 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include <pfkeyv2.h>
 #include <pfkey.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -108,53 +108,23 @@ noklips_del_sa(const struct kernel_sa *sa UNUSED)
   return TRUE;
 }
 
-static bool
-noklips_sag_eroute(struct state *st UNUSED
-		   , struct spd_route *sr UNUSED
-		   , enum pluto_sadb_operations op UNUSED
-		   , const char *opname UNUSED)
-{
-    return TRUE;
-}
-
-static bool
-noklips_shunt_eroute(struct connection *c UNUSED
-		     , struct spd_route *sr UNUSED
-		     , enum routing_t rt_kind UNUSED
-		     , enum pluto_sadb_operations op UNUSED
-		     , const char *opname UNUSED)
-{
-    return TRUE;
-}
-
-
 
 const struct kernel_ops noklips_kernel_ops = {
-    type: NO_KERNEL,
-    async_fdp: NULL,
+	type: KERNEL_TYPE_NONE,
+	async_fdp: NULL,
 
-    init: init_noklips,
-    pfkey_register: noklips_register,
-    pfkey_register_response: noklips_register_response,
-    process_queue: noklips_dequeue,
-    process_msg: noklips_event,
-    raw_eroute: noklips_raw_eroute,
-    add_sa: noklips_add_sa,
-    grp_sa: noklips_grp_sa,
-    del_sa: noklips_del_sa,
-    sag_eroute: noklips_sag_eroute,
-    shunt_eroute: noklips_shunt_eroute,
-    get_spi: NULL,
-    inbound_eroute: FALSE,
-    policy_lifetime: FALSE,
-    docommand: NULL,
-    kern_name: "noklips",
+	init: init_noklips,
+	pfkey_register: noklips_register,
+	pfkey_register_response: noklips_register_response,
+	process_queue: noklips_dequeue,
+	process_msg: noklips_event,
+	raw_eroute: noklips_raw_eroute,
+	add_sa: noklips_add_sa,
+	grp_sa: noklips_grp_sa,
+	del_sa: noklips_del_sa,
+	get_spi: NULL,
+        inbound_eroute: FALSE,
+	policy_lifetime: FALSE,
+	docommand: NULL,
+	opname: "noklips",
 };
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

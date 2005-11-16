@@ -1,9 +1,8 @@
---- plain/Documentation/Configure.help.old	2005-10-18 15:29:28.000000000 -0400
-+++ plain/Documentation/Configure.help	2005-10-18 15:29:58.000000000 -0400
-@@ -29314,6 +29314,60 @@
-   
-   If unsure, say N.
+--- linux/Documentation/Configure.help.orig	Fri Dec 21 12:41:53 2001
++++ linux/Documentation/Configure.help	Mon Jul 29 16:35:32 2002
+@@ -24237,5 +24237,65 @@
  
+-#
 +IP Security Protocol (IPSEC) (EXPERIMENTAL)
 +CONFIG_IPSEC
 +  This unit is experimental code.
@@ -57,7 +56,14 @@
 +  Enables IPSEC kernel debugging.  It is further controlled by the
 +  user space utility 'klipsdebug'.
 +
++IPSEC Regression Testing option
++CONFIG_IPSEC_REGRESS
++  Enables IPSEC regression testing. Creates a number of switches in
++  /proc/sys/net/ipsec which cause various failure modes in KLIPS.
++  For more details see Openswan source under 
++  testing/doc/regression_options.txt.
++
 +# 
- #
  # A couple of things I keep forgetting:
  #   capitalize: AppleTalk, Ethernet, DOS, DMA, FAT, FTP, Internet,
+ #               Intel, IRQ, ISDN, Linux, MSDOS, NetWare, NetWinder,

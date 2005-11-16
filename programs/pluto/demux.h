@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: demux.h,v 1.36 2005/08/31 03:36:53 mcr Exp $
+ * RCSID $Id: demux.h,v 1.35 2005/06/14 22:38:06 mcr Exp $
  */
 
 #ifndef _DEMUX_H
@@ -67,7 +67,6 @@ struct msg_digest {
     pb_stream rbody;	/* room for reply body (after header) */
     notification_t note;	/* reason for failure */
     bool dpd;           /* Peer supports RFC 3706 DPD */
-	stf_status result;  /* temporary stored here for access by Tcl */
 
 #   define PAYLIMIT 20
     struct payload_digest

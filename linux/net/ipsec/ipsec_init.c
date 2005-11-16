@@ -18,7 +18,7 @@
  *
  */
 
-char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.106 2005/09/14 14:22:55 mcr Exp $";
+char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.1 2005/08/12 01:18:20 ken Exp $";
 
 #include <linux/config.h>
 #include <linux/version.h>
@@ -329,7 +329,6 @@ init_module(void)
 	return error;
 }
 
-#ifndef NET_26
 void
 cleanup_module(void)
 {
@@ -342,14 +341,12 @@ cleanup_module(void)
 	KLIPS_PRINT(1, "klips_info:cleanup_module: "
 		    "ipsec module unloaded.\n");
 }
-#endif
 #endif /* MODULE */
 
 /*
  * $Log: ipsec_init.c,v $
- * Revision 1.106  2005/09/14 14:22:55  mcr
- * 	remove module unload on 2.6. --- it just won't work, so
- * 	don't let people try.
+ * Revision 1.104.2.1  2005/08/12 01:18:20  ken
+ * Warn people who don't have NAT-T patch applied, but try and compile NAT-T code
  *
  * Revision 1.105  2005/08/12 00:56:33  mcr
  * 	add warning for people who didn't apply nat-t patch.

@@ -1,3 +1,58 @@
+Starting UML PATH/start.sh
+spawn PATH single
+Linux version XXXX
+On node 0 totalpages: 8192
+Kernel command line:
+Calibrating delay loop... XXXX bogomips
+Dentry-cache hash table entries: NUMBERS
+Inode-cache hash table entries: NUMBERS
+Mount-cache hash table entries: NUMBERS
+Buffer-cache hash table entries: NUMBERS
+Page-cache hash table entries: NUMEBRS
+POSIX conformance testing by UNIFIX
+Linux NET4.0 for Linux 2.4
+Based upon Swansea University Computer Society NET3.039
+Initializing RT netlink socket
+Starting kswapd
+VFS: Diskquotas version dquot_6.4.0 initialized
+devfs: VERSION Richard Gooch (rgooch@atnf.csiro.au)
+devfs: boot_options Q
+pty: 256 Unix98 ptys configured
+SLIP: version 0.8.4-NET3.019-NEWTTY (dynamic channels, max=256).
+loop: loaded (max 8 devices)
+PPP generic driver version VERSION
+Universal TUN/TAP device driver VERSION
+NET4: Linux TCP/IP 1.0 for NET4.0
+IP Protocols: ICMP, UDP, TCP
+IP: routing cache hash table of 512 buckets, 4Kbytes
+TCP: Hash tables configured (established 2048 bind 2048)
+IPv4 over IPv4 tunneling driver
+GRE over IPv4 tunneling driver
+NET4: Unix domain sockets 1.0/SMP for Linux NET4.0.
+Mounted devfs on /dev
+INIT: version 2.78 booting
+Activating swap...
+Calculating module dependancies
+done.
+Loading modules: LIST
+
+Checking all file systems...
+Parallelizing fsck version 1.18 (11-Nov-1999)
+Setting kernel variables.
+Mounting local filesystems...
+/dev/shm on /tmp type tmpfs (rw)
+/dev/shm on /var/run type tmpfs (rw)
+devpts on /dev/pts type devpts (rw,mode=0622)
+none on /usr/share type hostfs (ro)
+Enabling packet forwarding: done.
+Configuring network interfaces: done.
+Cleaning: /tmp /var/lock /var/run.
+Initializing random number generator... done.
+Recovering nvi editor sessions... done.
+Give root password for maintenance
+(or type Control-D for normal startup): 
+east:~#
+ klogd -c 4 -x -f /tmp/klog.log
 east:~#
  TZ=GMT export TZ
 east:~#
@@ -21,10 +76,11 @@ east:~#
 east NOW
 192.1.2.23/32      -> 192.0.1.0/24       => %pass (0)
 ipsec0->eth1 mtu=16260(1500)->1500
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
 east:~#
  route add -host 192.0.1.1 gw 192.1.2.45 dev ipsec0
 east:~#
- /usr/obj/programs/ikeping/ikeping --verbose --wait 2 --inet 192.0.1.1 192.0.1.1 192.0.1.1 192.0.1.1
+ /usr/src/programs/ikeping/ikeping --verbose --wait 2 --inet 192.0.1.1 192.0.1.1 192.0.1.1 192.0.1.1
 Sending packet to 192.0.1.1/500
 Sending packet to 192.0.1.1/500
 Sending packet to 192.0.1.1/500
@@ -45,9 +101,10 @@ klips_debug:pfkey_x_debug_process: set
 klips_debug:pfkey_msg_interp: parsing message type 16(x-debug) with msg_parser 0pDEADF00D.
 klips_debug:pfkey_x_msg_debug_parse: .
 klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
-klips_debug:pfkey_destroy_socket: 0pDEADF00D
-klips_debug:pfkey_remove_socket: 0pDEADF00D
-klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: .
+klips_debug:pfkey_remove_socket: .
+klips_debug:pfkey_remove_socket: succeeded.
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called.
 klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
 klips_debug:pfkey_destroy_socket: destroyed.
 klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
@@ -220,9 +277,10 @@ klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
 klips_debug:pfkey_x_addflow_parse: sending up x_addflow reply message for satype=11(INT) (proto=61) to socket=0pDEADF00D succeeded.
 klips_debug:pfkey_x_addflow_parse: extr->ips cleaned up and freed.
 klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
-klips_debug:pfkey_destroy_socket: 0pDEADF00D
-klips_debug:pfkey_remove_socket: 0pDEADF00D
-klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: .
+klips_debug:pfkey_remove_socket: .
+klips_debug:pfkey_remove_socket: succeeded.
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called.
 klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
 klips_debug:pfkey_destroy_socket: skb=0pDEADF00D freed.
 klips_debug:pfkey_destroy_socket: destroyed.

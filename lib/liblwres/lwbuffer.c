@@ -15,10 +15,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwbuffer.c,v 1.3 2005/08/05 01:18:29 mcr Exp $ */
+/* $Id: lwbuffer.c,v 1.2 2004/09/20 18:00:36 mcr Exp $ */
 
 #include <config.h>
-#include <sys/types.h>
 
 #include <string.h>
 

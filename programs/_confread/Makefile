@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.7 2005/08/16 02:02:00 mcr Exp $
+# RCSID $Id: Makefile,v 1.6 2004/12/18 18:13:36 mcr Exp $
 
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
 include ${OPENSWANSRCDIR}/Makefile.inc
@@ -20,7 +20,6 @@ PROGRAM=_confread
 PROGRAMDIR=${LIBDIR}
 EXTRA5MAN=ipsec.conf.5
 CONFFILES=ipsec.conf
-EXCONFILES=ipsec.win2k.conf
 
 CONFDSUBDIR=policies
 CONFDFILES=clear clear-or-private private-or-clear private block
@@ -29,9 +28,6 @@ include ${srcdir}../Makefile.program
 
 #
 # $Log: Makefile,v $
-# Revision 1.7  2005/08/16 02:02:00  mcr
-# 	added example ipsec.conf using EXCONFFILE.
-#
 # Revision 1.6  2004/12/18 18:13:36  mcr
 # 	adjusted Makefiles so that ${OBJDIR} builds work.
 #

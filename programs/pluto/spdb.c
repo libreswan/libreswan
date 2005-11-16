@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: spdb.c,v 1.121 2005/08/05 19:16:48 mcr Exp $
+ * RCSID $Id: spdb.c,v 1.120 2005/07/05 22:07:06 mcr Exp $
  */
 
 #include <stdio.h>
@@ -20,12 +20,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 #include "pfkeyv2.h"
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 

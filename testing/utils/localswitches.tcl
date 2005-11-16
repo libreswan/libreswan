@@ -1,24 +1,39 @@
 #!/usr/bin/expect --
 
 #
-# $Id: localswitches.tcl,v 1.3 2003/08/18 16:31:34 mcr Exp $
+# $Id: localswitches.tcl,v 1.5 2004/04/03 19:44:52 ken Exp $
 #
 
-source $env(FREESWANSRCDIR)/testing/utils/GetOpts.tcl
-source $env(FREESWANSRCDIR)/testing/utils/netjig.tcl
+source $env(OPENSWANSRCDIR)/testing/utils/GetOpts.tcl
+source $env(OPENSWANSRCDIR)/testing/utils/netjig.tcl
 
 set netjig_debug_opt ""
 
-set netjig_prog $env(FREESWANSRCDIR)/testing/utils/uml_netjig/uml_netjig
+set netjig_prog $env(OPENSWANSRCDIR)/testing/utils/uml_netjig/uml_netjig
+
+set arpreply ""
+set umlid(extra_hosts) ""
 
 spawn $netjig_prog --cmdproto -t $netjig_debug_opt 
 set netjig1 $spawn_id
 
-newswitch $netjig1 public
-newswitch $netjig1 east
-newswitch $netjig1 west
-newswitch $netjig1 northpublic
-newswitch $netjig1 southpublic
+netjigsetup $netjig1
+
+foreach net $managednets {
+    calc_net $net
+}
+
+foreach net $managednets {
+    process_net $net
+}
+
+foreach net $managednets {
+    if { $umlid(net$net,arp) } {
+	newswitch $netjig1 "--arpreply $net"
+    } {
+	newswitch $netjig1 "$net"
+    }
+}
 
 foreach host $argv {
     system "$host single &"

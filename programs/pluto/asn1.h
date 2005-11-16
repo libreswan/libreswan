@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: asn1.h,v 1.5 2005/08/05 17:39:56 mcr Exp $
+ * RCSID $Id: asn1.h,v 1.4 2004/06/14 01:46:02 mcr Exp $
  */
 
 /* Defines some primitive ASN1 types */
@@ -81,7 +81,7 @@ typedef enum {
 
 typedef struct {
     u_int   level;
-    const char  *name;
+    const u_char  *name;
     asn1_t  type;
     u_char  flags;
 } asn1Object_t;

@@ -1,4 +1,2 @@
 This simple test verifies that using AH+ESP (ie, by specifying
 auth=ah in a conn) doesn't impede secure packet flow.
-
-note: This test currently fails because of unknown proto=51.

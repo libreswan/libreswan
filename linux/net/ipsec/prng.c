@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: prng.c,v 1.8 2005/08/25 01:20:21 paul Exp $
+ * RCSID $Id: prng.c,v 1.7 2004/07/10 07:48:36 mcr Exp $
  */
 #include "openswan.h"
 
@@ -65,7 +65,7 @@ size_t dstlen;
 	int i, j, t;
 	unsigned char *p = dst;
 	size_t remain = dstlen;
-#	define	MAXCOUNT	4000000000ul
+#	define	MAX	4000000000ul
 
 	while (remain > 0) {
 		i = (prng->i + 1) & 0xff;
@@ -79,10 +79,10 @@ size_t dstlen;
 		*p++ = prng->sbox[t];
 		remain--;
 	}
-	if (prng->count < MAXCOUNT - dstlen)
+	if (prng->count < MAX - dstlen)
 		prng->count += dstlen;
 	else
-		prng->count = MAXCOUNT;
+		prng->count = MAX;
 }
 
 /*

@@ -16,14 +16,13 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: async.c,v 1.8 2005/08/05 01:18:29 mcr Exp $ */
+/* $Id: async.c,v 1.7 2005/03/30 16:49:18 ken Exp $ */
 
 #include <config.h>
 
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <limits.h>
 
 #include <lwres/lwres.h>
 #include <lwres/net.h>

@@ -37,16 +37,13 @@ fi
 
 if [ ! -d ${KERNPOOL}/. ]; then echo Your KERNPOOL= is not properly set; exit 1; fi	
 
-if [ "${UMLPATCH}" != "none" ] && [ ! -r ${UMLPATCH} ]; then echo Your UMLPATCH= is not properly set; exit 1; fi
+if [ ! -r ${UMLPATCH} ]; then echo Your UMLPATCH= is not properly set; exit 1; fi
 if [ -z "${OPENSWANHOSTS}" ]; then echo Your OPENSWANHOSTS= is not properly set; exit 1; fi
 if [ -z "${NATTPATCH}" ]; then echo Your NATTPATCH= is not properly set; exit 1; fi 
 if [ ! -d ${BASICROOT}/. ]; then echo Your BASICROOT= is not properly set; exit 1; fi
     
 #
 # $Log: verify-uml.sh,v $
-# Revision 1.2  2005/08/11 18:08:04  mikes
-#     none is an acceptable answer for UMLPATCH
-#
 # Revision 1.1  2005/07/14 01:37:56  mcr
 # 	script to check out umlsetup.sh and complain before
 # 	we get too far.

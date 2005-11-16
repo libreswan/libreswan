@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: server.c,v 1.113 2005/08/27 05:51:00 paul Exp $
+ * RCSID $Id: server.c,v 1.109.2.1 2005/08/18 14:17:38 ken Exp $
  */
 
 #include <stdio.h>
@@ -37,13 +37,15 @@
 #include <fcntl.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <resolv.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
+#include <sys/queue.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#include <sys/queue.h>
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
@@ -92,21 +94,11 @@ LIST_HEAD(,iface_dev) interface_dev;
 
 /* control (whack) socket */
 int ctl_fd = NULL_FD;	/* file descriptor of control (whack) socket */
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 struct sockaddr_un ctl_addr = { AF_UNIX, DEFAULT_CTLBASE CTL_SUFFIX };
-#else
-/* This will require fixes elsewhere too! */
-struct sockaddr_un ctl_addr = { sizeof(struct sockaddr_un), AF_UNIX, DEFAULT_CTLBASE CTL_SUFFIX };
-#endif
 
 /* info (showpolicy) socket */
 int policy_fd = NULL_FD;
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 struct sockaddr_un info_addr= { AF_UNIX, DEFAULT_CTLBASE INFO_SUFFIX };
-#else
-/* This will require fixes elsewhere too! */
-struct sockaddr_un info_addr= { sizeof(struct sockaddr_un), AF_UNIX, DEFAULT_CTLBASE INFO_SUFFIX };
-#endif
 
 /* Initialize the control socket.
  * Note: this is called very early, so little infrastructure is available.
@@ -316,12 +308,9 @@ struct raw_iface {
     struct raw_iface *next;
 };
 
-struct raw_iface *static_ifn=NULL;
-
 /* Called to handle --interface <ifname>
  * Semantics: if specified, only these (real) interfaces are considered.
  */
-#if !defined(__CYGWIN32__)
 static const char *pluto_ifn[10];
 static int pluto_ifn_roof = 0;
 
@@ -342,39 +331,11 @@ use_interface(const char *rifn)
 	return TRUE;
     }
 }
-#else
-bool
-use_interface(const char *rifn)
-{
-    struct raw_iface *ri;
-    static int ifnum=0;
-    err_t e;
-
-    if(pluto_ifn_inst[0]=='\0') {
-	pluto_ifn_inst = clone_str(rifn, "genifn");
-    }
-
-    ri = alloc_thing(*ri, "static interface");
-
-    e = ttoaddr(rifn, strlen(rifn), 0, &ri->addr);
-    if(e) {
-	fprintf(stderr, "--interface failed: %s\n", e);
-	exit(10);
-    }
-    snprintf(ri->name, sizeof(ri->name), "ifn%d", ifnum++);
-
-    ri->next = static_ifn;
-    static_ifn = ri;
-
-    return TRUE;
-}
-#endif
 
 #ifndef IPSECDEVPREFIX
 # define IPSECDEVPREFIX "ipsec"
 #endif
 
-#if !defined(__CYGWIN32__)
 static struct raw_iface *
 find_raw_ifaces4(void)
 {
@@ -551,7 +512,6 @@ find_raw_ifaces6(void)
 
     return rifaces;
 }
-#endif
 
 static int
 create_socket(struct raw_iface *ifp, const char *v_name, int port)
@@ -616,7 +576,7 @@ create_socket(struct raw_iface *ifp, const char *v_name, int port)
     }
 #endif
 
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(KERNEL26_SUPPORT)
     if (kern_interface == USE_NETKEY)
     {
 	struct sadb_x_policy policy;
@@ -672,10 +632,8 @@ create_socket(struct raw_iface *ifp, const char *v_name, int port)
     }
     setportof(htons(pluto_port), &ifp->addr);
 
-#if defined(HAVE_UDPFROMTO)
     /* we are going to use udpfromto.c, so initialize it */
     udpfromto_init(fd);
-#endif
 
     return fd;
 }
@@ -730,7 +688,7 @@ process_raw_ifaces(struct raw_iface *rifaces)
 		    /* ugh: a second real interface with the same IP address
 		     * "after" allows us to avoid double reporting.
 		     */
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(KERNEL26_SUPPORT)
 		    if (kern_interface == USE_NETKEY)
 		    {
 			if (after)
@@ -755,7 +713,7 @@ process_raw_ifaces(struct raw_iface *rifaces)
 	if (bad)
 	    continue;
 
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(KERNEL26_SUPPORT)
 	if (kern_interface == USE_NETKEY)
 	{
 	    v = ifp;
@@ -789,7 +747,7 @@ process_raw_ifaces(struct raw_iface *rifaces)
 	/* We've got all we need; see if this is a new thing:
 	 * search old interfaces list.
 	 */
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(KERNEL26_SUPPORT)
 add_entry:
 #endif
 	{
@@ -819,7 +777,7 @@ add_entry:
 		    q = alloc_thing(struct iface_port, "struct iface_port");
 		    id = alloc_thing(struct iface_dev, "struct iface_dev");
 
-		    LIST_INSERT_HEAD(&interface_dev, id, id_entry);
+		    LIST_INSERT_HEAD(&interface_dev, id, id_entry)
 
 		    q->ip_dev = id;
 		    id->id_rname = clone_str(ifp->name, "real device name");
@@ -916,12 +874,8 @@ void
 find_ifaces(void)
 {
     mark_ifaces_dead();
-
-#if !defined(__CYGWIN32__)
     process_raw_ifaces(find_raw_ifaces4());
     process_raw_ifaces(find_raw_ifaces6());
-#endif
-    process_raw_ifaces(static_ifn);
 
     free_dead_ifaces();	    /* ditch remaining old entries */
 

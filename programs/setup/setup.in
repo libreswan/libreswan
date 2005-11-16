@@ -13,7 +13,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: setup.in,v 1.124 2005/08/16 02:14:41 mcr Exp $
+# RCSID $Id: setup.in,v 1.122.6.1 2005/07/25 19:17:03 ken Exp $
 #
 # ipsec         init.d script for starting and stopping
 #               the IPsec security subsystem (KLIPS and Pluto).
@@ -117,14 +117,12 @@ mkdir -p /var/run/pluto
 # do it
 case "$1" in
   start|--start|stop|--stop|_autostop|_autostart)
-	# remove for: @cygwin_START@ 
 	if test " `id -u`" != " 0"
 	then
 		echo "permission denied (must be superuser)" |
 			logger -s -p $IPSECsyslog -t ipsec_setup 2>&1
 		exit 1
 	fi
-	# remove for: @cygwin_END@
 	tmp=/var/run/pluto/ipsec_setup.st
 	outtmp=/var/run/pluto/ipsec_setup.out
 	(

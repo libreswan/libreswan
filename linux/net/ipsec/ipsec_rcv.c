@@ -15,7 +15,7 @@
  * for more details.
  */
 
-char ipsec_rcv_c_version[] = "RCSID $Id: ipsec_rcv.c,v 1.178 2005/10/21 02:19:34 mcr Exp $";
+char ipsec_rcv_c_version[] = "RCSID $Id: ipsec_rcv.c,v 1.171.2.5 2005/10/21 02:22:29 mcr Exp $";
 
 #include <linux/config.h>
 #include <linux/version.h>
@@ -1699,6 +1699,12 @@ rcvleave:
 
 /*
  * $Log: ipsec_rcv.c,v $
+ * Revision 1.171.2.5  2005/10/21 02:22:29  mcr
+ * 	pull up of another try at 2.4.x kernel fix
+ *
+ * Revision 1.171.2.4  2005/10/21 01:39:56  mcr
+ *     nat-t fix is 2.4/2.6 specific
+ *
  * Revision 1.178  2005/10/21 02:19:34  mcr
  * 	on 2.4 systems, we have to fix up the length as well.
  *

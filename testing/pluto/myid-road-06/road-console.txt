@@ -91,7 +91,7 @@ road:~#
  source /testing/pluto/bin/roadlocal.sh
 road:~#
  ipsec setup start
-ipsec_setup: Starting FreeS/WAN IPsec VERSION
+ipsec_setup: Starting Openswan IPsec VERSION
 road:~#
  /testing/pluto/oe-road-01/policy-wait.sh
 road:~#
@@ -159,7 +159,7 @@ road:~#
 Stopping domain name service: named.
 Stopping internet superserver: inetd.
 Stopping portmap daemon: portmap.
-ipsec_setup: Stopping FreeS/WAN IPsec...
+ipsec_setup: Stopping Openswan IPsec...
 IPSEC EVENT: KLIPS device ipsec0 shut down.
 
 Stopping system log daemon: klogd syslogd.

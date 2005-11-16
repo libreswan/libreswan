@@ -29,11 +29,10 @@
 #include <unistd.h>
 #include <sys/queue.h>
 
-#include <openswan.h>
-
 #include <pfkeyv2.h>
 #include <pfkey.h>
 
+#include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
 #include "constants.h"
@@ -109,7 +108,6 @@ kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 {
 	struct sadb_alg *alg_p=NULL;
 	int alg_id=sadb_alg->sadb_alg_id;
-
 	DBG(DBG_KLIPS, DBG_log("kernel_alg_add():"
 		"satype=%d, exttype=%d, alg_id=%d",
 		satype, exttype, sadb_alg->sadb_alg_id));
@@ -216,7 +214,6 @@ kernel_alg_proc_read(void) {
 						sadb_alg.sadb_alg_ivlen=ivlen;
 						sadb_alg.sadb_alg_minbits=minbits;
 						sadb_alg.sadb_alg_maxbits=maxbits;
-						sadb_alg.sadb_alg_reserved=0;
 						ret=kernel_alg_add(satype, supp_exttype, &sadb_alg);
 						DBG(DBG_CRYPT, DBG_log("kernel_alg_proc_read() alg_id=%d, "
 							"alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "

@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.16 2005/08/05 01:42:00 mcr Exp $
+# RCSID $Id: Makefile,v 1.14 2004/12/18 18:13:40 mcr Exp $
 
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
 include ${OPENSWANSRCDIR}/Makefile.inc
@@ -23,25 +23,13 @@ OBJS:=cmds.o lookup.o
 
 LWRESINCL=${LWRESDIR}/include
 
-LIBS:=${OPENSWANLIB} ${LIBLWRES} ${LIBDNS} ${LIBISC}
+LIBS:=${FREESWANLIB} ${LWRESLIB} ${BIND9STATICLIBDIR}/libdns.a ${BIND9STATICLIBDIR}/libisc.a 
 
 ifdef BIND9INCDIR
 CFLAGS+=-I${BIND9INCDIR}
 endif
 
-CFLAGS+=-I../../lib/libisc/include 
-CFLAGS+=-I../../lib/libdns/include 
-CFLAGS+=-I../../lib/liblwres/include 
-
-CFLAGS+=-I${srcdir}../../lib/libisc/nothreads/include 
-
-CFLAGS+=-I${srcdir}../../lib/libisc/${ISCARCH}/include 
-CFLAGS+=-I${srcdir}../../lib/libdns/${ISCARCH}/include 
-CFLAGS+=-I${srcdir}../../lib/liblwres/${ISCARCH}/include 
-
-CFLAGS+=-I${srcdir}../../lib/libisc/include 
-CFLAGS+=-I${srcdir}../../lib/libdns/include 
-CFLAGS+=-I${srcdir}../../lib/liblwres/include 
+CFLAGS+=-I${LWRESINCL}
 
 # for debugging
 #CFLAGS+=-DEFENCE
@@ -68,12 +56,6 @@ lookup.o:	lookup.c lwdnsq.h
 
 #
 # $Log: Makefile,v $
-# Revision 1.16  2005/08/05 01:42:00  mcr
-# 	build with local libisc/libdns.
-#
-# Revision 1.15  2005/07/27 18:43:50  mcr
-#    add -lpthread option. Oh well.
-#
 # Revision 1.14  2004/12/18 18:13:40  mcr
 # 	adjusted Makefiles so that ${OBJDIR} builds work.
 #

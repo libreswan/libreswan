@@ -1,6 +1,5 @@
 #!/bin/sh
 TZ=GMT export TZ
-: ==== start ====
 
 ipsec spi --clear
 ipsec eroute --clear
@@ -25,4 +24,4 @@ ipsec look
 
 # magic route command
 route add -host 192.0.1.1 gw 192.1.2.45 dev ipsec0
-: ==== end ====
+

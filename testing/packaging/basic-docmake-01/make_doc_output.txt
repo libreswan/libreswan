@@ -91,6 +91,7 @@ Processing manpage.d/ipsec_spi.8
 Processing manpage.d/ipsec_spigrp.5
 Processing manpage.d/ipsec_spigrp.8
 Processing manpage.d/ipsec_splitkeytoid.3
+Processing manpage.d/ipsec_starter.8
 Processing manpage.d/ipsec_subnetinsubnet.3
 Processing manpage.d/ipsec_subnetishost.3
 Processing manpage.d/ipsec_subnetof.3

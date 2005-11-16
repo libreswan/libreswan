@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: id.c,v 1.47 2005/08/05 19:10:43 mcr Exp $
+ * RCSID $Id: id.c,v 1.46 2005/02/14 05:56:02 ken Exp $
  */
 
 #include <stdlib.h>
@@ -25,11 +25,11 @@
 #ifndef HOST_NAME_MAX	/* POSIX 1003.1-2001 says <unistd.h> defines this */
 # define HOST_NAME_MAX	255 /* upper bound, according to SUSv2 */
 #endif
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -160,10 +160,10 @@ show_myid_status(void)
  */
 #define	MAX_BUF		6
 
-unsigned char*
+char*
 temporary_cyclic_buffer(void)
 {
-    static unsigned char buf[MAX_BUF][IDTOA_BUF]; /*MAX_BUF internal buffers */
+    static char buf[MAX_BUF][IDTOA_BUF];	/* MAX_BUF internal buffers */
     static int counter = 0;			/* cyclic counter */
 
     if (++counter == MAX_BUF) counter = 0;	/* next internal buffer */
@@ -224,10 +224,9 @@ atoid(char *src, struct id *id, bool myid_ok)
 		 * we interprete this as ID_KEY_ID
 		 */
 		id->kind = ID_KEY_ID;
-		id->name.ptr = (unsigned char *)src;
+		id->name.ptr = src;
 		/* discard @~, convert from hex to bin */
-		ugh = ttodata(src+2, 0, 16, (char *)id->name.ptr
-			      , strlen(src), &id->name.len);
+		ugh = ttodata(src+2, 0, 16, id->name.ptr, strlen(src), &id->name.len);
 	    }
 	    else if (*(src+1) == '~')
 	    {
@@ -235,10 +234,9 @@ atoid(char *src, struct id *id, bool myid_ok)
 		* we interprete this as a binary ID_DER_ASN1_DN
 		*/
 		id->kind = ID_DER_ASN1_DN;
-		id->name.ptr = (unsigned char *)src;
+		id->name.ptr = src;
 		/* discard @~, convert from hex to bin */
-		ugh = ttodata(src+2, 0, 16, (char *)id->name.ptr
-			      , strlen(src), &id->name.len);
+		ugh = ttodata(src+2, 0, 16, id->name.ptr, strlen(src), &id->name.len);
 	    }
 	    else if (*(src+1) == '[')
 	    {
@@ -249,7 +247,7 @@ atoid(char *src, struct id *id, bool myid_ok)
 		int len = strlen(src+2);
 
 		id->kind = ID_KEY_ID;
-		id->name.ptr = (unsigned char *)src+2;
+		id->name.ptr = src+2;
 
 		if(src[len+2]==']')
 		{
@@ -261,7 +259,7 @@ atoid(char *src, struct id *id, bool myid_ok)
 	    else
 	    {
 		id->kind = ID_FQDN;
-		id->name.ptr = (unsigned char *)src+1;	/* discard @ */
+		id->name.ptr = src+1;	/* discard @ */
 		id->name.len = strlen(src)-1;
 	    }
 	}
@@ -271,7 +269,7 @@ atoid(char *src, struct id *id, bool myid_ok)
 	     * (but DNS wants . instead).
 	     */
 	    id->kind = ID_USER_FQDN;
-	    id->name.ptr = (unsigned char *)src;
+	    id->name.ptr = src;
 	    id->name.len = strlen(src);
 	}
     }
@@ -285,7 +283,7 @@ atoid(char *src, struct id *id, bool myid_ok)
 static int
 keyidtoa(char *dst, size_t dstlen, chunk_t keyid)
 {
-    int n = datatot((char *)keyid.ptr, keyid.len, 'x', dst, dstlen);
+    int n = datatot(keyid.ptr, keyid.len, 'x', dst, dstlen);
     return ((n < (int)dstlen)? n : (int)dstlen) - 1;
 }
 
@@ -484,8 +482,7 @@ same_id(const struct id *a, const struct id *b)
 	    while (bl > 0 && b->name.ptr[bl - 1] == '.')
 		bl--;
 	    return al == bl
-		&& strncasecmp((char *)a->name.ptr
-			       , (char *)b->name.ptr, al) == 0;
+		&& strncasecmp(a->name.ptr, b->name.ptr, al) == 0;
 	}
 
     case ID_DER_ASN1_DN:

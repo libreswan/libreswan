@@ -14,7 +14,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: x509.c,v 1.26 2005/09/13 19:43:19 mcr Exp $
+ * RCSID $Id: x509.c,v 1.23.18.3 2005/07/26 02:11:23 ken Exp $
  */
 
 #include <stdlib.h>
@@ -23,13 +23,13 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <time.h>
-#include <limits.h>
 #include <sys/types.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
+#include <sys/queue.h>
+
 #include "constants.h"
 #include "oswlog.h"
 
@@ -1787,8 +1787,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 	{
 	    char distpoint[PATH_MAX];
 
-	    distpoint[0] = '\0';
-	    strncat(distpoint, crl->distributionPoints->name.ptr,
+	    strncpy(distpoint, crl->distributionPoints->name.ptr,
 		    (crl->distributionPoints->name.len < PATH_MAX ?
 		     crl->distributionPoints->name.len : PATH_MAX));
 	    

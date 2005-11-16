@@ -18,7 +18,7 @@
  * Split out from ipsec_init.c version 1.70.
  */
 
-char ipsec_proc_c_version[] = "RCSID $Id: ipsec_proc.c,v 1.40 2005/08/26 20:02:24 mcr Exp $";
+char ipsec_proc_c_version[] = "RCSID $Id: ipsec_proc.c,v 1.39.2.1 2005/09/07 00:45:59 paul Exp $";
 
 
 #include <linux/config.h>
@@ -612,27 +612,27 @@ ipsec_version_get_info(char *buffer,
 IPSEC_PROCFS_DEBUG_NO_STATIC
 int
 ipsec_natt_get_info(char *buffer,
-		    char **start,
-		    off_t offset,
-		    int length  IPSEC_PROC_LAST_ARG)
+                    char **start,
+                    off_t offset,
+                    int length  IPSEC_PROC_LAST_ARG)
 {
-	int len = 0;
-	off_t begin = 0;
+        int len = 0;
+        off_t begin = 0;
 
-	len += ipsec_snprintf(buffer + len,
-			      length-len, "%d\n",
+        len += ipsec_snprintf(buffer + len,
+                              length-len, "%d\n",
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-			      1
+                              1
 #else
-			      0
+                              0
 #endif
-		);
+                );
 
-	*start = buffer + (offset - begin);	/* Start of wanted data */
-	len -= (offset - begin);			/* Start slop */
-	if (len > length)
-		len = length;
-	return len;
+        *start = buffer + (offset - begin);     /* Start of wanted data */
+        len -= (offset - begin);                        /* Start slop */
+        if (len > length)
+                len = length;
+        return len;
 }
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
@@ -846,7 +846,6 @@ static struct ipsec_proc_list proc_items[]={
 	{"stats",      &proc_net_ipsec_dir, &proc_stats_dir,  NULL,      NULL, NULL},
 	{"trap_count", &proc_stats_dir,     NULL,             ipsec_stats_get_int_info, NULL, &ipsec_xmit_trap_count},
 	{"trap_sendcount", &proc_stats_dir, NULL,             ipsec_stats_get_int_info, NULL, &ipsec_xmit_trap_sendcount},
-	{"natt",       &proc_net_ipsec_dir, NULL,             ipsec_natt_get_info,    NULL, NULL},
 	{"version",    &proc_net_ipsec_dir, NULL,             ipsec_version_get_info,    NULL, NULL},
 	{NULL,         NULL,                NULL,             NULL,      NULL, NULL}
 };
@@ -1007,9 +1006,8 @@ ipsec_proc_cleanup()
 
 /*
  * $Log: ipsec_proc.c,v $
- * Revision 1.40  2005/08/26 20:02:24  mcr
- * 	added /proc/net/ipsec/natt file to indicate if NAT-T was compiled
- * 	into KLIPS.
+ * Revision 1.39.2.1  2005/09/07 00:45:59  paul
+ * pull up of mcr's nat-t klips detection patch from head
  *
  * Revision 1.39  2005/05/20 03:19:18  mcr
  * 	modifications for use on 2.4.30 kernel, with backported

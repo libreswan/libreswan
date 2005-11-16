@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: connections.c,v 1.263 2005/10/13 03:05:18 mcr Exp $
+ * RCSID $Id: connections.c,v 1.256.2.6 2005/10/13 03:11:14 mcr Exp $
  */
 
 #include <string.h>
@@ -24,13 +24,16 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <resolv.h>
+#include <arpa/nameser.h>     /* missing from <resolv.h> on old systems */
+#include <sys/queue.h>
+
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 #include "pfkeyv2.h"
 #include "kameipsec.h"
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -70,6 +73,14 @@
 
 #ifdef VIRTUAL_IP
 #include "virtual.h"
+#endif
+
+#ifndef ns_t_txt
+#define ns_t_txt T_TXT
+#endif
+
+#ifndef ns_t_key
+#define ns_t_key T_KEY
 #endif
 
 static struct connection *connections = NULL;
@@ -3827,8 +3838,9 @@ is_virtual_net_used(const ip_subnet *peer_net, const struct id *peer_id)
     for (d = connections; d != NULL; d = d->ac_next)
     {
 	switch (d->kind) {
+            /* It does NOT make sense to check for CK_TEMPLATE entries here,
+               since they do not contain a currently used virtual IP address */ 
 	    case CK_PERMANENT:
-	    case CK_TEMPLATE:
 	    case CK_INSTANCE:
 		if ((subnetinsubnet(peer_net,&d->spd.that.client) ||
 		     subnetinsubnet(&d->spd.that.client,peer_net)) &&

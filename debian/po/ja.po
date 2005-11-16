@@ -14,10 +14,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openswan 2.2.0-4\n"
+"Project-Id-Version: openswan 1:2.2.0-8\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-13 11:49+0100\n"
-"PO-Revision-Date: 2004-12-30 01:26+0900\n"
+"PO-Revision-Date: 2005-05-28 01:26+0900\n"
 "Last-Translator: Hideki Yamane <henrich@samba.gr.jp>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -480,6 +480,7 @@ msgstr "Openswan で opportunistic encryption を有効にしますか?"
 #. Type: boolean
 #. Description
 #: ../openswan.templates.master:193
+#, fuzzy
 msgid ""
 "Openswan comes with support for opportunistic encryption (OE), which stores "
 "IPSec authentication information (i.e. RSA public keys) in (preferably "
@@ -491,11 +492,11 @@ msgid ""
 msgstr ""
 "Openswan は、IPSec 認証情報 (例: RSA 公開鍵) を (願わくはセキュアな) DNS レ"
 "コード内に保存する opportunistic encryption (OE) をサポートしています。これは"
-"広く利用されるようになるまで、これを有効にすることで全ての外部への新規接続は"
-"格段に遅くなります。バージョン 2.0 より、Openswan の開発元はデフォルトで OE "
-"を有効にしており、したがって plute (Openswan 鍵署名デーモン) が開始されるま"
-"で、すでにあるインターネットへの接続 (つまりデフォルトルート) が中断されるか"
-"もしれません。"
+"広く利用されるようになるまで、有効にすると外部への新規接続は全て格段に遅くな"
+"ります。バージョン 2.0 より Openswan の開発元はデフォルトで OE を有効にしてお"
+"り、したがって pluto (Openswan 鍵署名デーモン) が開始するとすぐ、既に存在して"
+"いるインターネットへの接続 (つまりデフォルトルート) が中断されるかもしれませ"
+"ん。"
 
 #. Type: boolean
 #. Description

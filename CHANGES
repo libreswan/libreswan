@@ -1,8 +1,65 @@
+Please see docs/KNOWN_BUGS file for more information
+
+v2.4.2
+* Minor fixes to accomodate FC4 2.6.11 kernels.
+* Fix for compilation of KLIPS on 2.4.x kernels.
+* Fix for NAT-T on 2.4.31
+* Fix for 'short' packets with KLIPS on 2.4.x
+* Merged in Jacco's l2tp configuration examples
+* Various bugfixes as reported on http://bugs.openswan.org/
+  #286 Incorrect links in intro.html
+  #344 netkey-acquire patch
+  #376 install_ipsec_sa and install_inbound_ipsec_sa
+  #486 ASSERTION FAILED at crypto.c:258: key_size==(DES_CBC_BLOCK_SIZE * 3)
+  #487 ASSERTION FAILED at state.c:120: IS_ISAKMP_ENCRYPTED(isakmp_sa->st_state) 
+
+v2.4.1
+* Not publically released
+
 v2.4.0
-* NAT-T support for KLIPS on 2.6 (Funded by Astaro)
-* Additional Cipher support with KLIPS on 2.6
+* NAT-T support for KLIPS on 2.6 (Sponsored by Astaro)
+* Additional Cipher support with KLIPS on 2.6 (Sponsored by Astaro)
 * Fix for NAT-T/PSK rekey (Ulrich @ Astaro)
-* Various bugfixes: #269, #328, #342, #350, #355, #357, #361, #363
+* Delete _updown.c and _updown.posix versions as they were obsolete
+* Fixes for aggressive mode and policy mode
+* Various bugfixes as reported on http://bugs.openswan.org/
+  #201 pluto not accepting negotiations on port 500 after port floating to 4500
+  #249 two default routes confuses scripts
+  #261 2 RW's w/DPD behind a NAT kick each other off at rekey time
+  #267 pluto crashes on inbound X.509 roadwarrior 
+  #269 informational crasher in demux.c
+  #301 kernel_netkey.c lists invalid ESP algorithm
+  #302 pluto assumes it has 3DES
+  #305 passert_fail (pred_str=0x80b88e3 "st->st_suspended_md->st == st", file_str=0x80b86a0 "state.c"
+  #306 st->st_suspended_md->st == st passert()
+  #316 Patch for ALG support from Astaro
+  #324 Impossible to disable AGGRESSIVE mode
+  #327 pluto nat-t detection on 2.6 without klips nat-t patch fails to
+       disable nat-t
+  #328 ipsec setup fxies for awk compiled with --enable-switch
+  #341 Pluto crashes with: ipsec__plutorun: !pluto failure!: exited with error
+       status 134 (signal 6)
+  #342 fix for 2.6.12 undocumented API fixes for sk_zapped and sk_alloc()
+       (based on fix from Sergeil.
+  #350 fix for passert() at connections.c:1353: isanyaddr(&c->spd.that.host_addr)
+  #355 dpdaction restart fix from Astaro
+  #357 secure_xauth_username_str fix from Astaro
+  #360 checkv199install creates bogus "old" files
+  #361/#363 fix for passert() demux.c:1204: unknown address family in
+       anyaddr/unspecaddr
+  #368 Fix for ipsec --setup --status output and eroute counting
+  #372 Netkey and device labels (eth#:#)
+  #373 _updown_x509 still uses obsolete 'route add' commands
+  #377 pluto crashes processing first connection if nhelpers=0
+  #380 pluto crashes when sent an IKEPING
+  #381 assertion failure in init_demux if AGGRESSIVE not defined
+  #383 MODP >= 4096 FIX
+  #386 undefined symbols compiling klips as module
+  #387 / #420 pfkey_ops undefined error on SMP kernel compiles.
+              possibly fixed, but may result in SMP unsafe-ness.
+  #342 KLIPS cannot be compiled for 2.6.12+
+  #415 RPM packaging errors for 2.4 based kernels
+  #416 Need a way to tell if NAT-T is compiled in the IPSec kernel
 
 v2.3.1
 * NAT-T RFC support (mlafon/mcr)
@@ -11,7 +68,7 @@ v2.3.1
 * Removed HowTo (obselete)
 * IPKG packaging updates
 * Log message updates
-* dpdaction=restart support 
+* dpdaction=restart support
 
 v2.3.0
 * KLIPS for 2.6 support (Experimental)
@@ -29,7 +86,7 @@ v2.2.0
 * Fixes for /proc filesystem issues that started to appear in 2.4.25
 
 v2.1.2
-* Fix loading of 2.6 modules 
+* Fix loading of 2.6 modules
 * Fix for snprintfs() in /proc, new for 2.4.25 kernels (dhr/pw)
 * Fix checks for some log files/dirs in case they are sockets or pipes (pw)
 * Fix for crl.pem crash/core (dhr/as/kb)
@@ -41,10 +98,10 @@ v2.1.1
 v2.1.0
 * NAT-T support (Mathieu Lafon - Arkoon)
 * X.509 fixes (Andreas Steffan)
-* New configuration file directive, {left|right}sourceip=#.#.#.# 
-  This will set the source address when talking to a particular 
-  connection.  This is very usefull to assign a static IP to your laptop 
-  while travelling.  This is based on Tuomo Soini's Advanced Routing 
+* New configuration file directive, {left|right}sourceip=#.#.#.#
+  This will set the source address when talking to a particular
+  connection.  This is very usefull to assign a static IP to your laptop
+  while travelling.  This is based on Tuomo Soini's Advanced Routing
   patch.
 
-RCSID $Id: CHANGES,v 1.326 2005/07/20 16:50:18 ken Exp $
+RCSID $Id: CHANGES,v 1.326.2.26 2005/11/15 02:43:22 ken Exp $

@@ -64,8 +64,6 @@ road:~#
 
 road:~#
 road:~#
- : ==== start ====
-road:~#
  ipsec setup stop
 IPSEC EVENT: KLIPS device ipsec0 shut down.
 ipsec_setup: Stopping Openswan IPsec...

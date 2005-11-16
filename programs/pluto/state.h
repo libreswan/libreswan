@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: state.h,v 1.100 2005/08/05 19:16:49 mcr Exp $
+ * RCSID $Id: state.h,v 1.98.2.2 2005/07/26 02:11:23 ken Exp $
  */
 
 #include <sys/types.h>
@@ -126,9 +126,10 @@ struct state
     struct ipsec_proto_info st_ah;
     struct ipsec_proto_info st_esp;
     struct ipsec_proto_info st_ipcomp;
-
+#ifdef KLIPS
     ipsec_spi_t        st_tunnel_in_spi;          /* KLUDGE */
     ipsec_spi_t        st_tunnel_out_spi;         /* KLUDGE */
+#endif
 
     const struct oakley_group_desc *st_pfs_group; /*group for Phase 2 PFS */
 

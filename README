@@ -1,5 +1,3 @@
-    ******* THIS IS A DEVELOPER RELEASE **** NOT FOR PRODUCTION *******
-
     ********* See docs/RELEASE-NOTES.txt for more information *********
 
 			Openswan 2.4.0 Release Notes
@@ -177,4 +175,4 @@ currently 40MB)
 The bulk of this software is under the GNU General Public License; see
 LICENSE.  Some parts of it are not; see CREDITS for the details.
 
-$Id: README,v 1.102 2005/07/06 22:50:02 ken Exp $.
+$Id: README,v 1.102.2.1 2005/11/08 18:09:57 ken Exp $.

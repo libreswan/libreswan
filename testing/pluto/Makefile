@@ -11,10 +11,9 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.9 2005/09/29 02:05:50 mcr Exp $
+# RCSID $Id: Makefile,v 1.7 2004/12/18 18:13:45 mcr Exp $
 
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir=./
 export OPENSWANSRCDIR
 include $(OPENSWANSRCDIR)/Makefile.inc
 
@@ -26,16 +25,16 @@ def:
 	@false
 
 check: 	${OPENSWANSRCDIR}/umlsetup.sh
-	source ${OPENSWANSRCDIR}/umlsetup.sh; source setup.sh; source ${UTILS}/functions.sh; source ${srcdir}TESTLIST
+	source ${OPENSWANSRCDIR}/umlsetup.sh; source setup.sh; source ${UTILS}/functions.sh; source TESTLIST
 
 spotcheck:
-	@source ${OPENSWANSRCDIR}/umlsetup.sh; source setup.sh; source $${UTILS}/functions.sh; eval `sed -e '/^#/d' ${srcdir}TESTLIST | perl $${UTILS}/shuffle.pl 1`
+	@source ${OPENSWANSRCDIR}/umlsetup.sh; source setup.sh; source $${UTILS}/functions.sh; eval `sed -e '/^#/d' TESTLIST | perl $${UTILS}/shuffle.pl 1`
 
 install install_file_list checkprograms programs:
 	@true
 
 clean:
-	grep -v '^#' ${srcdir}TESTLIST | while read testtype name status; \
+	grep -v '^#' TESTLIST | while read testtype name status; \
 	do\
 		rm -rf $$name/OUTPUT; \
 	done
@@ -50,12 +49,6 @@ realclean: clean
 
 #
 # $Log: Makefile,v $
-# Revision 1.9  2005/09/29 02:05:50  mcr
-# 	adjusted to make srcdir work right for tests
-#
-# Revision 1.8  2005/08/25 18:17:54  mcr
-# 	added ${srcdir} to find TESTLIST.
-#
 # Revision 1.7  2004/12/18 18:13:45  mcr
 # 	adjusted Makefiles so that ${OBJDIR} builds work.
 #

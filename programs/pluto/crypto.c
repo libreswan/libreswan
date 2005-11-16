@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: crypto.c,v 1.41 2005/10/06 19:41:27 mcr Exp $
+ * RCSID $Id: crypto.c,v 1.36.2.1 2005/09/27 04:28:09 paul Exp $
  */
 
 #include <stdio.h>
@@ -34,8 +34,6 @@
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "alg_info.h"
 #include "ike_alg.h"
-
-#include "tpm/tpm.h"
 
 
 /* moduli and generator. */
@@ -299,7 +297,6 @@ crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc
 
     e->do_crypt(buf, size, st->st_enc_key.ptr
 		, st->st_enc_key.len, st->st_new_iv, enc);
-
     /*
       e->set_key(&ctx, st->st_enc_key.ptr, st->st_enc_key.len);
       e->cbc_crypt(&ctx, buf, size, st->st_new_iv, enc);

@@ -9,14 +9,11 @@ EASTHOST=east
 WESTHOST=west
 
 REF_EAST_CONSOLE_OUTPUT=east-console.txt
-REF26_EAST_CONSOLE_OUTPUT=east-console.txt
 REF_WEST_CONSOLE_OUTPUT=west-console.txt
-REF26_WEST_CONSOLE_OUTPUT=west-console.txt
 
 REF_CONSOLE_FIXUPS="kern-list-fixups.sed nocr.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS east-prompt-splitline.pl"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-setup-sanitize.sed"
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS script-only.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS host-ping-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS host-dig-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS pluto-whack-sanitize.sed"

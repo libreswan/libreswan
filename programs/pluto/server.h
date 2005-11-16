@@ -11,13 +11,13 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: server.h,v 1.32 2005/09/19 00:40:48 mcr Exp $
+ * RCSID $Id: server.h,v 1.31 2005/06/14 22:38:06 mcr Exp $
  */
 
 #ifndef _SERVER_H
 #define _SERVER_H
 
-#include <sysqueue.h>
+#include <sys/queue.h>
 
 extern bool no_retransmits;
 extern int ctl_fd;	/* file descriptor of control (whack) socket */

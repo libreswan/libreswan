@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: uml_netjig.c,v 1.27 2003/04/02 20:25:53 mcr Exp $
+ * RCSID $Id: uml_netjig.c,v 1.27.26.1 2005/08/12 16:32:01 ken Exp $
  *
  * @(#) based upon uml_router from User-Mode-Linux tools package
  *
@@ -107,7 +107,7 @@ void *xmalloc1(size_t size, char *file, int linenum)
 static void Usage(void)
 {
   fprintf(stderr, "Usage : uml_netjig \n"
-	  "Version $Revision: 1.27 $ \n\n"
+	  "Version $Revision: 1.27.26.1 $ \n\n"
       "\t--cmdproto (-C)             go into the command protocol prompt\n"
       "\t--exitonempty (-e)          exit when no more packets to read\n"
       "\t--playpublic (-p) <file>    pcap(3) file to feed into public side\n"
@@ -510,7 +510,7 @@ int main(int argc, char **argv)
 			    /* advance the pointer once */
 			    onh = onh->nh_link.tqe_next;
 			    
-			    assert(onh!=onh2);  /*oh shit, is there a loop? */
+			    assert(onh!=onh2);  /* is there a loop? */
 		    }
 	    }
 	    /*
@@ -658,6 +658,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: uml_netjig.c,v $
+ * Revision 1.27.26.1  2005/08/12 16:32:01  ken
+ * Make tree PG13
+ *
  * Revision 1.27  2003/04/02 20:25:53  mcr
  * 	quiet down uml_netjig unless -v or $NETJIGVERBOSE is set.
  *

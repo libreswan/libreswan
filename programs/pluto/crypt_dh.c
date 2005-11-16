@@ -14,7 +14,7 @@
  *
  * This code was developed with the support of IXIA communications.
  *
- * RCSID $Id: crypt_dh.c,v 1.11 2005/08/14 21:47:29 mcr Exp $
+ * RCSID $Id: crypt_dh.c,v 1.8 2005/07/05 21:58:14 mcr Exp $
  */
 
 #include <stdlib.h>
@@ -25,6 +25,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/types.h>
@@ -33,7 +34,6 @@
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "packet.h"
@@ -216,7 +216,7 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
 	hmac_update_chunk(&ctx, shared);
 	hmac_update_chunk(&ctx, icookie);
 	hmac_update_chunk(&ctx, rcookie);
-	hmac_update(&ctx, (const u_char *)"\0", 1);
+	hmac_update(&ctx, "\0", 1);
 	hmac_final_chunk(*skeyid_d, "st_skeyid_d in generate_skeyids_iv()", &ctx);
 
 	/* SKEYID_A */
@@ -225,7 +225,7 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
 	hmac_update_chunk(&ctx, shared);
 	hmac_update_chunk(&ctx, icookie);
 	hmac_update_chunk(&ctx, rcookie);
-	hmac_update(&ctx, (const u_char *)"\1", 1);
+	hmac_update(&ctx, "\1", 1);
 	hmac_final_chunk(*skeyid_a, "st_skeyid_a in generate_skeyids_iv()", &ctx);
 
 	/* SKEYID_E */
@@ -234,7 +234,7 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
 	hmac_update_chunk(&ctx, shared);
 	hmac_update_chunk(&ctx, icookie);
 	hmac_update_chunk(&ctx, rcookie);
-	hmac_update(&ctx, (const u_char *)"\2", 1);
+	hmac_update(&ctx, "\2", 1);
 	hmac_final_chunk(*skeyid_e, "st_skeyid_e in generate_skeyids_iv()", &ctx);
     }
 
@@ -270,7 +270,7 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
 	    size_t i = 0;
 
 	    hmac_init_chunk(&ctx, hasher, *skeyid_e);
-	    hmac_update(&ctx, (const u_char *)"\0", 1);
+	    hmac_update(&ctx, "\0", 1);
 	    for (;;)
 	    {
 		hmac_final(&keytemp[i], &ctx);

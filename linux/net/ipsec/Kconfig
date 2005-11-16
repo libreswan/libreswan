@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Kconfig,v 1.7 2005/10/27 05:20:23 mcr Exp $
+# RCSID $Id: Kconfig,v 1.6 2005/05/18 20:55:27 mcr Exp $
 
 config KLIPS
 	tristate "Openswan IPsec (KLIPS26)"
@@ -61,12 +61,11 @@ config KLIPS_AUTH_HMAC_SHA1
 	   a bit more secure. There is little reason not to include it.
 
 config KLIPS_ALG
-	bool 'Enable algorithm plug-ins for encryption'	
+	bool 'Enable algorithm plug-ins for encryption'
 	default y
 	help
 	   This option provides support for loading new algorithms into the 
-	   kernel for use to encrypt. Normally these are modules, but algorithms
-	   may also be statically linked in.
+	   kernel for use to encrypt.
 
 config KLIPS_ENC_CRYPTOAPI
 	bool 'CryptoAPI algorithm interface'
@@ -123,10 +122,6 @@ endmenu
 #
 #
 # $Log: Kconfig,v $
-# Revision 1.7  2005/10/27 05:20:23  mcr
-# 	adjustment of ipsec_alg so that it will build statically in kernels
-# 	that do not have LKM defined at all.
-#
 # Revision 1.6  2005/05/18 20:55:27  mcr
 # 	default cryptoapi to n.
 #

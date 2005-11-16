@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pending.c,v 1.6 2005/08/05 19:13:47 mcr Exp $
+ * RCSID $Id: pending.c,v 1.5 2005/03/27 20:18:13 mcr Exp $
  */
 
 #include <string.h>
@@ -24,13 +24,14 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <resolv.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 #include "kameipsec.h"
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"

@@ -297,11 +297,6 @@ umlXhost	xauth-pluto-08		good
 #
 umlplutotest	basic-pluto-09		good
 
-# 
-# a testcase with esp=null-md5
-#
-umlplutotest	basic-pluto-10		good
-
 #
 # a test case of what happens to X.509 based authorization system
 # when a certificate is not sent, because it has expired and can not

@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
  * License for more details.
  *
- * RCSID $Id: openswan-modules-source.kernel-config,v 1.3 2005/01/19 17:09:15 mcr Exp $
+ * RCSID $Id: openswan-modules-source.kernel-config,v 1.3.6.1 2005/09/28 13:59:14 paul Exp $
  */
 #define	_CONFIG_ALL_H_	/* seen it, no need to see it again */
 

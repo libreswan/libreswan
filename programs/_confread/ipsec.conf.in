@@ -1,5 +1,5 @@
 # /etc/ipsec.conf - Openswan IPsec configuration file
-# RCSID $Id: ipsec.conf.in,v 1.16 2005/07/26 12:29:45 ken Exp $
+# RCSID $Id: ipsec.conf.in,v 1.15.2.2 2005/11/14 20:10:27 paul Exp $
 
 # This file:  @FINALEXAMPLECONFDIR@/ipsec.conf-sample
 #
@@ -24,7 +24,7 @@ config setup
 # Add connections here
 
 # sample VPN connection
-#	conn sample
+#conn sample
 #		# Left security gateway, subnet behind it, nexthop toward right.
 #		left=10.0.0.1
 #		leftsubnet=172.16.0.0/24

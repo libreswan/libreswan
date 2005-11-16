@@ -49,13 +49,13 @@ klipstest east-icmp-04		good
 # east-ah-icmp-01: pass ping packets through manually keyed AH SA and confirm
 #		   authentication is added (MD5 version)
 #
-skiptest east-ah-icmp-01	good
+klipstest east-ah-icmp-01	good
 
 #
 # east-ah-icmp-02: pass ping packets through manually keyed AH SA and confirm
 #		   authentication is added (SHA1 version)
 #
-skiptest east-ah-icmp-02	good
+klipstest east-ah-icmp-02	good
 
 #
 # east-espiv-01: check that ESP packets get unpredictable IVs rather than
@@ -270,7 +270,7 @@ klipstest west-icmp-02	good
 #
 # ah-esp-01: check an automatically keyed conn using ah+esp
 # 
-skiptest	ah-esp-01	good
+umlplutotest	ah-esp-01	good
 
 #
 # east-icmp-05:	tests for AES256

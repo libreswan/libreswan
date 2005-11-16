@@ -7,8 +7,6 @@ TEST_TYPE=ctltest
 TESTNAME=vpn-dns-01
 TESTHOST=east
 
-ARPREPLY=--arpreply
-
 REF_CONSOLE_OUTPUT=east-console.txt
 
 REF_CONSOLE_FIXUPS="kern-list-fixups.sed nocr.sed"

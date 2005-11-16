@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: plutomain.c,v 1.110 2005/09/18 02:10:08 mcr Exp $
+ * RCSID $Id: plutomain.c,v 1.102.2.4 2005/08/12 01:15:00 ken Exp $
  */
 
 #include <stdio.h>
@@ -27,14 +27,15 @@
 #include <sys/un.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <resolv.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
+#include <sys/queue.h>
 
 #include <openswan.h>
 
 #include <pfkeyv2.h>
 #include <pfkey.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -78,11 +79,6 @@
 #include "nat_traversal.h"
 #endif
 
-#ifdef TPM
-#include <tcl.h>
-#include "tpm/tpm.h"
-#endif
-
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
 #endif
@@ -119,7 +115,7 @@ usage(const char *mess)
 	    " [--use-klips]"
 	    " [--use-netkey]"
 	    " \\\n\t"
-	    "[--interface <ifname|ifaddr>]"
+	    "[--interface <ifname>]"
 	    " [--ikeport <port-number>]"
 	    " \\\n\t"
 	    "[--ctlbase <path>]"
@@ -300,7 +296,6 @@ main(int argc, char **argv)
 	    { "stderrlog", no_argument, NULL, 'e' },
 	    { "noklips", no_argument, NULL, 'n' },
 	    { "use-nostack",  no_argument, NULL, 'n' },
-	    { "use-none",     no_argument, NULL, 'n' },
 	    { "nocrsend", no_argument, NULL, 'c' },
 	    { "strictcrlpolicy", no_argument, NULL, 'r' },
 	    { "crlcheckinterval", required_argument, NULL, 'x'},
@@ -489,7 +484,7 @@ main(int argc, char **argv)
 	    uniqueIDs = TRUE;
 	    continue;
 
-	case 'i':	/* --interface <ifname|ifaddr> */
+	case 'i':	/* --interface <ifname> */
 	    if (!use_interface(optarg))
 		usage("too many --interface specifications");
 	    continue;
@@ -606,12 +601,13 @@ main(int argc, char **argv)
     else
 	log_to_stderr = FALSE;
 
+    /* set the logging function of pfkey debugging */
 #ifdef DEBUG
-#if 0
-    if(kernel_ops->set_debug) {
-	(*kernel_ops->set_debug)(cur_debugging, DBG_log, DBG_log);
-    }
-#endif
+    pfkey_debug_func = DBG_log;
+    pfkey_error_func = DBG_log;
+#else
+    pfkey_debug_func = NULL;
+    pfkey_error_func = NULL;
 #endif
 
     /** create control socket.
@@ -724,12 +720,6 @@ main(int argc, char **argv)
             , vc
             , compile_time_interop_options
             , v);
-#else
-        openswan_log("Starting Pluto (Openswan Version %s%s)"
-            , ipsec_version_code()
-            , compile_time_interop_options);
-#endif
-
 	if(vc[0]=='c' && vc[1]=='v' && vc[2]=='s') {
 	    /*
 	     * when people build RPMs from CVS, make sure they get blamed
@@ -738,11 +728,12 @@ main(int argc, char **argv)
 	     * strings the binary can or classic SCCS "what", will find
 	     * stuff too.
 	     */
-	    openswan_log("@(#) built on "__DATE__":" __TIME__ " by " BUILDER);
+	    openswan_log("@(#) built on "__DATE__":"__TIME__":"BUILDER);
 	}
-
-#if defined(USE_1DES)
-	openswan_log("WARNING: 1DES is enabled");
+#else
+        openswan_log("Starting Pluto (Openswan Version %s%s)"
+            , ipsec_version_code()
+            , compile_time_interop_options);
 #endif
     }
 
@@ -769,10 +760,6 @@ main(int argc, char **argv)
     init_kernel();
     init_adns();
     init_id();
-
-#ifdef TPM
-    init_tpm();
-#endif
 
 #ifdef HAVE_THREADS
     init_fetch();
@@ -815,10 +802,6 @@ exit_pluto(int status)
 
     /* free memory allocated by initialization routines.  Please don't
        forget to do this. */
-
-#ifdef TPM
-    free_tpm();
-#endif
 
 #ifdef HAVE_THREADS
     free_crl_fetch();          /* free chain of crl fetch requests */

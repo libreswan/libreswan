@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: rcv_info.c,v 1.10 2005/08/05 19:13:47 mcr Exp $
+ * RCSID $Id: rcv_info.c,v 1.8.24.1 2005/07/26 02:11:23 ken Exp $
  */
 
 #include <stdio.h>
@@ -26,10 +26,10 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
+#include <sys/queue.h>
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"

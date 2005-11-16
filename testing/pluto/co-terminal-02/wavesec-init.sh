@@ -6,8 +6,10 @@ ipsec setup stop
 
 # move gateway to the 3 network so that we can get OE to work.
 route delete default
-ifconfig eth1 inet 192.1.3.45 netmask 255.255.255.0 broadcast 192.1.3.255
-route add -net default gw 192.1.3.254
+ifdown eth1
+ifconfig eth1 inet 0.0.0.0
+
+route add -net default gw 192.9.4.254
 
 rndc stop
 named

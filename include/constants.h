@@ -14,7 +14,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: constants.h,v 1.5 2005/09/05 20:58:23 mcr Exp $
+ * RCSID $Id: constants.h,v 1.3 2004/05/29 03:06:12 mcr Exp $
  */
 
 #ifndef _CONSTANTS_H_
@@ -102,7 +102,7 @@ extern const char *bitnamesofb(const char *const table[]
 #define LOOSE_ENUM_OTHER 255
 
 struct keyword_enum_value {
-    const char *name;
+    const unsigned char *name;
     unsigned int value;
 };
 
@@ -136,7 +136,6 @@ extern void init_constants(void);
 
 #include "ietf_constants.h"
 #include "pluto_constants.h"
-#include "names_constant.h"
 
 #define _CONSTANTS_H_
 #endif /* _CONSTANTS_H_ */

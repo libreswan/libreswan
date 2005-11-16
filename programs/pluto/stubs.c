@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: stubs.c,v 1.3 2005/08/31 03:36:27 mcr Exp $
+ * RCSID $Id: stubs.c,v 1.1.2.1 2005/07/26 02:11:23 ken Exp $
  */
 
 #include <string.h>
@@ -25,13 +25,15 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <resolv.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 #include "pfkeyv2.h"
+#include "kameipsec.h"
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -74,7 +76,6 @@
 #endif
 
 #include "pluto_crypt.h"
-#include "crypto.h"
 #include "ikev1.h"
 
 stf_status aggr_not_present(int whack_sock UNUSED

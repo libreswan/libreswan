@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.10 2005/07/27 20:32:19 mcr Exp $
+# RCSID $Id: Makefile,v 1.8.2.1 2005/07/21 22:34:22 ken Exp $
 
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
 include ${OPENSWANSRCDIR}/Makefile.inc
@@ -21,28 +21,11 @@ PROGRAMDIR=${LIBDIR}
 
 include ${srcdir}../Makefile.program
 
-programs: ${PROGRAM}
-
-
-ifeq ($(USE_IPROUTE2),true)
-UPDOWN_PROGRAM=_updown.ip2
-else
-UPDOWN_PROGRAM=_updown.posix
-endif
-
-_updown: ${UPDOWN_PROGRAM}
-	cp ${UPDOWN_PROGRAM} _updown
-
-clean:: 
-	rm -f ${UPDOWN_PROGRAM} ${PROGRAM}
 
 #
 # $Log: Makefile,v $
-# Revision 1.10  2005/07/27 20:32:19  mcr
-#     fix for building _updown with OBJDIR
-#
-# Revision 1.9  2005/07/27 15:46:39  mcr
-# 	have to add explicit dependancy to make OBJDIR work.
+# Revision 1.8.2.1  2005/07/21 22:34:22  ken
+# Dump old posix _updown and use _updown.ip2.in all the time
 #
 # Revision 1.8  2005/07/21 20:40:53  ken
 # remove obsolete _updown.c

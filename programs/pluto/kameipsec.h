@@ -5,6 +5,7 @@
 
 #define IPSEC_PORT_ANY		0
 #define IPSEC_ULPROTO_ANY	255
+#define IPSEC_PROTO_ANY		255
 
 enum {
 	IPSEC_MODE_ANY		= 0,	/* We do not support this for SA */
@@ -40,8 +41,7 @@ enum {
 
 #define IPSEC_REPLAYWSIZE  32
 
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 #define IP_IPSEC_POLICY 16
 #define IPV6_IPSEC_POLICY 34
-#endif
+
 #endif	/* __IPSEC_H */

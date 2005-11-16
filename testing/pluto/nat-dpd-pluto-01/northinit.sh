@@ -2,7 +2,7 @@
 
 # make sure that NAT is working
 #ping -c 4 -n sunrise
-: ==== start ====
+
 TESTNAME=nat-dpd-pluto-01 
 source /testing/pluto/bin/northlocal.sh
 

@@ -8,10 +8,9 @@ TESTNAME=food-groups-oe-or-die-02
 EASTHOST=east
 WESTHOST=west
 
-ARPREPLY=--arpreply
-
-#EAST_INPUT=../../klips/inputs/01-sunrise-sunset-ping.pcap
 REF_WEST_OUTPUT=../../klips/outputs/westnet-null.txt
+WEST_ARPREPLY=true
+
 REF_PUB_OUTPUT=publicnet-dns.txt
 
 REF_PUB_FILTER=../../klips/fixups/no-arp-pcap.pl

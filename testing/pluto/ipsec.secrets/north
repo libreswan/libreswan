@@ -1,5 +1,5 @@
 #north:
-128.95.7.3 @north.example.com: rsa {
+127.95.7.3 @north.example.com: rsa {
 	# RSA 1024 bits
 	# for signatures only, UNSAFE FOR ENCRYPTION
 	#pubkey=0sAQN4JFU9gRnG336z1n1cV2LA6ACi1TjXfv3pvl6DRqa6uqBFM9RO4oArPc6FsBkBwEmMr8cpeFn4mVaepVe63qnvmQbGXVcRwhx0a509M824HjnyM04Xpoh2UuP/Mhnkm1cynunRuyGqXaZhlj4s+GbcOxPXhopz94wer+Qs/qvGqw==
@@ -16,9 +16,9 @@
 	Coefficient: 0x6da2a63e8dcae9b132a6c3a3e2539d5b8e9ef29496271349054bbe4eb00e799e6f029d120d6d4f178f79a22b103b9d4bc453d8b7232eb28d378f209ee78d17c9
     }
 
-128.95.7.1 128.95.7.2:	PSK "secret of 128.95.7.1 and 128.95.7.2"
-128.95.7.1 128.95.7.3:	PSK "secret of 128.95.7.1 and 128.95.7.3"
-128.95.7.1 128.95.7.4:	PSK "secret of 128.95.7.1 and 128.95.7.4"
-128.95.7.2 128.95.7.3:	PSK "secret of 128.95.7.2 and 128.95.7.3"
-128.95.7.2 128.95.7.4:	PSK "secret of 128.95.7.2 and 128.95.7.4"
-128.95.7.3 128.95.7.4:	PSK "secret of 128.95.7.3 and 128.95.7.4"
+127.95.7.1 127.95.7.2:	PSK "secret of 127.95.7.1 and 127.95.7.2"
+127.95.7.1 127.95.7.3:	PSK "secret of 127.95.7.1 and 127.95.7.3"
+127.95.7.1 127.95.7.4:	PSK "secret of 127.95.7.1 and 127.95.7.4"
+127.95.7.2 127.95.7.3:	PSK "secret of 127.95.7.2 and 127.95.7.3"
+127.95.7.2 127.95.7.4:	PSK "secret of 127.95.7.2 and 127.95.7.4"
+127.95.7.3 127.95.7.4:	PSK "secret of 127.95.7.3 and 127.95.7.4"

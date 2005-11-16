@@ -6,20 +6,20 @@ ipsec_setup: \.\.\.FreeS/WAN IPsec stopped
 ipsec_setup: Starting FreeS/WAN IPsec
 ipsec_setup: \.\.\.FreeS/WAN IPsec started
 ipsec_plutorun: .*: initiate
-Pluto.*: deleting state
-Pluto.*: forgetting secrets
-Pluto.*: shutting down
-Pluto.*: \|
-Pluto.*:   .* bytes loaded
-Pluto.*:   including X\.509 patch
-Pluto.*: Loading my X\.509 certificate
-Pluto.*: Starting Pluto
-Pluto.*: added connection description
-Pluto.*: adding interface
-Pluto.*: listening for IKE messages
-Pluto.*: loading secrets
-Pluto.*: .* SA established
-Pluto.*: .* SA expired
-Pluto.*: replacing stale .* SA
-Pluto.*: initiating Quick Mode
-Pluto.*: regenerating DH private secret
+pluto.*: deleting state
+pluto.*: forgetting secrets
+pluto.*: shutting down
+pluto.*: \|
+pluto.*:   .* bytes loaded
+pluto.*:   including X\.509 patch
+pluto.*: Loading my X\.509 certificate
+pluto.*: Starting pluto
+pluto.*: added connection description
+pluto.*: adding interface
+pluto.*: listening for IKE messages
+pluto.*: loading secrets
+pluto.*: .* SA established
+pluto.*: .* SA expired
+pluto.*: replacing stale .* SA
+pluto.*: initiating Quick Mode
+pluto.*: regenerating DH private secret

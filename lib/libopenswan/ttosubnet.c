@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: ttosubnet.c,v 1.14 2005/08/05 08:59:36 mcr Exp $
+ * RCSID $Id: ttosubnet.c,v 1.13 2004/05/12 15:57:02 ken Exp $
  */
 #include "internal.h"
 #include "openswan.h"
@@ -89,7 +89,7 @@ ip_subnet *dst;
 	}
 	else
 	{
-		unsigned long port;
+		long port;
 
 		oops =  ttoul(colon+1, mlen-(colon-mask+1), 0, &port);
 		if (oops != NULL)

@@ -10,7 +10,7 @@ if [ -z "${TESTING:-}" ]
 then
 	if [ -d testing ]; then
 		TESTING=`pwd`/testing
-	elif [ -d ${MYBOX:-}/testing ]; then
+	elif [ -d ${MYBOX}/testing ]; then
 		TESTING=$MYBOX/testing
 	else
 		echo "Please set \$TESTING "
@@ -19,28 +19,12 @@ fi
 
 export PATH=$TESTING/pluto/bin:$PATH 
 
-if [ -z "${OBJDIR:-}" ]
-then
-	OSDEP=`uname -s | tr 'A-Z' 'a-z'`
-	ARCH=`uname -m`
-	case $ARCH in
-		i?86) ARCH=i386;;
-	esac
-
-	if [ -d ${MYBOX:-}/OBJ.$OSDEP.$ARCH ]
-	then
-		OBJDIR=OBJ.$OSDEP.$ARCH/;
-	else
-		OBJDIR='./'
-	fi
-fi
-
 if [ -z "${PLUTO:-}" ]
 then
-	if [ -x ${MYBOX:-}/${OBJDIR}programs/pluto/pluto ]
+	if [ -x ${MYBOX:-}/programs/pluto/pluto ]
 	then
-		PLUTO=$MYBOX/${OBJDIR}/programs/pluto/pluto
-		WHACK=$MYBOX/${OBJDIR}/programs/pluto/whack
+		PLUTO=$MYBOX/programs/pluto/pluto
+		WHACK=$MYBOX/programs/pluto/whack
 	elif [ -x programs/pluto/pluto ]
 	then
 		PLUTO=`pwd`/programs/pluto/pluto
@@ -82,9 +66,9 @@ case "${USE_LWRES:-true}" in
 true)
 	if [ -z "${LWDNSQ:-}" ]
 	then
-		if [ -x ${MYBOX:-}/${OBJDIR}programs/lwdnsq/lwdnsq ]
+		if [ -x ${MYBOX:-}/programs/lwdnsq/lwdnsq ]
 		then
-			LWDNSQ=$MYBOX/${OBJDIR}programs/lwdnsq/lwdnsq
+			LWDNSQ=$MYBOX/programs/lwdnsq/lwdnsq
 		elif [ -x programs/lwdnsq/lwdnsq ]
 		then
 			LWDNSQ=`pwd`/programs/lwdnsq/lwdnsq
@@ -97,7 +81,7 @@ true)
 			LWDNSQ=""
 		else
 			echo "ERROR: Where is lwdnsq?  Not in \"$LWDNSQ\"; set \$LWDNSQ correctly." >&2
-			#exit 1
+			exit 1
 		fi
 	fi
 	if [ -n "${LWDNSQ}" ];	then
@@ -112,48 +96,40 @@ set -u
 export IKEPORT=8500
 export DOMAIN=example
 
-export ROUTER=128.95.7.254
-export WESTIP=128.95.7.1
-export EASTIP=128.95.7.2
-export NORTHIP=128.95.7.3
-export SOUTHIP=128.95.7.4
+export ROUTER=127.95.7.254
+export WESTIP=127.95.7.1
+export EASTIP=127.95.7.2
+export NORTHIP=127.95.7.3
+export SOUTHIP=127.95.7.4
 
-case ${OSDEP} in
-	cygwin_nt-5.0)
-	       export WESTIF=128.95.7.1;
-	       export EASTIF=128.95.7.2;
-               export NORTHIF=128.95.7.3;
-	       export SOUTHIF=128.95.7.4;;
+export WESTIF=lo:w
+export EASTIF=lo:e
+export NORTHIF=lo:n
+export SOUTHIF=lo:s
 
-	linux) export WESTIF=lo:w;
-	       export EASTIF=lo:e;
-               export NORTHIF=lo:n;
-	       export SOUTHIF=lo:s;;
-esac
+export WESTSUBNET=127.95.7.8/30
+export	VICTORIA=127.95.7.10
+export	VANCOUVER=127.95.7.11
+export	VANISHED=127.95.7.8	# missing, naturally
+export WESTSUBNET2=127.95.7.12/30
+export WESTSUBNET3=127.95.7.16/30
 
-export WESTSUBNET=128.95.7.8/30
-export	VICTORIA=128.95.7.10
-export	VANCOUVER=128.95.7.11
-export	VANISHED=128.95.7.8	# missing, naturally
-export WESTSUBNET2=128.95.7.12/30
-export WESTSUBNET3=128.95.7.16/30
-
-export EASTSUBNETNET=128.95.7.20
+export EASTSUBNETNET=127.95.7.20
 export EASTSUBNET=$EASTSUBNETNET/30
 export EASTHALFSUBNET=$EASTSUBNETNET/31	# includes Truro
-export	TRURO=128.95.7.21
-export	ANTIGONISH=128.95.7.22
-export	ATLANTIS=128.95.7.23	# missing, naturally
-export EASTSUBNET2=128.95.7.24/30
-export EASTSUBNET3=128.95.7.28/30
+export	TRURO=127.95.7.21
+export	ANTIGONISH=127.95.7.22
+export	ATLANTIS=127.95.7.23	# missing, naturally
+export EASTSUBNET2=127.95.7.24/30
+export EASTSUBNET3=127.95.7.28/30
 
-export NORTHSUBNET=128.95.7.32/30
-export NORTHSUBNET2=128.95.7.36/30
-export NORTHSUBNET3=128.95.7.40/30
+export NORTHSUBNET=127.95.7.32/30
+export NORTHSUBNET2=127.95.7.36/30
+export NORTHSUBNET3=127.95.7.40/30
 
-export SOUTHSUBNET=128.95.7.44/30
-export SOUTHSUBNET2=128.95.7.48/30
-export SOUTHSUBNET3=128.95.7.52/30
+export SOUTHSUBNET=127.95.7.44/30
+export SOUTHSUBNET2=127.95.7.48/30
+export SOUTHSUBNET3=127.95.7.52/30
 
 # sometimes CMP=diff is useful
 CMP=${CMP:-cmp}
@@ -175,7 +151,7 @@ EASTNET="$EASTHOST --client $EASTSUBNET"
 
 ANYHOST="--host %any --ikeport $IKEPORT"
 OPPO="--host %opportunistic --ikeport $IKEPORT"
-OPPONARROW="$OPPO --client 128.0.0.0/8"
+OPPONARROW="$OPPO --client 127.0.0.0/8"
 OPPOMISS="$OPPO --client 10.0.0.0/8"
 GROUP="--host %group --ikeport $IKEPORT"
 OPPOGROUP="--host %opportunisticgroup --ikeport $IKEPORT"

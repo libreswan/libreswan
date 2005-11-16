@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.4 2005/11/01 18:07:58 paul Exp $
+# RCSID $Id: Makefile,v 1.3.6.1 2005/11/01 18:10:07 paul Exp $
 
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
 include ${OPENSWANSRCDIR}/Makefile.inc
@@ -23,8 +23,8 @@ include ${srcdir}../Makefile.program
 
 #
 # $Log: Makefile,v $
-# Revision 1.4  2005/11/01 18:07:58  paul
-# Adopted Jacco's L2TP example configuration files. I changed them slightly
+# Revision 1.3.6.1  2005/11/01 18:10:07  paul
+# dopted Jacco's L2TP example configuration files. I changed them slightly
 # from his versions to properly support nat-t and to avoid breaking rekey
 # attempts for right=%any. I also changed the pathnames to proper ones,
 # removed hardcoded IP addresses and removed explicitely loading the roadwarriors

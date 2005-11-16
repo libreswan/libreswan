@@ -11,9 +11,10 @@ east:~#
 east:/tmp# mkdir log
 east:/tmp# ln -s /testing/pluto/log.ref       .
 east:/tmp# ln -s /testing/pluto/ipsec.secrets .
-east:/tmp# . doauto --diff ipsec-rsa-time-neg ipsec-rsa-time-trunc ipsec-rsa-time-neg-dontrekey ipsec-rsa-time-trunc-dontrekey
+east:/tmp# . doauto --diff ipsec-rsa-time-neg ipsec-rsa-time-trunc 
 ipsec-rsa-time-neg:
 ipsec-rsa-time-trunc:
+east:/tmp# . doauto --diff ipsec-rsa-time-neg-dontrekey ipsec-rsa-time-trunc-dontrekey
 ipsec-rsa-time-neg-dontrekey:
 ipsec-rsa-time-trunc-dontrekey:
 

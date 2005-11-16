@@ -954,12 +954,6 @@ default is not to use ESP</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>pfsgroup</emphasis></term>
-  <listitem>
-<para>Deprecated</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>espenckey</emphasis></term>
   <listitem>
 <para>ESP encryption key

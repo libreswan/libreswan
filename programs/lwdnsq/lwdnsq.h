@@ -94,7 +94,7 @@ typedef struct dnskey_glob {
 	struct pollfd   l_fds[5];     /* array of input sources */
 	unsigned int    l_nfds;       /* number of relevant entries */
 	unsigned int    cmdloc;
-	char            cmdbuf[LWDNSQ_CMDBUF_LEN];
+	unsigned char   cmdbuf[LWDNSQ_CMDBUF_LEN];
 	FILE           *cmdproto_out;
 	dnskey_lookup  *dns_outstanding;
 	int             dns_inflight;

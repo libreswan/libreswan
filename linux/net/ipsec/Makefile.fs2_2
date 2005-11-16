@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile.fs2_2,v 1.3 2005/08/12 00:43:55 mcr Exp $
+# RCSID $Id: Makefile.fs2_2,v 1.2 2004/09/18 19:32:42 mcr Exp $
 #
 # Note! Dependencies are done automagically by 'make dep', which also
 # removes any old dependencies. DON'T put your own dependencies here
@@ -94,24 +94,10 @@ VPATH+= ${LIBDESDIR}
 
 include ${LIBDESDIR}/Makefile.objs
 
-obj-y += satot.o
-obj-y += addrtot.o
-obj-y += ultot.o 
-obj-y += addrtypeof.o
-obj-y += anyaddr.o
-obj-y += initaddr.o
-obj-y += ultoa.o 
-obj-y += addrtoa.o 
-obj-y += subnettoa.o 
-obj-y += subnetof.o 
-obj-y += goodmask.o 
-obj-y += datatot.o 
-obj-y += rangetoa.o 
-obj-y += prng.o 
-obj-y += pfkey_v2_parse.o 
-obj-y += pfkey_v2_build.o 
-obj-y += pfkey_v2_debug.o 
-obj-y += pfkey_v2_ext_bits.o 
+LIBFREESWANDIR=${KLIPS_TOP}/lib/libfreeswan
+VPATH+=${LIBFREESWANDIR}
+
+include ${LIBFREESWANDIR}/Makefile.objs
 
 # IPcomp stuff
 obj-$(CONFIG_IPSEC_IPCOMP) += ipcomp.o 
@@ -274,9 +260,6 @@ tar:
 
 #
 # $Log: Makefile.fs2_2,v $
-# Revision 1.3  2005/08/12 00:43:55  mcr
-# 	removed libfreeswan/Makefile.objs, as no longer needed.
-#
 # Revision 1.2  2004/09/18 19:32:42  mcr
 # 	add EXPORT_SYMTAB for 2.2 if building as a module.
 #

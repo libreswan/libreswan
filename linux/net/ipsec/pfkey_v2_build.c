@@ -12,14 +12,14 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pfkey_v2_build.c,v 1.52 2005/08/14 21:41:15 mcr Exp $
+ * RCSID $Id: pfkey_v2_build.c,v 1.51 2004/10/03 01:26:36 mcr Exp $
  */
 
 /*
  *		Template from klips/net/ipsec/ipsec/ipsec_parser.c.
  */
 
-char pfkey_v2_build_c_version[] = "$Id: pfkey_v2_build.c,v 1.52 2005/08/14 21:41:15 mcr Exp $";
+char pfkey_v2_build_c_version[] = "$Id: pfkey_v2_build.c,v 1.51 2004/10/03 01:26:36 mcr Exp $";
 
 /*
  * Some ugly stuff to allow consistent debugging code for use in the
@@ -1352,9 +1352,8 @@ pfkey_msg_build(struct sadb_msg **pfkey_msg, struct sadb_ext *extensions[], int 
 			if(!(extensions_bitmaps[dir][EXT_BITS_PERM][(*pfkey_msg)->sadb_msg_type] &
 			     1<<ext)) {
 				ERROR("pfkey_msg_build: "
-					"ext type %d not permitted for %d/%d/%d, exts_perm=%08x, 1<<type=%08x\n", 
-					ext,
-				      dir,EXT_BITS_PERM,(*pfkey_msg)->sadb_msg_type,
+					"ext type %d not permitted, exts_perm=%08x, 1<<type=%08x\n", 
+					ext, 
 					extensions_bitmaps[dir][EXT_BITS_PERM][(*pfkey_msg)->sadb_msg_type],
 					1<<ext);
 				SENDERR(EINVAL);
@@ -1423,9 +1422,6 @@ errlab:
 
 /*
  * $Log: pfkey_v2_build.c,v $
- * Revision 1.52  2005/08/14 21:41:15  mcr
- * 	augment error message when an extension is not permitted.
- *
  * Revision 1.51  2004/10/03 01:26:36  mcr
  * 	fixes for gcc 3.4 compilation.
  *

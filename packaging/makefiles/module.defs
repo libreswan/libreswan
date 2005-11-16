@@ -39,12 +39,12 @@ CONFIG_KLIPS_IPCOMP=y
 # To enable userspace-switchable KLIPS debugging, say 'y'.
 CONFIG_KLIPS_DEBUG=y
 
+# NAT Traversal
+CONFIG_IPSEC_NAT_TRAVERSAL=y
+
 #
 #
 # $Log: module.defs,v $
-# Revision 1.4  2005/09/26 02:37:15  mcr
-# 	remove NAT_TRAVERSAL from all defaults.
-#
 # Revision 1.3  2005/05/11 01:53:24  mcr
 # 	adjusted module make file template.
 #

@@ -1,11 +1,6 @@
 Pluto TODO list
 ===============
-RCSID $Id: TODO,v 1.9 2005/08/24 22:40:03 mcr Exp $
-
-- make final diffie-hellman step asynchronous
-- make RSA operations asynchronous
-- make LDAP lookups asynchronous
-- make X.509 verifications asynchronous
+RCSID $Id: TODO,v 1.8 2002/04/24 07:35:44 mcr Exp $
 
 - should all log entries that are for errors say ERROR?
 
@@ -19,11 +14,27 @@ RCSID $Id: TODO,v 1.9 2005/08/24 22:40:03 mcr Exp $
   than it is worth.
 
 - notifications, in and out
+  + delete
   + first contact
   + last contact? (not part of drafts, but would be nice)
 
-- Pluto (rather than ipsec manual) install %passthrough conns?
+- Make DNS usage for asynchronous (non-blocking)
+  + looking up KEY and TXT records during negotiation
+  + perhaps not for whack command arguments and ipsec.secrets since the
+    library code uses gethostbyname
+
+- check that ipsec auto and whack to agree on what is worth reporting
+
+- Should Pluto (rather than ipsec manual) install %passthrough conns?
   That way Pluto would know of them.
+
+- For responding to Road Warriors, how can we decide if the RW has
+  gone away?  The rekeying event is perhaps too imprecise.  Even if
+  rekeying event is good enough, how do we know if the route should be
+  torn down?  Perhaps limiting a Phase 1 ID to one IP address would
+  help (limiting a client subnet to one peer already helps).  Perhaps
+  (in some rate-limited way) we can take an ICMP host unreachable
+  as a hint to do some authenticated and reliable probe.
 
 - it is annoying that Pluto and auto have different models for public keys.
   + auto specifies one per connection
@@ -61,6 +72,12 @@ RCSID $Id: TODO,v 1.9 2005/08/24 22:40:03 mcr Exp $
 
 - we need better policy control.  Our present flags need to be
   modulated (forbid, allow, offer, require)
+
+- HS will specify how --copyright and --version should behave
+
+- HS will initiate project-wide terminology replacing ISAKMP SA, IPSEC
+  SA, Protection Suite, Phase 1, Main Mode, Phase 2, Quick Mode, ...
+  Simplicity and clarity will be a goal.
 
 - interface discovery ought to match what is specified in ipsec.conf.
   This probably means grokking /proc/net/ipsec_tncfg.  Documented in

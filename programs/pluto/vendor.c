@@ -12,15 +12,15 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: vendor.c,v 1.46 2005/09/06 20:01:19 paul Exp $
+ * RCSID $Id: vendor.c,v 1.43.2.1 2005/07/26 02:05:10 ken Exp $
  */
 
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/queue.h>
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "log.h"
@@ -76,7 +76,6 @@
  *  5946c258f99a1a57b03eb9d1759e0f24 (From a Cisco VPN 3k)
  *  ebbc5b00141d0c895e11bd395902d690 (From a Cisco VPN 3k)
  *  3e984048101e66cc659fd002b0ed3655 (From a Cisco 1800 IOS device)
- *  ade1e70e9953c1328373ebf0257b85ed (From a Cisco PIX)
  *
  * Microsoft L2TP (???):
  * (This could be the MSL2TP client, which is a stripped version of SafeNet)
@@ -313,10 +312,10 @@ void init_vendorid(void)
 	    }
 	    else if (vid->flags & VID_MD5HASH) {
 		/** VendorID is a string to hash with MD5 **/
-		unsigned char *vidm =  malloc(MD5_DIGEST_SIZE);
-		vid->vid = (char *)vidm;
+		char *vidm =  malloc(MD5_DIGEST_SIZE);
+		vid->vid = vidm;
 		if (vidm) {
-		    unsigned const char *d = (unsigned const char *)vid->data;
+		    unsigned const char *d = vid->data;
 		    osMD5Init(&ctx);
 		    osMD5Update(&ctx, d, strlen(vid->data));
 		    osMD5Final(vidm, &ctx);
@@ -331,7 +330,7 @@ void init_vendorid(void)
 		vid->vid = vidm;
 		if (vidm) {
 		    osMD5Init(&ctx);
-		    osMD5Update(&ctx, (const unsigned char *)vid->data, strlen(vid->data));
+		    osMD5Update(&ctx, vid->data, strlen(vid->data));
 		    osMD5Final(hash, &ctx);
 		    vidm[0] = 'O';
 		    vidm[1] = 'E';

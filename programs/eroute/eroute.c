@@ -14,7 +14,7 @@
  * for more details.
  */
 
-char eroute_c_version[] = "RCSID $Id: eroute.c,v 1.67 2005/08/18 14:04:39 ken Exp $";
+char eroute_c_version[] = "RCSID $Id: eroute.c,v 1.66.2.1 2005/08/18 14:04:51 ken Exp $";
 
 
 #include <sys/types.h>
@@ -911,7 +911,7 @@ main(int argc, char **argv)
 }
 /*
  * $Log: eroute.c,v $
- * Revision 1.67  2005/08/18 14:04:39  ken
+ * Revision 1.66.2.1  2005/08/18 14:04:51  ken
  * Patch from mt@suse.de to avoid GCC warnings with system() calls
  *
  * Revision 1.66  2005/07/08 02:56:38  paul

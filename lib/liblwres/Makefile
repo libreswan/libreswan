@@ -13,24 +13,20 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile,v 1.11 2005/09/17 21:57:45 mcr Exp $
+# $Id: Makefile,v 1.8 2004/12/18 18:13:34 mcr Exp $
 
-OPENSWANSRCDIR?=$(shell cd ../..; pwd)
-include ${OPENSWANSRCDIR}/Makefile.inc
-
-CINCLUDES =	-I${srcdir}${ISCARCH}/include \
-		-I${srcdir}../libisc/${ISCARCH}/include \
-		-I${srcdir}../libisc/include \
-		-I. -I./include -I${srcdir}include 
+CINCLUDES =	-I${srcdir}/unix/include \
+		-I. -I./include -I${srcdir}/include 
 CDEFINES = -g
 CWARNINGS = -Werror
 
-CFLAGS=${USERCOMPILE} ${PORTINCLUDE} ${CINCLUDES} ${CDEFINES} ${CWARNINGS} 
+CFLAGS=${CINCLUDES} ${CDEFINES} ${CWARNINGS}
 
 VERSION="@(\#) openswan-hacking-9.3-for-osw2"
 LIBINTERFACE=2
 LIBREVISION=0
 LIBAGE=1
+RANLIB=ranlib
 
 # Alphabetically
 OBJS =		async.o context.o gai_strerror.o getaddrinfo.o gethost.o \
@@ -55,10 +51,11 @@ version.o: version.c
 		-DLIBREVISION=${LIBREVISION} \
 		-DLIBAGE=${LIBAGE} \
 		${CINCLUDES} ${CDEFINES} ${CWARNINGS} \
-		-c ${srcdir}version.c
+		-c ${srcdir}/version.c
 
 liblwres.a: ${OBJS} version.o
 	${AR} ${ARFLAGS} $@ ${OBJS} version.o
+	${RANLIB} $@
 
 timestamp: liblwres.a
 	touch timestamp

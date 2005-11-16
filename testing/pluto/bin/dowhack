@@ -9,7 +9,7 @@
 #  *-dnsrsa*: keys are loaded via --dnskeyondemand
 #  *-pl|*-pl-*: extracts of Pluto Logs are added to the whack log
 #
-# RCSID $Id: dowhack,v 1.28 2005/08/19 04:05:01 mcr Exp $
+# RCSID $Id: dowhack,v 1.27 2003/10/31 04:50:40 dhr Exp $
 
 set -u
 
@@ -31,13 +31,13 @@ TO_RSA="$RSADNS $TO $RSADNS"
 case "$i" in
 listen)	both --listen
 	;;
-kall)	both --keyid 128.95.7.2 --pubkeyrsa 0sAQOeSJscIy2XZHfs+PODDqdgJR2FmdfRNqzURVL5q2fesMHmibMLPM5cTPx2HvYKBX3YyB+BdHoojmFNixV+RTrKyyN0Og4PYwhdw0FUApDvOg7KYe1CeLUeTAUzT5Pq7MdclRW5bYY84hXSfKgaPwPTwuiLKEnVdbhGgwxqwfQ6ow==
+kall)	both --keyid 127.95.7.2 --pubkeyrsa 0sAQOeSJscIy2XZHfs+PODDqdgJR2FmdfRNqzURVL5q2fesMHmibMLPM5cTPx2HvYKBX3YyB+BdHoojmFNixV+RTrKyyN0Og4PYwhdw0FUApDvOg7KYe1CeLUeTAUzT5Pq7MdclRW5bYY84hXSfKgaPwPTwuiLKEnVdbhGgwxqwfQ6ow==
 	both --keyid @east.example.com --pubkeyrsa 0sAQNWmttqbM8nIypsHEULynOagFyV1MQ+/1yF5sa32abxBb2fimah7NsHM9l/KpNo7RGtiP0L6triedsZ0xz1Maa4DPnZlrtexu5uIH+FH34SUr7Xe2RcHnLVOznHMzacgcjrOUvV/nA9OEGvm7vRsMAWm/VjNuNugogFreiYEpFMQQ==
-	both --keyid 128.95.7.3 --pubkeyrsa 0sAQN4JFU9gRnG336z1n1cV2LA6ACi1TjXfv3pvl6DRqa6uqBFM9RO4oArPc6FsBkBwEmMr8cpeFn4mVaepVe63qnvmQbGXVcRwhx0a509M824HjnyM04Xpoh2UuP/Mhnkm1cynunRuyGqXaZhlj4s+GbcOxPXhopz94wer+Qs/qvGqw==
+	both --keyid 127.95.7.3 --pubkeyrsa 0sAQN4JFU9gRnG336z1n1cV2LA6ACi1TjXfv3pvl6DRqa6uqBFM9RO4oArPc6FsBkBwEmMr8cpeFn4mVaepVe63qnvmQbGXVcRwhx0a509M824HjnyM04Xpoh2UuP/Mhnkm1cynunRuyGqXaZhlj4s+GbcOxPXhopz94wer+Qs/qvGqw==
 	both --keyid @north.example.com --pubkeyrsa 0sAQN4JFU9gRnG336z1n1cV2LA6ACi1TjXfv3pvl6DRqa6uqBFM9RO4oArPc6FsBkBwEmMr8cpeFn4mVaepVe63qnvmQbGXVcRwhx0a509M824HjnyM04Xpoh2UuP/Mhnkm1cynunRuyGqXaZhlj4s+GbcOxPXhopz94wer+Qs/qvGqw==
-	both --keyid 128.95.7.4 --pubkeyrsa 0sAQOKe6+kbDtp4PB8NZshjCBw8z5wuGCAddokgSDATW47tNmQhUvzlnT1ia1ZsyiRFph1LJkz+A0bkbOhPr1vWUJHK6/s+Y8Rf7GSZC0Fi5Fr4DgpWwswzFaLl4baRfeu8z4k147dtSoG4K/6UfQ+IbqML5lwm92uRqONszbn/PDDPQ==
+	both --keyid 127.95.7.4 --pubkeyrsa 0sAQOKe6+kbDtp4PB8NZshjCBw8z5wuGCAddokgSDATW47tNmQhUvzlnT1ia1ZsyiRFph1LJkz+A0bkbOhPr1vWUJHK6/s+Y8Rf7GSZC0Fi5Fr4DgpWwswzFaLl4baRfeu8z4k147dtSoG4K/6UfQ+IbqML5lwm92uRqONszbn/PDDPQ==
 	both --keyid @south.example.com --pubkeyrsa 0sAQOKe6+kbDtp4PB8NZshjCBw8z5wuGCAddokgSDATW47tNmQhUvzlnT1ia1ZsyiRFph1LJkz+A0bkbOhPr1vWUJHK6/s+Y8Rf7GSZC0Fi5Fr4DgpWwswzFaLl4baRfeu8z4k147dtSoG4K/6UfQ+IbqML5lwm92uRqONszbn/PDDPQ==
-	both --keyid 128.95.7.1 --pubkeyrsa 0sAQOOyFBeFFr9CWXgn1aOEvTr98HG4inSckTXlyYi5x85G+Q1+PZ/roqB3OtnRS2XbXFb3n92QjZMJ403wQUwMAt6uzXzXDle5VvFn7cVXq3ch0jqQUxIFcdIIFR2wtkxvAr20xSOHNF/ozmKVZLkrHLu4RvVCCbSNa5toqLXblkcOQ==
+	both --keyid 127.95.7.1 --pubkeyrsa 0sAQOOyFBeFFr9CWXgn1aOEvTr98HG4inSckTXlyYi5x85G+Q1+PZ/roqB3OtnRS2XbXFb3n92QjZMJ403wQUwMAt6uzXzXDle5VvFn7cVXq3ch0jqQUxIFcdIIFR2wtkxvAr20xSOHNF/ozmKVZLkrHLu4RvVCCbSNa5toqLXblkcOQ==
 	both --keyid @west.example.com --pubkeyrsa 0sAQOFtqrs57eghHmYREoCu1iGn4kXd+a6yT7wCFUk54d9i08mR4h5uFKPhc9fq78XNqz1AhrBH3SRcWAfJ8DaeGvZ0ZvCrTQZn+RJzX1FQ4fjuGBO0eup2XUMsYDw01PFzQ9O4qlwly6niOcMTxvbWgGcl+3DYfRvHgxet8kNtfqzHQ==
 	;;
 shutdown)	both --shutdown
@@ -121,7 +121,7 @@ dipsec-wk-rsa|dipsec-wk-dnsrsa)
 	;;
 xipsec-wk-rsa|xipsec-wk-dnsrsa)
 		# jam bad public key for east
-	me --keyid 128.95.7.2 --pubkeyrsa 0sAQOKe6+kbDtp4PB8NZshjCBw8z5wuGCAddokgSDATW47tNmQhUvzlnT1ia1ZsyiRFph1LJkz+A0bkbOhPr1vWUJHK6/s+Y8Rf7GSZC0Fi5Fr4DgpWwswzFaLl4baRfeu8z4k147dtSoG4K/6UfQ+IbqML5lwm92uRqONszbn/PDDPQ==
+	me --keyid 127.95.7.2 --pubkeyrsa 0sAQOKe6+kbDtp4PB8NZshjCBw8z5wuGCAddokgSDATW47tNmQhUvzlnT1ia1ZsyiRFph1LJkz+A0bkbOhPr1vWUJHK6/s+Y8Rf7GSZC0Fi5Fr4DgpWwswzFaLl4baRfeu8z4k147dtSoG4K/6UfQ+IbqML5lwm92uRqONszbn/PDDPQ==
 	me --keyid @east.example.com --pubkeyrsa 0sAQOKe6+kbDtp4PB8NZshjCBw8z5wuGCAddokgSDATW47tNmQhUvzlnT1ia1ZsyiRFph1LJkz+A0bkbOhPr1vWUJHK6/s+Y8Rf7GSZC0Fi5Fr4DgpWwswzFaLl4baRfeu8z4k147dtSoG4K/6UfQ+IbqML5lwm92uRqONszbn/PDDPQ==
 	me --name ipsec-rsa --initiate
 	;;
@@ -408,14 +408,14 @@ xipsec-oppo)
 	# whack error: 0.0.0.0 or 0::0 isn't a valid client address "0.0.0.0"
 	# me --oppohere $VICTORIA --oppothere 0.0.0.0
 
-	# 033 Can't Opportunistically initiate for 128.95.7.22 to 128.95.7.10: no Opportunistic template covers them
+	# 033 Can't Opportunistically initiate for 127.95.7.22 to 127.95.7.10: no Opportunistic template covers them
 	me --oppohere $ANTIGONISH --oppothere $VICTORIA
 
-	# 033 Can't Opportunistically initiate for 128.95.7.10 to 128.95.7.23: no host 23.7.95.127.in-addr.arpa. for TXT record
+	# 033 Can't Opportunistically initiate for 127.95.7.10 to 127.95.7.23: no host 23.7.95.127.in-addr.arpa. for TXT record
 	me --oppohere $VICTORIA --oppothere $ATLANTIS
 
-	# [used to be] Responder says: "ipsec-oppo-me" 128.95.7.1 0.0.0.0/32 #1: gateway 128.95.7.1 claims client 128.95.7.8, but DNS for client fails to confirm: no host 8.7.95.127.in-addr.arpa. for TXT record
-	# [now that checking of our records is done] Initiator: 033 Can't Opportunistically initiate for 128.95.7.8 to 128.95.7.22: no host 8.7.95.127.in-addr.arpa. for TXT record
+	# [used to be] Responder says: "ipsec-oppo-me" 127.95.7.1 0.0.0.0/32 #1: gateway 127.95.7.1 claims client 127.95.7.8, but DNS for client fails to confirm: no host 8.7.95.127.in-addr.arpa. for TXT record
+	# [now that checking of our records is done] Initiator: 033 Can't Opportunistically initiate for 127.95.7.8 to 127.95.7.22: no host 8.7.95.127.in-addr.arpa. for TXT record
 	me --oppohere $VANISHED --oppothere $ANTIGONISH
 	;;
 
@@ -465,13 +465,13 @@ xipsec-oppo-narrow)
 	# whack error: 0.0.0.0 or 0::0 isn't a valid client address "0.0.0.0"
 	# me --oppohere $VICTORIA --oppothere 0.0.0.0
 
-	# 033 Can't Opportunistically initiate for 128.95.7.22 to 128.95.7.10: no routed Opportunistic template covers this pair
+	# 033 Can't Opportunistically initiate for 127.95.7.22 to 127.95.7.10: no routed Opportunistic template covers this pair
 	me --oppohere $ANTIGONISH --oppothere $VICTORIA
 
-	# 033 Can't Opportunistically initiate for 128.95.7.10 to 128.95.7.23: no host 23.7.95.127.in-addr.arpa. for TXT record
+	# 033 Can't Opportunistically initiate for 127.95.7.10 to 127.95.7.23: no host 23.7.95.127.in-addr.arpa. for TXT record
 	me --oppohere $VICTORIA --oppothere $ATLANTIS
 
-	# Responder says: "ipsec-oppo-me" 128.95.7.1 0.0.0.0/32 #1: gateway 128.95.7.1 claims client 128.95.7.8, but DNS for client fails to confirm: no host 8.7.95.127.in-addr.arpa. for TXT record
+	# Responder says: "ipsec-oppo-me" 127.95.7.1 0.0.0.0/32 #1: gateway 127.95.7.1 claims client 127.95.7.8, but DNS for client fails to confirm: no host 8.7.95.127.in-addr.arpa. for TXT record
 	# Initiator slowly times out.
 	# me --oppohere $VANISHED --oppothere $ANTIGONISH
 	;;
@@ -522,13 +522,13 @@ xipsec-oppo-miss)
 	# whack error: 0.0.0.0 or 0::0 isn't a valid client address "0.0.0.0"
 	# me --oppohere $VICTORIA --oppothere 0.0.0.0
 
-	# 033 no suitable connection for opportunism between 128.95.7.22 and 128.95.7.10 with 128.95.7.1 as peer
+	# 033 no suitable connection for opportunism between 127.95.7.22 and 127.95.7.10 with 127.95.7.1 as peer
 	me --oppohere $ANTIGONISH --oppothere $VICTORIA
 
-	# 033 Can't Opportunistically initiate for 128.95.7.10 to 128.95.7.23: no host 23.7.95.127.in-addr.arpa. for TXT record
+	# 033 Can't Opportunistically initiate for 127.95.7.10 to 127.95.7.23: no host 23.7.95.127.in-addr.arpa. for TXT record
 	me --oppohere $VICTORIA --oppothere $ATLANTIS
 
-	# Responder says: "ipsec-oppo-me" 128.95.7.1 0.0.0.0/32 #1: gateway 128.95.7.1 claims client 128.95.7.8, but DNS for client fails to confirm: no host 8.7.95.127.in-addr.arpa. for TXT record
+	# Responder says: "ipsec-oppo-me" 127.95.7.1 0.0.0.0/32 #1: gateway 127.95.7.1 claims client 127.95.7.8, but DNS for client fails to confirm: no host 8.7.95.127.in-addr.arpa. for TXT record
 	# Initiator slowly times out.
 	# me --oppohere $VANISHED --oppothere $ANTIGONISH
 	;;
@@ -861,13 +861,13 @@ xipsec-oppo-group)
 	## whack error: 0.0.0.0 or 0::0 isn't a valid client address "0.0.0.0"
 	# me --oppohere $VICTORIA --oppothere 0.0.0.0
 
-	# 033 Can't Opportunistically initiate for 128.95.7.22 to 128.95.7.10: no routed Opportunistic template covers them
+	# 033 Can't Opportunistically initiate for 127.95.7.22 to 127.95.7.10: no routed Opportunistic template covers them
 	me --oppohere $ANTIGONISH --oppothere $VICTORIA
 
-	# 033 Can't Opportunistically initiate for 128.95.7.10 to 128.95.7.23: no host 23.7.95.127.in-addr.arpa. for TXT record
+	# 033 Can't Opportunistically initiate for 127.95.7.10 to 127.95.7.23: no host 23.7.95.127.in-addr.arpa. for TXT record
 	me --oppohere $VICTORIA --oppothere $ATLANTIS
 
-	## Responder says: "ipsec-oppo-me" 128.95.7.1 0.0.0.0/32 #1: gateway 128.95.7.1 claims client 128.95.7.8, but DNS for client fails to confirm: no host 8.7.95.127.in-addr.arpa. for TXT record
+	## Responder says: "ipsec-oppo-me" 127.95.7.1 0.0.0.0/32 #1: gateway 127.95.7.1 claims client 127.95.7.8, but DNS for client fails to confirm: no host 8.7.95.127.in-addr.arpa. for TXT record
 	## Initiator slowly times out.
 	# me --oppohere $VANISHED --oppothere $ANTIGONISH
 	;;
@@ -887,7 +887,7 @@ dregr-shunt-oppo)
 xregr-shunt-oppo)
 	both --name clear-west-east --route
 	me_status
-	# 033 Can't Opportunistically initiate for 128.95.7.10 to 128.95.7.21: a shunt-only connection covers this pair
+	# 033 Can't Opportunistically initiate for 127.95.7.10 to 127.95.7.21: a shunt-only connection covers this pair
 	me --oppohere $VICTORIA --oppothere $TRURO
 	;;
 

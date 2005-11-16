@@ -11,9 +11,9 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.7 2005/10/02 21:43:50 mcr Exp $
+# RCSID $Id: Makefile,v 1.6 2004/12/18 18:13:45 mcr Exp $
 
-OPENSWANSRCDIR?=$(shell cd ../.. && pwd)
+OPENSWANSRCDIR?=$(shell cd .. && pwd)
 include $(OPENSWANSRCDIR)/Makefile.inc
 
 SUBDIRS=
@@ -44,9 +44,6 @@ realclean: clean
 
 #
 # $Log: Makefile,v $
-# Revision 1.7  2005/10/02 21:43:50  mcr
-# 	make sure that OPENSWANSRCDIR is set right.
-#
 # Revision 1.6  2004/12/18 18:13:45  mcr
 # 	adjusted Makefiles so that ${OBJDIR} builds work.
 #

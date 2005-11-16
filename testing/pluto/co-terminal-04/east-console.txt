@@ -59,7 +59,7 @@ east:~#
  named
 east:~#
  ipsec setup start
-ipsec_setup: Starting FreeS/WAN IPsec VERSION
+ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
  /testing/pluto/bin/wait-until-policy-loaded
 east:~#
@@ -131,7 +131,7 @@ east:~#
 Stopping domain name service: named.
 Stopping internet superserver: inetd.
 Stopping portmap daemon: portmap.
-ipsec_setup: Stopping FreeS/WAN IPsec...
+ipsec_setup: Stopping Openswan IPsec...
 ipsec_setup: stop ordered, but IPsec does not appear to be running!
 ipsec_setup: doing cleanup anyway...
 

@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: policyquery.c,v 1.3 2005/07/26 01:12:23 mcr Exp $
+ * RCSID $Id: policyquery.c,v 1.2.24.1 2005/07/26 01:51:36 ken Exp $
  */
 
 #include <stddef.h>

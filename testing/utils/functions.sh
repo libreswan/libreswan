@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# $Id: functions.sh,v 1.127 2005/09/28 12:49:22 mcr Exp $
+# $Id: functions.sh,v 1.124 2005/07/09 15:40:30 mcr Exp $
 #
 
 preptest() {
@@ -139,75 +139,75 @@ consolediff() {
 compat_variables() {
     if [ -z "$REF_CONSOLE_OUTPUT" ] && [ -n "$REFCONSOLEOUTPUT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: REFCONSOLEOUTPUT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	REF_CONSOLE_OUTPUT=$REFCONSOLEOUTPUT
     fi
 
     if [ -z "$REF_CONSOLE_FIXUPS" ] && [ -n "$REFCONSOLEFIXUPS" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: REFCONSOLEFIXUPS
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	REF_CONSOLE_FIXUPS=$REFCONSOLEFIXUPS
     fi
 
     if [ -z "$REF_PUB_OUTPUT" ] && [ -n "$REFPUBOUTPUT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: REFPUBOUTPUT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	REF_PUB_OUTPUT=$REFPUBOUTPUT
     fi
 
     if [ -z "$REF_PRIV_OUTPUT" ] && [ -n "$REFPRIVOUTPUT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: REFPRIVOUTPUT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	REF_PRIV_OUTPUT=$REFPRIVOUTPUT
     fi
 
     if [ -z "$PRIV_INPUT" ] && [ -n "$PRIVINPUT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: PRIVINPUT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	PRIV_INPUT=$PRIVINPUT
     fi
 
     if [ -z "$PUB_INPUT" ] && [ -n "$PUBINPUT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: PUBINPUT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	PUB_INPUT=$PUBINPUT
     fi
 
     if [ -z "$INIT_SCRIPT" ] && [ -n "$SCRIPT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: SCRIPT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	INIT_SCRIPT=$SCRIPT
     fi
 
     if [ -z "$EAST_RUN_SCRIPT" ] && [ -n "$RUN_EAST_SCRIPT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: RUN_EAST_SCRIPT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	EAST_RUN_SCRIPT=$RUN_EAST_SCRIPT
     fi
     if [ -z "$WEST_RUN_SCRIPT" ] && [ -n "$RUN_WEST_SCRIPT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: RUN_WEST_SCRIPT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	WEST_RUN_SCRIPT=$RUN_WEST_SCRIPT
     fi
 
     if [ -z "$EAST_FINAL_SCRIPT" ] && [ -n "$FINAL_EAST_SCRIPT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: FINAL_EAST_SCRIPT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	EAST_FINAL_SCRIPT=$FINAL_EAST_SCRIPT
     fi
     if [ -z "$WEST_FINAL_SCRIPT" ] && [ -n "$FINAL_WEST_SCRIPT" ]
     then
-	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES: FINAL_WEST_SCRIPT
+	echo PLEASE FIX UP TEST CASE FOR COMPAT VARIABLES
 	exit 1
 	WEST_FINAL_SCRIPT=$FINAL_WEST_SCRIPT
     fi
@@ -1073,11 +1073,10 @@ libtest() {
     symbol=`echo $testobj | tr 'a-z' 'A-Z'`_MAIN
 
     unset FILE
-    SRCDIR=${SRCDIR-./}
 
-    if [ -f ${SRCDIR}$testsrc ] 
+    if [ -f ./$testsrc ] 
     then
-	FILE=${SRCDIR}$testsrc
+	FILE=./$testsrc
     elif [ -f ${OPENSWANSRCDIR}/lib/libopenwan/$testsrc ]
     then
 	FILE=${OPENSWANSRCDIR}/lib/libopenswan/$testsrc
@@ -1102,9 +1101,9 @@ libtest() {
 
     EXTRAFLAGS=
     EXTRALIBS=
-    if [ -f ${SRCDIR}FLAGS.$testobj ]
+    if [ -f ./FLAGS.$testobj ]
     then
-	source ${SRCDIR}FLAGS.$testobj
+	source ./FLAGS.$testobj
     fi
 
     stat=99
@@ -1605,133 +1604,10 @@ umlXhost() {
     recordresults $testdir "$testexpect" "$stat" $testdir
 }
 
-
-###################################
 #
-#  test type: buildtest
-#
-#  does an alternate build with another set of options and/or
-#  a different kind of compiler
-#
-###################################
-
-do_build_test() {
-
-    rm -rf OUTPUT${KLIPS_MODULE}/root
-    mkdir -p OUTPUT${KLIPS_MODULE}/root
-
-    # locale affects sort order.
-    LC_ALL=C export LC_ALL
-
-    success=true
-    instdir=`cd OUTPUT${KLIPS_MODULE}/root && pwd`
-
-    prerunsetup
-
-    if [ -n "$INSTALL_FLAGS" ]
-    then
-	$MAKE_INSTALL_TEST_DEBUG && echo make --no-print-directory DESTDIR=$instdir $INSTALL_FLAGS
-	(cd $OPENSWANSRCDIR && eval make OPENSWANSRCDIR=`pwd` --no-print-directory DESTDIR=$instdir $INSTALL_FLAGS ) >OUTPUT${KLIPS_MODULE}/install1.txt 2>&1 || exit 1
-    fi
-
-    if [ -n "$POSTINSTALL_SCRIPT" ]
-    then
-	$POSTINSTALL_SCRIPT $OPENSWANSRCDIR $instdir || exit 1
-    fi
-
-    if [ -n "$INSTALL2_FLAGS" ]
-    then
-	$MAKE_INSTALL_TEST_DEBUG && echo make --no-print-directory DESTDIR=$instdir $INSTALL2_FLAGS
-	(cd $OPENSWANSRCDIR && eval make OPENSWANSRCDIR=`pwd` --no-print-directory DESTDIR=$instdir $INSTALL2_FLAGS ) >OUTPUT${KLIPS_MODULE}/install2.txt 2>&1 || exit 1
-    fi
-
-    if [ -n "$UNINSTALL_FLAGS" ]
-    then
-	$MAKE_INSTALL_TEST_DEBUG && echo make --no-print-directory DESTDIR=$instdir $UNINSTALL_FLAGS
-	(cd $OPENSWANSRCDIR && eval make OPENSWANSRCDIR=`pwd` --no-print-directory DESTDIR=$instdir $UNINSTALL_FLAGS ) >OUTPUT${KLIPS_MODULE}/uninstall.txt 2>&1 || exit 1
-    fi
-
-    if [ -n "$REF_MAKE_DOC_OUTPUT" ]
-    then
-      rm -f OUTPUT${KLIPS_MODULE}/$REF_MAKE_DOC_OUTPUT.txt
-
-      (cd $OPENSWANSRCDIR/doc && eval make OPENSWANSRCDIR=$OPENSWANSRCDIR clean --no-print-directory && eval make OPENSWANSRCDIR=$OPENSWANSRCDIR --no-print-directory ) | sort >OUTPUT${KLIPS_MODULE}/$REF_MAKE_DOC_OUTPUT.txt
-      if diff -u -w -b -B $REF_MAKE_DOC_OUTPUT.txt OUTPUT${KLIPS_MODULE}/$REF_MAKE_DOC_OUTPUT.txt >OUTPUT${KLIPS_MODULE}/$REF_MAKE_DOC_OUTPUT.diff
-      then
-	 echo "make doc output matched"
-      else
-	 echo "make doc output differed"
-	 success=false
-      fi
-    fi
-
-    if [ -n "$REF_FIND_f_l_OUTPUT" ]
-    then
-      rm -f OUTPUT${KLIPS_MODULE}/$REF_FIND_f_l_OUTPUT
-
-      (cd OUTPUT${KLIPS_MODULE}/root && find . \( -type f -or -type l \) -print ) | sort >OUTPUT${KLIPS_MODULE}/$REF_FIND_f_l_OUTPUT.txt
-      if diff -u -w -b -B $REF_FIND_f_l_OUTPUT.txt OUTPUT${KLIPS_MODULE}/$REF_FIND_f_l_OUTPUT.txt >OUTPUT${KLIPS_MODULE}/$REF_FIND_f_l_OUTPUT.diff
-      then
-	 echo "Install list file list matched"
-      else
-	 echo "Install list file list differed"
-	 success=false
-      fi
-    fi
-
-
-    if [ -n "$REF_FILE_CONTENTS" ]
-    then
-      cat $REF_FILE_CONTENTS | while read reffile samplefile
-      do
-	if diff -u -w -b -B $reffile $instdir/$samplefile >OUTPUT${KLIPS_MODULE}/$reffile.diff
-	then
-	    echo "Reffile $samplefile matched"
-	else
-	    echo "Reffile $samplefile differed"
-	    success=false
-	fi
-      done
-    fi
-
-    case "$success" in
-    true)	exit 0 ;;
-    *)		exit 1 ;;
-    esac
-}
-
-
-# test entry point:
-buildtest() {
-    testdir=$1
-    testexpect=$2
-
-    echo '**** Make BUILD RUNNING' $testdir${KLIPS_MODULE} '****'
-
-    OPENSWANSRCDIR=`cd $OPENSWANSRCDIR && pwd` export OPENSWANSRCDIR
-
-    export UML_BRAND="$$"
-    ( preptest $testdir buildtest && do_build_test )
-    stat=$?
-
-    recordresults $testdir "$testexpect" "$stat" $testdir${KLIPS_MODULE}
-}
-
-
-
-#
-# $Id: functions.sh,v 1.127 2005/09/28 12:49:22 mcr Exp $
+# $Id: functions.sh,v 1.124 2005/07/09 15:40:30 mcr Exp $
 #
 # $Log: functions.sh,v $
-# Revision 1.127  2005/09/28 12:49:22  mcr
-# 	document why developer is being nagged.
-#
-# Revision 1.126  2005/08/31 03:35:43  mcr
-# 	added template do_build_test (not yet done)
-#
-# Revision 1.125  2005/08/05 17:04:54  mcr
-# 	adjustment of test cases to work with object directories.
-#
 # Revision 1.124  2005/07/09 15:40:30  mcr
 # 	make tests that need compat variables abort.
 #

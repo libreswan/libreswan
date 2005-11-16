@@ -21,10 +21,11 @@ east:~#
 east NOW
 192.1.2.23/32      -> 192.0.1.0/24       => %trapsubnet (0)
 ipsec0->eth1 mtu=16260(1500)->1500
+Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
 east:~#
  route add -host 192.0.1.1 gw 192.1.2.45 dev ipsec0
 east:~#
- /usr/obj/programs/ikeping/ikeping --verbose --wait 2 --inet 192.0.1.1 192.0.1.1 192.0.1.1 192.0.1.1
+ /usr/src/programs/ikeping/ikeping --verbose --wait 2 --inet 192.0.1.1 192.0.1.1 192.0.1.1 192.0.1.1
 Sending packet to 192.0.1.1/500
 Sending packet to 192.0.1.1/500
 Sending packet to 192.0.1.1/500

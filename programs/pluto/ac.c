@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ac.c,v 1.10 2005/09/19 00:22:00 mcr Exp $
+ * RCSID $Id: ac.c,v 1.7 2004/06/14 01:46:02 mcr Exp $
  */
 
 #include <stdlib.h>
@@ -25,7 +25,6 @@
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 
@@ -312,7 +311,7 @@ decode_groups(char *groups, ietfAttrList_t **listp)
           ietfAttrList_t *el = alloc_thing(ietfAttrList_t, "ietfAttrList");
           
           attr->kind  = IETF_ATTRIBUTE_STRING;
-          attr->value.ptr = (unsigned char *)groups;
+          attr->value.ptr = groups;
           attr->value.len = end - groups;
           attr->count = 0;
       
@@ -352,7 +351,7 @@ parse_ietfAttrSyntax(chunk_t blob, int level0)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    u_int objectID = 0;
+    int objectID = 0;
     
     ietfAttrList_t *list = NULL;
 	
@@ -398,7 +397,7 @@ parse_roleSyntax(chunk_t blob, int level0)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    u_int objectID = 0;
+    int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -427,7 +426,7 @@ parse_ac(chunk_t blob, x509acert_t *ac)
     chunk_t type;
     chunk_t object;
     u_int level;
-    u_int objectID = 0;
+    int objectID = 0;
 
     asn1_init(&ctx, blob, 0, FALSE, DBG_RAW);
 
@@ -691,9 +690,9 @@ verify_x509acert(x509acert_t *ac, bool strict)
     time_t valid_until = ac->notAfter;
 
     DBG(DBG_CONTROL,
-	dntoa((char *)buf, BUF_LEN, ac->entityName);
+	dntoa(buf, BUF_LEN, ac->entityName);
 	DBG_log("holder: '%s'",buf);
-	dntoa((char *)buf, BUF_LEN, ac->issuerName);
+	dntoa(buf, BUF_LEN, ac->issuerName);
 	DBG_log("issuer: '%s'",buf);
     )
     
@@ -741,10 +740,10 @@ verify_x509acert(x509acert_t *ac, bool strict)
 void
 load_acerts(void)
 {
-    char buf[BUF_LEN];
+    u_char buf[BUF_LEN];
 
     /* change directory to specified path */
-    char *save_dir = getcwd(buf, BUF_LEN);
+    u_char *save_dir = getcwd(buf, BUF_LEN);
 
     if (!chdir(A_CERT_PATH))
     {
@@ -817,7 +816,7 @@ list_acerts(bool utc)
 
     while (ac != NULL)
     {
-	char buf[BUF_LEN];
+	u_char buf[BUF_LEN];
 	char   tbuf[TIMETOA_BUF];
 
 	whack_log(RC_COMMENT, "%s",timetoa(&ac->installed, utc, tbuf, sizeof(tbuf)));
@@ -833,14 +832,14 @@ list_acerts(bool utc)
 	}
 	if (ac->holderSerial.ptr != NULL)
 	{
-	    datatot((char *)ac->holderSerial.ptr, ac->holderSerial.len, ':'
+	    datatot(ac->holderSerial.ptr, ac->holderSerial.len, ':'
 		, buf, BUF_LEN);
 	    whack_log(RC_COMMENT, "       hserial:  %s", buf);
 	}
 	dntoa(buf, BUF_LEN, ac->issuerName);
 	whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
-	datatot((char *)ac->serialNumber.ptr, ac->serialNumber.len, ':'
-		, buf, BUF_LEN);
+	datatot(ac->serialNumber.ptr, ac->serialNumber.len, ':'
+	    , buf, BUF_LEN);
 	whack_log(RC_COMMENT, "       serial:   %s", buf);
 
 	if (ac->groups != NULL)

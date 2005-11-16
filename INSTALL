@@ -1,10 +1,14 @@
 
-Please read the documentation in doc/
+Please read the documentation in doc/ & docs/
 
 Building userland: 
 
 	make programs install
 
-Buildings KLIPS kernel module: 
+Building KLIPS kernel module on 2.4 (assuming your kernel source is /usr/src/linux-2.4)
+
+	make KERNELSRC=/usr/src/linux-2.4 module minstall
+
+Building KLIPS kernel module on 2.6
 
 	make KERNELSRC=/lib/modules/`uname -r`/build module minstall

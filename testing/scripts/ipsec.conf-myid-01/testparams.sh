@@ -8,7 +8,6 @@ TESTNAME=ipsec.conf-myid-01
 TESTHOST=east
 
 REF_CONSOLE_OUTPUT=east-console.txt
-REF26_CONSOLE_OUTPUT=east-console.txt
 
 REF_CONSOLE_FIXUPS="nocr.sed script-only.sed ipsec-setup-sanitize.sed pluto-log-sanitize.sed east-prompt-splitline.pl "
 

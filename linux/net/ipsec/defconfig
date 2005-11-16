@@ -1,10 +1,10 @@
 
 #
-# RCSID $Id: defconfig,v 1.30 2005/09/15 02:31:12 paul Exp $
+# RCSID $Id: defconfig,v 1.28 2005/05/11 03:15:42 mcr Exp $
 #
 
 #
-# Openswan IPSec implementation, KLIPS kernel config defaults
+# FreeS/WAN IPSec implementation, KLIPS kernel config defaults
 #
 
 #
@@ -58,16 +58,12 @@ CONFIG_KLIPS_IPCOMP=y
 # To enable userspace-switchable KLIPS debugging, say 'y'.
 CONFIG_KLIPS_DEBUG=y
 
+# NAT Traversal
+CONFIG_IPSEC_NAT_TRAVERSAL=y
+
 #
 #
 # $Log: defconfig,v $
-# Revision 1.30  2005/09/15 02:31:12  paul
-# Changed a FreeS/WAN occurance to Openswan
-#
-# Revision 1.29  2005/08/24 22:10:05  mcr
-# 	do not list NAT_TRAVERSAL as a default for KLIPS,
-# 	let it live in the packaging "MODULE_DEF_CONFIG" files.
-#
 # Revision 1.28  2005/05/11 03:15:42  mcr
 # 	adjusted makefiles to sanely build modules properly.
 #

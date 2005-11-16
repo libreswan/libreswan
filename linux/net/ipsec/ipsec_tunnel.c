@@ -14,7 +14,7 @@
  * for more details.
  */
 
-char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.233 2005/08/31 23:26:11 mcr Exp $";
+char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.232.2.1 2005/09/21 22:57:43 paul Exp $";
 
 #define __NO_VERSION__
 #include <linux/module.h>
@@ -1839,8 +1839,8 @@ ipsec_tunnel_cleanup_devices(void)
 
 /*
  * $Log: ipsec_tunnel.c,v $
- * Revision 1.233  2005/08/31 23:26:11  mcr
- * 	fixes for 2.6.13
+ * Revision 1.232.2.1  2005/09/21 22:57:43  paul
+ * pulled up compile fix for 2.6.13
  *
  * Revision 1.232  2005/06/04 16:06:06  mcr
  * 	better patch for nat-t rcv-device code.

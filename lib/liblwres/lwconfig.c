@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwconfig.c,v 1.3 2005/08/05 01:18:29 mcr Exp $ */
+/* $Id: lwconfig.c,v 1.2 2004/09/20 18:00:36 mcr Exp $ */
 
 /***
  *** Module for parsing resolv.conf files.
@@ -45,7 +45,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
 
 #include <lwres/lwbuffer.h>
 #include <lwres/lwres.h>

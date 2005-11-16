@@ -1,7 +1,7 @@
 Summary: Openswan IPSEC implementation
 Name: openswan
-Version: 2.CVSHEAD
-# build kLIPS kerneo module or not
+Version: 2.4.3
+# Build LLIPS kernel module?
 %{!?buildklips: %{expand: %%define buildklips 1}}
 %{!?buildxen: %{expand: %%define buildxen 0}}
 

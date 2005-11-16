@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
  * License for more details.
  *
- * RCSID $Id: config-noipcomp.h,v 1.5 2005/08/26 13:55:12 ken Exp $
+ * RCSID $Id: config-noipcomp.h,v 1.4 2003/03/14 08:09:26 rgb Exp $
  */
 #define	_CONFIG_ALL_H_	/* seen it, no need to see it again */
 
@@ -52,6 +52,10 @@
 
 #ifndef CONFIG_IPSEC_ENC_3DES
 #define CONFIG_IPSEC_ENC_3DES
+#endif
+
+#ifdef CONFIG_IPSEC_REGRESS
+#undef CONFIG_IPSEC_REGRESS
 #endif
 
 

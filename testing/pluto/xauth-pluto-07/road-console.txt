@@ -1,3 +1,59 @@
+Starting UML PATH/start.sh
+spawn PATH single
+Linux version XXXX
+On node 0 totalpages: 8192
+Kernel command line:
+Calibrating delay loop... XXXX bogomips
+Dentry-cache hash table entries: NUMBERS
+Inode-cache hash table entries: NUMBERS
+Mount-cache hash table entries: NUMBERS
+Buffer-cache hash table entries: NUMBERS
+Page-cache hash table entries: NUMEBRS
+POSIX conformance testing by UNIFIX
+Linux NET4.0 for Linux 2.4
+Based upon Swansea University Computer Society NET3.039
+Initializing RT netlink socket
+Starting kswapd
+VFS: Diskquotas version dquot_6.4.0 initialized
+devfs: VERSION Richard Gooch (rgooch@atnf.csiro.au)
+devfs: boot_options Q
+pty: 256 Unix98 ptys configured
+SLIP: version 0.8.4-NET3.019-NEWTTY (dynamic channels, max=256).
+loop: loaded (max 8 devices)
+PPP generic driver version VERSION
+Universal TUN/TAP device driver VERSION
+
+NET4: Linux TCP/IP 1.0 for NET4.0
+IP Protocols: ICMP, UDP, TCP
+IP: routing cache hash table of 512 buckets, 4Kbytes
+TCP: Hash tables configured (established 2048 bind 2048)
+IPv4 over IPv4 tunneling driver
+GRE over IPv4 tunneling driver
+NET4: Unix domain sockets 1.0/SMP for Linux NET4.0.
+Mounted devfs on /dev
+INIT: version 2.78 booting
+Activating swap...
+Calculating module dependancies
+done.
+Loading modules: LIST
+
+Checking all file systems...
+Parallelizing fsck version 1.18 (11-Nov-1999)
+Setting kernel variables.
+Mounting local filesystems...
+/dev/shm on /tmp type tmpfs (rw)
+/dev/shm on /var/run type tmpfs (rw)
+devpts on /dev/pts type devpts (rw,mode=0622)
+none on /usr/share type hostfs (ro)
+Enabling packet forwarding: done.
+Configuring network interfaces: done.
+Cleaning: /tmp /var/lock /var/run.
+Initializing random number generator... done.
+Recovering nvi editor sessions... done.
+Give root password for maintenance
+(or type Control-D for normal startup): 
+road:~#
+ klogd -c 4 -x -f /tmp/klog.log
 road:~#
  ipsec setup stop
 ipsec_setup: Stopping Openswan IPsec...
@@ -46,26 +102,29 @@ road:~#
 002 "modecfg-road--eastnet-psk" #1: Aggressive mode peer ID is ID_FQDN: '@east'
 002 "modecfg-road--eastnet-psk" #1: Aggressive mode peer ID is ID_FQDN: '@east'
 002 "modecfg-road--eastnet-psk" #1: transition from state STATE_AGGR_I1 to state STATE_AGGR_I2
-004 "modecfg-road--eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=OAKLEY_PRESHARED_KEY cipher=oakley_3des_cbc_192 prf=oakley_sha group=modp1536}
+002 "modecfg-road--eastnet-psk" #1: sent AI2, ISAKMP SA established
+004 "modecfg-road--eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established
 041 "modecfg-road--eastnet-psk" #1: modecfg-road--eastnet-psk prompt for Username:
 040 "modecfg-road--eastnet-psk" #1: modecfg-road--eastnet-psk prompt for Password:
 002 "modecfg-road--eastnet-psk" #1: XAUTH: Answering XAUTH challenge with user='use3'
 002 "modecfg-road--eastnet-psk" #1: transition from state STATE_XAUTH_I0 to state STATE_XAUTH_I1
+002 "modecfg-road--eastnet-psk" #1: XAUTH client - awaiting CFG_set
 004 "modecfg-road--eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set
 002 "modecfg-road--eastnet-psk" #1: XAUTH: Successfully Authenticated
 002 "modecfg-road--eastnet-psk" #1: transition from state STATE_XAUTH_I0 to state STATE_XAUTH_I1
+002 "modecfg-road--eastnet-psk" #1: XAUTH client - awaiting CFG_set
 004 "modecfg-road--eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set
 002 "modecfg-road--eastnet-psk" #1: modecfg: Sending IP request (MODECFG_I1)
 002 "modecfg-road--eastnet-psk" #1: received mode cfg reply
 002 "modecfg-road--eastnet-psk" #1: setting client address to 192.0.2.209/32
 002 "modecfg-road--eastnet-psk" #1: setting ip source address to 192.0.2.209/32
 002 "modecfg-road--eastnet-psk" #1: transition from state STATE_MODE_CFG_I1 to state STATE_MAIN_I4
+002 "modecfg-road--eastnet-psk" #1: ISAKMP SA established
 004 "modecfg-road--eastnet-psk" #1: STATE_MAIN_I4: ISAKMP SA established
 002 "modecfg-road--eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+MODECFGPULL+AGGRESSIVE
 117 "modecfg-road--eastnet-psk" #2: STATE_QUICK_I1: initiate
-002 "modecfg-road--eastnet-psk" #2: up-client output: /usr/local/lib/ipsec/_updown: changesource `ip addr add 192.0.2.209/32 dev ipsec0' failed (RTNETLINK answers: File exists)
-002 "modecfg-road--eastnet-psk" #2: route-client output: /usr/local/lib/ipsec/_updown: addsource `ip addr add 192.0.2.209/32 dev ipsec0' failed (RTNETLINK answers: File exists)
 002 "modecfg-road--eastnet-psk" #2: transition from state STATE_QUICK_I1 to state STATE_QUICK_I2
+002 "modecfg-road--eastnet-psk" #2: sent QI2, IPsec SA established
 004 "modecfg-road--eastnet-psk" #2: STATE_QUICK_I2: sent QI2, IPsec SA established
 road:~#
  echo done.
@@ -75,4 +134,17 @@ road:~#
 
 road:~#
 road:~#
+ halt
+INIT: Switching to runlevel: 0
+INIT: Sending processes the TERM signal
+road:~#
+ ipsec setup stop
+IPSEC EVENT: KLIPS device ipsec0 shut down.
+ipsec_setup: Stopping Openswan IPsec...
+road:~#
+ kill `cat /var/run/klogd.pid`; cat /tmp/klog.log
+klogd 1.3-3#33.1, log source = /proc/kmsg started.
+road:~#
+ halt -p -f
+Power down.
 

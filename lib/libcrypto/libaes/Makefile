@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.8 2005/09/17 21:57:45 mcr Exp $
+# RCSID $Id: Makefile,v 1.6 2004/12/18 18:13:33 mcr Exp $
 
 
 OPENSWANSRCDIR?=$(shell cd ../../..; pwd)
@@ -44,8 +44,7 @@ VPATH += ${SRCDIR}
 LIB=libaes.a
 
 # Original flags
-CFLAGS=-I. -I${SRCDIR} -I${KLIPSD} -I${OPENSWANSRCDIR} ${PORTINCLUDE}
-CFLAGS+=$(USERCOMPILE)
+CFLAGS=-I. -I${SRCDIR} -I${KLIPSD} -I${OPENSWANSRCDIR} $(USERCOMPILE)
 CFLAGS+=-O3 -fomit-frame-pointer -Wall  -Wcast-qual 
 CFLAGS+= -Wmissing-prototypes
 CFLAGS+= -Wpointer-arith
@@ -66,7 +65,7 @@ install install_file_list:
 	@exit 0
 
 $(LIB):	$(OBJS)
-	$(AR) crs $(LIB) $(OBJS)
+	$(AR) $(ARFLAGS) $(LIB) $(OBJS)
 
 $(OBJS):	$(HDRS)
 

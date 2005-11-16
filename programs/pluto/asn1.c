@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: asn1.c,v 1.10 2005/08/05 17:33:27 mcr Exp $
+ * RCSID $Id: asn1.c,v 1.9 2004/06/29 22:55:27 ken Exp $
  */
 
 #include <stdlib.h>
@@ -20,7 +20,6 @@
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 
@@ -292,7 +291,7 @@ asn1totime(const chunk_t *utctime, asn1_t type)
 
     /* compensate timezone */
 
-    return mktime(&t) - TimeZoneOffset - tz_offset;
+    return mktime(&t) - timezone - tz_offset;
 }
 
 /*

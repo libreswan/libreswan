@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
  * License for more details.
  *
- * RCSID $Id: config-i686-smp.h,v 1.5 2005/01/06 01:34:59 paul Exp $
+ * RCSID $Id: config-i686-smp.h,v 1.5.6.2 2005/08/18 20:40:09 paul Exp $
  */
 #define	_CONFIG_RH_I686_SMP_H_	/* seen it, no need to see it again */
 
@@ -59,11 +59,11 @@
 #endif
 
 #ifndef CONFIG_KLIPS_NAT_TRAVERSAL
-#define CONFIG_KLIPS_NAT_TRAVERSAL 1
+#define CONFIG_KLIPS_NAT_TRAVERSAL 0
 #endif
 
 #ifndef CONFIG_IPSEC_NAT_TRAVERSAL
-#define CONFIG_IPSEC_NAT_TRAVERSAL 1
+#define CONFIG_IPSEC_NAT_TRAVERSAL 0
 #endif
 
 /* off by default for now */

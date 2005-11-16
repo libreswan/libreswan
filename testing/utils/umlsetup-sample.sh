@@ -26,6 +26,10 @@ POOLSPACE=$UMLPREFIX/umlbuild
 # or something you downloaded.
 KERNPOOL=$UMLPREFIX/kernel/linux-2.4.19/linux
 
+# if you have a kernel that already has the NAT-T patch applies, then
+# set this to false.
+NATTPATCH=true
+
 # NONINTPATCH is a patch that comes from Redhat kernels. It permits
 # "make oldconfig" to complete without interacting with the user.
 # I think that 2.6. kernels have this. This patch is optional, if you

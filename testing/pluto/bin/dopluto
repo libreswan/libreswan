@@ -4,9 +4,7 @@
 # Only argument is east or west
 # Actually, extra args are passed on to pluto, so --nofork might be useful
 #
-# RCSID $Id: dopluto,v 1.15 2005/08/19 04:05:01 mcr Exp $
-
-cd /tmp
+# RCSID $Id: dopluto,v 1.14 2004/10/17 23:59:57 mcr Exp $
 
 . CONFIG
 
@@ -30,16 +28,14 @@ function performpluto() {
 	ln -s -f ../../ipsec.secrets .
 	ln -s -f ${TESTING}/pluto/ipsec.d/west .
 	ln -s -f ${TESTING}/pluto/ipsec.d/east .
-	echo PWD: `pwd`
 	echo "PLUTO" "$@"
 	$MYPLUTO ${LWDNSQOPTION:-} "$@" || echo RC: $?
 	}
 
-LOCK=pluto/$SIDE/pluto.$SIDE.pid
+LOCK=pluto.$SIDE.pid
 
 if [ -f $LOCK ]
 then
-	echo Removing stale lock $LOCK
 	$MYWHACK --ctlbase pluto.$SIDE --shutdown
 	rm -f $LOCK
 fi
@@ -53,6 +49,6 @@ performpluto \
 	--ikeport $IKEPORT $HELPERS \
 	--secretsfile `pwd`/ipsec.secrets/$SIDE \
 	--ipsecdir `pwd`/$SIDE \
-	--noklips --uniqueids --stderrlog --nhelpers 0 \
+	--noklips --uniqueids --stderrlog \
 	--debug-all --debug-private \
 	"$@"

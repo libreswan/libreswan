@@ -14,7 +14,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: xauth.c,v 1.44 2005/08/05 19:18:47 mcr Exp $
+ * RCSID $Id: xauth.c,v 1.41.4.3 2005/07/26 02:11:23 ken Exp $
  *
  * This code originally written by Colubris Networks, Inc.
  * Extraction of patch and porting to 1.99 codebases by Xelerance Corporation
@@ -31,14 +31,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#if !defined(__CYGWIN32__)
+#include <sys/queue.h>
 #include <crypt.h>
-#endif
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 
@@ -469,7 +467,7 @@ stf_status modecfg_resp(struct state *st
 stf_status modecfg_send_set(struct state *st)
 {
 	pb_stream reply,rbody;
-	unsigned char buf[256];
+	char buf[256];
 
 	/* set up reply */
 	init_pbs(&reply, buf, sizeof(buf), "ModecfgR1");
@@ -545,7 +543,7 @@ stf_status xauth_send_request(struct state *st)
 {
     pb_stream reply;
     pb_stream rbody;
-    unsigned char buf[256];
+    char buf[256];
     u_char *r_hash_start,*r_hashval;
 
     /* set up reply */
@@ -636,7 +634,7 @@ stf_status modecfg_send_request(struct state *st)
 {
     pb_stream reply;
     pb_stream rbody;
-    unsigned char buf[256];
+    char buf[256];
     u_char *r_hash_start,*r_hashval;
 
     /* set up reply */
@@ -729,7 +727,7 @@ stf_status xauth_send_status(struct state *st, int status)
 {
     pb_stream reply;
     pb_stream rbody;
-    unsigned char buf[256];
+    char buf[256];
     u_char *r_hash_start,*r_hashval;
 
     /* set up reply */
@@ -994,18 +992,12 @@ int do_md5_authentication(void *varg)
 		    , szuser, arg->name.ptr
 		    , szpass, szconnid, arg->connname.ptr));
 
-        if ( strcasecmp(szconnid, (char *)arg->connname.ptr) == 0
-	     && strcmp( szuser, (char *)arg->name.ptr ) == 0 ) /* user correct ?*/
+        if ( strcasecmp(szconnid, arg->connname.ptr) == 0
+	     && strcmp( szuser, arg->name.ptr ) == 0 ) /* user correct ?*/
         {
 	    char *cp;
 
-#if defined(__CYGWIN32__)
-	    /* password is in the clear! */
-	    cp = (char *)arg->password.ptr;
-#else
-	    /* keep the passwords using whatever utilities we have */
 	    cp = crypt( arg->password.ptr, szpass);
-#endif	    
 
 	    if(DBGP(DBG_CRYPT))
 	    {
@@ -1060,7 +1052,7 @@ static void * do_authentication(void *varg)
 	  st->st_msgid_phase15 = 0;
 	}
 	pfreeany(st->st_xauth_username);
-	st->st_xauth_username = clone_str((char *)arg->name.ptr,"XAUTH Username");
+	st->st_xauth_username = clone_str(arg->name.ptr,"XAUTH Username");
     } else
     {
 	/** Login attempt failed, display error, send XAUTH status to client
@@ -1129,10 +1121,6 @@ xauth_inR0(struct msg_digest *md)
     bool gotname, gotpassword;
 
     gotname = gotpassword = FALSE;
-
-    name = empty_chunk;
-    password = empty_chunk;
-    connname = empty_chunk;
 
     CHECK_QUICK_HASH(md,xauth_mode_cfg_hash(hash_val,hash_pbs->roof, md->message_pbs.roof, st)
 	, "XAUTH-HASH", "XAUTH R0");
@@ -1908,7 +1896,7 @@ xauth_inI0(struct msg_digest *md)
     char msgbuf[81];
     int len;
     unsigned type;
-    unsigned char *dat;
+    char *dat;
     int status = 0;
     unsigned val;
     stf_status stat;
@@ -2282,12 +2270,19 @@ xauth_inI1(struct msg_digest *md)
 
 
 /*
- * $Id: xauth.c,v 1.44 2005/08/05 19:18:47 mcr Exp $
+ * $Id: xauth.c,v 1.41.4.3 2005/07/26 02:11:23 ken Exp $
  *
  * $Log: xauth.c,v $
- * Revision 1.44  2005/08/05 19:18:47  mcr
- * 	adjustments for signed issues.
- * 	use sysdep.h.
+ * Revision 1.41.4.3  2005/07/26 02:11:23  ken
+ * Pullin from HEAD:
+ * Split Aggressive mode into ikev1_aggr.c
+ * Fix NAT-T that we broke in dr7
+ * Move dpd/pgp vendor id's to vendor.[ch]
+ *
+ * Revision 1.41.4.2  2005/07/25 19:26:34  ken
+ * Pullin fixes for NAT-T from HEAD
+ * Includes IMPAIR_JACOB_TWO_TWO impairment from HEAD
+ * change from c->interface to st->st_interface for sending packets
  *
  * Revision 1.43  2005/07/22 14:05:51  mcr
  * 	fixes for -Werror warnings.

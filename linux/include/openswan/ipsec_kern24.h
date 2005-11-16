@@ -13,101 +13,10 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_kern24.h,v 1.5 2005/08/05 08:48:38 mcr Exp $
+ * RCSID $Id: ipsec_kern24.h,v 1.4 2005/05/20 03:19:18 mcr Exp $
  */
 
 #ifndef _IPSEC_KERN24_H
-
-#ifdef NET_21
-#  include <linux/in6.h>
-#else
-     /* old kernel in.h has some IPv6 stuff, but not quite enough */
-#  define	s6_addr16	s6_addr
-#  define	AF_INET6	10
-#  define uint8_t __u8
-#  define uint16_t __u16 
-#  define uint32_t __u32 
-#  define uint64_t __u64 
-#endif
-
-#ifdef NET_21
-# define ipsec_kfree_skb(a) kfree_skb(a)
-#else /* NET_21 */
-# define ipsec_kfree_skb(a) kfree_skb(a, FREE_WRITE)
-#endif /* NET_21 */
-
-#ifdef NETDEV_23
-#if 0
-#ifndef NETDEV_25
-#define device net_device
-#endif
-#endif
-# define ipsec_dev_get dev_get_by_name
-# define __ipsec_dev_get __dev_get_by_name
-# define ipsec_dev_put(x) dev_put(x)
-# define __ipsec_dev_put(x) __dev_put(x)
-# define ipsec_dev_hold(x) dev_hold(x)
-#else /* NETDEV_23 */
-# define ipsec_dev_get dev_get
-# define __ipsec_dev_put(x) 
-# define ipsec_dev_put(x)
-# define ipsec_dev_hold(x) 
-#endif /* NETDEV_23 */
-
-#ifndef SPINLOCK
-#  include <linux/bios32.h>
-     /* simulate spin locks and read/write locks */
-     typedef struct {
-       volatile char lock;
-     } spinlock_t;
-
-     typedef struct {
-       volatile unsigned int lock;
-     } rwlock_t;                                                                     
-
-#  define spin_lock_init(x) { (x)->lock = 0;}
-#  define rw_lock_init(x) { (x)->lock = 0; }
-
-#  define spin_lock(x) { while ((x)->lock) barrier(); (x)->lock=1;}
-#  define spin_lock_irq(x) { cli(); spin_lock(x);}
-#  define spin_lock_irqsave(x,flags) { save_flags(flags); spin_lock_irq(x);}
-
-#  define spin_unlock(x) { (x)->lock=0;}
-#  define spin_unlock_irq(x) { spin_unlock(x); sti();}
-#  define spin_unlock_irqrestore(x,flags) { spin_unlock(x); restore_flags(flags);}
-
-#  define read_lock(x) spin_lock(x)
-#  define read_lock_irq(x) spin_lock_irq(x)
-#  define read_lock_irqsave(x,flags) spin_lock_irqsave(x,flags)
-
-#  define read_unlock(x) spin_unlock(x)
-#  define read_unlock_irq(x) spin_unlock_irq(x)
-#  define read_unlock_irqrestore(x,flags) spin_unlock_irqrestore(x,flags)
-
-#  define write_lock(x) spin_lock(x)
-#  define write_lock_irq(x) spin_lock_irq(x)
-#  define write_lock_irqsave(x,flags) spin_lock_irqsave(x,flags)
-
-#  define write_unlock(x) spin_unlock(x)
-#  define write_unlock_irq(x) spin_unlock_irq(x)
-#  define write_unlock_irqrestore(x,flags) spin_unlock_irqrestore(x,flags)
-#endif /* !SPINLOCK */
-
-#ifndef SPINLOCK_23
-#  define spin_lock_bh(x)  spin_lock_irq(x)
-#  define spin_unlock_bh(x)  spin_unlock_irq(x)
-
-#  define read_lock_bh(x)  read_lock_irq(x)
-#  define read_unlock_bh(x)  read_unlock_irq(x)
-
-#  define write_lock_bh(x)  write_lock_irq(x)
-#  define write_unlock_bh(x)  write_unlock_irq(x)
-#endif /* !SPINLOCK_23 */
-
-#ifndef HAVE_NETDEV_PRINTK
-#define netdev_printk(sevlevel, netdev, msglevel, format, arg...) \
-	printk(sevlevel "%s: " format , netdev->name , ## arg)
-#endif
 
 #ifndef NET_26
 #define sk_receive_queue  receive_queue

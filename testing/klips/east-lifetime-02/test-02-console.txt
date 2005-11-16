@@ -1,3 +1,59 @@
+Starting UML PATH/start.sh
+spawn PATH single
+Linux version XXXX
+On node 0 totalpages: 8192
+Kernel command line:
+Calibrating delay loop... XXXX bogomips
+Dentry-cache hash table entries: NUMBERS
+Inode-cache hash table entries: NUMBERS
+Mount-cache hash table entries: NUMBERS
+Buffer-cache hash table entries: NUMBERS
+Page-cache hash table entries: NUMEBRS
+POSIX conformance testing by UNIFIX
+Linux NET4.0 for Linux 2.4
+Based upon Swansea University Computer Society NET3.039
+Initializing RT netlink socket
+Starting kswapd
+VFS: Diskquotas version dquot_6.4.0 initialized
+devfs: VERSION Richard Gooch (rgooch@atnf.csiro.au)
+devfs: boot_options Q
+pty: 256 Unix98 ptys configured
+SLIP: version 0.8.4-NET3.019-NEWTTY (dynamic channels, max=256).
+loop: loaded (max 8 devices)
+PPP generic driver version VERSION
+Universal TUN/TAP device driver VERSION
+
+NET4: Linux TCP/IP 1.0 for NET4.0
+IP Protocols: ICMP, UDP, TCP
+IP: routing cache hash table of 512 buckets, 4Kbytes
+TCP: Hash tables configured (established 2048 bind 2048)
+IPv4 over IPv4 tunneling driver
+GRE over IPv4 tunneling driver
+NET4: Unix domain sockets 1.0/SMP for Linux NET4.0.
+Mounted devfs on /dev
+INIT: version 2.78 booting
+Activating swap...
+Calculating module dependancies
+done.
+Loading modules: LIST
+
+Checking all file systems...
+Parallelizing fsck version 1.18 (11-Nov-1999)
+Setting kernel variables.
+Mounting local filesystems...
+/dev/shm on /tmp type tmpfs (rw)
+/dev/shm on /var/run type tmpfs (rw)
+devpts on /dev/pts type devpts (rw,mode=0622)
+none on /usr/share type hostfs (ro)
+Enabling packet forwarding: done.
+Configuring network interfaces: done.
+Cleaning: /tmp /var/lock /var/run.
+Initializing random number generator... done.
+Recovering nvi editor sessions... done.
+Give root password for maintenance
+(or type Control-D for normal startup): 
+east:~#
+ klogd -c 4 -x -f /tmp/klog.log
 east:~#
  TZ=GMT export TZ
 east:~#
@@ -43,4 +99,40 @@ east:~#
 east:~#
  echo send packets
 send packets
+east:~#
+ kill `cat /var/run/pluto/pf_key.pid`
+east:~#
+ cat /tmp/pfkey.txt; echo ===
+
+pfkey v2 msg. type=7(register) seq=1 len=5 pid=987 errno=0 satype=2(AH)
+version=2 type=7 errno=0 satype=2 len=5 seq=1 pid=987 {ext=14 len=3 bytes=0x000000000300a000a00000000200800080000000 } 
+
+pfkey v2 msg. type=7(register) seq=2 len=9 pid=987 errno=0 satype=3(ESP)
+version=2 type=7 errno=0 satype=3 len=9 seq=2 pid=987 {ext=14 len=4 bytes=0x0000000009008000800000000300a000a00000000200800080000000 } {ext=15 len=3 bytes=0x000000000c808000000100000340a800a8000000 } 
+
+pfkey v2 msg. type=7(register) seq=3 len=4 pid=987 errno=0 satype=9(IPIP)
+version=2 type=7 errno=0 satype=9 len=4 seq=3 pid=987 {ext=15 len=2 bytes=0x000000000100200020000000 } 
+
+pfkey v2 msg. type=7(register) seq=4 len=4 pid=987 errno=0 satype=10(COMP)
+version=2 type=7 errno=0 satype=10 len=4 seq=4 pid=987 {ext=15 len=2 bytes=0x000000000200010001000000 } 
+
+pfkey v2 msg. type=8(expire) seq=1 len=21 pid=987 errno=0 satype=3(ESP)
+version=2 type=8 errno=0 satype=3 len=21 seq=1 pid=987 {ext=1 len=3 spi=78563412 replay=0 state=1 auth=2 encrypt=3 flags=00000000 ref=00000002}{ext=2 len=5 allocations=1 bytes=408 addtime=X usetime=X packets=3 } {ext=4 len=5 allocations=0 bytes=384 addtime=X usetime=X packets=0 } {ext=5 len=3 proto=0 prefixlen=0 addr=0x02000000c00102170000000000000000 } {ext=6 len=3 proto=0 prefixlen=0 addr=0x02000000c001022d0000000000000000 } 
+pf_key: Exiting on signal 15
+===
+east:~#
+ ipsec eroute
+8          192.0.2.0/24       -> 192.0.1.0/24       => tun0x12345678@192.1.2.45
+east:~#
+ ipsec setup stop
+IPSEC EVENT: KLIPS device ipsec0 shut down.
+ipsec_setup: Stopping Openswan IPsec...
+ipsec_setup: stop ordered, but IPsec does not appear to be running!
+ipsec_setup: doing cleanup anyway...
+east:~#
+ kill `cat /var/run/klogd.pid`; cat /tmp/klog.log
+klogd 1.3-3#33.1, log source = /proc/kmsg started.
+east:~#
+ halt -p -f
+Power down.
 

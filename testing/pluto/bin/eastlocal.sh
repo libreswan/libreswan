@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# this script is used by "road" UMLs that want to have per-test
+# this script is used by "east" UMLs that want to have per-test
 # configuration files, and will be hitting sunrise-oe to test with.
 
 TESTING=${TESTING-/testing}
@@ -18,13 +18,7 @@ then
     cat ${TESTING}/pluto/$TESTNAME/east.secrets >>/tmp/$TESTNAME/ipsec.secrets
 fi
 
-if [ -f ${TESTING}/pluto/$TESTNAME/east.tpm.tcl ] 
-then
-    cp ${TESTING}/pluto/$TESTNAME/east.tpm.tcl /tmp/$TESTNAME/ipsec.d/tpm.tcl
-fi
-
 mkdir -p /tmp/$TESTNAME/ipsec.d/policies
-cp /etc/ipsec.d/*          /tmp/$TESTNAME/ipsec.d
-cp /etc/ipsec.d/policies/* /tmp/$TESTNAME/ipsec.d/policies
+cp -r /etc/ipsec.d/*          /tmp/$TESTNAME/ipsec.d
 
 IPSEC_CONFS=/tmp/$TESTNAME export IPSEC_CONFS

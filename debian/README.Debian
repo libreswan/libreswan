@@ -84,16 +84,10 @@ should match the Debian package version).
 If you want to use NAT Traversal but still want to use openswan-modules-source
 (since you need to patch the kernel anyway, using kernel-patch-openswan is
 easier), you can find the necessary patch under 
-/usr/src/modules/openswan/debian/nat-t.diff
-It should apply cleanly to almost any vanilla 2.4 series kernel. Debian 
+/usr/src/modules/openswan/debian/nat-t-<major version>.diff
+It should apply cleanly to newer vanilla 2.4 and 2.6 series kernels. Debian 
 kernels usually have that patch already applied, so you will not need to patch
 a Debian kernel to use openswan. 
-For 2.6 series, it is generally no longer necessary, as it is already included 
-upstream (the vanilla kernel).
-
-openswan 2.3.0 supports KLIPS for kernel series 2.6, but this support is marked
-experimental and has not yet been integrated into the openswan-modules-source
-package. Therefore, it will only work for a 2.4 series kernel.
 
 2) kernel-patch-openswan:
 By installing the kernel-patch-openswan package and using make-kpkg to build
@@ -103,9 +97,6 @@ possible with building the openswan modules outside the kernel tree with the
 openswan-modules-source package without the additional patch). Please note 
 that the environment variable PATCH_THE_KERNEL=YES has to be set for make-kpkg 
 to apply the kernel patches.
-
-This will only work for 2.4 series kernels! Patching 2.6 series kernels is not
-supported.
 
 3) Miscellaneous
 
@@ -118,4 +109,4 @@ is now the official support address for the Debian package of openswan. You
 can subscribe to the list and view its archives at
 https://www.gibraltar.at/mailman/listinfo/debian-openswan
 
- -- Rene Mayrhofer <rmayr@debian.org>, Wed Oct 16 13:08:20 2004
+ -- Rene Mayrhofer <rmayr@debian.org>, Mon, Sep 19 14:58:00 2005

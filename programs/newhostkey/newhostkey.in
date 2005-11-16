@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: newhostkey.in,v 1.8 2005/08/18 12:11:19 ken Exp $
+# RCSID $Id: newhostkey.in,v 1.6.46.1 2005/08/17 23:37:17 ken Exp $
 
 me="ipsec newhostkey"
 usage="Usage: $me --output filename [--bits n] [--quiet] [--hostname host]

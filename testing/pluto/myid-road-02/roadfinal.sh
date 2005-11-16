@@ -5,4 +5,4 @@ cat /tmp/pluto.log
 ipsec look
 ipsec auto --status 
 : ==== tuc ====
-: ==== end ====
+

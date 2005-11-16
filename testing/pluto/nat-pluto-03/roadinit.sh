@@ -1,5 +1,5 @@
 #!/bin/sh
-: ==== start ====
+
 TESTNAME=nat-pluto-03
 
 hostname road.uml.freeswan.org

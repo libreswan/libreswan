@@ -61,7 +61,7 @@ east:~#
  route add -net default gw 192.1.2.45
 east:~#
  ipsec setup start
-ipsec_setup: Starting FreeS/WAN IPsec VERSION
+ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
  /testing/pluto/basic-pluto-01/whackwait.sh
 east:~#
@@ -87,7 +87,7 @@ east NOW
 ipsec0->eth1 mtu=16260(1500)->1500
 Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
 0.0.0.0         192.1.2.45      0.0.0.0         UG       40 0          0 eth1
-192.0.1.0       192.1.2.45      255.255.255.0   UG       40 0          0 ipsec0
+192.0.1.0       192.1.2.45      255.255.255.0   U        40 0          0 ipsec0
 192.1.2.0       0.0.0.0         255.255.255.0   U        40 0          0 eth1
 192.1.2.0       0.0.0.0         255.255.255.0   U        40 0          0 ipsec0
 east:~#
@@ -108,7 +108,7 @@ east:~#
 Stopping domain name service: named.
 Stopping internet superserver: inetd.
 Stopping portmap daemon: portmap.
-ipsec_setup: Stopping FreeS/WAN IPsec...
+ipsec_setup: Stopping Openswan IPsec...
 IPSEC EVENT: KLIPS device ipsec0 shut down.
 
 Stopping system log daemon: klogd syslogd.

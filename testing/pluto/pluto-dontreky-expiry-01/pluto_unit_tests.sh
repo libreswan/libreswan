@@ -12,6 +12,7 @@ mkdir log
 ln -s /testing/pluto/log.ref       .
 ln -s /testing/pluto/ipsec.secrets .
 
-. doauto --diff ipsec-rsa-time-neg ipsec-rsa-time-trunc ipsec-rsa-time-neg-dontrekey ipsec-rsa-time-trunc-dontrekey
+. doauto --diff ipsec-rsa-time-neg ipsec-rsa-time-trunc 
+. doauto --diff ipsec-rsa-time-neg-dontrekey ipsec-rsa-time-trunc-dontrekey
 
 : ==== end ====

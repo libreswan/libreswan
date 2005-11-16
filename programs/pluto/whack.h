@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: whack.h,v 1.70 2005/09/26 03:23:18 mcr Exp $
+ * RCSID $Id: whack.h,v 1.68 2004/12/16 01:22:44 mcr Exp $
  */
 
 #include <openswan.h>
@@ -34,7 +34,7 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 24)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 33)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 32)
 
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
@@ -179,9 +179,6 @@ struct whack_message {
     /* for WHACK_REREAD */
     u_char whack_reread;
 
-    /* for WHACK_TCPEVAL */
-    char *tpmeval;
-
     /* space for strings (hope there is enough room):
      * Note that pointers don't travel on wire.
      *  1 connection name [name_len]
@@ -200,7 +197,7 @@ struct whack_message {
      * plus keyval (limit: 8K bits + overhead), a chunk.
      */
     size_t str_size;
-    unsigned char string[2048];
+    char string[2048];
 };
 
 /* options of whack --list*** command */
@@ -230,14 +227,14 @@ struct whack_message {
 #define REREAD_OCSPCERTS  0x08	/* reread certs in /etc/ipsec.d/ocspcerts */
 #define REREAD_ACERTS     0x10	/* reread certs in /etc/ipsec.d/acerts */
 #define REREAD_CRLS	  0x20	/* reread crls in /etc/ipsec.d/crls */
+
 #define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_CRLS)  /* all reread options */
-#define REREAD_TPMEVAL    0x40  /* evaluate in Tcl */
 
 
 struct whackpacker {
     struct whack_message *msg;
-    unsigned char        *str_roof;
-    unsigned char        *str_next;
+    char                 *str_roof;
+    char                 *str_next;
     int                   n;
 };
 

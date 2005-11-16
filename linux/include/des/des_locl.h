@@ -253,7 +253,11 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 				} \
 			}
 
+#if defined(WIN32)
+#define	ROTATE(a,n)	(_lrotr(a,n))
+#else
 #define	ROTATE(a,n)	(((a)>>(n))+((a)<<(32-(n))))
+#endif
 
 /* Don't worry about the LOAD_DATA() stuff, that is used by
  * fcrypt() to add it's little bit to the front */

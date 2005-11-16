@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: vendor.h,v 1.14 2005/07/26 02:02:35 mcr Exp $
+ * RCSID $Id: vendor.h,v 1.13.2.1 2005/07/26 02:05:10 ken Exp $
  */
 
 #ifndef _VENDOR_H_

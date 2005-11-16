@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pfkey_v2.c,v 1.102 2005/09/14 16:37:23 mcr Exp $
+ * RCSID $Id: pfkey_v2.c,v 1.97.2.4 2005/09/14 16:40:45 mcr Exp $
  */
 
 /*
@@ -1891,6 +1891,19 @@ void pfkey_proto_init(struct net_protocol *pro)
 
 /*
  * $Log: pfkey_v2.c,v $
+ * Revision 1.97.2.4  2005/09/14 16:40:45  mcr
+ *    pull up of compilation on 2.4
+ *
+ * Revision 1.97.2.3  2005/09/06 02:10:03  mcr
+ *    pulled up possible SMP-related compilation fix
+ *
+ * Revision 1.97.2.2  2005/08/28 01:21:12  paul
+ * Undid Ken's gcc4 fix in version 1.94 since it breaks linking KLIPS on
+ * SMP kernels.
+ *
+ * Revision 1.97.2.1  2005/08/27 23:40:00  paul
+ * recommited HAVE_SOCK_SECURITY fixes for linux 2.6.13
+ *
  * Revision 1.102  2005/09/14 16:37:23  mcr
  * 	fix to compile on 2.4.
  *

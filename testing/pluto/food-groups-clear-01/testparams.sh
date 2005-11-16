@@ -8,14 +8,13 @@ TESTNAME=food-groups-clear-01
 EASTHOST=east
 WESTHOST=west
 
-#ARPREPLY=--arpreply
-
-#EAST_INPUT=../../klips/inputs/01-sunrise-sunset-ping.pcap
 REF_WEST_OUTPUT=westnet-east-sunset-ping.txt
-REF_WEST_FILTER=../../klips/fixups/no-arp-pcap.pl
+REF_WEST_FILTER=../../klips/fixups/no-arp-pcap2.pl
 
 REF_PUB_OUTPUT=publicnet-east-sunset-ping.txt
-REF_PUB_FILTER=../../klips/fixups/no-arp-pcap.pl
+REF_PUB_FILTER=../../klips/fixups/no-arp-pcap2.pl
+
+THREEEIGHT=true
 
 REF_EAST_CONSOLE_OUTPUT=east-console.txt
 REF26_EAST_CONSOLE_OUTPUT=east-console.txt

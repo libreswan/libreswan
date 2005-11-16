@@ -1,5 +1,5 @@
 #!/bin/sh
-: ==== start ====
+
 TESTNAME=nat-pluto-02
 source /testing/pluto/bin/eastlocal.sh
 

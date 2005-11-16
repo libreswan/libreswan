@@ -24,11 +24,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "sha1.h"

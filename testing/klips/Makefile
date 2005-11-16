@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.20 2005/08/25 18:18:15 mcr Exp $
+# RCSID $Id: Makefile,v 1.19 2004/07/05 05:26:19 mcr Exp $
 
 OPENSWANSRCDIR=$(shell cd ../..; pwd)
 include $(OPENSWANSRCDIR)/Makefile.inc
@@ -35,11 +35,11 @@ checkmod:
 	KLIPS_MODULE=-module ./dotests.sh
 
 spotcheck:
-	@source ${OPENSWANSRCDIR}/umlsetup.sh; source setup.sh; source $${UTILS}/functions.sh; eval `sed -e '/^#/d' -e '/^$$/d' ${srcdir}TESTLIST | perl $${UTILS}/shuffle.pl 1`
+	@source ${OPENSWANSRCDIR}/umlsetup.sh; source setup.sh; source $${UTILS}/functions.sh; eval `sed -e '/^#/d' -e '/^$$/d' TESTLIST | perl $${UTILS}/shuffle.pl 1`
 
 
 checkcon:
-	cat ${srcdir}TESTLIST | sed -e '/^#/d' -e '/^$$/d' | while read testtype name status; \
+	cat TESTLIST | sed -e '/^#/d' -e '/^$$/d' | while read testtype name status; \
 	do\
 		echo Working on $$name; \
 		(cd $$name && ../../utils/redocon.sh); \
@@ -52,7 +52,7 @@ install install_file_list checkprograms programs:
 	@true
 
 clean:
-	cat ${srcdir}TESTLIST | while read testtype name status; \
+	cat TESTLIST | while read testtype name status; \
 	do\
 		rm -rf $$name/OUTPUT;\
 	done

@@ -8,13 +8,13 @@ Majors Version	Desired Feature Set			Date
 		
 2.3.1		bug fixes for DPD and ModeCfg.		Q1 2005
 
-2.4		optional 'ipsec starter'		Q2 2005
-		KLIPS2.6 test cases run
+2.4		Alg/CryptoAPI Support			Q2 2005
+		KLIPS2.6 support
 
-2.5		hardware support
+2.5		hardware support			Q1 2006
 		simpleca included
 
-2.7		no more scripts				Q1 2005
+2.7		no more scripts				Q2 2006
 		26sec test cases
 
 2.7		IKEv2 (???)

@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pem.c,v 1.9 2005/08/05 19:12:10 mcr Exp $
+ * RCSID $Id: pem.c,v 1.8 2005/02/28 22:16:59 mcr Exp $
  */
 
 /* decrypt a PEM encoded data block using DES-EDE3-CBC
@@ -30,7 +30,6 @@
 #define HEADER_DES_LOCL_H   /* stupid trick to force prototype decl in <des.h> */
 #include <crypto/des.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "log.h"

@@ -111,16 +111,6 @@ void ipsec_print_ip(struct iphdr *ip)
   return;
 }
 
-struct net_device *ipsec_get_device(int inst)
-{
-  struct net_device *ipsec_dev;
-
-  ipsec_dev = NULL;
-
-  return ipsec_dev;
-}
-
-
 int pfkey_expire(struct ipsec_sa *sa, int time)
 {
   return 1;

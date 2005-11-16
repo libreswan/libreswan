@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: keyblobtoid.c,v 1.8 2005/08/05 08:59:36 mcr Exp $
+ * RCSID $Id: keyblobtoid.c,v 1.7 2004/04/09 18:00:39 mcr Exp $
  */
 #include "internal.h"
 #include "openswan.h"
@@ -37,7 +37,7 @@ size_t dstlen;
 		buf[5] = '0' + srclen;
 		ret = 0;
 	} else {
-	    (void) datatot((const char *)src, srclen, 64, buf, NDIG+1);
+		(void) datatot(src, srclen, 64, buf, NDIG+1);
 		ret = NDIG+1;
 	}
 

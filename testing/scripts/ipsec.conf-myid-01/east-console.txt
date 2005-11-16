@@ -33,7 +33,7 @@ east:~#
 000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
 000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
 000  
-000 stats /net/istari/0i/sandboxes/noklips/programs/pluto/db_ops.c: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
+000 stats db_ops.c: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
 000 "block": 192.1.2.23[%myid]---192.1.2.254...%group; unrouted; eroute owner: #0
 000 "block":     srcip=unset; dstip=unset; srcup=ipsec _updown; dstup=ipsec _updown;
@@ -48,7 +48,7 @@ east:~#
 000 "clear-or-private": 192.1.2.23[%myid]---192.1.2.254...%opportunisticgroup; unrouted; eroute owner: #0
 000 "clear-or-private":     srcip=unset; dstip=unset; srcup=ipsec _updown; dstup=ipsec _updown;
 000 "clear-or-private":   ike_life: 3600s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
-000 "clear-or-private":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+GROUP+GROUTED+PASS+failurePASS+NEVER_NEGOTIATE+lKOD+rKOD; prio: 32,0; interface: eth1; 
+000 "clear-or-private":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+GROUP+GROUTED+PASS+failurePASS+lKOD+rKOD; prio: 32,0; interface: eth1; 
 000 "clear-or-private":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "packetdefault": 0.0.0.0/0===192.1.2.23[%myid]---192.1.2.254...%opportunistic; prospective erouted; eroute owner: #0
 000 "packetdefault":     srcip=unset; dstip=unset; srcup=ipsec _updown; dstup=ipsec _updown;
@@ -76,6 +76,7 @@ east:~#
  ipsec setup stop
 IPSEC EVENT: KLIPS device ipsec0 shut down.
 ipsec_setup: Stopping Openswan IPsec...
+ipsec_setup: Unknown HZ value! (8) Assume 100.
 east:~#
  ipsec eroute
 east:~#
@@ -111,7 +112,7 @@ east:~#
 000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
 000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
 000  
-000 stats /net/istari/0i/sandboxes/noklips/programs/pluto/db_ops.c: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
+000 stats db_ops.c: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
 000 "block": 192.1.2.23[%myid]---192.1.2.254...%group; unrouted; eroute owner: #0
 000 "block":     srcip=unset; dstip=unset; srcup=ipsec _updown; dstup=ipsec _updown;
@@ -126,7 +127,7 @@ east:~#
 000 "clear-or-private": 192.1.2.23[%myid]---192.1.2.254...%opportunisticgroup; unrouted; eroute owner: #0
 000 "clear-or-private":     srcip=unset; dstip=unset; srcup=ipsec _updown; dstup=ipsec _updown;
 000 "clear-or-private":   ike_life: 3600s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
-000 "clear-or-private":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+GROUP+GROUTED+PASS+failurePASS+NEVER_NEGOTIATE+lKOD+rKOD; prio: 32,0; interface: eth1; 
+000 "clear-or-private":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+GROUP+GROUTED+PASS+failurePASS+lKOD+rKOD; prio: 32,0; interface: eth1; 
 000 "clear-or-private":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "packetdefault": 0.0.0.0/0===192.1.2.23[%myid]---192.1.2.254...%opportunistic; prospective erouted; eroute owner: #0
 000 "packetdefault":     srcip=unset; dstip=unset; srcup=ipsec _updown; dstup=ipsec _updown;
@@ -154,4 +155,5 @@ east:~#
  ipsec setup stop
 IPSEC EVENT: KLIPS device ipsec0 shut down.
 ipsec_setup: Stopping Openswan IPsec...
+ipsec_setup: Unknown HZ value! (9) Assume 100.
 

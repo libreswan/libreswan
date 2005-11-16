@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: auto.in,v 1.106 2005/09/26 02:38:29 mcr Exp $
+# RCSID $Id: auto.in,v 1.104 2005/01/11 17:52:49 ken Exp $
 
 me='ipsec auto'
 usage="Usage:
@@ -220,7 +220,7 @@ awk '	BEGIN {
 		if ((k in s) && s[k] != "yes" && s[k] != "no")
 			fail("parameter " v(k) " must be \"yes\" or \"no\"")
 	}
-	function setdefault(k, val) {
+	function default(k, val) {
 		if (!(k in s))
 			s[k] = val
 	}
@@ -313,7 +313,7 @@ awk '	BEGIN {
 		if (!seensome)
 			fail("internal error, output called inappropriately")
 
-		setdefault("type", "tunnel")
+		default("type", "tunnel")
 		type_flags = ""
 		t = s["type"]
 		if (t == "tunnel") {
@@ -335,7 +335,7 @@ awk '	BEGIN {
 		} else
 			fail("unknown type " v(t))
 
-		setdefault("failureshunt", "none")
+		default("failureshunt", "none")
 		t = s["failureshunt"]
 		if (t == "passthrough")
 			type_flags = type_flags " --failpass";
@@ -362,52 +362,52 @@ awk '	BEGIN {
 			nexthopset("right", drnexthop)
 		}
 
-		setdefault("keyexchange", "ike")
+		default("keyexchange", "ike")
 		if (s["keyexchange"] != "ike")
 			fail("only know how to do keyexchange=ike")
-		setdefault("auth", "esp")
+		default("auth", "esp")
 		if (("auth" in s) && s["auth"] != "esp" && s["auth"] != "ah")
 			fail("only know how to do auth=esp or auth=ah")
 
 		yesno("pfs")
-		setdefault("pfs", "yes")
+		default("pfs", "yes")
 
  		yesno("aggrmode")
- 		setdefault("aggrmode", "no")
+ 		default("aggrmode", "no")
 
                 duration("dpddelay")
                 duration("dpdtimeout")
                 if(("dpddelay" in s) && !("dpdtimeout" in s))
-                        setdefault("dpdtimeout",120)
+                        default("dpdtimeout",120)
                 if(!("dpddelay" in s) && ("dpdtimeout" in s))
-                        setdefault("dpddelay",30)
-                setdefault("dpdaction","hold")
+                        default("dpddelay",30)
+                default("dpdaction","hold")
 
 		yesno("forceencaps")
-		setdefault("forceencaps", "no")
+		default("forceencaps", "no")
 		yesno("xauth")
-		setdefault("xauth", "no")
+		default("xauth", "no")
 		yesno("xauthserver")
-		setdefault("xauthserver", "no")
+		default("xauthserver", "no")
 		yesno("xauthclient")
-		setdefault("xauthclient", "no")
+		default("xauthclient", "no")
 		yesno("modecfgserver")
-		setdefault("modecfgserver", "no")
+		default("modecfgserver", "no")
 		yesno("modecfgclient")
-		setdefault("modecfgclient", "no")
+		default("modecfgclient", "no")
 
 		yesno("modecfgpull")
-		setdefault("modecfgpull", "no")
+		default("modecfgpull", "no")
 
 		yesno("compress")
-		setdefault("compress", "no")
-		setdefault("keylife", "8h")
+		default("compress", "no")
+		default("keylife", "8h")
 		duration("keylife")
 		yesno("rekey")
-		setdefault("rekey", "yes")
-		setdefault("rekeymargin", "9m")
+		default("rekey", "yes")
+		default("rekeymargin", "9m")
 		duration("rekeymargin")
-		setdefault("keyingtries", "%forever")
+		default("keyingtries", "%forever")
 		if (s["keyingtries"] == "%forever")
 			s["keyingtries"] = 0
 		integer("keyingtries")
@@ -419,13 +419,13 @@ awk '	BEGIN {
 			integer("rekeyfuzz")
 		}
 		duration("ikelifetime")
-		setdefault("disablearrivalcheck", "no")
+		default("disablearrivalcheck", "no")
 
-		setdefault("leftsendcert", "always")
-		setdefault("rightsendcert", "always")
+		default("leftsendcert", "always")
+		default("rightsendcert", "always")
 
-		setdefault("leftnexthop", "%direct")
-		setdefault("rightnexthop", "%direct")
+		default("leftnexthop", "%direct")
+		default("rightnexthop", "%direct")
 		if (s["leftnexthop"] == s["left"])
 			fail("left and leftnexthop must not be the same")
 		if (s["rightnexthop"] == s["right"])
@@ -441,22 +441,22 @@ awk '	BEGIN {
 			s["rightnexthop"] = drnexthop
 		}
 
-		setdefault("leftupdown", "ipsec _updown")
-		setdefault("rightupdown", "ipsec _updown")
-		setdefault("authby", "rsasig")
+		default("leftupdown", "ipsec _updown")
+		default("rightupdown", "ipsec _updown")
+		default("authby", "rsasig")
 		t = s["authby"]
 		if (t == "rsasig" || t == "secret|rsasig" || t == "rsasig|secret") {
 			authtype = "--rsasig"
 			type_flags = "--encrypt " type_flags
 			if (!("leftcert" in s)) {
-				setdefault("leftrsasigkey", "%dnsondemand")
+				default("leftrsasigkey", "%dnsondemand")
 				if (id("left") == "%any" &&
 				    !(s["leftrsasigkey"] == "%cert" ||
 				      s["leftrsasigkey"] == "0x00") )
 					fail("ID " v(id("left")) " cannot have RSA key")
 			}
 			if (!("rightcert" in s)) {
-				setdefault("rightrsasigkey", "%dnsondemand")
+				default("rightrsasigkey", "%dnsondemand")
 				if (id("right") == "%any" &&
 				    !(s["rightrsasigkey"] == "%cert" ||
 				      s["rightrsasigkey"] == "0x00") )
@@ -476,7 +476,7 @@ awk '	BEGIN {
 		settings = type_flags
 
                 # BEGIN IPv6
-                setdefault("connaddrfamily", "ipv4")
+                default("connaddrfamily", "ipv4")
                 if (s["connaddrfamily"] == "ipv6") {
                         settings = settings " --ipv6"
                 } else if (s["connaddrfamily"] != "ipv4") {
@@ -485,7 +485,7 @@ awk '	BEGIN {
                 # END IPv6
 
 		if (s["ike"] != "")
-			settings = settings " --ikealg " qs("ike")
+			settings = settings " --ike " qs("ike")
 		if (s["esp"] != "")
 			settings = settings " --esp " qs("esp")
 

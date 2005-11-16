@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: whacklib.c,v 1.9 2005/09/26 03:23:39 mcr Exp $
+ * RCSID $Id: whacklib.c,v 1.7 2004/12/16 01:21:59 mcr Exp $
  */
 
 #include <stdio.h>
@@ -34,7 +34,6 @@
 #include <openswan.h>
 #include <stdarg.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "whack.h"
@@ -59,7 +58,7 @@ pack_str(struct whackpacker *wp, char **p)
     }
     else
     {
-	strcpy((char *)wp->str_next, s);
+	strcpy(wp->str_next, s);
 	wp->str_next += len;
 	*p = NULL;	/* don't send pointers on the wire! */
 	return TRUE;
@@ -77,7 +76,7 @@ pack_str(struct whackpacker *wp, char **p)
 static bool
 unpack_str(struct whackpacker *wp, char **p)
 {
-    unsigned char *end = memchr(wp->str_next, '\0', wp->str_roof - wp->str_next);
+    char *end = memchr(wp->str_next, '\0', wp->str_roof - wp->str_next);
 
     if (end == NULL)
     {
@@ -85,9 +84,7 @@ unpack_str(struct whackpacker *wp, char **p)
     }
     else
     {
-	unsigned char *s = (wp->str_next == end? NULL : wp->str_next);
-
-	*p = (char *)s;
+	*p = wp->str_next == end? NULL : wp->str_next;
 	wp->str_next = end + 1;
 	return TRUE;
     }
@@ -131,8 +128,7 @@ err_t pack_whack_msg (struct whackpacker *wp)
 	|| !pack_str(wp, &wp->msg->myid)        /* string 15 */
     	|| !pack_str(wp, &wp->msg->ike)         /* string 16 */
     	|| !pack_str(wp, &wp->msg->esp)         /* string 17 */
-    	|| !pack_str(wp, &wp->msg->tpmeval)     /* string 18 */
-	|| wp->str_roof - wp->str_next < (ptrdiff_t)wp->msg->keyval.len)    /* chunk (sort of string 19) */
+	|| wp->str_roof - wp->str_next < (ptrdiff_t)wp->msg->keyval.len)    /* chunk (sort of string 16) */
     {
 	ugh = "too many bytes of strings to fit in message to pluto";
 	return ugh;
@@ -185,8 +181,8 @@ err_t unpack_whack_msg (struct whackpacker *wp)
 	|| !unpack_str(wp, &wp->msg->myid)        /* string 15 */
     	|| !unpack_str(wp, &wp->msg->ike)         /* string 16 */
     	|| !unpack_str(wp, &wp->msg->esp)         /* string 17 */
-    	|| !unpack_str(wp, &wp->msg->tpmeval)     /* string 18 */
-	|| wp->str_roof - wp->str_next != (ptrdiff_t)wp->msg->keyval.len)	/* check chunk */
+
+       || wp->str_roof - wp->str_next != (ptrdiff_t)wp->msg->keyval.len)	/* check chunk */
     {
 	ugh = "message from whack contains bad string";
     }

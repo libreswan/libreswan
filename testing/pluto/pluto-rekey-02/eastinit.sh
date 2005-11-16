@@ -1,5 +1,5 @@
 #!/bin/sh
-: ==== start ====
+
 TESTNAME=pluto-rekey-02
 source /testing/pluto/bin/eastlocal.sh
 

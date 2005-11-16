@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: state.c,v 1.154 2005/08/12 16:51:02 mcr Exp $
+ * RCSID $Id: state.c,v 1.151.4.4 2005/08/12 17:04:08 ken Exp $
  */
 
 #include <stdio.h>
@@ -24,10 +24,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <sys/queue.h>
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -311,7 +311,7 @@ delete_state(struct state *st)
             delete_dpd_event(st);
 
     /* if there is a suspended state transition, disconnect us */
-    if (st->st_suspended_md != NULL)
+    if (st != NULL && st->st_suspended_md != NULL)
     {
 	passert(st->st_suspended_md->st == st);
 	st->st_suspended_md->st = NULL;
@@ -580,7 +580,7 @@ duplicate_state(struct state *st)
     nst->quirks = st->quirks;
     nst->hidden_variables = st->hidden_variables;
     if(st->st_xauth_username) {
-	nst->st_xauth_username = clone_str((char *)st->st_xauth_username
+	nst->st_xauth_username = clone_str(st->st_xauth_username
 					   , "xauth username");
     }
     nst->st_remoteaddr = st->st_remoteaddr;
@@ -639,10 +639,9 @@ find_state(const u_char *icookie
 	    && memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0)
 	{
 	    DBG(DBG_CONTROL,
-		DBG_log("peer and cookies match on #%ld, provided msgid %08lx vs %08lx"
+		DBG_log("peer and cookies match on #%ld, provided msgid %08x vs %08x"
 			, st->st_serialno
-			, (long unsigned)ntohl(msgid)
-			, (long unsigned)ntohl(st->st_msgid)));
+			, ntohl(msgid), ntohl(st->st_msgid)));
 	    if(msgid == st->st_msgid)
 		break;
 	}
@@ -678,11 +677,11 @@ find_info_state(const u_char *icookie
 	    && memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0)
 	{
 	    DBG(DBG_CONTROL,
-		DBG_log("peer and cookies match on #%ld, provided msgid %08lx vs %08lx/%08lx"
+		DBG_log("peer and cookies match on #%ld, provided msgid %08x vs %08x/%08x"
 			, st->st_serialno
-			, (long unsigned)ntohl(msgid)
-			, (long unsigned)ntohl(st->st_msgid)
-			, (long unsigned)ntohl(st->st_msgid_phase15)));
+			, ntohl(msgid)
+			, ntohl(st->st_msgid)
+			, ntohl(st->st_msgid_phase15)));
 	    if((st->st_msgid_phase15!=0 && msgid == st->st_msgid_phase15)
 	       || msgid == st->st_msgid)
 		break;

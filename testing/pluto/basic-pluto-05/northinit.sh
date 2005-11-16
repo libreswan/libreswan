@@ -2,7 +2,7 @@
 
 # make sure that NAT is working
 #ping -c 4 -n sunrise
-: ==== start ====
+
 TESTNAME=basic-pluto-05 
 source /testing/pluto/bin/northlocal.sh
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-: ==== start ====
+
 ipsec setup stop
 umount /var/tmp; mount /var/tmp
 umount /usr/local; mount /usr/local

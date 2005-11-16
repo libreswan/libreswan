@@ -1,8 +1,8 @@
-192.0.3.1 > 192.0.2.1: ICMP echo request, id 26112, seq 0, length 64
-192.0.3.1 > 192.0.2.1: ICMP echo request, id 26112, seq 256, length 64
-192.0.3.1 > 192.0.2.1: ICMP echo request, id 26112, seq 512, length 64
-192.0.3.1 > 192.0.2.1: ICMP echo request, id 26112, seq 768, length 64
-192.0.3.1 > 192.0.2.1: ICMP echo request, id 26112, seq 1024, length 64
-192.0.3.1 > 192.0.2.1: ICMP echo request, id 26112, seq 1280, length 64
-192.0.3.1 > 192.0.2.1: ICMP echo request, id 26112, seq 1536, length 64
-192.0.3.1 > 192.0.2.1: ICMP echo request, id 26112, seq 1792, length 64
+192.0.3.1 > 192.0.2.1: ICMP echo request (DF)
+192.0.3.1 > 192.0.2.1: ICMP echo request (DF)
+192.0.3.1 > 192.0.2.1: ICMP echo request (DF)
+192.0.3.1 > 192.0.2.1: ICMP echo request (DF)
+192.0.3.1 > 192.0.2.1: ICMP echo request (DF)
+192.0.3.1 > 192.0.2.1: ICMP echo request (DF)
+192.0.3.1 > 192.0.2.1: ICMP echo request (DF)
+192.0.3.1 > 192.0.2.1: ICMP echo request (DF)

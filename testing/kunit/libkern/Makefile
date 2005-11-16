@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.7 2005/08/04 18:54:57 mcr Exp $
+# RCSID $Id: Makefile,v 1.6 2005/04/28 21:01:13 mcr Exp $
 
 
 OPENSWANSRCDIR?=$(shell cd ../../..; pwd)
@@ -23,14 +23,11 @@ MANDIR=$(MANTREE)/man3
 
 SRCS=printk.c jiffies.c sysctl.c panic.c skb.c netif.c stack.c
 SRCS+=vmalloc.c  module.c
-SRCS+=bh.c ipv4.c talloc.c skbcreate.c
-# XXX need to have checksum.c for non-x86
-
-ASSRCS+=checksum.S
+SRCS+=bh.c checksum.S ipv4.c talloc.c skbcreate.c
 
 KSRCS=kernelenv.c core.c
 
-OBJS=${SRCS:.c=.o} ${ASSRCS:.S=.o} ${KSRCS:.c=.o} version.o
+OBJS=${SRCS:.c=.o} ${SRCS:.S=.o} ${KSRCS:.c=.o} version.o
 
 LIBA=libkern.a
 KLIPSSRCDIR=${OPENSWANSRCDIR}/linux
@@ -84,8 +81,8 @@ $(OBJS):	$(HDRS)
 $(LOGOBJS):	$(HDRS)
 
 # build version.c using version number from Makefile.ver
-version.c:	${srcdir}version.in.c ${OPENSWANSRCDIR}/Makefile.ver
-	sed '/"/s/xxx/$(IPSECVERSION)/' ${srcdir}version.in.c >$@
+version.c:	version.in.c ${OPENSWANSRCDIR}/Makefile.ver
+	sed '/"/s/xxx/$(IPSECVERSION)/' version.in.c >$@
 
 clean:
 	rm -f $(LIB) *.o try* core *.core $(EXTHDRS) $(EXTLIBS) version.c

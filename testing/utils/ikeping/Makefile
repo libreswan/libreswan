@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.5 2002/03/27 23:28:25 mcr Exp $
+# RCSID $Id: Makefile,v 1.6 2004/04/03 19:44:52 ken Exp $
 
 
 
@@ -22,9 +22,9 @@ include ../../../Makefile.inc
 FMANDIR=$(MANTREE)/man5
 PMANDIR=$(MANTREE)/man8
 
-FREESWANSRCDIR=../../..
-FREESWANLIBDIR=${FREESWANSRCDIR}/lib
-FREESWANINCLS= -I$(FREESWANLIBDIR) -I${FREESWANSRCDIR}
+OPENSWANSRCDIR=../../..
+FREESWANLIBDIR=${OPENSWANSRCDIR}/lib
+FREESWANINCLS= -I$(FREESWANLIBDIR) -I${OPENSWANSRCDIR}
 FREESWANLIB=$(FREESWANLIBDIR)/libfreeswan.a
 
 CFLAGS = -g -Wall -W -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast \
@@ -101,6 +101,6 @@ checkprograms: ikeping
 check: 
 
 
-ikeping.o: ${FREESWANSRCDIR}/pluto/constants.h
-ikeping.o: ${FREESWANSRCDIR}/pluto/packet.h
-ikeping.o: ${FREESWANSRCDIR}/lib/freeswan.h
+ikeping.o: ${OPENSWANSRCDIR}/pluto/constants.h
+ikeping.o: ${OPENSWANSRCDIR}/pluto/packet.h
+ikeping.o: ${OPENSWANSRCDIR}/lib/freeswan.h

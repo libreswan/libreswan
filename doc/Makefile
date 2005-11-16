@@ -45,7 +45,7 @@ separate=intro.html install.html config.html manpages.html \
 	mail.html performance.html testing.html web.html \
 	glossary.html biblio.html rfc.html faq.html \
 	adv_config.html user_examples.html background.html \
-	quickstart.html umltesting.html makecheck.html nightly.html \
+	quickstart.html  makecheck.html nightly.html \
         upgrading.html policygroups.html
 
 alldocs=${seperate} index.html 
@@ -58,23 +58,24 @@ TESTINGDIR=${OPENSWANSRCDIR}/testing
 
 # where do we put HTML manpages?
 HMANDIR=manpage.d
-SAMPLEMAN=${HMANDIR}/ipsec.8.html
 
-programs: ${alldocs} ${SAMPLEMAN}
+programs: ${alldocs} manpages
 
-all: #$(howto) index.html
+all: #$(howto) $(manpages) index.html
 
 # default, build HTML only
 # dependencies build most of it
 # then we add index
-index.html: ${SAMPLEMAN} ${OPENSWANSRCDIR}/doc/src/index.html
+index.html: manpages ${OPENSWANSRCDIR}/doc/src/index.html
 	cp ${OPENSWANSRCDIR}/doc/src/index.html index.html
 
-${SAMPLEMAN}: $(SCRIPTDIR)/mkhtmlman
+manpages:	manp
+
+manp:	$(SCRIPTDIR)/mkhtmlman
 	-@$(SCRIPTDIR)/mkhtmlman $(HMANDIR) `find ${OPENSWANSRCDIR}/programs ${OPENSWANSRCDIR}/lib ${OPENSWANSRCDIR}/linux -type f -name '*.[1-8]' -print | grep -v lwres | grep -v CVS`
 
-real-all: $(howto) index.html
-remake: $(alldocs) 
+real-all: $(howto) $(manpages) index.html
+remake: $(alldocs) $(manpages) 
 
 realclean:
 	@rm -f $(howto) $(separate) toc.html index.html
@@ -83,7 +84,7 @@ realclean:
 clean:
 	@echo nothing here anymore
 
-install: ${alldocs} ${SAMPLEMAN}
+install: ${alldocs} manpages
 	@mkdir -p ${DOCDIR}
 	@$(foreach f, $(alldocs), \
 		$(INSTALL) $f ${DOCDIR} || exit 1;\

@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: _startklips.in,v 1.46 2005/08/25 22:45:01 paul Exp $
+# RCSID $Id: _startklips.in,v 1.43 2005/03/31 21:07:27 ken Exp $
 
 me='ipsec _startklips'		# for messages
 
@@ -104,21 +104,22 @@ klipsinterface() {
 
 	# figure out ifconfig for interface
 	addr=
-	eval `ip addr show dev $phys |
-		awk '$1 == "inet" {
-			print "addr=" $2
-			other = $4
-			if ($3 == "brd")
+	eval `ifconfig $phys |
+		awk '$1 == "inet" && $2 ~ /^addr:/ && $NF ~ /^Mask:/ {
+			gsub(/:/, " ", $0)
+			print "addr=" $3
+			other = $5
+			if ($4 == "Bcast")
 				print "type=broadcast"
-			else if ($3 == "peer")
-				print "type=peer"
+			else if ($4 == "P-t-P")
+				print "type=pointopoint"
 			else if (NF == 5) {
 				print "type="
 				other = ""
 			} else
 				print "type=unknown"
 			print "otheraddr=" other
-			gsub(/\//, " ", $0)
+			print "mask=" $NF
 		}'`
 	if test " $addr" = " "
 	then
@@ -136,17 +137,16 @@ klipsinterface() {
 	else
 		mtu=
 	fi
+	echo "KLIPS $virt on $phys $addr/$mask $type $otheraddr $mtu" | logonly
+
 	if $klips
 	then
-		echo "KLIPS $virt on $phys $addr $type $otheraddr $mtu" | logonly
 		# attach the interface and bring it up
 		ipsec tncfg --attach --virtual $virt --physical $phys
-		ip addr add $addr $type $otheraddr dev $virt
-		ip link set $virt $mtu up
+		ifconfig $virt inet $addr $type $otheraddr netmask $mask $mtu
 	fi
 
 	# if %defaultroute, note the facts
-	addr=`echo $addr|sed 's/\/.*//'`
 	if test " $2" != " "
 	then
 		(
@@ -199,8 +199,8 @@ checkif() {
 
 # interfaces=%defaultroute:  put ipsec0 on top of default route's interface
 defaultinterface() {
-	phys=`ip route show |
-		awk '$1 == "default" { print $5 }'`
+	phys=`netstat -nr |
+		awk '$1 == "0.0.0.0" && $3 == "0.0.0.0" { print $NF }'`
 	if test " $phys" = " "
 	then
 		echo "no default route, %defaultroute cannot cope!!!"
@@ -211,8 +211,8 @@ defaultinterface() {
 		echo "multiple default routes, %defaultroute cannot cope!!!"
 		exit 1
 	fi
-	next=`ip route show |
-		awk '$1 == "default" { print $3 }'`
+	next=`netstat -nr |
+		awk '$1 == "0.0.0.0" && $3 == "0.0.0.0" { print $2 }'`
 	klipsinterface "ipsec0=$phys" $next
 }
 

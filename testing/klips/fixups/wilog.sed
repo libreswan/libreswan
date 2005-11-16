@@ -12,8 +12,3 @@ s/ {isakmp=#.*\/ipsec=#.*}//
 /started helper pid=/d
 /calc_dh_shared()/d
 /^!/d
-s/\(Vendor ID payload \[Openswan (this version) \).*/\1 VERSION/
-/@(#) built on/d
-s,7.2/ifn0,7.2/lo:e,
-s,7.1/ifn0,7.1/lo:w,
-

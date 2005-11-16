@@ -1,5 +1,5 @@
 #!/bin/sh
-: ==== start ====
+
 : note trailing dot
 hostname road.uml.freeswan.org.
 

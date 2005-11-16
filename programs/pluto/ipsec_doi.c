@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_doi.c,v 1.316 2005/10/20 21:12:36 mcr Exp $
+ * RCSID $Id: ipsec_doi.c,v 1.304.2.7 2005/11/15 03:51:22 ken Exp $
  */
 
 #include <stdio.h>
@@ -24,14 +24,15 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <resolv.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
+#include <sys/queue.h>
 #include <sys/time.h>		/* for gettimeofday */
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 #include "pfkeyv2.h"
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
@@ -86,8 +87,6 @@
 #include "dpd.h"
 #include "x509more.h"
 
-#include "tpm/tpm.h"
-
 /*
 * tools for sending Pluto Vendor ID.
  */
@@ -114,7 +113,7 @@ init_pluto_vendorid(void)
 {
     MD5_CTX hc;
     unsigned char hash[MD5_DIGEST_SIZE];
-    const char *v = ipsec_version_string();
+    const unsigned char *v = ipsec_version_string();
     int i;
 
     if(pluto_vendorid_built) {
@@ -122,8 +121,8 @@ init_pluto_vendorid(void)
     }
 
     osMD5Init(&hc);
-    osMD5Update(&hc, (const unsigned char *)v, strlen(v));
-    osMD5Update(&hc, (const unsigned char *)compile_time_interop_options
+    osMD5Update(&hc, v, strlen(v));
+    osMD5Update(&hc, compile_time_interop_options
 	, strlen(compile_time_interop_options));
     osMD5Final(hash, &hc);
 
@@ -262,7 +261,6 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
     u_char *r_hashval, *r_hash_start;
     static time_t last_malformed;
     time_t n = time((time_t)NULL);
-    struct isakmp_hdr hdr;           /* keep it around for TPM */
 
     r_hashval = NULL;
     r_hash_start = NULL;
@@ -316,6 +314,8 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 
     /* HDR* */
     {
+	struct isakmp_hdr hdr;
+
 	hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT | ISAKMP_MINOR_VERSION;
 	hdr.isa_np = encst ? ISAKMP_NEXT_HASH : ISAKMP_NEXT_N;
 	hdr.isa_xchg = ISAKMP_XCHG_INFO;
@@ -372,16 +372,6 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 	close_output_pbs(&not_pbs);
     }
 
-#ifdef TPM
-    {
-	pb_stream *pbs = &r_hdr_pbs;
-	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-	TCLCALLOUT_crypt("preHash",encst,pbs,sizeof(struct isakmp_hdr),enc_len);
-	r_hashval = tpm_relocateHash(pbs);
-    }
-#endif
-
     /* calculate hash value and patch into Hash Payload */
     if (encst)
     {
@@ -432,12 +422,7 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 	chunk_t saved_tpacket = sndst->st_tpacket;
 
 	setchunk(sndst->st_tpacket, pbs.start, pbs_offset(&pbs));
-	TCLCALLOUT_notify("avoidEmittingNotification", sndst, &pbs, &hdr);
 	send_packet(sndst, "notification packet", TRUE);
-#ifdef TPM
-    tpm_stolen:  
-    tpm_ignore:
-#endif
 	sndst->st_tpacket = saved_tpacket;
     }
 }
@@ -463,7 +448,7 @@ send_notification_from_state(struct state *st, enum state_kind state,
 	send_notification(st, type, p1st, generate_msgid(p1st),
 	    st->st_icookie, st->st_rcookie, NULL, 0, PROTO_ISAKMP);
     }
-    else if (IS_ISAKMP_ENCRYPTED(state)) {
+    else if (IS_ISAKMP_ENCRYPTED(st->st_state)) {
 	send_notification(st, type, st, generate_msgid(st),
 	    st->st_icookie, st->st_rcookie, NULL, 0, PROTO_ISAKMP);
     }
@@ -498,8 +483,8 @@ send_notification_from_md(struct msg_digest *md, u_int16_t type)
     st.st_remoteport = md->sender_port;
     st.st_localaddr  = md->iface->ip_addr;
     st.st_localport  = md->iface->port;
-    cnx.interface = md->iface;
     st.st_interface = md->iface;
+    cnx.interface = md->iface;
 
     send_notification(&st, type, NULL, 0,
 	md->hdr.isa_icookie, md->hdr.isa_rcookie, NULL, 0, PROTO_ISAKMP);
@@ -525,7 +510,6 @@ send_delete(struct state *st)
 	*r_hashval,	/* where in reply to jam hash value */
 	*r_hash_start;	/* start of what is to be hashed */
     bool isakmp_sa = FALSE;
-    struct isakmp_hdr hdr;
 
     /* If there are IPsec SA's related to this state struct... */
     if (IS_IPSEC_SA_ESTABLISHED(st->st_state))
@@ -573,6 +557,8 @@ send_delete(struct state *st)
 
     /* HDR* */
     {
+	struct isakmp_hdr hdr;
+
 	hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT | ISAKMP_MINOR_VERSION;
 	hdr.isa_np = ISAKMP_NEXT_HASH;
 	hdr.isa_xchg = ISAKMP_XCHG_INFO;
@@ -672,12 +658,7 @@ send_delete(struct state *st)
 	    impossible();
 
 	setchunk(p1st->st_tpacket, reply_pbs.start, pbs_offset(&reply_pbs));
-	TCLCALLOUT_notify("avoidEmittingDelete", p1st, &reply_pbs, &hdr);
 	send_packet(p1st, "delete notify", TRUE);
-#ifdef TPM
-    tpm_stolen:  
-    tpm_ignore:
-#endif
 	p1st->st_tpacket = saved_tpacket;
 
 	/* get back old IV for this state */
@@ -1177,12 +1158,13 @@ ipsecdoi_replace(struct state *st, unsigned long try)
  * See draft-ietf-ipsec-ike-01.txt 4.1 and 6.1.1.2
  */
 
-void
+typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t) ;
+static void
 main_mode_hash_body(struct state *st
-		    , bool hashi	/* Initiator? */
-		    , const pb_stream *idpl	/* ID payload, as PBS */
-		    , union hash_ctx *ctx
-		    , hash_update_t hash_update_void)
+, bool hashi	/* Initiator? */
+, const pb_stream *idpl	/* ID payload, as PBS */
+, union hash_ctx *ctx
+, void (*hash_update_void)(void *, const u_char *input, size_t))
 {
 #define HASH_UPDATE_T (union hash_ctx *, const u_char *input, unsigned int len)
     hash_update_t hash_update=(hash_update_t)  hash_update_void;
@@ -1230,11 +1212,11 @@ main_mode_hash_body(struct state *st
 #   undef hash_update
 }
 
-size_t	/* length of hash */
+static size_t	/* length of hash */
 main_mode_hash(struct state *st
-	       , u_char *hash_val	/* resulting bytes */
-	       , bool hashi	/* Initiator? */
-	       , const pb_stream *idpl)	/* ID payload, as PBS; cur must be at end */
+, u_char *hash_val	/* resulting bytes */
+, bool hashi	/* Initiator? */
+, const pb_stream *idpl)	/* ID payload, as PBS; cur must be at end */
 {
     struct hmac_ctx ctx;
 
@@ -1268,10 +1250,10 @@ main_mode_sha1(struct state *st
  * Use PKCS#1 version 1.5 encryption of hash (called
  * RSAES-PKCS1-V1_5) in PKCS#2.
  */
-size_t
+static size_t
 RSA_sign_hash(struct connection *c
-	      , u_char sig_val[RSA_MAX_OCTETS]
-	      , const u_char *hash_val, size_t hash_len)
+, u_char sig_val[RSA_MAX_OCTETS]
+, const u_char *hash_val, size_t hash_len)
 {
     size_t sz = 0;
     smartcard_t *sc = c->spd.this.sc;
@@ -1744,12 +1726,8 @@ encrypt_message(pb_stream *pbs, struct state *st)
 	, DBG_log("encrypting using %s"
 		  , enum_show(&oakley_enc_names, st->st_oakley.encrypt)));
 
-    TCLCALLOUT_crypt("preEncrypt", st, pbs,sizeof(struct isakmp_hdr),enc_len);
-
     /* e->crypt(TRUE, enc_start, enc_len, st); */
     crypto_cbc_encrypt(e, TRUE, enc_start, enc_len, st);
-
-    TCLCALLOUT_crypt("postEncrypt", st,pbs,sizeof(struct isakmp_hdr),enc_len);
 
     update_iv(st);
     DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);
@@ -1795,7 +1773,7 @@ has_preloaded_public_key(struct state *st)
  * We must be called before SIG or HASH are decoded since we
  * may change the peer's RSA key or ID.
  */
-bool
+static bool
 decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 {
     struct state *const st = md->st;
@@ -2742,13 +2720,11 @@ doi_log_cert_thinking(struct msg_digest *md UNUSED
 	, DBG_log("  so %ssend cert.", send_cert ? "" : "do not "));
 
     if(!send_cert) {
-	if(auth == OAKLEY_PRESHARED_KEY) {
-	    openswan_log("I did not send a certificate because digital signatures are not being used. (PSK)");
-	} else if(certtype == CERT_NONE) {
-	    openswan_log("I did not send a certificate because I do not have one.");
-	} else if(policy == cert_sendifasked) {
-	    openswan_log("I did not send my certificate because I was not asked to.");
-	}
+      if(certtype == CERT_NONE) {
+	openswan_log("I did not send a certificate because I do not have one.");
+      } else if(policy == cert_sendifasked) {
+	openswan_log("I did not send my certificate because I was not asked to.");
+      }
     }
 }
 
@@ -2897,18 +2873,6 @@ main_inR2_outI3(struct msg_digest *md)
 	    return STF_INTERNAL_ERROR;
     }
 
-#ifdef TPM
-    {
-	pb_stream *pbs = &md->rbody;
-	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-	TCLCALLOUT_crypt("preHash", st,pbs,sizeof(struct isakmp_hdr),enc_len);
-
-	/* find location of ID PBS */
-	tpm_findID(pbs, &id_pbs);
-    }
-#endif
-
     /* HASH_I or SIG_I out */
     {
 	u_char hash_val[MAX_DIGEST_LEN];
@@ -2959,6 +2923,24 @@ main_inR2_outI3(struct msg_digest *md)
  * Used for STATE_MAIN_R2 and STATE_MAIN_I3.
  */
 
+enum key_oppo_step {
+    kos_null,
+    kos_his_txt
+#ifdef USE_KEYRR
+    , kos_his_key
+#endif
+};
+
+struct key_continuation {
+    struct adns_continuation ac;	/* common prefix */
+    struct msg_digest   *md;
+    enum   key_oppo_step step;
+    bool                 failure_ok;
+    err_t                last_ugh;
+};
+
+typedef stf_status (key_tail_fn)(struct msg_digest *md
+				  , struct key_continuation *kc);
 static void
 report_key_dns_failure(struct id *id, err_t ugh)
 {
@@ -2977,7 +2959,7 @@ report_key_dns_failure(struct id *id, err_t ugh)
  * Note: parameter kc is a continuation containing the results from
  * the previous DNS query, or NULL indicating no query has been issued.
  */
-stf_status
+static stf_status
 oakley_id_and_auth(struct msg_digest *md
 		 , bool initiator	/* are we the Initiator? */
 		 , bool aggrmode                /* aggressive mode? */
@@ -3061,7 +3043,7 @@ oakley_id_and_auth(struct msg_digest *md
 #endif
 		ugh = start_adns_query(&st->st_connection->spd.that.id
 				       , &st->st_connection->spd.that.id	/* SG itself */
-				       , ns_t_txt
+				       , T_TXT
 				       , cont_fn
 				       , &nkc->ac);
 		break;
@@ -3072,7 +3054,7 @@ oakley_id_and_auth(struct msg_digest *md
 		nkc->step = kos_his_key;
 		ugh = start_adns_query(&st->st_connection->spd.that.id
 				       , NULL	/* no sgw for KEY */
-				       , ns_t_key
+				       , T_KEY
 				       , cont_fn
 				       , &nkc->ac);
 		break;
@@ -3126,7 +3108,7 @@ oakley_id_and_auth(struct msg_digest *md
  * to find authentication, or we run out of things
  * to try.
  */
-void
+static void
 key_continue(struct adns_continuation *cr
 	     , err_t ugh
 	     , key_tail_fn *tail)
@@ -3197,6 +3179,15 @@ main_id_and_auth(struct msg_digest *md
 		 , struct key_continuation *kc) /* argument */
 {
     return oakley_id_and_auth(md, initiator, FALSE, cont_fn, kc);
+}
+
+static inline stf_status
+aggr_id_and_auth(struct msg_digest *md
+		 , bool initiator	/* are we the Initiator? */
+		 , cont_fn_t cont_fn	/* continuation function */
+		 , struct key_continuation *kc) /* argument */
+{
+    return oakley_id_and_auth(md, initiator, TRUE, cont_fn, kc);
 }
 
 static void
@@ -3293,18 +3284,6 @@ main_inI3_outR3_tail(struct msg_digest *md
 	    return STF_INTERNAL_ERROR;
 	close_output_pbs(&cert_pbs);
     }
-
-#ifdef TPM
-    {
-	pb_stream *pbs = &md->rbody;
-	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-	TCLCALLOUT_crypt("preHash", st,pbs,sizeof(struct isakmp_hdr),enc_len);
-
-	/* find location of ID PBS */
-	tpm_findID(pbs, &r_id_pbs);
-    }
-#endif
 
     /* HASH_R or SIG_R out */
     {
@@ -3432,6 +3411,654 @@ main_inR3_tail(struct msg_digest *md
     return STF_OK;
 }
 
+#if defined(AGGRESSIVE)
+/* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii 
+ *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
+ */
+static stf_status
+aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
+		     , struct pluto_crypto_req *r);
+
+static void
+aggr_inI1_outR1_continue(struct pluto_crypto_req_cont *pcrc
+			 , struct pluto_crypto_req *r
+			 , err_t ugh)
+{
+  struct ke_continuation *ke = (struct ke_continuation *)pcrc;
+  struct msg_digest *md = ke->md;
+  struct state *const st = md->st;
+  stf_status e;
+  
+  DBG(DBG_CONTROLMORE
+      , DBG_log("aggr inI1_outR1: calculated ke+nonce, sending R1"));
+  
+  /* XXX should check out ugh */
+  passert(ugh == NULL);
+  passert(cur_state == NULL);
+  passert(st != NULL);
+
+  passert(st->st_suspended_md == ke->md);
+  st->st_suspended_md = NULL;	/* no longer connected or suspended */
+
+  set_cur_state(st);
+  st->st_calculating = FALSE;
+  e = aggr_inI1_outR1_tail(pcrc, r);
+  
+  if(ke->md != NULL) {
+      complete_state_transition(&ke->md, e);
+      release_md(ke->md);
+  }
+  reset_cur_state();
+}
+
+static stf_status
+aggr_inI1_outR1_common(struct msg_digest *md
+		       , int authtype)
+{
+    /* With Aggressive Mode, we get an ID payload in this, the first
+     * message, so we can use it to index the preshared-secrets
+     * when the IP address would not be meaningful (i.e. Road
+     * Warrior).  So our first task is to unravel the ID payload.
+     */
+    struct state *st;
+    struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
+    pb_stream *keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
+    struct connection *c = find_host_connection(&md->iface->ip_addr
+						, md->iface->port
+						, &md->sender
+						, md->sender_port);
+
+
+#if 0    
+#ifdef NAT_TRAVERSAL
+    if (c == NULL && md->iface->ike_float)
+    {
+	c = find_host_connection(&md->iface->addr, NAT_T_IKE_FLOAT_PORT
+		, &md->sender, md->sender_port);
+    }
+#endif
+#endif
+
+    if (c == NULL)
+    {
+	/* see if a wildcarded connection can be found */
+	c = find_host_connection(&md->iface->ip_addr, pluto_port
+				 , (ip_address*)NULL, md->sender_port);
+	if (c != NULL && c->policy & POLICY_AGGRESSIVE)
+	{
+	    /* Create a temporary connection that is a copy of this one.
+	     * His ID isn't declared yet.
+	     */
+	    c = rw_instantiate(c, &md->sender,
+			       NULL,
+			       NULL);
+	}
+	else
+	{
+	    loglog(RC_LOG_SERIOUS, "initial Aggressive Mode message from %s"
+		" but no (wildcard) connection has been configured"
+		, ip_str(&md->sender));
+	    /* XXX notification is in order! */
+	    return STF_IGNORE;
+	}
+    }
+
+    /* Set up state */
+    cur_state = md->st = st = new_state();	/* (caller will reset cur_state) */
+    st->st_connection = c;
+    st->st_remoteaddr = md->sender;
+    st->st_remoteport = md->sender_port;
+    st->st_interface  = md->iface;
+    st->st_state = STATE_AGGR_R1;
+
+    /* until we have clue who this is, then be conservative about allocating
+     * them any crypto bandwidth */
+    st->st_import = pcim_stranger_crypto;
+
+    st->st_policy |= POLICY_AGGRESSIVE;
+
+    st->st_oakley.auth = authtype;  
+
+    if (!decode_peer_id(md, FALSE, TRUE))
+    {
+	char buf[IDTOA_BUF];
+
+	(void) idtoa(&st->st_connection->spd.that.id, buf, sizeof(buf));
+	loglog(RC_LOG_SERIOUS,
+	     "initial Aggressive Mode packet claiming to be from %s"
+	     " on %s but no connection has been authorized",
+	    buf, ip_str(&md->sender));
+	/* XXX notification is in order! */
+	return STF_FAIL + INVALID_ID_INFORMATION;
+    }
+
+    c = st->st_connection;
+
+#ifdef DEBUG
+    extra_debugging(c);
+#endif
+    st->st_try = 0;	/* Not our job to try again from start */
+    st->st_policy = c->policy & ~POLICY_IPSEC_MASK;	/* only as accurate as connection */
+
+    memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
+    get_cookie(FALSE, st->st_rcookie, COOKIE_SIZE, &md->sender);
+
+    insert_state(st);	/* needs cookies, connection, and msgid (0) */
+
+    st->st_doi = ISAKMP_DOI_IPSEC;
+    st->st_situation = SIT_IDENTITY_ONLY; /* We only support this */
+
+    openswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\""
+	" from %s"
+	, st->st_serialno, st->st_connection->name
+	, ip_str(&c->spd.that.host_addr));
+
+#ifdef NAT_TRAVERSAL
+    if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
+	/* reply if NAT-Traversal draft is supported */
+	st->hidden_variables.st_nat_traversal = nat_traversal_vid_to_method(md->quirks.nat_traversal_vid);
+    }
+#endif
+
+    /* save initiator SA for HASH */
+    clonereplacechunk(st->st_p1isa, sa_pd->pbs.start, pbs_room(&sa_pd->pbs),
+		      "sa in aggr_inI1_outR1()");
+
+    /*
+     * parse_isakmp_sa picks the right group, which we need to know
+     * before we do any calculations. We will call it again to have it
+     * emit the winning SA into the output.
+     */
+    /* SA body in */
+    {
+	pb_stream sabs = sa_pd->pbs;
+	
+	RETURN_STF_FAILURE(parse_isakmp_sa_body(&sabs
+						, &sa_pd->payload.sa
+						, NULL, FALSE, st));
+    }
+
+    /* KE in */
+    RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.group, keyex_pbs));
+
+    /* Ni in */
+    RETURN_STF_FAILURE(accept_nonce(md, &st->st_ni, "Ni"));
+
+    {
+	struct ke_continuation *ke = alloc_thing(struct ke_continuation
+						 , "outI2 KE");
+	ke->md = md;
+	st->st_suspended_md = md;
+
+	if (!st->st_sec_in_use) {
+	    ke->ke_pcrc.pcrc_func = aggr_inI1_outR1_continue;
+	    return build_ke(&ke->ke_pcrc, st, st->st_oakley.group
+			    , st->st_import);
+	} else {
+	    return aggr_inI1_outR1_tail((struct pluto_crypto_req_cont *)ke
+					, NULL);
+	}
+    }
+}
+
+stf_status
+aggr_inI1_outR1_psk(struct msg_digest *md)
+{
+    return aggr_inI1_outR1_common(md, OAKLEY_PRESHARED_KEY);
+}
+
+stf_status
+aggr_inI1_outR1_rsasig(struct msg_digest *md)
+{
+    return aggr_inI1_outR1_common(md, OAKLEY_RSA_SIG);
+}
+
+static stf_status
+aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
+		     , struct pluto_crypto_req *r)
+{
+    struct ke_continuation *ke = (struct ke_continuation *)pcrc;
+    struct msg_digest *md = ke->md;
+    struct state *st = md->st;
+    struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
+    int auth_payload;
+    pb_stream r_sa_pbs;
+    pb_stream r_id_pbs;	/* ID Payload; also used for hash calculation */
+
+    /* parse_isakmp_sa also spits out a winning SA into our reply,
+     * so we have to build our md->reply and emit HDR before calling it.
+     */
+
+    init_pbs(&md->reply, reply_buffer, sizeof(reply_buffer), "reply packet");
+
+    /* HDR out */
+    {
+	struct isakmp_hdr r_hdr = md->hdr;
+
+	memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+	r_hdr.isa_np = ISAKMP_NEXT_SA;
+	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &md->reply, &md->rbody))
+	    return STF_INTERNAL_ERROR;
+    }
+
+    /* start of SA out */
+    {
+	struct isakmp_sa r_sa = sa_pd->payload.sa;
+	notification_t r;
+
+	r_sa.isasa_np = ISAKMP_NEXT_KE;
+	if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
+	    return STF_INTERNAL_ERROR;
+
+	/* SA body in and out */
+	r = parse_isakmp_sa_body(&sa_pd->pbs, &sa_pd->payload.sa,
+				 &r_sa_pbs, FALSE, st);
+	if (r != NOTHING_WRONG)
+	    return STF_FAIL + r;
+    }
+
+    /* don't know until after SA body has been parsed */
+    auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY
+	? ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
+
+
+    /************** build rest of output: KE, Nr, IDir, HASH_R/SIG_R ********/
+
+    /* KE */
+    if (!ship_KE(st, r, &st->st_gr, 
+		 &md->rbody, ISAKMP_NEXT_NONCE))
+	return STF_INTERNAL_ERROR;
+
+    /* Nr */
+    if (!ship_nonce(&st->st_nr, r
+		    , &md->rbody, ISAKMP_NEXT_ID, "Nr"))
+	return STF_INTERNAL_ERROR;
+
+    /* IDir out */
+    {
+	struct isakmp_ipsec_id id_hd;
+	chunk_t id_b;
+
+	build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this);
+	id_hd.isaiid_np = auth_payload;
+	if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc, &md->rbody, &r_id_pbs)
+	|| !out_chunk(id_b, &r_id_pbs, "my identity"))
+	    return STF_INTERNAL_ERROR;
+	close_output_pbs(&r_id_pbs);
+    }
+
+    (void)perform_dh_secretiv(st, RESPONDER, st->st_oakley.group->group);
+    update_iv(st);
+
+
+    /* HASH_R or SIG_R out */
+    {
+	u_char hash_val[MAX_DIGEST_LEN];
+	size_t hash_len = main_mode_hash(st, hash_val, FALSE, &r_id_pbs);
+
+	if (auth_payload == ISAKMP_NEXT_HASH)
+	{
+	    /* HASH_R out */
+	    if (!out_generic_raw(ISAKMP_NEXT_VID
+				 , &isakmp_hash_desc
+				 , &md->rbody
+				 , hash_val
+				 , hash_len
+				 , "HASH_R"))
+		return STF_INTERNAL_ERROR;
+	}
+	else
+	{
+	    /* SIG_R out */
+	    u_char sig_val[RSA_MAX_OCTETS];
+	    size_t sig_len = RSA_sign_hash(st->st_connection
+		, sig_val, hash_val, hash_len);
+
+	    if (sig_len == 0)
+	    {
+		loglog(RC_LOG_SERIOUS, "unable to locate my private key for RSA Signature");
+		return STF_FAIL + AUTHENTICATION_FAILED;
+	    }
+
+	    if (!out_generic_raw(ISAKMP_NEXT_VID, &isakmp_signature_desc
+	    , &md->rbody, sig_val, sig_len, "SIG_R"))
+		return STF_INTERNAL_ERROR;
+	}
+    }
+
+    /*
+     * NOW SEND VENDOR ID payloads 
+     */
+       
+    /* Announce our ability to do RFC 3706 Dead Peer Detection to the peer
+        if we have it enabled on this conn */
+    if(st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
+	/* Set local policy for DPD to be on */
+	st->hidden_variables.st_dpd_local = 1;
+    }
+    
+    {
+      int np = ISAKMP_NEXT_NONE;
+
+#ifdef NAT_TRAVERSAL
+      if (st->hidden_variables.st_nat_traversal) {
+	np = ISAKMP_NEXT_VID;
+      }
+#endif
+
+      if( !out_generic_raw(np, &isakmp_vendor_id_desc
+			   , &md->rbody, dpd_vendorid
+			   , dpd_vendorid_len, "DPP Vendor ID")) {
+	return STF_INTERNAL_ERROR;
+      }
+    }
+
+#ifdef NAT_TRAVERSAL
+    if (st->hidden_variables.st_nat_traversal) {
+      if (!out_vendorid(auth_payload
+			, &md->rbody
+			, md->quirks.nat_traversal_vid)) {
+	return STF_INTERNAL_ERROR;
+      }
+    }
+
+    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
+      if (!nat_traversal_add_natd(auth_payload, &md->rbody, md))
+	return STF_INTERNAL_ERROR;
+    }
+#endif
+
+    /* finish message */
+    close_message(&md->rbody);
+
+    return STF_OK;
+}
+
+/* STATE_AGGR_I1: HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
+ *           --> HDR*, HASH_I/SIG_I
+ */
+static stf_status
+aggr_inR1_outI2_tail(struct msg_digest *md
+		     , struct key_continuation *kc); /* forward */
+
+stf_status
+aggr_inR1_outI2(struct msg_digest *md)
+{
+    /* With Aggressive Mode, we get an ID payload in this, the second
+     * message, so we can use it to index the preshared-secrets
+     * when the IP address would not be meaningful (i.e. Road
+     * Warrior).  So our first task is to unravel the ID payload.
+     */
+    struct state *st = md->st;
+    pb_stream *keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
+
+    st->st_policy |= POLICY_AGGRESSIVE;
+
+    if (!decode_peer_id(md, FALSE, TRUE))
+    {
+	char buf[200];
+
+	(void) idtoa(&st->st_connection->spd.that.id, buf, sizeof(buf));
+	loglog(RC_LOG_SERIOUS,
+	     "initial Aggressive Mode packet claiming to be from %s"
+	     " on %s but no connection has been authorized",
+	    buf, ip_str(&md->sender));
+	/* XXX notification is in order! */
+	return STF_FAIL + INVALID_ID_INFORMATION;
+    }
+
+    /* verify echoed SA */
+    {
+	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
+	notification_t r = \
+	    parse_isakmp_sa_body(&sapd->pbs, &sapd->payload.sa,
+				 NULL, TRUE, st);
+
+	if (r != NOTHING_WRONG)
+	    return STF_FAIL + r;
+    }
+
+    /* copy the quirks we might have accumulated */
+    copy_quirks(&st->quirks, &md->quirks);
+
+#ifdef NAT_TRAVERSAL
+    if (nat_traversal_enabled && md->quirks.nat_traversal_vid) {
+	st->hidden_variables.st_nat_traversal = nat_traversal_vid_to_method(md->quirks.nat_traversal_vid);
+    }
+#endif
+
+    /* KE in */
+    RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.group, keyex_pbs));
+
+    /* Ni in */
+    RETURN_STF_FAILURE(accept_nonce(md, &st->st_nr, "Nr"));
+
+    /* moved the following up as we need Rcookie for hash, skeyids */
+    /* Reinsert the state, using the responder cookie we just received */
+    unhash_state(st);
+    memcpy(st->st_rcookie, md->hdr.isa_rcookie, COOKIE_SIZE);
+    insert_state(st);	/* needs cookies, connection, and msgid (0) */
+
+#ifdef NAT_TRAVERSAL
+    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
+	nat_traversal_natd_lookup(md);
+    }
+    if (st->hidden_variables.st_nat_traversal) {
+	nat_traversal_show_result(st->hidden_variables.st_nat_traversal, md->sender_port);
+    }
+    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {
+	nat_traversal_new_ka_event();
+    }
+#endif
+
+    {
+	stf_status stat;
+	stat = perform_dh_secretiv(st, INITIATOR, st->st_oakley.group->group);
+	if(stat != STF_OK) {
+	    return stat;
+	}
+    }
+
+    return aggr_inR1_outI2_tail(md, NULL);
+}
+
+static void
+aggr_inR1_outI2_continue(struct adns_continuation *cr, err_t ugh)
+{
+    key_continue(cr, ugh, aggr_inR1_outI2_tail);
+}
+
+static stf_status
+aggr_inR1_outI2_tail(struct msg_digest *md
+		     , struct key_continuation *kc)
+{
+    struct state *const st = md->st;
+    struct connection *c = st->st_connection;
+    int auth_payload;
+
+    /* HASH_R or SIG_R in */
+    {
+	stf_status r = aggr_id_and_auth(md, TRUE
+					, aggr_inR1_outI2_continue, kc);
+
+	if (r != STF_OK)
+	    return r;
+    }
+
+    auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY
+	? ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
+
+    /**************** build output packet: HDR, HASH_I/SIG_I **************/
+
+    /* HDR out */
+    {
+	struct isakmp_hdr r_hdr = md->hdr;
+
+	memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+	/* outputting should back-patch previous struct/hdr with payload type */
+	r_hdr.isa_np = auth_payload;
+	r_hdr.isa_flags |= ISAKMP_FLAG_ENCRYPTION;  /* KLUDGE */
+	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &md->reply, &md->rbody))
+	    return STF_INTERNAL_ERROR;
+    }
+
+#ifdef NAT_TRAVERSAL
+    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
+	if (!nat_traversal_add_natd(auth_payload, &md->rbody, md))
+	    return STF_INTERNAL_ERROR;
+    }
+#endif
+
+    /* HASH_I or SIG_I out */
+    {
+	u_char buffer[1024];
+	struct isakmp_ipsec_id id_hd;
+	chunk_t id_b;
+	pb_stream id_pbs;
+	u_char hash_val[MAX_DIGEST_LEN];
+	size_t hash_len;
+
+	build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this);
+	init_pbs(&id_pbs, buffer, sizeof(buffer), "identity payload");
+	id_hd.isaiid_np = ISAKMP_NEXT_NONE;
+	if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc, &id_pbs, NULL)
+	|| !out_chunk(id_b, &id_pbs, "my identity"))
+	    return STF_INTERNAL_ERROR;
+
+	hash_len = main_mode_hash(st, hash_val, TRUE, &id_pbs);
+
+	if (auth_payload == ISAKMP_NEXT_HASH)
+	{
+	    /* HASH_I out */
+	    if (!out_generic_raw(ISAKMP_NEXT_NONE, &isakmp_hash_desc, &md->rbody
+	    , hash_val, hash_len, "HASH_I"))
+		return STF_INTERNAL_ERROR;
+	}
+	else
+	{
+	    /* SIG_I out */
+	    u_char sig_val[RSA_MAX_OCTETS];
+	    size_t sig_len = RSA_sign_hash(st->st_connection
+		, sig_val, hash_val, hash_len);
+
+	    if (sig_len == 0)
+	    {
+		loglog(RC_LOG_SERIOUS, "unable to locate my private key for RSA Signature");
+		return STF_FAIL + AUTHENTICATION_FAILED;
+	    }
+
+	    if (!out_generic_raw(ISAKMP_NEXT_NONE, &isakmp_signature_desc
+	    , &md->rbody, sig_val, sig_len, "SIG_I"))
+		return STF_INTERNAL_ERROR;
+	}
+    }
+
+    /* RFC2408 says we must encrypt at this point */
+
+    /* st_new_iv was computed by generate_skeyids_iv */
+    if (!encrypt_message(&md->rbody, st))
+	return STF_INTERNAL_ERROR;	/* ??? we may be partly committed */
+
+    c->newest_isakmp_sa = st->st_serialno;
+
+    /* save last IV from phase 1 so it can be restored later so anything 
+     * between the end of phase 1 and the start of phase 2 ie mode config
+     * payloads etc will not loose our IV
+     */
+    memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
+    st->st_ph1_iv_len = st->st_new_iv_len;
+    
+    return STF_OK;
+}
+
+/* STATE_AGGR_R1: HDR*, HASH_I --> done
+ */
+stf_status aggr_inI2_tail(struct msg_digest *md
+				, struct key_continuation *kc); /* forward */
+
+static void
+aggr_inI2_continue(struct adns_continuation *cr, err_t ugh)
+{
+    key_continue(cr, ugh, aggr_inI2_tail);
+}
+
+stf_status
+aggr_inI2(struct msg_digest *md)
+{
+    return aggr_inI2_tail(md, NULL);
+}
+
+stf_status
+aggr_inI2_tail(struct msg_digest *md
+		     , struct key_continuation *kc)
+{
+    struct state *const st = md->st;
+    struct connection *c = st->st_connection;
+    u_char buffer[1024];
+    struct payload_digest id_pd;
+
+#ifdef NAT_TRAVERSAL
+    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
+	nat_traversal_natd_lookup(md);
+    }
+    if (st->hidden_variables.st_nat_traversal) {
+	nat_traversal_show_result(st->hidden_variables.st_nat_traversal, md->sender_port);
+    }
+    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {
+	nat_traversal_new_ka_event();
+    }
+#endif
+
+    /* Reconstruct the peer ID so the peer hash can be authenticated */
+    {
+	struct isakmp_ipsec_id id_hd;
+	chunk_t id_b;
+	pb_stream pbs;
+	pb_stream id_pbs;
+	build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that);
+	init_pbs(&pbs, buffer, sizeof(buffer), "identity payload");
+	id_hd.isaiid_np = ISAKMP_NEXT_NONE;
+	if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc, &pbs, &id_pbs)
+		|| !out_chunk(id_b, &id_pbs, "my identity"))
+	    return STF_INTERNAL_ERROR;
+	close_output_pbs(&id_pbs);
+	id_pbs.roof = pbs.cur;
+	id_pbs.cur = pbs.start;
+	in_struct(&id_pd.payload, &isakmp_identification_desc, &id_pbs, &id_pd.pbs);
+    }
+    md->chain[ISAKMP_NEXT_ID] = &id_pd;
+
+    /* HASH_I or SIG_I in */
+    {
+	stf_status r = aggr_id_and_auth(md, FALSE
+					, aggr_inI2_continue, kc);
+
+	if (r != STF_OK)
+	    return r;
+    }
+
+    /* And reset the md to not leave stale pointers to our private id payload */
+    md->chain[ISAKMP_NEXT_ID] = NULL;
+
+    /**************** done input ****************/
+
+    c->newest_isakmp_sa = st->st_serialno;
+
+    update_iv(st);	/* Finalize our Phase 1 IV */
+
+    /* save last IV from phase 1 so it can be restored later so anything 
+     * between the end of phase 1 and the start of phase 2 ie mode config
+     * payloads etc will not loose our IV
+     */
+    memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
+    st->st_ph1_iv_len = st->st_new_iv_len;
+    
+    DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
+
+    return STF_OK;
+}
+#endif
+
 stf_status
 send_isakmp_notification(struct state *st
 			 , u_int16_t type, const void *data, size_t len)
@@ -3486,17 +4113,7 @@ send_isakmp_notification(struct state *st
                 return STF_INTERNAL_ERROR;    
         close_output_pbs(&notify_pbs);
     }
-
-#ifdef TPM            
-    {
-	pb_stream *pbs = &rbody;
-	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-	TCLCALLOUT_crypt("preHash", st,pbs,sizeof(struct isakmp_hdr),enc_len);
-	r_hashval = tpm_relocateHash(pbs);	
-    }
-#endif
-
+            
     {
         /* finish computing HASH */     
         struct hmac_ctx ctx;

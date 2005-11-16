@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ikeping.c,v 1.2 2005/08/05 19:10:43 mcr Exp $
+ * RCSID $Id: ikeping.c,v 1.1 2005/04/21 02:14:30 mcr Exp $
  */
 
 #include <stdio.h>
@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/queue.h>
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 #  include <asm/types.h>	/* for __u8, __u32 */
@@ -35,7 +36,6 @@
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 

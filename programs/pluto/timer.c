@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: timer.c,v 1.101 2005/08/12 16:47:03 mcr Exp $
+ * RCSID $Id: timer.c,v 1.99.2.1 2005/08/12 17:03:02 ken Exp $
  */
 
 #include <stdio.h>
@@ -22,10 +22,10 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/queue.h>
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"

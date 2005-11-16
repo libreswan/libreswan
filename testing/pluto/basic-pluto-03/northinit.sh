@@ -1,5 +1,5 @@
 #!/bin/sh
-: ==== start ====
+
 # make sure that NAT is working
 #ping -c 4 -n sunrise
 

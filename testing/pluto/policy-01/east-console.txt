@@ -79,7 +79,7 @@ road.uml.freeswan.org.	604800	IN	KEY	16896 4 1 AQNxbOBmDqiNrUmn5q4kzBQ6I6pW/g2c8
 
 east:~#
  ipsec setup start
-ipsec_setup: Starting FreeS/WAN IPsec VERSION
+ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
  ipsec auto --add private-or-clear
 east:~#
@@ -144,7 +144,7 @@ east:~#
 Stopping domain name service: named.
 Stopping internet superserver: inetd.
 Stopping portmap daemon: portmap.
-ipsec_setup: Stopping FreeS/WAN IPsec...
+ipsec_setup: Stopping Openswan IPsec...
 IPSEC EVENT: KLIPS device ipsec0 shut down.
 
 Stopping system log daemon: klogd syslogd.

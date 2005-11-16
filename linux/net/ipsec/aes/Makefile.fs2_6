@@ -13,7 +13,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile.fs2_6,v 1.2 2005/08/12 14:13:58 mcr Exp $
+# RCSID $Id: Makefile.fs2_6,v 1.1.10.1 2005/08/12 16:10:05 ken Exp $
 #
 # Note! Dependencies are done automagically by 'make dep', which also
 # removes any old dependencies. DON'T put your own dependencies here
@@ -41,6 +41,9 @@ endif
 
 #
 # $Log: Makefile.fs2_6,v $
+# Revision 1.1.10.1  2005/08/12 16:10:05  ken
+# do not use assembly code with there are no frame pointers
+#
 # Revision 1.2  2005/08/12 14:13:58  mcr
 # 	do not use assembly code with there are no frame pointers,
 # 	as it does not have the right linkages.

@@ -8,10 +8,6 @@ TESTNAME=food-groups-clear-02
 EASTHOST=east
 WESTHOST=west
 
-# arpreply turned off because "sunset" will be running
-#ARPREPLY=--arpreply
-
-#EAST_INPUT=../../klips/inputs/01-sunrise-sunset-ping.pcap
 REF_WEST_OUTPUT=../../klips/outputs/westnet-east-sunset-ping.txt
 REF_PUB_OUTPUT=publicnet-east-sunset-ping-reply.txt
 REF_PUB_FILTER=../../klips/fixups/no-arp-pcap.pl

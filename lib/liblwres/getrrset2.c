@@ -15,14 +15,13 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: getrrset2.c,v 1.3 2005/08/05 01:18:29 mcr Exp $ */
+/* $Id: getrrset2.c,v 1.2 2004/09/20 18:00:35 mcr Exp $ */
 
 #include <config.h>
 
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <sys/time.h>
 
 #include <lwres/lwres.h>
 #include <lwres/net.h>

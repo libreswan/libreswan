@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: manual.in,v 1.85 2005/08/25 22:27:06 paul Exp $
+# RCSID $Id: manual.in,v 1.84 2005/04/17 22:57:12 paul Exp $
 
 me='ipsec manual'
 usage="Usage:
@@ -97,19 +97,15 @@ case "$op" in
 esac
 
 case "$interfs" in
-'')     interfs="`ip addr show up |
-                awk '   /ipsec[0-9]+:/ {
-                                sub(/:/, "", $2)
-                                interf = $2
-                                next
-                                }
-                        /^[^ \t]/ { interf = ""; next }
-                        /^[ \t]*inet/ {
-                                sub(/\/.*/, "", $2)
-                                if (interf != "")
-                                        print $2 "@" interf
-                         }' | tr '\n' ' '`"
-        ;;
+'')	interfs="`ifconfig |
+		awk '	/^ipsec/ { interf = $1 ; next }
+			/^[^ \t]/ { interf = "" ; next }
+			/^[ \t]*inet addr/ {
+				sub(/:/, " ", $0)
+				if (interf != "")
+					print $3 "@" interf
+			 }' | sed ':a;N;$!ba;s/\n/ /g'`"
+	;;
 esac
 
 if test -s $info

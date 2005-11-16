@@ -1,4 +1,3 @@
-: ==== start ====
 ipsec setup start
 ipsec auto --config /testing/pluto/bad-updown-01/ipsec.conf.bad-updown --add westnet-eastnet-bad-updown
 /testing/pluto/bin/eroutewait.sh trap

@@ -1,5 +1,5 @@
 #!/bin/sh
-: ==== start ====
+
 TZ=GMT export TZ
 
 ipsec spi --clear
@@ -35,4 +35,4 @@ mkdir -p /var/run/pluto
 ipsec pf_key --daemon /var/run/pluto/pf_key.pid >/tmp/pfkey.txt
 echo send packets
 
-: ==== end ====
+

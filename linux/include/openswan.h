@@ -14,7 +14,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: openswan.h,v 1.95 2005/08/25 01:24:40 paul Exp $
+ * RCSID $Id: openswan.h,v 1.93 2005/04/14 20:21:51 mcr Exp $
  */
 #define	_OPENSWAN_H	/* seen it, no need to see it again */
 
@@ -34,12 +34,10 @@
  * where we get them depends on whether we're in userland or not.
  */
 /* things that need to come from one place or the other, depending */
-#if defined(linux) 
-#if defined(__KERNEL__)
+#ifdef __KERNEL__
 #include <linux/types.h>
 #include <linux/socket.h>
 #include <linux/in.h>
-#include <linux/in6.h>
 #include <linux/string.h>
 #include <linux/ctype.h>
 #define user_assert(foo)  /*nothing*/
@@ -58,48 +56,27 @@
 #  define uint64_t u_int64_t 
 
 
-
-#endif /* __KERNEL__ */
-
 #  define DEBUG_NO_STATIC static
-#include <openswan/ipsec_kversion.h>
-#include <openswan/ipsec_param.h>
-#endif /* linux */
 
-/*
- * Yes Virginia, we have started a windows port.
- */
-#if defined(__CYGWIN32__)
-#if !defined(WIN32_KERNEL) 
-/* get windows equivalents */
-#include <stdio.h>
-#include <string.h>
-#include <win32/types.h>
-#include <netinet/in.h>
-#include <cygwin/socket.h>
-#include <assert.h>
-#define user_assert(foo) assert(foo)
-#endif /* _KERNEL */
-#endif /* WIN32 */
-
-/*
- * Kovacs? A macosx port?
- */
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-#include <TargetConditionals.h>
-#include <AvailabilityMacros.h>
-#include <machine/types.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <tcpd.h>
-#define user_assert(foo) assert(foo)
 #endif
 
+#include <openswan/ipsec_param.h>
+
+
+/*
+ * Grab the kernel version to see if we have NET_21, and therefore 
+ * IPv6. Some of this is repeated from ipsec_kversions.h. Of course, 
+ * we aren't really testing if the kernel has IPv6, but rather if the
+ * the include files do.
+ */
+#include <linux/version.h>
+#ifndef KERNEL_VERSION
+#define KERNEL_VERSION(x,y,z) (((x)<<16)+((y)<<8)+(z))
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,1,0)
+#define NET_21
+#endif
 
 #ifndef IPPROTO_COMP
 #  define IPPROTO_COMP 108
@@ -108,6 +85,16 @@
 #ifndef IPPROTO_INT
 #  define IPPROTO_INT 61
 #endif /* !IPPROTO_INT */
+
+#ifdef CONFIG_KLIPS_DEBUG
+#ifndef DEBUG_NO_STATIC
+#  define DEBUG_NO_STATIC
+#endif
+#else /* CONFIG_KLIPS_DEBUG */
+#ifndef DEBUG_NO_STATIC
+#  define DEBUG_NO_STATIC static
+#endif
+#endif /* CONFIG_KLIPS_DEBUG */
 
 #if !defined(ESPINUDP_WITH_NON_IKE)
 #define ESPINUDP_WITH_NON_IKE   1  /* draft-ietf-ipsec-nat-t-ike-00/01 */
@@ -121,13 +108,13 @@
  */
 
 /* first, some quick fakes in case we're on an old system with no IPv6 */
-#if !defined(s6_addr16) && defined(__CYGWIN32__)
+#ifndef s6_addr16
 struct in6_addr {
 	union 
 	{
-		u_int8_t	u6_addr8[16];
-		u_int16_t	u6_addr16[8];
-		u_int32_t	u6_addr32[4];
+		__u8		u6_addr8[16];
+		__u16		u6_addr16[8];
+		__u32		u6_addr32[4];
 	} in6_u;
 #define s6_addr			in6_u.u6_addr8
 #define s6_addr16		in6_u.u6_addr16
@@ -212,11 +199,6 @@ typedef uint32_t IPsecSAref_t;
 #endif
 
 
-/*
- * function to log stuff from libraries that may be used in multiple
- * places.
- */
-typedef void (*openswan_keying_debug_func_t)(const char *message, ...);
 
 
 

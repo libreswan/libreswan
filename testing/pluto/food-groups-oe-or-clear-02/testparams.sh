@@ -8,10 +8,10 @@ TESTNAME=food-groups-oe-or-clear-02
 EASTHOST=east
 WESTHOST=west
 
-ARPREPLY=--arpreply
-
 #EAST_INPUT=../../klips/inputs/01-sunrise-sunset-ping.pcap
 REF_WEST_OUTPUT=../../klips/outputs/westnet-sunrise-sunset-ping.txt
+WEST_ARPREPLY=true
+
 REF_PUB_OUTPUT=../../klips/outputs/publicnet-sunrise-sunset-ping.txt
 
 REF_EAST_CONSOLE_OUTPUT=east-console.txt

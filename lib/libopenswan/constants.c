@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: constants.c,v 1.14 2005/09/27 02:19:05 mcr Exp $
+ * RCSID $Id: constants.c,v 1.11 2005/06/23 01:45:55 mcr Exp $
  */
 
 /*
@@ -83,12 +83,11 @@ const char *const debug_bit_names[] = {
 	"private",            /* 20 */
 
 	"impair-delay-adns-key-answer", /* 21 */
-	"impair-delay-adns-txt-answer", /* 22 */
-	"impair-bust-mi2",   /* 23 */
-	"impair-bust-mr2",   /* 24 */
-	"impair-sa-creation", /* 25 */
-	"impair-die-oninfo",  /* 26 */
-	"impair-jacob-two-two",  /* 27 */
+	"impair-delay-adns-txt-answer",
+	"impair-bust-mi2",
+	"impair-bust-mr2",
+	"impair-sa-creation",
+	"impair-die-oninfo",
 
 	NULL
     };
@@ -124,7 +123,7 @@ const char *const payload_name[] = {
 	"ISAKMP_NEXT_D",
 	"ISAKMP_NEXT_VID",
 	"ISAKMP_NEXT_MODECFG",  /* 14 */
-	"ISAKMP_NEXT_NAT-D",
+	"ISAKMP_NEXT_15",
 	"ISAKMP_NEXT_16",
 	"ISAKMP_NEXT_17",
 	"ISAKMP_NEXT_18",
@@ -879,12 +878,10 @@ static const char *const rr_type_name[] = {
 	NULL
     };
 
-enum_names rr_type_names = { ns_t_a, ns_t_naptr, rr_type_name, NULL };
+enum_names rr_type_names = { T_A, T_NAPTR, rr_type_name, NULL };
 
 /* Query type values which do not appear in resource records */
 static const char *const rr_qtype_name[] = {
-    "T_TKEY",           /* 249 transaction key */
-    "TSIG",             /* 250 transaction signature */
 	"T_IXFR",	/* 251 incremental zone transfer */
 	"T_AXFR",	/* 252 transfer zone of authority */
 	"T_MAILB",	/* 253 transfer mailbox records */
@@ -893,15 +890,14 @@ static const char *const rr_qtype_name[] = {
 	NULL
     };
 
-enum_names rr_qtype_names = { ns_t_tkey, ns_t_any
-			      , rr_qtype_name, &rr_type_names };
+enum_names rr_qtype_names = { T_IXFR, T_ANY, rr_qtype_name, &rr_type_names };
 
 static const char *const rr_class_name[] = {
 	"C_IN",	/* 1 the arpa internet */
 	NULL
     };
 
-enum_names rr_class_names = { ns_c_in, ns_c_in, rr_class_name, NULL };
+enum_names rr_class_names = { C_IN, C_IN, rr_class_name, NULL };
 
 static const char *const ppk_name[] = {
   "PPK_PSK",
@@ -920,9 +916,9 @@ enum_names ppk_names = { PPK_PSK, PPK_PIN, ppk_name, NULL };
 const char *const natt_type_bitnames[] = {
   "draft-ietf-ipsec-nat-t-ike-00/01",    /* 0 */
   "draft-ietf-ipsec-nat-t-ike-02/03",
-  "draft-ietf-ipsec-nat-t-ike (OS X)",
   "RFC 3947 (NAT-Traversal)",
-  "4",   "5",   "6",   "7",              /* 4 */ 
+  "3",                                   /* 3 */
+  "4",   "5",   "6",   "7", 
   "8",   "9",   "10",  "11",
   "12",  "13",  "14",  "15",
   "16",  "17",  "18",  "19", 

@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: rnd.c,v 1.26 2005/09/26 03:21:55 mcr Exp $
+ * RCSID $Id: rnd.c,v 1.22 2005/01/18 02:49:40 ken Exp $
  */
 
 /* A true random number generator (we hope)
@@ -67,7 +67,7 @@
 #include "log.h"
 #include "timer.h"
 
-#if defined(linux) || (defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
+#ifdef linux
 # define USE_DEV_RANDOM	1
 #ifdef HWRANDOM
 # define RANDOM_PATH    "/dev/hwrandom"
@@ -75,15 +75,12 @@
 #else
 # define RANDOM_PATH    "/dev/urandom"
 #endif
-#endif
-
-#if defined(__OpenBSD__)
+#else
+# ifdef __OpenBSD__
 #  define USE_ARC4RANDOM
-#endif
-
-#if defined(__CYGWIN__)
-#define USE_DEV_RANDOM 1
-#define RANDOM_PATH "/dev/random"
+# else
+#   define USE_CLOCK_SLEW
+# endif
 #endif
 
 
@@ -239,7 +236,6 @@ init_rnd_pool(void)
     }
 # endif
 
-    fcntl(random_fd, F_SETFD, FD_CLOEXEC);
 
     get_rnd_bytes(random_pool, RANDOM_POOL_SIZE);
     mix_pool();

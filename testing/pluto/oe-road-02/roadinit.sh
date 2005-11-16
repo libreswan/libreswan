@@ -13,14 +13,8 @@ sleep 2
 
 /testing/pluto/bin/look-for-txt roadtxt.uml.freeswan.org AQNxbOBmD
 
-
-mkdir -p /tmp/oe-road-02
-cp /testing/pluto/oe-road-02/road.conf  /tmp/oe-road-02/ipsec.conf
-cp /etc/ipsec.secrets                   /tmp/oe-road-02
-(cd /tmp/oe-road-02 && ln -s /etc/ipsec.d ipsec.d )
-
-IPSEC_CONFS=/tmp/oe-road-02 export IPSEC_CONFS
-
+TESTNAME=oe-road-02
+source /testing/pluto/bin/roadlocal.sh
 ipsec setup start
 
 /testing/pluto/oe-road-01/policy-wait.sh

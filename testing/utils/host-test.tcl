@@ -1,7 +1,7 @@
 #!/usr/bin/expect --
 
 #
-# $Id: host-test.tcl,v 1.39 2005/10/20 21:11:45 mcr Exp $
+# $Id: host-test.tcl,v 1.38 2004/09/15 21:50:32 mcr Exp $
 #
 
 source $env(OPENSWANSRCDIR)/testing/utils/GetOpts.tcl
@@ -37,6 +37,7 @@ set do_recordpublic  0
 set do_consoleoutput 0
 set do_dns           0
 set timeout 300
+set netjig_wait_user 0
 log_user 0
 if {[info exists env(HOSTTESTDEBUG)]} {
     if {$env(HOSTTESTDEBUG) == "hosttest"} {
@@ -47,6 +48,12 @@ set netjig_debug_opt ""
 if {[info exists env(NETJIGTESTDEBUG)]} {
     if {$env(NETJIGTESTDEBUG) == "netjig"} {
 	set netjig_debug_opt "--debug"
+    }
+}
+
+if {[info exists env(NETJIGWAITUSER)]} {
+    if {$env(NETJIGWAITUSER) == "waituser"} {
+	set netjig_wait_user 1
     }
 }
 
@@ -178,10 +185,15 @@ if { $do_playpublic == 1 || $do_playprivate == 1 } {
     waitplay $netjig1
 }
 
-netjigdebug "Finished tests, shutting down"
+if { $netjig_wait_user == 1 } {
+    set old_timeout $timeout
+    puts -nonewline stderr "PLEASE PRESS ENTER TO TERMINATE TEST"
+    set timeout -1
+    expect_user -gl "\n"
+    set timeout $old_timeout
+}
 
-# see if we should wait
-wait_user
+netjigdebug "Finished tests, shutting down"
 
 after 500
 
@@ -206,9 +218,6 @@ system "sleep 4"
 
 # 
 # $Log: host-test.tcl,v $
-# Revision 1.39  2005/10/20 21:11:45  mcr
-# 	refactored to put wait-user function in netjig.tcl.
-#
 # Revision 1.38  2004/09/15 21:50:32  mcr
 # 	sleep after the test case finishes to give the UML time
 # 	to exit cleanly.

@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: demux.c,v 1.241 2005/10/09 20:30:12 mcr Exp $
+ * RCSID $Id: demux.c,v 1.210.2.10 2005/10/06 00:57:26 paul Exp $
  */
 
 /* Ordering Constraints on Payloads
@@ -115,6 +115,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/queue.h>
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 #  include <asm/types.h>	/* for __u8, __u32 */
@@ -124,7 +125,6 @@
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 
@@ -160,7 +160,6 @@
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
-#include "tpm/tpm.h"
 
 /* This file does basic header checking and demux of
  * incoming packets.
@@ -1251,31 +1250,18 @@ read_packet(struct msg_digest *md)
 	struct sockaddr sa;
 	struct sockaddr_in sa_in4;
 	struct sockaddr_in6 sa_in6;
-    } from
-#if defined(HAVE_UDPFROMTO)
-	  ,to
-#endif
-	  ;
-    socklen_t from_len = sizeof(from);
-#if defined(HAVE_UDPFROMTO)
-    socklen_t to_len   = sizeof(to);
-#endif
+    } from,to;
+    int from_len = sizeof(from);
+    int to_len   = sizeof(to);
     err_t from_ugh = NULL;
     static const char undisclosed[] = "unknown source";
 
     happy(anyaddr(addrtypeof(&ifp->ip_addr), &md->sender));
     zero(&from.sa);
-
-#if defined(HAVE_UDPFROMTO)
     packet_len = recvfromto(ifp->fd, bigbuffer
 			    , sizeof(bigbuffer), /*flags*/0
 			    , &from.sa, &from_len
 			    , &to.sa, &to_len);
-#else
-    packet_len = recvfrom(ifp->fd, bigbuffer
-			  , sizeof(bigbuffer), /*flags*/0
-			  , &from.sa, &from_len);
-#endif    
 
     /* we do not do anything with *to* addresses yet... we will */
 
@@ -1302,7 +1288,7 @@ read_packet(struct msg_digest *md)
 	{
 	    from_ugh = "unexpected Address Family";
 	}
-	else if (from_len != afi->sa_sz)
+	else if (from_len != (int)afi->sa_sz)
 	{
 	    from_ugh = "wrong length";
 	}
@@ -1478,8 +1464,6 @@ process_packet(struct msg_digest **mdp)
 		  , enum_name(&exchange_names, md->hdr.isa_xchg)
 		  , md->hdr.isa_xchg));
 
-    TCLCALLOUT("processRawPacket", NULL, NULL, md);
-
     switch (md->hdr.isa_xchg)
     {
 #ifdef NOTYET
@@ -1552,16 +1536,6 @@ process_packet(struct msg_digest **mdp)
     case ISAKMP_XCHG_INFO:	/* an informational exchange */
 	st = find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie
 			     , &md->sender, MAINMODE_MSGID);
-
-	if (st == NULL)
-	{
-	    /*
-	     * might be an informational response to our first
-	     * message, in which case, we don't know the rcookie yet.
-	     */
-	    st = find_state(md->hdr.isa_icookie, zero_cookie
-			    , &md->sender, MAINMODE_MSGID);
-	}
 
 	if (st != NULL)
 	    set_cur_state(st);
@@ -1755,7 +1729,7 @@ process_packet(struct msg_digest **mdp)
 	     * See if we have a Main Mode state.
 	     * ??? what if this is a duplicate of another message?
 	     */
-	    st = find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie
+	    st = find_state(md->hdr.isa_icookie, md->hdr.isa_rcookie
 				 , &md->sender, 0);
 
 	    if (st == NULL)
@@ -1853,8 +1827,6 @@ process_packet(struct msg_digest **mdp)
 	break;
 #endif
 
-#if 0
-	/* this code is NOT tested yet */
     case ISAKMP_XCHG_ECHOREQUEST_PRIVATE:
     case ISAKMP_XCHG_ECHOREQUEST:
 	receive_ike_echo_request(md);
@@ -1864,7 +1836,6 @@ process_packet(struct msg_digest **mdp)
     case ISAKMP_XCHG_ECHOREPLY:
 	receive_ike_echo_reply(md);
 	return;
-#endif
 
 #ifdef NOTYET
     case ISAKMP_XCHG_NGRP:
@@ -2071,17 +2042,8 @@ process_packet(struct msg_digest **mdp)
 		}
 	    } 
 
-	    TCLCALLOUT_crypt("preDecrypt", st, &md->message_pbs
-			     , pbs_offset(&md->message_pbs)
-			     , pbs_left(&md->message_pbs));
-
 	    crypto_cbc_encrypt(e, FALSE, md->message_pbs.cur, 
-			       pbs_left(&md->message_pbs) , st);
-	    
-	    TCLCALLOUT_crypt("postDecrypt", st, &md->message_pbs
-			     , pbs_offset(&md->message_pbs)
-			     , pbs_left(&md->message_pbs));
-
+			    pbs_left(&md->message_pbs) , st);
 	}
 
 	DBG_cond_dump(DBG_CRYPT, "decrypted:\n", md->message_pbs.cur
@@ -2101,9 +2063,6 @@ process_packet(struct msg_digest **mdp)
 	    return;
 	}
     }
-
-    md->from_state = from_state;
-    TCLCALLOUT("recvMessage", st, (st ? st->st_connection : NULL), md);
 
     /* Digest the message.
      * Padding must be removed to make hashing work.
@@ -2166,15 +2125,15 @@ process_packet(struct msg_digest **mdp)
 		    sd = payload_descs[np];
 		    break;
 		case ISAKMP_NEXT_NATD_BADDRAFTS:
-			if (st && (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD_BADDRAFT_VALUES)) {
-			    /*
-			     * Only accept this value if we're in compatibility mode with
-			     * the bad drafts of the RFC
-			     */
-		        np = ISAKMP_NEXT_NATD_RFC;  /* NAT-D relocated */
-		        sd = payload_descs[np];
-		        break;
-		    }
+		    if (st && (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD_BADDRAFT_VALUES)) {
+			/*
+			 * Only accept this value if we're in compatibility mode with
+			 * the bad drafts of the RFC
+			 */
+		    np = ISAKMP_NEXT_NATD_RFC;  /* NAT-D relocated */
+		    sd = payload_descs[np];
+		    break;
+		}
 #endif
 		default:
 		    loglog(RC_LOG_SERIOUS, "%smessage ignored because it contains an unknown or"
@@ -2189,9 +2148,7 @@ process_packet(struct msg_digest **mdp)
 		lset_t s = LELEM(np);
 
 		if (LDISJOINT(s
-			      , needed | smc->opt_payloads|
-			      LELEM(ISAKMP_NEXT_VID) |
-			      LELEM(ISAKMP_NEXT_N) | LELEM(ISAKMP_NEXT_D)))
+		, needed | smc->opt_payloads| LELEM(ISAKMP_NEXT_N) | LELEM(ISAKMP_NEXT_D)))
 		{
 		    loglog(RC_LOG_SERIOUS, "%smessage ignored because it "
 			   "contains an unexpected payload type (%s)"
@@ -2293,17 +2250,15 @@ process_packet(struct msg_digest **mdp)
 	    struct payload_digest *p;
 	    int i;
 
-	    p = md->chain[ISAKMP_NEXT_SA];
-	    i = 1;
-	    while(p != NULL) {
+	    for (p = md->chain[ISAKMP_NEXT_SA], i = 1; p != NULL
+	    ; p = p->next, i++)
+	    {
 		if (p != &md->digest[i])
 		{
 		    loglog(RC_LOG_SERIOUS, "malformed Quick Mode message: SA payload is in wrong position");
 		    SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 		    return;
 		}
-		p = p->next;
-		i++;
 	    }
 	}
 
@@ -2336,72 +2291,65 @@ process_packet(struct msg_digest **mdp)
 	}
     }
 
-    md->smc = smc;
-    md->st = st;
-
     /* Ignore payloads that we don't handle:
      * Delete, Notification, VendorID
      */
+    /* XXX Handle deletions */
     /* XXX Handle Notifications */
+    /* XXX Handle VID payloads */
     {
 	struct payload_digest *p;
 
-	p = md->chain[ISAKMP_NEXT_N];
-	while(p != NULL) {
-	    if(p->payload.notification.isan_type != R_U_THERE
-	       && p->payload.notification.isan_type != R_U_THERE_ACK
-	       && p->payload.notification.isan_type != PAYLOAD_MALFORMED) {
-		
-		loglog(RC_LOG_SERIOUS
-		       , "ignoring informational payload, type %s st=%p"
-		       , enum_show(&ipsec_notification_names
-				   , p->payload.notification.isan_type), st);
-#ifdef DEBUG
-		if(st!=NULL
-		   && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO) {
-		    loglog(RC_LOG_SERIOUS, "received and failed on unknown informational message");
-		    complete_state_transition(mdp, STF_FATAL);
-		    return;
+	for (p = md->chain[ISAKMP_NEXT_N]; p != NULL; p = p->next)
+	{
+                if(p->payload.notification.isan_type != R_U_THERE
+		   && p->payload.notification.isan_type != R_U_THERE_ACK
+		   && p->payload.notification.isan_type != PAYLOAD_MALFORMED) {
+
+		    loglog(RC_LOG_SERIOUS
+			   , "ignoring informational payload, type %s"
+			   , enum_show(&ipsec_notification_names
+				       , p->payload.notification.isan_type));
 		}
-#endif	    
-	    }
 	    DBG_cond_dump(DBG_PARSING, "info:", p->pbs.cur, pbs_left(&p->pbs));
-
-	    p = p->next;
-
 	}
 
-	p = md->chain[ISAKMP_NEXT_D];
-	while(p != NULL) {
+	for (p = md->chain[ISAKMP_NEXT_D]; p != NULL; p = p->next)
+	{
 	    accept_delete(st, md, p);
 	    DBG_cond_dump(DBG_PARSING, "del:", p->pbs.cur, pbs_left(&p->pbs));
-	    p = p->next;
 	}
 
-	p = md->chain[ISAKMP_NEXT_VID];
-	while(p != NULL) { 
-	    handle_vendorid(md, (char *)p->pbs.cur, pbs_left(&p->pbs), st);
-	    p = p->next;
+	for (p = md->chain[ISAKMP_NEXT_VID]; p != NULL; p = p->next)
+	{
+#if 0
+	    char vid_string[48];
+	    size_t vid_len = sizeof(vid_string) - 1 < pbs_left(&p->pbs)
+		? sizeof(vid_string) - 1 : pbs_left(&p->pbs);
+	    size_t i;
+
+	    /* make it printable by forcing bits; truncate if long */
+	    for (i = 0; i < vid_len; i++)
+		vid_string[i] = (p->pbs.cur[i] & 0x7f);
+	    vid_string[vid_len] = '\0';
+
+	    loglog(RC_LOG, "received Vendor ID Payload; ASCII hash: %s"
+		, vid_string);
+	    DBG_cond_dump(DBG_PARSING, "VID:", p->pbs.cur, pbs_left(&p->pbs));
+#endif
+	    handle_vendorid(md, p->pbs.cur, pbs_left(&p->pbs), st);
 	}
     }
+    md->from_state = from_state;
+    md->smc = smc;
+    md->st = st;
 
     /* possibly fill in hdr */
     if (smc->first_out_payload != ISAKMP_NEXT_NONE)
 	echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0
 	    , smc->first_out_payload);
 
-    TCLCALLOUT("changeState", st, (st ? st->st_connection : NULL), md);
-    /* XXX recheck md->smc, because it may have changed. */
-
     complete_state_transition(mdp, smc->processor(md));
-#ifdef TPM
- tpm_ignore:
-    return;
-
- tpm_stolen:
-    *mdp = NULL;
-    return;
-#endif    
 }
 
 
@@ -2442,11 +2390,6 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 
     cur_state = st = md->st;	/* might have changed */
 
-    md->result = result;
-    TCLCALLOUT("adjustFailure", st, (st ? st->st_connection : NULL), md);
-    result = md->result;
-
-
     /* If state has DPD support, import it */
     if( st && md->dpd && st->hidden_variables.st_dpd != md->dpd) {
 	DBG(DBG_DPD, DBG_log("peer supports dpd"));
@@ -2484,15 +2427,15 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 
 	case STF_SUSPEND:
 	    /* update the previous packet history */
-	    update_retransmit_history(st, md);
-
+	    if(md->packet_pbs.start) {
+                 update_retransmit_history(st, md);
+            }
 	    /* the stf didn't complete its job: don't relase md */
 	    *mdp = NULL;
 	    break;
 
 	case STF_OK:
 	    /* advance the state */
-
 	    openswan_log("transition from state %s to state %s"
                  , enum_name(&state_names, from_state)
                  , enum_name(&state_names, smc->next_state));
@@ -2515,13 +2458,8 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 	    {
 		char buf[ADDRTOT_BUF];
 
-		if(nat_traversal_enabled) {
-		    /* adjust our destination port if necessary */
-		    nat_traversal_change_port_lookup(md, st);
-		}
-
 		DBG(DBG_CONTROL
-		    , DBG_log("sending reply packet to %s:%u (from port %u)"
+		    , DBG_log("sending reply packet to %s:%u (from port=%d)"
 			      , (addrtot(&st->st_remoteaddr
 					 , 0, buf, sizeof(buf)), buf)
 			      , st->st_remoteport
@@ -2532,17 +2470,19 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 		clonetochunk(st->st_tpacket, md->reply.start
 		    , pbs_offset(&md->reply), "reply packet");
 
+#ifdef NAT_TRAVERSAL
+		if (nat_traversal_enabled) {
+		    nat_traversal_change_port_lookup(md, md->st);
+		}
+#endif
+
 		/* actually send the packet
 		 * Note: this is a great place to implement "impairments"
 		 * for testing purposes.  Suppress or duplicate the
 		 * send_packet call depending on st->st_state.
 		 */
-
-		TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
 		send_packet(st, enum_name(&state_names, from_state), TRUE);
 	    }
-
-	    TCLCALLOUT("adjustTimers", st, st->st_connection, md);
 
 	    /* Schedule for whatever timeout is specified */
 	    {
@@ -2691,11 +2631,11 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 			    natinfo="/NAT";
 			}
 			snprintf(b, sizeof(sadetails)-(b-sadetails)-1
-				 , "%sESP%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s"
+				 , "%sESP%s=>0x%08x <0x%08x xfrm=%s_%d-%s"
 				 , ini
 				 , natinfo
-				 , (unsigned long)ntohl(st->st_esp.attrs.spi)
-				 , (unsigned long)ntohl(st->st_esp.our_spi)
+				 , ntohl(st->st_esp.attrs.spi)
+				 , ntohl(st->st_esp.our_spi)
 				 , enum_show(&esp_transformid_names, st->st_esp.attrs.transid)+strlen("ESP_")
 				 , st->st_esp.attrs.key_len
 				 , enum_show(&auth_alg_names, st->st_esp.attrs.auth)+strlen("AUTH_ALGORITHM_"));
@@ -2708,10 +2648,10 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 		    if(st->st_ah.present)
 		    {
 			snprintf(b, sizeof(sadetails)-(b-sadetails)-1
-				 , "%sAH=>0x%08lx <0x%08lx"
+				 , "%sAH=>0x%08x <0x%08x"
 				 , ini
-				 , (unsigned long)ntohl(st->st_ah.attrs.spi)
-				 , (unsigned long)ntohl(st->st_ah.our_spi));
+				 , ntohl(st->st_ah.attrs.spi)
+				 , ntohl(st->st_ah.our_spi));
 			ini = " ";
 			fin = "}";
 		    }
@@ -2721,10 +2661,10 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 		    if(st->st_ipcomp.present)
 		    {
 			snprintf(b, sizeof(sadetails)-(b-sadetails)-1
-				 , "%sIPCOMP=>0x%08lx <0x%08lx"
+				 , "%sIPCOMP=>0x%08x <0x%08x"
 				 , ini
-				 , (unsigned long)ntohl(st->st_ipcomp.attrs.spi)
-				 , (unsigned long)ntohl(st->st_ipcomp.our_spi));
+				 , ntohl(st->st_ipcomp.attrs.spi)
+				 , ntohl(st->st_ipcomp.our_spi));
 			ini = " ";
 			fin = "}";
 		    }
@@ -2960,8 +2900,8 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 	    /* well, this should never happen during a whack, since
 	     * a whack will always force crypto.
 	     */
-	    st->st_suspended_md = NULL;
-	    pexpect(st->st_calculating == FALSE);
+            st->st_suspended_md = NULL;
+
 	    openswan_log("message in state %s ignored due to cryptographic overload"
 			 , enum_name(&state_names, from_state));
 	    break;
@@ -3010,16 +2950,6 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 	    }
             break;
     }
-
-#ifdef TPM
- tpm_ignore:
-    return;
-
- tpm_stolen:
-    *mdp = NULL;
-    return;
-#endif    
-
 }
 
 /*

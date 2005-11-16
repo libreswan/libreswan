@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: whack.c,v 1.152 2005/10/02 22:30:59 mcr Exp $
+ * RCSID $Id: whack.c,v 1.144.4.3 2005/07/26 02:11:23 ken Exp $
  */
 
 #include <stdio.h>
@@ -33,7 +33,6 @@
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 
@@ -64,24 +63,22 @@ help(void)
 	    " [--tunnelipv4 | --tunnelipv6]"
 	    " \\\n   "
 	    " (--host <ip-address> | --id <identity> | --cert <path>)"
-	    " \\\n   "
 	    " [--ca <distinguished name>]"
+	    " [--ikeport <port-number>]"
 	    " \\\n   "
 	    " [--nexthop <ip-address>]"
 	    " [--client <subnet> | --clientwithin <address range>]"
-	    " \\\n   "
-	    " [--ikeport <port-number>]"
 	    " [--srcip <ip-address>]"
 	    " \\\n   "
 	    " [--clientprotoport <protocol>/<port>]"
 	    " [--dnskeyondemand]"
 	    " \\\n   "
 	    " [--updown <updown>]"
-	    " \\\n   "
+	    " --to"
 	    " (--host <ip-address> | --id <identity>)"
             " \\\n   "
-            " [--groups <access control groups>]"
             " [--cert <path>]"
+            " [--groups <access control groups>]"
 	    " [--ca <distinguished name>]"
 	    " [--sendcert]"
 	    " [--sendcerttype number]"
@@ -96,7 +93,6 @@ help(void)
 	    " \\\n   "
 	    " [--dnskeyondemand]"
 	    " [--updown <updown>]"
-	    " \\\n   "
 	    " [--psk]"
 	    " [--rsasig]"
 	    " \\\n   "
@@ -118,11 +114,11 @@ help(void)
 	    " \\\n   "
 	    " [--dontrekey]"
 	    " [--aggrmode]"
-	    " [--forceencaps]"
-            " \\\n   "
             " [--dpddelay <seconds> --dpdtimeout <seconds>]"
-            " [--dpdaction (clear|hold|restart)]"
             " \\\n   "
+            " [--dpdaction (clear|hold|restart)]"
+	    " [--forceencaps]"
+
 
 #ifdef XAUTH
 	    " [--xauthserver]"
@@ -132,8 +128,6 @@ help(void)
 	    " [--initiateontraffic|--pass|--drop|--reject]"
 	    " \\\n   "
 	    " [--failnone|--failpass|--faildrop|--failreject]"
-            " \\\n   "
-	    " --to"
 	    "\n\n"
 	"routing: whack"
 	    " (--route | --unroute)"
@@ -236,11 +230,6 @@ help(void)
 	"shutdown: whack"
 	    " --shutdown"
 	    "\n\n"
-#ifdef TPM
-        "taproom: whack"
-	    " --tpmeval string"
-	    "\n\n"
-#endif
 	"Openswan %s\n"
 	, ipsec_version_code());
 }
@@ -346,19 +335,13 @@ enum option_enums {
     OPT_OPPO_HERE,
     OPT_OPPO_THERE,
 
-#   define OPT_LAST1 OPT_OPPO_THERE  /* last "normal" option */
-
-#define OPT_FIRST2  OPT_ASYNC
-
     OPT_ASYNC,
 
     OPT_DELETECRASH,
     OPT_XAUTHNAME,
     OPT_XAUTHPASS,
-    OPT_TPMEVAL,
 
-#define OPT_LAST2 OPT_TPMEVAL  /* last "normal" option */
-
+#   define OPT_LAST OPT_ASYNC	/* last "normal" option */
 
 /* List options */
 
@@ -499,8 +482,8 @@ enum option_enums {
  *
  */
 #define OPTION_OFFSET	256	/* to get out of the way of letter options */
-#define NUMERIC_ARG (1 << 11)	/* expect a numeric argument */
-#define AUX_SHIFT   12	/* amount to shift for aux information */
+#define NUMERIC_ARG (1 << 9)	/* expect a numeric argument */
+#define AUX_SHIFT   10	/* amount to shift for aux information */
 
 static const struct option long_opts[] = {
 #   define OO	OPTION_OFFSET
@@ -545,7 +528,6 @@ static const struct option long_opts[] = {
     { "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
     { "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
     { "xauthpass", required_argument, NULL, OPT_XAUTHPASS + OO },
-    { "tpmeval",   required_argument, NULL, OPT_TPMEVAL   + OO },
 
     { "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
     { "oppothere", required_argument, NULL, OPT_OPPO_THERE + OO },
@@ -646,8 +628,7 @@ static const struct option long_opts[] = {
     { "rekeywindow", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },	/* OBSOLETE */
     { "rekeyfuzz", required_argument, NULL, CD_RKFUZZ + OO + NUMERIC_ARG },
     { "keyingtries", required_argument, NULL, CD_KTRIES + OO + NUMERIC_ARG },
-    { "ike",    required_argument, NULL, CD_IKE + OO },
-    { "ikealg", required_argument, NULL, CD_IKE + OO },
+    { "ike", required_argument, NULL, CD_IKE + OO },
     { "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
     { "esp", required_argument, NULL, CD_ESP + OO },
 #ifdef DEBUG
@@ -684,13 +665,32 @@ static const struct option long_opts[] = {
     { 0,0,0,0 }
 };
 
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 struct sockaddr_un ctl_addr = { AF_UNIX, DEFAULT_CTLBASE CTL_SUFFIX };
-#else
-/* This will require fixes elsewhere too! */
-struct sockaddr_un ctl_addr = { sizeof(struct sockaddr_un), AF_UNIX, DEFAULT_CTLBASE CTL_SUFFIX };
-#endif
 
+/* helper variables and function to encode strings from whack message */
+
+static char
+    *next_str,
+    *str_roof;
+
+static bool
+pack_str(char **p)
+{
+    const char *s = *p == NULL? "" : *p;	/* note: NULL becomes ""! */
+    size_t len = strlen(s) + 1;
+
+    if (str_roof - next_str < (ptrdiff_t)len)
+    {
+	return FALSE;	/* fishy: no end found */
+    }
+    else
+    {
+	strcpy(next_str, s);
+	next_str += len;
+	*p = NULL;	/* don't send pointers on the wire! */
+	return TRUE;
+    }
+}
 
 static void
 check_life_time(time_t life, time_t limit, const char *which
@@ -855,11 +855,9 @@ int
 main(int argc, char **argv)
 {
     struct whack_message msg;
-    struct whackpacker wp;
     char esp_buf[256];	/* uses snprintf */
     lset_t
         opts_seen = LEMPTY,
-        opts2_seen = LEMPTY,
         lst_seen = LEMPTY,
         cd_seen = LEMPTY,
         end_seen = LEMPTY,
@@ -872,7 +870,6 @@ main(int argc, char **argv)
     char xauthpass[128];
     int xauthnamelen = 0, xauthpasslen = 0;
     bool gotxauthname = FALSE, gotxauthpass = FALSE;
-    const char *ugh;
 
     /* check division of numbering space */
 #ifdef DEBUG
@@ -880,10 +877,9 @@ main(int argc, char **argv)
 #else
     assert(OPTION_OFFSET + CD_LAST < NUMERIC_ARG);
 #endif
-    assert(OPT_LAST1- OPT_FIRST < (sizeof opts_seen * BITS_PER_BYTE)-1);
-    assert(OPT_LAST2- OPT_FIRST2< (sizeof opts2_seen * BITS_PER_BYTE)-1);
-    assert(LST_LAST - LST_FIRST < (sizeof lst_seen * BITS_PER_BYTE)-1);
-    assert(END_LAST - END_FIRST < (sizeof end_seen * BITS_PER_BYTE)-1);
+    assert(OPT_LAST - OPT_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
+    assert(LST_LAST - LST_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
+    assert(END_LAST - END_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
     assert(CD_LAST - CD_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
 #ifdef DEBUG	/* must be last so others are less than (sizeof cd_seen * BITS_PER_BYTE) to fit in lset_t */
     assert(DBGOPT_LAST - DBGOPT_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
@@ -920,7 +916,7 @@ main(int argc, char **argv)
 	 * by getopt_long, so we simply pass an empty string as
 	 * the list.  It could be "hp:d:c:o:eatfs" "NARXPECK".
 	 */
-	volatile int c = getopt_long(argc, argv, "", long_opts, &long_index) - OPTION_OFFSET;
+	int c = getopt_long(argc, argv, "", long_opts, &long_index) - OPTION_OFFSET;
 	int aux = 0;
 
 	/* decode a numeric argument, if expected */
@@ -944,7 +940,7 @@ main(int argc, char **argv)
 	}
 
 	/* per-class option processing */
-	if (0 <= c && c <= OPT_LAST1)
+	if (0 <= c && c < OPT_LAST)
 	{
 	    /* OPT_* options get added opts_seen.
 	     * Reject repeated options (unless later code intervenes).
@@ -954,17 +950,6 @@ main(int argc, char **argv)
 	    if (opts_seen & f)
 		diagq("duplicated flag", long_opts[long_index].name);
 	    opts_seen |= f;
-	}
-	else if (OPT_FIRST2 <= c && c <= OPT_LAST2)
-	{
-	    /* OPT_* options get added opts_seen2.
-	     * Reject repeated options (unless later code intervenes).
-	     */
-	    lset_t f = LELEM(c);
-
-	    if (opts2_seen & f)
-		diagq("duplicated flag", long_opts[long_index].name);
-	    opts2_seen |= f;
 	}
         else if (LST_FIRST <= c && c <= LST_LAST)
         {
@@ -1081,7 +1066,7 @@ main(int argc, char **argv)
 	    {
 		static char keyspace[RSA_MAX_ENCODING_BYTES];
 		char diag_space[TTODATAV_BUF];
-		ugh = ttodatav(optarg, 0, 0
+		const char *ugh = ttodatav(optarg, 0, 0
 		    , keyspace, sizeof(keyspace)
 		    , &msg.keyval.len, diag_space, sizeof(diag_space)
 		    , TTODATAV_SPACECOUNTS);
@@ -1095,7 +1080,7 @@ main(int argc, char **argv)
 		    diagq(ugh_space, optarg);
 		}
 		msg.pubkey_alg = PUBKEY_ALG_RSA;
-		msg.keyval.ptr = (unsigned char *)keyspace;
+		msg.keyval.ptr = keyspace;
 	    }
 	    continue;
 
@@ -1568,18 +1553,6 @@ main(int argc, char **argv)
 	  xauthpasslen = strlen(xauthpass)+1;
 	  continue;
 
-	case OPT_TPMEVAL:
-#ifdef TPM
-	    msg.tpmeval = strdup(optarg);
-	    msg.whack_reread |= REREAD_TPMEVAL;
-	    printf("sending tpmeval: '%s'\n", msg.tpmeval);
-
-#else
-	    diag("TaProoM is not enabled in this build");
-#endif	    
-	    continue;
-	    
-
 #ifdef DEBUG
 	case DBGOPT_NONE:	/* --debug-none */
 	    msg.debugging = DBG_NONE;
@@ -1767,7 +1740,8 @@ main(int argc, char **argv)
 
 
     /* pack strings for inclusion in message */
-    wp.msg = &msg;
+    next_str = msg.string;
+    str_roof = &msg.string[sizeof(msg.string)];
 
     /* build esp message as esp="<esp>;<pfsgroup>" */
     if (msg.pfsgroup) {
@@ -1776,12 +1750,36 @@ main(int argc, char **argv)
 		    msg.pfsgroup ? msg.pfsgroup : "");
 	    msg.esp=esp_buf;
     }
-    ugh = pack_whack_msg(&wp);
-    if (ugh)
-	diag(ugh);
+    if (!pack_str(&msg.name)		/* string  1 */
+    || !pack_str(&msg.left.id)		/* string  2 */
+    || !pack_str(&msg.left.cert)	/* string  3 */
+    || !pack_str(&msg.left.ca)		/* string  4 */
+    || !pack_str(&msg.left.groups)	/* string  5 */
+    || !pack_str(&msg.left.updown)	/* string  6 */
+#ifdef VIRTUAL_IP
+    || !pack_str(&msg.left.virt)
+#endif
+    || !pack_str(&msg.right.id)		/* string  7 */
+    || !pack_str(&msg.right.cert)	/* string  8 */
+    || !pack_str(&msg.right.ca)		/* string  9 */
+    || !pack_str(&msg.right.groups)	/* string  10 */
+    || !pack_str(&msg.right.updown)	/* string  11 */
+#ifdef VIRTUAL_IP
+    || !pack_str(&msg.right.virt)
+#endif
+    || !pack_str(&msg.keyid)		/* string 12 */
+    || !pack_str(&msg.myid)		/* string 13 */
+    || !pack_str(&msg.ike)		/* string 14 */
+    || !pack_str(&msg.esp)		/* string 15 */
+    || str_roof - next_str < (ptrdiff_t)msg.keyval.len)    /* chunk (sort of string 5) */
+	diag("too many bytes of strings to fit in message to pluto");
+
+    memcpy(next_str, msg.keyval.ptr, msg.keyval.len);
+    msg.keyval.ptr = NULL;
+    next_str += msg.keyval.len;
 
     msg.magic = ((opts_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS)))
-		| opts2_seen | lst_seen | cd_seen) != LEMPTY
+		| lst_seen | cd_seen) != LEMPTY
 	    || msg.whack_options
 	? WHACK_MAGIC : WHACK_BASIC_MAGIC;
 
@@ -1811,7 +1809,7 @@ main(int argc, char **argv)
     {
 	int sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	int exit_status = 0;
-	ssize_t len = wp.str_next - (unsigned char *)&msg;
+	ssize_t len = next_str - (char *)&msg;
 
 	if (sock == -1)
 	{

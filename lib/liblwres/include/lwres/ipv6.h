@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipv6.h,v 1.3 2005/08/05 01:18:30 mcr Exp $ */
+/* $Id: ipv6.h,v 1.2 2004/09/20 18:00:42 mcr Exp $ */
 
 #ifndef LWRES_IPV6_H
 #define LWRES_IPV6_H 1
@@ -35,15 +35,84 @@
 #include <lwres/int.h>
 #include <lwres/platform.h>
 
-#if 0
 /***
  *** Types.
  ***/
+
+struct in6_addr {
+        union {
+		lwres_uint8_t	_S6_u8[16];
+		lwres_uint16_t	_S6_u16[8];
+		lwres_uint32_t	_S6_u32[4];
+        } _S6_un;
+};
+#define s6_addr		_S6_un._S6_u8
+#define s6_addr8	_S6_un._S6_u8
+#define s6_addr16	_S6_un._S6_u16
+#define s6_addr32	_S6_un._S6_u32
+
+#define IN6ADDR_ANY_INIT 	{{{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }}}
+#define IN6ADDR_LOOPBACK_INIT 	{{{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }}}
+
+LIBLWRES_EXTERNAL_DATA extern const struct in6_addr in6addr_any;
+LIBLWRES_EXTERNAL_DATA extern const struct in6_addr in6addr_loopback;
+
+struct sockaddr_in6 {
+#ifdef LWRES_PLATFORM_HAVESALEN
+	lwres_uint8_t		sin6_len;
+	lwres_uint8_t		sin6_family;
+#else
+	lwres_uint16_t		sin6_family;
+#endif
+	lwres_uint16_t		sin6_port;
+	lwres_uint32_t		sin6_flowinfo;
+	struct in6_addr		sin6_addr;
+	lwres_uint32_t		sin6_scope_id;
+};
+
+#ifdef LWRES_PLATFORM_HAVESALEN
+#define SIN6_LEN 1
+#endif
 
 struct in6_pktinfo {
 	struct in6_addr ipi6_addr;    /* src/dst IPv6 address */
 	unsigned int    ipi6_ifindex; /* send/recv interface index */
 };
-#endif
+
+/*
+ * Unspecified
+ */
+#define IN6_IS_ADDR_UNSPECIFIED(a)      \
+        (((a)->s6_addr32[0] == 0) &&    \
+         ((a)->s6_addr32[1] == 0) &&    \
+         ((a)->s6_addr32[2] == 0) &&    \
+         ((a)->s6_addr32[3] == 0))
+
+/*
+ * Loopback
+ */
+#define IN6_IS_ADDR_LOOPBACK(a)         \
+        (((a)->s6_addr32[0] == 0) &&    \
+         ((a)->s6_addr32[1] == 0) &&    \
+         ((a)->s6_addr32[2] == 0) &&    \
+         ((a)->s6_addr32[3] == htonl(1)))
+
+/*
+ * IPv4 compatible
+ */
+#define IN6_IS_ADDR_V4COMPAT(a)         \
+        (((a)->s6_addr32[0] == 0) &&    \
+         ((a)->s6_addr32[1] == 0) &&    \
+         ((a)->s6_addr32[2] == 0) &&    \
+         ((a)->s6_addr32[3] != 0) &&    \
+         ((a)->s6_addr32[3] != htonl(1)))
+
+/*
+ * Mapped
+ */
+#define IN6_IS_ADDR_V4MAPPED(a)               \
+        (((a)->s6_addr32[0] == 0) &&          \
+         ((a)->s6_addr32[1] == 0) &&          \
+         ((a)->s6_addr32[2] == htonl(0x0000ffff)))
 
 #endif /* LWRES_IPV6_H */

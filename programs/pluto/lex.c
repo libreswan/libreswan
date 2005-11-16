@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: lex.c,v 1.4 2005/08/05 19:12:10 mcr Exp $
+ * RCSID $Id: lex.c,v 1.3 2004/04/27 12:43:27 ken Exp $
  */
 
 #include <stdio.h>
@@ -24,7 +24,6 @@
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "log.h"

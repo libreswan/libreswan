@@ -14,7 +14,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_xform.h,v 1.42 2005/08/05 08:50:45 mcr Exp $
+ * RCSID $Id: ipsec_xform.h,v 1.41 2004/07/10 19:08:41 mcr Exp $
  */
 
 #ifndef _IPSEC_XFORM_H_
@@ -124,8 +124,6 @@ static inline const char *auth_name_id (unsigned id) {
 	auth_name_id(x->ips_authalg) /* "_UNKNOWN_auth" */ \
 
 #ifdef __KERNEL__
-#include <linux/skbuff.h>
-
 struct ipsec_rcv_state;
 struct ipsec_xmit_state;
 
@@ -168,10 +166,6 @@ extern void ipsec_dmp(char *s, caddr_t bb, int len);
 
 /*
  * $Log: ipsec_xform.h,v $
- * Revision 1.42  2005/08/05 08:50:45  mcr
- * 	move #include of skbuff.h to a place where
- * 	we know it will be kernel only code.
- *
  * Revision 1.41  2004/07/10 19:08:41  mcr
  * 	CONFIG_IPSEC -> CONFIG_KLIPS.
  *

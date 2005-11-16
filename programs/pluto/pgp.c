@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pgp.c,v 1.9 2005/08/05 19:13:47 mcr Exp $
+ * RCSID $Id: pgp.c,v 1.8 2004/09/08 17:16:52 ken Exp $
  */
 
 #include <stdlib.h>
@@ -21,7 +21,6 @@
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 

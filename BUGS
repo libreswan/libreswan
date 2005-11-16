@@ -1,5 +1,5 @@
-This code is still less than perfect and undoubtedly has bugs.  As of this
-release, the following are considered known bugs: 
+As of this release, the following are considered known bugs.  For a detailed
+list, see http://bugs.openswan.org 
 
 * Test cases using AH for authentication currently fail. If you need this 
   functionality for interop, either use an older release (1.99) or JuanJo 
@@ -17,24 +17,13 @@ release, the following are considered known bugs:
 
 * Pluto will not retry if it can not find its key in DNS when it starts.
 
-* Extrusion and Opportunistic Encryption do not mix well without
-  Advanced Routing. (There is a workaround using advanced routing)
-
-* Installing a new FreeS/WAN on top of an old one doesn't update kernel
+* Installing a new Openswan on top of an old one doesn't update kernel
   configuration options, so if new options are added, you need to start
   with a virgin kernel instead, or 'make oldconfig'
 
 * KLIPS cannot cope with IP packets employing IP options.  Normally, 
   KLIPS strips the options when forwarding.  This has caused no trouble 
   that we know of, somewhat to our surprise.
-
-* There are some ill-defined problems with sending large packets through
-  transport-mode connections, especially in 2.2.xx kernels.
-
-* There appears to be a kernel memory leak if rekeying occurs while a
-  connection is carrying traffic.  The effect is small unless you are
-  rekeying very frequently indeed.  We don't beleive this is the case anymore
-  as we haven't seen since in the 2.x codebase.  
 
 * There are too many ways for packets to get around the security stuff. 
   In particular, suppose you have the following, with security gateways X
@@ -94,4 +83,4 @@ release, the following are considered known bugs:
   is more than "IPsec-overhead" larger than the MTU. This is to compatible
   with plpmtud (i.e. "PMTUbis") being proposed in the pmtud WG.
 
-This file is RCSID $Id: BUGS,v 1.56 2005/04/11 02:58:39 ken Exp $
+This file is RCSID $Id: BUGS,v 1.56.2.3 2005/11/08 18:13:26 ken Exp $

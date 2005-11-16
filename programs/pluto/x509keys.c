@@ -15,7 +15,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: x509keys.c,v 1.6 2005/08/05 19:18:47 mcr Exp $
+ * RCSID $Id: x509keys.c,v 1.5 2005/06/14 22:38:06 mcr Exp $
  */
 
 #include <stdlib.h>
@@ -29,7 +29,8 @@
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
+#include <sys/queue.h>
+
 #include "constants.h"
 #include "oswlog.h"
 

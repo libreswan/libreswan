@@ -1,7 +1,7 @@
 #!/usr/bin/expect --
 
 #
-# $Id: Xhost-test.tcl,v 1.19 2005/10/20 21:11:45 mcr Exp $
+# $Id: Xhost-test.tcl,v 1.18 2005/02/11 01:31:19 mcr Exp $
 #
 
 if {! [info exists env(OPENSWANSRCDIR)]} {
@@ -217,9 +217,6 @@ foreach net $managednets {
 # let things settle.
 after 500
 
-# see if we should wait
-wait_user
-
 # do the "run" scripts now.
 foreach host $managed_hosts {
     runuml $host
@@ -291,9 +288,6 @@ expect {
 
 # 
 # $Log: Xhost-test.tcl,v $
-# Revision 1.19  2005/10/20 21:11:45  mcr
-# 	refactored to put wait-user function in netjig.tcl.
-#
 # Revision 1.18  2005/02/11 01:31:19  mcr
 # 	added a sleep to permit UMLs to finish and drain.
 #

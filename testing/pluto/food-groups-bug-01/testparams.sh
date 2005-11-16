@@ -8,8 +8,6 @@ TESTNAME=food-groups-bug-01
 EASTHOST=east
 WESTHOST=west
 
-ARPREPLY=--arpreply
-
 #EAST_INPUT=../../klips/inputs/01-sunrise-sunset-ping.pcap
 REF_WEST_OUTPUT=../../klips/outputs/westnet-null.txt
 REF_PUB_OUTPUT=../../klips/outputs/publicnet-null.txt

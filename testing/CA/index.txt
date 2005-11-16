@@ -9,5 +9,3 @@ R	050528165301Z	041229021527Z	08	unknown	/C=CA/ST=Ontario/O=Openswan/L=Toronto/C
 V	051229021503Z		09	unknown	/C=CA/ST=Ontario/O=Openswan/L=Toronto/CN=east.uml.freeswan.org/emailAddress=east@openswan.org
 V	051229021523Z		0A	unknown	/C=CA/ST=Ontario/O=Openswan/L=Toronto/CN=west.uml.freeswan.org/emailAddress=west@openswan.org
 V	051229021528Z		0B	unknown	/C=CA/ST=Ontario/O=Openswan/L=Toronto/CN=north.uml.freeswan.org/emailAddress=north@openswan.org
-V	060422015653Z		0C	unknown	/C=CA/ST=Ontario/O=Openswan/L=Toronto/CN=uml1/emailAddress=uml1@xelerance.com
-V	060422015741Z		0D	unknown	/C=CA/ST=Ontario/O=Openswan/L=Toronto/CN=ncp/emailAddress=ncp@xelerance.com

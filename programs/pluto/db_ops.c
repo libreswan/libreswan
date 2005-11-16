@@ -54,16 +54,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-#include <sys/malloc.h>
-#else
 #include <malloc.h>
-#endif
 #include <sys/types.h>
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
@@ -337,7 +332,7 @@ db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
 int
 db_ops_show_status(void)
 {
-	whack_log(RC_COMMENT, "stats db_ops: " 
+	whack_log(RC_COMMENT, "stats " __FILE__ ": " 
 			DB_OPS_STATS_DESC " :"
 			DB_OPS_STATS_STR("context")
 			DB_OPS_STATS_STR("trans")

@@ -1,4 +1,4 @@
-# $Id: netjig.tcl,v 1.54 2005/10/20 21:11:45 mcr Exp $
+# $Id: netjig.tcl,v 1.53 2005/03/20 23:20:10 mcr Exp $
 
 global theprompt
 set theprompt {([a-zA-Z0-9]*):.*# }
@@ -505,28 +505,7 @@ proc process_host {host} {
     append varname $uphost
     append varname _CONSOLE_RAW
     set_from_env $host consolefile $varname
-
-    set umlid(netjig_wait_user) 0
-    if {[info exists env(NETJIGWAITUSER)]} {
-	if {$env(NETJIGWAITUSER) == "waituser"} {
-	    set umlid(netjig_wait_user) 1
-	}
-    }
 }
-
-proc wait_user {} {
-    global umlid
-    global timeout
-
-    if { $umlid(netjig_wait_user) == 1 } {
-	set old_timeout $timeout
-	puts -nonewline stderr "PLEASE PRESS ENTER TO TERMINATE TEST"
-	set timeout -1
-	expect_user -gl "\n"
-	set timeout $old_timeout
-    }
-}
-
     
 # {NORTH,SOUTH,EAST,WEST}_PLAY denotes a pcap file to play on that network
 # {NORTH,SOUTH,EAST,WEST}_REC  denotes a pcap file to reocrd into from that network
@@ -569,12 +548,9 @@ proc process_net {net} {
 
 match_max -d 10000
 
-# $Id: netjig.tcl,v 1.54 2005/10/20 21:11:45 mcr Exp $
+# $Id: netjig.tcl,v 1.53 2005/03/20 23:20:10 mcr Exp $
 #
 # $Log: netjig.tcl,v $
-# Revision 1.54  2005/10/20 21:11:45  mcr
-# 	refactored to put wait-user function in netjig.tcl.
-#
 # Revision 1.53  2005/03/20 23:20:10  mcr
 # 	when looking for an output file for console output,
 # 	include the kernel version in the variable that we will

@@ -16,23 +16,23 @@ OBJDIRTOP=`(cd ${OBJDIR};pwd)`
 
 if [ -f ${OBJDIR}/Makefile ]
 then
-    : echo "Will not overwrite ${OBJDIR}/Makefile"
-else
-	echo 'srcdir='${srcdir}/ 		 >${OBJDIR}/Makefile
-	echo 'OBJDIR='${OBJDIR}                 >>${OBJDIR}/Makefile
-	echo 'OBJDIRTOP='${OBJDIRTOP}           >>${OBJDIR}/Makefile
-	echo 'VPATH+=${srcdir}' 		>>${OBJDIR}/Makefile
-	echo 'OSDEP='${OSDEP}                   >>${OBJDIR}/Makefile
-	echo 'BUILDENV='${BUILDENV}             >>${OBJDIR}/Makefile
-	echo 'OPENSWANSRCDIR='${srcdir}         >>${OBJDIR}/Makefile
-	echo 'include ${srcdir}Makefile.top'   >>${OBJDIR}/Makefile
-
-	echo 'programs install clean checkprograms:: ' >>${OBJDIR}/Makefile
-	echo '	@for d in $(SUBDIRS) ; \'                                >>${OBJDIR}/Makefile
-	echo '	do \'                                                    >>${OBJDIR}/Makefile
-	echo '		(cd $$d && $(MAKE) OPENSWANSRCDIR=${OPENSWANSRCDIR} $@ ) || exit 1; \'  >>${OBJDIR}/Makefile
-	echo '	done; '                                                  >>${OBJDIR}/Makefile
+    echo "Will not overwrite ${OBJDIR}/Makefile"
+    exit 0
 fi
+
+echo 'srcdir='${srcdir} 		 >${OBJDIR}/Makefile
+echo 'OBJDIR='${OBJDIR}                 >>${OBJDIR}/Makefile
+echo 'OBJDIRTOP='${OBJDIRTOP}           >>${OBJDIR}/Makefile
+echo 'VPATH+=${srcdir}' 		>>${OBJDIR}/Makefile
+echo 'OPENSWANSRCDIR='${srcdir}         >>${OBJDIR}/Makefile
+echo 'include ${srcdir}/Makefile.top'   >>${OBJDIR}/Makefile
+
+echo 'programs install clean checkprograms:: ' >>${OBJDIR}/Makefile
+echo '	@for d in $(SUBDIRS) ; \'                                >>${OBJDIR}/Makefile
+echo '	do \'                                                    >>${OBJDIR}/Makefile
+echo '		(cd $$d && $(MAKE) OPENSWANSRCDIR=${OPENSWANSRCDIR} $@ ) || exit 1; \'  >>${OBJDIR}/Makefile
+echo '	done; '                                                  >>${OBJDIR}/Makefile
+
 
 
 find $dirs -name Makefile -print | (cd ${OBJDIR}; while read file
@@ -43,17 +43,15 @@ do
 
 	if [ -f ${dirname}/Makefile ]
 	then
-	    : echo "Will not overwrite ${dirname}/Makefile"
-	else
-		echo 'srcdir='${dsrcdir}/ 		 >${dirname}/Makefile
-		echo 'OBJDIR='${OBJDIR}                 >>${dirname}/Makefile
-		echo 'OBJDIRTOP='${OBJDIRTOP}           >>${dirname}/Makefile
-		echo 'OSDEP='${OSDEP}                   >>${dirname}/Makefile
-		echo 'BUILDENV='${BUILDENV}             >>${dirname}/Makefile
-		echo 'VPATH+=${srcdir}' 		>>${dirname}/Makefile
-		echo 'OPENSWANSRCDIR='${srcdir}         >>${dirname}/Makefile
-		echo 'include ${srcdir}Makefile'       >>${dirname}/Makefile
+	    echo "Will not overwrite ${dirname}/Makefile"
+	    exit 0
 	fi
+
+	echo 'srcdir='${dsrcdir}/ 		 >${dirname}/Makefile
+	echo 'OBJDIR='${OBJDIR}                 >>${dirname}/Makefile
+	echo 'VPATH+=${srcdir}' 		>>${dirname}/Makefile
+	echo 'OPENSWANSRCDIR='${srcdir}         >>${dirname}/Makefile
+	echo 'include ${srcdir}/Makefile'       >>${dirname}/Makefile
 done
 )
 

@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pluto_crypt.h,v 1.9 2005/08/08 17:24:26 ken Exp $
+ * RCSID $Id: pluto_crypt.h,v 1.8.4.1 2005/08/08 17:18:58 ken Exp $
  */
 
 /*

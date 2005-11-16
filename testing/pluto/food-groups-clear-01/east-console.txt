@@ -6,7 +6,7 @@ east:~#
  route add -net default gw 192.1.2.45
 east:~#
  ipsec setup start
-ipsec_setup: Starting FreeS/WAN IPsec VERSION
+ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
  /testing/pluto/basic-pluto-01/eroutewait.sh trap
 east:~#
@@ -37,9 +37,6 @@ east:~#
  ipsec eroute
 0          0.0.0.0/0          -> 0.0.0.0/0          => %trap
 0          192.1.2.23/32      -> 192.0.1.0/24       => %pass
-0          192.1.2.23/32      -> 192.1.2.129/32     => %pass
-0          192.1.2.23/32      -> 192.1.2.130/32     => %pass
-0          192.1.2.23/32      -> 192.1.2.254/32     => %pass
 east:~#
  echo end
 end
@@ -63,9 +60,6 @@ east:~#
 east NOW
 0.0.0.0/0          -> 0.0.0.0/0          => %trap
 192.1.2.23/32      -> 192.0.1.0/24       => %pass
-192.1.2.23/32      -> 192.1.2.129/32     => %pass
-192.1.2.23/32      -> 192.1.2.130/32     => %pass
-192.1.2.23/32      -> 192.1.2.254/32     => %pass
 ipsec0->eth1 mtu=16260(9999)->1500
 Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
 0.0.0.0         192.1.2.45      0.0.0.0         UG       99 0          0 eth1
@@ -74,9 +68,6 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
 192.0.1.0       192.1.2.45      255.255.255.0   UG       99 0          0 ipsec0
 192.1.2.0       0.0.0.0         255.255.255.0   U        99 0          0 eth1
 192.1.2.0       0.0.0.0         255.255.255.0   U        99 0          0 ipsec0
-192.1.2.129     192.1.2.45      255.255.255.255 UGH      99 0          0 ipsec0
-192.1.2.130     192.1.2.45      255.255.255.255 UGH      99 0          0 ipsec0
-192.1.2.254     192.1.2.45      255.255.255.255 UGH      99 0          0 ipsec0
 east:~#
  echo end
 end
@@ -85,8 +76,8 @@ east:~#
 
 east:~#
  ipsec setup stop
-ipsec_setup: Stopping FreeS/WAN IPsec...
 IPSEC EVENT: KLIPS device ipsec0 shut down.
+ipsec_setup: Stopping Openswan IPsec...
 east:~#
  kill `cat /var/run/klogd.pid`; cat /tmp/klog.log
 klogd 1.3-3#33.1, log source = /proc/kmsg started.

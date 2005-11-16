@@ -1,4 +1,4 @@
-#ifndef _OPENSWAN_KVERSIONS_H
+#ifndef _FREESWAN_KVERSIONS_H
 /*
  * header file for FreeS/WAN library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
@@ -14,9 +14,9 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: ipsec_kversion.h,v 1.18 2005/08/31 23:26:11 mcr Exp $
+ * RCSID $Id: ipsec_kversion.h,v 1.15.2.2 2005/09/01 01:57:19 paul Exp $
  */
-#define	_OPENSWAN_KVERSIONS_H	/* seen it, no need to see it again */
+#define	_FREESWAN_KVERSIONS_H	/* seen it, no need to see it again */
 
 /*
  * this file contains a series of atomic defines that depend upon
@@ -54,6 +54,12 @@
 #define NETDEV_23
 #  ifndef CONFIG_IP_ALIAS
 #  define CONFIG_IP_ALIAS
+#  endif
+#include <linux/socket.h>
+#include <linux/skbuff.h>
+#include <linux/netlink.h>
+#  ifdef NETLINK_XFRM
+#  define NETDEV_25
 #  endif
 #endif
 
@@ -104,7 +110,6 @@
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 #define HAVE_NETDEV_PRINTK 1
 #define NET_26
-#define NETDEV_25
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,8)
@@ -116,7 +121,6 @@
 #define NET_26_12_SKALLOC
 #endif
 
-/* see <linux/security.h> */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,13)
 #define HAVE_SOCK_SECURITY
 
@@ -124,7 +128,97 @@
 #define HAVE_SKB_NF_DEBUG
 #endif
 
-#if __KERNEL__
+#ifdef NET_21
+#  include <linux/in6.h>
+#else
+     /* old kernel in.h has some IPv6 stuff, but not quite enough */
+#  define	s6_addr16	s6_addr
+#  define	AF_INET6	10
+#  define uint8_t __u8
+#  define uint16_t __u16 
+#  define uint32_t __u32 
+#  define uint64_t __u64 
+#endif
+
+#ifdef NET_21
+# define ipsec_kfree_skb(a) kfree_skb(a)
+#else /* NET_21 */
+# define ipsec_kfree_skb(a) kfree_skb(a, FREE_WRITE)
+#endif /* NET_21 */
+
+#ifdef NETDEV_23
+#if 0
+#ifndef NETDEV_25
+#define device net_device
+#endif
+#endif
+# define ipsec_dev_get dev_get_by_name
+# define __ipsec_dev_get __dev_get_by_name
+# define ipsec_dev_put(x) dev_put(x)
+# define __ipsec_dev_put(x) __dev_put(x)
+# define ipsec_dev_hold(x) dev_hold(x)
+#else /* NETDEV_23 */
+# define ipsec_dev_get dev_get
+# define __ipsec_dev_put(x) 
+# define ipsec_dev_put(x)
+# define ipsec_dev_hold(x) 
+#endif /* NETDEV_23 */
+
+#ifndef SPINLOCK
+#  include <linux/bios32.h>
+     /* simulate spin locks and read/write locks */
+     typedef struct {
+       volatile char lock;
+     } spinlock_t;
+
+     typedef struct {
+       volatile unsigned int lock;
+     } rwlock_t;                                                                     
+
+#  define spin_lock_init(x) { (x)->lock = 0;}
+#  define rw_lock_init(x) { (x)->lock = 0; }
+
+#  define spin_lock(x) { while ((x)->lock) barrier(); (x)->lock=1;}
+#  define spin_lock_irq(x) { cli(); spin_lock(x);}
+#  define spin_lock_irqsave(x,flags) { save_flags(flags); spin_lock_irq(x);}
+
+#  define spin_unlock(x) { (x)->lock=0;}
+#  define spin_unlock_irq(x) { spin_unlock(x); sti();}
+#  define spin_unlock_irqrestore(x,flags) { spin_unlock(x); restore_flags(flags);}
+
+#  define read_lock(x) spin_lock(x)
+#  define read_lock_irq(x) spin_lock_irq(x)
+#  define read_lock_irqsave(x,flags) spin_lock_irqsave(x,flags)
+
+#  define read_unlock(x) spin_unlock(x)
+#  define read_unlock_irq(x) spin_unlock_irq(x)
+#  define read_unlock_irqrestore(x,flags) spin_unlock_irqrestore(x,flags)
+
+#  define write_lock(x) spin_lock(x)
+#  define write_lock_irq(x) spin_lock_irq(x)
+#  define write_lock_irqsave(x,flags) spin_lock_irqsave(x,flags)
+
+#  define write_unlock(x) spin_unlock(x)
+#  define write_unlock_irq(x) spin_unlock_irq(x)
+#  define write_unlock_irqrestore(x,flags) spin_unlock_irqrestore(x,flags)
+#endif /* !SPINLOCK */
+
+#ifndef SPINLOCK_23
+#  define spin_lock_bh(x)  spin_lock_irq(x)
+#  define spin_unlock_bh(x)  spin_unlock_irq(x)
+
+#  define read_lock_bh(x)  read_lock_irq(x)
+#  define read_unlock_bh(x)  read_unlock_irq(x)
+
+#  define write_lock_bh(x)  write_lock_irq(x)
+#  define write_unlock_bh(x)  write_unlock_irq(x)
+#endif /* !SPINLOCK_23 */
+
+#ifndef HAVE_NETDEV_PRINTK
+#define netdev_printk(sevlevel, netdev, msglevel, format, arg...) \
+	printk(sevlevel "%s: " format , netdev->name , ## arg)
+#endif
+
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,0)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0) 
 #include "openswan/ipsec_kern24.h"
@@ -132,22 +226,25 @@
 #error "kernels before 2.4 are not supported at this time"
 #endif
 #endif
-#endif
 
-#endif /* _OPENSWAN_KVERSIONS_H */
+
+#endif /* _FREESWAN_KVERSIONS_H */
 
 /*
  * $Log: ipsec_kversion.h,v $
- * Revision 1.18  2005/08/31 23:26:11  mcr
- * 	fixes for 2.6.13
+ * Revision 1.15.2.2  2005/09/01 01:57:19  paul
+ * michael's fixes for 2.6.13 from head
  *
- * Revision 1.17  2005/08/27 23:07:21  paul
- * Somewhere between 2.6.12 and 2.6.13rc7 the unused security memnber in sk_buff
- * has been removed. This patch should fix compilation for both cases.
+ * Revision 1.15.2.1  2005/08/27 23:13:48  paul
+ * Fix for:
+ * 7 weeks ago:  	[NET]: Remove unused security member in sk_buff
+ * changeset 4280: 	328ea53f5fee
+ * parent 4279:	beb0afb0e3f8
+ * author: 	Thomas Graf <tgraf@suug.ch>
+ * date: 	Tue Jul 5 21:12:44 2005
+ * files: 	include/linux/skbuff.h include/linux/tc_ematch/tc_em_meta.h net/core/skbuff.c net/ipv4/ip_output.c net/ipv6/ip6_output.c net/sched/em_meta.c
  *
- * Revision 1.16  2005/08/05 08:48:38  mcr
- * 	many compat definitions moved to kern24.h because
- * 	ipsec_kversion.h may be needed by openswan.h.
+ * This should fix compilation on 2.6.13(rc) kernels
  *
  * Revision 1.15  2005/07/19 20:02:15  mcr
  * 	sk_alloc() interface change.

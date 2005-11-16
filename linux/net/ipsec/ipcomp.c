@@ -14,7 +14,7 @@
  * for more details.
  */
 
-char ipcomp_c_version[] = "RCSID $Id: ipcomp.c,v 1.43 2005/08/27 23:07:21 paul Exp $";
+char ipcomp_c_version[] = "RCSID $Id: ipcomp.c,v 1.41.2.1 2005/08/27 23:40:00 paul Exp $";
 
 /* SSS */
 
@@ -49,7 +49,6 @@ char ipcomp_c_version[] = "RCSID $Id: ipcomp.c,v 1.43 2005/08/27 23:07:21 paul E
 
 #include <net/ip.h>
 
-#include "openswan/ipsec_kern24.h"
 #include "openswan/radij.h"
 #include "openswan/ipsec_encap.h"
 #include "openswan/ipsec_sa.h"

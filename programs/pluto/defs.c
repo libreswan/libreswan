@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: defs.c,v 1.31 2005/08/05 17:39:56 mcr Exp $
+ * RCSID $Id: defs.c,v 1.30 2004/06/27 22:32:45 mcr Exp $
  */
 
 #include <stdlib.h>
@@ -23,7 +23,6 @@
 
 #include <openswan.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "openswan/ipsec_policy.h"
 #include "defs.h"

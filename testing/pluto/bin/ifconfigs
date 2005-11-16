@@ -4,10 +4,6 @@
 
 . CONFIG
 
-# assume that if /sbin/ifconfig doesn't exist, or can't be run, that
-# the aliases already exist.
-if [ ! -x /sbin/ifconfig ]; then exit 0; fi
-
 for i
 do
 	case "$i" in

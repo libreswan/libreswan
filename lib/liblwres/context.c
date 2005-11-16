@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: context.c,v 1.5 2005/08/05 01:18:29 mcr Exp $ */
+/* $Id: context.c,v 1.4 2004/12/02 06:16:19 mcr Exp $ */
 
 #include <config.h>
 
@@ -26,11 +26,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-
-#include <isc/ipv6.h>
 #include <lwres/lwres.h>
 #include <lwres/net.h>
 #include <lwres/platform.h>

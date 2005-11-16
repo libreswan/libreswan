@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: _realsetup.in,v 1.50 2005/08/26 14:49:01 ken Exp $
+# RCSID $Id: _realsetup.in,v 1.46.2.2 2005/07/28 00:23:48 ken Exp $
 
 me='ipsec setup'		# for messages
 
@@ -37,13 +37,6 @@ then
 	echo "$me: $0 must be called by ipsec_setup" >&2
 	exit 1
 fi
-
-if test `ip addr list|grep -c cipsec` -ne 0
-then
-	echo "Cisco IPSec client is already loaded, aborting! (cipsec# device found)"
-	exit 1
-fi
-
 # defaults for "config setup" items
 
 IPSECinterfaces=${IPSECinterfaces:-%defaultroute}
@@ -79,8 +72,8 @@ auto)
 klips)  netkey=false; klips=true;;
 netkey) netkey=true;  klips=false;;
 none)   netkey=false; klips=false;;
-nostack)   netkey=false; klips=false;;
 esac
+
 
 # Shall we trace?
 execute="true"
@@ -143,16 +136,13 @@ LOGONLY="logger -p $IPSECsyslog -t ipsec_setup"
 # within another sequence (for plutorun).
 # Luckily there are NO substitutions in it.
 
-KILLKLIPS=":"
-
 if $klips
 then
-KILLKLIPS='ifl=` ip link show up | sed -n -e "/ipsec[0-9][0-9]*/s/^[0-9][0-9]*: \([^ ]*\): .*/\1/p" ` ;
+    KILLKLIPS='ifl=` ifconfig | sed -n -e "/^ipsec/s/ .*//p" ` ;
 	test "X$ifl" != "X" &&
 	for i in  $ifl ;
 	do
-		ip link set $i down ;
-		ip addr flush dev $i ;
+		ifconfig $i down ;
 		ipsec tncfg --detach --virtual $i ;
 	done ;
 	test -r /proc/net/ipsec_klipsdebug && ipsec klipsdebug --none ;
@@ -222,33 +212,26 @@ case "$1" in
         	then
                 	echo "WARNING: overridemtu= is ignored when using the NETKEY stack"
         	fi
-		if test $IPSECinterfaces
-		then
-			echo "WARNING: interfaces= is ignored when using the NETKEY stack"
-		fi 
 	fi
 
 
-	if $klips
-	then
-		# here we go
-		perform ipsec _startklips \
-				--info $info \
-				--debug "\"$IPSECklipsdebug\"" \
-				--omtu "\"$IPSECoverridemtu\"" \
-				--fragicmp "\"$IPSECfragicmp\"" \
-				--hidetos "\"$IPSEChidetos\"" \
-				--rpfilter "\"$IPSECrp_filter\"" \
-				--log "\"$IPSECsyslog\"" \
-				$IPSECinterfaces "||" \
-			"{" rm -f $lock ";" exit 1 ";" "}"
+	# here we go
+	perform ipsec _startklips \
+			--info $info \
+			--debug "\"$IPSECklipsdebug\"" \
+			--omtu "\"$IPSECoverridemtu\"" \
+			--fragicmp "\"$IPSECfragicmp\"" \
+			--hidetos "\"$IPSEChidetos\"" \
+			--rpfilter "\"$IPSECrp_filter\"" \
+			--log "\"$IPSECsyslog\"" \
+			$IPSECinterfaces "||" \
+		"{" rm -f $lock ";" exit 1 ";" "}"
 
-		perform test -f $ipsecversion "||" \
-			test -f $kamepfkey "||" "{" \
-			echo "\"OOPS, should have aborted!  Broken shell!\"" ";" \
-			exit 1 ";" \
-			"}"
-	fi
+	perform test -f $ipsecversion "||" \
+		test -f $kamepfkey "||" "{" \
+		echo "\"OOPS, should have aborted!  Broken shell!\"" ";" \
+		exit 1 ";" \
+		"}"
 
 	# misc pre-Pluto setup
 
@@ -416,8 +399,9 @@ case "$1" in
 			eroutes=`wc -l < /proc/net/ipsec_eroute 2> /dev/null | sed s/\ //g`
 		fi
 	else
-		eroutes=`ipsec eroute 2> /dev/null | wc -l | sed s/\ //g`
+		eroutes=`ipsec auto --status 2> /dev/null | grep -i "ipsec sa established" | wc -l | sed s/\ //g`
 	fi
+
 
 	if test -r $ipsecversion
 	then

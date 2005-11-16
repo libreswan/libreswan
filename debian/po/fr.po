@@ -9,13 +9,13 @@ msgstr ""
 "Project-Id-Version: freeswan 1.99-6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-13 11:49+0100\n"
-"PO-Revision-Date: 2004-06-27 09:31+0200\n"
+"PO-Revision-Date: 2005-01-17 08:08+0100\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.3.1\n"
+"X-Generator: KBabel 1.9.1\n"
 "Plural-Forms: Plural-Forms: nplurals=2; plural=n>1;\n"
 
 #. Type: select
@@ -500,7 +500,6 @@ msgstr "Souhaitez-vous activer le chiffrement opportuniste dansOpenswan ?"
 #. Type: boolean
 #. Description
 #: ../openswan.templates.master:193
-#, fuzzy
 msgid ""
 "Openswan comes with support for opportunistic encryption (OE), which stores "
 "IPSec authentication information (i.e. RSA public keys) in (preferably "
@@ -515,10 +514,10 @@ msgstr ""
 "à-dire les clés publiques RSA) dans des enregistrements DNS, de préférence "
 "sécurisés. Tant que cette fonctionnalité ne sera pas déployée largement, son "
 "activation provoquera un ralentissement significatif pour toute nouvelle "
-"connexion sortante. À partir de la version 2.0, OE est activé par défaut "
-"dans Openswan, ce qui peut interrompre le fonctionnement de votre connexion "
-"à l'Internet (c'est-à-dire votre route par défaut) dès le démarrage de "
-"pluto, le démon de gestion de clés d'Openswan."
+"connexion sortante. À partir de la version 2.0, cette fonctionnalité est "
+"activée par défaut dans Openswan, ce qui peut interrompre le fonctionnement "
+"de votre connexion à l'Internet (c'est-à-dire votre route par défaut) dès le "
+"démarrage de pluto, le démon de gestion de clés d'Openswan."
 
 #. Type: boolean
 #. Description

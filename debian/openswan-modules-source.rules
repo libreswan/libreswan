@@ -64,26 +64,7 @@ build: debian/control configure-stamp build-stamp
 build-stamp:
 	dh_testdir
 
-	# this is taken from the main openswan Makefile
-	sed '/"/s/xxx/$(IPSECVERSION)/' linux/net/ipsec/version.in.c > linux/net/ipsec/version.c
-	
-	# now build the ipsec module
-	$(MAKE) -C linux/net/ipsec ARCH=${ARCH} KLIPSMODULE=true \
-		TOPDIR=${KSRC} -f `pwd`/linux/net/ipsec/defconfig -f Makefile \
-		MODULE_DEF_INCLUDE=`pwd`/config-all.h KLIPS_TOP=`pwd`/linux \
-		CONFIG_IPSEC=m \
-		ipsec.o
-	$(MAKE) -C linux/net/ipsec/alg ARCH=${ARCH} KLIPSMODULE=true \
-		TOPDIR=${KSRC} \
-		MODULE_DEF_INCLUDE=`pwd`/config-all.h KLIPS_TOP=`pwd`/linux \
-		LIBCRYPTO=`pwd`/lib/libcrypto \
-		EXTRA_CFLAGS="-D__KERNEL__ -include `pwd`/config-all.h \
-			-I`pwd`/linux/include \
-			-I`pwd`/lib/libcrypto/include \
-			-I`pwd`/linux/include/ \
-                        -I${KSRC}/include" \
-		CONFIG_IPSEC=m \
-		all_alg_modules
+	$(MAKE) module OPENSWANSRCDIR=$(CURDIR) KERNELSRC=${KSRC}
 
 	touch build-stamp
 
@@ -92,23 +73,13 @@ clean:
 	dh_testroot
 	rm -f build-stamp configure-stamp
 
-	# Add here commands to clean up after the build process.
-	-$(MAKE) -C linux/net/ipsec ARCH=${ARCH} KLIPSMODULE=true \
-		TOPDIR=${KSRC} -f `pwd`/linux/net/ipsec/defconfig -f Makefile \
-		MODULE_DEF_INCLUDE=`pwd`/config-all.h KLIPS_TOP=`pwd`/linux \
-		clean
-	-$(MAKE) -C linux/net/ipsec/alg ARCH=${ARCH} KLIPSMODULE=true \
-		TOPDIR=${KSRC} \
-		MODULE_DEF_INCLUDE=`pwd`/config-all.h KLIPS_TOP=`pwd`/linux \
-		clean
-	rm -f linux/net/ipsec/version.c
+	$(MAKE) modclean OPENSWANSRCDIR=$(CURDIR) KERNELSRC=${KSRC}
 
 	dh_clean
 
 	rm -f debian/control
 
 MODDESTDIR=$(CURDIR)/debian/openswan-modules-$(KVERS)/lib/modules/$(KVERS)/kernel/net/ipsec
-MOD_ALGDESTDIR=$(CURDIR)/debian/openswan-modules-$(KVERS)/lib/modules/$(KVERS)/kernel/net/ipsec/alg
 install:
 install: build
 	dh_testdir
@@ -117,10 +88,13 @@ install: build
 	dh_installdirs
 
 	mkdir -p $(MODDESTDIR)
-	mkdir -p $(MOD_ALGDESTDIR)
-	cp linux/net/ipsec/ipsec.o $(MODDESTDIR)
-	cp linux/net/ipsec/alg/ipsec_*.o $(MOD_ALGDESTDIR)
-	rm $(MOD_ALGDESTDIR)/ipsec_alg_*.o
+	if [ -d modobj ]; then \
+		cp modobj/ipsec.o $(MODDESTDIR); \
+		cp modobj/ipsec_alg_*.o $(MODDESTDIR); \
+	else \
+		cp modobj26/ipsec.ko $(MODDESTDIR); \
+	fi
+
 
 # Build architecture-independent files here.
 binary-indep: build install

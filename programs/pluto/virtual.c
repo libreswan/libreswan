@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: virtual.c,v 1.6 2005/08/05 19:18:47 mcr Exp $
+ * RCSID $Id: virtual.c,v 1.5 2004/05/08 11:05:38 ken Exp $
  */
 
 #ifdef VIRTUAL_IP
@@ -21,8 +21,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/queue.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 

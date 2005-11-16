@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: id.h,v 1.24 2005/08/05 19:10:43 mcr Exp $
+ * RCSID $Id: id.h,v 1.23 2005/02/14 05:56:02 ken Exp $
  */
 
 struct id {
@@ -42,7 +42,7 @@ extern void set_myFQDN(void);
 
 extern err_t atoid(char *src, struct id *id, bool myid_ok);
 extern void iptoid(const ip_address *ip, struct id *id);
-extern unsigned char* temporary_cyclic_buffer(void);
+extern char* temporary_cyclic_buffer(void);
 extern int idtoa(const struct id *id, char *dst, size_t dstlen);
 #define IDTOA_BUF	512
 extern void escape_metachar(const char *src, char *dst, size_t dstlen);

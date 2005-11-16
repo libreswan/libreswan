@@ -21,14 +21,12 @@ struct encrypt_desc {
   void (*do_crypt)(u_int8_t *dat, size_t datasize, u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc);
 };
 
-typedef void (*hash_update_t)(void *, const u_char *, size_t) ;
-
 struct hash_desc {
   struct ike_alg common;
   size_t hash_ctx_size;
   size_t hash_digest_len;
   void (*hash_init)(void *ctx);
-  hash_update_t hash_update;
+  void (*hash_update)(void *ctx, const u_int8_t *in, size_t datasize);
   void (*hash_final)(u_int8_t *out, void *ctx);
 };
 

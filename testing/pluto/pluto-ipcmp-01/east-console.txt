@@ -56,7 +56,7 @@ east:~#
  klogd -c 4 -x -f /tmp/klog.log
 east:~#
  ipsec setup start
-ipsec_setup: Starting FreeS/WAN IPsec VERSION
+ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
  ipsec auto --add westnet-eastnet-ipcomp
 east:~#
@@ -85,8 +85,8 @@ Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
 192.1.2.0       0.0.0.0         255.255.255.0   U        99 0          0 ipsec0
 east:~#
  ipsec setup stop
-ipsec_setup: Stopping FreeS/WAN IPsec...
 IPSEC EVENT: KLIPS device ipsec0 shut down.
+ipsec_setup: Stopping Openswan IPsec...
 east:~#
  kill `cat /var/run/klogd.pid`; cat /tmp/klog.log
 klogd 1.3-3#33.1, log source = /proc/kmsg started.

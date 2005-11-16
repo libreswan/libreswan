@@ -12,9 +12,9 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: kernel_netlink.h,v 1.2 2005/08/14 21:58:09 mcr Exp $
+ * RCSID $Id: kernel_netlink.h,v 1.1 2003/07/31 18:14:23 mcr Exp $
  */
 
-#if defined(linux) && defined(NETKEY_SUPPORT)
-extern const struct kernel_ops netkey_kernel_ops;
+#if defined(KLIPS) && defined(linux)
+extern const struct kernel_ops linux_kernel_ops;
 #endif

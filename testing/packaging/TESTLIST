@@ -32,7 +32,7 @@ mkinsttest	overwrite-install-01	good
 #rpm_build_install_test	rpm-rh72-install-01	good
 
 # for RH7.3 kernel
-rpm_build_install_test	rpm-rh73-install-01	good
+#rpm_build_install_test	rpm-rh73-install-01	good
 
 # for IPKG
 ipkg_build_install_test	ipkg-install-01		good
@@ -51,13 +51,16 @@ kernel_patch_test	kernpatch-two-two-01	good
 kernel_patch_test	kernpatch-two-oh-01	good
 
 # test against SuSE kernel source
-kernel_patch_test	kernpatch-suse-two-four	good
-
+# Disabled - SuSE now includes 2.6 backport stuff, so 
+# we don't patch the kernel
+skiptest	kernpatch-suse-two-four	incomplete
 
 #
 # test of building the module against various kernel sources
 #
-module_compile		modtest-suse-two-four	good
+# Disabled - SuSE now includes 2.6 backport stuff, so 
+# we don't patch the kernel
+skiptest		modtest-suse-two-four	incomplete
 
 # test for building without ipcomp.
 module_compile		modtest-noipcomp-01	good
@@ -66,7 +69,7 @@ module_compile		modtest-noipcomp-01	good
 module_compile		modtest-nodebug-01	good
 
 # test for building on Alpha (only works on Alpha)
-module_compile		modtest-rh-alpha-01	good
+skiptest		modtest-rh-alpha-01	incomplete
 
 
 

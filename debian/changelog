@@ -1,3 +1,106 @@
+openswan (1:2.4.0-1) unstable; urgency=low
+
+  * New upstream release. This finally allows the Debian packages to be 
+    updated since the regression from 2.2.X to 2.3.X has been fixed (pluto
+    crash with roadwarriors). Please be aware that pluto daemons from 2.2 or
+    2.3 openswan release will still crash, so please update all your 
+    installations as soon as possible.
+    Closes: #292132: openswan: OpenSwan 2.2.0 crashes when a road-warrior 
+                     comes in using 2.3.0
+    This release also supports KLIPS with 2.6 kernels now.
+    Closes: #301801: kernel-patch-openswan: Fails to build with Debian 
+                     2.6.10 source 
+            #273443: openswan-modules-source: doesn't build with 2.6.8 - 
+                     different from #273144 (?) 
+            #318136: kernel-patch-openswan: Problem applying 
+                     kernel-openswan-patch to kernel-source-2.6.8
+  * Fixed gcc 4 compile for fswcert (patch will be forwarded to upstream).
+  * Added Vietnamese debconf translation.
+    Closes: #316692: INTL:vi
+  * Introduced the epoch in this branch to allow automatic updates from the
+    previously downgraded 2.2 release.
+  * Edited the debian/copyright file to mention the shared GPL path and
+    removed old licenses (only refer to CREDITS now).
+
+ -- Rene Mayrhofer <rmayr@debian.org>  Mon, 19 Sep 2005 13:40:30 +0100
+
+openswan (2.3.1-1) unstable; urgency=high
+
+  Urgency HIGH because openswan is an important package for testing (at least
+  in my opinion...).
+  * New upstream version. This update should fix the various crashes
+    that openswan 2.3.0 pluto was causing on other openswan boxes
+    (occured in the wild with 2.2.0 and 2.3.0, but might also happen
+    with others) in some cases.
+    Closes: #292132: openswan: OpenSwan 2.2.0 crashes when a road-warrior 
+            comes in using 2.3.0
+  * Adapt to the new way of building modules (which changed between upstream
+    version 2.2.0 and 2.3.0). openswan-modules-source should now build with
+    2.4 and with 2.6 kernels (using make-kpkg).
+    Closes: #291274: Fails to build with 2.4.29: missing Makefile
+    Closes: #276521: openswan-modules-source: ipsec_aes.o & ipsec_cryptoapi.o 
+            not kernel modules
+  * Also enable building of 2.6 kernel modules in openswan-modules-source.
+    Closes: #273443: openswan-modules-source: doesn't build with 2.6.8 - 
+            different from #273144 (?)
+  * kernel-patch-openswan also needed some changes due to the new tree
+    layout (specifically the new Makefile.top). Now kernel-patch-openswan
+    has been enabled to work with kernel 2.6, so you can now get ipsecX
+    interfaces with kernel 2.6 (tested with vanilla 2.6.10)!
+    Closes: #301801 kernel-patch-openswan: Fails to build with Debian 2.6.10 
+            source
+  * There was no reply by the original bug submitter, so this really seemed
+    to be a toolchain problem. I can't reproduce this bug.
+    Closes: #283387: openswan: Fails to build on testing (Sarge)
+  * The build-dependency has already been updated from libcurl2-dev to 
+    libcurl3-dev in package 2.3.0-1. Now updated it to 
+    libcurl3-dev | libcurl2-dev so that backporting to woody is easier.
+    Closes: #298468 openswan fails to build on sarge due to missing 
+            libcurl2-dev dependancy
+  * The same goes for libopensc*-dev.
+  * Fixed typos in the logcheck ignore files.
+    Closes: #298693: openswan: logcheck files - typo
+  * Updated debconf translations.
+    Closes: #290847: openswan: [INTL:fr] French debconf templates translation
+    Closes: #292077: [INTL:pt_BR] Please apply the attached patch in order to 
+            update openswan's pt_BR debconf translation
+    Closes: #294202: [l10n] Czech po-debconf template translation (cs.po)
+  * Removed the source code for the fswcert utility from the debian/ dir in
+    the source package - it is now included in the upstream source under
+    programs/.
+  * Removed the conflicts with ike-server (still providing it though).
+    Closes: #297186: openswan: Remove conflict on ike-server
+  * Don't conflict with freeswan generally, but only with versions < 2.04-12.
+    (This is in preparation of the freeswan transition package that I am 
+    working on.)
+  * Explicitly remove the execute permissions from /etc/ipsec.d/policies/*.
+    Closes: #298245: wrong permissions in /etc
+  * No longer need gawk for openswan scripts to work. This allows to finally
+    removed the awk-to-gawk hack in debian/rules and means that openswan no
+    longer depends on gawk.
+  * Enable the building of pluto code for dynamic URL fetching (which needs
+    libldap2-dev and libcurl3-dev) and the XAUTH PAM support. Therefore, we
+    now build-depend on libpam0g-dev.
+    Closes: #292838: openswan: Dynamic CRL fetching not supported
+
+ -- Rene Mayrhofer <rmayr@debian.org>  Sat,  9 Apr 2005 17:56:16 +0200
+
+openswan (2.3.0-2) unstable; urgency=HIGH
+
+  Urgency HIGH due to security issue and problems with build-deps in sarge.
+  * Fix the security issue. Please see
+    http://www.idefense.com/application/poi/display?id=190&
+        type=vulnerabilities&flashstatus=false
+    or CAN-2005-0162 at
+    http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2005-0162
+    for more details. Thanks to Martin Schulze for informing me about this 
+    issue.
+    Closes: #292458: Openswan XAUTH/PAM Buffer Overflow Vulnerability
+  * Added a Build-Dependency to lynx.
+    Closes: #291143: openswan: FTBFS: Missing build dependency.
+
+ -- Rene Mayrhofer <rmayr@debian.org>  Thu, 27 Jan 2005 16:10:11 +0100
+
 openswan (2.3.0-1) unstable; urgency=low
 
   * New upstream release.

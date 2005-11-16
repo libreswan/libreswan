@@ -1,7 +1,7 @@
 # note: forward key does not match reverse key (tricky, but helps testing)
 
 #west:
-128.95.7.1: rsa {
+127.95.7.1: rsa {
 	# RSA 1024 bits
 	# for signatures only, UNSAFE FOR ENCRYPTION
 	#pubkey=0sAQOOyFBeFFr9CWXgn1aOEvTr98HG4inSckTXlyYi5x85G+Q1+PZ/roqB3OtnRS2XbXFb3n92QjZMJ403wQUwMAt6uzXzXDle5VvFn7cVXq3ch0jqQUxIFcdIIFR2wtkxvAr20xSOHNF/ozmKVZLkrHLu4RvVCCbSNa5toqLXblkcOQ==
@@ -35,12 +35,12 @@
 	Coefficient: 0xe5ebc68645cac206b45f99cb7d83ee1cc94b587f0a8a02f839daef157e6a64eef8414f317b92c3dce5a845bdf91ad9e5d31d2a326a04f2b7b89d293f494df9af
     }
 
-@west.example.com 128.95.7.1 128.95.7.2:	PSK "secret of 128.95.7.1 and 128.95.7.2"
-128.95.7.1 128.95.7.3:	PSK "secret of 128.95.7.1 and 128.95.7.3"
-128.95.7.1 128.95.7.4:	PSK "secret of 128.95.7.1 and 128.95.7.4"
-128.95.7.2 128.95.7.3:	PSK "secret of 128.95.7.2 and 128.95.7.3"
-128.95.7.2 128.95.7.4:	PSK "secret of 128.95.7.2 and 128.95.7.4"
-128.95.7.3 128.95.7.4:	PSK "secret of 128.95.7.3 and 128.95.7.4"
+@west.example.com 127.95.7.1 127.95.7.2:	PSK "secret of 127.95.7.1 and 127.95.7.2"
+127.95.7.1 127.95.7.3:	PSK "secret of 127.95.7.1 and 127.95.7.3"
+127.95.7.1 127.95.7.4:	PSK "secret of 127.95.7.1 and 127.95.7.4"
+127.95.7.2 127.95.7.3:	PSK "secret of 127.95.7.2 and 127.95.7.3"
+127.95.7.2 127.95.7.4:	PSK "secret of 127.95.7.2 and 127.95.7.4"
+127.95.7.3 127.95.7.4:	PSK "secret of 127.95.7.3 and 127.95.7.4"
 
 # spare longer key
 @nobody.example.com: rsa {

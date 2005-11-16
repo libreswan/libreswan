@@ -1,7 +1,7 @@
 #! /bin/sh 
 #
 # 
-# $Id: uml-functions.sh,v 1.43 2005/09/28 12:51:59 mcr Exp $
+# $Id: uml-functions.sh,v 1.38 2005/07/14 01:35:54 mcr Exp $
 #
 
 setup_make() {
@@ -17,8 +17,6 @@ setup_make() {
     esac
 
     echo "IPSECDIR=${OPENSWANSRCDIR}/linux/net/ipsec"
-    echo "USE_OBJDIR=${USE_OBJDIR}"
-    echo "include ${OPENSWANSRCDIR}/Makefile.inc"
     echo "include ${OPENSWANSRCDIR}/Makefile.ver"
     echo 
     
@@ -58,7 +56,7 @@ setup_host_make() {
     depends="$depends $host/root"
 
     echo $host/linux : $KERNEL 
-    echo "$TAB rm -f $host/linux; cp $KERNEL $host/linux"          
+    echo "$TAB cp $KERNEL $host/linux"          
     echo
     depends="$depends $host/linux"
 
@@ -72,12 +70,10 @@ setup_host_make() {
 
     # make sure that we have /dev, /tmp and /var/run
     echo "$TAB mkdir -p $hostroot/dev $hostroot/tmp $hostroot/var/run $hostroot/usr/share $hostroot/proc $hostroot/var/log/pluto/peer"
-    echo "$TAB rm -f $hostroot/dev/console $hostroot/dev/null"
-    echo "$TAB touch $hostroot/dev/console $hostroot/dev/null"
 
     # root image may be debian, but we expect rh-style /etc/rc.d
     echo "$TAB mkdir -p $hostroot/etc/rc.d"
-    echo "$TAB mkdir -p $hostroot/testing $hostroot/usr/src $hostroot/usr/obj"
+    echo "$TAB mkdir -p $hostroot/testing $hostroot/usr/src"
     echo "$TAB if [ ! -d $hostroot/etc/rc.d/init.d ]; then (cd $hostroot/etc/rc.d && ln -fs ../init.d ../rc?.d . ); fi"
 
     # nuke certain other files that get in the way of booting
@@ -151,7 +147,6 @@ setup_host_make() {
     echo "$TAB echo none	   /usr/share		     hostfs   defaults,ro,$SHAREROOT 0 0 >>$hostroot/etc/fstab"
     echo "$TAB echo none	   /testing		     hostfs   defaults,ro,${TESTINGROOT} 0 0 >>$hostroot/etc/fstab"
     echo "$TAB echo none	   /usr/src		     hostfs   defaults,ro,${OPENSWANSRCDIR} 0 0 >>$hostroot/etc/fstab"
-    echo "$TAB echo none	   /usr/obj		     hostfs   defaults,ro,\${OBJDIRTOP} 0 0 >>$hostroot/etc/fstab"
     echo "$TAB echo none	   /usr/local		     hostfs   defaults,rw,${POOLSPACE}/${hostroot}/usr/local 0 0 >>$hostroot/etc/fstab"
     echo "$TAB echo none	   /var/tmp		     hostfs   defaults,rw,${POOLSPACE}/${hostroot}/var/tmp 0 0 >>$hostroot/etc/fstab"
     depends="$depends $hostroot/etc/fstab"
@@ -191,7 +186,7 @@ setup_host_make() {
 	echo "$TAB echo '# get $net value from baseconfig'          >>$startscript"
 	echo "$TAB echo . ${TESTINGROOT}/baseconfigs/net.$host.sh   >>$startscript"
 	echo "$TAB echo ''          >>$startscript"
-	echo "$TAB echo '$POOLSPACE/plain${KERNVER}/linux root=/dev/root rootfstype=hostfs rootflags=$POOLSPACE/$hostroot rw ssl=pty umid=$host \$\$net \$\$UML_DEBUG_OPT \$\$UML_"${host}"_OPT \$\$*' >>$startscript"
+	echo "$TAB echo '$POOLSPACE/plain${KERNVER}/linux root=/dev/root rootfstype=hostfs rootflags=$POOLSPACE/$hostroot rw umid=$host \$\$net \$\$UML_DEBUG_OPT \$\$UML_"${host}"_OPT \$\$*' >>$startscript"
 	echo "$TAB chmod +x $startscript"
 	echo
 	depends="$depends $startscript"
@@ -205,8 +200,8 @@ setup_host_make() {
     echo "$TAB echo '# get $net value from baseconfig'          >>$startscript"
     echo "$TAB echo . ${TESTINGROOT}/baseconfigs/net.$host.sh   >>$startscript"
     echo "$TAB echo ''          >>$startscript"
-    echo "$TAB echo '$POOLSPACE/$host/linux root=/dev/root rootfstype=hostfs rootflags=$POOLSPACE/$hostroot rw ssl=pty umid=$host \$\$net \$\$UML_DEBUG_OPT \$\$UML_"${host}"_OPT \$\$*' >>$startscript"
-    echo "$TAB echo 'if [ -n \"\$\$UML_SLEEP\" ]; then eval \$\$UML_SLEEP; fi'  >>$startscript"
+    echo "$TAB echo '$POOLSPACE/$host/linux root=/dev/root rootfstype=hostfs rootflags=$POOLSPACE/$hostroot rw umid=$host \$\$net \$\$UML_DEBUG_OPT \$\$UML_"${host}"_OPT \$\$*' >>$startscript"
+    echo "$TAB echo 'if [ -n \"$SLEEP\" ]; then eval $SLEEP; fi'  >>$startscript"
     echo "$TAB chmod +x $startscript"
     echo
     depends="$depends $startscript"
@@ -362,24 +357,6 @@ applypatches() {
 
 #
 # $Log: uml-functions.sh,v $
-# Revision 1.43  2005/09/28 12:51:59  mcr
-# 	added /usr/obj mount point.
-#
-# Revision 1.42  2005/09/14 14:47:30  mcr
-# 	create /dev/console and /dev/null so that 2.6.12 (no devfs) will
-# 	work right.
-#
-# Revision 1.41  2005/08/31 03:36:15  mcr
-# 	fixed quoting of $SLEEP, rename to UML_SLEEP.
-# 	rm kernel before we copy it, in case it is being used.
-#
-# Revision 1.40  2005/08/14 21:38:50  mcr
-# 	include ssl=pty to get serial ports onto pty's
-# 	for gdbserver use.
-#
-# Revision 1.39  2005/07/25 19:15:44  mcr
-# 	fix generate of start.sh, to properly expand SLEEP.
-#
 # Revision 1.38  2005/07/14 01:35:54  mcr
 # 	use USE_OBJDIR.
 #

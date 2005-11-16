@@ -30,8 +30,6 @@ IP: routing cache hash table of 512 buckets, 4Kbytes
 TCP established hash table entries: 2048 (order: 2, 16384 bytes)
 TCP bind hash table entries: 2048 (order: 1, 8192 bytes)
 TCP: Hash tables configured (established 2048 bind 2048)
-NET: Registered protocol family 15
-ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 IPv4 over IPv4 tunneling driver
 GRE over IPv4 tunneling driver
 NET: Registered protocol family 1

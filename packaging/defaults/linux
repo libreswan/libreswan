@@ -18,18 +18,9 @@ MOD26BUILDDIR?=${OPENSWANSRCDIR}/modobj26
 
 MODULE_FLAGS:=KLIPSMODULE=true -f ${MODULE_DEFCONFIG} 
 
-PORTINCLUDE+=-I${OPENSWANSRCDIR}/ports/linux/include 
-
-TCLLIB=-ltcl8.4
-TCLINC=-isystem /usr/include/tcl8.4
-
 # include KLIPS support
 USE_KLIPS?=true
 
 # build modules, etc. for KLIPS.
 BUILD_KLIPS?=true
-
-# ISC code should use unix definitions.
-ISCARCH=unix
-ISCHOSTARCH=unix
 

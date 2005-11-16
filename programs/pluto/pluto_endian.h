@@ -11,16 +11,14 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pluto_endian.h,v 1.3 2005/08/05 19:13:47 mcr Exp $
+ * RCSID $Id: pluto_endian.h,v 1.2 2005/05/13 00:33:13 mcr Exp $
  */
 
 /* sets BYTE_ORDER, LITTLE_ENDIAN, and BIG_ENDIAN */
 
-#if defined(__CYGWIN__)
-# include <endian.h>
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 # include <machine/endian.h>
-#elif defined(linux)
+#elif linux
 # if defined(i386) && !defined(__i386__)
 #  define __i386__ 1
 #  define MYHACKFORTHIS 1

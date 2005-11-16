@@ -20,9 +20,6 @@ This is an overview of known issues with Openswan on the 2.6 kernel codebase
 * Openswan-2 ships with support for NETKEY.
   Many thanks to Herbert Xu for the initial code patches.
 
-* setkey doesn't like spaces in PSK's from ipsec.secrets.  If you are on a recent
-  distro with 'ip xfrm' support, or using KLIPS, this isn't a problem.
-
 * Use the most recent Linux Openswan-2 release from ftp.openswan.org
   to try our 2.6 kernel support. Currently, this is 2.3.1
 

@@ -3,7 +3,7 @@
 #ipsec setup stop
 #umount /var/tmp; mount /var/tmp
 #umount /usr/local; mount /usr/local
-: ==== start ====
+
 hostname road.uml.freeswan.org
 
 ifconfig eth0 inet 192.1.3.194

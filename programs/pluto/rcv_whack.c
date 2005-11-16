@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: rcv_whack.c,v 1.119 2005/10/02 22:30:12 mcr Exp $
+ * RCSID $Id: rcv_whack.c,v 1.116 2005/05/19 14:58:55 mcr Exp $
  */
 
 #include <stdio.h>
@@ -26,13 +26,13 @@
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <resolv.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
-#include <fcntl.h>
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include "pfkeyv2.h"
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -66,10 +66,6 @@
 
 #include "kernel_alg.h"
 #include "ike_alg.h"
-
-#ifdef TPM
-#include "tpm/tpm.h"
-#endif
 
 /* bits loading keys from asynchronous DNS */
 
@@ -195,7 +191,7 @@ key_add_request(const struct whack_message *msg)
 		case ka_TXT:
 		    ugh = start_adns_query(&keyid
 			, &keyid	/* same */
-			, ns_t_txt
+			, T_TXT
 			, key_add_continue
 			, &kc->ac);
 		    break;
@@ -203,7 +199,7 @@ key_add_request(const struct whack_message *msg)
 		case ka_KEY:
 		    ugh = start_adns_query(&keyid
 			, NULL
-			, ns_t_key
+			, T_KEY
 			, key_add_continue
 			, &kc->ac);
 		    break;
@@ -253,14 +249,8 @@ whack_handle(int whackctlfd)
 	log_errno((e, "accept() failed in whack_handle()"));
 	return;
     }
-    if (fcntl(whackfd, F_SETFD, FD_CLOEXEC) < 0)
-    {
-       log_errno((e, "failed to set CLOEXEC in whack_handle()"));
-       close(whackfd);
-       return;
-    }
     n = read(whackfd, &msg, sizeof(msg));
-    if (n <= 0)
+    if (n == -1)
     {
 	log_errno((e, "read() failed in whack_handle()"));
 	close(whackfd);
@@ -277,7 +267,7 @@ whack_handle(int whackctlfd)
         wp.msg = &msg;
         wp.n   = n;
         wp.str_next = msg.string;
-        wp.str_roof = (unsigned char *)&msg + n;
+        wp.str_roof = (char *)&msg + n;
 
 	if ((size_t)n < offsetof(struct whack_message, whack_shutdown) + sizeof(msg.whack_shutdown))
 	{
@@ -310,7 +300,7 @@ whack_handle(int whackctlfd)
         }
         else
         {
-            msg.keyval.ptr = wp.str_next;    /* grab chunk */
+            msg.keyval.ptr = wp.str_next;       /* grab chunk */
         }
 
 	if (ugh != NULL)
@@ -441,16 +431,6 @@ whack_handle(int whackctlfd)
 
     {
 	load_crls();
-    }
-
-    if (msg.tpmeval) 
-    {
-#ifdef TPM
-	passert(msg.tpmeval != NULL);
-	tpm_eval(msg.tpmeval);
-#else
-	openswan_log("Pluto not built with TAPROOM");
-#endif	
     }
 
 #ifdef HAVE_OCSP

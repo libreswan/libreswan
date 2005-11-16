@@ -30,7 +30,7 @@ VPATH+=${SRCDIR}
 # If you are on a DEC Alpha, edit des.h and change the DES_LONG
 # define to 'unsigned int'.  I have seen this give a %20 speedup.
 
-OPTS0= -DLIBDES_LIT 
+OPTS0= -DLIBDES_LIT -DRAND -DTERMIO #-DNOCONST
 
 # Version 1.94 has changed the strings_to_key function so that it is
 # now compatible with MITs when the string is longer than 8 characters.
@@ -60,7 +60,7 @@ MAKE=make -f Makefile
 # normally overridden by FreeS/WAN Makefiles anyway
 CFLAG= -O3 -fomit-frame-pointer -I${KLIPSD}/include -I${SRCDIR}
 
-CFLAGS=$(OPTS) $(CFLAG) $(USERCOMPILE) ${PORTINCLUDE}
+CFLAGS=$(OPTS) $(CFLAG) $(USERCOMPILE)
 CPP=$(CC) -E
 
 # Assember version of des_encrypt*().
@@ -124,9 +124,8 @@ DLIB=	libdes.a
 .PHONY:	all cc gcc x86-elf x86-out x86-solaris x86-bsdi test tar_lit \
 	tar shar depend clean dclean install check checkprograms
 
-programs: $(DLIB)
-
 all: $(DLIB) $(TESTING)
+programs: $(DLIB)
 
 cc:
 	$(MAKE) CC=cc CFLAGS="-O $(OPTS) $(CFLAG)" all

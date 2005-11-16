@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: dpd.c,v 1.32 2005/08/26 13:41:16 ken Exp $
+ * RCSID $Id: dpd.c,v 1.29.2.2 2005/08/26 13:40:48 ken Exp $
  */
 
 #include <stdio.h>
@@ -23,13 +23,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <resolv.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
+#include <sys/queue.h>
 #include <sys/time.h>		/* for gettimeofday */
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "state.h"

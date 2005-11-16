@@ -15,7 +15,7 @@
  * for more details.
  */
 
-char klipsdebug_c_version[] = "RCSID $Id: klipsdebug.c,v 1.58 2005/08/18 14:04:39 ken Exp $";
+char klipsdebug_c_version[] = "RCSID $Id: klipsdebug.c,v 1.57.2.1 2005/08/18 14:04:51 ken Exp $";
 
 
 #include <sys/types.h>
@@ -440,7 +440,7 @@ main(int argc, char **argv)
 }
 /*
  * $Log: klipsdebug.c,v $
- * Revision 1.58  2005/08/18 14:04:39  ken
+ * Revision 1.57.2.1  2005/08/18 14:04:51  ken
  * Patch from mt@suse.de to avoid GCC warnings with system() calls
  *
  * Revision 1.57  2005/07/08 02:56:38  paul

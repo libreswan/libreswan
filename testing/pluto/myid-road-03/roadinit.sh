@@ -1,5 +1,5 @@
 #!/bin/sh
-: ==== start ====
+
 hostname roadkey.uml.freeswan.org
 
 ifconfig eth0 inet 192.1.3.209

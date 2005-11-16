@@ -49,6 +49,11 @@ by Hugh Redelmeier.</para>
 
 <!--
 $Log: pluto.8.xml,v $
+Revision 1.1.24.1  2005/07/25 19:26:34  ken
+Pullin fixes for NAT-T from HEAD
+Includes IMPAIR_JACOB_TWO_TWO impairment from HEAD
+change from c->interface to st->st_interface for sending packets
+
 Revision 1.2  2005/07/25 19:06:55  mcr
 	first hack at translating pluto.8 -> docbook.
 

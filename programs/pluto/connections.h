@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: connections.h,v 1.104 2005/08/25 02:24:45 paul Exp $
+ * RCSID $Id: connections.h,v 1.103 2005/06/14 22:38:06 mcr Exp $
  */
 
 /* There are two kinds of connections:
@@ -133,11 +133,6 @@ struct virtual_t;
 
 #ifdef VIRTUAL_IP
 struct virtual_t;
-#endif
-
-/* for CIRCLEQ_ENTRY */
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-#include <sys/queue.h>
 #endif
 
 struct ietfAttr;	/* forward declaration of ietfAttr defined in ac.h */

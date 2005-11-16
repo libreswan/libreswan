@@ -34,7 +34,7 @@ east:~#
 000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
 000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
 000  
-000 stats /net/istari/0i/sandboxes/noklips/programs/pluto/db_ops.c: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
+000 stats db_ops.c: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
 000 "packetdefault": 0.0.0.0/0===192.1.2.23[%myid]---192.1.2.254...%opportunistic; prospective erouted; eroute owner: #0
 000 "packetdefault":     srcip=unset; dstip=unset; srcup=ipsec _updown; dstup=ipsec _updown;
@@ -87,7 +87,7 @@ east:~#
 000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
 000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
 000  
-000 stats /net/istari/0i/sandboxes/noklips/programs/pluto/db_ops.c: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
+000 stats db_ops.c: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
 000 "packetdefault": 0.0.0.0/0===192.1.2.23[%myid]---192.1.2.254...%opportunistic; prospective erouted; eroute owner: #0
 000 "packetdefault":     srcip=unset; dstip=unset; srcup=ipsec _updown; dstup=ipsec _updown;

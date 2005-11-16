@@ -14,7 +14,8 @@ cd /tmp
 mkdir log
 ln -s /testing/pluto/log.ref       .
 ln -s /testing/pluto/ipsec.secrets .
-ln -s /testing/pluto/ipsec.d .
+ln -s /testing/pluto/ipsec.d/west .
+ln -s /testing/pluto/ipsec.d/east .
 
 . doauto --diff k4096-dns isakmp-dnsrsa isakmp-dnsrsa-case isakmp-dnsrsa-dot
 . doauto --diff ipsec-dnsrsa ipsec-dnsrsa-delete ipsec-dnsrsa-c ipsec-dnsrsa-co

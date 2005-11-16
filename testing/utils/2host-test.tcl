@@ -1,16 +1,16 @@
 #!/usr/bin/expect --
 
 #
-# $Id: 2host-test.tcl,v 1.21 2003/10/28 03:03:33 dhr Exp $
+# $Id: 2host-test.tcl,v 1.22 2004/04/03 19:44:52 ken Exp $
 #
 
-if {! [info exists env(FREESWANSRCDIR)]} {
-    puts stderr "Please point \$FREESWANSRCDIR to ../testing/utils/"
+if {! [info exists env(OPENSWANSRCDIR)]} {
+    puts stderr "Please point \$OPENSWANSRCDIR to ../testing/utils/"
     exit 24
 }
 
-source $env(FREESWANSRCDIR)/testing/utils/GetOpts.tcl
-source $env(FREESWANSRCDIR)/testing/utils/netjig.tcl
+source $env(OPENSWANSRCDIR)/testing/utils/GetOpts.tcl
+source $env(OPENSWANSRCDIR)/testing/utils/netjig.tcl
 
 proc usage {} {
     puts stderr "Usage: 2host-test "
@@ -280,6 +280,9 @@ expect {
 
 # 
 # $Log: 2host-test.tcl,v $
+# Revision 1.22  2004/04/03 19:44:52  ken
+# FREESWANSRCDIR -> OPENSWANSRCDIR (patch by folken)
+#
 # Revision 1.21  2003/10/28 03:03:33  dhr
 #
 # Refine testing scripts:

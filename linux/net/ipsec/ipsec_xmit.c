@@ -15,7 +15,7 @@
  * for more details.
  */
 
-char ipsec_xmit_c_version[] = "RCSID $Id: ipsec_xmit.c,v 1.23 2005/08/28 02:11:32 ken Exp $";
+char ipsec_xmit_c_version[] = "RCSID $Id: ipsec_xmit.c,v 1.20.2.1 2005/08/27 23:40:00 paul Exp $";
 
 #define __NO_VERSION__
 #include <linux/module.h>
@@ -61,7 +61,6 @@ char ipsec_xmit_c_version[] = "RCSID $Id: ipsec_xmit.c,v 1.23 2005/08/28 02:11:3
 # include <net/tcp.h>		/* TCP options */
 #endif	/* MSS_HACK */
 
-#include "openswan/ipsec_kern24.h"
 #include "openswan/radij.h"
 #include "openswan/ipsec_life.h"
 #include "openswan/ipsec_xform.h"
@@ -1749,16 +1748,8 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 
 /*
  * $Log: ipsec_xmit.c,v $
- * Revision 1.23  2005/08/28 02:11:32  ken
- * Add missing HAVE_
- *
- * Revision 1.22  2005/08/27 23:07:21  paul
- * Somewhere between 2.6.12 and 2.6.13rc7 the unused security memnber in sk_buff
- * has been removed. This patch should fix compilation for both cases.
- *
- * Revision 1.21  2005/08/05 08:44:54  mcr
- * 	ipsec_kern24.h (compat code for 2.4) must be include
- * 	explicitely now.
+ * Revision 1.20.2.1  2005/08/27 23:40:00  paul
+ * recommited HAVE_SOCK_SECURITY fixes for linux 2.6.13
  *
  * Revision 1.20  2005/07/12 15:39:27  paul
  * include asm/uaccess.h for VERIFY_WRITE

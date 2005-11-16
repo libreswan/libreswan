@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
  * License for more details.
  *
- * RCSID $Id: config-x86_64-smp.h,v 1.2 2005/01/05 22:12:14 paul Exp $
+ * RCSID $Id: config-x86_64-smp.h,v 1.2.8.3 2005/08/18 20:49:12 paul Exp $
  */
 #define	_CONFIG_RH_X86_64_SMP_H_	/* seen it, no need to see it again */
 
@@ -59,11 +59,11 @@
 #endif
 
 #ifndef CONFIG_KLIPS_NAT_TRAVERSAL
-#define CONFIG_KLIPS_NAT_TRAVERSAL 1
+#define CONFIG_KLIPS_NAT_TRAVERSAL 0
 #endif
 
 #ifndef CONFIG_IPSEC_NAT_TRAVERSAL
-#define CONFIG_IPSEC_NAT_TRAVERSAL 1
+#define CONFIG_IPSEC_NAT_TRAVERSAL 0
 #endif
 
 /* off by default for now */

@@ -11,16 +11,18 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: kernel_netlink.c,v 1.31 2005/08/14 21:58:09 mcr Exp $
+ * RCSID $Id: kernel_netlink.c,v 1.30.2.2 2005/11/13 14:59:57 paul Exp $
  */
 
-#if defined(linux) && defined(NETKEY_SUPPORT)
+#if defined(linux) && defined(KERNEL26_SUPPORT)
 
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <unistd.h>
 
 #include "kameipsec.h"
@@ -31,7 +33,6 @@
 #include <pfkeyv2.h>
 #include <pfkey.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -177,7 +178,7 @@ static void init_netlink(void)
  */
 static bool
 send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf, size_t rbuf_len
-		 , const char *description, const char *text_said)
+, const char *description, const char *text_said)
 {
     struct {
 	struct nlmsghdr n;
@@ -381,7 +382,7 @@ netlink_raw_eroute(const ip_address *this_host
 		   , unsigned int satype
 		   , const struct pfkey_proto_info *proto_info
 		   , time_t use_lifetime UNUSED
-		   , enum pluto_sadb_operations sadb_op
+		   , unsigned int op
 		   , const char *text_said)
 {
     struct {
@@ -417,7 +418,7 @@ netlink_raw_eroute(const ip_address *this_host
 	case SPI_TRAP:
 	case SPI_TRAPSUBNET:
 	case SPI_HOLD:
-	  if (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND)
+	    if (op & (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
 	    {
 		return TRUE;
 	    }
@@ -443,12 +444,12 @@ netlink_raw_eroute(const ip_address *this_host
     req.u.p.sel.family = family;
 
     dir = XFRM_POLICY_OUT;
-    if (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND)
+    if (op & (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
     {
 	dir = XFRM_POLICY_IN;
     }
 
-    if (sadb_op == ERO_DELETE || sadb_op == ERO_DEL_INBOUND)
+    if ((op & ERO_MASK) == ERO_DELETE)
     {
 	req.u.id.dir = dir;
 	req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
@@ -482,14 +483,14 @@ netlink_raw_eroute(const ip_address *this_host
 	req.u.p.lft.hard_packet_limit = XFRM_INF;
 
 	req.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
-	if (sadb_op == ERO_REPLACE)
+	if (op & (SADB_X_SAFLAGS_REPLACEFLOW << ERO_FLAG_SHIFT))
 	{
 	    req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
 	}
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
     }
 
-    if (policy == IPSEC_POLICY_IPSEC && sadb_op != ERO_DELETE)
+    if (policy == IPSEC_POLICY_IPSEC && (op & ERO_MASK) != ERO_DELETE)
     {
 	struct rtattr *attr;
 	struct xfrm_user_tmpl tmpl[4];
@@ -503,14 +504,13 @@ netlink_raw_eroute(const ip_address *this_host
 	    tmpl[i].optional =
 		proto_info[i].proto == IPPROTO_COMP && dir != XFRM_POLICY_OUT;
 	    tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
-	    tmpl[i].mode =
-		proto_info[i].encapsulation == ENCAPSULATION_MODE_TUNNEL;
+	    tmpl[i].mode = 0;
 
-	    if (!tmpl[i].mode)
-	    {
+	    if (proto_info[i].encapsulation != ENCAPSULATION_MODE_TUNNEL
+	    || isanyaddr(that_host))
 		continue;
-	    }
 
+	    tmpl[i].mode = 1;
 	    ip2xfrm(this_host, &tmpl[i].saddr);
 	    ip2xfrm(that_host, &tmpl[i].id.daddr);
 	}
@@ -524,11 +524,12 @@ netlink_raw_eroute(const ip_address *this_host
     }
 
     enoent_ok = FALSE;
-    if (sadb_op == ERO_DEL_INBOUND)
+    if (op == ERO_DEL_INBOUND)
     {
 	enoent_ok = TRUE;
     }
-    else if (sadb_op == ERO_DELETE && ntohl(spi) == SPI_HOLD)
+    else if (op == ERO_DELETE && ntohl(spi) == SPI_HOLD
+    && proto_info[0].encapsulation == ENCAPSULATION_MODE_TRANSPORT)
     {
 	enoent_ok = TRUE;
     }
@@ -813,17 +814,39 @@ netlink_acquire(struct nlmsghdr *n)
      *     that they aren't v4 to v6 or something goofy
      */
 
-    if (!(ugh = xfrm_to_ip_address(family, srcx, &src))
-	&& !(ugh = xfrm_to_ip_address(family, dstx, &dst))
-	&& !(ugh = src_proto == dst_proto? NULL : "src and dst protocols differ")
-	&& !(ugh = addrtosubnet(&src, &ours))
-	&& !(ugh = addrtosubnet(&dst, &his)))
-      record_and_initiate_opportunistic(&ours, &his, transport_proto
-					  , "%acquire-netlink");
-
-
-    if (ugh != NULL)
+    if ((ugh = xfrm_to_ip_address(family, srcx, &src))
+	|| (ugh = xfrm_to_ip_address(family, dstx, &dst))
+	|| (ugh = src_proto == dst_proto? NULL : "src and dst protocols differ")
+	|| (ugh = addrtosubnet(&src, &ours))
+	|| (ugh = addrtosubnet(&dst, &his)))
+    {
 	openswan_log("XFRM_MSG_ACQUIRE message from kernel malformed: %s", ugh);
+	return;
+    }
+
+    /* Remove this once connections.c can handle it. */
+    transport_proto = 0;
+
+    if (has_bare_hold(&src, &dst, transport_proto))
+    {
+	/* On the native stack we emulate %hold eroutes through
+	 * XFRM_STATE_ACQ states which expire after a set interval.
+	 * Therefore we need to filter out subsequent notifications.
+	 */
+	char ocb[ADDRTOT_BUF];
+	char pcb[ADDRTOT_BUF];
+
+	addrtot(&src, 0, ocb, sizeof(ocb));
+	addrtot(&dst, 0, pcb, sizeof(pcb));
+
+	loglog(RC_COMMENT
+	    , "ignoring duplicate netlink acquire event for %s to %s"
+	    , ocb, pcb);
+	return;
+    }
+
+    record_and_initiate_opportunistic(&ours, &his, transport_proto
+				      , "%acquire-netlink");
 }
 
 static void
@@ -1059,8 +1082,9 @@ retry:
 	}
 
 	loglog(RC_LOG_SERIOUS
-	    , "ERROR: netlink_get_spi for %s failed with errno %d: %s"
+	    , "ERROR: netlink_get_spi for %s/%u/%u failed with errno %d: %s"
 	    , text_said
+	    , req.spi.min, req.spi.max
 	    , -rsp.u.e.error
 	    , strerror(-rsp.u.e.error));
 	return 0;
@@ -1079,24 +1103,24 @@ retry:
     return rsp.u.sa.id.spi;
 }
 
-const struct kernel_ops netkey_kernel_ops = {
-    type: USE_NETKEY,
-    inbound_eroute: 1,
-    policy_lifetime: 1,
-    async_fdp: &netlink_bcast_fd,
-    replay_window: 32,
-    
-    init: init_netlink,
-    pfkey_register: linux_pfkey_register,
-    pfkey_register_response: linux_pfkey_register_response,
-    process_msg: netlink_process_msg,
-    raw_eroute: netlink_raw_eroute,
-    add_sa: netlink_add_sa,
-    del_sa: netlink_del_sa,
-    process_queue: NULL,
-    grp_sa: NULL,
-    get_spi: netlink_get_spi,
-    docommand: do_command_linux,
-    kern_name: "netkey",
+const struct kernel_ops linux_kernel_ops = {
+	type: KERNEL_TYPE_LINUX,
+	inbound_eroute: 1,
+	policy_lifetime: 1,
+	async_fdp: &netlink_bcast_fd,
+	replay_window: 32,
+
+	init: init_netlink,
+	pfkey_register: linux_pfkey_register,
+	pfkey_register_response: linux_pfkey_register_response,
+	process_msg: netlink_process_msg,
+	raw_eroute: netlink_raw_eroute,
+	add_sa: netlink_add_sa,
+	del_sa: netlink_del_sa,
+	process_queue: NULL,
+	grp_sa: NULL,
+	get_spi: netlink_get_spi,
+	docommand: do_command_linux,
+	opname: "netkey",
 };
 #endif /* linux && KLIPS */

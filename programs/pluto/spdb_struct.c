@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: spdb_struct.c,v 1.19 2005/09/26 23:35:28 mcr Exp $
+ * RCSID $Id: spdb_struct.c,v 1.13.2.8 2005/11/14 02:06:50 paul Exp $
  */
 
 #include <stdio.h>
@@ -20,12 +20,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 #include "pfkeyv2.h"
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 
@@ -259,7 +259,11 @@ out_sa(pb_stream *outs
 	    {
 		ipsec_spi_t *spi_ptr = NULL;
 		int proto = 0;
-		bool *spi_generated;
+		bool *spi_generated = FALSE;
+
+		spi_generated = NULL;
+
+		spi_generated = NULL;
 
 		spi_generated = NULL;
 
@@ -761,8 +765,6 @@ parse_isakmp_sa_body(
 		    {
 #if defined(USE_1DES)
 		    case OAKLEY_DES_CBC:
-			openswan_log("1DES is not encryption");
-			/* FALL THROUGH */
 #endif
 		    case OAKLEY_3DES_CBC:
 			ta.encrypt = val;
@@ -1009,10 +1011,16 @@ parse_isakmp_sa_body(
 		     * check if this keylen is compatible with 
 		     * specified alg_info_ike
 		     */
-		    if (!ike_alg_enc_ok(ta.encrypt, val, c->alg_info_ike, &ugh)) {
-			ugh = "peer proposed key_len not valid for encrypt algo setup specified";
+                   if(ta.encrypt == OAKLEY_3DES_CBC) {
+                       ta.enckeylen = 24;
+                   } else if(ta.encrypt == OAKLEY_DES_CBC) {
+                       ta.enckeylen = 8;
+                   } else {
+                       if (!ike_alg_enc_ok(ta.encrypt, val, c->alg_info_ike, &ugh)) {
+                           ugh = "peer proposed key_len not valid for encrypt algo setup specified";
+                       }
+                       ta.enckeylen=val;
 		    }
-		    ta.enckeylen=val;
 		    break;
 #else
 		case OAKLEY_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
@@ -1746,10 +1754,6 @@ parse_ipsec_sa_body(
 	ipcomp_cpi = 0;
 	esp_spi = 0;
 	ah_spi = 0;
-
-	memset(&ah_proposal, 0, sizeof(ah_proposal));
-	memset(&esp_proposal, 0, sizeof(esp_proposal));
-	memset(&ipcomp_proposal, 0, sizeof(ipcomp_proposal));
 
 	/* for each proposal in the conjunction */
 	do {

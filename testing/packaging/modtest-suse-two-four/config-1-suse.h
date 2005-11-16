@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
  * License for more details.
  *
- * RCSID $Id: config-1-suse.h,v 1.3 2005/08/26 13:55:12 ken Exp $
+ * RCSID $Id: config-1-suse.h,v 1.2 2002/12/06 02:14:10 mcr Exp $
  */
 #define	_CONFIG_RH_I586_H_	/* seen it, no need to see it again */
 
@@ -52,6 +52,10 @@
 
 #ifndef CONFIG_IPSEC_ENC_3DES
 #define CONFIG_IPSEC_ENC_3DES 1
+#endif
+
+#ifndef CONFIG_IPSEC_REGRESS
+#define CONFIG_IPSEC_REGRESS 0
 #endif
 
 #define SUSE_LINUX_2_4_19_IS_STUPID 1

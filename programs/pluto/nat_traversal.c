@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: nat_traversal.c,v 1.32 2005/10/03 19:59:11 mcr Exp $
+ * RCSID $Id: nat_traversal.c,v 1.26.2.4 2005/09/27 04:30:20 paul Exp $
  */
 
 #ifdef NAT_TRAVERSAL
@@ -25,13 +25,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>     /* used only if MSG_NOSIGNAL not defined */
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 #include <pfkeyv2.h>
 #include <pfkey.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
 
@@ -88,31 +88,30 @@ void init_nat_traversal (bool activate, unsigned int keep_alive_period,
 	nat_traversal_support_port_floating = activate ? spf : FALSE;
 	openswan_log("Setting NAT-Traversal port-4500 floating to %s"
 		     , nat_traversal_support_port_floating ? "on" : "off");
-	openswan_log("   port floating activation criteria nat_t=%d/port_float=%d"
+	openswan_log("   port floating activation criteria nat_t=%d/port_fload=%d"
 		     , activate, spf);
 #endif
-	{ 
-	  FILE *f = fopen("/proc/net/ipsec/natt", "r");
-	  char n;
-	  if(f != NULL) {
-	    n=getc(f);
-	    if(n=='0') {
-	      nat_traversal_enabled = FALSE;
-	      nat_traversal_support_non_ike=FALSE;
-	      nat_traversal_support_port_floating=FALSE;
-	      openswan_log("  KLIPS does not have NAT-Traversal built in (see /proc/net/ipsec/natt)\n");
-	    }
-	    fclose(f);
-	  }
-	}
+        {
+          FILE *f = fopen("/proc/net/ipsec/natt", "r");
+          char n;
+          if(f != NULL) {
+            n=getc(f);
+            if(n=='0') {
+              nat_traversal_enabled = FALSE;
+              nat_traversal_support_non_ike=FALSE;
+              nat_traversal_support_port_floating=FALSE;
+              openswan_log("  KLIPS does not have NAT-Traversal built in (see /proc/net/ipsec/natt)\n");
+            }
+            fclose(f);
+          }
+        }
 
 	_force_ka = fka;
 	_kap = keep_alive_period ? keep_alive_period : DEFAULT_KEEP_ALIVE_PERIOD;
-	plog("   including NAT-Traversal patch (Version %s)%s%s%s",
-	     natt_version, activate ? "" : " [disabled]",
-	     activate & fka ? " [Force KeepAlive]" : "",
-	     activate & !spf ? " [Port Floating disabled]" : "");
-
+	plog("  including NAT-Traversal patch (Version %s)%s%s%s",
+		natt_version, activate ? "" : " [disabled]",
+		activate & fka ? " [Force KeepAlive]" : "",
+		activate & !spf ? " [Port Floating disabled]" : "");
 }
 
 static void disable_nat_traversal(int type)
@@ -133,9 +132,9 @@ static void disable_nat_traversal(int type)
 	}
 }
 
-static void _natd_hash(const struct hash_desc *hasher, unsigned char *hash
-		       , u_int8_t *icookie, u_int8_t *rcookie
-		       , const ip_address *ip, u_int16_t port)
+static void _natd_hash(const struct hash_desc *hasher, char *hash,
+	u_int8_t *icookie, u_int8_t *rcookie,
+	const ip_address *ip, u_int16_t port)
 {
 	union hash_ctx ctx;
 
@@ -232,7 +231,7 @@ u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
 
 void nat_traversal_natd_lookup(struct msg_digest *md)
 {
-	unsigned char hash[MAX_DIGEST_LEN];
+	char hash[MAX_DIGEST_LEN];
 	struct payload_digest *p;
 	struct state *st = md->st;
 	int i;
@@ -265,7 +264,7 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 	_natd_hash(st->st_oakley.hasher, hash
 		   , st->st_icookie, st->st_rcookie
 		   , &(md->iface->ip_addr)
-		   , ntohs(md->iface->port));
+		   , ntohs(st->st_localport));
 
 	if (!( (pbs_left(&p->pbs) == st->st_oakley.hasher->hash_digest_len)
 	       && (memcmp(p->pbs.cur, hash, st->st_oakley.hasher->hash_digest_len)==0)))
@@ -323,7 +322,7 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	struct msg_digest *md)
 {
-	unsigned char hash[MAX_DIGEST_LEN];
+	char hash[MAX_DIGEST_LEN];
 	struct state *st = md->st;
 	unsigned int nat_np;
 
@@ -927,26 +926,26 @@ void process_pfkey_nat_t_new_mapping(
 
 /*
  * $Log: nat_traversal.c,v $
- * Revision 1.32  2005/10/03 19:59:11  mcr
- * 	fixed english typo.
+ * Revision 1.26.2.4  2005/09/27 04:30:20  paul
+ * Backport of HEAD's patch, adopted from Peter Van der Beken's
+ * (peterv@propagandism.org) MacOSX interop patch.
  *
- * Revision 1.31  2005/10/02 22:01:10  mcr
- * 	change indentation, and make sure that port hash is calculated
- * 	over the port that the packet was received upon vs the port
- * 	that the policy was declared for.
+ * Reported to Apple Developer Center (ADC) by Paul Wouters (paul@xelerance.com):
+ * Problem ID: 4274347
+ * Title: IPsec NAT-T implementation is broken, breaking L2TP VPN's to non-apple servers
+ * Created Date: 26-Sep-2005 06:36 PM
  *
- * Revision 1.30  2005/09/26 23:35:28  mcr
- * 	http://bugs.xelerance.com/view.php?id=448
- * 	ADC Problem ID: 4274347
- * 	Created Date: 26-Sep-2005 06:36 PM
+ * Revision 1.26.2.3  2005/09/07 00:41:12  paul
+ * Pull up mcr's nat-t detection for klips.
  *
- * Revision 1.29  2005/08/26 20:07:21  mcr
- * 	added /proc/net/ipsec/natt file to indicate if NAT-T was compiled
- * 	into KLIPS.
+ * Revision 1.26.2.2  2005/07/26 02:11:23  ken
+ * Pullin from HEAD:
+ * Split Aggressive mode into ikev1_aggr.c
+ * Fix NAT-T that we broke in dr7
+ * Move dpd/pgp vendor id's to vendor.[ch]
  *
- * Revision 1.28  2005/08/05 19:12:10  mcr
- * 	adjustments for signed issues.
- * 	use sysdep.h.
+ * Revision 1.26.2.1  2005/07/26 01:20:14  ken
+ * Pull in st -> c changes from HEAD
  *
  * Revision 1.27  2005/07/26 01:14:58  mcr
  * 	switch from i->interface to st->st_interface.
@@ -1000,6 +999,6 @@ void process_pfkey_nat_t_new_mapping(
  * 	added log info.
  *
  *
- * $Id: nat_traversal.c,v 1.32 2005/10/03 19:59:11 mcr Exp $
+ * $Id: nat_traversal.c,v 1.26.2.4 2005/09/27 04:30:20 paul Exp $
  *
  */

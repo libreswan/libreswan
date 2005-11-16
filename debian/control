@@ -3,14 +3,15 @@ Section: net
 Priority: optional
 Maintainer: Rene Mayrhofer <rmayr@debian.org>
 Standards-Version: 3.6.1.0
-Build-Depends: debhelper (>= 4.1.16), libgmp3-dev, libssl-dev, htmldoc, man2html, gawk, libcurl3-dev, libopensc1-dev, libldap2-dev, bison, flex
+Build-Depends: debhelper (>= 4.1.16), libgmp3-dev, libssl-dev, htmldoc, man2html, libcurl3-dev | libcurl2-dev, libopensc1-dev | libopensc0-dev, libldap2-dev, libpam0g-dev, bison, flex, lynx
 
 Package: openswan
 Architecture: any
-Depends: ${shlibs:Depends}, bsdmainutils, makedev | devfsd, ${debconf-depends}, debianutils (>=1.7), openssl, gawk, host, iproute (>= 2.6.8)
+Pre-Depends: debconf
+Depends: ${shlibs:Depends}, bsdmainutils, makedev | devfsd, debianutils (>=1.7), ipsec-tools, openssl, host, iproute
 Suggests: openswan-modules-source | kernel-patch-openswan, curl
 Provides: ike-server
-Conflicts: ike-server, freeswan
+Conflicts: freeswan (<< 2.04-12)
 Description: IPSEC utilities for Openswan
  IPSEC is Internet Protocol SECurity. It uses strong cryptography to provide
  both authentication and encryption services. Authentication ensures that

@@ -1,4 +1,4 @@
-These notes apply to Openswan 2.3.0 developer release 3 ("dr3")
+These notes apply to Openswan 2.4.2 
 
 
 1.   Aggressive Mode support is included.  You enable it by:

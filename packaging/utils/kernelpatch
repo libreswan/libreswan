@@ -3,7 +3,7 @@
 # wander through an Openswan linux directory, creating a patch file (to stdout)
 # that will apply the code to a kernel source directory.
 #
-# $Id: kernelpatch,v 1.14 2005/09/26 02:37:53 mcr Exp $
+# $Id: kernelpatch,v 1.13 2005/04/06 17:47:44 mcr Exp $
 #
 
 KERN=$1
@@ -14,7 +14,7 @@ patch22=false
 patch24=false
 patch26=false
 
-. packaging/utils/kernelpatching.sh
+source packaging/utils/kernelpatching.sh
 
 case $KERN in
     2.0) patchname=os2_0; altname=fs2_0; patch20=true ;;

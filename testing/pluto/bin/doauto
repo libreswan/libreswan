@@ -5,7 +5,7 @@
 #  *-rsa|*-rsa-*: keys get loaded
 #  *-pl|*-pl-*: extracts of Pluto Logs are added to the whack log
 #
-# RCSID $Id: doauto,v 1.36 2005/08/19 04:05:01 mcr Exp $
+# RCSID $Id: doauto,v 1.35 2004/10/07 04:22:21 mcr Exp $
 
 . CONFIG
 
@@ -137,10 +137,6 @@ do
 
 	) >$LD/wi-log
 
-	if $SETUPONLY 
-        then
-		exit 2
-        fi
 
 	if [ -f log.ref/$t/wi-log ]
 	then

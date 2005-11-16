@@ -12,10 +12,10 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pfkey_print.c,v 1.3 2005/08/05 01:56:04 mcr Exp $
+ * RCSID $Id: pfkey_print.c,v 1.2 2004/04/26 05:03:40 ken Exp $
  */
 
-char pfkey_v2_print_c_version[] = "$Id: pfkey_print.c,v 1.3 2005/08/05 01:56:04 mcr Exp $";
+char pfkey_v2_print_c_version[] = "$Id: pfkey_print.c,v 1.2 2004/04/26 05:03:40 ken Exp $";
 
 #include <sys/types.h>
 
@@ -35,8 +35,8 @@ pfkey_print(struct sadb_msg *msg, FILE *out)
 	    msg->sadb_msg_errno,
 	    msg->sadb_msg_satype,
 	    msg->sadb_msg_len,
-	    (int)msg->sadb_msg_seq,
-	    (int)msg->sadb_msg_pid);
+	    msg->sadb_msg_seq,
+	    msg->sadb_msg_pid);
     
     len = IPSEC_PFKEYv2_LEN(msg->sadb_msg_len);
     len -= sizeof(struct sadb_msg);
@@ -61,13 +61,13 @@ pfkey_print(struct sadb_msg *msg, FILE *out)
 	  {
 	    struct sadb_sa *sa = (struct sadb_sa *)se;
 	    fprintf(out, "spi=%08x replay=%d state=%d auth=%d encrypt=%d flags=%08x ref=%08x}",
-		    (int)sa->sadb_sa_spi,
+		    sa->sadb_sa_spi,
 		    sa->sadb_sa_replay,
 		    sa->sadb_sa_state,
 		    sa->sadb_sa_auth,
 		    sa->sadb_sa_encrypt,
-		    (int)sa->sadb_sa_flags,
-		    (int)sa->sadb_x_sa_ref);
+		    sa->sadb_sa_flags,
+		    sa->sadb_x_sa_ref);
 	  }
 	  break;
 	  
@@ -113,11 +113,11 @@ pfkey_print(struct sadb_msg *msg, FILE *out)
 	    struct sadb_lifetime *life = (struct sadb_lifetime *)se;
 
 	    fprintf(out, "allocations=%d bytes=%qd addtime=%qd usetime=%qd packets=%d",
-		    (int)life->sadb_lifetime_allocations,
+		    life->sadb_lifetime_allocations,
 		    (long long)life->sadb_lifetime_bytes,
 		    (long long)life->sadb_lifetime_addtime,
 		    (long long)life->sadb_lifetime_usetime,
-		    (int)life->sadb_x_lifetime_packets);
+		    life->sadb_x_lifetime_packets);
 	    fprintf(out, " } ");
 	  }
 	  break;

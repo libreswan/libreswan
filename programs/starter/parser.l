@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: parser.l,v 1.10 2005/08/18 14:06:42 ken Exp $
+ * RCSID $Id: parser.l,v 1.9.14.1 2005/08/18 14:06:23 ken Exp $
  */
 
 #include <sys/queue.h>

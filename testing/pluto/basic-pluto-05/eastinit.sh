@@ -1,5 +1,5 @@
 #!/bin/sh
-: ==== start ====
+
 TESTNAME=basic-pluto-05
 source /testing/pluto/bin/eastlocal.sh
 

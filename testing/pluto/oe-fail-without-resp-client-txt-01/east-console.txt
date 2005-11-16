@@ -58,7 +58,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.1.2.45      0.0.0.0         UG    0      0        0 eth1
 east:~#
  ipsec setup start
-ipsec_setup: Starting FreeS/WAN IPsec VERSION
+ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
  ipsec auto --add simulate-OE-east-west-1
 east:~#

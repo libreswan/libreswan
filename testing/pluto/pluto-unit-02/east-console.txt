@@ -13,7 +13,8 @@ east:~#
 east:/tmp# mkdir log
 east:/tmp# ln -s /testing/pluto/log.ref       .
 east:/tmp# ln -s /testing/pluto/ipsec.secrets .
-east:/tmp# ln -s /testing/pluto/ipsec.d .
+east:/tmp# ln -s /testing/pluto/ipsec.d/west .
+east:/tmp# ln -s /testing/pluto/ipsec.d/east .
 east:/tmp# . doauto --diff k4096-dns isakmp-dnsrsa isakmp-dnsrsa-case isakmp-dnsrsa-dot
 k4096-dns:
 isakmp-dnsrsa:

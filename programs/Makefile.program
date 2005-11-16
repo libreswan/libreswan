@@ -2,7 +2,7 @@
 include ${OPENSWANSRCDIR}/Makefile.ver
 include ${OPENSWANSRCDIR}/Makefile.inc
 
-CFLAGS+=${USERCOMPILE} ${PORTINCLUDE} -I${OPENSWANSRCDIR} -I${KLIPSINC} -I${OPENSWANSRCDIR}/include
+CFLAGS+=${USERCOMPILE} -I${OPENSWANSRCDIR} -I${KLIPSINC} -I${OPENSWANSRCDIR}/include
 
 CFLAGS+= -Wall
 #CFLAGS+= -Wconversion
@@ -94,10 +94,6 @@ install:: $(PROGRAM) $(CONFFILES) $(EXTRA8MAN) $(EXTRA5MAN) $(EXTRA5PROC) $(LIBF
 		if [ ! -f $(CONFDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDIR)/$f || exit 1; fi;\
 		$(INSTALL) $(INSTCONFFLAGS) $$g $(EXAMPLECONFDIR)/$f-sample || exit 1; \
 	)
-	@$(foreach f, $(EXCONFFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
-		$(INSTALL) $(INSTCONFFLAGS) $$g $(EXAMPLECONFDIR)/$f-sample || exit 1; \
-	)
 	@$(foreach f, $(CONFDFILES), \
 		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
 		if [ ! -f $(CONFDDIR)/$(CONFDSUBDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDDIR)/$(CONFDSUBDIR)/$f || exit 1; fi;\
@@ -124,9 +120,6 @@ install_file_list::
 		echo $(CONFDIR)/$f;\
 		echo $(EXAMPLECONFDIR)/$f-sample;\
 	)
-	@$(foreach f, $(EXCONFFILES), \
-		echo $(EXAMPLECONFDIR)/$f-sample;\
-	)
 	@$(foreach f, $(CONFDFILES), \
 		echo $(CONFDDIR)/${CONFDSUBDIR}/$f;\
 	)
@@ -147,14 +140,12 @@ LDLIBS=${LIBS} ${USERLINK}
 	$(CC) $(CFLAGS) -E -o $@ $< 
 
 %: ${srcdir}%.in ${OPENSWANSRCDIR}/Makefile.inc ${OPENSWANSRCDIR}/Makefile.ver
-	@echo  $< '->' $@
 	@cat $< | sed -e "s/xxx/$(IPSECVERSION)/" \
 			-e "s:@IPSEC_DIR@:$(FINALBINDIR):" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):" \
 			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):" \
 			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):" \
-			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):" \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):" \

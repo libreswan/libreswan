@@ -12,14 +12,14 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: optionsfrom.c,v 1.9 2005/08/25 01:19:23 paul Exp $
+ * RCSID $Id: optionsfrom.c,v 1.7 2004/04/09 18:00:38 mcr Exp $
  */
 #include "internal.h"
 #include "openswan.h"
 
 #include <stdio.h>
 
-#define	MAXLOOP	100		/* loop-detection limit */
+#define	MAX	100		/* loop-detection limit */
 
 /* internal work area */
 struct work {
@@ -31,7 +31,7 @@ struct work {
 
 static const char *dowork(const char *, int *, char ***, int);
 static const char *getanarg(FILE *, struct work *, char **);
-static char *of_getline(FILE *, char *, size_t);
+static char *getline(FILE *, char *, size_t);
 
 /*
  - optionsfrom - add some options, taken from a file, to argc/argv
@@ -50,7 +50,7 @@ FILE *errsto;			/* where to report errors (NULL means return) */
 
 	if (errsto != NULL) {
 		nuses++;
-		if (nuses >= MAXLOOP) {
+		if (nuses >= MAX) {
 			fprintf(errsto,
 				"%s: optionsfrom called %d times, looping?\n",
 				(*argvp)[0], nuses);
@@ -149,7 +149,7 @@ char **linep;			/* where to store pointer if successful */
 	char *endp;
 
 	while (w->pending == NULL) {	/* no pending line */
-		if ((w->line = of_getline(f, w->buf, sizeof(w->buf))) == NULL)
+		if ((w->line = getline(f, w->buf, sizeof(w->buf))) == NULL)
 			return "error in line read";	/* caller checks EOF */
 		if (w->line[0] != '#' &&
 				*(w->line + strspn(w->line, " \t")) != '\0')
@@ -171,7 +171,7 @@ char **linep;			/* where to store pointer if successful */
 			if (*linep == NULL)
 				return "out of memory for new line";
 			strcpy(*linep, p);
-		} else			/* of_getline already malloced it */
+		} else			/* getline already malloced it */
 			*linep = p;
 		return NULL;
 	}
@@ -203,10 +203,10 @@ char **linep;			/* where to store pointer if successful */
 }
 
 /*
- - of_getline - read a line from the file, trim newline off
+ - getline - read a line from the file, trim newline off
  */
 static char *			/* pointer to line, NULL for eof/error */
-of_getline(f, buf, bufsize)
+getline(f, buf, bufsize)
 FILE *f;
 char *buf;			/* buffer to use, if convenient */
 size_t bufsize;			/* size of buf */

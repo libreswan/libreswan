@@ -15,6 +15,7 @@ ctltest	barf-01	good
 ctltest	barf-02	good
 
 ctltest ipsec.conf-myid-01 good
+ctltest ipsec.conf-alsoflip-01 good
 
 
 # test case for restart controls for pluto

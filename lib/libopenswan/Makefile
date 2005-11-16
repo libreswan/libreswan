@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.20 2005/09/17 21:57:45 mcr Exp $
+# RCSID $Id: Makefile,v 1.18 2005/01/25 20:06:40 mcr Exp $
 
 
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
@@ -29,29 +29,21 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
 	goodmask.c initaddr.c initsaid.c initsubnet.c keyblobtoid.c \
 	kernel_alg.c \
 	optionsfrom.c \
-	prng.c \
+	pfkey_v2_build.c pfkey_v2_ext_bits.c pfkey_v2_parse.c \
+	pfkey_v2_debug.c prng.c \
 	packet.c \
 	portof.c rangetoa.c rangetosubnet.c sameaddr.c \
 	satot.c subnetof.c subnettoa.c subnettot.c \
 	subnettypeof.c ttoaddr.c ttodata.c ttoprotoport.c \
-	ttosa.c ttosubnet.c ttoul.c ultoa.c ultot.c 
+	ttosa.c ttosubnet.c ttoul.c ultoa.c ultot.c \
+	udpfromto.c
 
 SRCS+=sanitizestring.c pfkey_print.c
-
-ifeq ($(USE_KLIPS),true)
-PFKEYV2_DEFS=-DKLIPS -DPFKEYV2
-PFKEYV2_SRCS+=pfkey_v2_build.c pfkey_v2_ext_bits.c pfkey_v2_parse.c
-PFKEYV2_SRCS+=pfkey_v2_debug.c 
-
-# for now, USE_KLIPS=>linux, which implies we have udpfromto() support.
-UDPFROMTO_DEFS=-DWITH_UDPFROMTO -DHAVE_IP_PKTINFO
-UDPFROMTO_SRCS=udpfromto.c
-endif
 
 LOGSRCS=oswlog.c 
 
 
-OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} ${UDPFROMTO_SRCS:.c=.o} version.o
+OBJS=${SRCS:.c=.o} version.o
 LOGOBJS=${LOGSRCS:.c=.o}
 
 KLIPSD=${OPENSWANSRCDIR}/linux/include
@@ -66,8 +58,8 @@ LIBA=libopenswan.a
 LIBL=liboswlog.a
 # Original flags
 CFLAGS=-I. -I${KLIPSSRCDIR} -I${KLIPSD} -I${OPENSWANSRCDIR} -DDEBUG
-CFLAGS+=${PFKEYV2_DEFS} ${UDPFROMTO_DEFS}
-CFLAGS+= -I${OPENSWANSRCDIR}/include ${PORTINCLUDE} $(USERCOMPILE)
+CFLAGS+=-DWITH_UDPFROMTO -DHAVE_IP_PKTINFO
+CFLAGS+= -I${OPENSWANSRCDIR}/include $(USERCOMPILE)
 CFLAGS+= -Wall
 #CFLAGS+= -Wconversion
 #CFLAGS+= -Wmissing-prototypes

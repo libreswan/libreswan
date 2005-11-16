@@ -28,32 +28,9 @@ configure-stamp:
 patch-stamp:
 	dh_testdir
 
-	# and replace all calls of 'awk' by 'gawk'
-	-echo "Replacing all calls of awk by gawk"
-	if [ ! -e "patch-awk-to-gawk.stamp" ]; then \
-		for f in `grep "awk " --recursive --files-with-match programs/*`; \
-		do \
-			cp $$f $$f.awk-to-gawk.save; \
-			sed 's/awk /gawk /' $$f.awk-to-gawk.save > $$f; \
-		done ; \
-		touch patch-awk-to-gawk.stamp; \
-	fi
-	
 	touch patch-stamp
 
 unpatch: 
-	# undo the replacement of all calls of 'awk' by 'gawk'
-	-echo "Undoing the replacement of awk by gawk"
-	if [ -e "patch-awk-to-gawk.stamp" ]; then \
-		for f in `find $(CURDIR) -name "*.awk-to-gawk.save" | grep -v "/\.svn/"`; \
-		do \
-			sh -c "oldf=\`expr $$f : '\(.*\)\.awk-to-gawk.save'\`; \
-			echo \"Restoring \$$oldf\"; \
-			mv $$f \$$oldf" ; \
-		done ; \
-		rm -f patch-awk-to-gawk.stamp; \
-	fi
-
 	rm -f patch-stamp
 
 build: build-stamp
@@ -76,7 +53,9 @@ build-stamp: patch-stamp
 	$(MAKE) -C doc/ index.html
 	
 	# also generate the fswcert tool
-	$(MAKE) -C debian/fswcert/
+	$(MAKE) -C programs/fswcert/
+	# ugly hack....
+	$(MAKE) -C programs/fswcert/ programs WERROR='-lcrypto'
 
 	touch build-stamp
 
@@ -86,7 +65,7 @@ clean: unpatch
 	rm -f build-stamp configure-stamp
 
 	-$(MAKE) clean
-	-$(MAKE) -C debian/fswcert/ clean
+	-$(MAKE) -C programs/fswcert/ clean
 	# after a make clean, no binaries _should_ be left, but ....
 	-find $(CURDIR) -name "*.o" | xargs --no-run-if-empty rm
 	-find $(CURDIR)/lib/libcrypto -name "*.a" | xargs --no-run-if-empty rm
@@ -125,7 +104,9 @@ install-openswan: build
 			FINALLIBEXECDIR=/usr/lib/ipsec \
 			PUBDIR=$(CURDIR)/debian/openswan/usr/sbin \
 			MANTREE=$(CURDIR)/debian/openswan/usr/share/man \
-			DESTDIR=$(CURDIR)/debian/openswan
+			DESTDIR=$(CURDIR)/debian/openswan \
+			USE_LDAP=true USE_LIBCURL=true HAVE_THREADS=true \
+			USE_XAUTHPAM=true
 	rm -rf $(CURDIR)/debian/openswan/usr/local
 	install --mode=0600 $(CURDIR)/debian/ipsec.secrets.proto $(CURDIR)/debian/openswan/etc/ipsec.secrets
 
@@ -134,10 +115,11 @@ install-openswan: build
 	patch $(CURDIR)/debian/openswan/usr/lib/ipsec/_plutorun < debian/use-bash.diff
 
 	# install the fswcert tool
-	install $(CURDIR)/debian/fswcert/fswcert $(CURDIR)/debian/openswan/usr/bin
+	install $(CURDIR)/programs/fswcert/fswcert $(CURDIR)/debian/openswan/usr/bin
+	install $(CURDIR)/programs/fswcert/fswcert.8 $(CURDIR)/debian/openswan/usr/share/man/man8
 
 	rm -f $(CURDIR)/debian/openswan/etc/init.d/ipsec?*
-	rm -f $(CURDIR)/debian/openswan/usr/lib/ipsec/_startklips?*
+	rm -f $(CURDIR)/debian/openswan/usr/lib/ipsec/_plutorun?*
 
 	# this is handled by update-rc.d
 	rm -rf $(CURDIR)/debian/openswan/etc/rc?.d
@@ -166,8 +148,10 @@ install-openswan: build
 	# set permissions on ipsec.secrets
 	chmod 600 $(CURDIR)/debian/openswan/etc/ipsec.secrets
 	chmod 644 $(CURDIR)/debian/openswan/etc/ipsec.conf
-        # this also only works with the X.509 patch applied
-	-chmod 700 -R $(CURDIR)/debian/openswan/etc/ipsec.d/private/
+	chmod 700 -R $(CURDIR)/debian/openswan/etc/ipsec.d/private/
+	# don't know why they come with +x set by default...
+	chmod 644 $(CURDIR)/debian/openswan/etc/ipsec.d/policies/*
+	chmod 644 $(CURDIR)/debian/openswan/etc/ipsec.d/examples/*
 
 	# more lintian cleanups
 	find $(CURDIR)/debian/openswan -name ".cvsignore" | xargs --no-run-if-empty rm -f
@@ -183,20 +167,22 @@ install-openswan-modules-source: patch-stamp
 	mkdir -p "$(BUILDDIR)/modules/openswan"
 	mkdir -p "$(BUILDDIR)/modules/openswan/lib"
 	mkdir -p "$(BUILDDIR)/modules/openswan/debian"
-	cp -r Makefile.inc Makefile.ver linux/ \
+	mkdir -p "$(BUILDDIR)/modules/openswan/packaging"
+	cp -r Makefile Makefile.top Makefile.inc Makefile.ver linux/ \
 		"$(BUILDDIR)/modules/openswan"
-	# if we don't have the crypto-ext patches, this can fail
-	-cp -r lib/libcrypto \
-		"$(BUILDDIR)/modules/openswan/lib/"
-	-find "$(BUILDDIR)/modules/openswan/lib/" -name "*.o" | xargs --no-run-if-empty rm
+	cp -r lib/libcrypto "$(BUILDDIR)/modules/openswan/lib/"
+	cp -r packaging/makefiles packaging/linus \
+		"$(BUILDDIR)/modules/openswan/packaging/"
+	find "$(BUILDDIR)/modules/openswan/lib/" -name "*.o" | xargs --no-run-if-empty rm
 	install --mode=644 debian/openswan-modules-source.kernel-config "$(BUILDDIR)/modules/openswan/config-all.h"
 	install --mode=755 debian/openswan-modules-source.rules "$(BUILDDIR)/modules/openswan/debian/rules"
 	install --mode=644 debian/openswan-modules-source.control.in "$(BUILDDIR)/modules/openswan/debian/control.in"
 	install --mode=644 debian/changelog "$(BUILDDIR)/modules/openswan/debian/"
 
-	# This creates the NAT-T patch that can be used on the kernel tree 
+	# This creates the NAT-T patches that can be used on the kernel tree 
 	# even with openswan-modules-source.
-	make nattpatch > $(BUILDDIR)/modules/openswan/debian/nat-t.diff
+	make nattpatch2.4 > $(BUILDDIR)/modules/openswan/debian/nat-t-2.4.diff
+	make nattpatch2.6 > $(BUILDDIR)/modules/openswan/debian/nat-t-2.6.diff
         
 	tar -C $(BUILDDIR) -c modules/ | gzip -9 > \
         	"$(PKGDIR)/usr/src/openswan-modules.tar.gz"
@@ -220,7 +206,8 @@ install-kernel-patch-openswan: patch-stamp
 		"$(PKGDIR)/usr/src/kernel-patches/all/unpatch/openswan"
 	install --mode=0755 packaging/utils/patcher \
 		"$(PKGDIR)/usr/src/kernel-patches/all/openswan"
-	cp -r Makefile Makefile.inc Makefile.ver lib/ linux/ packaging/ nat-t/ \
+	cp -r Makefile Makefile.inc Makefile.ver Makefile.top lib/ linux/ \
+		packaging/ nat-t/ \
 		"$(PKGDIR)/usr/src/kernel-patches/all/openswan"
 	# also don't generate the out.kpatch file under /usr/src/....
 	sed 's/>>out.kpatch//' \
@@ -253,20 +240,22 @@ install-kernel-patch-openswan: patch-stamp
 	rm -rf "$(PKGDIR)/usr/src/kernel-patches/all/openswan/packaging/ipkg"
 	rm -rf "$(PKGDIR)/usr/src/kernel-patches/all/openswan/packaging/makefiles"
 	rm -rf "$(PKGDIR)/usr/src/kernel-patches/all/openswan/packaging/redhat"
-	find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/linux/crypto/ciphers/des/asm/" \
+	rm -rf "$(PKGDIR)/usr/src/kernel-patches/all/openswan/packaging/suse"
+	rm -r "$(PKGDIR)/usr/src/kernel-patches/all/openswan/packaging/utils/disttools.pl"
+	rm -r "$(PKGDIR)/usr/src/kernel-patches/all/openswan/packaging/utils/kernel.patch.gen.sh"
+	rm -r "$(PKGDIR)/usr/src/kernel-patches/all/openswan/packaging/utils/sshenv"
+	rm -r "$(PKGDIR)/usr/src/kernel-patches/all/openswan/packaging/utils/setup"
+	find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/linux/net/ipsec/des/asm/" \
 		-name '*.pl' -print0 | xargs --no-run-if-empty -0 \
 		perl -pi -e 's{^#!/usr/local/bin/perl}{#!/usr/bin/perl}g'
-	# if we don't have the crypto-ext patches, this can fail
-	-find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/lib/libcrypto/" \
+	find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/lib/libcrypto/" \
 		-name '*.pl' -print0 | xargs --no-run-if-empty -0 \
 		perl -pi -e 's{^#!/usr/local/bin/perl}{#!/usr/bin/perl}g'
-	find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/linux/crypto/ciphers/des/asm/" \
+	find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/linux/net/ipsec/des/asm/" \
 		-name '*.pl' -print0 | xargs --no-run-if-empty -0 chmod a+x
-	# if we don't have the crypto-ext patches, this can fail
-	-find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/lib/libcrypto/" \
+	find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/lib/libcrypto/" \
 		-name '*.pl' -print0 | xargs --no-run-if-empty -0 chmod a+x
-	# if we don't have the crypto-ext patches, this can fail
-	-find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/linux/net/ipsec/alg/scripts/" \
+	find "$(PKGDIR)/usr/src/kernel-patches/all/openswan/linux/net/ipsec/alg/scripts/" \
 		-name '*.sh' -print0 | xargs --no-run-if-empty -0 chmod a+x
 	chmod -R u=rwX,go=rX "$(PKGDIR)/usr/src/kernel-patches/all/openswan"
 	

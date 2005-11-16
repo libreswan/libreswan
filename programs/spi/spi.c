@@ -14,7 +14,7 @@
  * for more details.
  */
 
-char spi_c_version[] = "RCSID $Id: spi.c,v 1.114 2005/08/18 14:04:40 ken Exp $";
+char spi_c_version[] = "RCSID $Id: spi.c,v 1.112.2.2 2005/08/18 14:04:51 ken Exp $";
 
 #include <asm/types.h>
 #include <sys/types.h>
@@ -157,7 +157,7 @@ usage(char *s, FILE *f)
 }
 
 int
-parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
+parse_life_options(uint32_t life[life_maxsever][life_maxtype],
 		   char *life_opt[life_maxsever][life_maxtype],
 		   char *optarg)
 {
@@ -293,9 +293,8 @@ parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		}
 		life_opt[life_severity][life_type] = optargt;
 		if(debug) {
-			fprintf(stdout, "%s lifetime %s set to %lu.\n",
-				progname, optargt,
-				(unsigned long)life[life_severity][life_type]);
+			fprintf(stdout, "%s lifetime %s set to %d.\n",
+				progname, optargt, life[life_severity][life_type]);
 		}
 		optargp=endptr+1;
 	} while(*endptr==',' || isspace(*endptr));
@@ -1780,14 +1779,14 @@ void exit_tool(int x)
 
 /*
  * $Log: spi.c,v $
- * Revision 1.114  2005/08/18 14:04:40  ken
+ * Revision 1.112.2.2  2005/08/18 14:04:51  ken
  * Patch from mt@suse.de to avoid GCC warnings with system() calls
  *
- * Revision 1.113  2005/08/05 08:42:45  mcr
- * 	signed/unsigned adjustments.
+ * Revision 1.112.2.1  2005/08/12 16:30:32  ken
+ * Make tree PG13
  *
  * Revision 1.112  2005/07/08 02:55:55  paul
- * fuck vault
+ * fix gcc warning
  *
  * Revision 1.111  2005/05/12 03:08:23  mcr
  * 	do not mess with keysize for 3des/des.

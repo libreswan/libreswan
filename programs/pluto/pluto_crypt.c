@@ -14,7 +14,7 @@
  *
  * This code was developed with the support of IXIA communications.
  *
- * RCSID $Id: pluto_crypt.c,v 1.22 2005/08/27 05:40:06 paul Exp $
+ * RCSID $Id: pluto_crypt.c,v 1.19 2005/07/13 02:14:08 mcr Exp $
  */
 
 #include <stdlib.h>
@@ -25,19 +25,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/types.h>
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-#include <sys/sysctl.h>
-#endif
-
 #include <signal.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "packet.h"
@@ -86,17 +82,6 @@ void pluto_do_crypto_op(struct pluto_crypto_req *r)
 		  , enum_show(&pluto_cryptoop_names, r->pcr_type)
 		  , r->pcr_id));
 
-#ifdef DEBUG
-    {
-	char *d = getenv("PLUTO_CRYPTO_HELPER_DELAY");
-	if(d != NULL) {
-	    int delay=atoi(d);
-
-	    DBG_log("helper is pausing for %d seconds", delay);
-	    sleep(delay);
-	}
-    }
-#endif
 
     /* now we have the entire request in the buffer, process it */
     switch(r->pcr_type) {
@@ -737,18 +722,7 @@ void init_crypto_helpers(int nhelpers)
     /* find out how many CPUs there are, if nhelpers is -1 */
     /* if nhelpers == 0, then we do all the work ourselves */
     if(nhelpers == -1) {
-	int ncpu_online;
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
-      ncpu_online = sysconf(_SC_NPROCESSORS_ONLN);
-#else
-      int mib[2], numcpu;
-           size_t len;
-
-           mib[0] = CTL_HW;
-           mib[1] = HW_NCPU;
-           len = sizeof(numcpu);
-           ncpu_online = sysctl(mib, 2, &numcpu, &len, NULL, 0);
-#endif
+	int ncpu_online = sysconf(_SC_NPROCESSORS_ONLN);
 
 	if(ncpu_online > 2) {
 	    nhelpers = ncpu_online - 1;

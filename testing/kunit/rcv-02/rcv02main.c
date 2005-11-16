@@ -97,20 +97,6 @@ int netif_rx(struct sk_buff *skb)
   return 0;
 }
 
-struct net_device fake_ipsec_dev = {
-  .hard_header_len = 14
-};
-
-struct net_device *ipsec_get_device(int inst)
-{
-  struct net_device *ipsec_dev;
-
-  ipsec_dev = &fake_ipsec_dev;
-
-
-  return ipsec_dev;
-}
-
 int
 pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 {

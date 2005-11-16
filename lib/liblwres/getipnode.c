@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: getipnode.c,v 1.3 2005/08/05 01:18:29 mcr Exp $ */
+/* $Id: getipnode.c,v 1.2 2004/09/20 18:00:35 mcr Exp $ */
 
 #include <config.h>
 
@@ -23,10 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <netdb.h>
-
-#include <sys/socket.h>
-#include <isc/ipv6.h>
 
 #include <lwres/lwres.h>
 #include <lwres/net.h>
@@ -352,7 +348,7 @@ lwres_freehostent(struct hostent *he) {
 	int names = 1;
 	int addresses = 1;
 
-	free((void *)he->h_name);
+	free(he->h_name);
 
 	cpp = he->h_addr_list;
 	while (*cpp != NULL) {
@@ -840,7 +836,7 @@ copyandmerge(struct hostent *he1, struct hostent *he2, int af, int *error_num)
 			    he1->h_name : he2->h_name) + 1);
 	if (he->h_name == NULL)
 		goto cleanup2;
-	strcpy((char *)he->h_name, (he1 != NULL) ? he1->h_name : he2->h_name);
+	strcpy(he->h_name, (he1 != NULL) ? he1->h_name : he2->h_name);
 
 	/*
 	 * Set address type and length.
@@ -944,7 +940,7 @@ hostfromaddr(lwres_gnbaresponse_t *addr, int af, const void *src) {
 		free(he->h_aliases);
 	}
 	if (he != NULL && he->h_name != NULL)
-	  free((char *)he->h_name);
+		free(he->h_name);
 	if (he != NULL)
 		free(he);
 	return (NULL);
@@ -1023,7 +1019,7 @@ hostfromname(lwres_gabnresponse_t *name, int af) {
 		free(he->h_aliases);
 	}
 	if (he != NULL && he->h_name != NULL)
-	  free((char *)he->h_name);
+		free(he->h_name);
 	if (he != NULL)
 		free(he);
 	return (NULL);

@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: barf.in,v 1.108 2005/09/01 19:28:19 paul Exp $
+# RCSID $Id: barf.in,v 1.107 2005/07/15 16:39:25 paul Exp $
 
 LOGS=${LOGS-/var/log}
 CONFS=${IPSEC_CONFS-/etc}
@@ -250,8 +250,6 @@ _________________________ /proc/net/dev
 cat /proc/net/dev
 _________________________ /proc/net/route
 cat /proc/net/route
-_________________________ /proc/sys/net/ipv4/ip_no_pmtu_disc
-cat /proc/sys/net/ipv4/ip_no_pmtu_disc
 _________________________ /proc/sys/net/ipv4/ip_forward
 cat /proc/sys/net/ipv4/ip_forward
 _________________________ /proc/sys/net/ipv4/conf/star-rp_filter

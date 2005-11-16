@@ -1,4 +1,4 @@
-/* FreeS/WAN NAT-Traversal
+/* Openswan NAT-Traversal
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: nat_traversal.h,v 1.5 2005/09/26 23:35:28 mcr Exp $
+ * RCSID $Id: nat_traversal.h,v 1.4.8.1 2005/09/27 04:30:20 paul Exp $
  */
 
 #ifndef _NAT_TRAVERSAL_H_

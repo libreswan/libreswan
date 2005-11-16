@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: dnskey.c,v 1.87 2005/11/02 01:17:03 paul Exp $
+ * RCSID $Id: dnskey.c,v 1.84 2004/11/30 16:34:08 mcr Exp $
  */
 
 #include <stdlib.h>
@@ -25,12 +25,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <resolv.h>
 #include <netdb.h>	/* ??? for h_errno */
+#include <sys/queue.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "sysdep.h"
 #include "constants.h"
 #include "adns.h"	/* needs <resolv.h> */
 #include "defs.h"
@@ -107,7 +108,7 @@ init_adns(void)
 	/* pathname was not specified as an option: build it.
 	 * First, figure out the directory to be used.
 	 */
-	ssize_t n=0;
+	ssize_t n;
 
 	if (helper_bin_dir != NULL)
 	{
@@ -120,7 +121,6 @@ init_adns(void)
 	    }
 	}
 	else
-#if defined(linux)
 	{
 	    /* The program will be in the same directory as Pluto,
 	     * so we use the sympolic link /proc/self/exe to
@@ -133,11 +133,6 @@ init_adns(void)
 		    , "readlink(\"/proc/self/exe\") failed in init_adns()"));
 
 	}
-#else
-	/* This is wrong. Should end up in a resource_dir on MacOSX -- Paul */
-	adns_path="/usr/local/libexec/ipsec/lwdnsq";
-#endif
-
 
 	if ((size_t)n > sizeof(adns_path_space) - sizeof(adns_name))
 	    exit_log("path to %s is too long", adns_name);
@@ -195,8 +190,6 @@ init_adns(void)
 	adns_qfd = qfds[1];
 	adns_afd = afds[0];
 	close(afds[1]);
-	fcntl(adns_qfd, F_SETFD, FD_CLOEXEC);
-	fcntl(adns_afd, F_SETFD, FD_CLOEXEC);
 	fcntl(adns_qfd, F_SETFL, O_NONBLOCK);
 	break;
     }
@@ -262,11 +255,11 @@ stop_adns(void)
 static const char our_TXT_attr[] = our_TXT_attr_string;
 
 static err_t
-decode_iii(char **pp, struct id *gw_id)
+decode_iii(u_char **pp, struct id *gw_id)
 {
-    char *p = *pp + strspn(*pp, " \t");
-    char *e = p + strcspn(p, " \t");
-    char under = *e;
+    u_char *p = *pp + strspn(*pp, " \t");
+    u_char *e = p + strcspn(p, " \t");
+    u_char under = *e;
 
     if (p == e)
 	return "TXT " our_TXT_attr_string " badly formed (no gateway specified)";
@@ -306,13 +299,13 @@ decode_iii(char **pp, struct id *gw_id)
 }
 
 static err_t
-process_txt_rr_body(char *str
-		    , bool doit	/* should we capture information? */
-		    , enum dns_auth_level dns_auth_level
-		    , struct adns_continuation *const cr)
+process_txt_rr_body(u_char *str
+, bool doit	/* should we capture information? */
+, enum dns_auth_level dns_auth_level
+, struct adns_continuation *const cr)
 {
     const struct id *client_id = &cr->id;	/* subject of query */
-    char *p = str;
+    u_char *p = str;
     unsigned long pref = 0;
     struct gw_info gi;
 
@@ -334,7 +327,7 @@ process_txt_rr_body(char *str
 
 	p++;
 	pref = strtoul(p, &e, 0);
-	if (e == p)
+	if ((u_char *)e == p)
 	    return "malformed X-IPsec-Server priority";
 
 	p = e + strspn(e, " \t");
@@ -430,7 +423,7 @@ process_txt_rr_body(char *str
 	    chunk_t kbc;
 	    struct RSA_public_key r;
 
-	    err_t ugh = ttodatav(p, 0, 64, (char *)kb, sizeof(kb), &kbc.len
+	    err_t ugh = ttodatav(p, 0, 64, kb, sizeof(kb), &kbc.len
 		, diag_space, sizeof(diag_space), TTODATAV_SPACECOUNTS);
 
 	    if (ugh != NULL)
@@ -497,9 +490,9 @@ rr_typename(int type)
 {
     switch (type)
     {
-    case ns_t_txt:
+    case T_TXT:
 	return "TXT";
-    case ns_t_key:
+    case T_KEY:
 	return "KEY";
     default:
 	return "???";
@@ -511,9 +504,9 @@ rr_typename(int type)
 
 # ifdef USE_KEYRR
 static err_t
-process_lwdnsq_key(char *str
-		   , enum dns_auth_level dns_auth_level
-		   , struct adns_continuation *const cr)
+process_lwdnsq_key(u_char *str
+, enum dns_auth_level dns_auth_level
+, struct adns_continuation *const cr)
 {
     /* fields of KEY record.  See RFC 2535 3.1 KEY RDATA format. */
     unsigned long flags	/* 16 bits */
@@ -562,7 +555,7 @@ process_lwdnsq_key(char *str
 	 */
 	u_char kb[RSA_MAX_ENCODING_BYTES];	/* plenty of space for binary form of public key */
 	chunk_t kbc;
-	err_t ugh = ttodatav(rest, 0, 64, (char *)kb, sizeof(kb), &kbc.len
+	err_t ugh = ttodatav(rest, 0, 64, kb, sizeof(kb), &kbc.len
 	    , diag_space, sizeof(diag_space), TTODATAV_IGNORESPACE);
 
 	if (ugh != NULL)
@@ -1272,11 +1265,11 @@ process_dns_answer(struct adns_continuation *const cr
 /****************************************************************/
 
 static err_t
-build_dns_name(char name_buf[NS_MAXDNAME + 2]
-	       , unsigned long serial USED_BY_DEBUG
-	       , const struct id *id
-	       , const char *typename USED_BY_DEBUG
-	       , const char *gwname   USED_BY_DEBUG)
+build_dns_name(u_char name_buf[NS_MAXDNAME + 2]
+, unsigned long serial USED_BY_DEBUG
+, const struct id *id
+, const char *typename USED_BY_DEBUG
+, const char *gwname   USED_BY_DEBUG)
 {
     /* note: all end in "." to suppress relative searches */
     id = resolve_myid(id);
@@ -1292,7 +1285,7 @@ build_dns_name(char name_buf[NS_MAXDNAME + 2]
 
 	passert(bl == 4);
 	snprintf(name_buf, NS_MAXDNAME + 2, "%d.%d.%d.%d.in-addr.arpa."
-		 , b[3], b[2], b[1], b[0]);
+	    , b[3], b[2], b[1], b[0]);
 	break;
     }
 
@@ -1301,7 +1294,7 @@ build_dns_name(char name_buf[NS_MAXDNAME + 2]
 	/* ??? is this correct? */
 	const unsigned char *b;
 	size_t bl;
-	char *op = name_buf;
+	u_char *op = name_buf;
 	static const char suffix[] = "IP6.INT.";
 
 	for (bl = addrbytesptr(&id->ip_addr, &b); bl-- != 0; )
@@ -1529,7 +1522,7 @@ start_adns_query(const struct id *id	/* domain to query */
 
     {
 	err_t ugh = build_dns_name(cr->query.name_buf, cr->qtid
-				   , id, typename, gwidb);
+	    , id, typename, gwidb);
 
 	if (ugh != NULL)
 	{
@@ -1556,8 +1549,8 @@ bool unsent_ADNS_queries = FALSE;
 void
 send_unsent_ADNS_queries(void)
 {
-    static const char *buf_end = NULL;	/* NOTE STATIC */
-    static const char *buf_cur = NULL;	/* NOTE STATIC */
+    static const unsigned char *buf_end = NULL;	/* NOTE STATIC */
+    static const unsigned char *buf_cur = NULL;	/* NOTE STATIC */
 
     if (adns_qfd == NULL_FD)
 	return;	/* nothing useful to do */
@@ -1606,7 +1599,7 @@ send_unsent_ADNS_queries(void)
 	    next_query->used = FALSE;
 	    {
 		/* NOTE STATIC: */
-		static char qbuf[LWDNSQ_CMDBUF_LEN + 1];	/* room for NUL */
+		static unsigned char qbuf[LWDNSQ_CMDBUF_LEN + 1];	/* room for NUL */
 
 		snprintf(qbuf, sizeof(qbuf), "%s %lu %s\n"
 		    , rr_typename(next_query->type)
