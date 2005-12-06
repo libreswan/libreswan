@@ -75,7 +75,7 @@ sub errchk {
 	    print "]\n";
 	    if(@err) 
 	    { 
-		print @err; 
+		print "  @err"; 
 	    }
 	}
 	else
@@ -221,9 +221,35 @@ sub installstartcheck {
 	if ( -e "/proc/net/ipsec_eroute" || -e "/proc/net/pfkey" ) { $test="1" }
 	errchk "$test";
 
+        if ( -e "/proc/net/ipsec_eroute") {
+        printfun "KLIPS detected, checking for NAT Traversal support";
+	if ( -e "/proc/net/ipsec/natt" ) { $nattest = "1" }
+	errchk "$nattest"; 
+	}
+
+        if ( -e "/proc/net/pfkey") {
+        printfun "NETKEY detected, testing for disabled ICMP send_redirects";
+        open("cat", "/proc/sys/net/ipv4/conf/default/send_redirects");
+	if(<cat> == "1")
+	    {
+		errchk "";
+		print "\n  Please disable /proc/sys/net/ipv4/conf/*/send_redirects\n  or NETKEY will cause the sending of bogus ICMP redirects!\n\n"; 
+	    }
+	else { errchk "1"; } 
+	
+        printfun "NETKEY detected, testing for disabled ICMP accept_redirects";
+        open("cat", "/proc/sys/net/ipv4/conf/default/accept_redirects");
+	if(<cat> == "1")
+	    {
+		errchk "";
+		print "\n  Please disable /proc/sys/net/ipv4/conf/*/accept_redirects\n  or NETKEY will accept bogus ICMP redirects!\n\n"; 
+	    }
+	else { errchk "1"; } 
+	}
+
 	printfun "Checking for RSA private key ($conf/ipsec.secrets)";
 	run "ipsec showhostkey --txt 1.1.1.1";
-	errchk @out;
+	errchk "@out" , "DISABLED";
 	
 	# Wouldn't this test fail if your mucked up your interface definition?
 	printfun "Checking that pluto is running";
@@ -293,11 +319,12 @@ sub cmdchecks {
               errchk "@out";
              }
      }
-    if ( -e "/proc/net/pfkey") {
-       printfun "Checking for 'setkey' command for NETKEY IPsec stack support";
-       run "which setkey";
-       errchk "@out";
-    }
+# perhaps check for ip xfrm support, but forget about setkey.
+#    if ( -e "/proc/net/pfkey") {
+#       printfun "Checking for 'setkey' command for NETKEY IPsec stack support";
+#       run "which setkey";
+#       errchk "@out";
+#    }
 }
     
 sub dnschecks {

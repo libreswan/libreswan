@@ -14,7 +14,7 @@
  * for more details.
  */
 
-char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.232.2.1 2005/09/21 22:57:43 paul Exp $";
+char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.232.2.2 2005/11/22 04:11:52 ken Exp $";
 
 #define __NO_VERSION__
 #include <linux/module.h>
@@ -272,15 +272,20 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 
 		if(ixs->skb->sk) {
 #ifdef NET_26
-			struct tcp_tw_bucket *tw;
-			
-			tw = (struct tcp_tw_bucket *)ixs->skb->sk;
-
-			ixs->sport = ntohs(tw->tw_sport);
-			ixs->dport = ntohs(tw->tw_dport);
+#ifdef HAVE_INET_SK_SPORT
+                       ixs->sport = ntohs(inet_sk(ixs->skb->sk)->sport);
+                       ixs->dport = ntohs(inet_sk(ixs->skb->sk)->dport);
 #else
-			ixs->sport = ntohs(ixs->skb->sk->sport);
-			ixs->dport = ntohs(ixs->skb->sk->dport);
+                        struct tcp_tw_bucket *tw;
+
+                        tw = (struct tcp_tw_bucket *)ixs->skb->sk;
+
+                        ixs->sport = ntohs(tw->tw_sport);
+                        ixs->dport = ntohs(tw->tw_dport);
+#endif
+#else
+                        ixs->sport = ntohs(ixs->skb->sk->sport);
+                        ixs->dport = ntohs(ixs->skb->sk->dport);
 #endif
 		} 
 
@@ -1839,6 +1844,9 @@ ipsec_tunnel_cleanup_devices(void)
 
 /*
  * $Log: ipsec_tunnel.c,v $
+ * Revision 1.232.2.2  2005/11/22 04:11:52  ken
+ * Backport fixes for 2.6.14 kernels from HEAD
+ *
  * Revision 1.232.2.1  2005/09/21 22:57:43  paul
  * pulled up compile fix for 2.6.13
  *

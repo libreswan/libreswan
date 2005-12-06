@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pfkey_v2.c,v 1.97.2.4 2005/09/14 16:40:45 mcr Exp $
+ * RCSID $Id: pfkey_v2.c,v 1.97.2.5 2005/11/22 04:11:52 ken Exp $
  */
 
 /*
@@ -461,9 +461,15 @@ pfkey_destroy_socket(struct sock *sk)
 			       "pfkey_skb contents:");
 			printk(" next:0p%p", skb->next);
 			printk(" prev:0p%p", skb->prev);
-			printk(" list:0p%p", skb->list);
-			printk(" sk:0p%p", skb->sk);
-			printk(" stamp:%ld.%ld", skb->stamp.tv_sec, skb->stamp.tv_usec);
+#ifdef HAVE_SKB_LIST
+                        printk(" list:0p%p", skb->list);
+#endif
+                        printk(" sk:0p%p", skb->sk);
+#ifdef HAVE_TSTAMP
+                        printk(" stamp:%ld.%ld", skb->tstamp.off_sec, skb->tstamp.off_usec);
+#else
+                        printk(" stamp:%ld.%ld", skb->stamp.tv_sec, skb->stamp.tv_usec);
+#endif
 			printk(" dev:0p%p", skb->dev);
 			if(skb->dev) {
 				if(skb->dev->name) {
@@ -1376,8 +1382,12 @@ pfkey_recvmsg(struct socket *sock, struct msghdr *msg, int size, int noblock, in
 #endif /* NET_21 */
 
 	skb_copy_datagram_iovec(skb, 0, msg->msg_iov, size);
+#ifdef HAVE_TSTAMP
+        sk->sk_stamp.tv_sec = skb->tstamp.off_sec;
+        sk->sk_stamp.tv_usec = skb->tstamp.off_usec;
+#else
         sk->sk_stamp=skb->stamp;
-
+#endif
 	skb_free_datagram(sk, skb);
 	return size;
 }
@@ -1891,6 +1901,9 @@ void pfkey_proto_init(struct net_protocol *pro)
 
 /*
  * $Log: pfkey_v2.c,v $
+ * Revision 1.97.2.5  2005/11/22 04:11:52  ken
+ * Backport fixes for 2.6.14 kernels from HEAD
+ *
  * Revision 1.97.2.4  2005/09/14 16:40:45  mcr
  *    pull up of compilation on 2.4
  *

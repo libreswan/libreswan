@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: _startklips.in,v 1.43 2005/03/31 21:07:27 ken Exp $
+# RCSID $Id: _startklips.in,v 1.43.4.2 2005/11/24 23:08:05 ken Exp $
 
 me='ipsec _startklips'		# for messages
 
@@ -285,6 +285,9 @@ then
 		modprobe -qv xfrm4_tunnel
 		# xfrm_user contains netlink support for IPsec 
 		modprobe -qv xfrm_user
+		modprobe -qv hw_random
+		# padlock must load before aes module
+		modprobe -qv padlock
 		# load the most common ciphers/algo's
 		modprobe -qv sha1
 		modprobe -qv md5
@@ -305,6 +308,9 @@ then
 		fi
                 unset MODPATH MODULECONF        # no user overrides!
                 depmod -a >/dev/null 2>&1
+		modprobe -qv hw_random
+		# padlock must load before aes module
+		modprobe -qv padlock
                 modprobe -v ipsec
         fi
         if test ! -f $ipsecversion

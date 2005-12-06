@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: sameaddr.c,v 1.10 2004/04/09 18:00:36 mcr Exp $
+ * RCSID $Id: sameaddr.c,v 1.10.14.1 2005/11/17 01:44:12 mcr Exp $
  */
 #include "internal.h"
 #include "openswan.h"

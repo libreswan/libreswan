@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: connections.h,v 1.103 2005/06/14 22:38:06 mcr Exp $
+ * RCSID $Id: connections.h,v 1.103.2.1 2005/11/17 01:44:12 mcr Exp $
  */
 
 /* There are two kinds of connections:

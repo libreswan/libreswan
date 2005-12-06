@@ -15,7 +15,7 @@
  * for more details.
  */
 
-char ipsec_xmit_c_version[] = "RCSID $Id: ipsec_xmit.c,v 1.20.2.1 2005/08/27 23:40:00 paul Exp $";
+char ipsec_xmit_c_version[] = "RCSID $Id: ipsec_xmit.c,v 1.20.2.2 2005/11/27 21:41:03 paul Exp $";
 
 #define __NO_VERSION__
 #include <linux/module.h>
@@ -819,11 +819,7 @@ ipsec_xmit_encap_once(struct ipsec_xmit_state *ixs)
 		default:
 			break;
 		}
-#ifdef NETDEV_23
-		ixs->iph->ttl      = sysctl_ip_default_ttl;
-#else /* NETDEV_23 */
-		ixs->iph->ttl      = ip_statistics.IpDefaultTTL;
-#endif /* NETDEV_23 */
+		ixs->iph->ttl      = SYSCTL_IPSEC_DEFAULT_TTL;
 		ixs->iph->frag_off = 0;
 		ixs->iph->saddr    = ((struct sockaddr_in*)(ixs->ipsp->ips_addr_s))->sin_addr.s_addr;
 		ixs->iph->daddr    = ((struct sockaddr_in*)(ixs->ipsp->ips_addr_d))->sin_addr.s_addr;
@@ -1748,6 +1744,9 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 
 /*
  * $Log: ipsec_xmit.c,v $
+ * Revision 1.20.2.2  2005/11/27 21:41:03  paul
+ * Pull down TTL fixes from head. this fixes "Unknown symbol sysctl_ip_default_ttl"in for klips as module.
+ *
  * Revision 1.20.2.1  2005/08/27 23:40:00  paul
  * recommited HAVE_SOCK_SECURITY fixes for linux 2.6.13
  *

@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: manual.in,v 1.84 2005/04/17 22:57:12 paul Exp $
+# RCSID $Id: manual.in,v 1.84.2.1 2005/11/18 05:18:33 ken Exp $
 
 me='ipsec manual'
 usage="Usage:
@@ -210,7 +210,7 @@ awk '	BEGIN {
 		if ((k in s) && s[k] != "yes" && s[k] != "no")
 			fail("parameter \"" k "\" must be \"yes\" or \"no\"")
 	}
-	function default(k, v) {
+	function set_os_default(k, v) {
 		if (!(k in s))
 			s[k] = v
 	}
@@ -323,7 +323,7 @@ awk '	BEGIN {
 	#########
 	if (failed)
 		exit 1
-	default("type", "tunnel")
+	set_os_default("type", "tunnel")
 	type = s["type"]
 	shunt = 0
 	if (type == "transport") {
@@ -364,9 +364,9 @@ awk '	BEGIN {
 	}
 
 	leftsub = ("leftsubnet" in s) ? 1 : 0
-	default("leftsubnet", s["left"] "/32")
+	set_os_default("leftsubnet", s["left"] "/32")
 	rightsub = ("rightsubnet" in s) ? 1 : 0
-	default("rightsubnet", s["right"] "/32")
+	set_os_default("rightsubnet", s["right"] "/32")
 	integer("espreplay_window")
 	if (("espreplay_window" in s) && s["espreplay_window"] == 0)
 		delete s["espreplay_window"]
@@ -376,8 +376,8 @@ awk '	BEGIN {
 	netfix("left")
 	netfix("right")
 
-	default("leftnexthop", s["right"])
-	default("rightnexthop", s["left"])
+	set_os_default("leftnexthop", s["right"])
+	set_os_default("rightnexthop", s["left"])
 	if (s["leftnexthop"] == s["left"])
 		fail("left and leftnexthop must not be the same")
 	if (s["rightnexthop"] == s["right"])

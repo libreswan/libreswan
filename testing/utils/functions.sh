@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# $Id: functions.sh,v 1.124 2005/07/09 15:40:30 mcr Exp $
+# $Id: functions.sh,v 1.124.2.2 2005/11/17 03:43:46 ken Exp $
 #
 
 preptest() {
@@ -1547,16 +1547,12 @@ do_umlX_test() {
 	EXP2_ARGS="$EXP2_ARGS -P OUTPUT${KLIPS_MODULE}/$PUBOUTPUT.pcap"
     fi
 
-<<<<<<< testing/utils/functions.sh
     if [ "X$ARPREPLY" = "X--arpreply" ]
     then
 	EXP2_ARGS="$EXP2_ARGS -a"
     fi
 
     if [ -n "$NETJIG_EXTRA" ]
-=======
-    if [ -n "${NETJIG_EXTRA-}" ]
->>>>>>> .merge_file_i5fcGo
     then
 	EXP2_ARGS="$EXP2_ARGS -N $NETJIG_EXTRA"
     fi
@@ -1609,9 +1605,15 @@ umlXhost() {
 }
 
 #
-# $Id: functions.sh,v 1.124 2005/07/09 15:40:30 mcr Exp $
+# $Id: functions.sh,v 1.124.2.2 2005/11/17 03:43:46 ken Exp $
 #
 # $Log: functions.sh,v $
+# Revision 1.124.2.2  2005/11/17 03:43:46  ken
+# Remove CVS commit errors
+#
+# Revision 1.124.2.1  2005/11/17 01:44:13  mcr
+# 	pullup of code from git tree.
+#
 # Revision 1.124  2005/07/09 15:40:30  mcr
 # 	make tests that need compat variables abort.
 #

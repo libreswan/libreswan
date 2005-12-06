@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: connections.c,v 1.256.2.6 2005/10/13 03:11:14 mcr Exp $
+ * RCSID $Id: connections.c,v 1.256.2.7 2005/11/17 01:44:12 mcr Exp $
  */
 
 #include <string.h>

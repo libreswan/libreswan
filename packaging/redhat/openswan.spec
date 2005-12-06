@@ -1,14 +1,14 @@
 Summary: Openswan IPSEC implementation
 Name: openswan
-Version: 2.4.3
-# Build LLIPS kernel module?
-%{!?buildklips: %{expand: %%define buildklips 1}}
+Version: 2.4.5dr3
+# Build KLIPS kernel module?
+%{!?buildklips: %{expand: %%define buildklips 0}}
 %{!?buildxen: %{expand: %%define buildxen 0}}
 
 # The default kernel version to build for is the latest of
-# the installed kernel-source RPMs.
+# the installed binary kernel
 # This can be overridden by "--define 'kversion x.x.x-y.y.y'"
-#%define defkv %(rpm -q --qf='%{Version}-%{Release}\ ' kernel | tr ' ' '\n' | tail -1)
+%define defkv %(rpm -q kernel kernel-smp| grep -v "not installed" | sed "s/kernel-smp-\\\(.\*\\\)$/\\1smp/"| sed "s/kernel-//"| sort | tail -1)
 %{!?kversion: %{expand: %%define kversion %defkv}}
 %define	krelver		%(echo %{kversion} | tr -s '-' '_')
 
@@ -91,13 +91,10 @@ rm -rf ${RPM_BUILD_ROOT}
 FS=$(pwd)
 %if %{buildklips}
 mkdir -p BUILD.%{_target_cpu}
-mkdir -p BUILD.%{_target_cpu}-smp
 
 cd packaging/redhat
-for smp in -smp ""
-do
 # rpm doesn't know we're compiling kernel code. optflags will give us -m64
-%{__make} -C $FS MOD26BUILDDIR=$FS/BUILD.%{_target_cpu}$smp \
+%{__make} -C $FS MOD26BUILDDIR=$FS/BUILD.%{_target_cpu} \
     OPENSWANSRCDIR=$FS \
     KLIPSCOMPILE="%{optflags}" \
     KERNELSRC=/lib/modules/%{kversion}/build \
@@ -106,10 +103,9 @@ do
 %else
     ARCH=%{_arch} \
 %endif
-    MODULE_DEF_INCLUDE=$FS/packaging/redhat/config-%{_target_cpu}$smp.h \
+    MODULE_DEF_INCLUDE=$FS/packaging/redhat/config-%{_target_cpu}.h \
     MODULE_EXTRA_INCLUDE=$FS/packaging/redhat/extra_%{krelver}.h \
     include module
-done
 %endif
 
 %install
@@ -129,19 +125,11 @@ install -d %{buildroot}%{_sbindir}
 
 %if %{buildklips}
 mkdir -p %{buildroot}/lib/modules/%{kversion}/kernel/net/ipsec
-mkdir -p %{buildroot}/lib/modules/%{kversion}smp/kernel/net/ipsec
 for i in $FS/BUILD.%{_target_cpu}/ipsec.ko  $FS/modobj/ipsec.o
 do
   if [ -f $i ]
   then
     cp $i %{buildroot}/lib/modules/%{kversion}/kernel/net/ipsec 
-  fi
-done
-for i in BUILD.%{_target_cpu}-smp/ipsec.o BUILD.%{_target_cpu}-smp/ipsec.ko  
-do 
-  if [ -f $i ]
-  then
-    cp $i  %{buildroot}/lib/modules/%{kversion}smp/kernel/net/ipsec
   fi
 done
 %endif
@@ -174,7 +162,6 @@ rm -rf ${RPM_BUILD_ROOT}
 %files klips
 %defattr (-,root,root)
 /lib/modules/%{kversion}/kernel/net/ipsec
-/lib/modules/%{kversion}smp/kernel/net/ipsec
 %endif
 
 %pre 

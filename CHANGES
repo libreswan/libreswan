@@ -1,6 +1,44 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.4.5
+* Fix for ipsec: Unknown symbol sysctl_ip_default_ttl
+* Fix for compiling on 2.6.14 kernels 
+* Fix patching against 2.6.14 kernels
+* Additions to barf and verify commands for various kernel internals
+* load hw_random and padlock modules before aes module so hardware routines
+  are prefered over software routines.
+* allow rightsubnet= with type=transport for L2TP behind NAT.
+* Refactored natd_lookup / hash code, probably fixes lot of NAT related bugs
+  #401 l2tp connection is not work with 2.6 build in IPSEC
+  #442 Pluto uses wrong port in NAT-D calculation
+  #450 macosx (possible generic PSK+NAT-T rekey bug: eroute already in use.
+  #462 updated patch for Openswan and OS X with NAT-T
+  #509 KLIPS compilation fail with kernel-2.6.14.2 
+
+
+v2.4.4
+  #487 ASSERTION FAILED at state.c:120:IS_ISAKMP_ENCRYPTED(isakmp_sa->st_state) 
+  (see http://www.openswan.org/niscc2/)
+  (proper fix in pluto_constants.h)
+* Fix for kernels having strstr
+* Various gcc4 warning fixes
+* disable CONFIG_IPSEC_NAT_TRAVERSAL per default so we can build KLIPS on
+  Fedora systems.
+* questionable spin_unlock commented out. Might fix reported SMP crashers.
+* update to permit alg code without module support
+* Fix for detecting proper kernel source/header directory on fedora
+* Various bugfixes as reported on http://bugs.openswan.org/
+  #499: check for module support in kernel for IPsec Modular Extensions
+  #500: recent awk breaks on 'setdefault' command
+
+
+v2.4.3
+  #487 ASSERTION FAILED at state.c:120:IS_ISAKMP_ENCRYPTED(isakmp_sa->st_state) 
+  (see http://www.openswan.org/niscc2/)
+  (incorrect fixed. version not released)
+
 v2.4.2
+* Fixes for compiling on 2.6.14 by David McCullough
 * Minor fixes to accomodate FC4 2.6.11 kernels.
 * Fix for compilation of KLIPS on 2.4.x kernels.
 * Fix for NAT-T on 2.4.31
@@ -11,7 +49,7 @@ v2.4.2
   #344 netkey-acquire patch
   #376 install_ipsec_sa and install_inbound_ipsec_sa
   #486 ASSERTION FAILED at crypto.c:258: key_size==(DES_CBC_BLOCK_SIZE * 3)
-  #487 ASSERTION FAILED at state.c:120: IS_ISAKMP_ENCRYPTED(isakmp_sa->st_state) 
+  (see http://www.openswan.org/niscc2/)
 
 v2.4.1
 * Not publically released
@@ -104,4 +142,4 @@ v2.1.0
   while travelling.  This is based on Tuomo Soini's Advanced Routing
   patch.
 
-RCSID $Id: CHANGES,v 1.326.2.26 2005/11/15 02:43:22 ken Exp $
+RCSID $Id: CHANGES,v 1.326.2.33 2005/11/28 02:16:42 paul Exp $

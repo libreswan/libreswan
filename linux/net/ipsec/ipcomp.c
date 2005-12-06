@@ -14,7 +14,7 @@
  * for more details.
  */
 
-char ipcomp_c_version[] = "RCSID $Id: ipcomp.c,v 1.41.2.1 2005/08/27 23:40:00 paul Exp $";
+char ipcomp_c_version[] = "RCSID $Id: ipcomp.c,v 1.41.2.2 2005/11/22 04:11:52 ken Exp $";
 
 /* SSS */
 
@@ -600,7 +600,9 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
         memcpy(n->head,
 	       skb->head,
 	       ((char *)iph - (char *)skb->head) + iphlen);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,14)
         n->list=NULL;
+#endif
 	n->next=NULL;
 	n->prev=NULL;
         n->sk=NULL;
@@ -657,7 +659,11 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
 	n->pkt_bridged=skb->pkt_bridged;
 #endif /* NETDEV_23 */
 	n->ip_summed=0;
+#ifdef HAVE_TSTAMP
+        n->tstamp = skb->tstamp;
+#else
         n->stamp=skb->stamp;
+#endif
 #ifndef NETDEV_23 /* this seems to have been removed in 2.4 */
 #if defined(CONFIG_SHAPER) || defined(CONFIG_SHAPER_MODULE)
         n->shapelatency=skb->shapelatency;       /* Latency on frame */

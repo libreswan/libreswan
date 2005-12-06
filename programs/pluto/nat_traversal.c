@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: nat_traversal.c,v 1.26.2.4 2005/09/27 04:30:20 paul Exp $
+ * RCSID $Id: nat_traversal.c,v 1.26.2.5 2005/11/24 05:30:37 ken Exp $
  */
 
 #ifdef NAT_TRAVERSAL
@@ -134,7 +134,7 @@ static void disable_nat_traversal(int type)
 
 static void _natd_hash(const struct hash_desc *hasher, char *hash,
 	u_int8_t *icookie, u_int8_t *rcookie,
-	const ip_address *ip, u_int16_t port)
+	const ip_address *ip, u_int16_t port /* network order */)
 {
 	union hash_ctx ctx;
 
@@ -178,7 +178,7 @@ static void _natd_hash(const struct hash_desc *hasher, char *hash,
 					sizeof(ip->u.v4.sin_addr.s_addr));
 				break;
 		}
-		DBG_log("_natd_hash: port=%d", port);
+		DBG_log("_natd_hash: port=%d", ntohs(port));
 		DBG_dump("_natd_hash: hash=", hash, hasher->hash_digest_len);
 	);
 #endif
@@ -229,11 +229,15 @@ u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
 	return 0;
 }
 
+
 void nat_traversal_natd_lookup(struct msg_digest *md)
 {
-	char hash[MAX_DIGEST_LEN];
+	unsigned char hash_me[MAX_DIGEST_LEN];
+	unsigned char hash_him[MAX_DIGEST_LEN];
 	struct payload_digest *p;
 	struct state *st = md->st;
+	bool found_me = FALSE;
+	bool found_him= FALSE;
 	int i;
 
 	if (!st || !md->iface || !st->st_oakley.hasher) {
@@ -260,64 +264,69 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 	/**
 	 * First one with my IP & port
 	 */
-	p = md->chain[ISAKMP_NEXT_NATD_RFC];
-	_natd_hash(st->st_oakley.hasher, hash
+	_natd_hash(st->st_oakley.hasher, hash_me
 		   , st->st_icookie, st->st_rcookie
 		   , &(md->iface->ip_addr)
-		   , ntohs(st->st_localport));
-
-	if (!( (pbs_left(&p->pbs) == st->st_oakley.hasher->hash_digest_len)
-	       && (memcmp(p->pbs.cur, hash, st->st_oakley.hasher->hash_digest_len)==0)))
-	{
-#ifdef NAT_D_DEBUG
-	    DBG(DBG_NATT,
-		DBG_log("NAT_TRAVERSAL_NAT_BHND_ME");
-		DBG_dump("expected NAT-D:", hash,
-			 st->st_oakley.hasher->hash_digest_len);
-		DBG_dump("received NAT-D:", p->pbs.cur, pbs_left(&p->pbs));
-		);
-#endif
-	    st->hidden_variables.st_nat_traversal |= LELEM(NAT_TRAVERSAL_NAT_BHND_ME);
-	}
+		   , ntohs(md->iface->port));
 
 	/**
 	 * The others with sender IP & port
 	 */
-	_natd_hash(st->st_oakley.hasher, hash
+	_natd_hash(st->st_oakley.hasher, hash_him
 		   , st->st_icookie, st->st_rcookie
 		   , &(md->sender), ntohs(md->sender_port));
 
-	for (p = p->next, i=0 ; p != NULL; p = p->next) {
-	    if ( (pbs_left(&p->pbs) == st->st_oakley.hasher->hash_digest_len)
-		 && (memcmp(p->pbs.cur, hash
-			    , st->st_oakley.hasher->hash_digest_len)==0)
-		) {
-		i++;
-	    }
-	}
-
-	if (!i) {
+	for (p = md->chain[ISAKMP_NEXT_NATD_RFC], i=0;
+	     p != NULL && (!found_me || !found_him);
+	     p = p->next)
+	  {
 #ifdef NAT_D_DEBUG
 	    DBG(DBG_NATT,
-		DBG_log("NAT_TRAVERSAL_NAT_BHND_PEER");
-		DBG_dump("expected NAT-D:", hash,
+		DBG_log("NAT_TRAVERSAL hash=%d (me:%d) (him:%d)"
+			, i, found_me, found_him);
+		DBG_dump("expected NAT-D(me):", hash_me,
 			 st->st_oakley.hasher->hash_digest_len);
-		p = md->chain[ISAKMP_NEXT_NATD_RFC];
-		for (p = p->next, i=0 ; p != NULL; p = p->next) {
-		    DBG_dump("received NAT-D:", p->pbs.cur, pbs_left(&p->pbs));
-		}
+		DBG_dump("expected NAT-D(him):", hash_him,
+			 st->st_oakley.hasher->hash_digest_len);
+		DBG_dump("received NAT-D:", p->pbs.cur, pbs_left(&p->pbs));
 		);
 #endif
-	    st->hidden_variables.st_nat_traversal |= LELEM(NAT_TRAVERSAL_NAT_BHND_PEER);
-	}
+	    if ( (pbs_left(&p->pbs) == st->st_oakley.hasher->hash_digest_len)
+		 && (memcmp(p->pbs.cur, hash_me
+			    , st->st_oakley.hasher->hash_digest_len)==0))
+	      {
+		found_me = TRUE;
+	      } 
+	    
+	    if ( (pbs_left(&p->pbs) == st->st_oakley.hasher->hash_digest_len)
+		 && (memcmp(p->pbs.cur, hash_him
+			    , st->st_oakley.hasher->hash_digest_len)==0))
+	      {
+		found_him = TRUE;
+	      } 
+	    
+	    i++;
+	  }
 	
-	st->hidden_variables.st_natd = md->sender;
+	DBG(DBG_NATT,
+	    DBG_log("NAT_TRAVERSAL hash=%d (me:%d) (him:%d)"
+		    , i, found_me, found_him));
+	    
+	if(!found_me) {
+	    st->hidden_variables.st_nat_traversal |= LELEM(NAT_TRAVERSAL_NAT_BHND_ME);
+	}
+
+	if(!found_him) {
+	    st->hidden_variables.st_nat_traversal |= LELEM(NAT_TRAVERSAL_NAT_BHND_PEER);
+	    st->hidden_variables.st_natd = md->sender;
+	}
 
 	if(st->st_connection->forceencaps) {
 	    st->hidden_variables.st_nat_traversal |= LELEM(NAT_TRAVERSAL_NAT_BHND_PEER);
 	    st->hidden_variables.st_nat_traversal |= LELEM(NAT_TRAVERSAL_NAT_BHND_ME);
 	}
 }
+
 
 bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	struct msg_digest *md)
@@ -355,7 +364,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	    _natd_hash(st->st_oakley.hasher, hash, st->st_icookie
 		       , is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie
 		       , &(md->sender)
-		       , ntohs(md->sender_port));
+		       , htons(md->sender_port));
 	}
 
 	if (!out_generic_raw(nat_np, &isakmp_nat_d, outs
@@ -378,7 +387,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		       , st->st_icookie
 		       , is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie
 		       , &(md->iface->ip_addr)
-		       , ntohs(st->st_remoteport));
+		       , htons(md->iface->port));
 	}
 	return (out_generic_raw(np, &isakmp_nat_d, outs,
 		hash, st->st_oakley.hasher->hash_digest_len, "NAT-D"));
@@ -926,6 +935,9 @@ void process_pfkey_nat_t_new_mapping(
 
 /*
  * $Log: nat_traversal.c,v $
+ * Revision 1.26.2.5  2005/11/24 05:30:37  ken
+ * MCR's refactored natd_lookup function for multi-NAT-D Hash
+ *
  * Revision 1.26.2.4  2005/09/27 04:30:20  paul
  * Backport of HEAD's patch, adopted from Peter Van der Beken's
  * (peterv@propagandism.org) MacOSX interop patch.
@@ -999,6 +1011,6 @@ void process_pfkey_nat_t_new_mapping(
  * 	added log info.
  *
  *
- * $Id: nat_traversal.c,v 1.26.2.4 2005/09/27 04:30:20 paul Exp $
+ * $Id: nat_traversal.c,v 1.26.2.5 2005/11/24 05:30:37 ken Exp $
  *
  */

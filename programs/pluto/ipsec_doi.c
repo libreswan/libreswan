@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_doi.c,v 1.304.2.7 2005/11/15 03:51:22 ken Exp $
+ * RCSID $Id: ipsec_doi.c,v 1.304.2.8 2005/11/16 22:43:30 ken Exp $
  */
 
 #include <stdio.h>
@@ -448,7 +448,7 @@ send_notification_from_state(struct state *st, enum state_kind state,
 	send_notification(st, type, p1st, generate_msgid(p1st),
 	    st->st_icookie, st->st_rcookie, NULL, 0, PROTO_ISAKMP);
     }
-    else if (IS_ISAKMP_ENCRYPTED(st->st_state)) {
+    else if (IS_ISAKMP_ENCRYPTED(state)) {
 	send_notification(st, type, st, generate_msgid(st),
 	    st->st_icookie, st->st_rcookie, NULL, 0, PROTO_ISAKMP);
     }

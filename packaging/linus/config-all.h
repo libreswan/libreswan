@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
  * License for more details.
  *
- * RCSID $Id: config-all.h,v 1.11 2005/01/26 00:52:59 mcr Exp $
+ * RCSID $Id: config-all.h,v 1.11.6.1 2005/11/17 22:37:20 paul Exp $
  */
 #define	_CONFIG_ALL_H_	/* seen it, no need to see it again */
 
@@ -54,8 +54,10 @@
 #define CONFIG_KLIPS_ENC_3DES 1
 #endif
 
+#if 0
 #ifndef CONFIG_IPSEC_NAT_TRAVERSAL
-#define CONFIG_IPSEC_NAT_TRAVERSAL 1
+#define CONFIG_IPSEC_NAT_TRAVERSAL 0
+#endif
 #endif
 
 #ifndef CONFIG_KLIPS_ENC_AES

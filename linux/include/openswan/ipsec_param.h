@@ -15,7 +15,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_param.h,v 1.29.6.1 2005/08/12 16:24:18 ken Exp $
+ * RCSID $Id: ipsec_param.h,v 1.29.6.2 2005/11/27 21:40:14 paul Exp $
  *
  */
 
@@ -242,11 +242,19 @@ extern void ipsec_print_ip(struct iphdr *ip);
 #endif
 #endif
 
+#ifndef IPSEC_DEFAULT_TTL
+#define IPSEC_DEFAULT_TTL 64
+#endif
+
 #define _IPSEC_PARAM_H_
 #endif /* _IPSEC_PARAM_H_ */
 
 /*
  * $Log: ipsec_param.h,v $
+ * Revision 1.29.6.2  2005/11/27 21:40:14  paul
+ * Pull down TTL fixes from head. this fixes "Unknown symbol sysctl_ip_default_ttl"
+ * in for klips as module.
+ *
  * Revision 1.29.6.1  2005/08/12 16:24:18  ken
  * Pull in NAT-T compile logic from HEAD
  *

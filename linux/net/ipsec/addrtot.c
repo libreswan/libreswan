@@ -12,8 +12,13 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: addrtot.c,v 1.22 2005/05/20 16:47:40 mcr Exp $
+ * RCSID $Id: addrtot.c,v 1.22.2.1 2005/11/17 22:30:49 paul Exp $
  */
+
+#if defined(__KERNEL__) && defined(__HAVE_ARCH_STRSTR)
+#include <linux/string.h>
+#endif
+
 #include "openswan.h"
 
 #define	IP4BYTES	4	/* bytes in an IPv4 address */
@@ -27,6 +32,7 @@ static size_t reverse4(const unsigned char *s, size_t len, char *b, char **dp);
 static size_t reverse6(const unsigned char *s, size_t len, char *b, char **dp);
 
 #if defined(__KERNEL__) && !defined(__HAVE_ARCH_STRSTR) 
+#define strstr ipsec_strstr
 /*
  * Find the first occurrence of find in s.
  * (from NetBSD 1.6's /src/lib/libc/string/strstr.c)
@@ -333,6 +339,9 @@ regress()
 
 /*
  * $Log: addrtot.c,v $
+ * Revision 1.22.2.1  2005/11/17 22:30:49  paul
+ * pull up strstr fix from head.
+ *
  * Revision 1.22  2005/05/20 16:47:40  mcr
  * 	make strstr static if we need it.
  *
@@ -370,6 +379,9 @@ regress()
  *
  * Revision 1.12  2003/12/30 06:42:48  mcr
  * 	added $Log: addrtot.c,v $
+ * 	added Revision 1.22.2.1  2005/11/17 22:30:49  paul
+ * 	added pull up strstr fix from head.
+ * 	added
  * 	added Revision 1.22  2005/05/20 16:47:40  mcr
  * 	added 	make strstr static if we need it.
  * 	added

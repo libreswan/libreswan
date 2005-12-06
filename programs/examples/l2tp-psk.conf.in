@@ -1,4 +1,8 @@
-conn L2TP-PSK
+conn L2TP-PSK-NAT
+        rightsubnet=vhost:%priv
+	also=L2TP-PSK-noNAT
+
+conn L2TP-PSK-noNAT
 	#
 	# Configuration for one user with any type of IPsec/L2TP client
 	# including the updated Windows 2000/XP (MS KB Q818043), but
@@ -15,9 +19,7 @@ conn L2TP-PSK
 	keyingtries=3
 	# we cannot rekey for %any, let client rekey
 	rekey=no
-	# Do not enable the line below. It is implicitely used, and
-	# specifying it will currently break when using nat-t.
-	# type=transport. See http://bugs.xelerance.com/view.php?id=466
+	type=transport
 	#
         left=%defaultroute
         # or you can use: left=YourIPAddress
@@ -29,7 +31,6 @@ conn L2TP-PSK
 	# The remote user.
 	#
 	right=%any
-        rightca=%same
 	rightprotoport=17/1701
-        rightsubnet=vhost:%priv,%no
+
 

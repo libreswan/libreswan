@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: spdb_struct.c,v 1.13.2.8 2005/11/14 02:06:50 paul Exp $
+ * RCSID $Id: spdb_struct.c,v 1.13.2.10 2005/11/18 06:21:01 ken Exp $
  */
 
 #include <stdio.h>
@@ -140,12 +140,6 @@ out_sa(pb_stream *outs
 	modestr = "ike";
 	alginfo = st->st_connection->alg_ike;
 
-	/* this is really checked upon load, but we double check here. */
-	if(revised_sadb == NULL) {
-	    loglog(RC_NOALGO, "%s algorithm string: \"%s\" results in no permitted algorithms"
-		   , modestr, alginfo ? alginfo : "empty");
-	    return FALSE;
-	}
     } else {
 	revised_sadb=kernel_alg_makedb(st->st_connection->alg_info_esp, TRUE);
     }
