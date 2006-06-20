@@ -331,6 +331,9 @@ USE_SAREF_KERNEL=false
 # include support for NETKEY 2.5/2.6 IPsec in pluto (aka "native", "kame")
 USE_KERNEL26?=true
 
+# include support for BSD/KAME IPsec in pluto (on *BSD)
+USE_BSDKAME?=false
+
 # include support for sending Openswan Vendor IDs
 USE_VENDORID?=true
 

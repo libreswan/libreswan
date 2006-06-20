@@ -124,6 +124,8 @@ usage(const char *mess)
 	    " [--use-auto]"
 	    " [--use-klips]"
 	    " [--use-netkey]"
+	    " [--use-mastklips]"
+	    " [--use-bsdkame]"
 	    " \\\n\t"
 	    "[--interface <ifname|ifaddr>]"
 	    " [--ikeport <port-number>]"
@@ -324,6 +326,8 @@ main(int argc, char **argv)
 	    { "usenetkey", no_argument, NULL, 'K' },
 	    { "use-netkey", no_argument, NULL, 'K' },
 	    { "use-mast",   no_argument, NULL, 'M' },
+	    { "use-mastklips", no_argument, NULL, 'M' },
+	    { "use-bsdkame",   no_argument, NULL, 'F' },
 	    { "interface", required_argument, NULL, 'i' },
 	    { "ikeport", required_argument, NULL, 'p' },
 	    { "ctlbase", required_argument, NULL, 'b' },
@@ -457,6 +461,10 @@ main(int argc, char **argv)
 
 	case 'M':       /* --use-mast */
 	    kern_interface = USE_MASTKLIPS;
+	    continue;
+
+	case 'F':       /* --use-bsdkame */
+	    kern_interface = USE_BSDKAME;
 	    continue;
 
 	case 'K':       /* --use-netkey */

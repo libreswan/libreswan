@@ -152,6 +152,13 @@ FUNK_DEFS=-DWIN2K_FUNK_IPSEC
 FUNK_OBJS=kernel_funk.o
 endif
 
+BSDKAME_DIST_SRCS=kernel_bsdkame.c
+ifeq ($(USE_BSDKAME),true)
+BSDKAME_SRCS=${BSDKAME_DIST_SRCS}
+BSDKAME_DEFS=-DBSD_KAME
+BSDKAME_OBJS=kernel_bsdkame.o
+endif
+
 
 # the files are defined here so that TAGS: can catch them.
 #

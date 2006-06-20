@@ -56,10 +56,14 @@ static const char *const kern_interface_name[] = {
   "none",
   "auto-pick",
   "klips",
-  "netkey"
+  "netkey",
+  "win2k",
+  "funk",
+  "mastklips",
+  "bsdkame"
 };
 enum_names kern_interface_names = 
-  { NO_KERNEL, USE_NETKEY, kern_interface_name, NULL };
+  { NO_KERNEL, USE_BSDKAME, kern_interface_name, NULL };
 
 /* DPD actions */
 static const char *const dpd_action_name[] = {
