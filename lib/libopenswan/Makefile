@@ -113,7 +113,7 @@ MANS=anyaddr.3 atoaddr.3 atoasr.3 atoul.3 goodmask.3 \
 SHOULDWERESTART=${USE_OBJDIR}$(wildcard ttodata.3.xml)
 ifeq ($(SHOULDWERESTART),truettodata.3.xml)
 all programs clean install:
-	cd ${OPENSWANSRCDIR} && cd ${OBJDIRTOP}/lib/libopenswan && make $@
+	cd ${OPENSWANSRCDIR} && cd ${OBJDIRTOP}/lib/libopenswan && $(MAKE) $@
 else
 all:	$(LIBA) ${LIBL}
 programs: $(LIBA) ${LIBL}
