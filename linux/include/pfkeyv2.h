@@ -18,6 +18,7 @@ you leave this credit intact on any copies of this file.
 
 #define PF_KEY_V2 2
 #define PFKEYV2_REVISION        199806L
+#define PFKEYV2_KLIPS    200606
 
 #define SADB_RESERVED    0
 #define SADB_GETSPI      1

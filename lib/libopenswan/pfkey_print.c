@@ -68,14 +68,21 @@ pfkey_print(struct sadb_msg *msg, FILE *out)
 		    sa->sadb_sa_auth,
 		    sa->sadb_sa_encrypt,
 		    (int)sa->sadb_sa_flags,
-		    (int)sa->sadb_x_sa_ref);
+#if defined(PFKEYV2_KLIPS) && PFKEYV2_KLIPS >= 200601
+		    (int)sa->sadb_x_sa_ref
+#else
+		    0
+#endif
+		    );
 	  }
 	  break;
 	  
+#if defined(PFKEYV2_KLIPS) && PFKEYV2_KLIPS >= 200601
 	case SADB_X_EXT_ADDRESS_SRC_FLOW: 
 	case SADB_X_EXT_ADDRESS_DST_FLOW: 
 	case SADB_X_EXT_ADDRESS_SRC_MASK: 
 	case SADB_X_EXT_ADDRESS_DST_MASK:
+#endif
 	case SADB_EXT_ADDRESS_DST:        
 	case SADB_EXT_ADDRESS_SRC:        
 	  {
@@ -97,6 +104,7 @@ pfkey_print(struct sadb_msg *msg, FILE *out)
 	  }
 	  break;
 	  
+#if defined(PFKEYV2_KLIPS) && PFKEYV2_KLIPS >= 200601
 	case SADB_X_EXT_PROTOCOL:
 	  {
 	    struct sadb_protocol *sp = (struct sadb_protocol *)se;
@@ -106,6 +114,7 @@ pfkey_print(struct sadb_msg *msg, FILE *out)
 		    sp->sadb_protocol_flags);
 	  }
 	  break;
+#endif
 
 	case SADB_EXT_LIFETIME_CURRENT:   
 	case SADB_EXT_LIFETIME_HARD:      
@@ -118,7 +127,12 @@ pfkey_print(struct sadb_msg *msg, FILE *out)
 		    (long long)life->sadb_lifetime_bytes,
 		    (long long)life->sadb_lifetime_addtime,
 		    (long long)life->sadb_lifetime_usetime,
-		    (int)life->sadb_x_lifetime_packets);
+#if defined(PFKEYV2_KLIPS) && PFKEYV2_KLIPS >= 200601
+		    (int)life->sadb_x_lifetime_packets
+#else 
+		    0
+#endif		    
+		    );
 	    fprintf(out, " } ");
 	  }
 	  break;
@@ -135,11 +149,13 @@ pfkey_print(struct sadb_msg *msg, FILE *out)
 	case SADB_EXT_SUPPORTED_AUTH:     
 	case SADB_EXT_SUPPORTED_ENCRYPT:  
 	case SADB_EXT_SPIRANGE:           
+#if defined(PFKEYV2_KLIPS) && PFKEYV2_KLIPS >= 200601
 	case SADB_X_EXT_KMPRIVATE:
 	case SADB_X_EXT_SATYPE2:
 	case SADB_X_EXT_SA2:
 	case SADB_X_EXT_ADDRESS_DST2:     
 	case SADB_X_EXT_DEBUG:
+#endif
 	default:
 	  {
 	    unsigned int elen;
