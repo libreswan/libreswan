@@ -795,7 +795,7 @@ pfkey_raw_eroute(const ip_address *this_host
 		 , ipsec_spi_t spi
 		 , unsigned int proto UNUSED
 		 , unsigned int transport_proto
-		 , unsigned int satype
+		 , enum eroute_type esatype
 		 , const struct pfkey_proto_info *proto_info UNUSED
 		 , time_t use_lifetime UNUSED
 		 , enum pluto_sadb_operations op
@@ -811,6 +811,7 @@ pfkey_raw_eroute(const ip_address *this_host
 
     int sport = ntohs(portof(&this_client->addr));
     int dport = ntohs(portof(&that_client->addr));
+    int satype;
 
     networkof(this_client, &sflow_ska);
     maskof(this_client, &smask_ska);
@@ -820,7 +821,31 @@ pfkey_raw_eroute(const ip_address *this_host
     maskof(that_client, &dmask_ska);
     setportof(dport ? ~0:0, &dmask_ska);
 
+    switch(esatype) {
+    case ET_UNSPEC:
+	    satype = K_SADB_SATYPE_UNSPEC;
+	    break;
 
+    case ET_AH:
+	    satype = K_SADB_SATYPE_AH;
+	    break;
+
+    case ET_ESP:
+	    satype = K_SADB_SATYPE_ESP;
+	    break;
+
+    case ET_IPCOMP:
+	    satype = K_SADB_X_SATYPE_COMP;
+	    break;
+
+    case ET_INT:
+	    satype = K_SADB_X_SATYPE_INT;
+	    break;
+
+    case ET_IPIP:
+	    satype = K_SADB_X_SATYPE_IPIP;
+	    break;
+    }
 
     if (!pfkey_msg_start(klips_op & KLIPS_OP_MASK, satype
 		       , "pfkey_msg_hdr flow", text_said, extensions))
@@ -886,7 +911,9 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
     pfkey_buf pfb;
     bool success = FALSE;
 
-    success = pfkey_msg_start(replace ? K_SADB_UPDATE : K_SADB_ADD, sa->satype
+    int klips_satype = proto2satype(sa->esatype);
+
+    success = pfkey_msg_start(replace ? K_SADB_UPDATE : K_SADB_ADD, klips_satype
 			      , "pfkey_msg_hdr Add SA"
 			      , sa->text_said, extensions);
 
@@ -1014,8 +1041,11 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 bool pfkey_grp_sa(const struct kernel_sa *sa0, const struct kernel_sa *sa1)
 {
     struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
+    int klips_satype0 = proto2satype(sa0->esatype);
+    int klips_satype1 = proto2satype(sa1->esatype);
 
-    return pfkey_msg_start(K_SADB_X_GRPSA, sa1->satype
+
+    return pfkey_msg_start(K_SADB_X_GRPSA, klips_satype1
 	, "pfkey_msg_hdr group", sa1->text_said, extensions)
 
     && pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA]
@@ -1028,7 +1058,7 @@ bool pfkey_grp_sa(const struct kernel_sa *sa0, const struct kernel_sa *sa1)
 	, "pfkey_addr_d group", sa1->text_said, extensions)
 
     && pfkey_build(pfkey_x_satype_build(&extensions[K_SADB_X_EXT_SATYPE2]
-	    , sa0->satype)
+	    , klips_satype0)
 	, "pfkey_satype group", sa0->text_said, extensions)
 
     && pfkey_build(pfkey_sa_build(&extensions[K_SADB_X_EXT_SA2]

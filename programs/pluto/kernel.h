@@ -59,6 +59,18 @@ struct pfkey_proto_info {
 };
 struct sadb_msg;
 
+/* replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal SADB_SATYPE values */
+enum eroute_type {
+	ET_UNSPEC = 0,
+	ET_AH    = SA_AH,
+	ET_ESP   = SA_ESP,
+	ET_IPCOMP= SA_COMP,
+	ET_INT   = SA_INT,    /* internal type */
+	ET_IPIP  = SA_IPIP,   /* turn on tunnel type */
+};
+#define esatype2proto(X) (int)X
+#define proto2esatype(X) (enum eroute_type)X
+
 struct kernel_sa {
 	const ip_address *src;
 	const ip_address *dst;
@@ -68,7 +80,7 @@ struct kernel_sa {
 
 	ipsec_spi_t spi;
 	unsigned proto;
-	unsigned satype;
+	enum eroute_type esatype;
 	unsigned replay_window;
 	unsigned reqid;
 
@@ -100,6 +112,11 @@ struct raw_iface {
 LIST_HEAD(iface_list, iface_dev);
 extern struct iface_list interface_dev;
 
+/* KAME has a different name for AES */
+#if !defined(SADB_X_EALG_AESCBC) && defined(SADB_X_EALG_AES)
+#define SADB_X_EALG_AESCBC SADB_X_EALG_AES
+#endif
+
 struct kernel_ops {
     enum kernel_interface type;
     const char *kern_name;
@@ -124,7 +141,7 @@ struct kernel_ops {
 		       ipsec_spi_t spi,
 		       unsigned int proto,
 		       unsigned int transport_proto,
-		       unsigned int satype,
+		       enum eroute_type satype,
 		       const struct pfkey_proto_info *proto_info,
 		       time_t use_lifetime,
 		       enum pluto_sadb_operations op,
