@@ -55,8 +55,7 @@ CFLAGS +=-g -Wall -W -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast \
 	-Wstrict-prototypes # -Wundef
 
 # where to find klips headers and Openswan headers
-# and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
-HDRDIRS = -I${OPENSWANSRCDIR}/programs/pluto/linux26 -I${OPENSWANSRCDIR}/include -I$(OPENSWANSRCDIR)/lib/libcrypto -I$(KLIPSINC) 
+HDRDIRS = -I${OPENSWANSRCDIR}/include -I$(OPENSWANSRCDIR)/lib/libcrypto -I$(KLIPSINC) 
 
 # On non-LINUX systems, these one of these may be needed (see endian.h)
 # BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=BIG_ENDIAN
@@ -119,7 +118,8 @@ endif
 
 NETKEY_DIST_SRCS=kernel_netlink.c kernel_netlink.h
 ifeq ($(USE_KERNEL26),true)
-NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES 
+# find 2.6 kernel's <rtnetlink.h> and <xfrm.h> in subdir
+NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -I${OPENSWANSRCDIR}/programs/pluto/linux26 
 NETKEY_SRCS=${NETKEY_DIST_SRCS}
 NETKEY_OBJS=kernel_netlink.o
 endif
