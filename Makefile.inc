@@ -37,6 +37,33 @@ SHELL=/bin/sh
 
 .PHONY:	programs checkprograms clean
 
+# supply kernel-configuration ARCH defaults
+ifeq ($(ARCH),)
+ARCH := $(shell uname -m)
+endif
+# always sanitize $(ARCH)
+ARCH := $(shell echo $(ARCH) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
+
+ifeq ($(OSDEP),)
+OSDEP:=$(shell uname -s | tr 'A-Z' 'a-z')
+endif
+
+-include ${OPENSWANSRCDIR}/Makefile.ver
+IPSECVERSION:=${IPSECBASEVERSION}$(shell ${OPENSWANSRCDIR}/packaging/utils/setlocalversion ${OPENSWANSRCDIR})
+export IPSECVERSION
+
+# include OSDEP/ARCH specific makefiles, if any.
+# OSDEP=linux,bsd,cygwin
+# 
+# but, BUILDENV could be mingw32-linux, or mingw32, etc..
+ifeq ($(BUILDENV),)
+BUILDENV=$(shell uname -s | tr 'A-Z' 'a-z' | sed -e 's/\(.*\)-.*/\1/')
+endif
+export BUILDENV
+export OSDEP
+include ${OPENSWANSRCDIR}/packaging/defaults/${BUILDENV}
+-include ${OPENSWANSRCDIR}/packaging/defaults/${BUILDENV}.${ARCH}
+
 ### install pathnames
 
 # DESTDIR can be used to supply a prefix to all install targets.
@@ -392,33 +419,6 @@ NONINTCONFIG=oldconfig
 ifeq ($(USE_OBJDIR),)
 USE_OBJDIR?=true
 endif
-
-# supply kernel-configuration ARCH defaults
-ifeq ($(ARCH),)
-ARCH := $(shell uname -m)
-endif
-# always sanitize $(ARCH)
-ARCH := $(shell echo $(ARCH) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
-
-ifeq ($(OSDEP),)
-OSDEP:=$(shell uname -s | tr 'A-Z' 'a-z')
-endif
-
--include ${OPENSWANSRCDIR}/Makefile.ver
-IPSECVERSION:=${IPSECBASEVERSION}$(shell ${OPENSWANSRCDIR}/packaging/utils/setlocalversion ${OPENSWANSRCDIR})
-export IPSECVERSION
-
-# include OSDEP/ARCH specific makefiles, if any.
-# OSDEP=linux,bsd,cygwin
-# 
-# but, BUILDENV could be mingw32-linux, or mingw32, etc..
-ifeq ($(BUILDENV),)
-BUILDENV=$(shell uname -s | tr 'A-Z' 'a-z' | sed -e 's/\(.*\)-.*/\1/')
-endif
-export BUILDENV
-export OSDEP
-include ${OPENSWANSRCDIR}/packaging/defaults/${BUILDENV}
--include ${OPENSWANSRCDIR}/packaging/defaults/${BUILDENV}.${ARCH}
 
 ifeq ($(USE_OBJDIR),true)
 OBJDIR=OBJ.${BUILDENV}.${ARCH}
