@@ -186,7 +186,7 @@ INSTALL=install
 # how backup names are composed.
 # Note that the install procedures will never overwrite an existing config
 # file, which is why -b is not specified for them.
-INSTBINFLAGS=-b --suffix=.old
+INSTBINFLAGS=-b -B .old
 INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
 INSTMANFLAGS=
 INSTCONFFLAGS=
@@ -449,6 +449,7 @@ LWRESDIR=${OPENSWANSRCDIR}/lib/liblwres
 LIBLWRES=${OBJDIRTOP}/lib/liblwres/liblwres.a
 LIBDNS=${OBJDIRTOP}/lib/libdns/libdns.a
 LIBISC=${OBJDIRTOP}/lib/libisc/libisc.a
+LIBBSDPFKEY=${OBJDIRTOP}/lib/libbsdpfkey/libbsdpfkey.a
 ISCARCH?=unix
 ISCHOSTARCH?=unix
 

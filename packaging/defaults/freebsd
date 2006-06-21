@@ -8,12 +8,12 @@ PORTDEFINE+=-DHAS_SUN_LEN
 TCLLIB=-ltcl8.4
 TCLINC=-isystem /usr/local/include/tcl8.4
 
-# no KLIPS, but want PFKEYv2
+# no KLIPS, we will be using FreeBSD copy of pfkey code.
 USE_KLIPS=false
-USE_PFKEYv2=true
 USE_KERNEL26=false
-USE_BSDKAME=true
 USE_PFKEYv2=false
+
+USE_BSDKAME=true
 
 # build modules, etc. for KLIPS.
 BUILD_KLIPS=false

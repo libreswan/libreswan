@@ -76,7 +76,7 @@ const char *random_devices[]={
 #elif defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
   "/dev/urandom",
   "/dev/random"
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) || defined(__FreeBSD__)
   "/dev/random"
 #elif defined(__CYGWIN__)
   "/dev/random"

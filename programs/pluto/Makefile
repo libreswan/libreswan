@@ -92,7 +92,7 @@ DISTSRC = \
 	ipsec_doi.c ipsec_doi.h ikev1_quick.c ikev1_continuations.h \
 	kernel.c kernel.h \
 	${NETKEY_SRCS} \
-	${KLIPS_SRCS} ${MAST_SRCS} ${WIN2K_SRCS} ${FUNK_SRCS} \
+	${KLIPS_SRCS} ${MAST_SRCS} ${WIN2K_SRCS} ${FUNK_SRCS} ${BSDKAME_SRCS} \
 	kernel_noklips.c kernel_noklips.h \
 	ike_alg.c ike_alg.h ikeping.c \
 	ike_alg_aes.c ike_alginit.c \
@@ -134,6 +134,7 @@ OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJSPLUTO += timer.o pluto_constants.o
 OBJSPLUTO += myid.o ipsec_doi.o ikev1_quick.o ikeping.o kernel.o 
 OBJSPLUTO += $(NETKEY_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${FUNK_OBJS}
+OBJSPLUTO += $(BSDKAME_OBJS) 
 OBJSPLUTO += kernel_noklips.o rcv_whack.o 
 OBJSPLUTO += ${IPSECPOLICY_OBJS} demux.o keys.o dnskey.o
 OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o
