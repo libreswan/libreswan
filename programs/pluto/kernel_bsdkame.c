@@ -95,7 +95,6 @@ bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
      */
     for (ifp = rifaces; ifp != NULL; ifp = ifp->next)
     {
-	struct raw_iface *v = NULL;	/* matching ipsecX interface */
 	bool after = FALSE; /* has vfp passed ifp on the list? */
 	bool bad = FALSE;
 	struct raw_iface *vfp;
@@ -136,7 +135,7 @@ bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 		if (q == NULL)
 		{
 		    /* matches nothing -- create a new entry */
-		    int fd = create_socket(ifp, v->name, pluto_port);
+		    int fd = create_socket(ifp, ifp->name, pluto_port);
 
 		    if (fd < 0)
 			break;
@@ -155,7 +154,7 @@ bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 
 		    q->ip_dev = id;
 		    id->id_rname = clone_str(ifp->name, "real device name");
-		    id->id_vname = clone_str(v->name, "virtual device name");
+		    id->id_vname = clone_str(ifp->name, "virtual device name");
 		    id->id_count++;
 
 		    q->ip_addr = ifp->addr;
@@ -182,7 +181,7 @@ bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 		    if (nat_traversal_support_port_floating
 			&& addrtypeof(&ifp->addr) == AF_INET)
 		    {
-			fd = create_socket(ifp, v->name, NAT_T_IKE_FLOAT_PORT);
+			fd = create_socket(ifp, id->id_vname, NAT_T_IKE_FLOAT_PORT);
 			if (fd < 0) 
 			    break;
 			nat_traversal_espinudp_socket(fd, "IPv4"
@@ -210,7 +209,7 @@ bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 
 		/* search over if matching old entry found */
 		if (streq(q->ip_dev->id_rname, ifp->name)
-		    && streq(q->ip_dev->id_vname, v->name)
+		    && streq(q->ip_dev->id_vname, ifp->name)
 		    && sameaddr(&q->ip_addr, &ifp->addr))
 		{
 		    /* matches -- rejuvinate old entry */
@@ -219,7 +218,7 @@ bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 		    /* look for other interfaces to keep (due to NAT-T) */
 		    for (q = q->next ; q ; q = q->next) {
 			if (streq(q->ip_dev->id_rname, ifp->name)
-			    && streq(q->ip_dev->id_vname, v->name)
+			    && streq(q->ip_dev->id_vname, ifp->name)
 			    && sameaddr(&q->ip_addr, &ifp->addr)) {
 				q->change = IFN_KEEP;
 			}
@@ -416,7 +415,7 @@ bsdkame_set_debug(int cur_debug UNUSED
 		  , openswan_keying_debug_func_t debug_func UNUSED
 		  , openswan_keying_debug_func_t error_func UNUSED)
 {
-    passert(0);
+    /* nothing to do here for now */
 }
 
 static void

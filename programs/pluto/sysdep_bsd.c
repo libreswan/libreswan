@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
@@ -196,54 +197,34 @@ bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
 struct raw_iface *
 find_raw_ifaces4(void)
 {
-    static const int on = TRUE;	/* by-reference parameter; constant, we hope */
-    int j;	/* index into buf */
-    struct ifconf ifconf;
-    struct ifreq buf[300];	/* for list of interfaces -- arbitrary limit */
     struct raw_iface *rifaces = NULL;
+    struct ifaddrs *ifa = NULL, *ifn;
     int master_sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);    /* Get a UDP socket */
 
-    /* get list of interfaces with assigned IPv4 addresses from system */
-
-    if (master_sock == -1)
-	exit_log_errno((e, "socket() failed in find_raw_ifaces4()"));
-
-    if (setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR
-		   , (const void *)&on, sizeof(on)) < 0)
-	    exit_log_errno((e, "setsockopt() in find_raw_ifaces4()"));
-
-    /* bind the socket */
-    {
-	ip_address any;
-
-	happy(anyaddr(AF_INET, &any));
-	setportof(htons(pluto_port), &any);
-	if (bind(master_sock, sockaddrof(&any), sockaddrlenof(&any)) < 0)
-	    exit_log_errno((e, "bind() failed in find_raw_ifaces4()"));
+    if(getifaddrs(&ifa) != 0) {
+	exit_log_errno((e, "getifaddrs failed in find_raw_ifaces4()"));
     }
 
-    /* Get local interfaces.  See netdevice(7). */
-    ifconf.ifc_len = sizeof(buf);
-    ifconf.ifc_buf = (void *) buf;
-    zero(buf);
-
-    if (ioctl(master_sock, SIOCGIFCONF, &ifconf) == -1)
-	exit_log_errno((e, "ioctl(SIOCGIFCONF) in find_raw_ifaces4()"));
-
-    /* Add an entry to rifaces for each interesting interface. */
-    for (j = 0; (j+1) * sizeof(*buf) <= (size_t)ifconf.ifc_len; j++)
+    ifn = ifa;
+    for(;ifa != NULL; ifa=ifa->ifa_next)
     {
 	struct raw_iface ri;
-	const struct sockaddr_in *rs = (struct sockaddr_in *) &buf[j].ifr_addr;
+	const struct sockaddr_in *rs = (struct sockaddr_in *) ifa->ifa_addr;
 	struct ifreq auxinfo;
 
 	/* ignore all but AF_INET interfaces */
-	if (rs->sin_family != AF_INET)
-	    continue;	/* not interesting */
+	if (rs->sin_family != AF_INET) {
+	  DBG(DBG_CONTROLMORE
+	      , DBG_log("wrong sin family: %d\n", rs->sin_family));
+	  
+	  continue;	/* not interesting */
+	}
 
 	/* build a NUL-terminated copy of the rname field */
-	memcpy(ri.name, buf[j].ifr_name, IFNAMSIZ);
+	strncpy(ri.name, ifa->ifa_name, IFNAMSIZ);
 	ri.name[IFNAMSIZ] = '\0';
+
+	DBG(DBG_CONTROLMORE, DBG_log("while looking for interfaces, found: %s", ri.name));
 
 	/* ignore if our interface names were specified, and this isn't one */
 	if (pluto_ifn_roof != 0)
@@ -253,23 +234,33 @@ find_raw_ifaces4(void)
 	    for (i = 0; i != pluto_ifn_roof; i++)
 		if (streq(ri.name, pluto_ifn[i]))
 		    break;
-	    if (i == pluto_ifn_roof)
-		continue;	/* not found -- skip */
+	    if (i == pluto_ifn_roof) {
+	      DBG(DBG_CONTROLMORE
+		  , DBG_log("   if %s ignored, not on interesting list", ri.name));
+	      
+	      continue;	/* not found -- skip */
+	    }
 	}
 
 	/* Find out stuff about this interface.  See netdevice(7). */
 	zero(&auxinfo);	/* paranoia */
-	memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ);
+	memcpy(auxinfo.ifr_name, ifa->ifa_name, IFNAMSIZ);
 	if (ioctl(master_sock, SIOCGIFFLAGS, &auxinfo) == -1)
 	    exit_log_errno((e
 		, "ioctl(SIOCGIFFLAGS) for %s in find_raw_ifaces4()"
 		, ri.name));
-	if (!(auxinfo.ifr_flags & IFF_UP))
-	    continue;	/* ignore an interface that isn't UP */
+	if (!(auxinfo.ifr_flags & IFF_UP)) {
+	  DBG(DBG_CONTROLMORE
+	      , DBG_log("   if %s ignored, not UP", ri.name));
+	  continue;	/* ignore an interface that isn't UP */
+	}
 
 	/* ignore unconfigured interfaces */
-	if (rs->sin_addr.s_addr == 0)
-	    continue;
+	if (rs->sin_addr.s_addr == 0) {
+	  DBG(DBG_CONTROLMORE
+	      , DBG_log("   if %s ignored, no IP configured", ri.name));
+	  continue;
+	}
 
 	happy(initaddr((const void *)&rs->sin_addr, sizeof(struct in_addr)
 	    , AF_INET, &ri.addr));
@@ -280,6 +271,7 @@ find_raw_ifaces4(void)
 	rifaces = clone_thing(ri, "struct raw_iface");
     }
 
+    freeifaddrs(ifn);
     close(master_sock);
 
     return rifaces;
