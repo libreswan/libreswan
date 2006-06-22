@@ -220,7 +220,7 @@ fi
 echo "$verb Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun
 execdir=${IPSEC_EXECDIR-@IPSEC_EXECDIR@}
 libdir=${IPSEC_LIBDIR-@IPSEC_LIBDIR@}
-ipsecdir=${IPSEC_CONFS-@IPSEC_CONFDDIR@}
+ipsecdir=${IPSEC_CONFS-@IPSEC_CONFDIR@}
 
 if test -n "$showonly"
 then
@@ -235,7 +235,7 @@ until (
 		export defaultroutephys defaultroutevirt defaultrouteaddr defaultroutenexthop
 	fi
 	# eval allows $popts to contain redirection and other magic
-	eval $execdir/pluto --nofork --secretsfile "$IPSEC_SECRETS" --ipsecdir $ipsecdir $popts
+	eval $execdir/pluto --nofork --secretsfile "$IPSEC_SECRETS" --ipsecdir "${IPSEC_CONFS}/ipsec.d" $popts
 	status=$?
 	echo "exit"
 	echo $status
