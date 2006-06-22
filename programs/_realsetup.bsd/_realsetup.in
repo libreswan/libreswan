@@ -149,7 +149,47 @@ case "$1" in
 		exit 1 ";" \
 		"}"
 
-	perform ">" $info
+	> $info
+
+	phys=`netstat -nr -f inet |
+		awk '$1 == "default" { print $NF; exit 0 }'`
+
+	next=`netstat -nr -f inet |
+		awk '$1 == "default" { print $2; exit 0 }'`
+	
+	addr=
+	eval `ifconfig $phys |
+		awk '$1 == "inet" && $3 == "netmask" {
+			print "addr=" $2
+			other = $5
+			if ($4 == "broadcast")
+				print "type=broadcast"
+			else if ($4 == "P-t-P")
+				print "type=pointopoint"
+			else if (NF == 5) {
+				print "type="
+				other = ""
+			} else
+				print "type=unknown"
+			print "otheraddr=" other
+			print "mask=" $4
+		}'`
+
+	# if %defaultroute, note the facts
+	if test " $next" != " "
+	then
+		(
+			echo "defaultroutephys=$phys"
+			echo "defaultrouteaddr=$addr"
+			if test " $next" != " 0.0.0.0"
+			then
+				echo "defaultroutenexthop=$next"
+			fi
+		) >>$info
+	else
+		echo '#dr: no default route' >>$info
+	fi
+
 
 	# misc pre-Pluto setup
 
