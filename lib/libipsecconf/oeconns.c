@@ -19,6 +19,7 @@
 #include <limits.h>
 #include <assert.h>
 #include <sys/queue.h>
+#include <stdio.h>
 
 #include "ipsecconf/parser.h"
 #include "ipsecconf/confread.h"
@@ -339,10 +340,15 @@ struct oe_conn oe_private = {
 	.oe_ct = OE_PRIVATE,
 	.oe_cn = "private",
 	.oe_sc = {
+		/* RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+GROUP
+		 * +GROUTED+failureDROP+lKOD+rKOD
+		 */
+
 		.policy = POLICY_RSASIG|POLICY_ENCRYPT|POLICY_TUNNEL|POLICY_PFS|
 		POLICY_DONT_REKEY|POLICY_OPPO|POLICY_GROUP|POLICY_GROUTED|
 		POLICY_FAIL_DROP,
-		
+
+
 		.desired_state = STARTUP_ROUTE,
 		
 		.options[KBF_KEYINGTRIES]=3,
@@ -476,7 +482,7 @@ void add_any_oeconns(struct starter_config *cfg,
 	int i;
 
 	for(i=0;i<OE_MAX;i++) found_conns[i]=FALSE;
-	
+
 	/* look for the conn. */
 	for(sconn = cfgp->sections.tqh_first; sconn != NULL; sconn = sconn->link.tqe_next)
 		
@@ -489,7 +495,7 @@ void add_any_oeconns(struct starter_config *cfg,
 	}
 
 	
-	for(i=0, oc=implicit_conns; *oc!=NULL; oc++) {
+	for(i=0, oc=implicit_conns; *oc!=NULL; oc++, i++) {
 		if(found_conns[i]==FALSE) {
 			int connerr = 0;
 			struct starter_conn *conn;

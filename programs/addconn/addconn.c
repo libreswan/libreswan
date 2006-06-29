@@ -62,6 +62,7 @@ static const char *usage_string = ""
     "Usage: addconn [--config file] \n"
     "               [--addall] [--listroute] [--liststart]\n"
     "               [--rootdir dir] \n"
+    "               [--ctlbase socketfile] \n"
     "               [--configsetup] \n"
     "               [--defaultroute <addr>] [--defaultroutenexthop <addr>]\n"
     
@@ -89,6 +90,7 @@ static struct option const longopts[] =
 	{"listroute",           no_argument, NULL, 'r'},
 	{"liststart",           no_argument, NULL, 's'},
 	{"varprefix",           required_argument, NULL, 'P'},
+	{ "ctlbase",            required_argument, NULL, 'c' },
 	{"search",              no_argument, NULL, 'S'},
 	{"rootdir",             required_argument, NULL, 'R'},
 	{"configsetup",         no_argument, NULL, 'T'},
@@ -115,6 +117,7 @@ main(int argc, char *argv[])
     struct starter_conn *conn = NULL;
     char *defaultroute = NULL;
     char *defaultnexthop = NULL;
+    char *ctlbase = NULL;
 
 #if 0
     /* efence settings */
@@ -160,6 +163,10 @@ main(int argc, char *argv[])
 
 	case 'C':
 	    configfile = clone_str(optarg, "config file name");
+	    break;
+
+	case 'c':
+	    ctlbase = clone_str(optarg, "control base");
 	    break;
 
 	case 'A':
@@ -228,7 +235,7 @@ main(int argc, char *argv[])
 
     starter_use_log (verbose, 1, verbose ? 0 : 1);
 
-    cfg = confread_load(configfile, &err);
+    cfg = confread_load(configfile, &err, ctlbase);
     
     if(cfg == NULL) {
 	printf("can not load config '%s': %s\n",
@@ -268,6 +275,9 @@ main(int argc, char *argv[])
 
     if(all) 
     {
+	if(verbose) {
+	    printf("loading all conns:");
+	}
 	/* load all conns marked as auto=add or better */
 	for(conn = cfg->conns.tqh_first;
 	    conn != NULL;
@@ -276,10 +286,15 @@ main(int argc, char *argv[])
 	    if (conn->desired_state == STARTUP_ADD
 		|| conn->desired_state == STARTUP_START
 		|| conn->desired_state == STARTUP_ROUTE) {
+		if(verbose) printf(" %s", conn->name);
 		starter_whack_add_conn(cfg, conn);
 	    }
 	}
+	if(verbose) printf("\n");
     } else if(listroute) {
+	if(verbose) {
+	    printf("listing all conns marked as auto=start\n");
+	}
 	/* list all conns marked as auto=route or start or better */
 	for(conn = cfg->conns.tqh_first;
 	    conn != NULL;
@@ -375,26 +390,45 @@ main(int argc, char *argv[])
 
     } else {
 	/* load named conns, regardless of their state */
-	for(conn = cfg->conns.tqh_first;
-	    conn != NULL;
-	    conn = conn->link.tqe_next)
-	{
-	    int   connum;
-	    for(connum = optind; connum<argc; connum++) {
-		/* yes, let's make it case-insensitive */
-		if(strcasecmp(conn->name, argv[connum])==0) {
-		    if(conn->state == STATE_ADDED) {
-			printf("conn %s already added\n", conn->name);
-		    } else if(conn->state == STATE_FAILED) {
-			printf("conn %s did not load properly\n", conn->name);
-		    } else {
-			printf("loading conn: %s\n", conn->name);
-			exit_status = starter_whack_add_conn(cfg, conn);
-			conn->state = STATE_ADDED;
+	int   connum;
+
+	if(verbose) {
+	    printf("loading named conns:");
+	}
+	for(connum = optind; connum<argc; connum++) {
+	    if(verbose) {
+		printf(" %s", argv[connum]);
+	    }
+	    for(conn = cfg->conns.tqh_first;
+		conn != NULL;
+		conn = conn->link.tqe_next)
+		{
+		    /* yes, let's make it case-insensitive */
+		    if(strcasecmp(conn->name, argv[connum])==0) {
+			if(conn->state == STATE_ADDED) {
+			    printf("conn %s already added\n", conn->name);
+			} else if(conn->state == STATE_FAILED) {
+			    printf("conn %s did not load properly\n", conn->name);
+			} else {
+			    printf("loading conn: %s\n", conn->name);
+			    exit_status = starter_whack_add_conn(cfg, conn);
+			    conn->state = STATE_ADDED;
+			}
+			break;
 		    }
+		}
+
+	    if(conn == NULL) {
+		/* only if we don't find it */
+		exit_status++;
+		if(!verbose) {
+		    printf("conn '%s': not found\n", argv[connum]);
+		} else {
+		    printf("(notfound)");
 		}
 	    }
 	}
+	if(verbose) printf("\n");
     }
     
     exit(exit_status);
