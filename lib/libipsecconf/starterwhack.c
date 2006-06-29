@@ -150,16 +150,18 @@ int starter_whack_read_reply(int sock,
 	return ret;
 }
 
-static int send_whack_msg (struct whack_message *msg)
+static int send_whack_msg (struct whack_message *msg, char *ctlbase)
 {
 	struct sockaddr_un ctl_addr =
-	  { .sun_family = AF_UNIX,
-	    .sun_path   = CTL_FILE };
+	    { .sun_family = AF_UNIX };
 	int sock;
 	ssize_t len;
 	struct whackpacker wp;
 	err_t ugh;
 	int ret;
+
+	/* copy socket location */
+	strncpy(ctl_addr.sun_path, ctlbase, sizeof(ctl_addr.sun_path));
 
 	/**
 	 * Pack strings
@@ -304,11 +306,13 @@ static void set_whack_end(struct starter_config *cfg
 	w->protocol = l->protocol;
 	w->port = l->port;
 	w->virt = l->virt;
+
 	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;
 }
 
-static int starter_whack_add_pubkey (struct starter_conn *conn,
-	struct starter_end *end, const char *lr)
+static int starter_whack_add_pubkey (struct starter_config *cfg,
+				     struct starter_conn *conn,
+				     struct starter_end *end, const char *lr)
 {
 	const char *err;
 	char keyspace[1024 + 4];
@@ -330,7 +334,7 @@ static int starter_whack_add_pubkey (struct starter_conn *conn,
 		}
 		else {
 			msg.keyval.ptr = keyspace;
-			ret = send_whack_msg(&msg);
+			ret = send_whack_msg(&msg, cfg->ctlbase);
 		}
 	}
 
@@ -353,13 +357,14 @@ static int starter_whack_add_pubkey (struct starter_conn *conn,
 		}
 		else {
 			msg.keyval.ptr = keyspace;
-			return send_whack_msg(&msg);
+			return send_whack_msg(&msg, cfg->ctlbase);
 		}
 	}
 	return 0;
 }
 
-int starter_whack_add_conn (struct starter_config *cfg, struct starter_conn *conn)
+int starter_whack_add_conn (struct starter_config *cfg
+			    , struct starter_conn *conn)
 {
 	struct whack_message msg;
 	int r;
@@ -387,57 +392,60 @@ int starter_whack_add_conn (struct starter_config *cfg, struct starter_conn *con
 	msg.esp = conn->esp;
 	msg.ike = conn->ike;
 
-	r =  send_whack_msg(&msg);
+	r =  send_whack_msg(&msg, cfg->ctlbase);
 
 	if ((r==0) && (conn->policy & POLICY_RSASIG)) {
-		starter_whack_add_pubkey (conn, &conn->left, "left");
-		starter_whack_add_pubkey (conn, &conn->right, "right");
+	    starter_whack_add_pubkey (cfg, conn, &conn->left,  "left");
+	    starter_whack_add_pubkey (cfg, conn, &conn->right, "right");
 	}
 
 	return r;
 }
 
-int starter_whack_del_conn (struct starter_conn *conn)
+int starter_whack_del_conn (struct starter_config *cfg
+			    , struct starter_conn *conn)
 {
 	struct whack_message msg;
 	init_whack_msg(&msg);
 	msg.whack_delete = TRUE;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg);
+	return send_whack_msg(&msg, cfg->ctlbase);
 }
 
-int starter_whack_route_conn (struct starter_conn *conn)
+int starter_whack_route_conn (struct starter_config *cfg
+			      , struct starter_conn *conn)
 {
 	struct whack_message msg;
 	init_whack_msg(&msg);
 	msg.whack_route = TRUE;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg);
+	return send_whack_msg(&msg, cfg->ctlbase);
 }
 
-int starter_whack_initiate_conn (struct starter_conn *conn)
+int starter_whack_initiate_conn (struct starter_config *cfg
+				 ,struct starter_conn *conn)
 {
 	struct whack_message msg;
 	init_whack_msg(&msg);
 	msg.whack_initiate = TRUE;
 	msg.whack_async = TRUE;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg);
+	return send_whack_msg(&msg, cfg->ctlbase);
 }
 
-int starter_whack_listen (void)
+int starter_whack_listen (struct starter_config *cfg)
 {
 	struct whack_message msg;
 	init_whack_msg(&msg);
 	msg.whack_listen = TRUE;
-	return send_whack_msg(&msg);
+	return send_whack_msg(&msg, cfg->ctlbase);
 }
 
-int starter_whack_shutdown (void)
+int starter_whack_shutdown (struct starter_config *cfg)
 {
 	struct whack_message msg;
 	init_whack_msg(&msg);
 	msg.whack_shutdown = TRUE;
-	return send_whack_msg(&msg);
+	return send_whack_msg(&msg, cfg->ctlbase);
 }
 

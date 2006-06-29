@@ -22,7 +22,10 @@
 #include <assert.h>
 #include <sys/queue.h>
 
+#include "oswalloc.h"
+
 #include "ipsecconf/parser.h"
+#include "ipsecconf/files.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/interfaces.h"
 #include "ipsecconf/starterlog.h"
@@ -84,6 +87,8 @@ static void default_values (struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_AUTO] = STARTUP_NO;
 	cfg->conn_default.state = STATE_LOADED;
+
+	cfg->ctlbase = clone_str(CTL_FILE, "default base");
 }
 
 #define ERR_FOUND(args...) \
@@ -874,7 +879,7 @@ int init_load_conn(struct starter_config *cfg
 }
 
 
-struct starter_config *confread_load(const char *file, err_t *perr)
+struct starter_config *confread_load(const char *file, err_t *perr, char *ctlbase)
 {
 	struct starter_config *cfg = NULL;
 	struct config_parsed *cfgp;
@@ -899,6 +904,11 @@ struct starter_config *confread_load(const char *file, err_t *perr)
 	 * Set default values
 	 */
 	default_values(cfg);
+
+	if(ctlbase) {
+	    pfree(cfg->ctlbase);
+	    cfg->ctlbase = clone_str(ctlbase, "control socket");
+	}
 
 	/**
 	 * Load setup
