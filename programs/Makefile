@@ -23,10 +23,10 @@ SUBDIRS=
 
 ifeq ($(USE_KLIPS),true)
 SUBDIRS+=spi eroute spigrp tncfg klipsdebug pf_key
-SUBDIRS+=_realsetup 
+SUBDIRS+=_realsetup _updown.klips _updown.mast
 else 
 ifeq ($(USE_KERNEL26),true)
-SUBDIRS+=_realsetup 
+SUBDIRS+=_realsetup _updown.netkey
 endif
 endif
 
@@ -39,12 +39,12 @@ SUBDIRS+=showpolicy
 endif
 
 ifeq ($(USE_BSDKAME),true)
-SUBDIRS+=_realsetup.bsd
+SUBDIRS+=_realsetup.bsd _updown.bsd
 endif
 
 SUBDIRS+=proc pluto addconn
 SUBDIRS+=_confread _copyright _include _keycensor _plutoload _plutorun
-SUBDIRS+=_secretcensor _startklips _updown _updown.klips _updown.mast
+SUBDIRS+=_secretcensor _startklips _updown 
 SUBDIRS+=auto barf verify ipsec look manual newhostkey ranbits secrets
 SUBDIRS+=rsasigkey send-pr setup showdefaults showhostkey calcgoo mailkey
 SUBDIRS+=ikeping examples livetest
