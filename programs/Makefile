@@ -39,7 +39,7 @@ SUBDIRS+=showpolicy
 endif
 
 ifeq ($(USE_BSDKAME),true)
-SUBDIRS+=_realsetup.bsd _updown.bsd
+SUBDIRS+=_realsetup.bsd _updown.bsdkame
 endif
 
 SUBDIRS+=proc pluto addconn

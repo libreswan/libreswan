@@ -16,7 +16,7 @@
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
 include ${OPENSWANSRCDIR}/Makefile.inc
 
-PROGRAM=_updown.bsd
+PROGRAM=_updown.bsdkame
 PROGRAMDIR=${LIBDIR}
 
 include ${srcdir}../Makefile.program
