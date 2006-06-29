@@ -31,6 +31,9 @@
 
 #include <openswan.h>
 #include <net/pfkeyv2.h>
+#include <netkey/keydb.h>
+#include <netinet/in.h>
+#include <netinet6/ipsec.h>
 #include "libpfkey.h"         /* this is a copy of a freebsd libipsec/ file */
 
 #include "sysdep.h"
@@ -59,6 +62,7 @@
 #endif
 
 int pfkeyfd = NULL_FD;
+unsigned int pfkey_seq = 1;
 
 static void
 bsdkame_init_pfkey(void)
@@ -353,13 +357,252 @@ bsdkame_raw_eroute(const ip_address *this_host UNUSED
  * is specified in the policy of connection c.
  */
 static bool
-bsdkame_shunt_eroute(struct connection *c UNUSED
+bsdkame_shunt_eroute(struct connection *c 
 		     , struct spd_route *sr UNUSED
-		     , enum routing_t rt_kind UNUSED
-		     , enum pluto_sadb_operations op UNUSED
+		     , enum routing_t rt_kind 
+		     , enum pluto_sadb_operations op 
 		     , const char *opname UNUSED)
 {
-    passert(0);
+    ipsec_spi_t spi = shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
+    int policy = -1;
+
+    switch(spi) {
+    case 0:
+        /* we're supposed to end up with no eroute: rejig op and opname */
+        switch (op)
+        {
+        case ERO_REPLACE:
+            /* replace with nothing == delete */
+            op = ERO_DELETE;
+            opname = "delete";
+            break;
+        case ERO_ADD:
+            /* add nothing == do nothing */
+            return TRUE;
+
+        case ERO_DELETE:
+            /* delete remains delete */
+            break;
+	    
+	case ERO_ADD_INBOUND:
+	    break;
+
+	case ERO_DEL_INBOUND:
+	    break;
+
+        default:
+            bad_case(op);
+        }
+	break;
+	
+    case SPI_TRAP:
+	policy = IPSEC_POLICY_IPSEC;
+	break;
+	
+    case SPI_PASS:
+        policy = IPSEC_POLICY_NONE;  /* BYPASS is for sockets only */
+	break;
+
+    case SPI_REJECT:
+    case SPI_DROP:
+	policy = IPSEC_POLICY_DISCARD;
+	break;
+	
+    default:
+      DBG_log("shunt_eroute called with spi=%08x\n", spi);
+    }
+
+    if (sr->routing == RT_ROUTED_ECLIPSED && c->kind == CK_TEMPLATE)
+    {
+        /* We think that we have an eroute, but we don't.
+         * Adjust the request and account for eclipses.
+         */
+        passert(eclipsable(sr));
+        switch (op)
+        {
+        case ERO_REPLACE:
+            /* really an add */
+            op = ERO_ADD;
+            opname = "replace eclipsed";
+            eclipse_count--;
+            break;
+	    
+        case ERO_DELETE:
+            /* delete unnecessary: we don't actually have an eroute */
+            eclipse_count--;
+            return TRUE;
+
+        case ERO_ADD:
+        default:
+            bad_case(op);
+        }
+    }
+    else if (eclipse_count > 0 && op == ERO_DELETE && eclipsable(sr))
+    {
+        /* maybe we are uneclipsing something */
+        struct spd_route *esr;
+        struct connection *ue = eclipsed(c, &esr);
+
+        if (ue != NULL)
+        {
+            esr->routing = RT_ROUTED_PROSPECTIVE;
+            return bsdkame_shunt_eroute(ue, esr
+				      , RT_ROUTED_PROSPECTIVE
+				      , ERO_REPLACE
+				      , "restoring eclipsed");
+        }
+    }
+
+    switch(op) {
+    case ERO_REPLACE:
+    case ERO_ADD:
+    {
+	ip_subnet *mine   = &sr->this.client;
+	ip_subnet *his    = &sr->that.client;
+	const struct sockaddr *saddr = (const struct sockaddr *)&mine->addr;
+	const struct sockaddr *daddr = (const struct sockaddr *)&his->addr;
+	char pbuf[512];
+	char buf2[256];
+	struct sadb_x_policy *policy_struct = (struct sadb_x_policy *)pbuf;
+	struct sadb_x_ipsecrequest *ir;
+	int policylen;
+	int ret;
+      
+	snprintf(buf2, sizeof(buf2)
+		 , "eroute_connection %s", opname);
+
+	memset(pbuf, 0, sizeof(pbuf));
+
+	/* XXX need to fix this for v6 */
+	mine->addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
+	his->addr.u.v4.sin_len   = sizeof(struct sockaddr_in);
+
+	passert(policy != -1);
+
+	policy_struct->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+	policy_struct->sadb_x_policy_type = policy;
+	policy_struct->sadb_x_policy_dir  = IPSEC_DIR_OUTBOUND;
+        policy_struct->sadb_x_policy_id   = 0; /* needs to be set, and recorded */
+
+	policylen = sizeof(*policy_struct);
+
+	if(policy == IPSEC_POLICY_IPSEC) {
+	    ip_address *me   = &sr->this.host_addr;
+	    ip_address *him  = &sr->that.host_addr;
+	    unsigned char *addrmem;
+
+	    /* should be already filled in */
+	    me->u.v4.sin_len  = sizeof(struct sockaddr_in);
+	    him->u.v4.sin_len  = sizeof(struct sockaddr_in);
+
+	    ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
+	  
+	    ir->sadb_x_ipsecrequest_len = sizeof(struct sadb_x_ipsecrequest)+me->u.v4.sin_len+him->u.v4.sin_len;
+	    if(c->policy & POLICY_ENCRYPT) {
+	      /* maybe should look at IPCOMP too */
+	      ir->sadb_x_ipsecrequest_proto = IPPROTO_ESP;
+	    } else {
+	      ir->sadb_x_ipsecrequest_proto = IPPROTO_AH;
+	    }
+
+	    if(c->policy & POLICY_TUNNEL) {
+		ir->sadb_x_ipsecrequest_mode=IPSEC_MODE_TUNNEL;
+	    } else {
+		ir->sadb_x_ipsecrequest_mode=IPSEC_MODE_TRANSPORT;
+	    }
+	    ir->sadb_x_ipsecrequest_level=IPSEC_LEVEL_REQUIRE;
+	    ir->sadb_x_ipsecrequest_reqid=0;  /* not used for now */
+   
+	    addrmem = (unsigned char *)&ir[1];
+	    memcpy(addrmem, &me->u.v4,  me->u.v4.sin_len);
+	    addrmem += me->u.v4.sin_len;
+	    memcpy(addrmem, &him->u.v4, him->u.v4.sin_len);
+
+	    addrmem += him->u.v4.sin_len;
+
+	    policylen += ir->sadb_x_ipsecrequest_len;
+	
+	    DBG_log("request_len=%u policylen=%u\n",
+		    ir->sadb_x_ipsecrequest_len, policylen);
+
+	} else {
+	  DBG_log("setting policy=%d\n", policy);
+	}
+	  	
+	policy_struct->sadb_x_policy_len =PFKEY_UNIT64(policylen);
+
+	ret = pfkey_send_spdadd(pfkeyfd,
+				saddr, mine->maskbits,
+				daddr, his->maskbits,
+				255 /* proto */,
+				(caddr_t)policy_struct, policylen,
+				pfkey_seq++);
+
+	if(ret < 0) {
+	    extern int __ipsec_errcode;
+	    DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p\n", ret
+		    , __ipsec_errcode, ipsec_strerror()
+		    , saddr, daddr);
+	    return FALSE;
+	}
+	return TRUE;
+    }
+
+    case ERO_DELETE:
+      {
+	/* need to send a delete message */
+	ip_subnet *mine   = &sr->this.client;
+	ip_subnet *his    = &sr->that.client;
+	const struct sockaddr *saddr = (const struct sockaddr *)&mine->addr;
+	const struct sockaddr *daddr = (const struct sockaddr *)&his->addr;
+	char pbuf[512];
+	char buf2[256];
+	struct sadb_x_policy *policy_struct = (struct sadb_x_policy *)pbuf;
+	int policylen;
+	int ret;
+      
+	DBG_log("need to send a delete message\n");
+
+	snprintf(buf2, sizeof(buf2)
+		 , "eroute_connection %s", opname);
+
+	/* XXX need to fix this for v6 */
+	mine->addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
+	his->addr.u.v4.sin_len   = sizeof(struct sockaddr_in);
+
+	policy_struct->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+
+	/* this might be wrong! --- probably should use spddelete2() */
+	policy_struct->sadb_x_policy_type = IPSEC_POLICY_IPSEC;
+	policy_struct->sadb_x_policy_dir  = IPSEC_DIR_OUTBOUND;
+        policy_struct->sadb_x_policy_id = 0;
+
+	policylen = sizeof(*policy_struct);
+
+	policy_struct->sadb_x_policy_len =PFKEY_UNIT64(policylen);
+
+	ret = pfkey_send_spddelete(pfkeyfd,
+				saddr, mine->maskbits,
+				daddr, his->maskbits,
+				255 /* proto */,
+				(caddr_t)policy_struct, policylen,
+				pfkey_seq++);
+
+	if(ret < 0) {
+	    extern int __ipsec_errcode;
+	    DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p\n", ret
+		    , __ipsec_errcode, ipsec_strerror()
+		    , saddr, daddr);
+	    return FALSE;
+	}
+	return TRUE;
+      break;
+      }
+    case ERO_ADD_INBOUND:
+    case ERO_REPLACE_INBOUND:
+    case ERO_DEL_INBOUND:
+      bad_case(op);
+    }
     return FALSE;
 }
 

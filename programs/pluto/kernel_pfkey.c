@@ -1196,7 +1196,7 @@ pfkey_shunt_eroute(struct connection *c
             esr->routing = RT_ROUTED_PROSPECTIVE;
             return pfkey_shunt_eroute(ue, esr
 				      , RT_ROUTED_PROSPECTIVE
-				      , (K_SADB_X_ADDFLOW | (SADB_X_SAFLAGS_REPLACEFLOW << KLIPS_OP_FLAG_SHIFT))
+				      , ERO_REPLACE
 				      , "restoring eclipsed");
         }
     }

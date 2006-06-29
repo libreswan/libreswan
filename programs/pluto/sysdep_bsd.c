@@ -214,17 +214,12 @@ find_raw_ifaces4(void)
 
 	/* ignore all but AF_INET interfaces */
 	if (rs->sin_family != AF_INET) {
-	  DBG(DBG_CONTROLMORE
-	      , DBG_log("wrong sin family: %d\n", rs->sin_family));
-	  
 	  continue;	/* not interesting */
 	}
 
 	/* build a NUL-terminated copy of the rname field */
 	strncpy(ri.name, ifa->ifa_name, IFNAMSIZ);
 	ri.name[IFNAMSIZ] = '\0';
-
-	DBG(DBG_CONTROLMORE, DBG_log("while looking for interfaces, found: %s", ri.name));
 
 	/* ignore if our interface names were specified, and this isn't one */
 	if (pluto_ifn_roof != 0)

@@ -40,6 +40,7 @@ __FBSDID("$FreeBSD$");
 #include <netinet/in.h>
 #include <netinet6/ipsec.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -60,9 +61,9 @@ static int pfkey_send_x1(int, u_int, u_int, u_int, struct sockaddr *,
 static int pfkey_send_x2(int, u_int, u_int, u_int,
 	struct sockaddr *, struct sockaddr *, u_int32_t);
 static int pfkey_send_x3(int, u_int, u_int);
-static int pfkey_send_x4(int, u_int, struct sockaddr *, u_int,
-	struct sockaddr *, u_int, u_int, u_int64_t, u_int64_t,
-	char *, int, u_int32_t);
+static int pfkey_send_x4(int, u_int, const struct sockaddr *, u_int,
+			 const struct sockaddr *, u_int, u_int, u_int64_t, u_int64_t,
+			 char *, int, u_int32_t);
 static int pfkey_send_x5(int, u_int, u_int32_t);
 
 static caddr_t pfkey_setsadbmsg(caddr_t, caddr_t, u_int, u_int,
@@ -70,7 +71,7 @@ static caddr_t pfkey_setsadbmsg(caddr_t, caddr_t, u_int, u_int,
 static caddr_t pfkey_setsadbsa(caddr_t, caddr_t, u_int32_t, u_int,
 	u_int, u_int, u_int32_t);
 static caddr_t pfkey_setsadbaddr(caddr_t, caddr_t, u_int,
-	struct sockaddr *, u_int, u_int);
+				 const struct sockaddr *, u_int, u_int);
 static caddr_t pfkey_setsadbkey(caddr_t, caddr_t, u_int, caddr_t, u_int);
 static caddr_t pfkey_setsadblifetime(caddr_t, caddr_t, u_int, u_int32_t,
 	u_int32_t, u_int32_t, u_int32_t);
@@ -867,7 +868,7 @@ pfkey_send_promisc_toggle(so, flag)
 int
 pfkey_send_spdadd(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
 	int so;
-	struct sockaddr *src, *dst;
+	const struct sockaddr *src, *dst;
 	u_int prefs, prefd, proto;
 	caddr_t policy;
 	int policylen;
@@ -975,7 +976,7 @@ pfkey_send_spdupdate2(so, src, prefs, dst, prefd, proto, ltime, vtime,
 int
 pfkey_send_spddelete(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
 	int so;
-	struct sockaddr *src, *dst;
+	const struct sockaddr *src, *dst;
 	u_int prefs, prefd, proto;
 	caddr_t policy;
 	int policylen;
@@ -1427,15 +1428,12 @@ pfkey_send_x3(so, type, satype)
 
 /* sending SADB_X_SPDADD message to the kernel */
 static int
-pfkey_send_x4(so, type, src, prefs, dst, prefd, proto,
-		ltime, vtime, policy, policylen, seq)
-	int so;
-	struct sockaddr *src, *dst;
-	u_int type, prefs, prefd, proto;
-	u_int64_t ltime, vtime;
-	char *policy;
-	int policylen;
-	u_int32_t seq;
+pfkey_send_x4(int so, u_int type,
+	      const struct sockaddr *src, u_int prefs,
+	      const struct sockaddr *dst, u_int prefd,
+	      u_int proto,
+	      u_int64_t ltime, u_int64_t vtime,
+	      char *policy, int policylen, u_int32_t seq)
 {
 	struct sadb_msg *newmsg;
 	int len;
@@ -1443,9 +1441,12 @@ pfkey_send_x4(so, type, src, prefs, dst, prefd, proto,
 	int plen;
 	caddr_t ep;
 
+	__ipsec_errcode = EIPSEC_NO_ERROR;	
+
 	/* validity check */
 	if (src == NULL || dst == NULL) {
 		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		fprintf(stderr, "src=%p dst=%p\n", src, dst);
 		return -1;
 	}
 	if (src->sa_family != dst->sa_family) {
@@ -1487,22 +1488,26 @@ pfkey_send_x4(so, type, src, prefs, dst, prefd, proto,
 	p = pfkey_setsadbmsg((caddr_t)newmsg, ep, type, len,
 	    SADB_SATYPE_UNSPEC, seq, getpid());
 	if (!p) {
+	    fprintf(stderr, "setting sadbmsg\n");
 		free(newmsg);
 		return -1;
 	}
 	p = pfkey_setsadbaddr(p, ep, SADB_EXT_ADDRESS_SRC, src, prefs, proto);
 	if (!p) {
+	    fprintf(stderr, "setting sadbaddr-src\n");
 		free(newmsg);
 		return -1;
 	}
 	p = pfkey_setsadbaddr(p, ep, SADB_EXT_ADDRESS_DST, dst, prefd, proto);
 	if (!p) {
+	    fprintf(stderr, "setting sadbaddr-dst\n");
 		free(newmsg);
 		return -1;
 	}
 	p = pfkey_setsadblifetime(p, ep, SADB_EXT_LIFETIME_HARD,
 			0, 0, ltime, vtime);
 	if (!p || p + policylen != ep) {
+	    fprintf(stderr, "failed on setting sadblifetime\n");
 		free(newmsg);
 		return -1;
 	}
@@ -1512,8 +1517,10 @@ pfkey_send_x4(so, type, src, prefs, dst, prefd, proto,
 	len = pfkey_send(so, newmsg, len);
 	free(newmsg);
 
-	if (len < 0)
+	if (len < 0) {
+	    fprintf(stderr, "len = %d\n", len);
 		return -1;
+	}
 
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
@@ -1688,6 +1695,8 @@ pfkey_send(so, msg, len)
 	int len;
 {
 	if ((len = send(so, (caddr_t)msg, len, 0)) < 0) {
+	    fprintf(stderr, "send failed len=%d error=%d(%s)\n", len
+		    , errno, strerror(errno));
 		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
@@ -1933,8 +1942,10 @@ pfkey_setsadbmsg(buf, lim, type, tlen, satype, seq, pid)
 	p = (struct sadb_msg *)buf;
 	len = sizeof(struct sadb_msg);
 
-	if (buf + len > lim)
-		return NULL;
+	if (buf + len > lim) {
+	    fprintf(stderr, "sadbmsg: %p+%d>%p fails\n", buf,len,lim);
+	    return NULL;
+	}
 
 	memset(p, 0, len);
 	p->sadb_msg_version = PF_KEY_V2;
@@ -1966,8 +1977,10 @@ pfkey_setsadbsa(buf, lim, spi, wsize, auth, enc, flags)
 	p = (struct sadb_sa *)buf;
 	len = sizeof(struct sadb_sa);
 
-	if (buf + len > lim)
-		return NULL;
+	if (buf + len > lim) {
+	    fprintf(stderr, "sadbsa: %p+%d>%p fails\n", buf,len,lim);
+	    return NULL;
+	}
 
 	memset(p, 0, len);
 	p->sadb_sa_len = PFKEY_UNIT64(len);
@@ -1992,7 +2005,7 @@ pfkey_setsadbaddr(buf, lim, exttype, saddr, prefixlen, ul_proto)
 	caddr_t buf;
 	caddr_t lim;
 	u_int exttype;
-	struct sockaddr *saddr;
+	const struct sockaddr *saddr;
 	u_int prefixlen;
 	u_int ul_proto;
 {
@@ -2002,8 +2015,10 @@ pfkey_setsadbaddr(buf, lim, exttype, saddr, prefixlen, ul_proto)
 	p = (struct sadb_address *)buf;
 	len = sizeof(struct sadb_address) + PFKEY_ALIGN8(saddr->sa_len);
 
-	if (buf + len > lim)
-		return NULL;
+	if (buf + len > lim) {
+	    fprintf(stderr, "sadbaddr: %p+%d>%p fails\n", buf,len,lim);
+	    return NULL;
+	}
 
 	memset(p, 0, len);
 	p->sadb_address_len = PFKEY_UNIT64(len);
@@ -2034,8 +2049,10 @@ pfkey_setsadbkey(buf, lim, type, key, keylen)
 	p = (struct sadb_key *)buf;
 	len = sizeof(struct sadb_key) + PFKEY_ALIGN8(keylen);
 
-	if (buf + len > lim)
-		return NULL;
+	if (buf + len > lim) {
+	    fprintf(stderr, "sadbkey: %p+%d>%p fails\n", buf,len,lim);
+	    return NULL;
+	}
 
 	memset(p, 0, len);
 	p->sadb_key_len = PFKEY_UNIT64(len);
@@ -2065,8 +2082,10 @@ pfkey_setsadblifetime(buf, lim, type, l_alloc, l_bytes, l_addtime, l_usetime)
 	p = (struct sadb_lifetime *)buf;
 	len = sizeof(struct sadb_lifetime);
 
-	if (buf + len > lim)
-		return NULL;
+	if (buf + len > lim) {
+	    fprintf(stderr, "sadblifetime: %p+%d>%p fails\n", buf,len,lim);
+	    return NULL;
+	}
 
 	memset(p, 0, len);
 	p->sadb_lifetime_len = PFKEY_UNIT64(len);
@@ -2112,8 +2131,10 @@ pfkey_setsadbxsa2(buf, lim, mode0, reqid)
 	p = (struct sadb_x_sa2 *)buf;
 	len = sizeof(struct sadb_x_sa2);
 
-	if (buf + len > lim)
-		return NULL;
+	if (buf + len > lim) {
+	    fprintf(stderr, "sadbxsa2: %p+%d>%p fails\n", buf,len,lim);
+	    return NULL;
+	}
 
 	memset(p, 0, len);
 	p->sadb_x_sa2_len = PFKEY_UNIT64(len);
