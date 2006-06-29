@@ -372,28 +372,30 @@ static int validate_end(struct starter_conn *conn_st
 	end->id = xstrdup(value);
     }
 
-    switch(end->options[KSCF_RSAKEY1]) {
-    case PUBKEY_DNS:
-    case PUBKEY_DNSONDEMAND:
-	end->key_from_DNS_on_demand = TRUE;
-	break;
-
-    default:
-	end->key_from_DNS_on_demand = FALSE;
-	/* validate the KSCF_RSAKEY1/RSAKEY2 */
-	if(end->strings[KSCF_RSAKEY1] != NULL)
-	{
-	    char *value = end->strings[KSCF_RSAKEY1];
+    if(end->options_set[KSCF_RSAKEY1]) {
+	switch(end->options[KSCF_RSAKEY1]) {
+	case PUBKEY_DNS:
+	case PUBKEY_DNSONDEMAND:
+	    end->key_from_DNS_on_demand = TRUE;
+	    break;
 	    
-	    if (end->rsakey1) free(end->rsakey1);
-	    end->rsakey1 = xstrdup(value);
-	}
-	if(end->strings[KSCF_RSAKEY2] != NULL)
-	{
-	    char *value = end->strings[KSCF_RSAKEY2];
-	    
-	    if (end->rsakey2) free(end->rsakey2);
-	    end->rsakey2 = xstrdup(value);
+	default:
+	    end->key_from_DNS_on_demand = FALSE;
+	    /* validate the KSCF_RSAKEY1/RSAKEY2 */
+	    if(end->strings[KSCF_RSAKEY1] != NULL)
+		{
+		    char *value = end->strings[KSCF_RSAKEY1];
+		    
+		    if (end->rsakey1) free(end->rsakey1);
+		    end->rsakey1 = xstrdup(value);
+		}
+	    if(end->strings[KSCF_RSAKEY2] != NULL)
+		{
+		    char *value = end->strings[KSCF_RSAKEY2];
+		    
+		    if (end->rsakey2) free(end->rsakey2);
+		    end->rsakey2 = xstrdup(value);
+		}
 	}
     }
 
@@ -787,7 +789,7 @@ static int load_conn (struct starter_config *cfg
 }
 
     
-void conn_default (struct starter_conn *conn,
+void conn_default (char *n, struct starter_conn *conn,
 		   struct starter_conn *def)
 {
     int i;
@@ -807,7 +809,7 @@ void conn_default (struct starter_conn *conn,
     CONN_STR(conn->right.id);
     CONN_STR(conn->right.rsakey1);
     CONN_STR(conn->right.rsakey2);
-    
+
     for(i=0; i<KSCF_MAX; i++)
     {
 	CONN_STR(conn->left.strings[i]);
@@ -845,7 +847,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name, err_
 	return NULL;
     }
 
-    conn_default(conn, &cfg->conn_default);
+    conn_default(name, conn, &cfg->conn_default);
     conn->name = xstrdup(name);
     conn->desired_state = STARTUP_NO;
     conn->state = STATE_FAILED;
