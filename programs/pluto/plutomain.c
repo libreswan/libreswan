@@ -623,6 +623,10 @@ main(int argc, char **argv)
 	chdir(coredir);
     }
 
+#ifdef HAVE_SETPROCTITLE
+    setproctitle("pluto master process ");
+#endif
+
     oco = osw_init_options();
     DBG(DBG_CONTROL, DBG_log("confddir set to %s\n", oco->confddir));
 
