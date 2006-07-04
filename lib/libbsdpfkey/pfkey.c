@@ -54,10 +54,6 @@ __FBSDID("$FreeBSD$");
 static int findsupportedmap(int);
 static int setsupportedmap(struct sadb_supported *);
 static struct sadb_alg *findsupportedalg(u_int, u_int);
-static int pfkey_send_x1(int, u_int, u_int, u_int, struct sockaddr *,
-	struct sockaddr *, u_int32_t, u_int32_t, u_int, caddr_t,
-	u_int, u_int, u_int, u_int, u_int, u_int32_t, u_int32_t,
-	u_int32_t, u_int32_t, u_int32_t);
 static int pfkey_send_x2(int, u_int, u_int, u_int,
 	struct sockaddr *, struct sockaddr *, u_int32_t);
 static int pfkey_send_x3(int, u_int, u_int);
@@ -1104,7 +1100,7 @@ pfkey_send_spddump(so)
 }
 
 /* sending SADB_ADD or SADB_UPDATE message to the kernel */
-static int
+int
 pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
 		keymat, e_type, e_keylen, a_type, a_keylen, flags,
 		l_alloc, l_bytes, l_addtime, l_usetime, seq)

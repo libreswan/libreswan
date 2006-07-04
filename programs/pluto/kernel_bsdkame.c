@@ -331,6 +331,12 @@ bsdkame_event(void)
     passert(0);
 }
 
+/*
+ * we do not do anything here, leaving it up to the
+ * sag_eroute to install the whole shebang. 
+ *
+ * XXX We're lazy. We could call shunt_eroute.
+ */
 static bool
 bsdkame_raw_eroute(const ip_address *this_host UNUSED
 		   , const ip_subnet *this_client UNUSED
@@ -345,8 +351,7 @@ bsdkame_raw_eroute(const ip_address *this_host UNUSED
 		   , enum pluto_sadb_operations op UNUSED
 		   , const char *text_said UNUSED)
 {
-    passert(0);
-    return FALSE;
+  return TRUE;
 }
 
 /* Add/replace/delete a shunt eroute.
@@ -358,10 +363,10 @@ bsdkame_raw_eroute(const ip_address *this_host UNUSED
  */
 static bool
 bsdkame_shunt_eroute(struct connection *c 
-		     , struct spd_route *sr UNUSED
+		     , struct spd_route *sr 
 		     , enum routing_t rt_kind 
 		     , enum pluto_sadb_operations op 
-		     , const char *opname UNUSED)
+		     , const char *opname)
 {
     ipsec_spi_t spi = shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
     int policy = -1;
@@ -613,30 +618,93 @@ bsdkame_sag_eroute(struct state *st UNUSED
 		   , unsigned op UNUSED
 		   , const char *opname UNUSED)
 {
-    passert(0);
-    return FALSE;
+    return TRUE;
 }
 
 static bool
-bsdkame_add_sa(const struct kernel_sa *sa UNUSED, bool replace UNUSED)
+bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 {
-    passert(0);
-    return FALSE;
+    const struct sockaddr *saddr = (const struct sockaddr *)sa->src;
+    const struct sockaddr *daddr = (const struct sockaddr *)sa->dst;
+    char keymat[256];
+    int ret, mode, satype;
+      
+    passert(sa->src->u.v4.sin_len == sizeof(struct sockaddr_in));
+
+    if(sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+	mode=IPSEC_MODE_TUNNEL;
+    } else {
+	mode=IPSEC_MODE_TRANSPORT;
+    }
+
+    switch(sa->esatype) {
+    case ET_AH:
+	satype=SADB_SATYPE_AH;
+	break;
+    case ET_ESP:
+	satype=SADB_SATYPE_ESP;
+	break;
+    case ET_IPCOMP:
+	satype=SADB_X_SATYPE_IPCOMP;
+	break;
+	
+    case ET_IPIP:
+      return TRUE;
+
+    case ET_INT:
+    case ET_UNSPEC:
+	bad_case(sa->esatype);
+    }
+
+    if((sa->enckeylen + sa->authkeylen) > sizeof(keymat)) {
+	openswan_log("Key material is too big for kernel interface: %d>%d\n"
+		     , (sa->enckeylen + sa->authkeylen)
+		     , sizeof(keymat));
+	return FALSE;
+    }
+    
+    memcpy(keymat, sa->enckey, sa->enckeylen);
+    memcpy(keymat+sa->enckeylen, sa->authkey, sa->authkeylen);
+
+    ret = pfkey_send_x1(pfkeyfd, (replace ? SADB_UPDATE : SADB_ADD),
+			satype, mode,
+			saddr, daddr, 
+			sa->spi,
+			sa->reqid, /* reqid */
+			64, /* wsize, replay window size */
+			keymat,
+			sa->encalg,
+			sa->enckeylen,
+			sa->authalg,
+			sa->authkeylen,
+			0, /*flags */
+			0, /* l_alloc */
+			0, /* l_bytes */
+			0, /* l_addtime */
+			0, /* l_usetime, */
+			pfkey_seq++);
+
+    if(ret < 0) {
+	extern int __ipsec_errcode;
+	openswan_log("ret = %d from send_add: %d (%s)", ret
+		     , __ipsec_errcode, ipsec_strerror());
+	return FALSE;
+    }
+
+    return TRUE;
 }
 
 static bool
 bsdkame_grp_sa(const struct kernel_sa *sa0 UNUSED
 	       , const struct kernel_sa *sa1 UNUSED)
 {
-    passert(0);
-    return FALSE;
+    return TRUE;
 }
 
 static bool
 bsdkame_del_sa(const struct kernel_sa *sa UNUSED)
 {
-    passert(0);
-    return FALSE;
+    return TRUE;
 }
 
 /* Check if there was traffic on given SA during the last idle_max
@@ -669,6 +737,38 @@ bsdkame_remove_orphaned_holds(int transport_proto  UNUSED
     passert(0);
 }
 
+#if 0
+static void
+bsdkame_except_socket(int socketfd)
+{
+	char pbuf[512];
+	struct sadb_x_policy *policy_struct = (struct sadb_x_policy *)pbuf;
+	struct sadb_x_ipsecrequest *ir;
+	int policylen;
+	int ret;
+      
+	memset(pbuf, 0, sizeof(pbuf));
+
+	policy_struct->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+	policy_struct->sadb_x_policy_type = IPSEC_POLICY_BYPASS;
+	policy_struct->sadb_x_policy_dir  = IPSEC_DIR_OUTBOUND;
+        policy_struct->sadb_x_policy_id   = 0; /* needs to be set, and recorded */
+
+	policylen = sizeof(*policy_struct);
+	policy_struct->sadb_x_policy_len =PFKEY_UNIT64(policylen);
+
+	if(setsockopt(socketfd, 
+	ret = pfkey_send_spdadd(pfkeyfd,
+				saddr, mine->maskbits,
+				daddr, his->maskbits,
+				255 /* proto */,
+				(caddr_t)policy_struct, policylen,
+				pfkey_seq++);
+
+    
+}
+#endif
+
 
 const struct kernel_ops bsdkame_kernel_ops = {
     type: USE_BSDKAME,
@@ -691,6 +791,7 @@ const struct kernel_ops bsdkame_kernel_ops = {
     inbound_eroute: FALSE,
     policy_lifetime: FALSE,
     init: bsdkame_init_pfkey,
+		   /* exceptsocket: bsdkame_except_socket, */
     docommand: bsdkame_do_command,
     set_debug: bsdkame_set_debug,
     remove_orphaned_holds: bsdkame_remove_orphaned_holds,
