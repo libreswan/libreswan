@@ -159,7 +159,6 @@ uprule() {
 	    addsource
 	    changesource
 	fi
-	ip route flush cache
 }
 
 downrule() {
