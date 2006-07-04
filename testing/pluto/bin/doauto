@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # start of an automatic testing script
 #
 # Note: the name of a test affects processing.
@@ -74,7 +74,7 @@ do
 	ulimit -c unlimited
 
 	# start Initiator pluto (daemon forks to return control)
-	$DOPLUTO west >$LD/pi-log 2>&1
+	bash -x $DOPLUTO west >$LD/pi-log 2>&1
 
 	# start Responder pluto (daemon forks to return control)
 	$DOPLUTO east >$LD/pr-log 2>&1

@@ -118,12 +118,20 @@ export EASTIP=128.95.7.2
 export NORTHIP=128.95.7.3
 export SOUTHIP=128.95.7.4
 
+export ALIAS=""
+
 case ${OSDEP} in
 	cygwin_nt-5.0)
 	       export WESTIF=128.95.7.1;
 	       export EASTIF=128.95.7.2;
                export NORTHIF=128.95.7.3;
 	       export SOUTHIF=128.95.7.4;;
+
+	freebsd) export ALIAS="alias";
+		 export WESTIF=lo0;
+	         export EASTIF=lo0;
+                 export NORTHIF=lo0;
+	         export SOUTHIF=lo0;;
 
 	linux) export WESTIF=lo:w;
 	       export EASTIF=lo:e;
@@ -180,8 +188,8 @@ OPPOMISS="$OPPO --client 10.0.0.0/8"
 GROUP="--host %group --ikeport $IKEPORT"
 OPPOGROUP="--host %opportunisticgroup --ikeport $IKEPORT"
 
-WHACKWEST="${WESTWHACK:-$WHACK} --ctlbase pluto/west/pluto.west"
-WHACKEAST="${EASTWHACK:-$WHACK} --ctlbase pluto/east/pluto.east"
+WHACKWEST="${WESTWHACK:-$WHACK} --ctlbase /tmp/pluto/west/pluto.west"
+WHACKEAST="${EASTWHACK:-$WHACK} --ctlbase /tmp/pluto/east/pluto.east"
 
 # run of the mill lifetimes
 NORMALMARG=350
@@ -207,47 +215,47 @@ LIST="1 2 3 4 5"
 # dumb boilerplate
 TO="--updown silly --to --updown sally"
 
-function whackwest() {
+whackwest() {
 	eval $WHACKWEST "$@"
 	}
 
-function whackeast() {
+whackeast() {
 	eval $WHACKEAST "$@"
 	}
 
-function perform() {
+perform() {
 	echo "$@"
 	"$@" || echo RC: $?
 	}
 
-function me() {
+me() {
 	perform whackwest "$@"
 	}
 
-function him() {
+him() {
 	perform whackeast "$@"
 	}
 
-function both() {
+both() {
 	perform whackwest "$@"
 	perform whackeast "$@"
 	}
 
-function me_status() {
+me_status() {
 	me --status | canonicize_status
 	}
 
-function him_status() {
+him_status() {
 	him --status | canonicize_status
 	}
 
-function both_status() {
+both_status() {
 	both --status | canonicize_status
 	}
 
 # Grab the lifetime setting actually in states.
 # Turn them into shell variable assignments suitable for eval ``.
-function grab_lifetimes() {
+grab_lifetimes() {
 	( me --status ; him --status ) | sed -n -e \
 		'/STATE_/ {
 			s/.*MAIN/ISAKMP/
@@ -272,7 +280,7 @@ ut() {
 # Can't be more, but might be a bit less.
 # A bit is 3 seconds, for now.
 # Must not print variable values unless we have an error condition.
-function notcloseto() {
+notcloseto() {
 	if expr '(' $1 ')' '>' '(' $2 ')' >/dev/null
 	then
 		echo bad $3: $1 '>' $2
@@ -287,7 +295,7 @@ function notcloseto() {
 	fi
 	}
 
-function canonicize_status() {
+canonicize_status() {
 	sed 	-e 's/ in [1-9][0-9]*s/ in ???s/' \
 		-e 's/ esp\.[0-9a-f]*@/ esp.???@/g' \
 		-e 's/ ah\.[0-9a-f]*@/ ah.???@/g' \

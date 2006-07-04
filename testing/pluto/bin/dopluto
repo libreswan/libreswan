@@ -25,14 +25,14 @@ shift
 
 # the purpose of this function is to hide differences that don't count
 # from the log: path to pluto and LWDNSQOPTION
-function performpluto() {
+performpluto() {
 	mkdir -p pluto/$SIDE && cd pluto/$SIDE
 	ln -s -f ../../ipsec.secrets .
 	ln -s -f ${TESTING}/pluto/ipsec.d/west .
 	ln -s -f ${TESTING}/pluto/ipsec.d/east .
 	echo PWD: `pwd`
 	echo "PLUTO" "$@"
-	$MYPLUTO ${LWDNSQOPTION:-} "$@" || echo RC: $?
+	echo $MYPLUTO ${LWDNSQOPTION:-} "$@" || echo RC: $?
 	}
 
 LOCK=pluto/$SIDE/pluto.$SIDE.pid
