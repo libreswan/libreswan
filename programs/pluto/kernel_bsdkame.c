@@ -340,17 +340,17 @@ bsdkame_event(void)
  *
  */
 static bool
-bsdkame_raw_eroute(const ip_address *this_host 
+bsdkame_raw_eroute(const ip_address *this_host
 		   , const ip_subnet *this_client
-		   , const ip_address *that_host 
-		   , const ip_subnet *that_client 
-		   , ipsec_spi_t spi 
-		   , unsigned int proto 
-		   , unsigned int transport_proto UNUSED
+		   , const ip_address *that_host
+		   , const ip_subnet *that_client
+		   , ipsec_spi_t spi
+		   , unsigned int proto
+		   , unsigned int transport_proto
 		   , enum eroute_type esatype UNUSED
 		   , const struct pfkey_proto_info *proto_info UNUSED
 		   , time_t use_lifetime UNUSED
-		   , enum pluto_sadb_operations op 
+		   , enum pluto_sadb_operations op
 		   , const char *text_said UNUSED)
 {
     const struct sockaddr *saddr = (const struct sockaddr *)&this_client->addr;
