@@ -406,11 +406,10 @@ main(int argc, char *argv[])
 		    /* yes, let's make it case-insensitive */
 		    if(strcasecmp(conn->name, argv[connum])==0) {
 			if(conn->state == STATE_ADDED) {
-			    printf("conn %s already added\n", conn->name);
+			    printf("\nconn %s already added\n", conn->name);
 			} else if(conn->state == STATE_FAILED) {
-			    printf("conn %s did not load properly\n", conn->name);
+			    printf("\nconn %s did not load properly\n", conn->name);
 			} else {
-			    printf("loading conn: %s\n", conn->name);
 			    exit_status = starter_whack_add_conn(cfg, conn);
 			    conn->state = STATE_ADDED;
 			}
