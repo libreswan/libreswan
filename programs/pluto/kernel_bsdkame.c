@@ -332,26 +332,147 @@ bsdkame_event(void)
 }
 
 /*
- * we do not do anything here, leaving it up to the
- * sag_eroute to install the whole shebang. 
+ * We are were to install a set of policy, when there is in fact an SA
+ * that is already setup.
  *
- * XXX We're lazy. We could call shunt_eroute.
+ * Well, the code is actually shared with shunt_eroute, since for KAME,
+ * we set up the policy in an abstracted sense.
+ *
  */
 static bool
-bsdkame_raw_eroute(const ip_address *this_host UNUSED
-		   , const ip_subnet *this_client UNUSED
-		   , const ip_address *that_host UNUSED
-		   , const ip_subnet *that_client UNUSED
-		   , ipsec_spi_t spi UNUSED
-		   , unsigned int proto UNUSED
+bsdkame_raw_eroute(const ip_address *this_host 
+		   , const ip_subnet *this_client
+		   , const ip_address *that_host 
+		   , const ip_subnet *that_client 
+		   , ipsec_spi_t spi 
+		   , unsigned int proto 
 		   , unsigned int transport_proto UNUSED
 		   , enum eroute_type esatype UNUSED
 		   , const struct pfkey_proto_info *proto_info UNUSED
 		   , time_t use_lifetime UNUSED
-		   , enum pluto_sadb_operations op UNUSED
+		   , enum pluto_sadb_operations op 
 		   , const char *text_said UNUSED)
 {
-  return TRUE;
+    const struct sockaddr *saddr = (const struct sockaddr *)&this_client->addr;
+    const struct sockaddr *daddr = (const struct sockaddr *)&that_client->addr;
+    char pbuf[512];
+    struct sadb_x_policy *policy_struct = (struct sadb_x_policy *)pbuf;
+    struct sadb_x_ipsecrequest *ir;
+    int policylen;
+    int ret;
+    int policy = -1;
+
+    switch(spi) {
+    case 0:
+        /* we're supposed to end up with no eroute: rejig op and opname */
+        switch (op)
+        {
+        case ERO_REPLACE:
+            /* replace with nothing == delete */
+            op = ERO_DELETE;
+            break;
+        case ERO_ADD:
+            /* add nothing == do nothing */
+            return TRUE;
+
+        case ERO_DELETE:
+            /* delete remains delete */
+            break;
+	    
+	case ERO_ADD_INBOUND:
+	    break;
+
+	case ERO_DEL_INBOUND:
+	    break;
+
+        default:
+            bad_case(op);
+        }
+	break;
+	
+    case SPI_TRAP:
+	policy = IPSEC_POLICY_IPSEC;
+	break;
+	
+    case SPI_PASS:
+        policy = IPSEC_POLICY_NONE;  /* BYPASS is for sockets only */
+	break;
+
+    case SPI_REJECT:
+    case SPI_DROP:
+	policy = IPSEC_POLICY_DISCARD;
+	break;
+	
+    default:
+      DBG_log("shunt_eroute called with spi=%08x\n", spi);
+    }
+
+    memset(pbuf, 0, sizeof(pbuf));
+
+    /* this is sanity check that it got set properly */
+    passert(this_client->addr.u.v4.sin_len == sizeof(struct sockaddr_in));
+    passert(that_client->addr.u.v4.sin_len == sizeof(struct sockaddr_in));
+
+    passert(policy != -1);
+
+    policy_struct->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+    policy_struct->sadb_x_policy_type = policy;
+    policy_struct->sadb_x_policy_dir  = IPSEC_DIR_OUTBOUND;
+    policy_struct->sadb_x_policy_id   = 0; /* needs to be set, and recorded */
+
+    policylen = sizeof(*policy_struct);
+    
+    if(policy == IPSEC_POLICY_IPSEC) {
+	const ip_address *me   = this_host;
+	const ip_address *him  = that_host;
+	unsigned char *addrmem;
+
+	ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
+	  
+	ir->sadb_x_ipsecrequest_len = sizeof(struct sadb_x_ipsecrequest)+me->u.v4.sin_len+him->u.v4.sin_len;
+	ir->sadb_x_ipsecrequest_proto = proto;
+
+	if(transport_proto == 0) {
+	    ir->sadb_x_ipsecrequest_mode=IPSEC_MODE_TUNNEL;
+	} else {
+	    ir->sadb_x_ipsecrequest_mode=IPSEC_MODE_TRANSPORT;
+	}
+	ir->sadb_x_ipsecrequest_level=IPSEC_LEVEL_REQUIRE;
+	ir->sadb_x_ipsecrequest_reqid=0;  /* not used for now */
+   
+	addrmem = (unsigned char *)&ir[1];
+	memcpy(addrmem, &me->u.v4,  me->u.v4.sin_len);
+	addrmem += me->u.v4.sin_len;
+	memcpy(addrmem, &him->u.v4, him->u.v4.sin_len);
+	
+	addrmem += him->u.v4.sin_len;
+	
+	policylen += ir->sadb_x_ipsecrequest_len;
+	
+	DBG_log("request_len=%u policylen=%u\n",
+		ir->sadb_x_ipsecrequest_len, policylen);
+
+    } else {
+	DBG_log("setting policy=%d\n", policy);
+    }
+	  	
+    policy_struct->sadb_x_policy_len =PFKEY_UNIT64(policylen);
+
+    ret = pfkey_send_spdadd(pfkeyfd,
+			    saddr, this_client->maskbits,
+			    daddr, that_client->maskbits,
+			    255 /* proto */,
+			    (caddr_t)policy_struct, policylen,
+			    pfkey_seq++);
+
+    if(ret < 0) {
+	extern int __ipsec_errcode;
+	DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p\n", ret
+		, __ipsec_errcode, ipsec_strerror()
+		, saddr, daddr);
+	return FALSE;
+    }
+    return TRUE;
 }
 
 /* Add/replace/delete a shunt eroute.
@@ -737,37 +858,44 @@ bsdkame_remove_orphaned_holds(int transport_proto  UNUSED
     passert(0);
 }
 
-#if 0
-static void
-bsdkame_except_socket(int socketfd)
+static bool
+bsdkame_except_socket(int socketfd, int family)
 {
-	char pbuf[512];
-	struct sadb_x_policy *policy_struct = (struct sadb_x_policy *)pbuf;
-	struct sadb_x_ipsecrequest *ir;
-	int policylen;
-	int ret;
-      
-	memset(pbuf, 0, sizeof(pbuf));
+	struct sadb_x_policy policy;
+	int level, optname;
 
-	policy_struct->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
-	policy_struct->sadb_x_policy_type = IPSEC_POLICY_BYPASS;
-	policy_struct->sadb_x_policy_dir  = IPSEC_DIR_OUTBOUND;
-        policy_struct->sadb_x_policy_id   = 0; /* needs to be set, and recorded */
-
-	policylen = sizeof(*policy_struct);
-	policy_struct->sadb_x_policy_len =PFKEY_UNIT64(policylen);
-
-	if(setsockopt(socketfd, 
-	ret = pfkey_send_spdadd(pfkeyfd,
-				saddr, mine->maskbits,
-				daddr, his->maskbits,
-				255 /* proto */,
-				(caddr_t)policy_struct, policylen,
-				pfkey_seq++);
-
-    
-}
+	switch (family) {
+	case AF_INET:
+		level = IPPROTO_IP;
+		optname = IP_IPSEC_POLICY;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		level = IPPROTO_IPV6;
+		optname = IPV6_IPSEC_POLICY;
+		break;
 #endif
+	default:
+		openswan_log("unsupported address family (%d)\n", family);
+		return FALSE;
+	}
+
+	memset(&policy, 0, sizeof(policy));
+	policy.sadb_x_policy_len = PFKEY_UNIT64(sizeof(policy));
+	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+	policy.sadb_x_policy_type = IPSEC_POLICY_BYPASS;
+	policy.sadb_x_policy_dir = IPSEC_DIR_INBOUND;
+	if (setsockopt(socketfd, level, optname, &policy, sizeof(policy)) == -1) {
+	    openswan_log("bsdkame except socket setsockopt: %s\n", strerror(errno));
+	    return FALSE;
+	}
+	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
+	if (setsockopt(socketfd, level, optname, &policy, sizeof(policy)) == -1) {
+	    openswan_log("bsdkame except socket setsockopt: %s\n", strerror(errno));
+	    return FALSE;
+	}
+	return TRUE;
+}
 
 
 const struct kernel_ops bsdkame_kernel_ops = {
@@ -791,7 +919,7 @@ const struct kernel_ops bsdkame_kernel_ops = {
     inbound_eroute: FALSE,
     policy_lifetime: FALSE,
     init: bsdkame_init_pfkey,
-		   /* exceptsocket: bsdkame_except_socket, */
+    exceptsocket: bsdkame_except_socket, 
     docommand: bsdkame_do_command,
     set_debug: bsdkame_set_debug,
     remove_orphaned_holds: bsdkame_remove_orphaned_holds,
