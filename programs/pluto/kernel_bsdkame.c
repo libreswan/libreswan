@@ -917,7 +917,7 @@ const struct kernel_ops bsdkame_kernel_ops = {
     get_spi: NULL,
     eroute_idle: bsdkame_was_eroute_idle,
     inbound_eroute: FALSE,
-    policy_lifetime: FALSE,
+    policy_lifetime: TRUE,
     init: bsdkame_init_pfkey,
     exceptsocket: bsdkame_except_socket, 
     docommand: bsdkame_do_command,
