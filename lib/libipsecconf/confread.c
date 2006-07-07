@@ -263,7 +263,8 @@ static int load_setup (struct starter_config *cfg
  * Validate that yes in fact we are one side of the tunnel
  * 
  * The function checks that IP addresses are valid, nexthops are
- * present (if needed) as well as policies
+ * present (if needed) as well as policies, and sets the leftID 
+ * from the left= if it isn't set.
  *
  * @param conn_st a connection definition
  * @param end a connection end
@@ -279,6 +280,15 @@ static int validate_end(struct starter_conn *conn_st
     int err=0;
     
     end->addrtype=end->options[KNCF_IP];
+
+    /* validate the KSCF_ID */
+    if(end->strings[KSCF_ID] != NULL)
+    {
+	char *value = end->strings[KSCF_ID];
+	
+	if (end->id) free(end->id);
+	end->id = xstrdup(value);
+    } 
 
     /* validate the KSCF_IP/KNCF_IP */
     switch(end->addrtype)
@@ -303,6 +313,13 @@ static int validate_end(struct starter_conn *conn_st
 
 	er = ttoaddr(end->strings[KNCF_IP], 0, AF_INET, &(end->addr));
 	if (er) ERR_FOUND("bad addr %s=%s [%s]", (left ? "left" : "right"), end->strings[KNCF_IP], er);
+
+	if(end->id == NULL) {
+	    char idbuf[ADDRTOT_BUF];
+	    addrtot(&end->addr, 0, idbuf, sizeof(idbuf));
+	    
+	    end->id=clone_str(idbuf, "end if");
+	}
 	break;
 	
     case KH_OPPO:
@@ -361,15 +378,6 @@ static int validate_end(struct starter_conn *conn_st
 	if (er) ERR_FOUND("bad addr %s=%s [%s]", (left ? "lextnexthop" : "rightnexthop"), value, er);
     } else {
 	anyaddr(AF_INET, &end->nexthop);
-    }
-
-    /* validate the KSCF_ID */
-    if(end->strings[KSCF_ID] != NULL)
-    {
-	char *value = end->strings[KSCF_ID];
-	
-	if (end->id) free(end->id);
-	end->id = xstrdup(value);
     }
 
     if(end->options_set[KSCF_RSAKEY1]) {
