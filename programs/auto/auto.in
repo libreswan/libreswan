@@ -50,7 +50,7 @@ do
 	--utc)		utc="$1"		;;
 	--config)	config="--config $2" ; shift	;;
 	--asynchronous)	async="--asynchronous"	;;
-	--verbose)	logfilter='1'		;;
+	--verbose)	verb="--verbose"; logfilter='1'		;;
 	--up|--down|--add|--delete|--replace|--route|--unroute)
 			if test " $op" != " "
 			then
@@ -174,7 +174,7 @@ if [ -n "$defaultroutenexthop" ]
 then
     options="$options --defaultroutenexthop $defaultroutenexthop"
 fi
-echo "ipsec addconn $config $options $names"             | runit
+echo "ipsec addconn $verb $config $options $names"             | runit
 exit 
  
 
