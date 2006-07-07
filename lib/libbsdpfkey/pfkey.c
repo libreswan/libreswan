@@ -1106,7 +1106,7 @@ pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
 		l_alloc, l_bytes, l_addtime, l_usetime, seq)
 	int so;
 	u_int type, satype, mode;
-	struct sockaddr *src, *dst;
+	const struct sockaddr *src, *dst;
 	u_int32_t spi, reqid;
 	u_int wsize;
 	caddr_t keymat;
