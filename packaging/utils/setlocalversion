@@ -8,7 +8,7 @@ usage() {
 
 cd "${1:-.}" || usage
 
-if ! which git
+if ! which git >/dev/null
 then
 	echo "GITGITGIT"
 	exit
