@@ -405,6 +405,7 @@ bsdkame_raw_eroute(const ip_address *this_host
 	
     default:
       DBG_log("shunt_eroute called with spi=%08x\n", spi);
+      policy = IPSEC_POLICY_IPSEC;
     }
 
     memset(pbuf, 0, sizeof(pbuf));
