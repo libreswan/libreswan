@@ -395,8 +395,10 @@ int starter_whack_add_conn (struct starter_config *cfg
 	r =  send_whack_msg(&msg, cfg->ctlbase);
 
 	if ((r==0) && (conn->policy & POLICY_RSASIG)) {
-	    starter_whack_add_pubkey (cfg, conn, &conn->left,  "left");
-	    starter_whack_add_pubkey (cfg, conn, &conn->right, "right");
+	    r=starter_whack_add_pubkey (cfg, conn, &conn->left,  "left");
+	    if(r==0) {
+	      r=starter_whack_add_pubkey (cfg, conn, &conn->right, "right");
+	    }
 	}
 
 	return r;
