@@ -120,11 +120,15 @@ struct starter_config {
     ip_address dr;  /* default route */
     ip_address dnh; /* next hop value */
 
+    char *ctlbase;  /* location of pluto control socket */
+
     /* connections list (without %default) */
     TAILQ_HEAD(, starter_conn) conns;
 };
 
-extern struct starter_config *confread_load(const char *file, err_t *perr);
+extern struct starter_config *confread_load(const char *file
+					    , err_t *perr
+					    , char *ctlbase);
 extern struct starter_conn *alloc_add_conn(struct starter_config *cfg
 					   , char *name, err_t *perr);
 extern int init_load_conn(struct starter_config *cfg

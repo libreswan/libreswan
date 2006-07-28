@@ -8,3 +8,5 @@
 
 #define __u8 u_int8_t
 #define u8 u_int8_t
+
+#define HAVE_SIN_LEN

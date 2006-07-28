@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refmeta>
+<refentrytitle>_UPDOWN</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>25 Apr 2002</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec _updown</refname>
+<refpurpose>klips manipulation script</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<para><emphasis remap='I'>_updown</emphasis>
+is invoked by pluto when it has brought up a new connection. This script
+is used to insert the appropriate routing entries for IPsec operation.
+The interface to the script is documented in the pluto man page.</para>
+</refsynopsisdiv>
+
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Man page written for the Linux FreeS/WAN project &lt;<ulink url='http://www.freeswan.org/'>http://www.freeswan.org/</ulink>&gt;
+by Michael Richardson. Original program written by Henry Spencer.</para>
+
+</refsect1>
+</refentry>
+

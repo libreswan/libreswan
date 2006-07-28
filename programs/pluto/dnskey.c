@@ -120,7 +120,7 @@ init_adns(void)
 	    }
 	}
 	else
-#if !defined(MACINTOSH)
+#if defined(linux)
 	{
 	    /* The program will be in the same directory as Pluto,
 	     * so we use the sympolic link /proc/self/exe to
@@ -134,8 +134,9 @@ init_adns(void)
 
 	}
 #else
-	/* This is wrong. Should end up in a resource_dir on MacOSX -- Paul */
-	adns_path="/usr/local/libexec/ipsec/lwdnsq";
+	/* This is wrong. Should end up in a resource_dir */
+	strcpy(adns_path_space,"/usr/local/libexec/ipsec/");
+	n=strlen(adns_path_space);
 #endif
 
 

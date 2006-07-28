@@ -18,6 +18,8 @@ USE_BSDKAME=true
 # build modules, etc. for KLIPS.
 BUILD_KLIPS=false
 
+CFLAGS+=-DHAVE_SETPROCTITLE
+
 # ISC code should use unix definitions.
 ISCARCH=unix
 ISCHOSTARCH=unix

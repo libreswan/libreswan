@@ -1,0 +1,279 @@
+#! /bin/sh
+# iproute2 version, default updown script
+#
+# Copyright (C) 2003-2004 Nigel Metheringham
+# Copyright (C) 2002-2004 Michael Richardson <mcr@xelerance.com>
+# Copyright (C) 2003-2005 Tuomo Soini <tis@foobar.fi>
+# 
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# RCSID $Id: _updown.ip2.in,v 1.19 2005/08/25 21:52:53 paul Exp $
+
+
+
+# CAUTION:  Installing a new version of FreeS/WAN will install a new
+# copy of this script, wiping out any custom changes you make.  If
+# you need changes, make a copy of this under another name, and customize
+# that, and use the (left/right)updown parameters in ipsec.conf to make
+# FreeS/WAN use yours instead of this default one.
+
+LC_ALL=C export LC_ALL
+
+# things that this script gets (from ipsec_pluto(8) man page)
+#
+#
+#      PLUTO_VERSION
+#              indicates  what  version of this interface is being
+#              used.  This document describes version  1.1.   This
+#              is upwardly compatible with version 1.0.
+#
+#       PLUTO_VERB
+#              specifies the name of the operation to be performed
+#              (prepare-host, prepare-client, up-host, up-client,
+#              down-host, or down-client).  If the address family
+#              for security gateway to security gateway communica­
+#              tions is IPv6, then a suffix of -v6 is added to the
+#              verb.
+#
+#       PLUTO_CONNECTION
+#              is the name of the  connection  for  which  we  are
+#              routing.
+#
+#       PLUTO_CONN_POLICY
+#              the policy of the connection, as in:
+#     RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failureDROP+lKOD+rKOD  
+#
+#       PLUTO_NEXT_HOP
+#              is the next hop to which packets bound for the peer
+#              must be sent.
+#
+#       PLUTO_INTERFACE
+#              is the name of the ipsec interface to be used.
+#
+#       PLUTO_ME
+#              is the IP address of our host.
+#
+#       PLUTO_MY_CLIENT
+#              is the IP address / count of our client subnet.  If
+#              the  client  is  just  the  host,  this will be the
+#              host's own IP address / max (where max  is  32  for
+#              IPv4 and 128 for IPv6).
+#
+#       PLUTO_MY_CLIENT_NET
+#              is the IP address of our client net.  If the client
+#              is just the host, this will be the  host's  own  IP
+#              address.
+#
+#       PLUTO_MY_CLIENT_MASK
+#              is  the  mask for our client net.  If the client is
+#              just the host, this will be 255.255.255.255.
+#
+#       PLUTO_MY_SOURCEIP
+#              if non-empty, then the source address for the route will be
+#              set to this IP address.
+#
+#       PLUTO_MY_PROTOCOL
+#              is the protocol  for this  connection.  Useful  for
+#              firewalling.
+#
+#       PLUTO_MY_PORT
+#              is the port. Useful for firewalling.
+#
+#       PLUTO_PEER
+#              is the IP address of our peer.
+#
+#       PLUTO_PEER_CLIENT
+#              is the IP address / count of the peer's client sub­
+#              net.   If the client is just the peer, this will be
+#              the peer's own IP address / max (where  max  is  32
+#              for IPv4 and 128 for IPv6).
+#
+#       PLUTO_PEER_CLIENT_NET
+#              is the IP address of the peer's client net.  If the
+#              client is just the peer, this will  be  the  peer's
+#              own IP address.
+#
+#       PLUTO_PEER_CLIENT_MASK
+#              is  the  mask  for  the  peer's client net.  If the
+#              client   is   just   the   peer,   this   will   be
+#              255.255.255.255.
+#
+#       PLUTO_PEER_PROTOCOL
+#              is  the  protocol  set  for  remote  end  with port
+#              selector.
+#
+#       PLUTO_PEER_PORT
+#              is the peer's port. Useful for firewalling.
+#
+#       PLUTO_CONNECTION_TYPE
+#
+
+# check interface version
+case "$PLUTO_VERSION" in
+1.*)	# Older Pluto?!?  Play it safe, script may be using new features.
+	echo "$0: obsolete interface version \`$PLUTO_VERSION'," >&2
+	echo "$0: 	called by obsolete Pluto?" >&2
+	exit 2
+	;;
+2.*)	;;
+*)	echo "$0: unknown interface version \`$PLUTO_VERSION'" >&2
+	exit 2
+	;;
+esac
+
+# check parameter(s)
+case "$1:$*" in
+':')			# no parameters
+	;;
+ipfwadm:ipfwadm)	# due to (left/right)firewall; for default script only
+	;;
+custom:*)		# custom parameters (see above CAUTION comment)
+	;;
+*)	echo "$0: unknown parameters \`$*'" >&2
+	exit 2
+	;;
+esac
+
+# utility functions for route manipulation
+# Meddling with this stuff should not be necessary and requires great care.
+uproute() {
+	doroute add
+}
+
+downroute() {
+	doroute delete
+}
+
+uprule() {
+	# virtual sourceip support
+	if [ -n "$PLUTO_MY_SOURCEIP" ]
+	then
+	    addsource
+	    changesource
+	fi
+}
+
+downrule() {
+	if [ -n "$PLUTO_MY_SOURCEIP" ]
+	then
+	    dorule delete
+	fi
+}
+
+addsource() {
+	st=0
+	## add an alias to the loopback interface if not already there
+	cidr=${PLUTO_PEER_CLIENT##*/}
+	snet=${PLUTO_MY_SOURCEIP%/*}/32
+
+	if test "${PLUTO_PEER_CLIENT}" != "${cidr}"
+	then
+		snet=${PLUTO_MY_SOURCEIP%/*}/${cidr}
+	fi
+
+	st=1
+	return $st
+}
+
+changesource() {
+	st=0
+
+	st=1
+ 	return $st
+}
+
+dorule() {
+	st=0
+	return $st
+}
+
+
+doroute() {
+	st=0
+	return $st
+}
+ 
+
+# the big choice
+case "$PLUTO_VERB:$1" in
+prepare-host:*|prepare-client:*)
+	# delete possibly-existing route (preliminary to adding a route)
+	exit 0
+	;;
+route-host:*|route-client:*)
+	# connection to me or my client subnet being routed
+	uproute
+	;;
+unroute-host:*|unroute-client:*)
+	# connection to me or my client subnet being unrouted
+	downroute
+	;;
+up-host:*)
+	# connection to me coming up
+	uprule
+	# If you are doing a custom version, firewall commands go here.
+	;;
+down-host:*)
+	# connection to me going down
+	downrule
+	# If you are doing a custom version, firewall commands go here.
+	;;
+up-client:)
+	# connection to my client subnet coming up
+	uprule
+	# If you are doing a custom version, firewall commands go here.
+	;;
+down-client:)
+	# connection to my client subnet going down
+	downrule
+	# If you are doing a custom version, firewall commands go here.
+	;;
+up-client:ipfwadm)
+	# connection to client subnet, with (left/right)firewall=yes, coming up
+	uprule
+	;;
+down-client:ipfwadm)
+	# connection to client subnet, with (left/right)firewall=yes, going down
+	downrule
+	;;
+#
+# IPv6
+#
+prepare-host-v6:*|prepare-client-v6:*)
+	;;
+route-host-v6:*|route-client-v6:*)
+	# connection to me or my client subnet being routed
+	#uproute_v6
+	;;
+unroute-host-v6:*|unroute-client-v6:*)
+	# connection to me or my client subnet being unrouted
+	#downroute_v6
+	;;
+up-host-v6:*)
+	# connection to me coming up
+	# If you are doing a custom version, firewall commands go here.
+	;;
+down-host-v6:*)
+	# connection to me going down
+	# If you are doing a custom version, firewall commands go here.
+	;;
+up-client-v6:)
+	# connection to my client subnet coming up
+	# If you are doing a custom version, firewall commands go here.
+	;;
+down-client-v6:)
+	# connection to my client subnet going down
+	# If you are doing a custom version, firewall commands go here.
+	;;
+*)	echo "$0: unknown verb \`$PLUTO_VERB' or parameter \`$1'" >&2
+	exit 1
+	;;
+esac

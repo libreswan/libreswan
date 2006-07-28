@@ -3,6 +3,8 @@
 # build up a cramfs for initrd use.
 # probably you will run this under fakeroot
 
+PATH=$PATH:/usr/sbin:/sbin export PATH
+
 list=$1
 srctree=$2
 basicroot=$3

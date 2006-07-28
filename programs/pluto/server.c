@@ -434,6 +434,14 @@ create_socket(struct raw_iface *ifp, const char *v_name, int port)
     udpfromto_init(fd);
 #endif
 
+    /* poke a hole for IKE messages in the IPsec layer */
+    if(kernel_ops->exceptsocket) {
+	if(!(*kernel_ops->exceptsocket)(fd, AF_INET)) {
+	    close(fd);
+	    return -1;
+	}
+    }
+
     return fd;
 }
 
