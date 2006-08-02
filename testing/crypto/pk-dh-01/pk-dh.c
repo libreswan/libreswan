@@ -203,7 +203,9 @@ int main(int argc, char *argv[])
 	calc_dh_iv(&r);
 
 	printf("\noutput:\n");
-	
+
+	fflush(stdout);
+	fflush(stderr);
 
 	{
 		void *shared = wire_chunk_ptr(skr, &skr->shared);
