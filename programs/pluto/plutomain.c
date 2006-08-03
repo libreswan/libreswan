@@ -124,6 +124,8 @@ usage(const char *mess)
 	    " [--use-auto]"
 	    " [--use-klips]"
 	    " [--use-netkey]"
+	    " [--use-mastklips]"
+	    " [--use-bsdkame]"
 	    " \\\n\t"
 	    "[--interface <ifname|ifaddr>]"
 	    " [--ikeport <port-number>]"
@@ -146,6 +148,7 @@ usage(const char *mess)
 	    " [--debug-crypt]"
 	    " [--debug-parsing]"
 	    " [--debug-emitting]"
+	    " [--debug-x509]"
 	    " \\\n\t"
 	    "[--debug-control]"
 	    " [--debug-klips]"
@@ -325,6 +328,8 @@ main(int argc, char **argv)
 	    { "usenetkey", no_argument, NULL, 'K' },
 	    { "use-netkey", no_argument, NULL, 'K' },
 	    { "use-mast",   no_argument, NULL, 'M' },
+	    { "use-mastklips", no_argument, NULL, 'M' },
+	    { "use-bsdkame",   no_argument, NULL, 'F' },
 	    { "interface", required_argument, NULL, 'i' },
 	    { "ikeport", required_argument, NULL, 'p' },
 	    { "ctlbase", required_argument, NULL, 'b' },
@@ -369,7 +374,7 @@ main(int argc, char **argv)
 	    { "debug-oppo", no_argument, NULL, DBG_OPPO + DBG_OFFSET },
 	    { "debug-controlmore", no_argument, NULL, DBG_CONTROLMORE + DBG_OFFSET },
 	    { "debug-dpd", no_argument, NULL, DBG_DPD + DBG_OFFSET },
-            { "debug-x509", no_argument, NULL, DBG_X509 + DBG_OFFSET },
+	    { "debug-x509", no_argument, NULL, DBG_X509 + DBG_OFFSET },
 	    { "debug-private", no_argument, NULL, DBG_PRIVATE + DBG_OFFSET },
 	    { "debug-pfkey", no_argument, NULL, DBG_PFKEY + DBG_OFFSET },
 
@@ -459,6 +464,10 @@ main(int argc, char **argv)
 
 	case 'M':       /* --use-mast */
 	    kern_interface = USE_MASTKLIPS;
+	    continue;
+
+	case 'F':       /* --use-bsdkame */
+	    kern_interface = USE_BSDKAME;
 	    continue;
 
 	case 'K':       /* --use-netkey */
@@ -615,7 +624,13 @@ main(int argc, char **argv)
 	chdir(coredir);
     }
 
+#ifdef HAVE_SETPROCTITLE
+    setproctitle("pluto master process ");
+#endif
+
     oco = osw_init_options();
+    DBG(DBG_CONTROL, DBG_log("confddir set to %s\n", oco->confddir));
+
     lockfd = create_lock();
 
     /* select between logging methods */

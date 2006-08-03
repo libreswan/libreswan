@@ -1,3 +1,6 @@
+OBJ.freebsd.i386
+OBJ.linux.i386
 UMLPOOL
+TAGS
 umlsetup.sh
 *~

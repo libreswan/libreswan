@@ -30,7 +30,9 @@
 #include <xfrm.h>
 
 #include <openswan.h>
-#include <pfkeyv2.h>
+
+#include <pfkeyv2.h> 
+/* XXX --- we shouldn't be including the wrong thing. #include <linux/pfkeyv2.h> */
 #include <pfkey.h>
 
 #include "sysdep.h"
@@ -383,7 +385,7 @@ netlink_raw_eroute(const ip_address *this_host
 		   , ipsec_spi_t spi
 		   , unsigned int proto UNUSED
 		   , unsigned int transport_proto UNUSED
-		   , unsigned int satype
+		   , enum eroute_type esatype
 		   , const struct pfkey_proto_info *proto_info
 		   , time_t use_lifetime UNUSED
 		   , enum pluto_sadb_operations sadb_op
@@ -401,33 +403,55 @@ netlink_raw_eroute(const ip_address *this_host
     int dir;
     int family;
     int policy;
+    int satype;
     bool ok;
     bool enoent_ok;
 
     policy = IPSEC_POLICY_IPSEC;
 
-    if (satype == SADB_X_SATYPE_INT)
-    {
+    switch(esatype) {
+    case ET_UNSPEC:
+	    satype = SADB_SATYPE_UNSPEC;
+	    break;
+
+    case ET_AH:
+	    satype = SADB_SATYPE_AH;
+	    break;
+
+    case ET_ESP:
+	    satype = SADB_SATYPE_ESP;
+	    break;
+
+    case ET_IPCOMP:
+	    satype = SADB_X_SATYPE_IPCOMP;
+	    break;
+
+    case ET_INT:
 	/* shunt route */
-	switch (ntohl(spi))
-	{
-	case SPI_PASS:
-	    policy = IPSEC_POLICY_NONE;
-	    break;
-	case SPI_DROP:
-	case SPI_REJECT:
-	default:
-	    policy = IPSEC_POLICY_DISCARD;
-	    break;
-	case SPI_TRAP:
-	case SPI_TRAPSUBNET:
-	case SPI_HOLD:
-	  if (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND)
+	    switch (ntohl(spi))
 	    {
-		return TRUE;
+	    case SPI_PASS:
+		    policy = IPSEC_POLICY_NONE;
+		    break;
+	    case SPI_DROP:
+	    case SPI_REJECT:
+	    default:
+		    policy = IPSEC_POLICY_DISCARD;
+		    break;
+	    case SPI_TRAP:
+	    case SPI_TRAPSUBNET:
+	    case SPI_HOLD:
+		    if (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND)
+		    {
+			    return TRUE;
+		    }
+		    break;
 	    }
 	    break;
-	}
+	    
+    case ET_IPIP:
+	    bad_case(ET_IPIP);
+	    break;
     }
 
     memset(&req, 0, sizeof(req));
@@ -551,7 +575,7 @@ netlink_raw_eroute(const ip_address *this_host
 	    break;
 	}
 	else if (proto_info[0].encapsulation != ENCAPSULATION_MODE_TUNNEL
-	&& satype != SADB_X_SATYPE_INT)
+	&& esatype != ET_INT)
 	{
 	    break;
 	}
@@ -590,7 +614,7 @@ netlink_add_sa(const struct kernel_sa *sa, bool replace)
     ip2xfrm(sa->dst, &req.p.id.daddr);
 
     req.p.id.spi = sa->spi;
-    req.p.id.proto = satype2proto(sa->satype);
+    req.p.id.proto = esatype2proto(sa->esatype);
     req.p.family = sa->src->u.v4.sin_family;
     req.p.mode = (sa->encapsulation == ENCAPSULATION_MODE_TUNNEL);
     req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window; 
@@ -656,7 +680,7 @@ netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	attr = (struct rtattr *)((char *)attr + attr->rta_len);
     }
 
-    if (sa->satype == SADB_X_SATYPE_COMP)
+    if (sa->esatype == ET_IPCOMP)
     {
 	struct xfrm_algo algo;
 	const char *name;

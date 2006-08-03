@@ -907,6 +907,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	}
 }
 
+#ifdef KLIPS
 struct _new_klips_mapp_nfo {
 	struct sadb_sa *sa;
 	ip_address src, dst;
@@ -982,6 +983,7 @@ void process_pfkey_nat_t_new_mapping(
 	if (ugh != NULL)
 		openswan_log("K_SADB_X_NAT_T_NEW_MAPPING message from KLIPS malformed: %s", ugh);
 }
+#endif /* USE_KLIPS */
 
 #endif
 

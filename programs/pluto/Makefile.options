@@ -55,8 +55,7 @@ CFLAGS +=-g -Wall -W -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast \
 	-Wstrict-prototypes # -Wundef
 
 # where to find klips headers and Openswan headers
-# and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
-HDRDIRS = -I${OPENSWANSRCDIR}/programs/pluto/linux26 -I${OPENSWANSRCDIR}/include -I$(OPENSWANSRCDIR)/lib/libcrypto -I$(KLIPSINC) 
+HDRDIRS = -I${OPENSWANSRCDIR}/include -I$(OPENSWANSRCDIR)/lib/libcrypto -I$(KLIPSINC) 
 
 # On non-LINUX systems, these one of these may be needed (see endian.h)
 # BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=BIG_ENDIAN
@@ -119,7 +118,8 @@ endif
 
 NETKEY_DIST_SRCS=kernel_netlink.c kernel_netlink.h
 ifeq ($(USE_KERNEL26),true)
-NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES 
+# find 2.6 kernel's <rtnetlink.h> and <xfrm.h> in subdir
+NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -I${OPENSWANSRCDIR}/programs/pluto/linux26 
 NETKEY_SRCS=${NETKEY_DIST_SRCS}
 NETKEY_OBJS=kernel_netlink.o
 endif
@@ -150,6 +150,14 @@ ifeq ($(USE_WIN2K_FUNK),true)
 FUNK_SRCS=${FUNK_DIST_SRCS}
 FUNK_DEFS=-DWIN2K_FUNK_IPSEC
 FUNK_OBJS=kernel_funk.o
+endif
+
+BSDKAME_DIST_SRCS=kernel_bsdkame.c
+ifeq ($(USE_BSDKAME),true)
+BSDKAME_SRCS=${BSDKAME_DIST_SRCS}
+BSDKAME_DEFS=-DBSD_KAME
+BSDKAME_OBJS=kernel_bsdkame.o
+BSDKAME_LIBS=${LIBBSDPFKEY}
 endif
 
 
@@ -276,7 +284,7 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(HAVE_THREADS_DEFS) \
 	$(SMARTCARD_DEFS) \
 	-DPLUTO \
-	${KLIPS_DEFS} ${WIN2K_DEFS} ${TPM_DEFS} ${MAST_DEFS} \
+	${KLIPS_DEFS} ${WIN2K_DEFS} ${TPM_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	-DBUILDER=\"${BUILDER}\" \
 	-DDEBUG \
 	-DGCC_LINT \
@@ -297,9 +305,9 @@ LIBSPLUTO+=${LIBSHA1} ${LIBMD5} ${LIBMD2}
 LIBSPLUTO+=$(IPSECPOLICY_LIBS) $(X509_LIBS) $(SMARTCARD_LIBS) 
 LIBSPLUTO+=$(HAVE_THREADS_LIBS) ${XAUTHPAM_LIBS}
 LIBSPLUTO+=${CURL_LIBS} ${TPM_LIBS}
-LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${WHACKLIB}
+LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${WHACKLIB} ${BSDKAME_LIBS}
 PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${TPM_LLIBS} ${HAVE_THREADS_LLIBS} 
-PLUTOMINUSL+= ${XAUTH_LLIBS}
+PLUTOMINUSL+= ${XAUTH_LLIBS} 
 PLUTOMINUSL+= ${SMARTCARD_LLIBS} ${OPENSSL_LIBS} ${LIBCRYPT} -lgmp # -lefence
 
 

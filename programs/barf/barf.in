@@ -267,7 +267,7 @@ then
 	cat /proc/config_built_with
 fi
 _________________________ distro-release
-for distro in /etc/redhat-release /etc/debian-release /etc/SuSE-release /etc/mandrake-release /etc/mandriva-release /etc/gentoo-release
+for distro in /etc/redhat-release /etc/debian_version /etc/SuSE-release /etc/mandrake-release /etc/mandriva-release /etc/gentoo-release /etc/motd
 do
         if test -f $distro
         then

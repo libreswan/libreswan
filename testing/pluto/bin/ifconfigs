@@ -12,10 +12,10 @@ for i
 do
 	case "$i" in
 	up)
-		/sbin/ifconfig $EASTIF $EASTIP netmask 255.255.255.255
-		/sbin/ifconfig $WESTIF $WESTIP netmask 255.255.255.255
-		/sbin/ifconfig $NORTHIF $NORTHIP netmask 255.255.255.255
-		/sbin/ifconfig $SOUTHIF $SOUTHIP netmask 255.255.255.255
+		/sbin/ifconfig $EASTIF $EASTIP netmask 255.255.255.255 $ALIAS
+		/sbin/ifconfig $WESTIF $WESTIP netmask 255.255.255.255 $ALIAS
+		/sbin/ifconfig $NORTHIF $NORTHIP netmask 255.255.255.255 $ALIAS
+		/sbin/ifconfig $SOUTHIF $SOUTHIP netmask 255.255.255.255 $ALIAS
 		;;
 	down)
 		/sbin/ifconfig $EASTIF down

@@ -22,7 +22,10 @@
 #include <assert.h>
 #include <sys/queue.h>
 
+#include "oswalloc.h"
+
 #include "ipsecconf/parser.h"
+#include "ipsecconf/files.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/interfaces.h"
 #include "ipsecconf/starterlog.h"
@@ -84,6 +87,8 @@ static void default_values (struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_AUTO] = STARTUP_NO;
 	cfg->conn_default.state = STATE_LOADED;
+
+	cfg->ctlbase = clone_str(CTL_FILE, "default base");
 }
 
 #define ERR_FOUND(args...) \
@@ -258,7 +263,8 @@ static int load_setup (struct starter_config *cfg
  * Validate that yes in fact we are one side of the tunnel
  * 
  * The function checks that IP addresses are valid, nexthops are
- * present (if needed) as well as policies
+ * present (if needed) as well as policies, and sets the leftID 
+ * from the left= if it isn't set.
  *
  * @param conn_st a connection definition
  * @param end a connection end
@@ -274,6 +280,15 @@ static int validate_end(struct starter_conn *conn_st
     int err=0;
     
     end->addrtype=end->options[KNCF_IP];
+
+    /* validate the KSCF_ID */
+    if(end->strings[KSCF_ID] != NULL)
+    {
+	char *value = end->strings[KSCF_ID];
+	
+	if (end->id) free(end->id);
+	end->id = xstrdup(value);
+    } 
 
     /* validate the KSCF_IP/KNCF_IP */
     switch(end->addrtype)
@@ -298,6 +313,13 @@ static int validate_end(struct starter_conn *conn_st
 
 	er = ttoaddr(end->strings[KNCF_IP], 0, AF_INET, &(end->addr));
 	if (er) ERR_FOUND("bad addr %s=%s [%s]", (left ? "left" : "right"), end->strings[KNCF_IP], er);
+
+	if(end->id == NULL) {
+	    char idbuf[ADDRTOT_BUF];
+	    addrtot(&end->addr, 0, idbuf, sizeof(idbuf));
+	    
+	    end->id=clone_str(idbuf, "end if");
+	}
 	break;
 	
     case KH_OPPO:
@@ -358,37 +380,30 @@ static int validate_end(struct starter_conn *conn_st
 	anyaddr(AF_INET, &end->nexthop);
     }
 
-    /* validate the KSCF_ID */
-    if(end->strings[KSCF_ID] != NULL)
-    {
-	char *value = end->strings[KSCF_ID];
-	
-	if (end->id) free(end->id);
-	end->id = xstrdup(value);
-    }
-
-    switch(end->options[KSCF_RSAKEY1]) {
-    case PUBKEY_DNS:
-    case PUBKEY_DNSONDEMAND:
-	end->key_from_DNS_on_demand = TRUE;
-	break;
-
-    default:
-	end->key_from_DNS_on_demand = FALSE;
-	/* validate the KSCF_RSAKEY1/RSAKEY2 */
-	if(end->strings[KSCF_RSAKEY1] != NULL)
-	{
-	    char *value = end->strings[KSCF_RSAKEY1];
+    if(end->options_set[KSCF_RSAKEY1]) {
+	switch(end->options[KSCF_RSAKEY1]) {
+	case PUBKEY_DNS:
+	case PUBKEY_DNSONDEMAND:
+	    end->key_from_DNS_on_demand = TRUE;
+	    break;
 	    
-	    if (end->rsakey1) free(end->rsakey1);
-	    end->rsakey1 = xstrdup(value);
-	}
-	if(end->strings[KSCF_RSAKEY2] != NULL)
-	{
-	    char *value = end->strings[KSCF_RSAKEY2];
-	    
-	    if (end->rsakey2) free(end->rsakey2);
-	    end->rsakey2 = xstrdup(value);
+	default:
+	    end->key_from_DNS_on_demand = FALSE;
+	    /* validate the KSCF_RSAKEY1/RSAKEY2 */
+	    if(end->strings[KSCF_RSAKEY1] != NULL)
+		{
+		    char *value = end->strings[KSCF_RSAKEY1];
+		    
+		    if (end->rsakey1) free(end->rsakey1);
+		    end->rsakey1 = xstrdup(value);
+		}
+	    if(end->strings[KSCF_RSAKEY2] != NULL)
+		{
+		    char *value = end->strings[KSCF_RSAKEY2];
+		    
+		    if (end->rsakey2) free(end->rsakey2);
+		    end->rsakey2 = xstrdup(value);
+		}
 	}
     }
 
@@ -782,7 +797,7 @@ static int load_conn (struct starter_config *cfg
 }
 
     
-void conn_default (struct starter_conn *conn,
+void conn_default (char *n, struct starter_conn *conn,
 		   struct starter_conn *def)
 {
     int i;
@@ -802,7 +817,7 @@ void conn_default (struct starter_conn *conn,
     CONN_STR(conn->right.id);
     CONN_STR(conn->right.rsakey1);
     CONN_STR(conn->right.rsakey2);
-    
+
     for(i=0; i<KSCF_MAX; i++)
     {
 	CONN_STR(conn->left.strings[i]);
@@ -840,7 +855,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name, err_
 	return NULL;
     }
 
-    conn_default(conn, &cfg->conn_default);
+    conn_default(name, conn, &cfg->conn_default);
     conn->name = xstrdup(name);
     conn->desired_state = STARTUP_NO;
     conn->state = STATE_FAILED;
@@ -874,7 +889,7 @@ int init_load_conn(struct starter_config *cfg
 }
 
 
-struct starter_config *confread_load(const char *file, err_t *perr)
+struct starter_config *confread_load(const char *file, err_t *perr, char *ctlbase)
 {
 	struct starter_config *cfg = NULL;
 	struct config_parsed *cfgp;
@@ -899,6 +914,11 @@ struct starter_config *confread_load(const char *file, err_t *perr)
 	 * Set default values
 	 */
 	default_values(cfg);
+
+	if(ctlbase) {
+	    pfree(cfg->ctlbase);
+	    cfg->ctlbase = clone_str(ctlbase, "control socket");
+	}
 
 	/**
 	 * Load setup

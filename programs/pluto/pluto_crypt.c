@@ -650,18 +650,24 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	int fd;
 	int maxfd;
 	struct rlimit nf;
-	int i;
 
+#ifdef HAVE_SETPROCTITLE
+	setproctitle("pluto helper %s #%3d   ", pluto_ifn_inst, n);
+#else
 	/* diddle with our proc title */
-	memset(global_argv[0], '\0', strlen(global_argv[0])+1);
-	sprintf(global_argv[0], "pluto helper %s #%3d   ", pluto_ifn_inst, n);
-	for(i = 1; i < global_argc; i++) {
-	    if(global_argv[i]) {
-		int l = strlen(global_argv[i]);
-		memset(global_argv[i], '\0', l);
+	{
+	    int i;
+	    memset(global_argv[0], '\0', strlen(global_argv[0])+1);
+	    sprintf(global_argv[0], "pluto helper %s #%3d   ", pluto_ifn_inst, n);
+	    for(i = 1; i < global_argc; i++) {
+		if(global_argv[i]) {
+		    int l = strlen(global_argv[i]);
+		    memset(global_argv[i], '\0', l);
+		}
+		global_argv[i]=NULL;
 	    }
-	    global_argv[i]=NULL;
 	}
+#endif
 
 	if(getenv("PLUTO_CRYPTO_HELPER_DEBUG")) {
 	    sprintf(global_argv[0], "pluto helper %s #%3d (waiting for GDB) "

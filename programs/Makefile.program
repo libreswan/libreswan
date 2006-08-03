@@ -182,7 +182,7 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp
 
 %: ${srcdir}%.in ${OPENSWANSRCDIR}/Makefile.inc ${OPENSWANSRCDIR}/Makefile.ver
 	@echo  $< '->' $@
-	@cat $< | sed -e "s/xxx/$(IPSECVERSION)/" \
+	@cat $< | sed -e "s,xxx,$(IPSECVERSION)," \
 			-e "s:@IPSEC_DIR@:$(FINALBINDIR):" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):" \

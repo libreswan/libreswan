@@ -37,6 +37,33 @@ SHELL=/bin/sh
 
 .PHONY:	programs checkprograms clean
 
+# supply kernel-configuration ARCH defaults
+ifeq ($(ARCH),)
+ARCH := $(shell uname -m)
+endif
+# always sanitize $(ARCH)
+ARCH := $(shell echo $(ARCH) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
+
+ifeq ($(OSDEP),)
+OSDEP:=$(shell uname -s | tr 'A-Z' 'a-z')
+endif
+
+-include ${OPENSWANSRCDIR}/Makefile.ver
+IPSECVERSION:=${IPSECBASEVERSION}$(shell ${OPENSWANSRCDIR}/packaging/utils/setlocalversion ${OPENSWANSRCDIR})
+export IPSECVERSION
+
+# include OSDEP/ARCH specific makefiles, if any.
+# OSDEP=linux,bsd,cygwin
+# 
+# but, BUILDENV could be mingw32-linux, or mingw32, etc..
+ifeq ($(BUILDENV),)
+BUILDENV=$(shell uname -s | tr 'A-Z' 'a-z' | sed -e 's/\(.*\)-.*/\1/')
+endif
+export BUILDENV
+export OSDEP
+include ${OPENSWANSRCDIR}/packaging/defaults/${BUILDENV}
+-include ${OPENSWANSRCDIR}/packaging/defaults/${BUILDENV}.${ARCH}
+
 ### install pathnames
 
 # DESTDIR can be used to supply a prefix to all install targets.
@@ -159,7 +186,7 @@ INSTALL=install
 # how backup names are composed.
 # Note that the install procedures will never overwrite an existing config
 # file, which is why -b is not specified for them.
-INSTBINFLAGS=-b --suffix=.old
+INSTBINFLAGS=-b -B .old
 INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
 INSTMANFLAGS=
 INSTCONFFLAGS=
@@ -304,6 +331,9 @@ USE_SAREF_KERNEL=false
 # include support for NETKEY 2.5/2.6 IPsec in pluto (aka "native", "kame")
 USE_KERNEL26?=true
 
+# include support for BSD/KAME IPsec in pluto (on *BSD)
+USE_BSDKAME?=false
+
 # include support for sending Openswan Vendor IDs
 USE_VENDORID?=true
 
@@ -393,33 +423,6 @@ ifeq ($(USE_OBJDIR),)
 USE_OBJDIR?=true
 endif
 
-# supply kernel-configuration ARCH defaults
-ifeq ($(ARCH),)
-ARCH := $(shell uname -m)
-endif
-# always sanitize $(ARCH)
-ARCH := $(shell echo $(ARCH) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
-
-ifeq ($(OSDEP),)
-OSDEP:=$(shell uname -s | tr 'A-Z' 'a-z')
-endif
-
--include ${OPENSWANSRCDIR}/Makefile.ver
-IPSECVERSION:=${IPSECBASEVERSION}$(shell ${OPENSWANSRCDIR}/packaging/utils/setlocalversion ${OPENSWANSRCDIR})
-export IPSECVERSION
-
-# include OSDEP/ARCH specific makefiles, if any.
-# OSDEP=linux,bsd,cygwin
-# 
-# but, BUILDENV could be mingw32-linux, or mingw32, etc..
-ifeq ($(BUILDENV),)
-BUILDENV=$(shell uname -s | tr 'A-Z' 'a-z' | sed -e 's/\(.*\)-.*/\1/')
-endif
-export BUILDENV
-export OSDEP
-include ${OPENSWANSRCDIR}/packaging/defaults/${BUILDENV}
--include ${OPENSWANSRCDIR}/packaging/defaults/${BUILDENV}.${ARCH}
-
 ifeq ($(USE_OBJDIR),true)
 OBJDIR=OBJ.${BUILDENV}.${ARCH}
 OBJDIRTOP=${OPENSWANSRCDIR}/${OBJDIR}
@@ -446,6 +449,7 @@ LWRESDIR=${OPENSWANSRCDIR}/lib/liblwres
 LIBLWRES=${OBJDIRTOP}/lib/liblwres/liblwres.a
 LIBDNS=${OBJDIRTOP}/lib/libdns/libdns.a
 LIBISC=${OBJDIRTOP}/lib/libisc/libisc.a
+LIBBSDPFKEY=${OBJDIRTOP}/lib/libbsdpfkey/libbsdpfkey.a
 ISCARCH?=unix
 ISCHOSTARCH?=unix
 

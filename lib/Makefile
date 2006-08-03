@@ -29,6 +29,10 @@ ifeq ($(USE_IPSECPOLICY),true)
 SUBDIRS+=libipsecpolicy
 endif
 
+ifeq ($(USE_BSDKAME),true)
+SUBDIRS+=libbsdpfkey
+endif
+
 def:
 	@echo "Please read doc/intro.html or INSTALL before running make"
 	@false

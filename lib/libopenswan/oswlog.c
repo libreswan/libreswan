@@ -54,8 +54,10 @@ tool_init_log(void)
     if (log_to_syslog)
 	openlog(progname, LOG_CONS | LOG_NDELAY | LOG_PID, LOG_AUTHPRIV);
 
+#ifdef PFKEYV2
     pfkey_error_func = printf;
     pfkey_debug_func = printf;
+#endif
 }
 
 void
@@ -217,8 +219,10 @@ set_debugging(lset_t deb)
 {
     cur_debugging = deb;
 
+#ifdef PFKEYV2
     pfkey_lib_debug = (cur_debugging&DBG_PFKEY ?
 		       PF_KEY_DEBUG_PARSE_MAX : PF_KEY_DEBUG_PARSE_NONE);
+#endif
 }
 
 /* log a debugging message (prefixed by "| ") */

@@ -84,6 +84,15 @@ struct cryptodev_meth cryptodev;
 
 /*
  * Convert a BIGNUM to the representation that /dev/crypto needs.
+ *
+ * BIGNUMs are stored in arrays of "BN_BITS2" chunks, in little-endian
+ *         format, a->top is last used chunk, a->dmax is size of array,
+ *         a->neg if negative.
+ *         Each *chunk* are in native endian format.
+ *
+ * CRYPTODEV expects big nums to be stored in an array of bytes, in
+ *           little endian byte format.
+ *
  */
 static int
 bn2crparam(const BIGNUM *a, struct crparam *crp)

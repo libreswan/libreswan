@@ -66,7 +66,7 @@ MANS=
 SHOULDWERESTART=${USE_OBJDIR}$(wildcard whacklib.c)
 ifeq ($(SHOULDWERESTART),truewhacklib.c)
 all programs clean install:
-	cd ${OPENSWANSRCDIR} && cd ${OBJDIRTOP}/lib/libwhack && make $@
+	cd ${OPENSWANSRCDIR} && cd ${OBJDIRTOP}/lib/libwhack && ${MAKE} $@
 else
 all:	$(LIB) ${LIBL}
 programs: $(LIB) ${LIBL}

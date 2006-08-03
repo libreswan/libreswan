@@ -51,24 +51,24 @@ doinstall:
 	@for d in $(MANDIR); do mkdir -p $$d; done
 	@for f in $(MANS) ; \
 	do \
-		$(INSTALL) $(INSTMANFLAGS) $(MANSRCDIR)/$$f $(MANDIR)/ipsec_$$f || exit 1 ; \
+		$(INSTALL) $(INSTMANFLAGS) $(MANSRCDIR)/$$f $(MANTREE)/ipsec_$$f || exit 1 ; \
 	done
 	@$(OPENSWANSRCDIR)/packaging/utils/manlink $(foreach man, $(MANS), ${MANSRCDIR}/$(man)) | \
 	while read from to; \
 	do \
-		ln -s -f ipsec_$$from $(MANDIR)/$$to; \
+		ln -s -f ipsec_$$from $(MANTREE)/$$to; \
 	done
 
 
 install_file_list:
 	@for f in $(MANS) ; \
 	do \
-		echo $(MANDIR)/ipsec_$$f;\
+		echo $(MANTREE)/ipsec_$$f;\
 	done;
 	@$(OPENSWANSRCDIR)/packaging/utils/manlink $(foreach man, $(MANS), ${MANSRCDIR}/$(man)) | \
 	while read from to; \
 	do \
-		echo $(MANDIR)/$$to; \
+		echo $(MANTREE)/$$to; \
 	done
 
 $(LIB): $(OBJS)

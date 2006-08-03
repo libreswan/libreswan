@@ -91,7 +91,7 @@ install: ${alldocs} ${SAMPLEMAN}
 	do \
 		$(INSTALL) $$file ${DOCDIR} || exit 1;\
 	done;
-	/bin/bash -c 'MANDIR=${MANTREE}; /usr/bin/find ${OPENSWANSRCDIR}/programs ${OPENSWANSRCDIR}/lib ${OPENSWANSRCDIR}/linux -type f -name "*.[1-8]" -print | grep -v lwres | grep -v CVS | while read f; do if [ -f $$f ]; then  manNo=$${f##*.}; F=$${f##*/}; /bin/mkdir -p  $$MANDIR/man$$manNo; /bin/cp -fp $$f $$MANDIR/man$$manNo/ipsec_$$F; fi; done'
+	@/bin/bash -c 'MANDIR=${MANTREE}; /usr/bin/find ${OPENSWANSRCDIR}/programs ${OPENSWANSRCDIR}/lib ${OPENSWANSRCDIR}/linux -type f -name "*.[1-8]" -print | grep -v lwres | grep -v CVS | while read f; do if [ -f $$f ]; then  manNo=$${f##*.}; F=$${f##*/}; /bin/mkdir -p  $$MANDIR/man$$manNo; /bin/cp -fp $$f $$MANDIR/man$$manNo/ipsec_$$F; fi; done'
 
 install_file_list:
 	@$(foreach f, $(alldocs), \
