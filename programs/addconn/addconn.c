@@ -207,7 +207,11 @@ main(int argc, char *argv[])
     if(optind == argc && !all && !listroute && !liststart && !search && !typeexport) {
 	usage();
     }
-    
+
+    if(verbose > 3) {
+	extern int yydebug;
+	yydebug=1;
+    }
 
     /* find config file */
     confdir = getenv(IPSEC_CONFDIR_VAR);
@@ -238,8 +242,8 @@ main(int argc, char *argv[])
     cfg = confread_load(configfile, &err, ctlbase);
     
     if(cfg == NULL) {
-	printf("can not load config '%s': %s\n",
-	       configfile, err);
+	fprintf(stderr, "can not load config '%s': %s\n",
+		configfile, err);
 	exit(3);
     }
 

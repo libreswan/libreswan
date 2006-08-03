@@ -1,0 +1,69 @@
+-*- emacs-wiki -*-
+
+KLIPStest paramaters
+
+   The klipstest function starts a program
+   (testing/utils/uml_netjig/uml_netjig) to setup a bunch of I/O sockets
+   (that simulate network interfaces). It then exports the references to
+   these sockets to the environment and invokes (using system()) a given
+   script. It waits for the script to finish.
+
+   The script invoked (testing/utils/host-test.tcl) is a TCL [6]expect
+   script that arranges to start the UML and configure it appropriately
+   for the test. The configuration is done with the script given above
+   for INIT_SCRIPT. The TCL script then forks, leaves the UML in the
+   background and exits. uml_netjig continues. It then starts listening
+   to the simulated network answering ARPs and inserting packets as
+   appropriate.
+
+   The klipstest function invokes uml_netjig with arguments to capture
+   output from network interface(s) and insert packets as appropriate:
+
+   PUB_INPUT
+          a [7]pcap file to feed in on the public (encrypted) interface.
+          (typically, eth1)
+
+   PRIV_INPUT
+          a pcap file to feed in on the private (plain-text) interface
+          (typically, eth0).
+
+   REF_PUB_OUTPUT
+          a text file containing tcpdump output. Packets on the public
+          (eth1) interface are captured to a [8]pcap file by uml_netjig.
+          The klipstest function then uses tcpdump on the file to produce
+          text output, which is compared to the file given.
+
+   REF_PUB_FILTER
+          a program that will filter the TCPDUMP output to do further
+          processing. Defaults to "cat".
+
+   REF_PRIV_OUTPUT
+          a text file containing tcpdump output. Packets on the private
+          (eth0) interface are captured and compared after conversion by
+          tcpdump, as with REFPUBOUTPUT.
+
+   REF_PRIV_FILTER
+          a program that will filter the TCPDUMP output to do further
+          processing. Defaults to "cat".
+
+   EXITONEMPTY
+          a flag for uml_netjig. It should contain "--exitonempty" of
+          uml_netjig should exit when all of the input
+          (PUBINPUT,PRIVINPUT) packets have been injected.
+
+   ARPREPLY
+          a flag for uml_netjig. It should contain "--arpreply" if
+          uml_netjig should reply to ARP requests. One will typically set
+          this to avoid having to fudge the ARP cache manually.
+
+   TCPDUMPFLAGS
+          a set of flags for the tcpdump used when converting captured
+          output. Typical values will include "-n" to turn off DNS, and
+          often "-E" to set the decryption key (tcpdump 3.7.1 and higher
+          only) for ESP packets. The "-t" flag (turn off timestamps) is
+          provided automatically
+
+   NETJIG_EXTRA
+          additional comments to be sent to the netjig. This may arrange
+          to record or create additional networks, or may toggle options.
+

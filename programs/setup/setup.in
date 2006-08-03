@@ -87,7 +87,13 @@ done
 # Pick up IPsec configuration (until we have done this, successfully, we
 # do not know where errors should go, hence the explicit "daemon.error"s.)
 # Note the "--export", which exports the variables created.
-eval `ipsec addconn $config --varprefix IPSEC --configsetup`
+variables=`ipsec addconn $config --varprefix IPSEC --configsetup`
+if [ $? != 0 ]
+then
+    echo "Failed to parse config setup portion of ipsec.conf"
+    exit $?
+fi
+eval $variables
 
 if test " $IPSEC_confreadstatus" != " "
 then

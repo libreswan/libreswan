@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_rcv.h,v 1.28 2005/05/11 00:59:45 mcr Exp $
+ * RCSID $Id: ipsec_rcv.h,v 1.28.2.1 2006/07/10 15:52:20 paul Exp $
  */
 
 #ifndef IPSEC_RCV_H
@@ -37,8 +37,10 @@
 /* struct options; */
 
 #define __NO_VERSION__
-#include <linux/module.h>
 #include <linux/config.h>	/* for CONFIG_IP_FORWARD */
+#ifdef CONFIG_MODULES
+#include <linux/module.h>
+#endif
 #include <linux/version.h>
 #include <openswan.h>
 
@@ -135,11 +137,17 @@ extern int sysctl_ipsec_inbound_policy_check;
 
 extern int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type);
 
+// manage ipsec rcv state objects
+extern int ipsec_rcv_state_cache_init (void);
+extern void ipsec_rcv_state_cache_cleanup (void);
 
 #endif /* IPSEC_RCV_H */
 
 /*
  * $Log: ipsec_rcv.h,v $
+ * Revision 1.28.2.1  2006/07/10 15:52:20  paul
+ * Fix for bug #642 by Bart Trojanowski
+ *
  * Revision 1.28  2005/05/11 00:59:45  mcr
  * 	do not call debug routines if !defined KLIPS_DEBUG.
  *

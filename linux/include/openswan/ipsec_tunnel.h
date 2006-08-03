@@ -130,6 +130,9 @@ extern int sysctl_ipsec_debug_verbose;
 #define DB_TN_ENCAP     0x0200
 #endif /* CONFIG_KLIPS_DEBUG */
 
+// manage ipsec xmit state objects
+extern int ipsec_xmit_state_cache_init (void);
+extern void ipsec_xmit_state_cache_cleanup (void);
 /*
  * $Log: ipsec_tunnel.h,v $
  * Revision 1.33  2005/06/04 16:06:05  mcr

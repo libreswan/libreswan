@@ -15,7 +15,7 @@
  * for more details.
  */
 
-char ipsec_xmit_c_version[] = "RCSID $Id: ipsec_xmit.c,v 1.20.2.4 2006/04/20 16:33:07 mcr Exp $";
+char ipsec_xmit_c_version[] = "RCSID $Id: ipsec_xmit.c,v 1.20.2.6 2006/07/07 22:09:49 paul Exp $";
 
 #define __NO_VERSION__
 #include <linux/module.h>
@@ -284,6 +284,12 @@ ipsec_print_ip(struct iphdr *ip)
 		printk(" (TCP)");
 	if(ip->protocol == IPPROTO_ICMP)
 		printk(" (ICMP)");
+	if(ip->protocol == IPPROTO_ESP)
+		printk(" (ESP)");
+	if(ip->protocol == IPPROTO_AH)
+		printk(" (AH)");
+	if(ip->protocol == IPPROTO_COMP)
+		printk(" (COMP)");
 	printk(" chk:%d", ntohs(ip->check));
 	addrtoa(*((struct in_addr*)(&ip->saddr)), 0, buf, sizeof(buf));
 	printk(" saddr:%s", buf);
@@ -398,8 +404,7 @@ ipsec_xmit_sanity_check_dev(struct ipsec_xmit_state *ixs)
 	}
 
 	ixs->physmtu = ixs->physdev->mtu;
-	ixs->cur_mtu = ixs->dev->mtu;
-
+        ixs->cur_mtu = ixs->physdev->mtu;
 	ixs->stats = (struct net_device_stats *) &(ixs->prv->mystats);
 
 	return IPSEC_XMIT_OK;
@@ -554,8 +559,6 @@ ipsec_xmit_encap_once(struct ipsec_xmit_state *ixs)
 		tailroom += blocksize != 1 ?
 			((blocksize - ((ixs->pyldsz + 2) % blocksize)) % blocksize) + 2 :
 			((4 - ((ixs->pyldsz + 2) % 4)) % 4) + 2;
-#else
-		tailroom += ((8 - ((ixs->pyldsz + 2 * sizeof(unsigned char)) % 8)) % 8) + 2;
 		tailroom += authlen;
 		break;
 #endif /* CONFIG_KLIPS_ESP */
@@ -642,12 +645,10 @@ ipsec_xmit_encap_once(struct ipsec_xmit_state *ixs)
 		
 		dat[len - authlen - 1] = ixs->iph->protocol;
 		ixs->iph->protocol = IPPROTO_ESP;
-
-#ifdef CONFIG_KLIPS_DEBUG
+		
 		if(debug_tunnel & DB_TN_ENCAP) {
 		        dmp("pre-encrypt", dat, len);
 		}
-#endif
 
 		/*
 		 * Do all operations here:
@@ -1059,6 +1060,7 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 	struct ipsec_alg_auth *ixt_a = NULL;
 	int blocksize = 8;
 	enum ipsec_xmit_value bundle_stat = IPSEC_XMIT_OK;
+	struct ipsec_sa *saved_ipsp;
  
 	ixs->newdst = ixs->orgdst = ixs->iph->daddr;
 	ixs->newsrc = ixs->orgsrc = ixs->iph->saddr;
@@ -1238,7 +1240,7 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 	 * How much headroom do we need to be able to apply
 	 * all the grouped transforms?
 	 */
-	ixs->ipsq = ixs->ipsp;	/* save the head of the ipsec_sa chain */
+	saved_ipsp = ixs->ipsp;	/* save the head of the ipsec_sa chain */
 	while (ixs->ipsp) {
 		ixs->sa_len = satot(&ixs->ipsp->ips_said, 0, ixs->sa_txt, sizeof(ixs->sa_txt));
 		if(ixs->sa_len == 0) {
@@ -1278,7 +1280,7 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 				    "replay window counter rolled for SA:<%s%s%s> %s, packet dropped, expiring SA.\n",
 				    IPS_XFORM_NAME(ixs->ipsp),
 				    ixs->sa_len ? ixs->sa_txt : " (error)");
-			ipsec_sa_delchain(ixs->ipsp);
+			ipsec_sa_rm(ixs->ipsp);
 			ixs->stats->tx_errors++;
 			bundle_stat = IPSEC_XMIT_REPLAYROLLED;
 			goto cleanup;
@@ -1306,7 +1308,7 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 		   ipsec_lifetime_check(&ixs->ipsp->ips_life.ipl_packets, "packets",ixs->sa_txt,
 					ipsec_life_countbased, ipsec_outgoing, ixs->ipsp) == ipsec_life_harddied) {
 				
-			ipsec_sa_delchain(ixs->ipsp);
+			ipsec_sa_rm(ixs->ipsp);
 			ixs->stats->tx_errors++;
 			bundle_stat = IPSEC_XMIT_LIFETIMEFAILED;
 			goto cleanup;
@@ -1426,7 +1428,7 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 		ixs->max_tailroom += ixs->tailroom;
 		ixs->pyldsz += (ixs->headroom + ixs->tailroom);
 	}
-	ixs->ipsp = ixs->ipsq;	/* restore the head of the ipsec_sa chain */
+	ixs->ipsp = saved_ipsp;	/* restore the head of the ipsec_sa chain */
 		
 	KLIPS_PRINT(debug_tunnel & DB_TN_CROUT,
 		    "klips_debug:ipsec_xmit_encap_bundle: "
@@ -1700,6 +1702,7 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 		ipsec_print_ip(ixs->iph);
 	}
 #endif
+
 	/*
 	 * Apply grouped transforms to packet
 	 */
@@ -1713,6 +1716,7 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 			ipsec_print_ip(ixs->iph);
 		}
 #endif
+
 		if(encap_stat != IPSEC_XMIT_OK) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 				    "klips_debug:ipsec_xmit_encap_bundle: encap_once failed: %d\n",
@@ -1734,8 +1738,14 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 
 /*
  * $Log: ipsec_xmit.c,v $
- * Revision 1.23  2005/08/28 02:11:32  ken
- * Add missing HAVE_
+ * Revision 1.20.2.6  2006/07/07 22:09:49  paul
+ * From: Bart Trojanowski <bart@xelerance.com>
+ * Removing a left over '#else' that split another '#if/#endif' block in two.
+ *
+ * Revision 1.20.2.5  2006/07/07 15:43:17  paul
+ * From: Bart Trojanowski <bart@xelerance.com>
+ * improved protocol detection in ipsec_print_ip() -- a debug aid.
+ *
  * Revision 1.20.2.4  2006/04/20 16:33:07  mcr
  * remove all of CONFIG_KLIPS_ALG --- one can no longer build without it.
  * Fix in-kernel module compilation. Sub-makefiles do not work.
@@ -1746,13 +1756,8 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
  * Revision 1.20.2.2  2005/11/27 21:41:03  paul
  * Pull down TTL fixes from head. this fixes "Unknown symbol sysctl_ip_default_ttl"in for klips as module.
  *
- * Revision 1.22  2005/08/27 23:07:21  paul
- * Somewhere between 2.6.12 and 2.6.13rc7 the unused security memnber in sk_buff
- * has been removed. This patch should fix compilation for both cases.
- *
- * Revision 1.21  2005/08/05 08:44:54  mcr
- * 	ipsec_kern24.h (compat code for 2.4) must be include
- * 	explicitely now.
+ * Revision 1.20.2.1  2005/08/27 23:40:00  paul
+ * recommited HAVE_SOCK_SECURITY fixes for linux 2.6.13
  *
  * Revision 1.20  2005/07/12 15:39:27  paul
  * include asm/uaccess.h for VERIFY_WRITE

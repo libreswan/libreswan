@@ -108,9 +108,11 @@ typedef unsigned short int IPsecRefTableUnusedCount;
 #define IPSEC_SA_REF_HOST_FIELD_WIDTH (8 * sizeof(IPSEC_SA_REF_HOST_FIELD_TYPE))
 #define IPSEC_SA_REF_FIELD_WIDTH (8 * sizeof(IPsecSAref_t))
 
-#define IPSEC_SA_REF_MASK        (IPSEC_SAREF_NULL >> (IPSEC_SA_REF_FIELD_WIDTH - IPSEC_SA_REF_TABLE_IDX_WIDTH))
-#define IPSEC_SA_REF_TABLE_MASK ((IPSEC_SAREF_NULL >> (IPSEC_SA_REF_FIELD_WIDTH - IPSEC_SA_REF_MAINTABLE_IDX_WIDTH)) << IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
-#define IPSEC_SA_REF_ENTRY_MASK  (IPSEC_SAREF_NULL >> (IPSEC_SA_REF_FIELD_WIDTH - IPSEC_SA_REF_SUBTABLE_IDX_WIDTH))
+#define IPSEC_SA_REF_MAX         (~IPSEC_SAREF_NULL)
+#define IPSEC_SAREF_FIRST        1
+#define IPSEC_SA_REF_MASK        (IPSEC_SA_REF_MAX >> (IPSEC_SA_REF_FIELD_WIDTH - IPSEC_SA_REF_TABLE_IDX_WIDTH))
+#define IPSEC_SA_REF_TABLE_MASK ((IPSEC_SA_REF_MAX >> (IPSEC_SA_REF_FIELD_WIDTH - IPSEC_SA_REF_MAINTABLE_IDX_WIDTH)) << IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
+#define IPSEC_SA_REF_ENTRY_MASK  (IPSEC_SA_REF_MAX >> (IPSEC_SA_REF_FIELD_WIDTH - IPSEC_SA_REF_SUBTABLE_IDX_WIDTH))
 
 #define IPsecSAref2table(x) (((x) & IPSEC_SA_REF_TABLE_MASK) >> IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
 #define IPsecSAref2entry(x) ((x) & IPSEC_SA_REF_ENTRY_MASK)
@@ -124,13 +126,24 @@ typedef unsigned short int IPsecRefTableUnusedCount;
 /* 'struct ipsec_sa' should be 64bit aligned when allocated. */
 struct ipsec_sa 	                        
 {
-	IPsecSAref_t	ips_ref;		/* reference table entry number */
-	atomic_t	ips_refcount;		/* reference count for this struct */
+	atomic_t	ips_refcount;	/* reference count for this struct */
+        int             ips_marked_deleted;     /* used with reference counting */
+	IPsecSAref_t	ips_ref;	/* reference table entry number */
+	IPsecSAref_t	ips_refhim;	/* ref of paired SA, if any */
+	struct ipsec_sa	*ips_next;	 	/* pointer to next xform */
+
 	struct ipsec_sa	*ips_hnext;		/* next in hash chain */
 	struct ipsec_sa	*ips_inext;	 	/* pointer to next xform */
 	struct ipsec_sa	*ips_onext;	 	/* pointer to prev xform */
 
 	struct ifnet	*ips_rcvif;	 	/* related rcv encap interface */
+
+	struct xform_functions *ips_xformfuncs; /* pointer to routines to process this SA */
+
+	struct net_device *ips_out;             /* what interface to emerge on */
+	__u8            ips_transport_direct;   /* if true, punt directly to
+						 * the protocol layer */
+	struct socket  *ips_sock;               /* cache of transport socket */
 
 	ip_said	        ips_said;	 	/* SA ID */
 
@@ -207,7 +220,7 @@ struct ipsec_sa
 #endif
 	struct ipsec_alg_enc *ips_alg_enc;
 	struct ipsec_alg_auth *ips_alg_auth;
-	IPsecSAref_t	ips_ref_rel;
+//IPsecSAref_t	ips_ref_rel;
 };
 
 struct IPsecSArefSubTable
@@ -234,13 +247,17 @@ extern int ipsec_sadb_init(void);
 extern struct ipsec_sa *ipsec_sa_alloc(int*error); /* pass in error var by pointer */
 extern IPsecSAref_t ipsec_SAref_alloc(int*erorr); /* pass in error var by pointer */
 extern int ipsec_sa_free(struct ipsec_sa* ips);
-extern int ipsec_sa_put(struct ipsec_sa *ips);
+
+#define ipsec_sa_get(ips) __ipsec_sa_get(ips, __FUNCTION__, __LINE__)
+extern struct ipsec_sa * __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line);
+extern void ipsec_sa_put(struct ipsec_sa *ips);
 extern int ipsec_sa_add(struct ipsec_sa *ips);
-extern int ipsec_sa_del(struct ipsec_sa *ips);
-extern int ipsec_sa_delchain(struct ipsec_sa *ips);
+extern void ipsec_sa_rm(struct ipsec_sa *ips);
 extern int ipsec_sadb_cleanup(__u8 proto);
 extern int ipsec_sadb_free(void);
-extern int ipsec_sa_wipe(struct ipsec_sa *ips);
+extern int ipsec_sa_intern(struct ipsec_sa *ips);
+extern struct ipsec_sa *ipsec_sa_getbyref(IPsecSAref_t ref);
+
 #endif /* __KERNEL__ */
 
 enum ipsec_direction {
@@ -252,102 +269,6 @@ enum ipsec_direction {
 #endif /* _IPSEC_SA_H_ */
 
 /*
- * $Log: ipsec_sa.h,v $
- * Revision 1.23  2005/05/11 01:18:59  mcr
- * 	do not change structure based upon options, to avoid
- * 	too many #ifdef.
- *
- * Revision 1.22  2005/04/14 01:17:09  mcr
- * 	change sadb_state to an enum.
- *
- * Revision 1.21  2004/08/20 21:45:37  mcr
- * 	CONFIG_KLIPS_NAT_TRAVERSAL is not used in an attempt to
- * 	be 26sec compatible. But, some defines where changed.
- *
- * Revision 1.20  2004/07/10 19:08:41  mcr
- * 	CONFIG_IPSEC -> CONFIG_KLIPS.
- *
- * Revision 1.19  2004/04/05 19:55:06  mcr
- * Moved from linux/include/freeswan/ipsec_sa.h,v
- *
- * Revision 1.18  2004/04/05 19:41:05  mcr
- * 	merged alg-branch code.
- *
- * Revision 1.17.2.1  2003/12/22 15:25:52  jjo
- * . Merged algo-0.8.1-rc11-test1 into alg-branch
- *
- * Revision 1.17  2003/12/10 01:20:06  mcr
- * 	NAT-traversal patches to KLIPS.
- *
- * Revision 1.16  2003/10/31 02:27:05  mcr
- * 	pulled up port-selector patches and sa_id elimination.
- *
- * Revision 1.15.4.1  2003/10/29 01:10:19  mcr
- * 	elimited "struct sa_id"
- *
- * Revision 1.15  2003/05/11 00:53:09  mcr
- * 	IPsecSAref_t and macros were moved to freeswan.h.
- *
- * Revision 1.14  2003/02/12 19:31:55  rgb
- * Fixed bug in "file seen" machinery.
- * Updated copyright year.
- *
- * Revision 1.13  2003/01/30 02:31:52  rgb
- *
- * Re-wrote comments describing SAref system for accuracy.
- * Rename SAref table macro names for clarity.
- * Convert IPsecSAref_t from signed to unsigned to fix apparent SAref exhaustion bug.
- * Transmit error code through to caller from callee for better diagnosis of problems.
- * Enclose all macro arguments in parens to avoid any possible obscrure bugs.
- *
- * Revision 1.12  2002/10/07 18:31:19  rgb
- * Change comment to reflect the flexible nature of the main and sub-table widths.
- * Added a counter for the number of unused entries in each subtable.
- * Further break up host field type macro to host field.
- * Move field width sanity checks to ipsec_sa.c
- * Define a mask for an entire saref.
- *
- * Revision 1.11  2002/09/20 15:40:33  rgb
- * Re-write most of the SAref macros and types to eliminate any pointer references to Entrys.
- * Fixed SAref/nfmark macros.
- * Rework saref freeslist.
- * Place all ipsec sadb globals into one struct.
- * Restrict some bits to kernel context for use to klips utils.
- *
- * Revision 1.10  2002/09/20 05:00:34  rgb
- * Update copyright date.
- *
- * Revision 1.9  2002/09/17 17:19:29  mcr
- * 	make it compile even if there is no netfilter - we lost
- * 	functionality, but it works, especially on 2.2.
- *
- * Revision 1.8  2002/07/28 22:59:53  mcr
- * 	clarified/expanded one comment.
- *
- * Revision 1.7  2002/07/26 08:48:31  rgb
- * Added SA ref table code.
- *
- * Revision 1.6  2002/05/31 17:27:48  rgb
- * Comment fix.
- *
- * Revision 1.5  2002/05/27 18:55:03  rgb
- * Remove final vistiges of tdb references via IPSEC_KLIPS1_COMPAT.
- *
- * Revision 1.4  2002/05/23 07:13:36  rgb
- * Convert "usecount" to "refcount" to remove ambiguity.
- *
- * Revision 1.3  2002/04/24 07:36:47  mcr
- * Moved from ./klips/net/ipsec/ipsec_sa.h,v
- *
- * Revision 1.2  2001/11/26 09:16:15  rgb
- * Merge MCR's ipsec_sa, eroute, proc and struct lifetime changes.
- *
- * Revision 1.1.2.1  2001/09/25 02:24:58  mcr
- * 	struct tdb -> struct ipsec_sa.
- * 	sa(tdb) manipulation functions renamed and moved to ipsec_sa.c
- * 	ipsec_xform.c removed. header file still contains useful things.
- *
- *
  * Local variables:
  * c-file-style: "linux"
  * End:

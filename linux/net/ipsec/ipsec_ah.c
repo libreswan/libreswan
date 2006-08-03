@@ -13,7 +13,7 @@
  * for more details.
  */
 
-char ipsec_ah_c_version[] = "RCSID $Id: ipsec_ah.c,v 1.12 2005/04/29 05:10:22 mcr Exp $";
+char ipsec_ah_c_version[] = "RCSID $Id: ipsec_ah.c,v 1.12.2.1 2006/02/15 05:35:14 paul Exp $";
 #include <linux/config.h>
 #include <linux/version.h>
 
@@ -162,7 +162,7 @@ ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 	/* finally, do the packet contents themselves */
 	(*aa->update)((void*)&tctx,
 		      (caddr_t)skb->h.raw + ahhlen,
-		      skb->len - irs->iphlen - ahhlen);
+		      skb->len - ahhlen);
 
 	(*aa->final)(irs->hash, (void *)&tctx);
 
@@ -210,6 +210,7 @@ ipsec_rcv_ah_decap(struct ipsec_rcv_state *irs)
 	}
 	skb_pull(skb, ahhlen);
 
+	skb->nh.raw = skb->nh.raw + ahhlen;
 	irs->ipp = skb->nh.iph;
 
 	ipsec_rcv_dmp("ah postpull", (void *)skb->nh.iph, skb->len);
@@ -348,6 +349,15 @@ struct inet_protocol ah_protocol =
 
 /*
  * $Log: ipsec_ah.c,v $
+ * Revision 1.12.2.1  2006/02/15 05:35:14  paul
+ * Patch by  David McCullough <davidm@snapgear.com>
+ * If you setup a tunnel without ESP it doesn't work.  It used to work in
+ * an older openswan version but stopped when klips was modified to deal
+ * with the pulled IP header on the received SKB's.
+ *
+ * The code in ipsec_ah.c still thinks the IP header is there and runs the
+ * hash on the incorrect data.
+ *
  * Revision 1.12  2005/04/29 05:10:22  mcr
  * 	removed from extraenous includes to make unit testing easier.
  *

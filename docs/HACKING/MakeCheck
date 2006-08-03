@@ -1,0 +1,62 @@
+-*- emacs-wiki -*-
+
+                     How to configure to use "make check"
+
+What is "make check"
+
+   "make check" is a target in the top level makefile. It takes care of
+   running a number of unit and system tests to confirm that FreeSWAN has
+   been compiled correctly, and that no new bugs have been introduced.
+
+   As FreeSWAN contains both kernel and userspace components, doing
+   testing of FreeSWAN requires that the kernel be simulated. This is
+   typically difficult to do as a kernel requires that it be run on bare
+   hardware. A technology has emerged that makes this simpler. This is
+   [1]User Mode Linux.
+
+   User-Mode Linux is a way to build a Linux kernel such that it can run
+   as a process under another Linux (or in the future other) kernel.
+   Presently, this can only be done for 2.4 guest kernels. The host
+   kernel can be 2.2 or 2.4.
+
+   "make check" expects to be able to build User-Mode Linux kernels with
+   FreeSWAN included. To do this it needs to have some files downloaded
+   and extracted prior to running "make check". This is described in the
+   [2]UML testing document.
+
+   After having run the example in the UML testing document and
+   successfully brought up the four machine combination, you are ready to
+   use "make check"
+
+Running "make check"
+
+   "make check" works by walking the FreeSWAN source tree invoking the
+   "check" target at each node. At present there are tests defined only
+   for the klips directory. These tests will use the UML infrastructure
+   to test out pieces of the klips code.
+
+   The results of the tests can be recorded. If the environment variable
+   $REGRESSRESULTS is non-null, then the results of each test will be
+   recorded. This can be used as part of a nightly regression testing
+   system, see [[NightlyTesting][Nightly testing for more details]]
+
+   "make check" otherwise prints a minimal amount of output for each
+   test, and indicates pass/fail status of each test as they are run.
+   Failed tests do not cause failure of the target in the form of exit
+   codes.
+
+[[WritingMakeCheckTest][How to write a "make check" test]]
+
+
+
+
+                               Current pitfalls
+
+   "tcpdump dissector" not available.
+          This is a non-fatal warning. If uml_netjig is invoked with the
+          -t option, then it will attempt to use tcpdump's dissector to
+          decode each packet that it processes. The dissector is
+          presently not available, so this option it normally turned off
+          at compile time. The dissector library will be released with
+          tcpdump version 4.0.
+

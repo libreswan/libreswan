@@ -19,3 +19,12 @@ ctltest ipsec.conf-myid-01 good
 
 # test case for restart controls for pluto
 ctltest	ipsec.conf-restart-01	good
+
+
+unittest 	readwriteconf-01	good
+unittest	readwriteconf-02	good
+
+# only valid on KLIPSng branch
+unittest	readwriteconf-03	skip
+
+unittest	readwriteconf-04	good

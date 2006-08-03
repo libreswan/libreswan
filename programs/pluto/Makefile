@@ -88,13 +88,13 @@ DISTSRC = \
 	demux.c demux.h \
 	dnskey.c dnskey.h \
 	dpd.c dpd.h \
-	myid.c \
+	myid.c hmac.c \
 	ipsec_doi.c ipsec_doi.h ikev1_quick.c ikev1_continuations.h \
 	kernel.c kernel.h \
 	${NETKEY_SRCS} \
 	${KLIPS_SRCS} ${MAST_SRCS} ${WIN2K_SRCS} ${FUNK_SRCS} ${BSDKAME_SRCS} \
 	kernel_noklips.c kernel_noklips.h \
-	ike_alg.c ike_alg.h ikeping.c \
+	ike_alg.c ike_alg_status.c ike_alg.h ikeping.c \
 	ike_alg_aes.c ike_alginit.c \
 	rcv_whack.c rcv_whack.h \
 	$(IPSECPOLICY_DIST_SRCS) \
@@ -131,7 +131,7 @@ OBJSGCRYPT =
 
 OBJSPLUTO  = connections.o pending.o cookie.o crypto.o defs.o dpd.o
 OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
-OBJSPLUTO += timer.o pluto_constants.o
+OBJSPLUTO += timer.o pluto_constants.o hmac.o
 OBJSPLUTO += myid.o ipsec_doi.o ikev1_quick.o ikeping.o kernel.o 
 OBJSPLUTO += $(NETKEY_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${FUNK_OBJS}
 OBJSPLUTO += $(BSDKAME_OBJS) 
@@ -142,7 +142,7 @@ OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_print.o
 OBJSPLUTO += vendor.o nat_traversal.o virtual.o 
 OBJSPLUTO += ike_alg_aes.o ike_alginit.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS}
-OBJSPLUTO += ike_alg.o db_ops.o 
+OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o 
 OBJSPLUTO += ${XAUTH_OBJS}
 OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${SMARTCARD_OBJS} ${X509_OBJS} ${HAVE_THREADS_OBJS}

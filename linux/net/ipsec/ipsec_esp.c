@@ -13,7 +13,7 @@
  * for more details.
  */
 
-char ipsec_esp_c_version[] = "RCSID $Id: ipsec_esp.c,v 1.13.2.1 2006/04/20 16:33:06 mcr Exp $";
+char ipsec_esp_c_version[] = "RCSID $Id: ipsec_esp.c,v 1.13.2.4 2006/05/06 03:07:38 ken Exp $";
 #include <linux/config.h>
 #include <linux/version.h>
 
@@ -236,14 +236,14 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 	if (ipsec_alg_esp_encrypt(ipsp, 
 				  idat, irs->ilen, espp->esp_iv, 
 				  IPSEC_ALG_DECRYPT) <= 0) {
-		printk("klips_error:ipsec_rcv: "
-		       "got packet with esplen = %d "
-		       "from %s -- should be on "
-		       "ENC(%d) octet boundary, "
-		       "packet dropped\n",
-		       irs->ilen,
-		       irs->ipsaddr_txt,
-		       ipsp->ips_encalg);
+		KLIPS_ERROR(debug_rcv, "klips_error:ipsec_rcv: "
+			    "got packet with esplen = %d "
+			    "from %s -- should be on "
+			    "ENC(%d) octet boundary, "
+			    "packet dropped\n",
+			    irs->ilen,
+			    irs->ipsaddr_txt,
+			    ipsp->ips_encalg);
 		if(irs->stats) {
 			irs->stats->rx_errors++;
 		}
@@ -349,6 +349,9 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 	return IPSEC_RCV_OK;
 }
 
+/*
+ *
+ */
 enum ipsec_xmit_value
 ipsec_xmit_esp_setup(struct ipsec_xmit_state *ixs)
 {
@@ -534,6 +537,16 @@ struct inet_protocol esp_protocol =
 
 /*
  * $Log: ipsec_esp.c,v $
+ * Revision 1.13.2.4  2006/05/06 03:07:38  ken
+ * Pull in proper padsize->tailroom fix from #public
+ * Need to do correct math on padlen since padsize is not equal to tailroom
+ *
+ * Revision 1.13.2.3  2006/05/05 03:58:04  ken
+ * ixs->padsize becomes ixs->tailroom
+ *
+ * Revision 1.13.2.2  2006/05/01 14:36:03  mcr
+ * use KLIPS_ERROR for fatal things.
+ *
  * Revision 1.13.2.1  2006/04/20 16:33:06  mcr
  * remove all of CONFIG_KLIPS_ALG --- one can no longer build without it.
  * Fix in-kernel module compilation. Sub-makefiles do not work.

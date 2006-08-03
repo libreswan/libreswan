@@ -75,13 +75,14 @@ install programs check:
 	@true
 
 depend: 
-	makedepend -- ${CFLAGS} -- ${OBJS:.o=.c}
+	makedepend -- ${CFLAGS} -- ${NOBJS:.o=.c} uml_netjig.c uml_switch.c
 
 # DO NOT DELETE - these were hand edited.
 
-uml_netjig.o: netjig.h nethub.h port.h hash.h
-nethub.o: netjig.h nethub.h port.h hash.h
-cmdmode.o: netjig.h
-port.o: nethub.h port.h hash.h
-hash.o: nethub.h port.h hash.h
-uml_switch.o: netjig.h nethub.h port.h hash.h
+nethub.o: port.h hash.h nethub.h netjig.h nethub.c
+cmdmode.o: nethub.h netjig.h cmdmode.c
+port.o: hash.h port.h nethub.h port.c
+hash.o: switch.h hash.h hash.c
+tuntap.o: port.h tuntap.c
+uml_netjig.o: port.h hash.h netjig.h nethub.h uml_netjig.c
+uml_switch.o: port.h hash.h netjig.h nethub.h uml_netjig.c

@@ -1,0 +1,18 @@
+-*- emacs-wiki -*-
+
+rpm_build_install_test paramaters
+
+   The rpm_build_install_test type is to verify that the proper packing
+   list is produced by "make rpm", and that the mechanisms for building
+   the kernel modules produce consistent results.
+
+   RPM_KERNEL_SOURCE
+          Point to an extracted copy of the RedHat kernel source code.
+          Variables from the environment may be used.
+
+   REF_RPM_CONTENTS
+          This is a file containing one record per line. Each record
+          consists of a RPM name (may contain wildcards) and a filename
+          to compare the contents to. The RPM will be located and a file
+          list will be produced with rpm2cpio.
+

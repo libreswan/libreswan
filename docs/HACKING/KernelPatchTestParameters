@@ -1,0 +1,30 @@
+-*- emacs-wiki -*-
+
+kernel_patch_test paramaters
+
+   The kernel_patch_test function takes some kernel source, copies it
+   with lndir, and then applies the patch as produced by "make
+   kernelpatch".
+
+   The following are used to control the input and output to the system:
+
+   KERNEL_NAME
+          the kernel name, typically something like "linus" or "rh"
+
+   KERNEL_VERSION
+          the kernel version number, as in "2.2" or "2.4".
+
+   KERNEL_${KERNEL_NAME}${KERNEL_VERSION}_SRC
+          This variable should set in the environment, probably in
+          ~/freeswan-regress-env.sh. Examples of this variables would be
+          KERNEL_LINUS2_0_SRC or KERNEL_RH7_3_SRC. This variable should
+          point to an extracted copy of the kernel source in question.
+
+   REF_PATCH_OUTPUT
+          a copy of the patch output to compare against
+
+   KERNEL_PATCH_LEAVE_SOURCE
+          If set to a non-empty string, then the patched kernel source is
+          not removed at the end of the test. This will typically be set
+          in the environment while debugging.
+

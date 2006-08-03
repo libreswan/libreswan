@@ -53,6 +53,7 @@ char pfkey_v2_parser_c_version[] = "$Id: pfkey_v2_parser.c,v 1.134 2005/05/11 01
 # endif /* SPINLOCK_23 */
 #endif /* SPINLOCK */
 #ifdef NET_21
+# include <net/route.h>          /* inet_addr_type */
 # include <linux/in6.h>
 # define ip_chk_addr inet_addr_type
 # define IS_MYADDR RTN_LOCAL
@@ -184,8 +185,9 @@ pfkey_x_protocol_process(struct sadb_ext *pfkey_ext,
 DEBUG_NO_STATIC int
 pfkey_ipsec_sa_init(struct ipsec_sa *ipsp)
 {
-
-	return ipsec_sa_init(ipsp);
+        int rc;
+	rc = ipsec_sa_init(ipsp);
+        return rc;
 }
 
 int
@@ -470,35 +472,27 @@ pfkey_update_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		nat_t_ips_saved = extr->ips;
 		extr->ips = ipsq;
 	}
-	else {
+	else 
 #endif
+        {
 	
-	/* XXX extr->ips->ips_rcvif = &(enc_softc[em->em_if].enc_if);*/
-	extr->ips->ips_rcvif = NULL;
-	if ((error = pfkey_ipsec_sa_init(extr->ips))) {
-		ipsec_sa_put(ipsq);
-		spin_unlock_bh(&tdb_lock);
-		KLIPS_PRINT(debug_pfkey,
-			    "klips_debug:pfkey_update_parse: "
-			    "not successful for SA: %s, deleting.\n",
-			    sa_len ? sa : " (error)");
-		SENDERR(-error);
-	}
+                /* XXX extr->ips->ips_rcvif = &(enc_softc[em->em_if].enc_if);*/
+                extr->ips->ips_rcvif = NULL;
+                if ((error = pfkey_ipsec_sa_init(extr->ips))) {
+                        ipsec_sa_put(ipsq);
+                        spin_unlock_bh(&tdb_lock);
+                        KLIPS_PRINT(debug_pfkey,
+                                        "klips_debug:pfkey_update_parse: "
+                                        "not successful for SA: %s, deleting.\n",
+                                        sa_len ? sa : " (error)");
+                        SENDERR(-error);
+                }
 
-	extr->ips->ips_life.ipl_addtime.ipl_count = ipsq->ips_life.ipl_addtime.ipl_count;
-	ipsec_sa_put(ipsq);
-	if((error = ipsec_sa_delchain(ipsq))) {
-		spin_unlock_bh(&tdb_lock);
-		KLIPS_PRINT(debug_pfkey,
-			    "klips_debug:pfkey_update_parse: "
-			    "error=%d, trouble deleting intermediate ipsec_sa for SA=%s.\n",
-			    error,
-			    sa_len ? sa : " (error)");
-		SENDERR(-error);
+                extr->ips->ips_life.ipl_addtime.ipl_count = ipsq->ips_life.ipl_addtime.ipl_count;
+
+                /* this will call delchain-equivalent if refcount=>0 */
+                ipsec_sa_put(ipsq);
 	}
-#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-	}
-#endif
 
 	spin_unlock_bh(&tdb_lock);
 	
@@ -906,16 +900,8 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		SENDERR(ESRCH);
 	}
 
+        /* this will call delchain-equivalent if refcount=>0 */
 	ipsec_sa_put(ipsp);
-	if((error = ipsec_sa_delchain(ipsp))) {
-		spin_unlock_bh(&tdb_lock);
-		KLIPS_PRINT(debug_pfkey,
-			    "klips_debug:pfkey_delete_parse: "
-			    "error=%d returned trying to delete ipsec_sa for SA:%s.\n",
-			    error,
-			    sa_len ? sa : " (error)");
-		SENDERR(-error);
-	}
 	spin_unlock_bh(&tdb_lock);
 
 	if(!(pfkey_safe_build(error = pfkey_msg_hdr_build(&extensions_reply[0],
@@ -2688,7 +2674,7 @@ pfkey_build_reply(struct sadb_msg *pfkey_msg,
 	if (!extr || !extr->ips) {
 			KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_build_reply: "
 				    "bad ipsec_sa passed\n");
-			return EINVAL;
+			return EINVAL; // TODO: should this not be negative?
 	}
 	error = pfkey_safe_build(pfkey_msg_hdr_build(&extensions[0],
 						     msg_type,
@@ -2839,7 +2825,7 @@ pfkey_msg_interp(struct sock *sk, struct sadb_msg *pfkey_msg,
 	
 	/* Process the extensions */
 	for(i=1; i <= SADB_EXT_MAX;i++)	{
-		if(extensions[i] != NULL) {
+		if(extensions[i] != NULL && ext_processors[i]!=NULL) {
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_msg_interp: "
 				    "processing ext %d 0p%p with processor 0p%p.\n", 
@@ -2880,10 +2866,10 @@ pfkey_msg_interp(struct sock *sk, struct sadb_msg *pfkey_msg,
 #endif	
  errlab:
 	if(extr.ips != NULL) {
-		ipsec_sa_wipe(extr.ips);
+		ipsec_sa_put(extr.ips);
 	}
 	if(extr.ips2 != NULL) {
-		ipsec_sa_wipe(extr.ips2);
+		ipsec_sa_put(extr.ips2);
 	}
 	if (extr.eroute != NULL) {
 		kfree(extr.eroute);

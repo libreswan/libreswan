@@ -1,0 +1,17 @@
+-*- emacs-wiki -*-
+
+libtest paramaters
+
+   The libtest test is for testing library routines. The library file is
+   expected to provided an #ifdef by the name of library
+   . The libtest type invokes the C compiler to compile this file, links
+   it against libfreeswan.a (to resolve any other dependancies) and runs
+   the test with the -r argument to invoke a regression test.
+
+   The library test case is expected to do a self-test, exiting with
+   status code 0 if everything is okay, and with non-zero otherwise. A
+   core dump (exit code greater than 128) is noted specifically.
+
+   Unlike other tests, there are no subdirectories required, or other
+   parameters to set.
+

@@ -1,0 +1,96 @@
+| main inR1_outI2: calculated ke+nonce, sending I2
+| processing connection marajade--vpsn
+| **emit ISAKMP Message:
+|    initiator cookie:
+|   c8 c9 8b 44  19 84 5a 59
+|    responder cookie:
+|   d0 23 4f 16  d3 3e 23 d4
+|    next payload type: ISAKMP_NEXT_KE
+|    ISAKMP version: ISAKMP Version 1.0
+|    exchange type: ISAKMP_XCHG_IDPROT
+|    flags: none
+|    message ID:  00 00 00 00
+| ***emit ISAKMP Key Exchange Payload:
+|    next payload type: ISAKMP_NEXT_NONCE
+| emitting 192 raw bytes of keyex value into ISAKMP Key Exchange Payload
+| keyex value  53 41 5e 65  f1 c1 1c a9  2e 0c 82 d7  7a e1 4d 24
+|   9d 5f c8 aa  68 99 02 0d  db 88 e9 59  0b e3 b1 7c
+|   82 25 c0 c8  bf 63 2e fc  17 78 2c 41  0a d3 d6 f6
+|   d0 6e b8 71  97 21 22 e4  46 8b 91 93  f9 45 fb 25
+|   1b 10 eb 66  db 3d a5 c8  92 48 2e 8e  aa b8 4e 6a
+|   1f 61 4d d9  a1 10 28 3f  1d 71 78 e0  70 fd 02 37
+|   29 b0 d5 27  30 ff 1d 82  c5 99 54 3b  2c 07 3b f0
+|   6a ed c4 c3  8b 49 53 d4  be 1c 69 88  f5 a0 22 aa
+|   ae eb 32 1b  cb aa 73 47  00 0f 0d c7  5e 2c 4f 47
+|   37 5d e4 40  84 03 fb 3d  7f bb a3 4b  3e 41 21 fd
+|   cb 6f f8 19  1a c8 b6 0d  4e 16 6c 60  77 c2 0f 8e
+|   dd fc 06 74  41 58 a0 f6  d5 44 bb 19  c6 0d 51 27
+| emitting length of ISAKMP Key Exchange Payload: 196
+| ***emit ISAKMP Nonce Payload:
+|    next payload type: ISAKMP_NEXT_NONE
+| emitting 16 raw bytes of Ni into ISAKMP Nonce Payload
+| Ni  e7 ff 90 49  25 b6 ff 99  59 ae 80 84  63 3e ec 2f
+| emitting length of ISAKMP Nonce Payload: 20
+| sending NATD payloads
+| _natd_hash: hasher=0x80e91e0(16)
+| _natd_hash: icookie=
+|   c8 c9 8b 44  19 84 5a 59
+| _natd_hash: rcookie=
+|   d0 23 4f 16  d3 3e 23 d4
+| _natd_hash: ip=  d8 bf 8c 26
+| _natd_hash: port=500
+| _natd_hash: hash=  6d e9 ea f1  ea a1 35 fe  b1 5c 57 83  da 33 30 02
+| ***emit ISAKMP NAT-D Payload:
+|    next payload type: ISAKMP_NEXT_NAT-D
+| emitting 16 raw bytes of NAT-D into ISAKMP NAT-D Payload
+| NAT-D  6d e9 ea f1  ea a1 35 fe  b1 5c 57 83  da 33 30 02
+| emitting length of ISAKMP NAT-D Payload: 20
+| _natd_hash: hasher=0x80e91e0(16)
+| _natd_hash: icookie=
+|   c8 c9 8b 44  19 84 5a 59
+| _natd_hash: rcookie=
+|   d0 23 4f 16  d3 3e 23 d4
+| _natd_hash: ip=  cd 96 c8 f7
+| _natd_hash: port=500
+| _natd_hash: hash=  1e 32 60 d5  cf 6b ad a2  96 70 22 6c  77 6b 4e 24
+| ***emit ISAKMP NAT-D Payload:
+|    next payload type: ISAKMP_NEXT_NONE
+| emitting 16 raw bytes of NAT-D into ISAKMP NAT-D Payload
+| NAT-D  1e 32 60 d5  cf 6b ad a2  96 70 22 6c  77 6b 4e 24
+| emitting length of ISAKMP NAT-D Payload: 20
+| emitting length of ISAKMP Message: 284
+| ICOOKIE:  c8 c9 8b 44  19 84 5a 59
+| RCOOKIE:  00 00 00 00  00 00 00 00
+| peer:  d8 bf 8c 26
+| state hash entry 21
+| ICOOKIE:  c8 c9 8b 44  19 84 5a 59
+| RCOOKIE:  d0 23 4f 16  d3 3e 23 d4
+| peer:  d8 bf 8c 26
+| state hash entry 3
+| complete state transition with STF_OK
+"marajade--vpsn" #408: transition from state STATE_MAIN_I1 to state STATE_MAIN_I2
+| sending reply packet to 216.191.140.38:500 (from port=500)
+| sending 284 bytes for STATE_MAIN_I1 through eth0:500 to 216.191.140.38:500:
+|   c8 c9 8b 44  19 84 5a 59  d0 23 4f 16  d3 3e 23 d4
+|   04 10 02 00  00 00 00 00  00 00 01 1c  0a 00 00 c4
+|   53 41 5e 65  f1 c1 1c a9  2e 0c 82 d7  7a e1 4d 24
+|   9d 5f c8 aa  68 99 02 0d  db 88 e9 59  0b e3 b1 7c
+|   82 25 c0 c8  bf 63 2e fc  17 78 2c 41  0a d3 d6 f6
+|   d0 6e b8 71  97 21 22 e4  46 8b 91 93  f9 45 fb 25
+|   1b 10 eb 66  db 3d a5 c8  92 48 2e 8e  aa b8 4e 6a
+|   1f 61 4d d9  a1 10 28 3f  1d 71 78 e0  70 fd 02 37
+|   29 b0 d5 27  30 ff 1d 82  c5 99 54 3b  2c 07 3b f0
+|   6a ed c4 c3  8b 49 53 d4  be 1c 69 88  f5 a0 22 aa
+|   ae eb 32 1b  cb aa 73 47  00 0f 0d c7  5e 2c 4f 47
+|   37 5d e4 40  84 03 fb 3d  7f bb a3 4b  3e 41 21 fd
+|   cb 6f f8 19  1a c8 b6 0d  4e 16 6c 60  77 c2 0f 8e
+|   dd fc 06 74  41 58 a0 f6  d5 44 bb 19  c6 0d 51 27
+|   14 00 00 14  e7 ff 90 49  25 b6 ff 99  59 ae 80 84
+|   63 3e ec 2f  14 00 00 14  6d e9 ea f1  ea a1 35 fe
+|   b1 5c 57 83  da 33 30 02  00 00 00 14  1e 32 60 d5
+|   cf 6b ad a2  96 70 22 6c  77 6b 4e 24
+| inserting event EVENT_RETRANSMIT, timeout in 10 seconds for #408
+"marajade--vpsn" #408: STATE_MAIN_I2: sent MI2, expecting MR2
+| modecfg pull: noquirk policy:push not-client
+| phase 1 is done, looking for phase 1 to unpend
+| next event EVENT_RETRANSMIT in 2 seconds for #407

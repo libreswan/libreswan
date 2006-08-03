@@ -133,7 +133,7 @@ netjigdebug "Will start additional hosts: $umlid(extra_hosts)"
 
 # we start up netjig_prog with a plain pipe, so that
 # stderr from it will go to our stderr.
-spawn -noecho -open [open "|$netjig_prog --cmdproto -t $netjig_debug_opt 2>@stderr" w+]
+spawn -noecho -open [open "|$netjig_prog --cmdproto $netjig_debug_opt 2>@stderr" w+]
 set netjig1 $spawn_id
 
 netjigsetup $netjig1

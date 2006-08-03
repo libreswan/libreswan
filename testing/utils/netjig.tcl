@@ -99,8 +99,8 @@ proc newswitch {netjig net} {
 
     set arpreply ""
 
-    netjigcmddebug "looking for umlid(net$net,arp)=$umlid(net$net,arp)\n"
     if { [info exists umlid(net$net,arp)] } {
+	netjigcmddebug "looking for umlid(net$net,arp)=$umlid(net$net,arp)\n"
 	if { $umlid(net$net,arp) != 0 } {
 	    set arpreply "--arpreply"
 	}

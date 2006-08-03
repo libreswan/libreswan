@@ -138,7 +138,7 @@ base-ipcomp-objs += ${asm-ipcomp-obj-y}
 
 ipsec-$(CONFIG_KLIPS_IPCOMP) += ${base-ipcomp-objs}
 
-EXTRA_CFLAGS += -DIPCOMP_PREFIX
+EXTRA_CFLAGS += -DIPCOMP_PREFIX -DKLIPS
 
 #
 # $Log: Makefile.fs2_6,v $

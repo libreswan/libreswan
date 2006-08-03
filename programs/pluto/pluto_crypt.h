@@ -27,6 +27,9 @@
  *
  */
 
+#ifndef _PLUTO_CRYPT_H
+#define _PLUTO_CRYPT_H
+
 typedef unsigned int pcr_req_id;
 
 typedef struct wire_chunk {
@@ -175,3 +178,6 @@ extern stf_status perform_dh_secret(struct state *st
 
 extern void calc_dh_iv(struct pluto_crypto_req *r);
 extern void calc_dh(struct pluto_crypto_req *r);
+
+#endif /* _PLUTO_CRYPT_H */
+

@@ -992,7 +992,7 @@ ipsec_proc_cleanup()
 		do {
 			remove_proc_entry(it->name, *it->parent);
 			it--;
-		} while(it > proc_items);
+		} while(it >= proc_items);
 	}
 
 

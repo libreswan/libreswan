@@ -189,7 +189,17 @@ ipsec_klips_init(void)
 		    "KLIPS startup, Openswan KLIPS IPsec stack version: %s\n",
 		    ipsec_version_code());
 
+        error = ipsec_xmit_state_cache_init ();
+        if (error)
+                goto error_xmit_state_cache;
+
+        error = ipsec_rcv_state_cache_init ();
+        if (error)
+                goto error_rcv_state_cache;
+
 	error |= ipsec_proc_init();
+        if (error)
+                goto error_proc_init;
 
 #ifdef SPINLOCK
 	ipsec_sadb.sadb_lock = SPIN_LOCK_UNLOCKED;
@@ -203,11 +213,20 @@ ipsec_klips_init(void)
 #endif /* !SPINLOCK */
 
 	error |= ipsec_sadb_init();
+        if (error)
+                goto error_sadb_init;
+
 	error |= ipsec_radijinit();
+        if (error)
+                goto error_radijinit;
 
 	error |= pfkey_init();
+        if (error)
+                goto error_pfkey_init;
 
 	error |= register_netdevice_notifier(&ipsec_dev_notifier);
+        if (error)
+                goto error_netdev_notifier;
 
 #ifdef CONFIG_KLIPS_ESP
 	openswan_inet_add_protocol(&esp_protocol, IPPROTO_ESP);
@@ -225,6 +244,8 @@ ipsec_klips_init(void)
 #endif
 
 	error |= ipsec_tunnel_init_devices();
+        if (error)
+                goto error_tunnel_init_devices;
 
 #if defined(NET_26) && defined(CONFIG_IPSEC_NAT_TRAVERSAL)
 	/* register our ESP-UDP handler */
@@ -237,6 +258,8 @@ ipsec_klips_init(void)
 
 #ifdef CONFIG_SYSCTL
         error |= ipsec_sysctl_register();
+        if (error)
+                goto error_sysctl_register;
 #endif                                                                          
 
 	ipsec_alg_init();
@@ -245,6 +268,29 @@ ipsec_klips_init(void)
 	prng_init(&ipsec_prng, seed, sizeof(seed));
 
 	return error;
+
+        // undo ipsec_sysctl_register
+error_sysctl_register:
+	ipsec_tunnel_cleanup_devices();
+error_tunnel_init_devices:
+	unregister_netdevice_notifier(&ipsec_dev_notifier);
+error_netdev_notifier:
+	pfkey_cleanup();
+error_pfkey_init:
+	ipsec_radijcleanup();
+error_radijinit:
+	ipsec_sadb_cleanup(0);
+	ipsec_sadb_free();
+error_sadb_init:
+error_proc_init:
+        // ipsec_proc_init() does not cleanup after itself, so we have to do it here
+        // TODO: ipsec_proc_init() should roll back what it chaned on failure
+	ipsec_proc_cleanup();
+        ipsec_rcv_state_cache_cleanup ();
+error_rcv_state_cache:
+        ipsec_xmit_state_cache_cleanup ();
+error_xmit_state_cache:
+        return error;
 }	
 
 
@@ -308,6 +354,12 @@ ipsec_cleanup(void)
 		    "klips_debug:ipsec_cleanup: "
 		    "calling pfkey_cleanup.\n");
 	error |= pfkey_cleanup();
+
+        ipsec_rcv_state_cache_cleanup ();
+        ipsec_xmit_state_cache_cleanup ();
+
+        ipsec_rcv_state_cache_cleanup ();
+        ipsec_xmit_state_cache_cleanup ();
 
 	ipsec_proc_cleanup();
 

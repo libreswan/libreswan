@@ -55,4 +55,11 @@
 +  Enables IPSEC kernel debugging.  It is further controlled by the
 +  user space utility 'klipsdebug'.
 +
++IPSEC Regression Testing option
++CONFIG_IPSEC_REGRESS
++  Enables IPSEC regression testing. Creates a number of switches in
++  /proc/sys/net/ipsec which cause various failure modes in KLIPS.
++  For more details see Openswan source under 
++  testing/doc/regression_options.txt.
++
  # need an empty line after last entry, for sed script in Configure.

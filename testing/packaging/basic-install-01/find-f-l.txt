@@ -4,6 +4,7 @@
 ./etc/ipsec.d/examples/l2tp-psk-orgWIN2KXP.conf
 ./etc/ipsec.d/examples/l2tp-psk.conf
 ./etc/ipsec.d/examples/no_oe.conf
+./etc/ipsec.d/examples/oe.conf
 ./etc/ipsec.d/policies/block
 ./etc/ipsec.d/policies/clear
 ./etc/ipsec.d/policies/clear-or-private
@@ -29,6 +30,7 @@
 ./usr/local/lib/ipsec/_updown
 ./usr/local/lib/ipsec/_updown_x509
 ./usr/local/lib/ipsec/ipsec_pr.template
+./usr/local/libexec/ipsec/addconn
 ./usr/local/libexec/ipsec/auto
 ./usr/local/libexec/ipsec/barf
 ./usr/local/libexec/ipsec/calcgoo
@@ -145,6 +147,7 @@
 ./usr/local/man/man8/ipsec__startklips.8
 ./usr/local/man/man8/ipsec__updown.8
 ./usr/local/man/man8/ipsec__updown_x509.8
+./usr/local/man/man8/ipsec_addconn.8
 ./usr/local/man/man8/ipsec_auto.8
 ./usr/local/man/man8/ipsec_barf.8
 ./usr/local/man/man8/ipsec_calcgoo.8
@@ -191,6 +194,7 @@
 ./usr/local/share/doc/openswan/ipsec__startklips.8.html
 ./usr/local/share/doc/openswan/ipsec__updown.8.html
 ./usr/local/share/doc/openswan/ipsec__updown_x509.8.html
+./usr/local/share/doc/openswan/ipsec_addconn.8.html
 ./usr/local/share/doc/openswan/ipsec_addrbytesof.3.html
 ./usr/local/share/doc/openswan/ipsec_addrbytesptr.3.html
 ./usr/local/share/doc/openswan/ipsec_addrcmp.3.html

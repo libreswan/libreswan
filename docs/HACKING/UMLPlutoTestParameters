@@ -1,0 +1,8 @@
+-*- emacs-wiki -*-
+
+umlplutotest paramaters
+
+   The umlplutotest function starts a pair of user mode line processes.
+   This is a 2-host version of umlXhost. The "EAST" and "WEST" slots are
+   defined.
+

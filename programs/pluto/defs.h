@@ -15,6 +15,9 @@
  * RCSID $Id: defs.h,v 1.36 2004/05/27 00:39:59 mcr Exp $
  */
 
+#ifndef _DEFS_H
+#define _DEFS_H
+
 #include "oswalloc.h"
 
 #ifdef KLIPS
@@ -89,4 +92,4 @@ extern void unlock_authcert_list(const char *who);
 #endif
 
 
-
+#endif /* _DEFS_H */

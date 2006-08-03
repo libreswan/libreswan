@@ -59,11 +59,17 @@ IPSECcrlcheckinterval=${IPSECcrlcheckinterval:-0}
 IPSECprotostack=${IPSECprotostack:-auto}
 # IPSECoverridemtu	""
 
+# set defaults
+mast=false
+klips=false
+netkey=false
+
 # which kernel are we using?
 case $IPSECprotostack in
 auto)
-    if false
+    # for now, you can not auto-select mast
     #if test -f /proc/sys/net/ipsec/debug_mast
+    if false
     then
     	netkey=false; klips=false; mast=true;
     elif test -f $kamepfkey
@@ -161,7 +167,6 @@ then
 	test -r /proc/net/ipsec_klipsdebug && ipsec klipsdebug --none ;
 	test -d /proc/net/ipsec/eroute && ipsec eroute --clear ;
 	test -d /proc/net/ipsec/spi && ipsec spi --clear'
-	#lsmod 2>&1 | grep "^ipsec" > /dev/null && rmmod ipsec'
 fi
 
 # flush some stuff for mast as well

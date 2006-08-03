@@ -245,7 +245,6 @@ defaultinterface() {
 	#fi
 	next=`netstat -nr |
 		awk '$1 == "0.0.0.0" && $3 == "0.0.0.0" { print $2; exit 0 }'`
-	klipsinterface "ipsec0=$phys" $next
 
 	if $klips
 	then

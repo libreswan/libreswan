@@ -114,10 +114,6 @@ endmenu
 #
 #
 # $Log: Kconfig,v $
-# Revision 1.7  2005/10/27 05:20:23  mcr
-# 	adjustment of ipsec_alg so that it will build statically in kernels
-# 	that do not have LKM defined at all.
-#
 # Revision 1.6.2.1  2006/04/20 16:33:06  mcr
 # remove all of CONFIG_KLIPS_ALG --- one can no longer build without it.
 # Fix in-kernel module compilation. Sub-makefiles do not work.

@@ -363,22 +363,24 @@ ipsec_rcv_decap_once(struct ipsec_rcv_state *irs
 
 
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-		KLIPS_PRINT(debug_rcv,
-			"klips_debug:ipsec_rcv: "
-			"natt_type=%u tdbp->ips_natt_type=%u : %s\n",
-			irs->natt_type, newipsp->ips_natt_type,
-			(irs->natt_type==newipsp->ips_natt_type)?"ok":"bad");
-		if (irs->natt_type != newipsp->ips_natt_type) {
-			KLIPS_PRINT(debug_rcv,
-				    "klips_debug:ipsec_rcv: "
-				    "SA:%s does not agree with expected NAT-T policy.\n",
-				    irs->sa_len ? irs->sa : " (error)");
-			if(irs->stats) {
-				irs->stats->rx_dropped++;
-			}
-			ipsec_sa_put(newipsp);
-			return IPSEC_RCV_FAILEDINBOUND;
-		}
+                if (proto == IPPROTO_ESP) {
+                        KLIPS_PRINT(debug_rcv,
+                                "klips_debug:ipsec_rcv: "
+                                "natt_type=%u tdbp->ips_natt_type=%u : %s\n",
+                                irs->natt_type, newipsp->ips_natt_type,
+                                (irs->natt_type==newipsp->ips_natt_type)?"ok":"bad");
+                        if (irs->natt_type != newipsp->ips_natt_type) {
+                                KLIPS_PRINT(debug_rcv,
+                                            "klips_debug:ipsec_rcv: "
+                                            "SA:%s does not agree with expected NAT-T policy.\n",
+                                            irs->sa_len ? irs->sa : " (error)");
+                                if(irs->stats) {
+                                        irs->stats->rx_dropped++;
+                                }
+                                ipsec_sa_put(newipsp);
+                                return IPSEC_RCV_FAILEDINBOUND;
+                        }
+                }
 #endif		 
 	}
 
@@ -406,7 +408,12 @@ ipsec_rcv_decap_once(struct ipsec_rcv_state *irs
 	   ipsec_lifetime_check(&irs->ipsp->ips_life.ipl_packets, "packets",
 				irs->sa, ipsec_life_countbased, ipsec_incoming,
 				irs->ipsp) == ipsec_life_harddied) {
-		ipsec_sa_delchain(irs->ipsp);
+
+		/*
+		 * disconnect SA from the hash table, so it can not be
+		 * found again.
+		 */
+		ipsec_sa_rm(irs->ipsp);
 		if(irs->stats) {
 			irs->stats->rx_dropped++;
 		}
@@ -621,7 +628,10 @@ ipsec_rcv_decap_once(struct ipsec_rcv_state *irs
 
 		/* If the sequence number == 0, expire SA, it had rolled */
 		if(irs->ipsp->ips_replaywin && !replay /* !irs->ipsp->ips_replaywin_lastseq */) {
-			ipsec_sa_delchain(irs->ipsp);
+
+		        /* we need to remove it from the sadb hash, so that it can't be found again */
+			ipsec_sa_rm(irs->ipsp);
+
 			KLIPS_PRINT(debug_rcv,
 				    "klips_debug:ipsec_rcv: "
 				    "replay window counter rolled, expiring SA.\n");
@@ -1326,6 +1336,9 @@ struct sk_buff *ipsec_rcv_natt_decap(struct sk_buff *skb
 }
 #endif
 
+/* management of buffers */
+static struct ipsec_rcv_state * ipsec_rcv_state_new (void);
+static void ipsec_rcv_state_delete (struct ipsec_rcv_state *irs);
 
 int
 ipsec_rcv(struct sk_buff *skb
@@ -1341,7 +1354,7 @@ ipsec_rcv(struct sk_buff *skb
 	struct net_device_stats *stats = NULL;		/* This device's statistics */
 	struct net_device *ipsecdev = NULL, *prvdev;
 	struct ipsecpriv *prv;
-	struct ipsec_rcv_state nirs, *irs = &nirs;
+	struct ipsec_rcv_state *irs = NULL;
 	struct iphdr *ipp;
 	char name[9];
 	int i;
@@ -1349,7 +1362,13 @@ ipsec_rcv(struct sk_buff *skb
 	/* Don't unlink in the middle of a turnaround */
 	KLIPS_INC_USE;
 
-	memset(&nirs, 0, sizeof(struct ipsec_rcv_state));
+        irs = ipsec_rcv_state_new ();
+        if (unlikely (! irs)) {
+		KLIPS_PRINT(debug_rcv,
+			    "klips_debug:ipsec_rcv: "
+			    "failled to allocate a rcv state object\n");
+                goto error_alloc;
+        }
 
 	if (skb == NULL) {
 		KLIPS_PRINT(debug_rcv,
@@ -1402,7 +1421,12 @@ ipsec_rcv(struct sk_buff *skb
 	   twice.
 	*/
 	if (skb_is_nonlinear(skb)) {
-		if (skb_linearize(skb, GFP_ATOMIC) != 0) {
+#ifdef HAVE_NEW_SKB_LINEARIZE
+		if (skb_linearize_cow(skb) != 0)
+#else
+		if (skb_linearize(skb, GFP_ATOMIC) != 0) 
+#endif
+		{
 			goto rcvleave;
 		}
 	}
@@ -1573,6 +1597,8 @@ ipsec_rcv(struct sk_buff *skb
 	irs->skb = skb;
 
 	ipsec_rcv_decap(irs);
+
+        ipsec_rcv_state_delete (irs);
 	KLIPS_DEC_USE;
 	return(0);
 
@@ -1580,7 +1606,9 @@ ipsec_rcv(struct sk_buff *skb
 	if(skb) {
 		ipsec_kfree_skb(skb);
 	}
+        ipsec_rcv_state_delete (irs);
 	KLIPS_DEC_USE;
+ error_alloc:
 	return(0);
 
 }
@@ -1600,13 +1628,19 @@ ipsec_rcv(struct sk_buff *skb
  */
 int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 {
-	struct ipsec_rcv_state nirs, *irs = &nirs;
+	struct ipsec_rcv_state *irs = NULL;
 	struct iphdr *ipp;
+
+        irs = ipsec_rcv_state_new ();
+        if (unlikely (! irs)) {
+		KLIPS_PRINT(debug_rcv,
+			    "klips_debug:ipsec_rcv: "
+			    "failled to allocate a rcv state object\n");
+                goto error_alloc;
+        }
 
 	/* Don't unlink in the middle of a turnaround */
 	KLIPS_INC_USE;
-
-	memset(irs, 0, sizeof(*irs));
 
 	/* XXX fudge it so that all nat-t stuff comes from ipsec0    */
 	/*     eventually, the SA itself will determine which device
@@ -1626,7 +1660,12 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 	   not assembled automatically to save TCP from having to copy
 	   twice.
 	*/
-	if (skb_is_nonlinear(skb)) {
+#ifdef HAVE_NEW_SKB_LINEARIZE
+		if (skb_linearize_cow(skb) != 0) 
+#else
+		if (skb_linearize(skb, GFP_ATOMIC) != 0) 
+#endif
+		{
 		if (skb_linearize(skb, GFP_ATOMIC) != 0) {
 			goto rcvleave;
 		}
@@ -1680,6 +1719,7 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 #endif
 	ipsec_rcv_decap(irs);
 	KLIPS_DEC_USE;
+        ipsec_rcv_state_delete (irs);
 	return 0;
 
 rcvleave:
@@ -1687,10 +1727,86 @@ rcvleave:
 		ipsec_kfree_skb(skb);
 	}
 	KLIPS_DEC_USE;
+        ipsec_rcv_state_delete (irs);
+error_alloc:
 	return 0;
 }
 #endif
 
+// ------------------------------------------------------------------------
+// this handles creating and managing state for recv path
+
+static spinlock_t irs_cache_lock = SPIN_LOCK_UNLOCKED;
+static kmem_cache_t *irs_cache_allocator = NULL;
+static unsigned  irs_cache_allocated_count = 0;
+
+int
+ipsec_rcv_state_cache_init (void)
+{
+        if (irs_cache_allocator)
+                return -EBUSY;
+
+        spin_lock_init(&irs_cache_lock);
+
+        irs_cache_allocator = kmem_cache_create ("ipsec_irs",
+                sizeof (struct ipsec_rcv_state), 0,
+                0, NULL, NULL);
+        if (! irs_cache_allocator)
+                return -ENOMEM;
+
+        return 0;
+}
+
+void
+ipsec_rcv_state_cache_cleanup (void)
+{
+        if (unlikely (irs_cache_allocated_count))
+                printk ("ipsec: deleting ipsec_irs kmem_cache while in use\n");
+
+        if (irs_cache_allocator) {
+                kmem_cache_destroy (irs_cache_allocator);
+                irs_cache_allocator = NULL;
+        }
+        irs_cache_allocated_count = 0;
+}
+
+static struct ipsec_rcv_state *
+ipsec_rcv_state_new (void)
+{
+	struct ipsec_rcv_state *irs;
+
+        spin_lock_bh (&irs_cache_lock);
+
+        irs = kmem_cache_alloc (irs_cache_allocator, GFP_ATOMIC);
+
+        if (likely (irs != NULL))
+                irs_cache_allocated_count++;
+
+        spin_unlock_bh (&irs_cache_lock);
+
+        if (unlikely (NULL == irs))
+                goto bail;
+
+        // initialize the object
+        memset((caddr_t)irs, 0, sizeof(*irs));
+
+bail:
+        return irs;
+}
+
+static void
+ipsec_rcv_state_delete (struct ipsec_rcv_state *irs)
+{
+        if (unlikely (! irs))
+                return;
+
+        spin_lock_bh (&irs_cache_lock);
+
+        irs_cache_allocated_count--;
+        kmem_cache_free (irs_cache_allocator, irs);
+
+        spin_unlock_bh (&irs_cache_lock);
+}
 
 /*
  * $Log: ipsec_rcv.c,v $

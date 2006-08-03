@@ -1,7 +1,7 @@
 /*
  * @(#) RFC2367 PF_KEYv2 Key management API message parser
  * Copyright (C) 1998-2003   Richard Guy Briggs.
- * Copyright (C) 2004        Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2004-2006   Michael Richardson <mcr@xelerance.com>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,14 +13,14 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pfkey_v2_ext_process.c,v 1.20.2.1 2006/04/20 16:33:07 mcr Exp $
+ * RCSID $Id: pfkey_v2_ext_process.c,v 1.20 2005/04/29 05:10:22 mcr Exp $
  */
 
 /*
  *		Template from klips/net/ipsec/ipsec/ipsec_netlink.c.
  */
 
-char pfkey_v2_ext_process_c_version[] = "$Id: pfkey_v2_ext_process.c,v 1.20.2.1 2006/04/20 16:33:07 mcr Exp $";
+char pfkey_v2_ext_process_c_version[] = "$Id: pfkey_v2_ext_process.c,v 1.20 2005/04/29 05:10:22 mcr Exp $";
 
 #include <linux/config.h>
 #include <linux/version.h>
@@ -88,6 +88,7 @@ char pfkey_v2_ext_process_c_version[] = "$Id: pfkey_v2_ext_process.c,v 1.20.2.1 
 
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
+/* returns 0 on success */
 int
 pfkey_sa_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* extr)
 {
@@ -131,7 +132,7 @@ pfkey_sa_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* extr)
 	ipsp->ips_state = pfkey_sa->sadb_sa_state;
 	ipsp->ips_flags = pfkey_sa->sadb_sa_flags;
 	ipsp->ips_replaywin_lastseq = ipsp->ips_replaywin_bitmap = 0;
-	ipsp->ips_ref_rel = pfkey_sa->sadb_x_sa_ref;
+	ipsp->ips_ref = pfkey_sa->sadb_x_sa_ref;
 	
 	switch(ipsp->ips_said.proto) {
 	case IPPROTO_AH:
@@ -666,11 +667,11 @@ pfkey_x_satype_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* 
 	struct sadb_x_satype *pfkey_x_satype = (struct sadb_x_satype *)pfkey_ext;
 
 	KLIPS_PRINT(debug_pfkey,
-		    "klips_debug:pfkey_x_satype_process: .\n");
+		    "pfkey_x_satype_process: .\n");
 
 	if(!extr || !extr->ips) {
 		KLIPS_PRINT(debug_pfkey,
-			    "klips_debug:pfkey_x_satype_process: "
+			    "pfkey_x_satype_process: "
 			    "extr or extr->ips is NULL, fatal\n");
 		SENDERR(EINVAL);
 	}
@@ -682,14 +683,14 @@ pfkey_x_satype_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* 
 		SENDERR(-error);
 	}
 	if(!(extr->ips2->ips_said.proto = satype2proto(pfkey_x_satype->sadb_x_satype_satype))) {
-		KLIPS_PRINT(debug_pfkey,
-			    "klips_debug:pfkey_x_satype_process: "
+		KLIPS_ERROR(debug_pfkey,
+			    "pfkey_x_satype_process: "
 			    "proto lookup from satype=%d failed.\n",
 			    pfkey_x_satype->sadb_x_satype_satype);
 		SENDERR(EINVAL);
 	}
 	KLIPS_PRINT(debug_pfkey,
-		    "klips_debug:pfkey_x_satype_process: "
+		    "pfkey_x_satype_process: "
 		    "protocol==%d decoded from satype==%d(%s).\n",
 		    extr->ips2->ips_said.proto,
 		    pfkey_x_satype->sadb_x_satype_satype,
@@ -855,88 +856,6 @@ errlab:
 }
 
 /*
- * $Log: pfkey_v2_ext_process.c,v $
- * Revision 1.20.2.1  2006/04/20 16:33:07  mcr
- * remove all of CONFIG_KLIPS_ALG --- one can no longer build without it.
- * Fix in-kernel module compilation. Sub-makefiles do not work.
- *
- * Revision 1.20  2005/04/29 05:10:22  mcr
- * 	removed from extraenous includes to make unit testing easier.
- *
- * Revision 1.19  2004/12/04 07:14:18  mcr
- * 	resolution to gcc3-ism was wrong. fixed to assign correct
- * 	variable.
- *
- * Revision 1.18  2004/12/03 21:25:57  mcr
- * 	compile time fixes for running on 2.6.
- * 	still experimental.
- *
- * Revision 1.17  2004/08/21 00:45:04  mcr
- * 	CONFIG_KLIPS_NAT was wrong, also need to include udp.h.
- *
- * Revision 1.16  2004/07/10 19:11:18  mcr
- * 	CONFIG_IPSEC -> CONFIG_KLIPS.
- *
- * Revision 1.15  2004/04/06 02:49:26  mcr
- * 	pullup of algo code from alg-branch.
- *
- * Revision 1.14  2004/02/03 03:13:59  mcr
- * 	no longer #ifdef out NON_ESP mode. That was a mistake.
- *
- * Revision 1.13  2003/12/15 18:13:12  mcr
- * 	when compiling with NAT traversal, don't assume that the
- * 	kernel has been patched, unless CONFIG_IPSEC_NAT_NON_ESP
- * 	is set.
- *
- * Revision 1.12.2.1  2003/12/22 15:25:52  jjo
- *      Merged algo-0.8.1-rc11-test1 into alg-branch
- *
- * Revision 1.12  2003/12/10 01:14:27  mcr
- * 	NAT-traversal patches to KLIPS.
- *
- * Revision 1.11  2003/10/31 02:27:55  mcr
- * 	pulled up port-selector patches and sa_id elimination.
- *
- * Revision 1.10.4.2  2003/10/29 01:30:41  mcr
- * 	elimited "struct sa_id".
- *
- * Revision 1.10.4.1  2003/09/21 13:59:56  mcr
- * 	pre-liminary X.509 patch - does not yet pass tests.
- *
- * Revision 1.10  2003/02/06 01:51:41  rgb
- * Removed no longer relevant comment
- *
- * Revision 1.9  2003/01/30 02:32:44  rgb
- *
- * Transmit error code through to caller from callee for better diagnosis of problems.
- *
- * Revision 1.8  2002/12/13 22:42:22  mcr
- * 	restored sa_ref code
- *
- * Revision 1.7  2002/12/13 22:40:48  mcr
- * 	temporarily removed sadb_x_sa_ref reference for 2.xx
- *
- * Revision 1.6  2002/10/05 05:02:58  dhr
- *
- * C labels go on statements
- *
- * Revision 1.5  2002/09/20 15:41:08  rgb
- * Switch from pfkey_alloc_ipsec_sa() to ipsec_sa_alloc().
- * Added sadb_x_sa_ref to struct sadb_sa.
- *
- * Revision 1.4  2002/09/20 05:02:02  rgb
- * Added memory allocation debugging.
- *
- * Revision 1.3  2002/07/24 18:44:54  rgb
- * Type fiddling to tame ia64 compiler.
- *
- * Revision 1.2  2002/05/27 18:55:03  rgb
- * Remove final vistiges of tdb references via IPSEC_KLIPS1_COMPAT.
- *
- * Revision 1.1  2002/05/14 02:33:51  rgb
- * Moved all the extension processing functions to pfkey_v2_ext_process.c.
- *
- *
  * Local variables:
  * c-file-style: "linux"
  * End:

@@ -14,7 +14,7 @@
 # RCSID $Id: Makefile,v 1.9 2005/09/29 02:05:50 mcr Exp $
 
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir=./
+srcdir:=./
 export OPENSWANSRCDIR
 include $(OPENSWANSRCDIR)/Makefile.inc
 
@@ -26,7 +26,7 @@ def:
 	@false
 
 check: 	${OPENSWANSRCDIR}/umlsetup.sh
-	source ${OPENSWANSRCDIR}/umlsetup.sh; source setup.sh; source ${UTILS}/functions.sh; source ${srcdir}TESTLIST
+	source ${OPENSWANSRCDIR}/umlsetup.sh; source setup.sh; source ${UTILS}/functions.sh; source TESTLIST
 
 spotcheck:
 	@source ${OPENSWANSRCDIR}/umlsetup.sh; source setup.sh; source $${UTILS}/functions.sh; eval `sed -e '/^#/d' ${srcdir}TESTLIST | perl $${UTILS}/shuffle.pl 1`

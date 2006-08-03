@@ -1144,6 +1144,7 @@ check_connection_end(const struct whack_end *this, const struct whack_end *that
 	    {
 		if (c->policy & POLICY_AGGRESSIVE)
 			continue;
+#if 0
 		if (!NEVER_NEGOTIATE(c->policy)
 		&& ((c->policy ^ wm->policy) & (POLICY_PSK | POLICY_RSASIG)))
 		{
@@ -1152,6 +1153,7 @@ check_connection_end(const struct whack_end *this, const struct whack_end *that
 			, c->name);
 		    return FALSE;
 		}
+#endif
 	    }
 	}
     }
@@ -3563,11 +3565,22 @@ shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 struct connection *
 find_host_connection2(const char *func
 		     , const ip_address *me, u_int16_t my_port
-		     , const ip_address *him, u_int16_t his_port)
+		     , const ip_address *him, u_int16_t his_port, lset_t policy)
 {
+    struct connection *c;
     DBG(DBG_CONTROLMORE,
 	DBG_log("find_host_connection called from %s", func));
-    return find_host_pair_connections(__FUNCTION__, me, my_port, him, his_port);
+    c = find_host_pair_connections(__FUNCTION__, me, my_port, him, his_port);
+    if (policy != LEMPTY) {
+	/* if we have requirements for the policy, choose the first matching
+	 * connection.
+	 */
+	for (; c != NULL; c = c->hp_next) {
+	    if ((c->policy & policy) == policy)
+		break;
+	}
+    }
+    return c;
 }
 
 /*

@@ -1,0 +1,194 @@
+-*- emacs-wiki -*-
+
+Structure of a test
+
+   Each test consists of a set of directories under testing/. There are
+   directories for klips, pluto, packaging and libraries. Each directory
+   has a list of tests to run is stored in a file called TESTLIST in that
+   directory. e.g. testing/klips/TESTLIST.
+
+The TESTLIST
+
+   This isn't actually a shell script. It just looks like one.
+   (Tragically Hip: "She's not pretty, she just looks that way.")
+
+   Some tools other than /bin/sh process it. Lines that start with # are
+   comments. 
+
+# test-kind     directory-containing-test       expectation     [PR#]
+
+   The first word provides the test type, detailed below.
+
+   The second word is the name of the test to run. This the directory in
+   which the test case is to be found..
+
+   The third word may be one of:
+
+   blank/good
+          the test is believed to function, report failure
+
+   bad
+          the test is known to fail, report unexpected success
+
+   suspended
+          the test should not be run
+
+   The fourth word may be a number, which is a PR# if the test is
+   failing.
+
+Test kinds
+
+   The test types are:
+
+   skiptest
+          means run no test.
+
+   ctltest
+          means run a single system without input/output.
+
+   klipstest
+          means run a single system with input/output networks
+
+   umlplutotest
+          means run a pair of systems
+
+   umlXhost
+          run an arbitrary number of systems
+
+   mkinsttest
+          a test of the "make install" machinery.
+
+   kernel_test_patch
+          a test of the "make kernelpatch" machinery.
+
+   Each test directory has a file in it called testparams.sh. This file
+   sets a number of environment variables to define the parameters of the
+   test.
+
+Common parameters
+
+   TESTNAME
+          the name of the test (repeated for checking purposes)
+
+   TEST_TYPE
+          the type of the test (repeat of type type above)
+
+   TESTHOST
+          the name of the UML machine to run for the test, typically
+          "east" or "west"
+
+   TEST_PURPOSE
+          The purpose of the test is one of:
+
+        goal
+                The goal purpose is where a test is defined for code that
+                is not yet finished. The test indicates when the goals
+                have in fact been reached.
+
+        regress
+                This is a test to determine that a previously existing
+                bug has been repaired. This test will initially be
+                created to reproduce the bug in isolation, and then the
+                bug will be fixed.
+
+        exploit
+                This is a set of packets/programs that causes a
+                vulnerability to be exposed. It is a specific variation
+                of the regress option.
+
+   TEST_GOAL_ITEM
+          in the case of a goal test, this is a reference to the
+          requirements document
+
+   TEST_PROB_REPORT
+          in the case of regression test, this the problem report number
+          from GNATS
+
+   TEST_EXPLOIT_URL
+          in the case of an exploit, this is a URL referencing the paper
+          explaining the origin of the test and the origin of exploit
+          software
+
+   REF_CONSOLE_OUTPUT
+          a file in the test directory that contains the sanitized
+          console output against which to compare the output of the
+          actual test.
+
+   REF_CONSOLE_FIXUPS
+          a list of scripts (found in klips/test/fixups) to apply to
+          sanitize the console output of the machine under test. These
+          are typically perl, awk or sed scripts that remove things in
+          the kernel output that change each time the test is run and/or
+          compiled.
+
+   INIT_SCRIPT
+          a file of commands that is fed into the virtual machine's
+          console in single user mode prior to starting the tests. This
+          file will usually set up any eroute's and SADB entries that are
+          required for the test.
+
+          Lines beginning with # are skipped. Blank lines are skipped.
+          Otherwise, a shell prompted is waited for each time (consisting
+          of \n#) and then the command is sent. Note that the prompt is
+          waited for before the command and not after, so completion of
+          the last command in the script is not required. This is often
+          used to invoke a program to monitor the system, e.g. ipsec
+          pf_key.
+
+   RUN_SCRIPT
+          a file of commands that is fed into the virtual machine's
+          console in single user mode, before the packets are sent. On
+          single machine tests, this script doesn't provide any more
+          power than INIT_SCRIPT, but is implemented for consistency's
+          sake.
+
+   FINAL_SCRIPT
+          a file of commands that is fed into the virtual machine's
+          console in single user mode after the final packet is sent.
+          Similar to INIT_SCRIPT, above. If not specified, then the
+          single command "halt" is sent. If specified, then the script
+          should end with a halt command to nicely shutdown the UML.
+
+   CONSOLEDIFFDEBUG
+          If set to "true" then the series of console fixups (see
+          REF_CONSOLE_FIXUPS) will be output after it is constructed. (It
+          should be set to "false", or unset otherwise)
+
+   NETJIGDEBUG
+          If set to "true" then the series of console fixups (see
+          REF_CONSOLE_FIXUPS) will be output after it is constructed. (It
+          should be set to "false", or unset otherwise)
+
+   NETJIGTESTDEBUG
+          If set to "netjig", then the results of talking to the
+          uml_netjig will be printed to stderr during the test. In
+          addition, the jig will be invoked with --debug, which causes it
+          to log its process ID, and wait 60 seconds before continuing.
+          This can be used if you are trying to debug the uml_netjig
+          program itself.
+
+   HOSTTESTDEBUG
+          If set to "hosttest", then the results of taling to the
+          consoles of the UMLs will be printed to stderr during the test.
+
+   NETJIGWAITUSER
+          If set to "waituser", then the scripts will wait forever for
+          user input before they shut the tests down. Use this is if you
+          are debugging through the kernel.
+
+   PACKETRATE
+          A number, in miliseconds (default is 500ms) at which packets
+          will be replayed by the netjig.
+
+- [[KLIPSTestParameters][KLIPStest parameters]]
+- [[MKInstTestParameters][mkinsttest parameters]]
+- [[RPMBuildInstallParameters][rpm_build_install_test parameters]]
+- [[LibTestParameters][libtest parameters]]
+- [[UMLPlutoTestParameters][umlplutotest parameters]]
+- [[UMLXHostParameters][umlXhost parameters]]
+- [[KernelPatchTestParameters][kernel_patch_test paramaters]]
+- [[ModuleCompileParameters][module_compile paramaters]]
+- [[UnitTestParameters][Unit Test parameters]]
+
+
+

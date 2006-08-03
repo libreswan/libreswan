@@ -25,8 +25,7 @@ b=src/manpages.html src/firewall.html src/trouble.html
 c=src/compat.html src/interop.html src/performance.html \
 	src/testing.html src/kernel.html src/adv_config.html \
 	src/install.html src/config.html \
-	src/background.html src/user_examples.html \
-	src/makecheck.html src/umltesting.html \
+	src/background.html src/user_examples.html 
 
 # background and reference material
 d=src/politics.html src/ipsec.html \

@@ -25,7 +25,7 @@
  *	special case: ipsec core modular with this static algo inside:
  *	must avoid MODULE magic for this file
  */
-#if defined(CONFIG_KLIPS_MODULE) && CONFIG_KLIPS_MODULE && defined(CONFIG_KLIPS_ENC_3DES)
+#if defined(CONFIG_KLIPS_MODULE) && defined(CONFIG_KLIPS_ENC_3DES)
 #undef MODULE
 #endif
 
@@ -50,9 +50,15 @@ static int excl_3des=0;
 
 #if defined(CONFIG_KLIPS_ENC_3DES_MODULE)
 MODULE_AUTHOR("Michael Richardson <mcr@xelerance.com>");
+#ifdef module_param
+module_param(debug_3des, int, 0664);
+module_param(test_des, int, 0664);
+module_param(excl_des, int, 0664);
+#else
 MODULE_PARM(debug_3des, "i");
 MODULE_PARM(test_des, "i");
 MODULE_PARM(excl_des, "i");
+#endif
 #endif
 
 #define ESP_AES_MAC_KEY_SZ	16	/* 128 bit MAC key */

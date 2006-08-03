@@ -1,10 +1,12 @@
 #!/bin/sh
 
-rootdir=`cd ../../..; pwd`
-mkdir -p OUTPUT
+# assumes that 
+#          ROOTDIR=    set to root of source code.
+#          OBJDIRTOP=  set to location of object files
+#
+
 echo "file $rootdir/OBJ.linux.i386/programs/readwriteconf/readwriteconf" >.gdbinit
 echo "set args --rootdir=$rootdir/testing/baseconfigs/all --config $rootdir/testing/baseconfigs/west/etc/ipsec.conf >OUTPUT/west-flat.conf-out" >>.gdbinit
 
-$rootdir/OBJ.linux.i386/programs/readwriteconf/readwriteconf --rootdir=$rootdir/testing/baseconfigs/all --config $rootdir/testing/baseconfigs/west/etc/ipsec.conf >OUTPUT/west-flat.conf-out
+${OBJDIRTOP}/programs/readwriteconf/readwriteconf --rootdir=${ROOTDIR}/testing/baseconfigs/all --config ${ROOTDIR}/testing/baseconfigs/west/etc/ipsec.conf 
 
-diff -u west-flat.conf OUTPUT/west-flat.conf-out

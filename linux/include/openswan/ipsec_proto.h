@@ -51,13 +51,10 @@ extern struct ipsec_sa *ipsec_sa_alloc(int*error);
 
 
 extern struct ipsec_sa *ipsec_sa_getbyid(ip_said *);
-extern int ipsec_sa_put(struct ipsec_sa *);
-extern /* void */ int ipsec_sa_del(struct ipsec_sa *);
-extern /* void */ int ipsec_sa_delchain(struct ipsec_sa *);
+extern void ipsec_sa_put(struct ipsec_sa *);
 extern /* void */ int ipsec_sa_add(struct ipsec_sa *);
 
 extern int ipsec_sa_init(struct ipsec_sa *ipsp);
-extern int ipsec_sa_wipe(struct ipsec_sa *ipsp);
 
 /* debug declarations */
 

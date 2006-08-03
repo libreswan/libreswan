@@ -19,6 +19,7 @@ TEST_EXPLOIT_URL=${TEST_EXPLOIT_URL-http://www.openswan.org/vuln/}
 preptest() {
     local testdir="$1"
     local testtype="$2"
+    local createobjdir="$3"
 
     if [ ! -r "$testdir/testparams.sh" ]
     then
@@ -26,10 +27,14 @@ preptest() {
 	exit 1
     fi
 
+    createobjdir=${createobjdir-false}
+
     # make sure no results survive from a past run
     if [ ! -z "$testdir" ] ; then
-	rm -rf "$testdir/OUTPUT"${KLIPS_MODULE}
-	mkdir -p "$testdir/OUTPUT"${KLIPS_MODULE}
+        if $createobjdir; then
+	    rm -rf "$testdir/OUTPUT"${KLIPS_MODULE}
+	    mkdir -p "$testdir/OUTPUT"${KLIPS_MODULE}
+	fi
     fi
 
     cd $testdir
@@ -1724,194 +1729,85 @@ buildtest() {
     recordresults $testdir "$testexpect" "$stat" $testdir${KLIPS_MODULE} false
 }
 
+###################################
+#
+#  test type: unittest
+#
+# testparams.sh should specify a script to be run as $TESTSCRIPT
+#          REF_CONSOLE_OUTPUT= name of reference output
+#    
+# The script will be started with:
+#          ROOTDIR=    set to root of source code.
+#          OBJDIRTOP=  set to location of object files
+# 
+#
+# testparams.sh should set PROGRAMS= to a list of subdirs of programs/ that must
+#                be built before using the test. This allows additional modules
+#                to be built.
+#
+# If there is a Makefile in the subdir, it will be invoked as "make checkprograms"
+#
+# The stdout of the script will be set to an output file, which will then be sanitized
+# using the normal set of fixup scripts.
+#          
+#
+###################################
+
+do_unittest() {
+
+    export ROOTDIR=${OPENSWANSRCDIR}
+    eval `(cd $ROOTDIR; make env)`
+    failnum=1
+
+    if [ ! -x "$TESTSCRIPT" ]; then echo "TESTSCRIPT=$TESTSCRIPT is not executable"; exit 41; fi
+
+    (cd ${ROOTDIR}/programs;
+     for program in ${PROGRAMS}
+     do
+	if [ -d $program ]; then (cd $program && make programs checkprograms ); fi
+     done)
+
+    # if there is a makefile, run it and bail if fails
+    [ -f Makefile ] && make checkprograms
+
+    # make sure we get all core dumps!
+    ulimit -c unlimited
+    export OBJDIRTOP
+
+    OUTDIR=${OBJDIRTOP}/testing/${TESTSUBDIR}/${TESTNAME}
+    mkdir -p ${OUTDIR}
+    ln -f -s ${OUTDIR} OUTPUT
+
+    ./$TESTSCRIPT >${OUTDIR}/console.txt
+
+    stat=$?
+    echo Exit code $stat
+    if [ $stat -gt 128 ]
+    then
+	stat="$stat core"
+    else
+        consolediff "" OUTPUT/console.txt $REF_CONSOLE_OUTPUT
+	case "$success" in
+	true)	exit 0 ;;
+	*)	exit $failnum ;;
+	esac
+    fi
+}
+
+unittest() {
+    testcase=$1
+    testexpect=$2
+
+    echo '**** make unittest RUNNING '$testcase' ****'
+
+    echo Running $testobj
+    ( preptest $testcase unittest false && do_unittest )
+    stat=$?
+
+    TEST_PURPOSE=regress recordresults $testcase "$testexpect" "$stat" $testcase false
+}
 
 
-#
-# $Id: functions.sh,v 1.131 2005/11/16 21:31:50 mcr Exp $
-#
-# $Log: functions.sh,v $
-# Revision 1.131  2005/11/16 21:31:50  mcr
-# 	numerous fixes to make checks work with set -u.
-#
-# Revision 1.127  2005/09/28 12:49:22  mcr
-# 	document why developer is being nagged.
-#
-# Revision 1.126  2005/08/31 03:35:43  mcr
-# 	added template do_build_test (not yet done)
-#
-# Revision 1.125  2005/08/05 17:04:54  mcr
-# 	adjustment of test cases to work with object directories.
-#
-# Revision 1.124.2.2  2005/11/17 03:43:46  ken
-# Remove CVS commit errors
-#
-# Revision 1.124.2.1  2005/11/17 01:44:13  mcr
-# 	pullup of code from git tree.
-#
-# Revision 1.124  2005/07/09 15:40:30  mcr
-# 	make tests that need compat variables abort.
-#
-# Revision 1.123  2005/05/12 03:11:41  mcr
-# 	permit *_START to be set from testparams.sh for
-# 	east-1des-01 use.
-#
-# Revision 1.122  2005/04/21 02:51:13  mcr
-# 	do not copy results for module test (it's a whole kernel!)
-# 	store kernel console output in console26.txt.
-#
-# Revision 1.121  2005/03/20 23:18:46  mcr
-# 	make sure to export KERNVER to netjig.tcl.
-#
-# Revision 1.120  2005/03/13 19:15:02  mcr
-# 	make sure to record libtest diff output result.
-#
-# Revision 1.119  2005/01/24 01:12:12  mcr
-# 	adjusted include directories and library definitions so
-# 	that test cases continue to compile.
-#
-# Revision 1.118  2004/12/30 07:07:14  mcr
-# 	when marking which test is running, make sure to include -module
-#
-# Revision 1.117  2004/11/09 18:36:35  ken
-# rpm -> ipkg
-#
-# Revision 1.116  2004/11/09 18:30:24  ken
-# Add functions for ipkg_build_install_test
-#
-# Revision 1.115  2004/10/20 01:43:58  mcr
-# 	redirected stderr to capture file as well.
-#
-# Revision 1.114  2004/10/19 22:10:54  mcr
-# 	capture and compare the output as well.
-#
-# Revision 1.113  2004/10/17 17:37:45  mcr
-# 	run library tests in the subdir (so core will go there),
-# 	and make sure that core dumps are enabled.
-#
-# Revision 1.112  2004/10/16 22:53:22  mcr
-# 	added EXTRAFLAGS and EXTRALIBS variable to library test
-# 	process, and provide FLAGS.testobj file to configure
-# 	test case.
-#
-# Revision 1.111  2004/09/21 01:20:09  mcr
-# 	support per-kernel console output
-#
-# Revision 1.110  2004/09/13 02:26:48  mcr
-# 	use appropriate console comparison file.
-#
-# Revision 1.109  2004/08/22 04:59:59  mcr
-# 	fix up module compile test to work with 2.6.
-# 	added post-build complicated check.
-#
-# Revision 1.108  2004/05/19 14:53:31  mcr
-# 	call summarize results just before each test case.
-#
-# Revision 1.107  2004/04/16 19:57:29  mcr
-# 	if THREEEIGHT is set to true, then do not run the
-# 	three-eight filter.
-#
-# Revision 1.106  2004/04/09 18:30:05  mcr
-# 	look in all sorts of places for the library code.
-#
-# Revision 1.105  2004/04/04 03:57:58  ken
-# Change order of options to ps, as newer versions are more strict about order
-#
-# Revision 1.104  2004/04/03 19:44:52  ken
-# FREESWANSRCDIR -> OPENSWANSRCDIR (patch by folken)
-#
-# Revision 1.103  2004/02/16 04:13:37  mcr
-# 	use new NETWORK_ARPREPLY= to decide how/when to answer arp
-# 	requests.
-#
-# Revision 1.102  2004/02/03 20:14:39  mcr
-# 	networks are now managed as a list rather than explicitely.
-#
-# Revision 1.101  2003/11/25 00:22:53  mcr
-# 	have skiptest make up a fake TEST_PURPOSE, so there are
-# 	no complaints from regressrecord.
-#
-# Revision 1.100  2003/11/05 07:38:30  dhr
-#
-# make functions.sh more robust
-#
-# Revision 1.99  2003/11/05 04:35:56  dhr
-#
-# clarify shell variable export command
-#
-# Revision 1.98  2003/10/31 02:43:33  mcr
-# 	pull up of port-selector tests
-#
-# Revision 1.97  2003/10/29 20:52:37  dhr
-#
-# functions.sh: silence grep; add "rogue" to status if rogue was found
-#
-# Revision 1.96  2003/10/28 03:03:33  dhr
-#
-# Refine testing scripts:
-# - put timeout and eof handlers in each expect script
-# - kill more rogue processes: even those with unreadable(!) /proc entries
-# - improve reporting of skipped tests
-# - make "recordresults" do more, simplifying every caller
-# - speed up UML shutdown by using "halt -p -r" (requires many reference log updates)
-#
-# Revision 1.95  2003/10/21 15:08:03  dhr
-#
-# - show more raw detail within braces of testing report
-# - make functions.sh clearer
-# - silence the "kill" commands in function.sh that probe for successful killing
-#
-# Revision 1.94  2003/10/16 03:14:56  dhr
-#
-# Many minor improvements to functions.sh:
-# - add quotes for good shell hygiene
-# - try harder to kill rogue UML processes
-# - use "case" to analyze $success (``if $success'' fails whe $success is "missing")
-# The use of $success is still disorganized and confusing.  With some work
-# it could be used to produce better diagnostics.
-#
-# Revision 1.93  2003/10/16 02:56:47  dhr
-#
-# clean up whitespace
-#
-# Revision 1.92  2003/10/15 15:31:57  dhr
-#
-# functions.sh: let recordresults survive a testparams.sh that exits
-#
-# Revision 1.91  2003/10/14 22:07:09  dhr
-#
-# functions.sh: let recordresults survive a missing testparams.sh
-#
-# Revision 1.90  2003/10/14 14:23:29  dhr
-#
-# Fix some problems with "make check" (testing/utils/functions.sh):
-# - Make sure that each "source" or "." command uses a pathname with a slash.
-#   Otherwise the $PATH will be used.
-# - Fix the TEST_PURPOSE analysis: source testparams.sh in recordresults.
-#   Note when TEST_PURPOSE isn't understood.
-# - remove redundant "rm -rf" commands
-#
-# Revision 1.89  2003/10/01 16:13:56  dhr
-#
-# Make the -modules hack in testing/klips/dotests.sh actually work:
-# add ${KLIPS_MODULE} to almost every path with OUTPUT that didn't already have it.
-#
-# Revision 1.88.2.1  2003/10/29 02:09:56  mcr
-# 	set test purpose to REGRESS for library tests.
-#
-# Revision 1.88  2003/08/21 22:38:06  mcr
-# 	sense of test was wrong for MODULE_DEFCONFIG
-#
-# Revision 1.87  2003/08/21 22:35:11  mcr
-# 	if we didn't specify a MODULE_DEFCONFIG, then use /dev/null
-#
-# Revision 1.86  2003/08/18 16:32:48  mcr
-# 	export 3,4,5 RUN script variables.
-#
-# Revision 1.85  2003/05/21 14:10:31  mcr
-# 	look for core files produced by pluto, and save them to the
-# 	OUTPUT directory, changing failure state to "core".
-#
-# Revision 1.84  2003/05/03 23:26:02  mcr
-# 	added RCS Ids.
-#
-#
+
+
+

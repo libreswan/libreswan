@@ -48,6 +48,8 @@ SRCDIR=${OPENSWANSRCDIR}/linux/net/ipsec/aes
 VPATH += ${SRCDIR}
 
 LIB=libaes.a
+LIBRARY=aes
+ONEFILE=aes.c
 
 include ${srcdir}../../Makefile.library
 

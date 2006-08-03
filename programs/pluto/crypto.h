@@ -14,6 +14,9 @@
  * RCSID $Id: crypto.h,v 1.22 2005/09/20 18:03:13 mcr Exp $
  */
 
+#ifndef _CRYPTO_H
+#define _CRYPTO_H
+
 #include <gmp.h>    /* GNU MP library */
 
 #include "sha1.h"
@@ -124,3 +127,5 @@ extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 	hmac_final((ch).ptr, (ctx)); \
     }
 #endif
+
+#endif /* _CRYPTO_H */

@@ -56,6 +56,10 @@ TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h l
 tags:	$(TAGSFILES)
 	@LC_ALL=C ctags $(CTAGSFLAGS) ${TAGSFILES}
 
+cscope:
+	@ls ${TAGSFILES} > cscope.files
+	@cscope -b
+
 TAGS:	$(TAGSFILES)
 	@LC_ALL=C etags $(ETAGSFLAGS) ${TAGSFILES}
 

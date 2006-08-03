@@ -1,6 +1,6 @@
 # Openswan pathnames and other master configuration
 # Copyright (C) 2001, 2002  Henry Spencer.
-# Copyright (C) 2003, 2004  Xelerance Corporation
+# Copyright (C) 2003-2006   Xelerance Corporation
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the

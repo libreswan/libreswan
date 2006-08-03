@@ -1,12 +1,14 @@
 #!/bin/sh
 
-rootdir=`cd ../../..; pwd`
-mkdir -p OUTPUT
-exe=$rootdir/OBJ.linux.i386/programs/readwriteconf/readwriteconf
-args="--rootdir=$rootdir/testing/baseconfigs/all --config $rootdir/testing/pluto/mast-pluto-01/east.conf"
+# assumes that 
+#          ROOTDIR=    set to root of source code.
+#          OBJDIRTOP=  set to location of object files
+#
+
+exe=${OBJDIRTOP}/programs/readwriteconf/readwriteconf
+args="--rootdir=${ROOTDIR}/testing/baseconfigs/all --config ${ROOTDIR}/testing/pluto/mast-pluto-01/east.conf"
 echo "file $exe" >.gdbinit
 echo "set args $args >OUTPUT/west-flat.conf-out" >>.gdbinit
 
-eval $exe $args >OUTPUT/east-flat.conf-out
+eval $exe $args 
 
-diff -u east-flat.conf OUTPUT/east-flat.conf-out

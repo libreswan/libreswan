@@ -13,7 +13,7 @@
  * for more details.
  */
 
-char ipsec_ipcomp_c_version[] = "RCSID $Id: ipsec_ipcomp.c,v 1.6 2005/11/11 03:29:14 paul Exp $";
+char ipsec_ipcomp_c_version[] = "RCSID $Id: ipsec_ipcomp.c,v 1.5.2.1 2006/07/07 16:39:58 paul Exp $";
 #include <linux/config.h>
 #include <linux/version.h>
 
@@ -77,7 +77,7 @@ ipsec_rcv_ipcomp_checks(struct ipsec_rcv_state *irs,
 {
 	int ipcompminlen;
 
-	ipcompminlen = irs->hard_header_len + sizeof(struct iphdr);
+	ipcompminlen = sizeof(struct iphdr);
 
 	if(skb->len < (ipcompminlen + sizeof(struct ipcomphdr))) {
 		KLIPS_PRINT(debug_rcv & DB_RX_INAU,
@@ -140,9 +140,7 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 
 	skb = skb_decompress(skb, ipsp, &flags);
 	if (!skb || flags) {
-/* From Toby's patch. might be our smp crasher?
 		spin_unlock(&tdb_lock);
-*/
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "skb_decompress() returned error flags=%x, dropped.\n",

@@ -1,0 +1,46 @@
+-*- emacs-wiki -*-
+
+mkinsttest paramaters
+
+   The basic concept of the mkinsttest test type is that it performs a
+   "make install" to a temporary $DESTDIR. The resulting tree can then be
+   examined to determine if it was done properly. The files can be
+   uninstalled to determine if the file list was correct, or the contents
+   of files can be examined more precisely.
+
+   INSTALL_FLAGS
+          If set, then an install will be done. This provides the set of
+          flags to provide for the install. The target to be used
+          (usually "install") must be among the flags.
+
+   POSTINSTALL_SCRIPT
+          If set, a script to run after initial "make install". Two
+          arguments are provided: an absolute path to the root of the
+          FreeSWAN src tree, and an absolute path to the temporary
+          installation area.
+
+   INSTALL2_FLAGS
+          If set, a second install will be done using these flags.
+          Similarly to INSTALL_FLAGS, the target must be among the flags.
+
+   UNINSTALL_FLAGS
+          If set, an uninstall will be done using these flags. Similarly
+          to INSTALL_FLAGS, the target (usually "uninstall") must be
+          among the flags.
+
+   REF_FIND_f_l_OUTPUT
+          If set, a find $ROOT ( -type f -or -type -l ) will be done to
+          get a list of a real files and symlinks. The resulting file
+          will be compared to the file listed by this option.
+
+   REF_FILE_CONTENTS
+          If set, it should point to a file containing records for the
+          form:
+
+  reffile   samplefile
+
+          one record per line. A diff between the provided reference
+          file, and the sample file (located in the temporary
+          installation root) will be done for each record.
+
+

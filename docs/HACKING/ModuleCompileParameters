@@ -1,0 +1,57 @@
+-*- emacs-wiki -*-
+
+module_compile paramaters
+
+   The module_compile test attempts to build the KLIPS module against a
+   given set of kernel source. This is also done by the RPM tests, but in
+   a very specific manner.
+
+   There are two variations of this test - one where the kernel either
+   doesn't need to be configured, or is already done, and tests were
+   there is a local configuration file.
+
+   Where the kernel doesn't need to be configured, the kernel source that
+   is found is simply used. It may be a RedHat-style kernel, where one
+   can cause it to configure itself via rhconfig.h-style definitions. Or,
+   it may just be a kernel tree that has been configured.
+
+   If the variable KERNEL_CONFIG_FILE is set, then a new directory is
+   created for the kernel source. It is populated with lndir(1). The
+   referenced file is then copied in as .config, and "make oldconfig" is
+   used to configure the kernel. This resulting kernel is then used as
+   the reference source.
+
+   In all cases, the kernel source is found the same was for the
+   kernelpatch test, i.e. via KERNEL_VERSION/KERNEL_NAME and
+   KERNEL_${KERNEL_NAME}${KERNEL_VERSION}_SRC.
+
+   Once there is kernel source, the module is compiled using the
+   top-level "make module" target.
+
+   The test is considered successful if an executable is found in
+   OUTPUT/module/ipsec.o at the end of the test.
+
+   KERNEL_NAME
+          the kernel name, typically something like "linus" or "rh"
+
+   KERNEL_VERSION
+          the kernel version number, as in "2.2" or "2.4".
+
+   KERNEL_${KERNEL_NAME}${KERNEL_VERSION}_SRC
+          This variable should set in the environment, probably in
+          ~/freeswan-regress-env.sh. Examples of this variables would be
+          KERNEL_LINUS2_0_SRC or KERNEL_RH7_3_SRC. This variable should
+          point to an extracted copy of the kernel source in question.
+
+   KERNEL_CONFIG_FILE
+          The configuration file for the kernel.
+
+   KERNEL_PATCH_LEAVE_SOURCE
+          If set to a non-empty string, then the configured kernel source
+          is not removed at the end of the test. This will typically be
+          set in the environment while debugging.
+
+   MODULE_DEF_INCLUDE
+          The include file that will be used to configure the KLIPS
+          module, and possibly the kernel source.
+

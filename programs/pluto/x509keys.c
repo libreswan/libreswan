@@ -263,7 +263,7 @@ bool
 collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
 {
     struct connection *d = find_host_connection(&md->iface->ip_addr
-	, pluto_port, (ip_address*)NULL, md->sender_port);
+	, pluto_port, (ip_address*)NULL, md->sender_port, LEMPTY);
 
     for (; d != NULL; d = d->hp_next)
     {

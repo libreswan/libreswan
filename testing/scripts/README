@@ -1,0 +1,6 @@
+Historically this set of test dealt with the AWK/SED/SHELL scripts that ran
+the configuration parsing system, but as they have been translated to C code,
+they have been changed into unit tests.
+
+These tests are intended to run on the host, not under a UML. They are intended
+to be unit tests.

@@ -517,6 +517,80 @@ decode_long_duration(pb_stream *pbs)
     return val;
 }
 
+/* Preparse the body of an ISAKMP SA Payload and find which policy is required
+ * to match the packet. Errors are just ignored and will be detected and
+ * handled later in parse_isakmp_sa_body().
+ *
+ * All we want for the moment is to know whether peer is using RSA or PSK.
+ */
+lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
+{
+    pb_stream proposal_pbs;
+    struct isakmp_proposal proposal;
+    pb_stream trans_pbs;
+    struct isakmp_transform trans;
+    u_char *attr_start;
+    size_t attr_len;
+    struct isakmp_attribute a;
+    pb_stream attr_pbs;
+    u_int32_t ipsecdoisit;
+    unsigned trans_left;
+    lset_t policy = 0;
+
+    if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, sa_pbs, NULL))
+	return LEMPTY;
+
+    if (!in_struct(&proposal, &isakmp_proposal_desc, sa_pbs, &proposal_pbs))
+	return LEMPTY;
+
+    if (proposal.isap_spisize > MAX_ISAKMP_SPI_SIZE)
+	return LEMPTY;
+
+    if (proposal.isap_spisize > 0)
+    {
+	u_char junk_spi[MAX_ISAKMP_SPI_SIZE];
+
+	if (!in_raw(junk_spi, proposal.isap_spisize, &proposal_pbs, "Oakley SPI"))
+    return LEMPTY;
+    }
+
+    trans_left = proposal.isap_notrans;
+    while (trans_left--) {
+	if (!in_struct(&trans, &isakmp_isakmp_transform_desc, &proposal_pbs,
+	    &trans_pbs))
+	    return LEMPTY;
+
+	attr_start = trans_pbs.cur;
+	attr_len = pbs_left(&trans_pbs);
+
+	while (pbs_left(&trans_pbs) != 0) {
+	    if (!in_struct(&a, &isakmp_oakley_attribute_desc, &trans_pbs,
+		&attr_pbs))
+		return LEMPTY;
+	    switch (a.isaat_af_type) {
+		case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
+		    switch (a.isaat_lv) {
+			case XAUTHInitPreShared:
+			case OAKLEY_PRESHARED_KEY:
+				policy |= POLICY_PSK;
+			    break;
+			case XAUTHInitRSA:
+			case OAKLEY_RSA_SIG:
+				policy |= POLICY_RSASIG;
+			    break;
+		    }
+		    break;
+	    }
+	}
+    }
+
+    if ((policy & POLICY_PSK) && (policy & POLICY_RSASIG))
+	policy &= ~(POLICY_PSK|POLICY_RSASIG);
+
+    return policy;
+}
+
+
 /**
  * Parse the body of an ISAKMP SA Payload (i.e. Phase 1 / Main Mode).
  * Various shortcuts are taken.  In particular, the policy, such as
@@ -2317,6 +2391,225 @@ parse_ipsec_sa_body(
     loglog(RC_LOG_SERIOUS, "no acceptable Proposal in IPsec SA");
     return NO_PROPOSAL_CHOSEN;
 }
+
+#define AD(x) x, elemsof(x)	/* Array Description */
+#define AD_NULL NULL, 0
+/*
+ * empty structure, for clone use.
+ */
+static struct db_attr otempty[] = {
+	{ OAKLEY_ENCRYPTION_ALGORITHM, -1 },
+	{ OAKLEY_HASH_ALGORITHM,       -1 },
+	{ OAKLEY_AUTHENTICATION_METHOD, -1 },
+	{ OAKLEY_GROUP_DESCRIPTION,    -1 },
+	{ OAKLEY_KEY_LENGTH,    -1 },
+	};
+
+static struct db_trans oakley_trans_empty[] = {
+	{ KEY_IKE, AD(otempty) },
+    };
+
+static struct db_prop oakley_pc_empty[] =
+    { { PROTO_ISAKMP, AD(oakley_trans_empty) } };
+
+static struct db_prop_conj oakley_props_empty[] = { { AD(oakley_pc_empty) } };
+
+struct db_sa oakley_empty = { AD(oakley_props_empty) };
+
+/*
+ * 	Create an OAKLEY proposal based on alg_info and policy
+ */
+struct db_sa *
+oakley_alg_makedb(struct alg_info_ike *ai
+		  , struct db_sa *base
+		  , int maxtrans)
+{
+    /* struct db_context inprog UNUSED; */
+    struct db_sa *gsp = NULL;
+    struct db_sa *emp_sp = NULL;
+    struct ike_info *ike_info;
+    unsigned ealg, halg, modp, eklen=0;
+    struct encrypt_desc *enc_desc;
+    int transcnt = 0;
+    int i;
+
+    /*
+     * start by copying the proposal that would have been picked by
+     * standard defaults.
+     */
+
+    if (!ai) {
+	DBG(DBG_CRYPT,DBG_log("no IKE algorithms for this connection "));
+	
+	goto fail;
+    }
+
+    gsp = NULL;
+
+    /*
+     * for each group, we will create a new proposal item, and then
+     * append it to the list of transforms in the conjoint point.
+     *
+     * when creating each item, we will use the first transform
+     * from the base item as the template.
+     */
+    ALG_INFO_IKE_FOREACH(ai, ike_info, i) {
+
+	if(ike_info->ike_default == FALSE) {
+	    struct db_attr  *enc, *hash, *auth, *grp, *enc_keylen, *new_auth;
+	    struct db_trans *trans;
+	    struct db_prop  *prop;
+	    struct db_prop_conj *cprop;
+	    
+	    ealg = ike_info->ike_ealg;
+	    halg = ike_info->ike_halg;
+	    modp = ike_info->ike_modp;
+	    eklen= ike_info->ike_eklen;
+	    
+	    if (!ike_alg_enc_present(ealg)) {
+		DBG_log("oakley_alg_makedb() "
+			"ike enc ealg=%d not present",
+			ealg);
+		continue;
+	    }
+	    if (!ike_alg_hash_present(halg)) {
+		DBG_log("oakley_alg_makedb() "
+			"ike hash halg=%d not present",
+			halg);
+		continue;
+	    }
+	    enc_desc = ike_alg_get_encrypter(ealg);
+	    
+	    passert(enc_desc != NULL);
+	    if (eklen 
+		&& (eklen < enc_desc->keyminlen
+		    || eklen >  enc_desc->keymaxlen))
+		
+		{
+		    DBG_log("ike_alg_db_new() "
+			    "ealg=%d (specified) keylen:%d, "
+			    "not valid "
+			    "min=%d, max=%d"
+			    , ealg
+			    , eklen
+			    , enc_desc->keyminlen
+			    , enc_desc->keymaxlen
+			    );
+		    continue;
+		}
+	    
+	    /* okay copy the basic item, and modify it. */
+	    if(eklen > 0)
+	    {
+		emp_sp = sa_copy_sa(&oakley_empty, 0);
+		cprop = &base->prop_conjs[0];
+		prop = &cprop->props[0];
+		trans = &prop->trans[0];
+		new_auth = &trans->attrs[2];
+
+		cprop = &emp_sp->prop_conjs[0];
+		prop = &cprop->props[0];
+		trans = &prop->trans[0];
+		auth = &trans->attrs[2];
+		*auth = *new_auth;
+	    }
+	    else
+		emp_sp = sa_copy_sa_first(base);
+
+	    passert(emp_sp->prop_conj_cnt == 1);
+	    cprop = &emp_sp->prop_conjs[0];
+	    
+	    passert(cprop->prop_cnt == 1);
+	    prop = &cprop->props[0];
+	    
+	    passert(prop->trans_cnt == 1);
+	    trans = &prop->trans[0];
+	    
+	    passert(trans->attr_cnt == 4 || trans->attr_cnt == 5);
+	    enc  = &trans->attrs[0];
+	    hash = &trans->attrs[1];
+	    auth = &trans->attrs[2];
+	    grp  = &trans->attrs[3];
+
+	    if(eklen > 0) {
+		enc_keylen = &trans->attrs[4];
+		enc_keylen->val = eklen;
+	    }
+
+	    passert(enc->type == OAKLEY_ENCRYPTION_ALGORITHM);
+	    if(ealg > 0) {
+		enc->val = ealg;
+	    }
+	    
+	    modp = ike_info->ike_modp;
+	    eklen= ike_info->ike_eklen;
+	    
+	    passert(hash->type == OAKLEY_HASH_ALGORITHM);
+	    if(halg > 0) {
+		hash->val = halg;
+	    }
+	    
+	    passert(auth->type == OAKLEY_AUTHENTICATION_METHOD);
+	    /* no setting for auth type for IKE */
+	    
+	    passert(grp->type == OAKLEY_GROUP_DESCRIPTION);
+	    if(modp > 0) {
+		grp->val = modp;
+	    }
+	} else {
+	    emp_sp = sa_copy_sa(base, 0);
+	}
+
+	if(maxtrans == 1) {
+	    if(transcnt == 0) {
+		DBG(DBG_CONTROL, DBG_log("using transform (%d,%d,%d,%ld)"
+					 , ike_info->ike_ealg
+					 , ike_info->ike_halg
+					 , ike_info->ike_modp
+					 , (long)ike_info->ike_eklen));
+		if(gsp) {
+		    free_sa(gsp);
+		}
+		gsp = emp_sp;
+	    } else {
+		free_sa(emp_sp);
+	    }
+
+	    if(transcnt > 0) {
+		if(transcnt == 1) {
+		    loglog(RC_LOG_SERIOUS
+			   
+			   , "multiple transforms were set in aggressive mode. Only first one used.");
+		}
+
+		loglog(RC_LOG_SERIOUS
+		       , "transform (%d,%d,%d,%ld) ignored."
+		       , ike_info->ike_ealg
+		       , ike_info->ike_halg
+		       , ike_info->ike_modp
+		       , (long)ike_info->ike_eklen);
+	    } 
+
+	} else {
+	    struct db_sa *new;
+
+	    /* now merge emp_sa and gsp */
+	    if(gsp) {
+		new = sa_merge_proposals(gsp, emp_sp);
+		free_sa(gsp);
+		free_sa(emp_sp);
+		emp_sp = NULL;
+		gsp = new;
+	    } else {
+		gsp = emp_sp;
+	    }
+	}
+	transcnt++;
+    }
+fail:
+    return gsp;
+}
+
 
 /*
  * Local Variables:

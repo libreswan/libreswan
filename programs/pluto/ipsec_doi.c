@@ -2109,10 +2109,12 @@ main_inI1_outR1(struct msg_digest *md)
     /* random source ports are handled by find_host_connection */
     c = find_host_connection(&md->iface->ip_addr, pluto_port
 			     , &md->sender
-			     , md->sender_port);
+			     , md->sender_port, LEMPTY);
 
     if (c == NULL)
     {
+	pb_stream pre_sa_pbs = sa_pd->pbs;
+	lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs);
 	/* See if a wildcarded connection can be found.
 	 * We cannot pick the right connection, so we're making a guess.
 	 * All Road Warrior connections are fair game:
@@ -2127,7 +2129,7 @@ main_inI1_outR1(struct msg_digest *md)
 	    struct connection *d;
 	    d = find_host_connection(&md->iface->ip_addr, pluto_port
 				     , (ip_address*)NULL
-				     , md->sender_port);
+				     , md->sender_port, policy);
 
 	    for (; d != NULL; d = d->hp_next)
 	    {
@@ -2155,8 +2157,10 @@ main_inI1_outR1(struct msg_digest *md)
 	if (c == NULL)
 	{
 	    loglog(RC_LOG_SERIOUS, "initial Main Mode message received on %s:%u"
-		" but no connection has been authorized"
-		, ip_str(&md->iface->ip_addr), ntohs(portof(&md->iface->ip_addr)));
+		" but no connection has been authorized%s%s"
+		, ip_str(&md->iface->ip_addr), ntohs(portof(&md->iface->ip_addr))
+		, (policy != LEMPTY) ? " with policy=" : ""
+		, (policy != LEMPTY) ? bitnamesof(sa_policy_bit_names, policy) : "");
 	    /* XXX notification is in order! */
 	    return STF_IGNORE;
 	}

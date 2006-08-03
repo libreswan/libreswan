@@ -48,7 +48,7 @@ install: doinstall
 endif
 
 doinstall:
-	mkdir -p $(MANTREE)
+	@for d in $(MANDIR); do mkdir -p $$d; done
 	@for f in $(MANS) ; \
 	do \
 		$(INSTALL) $(INSTMANFLAGS) $(MANSRCDIR)/$$f $(MANTREE)/ipsec_$$f || exit 1 ; \

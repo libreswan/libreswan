@@ -1,0 +1,20 @@
+-*- emacs-wiki -*-
+
+The Unit Test mechod is designed to use run a test case on the devel host.
+It does not invoke a User-Mode-Linux to run the test.
+
+The testparams.sh should specify the following:
+
+   TESTSCRIPT           a script/program to be used to invoke the unit test.
+   REF_CONSOLE_OUTPUT   a file for reference output.
+   REF_CONSOLE_FIXUPS   a list of fixups for the console output
+   PROGRAMS             a list of subdirs of "programs/" which should be
+                        build prior to invoking the test.
+
+If there is a Makefile in the testdir, it will be invoked as "make
+checkprograms" before the test is run.
+
+The script/program will be started with:
+          ROOTDIR=    set to root of source code.
+          OBJDIRTOP=  set to location of object files
+

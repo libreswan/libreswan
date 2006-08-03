@@ -198,6 +198,8 @@ programs install clean::
 
 else
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
+OBJDIRTOP=${ABSOBJDIR}
+export OBJDIRTOP
 
 programs install clean:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}

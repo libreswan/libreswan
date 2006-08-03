@@ -142,7 +142,7 @@ aggr_inI1_outR1_common(struct msg_digest *md
     struct connection *c = find_host_connection(&md->iface->ip_addr
 						, md->iface->port
 						, &md->sender
-						, md->sender_port);
+						, md->sender_port, LEMPTY);
 
 
 #if 0    
@@ -150,7 +150,7 @@ aggr_inI1_outR1_common(struct msg_digest *md
     if (c == NULL && md->iface->ike_float)
     {
 	c = find_host_connection(&md->iface->addr, NAT_T_IKE_FLOAT_PORT
-		, &md->sender, md->sender_port);
+				 , &md->sender, md->sender_port, LEMPTY);
     }
 #endif
 #endif
@@ -158,8 +158,10 @@ aggr_inI1_outR1_common(struct msg_digest *md
     if (c == NULL)
     {
 	/* see if a wildcarded connection can be found */
+ 	pb_stream pre_sa_pbs = sa_pd->pbs;
+ 	lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs);
 	c = find_host_connection(&md->iface->ip_addr, pluto_port
-				 , (ip_address*)NULL, md->sender_port);
+				 , (ip_address*)NULL, md->sender_port, policy);
 	if (c != NULL && c->policy & POLICY_AGGRESSIVE)
 	{
 	    /* Create a temporary connection that is a copy of this one.
@@ -172,8 +174,10 @@ aggr_inI1_outR1_common(struct msg_digest *md
 	else
 	{
 	    loglog(RC_LOG_SERIOUS, "initial Aggressive Mode message from %s"
-		" but no (wildcard) connection has been configured"
-		, ip_str(&md->sender));
+		   " but no (wildcard) connection has been configured%s%s"
+		   , ip_str(&md->sender)
+		   , (policy != LEMPTY) ? " with policy=" : ""
+		   , (policy != LEMPTY) ? bitnamesof(sa_policy_bit_names, policy) : "");
 	    /* XXX notification is in order! */
 	    return STF_IGNORE;
 	}

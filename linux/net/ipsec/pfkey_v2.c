@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pfkey_v2.c,v 1.99 2005/08/28 01:53:37 paul Exp $
+ * RCSID $Id: pfkey_v2.c,v 1.97.2.8 2006/07/10 15:56:11 paul Exp $
  */
 
 /*
@@ -84,8 +84,8 @@ extern int sysctl_ipsec_debug_verbose;
 #define SOCKOPS_WRAPPED(name) name
 #endif /* SOCKOPS_WRAPPED */
 
-static rwlock_t pfkey_sock_lock = RW_LOCK_UNLOCKED;
 #ifdef NET_26
+static rwlock_t pfkey_sock_lock = RW_LOCK_UNLOCKED;
 HLIST_HEAD(pfkey_sock_list);
 static DECLARE_WAIT_QUEUE_HEAD(pfkey_sock_wait);
 static atomic_t pfkey_sock_users = ATOMIC_INIT(0);
@@ -1541,6 +1541,7 @@ cleanup_module(void)
 }
 #endif /* 0 */
 #else /* MODULE */
+struct net_protocol;
 void pfkey_proto_init(struct net_protocol *pro)
 {
 	pfkey_init();
@@ -1549,22 +1550,14 @@ void pfkey_proto_init(struct net_protocol *pro)
 
 /*
  * $Log: pfkey_v2.c,v $
- * Revision 1.102  2005/09/14 16:37:23  mcr
- * 	fix to compile on 2.4.
+ * Revision 1.97.2.8  2006/07/10 15:56:11  paul
+ * Fix for bug #642 by Bart.
  *
- * Revision 1.101  2005/09/06 01:42:25  mcr
- *    removed additional SOCKOPS_WRAPPED code
+ * Revision 1.97.2.7  2006/04/04 11:34:19  ken
+ * Backport SMP fixes + #ifdef cleanup from #public
  *
- * Revision 1.100  2005/08/30 18:10:15  mcr
- * 	remove SOCKOPS_WRAPPED() code, add proper locking to the
- * 	pfkey code. (cross fingers)
- *
- * Revision 1.99  2005/08/28 01:53:37  paul
- * Undid Ken's gcc4 fix in version 1.94 since it breaks linking KLIPS on SMP kernels.
- *
- * Revision 1.98  2005/08/27 23:07:21  paul
- * Somewhere between 2.6.12 and 2.6.13rc7 the unused security memnber in sk_buff
- * has been removed. This patch should fix compilation for both cases.
+ * Revision 1.97.2.6  2006/02/15 05:00:20  paul
+ * Fix for crasher on 2.6.12+ with klips (mostly seen on redhat kernels)
  *
  * Revision 1.97.2.5  2005/11/22 04:11:52  ken
  * Backport fixes for 2.6.14 kernels from HEAD
@@ -1581,6 +1574,23 @@ void pfkey_proto_init(struct net_protocol *pro)
  *
  * Revision 1.97.2.1  2005/08/27 23:40:00  paul
  * recommited HAVE_SOCK_SECURITY fixes for linux 2.6.13
+ *
+ * Revision 1.102  2005/09/14 16:37:23  mcr
+ * 	fix to compile on 2.4.
+ *
+ * Revision 1.101  2005/09/06 01:42:25  mcr
+ *    removed additional SOCKOPS_WRAPPED code
+ *
+ * Revision 1.100  2005/08/30 18:10:15  mcr
+ * 	remove SOCKOPS_WRAPPED() code, add proper locking to the
+ * 	pfkey code. (cross fingers)
+ *
+ * Revision 1.99  2005/08/28 01:53:37  paul
+ * Undid Ken's gcc4 fix in version 1.94 since it breaks linking KLIPS on SMP kernels.
+ *
+ * Revision 1.98  2005/08/27 23:07:21  paul
+ * Somewhere between 2.6.12 and 2.6.13rc7 the unused security memnber in sk_buff
+ * has been removed. This patch should fix compilation for both cases.
  *
  * Revision 1.97  2005/07/20 00:33:36  mcr
  * 	fixed typo in #ifdef for SKALLOC.
