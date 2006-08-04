@@ -28,6 +28,8 @@
 |   b9 73 0f e0  49 2c 2a f8  c9 04 f6 4c  59 16 90 9d
 | secret  17 9b b3 22  a6 77 6f bc  01 4e 41 03  f0 f6 2e 93
 |   fb 07 d0 93  84 57 e4 54  1e 64 46 a9  34 37 c0 9d
+
+output:
 | shared  c2 e9 1d a2  05 63 19 6e  34 89 df d1  af a5 4a 51
 |   09 4d 76 2e  ff bf 39 a6  1a 64 f4 8c  8e fb 0a 4f
 |   ac 5a a3 18  01 aa 1a cc  94 d6 91 50  96 38 16 8b
@@ -40,6 +42,4 @@
 |   1e 0c 61 71  32 d6 b9 79  58 61 e6 ab  f3 67 d8 9e
 |   3c db 68 3e  ff 9e 37 ea  67 70 21 0e  07 ea b6 2b
 |   72 30 ea 5d  55 86 9a 04  86 ed e1 c7  bd ee 61 84
-
-output:
 
