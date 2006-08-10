@@ -60,6 +60,15 @@ extern void tool_close_log(void);
 #define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
 #define DBG_cond_dump_chunk(cond, label, ch) DBG(cond, DBG_dump_chunk(label, ch))
 
+/*
+ * function to log stuff from libraries that may be used in multiple
+ * places.
+ */
+#ifndef OPENSWAN_KEYING_FUNCTION 
+#define OPENSWAN_KEYING_FUNCTION 
+typedef int (*openswan_keying_debug_func_t)(const char *message, ...);
+#endif
+
 /* Build up a diagnostic in a static buffer.
  * Although this would be a generally useful function, it is very
  * hard to come up with a discipline that prevents different uses

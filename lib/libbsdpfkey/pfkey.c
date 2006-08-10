@@ -46,10 +46,16 @@ __FBSDID("$FreeBSD$");
 #include <string.h>
 #include <errno.h>
 
+#include "oswlog.h"
+
 #include "ipsec_strerror.h"
 #include "libpfkey.h"
 
 #define CALLOC(size, cast) (cast)calloc(1, (size))
+
+unsigned int bsdpfkey_lib_debug = 0;
+openswan_keying_debug_func_t pfkey_debug_func;
+#define PFKEY_DEBUG if(bsdpfkey_lib_debug) (*pfkey_debug_func)
 
 static int findsupportedmap(int);
 static int setsupportedmap(struct sadb_supported *);
@@ -1442,7 +1448,7 @@ pfkey_send_x4(int so, u_int type,
 	/* validity check */
 	if (src == NULL || dst == NULL) {
 		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
-		fprintf(stderr, "src=%p dst=%p\n", src, dst);
+		PFKEY_DEBUG( "src=%p dst=%p\n", src, dst);
 		return -1;
 	}
 	if (src->sa_family != dst->sa_family) {
@@ -1484,26 +1490,26 @@ pfkey_send_x4(int so, u_int type,
 	p = pfkey_setsadbmsg((caddr_t)newmsg, ep, type, len,
 	    SADB_SATYPE_UNSPEC, seq, getpid());
 	if (!p) {
-	    fprintf(stderr, "setting sadbmsg\n");
+	    PFKEY_DEBUG( "setting sadbmsg\n");
 		free(newmsg);
 		return -1;
 	}
 	p = pfkey_setsadbaddr(p, ep, SADB_EXT_ADDRESS_SRC, src, prefs, proto);
 	if (!p) {
-	    fprintf(stderr, "setting sadbaddr-src\n");
+	    PFKEY_DEBUG( "setting sadbaddr-src\n");
 		free(newmsg);
 		return -1;
 	}
 	p = pfkey_setsadbaddr(p, ep, SADB_EXT_ADDRESS_DST, dst, prefd, proto);
 	if (!p) {
-	    fprintf(stderr, "setting sadbaddr-dst\n");
+	    PFKEY_DEBUG( "setting sadbaddr-dst\n");
 		free(newmsg);
 		return -1;
 	}
 	p = pfkey_setsadblifetime(p, ep, SADB_EXT_LIFETIME_HARD,
 			0, 0, ltime, vtime);
 	if (!p || p + policylen != ep) {
-	    fprintf(stderr, "failed on setting sadblifetime\n");
+	    PFKEY_DEBUG( "failed on setting sadblifetime\n");
 		free(newmsg);
 		return -1;
 	}
@@ -1514,7 +1520,7 @@ pfkey_send_x4(int so, u_int type,
 	free(newmsg);
 
 	if (len < 0) {
-	    fprintf(stderr, "len = %d\n", len);
+	    PFKEY_DEBUG( "len = %d\n", len);
 		return -1;
 	}
 
@@ -1691,7 +1697,7 @@ pfkey_send(so, msg, len)
 	int len;
 {
 	if ((len = send(so, (caddr_t)msg, len, 0)) < 0) {
-	    fprintf(stderr, "send failed len=%d error=%d(%s)\n", len
+	    PFKEY_DEBUG( "send failed len=%d error=%d(%s)\n", len
 		    , errno, strerror(errno));
 		__ipsec_set_strerror(strerror(errno));
 		return -1;
@@ -1939,7 +1945,7 @@ pfkey_setsadbmsg(buf, lim, type, tlen, satype, seq, pid)
 	len = sizeof(struct sadb_msg);
 
 	if (buf + len > lim) {
-	    fprintf(stderr, "sadbmsg: %p+%d>%p fails\n", buf,len,lim);
+	    PFKEY_DEBUG( "sadbmsg: %p+%d>%p fails\n", buf,len,lim);
 	    return NULL;
 	}
 
@@ -1974,7 +1980,7 @@ pfkey_setsadbsa(buf, lim, spi, wsize, auth, enc, flags)
 	len = sizeof(struct sadb_sa);
 
 	if (buf + len > lim) {
-	    fprintf(stderr, "sadbsa: %p+%d>%p fails\n", buf,len,lim);
+	    PFKEY_DEBUG( "sadbsa: %p+%d>%p fails\n", buf,len,lim);
 	    return NULL;
 	}
 
@@ -2012,7 +2018,7 @@ pfkey_setsadbaddr(buf, lim, exttype, saddr, prefixlen, ul_proto)
 	len = sizeof(struct sadb_address) + PFKEY_ALIGN8(saddr->sa_len);
 
 	if (buf + len > lim) {
-	    fprintf(stderr, "sadbaddr: %p+%d>%p fails\n", buf,len,lim);
+	    PFKEY_DEBUG( "sadbaddr: %p+%d>%p fails\n", buf,len,lim);
 	    return NULL;
 	}
 
@@ -2046,7 +2052,7 @@ pfkey_setsadbkey(buf, lim, type, key, keylen)
 	len = sizeof(struct sadb_key) + PFKEY_ALIGN8(keylen);
 
 	if (buf + len > lim) {
-	    fprintf(stderr, "sadbkey: %p+%d>%p fails\n", buf,len,lim);
+	    PFKEY_DEBUG( "sadbkey: %p+%d>%p fails\n", buf,len,lim);
 	    return NULL;
 	}
 
@@ -2079,7 +2085,7 @@ pfkey_setsadblifetime(buf, lim, type, l_alloc, l_bytes, l_addtime, l_usetime)
 	len = sizeof(struct sadb_lifetime);
 
 	if (buf + len > lim) {
-	    fprintf(stderr, "sadblifetime: %p+%d>%p fails\n", buf,len,lim);
+	    PFKEY_DEBUG( "sadblifetime: %p+%d>%p fails\n", buf,len,lim);
 	    return NULL;
 	}
 
@@ -2128,7 +2134,7 @@ pfkey_setsadbxsa2(buf, lim, mode0, reqid)
 	len = sizeof(struct sadb_x_sa2);
 
 	if (buf + len > lim) {
-	    fprintf(stderr, "sadbxsa2: %p+%d>%p fails\n", buf,len,lim);
+	    PFKEY_DEBUG( "sadbxsa2: %p+%d>%p fails\n", buf,len,lim);
 	    return NULL;
 	}
 

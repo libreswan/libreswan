@@ -239,9 +239,10 @@ typedef uint32_t IPsecSAref_t;
  * function to log stuff from libraries that may be used in multiple
  * places.
  */
+#ifndef OPENSWAN_KEYING_FUNCTION 
+#define OPENSWAN_KEYING_FUNCTION 
 typedef int (*openswan_keying_debug_func_t)(const char *message, ...);
-
-
+#endif
 
 /*
  * new IPv6-compatible functions

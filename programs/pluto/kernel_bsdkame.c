@@ -844,11 +844,12 @@ bsdkame_was_eroute_idle(struct state *st UNUSED
 
 
 static void
-bsdkame_set_debug(int cur_debug UNUSED
-		  , openswan_keying_debug_func_t debug_func UNUSED
+bsdkame_set_debug(int cur_debug
+		  , openswan_keying_debug_func_t debug_func
 		  , openswan_keying_debug_func_t error_func UNUSED)
 {
-    /* nothing to do here for now */
+	bsdpfkey_lib_debug = (cur_debug&DBG_PFKEY ? 1 : 0);
+	pfkey_debug_func = debug_func;
 }
 
 static void

@@ -93,3 +93,6 @@ int pfkey_send_x1(int, u_int, u_int, u_int, const struct sockaddr *,
 	const struct sockaddr *, u_int32_t, u_int32_t, u_int, caddr_t,
 	u_int, u_int, u_int, u_int, u_int, u_int32_t, u_int32_t,
 	u_int32_t, u_int32_t, u_int32_t);
+
+extern openswan_keying_debug_func_t pfkey_debug_func;
+extern unsigned int bsdpfkey_lib_debug;
