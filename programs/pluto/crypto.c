@@ -117,21 +117,66 @@ static struct hash_desc crypto_hasher_sha1 =
     hash_final: (void (*)(u_char *, void *)) SHA1Final,
 };
 #endif
+
+/* Oakley group description
+ *
+ * See RFC2409 "The Internet key exchange (IKE)" 6.
+ */
+
+const struct oakley_group_desc unset_group = { .group = 0 };	/* magic signifier */
+
+struct oakley_group_desc oakley_group[] = {
+#if defined(USE_VERYWEAK_DH1)    	/* modp768 not sufficiently strong */
+    { .group = OAKLEY_GROUP_MODP768; .modulus = &modp768_modulus; 
+      .bytes=BYTES_FOR_BITS(768); .str_modulus=MODP768_MODULUS; },
+#endif
+    { .group = OAKLEY_GROUP_MODP1024, .modulus = &modp1024_modulus, 
+      .bytes=BYTES_FOR_BITS(1024), .str_modulus=MODP1024_MODULUS, },
+    { .group = OAKLEY_GROUP_MODP1536, .modulus = &modp1536_modulus, 
+      .bytes=BYTES_FOR_BITS(1536), .str_modulus=MODP1536_MODULUS, },
+    { .group = OAKLEY_GROUP_MODP2048, .modulus = &modp2048_modulus, 
+      .bytes=BYTES_FOR_BITS(2048), .str_modulus=MODP2048_MODULUS, },
+    { .group = OAKLEY_GROUP_MODP3072, .modulus = &modp3072_modulus, 
+      .bytes=BYTES_FOR_BITS(3072), .str_modulus=MODP3072_MODULUS, },
+    { .group = OAKLEY_GROUP_MODP4096, .modulus = &modp4096_modulus, 
+      .bytes=BYTES_FOR_BITS(4096), .str_modulus=MODP4096_MODULUS, },
+    { .group = OAKLEY_GROUP_MODP6144, .modulus = &modp6144_modulus, 
+      .bytes=BYTES_FOR_BITS(6144), .str_modulus=MODP6144_MODULUS, },
+    { .group = OAKLEY_GROUP_MODP8192, .modulus = &modp8192_modulus, 
+      .bytes=BYTES_FOR_BITS(8192), .str_modulus=MODP8192_MODULUS, },
+};
+
+const unsigned int oakley_group_size = elemsof(oakley_group);
+
+const struct oakley_group_desc *
+lookup_group(u_int16_t group)
+{
+    int i;
+
+    for (i = 0; i != elemsof(oakley_group); i++)
+	if (group == oakley_group[i].group)
+	    return &oakley_group[i];
+    return NULL;
+}
+
 void
 init_crypto(void)
 {
-    if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0
-#if defined(USE_VERYWEAK_DH1)	                        /* modp768 not sufficiently strong */
-    || mpz_init_set_str(&modp768_modulus, MODP768_MODULUS, 16) != 0
-#endif
-    || mpz_init_set_str(&modp1024_modulus, MODP1024_MODULUS, 16) != 0
-    || mpz_init_set_str(&modp1536_modulus, MODP1536_MODULUS, 16) != 0
-    || mpz_init_set_str(&modp2048_modulus, MODP2048_MODULUS, 16) != 0
-    || mpz_init_set_str(&modp3072_modulus, MODP3072_MODULUS, 16) != 0
-    || mpz_init_set_str(&modp4096_modulus, MODP4096_MODULUS, 16) != 0
-    || mpz_init_set_str(&modp6144_modulus, MODP6144_MODULUS, 16) != 0
-    || mpz_init_set_str(&modp8192_modulus, MODP8192_MODULUS, 16) != 0)
+    int i;
+
+    if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0)
 	exit_log("mpz_init_set_str() failed in init_crypto()");
+
+    for (i = 0; i != elemsof(oakley_group); i++) {
+	struct oakley_group_desc *ogd = &oakley_group[i];
+
+	if(mpz_init_set_str(ogd->modulus, ogd->str_modulus, 16) != 0)
+	    exit_log("mpz_init_set_str() failed in init_crypto()");
+
+	/* convert to raw byte string for use in hardware offload interface */
+	ogd->raw_modulus = mpz_to_n2(ogd->modulus);
+    }
+
 #ifdef IKE_ALG
 	{
 #ifdef USE_TWOFISH
@@ -186,39 +231,6 @@ init_crypto(void)
 	    ike_alg_add((struct ike_alg *) &crypto_hasher_md5);
 	}
 #endif
-}
-
-/* Oakley group description
- *
- * See RFC2409 "The Internet key exchange (IKE)" 6.
- */
-
-const struct oakley_group_desc unset_group = {0, NULL, 0};	/* magic signifier */
-
-const struct oakley_group_desc oakley_group[] = {
-#if defined(USE_VERYWEAK_DH1)    	/* modp768 not sufficiently strong */
-    { OAKLEY_GROUP_MODP768, &modp768_modulus, BYTES_FOR_BITS(768) },
-#endif
-    { OAKLEY_GROUP_MODP1024, &modp1024_modulus, BYTES_FOR_BITS(1024) },
-    { OAKLEY_GROUP_MODP1536, &modp1536_modulus, BYTES_FOR_BITS(1536) },
-    { OAKLEY_GROUP_MODP2048, &modp2048_modulus, BYTES_FOR_BITS(2048) },
-    { OAKLEY_GROUP_MODP3072, &modp3072_modulus, BYTES_FOR_BITS(3072) },
-    { OAKLEY_GROUP_MODP4096, &modp4096_modulus, BYTES_FOR_BITS(4096) },
-    { OAKLEY_GROUP_MODP6144, &modp6144_modulus, BYTES_FOR_BITS(6144) },
-    { OAKLEY_GROUP_MODP8192, &modp8192_modulus, BYTES_FOR_BITS(8192) },
-};
-
-const unsigned int oakley_group_size = elemsof(oakley_group);
-
-const struct oakley_group_desc *
-lookup_group(u_int16_t group)
-{
-    int i;
-
-    for (i = 0; i != elemsof(oakley_group); i++)
-	if (group == oakley_group[i].group)
-	    return &oakley_group[i];
-    return NULL;
 }
 
 /* Encryption Routines

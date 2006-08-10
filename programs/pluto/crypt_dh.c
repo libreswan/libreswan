@@ -50,23 +50,32 @@
 #include "secrets.h"
 #include "keys.h"
 
+typedef void (*calc_dh_shared_t)(chunk_t *shared, const chunk_t g
+				 , const chunk_t *secchunk
+				 , const struct oakley_group_desc *group);
+
 /** Compute DH shared secret from our local secret and the peer's public value.
  * We make the leap that the length should be that of the group
  * (see quoted passage at start of ACCEPT_KE).
  */
 static void
-calc_dh_shared(chunk_t *shared, const chunk_t g
-	       , const MP_INT *sec
-	       , const struct oakley_group_desc *group)
+calc_dh_shared_gmp(chunk_t *shared, const chunk_t g
+		   , const chunk_t *secchunk
+		   , const struct oakley_group_desc *group)
 {
-    MP_INT mp_g, mp_shared;
+    MP_INT mp_g, mp_shared, sec;
     struct timeval tv0, tv1;
     unsigned long tv_diff;
 
     gettimeofday(&tv0, NULL);
+
+    /* recover the long term secret */
+    n_to_mpz(&sec, secchunk->ptr, secchunk->len);
+
+    /* do the exponentiation */
     n_to_mpz(&mp_g, g.ptr, g.len);
     mpz_init(&mp_shared);
-    mpz_powm(&mp_shared, &mp_g, sec, group->modulus);
+    mpz_powm(&mp_shared, &mp_g, &sec, group->modulus);
     mpz_clear(&mp_g);
 
     *shared = mpz_to_n(&mp_shared, group->bytes);
@@ -90,6 +99,11 @@ calc_dh_shared(chunk_t *shared, const chunk_t g
     DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret:\n", *shared);
 }
 
+#ifdef VULCAN_PK
+#include "vulcan/crypto_dh_vulcanpk.c"
+#endif
+
+calc_dh_shared_t calc_dh_shared = calc_dh_shared_gmp;
 
 /* SKEYID for preshared keys.
  * See draft-ietf-ipsec-ike-01.txt 4.1
@@ -303,7 +317,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
     struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
     struct pcr_skeyid_q dhq;
     const struct oakley_group_desc *group;
-    MP_INT  sec;
+    chunk_t  sec;
     chunk_t  shared, g;
     chunk_t  skeyid, skeyid_d, skeyid_a, skeyid_e; 
     chunk_t  new_iv, enc_key;
@@ -327,8 +341,8 @@ void calc_dh_iv(struct pluto_crypto_req *r)
     DBG(DBG_CRYPT,
 	DBG_dump_chunk("long term secret: ", shared));
 
-    /* recover the long term secret */
-    n_to_mpz(&sec, wire_chunk_ptr(&dhq, &dhq.secret), dhq.secret.len);
+    sec.ptr = wire_chunk_ptr(&dhq, &dhq.secret);
+    sec.len = dhq.secret.len;
 
     /* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
 
@@ -338,7 +352,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
       setchunk_fromwire(g, &dhq.gr, &dhq);
     }
 
-    calc_dh_shared(&shared, g, &sec, group);
+    (*calc_dh_shared)(&shared, g, &sec, group);
     
     memset(&skeyid, 0, sizeof(skeyid));
     memset(&skeyid_d, 0, sizeof(skeyid_d));
@@ -383,7 +397,7 @@ void calc_dh(struct pluto_crypto_req *r)
     struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
     struct pcr_skeyid_q dhq;
     const struct oakley_group_desc *group;
-    MP_INT  sec;
+    chunk_t  sec;
     chunk_t  shared, g;
 
     /* copy the request, since we will use the same memory for the reply */
@@ -403,7 +417,8 @@ void calc_dh(struct pluto_crypto_req *r)
     shared.len = group->bytes;
 
     /* recover the long term secret */
-    n_to_mpz(&sec, wire_chunk_ptr(&dhq, &dhq.secret), dhq.secret.len);
+    sec.ptr = wire_chunk_ptr(&dhq, &dhq.secret);
+    sec.len = dhq.secret.len;
 
     /* now calculate the (g^x)(g^y) */
 
@@ -412,7 +427,7 @@ void calc_dh(struct pluto_crypto_req *r)
     } else {
       setchunk_fromwire(g, &dhq.gr, &dhq);
     }
-    calc_dh_shared(&shared, g, &sec, group);
+    (*calc_dh_shared)(&shared, g, &sec, group);
 
     /* now translate it back to wire chunks, freeing the chunks */
     setwirechunk_fromchunk(skr->shared,   shared,   skr);

@@ -161,6 +161,11 @@ int main(int argc, char *argv[])
 	/* initialize list of moduli */
 	init_crypto();
 
+#ifdef VULCAN_PK
+	calc_dh_shared = calc_dh_shared_vulcanpk;
+#endif	
+	
+
 	skq->thespace.start = 0;
 	skq->thespace.len   = sizeof(skq->space);
 	skq->auth = tc2_auth;

@@ -37,11 +37,13 @@ struct oakley_group_desc {
     u_int16_t group;
     MP_INT *modulus;
     size_t bytes;
+    const unsigned char *str_modulus;
+    chunk_t        raw_modulus;
 };
 
 extern const struct oakley_group_desc unset_group;	/* magic signifier */
 extern const struct oakley_group_desc *lookup_group(u_int16_t group);
-extern const struct oakley_group_desc oakley_group[];
+extern struct oakley_group_desc oakley_group[];
 extern const unsigned int oakley_group_size;
 
 /* unification of cryptographic encoding/decoding algorithms
@@ -129,3 +131,11 @@ extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 #endif
 
 #endif /* _CRYPTO_H */
+
+/*
+ * Local Variables:
+ * c-basic-offset:4
+ * c-style: pluto
+ * End:
+ */
+
