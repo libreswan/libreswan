@@ -9,6 +9,8 @@ SOURCES+=${OPENSWANSRCDIR}/programs/pluto/ike_alg.c
 SOURCES+=${OPENSWANSRCDIR}/programs/pluto/crypt_utils.c
 SOURCES+=${OPENSWANSRCDIR}/programs/pluto/crypt_dh.c
 
+PROGRAM=pk-dh
+
 pk-dh: ${SOURCES}
 
 programs checkprograms: ${UNITTEST}
