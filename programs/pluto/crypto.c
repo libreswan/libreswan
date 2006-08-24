@@ -125,25 +125,34 @@ static struct hash_desc crypto_hasher_sha1 =
 
 const struct oakley_group_desc unset_group = { .group = 0 };	/* magic signifier */
 
+#include "modulus_reciprocals.c"
+
 struct oakley_group_desc oakley_group[] = {
 #if defined(USE_VERYWEAK_DH1)    	/* modp768 not sufficiently strong */
     { .group = OAKLEY_GROUP_MODP768; .modulus = &modp768_modulus; 
       .bytes=BYTES_FOR_BITS(768); .str_modulus=MODP768_MODULUS; },
 #endif
     { .group = OAKLEY_GROUP_MODP1024, .modulus = &modp1024_modulus, 
-      .bytes=BYTES_FOR_BITS(1024), .str_modulus=MODP1024_MODULUS, },
+      .bytes=BYTES_FOR_BITS(1024), .str_modulus=MODP1024_MODULUS,
+      .rec_modulus=&modp1024_reciprocal },
     { .group = OAKLEY_GROUP_MODP1536, .modulus = &modp1536_modulus, 
-      .bytes=BYTES_FOR_BITS(1536), .str_modulus=MODP1536_MODULUS, },
+      .bytes=BYTES_FOR_BITS(1536), .str_modulus=MODP1536_MODULUS, 
+      .rec_modulus=&modp1536_reciprocal },
     { .group = OAKLEY_GROUP_MODP2048, .modulus = &modp2048_modulus, 
-      .bytes=BYTES_FOR_BITS(2048), .str_modulus=MODP2048_MODULUS, },
+      .bytes=BYTES_FOR_BITS(2048), .str_modulus=MODP2048_MODULUS, 
+      .rec_modulus=&modp2048_reciprocal },
     { .group = OAKLEY_GROUP_MODP3072, .modulus = &modp3072_modulus, 
-      .bytes=BYTES_FOR_BITS(3072), .str_modulus=MODP3072_MODULUS, },
+      .bytes=BYTES_FOR_BITS(3072), .str_modulus=MODP3072_MODULUS, 
+      .rec_modulus=&modp3072_reciprocal },
     { .group = OAKLEY_GROUP_MODP4096, .modulus = &modp4096_modulus, 
-      .bytes=BYTES_FOR_BITS(4096), .str_modulus=MODP4096_MODULUS, },
+      .bytes=BYTES_FOR_BITS(4096), .str_modulus=MODP4096_MODULUS, 
+      .rec_modulus=&modp4096_reciprocal },
     { .group = OAKLEY_GROUP_MODP6144, .modulus = &modp6144_modulus, 
-      .bytes=BYTES_FOR_BITS(6144), .str_modulus=MODP6144_MODULUS, },
+      .bytes=BYTES_FOR_BITS(6144), .str_modulus=MODP6144_MODULUS, 
+      .rec_modulus=&modp6144_reciprocal },
     { .group = OAKLEY_GROUP_MODP8192, .modulus = &modp8192_modulus, 
-      .bytes=BYTES_FOR_BITS(8192), .str_modulus=MODP8192_MODULUS, },
+      .bytes=BYTES_FOR_BITS(8192), .str_modulus=MODP8192_MODULUS, 
+      .rec_modulus=&modp8192_reciprocal },
 };
 
 const unsigned int oakley_group_size = elemsof(oakley_group);

@@ -39,6 +39,7 @@ struct oakley_group_desc {
     size_t bytes;
     const unsigned char *str_modulus;
     chunk_t        raw_modulus;
+    chunk_t       *rec_modulus;  /* reducent of modulus */
 };
 
 extern const struct oakley_group_desc unset_group;	/* magic signifier */
