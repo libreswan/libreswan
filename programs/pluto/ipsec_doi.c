@@ -294,6 +294,8 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 	    return;
 	}
 
+	openswan_DBG_dump("payload malformed after IV", sndst->st_iv, sndst->st_iv_len);
+
 	/*
 	 * do not encrypt notification, since #1 reason for malformed
 	 * payload is that the keys are all messed up.

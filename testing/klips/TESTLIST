@@ -64,6 +64,11 @@ skiptest east-ah-icmp-02	good
 klipstest east-espiv-01		good
 
 #
+# west-bigicmp-01: test receiving fragmented ESP packets
+#
+klipstest west-bigicmp-01		good
+
+#
 # west-icmp-01: pass enciphered ping packets through manually keyed ESP SA
 #		and confirm decryption
 #

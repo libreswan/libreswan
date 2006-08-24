@@ -1,210 +1,35 @@
-Starting UML /0i/sandboxes/pool/t4/east/start.sh
-spawn /0i/sandboxes/pool/t4/east/start.sh single
-Checking for /proc/mm...found
-Checking for the skas3 patch in the host...found
-Checking PROT_EXEC mmap in /tmp...OK
-Linux version 2.6.11.2 (mcr@gimli) (gcc version 3.3.5 (Debian 1:3.3.5-8)) #20 Sun Apr 17 01:27:00 EDT 2005
-Built 1 zonelists
-Kernel command line: root=/dev/root rootfstype=hostfs rootflags=/0i/sandboxes/pool/t4/east/root rw eth0=daemon,10:00:00:dc:bc:ff,unix,/tmp/umljQQizf.d/private/ctl,/tmp/umljQQizf.d/private/data eth1=daemon,10:00:00:64:64:23,unix,/tmp/umljQQizf.d/public/ctl,/tmp/umljQQizf.d/public/data eth2=daemon,10:00:00:32:64:23,unix,/tmp/umljQQizf.d/admin/ctl,/tmp/umljQQizf.d/admin/data single
-PID hash table entries: 256 (order: 8, 4096 bytes)
-Dentry cache hash table entries: 8192 (order: 3, 32768 bytes)
-Inode-cache hash table entries: 4096 (order: 2, 16384 bytes)
-Memory: 28712k available
-Mount-cache hash table entries: 512 (order: 0, 4096 bytes)
-Checking for host processor cmov support...Yes
-Checking for host processor xmm support...No
-Checking that ptrace can change system call numbers...OK
-Checking syscall emulation patch for ptrace...missing
-Checking that host ptys support output SIGIO...Yes
-Checking that host ptys support SIGIO on close...No, enabling workaround
-Checking for /dev/anon on the host...Not available (open failed with errno 2)
-NET: Registered protocol family 16
-daemon_setup : Ignoring data socket specification
-Netdevice 0 (10:00:00:dc:bc:ff) : daemon backend (uml_switch version 3) - unix:/tmp/umljQQizf.d/private/ctl
-daemon_setup : Ignoring data socket specification
-Netdevice 1 (10:00:00:64:64:23) : daemon backend (uml_switch version 3) - unix:/tmp/umljQQizf.d/public/ctl
-daemon_setup : Ignoring data socket specification
-Netdevice 2 (10:00:00:32:64:23) : daemon backend (uml_switch version 3) - unix:/tmp/umljQQizf.d/admin/ctl
-mconsole (version 2) initialized on /home/mcr/.uml/east/mconsole
-VFS: Disk quotas dquot_6.5.1
-Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
-devfs: 2004-01-31 Richard Gooch (rgooch@atnf.csiro.au)
-devfs: boot_options: 0x1
-Initializing Cryptographic API
-io scheduler noop registered
-io scheduler anticipatory registered
-io scheduler deadline registered
-io scheduler cfq registered
-RAMDISK driver initialized: 16 RAM disks of 4096K size 1024 blocksize
-loop: loaded (max 8 devices)
-nbd: registered device at major 43
-PPP generic driver version 2.4.2
-SLIP: version 0.8.4-NET3.019-NEWTTY (dynamic channels, max=256).
-tun: Universal TUN/TAP device driver, 1.6
-tun: (C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>
-NET: Registered protocol family 2
-IP: routing cache hash table of 512 buckets, 4Kbytes
-TCP established hash table entries: 2048 (order: 2, 16384 bytes)
-TCP bind hash table entries: 2048 (order: 1, 8192 bytes)
-TCP: Hash tables configured (established 2048 bind 2048)
-klips_info:ipsec_init: KLIPS startup, Openswan KLIPS IPsec stack version: cvs2005Apr16_23:42:32
-NET: Registered protocol family 15
-klips_info:ipsec_alg_init: KLIPS alg v=0.8.1-0 (EALG_MAX=255, AALG_MAX=251)
-klips_info:ipsec_alg_init: calling ipsec_alg_static_init()
-ipsec_aes_init(alg_type=15 alg_id=12 name=aes): ret=0
-ipsec_aes_init(alg_type=14 alg_id=9 name=aes_mac): ret=0
-IPv4 over IPv4 tunneling driver
-GRE over IPv4 tunneling driver
-ip_conntrack version 2.1 (224 buckets, 1792 max) - 212 bytes per conntrack
-ip_tables: (C) 2000-2002 Netfilter core team
-ipt_recent v0.3.1: Stephen Frost <sfrost@snowman.net>.  http://snowman.net/projects/ipt_recent/
-arp_tables: (C) 2002 David S. Miller
-NET: Registered protocol family 1
-NET: Registered protocol family 17
-Initialized stdio console driver
-Console initialized on /dev/tty0
-Initializing software serial port version 1
-VFS: Mounted root (hostfs filesystem).
-Mounted devfs on /dev
-line_ioctl: tty0: ioctl KDSIGACCEPT called
-INIT: version 2.78 booting
-Activating swap...
-Checking all file systems...
-Parallelizing fsck version 1.18 (11-Nov-1999)
-Setting kernel variables.
-Mounting local filesystems...
-/dev/shm on /tmp type tmpfs (rw)
-/dev/shm on /var/run type tmpfs (rw)
-devpts on /dev/pts type devpts (rw,mode=0622)
-none on /usr/share type hostfs (ro)
-none on /testing type hostfs (ro,/0i/sandboxes/t4/testing)
-none on /usr/src type hostfs (ro,/0i/sandboxes/t4)
-none on /usr/local type hostfs (rw,/0i/sandboxes/pool/t4/east/root/usr/local)
-none on /var/tmp type hostfs (rw,/0i/sandboxes/pool/t4/east/root/var/tmp)
-Enabling packet forwarding: done.
-Configuring network interfaces: done.
-Cleaning: /tmp /var/lock /var/run.
-Initializing random number generator... done.
-Recovering nvi editor sessions... done.
-Give root password for maintenance
-(or type Control-D for normal startup): 
-east:~# echo Starting loading module
-Starting loading module
-east:~# exec bash --noediting
-east:~# ulimit -c unlimited
-east:~# echo Finished loading module
-Finished loading module
-east:~# klogd -c 4 -x -f /tmp/klog.log
-east:~# TZ=GMT export TZ
-east:~# ipsec spi --clear
-east:~# ipsec eroute --clear
-east:~# authkey=0x98765876587658765876587658765876
-east:~# ipsec spi --af inet --edst 192.1.2.45 --spi 0x91234567 --proto ah --src 192.1.2.23 --ah hmac-md5-96 --authkey $authkey
-KLIPS sa initialization: proto=51 unknown.
-/usr/local/libexec/ipsec/spi: pfkey write failed (errno=22): Invalid argument, check kernel log messages for specifics.
-east:~# ipsec spi --af inet --edst 192.1.2.45 --spi 0x91234567 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4
-east:~# ipsec spigrp inet 192.1.2.45 0x91234567 tun inet 192.1.2.45 0x91234567 ah
-/usr/local/libexec/ipsec/spigrp: pfkey write failed, returning -1 with errno=2.
-device does not exist.  See FreeS/WAN installation procedure.
-east:~# ipsec eroute --add --eraf inet --src 192.0.2.0/24 --dst 192.0.1.0/24 --said tun0x91234567@192.1.2.45
-east:~# ipsec tncfg --attach --virtual ipsec0 --physical eth1
-east:~# ifconfig ipsec0 inet 192.1.2.23 netmask 0xffffff00 broadcast 192.1.2.255 up
-east:~# arp -s 192.1.2.45 10:00:00:64:64:45
-east:~# arp -s 192.1.2.254 10:00:00:64:64:45
-east:~# ipsec look
-east Wed Apr 20 23:33:51 GMT 2005
-192.0.2.0/24       -> 192.0.1.0/24       => tun0x91234567@192.1.2.45  (0)
+east:~#
+ TZ=GMT export TZ
+east:~#
+ ipsec spi --clear
+east:~#
+ ipsec eroute --clear
+east:~#
+ authkey=0x98765876587658765876587658765876
+east:~#
+ ipsec spi --af inet --edst 192.1.2.45 --spi 0x91234567 --proto ah --src 192.1.2.23 --ah hmac-md5-96 --authkey $authkey
+east:~#
+ ipsec spi --af inet --edst 192.1.2.45 --spi 0x91234567 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4
+east:~#
+ ipsec spigrp inet 192.1.2.45 0x91234567 tun inet 192.1.2.45 0x91234567 ah
+east:~#
+ ipsec eroute --add --eraf inet --src 192.0.2.0/24 --dst 192.0.1.0/24 --said tun0x91234567@192.1.2.45
+east:~#
+ ipsec tncfg --attach --virtual ipsec0 --physical eth1
+east:~#
+ ifconfig ipsec0 inet 192.1.2.23 netmask 0xffffff00 broadcast 192.1.2.255 up
+east:~#
+ arp -s 192.1.2.45 10:00:00:64:64:45
+east:~#
+ arp -s 192.1.2.254 10:00:00:64:64:45
+east:~#
+ ipsec look
+east NOW
+192.0.2.0/24       -> 192.0.1.0/24       => tun0x91234567@192.1.2.45 ah0x91234567@192.1.2.45  (0)
 ipsec0->eth1 mtu=16260(1500)->1500
-tun0x91234567@192.1.2.45 IPIP: dir=out src=192.1.2.23 life(c,s,h)=addtime(1,0,0) natencap=none natsport=0 natdport=0 refcount=3 ref=3
+ah0x91234567@192.1.2.45 AH_HMAC_MD5: dir=out src=192.1.2.23 alen=128 aklen=128 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=4 ref=2
+tun0x91234567@192.1.2.45 IPIP: dir=out src=192.1.2.23 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=4 ref=3
 ROUTING TABLE
-east:~# route add -host 192.0.1.1 gw 192.1.2.45 dev ipsec0
-east:~# ipsec setup stop
-IPSEC EVENT: KLIPS device ipsec0 shut down.
-ipsec_setup: Stopping Openswan IPsec...
-ipsec_setup: stop ordered, but IPsec does not appear to be running!
-ipsec_setup: doing cleanup anyway...
-east:~# kill `cat /var/run/klogd.pid`; cat /tmp/klog.log
-klogd 1.3-3#33.1, log source = /proc/kmsg started.
-<4>Linux version 2.6.11.2 (mcr@gimli) (gcc version 3.3.5 (Debian 1:3.3.5-8)) #20 Sun Apr 17 01:27:00 EDT 2005
-<7>On node 0 totalpages: 8192
-<7>  DMA zone: 8192 pages, LIFO batch:2
-<7>  Normal zone: 0 pages, LIFO batch:1
-<7>  HighMem zone: 0 pages, LIFO batch:1
-<4>Built 1 zonelists
-<4>Kernel command line: root=/dev/root rootfstype=hostfs rootflags=/0i/sandboxes/pool/t4/east/root rw eth0=daemon,10:00:00:dc:bc:ff,unix,/tmp/umljQQizf.d/private/ctl,/tmp/umljQQizf.d/private/data eth1=daemon,10:00:00:64:64:23,unix,/tmp/umljQQizf.d/public/ctl,/tmp/umljQQizf.d/public/data eth2=daemon,10:00:00:32:64:23,unix,/tmp/umljQQizf.d/admin/ctl,/tmp/umljQQizf.d/admin/data single
-<4>PID hash table entries: 256 (order: 8, 4096 bytes)
-<4>Dentry cache hash table entries: 8192 (order: 3, 32768 bytes)
-<4>Inode-cache hash table entries: 4096 (order: 2, 16384 bytes)
-<6>Memory: 28712k available
-<7>Calibrating delay loop... 848.69 BogoMIPS (lpj=4243456)
-<4>Mount-cache hash table entries: 512 (order: 0, 4096 bytes)
-<4>Checking for host processor cmov support...Yes
-<4>Checking for host processor xmm support...No
-<4>Checking that ptrace can change system call numbers...OK
-<4>Checking syscall emulation patch for ptrace...missing
-<4>Checking that host ptys support output SIGIO...Yes
-<4>Checking that host ptys support SIGIO on close...No, enabling workaround
-<4>Checking for /dev/anon on the host...Not available (open failed with errno 2)
-<6>NET: Registered protocol family 16
-<4>daemon_setup : Ignoring data socket specification
-<6>Netdevice 0 (10:00:00:dc:bc:ff) : daemon backend (uml_switch version 3) - unix:/tmp/umljQQizf.d/private/ctl
-<4>daemon_setup : Ignoring data socket specification
-<6>Netdevice 1 (10:00:00:64:64:23) : daemon backend (uml_switch version 3) - unix:/tmp/umljQQizf.d/public/ctl
-<4>daemon_setup : Ignoring data socket specification
-<6>Netdevice 2 (10:00:00:32:64:23) : daemon backend (uml_switch version 3) - unix:/tmp/umljQQizf.d/admin/ctl
-<4>mconsole (version 2) initialized on /home/mcr/.uml/east/mconsole
-<5>VFS: Disk quotas dquot_6.5.1
-<4>Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
-<6>devfs: 2004-01-31 Richard Gooch (rgooch@atnf.csiro.au)
-<6>devfs: boot_options: 0x1
-<6>Initializing Cryptographic API
-<6>io scheduler noop registered
-<6>io scheduler anticipatory registered
-<6>io scheduler deadline registered
-<6>io scheduler cfq registered
-<4>RAMDISK driver initialized: 16 RAM disks of 4096K size 1024 blocksize
-<6>loop: loaded (max 8 devices)
-<6>nbd: registered device at major 43
-<6>PPP generic driver version 2.4.2
-<6>SLIP: version 0.8.4-NET3.019-NEWTTY (dynamic channels, max=256).
-<6>tun: Universal TUN/TAP device driver, 1.6
-<6>tun: (C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>
-<6>NET: Registered protocol family 2
-<6>IP: routing cache hash table of 512 buckets, 4Kbytes
-<4>TCP established hash table entries: 2048 (order: 2, 16384 bytes)
-<4>TCP bind hash table entries: 2048 (order: 1, 8192 bytes)
-<6>TCP: Hash tables configured (established 2048 bind 2048)
-<6>klips_info:ipsec_init: KLIPS startup, Openswan KLIPS IPsec stack version: cvs2005Apr16_23:42:32
-<6>NET: Registered protocol family 15
-<6>klips_info:ipsec_alg_init: KLIPS alg v=0.8.1-0 (EALG_MAX=255, AALG_MAX=251)
-<6>klips_info:ipsec_alg_init: calling ipsec_alg_static_init()
-<4>ipsec_aes_init(alg_type=15 alg_id=12 name=aes): ret=0
-<4>ipsec_aes_init(alg_type=14 alg_id=9 name=aes_mac): ret=0
-<6>IPv4 over IPv4 tunneling driver
-<6>GRE over IPv4 tunneling driver
-<4>ip_conntrack version 2.1 (224 buckets, 1792 max) - 212 bytes per conntrack
-<4>ip_tables: (C) 2000-2002 Netfilter core team
-<6>ipt_recent v0.3.1: Stephen Frost <sfrost@snowman.net>.  http://snowman.net/projects/ipt_recent/
-<4>arp_tables: (C) 2002 David S. Miller
-<6>NET: Registered protocol family 1
-<6>NET: Registered protocol family 17
-<6>Initialized stdio console driver
-<4>Console initialized on /dev/tty0
-<6>Initializing software serial port version 1
-<4>VFS: Mounted root (hostfs filesystem).
-<6>Mounted devfs on /dev
-<6>line_ioctl: tty0: ioctl KDSIGACCEPT called
-<7>Something isn't implemented in here
-<7>Something isn't implemented in here
-<7>Something isn't implemented in here
-<7>Something isn't implemented in here
-<7>Something isn't implemented in here
-<7>Something isn't implemented in here
-<4>
-<3>KLIPS sa initialization: proto=51 unknown.
-<2>IPSEC EVENT: KLIPS device ipsec0 shut down.
-<4>
-Kernel logging (proc) stopped.
-Kernel log daemon terminating.
-east:~# halt -p -f
-Power down.
+east:~#
+ route add -host 192.0.1.1 gw 192.1.2.45 dev ipsec0
+

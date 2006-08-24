@@ -111,10 +111,8 @@ int debug_ah = 0;
 
 #define DECREMENT_UNSIGNED(X, amount) ((amount < (X)) ? (X)-amount : 0)
 
-#ifdef CONFIG_KLIPS_ALG
 extern int ipsec_xform_get_info(char *buffer, char **start,
 				off_t offset, int length IPSEC_PROC_LAST_ARG);
-#endif
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
 int
@@ -843,9 +841,7 @@ static struct ipsec_proc_list proc_items[]={
 	{"ipv4",       &proc_birth_dir,     NULL,             ipsec_birth_info, ipsec_birth_set, (void *)&ipsec_ipv4_birth_packet},
 	{"ipv6",       &proc_birth_dir,     NULL,             ipsec_birth_info, ipsec_birth_set, (void *)&ipsec_ipv6_birth_packet},
 	{"tncfg",      &proc_net_ipsec_dir, NULL,             ipsec_tncfg_get_info,      NULL, NULL},
-#ifdef CONFIG_KLIPS_ALG
 	{"xforms",     &proc_net_ipsec_dir, NULL,             ipsec_xform_get_info,      NULL, NULL},
-#endif
 	{"stats",      &proc_net_ipsec_dir, &proc_stats_dir,  NULL,      NULL, NULL},
 	{"trap_count", &proc_stats_dir,     NULL,             ipsec_stats_get_int_info, NULL, &ipsec_xmit_trap_count},
 	{"trap_sendcount", &proc_stats_dir, NULL,             ipsec_stats_get_int_info, NULL, &ipsec_xmit_trap_sendcount},

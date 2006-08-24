@@ -1,0 +1,3 @@
+This test sets up a conn just like west-icmp-01, only it tests the situation
+where the inner packets were too big, and cause the ESP to become fragmented.
+

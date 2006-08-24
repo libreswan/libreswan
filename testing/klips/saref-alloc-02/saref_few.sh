@@ -1,4 +1,5 @@
 #!/bin/sh
+: ==== start ====
 TZ=GMT export TZ
 
 ipsec spi --clear

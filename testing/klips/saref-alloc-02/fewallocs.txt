@@ -1,0 +1,2061 @@
+east:~#
+ TZ=GMT export TZ
+east:~#
+ ipsec spi --clear
+east:~#
+ ipsec eroute --clear
+east:~#
+ ipsec klipsdebug --set pfkey
+east:~#
+ ipsec klipsdebug --set xform
+east:~#
+ ROOT= export ROOT
+east:~#
+ : allocate, and delete
+east:~#
+ ipsec spi --saref --af inet --edst 30.122.14.231 --spi 0x3989876 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=3
+east:~#
+ ipsec spi --saref --af inet --edst 30.122.14.231 --spi 0x3989876 --proto esp --del
+/usr/local/libexec/ipsec/spi: saref=0
+east:~#
+ : allocate a second and third, and delete second
+east:~#
+ ipsec spi --saref --af inet --edst 250.128.167.40 --spi 0x7078247 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=4
+east:~#
+ ipsec spi --saref --af inet --edst 76.30.241.132 --spi 0x2578363 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=5
+east:~#
+ ipsec spi --saref --af inet --edst 250.128.167.40 --spi 0x7078247 --proto esp --del
+/usr/local/libexec/ipsec/spi: saref=0
+east:~#
+ : allocate a fourth, and delete second
+east:~#
+ ipsec spi --saref --af inet --edst 117.30.250.38 --spi 0x3147647 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=6
+east:~#
+ ipsec spi --saref --af inet --edst 76.30.241.132 --spi 0x2578363 --proto esp --del
+/usr/local/libexec/ipsec/spi: saref=0
+east:~#
+ : allocate a bunch.
+east:~#
+ ipsec spi --saref --af inet --edst 16.125.20.100 --spi 0x5871399 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=7
+east:~#
+ ipsec spi --saref --af inet --edst 244.130.69.6 --spi 0x12063530 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=8
+east:~#
+ ipsec spi --saref --af inet --edst 221.166.143.219 --spi 0x9083808 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=9
+east:~#
+ ipsec spi --saref --af inet --edst 156.96.102.246 --spi 0x928066 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=10
+east:~#
+ ipsec spi --saref --af inet --edst 190.3.105.114 --spi 0x3624918 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=11
+east:~#
+ ipsec spi --saref --af inet --edst 137.41.189.19 --spi 0x15420208 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=12
+east:~#
+ ipsec spi --saref --af inet --edst 149.255.75.187 --spi 0x1754290 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=13
+east:~#
+ ipsec spi --saref --af inet --edst 32.97.52.61 --spi 0x5686174 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=14
+east:~#
+ ipsec spi --saref --af inet --edst 69.42.155.116 --spi 0x12595525 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey 0x4043434545464649494a4a4c4c4f4f515152525454575758 --authkey 0x87658765876587658765876587658765
+/usr/local/libexec/ipsec/spi: saref=15
+east:~#
+ : delete one in the middle
+east:~#
+ ipsec spi --saref --af inet --edst 149.255.75.187 --spi 0x1754290 --proto esp --del
+/usr/local/libexec/ipsec/spi: saref=0
+east:~#
+ ipsec setup stop
+ipsec_setup: Stopping Openswan IPsec...
+ipsec_setup: stop ordered, but IPsec does not appear to be running!
+ipsec_setup: doing cleanup anyway...
+east:~#
+ kill `cat /var/run/klogd.pid`; cat /tmp/klog.log
+klogd 1.3-3#33.1, log source = /proc/kmsg started.
+east:~#
+ halt -p -f
+Power down.
+klips_debug:pfkey_x_debug_process: set
+klips_debug:pfkey_msg_interp: parsing message type 16(x-debug) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_x_msg_debug_parse: .
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 72 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=16, errno=0, satype=0(UNKNOWN), len=9, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=16(x-debug), errno=0, satype=0(UNKNOWN), len=9, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: remain=7
+klips_debug:pfkey_msg_parse: extensions permitted=02000001, required=02000001.
+klips_debug:pfkey_msg_parse: parsing ext type=25(X-set-debug) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=25(X-set-debug) ext_len=7 parsing ext 0pDEADF00D with parser pfkey_x_ext_debug_parse.
+klips_debug:pfkey_x_debug_parse: enter
+klips_debug:pfkey_msg_parse: Extension 25(X-set-debug) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=02000001, seen=02000001, required=02000001.
+klips_debug:pfkey_msg_interp: processing ext 25 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_x_debug_process: .
+klips_debug:pfkey_x_debug_process: set
+klips_debug:pfkey_msg_interp: parsing message type 16(x-debug) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_x_msg_debug_parse: .
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=03989876 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=30.122.14.231 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 30.122.14.231.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 30.122.14.231.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.3989876@30.122.14.231, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:ipsec_SAref_recycle: recycling, continuing from SAref=2 (0pDEADF00D), table=0, entry=2.
+klips_debug:ipsec_SAref_recycle: SArefFreeList partly refilled to 255 of 256.
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=03989876 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=30.122.14.231:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.3989876@30.122.14.231
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 88 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=4, errno=0, satype=3(ESP), len=11, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=4(delete), errno=0, satype=3(ESP), len=11, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 4(delete).
+klips_debug:pfkey_msg_parse: remain=9
+klips_debug:pfkey_msg_parse: extensions permitted=00000063, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=9.
+klips_debug:pfkey_msg_parse: remain=9 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=03989876 replay=0 state=1 auth=0 encrypt=0 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=6.
+klips_debug:pfkey_msg_parse: remain=6 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=0.0.0.0 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=3.
+klips_debug:pfkey_msg_parse: remain=3 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=30.122.14.231 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=00000063, seen=00000063, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 0.0.0.0.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 30.122.14.231.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 30.122.14.231.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: parsing message type 4(delete) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_delete_parse: .
+klips_debug:ipsec_sa_del: unhashing SA:esp.3989876@30.122.14.231 (ref=3), hashval=139.
+klips_debug:ipsec_sa_del: successfully unhashed first ipsec_sa in chain.
+klips_debug: ipsec_alg_sa_wipe() :unlinking for encalg=3
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=03989876 replay=0 sa_state=0 auth=0 encrypt=0 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=0.0.0.0:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=30.122.14.231:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=00000063, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_delete_parse: sending up delete reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=07078247 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=250.128.167.40 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 250.128.167.40.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 250.128.167.40.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.7078247@250.128.167.40, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=07078247 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=250.128.167.40:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.7078247@250.128.167.40
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=02578363 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=76.30.241.132 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 76.30.241.132.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 76.30.241.132.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.2578363@76.30.241.132, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=02578363 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=76.30.241.132:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.2578363@76.30.241.132
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 88 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=4, errno=0, satype=3(ESP), len=11, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=4(delete), errno=0, satype=3(ESP), len=11, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 4(delete).
+klips_debug:pfkey_msg_parse: remain=9
+klips_debug:pfkey_msg_parse: extensions permitted=00000063, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=9.
+klips_debug:pfkey_msg_parse: remain=9 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=07078247 replay=0 state=1 auth=0 encrypt=0 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=6.
+klips_debug:pfkey_msg_parse: remain=6 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=0.0.0.0 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=3.
+klips_debug:pfkey_msg_parse: remain=3 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=250.128.167.40 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=00000063, seen=00000063, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 0.0.0.0.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 250.128.167.40.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 250.128.167.40.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: parsing message type 4(delete) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_delete_parse: .
+klips_debug:ipsec_sa_del: unhashing SA:esp.7078247@250.128.167.40 (ref=4), hashval=101.
+klips_debug:ipsec_sa_del: successfully unhashed first ipsec_sa in chain.
+klips_debug: ipsec_alg_sa_wipe() :unlinking for encalg=3
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=07078247 replay=0 sa_state=0 auth=0 encrypt=0 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=0.0.0.0:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=250.128.167.40:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=00000063, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_delete_parse: sending up delete reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=03147647 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=117.30.250.38 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 117.30.250.38.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 117.30.250.38.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.3147647@117.30.250.38, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=03147647 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=117.30.250.38:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.3147647@117.30.250.38
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 88 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=4, errno=0, satype=3(ESP), len=11, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=4(delete), errno=0, satype=3(ESP), len=11, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 4(delete).
+klips_debug:pfkey_msg_parse: remain=9
+klips_debug:pfkey_msg_parse: extensions permitted=00000063, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=9.
+klips_debug:pfkey_msg_parse: remain=9 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=02578363 replay=0 state=1 auth=0 encrypt=0 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=6.
+klips_debug:pfkey_msg_parse: remain=6 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=0.0.0.0 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=3.
+klips_debug:pfkey_msg_parse: remain=3 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=76.30.241.132 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=00000063, seen=00000063, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 0.0.0.0.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 76.30.241.132.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 76.30.241.132.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: parsing message type 4(delete) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_delete_parse: .
+klips_debug:ipsec_sa_del: unhashing SA:esp.2578363@76.30.241.132 (ref=5), hashval=152.
+klips_debug:ipsec_sa_del: successfully unhashed first ipsec_sa in chain.
+klips_debug: ipsec_alg_sa_wipe() :unlinking for encalg=3
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=02578363 replay=0 sa_state=0 auth=0 encrypt=0 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=0.0.0.0:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=76.30.241.132:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=00000063, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_delete_parse: sending up delete reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=05871399 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=16.125.20.100 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 16.125.20.100.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 16.125.20.100.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.5871399@16.125.20.100, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=05871399 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=16.125.20.100:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.5871399@16.125.20.100
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=12063530 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=244.130.69.6 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 244.130.69.6.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 244.130.69.6.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.12063530@244.130.69.6, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=12063530 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=244.130.69.6:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.12063530@244.130.69.6
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=09083808 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=221.166.143.219 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 221.166.143.219.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 221.166.143.219.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.9083808@221.166.143.219, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=09083808 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=221.166.143.219:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.9083808@221.166.143.219
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=00928066 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=156.96.102.246 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 156.96.102.246.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 156.96.102.246.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.928066@156.96.102.246, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=00928066 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=156.96.102.246:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.928066@156.96.102.246
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=03624918 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=190.3.105.114 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 190.3.105.114.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 190.3.105.114.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.3624918@190.3.105.114, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=03624918 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=190.3.105.114:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.3624918@190.3.105.114
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=15420208 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=137.41.189.19 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 137.41.189.19.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 137.41.189.19.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.15420208@137.41.189.19, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=15420208 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=137.41.189.19:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.15420208@137.41.189.19
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=01754290 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=149.255.75.187 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 149.255.75.187.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 149.255.75.187.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.1754290@149.255.75.187, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=01754290 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=149.255.75.187:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.1754290@149.255.75.187
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=05686174 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=32.97.52.61 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 32.97.52.61.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 32.97.52.61.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.5686174@32.97.52.61, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=05686174 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=32.97.52.61:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.5686174@32.97.52.61
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 144 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=3, errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=3(add), errno=0, satype=3(ESP), len=18, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 3(add).
+klips_debug:pfkey_msg_parse: remain=16
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=16.
+klips_debug:pfkey_msg_parse: remain=16 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=12595525 replay=0 state=1 auth=2 encrypt=3 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=13.
+klips_debug:pfkey_msg_parse: remain=13 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=192.1.2.23 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=10.
+klips_debug:pfkey_msg_parse: remain=10 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=69.42.155.116 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=8(authentication-key) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=8(authentication-key) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=3 exttype=8(authentication-key) bits=128 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 8(authentication-key) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=9(cipher-key) remain=4.
+klips_debug:pfkey_msg_parse: remain=4 ext_type=9(cipher-key) ext_len=4 parsing ext 0pDEADF00D with parser pfkey_key_parse.
+klips_debug:pfkey_key_parse: success, found len=4 exttype=9(cipher-key) bits=192 reserved=0.
+klips_debug:pfkey_msg_parse: Extension 9(cipher-key) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=78001ffb, seen=00000363, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 192.1.2.23.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 69.42.155.116.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 69.42.155.116.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 8 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 16 bytes for authkey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: processing ext 9 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_key_process: .
+klips_debug:pfkey_key_process: allocating 24 bytes for enckey.
+klips_debug:pfkey_key_process: success.
+klips_debug:pfkey_msg_interp: parsing message type 3(add) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_add_parse: .
+klips_debug:pfkey_add_parse: existing ipsec_sa not found (this is good) for SAesp.12595525@69.42.155.116, out-bound, allocating.
+klips_debug:ipsec_alg_enc_key_create: entering with encalg=3 ixt_e=ABCDABCD
+klips_debug:ipsec_alg_enc_key_create: about to call:set_key(key_e=ABCDABCD, ekp=ABCDABCD, key_size=24)
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=12595525 replay=0 sa_state=1 auth=2 encrypt=3 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=192.1.2.23:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=69.42.155.116:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=78001c7b, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_add_parse: sending up add reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_add_parse: successful for SA: esp.12595525@69.42.155.116
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 88 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=4, errno=0, satype=3(ESP), len=11, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_interp: satype 3 lookups to proto=50.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=4(delete), errno=0, satype=3(ESP), len=11, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: satype 3(ESP) conversion to proto gives 50 for msg_type 4(delete).
+klips_debug:pfkey_msg_parse: remain=9
+klips_debug:pfkey_msg_parse: extensions permitted=00000063, required=00000063.
+klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=9.
+klips_debug:pfkey_msg_parse: remain=9 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=01754290 replay=0 state=1 auth=0 encrypt=0 flags=0 ref=0.
+klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=6.
+klips_debug:pfkey_msg_parse: remain=6 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=5(source-address) family=2(AF_INET) address=0.0.0.0 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 5(source-address) parsed.
+klips_debug:pfkey_msg_parse: parsing ext type=6(destination-address) remain=3.
+klips_debug:pfkey_msg_parse: remain=3 ext_type=6(destination-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.
+klips_debug:pfkey_address_parse: found exttype=6(destination-address) family=2(AF_INET) address=149.255.75.187 proto=0 port=0.
+klips_debug:pfkey_address_parse: successful.
+klips_debug:pfkey_msg_parse: Extension 6(destination-address) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=00000063, seen=00000063, required=00000063.
+klips_debug:pfkey_msg_interp: processing ext 1 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_sa_process: .
+klips_debug:pfkey_msg_interp: processing ext 5 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 0.0.0.0.
+klips_debug:pfkey_address_process: found src address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: processing ext 6 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_address_process:
+klips_debug:pfkey_address_process: found address family=2, AF_INET, 149.255.75.187.
+klips_debug:pfkey_address_process: found dst address.
+klips_debug:pfkey_address_process: allocating 16 bytes for saddr.
+klips_debug:pfkey_address_process: ips_said.dst set to 149.255.75.187.
+klips_debug:pfkey_address_process: successful.
+klips_debug:pfkey_msg_interp: parsing message type 4(delete) with msg_parser 0pDEADF00D.
+klips_debug:pfkey_delete_parse: .
+klips_debug:ipsec_sa_del: unhashing SA:esp.1754290@149.255.75.187 (ref=13), hashval=151.
+klips_debug:ipsec_sa_del: successfully unhashed first ipsec_sa in chain.
+klips_debug: ipsec_alg_sa_wipe() :unlinking for encalg=3
+klips_debug:pfkey_msg_hdr_build:
+klips_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0pDEADF00D pfkey_ext=0pDEADF00D *pfkey_ext=0pDEADF00D.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_sa_build: spi=01754290 replay=0 sa_state=0 auth=0 encrypt=0 flags=0
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=5 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=0.0.0.0:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_address_build: exttype=6 proto=0 prefixlen=0
+klips_debug:pfkey_address_build: found address family AF_INET.
+klips_debug:pfkey_address_build: found address=149.255.75.187:0.
+klips_debug:pfkey_address_build: successful created len: 3.
+klips_debug:pfkey_safe_build: error=0
+klips_debug:pfkey_safe_build:success.
+klips_debug:pfkey_msg_build: pfkey_msg=0pDEADF00D allocated 88 bytes, &(extensions[0])=0pDEADF00D
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[1] (type=1)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[5] (type=5)
+klips_debug:pfkey_msg_build: copying 24 bytes from extensions[6] (type=6)
+klips_debug:pfkey_msg_build: extensions permitted=00000063, seen=00000063, required=00000063.
+klips_debug:pfkey_upmsg: allocating 88 bytes...
+klips_debug:pfkey_upmsg: ...allocated at 0pDEADF00D.
+klips_debug:pfkey_delete_parse: sending up delete reply message for satype=3(ESP) to socket=0pDEADF00D succeeded.
+klips_debug:pfkey_release: sock=0pDEADF00D sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: 0pDEADF00D
+klips_debug:pfkey_remove_socket: 0pDEADF00D
+klips_debug:pfkey_destroy_socket: pfkey_remove_socket called, sk=0pDEADF00D
+klips_debug:pfkey_destroy_socket: sk(0pDEADF00D)->(&0pDEADF00D)receive_queue.{next=0pDEADF00D,prev=0pDEADF00D}.
+klips_debug:pfkey_destroy_socket: destroyed.
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_list_remove_socket: removing sock=0pDEADF00D
+klips_debug:pfkey_release: succeeded.
+klips_debug:pfkey_create: sock=0pDEADF00D type:3 state:1 flags:0 protocol:2
+klips_debug:pfkey_create: sock->fasync_list=0pDEADF00D sk->sleep=0pDEADF00D.
+klips_debug:pfkey_insert_socket: sk=0pDEADF00D
+klips_debug:pfkey_list_insert_socket: allocating 8 bytes for socketp=0pDEADF00D
+klips_debug:pfkey_create: Socket sock=0pDEADF00D sk=0pDEADF00D initialised.
+klips_debug:pfkey_sendmsg: .
+klips_debug:pfkey_sendmsg: allocating 72 bytes for downward message.
+klips_debug:pfkey_sendmsg: msg sent for parsing.
+klips_debug:pfkey_msg_interp: parsing message ver=2, type=16, errno=0, satype=0(UNKNOWN), len=9, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_interp: allocated extr->ips=0pDEADF00D.
+klips_debug:pfkey_msg_parse: parsing message ver=2, type=16(x-debug), errno=0, satype=0(UNKNOWN), len=9, res=0, seq=1, pid=987.
+klips_debug:pfkey_msg_parse: remain=7
+klips_debug:pfkey_msg_parse: extensions permitted=02000001, required=02000001.
+klips_debug:pfkey_msg_parse: parsing ext type=25(X-set-debug) remain=7.
+klips_debug:pfkey_msg_parse: remain=7 ext_type=25(X-set-debug) ext_len=7 parsing ext 0pDEADF00D with parser pfkey_x_ext_debug_parse.
+klips_debug:pfkey_x_debug_parse: enter
+klips_debug:pfkey_msg_parse: Extension 25(X-set-debug) parsed.
+klips_debug:pfkey_msg_parse: extensions permitted=02000001, seen=02000001, required=02000001.
+klips_debug:pfkey_msg_interp: processing ext 25 0pDEADF00D with processor 0pDEADF00D.
+klips_debug:pfkey_x_debug_process: .
+klips_debug:pfkey_x_debug_process: unset
+

@@ -82,7 +82,7 @@ klips_debug:pfkey_msg_parse: remain=21
 klips_debug:pfkey_msg_parse: extensions permitted=05e00c63, required=01e00043.
 klips_debug:pfkey_msg_parse: parsing ext type=1(security-association) remain=21.
 klips_debug:pfkey_msg_parse: remain=21 ext_type=1(security-association) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_sa_parse.
-klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=00000100 replay=0 state=0 auth=0 encrypt=0 flags=0 ref=-1.
+klips_debug:pfkey_sa_parse: successfully found len=3 exttype=1(security-association) spi=00000100 replay=0 state=0 auth=0 encrypt=0 flags=0 ref=0.
 klips_debug:pfkey_msg_parse: Extension 1(security-association) parsed.
 klips_debug:pfkey_msg_parse: parsing ext type=5(source-address) remain=18.
 klips_debug:pfkey_msg_parse: remain=18 ext_type=5(source-address) ext_len=3 parsing ext 0pDEADF00D with parser pfkey_address_parse.

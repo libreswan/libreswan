@@ -42,7 +42,9 @@ while($operationCount < $maxOperations) {
     $spi=$spi[$sanum];
     
     #print "free $edst $spi $proto $src\n";
-    print "ipsec spi --saref --af inet --edst $edst --spi $spi --proto $proto --del\n";
+    print "ipsec spi --af inet --edst $edst --spi $spi --proto $proto --del\n";
+
+    $del=1;
       
     if($sanum != $saCount-1) {
       # delete it, by copying one from end.
@@ -57,6 +59,8 @@ while($operationCount < $maxOperations) {
     $edst=$edst_choices[$choice];
     $spi="0x".(int(rand(16777216))+1024);
 
+    $del=0;
+
     #print "alloc $edst $spi $proto $src\n";
     print "ipsec spi --saref --af inet --edst $edst --spi $spi --proto $proto --src $src --esp $algo --enckey $enckey --authkey $authkey\n";
 
@@ -68,7 +72,7 @@ while($operationCount < $maxOperations) {
   if($maxSa < $saCount) {
   	$maxSa = $saCount;
   }
-  print "echo saCount=$saCount $maxSa\n";
+  print "echo saCount=$saCount $maxSa del=$del\n";
 }
 
 print "# maxSa = $maxSa\n";

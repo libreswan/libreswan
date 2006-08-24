@@ -196,8 +196,9 @@ find_raw_ifaces4(void)
 {
     static const int on = TRUE;	/* by-reference parameter; constant, we hope */
     int j;	/* index into buf */
+    static int    num=64;    /* number of interfaces */
     struct ifconf ifconf;
-    struct ifreq buf[300];	/* for list of interfaces -- arbitrary limit */
+    struct ifreq *buf;	     /* for list of interfaces -- arbitrary limit */
     struct raw_iface *rifaces = NULL;
     int master_sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);    /* Get a UDP socket */
 
@@ -220,16 +221,32 @@ find_raw_ifaces4(void)
 	    exit_log_errno((e, "bind() failed in find_raw_ifaces4()"));
     }
 
-    /* Get local interfaces.  See netdevice(7). */
-    ifconf.ifc_len = sizeof(buf);
-    ifconf.ifc_buf = (void *) buf;
-    zero(buf);
-
-    if (ioctl(master_sock, SIOCGIFCONF, &ifconf) == -1)
-	exit_log_errno((e, "ioctl(SIOCGIFCONF) in find_raw_ifaces4()"));
-
+    buf = NULL;
+   
+    /* a million interfaces is probably the maximum, ever... */
+    while(num < (1024*1024)) {
+	    /* Get local interfaces.  See netdevice(7). */
+	    ifconf.ifc_len = num * sizeof(struct ifreq);
+	    buf = (void *) realloc(buf, ifconf.ifc_len);
+	    if (!buf)
+		    exit_log_errno((e, "realloc of %d in find_raw_ifaces4()",
+				    ifconf.ifc_len));
+	    memset(buf, 0, num*sizeof(struct ifreq));
+	    ifconf.ifc_buf = (void *) buf;
+	    
+	    if (ioctl(master_sock, SIOCGIFCONF, &ifconf) == -1)
+		    exit_log_errno((e, "ioctl(SIOCGIFCONF) in find_raw_ifaces4()"));
+	    
+	    /* if we got back less than we asked for, we have them all */
+	    if (ifconf.ifc_len < (int)(sizeof(struct ifreq) * num))
+		    break;
+	    
+	    /* try again and ask for more this time */
+	    num *= 2;
+    }
+  
     /* Add an entry to rifaces for each interesting interface. */
-    for (j = 0; (j+1) * sizeof(*buf) <= (size_t)ifconf.ifc_len; j++)
+    for (j = 0; (j+1) * sizeof(struct ifreq) <= (size_t)ifconf.ifc_len; j++)
     {
 	struct raw_iface ri;
 	const struct sockaddr_in *rs = (struct sockaddr_in *) &buf[j].ifr_addr;

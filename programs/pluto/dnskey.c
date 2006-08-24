@@ -214,11 +214,17 @@ stop_adns(void)
     if (adns_pid != 0)
     {
 	int status;
-	pid_t p = waitpid(adns_pid, &status, 0);
+	pid_t p;
+
+	sleep(1);
+	p = waitpid(adns_pid, &status, WNOHANG);
 
 	if (p == -1)
 	{
 	    log_errno((e, "waitpid for ADNS process failed"));
+
+	    /* get rid of, it might be stuck */
+	    kill(adns_pid, 15);
 	}
 	else if (WIFEXITED(status))
 	{

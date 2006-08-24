@@ -175,6 +175,7 @@ static struct ipsec_alg_enc ipsec_alg_AES = {
 		      ixt_blocksize:	ESP_AES_CBC_BLK_LEN, 
 		      ixt_support: {
 			ias_exttype:	IPSEC_ALG_TYPE_ENCRYPT,
+			//ias_ivlen:      128,
 			ias_id: 	ESP_AES,
 			ias_keyminbits:	ESP_AES_KEY_SZ_MIN*8,
 			ias_keymaxbits:	ESP_AES_KEY_SZ_MAX*8,

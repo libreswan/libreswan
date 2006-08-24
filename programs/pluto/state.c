@@ -531,11 +531,11 @@ delete_states_by_peer(ip_address *peer)
 		char ra[ADDRTOT_BUF];
 		
 		st = st->st_hashchain_next;	/* before this is deleted */
-		
-		addrtot(&st->st_remoteaddr, 0, ra, sizeof(ra));
+
+		addrtot(&this->st_remoteaddr, 0, ra, sizeof(ra));
 		DBG_log("comparing %s to %s\n", ra, peerstr);
 
-		if(sameaddr(&st->st_remoteaddr, peer)) {
+		if(sameaddr(&this->st_remoteaddr, peer)) {
 		    if(ph1==0 && IS_PHASE1(st->st_state)) {
 			
 			whack_log(RC_COMMENT
@@ -544,8 +544,8 @@ delete_states_by_peer(ip_address *peer)
 				  , c->name);
 			ipsecdoi_replace(st, 1);
 		    } else {
-			delete_event(st);
-			event_schedule(EVENT_SA_REPLACE, 0, st);
+			delete_event(this);
+			event_schedule(EVENT_SA_REPLACE, 0, this);
 		    }
 		}
 	    }

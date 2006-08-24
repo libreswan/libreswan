@@ -186,6 +186,7 @@ DEBUG_NO_STATIC int
 pfkey_ipsec_sa_init(struct ipsec_sa *ipsp)
 {
         int rc;
+	KLIPS_PRINT(debug_pfkey, "Calling SA_INIT\n");
 	rc = ipsec_sa_init(ipsp);
         return rc;
 }
@@ -727,6 +728,28 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 		SENDERR(-error);
 	}
 
+#if 0
+	/* extensions would provide this information, but not in this branch */
+	if(extr->sarefme!=IPSEC_SAREF_NULL
+	   && extr->ips->ips_ref==IPSEC_SAREF_NULL) {
+		extr->ips->ips_ref=extr->sarefme;
+	}
+
+	if(extr->sarefhim!=IPSEC_SAREF_NULL
+	   && extr->ips->ips_refhim==IPSEC_SAREF_NULL) {
+		extr->ips->ips_refhim=extr->sarefhim;
+	}
+#endif
+
+	/* attach it to the SAref table */
+	if((error = ipsec_sa_intern(extr->ips)) != 0) {
+		KLIPS_ERROR(debug_pfkey,
+			    "pfkey_add_parse: "
+			    "failed to intern SA as SAref#%lu\n"
+			    , (unsigned long)extr->ips->ips_ref);
+		SENDERR(-error);
+	}
+
 	extr->ips->ips_life.ipl_addtime.ipl_count = jiffies / HZ;
 	if(!extr->ips->ips_life.ipl_allocations.ipl_count) {
 		extr->ips->ips_life.ipl_allocations.ipl_count += 1;
@@ -847,6 +870,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 			    error);
 		SENDERR(-error);
 	}
+	ipsec_sa_put(extr->ips);
 	extr->ips = NULL;
 	
 	KLIPS_PRINT(debug_pfkey,
@@ -873,6 +897,7 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 	struct sadb_msg *pfkey_reply = NULL;
 	struct socket_list *pfkey_socketsp;
 	uint8_t satype = ((struct sadb_msg*)extensions[SADB_EXT_RESERVED])->sadb_msg_satype;
+	IPsecSAref_t ref;
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_delete_parse: .\n");
@@ -900,7 +925,13 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		SENDERR(ESRCH);
 	}
 
-        /* this will call delchain-equivalent if refcount=>0 */
+	/* remove it from SAref tables */
+	ref = ipsp->ips_ref;
+	ipsec_sa_untern(ipsp); 
+	ipsec_sa_rm(ipsp);
+
+	/* this will call delchain-equivalent if refcount -> 0
+	 * noting that get() above, added to ref count */
 	ipsec_sa_put(ipsp);
 	spin_unlock_bh(&tdb_lock);
 
@@ -919,7 +950,7 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 							0,
 							0,
 							0,
-							extr->ips->ips_ref),
+							ref),
 				 extensions_reply)
 	     && pfkey_safe_build(error = pfkey_address_build(&extensions_reply[SADB_EXT_ADDRESS_SRC],
 							     SADB_EXT_ADDRESS_SRC,

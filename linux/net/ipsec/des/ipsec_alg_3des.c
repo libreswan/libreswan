@@ -120,6 +120,7 @@ static struct ipsec_alg_enc ipsec_alg_3DES = {
 			ixt_support: {
 			  ias_exttype:	  IPSEC_ALG_TYPE_ENCRYPT,
 			  ias_id: 	  ESP_3DES,
+			  //ias_ivlen:      64,
 			  ias_keyminbits: ESP_3DES_KEY_SZ*8,
 			  ias_keymaxbits: ESP_3DES_KEY_SZ*8,
 		},

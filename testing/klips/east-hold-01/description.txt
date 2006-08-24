@@ -1,0 +1,1 @@
+Test functioning of %hold operations with a source of ICMP packets.

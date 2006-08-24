@@ -322,7 +322,9 @@ print HTMLFILE "<HTML>  <HEAD>\n";
 print HTMLFILE "<META http-equiv=\"content-type\" content=\"text/html; charset=ISO-8859-1\">\n";
 
 if(defined($runningtest)) {
-  print HTMLFILE "<META http-equiv=\"Refresh\" content=\"15,testresults.html\">\n";
+  print HTMLFILE "<META http-equiv=\"Refresh\" content=\"5,testresults.html\">\n";
+} else {
+  print HTMLFILE "<META http-equiv=\"Refresh\" content=\"60,testresults.html\">\n";
 }
 
 print HTMLFILE "<TITLE>Openswan nightly testing results for $runtime</TITLE>\n";

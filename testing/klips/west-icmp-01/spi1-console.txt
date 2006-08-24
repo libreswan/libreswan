@@ -24,8 +24,8 @@ west:~#
  ipsec look
 west NOW
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0x12345678@192.1.2.45 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xDEADF00DDEADF00D alen=128 aklen=128 eklen=192 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
-tun0x12345678@192.1.2.45 IPIP: dir=in  src=192.1.2.23 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
+esp0x12345678@192.1.2.45 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xDEADF00DDEADF00D alen=128 aklen=128 eklen=192 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=4 ref=2
+tun0x12345678@192.1.2.45 IPIP: dir=in  src=192.1.2.23 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=4 ref=3
 ROUTING TABLE
 west:~#
  route add -host 192.0.2.1 gw 192.1.2.23 dev ipsec0

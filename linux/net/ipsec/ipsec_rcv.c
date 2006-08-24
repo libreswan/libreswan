@@ -1660,13 +1660,13 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 	   not assembled automatically to save TCP from having to copy
 	   twice.
 	*/
+	if (skb_is_nonlinear(skb)) {
 #ifdef HAVE_NEW_SKB_LINEARIZE
 		if (skb_linearize_cow(skb) != 0) 
 #else
 		if (skb_linearize(skb, GFP_ATOMIC) != 0) 
 #endif
 		{
-		if (skb_linearize(skb, GFP_ATOMIC) != 0) {
 			goto rcvleave;
 		}
 	}

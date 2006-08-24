@@ -5,7 +5,7 @@ TESTNAME=west-icmp-01
 TESTHOST=west
 EXITONEMPTY=--exitonempty
 
-ARPREPLY=--arpreply 
+PRIVATE_ARPREPLY=true
 
 PUB_INPUT=../inputs/02-sunrise-sunset-esp.pcap
 REF_PRIV_OUTPUT=spi1-cleartext.txt

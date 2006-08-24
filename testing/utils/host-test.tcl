@@ -138,6 +138,9 @@ set netjig1 $spawn_id
 
 netjigsetup $netjig1
 
+process_net public
+process_net private
+
 newswitch $netjig1 public
 newswitch $netjig1 private
 

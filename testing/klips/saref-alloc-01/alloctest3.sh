@@ -1,4 +1,6 @@
 #!/bin/sh
+
+: ==== start ====
 TZ=GMT export TZ
 
 ipsec spi --clear
@@ -9,6 +11,7 @@ ROOT= export ROOT
 
 sh $ROOT/testing/klips/saref-alloc-01/alloctest2.sh
 
-#ipsec look
+ipsec spi | wc -l
+: ==== end ====
 
 

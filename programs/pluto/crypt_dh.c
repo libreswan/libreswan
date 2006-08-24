@@ -358,11 +358,11 @@ void calc_dh_iv(struct pluto_crypto_req *r)
     shared.ptr = wire_chunk_ptr(skr, &skr->shared);
     shared.len = group->bytes;
 
-    DBG(DBG_CRYPT,
-	DBG_dump_chunk("long term secret: ", shared));
-
     sec.ptr = wire_chunk_ptr(&dhq, &dhq.secret);
     sec.len = dhq.secret.len;
+
+    DBG(DBG_CRYPT,
+	DBG_dump_chunk("long term secret: ", sec));
 
     /* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
 

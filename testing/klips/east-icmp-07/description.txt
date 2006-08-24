@@ -1,2 +1,5 @@
 This tests production of ESP-twofish-SHA1 packets with a source of
 ICMP packets.
+
+This test case will not run on a default 'make uml', since twofish is not normally 
+available.

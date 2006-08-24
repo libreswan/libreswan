@@ -28,5 +28,4 @@ Sending packet to 192.0.1.1/500
 Sending packet to 192.0.1.1/500
 Sending packet to 192.0.1.1/500
 Sending packet to 192.0.1.1/500
-east:~#
 

@@ -1180,6 +1180,8 @@ libtest() {
 #
 #  Some additional options to control the network emulator
 #    ARPREPLY=--arpreply         - if ARPs should be answered
+#  -> obsoleted by NETWORK_ARPREPLY=true
+#
 
 # test entry point:
 umlplutotest() {
