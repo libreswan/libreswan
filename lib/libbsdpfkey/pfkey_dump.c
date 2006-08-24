@@ -51,6 +51,7 @@ __FBSDID("$FreeBSD$");
 #include <time.h>
 #include <netdb.h>
 
+#include "oswlog.h"
 #include "ipsec_strerror.h"
 #include "libpfkey.h"
 

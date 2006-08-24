@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <netdb.h>	/* ??? for h_errno */
+#include <signal.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>

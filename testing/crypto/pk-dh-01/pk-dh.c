@@ -22,6 +22,7 @@
 
 int pkdh_verbose=0;
 
+#include <stdio.h>
 #include "../../../programs/pluto/hmac.c"
 #include "../../../programs/pluto/crypto.c"
 #include "../../../programs/pluto/ike_alg.c"
