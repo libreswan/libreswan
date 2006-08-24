@@ -1,0 +1,6 @@
+This test case calculates reducents aka reciprocals for each of the
+MODP groups which are defined by the IETF specifications.
+
+It then multiplies the reciprocal and the modulus together, confirming that
+the result is 1.
+
