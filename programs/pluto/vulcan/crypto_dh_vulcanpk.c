@@ -14,14 +14,19 @@ calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
     struct timeval tv0, tv1;
     unsigned long tv_diff;
     unsigned char *mapping = mapvulcanpk();
-    struct pkprogram expmodP;
+    struct pkprogram expModP;
     unsigned char sharedbytes[384];
+    int chunksize, modlen, explen;
+    int areg,breg,mreg;
 
-    memset(&expmodP, 0, sizeof(expModP));
+    memset(&expModP, 0, sizeof(expModP));
+
+    /* initialize chip */
+    vulcanpk_init(mapping);
 
     gettimeofday(&tv0, NULL);
 
-    expModP.valuesLittleEndian = TRUE;
+    expModP.valuesLittleEndian = FALSE;
 
     /* mod exp calculates A^B mod M */
 
@@ -30,41 +35,114 @@ calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
      * 6*64 = 384.
      */
 
-    /* point to peer's calculated g^x */
+    /* point to peer's calculated (g^x) */
+    areg = 0;
     expModP.aValues[0]  = g.ptr;
     expModP.aValueLen[0]= g.len;
 
-    /* point to our secret value */
+    /* point to our secret value, ^y */
+    breg = 1;
     expModP.aValues[1]  = secchunk->ptr;
     expModP.aValueLen[1]= secchunk->len;
 
-    /* modulus */
+    /* need to find exponent length, in bits */
+    {
+	unsigned char *secval = secchunk->ptr;
+	unsigned int seclen   = secchunk->len;
+
+	explen = seclen * 8;
+	while(*secval == 0 && seclen > 0) {
+	    secval++;
+	    seclen--;
+	    explen-=8;
+	}
+
+	if((*secval & 0x80) == 0) {
+	    explen--;
+
+	    if((*secval & 0x40) == 0) {
+		explen--;
+
+		if((*secval & 0x20) == 0) {
+		    explen--;
+
+		    if((*secval & 0x10) == 0) {
+			explen--;
+
+			if((*secval & 0x08) == 0) {
+			    explen--;
+
+			    if((*secval & 0x04) == 0) {
+				explen--;
+
+				if((*secval & 0x02) == 0) {
+				    explen--;
+
+				    if((*secval & 0x01) == 0) {
+					explen--;
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+    
+
+    /* register 2 is result. */
+    /* register 3 is scratch */
+       
+    /* M = modulus */
+    mreg = 4;
     expModP.aValues[4]  = group->raw_modulus.ptr;
     expModP.aValueLen[4]= group->raw_modulus.len;
 
-    /* reciprocal */
-    expModP.aValues[5]  = group->rec_modulus.ptr;
-    expModP.aValueLen[5]= group->rec_modulus.len;
+    /* reciprocal M(1) */
+    expModP.aValues[5]  = group->rec_modulus->ptr;
+    expModP.aValueLen[5]= group->rec_modulus->len;
+
+    /* registers 6,7,8 is M(2),M(3),M(4), scratch */
 
     expModP.oOffset = 2;  /* B(1) is result */
-    expModP.oValue  = sharedbytes;
-    expModP.oValue  = sizeof(sharedbytes);
+    expModP.oValue    = sharedbytes;
+    expModP.oValueLen = group->raw_modulus.len;
+
+
+    /*
+     * now figure out appropriate chunksize to use.
+     * the chunksize has to be equal to the length of the
+     * modulus.
+     */
+
+    /* modlen is in units of 32-bits, or 4 bytes */
+    modlen = group->raw_modulus.len / 4;
+
+    /* chunksize is units of 64 bytes */
+    chunksize = group->raw_modulus.len / 64;
+    expModP.chunksize = chunksize;
+	
 
     /* ask to have the exponentiation done now! */
+    /* sizes are ModLen=96(*32=3072), EXP_len=1,RED_len=0*/
+    expModP.pk_program[0]=(0<<24)|((explen-1)<<8)|(modlen&0x7f);
 
-    expModP.pk_program[0]=/* sizes are ModLen=96(*32=3072),
-			     EXP_len=1,RED_len=0*/
-			(0<<24)|(1<<8)|(96);
+    /* now that we know the chunksize, we can calculate offsets */
+    areg = (areg * chunksize);
+    breg = (breg * chunksize);
+    mreg = (mreg * chunksize);
+	
     expModP.pk_program[1]=/* opcode 1100=0xC (mod-exp),
 			     with A=0, B=1(6),M=4(24)*/
-			(1<<18)|(6<<6)|(24<<0);
+	(0xC<<24)|(mreg << 16)|(breg << 8)|(areg << 0);
 
-    execute_pkprogram(&expModP);
+    expModP.pk_proglen=2;
 
-    /* recover shared value */
-    
-    *shared = mpz_to_n(&mp_shared, group->bytes);
-    mpz_clear(&mp_shared);
+    execute_pkprogram(mapping, &expModP);
+
+    /* recover calculated shared value */
+    clonetochunk(*shared, sharedbytes, group->raw_modulus.len, "DH shared value");
 
     gettimeofday(&tv1, NULL);
     tv_diff=(tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
@@ -82,6 +160,10 @@ calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
     }
 
     DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret:\n", *shared);
+
+    /* shut down */
+    unmapvulcanpk(mapping);
+
 }
 
 /*

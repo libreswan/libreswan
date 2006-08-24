@@ -1,15 +1,42 @@
+#include <sys/mman.h>
+#include <dev/hifn/hifn7751reg.h>
+
+//typedef int bool;
+
+/*
+ * Bus read/write barrier methods. (taken from i386/include/bus.h )
+ *
+ *	void bus_space_write_barrier(void)
+ *
+ *
+ * Note that BUS_SPACE_BARRIER_WRITE doesn't do anything other than
+ * prevent reordering by the compiler; all Intel x86 processors currently
+ * retire operations outside the CPU in program order.
+ */
+
+static __inline void
+bus_space_write_barrier(void)
+{
+  __asm __volatile("" : : : "memory");
+}
+
+static int vulcan_fd=-1;
+
 unsigned char * mapvulcanpk(void)
 {
 	unsigned char *mapping;
-	int fd=open("/dev/vulcanpk", O_RDWR);
-	
-	if(fd == -1) {
-	  perror("open");
-	  exit(6);
+
+	if(vulcan_fd == -1) {
+	    vulcan_fd=open("/dev/vulcanpk", O_RDWR);
+	    
+	    if(vulcan_fd == -1) {
+		perror("open");
+		exit(6);
+	    }
 	}
 
 	/* HIFN_1_PUB_MEMEND */
-	mapping = mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	mapping = mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, vulcan_fd, 0);
 	
 	if(mapping == NULL) {
 		perror("mmap");
@@ -17,26 +44,17 @@ unsigned char * mapvulcanpk(void)
 	}
 	
 	return mapping;
+
+}
+void unmapvulcanpk(unsigned char *mapping)
+{
+    munmap(mapping, 4096);
+    if(vulcan_fd!=-1) close(vulcan_fd);
+    vulcan_fd=-1;
 }
 
-void hexdump(caddr_t bb, int len)
-{
-	unsigned char *b = bb;
-	int i;
-  
-	for(i = 0; i < len; i++) {
-		if(!(i % 16)) {
-			printf("%04x:", i);
-		}
-		printf(" %02x", b[i]); 
-		if(!((i + 1) % 16)) {
-			printf("\n");
-		}
-	}
-	if(i % 16) {
-		printf("\n");
-	}
-}
+/* in include/, because you never know when you will need it */
+#include "hexdump.c"
 
 void print_status(u_int32_t stat)
 {
@@ -46,6 +64,12 @@ void print_status(u_int32_t stat)
 	}
 	if(stat & HIFN_PUBSTS_CARRY) {
 		printf("carry ");
+	}
+	if(stat & 0x4) {
+		printf("sign(2) ");
+	}
+	if(stat & 0x8) {
+		printf("zero(3) ");
 	}
 	if(stat & HIFN_PUBSTS_FIFO_EMPTY) {
 		printf("empty ");
@@ -60,13 +84,14 @@ void print_status(u_int32_t stat)
 		printf("write=%d ", (stat & HIFN_PUBSTS_FIFO_WRITE)>>16);
 	}
 	if(stat & HIFN_PUBSTS_FIFO_READ) {
-		printf("write=%d ", (stat & HIFN_PUBSTS_FIFO_READ)>>24);
+		printf("read=%d ", (stat & HIFN_PUBSTS_FIFO_READ)>>24);
 	}
 	printf("\n");
 }
 
 
 #define PUB_WORD(offset) *(volatile u_int32_t *)(&mapping[offset])
+#define PUB_WORD_WRITE(offset, value) if(pk_verbose_execute) printf("write-1 %04x = %08x\n", offset, value), PUB_WORD(offset)=value
 
 inline void write_pkop(unsigned char *mapping,
 		       u_int32_t oplen, u_int32_t op)
@@ -82,51 +107,144 @@ inline void write_pkop(unsigned char *mapping,
 #define PKVALUE_BITS  3072
 #define PKVALUE_LEN   (PKVALUE_BITS/8)
 
-#define PK_AVALUES 7
-#define PK_BVALUES 7
+#define PK_AVALUES 16
+#define PK_BVALUES 16
 
 struct pkprogram {
-	bool           valuesLittleEndian;
-	unsigned char *aValues[PK_AVALUES];
-	unsigned short aValueLen[PK_AVALUES];
-	unsigned int   oOffset;
-	unsigned char *oValue;
-	u_int32_t      pk_program[32];
+    bool           valuesLittleEndian;
+    unsigned char  chunksize;           /* how many 64-byte chunks/register */
+    unsigned char *aValues[PK_AVALUES];
+    unsigned short aValueLen[PK_AVALUES];
+    unsigned int   oOffset;
+    unsigned char *oValue;
+    unsigned int   oValueLen;
+    u_int32_t      pk_program[32];
+    int            pk_proglen;
 };
 
 int pk_verbose_execute=0;
 
 
-void copyPkValues(unsigned char *mapping, struct pkprogram *prog
-		  char *typeStr, 
-		  int pkRegNum,
-		  unsigned char *pkValue, unsigned short pkValueLen)
+void copyPkValueTo(unsigned char *mapping, struct pkprogram *prog,
+		   char *typeStr, 
+		   int pkRegNum,
+		   unsigned char *pkValue, unsigned short pkValueLen)
 {
-	unsigned char *pkReg = mapping + HIFN_1_PUB_MEM + (pkRegNum*PKVALUE_LEN);
+    unsigned int registerSize = prog->chunksize*64;
+    unsigned int pkRegOff = HIFN_1_PUB_MEM + (pkRegNum*registerSize);
+    unsigned char *pkReg = mapping + pkRegOff;
 
-	if(!prog->valuesLittleEndian) {
-		memcpy(pkReg, pkValue, PKVALUE_LEN);
+	if(prog->valuesLittleEndian) {
+		memcpy(pkReg, pkValue, pkValueLen);
+		memset(pkReg+pkValueLen, 0, (registerSize-pkValueLen));
 	} else {
 		int vi, vd;
-		
-		for(vd=pkValueLen-1, vi=0; vi<PKVALUE_LEN && vd >=0; vi++, vd--) {
-			pkReg[vi]=pkValue[vd];
+		unsigned char pkRegTemp[PKVALUE_LEN];
+
+		/*
+		 * we use a temp area, because probably things go badly
+		 * if we do byte accesses.
+		 */
+		memset(pkRegTemp, 0, PKVALUE_LEN);
+		for(vd=pkValueLen-1, vi=0; vi<registerSize && vd >=0; vi++, vd--) {
+			pkRegTemp[vi]=pkValue[vd];
 		}
+		memcpy(pkReg, pkRegTemp, registerSize);
 	}
 	
 	if(pk_verbose_execute) {
-		printf("%s[%d]:\n", typeStr, pkRegNum);
-		hexdump(pkReg, PKVALUE_LEN);
+		printf("%s[%d]: before\n", typeStr, pkRegNum);
+		hexdump(mapping, pkRegOff, registerSize);
 	}
 }
 
+void copyPkValueFrom(unsigned char *mapping, struct pkprogram *prog,
+		     char *typeStr, 
+		     int pkRegNum,
+		     unsigned char *pkValue, unsigned short pkValueLen)
+{
+    unsigned int registerSize = prog->chunksize*64;
+    unsigned int pkRegOff = HIFN_1_PUB_MEM + (pkRegNum*registerSize);
+    unsigned char *pkReg = mapping + pkRegOff;
+
+    if(prog->valuesLittleEndian) {
+	memcpy(pkValue, pkReg, pkValueLen);
+    } else {
+	int vi, vd;
+
+	unsigned char pkRegTemp[PKVALUE_LEN];
+
+	/*
+	 * we use a temp area, because probably things go badly
+	 * if we do byte accesses.
+	 */
+	memcpy(pkRegTemp, pkReg, PKVALUE_LEN);
+
+	memset(pkValue, 0, pkValueLen);
+	for(vd=pkValueLen-1, vi=0; vi<registerSize && vd >=0; vi++, vd--) {
+	    pkValue[vd]=pkRegTemp[vi];
+	}
+	
+	if(pk_verbose_execute) {
+		printf("%s[%d]: after extract\n", typeStr, pkRegNum);
+		hexdump(pkValue, 0, pkValueLen);
+	}
+    }
+}
+
+void dump_registers(unsigned char *mapping, unsigned int registerSize)
+{
+    unsigned int pkNum;
+    unsigned int maxregister = (HIFN_1_PUB_MEMSIZE/registerSize)-1;
+
+    for(pkNum = 0;
+	pkNum <= maxregister;
+	pkNum++)
+    {
+	unsigned int pkRegOff = HIFN_1_PUB_MEM + (pkNum*registerSize);
+	printf("register[%d]\n", pkNum);
+	hexdump(mapping, pkRegOff, registerSize);
+    }
+}
+
+
+
+#if !defined(ENHANCED_MODE)
+inline u_int32_t xlat2compat_oplen(u_int32_t oplen)
+{
+	unsigned int red,exp,mod;
+	red = (oplen >> 24)&0xff;
+	exp = (oplen >> 8)&0xfff;
+	mod = (oplen >> 0)&0xff;
+	  
+	oplen = ((red&0xf) << 18) | ((exp&0x7ff) << 7) | (mod & 0x7f);
+	
+	return oplen;
+}
+
+inline u_int32_t xlat2compat_op(u_int32_t op)
+{
+	unsigned int opcode,m,b,a;
+	opcode = (op>>24)&0xff;
+	m      = (op>>16)&0xff;
+	b      = (op>>8)&0xff;
+	a      = op & 0xff;
+	
+	op = (opcode << 18)|(m<<12)|(b<<6)|(a<<0);
+	
+	/* assert that "opcode" is not invalid, may be good */
+	return op;
+}
+#endif
 
 void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 {
 	/* make sure PK engine is done */
+    unsigned int registerSize = prog->chunksize*64;
 	int count=5;
 	int i, pc;
 	volatile u_int32_t stat;
+	volatile u_int32_t *opfifo;
 
 	while(count-->0 &&
 	      ((stat = PUB_WORD(HIFN_1_PUB_STATUS)) & HIFN_PUBSTS_DONE) != HIFN_PUBSTS_DONE) {
@@ -142,71 +260,117 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	 * hopefully, will turn into a single PCI burst write.
 	 */
 	for(i=0; i<PK_AVALUES; i++) {
-		if(prog->aValues[i] != NULL) {
-			copyPkValue(mapping, prog, "a", i, prog->aValues[i]);
-		} else {
-			unsigned char *pkReg = mapping + HIFN_1_PUB_MEM + (i*PKVALUE_LEN);
-			/* clear memory */
-			memset(pkReg, 0, PKVALUE_LEN);
-		}
+	    if(prog->aValues[i] != NULL) {
+		copyPkValueTo(mapping, prog, "a", i, prog->aValues[i], prog->aValueLen[i]);
+	    } else {
+		unsigned char *pkReg = mapping + HIFN_1_PUB_MEM + (i*registerSize);
+		/* clear memory */
+		memset(pkReg, 0, registerSize);
+	    }
 	}
 	
 	/* a write barrier, and a cache flush would be good idea here */
+	bus_space_write_barrier();
 	usleep(1000);
 
-	/* run each instruction, one at a time */
-	for(pc=0; prog->pk_program[pc]!=0 && pc < 32; pc+=2) {
-		volatile u_int32_t *opfifo;
+	/* now copy the instructions to the FIFO. */
 
-		/* do not use fifo for now, sigh */
-		opfifo = (volatile u_int32_t *)(mapping+HIFN_1_PUB_OPLEN);
+#if !defined(ENHANCED_MODE)
+	/*
+	 * oops. FIFO is broken, so write them out to oplen/op,
+	 * after converting them to compat mode instructions.
+	 */
+	pc = 0;
+	opfifo = (volatile u_int32_t *)(mapping+HIFN_1_PUB_OPLEN);
+	if(pk_verbose_execute) print_status(PUB_WORD(HIFN_1_PUB_STATUS));
+	PUB_WORD_WRITE(HIFN_1_PUB_STATUS, PUB_WORD(HIFN_1_PUB_STATUS));
+	if(pk_verbose_execute) print_status(PUB_WORD(HIFN_1_PUB_STATUS));
 
-		printf("executing instruction %d\n", pc);
-		opfifo[0]=prog->pk_program[pc];
-		opfifo[1]=prog->pk_program[pc+1];
+	while(pc < prog->pk_proglen) {
+	    u_int32_t op, oplen;
 
-		/* wait for DONE bit */
+	    oplen = prog->pk_program[pc];
+	    op    = prog->pk_program[pc+1];
+
+	    if(pk_verbose_execute) {
+		print_status(PUB_WORD(HIFN_1_PUB_STATUS));
+		printf("original instruction at %d oplen=%08x/op=%08x\n",
+		       pc, oplen, op);
+	    }
+
+	    oplen = xlat2compat_oplen(prog->pk_program[pc++]);
+	    op = xlat2compat_op(prog->pk_program[pc++]);
+	    
+	    if(pk_verbose_execute) {
+		printf("executing instruction %d (of %d) (%08x/%08x)\n",
+		       pc, prog->pk_proglen, oplen, op);
+	    }
+	    opfifo[0]=oplen;
+	    opfifo[1]=op;
+
+	    if(pc < prog->pk_proglen) {
 		count=5;
-
-		while(count-->0 &&
+		while(--count>0 &&
 		      ((stat = PUB_WORD(HIFN_1_PUB_STATUS)) & HIFN_PUBSTS_DONE) != HIFN_PUBSTS_DONE) {
-			usleep(1000);
+		    usleep(1000);
 		}
-		if(count == 0) {
-			printf("failed to complete: %08x\n", stat);
-			exit(6);
-		}
+	    }
+	}
+#else
+	opfifo = (volatile u_int32_t *)(mapping+HIFN_1_PUB_FIFO_OPLEN);
+	memcpy(opfifo, prog->pk_program, prog->pk_proglen*8);
+#endif
 
-		for(i=0; i<PK_AVALUES; i++) {
-			unsigned char *pkReg = mapping + HIFN_1_PUB_MEM + (i*PKVALUE_LEN);
-			if(prog->aValues[i] && pk_verbose_execute) {
-				printf("a[%d]:\n", i);
-				hexdump(pkReg, PKVALUE_LEN);
-			}
-		}
+	bus_space_write_barrier();
+	usleep(1000);
+	/* wait for DONE bit */
+	if(pk_verbose_execute) print_status(PUB_WORD(HIFN_1_PUB_STATUS));
+	count=50;
+	
+	while(--count>0 &&
+	      ((stat = PUB_WORD(HIFN_1_PUB_STATUS)) & HIFN_PUBSTS_DONE) != HIFN_PUBSTS_DONE) {
+	    usleep(1000);
 	}
-      
-	/* output is usually in b[2] */
-	{
-		unsigned char *pkReg = mapping + HIFN_1_PUB_MEM + (prog->oOffset*PKVALUE_LEN);
-		printf("result[%d]:\n", prog->oOffset);
-		hexdump(pkReg, 16);
+	if(count == 0) {
+	    printf("failed to complete: %08x\n", stat);
+	    print_status(stat);
+	    exit(6);
 	}
+
+	if(pk_verbose_execute) {
+	    printf("after running:\n");
+	    dump_registers(mapping, prog->chunksize*64);
+	}
+	    
+	/* output is usually in b[1] */
+	copyPkValueFrom(mapping, prog, "a", prog->oOffset,
+			prog->oValue, prog->oValueLen);
 }
 
 void vulcanpk_init(unsigned char *mapping)
 {
+        volatile unsigned int stat;
+
 	PUB_WORD(HIFN_1_PUB_RESET)=0x1;
 	while((stat = PUB_WORD(HIFN_1_PUB_RESET)) & 0x01) {
 		sleep(1);
 	}
 
 
-	//PUB_WORD(HIFN_1_PUB_MODE) = PUB_WORD(HIFN_1_PUB_MODE)|HIFN_PKMODE_ENHANCED;
+#if defined(ENHANCED_MODE)
+	PUB_WORD_WRITE(HIFN_1_PUB_MODE, PUB_WORD(HIFN_1_PUB_MODE)|HIFN_PKMODE_ENHANCED);
+#endif
+
 	/* enable RNG again */
-	PUB_WORD(HIFN_1_RNG_CONFIG) = PUB_WORD(HIFN_1_RNG_CONFIG) | HIFN_RNGCFG_ENA;
+	PUB_WORD_WRITE(HIFN_1_RNG_CONFIG, PUB_WORD(HIFN_1_RNG_CONFIG) | HIFN_RNGCFG_ENA);
 
 	/* clear out PUBLIC DONE */
-	PUB_WORD(HIFN_1_PUB_STATUS) = HIFN_PUBSTS_DONE;
+	PUB_WORD_WRITE(HIFN_1_PUB_STATUS, PUB_WORD(HIFN_1_PUB_STATUS));
 }
 
+/*
+ * Local Variables:
+ * c-basic-offset:4
+ * c-style: pluto
+ * End:
+ */
