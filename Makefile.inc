@@ -186,7 +186,7 @@ INSTALL=install
 # how backup names are composed.
 # Note that the install procedures will never overwrite an existing config
 # file, which is why -b is not specified for them.
-INSTBINFLAGS=-b -B .old
+INSTBINFLAGS=-b 
 INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
 INSTMANFLAGS=
 INSTCONFFLAGS=
