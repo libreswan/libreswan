@@ -14,7 +14,7 @@ EASTHOST=${EASTHOST-}
 TEST_GOAL_ITEM=${TEST_GOAL_ITEM-0}
 TEST_PROB_REPORT=${TEST_PROB_REPORT-0}
 TEST_EXPLOIT_URL=${TEST_EXPLOIT_URL-http://www.openswan.org/vuln/}
-
+MAKE=${MAKE-make}
 
 preptest() {
     local testdir="$1"
@@ -1755,8 +1755,9 @@ buildtest() {
 
 do_unittest() {
 
+    success=true
     export ROOTDIR=${OPENSWANSRCDIR}
-    eval `(cd $ROOTDIR; make env)`
+    eval `(cd $ROOTDIR; ${MAKE} env)`
     failnum=1
 
     if [ ! -x "$TESTSCRIPT" ]; then echo "TESTSCRIPT=$TESTSCRIPT is not executable"; exit 41; fi
@@ -1764,11 +1765,11 @@ do_unittest() {
     (cd ${ROOTDIR}/programs;
      for program in ${PROGRAMS}
      do
-	if [ -d $program ]; then (cd $program && make programs checkprograms ); fi
+	if [ -d $program ]; then (cd $program && ${MAKE} programs checkprograms ); fi
      done)
 
     # if there is a makefile, run it and bail if fails
-    [ -f Makefile ] && make checkprograms
+    [ -f Makefile ] && ${MAKE} checkprograms
 
     # make sure we get all core dumps!
     ulimit -c unlimited
@@ -1800,7 +1801,7 @@ unittest() {
 
     echo '**** make unittest RUNNING '$testcase' ****'
 
-    echo Running $testobj
+    echo Running $testcase
     ( preptest $testcase unittest false && do_unittest )
     stat=$?
 

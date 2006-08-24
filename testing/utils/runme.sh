@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 # $Id: runme.sh,v 1.3 2004/05/28 02:07:02 mcr Exp $
