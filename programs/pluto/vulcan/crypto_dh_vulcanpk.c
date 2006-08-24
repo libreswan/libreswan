@@ -1,28 +1,27 @@
 #include "vulcan/vulcanpk_funcs.c"
 
+unsigned char *vulcanpk_mapping = NULL;
+bool please_use_vulcan_hack = FALSE;
+
 /**
  * Compute DH shared secret from our local secret and the peer's public value.
  * 
  * Do this by talking directly to the Vulcan PK accelerator through
  * an mmap()'ing of the registers.
  */
-static void
+void
 calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
 			, const chunk_t *secchunk
 			, const struct oakley_group_desc *group)
 {
     struct timeval tv0, tv1;
     unsigned long tv_diff;
-    unsigned char *mapping = mapvulcanpk();
     struct pkprogram expModP;
     unsigned char sharedbytes[384];
     int chunksize, modlen, explen;
     int areg,breg,mreg;
 
     memset(&expModP, 0, sizeof(expModP));
-
-    /* initialize chip */
-    vulcanpk_init(mapping);
 
     gettimeofday(&tv0, NULL);
 
@@ -139,7 +138,7 @@ calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
 
     expModP.pk_proglen=2;
 
-    execute_pkprogram(mapping, &expModP);
+    execute_pkprogram(vulcanpk_mapping, &expModP);
 
     /* recover calculated shared value */
     clonetochunk(*shared, sharedbytes, group->raw_modulus.len, "DH shared value");
@@ -160,10 +159,6 @@ calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
     }
 
     DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret:\n", *shared);
-
-    /* shut down */
-    unmapvulcanpk(mapping);
-
 }
 
 /*

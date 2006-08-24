@@ -21,6 +21,7 @@
 
 extern bool no_retransmits;
 extern bool log_to_stderr_desired;
+extern bool please_use_vulcan_hack;
 
 extern int ctl_fd;	/* file descriptor of control (whack) socket */
 extern struct sockaddr_un ctl_addr;	/* address of control (whack) socket */

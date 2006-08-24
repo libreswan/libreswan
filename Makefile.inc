@@ -394,6 +394,9 @@ USE_NOCRYPTO?=false
 # of switching away from AES/3DES quickly. 
 USE_EXTRACRYPTO?=true
 
+# do PK operations with a memory mapped hifn 7956
+USE_VULCANHACK?=true
+
 # Do we have pthreads available?  Only yes if you need it for XAUTH+PAM,
 # or if you need it for CRL fetching.
 # 

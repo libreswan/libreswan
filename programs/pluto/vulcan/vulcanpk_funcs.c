@@ -1,6 +1,10 @@
 #include <sys/mman.h>
 #include <dev/hifn/hifn7751reg.h>
 
+#include "dev/hifn/vulcanpk_funcs.h"
+#include <sys/types.h>
+#include <fcntl.h>
+
 //typedef int bool;
 
 /*
@@ -93,7 +97,7 @@ void print_status(u_int32_t stat)
 #define PUB_WORD(offset) *(volatile u_int32_t *)(&mapping[offset])
 #define PUB_WORD_WRITE(offset, value) if(pk_verbose_execute) printf("write-1 %04x = %08x\n", offset, value), PUB_WORD(offset)=value
 
-inline void write_pkop(unsigned char *mapping,
+inline static void write_pkop(unsigned char *mapping,
 		       u_int32_t oplen, u_int32_t op)
 {
 	volatile u_int32_t *opfifo;
@@ -125,12 +129,12 @@ struct pkprogram {
 int pk_verbose_execute=0;
 
 
-void copyPkValueTo(unsigned char *mapping, struct pkprogram *prog,
-		   char *typeStr, 
+static void copyPkValueTo(unsigned char *mapping, struct pkprogram *prog,
+		   const char *typeStr, 
 		   int pkRegNum,
 		   unsigned char *pkValue, unsigned short pkValueLen)
 {
-    unsigned int registerSize = prog->chunksize*64;
+    int registerSize = prog->chunksize*64;
     unsigned int pkRegOff = HIFN_1_PUB_MEM + (pkRegNum*registerSize);
     unsigned char *pkReg = mapping + pkRegOff;
 
@@ -158,12 +162,12 @@ void copyPkValueTo(unsigned char *mapping, struct pkprogram *prog,
 	}
 }
 
-void copyPkValueFrom(unsigned char *mapping, struct pkprogram *prog,
-		     char *typeStr, 
+static void copyPkValueFrom(unsigned char *mapping, struct pkprogram *prog,
+		     const char *typeStr, 
 		     int pkRegNum,
 		     unsigned char *pkValue, unsigned short pkValueLen)
 {
-    unsigned int registerSize = prog->chunksize*64;
+    int registerSize = prog->chunksize*64;
     unsigned int pkRegOff = HIFN_1_PUB_MEM + (pkRegNum*registerSize);
     unsigned char *pkReg = mapping + pkRegOff;
 
@@ -192,7 +196,7 @@ void copyPkValueFrom(unsigned char *mapping, struct pkprogram *prog,
     }
 }
 
-void dump_registers(unsigned char *mapping, unsigned int registerSize)
+static void dump_registers(unsigned char *mapping, unsigned int registerSize)
 {
     unsigned int pkNum;
     unsigned int maxregister = (HIFN_1_PUB_MEMSIZE/registerSize)-1;
@@ -210,7 +214,7 @@ void dump_registers(unsigned char *mapping, unsigned int registerSize)
 
 
 #if !defined(ENHANCED_MODE)
-inline u_int32_t xlat2compat_oplen(u_int32_t oplen)
+static inline u_int32_t xlat2compat_oplen(u_int32_t oplen)
 {
 	unsigned int red,exp,mod;
 	red = (oplen >> 24)&0xff;
@@ -222,7 +226,7 @@ inline u_int32_t xlat2compat_oplen(u_int32_t oplen)
 	return oplen;
 }
 
-inline u_int32_t xlat2compat_op(u_int32_t op)
+static inline u_int32_t xlat2compat_op(u_int32_t op)
 {
 	unsigned int opcode,m,b,a;
 	opcode = (op>>24)&0xff;

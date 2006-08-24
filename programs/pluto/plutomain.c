@@ -169,6 +169,10 @@ usage(const char *mess)
 	   " \\\n\t"
 	   "[--virtual_private <network_list>]"
 #endif
+#ifdef VULCAN_PK
+	   " \\\n\t"
+	    "[--usevulcanhack]"
+#endif	    
 	    "\n"
 	"Openswan %s\n"
 	, ipsec_version_code());
@@ -358,6 +362,9 @@ main(int argc, char **argv)
 #ifdef VIRTUAL_IP
 	    { "virtual_private", required_argument, NULL, '6' },
 #endif
+#ifdef VULCAN_PK
+	    { "usevulcanhack", no_argument, NULL, '7' },  /* 7956 */
+#endif	    
 	    { "nhelpers", required_argument, NULL, 'j' },
 #ifdef DEBUG
 	    { "debug-none", no_argument, NULL, 'N' },
@@ -595,6 +602,11 @@ main(int argc, char **argv)
 	case '5':	/* --debug-nat_t */
 	    base_debugging |= DBG_NATT;
 	    continue;
+#endif
+#ifdef VULCAN_PK
+        case '7':
+	    please_use_vulcan_hack=TRUE;
+	    break;
 #endif
 #ifdef VIRTUAL_IP
 	case '6':	/* --virtual_private */

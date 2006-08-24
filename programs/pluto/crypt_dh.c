@@ -50,9 +50,9 @@
 #include "secrets.h"
 #include "keys.h"
 
-typedef void (*calc_dh_shared_t)(chunk_t *shared, const chunk_t g
-				 , const chunk_t *secchunk
-				 , const struct oakley_group_desc *group);
+#ifdef VULCAN_PK
+#include "dev/hifn/vulcanpk_funcs.h"
+#endif
 
 /** Compute DH shared secret from our local secret and the peer's public value.
  * We make the leap that the length should be that of the group

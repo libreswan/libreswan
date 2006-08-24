@@ -179,5 +179,19 @@ extern stf_status perform_dh_secret(struct state *st
 extern void calc_dh_iv(struct pluto_crypto_req *r);
 extern void calc_dh(struct pluto_crypto_req *r);
 
+typedef void (*calc_dh_shared_t)(chunk_t *shared, const chunk_t g
+				 , const chunk_t *secchunk
+				 , const struct oakley_group_desc *group);
+
+extern calc_dh_shared_t calc_dh_shared;
+
+#ifdef VULCAN_PK
+extern void calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
+				    , const chunk_t *secchunk
+				    , const struct oakley_group_desc *group);
+extern unsigned char *vulcanpk_mapping;
+#include "dev/hifn/vulcanpk_funcs.h"
+#endif
+
 #endif /* _PLUTO_CRYPT_H */
 

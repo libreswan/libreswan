@@ -35,6 +35,9 @@
 #include <sys/sysctl.h>
 #endif
 
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <signal.h>
 
 #include <openswan.h>
@@ -697,7 +700,20 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	openswan_passert_fail = helper_passert_fail;
 	debug_prefix='!';
 
+#ifdef VULCAN_PK
+	vulcanpk_mapping = mapvulcanpk();
+	/* initialize chip */
+	vulcanpk_init(vulcanpk_mapping);
+#endif	
+
 	pluto_crypto_helper(fds[1], n);
+
+
+#ifdef VULCAN_PK
+	/* shut down */
+	unmapvulcanpk(vulcanpk_mapping);
+#endif
+
 	exit(0);
 	/* NOTREACHED */
     }
@@ -754,6 +770,23 @@ void init_crypto_helpers(int nhelpers)
     pc_workers = NULL;
     pc_workers_cnt = 0;
     pcw_id = 1;
+
+#ifdef VULCAN_PK
+    if(please_use_vulcan_hack) {
+	int vfd;
+
+	vfd = open("/dev/vulcanpk", O_RDWR);
+	if(vfd != -1) {
+	    calc_dh_shared = calc_dh_shared_vulcanpk;
+	    close(vfd);
+
+	    if(nhelpers == -1) {
+		/* only need one helper for this situation, in theory */
+		nhelpers = 1;
+	    }
+	}
+    }
+#endif
 
     /* find out how many CPUs there are, if nhelpers is -1 */
     /* if nhelpers == 0, then we do all the work ourselves */
