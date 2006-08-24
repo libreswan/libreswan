@@ -18,6 +18,8 @@
  * RCSID $Id: crypt_dh.c,v 1.11 2005/08/14 21:47:29 mcr Exp $
  */
 
+#define PK_DH_REGRESS 1
+
 #include "../../../programs/pluto/hmac.c"
 #include "../../../programs/pluto/crypto.c"
 #include "../../../programs/pluto/ike_alg.c"
@@ -218,5 +220,5 @@ int main(int argc, char *argv[])
 		openswan_DBG_dump("shared", shared, skr->shared.len);
 	}
 
-	exit(4);
+	exit(0);
 }

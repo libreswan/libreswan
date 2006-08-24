@@ -75,7 +75,23 @@ calc_dh_shared_gmp(chunk_t *shared, const chunk_t g
     /* do the exponentiation */
     n_to_mpz(&mp_g, g.ptr, g.len);
     mpz_init(&mp_shared);
+
+#ifdef PK_DH_REGRESS
+    printf("mp_g: ");
+    mpz_out_str(stdout, 16, &mp_g);
+    printf("\nsecret: ");
+    mpz_out_str(stdout, 16, &sec);
+    printf("\nmodulus: ");
+    mpz_out_str(stdout, 16, group->modulus);
+#endif
+
     mpz_powm(&mp_shared, &mp_g, &sec, group->modulus);
+
+#ifdef PK_DH_REGRESS
+    printf("\nshared: ");
+    mpz_out_str(stdout, 16, &mp_shared);
+    printf("\n");
+#endif
     mpz_clear(&mp_g);
 
     *shared = mpz_to_n(&mp_shared, group->bytes);

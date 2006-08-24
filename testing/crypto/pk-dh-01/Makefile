@@ -1,4 +1,4 @@
-OPENSWANSRCDIR=$(shell cd ../../..; pwd)
+OPENSWANSRCDIR?=$(shell cd ../../..; pwd)
 
 UNITTEST=pk-dh
 CFLAGS=-DUSE_3DES -I${OPENSWANSRCDIR}/programs/pluto
