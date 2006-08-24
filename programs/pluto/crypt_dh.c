@@ -77,20 +77,24 @@ calc_dh_shared_gmp(chunk_t *shared, const chunk_t g
     mpz_init(&mp_shared);
 
 #ifdef PK_DH_REGRESS
-    printf("mp_g: ");
-    mpz_out_str(stdout, 16, &mp_g);
-    printf("\nsecret: ");
-    mpz_out_str(stdout, 16, &sec);
-    printf("\nmodulus: ");
-    mpz_out_str(stdout, 16, group->modulus);
+    if(pkdh_verbose) {
+	printf("mp_g: ");
+	mpz_out_str(stdout, 16, &mp_g);
+	printf("\nsecret: ");
+	mpz_out_str(stdout, 16, &sec);
+	printf("\nmodulus: ");
+	mpz_out_str(stdout, 16, group->modulus);
+    }
 #endif
 
     mpz_powm(&mp_shared, &mp_g, &sec, group->modulus);
 
 #ifdef PK_DH_REGRESS
-    printf("\nshared: ");
-    mpz_out_str(stdout, 16, &mp_shared);
-    printf("\n");
+    if(pkdh_verbose) {
+	printf("\nshared: ");
+	mpz_out_str(stdout, 16, &mp_shared);
+	printf("\n");
+    }
 #endif
     mpz_clear(&mp_g);
 

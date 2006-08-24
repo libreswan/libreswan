@@ -20,6 +20,8 @@
 
 #define PK_DH_REGRESS 1
 
+int pkdh_verbose=0;
+
 #include "../../../programs/pluto/hmac.c"
 #include "../../../programs/pluto/crypto.c"
 #include "../../../programs/pluto/ike_alg.c"
@@ -57,9 +59,10 @@ int main(int argc, char *argv[])
 	/* initialize list of moduli */
 	init_crypto();
 
-#ifdef VULCAN_PK
-	calc_dh_shared = calc_dh_shared_vulcanpk;
-#endif	
+	if(argc>1) {
+		pkdh_verbose=1;
+	}
+
 	perform_t2_test();
 
 	exit(0);
