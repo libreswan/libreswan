@@ -437,8 +437,8 @@ typedef struct hifn_desc {
 /*
  * Public Key Engine Mode Register
  */
-#define HIFN_PKMODE_HOSTINVERT   (1 << 0)       /* HOST INVERT */
-#define HIFN_PKMODE_ENHANCED     (1 << 1)       /* Enable enhanced mode */
+#define HIFN_PKMODE_HOSTINVERT   (1 << 1)       /* HOST INVERT */
+#define HIFN_PKMODE_ENHANCED     (1 << 0)       /* Enable enhanced mode */
 
 
 /*********************************************************************
