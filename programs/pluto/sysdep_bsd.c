@@ -197,10 +197,6 @@ bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
 struct raw_iface *
 find_raw_ifaces4(void)
 {
-    int j;	                /* index into buf */
-    static int num=64;          /* number of interfaces */
-    struct ifconf ifconf;
-    struct ifreq *buf;	     /* for list of interfaces -- arbitrary limit */
     struct raw_iface *rifaces = NULL;
     struct ifaddrs *ifa = NULL, *ifn;
     int master_sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);    /* Get a UDP socket */
@@ -209,35 +205,10 @@ find_raw_ifaces4(void)
 	exit_log_errno((e, "getifaddrs failed in find_raw_ifaces4()"));
     }
 
-    buf = NULL;
-   
-    /* a million interfaces is probably the maximum, ever... */
-    while(num < (1024*1024)) {
-	    /* Get local interfaces.  See netdevice(7). */
-	    ifconf.ifc_len = num * sizeof(struct ifreq);
-	    buf = (void *) realloc(buf, ifconf.ifc_len);
-	    if (!buf)
-		    exit_log_errno((e, "realloc of %d in find_raw_ifaces4()",
-				    ifconf.ifc_len));
-	    memset(buf, 0, num*sizeof(struct ifreq));
-	    ifconf.ifc_buf = (void *) buf;
-	    
-	    if (ioctl(master_sock, SIOCGIFCONF, &ifconf) == -1)
-		    exit_log_errno((e, "ioctl(SIOCGIFCONF) in find_raw_ifaces4()"));
-	    
-	    /* if we got back less than we asked for, we have them all */
-	    if (ifconf.ifc_len < (int)(sizeof(struct ifreq) * num))
-		    break;
-	    
-	    /* try again and ask for more this time */
-	    num *= 2;
-    }
-  
-    /* Add an entry to rifaces for each interesting interface. */
-    for (j = 0; (j+1) * sizeof(struct ifreq) <= (size_t)ifconf.ifc_len; j++)
-    {
+    ifn = ifa;
+    while(ifn != NULL) {
 	struct raw_iface ri;
-	const struct sockaddr_in *rs = (struct sockaddr_in *) ifa->ifa_addr;
+	const struct sockaddr_in *rs = (struct sockaddr_in *) ifn->ifa_addr;
 	struct ifreq auxinfo;
 
 	/* ignore all but AF_INET interfaces */
@@ -246,7 +217,7 @@ find_raw_ifaces4(void)
 	}
 
 	/* build a NUL-terminated copy of the rname field */
-	strncpy(ri.name, ifa->ifa_name, IFNAMSIZ);
+	strncpy(ri.name, ifn->ifa_name, IFNAMSIZ);
 	ri.name[IFNAMSIZ] = '\0';
 
 	/* ignore if our interface names were specified, and this isn't one */
@@ -267,7 +238,7 @@ find_raw_ifaces4(void)
 
 	/* Find out stuff about this interface.  See netdevice(7). */
 	zero(&auxinfo);	/* paranoia */
-	memcpy(auxinfo.ifr_name, ifa->ifa_name, IFNAMSIZ);
+	memcpy(auxinfo.ifr_name, ifn->ifa_name, IFNAMSIZ);
 	if (ioctl(master_sock, SIOCGIFFLAGS, &auxinfo) == -1)
 	    exit_log_errno((e
 		, "ioctl(SIOCGIFFLAGS) for %s in find_raw_ifaces4()"
@@ -289,12 +260,16 @@ find_raw_ifaces4(void)
 	    , AF_INET, &ri.addr));
 
 	DBG(DBG_CONTROL, DBG_log("found %s with address %s"
-	    , ri.name, ip_str(&ri.addr)));
+				 , ri.name, ip_str(&ri.addr)));
+
+	/* add permently to list */
 	ri.next = rifaces;
 	rifaces = clone_thing(ri, "struct raw_iface");
+
+	ifn = ifn->ifa_next;
     }
 
-    freeifaddrs(ifn);
+    freeifaddrs(ifa);
     close(master_sock);
 
     return rifaces;
