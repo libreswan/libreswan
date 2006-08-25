@@ -34,7 +34,7 @@ unsigned char * mapvulcanpk(void)
 	    vulcan_fd=open("/dev/vulcanpk", O_RDWR);
 	    
 	    if(vulcan_fd == -1) {
-		perror("open");
+		perror("vulcan mapping open");
 		exit(6);
 	    }
 	}

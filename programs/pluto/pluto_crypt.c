@@ -90,6 +90,8 @@ int pc_workers_cnt = 0;
 int pc_worker_num;
 pcr_req_id pcw_id;
 
+bool using_vulcan_hack=FALSE;
+
 /* local in child */
 int pc_helper_num=-1;
 
@@ -701,17 +703,21 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	debug_prefix='!';
 
 #ifdef VULCAN_PK
-	vulcanpk_mapping = mapvulcanpk();
-	/* initialize chip */
-	vulcanpk_init(vulcanpk_mapping);
+	if(using_vulcan_hack) {
+	    vulcanpk_mapping = mapvulcanpk();
+	    /* initialize chip */
+	    vulcanpk_init(vulcanpk_mapping);
+	}
 #endif	
 
 	pluto_crypto_helper(fds[1], n);
 
 
 #ifdef VULCAN_PK
-	/* shut down */
-	unmapvulcanpk(vulcanpk_mapping);
+	if(using_vulcan_hack) {
+	    /* shut down */
+	    unmapvulcanpk(vulcanpk_mapping);
+	}
 #endif
 
 	exit(0);
@@ -778,6 +784,7 @@ void init_crypto_helpers(int nhelpers)
 	vfd = open("/dev/vulcanpk", O_RDWR);
 	if(vfd != -1) {
 	    calc_dh_shared = calc_dh_shared_vulcanpk;
+	    using_vulcan_hack = TRUE;
 	    close(vfd);
 
 	    if(nhelpers == -1) {
