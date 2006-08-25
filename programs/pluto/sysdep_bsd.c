@@ -197,7 +197,6 @@ bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
 struct raw_iface *
 find_raw_ifaces4(void)
 {
-    static const int on = TRUE;	/* by-reference parameter; constant, we hope */
     int j;	                /* index into buf */
     static int num=64;          /* number of interfaces */
     struct ifconf ifconf;
