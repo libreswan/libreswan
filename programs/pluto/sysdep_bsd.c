@@ -206,8 +206,8 @@ find_raw_ifaces4(void)
     }
 
     ifn = ifa;
-    while(ifn != NULL) {
-	struct raw_iface ri;
+    for(ifn=ifa; ifn != NULL; ifn=ifn->ifa_next) {
+    	struct raw_iface ri;
 	const struct sockaddr_in *rs = (struct sockaddr_in *) ifn->ifa_addr;
 	struct ifreq auxinfo;
 
@@ -265,8 +265,6 @@ find_raw_ifaces4(void)
 	/* add permently to list */
 	ri.next = rifaces;
 	rifaces = clone_thing(ri, "struct raw_iface");
-
-	ifn = ifn->ifa_next;
     }
 
     freeifaddrs(ifa);

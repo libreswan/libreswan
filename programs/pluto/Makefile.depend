@@ -1085,6 +1085,23 @@ sysdep_linux.o: sysdep_linux.c ../../linux/include/openswan.h \
   ../../include/packet.h log.h server.h \
   ../../include/sysqueue.h ../../include/whack.h \
   keys.h
+sysdep_freebsd.o: sysdep_freebsd.c sysdep_bsd.c ../../linux/include/openswan.h \
+  ../../ports/freebsd/include/sysdep.h \
+  ../../include/constants.h ../../include/biglset.h \
+  ../../linux/include/openswan/passert.h \
+  ../../include/ietf_constants.h \
+  ../../include/pluto_constants.h \
+  ../../include/names_constant.h \
+  ../../include/oswlog.h defs.h \
+  ../../include/oswalloc.h rnd.h ../../include/id.h \
+  connections.h ../../include/x509.h \
+  ../../include/pgp.h ../../include/certs.h \
+  ../../include/secrets.h ../../include/smartcard.h \
+  state.h quirks.h timer.h ../../include/oswtime.h kernel.h \
+  kernel_netlink.h kernel_pfkey.h kernel_noklips.h \
+  ../../include/packet.h log.h server.h \
+  ../../include/sysqueue.h ../../include/whack.h \
+  keys.h
 timer.o: timer.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
