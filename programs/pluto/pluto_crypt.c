@@ -785,6 +785,7 @@ void init_crypto_helpers(int nhelpers)
 	if(vfd != -1) {
 	    calc_dh_shared = calc_dh_shared_vulcanpk;
 	    using_vulcan_hack = TRUE;
+	    openswan_log("Enabling direct Vulcan Public Key interface\n");
 	    close(vfd);
 
 	    if(nhelpers == -1) {
