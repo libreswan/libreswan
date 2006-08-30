@@ -42,14 +42,18 @@ struct starter_end {
     ip_subnet subnet;
     char *iface;
     char *id;
+    
+    enum pubkey_source rsakey1_type, rsakey2_type;
     unsigned char *rsakey1;
     unsigned char *rsakey2;
     u_int16_t port;
     u_int8_t protocol;
     bool has_client_wildcard;
     bool key_from_DNS_on_demand;
-    char *cert;
     char *virt;
+    char *cert;
+    char *ca;
+    char *updown;
     ksf  strings;
     knf  options;
 

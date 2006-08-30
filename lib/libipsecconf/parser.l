@@ -30,6 +30,9 @@
 
 #define MAX_INCLUDE_DEPTH  10
 
+/* we want no actual output! */
+#define ECHO 
+
 /*    
 #define YY_NO_UNPUT
 */
@@ -268,16 +271,19 @@ include			return INCLUDE;
 			   assert(len>0);
 
 			   /* remove trailing " */
-			   s[len-1]='\0';
+			   s[len-1]='\0'; 
 			   if(yydebug) { fprintf(stderr, "STRING: \"%s\"\n", s);}
 			   yylval.s = strdup(s);
                            return STRING;
 			}
 
-#.*		        /* eat comment lines */ ;
+#.*		        /* eat comment lines */ {
+                        }
+
+[ \t\n]                 /* eat additional white spaces */ {
+                        }
 
 .			yyerror(yytext);
-
 %%
 
 int yywrap(void) {
@@ -286,6 +292,7 @@ int yywrap(void) {
 
 /*
  * Local Variables:
+ * mode: flex
  * c-basic-offset:4
  * c-style: pluto
  * End:

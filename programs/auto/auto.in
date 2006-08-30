@@ -124,7 +124,6 @@ runit() {
 		    echo 'exec <&3'     # regain stdin
 		    cat
 		    echo ');'
-		    echo 'echo = $?'
 		) | sh $shopts |
 			awk "/^= / { exit \$2 } $logfilter { print }"
 	fi

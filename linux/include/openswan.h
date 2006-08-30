@@ -220,6 +220,7 @@ typedef uint32_t IPsecSAref_t;
 #define NFmark2IPsecSAref(x) (((x) >> IPSEC_SA_REF_TABLE_OFFSET)&IPSEC_SA_REF_MASK)
 
 #define IPSEC_SAREF_NULL ((IPsecSAref_t)0)
+#define IPSEC_SAREF_NA   ((IPsecSAref_t)0xffff0001)
 
 /* GCC magic for use in function definitions! */
 #ifdef GCC_LINT

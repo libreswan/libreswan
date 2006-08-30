@@ -1,6 +1,8 @@
 north:~#
  TESTNAME=aggr-pluto-03
 north:~#
+ source /testing/pluto/bin/northlocal.sh
+north:~#
  ipsec setup start
 ipsec_setup: Starting Openswan IPsec VERSION
 north:~#
@@ -17,9 +19,9 @@ north:~#
 003 "north-east-aggr-pluto-03" #1: received Vendor ID payload [Dead Peer Detection]
 106 "north-east-aggr-pluto-03" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "north-east-aggr-pluto-03" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-004 "north-east-aggr-pluto-03" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=oakley_3des_cbc_192 prf=oakley_md5 group=modp1536}
+004 "north-east-aggr-pluto-03" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp1536}
 117 "north-east-aggr-pluto-03" #2: STATE_QUICK_I1: initiate
-004 "north-east-aggr-pluto-03" #2: STATE_QUICK_I2: sent QI2, IPsec SA established
+004 "north-east-aggr-pluto-03" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
 north:~#
  echo done
 done

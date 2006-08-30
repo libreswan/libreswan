@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdio.h>
+#include "oswlog.h"
 #include "oswconf.h"
 #include "oswalloc.h"
 
@@ -108,6 +109,8 @@ void osw_conf_setdefault(void)
     global_oco.vardir  = var_dir;
     global_oco.confdir = ipsec_conf_dir;
     global_oco.conffile = conffile;
+
+    //DBG_log("default setting of ipsec.d to %s", global_oco.confddir);
 }
 
 
@@ -128,6 +131,8 @@ const struct osw_conf_options *osw_init_ipsecdir(const char *ipsec_dir)
     global_oco.confddir = clone_str(ipsec_dir, "override ipsec.d");
     osw_conf_calculate(&global_oco);
     setup = TRUE;
+
+    openswan_log("adjusting ipsec.d to %s", global_oco.confddir);
 
     return &global_oco;
 }

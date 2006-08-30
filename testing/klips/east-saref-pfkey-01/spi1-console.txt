@@ -10,10 +10,10 @@ east:~#
  authkey=0x87658765876587658765876587658765
 east:~#
  ipsec spi --saref --af inet --edst 192.1.2.45 --spi 0x12345678 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey $enckey --authkey $authkey
-/usr/local/libexec/ipsec/spi: saref=2
+/usr/local/libexec/ipsec/spi: saref=3
 east:~#
  ipsec spi --saref --af inet --edst 192.1.2.45 --spi 0x12345678 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4
-/usr/local/libexec/ipsec/spi: saref=3
+/usr/local/libexec/ipsec/spi: saref=4
 east:~#
  echo start now
 start now

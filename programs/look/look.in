@@ -26,7 +26,7 @@ esac
 unset LANG LANGUAGE LC_ALL LC_MESSAGES
 
 # Pick up IPsec configuration etc.
-eval `ipsec _confread --varprefix IPSEC --optional --type config setup`
+eval `ipsec addconn --varprefix IPSEC --configsetup`
 if test " $IPSEC_confreadstatus" != " "
 then
 	echo "$IPSEC_confreadstatus -- aborting" |

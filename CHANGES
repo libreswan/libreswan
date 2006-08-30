@@ -1,6 +1,11 @@
 Please see docs/KNOWN_BUGS file for more information
 
 #public
+ 
+    AES-128 (group 5, MD5 or SHA1 for PRF) is now accepted for phase 1,
+	and it is now the preferred cipher as well. This should be the
+	case for Main mode, Aggressive mode, and for XAUTH client and
+	XAUTH server, and PSK and RSA sig mode.
 
     fixes so that starter will now compile
     move whacklib to lib/libwhack

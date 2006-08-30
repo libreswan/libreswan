@@ -17,7 +17,7 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS klips-spi-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS klips-debug-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-look-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS east-prompt-splitline.pl"
-
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS tcpdump-three-eight.sed"
 TCPDUMPFLAGS="-n -E 3des-cbc-hmac96:0x43434545464649494a4a4c4c4f4f51515252545457575840"
 REF_PUB_FILTER=./sanitize-second-esp.pl
 INIT_SCRIPT=spi1.sh

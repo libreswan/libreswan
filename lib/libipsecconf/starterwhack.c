@@ -248,10 +248,14 @@ static void set_whack_end(struct starter_config *cfg
 			  , struct starter_end *l)
 {
 	w->id = l->id;
+	w->host_type = l->addrtype;
 
 	switch(l->addrtype) {
 	case KH_DEFAULTROUTE:
 		w->host_addr = cfg->dr;
+		if(addrtypeof(&w->host_addr) == 0) {
+			w->host_addr = *aftoinfo(AF_INET)->any;
+		}
 		break;
 		
 	case KH_IPADDR:
@@ -262,6 +266,10 @@ static void set_whack_end(struct starter_config *cfg
 	case KH_GROUP:
 	case KH_OPPOGROUP:
 		/* policy should have been set to OPPO */
+		anyaddr(l->addr_family, &w->host_addr);
+		break;
+
+	case KH_ANY:
 		anyaddr(l->addr_family, &w->host_addr);
 		break;
 		
@@ -303,6 +311,9 @@ static void set_whack_end(struct starter_config *cfg
 	w->host_port = IKE_UDP_PORT;
 	w->has_client_wildcard = l->has_client_wildcard;
 	w->cert = l->cert;
+	w->ca   = l->ca;
+	w->updown = l->updown;
+	w->virt   = NULL;
 	w->protocol = l->protocol;
 	w->port = l->port;
 	w->virt = l->virt;
@@ -325,16 +336,38 @@ static int starter_whack_add_pubkey (struct starter_config *cfg,
 	msg.pubkey_alg = PUBKEY_ALG_RSA;
 	if (end->id && end->rsakey1) {
 		msg.keyid = end->id;
-		err = atobytes(end->rsakey1, 0, keyspace, sizeof(keyspace),
-			&msg.keyval.len);
-		if (err) {
+
+		switch(end->rsakey1_type) {
+		case PUBKEY_DNS:
+		case PUBKEY_DNSONDEMAND:
+		    starter_log(LOG_LEVEL_DEBUG, "conn %s/%s has key from DNS",
+				connection_name(conn), lr);
+		    break;
+
+		case PUBKEY_CERTIFICATE:
+		    starter_log(LOG_LEVEL_DEBUG, "conn %s/%s has key from certificate",
+				connection_name(conn), lr);
+		    break;
+
+		case PUBKEY_NOTSET:
+		    break;
+
+		case PUBKEY_PREEXCHANGED:
+		    err = atobytes(end->rsakey1, 0, keyspace, sizeof(keyspace),
+				   &msg.keyval.len);
+		    if (err) {
 			starter_log(LOG_LEVEL_ERR, "conn %s/%s: rsakey malformed [%s]",
-				connection_name(conn), lr, err);
+				    connection_name(conn), lr, err);
 			return 1;
-		}
-		else {
+		    }
+		    else {
 			msg.keyval.ptr = keyspace;
+<<<<<<< master
 			ret = send_whack_msg(&msg, cfg->ctlbase);
+=======
+			ret = send_whack_msg(&msg);
+		    }
+>>>>>>> public
 		}
 	}
 
@@ -345,19 +378,32 @@ static int starter_whack_add_pubkey (struct starter_config *cfg,
 	msg.whack_key = TRUE;
 	msg.pubkey_alg = PUBKEY_ALG_RSA;
 	if (end->id && end->rsakey2) {
-		printf("addkey2: %s\n", lr);
+		/* printf("addkey2: %s\n", lr); */
 
 		msg.keyid = end->id;
-		err = atobytes(end->rsakey2, 0, keyspace, sizeof(keyspace),
-			       &msg.keyval.len);
-		if (err) {
+		switch(end->rsakey2_type) {
+		case PUBKEY_NOTSET:
+		case PUBKEY_DNS:
+		case PUBKEY_DNSONDEMAND:
+		case PUBKEY_CERTIFICATE:
+		    break;
+
+		case PUBKEY_PREEXCHANGED:
+		    err = atobytes(end->rsakey2, 0, keyspace, sizeof(keyspace),
+				   &msg.keyval.len);
+		    if (err) {
 			starter_log(LOG_LEVEL_ERR, "conn %s/%s: rsakey malformed [%s]",
-				connection_name(conn), lr, err);
+				    connection_name(conn), lr, err);
 			return 1;
-		}
-		else {
+		    }
+		    else {
 			msg.keyval.ptr = keyspace;
+<<<<<<< master
 			return send_whack_msg(&msg, cfg->ctlbase);
+=======
+			return send_whack_msg(&msg);
+		    }
+>>>>>>> public
 		}
 	}
 	return 0;

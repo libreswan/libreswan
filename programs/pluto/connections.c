@@ -147,8 +147,17 @@ find_host_pair(const ip_address *myaddr
     char b1[ADDRTOT_BUF],b2[ADDRTOT_BUF];
 
     /* default hisaddr to an appropriate any */
-    if (hisaddr == NULL)
-	hisaddr = aftoinfo(addrtypeof(myaddr))->any;
+    if (hisaddr == NULL) {
+	const struct af_info *af = aftoinfo(addrtypeof(myaddr));
+
+	if(af == NULL) {
+	    af = aftoinfo(AF_INET);
+	}
+	
+	if(af) {
+	    hisaddr = af->any;
+	}
+    }
 
     /*
      * look for a host-pair that has the right set of ports/address.
@@ -870,7 +879,7 @@ load_end_certificate(const char *filename, struct end *dst)
 {
     time_t valid_until;
     cert_t cert;
-    bool valid_cert = FALSE;
+    err_t ugh = NULL;
     bool cached_cert = FALSE;
 
     memset(&dst->cert, 0, sizeof(dst->cert));
@@ -881,6 +890,9 @@ load_end_certificate(const char *filename, struct end *dst)
     /* initialize smartcard info record */
     dst->sc = NULL;
 
+    openswan_log("loading certificate from %s\n", filename);
+    dst->cert_filename = clone_str(filename, "certificate filename");
+
     if (filename != NULL)
     {
 #ifdef SMARTCARD
@@ -888,6 +900,8 @@ load_end_certificate(const char *filename, struct end *dst)
 	{
 	    /* we have a smartcard */
 	    smartcard_t *sc = scx_parse_reader_id(filename + strlen(SCX_TOKEN));
+	    bool valid_cert = FALSE;
+
 	    dst->sc = scx_add(sc);
 
 	    /* is there a cached smartcard certificate? */
@@ -901,53 +915,63 @@ load_end_certificate(const char *filename, struct end *dst)
 	    }
 	    else
 	    	valid_cert = scx_load_cert(dst->sc, &cert);
+
+	    if(!valid_cert) {
+		whack_log(RC_FATAL, "can not load certificate from smartcard: %s\n",
+			  filename);
+		return;
+	    }
 	}
 	else
 #endif
 	{
+	    bool valid_cert = FALSE;
+
 	    /* load cert from file */
 	    valid_cert = load_host_cert(FALSE, filename, &cert, TRUE);
+	    if(!valid_cert) {
+		whack_log(RC_FATAL, "can not load certificate file %s\n"
+			  , filename);
+		return;
+	    }
 	}
     }
 
-    if (valid_cert)
+
+    switch (cert.type)
     {
-	err_t ugh = NULL;
-
-	switch (cert.type)
+    case CERT_PGP:
+	select_pgpcert_id(cert.u.pgp, &dst->id);
+	
+	if (cached_cert)
+	    dst->cert = cert;
+	else
 	{
-	case CERT_PGP:
-	    select_pgpcert_id(cert.u.pgp, &dst->id);
-
-	    if (cached_cert)
-		dst->cert = cert;
-	    else
-	    {
-		valid_until = cert.u.pgp->until;
-		add_pgp_public_key(cert.u.pgp, cert.u.pgp->until, DAL_LOCAL);
-		dst->cert.type = cert.type;
-		dst->cert.u.pgp = pluto_add_pgpcert(cert.u.pgp);
-	    }
-	    break;
-
-	case CERT_X509_SIGNATURE:
-	    select_x509cert_id(cert.u.x509, &dst->id);
-
-	    if (!cached_cert)
-	    {
-		/* check validity of cert */
-		valid_until = cert.u.x509->notAfter;
-		ugh = check_validity(cert.u.x509, &valid_until);
-	    }
-	    if (ugh != NULL)
-	    {
-		openswan_log("  %s", ugh);
-		free_x509cert(cert.u.x509);
-	    }
-	    else
-	    {
-	    	DBG(DBG_CONTROL,
-		    DBG_log("certificate is valid")
+	    valid_until = cert.u.pgp->until;
+	    add_pgp_public_key(cert.u.pgp, cert.u.pgp->until, DAL_LOCAL);
+	    dst->cert.type = cert.type;
+	    dst->cert.u.pgp = pluto_add_pgpcert(cert.u.pgp);
+	}
+	break;
+	
+    case CERT_X509_SIGNATURE:
+	select_x509cert_id(cert.u.x509, &dst->id);
+	
+	if (!cached_cert)
+	{
+	    /* check validity of cert */
+	    valid_until = cert.u.x509->notAfter;
+	    ugh = check_validity(cert.u.x509, &valid_until);
+	}
+	if (ugh != NULL)
+	{
+	    openswan_log("  %s", ugh);
+	    free_x509cert(cert.u.x509);
+	}
+	else
+	{
+	    DBG(DBG_CONTROL,
+		DBG_log("certificate is valid")
 		)
 		if (cached_cert)
 		    dst->cert = cert;
@@ -957,26 +981,25 @@ load_end_certificate(const char *filename, struct end *dst)
 		    dst->cert.type = cert.type;
 		    dst->cert.u.x509 = add_x509cert(cert.u.x509);
 		}
-		/* if no CA is defined, use issuer as default */
-		if (dst->ca.ptr == NULL)
-		    dst->ca = dst->cert.u.x509->issuer;
-	    }
-	    break;
-	default:
-	    break;
+	    /* if no CA is defined, use issuer as default */
+	    if (dst->ca.ptr == NULL)
+		dst->ca = dst->cert.u.x509->issuer;
 	}
-
-	/* cache the certificate that was last retrieved from the smartcard */
-	if (dst->sc != NULL)
+	break;
+    default:
+	break;
+    }
+    
+    /* cache the certificate that was last retrieved from the smartcard */
+    if (dst->sc != NULL)
+    {
+	if (!same_cert(&dst->sc->last_cert, &dst->cert))
 	{
-	    if (!same_cert(&dst->sc->last_cert, &dst->cert))
-	    {
-		release_cert(dst->sc->last_cert);
-		dst->sc->last_cert = dst->cert;
-		share_cert(dst->cert);
-	    }
-	    time(&dst->sc->last_load);
+	    release_cert(dst->sc->last_cert);
+	    dst->sc->last_cert = dst->cert;
+	    share_cert(dst->cert);
 	}
+	time(&dst->sc->last_load);
     }
 }
 
@@ -1039,6 +1062,7 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
     decode_groups(src->groups, &dst->groups);
 
     /* the rest is simple copying of corresponding fields */
+    dst->host_type = src->host_type;
     dst->host_addr = src->host_addr;
     dst->host_nexthop = src->host_nexthop;
     dst->host_srcip = src->host_srcip;
@@ -1082,8 +1106,9 @@ static bool
 check_connection_end(const struct whack_end *this, const struct whack_end *that
 , const struct whack_message *wm)
 {
-    if (wm->addr_family != addrtypeof(&this->host_addr)
-	|| wm->addr_family != addrtypeof(&this->host_nexthop))
+    if (this->host_type == KH_IPADDR
+	&& (wm->addr_family != addrtypeof(&this->host_addr)
+	    || wm->addr_family != addrtypeof(&this->host_nexthop)))
     {
 	/* this should have been diagnosed by whack, so we need not be clear
 	 * !!! overloaded use of RC_CLASH
@@ -1095,6 +1120,9 @@ check_connection_end(const struct whack_end *this, const struct whack_end *that
 	return FALSE;
     }
 
+    /* this check actually prevents IPv4 in IPv6 and vv, so it will
+     * have to go away at some point.
+     */
     if ((this->has_client? wm->tunnel_addr_family : wm->addr_family)
 	!= subnettypeof(&this->client))
     {
@@ -4470,6 +4498,8 @@ show_connections_status(void)
 		char srcip[ADDRTOT_BUF], dstip[ADDRTOT_BUF];
 		char thissemi[3+sizeof("srcup=")];
 		char thatsemi[3+sizeof("dstup=")];
+		char thiscertsemi[3+sizeof("srccert=")+PATH_MAX];
+		char thatcertsemi[3+sizeof("dstcert=")+PATH_MAX];
 		char *thisup, *thatup;
 
 		(void) format_connection(topo, sizeof(topo), c, sr);
@@ -4510,10 +4540,26 @@ show_connections_status(void)
 		    thatup=sr->that.updown;
 		}
 		
-		whack_log(RC_COMMENT, "\"%s\"%s:     srcip=%s; dstip=%s%s%s%s%s;"
+		thiscertsemi[0]='\0';
+		if(sr->this.cert_filename) {
+		    snprintf(thiscertsemi, sizeof(thiscertsemi)-1
+			     , "; srccert=%s"
+			     , sr->this.cert_filename);
+		}
+
+		thatcertsemi[0]='\0';
+		if(sr->that.cert_filename) {
+		    snprintf(thatcertsemi, sizeof(thatcertsemi)-1
+			     , "; dstcert=%s"
+			     , sr->that.cert_filename);
+		}
+		
+		whack_log(RC_COMMENT, "\"%s\"%s:     srcip=%s; dstip=%s%s%s%s%s%s%s;"
 			  , c->name, instance, srcip, dstip
 			  , thissemi, thisup
-			  , thatsemi, thatup);
+			  , thatsemi, thatup
+			  , thiscertsemi
+			  , thatcertsemi);
 		sr = sr->next;
 		num++;
 	    }

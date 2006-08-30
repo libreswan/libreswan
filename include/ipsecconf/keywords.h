@@ -42,6 +42,7 @@ enum keyword_string_config_field {
 };
 
 /* Numeric fields also include boolean fields */
+/* and do not come in right/left variants */
 enum keyword_numeric_config_field {
     KBF_FRAGICMP = 0,
     KBF_HIDETOS  = 1,
@@ -88,6 +89,8 @@ enum keyword_numeric_config_field {
  * NOTE: loose_enum values have both string and integer types,
  * and MUST have the same index for each.
  *
+ * they come in left and right= variants.
+ *
  */
 
 enum keyword_string_conn_field {
@@ -124,6 +127,7 @@ enum keyword_numeric_conn_field {
     KNCF_ESPREPLAYWINDOW  = 6,
     KNCF_DPDDELAY         = 7,
     KNCF_DPDTIMEOUT       = 8,
+    KNCF_DPDACTION        = 9,
     KNCF_MAX              = 30
 };
 
@@ -147,11 +151,11 @@ enum keyword_keyexchange {
 
 /* values for auto={add,start,route,ignore} */
 enum keyword_auto {
-    STARTUP_NO,
-    STARTUP_POLICY,
-    STARTUP_ADD,
-    STARTUP_ROUTE,
-    STARTUP_START
+    STARTUP_NO      = 0,
+    STARTUP_POLICY  = 1,
+    STARTUP_ADD     = 2,
+    STARTUP_ROUTE   = 3,
+    STARTUP_START   = 4
 };
 
 enum keyword_satype {

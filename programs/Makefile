@@ -43,9 +43,9 @@ SUBDIRS+=_realsetup.bsd _updown.bsdkame
 endif
 
 SUBDIRS+=proc pluto addconn
-SUBDIRS+=_confread _copyright _include _keycensor _plutoload _plutorun
+SUBDIRS+=_copyright _include _keycensor _plutoload _plutorun
 SUBDIRS+=_secretcensor _startklips _updown 
-SUBDIRS+=auto barf verify ipsec look manual newhostkey ranbits secrets
+SUBDIRS+=auto barf verify ipsec look newhostkey ranbits secrets
 SUBDIRS+=rsasigkey send-pr setup showdefaults showhostkey calcgoo mailkey
 SUBDIRS+=ikeping examples livetest
 

@@ -4,7 +4,7 @@ TEST_TYPE=klipstest
 TESTNAME=west-icmp-04
 TESTHOST=west
 EXITONEMPTY=--exitonempty
-ARPREPLY=--arpreply 
+PRIVATE_ARPREPLY=true
 
 #THREEEIGHT=true
 PUB_INPUT=../inputs/08-sunrise-sunset-esp-sha1.pcap

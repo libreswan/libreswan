@@ -5,7 +5,7 @@ TESTHOST=west
 TEST_TYPE=klipstest
 TEST_PURPOSE=regress
 EXITONEMPTY=--exitonempty
-ARPREPLY=--arpreply 
+PRIVATE_ARPREPLY=true
 
 PUB_INPUT=../inputs/08-east-west-esp-ipcomp.pcap
 REF_PRIV_OUTPUT=spi1-cleartext.txt

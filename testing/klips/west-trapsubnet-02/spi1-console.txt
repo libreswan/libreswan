@@ -40,7 +40,7 @@ pfkey v2 msg. type=7(register) seq=1 len=5 pid=987 errno=0 satype=2(AH)
 version=2 type=7 errno=0 satype=2 len=5 seq=1 pid=987 {ext=14 len=3 bytes=0x000000000300a000a00000000200800080000000 } 
 
 pfkey v2 msg. type=7(register) seq=2 len=10 pid=987 errno=0 satype=3(ESP)
-version=2 type=7 errno=0 satype=3 len=10 seq=2 pid=987 {ext=14 len=4 bytes=0x0000000009008000800000000300a000a00000000200800080000000 } {ext=15 len=4 bytes=0x000000000340c000c00000000c408000000100000340a800a8000000 } 
+version=2 type=7 errno=0 satype=3 len=10 seq=2 pid=987 {ext=14 len=4 bytes=0x0000000009008000800000000300a000a00000000200800080000000 } {ext=15 len=4 bytes=0x000000000340c000c00000000c808000000100000340a800a8000000 } 
 
 pfkey v2 msg. type=7(register) seq=3 len=4 pid=987 errno=0 satype=9(IPIP)
 version=2 type=7 errno=0 satype=9 len=4 seq=3 pid=987 {ext=15 len=2 bytes=0x000000000100200020000000 } 
@@ -52,3 +52,4 @@ pf_key: Exiting on signal 15
 west:~#
  ipsec eroute
 0          192.0.1.0/24       -> 192.0.2.0/24       => %trapsubnet
+

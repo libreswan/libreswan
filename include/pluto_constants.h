@@ -530,6 +530,7 @@ enum pubkey_source
     PUBKEY_NOTSET       = 0,
     PUBKEY_DNS          = 1,
     PUBKEY_DNSONDEMAND  = 2,
+    PUBKEY_CERTIFICATE  = 3,
     PUBKEY_PREEXCHANGED = LOOSE_ENUM_OTHER,
 };
 

@@ -11,5 +11,6 @@ cp /etc/ipsec.secrets                    /tmp/$TESTNAME
 
 mkdir -p /tmp/$TESTNAME/ipsec.d/policies
 cp /etc/ipsec.d/policies/* /tmp/$TESTNAME/ipsec.d/policies
+cp -r /etc/ipsec.d/*          /tmp/$TESTNAME/ipsec.d
 
 IPSEC_CONFS=/tmp/$TESTNAME export IPSEC_CONFS

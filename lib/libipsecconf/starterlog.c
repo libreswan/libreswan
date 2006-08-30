@@ -96,6 +96,9 @@ void starter_use_log (int debug, int console, int syslog)
 		}
 		_syslog = syslog;
 	}
+	if(_debug) {
+	    starter_log(LOG_LEVEL_ERR, "debugging mode enabled\n");
+	}
 }
 
 void

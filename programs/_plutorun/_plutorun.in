@@ -47,6 +47,7 @@ do
 	--opts)	                 popts="$2" ; shift	;;
 	--stderrlog)             stderrlog="$2" ; shift	;;
 	--wait)	                 plutowait="$2" ; shift	;;
+        --show)	                 show="--show"  ; shift ;;
 	--showonly)	         showonly="true" ;;
 	--pre)	                 prepluto="$2" ; shift	;;
 	--post)	                 postpluto="$2" ; shift	;;
@@ -220,11 +221,16 @@ fi
 echo "$verb Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun
 execdir=${IPSEC_EXECDIR-@IPSEC_EXECDIR@}
 libdir=${IPSEC_LIBDIR-@IPSEC_LIBDIR@}
-ipsecdir=${IPSEC_CONFS-@IPSEC_CONFDIR@}
+
+ipsecdiropt=""
+if [ -n "${IPSEC_CONFDDIR}" ] 
+then
+    ipsecdiropt="--ipsecdir ${IPSEC_CONFDDIR}"
+fi
 
 if test -n "$showonly"
 then
-	echo $execdir/pluto --nofork --secretsfile "$IPSEC_SECRETS" --ipsecdir "${IPSEC_CONFS}/ipsec.d" $popts
+	echo $execdir/pluto --nofork --secretsfile "$IPSEC_SECRETS" $ipsecdiropt $popts
 	exit 0
 fi
 
@@ -235,7 +241,7 @@ until (
 		export defaultroutephys defaultroutevirt defaultrouteaddr defaultroutenexthop
 	fi
 	# eval allows $popts to contain redirection and other magic
-	eval $execdir/pluto --nofork --secretsfile "$IPSEC_SECRETS" --ipsecdir "${IPSEC_CONFS}/ipsec.d" $popts
+	eval $execdir/pluto --nofork --secretsfile "$IPSEC_SECRETS" $ipsecdiropt $popts
 	status=$?
 	echo "exit"
 	echo $status

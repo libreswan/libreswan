@@ -16,7 +16,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: async.c,v 1.8 2005/08/05 01:18:29 mcr Exp $ */
+/* $Id: async.c,v 1.7.4.1 2006/08/16 17:29:11 mcr Exp $ */
 
 #include <config.h>
 
@@ -146,9 +146,10 @@ lwres_getrrsetbyname_xmit(lwres_context_t *ctx,
 	lwres_result_t lwresult;
 
 	if(!las->inqueue) {
-	  las->next = ctx->pending;
-	  ctx->pending = las;
-	  las->inqueue = 1;
+		REQUIRE(las != ctx->pending);
+		las->next = ctx->pending;
+		ctx->pending = las;
+		las->inqueue = 1;
 	}
 
 	lwresult = lwres_context_send(ctx, las->b_out.base, las->b_out.length);
@@ -159,13 +160,29 @@ lwres_getrrsetbyname_xmit(lwres_context_t *ctx,
 void
 lwres_sanitize_list(lwres_context_t *ctx)
 {
-	volatile struct lwres_async_state *las;
+	int swap;
+	struct lwres_async_state *tortoise;
+	struct lwres_async_state *hare;
 
-	las = ctx->pending;
-	while(las != NULL) {
-	  REQUIRE(las != (volatile struct lwres_async_state *)0xa5a5a5a5);
-	  REQUIRE(las != (volatile struct lwres_async_state *)0x5a5a5a5a);
-	  las=las->next;
+	hare = ctx->pending;
+	tortoise = hare;
+	swap=1;
+	while(hare != NULL) {
+	  REQUIRE(hare != (volatile struct lwres_async_state *)0xa5a5a5a5);
+	  REQUIRE(hare != (volatile struct lwres_async_state *)0x5a5a5a5a);
+	  REQUIRE(hare->inqueue == 1);
+	  
+	  hare=hare->next;
+
+	  swap=!swap;
+	  if(swap) {
+		  tortoise=tortoise->next;
+	  }
+
+	  /* if tortoise ever catches up with hare, it's because
+	   * hare has looped him
+	   */
+	  REQUIRE(hare != tortoise);
 	}
 }
 
@@ -249,9 +266,30 @@ lwres_getrrsetbyname_read(struct lwres_async_state **plas,
 	 */
 	las_prev = &ctx->pending;
 	las = ctx->pending;
-	while(las && las->serial != pkt.serial) {
-		las_prev=&las->next;
-		las=las->next;
+
+	{
+		int swap;
+		struct lwres_async_state *tortoise;
+		struct lwres_async_state *hare = las;   /* it's cuter to call it this */
+		tortoise = hare;
+		swap=1;
+		while(hare != NULL && hare->serial != pkt.serial) {
+			REQUIRE(hare != (volatile struct lwres_async_state *)0xa5a5a5a5);
+			REQUIRE(hare != (volatile struct lwres_async_state *)0x5a5a5a5a);
+
+			hare=hare->next;
+			las_prev=&hare->next;
+			swap=!swap;
+			if(swap) {
+				tortoise=tortoise->next;
+			}
+			
+			/* if tortoise ever catches up with hare, it's because
+			 * hare has laped him
+			 */
+			REQUIRE(hare != tortoise);
+		}
+		las = hare;
 	}
 
 	if(las == NULL) {
@@ -265,6 +303,9 @@ lwres_getrrsetbyname_read(struct lwres_async_state **plas,
 	las->inqueue = 0;
 
 	*plas = las;
+
+	/* seems dumb, but it should be the case that we actually removed it, right! */
+	REQUIRE(ctx->pending != las);
 
 	/*
 	 * Free what we've transmitted, long ago.

@@ -4,13 +4,11 @@ east:~#
  ipsec setup start
 ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
- ipsec klipsdebug --all
+ /testing/pluto/basic-pluto-01/eroutewait.sh trap
 east:~#
  ipsec whack --debug-all
 east:~#
  ipsec auto --add westnet-eastnet-x509
-east:~#
- /testing/pluto/basic-pluto-01/eroutewait.sh trap
 east:~#
  
 

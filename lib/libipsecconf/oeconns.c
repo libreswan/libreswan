@@ -487,11 +487,12 @@ void add_any_oeconns(struct starter_config *cfg,
 	for(sconn = cfgp->sections.tqh_first; sconn != NULL; sconn = sconn->link.tqe_next)
 		
 	{
-		for(i=0, oc=implicit_conns; *oc!=NULL; oc++) {
-			if(strcasecmp((*oc)->oe_cn, sconn->name)==0) {
-				found_conns[i]=TRUE;
-			}
+	    for(i=0, oc=implicit_conns; *oc!=NULL; oc++, i++) {
+		if(strcasecmp((*oc)->oe_cn, sconn->name)==0) {
+		    starter_log(LOG_LEVEL_DEBUG, "found non-implicit conn: %s\n", sconn->name);
+		    found_conns[i]=TRUE;
 		}
+	    }
 	}
 
 	
@@ -503,7 +504,7 @@ void add_any_oeconns(struct starter_config *cfg,
 
 			tconn = &((*oc)->oe_sc);
 			starter_log(LOG_LEVEL_DEBUG,
-				    "did not found conn: %s, loading implicit\n",
+				    "did not find conn: %s, loading implicit\n",
 				    (*oc)->oe_cn);
 
 			conn = alloc_add_conn(cfg, (*oc)->oe_cn, &perr);
@@ -531,6 +532,7 @@ void add_any_oeconns(struct starter_config *cfg,
 			conn->ike  = tconn->ike;
 			conn->desired_state = tconn->desired_state;
 			conn->policy = tconn->policy;
+			conn->state = STATE_LOADED;
 
 			if(connerr) {
 				starter_log(LOG_LEVEL_INFO, "implicit %s: %s"

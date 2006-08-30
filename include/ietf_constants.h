@@ -605,7 +605,8 @@ typedef u_int16_t oakley_hash_t;
 /* extern enum_names oakley_hash_names; */
 
 #define OAKLEY_MD5      1
-#define OAKLEY_SHA      2
+#define OAKLEY_SHA1     2
+#define OAKLEY_SHA      OAKLEY_SHA1
 #define OAKLEY_TIGER    3
 #define OAKLEY_SHA2_256        4
 #define OAKLEY_SHA2_384        5

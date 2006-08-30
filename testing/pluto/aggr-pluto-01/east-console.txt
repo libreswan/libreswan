@@ -6,9 +6,9 @@ east:~#
  ipsec setup start
 ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
- ipsec auto --add westnet-eastnet-aggr
-east:~#
  /testing/pluto/basic-pluto-01/eroutewait.sh trap
+east:~#
+ ipsec auto --add westnet-eastnet-aggr
 east:~#
  
 
@@ -26,8 +26,8 @@ ROUTING TABLE
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
 192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.23 
 192.0.1.0/24 dev ipsec0  scope link 
-0.0.0.0/1 via 192.1.2.254 dev ipsec0 
-128.0.0.0/1 via 192.1.2.254 dev ipsec0 
+0.0.0.0/1 dev ipsec0  scope link 
+128.0.0.0/1 dev ipsec0  scope link 
 default via 192.1.2.254 dev eth1 
 east:~#
 east:~#

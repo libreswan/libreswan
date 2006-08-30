@@ -327,7 +327,7 @@ static int validate_end(struct starter_conn *conn_st
 	break;
 
     case KH_OPPOGROUP:
-	conn_st->policy |= POLICY_GROUP|POLICY_GROUP;
+	conn_st->policy |= POLICY_OPPO|POLICY_GROUP;
 	break;
 
     case KH_GROUP:
@@ -377,10 +377,25 @@ static int validate_end(struct starter_conn *conn_st
 	er = ttoaddr(value, 0, AF_INET, &(end->nexthop));
 	if (er) ERR_FOUND("bad addr %s=%s [%s]", (left ? "lextnexthop" : "rightnexthop"), value, er);
     } else {
+	if(conn_st->policy & POLICY_OPPO) {
+	    end->nexttype = KH_DEFAULTROUTE;
+	}
 	anyaddr(AF_INET, &end->nexthop);
     }
 
+    /* validate the KSCF_ID */
+    if(end->strings[KSCF_ID] != NULL)
+    {
+	char *value = end->strings[KSCF_ID];
+	
+	if (end->id) free(end->id);
+	end->id = xstrdup(value);
+    }
+
     if(end->options_set[KSCF_RSAKEY1]) {
+	end->rsakey1_type = end->options[KSCF_RSAKEY1];
+	end->rsakey2_type = end->options[KSCF_RSAKEY2];
+
 	switch(end->options[KSCF_RSAKEY1]) {
 	case PUBKEY_DNS:
 	case PUBKEY_DNSONDEMAND:
@@ -391,21 +406,56 @@ static int validate_end(struct starter_conn *conn_st
 	    end->key_from_DNS_on_demand = FALSE;
 	    /* validate the KSCF_RSAKEY1/RSAKEY2 */
 	    if(end->strings[KSCF_RSAKEY1] != NULL)
-		{
-		    char *value = end->strings[KSCF_RSAKEY1];
-		    
-		    if (end->rsakey1) free(end->rsakey1);
-		    end->rsakey1 = xstrdup(value);
-		}
+	    {
+		char *value = end->strings[KSCF_RSAKEY1];
+		
+		if (end->rsakey1) free(end->rsakey1);
+		end->rsakey1 = xstrdup(value);
+	    }
 	    if(end->strings[KSCF_RSAKEY2] != NULL)
-		{
-		    char *value = end->strings[KSCF_RSAKEY2];
-		    
-		    if (end->rsakey2) free(end->rsakey2);
-		    end->rsakey2 = xstrdup(value);
-		}
+	    {
+		char *value = end->strings[KSCF_RSAKEY2];
+		
+		if (end->rsakey2) free(end->rsakey2);
+		end->rsakey2 = xstrdup(value);
+	    }
 	}
     }
+
+    /* copy certificate path name */
+    if(end->strings_set[KSCF_CERT]) {
+	end->cert = xstrdup(end->strings[KSCF_CERT]);
+    }
+
+    if(end->strings_set[KSCF_CA]) {
+	end->ca = xstrdup(end->strings[KSCF_CA]);
+    }
+
+    if(end->strings_set[KSCF_UPDOWN]) {
+	end->updown = xstrdup(end->strings[KSCF_UPDOWN]);
+    }
+
+    if(end->strings_set[KSCF_UPDOWN]) {
+	end->updown = xstrdup(end->strings[KSCF_UPDOWN]);
+    }
+
+    if(end->strings_set[KSCF_PROTOPORT]) {
+	/* XXX processing needed to strip it apart,
+	 * and also to set per_* controls.
+	 */
+    }
+
+    /*
+    KSCF_SUBNETWITHIN    --- not sure what to do with it.
+    KSCF_PROTOPORT       --- todo
+    KSCF_ESPENCKEY       --- todo (manual keying)
+    KSCF_ESPAUTHKEY      --- todo (manual keying)
+    KSCF_DPDACTION    = 15,
+    KSCF_SOURCEIP     = 16,
+    KSCF_ALSO         = 17,
+    KSCF_ALSOFLIP     = 18,                    
+    KSCF_MAX          = 19
+*/
 
     return err;
 }
@@ -770,6 +820,8 @@ static int load_conn (struct starter_config *cfg
 	}
 	conn->alsos = alsos;
     }
+
+    /* translate strings/numbers into conn items */
     
     KW_POLICY_FLAG(KBF_TYPE, POLICY_TUNNEL);
     KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
@@ -780,18 +832,30 @@ static int load_conn (struct starter_config *cfg
 	conn->policy &= ~(POLICY_ID_AUTH_MASK);
 	conn->policy |= conn->options[KBF_AUTHBY];
 
-	printf("%s: setting conn->policy=%08x (%08x)\n",
-	       conn->name,
-	       (unsigned int)conn->policy,
-	       conn->options[KBF_AUTHBY]);
+	starter_log(LOG_LEVEL_INFO,
+		    "%s: setting conn->policy=%08x (%08x)\n",
+		    conn->name,
+		    (unsigned int)conn->policy,
+		    conn->options[KBF_AUTHBY]);
     }
     
     KW_POLICY_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
 
+    KW_POLICY_FLAG(KBF_AGGRMODE, POLICY_AGGRESSIVE);
+
+    if(conn->strings_set[KSCF_ESP]) {
+	conn->esp = xstrdup(conn->strings[KSCF_ESP]);
+    }
+    if(conn->strings_set[KSCF_IKE]) {
+	conn->ike = xstrdup(conn->strings[KSCF_IKE]);
+    }
+
     err += validate_end(conn, &conn->left,  TRUE, perr);
     err += validate_end(conn, &conn->right, FALSE,perr);
 
-    conn->desired_state = conn->options[KBF_AUTO];
+    if(conn->options_set[KBF_AUTO]) {
+	conn->desired_state = conn->options[KBF_AUTO];
+    }
     
     return err;
 }
@@ -967,6 +1031,7 @@ struct starter_config *confread_load(const char *file, err_t *perr, char *ctlbas
 
 	/* if we have OE on, then create any missing OE conns! */
 	if(cfg->setup.options[KBF_OPPOENCRYPT]) {
+	    starter_log(LOG_LEVEL_DEBUG, "Enabling OE conns\n");
 	    add_any_oeconns(cfg, cfgp);
 	}
 

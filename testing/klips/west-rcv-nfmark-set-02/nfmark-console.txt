@@ -1,58 +1,3 @@
-Starting UML PATH/start.sh
-spawn PATH single
-Linux version XXXX
-On node 0 totalpages: 8192
-Kernel command line:
-Calibrating delay loop... XXXX bogomips
-Dentry-cache hash table entries: NUMBERS
-Inode-cache hash table entries: NUMBERS
-Mount-cache hash table entries: NUMBERS
-Buffer-cache hash table entries: NUMBERS
-Page-cache hash table entries: NUMEBRS
-POSIX conformance testing by UNIFIX
-Linux NET4.0 for Linux 2.4
-Based upon Swansea University Computer Society NET3.039
-Initializing RT netlink socket
-Starting kswapd
-VFS: Diskquotas version dquot_6.4.0 initialized
-devfs: VERSION Richard Gooch (rgooch@atnf.csiro.au)
-devfs: boot_options Q
-pty: 256 Unix98 ptys configured
-SLIP: version 0.8.4-NET3.019-NEWTTY (dynamic channels, max=256).
-loop: loaded (max 8 devices)
-PPP generic driver version VERSION
-Universal TUN/TAP device driver VERSION
-NET4: Linux TCP/IP 1.0 for NET4.0
-IP Protocols: ICMP, UDP, TCP
-IP: routing cache hash table of 512 buckets, 4Kbytes
-TCP: Hash tables configured (established 2048 bind 2048)
-IPv4 over IPv4 tunneling driver
-GRE over IPv4 tunneling driver
-NET4: Unix domain sockets 1.0/SMP for Linux NET4.0.
-Mounted devfs on /dev
-INIT: version 2.78 booting
-Activating swap...
-Calculating module dependancies
-done.
-Loading modules: LIST
-
-Checking all file systems...
-Parallelizing fsck version 1.18 (11-Nov-1999)
-Setting kernel variables.
-Mounting local filesystems...
-/dev/shm on /tmp type tmpfs (rw)
-/dev/shm on /var/run type tmpfs (rw)
-devpts on /dev/pts type devpts (rw,mode=0622)
-none on /usr/share type hostfs (ro)
-Enabling packet forwarding: done.
-Configuring network interfaces: done.
-Cleaning: /tmp /var/lock /var/run.
-Initializing random number generator... done.
-Recovering nvi editor sessions... done.
-Give root password for maintenance
-(or type Control-D for normal startup): 
-west:~#
- klogd -c 4 -x -f /tmp/klog.log
 west:~#
  TZ=GMT export TZ
 west:~#
@@ -73,12 +18,12 @@ west:~#
  sa1=`ipsec spi --af inet --edst 192.1.2.45 --spi 0x88447755 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey $enckey1 --authkey $authkey1 --saref | cut -d '=' -f2`
 west:~#
  echo SA1 $sa1
-SA1 2
+SA1 3
 west:~#
  sa2=`ipsec spi --af inet --edst 192.1.2.45 --spi 0x88447755 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4 --saref | cut -d '=' -f2`
 west:~#
  echo SA2 $sa2
-SA2 3
+SA2 4
 west:~#
  ipsec spigrp inet 192.1.2.45 0x88447755 tun inet 192.1.2.45 0x88447755 esp 
 west:~#
@@ -87,21 +32,21 @@ west:~#
  sa3=`ipsec spi --af inet --edst 192.1.2.45 --spi 0x12345678 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey $enckey2 --authkey $authkey2 --saref | cut -d '=' -f2`
 west:~#
  echo SA3 $sa3
-SA3 6
+SA3 5
 west:~#
  sa4=`ipsec spi --af inet --edst 192.1.2.45 --spi 0x12345678 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4 --saref | cut -d '=' -f2`
 west:~#
  echo SA4 $sa4
-SA4 7
+SA4 6
 west:~#
  ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp 
 west:~#
  ipsec look
 west NOW
-esp0x12345678@192.1.2.45 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xDEADF00DDEADF00D alen=128 aklen=128 eklen=192 life(c,s,h)= refcount=4 ref=6
-esp0x88447755@192.1.2.45 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xDEADF00DDEADF00D alen=128 aklen=128 eklen=192 life(c,s,h)= refcount=4 ref=2
-tun0x12345678@192.1.2.45 IPIP: dir=in  src=192.1.2.23 life(c,s,h)= refcount=4 ref=7
-tun0x88447755@192.1.2.45 IPIP: dir=in  src=192.1.2.23 life(c,s,h)= refcount=4 ref=3
+esp0x12345678@192.1.2.45 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xDEADF00DDEADF00D alen=128 aklen=128 eklen=192 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=4 ref=5
+esp0x88447755@192.1.2.45 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xDEADF00DDEADF00D alen=128 aklen=128 eklen=192 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=4 ref=3
+tun0x12345678@192.1.2.45 IPIP: dir=in  src=192.1.2.23 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=4 ref=6
+tun0x88447755@192.1.2.45 IPIP: dir=in  src=192.1.2.23 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=4 ref=4
 ROUTING TABLE
 west:~#
  sa1=$(printf "0x%08x" $(expr $sa1 '*' 65536))
@@ -113,16 +58,16 @@ west:~#
  sa4=$(printf "0x%08x" $(expr $sa4 '*' 65536))
 west:~#
  echo SA1 $sa1
-SA1 0x00020000
+SA1 0x00030000
 west:~#
  echo SA2 $sa2
-SA2 0x00030000
+SA2 0x00040000
 west:~#
  echo SA3 $sa3
-SA3 0x00060000
+SA3 0x00050000
 west:~#
  echo SA4 $sa4
-SA4 0x00070000
+SA4 0x00060000
 west:~#
  : now setup of the nfmark based switching
 west:~#
@@ -151,28 +96,5 @@ west:~#
  arp -s 192.0.1.1  10:00:00:32:32:01
 west:~#
  arp -s 192.9.2.254 10:00:00:99:99:fe
-west:~#
- kill `cat /var/run/klogd.pid`; cat /tmp/klog.log
-klogd 1.3-3#33.1, log source = /proc/kmsg started.
-west:~#
- halt
-INIT: Switching to runlevel: 0
-INIT: Sending processes the TERM signal
-west:~#
- INIT: Sending processes the KILL signal
-Stopping domain name service: named.
-Stopping internet superserver: inetd.
-Stopping portmap daemon: portmap.
-ipsec_setup: Stopping FreeS/WAN IPsec...
-ipsec_setup: stop ordered, but IPsec does not appear to be running!
-ipsec_setup: doing cleanup anyway...
-IPSEC EVENT: KLIPS device ipsec0 shut down.
-
-Stopping system log daemon: klogd syslogd.
-Sending all processes the TERM signal... done.
-Sending all processes the KILL signal... done.
-Unmounting remote filesystems... done.
-Deactivating swap... done.
-Unmounting local filesystems... done.
-Power down.
+SIOCSARP: Network is unreachable
 

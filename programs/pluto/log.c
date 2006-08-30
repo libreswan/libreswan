@@ -67,7 +67,9 @@ static void perpeer_logclose(struct connection *c);	/* forward */
 bool
     log_to_stderr = TRUE,	/* should log go to stderr? */
     log_to_syslog = TRUE,	/* should log go to syslog? */
-    log_to_perpeer= FALSE;	/* should log go to per-IP file? */
+    log_to_perpeer= FALSE,	/* should log go to per-IP file? */
+    log_did_something=TRUE;     /* set if we wrote something recently */
+
 
 bool
     logged_txt_warning = FALSE;  /* should we complain about finding KEY? */
@@ -412,6 +414,8 @@ openswan_log(const char *message, ...)
     fmt_log(m, sizeof(m), message, args);
     va_end(args);
 
+    log_did_something=TRUE;
+
     if (log_to_stderr)
 	fprintf(stderr, "%s\n", m);
     if (log_to_syslog)
@@ -434,6 +438,8 @@ loglog(int mess_no, const char *message, ...)
     fmt_log(m, sizeof(m), message, args);
     va_end(args);
 
+    log_did_something=TRUE;
+
     if (log_to_stderr)
 	fprintf(stderr, "%s\n", m);
     if (log_to_syslog)
@@ -453,6 +459,8 @@ openswan_log_errno_routine(int e, const char *message, ...)
     va_start(args, message);
     fmt_log(m, sizeof(m), message, args);
     va_end(args);
+
+    log_did_something=TRUE;
 
     if (log_to_stderr)
 	fprintf(stderr, "ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
@@ -477,6 +485,8 @@ exit_log(const char *message, ...)
     fmt_log(m, sizeof(m), message, args);
     va_end(args);
 
+    log_did_something=TRUE;
+
     if (log_to_stderr)
 	fprintf(stderr, "FATAL ERROR: %s\n", m);
     if (log_to_syslog)
@@ -498,6 +508,8 @@ openswan_exit_log_errno_routine(int e, const char *message, ...)
     va_start(args, message);
     fmt_log(m, sizeof(m), message, args);
     va_end(args);
+
+    log_did_something=TRUE;
 
     if (log_to_stderr)
 	fprintf(stderr, "FATAL ERROR: %s. Errno %d: %s\n", m, e, strerror(e));

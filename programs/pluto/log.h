@@ -31,6 +31,8 @@ extern bool
     log_to_syslog,	/* should log go to syslog? */
     log_to_perpeer;     /* should log go to per-IP file? */
 
+extern bool log_did_something;  /* set if we should log time again to debug*/
+
 extern const char *base_perpeer_logdir;
 
 extern char **global_argv; /* pointer to first arguments,

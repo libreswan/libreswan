@@ -14383,5 +14383,5 @@ saCount=4163 4164 del=0
 saCount=4164 4164 del=0
 east:~#
  ipsec spi | wc -l
-   4170
+   4168
 

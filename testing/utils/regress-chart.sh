@@ -12,7 +12,7 @@ tree=$1
 
 cd $tree || exit 1
 
-cat */stats.txt | sort -n >regressstats.txt
+cat */*/stats.txt | sort -n >regressstats.txt
 gnuplot <<EOF
 set terminal png
 set output 'regressgraph.png'

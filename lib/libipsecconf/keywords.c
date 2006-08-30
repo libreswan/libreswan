@@ -120,6 +120,7 @@ struct keyword_enum_values kw_type_list=
  */
 struct keyword_enum_value kw_rsasigkey_values[]={
     { "",             PUBKEY_PREEXCHANGED },
+    { "%cert",        PUBKEY_CERTIFICATE },
     { "%dns",         PUBKEY_DNS },
     { "%dnsondemand", PUBKEY_DNSONDEMAND },
 };
@@ -279,7 +280,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     /* DPD */ 
     {"dpddelay", kv_conn|kv_auto,kt_number, KNCF_DPDDELAY, NOT_ENUM},
     {"dpdtimeout", kv_conn|kv_auto,kt_number,KNCF_DPDTIMEOUT , NOT_ENUM},
-    {"dpdaction", kv_conn|kv_auto,kt_enum, KSCF_DPDACTION , &kw_dpdaction_list},
+    {"dpdaction", kv_conn|kv_auto,kt_enum, KNCF_DPDACTION , &kw_dpdaction_list},
 
 
     /* aggr/xauth/modeconfig */ 

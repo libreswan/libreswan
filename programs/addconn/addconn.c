@@ -308,8 +308,8 @@ main(int argc, char *argv[])
 		|| conn->desired_state == STARTUP_ROUTE) {
 		printf("%s ", conn->name);
 	    }
-	    printf("\n");
 	}
+	printf("\n");
     } else if(liststart) {
 	/* list all conns marked as auto=route or start or better */
 	for(conn = cfg->conns.tqh_first;
@@ -319,8 +319,8 @@ main(int argc, char *argv[])
 	    if (conn->desired_state == STARTUP_START) {
 		printf("%s ", conn->name);
 	    }
-	    printf("\n");
 	}
+	printf("\n");
     } else if(search) {
 	char *sep="";
 	if((argc-optind) < 2 ) {

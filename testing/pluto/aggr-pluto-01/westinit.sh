@@ -14,8 +14,8 @@ TESTNAME=aggr-pluto-01
 source /testing/pluto/bin/westlocal.sh
 
 ipsec setup start
-ipsec auto --add westnet-eastnet-aggr
 /testing/pluto/basic-pluto-01/eroutewait.sh trap
+ipsec auto --add westnet-eastnet-aggr
 
 echo done
 

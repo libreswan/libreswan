@@ -117,6 +117,9 @@ then
 	. $info
 fi
 
+echo 'ipsec manual is broken for now'
+exit 4
+
 ipsec _confread $config $noinclude $names |
 awk '	BEGIN {
 		FS = "\t"
