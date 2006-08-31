@@ -429,6 +429,7 @@ int starter_whack_add_conn (struct starter_config *cfg
 
 	msg.esp = conn->esp;
 	msg.ike = conn->ike;
+	msg.tpmeval = NULL;
 
 	r =  send_whack_msg(&msg, cfg->ctlbase);
 

@@ -189,13 +189,18 @@ struct whack_message {
      *  4 left's ca
      *  5 left's groups
      *  6 left's updown
-     *  7 right's name [left.host.name.len]
-     *  8 right's cert
-     *  9 right's ca
-     * 10 right's groups
-     * 11 right's updown
-     * 12 keyid
-     * 13 myid
+     *  7 left's virt
+     *  8 right's name [left.host.name.len]
+     *  9 right's cert
+     * 10 right's ca
+     * 11 right's groups
+     * 12 right's updown
+     * 13 right's virt
+     * 14 keyid
+     * 15 myid
+     * 16 ike
+     * 17 esp
+     * 18 tpmeval
      * plus keyval (limit: 8K bits + overhead), a chunk.
      */
     size_t str_size;
