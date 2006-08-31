@@ -1302,7 +1302,7 @@ init_am_st_oakley(struct state *st, lset_t policy)
     passert(prop->trans_cnt == 1);
     trans = &prop->trans[0];
 
-    passert(trans->attr_cnt == 4);
+    passert(trans->attr_cnt == 4 || trans->attr_cnt == 5); 
     enc  = &trans->attrs[0];
     hash = &trans->attrs[1];
     auth = &trans->attrs[2];
@@ -1318,7 +1318,14 @@ init_am_st_oakley(struct state *st, lset_t policy)
     ta.encrypt = enc->val;             /* OAKLEY_ENCRYPTION_ALGORITHM */
     ta.encrypter = crypto_get_encrypter(ta.encrypt);
     passert(ta.encrypter != NULL);
-    ta.enckeylen = ta.encrypter->keydeflen;
+
+    if(trans->attr_cnt == 5) {
+	struct db_attr *enc_keylen;
+	enc_keylen = &trans->attrs[4];
+	ta.enckeylen = enc_keylen->val;
+    } else {
+	ta.enckeylen = ta.encrypter->keydeflen;
+    }
 
     passert(hash->type == OAKLEY_HASH_ALGORITHM);
     ta.hash = hash->val;               /* OAKLEY_HASH_ALGORITHM */
