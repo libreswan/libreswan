@@ -29,6 +29,10 @@ ifeq ($(USE_NAT_TRAVERSAL),true)
 CFLAGS+= -DNAT_TRAVERSAL
 endif
 
+ifeq ($(USE_KLIPS),true)
+CFLAGS+= -DKLIPS
+endif
+
 ARFLAGS=crvs
 MANS=
 

@@ -25,6 +25,10 @@ ifeq ($(USE_SAREF_KERNEL),true)
 CFLAGS+=-DSAREF_SUPPORTED
 endif
 
+ifeq ($(USE_KLIPS),true)
+CFLAGS+= -DKLIPS
+endif
+
 ifeq ($(USE_NAT_TRAVERSAL),true)
 NAT_DEFS=-DNAT_TRAVERSAL -DVIRTUAL_IP 
 endif

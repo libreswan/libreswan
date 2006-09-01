@@ -13,9 +13,9 @@
 #ifndef hexdump_printf
 #define hexdump_printf printf
 #endif
-void hexdump(caddr_t base, unsigned int offset, int len)
+void hexdump(const unsigned char *base, unsigned int offset, int len)
 {
-	unsigned char *b = base+offset;
+	const unsigned char *b = base+offset;
 	unsigned char bb[4];             /* avoid doing byte accesses */
 	int i;
 	int first,last;     /* flags */

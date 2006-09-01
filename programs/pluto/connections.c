@@ -890,11 +890,11 @@ load_end_certificate(const char *filename, struct end *dst)
     /* initialize smartcard info record */
     dst->sc = NULL;
 
-    openswan_log("loading certificate from %s\n", filename);
-    dst->cert_filename = clone_str(filename, "certificate filename");
-
     if (filename != NULL)
     {
+	openswan_log("loading certificate from %s\n", filename);
+	dst->cert_filename = clone_str(filename, "certificate filename");
+
 #ifdef SMARTCARD
 	if (strncmp(filename, SCX_TOKEN, strlen(SCX_TOKEN)) == 0)
 	{
