@@ -606,7 +606,7 @@ main(int argc, char **argv)
 #ifdef VULCAN_PK
         case '7':
 	    please_use_vulcan_hack=TRUE;
-	    break;
+	    continue;
 #endif
 #ifdef VIRTUAL_IP
 	case '6':	/* --virtual_private */
