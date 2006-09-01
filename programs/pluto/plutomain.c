@@ -627,8 +627,11 @@ main(int argc, char **argv)
 	}
 	break;
     }
-    if (optind != argc)
+
+    if (optind != argc) {
+	fprintf(stderr, "Extra arguments: %s\n", argv[optind]);
 	usage("unexpected argument");
+    }
     reset_debugging();
 
     /* if a core dir was set, chdir there */
