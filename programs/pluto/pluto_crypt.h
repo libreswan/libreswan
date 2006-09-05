@@ -178,13 +178,15 @@ extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn
 extern void finish_dh_secretiv(struct state *st,
 			       struct pluto_crypto_req *r);
 
-extern stf_status perform_dh_secretiv(struct state *st
-				      , enum phase1_role  init  
-				      , u_int16_t oakley_group);
+extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn
+				  , struct state *st
+				  , enum crypto_importance importance
+				  , enum phase1_role init      
+				  , u_int16_t oakley_group);
 
-extern stf_status perform_dh_secret(struct state *st
-				    , enum phase1_role init
-				    , u_int16_t group);
+extern void finish_dh_secret(struct state *st,
+			     struct pluto_crypto_req *r);
+
 
 extern void calc_dh_iv(struct pluto_crypto_req *r);
 extern void calc_dh(struct pluto_crypto_req *r);

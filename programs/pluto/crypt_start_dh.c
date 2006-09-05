@@ -59,18 +59,17 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn
 			     , enum phase1_role init       /* TRUE=g_init,FALSE=g_r */
 			     , u_int16_t oakley_group)
 {
-    struct pluto_crypto_req *r;
+    struct pluto_crypto_req r;
     struct pcr_skeyid_q *dhq;
     const chunk_t *pss = get_preshared_secret(st->st_connection);
     err_t e;
     bool toomuch = FALSE;
 
-    r = alloc_thing(struct pluto_crypto_req, "calculcate dh secretiv");
-    r->pcr_len = sizeof(struct pluto_crypto_req);
-    r->pcr_type = pcr_compute_dh_iv;
-    r->pcr_pcim = importance;
+    r.pcr_len = sizeof(struct pluto_crypto_req);
+    r.pcr_type = pcr_compute_dh_iv;
+    r.pcr_pcim = importance;
 
-    dhq = &r->pcr_d.dhq;
+    dhq = &r.pcr_d.dhq;
 
     passert(st->st_sec_in_use);
 
@@ -84,9 +83,9 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn
     dhq->init = init;
     dhq->keysize = st->st_oakley.enckeylen/BITS_PER_BYTE; 
 
-    passert(r->pcr_d.dhq.oakley_group != 0);
-    DBG_log("parent1 type: %d group: %d len: %d\n", r->pcr_type,
-	    r->pcr_d.dhq.oakley_group, r->pcr_len);
+    passert(r.pcr_d.dhq.oakley_group != 0);
+    DBG_log("parent1 type: %d group: %d len: %d\n", r.pcr_type,
+	    r.pcr_d.dhq.oakley_group, r.pcr_len);
 
     if(pss) {
 	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->pss, *pss);
@@ -107,7 +106,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn
 	   , st->st_rcookie, COOKIE_SIZE);
 
     passert(dhq->oakley_group != 0);
-    e = send_crypto_helper_request(r, cn, &toomuch);
+    e = send_crypto_helper_request(&r, cn, &toomuch);
 
     if(e != NULL) {
 	loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
@@ -154,19 +153,25 @@ void finish_dh_secretiv(struct state *st,
     st->st_new_iv_len = dhr->new_iv.len;
 
     st->hidden_variables.st_skeyid_calculated = TRUE;
-
-    /* free up calculation structure */
-    pfree(r);
 }
 
-stf_status perform_dh_secret(struct state *st
-			     , enum phase1_role init      
-			     , u_int16_t oakley_group)
+stf_status start_dh_secret(struct pluto_crypto_req_cont *cn
+			   , struct state *st
+			   , enum crypto_importance importance
+			   , enum phase1_role init      
+			   , u_int16_t oakley_group)
 {
     struct pluto_crypto_req r;
-    struct pcr_skeyid_q *dhq = &r.pcr_d.dhq;
-    struct pcr_skeyid_r *dhr = &r.pcr_d.dhr;
+    struct pcr_skeyid_q *dhq;
     const chunk_t *pss = get_preshared_secret(st->st_connection);
+    err_t e;
+    bool toomuch = FALSE;
+
+    r.pcr_len = sizeof(struct pluto_crypto_req);
+    r.pcr_type = pcr_compute_dh;
+    r.pcr_pcim = importance;
+
+    dhq = &r.pcr_d.dhq;
 
     passert(st->st_sec_in_use);
 
@@ -198,11 +203,34 @@ stf_status perform_dh_secret(struct state *st
     memcpy(wire_chunk_ptr(&r.pcr_d.dhq, &dhq->rcookie)
 	   , st->st_rcookie, COOKIE_SIZE);
 
-    calc_dh(&r);
+    e = send_crypto_helper_request(&r, cn, &toomuch);
 
+    if(e != NULL) {
+	loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
+	if(toomuch) {
+	    return STF_TOOMUCHCRYPTO;
+	} else {
+	    return STF_FAIL;
+	}
+    } else if(!toomuch) {
+	st->st_calculating = TRUE;
+	delete_event(st);
+	event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY, st);
+	return STF_SUSPEND;
+    } else {
+	/* we must have run the continuation directly, so
+	 * complete_state_transition already got called. 
+	 */
+	return STF_INLINE;
+    }
+}
+
+void finish_dh_secret(struct state *st,
+		      struct pluto_crypto_req *r)
+{
+    struct pcr_skeyid_r *dhr = &r->pcr_d.dhr;
+			
     clonetochunk(st->st_shared,   wire_chunk_ptr(dhr, &(dhr->shared))
 		 , dhr->shared.len,   "calculated shared secret");
-    
-    return STF_OK;
 }
 

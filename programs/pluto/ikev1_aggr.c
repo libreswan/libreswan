@@ -955,18 +955,14 @@ aggr_outI1(int whack_sock,
 	ke->md->st = st;
 	st->st_suspended_md = ke->md;
 
-	if (!st->st_sec_in_use) {
-	    ke->ke_pcrc.pcrc_func = aggr_outI1_continue;
-	    e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group, importance);
-	    if(e != STF_SUSPEND) {
-	      loglog(RC_CRYPTOFAILED, "system too busy");
-	      delete_state(st);
-	    }
-	} else {
-	    e = aggr_outI1_tail((struct pluto_crypto_req_cont *)ke
-					, NULL);
+	passert(st->st_sec_in_use == FALSE);
+	ke->ke_pcrc.pcrc_func = aggr_outI1_continue;
+	e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group, importance);
+	if(e != STF_SUSPEND) {
+	    loglog(RC_CRYPTOFAILED, "system too busy");
+	    delete_state(st);
 	}
-	
+
 	reset_globals();
 
 	return e;

@@ -132,12 +132,13 @@ stf_status build_ke(struct pluto_crypto_req_cont *cn
 		    , const struct oakley_group_desc *group
 		    , enum crypto_importance importance)
 {
-  struct pluto_crypto_req *r;
-  err_t e;
-  bool toomuch = FALSE;
+    struct pluto_crypto_req rd;
+    struct pluto_crypto_req *r = &rd;
+    err_t e;
+    bool toomuch = FALSE;
 
-  r = alloc_thing(struct pluto_crypto_req, "build ke request");
-  
+    memset(&rd, 0, sizeof(rd));
+
   r->pcr_len  = sizeof(struct pluto_crypto_req);
   r->pcr_type = pcr_build_kenonce;
   r->pcr_pcim = importance;
@@ -174,11 +175,12 @@ stf_status build_nonce(struct pluto_crypto_req_cont *cn
 		       , struct state *st 
 		       , enum crypto_importance importance)
 {
-  struct pluto_crypto_req *r;
-  err_t e;
-  bool toomuch = FALSE;
+    struct pluto_crypto_req rd;
+    struct pluto_crypto_req *r = &rd;
+    err_t e;
+    bool toomuch = FALSE;
 
-  r = alloc_thing(struct pluto_crypto_req, "build ke request");
+    memset(&rd, 0, sizeof(rd));
   
   r->pcr_len  = sizeof(struct pluto_crypto_req);
   r->pcr_type = pcr_build_nonce;

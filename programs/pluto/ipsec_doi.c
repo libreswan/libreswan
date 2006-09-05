@@ -2439,14 +2439,10 @@ main_inR1_outI2(struct msg_digest *md)
 						 , "outI2 KE");
 	ke->md = md;
 	
-	if (!st->st_sec_in_use) {
-	    ke->ke_pcrc.pcrc_func = main_inR1_outI2_continue;
-	    st->st_suspended_md = md;
-	    return build_ke(&ke->ke_pcrc, st, st->st_oakley.group, st->st_import);
-	} else {
-	    return main_inR1_outI2_tail((struct pluto_crypto_req_cont *)ke
-					, NULL);
-	}
+	passert(st->st_sec_in_use==FALSE); 
+	ke->ke_pcrc.pcrc_func = main_inR1_outI2_continue;
+	st->st_suspended_md = md;
+	return build_ke(&ke->ke_pcrc, st, st->st_oakley.group, st->st_import);
     }
 }
 
@@ -2618,14 +2614,10 @@ main_inI2_outR2(struct msg_digest *md)
 	ke->md = md;
 	st->st_suspended_md = md;
 
-	if (!st->st_sec_in_use) {
-	    ke->ke_pcrc.pcrc_func = main_inI2_outR2_continue;
-	    return build_ke(&ke->ke_pcrc, st
-			    , st->st_oakley.group, st->st_import);
-	} else {
-	    return main_inI2_outR2_tail((struct pluto_crypto_req_cont *)ke
-					, NULL);
-	}
+	passert(st->st_sec_in_use == FALSE);
+	ke->ke_pcrc.pcrc_func = main_inI2_outR2_continue;
+	return build_ke(&ke->ke_pcrc, st
+			, st->st_oakley.group, st->st_import);
     }
 }
 
