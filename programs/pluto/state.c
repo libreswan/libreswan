@@ -839,6 +839,7 @@ void fmt_state(struct state *st, time_t n
     /* XXX spd-enum */
     const char *eo = c->spd.eroute_owner == st->st_serialno
 	? "; eroute owner" : "";
+    const char *idlestr;
 
     fmt_conn_instance(c, inst);
 
@@ -865,9 +866,17 @@ void fmt_state(struct state *st, time_t n
 	    snprintf(dpdbuf, sizeof(dpdbuf), "; nodpd");
 	}
     }
+    
+    if(st->st_calculating) {
+	idlestr = "crypto_calculating";
+    } else if(st->st_suspended_md) {
+	idlestr = "crypto/dns-lookup";
+    } else {
+	idlestr = "idle";
+    }
 	
     snprintf(state_buf, state_buf_len
-	     , "#%lu: \"%s\"%s:%u %s (%s); %s in %lds%s%s%s%s"
+	     , "#%lu: \"%s\"%s:%u %s (%s); %s in %lds%s%s%s%s; %s"
 	     , st->st_serialno
 	     , c->name, inst
 	     , st->st_remoteport
@@ -875,7 +884,8 @@ void fmt_state(struct state *st, time_t n
 	     , state_story[st->st_state - STATE_MAIN_R0]
 	     , st->st_event ? enum_name(&timer_event_names, st->st_event->ev_type) : "none"
 	     , delta
-	     , np1, np2, eo, dpdbuf);
+	     , np1, np2, eo, dpdbuf
+	     , idlestr);
 
     /* print out SPIs if SAs are established */
     if (state_buf2_len != 0)

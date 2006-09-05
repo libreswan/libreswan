@@ -972,6 +972,15 @@ quick_outI1_tail(struct pluto_crypto_req_cont *pcrc
  * consulted asynchronously, gateways_from_dns != NULL the second time.
  * Remember that our state object might disappear too!
  *
+ * At the end of authtail, we have all the info we need, but we
+ * haven't done any nonce generation or DH that we might need
+ * to do, so that are two crypto continuations that do this work,
+ * they are:
+ *    quick_inI1_outR1_cryptocontinue1 -- called after NONCE/KE
+ *    quick_inI1_outR1_cryptocontinue2 -- called after DH (if PFS)
+ *
+ * we have to call nonce/ke and DH if we are doing PFS.
+ *
  *
  * If the connection is opportunistic, we must verify delegation.
  *
@@ -1538,106 +1547,10 @@ quick_inI1_outR1_cryptocontinue2(struct pluto_crypto_req_cont *pcrc
 			      , struct pluto_crypto_req *r
 				 , err_t ugh);
 
-
 static void
 quick_inI1_outR1_cryptocontinue1(struct pluto_crypto_req_cont *pcrc
 				 , struct pluto_crypto_req *r
-				 , err_t ugh)
-{
-    struct qke_continuation *qke = (struct qke_continuation *)pcrc;
-    struct msg_digest *md = qke->md;
-    struct state *const st = qke->st;
-    stf_status e;
-
-    DBG(DBG_CONTROLMORE
-	, DBG_log("quick inI1_outR1: calculated ke+nonce, calculating DH"));
-
-    /* XXX should check out ugh */
-    passert(ugh == NULL);
-    passert(cur_state == NULL);
-    passert(st != NULL);
-
-    passert(st->st_connection != NULL);
-
-    set_cur_state(st);	/* we must reset before exit */
-    st->st_calculating=FALSE;
-
-    /* we always calcualte a nonce */
-    unpack_nonce(&st->st_nr, r);
-
-    if (st->st_pfs_group != NULL) {
-	struct dh_continuation *dh = alloc_thing(struct dh_continuation
-						 , "quick outR1 DH");
-
-	unpack_KE(st, r, &st->st_gr);
-    
-	/* set up second calculation */
-	dh->md = md;
-	st->st_suspended_md = md;
-	dh->dh_pcrc.pcrc_func = quick_inI1_outR1_cryptocontinue2;
-	e = start_dh_secret(&dh->dh_pcrc, st
-			    , st->st_import
-			    , RESPONDER
-			    , st->st_oakley.group->group);
-	
-	if(e != STF_SUSPEND) {
-	    if(dh->md != NULL) {
-		complete_state_transition(&qke->md, e);
-		release_md(qke->md);
-	    }
-	}
-	
-    } else {
-	/* but if PFS is off, we don't do a second DH, so
-	 * just call the continuation after making something up.
-	 */
-	struct dh_continuation dh;
-
-	dh.md=md;
-
-	e = quick_inI1_outR1_cryptotail(&dh, NULL);
-
-	if(dh.md != NULL) {
-	    /* note: use qke-> pointer */
-	    complete_state_transition(&qke->md, e);
-	    release_md(qke->md);
-	}
-    }
-    reset_cur_state();
-	
-}
-
-static void
-quick_inI1_outR1_cryptocontinue2(struct pluto_crypto_req_cont *pcrc
-			      , struct pluto_crypto_req *r
-			      , err_t ugh)
-{
-    struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-    struct msg_digest *md = dh->md;
-    struct state *const st = md->st;
-    stf_status e;
-
-    DBG(DBG_CONTROLMORE
-	, DBG_log("quick inI1_outR1: calculated DH, sending R1"));
-
-    /* XXX should check out ugh */
-    passert(ugh == NULL);
-    passert(cur_state == NULL);
-    passert(st != NULL);
-
-    passert(st->st_connection != NULL);
-
-    set_cur_state(st);	/* we must reset before exit */
-    st->st_calculating=FALSE;
-    e = quick_inI1_outR1_cryptotail(dh, r);
-
-    if(dh->md != NULL) {
-	complete_state_transition(&dh->md, e);
-	release_md(dh->md);
-    }
-
-    reset_cur_state();
-}
+				 , err_t ugh);
 
 static stf_status
 quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
@@ -1933,6 +1846,109 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 	    return e;
 	}
     }
+}
+
+static void
+quick_inI1_outR1_cryptocontinue1(struct pluto_crypto_req_cont *pcrc
+				 , struct pluto_crypto_req *r
+				 , err_t ugh)
+{
+    struct qke_continuation *qke = (struct qke_continuation *)pcrc;
+    struct msg_digest *md = qke->md;
+    struct state *const st = qke->st;
+    stf_status e;
+
+    DBG(DBG_CONTROLMORE
+	, DBG_log("quick inI1_outR1: calculated ke+nonce, calculating DH"));
+
+    /* XXX should check out ugh */
+    passert(ugh == NULL);
+    passert(cur_state == NULL);
+    passert(st != NULL);
+
+    passert(st->st_connection != NULL);
+
+    set_cur_state(st);	/* we must reset before exit */
+    st->st_calculating=FALSE;
+    st->st_suspended_md = NULL;
+
+    /* we always calcualte a nonce */
+    unpack_nonce(&st->st_nr, r);
+
+    if (st->st_pfs_group != NULL) {
+	struct dh_continuation *dh = alloc_thing(struct dh_continuation
+						 , "quick outR1 DH");
+
+	unpack_KE(st, r, &st->st_gr);
+    
+	/* set up second calculation */
+	dh->md = md;
+	st->st_suspended_md = md;
+	dh->dh_pcrc.pcrc_func = quick_inI1_outR1_cryptocontinue2;
+	e = start_dh_secret(&dh->dh_pcrc, st
+			    , st->st_import
+			    , RESPONDER
+			    , st->st_oakley.group->group);
+	
+	if(e != STF_SUSPEND) {
+	    if(dh->md != NULL) {
+		complete_state_transition(&qke->md, e);
+		release_md(qke->md);
+	    }
+	}
+	
+    } else {
+	/* but if PFS is off, we don't do a second DH, so
+	 * just call the continuation after making something up.
+	 */
+	struct dh_continuation dh;
+
+	dh.md=md;
+
+	e = quick_inI1_outR1_cryptotail(&dh, NULL);
+
+	if(dh.md != NULL) {
+	    /* note: use qke-> pointer */
+	    complete_state_transition(&qke->md, e);
+	    release_md(qke->md);
+	}
+    }
+    reset_cur_state();
+	
+}
+
+static void
+quick_inI1_outR1_cryptocontinue2(struct pluto_crypto_req_cont *pcrc
+			      , struct pluto_crypto_req *r
+			      , err_t ugh)
+{
+    struct dh_continuation *dh = (struct dh_continuation *)pcrc;
+    struct msg_digest *md = dh->md;
+    struct state *const st = md->st;
+    stf_status e;
+
+    DBG(DBG_CONTROLMORE
+	, DBG_log("quick inI1_outR1: calculated DH, sending R1"));
+
+    /* XXX should check out ugh */
+    passert(ugh == NULL);
+    passert(cur_state == NULL);
+    passert(st != NULL);
+
+    passert(st->st_connection != NULL);
+
+    set_cur_state(st);	/* we must reset before exit */
+    st->st_calculating=FALSE;
+    st->st_suspended_md = NULL;
+
+    e = quick_inI1_outR1_cryptotail(dh, r);
+
+    if(dh->md != NULL) {
+	complete_state_transition(&dh->md, e);
+	release_md(dh->md);
+    }
+
+    reset_cur_state();
 }
 
 static stf_status
