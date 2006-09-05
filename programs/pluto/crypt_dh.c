@@ -1,5 +1,5 @@
 /* 
- * Cryptographic helper function - calculate KE and nonce
+ * Cryptographic helper function - calculate DH
  * Copyright (C) 2004 Michael C. Richardson <mcr@xelerance.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -351,6 +351,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
     skr->thespace.len   = sizeof(skr->space);
 
     group = lookup_group(dhq.oakley_group);
+    passert(group != NULL);
 
     pluto_crypto_allocchunk(&skr->thespace
 			   , &skr->shared

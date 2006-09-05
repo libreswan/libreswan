@@ -6,10 +6,24 @@
 extern notification_t accept_KE(chunk_t *dest, const char *val_name
 				, const struct oakley_group_desc *gr
 				, pb_stream *pbs);
+
+extern void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r);
+extern bool justship_nonce(chunk_t *n
+			   , pb_stream *outs, u_int8_t np
+			   , const char *name);
+
+/* calls previous two routines */
 extern bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r
 		       , pb_stream *outs, u_int8_t np
 		       , const char *name);
 
+extern void unpack_KE(struct state *st
+		      , struct pluto_crypto_req *r
+		      , chunk_t *g);
+extern bool justship_KE(chunk_t *g
+			, pb_stream *outs, u_int8_t np);
+
+/* just calls previous two routines now */
 extern bool ship_KE(struct state *st
 		    , struct pluto_crypto_req *r
 		    , chunk_t *g

@@ -15,8 +15,10 @@ struct qke_continuation {
 };
 
 struct dh_continuation {
-    struct pluto_crypto_req_cont dh_pcrc;
-    struct state                *st;            /* need to use abstract # */
+	struct pluto_crypto_req_cont dh_pcrc;
+	struct msg_digest           *md;
+	so_serial_t                  serialno;  /* used for inter state
+						 * calculations on responder */
 };
 
 

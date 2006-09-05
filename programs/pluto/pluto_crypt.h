@@ -103,6 +103,7 @@ struct pcr_skeyid_r {
 
 struct pluto_crypto_req {
   size_t                     pcr_len;
+
   enum pluto_crypto_requests pcr_type;
   pcr_req_id                 pcr_id;
   enum crypto_importance     pcr_pcim;
@@ -167,6 +168,15 @@ extern void compute_dh_shared(struct state *st, const chunk_t g
 
 extern stf_status perform_dh(struct pluto_crypto_req_cont *cn, struct state *st);
 extern bool generate_skeyids_iv(struct state *st);
+
+extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn
+				    , struct state *st
+				    , enum crypto_importance importance
+				    , enum phase1_role init /* TRUE=g_init,FALSE=g_r */
+				    , u_int16_t oakley_group);
+
+extern void finish_dh_secretiv(struct state *st,
+			       struct pluto_crypto_req *r);
 
 extern stf_status perform_dh_secretiv(struct state *st
 				      , enum phase1_role  init  
