@@ -10,6 +10,9 @@ east:~#
 east:~#
  ipsec auto --add westnet-eastnet-aggr
 east:~#
+ echo done
+done
+east:~#
  
 
 east:~#
