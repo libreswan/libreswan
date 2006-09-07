@@ -2185,6 +2185,7 @@ quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc
 
     set_cur_state(st);	/* we must reset before exit */
     st->st_calculating=FALSE;
+    set_suspended(st, NULL);
 
     e = quick_inR1_outI2_cryptotail(dh, r);
 
