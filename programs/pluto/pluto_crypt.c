@@ -178,6 +178,7 @@ helper_passert_fail(const char *pred_str
 
 void pluto_crypto_helper(int fd, int helpernum)
 {
+    FILE *io = fdopen(fd, "ab+");
     long reqbuf[PCR_REQ_SIZE/sizeof(long)];
     struct pluto_crypto_req *r;
 
@@ -189,40 +190,53 @@ void pluto_crypto_helper(int fd, int helpernum)
     setpriority(PRIO_PROCESS, 0, 10);
 
     DBG(DBG_CONTROL, DBG_log("helper %d waiting on fd: %d"
-			      , helpernum, fd));
+			     , helpernum, fileno(io)));
 
     memset(reqbuf, 0, sizeof(reqbuf));
-    while(read(fd, (char*)reqbuf, sizeof(r->pcr_len)) == sizeof(r->pcr_len)) {
+    while(fread((char*)reqbuf, sizeof(r->pcr_len), 1, io) == 1) {
 	int restlen;
-	int actlen;
+	int actnum;
+	unsigned char *reqrest = ((char *)reqbuf)+sizeof(r->pcr_len);
 
 	r = (struct pluto_crypto_req *)reqbuf;
 	restlen = r->pcr_len-sizeof(r->pcr_len);
 	
 	passert(restlen < (signed)PCR_REQ_SIZE);
 
+	actnum = fread(reqrest, restlen, 1, io);
 	/* okay, got a basic size, read the rest of it */
-	if((actlen= read(fd, ((char *)reqbuf)+sizeof(r->pcr_len), restlen)) != restlen) {
+	if(actnum != 1) {
 	    /* faulty read. die, parent will restart us */
-	    
-	    loglog(RC_LOG_SERIOUS, "cryptographic helper(%d) read(%d)=%d failed: %s\n",
-		   getpid(), restlen, actlen, strerror(errno));
+	    loglog(RC_LOG_SERIOUS, "cryptographic helper(%d) fread(%d)=%d failed: %s\n",
+		   getpid(), restlen, actnum, strerror(errno));
+
+#ifdef DEBUG
+	    if(getenv("PLUTO_CRYPTO_HELPER_COREDUMP")) {
+		if(fork()==0) { /* in child */
+		    passert(actnum == 1);
+		}
+	    }
+#endif
 	    exit(1);
 	}
 
 	pluto_do_crypto_op(r);
 
-	actlen = write(fd, (unsigned char *)r, r->pcr_len);
+	actnum = fwrite((unsigned char *)r, r->pcr_len, 1, io);
 
-	if((unsigned)actlen != r->pcr_len) {
-	    loglog(RC_LOG_SERIOUS, "failed to write answer: %d", actlen);
+	if(actnum != 1) {
+	    loglog(RC_LOG_SERIOUS, "failed to write answer: %d", actnum);
 	    exit(2);
 	}
 	memset(reqbuf, 0, sizeof(reqbuf));
     }
 
+    if(!feof(io)) {
+	loglog(RC_LOG_SERIOUS, "helper %d got error: %s", helpernum, strerror(ferror(io)));
+    }
+
     /* probably normal EOF */
-    close(fd);
+    fclose(io);
     exit(0);
 }
 
@@ -503,6 +517,7 @@ void delete_cryptographic_continuation(struct state *st)
 void handle_helper_comm(struct pluto_crypto_worker *w)
 {
     long reqbuf[PCR_REQ_SIZE/sizeof(long)];
+    unsigned char *inloc;
     struct pluto_crypto_req *r;
     int restlen;
     int actlen;
@@ -540,23 +555,32 @@ void handle_helper_comm(struct pluto_crypto_worker *w)
 	       , w->pcw_helpernum
 	       , w->pcw_pid, (unsigned long)r->pcr_len
                , (unsigned long)sizeof(reqbuf));
+    killit:
 	kill(w->pcw_pid, SIGTERM);
 	w->pcw_dead = TRUE;
 	return;
     }
 
     restlen = r->pcr_len-sizeof(r->pcr_len);
-	
-    /* okay, got a basic size, read the rest of it */
-    if((actlen= read(w->pcw_pipe
-		     , ((char*)reqbuf)+sizeof(r->pcr_len)
-		     , restlen)) != restlen) {
-	/* faulty read. die, parent will restart us */
-	
-	loglog(RC_LOG_SERIOUS
-	       , "cryptographic handler(%d) read(%d)=%d failed: %s\n"
-	       , w->pcw_pipe, restlen, actlen, strerror(errno));
-	return;
+    inloc = ((char*)reqbuf)+sizeof(r->pcr_len);
+
+    while(restlen > 0) {
+	/* okay, got a basic size, read the rest of it */
+	actlen = read(w->pcw_pipe, inloc, restlen);
+
+	if(actlen <= 0) {
+	    /* faulty read. note this fact, and close pipe. */
+	    /* we actually need to restart this query, but we'll do that
+	     * another day.
+	     */
+	    loglog(RC_LOG_SERIOUS
+		   , "cryptographic handler(%d) read(%d)=%d failed: %s\n"
+		   , w->pcw_pipe, restlen, actlen, strerror(errno));
+	    goto killit;
+	}
+
+	restlen -= actlen;
+	inloc   += actlen;
     }
 
     DBG(DBG_CRYPT, DBG_log("helper %u replies to sequence %u"
@@ -714,7 +738,6 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 #endif	
 
 	pluto_crypto_helper(fds[1], n);
-
 
 #ifdef VULCAN_PK
 	if(using_vulcan_hack) {
