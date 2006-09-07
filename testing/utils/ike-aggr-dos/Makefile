@@ -18,7 +18,8 @@ OPENSWANSRCDIR?=$(shell cd ../../..; pwd)
 include ${OPENSWANSRCDIR}/Makefile.inc
 
 PROGRAM=ike-aggr-dos
-OBJS=checksum.o
+#OBJS=checksum.o
+OBJS=in_cksum.o
 
 VPATH += ${OPENSWANSRCDIR}/testing/kunit/libkern
 
