@@ -667,6 +667,7 @@ quick_outI1_continue(struct pluto_crypto_req_cont *pcrc
     passert(st != NULL);
 
     set_cur_state(st);	/* we must reset before exit */
+    set_suspended(st, NULL);
     e = quick_outI1_tail(pcrc, r);
 
     reset_globals();
