@@ -146,7 +146,7 @@ calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
     gettimeofday(&tv1, NULL);
     tv_diff=(tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
     DBG(DBG_CRYPT, 
-    	DBG_log("calc_dh_shared(): time elapsed (%s): %ld usec"
+    	DBG_log("calc_dh_shared_vulcanpk(): time elapsed (%s): %ld usec"
 		, enum_show(&oakley_group_names, group->group)
 		, tv_diff);
        );
