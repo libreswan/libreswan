@@ -125,7 +125,7 @@ aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc
   passert(st != NULL);
 
   passert(st->st_suspended_md == dh->md);
-  st->st_suspended_md = NULL;	/* no longer connected or suspended */
+  set_suspended(st, NULL);	/* no longer connected or suspended */
 
   set_cur_state(st);
   st->st_calculating = FALSE;
@@ -134,7 +134,7 @@ aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc
   
   if(dh->md != NULL) {
       complete_state_transition(&dh->md, e);
-      release_md(dh->md);
+      if(dh->md) release_md(dh->md);
   }
   reset_cur_state();
 }
@@ -164,7 +164,7 @@ aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc
   passert(st != NULL);
 
   passert(st->st_suspended_md == ke->md);
-  st->st_suspended_md = NULL;	/* no longer connected or suspended */
+  set_suspended(st, NULL);	/* no longer connected or suspended */
 
   set_cur_state(st);
   st->st_calculating = FALSE;
@@ -182,7 +182,7 @@ aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc
       struct dh_continuation *dh = alloc_thing(struct dh_continuation
 					       , "aggr outR1 DH");
       dh->md = md;
-      st->st_suspended_md = md;
+      set_suspended(st, md);
       dh->dh_pcrc.pcrc_func = aggr_inI1_outR1_continue2;
       e = start_dh_secretiv(&dh->dh_pcrc, st
 			    , st->st_import
@@ -192,7 +192,7 @@ aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc
       if(e != STF_SUSPEND) {
 	  if(dh->md != NULL) {
 	      complete_state_transition(&dh->md, e);
-	      release_md(dh->md);
+	      if(dh->md) release_md(dh->md);
 	  }
       }
 
@@ -341,7 +341,7 @@ aggr_inI1_outR1_common(struct msg_digest *md
 	struct ke_continuation *ke = alloc_thing(struct ke_continuation
 						 , "outI2 KE");
 	ke->md = md;
-	st->st_suspended_md = md;
+	set_suspended(st, md);
 
 	if (!st->st_sec_in_use) {
 	    ke->ke_pcrc.pcrc_func = aggr_inI1_outR1_continue1;
@@ -606,7 +606,7 @@ aggr_inR1_outI2(struct msg_digest *md)
 	struct dh_continuation *dh = alloc_thing(struct dh_continuation
 						 , "aggr outR1 DH");
 	dh->md = md;
-	st->st_suspended_md = md;
+	set_suspended(st, md);
 	dh->dh_pcrc.pcrc_func = aggr_inR1_outI2_crypto_continue;
 	return start_dh_secretiv(&dh->dh_pcrc, st
 				 , st->st_import
@@ -634,7 +634,7 @@ aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc
   passert(st != NULL);
 
   passert(st->st_suspended_md == dh->md);
-  st->st_suspended_md = NULL;	/* no longer connected or suspended */
+  set_suspended(st, NULL);	/* no longer connected or suspended */
 
   set_cur_state(st);
   st->st_calculating = FALSE;
@@ -645,7 +645,7 @@ aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc
   
   if(dh->md != NULL) {
       complete_state_transition(&dh->md, e);
-      release_md(dh->md);
+      if(dh->md) release_md(dh->md);
   }
   reset_cur_state();
 }
@@ -882,7 +882,7 @@ aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc
   passert(st != NULL);
 
   passert(st->st_suspended_md == ke->md);
-  st->st_suspended_md = NULL;	/* no longer connected or suspended */
+  set_suspended(st,NULL);	/* no longer connected or suspended */
 
   set_cur_state(st);
 
@@ -892,7 +892,7 @@ aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc
   
   if(ke->md != NULL) {
       complete_state_transition(&ke->md, e);
-      release_md(ke->md);
+      if(ke->md) release_md(ke->md);
   }
   reset_globals();
 
@@ -953,7 +953,7 @@ aggr_outI1(int whack_sock,
 
 	ke->md = alloc_md();
 	ke->md->st = st;
-	st->st_suspended_md = ke->md;
+	set_suspended(st, ke->md);
 
 	passert(st->st_sec_in_use == FALSE);
 	ke->ke_pcrc.pcrc_func = aggr_outI1_continue;
@@ -1027,6 +1027,8 @@ aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc
     /* Ni out */
     if (!ship_nonce(&st->st_ni, r, &md->rbody, ISAKMP_NEXT_ID, "Ni"))
 	return STF_INTERNAL_ERROR;
+
+    DBG_log("setting sec: %d", st->st_sec_in_use);
 
     /* IDii out */
     {

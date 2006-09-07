@@ -1223,7 +1223,7 @@ quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
     if (st != NULL)
     {
 	passert(st->st_suspended_md == b->md);
-	st->st_suspended_md = NULL;	/* no longer connected or suspended */
+	set_suspended(st, NULL);	/* no longer connected or suspended */
 	cur_state = st;
 	if (!b->failure_ok && ugh != NULL)
 	{
@@ -1260,7 +1260,7 @@ quick_inI1_outR1_start_query(struct verify_oppo_bundle *b
     b->step = next_step;    /* not just vc->b.step */
     vc->b = *b;
     passert(p1st->st_suspended_md == NULL);
-    p1st->st_suspended_md = b->md;
+    set_suspended(p1st, b->md);
 
     DBG(DBG_CONTROL,
 	{
@@ -1352,7 +1352,7 @@ quick_inI1_outR1_start_query(struct verify_oppo_bundle *b
 	 * into b, not just vc->b.
 	 */
 	report_verify_failure(b, ugh);
-	p1st->st_suspended_md = NULL;
+	set_suspended(p1st,  NULL);
 	return STF_FAIL + INVALID_ID_INFORMATION;
     }
     else
@@ -1870,7 +1870,7 @@ quick_inI1_outR1_cryptocontinue1(struct pluto_crypto_req_cont *pcrc
 
     set_cur_state(st);	/* we must reset before exit */
     st->st_calculating=FALSE;
-    st->st_suspended_md = NULL;
+    set_suspended(st, NULL);
 
     /* we always calcualte a nonce */
     unpack_nonce(&st->st_nr, r);
@@ -1883,7 +1883,7 @@ quick_inI1_outR1_cryptocontinue1(struct pluto_crypto_req_cont *pcrc
     
 	/* set up second calculation */
 	dh->md = md;
-	st->st_suspended_md = md;
+	set_suspended(st, md);
 	dh->dh_pcrc.pcrc_func = quick_inI1_outR1_cryptocontinue2;
 	e = start_dh_secret(&dh->dh_pcrc, st
 			    , st->st_import
@@ -1893,7 +1893,7 @@ quick_inI1_outR1_cryptocontinue1(struct pluto_crypto_req_cont *pcrc
 	if(e != STF_SUSPEND) {
 	    if(dh->md != NULL) {
 		complete_state_transition(&qke->md, e);
-		release_md(qke->md);
+		if(dh->md) release_md(qke->md);
 	    }
 	}
 	
@@ -1910,7 +1910,7 @@ quick_inI1_outR1_cryptocontinue1(struct pluto_crypto_req_cont *pcrc
 	if(dh.md != NULL) {
 	    /* note: use qke-> pointer */
 	    complete_state_transition(&qke->md, e);
-	    release_md(qke->md);
+	    if(dh.md) release_md(qke->md);
 	}
     }
     reset_cur_state();
@@ -1939,13 +1939,13 @@ quick_inI1_outR1_cryptocontinue2(struct pluto_crypto_req_cont *pcrc
 
     set_cur_state(st);	/* we must reset before exit */
     st->st_calculating=FALSE;
-    st->st_suspended_md = NULL;
+    set_suspended(st, NULL);
 
     e = quick_inI1_outR1_cryptotail(dh, r);
 
     if(dh->md != NULL) {
 	complete_state_transition(&dh->md, e);
-	release_md(dh->md);
+	if(dh->md) release_md(dh->md);
     }
 
     reset_cur_state();
@@ -2147,7 +2147,7 @@ quick_inR1_outI2(struct msg_digest *md)
 
 	/* set up DH calculation */
 	dh->md = md;
-	st->st_suspended_md = md;
+	set_suspended(st, md);
 	dh->dh_pcrc.pcrc_func = quick_inR1_outI2_continue;
 	return start_dh_secret(&dh->dh_pcrc, st
 			       , st->st_import
@@ -2189,7 +2189,7 @@ quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc
 
     if(dh->md != NULL) {
 	complete_state_transition(&dh->md, e);
-	release_md(dh->md);
+	if(dh->md) release_md(dh->md);
     }
     reset_cur_state();
 }

@@ -1995,7 +1995,7 @@ process_packet(struct msg_digest **mdp)
 		      , ip_str(&md->sender), (unsigned)md->sender_port));
 
 	if(st->st_suspended_md) { release_md(st->st_suspended_md); }
-	st->st_suspended_md = md;
+	set_suspended(st, md);
 	md->st = st;
 	*mdp = NULL;
 	return;
@@ -2987,7 +2987,7 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 	    /* well, this should never happen during a whack, since
 	     * a whack will always force crypto.
 	     */
-	    st->st_suspended_md = NULL;
+	    set_suspended(st, NULL);
 	    pexpect(st->st_calculating == FALSE);
 	    openswan_log("message in state %s ignored due to cryptographic overload"
 			 , enum_name(&state_names, from_state));

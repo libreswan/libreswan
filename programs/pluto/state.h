@@ -132,6 +132,10 @@ struct hidden_variables {
     ip_address     st_natd;
 };                        
 
+#define set_suspended(st,md) do { st->st_suspended_md=md; \
+                                  st->st_suspended_md_func=__FUNCTION__; \
+                                  st->st_suspended_md_line=__LINE__; } while(0)
+
 /* state object: record the state of a (possibly nascent) SA
  *
  * Invariants (violated only during short transitions):
@@ -152,6 +156,8 @@ struct state
                                                 */
 
     struct msg_digest *st_suspended_md;        /* suspended state-transition */
+    const char        *st_suspended_md_func;
+    int                st_suspended_md_line;
 
     struct oakley_trans_attrs st_oakley;
 

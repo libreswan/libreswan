@@ -2392,7 +2392,7 @@ main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc
     passert(st != NULL);
 
     passert(st->st_suspended_md == ke->md);
-    st->st_suspended_md = NULL;	/* no longer connected or suspended */
+    set_suspended(st, NULL);	/* no longer connected or suspended */
 
     set_cur_state(st);
 
@@ -2402,7 +2402,7 @@ main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc
 
     if(ke->md != NULL) {
 	complete_state_transition(&ke->md, e);
-	release_md(ke->md);
+	if(ke->md) release_md(ke->md);
     }
 
     reset_cur_state();
@@ -2441,7 +2441,7 @@ main_inR1_outI2(struct msg_digest *md)
 	
 	passert(st->st_sec_in_use==FALSE); 
 	ke->ke_pcrc.pcrc_func = main_inR1_outI2_continue;
-	st->st_suspended_md = md;
+	set_suspended(st, md);
 	return build_ke(&ke->ke_pcrc, st, st->st_oakley.group, st->st_import);
     }
 }
@@ -2554,7 +2554,7 @@ main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc
     passert(st != NULL);
 
     passert(st->st_suspended_md == ke->md);
-    st->st_suspended_md = NULL;	/* no longer connected or suspended */
+    set_suspended(st, NULL);	/* no longer connected or suspended */
 
     set_cur_state(st);
 
@@ -2563,7 +2563,7 @@ main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc
 
     if(ke->md != NULL) {
         complete_state_transition(&ke->md, e);
-        release_md(ke->md);
+        if(ke->md) release_md(ke->md);
     }
     reset_cur_state();
 }
@@ -2612,7 +2612,7 @@ main_inI2_outR2(struct msg_digest *md)
 					     , "inI2_outR2 KE");
 
 	ke->md = md;
-	st->st_suspended_md = md;
+	set_suspended(st, md);
 
 	passert(st->st_sec_in_use == FALSE);
 	ke->ke_pcrc.pcrc_func = main_inI2_outR2_continue;
@@ -2657,7 +2657,7 @@ main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc
     if(st->st_suspended_md != NULL) {
 	struct msg_digest *md = st->st_suspended_md;
 
-	st->st_suspended_md = NULL;
+	set_suspended(st, NULL);
 	process_packet(&md);
 	if(md != NULL) {
 	    release_md(md);
@@ -3077,7 +3077,7 @@ main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc
   passert(st != NULL);
 
   passert(st->st_suspended_md == dh->md);
-  st->st_suspended_md = NULL;	/* no longer connected or suspended */
+  set_suspended(st, NULL);	/* no longer connected or suspended */
 
   set_cur_state(st);
   st->st_calculating = FALSE;
@@ -3091,7 +3091,7 @@ main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc
   
   if(dh->md != NULL) {
       complete_state_transition(&dh->md, e);
-      release_md(dh->md);
+      if(dh->md) release_md(dh->md);
   }
   reset_cur_state();
 }
@@ -3114,7 +3114,7 @@ main_inR2_outI3(struct msg_digest *md)
     if(!dh) { return STF_FATAL; }
     
     dh->md = md;
-    st->st_suspended_md = md;
+    set_suspended(st, md);
     dh->dh_pcrc.pcrc_func = main_inR2_outI3_cryptotail;
     return start_dh_secretiv(&dh->dh_pcrc, st
 			     , st->st_import
@@ -3215,7 +3215,7 @@ oakley_id_and_auth(struct msg_digest *md
 
 	    /* Record that state is used by a suspended md */
 	    passert(st->st_suspended_md == NULL);
-	    st->st_suspended_md = md;
+	    set_suspended(st,md);
 
 	    nkc->failure_ok = FALSE;
 	    nkc->md = md;
@@ -3254,7 +3254,7 @@ oakley_id_and_auth(struct msg_digest *md
 	    if (ugh != NULL)
 	    {
 		report_key_dns_failure(&st->st_connection->spd.that.id, ugh);
-		st->st_suspended_md = NULL;
+		set_suspended(st, NULL);
 		r = STF_FAIL + INVALID_KEY_INFORMATION;
 	    } else {
 		/*
@@ -3311,7 +3311,7 @@ key_continue(struct adns_continuation *cr
 	stf_status r;
 
 	passert(st->st_suspended_md == kc->md);
-	st->st_suspended_md = NULL;	/* no longer connected or suspended */
+	set_suspended(st,NULL);	/* no longer connected or suspended */
 	cur_state = st;
 
 	/* cancel any DNS event, since we got an anwer */
