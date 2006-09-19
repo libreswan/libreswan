@@ -33,7 +33,7 @@
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 
-#include "pfkeyv2.h"
+#include "openswan/pfkeyv2.h"
 #include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
