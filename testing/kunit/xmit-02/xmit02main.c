@@ -17,8 +17,8 @@ extern void *malloc(unsigned int size);
 #include "openswan/ipsec_sa.h"
 #include "openswan/ipsec_policy.h"
 #include "openswan/ipsec_proto.h"
-#include "pfkeyv2.h"
-#include "pfkey.h"
+#include "openswan/pfkeyv2.h"
+#include "openswan/pfkey.h"
 
 #include "talloc.h"
 

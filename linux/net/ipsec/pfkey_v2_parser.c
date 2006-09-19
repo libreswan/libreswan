@@ -80,8 +80,8 @@ char pfkey_v2_parser_c_version[] = "$Id: pfkey_v2_parser.c,v 1.134 2005/05/11 01
 #include "openswan/ipsec_rcv.h"
 #include "openswan/ipcomp.h"
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_alg.h"

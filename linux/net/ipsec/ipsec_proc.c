@@ -87,8 +87,8 @@ char ipsec_proc_c_version[] = "RCSID $Id: ipsec_proc.c,v 1.41 2005/11/11 04:04:0
 
 #include "openswan/ipsec_proto.h"
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #ifdef CONFIG_PROC_FS
 

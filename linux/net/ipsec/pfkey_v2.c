@@ -67,8 +67,8 @@
 #include "openswan/ipsec_encap.h"
 #include "openswan/ipsec_sa.h"
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_kern24.h"

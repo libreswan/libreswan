@@ -59,7 +59,7 @@ alg_info.o: alg_info.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/openswan/ipsec_policy.h \
   ../../linux/include/openswan/passert.h \
-  ../../linux/include/pfkeyv2.h \
+  ../../linux/include/openswan/pfkeyv2.h \
   ../../include/constants.h \
   ../../include/biglset.h \
   ../../include/ietf_constants.h \
@@ -197,8 +197,8 @@ initsubnet.o: initsubnet.c internal.h \
 kernel_alg.o: kernel_alg.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
-  ../../linux/include/pfkeyv2.h \
-  ../../linux/include/pfkey.h \
+  ../../linux/include/openswan/pfkeyv2.h \
+  ../../linux/include/openswan/pfkey.h \
   ../../linux/include/openswan/ipsec_policy.h \
   ../../include/constants.h \
   ../../include/biglset.h \
@@ -335,8 +335,8 @@ pfkey_print.o: pfkey_print.c \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
-  ../../linux/include/pfkeyv2.h \
-  ../../linux/include/pfkey.h
+  ../../linux/include/openswan/pfkeyv2.h \
+  ../../linux/include/openswan/pfkey.h
 pkcs.o: pkcs.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \

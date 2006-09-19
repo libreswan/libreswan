@@ -65,8 +65,8 @@ extern int debug_pfkey;
 #endif /* __KERNEL__ */
 
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/ipsec_sa.h"  /* IPSEC_SAREF_NULL, IPSEC_SA_REF_TABLE_IDX_WIDTH */
 

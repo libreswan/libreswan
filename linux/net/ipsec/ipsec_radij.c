@@ -57,8 +57,8 @@
 #include "openswan/ipsec_tunnel.h"	/* struct ipsecpriv */
 #include "openswan/ipsec_xform.h"
  
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/ipsec_proto.h"
 

@@ -43,7 +43,7 @@
 #endif /* __KERNEL__ */
 #include "openswan/ipsec_param.h"
 
-#include "pfkeyv2.h"
+#include "openswan/pfkeyv2.h"
 
 
 /* SAs are held in a table.

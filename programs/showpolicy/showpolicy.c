@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
 {
   struct ipsec_policy_cmd_query q;
   err_t ret;
-  int   c, fd;
+  int   c, fd = -1;
   unsigned short port;
   char  *foo;
 

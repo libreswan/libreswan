@@ -43,8 +43,8 @@
 
 #include <stdint.h>
 #include <openswan.h>
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 char *progname;
 uint32_t pfkey_seq = 0;

@@ -55,8 +55,8 @@ char pfkey_v2_ext_bits_c_version[] = "$Id: pfkey_v2_ext_bits.c,v 1.22 2005/05/11
 #endif
 
 #include <openswan.h>
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 unsigned int extensions_bitmaps[2/*in/out*/][2/*perm/req*/][SADB_EXTENSIONS_MAX] = {
 

@@ -46,8 +46,8 @@ char spi_c_version[] = "RCSID $Id: spi.c,v 1.114 2005/08/18 14:04:40 ken Exp $";
 #endif
 #include <signal.h>
 #include <sys/socket.h>
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/radij.h"
 #include "openswan/ipsec_encap.h"

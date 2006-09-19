@@ -37,7 +37,7 @@
 #include <linux/types.h>
 #include <linux/list.h>
 #include <asm/atomic.h>
-#include <pfkey.h>
+#include <openswan/pfkey.h>
 
 /*	
  *	The following structs are used via pointers in ipsec_alg object to

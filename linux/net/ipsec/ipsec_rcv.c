@@ -75,8 +75,8 @@ char ipsec_rcv_c_version[] = "RCSID $Id: ipsec_rcv.c,v 1.178 2005/10/21 02:19:34
 #include "openswan/ipsec_ipcomp.h"
 #endif /* CONFIG_KLIPS_COMP */
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_alg.h"
@@ -1362,6 +1362,20 @@ ipsec_rcv(struct sk_buff *skb
 	/* Don't unlink in the middle of a turnaround */
 	KLIPS_INC_USE;
 
+	if (skb == NULL) {
+		KLIPS_PRINT(debug_rcv,
+			    "klips_debug:ipsec_rcv: "
+			    "NULL skb passed in.\n");
+		goto error_no_skb;
+	}
+
+	if (skb->data == NULL) {
+		KLIPS_PRINT(debug_rcv,
+			    "klips_debug:ipsec_rcv: "
+			    "NULL skb->data passed in, packet is bogus, dropping.\n");
+		goto error_bad_skb;
+	}
+
         irs = ipsec_rcv_state_new ();
         if (unlikely (! irs)) {
 		KLIPS_PRINT(debug_rcv,
@@ -1369,20 +1383,6 @@ ipsec_rcv(struct sk_buff *skb
 			    "failled to allocate a rcv state object\n");
                 goto error_alloc;
         }
-
-	if (skb == NULL) {
-		KLIPS_PRINT(debug_rcv,
-			    "klips_debug:ipsec_rcv: "
-			    "NULL skb passed in.\n");
-		goto rcvleave;
-	}
-
-	if (skb->data == NULL) {
-		KLIPS_PRINT(debug_rcv,
-			    "klips_debug:ipsec_rcv: "
-			    "NULL skb->data passed in, packet is bogus, dropping.\n");
-		goto rcvleave;
-	}
 
 #if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && !defined(NET_26)
 	{
@@ -1596,19 +1596,21 @@ ipsec_rcv(struct sk_buff *skb
 	irs->authfuncs=NULL;
 	irs->skb = skb;
 
-	ipsec_rcv_decap(irs);
+	(void)ipsec_rcv_decap(irs);
 
         ipsec_rcv_state_delete (irs);
-	KLIPS_DEC_USE;
+        KLIPS_DEC_USE;
 	return(0);
 
- rcvleave:
-	if(skb) {
-		ipsec_kfree_skb(skb);
-	}
+rcvleave:
         ipsec_rcv_state_delete (irs);
+
+error_alloc:
+error_bad_skb:
+        ipsec_kfree_skb(skb);
+error_no_skb:
+
 	KLIPS_DEC_USE;
- error_alloc:
 	return(0);
 
 }
@@ -1631,6 +1633,9 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 	struct ipsec_rcv_state *irs = NULL;
 	struct iphdr *ipp;
 
+	/* Don't unlink in the middle of a turnaround */
+	KLIPS_INC_USE;
+
         irs = ipsec_rcv_state_new ();
         if (unlikely (! irs)) {
 		KLIPS_PRINT(debug_rcv,
@@ -1638,9 +1643,6 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 			    "failled to allocate a rcv state object\n");
                 goto error_alloc;
         }
-
-	/* Don't unlink in the middle of a turnaround */
-	KLIPS_INC_USE;
 
 	/* XXX fudge it so that all nat-t stuff comes from ipsec0    */
 	/*     eventually, the SA itself will determine which device
@@ -1718,6 +1720,7 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 
 #endif
 	ipsec_rcv_decap(irs);
+
 	KLIPS_DEC_USE;
         ipsec_rcv_state_delete (irs);
 	return 0;
@@ -1726,9 +1729,9 @@ rcvleave:
 	if(skb) {
 		ipsec_kfree_skb(skb);
 	}
-	KLIPS_DEC_USE;
         ipsec_rcv_state_delete (irs);
 error_alloc:
+	KLIPS_DEC_USE;
 	return 0;
 }
 #endif

@@ -325,6 +325,7 @@ struct xform_functions ah_xform_funcs[]={
 };
 
 
+#ifndef CONFIG_XFRM_ALTERNATE_STACK
 #ifdef NET_26
 struct inet_protocol ah_protocol = {
   .handler = ipsec_rcv,
@@ -346,6 +347,7 @@ struct inet_protocol ah_protocol =
 #endif
 };
 #endif /* NET_26 */
+#endif /* CONFIG_XFRM_ALTERNATE_STACK */
 
 /*
  * $Log: ipsec_ah.c,v $

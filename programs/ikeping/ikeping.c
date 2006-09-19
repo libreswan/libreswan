@@ -32,7 +32,7 @@
 #include <poll.h>
 
 #include <openswan.h>
-#include "pfkeyv2.h"
+#include "openswan/pfkeyv2.h"
 
 #include "constants.h"
 #include "packet.h"

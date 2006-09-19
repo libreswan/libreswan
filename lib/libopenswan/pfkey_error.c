@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "openswan.h"
-#include <pfkeyv2.h>
+#include <openswan/pfkeyv2.h>
 
 extern char *progname;
 

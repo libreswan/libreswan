@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <openswan.h>
-#include <pfkeyv2.h>
+#include <openswan/pfkeyv2.h>
 #include <openswan/passert.h>
 #include <openswan/ipsec_policy.h>
 

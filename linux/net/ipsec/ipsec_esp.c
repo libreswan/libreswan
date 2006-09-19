@@ -510,6 +510,7 @@ struct xform_functions esp_xform_funcs[]={
 	},
 };
 
+#ifndef CONFIG_XFRM_ALTERNATE_STACK
 #ifdef NET_26
 struct inet_protocol esp_protocol = {
   .handler = ipsec_rcv,
@@ -531,6 +532,7 @@ struct inet_protocol esp_protocol =
 #endif
 };
 #endif /* NET_26 */
+#endif /* CONFIG_XFRM_ALTERNATE_STACK */
 
 #endif /* !CONFIG_KLIPS_ESP */
 

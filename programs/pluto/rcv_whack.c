@@ -30,7 +30,7 @@
 #include <fcntl.h>
 
 #include <openswan.h>
-#include "pfkeyv2.h"
+#include "openswan/pfkeyv2.h"
 
 #include "sysdep.h"
 #include "oswconf.h"

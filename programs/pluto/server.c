@@ -71,8 +71,8 @@
 #include "pluto_crypt.h" /* cryptographic helper functions */
 #include "udpfromto.h"
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 #include "kameipsec.h"
 
 #ifdef NAT_TRAVERSAL

@@ -45,8 +45,8 @@ extern int debug_pfkey;
 #endif /* __KERNEL__ */
 
 #include "openswan.h"
-#include "pfkeyv2.h"
-#include "pfkey.h"
+#include "openswan/pfkeyv2.h"
+#include "openswan/pfkey.h"
 
 /* 
  * This file provides ASCII translations of PF_KEY magic numbers.

@@ -40,7 +40,10 @@ struct ipcomphdr {			/* IPCOMP header */
     __u16   ipcomp_cpi;		/* Compression Parameter Index */
 };
 
+#ifndef CONFIG_XFRM_ALTERNATE_STACK
 extern struct inet_protocol comp_protocol;
+#endif /* CONFIG_XFRM_ALTERNATE_STACK */
+
 extern int sysctl_ipsec_debug_ipcomp;
 
 #define IPCOMP_UNCOMPRESSABLE     0x000000001

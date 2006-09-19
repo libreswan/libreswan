@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
     bool txt_flg=FALSE;
     bool ipseckey_flg=FALSE;
     bool dhclient_flg=FALSE;
-    char *gateway;
+    char *gateway = NULL;
     int precedence=10;
     int verbose=0;
     const struct osw_conf_options *oco = osw_init_options();
@@ -471,7 +471,7 @@ int main(int argc, char *argv[])
     }
 
     if(key_flg || ipseckey_flg || txt_flg) {
-	int rr_type;
+	int rr_type = ns_t_invalid;
 	if(key_flg) {
 	    rr_type = ns_t_key;
 	} else if(ipseckey_flg) {

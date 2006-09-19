@@ -17,7 +17,7 @@
 
 #ifndef _KERNEL_ALG_H
 #define _KERNEL_ALG_H
-#include "pfkeyv2.h"
+#include "openswan/pfkeyv2.h"
 
 struct sadb_msg; /* forward definition */
 

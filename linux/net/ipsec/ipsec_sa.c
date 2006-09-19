@@ -69,8 +69,8 @@
 #include "openswan/ipsec_ipcomp.h"
 #endif /* CONFIG_KLIPS_COMP */
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_alg.h"

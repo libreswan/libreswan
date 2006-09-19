@@ -63,8 +63,8 @@ char pfkey_v2_build_c_version[] = "$Id: pfkey_v2_build.c,v 1.53 2005/11/09 00:30
 
 #endif /* __KERNEL__ */
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #ifdef __KERNEL__
 #include "openswan/radij.h"  /* rd_nodes */

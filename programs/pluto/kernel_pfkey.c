@@ -33,8 +33,8 @@
 #include <sys/types.h>
 
 #include <openswan.h>
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "sysdep.h"
 #include "constants.h"

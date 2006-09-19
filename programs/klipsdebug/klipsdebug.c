@@ -44,8 +44,8 @@ char klipsdebug_c_version[] = "RCSID $Id: klipsdebug.c,v 1.58 2005/08/18 14:04:3
 
 /* permanently turn it on since netlink support has been disabled */
 #include <signal.h>
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "oswlog.h"
 #include "openswan/radij.h"

@@ -55,8 +55,8 @@
 #include "freeswan/ipsec_ah.h"
 #include "freeswan/ipsec_esp.h"
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #ifdef CONFIG_KLIPS_DEBUG
 int debug_xform = 0;

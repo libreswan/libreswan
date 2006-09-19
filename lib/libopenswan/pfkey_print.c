@@ -21,8 +21,8 @@ char pfkey_v2_print_c_version[] = "$Id: pfkey_print.c,v 1.3 2005/08/05 01:56:04 
 #include <stdio.h>
 
 #include <openswan.h>
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 void
 pfkey_print(struct sadb_msg *msg, FILE *out)

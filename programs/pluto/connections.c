@@ -27,7 +27,7 @@
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
-#include "pfkeyv2.h"
+#include "openswan/pfkeyv2.h"
 #include "kameipsec.h"
 
 #include "sysdep.h"

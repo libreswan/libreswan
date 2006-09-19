@@ -13,8 +13,8 @@
 #include "openswan/ipsec_sa.h"
 #include "openswan/ipsec_policy.h"
 #include "openswan/ipsec_proto.h"
-#include "pfkeyv2.h"
-#include "pfkey.h"
+#include "openswan/pfkeyv2.h"
+#include "openswan/pfkey.h"
 
 int debug_tunnel;
 int debug_eroute;

@@ -79,8 +79,8 @@ char ipsec_xmit_c_version[] = "RCSID $Id: ipsec_xmit.c,v 1.20.2.6 2006/07/07 22:
 #include "openswan/ipcomp.h"
 #endif /* CONFIG_KLIPS_IPCOMP */
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_alg.h"

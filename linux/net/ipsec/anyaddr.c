@@ -101,6 +101,11 @@ const ip_address *src;
 	case AF_INET6:
 		cmp = memcmp(&src->u.v6.sin6_addr, &v6any, sizeof(v6any));
 		break;
+
+	case 0:
+		/* a zeroed structure is considered any address */
+		return 1;
+
 	default:
 		return 0;
 		break;

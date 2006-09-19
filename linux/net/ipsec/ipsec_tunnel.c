@@ -78,8 +78,8 @@ char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.234 2005/11/11 04
 #include "openswan/ipsec_esp.h"
 #include "openswan/ipsec_kern24.h"
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/ipsec_proto.h"
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL

@@ -233,6 +233,7 @@ struct xform_functions ipcomp_xform_funcs[]={
 /* We probably don't want to install a pure IPCOMP protocol handler, but
    only want to handle IPCOMP if it is encapsulated inside an ESP payload
    (which is already handled) */
+#ifndef CONFIG_XFRM_ALTERNATE_STACK
 #ifdef CONFIG_KLIPS_IPCOMP
 struct inet_protocol comp_protocol =
 {
@@ -249,6 +250,7 @@ struct inet_protocol comp_protocol =
 #endif
 };
 #endif /* CONFIG_KLIPS_IPCOMP */
+#endif /* CONFIG_XFRM_ALTERNATE_STACK */
 #endif
 
 #endif /* CONFIG_KLIPS_IPCOMP */

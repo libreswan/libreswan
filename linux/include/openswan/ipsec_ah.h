@@ -27,7 +27,9 @@
 
 #ifdef __KERNEL__
 
+#ifndef CONFIG_XFRM_ALTERNATE_STACK
 extern struct inet_protocol ah_protocol;
+#endif /* CONFIG_XFRM_ALTERNATE_STACK */
 
 struct options;
 

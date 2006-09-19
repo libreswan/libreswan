@@ -21,7 +21,7 @@ connections.o: connections.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/openswan/ipsec_policy.h \
-  ../../linux/include/pfkeyv2.h kameipsec.h \
+  ../../linux/include/openswan/pfkeyv2.h kameipsec.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -416,7 +416,7 @@ ikev1_aggr.o: ikev1_aggr.c ../../include/arpa/nameser.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/openswan/ipsec_policy.h \
-  ../../linux/include/pfkeyv2.h \
+  ../../linux/include/openswan/pfkeyv2.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -465,16 +465,15 @@ ikev1_quick.o: ikev1_quick.c ../../include/arpa/nameser.h \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h ike_alg.h \
   ../../include/kernel_alg.h \
-  ../../linux/include/pfkeyv2.h plutoalg.h pluto_crypt.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h ikev1.h \
-  ikev1_continuations.h xauth.h vendor.h nat_traversal.h virtual.h dpd.h \
-  x509more.h tpm/tpm.h
+  ../../linux/include/openswan/pfkeyv2.h plutoalg.h pluto_crypt.h \
+  ikev1.h ikev1_continuations.h xauth.h vendor.h nat_traversal.h \
+  virtual.h dpd.h x509more.h tpm/tpm.h
 ipsec_doi.o: ipsec_doi.c ../../include/arpa/nameser.h \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/openswan/ipsec_policy.h \
-  ../../linux/include/pfkeyv2.h \
+  ../../linux/include/openswan/pfkeyv2.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -532,6 +531,7 @@ kernel_klips.o: kernel_klips.c ../../linux/include/openswan.h \
   ../../include/pluto_constants.h \
   ../../include/names_constant.h \
   ../../include/oswlog.h defs.h \
+<<<<<<< master
   ../../include/oswalloc.h ../../include/id.h \
   connections.h ../../include/x509.h \
   ../../include/pgp.h ../../include/certs.h \
@@ -542,6 +542,22 @@ kernel_klips.o: kernel_klips.c ../../linux/include/openswan.h \
   ../../include/packet.h nat_traversal.h demux.h server.h \
   ../../include/sysqueue.h ../../include/alg_info.h \
   ../../include/kernel_alg.h
+=======
+  ../../include/oswalloc.h rnd.h \
+  ../../include/id.h connections.h \
+  ../../include/x509.h \
+  ../../include/pgp.h \
+  ../../include/certs.h \
+  ../../include/secrets.h \
+  ../../include/smartcard.h state.h quirks.h timer.h \
+  ../../include/oswtime.h kernel.h kernel_netlink.h \
+  kernel_pfkey.h kernel_noklips.h ../../include/packet.h \
+  log.h server.h ../../include/sysqueue.h \
+  ../../include/whack.h keys.h nat_traversal.h demux.h \
+  ../../include/alg_info.h \
+  ../../include/kernel_alg.h \
+  ../../linux/include/openswan/pfkeyv2.h
+>>>>>>> calcdh
 kernel_netlink.o: kernel_netlink.c kameipsec.h \
   ../../programs/pluto/linux26/rtnetlink.h \
   ../../programs/pluto/linux26/netlink.h \
@@ -549,8 +565,8 @@ kernel_netlink.o: kernel_netlink.c kameipsec.h \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
-  ../../linux/include/pfkeyv2.h \
-  ../../linux/include/pfkey.h \
+  ../../linux/include/openswan/pfkeyv2.h \
+  ../../linux/include/openswan/pfkey.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -570,8 +586,8 @@ kernel_noklips.o: kernel_noklips.c \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
-  ../../linux/include/pfkeyv2.h \
-  ../../linux/include/pfkey.h \
+  ../../linux/include/openswan/pfkeyv2.h \
+  ../../linux/include/openswan/pfkey.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -588,8 +604,8 @@ kernel_noklips.o: kernel_noklips.c \
 kernel_pfkey.o: kernel_pfkey.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
-  ../../linux/include/pfkeyv2.h \
-  ../../linux/include/pfkey.h \
+  ../../linux/include/openswan/pfkeyv2.h \
+  ../../linux/include/openswan/pfkey.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -631,7 +647,7 @@ keys.o: keys.c ../../include/arpa/nameser.h \
 log.o: log.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
-  ../../linux/include/pfkeyv2.h \
+  ../../linux/include/openswan/pfkeyv2.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -668,8 +684,8 @@ nat_traversal.o: nat_traversal.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/openswan/ipsec_policy.h \
-  ../../linux/include/pfkeyv2.h \
-  ../../linux/include/pfkey.h \
+  ../../linux/include/openswan/pfkeyv2.h \
+  ../../linux/include/openswan/pfkey.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -788,7 +804,7 @@ pluto_crypt.o: pluto_crypt.c ../../linux/include/openswan.h \
 plutoalg.o: plutoalg.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
-  ../../linux/include/pfkeyv2.h \
+  ../../linux/include/openswan/pfkeyv2.h \
   ../../linux/include/openswan/passert.h \
   ../../linux/include/openswan/ipsec_policy.h \
   ../../ports/linux/include/sysdep.h \
@@ -812,8 +828,8 @@ plutomain.o: plutomain.c ../../include/arpa/nameser.h \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
-  ../../linux/include/pfkeyv2.h \
-  ../../linux/include/pfkey.h \
+  ../../linux/include/openswan/pfkeyv2.h \
+  ../../linux/include/openswan/pfkey.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -869,7 +885,7 @@ rcv_whack.o: rcv_whack.c ../../include/arpa/nameser.h \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
-  ../../linux/include/pfkeyv2.h \
+  ../../linux/include/openswan/pfkeyv2.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/oswconf.h ../../include/constants.h \
   ../../include/biglset.h \
@@ -918,6 +934,7 @@ server.o: server.c ../../include/arpa/nameser.h \
   ../../include/secrets.h ../../include/smartcard.h \
   connections.h kernel.h log.h ../../include/oswlog.h server.h \
   ../../include/sysqueue.h timer.h \
+<<<<<<< master
   ../../include/oswtime.h ../../include/packet.h \
   demux.h rcv_whack.h rcv_info.h keys.h adns.h dnskey.h \
   ../../include/whack.h pluto_crypt.h \
@@ -925,6 +942,14 @@ server.o: server.c ../../include/arpa/nameser.h \
   ../../include/udpfromto.h \
   ../../linux/include/pfkeyv2.h \
   ../../linux/include/pfkey.h kameipsec.h nat_traversal.h
+=======
+  ../../include/oswtime.h \
+  ../../include/packet.h demux.h rcv_whack.h rcv_info.h \
+  keys.h adns.h dnskey.h ../../include/whack.h \
+  pluto_crypt.h ../../include/udpfromto.h \
+  ../../linux/include/openswan/pfkeyv2.h \
+  ../../linux/include/openswan/pfkey.h kameipsec.h nat_traversal.h
+>>>>>>> calcdh
 smallprime.o: smallprime.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
@@ -952,7 +977,7 @@ spdb.o: spdb.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/openswan/ipsec_policy.h \
-  ../../linux/include/pfkeyv2.h \
+  ../../linux/include/openswan/pfkeyv2.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -992,12 +1017,18 @@ spdb_print.o: spdb_print.c ../../linux/include/openswan.h \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h ../../include/alg_info.h \
   ../../include/kernel_alg.h \
+<<<<<<< master
   ../../linux/include/pfkeyv2.h ike_alg.h db_ops.h
 spdb_struct.o: spdb_struct.c ../../linux/include/openswan.h \
+=======
+  ../../linux/include/openswan/pfkeyv2.h ike_alg.h db_ops.h
+spdb_struct.o: spdb_struct.c \
+  ../../linux/include/openswan.h \
+>>>>>>> calcdh
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/openswan/ipsec_policy.h \
-  ../../linux/include/pfkeyv2.h \
+  ../../linux/include/openswan/pfkeyv2.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
@@ -1043,7 +1074,7 @@ stubs.o: stubs.c ../../include/arpa/nameser.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/openswan/ipsec_policy.h \
-  ../../linux/include/pfkeyv2.h \
+  ../../linux/include/openswan/pfkeyv2.h \
   ../../ports/linux/include/sysdep.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \

@@ -41,8 +41,8 @@ char spigrp_c_version[] = "RCSID $Id: spigrp.c,v 1.51 2005/08/18 14:04:39 ken Ex
 #endif
 
 #include <signal.h>
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 #include "pfkey_help.h"
 
 #include "openswan/radij.h"

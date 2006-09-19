@@ -52,7 +52,9 @@ struct des_eks {
 	des_key_schedule ks;
 };
 
+#ifndef CONFIG_XFRM_ALTERNATE_STACK
 extern struct inet_protocol esp_protocol;
+#endif /* CONFIG_XFRM_ALTERNATE_STACK */
 
 struct options;
 

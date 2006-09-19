@@ -43,8 +43,8 @@ char eroute_c_version[] = "RCSID $Id: eroute.c,v 1.67 2005/08/18 14:04:39 ken Ex
 #include <getopt.h>
 
 #include <signal.h>
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "openswan/radij.h"
 #include "openswan/ipsec_encap.h"

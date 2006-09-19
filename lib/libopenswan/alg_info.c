@@ -28,7 +28,7 @@
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
 #include <openswan/passert.h>
-#include <pfkeyv2.h>
+#include <openswan/pfkeyv2.h>
 
 #include "constants.h"
 #include "alg_info.h"
