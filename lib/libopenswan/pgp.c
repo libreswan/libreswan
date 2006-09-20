@@ -219,14 +219,12 @@ parse_pgp_pubkey_packet(chunk_t *packet, pgpcert_t *cert)
 	DBG(DBG_PARSING,
 	    char tbuf[TIMETOA_BUF];
 	    DBG_log("L3 - until:");
-	    DBG_log("  %s", timetoa(&cert->until, TRUE, tbuf, sizeof(tbuf)))
-	)
+	    DBG_log("  %s", timetoa(&cert->until, TRUE, tbuf, sizeof(tbuf))));
     }
 
     /* public key algorithm - 1 byte */
     DBG(DBG_PARSING,
-	DBG_log("L3 - public key algorithm:")
-    )
+	DBG_log("L3 - public key algorithm:"));
 
     switch (pgp_size(packet, 1))
     {
@@ -263,7 +261,7 @@ parse_pgp_pubkey_packet(chunk_t *packet, pgpcert_t *cert)
             osMD5Init(&context);
             osMD5Update(&context, cert->modulus.ptr, cert->modulus.len);
 	    osMD5Update(&context, cert->publicExponent.ptr, cert->publicExponent.len);
-            osMD5Final(cert->fingerprint, &context);
+            osMD5Final((unsigned char *)cert->fingerprint, &context);
 	}
 	else
 	{
@@ -524,7 +522,7 @@ select_pgpcert_id(pgpcert_t *cert, struct id *end_id)
 {
     end_id->kind = ID_KEY_ID;
     end_id->name.len = PGP_FINGERPRINT_SIZE;
-    end_id->name.ptr = cert->fingerprint;
+    end_id->name.ptr = (unsigned char *)cert->fingerprint;
     end_id->name.ptr = temporary_cyclic_buffer();
     memcpy(end_id->name.ptr, cert->fingerprint, PGP_FINGERPRINT_SIZE);
 }

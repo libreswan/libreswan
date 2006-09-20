@@ -53,7 +53,7 @@ int isbytes = 0;		/* byte count rather than bits? */
 
 char me[] = "ipsec ranbits";	/* for messages */
 
-char buf[MAXBITS/CHAR_BIT];
+unsigned char buf[MAXBITS/CHAR_BIT];
 char outbuf[3*sizeof(buf)];
 
 int main(int argc, char *argv[])

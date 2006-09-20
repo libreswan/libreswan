@@ -429,8 +429,8 @@ void
 load_authcerts(const char *type, const char *path, u_char auth_flags)
 {
     struct dirent **filelist;
-    u_char buf[ASN1_BUF_LEN];
-    u_char *save_dir;
+    char buf[ASN1_BUF_LEN];
+    char *save_dir;
     int n;
 
     /* change directory to specified path */
@@ -582,7 +582,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 	    char distpoint[PATH_MAX];
 
 	    distpoint[0] = '\0';
-	    strncat(distpoint, crl->distributionPoints->name.ptr,
+	    strncat(distpoint, (char *)crl->distributionPoints->name.ptr,
 		    (crl->distributionPoints->name.len < PATH_MAX ?
 		     crl->distributionPoints->name.len : PATH_MAX));
 	    
@@ -666,8 +666,8 @@ void
 load_crls(void)
 {
     struct dirent **filelist;
-    u_char buf[PATH_MAX];
-    u_char *save_dir;
+    char buf[PATH_MAX];
+    char *save_dir;
     int n;
     const struct osw_conf_options *oco = osw_init_options(); 
 
@@ -698,7 +698,7 @@ load_crls(void)
                     crl_uri.len = 8 + strlen(oco->crls_dir) + strlen(filename);
 		    crl_uri.ptr = alloc_bytes(crl_uri.len + 1, "crl uri");
 		    /* build CRL file URI */
-		    snprintf(crl_uri.ptr, crl_uri.len +1, "file://%s/%s", oco->crls_dir, filename);
+		    snprintf((char *)crl_uri.ptr, crl_uri.len +1, "file://%s/%s", oco->crls_dir, filename);
 		    insert_crl(blob, crl_uri);
 		}
 		free(filelist[n]);
@@ -833,7 +833,7 @@ static bool
 verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 {
     x509crl_t *crl;
-    u_char ibuf[ASN1_BUF_LEN], cbuf[ASN1_BUF_LEN];
+    char ibuf[ASN1_BUF_LEN], cbuf[ASN1_BUF_LEN];
 
     lock_crl_list("verify_by_crl");
     crl = get_x509crl(cert->issuer, cert->authKeySerialNumber, cert->authKeyID);
@@ -964,9 +964,9 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
     for (pathlen = 0; pathlen < MAX_CA_PATH_LEN; pathlen++)
     {
 	x509cert_t *issuer_cert;
-	u_char sbuf[ASN1_BUF_LEN];
-	u_char ibuf[ASN1_BUF_LEN];
-	u_char abuf[ASN1_BUF_LEN];
+	char sbuf[ASN1_BUF_LEN];
+	char ibuf[ASN1_BUF_LEN];
+	char abuf[ASN1_BUF_LEN];
 
 	err_t ugh = NULL;
 
@@ -1068,7 +1068,7 @@ list_x509cert_chain(const char *caption, x509cert_t* cert, u_char auth_flags
 	{
 	    unsigned keysize;
 	    char keyid[KEYID_BUF];
-	    u_char buf[ASN1_BUF_LEN];
+	    char buf[ASN1_BUF_LEN];
 	    char tbuf[TIMETOA_BUF];
 	    
 	    cert_t c;
@@ -1167,7 +1167,7 @@ list_crls(bool utc, bool strict)
 
     while (crl != NULL)
     {
-	u_char buf[ASN1_BUF_LEN];
+	char buf[ASN1_BUF_LEN];
 	u_int revoked = 0;
 	revokedCert_t *revokedCert = crl->revokedCertificates;
 	char tbuf[TIMETOA_BUF];
@@ -1254,7 +1254,7 @@ add_pgp_public_key(pgpcert_t *cert , time_t until
 
     pk = allocate_RSA_public_key(c);
     pk->id.kind = ID_KEY_ID;
-    pk->id.name.ptr = cert->fingerprint;
+    pk->id.name.ptr = (unsigned char *)cert->fingerprint;
     pk->id.name.len = PGP_FINGERPRINT_SIZE;
     pk->dns_auth_level = dns_auth_level;
     pk->until_time = until;
@@ -1275,7 +1275,7 @@ trust_authcert_candidate(const x509cert_t *cert, const x509cert_t *alt_chain)
     for (pathlen = 0; pathlen < MAX_CA_PATH_LEN; pathlen++)
     {
        const x509cert_t *authcert = NULL;
-       u_char buf[ASN1_BUF_LEN];
+       char buf[ASN1_BUF_LEN];
 
        DBG(DBG_CONTROL,
            dntoa(buf, ASN1_BUF_LEN, cert->subject);
@@ -1288,7 +1288,7 @@ trust_authcert_candidate(const x509cert_t *cert, const x509cert_t *alt_chain)
                    , buf, ASN1_BUF_LEN);
                DBG_log("authkey:  %s", buf);
            }
-       )
+	   );
 
        /* search in alternative chain first */
        authcert = get_alt_cacert(cert->issuer, cert->authKeySerialNumber
@@ -1381,7 +1381,7 @@ list_pgp_end_certs(bool utc)
 	whack_log(RC_COMMENT, "%s, count: %d"
 		  , timetoa(&cert->installed, utc, tbuf, sizeof(tbuf))
 		  , cert->count);
-	datatot(cert->fingerprint, PGP_FINGERPRINT_SIZE, 'x', buf, ASN1_BUF_LEN);
+	datatot((unsigned char *)cert->fingerprint, PGP_FINGERPRINT_SIZE, 'x', buf, ASN1_BUF_LEN);
 	whack_log(RC_COMMENT, "       fingerprint:  %s", buf);
 	form_keyid(cert->publicExponent, cert->modulus, buf, &keysize);
 	whack_log(RC_COMMENT, "       pubkey:   %4d RSA Key %s%s", 8*keysize, buf,

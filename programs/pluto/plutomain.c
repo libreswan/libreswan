@@ -557,7 +557,7 @@ main(int argc, char **argv)
 	    continue;
 
 	case 's':	/* --secretsfile <secrets-file> */
-	    shared_secrets_file = optarg;
+	    pluto_shared_secrets_file = optarg;
 	    continue;
 
 	case 'f':	/* --ipsecdir <ipsec-dir> */

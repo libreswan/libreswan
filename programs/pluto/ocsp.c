@@ -635,7 +635,7 @@ list_ocsp_locations(ocsp_location_t *location, bool requests, bool utc
 
 	if (certinfo != NULL)
 	{
-	    u_char buf[BUF_LEN];
+	    char buf[BUF_LEN];
 
 	    if (first)
 	    {
@@ -1197,7 +1197,7 @@ valid_ocsp_response(response_t *res)
 
     for (pathlen = 0; pathlen < MAX_CA_PATH_LEN; pathlen++)
     {
-	u_char buf[BUF_LEN];
+	char buf[BUF_LEN];
 	err_t ugh = NULL;
 	time_t until;
 
@@ -1276,11 +1276,11 @@ static bool
 parse_basic_ocsp_response(chunk_t blob, int level0, response_t *res)
 {
     u_int level, version, extn_oid = 0;
-    u_char buf[BUF_LEN];
+    char buf[BUF_LEN];
     asn1_ctx_t ctx;
     bool critical;
     chunk_t object;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -1376,7 +1376,7 @@ parse_ocsp_response(chunk_t blob, response_t * res)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     response_status rStatus = STATUS_INTERNALERROR;
     u_int ocspResponseType = 0;
@@ -1443,7 +1443,7 @@ parse_ocsp_single_response(chunk_t blob, int level0, single_response_t *sres)
     asn1_ctx_t ctx;
     bool critical;
     chunk_t object;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -1726,7 +1726,7 @@ parse_ocsp(ocsp_location_t *location, chunk_t blob)
 	u_int level;
 	asn1_ctx_t ctx;
 	chunk_t object;
-	int objectID = 0;
+	u_int objectID = 0;
 
 	asn1_init(&ctx, res.responses, 0, FALSE, DBG_RAW);
 

@@ -172,7 +172,7 @@ atoid(char *src, struct id *id, bool myid_ok)
 static int
 keyidtoa(char *dst, size_t dstlen, chunk_t keyid)
 {
-    int n = datatot((char *)keyid.ptr, keyid.len, 'x', dst, dstlen);
+    int n = datatot(keyid.ptr, keyid.len, 'x', dst, dstlen);
     return ((n < (int)dstlen)? n : (int)dstlen) - 1;
 }
 
@@ -283,7 +283,7 @@ escape_metachar(const char *src, char *dst, size_t dstlen)
  * Remove all shell metacharacters ', \, ", `, and $ in a character string
  */
 void
-remove_metachar(const char *src, char *dst, size_t dstlen)
+remove_metachar(const unsigned char *src, char *dst, size_t dstlen)
 {
     while (*src != '\0' && dstlen > 1)
     {

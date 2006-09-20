@@ -54,7 +54,7 @@ extern unsigned char* temporary_cyclic_buffer(void);
 extern int idtoa(const struct id *id, char *dst, size_t dstlen);
 #define IDTOA_BUF	512
 extern void escape_metachar(const char *src, char *dst, size_t dstlen);
-extern void remove_metachar(const char *src, char *dst, size_t dstlen);
+extern void remove_metachar(const unsigned char *src, char *dst, size_t dstlen);
 struct end;	/* forward declaration of tag (defined in connections.h) */
 extern void unshare_id_content(struct id *id);
 extern void free_id_content(struct id *id);

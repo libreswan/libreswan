@@ -37,7 +37,7 @@ size_t dstlen;
 		buf[5] = '0' + srclen;
 		ret = 0;
 	} else {
-	    (void) datatot((const char *)src, srclen, 64, buf, NDIG+1);
+	    (void) datatot(src, srclen, 64, buf, NDIG+1);
 		ret = NDIG+1;
 	}
 

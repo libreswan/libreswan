@@ -167,8 +167,8 @@ static int send_whack_msg (struct whack_message *msg, char *ctlbase)
 	 * Pack strings
 	 */
 	wp.msg = msg;
-	wp.str_next = (char *)msg->string;
-	wp.str_roof = (char *)&msg->string[sizeof(msg->string)];
+	wp.str_next = (unsigned char *)msg->string;
+	wp.str_roof = (unsigned char *)&msg->string[sizeof(msg->string)];
 
 	ugh = pack_whack_msg(&wp);
 
@@ -353,7 +353,7 @@ static int starter_whack_add_pubkey (struct starter_config *cfg,
 		    break;
 
 		case PUBKEY_PREEXCHANGED:
-		    err = atobytes(end->rsakey1, 0, keyspace, sizeof(keyspace),
+ 		    err = atobytes((char *)end->rsakey1, 0, keyspace, sizeof(keyspace),
 				   &msg.keyval.len);
 		    if (err) {
 			starter_log(LOG_LEVEL_ERR, "conn %s/%s: rsakey malformed [%s]",
@@ -361,8 +361,8 @@ static int starter_whack_add_pubkey (struct starter_config *cfg,
 			return 1;
 		    }
 		    else {
-			msg.keyval.ptr = keyspace;
-			ret = send_whack_msg(&msg, cfg->ctlbase);
+		      msg.keyval.ptr = (unsigned char *)keyspace;
+			ret = send_whack_msg(&msg);
 		    }
 		}
 	}
@@ -385,7 +385,7 @@ static int starter_whack_add_pubkey (struct starter_config *cfg,
 		    break;
 
 		case PUBKEY_PREEXCHANGED:
-		    err = atobytes(end->rsakey2, 0, keyspace, sizeof(keyspace),
+		  err = atobytes((char *)end->rsakey2, 0, keyspace, sizeof(keyspace),
 				   &msg.keyval.len);
 		    if (err) {
 			starter_log(LOG_LEVEL_ERR, "conn %s/%s: rsakey malformed [%s]",
@@ -393,8 +393,13 @@ static int starter_whack_add_pubkey (struct starter_config *cfg,
 			return 1;
 		    }
 		    else {
+<<<<<<< master
 			msg.keyval.ptr = keyspace;
 			return send_whack_msg(&msg, cfg->ctlbase);
+=======
+		      msg.keyval.ptr = (unsigned char *)keyspace;
+			return send_whack_msg(&msg);
+>>>>>>> calcdh
 		    }
 		}
 	}

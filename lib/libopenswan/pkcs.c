@@ -104,7 +104,7 @@ parse_pkcs1_private_key(chunk_t blob, rsa_privkey_t *key)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, 0, FALSE, DBG_PRIVATE);
 
@@ -144,7 +144,7 @@ parse_pkcs7_signedData(chunk_t blob, int level0, x509cert_t **cert)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -186,7 +186,7 @@ parse_pkcs7_cert(chunk_t blob, x509cert_t **cert)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, 0, FALSE, DBG_RAW);
 

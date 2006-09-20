@@ -1454,18 +1454,20 @@ add_connection(const struct whack_message *wm)
 
 	    DBG_log("%s", topo);
 
+#if 0
 	    /* Make sure that address families can be correctly inferred
 	     * from printed ends.
 	     */
-	    passert(c->addr_family == addrtypeof(&c->spd.this.host_addr)
-		&& c->addr_family == addrtypeof(&c->spd.this.host_nexthop)
-		&& (c->spd.this.has_client? c->tunnel_addr_family : c->addr_family)
-		  == subnettypeof(&c->spd.this.client)
+	    passert(c->addr_family == addrtypeof(&c->spd.this.host_addr));
+	    passert(c->addr_family == addrtypeof(&c->spd.this.host_nexthop));
+	    passert((c->spd.this.has_client? c->tunnel_addr_family : c->addr_family) == subnettypeof(&c->spd.this.client));
+	    
 
-		&& c->addr_family == addrtypeof(&c->spd.that.host_addr)
-		&& c->addr_family == addrtypeof(&c->spd.that.host_nexthop)
-		&& (c->spd.that.has_client? c->tunnel_addr_family : c->addr_family)
-		  == subnettypeof(&c->spd.that.client));
+	    passert(c->addr_family == addrtypeof(&c->spd.that.host_addr));
+	    passert(c->addr_family == addrtypeof(&c->spd.that.host_nexthop));
+	    passert((c->spd.that.has_client? c->tunnel_addr_family : c->addr_family)
+		    == subnettypeof(&c->spd.that.client));
+#endif
 
 	    DBG_log("ike_life: %lus; ipsec_life: %lus; rekey_margin: %lus;"
 		" rekey_fuzz: %lu%%; keyingtries: %lu; policy: %s"

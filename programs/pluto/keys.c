@@ -99,6 +99,42 @@ void free_preshared_secrets(void)
     osw_free_preshared_secrets(&pluto_secrets);
 }
 
+static int print_secrets(struct secret *secret
+			 , struct private_key_stuff *pks UNUSED
+			 , void *uservoid UNUSED)
+{
+    char idb1[IDTOA_BUF];
+    char idb2[IDTOA_BUF];
+    const char *kind;
+    
+    switch(pks->kind) {
+    case PPK_PSK: kind="PSK"; break;
+    case PPK_RSA: kind="RSA"; break;
+    case PPK_PIN: kind="PIN"; break;
+    }
+
+    struct id_list *ids = osw_get_idlist(secret);
+    strcpy(idb1,"%any");
+    strcpy(idb2,"");
+
+    if(ids!=NULL) idtoa(&ids->id, idb1, sizeof(idb1));
+    if(ids->next!=NULL) idtoa(&ids->next->id, idb2, sizeof(idb2));
+
+    whack_log(RC_COMMENT, "    %d: %s %s %s%s", osw_get_secretlineno(secret),
+	      kind, 
+	      idb1, idb2, (ids->next->next != NULL ? " more" :""));
+
+    /* continue loop until end */
+    return 1;
+}
+
+
+void list_psks(void)
+{
+    whack_log(RC_COMMENT, "List of Pre-shared secrets (from %s)", pluto_shared_secrets_file);
+    osw_foreach_secret(pluto_secrets, print_secrets, NULL);
+}
+
 /*
  * compute an RSA signature with PKCS#1 padding
  */

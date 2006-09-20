@@ -708,7 +708,7 @@ err_t osw_process_rsa_keyfile(struct secret **psecrets
 static err_t osw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
 {
     err_t ugh = NULL;
-
+    
     if (*flp->tok == '"' || *flp->tok == '\'')
     {
 	clonetochunk(*psk, flp->tok+1, flp->cur - flp->tok  - 2, "PSK");
@@ -732,6 +732,11 @@ static err_t osw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
 	    (void) shift();
 	}
     }
+
+    DBG(DBG_CONTROL, DBG_log("Processing PSK at line %d: %s"
+			     , flp->lino
+			     , ugh == NULL ? "passed" : ugh));
+
     return ugh;
 }
 
@@ -958,7 +963,7 @@ process_secret(struct secret **psecrets, int verbose,
 	    ugh = osw_process_rsa_keyfile(psecrets, verbose,
 					  &s->pks.u.RSA_private_key,pass);
 	}
-	if(verbose) {
+	if(!ugh && verbose) {
 	    openswan_log("loaded private key for keyid: %s:%s",
 			 enum_name(&ppk_names, s->pks.kind),
 			 s->pks.u.RSA_private_key.pub.keyid);

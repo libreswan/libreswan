@@ -23,7 +23,7 @@ static void convert(const char *src, size_t nreal, int format, char *out);
  */
 size_t				/* true length (with NUL) for success */
 datatot(src, srclen, format, dst, dstlen)
-const char *src;
+const unsigned char *src;
 size_t srclen;
 int format;			/* character indicating what format */
 char *dst;			/* need not be valid if dstlen is 0 */
@@ -34,7 +34,7 @@ size_t dstlen;
 	size_t breakevery;	/* add a _ every this many (0 means don't) */
 	size_t sincebreak;	/* output bytes since last _ */
 	char breakchar;		/* character used to break between groups */
-	char inblock[10];	/* enough for any format */
+	unsigned char inblock[10];	/* enough for any format */
 	char outblock[10];	/* enough for any format */
 	char fake[1];		/* fake output area for dstlen == 0 */
 	size_t needed;		/* return value */
@@ -123,7 +123,7 @@ size_t dstlen;
 			nreal = inblocksize;
 		out = (outblocksize > stop - dst) ? outblock : dst;
 
-		convert(src, nreal, format, out);
+		convert((const char *)src, nreal, format, out);
 		needed += outblocksize;
 		sincebreak += outblocksize;
 		if (dst < stop) {
@@ -209,7 +209,7 @@ char *out;
  */
 size_t				/* true length (with NUL) for success */
 datatoa(src, srclen, format, dst, dstlen)
-const char *src;
+const unsigned char *src;
 size_t srclen;
 int format;			/* character indicating what format */
 char *dst;			/* need not be valid if dstlen is 0 */
@@ -224,7 +224,7 @@ size_t dstlen;
  */
 size_t				/* true length (with NUL) for success */
 bytestoa(src, srclen, format, dst, dstlen)
-const char *src;
+const unsigned char *src;
 size_t srclen;
 int format;			/* character indicating what format */
 char *dst;			/* need not be valid if dstlen is 0 */

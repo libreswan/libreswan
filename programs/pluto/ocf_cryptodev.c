@@ -99,7 +99,7 @@ bn2crparam(const BIGNUM *a, struct crparam *crp)
 {
 	int i, j, k;
 	ssize_t bytes, bits;
-	u_char *b;
+	char *b;
 
 	crp->crp_p = NULL;
 	crp->crp_nbits = 0;

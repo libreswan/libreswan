@@ -280,9 +280,6 @@ include			return INCLUDE;
 #.*		        /* eat comment lines */ {
                         }
 
-[ \t\n]                 /* eat additional white spaces */ {
-                        }
-
 .			yyerror(yytext);
 %%
 

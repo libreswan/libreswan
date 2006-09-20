@@ -63,6 +63,7 @@ struct keyword_enum_values kw_keyexchange_list=
  * Values for authby={rsasig, secret}
  */
 struct keyword_enum_value kw_authby_values[]={
+    { "never",     0},
     { "rsasig",    POLICY_RSASIG},
     { "secret",    POLICY_PSK},
 };
@@ -261,7 +262,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"also",           kv_conn,         kt_appendstring, KSCF_ALSO,NOT_ENUM},
     {"alsoflip",       kv_conn,         kt_string, KSCF_ALSOFLIP,NOT_ENUM},
     {"type",           kv_conn,         kt_enum,   KBF_TYPE,        &kw_type_list},
-    {"authby",         kv_conn|kv_auto, kt_string, KBF_AUTHBY,      &kw_authby_list},
+    {"authby",         kv_conn|kv_auto, kt_enum,   KSCF_AUTHBY,&kw_authby_list},
     {"keyexchange",    kv_conn|kv_auto, kt_enum,   KBF_KEYEXCHANGE, &kw_keyexchange_list},
     {"pfs",            kv_conn|kv_auto, kt_bool,   KBF_PFS,          NOT_ENUM},
     {"keylife",        kv_conn|kv_auto, kt_time,   KBF_SALIFETIME,NOT_ENUM},

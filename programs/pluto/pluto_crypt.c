@@ -196,7 +196,7 @@ void pluto_crypto_helper(int fd, int helpernum)
     while(fread((char*)reqbuf, sizeof(r->pcr_len), 1, io) == 1) {
 	int restlen;
 	int actnum;
-	unsigned char *reqrest = ((char *)reqbuf)+sizeof(r->pcr_len);
+	unsigned char *reqrest = ((unsigned char *)reqbuf)+sizeof(r->pcr_len);
 
 	r = (struct pluto_crypto_req *)reqbuf;
 	restlen = r->pcr_len-sizeof(r->pcr_len);
@@ -562,7 +562,7 @@ void handle_helper_comm(struct pluto_crypto_worker *w)
     }
 
     restlen = r->pcr_len-sizeof(r->pcr_len);
-    inloc = ((char*)reqbuf)+sizeof(r->pcr_len);
+    inloc = ((unsigned char*)reqbuf)+sizeof(r->pcr_len);
 
     while(restlen > 0) {
 	/* okay, got a basic size, read the rest of it */

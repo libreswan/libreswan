@@ -275,8 +275,8 @@ err_t ttodatav(const char *src, size_t srclen, int base,
 #define TTODATAV_IGNORESPACE  (1<<1)  /* ignore spaces in base64 encodings*/
 #define TTODATAV_SPACECOUNTS  0       /* do not ignore spaces in base64   */
 
-size_t datatot(const char *src, size_t srclen, int format, char *buf,
-								size_t buflen);
+size_t datatot(const unsigned char *src, size_t srclen, int format
+	       , char *buf, size_t buflen);
 size_t keyblobtoid(const unsigned char *src, size_t srclen, char *dst,
 								size_t dstlen);
 size_t splitkeytoid(const unsigned char *e, size_t elen, const unsigned char *m,
@@ -428,7 +428,7 @@ atobytes(
 );
 size_t				/* 0 failure, else true size */
 bytestoa(
-	const char *src,
+	const unsigned char *src,
 	size_t srclen,
 	int format,		/* character; 0 means default */
 	char *dst,
@@ -445,7 +445,7 @@ atodata(
 );
 size_t				/* 0 failure, else true size */
 datatoa(
-	const char *src,
+	const unsigned char *src,
 	size_t srclen,
 	int format,		/* character; 0 means default */
 	char *dst,

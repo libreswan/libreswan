@@ -399,7 +399,7 @@ const x509crl_t empty_x509crl = {
 /* coding of X.501 distinguished name */
 
 typedef struct {
-    const u_char *name;
+    const char *name;
     chunk_t oid;
     u_char type;
 } x501rdn_t;
@@ -598,7 +598,7 @@ dn_parse(chunk_t dn, chunk_t *str)
 
     if(dn.ptr == NULL) {
 	const char *e = "(empty)";
-	strncpy(str->ptr, e, str->len);
+	strncpy((char *)str->ptr, e, str->len);
 	update_chunk(str, strlen(e));
 	return NULL;
     }
@@ -617,18 +617,18 @@ dn_parse(chunk_t dn, chunk_t *str)
 	if (first)		/* first OID/value pair */
 	    first = FALSE;
 	else			/* separate OID/value pair by a comma */
-	    update_chunk(str, snprintf(str->ptr,str->len,", "));
+	    update_chunk(str, snprintf((char *)str->ptr,str->len,", "));
 
 	/* print OID */
 	oid_code = known_oid(oid);
 	if (oid_code == OID_UNKNOWN)	/* OID not found in list */
 	    hex_str(oid, str);
 	else
-	    update_chunk(str, snprintf(str->ptr,str->len,"%s",
+	    update_chunk(str, snprintf((char *)str->ptr,str->len,"%s",
 			      oid_names[oid_code].name));
 
 	/* print value */
-	update_chunk(str, snprintf(str->ptr,str->len,"=%.*s",
+	update_chunk(str, snprintf((char *)str->ptr,str->len,"=%.*s",
 			      (int)value.len,value.ptr));
     }
     return NULL;
@@ -669,9 +669,9 @@ void
 hex_str(chunk_t bin, chunk_t *str)
 {
     u_int i;
-    update_chunk(str, snprintf(str->ptr,str->len,"0x"));
+    update_chunk(str, snprintf((char *)str->ptr,str->len,"0x"));
     for (i=0; i < bin.len; i++)
-	update_chunk(str, snprintf(str->ptr,str->len,"%02X",*bin.ptr++));
+	update_chunk(str, snprintf((char *)str->ptr,str->len,"%02X",*bin.ptr++));
 }
 
 
@@ -684,16 +684,15 @@ dntoa(char *dst, size_t dstlen, chunk_t dn)
     err_t ugh = NULL;
     chunk_t str;
 
-    str.ptr = dst;
+    str.ptr = (unsigned char*)dst;
     str.len = dstlen;
     ugh = dn_parse(dn, &str);
 
     if (ugh != NULL) /* error, print DN as hex string */
     {
 	DBG(DBG_PARSING,
-	    DBG_log("error in DN parsing: %s", ugh)
-	)
-	str.ptr = dst;
+	    DBG_log("error in DN parsing: %s", ugh));
+	str.ptr = (unsigned char *)dst;
 	str.len = dstlen;
 	hex_str(dn, &str);
     }
@@ -761,7 +760,7 @@ atodn(char *src, chunk_t *dn)
 	case SEARCH_OID:
 	    if (*src != ' ' && *src != '/' && *src !=  ',')
 	    {
-		oid.ptr = src;
+		oid.ptr = (unsigned char *)src;
 		oid.len = 1;
 		state = READ_OID;
 	    }
@@ -774,7 +773,7 @@ atodn(char *src, chunk_t *dn)
 		for (pos = 0; pos < X501_RDN_ROOF; pos++)
 		{
 		    if (strlen(x501rdns[pos].name) == oid.len &&
-			strncasecmp(x501rdns[pos].name, oid.ptr, oid.len) == 0)
+			strncasecmp(x501rdns[pos].name, (char *)oid.ptr, oid.len) == 0)
 			break; /* found a valid OID */
 		}
 		if (pos == X501_RDN_ROOF)
@@ -793,7 +792,7 @@ atodn(char *src, chunk_t *dn)
 	case SEARCH_NAME:
 	    if (*src != ' ' && *src != '=')
 	    {
-		name.ptr = src;
+		name.ptr = (unsigned char *)src;
 		name.len = 1;
 		whitespace = 0;
 		state = READ_NAME;
@@ -908,12 +907,12 @@ same_dn(chunk_t a, chunk_t b)
 	if (type_a == type_b && (type_a == ASN1_PRINTABLESTRING ||
 	   (type_a == ASN1_IA5STRING && known_oid(oid_a) == OID_PKCS9_EMAIL)))
 	{
-	    if (strncasecmp(value_a.ptr, value_b.ptr, value_b.len) != 0)
+	    if (strncasecmp((char *)value_a.ptr, (char *)value_b.ptr, value_b.len) != 0)
 		return FALSE;
 	}
 	else
 	{
-	    if (strncmp(value_a.ptr, value_b.ptr, value_b.len) != 0)
+	    if (strncmp((char *)value_a.ptr, (char *)value_b.ptr, value_b.len) != 0)
 		return FALSE;
 	}
     }
@@ -974,12 +973,12 @@ match_dn(chunk_t a, chunk_t b, int *wildcards)
 	if (type_a == type_b && (type_a == ASN1_PRINTABLESTRING ||
 	   (type_a == ASN1_IA5STRING && known_oid(oid_a) == OID_PKCS9_EMAIL)))
 	{
-	    if (strncasecmp(value_a.ptr, value_b.ptr, value_b.len) != 0)
+	    if (strncasecmp((char *)value_a.ptr, (char *)value_b.ptr, value_b.len) != 0)
 		return FALSE;
 	}
 	else
 	{
-	    if (strncmp(value_a.ptr, value_b.ptr, value_b.len) != 0)
+	    if (strncmp((char *)value_a.ptr, (char *)value_b.ptr, value_b.len) != 0)
 		return FALSE;
 	}
     }
@@ -1306,7 +1305,7 @@ parse_basicConstraints(chunk_t blob, int level0)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    unsigned int objectID = 0;
     bool isCA = FALSE;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
@@ -1369,7 +1368,7 @@ parse_generalName(chunk_t blob, int level0)
     u_char buf[ASN1_BUF_LEN];
     asn1_ctx_t ctx;
     chunk_t object;
-    int objectID = 0;
+    unsigned int objectID = 0;
     u_int level;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
@@ -1392,7 +1391,7 @@ parse_generalName(chunk_t blob, int level0)
 	    break;
 	case GN_OBJ_DIRECTORY_NAME:
 	    DBG(DBG_PARSING,
-		dntoa(buf, ASN1_BUF_LEN, object);
+		dntoa((char *)buf, ASN1_BUF_LEN, object);
 		DBG_log("  '%s'", buf)
 	    )
 	    valid_gn = TRUE;
@@ -1436,7 +1435,7 @@ parse_generalNames(chunk_t blob, int level0, bool implicit)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    unsigned int objectID = 0;
         
     generalName_t *top_gn = NULL;
 
@@ -1486,7 +1485,7 @@ parse_time(chunk_t blob, int level0)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -1514,7 +1513,7 @@ parse_algorithmIdentifier(chunk_t blob, int level0)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -1541,7 +1540,7 @@ parse_keyIdentifier(chunk_t blob, int level0, bool implicit)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, implicit, DBG_RAW);
 
@@ -1559,7 +1558,7 @@ parse_authorityKeyIdentifier(chunk_t blob, int level0
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -1598,7 +1597,7 @@ parse_authorityInfoAccess(chunk_t blob, int level0, chunk_t *accessLocation)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     u_int accessMethod = OID_UNKNOWN;
 
@@ -1624,11 +1623,10 @@ parse_authorityInfoAccess(chunk_t blob, int level0, chunk_t *accessLocation)
                            return;
 
 			DBG(DBG_PARSING,
-			    DBG_log("  '%.*s'",(int)object.len, object.ptr)
-			)
+			    DBG_log("  '%.*s'",(int)object.len, object.ptr));
 
 			/* only HTTP(S) URIs accepted */
-			if (strncasecmp(object.ptr, "http", 4) == 0)
+		        if (strncasecmp((char *)object.ptr, "http", 4) == 0)
 			{
 			    *accessLocation = object;
 			    return;
@@ -1659,7 +1657,7 @@ parse_extendedKeyUsage(chunk_t blob, int level0)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -1686,7 +1684,7 @@ parse_crlDistributionPoints(chunk_t blob, int level0)
     asn1_ctx_t ctx;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     generalName_t *top_gn = NULL;      /* top of the chained list */
     generalName_t **tail_gn = &top_gn; /* tail of the chained list */
@@ -1728,7 +1726,7 @@ parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
     chunk_t object;
     u_int level;
     u_int extn_oid = 0;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -1762,9 +1760,8 @@ parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 	case X509_OBJ_ISSUER:
 	    cert->issuer = object;
 	    DBG(DBG_PARSING,
-		dntoa(buf, ASN1_BUF_LEN, object);
-		DBG_log("  '%s'",buf)
-	    )
+		dntoa((char *)buf, ASN1_BUF_LEN, object);
+		DBG_log("  '%s'",buf));
 	    break;
 	case X509_OBJ_NOT_BEFORE:
 	    cert->notBefore = parse_time(object, level);
@@ -1775,9 +1772,8 @@ parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 	case X509_OBJ_SUBJECT:
 	    cert->subject = object;
 	    DBG(DBG_PARSING,
-		dntoa(buf, ASN1_BUF_LEN, object);
-		DBG_log("  '%s'",buf)
-	    )
+		dntoa((char *)buf, ASN1_BUF_LEN, object);
+		DBG_log("  '%s'",buf));
 	    break;
 	case X509_OBJ_SUBJECT_PUBLIC_KEY_ALGORITHM:
 	    if (parse_algorithmIdentifier(object, level) == OID_RSA_ENCRYPTION)
@@ -1888,7 +1884,7 @@ parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
     chunk_t userCertificate;
     chunk_t object;
     u_int level;
-    int objectID = 0;
+    u_int objectID = 0;
 
     asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
@@ -1919,9 +1915,8 @@ parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 	case CRL_OBJ_ISSUER:
 	    crl->issuer = object;
 	    DBG(DBG_PARSING,
-		dntoa(buf, ASN1_BUF_LEN, object);
-		DBG_log("  '%s'",buf)
-	    )
+		dntoa((char *)buf, ASN1_BUF_LEN, object);
+		DBG_log("  '%s'",buf));
 	    break;
 	case CRL_OBJ_THIS_UPDATE:
 	    crl->thisUpdate = parse_time(object, level);

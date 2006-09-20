@@ -410,14 +410,14 @@ static int validate_end(struct starter_conn *conn_st
 		char *value = end->strings[KSCF_RSAKEY1];
 		
 		if (end->rsakey1) free(end->rsakey1);
-		end->rsakey1 = xstrdup(value);
+		end->rsakey1 = (unsigned char *)xstrdup(value);
 	    }
 	    if(end->strings[KSCF_RSAKEY2] != NULL)
 	    {
 		char *value = end->strings[KSCF_RSAKEY2];
 		
 		if (end->rsakey2) free(end->rsakey2);
-		end->rsakey2 = xstrdup(value);
+		end->rsakey2 = (unsigned char *)xstrdup(value);
 	    }
 	}
     }
@@ -828,15 +828,15 @@ static int load_conn (struct starter_config *cfg
     KW_POLICY_FLAG(KBF_PFS,  POLICY_PFS);
     
     /* reset authby flags */
-    if(conn->options_set[KBF_AUTHBY]) {
+    if(conn->options_set[KSCF_AUTHBY]) {
 	conn->policy &= ~(POLICY_ID_AUTH_MASK);
-	conn->policy |= conn->options[KBF_AUTHBY];
+	conn->policy |= conn->options[KSCF_AUTHBY];
 
-	starter_log(LOG_LEVEL_INFO,
+	starter_log(LOG_LEVEL_DEBUG,
 		    "%s: setting conn->policy=%08x (%08x)\n",
 		    conn->name,
 		    (unsigned int)conn->policy,
-		    conn->options[KBF_AUTHBY]);
+		    conn->options[KSCF_AUTHBY]);
     }
     
     KW_POLICY_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
@@ -872,16 +872,17 @@ void conn_default (char *n, struct starter_conn *conn,
     /* unlink it */
     memset(&conn->link, 0, sizeof(conn->link));
 
-#define CONN_STR(v) if (v) v=xstrdup(v)
+#define CONN_STR2(v,T) if (v) v=(T)xstrdup((char *)v)
+#define CONN_STR(v) if (v) v=xstrdup((char *)v)
     CONN_STR(conn->left.iface);
     CONN_STR(conn->left.id);
-    CONN_STR(conn->left.rsakey1);
-    CONN_STR(conn->left.rsakey2);
+    CONN_STR2(conn->left.rsakey1, unsigned char * );
+    CONN_STR2(conn->left.rsakey2, unsigned char * );
     CONN_STR(conn->right.iface);
     CONN_STR(conn->right.id);
-    CONN_STR(conn->right.rsakey1);
-    CONN_STR(conn->right.rsakey2);
-
+    CONN_STR2(conn->right.rsakey1, unsigned char *);
+    CONN_STR2(conn->right.rsakey2, unsigned char *);
+    
     for(i=0; i<KSCF_MAX; i++)
     {
 	CONN_STR(conn->left.strings[i]);

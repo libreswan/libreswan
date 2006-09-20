@@ -49,6 +49,7 @@ char usage[] = "Usage: ipsec showhostkey [--ipseckey {gateway}][--left ] [--righ
              "                         [ --rsaid keyid ] [--verbose] [--version]\n";
 
 struct option opts[] = {
+  {"help",	no_argument,	NULL,	'?',},
   {"key",	no_argument,	NULL,	'k',},
   {"left",	no_argument,	NULL,	'l',},
   {"right",	no_argument,	NULL,	'r',},
@@ -119,6 +120,13 @@ int list_key(struct secret *secret,
     return 1;
 }
 
+int dump_key(struct secret *secret,
+	     struct private_key_stuff *pks,
+	     void *uservoid)
+{
+    return list_key(secret, pks, uservoid);
+}
+
 
 int pickbyid(struct secret *secret,
 	     struct private_key_stuff *pks,
@@ -152,7 +160,7 @@ char *get_default_keyid(struct secret *host_secrets)
      
 void dump_keys(struct secret *host_secrets)
 {
-    
+    (void)osw_foreach_secret(host_secrets, dump_key, NULL);
 }
 
 struct secret *pick_key(struct secret *host_secrets
@@ -238,7 +246,7 @@ void show_dnskey(struct secret *s
 
     keyblob = pubkey_to_rfc3110(&pks->u.RSA_private_key.pub, &keybloblen);
 
-    datatot((char *)keyblob, keybloblen, 's', base64, sizeof(base64));
+    datatot(keyblob, keybloblen, 's', base64, sizeof(base64));
 
     switch(rr_type) {
     case ns_t_key:
@@ -292,7 +300,7 @@ void show_confkey(struct secret *s
 
     keyblob = pubkey_to_rfc3110(&pks->u.RSA_private_key.pub, &keybloblen);
 
-    datatot((char *)keyblob, keybloblen, 's', base64, sizeof(base64));
+    datatot(keyblob, keybloblen, 's', base64, sizeof(base64));
 
     printf("\t# rsakey %s\n", 
 	   pks->u.RSA_private_key.pub.keyid);
@@ -337,6 +345,10 @@ int main(int argc, char *argv[])
     
     while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF) {
 	switch (opt) {
+	case '?':
+	    goto usage;
+	    break;
+
 	case 'k':
 	    key_flg=TRUE;
 	    break;
@@ -422,6 +434,10 @@ int main(int argc, char *argv[])
 	+ ipseckey_flg + dhclient_flg) > 1) {
 	fprintf(stderr, "You must specify only one operation\n");
 	goto usage;
+    }
+
+    if(verbose > 2) {
+	set_debugging(DBG_ALL);
     }
 
     /* now load file from indicated location */
