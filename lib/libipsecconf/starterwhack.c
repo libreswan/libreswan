@@ -361,8 +361,8 @@ static int starter_whack_add_pubkey (struct starter_config *cfg,
 			return 1;
 		    }
 		    else {
-		      msg.keyval.ptr = (unsigned char *)keyspace;
-			ret = send_whack_msg(&msg);
+			    msg.keyval.ptr = (unsigned char *)keyspace;
+			    ret = send_whack_msg(&msg, cfg->ctlbase);
 		    }
 		}
 	}
@@ -393,13 +393,8 @@ static int starter_whack_add_pubkey (struct starter_config *cfg,
 			return 1;
 		    }
 		    else {
-<<<<<<< master
-			msg.keyval.ptr = keyspace;
-			return send_whack_msg(&msg, cfg->ctlbase);
-=======
 		      msg.keyval.ptr = (unsigned char *)keyspace;
-			return send_whack_msg(&msg);
->>>>>>> calcdh
+		      return send_whack_msg(&msg, cfg->ctlbase);
 		    }
 		}
 	}
