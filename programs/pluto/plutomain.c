@@ -33,6 +33,7 @@
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
 
 #include <openswan.h>
+#include <crypto/cryptodev.h>
 
 #include <openswan/pfkeyv2.h>
 #include <openswan/pfkey.h>

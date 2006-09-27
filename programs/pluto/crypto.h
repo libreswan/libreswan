@@ -40,6 +40,8 @@ struct oakley_group_desc {
     const char    *str_modulus;
     chunk_t        raw_modulus;
     chunk_t       *rec_modulus;  /* reducent of modulus */
+    chunk_t        raw_modulus_le;  /* little endian for OCF */
+    chunk_t        rec_modulus_le;  /* little endian for OCF */
 };
 
 extern const struct oakley_group_desc unset_group;	/* magic signifier */

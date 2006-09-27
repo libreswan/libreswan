@@ -107,6 +107,8 @@
 #define	CRYPTO_ALG_FLAG_RNG_ENABLE	0x02 /* Has HW RNG for DH/DSA */
 #define	CRYPTO_ALG_FLAG_DSA_SHA		0x04 /* Can do SHA on msg */
 
+#define CRYPTO_NAME_LEN 16
+
 struct session_op {
 	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
 	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
@@ -117,6 +119,7 @@ struct session_op {
 	caddr_t		mackey;
 
   	u_int32_t	ses;		/* returns: session # */ 
+	char            crypto_device_name[CRYPTO_NAME_LEN];  /* name of engine used */
 };
 
 struct crypt_op {
@@ -149,6 +152,7 @@ struct crypt_kop {
 	u_short		crk_oparams;	/* # of output parameters */
 	u_int		crk_pad1;
 	struct crparam	crk_param[CRK_MAXPARAM];
+	char            crypto_device_name[CRYPTO_NAME_LEN];  /* name of engine used */
 };
 #define	CRK_ALGORITM_MIN	0
 #define CRK_MOD_EXP		0
@@ -156,13 +160,26 @@ struct crypt_kop {
 #define CRK_DSA_SIGN		2
 #define CRK_DSA_VERIFY		3
 #define CRK_DH_COMPUTE_KEY	4
-#define CRK_ALGORITHM_MAX	4 /* Keep updated - see below */
+#define CRK_MOD_ADD             5
+#define CRK_ADD                 6
+#define CRK_ALGORITHM_MAX	6 /* Keep updated - see below */
 
 #define CRF_MOD_EXP		(1 << CRK_MOD_EXP)
 #define CRF_MOD_EXP_CRT		(1 << CRK_MOD_EXP_CRT)
 #define CRF_DSA_SIGN		(1 << CRK_DSA_SIGN)
 #define CRF_DSA_VERIFY		(1 << CRK_DSA_VERIFY)
 #define CRF_DH_COMPUTE_KEY	(1 << CRK_DH_COMPUTE_KEY)
+#define CRF_MOD_ADD             (1 << CRK_MOD_ADD)
+#define CRF_ADD                 (1 << CRK_ADD)
+
+/* parameters for MOD_EXP operation */
+#define	CRK_MOD_PARAM_BASE	0
+#define	CRK_MOD_PARAM_EXP	1
+#define	CRK_MOD_PARAM_MOD	2
+#define	CRK_MOD_PARAM_RECIP	3
+
+#define CRK_MOD_PARAM_RES       0  /* relative to oparams */
+
 
 /*
  * done against open of /dev/crypto, to get a cloned descriptor.
@@ -177,6 +194,7 @@ struct crypt_kop {
 #define CIOCKEY		_IOWR('c', 104, struct crypt_kop)
 
 #define CIOCASYMFEAT	_IOR('c', 105, u_int32_t)
+
 
 struct cryptotstat {
 	struct timespec	acc;		/* total accumulated time */
@@ -280,6 +298,7 @@ struct cryptop {
 	int (*crp_callback)(struct cryptop *); /* Callback function */
 
 	caddr_t		crp_mac;
+	int             crp_maclen;     /* size of buffer above */
 };
 
 #define CRYPTO_BUF_CONTIG	0x0
@@ -294,6 +313,7 @@ struct cryptop {
  */
 #define	CRYPTO_HINT_MORE	0x1	/* more ops coming shortly */
 
+/* note crypt_kop is IOCTL interface, this is internal version */
 struct cryptkop {
 	struct list_head krp_list;
 	wait_queue_head_t krp_waitq;
@@ -314,6 +334,8 @@ struct cryptkop {
 /* Crypto capabilities structure */
 struct cryptocap {
 	u_int32_t	cc_sessions;
+	u_int32_t       cc_hid;
+	char            cc_name[CRYPTO_NAME_LEN];
 
 	/*
 	 * Largest possible operator length (in bits) for each type of
@@ -351,9 +373,18 @@ struct cryptocap {
 #define	CRYPTO_SESID2CAPS(_sid)	(((_sid) >> 56) & 0xff)
 #define	CRYPTO_SESID2LID(_sid)	(((u_int32_t) (_sid)) & 0xffffffff)
 
-extern	int crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard);
+enum cryptodev_selection {
+	CRYPTO_ANYDEVICE=-1,
+	CRYPTO_ANYHARDWARE=-2,
+	CRYPTO_ANYSOFTWARE=-3,
+	CRYPTO_SOFTWARE=0,
+	/* otherwise, specific driver */
+};
+
+extern	int crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selection desired_device);
 extern	int crypto_freesession(u_int64_t sid);
-extern	int32_t crypto_get_driverid(u_int32_t flags);
+extern	int32_t crypto_get_driverid(u_int32_t flags, char *drivername);
+extern  void crypto_devicename(u_int64_t sid, char devicename[16]);
 extern	int crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	    u_int32_t flags,
 	    int (*newses)(void*, u_int32_t*, struct cryptoini*),
@@ -377,9 +408,11 @@ extern	int crypto_getfeat(int *);
 extern	void crypto_freereq(struct cryptop *crp);
 extern	struct cryptop *crypto_getreq(int num);
 
+#if 0
 extern	int crypto_usercrypto;		/* userland may do crypto requests */
 extern	int crypto_userasymcrypto;	/* userland may do asym crypto reqs */
 extern	int crypto_devallowsoft;	/* only use hardware crypto */
+#endif
 
 /*
  * random number support,  crypto_unregister_all will unregister

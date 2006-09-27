@@ -191,11 +191,14 @@ extern void finish_dh_secret(struct state *st,
 extern void calc_dh_iv(struct pluto_crypto_req *r);
 extern void calc_dh(struct pluto_crypto_req *r);
 
-typedef void (*calc_dh_shared_t)(chunk_t *shared, const chunk_t g
-				 , const chunk_t *secchunk
-				 , const struct oakley_group_desc *group);
 
-extern calc_dh_shared_t calc_dh_shared;
+extern void calc_dh_shared_gmp(chunk_t *shared, const chunk_t g
+			       , const chunk_t *secchunk
+			       , const struct oakley_group_desc *group);
+
+extern void calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
+			       , const chunk_t *secchunk
+			       , const struct oakley_group_desc *group);
 
 #ifdef VULCAN_PK
 extern void calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g

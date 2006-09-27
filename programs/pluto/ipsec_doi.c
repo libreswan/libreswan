@@ -1440,12 +1440,12 @@ try_RSA_signature(const u_char hash_val[MAX_DIGEST_LEN], size_t hash_len
     {
 	chunk_t temp_s;
 	mpz_t c;
-#ifdef HAVE_OCF_AND_OPENSSL
+#ifdef HAVE_OLD_OCF_AND_OPENSSL
 	BIGNUM r0;
 #endif
 
 	n_to_mpz(c, sig_val, sig_len);
-#ifdef HAVE_OCF_AND_OPENSSL
+#ifdef HAVE_OLD_OCF_AND_OPENSSL
 	BN_init(&r0);
 	cryptodev.mod_exp(&r0, c, &k->e, &k->n);
 	bn2mp(&r0, (MP_INT *) c);
@@ -1456,7 +1456,7 @@ try_RSA_signature(const u_char hash_val[MAX_DIGEST_LEN], size_t hash_len
 	temp_s = mpz_to_n(c, sig_len);	/* back to octets */
 	memcpy(s, temp_s.ptr, sig_len);
 	pfree(temp_s.ptr);
-#ifndef HAVE_OCF_AND_OPENSSL
+#ifndef HAVE_OLD_OCF_AND_OPENSSL
 	mpz_clear(c);
 #endif
     }

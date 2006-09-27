@@ -29,6 +29,7 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <crypto/cryptodev.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
@@ -49,6 +50,7 @@
 #include "id.h"
 #include "secrets.h"
 #include "keys.h"
+#include "ocf_cryptodev.h"
 
 #ifdef VULCAN_PK
 #include "dev/hifn/vulcanpk_funcs.h"
@@ -58,7 +60,7 @@
  * We make the leap that the length should be that of the group
  * (see quoted passage at start of ACCEPT_KE).
  */
-static void
+void
 calc_dh_shared_gmp(chunk_t *shared, const chunk_t g
 		   , const chunk_t *secchunk
 		   , const struct oakley_group_desc *group)
@@ -119,11 +121,89 @@ calc_dh_shared_gmp(chunk_t *shared, const chunk_t g
     DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret:\n", *shared);
 }
 
-#ifdef VULCAN_PK
-#include "vulcan/crypto_dh_vulcanpk.c"
-#endif
+/*
+ * Set up the modular exponentiation operation.
+ */
+void
+calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
+		   , const chunk_t *secchunk
+		   , const struct oakley_group_desc *group)
+{
+	struct crypt_kop kop;
+	struct timeval tv0, tv1;
+	chunk_t gle, secle;
+	unsigned char *result;
+	unsigned long tv_diff;
+	int ret = 1;
 
-calc_dh_shared_t calc_dh_shared = calc_dh_shared_gmp;
+	/* Currently, we know we can do mod exp iff we can do any
+	 * asymmetric operations at all.
+	 */
+	if (cryptodev_asymfeat == 0) {
+	    calc_dh_shared_gmp(shared, g, secchunk, group);
+	    return;
+	}
+
+	gettimeofday(&tv0, NULL);
+
+	/* mod exp calculates A^B mod M, (g^x)^y mod M */
+	memset(&kop, 0, sizeof kop);
+	kop.crk_op = CRK_MOD_EXP;
+
+	/* point to peer's calculated (g^x) */
+
+	clonetochunk(gle, g.ptr, g.len, "gle");
+	chunk2le(gle);
+	kop.crk_param[CRK_MOD_PARAM_BASE].crp_p = (caddr_t)gle.ptr;
+	kop.crk_param[CRK_MOD_PARAM_BASE].crp_nbits = gle.len*8;
+
+	/* point to our secret value, ^y */
+	clonetochunk(secle, secchunk->ptr, secchunk->len, "secle");
+	chunk2le(secle);
+	kop.crk_param[CRK_MOD_PARAM_EXP].crp_p = (caddr_t)secle.ptr;
+	kop.crk_param[CRK_MOD_PARAM_EXP].crp_nbits = secle.len*8;
+
+	/* point to our secret value, ^y */
+	/* M = modulus */
+	kop.crk_param[CRK_MOD_PARAM_MOD].crp_p = (caddr_t)group->raw_modulus_le.ptr;
+	kop.crk_param[CRK_MOD_PARAM_MOD].crp_nbits = group->raw_modulus_le.len;
+	
+	kop.crk_param[CRK_MOD_PARAM_RECIP].crp_p = (caddr_t)group->rec_modulus_le.ptr;
+	kop.crk_param[CRK_MOD_PARAM_RECIP].crp_nbits=group->rec_modulus_le.len;
+
+	kop.crk_iparams = 4;
+	
+	result = alloc_bytes(group->bytes, "DH result");
+	kop.crk_param[kop.crk_iparams].crp_p = (caddr_t)result;
+	kop.crk_param[kop.crk_iparams].crp_nbits = group->bytes * 8;
+	setchunk(*shared, result, group->bytes);
+
+	kop.crk_oparams = 1;
+
+	ret = cryptodev_asym(&kop);
+	
+	gettimeofday(&tv1, NULL);
+	tv_diff=(tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
+	DBG(DBG_CRYPT, 
+	    DBG_log("calc_dh_shared(): time elapsed (%s): %ld usec"
+		    , enum_show(&oakley_group_names, group->group)
+		    , tv_diff);
+	    );
+	/* if took more than 200 msec ... */
+	if (tv_diff > 200000) {
+	    loglog(RC_LOG_SERIOUS, "WARNING: calc_dh_shared(): for %s took "
+		   "%ld usec"
+		   , enum_show(&oakley_group_names, group->group)
+		   , tv_diff);
+	}
+	
+	DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret:\n", *shared);
+	
+//err:
+	freeanychunk(gle);
+	freeanychunk(secle);
+	return;
+}
 
 /* SKEYID for preshared keys.
  * See draft-ietf-ipsec-ike-01.txt 4.1
@@ -373,7 +453,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
       setchunk_fromwire(g, &dhq.gr, &dhq);
     }
 
-    (*calc_dh_shared)(&shared, g, &sec, group);
+    (*cryptodev.calc_dh_shared)(&shared, g, &sec, group);
     
     memset(&skeyid, 0, sizeof(skeyid));
     memset(&skeyid_d, 0, sizeof(skeyid_d));
@@ -448,7 +528,7 @@ void calc_dh(struct pluto_crypto_req *r)
     } else {
       setchunk_fromwire(g, &dhq.gr, &dhq);
     }
-    (*calc_dh_shared)(&shared, g, &sec, group);
+    (*cryptodev.calc_dh_shared)(&shared, g, &sec, group);
 
     /* now translate it back to wire chunks, freeing the chunks */
     setwirechunk_fromchunk(skr->shared,   shared,   skr);

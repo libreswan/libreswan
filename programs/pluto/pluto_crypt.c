@@ -803,13 +803,14 @@ void init_crypto_helpers(int nhelpers)
     pc_workers_cnt = 0;
     pcw_id = 1;
 
+    cryptodev.calc_dh_shared = calc_dh_shared_gmp;
 #ifdef VULCAN_PK
     if(please_use_vulcan_hack) {
 	int vfd;
 
 	vfd = open("/dev/vulcanpk", O_RDWR);
 	if(vfd != -1) {
-	    calc_dh_shared = calc_dh_shared_vulcanpk;
+	    cryptodev.calc_dh_shared = calc_dh_shared_vulcanpk;
 	    using_vulcan_hack = TRUE;
 	    openswan_log("Enabling direct Vulcan Public Key interface\n");
 	    close(vfd);

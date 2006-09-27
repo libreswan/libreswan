@@ -32,6 +32,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
+#include <crypto/cryptodev.h>
 
 #include <glob.h>
 #ifndef GLOB_ABORTED
@@ -143,14 +144,14 @@ sign_hash(const struct RSA_private_key *k, const u_char *hash_val, size_t hash_l
     , u_char *sig_val, size_t sig_len)
 {
     chunk_t ch;
-#ifdef HAVE_OCF_AND_OPENSSL
+#ifdef HAVE_OLD_OCF_AND_OPENSSL
     mpz_t t1;
 #else
     mpz_t t1, t2;
 #endif
     size_t padlen;
     u_char *p = sig_val;
-#ifdef HAVE_OCF_AND_OPENSSL
+#ifdef HAVE_OLD_OCF_AND_OPENSSL
     BIGNUM r0;
 #endif
 
@@ -175,7 +176,7 @@ sign_hash(const struct RSA_private_key *k, const u_char *hash_val, size_t hash_l
      * There are two methods, depending on the form of the private key.
      * We use the one based on the Chinese Remainder Theorem.
      */
-#ifdef HAVE_OCF_AND_OPENSSL
+#ifdef HAVE_OLD_OCF_AND_OPENSSL
     BN_init(&r0);
     cryptodev.rsa_mod_exp_crt(k, &t1, &r0);
     bn2mp(&r0, (MP_INT *) &t1);
@@ -199,7 +200,7 @@ sign_hash(const struct RSA_private_key *k, const u_char *hash_val, size_t hash_l
     ch = mpz_to_n(t1, sig_len);
     memcpy(sig_val, ch.ptr, sig_len);
     pfree(ch.ptr);
-#ifndef HAVE_OCF_AND_OPENSSL
+#ifndef HAVE_OLD_OCF_AND_OPENSSL
 
     mpz_clear(t1);
     mpz_clear(t2);

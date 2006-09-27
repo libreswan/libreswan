@@ -22,6 +22,7 @@
 #include <openswan.h>
 #define HEADER_DES_LOCL_H   /* stupid trick to force prototype decl in <des.h> */
 #include <crypto/des.h>
+#include <crypto/cryptodev.h>
 
 #include <errno.h>
 
@@ -34,6 +35,7 @@
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "ocf_cryptodev.h"
 
 #include "tpm/tpm.h"
 
@@ -184,6 +186,13 @@ init_crypto(void)
 
 	/* convert to raw byte string for use in hardware offload interface */
 	ogd->raw_modulus = mpz_to_n2(ogd->modulus);
+	clonetochunk(ogd->raw_modulus_le,
+		     ogd->raw_modulus.ptr, ogd->raw_modulus.len, "mod_le");
+	chunk2le(ogd->raw_modulus_le);
+
+	clonetochunk(ogd->rec_modulus_le,
+		     ogd->rec_modulus->ptr, ogd->rec_modulus->len, "rec_le");
+	chunk2le(ogd->rec_modulus_le);
     }
 
 #ifdef IKE_ALG

@@ -395,7 +395,7 @@ USE_NOCRYPTO?=false
 USE_EXTRACRYPTO?=true
 
 # do PK operations with a memory mapped hifn 7956
-USE_VULCANHACK?=true
+USE_VULCANHACK?=false
 
 # Do we have pthreads available?  Only yes if you need it for XAUTH+PAM,
 # or if you need it for CRL fetching.

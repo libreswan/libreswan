@@ -33,6 +33,8 @@
  *
  */
 
+#include <crypto/cryptodev.h>
+
 /* yuck */
 #define NO_ASN1_TYPEDEFS 1
 #include <openssl/bn.h>
@@ -56,13 +58,27 @@
 #undef ASN1_BOOLEAN
 #undef ASN1_NULL
 
+struct oakley_group_desc;
+typedef void (*calc_dh_shared_t)(chunk_t *shared, const chunk_t g
+				 , const chunk_t *secchunk
+				 , const struct oakley_group_desc *group);
+
 struct cryptodev_meth {
+	calc_dh_shared_t calc_dh_shared;
+#if 0
 	int (*rsa_mod_exp_crt)(const struct RSA_private_key *k, mpz_t *t1, BIGNUM *r0);
 	int (*mod_exp)(BIGNUM *r0, MP_INT *mp_g
 		       , const MP_INT *secret, const MP_INT *modulus);
+#endif
 };
 
 extern struct cryptodev_meth cryptodev;
 
 extern void load_cryptodev(void);
 extern int bn2mp(const BIGNUM *a, MP_INT *mp);
+
+/* reverse order of bytes in the number */
+extern void chunk2le(chunk_t c);
+extern int cryptodev_asym(struct crypt_kop *kop);
+
+extern u_int32_t cryptodev_asymfeat;

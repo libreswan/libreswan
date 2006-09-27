@@ -66,7 +66,7 @@ void calc_ke(struct pluto_crypto_req *r)
     const struct oakley_group_desc *group;
     chunk_t gi;
     struct pcr_kenonce *kn = &r->pcr_d.kn;
-#ifdef HAVE_OCF_AND_OPENSSL
+#ifdef HAVE_OLD_OCF_AND_OPENSSL
     BIGNUM r0;
 #endif
     
@@ -81,7 +81,7 @@ void calc_ke(struct pluto_crypto_req *r)
     n_to_mpz(&secret, wire_chunk_ptr(kn, &(kn->secret)), LOCALSECRETSIZE);
     
     mpz_init(&mp_g);
-#ifdef HAVE_OCF_AND_OPENSSL
+#ifdef HAVE_OLD_OCF_AND_OPENSSL
     BN_init(&r0);
     cryptodev.mod_exp(&r0, &groupgenerator, &secret, group->modulus);
     bn2mp(&r0, (MP_INT *) &mp_g);
@@ -106,7 +106,7 @@ void calc_ke(struct pluto_crypto_req *r)
 	DBG_dump_chunk("Public DH value sent:\n", gi));
 
     /* clean up after ourselves */
-#ifdef HAVE_OCF_AND_OPENSSL
+#ifdef HAVE_OLD_OCF_AND_OPENSSL
     BN_free(&r0);
 #else
     mpz_clear(&mp_g);
