@@ -880,15 +880,9 @@ void conn_default (char *n, struct starter_conn *conn,
     CONN_STR2(conn->left.rsakey2, unsigned char * );
     CONN_STR(conn->right.iface);
     CONN_STR(conn->right.id);
-<<<<<<< master
-    CONN_STR(conn->right.rsakey1);
-    CONN_STR(conn->right.rsakey2);
-
-=======
     CONN_STR2(conn->right.rsakey1, unsigned char *);
     CONN_STR2(conn->right.rsakey2, unsigned char *);
     
->>>>>>> calcdh
     for(i=0; i<KSCF_MAX; i++)
     {
 	CONN_STR(conn->left.strings[i]);
