@@ -68,9 +68,9 @@ int getoldkey(char *filename);
 void rsasigkey(int nbits, int useoldkey);
 void initprime(mpz_t var, int nbits, int eval);
 void initrandom(mpz_t var, int nbits);
-void getrandom(size_t nbytes, char *buf);
-char *bundle(int e, mpz_t n, size_t *sizep);
-char *conv(char *bits, size_t nbytes, int format);
+void getrandom(size_t nbytes, unsigned char *buf);
+unsigned char *bundle(int e, mpz_t n, size_t *sizep);
+char *conv(unsigned char *bits, size_t nbytes, int format);
 char *hexout(mpz_t var);
 void report(char *msg);
 
@@ -289,7 +289,7 @@ int useoldkey;			/* take primes from old key? */
 	mpz_t exp1;
 	mpz_t exp2;
 	mpz_t coeff;
-	char *bundp;
+	unsigned char *bundp;
 	size_t bs;
 	int success;
 	time_t now = time((time_t *)NULL);
@@ -418,7 +418,7 @@ mpz_t var;
 int nbits;			/* known to be a multiple of CHAR_BIT */
 {
 	size_t nbytes = (size_t)(nbits / CHAR_BIT);
-	static char bitbuf[MAXBITS/CHAR_BIT];
+	static unsigned char bitbuf[MAXBITS/CHAR_BIT];
 	static char hexbuf[2 + MAXBITS/4 + 1];
 	size_t hsize = sizeof(hexbuf);
 
@@ -442,7 +442,7 @@ int nbits;			/* known to be a multiple of CHAR_BIT */
 void
 getrandom(nbytes, buf)
 size_t nbytes;
-char *buf;			/* known to be big enough */
+unsigned char *buf;			/* known to be big enough */
 {
 	size_t ndone;
 	int dev;
@@ -505,21 +505,21 @@ mpz_t var;
  - bundle - bundle e and n into an RFC2537-format lump
  * Note, calls hexout.
  */
-char *				/* pointer to static buffer (ick) */
+unsigned char *				/* pointer to static buffer (ick) */
 bundle(e, n, sizep)
 int e;
 mpz_t n;
 size_t *sizep;
 {
 	char *hexp = hexout(n);
-	static char bundbuf[2 + MAXBITS/8];
+	static unsigned char bundbuf[2 + MAXBITS/8];
 	const char *er;
 	size_t size;
 
 	assert(e <= 255);
 	bundbuf[0] = 1;
 	bundbuf[1] = e;
-	er = ttodata(hexp, 0, 0, bundbuf+2, sizeof(bundbuf)-2, &size);
+	er = ttodata(hexp, 0, 0, (char *)bundbuf+2, sizeof(bundbuf)-2, &size);
 	if (er != NULL) {
 		fprintf(stderr, "%s: can't-happen bundle convert error `%s'\n",
 								me, er);
@@ -540,7 +540,7 @@ size_t *sizep;
  */
 char *				/* pointer to static buffer (ick) */
 conv(bits, nbytes, format)
-char *bits;
+unsigned char *bits;
 size_t nbytes;
 int format;			/* datatot() code */
 {

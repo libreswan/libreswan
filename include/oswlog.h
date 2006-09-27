@@ -50,6 +50,8 @@ extern void openswan_exit_log(const char *message, ...) PRINTF_LIKE(1);
 extern void exit_tool(int);
 extern void tool_init_log(void);
 extern void tool_close_log(void);
+extern void set_debugging(lset_t deb);
+
 
 #else /*!DEBUG*/
 

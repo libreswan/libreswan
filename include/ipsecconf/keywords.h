@@ -22,6 +22,11 @@
 #include "constants.h"
 #endif
 
+
+/*
+ * these are global configuration parameters, and appear in
+ * "config setup" stanza.
+ */
 enum keyword_string_config_field {
     KSF_INTERFACES = 0,
     KSF_PREPLUTO   = 3,
@@ -58,7 +63,6 @@ enum keyword_numeric_config_field {
     KBF_RPFILTER     = 12,
     KBF_CRLCHECKINTERVAL = 13,
     KBF_TYPE       = 14,
-    KBF_AUTHBY     = 15,
     KBF_KEYEXCHANGE= 16,
     KBF_AUTO       = 17,
     KBF_PFS        = 18,
@@ -86,6 +90,9 @@ enum keyword_numeric_config_field {
 };
 
 /*
+ * these are global configuration parameters, and appear in
+ * normal conn sections, some of them come in left/right variants.
+ *
  * NOTE: loose_enum values have both string and integer types,
  * and MUST have the same index for each.
  *
@@ -113,7 +120,8 @@ enum keyword_string_conn_field {
     KSCF_SOURCEIP     = 16,
     KSCF_ALSO         = 17,
     KSCF_ALSOFLIP     = 18,                     /* XXX still to handle */
-    KSCF_MAX          = 19
+    KSCF_AUTHBY       = 19,
+    KSCF_MAX          = 20
 };
 
 

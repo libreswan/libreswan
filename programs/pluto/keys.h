@@ -41,6 +41,7 @@ extern void add_pgp_public_key(pgpcert_t *cert, time_t until
     , enum dns_auth_level dns_auth_level);
 extern void remove_x509_public_key(/*const*/ x509cert_t *cert);
 extern void list_public_keys(bool utc);
+extern void list_psks(void);
 
 struct gw_info;	/* forward declaration of tag (defined in dnskey.h) */
 extern void transfer_to_public_keys(struct gw_info *gateways_from_dns
@@ -51,6 +52,7 @@ extern void transfer_to_public_keys(struct gw_info *gateways_from_dns
 
 extern const chunk_t *get_preshared_secret(const struct connection *c);
 
+extern const char *pluto_shared_secrets_file;
 extern void load_preshared_secrets(int whackfd);
 extern void free_preshared_secrets(void);
 

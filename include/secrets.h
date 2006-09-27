@@ -26,8 +26,6 @@
 struct state;	 /* forward declaration */
 struct secret;  /* opaque definition, private to secrets.c */
 
-const char *shared_secrets_file;
-
 struct RSA_public_key
 {
     char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */

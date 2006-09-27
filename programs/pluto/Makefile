@@ -259,9 +259,9 @@ checkprograms:
 
 # Gather dependencies caused by explicit #includes within .c files
 depend:
-	@(ls $(DISTSRC) | grep '\.c' | xargs gcc -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ) | sed -e 's,${OPENSWANSRCDIR},../..,g' >Makefile.depend
+	@(ls $(DISTSRC) | grep '\.c' | xargs gcc -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ) | sed -e 's,${OPENSWANSRCDIR},../..,g' >Makefile.depend.${OSDEP}
 
--include ${srcdir}Makefile.depend
+-include ${srcdir}Makefile.depend.${OSDEP}
 
 # DO NOT DELETE
 

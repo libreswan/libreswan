@@ -46,7 +46,7 @@ present(const char* pattern, chunk_t* ch)
 {
     u_int pattern_len = strlen(pattern);
 
-    if (ch->len >= pattern_len && strncmp(ch->ptr, pattern, pattern_len) == 0)
+    if (ch->len >= pattern_len && strncmp((char *)ch->ptr, pattern, pattern_len) == 0)
     {
 	ch->ptr += pattern_len;
 	ch->len -= pattern_len;
@@ -62,7 +62,7 @@ static bool
 match(const char *pattern, const chunk_t *ch)
 {
     return ch->len == strlen(pattern) &&
-	   strncmp(pattern, ch->ptr, ch->len) == 0;
+      strncmp(pattern, (char *)ch->ptr, ch->len) == 0;
 }
 
 /*
@@ -195,7 +195,7 @@ pem_decrypt_3des(chunk_t *blob, chunk_t *iv, const char *passphrase)
 
     /* Convert passphrase to 3des key */
     osMD5Init(&context);
-    osMD5Update(&context, passphrase, strlen(passphrase));
+    osMD5Update(&context, (const unsigned char *)passphrase, strlen(passphrase));
     osMD5Update(&context, iv->ptr, iv->len);
     osMD5Final(digest, &context);
 
@@ -203,7 +203,7 @@ pem_decrypt_3des(chunk_t *blob, chunk_t *iv, const char *passphrase)
 
     osMD5Init(&context);
     osMD5Update(&context, digest, MD5_DIGEST_SIZE);
-    osMD5Update(&context, passphrase, strlen(passphrase));
+    osMD5Update(&context, (const unsigned char *)passphrase, strlen(passphrase));
     osMD5Update(&context, iv->ptr, iv->len);
     osMD5Final(digest, &context);
 
@@ -402,8 +402,8 @@ pemtobin(chunk_t *blob, prompt_pass_t *pass, const char* label, bool *pgp)
 			return "we support DES-EDE3-CBC encrypted files, only";
 
 		    eat_whitespace(&value);
-		    ugh = ttodata(value.ptr, value.len, 16,
-		    		  iv.ptr, MAX_DIGEST_LEN, &len);
+		    ugh = ttodata((char *)value.ptr, value.len, 16,
+		    		  (char *)iv.ptr, MAX_DIGEST_LEN, &len);
 		    if (ugh)
 			return "error in IV";
 
@@ -432,8 +432,8 @@ pemtobin(chunk_t *blob, prompt_pass_t *pass, const char* label, bool *pgp)
 		    continue;
 		}
 
-		ugh = ttodata(data.ptr, data.len, 64,
-			      dst.ptr, blob->len - dst.len, &len);
+		ugh = ttodata((char *)data.ptr, data.len, 64,
+			      (char *)dst.ptr, blob->len - dst.len, &len);
 		if (ugh)
 		{
 		    DBG(DBG_PARSING,

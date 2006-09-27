@@ -139,7 +139,7 @@ err_t ipsec_policy_sendrecv(unsigned char *buf,
 
 err_t ipsec_policy_lookup(int fd, struct ipsec_policy_cmd_query *result)
 {
-  int len;
+  unsigned int len;
 
   /* clear it out */
   memset(result, 0, sizeof(*result));

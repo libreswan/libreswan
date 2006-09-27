@@ -24,7 +24,8 @@
 
 #define streqn(a,b) (a)?((b)?(strcmp(a,b)):(-1)):(b!=NULL)
 
-#define STRCMP(obj) if (streqn(c1->obj,c2->obj)) return -1
+#define STRCMP(obj)  if (streqn(c1->obj,c2->obj)) return -1
+#define STRCMPU(obj) if (streqn((char *)c1->obj, (char *)c2->obj)) return -1
 #define VARCMP(obj) if (c1->obj!=c2->obj) return -1
 #define MEMCMP(obj) if (memcmp(&c1->obj,&c2->obj,sizeof(c1->obj))) return -1
 #define ADDCMP(obj) if (addrcmp(&c1->obj,&c2->obj)) return -1
@@ -40,8 +41,8 @@ static int starter_cmp_end (struct starter_end *c1, struct starter_end *c2)
 	SUBCMP(subnet);
 	STRCMP(iface);
 	STRCMP(id);
-	STRCMP(rsakey1);
-	STRCMP(rsakey2);
+	STRCMPU(rsakey1);
+	STRCMPU(rsakey2);
 	STRCMP(strings[KSCF_UPDOWN]);
 	STRCMP(cert);
 	VARCMP(has_client_wildcard);

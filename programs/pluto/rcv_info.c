@@ -276,7 +276,7 @@ void
 info_handle(int infoctlfd)
 {
 	struct sockaddr_un info_client_addr;
-	int info_addr_len = sizeof(info_client_addr);
+	unsigned int info_addr_len = sizeof(info_client_addr);
 	/* Note: actual value in n should fit in int.  To print, cast to int. */
 	int infofd;
 	err_t err;

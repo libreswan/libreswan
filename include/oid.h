@@ -9,7 +9,7 @@ typedef struct {
     u_char octet;
     u_int  next;
     u_int  down;
-    const u_char *name;
+    const char *name;
 } oid_t;
 
 extern const oid_t oid_names[];

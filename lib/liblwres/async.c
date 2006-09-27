@@ -277,8 +277,8 @@ lwres_getrrsetbyname_read(struct lwres_async_state **plas,
 			REQUIRE(hare != (volatile struct lwres_async_state *)0xa5a5a5a5);
 			REQUIRE(hare != (volatile struct lwres_async_state *)0x5a5a5a5a);
 
-			hare=hare->next;
 			las_prev=&hare->next;
+			hare=hare->next;
 			swap=!swap;
 			if(swap) {
 				tortoise=tortoise->next;

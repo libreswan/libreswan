@@ -6,4 +6,6 @@ east:~#
  ipsec setup start
 ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
+ ipsec auto --add road--eastnet-psk
+east:~#
  

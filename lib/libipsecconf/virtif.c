@@ -230,7 +230,7 @@ void starter_ifaces_clear (void)
 int starter_ifaces_load (char **ifaces, unsigned int omtu, int nat_t)
 {
 	char *tmp_phys, *phys;
-	int n;
+	unsigned int n;
 	char **i;
 	int sock;
 	int j, found;

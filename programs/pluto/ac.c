@@ -836,13 +836,13 @@ list_acerts(bool utc)
 	}
 	if (ac->holderSerial.ptr != NULL)
 	{
-	    datatot((char *)ac->holderSerial.ptr, ac->holderSerial.len, ':'
+	    datatot(ac->holderSerial.ptr, ac->holderSerial.len, ':'
 		, buf, BUF_LEN);
 	    whack_log(RC_COMMENT, "       hserial:  %s", buf);
 	}
 	dntoa(buf, BUF_LEN, ac->issuerName);
 	whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
-	datatot((char *)ac->serialNumber.ptr, ac->serialNumber.len, ':'
+	datatot(ac->serialNumber.ptr, ac->serialNumber.len, ':'
 		, buf, BUF_LEN);
 	whack_log(RC_COMMENT, "       serial:   %s", buf);
 

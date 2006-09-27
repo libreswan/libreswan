@@ -1005,7 +1005,7 @@ int do_md5_authentication(void *varg)
 	    cp = (char *)arg->password.ptr;
 #else
 	    /* keep the passwords using whatever utilities we have */
-	    cp = crypt( arg->password.ptr, szpass);
+	    cp = crypt( (char *)arg->password.ptr, szpass);
 #endif	    
 
 	    if(DBGP(DBG_CRYPT))
