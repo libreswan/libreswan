@@ -384,7 +384,9 @@ void load_cryptodev(void)
 		cryptodev.mod_exp = cryptodev_mod_exp;
 		cryptodev.rsa_mod_exp_crt = cryptodev_rsa_mod_exp_nocrt;
 #endif
+#ifndef VULCAN_PK
 		cryptodev.calc_dh_shared = calc_dh_shared_ocf;
+#endif
 		openswan_log("Performing modular exponentiation acceleration in hardware");
 	}
 }

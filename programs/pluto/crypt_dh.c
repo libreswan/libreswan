@@ -121,8 +121,12 @@ calc_dh_shared_gmp(chunk_t *shared, const chunk_t g
     DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret:\n", *shared);
 }
 
+#ifdef VULCAN_PK
+#include "vulcan/crypto_dh_vulcanpk.c"
+#else
+
 /*
- * Set up the modular exponentiation operation.
+ * Set up the modular exponentiation operation via OCF interface
  */
 void
 calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
@@ -204,6 +208,7 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 	freeanychunk(secle);
 	return;
 }
+#endif
 
 /* SKEYID for preshared keys.
  * See draft-ietf-ipsec-ike-01.txt 4.1

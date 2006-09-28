@@ -19,7 +19,6 @@
 
 #include <fcntl.h>
 
-#define VULCAN_PK 1
 #define PK_DH_REGRESS 1
 
 int pkdh_verbose=0;
@@ -64,20 +63,9 @@ int main(int argc, char *argv[])
 	/* initialize list of moduli */
 	init_crypto();
 
-	vulcanpk_mapping = mapvulcanpk();
-	/* initialize chip */
-	vulcanpk_init(vulcanpk_mapping);
-
-	if(argc>1) {
-		pk_verbose_execute=1;
-	}
-
-	cryptodev.calc_dh_shared = calc_dh_shared_vulcanpk;
+	cryptodev.calc_dh_shared = calc_dh_shared_ocf;
 
 	perform_t2_test();
-
-	/* shut down */
-	unmapvulcanpk(vulcanpk_mapping);
 
 	exit(0);
 }

@@ -33,6 +33,8 @@
  *
  */
 
+#ifndef _OCF_CRYPTODEV_H
+#define _OCF_CRYPTODEV_H
 #include <crypto/cryptodev.h>
 
 /* yuck */
@@ -82,3 +84,6 @@ extern void chunk2le(chunk_t c);
 extern int cryptodev_asym(struct crypt_kop *kop);
 
 extern u_int32_t cryptodev_asymfeat;
+
+#endif /* _OCF_CRYPTODEV_H */
+

@@ -20,6 +20,7 @@
 
 #include "../../../programs/pluto/hmac.c"
 #include "../../../programs/pluto/crypto.c"
+#include "../../../programs/pluto/ocf_cryptodev.c"
 #include "../../../programs/pluto/ike_alg.c"
 #include "../../../programs/pluto/crypt_utils.c"
 #include "../../../programs/pluto/crypt_dh.c"
