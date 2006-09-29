@@ -113,6 +113,10 @@ manualconns() {
 # for no-stdout logging:
 LOGONLY="logger -p $IPSECsyslog -t ipsec_setup"
 
+KILLKLIPS='echo "Clearing out any lingering policy ";
+           setkey -F;
+           setkey -FP;'
+
 # do it
 case "$1" in
   start|--start|_autostart)
@@ -244,6 +248,7 @@ case "$1" in
 			--post "\"$IPSECpostpluto\"" \
 			--log "\"$IPSECsyslog\"" $plutorestartoncrash \
 			--pid "\"$plutopid\"" "||" "{" \
+	            $KILLKLIPS ";" \
 		    rm -f $lock ";" \
 		    exit 1 ";" \
 		    "}"
