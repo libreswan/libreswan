@@ -246,9 +246,12 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	/* make sure PK engine is done */
     unsigned int registerSize = prog->chunksize*64;
 	int count=5;
-	int i, pc;
+	int i;
 	volatile u_int32_t stat;
+#if !defined(ENHANCED_MODE)
 	volatile u_int32_t *opfifo;
+	int pc;
+#endif
 
 	while(count-->0 &&
 	      ((stat = PUB_WORD(HIFN_1_PUB_STATUS)) & HIFN_PUBSTS_DONE) != HIFN_PUBSTS_DONE) {
@@ -321,8 +324,8 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	    }
 	}
 #else
-	opfifo = (volatile u_int32_t *)(mapping+HIFN_1_PUB_FIFO_OPLEN);
-	memcpy(opfifo, prog->pk_program, prog->pk_proglen*8);
+	memcpy((mapping+HIFN_1_PUB_FIFO_OPLEN),
+	       prog->pk_program, prog->pk_proglen*8);
 #endif
 
 	bus_space_write_barrier();
@@ -362,6 +365,7 @@ void vulcanpk_init(unsigned char *mapping)
 
 
 #if defined(ENHANCED_MODE)
+	openswan_log("Running vulcan PK engine in enhanced mode\n");
 	PUB_WORD_WRITE(HIFN_1_PUB_MODE, PUB_WORD(HIFN_1_PUB_MODE)|HIFN_PKMODE_ENHANCED);
 #endif
 
