@@ -257,7 +257,7 @@ endif
 endif
 
 ifeq ($(USE_VULCANHACK),true)
-HACKS+=-DVULCAN_PK
+HACKS+=-DVULCAN_PK -DENHANCED_MODE
 HDRDIRS+=-I${OPENSWANSRCDIR}/programs/pluto
 endif
 
@@ -301,7 +301,7 @@ DEFINES = $(EXTRA_DEFINES) \
 	${WEAK_DEFS} \
 	${SINGLE_CONF_DIR} ${HAVE_OCF_OPENSSL_DEFS} \
 	${HW_DEFS} \
-	# -DLEAK_DETECTIVE
+        # -DLEAK_DETECTIVE
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
