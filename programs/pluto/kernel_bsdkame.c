@@ -317,6 +317,13 @@ bsdkame_pfkey_register_response(const struct sadb_msg *msg UNUSED)
     passert(0);
 }
 
+typedef struct pfkey_item {
+	TAILQ_ENTRY(pfkey_item) list;
+	struct sadb_msg        *msg;
+} pfkey_item;
+
+TAILQ_HEAD(,pfkey_item) pfkey_iq;
+
 /* asynchronous messages from our queue */
 static void
 bsdkame_dequeue(void)
@@ -330,6 +337,25 @@ bsdkame_event(void)
 {
     passert(0);
 }
+
+
+static void
+bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)
+{
+	struct sadb_msg *reply = pfkey_recv(pfkeyfd);
+	
+	while(reply != NULL && reply->sadb_msg_seq != pfkey_seq)
+	{
+		struct pfkey_item *pi;
+		pi = alloc_thing(struct pfkey_item, "pfkey item");
+
+		pi->msg = reply;
+		TAILQ_INSERT_TAIL(&pfkey_iq, pi, list);
+
+		reply = pfkey_recv(pfkeyfd);
+	}
+}
+
 
 /*
  * We are were to install a set of policy, when there is in fact an SA
@@ -423,6 +449,17 @@ bsdkame_raw_eroute(const ip_address *this_host
 
     policylen = sizeof(*policy_struct);
     
+    switch(proto) {
+    case IPPROTO_ESP:
+    case IPPROTO_AH:
+    case IPPROTO_IPCOMP:
+	    break;
+
+    default:
+	    DBG_log("bsdkame_raw_eroute not installing eroute to proto=%d\n", proto);
+	    return TRUE;
+    }
+    
     if(policy == IPSEC_POLICY_IPSEC) {
 	const ip_address *me   = this_host;
 	const ip_address *him  = that_host;
@@ -459,18 +496,22 @@ bsdkame_raw_eroute(const ip_address *this_host
 	  	
     policy_struct->sadb_x_policy_len =PFKEY_UNIT64(policylen);
 
+    pfkey_seq++;
+
     ret = pfkey_send_spdadd(pfkeyfd,
 			    saddr, this_client->maskbits,
 			    daddr, that_client->maskbits,
 			    255 /* proto */,
 			    (caddr_t)policy_struct, policylen,
-			    pfkey_seq++);
+			    pfkey_seq);
+
+    bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 
     if(ret < 0) {
 	extern int __ipsec_errcode;
-	DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p\n", ret
+	DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=eroute\n", ret
 		, __ipsec_errcode, ipsec_strerror()
-		, saddr, daddr);
+		, saddr, daddr, pfkey_seq);
 	return FALSE;
     }
     return TRUE;
@@ -658,18 +699,21 @@ bsdkame_shunt_eroute(struct connection *c
 	  	
 	policy_struct->sadb_x_policy_len =PFKEY_UNIT64(policylen);
 
+	pfkey_seq++;
 	ret = pfkey_send_spdadd(pfkeyfd,
 				saddr, mine->maskbits,
 				daddr, his->maskbits,
 				255 /* proto */,
 				(caddr_t)policy_struct, policylen,
-				pfkey_seq++);
+				pfkey_seq);
+
+	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 
 	if(ret < 0) {
 	    extern int __ipsec_errcode;
-	    DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p\n", ret
+	    DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s\n", ret
 		    , __ipsec_errcode, ipsec_strerror()
-		    , saddr, daddr);
+		    , saddr, daddr, pfkey_seq, opname);
 	    return FALSE;
 	}
 	return TRUE;
@@ -708,18 +752,21 @@ bsdkame_shunt_eroute(struct connection *c
 
 	policy_struct->sadb_x_policy_len =PFKEY_UNIT64(policylen);
 
+	pfkey_seq++;
 	ret = pfkey_send_spddelete(pfkeyfd,
 				saddr, mine->maskbits,
 				daddr, his->maskbits,
 				255 /* proto */,
 				(caddr_t)policy_struct, policylen,
-				pfkey_seq++);
+				pfkey_seq);
+
+	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 
 	if(ret < 0) {
 	    extern int __ipsec_errcode;
-	    DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p\n", ret
+	    DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s\n", ret
 		    , __ipsec_errcode, ipsec_strerror()
-		    , saddr, daddr);
+		    , saddr, daddr, pfkey_seq, opname);
 	    return FALSE;
 	}
 	return TRUE;
@@ -740,7 +787,8 @@ bsdkame_sag_eroute(struct state *st UNUSED
 		   , unsigned op UNUSED
 		   , const char *opname UNUSED)
 {
-    return TRUE;
+	DBG_log("sag eroute called\n");
+	return TRUE;
 }
 
 static bool
@@ -785,8 +833,17 @@ bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	return FALSE;
     }
     
+    pfkey_seq++;
+
     memcpy(keymat, sa->enckey, sa->enckeylen);
     memcpy(keymat+sa->enckeylen, sa->authkey, sa->authkeylen);
+
+    DBG(DBG_KLIPS
+	, DBG_log("calling pfkey_send_x1 for pfkeyseq=%d encalg=%d/%d authalg=%d/%d spi=%08x, reqid=%u, satype=%d\n"
+		  , pfkey_seq
+		  , sa->encalg, sa->enckeylen
+		  , sa->authalg, sa->authkeylen
+		  , sa->spi, sa->reqid, satype));
 
     ret = pfkey_send_x1(pfkeyfd, (replace ? SADB_UPDATE : SADB_ADD),
 			satype, mode,
@@ -804,12 +861,14 @@ bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 			0, /* l_bytes */
 			0, /* l_addtime */
 			0, /* l_usetime, */
-			pfkey_seq++);
+			pfkey_seq);
+
+    bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
 
     if(ret < 0) {
 	extern int __ipsec_errcode;
-	openswan_log("ret = %d from send_add: %d (%s)", ret
-		     , __ipsec_errcode, ipsec_strerror());
+	openswan_log("ret = %d from add_sa: %d (%s) seq=%d", ret
+		     , __ipsec_errcode, ipsec_strerror(), pfkey_seq);
 	return FALSE;
     }
 
