@@ -1978,6 +1978,14 @@ process_packet(struct msg_digest **mdp)
 	return;
     }
 
+    /* save values for use in resumption of processing below.
+     * (may be suspended due to crypto operation not yet complete)
+     */
+    md->st = st;
+    md->from_state = from_state;
+    md->smc = smc;
+    md->new_iv_set = new_iv_set;
+
     /*
      * look for encrypt packets. We can not handle them if we have not
      * yet calculated the skeyids. We will just store the packet in
@@ -1994,12 +2002,27 @@ process_packet(struct msg_digest **mdp)
 	    , DBG_log("received encrypted packet from %s:%u but exponentiation still in progress"
 		      , ip_str(&md->sender), (unsigned)md->sender_port));
 
+	/* if there was a previous packet, let it go, and go with most
+	 * recent one.
+	 */
 	if(st->st_suspended_md) { release_md(st->st_suspended_md); }
+
 	set_suspended(st, md);
-	md->st = st;
 	*mdp = NULL;
 	return;
     }
+
+    process_packet_tail(mdp);
+}
+
+
+void process_packet_tail(struct msg_digest **mdp)
+{
+    struct msg_digest *md = *mdp;
+    struct state *st = md->st;
+    enum state_kind from_state = md->from_state;
+    const struct state_microcode *smc = md->smc;
+    bool new_iv_set = md->new_iv_set;
 
     if (md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION)
     {
@@ -2102,7 +2125,6 @@ process_packet(struct msg_digest **mdp)
 	}
     }
 
-    md->from_state = from_state;
     TCLCALLOUT("recvMessage", st, (st ? st->st_connection : NULL), md);
 
     /* Digest the message.
@@ -2336,9 +2358,6 @@ process_packet(struct msg_digest **mdp)
 	    }
 	}
     }
-
-    md->smc = smc;
-    md->st = st;
 
     /* Ignore payloads that we don't handle:
      * Delete, Notification, VendorID

@@ -2658,11 +2658,12 @@ main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc
 	struct msg_digest *md = st->st_suspended_md;
 
 	set_suspended(st, NULL);
-	process_packet(&md);
+	process_packet_tail(&md);
 	if(md != NULL) {
 	    release_md(md);
 	}
     }
+    reset_cur_state();
     return;
 }
 
