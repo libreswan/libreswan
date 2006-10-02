@@ -373,3 +373,11 @@ const struct kernel_ops klips_kernel_ops = {
     kern_name: "klips"
 };
 #endif /* KLIPS */
+
+
+/*
+ * Local Variables:
+ * c-basic-offset:4
+ * c-style: pluto
+ * End:
+ */
