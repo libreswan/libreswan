@@ -780,15 +780,46 @@ bsdkame_shunt_eroute(struct connection *c
     return FALSE;
 }
 
-/* install or remove eroute for SA Group */
+/*
+ * install or remove eroute for SA Group
+ * must just install the appropriate SPD entries, as the
+ * SA has already been negotiated, either due to manual intervention,
+ * or because we are the responder.
+ *
+ * Funny thing about KAME/BSD, we don't actually need to know the state
+ * information to install the policy, since they are not strongly linked.
+ *
+ */
 static bool
 bsdkame_sag_eroute(struct state *st UNUSED
 		   , struct spd_route *sr UNUSED
 		   , unsigned op UNUSED
 		   , const char *opname UNUSED)
 {
-	DBG_log("sag eroute called\n");
-	return TRUE;
+    int proto;
+
+    DBG_log("sag eroute called\n");
+
+    proto = 0;
+    if (st->st_ah.present) {
+	proto = IPPROTO_AH;
+    } else if (st->st_esp.present) {
+	proto = IPPROTO_ESP;
+    } else if (st->st_ipcomp.present) {
+	proto = IPPROTO_COMP;
+    }
+    return bsdkame_raw_eroute(&sr->this.host_addr
+			      , &sr->this.client
+			      , &sr->that.host_addr
+			      , &sr->that.client
+			      , SPI_TRAP /* Spi# not used in KAME/BSD */
+			      , proto
+			      , sr->this.protocol
+			      , 0 /* esatype unused */
+			      , NULL /* proto_info unused */
+			      , 0    /* use lifetime unused */
+			      , op
+			      , NULL /* said unused */);
 }
 
 static bool
@@ -819,7 +850,7 @@ bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	break;
 	
     case ET_IPIP:
-      return TRUE;
+	return TRUE;
 
     case ET_INT:
     case ET_UNSPEC:
@@ -872,13 +903,6 @@ bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	return FALSE;
     }
 
-    return TRUE;
-}
-
-static bool
-bsdkame_grp_sa(const struct kernel_sa *sa0 UNUSED
-	       , const struct kernel_sa *sa1 UNUSED)
-{
     return TRUE;
 }
 
@@ -973,7 +997,7 @@ const struct kernel_ops bsdkame_kernel_ops = {
     shunt_eroute: bsdkame_shunt_eroute,
     sag_eroute: bsdkame_sag_eroute,
     add_sa: bsdkame_add_sa,
-    grp_sa: bsdkame_grp_sa,
+    grp_sa: NULL,
     del_sa: bsdkame_del_sa,
     get_spi: NULL,
     eroute_idle: bsdkame_was_eroute_idle,
@@ -987,3 +1011,10 @@ const struct kernel_ops bsdkame_kernel_ops = {
     process_ifaces: bsdkame_process_raw_ifaces,
 };
 
+
+/*
+ * Local Variables:
+ * c-basic-offset:4
+ * c-style: pluto
+ * End:
+ */
