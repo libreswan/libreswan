@@ -100,7 +100,7 @@ struct kernel_sa {
 	u_int8_t transid, natt_type;
 	ip_address *natt_oa;
 #endif
-	const char *text_said;
+	char *text_said;
 };
 
 struct raw_iface {
