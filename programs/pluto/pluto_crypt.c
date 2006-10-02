@@ -343,7 +343,8 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r
     if(cnt == 0) {
 	/* didn't find any workers */
 	DBG(DBG_CONTROL
-	    , DBG_log("failed to find any available worker"));
+	    , DBG_log("failed to find any available worker (import=%s)"
+		      , enum_name(&pluto_cryptoimportance_names,r->pcr_pcim)));
 
 	*toomuch = TRUE;
 	return "failed to find any available worker";
