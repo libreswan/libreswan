@@ -42,7 +42,6 @@ road:~#
 003 "road--eastnet-psk" #1: multiple transforms were set in aggressive mode. Only first one used.
 003 "road--eastnet-psk" #1: transform (5,2,2,0) ignored.
 112 "road--eastnet-psk" #1: STATE_AGGR_I1: initiate
-002 "road--eastnet-psk" #1: ERROR: asynchronous network error report on eth0 (sport=500) for message to 192.1.2.23 port 500, complainant 192.1.2.23: Connection refused [errno 111, origin ICMP type 3 code 3 (not authenticated)]
 003 "road--eastnet-psk" #1: received Vendor ID payload [Dead Peer Detection]
 002 "road--eastnet-psk" #1: Aggressive mode peer ID is ID_FQDN: '@east'
 003 "road--eastnet-psk" #1: Can't authenticate: no preshared key found for `@roadrandom' and `@east'.  Attribute OAKLEY_AUTHENTICATION_METHOD
