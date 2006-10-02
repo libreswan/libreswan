@@ -1212,13 +1212,14 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         set_text_said(text_said
             , &c->spd.that.host_addr, ipip_spi, SA_IPIP);
 
+	said_next->proto = IPPROTO_IPIP;
         said_next->src = &src.addr;
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
         said_next->dst_client = &dst_client;
         said_next->spi = ipip_spi;
         said_next->esatype = ET_IPIP;
-        said_next->text_said = text_said;
+        said_next->text_said = clone_str(text_said, "said");
 
 	if(inbound) {
 	    /*
@@ -1283,6 +1284,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 
         set_text_said(text_said, &dst.addr, ipcomp_spi, SA_COMP);
 
+	said_next->proto = IPPROTO_COMP;
         said_next->src = &src.addr;
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
@@ -1292,7 +1294,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->encalg = compalg;
         said_next->encapsulation = encapsulation;
         said_next->reqid = c->spd.reqid + 2;
-        said_next->text_said = text_said;
+        said_next->text_said = clone_str(text_said, "said");
 
 	if(inbound) {
 	    /*
@@ -1488,6 +1490,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 
         set_text_said(text_said, &dst.addr, esp_spi, SA_ESP);
 
+	said_next->proto = IPPROTO_ESP;
         said_next->src = &src.addr;
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
@@ -1512,7 +1515,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->natt_type = natt_type;
         said_next->natt_oa = &natt_oa;
 #endif  
-        said_next->text_said = text_said;
+        said_next->text_said = clone_str(text_said, "said");
 
 	if(inbound) {
 	    /*
@@ -1578,6 +1581,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 
         set_text_said(text_said, &dst.addr, ah_spi, SA_AH);
 
+	said_next->proto = IPPROTO_AH;
         said_next->src = &src.addr;
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
@@ -1590,7 +1594,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->authkey = ah_dst_keymat;
         said_next->encapsulation = encapsulation;
         said_next->reqid = c->spd.reqid;
-        said_next->text_said = text_said;
+        said_next->text_said = clone_str(text_said, "said");
 
 	if(inbound) {
 	    /*
@@ -1711,21 +1715,10 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
          */
         for (s = said; s < said_next-1; s++)
         {
-            char
-                text_said0[SATOT_BUF],
-                text_said1[SATOT_BUF];
-
             /* group s[1] and s[0], in that order */
-            
-            set_text_said(text_said0, s[0].dst, s[0].spi, s[0].proto);
-            set_text_said(text_said1, s[1].dst, s[1].spi, s[1].proto);
-            
             DBG(DBG_KLIPS, DBG_log("grouping %s (ref=%u) and %s (ref=%u)"
-				   , text_said1, s[0].ref
-				   , text_said0, s[1].ref));
-            
-            s[0].text_said = text_said0;
-            s[1].text_said = text_said1;
+				   , s[1].text_said, s[0].ref
+				   , s[0].text_said, s[1].ref));
             
             if (!kernel_ops->grp_sa(s + 1, s))
                 goto fail;
@@ -1744,6 +1737,11 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 	goto fail;
     }
 #endif
+
+    while (said_next-- != said) {
+	pfree(said_next->text_said);
+    }
+    
     return TRUE;
 
 fail:
@@ -1754,6 +1752,7 @@ fail:
 		(void) del_spi(said_next->spi, said_next->proto
 			       , &src.addr, said_next->dst);
 	    }
+	    pfree(said_next->text_said);
 	}
         return FALSE;
     }
