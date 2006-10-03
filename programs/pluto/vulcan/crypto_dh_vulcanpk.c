@@ -21,6 +21,14 @@ calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
     int chunksize, modlen, explen;
     int areg,breg,mreg;
 
+    if(group->raw_modulus.len > 384) {
+	/* too big for PK engine, use software */
+	DBG(DBG_CONTROL, DBG_log("exponent too big (%d), using software\n"
+				 , group->raw_modulus.len*8));
+	calc_dh_shared_gmp(shared, g, secchunk, group);
+	return;
+    }
+
     memset(&expModP, 0, sizeof(expModP));
 
     gettimeofday(&tv0, NULL);
@@ -124,7 +132,7 @@ calc_dh_shared_vulcanpk(chunk_t *shared, const chunk_t g
 	
 
     /* ask to have the exponentiation done now! */
-    /* sizes are ModLen=96(*32=3072), EXP_len=1,RED_len=0*/
+    /* sizes are ModLen=96(*32=3072), EXP_len=1, RED_len=0*/
     expModP.pk_program[0]=(0<<24)|((explen-1)<<8)|(modlen&0x7f);
 
     /* now that we know the chunksize, we can calculate offsets */
