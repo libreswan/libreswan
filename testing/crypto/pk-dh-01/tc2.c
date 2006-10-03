@@ -10,7 +10,7 @@
 
 /* test case 2 - DH operation */
 u_int16_t     tc2_oakleygroup  = OAKLEY_GROUP_MODP1536;
-oakley_auth_t tc2_auth         = AUTH_ALGORITHM_HMAC_MD5;
+oakley_auth_t tc2_auth         = OAKLEY_RSA_SIG;
 oakley_hash_t tc2_hash         = OAKLEY_MD5;
 struct encrypt_desc *tc2_encrypter = &crypto_encrypter_3des;
 enum phase1_role tc2_init      = INITIATOR;
