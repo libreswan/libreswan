@@ -62,40 +62,40 @@ void unmapvulcanpk(unsigned char *mapping)
 
 void print_status(u_int32_t stat)
 {
-	printf("status: %08x ", stat);
+	DBG_log("status: %08x ", stat);
 	if(stat & HIFN_PUBSTS_DONE) {
-		printf("done ");
+		DBG_log("done ");
 	}
 	if(stat & HIFN_PUBSTS_CARRY) {
-		printf("carry ");
+		DBG_log("carry ");
 	}
 	if(stat & 0x4) {
-		printf("sign(2) ");
+		DBG_log("sign(2) ");
 	}
 	if(stat & 0x8) {
-		printf("zero(3) ");
+		DBG_log("zero(3) ");
 	}
 	if(stat & HIFN_PUBSTS_FIFO_EMPTY) {
-		printf("empty ");
+		DBG_log("empty ");
 	}
 	if(stat & HIFN_PUBSTS_FIFO_FULL) {
-		printf("full ");
+		DBG_log("full ");
 	}
 	if(stat & HIFN_PUBSTS_FIFO_OVFL) {
-		printf("overflow ");
+		DBG_log("overflow ");
 	}
 	if(stat & HIFN_PUBSTS_FIFO_WRITE) {
-		printf("write=%d ", (stat & HIFN_PUBSTS_FIFO_WRITE)>>16);
+		DBG_log("write=%d ", (stat & HIFN_PUBSTS_FIFO_WRITE)>>16);
 	}
 	if(stat & HIFN_PUBSTS_FIFO_READ) {
-		printf("read=%d ", (stat & HIFN_PUBSTS_FIFO_READ)>>24);
+		DBG_log("read=%d ", (stat & HIFN_PUBSTS_FIFO_READ)>>24);
 	}
-	printf("\n");
+	DBG_log("\n");
 }
 
 
 #define PUB_WORD(offset) *(volatile u_int32_t *)(&mapping[offset])
-#define PUB_WORD_WRITE(offset, value) if(pk_verbose_execute) printf("write-1 %04x = %08x\n", offset, value), PUB_WORD(offset)=value
+#define PUB_WORD_WRITE(offset, value) do { if(pk_verbose_execute) DBG_log("write-1 %04x = %08x\n", offset, value); PUB_WORD(offset)=value; } while(0)
 
 inline static void write_pkop(unsigned char *mapping,
 		       u_int32_t oplen, u_int32_t op)
@@ -157,7 +157,7 @@ static void copyPkValueTo(unsigned char *mapping, struct pkprogram *prog,
 	}
 	
 	if(pk_verbose_execute) {
-		printf("%s[%d]: before\n", typeStr, pkRegNum);
+		DBG_log("%s[%d]: before\n", typeStr, pkRegNum);
 		hexdump(mapping, pkRegOff, registerSize);
 	}
 }
@@ -190,7 +190,7 @@ static void copyPkValueFrom(unsigned char *mapping, struct pkprogram *prog,
 	}
 	
 	if(pk_verbose_execute) {
-		printf("%s[%d]: after extract\n", typeStr, pkRegNum);
+		DBG_log("%s[%d]: after extract\n", typeStr, pkRegNum);
 		hexdump(pkValue, 0, pkValueLen);
 	}
     }
@@ -206,7 +206,7 @@ static void dump_registers(unsigned char *mapping, unsigned int registerSize)
 	pkNum++)
     {
 	unsigned int pkRegOff = HIFN_1_PUB_MEM + (pkNum*registerSize);
-	printf("register[%d]\n", pkNum);
+	DBG_log("register[%d]\n", pkNum);
 	hexdump(mapping, pkRegOff, registerSize);
     }
 }
@@ -250,17 +250,19 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	volatile u_int32_t stat;
 #if !defined(ENHANCED_MODE)
 	volatile u_int32_t *opfifo;
-	int pc;
 #endif
+	int pc;
 
+#if 0
 	while(count-->0 &&
 	      ((stat = PUB_WORD(HIFN_1_PUB_STATUS)) & HIFN_PUBSTS_DONE) != HIFN_PUBSTS_DONE) {
 		usleep(1000);
 	}
 	if(count == 0) {
-		printf("failed to complete: %08x\n", stat);
+	    openswan_log("pk_pubsts_done failed to complete: %08x\n", stat);
 		exit(6);
 	}
+#endif
 
 	/*
 	 * copy source operands into memory, clearing other parts.
@@ -282,12 +284,13 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 
 	/* now copy the instructions to the FIFO. */
 
+	pc = 0;
+
 #if !defined(ENHANCED_MODE)
 	/*
 	 * oops. FIFO is broken, so write them out to oplen/op,
 	 * after converting them to compat mode instructions.
 	 */
-	pc = 0;
 	opfifo = (volatile u_int32_t *)(mapping+HIFN_1_PUB_OPLEN);
 	if(pk_verbose_execute) print_status(PUB_WORD(HIFN_1_PUB_STATUS));
 	PUB_WORD_WRITE(HIFN_1_PUB_STATUS, PUB_WORD(HIFN_1_PUB_STATUS));
@@ -301,7 +304,7 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 
 	    if(pk_verbose_execute) {
 		print_status(PUB_WORD(HIFN_1_PUB_STATUS));
-		printf("original instruction at %d oplen=%08x/op=%08x\n",
+		DBG_log("original instruction at %d oplen=%08x/op=%08x\n",
 		       pc, oplen, op);
 	    }
 
@@ -309,7 +312,7 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	    op = xlat2compat_op(prog->pk_program[pc++]);
 	    
 	    if(pk_verbose_execute) {
-		printf("executing instruction %d (of %d) (%08x/%08x)\n",
+		DBG_log("executing instruction %d (of %d) (%08x/%08x)\n",
 		       pc, prog->pk_proglen, oplen, op);
 	    }
 	    opfifo[0]=oplen;
@@ -322,10 +325,24 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 		    usleep(1000);
 		}
 	    }
+	    pc+=2;
 	}
 #else
-	memcpy((mapping+HIFN_1_PUB_FIFO_OPLEN),
-	       prog->pk_program, prog->pk_proglen*8);
+	while(pc < prog->pk_proglen) {
+	    u_int32_t op, oplen;
+
+	    oplen = prog->pk_program[pc];
+	    op    = prog->pk_program[pc+1];
+
+	    if(pk_verbose_execute) {
+		print_status(PUB_WORD(HIFN_1_PUB_STATUS));
+		DBG_log("instruction at %d oplen=%08x/op=%08x\n",
+		       pc, oplen, op);
+	    }
+	    
+	    write_pkop(mapping, oplen, op);
+	    pc+=2;
+	}
 #endif
 
 	bus_space_write_barrier();
@@ -339,13 +356,13 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	    usleep(1000);
 	}
 	if(count == 0) {
-	    printf("failed to complete: %08x\n", stat);
+	    openswan_log("failed to complete operation: %08x\n", stat);
 	    print_status(stat);
 	    exit(6);
 	}
 
 	if(pk_verbose_execute) {
-	    printf("after running:\n");
+	    openswan_log("after running:\n");
 	    dump_registers(mapping, prog->chunksize*64);
 	}
 	    
@@ -354,19 +371,25 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 			prog->oValue, prog->oValueLen);
 }
 
-void vulcanpk_init(unsigned char *mapping)
+void vulcanpk_init(volatile unsigned char *mapping)
 {
         volatile unsigned int stat;
+	int count=60;
 
 	PUB_WORD(HIFN_1_PUB_RESET)=0x1;
-	while((stat = PUB_WORD(HIFN_1_PUB_RESET)) & 0x01) {
+	
+	while(count-->0 && (stat = PUB_WORD(HIFN_1_PUB_RESET)) & 0x01) {
 		sleep(1);
+	}
+	if(count==0) {
+	    openswan_log("failed to reset Vulcan PK engine\n");
+	    exit(7);
 	}
 
 
 #if defined(ENHANCED_MODE)
-	openswan_log("Running vulcan PK engine in enhanced mode\n");
 	PUB_WORD_WRITE(HIFN_1_PUB_MODE, PUB_WORD(HIFN_1_PUB_MODE)|HIFN_PKMODE_ENHANCED);
+	DBG_log("Running vulcan PK engine in enhanced mode pubmode=%08x\n", PUB_WORD(HIFN_1_PUB_MODE));
 #endif
 
 	/* enable RNG again */
