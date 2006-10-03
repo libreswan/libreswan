@@ -846,8 +846,14 @@ static int load_conn (struct starter_config *cfg
     if(conn->strings_set[KSCF_ESP]) {
 	conn->esp = xstrdup(conn->strings[KSCF_ESP]);
     }
+
     if(conn->strings_set[KSCF_IKE]) {
 	conn->ike = xstrdup(conn->strings[KSCF_IKE]);
+    }
+
+    if(conn->options_set[KNCF_PHASE2]) {
+	conn->policy &= ~(POLICY_AUTHENTICATE|POLICY_ENCRYPT);
+	conn->policy |= conn->options[KNCF_PHASE2];
     }
 
     err += validate_end(conn, &conn->left,  TRUE, perr);

@@ -371,7 +371,7 @@ void confwrite_conn(FILE *out,
     }
 
     if(conn->policy) {
-	int auth_policy;
+	int auth_policy, phase2_policy;
 
 	if(conn->policy & POLICY_TUNNEL) {
 	    fprintf(out, "\ttype=tunnel\n");
@@ -409,6 +409,24 @@ void confwrite_conn(FILE *out,
 
 	default:
 	    fprintf(out, "\tauthby=never\n");
+	    break;
+	}
+
+	phase2_policy = (conn->policy & (POLICY_AUTHENTICATE|POLICY_ENCRYPT));
+	switch(phase2_policy) {
+	case POLICY_AUTHENTICATE:
+	    fprintf(out, "\tphase2=ah\n");
+	    break;
+
+	case POLICY_ENCRYPT:
+	    fprintf(out, "\tphase2=esp\n");
+	    break;
+
+	case (POLICY_ENCRYPT|POLICY_AUTHENTICATE):
+	    fprintf(out, "\tphase2=ah+esp\n");
+	    break;
+
+	default:
 	    break;
 	}
     }

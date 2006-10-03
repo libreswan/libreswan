@@ -203,10 +203,20 @@ struct keyword_enum_value kw_klipsdebug_values[]={
     { "comp",     LELEM(KDF_COMP) },
 };
 
-
 struct keyword_enum_values kw_klipsdebug_list=
     { kw_klipsdebug_values, sizeof(kw_klipsdebug_values)/sizeof(struct keyword_enum_value)};
     
+
+struct keyword_enum_value kw_phase2types_values[]={
+    { "default",  POLICY_ENCRYPT },
+    { "ah+esp",   POLICY_ENCRYPT|POLICY_AUTHENTICATE },
+    { "esp",      POLICY_ENCRYPT },
+    { "ah",       POLICY_AUTHENTICATE },
+};
+
+struct keyword_enum_values kw_phase2types_list=
+    { kw_phase2types_values, sizeof(kw_phase2types_values)/sizeof(struct keyword_enum_value)};
+
 struct keyword_def ipsec_conf_keywords_v2[]={
     {"interfaces",     kv_config, kt_string,    KSF_INTERFACES,NOT_ENUM},
     {"forwardcontrol", kv_config, kt_bool,      KBF_FORWARDCONTROL,NOT_ENUM},
@@ -241,7 +251,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
 
     /* this is "left=" and "right=" */
     {"",               kv_conn|kv_leftright, kt_loose_enum, KSCF_IP, &kw_host_list},  
-    {"esp",            kv_conn|kv_leftright|kv_manual, kt_string, KSCF_ESP,NOT_ENUM},
+
     {"ike",            kv_conn|kv_auto, kt_string, KSCF_IKE,NOT_ENUM},
 
     {"subnet",         kv_conn|kv_leftright, kt_subnet, KSCF_SUBNET,NOT_ENUM}, 
@@ -255,8 +265,6 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"spibase",        kv_conn|kv_auto|kv_leftright, kt_number, KNCF_SPIBASE,NOT_ENUM},
     {"cert",           kv_conn|kv_leftright, kt_filename, KSCF_CERT,NOT_ENUM},
     {"ca",             kv_conn|kv_leftright, kt_string, KSCF_CA,NOT_ENUM},
-    {"subnetwithin",   kv_conn|kv_leftright, kt_string, KSCF_SUBNETWITHIN,NOT_ENUM},
-    {"protoport",      kv_conn|kv_leftright, kt_string, KSCF_PROTOPORT,NOT_ENUM},
 
     {"auto",           kv_conn,         kt_enum,   KBF_AUTO,        &kw_auto_list},
     {"also",           kv_conn,         kt_appendstring, KSCF_ALSO,NOT_ENUM},
@@ -271,11 +279,18 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"rekey",          kv_conn|kv_auto, kt_bool,   KBF_REKEY, NOT_ENUM},
     {"rekeymargin",    kv_conn|kv_auto, kt_time,   KBF_REKEYMARGIN,NOT_ENUM},
     {"rekeyfuzz",      kv_conn|kv_auto, kt_time,   KBF_REKEYFUZZ,NOT_ENUM},
-    {"compress",       kv_conn|kv_auto, kt_bool,   KBF_COMPRESS,NOT_ENUM},
     {"keyingtries",    kv_conn|kv_auto, kt_number, KBF_KEYINGTRIES,NOT_ENUM},
     {"ikelifetime",    kv_conn|kv_auto, kt_time,   KBF_IKELIFETIME,NOT_ENUM},
     {"disablearrivalcheck", kv_conn|kv_auto, kt_invertbool, KBF_ARRIVALCHECK,NOT_ENUM},
     {"failureshunt",   kv_conn|kv_auto, kt_enum,   KBF_FAILURESHUNT, &kw_failureshunt_list},
+
+    /* attributes of the phase2 policy */
+    {"esp",            kv_conn|kv_auto|kv_manual,  kt_string, KSCF_ESP,NOT_ENUM},
+    {"subnetwithin",   kv_conn|kv_leftright, kt_string, KSCF_SUBNETWITHIN,NOT_ENUM},
+    {"protoport",      kv_conn|kv_leftright, kt_string, KSCF_PROTOPORT,NOT_ENUM},
+    {"phase2",         kv_conn|kv_auto|kv_manual,  kt_enum, KNCF_PHASE2, &kw_phase2types_list},
+    {"auth",           kv_conn|kv_auto|kv_manual,  kt_enum, KNCF_PHASE2, &kw_phase2types_list},
+    {"compress",       kv_conn|kv_auto, kt_bool,   KBF_COMPRESS,NOT_ENUM},
 
 
     /* DPD */ 

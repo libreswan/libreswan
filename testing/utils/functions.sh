@@ -113,7 +113,7 @@ consolediff() {
     ref=$3
 
     cleanups="cat $output "
-    success=${success-}
+    success=${success-true}
 
     for fixup in `echo $REF_CONSOLE_FIXUPS`
     do

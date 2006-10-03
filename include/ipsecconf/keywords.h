@@ -121,12 +121,12 @@ enum keyword_string_conn_field {
     KSCF_ALSO         = 17,
     KSCF_ALSOFLIP     = 18,                     /* XXX still to handle */
     KSCF_AUTHBY       = 19,
-    KSCF_MAX          = 20
+    KSCF_MAX          = 21
 };
 
 
 enum keyword_numeric_conn_field {
-    KNCF_IP               = 0,
+    KNCF_IP               = 0,    /* also a string */
     KNCF_FIREWALL         = 1,
     KNCF_NEXTHOP          = 2,
     KNCF_IDTYPE           = 3,
@@ -136,6 +136,7 @@ enum keyword_numeric_conn_field {
     KNCF_DPDDELAY         = 7,
     KNCF_DPDTIMEOUT       = 8,
     KNCF_DPDACTION        = 9,
+    KNCF_PHASE2           = 10,
     KNCF_MAX              = 30
 };
 
