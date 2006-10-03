@@ -781,7 +781,7 @@ static void cleanup_crypto_helper(struct pluto_crypto_worker *w
 	loglog(RC_LOG_SERIOUS, "closing helper(%u) pid=%d fd=%d killed=%s(%d%s) exit=%d"
 	       , w->pcw_helpernum, w->pcw_pid, w->pcw_pipe
 	       , WIFEXITED(status) ? "no" : "yes"
-	       , WIFEXITED(status) ? WTERMSIG(status) : -1
+	       , WIFEXITED(status) ? 0 : WTERMSIG(status) 
 	       , WIFEXITED(status) && WCOREDUMP(status) ? ":core" : ""
 	       , WEXITSTATUS(status));
 	close(w->pcw_pipe);
