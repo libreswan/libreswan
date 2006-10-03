@@ -58,6 +58,7 @@ void unmapvulcanpk(unsigned char *mapping)
 }
 
 /* in include/, because you never know when you will need it */
+#define hexdump_printf DBG_log
 #include "hexdump.c"
 
 void print_status(u_int32_t stat)
@@ -137,6 +138,11 @@ static void copyPkValueTo(unsigned char *mapping, struct pkprogram *prog,
     int registerSize = prog->chunksize*64;
     unsigned int pkRegOff = HIFN_1_PUB_MEM + (pkRegNum*registerSize);
     unsigned char *pkReg = mapping + pkRegOff;
+
+    /* do not screw with stuff beyond 1 page */
+    if(pkRegOff > 4096) {
+	return;
+    }
 
 	if(prog->valuesLittleEndian) {
 		memcpy(pkReg, pkValue, pkValueLen);
@@ -264,6 +270,8 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	}
 #endif
 
+	DBG_log("mapping is at %p\n", mapping);
+
 	/*
 	 * copy source operands into memory, clearing other parts.
 	 * hopefully, will turn into a single PCI burst write.
@@ -273,8 +281,10 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 		copyPkValueTo(mapping, prog, "a", i, prog->aValues[i], prog->aValueLen[i]);
 	    } else {
 		unsigned char *pkReg = mapping + HIFN_1_PUB_MEM + (i*registerSize);
-		/* clear memory */
-		memset(pkReg, 0, registerSize);
+		if((pkReg+registerSize) < (mapping + 4096)) {
+		    /* clear memory */
+		    memset(pkReg, 0, registerSize);
+		}
 	    }
 	}
 	
@@ -349,7 +359,7 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	usleep(1000);
 	/* wait for DONE bit */
 	if(pk_verbose_execute) print_status(PUB_WORD(HIFN_1_PUB_STATUS));
-	count=50;
+	count=200;
 	
 	while(--count>0 &&
 	      ((stat = PUB_WORD(HIFN_1_PUB_STATUS)) & HIFN_PUBSTS_DONE) != HIFN_PUBSTS_DONE) {
@@ -384,6 +394,12 @@ void vulcanpk_init(volatile unsigned char *mapping)
 	if(count==0) {
 	    openswan_log("failed to reset Vulcan PK engine\n");
 	    exit(7);
+	}
+
+	if(getenv("VULCAN_PKMMAP_VERBOSE")) {
+	    pk_verbose_execute=1;
+	    setbuf(stderr, NULL);
+	    setbuf(stdout, NULL);
 	}
 
 
