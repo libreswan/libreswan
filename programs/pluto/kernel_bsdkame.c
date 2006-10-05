@@ -327,7 +327,7 @@ bsdkame_pfkey_register_response(const struct sadb_msg *msg)
 }
 
 static void
-bsdkame_pfkey_acquire(struct sadb_msg *msg)
+bsdkame_pfkey_acquire(struct sadb_msg *msg UNUSED)
 {
     DBG_log("received acquire --- discarded");
     return;
@@ -364,8 +364,8 @@ bsdkame_dequeue(void)
     struct pfkey_item *pi, *pinext;
     
     for(pi=pfkey_iq.tqh_first; pi; pi = pinext) {
-	pinext = pi->tqe_next;
-	TAILQ_REMOVE(pi);
+	pinext = pi->list.tqe_next;
+	TAILQ_REMOVE(&pfkey_iq, pi, list);
 
 	bsdkame_pfkey_async(pi->msg);
 	free(pi->msg);
