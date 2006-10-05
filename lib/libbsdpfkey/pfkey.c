@@ -1642,8 +1642,10 @@ pfkey_recv(so)
 	int len, reallen;
 
 	while ((len = recv(so, (caddr_t)&buf, sizeof(buf), MSG_PEEK)) < 0) {
+#if 0
 		if (errno == EINTR)
 			continue;
+#endif
 		__ipsec_set_strerror(strerror(errno));
 		return NULL;
 	}
