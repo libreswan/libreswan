@@ -18,13 +18,14 @@
 
 char readwriteconf_c_version[] = "@(#) Xelerance Openswan readwriteconf";
 
-#include <asm/types.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 /* #include <linux/netdevice.h> */
 #include <net/if.h>
 /* #include <linux/types.h> */ /* new */
 #include <sys/stat.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
@@ -157,7 +158,7 @@ main(int argc, char *argv[])
 
     starter_use_log (verbose, 1, verbose ? 0 : 1);
 
-    cfg = confread_load(configfile, &err);
+    cfg = confread_load(configfile, &err, NULL);
     
     if(!cfg) {
 	printf("config file: %s can not be loaded\n", configfile);
