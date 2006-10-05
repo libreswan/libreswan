@@ -64,12 +64,21 @@
 int pfkeyfd = NULL_FD;
 unsigned int pfkey_seq = 1;
 
+typedef struct pfkey_item {
+	TAILQ_ENTRY(pfkey_item) list;
+	struct sadb_msg        *msg;
+} pfkey_item;
+
+TAILQ_HEAD(,pfkey_item) pfkey_iq;
+
 static void
 bsdkame_init_pfkey(void)
 {
     int pid = getpid();
 
     /* open PF_KEY socket */
+
+    TAILQ_INIT(&pfkey_iq);
 
     pfkeyfd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 
@@ -316,13 +325,6 @@ bsdkame_pfkey_register_response(const struct sadb_msg *msg UNUSED)
 {
     passert(0);
 }
-
-typedef struct pfkey_item {
-	TAILQ_ENTRY(pfkey_item) list;
-	struct sadb_msg        *msg;
-} pfkey_item;
-
-TAILQ_HEAD(,pfkey_item) pfkey_iq;
 
 /* asynchronous messages from our queue */
 static void
