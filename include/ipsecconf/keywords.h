@@ -101,13 +101,13 @@ enum keyword_numeric_config_field {
  */
 
 enum keyword_string_conn_field {
-    KSCF_IP           = 0,
+    KSCF_IP           = 0,  /* loose_enum */
     KSCF_SUBNET       = 1,
-    KSCF_NEXTHOP      = 2,
+    KSCF_NEXTHOP      = 2,  /* loose_enum */
     KSCF_UPDOWN       = 3,
     KSCF_ID           = 4,
-    KSCF_RSAKEY1      = 5,
-    KSCF_RSAKEY2      = 6,
+    KSCF_RSAKEY1      = 5,  /* loose_enum */
+    KSCF_RSAKEY2      = 6,  /* loose_enum */
     KSCF_CERT         = 7,
     KSCF_CA           = 8,
     KSCF_SUBNETWITHIN = 9,
@@ -120,28 +120,30 @@ enum keyword_string_conn_field {
     KSCF_SOURCEIP     = 16,
     KSCF_ALSO         = 17,
     KSCF_ALSOFLIP     = 18,                     /* XXX still to handle */
-    KSCF_AUTHBY       = 19,
-    KSCF_MAX          = 21
+    KSCF_MAX          = 19
 };
 
 
 enum keyword_numeric_conn_field {
-    KNCF_IP               = 0,    /* also a string */
+    KNCF_IP               = 0,  /* loose_enum */
     KNCF_FIREWALL         = 1,
-    KNCF_NEXTHOP          = 2,
+    KNCF_NEXTHOP          = 2,  /* loose_enum */
     KNCF_IDTYPE           = 3,
     KNCF_SPIBASE          = 4,
-    KNCF_SPI              = 5,
-    KNCF_ESPREPLAYWINDOW  = 6,
-    KNCF_DPDDELAY         = 7,
-    KNCF_DPDTIMEOUT       = 8,
-    KNCF_DPDACTION        = 9,
-    KNCF_PHASE2           = 10,
-    KNCF_MAX              = 30
+    KNCF_RSAKEY1          = 5,  /* loose_enum */
+    KNCF_RSAKEY2          = 6,  /* loose_enum */
+    KNCF_SPI              = 7,
+    KNCF_ESPREPLAYWINDOW  = 8,
+    KNCF_DPDDELAY         = 9,
+    KNCF_DPDTIMEOUT       = 10,
+    KNCF_DPDACTION        = 11,
+    KNCF_PHASE2           = 12,
+    KNCF_AUTHBY           = 13,
+    KNCF_MAX              = 19
 };
 
-#define KEY_STRINGS_MAX (KSF_MAX > KSCF_MAX ? KSF_MAX : KSCF_MAX)
-#define KEY_NUMERIC_MAX (KBF_MAX > KNCF_MAX ? KBF_MAX : KNCF_MAX)
+#define KEY_STRINGS_MAX (KSF_MAX > KSCF_MAX ? KSF_MAX : KSCF_MAX)+1
+#define KEY_NUMERIC_MAX (KBF_MAX > KNCF_MAX ? KBF_MAX : KNCF_MAX)+1
 
 /* these are bits set in a word */
 enum keyword_valid {
@@ -150,6 +152,8 @@ enum keyword_valid {
     kv_leftright = LELEM(2),
     kv_auto   = LELEM(3),
     kv_manual = LELEM(4),
+    kv_alias  = LELEM(5),
+    kv_policy = LELEM(6),
 };
 
 /* values keyexchange= */

@@ -58,6 +58,12 @@ void confwrite_int(FILE *out,
 	
 	if((k->validity & context)!=context) continue;
 
+	/* do not output aliases */
+	if(k->validity & kv_alias) continue;
+	
+	/* do not output policy settings handled elsewhere */
+	if(k->validity & kv_policy) continue;
+	
 #if 0
 	printf("side: %s  %s validity: %08x & %08x=%08x\n", side,
 	       k->keyname, k->validity, context, k->validity&context);
@@ -79,7 +85,7 @@ void confwrite_int(FILE *out,
 	    continue;
 
 	case kt_time:
-	    /* special number */
+	    /* special number, but do work later XXX */
 	    break;
 
 	case kt_bool:
@@ -156,6 +162,12 @@ void confwrite_str(FILE *out,
 
     for(k=ipsec_conf_keywords_v2; k->keyname!=NULL; k++) {
 	if((k->validity & context)==0) continue;
+
+	/* do not output aliases */
+	if(k->validity & kv_alias) continue;
+	
+	/* do not output policy settings handled elsewhere */
+	if(k->validity & kv_policy) continue;
 	
 	switch(k->type) {
 	case kt_string:
@@ -181,7 +193,7 @@ void confwrite_str(FILE *out,
 	    continue;
 
 	case kt_time:
-	    /* special number */
+	    /* special number, not a string */
 	    continue;
 
 	case kt_percent:

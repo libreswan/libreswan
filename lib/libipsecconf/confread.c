@@ -828,15 +828,15 @@ static int load_conn (struct starter_config *cfg
     KW_POLICY_FLAG(KBF_PFS,  POLICY_PFS);
     
     /* reset authby flags */
-    if(conn->options_set[KSCF_AUTHBY]) {
+    if(conn->options_set[KNCF_AUTHBY]) {
 	conn->policy &= ~(POLICY_ID_AUTH_MASK);
-	conn->policy |= conn->options[KSCF_AUTHBY];
+	conn->policy |= conn->options[KNCF_AUTHBY];
 
 	starter_log(LOG_LEVEL_DEBUG,
 		    "%s: setting conn->policy=%08x (%08x)\n",
 		    conn->name,
 		    (unsigned int)conn->policy,
-		    conn->options[KSCF_AUTHBY]);
+		    conn->options[KNCF_AUTHBY]);
     }
     
     KW_POLICY_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
