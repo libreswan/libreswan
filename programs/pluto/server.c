@@ -616,7 +616,6 @@ call_server(void)
 		FD_SET(adns_afd, &readfds);
 	    }
 
-#ifdef KLIPS
 	    if (kern_interface != NO_KERNEL)
 	    {
 		int fd = *kernel_ops->async_fdp;
@@ -628,7 +627,6 @@ call_server(void)
 		passert(!FD_ISSET(fd, &readfds));
 		FD_SET(fd, &readfds);
 	    }
-#endif
 
 	    if (listening)
 	    {
@@ -736,7 +734,6 @@ call_server(void)
 		ndes--;
 	    }
 
-#ifdef KLIPS
 	    if (kern_interface != NO_KERNEL
 		&& FD_ISSET(*kernel_ops->async_fdp, &readfds))
 	    {
@@ -747,7 +744,6 @@ call_server(void)
 		passert(GLOBALS_ARE_RESET());
 		ndes--;
 	    }
-#endif
 
 	    for (ifp = interfaces; ifp != NULL; ifp = ifp->next)
 	    {

@@ -321,23 +321,68 @@ bsdkame_pfkey_register(void)
 }
 
 static void
-bsdkame_pfkey_register_response(const struct sadb_msg *msg UNUSED)
+bsdkame_pfkey_register_response(const struct sadb_msg *msg)
 {
-    passert(0);
+    pfkey_set_supported(msg, msg->sadb_msg_len);
 }
+
+static void
+bsdkame_pfkey_acquire(struct sadb_msg *msg)
+{
+    DBG_log("received acquire --- discarded");
+    return;
+}
+
+
+/* processs a pfkey message */
+static void
+bsdkame_pfkey_async(struct sadb_msg *reply)
+{
+    switch (reply->sadb_msg_type)
+    {
+    case SADB_REGISTER:
+	bsdkame_pfkey_register_response(reply);
+	break;
+
+    case SADB_ACQUIRE:
+	bsdkame_pfkey_acquire(reply);
+	break;
+	
+	/* case SADB_NAT_T UPDATE STUFF  */
+	
+    default:
+	break;
+    }
+    
+}
+
 
 /* asynchronous messages from our queue */
 static void
 bsdkame_dequeue(void)
 {
-    passert(0);
+    struct pfkey_item *pi, *pinext;
+    
+    for(pi=pfkey_iq.tqh_first; pi; pi = pinext) {
+	pinext = pi->tqe_next;
+	TAILQ_REMOVE(pi);
+
+	bsdkame_pfkey_async(pi->msg);
+	free(pi->msg);
+	pfree(pi);
+	
+    }
 }
+
 
 /* asynchronous messages directly from PF_KEY socket */
 static void
 bsdkame_event(void)
 {
-    passert(0);
+	struct sadb_msg *reply = pfkey_recv(pfkeyfd);
+
+	bsdkame_pfkey_async(reply);
+	free(reply);
 }
 
 
