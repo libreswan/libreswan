@@ -183,6 +183,8 @@ int parser_y_include (const char *filename)
                           ic_private.line[ic_private.stack_ptr]++;
 		        }
 
+^[\t ]+\n		/* ignore lines that just have combinations of spaces on them */
+
 ^[\t ]+			return FIRST_SPACES;
 
 [\t ]+			/* ignore spaces in line */ ;
