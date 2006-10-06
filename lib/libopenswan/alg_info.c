@@ -749,9 +749,11 @@ alg_info_snprint(char *buf, int buflen
 	{
 	    struct alg_info_esp *alg_info_esp=(struct alg_info_esp *)alg_info;
 	    ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
-		np=snprintf(ptr, buflen, "%d_%03d-%d, "
+		np=snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d), "
+			    , enum_name(&esp_transformid_names, esp_info->esp_ealg_id)+sizeof("ESP")
 			    , esp_info->esp_ealg_id
 			    , (int)esp_info->esp_ealg_keylen
+			    , enum_name(&auth_alg_names, esp_info->esp_aalg_id)+sizeof("AUTH_ALGORITHM_HMAC")
 			    , esp_info->esp_aalg_id);
 		ptr+=np;
 		buflen-=np;
@@ -770,11 +772,13 @@ alg_info_snprint(char *buf, int buflen
     case PROTO_ISAKMP:
 	if(permitike) {
 	    ALG_INFO_IKE_FOREACH((struct alg_info_ike *)alg_info, ike_info, cnt) {
-		np=snprintf(ptr, buflen, "%d_%03d-%d-%d, ",
-			    ike_info->ike_ealg,
-			    (int)ike_info->ike_eklen,
-			    ike_info->ike_halg,
-			    ike_info->ike_modp);
+		np=snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d)-%d, "
+			    , enum_name(&esp_transformid_names, ike_info->ike_ealg)+sizeof("ESP")
+			    , ike_info->ike_ealg
+			    , (int)ike_info->ike_eklen
+			    , enum_name(&auth_alg_names, ike_info->ike_halg)+sizeof("AUTH_ALGORITHM_HMAC")
+			    , ike_info->ike_halg
+			    , ike_info->ike_modp);
 		ptr+=np;
 		buflen-=np;
 		if(buflen<0) goto out;
