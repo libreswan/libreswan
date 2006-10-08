@@ -96,3 +96,7 @@ int pfkey_send_x1(int, u_int, u_int, u_int, const struct sockaddr *,
 
 extern openswan_keying_debug_func_t pfkey_debug_func;
 extern unsigned int bsdpfkey_lib_debug;
+
+extern void foreach_supported_alg(void (*algregister)(int satype,
+						      int extype,
+						      struct sadb_alg *alg));

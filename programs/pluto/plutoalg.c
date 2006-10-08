@@ -34,6 +34,7 @@
 #include "state.h"
 #include "kernel_alg.h"
 #include "alg_info.h"
+#include "kernel_alg.h"
 #include "ike_alg.h"
 #include "plutoalg.h"
 #include "crypto.h"
@@ -193,24 +194,32 @@ alg_info_snprint_esp(char *buf, int buflen, struct alg_info_esp *alg_info)
 	int cnt;
 	int eklen, aklen;
 	ptr=buf;
+
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL) &&
-			(kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL))) {
-		eklen=esp_info->esp_ealg_keylen;
-		if (!eklen) 
-			eklen=kernel_alg_esp_enc_keylen(esp_info->esp_ealg_id)*BITS_PER_BYTE;
-		aklen=esp_info->esp_aalg_keylen;
-		if (!aklen) 
-			aklen=kernel_alg_esp_auth_keylen(esp_info->esp_aalg_id)*BITS_PER_BYTE;
-		ret=snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d)_%03d, "
-			     , enum_name(&esp_transformid_names, esp_info->esp_ealg_id)+sizeof("ESP_")
-			     , esp_info->esp_ealg_id, eklen
-			     , enum_name(&auth_alg_names, esp_info->esp_aalg_id)+sizeof("AUTH_ALGORITHM_HMAC_")
-			     , esp_info->esp_aalg_id, aklen);
-		ptr+=ret;
-		buflen-=ret;
-		if (buflen<0) break;
-		}
+	    if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL)) {
+		DBG_log("algid=%d not available", esp_info->esp_ealg_id);
+		continue;
+	    }
+
+	    if (kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL)) {
+		DBG_log("algid=%d not available", esp_info->esp_aalg_id);
+		continue;
+	    }
+	    
+	    eklen=esp_info->esp_ealg_keylen;
+	    if (!eklen) 
+		eklen=kernel_alg_esp_enc_keylen(esp_info->esp_ealg_id)*BITS_PER_BYTE;
+	    aklen=esp_info->esp_aalg_keylen;
+	    if (!aklen) 
+		aklen=kernel_alg_esp_auth_keylen(esp_info->esp_aalg_id)*BITS_PER_BYTE;
+	    ret=snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d)_%03d, "
+			 , enum_name(&esp_transformid_names, esp_info->esp_ealg_id)+sizeof("ESP")
+			 , esp_info->esp_ealg_id, eklen
+			 , enum_name(&auth_alg_names, esp_info->esp_aalg_id)+sizeof("AUTH_ALGORITHM_HMAC")
+			 , esp_info->esp_aalg_id, aklen);
+	    ptr+=ret;
+	    buflen-=ret;
+	    if (buflen<0) break;
 	}
 	return ptr-buf;
 }

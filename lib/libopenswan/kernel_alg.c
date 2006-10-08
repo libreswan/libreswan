@@ -104,7 +104,7 @@ kernel_alg_init(void)
 	esp_ealg_num=esp_aalg_num=0;
 }
 
-static int
+int
 kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 {
 	struct sadb_alg *alg_p=NULL;
@@ -143,7 +143,7 @@ kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 	 * test #1: encrypt algo must be present 
 	 */
 	int ret=ESP_EALG_PRESENT(alg_id);
-	if (!ret) goto out;
+	if (!ret) { ugh="not present"; goto out; }
 
 	alg_p=&esp_ealg[alg_id];
 	/* 

@@ -146,6 +146,42 @@ findsupportedalg(satype, alg_id)
 	return NULL;
 }
 
+void foreach_supported_alg(void (*algregister)(int satype, int extype, struct sadb_alg *alg))
+{
+	int algno;
+	int tlen,i;
+	int satype, supported_exttype;;
+	caddr_t p;
+
+	for (i = 0; i < sizeof(supported_map)/sizeof(supported_map[0]); i++) {
+	  satype = supported_map[i];
+
+	  algno=i;
+
+	  if(ipsec_supported[algno] == NULL) continue;
+	  
+	  tlen = ipsec_supported[algno]->sadb_supported_len
+	    - sizeof(struct sadb_supported);
+	  supported_exttype = ipsec_supported[algno]->sadb_supported_exttype;
+	  p = (caddr_t)(ipsec_supported[algno] + 1);
+
+	  while (tlen > 0) {
+	    struct sadb_alg *a = ((struct sadb_alg *)p);
+
+	    if (tlen < sizeof(struct sadb_alg)) {
+	      /* invalid format */
+	      break;
+	    }
+	    
+	    algregister(satype, supported_exttype, a);
+
+	    tlen -= sizeof(struct sadb_alg);
+	    p += sizeof(struct sadb_alg);
+	  }
+	}
+	return;
+}
+
 static int
 setsupportedmap(const struct sadb_supported *sup, int properlen)
 {
@@ -167,11 +203,16 @@ setsupportedmap(const struct sadb_supported *sup, int properlen)
 		free(*ipsup);
 
 	*ipsup = malloc(properlen);
+
+	DBG_log("recv_register 4 %d = %p \n",
+		sup->sadb_supported_exttype, *ipsup);
+
 	if (!*ipsup) {
 		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
 	memcpy(*ipsup, sup, properlen);
+	(*ipsup)->sadb_supported_len = properlen;
 
 	return 0;
 }
@@ -712,10 +753,13 @@ pfkey_recv_register(so)
 	struct sadb_msg *newmsg;
 	int error = -1;
 
+	DBG_log("recv_register\n");
+
 	/* receive message */
 	for (;;) {
 		if ((newmsg = pfkey_recv(so)) == NULL)
 			return -1;
+
 		if (newmsg->sadb_msg_type == SADB_REGISTER &&
 		    newmsg->sadb_msg_pid == pid)
 			break;
@@ -751,6 +795,8 @@ pfkey_set_supported(const struct sadb_msg *msg, int tlen)
 	const unsigned char *p, *ep;
 	int properlen;
 
+	DBG_log("recv_register 2\n");
+
 	/* validity */
 	if (msg->sadb_msg_len != tlen) {
 		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
@@ -762,6 +808,7 @@ pfkey_set_supported(const struct sadb_msg *msg, int tlen)
 
 	p += sizeof(struct sadb_msg);
 
+	DBG_log("recv_register 2c\n");
 	while (p < ep) {
 		sup = (const struct sadb_supported *)p;
 		if (ep < p + sizeof(*sup) ||
@@ -770,6 +817,8 @@ pfkey_set_supported(const struct sadb_msg *msg, int tlen)
 			/* invalid format */
 			break;
 		}
+
+		DBG_log("recv_register 2b\n");
 
 		switch (sup->sadb_supported_exttype) {
 		case SADB_EXT_SUPPORTED_AUTH:

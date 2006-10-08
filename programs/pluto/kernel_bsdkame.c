@@ -307,17 +307,57 @@ bsdkame_do_command(struct connection *c, struct spd_route *sr
     return invoke_command(verb, verb_suffix, cmd);
 }
 
+static void bsdkame_algregister(int satype, int supp_exttype,
+				struct sadb_alg *alg)
+{
+    int ret;
+
+    switch (satype) {
+    case SADB_SATYPE_AH:
+	ret=kernel_alg_add(satype, supp_exttype, alg);
+	DBG(DBG_KLIPS, DBG_log("algregister_ah(%p) exttype=%d alg_id=%d, "
+			       "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
+			       "ret=%d",
+			       alg, supp_exttype,
+			       alg->sadb_alg_id,
+			       alg->sadb_alg_ivlen,
+			       alg->sadb_alg_minbits,
+			       alg->sadb_alg_maxbits,
+			       ret));
+	break;
+
+    case SADB_SATYPE_ESP:
+	ret=kernel_alg_add(satype, supp_exttype, alg);
+	DBG(DBG_KLIPS, DBG_log("algregister(%p) alg_id=%d, "
+			       "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
+			       "ret=%d",
+			       alg,
+			       alg->sadb_alg_id,
+			       alg->sadb_alg_ivlen,
+			       alg->sadb_alg_minbits,
+			       alg->sadb_alg_maxbits,
+			       ret));
+    default: 
+	return;
+    }
+}
+
 static void
 bsdkame_pfkey_register(void)
 {
+    DBG_log("pfkey_register AH\n");
     pfkey_send_register(pfkeyfd, SADB_SATYPE_AH);
     pfkey_recv_register(pfkeyfd);
+
+    DBG_log("pfkey_register ESP\n");
     pfkey_send_register(pfkeyfd, SADB_SATYPE_ESP);
     pfkey_recv_register(pfkeyfd);
 
     can_do_IPcomp = FALSE;  /* until we get a response from KLIPS */
     pfkey_send_register(pfkeyfd, SADB_X_SATYPE_IPCOMP);
     pfkey_recv_register(pfkeyfd);
+
+    foreach_supported_alg(bsdkame_algregister);
 }
 
 static void
