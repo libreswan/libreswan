@@ -23,7 +23,9 @@
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/version.h>
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/kernel.h>
 
 #include "openswan/ipsec_param.h"

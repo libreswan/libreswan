@@ -60,7 +60,7 @@ static void default_values (struct starter_config *cfg)
 	cfg->setup.options[KBF_FRAGICMP] = TRUE;
 	cfg->setup.options[KBF_HIDETOS]  = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS]= FALSE;
-	cfg->setup.options[KBF_TYPE] = KS_TUNNEL;
+	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 
 	cfg->conn_default.policy = POLICY_RSASIG|POLICY_TUNNEL|POLICY_ENCRYPT|POLICY_PFS;
 
@@ -524,6 +524,10 @@ bool translate_conn (struct starter_conn *conn
 	
 	field = kw->keyword.keydef->field;
 
+	starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d\n",
+		    kw->keyword.keydef->keyname, field,
+		    kw->keyword.keydef->type);
+
 	assert(kw->keyword.keydef != NULL);
 	switch(kw->keyword.keydef->type)
 	{
@@ -664,6 +668,8 @@ bool translate_conn (struct starter_conn *conn
 		}
 	    }
 
+	    starter_log(LOG_LEVEL_DEBUG, "#setting %s[%d]=%u\n",
+			kw->keyword.keydef->keyname, field, kw->number);
 	    (*the_options)[field] = kw->number;
 	    (*set_options)[field] = TRUE;
 	    break;
@@ -714,7 +720,7 @@ static int load_conn (struct starter_config *cfg
     err += load_conn_basic(conn, sl, perr);
     if(err) return err;
 
-    if(conn->strings[KSCF_ALSO] != NULL
+    if(conn->strings[KSF_ALSO] != NULL
        && !alsoprocessing)
     {
 	starter_log(LOG_LEVEL_INFO
@@ -725,7 +731,7 @@ static int load_conn (struct starter_config *cfg
 
     /* now, process the also's */
     if (conn->alsos) free_list(conn->alsos);
-    conn->alsos = new_list(conn->strings[KSCF_ALSO]);
+    conn->alsos = new_list(conn->strings[KSF_ALSO]);
 
     if(alsoprocessing && conn->alsos)
     {
@@ -756,7 +762,7 @@ static int load_conn (struct starter_config *cfg
 		sl1 != NULL && strcasecmp(alsos[alsoplace], sl1->name) != 0;
 		sl1 = sl1->link.tqe_next);
 
-	    starter_log(LOG_LEVEL_DEBUG, "\twhile loading conn '%s' processing %s"
+	    starter_log(LOG_LEVEL_DEBUG, "\twhile loading conn '%s' also including '%s'"
 			, conn->name, alsos[alsoplace]);
 			    
 	    /*
@@ -765,18 +771,18 @@ static int load_conn (struct starter_config *cfg
 	     */
 	    if(sl1 && !sl1->beenhere)
 	    {
-		conn->strings_set[KSCF_ALSO]=FALSE;
-		if(conn->strings[KSCF_ALSO]) free(conn->strings[KSCF_ALSO]);
-		conn->strings[KSCF_ALSO]=NULL;
+		conn->strings_set[KSF_ALSO]=FALSE;
+		if(conn->strings[KSF_ALSO]) free(conn->strings[KSF_ALSO]);
+		conn->strings[KSF_ALSO]=NULL;
 		sl1->beenhere = TRUE;
 
 		/* translate things, but do not replace earlier settings */
 		err += translate_conn(conn, sl1, FALSE, perr);
 
-		if(conn->strings[KSCF_ALSO])
+		if(conn->strings[KSF_ALSO])
 		{
 		    /* now, check out the KSF_ALSO, and extend list if we need to */
-		    newalsos = new_list(conn->strings[KSCF_ALSO]);		
+		    newalsos = new_list(conn->strings[KSF_ALSO]);		
 		    
 		    if(newalsos && newalsos[0]!=NULL)
 		    {
@@ -822,38 +828,80 @@ static int load_conn (struct starter_config *cfg
     }
 
     /* translate strings/numbers into conn items */
-    
-    KW_POLICY_FLAG(KBF_TYPE, POLICY_TUNNEL);
+    starter_log(LOG_LEVEL_DEBUG, "#checking options_set[KBF_TYPE,%d]=%d %d\n",
+		KBF_TYPE,
+		conn->options_set[KBF_TYPE], conn->options[KBF_TYPE]);
+
+    if(conn->options_set[KBF_TYPE]) {
+	switch((enum keyword_satype)conn->options[KBF_TYPE]) {
+	case KS_TUNNEL:
+	    conn->policy |= POLICY_TUNNEL;
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    break;
+
+	case KS_TRANSPORT:
+	    conn->policy &= ~POLICY_TUNNEL;
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    break;
+	    
+	case KS_UDPENCAP:
+	    /* no way to specify this yet! */
+	    break;
+
+	case KS_PASSTHROUGH:
+	    starter_log(LOG_LEVEL_DEBUG, "#setting type=passthrough, policy=%08llx PASS=%08lx\n",
+		    (unsigned long long)conn->policy, POLICY_SHUNT_PASS);
+	    conn->policy &= ~(POLICY_ENCRYPT|POLICY_AUTHENTICATE);
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    conn->policy |= POLICY_SHUNT_PASS;
+	    starter_log(LOG_LEVEL_DEBUG, "#setted type=passthrough, policy=%08llx PASS=%08lx\n",
+		    (unsigned long long)conn->policy, POLICY_SHUNT_PASS);
+	    break;
+
+	case KS_DROP:
+	    conn->policy &= ~(POLICY_ENCRYPT|POLICY_AUTHENTICATE);
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    conn->policy |= POLICY_SHUNT_DROP;
+	    break;
+
+	case KS_REJECT:
+	    conn->policy &= ~(POLICY_ENCRYPT|POLICY_AUTHENTICATE);
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    conn->policy |= POLICY_SHUNT_REJECT;
+	    break;
+	}
+    }
+	    
     KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
     KW_POLICY_FLAG(KBF_PFS,  POLICY_PFS);
     
     /* reset authby flags */
-    if(conn->options_set[KNCF_AUTHBY]) {
+    if(conn->options_set[KBF_AUTHBY]) {
 	conn->policy &= ~(POLICY_ID_AUTH_MASK);
-	conn->policy |= conn->options[KNCF_AUTHBY];
+	conn->policy |= conn->options[KBF_AUTHBY];
 
 	starter_log(LOG_LEVEL_DEBUG,
 		    "%s: setting conn->policy=%08x (%08x)\n",
 		    conn->name,
 		    (unsigned int)conn->policy,
-		    conn->options[KNCF_AUTHBY]);
+		    conn->options[KBF_AUTHBY]);
     }
     
     KW_POLICY_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
 
     KW_POLICY_FLAG(KBF_AGGRMODE, POLICY_AGGRESSIVE);
 
-    if(conn->strings_set[KSCF_ESP]) {
-	conn->esp = xstrdup(conn->strings[KSCF_ESP]);
+    if(conn->strings_set[KSF_ESP]) {
+	conn->esp = xstrdup(conn->strings[KSF_ESP]);
     }
 
-    if(conn->strings_set[KSCF_IKE]) {
-	conn->ike = xstrdup(conn->strings[KSCF_IKE]);
+    if(conn->strings_set[KSF_IKE]) {
+	conn->ike = xstrdup(conn->strings[KSF_IKE]);
     }
 
-    if(conn->options_set[KNCF_PHASE2]) {
+    if(conn->options_set[KBF_PHASE2]) {
 	conn->policy &= ~(POLICY_AUTHENTICATE|POLICY_ENCRYPT);
-	conn->policy |= conn->options[KNCF_PHASE2];
+	conn->policy |= conn->options[KBF_PHASE2];
     }
 
     err += validate_end(conn, &conn->left,  TRUE, perr);

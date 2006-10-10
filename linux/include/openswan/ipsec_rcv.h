@@ -37,7 +37,9 @@
 /* struct options; */
 
 #define __NO_VERSION__
-#include <linux/config.h>	/* for CONFIG_IP_FORWARD */
+#ifndef AUTOCONF_INCLUDED
+#include <linux/config.h>
+#endif	/* for CONFIG_IP_FORWARD */
 #ifdef CONFIG_MODULES
 #include <linux/module.h>
 #endif

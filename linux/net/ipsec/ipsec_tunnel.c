@@ -18,7 +18,9 @@ char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.234 2005/11/11 04
 
 #define __NO_VERSION__
 #include <linux/module.h>
-#include <linux/config.h>	/* for CONFIG_IP_FORWARD */
+#ifndef AUTOCONF_INCLUDED
+#include <linux/config.h>
+#endif	/* for CONFIG_IP_FORWARD */
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 

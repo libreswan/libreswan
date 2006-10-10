@@ -21,7 +21,9 @@
 
 char pfkey_v2_parser_c_version[] = "$Id: pfkey_v2_parser.c,v 1.134 2005/05/11 01:48:20 mcr Exp $";
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 

@@ -18,7 +18,9 @@
  * Split out from ipsec_proc.c.
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 #define __NO_VERSION__
 #include <linux/module.h>

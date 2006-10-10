@@ -27,7 +27,9 @@
  *   modprobe ipsec_cryptoapi aes=128,128                (force these keylens)
  *   modprobe ipsec_cryptoapi des_ede3=0                 (everything but 3DES)
  */
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 
 /*	

@@ -1764,6 +1764,7 @@ do_unittest() {
 
     if [ ! -x "$TESTSCRIPT" ]; then echo "TESTSCRIPT=$TESTSCRIPT is not executable"; exit 41; fi
 
+    echo "BUILDING DEPENDANCIES"
     (cd ${ROOTDIR}/programs;
      for program in ${PROGRAMS}
      do
@@ -1781,7 +1782,9 @@ do_unittest() {
     mkdir -p ${OUTDIR}
     ln -f -s ${OUTDIR} OUTPUT
 
+    echo "RUNNING $TESTSCRIPT"
     ./$TESTSCRIPT >${OUTDIR}/console.txt
+    echo "DONE $TESTSCRIPT"
 
     stat=$?
     echo Exit code $stat

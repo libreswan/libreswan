@@ -30,6 +30,10 @@
 
 #define MAX_INCLUDE_DEPTH  10
 
+char rootdir[PATH_MAX];      /* when evaluating paths, prefix this to them */
+char rootdir2[PATH_MAX];     /* or... try this one too */
+
+
 /* we want no actual output! */
 #define ECHO 
 
@@ -100,6 +104,12 @@ int parser_y_include (const char *filename)
 	if(rootdir[0]!='\0' && filename[0]=='/')
         {
 	    snprintf(newname, PATH_MAX, "%s%s", rootdir, filename);
+
+            if(access(newname, R_OK)!=0) {
+  	      if(rootdir2[0]!='\0') {
+	        snprintf(newname, PATH_MAX, "%s%s", rootdir2, filename);
+              }
+            }
 	    filename=newname;
 	}
 		
@@ -145,10 +155,6 @@ int parser_y_include (const char *filename)
 %%
 
 <<EOF>>	{
-	if (ic_private.filename[ic_private.stack_ptr]) {
-		free(ic_private.filename[ic_private.stack_ptr]);
-		ic_private.filename[ic_private.stack_ptr] = NULL;
-	}
 	if (ic_private.file[ic_private.stack_ptr]) {
 	    int stackp = ic_private.stack_ptr;
 
@@ -165,6 +171,10 @@ int parser_y_include (const char *filename)
 		ic_private.file[stackp] = NULL;
 		yy_delete_buffer (YY_CURRENT_BUFFER);
 		yy_switch_to_buffer(ic_private.stack[stackp]);
+	}
+	if (ic_private.filename[ic_private.stack_ptr]) {
+		free(ic_private.filename[ic_private.stack_ptr]);
+		ic_private.filename[ic_private.stack_ptr] = NULL;
 	}
 	if (--ic_private.stack_ptr < 0) {
 		yyterminate();

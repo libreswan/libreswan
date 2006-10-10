@@ -25,68 +25,74 @@
 
 /*
  * these are global configuration parameters, and appear in
- * "config setup" stanza.
+ * "config setup" stanza, and as non-left/right items in
+ * the "conn foo" stanzas
  */
 enum keyword_string_config_field {
-    KSF_INTERFACES = 0,
-    KSF_PREPLUTO   = 3,
-    KSF_POSTPLUTO  = 4,
+    KSF_DPDACTION    = 0,  /* loose_enum evantually */
+    KSF_INTERFACES,
+    KSF_PREPLUTO,
+    KSF_POSTPLUTO,
     /* KSF_PACKETDEFAULT = 5, */
-    KSF_VIRTUALPRIVATE= 6, 
-    KSF_SYSLOG     = 7,
-    KSF_DUMPDIR    = 8,
-    KSF_MANUALSTART= 9,
-    KSF_PLUTOLOAD  = 10,
-    KSF_PLUTOSTART = 11,
-    KSF_MYID       = 13,
-    KSF_PLUTO      = 14,
-    KSF_PLUTOOPTS  = 15,
-    KSF_PLUTOSTDERRLOG=16,
-    KSF_PROTOSTACK  =17,
-    KSF_MAX        = 19
+    KSF_VIRTUALPRIVATE,
+    KSF_SYSLOG,
+    KSF_DUMPDIR,
+    KSF_MANUALSTART,
+    KSF_PLUTOLOAD,
+    KSF_PLUTOSTART,
+    KSF_MYID,
+    KSF_PLUTO,
+    KSF_PLUTOOPTS,
+    KSF_PLUTOSTDERRLOG,
+    KSF_PROTOSTACK,
+    KSF_IKE,
+    KSF_ESP,
+    KSF_ALSO,
+    KSF_ALSOFLIP,
+    KSF_MAX
 };
 
 /* Numeric fields also include boolean fields */
 /* and do not come in right/left variants */
 enum keyword_numeric_config_field {
-    KBF_FRAGICMP = 0,
-    KBF_HIDETOS  = 1,
-    KBF_UNIQUEIDS= 2,
-    KBF_PLUTOWAIT= 3,
-    KBF_FORWARDCONTROL = 5,
-    KBF_OVERRIDEMTU = 6,
-    KBF_STRICTCRLPOLICY = 7,
-    KBF_NOCRSEND    = 8,
-    KBF_NATTRAVERSAL = 9,
-    KBF_KEEPALIVE    = 10,
-    KBF_PLUTORESTARTONCRASH = 11,
-    KBF_RPFILTER     = 12,
-    KBF_CRLCHECKINTERVAL = 13,
-    KBF_TYPE       = 14,
-    KBF_KEYEXCHANGE= 16,
-    KBF_AUTO       = 17,
-    KBF_PFS        = 18,
-    KBF_SALIFETIME = 19,
-    KBF_REKEY      = 20,
-    KBF_REKEYMARGIN= 21,
-    KBF_REKEYFUZZ  = 22,
-    KBF_COMPRESS   = 23,
-    KBF_KEYINGTRIES  = 24,
-    KBF_ARRIVALCHECK = 25,
-    KBF_FAILURESHUNT = 26,
-    KBF_IKELIFETIME  = 27,
-    KBF_KLIPSDEBUG   = 28,
-    KBF_PLUTODEBUG   = 29,
-    KBF_NHELPERS     = 30,
-    KBF_OPPOENCRYPT  = 31,
-    KBF_AGGRMODE         = 32,
-    KBF_XAUTHSERVER      = 33,
-    KBF_XAUTHCLIENT      = 34,
-    KBF_MODECONFIGSERVER = 35,
-    KBF_MODECONFIGCLIENT = 36,
-    KBF_MODECONFIGPULL   = 37,
-
-    KBF_MAX          = 38
+    KBF_DPDACTION        = 0,
+    KBF_FAILURESHUNT = 1,
+    KBF_TYPE         = 2,
+    KBF_FRAGICMP,
+    KBF_HIDETOS,
+    KBF_UNIQUEIDS,
+    KBF_PLUTOWAIT,
+    KBF_FORWARDCONTROL,
+    KBF_OVERRIDEMTU,
+    KBF_STRICTCRLPOLICY,
+    KBF_NOCRSEND,
+    KBF_NATTRAVERSAL,
+    KBF_KEEPALIVE,
+    KBF_PLUTORESTARTONCRASH,
+    KBF_RPFILTER,
+    KBF_CRLCHECKINTERVAL,
+    KBF_KLIPSDEBUG,
+    KBF_PLUTODEBUG,
+    KBF_NHELPERS,
+    KBF_OPPOENCRYPT,
+    KBF_DPDDELAY,
+    KBF_DPDTIMEOUT,
+    KBF_PHASE2,
+    KBF_AUTHBY,
+    KBF_KEYEXCHANGE,
+    KBF_AUTO,
+    KBF_PFS,
+    KBF_SALIFETIME,
+    KBF_REKEY,
+    KBF_REKEYMARGIN,
+    KBF_REKEYFUZZ,
+    KBF_COMPRESS,
+    KBF_KEYINGTRIES,
+    KBF_ARRIVALCHECK,
+    KBF_IKELIFETIME,
+    KBF_AGGRMODE,
+    KBF_MODECONFIGPULL,
+    KBF_MAX         
 };
 
 /*
@@ -112,15 +118,10 @@ enum keyword_string_conn_field {
     KSCF_CA           = 8,
     KSCF_SUBNETWITHIN = 9,
     KSCF_PROTOPORT    = 10,
-    KSCF_IKE          = 11,
-    KSCF_ESP          = 12,
     KSCF_ESPENCKEY    = 13,
     KSCF_ESPAUTHKEY   = 14,
-    KSCF_DPDACTION    = 15,
-    KSCF_SOURCEIP     = 16,
-    KSCF_ALSO         = 17,
-    KSCF_ALSOFLIP     = 18,                     /* XXX still to handle */
-    KSCF_MAX          = 19
+    KSCF_SOURCEIP     = 15,
+    KSCF_MAX          = 16
 };
 
 
@@ -132,14 +133,13 @@ enum keyword_numeric_conn_field {
     KNCF_SPIBASE          = 4,
     KNCF_RSAKEY1          = 5,  /* loose_enum */
     KNCF_RSAKEY2          = 6,  /* loose_enum */
-    KNCF_SPI              = 7,
-    KNCF_ESPREPLAYWINDOW  = 8,
-    KNCF_DPDDELAY         = 9,
-    KNCF_DPDTIMEOUT       = 10,
-    KNCF_DPDACTION        = 11,
-    KNCF_PHASE2           = 12,
-    KNCF_AUTHBY           = 13,
-    KNCF_MAX              = 19
+    KNCF_XAUTHSERVER      = 7,
+    KNCF_XAUTHCLIENT      = 8,
+    KNCF_MODECONFIGSERVER = 9,
+    KNCF_MODECONFIGCLIENT = 10,
+    KNCF_SPI,
+    KNCF_ESPREPLAYWINDOW,
+    KNCF_MAX              
 };
 
 #define KEY_STRINGS_MAX (KSF_MAX > KSCF_MAX ? KSF_MAX : KSCF_MAX)+1

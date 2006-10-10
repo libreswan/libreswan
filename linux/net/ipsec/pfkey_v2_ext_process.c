@@ -22,7 +22,9 @@
 
 char pfkey_v2_ext_process_c_version[] = "$Id: pfkey_v2_ext_process.c,v 1.20 2005/04/29 05:10:22 mcr Exp $";
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 

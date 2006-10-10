@@ -16,7 +16,9 @@
  * RCSID $Id: ipsec_radij.c,v 1.73 2005/04/29 05:10:22 mcr Exp $
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 
