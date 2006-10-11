@@ -64,7 +64,9 @@ sadb_alg_ptr (int satype, int exttype, int alg_id, int rw)
 		default:
 			goto fail;
 	}
+
 	switch(satype) {
+		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
 			alg_p=(exttype == SADB_EXT_SUPPORTED_ENCRYPT)? 
 				&esp_ealg[alg_id] : &esp_aalg[alg_id];
@@ -74,8 +76,6 @@ sadb_alg_ptr (int satype, int exttype, int alg_id, int rw)
 					esp_ealg_num++ : esp_aalg_num++;
 			}
 			break;
-		case SADB_SATYPE_AH:
-			goto fail;
 		default:
 			goto fail;
 	}
@@ -113,8 +113,11 @@ kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	DBG(DBG_KLIPS, DBG_log("kernel_alg_add():"
 		"satype=%d, exttype=%d, alg_id=%d",
 		satype, exttype, sadb_alg->sadb_alg_id));
-	if (!(alg_p=sadb_alg_ptr(satype, exttype, alg_id, 1)))
-		return -1;
+	if (!(alg_p=sadb_alg_ptr(satype, exttype, alg_id, 1))) {
+	    DBG_log("kernel_alg_add(%d,%d,%d) fails because alg combo is invalid\n"
+		    , satype, exttype, sadb_alg->sadb_alg_id);
+	    return -1;
+	}
 
 	/*
 	DBG(DBG_KLIPS, DBG_log("kernel_alg_add(): assign *%p=*%p",
