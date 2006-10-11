@@ -97,7 +97,7 @@ vecho "patch revs: $klips_revs"
 (       
         cd $klips_git 
         filter_for_patch_files=$(echo $build_patches_for | sed 's, ,\\|,g')
-        find $interesting_dirs -type f | grep -v "$filter_for_patch_files" | cpio -pd $openswan_git/linux 
+        find $interesting_dirs -type f | grep -v "^\($filter_for_patch_files\)" | cpio -pd $openswan_git/linux 
 )
 
 #### step 2... cleanup after the copy
