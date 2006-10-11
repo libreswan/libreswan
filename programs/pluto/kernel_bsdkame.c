@@ -977,7 +977,7 @@ bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 			0, /*flags */
 			0, /* l_alloc */
 			0, /* l_bytes */
-			0, /* l_addtime */
+			sa->sa_lifetime, /* l_addtime */
 			0, /* l_usetime, */
 			pfkey_seq);
 
