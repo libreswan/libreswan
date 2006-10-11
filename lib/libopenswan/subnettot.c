@@ -16,6 +16,35 @@
  */
 #include "internal.h"
 #include "openswan.h"
+#include "constants.h"
+
+/*
+ * returns true if the subnet looks valid.
+ */
+bool isvalidsubnet(const ip_subnet *sub)
+{
+    int t=addrtypeof(&sub->addr);
+
+    switch(t) {
+    case AF_INET:
+	if(sub->maskbits <= 0 && sub->maskbits > 32) {
+	    return FALSE;
+	}
+	break;
+
+    case AF_INET6:
+	if(sub->maskbits <= 0 && sub->maskbits > 128) {
+	    return FALSE;
+	}
+	break;
+
+    default:
+	return FALSE;
+    }
+    
+
+    return TRUE;
+}
 
 /*
  - subnettot - convert subnet to text "addr/bitcount"

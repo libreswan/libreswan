@@ -1,8 +1,8 @@
 192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x1)
-192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x2):  ip-proto-48 71
-192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x3)
-192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x4)
-192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x5):  ip-proto-33 33
+192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x2)
+192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x3):  ipv6-frag 98
+192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x4):  ipv6-icmp 46
+192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x5): truncated-ip6 - 5536 bytes missing!1154:cedf:877b:26ec:d32b:66b2:9cb4:14d3 > f52c:76d5:23ec:ef55:b2aa:60aa:1e9c:f1: IP10 bad-hlen 12 [class 0xb0] [flowlabel 0x374b1]
 192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x6)
 192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x7)
-192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x8)
+192.1.2.23 > 192.1.2.45: ESP(spi=0xd1234567,seq=0x8):  ip-proto-122 75

@@ -254,7 +254,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
 
     {"ike",            kv_conn|kv_auto, kt_string, KSF_IKE,NOT_ENUM},
 
-    {"subnet",         kv_conn|kv_leftright, kt_subnet, KSCF_SUBNET,NOT_ENUM}, 
+    {"subnet",         kv_conn|kv_leftright|kv_processed, kt_subnet, KSCF_SUBNET,NOT_ENUM}, 
     {"sourceip",       kv_conn|kv_leftright, kt_ipaddr, KSCF_SOURCEIP,NOT_ENUM}, 
     {"nexthop",        kv_conn|kv_leftright, kt_ipaddr, KSCF_NEXTHOP,NOT_ENUM},
     {"firewall",       kv_conn|kv_leftright, kt_bool,   KNCF_FIREWALL,NOT_ENUM},
@@ -287,7 +287,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     /* attributes of the phase2 policy */
     {"esp",            kv_conn|kv_auto|kv_manual,  kt_string, KSF_ESP,NOT_ENUM},
     {"subnetwithin",   kv_conn|kv_leftright, kt_string, KSCF_SUBNETWITHIN,NOT_ENUM},
-    {"protoport",      kv_conn|kv_leftright, kt_string, KSCF_PROTOPORT,NOT_ENUM},
+    {"protoport",      kv_conn|kv_leftright|kv_processed, kt_string, KSCF_PROTOPORT,NOT_ENUM},
     {"phase2",         kv_conn|kv_auto|kv_manual|kv_policy,  kt_enum, KBF_PHASE2, &kw_phase2types_list},
     {"auth",           kv_conn|kv_auto|kv_manual|kv_policy|kv_alias,  kt_enum, KBF_PHASE2, &kw_phase2types_list},
     {"compress",       kv_conn|kv_auto, kt_bool,   KBF_COMPRESS,NOT_ENUM},

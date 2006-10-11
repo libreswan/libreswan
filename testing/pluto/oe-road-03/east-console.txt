@@ -47,6 +47,8 @@ east:~#
 002 listening for IKE messages
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
+002 loaded private key for keyid: PPK_RSA:AQN3cn11F
+002 loaded private key for keyid: PPK_RSA:AwEAAaFHY
 002 loading group "/etc/ipsec.d/policies/us-private-or-clear-all"
 002 loading group "/etc/ipsec.d/policies/us-private-or-clear"
 002 loading group "/etc/ipsec.d/policies/private-or-clear"

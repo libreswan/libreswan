@@ -40,9 +40,9 @@ west:~#
 003 "west-east" #1: received Vendor ID payload [Dead Peer Detection]
 106 "west-east" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "west-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-004 "west-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=oakley_3des_cbc_192 prf=oakley_md5 group=modp1536}
+004 "west-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp1536}
 117 "west-east" #2: STATE_QUICK_I1: initiate
-004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established
+004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
 west:~#
  : use the tunnel
 west:~#
@@ -56,7 +56,7 @@ west:~#
  : show the tunnel
 west:~#
  ipsec eroute
-12         192.1.2.45/32      -> 192.1.2.23/32      => tun0x1002@192.1.2.23
+12         192.1.2.45/32      -> 192.1.2.23/32      => tun0x1001@192.1.2.23
 west:~#
  : Let R_U_THERE packets flow
 west:~#

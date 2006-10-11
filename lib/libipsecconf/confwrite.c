@@ -63,7 +63,8 @@ void confwrite_int(FILE *out,
 	
 	/* do not output policy settings handled elsewhere */
 	if(k->validity & kv_policy) continue;
-	
+	if(k->validity & kv_processed) continue;
+
 #if 0
 	printf("side: %s  %s validity: %08x & %08x=%08x\n", side,
 	       k->keyname, k->validity, context, k->validity&context);
@@ -168,6 +169,7 @@ void confwrite_str(FILE *out,
 	
 	/* do not output policy settings handled elsewhere */
 	if(k->validity & kv_policy) continue;
+	if(k->validity & kv_processed) continue;
 	
 	switch(k->type) {
 	case kt_string:
@@ -280,8 +282,13 @@ void confwrite_side(FILE *out,
     }
 
     if(end->has_client) {
-	subnettot(&end->subnet, 0, databuf, SUBNETTOT_BUF);
-	fprintf(out, "\t%ssubnet=%s\n", side, databuf);
+	if(isvalidsubnet(&end->subnet)
+	   && (!subnetishost(&end->subnet)
+	       || !addrinsubnet(&end->addr, &end->subnet)))
+	{
+	    subnettot(&end->subnet, 0, databuf, SUBNETTOT_BUF);
+	    fprintf(out, "\t%ssubnet=%s\n", side, databuf);
+	}
     }
 
     if(end->rsakey1) {
@@ -305,8 +312,8 @@ void confwrite_side(FILE *out,
 	    sprintf(databuf, "%u", end->protocol);
 	}
 	    
-	fprintf(out, "\t%sportproto=%s/%s\n", side,
-		b2, databuf);
+	fprintf(out, "\t%sprotoport=%s/%s\n", side,
+		databuf, b2);
     }
 
     if(end->cert) {
