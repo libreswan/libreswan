@@ -1220,6 +1220,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->spi = ipip_spi;
         said_next->esatype = ET_IPIP;
         said_next->text_said = clone_str(text_said, "said");
+	said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
 	if(inbound) {
 	    /*
@@ -1295,6 +1296,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->encapsulation = encapsulation;
         said_next->reqid = c->spd.reqid + 2;
         said_next->text_said = clone_str(text_said, "said");
+	said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
 	if(inbound) {
 	    /*
@@ -1516,6 +1518,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->natt_oa = &natt_oa;
 #endif  
         said_next->text_said = clone_str(text_said, "said");
+	said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
 	if(inbound) {
 	    /*
@@ -1595,6 +1598,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->encapsulation = encapsulation;
         said_next->reqid = c->spd.reqid;
         said_next->text_said = clone_str(text_said, "said");
+	said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
 	if(inbound) {
 	    /*
