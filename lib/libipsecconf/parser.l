@@ -27,6 +27,7 @@
 #include "ipsecconf/parser.h"
 #include "parser.tab.h"
 #include "ipsecconf/parserlast.h"
+#include "ipsecconf/starterlog.h"
 
 #define MAX_INCLUDE_DEPTH  10
 
@@ -122,10 +123,10 @@ int parser_y_include (const char *filename)
 
 	if(verbose)
 	{
-	    fprintf(stderr, "including file %s from line %s:%d\n"
-		    , filename
-		    , ic_private.filename[ic_private.stack_ptr]
-		    , ic_private.line[ic_private.stack_ptr]);
+		starter_log(LOG_LEVEL_DEBUG, "including file %s from line %s:%d\n"
+			    , filename
+			    , ic_private.filename[ic_private.stack_ptr]
+			    , ic_private.line[ic_private.stack_ptr]);
 	}
 
 	/**
@@ -162,10 +163,11 @@ int parser_y_include (const char *filename)
 		
 		if(verbose)
 		{
-		    fprintf(stderr, "end of file %s, resuming %s line %d\n"
-			    , ic_private.filename[stackp]
-			    , (stackp > 0 ? ic_private.filename[stackp-1] : "<none>")
-			    , (stackp > 0 ? ic_private.line[stackp-1] : -1));
+			starter_log(LOG_LEVEL_DEBUG,
+				    "end of file %s, resuming %s line %d\n"
+				    , ic_private.filename[stackp]
+				    , (stackp > 0 ? ic_private.filename[stackp-1] : "<none>")
+				    , (stackp > 0 ? ic_private.line[stackp-1] : -1));
 		}
 		
 		ic_private.file[stackp] = NULL;

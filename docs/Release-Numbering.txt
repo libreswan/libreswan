@@ -1,0 +1,40 @@
+-*- emacs-wiki -*-
+
+I propose the following proceedure.
+  
+Releases are numbered M.X.Y.
+
+During Y==0 releases, we may introduce new functionality.
+       These releases are to be considered "testing" (in debian parlance)
+       
+During Y!=0 releases, we may not introduce new functionality, and these
+       releases are to be considered "stable" (in debian parlance).
+
+Releases where X==0 are to be considered "unstable". We reserve the
+	 right to replace entire subsystems, remove functionality, 
+	 change configuration file formats, etc.
+
+So, this means that the current #public/2.5.0drY branch shall henceforth
+be called "3.0.Y".  We will not do "drX" or "rcX" releases to the public.    
+
+The digits "Y" may go as large as 99. We will do a new X or Y-level release 
+4 times a year, possibly more often if we need to fix bugs.
+
+Probably there were two new X-level releases among the 2.4.Y path
+which we could have done.
+
+The message to Fedora and Debian should be:
+
+1) include Y==0 releases in "testing" at your discretion.
+
+2) there is no significant functional changes or stability changes
+   between M.X.Y and M.X+1.Y, for Y!=0. 
+
+   Setting Y=0 is a sign that we may have refactored or revised some
+   piece of the system, and we are indicating caution.  Users should
+   be able to trust that M.X+1.Y, Y>=1 will be a drop-in replacement for
+   M.X.Y.
+
+We will try to always do a M.X.1 release within 2 months of a M.X.0
+release.  Those are to be considered stable. 
+	

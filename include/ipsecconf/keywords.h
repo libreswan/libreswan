@@ -153,7 +153,8 @@ enum keyword_valid {
     kv_auto   = LELEM(3),
     kv_manual = LELEM(4),
     kv_alias  = LELEM(5),
-    kv_policy = LELEM(6),
+    kv_policy = LELEM(6),     /* is a policy affecting verb, processed specially */
+    kv_processed = LELEM(7),  /* is processed, do not output literal string */
 };
 
 /* values keyexchange= */

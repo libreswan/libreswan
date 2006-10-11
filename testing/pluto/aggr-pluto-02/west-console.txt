@@ -32,7 +32,7 @@ west:~#
  ipsec auto --up  westnet-eastnet-aggr-psk
 112 "westnet-eastnet-aggr-psk" #1: STATE_AGGR_I1: initiate
 003 "westnet-eastnet-aggr-psk" #1: received Vendor ID payload [Dead Peer Detection]
-004 "westnet-eastnet-aggr-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=oakley_3des_cbc_192 prf=oakley_sha group=modp1536}
+004 "westnet-eastnet-aggr-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=OAKLEY_PRESHARED_KEY cipher=oakley_3des_cbc_192 prf=oakley_sha group=modp1536}
 117 "westnet-eastnet-aggr-psk" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-aggr-psk" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
 west:~#

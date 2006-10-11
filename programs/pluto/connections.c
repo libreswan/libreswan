@@ -3597,17 +3597,33 @@ find_host_connection2(const char *func
 {
     struct connection *c;
     DBG(DBG_CONTROLMORE,
-	DBG_log("find_host_connection called from %s", func));
+	DBG_log("find_host_connection called from %s policy=%s", func
+		, bitnamesof(sa_policy_bit_names, policy)));
     c = find_host_pair_connections(__FUNCTION__, me, my_port, him, his_port);
+
     if (policy != LEMPTY) {
-	/* if we have requirements for the policy, choose the first matching
+	/*
+	 * if we have requirements for the policy, choose the first matching
 	 * connection.
 	 */
 	for (; c != NULL; c = c->hp_next) {
+	    DBG(DBG_CONTROLMORE,
+		DBG_log("searching for policy=%s, found=%s (%s)" 
+			, bitnamesof(sa_policy_bit_names, policy)
+			, bitnamesof(sa_policy_bit_names, c->policy)
+			, c->name));
+	    if(NEVER_NEGOTIATE(c->policy)) continue;
+
 	    if ((c->policy & policy) == policy)
 		break;
 	}
+
     }
+
+    for(; c != NULL && NEVER_NEGOTIATE(c->policy); c = c->hp_next);
+
+    DBG(DBG_CONTROLMORE,
+	DBG_log("find_host_connection returns %s", c ? c->name : "empty"));
     return c;
 }
 

@@ -310,6 +310,7 @@ static void set_whack_end(struct starter_config *cfg
 	w->updown = l->strings[KSCF_UPDOWN];
 	w->host_port = IKE_UDP_PORT;
 	w->has_client_wildcard = l->has_client_wildcard;
+	w->has_port_wildcard   = l->has_port_wildcard;
 	w->cert = l->cert;
 	w->ca   = l->ca;
 	w->updown = l->updown;

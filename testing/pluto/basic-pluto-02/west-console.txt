@@ -32,7 +32,7 @@ west:~#
 106 "westnet-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "westnet-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 031 "westnet-eastnet" #1: max number of retransmissions (2) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
-000 "westnet-eastnet" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+000 "westnet-eastnet" #1: starting keying attempt 2 of at most 3, but releasing whack
 west:~#
  echo done
 done
@@ -45,8 +45,8 @@ ROUTING TABLE
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45
 192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45
 192.0.2.0/24 via 192.1.2.23 dev eth1
-0.0.0.0/1 via 192.1.2.254 dev ipsec0
-128.0.0.0/1 via 192.1.2.254 dev ipsec0
+0.0.0.0/1 dev ipsec0  scope link
+128.0.0.0/1 dev ipsec0  scope link
 default via 192.1.2.254 dev eth1
 west:~#
  
