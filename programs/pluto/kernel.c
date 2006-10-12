@@ -1690,7 +1690,8 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
                     proto_info[i].encapsulation = ENCAPSULATION_MODE_TRANSPORT;
                 }
             }
-            
+
+	    setup_client_ports(&c->spd);
             /* MCR - should be passed a spd_eroute structure here */
             (void) raw_eroute(&c->spd.that.host_addr   /* this_host */
 			      , &c->spd.that.client    /* this_client */
@@ -1784,6 +1785,7 @@ teardown_half_ipsec_sa(struct state *st, bool inbound)
     if (kernel_ops->inbound_eroute && inbound
         && c->spd.eroute_owner == SOS_NOBODY)
     {
+	setup_client_ports(&c->spd);
         (void) raw_eroute(&c->spd.that.host_addr, &c->spd.that.client
                           , &c->spd.this.host_addr, &c->spd.this.client
                           , 256
