@@ -6,6 +6,7 @@ set -e
 
 be_verbose=
 do_debug=
+do_force=
 
 klips_git=/mara1/git/klips
 openswan_git=`pwd`
@@ -40,6 +41,7 @@ options:
 
     -k <klips_git_tree>       git tree to pull in
     -r <git_revs_for_diffs>   revisions to use for diff
+    -f                        force overwrite of newer files
     -v                        be verbose
     -d                        debug mode (set -x)
     -h                        this help
@@ -66,6 +68,9 @@ while ! [ -z "$1" ] ; do
                 ;;
             -v)
                 be_verbose=1
+                ;;
+            -f)
+                do_force=1
                 ;;
             -k)
                 klips_git=$1
@@ -96,8 +101,11 @@ vecho "patch revs: $klips_revs"
 #### step 1... copy over all the files that don't require patching
 (       
         cd $klips_git 
+
         filter_for_patch_files=$(echo $build_patches_for | sed 's, ,\\|,g')
-        find $interesting_dirs -type f | grep -v "^\($filter_for_patch_files\)" | cpio -pd $openswan_git/linux 
+        cpio_flags=$([ -z "$do_force" ] || echo u) # -u or --unconditional
+
+        find $interesting_dirs -type f | grep -v "^\($filter_for_patch_files\)" | cpio -pd$cpio_flags $openswan_git/linux 
 )
 
 #### step 2... cleanup after the copy
