@@ -670,6 +670,10 @@ ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
 	return IPSEC_XMIT_OK;
 }
 
+/* management of buffers */
+static struct ipsec_xmit_state * ipsec_xmit_state_new (void);
+static void ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs);
+
 void
 ipsec_tunnel_cleanup(struct ipsec_xmit_state*ixs)
 {
@@ -695,10 +699,6 @@ ipsec_tunnel_cleanup(struct ipsec_xmit_state*ixs)
 	}
         ipsec_xmit_state_delete (ixs);
 }
-
-/* management of buffers */
-static struct ipsec_xmit_state * ipsec_xmit_state_new (void);
-static void ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs);
 
 /*
  * when encap processing is complete it call this for us to continue
@@ -1914,10 +1914,15 @@ ipsec_xmit_state_new (void)
 
         spin_lock_bh (&ixs_cache_lock);
 
-        ixs = kmem_cache_alloc (ixs_cache_allocator, GFP_ATOMIC);
-
-        if (likely (ixs != NULL))
-                ixs_cache_allocated_count++;
+        if (likely (ixs_cache_allocated_count >= ipsec_ixs_max)) {
+		KLIPS_PRINT(debug_tunnel,
+			    "klips_debug:ipsec_xmit_state_new: "
+			    "exceeded outstanding TX packet cnt %d\n", ipsec_ixs_max);
+	} else {
+                ixs = kmem_cache_alloc (ixs_cache_allocator, GFP_ATOMIC);
+                if (likely (ixs != NULL))
+                        ixs_cache_allocated_count++;
+        }
 
         spin_unlock_bh (&ixs_cache_lock);
 

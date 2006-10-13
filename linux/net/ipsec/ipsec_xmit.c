@@ -1882,13 +1882,6 @@ ipsec_xmit_init(struct ipsec_xmit_state *ixs)
 		ipsec_print_ip(ixs->iph);
 	}
 #endif
-  			    "head,tailroom: %d,%d after allocation\n",
-  			    skb_headroom(ixs->skb), skb_tailroom(ixs->skb));
-  	}
-
-  	if(debug_tunnel & DB_TN_ENCAP) {
-  		ipsec_print_ip(ixs->iph);
-  	}
   
 cleanup:
 	return bundle_stat;

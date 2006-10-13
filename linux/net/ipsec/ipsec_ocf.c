@@ -39,8 +39,8 @@
 #include "openswan/ipsec_esp.h"
 #include "openswan/ipsec_ah.h"
 
-#include <pfkeyv2.h>
-#include <pfkey.h>
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
 
 #include "ipsec_ocf.h"
 

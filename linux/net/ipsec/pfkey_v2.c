@@ -166,64 +166,6 @@ SOCKOPS_WRAP(pfkey, PF_KEY);
 #endif  /* NETDEV_23 */
 
 #ifdef NET_26
-DEBUG_NO_STATIC int pfkey_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *msg, size_t len);
-DEBUG_NO_STATIC int pfkey_recvmsg(struct kiocb *kiocb, struct socket *sock, struct msghdr *msg
-				  , size_t size, int flags);
-#else
-DEBUG_NO_STATIC int pfkey_sendmsg(struct socket *sock, struct msghdr *msg, int len, struct scm_cookie *scm);
-DEBUG_NO_STATIC int pfkey_recvmsg(struct socket *sock, struct msghdr *msg, int size, int flags, struct scm_cookie *scm);
-#endif
-
-struct net_proto_family pfkey_family_ops = {
-	PF_KEY,
-	pfkey_create
-};
-
-struct proto_ops SOCKOPS_WRAPPED(pfkey_ops) = {
-#ifdef NETDEV_23
-	family:		PF_KEY,
-	release:	pfkey_release,
-	bind:		sock_no_bind,
-	connect:	sock_no_connect,
-	socketpair:	sock_no_socketpair,
-	accept:		sock_no_accept,
-	getname:	sock_no_getname,
-	poll:		datagram_poll,
-	ioctl:		sock_no_ioctl,
-	listen:		sock_no_listen,
-	shutdown:	pfkey_shutdown,
-	setsockopt:	sock_no_setsockopt,
-	getsockopt:	sock_no_getsockopt,
-	sendmsg:	pfkey_sendmsg,
-	recvmsg:	pfkey_recvmsg,
-	mmap:		sock_no_mmap,
-#else /* NETDEV_23 */
-	PF_KEY,
-	sock_no_dup,
-	pfkey_release,
-	sock_no_bind,
-	sock_no_connect,
-	sock_no_socketpair,
-	sock_no_accept,
-	sock_no_getname,
-	datagram_poll,
-	sock_no_ioctl,
-	sock_no_listen,
-	pfkey_shutdown,
-	sock_no_setsockopt,
-	sock_no_getsockopt,
-	sock_no_fcntl,
-	pfkey_sendmsg,
-	pfkey_recvmsg
-#endif /* NETDEV_23 */
-};
-
-#ifdef NETDEV_23
-#include <linux/smp_lock.h>
-SOCKOPS_WRAP(pfkey, PF_KEY);
-#endif  /* NETDEV_23 */
-
-#ifdef NET_26
 static void pfkey_sock_list_grab(void)
 {
 	write_lock_bh(&pfkey_sock_lock);
