@@ -18,6 +18,10 @@
 
 #include "openswan/ipsec_sa.h"
 
+#ifdef CONFIG_KLIPS_OCF
+#include <crypto/cryptodev.h>
+#endif
+
 enum ipsec_xmit_value
 {
 	IPSEC_XMIT_STOLEN=2,
@@ -51,7 +55,25 @@ enum ipsec_xmit_value
 	IPSEC_XMIT_IPSENDFAILURE=-26,
 	IPSEC_XMIT_ESPUDP=-27,
 	IPSEC_XMIT_ESPUDP_BADTYPE=-28,
+	IPSEC_XMIT_PENDING=-29,
 };
+
+
+/*
+ * state machine states
+ */
+
+#define IPSEC_XSM_INIT			0	/* make it easy, starting state is 0 */
+#define IPSEC_XSM_ENCAP_INIT	1
+#define IPSEC_XSM_ENCAP_SELECT	2
+#define IPSEC_XSM_ESP			3
+#define IPSEC_XSM_ESP_AH		4
+#define IPSEC_XSM_AH			5
+#define IPSEC_XSM_IPIP			6
+#define IPSEC_XSM_IPCOMP		7
+#define IPSEC_XSM_CONT			8
+#define IPSEC_XSM_DONE 			100
+
 
 struct ipsec_xmit_state
 {
@@ -108,6 +130,30 @@ struct ipsec_xmit_state
 	uint16_t natt_sport;
 	uint16_t natt_dport;
 #endif
+
+	/*
+	 * xmit state machine use
+	 */
+	void (*xsm_complete)(struct ipsec_xmit_state *ixs,
+			enum ipsec_xmit_value stat);
+	int		state;
+	int		next_state;
+#ifdef CONFIG_KLIPS_OCF
+	struct work_struct	workq;
+#endif
+#ifdef CONFIG_KLIPS_ALG
+	struct ipsec_alg_auth *ixt_a;
+	struct ipsec_alg_enc *ixt_e;
+#endif
+#ifdef CONFIG_KLIPS_ESP
+	struct esphdr *espp;
+	unsigned char *idat;
+#endif /* !CONFIG_KLIPS_ESP */
+	int blocksize;
+	int ilen, len;
+	unsigned char *dat;
+	__u8 frag_off, tos;
+	__u16 ttl, check;
 };
 
 enum ipsec_xmit_value
@@ -118,6 +164,11 @@ ipsec_xmit_sanity_check_skb(struct ipsec_xmit_state *ixs);
 
 enum ipsec_xmit_value
 ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs);
+
+extern void ipsec_xsm(struct ipsec_xmit_state *ixs);
+extern kmem_cache_t *ipsec_ixs_cache;
+extern int ipsec_ixs_max;
+extern atomic_t ipsec_ixs_cnt;
 
 extern void ipsec_extract_ports(struct iphdr * iph, struct sockaddr_encap * er);
 

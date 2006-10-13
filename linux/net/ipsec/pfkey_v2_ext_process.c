@@ -88,6 +88,10 @@ char pfkey_v2_ext_process_c_version[] = "$Id: pfkey_v2_ext_process.c,v 1.20 2005
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_alg.h"
 
+#ifdef CONFIG_KLIPS_OCF
+#include "ipsec_ocf.h"
+#endif
+
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
 /* returns 0 on success */
@@ -140,10 +144,18 @@ pfkey_sa_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* extr)
 	case IPPROTO_AH:
 		ipsp->ips_authalg = pfkey_sa->sadb_sa_auth;
 		ipsp->ips_encalg = SADB_EALG_NONE;
+#ifdef CONFIG_KLIPS_OCF
+		if (ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, 0))
+		    break;
+#endif
 		break;
 	case IPPROTO_ESP:
 		ipsp->ips_authalg = pfkey_sa->sadb_sa_auth;
 		ipsp->ips_encalg = pfkey_sa->sadb_sa_encrypt;
+#ifdef CONFIG_KLIPS_OCF
+		if (ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, ipsp->ips_encalg))
+		    break;
+#endif
 		ipsec_alg_sa_init(ipsp);
 		break;
 	case IPPROTO_IPIP:
@@ -263,7 +275,7 @@ pfkey_address_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* e
 	switch(s->sa_family) {
 	case AF_INET:
 		saddr_len = sizeof(struct sockaddr_in);
-		addrtoa(((struct sockaddr_in*)s)->sin_addr, 0, ipaddr_txt, sizeof(ipaddr_txt));
+		if (debug_pfkey)addrtoa(((struct sockaddr_in*)s)->sin_addr, 0, ipaddr_txt, sizeof(ipaddr_txt));
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_address_process: "
 			    "found address family=%d, AF_INET, %s.\n",
@@ -435,7 +447,7 @@ pfkey_address_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* e
 		if(s->sa_family == AF_INET) {
 			ipsp->ips_said.dst.u.v4.sin_addr.s_addr = ((struct sockaddr_in*)(ipsp->ips_addr_d))->sin_addr.s_addr;
 			ipsp->ips_said.dst.u.v4.sin_family      = AF_INET;
-			addrtoa(((struct sockaddr_in*)(ipsp->ips_addr_d))->sin_addr,
+			if (debug_pfkey)addrtoa(((struct sockaddr_in*)(ipsp->ips_addr_d))->sin_addr,
 				0,
 				ipaddr_txt,
 				sizeof(ipaddr_txt));

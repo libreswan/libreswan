@@ -80,6 +80,7 @@ char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.2 2006/04/20 16
 #include "openswan/ipsec_tunnel.h"
 
 #include "openswan/ipsec_rcv.h"
+#include "openswan/ipsec_xmit.h"
 #include "openswan/ipsec_ah.h"
 #include "openswan/ipsec_esp.h"
 
@@ -89,6 +90,10 @@ char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.2 2006/04/20 16
 
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_alg.h"
+
+#ifdef CONFIG_KLIPS_OCF
+#include "ipsec_ocf.h"
+#endif
 
 #include <openswan/pfkeyv2.h>
 #include <openswan/pfkey.h>
@@ -114,11 +119,24 @@ char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.2 2006/04/20 16
 MODULE_LICENSE("GPL");
 #endif
 
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_eroute = 0;
-int debug_spi = 0;
-int debug_netlink = 0;
-#endif /* CONFIG_KLIPS_DEBUG */
+/*
+ * We limit the number of outstanding RX/TX requests.
+ * Because we are now async,  we cannot just keep allocating
+ * these as fast as the come in,  crypto is usually much slower
+ * than your network interface
+ */
+kmem_cache_t *ipsec_irs_cache;
+kmem_cache_t *ipsec_ixs_cache;
+
+atomic_t ipsec_irs_cnt;
+int ipsec_irs_max = 1000;
+MODULE_PARM(ipsec_irs_max,"i");
+MODULE_PARM_DESC(ipsec_irs_max, "Maximum outstanding receive packets");
+
+atomic_t ipsec_ixs_cnt;
+int ipsec_ixs_max = 1000;
+MODULE_PARM(ipsec_ixs_max,"i");
+MODULE_PARM_DESC(ipsec_ixs_max, "Maximum outstanding transmit packets");
 
 struct prng ipsec_prng;
 
@@ -275,9 +293,28 @@ ipsec_klips_init(void)
 
 	ipsec_alg_init();
 
+#ifdef CONFIG_KLIPS_OCF
+	ipsec_ocf_init();
+#endif
+
 	get_random_bytes((void *)seed, sizeof(seed));
 	prng_init(&ipsec_prng, seed, sizeof(seed));
 
+	atomic_set(&ipsec_irs_cnt, 0);
+	atomic_set(&ipsec_ixs_cnt, 0);
+
+	ipsec_irs_cache = kmem_cache_create("ipsec_irs",
+			sizeof(struct ipsec_rcv_state), 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+	if (!ipsec_irs_cache) {
+		printk("Failed to get IRS cache\n");
+		error |= 1;
+	}
+	ipsec_ixs_cache = kmem_cache_create("ipsec_ixs",
+			sizeof(struct ipsec_xmit_state), 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+	if (!ipsec_ixs_cache) {
+		printk("Failed to get IXS cache\n");
+		error |= 1;
+	}
 	return error;
 
         // undo ipsec_sysctl_register
@@ -387,6 +424,13 @@ ipsec_cleanup(void)
 	ipsec_proc_cleanup();
 
 	prng_final(&ipsec_prng);
+
+	if (ipsec_irs_cache)
+		kmem_cache_destroy(ipsec_irs_cache);
+	ipsec_irs_cache = NULL;
+	if (ipsec_ixs_cache)
+		kmem_cache_destroy(ipsec_ixs_cache);
+	ipsec_ixs_cache = NULL;
 
 	return error;
 }

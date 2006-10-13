@@ -63,6 +63,7 @@ config KLIPS_AUTH_HMAC_SHA1
 config KLIPS_ENC_CRYPTOAPI
 	bool 'CryptoAPI algorithm interface'
 	default n
+	depends on KLIPS_ALG
 	help
 	   Enable the algorithm interface to make all CryptoAPI 1.0 algorithms
 	   available to KLIPS.
@@ -99,6 +100,15 @@ config KLIPS_IPCOMP
            The IPcomp protocol is used prior to ESP to make the packet
 	   smaller. Once encrypted, compression will fail, so any link
 	   layer efforts (e.g. PPP) will not work. 
+
+config KLIPS_OCF
+	bool 'IPsec OCF Acceleration Support'
+	default n
+	help
+	   OCF provides Asynchronous crypto acceleration for kernel and
+	   user applications.   It supports various HW accelerators.
+	   If you have OCF support enabled and wish IPsec to utilise
+	   the hardware managed by OCF,  then enable this option.
 
 config KLIPS_DEBUG
 	bool 'IPsec debugging'

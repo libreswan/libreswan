@@ -1,0 +1,10 @@
+diff --git a/crypto/Makefile b/crypto/Makefile
+index d287b9e..969fd22 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -32,3 +32,5 @@ obj-$(CONFIG_CRYPTO_MICHAEL_MIC) += mich
+ obj-$(CONFIG_CRYPTO_CRC32C) += crc32c.o
+ 
+ obj-$(CONFIG_CRYPTO_TEST) += tcrypt.o
++
++obj-$(CONFIG_OCF_OCF) += ocf/

@@ -3,6 +3,10 @@
  * Copyright (C) 1996, 1997  John Ioannidis.
  * Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Richard Guy Briggs.
  * 
+ * OCF/receive state machine written by
+ * David McCullough <dmccullough@cyberguard.com>
+ * Copyright (C) 2004-2005 Intel Corporation.  All Rights Reserved.
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -89,10 +93,6 @@ char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.234 2005/11/11 04
 #endif
 
 static __u32 zeroes[64];
-
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_tunnel = 0;
-#endif /* CONFIG_KLIPS_DEBUG */
 
 DEBUG_NO_STATIC int
 ipsec_tunnel_open(struct net_device *dev)
@@ -236,8 +236,8 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 		if(ixs->skb->sk) {
 #ifdef NET_26
 #ifdef HAVE_INET_SK_SPORT
-                      ixs->sport = ntohs(inet_sk(ixs->skb->sk)->sport);
-                      ixs->dport = ntohs(inet_sk(ixs->skb->sk)->dport);
+			ixs->sport = ntohs(inet_sk(ixs->skb->sk)->sport);
+			ixs->dport = ntohs(inet_sk(ixs->skb->sk)->dport);
 #else
 			struct udp_sock *us;
 			
@@ -281,8 +281,8 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 		if(ixs->skb->sk) {
 #ifdef NET_26
 #ifdef HAVE_INET_SK_SPORT
-                       ixs->sport = ntohs(inet_sk(ixs->skb->sk)->sport);
-                       ixs->dport = ntohs(inet_sk(ixs->skb->sk)->dport);
+			ixs->sport = ntohs(inet_sk(ixs->skb->sk)->sport);
+			ixs->dport = ntohs(inet_sk(ixs->skb->sk)->dport);
 #else
 			struct tcp_tw_bucket *tw;
 			
@@ -572,6 +572,7 @@ ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
 	/* new route/dst cache code from James Morris */
 	ixs->skb->dev = ixs->physdev;
 #ifdef NETDEV_25
+	memset (&fl, 0x0, sizeof (struct flowi));
  	fl.oif = ixs->physdev->iflink;
  	fl.nl_u.ip4_u.daddr = ixs->skb->nh.iph->daddr;
  	fl.nl_u.ip4_u.saddr = ixs->pass ? 0 : ixs->skb->nh.iph->saddr;
@@ -692,12 +693,75 @@ ipsec_tunnel_cleanup(struct ipsec_xmit_state*ixs)
 	if (ixs->ips.ips_ident_d.data) {
 		kfree(ixs->ips.ips_ident_d.data);
 	}
+        ipsec_xmit_state_delete (ixs);
 }
 
 /* management of buffers */
 static struct ipsec_xmit_state * ipsec_xmit_state_new (void);
 static void ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs);
 
+/*
+ * when encap processing is complete it call this for us to continue
+ */
+
+void
+ipsec_tunnel_xsm_complete(
+	struct ipsec_xmit_state *ixs,
+	enum ipsec_xmit_value stat)
+{
+	if(stat != IPSEC_XMIT_OK) {
+		if(stat == IPSEC_XMIT_PASS) {
+			goto bypass;
+		}
+		
+		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
+				"klips_debug:ipsec_tunnel_start_xmit: encap_bundle failed: %d\n",
+				stat);
+		goto cleanup;
+	}
+
+	ixs->matcher.sen_ip_src.s_addr = ixs->iph->saddr;
+	ixs->matcher.sen_ip_dst.s_addr = ixs->iph->daddr;
+	ixs->matcher.sen_proto = ixs->iph->protocol;
+	ipsec_extract_ports(ixs->iph, &ixs->matcher);
+
+	spin_lock(&eroute_lock);
+	ixs->eroute = ipsec_findroute(&ixs->matcher);
+	if(ixs->eroute) {
+		ixs->outgoing_said = ixs->eroute->er_said;
+		ixs->eroute_pid = ixs->eroute->er_pid;
+		ixs->eroute->er_count++;
+		ixs->eroute->er_lasttime = jiffies/HZ;
+	}
+	spin_unlock(&eroute_lock);
+
+	KLIPS_PRINT((debug_tunnel & DB_TN_XMIT) &&
+			/* ((ixs->orgdst != ixs->newdst) || (ixs->orgsrc != ixs->newsrc)) */
+			(ixs->orgedst != ixs->outgoing_said.dst.u.v4.sin_addr.s_addr) &&
+			ixs->outgoing_said.dst.u.v4.sin_addr.s_addr &&
+			ixs->eroute,
+			"klips_debug:ipsec_tunnel_start_xmit: "
+			"We are recursing here.\n");
+
+	if (/*((ixs->orgdst != ixs->newdst) || (ixs->orgsrc != ixs->newsrc))*/
+			(ixs->orgedst != ixs->outgoing_said.dst.u.v4.sin_addr.s_addr) &&
+			ixs->outgoing_said.dst.u.v4.sin_addr.s_addr &&
+			ixs->eroute) {
+		ipsec_xsm(ixs);
+		return;
+	}
+
+	stat = ipsec_tunnel_restore_hard_header(ixs);
+	if(stat != IPSEC_XMIT_OK) {
+		goto cleanup;
+	}
+
+bypass:
+	stat = ipsec_tunnel_send(ixs);
+
+cleanup:
+	ipsec_tunnel_cleanup(ixs);
+}
 
 /*
  *	This function assumes it is being called from dev_queue_xmit()
@@ -742,60 +806,15 @@ ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 	
 	ixs->innersrc = ixs->iph->saddr;
-	/* start encapsulation loop here XXX */
-	do {
- 		stat = ipsec_xmit_encap_bundle(ixs);
-	 	if(stat != IPSEC_XMIT_OK) {
-			if(stat == IPSEC_XMIT_PASS) {
-				goto bypass;
-			}
-			
-			KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
-				    "klips_debug:ipsec_tunnel_start_xmit: encap_bundle failed: %d\n",
-				    stat);
- 			goto cleanup;
-	 	}
 
-		ixs->matcher.sen_ip_src.s_addr = ixs->iph->saddr;
-		ixs->matcher.sen_ip_dst.s_addr = ixs->iph->daddr;
-		ixs->matcher.sen_proto = ixs->iph->protocol;
-		ipsec_extract_ports(ixs->iph, &ixs->matcher);
+	ixs->xsm_complete = ipsec_tunnel_xsm_complete;
 
-		spin_lock(&eroute_lock);
-		ixs->eroute = ipsec_findroute(&ixs->matcher);
-		if(ixs->eroute) {
-			ixs->outgoing_said = ixs->eroute->er_said;
-			ixs->eroute_pid = ixs->eroute->er_pid;
-			ixs->eroute->er_count++;
-			ixs->eroute->er_lasttime = jiffies/HZ;
-		}
-		spin_unlock(&eroute_lock);
-
-		KLIPS_PRINT((debug_tunnel & DB_TN_XMIT) &&
-			    /* ((ixs->orgdst != ixs->newdst) || (ixs->orgsrc != ixs->newsrc)) */
-			    (ixs->orgedst != ixs->outgoing_said.dst.u.v4.sin_addr.s_addr) &&
-			    ixs->outgoing_said.dst.u.v4.sin_addr.s_addr &&
-			    ixs->eroute,
-			    "klips_debug:ipsec_tunnel_start_xmit: "
-			    "We are recursing here.\n");
-
-	} while(/*((ixs->orgdst != ixs->newdst) || (ixs->orgsrc != ixs->newsrc))*/
-		(ixs->orgedst != ixs->outgoing_said.dst.u.v4.sin_addr.s_addr) &&
-		ixs->outgoing_said.dst.u.v4.sin_addr.s_addr &&
-		ixs->eroute);
-	
-	stat = ipsec_tunnel_restore_hard_header(ixs);
-	if(stat != IPSEC_XMIT_OK) {
-		goto cleanup;
-	}
-
- bypass:
-	stat = ipsec_tunnel_send(ixs);
+	ipsec_xsm(ixs);
+	return 0;
 
  cleanup:
 	ipsec_tunnel_cleanup(ixs);
 
-        ipsec_xmit_state_delete (ixs);
 alloc_error:
 	return 0;
 }
@@ -1905,8 +1924,34 @@ ipsec_xmit_state_new (void)
         if (unlikely (NULL == ixs))
                 goto bail;
 
-        // initialize the object
-        memset((caddr_t)ixs, 0, sizeof(*ixs));
+#if 0 /* optimised to only clear the required bits */
+	memset((caddr_t)ixs, 0, sizeof(*ixs));
+#else
+	ixs->pass = 0;
+	ixs->state = 0;
+	ixs->next_state = 0;
+	ixs->ipsp = NULL;
+	ixs->ipsq = NULL;
+	ixs->sa_len = 0;
+	ixs->stats = NULL;
+	ixs->ips.ips_ident_s.data = NULL;
+	ixs->ips.ips_ident_d.data = NULL;
+	ixs->outgoing_said.proto = 0;
+#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
+	ixs->natt_type = 0, ixs->natt_head = 0;
+	ixs->natt_sport = 0, ixs->natt_dport = 0;
+#endif
+	ixs->tot_headroom = 0;
+	ixs->tot_tailroom = 0;
+	ixs->eroute = NULL;
+	ixs->hard_header_stripped = 0;
+	ixs->hard_header_len = 0;
+	ixs->cur_mtu = 0; /* FIXME: can we do something better ? */
+
+	ixs->oskb = NULL;
+	ixs->saved_header = NULL;	/* saved copy of the hard header */
+	ixs->route = NULL;
+#endif /* memset */
 
 bail:
         return ixs;
