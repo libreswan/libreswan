@@ -1026,10 +1026,7 @@ ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 #ifdef CONFIG_KLIPS_OCF
 			irs->ipsp->ocf_in_use ||
 #endif
-#ifdef CONFIG_KLIPS_ALG
-			irs->ixt_a ||
-#endif
-			0) {
+			irs->ixt_a) {
 	  if(irs->proto_funcs->rcv_setup_auth)
 	    return (*irs->proto_funcs->rcv_setup_auth)(irs, irs->skb,
 				&irs->replay, &irs->authenticator);
@@ -1048,10 +1045,7 @@ ipsec_rcv_auth_calc(struct ipsec_rcv_state *irs)
 #ifdef CONFIG_KLIPS_OCF
 			irs->ipsp->ocf_in_use ||
 #endif
-#ifdef CONFIG_KLIPS_ALG
-			irs->ixt_a ||
-#endif
-			0) {
+			irs->ixt_a) {
 		if(!irs->authenticator) {
 			irs->ipsp->ips_errs.ips_auth_errs += 1;
 			if(irs->stats) {
@@ -1101,10 +1095,7 @@ ipsec_rcv_auth_chk(struct ipsec_rcv_state *irs)
 #ifdef CONFIG_KLIPS_OCF
 			irs->ipsp->ocf_in_use ||
 #endif
-#ifdef CONFIG_KLIPS_ALG
-			irs->ixt_a ||
-#endif
-			0) {
+			irs->ixt_a) {
 		if (memcmp(irs->hash, irs->authenticator, irs->authlen)) {
 			irs->ipsp->ips_errs.ips_auth_errs += 1;
 			KLIPS_PRINT(debug_rcv & DB_RX_INAU,

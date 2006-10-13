@@ -221,7 +221,6 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 		return(ipsec_ocf_rcv(irs));
 #endif
 
-#ifdef CONFIG_KLIPS_ALG
 	skb=irs->skb;
 
 	idat = skb->h.raw;
@@ -264,9 +263,6 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 	} 
 
 	return ipsec_rcv_esp_post_decrypt(irs);
-#else
-	return IPSEC_RCV_BAD_DECRYPT;
-#endif /* CONFIG_KLIPS_ALG */
 }
 
 

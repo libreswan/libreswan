@@ -1315,9 +1315,7 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 		
 		if ((error=ipsec_alg_enc_key_create(ipsp)) < 0)
 			SENDERR(-error);
-#endif /* CONFIG_KLIPS_ALG */
 
-#ifdef CONFIG_KLIPS_ALG
 		if ((ixt_a=ipsp->ips_alg_auth)) {
 			if ((error=ipsec_alg_auth_key_create(ipsp)) < 0)
 				SENDERR(-error);
@@ -1488,7 +1486,6 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				    ipsp->ips_authalg);
 			SENDERR(EINVAL);
 		}
-#endif /* CONFIG_KLIPS_ALG */
 	}
 			break;
 #endif /* !CONFIG_KLIPS_ESP */

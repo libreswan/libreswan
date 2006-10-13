@@ -490,10 +490,8 @@ ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 	ixs->tailroom = 0;
 	ixs->authlen = 0;
 
-#ifdef CONFIG_KLIPS_ALG
 	ixs->ixt_e = NULL;
 	ixs->ixt_a = NULL;
-#endif /* CONFIG_KLIPS_ALG */
 
 	
 	ixs->iphlen = ixs->iph->ihl << 2;
@@ -714,7 +712,6 @@ ipsec_xmit_esp(struct ipsec_xmit_state *ixs)
 		return(ipsec_ocf_xmit(ixs));
 #endif
 
-#ifdef CONFIG_KLIPS_ALG
 	if (!ixs->ixt_e) {
 		ixs->stats->tx_errors++;
 		return IPSEC_XMIT_ESP_BADALG;
@@ -743,9 +740,6 @@ ipsec_xmit_esp(struct ipsec_xmit_state *ixs)
 			   ixs->ipsp->ips_iv_size);
 	} 
 	return IPSEC_XMIT_OK;
-#else
-	return IPSEC_XMIT_ESP_BADALG;
-#endif /*  CONFIG_KLIPS_ALG */
 }
 
 
@@ -773,14 +767,12 @@ ipsec_xmit_esp_ah(struct ipsec_xmit_state *ixs)
 		return IPSEC_XMIT_AH_BADALG;
 	} else
 #endif
-#ifdef CONFIG_KLIPS_ALG
 	if (ixs->ixt_a) {
 		ipsec_alg_sa_esp_hash(ixs->ipsp,
 				(caddr_t)ixs->espp, ixs->len - ixs->iphlen - ixs->authlen,
 				&(ixs->dat[ixs->len - ixs->authlen]), ixs->authlen);
 
 	} else
-#endif /* CONFIG_KLIPS_ALG */
 	switch(ixs->ipsp->ips_authalg) {
 #ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
 	case AH_MD5:
@@ -1500,12 +1492,10 @@ ipsec_xmit_init(struct ipsec_xmit_state *ixs)
 				}
 			} else
 #endif /* CONFIG_KLIPS_OCF */
-#ifdef CONFIG_KLIPS_ALG
 			if ((ixs->ixt_e=ixs->ipsp->ips_alg_enc)) {
 				ixs->blocksize = ixs->ixt_e->ixt_common.ixt_blocksize;
 				ixs->headroom += ESP_HEADER_LEN + ixs->ixt_e->ixt_common.ixt_support.ias_ivlen/8;
 			} else
-#endif /* CONFIG_KLIPS_ALG */
 			{
 				ixs->stats->tx_errors++;
 				bundle_stat = IPSEC_XMIT_ESP_BADALG;

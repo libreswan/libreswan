@@ -141,10 +141,8 @@ struct ipsec_xmit_state
 #ifdef CONFIG_KLIPS_OCF
 	struct work_struct	workq;
 #endif
-#ifdef CONFIG_KLIPS_ALG
 	struct ipsec_alg_auth *ixt_a;
 	struct ipsec_alg_enc *ixt_e;
-#endif
 #ifdef CONFIG_KLIPS_ESP
 	struct esphdr *espp;
 	unsigned char *idat;

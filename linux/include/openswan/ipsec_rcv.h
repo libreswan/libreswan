@@ -159,9 +159,7 @@ struct ipsec_rcv_state {
 	int replay;
 	unsigned char *authenticator;
 	int esphlen;
-#ifdef CONFIG_KLIPS_ALG
 	struct ipsec_alg_auth *ixt_a;
-#endif
 	__u8 ttl, tos;
 	__u16 frag_off, check;
 };
