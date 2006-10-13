@@ -59,6 +59,8 @@ char ipsec_rcv_c_version[] = "RCSID $Id: ipsec_rcv.c,v 1.178 2005/10/21 02:19:34
 
 #include <net/ip.h>
 
+#include <linux/moduleparam.h>
+
 #include "openswan/ipsec_kern24.h"
 #include "openswan/radij.h"
 #include "openswan/ipsec_encap.h"
@@ -1669,13 +1671,12 @@ ipsec_rcv_complete(struct ipsec_rcv_state *irs)
 	netif_rx(irs->skb);
 	irs->skb=NULL;
 
- rcvleave:
-	if(irs->skb) {
-		ipsec_kfree_skb(irs->skb);
-	}
-
-	return(0);
+	return IPSEC_RCV_OK;
 }
+
+/* management of buffers */
+static struct ipsec_rcv_state * ipsec_rcv_state_new (void);
+static void ipsec_rcv_state_delete (struct ipsec_rcv_state *irs);
 
 /*
  * ipsec_rsm is responsible for walking us through the state machine
@@ -1750,15 +1751,10 @@ ipsec_rsm(struct ipsec_rcv_state *irs)
 		ipsec_kfree_skb(irs->skb);
 		irs->skb = NULL;
 	}
-	kmem_cache_free(ipsec_irs_cache, irs);
-	atomic_dec(&ipsec_irs_cnt);
+        ipsec_rcv_state_delete (irs);
 
 	KLIPS_DEC_USE; /* once less packet using the driver */
 }
-
-/* management of buffers */
-static struct ipsec_rcv_state * ipsec_rcv_state_new (void);
-static void ipsec_rcv_state_delete (struct ipsec_rcv_state *irs);
 
 int
 ipsec_rcv(struct sk_buff *skb
@@ -1828,9 +1824,6 @@ ipsec_rcv(struct sk_buff *skb
 	ipsec_rsm(irs);
 
   	return(0);
-
-rcvleave:
-        ipsec_rcv_state_delete (irs);
 
 error_alloc:
 error_bad_skb:
@@ -1930,6 +1923,10 @@ static spinlock_t irs_cache_lock = SPIN_LOCK_UNLOCKED;
 static kmem_cache_t *irs_cache_allocator = NULL;
 static unsigned  irs_cache_allocated_count = 0;
 
+static int ipsec_irs_max = 1000;
+module_param(ipsec_irs_max,int,0644);
+MODULE_PARM_DESC(ipsec_irs_max, "Maximum outstanding receive packets");
+
 int
 ipsec_rcv_state_cache_init (void)
 {
@@ -1963,7 +1960,7 @@ ipsec_rcv_state_cache_cleanup (void)
 static struct ipsec_rcv_state *
 ipsec_rcv_state_new (void)
 {
-	struct ipsec_rcv_state *irs;
+	struct ipsec_rcv_state *irs = NULL;
 
         spin_lock_bh (&irs_cache_lock);
 

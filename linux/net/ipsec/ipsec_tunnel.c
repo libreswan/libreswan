@@ -69,6 +69,8 @@ char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.234 2005/11/11 04
 #include <linux/if_arp.h>
 #include <net/arp.h>
 
+#include <linux/moduleparam.h>
+
 #include "openswan/ipsec_kversion.h"
 #include "openswan/radij.h"
 #include "openswan/ipsec_life.h"
@@ -1877,6 +1879,10 @@ static spinlock_t ixs_cache_lock = SPIN_LOCK_UNLOCKED;
 static kmem_cache_t *ixs_cache_allocator = NULL;
 static unsigned  ixs_cache_allocated_count = 0;
 
+static int ipsec_ixs_max = 1000;
+module_param(ipsec_ixs_max,int,0644);
+MODULE_PARM_DESC(ipsec_ixs_max, "Maximum outstanding transmit packets");
+
 int
 ipsec_xmit_state_cache_init (void)
 {
@@ -1910,7 +1916,7 @@ ipsec_xmit_state_cache_cleanup (void)
 static struct ipsec_xmit_state *
 ipsec_xmit_state_new (void)
 {
-	struct ipsec_xmit_state *ixs;
+	struct ipsec_xmit_state *ixs = NULL;
 
         spin_lock_bh (&ixs_cache_lock);
 

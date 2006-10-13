@@ -165,9 +165,6 @@ struct ipsec_rcv_state {
 };
 
 extern void ipsec_rsm(struct ipsec_rcv_state *irs);
-extern kmem_cache_t *ipsec_irs_cache;
-extern int ipsec_irs_max;
-extern atomic_t ipsec_irs_cnt;
 
 extern int
 #ifdef PROTO_HANDLER_SINGLE_PARM

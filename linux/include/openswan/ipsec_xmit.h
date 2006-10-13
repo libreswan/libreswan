@@ -164,9 +164,6 @@ enum ipsec_xmit_value
 ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs);
 
 extern void ipsec_xsm(struct ipsec_xmit_state *ixs);
-extern kmem_cache_t *ipsec_ixs_cache;
-extern int ipsec_ixs_max;
-extern atomic_t ipsec_ixs_cnt;
 
 extern void ipsec_extract_ports(struct iphdr * iph, struct sockaddr_encap * er);
 
