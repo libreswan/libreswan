@@ -1893,8 +1893,6 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 	}
 
 #endif
-	atomic_inc(&ipsec_irs_cnt);
-
 	irs->skb = skb;
 
 	/*
@@ -1905,11 +1903,13 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 
 	return(0);
 
+#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
 rcvleave:
 	if(skb) {
 		ipsec_kfree_skb(skb);
 	}
         ipsec_rcv_state_delete (irs);
+#endif
 error_alloc:
 	KLIPS_DEC_USE;
 	return 0;
