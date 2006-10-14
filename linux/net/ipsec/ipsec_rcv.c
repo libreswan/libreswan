@@ -827,7 +827,7 @@ ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 		}
 
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-                if (proto == IPPROTO_ESP) {
+                if (irs->proto == IPPROTO_ESP) {
                         KLIPS_PRINT(debug_rcv,
                                 "klips_debug:ipsec_rcv: "
                                 "natt_type=%u tdbp->ips_natt_type=%u : %s\n",
