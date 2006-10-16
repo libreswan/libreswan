@@ -709,8 +709,11 @@ quick_outI1(int whack_sock
 
     insert_state(st);	/* needs cookies, connection, and msgid */
 
-    alg_info_snprint_phase2(p2alg, sizeof(p2alg)
-		    , (struct alg_info_esp *)st->st_connection->alg_info_esp);
+    strcpy(p2alg, "defaults");
+    if(st->st_connection->alg_info_esp) {
+	alg_info_snprint_phase2(p2alg, sizeof(p2alg)
+				, (struct alg_info_esp *)st->st_connection->alg_info_esp);
+    }
 
     if (replacing == SOS_NOBODY)
 	openswan_log("initiating Quick Mode %s {using isakmp#%lu proposal=%s}"
