@@ -252,6 +252,7 @@ char **dstp;			/* where to put result pointer */
 #ifdef ADDRTOT_MAIN
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

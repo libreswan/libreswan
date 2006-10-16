@@ -1112,20 +1112,21 @@ libtest() {
         FILE=${OPENSWANSRCDIR}/linux/net/ipsec/$testsrc
     fi
 
-    #echo "LOOKING for " ./FLAGS.$testobj
+    eval $(cd ${OPENSWANSRCDIR} && OPENSWANSRCDIR=$(pwd) ${MAKE} --no-print-directory env )
 
     EXTRAFLAGS=
     EXTRALIBS=
     if [ -f ${SRCDIR}FLAGS.$testobj ]
     then
+        echo Sourcing ${SRCDIR}FLAGS.$testobj
 	source ${SRCDIR}FLAGS.$testobj
     fi
 
     stat=99
     if [ -n "${FILE-}" -a -r "${FILE-}" ]
     then
-	    echo ${CC} -g -o $testobj -D$symbol ${EXTRAFLAGS} -I${OPENSWANSRCDIR}/linux/include -I${OPENSWANSRCDIR} -I${OPENSWANSRCDIR}/include ${FILE} ${OPENSWANLIB} ${EXTRALIBS}
-	    ${CC} -g -o $testobj -D$symbol ${EXTRAFLAGS} -I${OPENSWANSRCDIR}/linux/include -I${OPENSWANSRCDIR} -I${OPENSWANSRCDIR}/include ${FILE} ${OPENSWANLIB} ${EXTRALIBS}
+	    echo ${CC} -g -o $testobj -D$symbol  ${PORTINCLUDE} ${EXTRAFLAGS} -I${OPENSWANSRCDIR}/linux/include -I${OPENSWANSRCDIR} -I${OPENSWANSRCDIR}/include ${PORTINCLUDE} ${FILE} ${OPENSWANLIB} ${EXTRALIBS}
+	    ${CC} -g -o $testobj -D$symbol ${PORTINCLUDE} ${EXTRAFLAGS} -I${OPENSWANSRCDIR}/linux/include -I${OPENSWANSRCDIR} -I${OPENSWANSRCDIR}/include ${FILE} ${OPENSWANLIB} ${EXTRALIBS}
 	    rm -rf lib-$testobj/OUTPUT
 	    mkdir -p lib-$testobj/OUTPUT
 

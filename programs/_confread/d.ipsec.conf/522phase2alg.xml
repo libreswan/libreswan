@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>phase2alg</emphasis></term>
+  <listitem>
+<para> Specifies the algorithms that will be offered/accepted for a phase2
+negotiation. If not specified, a secure set of defaults will be used. 
+</para>
+<para> The format for ESP is ENC-AUTH followed by an optional PFSgroup. For
+instance, "3des-md5" or "aes256-sha-modp2048".
+</para>
+<para> The format for AH is AUTH followed by an optional PFSgroup. For
+instance, "md5" or "sha-modp1536".
+</para>
+  </listitem>
+  </varlistentry>

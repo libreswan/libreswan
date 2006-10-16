@@ -685,6 +685,7 @@ quick_outI1(int whack_sock
     struct qke_continuation *qke = alloc_thing(struct qke_continuation
 					       , "quick_outI1 KE");
     stf_status e;
+    char p2alg[256];
 
     st->st_whack_sock = whack_sock;
     st->st_connection = c;
@@ -708,15 +709,18 @@ quick_outI1(int whack_sock
 
     insert_state(st);	/* needs cookies, connection, and msgid */
 
+    alg_info_snprint_phase2(p2alg, sizeof(p2alg)
+		    , (struct alg_info_esp *)st->st_connection->alg_info_esp);
+
     if (replacing == SOS_NOBODY)
-	openswan_log("initiating Quick Mode %s {using isakmp#%lu}"
+	openswan_log("initiating Quick Mode %s {using isakmp#%lu proposal=%s}"
 		     , prettypolicy(policy)
-		     , isakmp_sa->st_serialno);
+		     , isakmp_sa->st_serialno, p2alg);
     else
-	openswan_log("initiating Quick Mode %s to replace #%lu {using isakmp#%lu}"
+	openswan_log("initiating Quick Mode %s to replace #%lu {using isakmp#%lu proposal=%s}"
 		     , prettypolicy(policy)
 		     , replacing
-		     , isakmp_sa->st_serialno);
+		     , isakmp_sa->st_serialno, p2alg);
 
     /* 
      * See if pfs_group has been specified for this conn,

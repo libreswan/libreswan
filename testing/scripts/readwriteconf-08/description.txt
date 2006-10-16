@@ -1,0 +1,1 @@
+this tests parsing of a config file that phase2alg= in it.

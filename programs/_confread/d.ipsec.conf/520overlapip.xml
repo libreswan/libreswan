@@ -15,4 +15,6 @@ The default is no.
 <para>
 This feature is only available with kernel drivers that support SAs to overlapping conns.
 At present only the (klips)mast protocol stack supports this feature.
+</para>
+</listitem>
   </varlistentry>

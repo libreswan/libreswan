@@ -20,20 +20,13 @@ include $(OPENSWANSRCDIR)/Makefile.inc
 SUBDIRS=
 SRCDIR=${srcdir}
 UTILS=${OPENSWANSRCDIR}/testing/utils
-export OPENSWANLIB
-export OSWLOGLIB
-export LIBDESLITE
-export LIBAES
-export SRCDIR
-export OBJDIRTOP
-export USERCOMPILE
 
 TESTS=$(shell awk '{print $$2;}' ${srcdir}TESTLIST)
 
 all: ${TESTS}
 	echo ${TESTS}
 
-%: %.c
+%: %.c OUTPUT.%.txt
 	source ${UTILS}/functions.sh; libtest `basename $< .c`
 
 def:

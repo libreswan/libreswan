@@ -1,0 +1,6 @@
+1 err = (null) alg=3DES(3)_000-SHA1(2), ; pfsgroup=2; flags=-strict
+1 err = (null) alg=3DES(3)_000-SHA1(2), flags=-strict
+1 err = (null) alg=AES(12)_256-SHA1(2), flags=-strict
+1 err = hash_alg not found, enc_alg="aes", auth_alg="sha2", modp="" alg=AES(12)_256-SHA1(2), flags=-strict
+1 err = (null) alg=ID255(255)_000-MD5(1), flags=-strict
+1 err = hash_alg not found, enc_alg="", auth_alg="vanityhash1", modp="" alg=ID255(255)_000-MD5(1), flags=-strict

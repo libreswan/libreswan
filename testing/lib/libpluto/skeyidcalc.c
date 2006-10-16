@@ -1,4 +1,5 @@
 #define LEAK_DETECTIVE
+#define USE_SHA2
 #include "../../programs/pluto/crypt_dh.c"
 
 char *progname;
@@ -145,7 +146,7 @@ main(int argc, char *argv[])
     cur_debugging = DBG_ALL;
 
     init_crypto();
-    hasher = crypto_get_hasher(OAKLEY_SHA);
+    hasher = crypto_get_hasher(OAKLEY_SHA1);
 
     zero(&expected);
 

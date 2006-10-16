@@ -47,6 +47,7 @@
 #include "log.h"
 #include "spdb.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
+#include "plutoalg.h"
 
 #include "sha1.h"
 #include "md5.h"
@@ -147,7 +148,10 @@ out_sa(pb_stream *outs
 	    return FALSE;
 	}
     } else {
-	revised_sadb=kernel_alg_makedb(st->st_connection->alg_info_esp, TRUE);
+	revised_sadb=kernel_alg_makedb(st->st_connection->policy
+				       , st->st_connection->alg_info_esp
+				       , TRUE);
+
     }
 
     /* more sanity */
@@ -238,8 +242,8 @@ out_sa(pb_stream *outs
 		: IPSEC_DOI_SPI_SIZE;
 
 	    DBG(DBG_EMITTING, 
-		DBG_log("out_sa pcn: %d pn: %d<%d valid_count: %d",
-			pcn, pn, pc->prop_cnt, valid_prop_cnt));
+		DBG_log("out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
+			pcn, pn, pc->prop_cnt, valid_prop_cnt, p->trans_cnt));
 
 	    /* but, skip things if the transform count is zero */
 	    if(p->trans_cnt == 0) continue; 
@@ -2126,8 +2130,9 @@ parse_ipsec_sa_body(
 
 #ifdef KERNEL_ALG
 		if(c->alg_info_esp) {
-		    ugh = kernel_alg_esp_enc_ok(esp_attrs.transid, esp_attrs.key_len,
-						c->alg_info_esp);
+		    ugh = kernel_alg_esp_enc_ok(esp_attrs.transid
+						, esp_attrs.key_len
+						, c->alg_info_esp);
 		}
 #endif
 
