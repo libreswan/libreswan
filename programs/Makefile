@@ -42,7 +42,7 @@ ifeq ($(USE_BSDKAME),true)
 SUBDIRS+=_realsetup.bsd _updown.bsdkame
 endif
 
-SUBDIRS+=proc pluto addconn
+SUBDIRS+=proc pluto addconn _confread
 SUBDIRS+=_copyright _include _keycensor _plutoload _plutorun
 SUBDIRS+=_secretcensor _startklips _updown 
 SUBDIRS+=auto barf verify ipsec look newhostkey ranbits secrets
