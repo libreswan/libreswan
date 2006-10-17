@@ -376,6 +376,33 @@ kernel_alg_esp_auth_keylen(int auth)
 	return a_keylen;
 }
 
+err_t
+kernel_alg_ah_auth_ok(int auth, 
+		      struct alg_info_esp *alg_info __attribute__((unused)))
+{
+	int ret=(ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth)));
+
+	if(ret) {
+	    return NULL;
+	} else {
+	    return "bad auth alg";
+	}
+}
+
+int
+kernel_alg_ah_auth_keylen(int auth)
+{
+	int sadb_aalg=alg_info_esp_aa2sadb(auth);
+	int a_keylen=0;
+	if (sadb_aalg)
+		a_keylen=esp_aalg[sadb_aalg].sadb_alg_maxbits/BITS_PER_BYTE;
+
+	DBG(DBG_CONTROL | DBG_CRYPT | DBG_PARSING
+		    , DBG_log("kernel_alg_ah_auth_keylen(auth=%d, sadb_aalg=%d): "
+		    "a_keylen=%d", auth, sadb_aalg, a_keylen));
+	return a_keylen;
+}
+
 struct esp_info *
 kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen, u_int16_t auth)
 {

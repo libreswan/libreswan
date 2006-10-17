@@ -195,8 +195,9 @@ emit_subnet_id(ip_subnet *net
  */
 static void
 compute_proto_keymat(struct state *st
-, u_int8_t protoid
-, struct ipsec_proto_info *pi)
+		     , u_int8_t protoid
+		     , struct ipsec_proto_info *pi
+		     , const char *satypename)
 {
     size_t needed_len; /* bytes of keying material needed */
 
@@ -282,6 +283,12 @@ compute_proto_keymat(struct state *st
 		needed_len = HMAC_SHA1_KEY_LEN;
 		break;
 	    default:
+#ifdef KERNEL_ALG
+		if (kernel_alg_ah_auth_ok(pi->attrs.auth, NULL)) {
+		    needed_len += kernel_alg_ah_auth_keylen(pi->attrs.auth);
+		    break;
+		} 
+#endif
 		bad_case(pi->attrs.transid);
 	    }
 	    break;
@@ -349,17 +356,18 @@ compute_proto_keymat(struct state *st
     }
 
     DBG(DBG_CRYPT,
-	DBG_dump("KEYMAT computed:\n", pi->our_keymat, pi->keymat_len);
-	DBG_dump("Peer KEYMAT computed:\n", pi->peer_keymat, pi->keymat_len));
+	DBG_log("%s KEYMAT\n",satypename);
+	DBG_dump("  KEYMAT computed:\n", pi->our_keymat, pi->keymat_len);
+	DBG_dump("  Peer KEYMAT computed:\n", pi->peer_keymat, pi->keymat_len));
 }
 
 static void
 compute_keymats(struct state *st)
 {
     if (st->st_ah.present)
-	compute_proto_keymat(st, PROTO_IPSEC_AH, &st->st_ah);
+	compute_proto_keymat(st, PROTO_IPSEC_AH, &st->st_ah, "AH");
     if (st->st_esp.present)
-	compute_proto_keymat(st, PROTO_IPSEC_ESP, &st->st_esp);
+	compute_proto_keymat(st, PROTO_IPSEC_ESP, &st->st_esp, "ESP");
 }
 
 /* Decode the variable part of an ID packet (during Quick Mode).
@@ -685,6 +693,7 @@ quick_outI1(int whack_sock
     struct qke_continuation *qke = alloc_thing(struct qke_continuation
 					       , "quick_outI1 KE");
     stf_status e;
+    const char *pfsgroupname;
     char p2alg[256];
 
     st->st_whack_sock = whack_sock;
@@ -715,31 +724,37 @@ quick_outI1(int whack_sock
 				, (struct alg_info_esp *)st->st_connection->alg_info_esp);
     }
 
-    if (replacing == SOS_NOBODY)
-	openswan_log("initiating Quick Mode %s {using isakmp#%lu proposal=%s}"
-		     , prettypolicy(policy)
-		     , isakmp_sa->st_serialno, p2alg);
-    else
-	openswan_log("initiating Quick Mode %s to replace #%lu {using isakmp#%lu proposal=%s}"
-		     , prettypolicy(policy)
-		     , replacing
-		     , isakmp_sa->st_serialno, p2alg);
-
+    pfsgroupname="no-pfs";
     /* 
      * See if pfs_group has been specified for this conn,
      * if not, fallback to old use-same-as-P1 behaviour
      */
-#ifdef IKE_ALG
-    if (st->st_connection)
-	    st->st_pfs_group = ike_alg_pfsgroup(st->st_connection
-						, st->st_policy);
-    if (!st->st_pfs_group)
-#endif
+    if (st->st_connection) {
+	st->st_pfs_group = ike_alg_pfsgroup(st->st_connection
+					    , st->st_policy);
+	
+    }
+
     /* If PFS specified, use the same group as during Phase 1:
      * since no negotiation is possible, we pick one that is
      * very likely supported.
      */
+    if (!st->st_pfs_group)
 	    st->st_pfs_group = policy & POLICY_PFS? isakmp_sa->st_oakley.group : NULL;
+
+    if(policy & POLICY_PFS && st->st_pfs_group) {
+	pfsgroupname = enum_name(&oakley_group_names, st->st_pfs_group->group);
+    }
+
+    if (replacing == SOS_NOBODY)
+	openswan_log("initiating Quick Mode %s {using isakmp#%lu proposal=%s pfsgroup=%s}"
+		     , prettypolicy(policy)
+		     , isakmp_sa->st_serialno, p2alg, pfsgroupname);
+    else
+	openswan_log("initiating Quick Mode %s to replace #%lu {using isakmp#%lu proposal=%s pfsgroup=%s}"
+		     , prettypolicy(policy)
+		     , replacing
+		     , isakmp_sa->st_serialno, p2alg, pfsgroupname);
 
     qke->st = st;
     qke->isakmp_sa = isakmp_sa;
@@ -1896,7 +1911,7 @@ quick_inI1_outR1_cryptocontinue1(struct pluto_crypto_req_cont *pcrc
 	e = start_dh_secret(&dh->dh_pcrc, st
 			    , st->st_import
 			    , RESPONDER
-			    , st->st_oakley.group->group);
+			    , st->st_pfs_group->group);
 	
 	if(e != STF_SUSPEND) {
 	    if(dh->md != NULL) {
@@ -2160,7 +2175,7 @@ quick_inR1_outI2(struct msg_digest *md)
 	return start_dh_secret(&dh->dh_pcrc, st
 			       , st->st_import
 			       , INITIATOR
-			       , st->st_oakley.group->group);
+			       , st->st_pfs_group->group);
     } else {
 	/* just call the tail function */
 	struct dh_continuation dh;
