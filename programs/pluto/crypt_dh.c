@@ -143,7 +143,11 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 	/* Currently, we know we can do mod exp iff we can do any
 	 * asymmetric operations at all.
 	 */
+	DBG(DBG_CRYPT, DBG_log("dh_share_ocf: %d\n", cryptodev_asymfeat));
+
 	if (cryptodev_asymfeat == 0) {
+	    DBG(DBG_CRYPT, DBG_log("ocf not available, using gmp\n"));
+	    
 	    calc_dh_shared_gmp(shared, g, secchunk, group);
 	    return;
 	}
@@ -170,10 +174,10 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 	/* point to our secret value, ^y */
 	/* M = modulus */
 	kop.crk_param[CRK_MOD_PARAM_MOD].crp_p = (caddr_t)group->raw_modulus_le.ptr;
-	kop.crk_param[CRK_MOD_PARAM_MOD].crp_nbits = group->raw_modulus_le.len;
+	kop.crk_param[CRK_MOD_PARAM_MOD].crp_nbits = group->raw_modulus_le.len*8;
 	
 	kop.crk_param[CRK_MOD_PARAM_RECIP].crp_p = (caddr_t)group->rec_modulus_le.ptr;
-	kop.crk_param[CRK_MOD_PARAM_RECIP].crp_nbits=group->rec_modulus_le.len;
+	kop.crk_param[CRK_MOD_PARAM_RECIP].crp_nbits=group->rec_modulus_le.len*8;
 
 	kop.crk_iparams = 4;
 	

@@ -315,6 +315,7 @@ return_out:
 			alg_name, ret==0? "Ok" : "FAILED", ret);
 	return 0;
 }
+
 /* Get pfsgroup for this connection */
 const struct oakley_group_desc *
 ike_alg_pfsgroup(struct connection *c, lset_t policy)
