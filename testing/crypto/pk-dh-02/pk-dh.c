@@ -21,6 +21,7 @@
 
 #define VULCAN_PK 1
 #define PK_DH_REGRESS 1
+#define ENHANCED_MODE 1
 
 int pkdh_verbose=0;
 

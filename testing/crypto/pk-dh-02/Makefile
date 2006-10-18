@@ -1,6 +1,7 @@
 OPENSWANSRCDIR=$(shell cd ../../..; pwd)
 
 UNITTEST=pk-dh
+PROGRAM=${UNITTEST}
 CFLAGS=-DUSE_3DES -I${OPENSWANSRCDIR}/programs/pluto
 
 SOURCES=pk-dh.c ${OPENSWANSRCDIR}/programs/pluto/hmac.c
