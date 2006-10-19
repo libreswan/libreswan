@@ -241,7 +241,7 @@ typedef struct hifn_desc {
 #define HIFN_1_PUB_FIFO_OP      0x384   /* first element of op fifo */
 #define	HIFN_1_PUB_MEM		0x400	/* start of Public key memory */
 #define	HIFN_1_PUB_MEMEND	0xfff	/* end of Public key memory */
-#define HIFN_1_PUB_MEMSIZE      3072    /* actually 4096 */
+#define HIFN_1_PUB_MEMSIZE      (HIFN_1_PUB_MEMEND-HIFN_1_PUB_MEM+1)
 
 /* DMA Status and Control Register (HIFN_1_DMA_CSR) */
 #define	HIFN_DMACSR_D_CTRLMASK	0xc0000000	/* Destinition Ring Control */
