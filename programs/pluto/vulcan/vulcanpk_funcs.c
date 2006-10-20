@@ -444,7 +444,7 @@ void vulcanpk_init(unsigned char *mapping)
 			n++;
 		}
 	}
-	DBG_log("public key memory cleared properly\n");
+	DBG_log("# public key memory cleared properly\n");
 }
 
 /*
