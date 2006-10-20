@@ -57,7 +57,8 @@ cookie.o: cookie.c ../../linux/include/openswan.h \
   ../../include/names_constant.h defs.h \
   ../../include/oswalloc.h ../../include/constants.h \
   ../../include/sha1.h rnd.h cookie.h
-crypt_dh.o: crypt_dh.c ../../linux/include/openswan.h \
+crypt_dh.o: crypt_dh.c ../../include/crypto/cryptodev.h \
+  ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/openswan/ipsec_policy.h \
@@ -73,18 +74,13 @@ crypt_dh.o: crypt_dh.c ../../linux/include/openswan.h \
   ../../include/sha1.h ../../include/md5.h \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h rnd.h state.h pluto_crypt.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h \
   ../../include/oswlog.h log.h timer.h \
   ../../include/oswtime.h ike_alg.h \
   ../../include/id.h ../../include/secrets.h \
   ../../include/id.h ../../include/x509.h keys.h \
   ../../include/x509.h ../../include/certs.h \
   ../../include/secrets.h ../../include/pgp.h \
-  vulcan/crypto_dh_vulcanpk.c \
-  ../../programs/pluto/vulcan/vulcanpk_funcs.c \
-  ../../include/dev/hifn/hifn7751reg.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h \
-  ../../include/hexdump.c
+  ocf_cryptodev.h
 crypt_ke.o: crypt_ke.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
@@ -101,14 +97,13 @@ crypt_ke.o: crypt_ke.c ../../linux/include/openswan.h \
   ../../include/sha1.h ../../include/md5.h \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h rnd.h state.h pluto_crypt.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h \
   ../../include/oswlog.h log.h timer.h \
   ../../include/oswtime.h ../../include/id.h \
   ../../include/pgp.h ../../include/x509.h \
   ../../include/certs.h ../../include/secrets.h \
   ../../include/id.h ../../include/x509.h \
   ../../include/pgp.h keys.h ../../include/secrets.h \
-  ocf_cryptodev.h
+  ocf_cryptodev.h ../../include/crypto/cryptodev.h
 crypt_start_dh.o: crypt_start_dh.c \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
@@ -126,7 +121,6 @@ crypt_start_dh.o: crypt_start_dh.c \
   ../../include/sha1.h ../../include/md5.h \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h rnd.h state.h pluto_crypt.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h \
   ../../include/oswlog.h log.h timer.h \
   ../../include/oswtime.h ike_alg.h \
   ../../include/id.h ../../include/secrets.h \
@@ -146,12 +140,12 @@ crypt_utils.o: crypt_utils.c ../../linux/include/openswan.h \
   ../../include/oswalloc.h ../../include/constants.h \
   ../../include/packet.h demux.h server.h \
   ../../include/sysqueue.h quirks.h \
-  ../../include/oswlog.h log.h state.h rnd.h pluto_crypt.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h
+  ../../include/oswlog.h log.h state.h rnd.h pluto_crypt.h
 crypto.o: crypto.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
   ../../linux/include/crypto/des.h \
+  ../../include/crypto/cryptodev.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/openswan/passert.h \
   ../../include/ietf_constants.h \
@@ -162,7 +156,7 @@ crypto.o: crypto.c ../../linux/include/openswan.h \
   ../../include/md5.h ../../include/sha1.h crypto.h \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h ../../include/alg_info.h \
-  ike_alg.h tpm/tpm.h ../../include/constants.h \
+  ike_alg.h ocf_cryptodev.h tpm/tpm.h ../../include/constants.h \
   modulus_reciprocals.c
 db_ops.o: db_ops.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
@@ -500,9 +494,9 @@ ikev1_aggr.o: ikev1_aggr.c ../../include/arpa/nameser.h \
   ../../include/mpzfuncs.h ike_alg.h \
   ../../include/kernel_alg.h \
   ../../linux/include/openswan/pfkeyv2.h plutoalg.h \
-  pluto_crypt.h ../../include/dev/hifn/vulcanpk_funcs.h ikev1.h \
-  ikev1_continuations.h xauth.h vendor.h nat_traversal.h virtual.h dpd.h \
-  x509more.h tpm/tpm.h ../../include/constants.h
+  pluto_crypt.h ikev1.h ikev1_continuations.h xauth.h vendor.h \
+  nat_traversal.h virtual.h dpd.h x509more.h tpm/tpm.h \
+  ../../include/constants.h
 ikev1_quick.o: ikev1_quick.c ../../include/arpa/nameser.h \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
@@ -532,9 +526,9 @@ ikev1_quick.o: ikev1_quick.c ../../include/arpa/nameser.h \
   ../../include/mpzfuncs.h ike_alg.h \
   ../../include/kernel_alg.h \
   ../../linux/include/openswan/pfkeyv2.h plutoalg.h \
-  pluto_crypt.h ../../include/dev/hifn/vulcanpk_funcs.h ikev1.h \
-  ikev1_continuations.h xauth.h vendor.h nat_traversal.h virtual.h dpd.h \
-  x509more.h tpm/tpm.h ../../include/constants.h
+  pluto_crypt.h ikev1.h ikev1_continuations.h xauth.h vendor.h \
+  nat_traversal.h virtual.h dpd.h x509more.h tpm/tpm.h \
+  ../../include/constants.h
 ipsec_doi.o: ipsec_doi.c ../../include/arpa/nameser.h \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
@@ -565,10 +559,10 @@ ipsec_doi.o: ipsec_doi.c ../../include/arpa/nameser.h \
   ../../include/mpzfuncs.h ike_alg.h \
   ../../include/kernel_alg.h \
   ../../linux/include/openswan/pfkeyv2.h plutoalg.h \
-  pluto_crypt.h ../../include/dev/hifn/vulcanpk_funcs.h ikev1.h \
-  ikev1_continuations.h xauth.h vendor.h nat_traversal.h virtual.h dpd.h \
-  x509more.h tpm/tpm.h ../../include/constants.h \
-  ocf_cryptodev.h
+  pluto_crypt.h ikev1.h ikev1_continuations.h xauth.h vendor.h \
+  nat_traversal.h virtual.h dpd.h x509more.h tpm/tpm.h \
+  ../../include/constants.h ocf_cryptodev.h \
+  ../../include/crypto/cryptodev.h
 kernel.o: kernel.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
@@ -698,6 +692,7 @@ kernel_pfkey.o: kernel_pfkey.c ../../linux/include/openswan.h \
   ../../include/sysqueue.h ../../include/alg_info.h \
   ../../include/kernel_alg.h
 keys.o: keys.c ../../include/arpa/nameser.h \
+  ../../include/crypto/cryptodev.h \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
@@ -807,7 +802,7 @@ ocf_cryptodev.o: ocf_cryptodev.c \
   ../../include/secrets.h ../../include/id.h \
   ../../include/x509.h ../../include/pgp.h keys.h \
   ../../include/secrets.h log.h \
-  ../../include/oswlog.h ocf_cryptodev.h
+  ../../include/oswlog.h ocf_cryptodev.h pluto_crypt.h
 ocsp.o: ocsp.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
@@ -894,12 +889,12 @@ pluto_crypt.o: pluto_crypt.c ../../linux/include/openswan.h \
   ../../include/packet.h demux.h server.h \
   ../../include/sysqueue.h quirks.h \
   ../../include/oswlog.h log.h state.h rnd.h pluto_crypt.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h \
   ../../include/id.h ../../include/pgp.h \
   ../../include/x509.h ../../include/certs.h \
   ../../include/secrets.h ../../include/id.h \
   ../../include/x509.h ../../include/pgp.h keys.h \
-  ../../include/secrets.h ocf_cryptodev.h
+  ../../include/secrets.h ocf_cryptodev.h \
+  ../../include/crypto/cryptodev.h
 plutoalg.o: plutoalg.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
@@ -929,6 +924,7 @@ plutomain.o: plutomain.c ../../include/arpa/nameser.h \
   ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
+  ../../include/crypto/cryptodev.h \
   ../../linux/include/openswan/pfkeyv2.h \
   ../../linux/include/openswan/pfkey.h \
   ../../ports/linux/include/sysdep.h \
@@ -952,8 +948,7 @@ plutomain.o: plutomain.c ../../include/arpa/nameser.h \
   ipsec_doi.h ikev1_quick.h ocsp.h fetch.h ../../include/sha1.h \
   ../../include/md5.h crypto.h \
   ../../lib/libcrypto/libsha2/sha2.h \
-  ../../include/mpzfuncs.h vendor.h pluto_crypt.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h virtual.h \
+  ../../include/mpzfuncs.h vendor.h pluto_crypt.h virtual.h \
   nat_traversal.h ocf_cryptodev.h
 primegen.o: primegen.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
@@ -1057,7 +1052,6 @@ server.o: server.c ../../include/arpa/nameser.h \
   ../../include/secrets.h adns.h dnskey.h \
   ../../include/whack.h \
   ../../linux/include/openswan/ipsec_policy.h pluto_crypt.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h \
   ../../include/udpfromto.h \
   ../../linux/include/openswan/pfkeyv2.h \
   ../../linux/include/openswan/pfkey.h kameipsec.h \
@@ -1218,8 +1212,7 @@ stubs.o: stubs.c ../../include/arpa/nameser.h \
   ../../include/whack.h ../../include/alg_info.h \
   spdb.h ike_alg.h ../../include/kernel_alg.h \
   ../../linux/include/openswan/pfkeyv2.h plutoalg.h xauth.h \
-  nat_traversal.h virtual.h pluto_crypt.h \
-  ../../include/dev/hifn/vulcanpk_funcs.h crypto.h \
+  nat_traversal.h virtual.h pluto_crypt.h crypto.h \
   ../../include/sha1.h ../../include/md5.h \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h ikev1.h
@@ -1359,7 +1352,8 @@ x509.o: x509.c ../../linux/include/openswan.h \
   ../../include/certs.h state.h ../../include/md2.h \
   ../../include/md5.h ../../include/sha1.h \
   ../../include/whack.h fetch.h ocsp.h \
-  ../../include/pkcs.h plutocerts.h x509more.h ocf_cryptodev.h
+  ../../include/pkcs.h plutocerts.h x509more.h ocf_cryptodev.h \
+  ../../include/crypto/cryptodev.h
 x509keys.o: x509keys.c ../../linux/include/openswan.h \
   ../../linux/include/openswan/ipsec_kversion.h \
   ../../linux/include/openswan/ipsec_param.h \
