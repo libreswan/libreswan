@@ -340,7 +340,7 @@ cryptodev_mod_exp(BIGNUM *r0, MP_INT *mp_g
 #endif
 
 /* reverse order of bytes in the number */
-void chunk2le(chunk_t c)
+void chunk_reversebytes(chunk_t c)
 {
 	int b,e;
 
