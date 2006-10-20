@@ -67,19 +67,31 @@
  * the number of simultaneously active requests
  */
 static int request_q_len = 20;
+#ifdef module_param
+module_param(request_q_len, int, 0644);
+#else
 MODULE_PARM(request_q_len, "i");
+#endif
 MODULE_PARM_DESC(request_q_len, "Number of outstanding requests");
 /*
  * how many requests we want to have processed
  */
 static int request_num = 1024;
+#ifdef module_param
+module_param(request_num, int, 0644);
+#else
 MODULE_PARM(request_num, "i");
+#endif
 MODULE_PARM_DESC(request_num, "run for at least this many requests");
 /*
  * the size of each request
  */
 static int request_size = 1500;
+#ifdef module_param
+module_param(request_size, int, 0644);
+#else
 MODULE_PARM(request_size, "i");
+#endif
 MODULE_PARM_DESC(request_size, "size of each request");
 
 /*
