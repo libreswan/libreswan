@@ -190,6 +190,8 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 
 	ret = cryptodev_asym(&kop);
 	
+	chunk2be(*shared);
+
 	gettimeofday(&tv1, NULL);
 	tv_diff=(tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
 	DBG(DBG_CRYPT, 
