@@ -463,11 +463,14 @@ ipsec_rcv_init(struct ipsec_rcv_state *irs)
 	   not assembled automatically to save TCP from having to copy
 	   twice.
 	*/
-	if (skb_is_nonlinear(skb)) {
-		if (skb_linearize(skb, GFP_ATOMIC) != 0) {
-			return IPSEC_RCV_REALLYBAD;
-		}
-	}
+        if (skb_is_nonlinear(skb)) {
+#ifdef HAVE_NEW_SKB_LINEARIZE
+                if (skb_linearize_cow(skb) != 0) 
+#else
+                if (skb_linearize(skb, GFP_ATOMIC) != 0) 
+#endif
+                        return IPSEC_RCV_REALLYBAD;
+        }
 #endif /* IP_FRAGMENT_LINEARIZE */
 
 	ipp = skb->nh.iph;
