@@ -188,6 +188,14 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selectio
 	unsigned long d_flags;
 	struct cryptocap *cap = NULL;
 
+	if (!crypto_initted) {
+		int i = crypto_init();
+		if (i) {
+			printk("crypto: failed to init crypto (%d)!\n", i);
+			return(-1);
+		}
+	}
+
 	dprintk("%s(desired=%d)\n", __FUNCTION__, desired_device);
 	CRYPTO_DRIVER_LOCK();
 
@@ -417,7 +425,7 @@ crypto_get_driverid(u_int32_t flags, char *drivername)
 	if (!crypto_initted) {
 		i = crypto_init();
 		if (i) {
-			printk("crypto: failed to init crypto!\n");
+			printk("crypto: failed to init crypto (%d)!\n", i);
 			return(-1);
 		}
 	}
