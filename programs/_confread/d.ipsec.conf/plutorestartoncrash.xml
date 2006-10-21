@@ -1,0 +1,9 @@
+  <varlistentry>
+  <term><emphasis remap='B'>plutorestartoncrash</emphasis></term>
+  <listitem>
+<para>prevent pluto from restarting after it crashed. This option should only be used when a
+post-mortem of a core file is desired. It prevents pluto from restarting and possibly overwriting
+an older core file.</para>
+  </listitem>
+  </varlistentry>
+
