@@ -91,6 +91,10 @@ echo -n "Creating initial device nodes..."
 make_extra_nodes
 echo "done."
 
+echo Invoked with Arguments: $*
+
 cd /root
 pivot_root . initrd 
 cd /
+exec /sbin/init $*
+

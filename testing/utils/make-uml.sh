@@ -14,6 +14,8 @@ case $# in
     1) OPENSWANSRCDIR=$1; shift;;
 esac
 
+CC=${CC-cc}
+
 if [ `id -u` = 0 ]
 then
     echo Do not run this as root.
@@ -150,7 +152,7 @@ then
     rm -f .config
     cp ${TESTINGROOT}/kernelconfigs/umlplain${KERNVER}.config .config
     
-    (make ARCH=um $NONINTCONFIG && make ARCH=um dep && make ARCH=um linux ) || exit 1 </dev/null 
+    (make CC=${CC} ARCH=um $NONINTCONFIG && make CC=${CC} ARCH=um dep && make ARCH=um CC=${CC} linux ) || exit 1 </dev/null 
 fi
 
 BUILD_MODULES=${BUILD_MODULES-true}
