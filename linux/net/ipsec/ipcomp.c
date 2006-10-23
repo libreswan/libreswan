@@ -20,7 +20,9 @@ char ipcomp_c_version[] = "RCSID $Id: ipcomp.c,v 1.41.2.3 2006/04/20 15:46:58 mc
 
 /* SSS */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 
 #define __NO_VERSION__

@@ -31,7 +31,9 @@
 
 #define __NO_VERSION__
 #include <linux/module.h>
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>	/* for CONFIG_IP_FORWARD */
+#endif
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 

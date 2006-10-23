@@ -21,7 +21,9 @@
  * 	PK:	make XCBC comply with latest draft (keylength)
  *
  */
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 
 /*	
