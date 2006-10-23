@@ -285,7 +285,9 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"failureshunt",   kv_conn|kv_auto, kt_enum,   KBF_FAILURESHUNT, &kw_failureshunt_list},
 
     /* attributes of the phase2 policy */
-    {"esp",            kv_conn|kv_auto|kv_manual,  kt_string, KSF_ESP,NOT_ENUM},
+    {"phase2alg",      kv_conn|kv_auto|kv_manual,  kt_string, KSF_ESP,NOT_ENUM},
+    {"esp",            kv_conn|kv_auto|kv_manual|kv_alias,  kt_string, KSF_ESP,NOT_ENUM},
+    {"ah",             kv_conn|kv_auto|kv_manual|kv_alias,  kt_string, KSF_ESP,NOT_ENUM},
     {"subnetwithin",   kv_conn|kv_leftright, kt_string, KSCF_SUBNETWITHIN,NOT_ENUM},
     {"protoport",      kv_conn|kv_leftright|kv_processed, kt_string, KSCF_PROTOPORT,NOT_ENUM},
     {"phase2",         kv_conn|kv_auto|kv_manual|kv_policy,  kt_enum, KBF_PHASE2, &kw_phase2types_list},

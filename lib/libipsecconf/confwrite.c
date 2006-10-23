@@ -259,7 +259,7 @@ void confwrite_side(FILE *out,
 	break;
     }
 
-    if(end->id) {
+    if(end->strings_set[KSCF_ID] && end->id) {
 	fprintf(out, "\t%sid=\"%s\"\n",     side, end->id);
     }
 

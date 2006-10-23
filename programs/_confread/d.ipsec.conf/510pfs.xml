@@ -5,10 +5,13 @@
 keying channel
 (with PFS, penetration of the key-exchange protocol
 does not compromise keys negotiated earlier);
-acceptable values are
+Since there is no reason to ever refuse PFS, Openswan will allow a connection defined with
+<emphasis remap='B'>pfs=no</emphasis> to use PFS anyway.
+Acceptable values are
 <emphasis remap='B'>yes</emphasis>
 (the default)
 and
 <emphasis remap='B'>no</emphasis>.</para>
   </listitem>
   </varlistentry>
+

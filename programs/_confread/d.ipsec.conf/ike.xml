@@ -1,0 +1,33 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ike</emphasis></term>
+  <listitem>
+<para>IKE encryption/authentication algorithm to be used
+for the connection (phase 1 aka ISAKMP SA).  The format is
+<emphasis remap='I'>"cipher-hash;modpgroup, cipher-hash;modpgroup, ..."</emphasis>
+Any left out option will be filled in with all allowed default
+options. Multiple proposals are seperated by a comma. If an
+<emphasis remap='B'>ike=</emphasis>
+line is specified, no other received proposals will be accepted.
+Formerly there was a distinction (by using a <emphasis remap='B'>"!"</emphasis> symbol) between
+"strict mode" or not. That mode has been obsoleted. If an <emphasis remap='B'>ike=</emphasis> option is
+specified, the mode is always strict, meaning no other received proposals will be accepted.
+Some examples are
+<emphasis remap='B'>ike=3des-sha1,aes-sha1</emphasis>,
+<emphasis remap='B'>ike=aes</emphasis>,
+<emphasis remap='B'>ike=aes128-md5;modp2048</emphasis>,
+<emphasis remap='B'>ike=3des-md5;modp1024,esp=aes-sha1;modp1536</emphasis> or
+<emphasis remap='B'>ike=modp1536</emphasis>.
+The options must be suitable as a value of
+<citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s
+<option>--ike</option> option. The default is to use IKE, and to allow all combinations of:
+<literallayout remap='.nf'><emphasis remap='B'>
+                cipher:                 3des or aes
+                hash:                   sha1 or md5
+                pfsgroup (DHgroup):     modp1024 or modp1536
+</emphasis></literallayout></para>
+<para>
+If Openswan was compiled with extra INSECURE and BROKEN options, then the des (1des) and null cipher, as
+well as modp768 are available. This turns your VPN into a joke. Do not enable these options.</para>
+  </listitem>
+  </varlistentry>
+

@@ -1102,6 +1102,18 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
     return same_ca;
 }
 
+void
+setup_client_ports(struct spd_route *sr)
+{
+    if(!sr->this.has_port_wildcard) {
+	setportof(htons(sr->this.port), &sr->this.client.addr);
+    }
+    if(!sr->that.has_port_wildcard) {
+	setportof(htons(sr->that.port), &sr->that.client.addr);
+    }
+}
+
+
 static bool
 check_connection_end(const struct whack_end *this, const struct whack_end *that
 , const struct whack_message *wm)
@@ -1288,7 +1300,16 @@ add_connection(const struct whack_message *wm)
 #ifdef KERNEL_ALG
 	if (wm->esp)  
 	{
-		c->alg_info_esp = alg_info_esp_create_from_str(wm->esp? wm->esp : "", &ugh, FALSE);
+		DBG(DBG_CONTROL, DBG_log("from whack: got --esp=%s", wm->esp ? wm->esp: "NULL"));
+
+		if(c->policy & POLICY_ENCRYPT) {
+		    c->alg_info_esp = alg_info_esp_create_from_str(wm->esp? wm->esp : "", &ugh, FALSE);
+		} else if(c->policy & POLICY_AUTHENTICATE) {
+		    c->alg_info_esp = alg_info_ah_create_from_str(wm->esp? wm->esp : "", &ugh, FALSE);
+		} else {
+		    loglog(RC_NOALGO, "Can only do AH, or ESP, not AH+ESP\n");
+		    return;
+		}
 
 		DBG(DBG_CRYPT|DBG_CONTROL, 
 			static char buf[256]="<NULL>";
@@ -2167,9 +2188,9 @@ initiate_connection(const char *name, int whackfd
 	     */
 	    c->policy |= POLICY_UP;
 
-	    if(c->policy & POLICY_ENCRYPT) {
+	    if(c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)) {
 		struct alg_info_esp *alg = c->alg_info_esp;
-		struct db_sa *phase2_sa = kernel_alg_makedb(alg, TRUE);
+		struct db_sa *phase2_sa = kernel_alg_makedb(c->policy, alg, TRUE);
 		
 		if(alg != NULL && phase2_sa == NULL) {
 		    whack_log(RC_NOALGO, "can not initiate: no acceptable kernel algorithms loaded");

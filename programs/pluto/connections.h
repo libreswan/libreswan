@@ -414,6 +414,8 @@ extern size_t format_connection(char *buf, size_t buf_len
 				, struct spd_route *sr);
 
 
+extern void setup_client_ports(struct spd_route *sr);
+
 
 /*
  * Local Variables:

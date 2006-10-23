@@ -548,13 +548,13 @@ bsdkame_raw_eroute(const ip_address *this_host
     }
     
     if(policy == IPSEC_POLICY_IPSEC) {
-	const ip_address *me   = this_host;
-	const ip_address *him  = that_host;
+	const ip_address me   = *this_host;
+	const ip_address him  = *that_host;
 	unsigned char *addrmem;
 
 	ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
 	  
-	ir->sadb_x_ipsecrequest_len = sizeof(struct sadb_x_ipsecrequest)+me->u.v4.sin_len+him->u.v4.sin_len;
+	ir->sadb_x_ipsecrequest_len = sizeof(struct sadb_x_ipsecrequest)+me.u.v4.sin_len+him.u.v4.sin_len;
 	ir->sadb_x_ipsecrequest_proto = proto;
 
 	if(transport_proto == 0) {
@@ -566,11 +566,11 @@ bsdkame_raw_eroute(const ip_address *this_host
 	ir->sadb_x_ipsecrequest_reqid=0;  /* not used for now */
    
 	addrmem = (unsigned char *)&ir[1];
-	memcpy(addrmem, &me->u.v4,  me->u.v4.sin_len);
-	addrmem += me->u.v4.sin_len;
-	memcpy(addrmem, &him->u.v4, him->u.v4.sin_len);
+	memcpy(addrmem, &me.u.v4,  me.u.v4.sin_len);
+	addrmem += me.u.v4.sin_len;
+	memcpy(addrmem, &him.u.v4, him.u.v4.sin_len);
 	
-	addrmem += him->u.v4.sin_len;
+	addrmem += him.u.v4.sin_len;
 	
 	policylen += ir->sadb_x_ipsecrequest_len;
 	
@@ -588,7 +588,7 @@ bsdkame_raw_eroute(const ip_address *this_host
     ret = pfkey_send_spdadd(pfkeyfd,
 			    saddr, this_client->maskbits,
 			    daddr, that_client->maskbits,
-			    255 /* proto */,
+			    transport_proto ? transport_proto : 255 /* proto */,
 			    (caddr_t)policy_struct, policylen,
 			    pfkey_seq);
 
@@ -878,8 +878,8 @@ bsdkame_shunt_eroute(struct connection *c
  *
  */
 static bool
-bsdkame_sag_eroute(struct state *st UNUSED
-		   , struct spd_route *sr UNUSED
+bsdkame_sag_eroute(struct state *st 
+		   , struct spd_route *sr
 		   , unsigned op UNUSED
 		   , const char *opname UNUSED)
 {
@@ -895,6 +895,8 @@ bsdkame_sag_eroute(struct state *st UNUSED
     } else if (st->st_ipcomp.present) {
 	proto = IPPROTO_COMP;
     }
+    setup_client_ports(sr);
+
     return bsdkame_raw_eroute(&sr->this.host_addr
 			      , &sr->this.client
 			      , &sr->that.host_addr
@@ -977,7 +979,7 @@ bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 			0, /*flags */
 			0, /* l_alloc */
 			0, /* l_bytes */
-			0, /* l_addtime */
+			sa->sa_lifetime, /* l_addtime */
 			0, /* l_usetime, */
 			pfkey_seq);
 

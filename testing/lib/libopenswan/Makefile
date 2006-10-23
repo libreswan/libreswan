@@ -24,6 +24,9 @@ def:	check
 check:
 	export OPENSWANLIB=${OPENSWANLIB} REGRESSRESULTS=$${REGRESSRESULTS-../results} ; source ${UTILS}/functions.sh; source TESTLIST
 
+one:
+	export OPENSWANLIB=${OPENSWANLIB} REGRESSRESULTS=$${REGRESSRESULTS-../results} ; source ${UTILS}/functions.sh; eval `grep ${TEST} TESTLIST`
+
 install install_file_list checkprograms programs:
 	@true
 

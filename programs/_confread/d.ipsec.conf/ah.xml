@@ -1,0 +1,16 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ah</emphasis></term>
+  <listitem>
+<para>AH authentication algorithm to be used
+for the connection, e.g here.
+<emphasis remap='B'>hmac-md5</emphasis>
+The options must be suitable as a value of
+<citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s
+<option>--ah</option>
+option.
+The default is not to use AH. If for some (invalid) reason you still think you need AH, please
+use esp with the null encryption cipher instead. Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarilly supported here.
+</para>
+  </listitem>
+  </varlistentry>
+

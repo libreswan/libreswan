@@ -6,15 +6,25 @@ sa disjunct cnt: 0
 main mode oakley: 1
 sa disjunct cnt: 1
   conjunctions cnt: 1
-    protoid: 1 cnt: 4
+    protoid: 1 cnt: 6
       transform: 1 cnt: 4
-        type: 1 val: 5
+        type: 1 val: 7
+        type: 2 val: 2
+        type: 3 val: 1
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 7
         type: 2 val: 1
         type: 3 val: 1
         type: 4 val: 5
       transform: 1 cnt: 4
         type: 1 val: 5
         type: 2 val: 2
+        type: 3 val: 1
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 5
+        type: 2 val: 1
         type: 3 val: 1
         type: 4 val: 5
       transform: 1 cnt: 4
@@ -31,23 +41,33 @@ sa disjunct cnt: 1
   conjunctions cnt: 1
     protoid: 1 cnt: 1
       transform: 1 cnt: 4
-        type: 1 val: 5
-        type: 2 val: 1
+        type: 1 val: 7
+        type: 2 val: 2
         type: 3 val: 1
         type: 4 val: 5
 
 main mode oakley: 2
 sa disjunct cnt: 1
   conjunctions cnt: 1
-    protoid: 1 cnt: 4
+    protoid: 1 cnt: 6
       transform: 1 cnt: 4
-        type: 1 val: 5
+        type: 1 val: 7
+        type: 2 val: 2
+        type: 3 val: 3
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 7
         type: 2 val: 1
         type: 3 val: 3
         type: 4 val: 5
       transform: 1 cnt: 4
         type: 1 val: 5
         type: 2 val: 2
+        type: 3 val: 3
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 5
+        type: 2 val: 1
         type: 3 val: 3
         type: 4 val: 5
       transform: 1 cnt: 4
@@ -64,8 +84,8 @@ sa disjunct cnt: 1
   conjunctions cnt: 1
     protoid: 1 cnt: 1
       transform: 1 cnt: 4
-        type: 1 val: 5
-        type: 2 val: 1
+        type: 1 val: 7
+        type: 2 val: 2
         type: 3 val: 3
         type: 4 val: 5
 
@@ -129,15 +149,25 @@ sa disjunct cnt: 0
 main mode oakley: 5
 sa disjunct cnt: 1
   conjunctions cnt: 1
-    protoid: 1 cnt: 4
+    protoid: 1 cnt: 6
       transform: 1 cnt: 4
-        type: 1 val: 5
+        type: 1 val: 7
+        type: 2 val: 2
+        type: 3 val: 65002
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 7
         type: 2 val: 1
         type: 3 val: 65002
         type: 4 val: 5
       transform: 1 cnt: 4
         type: 1 val: 5
         type: 2 val: 2
+        type: 3 val: 65002
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 5
+        type: 2 val: 1
         type: 3 val: 65002
         type: 4 val: 5
       transform: 1 cnt: 4
@@ -154,17 +184,22 @@ sa disjunct cnt: 1
   conjunctions cnt: 1
     protoid: 1 cnt: 1
       transform: 1 cnt: 4
-        type: 1 val: 5
-        type: 2 val: 1
+        type: 1 val: 7
+        type: 2 val: 2
         type: 3 val: 65002
         type: 4 val: 5
 
 main mode oakley: 6
 sa disjunct cnt: 1
   conjunctions cnt: 1
-    protoid: 1 cnt: 4
+    protoid: 1 cnt: 6
       transform: 1 cnt: 4
-        type: 1 val: 5
+        type: 1 val: 7
+        type: 2 val: 2
+        type: 3 val: 65006
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 7
         type: 2 val: 1
         type: 3 val: 65005
         type: 4 val: 5
@@ -172,6 +207,11 @@ sa disjunct cnt: 1
         type: 1 val: 5
         type: 2 val: 2
         type: 3 val: 65006
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 5
+        type: 2 val: 1
+        type: 3 val: 65005
         type: 4 val: 5
       transform: 1 cnt: 4
         type: 1 val: 5
@@ -187,9 +227,9 @@ sa disjunct cnt: 1
   conjunctions cnt: 1
     protoid: 1 cnt: 1
       transform: 1 cnt: 4
-        type: 1 val: 5
-        type: 2 val: 1
-        type: 3 val: 65005
+        type: 1 val: 7
+        type: 2 val: 2
+        type: 3 val: 65006
         type: 4 val: 5
 
 main mode oakley: 7
@@ -252,15 +292,25 @@ sa disjunct cnt: 0
 main mode oakley: 9
 sa disjunct cnt: 1
   conjunctions cnt: 1
-    protoid: 1 cnt: 4
+    protoid: 1 cnt: 6
       transform: 1 cnt: 4
-        type: 1 val: 5
+        type: 1 val: 7
         type: 2 val: 1
+        type: 3 val: 65001
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 7
+        type: 2 val: 2
         type: 3 val: 65001
         type: 4 val: 5
       transform: 1 cnt: 4
         type: 1 val: 5
         type: 2 val: 2
+        type: 3 val: 65001
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 5
+        type: 2 val: 1
         type: 3 val: 65001
         type: 4 val: 5
       transform: 1 cnt: 4
@@ -277,7 +327,7 @@ sa disjunct cnt: 1
   conjunctions cnt: 1
     protoid: 1 cnt: 1
       transform: 1 cnt: 4
-        type: 1 val: 5
+        type: 1 val: 7
         type: 2 val: 1
         type: 3 val: 65001
         type: 4 val: 5
@@ -285,15 +335,25 @@ sa disjunct cnt: 1
 main mode oakley: 10
 sa disjunct cnt: 1
   conjunctions cnt: 1
-    protoid: 1 cnt: 4
+    protoid: 1 cnt: 6
       transform: 1 cnt: 4
-        type: 1 val: 5
+        type: 1 val: 7
+        type: 2 val: 2
+        type: 3 val: 65005
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 7
         type: 2 val: 1
         type: 3 val: 65005
         type: 4 val: 5
       transform: 1 cnt: 4
         type: 1 val: 5
         type: 2 val: 2
+        type: 3 val: 65005
+        type: 4 val: 5
+      transform: 1 cnt: 4
+        type: 1 val: 5
+        type: 2 val: 1
         type: 3 val: 65005
         type: 4 val: 5
       transform: 1 cnt: 4
@@ -310,8 +370,8 @@ sa disjunct cnt: 1
   conjunctions cnt: 1
     protoid: 1 cnt: 1
       transform: 1 cnt: 4
-        type: 1 val: 5
-        type: 2 val: 1
+        type: 1 val: 7
+        type: 2 val: 2
         type: 3 val: 65005
         type: 4 val: 5
 

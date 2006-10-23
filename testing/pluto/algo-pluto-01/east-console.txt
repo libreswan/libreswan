@@ -1,0 +1,32 @@
+east:~#
+ TESTNAME=algo-pluto-01
+east:~#
+ source /testing/pluto/bin/eastlocal.sh
+east:~#
+ ipsec setup start
+ipsec_setup: Starting Openswan IPsec VERSION
+east:~#
+ ipsec auto --add westnet-eastnet-aes256
+east:~#
+ /testing/pluto/basic-pluto-01/eroutewait.sh trap
+east:~#
+ 
+
+east:~#
+ ipsec look
+east NOW
+0.0.0.0/0          -> 0.0.0.0/0          => %trap
+192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
+ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23  natencap=none natsport=0 natdport=0  
+esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=256  natencap=none natsport=0 natdport=0  
+esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=256 natencap=none natsport=0 natdport=0  
+tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> natencap=none natsport=0 natdport=0  
+ROUTING TABLE
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.23 
+192.0.1.0/24 dev ipsec0  scope link 
+0.0.0.0/1 dev ipsec0  scope link 
+128.0.0.0/1 dev ipsec0  scope link 
+default via 192.1.2.254 dev eth1 
+

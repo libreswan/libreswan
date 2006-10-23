@@ -7,7 +7,6 @@
 /*
  * 	Main db object, (quite proposal "oriented")
  */
-#ifdef DB_CONTEXT
 struct db_context {
 	struct db_prop prop;		/* proposal buffer (not pointer) */
 	struct db_trans *trans0;	/* transf. list, dynamically sized */
@@ -41,6 +40,8 @@ static __inline__ struct db_prop *db_prop_get(struct db_context *ctx) {
 	return &ctx->prop;
 }
 /*	Show stats (allocation, etc) */
-#endif /* NO_DB_CONTEXT */
 int db_ops_show_status(void);
+
+extern void db_print(struct db_context *ctx);
+
 #endif /* _DB_OPS_H */

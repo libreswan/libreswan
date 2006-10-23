@@ -1,0 +1,7 @@
+Basic pluto test:
+
+"westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24
+
+the policy has been adjusted to do ESP with sha1, and uses a specific PFS group.
+
+

@@ -16,8 +16,6 @@
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
 include ${OPENSWANSRCDIR}/Makefile.inc
 
-PROGRAM=_confread
-PROGRAMDIR=${LIBDIR}
 EXTRA5MAN=ipsec.conf.5
 CONFFILES=ipsec.conf
 EXCONFILES=ipsec.win2k.conf

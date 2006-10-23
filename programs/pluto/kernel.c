@@ -1220,6 +1220,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->spi = ipip_spi;
         said_next->esatype = ET_IPIP;
         said_next->text_said = clone_str(text_said, "said");
+	said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
 	if(inbound) {
 	    /*
@@ -1295,6 +1296,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->encapsulation = encapsulation;
         said_next->reqid = c->spd.reqid + 2;
         said_next->text_said = clone_str(text_said, "said");
+	said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
 	if(inbound) {
 	    /*
@@ -1516,6 +1518,12 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->natt_oa = &natt_oa;
 #endif  
         said_next->text_said = clone_str(text_said, "said");
+	said_next->sa_lifetime = c->sa_ipsec_life_seconds;
+
+#ifdef DIVULGE_KEYS
+	DBG_dump("esp enckey:",  said_next->enckey,  said_next->enckeylen);
+	DBG_dump("esp authkey:", said_next->authkey, said_next->authkeylen);
+#endif
 
 	if(inbound) {
 	    /*
@@ -1595,6 +1603,11 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->encapsulation = encapsulation;
         said_next->reqid = c->spd.reqid;
         said_next->text_said = clone_str(text_said, "said");
+	said_next->sa_lifetime = c->sa_ipsec_life_seconds;
+
+#ifdef DIVULGE_KEYS
+	DBG_dump("ah authkey:", said_next->authkey, said_next->authkeylen);
+#endif
 
 	if(inbound) {
 	    /*
@@ -1686,7 +1699,8 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
                     proto_info[i].encapsulation = ENCAPSULATION_MODE_TRANSPORT;
                 }
             }
-            
+
+	    setup_client_ports(&c->spd);
             /* MCR - should be passed a spd_eroute structure here */
             (void) raw_eroute(&c->spd.that.host_addr   /* this_host */
 			      , &c->spd.that.client    /* this_client */
@@ -1780,6 +1794,7 @@ teardown_half_ipsec_sa(struct state *st, bool inbound)
     if (kernel_ops->inbound_eroute && inbound
         && c->spd.eroute_owner == SOS_NOBODY)
     {
+	setup_client_ports(&c->spd);
         (void) raw_eroute(&c->spd.that.host_addr, &c->spd.that.client
                           , &c->spd.this.host_addr, &c->spd.this.client
                           , 256

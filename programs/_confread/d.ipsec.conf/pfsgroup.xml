@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>pfsgroup</emphasis></term>
+  <listitem>
+<para>PFS  group to be used if <emphasis remap='B'>pfs=yes</emphasis>, e.g. pfsgroup=modp1536
+
+Because PFS group is not negotiated it is  single  valued
+and  must  be previously coordinated with peer.  Possible
+values are: modp1024,  modp1536, modp2048, modp3072 and modp4096.
+If not specified, it will use same DH group of phase1.
+
+Default value is the same value as Phase1's DH group.</para>
+  </listitem>
+  </varlistentry>
+

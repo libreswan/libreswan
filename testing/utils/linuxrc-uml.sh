@@ -2,6 +2,7 @@
 
 PATH="/sbin:/bin"
 
+
 # defaults
 tmpfs_size="10M"
 udev_root="/root/dev"
@@ -62,6 +63,7 @@ make_extra_nodes() {
 ##############################################################################
 
 mount -n -t proc none /proc
+if grep SHELL /proc/cmdline; then echo STARTING SHELL - exit to continue; /bin/sh; fi
 
 for v in $(cat /proc/cmdline)
 do
@@ -89,6 +91,10 @@ echo -n "Creating initial device nodes..."
 make_extra_nodes
 echo "done."
 
+echo Invoked with Arguments: $*
+
 cd /root
 pivot_root . initrd 
 cd /
+exec /sbin/init $*
+
