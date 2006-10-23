@@ -499,13 +499,11 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 
 extern const DES_LONG des_SPtrans[8][64];
 
-#ifndef NO_FCRYPT
 #ifndef NOPROTO
 void fcrypt_body(DES_LONG *out,des_key_schedule ks,
 	DES_LONG Eswap0, DES_LONG Eswap1);
 #else
 void fcrypt_body();
 #endif
-#endif /* NO_FCRYPT */
 
 #endif
