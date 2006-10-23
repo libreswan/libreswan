@@ -1,6 +1,10 @@
-
-  Electric Fence 2.1 Copyright (C) 1987-1998 Bruce Perens.
-../spdbph1ike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
+../spdbph1 ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC_SSH: Ok (ret=0)
+../spdbph1 ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC: Ok (ret=0)
+../spdbph1 ike_alg_register_enc(): Activating OAKLEY_SERPENT_CBC: Ok (ret=0)
+../spdbph1 ike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
+../spdbph1 ike_alg_register_enc(): Activating OAKLEY_BLOWFISH_CBC: Ok (ret=0)
+../spdbph1 ike_alg_register_hash(): Activating OAKLEY_SHA2_512: Ok (ret=0)
+../spdbph1 ike_alg_register_hash(): Activating OAKLEY_SHA2_256: Ok (ret=0)
 sa disjunct cnt: 1
   conjunctions cnt: 1
     protoid: 1 cnt: 4

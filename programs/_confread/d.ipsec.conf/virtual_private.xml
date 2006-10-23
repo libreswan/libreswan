@@ -1,0 +1,24 @@
+  <varlistentry>
+  <term><emphasis remap='B'>virtual_private</emphasis></term>
+  <listitem>
+<para>contains the networks that are allowed as subnet= for the remote
+client. In other words, the address ranges that may live behind a NAT
+router through which a client connects.  This value is usually set to
+all the RFC-1918 address space, excluding the space used in the local
+subnet behind the NAT (An IP address cannot live at two places at once).
+IPv4 address ranges are denoted as
+<emphasis remap='I'>%v4:a.b.c.d/mm</emphasis>
+and IPv6 is denoted as
+<emphasis remap='I'>%v6:aaaa::bbbb:cccc:dddd:eeee/mm</emphasis>. One
+can exclude subnets by using the <emphasis remap='B'>!</emphasis>.
+For example, if the VPN server is giving access to 192.168.1.0/24,
+this option should be set to:
+<emphasis remap='I'>virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%4:172.16.0.0/12,%v4:!192.168.1.0/24</emphasis>.
+This parameter is only needed on the server side and not on the client side that resides behind the NAT router, as
+the client will just use its IP address for the inner IP setting.
+This parameter may eventually become per-connection.
+</para>
+
+  </listitem>
+  </varlistentry>
+

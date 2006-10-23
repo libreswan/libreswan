@@ -5,4 +5,3 @@ Basic pluto test:
 the policy has been adjusted to permit only AES256 for phase 1 and AES128 
 for phase 2.
 
-note: cryptoapi is not built in by default so this test will fail. 

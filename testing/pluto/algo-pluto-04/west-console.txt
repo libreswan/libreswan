@@ -1,0 +1,121 @@
+west:~#
+ ping -n -c 4 192.0.2.254
+PING 192.0.2.254 (192.0.2.254): 56 data bytes
+64 bytes from 192.0.2.254: icmp_seq=0 ttl=257 time=999 ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=257 time=999 ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=257 time=999 ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=257 time=999 ms
+
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 packets received, 0% packet loss
+round-trip min/avg/max = 3.1/4.5/9.26 ms
+west:~#
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west:~#
+ ping -n -c 4 192.0.2.254
+PING 192.0.2.254 (192.0.2.254): 56 data bytes
+
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 packets received, 100% packet loss
+west:~#
+ TESTNAME=algo-pluto-04 
+west:~#
+ source /testing/pluto/bin/westlocal.sh
+west:~#
+ ipsec setup start
+ipsec_setup: Starting Openswan IPsec VERSION
+west:~#
+ ipsec auto --add westnet-eastnet-esp-sha1-pfs
+west:~#
+ ipsec auto --add westnet-eastnet-esp-md5-pfs
+west:~#
+ /testing/pluto/basic-pluto-01/eroutewait.sh trap
+west:~#
+ echo done
+done
+west:~#
+ ipsec auto --up  westnet-eastnet-esp-sha1-pfs
+104 "westnet-eastnet-esp-sha1-pfs" #1: STATE_MAIN_I1: initiate
+003 "westnet-eastnet-esp-sha1-pfs" #1: received Vendor ID payload [Openswan 
+003 "westnet-eastnet-esp-sha1-pfs" #1: received Vendor ID payload [Dead Peer Detection]
+106 "westnet-eastnet-esp-sha1-pfs" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+108 "westnet-eastnet-esp-sha1-pfs" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+004 "westnet-eastnet-esp-sha1-pfs" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_256 prf=oakley_sha group=modp2048}
+117 "westnet-eastnet-esp-sha1-pfs" #2: STATE_QUICK_I1: initiate
+004 "westnet-eastnet-esp-sha1-pfs" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
+west:~#
+ ipsec look
+west NOW
+0.0.0.0/0          -> 0.0.0.0/0          => %trap
+192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
+ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
+esp0xKLIPSPIK@192.1.2.23 ESP_3DES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=192 natencap=none natsport=0 natdport=0  
+esp0xKLIPSPIK@192.1.2.45 ESP_3DES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=192 natencap=none natsport=0 natdport=0  
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> natencap=none natsport=0 natdport=0  
+ROUTING TABLE
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45 
+192.0.2.0/24 dev ipsec0  scope link 
+0.0.0.0/1 dev ipsec0  scope link 
+128.0.0.0/1 dev ipsec0  scope link 
+default via 192.1.2.254 dev eth1 
+west:~#
+ ipsec auto --delete  westnet-eastnet-esp-sha1-pfs
+west:~#
+ ipsec auto --up  westnet-eastnet-esp-md5-pfs
+104 "westnet-eastnet-esp-md5-pfs" #3: STATE_MAIN_I1: initiate
+003 "westnet-eastnet-esp-md5-pfs" #3: received Vendor ID payload [Openswan 
+003 "westnet-eastnet-esp-md5-pfs" #3: received Vendor ID payload [Dead Peer Detection]
+106 "westnet-eastnet-esp-md5-pfs" #3: STATE_MAIN_I2: sent MI2, expecting MR2
+108 "westnet-eastnet-esp-md5-pfs" #3: STATE_MAIN_I3: sent MI3, expecting MR3
+004 "westnet-eastnet-esp-md5-pfs" #3: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_256 prf=oakley_sha group=modp2048}
+117 "westnet-eastnet-esp-md5-pfs" #4: STATE_QUICK_I1: initiate
+004 "westnet-eastnet-esp-md5-pfs" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
+west:~#
+ ipsec look
+west NOW
+0.0.0.0/0          -> 0.0.0.0/0          => %trap
+192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
+ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
+
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
+esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_MD5: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=128 aklen=128 eklen=128 natencap=none natsport=0 natdport=0  
+esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=128 aklen=128 eklen=128 natencap=none natsport=0 natdport=0  
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> natencap=none natsport=0 natdport=0  
+ROUTING TABLE
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45 
+192.0.2.0/24 dev ipsec0  scope link 
+0.0.0.0/1 dev ipsec0  scope link 
+128.0.0.0/1 dev ipsec0  scope link 
+default via 192.1.2.254 dev eth1 
+west:~#
+ echo done
+done
+west:~#
+ 
+
+west:~#
+ ipsec look
+west NOW
+0.0.0.0/0          -> 0.0.0.0/0          => %trap
+192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
+ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
+
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
+esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_MD5: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=128 aklen=128 eklen=128 natencap=none natsport=0 natdport=0  
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 natencap=none natsport=0 natdport=0  
+esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_MD5: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=128 aklen=128 eklen=128 natencap=none natsport=0 natdport=0  
+esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=128 aklen=128 eklen=128  natencap=none natsport=0 natdport=0  
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<>  natencap=none natsport=0 natdport=0  
+ROUTING TABLE
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45 
+192.0.2.0/24 dev ipsec0  scope link 
+0.0.0.0/1 dev ipsec0  scope link 
+128.0.0.0/1 dev ipsec0  scope link 
+default via 192.1.2.254 dev eth1 
+

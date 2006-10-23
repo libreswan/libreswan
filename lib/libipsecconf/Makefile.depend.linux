@@ -1,0 +1,121 @@
+alloc.o: alloc.c \
+  ../../include/ipsecconf/starterlog.h
+cmp.o: cmp.c ../../include/ipsecconf/keywords.h \
+  ../../linux/include/openswan.h \
+  ../../linux/include/openswan/ipsec_kversion.h \
+  ../../linux/include/openswan/ipsec_param.h \
+  ../../include/constants.h \
+  ../../include/biglset.h \
+  ../../linux/include/openswan/passert.h \
+  ../../linux/include/openswan.h \
+  ../../include/ietf_constants.h \
+  ../../include/pluto_constants.h \
+  ../../include/names_constant.h \
+  ../../include/ipsecconf/confread.h \
+  ../../include/ipsecconf/keywords.h \
+  ../../include/ipsecconf/cmp.h
+confread.o: confread.c \
+  ../../include/ipsecconf/parser.h \
+  ../../include/constants.h \
+  ../../include/biglset.h \
+  ../../linux/include/openswan/passert.h \
+  ../../linux/include/openswan.h \
+  ../../linux/include/openswan/ipsec_kversion.h \
+  ../../linux/include/openswan/ipsec_param.h \
+  ../../include/ietf_constants.h \
+  ../../include/pluto_constants.h \
+  ../../include/names_constant.h \
+  ../../linux/include/openswan.h \
+  ../../include/ipsecconf/confread.h \
+  ../../include/ipsecconf/keywords.h \
+  ../../include/ipsecconf/interfaces.h \
+  ../../include/ipsecconf/starterlog.h \
+  ../../include/ipsecconf/oeconns.h
+confwrite.o: confwrite.c \
+  ../../include/ipsecconf/parser.h \
+  ../../include/constants.h \
+  ../../include/biglset.h \
+  ../../linux/include/openswan/passert.h \
+  ../../linux/include/openswan.h \
+  ../../linux/include/openswan/ipsec_kversion.h \
+  ../../linux/include/openswan/ipsec_param.h \
+  ../../include/ietf_constants.h \
+  ../../include/pluto_constants.h \
+  ../../include/names_constant.h \
+  ../../linux/include/openswan.h \
+  ../../include/ipsecconf/confread.h \
+  ../../include/ipsecconf/keywords.h \
+  ../../include/ipsecconf/confwrite.h \
+  ../../include/ipsecconf/keywords.h \
+  ../../include/ipsecconf/keywords.h
+interfaces.o: interfaces.c \
+  ../../linux/include/openswan.h \
+  ../../linux/include/openswan/ipsec_kversion.h \
+  ../../linux/include/openswan/ipsec_param.h \
+  ../../ports/linux/include/sysdep.h \
+  ../../linux/include/openswan/ipsec_tunnel.h \
+  ../../include/ipsecconf/interfaces.h \
+  ../../include/ipsecconf/exec.h \
+  ../../include/ipsecconf/files.h \
+  ../../include/ipsecconf/starterlog.h
+oeconns.o: oeconns.c \
+  ../../include/ipsecconf/parser.h \
+  ../../include/constants.h \
+  ../../include/biglset.h \
+  ../../linux/include/openswan/passert.h \
+  ../../linux/include/openswan.h \
+  ../../linux/include/openswan/ipsec_kversion.h \
+  ../../linux/include/openswan/ipsec_param.h \
+  ../../include/ietf_constants.h \
+  ../../include/pluto_constants.h \
+  ../../include/names_constant.h \
+  ../../linux/include/openswan.h \
+  ../../include/ipsecconf/confread.h \
+  ../../include/ipsecconf/keywords.h \
+  ../../include/ipsecconf/interfaces.h \
+  ../../include/ipsecconf/starterlog.h \
+  ../../include/ipsecconf/oeconns.h
+starterlog.o: starterlog.c \
+  ../../linux/include/openswan.h \
+  ../../linux/include/openswan/ipsec_kversion.h \
+  ../../linux/include/openswan/ipsec_param.h \
+  ../../include/constants.h \
+  ../../include/biglset.h \
+  ../../linux/include/openswan/passert.h \
+  ../../linux/include/openswan.h \
+  ../../include/ietf_constants.h \
+  ../../include/pluto_constants.h \
+  ../../include/names_constant.h \
+  ../../include/ipsecconf/starterlog.h
+starterwhack.o: starterwhack.c \
+  ../../include/ipsecconf/starterwhack.h \
+  ../../include/ipsecconf/confread.h \
+  ../../include/ipsecconf/keywords.h \
+  ../../linux/include/openswan.h \
+  ../../linux/include/openswan/ipsec_kversion.h \
+  ../../linux/include/openswan/ipsec_param.h \
+  ../../include/constants.h \
+  ../../include/biglset.h \
+  ../../linux/include/openswan/passert.h \
+  ../../linux/include/openswan.h \
+  ../../include/ietf_constants.h \
+  ../../include/pluto_constants.h \
+  ../../include/names_constant.h \
+  ../../include/ipsecconf/files.h \
+  ../../include/ipsecconf/starterlog.h \
+  ../../include/oswalloc.h \
+  ../../include/constants.h \
+  ../../include/oswlog.h \
+  ../../linux/include/openswan.h \
+  ../../include/whack.h \
+  ../../linux/include/openswan/ipsec_policy.h \
+  ../../include/id.h
+virtif.o: virtif.c ../../linux/include/openswan.h \
+  ../../linux/include/openswan/ipsec_kversion.h \
+  ../../linux/include/openswan/ipsec_param.h \
+  ../../ports/linux/include/sysdep.h \
+  ../../linux/include/openswan/ipsec_tunnel.h \
+  ../../include/ipsecconf/interfaces.h \
+  ../../include/ipsecconf/exec.h \
+  ../../include/ipsecconf/files.h \
+  ../../include/ipsecconf/starterlog.h

@@ -161,7 +161,7 @@ struct end {
     u_int16_t host_port;	/* where the IKE port is */
     bool      host_port_specific; /* if TRUE, then IKE ports are tested for*/
     u_int16_t port;		/* port number, if per-port keying. */
-    u_int8_t protocol;          /* protocol number, if per-per keying. */
+    u_int8_t protocol;          /* transport-protocol number, if per-X keying.*/
 
     enum certpolicy sendcert;   /* whether or not to send the certificate */
     char   *cert_filename;       /* where we got the certificate */

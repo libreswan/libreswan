@@ -1288,7 +1288,16 @@ add_connection(const struct whack_message *wm)
 #ifdef KERNEL_ALG
 	if (wm->esp)  
 	{
-		c->alg_info_esp = alg_info_esp_create_from_str(wm->esp? wm->esp : "", &ugh, FALSE);
+		DBG(DBG_CONTROL, DBG_log("from whack: got --esp=%s", wm->esp ? wm->esp: "NULL"));
+
+		if(c->policy & POLICY_ENCRYPT) {
+		    c->alg_info_esp = alg_info_esp_create_from_str(wm->esp? wm->esp : "", &ugh, FALSE);
+		} else if(c->policy & POLICY_AUTHENTICATE) {
+		    c->alg_info_esp = alg_info_ah_create_from_str(wm->esp? wm->esp : "", &ugh, FALSE);
+		} else {
+		    loglog(RC_NOALGO, "Can only do AH, or ESP, not AH+ESP\n");
+		    return;
+		}
 
 		DBG(DBG_CRYPT|DBG_CONTROL, 
 			static char buf[256]="<NULL>";
@@ -2167,9 +2176,9 @@ initiate_connection(const char *name, int whackfd
 	     */
 	    c->policy |= POLICY_UP;
 
-	    if(c->policy & POLICY_ENCRYPT) {
+	    if(c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)) {
 		struct alg_info_esp *alg = c->alg_info_esp;
-		struct db_sa *phase2_sa = kernel_alg_makedb(alg, TRUE);
+		struct db_sa *phase2_sa = kernel_alg_makedb(c->policy, alg, TRUE);
 		
 		if(alg != NULL && phase2_sa == NULL) {
 		    whack_log(RC_NOALGO, "can not initiate: no acceptable kernel algorithms loaded");
@@ -3597,17 +3606,33 @@ find_host_connection2(const char *func
 {
     struct connection *c;
     DBG(DBG_CONTROLMORE,
-	DBG_log("find_host_connection called from %s", func));
+	DBG_log("find_host_connection called from %s policy=%s", func
+		, bitnamesof(sa_policy_bit_names, policy)));
     c = find_host_pair_connections(__FUNCTION__, me, my_port, him, his_port);
+
     if (policy != LEMPTY) {
-	/* if we have requirements for the policy, choose the first matching
+	/*
+	 * if we have requirements for the policy, choose the first matching
 	 * connection.
 	 */
 	for (; c != NULL; c = c->hp_next) {
+	    DBG(DBG_CONTROLMORE,
+		DBG_log("searching for policy=%s, found=%s (%s)" 
+			, bitnamesof(sa_policy_bit_names, policy)
+			, bitnamesof(sa_policy_bit_names, c->policy)
+			, c->name));
+	    if(NEVER_NEGOTIATE(c->policy)) continue;
+
 	    if ((c->policy & policy) == policy)
 		break;
 	}
+
     }
+
+    for(; c != NULL && NEVER_NEGOTIATE(c->policy); c = c->hp_next);
+
+    DBG(DBG_CONTROLMORE,
+	DBG_log("find_host_connection returns %s", c ? c->name : "empty"));
     return c;
 }
 

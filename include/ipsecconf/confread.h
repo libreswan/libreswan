@@ -37,7 +37,7 @@ struct starter_end {
     sa_family_t addr_family;
     enum keyword_host addrtype;
     enum keyword_host nexttype;
-    ip_address addr, nexthop;
+    ip_address addr, nexthop, sourceip;
     bool has_client;
     ip_subnet subnet;
     char *iface;
@@ -47,9 +47,11 @@ struct starter_end {
     unsigned char *rsakey1;
     unsigned char *rsakey2;
     u_int16_t port;
-    u_int8_t protocol;
+    u_int8_t  protocol;
     bool has_client_wildcard;
     bool key_from_DNS_on_demand;
+    bool has_port_wildcard;
+    bool has_id_wildcards;
     char *virt;
     char *cert;
     char *ca;
@@ -86,6 +88,7 @@ struct starter_conn {
     enum {
 	STATE_INVALID,
 	STATE_LOADED,
+	STATE_INCOMPLETE,
 	STATE_TO_ADD,
 	STATE_ADDED,
 	STATE_UP,

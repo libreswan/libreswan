@@ -2,6 +2,7 @@ Please see docs/KNOWN_BUGS file for more information
 
 #public
  
+    fixed various bugs with lifetime values in ipsec.conf parser
     AES-128 (group 5, MD5 or SHA1 for PRF) is now accepted for phase 1,
 	and it is now the preferred cipher as well. This should be the
 	case for Main mode, Aggressive mode, and for XAUTH client and

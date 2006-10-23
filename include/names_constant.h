@@ -4,6 +4,7 @@ extern enum_names timer_event_names;
 
 extern enum_names dpd_action_names;
 extern enum_names pluto_cryptoop_names;
+extern enum_names pluto_cryptoimportance_names;
 extern enum_names stfstatus_name;
 extern const char *const debug_bit_names[];
 extern enum_names state_names;

@@ -1,0 +1,17 @@
+  <varlistentry>
+  <term><emphasis remap='B'>strictcrlpolicy</emphasis></term>
+  <listitem>
+<para>if not set, pluto is tolerant about missing or expired X.509 Certificate
+Revocation Lists (CRL's), and will allow peer certificates as long as they
+do not appear on an expired CRL. When this option is enabled, all connections
+with an expired or missing CRL will be denied. Active connections will be
+terminated at rekey time. This setup is more secure, but also dangerous. If
+the CRL is fetched through an IPsec tunnel with a CRL that expired, the
+entire VPN server will be dead in the water until a new CRL is manually
+transferred to the machine (if it allows non-IPsec connections).
+Acceptable values are <emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>no</emphasis>
+(the default).
+</para>
+  </listitem>
+  </varlistentry>
+

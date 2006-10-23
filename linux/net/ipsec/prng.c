@@ -116,6 +116,7 @@ struct prng *prng;
 #ifdef PRNG_MAIN
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void regress();
 

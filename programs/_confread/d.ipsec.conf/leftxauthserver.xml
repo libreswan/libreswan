@@ -1,0 +1,17 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftxauthserver</emphasis></term>
+  <listitem>
+<para>Left is an XAUTH server. This can use PAM for authentication or md5 passwords
+in <emphasis remap='I'>/etc/ipsec.d/passwd</emphasis>. These are additional credentials
+to verify the user identity, and should not be confused with the XAUTH
+<emphasis remap='B'>group secret</emphasis>, which is just a regular PSK defined in
+<emphasis remap='I'>ipsec.secrets</emphasis>.  The other side of the connection
+should be configured as <emphasis remap='B'>rightxauthclient</emphasis>. XAUTH
+connections cannot rekey, so <emphasis remap='B'>rekey=no</emphasis> should be
+specified in this conn.  For further details on how to compile and use XAUTH, see README.XAUTH.
+Acceptable values are <emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>no</emphasis>
+(the default).
+</para>
+  </listitem>
+  </varlistentry>
+

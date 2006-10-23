@@ -1,0 +1,9 @@
+  <varlistentry>
+  <term><emphasis remap='B'>phase2</emphasis></term>
+  <listitem>
+<para>Sets the type of SA that will be produced. Valid options are:
+<emphasis remap='B'>esp</emphasis> for encryption (the default), and
+<emphasis remap='B'>ah</emphasis> for authentication only.
+</para>
+  </listitem>
+  </varlistentry>

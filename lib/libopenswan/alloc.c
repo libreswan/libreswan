@@ -20,6 +20,7 @@
 #include <dirent.h>
 #include <time.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <openswan.h>
 
@@ -89,6 +90,11 @@ void *alloc_bytes1(size_t size, const char *name, int leak_detective)
     }
 
     if (p == NULL) {
+	if(getenv("OPENSWAN_SNAPSHOT_MALLOC_FAIL")) {
+	    if(fork()==0) { /* in child */
+		abort();
+	    }
+	}
 	if(exit_log_func) {
 	    (*exit_log_func)("unable to malloc %lu bytes for %s"
 			     , (unsigned long) size, name);

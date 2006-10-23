@@ -15,11 +15,11 @@
 ./lib/libuuid.so.1
 ./lib/librt.so.1
 ./sbin/pivot_root
-./lib/libncurses.so.5.0
+./lib/libncurses.so.5.5
 ./lib/libncurses.so.5
-./lib/libc-2.3.2.so
+./lib/libc-2.3.6.so
 ./lib/libc.so.6
-./lib/ld-2.3.2.so
+./lib/ld-2.3.6.so
 ./lib/ld-linux.so.2
 ./lib/libdl.so.2
-./lib/libdl-2.3.2.so
+./lib/libdl-2.3.6.so

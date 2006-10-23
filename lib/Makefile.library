@@ -6,6 +6,7 @@ LEX=flex
 BISON=bison
 
 VPATH+= ${KLIPSSRCDIR}
+OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 
 # Original flags
 INCLUDES+=-I. -I${KLIPSSRCDIR} -I${KLIPSD} -I${OPENSWANSRCDIR}
@@ -85,9 +86,9 @@ cleanall::
 
 # Gather dependencies caused by explicit #includes within .c files
 depend: ${DISTSRC}
-	@(ls $(DISTSRC) | grep '\.c' | xargs gcc -MM ${PORTINCLUDE} ${INCLUDES} ${ALLFLAGS} ) | sed -e 's,${OPENSWANSRCDIR},../..,g' >Makefile.depend
+	@(ls $(DISTSRC) | grep '\.c' | xargs gcc -MM ${PORTINCLUDE} ${INCLUDES} ${ALLFLAGS} ) | sed -e 's,${OPENSWANSRCDIR},../..,g' >Makefile.depend.${OSDEP}
 
--include ${srcdir}Makefile.depend
+-include ${srcdir}Makefile.depend.${OSDEP}
 
 
 

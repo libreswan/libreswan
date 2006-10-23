@@ -1154,8 +1154,8 @@ spdb_struct.o: spdb_struct.c ../../linux/include/openswan.h \
   ../../include/certs.h connections.h state.h quirks.h \
   ../../include/packet.h keys.h \
   ../../include/secrets.h kernel.h log.h spdb.h \
-  ../../include/whack.h ../../include/sha1.h \
-  ../../include/md5.h crypto.h \
+  ../../include/whack.h plutoalg.h \
+  ../../include/sha1.h ../../include/md5.h crypto.h \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h ../../include/alg_info.h \
   ../../include/kernel_alg.h \

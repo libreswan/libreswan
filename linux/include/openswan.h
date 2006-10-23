@@ -315,6 +315,7 @@ int subnetishost(const ip_subnet *s);
 int samesaid(const ip_said *a, const ip_said *b);
 int sameaddrtype(const ip_address *a, const ip_address *b);
 int samesubnettype(const ip_subnet *a, const ip_subnet *b);
+int isvalidsubnet(const ip_subnet *a);
 int isanyaddr(const ip_address *src);
 int isunspecaddr(const ip_address *src);
 int isloopbackaddr(const ip_address *src);

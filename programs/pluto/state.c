@@ -876,7 +876,7 @@ void fmt_state(struct state *st, time_t n
     }
 	
     snprintf(state_buf, state_buf_len
-	     , "#%lu: \"%s\"%s:%u %s (%s); %s in %lds%s%s%s%s; %s"
+	     , "#%lu: \"%s\"%s:%u %s (%s); %s in %lds%s%s%s%s; %s; %s"
 	     , st->st_serialno
 	     , c->name, inst
 	     , st->st_remoteport
@@ -885,7 +885,8 @@ void fmt_state(struct state *st, time_t n
 	     , st->st_event ? enum_name(&timer_event_names, st->st_event->ev_type) : "none"
 	     , delta
 	     , np1, np2, eo, dpdbuf
-	     , idlestr);
+	     , idlestr
+	     , enum_name(&pluto_cryptoimportance_names, st->st_import));
 
     /* print out SPIs if SAs are established */
     if (state_buf2_len != 0)

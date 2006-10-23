@@ -1796,3 +1796,10 @@ pfkey_plumb_mast_device(int mast_dev)
 
 
 #endif /* KLIPS */
+
+/*
+ * Local Variables:
+ * c-basic-offset:4
+ * c-style: pluto
+ * End:
+ */
