@@ -115,7 +115,7 @@ LOGONLY="logger -p $IPSECsyslog -t ipsec_setup"
 
 KILLKLIPS='echo "Clearing out any lingering policy ";
            setkey -F;
-           setkey -FP;'
+           setkey -FP'
 
 # do it
 case "$1" in

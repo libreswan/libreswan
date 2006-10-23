@@ -104,7 +104,7 @@ kernel_alg_init(void)
 	esp_ealg_num=esp_aalg_num=0;
 }
 
-static int
+int
 kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 {
 	struct sadb_alg *alg_p=NULL;
@@ -146,7 +146,7 @@ kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 	 * test #1: encrypt algo must be present 
 	 */
 	int ret=ESP_EALG_PRESENT(alg_id);
-	if (!ret) goto out;
+	if (!ret) { ugh="not present"; goto out; }
 
 	alg_p=&esp_ealg[alg_id];
 	/* 
@@ -164,25 +164,25 @@ kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 
 out:
 	if (!ugh && alg_p != NULL) {
-		DBG(DBG_KLIPS, 
-			DBG_log("kernel_alg_esp_enc_ok(%d,%d): "
-				"alg_id=%d, "
-				"alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
-				"res=%d, ret=%d",
-				alg_id, key_len,
-				alg_p->sadb_alg_id,
-				alg_p->sadb_alg_ivlen,
-				alg_p->sadb_alg_minbits,
-				alg_p->sadb_alg_maxbits,
-				alg_p->sadb_alg_reserved,
-				ret);
-		   );
+	    DBG(DBG_KLIPS, 
+		DBG_log("kernel_alg_esp_enc_ok(%d,%d): "
+			"alg_id=%d, "
+			"alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
+			"res=%d, ret=%d",
+			alg_id, key_len,
+			alg_p->sadb_alg_id,
+			alg_p->sadb_alg_ivlen,
+			alg_p->sadb_alg_minbits,
+			alg_p->sadb_alg_maxbits,
+			alg_p->sadb_alg_reserved,
+			ret));
 	} else {
-		DBG(DBG_KLIPS, 
-			DBG_log("kernel_alg_esp_enc_ok(%d,%d): NO",
-				alg_id, key_len);
+	    DBG(DBG_KLIPS, 
+		DBG_log("kernel_alg_esp_enc_ok(%d,%d): NO",
+			alg_id, key_len);
 		);
 	}
+
 	return ugh;
 }
 

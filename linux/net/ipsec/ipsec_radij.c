@@ -64,10 +64,6 @@
 
 #include "openswan/ipsec_proto.h"
 
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_radij = 0;
-#endif /* CONFIG_KLIPS_DEBUG */
-
 struct radij_node_head *rnh = NULL;
 #ifdef SPINLOCK
 spinlock_t eroute_lock = SPIN_LOCK_UNLOCKED;
@@ -331,7 +327,7 @@ ipsec_makeroute(struct sockaddr_encap *eaddr,
 	spin_unlock_bh(&eroute_lock);
 	
 	if(error) {
-		sa_len = satot(&said, 0, sa, sizeof(sa));
+		sa_len = KLIPS_SATOT(debug_eroute, &said, 0, sa, sizeof(sa));
 		KLIPS_PRINT(debug_eroute, 
 			    "klips_debug:ipsec_makeroute: "
 			    "rj_addroute not able to insert eroute for SA:%s (error:%d)\n",

@@ -67,11 +67,6 @@ char ipsec_ipcomp_c_version[] = "RCSID $Id: ipsec_ipcomp.c,v 1.5.2.1 2006/07/07 
 
 #include "openswan/ipsec_proto.h"
 
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_ipcomp = 0;
-#endif /* CONFIG_KLIPS_DEBUG */
-
-
 #ifdef CONFIG_KLIPS_IPCOMP
 enum ipsec_rcv_value
 ipsec_rcv_ipcomp_checks(struct ipsec_rcv_state *irs,
@@ -120,7 +115,7 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 		char sa2[SATOT_BUF];
 		size_t sa_len2 = 0;
 
-		sa_len2 = satot(&ipsp->ips_said, 0, sa2, sizeof(sa2));
+		sa_len2 = KLIPS_SATOT(debug_rcv, &ipsp->ips_said, 0, sa2, sizeof(sa2));
 
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
@@ -142,7 +137,6 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 
 	skb = skb_decompress(skb, ipsp, &flags);
 	if (!skb || flags) {
-		spin_unlock(&tdb_lock);
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "skb_decompress() returned error flags=%x, dropped.\n",

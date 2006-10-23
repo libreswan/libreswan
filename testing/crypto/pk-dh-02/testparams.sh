@@ -1,5 +1,5 @@
 REF_CONSOLE_OUTPUT=../pk-dh-01/pk-dh-out.txt
-REF_CONSOLE_FIXUPS="rmhash.sed"
+REF_CONSOLE_FIXUPS=""
 TESTSCRIPT=runit.sh
 TEST_TYPE=unittest
 TESTNAME=pk-dh-02

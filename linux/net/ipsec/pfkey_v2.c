@@ -75,10 +75,7 @@
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_kern24.h"
 
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_pfkey = 0;
 extern int sysctl_ipsec_debug_verbose;
-#endif /* CONFIG_KLIPS_DEBUG */
 
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
@@ -101,6 +98,10 @@ struct socket_list *pfkey_open_sockets = NULL;
 struct socket_list *pfkey_registered_sockets[SADB_SATYPE_MAX+1];
 
 int pfkey_msg_interp(struct sock *, struct sadb_msg *, struct sadb_msg **);
+
+DEBUG_NO_STATIC int pfkey_create(struct socket *sock, int protocol);
+DEBUG_NO_STATIC int pfkey_shutdown(struct socket *sock, int mode);
+DEBUG_NO_STATIC int pfkey_release(struct socket *sock);
 
 DEBUG_NO_STATIC int pfkey_create(struct socket *sock, int protocol);
 DEBUG_NO_STATIC int pfkey_shutdown(struct socket *sock, int mode);

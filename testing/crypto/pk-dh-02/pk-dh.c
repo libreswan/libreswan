@@ -21,7 +21,6 @@
 
 #define VULCAN_PK 1
 #define PK_DH_REGRESS 1
-#define ENHANCED_MODE 1
 
 int pkdh_verbose=0;
 
@@ -29,7 +28,6 @@ int pkdh_verbose=0;
 
 #include "../../../programs/pluto/hmac.c"
 #include "../../../programs/pluto/crypto.c"
-#include "../../../programs/pluto/ocf_cryptodev.c"
 #include "../../../programs/pluto/ike_alg.c"
 #include "../../../programs/pluto/crypt_utils.c"
 #include "../../../programs/pluto/crypt_dh.c"
@@ -73,7 +71,7 @@ int main(int argc, char *argv[])
 		pk_verbose_execute=1;
 	}
 
-	cryptodev.calc_dh_shared = calc_dh_shared_vulcanpk;
+	calc_dh_shared = calc_dh_shared_vulcanpk;
 
 	perform_t2_test();
 

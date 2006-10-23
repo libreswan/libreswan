@@ -29,7 +29,7 @@ typedef void (*openswan_passert_fail_t)(const char *pred_str,
 					const char *file_str,
 					unsigned long line_no) NEVER_RETURNS;
 
-openswan_passert_fail_t openswan_passert_fail;
+extern openswan_passert_fail_t openswan_passert_fail;
 
 extern void pexpect_log(const char *pred_str
 			, const char *file_str, unsigned long line_no);

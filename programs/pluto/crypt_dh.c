@@ -56,6 +56,10 @@
 #include "dev/hifn/vulcanpk_funcs.h"
 #endif
 
+#ifdef VULCAN_PK
+#include "dev/hifn/vulcanpk_funcs.h"
+#endif
+
 /** Compute DH shared secret from our local secret and the peer's public value.
  * We make the leap that the length should be that of the group
  * (see quoted passage at start of ACCEPT_KE).

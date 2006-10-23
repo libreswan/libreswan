@@ -34,6 +34,7 @@
 #include "state.h"
 #include "kernel_alg.h"
 #include "alg_info.h"
+#include "kernel_alg.h"
 #include "ike_alg.h"
 #include "plutoalg.h"
 #include "crypto.h"
@@ -254,7 +255,6 @@ alg_info_snprint_ah(char *buf, int buflen, struct alg_info_esp *alg_info)
 	buf[0]=0; strncat(buf, "none", buflen);
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-
 	    if (kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL)) {
 		DBG_log("auth algid=%d not available", esp_info->esp_aalg_id);
 		continue;

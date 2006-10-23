@@ -63,38 +63,35 @@ void unmapvulcanpk(unsigned char *mapping)
 
 void print_status(u_int32_t stat)
 {
-    char line[80], *b=line;
-    line[0]='\0';
-    
-	b+=snprintf(b, 80, "status: %08x ", stat);
+	DBG_log("status: %08x ", stat);
 	if(stat & HIFN_PUBSTS_DONE) {
-		b+=snprintf(b, 80, "done ");
+		DBG_log("done ");
 	}
 	if(stat & HIFN_PUBSTS_CARRY) {
-		b+=snprintf(b, 80, "carry ");
+		DBG_log("carry ");
 	}
 	if(stat & 0x4) {
-		b+=snprintf(b, 80, "sign(2) ");
+		DBG_log("sign(2) ");
 	}
 	if(stat & 0x8) {
-		b+=snprintf(b, 80, "zero(3) ");
+		DBG_log("zero(3) ");
 	}
 	if(stat & HIFN_PUBSTS_FIFO_EMPTY) {
-		b+=snprintf(b, 80, "empty ");
+		DBG_log("empty ");
 	}
 	if(stat & HIFN_PUBSTS_FIFO_FULL) {
-		b+=snprintf(b, 80, "full ");
+		DBG_log("full ");
 	}
 	if(stat & HIFN_PUBSTS_FIFO_OVFL) {
-		b+=snprintf(b, 80, "overflow ");
+		DBG_log("overflow ");
 	}
 	if(stat & HIFN_PUBSTS_FIFO_WRITE) {
-		b+=snprintf(b, 80, "write=%d ", (stat & HIFN_PUBSTS_FIFO_WRITE)>>16);
+		DBG_log("write=%d ", (stat & HIFN_PUBSTS_FIFO_WRITE)>>16);
 	}
 	if(stat & HIFN_PUBSTS_FIFO_READ) {
-		b+=snprintf(b, 80, "read=%d ", (stat & HIFN_PUBSTS_FIFO_READ)>>24);
+		DBG_log("read=%d ", (stat & HIFN_PUBSTS_FIFO_READ)>>24);
 	}
-	DBG_log(line);
+	DBG_log("\n");
 }
 
 
@@ -132,14 +129,6 @@ struct pkprogram {
 
 int pk_verbose_execute=0;
 
-/*
- * copies 32-bit non-overlapping quantities only.
- */
-static inline void vulcan_pk_memcpy32(u_int32_t *dst, const u_int32_t *src, unsigned int len)
-{
-    unsigned int len4 = (len+3)/4;
-    while(len4-->0) *dst++=*src++;
-}
 
 static void copyPkValueTo(unsigned char *mapping, struct pkprogram *prog,
 		   const char *typeStr, 
@@ -156,7 +145,7 @@ static void copyPkValueTo(unsigned char *mapping, struct pkprogram *prog,
     }
 
 	if(prog->valuesLittleEndian) {
-		vulcan_pk_memcpy32((u_int32_t *)pkReg, (const u_int32_t *)pkValue, pkValueLen);
+		memcpy(pkReg, pkValue, pkValueLen);
 		memset(pkReg+pkValueLen, 0, (registerSize-pkValueLen));
 	} else {
 		int vi, vd;
@@ -170,8 +159,7 @@ static void copyPkValueTo(unsigned char *mapping, struct pkprogram *prog,
 		for(vd=pkValueLen-1, vi=0; vi<registerSize && vd >=0; vi++, vd--) {
 			pkRegTemp[vi]=pkValue[vd];
 		}
-		/* copy to PK engine, using 32-bit operations only */
-		vulcan_pk_memcpy32((u_int32_t *)pkReg, (const u_int32_t *)pkRegTemp, registerSize);
+		memcpy(pkReg, pkRegTemp, registerSize);
 	}
 	
 	if(pk_verbose_execute) {
@@ -282,7 +270,7 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	}
 #endif
 
-	DBG_log("# mapping is at %p\n", mapping);
+	DBG_log("mapping is at %p\n", mapping);
 
 	/*
 	 * copy source operands into memory, clearing other parts.
@@ -384,7 +372,7 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 	}
 
 	if(pk_verbose_execute) {
-	    openswan_log("after running (%d):\n", prog->chunksize);
+	    openswan_log("after running:\n");
 	    dump_registers(mapping, prog->chunksize*64);
 	}
 	    
@@ -393,12 +381,12 @@ void execute_pkprogram(unsigned char *mapping, struct pkprogram *prog)
 			prog->oValue, prog->oValueLen);
 }
 
-void vulcanpk_init(unsigned char *mapping)
+void vulcanpk_init(volatile unsigned char *mapping)
 {
         volatile unsigned int stat;
 	int count=60;
 
-	PUB_WORD_WRITE(HIFN_1_PUB_RESET, 0x1);
+	PUB_WORD(HIFN_1_PUB_RESET)=0x1;
 	
 	while(count-->0 && (stat = PUB_WORD(HIFN_1_PUB_RESET)) & 0x01) {
 		sleep(1);
@@ -417,10 +405,7 @@ void vulcanpk_init(unsigned char *mapping)
 
 #if defined(ENHANCED_MODE)
 	PUB_WORD_WRITE(HIFN_1_PUB_MODE, PUB_WORD(HIFN_1_PUB_MODE)|HIFN_PKMODE_ENHANCED);
-	DBG_log("# Running vulcan PK engine in enhanced mode pubmode=%08x\n", PUB_WORD(HIFN_1_PUB_MODE));
-#else
-	PUB_WORD_WRITE(HIFN_1_PUB_MODE, PUB_WORD(HIFN_1_PUB_MODE)&~HIFN_PKMODE_ENHANCED);
-	DBG_log("# Running vulcan PK engine in compat mode pubmode=%08x\n", PUB_WORD(HIFN_1_PUB_MODE));
+	DBG_log("Running vulcan PK engine in enhanced mode pubmode=%08x\n", PUB_WORD(HIFN_1_PUB_MODE));
 #endif
 
 	/* enable RNG again */
@@ -428,23 +413,6 @@ void vulcanpk_init(unsigned char *mapping)
 
 	/* clear out PUBLIC DONE */
 	PUB_WORD_WRITE(HIFN_1_PUB_STATUS, PUB_WORD(HIFN_1_PUB_STATUS));
-
-	/* clear out public key memory */
-	memset((unsigned char *)mapping+HIFN_1_PUB_MEM, 0, HIFN_1_PUB_MEMSIZE);
-
-	/* verify that memory cleared */
-	{
-		int i;
-		volatile unsigned int *n = (volatile unsigned int *)&mapping[HIFN_1_PUB_MEM];
-		for(i=HIFN_1_PUB_MEM; i< HIFN_1_PUB_MEMEND; i+=4) {
-			if(*n!=0) {
-				DBG_log("failed to clear pubkey memory at offset=%04x (%04x,%04x) (value=%02x)\n", i, HIFN_1_PUB_MEM, HIFN_1_PUB_MEMEND, mapping[i]);
-				exit(4);
-			}
-			n++;
-		}
-	}
-	DBG_log("# public key memory cleared properly\n");
 }
 
 /*

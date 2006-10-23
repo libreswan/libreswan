@@ -1,0 +1,3 @@
+This test case does a DH calculation using the PK-MMAP'ed vulcan hack,
+with ENHANCED MODE enabled.
+

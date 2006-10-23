@@ -81,4 +81,7 @@ extern int esp_aalg_num;
 	for (algo=SADB_AALG_MAX; algo >0 ; algo--) \
 		if (ESP_AALG_PRESENT(algo))
 
+extern int
+kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg);
+
 #endif /* _KERNEL_ALG_H */

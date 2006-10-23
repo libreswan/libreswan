@@ -886,7 +886,7 @@ void fmt_state(struct state *st, time_t n
 	     , delta
 	     , np1, np2, eo, dpdbuf
 	     , idlestr
-	     , enum_name(&pluto_cryptoimportance_names, st->st_import));
+	     , IS_IPSEC_SA_ESTABLISHED(st->st_state) ? "" : enum_name(&pluto_cryptoimportance_names, st->st_import));
 
     /* print out SPIs if SAs are established */
     if (state_buf2_len != 0)

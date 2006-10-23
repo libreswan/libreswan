@@ -64,6 +64,8 @@ char ipsec_ah_c_version[] = "RCSID $Id: ipsec_ah.c,v 1.12.2.1 2006/02/15 05:35:1
 #include "openswan/ipsec_ah.h"
 #include "openswan/ipsec_proto.h"
 
+#include "ipsec_ocf.h"
+
 __u32 zeroes[AH_AMAX];
 
 enum ipsec_rcv_value
@@ -136,6 +138,11 @@ ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 	} tctx;
 	struct iphdr ipo;
 	int ahhlen;
+
+#ifdef CONFIG_KLIPS_OCF
+	if (irs->ipsp->ocf_in_use)
+		return(ipsec_ocf_rcv(irs));
+#endif
 
 	aa = irs->authfuncs;
 

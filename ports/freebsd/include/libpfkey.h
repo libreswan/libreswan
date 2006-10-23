@@ -59,7 +59,7 @@ int pfkey_send_get(int, u_int, u_int, struct sockaddr *, struct sockaddr *,
 	u_int32_t);
 int pfkey_send_register(int, u_int);
 int pfkey_recv_register(int);
-int pfkey_set_supported(struct sadb_msg *, int);
+int pfkey_set_supported(const struct sadb_msg *, int);
 int pfkey_send_flush(int, u_int);
 int pfkey_send_dump(int, u_int);
 int pfkey_send_promisc_toggle(int, int);
@@ -96,3 +96,7 @@ int pfkey_send_x1(int, u_int, u_int, u_int, const struct sockaddr *,
 
 extern openswan_keying_debug_func_t pfkey_debug_func;
 extern unsigned int bsdpfkey_lib_debug;
+
+extern void foreach_supported_alg(void (*algregister)(int satype,
+						      int extype,
+						      struct sadb_alg *alg));
