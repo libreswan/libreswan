@@ -74,5 +74,6 @@ d.ipsec.conf/hidetos.xml
 d.ipsec.conf/overridemtu.xml
 d.ipsec.conf/manualstart.xml
 d.ipsec.conf/configsectionsend.xml
+d.ipsec.conf/acceleration.xml
 d.ipsec.conf/implicitconns.xml
 d.ipsec.conf/tail.xml

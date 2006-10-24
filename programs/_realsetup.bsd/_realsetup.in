@@ -238,6 +238,7 @@ case "$1" in
 			--disable_port_floating "\"$IPSECdisable_port_floating\"" \
 			--virtual_private "\"$IPSECvirtual_private\"" \
 			--crlcheckinterval "\"$IPSECcrlcheckinterval\"" \
+			--acceleration "\"$IPSECacceleration\"" \
                         --ocspuri "\"$IPSECocspuri\"" \
 			--nhelpers "\"$IPSECnhelpers\"" \
 			--dump "\"$IPSECdumpdir\"" \

@@ -148,6 +148,23 @@ struct keyword_enum_values kw_proto_stack=
     { kw_proto_stack_list, sizeof(kw_proto_stack_list)/sizeof(struct keyword_enum_value)};
 
 
+#if 0
+/*
+ * Values for acceleration={never,ipsec,pk,available}
+ *
+ * For now, these are in fact just a string.
+ */
+struct keyword_enum_value kw_accel_options_list[]={
+    { "never",        XCEL_NONE },
+    { "ipsec",        XCEL_IPSEC },
+    { "pk",           XCEL_PK }, 
+    { "available",    XCEL_IPSEC|XCEL_PK},
+};
+
+struct keyword_enum_values kw_accel_options=
+    { kw_accel_options, sizeof(kw_accel_options)/sizeof(struct keyword_enum_value)};
+#endif
+
 /*
  * Values for right= and left=
  */
@@ -247,7 +264,9 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"nat_traversal", kv_config,kt_bool,        KBF_NATTRAVERSAL, NOT_ENUM},
 #endif
     {"protostack",     kv_config, kt_string,    KSF_PROTOSTACK, &kw_proto_stack},
-    {"nhelpers",kv_config,kt_number, KBF_NHELPERS, NOT_ENUM},
+    {"nhelpers",       kv_config, kt_number, KBF_NHELPERS, NOT_ENUM},
+    {"acceleration",   kv_config, kt_string, KSF_ACCELERATION, NOT_ENUM /*&kw_accel_options */},
+    {"accelerator",    kv_config, kt_string, KSF_ACCELERATION, NOT_ENUM /*&kw_accel_options */},
 
     /* this is "left=" and "right=" */
     {"",               kv_conn|kv_leftright, kt_loose_enum, KSCF_IP, &kw_host_list},  
