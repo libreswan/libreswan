@@ -23,8 +23,8 @@ EXCONFILES=ipsec.win2k.conf
 CONFDSUBDIR=policies
 CONFDFILES=clear clear-or-private private-or-clear private block
 
-ipsec.conf.5.xml: d.ipsec.conf/*.xml
-	cat d.ipsec.conf/*.xml >ipsec.conf.5.xml
+ipsec.conf.5.xml: d.ipsec.conf/*.xml d.ipsec.conf/order.txt
+	cat `cat d.ipsec.conf/order.txt` >ipsec.conf.5.xml
 
 diff:	ipsec.conf.5.xml
 	diff -B -w -u ipsec.conf.5.xml ipsec.conf.5.xml-ref
