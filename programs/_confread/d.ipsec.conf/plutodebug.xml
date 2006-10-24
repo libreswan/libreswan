@@ -1,0 +1,21 @@
+  <varlistentry>
+  <term><emphasis remap='B'>plutodebug</emphasis></term>
+  <listitem>
+<para>how much Pluto debugging output should be logged.
+An empty value,
+or the magic value
+<emphasis remap='B'>none</emphasis>,
+means no debugging output (the default).
+The magic value
+<emphasis remap='B'>all</emphasis>
+means full output.
+Otherwise only the specified types of output
+(a quoted list, names without the
+<option>--debug-</option>
+prefix,
+separated by white space) are enabled;
+for details on available debugging types, see
+<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+
+  </listitem>
+  </varlistentry>

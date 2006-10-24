@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftsubnet</emphasis></term>
+  <listitem>
+<para>private subnet behind the left participant, expressed as
+<emphasis remap='I'>network</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmask</emphasis>
+(actually, any form acceptable to
+<citerefentry><refentrytitle>ipsec_ttosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry>);
+if omitted, essentially assumed to be <emphasis remap='I'>left</emphasis><filename>/32</filename>,
+signifying that the left end of the connection goes to the left participant only</para>
+  </listitem>
+  </varlistentry>

@@ -1,4 +1,4 @@
-<refsect1 id='choosing_a_connection'><title>CHOOSING A CONNECTION</title>
+<refsect1 id='choosing_a_connection'><title>CHOOSING A CONNECTION [THIS SECTION IS EXTREMELY OUT OF DATE</title>
 <para>When choosing a connection to apply to an outbound packet caught with a 
 <emphasis remap='B'>%trap,</emphasis>
 the system prefers the one with the most specific eroute that
@@ -36,6 +36,10 @@ by Henry Spencer.</para>
 </refsect1>
 
 <refsect1 id='bugs'><title>BUGS</title>
+<para>Before reporting new bugs, please ensure you are using the latest
+version of Openswan, and if not using KLIPS, please ensure you are using
+the latest kernel code for your IPsec stack.</para>
+
 <para>When
 <emphasis remap='B'>type</emphasis>
 or 
@@ -57,7 +61,7 @@ etc.)
 as an attribute of a connection,
 rather than of a participant pair, is dubious and incurs limitations.</para>
 
-<para><emphasis remap='I'>Ipsec_manual</emphasis>
+<para><emphasis remap='I'>ipsec_manual</emphasis>
 is not nearly as generous about the syntax of subnets,
 addresses, etc. as the usual Openswan user interfaces.
 Four-component dotted-decimal must be used for all addresses.
@@ -68,6 +72,22 @@ smart enough to translate bit-count netmasks to dotted-decimal form.</para>
 <para>It would be good to have a line-continuation syntax,
 especially for the very long lines involved in
 RSA signature keys.</para>
+
+<para><emphasis remap='B'>First packet caching</emphasis> is only implemented
+for the KLIPS(NG) and MAST stacks. NETKEY returns POSIX-breaking responses,
+visiable as <emphasis remap='I'>connect: Resource temporarily unavailable</amphasis>
+errors. This affects Opportunistic Encryption and DPD. Functionality on the BSD
+and Windows stacks is unknown.</para>
+
+<para>Some state information is only available when using KLIPS, and will
+return errors on other IPsec stacks. These include 
+<emphasis remap='I'>ipsec eroute</amphasis>, 
+<emphasis remap='I'>ipsec spi</amphasis> and
+<emphasis remap='I'>ipsec look</amphasis>.</para>
+
+<para> Multiple L2TP clients behind the same NAT router, and multiple L2TP
+clients behind different NAT routers using the same Virtual IP is currently
+only working for the KLIPSNG stack.</para>
 
 <para>The ability to specify different identities,
 <emphasis remap='B'>authby</emphasis>,
@@ -84,7 +104,7 @@ and that is considered to be the &ldquo;participant&rdquo; for such connections.
 interface-by-interface basis,
 rather than with the single global override that
 <emphasis remap='B'>overridemtu</emphasis>
-provides.</para>
+provides. This feature is planned for a future release.</para>
 
 <para>A number of features which <emphasis remap='I'>could</emphasis> be implemented in
 both manual and automatic keying

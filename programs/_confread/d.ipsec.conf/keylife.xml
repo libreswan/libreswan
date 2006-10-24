@@ -15,7 +15,7 @@ or
 (a time
 in minutes, hours, or days respectively)
 (default
-<emphasis remap='B'>8.0h</emphasis>,
+<emphasis remap='B'>8h</emphasis>,
 maximum
 <emphasis remap='B'>24h</emphasis>).
 Normally, the connection is renegotiated (via the keying channel)

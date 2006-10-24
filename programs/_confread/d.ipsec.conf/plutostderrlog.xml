@@ -1,0 +1,9 @@
+  <varlistentry>
+
+  <term><emphasis remap='B'>plutostderrlog</emphasis></term>
+  <listitem>
+<para>do not use syslog, but rather log to stderr, and direct stderr to the
+argument file.</para>
+
+  </listitem>
+  </varlistentry>

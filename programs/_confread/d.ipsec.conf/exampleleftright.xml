@@ -18,9 +18,11 @@ conn snt
 	left=10.11.11.1
 	leftsubnet=10.0.1.0/24
 	leftnexthop=172.16.55.66
+	leftsourceip=10.0.1.1
 	right=192.168.22.1
 	rightsubnet=10.0.2.0/24
 	rightnexthop=172.16.88.99
+	rightsourceip=10.0.2.1
 	keyingtries=%forever
 </emphasis>
 </literallayout> <!-- .fi -->

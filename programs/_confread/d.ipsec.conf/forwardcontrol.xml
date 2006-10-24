@@ -1,0 +1,25 @@
+  <varlistentry>
+  <term><emphasis remap='B'>forwardcontrol</emphasis></term>
+  <listitem>
+<para>whether
+<emphasis remap='I'>setup</emphasis>
+should turn IP forwarding on
+(if it's not already on) as IPsec is started,
+and turn it off again (if it was off) as IPsec is stopped;
+acceptable values are
+<emphasis remap='B'>yes</emphasis>
+and (the default)
+<emphasis remap='B'>no</emphasis>.
+For this to have full effect, forwarding must be
+disabled before the hardware interfaces are brought
+up (e.g.,
+<emphasis remap='B'>net.ipv4.ip_forward&nbsp;=&nbsp;0</emphasis>
+in
+<filename>/etc/sysctl.conf</filename>),
+because IPsec doesn't get control early enough to do that. If this option
+is not specified, and subnet-subnet tunnels are configured, then IP
+forwarding should be enabled by the system administrator.
+</para>
+
+  </listitem>
+  </varlistentry>

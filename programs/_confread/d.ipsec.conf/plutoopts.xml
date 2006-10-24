@@ -1,0 +1,8 @@
+  <varlistentry>
+  <term><emphasis remap='B'>plutoopts</emphasis></term>
+  <listitem>
+<para>additional options to pass to pluto upon startup. See
+<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>

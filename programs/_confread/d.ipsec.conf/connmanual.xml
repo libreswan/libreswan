@@ -54,25 +54,6 @@ is recommended)</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>esp</emphasis></term>
-  <listitem>
-<para>ESP encryption/authentication algorithm to be used
-for the connection, e.g.
-<emphasis remap='B'>3des-md5-96</emphasis>
-(must be suitable as a value of
-<citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s
-<option>--esp</option>
-option);
-default is not to use ESP</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>pfsgroup</emphasis></term>
-  <listitem>
-<para>Deprecated</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>espenckey</emphasis></term>
   <listitem>
 <para>ESP encryption key
@@ -127,19 +108,6 @@ or
 <emphasis remap='B'>spibase</emphasis>;
 typically a hexadecimal number beginning with
 <emphasis remap='B'>0x</emphasis></para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>ah</emphasis></term>
-  <listitem>
-<para>AH authentication algorithm to be used
-for the connection, e.g.
-<emphasis remap='B'>hmac-md5-96</emphasis>
-(must be suitable as a value of
-<citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s
-<option>--ah</option>
-option);
-default is not to use AH</para>
   </listitem>
   </varlistentry>
   <varlistentry>

@@ -1,0 +1,35 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftnexthop</emphasis></term>
+  <listitem>
+<para>next-hop gateway IP address for the left participant's connection
+to the public network;
+defaults to
+<emphasis remap='B'>%direct</emphasis>
+(meaning
+<emphasis remap='I'>right</emphasis>).
+If the value is to be overridden by the
+<emphasis remap='B'>left=%defaultroute</emphasis>
+method (see above),
+an explicit value must
+<emphasis remap='I'>not</emphasis>
+be given.
+If that method is not being used,
+but
+<emphasis remap='B'>leftnexthop</emphasis>
+is
+<emphasis remap='B'>%defaultroute</emphasis>,
+and
+<emphasis remap='B'>interfaces=%defaultroute</emphasis>
+is used in the
+<emphasis remap='B'>config</emphasis>
+<emphasis remap='B'>setup</emphasis>
+section,
+the next-hop gateway address of the default-route interface
+will be used.
+The magic value
+<emphasis remap='B'>%direct</emphasis>
+signifies a value to be filled in (by automatic keying)
+with the peer's address.
+Relevant only locally, other end need not agree on it.</para>
+  </listitem>
+  </varlistentry>

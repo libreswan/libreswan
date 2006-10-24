@@ -1,9 +1,8 @@
   <varlistentry>
   <term><emphasis remap='B'>interfaces</emphasis></term>
   <listitem>
-<para>This option is for KLIPS and KLIPSNG (mast)  only and will be ignored
-when using NETKEY, Windows or BSD stacks. It specifies the virtual and physical
-interfaces for IPsec to use: a single
+<para>virtual and physical interfaces for IPsec to use:
+a single
 <emphasis remap='I'>virtual</emphasis><emphasis remap='B'>=</emphasis><emphasis remap='I'>physical</emphasis> pair, a (quoted!) list of pairs separated
 by white space, or
 <emphasis remap='B'>%none</emphasis>.
@@ -25,4 +24,3 @@ and
 <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)</para>
   </listitem>
   </varlistentry>
-

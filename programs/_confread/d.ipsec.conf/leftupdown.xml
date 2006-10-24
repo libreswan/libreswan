@@ -1,0 +1,16 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftupdown</emphasis></term>
+  <listitem>
+<para>what &ldquo;updown&rdquo; script to run to adjust routing and/or firewalling
+when the status of the connection
+changes (default
+<emphasis remap='B'>ipsec _updown</emphasis>).
+May include positional parameters separated by white space
+(although this requires enclosing the whole string in quotes);
+including shell metacharacters is unwise.
+See
+<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+for details.
+Relevant only locally, other end need not agree on it.</para>
+  </listitem>
+  </varlistentry>

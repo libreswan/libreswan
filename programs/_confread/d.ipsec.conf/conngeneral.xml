@@ -1,0 +1,7 @@
+<refsect2 id='conn_parameters__general'><title>CONN PARAMETERS:  GENERAL</title>
+<para>The following parameters are relevant to both automatic and manual keying.
+Unless otherwise noted,
+for a connection to work,
+in general it is necessary for the two ends to agree exactly
+on the values of these parameters.</para>
+<variablelist remap='TP'>

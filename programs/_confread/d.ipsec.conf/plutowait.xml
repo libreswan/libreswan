@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>plutowait</emphasis></term>
+  <listitem>
+<para>should Pluto wait for each
+negotiation attempt that is part of startup to
+finish before proceeding with the next?
+Values are
+<emphasis remap='B'>yes</emphasis>
+or
+<emphasis remap='B'>no</emphasis>
+(the default).</para>
+
+  </listitem>
+  </varlistentry>

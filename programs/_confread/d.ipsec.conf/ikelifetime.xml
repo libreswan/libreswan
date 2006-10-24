@@ -10,7 +10,7 @@ acceptable values as for
 currently
 <emphasis remap='B'>1h</emphasis>,
 maximum
-<emphasis remap='B'>8h</emphasis>).
+<emphasis remap='B'>24h</emphasis>).
 The two-ends-disagree case is similar to that of
 <emphasis remap='B'>keylife</emphasis>.</para>
   </listitem>
