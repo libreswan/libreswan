@@ -144,6 +144,7 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 	unsigned long tv_diff;
 	int ret = 1;
 
+#if 0
 	/* Currently, we know we can do mod exp iff we can do any
 	 * asymmetric operations at all.
 	 */
@@ -155,6 +156,7 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 	    calc_dh_shared_gmp(shared, g, secchunk, group);
 	    return;
 	}
+#endif
 
 	gettimeofday(&tv0, NULL);
 
@@ -193,19 +195,27 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 	kop.crk_oparams = 1;
 
 	ret = cryptodev_asym(&kop);
-	
-	chunk2be(*shared);
 
-	gettimeofday(&tv1, NULL);
-	tv_diff=(tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
+	{ int e = errno;
+
+	    chunk2be(*shared);
+
+	    gettimeofday(&tv1, NULL);
+	    tv_diff=(tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
+	    if(ret != 0) {
+		loglog(RC_LOG_SERIOUS, "failed to do DH calculation: %s",
+		       strerror(e));
+	    }
+	}
+	
 	DBG(DBG_CRYPT, 
-	    DBG_log("calc_dh_shared(): time elapsed (%s): %ld usec"
+	    DBG_log("calc_dh_shared_ocf(): time elapsed (%s): %ld usec"
 		    , enum_show(&oakley_group_names, group->group)
 		    , tv_diff);
 	    );
 	/* if took more than 200 msec ... */
 	if (tv_diff > 200000) {
-	    loglog(RC_LOG_SERIOUS, "WARNING: calc_dh_shared(): for %s took "
+	    loglog(RC_LOG_SERIOUS, "WARNING: calc_dh_shared_ocf(): for %s took "
 		   "%ld usec"
 		   , enum_show(&oakley_group_names, group->group)
 		   , tv_diff);
