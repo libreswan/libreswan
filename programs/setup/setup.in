@@ -90,8 +90,7 @@ done
 variables=`ipsec addconn $config --varprefix IPSEC --configsetup`
 if [ $? != 0 ]
 then
-    echo "Failed to parse config setup portion of ipsec.conf"
-    exit $?
+    echo "Failed to parse config setup portion of ipsec.conf --- bravely continuing"
 fi
 eval $variables
 
