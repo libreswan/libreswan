@@ -84,7 +84,9 @@ extern int bn2mp(const BIGNUM *a, MP_INT *mp);
 #define chunk2be(c) chunk_reversebytes(c)
 
 extern void chunk2le(chunk_t c);
+extern void asym_close(void);
 extern int cryptodev_asym(struct crypt_kop *kop);
+extern void decode_acceleration_string(const char *str);
 
 extern u_int32_t cryptodev_asymfeat;
 

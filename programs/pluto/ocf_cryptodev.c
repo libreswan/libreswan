@@ -77,9 +77,12 @@
 #include "log.h"
 #include "ocf_cryptodev.h"
 #include "pluto_crypt.h"
+#include "server.h"
 
-u_int32_t cryptodev_asymfeat = 0;
 struct cryptodev_meth cryptodev;
+bool accel_avail;            /* if we found something to use */
+bool use_pk_accel=TRUE;      /* policy: should we try PK operations? */
+bool use_ipsec_accel=TRUE;   /* policy: should we try IPsec operations? */
 
 #undef DEBUG
 
@@ -227,15 +230,22 @@ get_dev_crypto(void)
 	return (retfd);
 }
 
+static int asym_fd = -1;
 /* Caching version for asym operations */
 static int get_asym_dev_crypto(void)
 {
-	static int fd = -1;
-
-	if (fd == -1)
-		fd = get_dev_crypto();
-	return fd;
+	if (asym_fd == -1)
+		asym_fd = get_dev_crypto();
+	return asym_fd;
 }
+
+/* clear things out */
+void asym_close(void)
+{
+	close(asym_fd);
+	asym_fd=-1;
+}
+	
 
 /*
  * Perform the ioctl 
@@ -355,28 +365,61 @@ void chunk_reversebytes(chunk_t c)
 	}
 }
 
+void decode_acceleration_string(const char *str)
+{
+	if(strcasecmp(str, "never")==0) {
+		use_pk_accel = FALSE;
+		use_ipsec_accel = FALSE;
+	} else if(strcasecmp(str, "ipsec")==0) {
+		use_pk_accel = FALSE;
+		use_ipsec_accel = TRUE;
+	} else if(strcasecmp(str, "pk")==0) {
+		use_pk_accel    = TRUE;
+		use_ipsec_accel = FALSE;
+	} else if(strcasecmp(str, "available")==0) {
+		use_pk_accel    = TRUE;
+		use_ipsec_accel = TRUE;
+	} else {
+		openswan_log("Invalid acceleration= value: '%s'\n", str);
+	}
+}
+		
 /*
  * Find out what we can support and use it.
  */
 void load_cryptodev(void)
 {
 	int fd;
+	u_int32_t cryptodev_asymfeat = 0;
+	static bool logged=0;
 
+	/* reset FD here */
+	asym_fd = -1;
 #if 0
 	cryptodev.rsa_mod_exp_crt = cryptodev_rsa_mod_exp_crt_sw;
 	cryptodev.mod_exp = cryptodev_mod_exp_sw;
 #endif
 
-	if((fd = get_dev_crypto()) < 0) {
+	if(!use_pk_accel) {
+		if(!logged) openswan_log("Performing all cryptographic operations in software (administively defined).");
+		logged=TRUE;
+		return;
+	}
+		
+
+	if((fd = get_asym_dev_crypto()) < 0) {
+	none:
+		if(!logged) openswan_log("Performing all cryptographic operations in software (no hardware found).");
+		logged=TRUE;
 		return;
 	}
 
 	/* find out what asymmetric crypto algorithms we support */
 	if (ioctl(fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
-		close(fd);
-		return;
+		DBG(DBG_CRYPT, DBG_log("failed to find cryptographic accelerator with PK operations"));
+		asym_close();
+		goto none;
 	}
-	close(fd);
 
 	if (cryptodev_asymfeat & CRF_MOD_EXP) {
 		/* Use modular exponentiation */
@@ -387,6 +430,10 @@ void load_cryptodev(void)
 #ifndef VULCAN_PK
 		cryptodev.calc_dh_shared = calc_dh_shared_ocf;
 #endif
-		openswan_log("Performing modular exponentiation acceleration in hardware");
+		if(!logged) openswan_log("Performing modular exponentiation acceleration in hardware {fd=%d}", fd);
+		logged=TRUE;
+	} else {
+		if(!logged) openswan_log("Performing all cryptographic operations in software (no capable hardware found, features=%08x).", cryptodev_asymfeat);
+		logged=TRUE;
 	}
 }
