@@ -1,6 +1,6 @@
 /* 
  * Cryptographic helper function.
- * Copyright (C) 2004 Michael C. Richardson <mcr@xelerance.com>
+ * Copyright (C) 2004-2006 Michael C. Richardson <mcr@xelerance.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
