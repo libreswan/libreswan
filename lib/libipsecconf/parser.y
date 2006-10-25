@@ -446,6 +446,10 @@ statement_kw:
 		}
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
+        | STRING EQUAL STRING {
+	        /* this is for invalid junk */
+		fprintf(stderr, "Invalid keyword: '%s', ignored.\n", $1);
+	}	
 	;
 
 %%
