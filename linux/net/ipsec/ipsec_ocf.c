@@ -44,6 +44,7 @@
 
 #include "ipsec_ocf.h"
 
+extern int debug_ocf;
 extern int debug_pfkey;
 extern int debug_rcv;
 
@@ -131,11 +132,11 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 	struct cryptoini crie, cria;
 	int error;
 
-	KLIPS_PRINT(debug_pfkey, "klips_debug:ipsec_ocf_sa_init(a=0x%x,e=0x%x)\n",
+	KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf_sa_init(a=0x%x,e=0x%x)\n",
 			authalg, encalg);
 
 	if (authalg && ipsp->ips_key_bits_a == 0) {
-		KLIPS_PRINT(debug_pfkey,
+		KLIPS_PRINT(debug_ocf,
 				"klips_debug:ipsec_ocf_sa_init(a=0x%x,e=0x%x) a-key-bits=0\n",
 				authalg, encalg);
 		/* pretend we are happy with this */
@@ -143,7 +144,7 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 	}
 
 	if (encalg && ipsp->ips_key_bits_e == 0) {
-		KLIPS_PRINT(debug_pfkey,
+		KLIPS_PRINT(debug_ocf,
 				"klips_debug:ipsec_ocf_sa_init(a=0x%x,e=0x%x) e-key-bits=0\n",
 				authalg, encalg);
 		/* pretend we are happy with this */
@@ -190,13 +191,13 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 		error = crypto_newsession(&ipsp->ocf_cryptoid, &cria,
                                 ocf_cryptodev_selection);
 	} else {
-		KLIPS_PRINT(debug_pfkey, "klips_debug:ipsec_ocf_sa_init: "
+		KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf_sa_init: "
 				"no authalg or encalg\n");
 		return 0;
 	}
 
 	if (error) {
-		KLIPS_PRINT(debug_pfkey, "klips_debug:ipsec_ocf_sa_init: "
+		KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf_sa_init: "
 				"crypto_newsession failed 0x%x\n", error);
 		return 0;
 	}
@@ -214,7 +215,7 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 int
 ipsec_ocf_sa_free(struct ipsec_sa *ipsp)
 {
-	KLIPS_PRINT(debug_pfkey, "klips_debug:ipsec_ocf_sa_free()\n");
+	KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf_sa_free()\n");
 	crypto_freesession(ipsp->ocf_cryptoid);
 	ipsp->ocf_cryptoid = -1;
 	ipsp->ocf_in_use = 0;
@@ -636,12 +637,12 @@ ipsec_ocf_check_alg(struct ipsec_alg_supported *s)
 	cri.cri_key      = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 	if (crypto_newsession(&cryptoid, &cri, 0)) {
-		KLIPS_PRINT(debug_pfkey, "klips_debug:ipsec_ocf:%s not supported\n",
+		KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf:%s not supported\n",
 				s->ias_name);
 		return 0;
 	}
 	crypto_freesession(cryptoid);
-	KLIPS_PRINT(debug_pfkey, "klips_debug:ipsec_ocf:%s supported\n",
+	KLIPS_PRINT(debug_ocf, "klips_debug:ipsec_ocf:%s supported\n",
 			s->ias_name);
 	return 1;
 }

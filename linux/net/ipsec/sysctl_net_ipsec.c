@@ -39,6 +39,7 @@ extern int       debug_netlink;
 extern int       debug_xform;
 extern int       debug_rcv;
 extern int       debug_pfkey;
+extern int       debug_ocf;
 extern int sysctl_ipsec_debug_verbose;
 #ifdef CONFIG_KLIPS_IPCOMP
 extern int sysctl_ipsec_debug_ipcomp;
@@ -92,6 +93,8 @@ static ctl_table ipsec_table[] = {
 	{ NET_IPSEC_DEBUG_RCV, "debug_rcv", &debug_rcv,
 	  sizeof(int), 0644, NULL, &proc_dointvec},    
 	{ NET_IPSEC_DEBUG_PFKEY, "debug_pfkey", &debug_pfkey,
+	  sizeof(int), 0644, NULL, &proc_dointvec},    
+	{ NET_IPSEC_DEBUG_PFKEY, "debug_ocf", &debug_ocf,
 	  sizeof(int), 0644, NULL, &proc_dointvec},    
 	{ NET_IPSEC_DEBUG_VERBOSE, "debug_verbose",&sysctl_ipsec_debug_verbose,
 	  sizeof(int), 0644, NULL, &proc_dointvec},    
