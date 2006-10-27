@@ -118,6 +118,7 @@ int debug_radij = 0;
 int debug_pfkey = 0;
 int debug_rcv = 0;
 int debug_netlink = 0;
+int debug_ocf = 0;
 int sysctl_ipsec_debug_verbose = 0;
 int sysctl_ipsec_debug_ipcomp =0;
 int sysctl_ipsec_icmp = 0;
@@ -133,6 +134,7 @@ module_param(debug_radij, int, 0644);
 module_param(debug_pfkey, int, 0644);
 module_param(debug_rcv, int, 0644);
 module_param(debug_netlink, int, 0644);
+module_param(debug_ocf, int, 0644);
 module_param(sysctl_ipsec_debug_verbose,int, 0644);
 module_param(sysctl_ipsec_debug_ipcomp, int, 0644);
 module_param(sysctl_ipsec_icmp,   int, 0644);
@@ -326,6 +328,11 @@ ipsec_spi_get_info(char *buffer,
 			if(sa_p->ips_errs.ips_encpad_errs) {
 				len += ipsec_snprintf(buffer+len, length-len, " encr_pad_errs=%d",
 					       sa_p->ips_errs.ips_encpad_errs);
+			}
+			
+			if(sa_p->ocf_in_use) {
+				len += ipsec_snprintf(buffer+len, length-len, " cryptoid=%d",
+					       sa_p->ocf_cryptoid);
 			}
 			
 			len += ipsec_snprintf(buffer+len, length-len, " life(c,s,h)=");

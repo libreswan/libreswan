@@ -35,7 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/kernel.h>
 #include <linux/version.h>
 #include <linux/string.h>

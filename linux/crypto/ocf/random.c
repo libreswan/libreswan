@@ -34,7 +34,9 @@
  * and/or fitness for purpose.
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/list.h>
@@ -77,10 +79,6 @@ static int random_proc(void *arg);
 
 static pid_t		randomproc = (pid_t) -1;
 static spinlock_t	random_lock;
-
-static inline _syscall3(int,open,const char *,file,int, flags, int, mode);
-static inline _syscall3(int,ioctl,int,fd,unsigned int,cmd,unsigned long,arg);
-static inline _syscall3(int,poll,struct pollfd *,pollfds,unsigned int,nfds,long,timeout);
 
 #define RND_STIR_INTERVAL  10
 static int rnd_stir_interval = RND_STIR_INTERVAL;

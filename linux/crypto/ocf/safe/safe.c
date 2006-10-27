@@ -31,7 +31,9 @@
 __FBSDID("$FreeBSD: src/sys/dev/safe/safe.c,v 1.8 2005/03/01 08:58:04 imp Exp $");
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

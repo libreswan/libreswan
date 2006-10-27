@@ -37,7 +37,9 @@
 __FBSDID("$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.25 2005/02/27 22:10:25 phk Exp $");
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/types.h>
 #include <linux/time.h>
 #include <linux/delay.h>
@@ -585,9 +587,11 @@ cryptodev_ioctl(
 				break;
 		fd = sys_dup(fd);
 		set_fs(fs);
-		put_user(fd, (int *) arg);
-		return fd == -1 ? -errno : 0;
-		}
+		if(fd >= 0) {
+			put_user(fd, (int *) arg);
+			return 0;
+		} else return fd;
+	}
 
 	case CIOCGSESSION:
 		dprintk("%s(CIOCGSESSION)\n", __FUNCTION__);
