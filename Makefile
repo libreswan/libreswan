@@ -161,7 +161,7 @@ __patches2.3 __patches2.4:
 
 klipsdefaults:
 	@KERNELDEFCONFIG=$(KERNELSRC)/arch/$(ARCH)/defconfig ; \
-	KERNELCONFIG=$(KCFILE) ; \
+	KERNELCONFIG=$(KCFILE) ; if [ -f $$KERNELCONFIG ]; then \
 	if ! egrep -q 'CONFIG_KLIPS' $$KERNELDEFCONFIG ; \
 	then \
 		set -x ; \
@@ -183,7 +183,7 @@ klipsdefaults:
 		rm -f $$KERNELCONFIG ; \
 		cp -a $$KERNELCONFIG.tmp $$KERNELCONFIG ; \
 		rm -f $$KERNELCONFIG.tmp ; \
-	fi
+	fi; fi
 
 
 
