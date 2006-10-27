@@ -57,6 +57,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 
 kpatch: unapplypatch applypatch klipsdefaults
 npatch: unapplynpatch applynpatch
+rpatch: unapplyrpatch applyrpatch
 
 unapplypatch:
 	-@if [ -f ${KERNELSRC}/openswan.patch ]; then \
@@ -77,6 +78,16 @@ unapplynpatch:
 applynpatch:
 	@echo Now performing forward NAT patches; 
 	${MAKE} nattpatch${KERNELREL} | tee ${KERNELSRC}/natt.patch | (cd ${KERNELSRC} && patch -p1 -b -z .preipsec --forward --ignore-whitespace )
+
+unapplyrpatch:
+	-@if [ -f ${KERNELSRC}/random.patch ]; then \
+		echo Undoing previous /dev/random patches; \
+		cat ${KERNELSRC}/random.patch | (cd ${KERNELSRC} && patch -p1 -R --force -E -z .preipsec --reverse --ignore-whitespace ); \
+	fi
+
+applyrpatch:
+	@echo Now performing forward /dev/random patches; 
+	${MAKE} randpatch${KERNELREL} | tee ${KERNELSRC}/random.patch | (cd ${KERNELSRC} && patch -p1 -b -z .preipsec --forward --ignore-whitespace )
 
 # patch kernel
 PATCHER=packaging/utils/patcher
@@ -554,6 +565,9 @@ nattpatch2.4:
 
 nattpatch2.2:
 	packaging/utils/nattpatch 2.2
+
+randpatch2.6:
+	packaging/utils/randpatch 2.6
 
 # take all the patches out of the kernel
 # (Note, a couple of files are modified by non-patch means; they are
