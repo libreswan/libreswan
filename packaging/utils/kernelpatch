@@ -34,6 +34,7 @@ do
   pname=`echo $file | sed -e 's,\.fs._.$,,' -e 's,\.os._.$,,'`
 
   case $base in 
+    \#.*) ;;
     TAGS) ;;
     tags) ;;
     .cvsignore) ;;
