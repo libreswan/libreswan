@@ -21,12 +21,14 @@ obj-$(CONFIG_OCF_OCFNULL)    += $(obj-base)ocfnull/
 
 obj-$(CONFIG_OCF_BENCH)      += $(obj-base)ocf-bench.o
 
+obj-$(CONFIG_OCF_RANDOMHARVEST) += $(obj-base)random.o
+
 ifndef obj
 list-multi += ocf.o 
-export-objs += crypto.o criov.o random.o
+export-objs += crypto.o criov.o 
 endif
 
-ocf-objs   := $(obj-base)crypto.o $(obj-base)criov.o $(obj-base)random.o
+ocf-objs   := $(obj-base)crypto.o $(obj-base)criov.o 
 
 ifdef CONFIG_OCF_FIPS
 ocf-objs     += $(obj-base)rndtest.o

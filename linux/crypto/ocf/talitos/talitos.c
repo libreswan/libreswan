@@ -1182,7 +1182,9 @@ static int talitos_probe(struct platform_device *pdev)
 	if (sc->sc_exec_units & TALITOS_HAS_EU_RNG)  {
 		printk(" rng");
 		talitos_rng_init(sc);
+#ifdef CONFIG_OCF_RANDOMHARVEST
 		crypto_rregister(sc->sc_cid, talitos_read_random, sc);
+#endif
 	}
 	if (sc->sc_exec_units & TALITOS_HAS_EU_DEU) {
 		printk(" des/3des");

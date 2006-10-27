@@ -55,6 +55,10 @@
 #include "rndtest.h"
 #endif
 
+#ifndef HAS_RANDOM_INPUT_WAIT
+#error "Please do not enable OCF_RANDOMHARVEST unless you have applied patches"
+#endif
+
 /*
  * a hack to access the debug levels from the crypto driver
  */

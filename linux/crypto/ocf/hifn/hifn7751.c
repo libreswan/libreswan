@@ -3074,10 +3074,12 @@ hifn_init_pkrng(struct hifn_softc *sc)
 		if(i) return i;
 	}
 
+#ifdef CONFIG_OCF_RANDOMHARVEST
 	/* hook-up the rng, if available */
 	if (sc->sc_flags & HIFN_HAS_RNG) {
 		crypto_rregister(sc->sc_cid, hifn_read_random, sc);
 	}
+#endif
 
 	/* Enable public key engine, if available */
 	if (sc->sc_flags & HIFN_HAS_PUBLIC) {

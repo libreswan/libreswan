@@ -2208,7 +2208,7 @@ static int safe_probe(struct pci_dev *dev, const struct pci_device_id *ent)
 	safe_reset_board(sc);		/* reset h/w */
 	safe_init_board(sc);		/* init h/w */
 
-#ifndef SAFE_NO_RNG
+#if !defined(SAFE_NO_RNG) && defined(CONFIG_OCF_RANDOMHARVEST)
 	if (sc->sc_flags & SAFE_FLAGS_RNG) {
 		safe_rng_init(sc);
 		crypto_rregister(sc->sc_cid, safe_read_random, sc);

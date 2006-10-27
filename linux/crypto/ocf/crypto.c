@@ -678,9 +678,12 @@ crypto_unregister_all(u_int32_t driverid)
 	CRYPTO_DRIVER_LOCK();
 
 	cap = crypto_checkdriver(driverid);
+
+#ifdef CONFIG_OCF_RANDOMHARVEST
 	if (cap != NULL) {
 		crypto_runregister_all(driverid);
 	}
+#endif
 	if (cap != NULL) {
 		for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++) {
 			cap->cc_alg[i] = 0;

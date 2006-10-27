@@ -6,18 +6,25 @@ config OCF_OCF
 	help
 	  A linux port of the OpenBSD/FreeBSD crypto framework.
 
-config OCF_FIPS
-	tristate "enable fips RNG checks"
-	depends on OCF_OCF
-	help
-	  Run all RNG provided data through a fips check before
-	  adding it /dev/random's entropy pool.
-
 config OCF_CRYPTODEV
 	tristate "cryptodev (user space support)"
 	depends on OCF_OCF
 	help
 	  The user space API to access crypto hardware.
+
+config OCF_RANDOMHARVEST
+	tristate "crypto random --- harvest entropy for /dev/random"
+	depends on OCF_OCF
+	help
+	  Includes code to harvest random numbers from devices that support it.
+          Currently requires patch to drivers/char/random.c
+
+config OCF_FIPS
+	tristate "enable fips RNG checks"
+	depends on OCF_OCF && OCF_RANDOMHARVEST
+	help
+	  Run all RNG provided data through a fips check before
+	  adding it /dev/random's entropy pool.
 
 config OCF_CRYPTOSOFT
 	tristate "cryptosoft (software crypto engine)"
@@ -48,7 +55,7 @@ config OCF_HIFN
 	  (7951, 7955, 7956, 7751, 7811)
 
 config OCF_HIFN_PKMMAP
-	tristate "Hifn Vulcan mmap interface (/dev/vulcanpk)"
+	bool "Hifn Vulcan mmap interface (/dev/vulcanpk)"
 	depends on OCF_HIFN
 	help
 	  Enables direct access to the vulcan PK engine via /dev/vulcanpk.

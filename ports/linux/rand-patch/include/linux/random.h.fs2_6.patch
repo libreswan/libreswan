@@ -2,12 +2,13 @@ diff --git a/include/linux/random.h b/include/linux/random.h
 index 5d6456b..0c73aa6 100644
 --- a/include/linux/random.h
 +++ b/include/linux/random.h
-@@ -47,6 +47,9 @@ extern void rand_initialize_irq(int irq)
+@@ -47,6 +47,10 @@ extern void rand_initialize_irq(int irq)
  extern void add_input_randomness(unsigned int type, unsigned int code,
  				 unsigned int value);
  extern void add_interrupt_randomness(int irq);
 +extern void random_input_words(__u32 *buf, size_t wordcount, int ent_count);
 +extern int random_input_wait(void);
++#define HAS_RANDOM_INPUT_WAIT 1
 +
  
  extern void get_random_bytes(void *buf, int nbytes);

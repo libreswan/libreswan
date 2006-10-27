@@ -62,7 +62,7 @@ rpatch: unapplyrpatch applyrpatch
 unapplypatch:
 	-@if [ -f ${KERNELSRC}/openswan.patch ]; then \
 		echo Undoing previous patches; \
-		cat ${KERNELSRC}/openswan.patch | (cd ${KERNELSRC} && patch -p1 -R --force -E -z .preipsec --reverse --ignore-whitespace ); \
+		cat ${KERNELSRC}/openswan.patch | (cd ${KERNELSRC} && patch -p1 -R --force -E -z .preipsec --reverse --ignore-whitespace ); rm -f ${KERNELSRC}/openswan.patch; \
 	fi
 
 applypatch:
@@ -72,7 +72,7 @@ applypatch:
 unapplynpatch:
 	-@if [ -f ${KERNELSRC}/natt.patch ]; then \
 		echo Undoing previous NAT patches; \
-		cat ${KERNELSRC}/natt.patch | (cd ${KERNELSRC} && patch -p1 -R --force -E -z .preipsec --reverse --ignore-whitespace ); \
+		cat ${KERNELSRC}/natt.patch | (cd ${KERNELSRC} && patch -p1 -R --force -E -z .preipsec --reverse --ignore-whitespace ); rm -f ${KERNELSRC}/natt.patch; \
 	fi
 
 applynpatch:
@@ -82,7 +82,7 @@ applynpatch:
 unapplyrpatch:
 	-@if [ -f ${KERNELSRC}/random.patch ]; then \
 		echo Undoing previous /dev/random patches; \
-		cat ${KERNELSRC}/random.patch | (cd ${KERNELSRC} && patch -p1 -R --force -E -z .preipsec --reverse --ignore-whitespace ); \
+		cat ${KERNELSRC}/random.patch | (cd ${KERNELSRC} && patch -p1 -R --force -E -z .preipsec --reverse --ignore-whitespace ) && rm -f ${KERNELSRC}/random.patch; \
 	fi
 
 applyrpatch:
