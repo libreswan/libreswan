@@ -366,37 +366,6 @@ done:
 	return err;
 }
 
-void crypto_devicename(u_int64_t sid, char *namebuf)
-{
-	u_int32_t hid;
-	int err;
-	unsigned long d_flags;
-
-	dprintk("%s()\n", __FUNCTION__);
-	CRYPTO_DRIVER_LOCK();
-
-	if (crypto_drivers == NULL) {
-		err = EINVAL;
-		goto done;
-	}
-
-	/* Determine two IDs. */
-	hid = CRYPTO_SESID2HID(sid);
-
-	if (hid >= crypto_drivers_num) {
-		dprintk("%s - INVALID DRIVER NUM %d\n", __FUNCTION__, hid);
-		err = ENOENT;
-		goto done;
-	}
-
-	namebuf[0]='\0';
-	strncpy(namebuf, crypto_drivers[hid].cc_name, sizeof(crypto_drivers[hid].cc_name));
-
-done:
-	CRYPTO_DRIVER_UNLOCK();
-	return;
-}
-
 /*
  * sets the cc_hid to element number.
  */
@@ -414,85 +383,271 @@ static void crypto_init_drivernum(void)
  * support for the algorithms they handle.
  */
 int32_t
-crypto_get_driverid(u_int32_t flags, char *drivername)
+crypto_get_driverid(u_int32_t flags, const char *drivername)
 {
-	struct cryptocap *newdrv;
-	int i;
+	const char *p;
+	struct cryptocap *cap;
+	int hid, drivername_len, this_driver_index;
 	unsigned long d_flags;
 
 	dprintk("%s()\n", __FUNCTION__);
 
 	if (!crypto_initted) {
-		i = crypto_init();
-		if (i) {
-			printk("crypto: failed to init crypto (%d)!\n", i);
+		int rc = crypto_init();
+		if (rc) {
+			printk("crypto: failed to init crypto (%d)!\n", rc);
 			return(-1);
 		}
 	}
 
+	/* figure out the lenght of the string and make sure there are no 
+	 * illegal characters present */
+	for (p = drivername, drivername_len = 0; 
+			*p && drivername_len < CRYPTO_NAME_BASE_LEN; 
+			p++, drivername_len++) {
+		if (*p == '#')
+			return -1;
+	}
+	if (drivername_len >= CRYPTO_NAME_BASE_LEN)
+		return -1;
+
 	CRYPTO_DRIVER_LOCK();
 
-	if(flags & CRYPTOCAP_F_SOFTWARE) {
-		i = 0;
-		if(i > crypto_drivers_num) {
-			crypto_drivers_num = i;
-		}
+	/* find the first unused hid, if software start looking at index 0, otherwise
+	 * start looking at index 1. */
+	if(flags & CRYPTOCAP_F_SOFTWARE 
+			&& 0==strcmp(drivername, "cryptosoft")) {
+		/* for cryptosoft we always use index 0, and we don't append 
+		 * the #%d because there is only one cryptosoft driver */
+		hid = 0;
+		this_driver_index = -1;
+
 	} else {
-		/* unit 0 is always reserved for software */
-		for (i = 1; i < crypto_drivers_num; i++)
-			if (crypto_drivers[i].cc_process == NULL &&
-			    (crypto_drivers[i].cc_flags & CRYPTOCAP_F_CLEANUP) == 0 &&
-			    crypto_drivers[i].cc_sessions == 0)
+		int i, driver_max_index;
+
+		for (hid = 1; hid < crypto_drivers_num; hid++) {
+			if (crypto_drivers[hid].cc_process == NULL &&
+					(crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) == 0) {
 				break;
-	}
-
-	/* Out of entries, allocate some more. */
-	if (i >= crypto_drivers_num) {
-		int new_num = crypto_drivers_num;
-
-		if(new_num == 0) new_num=1;
-
-		while(i >= new_num) {
-			new_num = new_num * 2;
-			/* Be careful about wrap-around. */
-			if (new_num <= crypto_drivers_num) {
-				CRYPTO_DRIVER_UNLOCK();
-				printk("crypto: driver count wraparound!\n");
-				return -1;
 			}
 		}
 
-		newdrv = kmalloc(new_num * sizeof(struct cryptocap),
-				 GFP_KERNEL);
-		if (newdrv == NULL) {
+		/* drivers get a enumeration suffix so we have to figure out 
+		 * what the last index is that we have for this drivername. */
+		driver_max_index = -1;
+		for (i=0; i<crypto_drivers_num; i++) {
+			int local_max = 0;
+
+			cap = &crypto_drivers[i];
+
+			// does the base name match?
+			if (strncmp (drivername, cap->cc_name, drivername_len))
+				break;
+
+			// this is the caracter after the base name match
+			p = cap->cc_name + drivername_len;
+
+			// is this the end of the name?
+			if (*p) {
+
+				// is it followed by an index?
+				if (*p != '#')
+					break;
+				p++;
+
+				// prase the number after the base name
+				for (;;) {
+					if (*p >= '0' && *p <= '9') {
+						local_max *= 10;
+						local_max += *p - '0';
+
+					} else if (!*p) {
+						break;
+
+					} else {
+						hid = -1;
+						goto done;
+					}
+				}
+			}
+
+			driver_max_index = max (driver_max_index, local_max);
+		}
+
+		// this is the suffix we use for the device name
+		this_driver_index = driver_max_index + 1;
+	}
+
+	/* Out of entries, allocate some more. */
+	if (hid >= crypto_drivers_num) {
+		int new_num = 2 * crypto_drivers_num;
+
+		/* Be careful about wrap-around. */
+		if (new_num <= crypto_drivers_num) {
+			CRYPTO_DRIVER_UNLOCK();
+			printk("crypto: driver count wraparound!\n");
+			return -1;
+		}
+
+		cap = kmalloc(new_num * sizeof(struct cryptocap), GFP_KERNEL);
+		if (cap == NULL) {
 			CRYPTO_DRIVER_UNLOCK();
 			printk("crypto: no space to expand driver table!\n");
 			return -1;
 		}
 
-		memcpy(newdrv, crypto_drivers,
-				crypto_drivers_num * sizeof(struct cryptocap));
-		memset(&crypto_drivers[crypto_drivers_num], 0,
-		       (new_num-crypto_drivers_num)* sizeof(struct cryptocap));
+		memcpy(cap, crypto_drivers,
+		      crypto_drivers_num * sizeof(struct cryptocap));
 
 		crypto_drivers_num = new_num;
 
 		kfree(crypto_drivers);
-		crypto_drivers = newdrv;
-		crypto_init_drivernum();
+		crypto_drivers = cap;
 	}
 
 	/* NB: state is zero'd on free */
-	crypto_drivers[i].cc_sessions = 1;	/* Mark */
-	crypto_drivers[i].cc_flags = flags;
-	crypto_drivers[i].cc_name[0]='\0';
-	strncpy(crypto_drivers[i].cc_name, drivername, sizeof(crypto_drivers[i].cc_name));
-	if (crypto_verbose)
-		printk("crypto: assign driver %u, flags %u\n", i, flags);
+	cap = &crypto_drivers[hid];
+	cap->cc_sessions = 1;	/* Mark */
+	cap->cc_flags = flags;
+	cap->cc_name[0]='\0';
+	cap->cc_hid = hid;
+	if (this_driver_index>=0)
+		snprintf (cap->cc_name, CRYPTO_NAME_BASE_LEN, "%s#%d",
+			drivername, this_driver_index);
+	else
+		strncpy (cap->cc_name, drivername, CRYPTO_NAME_BASE_LEN);
 
+        dprintk("crypto: assign driver %u, name %s, flags %u\n", 
+                        hid, cap->cc_name, flags);
+
+done:
 	CRYPTO_DRIVER_UNLOCK();
 
-	return i;
+	return hid;
+}
+
+int
+crypto_find_driverid (const char *drivername, int32_t *found_id)
+{
+	int error, dnlen, i;
+	unsigned long d_flags;
+	static const struct { 
+		enum cryptodev_selection id;
+		const char *name;
+	} name_lookup[] = {
+		{ CRYPTO_ANYDEVICE,   CRYPTO_ANYDEVICE_STRING   },
+		{ CRYPTO_ANYHARDWARE, CRYPTO_ANYHARDWARE_STRING },
+		{ CRYPTO_ANYSOFTWARE, CRYPTO_ANYSOFTWARE_STRING },
+		{ CRYPTO_SOFTWARE,    CRYPTO_SOFTWARE_STRING    },
+		{ -1, NULL }
+	}, *nl;
+#define NAME_LOOKUP_COUNT (sizeof(name_lookup)/sizeof(name_lookup[0]))
+
+	if (!drivername || !found_id)
+		return EFAULT;
+
+	if (! *drivername) {
+		*found_id = CRYPTO_ANYDEVICE;
+		return 0;
+	}
+
+	dnlen = strlen (drivername);
+	if (dnlen >= CRYPTO_NAME_LEN)
+		return EINVAL;
+
+	CRYPTO_DRIVER_LOCK();
+
+	for (nl=name_lookup; nl->name; nl++) {
+
+		if (0 == strcmp (drivername, nl->name)) {
+			*found_id = nl->id;
+			error = 0;
+			goto done;
+		}
+	}
+
+	for (i=0; i<crypto_drivers_num; i++) {
+		struct cryptocap *cap = &crypto_drivers[i];
+
+		if (strncmp (drivername, cap->cc_name, dnlen))
+			continue;
+
+		switch (cap->cc_name[dnlen]) {
+		case 0:   // complete match
+		case '#': // partial match
+			*found_id = i;
+			error = 0;
+			goto done;
+		default:
+			continue;
+		}
+	}
+
+	error = ENOENT;
+
+done:
+	CRYPTO_DRIVER_UNLOCK();
+
+	return error;
+}
+
+void 
+crypto_get_devicename(u_int32_t hid, char devicename[CRYPTO_NAME_LEN])
+{
+        int err;
+	unsigned long d_flags;
+
+        *devicename = 0;
+
+        CRYPTO_DRIVER_LOCK();
+
+        if (crypto_drivers == NULL) {
+                err = EINVAL;
+                goto done;
+        }
+
+        if (hid >= crypto_drivers_num) {
+                err = ENOENT;
+                goto done;
+        }
+
+        strncpy (devicename, crypto_drivers[hid].cc_name, CRYPTO_NAME_LEN);
+
+done:
+        CRYPTO_DRIVER_UNLOCK();
+}
+
+void 
+crypto_get_sess_devicename(u_int64_t sid, char devicename[CRYPTO_NAME_LEN])
+{
+	u_int32_t hid;
+	int err;
+	unsigned long d_flags;
+
+	dprintk("%s()\n", __FUNCTION__);
+
+	CRYPTO_DRIVER_LOCK();
+
+	if (crypto_drivers == NULL) {
+		err = EINVAL;
+		goto done;
+	}
+
+	/* Determine two IDs. */
+	hid = CRYPTO_SESID2HID(sid);
+
+	if (hid >= crypto_drivers_num) {
+		dprintk("%s - INVALID DRIVER NUM %d\n", __FUNCTION__, hid);
+		err = ENOENT;
+		goto done;
+	}
+
+	devicename[0]='\0';
+	strncpy(devicename, crypto_drivers[hid].cc_name, sizeof(crypto_drivers[hid].cc_name));
+
+done:
+	CRYPTO_DRIVER_UNLOCK();
+	return;
 }
 
 static struct cryptocap *

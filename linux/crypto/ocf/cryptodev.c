@@ -64,10 +64,10 @@ module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug,
 	   "Enable debug");
 
-static enum cryptodev_selection crypto_devsel = CRYPTO_ANYDEVICE;
-module_param(crypto_devsel, int, 0644);
+static int crypto_devallowsoft = 1;
+module_param_named(devallowsoft, crypto_devallowsoft, int, 0644);
 MODULE_PARM_DESC(crypto_devsel,
-	   "Select cryptodev drivers: -1=software only, 1=HW only, 0=any");
+	   "set this to zero to disable software support");
 
 struct csession_info {
 	u_int16_t	blocksize;
@@ -566,6 +566,7 @@ cryptodev_ioctl(
 	struct session_op sop;
 	struct crypt_op cop;
 	struct crypt_kop kop;
+        enum cryptodev_selection desired_device = 0;
 	u_int64_t sid;
 	u_int32_t ses;
 	int feat, fd, error = 0;
@@ -598,7 +599,7 @@ cryptodev_ioctl(
 		if(copy_from_user(&sop, (void*)arg, sizeof(sop))) {
 		  dprintk("%s(CIOCGSESSION) - bad copy\n", __FUNCTION__);
 		  error = EFAULT;
-		  goto bail;
+		  goto bail_CIOCGSESSION;
 		}
 
 		switch (sop.cipher) {
@@ -648,7 +649,7 @@ cryptodev_ioctl(
 		default:
 			dprintk("%s(CIOCGSESSION) - bad cipher\n", __FUNCTION__);
 			error = EINVAL;
-			goto bail;
+			goto bail_CIOCGSESSION;
 		}
 
 		switch (sop.mac) {
@@ -675,14 +676,16 @@ cryptodev_ioctl(
 			info.keysize = 20;
 			info.authsize = 12;
 			break;
-		case CRYPTO_SHA2_HMAC:
-			if (sop.mackeylen != 32 && sop.mackeylen != 48 &&
-					sop.mackeylen != 64) {
-				dprintk("%s(CIOCGSESSION) - bad key\n", __FUNCTION__);
-				error = EINVAL;
-				goto bail;
-			}
-			info.keysize = sop.mackeylen;
+                case CRYPTO_SHA2_256_HMAC:
+			info.keysize = 32;
+			info.authsize = 12;  /* HMAC is always truncated to 96-bits */
+			break;
+                case CRYPTO_SHA2_384_HMAC:
+			info.keysize = 48;
+			info.authsize = 12;  /* HMAC is always truncated to 96-bits */
+			break;
+                case CRYPTO_SHA2_512_HMAC:
+			info.keysize = 64;
 			info.authsize = 12;  /* HMAC is always truncated to 96-bits */
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
@@ -692,7 +695,7 @@ cryptodev_ioctl(
 		default:
 			dprintk("%s(CIOCGSESSION) - bad mac\n", __FUNCTION__);
 			error = EINVAL;
-			goto bail;
+			goto bail_CIOCGSESSION;
 		}
 
 		if (info.blocksize) {
@@ -701,7 +704,7 @@ cryptodev_ioctl(
 			if (sop.keylen > info.maxkey || sop.keylen < info.minkey) {
 				dprintk("%s(CIOCGSESSION) - bad key\n", __FUNCTION__);
 				error = EINVAL;
-				goto bail;
+				goto bail_CIOCGSESSION;
 			}
 
 			crie.cri_key = (u_int8_t *) kmalloc(crie.cri_klen/8, GFP_KERNEL);
@@ -709,7 +712,7 @@ cryptodev_ioctl(
 							crie.cri_klen/8)) {
 				dprintk("%s(CIOCGSESSION) - bad copy\n", __FUNCTION__);
 				error = EFAULT;
-				goto bail;
+				goto bail_CIOCGSESSION;
 			}
 			if (info.authsize)
 				crie.cri_next = &cria;
@@ -722,7 +725,7 @@ cryptodev_ioctl(
 				dprintk("%s(CIOCGSESSION) - mackeylen %d\n", __FUNCTION__,
 						sop.mackeylen);
 				error = EINVAL;
-				goto bail;
+				goto bail_CIOCGSESSION;
 			}
 
 			if (cria.cri_klen) {
@@ -731,34 +734,53 @@ cryptodev_ioctl(
 								cria.cri_klen / 8)) {
 					dprintk("%s(CIOCGSESSION) - bad copy\n", __FUNCTION__);
 					error = EFAULT;
-					goto bail;
+					goto bail_CIOCGSESSION;
 				}
 			}
 		}
 
+                // create a session given a device name selected by the user
+                error = crypto_find_driverid (sop.crypto_device_name, &desired_device);
+                if (error)
+                        goto bail_CIOCGSESSION;
+
+                // prevent fallthrough to software crypto
+                switch (desired_device) {
+                case CRYPTO_SOFTWARE:
+                case CRYPTO_ANYSOFTWARE:
+                        if (!crypto_devallowsoft) {
+                                error = EPERM;
+                                goto bail_CIOCGSESSION;
+                        }
+                default:
+                        break;
+                }
+
 		error = crypto_newsession(&sid, (info.blocksize ? &crie : &cria),
-				crypto_devsel);
+                                desired_device);
 		if (error) {
 			dprintk("%s(CIOCGSESSION) - newsession %d\n", __FUNCTION__, error);
-			goto bail;
+			goto bail_CIOCGSESSION;
 		}
+
+                // write out the name of the device selected for this session
+		crypto_get_sess_devicename(sid, sop.crypto_device_name);
 
 		cse = csecreate(fcr, sid, &crie, &cria, &info);
 		if (cse == NULL) {
 			crypto_freesession(sid);
 			error = EINVAL;
 			dprintk("%s(CIOCGSESSION) - csecreate failed\n", __FUNCTION__);
-			goto bail;
+			goto bail_CIOCGSESSION;
 		}
 		sop.ses = cse->ses;
-		crypto_devicename(sid, sop.crypto_device_name);
 
 		if (copy_to_user((void*)arg, &sop, sizeof(sop))) {
 			dprintk("%s(CIOCGSESSION) - bad copy\n", __FUNCTION__);
 			error = EFAULT;
 		}
 
-bail:
+bail_CIOCGSESSION:
 		if (error) {
 			dprintk("%s(CIOCGSESSION) - bail %d\n", __FUNCTION__, error);
 			if (crie.cri_key)
@@ -832,6 +854,7 @@ bail:
 		error = EINVAL;
 		break;
 	}
+bail:
 	return(-error);
 }
 

@@ -70,7 +70,7 @@ struct swcr_data {
 	struct crypto_tfm	*sw_tfm;
 	union {
 		struct {
-			char sw_key[HMAC_BLOCK_LEN];
+			char sw_key[HMAC_MAX_BLOCK_LEN];
 			int  sw_klen;
 			int  sw_authlen;
 		} hmac;
@@ -308,7 +308,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			}
 		} else if (sw_type == SW_TYPE_HMAC || sw_type == SW_TYPE_HASH) {
 			(*swd)->u.hmac.sw_klen = (cri->cri_klen + 7) / 8;
-			if (HMAC_BLOCK_LEN < (*swd)->u.hmac.sw_klen)
+			if (HMAC_MAX_BLOCK_LEN < (*swd)->u.hmac.sw_klen)
 				printk("%s,%d: ERROR ERROR ERROR\n", __FILE__, __LINE__);
 			memcpy((*swd)->u.hmac.sw_key, cri->cri_key, (*swd)->u.hmac.sw_klen);
 		} else {

@@ -176,7 +176,7 @@ ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 	ipsp->ips_auth_bits = ipsp->ips_key_bits_a;
 
         // automatically fix stupid mistakes
-        if (ocf_cryptodev_selection < CRYPTO_DEVICE_MIN)
+        if (ocf_cryptodev_selection < CRYPTODEV_SELECTION_MIN)
                 ocf_cryptodev_selection = CRYPTO_ANYDEVICE;
 
 	if (authalg && encalg) {
