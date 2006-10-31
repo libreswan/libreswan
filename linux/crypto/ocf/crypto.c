@@ -185,7 +185,7 @@ int
 crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selection desired_device)
 {
 	struct cryptoini *cr;
-	u_int32_t hid, lid;
+	u_int32_t lid, besthid;
 	int err = EINVAL;
 	unsigned long d_flags;
 	struct cryptocap *cap = NULL;
@@ -198,11 +198,14 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selectio
 		}
 	}
 
+	besthid = -1;
+
 	dprintk("%s(desired=%d)\n", __FUNCTION__, desired_device);
 	CRYPTO_DRIVER_LOCK();
 
 	if (crypto_drivers == NULL || crypto_drivers_num==0) {
 		dprintk("%s,%d: %s - no drivers\n", __FILE__, __LINE__, __FUNCTION__);
+		CRYPTO_DRIVER_UNLOCK();
 		goto done;
 	}
 
@@ -221,13 +224,22 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selectio
 		   cap->cc_newsession == NULL ||
 		   cap->cc_flags & CRYPTOCAP_F_CLEANUP) {
 			err = ENOENT;
+			CRYPTO_DRIVER_UNLOCK();
 			goto done;
 		}
-		hid = cap->cc_hid;
-	}
+		besthid = cap->cc_hid;
+	} else {
+		int hid;
+		int besthid_software=0;
 		
-	if(desired_device < 0) {
-		for (hid = 0; hid < crypto_drivers_num; hid++) {
+		/*
+		 * try them in reverse order, since software is usually
+		 * the first device, and last loaded might be most interesting
+		 *
+		 * However, we do look through all devices.
+		 *
+		 */
+		for (hid = crypto_drivers_num-1; hid>=0; hid--) {
 			dprintk("trying hid=%d\n", hid);
 			cap = &crypto_drivers[hid];
 			/*
@@ -262,58 +274,75 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selectio
 				}
 			}
 
-			if(cr == NULL) break;
+			if(cr == NULL) {
+				/* found potential device */
+				if(besthid == -1) besthid = hid;
+				else {
+					/* prefer hardware of they asked
+					 * for anything available.
+					 */
+					if(desired_device==CRYPTO_ANYDEVICE &&
+					   besthid_software &&
+					   (cap->cc_flags & CRYPTOCAP_F_SOFTWARE)==0) {
+						besthid = hid;
+						besthid_software=(cap->cc_flags & CRYPTOCAP_F_SOFTWARE);
+					}
+				}
+				dprintk("hid=%d assigning besthid=%d software=%d\n",
+					hid, besthid, besthid_software);
+			}
 		}
-
-		/* if we found nothing, clear cap */
-		if(hid == crypto_drivers_num) cap=NULL;
 	}
-			
-	if (cap != NULL) {
-		/* Ok, all algorithms are supported. */
-		
-		/*
-		 * Can't do everything in one session.
-		 *
-		 * XXX Fix this. We need to inject a "virtual" session layer right
-		 * XXX about here.
-		 */
-		
-		/*
-		 * up the number of sessions before we unlock so that this
-		 * cap does not go away while we are busy,  we unlock so that
-		 * newsession may sleep (for whatever reason, alloc etc).
-		 */
-		cap->cc_sessions++;
+
+	if (besthid ==-1) {
+		dprintk("No useful driver found");
 		CRYPTO_DRIVER_UNLOCK();
+		goto done;
+	}
+
+	cap = &crypto_drivers[besthid];
 		
-		/* Call the driver initialization routine. */
-		lid = hid;		/* Pass the driver ID. */
-		err = -99;
-
-		/* just paranoia here */
-		if(cap->cc_newsession) {
-			err = (*cap->cc_newsession)(cap->cc_arg, &lid, cri);
-		}
-
-		if (err == 0) {
-			/* XXX assert (hid &~ 0xffffff) == 0 */
-			/* XXX assert (cap->cc_flags &~ 0xff) == 0 */
-			(*sid) = ((cap->cc_flags & 0xff) << 24) | hid;
-			(*sid) <<= 32;
-			(*sid) |= (lid & 0xffffffff);
-		} else {
-			dprintk("%s,%d: %s - newsession returned %d\n",
-				__FILE__, __LINE__, __FUNCTION__, err);
-			cap->cc_sessions--;
-			if ((cap->cc_flags & CRYPTOCAP_F_CLEANUP) &&
-			    cap->cc_sessions == 0)
-				memset(cap, 0, sizeof(struct cryptocap));
-		}
-		return err;
+	/* Ok, all algorithms are supported. */
+	
+	/*
+	 * Can't do everything in one session.
+	 *
+	 * XXX Fix this. We need to inject a "virtual" session layer right
+	 * XXX about here.
+	 */
+	
+	/*
+	 * up the number of sessions before we unlock so that this
+	 * cap does not go away while we are busy,  we unlock so that
+	 * newsession may sleep (for whatever reason, alloc etc).
+	 */
+	cap->cc_sessions++;
+	CRYPTO_DRIVER_UNLOCK();
+	
+	/* Call the driver initialization routine. */
+	lid = besthid;		/* Pass the driver ID. */
+	err = -99;
+	
+	/* just paranoia here */
+	if(cap->cc_newsession) {
+		err = (*cap->cc_newsession)(cap->cc_arg, &lid, cri);
+	}
+	
+	if (err == 0) {
+		/* XXX assert (hid &~ 0xffffff) == 0 */
+		/* XXX assert (cap->cc_flags &~ 0xff) == 0 */
+		(*sid) = ((cap->cc_flags & 0xff) << 24) | besthid;
+		(*sid) <<= 32;
+		(*sid) |= (lid & 0xffffffff);
+	} else {
+		dprintk("%s,%d: %s - newsession returned %d\n",
+			__FILE__, __LINE__, __FUNCTION__, err);
+		cap->cc_sessions--;
+		if ((cap->cc_flags & CRYPTOCAP_F_CLEANUP) &&
+		    cap->cc_sessions == 0)
+			memset(cap, 0, sizeof(struct cryptocap));
 	}
 done:
-	CRYPTO_DRIVER_UNLOCK();
 	return err;
 }
 
