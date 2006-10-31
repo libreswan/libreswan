@@ -1,10 +1,24 @@
 #!/bin/sh
 
-klips_git=/mara7/hifn/klips-ocf
+klips_git=${1-/mara7/hifn/klips-ocf}
 openswan_git=`pwd`
 patchdir=$openswan_git/linux/patches
 
+set -e
 
+if [ ! -f $klips_git/README.openswan-2 ]
+then
+	echo klips_git '(arg1)' is not set right: $klips_git
+	echo file $klips_git/README.openswan-2 is missing.
+	exit 1
+fi
+
+
+if [ ! -f packaging/utils/kerngitpull.sh ]
+then
+	echo Please run this from the root of the openswan tree.
+	exit 2
+fi
 
 # generate set of patches against last time we did this, and apply
 # the patches to the linux/ subtree.
@@ -15,8 +29,8 @@ cd $klips_git
 mkdir -p $patchdir
 git-format-patch -o $openswan_git/linux/patches openswan_klips
 
-SIGNOFF="Michael Richardson <mcr@xelerance.com>"
-mkdir .dotest
+SIGNOFF=${SIGNOFF-"Michael Richardson <mcr@xelerance.com>"}
+mkdir -p .dotest
 
 cd $openswan_git/linux
 for p in patches/0*.txt
@@ -39,9 +53,11 @@ do
     done
 done
 
-#cd $klips_git
-#cg-switch openswan_klips
-#cg-update master
-#cg-switch master
+rm -rf .dotest
+
+cd $klips_git
+cg-switch openswan_klips
+cg-update master
+cg-switch master
 
 
