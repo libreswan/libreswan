@@ -2454,7 +2454,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 	session = HIFN_SESSION(crp->crp_sid);
 
 	if (sc == NULL || session >= sc->sc_nsessions) {
-		DPRINTF("%s,%d: %s - EINVAL\n",__FILE__,__LINE__,__FUNCTION__);
+		DPRINTF("%s,%d: %s - EINVAL sc=%p session=%u\n",__FILE__,__LINE__,__FUNCTION__, sc, session);
 		err = EINVAL;
 		goto errout;
 	}
@@ -2931,7 +2931,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *macbuf)
 static void
 hifn_write_reg_0(struct hifn_softc *sc, bus_size_t reg, u_int32_t val)
 {
-	//device_printf(sc->sc_dev, "writing_0[%02x]=%08x\n", reg, val);
+	/* device_printf(sc->sc_dev, "writing_0[%02x]=%08x\n", reg, val); */
 
 	if (sc->sc_flags & HIFN_IS_7811) {
 		if (sc->sc_bar0_lastreg == reg - 4)
@@ -2944,7 +2944,7 @@ hifn_write_reg_0(struct hifn_softc *sc, bus_size_t reg, u_int32_t val)
 static void
 hifn_write_reg_1(struct hifn_softc *sc, bus_size_t reg, u_int32_t val)
 {
-	device_printf(sc->sc_dev, "writing_1[%02x]=%08x\n", reg, val);
+	/* device_printf(sc->sc_dev, "writing_1[%02x]=%08x\n", reg, val); */
 
 	if (sc->sc_flags & HIFN_IS_7811) {
 		if (sc->sc_bar1_lastreg == reg - 4)
