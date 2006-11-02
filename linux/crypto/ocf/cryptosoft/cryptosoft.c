@@ -291,7 +291,8 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			return EINVAL;
 		}
 
-		if (sw_type == SW_TYPE_CIPHER) {
+                switch (sw_type) {
+                case SW_TYPE_CIPHER:
 			if (debug) {
 				dprintk("%s key:", __FUNCTION__);
 				for (i = 0; i < (cri->cri_klen + 7) / 8; i++)
@@ -306,12 +307,21 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 				swcr_freesession(NULL, i);
 				return error;
 			}
-		} else if (sw_type == SW_TYPE_HMAC || sw_type == SW_TYPE_HASH) {
+                        break;
+
+                case SW_TYPE_HMAC:
+                case SW_TYPE_HASH:
 			(*swd)->u.hmac.sw_klen = (cri->cri_klen + 7) / 8;
 			if (HMAC_MAX_BLOCK_LEN < (*swd)->u.hmac.sw_klen)
 				printk("%s,%d: ERROR ERROR ERROR\n", __FILE__, __LINE__);
 			memcpy((*swd)->u.hmac.sw_key, cri->cri_key, (*swd)->u.hmac.sw_klen);
-		} else {
+                        break;
+
+                case SW_TYPE_COMP:
+                        // nothing to configure
+                        break;
+
+                default:
 			printk("cryptosoft: Unhandled sw_type %d\n", sw_type);
 			swcr_freesession(NULL, i);
 			return EINVAL;
@@ -519,7 +529,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 			sg_num = 1;
 		}
 
-                dprintk ("desc %s %s\n",
+                dprintk ("cryptosoft desc %s %s\n",
                                 type == CRYPTO_BUF_CONTIG ? "CONTIG" :
                                 type == CRYPTO_BUF_IOV    ? "IOV" :
                                 type == CRYPTO_BUF_SKBUF  ? "SKBUF" : "???",
@@ -678,7 +688,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
                         cpu = get_cpu();
                         tmp_buffer = *per_cpu_ptr(ocf_comp_temp_buffers, cpu);
 
-                        data = crp->crp_buf + skip;
+                        // this will be our destination buffer
                         temp = tmp_buffer;
                         dlen = OCF_COMP_TEMP_BUFFER_SIZE;
 
@@ -707,26 +717,38 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
                                 }
 
                                 data = tmp_buffer;
+
+                        } else if (crp->crp_flags & CRYPTO_F_SKBUF) {
+                                // only one segment, and it's in the skb
+                                data = skb->data + skip;
+
+                        } else if (crp->crp_flags & CRYPTO_F_IOV) {
+                                // only one segment, and it's in the uiov
+                                data = uiop->uio_iov[0].iov_base + skip;
+
+                        } else {
+                                // only one segment, and it's in crp buffer
+                                data = crp->crp_buf + skip;
                         }
 
                         // do the deflate op
-                        if (crd->crd_flags & CRD_F_COMP) {
+			if (crd->crd_flags & CRD_F_ENCRYPT) { /* compress */
                                 ret = crypto_comp_compress(sw->sw_tfm, 
                                                 data, crd->crd_len, 
                                                 temp, &dlen);
-                                if (dlen > crd->crd_len) {
+                                if (!ret && dlen > crd->crd_len) {
                                         dprintk("cryptosoft: ERANGE compress "
                                                         "%d into %d\n",
                                                         crd->crd_len, dlen);
                                         ret = ERANGE;
                                 }
 
-                        } else {
+                        } else { /* decompress */
                                 ret = crypto_comp_decompress(sw->sw_tfm, 
                                                 data, crd->crd_len, 
                                                 temp, &dlen);
-                                if (dlen + crd->crd_inject >= crp->crp_olen) {
-                                        dprintk("cryptosoft: ETOOSMALL compress "
+                                if (!ret && (dlen + crd->crd_inject) > crp->crp_olen) {
+                                        dprintk("cryptosoft: ETOOSMALL decompress "
                                                         "%d into %d, space for %d,"
                                                         "at offset %d\n",
                                                         crd->crd_len, dlen, 
@@ -746,6 +768,9 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
                                 else if (type == CRYPTO_BUF_IOV)
                                         cuio_copyback(uiop, crd->crd_inject, dlen, (caddr_t)temp);
                         }
+
+                        // update the amount of space in the result
+                        crp->crp_olen = dlen;
 
                         // reenable preemption
                         put_cpu();
