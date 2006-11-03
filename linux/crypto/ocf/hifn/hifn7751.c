@@ -793,6 +793,7 @@ hifn_remove(struct pci_dev *dev)
 
 	/*XXX other resources */
 	del_timer_sync(&sc->sc_tickto);
+	del_timer_sync(&sc->sc_pk_timer);
 
 	/* Turn off DMA polling */
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
