@@ -66,12 +66,16 @@ module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug,
 	   "Enable debug");
 
-static enum cryptodev_selection crypto_devsel = CRYPTO_ANYDEVICE;
-module_param(crypto_devsel, int, 0644);
+static int crypto_devallowsoft = 1;
+module_param_named(devallowsoft, crypto_devallowsoft, int, 0644);
 MODULE_PARM_DESC(crypto_devsel,
-	   "Select cryptodev drivers: -1=software only, 1=HW only, 0=any");
+	   "set this to zero to disable software support");
 
 struct csession_info {
+        u_int16_t       is_cipher:1;
+        u_int16_t       is_hash:1;
+        u_int16_t       is_comp:1;
+
 	u_int16_t	blocksize;
 	u_int16_t	minkey, maxkey;
 
@@ -130,17 +134,27 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop)
 {
 	struct cryptop *crp = NULL;
 	struct cryptodesc *crde = NULL, *crda = NULL;
-	int error = 0;
+	int error = 0, no_desc = 0, iov_len;
 
 	dprintk("%s()\n", __FUNCTION__);
-	if (cop->len > 256*1024-4) {
-		dprintk("%s: %d > 256k\n", __FUNCTION__, cop->len);
+	if (cop->slen > 256*1024-4) {
+		dprintk("%s: slen %d > 256k\n", __FUNCTION__, cop->slen);
+		return (E2BIG);
+	}
+	if (cop->dlen > 256*1024-4) {
+		dprintk("%s: dlen %d > 256k\n", __FUNCTION__, cop->dlen);
 		return (E2BIG);
 	}
 
-	if (cse->info.blocksize && (cop->len % cse->info.blocksize) != 0) {
+	if (cse->info.blocksize && (cop->slen % cse->info.blocksize) != 0) {
 		dprintk("%s: blocksize=%d len=%d\n", __FUNCTION__, cse->info.blocksize,
-				cop->len);
+				cop->slen);
+		return (EINVAL);
+	}
+
+	if (cse->info.blocksize && (cop->dlen % cse->info.blocksize) != 0) {
+		dprintk("%s: blocksize=%d len=%d\n", __FUNCTION__, cse->info.blocksize,
+				cop->dlen);
 		return (EINVAL);
 	}
 
@@ -153,39 +167,58 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop)
 	cse->uio.uio_rw = UIO_WRITE;
 	cse->uio.uio_td = td;
 #endif
-	cse->uio.uio_iov[0].iov_len = cop->len;
-	cse->uio.uio_iov[0].iov_base = kmalloc(cop->len, GFP_KERNEL);
+	iov_len = cop->slen;
+        if (iov_len < cop->dlen)
+                iov_len = cop->dlen;
 
-	crp = crypto_getreq((cse->info.blocksize != 0) + (cse->info.authsize != 0));
+	cse->uio.uio_iov[0].iov_base = kmalloc(iov_len, GFP_KERNEL);
+	cse->uio.uio_iov[0].iov_len = iov_len;
+
+        if (NULL == cse->uio.uio_iov[0].iov_base) {
+                dprintk("%s: unable to allocate bounce buffer of %d\n", 
+                                __FUNCTION__, iov_len);
+                error = ENOMEM;
+                goto bail;
+        }
+
+        if (cse->info.is_cipher)
+                no_desc ++;
+        if (cse->info.is_hash)
+                no_desc ++;
+        if (cse->info.is_comp)
+                no_desc ++;
+
+	crp = crypto_getreq(no_desc);
 	if (crp == NULL) {
 		dprintk("%s: ENOMEM\n", __FUNCTION__);
 		error = ENOMEM;
 		goto bail;
 	}
 
-	if (cse->info.authsize) {
+        if (cse->info.is_hash) {
 		crda = crp->crp_desc;
-		if (cse->info.blocksize)
+		if (cse->info.is_cipher)
 			crde = crda->crd_next;
-	} else {
-		if (cse->info.blocksize)
-			crde = crp->crp_desc;
-		else {
-			dprintk("%s: bad request\n", __FUNCTION__);
-			error = EINVAL;
-			goto bail;
-		}
+
+	} else if (cse->info.is_cipher 
+                        || cse->info.is_comp) {
+                crde = crp->crp_desc;
+
+        } else {
+                dprintk("%s: bad request\n", __FUNCTION__);
+                error = EINVAL;
+                goto bail;
 	}
 
 	if ((error = copy_from_user(cse->uio.uio_iov[0].iov_base, cop->src,
-					cop->len))) {
+					cop->slen))) {
 		dprintk("%s: bad copy\n", __FUNCTION__);
 		goto bail;
 	}
 
 	if (crda) {
 		crda->crd_skip = 0;
-		crda->crd_len = cop->len;
+		crda->crd_len = cop->slen;
 		crda->crd_inject = 0;	/* ??? */
 
 		crda->crd_alg = cse->mac;
@@ -198,7 +231,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop)
 			crde->crd_flags |= CRD_F_ENCRYPT;
 		else
 			crde->crd_flags &= ~CRD_F_ENCRYPT;
-		crde->crd_len = cop->len;
+		crde->crd_len = cop->slen;
 		crde->crd_inject = 0;
 
 		crde->crd_alg = cse->cipher;
@@ -206,7 +239,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop)
 		crde->crd_klen = cse->keylen * 8;
 	}
 
-	crp->crp_ilen = cop->len;
+	crp->crp_ilen = cop->slen;
+	crp->crp_olen = cop->dlen;
 	crp->crp_flags = CRYPTO_F_IOV | CRYPTO_F_CBIMM
 		       | (cop->flags & COP_F_BATCH);
 	crp->crp_buf = (caddr_t)&cse->uio;
@@ -296,8 +330,9 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop)
 		goto bail;
 	}
 
+        cop->dlen = crp->crp_olen;
 	if (cop->dst && (error = copy_to_user(cop->dst,
-					cse->uio.uio_iov[0].iov_base, cop->len))) {
+					cse->uio.uio_iov[0].iov_base, cop->dlen))) {
 		dprintk("%s bad dst copy\n", __FUNCTION__);
 		error = EFAULT;
 		goto bail;
@@ -568,6 +603,7 @@ cryptodev_ioctl(
 	struct session_op sop;
 	struct crypt_op cop;
 	struct crypt_kop kop;
+        enum cryptodev_selection desired_device = 0;
 	u_int64_t sid;
 	u_int32_t ses;
 	int feat, fd, error = 0;
@@ -602,7 +638,7 @@ cryptodev_ioctl(
 		if(copy_from_user(&sop, (void*)arg, sizeof(sop))) {
 		  dprintk("%s(CIOCGSESSION) - bad copy\n", __FUNCTION__);
 		  error = EFAULT;
-		  goto bail;
+		  goto bail_CIOCGSESSION;
 		}
 
 		switch (sop.cipher) {
@@ -610,49 +646,62 @@ cryptodev_ioctl(
 			dprintk("%s(CIOCGSESSION) - no cipher\n", __FUNCTION__);
 			break;
 		case CRYPTO_NULL_CBC:
+                        info.is_cipher = 1;
 			info.blocksize = 4;
 			info.minkey = 0;
 			info.maxkey = 256;
 			break;
 		case CRYPTO_DES_CBC:
+                        info.is_cipher = 1;
 			info.blocksize = 8;
 			info.minkey = 8;
 			info.maxkey = 8;
 			break;
 		case CRYPTO_3DES_CBC:
+                        info.is_cipher = 1;
 			info.blocksize = 8;
 			info.minkey = 24;
 			info.maxkey = 24;
 			break;
 		case CRYPTO_BLF_CBC:
+                        info.is_cipher = 1;
 			info.blocksize = 8;
 			info.minkey = 5;
 			info.maxkey = 56;
 			break;
 		case CRYPTO_CAST_CBC:
+                        info.is_cipher = 1;
 			info.blocksize = 8;
 			info.minkey = 5;
 			info.maxkey = 16;
 			break;
 		case CRYPTO_SKIPJACK_CBC:
+                        info.is_cipher = 1;
 			info.blocksize = 8;
 			info.minkey = 10;
 			info.maxkey = 10;
 			break;
 		case CRYPTO_AES_CBC:
+                        info.is_cipher = 1;
 			info.blocksize = 16;
 			info.minkey = 16;
 			info.maxkey = 32;
 			break;
 		case CRYPTO_ARC4:
+                        info.is_cipher = 1;
 			info.blocksize = 1;
 			info.minkey = 1;
 			info.maxkey = 32;
 			break;
+                case CRYPTO_DEFLATE_COMP:
+                        info.is_comp = 1;
+			info.minkey = 0;
+			info.maxkey = 0;
+                        break;
 		default:
 			dprintk("%s(CIOCGSESSION) - bad cipher\n", __FUNCTION__);
 			error = EINVAL;
-			goto bail;
+			goto bail_CIOCGSESSION;
 		}
 
 		switch (sop.mac) {
@@ -660,73 +709,88 @@ cryptodev_ioctl(
 			dprintk("%s(CIOCGSESSION) - no mac\n", __FUNCTION__);
 			break;
 		case CRYPTO_NULL_HMAC:
+                        info.is_hash = 1;
 			info.keysize = 0;
 			info.authsize = 12;
 			break;
 		case CRYPTO_MD5:
+                        info.is_hash = 1;
 			info.keysize = 16;
 			info.authsize = 16;
 			break;
 		case CRYPTO_SHA1:
+                        info.is_hash = 1;
 			info.keysize = 20;
 			info.authsize = 20;
 			break;
 		case CRYPTO_MD5_HMAC:
+                        info.is_hash = 1;
 			info.keysize = 16;
 			info.authsize = 12;
 			break;
 		case CRYPTO_SHA1_HMAC:
+                        info.is_hash = 1;
 			info.keysize = 20;
 			info.authsize = 12;
 			break;
-		case CRYPTO_SHA2_HMAC:
-			if (sop.mackeylen != 32 && sop.mackeylen != 48 &&
-					sop.mackeylen != 64) {
-				dprintk("%s(CIOCGSESSION) - bad key\n", __FUNCTION__);
-				error = EINVAL;
-				goto bail;
-			}
-			info.keysize = sop.mackeylen;
+                case CRYPTO_SHA2_256_HMAC:
+                        info.is_hash = 1;
+			info.keysize = 32;
+			info.authsize = 12;  /* HMAC is always truncated to 96-bits */
+			break;
+                case CRYPTO_SHA2_384_HMAC:
+                        info.is_hash = 1;
+			info.keysize = 48;
+			info.authsize = 12;  /* HMAC is always truncated to 96-bits */
+			break;
+                case CRYPTO_SHA2_512_HMAC:
+                        info.is_hash = 1;
+			info.keysize = 64;
 			info.authsize = 12;  /* HMAC is always truncated to 96-bits */
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
+                        info.is_hash = 1;
 			info.keysize = 20;
 			info.authsize = 12;
 			break;
 		default:
 			dprintk("%s(CIOCGSESSION) - bad mac\n", __FUNCTION__);
 			error = EINVAL;
-			goto bail;
+			goto bail_CIOCGSESSION;
 		}
 
-		if (info.blocksize) {
+                if (info.is_comp) {
+			crie.cri_alg = sop.cipher;
+
+                } else if (info.is_cipher) {
 			crie.cri_alg = sop.cipher;
 			crie.cri_klen = sop.keylen * 8;
 			if (sop.keylen > info.maxkey || sop.keylen < info.minkey) {
 				dprintk("%s(CIOCGSESSION) - bad key\n", __FUNCTION__);
 				error = EINVAL;
-				goto bail;
+				goto bail_CIOCGSESSION;
 			}
 
-			crie.cri_key = (u_int8_t *) kmalloc(crie.cri_klen/8, GFP_KERNEL);
-			if (copy_from_user(crie.cri_key, sop.key,
-							crie.cri_klen/8)) {
-				dprintk("%s(CIOCGSESSION) - bad copy\n", __FUNCTION__);
-				error = EFAULT;
-				goto bail;
-			}
-			if (info.authsize)
+                        crie.cri_key = (u_int8_t *) kmalloc(crie.cri_klen/8, GFP_KERNEL);
+                        if (copy_from_user(crie.cri_key, sop.key,
+                                                crie.cri_klen/8)) {
+                                dprintk("%s(CIOCGSESSION) - bad copy\n", __FUNCTION__);
+                                error = EFAULT;
+                                goto bail_CIOCGSESSION;
+                        }
+
+			if (info.is_hash)
 				crie.cri_next = &cria;
 		}
 
-		if (info.authsize) {
+		if (info.is_hash) {
 			cria.cri_alg = sop.mac;
 			cria.cri_klen = sop.mackeylen * 8;
 			if (sop.mackeylen != info.keysize) {
 				dprintk("%s(CIOCGSESSION) - mackeylen %d\n", __FUNCTION__,
 						sop.mackeylen);
 				error = EINVAL;
-				goto bail;
+				goto bail_CIOCGSESSION;
 			}
 
 			if (cria.cri_klen) {
@@ -735,34 +799,53 @@ cryptodev_ioctl(
 								cria.cri_klen / 8)) {
 					dprintk("%s(CIOCGSESSION) - bad copy\n", __FUNCTION__);
 					error = EFAULT;
-					goto bail;
+					goto bail_CIOCGSESSION;
 				}
 			}
 		}
 
-		error = crypto_newsession(&sid, (info.blocksize ? &crie : &cria),
-				crypto_devsel);
+                // create a session given a device name selected by the user
+                error = crypto_find_driverid (sop.crypto_device_name, &desired_device);
+                if (error)
+                        goto bail_CIOCGSESSION;
+
+                // prevent fallthrough to software crypto
+                switch (desired_device) {
+                case CRYPTO_SOFTWARE:
+                case CRYPTO_ANYSOFTWARE:
+                        if (!crypto_devallowsoft) {
+                                error = EPERM;
+                                goto bail_CIOCGSESSION;
+                        }
+                default:
+                        break;
+                }
+
+		error = crypto_newsession(&sid, (info.is_hash ? &cria : &crie),
+                                desired_device);
 		if (error) {
 			dprintk("%s(CIOCGSESSION) - newsession %d\n", __FUNCTION__, error);
-			goto bail;
+			goto bail_CIOCGSESSION;
 		}
+
+                // write out the name of the device selected for this session
+		crypto_get_sess_devicename(sid, sop.crypto_device_name);
 
 		cse = csecreate(fcr, sid, &crie, &cria, &info);
 		if (cse == NULL) {
 			crypto_freesession(sid);
 			error = EINVAL;
 			dprintk("%s(CIOCGSESSION) - csecreate failed\n", __FUNCTION__);
-			goto bail;
+			goto bail_CIOCGSESSION;
 		}
 		sop.ses = cse->ses;
-		crypto_devicename(sid, sop.crypto_device_name);
 
 		if (copy_to_user((void*)arg, &sop, sizeof(sop))) {
 			dprintk("%s(CIOCGSESSION) - bad copy\n", __FUNCTION__);
 			error = EFAULT;
 		}
 
-bail:
+bail_CIOCGSESSION:
 		if (error) {
 			dprintk("%s(CIOCGSESSION) - bail %d\n", __FUNCTION__, error);
 			if (crie.cri_key)
@@ -836,6 +919,7 @@ bail:
 		error = EINVAL;
 		break;
 	}
+bail:
 	return(-error);
 }
 

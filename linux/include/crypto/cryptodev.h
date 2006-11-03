@@ -63,8 +63,29 @@
 #define CRYPTO_DRIVERS_INITIAL	4
 #define CRYPTO_SW_SESSIONS	32
 
+/* Hash values */
+#define	NULL_HASH_LEN		16
+#define	MD5_HASH_LEN		16
+#define	SHA1_HASH_LEN		20
+#define	RIPEMD160_HASH_LEN	20
+#define	SHA2_256_HASH_LEN	32
+#define	SHA2_384_HASH_LEN	48
+#define	SHA2_512_HASH_LEN	64
+#define	MD5_KPDK_HASH_LEN	16
+#define	SHA1_KPDK_HASH_LEN	20
+/* Maximum hash algorithm result length */
+#define	HASH_MAX_LEN		SHA2_512_HASH_LEN /* Keep this updated */
+
 /* HMAC values */
-#define HMAC_BLOCK_LEN		64
+#define	NULL_HMAC_BLOCK_LEN		64
+#define	MD5_HMAC_BLOCK_LEN		64
+#define	SHA1_HMAC_BLOCK_LEN		64
+#define	RIPEMD160_HMAC_BLOCK_LEN	64
+#define	SHA2_256_HMAC_BLOCK_LEN		64
+#define	SHA2_384_HMAC_BLOCK_LEN		128
+#define	SHA2_512_HMAC_BLOCK_LEN		128
+/* Maximum HMAC block length */
+#define	HMAC_MAX_BLOCK_LEN		SHA2_512_HMAC_BLOCK_LEN /* Keep this updated */
 #define HMAC_IPAD_VAL		0x36
 #define HMAC_OPAD_VAL		0x5C
 
@@ -75,7 +96,8 @@
 #define SKIPJACK_BLOCK_LEN	8
 #define CAST128_BLOCK_LEN	8
 #define RIJNDAEL128_BLOCK_LEN	16
-#define EALG_MAX_BLOCK_LEN	16 /* Keep this updated */
+#define AES_BLOCK_LEN		RIJNDAEL128_BLOCK_LEN
+#define EALG_MAX_BLOCK_LEN	AES_BLOCK_LEN /* Keep this updated */
 
 /* Maximum hash algorithm result length */
 #define AALG_MAX_RESULT_LEN	64 /* Keep this updated */
@@ -96,21 +118,27 @@
 #define CRYPTO_ARC4		12
 #define	CRYPTO_MD5		13
 #define	CRYPTO_SHA1		14
-#define	CRYPTO_SHA2_HMAC	15
-#define CRYPTO_NULL_HMAC	16
-#define CRYPTO_NULL_CBC		17
-#define CRYPTO_DEFLATE_COMP	18 /* Deflate compression algorithm */
-#define CRYPTO_ALGORITHM_MAX	18 /* Keep updated - see below */
+#define	CRYPTO_NULL_HMAC	15
+#define	CRYPTO_NULL_CBC		16
+#define	CRYPTO_DEFLATE_COMP	17 /* Deflate compression algorithm */
+#define	CRYPTO_SHA2_256_HMAC	18
+#define	CRYPTO_SHA2_384_HMAC	19
+#define	CRYPTO_SHA2_512_HMAC	20
+#define	CRYPTO_ALGORITHM_MAX	20 /* Keep updated - see below */
+
+/* alias for backwards compatibility */
+#define CRYPTO_SHA2_HMAC CRYPTO_SHA2_256_HMAC
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
 #define	CRYPTO_ALG_FLAG_RNG_ENABLE	0x02 /* Has HW RNG for DH/DSA */
 #define	CRYPTO_ALG_FLAG_DSA_SHA		0x04 /* Can do SHA on msg */
 
-#define CRYPTO_NAME_LEN 16
+#define CRYPTO_NAME_LEN 16		/* driver + '#" + index + NUL */
+#define CRYPTO_NAME_BASE_LEN 12		/* strlen(drivername) */
 
 struct session_op {
-	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
+	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC, CRYPTO_DEFLATE_COMP */
 	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
 
 	u_int32_t	keylen;		/* cipher key */
@@ -129,7 +157,7 @@ struct crypt_op {
 #define COP_DECRYPT	2
 	u_int16_t	flags;
 #define	COP_F_BATCH	0x0008		/* Batch op if possible */
-	u_int		len;
+	u_int		slen, dlen;     /* slen != dlen in compression */
 	caddr_t		src, dst;	/* become iov[] inside kernel */
 	caddr_t		mac;		/* must be big enough for chosen MAC */
 	caddr_t		iv;
@@ -313,6 +341,18 @@ struct cryptop {
  */
 #define	CRYPTO_HINT_MORE	0x1	/* more ops coming shortly */
 
+/* 
+ * Selecting a devicy by wildcard
+ */
+enum cryptodev_selection {
+	CRYPTO_ANYDEVICE=-1,
+	CRYPTO_ANYHARDWARE=-2,
+	CRYPTO_ANYSOFTWARE=-3,
+	CRYPTO_SOFTWARE=0,
+	/* otherwise, specific driver */
+};
+#define CRYPTODEV_SELECTION_MIN CRYPTO_ANYSOFTWARE
+
 /* note crypt_kop is IOCTL interface */
 struct cryptkop {
 	struct list_head krp_list;
@@ -326,14 +366,16 @@ struct cryptkop {
 	u_int		krp_status;	/* return status */
 	u_short		krp_iparams;	/* # of input parameters */
 	u_short		krp_oparams;	/* # of output parameters */
-	u_int32_t	krp_hid;
+        int32_t         krp_desired_device; /* enum cryptodev_selection */
+	u_int32_t	krp_hid;	/* selected device */
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
 	int		(*krp_callback)(struct cryptkop *);
 };
 
 /* Crypto capabilities structure */
 struct cryptocap {
-	u_int32_t	cc_sessions;
+	u_int32_t	cc_sessions;		/* (d) number of sessions */
+	u_int32_t	cc_koperations;		/* (d) number os asym operations */
 	u_int32_t       cc_hid;
 	char            cc_name[CRYPTO_NAME_LEN];
 
@@ -347,12 +389,12 @@ struct cryptocap {
 
 	u_int8_t	cc_kalg[CRK_ALGORITHM_MAX + 1];
 
-	u_int8_t	cc_flags;
-	u_int8_t	cc_qblocked;		/* symmetric q blocked */
-	u_int8_t	cc_kqblocked;		/* asymmetric q blocked */
+	u_int8_t	cc_flags;		/* (d) flags */
 #define CRYPTOCAP_F_CLEANUP	0x01		/* needs resource cleanup */
 #define CRYPTOCAP_F_SOFTWARE	0x02		/* software implementation */
 #define CRYPTOCAP_F_SYNC	0x04		/* operates synchronously */
+	u_int8_t	cc_qblocked;		/* (q) symmetric q blocked */
+	u_int8_t	cc_kqblocked;		/* (q) asymmetric q blocked */
 
 	void		*cc_arg;		/* callback argument */
 	int		(*cc_newsession)(void*, u_int32_t*, struct cryptoini*);
@@ -373,19 +415,19 @@ struct cryptocap {
 #define	CRYPTO_SESID2CAPS(_sid)	(((_sid) >> 56) & 0xff)
 #define	CRYPTO_SESID2LID(_sid)	(((u_int32_t) (_sid)) & 0xffffffff)
 
-enum cryptodev_selection {
-	CRYPTO_ANYDEVICE=-1,
-	CRYPTO_ANYHARDWARE=-2,
-	CRYPTO_ANYSOFTWARE=-3,
-	CRYPTO_SOFTWARE=0,
-	/* otherwise, specific driver */
-};
-#define CRYPTO_DEVICE_MIN CRYPTO_ANYSOFTWARE
+// these strings are passed in session_op::crypto_device_name to select the 
+// hardware device to use; see crypto_find_driverid()
+#define CRYPTO_ANYDEVICE_STRING   "anydevice"  
+#define CRYPTO_ANYHARDWARE_STRING "anyhardware"
+#define CRYPTO_ANYSOFTWARE_STRING "anysoftware"
+#define CRYPTO_SOFTWARE_STRING    "software"   
 
 extern	int crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selection desired_device);
 extern	int crypto_freesession(u_int64_t sid);
-extern	int32_t crypto_get_driverid(u_int32_t flags, char *drivername);
-extern  void crypto_devicename(u_int64_t sid, char devicename[16]);
+extern	int32_t crypto_get_driverid(u_int32_t flags, const char *drivername);
+extern  int crypto_find_driverid (const char *drivername, int32_t *found_id);
+extern  void crypto_get_devicename(u_int32_t device_id, char devicename[CRYPTO_NAME_LEN]);
+extern  void crypto_get_sess_devicename (u_int64_t sid, char devicename[CRYPTO_NAME_LEN]);
 extern	int crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	    u_int32_t flags,
 	    int (*newses)(void*, u_int32_t*, struct cryptoini*),

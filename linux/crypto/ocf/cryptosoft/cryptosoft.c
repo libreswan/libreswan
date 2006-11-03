@@ -48,7 +48,11 @@
 #include <linux/skbuff.h>
 #include <linux/random.h>
 #include <linux/uio.h>
+#include <linux/smp.h>
+#include <linux/hardirq.h>
+#include <linux/vmalloc.h>
 #include <asm/scatterlist.h>
+#include <asm/kmap_types.h>
 
 #include <crypto/cryptodev.h>
 
@@ -68,7 +72,7 @@ struct swcr_data {
 	struct crypto_tfm	*sw_tfm;
 	union {
 		struct {
-			char sw_key[HMAC_BLOCK_LEN];
+			char sw_key[HMAC_MAX_BLOCK_LEN];
 			int  sw_klen;
 			int  sw_authlen;
 		} hmac;
@@ -85,6 +89,9 @@ static u_int32_t swcr_sesnum = 0;
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
 static	int swcr_freesession(void *, u_int64_t);
+
+#define OCF_COMP_TEMP_BUFFER_SIZE 65400
+static void **ocf_comp_temp_buffers;
 
 static int debug = 0;
 module_param(debug, int, 0644);
@@ -286,7 +293,8 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			return EINVAL;
 		}
 
-		if (sw_type == SW_TYPE_CIPHER) {
+                switch (sw_type) {
+                case SW_TYPE_CIPHER:
 			if (debug) {
 				dprintk("%s key:", __FUNCTION__);
 				for (i = 0; i < (cri->cri_klen + 7) / 8; i++)
@@ -301,12 +309,21 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 				swcr_freesession(NULL, i);
 				return error;
 			}
-		} else if (sw_type == SW_TYPE_HMAC || sw_type == SW_TYPE_HASH) {
+                        break;
+
+                case SW_TYPE_HMAC:
+                case SW_TYPE_HASH:
 			(*swd)->u.hmac.sw_klen = (cri->cri_klen + 7) / 8;
-			if (HMAC_BLOCK_LEN < (*swd)->u.hmac.sw_klen)
+			if (HMAC_MAX_BLOCK_LEN < (*swd)->u.hmac.sw_klen)
 				printk("%s,%d: ERROR ERROR ERROR\n", __FILE__, __LINE__);
 			memcpy((*swd)->u.hmac.sw_key, cri->cri_key, (*swd)->u.hmac.sw_klen);
-		} else {
+                        break;
+
+                case SW_TYPE_COMP:
+                        // nothing to configure
+                        break;
+
+                default:
 			printk("cryptosoft: Unhandled sw_type %d\n", sw_type);
 			swcr_freesession(NULL, i);
 			return EINVAL;
@@ -359,12 +376,15 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 	struct cryptodesc *crd;
 	struct swcr_data *sw;
 	u_int32_t lid;
-	int type;
+	int type, ret;
 #define SCATTERLIST_MAX 16
 	struct scatterlist sg[SCATTERLIST_MAX];
 	int sg_num, sg_len, skip;
 	struct sk_buff *skb = NULL;
 	struct uio *uiop = NULL;
+        int cpu;
+        u8 *tmp_buffer, *temp, *data;
+        unsigned dlen;
 
 	dprintk("%s()\n", __FUNCTION__);
 	/* Sanity check */
@@ -400,6 +420,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 					skb_shinfo(skb)->nr_frags);
 			goto done;
 		}
+
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
 		uiop = (struct uio *) crp->crp_buf;
 		if (uiop->uio_iovcnt > SCATTERLIST_MAX) {
@@ -510,6 +531,15 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 			sg_num = 1;
 		}
 
+                dprintk ("cryptosoft desc %s %s\n",
+                                type == CRYPTO_BUF_CONTIG ? "CONTIG" :
+                                type == CRYPTO_BUF_IOV    ? "IOV" :
+                                type == CRYPTO_BUF_SKBUF  ? "SKBUF" : "???",
+                                sw->sw_type == SW_TYPE_CIPHER ? "CIPHER" :
+                                sw->sw_type == SW_TYPE_HMAC   ? "HMAC" :
+                                sw->sw_type == SW_TYPE_AUTH2  ? "AUTH2" :
+                                sw->sw_type == SW_TYPE_HASH   ? "HASH" :
+                                sw->sw_type == SW_TYPE_COMP   ? "COMP" : "???");
 
 		switch (sw->sw_type) {
 		case SW_TYPE_CIPHER: {
@@ -655,13 +685,98 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 			break;
 
 		case SW_TYPE_COMP:
-#if 0
-			data = allocate contiguous buffer (crp->crp_buf, crd->crd_len)
-			if (crd->crd_flags & CRD_F_COMP)
-				ret = crypto_comp_compress(sw->sw_tfm, data, len, result, &dlen);
-			else
-				ret = crypto_comp_decompress(sw->sw_tfm, data, len, result, &dlen);
-#endif
+
+                        // disable preemption and grab a 64k temp buffer
+                        cpu = get_cpu();
+                        tmp_buffer = *per_cpu_ptr(ocf_comp_temp_buffers, cpu);
+
+                        // this will be our destination buffer
+                        temp = tmp_buffer;
+                        dlen = OCF_COMP_TEMP_BUFFER_SIZE;
+
+                        // our deflate deflate functions don't handle scatter
+                        // gather so we have to copy into a temporary buffer
+                        // if we have more then one
+                        if (sg_num > 1) {
+                                int i;
+
+                                // copy all sg segments into tmp_buffer
+                                for (i=0, data=tmp_buffer; i<sg_num; 
+                                                i++, data+=sg[i].length) {
+
+                                        u8 *ptr = kmap_atomic (sg[i].page, 
+                                                in_softirq() 
+                                                        ? KM_SOFTIRQ0 
+                                                        : KM_USER0);
+
+                                        memcpy (data, (ptr + sg[i].offset),
+                                                        sg[i].length);
+
+                                        kunmap_atomic (ptr, 
+                                                in_softirq() 
+                                                        ? KM_SOFTIRQ0 
+                                                        : KM_USER0);
+                                }
+
+                                data = tmp_buffer;
+
+                        } else if (crp->crp_flags & CRYPTO_F_SKBUF) {
+                                // only one segment, and it's in the skb
+                                data = skb->data + skip;
+
+                        } else if (crp->crp_flags & CRYPTO_F_IOV) {
+                                // only one segment, and it's in the uiov
+                                data = uiop->uio_iov[0].iov_base + skip;
+
+                        } else {
+                                // only one segment, and it's in crp buffer
+                                data = crp->crp_buf + skip;
+                        }
+
+                        // do the deflate op
+			if (crd->crd_flags & CRD_F_ENCRYPT) { /* compress */
+                                ret = crypto_comp_compress(sw->sw_tfm, 
+                                                data, crd->crd_len, 
+                                                temp, &dlen);
+                                if (!ret && dlen > crd->crd_len) {
+                                        dprintk("cryptosoft: ERANGE compress "
+                                                        "%d into %d\n",
+                                                        crd->crd_len, dlen);
+                                        ret = ERANGE;
+                                }
+
+                        } else { /* decompress */
+                                ret = crypto_comp_decompress(sw->sw_tfm, 
+                                                data, crd->crd_len, 
+                                                temp, &dlen);
+                                if (!ret && (dlen + crd->crd_inject) > crp->crp_olen) {
+                                        dprintk("cryptosoft: ETOOSMALL decompress "
+                                                        "%d into %d, space for %d,"
+                                                        "at offset %d\n",
+                                                        crd->crd_len, dlen, 
+                                                        crp->crp_olen,
+                                                        crd->crd_inject);
+                                        ret = ETOOSMALL;
+                                }
+                        }
+
+                        // on success copy result back
+			crp->crp_etype = ret;
+                        if (ret == 0) {
+                                if (type == CRYPTO_BUF_CONTIG)
+                                        memcpy(crp->crp_buf + crd->crd_inject, temp, dlen);
+                                else if (type == CRYPTO_BUF_SKBUF)
+                                        skb_store_bits(skb, crd->crd_inject, temp, dlen);
+                                else if (type == CRYPTO_BUF_IOV)
+                                        cuio_copyback(uiop, crd->crd_inject, dlen, (caddr_t)temp);
+                        }
+
+                        // update the amount of space in the result
+                        crp->crp_olen = dlen;
+
+                        // reenable preemption
+                        put_cpu();
+
 			break;
 
 		default:
@@ -680,6 +795,24 @@ done:
 static int
 cryptosoft_init(void)
 {
+        int i, rc;
+
+        rc = -ENOMEM;
+        ocf_comp_temp_buffers = alloc_percpu (void*);
+        if (!ocf_comp_temp_buffers)
+                goto error_allocate_array;
+
+        for_each_possible_cpu (i) {
+                void *tmp = vmalloc (OCF_COMP_TEMP_BUFFER_SIZE);
+                if (!tmp) {
+                        printk("cryptosoft: cannot allocate temporary buffer, "
+                                        "cpu=%d, size=%d\n", i,
+                                        OCF_COMP_TEMP_BUFFER_SIZE);
+                        goto error_allocate_member;
+                }
+                *per_cpu_ptr(ocf_comp_temp_buffers, i) = tmp;
+        }
+
 	dprintk("%s(%p)\n", __FUNCTION__, cryptosoft_init);
 	swcr_id = crypto_get_driverid(CRYPTOCAP_F_SOFTWARE | CRYPTOCAP_F_SYNC, "cryptosoft");
 	if (swcr_id < 0)
@@ -711,14 +844,30 @@ cryptosoft_init(void)
 	REGISTER(CRYPTO_DEFLATE_COMP);
 #undef REGISTER
 	return(0);
+
+
+error_allocate_member:
+        for_each_possible_cpu (i) {
+                vfree (*per_cpu_ptr(ocf_comp_temp_buffers, i));
+        }
+        free_percpu (ocf_comp_temp_buffers);
+error_allocate_array:
+        return rc;
 }
 
 static void
 cryptosoft_exit(void)
 {
+        int i;
+
 	dprintk("%s()\n", __FUNCTION__);
 	crypto_unregister_all(swcr_id);
-	swcr_id = -1;
+        swcr_id = -1;
+
+        for_each_possible_cpu (i) {
+                vfree (*per_cpu_ptr(ocf_comp_temp_buffers, i));
+        }
+        free_percpu (ocf_comp_temp_buffers);
 }
 
 module_init(cryptosoft_init);
