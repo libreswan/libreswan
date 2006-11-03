@@ -31,7 +31,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/types.h>
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
+#if !defined(linux)
+#include <sys/param.h>
 #include <sys/sysctl.h>
 #endif
 
@@ -833,7 +834,7 @@ void init_crypto_helpers(int nhelpers)
     /* if nhelpers == 0, then we do all the work ourselves */
     if(nhelpers == -1) {
 	int ncpu_online;
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
+#if defined(_SC_NPROCESSORS_ONLN)
       ncpu_online = sysconf(_SC_NPROCESSORS_ONLN);
 #else
       int mib[2], numcpu;

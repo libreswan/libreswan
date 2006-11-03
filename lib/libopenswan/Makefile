@@ -41,6 +41,10 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
 
 SRCS+=sanitizestring.c pfkey_print.c pfkey_sock.c pfkey_error.c
 
+ifeq ($(NEEDS_GETOPT),true)
+SRCS+=getopt_long.c
+endif
+
 ifeq ($(USE_KLIPS),true)
 KLIPS_DEFS=-DKLIPS 
 # for now, USE_KLIPS=>linux, which implies we have udpfromto() support.
@@ -75,6 +79,7 @@ CFLAGS=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
 CFLAGS+=-I${OPENSWANSRCDIR} -DDEBUG
 CFLAGS+=${PFKEYV2_DEFS} ${KLIPS_DEFS} ${UDPFROMTO_DEFS}
 CFLAGS+= -I${OPENSWANSRCDIR}/include ${PORTINCLUDE} $(USERCOMPILE)
+CFLAGS+=${PORTLASTINCLUDE}
 CFLAGS+= -Wall
 #CFLAGS+= -Wconversion
 #CFLAGS+= -Wmissing-prototypes

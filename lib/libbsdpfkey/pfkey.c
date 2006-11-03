@@ -30,7 +30,6 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +48,7 @@ __FBSDID("$FreeBSD$");
 #include "oswlog.h"
 
 #include "ipsec_strerror.h"
-#include "libpfkey.h"
+#include "libbsdkame/libpfkey.h"
 
 #define CALLOC(size, cast) (cast)calloc(1, (size))
 

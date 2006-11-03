@@ -44,9 +44,7 @@ char tncfg_c_version[] = "RCSID $Id: lwdnsq.c,v 1.23 2005/08/26 19:13:48 mcr Exp
 #include <lwres/netdb.h>
 #include <lwres/async.h>
 
-#if defined(__CYGWIN__) || (defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
-#define getopt_long_only getopt_long
-#endif
+#include "getoptlong.h"
 
 #include "lwdnsq.h"
 
@@ -153,7 +151,7 @@ static int cmdparse(dnskey_glob *gs,
 	argc=0;
 	
 	/* skip initial spaces */
-	while(cmdline && isspace(*cmdline)) {
+	while(cmdline && isspace((int)*cmdline)) {
 		cmdline++;
 	}
 
@@ -165,7 +163,7 @@ static int cmdparse(dnskey_glob *gs,
 	     */
 	    argv[argc++]=arg;
 	  }
-	  while(cmdline && isspace(*cmdline)) {
+	  while(cmdline && isspace((int)*cmdline)) {
 	    cmdline++;
 	  }
 	}
@@ -294,7 +292,7 @@ main(int argc, char *argv[])
 		exit(5);
 	}
 
-	while((c = getopt_long_only(argc, argv, "dgl:siXZ", longopts, 0)) != EOF) {
+	while((c = getopt_long(argc, argv, "dgl:siXZ", longopts, 0)) != EOF) {
 		switch(c) {
 		case 'd':
 			gs.debug+=2;

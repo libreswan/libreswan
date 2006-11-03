@@ -1,0 +1,38 @@
+# set this to space where a linked/configured tree can be created by 
+# preprhkern4module. Only needed if you are going to be created RPMs
+# outside of a distribution (as the FS team does for RedHat).
+
+PORTINCLUDE=
+PORTINCLUDE+=-I${OPENSWANSRCDIR}/ports/netbsd/include
+
+PORTLASTINCLUDE=
+PORTLASTINCLUDE+=-isystem /usr/local/include
+PORTLASTINCLUDE+=-I/usr/pkg/include
+
+PORTDEFINE+=-DHAS_SUN_LEN
+
+PORTLDFLAGS=-L/usr/pkg/lib
+
+TCLLIB=-ltcl8.4
+TCLINC=-isystem /usr/pkg/include/tcl8.4
+
+# no KLIPS, we will be using FreeBSD copy of pfkey code.
+USE_KLIPS=false
+USE_KERNEL26=false
+USE_PFKEYv2=false
+
+USE_BSDKAME=true
+
+NEEDS_GETOPT=true
+
+# build modules, etc. for KLIPS.
+BUILD_KLIPS=false
+
+CFLAGS+=-DHAVE_SETPROCTITLE -DSCANDIR_HAS_CONST
+
+# ISC code should use unix definitions.
+ISCARCH=unix
+ISCHOSTARCH=unix
+
+USERLINK=-L/usr/local/lib -lcrypt
+

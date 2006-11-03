@@ -34,7 +34,7 @@
 #include <netkey/keydb.h>
 #include <netinet/in.h>
 #include <netinet6/ipsec.h>
-#include "libpfkey.h"         /* this is a copy of a freebsd libipsec/ file */
+#include "libbsdkame/libpfkey.h"         /* this is a copy of a freebsd libipsec/ file */
 
 #include "sysdep.h"
 #include "constants.h"

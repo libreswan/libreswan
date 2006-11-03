@@ -16,6 +16,7 @@
 
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
 #include <net/if.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -103,7 +103,7 @@
 /*
  * FreeBSD
  */
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) 
 #  define DEBUG_NO_STATIC static
 #include <sys/types.h>
 #include <netinet/in.h>

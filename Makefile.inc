@@ -484,6 +484,12 @@ export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
 
 #KERNELBUILDMFLAGS=--debug=biv V=1 
 
+
+# NEED_ things are compile time things. Just provide defaults as documentation.
+
+# needs getopt_long_only() function.
+NEEDS_GETOPT?=false
+
 # for emacs
 #
 # Local Variables: ;;;
