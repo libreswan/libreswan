@@ -161,7 +161,8 @@ ocf_des_cryptodev_internal(
 	cop.op = operation;
 	cop.src = (char *)fixed_src; 
 	cop.dst = (char *)dst;
-	cop.len = fixed_len;
+	cop.slen = fixed_len;
+	cop.dlen = fixed_len;
 	cop.iv = (char *)iv;
 	if (ioctl(crypto_fd, CIOCCRYPT, &cop) < 0) {
 		/* fprintf(stderr, "%s CIOCCRYPT failed\n", __FUNCTION__); */
