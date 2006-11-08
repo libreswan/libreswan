@@ -54,6 +54,10 @@
 #include <asm/scatterlist.h>
 #include <asm/kmap_types.h>
 
+#ifdef CONFIG_OCF_CRYPTOSOFT_DEBUG_COUNTERS
+#include <linux/debugfs.h>
+#endif
+
 #include <crypto/cryptodev.h>
 
 #define offset_in_page(p) ((unsigned long)(p) & ~PAGE_MASK)
@@ -97,6 +101,36 @@ static int debug = 0;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug,
 	   "Enable debug");
+
+#ifdef CONFIG_OCF_CRYPTOSOFT_DEBUG_COUNTERS
+
+static struct dentry *cryptosoft_debugfs_dir = NULL;
+
+enum {
+        DEBUG_VAR_cnt_total,
+
+        DEBUG_VAR_MAX
+};
+
+static struct {
+
+        const char *name;
+        struct dentry *file;
+        u32 value;
+
+} debug_vars[DEBUG_VAR_MAX] = {
+#define DEBUG_VAR_DEF(name) [DEBUG_VAR_##name] = { #name, NULL, 0 }
+
+       DEBUG_VAR_DEF(cnt_total),
+};
+
+#define debug_var_op(name,op) do { debug_vars[DEBUG_VAR_##name] op; } while (0)
+
+#else // CONFIG_OCF_CRYPTOSOFT_DEBUG_COUNTERS
+
+#define debug_var_op(name,op) do { /* nothing */ } while (0)
+
+#endif // CONFIG_OCF_CRYPTOSOFT_DEBUG_COUNTERS
 
 static void
 skb_copy_bits_back(struct sk_buff *skb, int offset, caddr_t cp, int len)
@@ -820,6 +854,23 @@ cryptosoft_init(void)
 
 	printk("cryptosoft: registered as device: %d\n", swcr_id);
 
+        // register our counters
+#ifdef CONFIG_OCF_CRYPTOSOFT_DEBUG_COUNTERS
+
+        cryptosoft_debugfs_dir = debugfs_create_dir ("cryptosoft", NULL);
+
+        if (cryptosoft_debugfs_dir) {
+                typeof (*debug_vars) *dvar;
+
+                for (dvar = debug_vars; dvar->name; dvar++)
+                        dvar->file = debugfs_create_u32(dvar->name, 0444,
+                                        cryptosoft_debugfs_dir, &dvar->value);
+
+                // we don't care if the registration fails
+        }
+
+#endif // CONFIG_OCF_CRYPTOSOFT_DEBUG_COUNTERS
+
 	crypto_register(swcr_id, CRYPTO_DES_CBC,
 	    0, 0, swcr_newsession, swcr_freesession, swcr_process, NULL);
 #define	REGISTER(alg) \
@@ -868,6 +919,27 @@ cryptosoft_exit(void)
                 vfree (*per_cpu_ptr(ocf_comp_temp_buffers, i));
         }
         free_percpu (ocf_comp_temp_buffers);
+
+        // deregister our counters
+#ifdef CONFIG_OCF_CRYPTOSOFT_DEBUG_COUNTERS
+
+        if (cryptosoft_debugfs_dir) {
+                typeof (*debug_vars) *dvar;
+
+                for (dvar = debug_vars; dvar->name; dvar++) {
+                        if (!dvar->file)
+                                continue;
+
+                        debugfs_remove (dvar->file);
+                        dvar->file = NULL;
+                }
+
+                debugfs_remove (cryptosoft_debugfs_dir);
+                cryptosoft_debugfs_dir = NULL;
+        }
+
+
+#endif // CONFIG_OCF_CRYPTOSOFT_DEBUG_COUNTERS
 }
 
 module_init(cryptosoft_init);

@@ -33,6 +33,14 @@ config OCF_CRYPTOSOFT
 	  A software driver for the OCF framework that uses
 	  the kernel CryptoAPI.
 
+config OCF_CRYPTOSOFT_DEBUG_COUNTERS
+	bool "enable debug counters for cryptosoft usage"
+	depends on OCF_CRYPTOSOFT && DEBUG_FS
+	help
+	  This option adds several counters into /sys/modules/cryptosoft
+          that are incremented for each operation performed by software.
+	  Used for testing and debugging.
+
 config OCF_SAFE
 	tristate "safenet (HW crypto engine)"
 	depends on OCF_OCF
