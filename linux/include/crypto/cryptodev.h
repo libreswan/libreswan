@@ -129,7 +129,7 @@ struct crypt_op {
 #define COP_DECRYPT	2
 	u_int16_t	flags;
 #define	COP_F_BATCH	0x0008		/* Batch op if possible */
-	u_int		len;
+	u_int		slen, dlen;     /* slen != dlen in compression */
 	caddr_t		src, dst;	/* become iov[] inside kernel */
 	caddr_t		mac;		/* must be big enough for chosen MAC */
 	caddr_t		iv;
