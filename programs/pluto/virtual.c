@@ -349,7 +349,7 @@ err_t
 is_virtual_net_allowed(const struct connection *c, const ip_subnet *peer_net,
 	const ip_address *his_addr)
 {
-    err_t why;
+    err_t why = NULL;
 
     if (!c->spd.that.virt) return NULL;
 

@@ -1,0 +1,13 @@
+  <varlistentry>
+  <term><emphasis remap='B'>dpdtimeout</emphasis></term>
+  <listitem>
+<para>Set the length of time (in seconds) we will idle without hearing either an
+R_U_THERE poll from our peer, or an R_U_THERE_ACK reply.  After this period
+has elapsed with no response and no traffic, we will declare the peer dead,
+and remove the SA (default
+<literal>120</literal>
+seconds).  If dpddelay is set, but not dpdtimeout, dpdtimeout will be set
+to the default.</para>
+  </listitem>
+  </varlistentry>
+

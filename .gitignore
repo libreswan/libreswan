@@ -1,6 +1,10 @@
+*.bak
+*.rej
+*~
+OBJ.*
 OBJ.freebsd.i386
 OBJ.linux.i386
-UMLPOOL
 TAGS
+UMLPOOL
+testing/.*/OUTPUT/.*
 umlsetup.sh
-*~

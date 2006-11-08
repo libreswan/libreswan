@@ -24,7 +24,8 @@
  *	Creates a new alg_info by parsing passed string		
  */
 enum parser_state_esp {
-	ST_INI,
+        ST_INI,         /* parse esp= string */
+	ST_INI_AA,      /* parse ah= string */
 	ST_EA,		/* encrypt algo   */
 	ST_EA_END,	
 	ST_EK,		/* enc. key length */
@@ -55,6 +56,8 @@ struct parser_context {
 	char *modp_str;
 	int eklen;
 	int aklen;
+    bool ealg_permit;
+    bool aalg_permit;
 	int ch;
 	const char *err;
 };
@@ -119,6 +122,10 @@ void alg_info_delref(struct alg_info **alg_info);
 struct alg_info_esp * alg_info_esp_create_from_str(const char *alg_str
 						   , err_t *err_p
 						   , bool permitmann);
+
+struct alg_info_esp * alg_info_ah_create_from_str(const char *alg_str
+						  , err_t *err_p
+						  , bool permitmann);
 
 struct alg_info_ike * alg_info_ike_create_from_str(const char *alg_str
 						   , err_t *err_p);

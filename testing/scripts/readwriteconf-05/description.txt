@@ -1,0 +1,2 @@
+this tests parsing of a config file with a phase2=esp, and
+a lifetime= parameter

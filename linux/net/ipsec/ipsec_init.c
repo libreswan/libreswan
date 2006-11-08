@@ -20,7 +20,9 @@
 
 char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.2 2006/04/20 16:33:06 mcr Exp $";
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/kernel.h> /* printk() */
@@ -78,6 +80,7 @@ char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.2 2006/04/20 16
 #include "openswan/ipsec_tunnel.h"
 
 #include "openswan/ipsec_rcv.h"
+#include "openswan/ipsec_xmit.h"
 #include "openswan/ipsec_ah.h"
 #include "openswan/ipsec_esp.h"
 
@@ -87,6 +90,10 @@ char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.2 2006/04/20 16
 
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_alg.h"
+
+#ifdef CONFIG_KLIPS_OCF
+#include "ipsec_ocf.h"
+#endif
 
 #include <openswan/pfkeyv2.h>
 #include <openswan/pfkey.h>
@@ -111,12 +118,6 @@ char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.2 2006/04/20 16
 #ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");
 #endif
-
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_eroute = 0;
-int debug_spi = 0;
-int debug_netlink = 0;
-#endif /* CONFIG_KLIPS_DEBUG */
 
 struct prng ipsec_prng;
 
@@ -272,6 +273,10 @@ ipsec_klips_init(void)
 #endif                                                                          
 
 	ipsec_alg_init();
+
+#ifdef CONFIG_KLIPS_OCF
+	ipsec_ocf_init();
+#endif
 
 	get_random_bytes((void *)seed, sizeof(seed));
 	prng_init(&ipsec_prng, seed, sizeof(seed));

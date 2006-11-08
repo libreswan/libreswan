@@ -42,6 +42,7 @@ do
 	--nocrsend)	         nocrsend="$2" ; shift	;;
 	--strictcrlpolicy)	 strictcrlpolicy="$2" ; shift	;;
 	--crlcheckinterval)	 crlcheckinterval="$2"; shift	;;
+	--acceleration)          acceleration="$2"; shift;;
         --ocspuri)               ocspuri="$2"; shift    ;;
 	--dump)	                 dumpdir="$2" ; shift	;;
 	--opts)	                 popts="$2" ; shift	;;
@@ -123,6 +124,12 @@ esac
 if test ${crlcheckinterval:-0} -gt 0
 then
 	popts="$popts --crlcheckinterval $crlcheckinterval"
+fi
+
+# add crl check interval
+if test -n "$acceleration"
+then
+	popts="$popts --use-acceleration=$acceleration"
 fi
 
 # add ocsp uri

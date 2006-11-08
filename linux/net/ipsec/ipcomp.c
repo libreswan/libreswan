@@ -20,7 +20,9 @@ char ipcomp_c_version[] = "RCSID $Id: ipcomp.c,v 1.41.2.3 2006/04/20 15:46:58 mc
 
 /* SSS */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 
 #define __NO_VERSION__
@@ -65,10 +67,6 @@ char ipcomp_c_version[] = "RCSID $Id: ipcomp.c,v 1.41.2.3 2006/04/20 15:46:58 mc
 #include "zlib/zutil.h"
 
 #include <openswan/pfkeyv2.h> /* SADB_X_CALG_DEFLATE */
-
-#ifdef CONFIG_KLIPS_DEBUG
-int sysctl_ipsec_debug_ipcomp = 0;
-#endif /* CONFIG_KLIPS_DEBUG */
 
 static
 struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_mask);

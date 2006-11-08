@@ -7,9 +7,9 @@ BISON=bison
 RM=rm
 
 INCLUDES+=-I${OPENSWANSRCDIR} -I${KLIPSINC} -I${OPENSWANSRCDIR}/include
-CFLAGS+=${USERCOMPILE} ${PORTINCLUDE} ${INCLUDES}
+CFLAGS+=${USERCOMPILE} ${PORTINCLUDE} ${INCLUDES} ${PORTLASTINCLUDE}
 
-CFLAGS+= -Wall
+CFLAGS+= ${WALL}
 #CFLAGS+= -Wconversion
 #CFLAGS+= -Wmissing-prototypes
 CFLAGS+= -Wpointer-arith
@@ -57,6 +57,8 @@ ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS=-L$(LD_LIBRARY_PATH)
 endif
 
+LDFLAGS+=${PORTLDFLAGS}
+
 MANDIR8=$(MANTREE)/man8
 MANDIR5=$(MANTREE)/man5
 
@@ -72,11 +74,13 @@ ifndef CONFDSUBDIR
 CONFDSUBDIR=.
 endif
 
+PROGRAMOBJDIR?=${PROGRAM}
+
 # we can't do tests with two conditions, but we can concatenate the strings
 SHOULDWERESTART=${USE_OBJDIR}$(wildcard ../Makefile.program)
 ifeq ($(SHOULDWERESTART),true../Makefile.program)
 all programs clean install:
-	cd ${OPENSWANSRCDIR} && cd ${OBJDIRTOP}/programs/${PROGRAM} && $(MAKE) $@
+	cd ${OPENSWANSRCDIR} && cd ${OBJDIRTOP}/programs/${PROGRAMOBJDIR} && $(MAKE) $@
 else
 all: ${PROGRAM}
 programs: all

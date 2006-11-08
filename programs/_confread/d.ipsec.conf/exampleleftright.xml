@@ -1,0 +1,78 @@
+<refsect1 id='conn_sections'><title>CONN SECTIONS</title>
+<para>A
+<emphasis remap='B'>conn</emphasis>
+section contains a
+<emphasis remap='I'>connection specification</emphasis>,
+defining a network connection to be made using IPsec.
+The name given is arbitrary, and is used to identify the connection to
+<citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>ipsec_manual</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+Here's a simple example:</para>
+
+<!-- .ne 10 -->
+<literallayout remap='.nf'>
+<!-- .ta 1c -->
+<emphasis remap='B'>
+conn snt
+	left=10.11.11.1
+	leftsubnet=10.0.1.0/24
+	leftnexthop=172.16.55.66
+	leftsourceip=10.0.1.1
+	right=192.168.22.1
+	rightsubnet=10.0.2.0/24
+	rightnexthop=172.16.88.99
+	rightsourceip=10.0.2.1
+	keyingtries=%forever
+</emphasis>
+</literallayout> <!-- .fi -->
+
+<para>A note on terminology...
+In automatic keying, there are two kinds of communications going on:
+transmission of user IP packets, and gateway-to-gateway negotiations for
+keying, rekeying, and general control.
+The data path (a set of &ldquo;IPsec SAs&rdquo;) used for user packets is herein
+referred to as the &ldquo;connection&rdquo;;
+the path used for negotiations (built with &ldquo;ISAKMP SAs&rdquo;) is referred to as
+the &ldquo;keying channel&rdquo;.</para>
+
+<para>To avoid trivial editing of the configuration file to suit it to each system
+involved in a connection,
+connection specifications are written in terms of
+<emphasis remap='I'>left</emphasis>
+and
+<emphasis remap='I'>right</emphasis>
+participants,
+rather than in terms of local and remote.
+Which participant is considered
+<emphasis remap='I'>left</emphasis>
+or
+<emphasis remap='I'>right</emphasis>
+is arbitrary;
+IPsec figures out which one it is being run on based on internal information.
+This permits using identical connection specifications on both ends.
+There are cases where there is no symmetry; a good convention is to
+use
+<emphasis remap='I'>left</emphasis>
+for the local side and
+<emphasis remap='I'>right</emphasis>
+for the remote side (the first letters are a good mnemonic).</para>
+
+<para>Many of the parameters relate to one participant or the other;
+only the ones for
+<emphasis remap='I'>left</emphasis>
+are listed here, but every parameter whose name begins with
+<emphasis remap='B'>left</emphasis>
+has a
+<emphasis remap='B'>right</emphasis>
+counterpart,
+whose description is the same but with
+<emphasis remap='B'>left</emphasis>
+and
+<emphasis remap='B'>right</emphasis>
+reversed.</para>
+
+<para>Parameters are optional unless marked &ldquo;(required)&rdquo;;
+a parameter required for manual keying need not be included for
+a connection which will use only automatic keying, and vice versa.</para>
+

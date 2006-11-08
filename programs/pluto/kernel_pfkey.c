@@ -1268,7 +1268,7 @@ pfkey_sag_eroute(struct state *st, struct spd_route *sr
     {
         inner_spi = st->st_ah.attrs.spi;
         inner_proto = SA_AH;
-        inner_satype = SADB_SATYPE_AH;
+        inner_satype = ET_AH;
 
         i--;
         proto_info[i].proto = IPPROTO_AH;
@@ -1281,7 +1281,7 @@ pfkey_sag_eroute(struct state *st, struct spd_route *sr
     {
         inner_spi = st->st_esp.attrs.spi;
         inner_proto = SA_ESP;
-        inner_satype = SADB_SATYPE_ESP;
+        inner_satype = ET_ESP;
 
         i--;
         proto_info[i].proto = IPPROTO_ESP;
@@ -1294,7 +1294,7 @@ pfkey_sag_eroute(struct state *st, struct spd_route *sr
     {
         inner_spi = st->st_ipcomp.attrs.spi;
         inner_proto = SA_COMP;
-        inner_satype = SADB_X_SATYPE_COMP;
+        inner_satype = ET_IPCOMP;
 
         i--;
         proto_info[i].proto = IPPROTO_COMP;
@@ -1314,7 +1314,7 @@ pfkey_sag_eroute(struct state *st, struct spd_route *sr
 
         inner_spi = st->st_tunnel_out_spi;
         inner_proto = SA_IPIP;
-        inner_satype = SADB_X_SATYPE_IPIP;
+        inner_satype = ET_IPIP;
 
         proto_info[i].encapsulation = ENCAPSULATION_MODE_TUNNEL;
         for (j = i + 1; proto_info[j].proto; j++)
@@ -1796,3 +1796,10 @@ pfkey_plumb_mast_device(int mast_dev)
 
 
 #endif /* KLIPS */
+
+/*
+ * Local Variables:
+ * c-basic-offset:4
+ * c-style: pluto
+ * End:
+ */

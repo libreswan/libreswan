@@ -55,7 +55,9 @@ char radij_c_version[] = "RCSID $Id: radij.c,v 1.48 2005/04/29 05:10:22 mcr Exp 
  * Routines to build and maintain radix trees for routing lookups.
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 

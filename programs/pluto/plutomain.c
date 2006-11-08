@@ -127,6 +127,7 @@ usage(const char *mess)
 	    " [--use-netkey]"
 	    " [--use-mastklips]"
 	    " [--use-bsdkame]"
+	    " [--use-acceleration=<never,ipsec,pk,available>]"
 	    " \\\n\t"
 	    "[--interface <ifname|ifaddr>]"
 	    " [--ikeport <port-number>]"
@@ -335,6 +336,7 @@ main(int argc, char **argv)
 	    { "use-mast",   no_argument, NULL, 'M' },
 	    { "use-mastklips", no_argument, NULL, 'M' },
 	    { "use-bsdkame",   no_argument, NULL, 'F' },
+	    { "use-acceleration", required_argument, NULL, '8'}, 
 	    { "interface", required_argument, NULL, 'i' },
 	    { "ikeport", required_argument, NULL, 'p' },
 	    { "ctlbase", required_argument, NULL, 'b' },
@@ -609,6 +611,10 @@ main(int argc, char **argv)
 	    please_use_vulcan_hack=TRUE;
 	    continue;
 #endif
+        case '8':      /* --use-acceleration= */
+	    decode_acceleration_string(optarg);
+	    continue;
+
 #ifdef VIRTUAL_IP
 	case '6':	/* --virtual_private */
 	    virtual_private = optarg;

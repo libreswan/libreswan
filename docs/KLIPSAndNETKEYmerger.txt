@@ -1,0 +1,120 @@
+-*- emacs-wiki -*-
+
+In October of 2002, just prior to the feature freeze of the Linux 2.6 kernel,
+an effort appeared to bring IPsec into the mainstream of the Linux 2.6
+kernel.
+
+The group decided for a variety of reasons not to import the KLIPS code,
+but to start anew.  Well, sort of. The group actually imported a lot of BSD
+KAME code, but also rewrote a lot.
+
+As the code was US "tainted", the FreeS/WAN project could not just adopt it.
+In the meantime, Xelerance and the Openswan fork was formed, and the US taint
+issue was not relevant. Many people asked why we bothered to maintain the
+KLIPS code.
+
+There are a number of answers: the major one for most of 2003 and 2004 was
+the NETKEY code (as we have decided to call the the 2.6 code) was just not
+mature enough yet. That is no longer the case and there are many advantages
+to the NETKEY code. They are:
+   a) full support for CryptoAPI 1.0
+   b) SMP-safe and SMP-optimized
+   c) makes most use of skbuff structure, and can deal with chained
+      skbuff's without linearing them.
+   d) IPv6 support.
+   e) integrated into stack.
+
+There are a number of disadvantages of the NETKEY code. They are:
+      a) uses KAME model of grabbing packets in ip_output().
+      b) uses horrible "setkey" interface to SPD.
+      c) overly RFC2401 limited in operation
+      d) is not yet fully integrated into ULP (TCP/UDP)
+
+Let's look at these things one at a time:
+
+* Packet grabbing
+  
+  The #1 hassle of running IPsec on BSD systems (MCR did this for four years
+  before joining the FreeS/WAN team) is that it is impossible even for
+  experts to debug. The simple reason is: no tcpdump.
+
+  The nicest things about the stoopid routing tricks method of packet capture
+  for KLIPS is the ability to tcpdump on the ipsec0 device to determine what
+  is going on.
+
+  There are some additional advantages --- it vastly simplifies firewalling.
+  NETKEY only got extensions to permit iptables to do things at all in 2.6.16,
+  and the methods of doing this are difficult to get right.
+
+* setkey interface
+
+  The setkey interface is a very thin layer on top of the RFC2367. RFC2367
+  predates RFC2401, and in fact the setkey interface while appearing to
+  be RFC2401 compliant, actually is not. The whole mechanism is therefore
+  not only overly complicated and obtuse, but is not even compliant to
+  the specifications.
+
+  The other part of this is that it comes from the early 1990s
+  pre-automatic-keying (IKE) IPsec version of IPsec. The policies were all
+  places in the kernel, with the userland keying daemon only a slave (helper)
+  to the kernel, instead of being centrally in charge of policy.
+
+  This method is okay if one is only building site-to-site VPNs, but fails
+  due to complexity when other types of policies (such as even, basic remote
+  access for road warriors with dynamic IPs) is implemented.
+
+  The setkey interface is just not rich enough to do things, and making
+  it richer is inappropriate --- the complexity belongs in userspace, not in
+  the kernel.
+
+  NETKEY comes with a second interface, the Netlink interface, but
+  essentially, it does not radically change the system. However, since it
+  has no legacy baggage, extending it would be much easier.
+
+* RFC2401 limitations
+
+  Even if we update setkey to be RFC2401 compliant, that in itself is a
+  dubious place to stop. Not only is RFC4301 out, but even that can't
+  accomodate a lot of what is really needed.
+
+  Instead, multiple methods of setting up firewall policy are needed.
+  What is not needed is another firewall, which the SPD actually represents.
+
+* Upper layer Protocols 
+
+  TCP and UDP would very much like to know how to efficiently deal with
+  "connection latching" of streams. I.e. if the first packet of a stream
+  arrives protected, then the rest of the stream should, and the outgoing
+  stream should also be protected.
+
+  We need to do this even for transport-mode SAs that cross NATs. That 
+  means, specifically for the case where there are two peers behind two
+  NATs that have the same private network address. Why? because 90% of the
+  end nodes on the Internet have 192.168.1.101 as their IP address, and
+  doing things like protecting peer2peer traffic is something that
+  should be possible, even common.
+
+
+THE PROPOSAL
+============
+
+Since we like the insides of NETKEY, and the outsides of KLIPS, and
+the insides of KLIPS are a rotten pit of despair.... let's rip the inside of
+KLIPS out, and interface directly to the lower levels of NETKEY.
+
+{see files diagrams/KLIPS.fig, diagrams/KLIPS_decap.fig, diagrams/NETKEY.fig,
+       and diagrams/KLIPSKEY.fig}
+
+{XXX - the idea of the rest of this document is to show how KLIPS is
+currently structured, how it may change in the near future, how NETKEY
+is structured, and how the interesting and useful parts of NETKEY can be
+incorporated into KLIPS, replacing the ugly parts.}
+
+{ZZZ - to be determined is how the upper parts of NETKEY may want to
+change}
+
+     
+
+
+  
+

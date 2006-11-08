@@ -30,7 +30,6 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +52,7 @@ __FBSDID("$FreeBSD$");
 
 #include "oswlog.h"
 #include "ipsec_strerror.h"
-#include "libpfkey.h"
+#include "libbsdkame/libpfkey.h"
 
 /* cope with old kame headers - ugly */
 #ifndef SADB_X_AALG_MD5

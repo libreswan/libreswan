@@ -64,7 +64,9 @@ sadb_alg_ptr (int satype, int exttype, int alg_id, int rw)
 		default:
 			goto fail;
 	}
+
 	switch(satype) {
+		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
 			alg_p=(exttype == SADB_EXT_SUPPORTED_ENCRYPT)? 
 				&esp_ealg[alg_id] : &esp_aalg[alg_id];
@@ -74,8 +76,6 @@ sadb_alg_ptr (int satype, int exttype, int alg_id, int rw)
 					esp_ealg_num++ : esp_aalg_num++;
 			}
 			break;
-		case SADB_SATYPE_AH:
-			goto fail;
 		default:
 			goto fail;
 	}
@@ -104,7 +104,7 @@ kernel_alg_init(void)
 	esp_ealg_num=esp_aalg_num=0;
 }
 
-static int
+int
 kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 {
 	struct sadb_alg *alg_p=NULL;
@@ -113,8 +113,11 @@ kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	DBG(DBG_KLIPS, DBG_log("kernel_alg_add():"
 		"satype=%d, exttype=%d, alg_id=%d",
 		satype, exttype, sadb_alg->sadb_alg_id));
-	if (!(alg_p=sadb_alg_ptr(satype, exttype, alg_id, 1)))
-		return -1;
+	if (!(alg_p=sadb_alg_ptr(satype, exttype, alg_id, 1))) {
+	    DBG_log("kernel_alg_add(%d,%d,%d) fails because alg combo is invalid\n"
+		    , satype, exttype, sadb_alg->sadb_alg_id);
+	    return -1;
+	}
 
 	/*
 	DBG(DBG_KLIPS, DBG_log("kernel_alg_add(): assign *%p=*%p",
@@ -143,7 +146,7 @@ kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 	 * test #1: encrypt algo must be present 
 	 */
 	int ret=ESP_EALG_PRESENT(alg_id);
-	if (!ret) goto out;
+	if (!ret) { ugh="not present"; goto out; }
 
 	alg_p=&esp_ealg[alg_id];
 	/* 
@@ -160,26 +163,26 @@ kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 	} 
 
 out:
-	if (!ugh) {
-		DBG(DBG_KLIPS, 
-			DBG_log("kernel_alg_esp_enc_ok(%d,%d): "
-				"alg_id=%d, "
-				"alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
-				"res=%d, ret=%d",
-				alg_id, key_len,
-				alg_p->sadb_alg_id,
-				alg_p->sadb_alg_ivlen,
-				alg_p->sadb_alg_minbits,
-				alg_p->sadb_alg_maxbits,
-				alg_p->sadb_alg_reserved,
-				ret);
-		   );
+	if (!ugh && alg_p != NULL) {
+	    DBG(DBG_KLIPS, 
+		DBG_log("kernel_alg_esp_enc_ok(%d,%d): "
+			"alg_id=%d, "
+			"alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
+			"res=%d, ret=%d",
+			alg_id, key_len,
+			alg_p->sadb_alg_id,
+			alg_p->sadb_alg_ivlen,
+			alg_p->sadb_alg_minbits,
+			alg_p->sadb_alg_maxbits,
+			alg_p->sadb_alg_reserved,
+			ret));
 	} else {
-		DBG(DBG_KLIPS, 
-			DBG_log("kernel_alg_esp_enc_ok(%d,%d): NO",
-				alg_id, key_len);
+	    DBG(DBG_KLIPS, 
+		DBG_log("kernel_alg_esp_enc_ok(%d,%d): NO",
+			alg_id, key_len);
 		);
 	}
+
 	return ugh;
 }
 
@@ -369,6 +372,33 @@ kernel_alg_esp_auth_keylen(int auth)
 
 	DBG(DBG_CONTROL | DBG_CRYPT | DBG_PARSING
 		    , DBG_log("kernel_alg_esp_auth_keylen(auth=%d, sadb_aalg=%d): "
+		    "a_keylen=%d", auth, sadb_aalg, a_keylen));
+	return a_keylen;
+}
+
+err_t
+kernel_alg_ah_auth_ok(int auth, 
+		      struct alg_info_esp *alg_info __attribute__((unused)))
+{
+	int ret=(ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth)));
+
+	if(ret) {
+	    return NULL;
+	} else {
+	    return "bad auth alg";
+	}
+}
+
+int
+kernel_alg_ah_auth_keylen(int auth)
+{
+	int sadb_aalg=alg_info_esp_aa2sadb(auth);
+	int a_keylen=0;
+	if (sadb_aalg)
+		a_keylen=esp_aalg[sadb_aalg].sadb_alg_maxbits/BITS_PER_BYTE;
+
+	DBG(DBG_CONTROL | DBG_CRYPT | DBG_PARSING
+		    , DBG_log("kernel_alg_ah_auth_keylen(auth=%d, sadb_aalg=%d): "
 		    "a_keylen=%d", auth, sadb_aalg, a_keylen));
 	return a_keylen;
 }

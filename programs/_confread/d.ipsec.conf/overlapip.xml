@@ -1,0 +1,20 @@
+  <varlistentry>
+  <term><emphasis remap='B'>overlapip</emphasis></term>
+  <listitem>
+<para>a boolean (yes/no) that determines, when *subnet=vhost: is used, if
+the virtual IP claimed by this states created from this connection can with
+states created from other connections.
+</para>
+<para>
+Note that connection instances created by the Opportunistic Encryption or PKIX (x.509) instantiation
+system are distinct internally. They will inherit this policy bit.
+</para>
+<para>
+The default is no. 
+</para>
+<para>
+This feature is only available with kernel drivers that support SAs to overlapping conns.
+At present only the (klips)mast protocol stack supports this feature.
+</para>
+</listitem>
+  </varlistentry>

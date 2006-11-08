@@ -38,9 +38,13 @@ extern int debug_pfkey;
 
 #else /* __KERNEL__ */
 
+#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
+# include <sys/types.h>
+#else
 # include <sys/types.h>
 # include <linux/types.h>
 # include <linux/errno.h>
+#endif
 
 #endif /* __KERNEL__ */
 

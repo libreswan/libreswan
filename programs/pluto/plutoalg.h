@@ -12,3 +12,10 @@ extern char *alg_info_snprint_ike1(struct ike_info *ike_info
 
 extern struct alg_info_ike *
 alg_info_ike_create_from_str (const char *alg_str, const char **err_p);
+
+extern int alg_info_snprint_ah(char *buf, int buflen
+			       , struct alg_info_esp *alg_info);
+
+extern int alg_info_snprint_phase2(char *buf, int buflen
+				   , struct alg_info_esp *alg_info);
+

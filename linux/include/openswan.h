@@ -89,21 +89,28 @@
 #include <TargetConditionals.h>
 #include <AvailabilityMacros.h>
 #include <machine/types.h>
+#include <machine/endian.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/time.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <tcpd.h>
+#include <assert.h>
 #define user_assert(foo) assert(foo)
+#define __u32  unsigned int
+#define __u8  unsigned char
+#define s6_addr16 __u6_addr.__u6_addr16
+#define DEBUG_NO_STATIC static
 #endif
 
 /*
  * FreeBSD
  */
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) 
 #  define DEBUG_NO_STATIC static
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -315,6 +322,7 @@ int subnetishost(const ip_subnet *s);
 int samesaid(const ip_said *a, const ip_said *b);
 int sameaddrtype(const ip_address *a, const ip_address *b);
 int samesubnettype(const ip_subnet *a, const ip_subnet *b);
+int isvalidsubnet(const ip_subnet *a);
 int isanyaddr(const ip_address *src);
 int isunspecaddr(const ip_address *src);
 int isloopbackaddr(const ip_address *src);

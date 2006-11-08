@@ -100,7 +100,9 @@ struct kernel_sa {
 	u_int8_t transid, natt_type;
 	ip_address *natt_oa;
 #endif
-	const char *text_said;
+	char *text_said;
+  
+    unsigned long sa_lifetime;   /* number of seconds until SA expires */
 };
 
 struct raw_iface {
@@ -345,3 +347,12 @@ extern const struct kernel_ops bsdkame_kernel_ops;
 
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */
+
+
+
+/*
+ * Local Variables:
+ * c-basic-offset:4
+ * c-style: pluto
+ * End:
+ */

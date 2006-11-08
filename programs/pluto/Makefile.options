@@ -217,7 +217,7 @@ ifeq ($(USE_XAUTH),true)
 XAUTH_DEFS=-DXAUTH -DMODECFG
 XAUTH_OBJS=${XAUTH_DIST_OBJS}
 XAUTH_SRCS=${XAUTH_DIST_SRCS}
-XAUTH_LLIBS=-lcrypt
+XAUTH_LLIBS=${LIBCRYPT}
 # if we use pam for password checking then add it too
 ifeq ($(USE_XAUTHPAM),true)
 XAUTHPAM_DEFS=-DXAUTH_USEPAM
@@ -257,7 +257,7 @@ endif
 endif
 
 ifeq ($(USE_VULCANHACK),true)
-HACKS+=-DVULCAN_PK
+HACKS+=-DVULCAN_PK -DENHANCED_MODE
 HDRDIRS+=-I${OPENSWANSRCDIR}/programs/pluto
 endif
 
@@ -294,14 +294,14 @@ DEFINES = $(EXTRA_DEFINES) \
 	-DDEBUG \
 	-DGCC_LINT \
 	-DUSE_AES -DUSE_3DES \
-	-DIKE_ALG -DKERNEL_ALG -DDB_CONTEXT \
+	-DIKE_ALG -DKERNEL_ALG \
 	${AGGRESSIVE_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${NAT_DEFS} ${CURL_DEFS}\
 	${WEAK_DEFS} \
 	${SINGLE_CONF_DIR} ${HAVE_OCF_OPENSSL_DEFS} \
 	${HW_DEFS} \
-	# -DLEAK_DETECTIVE
+        # -DLEAK_DETECTIVE
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl

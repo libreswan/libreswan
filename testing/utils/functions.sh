@@ -113,7 +113,7 @@ consolediff() {
     ref=$3
 
     cleanups="cat $output "
-    success=${success-}
+    success=${success-true}
 
     for fixup in `echo $REF_CONSOLE_FIXUPS`
     do
@@ -1112,20 +1112,21 @@ libtest() {
         FILE=${OPENSWANSRCDIR}/linux/net/ipsec/$testsrc
     fi
 
-    #echo "LOOKING for " ./FLAGS.$testobj
+    eval $(cd ${OPENSWANSRCDIR} && OPENSWANSRCDIR=$(pwd) ${MAKE} --no-print-directory env )
 
     EXTRAFLAGS=
     EXTRALIBS=
     if [ -f ${SRCDIR}FLAGS.$testobj ]
     then
+        echo Sourcing ${SRCDIR}FLAGS.$testobj
 	source ${SRCDIR}FLAGS.$testobj
     fi
 
     stat=99
     if [ -n "${FILE-}" -a -r "${FILE-}" ]
     then
-	    echo ${CC} -g -o $testobj -D$symbol ${EXTRAFLAGS} -I${OPENSWANSRCDIR}/linux/include -I${OPENSWANSRCDIR} -I${OPENSWANSRCDIR}/include ${FILE} ${OPENSWANLIB} ${EXTRALIBS}
-	    ${CC} -g -o $testobj -D$symbol ${EXTRAFLAGS} -I${OPENSWANSRCDIR}/linux/include -I${OPENSWANSRCDIR} -I${OPENSWANSRCDIR}/include ${FILE} ${OPENSWANLIB} ${EXTRALIBS}
+	    echo ${CC} -g -o $testobj -D$symbol  ${PORTINCLUDE} ${EXTRAFLAGS} -I${OPENSWANSRCDIR}/linux/include -I${OPENSWANSRCDIR} -I${OPENSWANSRCDIR}/include ${PORTINCLUDE} ${FILE} ${OPENSWANLIB} ${EXTRALIBS}
+	    ${CC} -g -o $testobj -D$symbol ${PORTINCLUDE} ${EXTRAFLAGS} -I${OPENSWANSRCDIR}/linux/include -I${OPENSWANSRCDIR} -I${OPENSWANSRCDIR}/include ${FILE} ${OPENSWANLIB} ${EXTRALIBS}
 	    rm -rf lib-$testobj/OUTPUT
 	    mkdir -p lib-$testobj/OUTPUT
 
@@ -1764,6 +1765,7 @@ do_unittest() {
 
     if [ ! -x "$TESTSCRIPT" ]; then echo "TESTSCRIPT=$TESTSCRIPT is not executable"; exit 41; fi
 
+    echo "BUILDING DEPENDANCIES"
     (cd ${ROOTDIR}/programs;
      for program in ${PROGRAMS}
      do
@@ -1781,7 +1783,9 @@ do_unittest() {
     mkdir -p ${OUTDIR}
     ln -f -s ${OUTDIR} OUTPUT
 
+    echo "RUNNING $TESTSCRIPT"
     ./$TESTSCRIPT >${OUTDIR}/console.txt
+    echo "DONE $TESTSCRIPT"
 
     stat=$?
     echo Exit code $stat

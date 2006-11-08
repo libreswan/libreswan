@@ -21,7 +21,9 @@
 
 char pfkey_v2_parser_c_version[] = "$Id: pfkey_v2_parser.c,v 1.134 2005/05/11 01:48:20 mcr Exp $";
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 
@@ -246,7 +248,7 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		extr->ips->ips_said.spi = maxspi;
 		ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
 		if(ipsq != NULL) {
-			sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+			sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 			ipsec_sa_put(ipsq);
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_getspi_parse: "
@@ -279,7 +281,7 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		}
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	if (!found_avail) {
 		KLIPS_PRINT(debug_pfkey,
@@ -424,7 +426,7 @@ pfkey_update_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		SENDERR(EINVAL);
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	spin_lock_bh(&tdb_lock);
 
@@ -695,7 +697,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 		SENDERR(EINVAL);
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
 	if(ipsq != NULL) {
@@ -911,7 +913,7 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		SENDERR(EINVAL);
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	spin_lock_bh(&tdb_lock);
 
@@ -1024,7 +1026,7 @@ pfkey_get_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 		SENDERR(EINVAL);
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	spin_lock_bh(&tdb_lock);
 
@@ -1624,9 +1626,9 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 		SENDERR(EINVAL);
 	}
 
-	sa_len1 = satot(&extr->ips->ips_said, 0, sa1, sizeof(sa1));
+	sa_len1 = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa1, sizeof(sa1));
 	if(extr->ips2 != NULL) {
-		sa_len2 = satot(&extr->ips2->ips_said, 0, sa2, sizeof(sa2));
+		sa_len2 = KLIPS_SATOT(debug_pfkey, &extr->ips2->ips_said, 0, sa2, sizeof(sa2));
 	}
 
 	spin_lock_bh(&tdb_lock);
@@ -1884,7 +1886,7 @@ pfkey_x_addflow_parse(struct sock *sk, struct sadb_ext **extensions, struct pfke
 			SENDERR(ENOENT);
 		}
 		
-		sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+		sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 		ipsp->ips_flags |= SADB_X_SAFLAGS_INFLOW;
 		ipsp->ips_flow_s = srcflow;

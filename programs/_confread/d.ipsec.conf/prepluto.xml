@@ -1,0 +1,17 @@
+  <varlistentry>
+  <term><emphasis remap='B'>prepluto</emphasis></term>
+  <listitem>
+<para>shell command to run before starting Pluto
+(e.g., to decrypt an encrypted copy of the
+<emphasis remap='I'>ipsec.secrets</emphasis>
+file).
+It's run in a very simple way;
+complexities like I/O redirection are best hidden within a script.
+Any output is redirected for logging,
+so running interactive commands is difficult unless they use
+<filename>/dev/tty</filename>
+or equivalent for their interaction.
+Default is none.</para>
+
+  </listitem>
+  </varlistentry>

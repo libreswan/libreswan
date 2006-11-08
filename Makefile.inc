@@ -197,6 +197,7 @@ INSTCONFFLAGS=
 
 # extra compile flags, for userland and kernel stuff, e.g. -g for debug info
 # you can add to this in the defaults file using +=
+WALL?=-Wall
 USERCOMPILE?=-g ${WERROR} ${PORTDEFINE}
 #USERCOMPILE?=-g -O3 ${WERROR} 
 KLIPSCOMPILE=-O3
@@ -431,9 +432,6 @@ OBJDIR=OBJ.${BUILDENV}.${ARCH}
 OBJDIRTOP=${OPENSWANSRCDIR}/${OBJDIR}
 endif
 
-# export everything so that scripts can use them.
-export LIBOPENSWANDIR OPENSWANSRCDIR ARCH 
-
 # where to place the object files which are built 
 OBJDIR?=.
 OBJDIRTOP?=${OPENSWANSRCDIR}
@@ -472,13 +470,29 @@ ifeq ($(USE_EXTRACRYPTO),true)
 CRYPTOLIBS+=${LIBSHA2} ${LIBSERPENT} ${LIBTWOFISH} ${LIBBLOWFISH}
 endif
 
+# some OSs do not need this.
+LIBCRYPT?=-lcrypt
+
 LIBPOLICYDIR=${OPENSWANSRCDIR}/linux/lib/libipsecpolicy
 POLICYLIB=${OBJDIRTOP}/lib/libipsecpolicy/libipsecpolicy.a
 
 WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
+# export everything so that scripts can use them.
+export LIBOPENSWANDIR OPENSWANSRCDIR ARCH PORTINCLUDE 
+export LIBOPENSWANDIR OPENSWANLIB OSWLOGLIB LWRESDIR LIBLWRES LIBDNS
+export LIBISC ISCARCH ISCHOSTARCH LIBDESSRCDIR LIBDESLITE LIBAES
+export LIBMD5 LIBMD2 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
+export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
+
 #KERNELBUILDMFLAGS=--debug=biv V=1 
+
+
+# NEED_ things are compile time things. Just provide defaults as documentation.
+
+# needs getopt_long_only() function.
+NEEDS_GETOPT?=false
 
 # for emacs
 #

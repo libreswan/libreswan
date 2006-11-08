@@ -38,6 +38,11 @@ extern bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg, st
 extern int kernel_alg_esp_enc_keylen(int alg_id);
 /* returns bool success if esp auth alg is present  */
 extern err_t kernel_alg_esp_auth_ok(int auth, struct alg_info_esp *nfo);
+
+extern int kernel_alg_ah_auth_keylen(int auth);
+extern err_t kernel_alg_ah_auth_ok(int auth,struct alg_info_esp *alg_info);
+
+
 /* returns auth keylen in BYTES for esp auth alg passed */
 extern int kernel_alg_esp_auth_keylen(int auth);
 /* returns 0 if read ok from /proc/net/pf_key_supported */
@@ -75,5 +80,8 @@ extern int esp_aalg_num;
 #define ESP_AALG_FOR_EACH_UPDOWN(algo) \
 	for (algo=SADB_AALG_MAX; algo >0 ; algo--) \
 		if (ESP_AALG_PRESENT(algo))
+
+extern int
+kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg);
 
 #endif /* _KERNEL_ALG_H */

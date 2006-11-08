@@ -16,7 +16,9 @@
  * RCSID $Id: ipsec_radij.c,v 1.73 2005/04/29 05:10:22 mcr Exp $
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 
@@ -61,10 +63,6 @@
 #include <openswan/pfkey.h>
 
 #include "openswan/ipsec_proto.h"
-
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_radij = 0;
-#endif /* CONFIG_KLIPS_DEBUG */
 
 struct radij_node_head *rnh = NULL;
 #ifdef SPINLOCK
@@ -329,7 +327,7 @@ ipsec_makeroute(struct sockaddr_encap *eaddr,
 	spin_unlock_bh(&eroute_lock);
 	
 	if(error) {
-		sa_len = satot(&said, 0, sa, sizeof(sa));
+		sa_len = KLIPS_SATOT(debug_eroute, &said, 0, sa, sizeof(sa));
 		KLIPS_PRINT(debug_eroute, 
 			    "klips_debug:ipsec_makeroute: "
 			    "rj_addroute not able to insert eroute for SA:%s (error:%d)\n",

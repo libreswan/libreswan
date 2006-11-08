@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>dumpdir</emphasis></term>
+  <listitem>
+<para>in what directory should things started by
+<emphasis remap='I'>setup</emphasis>
+(notably the Pluto daemon) be allowed to
+dump core?
+The empty value (the default) means they are not
+allowed to.</para>
+
+  </listitem>
+  </varlistentry>

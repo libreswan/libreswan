@@ -63,6 +63,11 @@ int main(int argc, char *argv[])
 	/* initialize list of moduli */
 	init_crypto();
 
+	if(argc > 1) {
+		pkdh_verbose = 1;
+	}
+
+	load_cryptodev();
 	cryptodev.calc_dh_shared = calc_dh_shared_ocf;
 
 	perform_t2_test();

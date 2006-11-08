@@ -20,7 +20,9 @@
  *
  */
 
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 
@@ -72,13 +74,14 @@
 #include <openswan/pfkeyv2.h>
 #include <openswan/pfkey.h>
 
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
+
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_alg.h"
 
+#include "ipsec_ocf.h"
 
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_xform = 0;
-#endif /* CONFIG_KLIPS_DEBUG */
 
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
@@ -522,7 +525,7 @@ ipsec_sa_getbyid(ip_said *said)
 		return NULL;
 	}
 
-	sa_len = satot(said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_xform, said, 0, sa, sizeof(sa));
 
 	hashval = IPS_HASH(said);
 	
@@ -590,7 +593,7 @@ __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
 	}
 
 	if(debug_xform) {
-		sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+		sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 
 		KLIPS_PRINT(debug_xform,
 			    "ipsec_sa_put: "
@@ -623,7 +626,7 @@ __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line)
                 return NULL;
 
 	if(debug_xform) {
-	  sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+          sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 
 	  KLIPS_PRINT(debug_xform,
 		      "ipsec_sa_get: "
@@ -691,7 +694,7 @@ void ipsec_sa_rm(struct ipsec_sa *ips)
                 return;
         }
 
-	sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 
 	hashval = IPS_HASH(&ips->ips_said);
 
@@ -764,7 +767,7 @@ ipsec_sa_del(struct ipsec_sa *ips)
 		ipsec_sa_put(in);
 	}
 	
-	sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+        sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 	hashval = IPS_HASH(&ips->ips_said);
 	
 	KLIPS_PRINT(debug_xform,
@@ -998,6 +1001,11 @@ ipsec_sa_wipe(struct ipsec_sa *ips)
 	}
 	ips->ips_iv = NULL;
 
+#ifdef CONFIG_KLIPS_OCF
+	if (ips->ocf_in_use)
+		ipsec_ocf_sa_free(ips);
+#endif
+
 	if(ips->ips_ident_s.data != NULL) {
 		memset((caddr_t)(ips->ips_ident_s.data),
                        0,
@@ -1050,7 +1058,7 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 		SENDERR(EINVAL);
 	}
 
-	sa_len = satot(&ipsp->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &ipsp->ips_said, 0, sa, sizeof(sa));
 
         KLIPS_PRINT(debug_pfkey,
 		    "ipsec_sa_init: "
@@ -1084,6 +1092,12 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 #ifdef CONFIG_KLIPS_AH
 	case IPPROTO_AH:
 		ipsp->ips_xformfuncs = ah_xform_funcs;
+
+
+#ifdef CONFIG_KLIPS_OCF
+		if (ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, 0))
+		    break;
+#endif
 
 		switch(ipsp->ips_authalg) {
 # ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
@@ -1264,6 +1278,12 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 #if defined (CONFIG_KLIPS_AUTH_HMAC_MD5) || defined (CONFIG_KLIPS_AUTH_HMAC_SHA1)
 		unsigned char *akp;
 		unsigned int aks;
+#endif
+		ipsp->ips_iv_size = 0;
+
+#ifdef CONFIG_KLIPS_OCF
+		if (ipsec_ocf_sa_init(ipsp, ipsp->ips_authalg, ipsp->ips_encalg))
+		    break;
 #endif
 
 		ipsec_alg_sa_init(ipsp);

@@ -309,12 +309,13 @@ ike_alg_register_enc(struct encrypt_desc *enc_desc)
 return_out:
 #endif
 
-	if (ret==0)
-		ret=ike_alg_add((struct ike_alg *)enc_desc);
+	if (ret==0) ret=ike_alg_add((struct ike_alg *)enc_desc);
+
 	openswan_log("ike_alg_register_enc(): Activating %s: %s (ret=%d)", 
 			alg_name, ret==0? "Ok" : "FAILED", ret);
 	return 0;
 }
+
 /* Get pfsgroup for this connection */
 const struct oakley_group_desc *
 ike_alg_pfsgroup(struct connection *c, lset_t policy)

@@ -60,7 +60,7 @@ static void default_values (struct starter_config *cfg)
 	cfg->setup.options[KBF_FRAGICMP] = TRUE;
 	cfg->setup.options[KBF_HIDETOS]  = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS]= FALSE;
-	cfg->setup.options[KBF_TYPE] = KS_TUNNEL;
+	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 
 	cfg->conn_default.policy = POLICY_RSASIG|POLICY_TUNNEL|POLICY_ENCRYPT|POLICY_PFS;
 
@@ -277,8 +277,13 @@ static int validate_end(struct starter_conn *conn_st
 			, bool left, err_t *perr)
 {
     err_t er = NULL;
+    const char *leftright=(left ? "left" : "right");
     int err=0;
-    
+
+    if(!end->options_set[KNCF_IP]) {
+	conn_st->state = STATE_INCOMPLETE;
+    }
+
     end->addrtype=end->options[KNCF_IP];
 
     /* validate the KSCF_ID */
@@ -312,14 +317,13 @@ static int validate_end(struct starter_conn *conn_st
 	assert(end->strings[KSCF_IP] != NULL);
 
 	er = ttoaddr(end->strings[KNCF_IP], 0, AF_INET, &(end->addr));
-	if (er) ERR_FOUND("bad addr %s=%s [%s]", (left ? "left" : "right"), end->strings[KNCF_IP], er);
+	if (er) ERR_FOUND("bad addr %s=%s [%s]", leftright, end->strings[KNCF_IP], er);
+        if(end->id == NULL) {
+            char idbuf[ADDRTOT_BUF];
+            addrtot(&end->addr, 0, idbuf, sizeof(idbuf));
 
-	if(end->id == NULL) {
-	    char idbuf[ADDRTOT_BUF];
-	    addrtot(&end->addr, 0, idbuf, sizeof(idbuf));
-	    
-	    end->id=clone_str(idbuf, "end if");
-	}
+            end->id=clone_str(idbuf, "end if");
+        }
 	break;
 	
     case KH_OPPO:
@@ -342,11 +346,10 @@ static int validate_end(struct starter_conn *conn_st
     }
 
     /* validate the KSCF_SUBNET */
-    if(end->strings[KSCF_SUBNET] != NULL)
+    if(end->strings_set[KSCF_SUBNET])
     {
 	char *value = end->strings[KSCF_SUBNET];
 
-#ifdef VIRTUAL_IP
         if ( ((strlen(value)>=6) && (strncmp(value,"vhost:",6)==0)) ||
 	     ((strlen(value)>=5) && (strncmp(value,"vnet:",5)==0)) ) {
 	    er = NULL;
@@ -357,12 +360,7 @@ static int validate_end(struct starter_conn *conn_st
 	    end->has_client = TRUE;
 	    er = ttosubnet(value, 0, AF_INET, &(end->subnet));
 	}
-#else
-	end->has_client = TRUE;
-	end->has_client_wildcard = FALSE;
-	er = ttosubnet(value, 0, AF_INET, &(end->subnet));
-#endif
-	if (er) ERR_FOUND("bad subnet %s=%s [%s]", (left ? "leftsubnet" : "rightsubnet"), value, er);
+	if (er) ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright, value, er);
     }
 
     /* set nexthop address to something consistent, by default */
@@ -370,12 +368,12 @@ static int validate_end(struct starter_conn *conn_st
     anyaddr(addrtypeof(&end->addr), &end->nexthop);
 
     /* validate the KSCF_NEXTHOP */
-    if(end->strings[KSCF_NEXTHOP] != NULL)
+    if(end->strings_set[KSCF_NEXTHOP])
     {
 	char *value = end->strings[KSCF_NEXTHOP];
 	
 	er = ttoaddr(value, 0, AF_INET, &(end->nexthop));
-	if (er) ERR_FOUND("bad addr %s=%s [%s]", (left ? "lextnexthop" : "rightnexthop"), value, er);
+	if (er) ERR_FOUND("bad addr %snexthop=%s [%s]", leftright, value, er);
     } else {
 	if(conn_st->policy & POLICY_OPPO) {
 	    end->nexttype = KH_DEFAULTROUTE;
@@ -384,7 +382,7 @@ static int validate_end(struct starter_conn *conn_st
     }
 
     /* validate the KSCF_ID */
-    if(end->strings[KSCF_ID] != NULL)
+    if(end->strings_set[KSCF_ID])
     {
 	char *value = end->strings[KSCF_ID];
 	
@@ -422,6 +420,25 @@ static int validate_end(struct starter_conn *conn_st
 	}
     }
 
+    /* validate the KSCF_SOURCEIP, if any, and if set,
+     * set the subnet to same value, if not set.
+     */
+    if(end->strings_set[KSCF_SOURCEIP])
+    {
+	char *value = end->strings[KSCF_SOURCEIP];
+	
+	er = ttoaddr(value, 0, AF_INET, &(end->sourceip));
+	if (er) ERR_FOUND("bad addr %ssourceip=%s [%s]", leftright, value, er);
+
+	if(!end->has_client) {
+	    starter_log(LOG_LEVEL_INFO, "defaulting %ssubnet to %s\n", leftright, value);
+	    er = addrtosubnet(&end->sourceip, &end->subnet);
+	    if (er) ERR_FOUND("attempt to default %ssubnet from %s failed: %s", leftright, value, er);
+	    end->has_client = TRUE;
+	    end->has_client_wildcard = FALSE;
+	}
+    } 
+
     /* copy certificate path name */
     if(end->strings_set[KSCF_CERT]) {
 	end->cert = xstrdup(end->strings[KSCF_CERT]);
@@ -440,20 +457,19 @@ static int validate_end(struct starter_conn *conn_st
     }
 
     if(end->strings_set[KSCF_PROTOPORT]) {
-	/* XXX processing needed to strip it apart,
-	 * and also to set per_* controls.
-	 */
+	err_t ugh;
+	char *value = end->strings[KSCF_PROTOPORT];
+
+	ugh = ttoprotoport(value, 0, &end->protocol, &end->port, &end->has_port_wildcard);
+
+	if (ugh) ERR_FOUND("bad %sprotoport=%s [%s]", leftright, value, ugh);
     }
 
     /*
     KSCF_SUBNETWITHIN    --- not sure what to do with it.
-    KSCF_PROTOPORT       --- todo
     KSCF_ESPENCKEY       --- todo (manual keying)
     KSCF_ESPAUTHKEY      --- todo (manual keying)
-    KSCF_DPDACTION    = 15,
     KSCF_SOURCEIP     = 16,
-    KSCF_ALSO         = 17,
-    KSCF_ALSOFLIP     = 18,                    
     KSCF_MAX          = 19
 */
 
@@ -523,6 +539,12 @@ bool translate_conn (struct starter_conn *conn
 	}
 	
 	field = kw->keyword.keydef->field;
+
+#ifdef PARSER_TYPE_DEBUG
+	starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d\n",
+		    kw->keyword.keydef->keyname, field,
+		    kw->keyword.keydef->type);
+#endif
 
 	assert(kw->keyword.keydef != NULL);
 	switch(kw->keyword.keydef->type)
@@ -664,6 +686,10 @@ bool translate_conn (struct starter_conn *conn
 		}
 	    }
 
+#if 0
+	    starter_log(LOG_LEVEL_DEBUG, "#setting %s[%d]=%u\n",
+			kw->keyword.keydef->keyname, field, kw->number);
+#endif
 	    (*the_options)[field] = kw->number;
 	    (*set_options)[field] = TRUE;
 	    break;
@@ -714,7 +740,7 @@ static int load_conn (struct starter_config *cfg
     err += load_conn_basic(conn, sl, perr);
     if(err) return err;
 
-    if(conn->strings[KSCF_ALSO] != NULL
+    if(conn->strings[KSF_ALSO] != NULL
        && !alsoprocessing)
     {
 	starter_log(LOG_LEVEL_INFO
@@ -725,7 +751,7 @@ static int load_conn (struct starter_config *cfg
 
     /* now, process the also's */
     if (conn->alsos) free_list(conn->alsos);
-    conn->alsos = new_list(conn->strings[KSCF_ALSO]);
+    conn->alsos = new_list(conn->strings[KSF_ALSO]);
 
     if(alsoprocessing && conn->alsos)
     {
@@ -756,7 +782,7 @@ static int load_conn (struct starter_config *cfg
 		sl1 != NULL && strcasecmp(alsos[alsoplace], sl1->name) != 0;
 		sl1 = sl1->link.tqe_next);
 
-	    starter_log(LOG_LEVEL_DEBUG, "\twhile loading conn '%s' processing %s"
+	    starter_log(LOG_LEVEL_DEBUG, "\twhile loading conn '%s' also including '%s'"
 			, conn->name, alsos[alsoplace]);
 			    
 	    /*
@@ -765,18 +791,18 @@ static int load_conn (struct starter_config *cfg
 	     */
 	    if(sl1 && !sl1->beenhere)
 	    {
-		conn->strings_set[KSCF_ALSO]=FALSE;
-		if(conn->strings[KSCF_ALSO]) free(conn->strings[KSCF_ALSO]);
-		conn->strings[KSCF_ALSO]=NULL;
+		conn->strings_set[KSF_ALSO]=FALSE;
+		if(conn->strings[KSF_ALSO]) free(conn->strings[KSF_ALSO]);
+		conn->strings[KSF_ALSO]=NULL;
 		sl1->beenhere = TRUE;
 
 		/* translate things, but do not replace earlier settings */
 		err += translate_conn(conn, sl1, FALSE, perr);
 
-		if(conn->strings[KSCF_ALSO])
+		if(conn->strings[KSF_ALSO])
 		{
 		    /* now, check out the KSF_ALSO, and extend list if we need to */
-		    newalsos = new_list(conn->strings[KSCF_ALSO]);		
+		    newalsos = new_list(conn->strings[KSF_ALSO]);		
 		    
 		    if(newalsos && newalsos[0]!=NULL)
 		    {
@@ -821,33 +847,81 @@ static int load_conn (struct starter_config *cfg
 	conn->alsos = alsos;
     }
 
+#ifdef PARSER_TYPE_DEBUG
     /* translate strings/numbers into conn items */
-    
-    KW_POLICY_FLAG(KBF_TYPE, POLICY_TUNNEL);
+    starter_log(LOG_LEVEL_DEBUG, "#checking options_set[KBF_TYPE,%d]=%d %d\n",
+		KBF_TYPE,
+		conn->options_set[KBF_TYPE], conn->options[KBF_TYPE]);
+#endif
+
+    if(conn->options_set[KBF_TYPE]) {
+	switch((enum keyword_satype)conn->options[KBF_TYPE]) {
+	case KS_TUNNEL:
+	    conn->policy |= POLICY_TUNNEL;
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    break;
+
+	case KS_TRANSPORT:
+	    conn->policy &= ~POLICY_TUNNEL;
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    break;
+	    
+	case KS_UDPENCAP:
+	    /* no way to specify this yet! */
+	    break;
+
+	case KS_PASSTHROUGH:
+	    conn->policy &= ~(POLICY_ENCRYPT|POLICY_AUTHENTICATE|POLICY_TUNNEL|POLICY_RSASIG);
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    conn->policy |= POLICY_SHUNT_PASS;
+	    break;
+
+	case KS_DROP:
+	    conn->policy &= ~(POLICY_ENCRYPT|POLICY_AUTHENTICATE|POLICY_TUNNEL|POLICY_RSASIG);
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    conn->policy |= POLICY_SHUNT_DROP;
+	    break;
+
+	case KS_REJECT:
+	    conn->policy &= ~(POLICY_ENCRYPT|POLICY_AUTHENTICATE|POLICY_TUNNEL|POLICY_RSASIG);
+	    conn->policy &= ~POLICY_SHUNT_MASK;
+	    conn->policy |= POLICY_SHUNT_REJECT;
+	    break;
+	}
+    }
+	    
     KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
     KW_POLICY_FLAG(KBF_PFS,  POLICY_PFS);
     
     /* reset authby flags */
-    if(conn->options_set[KSCF_AUTHBY]) {
+    if(conn->options_set[KBF_AUTHBY]) {
 	conn->policy &= ~(POLICY_ID_AUTH_MASK);
-	conn->policy |= conn->options[KSCF_AUTHBY];
+	conn->policy |= conn->options[KBF_AUTHBY];
 
+#if STARTER_POLICY_DEBUG
 	starter_log(LOG_LEVEL_DEBUG,
 		    "%s: setting conn->policy=%08x (%08x)\n",
 		    conn->name,
 		    (unsigned int)conn->policy,
-		    conn->options[KSCF_AUTHBY]);
+		    conn->options[KBF_AUTHBY]);
+#endif
     }
     
     KW_POLICY_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
 
     KW_POLICY_FLAG(KBF_AGGRMODE, POLICY_AGGRESSIVE);
 
-    if(conn->strings_set[KSCF_ESP]) {
-	conn->esp = xstrdup(conn->strings[KSCF_ESP]);
+    if(conn->strings_set[KSF_ESP]) {
+	conn->esp = xstrdup(conn->strings[KSF_ESP]);
     }
-    if(conn->strings_set[KSCF_IKE]) {
-	conn->ike = xstrdup(conn->strings[KSCF_IKE]);
+
+    if(conn->strings_set[KSF_IKE]) {
+	conn->ike = xstrdup(conn->strings[KSF_IKE]);
+    }
+
+    if(conn->options_set[KBF_PHASE2]) {
+	conn->policy &= ~(POLICY_AUTHENTICATE|POLICY_ENCRYPT);
+	conn->policy |= conn->options[KBF_PHASE2];
     }
 
     err += validate_end(conn, &conn->left,  TRUE, perr);

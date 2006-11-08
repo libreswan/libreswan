@@ -62,6 +62,7 @@ struct msg_digest {
     bool encrypted;	/* was it encrypted? */
     enum state_kind from_state;	/* state we started in */
     const struct state_microcode *smc;	/* microcode for initial state */
+    bool new_iv_set;
     struct state *st;	/* current state object */
     pb_stream reply;	/* room for reply */
     pb_stream rbody;	/* room for reply body (after header) */
@@ -84,6 +85,10 @@ typedef stf_status state_transition_fn(struct msg_digest *md);
 
 extern void complete_state_transition(struct msg_digest **mdp, stf_status result);
 extern void process_packet(struct msg_digest **mdp);
+
+/* continue with encrypted packet */
+extern void process_packet_tail(struct msg_digest **mdp);
+
 
 extern void free_md_pool(void);
 

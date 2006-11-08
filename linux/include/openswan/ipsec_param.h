@@ -188,10 +188,13 @@ extern int sysctl_ipsec_regress_pfkey_lossage;
 		((flag) ? printk(format , ## args) : 0)
 	#define KLIPS_IP_PRINT(flag, ip) \
 		((flag) ? ipsec_print_ip(ip) : 0)
+	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) \
+		((flag) ? satot(sa, format, dst, dstlen) : 0)
 #else /* CONFIG_KLIPS_DEBUG */
 	#define KLIPS_PRINT(flag, format, args...) do ; while(0)
 	#define KLIPS_PRINTMORE(flag, format, args...) do ; while(0)
 	#define KLIPS_IP_PRINT(flag, ip) do ; while(0)
+	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) (0)
 #endif /* CONFIG_KLIPS_DEBUG */
 
 
@@ -248,6 +251,10 @@ extern int sysctl_ipsec_regress_pfkey_lossage;
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL
 #undef CONFIG_IPSEC_NAT_TRAVERSAL
 #endif
+#endif
+
+#ifndef IPSEC_DEFAULT_TTL
+#define IPSEC_DEFAULT_TTL 64
 #endif
 
 #ifndef IPSEC_DEFAULT_TTL

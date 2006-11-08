@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>manualstart</emphasis></term>
+  <listitem>
+<para>which manually-keyed connections to set up at startup
+(empty, a name, or a quoted list of names separated by white space);
+see
+<citerefentry><refentrytitle>ipsec_manual</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+Default is none.</para>
+
+  </listitem>
+  </varlistentry>

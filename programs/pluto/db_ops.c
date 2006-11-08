@@ -348,33 +348,41 @@ db_ops_show_status(void)
 /* 
  * From below to end just testing stuff ....
  */
-#ifdef TEST
+#if defined(TEST)
 static void db_prop_print(struct db_prop *p)
 {
 	struct db_trans *t;
 	struct db_attr *a;
 	int ti, ai;
 	enum_names *n, *n_at, *n_av;
-	printf("protoid=\"%s\"\n", enum_name(&protocol_names, p->protoid));
+
+	DBG_log("protoid=\"%s\"\n", enum_name(&protocol_names, p->protoid));
 	for (ti=0, t=p->trans; ti< p->trans_cnt; ti++, t++) {
-		switch( t->transid) {
+		switch( p->protoid) {
 			case PROTO_ISAKMP:
-				n=&isakmp_transformid_names;break;
+				n=&isakmp_transformid_names;
+				break;
 			case PROTO_IPSEC_ESP:
-				n=&esp_transformid_names;break;
+				n=&esp_transformid_names;
+				break;
+			case PROTO_IPSEC_AH:
+				n=&ah_transformid_names;
+				break;
 			default:
 				continue;
 		}
-		printf("  transid=\"%s\"\n", 
-			enum_name(n, t->transid));
+		DBG_log("  transid=\"%s\"\n", enum_name(n, t->transid));
+
 		for (ai=0, a=t->attrs; ai < t->attr_cnt; ai++, a++) {
 			int i;
-			switch( t->transid) {
+			switch( p->protoid) {
 				case PROTO_ISAKMP:
 					n_at=&oakley_attr_names;
 					i=a->type|ISAKMP_ATTR_AF_TV;
 					n_av=oakley_attr_val_descs[(i)&ISAKMP_ATTR_RTYPE_MASK];
 					break;
+
+				case PROTO_IPSEC_AH:
 				case PROTO_IPSEC_ESP:
 					n_at=&ipsec_attr_names;
 					i=a->type|ISAKMP_ATTR_AF_TV;
@@ -383,20 +391,24 @@ static void db_prop_print(struct db_prop *p)
 				default:
 					continue;
 			}
-			printf("    type=\"%s\" value=\"%s\"\n", 
+			DBG_log("    type=\"%s\" value=\"%s\"\n", 
 				enum_name(n_at, i),
 				enum_name(n_av, a->val));
 		}
 	}
 
 }
-static void db_print(struct db_context *ctx) 
+
+void db_print(struct db_context *ctx) 
 {
-	printf("trans_cur diff=%d, attrs_cur diff=%d\n", 
+	DBG_log("trans_cur diff=%d, attrs_cur diff=%d\n", 
 			ctx->trans_cur - ctx->trans0,
 			ctx->attrs_cur - ctx->attrs0);
 	db_prop_print(&ctx->prop);
 }
+#endif
+
+#if defined(TEST)
 
 void
 passert_fail(const char *pred_str, const char *file_str, unsigned long line_no);

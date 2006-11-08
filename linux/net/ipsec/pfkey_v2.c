@@ -23,7 +23,9 @@
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/version.h>
+#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
+#endif
 #include <linux/kernel.h>
 
 #include "openswan/ipsec_param.h"
@@ -73,10 +75,7 @@
 #include "openswan/ipsec_proto.h"
 #include "openswan/ipsec_kern24.h"
 
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_pfkey = 0;
 extern int sysctl_ipsec_debug_verbose;
-#endif /* CONFIG_KLIPS_DEBUG */
 
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
@@ -99,6 +98,10 @@ struct socket_list *pfkey_open_sockets = NULL;
 struct socket_list *pfkey_registered_sockets[SADB_SATYPE_MAX+1];
 
 int pfkey_msg_interp(struct sock *, struct sadb_msg *, struct sadb_msg **);
+
+DEBUG_NO_STATIC int pfkey_create(struct socket *sock, int protocol);
+DEBUG_NO_STATIC int pfkey_shutdown(struct socket *sock, int mode);
+DEBUG_NO_STATIC int pfkey_release(struct socket *sock);
 
 DEBUG_NO_STATIC int pfkey_create(struct socket *sock, int protocol);
 DEBUG_NO_STATIC int pfkey_shutdown(struct socket *sock, int mode);
@@ -1494,7 +1497,7 @@ pfkey_cleanup(void)
 	
         printk(KERN_INFO "klips_info:pfkey_cleanup: "
 	       "shutting down PF_KEY domain sockets.\n");
-        error |= sock_unregister(PF_KEY);
+        sock_unregister(PF_KEY);
 
 	error |= supported_remove_all(SADB_SATYPE_AH);
 	error |= supported_remove_all(SADB_SATYPE_ESP);

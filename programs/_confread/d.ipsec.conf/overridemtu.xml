@@ -1,0 +1,10 @@
+  <varlistentry>
+  <term><emphasis remap='B'>overridemtu</emphasis></term>
+  <listitem>
+<para>value that the MTU of the ipsec<emphasis remap='I'>n</emphasis> interface(s) should be set to,
+overriding IPsec's (large) default.
+This parameter is needed only in special situations.
+This KLIPS option has no effect on NETKEY, Windows or BSD stacks.</para>
+
+  </listitem>
+  </varlistentry>

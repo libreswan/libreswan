@@ -1,0 +1,16 @@
+  <varlistentry>
+  <term><emphasis remap='B'>rp_filter</emphasis></term>
+  <listitem>
+<para>whether and how
+<emphasis remap='I'>setup</emphasis>
+should adjust the reverse path filtering mechanism for the
+physical devices to be used.
+Values are <emphasis remap='B'>%unchanged</emphasis> (to leave it alone)
+or <literal>0</literal>, <literal>1</literal>, <literal>2</literal> (values to set it to).
+<filename>/proc/sys/net/ipv4/conf/PHYS/rp_filter</filename>
+is badly documented; it must be <literal>0</literal> in many cases
+for ipsec to function.
+The default value for the parameter is <literal>0</literal>, that is, to disablerp_filter for all interfaces used.</para>
+
+  </listitem>
+  </varlistentry>

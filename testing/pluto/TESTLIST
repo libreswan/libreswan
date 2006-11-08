@@ -356,3 +356,9 @@ umlplutotest	basic-pluto-07		bad
 #
 umlplutotest	basic-pluto-08		bad
 
+# 
+# a test of using aes256 for phase 1 and phase 2,
+# with appropriate modp group
+umlplutotest    algo-pluto-01          good
+
+

@@ -1,0 +1,23 @@
+</variablelist>
+<para>If one or both security gateways are doing forwarding firewalling
+(possibly including masquerading),
+and this is specified using the firewall parameters,
+tunnels established with IPsec are exempted from it
+so that packets can flow unchanged through the tunnels.
+(This means that all subnets connected in this manner must have
+distinct, non-overlapping subnet address blocks.)
+This is done by the default
+<emphasis remap='I'>updown</emphasis>
+script (see
+<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>).</para>
+
+<para>The implementation of this makes certain assumptions about firewall setup,
+and the availability of the 
+<emphasis remap='I'>Linux Advanced Routing</emphasis> tools.
+In situations calling for more control,
+it may be preferable for the user to supply his own
+<emphasis remap='I'>updown</emphasis>
+script,
+which makes the appropriate adjustments for his system.</para>
+</refsect2>
+

@@ -23,6 +23,11 @@ extern bool no_retransmits;
 extern bool log_to_stderr_desired;
 extern bool please_use_vulcan_hack;
 
+extern bool accel_avail;
+extern bool use_pk_accel;
+extern bool use_ipsec_accel;
+
+
 extern int ctl_fd;	/* file descriptor of control (whack) socket */
 extern struct sockaddr_un ctl_addr;	/* address of control (whack) socket */
 

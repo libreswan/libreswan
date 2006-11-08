@@ -26,7 +26,6 @@ def:
 
 check:
 	unset KLIPS_MODULE; sh ./dotests.sh
-	KLIPS_MODULE=-module ./dotests.sh
 
 checkbase:
 	unset KLIPS_MODULE; sh ./dotests.sh

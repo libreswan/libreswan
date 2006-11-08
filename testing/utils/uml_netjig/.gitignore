@@ -1,0 +1,10 @@
+cmdmode.o
+getopt_long.o
+hash.o
+nethub.o
+port.o
+tuntap.o
+uml_netjig
+uml_netjig.o
+uml_switch
+uml_switch.o

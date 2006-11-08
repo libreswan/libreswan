@@ -1,7 +1,0 @@
-  <term><emphasis remap='B'>protostack</emphasis></term>
-  <listitem>
-<para>decide which protocol stack is going to be used. Valid values are "auto", "klips", "netkey" and "mast". The "mast" stack is a variation for the klips stack.
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-

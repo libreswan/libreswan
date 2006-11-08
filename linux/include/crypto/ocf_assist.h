@@ -36,10 +36,10 @@
 extern int	ocf_aes_assist(void);
 extern void	ocf_aes_set_key(aes_context *cx, const unsigned char in_key[],
 								int n_bytes, const int f);
-extern int	ocf_aes_cbc_encrypt(aes_context *ctx, u8 *input,
-				    u8 *output,
+extern int	ocf_aes_cbc_encrypt(aes_context *ctx, unsigned char *input,
+				    unsigned char *output,
 				    long length,
-				    u8 *ivec, int enc);
+				    unsigned char *ivec, int enc);
 
 extern int	ocf_des_assist(void);
 extern int	ocf_des_set_key(des_cblock *key, des_key_schedule schedule);

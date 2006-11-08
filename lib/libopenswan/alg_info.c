@@ -254,8 +254,37 @@ alg_info_esp_add (struct alg_info *alg_info,
 	}
 }
 
+/*	
+ *	Add AH alg info _with_ logic (policy):
+ */
+static void
+alg_info_ah_add (struct alg_info *alg_info,
+		  int ealg_id, int ek_bits,
+		  int aalg_id, int ak_bits,
+		  int modp_id, bool permit_manconn)
+{
+    if(aalg_id > 0 ||
+       (permit_manconn && aalg_id == 0))
+    {
+	__alg_info_esp_add((struct alg_info_esp *)alg_info,
+			   ealg_id, ek_bits,
+			   aalg_id, ak_bits);
+    }
+    else
+    {
+	/*	Policy: default to MD5 and SHA1 */
+	__alg_info_esp_add((struct alg_info_esp *)alg_info,
+			   ealg_id, ek_bits,				\
+			   AUTH_ALGORITHM_HMAC_MD5, ak_bits);
+	__alg_info_esp_add((struct alg_info_esp *)alg_info,
+			   ealg_id, ek_bits,				\
+			   AUTH_ALGORITHM_HMAC_SHA1, ak_bits);
+    }
+}
+
 static const char *parser_state_esp_names[] = {
 	"ST_INI",
+	"ST_INI_AA",
 	"ST_EA",
 	"ST_EA_END",	
 	"ST_EK",
@@ -330,6 +359,18 @@ parser_machine(struct parser_context *p_ctx)
 	    }
 	    p_ctx->err="No alphanum. char initially found";
 	    goto err;
+
+	case ST_INI_AA:
+	    if (isspace(ch))
+		break;
+	    if (isalnum(ch)) {
+		*(p_ctx->aalg_str++)=ch;
+		parser_set_state(p_ctx, ST_AA);
+		break;
+	    }
+	    p_ctx->err="No alphanum. char initially found";
+	    goto err;
+
 	case ST_EA:
 	    if (isalpha(ch) || ch == '_') {
 		*(p_ctx->ealg_str++)=ch;
@@ -466,9 +507,33 @@ parser_init_esp(struct parser_context *p_ctx)
     p_ctx->ealg_str=p_ctx->ealg_buf;
     p_ctx->aalg_str=p_ctx->aalg_buf;
     p_ctx->modp_str=p_ctx->modp_buf;
+    p_ctx->ealg_permit = TRUE;
+    p_ctx->aalg_permit = TRUE;
     p_ctx->state=ST_INI;
     
     p_ctx->ealg_getbyname=ealg_getbyname_esp;
+    p_ctx->aalg_getbyname=aalg_getbyname_esp;
+
+}
+
+/*	
+ *	Must be called for each "new" char, with new
+ *	character in ctx.ch
+ */
+static void
+parser_init_ah(struct parser_context *p_ctx)
+{
+    memset(p_ctx, 0, sizeof (*p_ctx));
+
+    p_ctx->protoid=PROTO_IPSEC_AH;
+    p_ctx->ealg_str=NULL;
+    p_ctx->ealg_permit = FALSE;
+    p_ctx->aalg_str=p_ctx->aalg_buf;
+    p_ctx->aalg_permit = TRUE;
+    p_ctx->modp_str=p_ctx->modp_buf;
+    p_ctx->state=ST_INI_AA;
+    
+    p_ctx->ealg_getbyname=NULL;
     p_ctx->aalg_getbyname=aalg_getbyname_esp;
 
 }
@@ -488,8 +553,8 @@ parser_alg_info_add(struct parser_context *p_ctx
 	int modp_id = 0;
 	const struct oakley_group_desc *gd;
 
-	ealg_id=aalg_id=0;
-	if (*p_ctx->ealg_buf) {
+	ealg_id=aalg_id=-1;
+	if (p_ctx->ealg_permit && *p_ctx->ealg_buf) {
 	    ealg_id=p_ctx->ealg_getbyname(p_ctx->ealg_buf, strlen(p_ctx->ealg_buf));
 	    if (ealg_id==ESP_MAGIC_ID) {
 		ealg_id=p_ctx->eklen;
@@ -504,7 +569,7 @@ parser_alg_info_add(struct parser_context *p_ctx
 				   p_ctx->ealg_buf,
 				   ealg_id));
 	}
-	if (*p_ctx->aalg_buf) {
+	if (p_ctx->aalg_permit && *p_ctx->aalg_buf) {
 	    aalg_id=p_ctx->aalg_getbyname(p_ctx->aalg_buf, strlen(p_ctx->aalg_buf));
 	    if (aalg_id<0) {
 		p_ctx->err="hash_alg not found";
@@ -625,6 +690,46 @@ alg_info_parse_str (struct alg_info *alg_info
 	return -1;
 }
 
+static bool
+alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie
+				, char *esp_buf
+				, const char **err_p)
+{
+    char *pfs_name;
+    static char err_buf[256];
+    int ret;
+    
+    pfs_name=index(esp_buf, ';');
+    
+    if(pfs_name) {
+	*pfs_name='\0';
+	pfs_name++;
+
+	/* if pfs strings AND first char is not '0' */
+	if (*pfs_name && pfs_name[0]!='0') {
+	    ret=modp_getbyname_esp(pfs_name, strlen(pfs_name));
+	    if (ret<0) {
+		/* Bomb if pfsgroup not found */
+		DBG(DBG_CRYPT, DBG_log("alg_info_*_create_from_str(): "
+				       "pfsgroup \"%s\" not found",
+				       pfs_name));
+		if (*err_p) {
+		    snprintf(err_buf, sizeof(err_buf),
+			     "pfsgroup \"%s\" not found",
+			     pfs_name);
+		    *err_p=err_buf;
+		}
+		return FALSE;
+	    }
+	    aie->esp_pfsgroup=ret;
+	}
+    } else
+	aie->esp_pfsgroup = 0;
+
+    return TRUE;
+}
+
+
 struct alg_info_esp *
 alg_info_esp_create_from_str (const char *alg_str
 			      , const char **err_p
@@ -632,8 +737,6 @@ alg_info_esp_create_from_str (const char *alg_str
 {
     struct alg_info_esp *alg_info_esp;
     char esp_buf[256];
-    static char err_buf[256];
-    char *pfs_name;
     int ret =0;
 
     /*
@@ -645,38 +748,14 @@ alg_info_esp_create_from_str (const char *alg_str
 
     if (!alg_info_esp) goto out;
 
-    pfs_name=index (alg_str, ';');
+    strcpy(esp_buf, alg_str);
+    if(!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_p)) {
+	return NULL;
+    }
 
-    if (pfs_name) {
-	memcpy(esp_buf, alg_str, pfs_name-alg_str);
-	esp_buf[pfs_name-alg_str] = 0;
-	alg_str=esp_buf;
-	pfs_name++;
-
-	/* if pfs strings AND first char is not '0' */
-	if (*pfs_name && pfs_name[0]!='0') {
-	    ret=modp_getbyname_esp(pfs_name, strlen(pfs_name));
-	    if (ret<0) {
-		/* Bomb if pfsgroup not found */
-		DBG(DBG_CRYPT, DBG_log("alg_info_esp_create_from_str(): "
-				       "pfsgroup \"%s\" not found",
-				       pfs_name));
-		if (*err_p) {
-		    snprintf(err_buf, sizeof(err_buf),
-			     "pfsgroup \"%s\" not found",
-			     pfs_name);
-		    *err_p=err_buf;
-		}
-		goto out;
-	    }
-	    alg_info_esp->esp_pfsgroup=ret;
-	}
-    } else
-	alg_info_esp->esp_pfsgroup = 0;
-    
     alg_info_esp->alg_info_protoid=PROTO_IPSEC_ESP;
     ret=alg_info_parse_str((struct alg_info *)alg_info_esp
-			   , alg_str, err_p
+			   , esp_buf, err_p
 			   , parser_init_esp
 			   , alg_info_esp_add
 			   , NULL
@@ -690,6 +769,43 @@ alg_info_esp_create_from_str (const char *alg_str
 	}
     return alg_info_esp;
     
+}
+
+struct alg_info_esp *
+alg_info_ah_create_from_str (const char *alg_str
+			     , const char **err_p
+			     , bool permitmann)
+{
+    struct alg_info_esp *alg_info_esp;
+    char esp_buf[256];
+    int ret =0;
+
+    /*
+     * 	alg_info storage should be sized dynamically
+     * 	but this may require 2passes to know
+     * 	transform count in advance.
+     */
+    alg_info_esp=alloc_thing (struct alg_info_esp, "alg_info_esp");
+
+    strcpy(esp_buf, alg_str);
+    if(!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_p)) {
+	return NULL;
+    }
+
+    alg_info_esp->alg_info_protoid=PROTO_IPSEC_AH;
+    ret=alg_info_parse_str((struct alg_info *)alg_info_esp
+			   , esp_buf, err_p
+			   , parser_init_ah
+			   , alg_info_ah_add
+			   , NULL
+			   , permitmann);
+
+    if (ret<0)
+	{
+	    pfreeany(alg_info_esp);
+	    alg_info_esp=NULL;
+	}
+    return alg_info_esp;
 }
 
 /*
@@ -749,9 +865,29 @@ alg_info_snprint(char *buf, int buflen
 	{
 	    struct alg_info_esp *alg_info_esp=(struct alg_info_esp *)alg_info;
 	    ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
-		np=snprintf(ptr, buflen, "%d_%03d-%d, "
-			    , esp_info->esp_ealg_id
-			    , (int)esp_info->esp_ealg_keylen
+		np=snprintf(ptr, buflen, "%s(%d), "
+			    , enum_name(&auth_alg_names, esp_info->esp_aalg_id)+sizeof("AUTH_ALGORITHM_HMAC")
+			    , esp_info->esp_aalg_id);
+		ptr+=np;
+		buflen-=np;
+		if(buflen<0) goto out;
+	    }
+	    if (alg_info_esp->esp_pfsgroup) {
+		np=snprintf(ptr, buflen, "; pfsgroup=%d; "
+			    , alg_info_esp->esp_pfsgroup);
+		ptr+=np;
+		buflen-=np;
+		if(buflen<0) goto out;
+	    }
+	    break;
+	}
+
+    case PROTO_IPSEC_AH: 
+	{
+	    struct alg_info_esp *alg_info_esp=(struct alg_info_esp *)alg_info;
+	    ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
+		np=snprintf(ptr, buflen, "%s(%d), "
+			    , enum_name(&auth_alg_names, esp_info->esp_aalg_id)+sizeof("AUTH_ALGORITHM_HMAC")
 			    , esp_info->esp_aalg_id);
 		ptr+=np;
 		buflen-=np;
@@ -770,11 +906,12 @@ alg_info_snprint(char *buf, int buflen
     case PROTO_ISAKMP:
 	if(permitike) {
 	    ALG_INFO_IKE_FOREACH((struct alg_info_ike *)alg_info, ike_info, cnt) {
-		np=snprintf(ptr, buflen, "%d_%03d-%d-%d, ",
-			    ike_info->ike_ealg,
-			    (int)ike_info->ike_eklen,
-			    ike_info->ike_halg,
-			    ike_info->ike_modp);
+		np=snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d)-%d, "
+			    , enum_name(&oakley_enc_names, ike_info->ike_ealg)+sizeof("OAKLEY")
+			    , ike_info->ike_ealg, (int)ike_info->ike_eklen
+			    , enum_name(&auth_alg_names, ike_info->ike_halg)+sizeof("AUTH_ALGORITHM_HMAC")
+			    , ike_info->ike_halg
+			    , ike_info->ike_modp);
 		ptr+=np;
 		buflen-=np;
 		if(buflen<0) goto out;

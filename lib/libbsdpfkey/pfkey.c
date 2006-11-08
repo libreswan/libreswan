@@ -30,7 +30,6 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +48,7 @@ __FBSDID("$FreeBSD$");
 #include "oswlog.h"
 
 #include "ipsec_strerror.h"
-#include "libpfkey.h"
+#include "libbsdkame/libpfkey.h"
 
 #define CALLOC(size, cast) (cast)calloc(1, (size))
 
@@ -58,7 +57,7 @@ openswan_keying_debug_func_t pfkey_debug_func;
 #define PFKEY_DEBUG if(bsdpfkey_lib_debug) (*pfkey_debug_func)
 
 static int findsupportedmap(int);
-static int setsupportedmap(struct sadb_supported *);
+static int setsupportedmap(const struct sadb_supported *sup, int properlen);
 static struct sadb_alg *findsupportedalg(u_int, u_int);
 static int pfkey_send_x2(int, u_int, u_int, u_int,
 	struct sockaddr *, struct sockaddr *, u_int32_t);
@@ -78,6 +77,11 @@ static caddr_t pfkey_setsadbkey(caddr_t, caddr_t, u_int, caddr_t, u_int);
 static caddr_t pfkey_setsadblifetime(caddr_t, caddr_t, u_int, u_int32_t,
 	u_int32_t, u_int32_t, u_int32_t);
 static caddr_t pfkey_setsadbxsa2(caddr_t, caddr_t, u_int32_t, u_int32_t);
+
+#undef  PFKEY_EXTLEN
+#define	PFKEY_EXTLEN(msg) \
+	PFKEY_UNUNIT64(((const struct sadb_ext *)(msg))->sadb_ext_len)
+
 
 /*
  * make and search supported algorithm structure.
@@ -141,9 +145,44 @@ findsupportedalg(satype, alg_id)
 	return NULL;
 }
 
+void foreach_supported_alg(void (*algregister)(int satype, int extype, struct sadb_alg *alg))
+{
+	int algno;
+	int tlen,i;
+	int satype, supported_exttype;;
+	caddr_t p;
+
+	for (i = 0; i < sizeof(supported_map)/sizeof(supported_map[0]); i++) {
+	  satype = supported_map[i];
+
+	  algno=i;
+
+	  if(ipsec_supported[algno] == NULL) continue;
+	  
+	  tlen = ipsec_supported[algno]->sadb_supported_len
+	    - sizeof(struct sadb_supported);
+	  supported_exttype = ipsec_supported[algno]->sadb_supported_exttype;
+	  p = (caddr_t)(ipsec_supported[algno] + 1);
+
+	  while (tlen > 0) {
+	    struct sadb_alg *a = ((struct sadb_alg *)p);
+
+	    if (tlen < sizeof(struct sadb_alg)) {
+	      /* invalid format */
+	      break;
+	    }
+	    
+	    algregister(satype, supported_exttype, a);
+
+	    tlen -= sizeof(struct sadb_alg);
+	    p += sizeof(struct sadb_alg);
+	  }
+	}
+	return;
+}
+
 static int
-setsupportedmap(sup)
-	struct sadb_supported *sup;
+setsupportedmap(const struct sadb_supported *sup, int properlen)
 {
 	struct sadb_supported **ipsup;
 
@@ -162,12 +201,17 @@ setsupportedmap(sup)
 	if (*ipsup)
 		free(*ipsup);
 
-	*ipsup = malloc(sup->sadb_supported_len);
+	*ipsup = malloc(properlen);
+
+	DBG_log("recv_register 4 %d = %p \n",
+		sup->sadb_supported_exttype, *ipsup);
+
 	if (!*ipsup) {
 		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
-	memcpy(*ipsup, sup, sup->sadb_supported_len);
+	memcpy(*ipsup, sup, properlen);
+	(*ipsup)->sadb_supported_len = properlen;
 
 	return 0;
 }
@@ -708,10 +752,13 @@ pfkey_recv_register(so)
 	struct sadb_msg *newmsg;
 	int error = -1;
 
+	DBG_log("recv_register\n");
+
 	/* receive message */
 	for (;;) {
 		if ((newmsg = pfkey_recv(so)) == NULL)
 			return -1;
+
 		if (newmsg->sadb_msg_type == SADB_REGISTER &&
 		    newmsg->sadb_msg_pid == pid)
 			break;
@@ -741,13 +788,13 @@ pfkey_recv_register(so)
  *	-1: error occured, and set errno.
  */
 int
-pfkey_set_supported(msg, tlen)
-	struct sadb_msg *msg;
-	int tlen;
+pfkey_set_supported(const struct sadb_msg *msg, int tlen)
 {
-	struct sadb_supported *sup;
-	caddr_t p;
-	caddr_t ep;
+	const struct sadb_supported *sup;
+	const unsigned char *p, *ep;
+	int properlen;
+
+	DBG_log("recv_register 2\n");
 
 	/* validity */
 	if (msg->sadb_msg_len != tlen) {
@@ -755,19 +802,22 @@ pfkey_set_supported(msg, tlen)
 		return -1;
 	}
 
-	p = (caddr_t)msg;
+	p = (const unsigned char *)msg;
 	ep = p + tlen;
 
 	p += sizeof(struct sadb_msg);
 
+	DBG_log("recv_register 2c\n");
 	while (p < ep) {
-		sup = (struct sadb_supported *)p;
+		sup = (const struct sadb_supported *)p;
 		if (ep < p + sizeof(*sup) ||
 		    PFKEY_EXTLEN(sup) < sizeof(*sup) ||
 		    ep < p + sup->sadb_supported_len) {
 			/* invalid format */
 			break;
 		}
+
+		DBG_log("recv_register 2b\n");
 
 		switch (sup->sadb_supported_exttype) {
 		case SADB_EXT_SUPPORTED_AUTH:
@@ -779,13 +829,13 @@ pfkey_set_supported(msg, tlen)
 		}
 
 		/* fixed length */
-		sup->sadb_supported_len = PFKEY_EXTLEN(sup);
+		properlen = PFKEY_EXTLEN(sup);
 
 		/* set supported map */
-		if (setsupportedmap(sup) != 0)
+		if (setsupportedmap(sup, properlen) != 0)
 			return -1;
 
-		p += sup->sadb_supported_len;
+		p += properlen;
 	}
 
 	if (p != ep) {
@@ -1640,8 +1690,10 @@ pfkey_recv(so)
 	int len, reallen;
 
 	while ((len = recv(so, (caddr_t)&buf, sizeof(buf), MSG_PEEK)) < 0) {
+#if 0
 		if (errno == EINTR)
 			continue;
+#endif
 		__ipsec_set_strerror(strerror(errno));
 		return NULL;
 	}

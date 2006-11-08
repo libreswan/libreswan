@@ -1,6 +1,6 @@
 /* 
  * Cryptographic helper function.
- * Copyright (C) 2004 Michael C. Richardson <mcr@xelerance.com>
+ * Copyright (C) 2004-2006 Michael C. Richardson <mcr@xelerance.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,7 +31,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/types.h>
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
+#if !defined(linux)
+#include <sys/param.h>
 #include <sys/sysctl.h>
 #endif
 
@@ -39,6 +40,7 @@
 #include <fcntl.h>
 
 #include <signal.h>
+#include <sys/wait.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
@@ -343,7 +345,8 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r
     if(cnt == 0) {
 	/* didn't find any workers */
 	DBG(DBG_CONTROL
-	    , DBG_log("failed to find any available worker"));
+	    , DBG_log("failed to find any available worker (import=%s)"
+		      , enum_name(&pluto_cryptoimportance_names,r->pcr_pcim)));
 
 	*toomuch = TRUE;
 	return "failed to find any available worker";
@@ -776,8 +779,12 @@ static void cleanup_crypto_helper(struct pluto_crypto_worker *w
 				  , int status)
 {
     if(w->pcw_pipe) {
-	loglog(RC_LOG_SERIOUS, "closing helper(%u) pid=%d fd=%d exit=%d"
-	       , w->pcw_helpernum, w->pcw_pid, w->pcw_pipe, status);
+	loglog(RC_LOG_SERIOUS, "closing helper(%u) pid=%d fd=%d killed=%s(%d%s) exit=%d"
+	       , w->pcw_helpernum, w->pcw_pid, w->pcw_pipe
+	       , WIFEXITED(status) ? "no" : "yes"
+	       , WIFEXITED(status) ? 0 : WTERMSIG(status) 
+	       , WIFEXITED(status) && WCOREDUMP(status) ? ":core" : ""
+	       , WEXITSTATUS(status));
 	close(w->pcw_pipe);
     }
 
@@ -827,7 +834,7 @@ void init_crypto_helpers(int nhelpers)
     /* if nhelpers == 0, then we do all the work ourselves */
     if(nhelpers == -1) {
 	int ncpu_online;
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
+#if defined(_SC_NPROCESSORS_ONLN)
       ncpu_online = sysconf(_SC_NPROCESSORS_ONLN);
 #else
       int mib[2], numcpu;

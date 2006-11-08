@@ -1,0 +1,15 @@
+  <varlistentry>
+  <term><emphasis remap='B'>esp</emphasis></term>
+  <listitem>
+<para>This option is obsolete. Please use <emphasis remap='B'>phase2alg</emphasis>
+instead.
+ESP encryption/authentication algorithm to be used for the connection (phase2 aka IPsec SA).
+The format is identical to the <emphasis remap='B'>ike</emphasis> option listed above.
+The options must be suitable as a value of
+<citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s
+<option>--esp</option> option. The default is to use ESP. The default values are the same as for ike=
+Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarilly supported here.
+</para>
+  </listitem>
+  </varlistentry>
+

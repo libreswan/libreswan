@@ -1,4 +1,10 @@
-../skeyidcalcike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
+../skeyidcalc ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC_SSH: Ok (ret=0)
+../skeyidcalc ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC: Ok (ret=0)
+../skeyidcalc ike_alg_register_enc(): Activating OAKLEY_SERPENT_CBC: Ok (ret=0)
+../skeyidcalc ike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
+../skeyidcalc ike_alg_register_enc(): Activating OAKLEY_BLOWFISH_CBC: Ok (ret=0)
+../skeyidcalc ike_alg_register_hash(): Activating OAKLEY_SHA2_512: Ok (ret=0)
+../skeyidcalc ike_alg_register_hash(): Activating OAKLEY_SHA2_256: Ok (ret=0)
 | Skey inputs (PSK+NI+NR)
 | ni:   61 73 64 66  61 73 64 66  61 73 64 66  61 73 64 66
 | nr:   64 61 73 64  66 61 73 64  66 61 73 64  66 61 73 64
@@ -6,7 +12,7 @@
 |   58 cb d0 03
 | rsa test 0 
 | skeyid inputs (digi+NI+NR+shared) hasher: oakley_md5
-| shared:   0e 64 6b 94  15 58 0f b0  5d 38 0a 09  0a ae fc c3
+| shared-secret:   0e 64 6b 94  15 58 0f b0  5d 38 0a 09  0a ae fc c3
 |   fc 5a 1a f8  9f b9 2b b8  f4 be f1 af  79 f5 34 7c
 |   bd f8 0e 35  ab 40 84 85  95 d5 28 c3  df 06 31 7d
 |   a0 53 ff ad  75 3f ed b6  74 6f 38 14  89 97 e7 80

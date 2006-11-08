@@ -1,0 +1,38 @@
+  <varlistentry>
+  <term><emphasis remap='B'>acceleration</emphasis></term>
+  <listitem>
+<para>whether
+<emphasis remap='I'>pluto</emphasis>
+should use hardware acceleration for cryptographic operations.
+Valid values are:
+<emphasis remap='B'>never</emphasis>, 
+<emphasis remap='B'>ipsec</emphasis>, 
+<emphasis remap='B'>pk</emphasis>, 
+and (the default)
+<emphasis remap='B'>available</emphasis>.
+</para>
+<para>
+If pluto finds the Open Cryptographic Framework installed, it can
+offload public key operations to hardware.  If KLIPS finds hardware installed,
+it can offload symmetric operations.  The default is to use the hardware if
+available.  
+</para>
+<para> 
+The setting
+<emphasis remap='B'>never</emphasis> 
+causes pluto to not use any hardware. The setting 
+<emphasis remap='B'>pk</emphasis> causes pluto to only use acceleration for
+Public Key operations (but not for symmetric operations for IPsec SAs). The
+setting 
+<emphasis remap='B'>ipsec</emphasis>
+causes pluto to not use the hardware for public key operations, but to use it
+for IPsec SAs if possible. 
+</para>
+<para>
+As of this writing it is not possible to disable using the hardware
+acceleration for IPsec operations directly from pluto. If the hardware is
+there, it will be used.
+</para>
+
+  </listitem>
+  </varlistentry>

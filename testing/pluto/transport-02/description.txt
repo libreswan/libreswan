@@ -1,0 +1,7 @@
+a pluto test of transport mode.
+
+A single transport mode SA is created between west and east, for port 3.
+On west, firewalling makes sure that one can only access port 3 via IPsec.
+
+the PFSgroup is set to a different group than the phase1.
+

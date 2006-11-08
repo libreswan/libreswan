@@ -1,0 +1,10 @@
+  <varlistentry>
+  <term><emphasis remap='B'>modecfgpull</emphasis></term>
+  <listitem>
+<para>Pull the Mode Config network information from the server.
+Acceptable values are <emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>no</emphasis>
+(the default).
+</para>
+  </listitem>
+  </varlistentry>
+

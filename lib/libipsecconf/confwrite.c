@@ -58,6 +58,13 @@ void confwrite_int(FILE *out,
 	
 	if((k->validity & context)!=context) continue;
 
+	/* do not output aliases */
+	if(k->validity & kv_alias) continue;
+	
+	/* do not output policy settings handled elsewhere */
+	if(k->validity & kv_policy) continue;
+	if(k->validity & kv_processed) continue;
+
 #if 0
 	printf("side: %s  %s validity: %08x & %08x=%08x\n", side,
 	       k->keyname, k->validity, context, k->validity&context);
@@ -79,7 +86,7 @@ void confwrite_int(FILE *out,
 	    continue;
 
 	case kt_time:
-	    /* special number */
+	    /* special number, but do work later XXX */
 	    break;
 
 	case kt_bool:
@@ -156,6 +163,13 @@ void confwrite_str(FILE *out,
 
     for(k=ipsec_conf_keywords_v2; k->keyname!=NULL; k++) {
 	if((k->validity & context)==0) continue;
+
+	/* do not output aliases */
+	if(k->validity & kv_alias) continue;
+	
+	/* do not output policy settings handled elsewhere */
+	if(k->validity & kv_policy) continue;
+	if(k->validity & kv_processed) continue;
 	
 	switch(k->type) {
 	case kt_string:
@@ -181,7 +195,7 @@ void confwrite_str(FILE *out,
 	    continue;
 
 	case kt_time:
-	    /* special number */
+	    /* special number, not a string */
 	    continue;
 
 	case kt_percent:
@@ -245,7 +259,7 @@ void confwrite_side(FILE *out,
 	break;
     }
 
-    if(end->id) {
+    if(end->strings_set[KSCF_ID] && end->id) {
 	fprintf(out, "\t%sid=\"%s\"\n",     side, end->id);
     }
 
@@ -268,8 +282,13 @@ void confwrite_side(FILE *out,
     }
 
     if(end->has_client) {
-	subnettot(&end->subnet, 0, databuf, SUBNETTOT_BUF);
-	fprintf(out, "\t%ssubnet=%s\n", side, databuf);
+	if(isvalidsubnet(&end->subnet)
+	   && (!subnetishost(&end->subnet)
+	       || !addrinsubnet(&end->addr, &end->subnet)))
+	{
+	    subnettot(&end->subnet, 0, databuf, SUBNETTOT_BUF);
+	    fprintf(out, "\t%ssubnet=%s\n", side, databuf);
+	}
     }
 
     if(end->rsakey1) {
@@ -293,8 +312,8 @@ void confwrite_side(FILE *out,
 	    sprintf(databuf, "%u", end->protocol);
 	}
 	    
-	fprintf(out, "\t%sportproto=%s/%s\n", side,
-		b2, databuf);
+	fprintf(out, "\t%sprotoport=%s/%s\n", side,
+		databuf, b2);
     }
 
     if(end->cert) {
@@ -371,46 +390,102 @@ void confwrite_conn(FILE *out,
     }
 
     if(conn->policy) {
-	int auth_policy;
+	int auth_policy, phase2_policy, shunt_policy, failure_policy;
 
-	if(conn->policy & POLICY_TUNNEL) {
-	    fprintf(out, "\ttype=tunnel\n");
-	} else {
-	    fprintf(out, "\ttype=transport\n");
-	}
+	phase2_policy = (conn->policy & (POLICY_AUTHENTICATE|POLICY_ENCRYPT));
+	failure_policy = (conn->policy & POLICY_FAIL_MASK);
+	shunt_policy=(conn->policy & POLICY_SHUNT_MASK);
 
-	if(conn->policy & POLICY_COMPRESS) {
-	    fprintf(out, "\tcompress=yes\n");
-	} else {
-	    fprintf(out, "\tcompress=no\n");
-	}
+	switch(shunt_policy) {
+	case POLICY_SHUNT_TRAP:
+	    if(conn->policy & POLICY_TUNNEL) {
+		fprintf(out, "\ttype=tunnel\n");
+	    } else {
+		fprintf(out, "\ttype=transport\n");
+	    }
+	    
+	    if(conn->policy & POLICY_COMPRESS) {
+		fprintf(out, "\tcompress=yes\n");
+	    } else {
+		fprintf(out, "\tcompress=no\n");
+	    }
+	    
+	    if(conn->policy & POLICY_PFS) {
+		fprintf(out, "\tpfs=yes\n");
+	    } else {
+		fprintf(out, "\tpfs=no\n");
+	    }
+	    
+	    if(conn->policy & POLICY_DONT_REKEY) {
+		fprintf(out, "\tnorekey=yes\n");
+	    } else {
+		fprintf(out, "\tnorekey=no\n");
+	    }
+	    
+	    auth_policy=(conn->policy & POLICY_ID_AUTH_MASK);
+	    switch(auth_policy) {
+	    case POLICY_PSK:
+		fprintf(out, "\tauthby=secret\n");
+		break;
+		
+	    case POLICY_RSASIG:
+		fprintf(out, "\tauthby=rsasig\n");
+		break;
+		
+	    default:
+		fprintf(out, "\tauthby=never\n");
+		break;
+	    }
+	    
+	    switch(phase2_policy) {
+	    case POLICY_AUTHENTICATE:
+		fprintf(out, "\tphase2=ah\n");
+		break;
+		
+	    case POLICY_ENCRYPT:
+		fprintf(out, "\tphase2=esp\n");
+		break;
+		
+	    case (POLICY_ENCRYPT|POLICY_AUTHENTICATE):
+		fprintf(out, "\tphase2=ah+esp\n");
+		break;
+		
+	    default:
+		break;
+	    }
 
-	if(conn->policy & POLICY_PFS) {
-	    fprintf(out, "\tpfs=yes\n");
-	} else {
-	    fprintf(out, "\tpfs=no\n");
-	}
+	    switch(failure_policy) {
+	    case POLICY_FAIL_NONE:
+		break;
+		
+	    case POLICY_FAIL_PASS:
+		fprintf(out, "\tfailureshunt=passthrough\n");
+		break;
+		
+	    case POLICY_FAIL_DROP:
+		fprintf(out, "\tfailureshunt=drop\n");
+		break;
+		
+	    case POLICY_FAIL_REJECT:
+		fprintf(out, "\tfailureshunt=reject\n");
+		break;
+	    }
+	    break;
 
-	if(conn->policy & POLICY_DONT_REKEY) {
-	    fprintf(out, "\tnorekey=yes\n");
-	} else {
-	    fprintf(out, "\tnorekey=no\n");
-	}
-
-	auth_policy=(conn->policy & POLICY_ID_AUTH_MASK);
-	switch(auth_policy) {
-	case POLICY_PSK:
-	    fprintf(out, "\tauthby=secret\n");
+	case POLICY_SHUNT_PASS:
+	    fprintf(out, "\ttype=passthrough\n");
 	    break;
 	    
-	case POLICY_RSASIG:
-	    fprintf(out, "\tauthby=rsasig\n");
+	case POLICY_SHUNT_DROP:
+	    fprintf(out, "\ttype=drop\n");
+	    break;
+	    
+	case POLICY_SHUNT_REJECT:
+	    fprintf(out, "\ttype=reject\n");
 	    break;
 
-	default:
-	    fprintf(out, "\tauthby=never\n");
-	    break;
 	}
+	
     }
 
     

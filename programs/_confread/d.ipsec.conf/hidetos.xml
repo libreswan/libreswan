@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>hidetos</emphasis></term>
+  <listitem>
+<para>whether a tunnel packet's TOS field should be set to
+<literal>0</literal>
+rather than copied from the user packet inside;
+acceptable values are
+<emphasis remap='B'>yes</emphasis>
+(the default)
+and
+<emphasis remap='B'>no</emphasis>.  This KLIPS option has no effect
+on NETKEY, Windows or BSD stacks.</para>
+  </listitem>
+  </varlistentry>

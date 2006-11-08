@@ -1,0 +1,17 @@
+  <varlistentry>
+  <term><emphasis remap='B'>forceencaps</emphasis></term>
+  <listitem>
+<para>
+In some cases, for example when ESP packets are filtered or when a broken
+IPsec peer does not properly recognise NAT, it can be useful to force
+RFC-3948 encapsulation.
+<emphasis remap='B'>forceencaps=yes</emphasis> forces the NAT detection
+code to lie and tell the remote peer that RFC-3948 encapsulation (ESP in UDP
+port 4500 packets) is required. For this option to have any effect, the setup section option
+<emphasis remap='B'>nat_traversal=yes</emphasis> needs to be set.
+Acceptable values are <emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>no</emphasis>
+(the default).
+</para>
+  </listitem>
+  </varlistentry>
+

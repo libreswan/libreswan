@@ -1,0 +1,17 @@
+  <varlistentry>
+  <term><emphasis remap='B'>uniqueids</emphasis></term>
+  <listitem>
+<para>whether a particular participant ID should be kept unique,
+with any new (automatically keyed)
+connection using an ID from a different IP address
+deemed to replace all old ones using that ID.
+Acceptable values are <emphasis remap='B'>yes</emphasis>
+(the default)
+and
+<emphasis remap='B'>no</emphasis>.
+Participant IDs normally <emphasis remap='I'>are</emphasis> unique,
+so a new (automatically-keyed) connection using the same ID is
+almost invariably intended to replace an old one.</para>
+
+  </listitem>
+  </varlistentry>

@@ -66,6 +66,12 @@
 #include <openswan/pfkeyv2.h>
 #include <openswan/pfkey.h>
 
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
+
+#include <openswan/pfkeyv2.h>
+#include <openswan/pfkey.h>
+
 #include "openswan/ipsec_alg.h"
 #include "openswan/ipsec_proto.h"
 

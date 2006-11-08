@@ -1,0 +1,9 @@
+<refsect2 id='conn_parameters__automatic_keying'><title>CONN PARAMETERS:  AUTOMATIC KEYING</title>
+<para>The following parameters are relevant only to automatic keying,
+and are ignored in manual keying.
+Unless otherwise noted,
+for a connection to work,
+in general it is necessary for the two ends to agree exactly
+on the values of these parameters.</para>
+<variablelist remap='TP'>
+

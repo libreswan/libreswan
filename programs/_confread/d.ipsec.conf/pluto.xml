@@ -1,0 +1,13 @@
+  <varlistentry>
+  <term><emphasis remap='B'>pluto</emphasis></term>
+  <listitem>
+<para>whether to start Pluto or not;
+Values are
+<emphasis remap='B'>yes</emphasis>
+(the default)
+or
+<emphasis remap='B'>no</emphasis>
+(useful only in special circumstances).</para>
+
+  </listitem>
+  </varlistentry>

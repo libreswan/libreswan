@@ -29,8 +29,9 @@
  *	@(#)queue.h	8.3 (Berkeley) 12/13/93
  */
 
-#ifndef	_SYS_QUEUE_H
+#if !defined(_SYS_QUEUE_H) && !defined(_SYS_QUEUE_H_)
 #define	_SYS_QUEUE_H 1
+#define	_SYS_QUEUE_H_ 1
 
 /*
  * This file defines three types of data structures: lists, tail queues,
@@ -238,4 +239,5 @@ struct {								\
 		(elm)->field.cqe_prev->field.cqe_next =			\
 		    (elm)->field.cqe_next;				\
 }
+
 #endif	/* sys/queue.h */

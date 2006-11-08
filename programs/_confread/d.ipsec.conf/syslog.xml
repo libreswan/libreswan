@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>syslog</emphasis></term>
+  <listitem>
+<para>the
+<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+&ldquo;facility&rdquo; name and priority to use for
+startup/shutdown log messages,
+default
+<emphasis remap='B'>daemon.error</emphasis>.</para>
+
+  </listitem>
+  </varlistentry>

@@ -17,12 +17,15 @@ void hexdump(const unsigned char *base, unsigned int offset, int len)
 {
 	const unsigned char *b = base+offset;
 	unsigned char bb[4];             /* avoid doing byte accesses */
-	int i;
+	char line[90];
+	int i, olen;
 	int first,last;     /* flags */
 
 	last=0;
 	first=1;
-  
+
+	line[0]='\0';
+	olen = 0;
 	for(i = 0; i < len; i++) {
 		/* if it's the first item on the line */
 		if((i % 16) == 0) {
@@ -50,22 +53,31 @@ void hexdump(const unsigned char *base, unsigned int offset, int len)
 			first=0;
 
 			/* print the offset */
-			hexdump_printf("%04x:", offset+i);
+			olen += snprintf(line+olen, 80-olen, "%04x:", offset+i);
 		}
 
-		memcpy(bb, b+i, 4);
-		hexdump_printf(" %02x %02x %02x %02x ",
+		{
+			u_int32_t *x;
+			const u_int32_t *y;
+			x=(u_int32_t *)bb;
+			y=(const u_int32_t *)(b+i);
+			*x = *y;
+		}
+		//memcpy(bb, b+i, 4);
+		olen += snprintf(line+olen, 80-olen, " %02x %02x %02x %02x ",
 			       bb[0], bb[1], bb[2], bb[3]);
 		i+=3;
 
 		/* see it's the last item on line */
 		if(!((i + 1) % 16)) {
-			hexdump_printf("\n");
+			hexdump_printf(line);
+			line[0]='\0';
+			olen=0;
 		}
 	}
 	/* if it wasn't the last item on line */
 	if(i % 16) {
-		hexdump_printf("\n");
+		hexdump_printf(line);
 	}
 }
 

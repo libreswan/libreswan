@@ -219,16 +219,16 @@ ${LIBTPM}: $(wildcard ${srcdir}tpm/*.c) $(wildcard ${srcdir}tpm/*.h) $(wildcard 
 	@(cd tpm && ${MAKE} srcdir=${srcdir}tpm/ libtpm.a )
 
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(OPENSWANLIB) ${LIBTPM} ${LIBSPLUTO}
-	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
+	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL} ${PORTLDFLAGS}
 
 $(BINNAMEADNS): $(OBJSADNS) ${LIBSPLUTO}
-	$(CC) -o $(BINNAMEADNS) $(OBJSADNS) $(USERLINK) $(LIBSADNS) ${ADNSMINUSL}
+	$(CC) -o $(BINNAMEADNS) $(OBJSADNS) $(USERLINK) $(LIBSADNS) ${ADNSMINUSL} ${PORTLDFLAGS}
 
 $(BINNAMEWHACK): $(OBJSWHACK) ${LIBSPLUTO}
-	$(CC) -o $(BINNAMEWHACK) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK) ${WHACKMINUSL}
+	$(CC) -o $(BINNAMEWHACK) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK) ${WHACKMINUSL} ${PORTLDFLAGS}
 
 $(BINNAMEWHACKINIT): $(OBJSWHACKINIT) ${LIBSPLUTO}
-	$(CC) -o $(BINNAMEWHACKINIT) $(OBJSWHACKINIT) $(USERLINK) $(LIBSWHACK)
+	$(CC) -o $(BINNAMEWHACKINIT) $(OBJSWHACKINIT) $(USERLINK) $(LIBSWHACK) ${PORTLDFLAGS}
 
 distlist:
 	@echo $(DIST)
@@ -251,7 +251,7 @@ check:
 checkprograms:
 
 .c.o:
-	$(CC) $(USERCOMPILE) ${PORTINCLUDE} $(COPTS) $(ALLFLAGS) -c $<
+	$(CC) $(USERCOMPILE) ${PORTINCLUDE} $(COPTS) $(ALLFLAGS) ${PORTLASTINCLUDE} -c $<
 
 %.i: %.c
 	$(CC) $(USERCOMPILE) ${PORTINCLUDE} $(COPTS) $(ALLFLAGS) -E -o $@ $<
@@ -259,7 +259,7 @@ checkprograms:
 
 # Gather dependencies caused by explicit #includes within .c files
 depend:
-	@(ls $(DISTSRC) | grep '\.c' | xargs gcc -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ) | sed -e 's,${OPENSWANSRCDIR},../..,g' >Makefile.depend.${OSDEP}
+	@(ls $(DISTSRC) | grep '\.c' | xargs gcc -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ${PORTLASTINCLUDE} ) | sed -e 's,${OPENSWANSRCDIR},../..,g' >Makefile.depend.${OSDEP}
 
 -include ${srcdir}Makefile.depend.${OSDEP}
 

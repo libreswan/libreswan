@@ -1,0 +1,42 @@
+diff --git a/include/linux/uio.h b/include/linux/uio.h
+index 9af8bbc..609cdbe 100644
+--- a/include/linux/uio.h
++++ b/include/linux/uio.h
+@@ -63,4 +63,16 @@ static inline size_t iov_length(const st
+ 
+ unsigned long iov_shorten(struct iovec *iov, unsigned long nr_segs, size_t to);
+ 
++struct uio {
++	struct	iovec *uio_iov;
++	int		uio_iovcnt;
++	off_t	uio_offset;
++	int		uio_resid;
++#if 0
++	enum	uio_seg uio_segflg;
++	enum	uio_rw uio_rw;
++	struct  thread *uio_td;
++#endif
++};
++
+ #endif
+diff --git a/include/linux/uio.h b/include/linux/uio.h
+index 9af8bbc..609cdbe 100644
+--- a/include/linux/uio.h
++++ b/include/linux/uio.h
+@@ -63,4 +63,16 @@ static inline size_t iov_length(const st
+ 
+ unsigned long iov_shorten(struct iovec *iov, unsigned long nr_segs, size_t to);
+ 
++struct uio {
++	struct	iovec *uio_iov;
++	int		uio_iovcnt;
++	off_t	uio_offset;
++	int		uio_resid;
++#if 0
++	enum	uio_seg uio_segflg;
++	enum	uio_rw uio_rw;
++	struct  thread *uio_td;
++#endif
++};
++
+ #endif

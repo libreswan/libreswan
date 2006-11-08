@@ -1,0 +1,52 @@
+  <varlistentry>
+  <term><emphasis remap='B'>left</emphasis></term>
+  <listitem>
+<para>(required)
+the IP address of the left participant's public-network interface,
+in any form accepted by
+<citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+or one of several magic values.
+If it is
+<emphasis remap='B'>%defaultroute</emphasis>,
+and
+the
+<emphasis remap='B'>config</emphasis>
+<emphasis remap='B'>setup</emphasis>
+section's,
+<emphasis remap='B'>interfaces</emphasis>
+specification contains
+<emphasis remap='B'>%defaultroute,</emphasis>
+<emphasis remap='B'>left</emphasis>
+will be filled in automatically with the local address
+of the default-route interface (as determined at IPsec startup time);
+this also overrides any value supplied for
+<emphasis remap='B'>leftnexthop</emphasis>.
+(Either
+<emphasis remap='B'>left</emphasis>
+or
+<emphasis remap='B'>right</emphasis>
+may be
+<emphasis remap='B'>%defaultroute</emphasis>,
+but not both.)
+The value
+<emphasis remap='B'>%any</emphasis>
+signifies an address to be filled in (by automatic keying) during
+negotiation.
+The value
+<emphasis remap='B'>%opportunistic</emphasis>
+signifies that both
+<emphasis remap='B'>left</emphasis>
+and
+<emphasis remap='B'>leftnexthop</emphasis>
+are to be filled in (by automatic keying) from DNS data for
+<emphasis remap='B'>left</emphasis>'s
+client.
+The values
+<emphasis remap='B'>%group</emphasis>
+and
+<emphasis remap='B'>%opportunisticgroup</emphasis>
+makes this a policy group conn: one that will be instantiated
+into a regular or opportunistic conn for each CIDR block listed in the
+policy group file with the same name as the conn.</para>
+  </listitem>
+  </varlistentry>

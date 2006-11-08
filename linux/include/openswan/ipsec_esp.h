@@ -67,6 +67,8 @@ struct esphdr
 
 extern struct xform_functions esp_xform_funcs[];
 
+extern enum ipsec_rcv_value ipsec_rcv_esp_post_decrypt(struct ipsec_rcv_state *irs);
+
 #ifdef CONFIG_KLIPS_DEBUG
 extern int debug_esp;
 #endif /* CONFIG_KLIPS_DEBUG */

@@ -106,7 +106,7 @@ static int print_secrets(struct secret *secret
 {
     char idb1[IDTOA_BUF];
     char idb2[IDTOA_BUF];
-    const char *kind;
+    const char *kind = "?";
     
     switch(pks->kind) {
     case PPK_PSK: kind="PSK"; break;
