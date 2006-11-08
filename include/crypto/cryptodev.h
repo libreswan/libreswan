@@ -129,8 +129,8 @@ struct crypt_op {
 #define COP_DECRYPT	2
 	u_int16_t	flags;
 #define	COP_F_BATCH	0x0008		/* Batch op if possible */
-	u_int		len;
-	caddr_t		src, dst;	/* become iov[] inside kernel */
+	u_int		slen, dlen;
+	caddr_t		src,  dst;	/* become iov[] inside kernel */
 	caddr_t		mac;		/* must be big enough for chosen MAC */
 	caddr_t		iv;
 };
@@ -380,6 +380,7 @@ enum cryptodev_selection {
 	CRYPTO_SOFTWARE=0,
 	/* otherwise, specific driver */
 };
+#define CRYPTO_DEVICE_MIN CRYPTO_ANYSOFTWARE
 
 extern	int crypto_newsession(u_int64_t *sid, struct cryptoini *cri, enum cryptodev_selection desired_device);
 extern	int crypto_freesession(u_int64_t sid);
