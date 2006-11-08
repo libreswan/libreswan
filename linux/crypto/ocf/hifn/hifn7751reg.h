@@ -406,9 +406,9 @@ typedef struct hifn_desc {
 #define	HIFN_PUBOPe_OP_COPY  	15	/*  copy */
 
 /* Public operand length register (HIFN_1_PUB_OPLEN) */
-#define	HIFN_PUBOPeLEN_MOD_SHIFT 0	
+#define	HIFN_PUBOPeLEN_MOD_SHIFT 24	
 #define	HIFN_PUBOPeLEN_EXP_SHIFT 8
-#define	HIFN_PUBOPeLEN_RED_SHIFT 24
+#define	HIFN_PUBOPeLEN_RED_SHIFT 0
 
 /* Public status register (HIFN_1_PUB_STATUS) */
 #define	HIFN_PUBSTS_DONE	0x00000001	/* operation done */

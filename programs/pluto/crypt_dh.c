@@ -1,6 +1,6 @@
 /* 
  * Cryptographic helper function - calculate DH
- * Copyright (C) 2004 Michael C. Richardson <mcr@xelerance.com>
+ * Copyright (C) 2004-2006 Michael C. Richardson <mcr@xelerance.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <crypto/cryptodev.h>
+#include <limits.h>
 
 #include <openswan.h>
 #include <openswan/ipsec_policy.h>
@@ -51,14 +52,6 @@
 #include "secrets.h"
 #include "keys.h"
 #include "ocf_cryptodev.h"
-
-#ifdef VULCAN_PK
-#include "dev/hifn/vulcanpk_funcs.h"
-#endif
-
-#ifdef VULCAN_PK
-#include "dev/hifn/vulcanpk_funcs.h"
-#endif
 
 /** Compute DH shared secret from our local secret and the peer's public value.
  * We make the leap that the length should be that of the group
@@ -143,10 +136,14 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 	unsigned char *result;
 	unsigned long tv_diff;
 	int ret = 1;
+	static unsigned int maxmodsize=UINT_MAX;
 
 #if 0
-	/* Currently, we know we can do mod exp iff we can do any
-	 * asymmetric operations at all.
+	/*
+	 * Currently, we know we can do mod exp iff we can do any
+	 * asymmetric operations at all. If we get EPARAM from the driver,
+	 * then we note the maximum size and punt to software for sizes
+	 * of that size and bigger.
 	 */
 	DBG(DBG_CRYPT, DBG_log("dh_share_ocf: %d\n", cryptodev_asymfeat));
 
@@ -157,6 +154,16 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 	    return;
 	}
 #endif
+
+tryagain:
+	if(group->raw_modulus_le.len >= maxmodsize) {
+	    DBG(DBG_CRYPT
+		, DBG_log("modp size=%u larger than %u bits, using gmp\n"
+			  ,maxmodsize
+			  ,group->raw_modulus_le.len*8));
+	    calc_dh_shared_gmp(shared, g, secchunk, group);
+	    return;
+	}
 
 	gettimeofday(&tv0, NULL);
 
@@ -203,6 +210,15 @@ calc_dh_shared_ocf(chunk_t *shared, const chunk_t g
 	    gettimeofday(&tv1, NULL);
 	    tv_diff=(tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
 	    if(ret != 0) {
+		if(errno == ERANGE) {
+		    DBG(DBG_CRYPT, DBG_log("modp size=%u failed with ERANGE, reducing maximum size from %u to %u, using gmp\n"
+					   ,group->raw_modulus_le.len*8
+					   ,maxmodsize
+					   ,group->raw_modulus_le.len*8));
+		    maxmodsize = group->raw_modulus_le.len;
+		    goto tryagain;
+		}
+
 		loglog(RC_LOG_SERIOUS, "failed to do DH calculation: %s",
 		       strerror(e));
 	    }

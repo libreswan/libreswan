@@ -198,9 +198,7 @@ struct hifn_softc {
 	struct list_head	sc_pk_q;        /* queue of PK requests */
 	spinlock_t		sc_pk_lock;	/* PK lock (queue + feed) */
 	struct hifn_pkq	       *sc_pk_qcur;	/* current processing request*/
-	struct timer_list       sc_pk_timer;	/* timer for PK engine failure */
-
-	unsigned int            sc_pk_spurious;
+	
 
 	struct miscdevice       sc_miscdev;
 };

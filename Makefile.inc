@@ -197,6 +197,7 @@ INSTCONFFLAGS=
 
 # extra compile flags, for userland and kernel stuff, e.g. -g for debug info
 # you can add to this in the defaults file using +=
+WALL?=-Wall
 USERCOMPILE?=-g ${WERROR} ${PORTDEFINE}
 #USERCOMPILE?=-g -O3 ${WERROR} 
 KLIPSCOMPILE=-O3
@@ -468,6 +469,9 @@ CRYPTOLIBS=${LIBAES} ${LIBSHA1} ${LIBMD5} ${LIBMD2} ${LIBDESLITE}
 ifeq ($(USE_EXTRACRYPTO),true)
 CRYPTOLIBS+=${LIBSHA2} ${LIBSERPENT} ${LIBTWOFISH} ${LIBBLOWFISH}
 endif
+
+# some OSs do not need this.
+LIBCRYPT?=-lcrypt
 
 LIBPOLICYDIR=${OPENSWANSRCDIR}/linux/lib/libipsecpolicy
 POLICYLIB=${OBJDIRTOP}/lib/libipsecpolicy/libipsecpolicy.a

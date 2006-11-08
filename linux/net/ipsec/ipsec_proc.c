@@ -610,6 +610,13 @@ ipsec_tncfg_get_info(char *buffer,
 	return len;
 }
 
+#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
+unsigned int natt_available = 1;
+#else
+unsigned int natt_available = 0;
+#endif
+module_param(natt_available, int, 0444);
+
 IPSEC_PROCFS_DEBUG_NO_STATIC
 int
 ipsec_version_get_info(char *buffer,

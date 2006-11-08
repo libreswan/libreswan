@@ -46,9 +46,7 @@ __FBSDID("$FreeBSD: src/sys/dev/hifn/hifn7751.c,v 1.32 2005/01/19 17:03:35 sam E
 /*
  * Driver for various Hifn encryption processors.
  */
-#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
-#endif
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/list.h>
@@ -73,10 +71,8 @@ __FBSDID("$FreeBSD: src/sys/dev/hifn/hifn7751.c,v 1.32 2005/01/19 17:03:35 sam E
 
 #define HIFN_DEBUG 
 
-#ifdef HIFN_HEXDUMP
 #define hexdump_printf printk
 #include "hexdump.c"
-#endif
 
 #define KASSERT(c,p)	if (!(c)) { printk p ; } else
 
@@ -131,7 +127,7 @@ pci_get_revid(struct pci_dev *dev)
 static	struct hifn_stats hifnstats;
 
 #define	hifn_debug debug
-static	int debug = 1;
+static	int debug = 0;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Enable debug");
 
@@ -162,6 +158,7 @@ static	int hifn_dramsize(struct hifn_softc *);
 static	int hifn_ramtype(struct hifn_softc *);
 static	void hifn_sessions(struct hifn_softc *);
 static irqreturn_t hifn_intr(int irq, void *arg, struct pt_regs *regs);
+static void hifn_kintr(struct hifn_softc *sc);
 static	u_int hifn_write_command(struct hifn_command *, u_int8_t *);
 static	u_int32_t hifn_next_signature(u_int32_t a, u_int cnt);
 static	int hifn_newsession(void *, u_int32_t *, struct cryptoini *);
@@ -173,9 +170,7 @@ static	int hifn_readramaddr(struct hifn_softc *, int, u_int8_t *);
 static	int hifn_writeramaddr(struct hifn_softc *, int, u_int8_t *);
 static	int hifn_dmamap_load_src(struct hifn_softc *, struct hifn_command *);
 static	int hifn_dmamap_load_dst(struct hifn_softc *, struct hifn_command *);
-
 static	int hifn_init_pkrng(struct hifn_softc *);
-
 static	void hifn_tick(unsigned long arg);
 static	void hifn_abort(struct hifn_softc *);
 static	void hifn_alloc_slot(struct hifn_softc *, int *, int *, int *, int *);
@@ -184,15 +179,12 @@ static	void hifn_write_reg_0(struct hifn_softc *, bus_size_t, u_int32_t);
 static	void hifn_write_reg_1(struct hifn_softc *, bus_size_t, u_int32_t);
 
 static	int hifn_read_random(void *arg, u_int32_t *buf, int len);
-
+static void hifn_pk_print_status(struct hifn_softc *sc, char *str, u_int32_t stat);
 
 /* for PK code */
 #if defined(CONFIG_OCF_HIFN_PKMMAP)
 static struct miscdevice hifnpk_miscdev;
 #else
-static void hifn_pk_timeout(unsigned long arg);
-static void hifn_kintr(struct hifn_softc *sc);
-static void hifn_pk_print_status(struct hifn_softc *sc, char *str, u_int32_t stat);
 static void hifn_kfeed(struct hifn_softc *sc);
 static int hifn_vulcan_kstart(struct hifn_softc *sc);
 static int hifn_vulcan_kprocess(void *arg, struct cryptkop *krp, int hint);
@@ -793,7 +785,6 @@ hifn_remove(struct pci_dev *dev)
 
 	/*XXX other resources */
 	del_timer_sync(&sc->sc_tickto);
-	del_timer_sync(&sc->sc_pk_timer);
 
 	/* Turn off DMA polling */
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
@@ -2094,19 +2085,6 @@ err_srcmap1:
 	return (err);
 }
 
-/*
- * hifn_tick - timer to check for errors in DMA rings
- *
- * @arg - hifn chip number to process.
- *
- * This function checks if the chip was active, and if so, checks the
- * rings to see if there is a situation with the rings that might concern us
- * and adjusts the status of things, and then disables appropriate DMA engines.
- *
- * This function is seperate from hifn_pk_timeout because of the difference in
- * timing, and a desire to isolate the two functions a bit more.
- *
- */
 static void
 hifn_tick(unsigned long arg)
 {
@@ -2181,7 +2159,6 @@ hifn_intr(int irq, void *arg, struct pt_regs *regs)
 	/* clear interrupts that were true */
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR, dmacsr & sc->sc_dmaier);
 
-#if !defined(CONFIG_OCF_HIFN_PKMMAP)
 	/* check out public key engine, if there is one */
 	if ((sc->sc_flags & HIFN_HAS_PUBLIC) &&
 	    (dmacsr & HIFN_DMACSR_PUBDONE)) {
@@ -2192,7 +2169,6 @@ hifn_intr(int irq, void *arg, struct pt_regs *regs)
 
 		hifn_kintr(sc);
 	}
-#endif
 
 	restart = dmacsr & (HIFN_DMACSR_D_OVER | HIFN_DMACSR_R_OVER);
 	if (restart)
@@ -2455,7 +2431,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 	session = HIFN_SESSION(crp->crp_sid);
 
 	if (sc == NULL || session >= sc->sc_nsessions) {
-		DPRINTF("%s,%d: %s - EINVAL sc=%p session=%u\n",__FILE__,__LINE__,__FUNCTION__, sc, session);
+		DPRINTF("%s,%d: %s - EINVAL\n",__FILE__,__LINE__,__FUNCTION__);
 		err = EINVAL;
 		goto errout;
 	}
@@ -2932,8 +2908,6 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *macbuf)
 static void
 hifn_write_reg_0(struct hifn_softc *sc, bus_size_t reg, u_int32_t val)
 {
-	/* device_printf(sc->sc_dev, "writing_0[%02x]=%08x\n", reg, val); */
-
 	if (sc->sc_flags & HIFN_IS_7811) {
 		if (sc->sc_bar0_lastreg == reg - 4)
 			readl(sc->sc_bar0 + HIFN_0_PUCNFG);
@@ -2945,8 +2919,6 @@ hifn_write_reg_0(struct hifn_softc *sc, bus_size_t reg, u_int32_t val)
 static void
 hifn_write_reg_1(struct hifn_softc *sc, bus_size_t reg, u_int32_t val)
 {
-	/* device_printf(sc->sc_dev, "writing_1[%02x]=%08x\n", reg, val); */
-
 	if (sc->sc_flags & HIFN_IS_7811) {
 		if (sc->sc_bar1_lastreg == reg - 4)
 			readl(sc->sc_bar1 + HIFN_1_REVID);
@@ -2982,11 +2954,34 @@ MODULE_DEVICE_TABLE(pci, hifn_pci_tbl);
  * PUBLIC KEY OPERATIONS/SUPPORT
  *
  */
-static void
-hifn_rng_init(struct hifn_softc *sc)
+static int
+hifn_init_pkrng(struct hifn_softc *sc)
 {
+	u_int32_t r;
+	int i;
+
+	DPRINTF("%s()\n", __FUNCTION__);
+
+	if ((sc->sc_flags & HIFN_IS_7811) == 0) {
+		/* Reset 7951 public key/rng engine */
+		WRITE_REG_1(sc, HIFN_1_PUB_RESET,
+		    READ_REG_1(sc, HIFN_1_PUB_RESET) | HIFN_PUBRST_RESET);
+
+		for (i = 0; i < 100; i++) {
+			DELAY(1000);
+			if ((READ_REG_1(sc, HIFN_1_PUB_RESET) &
+			    HIFN_PUBRST_RESET) == 0)
+				break;
+		}
+
+		if (i == 100) {
+			device_printf(sc->sc_dev, "public key init failed\n");
+			return (1);
+		}
+	}
+
+	/* Enable the rng, if available */
 	if (sc->sc_flags & HIFN_HAS_RNG) {
-		u_int32_t r;
 		if (sc->sc_flags & HIFN_IS_7811) {
 			r = READ_REG_1(sc, HIFN_1_7811_RNGENA);
 			if (r & HIFN_7811_RNGENA_ENA) {
@@ -2994,101 +2989,23 @@ hifn_rng_init(struct hifn_softc *sc)
 				WRITE_REG_1(sc, HIFN_1_7811_RNGENA, r);
 			}
 			WRITE_REG_1(sc, HIFN_1_7811_RNGCFG,
-				    HIFN_7811_RNGCFG_DEFL);
+			    HIFN_7811_RNGCFG_DEFL);
 			r |= HIFN_7811_RNGENA_ENA;
 			WRITE_REG_1(sc, HIFN_1_7811_RNGENA, r);
 		} else
 			WRITE_REG_1(sc, HIFN_1_RNG_CONFIG,
-				    READ_REG_1(sc, HIFN_1_RNG_CONFIG) |
-				    HIFN_RNGCFG_ENA);
-		
+			    READ_REG_1(sc, HIFN_1_RNG_CONFIG) |
+			    HIFN_RNGCFG_ENA);
+
 		sc->sc_rngfirst = 1;
-	}
-}
-
-#if !defined(CONFIG_OCF_HIFN_PKMMAP)
-static void
-hifn_pk_init(struct hifn_softc *sc)
-{
-	WRITE_REG_1(sc, HIFN_1_PUB_MODE, HIFN_PKMODE_ENHANCED);
-	device_printf(sc->sc_dev, "mode=%08x\n", READ_REG_1(sc,HIFN_1_PUB_MODE));
-	WRITE_REG_1(sc, HIFN_1_PUB_IEN, HIFN_PUBIEN_DONE);
-
-	/* reset any bits which are set */
-	WRITE_REG_1(sc, HIFN_1_PUB_STATUS, READ_REG_1(sc, HIFN_1_PUB_STATUS));
-	
-	memset(sc->sc_bar1+HIFN_1_PUB_MEM, 0, HIFN_1_PUB_MEMSIZE);
-}
-#endif
-
-static int
-hifn_pk_reset(struct hifn_softc *sc)
-{
-	int i;
-
-	DPRINTF("%s()\n", __FUNCTION__);
-
-	/* Reset 7951 public key/rng engine */
-	WRITE_REG_1(sc, HIFN_1_PUB_RESET,
-		    READ_REG_1(sc, HIFN_1_PUB_RESET) | HIFN_PUBRST_RESET);
-	
-	for (i = 0; i < 100; i++) {
-		DELAY(1000);
-		if ((READ_REG_1(sc, HIFN_1_PUB_RESET) &
-		     HIFN_PUBRST_RESET) == 0)
-			break;
-	}
-	
-	if (i == 100) {
-		device_printf(sc->sc_dev, "public key reset failed\n");
-		return (1);
-	}
-	
-#if !defined(CONFIG_OCF_HIFN_PKMMAP)
-	hifn_pk_init(sc);
-#endif
-
-	/* after a reset, the rng engine will need to be re-enabled */
-	hifn_rng_init(sc);
-	
-	return 0;
-}
-
-/*
- * hifn_init_pkrng - set up the 785x public key and RNG unit.
- *  
- * @sc - the software context for the unit in question.
- *
- * these functions are generally done only once. Use reset_pk(),
- * or pk_init and rng_init.
- *
- */
-static int
-hifn_init_pkrng(struct hifn_softc *sc)
-{
-	int i;
-
-	DPRINTF("%s()\n", __FUNCTION__);
-
-	if (sc->sc_flags & HIFN_HAS_PUBLIC) {
-		i = hifn_pk_reset(sc);
-		if(i) return i;
-	}
-
-#ifdef CONFIG_OCF_RANDOMHARVEST
-	/* hook-up the rng, if available */
-	if (sc->sc_flags & HIFN_HAS_RNG) {
 		crypto_rregister(sc->sc_cid, hifn_read_random, sc);
 	}
-#endif
 
 	/* Enable public key engine, if available */
 	if (sc->sc_flags & HIFN_HAS_PUBLIC) {
 		WRITE_REG_1(sc, HIFN_1_PUB_IEN, HIFN_PUBIEN_DONE);
 		sc->sc_dmaier |= HIFN_DMAIER_PUBDONE;
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
-
-		DPRINTF("PUBLIC %s()\n", __FUNCTION__);
 
 #if defined(CONFIG_OCF_HIFN_PKMMAP)
 		sc->sc_miscdev = hifnpk_miscdev;
@@ -3099,62 +3016,26 @@ hifn_init_pkrng(struct hifn_softc *sc)
 
 		device_printf(sc->sc_dev, "assigned to misc device %u\n", sc->sc_miscdev.minor);
 #else
-		device_printf(sc->sc_dev, "registered to OCF\n");
-		
 		INIT_LIST_HEAD(&sc->sc_pk_q);
 		spin_lock_init(&sc->sc_pk_lock);
 		sc->sc_pk_qcur = NULL;
+
+		WRITE_REG_1(sc, HIFN_1_PUB_MODE, HIFN_PKMODE_ENHANCED);
+		WRITE_REG_1(sc, HIFN_1_PUB_IEN, HIFN_PUBIEN_DONE);
+		WRITE_REG_1(sc, HIFN_1_PUB_STATUS, READ_REG_1(sc, HIFN_1_PUB_STATUS));
+
+		memset(sc->sc_bar1+HIFN_1_PUB_MEM, 0, HIFN_1_PUB_MEMSIZE);
 
 		crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0,
 				 hifn_vulcan_kprocess, sc);
 		crypto_kregister(sc->sc_cid, CRK_ADD, 0,
 				 hifn_vulcan_kprocess, sc);
-
-		init_timer(&sc->sc_pk_timer);
-		sc->sc_pk_timer.expires = jiffies + HZ; /* /10;*/ /* 1/10 second */
-		sc->sc_pk_timer.data = sc->sc_num;
-		sc->sc_pk_timer.function = hifn_pk_timeout;	/* timer handler */
-		add_timer(&sc->sc_pk_timer);
 #endif		
 
 	}
 
-	DPRINTF("%s() END\n", __FUNCTION__);
 
 	return (0);
-}
-
-void hifn_pk_print_status(struct hifn_softc *sc, char *str, u_int32_t stat)
-{
-	device_printf(sc->sc_dev, "%s status: %08x ", str, stat);
-	if(stat & HIFN_PUBSTS_DONE) {
-		printf("done ");
-	}
-	if(stat & HIFN_PUBSTS_CARRY) {
-		printf("carry ");
-	}
-	if(stat & 0x4) {
-		printf("sign(2) ");
-	}
-	if(stat & 0x8) {
-		printf("zero(3) ");
-	}
-	if(stat & HIFN_PUBSTS_FIFO_EMPTY) {
-		printf("empty ");
-	}
-	if(stat & HIFN_PUBSTS_FIFO_FULL) {
-		printf("full ");
-	}
-	if(stat & HIFN_PUBSTS_FIFO_OVFL) {
-		printf("overflow ");
-	}
-	if(stat & HIFN_PUBSTS_FIFO_WRITE) {
-		printf("write=%d ", (stat & HIFN_PUBSTS_FIFO_WRITE)>>16);
-	}
-	if(stat & HIFN_PUBSTS_FIFO_READ) {
-		printf("read=%d ", (stat & HIFN_PUBSTS_FIFO_READ)>>24);
-	}
-	printf("\n");
 }
 
 #if defined(CONFIG_OCF_HIFN_PKMMAP)
@@ -3293,18 +3174,10 @@ static void hifn_copyPkValueTo(struct hifn_softc *sc,
 	u_int32_t *words = (u_int32_t *)param->crp_p;
 	int regNum = (pkRegNum * chunkSize) + HIFN_1_PUB_MEM;
 
-	if(hifn_debug) device_printf(sc->sc_dev, "copying %d words (%d bits) to %02x from %p\n",
-				     wordcnt,
-				     param->crp_nbits, 
-				     (regNum - HIFN_1_PUB_MEM),
-				     words);
 	while(wordcnt-->0) {
-		writel(*words++, sc->sc_bar1 + regNum);
+		WRITE_REG_1(sc, regNum, *words++);
 		regNum += 4;
 	}
-
-	//hexdump(sc->sc_bar1, (pkRegNum * chunkSize) + HIFN_1_PUB_MEM,
-	//	(param->crp_nbits+7)/8);
 }
 
 /*
@@ -3378,77 +3251,13 @@ void hifn_write_pkop(struct hifn_softc *sc,
 					    READ_REG_1(sc, HIFN_1_PUB_STATUS));
 }
 
-/*
- * hifn_calc_bitlen - determine how many significant bits there are.
- *
- * @secval - pointer to array of bytes, little-endian format.
- * @seclen - number of bytes of data.
- *
- * This function calculates where the most-significant 1 bit in a little
- * endian value stored at secval.
- *
- */
- 
-static int hifn_calc_bitlen(unsigned char *secval,
-			    unsigned int seclen)
-{
-	int explen;
-			
-	explen = seclen * 8;
-	secval += (seclen-1);
-	while(*secval == 0 && seclen > 0) {
-		secval--;
-		seclen--;
-		explen-=8;
-	}
-
-	printk("seclen=%d *secval=%02x\n", seclen, *secval);
-	
-	/* fix up final byte size */
-	if((*secval & 0x80) == 0) {
-		explen--;
-		
-		if((*secval & 0x40) == 0) {
-			explen--;
-			
-			if((*secval & 0x20) == 0) {
-				explen--;
-				
-				if((*secval & 0x10) == 0) {
-					explen--;
-					
-					if((*secval & 0x08) == 0) {
-						explen--;
-						
-						if((*secval & 0x04) == 0) {
-							explen--;
-							
-							if((*secval & 0x02) == 0) {
-								explen--;
-								
-								if((*secval & 0x01) == 0) {
-									explen--;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	printk("explen=%d\n", explen);
-	return explen;
-}
-    
 static int
 hifn_vulcan_kstart(struct hifn_softc *sc)
 {
 	struct cryptkop *krp = sc->sc_pk_qcur->pkq_krp;
-	int mod_bits;
-	int chunkSize;  /* in bytes */
-	int modlen, explen;     /* in bits */
-	struct crparam *rec;
+	//int exp_bits, mod_bits, base_bits;
+	//u_int32_t op, a_off, b_off, c_off, d_off;
+	int chunkSize;
 
 	DPRINTF("%s()\n", __FUNCTION__);
 
@@ -3459,59 +3268,7 @@ hifn_vulcan_kstart(struct hifn_softc *sc)
 			krp->krp_status = EINVAL;
 			return (1);
 		}
-		if(krp->krp_iparams != 4) {
-			/* we would have to calculate the reciprocal!!!!
-			 * which we don't know how to do yet, so make it
-			 * invalid for now.
-			 */
-			krp->krp_status = EINVAL;
-			return (1);
-		} else {
-			rec = &krp->krp_param[CRK_MOD_PARAM_RECIP];
-		}
-
-		/* need to find exponent length, in bits */
-		explen = hifn_calc_bitlen(krp->krp_param[CRK_MOD_PARAM_EXP].crp_p,
-					  krp->krp_param[CRK_MOD_PARAM_EXP].crp_nbits/8);
-		mod_bits = krp->krp_param[CRK_MOD_PARAM_MOD].crp_nbits;
-		modlen = mod_bits / 4;
-		chunkSize = mod_bits / 8;
-
-		sc->sc_pk_qcur->pkq_chunksize  = chunkSize;
-		sc->sc_pk_qcur->pkq_oparam_reg = 2;
-
-		/*
-		 * param 0 is base, goes into register A(0)
-		 * param 1 is exponent, goes into register B(1).
-		 * register 2 will be the result, zero it.
-		 * register 3 used as scratch, zero it.
-		 * param 2 is the modulus, goes into register M(4)
-		 * param 3 is the reciprocal, goes into register M(5)
-		 * M(6) and M(7) are also scratch and have to be zero'ed.
-		 */
-		hifn_copyPkValueTo(sc, &krp->krp_param[CRK_MOD_PARAM_BASE],chunkSize,0);
-		hifn_copyPkValueTo(sc, &krp->krp_param[CRK_MOD_PARAM_EXP], chunkSize,1);
-		hifn_clearPkReg(sc, chunkSize, sc->sc_pk_qcur->pkq_oparam_reg);
-		hifn_clearPkReg(sc, chunkSize, 3);
-		hifn_copyPkValueTo(sc, &krp->krp_param[CRK_MOD_PARAM_MOD], chunkSize,4);
-		hifn_copyPkValueTo(sc, rec, chunkSize,5);
-		hifn_clearPkReg(sc, chunkSize, 6);
-		hifn_clearPkReg(sc, chunkSize, 7);
-		
-
-#ifdef HEXDUMP
-		if(hifn_debug) {
-			hexdump(sc->sc_bar1, HIFN_1_PUB_MEM, HIFN_1_PUB_MEMSIZE);
-		}
-#endif
-
-		hifn_write_pkop(sc, HIFN_PUBOPe_OP_MODEXP,
-				chunkSize,  /* chunk size in bytes */
-				0, /* A argument */
-				1, /* B argument */
-				4, /* M argument */
-				explen-1,  /* explen */
-				0  /* reducent length */);
+		goto unknown_op;
 		break;
 		
 	case CRK_ADD:
@@ -3549,15 +3306,12 @@ hifn_vulcan_kstart(struct hifn_softc *sc)
 		break;
 
 	default:
-		/* unknown_op: */
+	unknown_op:
 		device_printf(sc->sc_dev, "receive kop=%d\n", krp->krp_op);
 		krp->krp_status = ENOSYS;
 		return (1);
 	}
-
-	/* defer timer for 1 second */
-	mod_timer(&sc->sc_pk_timer, jiffies + HZ);
-
+				       
 	return (0);
 
 #if 0
@@ -3585,7 +3339,6 @@ hifn_kfeed(struct hifn_softc *sc)
 
 	if (list_empty(&sc->sc_pk_q) && sc->sc_pk_qcur == NULL) {
 		DPRINTF("nothing for device to do\n");
-		del_timer(&sc->sc_pk_timer);
 		return;
 	}
 	if (sc->sc_pk_qcur != NULL) {
@@ -3607,7 +3360,41 @@ hifn_kfeed(struct hifn_softc *sc)
 		 */
 	}
 }
+#endif /* PKMMAP */
 
+
+void hifn_pk_print_status(struct hifn_softc *sc, char *str, u_int32_t stat)
+{
+	device_printf(sc->sc_dev, "%s status: %08x ", str, stat);
+	if(stat & HIFN_PUBSTS_DONE) {
+		printf("done ");
+	}
+	if(stat & HIFN_PUBSTS_CARRY) {
+		printf("carry ");
+	}
+	if(stat & 0x4) {
+		printf("sign(2) ");
+	}
+	if(stat & 0x8) {
+		printf("zero(3) ");
+	}
+	if(stat & HIFN_PUBSTS_FIFO_EMPTY) {
+		printf("empty ");
+	}
+	if(stat & HIFN_PUBSTS_FIFO_FULL) {
+		printf("full ");
+	}
+	if(stat & HIFN_PUBSTS_FIFO_OVFL) {
+		printf("overflow ");
+	}
+	if(stat & HIFN_PUBSTS_FIFO_WRITE) {
+		printf("write=%d ", (stat & HIFN_PUBSTS_FIFO_WRITE)>>16);
+	}
+	if(stat & HIFN_PUBSTS_FIFO_READ) {
+		printf("read=%d ", (stat & HIFN_PUBSTS_FIFO_READ)>>24);
+	}
+	printf("\n");
+}
 /*
  * hifn_kintr - handle interrupts related to PK engine.
  *
@@ -3615,9 +3402,6 @@ hifn_kfeed(struct hifn_softc *sc)
  *
  * deal with any interrupts from the PK engine. We are not called unless
  * the PUB_DONE bit was set, so we may assume that it was set.
- *
- * Note, this routine is called from hifn_intr(), so we assume that all
- * locks are already taken.
  */
 void hifn_kintr(struct hifn_softc *sc)
 {
@@ -3632,12 +3416,6 @@ void hifn_kintr(struct hifn_softc *sc)
 	}
 
 	q = sc->sc_pk_qcur;
-	if(q == NULL) {
-		DPRINTF("%s() spurious interrupt\n", __FUNCTION__);
-		sc->sc_pk_spurious++;
-		return;
-	}
-		
 	sc->sc_pk_qcur = NULL;
 	
 	krp = q->pkq_krp;
@@ -3663,69 +3441,6 @@ void hifn_kintr(struct hifn_softc *sc)
 	kfree(q);
 }
 
-/*
- * hifn_pk_timeout - check once a second to see if PK engine got stuck.
- * 
- * @arg: hifn vulcan instance number
- *
- * The PK engine can get stuck if it is given a bad reciprocal for the moduli,
- * as it will never be able to do the modulus operation properly. Yes, a userspace
- * process could certain do a DOS on the the chip, since we'd only reset it
- * once a second. Perhaps, we should keep track of the PID of the offending
- * processing, and refuse them in the future.
- *
- * Note that the interrupt routine will put this timer off
- *
- *
- */
-static void hifn_pk_timeout(unsigned long arg)
-{
-	struct hifn_pkq *q;
-	struct hifn_softc *sc;
-	unsigned long l_flags;
-
-	DPRINTF("%s(%lu)\n", __FUNCTION__, arg);
-
-	if (arg >= HIFN_MAX_CHIPS)
-		return;
-	sc = hifn_chip_idx[arg];
-	if (!sc)
-		return;
-
-	HIFN_LOCK(sc);
-	q = sc->sc_pk_qcur;
-
-	hifn_pk_print_status(sc, "pk_timeout ", READ_REG_1(sc, HIFN_1_PUB_STATUS));
-	sc->sc_pk_qcur = NULL;
-	if(q == NULL) {
-		/* nothing happening, so it's fine, let the timer go */
-		goto done;
-	}
-
-	/*
-	 * something active, so it must have gotten stuck, kill current
-	 * operation, reset PK engine, and start a new operation.
-	 */
-	if(q->pkq_krp) {
-		/* it should never be NULL, but let's be careful */
-		q->pkq_krp->krp_status = EDOM;
-		crypto_kdone(q->pkq_krp);
-	}
-	kfree(q);
-
-
-	/* reset engine */
-	device_printf(sc->sc_dev, "PK engine stuck --- resetting\n");
-	hifn_pk_reset(sc);
-
-	/* feed a new entry, if any to the engine */
-	hifn_kfeed(sc);
-
-done:
-	HIFN_UNLOCK(sc);
-
-}
-#endif /* PKMMAP */
 
 
 static struct pci_driver hifn_driver = {
@@ -3750,6 +3465,6 @@ static void __exit hifn_exit (void)
 module_init(hifn_init);
 module_exit(hifn_exit);
 
-MODULE_LICENSE("Dual BSD/GPL");
+MODULE_LICENSE("BSD");
 MODULE_AUTHOR("David McCullough <dmccullough@cyberguard.com>");
 MODULE_DESCRIPTION("OCF driver for hifn PCI crypto devices");

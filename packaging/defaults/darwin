@@ -1,8 +1,14 @@
 CC=gcc
 PORTINCLUDE+=-I${OPENSWANSRCDIR}/ports/darwin/include 
-#USERCOMPILE+=-D__CYGWIN__ -D__CYGWIN32__
-#USERLINK=-mcygwin 
-#OSDEP=cygwin
+PORTINCLUDE+=-g -O3 -I/opt/local/include -L/opt/local/lib
+
+# apple can't deal with -Wall yet
+WALL=
+
+# apple has routines in libc.
+LIBCRYPT=
+
+USERLINK=-L/opt/local/lib
 
 USE_KLIPS=false
 USE_KERNEL26=false

@@ -89,15 +89,22 @@
 #include <TargetConditionals.h>
 #include <AvailabilityMacros.h>
 #include <machine/types.h>
+#include <machine/endian.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/time.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <tcpd.h>
+#include <assert.h>
 #define user_assert(foo) assert(foo)
+#define __u32  unsigned int
+#define __u8  unsigned char
+#define s6_addr16 __u6_addr.__u6_addr16
+#define DEBUG_NO_STATIC static
 #endif
 
 /*

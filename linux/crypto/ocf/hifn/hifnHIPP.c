@@ -32,9 +32,7 @@
 /*
  * Driver for various Hifn encryption processors.
  */
-#ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
-#endif
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/list.h>

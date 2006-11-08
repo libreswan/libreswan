@@ -217,7 +217,7 @@ ifeq ($(USE_XAUTH),true)
 XAUTH_DEFS=-DXAUTH -DMODECFG
 XAUTH_OBJS=${XAUTH_DIST_OBJS}
 XAUTH_SRCS=${XAUTH_DIST_SRCS}
-XAUTH_LLIBS=-lcrypt
+XAUTH_LLIBS=${LIBCRYPT}
 # if we use pam for password checking then add it too
 ifeq ($(USE_XAUTHPAM),true)
 XAUTHPAM_DEFS=-DXAUTH_USEPAM
