@@ -115,17 +115,6 @@ section_or_include:
 		if(yydebug) fprintf(stderr, "\nconfig setup read\n");
 
 	} kw_sections
-	| CONN DEFAULT EOL {
-		struct section_list *section = &_parser_cfg->conn_default;
-		section->name = "%default";
-		section->kw = NULL;
-
-                /* setup keyword section to record values */
-		_parser_kw = &(section->kw);
-		_parser_kw_last = NULL;
-	
-		if(yydebug) fprintf(stderr, "\nread conn %s\n", section->name);
-	} kw_sections
 	| CONN STRING EOL {
 		struct section_list *section;
 		section = (struct section_list *)malloc(sizeof(struct section_list));

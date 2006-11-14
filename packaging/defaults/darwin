@@ -14,6 +14,7 @@ USE_KLIPS=false
 USE_KERNEL26=false
 USE_WIN2K=false
 BUILD_KLIPS=false
+USE_YACC=true
 
 ISCARCH=unix
 ISCHOSTARCH=unix

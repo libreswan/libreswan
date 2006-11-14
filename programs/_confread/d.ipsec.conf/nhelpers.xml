@@ -1,0 +1,13 @@
+  <varlistentry>
+  <term><emphasis remap='B'>nhelpers</emphasis></term>
+  <listitem>
+<para>how many <emphasis remap='I'>pluto helpers</emphasis> are started
+to help with cryptographic operations. Pluto will start
+<emphasis remap='I'>(n-1)</emphasis> of them, where <emphasis remap='I'>n</emphasis>
+is the number of CPU's you have (including hypherthreaded CPU's).
+A value of 0 forces pluto to do all operations in the main
+process. A value of -1 tells pluto to perform the above calculation. Any
+other value forces the number to that amount.
+</para>
+  </listitem>
+  </varlistentry>

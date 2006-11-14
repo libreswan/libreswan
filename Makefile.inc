@@ -265,18 +265,6 @@ RH_KERNELSRC?=/lib/modules/2.6.9-1.681_FC3/build
 ## build environment variations
 ##
 
-# set this to a place where you have installed a bind9.3 
-# snapshot (20021115 or better). A bind 9.2, particularly a RedHat
-# installed one in RH 7.2, won't work - you wind up depending upon
-# openssl.
-
-BIND9STATICLIBDIR?=/usr/lib
-
-# if you install elsewere, you may need to point the include files to it.
-#BIND9STATICLIBDIR?=/sandel/lib
-#BIND9INCDIR?=/sandel/include
-
-
 #
 # USE_ variables determine if features are compiled into Openswan.
 #       these let you turn on/off specific features
@@ -416,6 +404,9 @@ USE_BASH?=true
 # Whether or not to include TaProoM (TCL Pluto Mix) into pluto.
 # you need at least swig 1.3.24, as well as tcl libraries and includes
 USE_TAPROOM?=false
+
+# On MAC OSX , we have to use YACC and not BISON.
+USE_YACC?=false
 
 X509_VERSION=X.509-1.5.4
 NONINTCONFIG=oldconfig

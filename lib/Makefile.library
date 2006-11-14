@@ -3,7 +3,11 @@ KLIPSSRCDIR=${OPENSWANSRCDIR}/linux/net/ipsec
 MANSRCDIR=${OPENSWANSRCDIR}/lib/libopenswan
 
 LEX=flex
+ifeq ($(USE_YACC),true)
+BISON="yacc -b parser"
+else
 BISON=bison
+endif
 
 VPATH+= ${KLIPSSRCDIR}
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
@@ -14,7 +18,9 @@ INCLUDES+=-I${OPENSWANSRCDIR}/include
 CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${PORTLASTINCLUDE}
 CFLAGS+=-DDEBUG
 CFLAGS+= $(USERCOMPILE)
+ifneq ($(BUILDENV),darwin)
 CFLAGS+= -Wall
+endif
 #CFLAGS+= -Wconversion
 #CFLAGS+= -Wmissing-prototypes
 CFLAGS+= -Wpointer-arith

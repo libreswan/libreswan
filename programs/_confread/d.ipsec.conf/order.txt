@@ -5,6 +5,7 @@ d.ipsec.conf/conngeneral.xml
 d.ipsec.conf/type.xml
 d.ipsec.conf/left.xml
 d.ipsec.conf/leftsubnet.xml
+d.ipsec.conf/leftprotoport.xml
 d.ipsec.conf/leftnexthop.xml
 d.ipsec.conf/leftsourceip.xml
 d.ipsec.conf/leftupdown.xml
@@ -22,6 +23,7 @@ d.ipsec.conf/leftid.xml
 d.ipsec.conf/leftrsasigkey.xml
 d.ipsec.conf/leftrsasigkey2.xml
 d.ipsec.conf/leftcert.xml
+d.ipsec.conf/leftca.xml
 d.ipsec.conf/leftsendcert.xml
 d.ipsec.conf/leftxauthserver.xml
 d.ipsec.conf/leftxauthclient.xml
@@ -53,6 +55,7 @@ d.ipsec.conf/protostack.xml
 d.ipsec.conf/interfaces.xml
 d.ipsec.conf/nat_traversal.xml
 d.ipsec.conf/virtual_private.xml
+d.ipsec.conf/nhelpers.xml
 d.ipsec.conf/crlcheckinterval.xml
 d.ipsec.conf/strictcrlpolicy.xml
 d.ipsec.conf/forwardcontrol.xml

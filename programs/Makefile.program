@@ -9,7 +9,13 @@ RM=rm
 INCLUDES+=-I${OPENSWANSRCDIR} -I${KLIPSINC} -I${OPENSWANSRCDIR}/include
 CFLAGS+=${USERCOMPILE} ${PORTINCLUDE} ${INCLUDES} ${PORTLASTINCLUDE}
 
+<<<<<<< master
 CFLAGS+= ${WALL}
+=======
+ifneq ($(BUILDENV),darwin)
+CFLAGS+= -Wall
+endif
+>>>>>>> calcdh
 #CFLAGS+= -Wconversion
 #CFLAGS+= -Wmissing-prototypes
 CFLAGS+= -Wpointer-arith

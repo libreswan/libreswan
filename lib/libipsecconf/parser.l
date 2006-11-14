@@ -250,7 +250,6 @@ config			return CONFIG;
 setup			return SETUP;
 conn			{ BEGIN USERDEF; return CONN; }
 include			return INCLUDE;
-%default                return DEFAULT;
 
 [^\"= \t\n]+	        {  int tok;
     
@@ -265,11 +264,6 @@ include			return INCLUDE;
                                break;
 			   }
 			   return tok;
-			}
-
-<USERDEF>%default       {
-                           BEGIN INITIAL;
-			   return DEFAULT;
 			}
 
 <USERDEF>[^\"= \t\n]+   {

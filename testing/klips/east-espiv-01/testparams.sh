@@ -19,7 +19,6 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS klips-spi-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS klips-debug-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-look-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS east-prompt-splitline.pl"
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS script-only.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS tcpdump-three-eight.sed"
 TCPDUMPFLAGS="-n -x -X -s 1600"
 INIT_SCRIPT=spi1.sh

@@ -425,6 +425,17 @@ int starter_whack_add_conn (struct starter_config *cfg
 
 	msg.policy = conn->policy;
 
+	if(conn->options_set[KBF_DPDACTION]) {
+		msg.dpd_action = conn->options[KBF_DPDACTION];
+
+		if(conn->options_set[KBF_DPDDELAY]) {
+			msg.dpd_delay  = conn->options[KBF_DPDDELAY];
+		}
+		if(conn->options_set[KBF_DPDTIMEOUT]) {
+			msg.dpd_timeout  = conn->options[KBF_DPDTIMEOUT];
+		}
+	}
+
 	set_whack_end(cfg, "left",  &msg.left, &conn->left);
 	set_whack_end(cfg, "right", &msg.right, &conn->right);
 

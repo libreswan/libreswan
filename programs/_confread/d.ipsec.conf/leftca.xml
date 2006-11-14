@@ -1,0 +1,15 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftca</emphasis></term>
+  <listitem>
+<para>specifies the authorized Certificate Agency (CA) that signed the
+certificate of the peer. If undefined, it defaults to the CA that signed
+the certificate specified in <emphasis remap='B'>leftcert</emphasis>.
+The special <emphasis remap='B'>rightca=%same</emphasis> is implied when
+not specifying a <emphasis remap='B'>rightca</emphasis> and means that
+only peers with certificates signed by the same CA as the leftca will be
+allowed. This option is only useful in complex multi CA certificate
+situations. When using a single CA, it can be safely omitted for both
+left and right.
+</para>
+  </listitem>
+  </varlistentry>

@@ -68,11 +68,19 @@
 #include "log.h"
 #include "timer.h"
 
+/*
+ * we have removed /dev/hw_random, as it can produce very low quality
+ * entropy. One must run rngd to verify the entropy and feed it into
+ * /dev/random properly.
+ *
+ * You have been warned.
+ *
+ */
 static int random_fd = -1;
 const char *random_devices[]={
 #if defined(linux) 
-  "/dev/hw_random",
-  "/dev/urandom"
+  "/dev/urandom",
+  "/dev/random"
 #elif defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
   "/dev/urandom",
   "/dev/random"

@@ -56,6 +56,10 @@
  *
  */
 
+#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
+#include <openswan.h>
+#endif
+
 #ifndef _CRYPTO_CRYPTO_H_
 #define _CRYPTO_CRYPTO_H_
 

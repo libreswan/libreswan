@@ -54,12 +54,19 @@ via an &ldquo;updown&rdquo; script.  However, the default
 <emphasis remap='B'>ipsec _updown</emphasis>
 provides no help in controlling a modern firewall.</para>
 
-<para>Including attributes of the keying channel
-(authentication methods,
-<emphasis remap='B'>ikelifetime</emphasis>,
-etc.)
-as an attribute of a connection,
-rather than of a participant pair, is dubious and incurs limitations.</para>
+<para>Including attributes of the keying channel (authentication methods,
+<emphasis remap='B'>ikelifetime</emphasis>, etc.) as an attribute of a
+connection, rather than of a participant pair, is dubious and incurs
+limitations.</para>
+
+<para>The use of <emphasis remap='B'>%any</emphasis> with the
+<emphasis remap='I'>protoport=</emphasis> option is ambiguous. Should
+the SA permits any port through or should the SA negotiate any single
+port through?  The first is a basic conn with a wildcard. The second
+is a template. The second is the current behaviour, and it's wrong
+for quite a number of uses involving TCP. The keyword
+<emphasis remap='B'>%one</emphasis> may be introduced in the future to
+seperate these two cases.</para>
 
 <para><emphasis remap='I'>ipsec_manual</emphasis>
 is not nearly as generous about the syntax of subnets,
@@ -75,15 +82,15 @@ RSA signature keys.</para>
 
 <para><emphasis remap='B'>First packet caching</emphasis> is only implemented
 for the KLIPS(NG) and MAST stacks. NETKEY returns POSIX-breaking responses,
-visiable as <emphasis remap='I'>connect: Resource temporarily unavailable</amphasis>
+visiable as <emphasis remap='I'>connect: Resource temporarily unavailable</emphasis>
 errors. This affects Opportunistic Encryption and DPD. Functionality on the BSD
 and Windows stacks is unknown.</para>
 
 <para>Some state information is only available when using KLIPS, and will
 return errors on other IPsec stacks. These include 
-<emphasis remap='I'>ipsec eroute</amphasis>, 
-<emphasis remap='I'>ipsec spi</amphasis> and
-<emphasis remap='I'>ipsec look</amphasis>.</para>
+<emphasis remap='I'>ipsec eroute</emphasis>, 
+<emphasis remap='I'>ipsec spi</emphasis> and
+<emphasis remap='I'>ipsec look</emphasis>.</para>
 
 <para> Multiple L2TP clients behind the same NAT router, and multiple L2TP
 clients behind different NAT routers using the same Virtual IP is currently

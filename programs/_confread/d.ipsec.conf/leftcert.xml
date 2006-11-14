@@ -1,10 +1,15 @@
   <varlistentry>
   <term><emphasis remap='B'>leftcert</emphasis></term>
   <listitem>
-<para>If you are using 
+<para>If you are using
 <emphasis remap='B'>leftrsasigkey=%cert</emphasis>
 this defines the certificate you would like to use. It should point to a X.509
 encoded certificate file. If you do not specify a full pathname, by default it
-will look in /etc/ipsec.d/certs.</para>
+will look in /etc/ipsec.d/certs. If openswan has been compiled with
+<emphasis remap='B'>USE_SMARTCARD=true</emphasis>, then this option can also be
+set to <emphasis remap='B'>leftcert=%smartcard</emphasis>. If multiple smartcards
+or USB tokens are present, they can be specified using
+<emphasis remap='B'>leftcert=%smartcard&lt;reader nr&gt;:&lt;PKCS#15 key id&gt;</emphasis>
+</para>
   </listitem>
   </varlistentry>

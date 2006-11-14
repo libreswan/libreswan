@@ -1,0 +1,3 @@
+this tests parsing of a config file that has dpd settings in it,
+both in a conn, and in %default.
+

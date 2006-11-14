@@ -215,11 +215,11 @@ static int cmdread(dnskey_glob *gs,
 		gs->cmdloc=0;
 		return 0;
 	}
-	memcpy(gs->cmdbuf+gs->cmdloc, buf, len);
+	memcpy((unsigned char *)gs->cmdbuf+gs->cmdloc, (unsigned char *)buf, len);
 	gs->cmdloc+=len;
 	gs->cmdbuf[gs->cmdloc]='\0';
 
-	while((nl = strchr(gs->cmdbuf, '\n')) != NULL) {
+	while((nl = strchr((char *)gs->cmdbuf, '\n')) != NULL) {
 		/* found a newline, so turn it into a \0, and process the
 		 * command, and then we will pull the rest of the buffer
 		 * up.
@@ -227,10 +227,10 @@ static int cmdread(dnskey_glob *gs,
 		*nl='\0';
 		cmdlen= nl - gs->cmdbuf +1;
 
-		cmdparse(gs, gs->cmdbuf);
+		cmdparse(gs, (char *)gs->cmdbuf);
 
 		gs->cmdloc -= cmdlen;
-		memmove(gs->cmdbuf, gs->cmdbuf+cmdlen, gs->cmdloc);
+		memmove((unsigned char *)gs->cmdbuf, (unsigned char *)gs->cmdbuf+cmdlen, gs->cmdloc);
 	}
 	return 1;
 }

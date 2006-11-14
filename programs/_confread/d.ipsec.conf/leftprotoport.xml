@@ -1,0 +1,33 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftprotoport</emphasis></term>
+  <listitem>
+<para>allowed protocols and ports over connection, also called Port
+Selectors. The argument is in the form <emphasis remap='I'>protocol</emphasis>,
+which can be a number or a name that will be looked up in
+<emphasis remap='I'>/etc/protocols</emphasis>, such as
+<emphasis remap='I'>leftprotoport=icmp</emphasis>, or in the form of
+<emphasis remap='I'>protocol/port</emphasis>, such as
+<emphasis remap='I'>tcp/smtp</emphasis>. Ports can be defined as a number (eg. 25)
+or as a name (eg smtp) which will be looked up in
+<emphasis remap='I'>/etc/services</emphasis>. A special keyword
+<emphasis remap='I'>%any</emphasis> can be used to allow all ports of a certain
+protocol. The most common use of this option is for L2TP connections to only
+allow l2tp packets (UDP port 1701), eg:
+<emphasis remap='I'>leftprotoport=17/1701</emphasis>. Some clients, notably
+older Windows XP and some Mac OSX clients, use a random high port as source
+port. In those cases <emphasis remap='I'>rightprotoport=17/%any</emphasis> can
+be used to allow all UDP traffic on the connection.
+Note that this option is part of the proposal, so it cannot be arbitrarily left out
+if one end does not care about the traffic selection over this connection - both peers have
+to agree. The Port Selectors show up in the output of
+<emphasis remap='I'>ipsec eroute</emphasis> and <emphasis remap='I'>ipsec auto --status</emphasis>
+eg:<emphasis remap='I'>"l2tp": 193.110.157.131[@aivd.xelernace.com]:7/1701...%any:17/1701</emphasis>
+This option only filters outbound traffic.  Inbound traffic selection
+must still be based on firewall rules activated by an updown script. The
+variablees $PLUTO_MY_PROTOCOL, $PLUTO_PEER_PROTOCOL, $PLUTO_MY_PORT, and
+$PLUTO_PEER_PORT are available for use in <emphasis remap='I'>updown</emphasis>
+scripts. Older workarounds for bugs involved a setting of <emphasis remap='I'>17/0</emphasis>
+to denote all ports were allowed. This notation should no longer be used.
+</para>
+  </listitem>
+  </varlistentry>

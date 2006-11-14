@@ -1,8 +1,9 @@
 -*- emacs-wiki -*-
 
-I propose the following proceedure.
-  
-Releases are numbered M.X.Y.
+Starting with the 2.5.00 and 3.0.00 release, we are clarifying what
+different release numbers mean.
+
+Releases are numbered M.X.YY.
 
 During Y==0 releases, we may introduce new functionality.
        These releases are to be considered "testing" (in debian parlance)
@@ -13,7 +14,6 @@ During Y!=0 releases, we may not introduce new functionality, and these
 Releases where X==0 are to be considered "unstable". We reserve the
 	 right to replace entire subsystems, remove functionality, 
 	 change configuration file formats, etc.
-
 
 ========
 
@@ -46,7 +46,7 @@ That is, one could see a release pattern like:
 
 We expect that if someone was running 3.1.3, that an upgrade to 3.2.1
 should be considered very safe.  We promise that we will not change
-any significant functionality or default in a major release cycle.
+any significant functionality or default in a minor number change.
 The config files will be upwards compatible, and to the extent possible,
 downward compatible -- i.e. we won't replace/upgrade any files in 3.2.1
 such that it won't also work with 3.1.3.
@@ -56,22 +56,20 @@ We hope that this is clear enough to package managers.
 It is very likely that once 3.2.1 ships, that there will be NO FURTHER
 SECURITY PATCHES to 3.1.3!
 
-The digits "Y" may go as large as 99, but will not have leading zeros.
+The digits "Y" may go as large as 99, and will have leading zeros.
 We will do a new X or Y-level release 4 times a year, possibly more often if
 we need to fix bugs. 
 
 **IMMEDIATE SITUATION**
 
-The #public/2.5.0drY branch shall be released as 2.99.0.
+The #public/2.5.0drY branch shall be released as 2.5.00. Once it has
+become stable, it will become 2.5.01, etc. and become the stable version.
 
-We expect that there will be a 2.5.0/2.5.1 release, done from GIT 
-(not CVS), that will continue to use the _confread AWK scripts.
+At nearly the same time, there will be a 3.0.00 release from the "260ocf"
+branch.  Once this is more stable, it will become 3.1.xx.
 
-At nearly the same time, there will be a 3.0.0 release from the "260ocf"
-branch.  Once this is more stable, it will become 3.1.x.
-
-At the same time, a "fsm" branch will begin to be released as 3.0.N
-(N =~ 20), which when it is ready, will start merging code into a 3.2.0.
+At the same time, a "fsm" branch will begin to be released as 3.0.NN
+(NN =~ 20), which when it is ready, will start merging code into a 3.2.00.
 
 **DR RELEASES**
 
@@ -79,9 +77,6 @@ There will not be any more "DR" releases.
 
 If we find that we need to cycle at something that is definitely unstable, we
 will do so at the previous "M.0" level.
-
-Probably there were two new X-level releases among the 2.4.Y path
-which we could have done.
 
 **PACKAGE MANAGER EXPECTATIONS**
 
@@ -102,3 +97,5 @@ release.  Those are to be considered stable.
 
 
 	
+
+

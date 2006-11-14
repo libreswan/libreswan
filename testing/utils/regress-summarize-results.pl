@@ -24,6 +24,9 @@ $unexpectedcolour="#009999"; # YELLOW
 $expectedcolour="#007700"; # dark green
 $roguecolour="#999900";    # purple?
 
+$fastrate=20;    # when test are running, how often to refresh
+$slowrate=300;   # when tests are not running, how often to refresh.
+
 $failed=0;
 $passed=0;
 $missed=0;
@@ -325,9 +328,9 @@ print HTMLFILE "<HTML>  <HEAD>\n";
 print HTMLFILE "<META http-equiv=\"content-type\" content=\"text/html; charset=ISO-8859-1\">\n";
 
 if(defined($runningtest)) {
-  print HTMLFILE "<META http-equiv=\"Refresh\" content=\"5,testresults.html\">\n";
+  print HTMLFILE "<META http-equiv=\"Refresh\" content=\"$fastrate,testresults.html\">\n";
 } else {
-  print HTMLFILE "<META http-equiv=\"Refresh\" content=\"60,testresults.html\">\n";
+  print HTMLFILE "<META http-equiv=\"Refresh\" content=\"$slowrate,testresults.html\">\n";
 }
 
 print HTMLFILE "<TITLE>Openswan nightly testing results for $runtime</TITLE>\n";

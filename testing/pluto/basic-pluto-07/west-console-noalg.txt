@@ -1,0 +1,68 @@
+west:~#
+ ping -n -c 4 192.0.2.254
+PING 192.0.2.254 (192.0.2.254): 56 data bytes
+64 bytes from 192.0.2.254: icmp_seq=0 ttl=257 time=999 ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=257 time=999 ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=257 time=999 ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=257 time=999 ms
+
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 packets received, 0% packet loss
+round-trip min/avg/max = 3.1/4.5/9.26 ms
+west:~#
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west:~#
+ ping -n -c 4 192.0.2.254
+PING 192.0.2.254 (192.0.2.254): 56 data bytes
+
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 packets received, 100% packet loss
+west:~#
+ TESTNAME=basic-pluto-07 
+west:~#
+ source /testing/pluto/bin/westlocal.sh
+west:~#
+ ipsec setup start
+ipsec_setup: Starting Openswan IPsec VERSION
+west:~#
+ ipsec auto --add westnet-eastnet-twofish
+west:~#
+ /testing/pluto/basic-pluto-01/eroutewait.sh trap
+west:~#
+ ipsec auto --up  westnet-eastnet-twofish
+003 "westnet-eastnet-twofish": requested kernel enc ealg_id=253 not present
+034 "westnet-eastnet-twofish": can not initiate: no acceptable kernel algorithms loaded
+west:~#
+ echo done
+done
+west:~#
+ ipsec look
+west NOW
+0.0.0.0/0          -> 0.0.0.0/0          => %trap
+ipsec0->eth1 mtu=16260(9999)->1500
+ROUTING TABLE
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+0.0.0.0/1 dev ipsec0  scope link 
+128.0.0.0/1 dev ipsec0  scope link 
+default via 192.1.2.254 dev eth1 
+west:~#
+ echo done
+done
+west:~#
+ 
+
+west:~#
+ ipsec look
+west NOW
+0.0.0.0/0          -> 0.0.0.0/0          => %trap
+ipsec0->eth1 mtu=16260(9999)->1500
+ROUTING TABLE
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+0.0.0.0/1 dev ipsec0  scope link 
+128.0.0.0/1 dev ipsec0  scope link 
+default via 192.1.2.254 dev eth1 
+

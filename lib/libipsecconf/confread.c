@@ -705,13 +705,6 @@ static int load_conn_basic(struct starter_conn *conn
 {
     int err;
 
-    memset(conn->strings_set, 0, sizeof(conn->strings_set));
-    memset(conn->options_set, 0, sizeof(conn->options_set));
-    memset(conn->left.strings_set, 0, sizeof(conn->left.strings_set));
-    memset(conn->left.options_set, 0, sizeof(conn->left.options_set));
-    memset(conn->right.strings_set, 0, sizeof(conn->left.strings_set));
-    memset(conn->right.options_set, 0, sizeof(conn->left.options_set));
-
     /* turn all of the keyword/value pairs into options/strings in left/right */
     err = translate_conn(conn, sl, TRUE, perr);
 

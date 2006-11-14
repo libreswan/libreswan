@@ -14,6 +14,9 @@ The default for this option is
 which may break compatibility with other vendor's IPSec implementations, such as
 Cisco and SafeNet. If you find that you are getting errors about no ID/Key found,
 you likely need to set this to
-<emphasis remap='B'>always.</emphasis></para>
+<emphasis remap='B'>always</emphasis>.
+This per-conn option replaces the obsolete global <emphasis remap='B'>nocrsend</emphasis>
+option.
+</para>
   </listitem>
   </varlistentry>

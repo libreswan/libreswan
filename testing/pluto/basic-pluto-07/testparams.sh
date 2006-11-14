@@ -12,10 +12,15 @@ REF_WEST_OUTPUT=../../klips/west-icmp-01/spi1-cleartext.txt
 WEST_ARPREPLY=true
 #THREEEIGHT=true
 
-REF_EAST_CONSOLE_OUTPUT=east-console.txt
-REF26_EAST_CONSOLE_OUTPUT=east-console.txt
-REF_WEST_CONSOLE_OUTPUT=west-console.txt
-REF26_WEST_CONSOLE_OUTPUT=west-console.txt
+REF_EAST_CONSOLE_OUTPUT=east-console-noalg.txt
+REF26_EAST_CONSOLE_OUTPUT=east-console-noalg.txt
+REF_WEST_CONSOLE_OUTPUT=west-console-noalg.txt
+REF26_WEST_CONSOLE_OUTPUT=west-console-noalg.txt
+
+#REF_EAST_CONSOLE_OUTPUT=east-console.txt
+#REF26_EAST_CONSOLE_OUTPUT=east-console.txt
+#REF_WEST_CONSOLE_OUTPUT=west-console.txt
+#REF26_WEST_CONSOLE_OUTPUT=west-console.txt
 
 REF_CONSOLE_FIXUPS="kern-list-fixups.sed nocr.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS script-only.sed"

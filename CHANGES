@@ -1,7 +1,10 @@
 Please see docs/KNOWN_BUGS file for more information
 
 #public
- 
+    removed /dev/hw_random from list of valid random sources on linux.
+        use "rngd" instead to feed /dev/random.
+
+v2.5.0 
     fixed various bugs with lifetime values in ipsec.conf parser
     AES-128 (group 5, MD5 or SHA1 for PRF) is now accepted for phase 1,
 	and it is now the preferred cipher as well. This should be the

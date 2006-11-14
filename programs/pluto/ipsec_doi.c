@@ -1946,8 +1946,14 @@ decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
     case ID_USER_FQDN:
 	if (memchr(id_pbs->cur, '@', pbs_left(id_pbs)) == NULL)
 	{
-	    loglog(RC_LOG_SERIOUS, "peer's ID_USER_FQDN contains no @");
-	    return FALSE;
+	    char idbuf[IDTOA_BUF];
+	    int len = pbs_left(id_pbs);
+	    if(len>(IDTOA_BUF-1)) len = IDTOA_BUF;
+
+	    memcpy(idbuf, id_pbs->cur, len-1);
+	    idbuf[len]='\0';
+	    loglog(RC_LOG_SERIOUS, "peer's ID_USER_FQDN contains no @: %s", idbuf);
+	    //return FALSE;
 	}
 	/* FALLTHROUGH */
     case ID_FQDN:
