@@ -18,9 +18,7 @@ INCLUDES+=-I${OPENSWANSRCDIR}/include
 CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${PORTLASTINCLUDE}
 CFLAGS+=-DDEBUG
 CFLAGS+= $(USERCOMPILE)
-ifneq ($(BUILDENV),darwin)
-CFLAGS+= -Wall
-endif
+CFLAGS+= ${WALL}
 #CFLAGS+= -Wconversion
 #CFLAGS+= -Wmissing-prototypes
 CFLAGS+= -Wpointer-arith
