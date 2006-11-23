@@ -242,7 +242,7 @@ static char *connection_name (struct starter_conn *conn)
 	return conn->name;
 }
 
-static void set_whack_end(struct starter_config *cfg
+static bool set_whack_end(struct starter_config *cfg
 			  , char *lr
 			  , struct whack_end *w
 			  , struct starter_end *l)
@@ -272,10 +272,14 @@ static void set_whack_end(struct starter_config *cfg
 	case KH_ANY:
 		anyaddr(l->addr_family, &w->host_addr);
 		break;
+
+	case KH_NOTSET:
+		printf("no valid %s= was set. Conn can not be loaded\n", lr);
+		return FALSE;
 		
 	default:
 		printf("%s: do something with host case: %d\n", lr, l->addrtype);
-		break;
+		return FALSE;
 	}
 
 	switch(l->nexttype) {
@@ -320,6 +324,8 @@ static void set_whack_end(struct starter_config *cfg
 	w->virt = l->virt;
 
 	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;
+
+	return TRUE;
 }
 
 static int starter_whack_add_pubkey (struct starter_config *cfg,
@@ -436,8 +442,10 @@ int starter_whack_add_conn (struct starter_config *cfg
 		}
 	}
 
-	set_whack_end(cfg, "left",  &msg.left, &conn->left);
-	set_whack_end(cfg, "right", &msg.right, &conn->right);
+	if(!set_whack_end(cfg, "left",  &msg.left, &conn->left) ||
+	   !set_whack_end(cfg, "right", &msg.right, &conn->right)) {
+		return -234;
+	}
 
 	msg.esp = conn->esp;
 	msg.ike = conn->ike;
