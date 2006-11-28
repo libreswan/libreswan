@@ -23,7 +23,7 @@
 #include <openswan.h>
 #define HEADER_DES_LOCL_H   /* stupid trick to force prototype decl in <des.h> */
 #include <crypto/des.h>
-#include <crypto/cryptodev.h>
+#include <opencrypto/cryptodev.h>
 
 #include <errno.h>
 

@@ -52,7 +52,7 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <crypto/cryptodev.h>
+#include <opencrypto/cryptodev.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <stdio.h>

@@ -29,7 +29,7 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <signal.h>
-#include <crypto/cryptodev.h>
+#include <opencrypto/cryptodev.h>
 #include <limits.h>
 
 #include <openswan.h>
@@ -219,8 +219,14 @@ tryagain:
 		    goto tryagain;
 		}
 
-		loglog(RC_LOG_SERIOUS, "failed to do DH calculation: %s",
+		loglog(RC_LOG_SERIOUS, "failed to do DH calculation with OCF: %s",
 		       strerror(e));
+
+#ifndef DEBUG		
+		/* do it with GMP? */
+		calc_dh_shared_gmp(shared, g, secchunk, group);
+#endif
+		return;
 	    }
 	}
 	

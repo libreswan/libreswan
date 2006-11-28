@@ -35,7 +35,7 @@
 
 #ifndef _OCF_CRYPTODEV_H
 #define _OCF_CRYPTODEV_H
-#include <crypto/cryptodev.h>
+#include <opencrypto/cryptodev.h>
 
 /* yuck */
 #define NO_ASN1_TYPEDEFS 1

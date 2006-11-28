@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
-#include <crypto/cryptodev.h>
+#include <opencrypto/cryptodev.h>
 
 #include <glob.h>
 #ifndef GLOB_ABORTED
