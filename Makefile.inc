@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile.inc,v 1.116.2.13 2007/06/19 14:49:19 paul Exp $
+# RCSID $Id: Makefile.inc,v 1.116.2.15 2007/10/22 14:28:19 paul Exp $
 
 
 
@@ -55,7 +55,7 @@ PUBDIR=$(DESTDIR)$(INC_USRLOCAL)/sbin
 
 # BINDIR is where sub-commands get put, FINALBINDIR is where the "ipsec"
 # command will look for them when it is run. Also called LIBEXECDIR.
-FINALLIBEXECDIR=$(INC_USRLOCAL)/libexec/ipsec
+FINALLIBEXECDIR?=$(INC_USRLOCAL)/libexec/ipsec
 LIBEXECDIR=$(DESTDIR)$(FINALBINDIR)
 
 FINALBINDIR=${FINALLIBEXECDIR}
@@ -63,11 +63,11 @@ BINDIR=${LIBEXECDIR}
 
 
 # SBINDIR is where the user interface command goes.
-FINALSBINDIR=$(INC_USRLOCAL)/sbin
+FINALSBINDIR?=$(INC_USRLOCAL)/sbin
 SBINDIR=$(DESTDIR)$(FINALSBINDIR)
 
 # libdir is where utility files go
-FINALLIBDIR=$(INC_USRLOCAL)/lib/ipsec
+FINALLIBDIR?=$(INC_USRLOCAL)/lib/ipsec
 LIBDIR=$(DESTDIR)$(FINALLIBDIR)
 
 
