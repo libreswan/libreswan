@@ -12,14 +12,14 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pfkey_v2_parser.c,v 1.134.2.2 2006/10/06 21:39:26 paul Exp $
+ * RCSID $Id: pfkey_v2_parser.c,v 1.134.2.4 2007/10/30 21:40:36 paul Exp $
  */
 
 /*
  *		Template from klips/net/ipsec/ipsec/ipsec_netlink.c.
  */
 
-char pfkey_v2_parser_c_version[] = "$Id: pfkey_v2_parser.c,v 1.134.2.2 2006/10/06 21:39:26 paul Exp $";
+char pfkey_v2_parser_c_version[] = "$Id: pfkey_v2_parser.c,v 1.134.2.4 2007/10/30 21:40:36 paul Exp $";
 
 #ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
@@ -243,7 +243,7 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		extr->ips->ips_said.spi = maxspi;
 		ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
 		if(ipsq != NULL) {
-			sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+			sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 			ipsec_sa_put(ipsq);
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_getspi_parse: "
@@ -276,7 +276,7 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		}
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	if (!found_avail) {
 		KLIPS_PRINT(debug_pfkey,
@@ -421,7 +421,7 @@ pfkey_update_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		SENDERR(EINVAL);
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	spin_lock_bh(&tdb_lock);
 
@@ -700,7 +700,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 		SENDERR(EINVAL);
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
 	if(ipsq != NULL) {
@@ -892,7 +892,7 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		SENDERR(EINVAL);
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	spin_lock_bh(&tdb_lock);
 
@@ -1007,7 +1007,7 @@ pfkey_get_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 		SENDERR(EINVAL);
 	}
 
-	sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	spin_lock_bh(&tdb_lock);
 
@@ -1607,9 +1607,9 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 		SENDERR(EINVAL);
 	}
 
-	sa_len1 = satot(&extr->ips->ips_said, 0, sa1, sizeof(sa1));
+	sa_len1 = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa1, sizeof(sa1));
 	if(extr->ips2 != NULL) {
-		sa_len2 = satot(&extr->ips2->ips_said, 0, sa2, sizeof(sa2));
+		sa_len2 = KLIPS_SATOT(debug_pfkey, &extr->ips2->ips_said, 0, sa2, sizeof(sa2));
 	}
 
 	spin_lock_bh(&tdb_lock);
@@ -1867,7 +1867,7 @@ pfkey_x_addflow_parse(struct sock *sk, struct sadb_ext **extensions, struct pfke
 			SENDERR(ENOENT);
 		}
 		
-		sa_len = satot(&extr->ips->ips_said, 0, sa, sizeof(sa));
+		sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 		ipsp->ips_flags |= SADB_X_SAFLAGS_INFLOW;
 		ipsp->ips_flow_s = srcflow;
@@ -2471,11 +2471,13 @@ pfkey_acquire(struct ipsec_sa *ipsp)
 		SENDERR(-error);
 	}
 
-#if KLIPS_PFKEY_ACQUIRE_LOSSAGE > 0
+#ifdef KLIPS_PFKEY_ACQUIRE_LOSSAGE
+#  if KLIPS_PFKEY_ACQUIRE_LOSSAGE > 0
 	if(sysctl_ipsec_regress_pfkey_lossage) {
 		return(0);
 	}
-#endif	
+#  endif
+#endif
 	
 	/* this should go to all registered sockets for that satype only */
 	for(pfkey_socketsp = pfkey_registered_sockets[satype];
@@ -2893,6 +2895,13 @@ pfkey_msg_interp(struct sock *sk, struct sadb_msg *pfkey_msg,
 
 /*
  * $Log: pfkey_v2_parser.c,v $
+ * Revision 1.134.2.4  2007/10/30 21:40:36  paul
+ * Fix for KLIPS_PFKEY_ACQUIRE_LOSSAGE [dhr]
+ *
+ * Revision 1.134.2.3  2007/09/05 02:56:10  paul
+ * Use the new ipsec_kversion macros by David to deal with 2.6.22 kernels.
+ * Fixes based on David McCullough patch.
+ *
  * Revision 1.134.2.2  2006/10/06 21:39:26  paul
  * Fix for 2.6.18+ only include linux/config.h if AUTOCONF_INCLUDED is not
  * set. This is defined through autoconf.h which is included through the
