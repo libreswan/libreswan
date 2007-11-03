@@ -15,7 +15,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ikev1_quick.c,v 1.3.2.6 2007/10/28 00:18:25 paul Exp $
+ * RCSID $Id: ikev1_quick.c,v 1.3.2.7 2007/11/02 01:28:36 paul Exp $
  */
 
 #include <stdio.h>
@@ -557,7 +557,6 @@ check_net_id(struct isakmp_ipsec_id *id
 	subnettot(&net_temp, 0, subrec, sizeof(subrec));
 	loglog(RC_LOG_SERIOUS, "%s subnet returned doesn't match my proposal - us:%s vs them:%s",
 		which,subxmt,subrec);
-#define ALLOW_MICROSOFT_BAD_PROPOSAL 1
 #ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 	loglog(RC_LOG_SERIOUS, "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
 	bad_proposal = FALSE;
@@ -566,7 +565,7 @@ check_net_id(struct isakmp_ipsec_id *id
 #endif
     }
     if(*protoid != id->isaiid_protoid) {
-	loglog(RC_LOG_SERIOUS, "%s peer returned protoid doesn't match my proposal - protoid(%d) vs id->isaiid_protoid(%d)",
+	loglog(RC_LOG_SERIOUS, "%s peer returned protocol id doesn't match my proposal - us%d vs them: %d",
 		 which,*protoid,id->isaiid_protoid);
 #ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 	loglog(RC_LOG_SERIOUS, "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
@@ -575,19 +574,21 @@ check_net_id(struct isakmp_ipsec_id *id
 	bad_proposal = TRUE;
 #endif
     }
-    if (*port != id->isaiid_port) {
+    /*
+     * workaround for #802- "our client ID returned doesn't match my proposal"
+     * until such time as bug #849 is properly fixed.
+     */
+    if (*port != id->isaiid_port) { 
 	loglog(RC_LOG_SERIOUS, "%s peer returned port doesn't match my proposal - us:%d vs them:%d",
 		which,*port,id->isaiid_port );
-	loglog(RC_LOG_SERIOUS, "(*protoid != id->isaiid_protoid)");
-#ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
-	loglog(RC_LOG_SERIOUS, "Allowing questionable proposal anyway [ALLOW_MICROSOFT_BAD_PROPOSAL]");
-	bad_proposal = FALSE;
-#else
-	bad_proposal = TRUE;
-#endif
+	if (*port != 0 && id->isaiid_port!=1701) {
+		loglog(RC_LOG_SERIOUS, "Allowing bad L2TP/IPsec proposal (see bug #849) anyway");
+		bad_proposal = FALSE;
+	} else 
+		bad_proposal = TRUE;
     }
 
-    return bad_proposal;
+    return !bad_proposal;
 }
 
 
