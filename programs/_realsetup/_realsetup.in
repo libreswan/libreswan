@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: _realsetup.in,v 1.46.2.15 2007/10/27 23:56:44 paul Exp $
+# RCSID $Id: _realsetup.in,v 1.46.2.16 2007/11/02 16:06:14 paul Exp $
 
 me='ipsec setup'		# for messages
 
@@ -185,8 +185,8 @@ case "$1" in
   start|--start|_autostart)
 	# First, does it seem to be going already?
 	perform test ! -f $lock "||" "{" \
-		echo "\"Openswan IPsec apparently already running, start aborted\"" ";" \
-		exit 1 ";" \
+		echo "\"Openswan IPsec apparently already active, start aborted\"" ";" \
+		exit 0 ";" \
 		"}"
 
 	# announcement
@@ -308,9 +308,9 @@ case "$1" in
 			status=0 ";" \
 			. $info ";" \
 		else \
-			echo "\"stop ordered, but IPsec does not appear to be running!\"" ";" \
+			echo "\"stop ordered, but IPsec appear to be stopped already!\"" ";" \
 			echo "\"doing cleanup anyway...\"" ";" \
-			status=1 ";" \
+			status=0 ";" \
 		fi
 	if test " $IPSECforwardcontrol" = " yes"
 	then
@@ -365,7 +365,7 @@ case "$1" in
 	if test " $IPSEC_setupflags" != " "
 	then
 		echo "$me $1 does not support $IPSEC_setupflags"
-		exit 1
+		exit 4
 	fi
 
 	if test -f $info
@@ -385,12 +385,14 @@ case "$1" in
 
 	if test -s $plutopid
 	then
-		if test -d /proc/`cat $plutopid` >/dev/null
+		if test -d /proc/`cat $plutopid 2> /dev/null` >/dev/null
 		then
 			plutokind=normal
 		elif ps -C pluto >/dev/null
 		then
 			plutokind=illicit
+		else
+			plutokind=dead
 		fi
 	elif ps -C pluto >/dev/null
 	then
@@ -425,31 +427,13 @@ case "$1" in
 		lk26sec=yes
 	fi
 
-	if test "$haslock"
+	if test "$hassublock" -a "$haslock" -a "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \)  -a "$hasinfo"
 	then
-		echo "IPsec running"  " - pluto pid: `cat $plutopid`"
-		# might not be a subsystem lock dir, ignore that issue
-		if test "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \)  -a "$hasinfo"
-		then
-			echo "pluto pid `cat $plutopid`"
-                        case "$eroutes" in
-                        0)      echo "No tunnels up"    ;;
-                        *)      echo "$eroutes tunnels up"      ;;
-                        esac
-			exit 0
-		fi
-		echo "but..."
-		if test "$plutokind" != "normal"
-		then
-			echo "$plutokind Pluto running" " - pluto pid: `cat $plutopid`"
-		fi
-		if test ! "$hasinfo"
-		then
-			echo "$info file missing!"
-		fi
-		case $klips in
-		maybe)	echo "KLIPS module is not loaded!"	;;
-		none)	echo "no KLIPS in kernel!"		;;
+		echo "IPsec running"  " - pluto pid: `cat $plutopid 2>/dev/null`"
+		echo "pluto pid `cat $plutopid`"
+		case "$eroutes" in
+			0)      echo "No tunnels up"    ;;
+			*)      echo "$eroutes tunnels up"      ;;
 		esac
 		if test "$eroutes"
 		then
@@ -458,16 +442,18 @@ case "$1" in
 				echo "some eroutes exist"
 			fi
 		fi
+		exit 0
 	else
 		echo "IPsec stopped"
 		if test ! "$hassublock" -a ! "$hasinfo" -a "$plutokind" = "no" -a "$eroutes" -eq 0
 		then
-			exit 0
+			exit 3
 		fi
 		echo "but..."
 		if test "$hassublock"
 		then
 			echo "has subsystem lock ($subsyslock)!"
+			exit 2
 		fi
 		if test "$hasinfo"
 		then
@@ -475,7 +461,7 @@ case "$1" in
 		fi
 		if test "$plutokind" != "no"
 		then
-			echo "An ${plutokind} Pluto is running?"
+			echo "An ${plutokind} Pluto is active?"
 		fi
 		if test "$eroutes" -gt 0
 		then
@@ -484,8 +470,9 @@ case "$1" in
 		exit 1
 	fi
 	# todo: ipsec verify --quiet that only shows problems
-	/usr/sbin/ipsec verify;
-	exit $?;
+	#/usr/sbin/ipsec verify;
+	#exit $?;
+	exit 4
 	;;
 
   --version)
