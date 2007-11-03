@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: _realsetup.in,v 1.46.2.12 2007/06/19 15:18:52 paul Exp $
+# RCSID $Id: _realsetup.in,v 1.46.2.15 2007/10/27 23:56:44 paul Exp $
 
 me='ipsec setup'		# for messages
 
@@ -140,7 +140,13 @@ LOGONLY="logger -p $IPSECsyslog -t ipsec_setup"
 
 if $klips
 then
-    KILLKLIPS='ifl=` ifconfig | sed -n -e "/^ipsec/s/ .*//p" ` ;
+	#
+	# don't use ifconfig here,  there may be thousands of
+	# interfaces to parse through,  much quicker to go
+	# direct to the source
+	#
+	KILLKLIPS='ifl=`grep -v NULL /proc/net/ipsec_tncfg 2> /dev/null | sed -n -e "/^ipsec/s/ .*//p" ` ;
+
 	test "X$ifl" != "X" &&
 	for i in  $ifl ;
 	do
@@ -193,8 +199,8 @@ case "$1" in
 
 	# preliminaries
 	perform rm -f $lock
-	mkdir -p rundir > /dev/null 2>/dev/null
-	mkdir -p subsysdir > /dev/null 2>/dev/null
+	mkdir -p $rundir > /dev/null 2>/dev/null
+	mkdir -p $subsysdir > /dev/null 2>/dev/null
 
 	# the meaning of $$ at a different runtime is questionable!
 	perform echo '$$' ">" $lock
@@ -321,7 +327,7 @@ case "$1" in
 	fi
 
 	perform test -f $plutopid "&&" "{" \
-		if ps -p '`' cat $plutopid '`' ">" /dev/null ";" \
+		if test -d '/proc/`' cat $plutopid '`' ">" /dev/null ";" \
 		then \
 			ipsec whack --shutdown "|" grep -v "^002" ";" \
 			sleep 1 ";" \
@@ -379,7 +385,7 @@ case "$1" in
 
 	if test -s $plutopid
 	then
-		if ps -p `cat $plutopid` >/dev/null
+		if test -d /proc/`cat $plutopid` >/dev/null
 		then
 			plutokind=normal
 		elif ps -C pluto >/dev/null
