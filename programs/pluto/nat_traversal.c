@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: nat_traversal.c,v 1.26.2.10 2007/07/09 23:08:47 paul Exp $
+ * RCSID $Id: nat_traversal.c,v 1.26.2.11 2007/10/28 07:00:22 paul Exp $
  */
 
 #ifdef NAT_TRAVERSAL
@@ -199,6 +199,7 @@ bool nat_traversal_add_vid(u_int8_t np, pb_stream *outs)
 		      
 	if (nat_traversal_support_port_floating) {
 		if (r) r = out_vendorid(np, outs, VID_NATT_RFC);
+		if (r) r = out_vendorid(np, outs, VID_NATT_IETF_05);
 		if (r) r = out_vendorid(np, outs, VID_NATT_IETF_03);
 		if (r) r = out_vendorid(np, outs, VID_NATT_IETF_02);
 		if (r) r = out_vendorid(np, outs, VID_NATT_IETF_02_N);
@@ -976,6 +977,10 @@ void process_pfkey_nat_t_new_mapping(
 
 /*
  * $Log: nat_traversal.c,v $
+ * Revision 1.26.2.11  2007/10/28 07:00:22  paul
+ * Added draft-ietf-ipsec-nat-t-ike-05 (80d0bb3def54565ee84645d4c85ce3ee)
+ * used in OSX.
+ *
  * Revision 1.26.2.10  2007/07/09 23:08:47  paul
  * Ensured two debug lines only appear when plutodebug=control is specified.
  *
@@ -1068,6 +1073,6 @@ void process_pfkey_nat_t_new_mapping(
  * 	added log info.
  *
  *
- * $Id: nat_traversal.c,v 1.26.2.10 2007/07/09 23:08:47 paul Exp $
+ * $Id: nat_traversal.c,v 1.26.2.11 2007/10/28 07:00:22 paul Exp $
  *
  */
