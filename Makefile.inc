@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile.inc,v 1.116.2.15 2007/10/22 14:28:19 paul Exp $
+# RCSID $Id: Makefile.inc,v 1.116.2.16 2007/11/02 03:07:27 paul Exp $
 
 
 
@@ -174,7 +174,7 @@ INSTCONFFLAGS=
 # CC variable
 # (caution, this stuff is still being sorted out, will change in future)
 USERCOMPILE?=-g -O3 -DDISABLE_UDP_CHECKSUM
-KLIPSCOMPILE=-O3
+KLIPSCOMPILE=-O3 -DCONFIG_KLIPS_ALG
 # for AMD64 use 
 #USERCOMPILE?=-g -O3 -m64
 #KLIPSCOMPILE=-O3 -m64 -mno-red-zone
