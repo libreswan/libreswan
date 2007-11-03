@@ -31,7 +31,7 @@ Group: System Environment/Daemons
 Provides: ipsec-userland
 Obsoletes: freeswan superfreeswan super-freeswan
 Requires: ipsec-kernel, iproute >= 2.6.8, gmp
-BuildRequires: gmp-devel bison flex bind-devel
+BuildRequires: gmp-devel bison flex bind-devel redhat-rpm-config
 Release: %{ourrelease}
 
 %package doc
