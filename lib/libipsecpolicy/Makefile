@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.4 2004/12/18 18:13:34 mcr Exp $
+# RCSID $Id: Makefile,v 1.4.6.1 2007/10/22 14:33:11 paul Exp $
 
 
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
@@ -30,7 +30,7 @@ KLIPSD=${OPENSWANSRCDIR}/linux/include
 
 LIB=libipsecpolicy.a
 # Original flags
-CFLAGS=-I. -I${KLIPSD} -I${OPENSWANSRCDIR} $(USERCOMPILE)
+CFLAGS+=-I. -I${KLIPSD} -I${OPENSWANSRCDIR} $(USERCOMPILE)
 CFLAGS+= -Wall
 CFLAGS+= -Wpointer-arith
 CFLAGS+= -Wcast-qual

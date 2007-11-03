@@ -60,7 +60,7 @@ MAKE=make -f Makefile
 # normally overridden by FreeS/WAN Makefiles anyway
 CFLAG= -O3 -fomit-frame-pointer -I${KLIPSD}/include -I${SRCDIR}
 
-CFLAGS=$(OPTS) $(CFLAG) $(USERCOMPILE)
+CFLAGS+=$(OPTS) $(CFLAG) $(USERCOMPILE)
 CPP=$(CC) -E
 
 # Assember version of des_encrypt*().

@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.18.6.1 2006/11/07 16:30:16 paul Exp $
+# RCSID $Id: Makefile,v 1.18.6.2 2007/10/22 14:33:11 paul Exp $
 
 
 OPENSWANSRCDIR?=$(shell cd ../..; pwd)
@@ -57,7 +57,7 @@ HDRS=${KLIPSD}/openswan.h internal.h
 LIBA=libopenswan.a
 LIBL=liboswlog.a
 # Original flags
-CFLAGS=-I. -I${KLIPSSRCDIR} -I${KLIPSD} -I${OPENSWANSRCDIR} -DDEBUG
+CFLAGS+=-I. -I${KLIPSSRCDIR} -I${KLIPSD} -I${OPENSWANSRCDIR} -DDEBUG
 CFLAGS+=-DWITH_UDPFROMTO -DHAVE_IP_PKTINFO
 CFLAGS+= -I${OPENSWANSRCDIR}/include $(USERCOMPILE)
 CFLAGS+= -Wall
