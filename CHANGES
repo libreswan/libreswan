@@ -1,5 +1,29 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.4.10
+* Fix for sock.sk_stamp type change in 2.6.22 [dhr]
+* Workaround for implementations that propose port 0 for l2tp to allow
+  us to connect to all their ports (instead of only 1701). This happens
+  with Cisco VPN 3000, OSX and Windows XP. This relates to various
+  reported bugs about rightprotoport=17/%any and CK_INSTANCE crashers [mcr]
+* Backport of fix for xauth name containing a space [paul]
+* Fix for final next payload in Aggressive Mode [David McCullough]
+* Fixes for compliling against 2.6.22 [David McCullough / Hugh Redelmeier]
+  (note: NAT-T KLIPS patch will not work on 2.6.23+)
+* Speed gains in the scripts on systems with many interfaces [David McCullough]
+* passert declaration fix [David McCullough]
+* A missed nfmark -> mark case in ipsec_sa.h [David McCullough]
+* Fix for ktime_to_timeval to use proper kernel versions [paul]
+* Added SElinux patch in contrib/ [Venkat Yekkirala]
+* Bugtracker bugs fixed:
+  #796: can't compile 2.4.8 on kernel 2.4.34 (module_param fix) [sergeil]
+  #708: vanilla kernel-2.6.19, KLIPS compile error (sock_unregister) [sergeil]
+  #824: defaultroute detection fails with PPP default route [sergeil]
+  (this is also the bug introduced in 2.4.9 that causes failed subnet tunnels)
+  #802: Error: "our client ID returned doesn't match my proposal" [mcr/paul]
+  #449: 17/%any is a template conn problem [mcr]
+  #855: Pluto restart impossible on busybox [paul]
+
 v2.4.9
 * Fix for Aggressive Mode with NAT-T (no negotiation in aggrmode) [mcr]
 * Integrated most openwrt workarounds - tested on whiterussian  [paul]
@@ -273,4 +297,4 @@ v2.1.0
   while travelling.  This is based on Tuomo Soini's Advanced Routing
   patch.
 
-RCSID $Id: CHANGES,v 1.326.2.118 2007/07/09 23:11:56 paul Exp $
+RCSID $Id: CHANGES,v 1.326.2.131 2007/10/31 19:58:45 paul Exp $

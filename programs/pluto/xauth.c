@@ -14,7 +14,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: xauth.c,v 1.41.4.3 2005/07/26 02:11:23 ken Exp $
+ * RCSID $Id: xauth.c,v 1.41.4.4 2007/09/05 23:02:19 paul Exp $
  *
  * This code originally written by Colubris Networks, Inc.
  * Extraction of patch and porting to 1.99 codebases by Xelerance Corporation
@@ -1806,10 +1806,11 @@ stf_status xauth_client_resp(struct state *st
 			loglog(RC_LOG_SERIOUS, "XAUTH username prompt failed.");
 			return STF_FAIL;
 		    }
-		    /* trip any trailing white space */
+		    /* replace the first newline character with a string-terminating \0 */
 		    {
-		      char *u = xauth_username;
-		      strsep(&u, " \n\t");
+		      char* cptr = memchr(xauth_username, '\n', sizeof(xauth_username));
+		      if (cptr)
+			*cptr = '\0';
 		    }
 		    out_raw(xauth_username, strlen(xauth_username)
 			    ,&attrval, "XAUTH username");
@@ -1835,11 +1836,11 @@ stf_status xauth_client_resp(struct state *st
 			return STF_FAIL;
 		    }
 
-		    /* trip any trailing white space */
+		    /* replace the first newline character with a string-terminating \0. */
 		    {
-		      char *u = xauth_password;
-
-		      strsep(&u, " \n\t");
+		      char* cptr = memchr(xauth_password, '\n', sizeof(xauth_password));
+		      if (cptr)
+			cptr = '\0';
 		    }
 		    out_raw(xauth_password, strlen(xauth_password)
 			    ,&attrval, "XAUTH password");
@@ -2270,9 +2271,13 @@ xauth_inI1(struct msg_digest *md)
 
 
 /*
- * $Id: xauth.c,v 1.41.4.3 2005/07/26 02:11:23 ken Exp $
+ * $Id: xauth.c,v 1.41.4.4 2007/09/05 23:02:19 paul Exp $
  *
  * $Log: xauth.c,v $
+ * Revision 1.41.4.4  2007/09/05 23:02:19  paul
+ * backport of xauth space in name patch
+ * (git 05f21656f41b40f4b5bb50e6712b90193b209535)
+ *
  * Revision 1.41.4.3  2005/07/26 02:11:23  ken
  * Pullin from HEAD:
  * Split Aggressive mode into ikev1_aggr.c
