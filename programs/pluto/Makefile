@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile,v 1.189.2.5 2006/11/07 15:55:52 paul Exp $
+# RCSID $Id: Makefile,v 1.189.2.8 2007/10/22 15:49:01 paul Exp $
 
 # All of the USE_ and HAVE_ variables are controlled from openswan/Makefile.inc
 
@@ -181,7 +181,7 @@ XAUTH_SRCS=${XAUTH_DIST_SRCS}
 # if we use pam for password checking then add it too
 ifeq ($(USE_XAUTHPAM),true)
 XAUTHPAM_DEFS=-DXAUTH_USEPAM
-XAUTHPAM_LIBS=-lpam
+XAUTHPAM_LIBS=-lpam -ldl
 endif
 endif
 
@@ -268,7 +268,7 @@ LIBSPLUTO+=${EXTRA_CRYPTO_LIBS}
 LIBSPLUTO+= -lgmp -lresolv # -lefence
 
 ifneq ($(LD_LIBRARY_PATH),)
-LDFLAGS=-L$(LD_LIBRARY_PATH)
+LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
 LIBSADNS = $(OPENSWANLIB)
@@ -432,19 +432,19 @@ install_file_list:
 		done
 
 alg_info_test: alg_info_test.o ike_alg.o constants.o defs.o log.o db_ops.o crypto.o $(LIBDESLITE) $(OPENSWANLIB)
-	$(CC) -o $@ $^ $(LIBSPLUTO)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBSPLUTO)
 
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(OPENSWANLIB)
 	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) 
 
 $(BINNAMEADNS): $(OBJSADNS)
-	$(CC) -o $(BINNAMEADNS) $(OBJSADNS) $(USERLINK) $(LIBSADNS)
+	$(CC) -o $(BINNAMEADNS) $(LDFLAGS) $(OBJSADNS) $(USERLINK) $(LIBSADNS)
 
 $(BINNAMEWHACK): $(OBJSWHACK)
-	$(CC) -o $(BINNAMEWHACK) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK)
+	$(CC) -o $(BINNAMEWHACK) $(LDFLAGS) $(OBJSWHACK) $(USERLINK) $(LIBSWHACK)
 
 $(BINNAMEWHACKINIT): $(OBJSWHACKINIT)
-	$(CC) -o $(BINNAMEWHACKINIT) $(OBJSWHACKINIT) $(USERLINK) $(LIBSWHACK)
+	$(CC) -o $(BINNAMEWHACKINIT) $(LDFLAGS) $(OBJSWHACKINIT) $(USERLINK) $(LIBSWHACK)
 
 distlist:
 	@echo $(DIST)
