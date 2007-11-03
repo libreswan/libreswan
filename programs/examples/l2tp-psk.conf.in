@@ -1,5 +1,5 @@
 conn L2TP-PSK-NAT
-        rightsubnet=vhost:%priv
+	rightsubnet=vhost:%priv
 	also=L2TP-PSK-noNAT
 
 conn L2TP-PSK-noNAT
@@ -21,8 +21,8 @@ conn L2TP-PSK-noNAT
 	rekey=no
 	type=transport
 	#
-        left=%defaultroute
-        # or you can use: left=YourIPAddress
+	left=%defaultroute
+	# or you can use: left=YourIPAddress
 	#
 	# For updated Windows 2000/XP clients,
 	# to support old clients as well, use leftprotoport=17/%any
@@ -31,6 +31,9 @@ conn L2TP-PSK-noNAT
 	# The remote user.
 	#
 	right=%any
-	rightprotoport=17/1701
+	# Using the magic port of "0" means "any one single port". This is
+	# a work around required for Apple OSX clients that use a randomly
+	# high port, but propose "0" instead of their port.
+	rightprotoport=17/0
 
 

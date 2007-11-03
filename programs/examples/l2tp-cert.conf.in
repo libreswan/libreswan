@@ -10,18 +10,16 @@ conn l2tp-X.509
 	authby=rsasig
 	pfs=no
 	auto=add
-        # we cannot rekey for %any, let client rekey
+	# we cannot rekey for %any, let client rekey
 	rekey=no
-        # Do not enable the line below. It is implicitely used, and
-        # specifying it will currently break when using nat-t.
-        # type=transport. See http://bugs.xelerance.com/view.php?id=466
+	# Do not enable the line below. It is implicitely used, and
+	# specifying it will currently break when using nat-t.
+	type=transport. See http://bugs.xelerance.com/view.php?id=466
 	#
 	left=%defaultroute
-        # or you can use: left=YourIPAddress
+	# or you can use: left=YourIPAddress
 	leftrsasigkey=%cert
 	leftcert=/etc/ipsec.d/certs/YourGatewayCertHere.pem
-	# For updated Windows 2000/XP clients,
-        # to support old clients as well, use leftprotoport=17/%any
 	leftprotoport=17/1701
 	#
 	# The remote user.
@@ -29,6 +27,9 @@ conn l2tp-X.509
 	right=%any
 	rightca=%same
 	rightrsasigkey=%cert
-	rightprotoport=17/1701
+	# Using the magic port of "0" means "any one single port". This is
+	# a work around required for Apple OSX clients that use a randomly
+	# high port, but propose "0" instead of their port.
+	rightprotoport=17/0
 	rightsubnet=vhost:%priv,%no
 
