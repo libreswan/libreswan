@@ -11,7 +11,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: vendor.h,v 1.13.2.3 2007/03/12 02:01:07 paul Exp $
+ * RCSID $Id: vendor.h,v 1.13.2.5 2007/10/28 07:00:23 paul Exp $
  */
 
 #ifndef _VENDOR_H_
@@ -59,6 +59,7 @@ enum known_vendorid {
   VID_CISCO_IOS             =38,
   VID_VISTA_AUTHIP          =39,
   VID_VISTA_AUTHIP2         =40,
+  VID_VISTA_AUTHIP3         =41,
 
 
   /* 101 - 200 : NAT-Traversal */
@@ -70,8 +71,9 @@ enum known_vendorid {
   VID_NATT_IETF_02_N         =106,
   VID_NATT_IETF_02           =107,
   VID_NATT_IETF_03           =108,
-  VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE	=109,
-  VID_NATT_RFC               =110,
+  VID_NATT_IETF_05           =109,
+  VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE	=110,
+  VID_NATT_RFC               =111,
 
 /* 
   While searching (strings) in /usr/sbin/racoon on Max OS X 10.3.3, I found it :
