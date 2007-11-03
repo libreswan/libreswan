@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: demux.c,v 1.210.2.14 2007/07/09 23:08:47 paul Exp $
+ * RCSID $Id: demux.c,v 1.210.2.15 2007/09/05 03:02:19 paul Exp $
  */
 
 /* Ordering Constraints on Payloads
@@ -2450,7 +2450,6 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 	    openswan_log("transition from state %s to state %s"
                  , enum_name(&state_names, from_state)
                  , enum_name(&state_names, smc->next_state));
-	    
 	    st->st_state = smc->next_state;
 
 	    /* Delete previous retransmission event.
