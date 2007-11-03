@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: _startklips.in,v 1.43.4.10 2007/07/06 17:29:15 paul Exp $
+# RCSID $Id: _startklips.in,v 1.43.4.13 2007/09/05 02:58:55 paul Exp $
 
 me='ipsec _startklips'		# for messages
 
@@ -210,7 +210,7 @@ checkif() {
 # interfaces=%defaultroute:  put ipsec0 on top of default route's interface
 defaultinterface() {
 	phys=`netstat -nr |
-		awk '$1 == "0.0.0.0" && $3 == "0.0.0.0" { print $NF }'`
+		awk '$1 == "0.0.0.0" && $3 == "0.0.0.0" { print $NF; exit 0 }'`
 	if test " $phys" = " "
 	then
 		echo "no default route, %defaultroute cannot cope!!!"
@@ -222,10 +222,10 @@ defaultinterface() {
 		exit 1
 	fi
 	next=`netstat -nr |
-		awk '$1 == "0.0.0.0" && $3 == "0.0.0.0" { print $2 }'`
+		awk '$1 == "0.0.0.0" && $3 == "0.0.0.0" { print $2; exit 0 }'`
 	if [ "$next" = "0.0.0.0" ] ; then
-		next=`ip addr list $phys | grep -E '^ +inet6*.*scope global $phys' |
-			awk '{ print $2}' | awk -F / '{ print $1 }'`
+		next=`ip addr list $phys | grep -E "^ +inet6*.*scope global $phys" |
+			awk '{ f($3=="peer")print $4; else print $2 }' | awk -F / '{ print $1 }'`
 	fi
 	klipsinterface "ipsec0=$phys" $next
 }
@@ -276,13 +276,13 @@ then
     echo "FATAL ERROR: Both KLIPS and NETKEY IPsec code is present in kernel"
     exit
 fi
-if test ! -f $ipsecversion && test ! -f $netkey && @MODPROBE@ -qn ipsec
+if test ! -f $ipsecversion && test ! -f $netkey && @MODPROBE@ -q ipsec
 then
 	# statically compiled KLIPS/NETKEY not found; but there seems to be an ipsec module
 	@MODPROBE@ ipsec 2> /dev/null
 fi
 
-if test ! -f $ipsecversion && test ! -f $netkey && @MODPROBE@ -qn af_key
+if test ! -f $ipsecversion && test ! -f $netkey && @MODPROBE@ -q af_key
 then
 	# netkey should work then
 	@MODPROBE@ af_key 2> /dev/null
