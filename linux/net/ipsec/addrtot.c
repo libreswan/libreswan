@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: addrtot.c,v 1.22.2.1 2005/11/17 22:30:49 paul Exp $
+ * RCSID $Id: addrtot.c,v 1.22.2.2 2007/10/30 21:32:26 paul Exp $
  */
 
 #if defined(__KERNEL__) && defined(__HAVE_ARCH_STRSTR)
@@ -37,6 +37,8 @@ static size_t reverse6(const unsigned char *s, size_t len, char *b, char **dp);
  * Find the first occurrence of find in s.
  * (from NetBSD 1.6's /src/lib/libc/string/strstr.c)
  */
+static char *strstr(const char *s, const char *find);
+
 static char *
 strstr(s, find)
 	const char *s, *find;
@@ -339,6 +341,9 @@ regress()
 
 /*
  * $Log: addrtot.c,v $
+ * Revision 1.22.2.2  2007/10/30 21:32:26  paul
+ * Added strstr prototype [dhr]
+ *
  * Revision 1.22.2.1  2005/11/17 22:30:49  paul
  * pull up strstr fix from head.
  *
@@ -379,6 +384,9 @@ regress()
  *
  * Revision 1.12  2003/12/30 06:42:48  mcr
  * 	added $Log: addrtot.c,v $
+ * 	added Revision 1.22.2.2  2007/10/30 21:32:26  paul
+ * 	added Added strstr prototype [dhr]
+ * 	added
  * 	added Revision 1.22.2.1  2005/11/17 22:30:49  paul
  * 	added pull up strstr fix from head.
  * 	added
