@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_doi.c,v 1.304.2.16 2007/01/22 21:05:12 paul Exp $
+ * RCSID $Id: ipsec_doi.c,v 1.304.2.17 2007/09/05 19:46:15 paul Exp $
  */
 
 #include <stdio.h>
@@ -3774,7 +3774,7 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
 
 #ifdef NAT_TRAVERSAL
     if (st->hidden_variables.st_nat_traversal) {
-      if (!out_vendorid(auth_payload
+      if (!out_vendorid(ISAKMP_NEXT_NONE
 			, &md->rbody
 			, md->quirks.nat_traversal_vid)) {
 	return STF_INTERNAL_ERROR;
