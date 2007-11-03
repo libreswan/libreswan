@@ -19,6 +19,9 @@ ifneq ($(strip $(MODULE_DEF_INCLUDE)),)
 EXTRA_CFLAGS += -include ${MODULE_DEF_INCLUDE}
 endif
 
+# Enable DISABLE_UDP_CHECKSUM for KLIPS, see bug #601
+EXTRA_CFLAGS += -DDISABLE_UDP_CHECKSUM
+
 EXTRA_CFLAGS += -I${KLIPS_TOP}/include
 
 # build version.c using version number from Makefile.ver
