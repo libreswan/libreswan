@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: pfkey_v2.c,v 1.97.2.12 2006/11/24 05:43:29 paul Exp $
+ * RCSID $Id: pfkey_v2.c,v 1.97.2.16 2007/10/31 19:57:41 paul Exp $
  */
 
 /*
@@ -509,9 +509,9 @@ pfkey_destroy_socket(struct sock *sk)
 			} else {
 				printk(" dev:NULL");
 			}
-			printk(" h:0p%p", skb->h.raw);
-			printk(" nh:0p%p", skb->nh.raw);
-			printk(" mac:0p%p", skb->mac.raw);
+			printk(" h:0p%p", skb_transport_header(skb));
+			printk(" nh:0p%p", skb_network_header(skb));
+			printk(" mac:0p%p", skb_mac_header(skb));
 			printk(" dst:0p%p", skb->dst);
 			if(sysctl_ipsec_debug_verbose) {
 				int i;
@@ -538,12 +538,12 @@ pfkey_destroy_socket(struct sock *sk)
 			printk(" truesize:%d", skb->truesize);
 			printk(" head:0p%p", skb->head);
 			printk(" data:0p%p", skb->data);
-			printk(" tail:0p%p", skb->tail);
-			printk(" end:0p%p", skb->end);
+			printk(" tail:0p%p", skb_tail_pointer(skb));
+			printk(" end:0p%p", skb_end_pointer(skb));
 			if(sysctl_ipsec_debug_verbose) {
 				unsigned char* i;
 				printk(" data");
-				for(i = skb->head; i < skb->end; i++) {
+				for(i = skb->head; i < skb_end_pointer(skb); i++) {
 					printk(":%2x", (unsigned char)(*(i)));
 				}
 			}
@@ -624,8 +624,8 @@ pfkey_upmsg(struct socket *sock, struct sadb_msg *pfkey_msg)
 		ipsec_kfree_skb(skb);
 		return -ENOBUFS;
 	}
-	skb->h.raw = skb_put(skb, pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN);
-	memcpy(skb->h.raw, pfkey_msg, pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN);
+	skb_set_transport_header(skb, ipsec_skb_offset(skb, skb_put(skb, pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN)));
+	memcpy(skb_transport_header(skb), pfkey_msg, pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN);
 
 	if((error = sock_queue_rcv_skb(sk, skb)) < 0) {
 		skb->sk=NULL;
@@ -1109,7 +1109,9 @@ pfkey_recvmsg(struct socket *sock
 	}
 
 	skb_copy_datagram_iovec(skb, 0, msg->msg_iov, size);
-#ifdef HAVE_TSTAMP
+#ifdef HAVE_KERNEL_TSTAMP
+	sk->sk_stamp = skb->tstamp;
+#elif defined(HAVE_TSTAMP)
 	sk->sk_stamp.tv_sec  = skb->tstamp.off_sec;
 	sk->sk_stamp.tv_usec = skb->tstamp.off_usec;
 #else
@@ -1169,6 +1171,8 @@ pfkey_get_info(char *buffer, char **start, off_t offset, int length
 					sk->sk_socket->state);
 #ifdef CONFIG_KLIPS_DEBUG
 		} else {
+		  struct timeval t;
+		  grab_socket_timeval(t, *sk);
 		  len += ipsec_snprintf(buffer+len, length-len,
 					"%8p %5d %d %8p %8p %d %d %d %d %5d %d.%06d %08lX %8X %2X\n",
 					sk,
@@ -1185,8 +1189,8 @@ pfkey_get_info(char *buffer, char **start, off_t offset, int length
 #endif					
 					sk->sk_protocol,
 					sk->sk_sndbuf,
-					(unsigned int)sk->sk_stamp.tv_sec,
-					(unsigned int)sk->sk_stamp.tv_usec,
+					(unsigned int)t.tv_sec,
+					(unsigned int)t.tv_usec,
 					sk->sk_socket->flags,
 					sk->sk_socket->type,
 					sk->sk_socket->state);
@@ -1507,7 +1511,11 @@ pfkey_cleanup(void)
 	
         printk(KERN_INFO "klips_info:pfkey_cleanup: "
 	       "shutting down PF_KEY domain sockets.\n");
+#ifdef VOID_SOCK_UNREGISTER
+		sock_unregister(PF_KEY);
+#else
         sock_unregister(PF_KEY);
+#endif
 
 	error |= supported_remove_all(SADB_SATYPE_AH);
 	error |= supported_remove_all(SADB_SATYPE_ESP);
@@ -1563,6 +1571,19 @@ void pfkey_proto_init(struct net_protocol *pro)
 
 /*
  * $Log: pfkey_v2.c,v $
+ * Revision 1.97.2.16  2007/10/31 19:57:41  paul
+ * type of sock.sk_stamp changed from timeval to ktime [dhr]
+ *
+ * Revision 1.97.2.15  2007-10-30 21:39:30  paul
+ * Use skb_tail_pointer/skb_end_pointer [dhr]
+ *
+ * Revision 1.97.2.14  2007/09/05 02:56:10  paul
+ * Use the new ipsec_kversion macros by David to deal with 2.6.22 kernels.
+ * Fixes based on David McCullough patch.
+ *
+ * Revision 1.97.2.13  2007/08/10 01:40:49  paul
+ * Fix for sock_unregister for 2.6.19 by Sergeil
+ *
  * Revision 1.97.2.12  2006/11/24 05:43:29  paul
  * kernels after 2.6.18 do not return a code from unregister_socket()
  * backport from git 41e54a2684dc809d7952e816860ea646a3194a72

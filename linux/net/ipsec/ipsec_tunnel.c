@@ -14,7 +14,7 @@
  * for more details.
  */
 
-char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.232.2.5 2006/10/06 21:39:26 paul Exp $";
+char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.232.2.7 2007/09/18 18:26:18 paul Exp $";
 
 #define __NO_VERSION__
 #include <linux/module.h>
@@ -42,6 +42,7 @@ char ipsec_tunnel_c_version[] = "RCSID $Id: ipsec_tunnel.c,v 1.232.2.5 2006/10/0
 #include <linux/netdevice.h>   /* struct device, struct net_device_stats, dev_queue_xmit() and other headers */
 #include <linux/etherdevice.h> /* eth_type_trans */
 #include <linux/ip.h>          /* struct iphdr */
+#include <net/arp.h>
 #include <linux/skbuff.h>
 
 #include <openswan.h>
@@ -235,12 +236,17 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 
 		if(ixs->skb->sk) {
 #ifdef NET_26
+#ifdef HAVE_INET_SK_SPORT
+			ixs->sport = ntohs(inet_sk(ixs->skb->sk)->sport);
+			ixs->dport = ntohs(inet_sk(ixs->skb->sk)->dport);
+#else
 			struct udp_sock *us;
 			
 			us = (struct udp_sock *)ixs->skb->sk;
 
 			ixs->sport = ntohs(us->inet.sport);
 			ixs->dport = ntohs(us->inet.dport);
+#endif
 #else
 			ixs->sport = ntohs(ixs->skb->sk->sport);
 			ixs->dport = ntohs(ixs->skb->sk->dport);
@@ -276,19 +282,19 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 		if(ixs->skb->sk) {
 #ifdef NET_26
 #ifdef HAVE_INET_SK_SPORT
-                       ixs->sport = ntohs(inet_sk(ixs->skb->sk)->sport);
-                       ixs->dport = ntohs(inet_sk(ixs->skb->sk)->dport);
+			ixs->sport = ntohs(inet_sk(ixs->skb->sk)->sport);
+			ixs->dport = ntohs(inet_sk(ixs->skb->sk)->dport);
 #else
-                        struct tcp_tw_bucket *tw;
+			struct tcp_tw_bucket *tw;
 
-                        tw = (struct tcp_tw_bucket *)ixs->skb->sk;
+			tw = (struct tcp_tw_bucket *)ixs->skb->sk;
 
-                        ixs->sport = ntohs(tw->tw_sport);
-                        ixs->dport = ntohs(tw->tw_dport);
+			ixs->sport = ntohs(tw->tw_sport);
+			ixs->dport = ntohs(tw->tw_dport);
 #endif
 #else
-                        ixs->sport = ntohs(ixs->skb->sk->sport);
-                        ixs->dport = ntohs(ixs->skb->sk->dport);
+			ixs->sport = ntohs(ixs->skb->sk->sport);
+			ixs->dport = ntohs(ixs->skb->sk->dport);
 #endif
 		} 
 
@@ -504,7 +510,7 @@ ipsec_tunnel_restore_hard_header(struct ipsec_xmit_state*ixs)
 	}
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL
 	if (ixs->natt_type && ixs->natt_head) {
-		struct iphdr *ipp = ixs->skb->nh.iph;
+		struct iphdr *ipp = ip_hdr(ixs->skb);
 		struct udphdr *udp;
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 			    "klips_debug:ipsec_tunnel_start_xmit: "
@@ -570,17 +576,17 @@ ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
 #ifdef NETDEV_25
 	memset (&fl, 0x0, sizeof (struct flowi));
  	fl.oif = ixs->physdev->iflink;
- 	fl.nl_u.ip4_u.daddr = ixs->skb->nh.iph->daddr;
- 	fl.nl_u.ip4_u.saddr = ixs->pass ? 0 : ixs->skb->nh.iph->saddr;
- 	fl.nl_u.ip4_u.tos = RT_TOS(ixs->skb->nh.iph->tos);
- 	fl.proto = ixs->skb->nh.iph->protocol;
+ 	fl.nl_u.ip4_u.daddr = ip_hdr(ixs->skb)->daddr;
+	fl.nl_u.ip4_u.saddr = ixs->pass ? 0 : ip_hdr(ixs->skb)->saddr;
+	fl.nl_u.ip4_u.tos = RT_TOS(ip_hdr(ixs->skb)->tos);
+	fl.proto = ip_hdr(ixs->skb)->protocol;
  	if ((ixs->error = ip_route_output_key(&ixs->route, &fl))) {
 #else
 	/*skb_orphan(ixs->skb);*/
 	if((ixs->error = ip_route_output(&ixs->route,
 				    ixs->skb->nh.iph->daddr,
-				    ixs->pass ? 0 : ixs->skb->nh.iph->saddr,
-				    RT_TOS(ixs->skb->nh.iph->tos),
+				    ixs->pass ? 0 : ip_hdr(ixs->skb)->saddr,
+				    RT_TOS(ip_hdr(ixs->skb)->tos),
                                     /* mcr->rgb: should this be 0 instead? */
 				    ixs->physdev->iflink))) {
 #endif
@@ -605,16 +611,16 @@ ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
 	dst_release(ixs->skb->dst);
 	ixs->skb->dst = &ixs->route->u.dst;
 	ixs->stats->tx_bytes += ixs->skb->len;
-	if(ixs->skb->len < ixs->skb->nh.raw - ixs->skb->data) {
+	if(ixs->skb->len < skb_network_header(ixs->skb) - ixs->skb->data) {
 		ixs->stats->tx_errors++;
 		printk(KERN_WARNING
 		       "klips_error:ipsec_xmit_send: "
 		       "tried to __skb_pull nh-data=%ld, %d available.  This should never happen, please report.\n",
-		       (unsigned long)(ixs->skb->nh.raw - ixs->skb->data),
+		       (unsigned long)(skb_network_header(ixs->skb) - ixs->skb->data),
 		       ixs->skb->len);
 		return IPSEC_XMIT_PUSHPULLERR;
 	}
-	__skb_pull(ixs->skb, ixs->skb->nh.raw - ixs->skb->data);
+	__skb_pull(ixs->skb, skb_network_header(ixs->skb) - ixs->skb->data);
 #ifdef SKB_RESET_NFCT
 	if(!ixs->pass) {
 	  nf_conntrack_put(ixs->skb->nfct);
@@ -628,7 +634,7 @@ ipsec_tunnel_send(struct ipsec_xmit_state*ixs)
 		    "klips_debug:ipsec_xmit_send: "
 		    "...done, calling ip_send() on device:%s\n",
 		    ixs->skb->dev ? ixs->skb->dev->name : "NULL");
-	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->skb->nh.iph);
+	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ip_hdr(ixs->skb));
 #ifdef NETDEV_23	/* 2.4 kernels */
 	{
 		int err;
@@ -879,8 +885,8 @@ ipsec_tunnel_hard_header(struct sk_buff *skb, struct net_device *dev,
 #ifdef NET_21
 			KLIPS_PRINTMORE(debug_tunnel & DB_TN_REVEC,
 					"ip=%08x->%08x\n",
-					(__u32)ntohl(skb->nh.iph->saddr),
-					(__u32)ntohl(skb->nh.iph->daddr) );
+					(__u32)ntohl(ip_hdr(skb)->saddr),
+					(__u32)ntohl(ip_hdr(skb)->daddr) );
 #else /* NET_21 */
 			KLIPS_PRINTMORE(debug_tunnel & DB_TN_REVEC,
 					"ip=%08x->%08x\n",
@@ -905,8 +911,8 @@ ipsec_tunnel_hard_header(struct sk_buff *skb, struct net_device *dev,
 #ifdef NET_21
 		KLIPS_PRINTMORE(debug_tunnel & DB_TN_REVEC,
 			    "ip=%08x->%08x\n",
-			    (__u32)ntohl(skb->nh.iph->saddr),
-			    (__u32)ntohl(skb->nh.iph->daddr) );
+			    (__u32)ntohl(ip_hdr(skb)->saddr),
+			    (__u32)ntohl(ip_hdr(skb)->daddr) );
 #else /* NET_21 */
 		KLIPS_PRINTMORE(debug_tunnel & DB_TN_REVEC,
 			    "ip=%08x->%08x\n",
@@ -972,8 +978,8 @@ ipsec_tunnel_rebuild_header(void *buff, struct net_device *dev,
 #ifdef NET_21
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "ip=%08x->%08x\n",
-			    (__u32)ntohl(skb->nh.iph->saddr),
-			    (__u32)ntohl(skb->nh.iph->daddr) );
+			    (__u32)ntohl(ip_hdr(skb)->saddr),
+			    (__u32)ntohl(ip_hdr(skb)->daddr) );
 #else /* NET_21 */
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "ip=%08x->%08x\n",
@@ -991,8 +997,8 @@ ipsec_tunnel_rebuild_header(void *buff, struct net_device *dev,
 #ifdef NET_21
 	KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 		    "ip=%08x->%08x\n",
-		    (__u32)ntohl(skb->nh.iph->saddr),
-		    (__u32)ntohl(skb->nh.iph->daddr) );
+		    (__u32)ntohl(ip_hdr(skb)->saddr),
+		    (__u32)ntohl(ip_hdr(skb)->daddr) );
 #else /* NET_21 */
 	KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 		    "ip=%08x->%08x\n",
@@ -1786,7 +1792,9 @@ ipsec_tunnel_init_devices(void)
 		memset((caddr_t)dev_ipsec->name, 0, IFNAMSIZ);
 		strncpy(dev_ipsec->name, name, IFNAMSIZ);
 #endif /* NETDEV_23 */
+#ifdef HAVE_DEV_NEXT
 		dev_ipsec->next = NULL;
+#endif
 		dev_ipsec->init = &ipsec_tunnel_probe;
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 			    "klips_debug:ipsec_tunnel_init_devices: "
@@ -1848,6 +1856,13 @@ ipsec_tunnel_cleanup_devices(void)
 
 /*
  * $Log: ipsec_tunnel.c,v $
+ * Revision 1.232.2.7  2007/09/18 18:26:18  paul
+ * Fix mangled preprocessor line in HAVE_INET_SK_SPORT case.
+ *
+ * Revision 1.232.2.6  2007/09/05 02:56:10  paul
+ * Use the new ipsec_kversion macros by David to deal with 2.6.22 kernels.
+ * Fixes based on David McCullough patch.
+ *
  * Revision 1.232.2.5  2006/10/06 21:39:26  paul
  * Fix for 2.6.18+ only include linux/config.h if AUTOCONF_INCLUDED is not
  * set. This is defined through autoconf.h which is included through the

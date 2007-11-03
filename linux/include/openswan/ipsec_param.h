@@ -15,7 +15,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_param.h,v 1.29.6.3 2006/05/01 14:32:31 mcr Exp $
+ * RCSID $Id: ipsec_param.h,v 1.29.6.4 2007/09/05 02:30:06 paul Exp $
  *
  */
 
@@ -183,10 +183,13 @@ extern void ipsec_print_ip(struct iphdr *ip);
 		((flag) ? printk(format , ## args) : 0)
 	#define KLIPS_IP_PRINT(flag, ip) \
 		((flag) ? ipsec_print_ip(ip) : 0)
+	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) \
+		((flag) ? satot(sa, format, dst, dstlen) : 0)
 #else /* CONFIG_KLIPS_DEBUG */
 	#define KLIPS_PRINT(flag, format, args...) do ; while(0)
 	#define KLIPS_PRINTMORE(flag, format, args...) do ; while(0)
 	#define KLIPS_IP_PRINT(flag, ip) do ; while(0)
+	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) (0)
 #endif /* CONFIG_KLIPS_DEBUG */
 
 
@@ -254,6 +257,9 @@ extern void ipsec_print_ip(struct iphdr *ip);
 
 /*
  * $Log: ipsec_param.h,v $
+ * Revision 1.29.6.4  2007/09/05 02:30:06  paul
+ * KLIPS_SATOT macro. Patch by David McCullough
+ *
  * Revision 1.29.6.3  2006/05/01 14:32:31  mcr
  * added KLIPS_ERROR and make sure that things work without CONFIG_KLIPS_REGRESS.
  *

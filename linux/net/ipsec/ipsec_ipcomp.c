@@ -13,7 +13,7 @@
  * for more details.
  */
 
-char ipsec_ipcomp_c_version[] = "RCSID $Id: ipsec_ipcomp.c,v 1.5.2.2 2006/10/06 21:39:26 paul Exp $";
+char ipsec_ipcomp_c_version[] = "RCSID $Id: ipsec_ipcomp.c,v 1.5.2.3 2007/09/05 02:56:09 paul Exp $";
 #ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
 #endif
@@ -93,7 +93,7 @@ ipsec_rcv_ipcomp_checks(struct ipsec_rcv_state *irs,
 		return IPSEC_RCV_BADLEN;
 	}
 
-	irs->protostuff.ipcompstuff.compp = (struct ipcomphdr *)skb->h.raw;
+	irs->protostuff.ipcompstuff.compp = (struct ipcomphdr *)skb_transport_header(skb);
 	irs->said.spi = htonl((__u32)ntohs(irs->protostuff.ipcompstuff.compp->ipcomp_cpi));
 	return IPSEC_RCV_OK;
 }
@@ -107,7 +107,7 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 
 	skb=irs->skb;
 
-	ipsec_xmit_dmp("ipcomp", skb->h.raw, skb->len);
+	ipsec_xmit_dmp("ipcomp", skb_transport_header(skb), skb->len);
 
 	if(ipsp == NULL) {
 		return IPSEC_RCV_SAIDNOTFOUND;
@@ -120,7 +120,7 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 		char sa2[SATOT_BUF];
 		size_t sa_len2 = 0;
 
-		sa_len2 = satot(&ipsp->ips_said, 0, sa2, sizeof(sa2));
+		sa_len2 = KLIPS_SATOT(debug_rcv, &ipsp->ips_said, 0, sa2, sizeof(sa2));
 
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
@@ -160,7 +160,7 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 	irs->skb = skb;
 	
 #ifdef NET_21
-	irs->ipp = skb->nh.iph;
+	irs->ipp = ip_hdr(skb);
 #else /* NET_21 */
 	irs->ipp = skb->ip_hdr;
 #endif /* NET_21 */
@@ -193,7 +193,7 @@ ipsec_xmit_ipcomp_setup(struct ipsec_xmit_state *ixs)
   ixs->skb = skb_compress(ixs->skb, ixs->ipsp, &flags);
 
 #ifdef NET_21
-  ixs->iph = ixs->skb->nh.iph;
+  ixs->iph = ip_hdr(ixs->skb);
 #else /* NET_21 */
   ixs->iph = ixs->skb->ip_hdr;
 #endif /* NET_21 */

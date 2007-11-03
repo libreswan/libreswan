@@ -14,7 +14,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_life.c,v 1.13.10.1 2006/10/06 21:39:26 paul Exp $
+ * RCSID $Id: ipsec_life.c,v 1.13.10.2 2007/09/05 02:39:38 paul Exp $
  *
  */
 
@@ -42,6 +42,7 @@
 #include <linux/netdevice.h>   /* struct device, struct net_device_stats and other headers */
 #include <linux/etherdevice.h> /* eth_type_trans */
 #include <linux/skbuff.h>
+#include <linux/ip.h>
 #include <openswan.h>
 
 #include "openswan/radij.h"
@@ -214,6 +215,9 @@ ipsec_lifetime_update_soft(struct ipsec_lifetime64 *lifetime,
 	
 /*
  * $Log: ipsec_life.c,v $
+ * Revision 1.13.10.2  2007/09/05 02:39:38  paul
+ * include ip.h to account for header file surgery in 2.6.22 [david]
+ *
  * Revision 1.13.10.1  2006/10/06 21:39:26  paul
  * Fix for 2.6.18+ only include linux/config.h if AUTOCONF_INCLUDED is not
  * set. This is defined through autoconf.h which is included through the

@@ -15,7 +15,7 @@
  * for more details.
  */
 
-char ipsec_rcv_c_version[] = "RCSID $Id: ipsec_rcv.c,v 1.171.2.11 2007/04/28 20:46:40 paul Exp $";
+char ipsec_rcv_c_version[] = "RCSID $Id: ipsec_rcv.c,v 1.171.2.15 2007/10/30 21:37:45 paul Exp $";
 
 #ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
@@ -534,7 +534,7 @@ ipsec_rcv_decap_once(struct ipsec_rcv_state *irs
 	}
 
 	/* ilen counts number of bytes in ESP portion */
-	irs->ilen = ((skb->data + skb->len) - skb->h.raw) - irs->authlen;
+	irs->ilen = ((irs->skb->data + irs->skb->len) - skb_transport_header(irs->skb)) - irs->authlen;
 	if(irs->ilen <= 0) {
 	  KLIPS_PRINT(debug_rcv,
 		      "klips_debug:ipsec_rcv: "
@@ -662,9 +662,9 @@ ipsec_rcv_decap_once(struct ipsec_rcv_state *irs
 	 */
 	skb = irs->skb;
 	irs->len = skb->len;
-	ipp = irs->ipp = skb->nh.iph;
-	iphlen = ipp->ihl<<2;
-	skb->h.raw = skb->nh.raw + iphlen;
+	ipp = irs->ipp = ip_hdr(skb);
+	irs->iphlen = ipp->ihl<<2;
+	skb_set_transport_header(skb, ipsec_skb_offset(skb, skb_network_header(skb) + irs->iphlen));
 	
 	/* zero any options that there might be */
 	memset(&(IPCB(skb)->opt), 0, sizeof(struct ip_options));
@@ -680,7 +680,7 @@ ipsec_rcv_decap_once(struct ipsec_rcv_state *irs
 	ipp->protocol = irs->next_header;
 
 	ipp->check = 0;	/* NOTE: this will be included in checksum */
-	ipp->check = ip_fast_csum((unsigned char *)skb->nh.iph, iphlen >> 2);
+	ipp->check = ip_fast_csum((unsigned char *)ip_hdr(skb), irs->iphlen >> 2);
 
 	KLIPS_PRINT(debug_rcv & DB_RX_PKTRX,
 		    "klips_debug:ipsec_rcv: "
@@ -875,13 +875,13 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 	   */
 	  __u32 natt_oa = ipsp->ips_natt_oa ?
 	    ((struct sockaddr_in*)(ipsp->ips_natt_oa))->sin_addr.s_addr : 0;
-	  __u16 pkt_len = skb->tail - (unsigned char *)ipp;
+	  __u16 pkt_len = skb_tail_pointer(skb) - (unsigned char *)ipp;
 	  __u16 data_len = pkt_len - (ipp->ihl << 2);
 	  
 	  switch (ipp->protocol) {
 	  case IPPROTO_TCP:
 	    if (data_len >= sizeof(struct tcphdr)) {
-	      struct tcphdr *tcp = skb->h.th;
+	      struct tcphdr *tcp = tcp_hdr(skb);
 	      if (natt_oa) {
 		__u32 buff[2] = { ~natt_oa, ipp->saddr };
 		KLIPS_PRINT(debug_rcv,
@@ -912,28 +912,31 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 	    break;
 	  case IPPROTO_UDP:
 	    if (data_len >= sizeof(struct udphdr)) {
-	      struct udphdr *udp = skb->h.uh;
+	      struct udphdr *udp = udp_hdr(skb);
 	      if (udp->check == 0) {
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "NAT-T & TRANSPORT: UDP checksum already 0\n");
 	      }
 	      else if (natt_oa) {
-		__u32 buff[2] = { ~natt_oa, ipp->saddr };
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "NAT-T & TRANSPORT: "
 			    "fix UDP checksum using NAT-OA\n");
 #ifdef DISABLE_UDP_CHECKSUM
-		udp->check=0
+		udp->check=0;
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "NAT-T & TRANSPORT: "
 			    "UDP checksum using NAT-OA disabled at compile time\n");
 #else
-		udp->check = csum_fold(
-				       csum_partial((unsigned char *)buff, sizeof(buff),
-						    udp->check^0xffff));
+		{
+		    __u32 buff[2] = { ~natt_oa, ipp->saddr };
+
+		    udp->check = csum_fold(
+					   csum_partial((unsigned char *)buff, sizeof(buff),
+							udp->check^0xffff));
+		}
 #endif
 	      }
 	      else {
@@ -965,7 +968,7 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 	 */
 	if(ipsnext) {
 		ipsp = ipsnext;
-		irs->sa_len = satot(&irs->said, 0, irs->sa, sizeof(irs->sa));
+		irs->sa_len = KLIPS_SATOT(debug_rcv, &irs->said, 0, irs->sa, sizeof(irs->sa));
 		if((ipp->protocol != IPPROTO_IPIP) && 
                    (ipp->protocol != IPPROTO_ATT_HEARTBEAT)) {  /* AT&T heartbeats to SIG/GIG */
 			spin_unlock(&tdb_lock);
@@ -983,7 +986,7 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 			if((ipsnext = ipsp->ips_inext)) {
 				char sa2[SATOT_BUF];
 				size_t sa_len2;
-				sa_len2 = satot(&ipsnext->ips_said, 0, sa2, sizeof(sa2));
+				sa_len2 = KLIPS_SATOT(debug_rcv, &ipsnext->ips_said, 0, sa2, sizeof(sa2));
 				spin_unlock(&tdb_lock);
 				KLIPS_PRINT(debug_rcv,
 					    "klips_debug:ipsec_rcv: "
@@ -999,7 +1002,7 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 				spin_unlock(&tdb_lock);
 				KLIPS_PRINT(debug_rcv,
 					    "klips_debug:ipsec_rcv: "
-					    "SA:%s, src=%s(%08x) does match expected 0x%08x.\n",
+					    "SA:%s, src=%s(%08x) does not match expected 0x%08x.\n",
 					    irs->sa_len ? irs->sa : " (error)",
 					    irs->ipsaddr_txt, 
 					    ipp->saddr, psin->sin_addr.s_addr);
@@ -1041,14 +1044,14 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 		 * options, but also by any UDP/ESP encap there might
 		 * have been, and this deals with all cases.
 		 */
-		skb_pull(skb, (skb->h.raw - skb->nh.raw));
+		skb_pull(skb, (skb_transport_header(skb) - skb_network_header(skb)));
 
 		/* new L3 header is where L4 payload was */
-		skb->nh.raw = skb->h.raw;
+		skb_set_network_header(skb, ipsec_skb_offset(skb, skb_transport_header(skb)));
 
 		/* now setup new L4 payload location */
-		ipp = (struct iphdr *)skb->nh.raw;
-		skb->h.raw = skb->nh.raw + (ipp->ihl << 2);
+		ipp = (struct iphdr *)skb_network_header(skb);
+		skb_set_transport_header(skb, ipsec_skb_offset(skb, skb_network_header(skb) + (ipp->ihl << 2)));
 
 
 		/* remove any saved options that we might have,
@@ -1062,9 +1065,11 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 
 		/* re-do any strings for debugging */
 		ipsaddr.s_addr = ipp->saddr;
-		addrtoa(ipsaddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
+		if (debug_rcv)
+			addrtoa(ipsaddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
 		ipdaddr.s_addr = ipp->daddr;
-		addrtoa(ipdaddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
+		if (debug_rcv)
+			addrtoa(ipdaddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
 
 		skb->protocol = htons(ETH_P_IP);
 		skb->ip_summed = 0;
@@ -1130,12 +1135,12 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 	}
 	skb->pkt_type = PACKET_HOST;
 	if(irs->hard_header_len &&
-	   (skb->mac.raw != (skb->nh.raw - irs->hard_header_len)) &&
+	   (skb_mac_header(skb) != (skb_network_header(skb) - irs->hard_header_len)) &&
 	   (irs->hard_header_len <= skb_headroom(skb))) {
 		/* copy back original MAC header */
-		memmove(skb->nh.raw - irs->hard_header_len,
-			skb->mac.raw, irs->hard_header_len);
-		skb->mac.raw = skb->nh.raw - irs->hard_header_len;
+		memmove(skb_network_header(skb) - irs->hard_header_len,
+			skb_mac_header(skb), irs->hard_header_len);
+		skb_set_mac_header(skb, ipsec_skb_offset(skb, skb_network_header(skb) - irs->hard_header_len));
 	}
 
 #ifdef CONFIG_KLIPS_IPCOMP
@@ -1175,13 +1180,13 @@ int ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 	 * pointers wind up a different for 2.6 vs 2.4, so we just fudge it here.
 	 */
 #ifdef NET_26
-	skb->data = skb_push(skb, skb->h.raw - skb->nh.raw);
+	irs->skb->data = skb_push(irs->skb, skb_transport_header(irs->skb) - skb_network_header(irs->skb));
 #else
-	skb->data = skb->nh.raw;
+	irs->skb->data = skb_network_header(irs->skb);
 	{
-	  struct iphdr *iph = skb->nh.iph;
+	  struct iphdr *iph = ip_hdr(irs->skb);
 	  int len = ntohs(iph->tot_len);
-	  skb->len  = len;
+	  irs->skb->len  = len;
 	}
 #endif
 
@@ -1399,9 +1404,12 @@ ipsec_rcv(struct sk_buff *skb
 #endif /* NAT_T */
 
 	/* dev->hard_header_len is unreliable and should not be used */
-	irs->hard_header_len = skb->mac.raw ? (skb->nh.raw - skb->mac.raw) : 0;
-	if((irs->hard_header_len < 0) || (irs->hard_header_len > skb_headroom(skb)))
-		irs->hard_header_len = 0;
+	/* klips26_rcv_encap will have already set hard_header_len for us?? */
+	if (irs->hard_header_len == 0) {
+		irs->hard_header_len = skb_mac_header(skb) ? (skb_network_header(skb) - skb_mac_header(skb)) : 0;
+		if((irs->hard_header_len < 0) || (irs->hard_header_len > skb_headroom(skb)))
+			irs->hard_header_len = 0;
+	}
 
 	skb = ipsec_rcv_unclone(skb, irs);
 	if(skb == NULL) {
@@ -1469,7 +1477,8 @@ ipsec_rcv(struct sk_buff *skb
 	}
 #endif
 
-	ipp = skb->nh.iph;
+	/* ipp = skb->nh.iph; */
+	ipp = ip_hdr(skb);
 
 	{
 	  	struct in_addr ipsaddr;
@@ -1655,7 +1664,8 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 	}
 #endif /* IP_FRAGMENT_LINEARIZE */
 
-	ipp = skb->nh.iph;
+	/* ipp = skb->nh.iph; */
+	ipp =ip_hdr(skb);
 
 	{
 	  	struct in_addr ipsaddr;
@@ -1716,6 +1726,19 @@ rcvleave:
 
 /*
  * $Log: ipsec_rcv.c,v $
+ * Revision 1.171.2.15  2007/10/30 21:37:45  paul
+ * Use skb_tail_pointer() [dhr]
+ *
+ * Revision 1.171.2.14  2007-10-22 14:54:38  paul
+ * Fix identation
+ *
+ * Revision 1.171.2.13  2007/10/15 22:16:34  paul
+ * Adding missing ; in DISABLE_UDP_CHECKSUM code
+ *
+ * Revision 1.171.2.12  2007/09/05 02:56:09  paul
+ * Use the new ipsec_kversion macros by David to deal with 2.6.22 kernels.
+ * Fixes based on David McCullough patch.
+ *
  * Revision 1.171.2.11  2007/04/28 20:46:40  paul
  * Added compile time switch for -DDISABLE_UDP_CHECKSUM that seems to be
  * breaking IPsec+NAT+Transport mode with NAT-OA. Enabled this per default

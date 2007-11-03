@@ -14,7 +14,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
- * RCSID $Id: passert.h,v 1.7 2004/10/21 18:44:42 mcr Exp $
+ * RCSID $Id: passert.h,v 1.7.8.1 2007/09/05 02:32:24 paul Exp $
  */
 
 #include "openswan.h"
@@ -29,7 +29,7 @@ typedef void (*openswan_passert_fail_t)(const char *pred_str,
 					const char *file_str,
 					unsigned long line_no) NEVER_RETURNS;
 
-openswan_passert_fail_t openswan_passert_fail;
+extern openswan_passert_fail_t openswan_passert_fail;
 
 extern void pexpect_log(const char *pred_str
 			, const char *file_str, unsigned long line_no);

@@ -13,7 +13,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_radij.c,v 1.73.2.1 2006/10/06 21:39:26 paul Exp $
+ * RCSID $Id: ipsec_radij.c,v 1.73.2.2 2007/09/05 02:56:09 paul Exp $
  */
 
 #ifndef AUTOCONF_INCLUDED
@@ -331,7 +331,7 @@ ipsec_makeroute(struct sockaddr_encap *eaddr,
 	spin_unlock_bh(&eroute_lock);
 	
 	if(error) {
-		sa_len = satot(&said, 0, sa, sizeof(sa));
+		sa_len = KLIPS_SATOT(debug_eroute, &said, 0, sa, sizeof(sa));
 		KLIPS_PRINT(debug_eroute, 
 			    "klips_debug:ipsec_makeroute: "
 			    "rj_addroute not able to insert eroute for SA:%s (error:%d)\n",
@@ -552,6 +552,10 @@ ipsec_rj_walker_delete(struct radij_node *rn, void *w0)
 
 /*
  * $Log: ipsec_radij.c,v $
+ * Revision 1.73.2.2  2007/09/05 02:56:09  paul
+ * Use the new ipsec_kversion macros by David to deal with 2.6.22 kernels.
+ * Fixes based on David McCullough patch.
+ *
  * Revision 1.73.2.1  2006/10/06 21:39:26  paul
  * Fix for 2.6.18+ only include linux/config.h if AUTOCONF_INCLUDED is not
  * set. This is defined through autoconf.h which is included through the

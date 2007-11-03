@@ -18,7 +18,7 @@
  * Split out from ipsec_init.c version 1.70.
  */
 
-char ipsec_proc_c_version[] = "RCSID $Id: ipsec_proc.c,v 1.39.2.4 2006/11/15 22:21:39 paul Exp $";
+char ipsec_proc_c_version[] = "RCSID $Id: ipsec_proc.c,v 1.39.2.6 2007/09/05 02:41:20 paul Exp $";
 
 
 #ifndef AUTOCONF_INCLUDED
@@ -28,6 +28,7 @@ char ipsec_proc_c_version[] = "RCSID $Id: ipsec_proc.c,v 1.39.2.4 2006/11/15 22:
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/kernel.h> /* printk() */
+#include <linux/ip.h>          /* struct iphdr */
 
 #include "openswan/ipsec_kversion.h"
 #include "openswan/ipsec_param.h"
@@ -43,7 +44,6 @@ char ipsec_proc_c_version[] = "RCSID $Id: ipsec_proc.c,v 1.39.2.4 2006/11/15 22:
 
 #include <linux/netdevice.h>   /* struct device, and other headers */
 #include <linux/etherdevice.h> /* eth_type_trans */
-#include <linux/ip.h>          /* struct iphdr */
 #include <linux/in.h>          /* struct sockaddr_in */
 #include <linux/skbuff.h>
 #include <asm/uaccess.h>       /* copy_from_user */
@@ -113,8 +113,10 @@ int debug_ah = 0;
 
 #define DECREMENT_UNSIGNED(X, amount) ((amount < (X)) ? (X)-amount : 0)
 
+#ifdef CONFIG_KLIPS_ALG
 extern int ipsec_xform_get_info(char *buffer, char **start,
 				off_t offset, int length IPSEC_PROC_LAST_ARG);
+#endif /* CONFIG_KLIPS_ALG */
 
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
@@ -616,7 +618,11 @@ unsigned int natt_available = 1;
 #else
 unsigned int natt_available = 0;
 #endif
+#ifdef module_param
 module_param(natt_available, int, 0444);
+#else
+MODULE_PARM("natt_available","i");
+#endif
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
 int
@@ -851,7 +857,9 @@ static struct ipsec_proc_list proc_items[]={
 	{"ipv4",       &proc_birth_dir,     NULL,             ipsec_birth_info, ipsec_birth_set, (void *)&ipsec_ipv4_birth_packet},
 	{"ipv6",       &proc_birth_dir,     NULL,             ipsec_birth_info, ipsec_birth_set, (void *)&ipsec_ipv6_birth_packet},
 	{"tncfg",      &proc_net_ipsec_dir, NULL,             ipsec_tncfg_get_info,      NULL, NULL},
+#ifdef CONFIG_KLIPS_ALG
 	{"xforms",     &proc_net_ipsec_dir, NULL,             ipsec_xform_get_info,      NULL, NULL},
+#endif /* CONFIG_KLIPS_ALG */
 	{"stats",      &proc_net_ipsec_dir, &proc_stats_dir,  NULL,      NULL, NULL},
 	{"trap_count", &proc_stats_dir,     NULL,             ipsec_stats_get_int_info, NULL, &ipsec_xmit_trap_count},
 	{"trap_sendcount", &proc_stats_dir, NULL,             ipsec_stats_get_int_info, NULL, &ipsec_xmit_trap_sendcount},
@@ -1015,6 +1023,12 @@ ipsec_proc_cleanup()
 
 /*
  * $Log: ipsec_proc.c,v $
+ * Revision 1.39.2.6  2007/09/05 02:41:20  paul
+ * Added xforms info to /proc file. Patch by David McCullough
+ *
+ * Revision 1.39.2.5  2007/08/09 14:37:45  paul
+ * Patch by sergeil to compile on 2.4.35.
+ *
  * Revision 1.39.2.4  2006/11/15 22:21:39  paul
  * backport of creating a /sys/ file to test for nat-t capability in kernel.
  *

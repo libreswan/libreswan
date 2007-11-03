@@ -18,7 +18,7 @@
  *
  */
 
-char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.4 2006/10/06 21:39:26 paul Exp $";
+char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.5 2007/09/05 02:36:57 paul Exp $";
 
 #ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
@@ -80,6 +80,7 @@ char ipsec_init_c_version[] = "RCSID $Id: ipsec_init.c,v 1.104.2.4 2006/10/06 21
 #include "openswan/ipsec_tunnel.h"
 
 #include "openswan/ipsec_rcv.h"
+#include "openswan/ipsec_xmit.h"
 #include "openswan/ipsec_ah.h"
 #include "openswan/ipsec_esp.h"
 
@@ -241,7 +242,9 @@ ipsec_klips_init(void)
         error |= ipsec_sysctl_register();
 #endif                                                                          
 
+#ifdef CONFIG_KLIPS_ALG
 	ipsec_alg_init();
+#endif
 
 	get_random_bytes((void *)seed, sizeof(seed));
 	prng_init(&ipsec_prng, seed, sizeof(seed));
@@ -345,6 +348,9 @@ cleanup_module(void)
 
 /*
  * $Log: ipsec_init.c,v $
+ * Revision 1.104.2.5  2007/09/05 02:36:57  paul
+ * include ipsec_init.h. Added an ifdef. Patch by David McCullough
+ *
  * Revision 1.104.2.4  2006/10/06 21:39:26  paul
  * Fix for 2.6.18+ only include linux/config.h if AUTOCONF_INCLUDED is not
  * set. This is defined through autoconf.h which is included through the

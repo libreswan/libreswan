@@ -15,7 +15,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: ipsec_sa.h,v 1.23 2005/05/11 01:18:59 mcr Exp $
+ * RCSID $Id: ipsec_sa.h,v 1.23.2.1 2007/09/05 02:31:15 paul Exp $
  *
  * This file derived from ipsec_xform.h on 2001/9/18 by mcr.
  *
@@ -99,6 +99,9 @@ typedef unsigned short int IPsecRefTableUnusedCount;
 #define IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES (1 << IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
 
 #ifdef CONFIG_NETFILTER
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
+#define		nfmark  mark
+#endif
 #define IPSEC_SA_REF_HOST_FIELD(x) ((struct sk_buff*)(x))->nfmark
 #define IPSEC_SA_REF_HOST_FIELD_TYPE typeof(IPSEC_SA_REF_HOST_FIELD(NULL))
 #else /* CONFIG_NETFILTER */
@@ -253,6 +256,9 @@ enum ipsec_direction {
 
 /*
  * $Log: ipsec_sa.h,v $
+ * Revision 1.23.2.1  2007/09/05 02:31:15  paul
+ * Fix an nfmark -> mark occurance. Patch by David McCullough
+ *
  * Revision 1.23  2005/05/11 01:18:59  mcr
  * 	do not change structure based upon options, to avoid
  * 	too many #ifdef.

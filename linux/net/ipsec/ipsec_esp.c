@@ -13,7 +13,7 @@
  * for more details.
  */
 
-char ipsec_esp_c_version[] = "RCSID $Id: ipsec_esp.c,v 1.13.2.6 2006/10/06 21:39:26 paul Exp $";
+char ipsec_esp_c_version[] = "RCSID $Id: ipsec_esp.c,v 1.13.2.7 2007/09/05 02:56:09 paul Exp $";
 #ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
 #endif
@@ -110,7 +110,7 @@ ipsec_rcv_esp_checks(struct ipsec_rcv_state *irs,
 		return IPSEC_RCV_BADLEN;
 	}
 
-	irs->protostuff.espstuff.espp = (struct esphdr *)skb->h.raw;
+	irs->protostuff.espstuff.espp = (struct esphdr *)skb_transport_header(skb);
 	irs->said.spi = irs->protostuff.espstuff.espp->esp_spi;
 
 	return IPSEC_RCV_OK;
@@ -137,7 +137,7 @@ ipsec_rcv_esp_decrypt_setup(struct ipsec_rcv_state *irs,
 		    irs->sa_len ? irs->sa : " (error)");
 
 	*replay = ntohl(espp->esp_rpl);
-	*authenticator = &(skb->h.raw[irs->ilen]);
+	*authenticator = &(skb_transport_header(skb)[irs->ilen]);
 
 	return IPSEC_RCV_OK;
 }
@@ -153,6 +153,7 @@ ipsec_rcv_esp_authcalc(struct ipsec_rcv_state *irs,
 		SHA1_CTX	sha1;
 	} tctx;
 
+#ifdef CONFIG_KLIPS_ALG
 	if (irs->ipsp->ips_alg_auth) {
 		KLIPS_PRINT(debug_rcv,
 				"klips_debug:ipsec_rcv: "
@@ -166,6 +167,7 @@ ipsec_rcv_esp_authcalc(struct ipsec_rcv_state *irs,
 		}
 		return IPSEC_RCV_BADPROTO;
 	}
+#endif
 	aa = irs->authfuncs;
 
 	/* copy the initialized keying material */
@@ -211,9 +213,10 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 	struct sk_buff *skb;
 	struct ipsec_alg_enc *ixt_e=NULL;
 
+#ifdef CONFIG_KLIPS_ALG
 	skb=irs->skb;
 
-	idat = skb->h.raw;
+	idat = skb_transport_header(skb);
 
 	/* encaplen is the distance between the end of the IP
 	 * header and the beginning of the ESP header.
@@ -223,7 +226,7 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 	 * Note: UDP-encap code has already moved the
 	 *       skb->data forward to accomodate this.
 	 */
-	encaplen = idat - (skb->nh.raw + irs->iphlen);
+	encaplen = skb_transport_header(skb) - (skb_network_header(skb) + irs->iphlen);
 
 	ixt_e=ipsp->ips_alg_enc;
 	esphlen = ESP_HEADER_LEN + ixt_e->ixt_common.ixt_support.ias_ivlen/8;
@@ -252,6 +255,7 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 			irs->stats->rx_errors++;
 		}
 		return IPSEC_RCV_BAD_DECRYPT;
+#endif /* CONFIG_KLIPS_ALG */
 	} 
 
 	ESP_DMP("postdecrypt", idat, irs->ilen);
@@ -315,7 +319,7 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 	 *
 	 */
 	memmove((void *)(idat - irs->iphlen),
-		(void *)(skb->nh.raw), irs->iphlen);
+		(void *)(skb_network_header(skb)), irs->iphlen);
 
 	ESP_DMP("esp postmove", (idat - irs->iphlen),
 		irs->iphlen + irs->ilen);
@@ -331,8 +335,8 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 		return IPSEC_RCV_ESP_DECAPFAIL;
 	}
 	skb_pull(skb, esphlen);
-	skb->nh.raw = idat - irs->iphlen;
-	irs->ipp = skb->nh.iph;
+	skb_set_network_header(skb, ipsec_skb_offset(skb, idat - irs->iphlen));
+	irs->ipp = ip_hdr(skb);
 
 	ESP_DMP("esp postpull", skb->data, skb->len);
 
@@ -496,7 +500,7 @@ ipsec_xmit_esp_setup(struct ipsec_xmit_state *ixs)
     return IPSEC_XMIT_AH_BADALG;
   }
 
-  ixs->skb->h.raw = (unsigned char*)espp;
+  skb_set_transport_header(ixs->skb, ipsec_skb_offset(ixs->skb, espp));
 
   return IPSEC_XMIT_OK;
 }
@@ -541,6 +545,10 @@ struct inet_protocol esp_protocol =
 
 /*
  * $Log: ipsec_esp.c,v $
+ * Revision 1.13.2.7  2007/09/05 02:56:09  paul
+ * Use the new ipsec_kversion macros by David to deal with 2.6.22 kernels.
+ * Fixes based on David McCullough patch.
+ *
  * Revision 1.13.2.6  2006/10/06 21:39:26  paul
  * Fix for 2.6.18+ only include linux/config.h if AUTOCONF_INCLUDED is not
  * set. This is defined through autoconf.h which is included through the
