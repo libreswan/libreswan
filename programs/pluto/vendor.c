@@ -12,7 +12,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: vendor.c,v 1.43.2.8 2007/03/12 02:01:07 paul Exp $
+ * RCSID $Id: vendor.c,v 1.43.2.10 2007/10/28 07:00:23 paul Exp $
  */
 
 #include <stdlib.h>
@@ -281,10 +281,11 @@ static struct vid_struct _vid_tab[] = {
 		"FRAGMENTATION", NULL, NULL, 0 },
 
 	/**
-	 * Windows Vista (and Longhorn?)
+	 * Windows Vista (and Longhorn? and Windows Server 2008?)
 	 */
 	DEC_MD5_VID(VISTA_AUTHIP, "MS-Negotiation Discovery Capable")
 	DEC_MD5_VID(VISTA_AUTHIP2, "IKE CGA version 1")
+	DEC_MD5_VID(VISTA_AUTHIP3, "MS-MamieExists")
 
 	/*
 	 * NCP.de
@@ -456,6 +457,7 @@ static void handle_known_vendorid (struct msg_digest *md UNUSED
 	case VID_NATT_IETF_02:
 	case VID_NATT_IETF_02_N:
 	case VID_NATT_IETF_03:
+	case VID_NATT_IETF_05:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 	case VID_NATT_RFC:
 	    vid_usefull = 1;
