@@ -486,6 +486,12 @@ void confwrite_conn(FILE *out,
 	    } else {
 		fprintf(out, "\trekey=yes\n");
 	    }
+
+	    if(conn->policy & POLICY_OVERLAPIP) {
+		fprintf(out, "\toverlapip=yes\n");
+	    } else {
+		fprintf(out, "\toverlapip=no\n");
+	    }
 	    
 	    auth_policy=(conn->policy & POLICY_ID_AUTH_MASK);
 	    switch(auth_policy) {
