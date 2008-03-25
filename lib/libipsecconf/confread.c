@@ -961,6 +961,8 @@ static int load_conn (struct starter_config *cfg
 
     KW_POLICY_FLAG(KBF_MODECONFIGPULL, POLICY_MODECFG_PULL);
 
+    KW_POLICY_FLAG(KBF_OVERLAPIP, POLICY_OVERLAPIP);
+
     if(conn->strings_set[KSF_ESP]) {
 	conn->esp = xstrdup(conn->strings[KSF_ESP]);
     }

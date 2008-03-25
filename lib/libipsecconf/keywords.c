@@ -300,6 +300,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"lifetime",       kv_conn|kv_auto|kv_alias, kt_time,   KBF_SALIFETIME,NOT_ENUM},
     {"salifetime",     kv_conn|kv_auto, kt_time,   KBF_SALIFETIME,NOT_ENUM},
     {"forceencaps",    kv_conn|kv_auto, kt_bool,   KBF_FORCEENCAP, NOT_ENUM},
+    {"overlapip",      kv_conn|kv_auto, kt_bool,   KBF_OVERLAPIP, NOT_ENUM},
     {"rekey",          kv_conn|kv_auto, kt_bool,   KBF_REKEY, NOT_ENUM},
     {"rekeymargin",    kv_conn|kv_auto, kt_time,   KBF_REKEYMARGIN,NOT_ENUM},
     {"rekeyfuzz",      kv_conn|kv_auto, kt_time,   KBF_REKEYFUZZ,NOT_ENUM},
