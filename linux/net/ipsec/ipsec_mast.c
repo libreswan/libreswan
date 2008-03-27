@@ -146,6 +146,7 @@ int ip_cmsg_send_ipsec(struct cmsghdr *cmsg, struct ipcm_cookie *ipc)
 	return 0;
 }
 
+/* Paul: This seems to be unused dead code */
 enum ipsec_xmit_value
 ipsec_mast_send(struct ipsec_xmit_state*ixs)
 {
