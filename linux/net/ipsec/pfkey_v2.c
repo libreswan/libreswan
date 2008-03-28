@@ -81,6 +81,8 @@
 #define SOCKOPS_WRAPPED(name) name
 #endif /* SOCKOPS_WRAPPED */
 
+extern struct proto_ops pfkey_ops;
+
 #ifdef NET_26
 static rwlock_t pfkey_sock_lock = RW_LOCK_UNLOCKED;
 HLIST_HEAD(pfkey_sock_list);
@@ -111,12 +113,14 @@ DEBUG_NO_STATIC int pfkey_recvmsg(struct socket *sock, struct msghdr *msg, int s
 #endif
 
 struct net_proto_family pfkey_family_ops = {
-	PF_KEY,
-	pfkey_create
+        .owner  = THIS_MODULE,
+        .family = PF_KEY,
+        .create = pfkey_create
 };
 
 struct proto_ops SOCKOPS_WRAPPED(pfkey_ops) = {
 #ifdef NETDEV_23
+        owner:          THIS_MODULE,
 	family:		PF_KEY,
 	release:	pfkey_release,
 	bind:		sock_no_bind,
@@ -1451,7 +1455,11 @@ pfkey_init(void)
 #endif /* CONFIG_KLIPS_IPCOMP */
 	error |= supported_add_all(K_SADB_X_SATYPE_IPIP, supported_init_ipip, sizeof(supported_init_ipip));
 
+#ifdef NET_21
         error |= sock_register(&pfkey_family_ops);
+#else /* NET_21 */
+        error |= sock_register(pfkey_proto_ops.family, &pfkey_proto_ops);
+#endif /* NET_21 */
 
 #ifdef CONFIG_PROC_FS
 #  ifndef PROC_FS_2325
