@@ -1,6 +1,8 @@
 Please see docs/KNOWN_BUGS file for more information
 
 v2.5.18
+* KLIPS IPsec SAref support for clashing Virtual IP support [mcr]
+  (required for xl2tpd ipsec saref support)
 * Bugtracker bugs fixed
  #917: pluto fails to compile when using pam. xauth [folti]
 
