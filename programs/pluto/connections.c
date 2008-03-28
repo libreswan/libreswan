@@ -948,6 +948,7 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
     return same_ca;
 }
 
+/* Paul: This function is not used anywhere */
 void
 setup_client_ports(struct spd_route *sr)
 {
