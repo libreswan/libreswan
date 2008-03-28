@@ -577,33 +577,30 @@ ipsec_sa_getbyref(IPsecSAref_t ref)
 	return ips;
 }
 
-
-void
-__ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
+int
+ipsec_sa_put(struct ipsec_sa *ips)
 {
+        char sa[SATOT_BUF];
+	size_t sa_len;
+
 	if(ips == NULL) {
 		KLIPS_PRINT(debug_xform,
 			    "ipsec_sa_put: "
 			    "null pointer passed in!\n");
-		return;
+		return -1;
 	}
 
-#ifdef CONFIG_KLIPS_DEBUG
 	if(debug_xform) {
-		char sa[SATOT_BUF];
-		size_t sa_len;
 		sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
 
 		KLIPS_PRINT(debug_xform,
 			    "ipsec_sa_put: "
-			    "ipsec_sa %p SA:%s, ref:%d reference count (%d--) decremented by %s:%d.\n",
+			    "ipsec_sa %p SA:%s, ref:%d reference count (%d--) decremented.\n",
 			    ips,
 			    sa_len ? sa : " (error)",
 			    ips->ips_ref,
-			    atomic_read(&ips->ips_refcount),
-			    func, line);
+			    atomic_read(&ips->ips_refcount));
 	}
-#endif
 
 	if(atomic_dec_and_test(&ips->ips_refcount)) {
 		KLIPS_PRINT(debug_xform,
@@ -613,43 +610,30 @@ __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
 		ipsec_sa_wipe(ips);
 	}
 
-	return;
+	return 0;
 }
 
-struct ipsec_sa *
+int
 __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line)
 {
-        if (ips == NULL)
-                return NULL;
+        char sa[SATOT_BUF];
+        size_t sa_len;
 
-#ifdef CONFIG_KLIPS_DEBUG
-	if(debug_xform) {
-		char sa[SATOT_BUF];
-		size_t sa_len;
-	  sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+        if(debug_xform) {
+          sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
 
-	  KLIPS_PRINT(debug_xform,
-		      "ipsec_sa_get: "
-		      "ipsec_sa %p SA:%s, ref:%d reference count (%d++) incremented by %s:%d.\n",
-		      ips,
-		      sa_len ? sa : " (error)",
-		      ips->ips_ref,
-		      atomic_read(&ips->ips_refcount),
-		      func, line);
-	}
-#endif
+          KLIPS_PRINT(debug_xform,
+                      "ipsec_sa_get: "
+                      "ipsec_sa %p SA:%s, ref:%d reference count (%d++) incremented by %s:%d.\n",
+                      ips,
+                      sa_len ? sa : " (error)",
+                      ips->ips_ref,
+                      atomic_read(&ips->ips_refcount),
+                      func, line);
+        }
 
-	atomic_inc(&ips->ips_refcount);
-
-	if(atomic_dec_and_test(&ips->ips_refcount)) {
-		KLIPS_PRINT(debug_xform,
-			    "ipsec_sa_put: freeing %p\n",
-			    ips);
-		/* it was zero */
-		ipsec_sa_wipe(ips);
-	}
-
-        return ips;
+        atomic_inc(&ips->ips_refcount);
+        return atomic_read(&ips->ips_refcount);
 }
 
 /*
@@ -660,8 +644,6 @@ ipsec_sa_add(struct ipsec_sa *ips)
 {
 	int error = 0;
 	unsigned int hashval;
-
-	ips = ipsec_sa_get(ips);
 
 	if(ips == NULL) {
 		KLIPS_PRINT(debug_xform,
