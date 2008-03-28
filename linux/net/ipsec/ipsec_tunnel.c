@@ -88,9 +88,6 @@
 #endif
 
 static __u32 zeroes[64];
-#ifdef CONFIG_KLIPS_DEBUG
-int debug_tunnel = 0;
-#endif /* CONFIG_KLIPS_DEBUG */
 
 DEBUG_NO_STATIC int
 ipsec_tunnel_open(struct net_device *dev)
