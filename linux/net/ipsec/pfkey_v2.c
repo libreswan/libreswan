@@ -81,7 +81,6 @@
 #define SOCKOPS_WRAPPED(name) name
 #endif /* SOCKOPS_WRAPPED */
 
-extern struct proto_ops pfkey_ops;
 
 #ifdef NET_26
 static rwlock_t pfkey_sock_lock = RW_LOCK_UNLOCKED;
