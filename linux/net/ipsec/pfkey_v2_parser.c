@@ -2734,6 +2734,10 @@ pfkey_x_plumb_parse(struct sock *sk, struct sadb_ext *extensions[], struct pfkey
 	}
 }
 
+/*
+ * this is a request to create a new device. Figure out which kind, and call appropriate
+ * routine in mast or tunnel code.
+ *    */
 DEBUG_NO_STATIC int
 pfkey_x_unplumb_parse(struct sock *sk, struct sadb_ext *extensions[], struct pfkey_extracted_data* extr)
 {
