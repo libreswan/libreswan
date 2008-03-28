@@ -1,12 +1,12 @@
-*** net/ipv4/fib_rules.c.orig	2008-03-27 21:11:10.000000000 -0400
---- net/ipv4/fib_rules.c	2006-04-25 22:40:09.000000000 -0400
+*** net/ipv4/fib_rules.c.orig	2006-04-24 16:20:24.000000000 -0400
+--- net/ipv4/fib_rules.c	2008-03-27 23:29:24.000000000 -0400
 ***************
 *** 68,73 ****
 --- 68,74 ----
   	u8		r_tos;
   #ifdef CONFIG_IP_ROUTE_FWMARK
   	u32		r_fwmark;
-+	u32             r_fwmark_mask;
++ 	u32             r_fwmark_mask;
   #endif
   	int		r_ifindex;
   #ifdef CONFIG_NET_CLS_ROUTE
@@ -84,16 +84,17 @@
   #ifdef CONFIG_IP_ROUTE_FWMARK
 ! 	if (r->r_fwmark)
 ! 		RTA_PUT(skb, RTA_PROTOINFO, 4, &r->r_fwmark);
-  	}
   #endif
   	rtm->rtm_table = r->r_table;
---- 397,405 ----
+  	rtm->rtm_protocol = 0;
+--- 397,406 ----
   	rtm->rtm_src_len = r->r_src_len;
   	rtm->rtm_tos = r->r_tos;
   #ifdef CONFIG_IP_ROUTE_FWMARK
 ! 	if (r->r_fwmark) {
 ! 		RTA_PUT(skb, RTA_FWMARK, 4, &r->r_fwmark);
 ! 		RTA_PUT(skb, RTA_FWMARK_MASK, 4, &r->r_fwmark_mask);
-  	}
+! 	}
   #endif
   	rtm->rtm_table = r->r_table;
+  	rtm->rtm_protocol = 0;
