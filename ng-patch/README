@@ -1,0 +1,30 @@
+The "ng-patch" is a collection of patches to the kernel to allow for
+multiple tunnels using the same virtual ip. This is required to support
+L2TP which uses IPsec transport mode, where there are multiple clients
+behind one NAT, or multiple clients with the same IP before NAT, or
+any combination thereof.
+
+See ipsecsaref.png in this directory for a graphical explanation of this
+scenario.
+
+It adds a reference number to each IPsec tunnel, so we can distinguish
+identical IP addresses on different tunnels.
+
+A few important notes:
+
+1) We hope to get this patch integrated into the mainstream kernel, so
+   that we don't have to worry about the IP_IPSEC_REFINFO clashing with
+   other IN_* defines in linux/in.h
+
+2) the IP_IPSEC_REFINFO is also defined in xl2tpd. These two need to
+   match! We have currently picked 22 for this.
+
+3) Currently, IPsec SAref tracking does not work together with kernel
+   L2TP mode included in 2.6.23
+
+4) The IPsec SAref code requires the support of "fwmask" in the userland
+   utility "ip" as well, so a patch to the iproute2 package is required
+   as well. We hope to fold this into the main iproute2 package as well.
+
+For more information, contact Xelerance
+
