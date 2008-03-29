@@ -4,8 +4,7 @@ L2TP which uses IPsec transport mode, where there are multiple clients
 behind one NAT, or multiple clients with the same IP before NAT, or
 any combination thereof.
 
-See ipsecsaref.png in this directory for a graphical explanation of this
-scenario.
+See doc/ipsecsaref.png for a graphical explanation of this scenario.
 
 It adds a reference number to each IPsec tunnel, so we can distinguish
 identical IP addresses on different tunnels.
