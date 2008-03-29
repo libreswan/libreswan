@@ -2,8 +2,9 @@ Please see docs/KNOWN_BUGS file for more information
 
 v2.5.18
 * KLIPSNG IPsec SAref support for clashing Virtual IP support [mcr]
-  (required for xl2tpd ipsec saref support)
+  (required for xl2tpd ipsec saref support, see)
 * ipsec saref cleanup / internal merge [paul]
+* added pre-made nat-t patch to nat-t/ directory [paul]
 * Bugtracker bugs fixed
  #917: pluto fails to compile when using pam. xauth [folti]
 
