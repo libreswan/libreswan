@@ -6,7 +6,8 @@
 
 Openswan is an IPsec implementation for Linux. It has support for most 
 of the extensions (RFC + IETF drafts) related to IPsec, including 
-X.509 Digital Certificates, NAT Traversal, and many others.
+X.509 Digital Certificates, NAT Traversal, and many others. It also
+supports IPsec SA reference tracking (for large l2tp/ipsec deployments)
 
 Openswan was originally based on FreeS/WAN 2.04 CVS, along with some
 minor bug fixes from 2.05 and 2.06.  See CREDITS for the history.
@@ -38,7 +39,8 @@ To use KLIPS:
 	a new bzImage.  From the Openswan source directory:
 
 	make nattpatch | (cd /usr/src/linux-2.6 && patch -p1 && make bzImage)
-	
+	(or use the premade natt patch from nat-t/ matching your kernel)
+
 	Note: Build and install kernel as normal, as you have modified
 	the TCP/IP stack in the kernel, so it needs to be recompiled and
 	installed.
@@ -57,6 +59,11 @@ To use KLIPS:
 
 	make KERNELSRC=/usr/src/linux-2.6 install minstall
 
+To use KLIPSNG (mast):
+
+To use IPsec SAref tracking (used for large scale l2tp deployments, see doc/)
+you also need a modified iproute2 command and the kernel patched from the
+ng-patch/ directory. You will also need the KLIPS patch as explained above
 
 To use the native (aka, Netkey) stack:
 
@@ -177,4 +184,3 @@ currently 40MB)
 The bulk of this software is under the GNU General Public License; see
 LICENSE.  Some parts of it are not; see CREDITS for the details.
 
-$Id: README,v 1.102 2005/07/06 22:50:02 ken Exp $.
