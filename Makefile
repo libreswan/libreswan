@@ -79,14 +79,14 @@ applynpatch:
 	${MAKE} nattpatch${KERNELREL} | tee ${KERNELSRC}/natt.patch | (cd ${KERNELSRC} && patch -p1 -b -z .preipsec --forward --ignore-whitespace )
 
 unapplyngpatch:
-	-@if [ -f ${KERNELSRC}/klipsng.patch ]; then \
-		echo Undoing previous klipsNG patches; \
-		cat ${KERNELSRC}/klipsng.patch | (cd ${KERNELSRC} && patch -p1 -R --force -E -z .preng --reverse --ignore-whitespace ); \
+	-@if [ -f ${KERNELSRC}/saref.patch ]; then \
+		echo Undoing previous IPsec SAref patches; \
+		cat ${KERNELSRC}/saref.patch | (cd ${KERNELSRC} && patch -p1 -R --force -E -z .preng --reverse --ignore-whitespace ); \
 	fi
 
 applyngpatch:
-	@echo Now performing klipsNG patches; 
-	${MAKE} ngpatch${KERNELREL} | tee ${KERNELSRC}/klipsng.patch | (cd ${KERNELSRC} && patch -p1 -b -z .preng --forward --ignore-whitespace )
+	@echo Now performing saref patches; 
+	${MAKE} ngpatch${KERNELREL} | tee ${KERNELSRC}/saref.patch | (cd ${KERNELSRC} && patch -p1 -b -z .preng --forward --ignore-whitespace )
 
 # patch kernel
 PATCHER=packaging/utils/patcher
@@ -544,17 +544,14 @@ kernelpatch2.6 kernelpatch:
 kernelpatch2.4:
 	packaging/utils/kernelpatch 2.4
 
-kernelpatch2.2:
-	packaging/utils/kernelpatch 2.2
-
-kernelpatch2.0:
-	packaging/utils/kernelpatch 2.0
-
 nattpatch:
 	if [ -f ${KERNELSRC}/Makefile ]; then \
 		${MAKE} nattpatch${KERNELREL}; \
 	else	echo "Cannot determine Linux kernel version. Perhaps you need to set KERNELSRC? (eg: export KERNELSRC=/usr/src/linux-`uname -r`/)"; exit 1; \
 	fi;
+
+ngpatch2.4:
+	@echo "IPsec SAref patch not supported for 2.4 kernels"
 
 ngpatch2.6:
 	packaging/utils/ngpatch 2.6
@@ -600,8 +597,7 @@ buildready:
 	cd doc ; $(MAKE) -s
 
 rpm:
-	@echo please cd packaging/redhat and
-	@echo run "${MAKE} RH_KERNELSRC=/some/path/to/kernel/src rpm"
+	rpmbuild -ba packaging/fedora/openswan.spec
 
 ipkg_strip:
 	@echo "Minimizing size for ipkg binaries..."
