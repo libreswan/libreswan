@@ -1,4 +1,3 @@
-    ******* THIS IS A DEVELOPER RELEASE **** NOT FOR PRODUCTION *******
 
     ********* See docs/RELEASE-NOTES.txt for more information *********
 
@@ -12,7 +11,7 @@ supports IPsec SA reference tracking (for large l2tp/ipsec deployments)
 Openswan was originally based on FreeS/WAN 2.04 CVS, along with some
 minor bug fixes from 2.05 and 2.06.  See CREDITS for the history.
 
-Download it from http://www.openswan.org/code
+Download it from http://www.openswan.org/code or ftp://ftp.openswan.org/
 
 
 				REQUIREMENTS
@@ -27,25 +26,45 @@ There a few packages required for Openswan to compile:
 2. gawk, flex and bison (usually included in all distributions)
 
 #########################################################################
+# Notes on kernel specific issues
+#########################################################################
+
+Openswan supports three items that require separate kernel level support
+These patches can be found in openswan-2.x.y/patches/kernel/<VERSION>/
+In general, only full kernel versions are supported (eg 2.6.23, not 2.6.23.9)
+
+a) KLIPS stack   - the Openswan IPsec stack
+                   (alternative stack for the buildin NETKEY stack)
+b) NAT-T support - NAT-Traversal via udp.c modifications for KLIPS
+                   (will soon be obsoleted for 2.6.23 and above)
+c) SAref support - IPsec SAref support via modifications to the TCP/IP stack
+                   (generic, but currently only supported by KLIPS)
+
+If you plan on using NETKEY, you should not apply any of these patches
+
+#########################################################################
 # HOW TO INSTALL on Kernel 2.6 (And Kernels with 2.6 IPsec backport)
 #########################################################################
 
 For Linux Kernels 2.6.0 and higher, Openswan can use the built in IPsec
-support, or KLIPS (ipsec0 devices).  
+NETKEY stack, or openswan KLIPS stack. Only the latter has ipsec0 devices.  
 
 To use KLIPS:
 
-0)	If you want NAT-T support, you need to patch your kernel and build
-	a new bzImage.  From the Openswan source directory:
+0)	Patch your kernel with the patches in openswan-2.6.x/patches/kernel
+	(if not available, try the make targets: ngpatch, nattpatch and kpatch
 
+<<<<<<< master
 	make nattpatch | (cd /usr/src/linux-2.6 && patch -p1 && make bzImage)
 	(or use the premade natt patch from nat-t/ matching your kernel)
 
+=======
+>>>>>>> origin
 	Note: Build and install kernel as normal, as you have modified
-	the TCP/IP stack in the kernel, so it needs to be recompiled and
-	installed.
+	the TCP/IP stack in the kernel, so the kernel and modules need to
+	be recompiled and re-installed.
 
-        eg: cd /usr/src/linux && make dep bzImage install
+        eg: cd /usr/src/linux-2.6.x  && make bzImage modules modules_install
 
 	See your distribution documentation on how to install a new kernel
 
@@ -65,7 +84,7 @@ To use IPsec SAref tracking (used for large scale l2tp deployments, see doc/)
 you also need a modified iproute2 command and the kernel patched from the
 ng-patch/ directory. You will also need the KLIPS patch as explained above
 
-To use the native (aka, Netkey) stack:
+To use the native (aka, NETKEY) stack:
 
 0)	Please use at least version kernel version 2.6.6, as prior 
 	versions of the kernel have serious bugs in the  IPsec stack.
@@ -135,7 +154,8 @@ your /etc/ipsec.* config files
 Mailing Lists:
 
 http://lists.openswan.org is home of the mailing lists.  Note: these are 
-closed lists - you *must* be subscribed to post.
+closed lists - you *must* be subscribed to post, or your posting will be
+delayed until a moderator approves your posting.
 
 Wiki:
 
@@ -149,7 +169,7 @@ irc.freenode.net.  If you need more information on our IRC channel, see
 http://www.openswan.org/support/irc.php
 
 Commercial support for Openswan is also available - see
-http://www.xelerance.com/openswan/support.php for more information, or
+http://www.xelerance.com/openswan/support/ for more information, or
 email sales@xelerance.com
 
 				BUGS
@@ -172,7 +192,12 @@ dev@lists.openswan.org) or join the development team on IRC in
 
 				DOCUMENTATION
 
-The most up to date docs are at http://wiki.openswan.org.
+The most up to date docs (apart from the man pages) are at
+http://wiki.openswan.org.
+
+There is currently one Openswan book available:
+http://www.packtpub.com/openswan/book/
+http://www.amazon.com/ourrefhere/
 
 Several high-level documents are in the doc directory.  Most are in HTML
 format; See doc/index.html for the top level index.  These are now
