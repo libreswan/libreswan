@@ -1,0 +1,6 @@
+This directory is used when running "make nattpatch" to create the NAT-T patch.
+Work is being done to obsolete this patch for kernels 2.6.23 and up, but has
+not yet been completed.
+
+Instead of running "make nattpatch", you can also use the proper version of
+the nat-t patch in this directory. 

@@ -1,0 +1,31 @@
+*** include/linux/rtnetlink.h.orig    2008-03-27 16:29:53.000000000 -0400
+--- include/linux/rtnetlink.h 2008-03-27 16:27:52.000000000 -0400
+***************
+*** 257,263 ****
+        RTA_PREFSRC,
+        RTA_METRICS,
+        RTA_MULTIPATH,
+!       RTA_PROTOINFO,
+        RTA_FLOW,
+        RTA_CACHEINFO,
+        RTA_SESSION,
+--- 257,263 ----
+        RTA_PREFSRC,
+        RTA_METRICS,
+        RTA_MULTIPATH,
+!       RTA_PROTOINFO,  /* also used for fwmark in iprule */
+        RTA_FLOW,
+        RTA_CACHEINFO,
+        RTA_SESSION,
+***************
+*** 266,271 ****
+--- 266,274 ----
+        __RTA_MAX
+  };
+  
++ #define RTA_FWMARK      RTA_PROTOINFO
++ #define RTA_FWMARK_MASK RTA_CACHEINFO
++ 
+  #define RTA_MAX (__RTA_MAX - 1)
+  
+  #define RTM_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct rtmsg))))

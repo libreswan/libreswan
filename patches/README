@@ -1,0 +1,11 @@
+
+This directory contains patches that can be applied without the use of
+any "make" target, such as 'make nattpatch' or 'make kpatch'. Since
+these make targets relied on us tweaking the patch to work against many
+versioned kernels, we decided to switch to providing patches meant to
+be used on 1 specific version.
+
+Currently, this directory contains the following:
+
+openswan-2.5.x-linux
+

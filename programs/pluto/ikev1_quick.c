@@ -1757,7 +1757,7 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 
 	/* fill in the client's true ip address/subnet */
 	DBG(DBG_CONTROLMORE
-	    , DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s"
+	    , DBG_log("client wildcard: %s, port wildcard: %s, virtual: %s"
 		      , c->spd.that.has_client_wildcard ? "yes" : "no"
 		      , c->spd.that.has_port_wildcard  ? "yes" : "no"
 		      , is_virtual_connection(c) ? "yes" : "no"));

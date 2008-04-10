@@ -1,0 +1,100 @@
+*** net/ipv4/fib_rules.c.orig	2006-04-24 16:20:24.000000000 -0400
+--- net/ipv4/fib_rules.c	2008-03-27 23:29:24.000000000 -0400
+***************
+*** 68,73 ****
+--- 68,74 ----
+  	u8		r_tos;
+  #ifdef CONFIG_IP_ROUTE_FWMARK
+  	u32		r_fwmark;
++ 	u32             r_fwmark_mask;
+  #endif
+  	int		r_ifindex;
+  #ifdef CONFIG_NET_CLS_ROUTE
+***************
+*** 116,122 ****
+  		    (!rta[RTA_DST-1] || memcmp(RTA_DATA(rta[RTA_DST-1]), &r->r_dst, 4) == 0) &&
+  		    rtm->rtm_tos == r->r_tos &&
+  #ifdef CONFIG_IP_ROUTE_FWMARK
+! 		    (!rta[RTA_PROTOINFO-1] || memcmp(RTA_DATA(rta[RTA_PROTOINFO-1]), &r->r_fwmark, 4) == 0) &&
+  #endif
+  		    (!rtm->rtm_type || rtm->rtm_type == r->r_action) &&
+  		    (!rta[RTA_PRIORITY-1] || memcmp(RTA_DATA(rta[RTA_PRIORITY-1]), &r->r_preference, 4) == 0) &&
+--- 117,124 ----
+  		    (!rta[RTA_DST-1] || memcmp(RTA_DATA(rta[RTA_DST-1]), &r->r_dst, 4) == 0) &&
+  		    rtm->rtm_tos == r->r_tos &&
+  #ifdef CONFIG_IP_ROUTE_FWMARK
+! 		    (!rta[RTA_FWMARK-1] || memcmp(RTA_DATA(rta[RTA_FWMARK-1]), &r->r_fwmark, 4) == 0) &&
+! 		    (!rta[RTA_FWMARK_MASK-1] || memcmp(RTA_DATA(rta[RTA_FWMARK_MASK-1]), &r->r_fwmark_mask, 4) == 0) &&
+  #endif
+  		    (!rtm->rtm_type || rtm->rtm_type == r->r_action) &&
+  		    (!rta[RTA_PRIORITY-1] || memcmp(RTA_DATA(rta[RTA_PRIORITY-1]), &r->r_preference, 4) == 0) &&
+***************
+*** 200,207 ****
+  	new_r->r_dstmask = inet_make_mask(rtm->rtm_dst_len);
+  	new_r->r_tos = rtm->rtm_tos;
+  #ifdef CONFIG_IP_ROUTE_FWMARK
+! 	if (rta[RTA_PROTOINFO-1])
+! 		memcpy(&new_r->r_fwmark, RTA_DATA(rta[RTA_PROTOINFO-1]), 4);
+  #endif
+  	new_r->r_action = rtm->rtm_type;
+  	new_r->r_flags = rtm->rtm_flags;
+--- 202,222 ----
+  	new_r->r_dstmask = inet_make_mask(rtm->rtm_dst_len);
+  	new_r->r_tos = rtm->rtm_tos;
+  #ifdef CONFIG_IP_ROUTE_FWMARK
+! 	if (rta[RTA_FWMARK-1]) {
+! 		memcpy(&new_r->r_fwmark,      RTA_DATA(rta[RTA_FWMARK-1]), 4);
+! 	}
+! 	if (rta[RTA_FWMARK_MASK-1]) {
+! 		memcpy(&new_r->r_fwmark_mask, RTA_DATA(rta[RTA_FWMARK_MASK-1]), 4);
+! 	}
+! 	/*
+! 	 * if the user doesn't set a mask, then set it to care about
+! 	 * all bits. This retains compatibility. Note it is impossible
+! 	 * to match SOMETHING & 0xMASK == 0, because fwmark==0 means
+! 	 * do not match fwmark at all.
+! 	 */
+! 	if(new_r->r_fwmark_mask == 0) {
+! 		new_r->r_fwmark_mask = 0xffffffff;
+! 	}
+  #endif
+  	new_r->r_action = rtm->rtm_type;
+  	new_r->r_flags = rtm->rtm_flags;
+***************
+*** 298,304 ****
+  		    ((daddr^r->r_dst) & r->r_dstmask) ||
+  		    (r->r_tos && r->r_tos != flp->fl4_tos) ||
+  #ifdef CONFIG_IP_ROUTE_FWMARK
+! 		    (r->r_fwmark && r->r_fwmark != flp->fl4_fwmark) ||
+  #endif
+  		    (r->r_ifindex && r->r_ifindex != flp->iif))
+  			continue;
+--- 313,319 ----
+  		    ((daddr^r->r_dst) & r->r_dstmask) ||
+  		    (r->r_tos && r->r_tos != flp->fl4_tos) ||
+  #ifdef CONFIG_IP_ROUTE_FWMARK
+! 		    (r->r_fwmark && r->r_fwmark != (flp->fl4_fwmark & r->r_fwmark_mask)) ||
+  #endif
+  		    (r->r_ifindex && r->r_ifindex != flp->iif))
+  			continue;
+***************
+*** 382,389 ****
+  	rtm->rtm_src_len = r->r_src_len;
+  	rtm->rtm_tos = r->r_tos;
+  #ifdef CONFIG_IP_ROUTE_FWMARK
+! 	if (r->r_fwmark)
+! 		RTA_PUT(skb, RTA_PROTOINFO, 4, &r->r_fwmark);
+  #endif
+  	rtm->rtm_table = r->r_table;
+  	rtm->rtm_protocol = 0;
+--- 397,406 ----
+  	rtm->rtm_src_len = r->r_src_len;
+  	rtm->rtm_tos = r->r_tos;
+  #ifdef CONFIG_IP_ROUTE_FWMARK
+! 	if (r->r_fwmark) {
+! 		RTA_PUT(skb, RTA_FWMARK, 4, &r->r_fwmark);
+! 		RTA_PUT(skb, RTA_FWMARK_MASK, 4, &r->r_fwmark_mask);
+! 	}
+  #endif
+  	rtm->rtm_table = r->r_table;
+  	rtm->rtm_protocol = 0;

@@ -1,10 +1,104 @@
---- a/net/ipv4/ip_sockglue.c
-+++ b/net/ipv4/ip_sockglue.c
-@@ -1083,6 +1113,7 @@ int ip_getsockopt(struct sock *sk, int level, int optname, char __user *optval,
- }
- 
- EXPORT_SYMBOL(ip_cmsg_recv);
-+EXPORT_SYMBOL(ip_cmsg_send);
- 
- EXPORT_SYMBOL(ip_getsockopt);
- EXPORT_SYMBOL(ip_setsockopt);
+*** net/ipv4/ip_sockglue.c.orig	2008-03-27 21:22:18.000000000 -0400
+--- net/ipv4/ip_sockglue.c	2006-04-25 22:40:09.000000000 -0400
+***************
+*** 50,55 ****
+--- 50,56 ----
+  #define IP_CMSG_TOS		4
+  #define IP_CMSG_RECVOPTS	8
+  #define IP_CMSG_RETOPTS		16
++ #define IP_CMSG_IPSEC_REFINFO   32
+  
+  /*
+   *	SOL_IP control messages.
+***************
+*** 112,117 ****
+--- 113,119 ----
+  
+  void ip_cmsg_recv(struct msghdr *msg, struct sk_buff *skb)
+  {
++ 	extern void ip_cmsg_recv_ipsec(struct msghdr *msg, struct sk_buff *skb);
+  	struct inet_sock *inet = inet_sk(skb->sk);
+  	unsigned flags = inet->cmsg_flags;
+  
+***************
+*** 138,143 ****
+--- 140,151 ----
+  
+  	if (flags & 1)
+  		ip_cmsg_recv_retopts(msg, skb);
++ 	if ((flags>>=1) == 0)
++ 		return;
++ 
++ 	/* IP_CMSG_IPSEC_REFINFO */
++ 	if (flags & 1)
++ 		ip_cmsg_recv_ipsec(msg, skb);
+  }
+  
+  int ip_cmsg_send(struct msghdr *msg, struct ipcm_cookie *ipc)
+***************
+*** 168,173 ****
+--- 176,191 ----
+  			break;
+  		}
+  		
++ 		case IP_IPSEC_REFINFO:
++ 		{
++ 			err = ip_cmsg_send_ipsec(cmsg, ipc);
++ 			if(err)
++ 				return err;
++ 
++ 			break;
++ 		}
++ 		
++ 			
+  		default:
+  			return -EINVAL;
+  		}
+***************
+*** 390,395 ****
+--- 408,414 ----
+  		return -ENOPROTOOPT;
+  
+  	if (((1<<optname) & ((1<<IP_PKTINFO) | (1<<IP_RECVTTL) |
++ 			     (1<<IP_IPSEC_REFINFO) |
+  			    (1<<IP_RECVOPTS) | (1<<IP_RECVTOS) | 
+  			    (1<<IP_RETOPTS) | (1<<IP_TOS) | 
+  			    (1<<IP_TTL) | (1<<IP_HDRINCL) | 
+***************
+*** 479,484 ****
+--- 498,510 ----
+  			else
+  				inet->cmsg_flags &= ~IP_CMSG_RETOPTS;
+  			break;
++         	case IP_IPSEC_REFINFO:
++ 			if (val)
++ 				inet->cmsg_flags |= IP_CMSG_IPSEC_REFINFO;
++ 			else
++ 				inet->cmsg_flags &= ~IP_CMSG_IPSEC_REFINFO;
++ 			break;
++ 			
+  		case IP_TOS:	/* This sets both TOS and Precedence */
+  			if (sk->sk_type == SOCK_STREAM) {
+  				val &= ~3;
+***************
+*** 933,938 ****
+--- 959,967 ----
+  		case IP_RETOPTS:
+  			val = (inet->cmsg_flags & IP_CMSG_RETOPTS) != 0;
+  			break;
++ 		case IP_IPSEC_REFINFO:
++ 			val = (inet->cmsg_flags & IP_CMSG_IPSEC_REFINFO) != 0;
++ 			break;
+  		case IP_TOS:
+  			val = inet->tos;
+  			break;
+***************
+*** 1084,1089 ****
+--- 1113,1119 ----
+  }
+  
+  EXPORT_SYMBOL(ip_cmsg_recv);
++ EXPORT_SYMBOL(ip_cmsg_send);
+  
+  EXPORT_SYMBOL(ip_getsockopt);
+  EXPORT_SYMBOL(ip_setsockopt);

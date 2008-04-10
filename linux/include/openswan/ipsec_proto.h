@@ -51,9 +51,11 @@ extern struct ipsec_sa *ipsec_sa_alloc(int*error);
 
 
 extern struct ipsec_sa *ipsec_sa_getbyid(ip_said *);
+extern int ipsec_sa_put(struct ipsec_sa *);
 extern /* void */ int ipsec_sa_add(struct ipsec_sa *);
 
 extern int ipsec_sa_init(struct ipsec_sa *ipsp);
+extern int ipsec_sa_wipe(struct ipsec_sa *ipsp);
 
 /* debug declarations */
 
@@ -137,55 +139,6 @@ extern int debug_netlink;
 #endif /* _IPSEC_PROTO_H_ */
 
 /*
- * $Log: ipsec_proto.h,v $
- * Revision 1.14  2005/04/29 04:50:03  mcr
- * 	prototypes for xmit and alg code.
- *
- * Revision 1.13  2005/04/17 03:46:07  mcr
- * 	added prototypes for ipsec_rcv() routines.
- *
- * Revision 1.12  2005/04/14 20:28:37  mcr
- * 	added additional prototypes.
- *
- * Revision 1.11  2005/04/14 01:16:28  mcr
- * 	add prototypes for snprintf.
- *
- * Revision 1.10  2005/04/13 22:47:28  mcr
- * 	make sure that forward references are available.
- *
- * Revision 1.9  2004/07/10 19:08:41  mcr
- * 	CONFIG_IPSEC -> CONFIG_KLIPS.
- *
- * Revision 1.8  2004/04/05 19:55:06  mcr
- * Moved from linux/include/freeswan/ipsec_proto.h,v
- *
- * Revision 1.7  2003/10/31 02:27:05  mcr
- * 	pulled up port-selector patches and sa_id elimination.
- *
- * Revision 1.6.30.1  2003/10/29 01:10:19  mcr
- * 	elimited "struct sa_id"
- *
- * Revision 1.6  2002/05/23 07:13:48  rgb
- * Added ipsec_sa_put() for releasing an ipsec_sa refcount.
- *
- * Revision 1.5  2002/05/14 02:36:40  rgb
- * Converted reference from ipsec_sa_put to ipsec_sa_add to avoid confusion
- * with "put" usage in the kernel.
- *
- * Revision 1.4  2002/04/24 07:36:47  mcr
- * Moved from ./klips/net/ipsec/ipsec_proto.h,v
- *
- * Revision 1.3  2002/04/20 00:12:25  rgb
- * Added esp IV CBC attack fix, disabled.
- *
- * Revision 1.2  2001/11/26 09:16:15  rgb
- * Merge MCR's ipsec_sa, eroute, proc and struct lifetime changes.
- *
- * Revision 1.1.2.1  2001/09/25 02:21:01  mcr
- * 	ipsec_proto.h created to keep prototypes rather than deal with
- * 	cyclic dependancies of structures and prototypes in .h files.
- *
- *
  *
  * Local variables:
  * c-file-style: "linux"

@@ -934,12 +934,8 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 #endif
 		
 		/* re-do any strings for debugging */
-		ipsaddr.s_addr = ipp->saddr;
-		if (debug_rcv)
-			addrtoa(ipsaddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
-		ipdaddr.s_addr = ipp->daddr;
-		if (debug_rcv)
-			addrtoa(ipdaddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
+		irs->ipp = ipp;
+                ipsec_rcv_redodebug(irs);
 
 		skb->protocol = htons(ETH_P_IP);
 		skb->ip_summed = 0;
@@ -1420,14 +1416,14 @@ ipsec_rcv(struct sk_buff *skb
 #endif /* CONFIG_KLIPS_DEBUG */
 	unsigned char protoc;
 	struct net_device_stats *stats = NULL;		/* This device's statistics */
-	struct net_device *ipsecdev = NULL, *prvdev;
-	struct ipsecpriv *prv;
-	struct ipsec_rcv_state *irs = NULL;
+	struct ipsec_rcv_state nirs, *irs = &nirs;
 	struct iphdr *ipp;
 	int i;
 
 	/* Don't unlink in the middle of a turnaround */
 	KLIPS_INC_USE;
+
+	memset(&nirs, 0, sizeof(struct ipsec_rcv_state));
 
 	if (skb == NULL) {
 		KLIPS_PRINT(debug_rcv,
@@ -1442,14 +1438,6 @@ ipsec_rcv(struct sk_buff *skb
 			    "NULL skb->data passed in, packet is bogus, dropping.\n");
 		goto error_bad_skb;
 	}
-
-        irs = ipsec_rcv_state_new ();
-        if (unlikely (! irs)) {
-		KLIPS_PRINT(debug_rcv,
-			    "klips_debug:ipsec_rcv: "
-			    "failled to allocate a rcv state object\n");
-                goto error_alloc;
-        }
 
 #if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && !defined(NET_26)
 	{
@@ -1650,7 +1638,6 @@ ipsec_rcv(struct sk_buff *skb
 rcvleave:
         ipsec_rcv_state_delete (irs);
 
-error_alloc:
 error_bad_skb:
         ipsec_kfree_skb(skb);
 error_no_skb:
