@@ -24,7 +24,7 @@ ipsec look
 
 # now arrange for some stuff to go to mast0
 
-ip rule add fwmark 0x80000000 fwmarkmask 0x80000000 table 51
+ip rule add fwmark 0x80000000/0x80000000 table 51
 ip route add 0.0.0.0/0 dev mast0 table 51
 
 iptables -I OUTPUT 1 -o eth1 -t mangle -p udp --src 192.1.2.23/32 --dst 192.1.2.45/32 --dport 9 -j MARK --set-mark $nfsaref

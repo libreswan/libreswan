@@ -40,7 +40,7 @@ esp0x1bbdd678@192.1.2.45 ESP_3DES_HMAC_MD5: dir=out src=192.1.2.23 iv_bits=64bit
 tun0x1bbdd678@192.1.2.45 IPIP: dir=out src=192.1.2.23 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=4562 refhim=0 reftable=2 refentry=466
 ROUTING TABLE
 east:~#
- ip rule add fwmark 0x80000000 fwmarkmask 0x80000000 table 51
+ ip rule add fwmark 0x80000000/0x80000000 table 51
 east:~#
  ip route add 0.0.0.0/0 dev mast0 table 51
 east:~#

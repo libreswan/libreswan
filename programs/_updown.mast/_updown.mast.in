@@ -182,7 +182,9 @@ checkipsec() {
 	# is also no advanced routing added yet.
 	# we pick table 50, cause proto50=ESP
 	# note "fwmarkmask" is an Openswan patch to "ip" command.
-	ip rule add fwmark 0x80000000 fwmarkmask 0x80000000 table 50
+	# note2: iproute2-2.6.22-070710 supports mask via /mask notation instead
+	# ip rule add fwmark 0x80000000 fwmarkmask 0x80000000 table 50
+	ip rule add fwmark 0x80000000/0x80000000 table 50
 	ip route add 0.0.0.0/0 dev $PLUTO_INTERFACE table 50
     fi
 
