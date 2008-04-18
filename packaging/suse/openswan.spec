@@ -125,13 +125,13 @@ install -d %{buildroot}%{_sbindir}
 ln -sf /etc/init.d/ipsec ${RPM_BUILD_ROOT}%{prefix}/sbin/rcipsec
 touch $RPM_BUILD_ROOT/etc/ipsec.secrets
 install -d -m 755 %{buildroot}/etc/sysconfig/network/{scripts,if-up.d,if-down.d}
-install -m 755 %{SOURCE31} %{buildroot}/etc/sysconfig/network/scripts/freeswan
-install -m 644 %{SOURCE32} %{buildroot}/etc/sysconfig/network/scripts/freeswan-functions
+install -m 755 packaging/suse/sysconfig.network.scripts.openswan %{buildroot}/etc/sysconfig/network/scripts/freeswan
+install -m 644 packaging/suse/sysconfig.network.scripts.openswan-functions %{buildroot}/etc/sysconfig/network/scripts/freeswan-functions
 ln -s ../scripts/freeswan %{buildroot}/etc/sysconfig/network/if-up.d/freeswan
 ln -s ../scripts/freeswan %{buildroot}/etc/sysconfig/network/if-down.d/freeswan
 # ip-up script (#39048)
 install -d -m 755 %{buildroot}/etc/ppp/ip-{up,down}.d
-install -m 755 %{SOURCE33} %{buildroot}/etc/ppp/ip-up.d/freeswan
+install -m 755 packaging/suse/openswan.ip-up %{buildroot}/etc/ppp/ip-up.d/freeswan
 ln -s ../ip-up.d/freeswan %{buildroot}/etc/ppp/ip-down.d/freeswan
 rm -f %{buildroot}/etc/rc?.d/[KS]*ipsec
 
