@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -e
+
+unset ${!LC_*} LANUGUAGE
+export LANG=POSIX
+
+export PATH=/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin
+
+config="$1"
+iface="$2"
+
+FREESWAN_ADD=
+FREESWAN_UP=
+
+. /etc/sysconfig/network/scripts/freeswan-functions || exit 1
+
+. /etc/sysconfig/network/ifcfg-"$config" 2>/dev/null || die "no config for $config found"
+
+[ -z "$FREESWAN_ADD$FREESWAN_UP" ] && die 0
+
+[ -e /var/run/pluto.pid ] || die "pluto not running, can't handle $iface"
+
+start()
+{
+	getfirstipv4addr $iface || die "unable to determine ip address for $iface"
+	[ -z "$ip" ] && die "unable to determine ip address for $iface"
+
+	ipsec auto --ready
+
+	local up
+	up=
+	for conn in $FREESWAN_ADD --up $FREESWAN_UP; do
+		# marker
+		[ "$conn" = "--up" ] && { up=1; continue; }
+
+		checkconnactive $conn && die 0 "$conn alread active"
+
+		ipsec auto --left "$ip" --add "$conn"
+		[ -z "$up" ] || ipsec auto --asynchronous --up "$conn" || true
+	done
+}
+
+stop()
+{
+	local up
+	up=
+	for conn in $FREESWAN_ADD --up $FREESWAN_UP; do
+		# marker
+		[ "$conn" = "--up" ] && { up=1; continue; }
+
+		checkconnactive $conn || die 0 "$conn not active"
+
+		[ -z "$up" ] || ipsec auto --down "$conn" || true
+		ipsec auto --delete "$conn"
+	done
+	
+	ipsec auto --ready
+}
+
+case "$0" in
+	*if-up.d*) start ;;
+	*if-down.d*) stop ;;
+	*) die "don't know what to do" ;;
+esac
