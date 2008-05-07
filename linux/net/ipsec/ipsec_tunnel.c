@@ -1647,7 +1647,7 @@ ipsec_tunnel_createnum(int ifnum)
 	memset((caddr_t)dev_ipsec->name, 0, IFNAMSIZ);
 	strncpy(dev_ipsec->name, name, IFNAMSIZ);
 #endif /* NETDEV_23 */
-#ifdef PAUL_FIXME
+#ifdef HAVE_DEV_NEXT
 	dev_ipsec->next = NULL;
 #endif
 	dev_ipsec->init = &ipsec_tunnel_probe;
