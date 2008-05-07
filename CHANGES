@@ -1,6 +1,6 @@
 Please see docs/KNOWN_BUGS file for more information
 
-v2.5.18
+v2.5.18 / v2.5.50s
 * KLIPSNG IPsec SAref support for clashing Virtual IP support [mcr]
   (required for xl2tpd ipsec saref support, see)
 * ipsec saref cleanup / internal merge [paul]
