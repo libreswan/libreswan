@@ -75,9 +75,10 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
 
 %build
 %{__make} \
-  USERCOMPILE="-g $(RPM_OPT_FLAGS) -W" \
+  USERCOMPILE='-g $(RPM_OPT_FLAGS) -W' \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \
+  FINALBINDIR=%{_libexecdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   INC_RCDIRS='/etc/init.d /etc/rc.d/init.d /etc/rc.d /sbin/init.d' \
