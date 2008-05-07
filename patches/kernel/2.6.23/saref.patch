@@ -14,7 +14,7 @@ diff -c -w -r -N linux-2.6.23/Makefile linux-2.6.23-ng/Makefile
   VERSION = 2
   PATCHLEVEL = 6
   SUBLEVEL = 23
-! EXTRAVERSION = -sony-ng
+! EXTRAVERSION = -osw-2.5.50s
   NAME = Arr Matey! A Hairy Bilge Rat!
   
   # *DOCUMENTATION*
