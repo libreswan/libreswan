@@ -263,18 +263,8 @@ void show_dnskey(struct secret *s
     gethostname(qname, sizeof(qname));
 
     if(pks->kind != PPK_RSA) {
-	char *enumstr;
-	switch (pks->kind) {
-	case PPK_PSK:
-		enumstr = "PPK_PSK";
-	case PPK_PIN:
-		enumstr = "PPK_PIN";
-	case PPK_XAUTH:
-		enumstr = "PPK_XAUTH";
-	default:
-		sscanf(enumstr,"UNKNOWN (%d)",(int *)pks->kind);
-	}
-	printf("%s: wrong kind of key %s in show_dnskey. Expected PPK_RSA.\n", progname,enumstr);
+	printf("%s: wrong kind of key %s in show_dnskey. Expected PPK_RSA.\n",
+		progname, enum_name(&ppk_names, pks->kind));
 	exit(5);
     }
 
