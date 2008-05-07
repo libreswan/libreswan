@@ -1647,7 +1647,9 @@ ipsec_tunnel_createnum(int ifnum)
 	memset((caddr_t)dev_ipsec->name, 0, IFNAMSIZ);
 	strncpy(dev_ipsec->name, name, IFNAMSIZ);
 #endif /* NETDEV_23 */
+#ifdef PAUL_FIXME
 	dev_ipsec->next = NULL;
+#endif
 	dev_ipsec->init = &ipsec_tunnel_probe;
 	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 		    "klips_debug:ipsec_tunnel_init_devices: "
@@ -1800,7 +1802,10 @@ ipsec_xmit_state_cache_init (void)
 
         spin_lock_init(&ixs_cache_lock);
 #ifdef HAVE_KMEM_CACHE_MACRO
-	ixs_cache_allocator = KMEM_CACHE(ipsec_ixs,0);
+	/* ixs_cache_allocator = KMEM_CACHE(ipsec_ixs,0); */
+        ixs_cache_allocator = kmem_cache_create ("ipsec_ixs",
+                sizeof (struct ipsec_xmit_state), 0,
+                0, NULL);
 #else
         ixs_cache_allocator = kmem_cache_create ("ipsec_ixs",
                 sizeof (struct ipsec_xmit_state), 0,
