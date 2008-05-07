@@ -81,10 +81,15 @@ if test " $plutowait" = " no"
 then
 	async="--asynchronous"
 fi
+err=0
 for tu in $plutostart
 do
-	ipsec auto --up $async $tu ||
+	ipsec auto --up $async $tu
+	err=$?
+	if test -z "$async" -a $err -gt 0
+	then
 		echo "...could not start conn \"$tu\""
+	fi
 done
 
 # report any further utterances, and watch for exit status
