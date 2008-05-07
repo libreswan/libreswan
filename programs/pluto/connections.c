@@ -1185,7 +1185,6 @@ add_connection(const struct whack_message *wm)
 				, ugh? ugh : "Unknown");
 			return;
 		}
-		c->alg_esp = clone_str(wm->esp, "esp string");
 	}
 #endif	
 
