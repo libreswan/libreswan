@@ -19,25 +19,51 @@ config setup
 	#
 	# NAT-TRAVERSAL support, see README.NAT-Traversal
 	nat_traversal=yes
+	# exclude networks used on server side by adding %v4:!a.b.c.0/24
 	virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%4:172.16.0.0/12
-	# OE is now off by default. Uncomment and change to on, to enable.
+	# If you see errors about helpers/workers, tryg uncommenting this
+	#nhelpers=0
+	# OE is now off by default. Change to on to enable.
 	OE=off
+	# For IPsec SAref, we need to use the MAST (KLIPSNG) stack
+	protostack=mast
 	
 
 # Add connections here
 
-# sample VPN connection
-# for more examples, see /etc/ipsec.d/examples/
-#conn sample
-#		# Left security gateway, subnet behind it, nexthop toward right.
-#		left=10.0.0.1
-#		leftsubnet=172.16.0.0/24
-#		leftnexthop=10.22.33.44
-#		# Right security gateway, subnet behind it, nexthop toward left.
-#		right=10.12.12.1
-#		rightsubnet=192.168.0.0/24
-#		rightnexthop=10.101.102.103
-#		# To authorize this connection, but not actually start it, 
-#		# at startup, uncomment this.
-#		#auto=start
-
+## sample VPN connection
+#conn l2tp
+#        # Configuration for one user with any type of IPsec/L2TP client
+#        # including the updated Windows 2000/XP (MS KB Q818043), but
+#        # excluding the non-updated Windows 2000/XP.
+#        #
+#        #
+#        # Use a certificate. Disable Perfect Forward Secrecy.
+#        #
+#        authby=rsasig
+#        pfs=no
+#        auto=add
+#        rekey=no
+#        type=transport
+#	# Allow overlapping IP addresses on connecting clients
+#        overlapip=yes
+#	#
+#	# The local server
+#	#
+#        leftsendcert=always
+#	# Make sure the interface with the public ip has an mtu of 1472
+#        left=YourPublicIP
+#	leftnexthop=IPofGateway
+#        leftrsasigkey=%cert
+#        leftcert=/etc/ipsec.d/certs/yourserver.cert
+#        leftprotoport=17/1701
+#        #
+#        # The remote user.
+#        #
+#        right=%any
+#        rightca=%any
+#        rightrsasigkey=%cert
+#        rightprotoport=17/0
+#        #rightprotoport=17/%any
+#        rightsubnet=vhost:%priv,%no
+#
