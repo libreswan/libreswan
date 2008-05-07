@@ -75,7 +75,7 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
 
 %build
 %{__make} \
-  USERCOMPILE='-g $(RPM_OPT_FLAGS) -W' \
+  USERCOMPILE='-g $(RPM_OPT_FLAGS) ' \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \
   FINALBINDIR=%{_libexecdir}/ipsec \
