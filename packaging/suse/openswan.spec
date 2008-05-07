@@ -32,11 +32,7 @@ PreReq: gmp %insserv_prereq %fillup_prereq perl
 BuildRequires: gmp-devel bison flex bind-devel 
 Requires: iproute2 >= 2.6.8
 AutoReqProv:    on
-Source10:       openswan.README.SUSE
 
-Source31:       sysconfig.network.scripts.openswan
-Source32:       sysconfig.network.scripts.openswan-functions
-Source33:       openswan.ip-up
 Prefix:         /usr
 
 %description
@@ -131,7 +127,8 @@ install -m 644 packaging/suse/sysconfig.network.scripts.openswan-functions %{bui
 ln -s ../scripts/freeswan %{buildroot}/etc/sysconfig/network/if-up.d/freeswan
 ln -s ../scripts/freeswan %{buildroot}/etc/sysconfig/network/if-down.d/freeswan
 # ip-up script (#39048)
-install -d -m 755 %{buildroot}/etc/ppp/ip-{up,down}.d
+install -d -m 750 -g dialout %{buildroot}/etc/ppp/ip-{up,down}.d
+install -d -m 750 %{buildroot}/etc/ppp/ip-{up,down}.d
 install -m 755 packaging/suse/openswan.ip-up %{buildroot}/etc/ppp/ip-up.d/freeswan
 ln -s ../ip-up.d/freeswan %{buildroot}/etc/ppp/ip-down.d/freeswan
 rm -f %{buildroot}/etc/rc?.d/[KS]*ipsec
