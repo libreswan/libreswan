@@ -341,6 +341,9 @@ struct ctl_table
 	int maxlen;
 	mode_t mode;
 	ctl_table *child;
+#ifdef CTL_TABLE_PARENT
+       ctl_table *parent;
+#endif
 	proc_handler *proc_handler;	/* Callback for text formatting */
 	ctl_handler *strategy;		/* Callback function for all r/w */
 	struct proc_dir_entry *de;	/* /proc control block */
