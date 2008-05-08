@@ -1491,7 +1491,7 @@ pfkey_cleanup(void)
 #ifdef VOID_SOCK_UNREGISTER
 	sock_unregister(PF_KEY);
 #else
-        sock_unregister(PF_KEY);
+        error |= sock_unregister(PF_KEY);
 #endif
 
 	error |= supported_remove_all(K_SADB_SATYPE_AH);
