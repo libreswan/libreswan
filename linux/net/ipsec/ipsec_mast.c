@@ -180,16 +180,16 @@ ipsec_mast_send(struct ipsec_xmit_state*ixs)
 	dst_release(ixs->skb->dst);
 	ixs->skb->dst = &ixs->route->u.dst;
 	ixs->stats->tx_bytes += ixs->skb->len;
-	if(ixs->skb->len < ixs->skb->nh.raw - ixs->skb->data) {
+	if(ixs->skb->len < skb_network_header(ixs->skb) - ixs->skb->data) {
 		ixs->stats->tx_errors++;
 		printk(KERN_WARNING
 		       "klips_error:ipsec_xmit_send: "
 		       "tried to __skb_pull nh-data=%ld, %d available.  This should never happen, please report.\n",
-		       (unsigned long)(ixs->skb->nh.raw - ixs->skb->data),
+		       (unsigned long)(skb_network_header(ixs->skb) - ixs->skb->data),
 		       ixs->skb->len);
 		return IPSEC_XMIT_PUSHPULLERR;
 	}
-	__skb_pull(ixs->skb, ixs->skb->nh.raw - ixs->skb->data);
+	__skb_pull(ixs->skb, skb_network_header(ixs->skb)- ixs->skb->data);
 #ifdef SKB_RESET_NFCT
 	nf_conntrack_put(ixs->skb->nfct);
 	ixs->skb->nfct = NULL;
