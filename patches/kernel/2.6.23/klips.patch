@@ -1,3 +1,4 @@
+make[1]: Entering directory `/usr/src/packages/SOURCES/openswan-2.5.51s'
 packaging/utils/kernelpatch 2.6
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/README.openswan-2     Mon Feb  9 13:51:03 2004
@@ -3829,12 +3830,13 @@ packaging/utils/kernelpatch 2.6
 +
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/include/openswan/ipsec_kversion.h     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,240 @@
+@@ -0,0 +1,241 @@
 +#ifndef _OPENSWAN_KVERSIONS_H
 +/*
-+ * header file for FreeS/WAN library functions
++ * header file for Openswan library functions
 + * Copyright (C) 1998, 1999, 2000  Henry Spencer.
 + * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
++ * Copyright (C) 2003 - 2008 Paul Wouters <paul@xelerance.com>
 + * 
 + * This library is free software; you can redistribute it and/or modify it
 + * under the terms of the GNU Library General Public License as published by
@@ -4395,7 +4397,7 @@ packaging/utils/kernelpatch 2.6
 + */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/include/openswan/ipsec_param.h     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,404 @@
+@@ -0,0 +1,268 @@
 +/*
 + * @(#) Openswan tunable paramaters
 + *
@@ -4659,142 +4661,6 @@ packaging/utils/kernelpatch 2.6
 +#endif /* _IPSEC_PARAM_H_ */
 +
 +/*
-+ * $Log: ipsec_param.h,v $
-+<<<<<<< HEAD:linux/include/openswan/ipsec_param.h
-+ * Revision 1.31  2005/08/12 15:01:38  mcr
-+ * 	attempt to #undef CONFIG_IPSEC_NAT_TRAVERSAL if it is =0.
-+=======
-+ * Revision 1.29.6.4  2007/09/05 02:30:06  paul
-+ * KLIPS_SATOT macro. Patch by David McCullough
-+ *
-+ * Revision 1.29.6.3  2006/05/01 14:32:31  mcr
-+ * added KLIPS_ERROR and make sure that things work without CONFIG_KLIPS_REGRESS.
-+ *
-+ * Revision 1.29.6.2  2005/11/27 21:40:14  paul
-+ * Pull down TTL fixes from head. this fixes "Unknown symbol sysctl_ip_default_ttl"
-+ * in for klips as module.
-+>>>>>>> 84dee3e...   patches for 2.6.22, skb-pointer-changes:linux/include/openswan/ipsec_param.h
-+ *
-+ * Revision 1.30  2005/08/05 08:50:45  mcr
-+ * 	move #include of skbuff.h to a place where
-+ * 	we know it will be kernel only code.
-+ *
-+ * Revision 1.29  2005/01/26 00:50:35  mcr
-+ * 	adjustment of confusion of CONFIG_IPSEC_NAT vs CONFIG_KLIPS_NAT,
-+ * 	and make sure that NAT_TRAVERSAL is set as well to match
-+ * 	userspace compiles of code.
-+ *
-+ * Revision 1.28  2004/09/13 15:50:15  mcr
-+ * 	spell NEED_INET properly, not NET_INET.
-+ *
-+ * Revision 1.27  2004/09/13 02:21:45  mcr
-+ * 	always turn on IPIP mode.
-+ * 	#define inet_protocol if necessary.
-+ *
-+ * Revision 1.26  2004/08/17 03:25:43  mcr
-+ * 	freeswan->openswan.
-+ *
-+ * Revision 1.25  2004/07/10 19:08:41  mcr
-+ * 	CONFIG_IPSEC -> CONFIG_KLIPS.
-+ *
-+ * Revision 1.24  2004/04/05 19:55:06  mcr
-+ * Moved from linux/include/freeswan/ipsec_param.h,v
-+ *
-+ * Revision 1.23  2003/12/13 19:10:16  mcr
-+ * 	refactored rcv and xmit code - same as FS 2.05.
-+ *
-+ * Revision 1.22  2003/10/31 02:27:05  mcr
-+ * 	pulled up port-selector patches and sa_id elimination.
-+ *
-+ * Revision 1.21.4.1  2003/10/29 01:10:19  mcr
-+ * 	elimited "struct sa_id"
-+ *
-+ * Revision 1.21  2003/04/03 17:38:18  rgb
-+ * Centralised ipsec_kfree_skb and ipsec_dev_{get,put}.
-+ * Change indentation for readability.
-+ *
-+ * Revision 1.20  2003/03/14 08:09:26  rgb
-+ * Fixed up CONFIG_IPSEC_DYNDEV definitions.
-+ *
-+ * Revision 1.19  2003/01/30 02:31:43  rgb
-+ *
-+ * Rename SAref table macro names for clarity.
-+ *
-+ * Revision 1.18  2002/09/30 19:06:26  rgb
-+ * 	Reduce default table to 16 bits width.
-+ *
-+ * Revision 1.17  2002/09/20 15:40:29  rgb
-+ * Define switch to activate new SAref code.
-+ * Prefix macros with "IPSEC_".
-+ * Rework saref freelist.
-+ * Restrict some bits to kernel context for use to klips utils.
-+ *
-+ * Revision 1.16  2002/09/20 05:00:31  rgb
-+ * Define switch to divulge hmac keys for debugging.
-+ * Added IPOPTIONS switch.
-+ *
-+ * Revision 1.15  2002/09/19 02:34:24  mcr
-+ * 	define IPSEC_PROC_SUBDIRS if we are 2.4, and use that in ipsec_proc.c
-+ * 	to decide if we are to create /proc/net/ipsec/.
-+ *
-+ * Revision 1.14  2002/08/30 01:20:54  mcr
-+ * 	reorganized 2.0/2.2/2.4 procfs support macro so match
-+ * 	2.4 values/typedefs.
-+ *
-+ * Revision 1.13  2002/07/28 22:03:28  mcr
-+ * 	added some documentation to SA_REF_*
-+ * 	turned on fix for ESPIV attack, now that we have the attack code.
-+ *
-+ * Revision 1.12  2002/07/26 08:48:31  rgb
-+ * Added SA ref table code.
-+ *
-+ * Revision 1.11  2002/07/23 02:57:45  rgb
-+ * Define ARPHRD_VOID for < 2.4 kernels.
-+ *
-+ * Revision 1.10  2002/05/27 21:37:28  rgb
-+ * Set the defaults sanely for those adventurous enough to try more than 1
-+ * digit of ipsec devices.
-+ *
-+ * Revision 1.9  2002/05/27 18:56:07  rgb
-+ * Convert to dynamic ipsec device allocation.
-+ *
-+ * Revision 1.8  2002/04/24 07:36:47  mcr
-+ * Moved from ./klips/net/ipsec/ipsec_param.h,v
-+ *
-+ * Revision 1.7  2002/04/20 00:12:25  rgb
-+ * Added esp IV CBC attack fix, disabled.
-+ *
-+ * Revision 1.6  2002/01/29 02:11:42  mcr
-+ * 	removal of kversions.h - sources that needed it now use ipsec_param.h.
-+ * 	updating of IPv6 structures to match latest in6.h version.
-+ * 	removed dead code from freeswan.h that also duplicated kversions.h
-+ * 	code.
-+ *
-+ * Revision 1.5  2002/01/28 19:22:01  mcr
-+ * 	by default, turn off LINEARIZE option
-+ * 	(let kversions.h turn it on)
-+ *
-+ * Revision 1.4  2002/01/20 20:19:36  mcr
-+ * 	renamed option to IP_FRAGMENT_LINEARIZE.
-+ *
-+ * Revision 1.3  2002/01/12 02:57:25  mcr
-+ * 	first regression test causes acquire messages to be lost
-+ * 	100% of the time. This is to help testing of pluto.
-+ *
-+ * Revision 1.2  2001/11/26 09:16:14  rgb
-+ * Merge MCR's ipsec_sa, eroute, proc and struct lifetime changes.
-+ *
-+ * Revision 1.1.2.3  2001/10/23 04:40:16  mcr
-+ * 	added #define for DIVULGING session keys in debug output.
-+ *
-+ * Revision 1.1.2.2  2001/10/22 20:53:25  mcr
-+ * 	added a define to control forcing of DES parity.
-+ *
-+ * Revision 1.1.2.1  2001/09/25 02:20:19  mcr
-+ * 	many common kernel configuration questions centralized.
-+ * 	more things remain that should be moved from freeswan.h.
-+ *
-+ *
 + * Local variables:
 + * c-file-style: "linux"
 + * End:
@@ -5022,7 +4888,7 @@ packaging/utils/kernelpatch 2.6
 +#endif /* _IPSEC_POLICY_H */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/include/openswan/ipsec_proto.h     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,195 @@
+@@ -0,0 +1,148 @@
 +/*
 + * @(#) prototypes for FreeSWAN functions 
 + *
@@ -5076,9 +4942,11 @@ packaging/utils/kernelpatch 2.6
 +
 +
 +extern struct ipsec_sa *ipsec_sa_getbyid(ip_said *);
++extern int ipsec_sa_put(struct ipsec_sa *);
 +extern /* void */ int ipsec_sa_add(struct ipsec_sa *);
 +
 +extern int ipsec_sa_init(struct ipsec_sa *ipsp);
++extern int ipsec_sa_wipe(struct ipsec_sa *ipsp);
 +
 +/* debug declarations */
 +
@@ -5162,55 +5030,6 @@ packaging/utils/kernelpatch 2.6
 +#endif /* _IPSEC_PROTO_H_ */
 +
 +/*
-+ * $Log: ipsec_proto.h,v $
-+ * Revision 1.14  2005/04/29 04:50:03  mcr
-+ * 	prototypes for xmit and alg code.
-+ *
-+ * Revision 1.13  2005/04/17 03:46:07  mcr
-+ * 	added prototypes for ipsec_rcv() routines.
-+ *
-+ * Revision 1.12  2005/04/14 20:28:37  mcr
-+ * 	added additional prototypes.
-+ *
-+ * Revision 1.11  2005/04/14 01:16:28  mcr
-+ * 	add prototypes for snprintf.
-+ *
-+ * Revision 1.10  2005/04/13 22:47:28  mcr
-+ * 	make sure that forward references are available.
-+ *
-+ * Revision 1.9  2004/07/10 19:08:41  mcr
-+ * 	CONFIG_IPSEC -> CONFIG_KLIPS.
-+ *
-+ * Revision 1.8  2004/04/05 19:55:06  mcr
-+ * Moved from linux/include/freeswan/ipsec_proto.h,v
-+ *
-+ * Revision 1.7  2003/10/31 02:27:05  mcr
-+ * 	pulled up port-selector patches and sa_id elimination.
-+ *
-+ * Revision 1.6.30.1  2003/10/29 01:10:19  mcr
-+ * 	elimited "struct sa_id"
-+ *
-+ * Revision 1.6  2002/05/23 07:13:48  rgb
-+ * Added ipsec_sa_put() for releasing an ipsec_sa refcount.
-+ *
-+ * Revision 1.5  2002/05/14 02:36:40  rgb
-+ * Converted reference from ipsec_sa_put to ipsec_sa_add to avoid confusion
-+ * with "put" usage in the kernel.
-+ *
-+ * Revision 1.4  2002/04/24 07:36:47  mcr
-+ * Moved from ./klips/net/ipsec/ipsec_proto.h,v
-+ *
-+ * Revision 1.3  2002/04/20 00:12:25  rgb
-+ * Added esp IV CBC attack fix, disabled.
-+ *
-+ * Revision 1.2  2001/11/26 09:16:15  rgb
-+ * Merge MCR's ipsec_sa, eroute, proc and struct lifetime changes.
-+ *
-+ * Revision 1.1.2.1  2001/09/25 02:21:01  mcr
-+ * 	ipsec_proto.h created to keep prototypes rather than deal with
-+ * 	cyclic dependancies of structures and prototypes in .h files.
-+ *
-+ *
 + *
 + * Local variables:
 + * c-file-style: "linux"
@@ -5402,7 +5221,7 @@ packaging/utils/kernelpatch 2.6
 + */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/include/openswan/ipsec_rcv.h     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,199 @@
+@@ -0,0 +1,157 @@
 +/*
 + * 
 + * Copyright (C) 1996, 1997  John Ioannidis.
@@ -5418,7 +5237,6 @@ packaging/utils/kernelpatch 2.6
 + * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 + * for more details.
 + *
-+ * RCSID $Id: ipsec_rcv.h,v 1.28.2.1 2006/07/10 15:52:20 paul Exp $
 + */
 +
 +#ifndef IPSEC_RCV_H
@@ -5553,47 +5371,6 @@ packaging/utils/kernelpatch 2.6
 +#endif /* IPSEC_RCV_H */
 +
 +/*
-+ * $Log: ipsec_rcv.h,v $
-+ * Revision 1.28.2.1  2006/07/10 15:52:20  paul
-+ * Fix for bug #642 by Bart Trojanowski
-+ *
-+ * Revision 1.28  2005/05/11 00:59:45  mcr
-+ * 	do not call debug routines if !defined KLIPS_DEBUG.
-+ *
-+ * Revision 1.27  2005/04/29 04:59:46  mcr
-+ * 	use ipsec_dmp_block.
-+ *
-+ * Revision 1.26  2005/04/13 22:48:35  mcr
-+ * 	added comments, and removed some log.
-+ * 	removed Linux 2.0 support.
-+ *
-+ * Revision 1.25  2005/04/08 18:25:37  mcr
-+ * 	prototype klips26 encap receive function
-+ *
-+ * Revision 1.24  2004/08/20 21:45:37  mcr
-+ * 	CONFIG_KLIPS_NAT_TRAVERSAL is not used in an attempt to
-+ * 	be 26sec compatible. But, some defines where changed.
-+ *
-+ * Revision 1.23  2004/08/03 18:17:40  mcr
-+ * 	in 2.6, use "net_device" instead of #define device->net_device.
-+ * 	this probably breaks 2.0 compiles.
-+ *
-+ * Revision 1.22  2004/07/10 19:08:41  mcr
-+ * 	CONFIG_IPSEC -> CONFIG_KLIPS.
-+ *
-+ * Revision 1.21  2004/04/06 02:49:08  mcr
-+ * 	pullup of algo code from alg-branch.
-+ *
-+ * Revision 1.20  2004/04/05 19:55:06  mcr
-+ * Moved from linux/include/freeswan/ipsec_rcv.h,v
-+ *
-+ * Revision 1.19  2003/12/15 18:13:09  mcr
-+ * 	when compiling with NAT traversal, don't assume that the
-+ * 	kernel has been patched, unless CONFIG_IPSEC_NAT_NON_ESP
-+ * 	is set.
-+ *
-+ * history elided 2005-04-12.
-+ *
 + * Local Variables:
 + * c-basic-offset:8
 + * c-style:linux
@@ -5604,7 +5381,7 @@ packaging/utils/kernelpatch 2.6
 +
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/include/openswan/ipsec_sa.h     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,280 @@
+@@ -0,0 +1,274 @@
 +/*
 + * @(#) Definitions of IPsec Security Association (ipsec_sa)
 + *
@@ -5706,9 +5483,6 @@ packaging/utils/kernelpatch 2.6
 +#define IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES (1 << IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
 +
 +#ifdef CONFIG_NETFILTER
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
-+#define		nfmark  mark
-+#endif
 +#define IPSEC_SA_REF_HOST_FIELD(x) ((struct sk_buff*)(x))->nfmark
 +#define IPSEC_SA_REF_HOST_FIELD_TYPE typeof(IPSEC_SA_REF_HOST_FIELD(NULL))
 +#else /* CONFIG_NETFILTER */
@@ -5856,10 +5630,8 @@ packaging/utils/kernelpatch 2.6
 +extern int ipsec_sa_free(struct ipsec_sa* ips);
 +
 +#define ipsec_sa_get(ips) __ipsec_sa_get(ips, __FUNCTION__, __LINE__)
-+extern struct ipsec_sa * __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line);
-+
-+#define ipsec_sa_put(ips) __ipsec_sa_put(ips, __FUNCTION__, __LINE__)
-+extern void __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line);
++extern int __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line);
++extern int ipsec_sa_put(struct ipsec_sa *ips);
 +extern int ipsec_sa_add(struct ipsec_sa *ips);
 +extern void ipsec_sa_rm(struct ipsec_sa *ips);
 +extern int ipsec_sadb_cleanup(__u8 proto);
@@ -5868,7 +5640,6 @@ packaging/utils/kernelpatch 2.6
 +extern int ipsec_sa_intern(struct ipsec_sa *ips);
 +extern struct ipsec_sa *ipsec_sa_getbyref(IPsecSAref_t ref);
 +
-+extern void ipsec_sa_untern(struct ipsec_sa *ips);
 +#endif /* __KERNEL__ */
 +
 +enum ipsec_direction {
@@ -9463,7 +9234,7 @@ packaging/utils/kernelpatch 2.6
 +
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/Kconfig     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,159 @@
+@@ -0,0 +1,161 @@
 +#
 +# IPSEC configuration
 +# Copyright (C) 2004 Michael Richardson <mcr@freeswan.org>
@@ -9481,14 +9252,16 @@ packaging/utils/kernelpatch 2.6
 +# RCSID $Id: Kconfig,v 1.6.2.1 2006/04/20 16:33:06 mcr Exp $
 +
 +config KLIPS
-+	tristate "Openswan IPsec (KLIPS26)"
++	tristate "Openswan IPsec (KLIPS)"
 +	default n
++	select NF_CONNTRACK && NETFILTER
 +	help
-+  	  KLIPS is the Openswan (www.openswan.org) Kernel Level IP Security
++	  KLIPS is the Openswan (www.openswan.org) Kernel Level IP Security
 +	  system. It is extensively tested, and has interoperated with
 +	  many other systems. 
-+          It provides "ipsecX" devices on which one can do firewalling.
-+          The userland, is compatible with both KLIPS and 26sec.
++	  It provides "ipsecX" devices on which one can do firewalling.
++	  The Openswan userland, is compatible with both KLIPS and NETKEY
++	  You cannot build KLIPS and NETKEY inline into the kernel.
 +
 +menu "KLIPS options"
 +	depends on KLIPS
@@ -25271,7 +25044,7 @@ packaging/utils/kernelpatch 2.6
 +#endif /* _INFUTIL_H */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/initaddr.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,85 @@
 +/*
 + * initialize address structure
 + * Copyright (C) 2000  Henry Spencer.
@@ -25324,6 +25097,7 @@ packaging/utils/kernelpatch 2.6
 +	case AF_INET:
 +		if (srclen != 4)
 +			return "IPv4 address must be exactly 4 bytes";
++#if !defined(__KERNEL__)
 +		/* On BSD, the kernel compares the entire struct sockaddr when
 + 		 * using bind(). However, this is as large as the largest
 + 		 * address family, so the 'remainder' has to be 0. Linux
@@ -25334,6 +25108,7 @@ packaging/utils/kernelpatch 2.6
 + 		 * Patch by Stefan Arentz <stefan@soze.com>
 + 		 */
 +		bzero(&dst->u.v4, sizeof(dst->u.v4));
++#endif
 +		dst->u.v4.sin_family = af;
 +		dst->u.v4.sin_port = 0;
 +		memcpy((char *)&dst->u.v4.sin_addr.s_addr, src, srclen);
@@ -25341,7 +25116,9 @@ packaging/utils/kernelpatch 2.6
 +	case AF_INET6:
 +		if (srclen != 16)
 +			return "IPv6 address must be exactly 16 bytes";
++#if !defined(__KERNEL__)
 +		bzero(&dst->u.v6, sizeof(dst->u.v6));
++#endif
 +		dst->u.v6.sin6_family = af;
 +		dst->u.v6.sin6_flowinfo = 0;		/* unused */
 +		dst->u.v6.sin6_port = 0;
@@ -28466,7 +28243,7 @@ packaging/utils/kernelpatch 2.6
 + */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/ipsec_init.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,450 @@
+@@ -0,0 +1,454 @@
 +/*
 + * @(#) Initialization code.
 + * Copyright (C) 1996, 1997   John Ioannidis.
@@ -28775,10 +28552,14 @@ packaging/utils/kernelpatch 2.6
 +	openswan_inet_del_protocol(&comp_protocol, IPPROTO_COMP);
 +#endif /* CONFIG_KLIPS_IPCOMP */
 +#endif
++#ifdef CONFIG_KLIPS_AH
 +error_openswan_inet_add_protocol_ah:
 +	openswan_inet_del_protocol(&ah_protocol, IPPROTO_AH);
++#endif
++#ifdef CONFIG_KLIPS_ESP
 +error_openswan_inet_add_protocol_esp:
 +	openswan_inet_del_protocol(&esp_protocol, IPPROTO_ESP);
++#endif
 +#endif
 +	unregister_netdevice_notifier(&ipsec_dev_notifier);
 +error_netdev_notifier:
@@ -29603,7 +29384,7 @@ packaging/utils/kernelpatch 2.6
 + */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/ipsec_mast.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,836 @@
+@@ -0,0 +1,841 @@
 +/*
 + * IPSEC MAST code.
 + * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
@@ -29752,6 +29533,8 @@ packaging/utils/kernelpatch 2.6
 +	return 0;
 +}
 +
++#if 0
++/* Paul: This seems to be unused dead code */
 +enum ipsec_xmit_value
 +ipsec_mast_send(struct ipsec_xmit_state*ixs)
 +{
@@ -29784,16 +29567,16 @@ packaging/utils/kernelpatch 2.6
 +	dst_release(ixs->skb->dst);
 +	ixs->skb->dst = &ixs->route->u.dst;
 +	ixs->stats->tx_bytes += ixs->skb->len;
-+	if(ixs->skb->len < ixs->skb->nh.raw - ixs->skb->data) {
++	if(ixs->skb->len < skb_network_header(ixs->skb) - ixs->skb->data) {
 +		ixs->stats->tx_errors++;
 +		printk(KERN_WARNING
 +		       "klips_error:ipsec_xmit_send: "
 +		       "tried to __skb_pull nh-data=%ld, %d available.  This should never happen, please report.\n",
-+		       (unsigned long)(ixs->skb->nh.raw - ixs->skb->data),
++		       (unsigned long)(skb_network_header(ixs->skb) - ixs->skb->data),
 +		       ixs->skb->len);
 +		return IPSEC_XMIT_PUSHPULLERR;
 +	}
-+	__skb_pull(ixs->skb, ixs->skb->nh.raw - ixs->skb->data);
++	__skb_pull(ixs->skb, skb_network_header(ixs->skb)- ixs->skb->data);
 +#ifdef SKB_RESET_NFCT
 +	nf_conntrack_put(ixs->skb->nfct);
 +	ixs->skb->nfct = NULL;
@@ -29828,6 +29611,7 @@ packaging/utils/kernelpatch 2.6
 +
 +        return IPSEC_XMIT_OK;
 +}
++#endif
 +
 +/*
 + *	This function assumes it is being called from dev_queue_xmit()
@@ -30312,7 +30096,9 @@ packaging/utils/kernelpatch 2.6
 +	memset((caddr_t)im, 0, sizeof(struct net_device));
 +	snprintf(im->name, IFNAMSIZ, MAST_DEV_FORMAT, vifnum);
 +
++#ifdef HAVE_NEXT_DEV
 +	im->next = NULL;
++#endif
 +	im->init = ipsec_mast_probe;
 +
 +	if(register_netdev(im) != 0) {
@@ -32453,7 +32239,7 @@ packaging/utils/kernelpatch 2.6
 + */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/ipsec_rcv.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,1869 @@
+@@ -0,0 +1,1859 @@
 +/*
 + * receive code
 + * Copyright (C) 1996, 1997  John Ioannidis.
@@ -33390,12 +33176,8 @@ packaging/utils/kernelpatch 2.6
 +#endif
 +		
 +		/* re-do any strings for debugging */
-+		ipsaddr.s_addr = ipp->saddr;
-+		if (debug_rcv)
-+			addrtoa(ipsaddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
-+		ipdaddr.s_addr = ipp->daddr;
-+		if (debug_rcv)
-+			addrtoa(ipdaddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
++		irs->ipp = ipp;
++                ipsec_rcv_redodebug(irs);
 +
 +		skb->protocol = htons(ETH_P_IP);
 +		skb->ip_summed = 0;
@@ -33876,14 +33658,14 @@ packaging/utils/kernelpatch 2.6
 +#endif /* CONFIG_KLIPS_DEBUG */
 +	unsigned char protoc;
 +	struct net_device_stats *stats = NULL;		/* This device's statistics */
-+	struct net_device *ipsecdev = NULL, *prvdev;
-+	struct ipsecpriv *prv;
-+	struct ipsec_rcv_state *irs = NULL;
++	struct ipsec_rcv_state nirs, *irs = &nirs;
 +	struct iphdr *ipp;
 +	int i;
 +
 +	/* Don't unlink in the middle of a turnaround */
 +	KLIPS_INC_USE;
++
++	memset(&nirs, 0, sizeof(struct ipsec_rcv_state));
 +
 +	if (skb == NULL) {
 +		KLIPS_PRINT(debug_rcv,
@@ -33898,14 +33680,6 @@ packaging/utils/kernelpatch 2.6
 +			    "NULL skb->data passed in, packet is bogus, dropping.\n");
 +		goto error_bad_skb;
 +	}
-+
-+        irs = ipsec_rcv_state_new ();
-+        if (unlikely (! irs)) {
-+		KLIPS_PRINT(debug_rcv,
-+			    "klips_debug:ipsec_rcv: "
-+			    "failled to allocate a rcv state object\n");
-+                goto error_alloc;
-+        }
 +
 +#if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && !defined(NET_26)
 +	{
@@ -34106,7 +33880,6 @@ packaging/utils/kernelpatch 2.6
 +rcvleave:
 +        ipsec_rcv_state_delete (irs);
 +
-+error_alloc:
 +error_bad_skb:
 +        ipsec_kfree_skb(skb);
 +error_no_skb:
@@ -34253,7 +34026,10 @@ packaging/utils/kernelpatch 2.6
 +
 +        spin_lock_init(&irs_cache_lock);
 +#ifdef HAVE_KMEM_CACHE_MACRO
-+        irs_cache_allocator = KMEM_CACHE(ipsec_irs,0);
++        /* irs_cache_allocator = KMEM_CACHE(ipsec_irs,0); */
++        irs_cache_allocator = kmem_cache_create ("ipsec_irs",
++                sizeof (struct ipsec_rcv_state), 0,
++                0, NULL);
 +#else
 +        irs_cache_allocator = kmem_cache_create ("ipsec_irs",
 +                sizeof (struct ipsec_rcv_state), 0,
@@ -34325,7 +34101,7 @@ packaging/utils/kernelpatch 2.6
 + */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/ipsec_sa.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,1543 @@
+@@ -0,0 +1,1525 @@
 +/*
 + * Common routines for IPsec SA maintenance routines.
 + *
@@ -34905,33 +34681,30 @@ packaging/utils/kernelpatch 2.6
 +	return ips;
 +}
 +
-+
-+void
-+__ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
++int
++ipsec_sa_put(struct ipsec_sa *ips)
 +{
++        char sa[SATOT_BUF];
++	size_t sa_len;
++
 +	if(ips == NULL) {
 +		KLIPS_PRINT(debug_xform,
 +			    "ipsec_sa_put: "
 +			    "null pointer passed in!\n");
-+		return;
++		return -1;
 +	}
 +
-+#ifdef CONFIG_KLIPS_DEBUG
 +	if(debug_xform) {
-+		char sa[SATOT_BUF];
-+		size_t sa_len;
 +		sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
 +
 +		KLIPS_PRINT(debug_xform,
 +			    "ipsec_sa_put: "
-+			    "ipsec_sa %p SA:%s, ref:%d reference count (%d--) decremented by %s:%d.\n",
++			    "ipsec_sa %p SA:%s, ref:%d reference count (%d--) decremented.\n",
 +			    ips,
 +			    sa_len ? sa : " (error)",
 +			    ips->ips_ref,
-+			    atomic_read(&ips->ips_refcount),
-+			    func, line);
++			    atomic_read(&ips->ips_refcount));
 +	}
-+#endif
 +
 +	if(atomic_dec_and_test(&ips->ips_refcount)) {
 +		KLIPS_PRINT(debug_xform,
@@ -34941,43 +34714,30 @@ packaging/utils/kernelpatch 2.6
 +		ipsec_sa_wipe(ips);
 +	}
 +
-+	return;
++	return 0;
 +}
 +
-+struct ipsec_sa *
++int
 +__ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line)
 +{
-+        if (ips == NULL)
-+                return NULL;
++        char sa[SATOT_BUF];
++        size_t sa_len;
 +
-+#ifdef CONFIG_KLIPS_DEBUG
-+	if(debug_xform) {
-+		char sa[SATOT_BUF];
-+		size_t sa_len;
-+	  sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
++        if(debug_xform) {
++          sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
 +
-+	  KLIPS_PRINT(debug_xform,
-+		      "ipsec_sa_get: "
-+		      "ipsec_sa %p SA:%s, ref:%d reference count (%d++) incremented by %s:%d.\n",
-+		      ips,
-+		      sa_len ? sa : " (error)",
-+		      ips->ips_ref,
-+		      atomic_read(&ips->ips_refcount),
-+		      func, line);
-+	}
-+#endif
++          KLIPS_PRINT(debug_xform,
++                      "ipsec_sa_get: "
++                      "ipsec_sa %p SA:%s, ref:%d reference count (%d++) incremented by %s:%d.\n",
++                      ips,
++                      sa_len ? sa : " (error)",
++                      ips->ips_ref,
++                      atomic_read(&ips->ips_refcount),
++                      func, line);
++        }
 +
-+	atomic_inc(&ips->ips_refcount);
-+
-+	if(atomic_dec_and_test(&ips->ips_refcount)) {
-+		KLIPS_PRINT(debug_xform,
-+			    "ipsec_sa_put: freeing %p\n",
-+			    ips);
-+		/* it was zero */
-+		ipsec_sa_wipe(ips);
-+	}
-+
-+        return ips;
++        atomic_inc(&ips->ips_refcount);
++        return atomic_read(&ips->ips_refcount);
 +}
 +
 +/*
@@ -34988,8 +34748,6 @@ packaging/utils/kernelpatch 2.6
 +{
 +	int error = 0;
 +	unsigned int hashval;
-+
-+	ips = ipsec_sa_get(ips);
 +
 +	if(ips == NULL) {
 +		KLIPS_PRINT(debug_xform,
@@ -36175,7 +35933,7 @@ packaging/utils/kernelpatch 2.6
 +
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/ipsec_tunnel.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,1874 @@
+@@ -0,0 +1,1876 @@
 +/*
 + * IPSEC Tunneling code. Heavily based on drivers/net/new_tunnel.c
 + * Copyright (C) 1996, 1997  John Ioannidis.
@@ -36266,9 +36024,6 @@ packaging/utils/kernelpatch 2.6
 +#endif
 +
 +static __u32 zeroes[64];
-+#ifdef CONFIG_KLIPS_DEBUG
-+int debug_tunnel = 0;
-+#endif /* CONFIG_KLIPS_DEBUG */
 +
 +DEBUG_NO_STATIC int
 +ipsec_tunnel_open(struct net_device *dev)
@@ -37828,7 +37583,9 @@ packaging/utils/kernelpatch 2.6
 +	memset((caddr_t)dev_ipsec->name, 0, IFNAMSIZ);
 +	strncpy(dev_ipsec->name, name, IFNAMSIZ);
 +#endif /* NETDEV_23 */
++#ifdef HAVE_DEV_NEXT
 +	dev_ipsec->next = NULL;
++#endif
 +	dev_ipsec->init = &ipsec_tunnel_probe;
 +	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 +		    "klips_debug:ipsec_tunnel_init_devices: "
@@ -37981,7 +37738,10 @@ packaging/utils/kernelpatch 2.6
 +
 +        spin_lock_init(&ixs_cache_lock);
 +#ifdef HAVE_KMEM_CACHE_MACRO
-+	ixs_cache_allocator = KMEM_CACHE(ipsec_ixs,0);
++	/* ixs_cache_allocator = KMEM_CACHE(ipsec_ixs,0); */
++        ixs_cache_allocator = kmem_cache_create ("ipsec_ixs",
++                sizeof (struct ipsec_xmit_state), 0,
++                0, NULL);
 +#else
 +        ixs_cache_allocator = kmem_cache_create ("ipsec_ixs",
 +                sizeof (struct ipsec_xmit_state), 0,
@@ -38130,7 +37890,7 @@ packaging/utils/kernelpatch 2.6
 + */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/ipsec_xmit.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,1923 @@
+@@ -0,0 +1,1940 @@
 +/*
 + * IPSEC Transmit code.
 + * Copyright (C) 1996, 1997  John Ioannidis.
@@ -39861,7 +39621,11 @@ packaging/utils/kernelpatch 2.6
 +enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs)
 +{
 +	if (ixs->natt_type && ixs->natt_head) {
++#if 0
 +		struct iphdr *ipp = ixs->skb->nh.iph;
++#endif
++		struct iphdr *ipp = ixs->iph;
++
 +		struct udphdr *udp;
 +		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 +			    "klips_debug:ipsec_tunnel_start_xmit: "
@@ -39925,10 +39689,17 @@ packaging/utils/kernelpatch 2.6
 +	int error;
 +  
 +#ifdef NETDEV_25
++#if 0
 + 	fl->nl_u.ip4_u.daddr = ixs->skb->nh.iph->daddr;
 + 	fl->nl_u.ip4_u.saddr = ixs->pass ? 0 : ixs->skb->nh.iph->saddr;
 + 	fl->nl_u.ip4_u.tos = RT_TOS(ixs->skb->nh.iph->tos);
 + 	fl->proto = ixs->skb->nh.iph->protocol;
++#endif
++        fl->nl_u.ip4_u.daddr = ixs->iph->daddr;
++        fl->nl_u.ip4_u.saddr = ixs->pass ? 0 : ixs->iph->saddr;
++        fl->nl_u.ip4_u.tos = RT_TOS(ixs->iph->tos);
++        fl->proto = ixs->iph->protocol;
++
 + 	if ((error = ip_route_output_key(&ixs->route, fl))) {
 +#else
 +	/*skb_orphan(ixs->skb);*/
@@ -39965,18 +39736,21 @@ packaging/utils/kernelpatch 2.6
 +		ixs->stats->tx_bytes += ixs->skb->len;
 +	}
 +
++#if 0
 +	if(ixs->skb->len < ixs->skb->nh.raw - ixs->skb->data) {
++#endif
++	if(ixs->skb->len < skb_network_header(ixs->skb) - ixs->skb->data) {
 +		if(ixs->stats) {
 +			ixs->stats->tx_errors++;
 +		}
 +		printk(KERN_WARNING
 +		       "klips_error:ipsec_xmit_send: "
 +		       "tried to __skb_pull nh-data=%ld, %d available.  This should never happen, please report.\n",
-+		       (unsigned long)(ixs->skb->nh.raw - ixs->skb->data),
++		       (unsigned long)(skb_network_header(ixs->skb) - ixs->skb->data),
 +		       ixs->skb->len);
 +		return IPSEC_XMIT_PUSHPULLERR;
 +	}
-+	__skb_pull(ixs->skb, ixs->skb->nh.raw - ixs->skb->data);
++	__skb_pull(ixs->skb, skb_network_header(ixs->skb) - ixs->skb->data);
 +#ifdef SKB_RESET_NFCT
 +	if(!ixs->pass) {
 +	  nf_conntrack_put(ixs->skb->nfct);
@@ -39990,7 +39764,10 @@ packaging/utils/kernelpatch 2.6
 +		    "klips_debug:ipsec_xmit_send: "
 +		    "...done, calling ip_send() on device:%s\n",
 +		    ixs->skb->dev ? ixs->skb->dev->name : "NULL");
++#if 0
 +	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->skb->nh.iph);
++#endif
++	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ip_hdr(ixs->skb));
 +#ifdef NETDEV_23	/* 2.4 kernels */
 +	{
 +		int err;
@@ -40749,7 +40526,7 @@ packaging/utils/kernelpatch 2.6
 +match_init:	ret
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/pfkey_v2.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,1548 @@
+@@ -0,0 +1,1555 @@
 +/*
 + * @(#) RFC2367 PF_KEYv2 Key management API domain socket I/F
 + * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs.
@@ -40833,6 +40610,7 @@ packaging/utils/kernelpatch 2.6
 +#define SOCKOPS_WRAPPED(name) name
 +#endif /* SOCKOPS_WRAPPED */
 +
++
 +#ifdef NET_26
 +static rwlock_t pfkey_sock_lock = RW_LOCK_UNLOCKED;
 +HLIST_HEAD(pfkey_sock_list);
@@ -40863,12 +40641,14 @@ packaging/utils/kernelpatch 2.6
 +#endif
 +
 +struct net_proto_family pfkey_family_ops = {
-+	PF_KEY,
-+	pfkey_create
++        .owner  = THIS_MODULE,
++        .family = PF_KEY,
++        .create = pfkey_create
 +};
 +
 +struct proto_ops SOCKOPS_WRAPPED(pfkey_ops) = {
 +#ifdef NETDEV_23
++        owner:          THIS_MODULE,
 +	family:		PF_KEY,
 +	release:	pfkey_release,
 +	bind:		sock_no_bind,
@@ -42203,7 +41983,11 @@ packaging/utils/kernelpatch 2.6
 +#endif /* CONFIG_KLIPS_IPCOMP */
 +	error |= supported_add_all(K_SADB_X_SATYPE_IPIP, supported_init_ipip, sizeof(supported_init_ipip));
 +
++#ifdef NET_21
 +        error |= sock_register(&pfkey_family_ops);
++#else /* NET_21 */
++        error |= sock_register(pfkey_proto_ops.family, &pfkey_proto_ops);
++#endif /* NET_21 */
 +
 +#ifdef CONFIG_PROC_FS
 +#  ifndef PROC_FS_2325
@@ -42236,7 +42020,7 @@ packaging/utils/kernelpatch 2.6
 +#ifdef VOID_SOCK_UNREGISTER
 +	sock_unregister(PF_KEY);
 +#else
-+        sock_unregister(PF_KEY);
++        error |= sock_unregister(PF_KEY);
 +#endif
 +
 +	error |= supported_remove_all(K_SADB_SATYPE_AH);
@@ -47185,7 +46969,7 @@ packaging/utils/kernelpatch 2.6
 + */
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/pfkey_v2_parser.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,3022 @@
+@@ -0,0 +1,3015 @@
 +/*
 + * @(#) RFC2367 PF_KEYv2 Key management API message parser
 + * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs <rgb@freeswan.org>
@@ -48089,8 +47873,6 @@ packaging/utils/kernelpatch 2.6
 +	struct sadb_msg *pfkey_reply = NULL;
 +	struct socket_list *pfkey_socketsp;
 +	uint8_t satype = ((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED])->sadb_msg_satype;
-+	IPsecSAref_t ref;
-+	struct sadb_builds sab;
 +
 +	KLIPS_PRINT(debug_pfkey,
 +		    "klips_debug:pfkey_delete_parse: .\n");
@@ -48118,25 +47900,8 @@ packaging/utils/kernelpatch 2.6
 +		SENDERR(ESRCH);
 +	}
 +
-+	/* remove it from SAref tables */
-+	ref = ipsp->ips_ref;
-+	ipsec_sa_untern(ipsp); 
-+	ipsec_sa_rm(ipsp);
-+
-+	/* this will call delchain-equivalent if refcount -> 0
-+	 * noting that get() above, added to ref count */
 +	ipsec_sa_put(ipsp);
 +	spin_unlock_bh(&tdb_lock);
-+
-+	memset(&sab, 0, sizeof(sab));
-+	sab.sa_base.sadb_sa_exttype = K_SADB_EXT_SA;
-+	sab.sa_base.sadb_sa_spi     = extr->ips->ips_said.spi;
-+	sab.sa_base.sadb_sa_replay  = 0;
-+	sab.sa_base.sadb_sa_state   = 0;
-+	sab.sa_base.sadb_sa_auth    = 0;
-+	sab.sa_base.sadb_sa_encrypt = 0;
-+	sab.sa_base.sadb_sa_flags   = 0;
-+	sab.sa_base.sadb_x_sa_ref   = ref;
 +
 +	if(!(pfkey_safe_build(error = pfkey_msg_hdr_build(&extensions_reply[0],
 +							  K_SADB_DELETE,
@@ -48145,8 +47910,16 @@ packaging/utils/kernelpatch 2.6
 +							  ((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED])->sadb_msg_seq,
 +							  ((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED])->sadb_msg_pid),
 +			      extensions_reply)
-+	     && pfkey_safe_build(error = pfkey_sa_builds(&extensions_reply[K_SADB_EXT_SA], sab),
-+				 extensions_reply)
++	     && pfkey_safe_build(error = pfkey_sa_build(&extensions_reply[K_SADB_EXT_SA],
++							K_SADB_EXT_SA,
++							extr->ips->ips_said.spi,
++							0,
++							0,
++							0,
++							0,
++							0),
++			      extensions_reply)
++
 +	     && pfkey_safe_build(error = pfkey_address_build(&extensions_reply[K_SADB_EXT_ADDRESS_SRC],
 +							     K_SADB_EXT_ADDRESS_SRC,
 +							     0, /*extr->ips->ips_said.proto,*/
@@ -49922,6 +49695,10 @@ packaging/utils/kernelpatch 2.6
 +	}
 +}
 +
++/*
++ * this is a request to create a new device. Figure out which kind, and call appropriate
++ * routine in mast or tunnel code.
++ *    */
 +DEBUG_NO_STATIC int
 +pfkey_x_unplumb_parse(struct sock *sk, struct sadb_ext *extensions[], struct pfkey_extracted_data* extr)
 +{
@@ -51757,7 +51534,7 @@ packaging/utils/kernelpatch 2.6
 +}
 --- /dev/null   Tue Mar 11 13:02:56 2003
 +++ linux/net/ipsec/sysctl_net_ipsec.c     Mon Feb  9 13:51:03 2004
-@@ -0,0 +1,345 @@
+@@ -0,0 +1,363 @@
 +/*
 + * sysctl interface to net IPSEC subsystem.
 + * Copyright (C) 1998, 1999, 2000, 2001	  Richard Guy Briggs.
@@ -51857,9 +51634,27 @@ packaging/utils/kernelpatch 2.6
 +         .proc_handler = &proc_dointvec,
 +       },
 +
++        { .ctl_name = NET_IPSEC_DEBUG_MAST,
++         .procname = "debug_mast",
++         .data     = &debug_mast,
++          .maxlen   = sizeof(int),
++         .mode     = 0644,
++         .child    = NULL,
++         .proc_handler = &proc_dointvec,
++       },
++
 +        { .ctl_name = NET_IPSEC_DEBUG_TUNNEL,
 +         .procname = "debug_tunnel",
 +         .data     = &debug_tunnel,
++          .maxlen   = sizeof(int),
++         .mode     = 0644,
++         .child    = NULL,
++         .proc_handler = &proc_dointvec,
++       },
++
++        { .ctl_name = NET_IPSEC_DEBUG_XMIT,
++         .procname = "debug_xmit",
++         .data     = &debug_xmit,
 +          .maxlen   = sizeof(int),
 +         .mode     = 0644,
 +         .child    = NULL,
@@ -53631,7 +53426,7 @@ packaging/utils/kernelpatch 2.6
 +
 +#include "openswan.h"
 +
-+#define	V	"2.5.sony-gdf381766"		/* substituted in by Makefile */
++#define	V	"2.5.51s"		/* substituted in by Makefile */
 +static const char openswan_number[] = V;
 +static const char openswan_string[] = "Openswan " V;
 +
@@ -53906,4 +53701,5 @@ packaging/utils/kernelpatch 2.6
 --- /dev/null   Fri May 10 13:59:54 2002
 +++ linux/net/ipsec/Makefile.ver  Sun Jul 28 22:10:40 2002
 @@ -0,0 +1 @@
-+IPSECVERSION='2.5.sony-gdf381766'
++IPSECVERSION='2.5.51s'
+make[1]: Leaving directory `/usr/src/packages/SOURCES/openswan-2.5.51s'
