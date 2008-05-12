@@ -1,0 +1,125 @@
+diff -c -w -r -N linux-2.6.22/Makefile linux-2.6.22-ng/Makefile
+*** linux-2.6.22/Makefile	Tue Oct  9 16:31:38 2007
+--- linux-2.6.22-ng/Makefile	Sat Apr  5 15:30:48 2008
+***************
+*** 1,7 ****
+  VERSION = 2
+  PATCHLEVEL = 6
+  SUBLEVEL = 22
+! EXTRAVERSION =
+  NAME = Holy Dancing Manatees, Batman!
+  
+  # *DOCUMENTATION*
+--- 1,7 ----
+  VERSION = 2
+  PATCHLEVEL = 6
+  SUBLEVEL = 22
+! EXTRAVERSION = -osw-2.5.50s
+  NAME = Holy Dancing Manatees, Batman!
+  
+  # *DOCUMENTATION*
+diff -c -w -r -N linux-2.6.22/include/linux/in.h linux-2.6.22-ng/include/linux/in.h
+*** linux-2.6.22/include/linux/in.h	Tue Oct  9 16:31:38 2007
+--- linux-2.6.22-ng/include/linux/in.h	Sat Apr  5 15:31:28 2008
+***************
+*** 75,80 ****
+--- 75,81 ----
+  #define IP_IPSEC_POLICY	16
+  #define IP_XFRM_POLICY	17
+  #define IP_PASSSEC	18
++ #define IP_IPSEC_REFINFO 22
+  
+  /* BSD compatibility */
+  #define IP_RECVRETOPTS	IP_RETOPTS
+diff -c -w -r -N linux-2.6.22/include/net/ip.h linux-2.6.22-ng/include/net/ip.h
+*** linux-2.6.22/include/net/ip.h	Tue Oct  9 16:31:38 2007
+--- linux-2.6.22-ng/include/net/ip.h	Sat Apr  5 15:31:39 2008
+***************
+*** 54,59 ****
+--- 54,60 ----
+  	__be32			addr;
+  	int			oif;
+  	struct ip_options	*opt;
++ 	struct sec_path         *sp;
+  };
+  
+  #define IPCB(skb) ((struct inet_skb_parm*)((skb)->cb))
+diff -c -w -r -N linux-2.6.22/include/net/xfrm.h linux-2.6.22-ng/include/net/xfrm.h
+*** linux-2.6.22/include/net/xfrm.h	Tue Oct  9 16:31:38 2007
+--- linux-2.6.22-ng/include/net/xfrm.h	Sat Apr  5 15:31:50 2008
+***************
+*** 616,628 ****
+--- 616,634 ----
+  
+  extern void xfrm_dst_ifdown(struct dst_entry *dst, struct net_device *dev);
+  
++ typedef unsigned int xfrm_sec_unique_t;
++  
+  struct sec_path
+  {
+  	atomic_t		refcnt;
++  	xfrm_sec_unique_t       ref;       /*reference to high-level policy*/
+  	int			len;
+  	struct xfrm_state	*xvec[XFRM_MAX_DEPTH];
+  };
+  
++ struct ipcm_cookie;
++ extern int ip_cmsg_send_ipsec(struct cmsghdr *cmsg, struct ipcm_cookie *ipc);
++  
+  static inline struct sec_path *
+  secpath_get(struct sec_path *sp)
+  {
+diff -c -w -r -N linux-2.6.22/net/ipv4/icmp.c linux-2.6.22-ng/net/ipv4/icmp.c
+*** linux-2.6.22/net/ipv4/icmp.c	Tue Oct  9 16:31:38 2007
+--- linux-2.6.22-ng/net/ipv4/icmp.c	Sat Apr  5 15:33:25 2008
+***************
+*** 440,445 ****
+--- 440,447 ----
+  	__be32 saddr;
+  	u8  tos;
+  
++ 	memset(&ipc, 0, sizeof(ipc));
++ 
+  	if (!rt)
+  		goto out;
+  
+diff -c -w -r -N linux-2.6.22/net/ipv4/ip_output.c linux-2.6.22-ng/net/ipv4/ip_output.c
+*** linux-2.6.22/net/ipv4/ip_output.c	Tue Oct  9 16:31:38 2007
+--- linux-2.6.22-ng/net/ipv4/ip_output.c	Sat Apr  5 15:33:32 2008
+***************
+*** 1341,1346 ****
+--- 1341,1348 ----
+  	__be32 daddr;
+  	struct rtable *rt = (struct rtable*)skb->dst;
+  
++ 	memset(&ipc, 0, sizeof(ipc));
++ 
+  	if (ip_options_echo(&replyopts.opt, skb))
+  		return;
+  
+diff -c -w -r -N linux-2.6.22/net/ipv4/ip_sockglue.c linux-2.6.22-ng/net/ipv4/ip_sockglue.c
+*** linux-2.6.22/net/ipv4/ip_sockglue.c	Tue Oct  9 16:31:38 2007
+--- linux-2.6.22-ng/net/ipv4/ip_sockglue.c	Sat Apr  5 15:33:40 2008
+***************
+*** 1225,1230 ****
+--- 1225,1231 ----
+  #endif
+  
+  EXPORT_SYMBOL(ip_cmsg_recv);
++ EXPORT_SYMBOL(ip_cmsg_send);
+  
+  EXPORT_SYMBOL(ip_getsockopt);
+  EXPORT_SYMBOL(ip_setsockopt);
+diff -c -w -r -N linux-2.6.22/net/ipv4/raw.c linux-2.6.22-ng/net/ipv4/raw.c
+*** linux-2.6.22/net/ipv4/raw.c	Tue Oct  9 16:31:38 2007
+--- linux-2.6.22-ng/net/ipv4/raw.c	Sat Apr  5 15:33:51 2008
+***************
+*** 390,395 ****
+--- 390,396 ----
+  	u8  tos;
+  	int err;
+  
++ 	memset(&ipc, 0, sizeof(ipc));
+  	err = -EMSGSIZE;
+  	if (len > 0xFFFF)
+  		goto out;
