@@ -15,14 +15,16 @@
 # RCSID $Id: Kconfig,v 1.6.2.1 2006/04/20 16:33:06 mcr Exp $
 
 config KLIPS
-	tristate "Openswan IPsec (KLIPS26)"
+	tristate "Openswan IPsec (KLIPS)"
 	default n
+	select NF_CONNTRACK && NETFILTER
 	help
-  	  KLIPS is the Openswan (www.openswan.org) Kernel Level IP Security
+	  KLIPS is the Openswan (www.openswan.org) Kernel Level IP Security
 	  system. It is extensively tested, and has interoperated with
 	  many other systems. 
-          It provides "ipsecX" devices on which one can do firewalling.
-          The userland, is compatible with both KLIPS and 26sec.
+	  It provides "ipsecX" devices on which one can do firewalling.
+	  The Openswan userland, is compatible with both KLIPS and NETKEY
+	  You cannot build KLIPS and NETKEY inline into the kernel.
 
 menu "KLIPS options"
 	depends on KLIPS
