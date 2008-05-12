@@ -33,37 +33,37 @@ config setup
 
 ## sample VPN connection
 #conn l2tp
-#        # Configuration for one user with any type of IPsec/L2TP client
-#        # including the updated Windows 2000/XP (MS KB Q818043), but
-#        # excluding the non-updated Windows 2000/XP.
-#        #
-#        #
-#        # Use a certificate. Disable Perfect Forward Secrecy.
-#        #
-#        authby=rsasig
-#        pfs=no
-#        auto=add
-#        rekey=no
-#        type=transport
+#	# Configuration for one user with any type of IPsec/L2TP client
+#	# including the updated Windows 2000/XP (MS KB Q818043), but
+#	# excluding the non-updated Windows 2000/XP.
+#	#
+#	#
+#	# Use a certificate. Disable Perfect Forward Secrecy.
+#	#
+#	authby=rsasig
+#	pfs=no
+#	auto=add
+#	rekey=no
+#	type=transport
 #	# Allow overlapping IP addresses on connecting clients
-#        overlapip=yes
+#	overlapip=yes
 #	#
 #	# The local server
 #	#
-#        leftsendcert=always
+#	leftsendcert=always
 #	# Make sure the interface with the public ip has an mtu of 1472
-#        left=YourPublicIP
+#	left=YourPublicIP
 #	leftnexthop=IPofGateway
-#        leftrsasigkey=%cert
-#        leftcert=/etc/ipsec.d/certs/yourserver.cert
-#        leftprotoport=17/1701
-#        #
-#        # The remote user.
-#        #
-#        right=%any
-#        rightca=%any
-#        rightrsasigkey=%cert
-#        rightprotoport=17/0
-#        #rightprotoport=17/%any
-#        rightsubnet=vhost:%priv,%no
+#	leftrsasigkey=%cert
+#	leftcert=/etc/ipsec.d/certs/yourserver.cert
+#	leftprotoport=17/1701
+#	#
+#	# The remote user.
+#	#
+#	right=%any
+#	rightca=%any
+#	rightrsasigkey=%cert
+#	rightprotoport=17/0
+#	#rightprotoport=17/%any
+#	rightsubnet=vhost:%priv,%no
 #
