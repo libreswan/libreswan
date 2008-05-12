@@ -32,11 +32,7 @@ PreReq: gmp %insserv_prereq %fillup_prereq perl
 BuildRequires: gmp-devel bison flex bind-devel 
 Requires: iproute2 >= 2.6.8
 AutoReqProv:    on
-Source10:       openswan.README.SUSE
 
-Source31:       sysconfig.network.scripts.openswan
-Source32:       sysconfig.network.scripts.openswan-functions
-Source33:       openswan.ip-up
 Prefix:         /usr
 
 %description
@@ -74,11 +70,13 @@ sed -i 's/-Werror/#-Werror/' lib/libisc/Makefile
 sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
 
 %build
+# Suse has no %{_libexecdir} directory, put it all in libdir instead (yuck)
 %{__make} \
   USERCOMPILE='-g $(RPM_OPT_FLAGS) ' \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \
-  FINALBINDIR=%{_libexecdir}/ipsec \
+  FINALBINDIR=%{_libdir}/ipsec \
+  FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   INC_RCDIRS='/etc/init.d /etc/rc.d/init.d /etc/rc.d /sbin/init.d' \
@@ -110,6 +108,8 @@ rm -rf ${RPM_BUILD_ROOT}
   DESTDIR=%{buildroot} \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \
+  FINALBINDIR=%{_libdir}/ipsec \
+  FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   install
@@ -124,14 +124,15 @@ install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
 install -d %{buildroot}%{_sbindir}
 #suse specific
 ln -sf /etc/init.d/ipsec ${RPM_BUILD_ROOT}%{prefix}/sbin/rcipsec
-touch $RPM_BUILD_ROOT/etc/ipsec.secrets
+#echo "# see man ipsec.secrets" >  $RPM_BUILD_ROOT/etc/ipsec.secrets
 install -d -m 755 %{buildroot}/etc/sysconfig/network/{scripts,if-up.d,if-down.d}
 install -m 755 packaging/suse/sysconfig.network.scripts.openswan %{buildroot}/etc/sysconfig/network/scripts/freeswan
 install -m 644 packaging/suse/sysconfig.network.scripts.openswan-functions %{buildroot}/etc/sysconfig/network/scripts/freeswan-functions
 ln -s ../scripts/freeswan %{buildroot}/etc/sysconfig/network/if-up.d/freeswan
 ln -s ../scripts/freeswan %{buildroot}/etc/sysconfig/network/if-down.d/freeswan
 # ip-up script (#39048)
-install -d -m 755 %{buildroot}/etc/ppp/ip-{up,down}.d
+install -d -m 750 -g dialout %{buildroot}/etc/ppp/ip-{up,down}.d
+install -d -m 750 %{buildroot}/etc/ppp/ip-{up,down}.d
 install -m 755 packaging/suse/openswan.ip-up %{buildroot}/etc/ppp/ip-up.d/freeswan
 ln -s ../ip-up.d/freeswan %{buildroot}/etc/ppp/ip-down.d/freeswan
 rm -f %{buildroot}/etc/rc?.d/[KS]*ipsec
@@ -164,7 +165,6 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_libdir}/ipsec
 %{_sbindir}/rcipsec
 %{_sbindir}/ipsec
-%{_libexecdir}/ipsec
 %doc %{_mandir}/*/*
 %config /etc/init.d/ipsec
 /etc/sysconfig/network/scripts/*
@@ -205,7 +205,11 @@ exit 0
 # openswan automatically does it on 'start' if no ipsec.secrets is found
 
 %changelog
-* Fri Apr 18 2008 Paul Wouters <paul@xelerance.com> - 2.5.sony-1
+* Wed May 07 2008 Paul Wouters <paul@xelerance.com> - 2.5.50-1
+- Various spec file fixes to compile on SLES 10 SP1
+- Suse has no libexec directory - use libdir
+
+* Fri Apr 18 2008 Paul Wouters <paul@xelerance.com> - 2.5.49-1
 - Incororated Suse initscripts and some SPEC semantics from mt@suse.de
 
 * Thu Dec 20 2007 Paul Wouters <paul@xelerance.com> - 2.6.01-1
