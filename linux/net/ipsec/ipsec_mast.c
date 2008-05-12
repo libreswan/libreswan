@@ -709,7 +709,9 @@ int ipsec_mast_createnum(int vifnum)
 	memset((caddr_t)im, 0, sizeof(struct net_device));
 	snprintf(im->name, IFNAMSIZ, MAST_DEV_FORMAT, vifnum);
 
+#ifdef HAVE_NEXT_DEV
 	im->next = NULL;
+#endif
 	im->init = ipsec_mast_probe;
 
 	if(register_netdev(im) != 0) {
