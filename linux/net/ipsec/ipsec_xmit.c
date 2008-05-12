@@ -1728,7 +1728,11 @@ static inline int ipsec_xmit_send2(struct sk_buff *skb)
 enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs)
 {
 	if (ixs->natt_type && ixs->natt_head) {
+#if 0
 		struct iphdr *ipp = ixs->skb->nh.iph;
+#endif
+		struct iphdr *ipp = ixs->iph;
+
 		struct udphdr *udp;
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 			    "klips_debug:ipsec_tunnel_start_xmit: "
@@ -1792,10 +1796,17 @@ ipsec_xmit_send(struct ipsec_xmit_state*ixs, struct flowi *fl)
 	int error;
   
 #ifdef NETDEV_25
+#if 0
  	fl->nl_u.ip4_u.daddr = ixs->skb->nh.iph->daddr;
  	fl->nl_u.ip4_u.saddr = ixs->pass ? 0 : ixs->skb->nh.iph->saddr;
  	fl->nl_u.ip4_u.tos = RT_TOS(ixs->skb->nh.iph->tos);
  	fl->proto = ixs->skb->nh.iph->protocol;
+#endif
+        fl->nl_u.ip4_u.daddr = ixs->iph->daddr;
+        fl->nl_u.ip4_u.saddr = ixs->pass ? 0 : ixs->iph->saddr;
+        fl->nl_u.ip4_u.tos = RT_TOS(ixs->iph->tos);
+        fl->proto = ixs->iph->protocol;
+
  	if ((error = ip_route_output_key(&ixs->route, fl))) {
 #else
 	/*skb_orphan(ixs->skb);*/
@@ -1832,6 +1843,9 @@ ipsec_xmit_send(struct ipsec_xmit_state*ixs, struct flowi *fl)
 		ixs->stats->tx_bytes += ixs->skb->len;
 	}
 
+#if 0
+	if(ixs->skb->len < ixs->skb->nh.raw - ixs->skb->data) {
+#endif
 	if(ixs->skb->len < skb_network_header(ixs->skb) - ixs->skb->data) {
 		if(ixs->stats) {
 			ixs->stats->tx_errors++;
@@ -1857,7 +1871,10 @@ ipsec_xmit_send(struct ipsec_xmit_state*ixs, struct flowi *fl)
 		    "klips_debug:ipsec_xmit_send: "
 		    "...done, calling ip_send() on device:%s\n",
 		    ixs->skb->dev ? ixs->skb->dev->name : "NULL");
+#if 0
 	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->skb->nh.iph);
+#endif
+	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ip_hdr(ixs->skb));
 #ifdef NETDEV_23	/* 2.4 kernels */
 	{
 		int err;
