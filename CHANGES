@@ -1,9 +1,13 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.5.52s
+* removed a spin_unlock in IP compress [david]
+* updated patches/2.6.16/* [paul]
+
 v2.5.51s
 * Various fixes were not commited to git, which were released as
   2.5.50s. Mostly related to 2.6.[23]+ and suse building [paul]
-* Updated patces/2.6.[23]/klips.patch files [paul]
+* Updated patches/2.6.[23]/klips.patch files [paul]
 
 v2.5.18 / v2.5.50s
 * KLIPSNG IPsec SAref support for clashing Virtual IP support [mcr]
