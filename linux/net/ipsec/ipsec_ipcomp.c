@@ -136,7 +136,6 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 
 	skb = skb_decompress(skb, ipsp, &flags);
 	if (!skb || flags) {
-		spin_unlock(&tdb_lock);
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "skb_decompress() returned error flags=%x, dropped.\n",
