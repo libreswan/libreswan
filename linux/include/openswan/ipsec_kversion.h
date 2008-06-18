@@ -152,7 +152,7 @@
  * patches to linux/skbuff.h, making it look like 2.6.18 version 
  */
 #ifdef CONFIG_XEN
-# HAVE_NEW_SKB_LINEARIZE
+#define HAVE_NEW_SKB_LINEARIZE
 #endif
 
 /* And the same for SuSe kernels who have it before it got into the
