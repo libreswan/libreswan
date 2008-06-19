@@ -1,5 +1,9 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.5.53s
+* Fixed IPSEC table handling in scripts [paul]
+  (Reported bug by Sony 12-06-2008)
+
 v2.5.52s
 * removed a spin_unlock in IP compress [david]
 * updated patches/2.6.16/* [paul]
