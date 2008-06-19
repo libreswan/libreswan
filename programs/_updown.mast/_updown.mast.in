@@ -4,6 +4,7 @@
 # Copyright (C) 2003-2004 Nigel Metheringham
 # Copyright (C) 2002-2007 Michael Richardson <mcr@xelerance.com>
 # Copyright (C) 2003-2005 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008 Paul Wouters <paul@xelerance.com>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -14,16 +15,14 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
-#
-# RCSID $Id: _updown.ip2.in,v 1.19 2005/08/25 21:52:53 paul Exp $
 
 
 
-# CAUTION:  Installing a new version of FreeS/WAN will install a new
+# CAUTION:  Installing a new version of Openswan will install a new
 # copy of this script, wiping out any custom changes you make.  If
 # you need changes, make a copy of this under another name, and customize
-# that, and use the (left/right)updown parameters in ipsec.conf to make
-# FreeS/WAN use yours instead of this default one.
+# that, and use the (left/right)updown= parameters in ipsec.conf to make
+# Openswan use yours instead of this default one.
 
 LC_ALL=C export LC_ALL
 
@@ -130,9 +129,6 @@ LC_ALL=C export LC_ALL
 #       DEFAULTSOURCE
 #              is the default value for PLUTO_MY_SOURCEIP
 #
-#       IPROUTETABLE
-#              is the default value for IPROUTETABLE
-#
 #       IPROUTEARGS
 #              is the extra argument list for ip route command
 #
@@ -172,7 +168,7 @@ esac
 # it will create one and insert it into the OUTPUT and FORWARD chains.
 checkipsec() {
     # first look for IPSEC chain.
-    if iptables -n -L -t mangle IPSEC >/dev/null 2>&1
+    if iptables -n -L IPSEC -t mangle >/dev/null 2>&1
     then
 	: it is okay. found it.
     else
@@ -183,8 +179,9 @@ checkipsec() {
 	# we pick table 50, cause proto50=ESP
 	# note "fwmarkmask" is an Openswan patch to "ip" command.
 	# note2: iproute2-2.6.22-070710 supports mask via /mask notation instead
+	# ip rule add fwmark 0x80000000/0x80000000 table 50
 	# ip rule add fwmark 0x80000000 fwmarkmask 0x80000000 table 50
-	ip rule add fwmark 0x80000000/0x80000000 table 50
+	ip rule add fwmark 0x80000000 fwmarkmask 0x80000000 table 50
 	ip route add 0.0.0.0/0 dev $PLUTO_INTERFACE table 50
     fi
 
@@ -194,18 +191,18 @@ checkipsec() {
 	: found it
     else
 	iptables -t mangle -I OUTPUT 1 -j IPSEC
-	#iptables -t mangle -I OUTPUT 1 -p udp --sport 500 -j ACCEPT
-	#iptables -t mangle -I OUTPUT 1 -p udp --dport 500 -j ACCEPT
-	#iptables -t mangle -I OUTPUT 1 -p udp --sport 4500 -j ACCEPT
-	#iptables -t mangle -I OUTPUT 1 -p udp --dport 4500 -j ACCEPT
+	iptables -t mangle -I OUTPUT 1 -p udp --sport 500 -j ACCEPT
+	iptables -t mangle -I OUTPUT 1 -p udp --dport 500 -j ACCEPT
+	iptables -t mangle -I OUTPUT 1 -p udp --sport 4500 -j ACCEPT
+	iptables -t mangle -I OUTPUT 1 -p udp --dport 4500 -j ACCEPT
     fi
 
-    # now look for -j IPSEC in OUTPUT and FORWARD chains.
-    if (iptables -n -L FORWARD | grep -q '^IPSEC')
+    # now look for -j IPSEC in PREROUTING chains.
+    if (iptables -n -t mangle -L PREROUTING | grep -q '^IPSEC')
     then
 	: found it
     else
-	iptables -A FORWARD -t mangle -j IPSEC
+	iptables -A PREROUTING -t mangle -j IPSEC
     fi
 
     
@@ -229,28 +226,14 @@ downroute() {
 
 # called XXXX
 uprule() {
-	# policy based advanced routing
-	if [ -n "$IPROUTETABLE" ]
-	then
-	    doipsecrule delete
-	    doipsecrule add
-	fi
-	# virtual sourceip support
-	if [ -n "$PLUTO_MY_SOURCEIP" ]
-	then
-	    addsource
-	    changesource
-	fi
+	doipsecrule delete
+	doipsecrule add
 	ip route flush cache
 }
 
 # called XXXX
 downrule() {
-	if [ -n "$PLUTO_MY_SOURCEIP" ]
-	then
-	    doipsecrule delete
-	    ip route flush cache
-	fi
+	doipsecrule delete
 }
 
 addsource() {
@@ -293,6 +276,7 @@ addsource() {
 	return $st
 }
 
+# WARNING: changesource might not work as expected with mast
 changesource() {
 	st=0
 	parms="$PLUTO_PEER_CLIENT"
@@ -303,7 +287,7 @@ changesource() {
 	    parms3="$parms3 table $IPROUTETABLE"
 	fi
 	cmd=add
-	if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep ipsec0
+	if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep mast0
 	then
 	    cmd=change
 	fi
@@ -327,84 +311,6 @@ changesource() {
  	return $st
 }
 
-dorule() {
-	st=0
-	it2=
-	iprule="from $PLUTO_MY_CLIENT"
-	iprule2="to $PLUTO_PEER_CLIENT"
-	if [ -n "$IPROUTETABLE" ]
-	then
-	    iprule2="$iprule2 table $IPROUTETABLE"
-	fi
-	iprule2="$iprule2 $IPRULEARGS"
-
-	case "$PLUTO_PEER_CLIENT" in
-	"0.0.0.0/0")
-		# opportunistic encryption work around
-		st=0
-		;;
-	*)
-		if [ -z "$PLUTO_MY_SOURCEIP" ]
-		then
-		    if [ "$PLUTO_ME" = "${PLUTO_MY_CLIENT%/*}" ]
-		    then
-			it="ip rule $1 iif lo $iprule2"
-		    else
-			it="ip rule $1 $iprule $iprule2"
-		    fi
-		else
-		    if [ "${PLUTO_MY_SOURCEIP%/*}" = "${PLUTO_MY_CLIENT%/*}" ]
-		    then
-			it="ip rule $1 iif lo $iprule2"
-		    else
-			it="ip rule $1 $iprule $iprule2"
-			it2="ip rule $1 iif lo $iprule2"
-		    fi
-		fi
-		oops="`eval $it 2>&1`"
-		st=$?
-		if test " $oops" = " " -a " $st" != " 0"
-		then
-		    oops="silent error, exit status $st"
-		fi
-		case "$oops" in
-		'RTNETLINK answers: No such process'*)
-			# This is what ip rule gives
-			# for "could not find such a rule"
-			oops=
-			st=0
-			;;
-		esac
-		if test " $oops" != " " -o " $st" != " 0"
-		then
-		    echo "$0: dorule \`$it' failed ($oops)" >&2
-		fi
-		if test "$st" = "0" -a -n "$it2"
-		then
-		    oops="`eval $it2 2>&1`"
-		    st=$?
-		    if test " $oops" = " " -a " $st" != " 0"
-		    then
-			oops="silent error, exit status $st"
-		    fi
-		    case "$oops" in
-		    'RTNETLINK answers: No such process'*)
-			    # This is what ip rule gives
-			    # for "could not find such a rule"
-			    oops=
-			    st=0
-			    ;;
-		    esac
-		    if test " $oops" != " " -o " $st" != " 0"
-		    then
-			echo "$0: dorule \`$it2' failed ($oops)" >&2
-		    fi
-		fi
-		;;
-	    esac
-	return $st
-}
-
 # the purpose of this command is to add an entry to the IPSEC chain in
 # the iptables system. It grabs the right packets and does a --set-mark
 # on them. An advanced routing rule then directs the packets to the
@@ -423,16 +329,12 @@ doipsecrule() {
 	#echo SAref: $saref '->' $nf_saref
 
 	case $1 in
-	    add) it="iptables -I IPSEC 1 -t mangle --src $srcnet --dst $dstnet -j MARK --set-mark $nf_saref"
-		 if -n "$PLUTO_MY_SOURCEIP" 
-		 then 
-			addsource 
-                 fi;;
+	    add) it="iptables -I IPSEC 1 -t mangle --src $srcnet --dst $dstnet -j MARK --set-mark $nf_saref";;
 
             delete) it="iptables -D IPSEC -t mangle --src $srcnet --dst $dstnet -j MARK --set-mark $nf_saref";;
         esac
 
-	oops="`eval $it 2>&1`"
+	oops="`set +x; eval $it 2>&1`"
 	st=$?
 	if test " $oops" = " " -a " $st" != " 0"
 	then
@@ -448,41 +350,41 @@ doipsecrule() {
 
 # the big choice
 case "$PLUTO_VERB:$1" in
+spdadd-client:*|spdadd-host:*)
+	checkipsec;
+	doipsecrule add;;
+
+spddel-client:*|spddel-host:*)
+	checkipsec
+	doipsecrule delete;;
+
 prepare-host:*|prepare-client:*)
 	# set up a "%trap" equivalent (we don't know how do this yet!)
 	;;
 
 route-host:*|route-client:*)
 	# connection to me or my client subnet being routed
-	uproute
+	# setup of %TRAP equivalent
 	;;
 
 unroute-host:*|unroute-client:*)
 	# connection to me or my client subnet being unrouted
-	downroute
+	# remove %TRAP equivalent
 	;;
 
 up-host:*)
-	# connection to me coming up
-	uprule
 	# If you are doing a custom version, firewall commands go here.
 	;;
 
 down-host:*)
-	# connection to me going down
-	downrule
 	# If you are doing a custom version, firewall commands go here.
 	;;
 
 up-client:)
-	# connection to my client subnet coming up
-	uprule
 	# If you are doing a custom version, firewall commands go here.
 	;;
 
 down-client:)
-	# connection to my client subnet going down
-	downrule
 	# If you are doing a custom version, firewall commands go here.
 	;;
 
