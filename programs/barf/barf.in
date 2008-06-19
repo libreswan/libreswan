@@ -184,6 +184,7 @@ _________________________ /proc/crypto
 if test -r /proc/crypto
 then
 	cat /proc/crypto
+fi
 # not visible on my 2.6 system
 #_________________________ /proc/net/pf_key-star
 #( cd /proc/net && egrep '^' pf_key_* )
