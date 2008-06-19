@@ -168,14 +168,6 @@ then
 	test -d /proc/net/ipsec/spi && ipsec spi --clear'
 fi
 
-# flush some stuff for mast as well
-if $mast
-then
-	KILLKLIPS='test -r /proc/net/ipsec_klipsdebug && ipsec klipsdebug --none ;
-	    test -d /proc/net/ipsec/eroute && ipsec eroute --clear ;
-	    test -d /proc/net/ipsec/spi && ipsec spi --clear'
-fi
-
 if $netkey
 then
 	KILLKLIPS='
