@@ -303,7 +303,7 @@ USE_SAREF_KERNEL=true
 
 # Build support for Linux NETKEY (XFRM) kernel level IPsec support for
 # pluto (aka "native", "kame")
-USE_NETKEY?=false
+USE_NETKEY?=true
 
 # Whether or not to use iproute2 based commands.
 # On Kernel 2.0, and early 2.2 systems you may need to either install the
