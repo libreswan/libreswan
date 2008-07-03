@@ -269,6 +269,7 @@ ipsec_klips_init(void)
                 goto error_tunnel_init_devices;
 
 	error |= ipsec_mast_init_devices();
+	/* XXX Don't we need to call cleanup goto on error here? */
 
 #if defined(NET_26) && defined(CONFIG_IPSEC_NAT_TRAVERSAL)
 	/* register our ESP-UDP handler */
@@ -446,9 +447,7 @@ cleanup_module(void)
 #endif /* MODULE */
 
 /*
- *
  * Local variables:
  * c-file-style: "linux"
  * End:
- *
  */
