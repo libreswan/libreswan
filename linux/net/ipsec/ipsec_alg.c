@@ -305,7 +305,7 @@ int ipsec_alg_enc_key_create(struct ipsec_sa *sa_p) {
 		    "entering with encalg=%d ixt_e=%p\n",
 		    sa_p->ips_encalg, ixt_e);
 	if (!ixt_e) {
-		KLIPS_PRINT(debug_pfkey,
+		KLIPS_ERROR(debug_pfkey,
 			    "klips_debug:ipsec_alg_enc_key_create: "
 			    "NULL ipsec_alg_enc object\n");
 		return -EPROTO;
