@@ -134,6 +134,7 @@ pfkey_x_debug_process(struct sadb_ext *pfkey_ext,
 		      struct pfkey_extracted_data* extr);
 
 extern int pfkey_upmsg(struct socket *, struct sadb_msg *);
+extern int pfkey_upmsgsk(struct sock *, struct sadb_msg *);
 extern int pfkey_expire(struct ipsec_sa *, int);
 extern int pfkey_acquire(struct ipsec_sa *);
 #else /* ! __KERNEL__ */
