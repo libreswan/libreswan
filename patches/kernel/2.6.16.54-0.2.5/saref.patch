@@ -1,0 +1,327 @@
+diff -rupN linux-2.6.16.54-0.2.5/include/linux/in.h linux-2.6.16.54-0.2.5.osw2.5.55s/include/linux/in.h
+--- linux-2.6.16.54-0.2.5/include/linux/in.h	2006-03-20 00:53:29.000000000 -0500
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/include/linux/in.h	2008-06-04 23:51:07.000000000 -0400
+@@ -72,6 +72,7 @@ struct in_addr {
+ #define IP_FREEBIND	15
+ #define IP_IPSEC_POLICY	16
+ #define IP_XFRM_POLICY	17
++#define IP_IPSEC_REFINFO 22
+ 
+ /* BSD compatibility */
+ #define IP_RECVRETOPTS	IP_RETOPTS
+diff -rupN linux-2.6.16.54-0.2.5/include/linux/rtnetlink.h linux-2.6.16.54-0.2.5.osw2.5.55s/include/linux/rtnetlink.h
+--- linux-2.6.16.54-0.2.5/include/linux/rtnetlink.h	2006-03-20 00:53:29.000000000 -0500
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/include/linux/rtnetlink.h	2008-06-30 23:35:32.000000000 -0400
+@@ -265,6 +265,9 @@ enum rtattr_type_t
+ 	__RTA_MAX
+ };
+ 
++#define RTA_FWMARK      RTA_PROTOINFO
++#define RTA_FWMARK_MASK RTA_CACHEINFO
++
+ #define RTA_MAX (__RTA_MAX - 1)
+ 
+ #define RTM_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct rtmsg))))
+diff -rupN linux-2.6.16.54-0.2.5/include/net/ip.h linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/ip.h
+--- linux-2.6.16.54-0.2.5/include/net/ip.h	2008-06-04 23:44:34.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/ip.h	2008-06-04 23:51:07.000000000 -0400
+@@ -49,6 +49,7 @@ struct ipcm_cookie
+ 	u32			addr;
+ 	int			oif;
+ 	struct ip_options	*opt;
++	struct sec_path         *sp;
+ };
+ 
+ #define IPCB(skb) ((struct inet_skb_parm*)((skb)->cb))
+diff -rupN linux-2.6.16.54-0.2.5/include/net/xfrm.h linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/xfrm.h
+--- linux-2.6.16.54-0.2.5/include/net/xfrm.h	2006-03-20 00:53:29.000000000 -0500
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/xfrm.h	2008-06-04 23:51:07.000000000 -0400
+@@ -587,13 +587,19 @@ struct sec_decap_state {
+ 	struct xfrm_decap_state decap;
+ };
+ 
++typedef unsigned int xfrm_sec_unique_t;
++
+ struct sec_path
+ {
+ 	atomic_t		refcnt;
++	xfrm_sec_unique_t       ref;       /*reference to high-level policy*/
+ 	int			len;
+ 	struct sec_decap_state	x[XFRM_MAX_DEPTH];
+ };
+ 
++struct ipcm_cookie;
++extern int ip_cmsg_send_ipsec(struct cmsghdr *cmsg, struct ipcm_cookie *ipc);
++
+ static inline struct sec_path *
+ secpath_get(struct sec_path *sp)
+ {
+diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/fib_rules.c
+--- linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c	2006-03-20 00:53:29.000000000 -0500
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/fib_rules.c	2008-06-30 23:27:55.000000000 -0400
+@@ -68,6 +68,7 @@ struct fib_rule
+ 	u8		r_tos;
+ #ifdef CONFIG_IP_ROUTE_FWMARK
+ 	u32		r_fwmark;
++        u32             r_fwmark_mask;
+ #endif
+ 	int		r_ifindex;
+ #ifdef CONFIG_NET_CLS_ROUTE
+@@ -116,7 +117,8 @@ int inet_rtm_delrule(struct sk_buff *skb
+ 		    (!rta[RTA_DST-1] || memcmp(RTA_DATA(rta[RTA_DST-1]), &r->r_dst, 4) == 0) &&
+ 		    rtm->rtm_tos == r->r_tos &&
+ #ifdef CONFIG_IP_ROUTE_FWMARK
+-		    (!rta[RTA_PROTOINFO-1] || memcmp(RTA_DATA(rta[RTA_PROTOINFO-1]), &r->r_fwmark, 4) == 0) &&
++		    (!rta[RTA_FWMARK-1] || memcmp(RTA_DATA(rta[RTA_FWMARK-1]), &r->r_fwmark, 4) == 0) &&
++		    (!rta[RTA_FWMARK_MASK-1] || memcmp(RTA_DATA(rta[RTA_FWMARK_MASK-1]), &r->r_fwmark_mask, 4) == 0) &&
+ #endif
+ 		    (!rtm->rtm_type || rtm->rtm_type == r->r_action) &&
+ 		    (!rta[RTA_PRIORITY-1] || memcmp(RTA_DATA(rta[RTA_PRIORITY-1]), &r->r_preference, 4) == 0) &&
+@@ -200,8 +202,21 @@ int inet_rtm_newrule(struct sk_buff *skb
+ 	new_r->r_dstmask = inet_make_mask(rtm->rtm_dst_len);
+ 	new_r->r_tos = rtm->rtm_tos;
+ #ifdef CONFIG_IP_ROUTE_FWMARK
+-	if (rta[RTA_PROTOINFO-1])
+-		memcpy(&new_r->r_fwmark, RTA_DATA(rta[RTA_PROTOINFO-1]), 4);
++	if (rta[RTA_FWMARK-1]) {
++		memcpy(&new_r->r_fwmark,      RTA_DATA(rta[RTA_FWMARK-1]), 4);
++	}
++	if (rta[RTA_FWMARK_MASK-1]) {
++		memcpy(&new_r->r_fwmark_mask, RTA_DATA(rta[RTA_FWMARK_MASK-1]), 4);
++	}
++	/*
++	 * if the user doesn't set a mask, then set it to care about
++	 * all bits. This retains compatibility. Note it is impossible
++	 * to match SOMETHING & 0xMASK == 0, because fwmark==0 means
++	 * do not match fwmark at all.
++	 */
++	if(new_r->r_fwmark_mask == 0) {
++		new_r->r_fwmark_mask = 0xffffffff;
++	}
+ #endif
+ 	new_r->r_action = rtm->rtm_type;
+ 	new_r->r_flags = rtm->rtm_flags;
+@@ -298,7 +313,7 @@ FRprintk("Lookup: %u.%u.%u.%u <- %u.%u.%
+ 		    ((daddr^r->r_dst) & r->r_dstmask) ||
+ 		    (r->r_tos && r->r_tos != flp->fl4_tos) ||
+ #ifdef CONFIG_IP_ROUTE_FWMARK
+-		    (r->r_fwmark && r->r_fwmark != flp->fl4_fwmark) ||
++		    (r->r_fwmark && r->r_fwmark != (flp->fl4_fwmark & r->r_fwmark_mask)) ||
+ #endif
+ 		    (r->r_ifindex && r->r_ifindex != flp->iif))
+ 			continue;
+@@ -382,8 +397,10 @@ static __inline__ int inet_fill_rule(str
+ 	rtm->rtm_src_len = r->r_src_len;
+ 	rtm->rtm_tos = r->r_tos;
+ #ifdef CONFIG_IP_ROUTE_FWMARK
+-	if (r->r_fwmark)
+-		RTA_PUT(skb, RTA_PROTOINFO, 4, &r->r_fwmark);
++	if (r->r_fwmark) {
++		RTA_PUT(skb, RTA_FWMARK, 4, &r->r_fwmark);
++		RTA_PUT(skb, RTA_FWMARK_MASK, 4, &r->r_fwmark_mask);
++	}
+ #endif
+ 	rtm->rtm_table = r->r_table;
+ 	rtm->rtm_protocol = 0;
+diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/icmp.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/icmp.c
+--- linux-2.6.16.54-0.2.5/net/ipv4/icmp.c	2006-03-20 00:53:29.000000000 -0500
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/icmp.c	2008-06-04 23:51:07.000000000 -0400
+@@ -440,6 +440,8 @@ void icmp_send(struct sk_buff *skb_in, i
+ 	u32 saddr;
+ 	u8  tos;
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	if (!rt)
+ 		goto out;
+ 
+diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_output.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/ip_output.c
+--- linux-2.6.16.54-0.2.5/net/ipv4/ip_output.c	2008-06-04 23:44:47.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/ip_output.c	2008-07-02 12:51:26.000000000 -0400
+@@ -75,6 +75,7 @@
+ #include <net/arp.h>
+ #include <net/icmp.h>
+ #include <net/checksum.h>
++#include <net/xfrm.h>
+ #include <net/inetpeer.h>
+ #include <net/checksum.h>
+ #include <linux/igmp.h>
+@@ -390,6 +391,8 @@ static void ip_copy_metadata(struct sk_b
+ 	/* Copy the flags to each fragment. */
+ 	IPCB(to)->flags = IPCB(from)->flags;
+ 
++	to->sp = secpath_get(from->sp);
++
+ #ifdef CONFIG_NET_SCHED
+ 	to->tc_index = from->tc_index;
+ #endif
+@@ -929,6 +932,7 @@ alloc_new_skb:
+ 			 */
+ 			skb->ip_summed = csummode;
+ 			skb->csum = 0;
++			skb->sp = secpath_get(ipc->sp);
+ 			skb_reserve(skb, hh_len);
+ 
+ 			/*
+@@ -1341,6 +1345,8 @@ void ip_send_reply(struct sock *sk, stru
+ 	u32 daddr;
+ 	struct rtable *rt = (struct rtable*)skb->dst;
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	if (ip_options_echo(&replyopts.opt, skb))
+ 		return;
+ 
+diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/ip_sockglue.c
+--- linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c	2006-03-20 00:53:29.000000000 -0500
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/ip_sockglue.c	2008-07-02 12:56:39.000000000 -0400
+@@ -50,6 +50,7 @@
+ #define IP_CMSG_TOS		4
+ #define IP_CMSG_RECVOPTS	8
+ #define IP_CMSG_RETOPTS		16
++#define IP_CMSG_IPSEC_REFINFO   32
+ 
+ /*
+  *	SOL_IP control messages.
+@@ -112,6 +113,7 @@ static void ip_cmsg_recv_retopts(struct 
+ 
+ void ip_cmsg_recv(struct msghdr *msg, struct sk_buff *skb)
+ {
++	extern void ip_cmsg_recv_ipsec(struct msghdr *msg, struct sk_buff *skb);
+ 	struct inet_sock *inet = inet_sk(skb->sk);
+ 	unsigned flags = inet->cmsg_flags;
+ 
+@@ -138,6 +140,12 @@ void ip_cmsg_recv(struct msghdr *msg, st
+ 
+ 	if (flags & 1)
+ 		ip_cmsg_recv_retopts(msg, skb);
++       if ((flags>>=1) == 0)
++               return;
++
++       /* IP_CMSG_IPSEC_REFINFO */
++       if (flags & 1)
++               ip_cmsg_recv_ipsec(msg, skb);
+ }
+ 
+ int ip_cmsg_send(struct msghdr *msg, struct ipcm_cookie *ipc)
+@@ -167,6 +175,14 @@ int ip_cmsg_send(struct msghdr *msg, str
+ 			ipc->addr = info->ipi_spec_dst.s_addr;
+ 			break;
+ 		}
++               case IP_IPSEC_REFINFO:
++               {
++                       err = ip_cmsg_send_ipsec(cmsg, ipc);
++                       if(err)
++                               return err;
++
++                       break;
++               }
+ 		default:
+ 			return -EINVAL;
+ 		}
+@@ -389,6 +405,7 @@ int ip_setsockopt(struct sock *sk, int l
+ 		return -ENOPROTOOPT;
+ 
+ 	if (((1<<optname) & ((1<<IP_PKTINFO) | (1<<IP_RECVTTL) | 
++			     (1<<IP_IPSEC_REFINFO) |
+ 			    (1<<IP_RECVOPTS) | (1<<IP_RECVTOS) | 
+ 			    (1<<IP_RETOPTS) | (1<<IP_TOS) | 
+ 			    (1<<IP_TTL) | (1<<IP_HDRINCL) | 
+@@ -478,6 +495,12 @@ int ip_setsockopt(struct sock *sk, int l
+ 			else
+ 				inet->cmsg_flags &= ~IP_CMSG_RETOPTS;
+ 			break;
++		case IP_IPSEC_REFINFO:
++			if (val)
++				inet->cmsg_flags |= IP_CMSG_IPSEC_REFINFO;
++			else
++				inet->cmsg_flags &= ~IP_CMSG_IPSEC_REFINFO;
++			break;
+ 		case IP_TOS:	/* This sets both TOS and Precedence */
+ 			if (sk->sk_type == SOCK_STREAM) {
+ 				val &= ~3;
+@@ -932,6 +955,9 @@ int ip_getsockopt(struct sock *sk, int l
+ 		case IP_RETOPTS:
+ 			val = (inet->cmsg_flags & IP_CMSG_RETOPTS) != 0;
+ 			break;
++		case IP_IPSEC_REFINFO:
++			val = (inet->cmsg_flags & IP_CMSG_IPSEC_REFINFO) != 0;
++			break;
+ 		case IP_TOS:
+ 			val = inet->tos;
+ 			break;
+@@ -1083,6 +1109,7 @@ int ip_getsockopt(struct sock *sk, int l
+ }
+ 
+ EXPORT_SYMBOL(ip_cmsg_recv);
++EXPORT_SYMBOL(ip_cmsg_send);
+ 
+ EXPORT_SYMBOL(ip_getsockopt);
+ EXPORT_SYMBOL(ip_setsockopt);
+diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/raw.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/raw.c
+--- linux-2.6.16.54-0.2.5/net/ipv4/raw.c	2006-03-20 00:53:29.000000000 -0500
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/raw.c	2008-06-04 23:51:07.000000000 -0400
+@@ -387,6 +387,8 @@ static int raw_sendmsg(struct kiocb *ioc
+ 	u8  tos;
+ 	int err;
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	err = -EMSGSIZE;
+ 	if (len > 0xFFFF)
+ 		goto out;
+diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/udp.c
+--- linux-2.6.16.54-0.2.5/net/ipv4/udp.c	2008-06-04 23:44:38.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/udp.c	2008-06-04 23:53:52.000000000 -0400
+@@ -497,6 +500,8 @@ int udp_sendmsg(struct kiocb *iocb, stru
+ 	int err;
+ 	int corkreq = up->corkflag || msg->msg_flags&MSG_MORE;
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	if (len > 0xFFFF)
+ 		return -EMSGSIZE;
+ 
+@@ -658,6 +663,10 @@ out:
+ 	ip_rt_put(rt);
+ 	if (free)
+ 		kfree(ipc.opt);
++	if(ipc.sp) {
++		secpath_put(ipc.sp);
++		ipc.sp=NULL;
++	}
+ 	if (!err) {
+ 		UDP_INC_STATS_USER(UDP_MIB_OUTDATAGRAMS);
+ 		return len;
+@@ -904,11 +949,11 @@ static int udp_encap_rcv(struct sock * s
+ 	/* if we're overly short, let UDP handle it */
+ 	len = skb->len - sizeof(struct udphdr);
+ 	if (len <= 0)
+-		return 1;
++		return 2;
+ 
+ 	/* if this is not encapsulated socket, then just return now */
+ 	if (!encap_type)
+-		return 1;
++		return 3;
+ 
+ 	/* If this is a paged skb, make sure we pull up
+ 	 * whatever data we need to look at. */
+@@ -931,7 +976,7 @@ static int udp_encap_rcv(struct sock * s
+ 			len = sizeof(struct udphdr);
+ 		} else
+ 			/* Must be an IKE packet.. pass it through */
+-			return 1;
++			return 4;
+ 		break;
+ 	case UDP_ENCAP_ESPINUDP_NON_IKE:
+ 		/* Check if this is a keepalive packet.  If so, eat it. */
+@@ -944,7 +989,7 @@ static int udp_encap_rcv(struct sock * s
+ 			len = sizeof(struct udphdr) + 2 * sizeof(u32);
+ 		} else
+ 			/* Must be an IKE packet.. pass it through */
+-			return 1;
++			return 5;
+ 		break;
+ 	}
+ 
