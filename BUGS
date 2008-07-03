@@ -92,3 +92,5 @@ For a detailed list, see http://bugs.openswan.org/
 
 * Document and/or make configure option of the define IPSEC_obey_DF. It seems
   currently not to be set anywhere.
+
+* Also document and/or make option for MSS_HACK_ / MSS_HACK (in ipsec_xmit.c)
