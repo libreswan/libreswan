@@ -14,7 +14,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- *
  */
 
 /* 
@@ -32,7 +31,7 @@
 #include <linux/module.h>
 #ifndef AUTOCONF_INCLUDED
 #include <linux/config.h>
-#endif	/* for CONFIG_IP_FORWARD */
+#endif
 #include <linux/version.h>
 #include <linux/kernel.h> /* printk() */
 
