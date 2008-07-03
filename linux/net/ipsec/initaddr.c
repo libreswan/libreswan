@@ -73,7 +73,7 @@ ip_address *dst;
 		bzero(&dst->u.v6, sizeof(dst->u.v6));
 #endif
 		dst->u.v6.sin6_family = af;
-		dst->u.v6.sin6_flowinfo = 0;		/* unused */
+		dst->u.v6.sin6_flowinfo = 0;
 		dst->u.v6.sin6_port = 0;
 		memcpy((char *)&dst->u.v6.sin6_addr, src, srclen);
 		break;
