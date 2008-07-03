@@ -144,6 +144,12 @@
 #define SYSCTL_IPSEC_DEFAULT_TTL IPSEC_DEFAULT_TTL
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+# define module_param(a,b,c)  MODULE_PARM(#a,"i")
+/* note below is only true for our current calls to module_param_array */
+# define module_param_array(a,b,c,d)  MODULE_PARM(#a,"1-2i")
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
 #define HAVE_NEW_SKB_LINEARIZE
 #endif
