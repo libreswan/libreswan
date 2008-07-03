@@ -36,10 +36,8 @@ static size_t reverse6(const unsigned char *s, size_t len, char *b, char **dp);
  * Find the first occurrence of find in s.
  * (from NetBSD 1.6's /src/lib/libc/string/strstr.c)
  */
-static char *strstr(const char *s, const char *find);
-
 static char *
-strstr(s, find)
+ipsec_strstr(s, find)
 	const char *s, *find;
 {
 	char c, sc;
@@ -255,7 +253,6 @@ char **dstp;			/* where to put result pointer */
 #ifdef ADDRTOT_MAIN
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
