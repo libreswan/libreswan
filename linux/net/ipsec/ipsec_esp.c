@@ -350,9 +350,6 @@ ipsec_rcv_esp_decrypt(struct ipsec_rcv_state *irs)
 	return IPSEC_RCV_OK;
 }
 
-/*
- *
- */
 enum ipsec_xmit_value
 ipsec_xmit_esp_setup(struct ipsec_xmit_state *ixs)
 {
