@@ -90,4 +90,5 @@ For a detailed list, see http://bugs.openswan.org/
   is more than "IPsec-overhead" larger than the MTU. This is to compatible
   with plpmtud (i.e. "PMTUbis") being proposed in the pmtud WG.
 
-This file is RCSID $Id: BUGS,v 1.56.2.3 2005/11/08 18:13:26 ken Exp $
+* Document and/or make configure option of the define IPSEC_obey_DF. It seems
+  currently not to be set anywhere.
