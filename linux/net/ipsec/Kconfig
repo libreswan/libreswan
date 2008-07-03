@@ -17,7 +17,7 @@
 config KLIPS
 	tristate "Openswan IPsec (KLIPS)"
 	default n
-	select NF_CONNTRACK && NETFILTER
+	depends on NF_CONNTRACK && NETFILTER
 	help
 	  KLIPS is the Openswan (www.openswan.org) Kernel Level IP Security
 	  system. It is extensively tested, and has interoperated with
