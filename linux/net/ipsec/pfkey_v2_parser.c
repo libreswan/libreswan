@@ -2745,13 +2745,16 @@ DEBUG_NO_STATIC int
 pfkey_x_plumb_parse(struct sock *sk, struct sadb_ext *extensions[], struct pfkey_extracted_data* extr)
 {
 	unsigned int vifnum;
+	int err;
 
 	vifnum = extr->outif;
 	if(vifnum > IPSECDEV_OFFSET) {
-		return ipsec_tunnel_createnum(vifnum-IPSECDEV_OFFSET);
+		err = ipsec_tunnel_createnum(vifnum-IPSECDEV_OFFSET);
 	} else {
-		return ipsec_mast_createnum(vifnum);
+		err = ipsec_mast_createnum(vifnum);
 	}
+
+	return pfkey_x_simple_reply(sk, extensions, err);
 }
 
 /*
@@ -2762,13 +2765,16 @@ DEBUG_NO_STATIC int
 pfkey_x_unplumb_parse(struct sock *sk, struct sadb_ext *extensions[], struct pfkey_extracted_data* extr)
 {
 	unsigned int vifnum;
+	int err;
 
 	vifnum = extr->outif;
 	if(vifnum > IPSECDEV_OFFSET) {
-		return ipsec_tunnel_deletenum(vifnum-IPSECDEV_OFFSET);
+		err = ipsec_tunnel_deletenum(vifnum-IPSECDEV_OFFSET);
 	} else {
-		return ipsec_mast_deletenum(vifnum);
+		err = ipsec_mast_deletenum(vifnum);
 	}
+
+	return pfkey_x_simple_reply(sk, extensions, err);
 }
 
 
