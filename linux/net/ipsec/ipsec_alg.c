@@ -850,7 +850,7 @@ int ipsec_alg_init(void) {
 	}
 #endif
 
-#if defined(CONFIG_KLIPS_ENC_3DES) && !defined(CONFIG_KLIPS_ENC_3DES_MODULE) 
+#if defined(CONFIG_KLIPS_ENC_3DES) && !defined(CONFIG_KLIPS_ENC_3DES_MODULE)
 #if defined(CONFIG_KLIPS_ENC_CRYPTOAPI) && CONFIG_KLIPS_ENC_CRYPTOAPI
 #warning "Using built-in 3des rather than CryptoAPI 3des"
 #endif	
