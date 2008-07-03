@@ -2706,6 +2706,37 @@ DEBUG_NO_STATIC int (*ext_processors[K_SADB_EXT_MAX+1])(struct sadb_ext *pfkey_e
  * MESSAGE PARSERS FOR KLIPS
  ********************************/
 
+DEBUG_NO_STATIC int
+pfkey_x_simple_reply(struct sock *sk , struct sadb_ext *extensions[], int err)
+{
+	struct sadb_msg *pfkey_reply = NULL;
+	int error = 0;
+	struct sadb_msg *m = ((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED]);
+
+	m->sadb_msg_errno = err;
+
+	if ((error = pfkey_msg_build(&pfkey_reply, extensions, EXT_BITS_OUT))) {
+		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_expire: "
+			    "failed to build the expire message\n");
+		SENDERR(-error);
+	}
+
+	error = pfkey_upmsgsk(sk, pfkey_reply);
+
+	if(error) {
+		KLIPS_ERROR(debug_pfkey, "pfkey_simple reply:"
+			    "sending up simple reply to pid=%d error=%d.\n",
+			     m->sadb_msg_pid, err);
+	}
+
+errlab:
+	if (pfkey_reply) {
+		pfkey_msg_free(&pfkey_reply);
+	}
+
+	return error;
+}
+
 /*
  * this is a request to create a new device. Figure out which kind, and call appropriate
  * routine in mast or tunnel code.
