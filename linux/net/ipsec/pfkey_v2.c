@@ -77,10 +77,13 @@
 
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
+#if 0
 #ifndef SOCKOPS_WRAPPED
 #define SOCKOPS_WRAPPED(name) name
 #endif /* SOCKOPS_WRAPPED */
+#endif
 
+extern struct proto_ops SOCKOPS_WRAPPED(pfkey_ops);
 
 #ifdef NET_26
 static rwlock_t pfkey_sock_lock = RW_LOCK_UNLOCKED;
@@ -559,8 +562,6 @@ pfkey_destroy_socket(struct sock *sk)
 int
 pfkey_upmsg(struct socket *sock, struct sadb_msg *pfkey_msg)
 {
-	int error = 0;
-	struct sk_buff * skb = NULL;
 	struct sock *sk;
 
 	if(sock == NULL) {
@@ -578,6 +579,14 @@ pfkey_upmsg(struct socket *sock, struct sadb_msg *pfkey_msg)
 	}
 
 	sk = sock->sk;
+	return pfkey_upmsgsk(sk, pfkey_msg);
+}
+
+int
+pfkey_upmsgsk(struct sock *sk, struct sadb_msg *pfkey_msg)
+{
+	int error = 0;
+	struct sk_buff * skb = NULL;
 
 	if(sk == NULL) {
 		KLIPS_PRINT(debug_pfkey,
@@ -705,7 +714,7 @@ pfkey_create(struct socket *sock, int protocol)
 
 	sk->sk_destruct = NULL;
 	sk->sk_reuse = 1;
-	sock->ops = &pfkey_ops;
+	sock->ops =  &SOCKOPS_WRAPPED(pfkey_ops);
 
 	sk->sk_family = PF_KEY;
 /*	sk->num = protocol; */
