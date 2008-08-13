@@ -1416,27 +1416,33 @@ ipsec_rcv(struct sk_buff *skb
 #endif /* CONFIG_KLIPS_DEBUG */
 	unsigned char protoc;
 	struct net_device_stats *stats = NULL;		/* This device's statistics */
-	struct ipsec_rcv_state nirs, *irs = &nirs;
+	struct ipsec_rcv_state *irs = NULL;
 	struct iphdr *ipp;
 	int i;
 
 	/* Don't unlink in the middle of a turnaround */
 	KLIPS_INC_USE;
 
-	memset(&nirs, 0, sizeof(struct ipsec_rcv_state));
+	irs = ipsec_rcv_state_new ();
+	if (unlikely (! irs)) {
+		KLIPS_PRINT(debug_rcv,
+			   "klips_debug:ipsec_rcv: "
+			    "failled to allocate a rcv state object\n");
+		goto rcvleave:;
+	}
 
 	if (skb == NULL) {
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "NULL skb passed in.\n");
-		goto error_no_skb;
+		goto rcvleave:;
 	}
 
 	if (skb->data == NULL) {
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "NULL skb->data passed in, packet is bogus, dropping.\n");
-		goto error_bad_skb;
+		goto rcvleave:;
 	}
 
 #if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && !defined(NET_26)
@@ -1636,14 +1642,14 @@ ipsec_rcv(struct sk_buff *skb
 	return(0);
 
 rcvleave:
-        ipsec_rcv_state_delete (irs);
-
-error_bad_skb:
-        ipsec_kfree_skb(skb);
-error_no_skb:
-
-	KLIPS_DEC_USE;
-	return(0);
+        if (irs) {
+                ipsec_rcv_state_delete(irs);
+        }
+        if (skb) {
+                ipsec_kfree_skb(skb);
+        }
+        KLIPS_DEC_USE;
+        return(0);
 
 }
 
