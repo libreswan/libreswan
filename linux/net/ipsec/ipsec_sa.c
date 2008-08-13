@@ -136,6 +136,7 @@ ipsec_SAref_recycle(void)
 	/* add one additional table entry */
 	addone = 0;
 
+	/* Paul: git 9c9fa9ecc221aad09c19f034eee37a76d156c1d2 on top of 08d50334736c1c8c4bcf9a2538f6a49b994ed39f */
 	ipsec_sadb.refFreeListHead = IPSEC_SAREF_FIRST;
 	for(i = 0; i < IPSEC_SA_REF_FREELIST_NUM_ENTRIES; i++) {
 		table = IPsecSAref2table(ipsec_sadb.refFreeListCont);
@@ -577,30 +578,32 @@ ipsec_sa_getbyref(IPsecSAref_t ref)
 	return ips;
 }
 
-int
-ipsec_sa_put(struct ipsec_sa *ips)
+void
+__ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
 {
-        char sa[SATOT_BUF];
-	size_t sa_len;
-
 	if(ips == NULL) {
 		KLIPS_PRINT(debug_xform,
 			    "ipsec_sa_put: "
 			    "null pointer passed in!\n");
-		return -1;
+		return;
 	}
 
+#ifdef CONFIG_KLIPS_DEBUG
 	if(debug_xform) {
+		char sa[SATOT_BUF];
+		size_t sa_len;
 		sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
 
 		KLIPS_PRINT(debug_xform,
 			    "ipsec_sa_put: "
-			    "ipsec_sa %p SA:%s, ref:%d reference count (%d--) decremented.\n",
+			    "ipsec_sa %p SA:%s, ref:%d reference count (%d--) decremented by %s:%d.\n",
 			    ips,
 			    sa_len ? sa : " (error)",
 			    ips->ips_ref,
-			    atomic_read(&ips->ips_refcount));
+			    atomic_read(&ips->ips_refcount),
+			    func, line);
 	}
+#endif
 
 	if(atomic_dec_and_test(&ips->ips_refcount)) {
 		KLIPS_PRINT(debug_xform,
@@ -610,30 +613,52 @@ ipsec_sa_put(struct ipsec_sa *ips)
 		ipsec_sa_wipe(ips);
 	}
 
-	return 0;
+	return;
 }
 
-int
+/* git 9c9fa9ecc221aad09c19f034eee37a76d156c1d2 is confusing. It seems to add two __ipsec_sa_get's */
+struct ipsec_sa *
 __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line)
 {
-        char sa[SATOT_BUF];
-        size_t sa_len;
 
-        if(debug_xform) {
-          sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+	if (ips == NULL)
+		return NULL;
 
-          KLIPS_PRINT(debug_xform,
-                      "ipsec_sa_get: "
-                      "ipsec_sa %p SA:%s, ref:%d reference count (%d++) incremented by %s:%d.\n",
-                      ips,
-                      sa_len ? sa : " (error)",
-                      ips->ips_ref,
-                      atomic_read(&ips->ips_refcount),
-                      func, line);
-        }
+#ifdef CONFIG_KLIPS_DEBUG
+	if(debug_xform) {
+		char sa[SATOT_BUF];
+		size_t sa_len;
+		sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
 
-        atomic_inc(&ips->ips_refcount);
-        return atomic_read(&ips->ips_refcount);
+		KLIPS_PRINT(debug_xform,
+			    "ipsec_sa_get: "
+			    "ipsec_sa %p SA:%s, ref:%d reference count (%d++) incremented by %s:%d.\n",
+			    ips,
+			    sa_len ? sa : " (error)",
+			    ips->ips_ref,
+			    atomic_read(&ips->ips_refcount),
+			    func, line);
+	}
+#endif
+
+	atomic_inc(&ips->ips_refcount);
+
+#if 0
+	/*
+	 * DAVIDM: if we include this code it means the SA is freed immediately
+	 * on creation and then reused ! Not sure why it is here.
+	 */
+
+	if(atomic_dec_and_test(&ips->ips_refcount)) {
+		KLIPS_PRINT(debug_xform,
+			    "ipsec_sa_get: freeing %p\n",
+			    ips);
+		/* it was zero */
+		ipsec_sa_wipe(ips);
+	}
+#endif
+
+	return ips;
 }
 
 /*
@@ -644,6 +669,8 @@ ipsec_sa_add(struct ipsec_sa *ips)
 {
 	int error = 0;
 	unsigned int hashval;
+
+	ips = ipsec_sa_get(ips);
 
 	if(ips == NULL) {
 		KLIPS_PRINT(debug_xform,
@@ -929,47 +956,6 @@ ipsec_sa_wipe(struct ipsec_sa *ips)
 	if(ips == NULL) {
 		return -ENODATA;
 	}
-
-#if IPSEC_SA_REF_CODE
-	/* remove me from the SArefTable */
-	if(debug_xform) 
-	{
-		char sa[SATOT_BUF];
-		size_t sa_len;
-		struct IPsecSArefSubTable *subtable = NULL;
-
-		if(IPsecSAref2table(IPsecSA2SAref(ips))<IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES
-		   && ipsec_sadb.refTable != NULL) {
-			subtable = ipsec_sadb.refTable[IPsecSAref2table(IPsecSA2SAref(ips))];
-		}
-
-		sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
-		KLIPS_PRINT(debug_xform,
-			    "klips_debug:ipsec_sa_wipe: "
-			    "removing SA=%s(0p%p), SAref=%d, table=%d(0p%p), entry=%d from the refTable.\n",
-			    sa_len ? sa : " (error)",
-			    ips,
-			    ips->ips_ref,
-			    IPsecSAref2table(IPsecSA2SAref(ips)),
-			    subtable,
-			    subtable ? IPsecSAref2entry(IPsecSA2SAref(ips)) : 0);
-	}
-
-	if(ips->ips_ref != IPSEC_SAREF_NULL) {
-		struct IPsecSArefSubTable *subtable = NULL;
-		int ref_table=IPsecSAref2table(IPsecSA2SAref(ips));
-		int ref_entry=IPsecSAref2entry(IPsecSA2SAref(ips));
-
-		if(ref_table < IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES) {
-			subtable = ipsec_sadb.refTable[ref_table];
-			if(subtable!=NULL && subtable->entry[ref_entry] == ips) {
-			
-				subtable->entry[ref_entry] = NULL;
-			}
-		}
-		ips->ips_ref = IPSEC_SAREF_NULL;
-	}
-#endif /* IPSEC_SA_REF_CODE */
 
 	/* paranoid clean up */
 	if(ips->ips_addr_s != NULL) {

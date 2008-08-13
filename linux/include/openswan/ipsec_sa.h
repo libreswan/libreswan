@@ -246,14 +246,17 @@ extern IPsecSAref_t ipsec_SAref_alloc(int*erorr); /* pass in error var by pointe
 extern int ipsec_sa_free(struct ipsec_sa* ips);
 
 #define ipsec_sa_get(ips) __ipsec_sa_get(ips, __FUNCTION__, __LINE__)
-extern int __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line);
-extern int ipsec_sa_put(struct ipsec_sa *ips);
+extern struct ipsec_sa * __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line);
+
+#define ipsec_sa_put(ips) __ipsec_sa_put(ips, __FUNCTION__, __LINE__)
+extern void __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line);
 extern int ipsec_sa_add(struct ipsec_sa *ips);
 extern void ipsec_sa_rm(struct ipsec_sa *ips);
 extern int ipsec_sadb_cleanup(__u8 proto);
 extern int ipsec_sadb_free(void);
 extern int ipsec_sa_wipe(struct ipsec_sa *ips);
 extern int ipsec_sa_intern(struct ipsec_sa *ips);
+extern void ipsec_sa_untern(struct ipsec_sa *ips);
 extern struct ipsec_sa *ipsec_sa_getbyref(IPsecSAref_t ref);
 
 #endif /* __KERNEL__ */

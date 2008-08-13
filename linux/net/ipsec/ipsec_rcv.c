@@ -1428,21 +1428,21 @@ ipsec_rcv(struct sk_buff *skb
 		KLIPS_PRINT(debug_rcv,
 			   "klips_debug:ipsec_rcv: "
 			    "failled to allocate a rcv state object\n");
-		goto rcvleave:;
+		goto rcvleave;
 	}
 
 	if (skb == NULL) {
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "NULL skb passed in.\n");
-		goto rcvleave:;
+		goto rcvleave;
 	}
 
 	if (skb->data == NULL) {
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "NULL skb->data passed in, packet is bogus, dropping.\n");
-		goto rcvleave:;
+		goto rcvleave;
 	}
 
 #if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && !defined(NET_26)
