@@ -1459,6 +1459,9 @@ ipsec_rcv(struct sk_buff *skb
 			if(skb && udp_decap_ret == 0) {
 				ipsec_kfree_skb(skb);
 			}
+			if (irs) {
+				ipsec_rcv_state_delete(irs);
+			}
 			KLIPS_DEC_USE;
 			return(udp_decap_ret);
 		}
@@ -1684,7 +1687,7 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 		KLIPS_PRINT(debug_rcv,
 			    "klips_debug:ipsec_rcv: "
 			    "failled to allocate a rcv state object\n");
-                goto error_alloc;
+                goto rcvleave;
         }
 
 	/* XXX fudge it so that all nat-t stuff comes from ipsec0    */
@@ -1764,8 +1767,9 @@ rcvleave:
 	if(skb) {
 		ipsec_kfree_skb(skb);
 	}
-        ipsec_rcv_state_delete (irs);
-error_alloc:
+	if (irs) {
+        	ipsec_rcv_state_delete (irs);
+	}
 	KLIPS_DEC_USE;
 	return 0;
 }
