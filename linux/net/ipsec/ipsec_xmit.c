@@ -1499,6 +1499,7 @@ ipsec_xmit_encap_bundle_2(struct ipsec_xmit_state *ixs)
 
 	/* end encapsulation loop here XXX */
  cleanup:
+	ixs->ipsp = saved_ipsp;
 	return bundle_stat;
 }
 
