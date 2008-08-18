@@ -1830,7 +1830,7 @@ ipsec_xmit_state_cache_cleanup (void)
         ixs_cache_allocated_count = 0;
 }
 
-static struct ipsec_xmit_state *
+struct ipsec_xmit_state *
 ipsec_xmit_state_new (void)
 {
 	struct ipsec_xmit_state *ixs;
