@@ -1,10 +1,20 @@
 Please see docs/KNOWN_BUGS file for more information
 
-v2.5.53s
+v2.5.57s
+- Various fixes related to mast/saref code for ixs/irs objects [mcr/bart/paul]
+- Fix using saved_ipsp to fix a refcount issue [Shingo Yamawaki]
+
+v2.5.56s [untagged it git]
+
+v2.5.55s [untagged it git]
+
+v2.5.54s [untagged it git]
+
+v2.5.53s [untagged it git]
 * Fixed IPSEC table handling in scripts [paul]
   (Reported bug by Sony 12-06-2008)
 
-v2.5.52s
+v2.5.52s [untagged it git]
 * removed a spin_unlock in IP compress [david]
 * updated patches/2.6.16/* [paul]
 
