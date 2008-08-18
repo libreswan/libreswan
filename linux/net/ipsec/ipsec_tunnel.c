@@ -510,8 +510,8 @@ ipsec_tunnel_restore_hard_header(struct ipsec_xmit_state*ixs)
 }
 
 /* management of buffers */
-static struct ipsec_xmit_state * ipsec_xmit_state_new (void);
-static void ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs);
+struct ipsec_xmit_state * ipsec_xmit_state_new (void);
+void ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs);
 
 
 /*
@@ -1854,7 +1854,7 @@ bail:
         return ixs;
 }
 
-static void
+void
 ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs)
 {
         if (unlikely (! ixs))
