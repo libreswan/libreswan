@@ -233,8 +233,7 @@ ipsec_mast_send(struct ipsec_xmit_state*ixs)
 int
 ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-	struct ipsec_xmit_state ixs_mem;
-	struct ipsec_xmit_state *ixs = &ixs_mem;
+	struct ipsec_xmit_state *ixs;
 	enum ipsec_xmit_value stat = IPSEC_XMIT_OK;
 	IPsecSAref_t SAref;
 
@@ -243,7 +242,11 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		return 0;
 	}
 		
-	memset(&ixs_mem, 0, sizeof(struct ipsec_xmit_state));
+	ixs = ipsec_xmit_state_new();
+	if(ixs == NULL) {
+		printk("mast failed to allocate IXS\n");
+		return 0;
+	}
 
 	ixs->skb = skb;
 	SAref = 0;
