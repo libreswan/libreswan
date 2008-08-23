@@ -680,7 +680,7 @@ ipsec_sa_add(struct ipsec_sa *ips)
 	}
 	hashval = IPS_HASH(&ips->ips_said);
 
-	ipsec_sa_get(ips);
+	/* ipsec_sa_get(ips); */
 	spin_lock_bh(&tdb_lock);
 	
 	ips->ips_hnext = ipsec_sadb_hash[hashval];
@@ -1029,6 +1029,16 @@ ipsec_sa_wipe(struct ipsec_sa *ips)
 	if (ips->ips_alg_enc||ips->ips_alg_auth) {
 		ipsec_alg_sa_wipe(ips);
 	}
+
+        if (ips->ips_next) {
+                ipsec_sa_put(ips->ips_next);
+        }
+        ips->ips_next = NULL;
+
+        if (ips->ips_hnext) {
+                ipsec_sa_put(ips->ips_hnext);
+        }
+        ips->ips_hnext = NULL;
 	
 	BUG_ON(atomic_read(&ips->ips_refcount) != 0);
 

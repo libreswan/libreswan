@@ -378,11 +378,16 @@ void ip_cmsg_recv_ipsec(struct msghdr *msg, struct sk_buff *skb)
 	sa1 = ipsec_sa_getbyref(sp->ref);
 	if(sa1) {
 		refs[1]= sa1->ips_refhim;
+	} else {
+		refs[1]=0;
 	}
 	refs[0]=sp->ref;
 
 	put_cmsg(msg, SOL_IP, IP_IPSEC_REFINFO,
 		 sizeof(xfrm_sec_unique_t)*2, &refs);
+	if (sa1) {
+		ipsec_sa_put(sa1);
+	}
 }
 
 		       

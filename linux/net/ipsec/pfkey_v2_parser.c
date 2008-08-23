@@ -1720,6 +1720,7 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 			    sa_len1 ? sa1 : " (error)",
 			    sa_len2 ? sa2 : " (error)");
 		ips1p->ips_next = ips2p;
+		ipsec_sa_put(ips1p);
 	} else { /* UNGRPSA */
 		while(ips1p) {
 			struct ipsec_sa *ipsn;

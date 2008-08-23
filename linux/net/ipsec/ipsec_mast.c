@@ -270,8 +270,7 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	if(ixs->ipsp == NULL) {
 		KLIPS_ERROR(debug_mast, "%s: no SA for saref=%d (sp=%p)\n",
 			    dev->name, SAref, skb->sp);
-		ipsec_kfree_skb(skb);
-		return 0;
+		goto failed;
 	}
 
 	/*
@@ -307,14 +306,7 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 failed:
 	ipsec_xmit_cleanup(ixs);
 
-	if(ixs->ipsp) {
-		ipsec_sa_put(ixs->ipsp);
-		ixs->ipsp=NULL;
-	}
-	if(ixs->skb) {
-		ipsec_kfree_skb(ixs->skb);
-		ixs->skb=NULL;
-	}
+	ipsec_xmit_state_delete(ixs)
 	return 0;
 }
 
