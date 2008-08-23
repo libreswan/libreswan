@@ -376,7 +376,7 @@ USE_EXTRACRYPTO?=true
 HAVE_THREADS?=false
 
 # Do we have OCF available?
-HAVE_OCF?=true
+HAVE_OCF?=false
 
 # Do we have Openssl libraries available for BIGNUM support?
 HAVE_OPENSSL?=true
