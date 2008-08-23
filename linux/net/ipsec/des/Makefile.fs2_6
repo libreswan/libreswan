@@ -14,8 +14,6 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# RCSID $Id: Makefile.fs2_6,v 1.3 2005/08/12 14:13:59 mcr Exp $
-#
 # Note! Dependencies are done automagically by 'make dep', which also
 # removes any old dependencies. DON'T put your own dependencies here
 # unless it's something special (ie not a .c file).
@@ -30,31 +28,20 @@ ifeq ($(strip ${SUBARCH}),)
 SUBARCH:=${ARCH}
 endif
 
+# The assembly version is incompatible with CONFIG_REGPARM=y The
+# CONFIG_REGPARM defines whether it uses registers or stack to pass
+# arguments and recent kernels (after 2.6.17 or 2.6.18) uses registers
+# unconditionally. Therefor, we disable the assembly version for ix86's
+# completely.
+# #
 # the assembly version expects frame pointers, which are
 # optional in many kernel builds. If you want speed, you should
 # probably use cryptoapi code instead.
-USEASSEMBLY=${SUBARCH}${CONFIG_FRAME_POINTER}
-ifeq (${USEASSEMBLY},i386y)
-obj-$(CONFIG_KLIPS_ENC_3DES) += dx86unix.o
-else
+#USEASSEMBLY=${SUBARCH}${CONFIG_FRAME_POINTER}
+#ifeq (${USEASSEMBLY},i386y)
+#obj-$(CONFIG_KLIPS_ENC_3DES) += dx86unix.o
+#else
+#obj-$(CONFIG_KLIPS_ENC_3DES) += des_enc.o
+#endif
 obj-$(CONFIG_KLIPS_ENC_3DES) += des_enc.o
-endif
-
-#
-# $Log: Makefile.fs2_6,v $
-# Revision 1.3  2005/08/12 14:13:59  mcr
-# 	do not use assembly code with there are no frame pointers,
-# 	as it does not have the right linkages.
-#
-# Revision 1.2  2005/04/29 05:13:07  mcr
-# 	3DES algorithm code.
-#
-# Revision 1.1  2004/08/17 03:27:30  mcr
-# 	klips 2.6 edits.
-#
-#
-# Local Variables:
-# compile-command: "(cd ../../.. && source umlsetup.sh && make -C ${POOLSPACE} module/ipsec.o)"
-# End Variables:
-#
 
