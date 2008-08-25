@@ -133,6 +133,14 @@ int error_append(char **perr, const char *fmt, ...)
 	    conn->policy &= ~fl;\
 	  }}
 
+#define KW_POLICY_NEGATIVE_FLAG(val,fl) if(conn->options_set[val]) \
+        { if(!conn->options[val]) \
+	  { \
+	    conn->policy |= fl; \
+	  } else { \
+	    conn->policy &= ~fl;\
+	  }}
+
 /**
  * Free the pointer list
  *
@@ -955,7 +963,7 @@ static int load_conn (struct starter_config *cfg
 #endif
     }
     
-    KW_POLICY_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
+    KW_POLICY_NEGATIVE_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
 
     KW_POLICY_FLAG(KBF_AGGRMODE, POLICY_AGGRESSIVE);
 
