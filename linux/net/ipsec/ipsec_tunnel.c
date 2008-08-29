@@ -406,7 +406,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 				    "klips_debug:ipsec_xmit_SAlookup: "
 				    "shunt SA of HOLD: skb stored in HOLD.\n");
 			if(ixs->eroute->er_last != NULL) {
-				kfree_skb(ixs->eroute->er_last);
+				ipsec_kfree_skb(ixs->eroute->er_last);
 			}
 			ixs->eroute->er_last = ixs->skb;
 			ixs->skb = NULL;
@@ -531,11 +531,16 @@ ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	ixs->natt_type = 0, ixs->natt_head = 0;
 	ixs->natt_sport = 0, ixs->natt_dport = 0;
 #endif
-        stat = IPSEC_XMIT_ERRMEMALLOC;
-        ixs = ipsec_xmit_state_new ();
-        if (! ixs) {
-                goto alloc_error;
-        }
+	stat = IPSEC_XMIT_ERRMEMALLOC;
+	ixs = ipsec_xmit_state_new ();
+	if (! ixs) {
+		struct ipsecpriv *prv;
+		struct net_device_stats *stats;
+		prv = dev->priv;
+		stats = (struct net_device_stats *) &(prv->mystats);
+		stats->tx_dropped++;
+		goto alloc_error;
+	}
 
 	ixs->dev = dev;
 	ixs->skb = skb;
@@ -621,9 +626,10 @@ ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
  cleanup:
 	ipsec_xmit_cleanup(ixs);
-
         ipsec_xmit_state_delete (ixs);
+	return 0;
 alloc_error:
+	ipsec_kfree_skb(skb);
 	return 0;
 }
 
