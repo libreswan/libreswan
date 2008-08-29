@@ -1024,9 +1024,9 @@ static int create_hold_eroute(struct eroute *origtrap,
 			    hold_eroute.er_eaddr.sen_proto);
 	}
 	if (first != NULL)
-		kfree_skb(first);
+		ipsec_kfree_skb(first);
 	if (last != NULL)
-		kfree_skb(last);
+		ipsec_kfree_skb(last);
 
 	error = ipsec_makeroute(&(hold_eroute.er_eaddr),
 				&(hold_eroute.er_emask),
@@ -1697,11 +1697,11 @@ ipsec_xmit_cleanup(struct ipsec_xmit_state*ixs)
 		ixs->saved_header = NULL;
 	}
 	if(ixs->skb) {
-		dev_kfree_skb(ixs->skb);
+		ipsec_kfree_skb(ixs->skb);
 		ixs->skb=NULL;
 	}
 	if(ixs->oskb) {
-		dev_kfree_skb(ixs->oskb);
+		ipsec_kfree_skb(ixs->oskb);
 		ixs->oskb=NULL;
 	}
 	if (ixs->ips.ips_ident_s.data) {
