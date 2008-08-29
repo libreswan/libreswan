@@ -358,7 +358,18 @@ ipsec_rcv_decap_lookup(struct ipsec_rcv_state *irs
 #endif		 
 	}
 
-	*pnewipsp = newipsp;
+	/* *pnewipsp = newipsp; */
+	if (newipsp != *pnewipsp) {
+		    if(irs->lastipsp) {
+			ipsec_sa_put(irs->lastipsp);
+		    }
+		    irs->lastipsp = irs->ipsp;
+		    irs->ipsp=newipsp;
+	} else {
+		    /* we already have a refcount for it */
+		    ipsec_sa_put(newipsp);
+	}
+
 	return IPSEC_RCV_OK;
 }
 
@@ -836,7 +847,7 @@ void ipsec_rcv_setoutif(struct ipsec_rcv_state *irs)
 static enum ipsec_rcv_value
 ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 {
-	struct ipsec_sa *ipsp = NULL;
+	struct ipsec_sa *ipsp;
 	struct ipsec_sa* ipsnext = NULL;
 	struct iphdr *ipp;
 	struct sk_buff *skb;
@@ -844,6 +855,7 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 
 	ipp  = irs->ipp;
 	ipsp = irs->ipsp;
+	irs->lastipsp = NULL;
 	skb  = irs->skb;
 	irs->sa_len = satot(&irs->said, 0, irs->sa, sizeof(irs->sa));
 	if((ipp->protocol != IPPROTO_IPIP) && 
@@ -1114,7 +1126,7 @@ ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 		/* okay, acted on this SA, so free any previous SA, and record a new one*/
 		skipipcomp:
 		if(irs->ipsp) {
-			struct ipsec_sa *newipsp = NULL;
+			struct ipsec_sa *newipsp;
 			newipsp = irs->ipsp->ips_next;
 			if(newipsp) {
 				ipsec_sa_get(newipsp);

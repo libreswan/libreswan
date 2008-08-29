@@ -901,7 +901,13 @@ ipsec_xmit_encap_once(struct ipsec_xmit_state *ixs)
 	ixs->ipsp->ips_life.ipl_usetime.ipl_last = jiffies / HZ;
 	ixs->ipsp->ips_life.ipl_packets.ipl_count++; 
 
+	/* we are done with this SA */
+	ipsec_sa_put(ixs->ipsp);
+
+	/* move to the next SA */
 	ixs->ipsp = ixs->ipsp->ips_next;
+	if (ixs->ipsp)
+		ipsec_sa_get(ixs->ipsp);
 			
 	return IPSEC_XMIT_OK;
 }

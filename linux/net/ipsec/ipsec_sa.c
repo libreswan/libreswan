@@ -670,8 +670,6 @@ ipsec_sa_add(struct ipsec_sa *ips)
 	int error = 0;
 	unsigned int hashval;
 
-	ips = ipsec_sa_get(ips);
-
 	if(ips == NULL) {
 		KLIPS_PRINT(debug_xform,
 			    "klips_error:ipsec_sa_add: "
@@ -680,7 +678,7 @@ ipsec_sa_add(struct ipsec_sa *ips)
 	}
 	hashval = IPS_HASH(&ips->ips_said);
 
-	/* ipsec_sa_get(ips); */
+	ipsec_sa_get(ips);
 	spin_lock_bh(&tdb_lock);
 	
 	ips->ips_hnext = ipsec_sadb_hash[hashval];
