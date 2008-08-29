@@ -4,6 +4,9 @@ v2.5.58s
 - Various memory leak fixes [Shingo Yamawaki]
 - rekey= was reversing yes/no in the parser [Shingo Yamawaki]
 - DPD fix for when behind NAT and in Aggressve Mode [hiren joshi]
+- Fix memory leak when we run out of descriptors [David McCullough]
+- Update stats to show dropped packets [David McCullough]
+- SA refcount fixes [David McCullough]
 
 v2.5.57s
 - Various fixes related to mast/saref code for ixs/irs objects [mcr/bart/paul]
