@@ -855,7 +855,6 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 
 	ipp  = irs->ipp;
 	ipsp = irs->ipsp;
-	irs->lastipsp = NULL;
 	skb  = irs->skb;
 	irs->sa_len = satot(&irs->said, 0, irs->sa, sizeof(irs->sa));
 	if((ipp->protocol != IPPROTO_IPIP) && 
@@ -1650,6 +1649,7 @@ ipsec_rcv(struct sk_buff *skb
 	irs->stats= stats;
 	irs->ipp  = ipp;
 	irs->ipsp = NULL;
+	irs->lastipsp = NULL;
 	irs->ilen = 0;
 	irs->authlen=0;
 	irs->authfuncs=NULL;
