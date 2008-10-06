@@ -1394,20 +1394,13 @@ pfkey_msg_build(struct sadb_msg **pfkey_msg, struct sadb_ext *extensions[], int 
 				  ext,
 				  extensions[ext]->sadb_ext_type);
 
+			  memcpy(pfkey_ext,
+				 extensions[ext],
+				 (extensions[ext])->sadb_ext_len * IPSEC_PFKEYv2_ALIGN);
 			{
 			  char *pfkey_ext_c = (char *)pfkey_ext;
 
 			  pfkey_ext_c += (extensions[ext])->sadb_ext_len * IPSEC_PFKEYv2_ALIGN;
-
-#if 0
-			  printf("memcpy(%p,%p,%d) -> %p %p:%p\n", pfkey_ext, 
-				 extensions[ext],
-				 (extensions[ext])->sadb_ext_len * IPSEC_PFKEYv2_ALIGN,
-				 pfkey_ext_c, (*pfkey_msg), (char *)(*pfkey_msg)+(total_size*IPSEC_PFKEYv2_ALIGN));
-#endif
-			  memcpy(pfkey_ext,
-				 extensions[ext],
-				 (extensions[ext])->sadb_ext_len * IPSEC_PFKEYv2_ALIGN);
 			  pfkey_ext = (struct sadb_ext *)pfkey_ext_c;
 			}
 
@@ -1416,10 +1409,15 @@ pfkey_msg_build(struct sadb_msg **pfkey_msg, struct sadb_ext *extensions[], int 
 		}
 	}
 
-	if(pfkey_extensions_missing(dir,(*pfkey_msg)->sadb_msg_type,extensions_seen)) {
-		ERROR("required extensions missing. seen=%08llx\n", (unsigned long long)extensions_seen);
-		SENDERR(EINVAL);
-	}
+#if 0
+	/* check required extensions */
+	DEBUGGING(PF_KEY_DEBUG_BUILD,
+		"pfkey_msg_build: "
+		"extensions permitted=%08x, seen=%08x, required=%08x.\n",
+		extensions_bitmaps[dir][EXT_BITS_PERM][(*pfkey_msg)->sadb_msg_type],
+		extensions_seen,
+		extensions_bitmaps[dir][EXT_BITS_REQ][(*pfkey_msg)->sadb_msg_type]);
+#endif
 
 #ifndef __KERNEL__	
 /*

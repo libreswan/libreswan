@@ -1,5 +1,9 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.5.59s
+* Bugtracker bugs fixed:
+  #975: ipsec_setup: Unknown socket write error 96. [paul]
+
 v2.5.58s
 - Various memory leak fixes [Shingo Yamawaki]
 - rekey= was reversing yes/no in the parser [Shingo Yamawaki]

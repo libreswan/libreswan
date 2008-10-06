@@ -2178,53 +2178,65 @@ pfkey_x_delflow_parse(struct sock *sk, struct sadb_ext **extensions, struct pfke
 			SENDERR(-error);
 		}
 	}
-	
-	if(!(pfkey_safe_build(error = pfkey_msg_hdr_build(&extensions_reply[0],
-							  K_SADB_X_DELFLOW,
-							  satype,
-							  0,
-							  ((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED])->sadb_msg_seq,
-							  ((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED])->sadb_msg_pid),
-			      extensions_reply)
-	     && pfkey_safe_build(error = pfkey_sa_build(&extensions_reply[K_SADB_EXT_SA],
+
+	error = pfkey_msg_hdr_build(&extensions_reply[0],
+				  K_SADB_X_DELFLOW,
+				  satype,
+				  0,
+				  ((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED])->sadb_msg_seq,
+				  ((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED])->sadb_msg_pid);
+
+	if(pfkey_safe_build(error, extensions_reply)) {
+		error = pfkey_sa_build(&extensions_reply[K_SADB_EXT_SA],
 							K_SADB_EXT_SA,
 							extr->ips->ips_said.spi,
 							extr->ips->ips_replaywin,
 							extr->ips->ips_state,
 							extr->ips->ips_authalg,
 							extr->ips->ips_encalg,
-							extr->ips->ips_flags),
-				 extensions_reply)
-	     && pfkey_safe_build(error = pfkey_address_build(&extensions_reply[K_SADB_X_EXT_ADDRESS_SRC_FLOW],
+							extr->ips->ips_flags);
+	}
+
+	if(!(extr->ips->ips_flags & SADB_X_SAFLAGS_CLEARFLOW)) {
+		if(pfkey_safe_build(error, extensions_reply)) {
+			error = pfkey_address_build(&extensions_reply[K_SADB_X_EXT_ADDRESS_SRC_FLOW],
 							     K_SADB_X_EXT_ADDRESS_SRC_FLOW,
 							     0, /*extr->ips->ips_said.proto,*/
 							     0,
-							     (struct sockaddr*)&srcflow),
-				 extensions_reply)
-	     && pfkey_safe_build(error = pfkey_address_build(&extensions_reply[K_SADB_X_EXT_ADDRESS_DST_FLOW],
+							     (struct sockaddr*)&srcflow);
+		}
+
+		if(pfkey_safe_build(error, extensions_reply)) {
+			error = pfkey_address_build(&extensions_reply[K_SADB_X_EXT_ADDRESS_DST_FLOW],
 							     K_SADB_X_EXT_ADDRESS_DST_FLOW,
 							     0, /*extr->ips->ips_said.proto,*/
 							     0,
-							     (struct sockaddr*)&dstflow),
-				 extensions_reply)
-	     && pfkey_safe_build(error = pfkey_address_build(&extensions_reply[K_SADB_X_EXT_ADDRESS_SRC_MASK],
+							     (struct sockaddr*)&dstflow);
+		}
+
+		if(pfkey_safe_build(error, extensions_reply)) {
+			error = pfkey_address_build(&extensions_reply[K_SADB_X_EXT_ADDRESS_SRC_MASK],
 							     K_SADB_X_EXT_ADDRESS_SRC_MASK,
 							     0, /*extr->ips->ips_said.proto,*/
 							     0,
-							     (struct sockaddr*)&srcmask),
-				 extensions_reply)
-	     && pfkey_safe_build(error = pfkey_address_build(&extensions_reply[K_SADB_X_EXT_ADDRESS_DST_MASK],
+							     (struct sockaddr*)&srcmask);
+		}
+
+		if(pfkey_safe_build(error, extensions_reply)) {
+			error = pfkey_address_build(&extensions_reply[K_SADB_X_EXT_ADDRESS_DST_MASK],
 							     K_SADB_X_EXT_ADDRESS_DST_MASK,
 							     0, /*extr->ips->ips_said.proto,*/
 							     0,
-							     (struct sockaddr*)&dstmask),
-				 extensions_reply)
-		)) {
+							     (struct sockaddr*)&dstmask);
+		}
+	}
+
+	if(!pfkey_safe_build(error, extensions_reply)) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_x_delflow_parse: "
-			    "failed to build the x_delflow reply message extensions\n");
+			"failed to build the x_delflow reply message extensions\n");
 		SENDERR(-error);
 	}
-		
+
 	if((error = pfkey_msg_build(&pfkey_reply, extensions_reply, EXT_BITS_OUT))) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_x_delflow_parse: "
 			    "failed to build the x_delflow reply message\n");
