@@ -115,6 +115,8 @@ struct msg_digest *looking_for_md = NULL;
 void
 release_md(struct msg_digest *md)
 {
+	if (!md)
+		return;
     passert(looking_for_md == NULL || md != looking_for_md);
     passert(looking_for_state == NULL || md->st != looking_for_state);
     freeanychunk(md->raw_packet);
