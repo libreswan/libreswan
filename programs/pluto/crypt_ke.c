@@ -98,6 +98,7 @@ void calc_ke(struct pluto_crypto_req *r)
 
     /* clean up after ourselves */
     mpz_clear(&mp_g);
+    mpz_clear(&secret);
     freeanychunk(gi);
 }
 

@@ -73,6 +73,7 @@ union mhdr {
 	const char *name;
 	union mhdr *older, *newer;
 	unsigned long magic;
+	unsigned long size;
     } i;    /* info */
     unsigned long junk;	/* force maximal alignment */
 };
@@ -103,6 +104,7 @@ void *alloc_bytes1(size_t size, const char *name, int leak_detective)
 
     if(leak_detective) {
 	p->i.name = name;
+	p->i.size = size;
 	p->i.older = allocs;
 	if (allocs != NULL)
 	    allocs->i.newer = p;
@@ -166,9 +168,9 @@ report_leaks(void)
 	if (p == NULL || pprev->i.name != p->i.name)
 	{
 	    if (n != 1)
-		openswan_log("leak: %lu * %s", n, pprev->i.name);
+		openswan_log("leak: %lu * %s, item size: %u", n, pprev->i.name, pprev->i.size);
 	    else
-		openswan_log("leak: %s", pprev->i.name);
+		openswan_log("leak: %s, item size: %u", pprev->i.name, pprev->i.size);
 	    n = 0;
 	}
     }

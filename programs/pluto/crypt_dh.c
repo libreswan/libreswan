@@ -343,6 +343,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
     }
 
     calc_dh_shared(&shared, g, &sec, group);
+    mpz_clear (&sec);
     
     memset(&skeyid, 0, sizeof(skeyid));
     memset(&skeyid_d, 0, sizeof(skeyid_d));
@@ -417,6 +418,7 @@ void calc_dh(struct pluto_crypto_req *r)
       setchunk_fromwire(g, &dhq.gr, &dhq);
     }
     calc_dh_shared(&shared, g, &sec, group);
+    mpz_clear (&sec);
 
     /* now translate it back to wire chunks, freeing the chunks */
     setwirechunk_fromchunk(skr->shared,   shared,   skr);
