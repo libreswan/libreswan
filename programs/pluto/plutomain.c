@@ -144,12 +144,14 @@ usage(const char *mess)
 	    " \\\n\t"
 	    "[--debug-raw]"
 	    " [--debug-crypt]"
+	    " [--debug-crypto]"
 	    " [--debug-parsing]"
 	    " [--debug-emitting]"
 	    " \\\n\t"
 	    "[--debug-control]"
 	    "[--debug-lifecycle]"
 	    " [--debug-klips]"
+	    " [--debug-netkey]"
 	    " [--debug-x509]"
 	    " [--debug-dns]"
 	    " [--debug-oppo]"
@@ -357,11 +359,13 @@ main(int argc, char **argv)
 
 	    { "debug-raw", no_argument, NULL, DBG_RAW + DBG_OFFSET },
 	    { "debug-crypt", no_argument, NULL, DBG_CRYPT + DBG_OFFSET },
+	    { "debug-crypto", no_argument, NULL, DBG_CRYPT + DBG_OFFSET },
 	    { "debug-parsing", no_argument, NULL, DBG_PARSING + DBG_OFFSET },
 	    { "debug-emitting", no_argument, NULL, DBG_EMITTING + DBG_OFFSET },
 	    { "debug-control", no_argument, NULL, DBG_CONTROL + DBG_OFFSET },
 	    { "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE + DBG_OFFSET },
 	    { "debug-klips", no_argument, NULL, DBG_KLIPS + DBG_OFFSET },
+	    { "debug-netkey", no_argument, NULL, DBG_NETKEY + DBG_OFFSET },
 	    { "debug-dns", no_argument, NULL, DBG_DNS + DBG_OFFSET },
 	    { "debug-oppo", no_argument, NULL, DBG_OPPO + DBG_OFFSET },
 	    { "debug-oppoinfo", no_argument, NULL, DBG_OPPOINFO + DBG_OFFSET },
