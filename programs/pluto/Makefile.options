@@ -202,7 +202,7 @@ XAUTH_DIST_SRCS=xauth.c xauth.h
 XAUTH_DIST_OBJS=xauth.o
 ifeq ($(USE_XAUTH),true)
 # This compile option activates xauth code and modecfg needed by xauth
-XAUTH_DEFS=-DXAUTH -DMODECFG
+XAUTH_DEFS=-DXAUTH -DMODECFG -DMODECFG_DNSWINS
 XAUTH_OBJS=${XAUTH_DIST_OBJS}
 XAUTH_SRCS=${XAUTH_DIST_SRCS}
 ifneq ($(BUILDENV), darwin)
