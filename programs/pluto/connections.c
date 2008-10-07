@@ -2104,7 +2104,6 @@ find_host_connection2(const char *func
     return c;
 }
 
-#if 0
 /*
  * extracts the peer's ca from the chained list of public keys
  */
@@ -2124,7 +2123,6 @@ get_peer_ca(const struct id *peer_id)
     }
     return empty_chunk;
 }
-#endif
 
 
 
@@ -2221,12 +2219,8 @@ refine_host_connection(const struct state *st, const struct id *peer_id
 	 , DBG_log("refine_connection: starting with %s"
 		   , c->name));
 
-#if 0
     peer_ca = get_peer_ca(peer_id);
 
-    /* XXX I think that this code should be done later on, or maybe not
-     * at all, since we should conclude the same thing below.
-     */
     if (same_id(&c->spd.that.id, peer_id)
 	&& (peer_ca.ptr != NULL)
 	&& trusted_ca(peer_ca, c->spd.that.ca, &peer_pathlen)
@@ -2241,7 +2235,6 @@ refine_host_connection(const struct state *st, const struct id *peer_id
 
 	return c;	/* peer ID matches current connection -- look no further */
     }
-#endif
 
 #if defined(XAUTH)
     auth = xauth_calcbaseauth(auth);
