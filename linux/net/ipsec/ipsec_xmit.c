@@ -901,14 +901,6 @@ ipsec_xmit_encap_once(struct ipsec_xmit_state *ixs)
 	ixs->ipsp->ips_life.ipl_usetime.ipl_last = jiffies / HZ;
 	ixs->ipsp->ips_life.ipl_packets.ipl_count++; 
 
-	/* we are done with this SA */
-	ipsec_sa_put(ixs->ipsp);
-
-	/* move to the next SA */
-	ixs->ipsp = ixs->ipsp->ips_next;
-	if (ixs->ipsp)
-		ipsec_sa_get(ixs->ipsp);
-			
 	return IPSEC_XMIT_OK;
 }
 
@@ -1069,6 +1061,7 @@ ipsec_xmit_encap_bundle_2(struct ipsec_xmit_state *ixs)
 	 * all the grouped transforms?
 	 */
 	saved_ipsp = ixs->ipsp;	/* save the head of the ipsec_sa chain */
+	ipsec_sa_get(saved_ipsp);
 	while (ixs->ipsp) {
 		if (debug_tunnel & DB_TN_XMIT) {
 		ixs->sa_len = KLIPS_SATOT(debug_tunnel, &ixs->ipsp->ips_said, 0, ixs->sa_txt, sizeof(ixs->sa_txt));
@@ -1501,11 +1494,13 @@ ipsec_xmit_encap_bundle_2(struct ipsec_xmit_state *ixs)
 			bundle_stat = IPSEC_XMIT_ENCAPFAIL;
 			goto cleanup;
 		}
+		ixs->ipsp = ixs->ipsp->ips_next;
 	}
 
 	/* end encapsulation loop here XXX */
  cleanup:
 	ixs->ipsp = saved_ipsp;
+	ipsec_sa_put(saved_ipsp);
 	return bundle_stat;
 }
 

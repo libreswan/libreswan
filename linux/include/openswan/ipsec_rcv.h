@@ -82,6 +82,7 @@ struct ipsec_rcv_state {
 	struct net_device_stats *stats;
 	struct iphdr    *ipp;          /* the IP header */
 	struct ipsec_sa *ipsp;         /* current SA being processed */
+	struct ipsec_sa *lastipsp;     /* last SA */
 	int len;                       /* length of packet */
 	int ilen;                      /* length of inner payload (-authlen) */
 	int authlen;                   /* how big is the auth data at end */

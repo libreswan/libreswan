@@ -359,7 +359,7 @@ ipsec_rcv_decap_lookup(struct ipsec_rcv_state *irs
 	}
 
 	/* *pnewipsp = newipsp; */
-	if (newipsp != *pnewipsp) {
+	if (newipsp != irs->ipsp) {
 		    if(irs->lastipsp) {
 			ipsec_sa_put(irs->lastipsp);
 		    }
@@ -386,12 +386,14 @@ void ip_cmsg_recv_ipsec(struct msghdr *msg, struct sk_buff *skb)
 	KLIPS_PRINT(debug_rcv, "retrieving saref=%u from skb=%p\n",
 		    sp->ref, skb);
 
+	spin_lock_bh(&tdb_lock);
 	sa1 = ipsec_sa_getbyref(sp->ref);
 	if(sa1) {
 		refs[1]= sa1->ips_refhim;
 	} else {
 		refs[1]=0;
 	}
+	spin_unlock_bh(&tdb_lock);
 	refs[0]=sp->ref;
 
 	put_cmsg(msg, SOL_IP, IP_IPSEC_REFINFO,
@@ -1047,8 +1049,7 @@ ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 	  ipsec_sa s while we are using and updating them.
 	*/
 
-	/* probably can go away now */
-	spin_lock(&tdb_lock);
+	spin_lock_bh(&tdb_lock);
 
 	switch(irs->ipp->protocol) {
 	case IPPROTO_ESP:
@@ -1071,6 +1072,7 @@ ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 			irs->stats->rx_errors++;
 		}
 		decap_stat = IPSEC_RCV_BADPROTO;
+		spin_unlock_bh(&tdb_lock);
 		goto rcvleave;
 	}
 
@@ -1082,6 +1084,7 @@ ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 		/* look up the first SA */
 		irv = ipsec_rcv_decap_lookup(irs, proto_funcs, &newipsp);
 		if(irv != IPSEC_RCV_OK) {
+			spin_unlock_bh(&tdb_lock);
 			return irv;
 		}
 		
@@ -1095,6 +1098,7 @@ ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 		proto_funcs = irs->ipsp->ips_xformfuncs;
 		if(proto_funcs == NULL) {
 			decap_stat = IPSEC_RCV_BADPROTO;
+			spin_unlock_bh(&tdb_lock);
 			goto rcvleave;
 		}
 
@@ -1108,13 +1112,14 @@ ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 				irs->stats->rx_errors++;
 			}
 			decap_stat = IPSEC_RCV_FAILEDINBOUND;
+			spin_unlock_bh(&tdb_lock);
 			goto rcvleave;
 		}
 
 	        decap_stat = ipsec_rcv_decap_once(irs, proto_funcs);
 
 		if(decap_stat != IPSEC_RCV_OK) {
-			spin_unlock(&tdb_lock);
+			spin_unlock_bh(&tdb_lock);
 			KLIPS_PRINT(debug_rcv,
 				    "klips_debug:ipsec_rcv: decap_once failed: %d\n",
 				    decap_stat);
@@ -1196,11 +1201,12 @@ ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 		decap_stat = ipsec_rcv_decap_ipip(irs);
 		if(decap_stat != IPSEC_RCV_OK) {
 			spin_unlock(&tdb_lock);
+			spin_unlock_bh(&tdb_lock);
 			goto rcvleave;
 		}
 	}
 
-	spin_unlock(&tdb_lock);
+	spin_unlock_bh(&tdb_lock);
 
 	if(irs->stats) {
 		irs->stats->rx_bytes += skb->len;

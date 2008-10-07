@@ -52,6 +52,13 @@ char ipsec_mast_c_version[] = "RCSID $Id: ipsec_mast.c,v 1.7 2005/04/29 05:10:22
 #ifdef NETDEV_23
 # include <linux/netfilter_ipv4.h>
 #endif /* NETDEV_23 */
+#ifdef SPINLOCK
+# ifdef SPINLOCK_23
+#  include <linux/spinlock.h> /* *lock* */
+# else /* SPINLOCK_23 */
+#  include <asm/spinlock.h> /* *lock* */
+# endif /* SPINLOCK_23 */
+#endif /* SPINLOCK */
 
 #include <linux/if_arp.h>
 
@@ -133,12 +140,14 @@ int ip_cmsg_send_ipsec(struct cmsghdr *cmsg, struct ipcm_cookie *ipc)
 
 	sp->ref = *ref;
 	KLIPS_PRINT(debug_mast, "sending with saref=%u\n", sp->ref);
-		
+
+	spin_lock_bh(&tdb_lock);
 	sa1 = ipsec_sa_getbyref(sp->ref);
 	if(sa1 && sa1->ips_out) {
 		ipc->oif = sa1->ips_out->ifindex;
 		KLIPS_PRINT(debug_mast, "setting oif: %d\n", ipc->oif);
 	}
+	spin_unlock_bh(&tdb_lock);
 	ipsec_sa_put(sa1);
 	
 	ipc->sp  = sp;
@@ -266,6 +275,8 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	ipsec_xmit_sanity_check_skb(ixs);
 
+	spin_lock_bh(&tdb_lock);
+
 	ixs->ipsp = ipsec_sa_getbyref(SAref);
 	if(ixs->ipsp == NULL) {
 		KLIPS_ERROR(debug_mast, "%s: no SA for saref=%d (sp=%p)\n",
@@ -304,9 +315,10 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 
 failed:
+	spin_unlock_bh(&tdb_lock);
 	ipsec_xmit_cleanup(ixs);
 
-	ipsec_xmit_state_delete(ixs)
+	ipsec_xmit_state_delete(ixs);
 	return 0;
 }
 

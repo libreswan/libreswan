@@ -243,12 +243,15 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		maxspi = ((struct sadb_spirange *)extensions[K_SADB_EXT_SPIRANGE])->sadb_spirange_max;
 	}
 
+	spin_lock_bh(&tdb_lock);
+
 	if(maxspi == minspi) {
 		extr->ips->ips_said.spi = maxspi;
 		ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
 		if(ipsq != NULL) {
 			sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 			ipsec_sa_put(ipsq);
+			spin_unlock_bh(&tdb_lock);
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_getspi_parse: "
 				    "EMT_GETSPI found an old ipsec_sa for SA: %s, delete it first.\n",
@@ -283,6 +286,7 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	if (!found_avail) {
+		spin_unlock_bh(&tdb_lock);
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_getspi_parse: "
 			    "found an old ipsec_sa for SA: %s, delete it first.\n",
@@ -293,7 +297,8 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 	if(ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR) {
 		extr->ips->ips_flags |= EMT_INBOUND;
 	}
-	
+
+	spin_unlock_bh(&tdb_lock);
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_getspi_parse: "
 		    "existing ipsec_sa not found (this is good) for SA: %s, %s-bound, allocating.\n",
@@ -703,9 +708,12 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 
 	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
+	spin_lock_bh(&tdb_lock);
+
 	ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
 	if(ipsq != NULL) {
 		ipsec_sa_put(ipsq);
+		spin_unlock_bh(&tdb_lock);
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_add_parse: "
 			    "found an old ipsec_sa for SA%s, delete it first.\n",
@@ -727,6 +735,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 	extr->ips->ips_rcvif = NULL;
 	
 	if ((error = ipsec_sa_init(extr->ips))) {
+		spin_unlock_bh(&tdb_lock);
 		KLIPS_ERROR(debug_pfkey,
 			    "pfkey_add_parse: "
 			    "not successful for SA: %s, deleting.\n",
@@ -746,12 +755,15 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 
 	/* attach it to the SAref table */
 	if((error = ipsec_sa_intern(extr->ips)) != 0) {
+		spin_unlock_bh(&tdb_lock);
 		KLIPS_ERROR(debug_pfkey,
 			    "pfkey_add_parse: "
 			    "failed to intern SA as SAref#%lu\n"
 			    , (unsigned long)extr->ips->ips_ref);
 		SENDERR(-error);
 	}
+
+	spin_unlock_bh(&tdb_lock);
 
 	extr->ips->ips_life.ipl_addtime.ipl_count = jiffies / HZ;
 	if(!extr->ips->ips_life.ipl_allocations.ipl_count) {
@@ -2367,7 +2379,7 @@ pfkey_expire(struct ipsec_sa *ipsp, int hard)
 				  extensions))) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_expire: "
 			    "failed to build the expire message extensions\n");
-		spin_unlock(&tdb_lock);
+		spin_unlock_bh(&tdb_lock);
 		goto errlab;
 	}
 	
