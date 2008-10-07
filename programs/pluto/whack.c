@@ -132,6 +132,17 @@ help(void)
 	    " [--xauthserver]"
 	    " [--xauthclient]"
 #endif
+#ifdef MODECFG
+	    " [--modecfgserver]"
+	    " [--modecfgclient]"
+	    " [--modecfgpull]"
+#ifdef MODECFG_DNSWINS
+	    " [--modecfgdns1]"
+	    " [--modecfgdns2]"
+	    " [--modecfgwins1]"
+	    " [--modecfgwins2]"
+#endif
+#endif
 	    " \\\n   "
 	    " [--initiateontraffic|--pass|--drop|--reject]"
 	    " \\\n   "
@@ -658,12 +669,14 @@ static const struct option long_opts[] = {
     { "modecfgpull",   no_argument, NULL, CD_MODECFGPULL + OO },
     { "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
     { "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
+#ifdef MODECFG_DNSWINS
     { "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
     { "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
     { "modecfgwins1", required_argument, NULL, CD_MODECFGWINS1 + OO },
     { "modecfgwins2", required_argument, NULL, CD_MODECFGWINS2 + OO },
     { "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
     { "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
+#endif
 #endif
     { "sendcert", required_argument, NULL, END_SENDCERT + OO },
     { "certtype", required_argument, NULL, END_CERTTYPE + OO + NUMERIC_ARG },

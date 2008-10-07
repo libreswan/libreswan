@@ -1,6 +1,13 @@
 Please see docs/KNOWN_BUGS file for more information
 
 v2.5.59s
+* Fix parallel build (missing parser.tab.c dependancy) [tuomo]
+* Fix for pluto not starting with plutodebub=all [paul]
+* refineconnection bug fix. This might cover various problems where
+  the right conn was not picked (eg rightca="%any" workaround, but
+  perhaps also some rekey issues) [paul]
+
+
 * Bugtracker bugs fixed:
   #975: ipsec_setup: Unknown socket write error 96. [paul]
 
