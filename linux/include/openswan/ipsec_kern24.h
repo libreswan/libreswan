@@ -36,6 +36,8 @@
 # define ipsec_kfree_skb(a) kfree_skb(a, FREE_WRITE)
 #endif /* NET_21 */
 
+/* this is in ipsec_kversion.h */
+#if 0
 #ifdef NETDEV_23
 #if 0
 #ifndef NETDEV_25
@@ -53,6 +55,7 @@
 # define ipsec_dev_put(x)
 # define ipsec_dev_hold(x) 
 #endif /* NETDEV_23 */
+#endif
 
 #ifndef SPINLOCK
 #  include <linux/bios32.h>
