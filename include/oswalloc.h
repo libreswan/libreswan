@@ -78,4 +78,8 @@ extern bool cmp_chunk(chunk_t a, chunk_t b);
 typedef void (*exit_log_func_t)(const char *message, ...);
 extern void set_exit_log_func(exit_log_func_t func);
 
+#ifdef DMALLOC
+# include <dmalloc.h>
+#endif
+
 #endif /* _OSW_ALLOC_H_ */

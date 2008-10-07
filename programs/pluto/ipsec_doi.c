@@ -2104,6 +2104,12 @@ decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 /* Handle a Main Mode Oakley first packet (responder side).
  * HDR;SA --> HDR;SA
  */
+
+#ifdef DMALLOC
+static unsigned long _dm_mark = 0;
+static unsigned long _dm_initialized = 0;
+#endif
+
 stf_status
 main_inI1_outR1(struct msg_digest *md)
 {
