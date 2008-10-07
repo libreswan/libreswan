@@ -1428,3 +1428,4 @@ xauth.o: xauth.c ../../linux/include/openswan.h \
   ../../include/md5.h crypto.h \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h ike_alg.h xauth.h virtual.h
+parser.tab.o: parser.tab.c
