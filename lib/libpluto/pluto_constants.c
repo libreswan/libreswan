@@ -64,10 +64,11 @@ static const char *const dpd_action_name[] = {
   "action:clear",
   "action:hold",
   "action:restart",
+  "action:restart_by_peer",
 };
 
 enum_names dpd_action_names =
-    { EVENT_NULL, DPD_ACTION_RESTART, dpd_action_name, NULL };
+    { EVENT_NULL, DPD_ACTION_RESTART_BY_PEER, dpd_action_name, NULL };
 
 /* Timer events */
 static const char *const timer_event_name[] = {
