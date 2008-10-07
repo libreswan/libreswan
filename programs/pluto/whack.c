@@ -125,7 +125,7 @@ help(void)
 	    " [--forceencaps]"
             " \\\n   "
             " [--dpddelay <seconds> --dpdtimeout <seconds>]"
-            " [--dpdaction (clear|hold|restart)]"
+            " [--dpdaction (clear|hold|restart|restart_by_peer)]"
             " \\\n   "
 
 #ifdef XAUTH
@@ -730,6 +730,11 @@ static const struct option long_opts[] = {
     { 0,0,0,0 }
 };
 
+#ifdef DYNAMICDNS
+static const char namechars[] = "abcdefghijklmnopqrstuvwxyz"
+				"ABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
+#endif /* DYNAMICDNS */
+
 struct sockaddr_un ctl_addr = {
     .sun_family = AF_UNIX,
     .sun_path   = DEFAULT_CTLBASE CTL_SUFFIX,
@@ -883,6 +888,10 @@ main(int argc, char **argv)
     clear_end(&msg.right);	/* left set from this after --to */
 
     msg.name = NULL;
+#ifdef DYNAMICDNS
+    msg.dnshostname = NULL;
+#endif /* DYNAMICDNS */
+
     msg.keyid = NULL;
     msg.keyval.ptr = NULL;
     msg.esp = NULL;
@@ -1222,6 +1231,24 @@ main(int argc, char **argv)
 	    }
 	    else
 	    {
+#ifdef DYNAMICDNS
+		if (msg.left.id != NULL) {
+		    int strlength = 0;
+		    int n = 0;
+		    const char *cp;
+		    int dnshostname = 0;
+
+		    strlength = strlen(optarg);
+		    for (cp = optarg, n = strlength; n > 0; cp++, n--) {
+			    if (strchr(namechars, *cp) != NULL) {
+				    dnshostname = 1;
+				    break;
+			    }
+		    }
+		    if (dnshostname)
+		    	msg.dnshostname = optarg;
+		}
+#endif /* DYNAMICDNS */
 		diagq(ttoaddr(optarg, 0, msg.addr_family
 		    , &msg.right.host_addr), optarg);
 	    }
@@ -1453,6 +1480,9 @@ main(int argc, char **argv)
             }
             if( strcmp(optarg, "restart") == 0) {
                     msg.dpd_action = DPD_ACTION_RESTART;
+            }
+            if( strcmp(optarg, "restart_by_peer") == 0) {
+                    msg.dpd_action = DPD_ACTION_RESTART_BY_PEER;
             }
             continue;
 
@@ -1791,8 +1821,9 @@ main(int argc, char **argv)
             diag("dpddelay specified, but dpdtimeout is zero, both should be specified");
     if(!msg.dpd_delay && msg.dpd_timeout)
             diag("dpdtimeout specified, but dpddelay is zero, both should be specified");
-    if(msg.dpd_action != DPD_ACTION_CLEAR && msg.dpd_action != DPD_ACTION_HOLD && msg.dpd_action != DPD_ACTION_RESTART) {
-            diag("dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
+    if(msg.dpd_action != DPD_ACTION_CLEAR && msg.dpd_action != DPD_ACTION_HOLD
+         && msg.dpd_action != DPD_ACTION_RESTART && msg.dpd_action != DPD_ACTION_RESTART_BY_PEER) {
+            diag("dpdaction can only be \"clear\", \"hold\", \"restart\" or \"restart_by_peer\", defaulting to \"hold\"");
             msg.dpd_action = DPD_ACTION_HOLD;
     }
 

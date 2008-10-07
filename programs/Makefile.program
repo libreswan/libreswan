@@ -59,7 +59,7 @@ ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS=-L$(LD_LIBRARY_PATH)
 endif
 
-+ifeq ($(USE_DMALLOC),true)
+ifeq ($(USE_DMALLOC),true)
 CFLAGS+=-DDMALLOC
 LIBS+= -ldmalloc
 endif

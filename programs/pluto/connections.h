@@ -250,6 +250,9 @@ struct connection {
 #ifdef XAUTH_USEPAM 
     pam_handle_t  *pamh;		/*  PAM handle for that connection  */
 #endif
+#ifdef DYNAMICDNS
+    char *dnshostname;
+#endif /* DYNAMICDNS */
 #ifdef MODECFG
     ip_address modecfg_dns1;
     ip_address modecfg_dns2;
@@ -279,6 +282,7 @@ extern void initiate_connection(const char *name
 				, int whackfd
 				, lset_t moredebug
 				, enum crypto_importance importance);
+extern void restart_connections_by_peer(struct connection *c);
 extern void initiate_ondemand(const ip_address *our_client
 			      , const ip_address *peer_client
 			      , int transport_proto

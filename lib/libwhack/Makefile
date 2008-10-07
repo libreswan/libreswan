@@ -57,6 +57,10 @@ ifeq ($(USE_NAT_TRAVERSAL),true)
 CFLAGS+= -DNAT_TRAVERSAL
 endif
 
+ifeq ($(USE_DYNAMICDNS),true)
+CFLAGS+= -DDYNAMICDNS
+endif
+
 ARFLAGS=crvs
 MANS=
 

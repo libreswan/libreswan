@@ -264,6 +264,11 @@ RH_KERNELSRC?=/lib/modules/2.6.9-1.681_FC3/build
 # This only affects conns that use DNS for keys in lookups.
 USE_LWRES?=true
 
+# Do a new lookup every time a connection is (re)started. This works better
+# on hosts with some dyndns service, since DPD will cause a new dns lookup,
+# but it could be a potential security issue if receiving spoofed dns.
+USE_DYNAMICDNS?=false
+
 # what kind of firewalling to use:
 #  2.0 	- ipfwadm
 #  2.2  - ipchains

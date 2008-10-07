@@ -12,6 +12,7 @@ v2.5.59s
 * Add support for USE_DMALLOC [Ilia Sotnikov]
 * Update stats to show dropped packets [David McCullough]
 * DNS/WINS ModeConfig fixes [David McCullough]
+* dynamic dns support (do dns lookup at restart conn, eg after dpd) [david]
 * Bugtracker bugs fixed:
   #975: ipsec_setup: Unknown socket write error 96. [paul]
   #984:  Wrong ipsec_dev_get(x) function for Kernels < 2.6.24

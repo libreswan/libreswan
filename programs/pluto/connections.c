@@ -132,6 +132,80 @@ release_connection(struct connection *c, bool relations)
     }
 }
 
+#ifdef DYNAMICDNS
+
+/* used by update_host_pairs */
+#define list_rm(etype, enext, e, ehead) { \
+	etype **ep; \
+	for (ep = &(ehead); *ep != (e); ep = &(*ep)->enext) \
+	    passert(*ep != NULL);    /* we must not come up empty-handed */ \
+	*ep = (e)->enext; \
+    }
+
+/* update the host pairs with the latest DNS ip address */
+void
+update_host_pairs(struct connection *c)
+{
+    struct connection *d = NULL, *conn_next_tmp = NULL, *conn_list = NULL;
+    struct host_pair *p = NULL, *hp_next_tmp;
+    ip_address new_addr;
+    char *dnshostname;
+
+    d = c->host_pair->connections;
+    p = c->host_pair;
+
+    if (d == NULL
+    	|| p == NULL
+	|| d->dnshostname == NULL
+	|| ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL
+	|| sameaddr(&new_addr, &p->him.addr)) 
+	    return;
+
+    /* remember this dnshostname */
+    dnshostname = c->dnshostname;
+
+    for (; d != NULL; d = hp_next_tmp)
+    {
+	hp_next_tmp = d->hp_next;
+	if (d->dnshostname && strcmp(d->dnshostname, dnshostname) == 0)
+	{
+	      /* 
+	      * If there is a dnshostname and it is the same as the one that has changed, then 
+	      * change the connection's remote host address and remove the connection from the host pair.
+	      */
+	      d->spd.that.host_addr = new_addr;
+	      list_rm(struct connection, hp_next, d, d->host_pair->connections);
+
+	      d->hp_next = conn_list;
+	      conn_list = d;
+	}
+    }
+
+    if (conn_list)
+    {
+	d = conn_list;
+	for (; d != NULL; d = conn_next_tmp)
+	{
+	    /* 
+	    * connect the connection to the new host_pair
+	    */
+	    conn_next_tmp = d->hp_next;
+	    connect_to_host_pair(d);
+	}
+    }
+
+    if (p->connections == NULL)
+    {
+	passert(p->pending == NULL);	/* ??? must deal with this! */
+	list_rm(struct host_pair, next, p, host_pairs);
+	pfree(p);
+    }
+}
+
+#endif /* DYNAMICDNS */
+
+
+
 /* Delete a connection */
 
 static void
@@ -235,6 +309,9 @@ delete_connection(struct connection *c, bool relations)
     set_debugging(old_cur_debugging);
 #endif
     pfreeany(c->name);
+#ifdef DYNAMICDNS
+    pfreeany(c->dnshostname);
+#endif /* DYNAMICDNS */
 
     sr = &c->spd;
     while(sr) {
@@ -675,6 +752,10 @@ unshare_connection_strings(struct connection *c)
     struct spd_route *sr;
 
     c->name = clone_str(c->name, "connection name");
+
+#ifdef DYNAMICDNS
+    c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
+#endif /* DYNAMICDNS */
 
     /* duplicate any alias, adding spaces to the beginning and end */
     c->connalias = clone_str(c->connalias, "connection alias");
@@ -1132,6 +1213,11 @@ add_connection(const struct whack_message *wm)
 	same_rightca = same_leftca = FALSE;
 	c->name = wm->name;
 	c->connalias = wm->connalias;
+
+#ifdef DYNAMICDNS
+	if (wm->dnshostname)
+		c->dnshostname = wm->dnshostname;
+#endif /* DYNAMICDNS */
 
 	c->policy = wm->policy;
 
