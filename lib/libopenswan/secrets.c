@@ -394,8 +394,9 @@ struct secret *osw_find_secret_by_id(struct secret *secrets
 	, idhim[IDTOA_BUF], idhim2[IDTOA_BUF];
     enum {	/* bits */
 	match_default = 01,
-	match_him = 02,
-	match_me = 04
+	match_any = 02,
+	match_him = 04,
+	match_me = 010
     };
     unsigned int best_match = 0;
     struct secret *s, *best = NULL;
@@ -440,11 +441,21 @@ struct secret *osw_find_secret_by_id(struct secret *secrets
 		    idnum++;
 		    idtoa(&i->id, idstr1, IDTOA_BUF);
 
-		    if (same_id(&i->id, my_id))
-			match |= match_me;
+		    if (any_id(&i->id)) {
+			/*
+			 * match any will automatically match me and him
+			 * so treat it as it's own match type so that specific
+			 * matches get a higher "match" value and are
+			 * used in preference to "any" matches.
+			 */
+			match |= match_any;
+		    } else {
+		    	if (same_id(&i->id, my_id))
+			    match |= match_me;
 
-		    if (his_id!=NULL && same_id(&i->id, his_id))
-			match |= match_him;
+		    	if (his_id!=NULL && same_id(&i->id, his_id))
+			    match |= match_him;
+		    }
 
 		    DBG(DBG_CONTROL,
 			DBG_log("%d: compared key %s to %s / %s -> %d"
@@ -475,7 +486,10 @@ struct secret *osw_find_secret_by_id(struct secret *secrets
 		    break;
 		/* FALLTHROUGH */
 	    case match_default:	/* default all */
+	    case match_any:	/* a wildcard */
 	    case match_me | match_default:	/* default peer */
+	    case match_me | match_any:	/* %any/0.0.0.0 and me */
+	    case match_him | match_any:	/* %any/0.0.0.0 and peer */
 	    case match_me | match_him:	/* explicit */
 		if (match == best_match)
 		{

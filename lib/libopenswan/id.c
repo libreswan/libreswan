@@ -345,6 +345,34 @@ free_id_content(struct id *id)
     }
 }
 
+/* is this a "match anything" id */
+bool
+any_id(const struct id *a)
+{
+    a = resolve_myid(a);
+
+    switch (a->kind)
+    {
+    case ID_NONE:
+	return TRUE;	/* wildcard */
+
+    case ID_IPV4_ADDR:
+    case ID_IPV6_ADDR:
+		return isanyaddr(&a->ip_addr);
+
+    case ID_FQDN:
+    case ID_USER_FQDN:
+    case ID_DER_ASN1_DN:
+    case ID_KEY_ID:
+		return FALSE;
+
+    default:
+	bad_case(a->kind);
+    }
+    /* NOTREACHED */
+    return FALSE;
+}
+
 /* compare two struct id values */
 bool
 same_id(const struct id *a, const struct id *b)
