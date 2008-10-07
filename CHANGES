@@ -6,10 +6,16 @@ v2.5.59s
 * refineconnection bug fix. This might cover various problems where
   the right conn was not picked (eg rightca="%any" workaround, but
   perhaps also some rekey issues) [paul]
-
-
+* Fix memory leak when we run out of descriptors [David McCullough]
+* Various memory leak fixes for pluto (from #macosx) [Ilia Sotnikov]
+* LEAK_DETECTIVE should report better now [Ilia Sotnikov]
+* Add support for USE_DMALLOC [Ilia Sotnikov]
+* Update stats to show dropped packets [David McCullough]
+* DNS/WINS ModeConfig fixes [David McCullough]
 * Bugtracker bugs fixed:
   #975: ipsec_setup: Unknown socket write error 96. [paul]
+  #984:  Wrong ipsec_dev_get(x) function for Kernels < 2.6.24
+  #228: Problems with %any matching in ipsec.secrets? [David McCullough]
 
 v2.5.58s
 - Various memory leak fixes [Shingo Yamawaki]
