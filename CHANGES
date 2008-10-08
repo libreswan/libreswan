@@ -15,6 +15,8 @@ v2.5.59s
 * dynamic dns support (do dns lookup at restart conn, eg after dpd) [david]
   Uses USE_DYNAMICDNS=
 * dpdaction=restart_by_peer support added [david]
+* Fix for "auth failed on packet" (kernel locking fixes) [Shingo Yamawaki]
+* Make sure not to deref NULL p1st when checking for stuck phase 2.
 * Bugtracker bugs fixed:
   #975: ipsec_setup: Unknown socket write error 96. [paul]
   #984:  Wrong ipsec_dev_get(x) function for Kernels < 2.6.24
