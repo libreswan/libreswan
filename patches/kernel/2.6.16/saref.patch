@@ -1,0 +1,126 @@
+diff -c -w -r -N linux-2.6.16/include/linux/in.h linux-2.6.16-ng/include/linux/in.h
+*** linux-2.6.16/include/linux/in.h	2006-03-20 00:53:29.000000000 -0500
+--- linux-2.6.16-ng/include/linux/in.h	2008-06-01 17:15:51.000000000 -0400
+***************
+*** 72,77 ****
+--- 72,78 ----
+  #define IP_FREEBIND	15
+  #define IP_IPSEC_POLICY	16
+  #define IP_XFRM_POLICY	17
++ #define IP_IPSEC_REFINFO 22
+  
+  /* BSD compatibility */
+  #define IP_RECVRETOPTS	IP_RETOPTS
+diff -c -w -r -N linux-2.6.16/include/net/ip.h linux-2.6.16-ng/include/net/ip.h
+*** linux-2.6.16/include/net/ip.h	2006-03-20 00:53:29.000000000 -0500
+--- linux-2.6.16-ng/include/net/ip.h	2008-06-01 17:16:42.000000000 -0400
+***************
+*** 49,54 ****
+--- 49,55 ----
+  	u32			addr;
+  	int			oif;
+  	struct ip_options	*opt;
++ 	struct sec_path         *sp;
+  };
+  
+  #define IPCB(skb) ((struct inet_skb_parm*)((skb)->cb))
+diff -c -w -r -N linux-2.6.16/include/net/xfrm.h linux-2.6.16-ng/include/net/xfrm.h
+*** linux-2.6.16/include/net/xfrm.h	2006-03-20 00:53:29.000000000 -0500
+--- linux-2.6.16-ng/include/net/xfrm.h	2008-06-01 17:27:42.000000000 -0400
+***************
+*** 587,599 ****
+--- 587,605 ----
+  	struct xfrm_decap_state decap;
+  };
+  
++ typedef unsigned int xfrm_sec_unique_t;
++ 
+  struct sec_path
+  {
+  	atomic_t		refcnt;
++ 	xfrm_sec_unique_t       ref;       /*reference to high-level policy*/
+  	int			len;
+  	struct sec_decap_state	x[XFRM_MAX_DEPTH];
+  };
+  
++ struct ipcm_cookie;
++ extern int ip_cmsg_send_ipsec(struct cmsghdr *cmsg, struct ipcm_cookie *ipc);
++ 
+  static inline struct sec_path *
+  secpath_get(struct sec_path *sp)
+  {
+diff -c -w -r -N linux-2.6.16/Makefile linux-2.6.16-ng/Makefile
+*** linux-2.6.16/Makefile	2006-03-20 00:53:29.000000000 -0500
+--- linux-2.6.16-ng/Makefile	2008-06-01 17:28:09.000000000 -0400
+***************
+*** 1,7 ****
+  VERSION = 2
+  PATCHLEVEL = 6
+  SUBLEVEL = 16
+! EXTRAVERSION =
+  NAME=Sliding Snow Leopard
+  
+  # *DOCUMENTATION*
+--- 1,7 ----
+  VERSION = 2
+  PATCHLEVEL = 6
+  SUBLEVEL = 16
+! EXTRAVERSION = -osw-2.5.52s
+  NAME=Sliding Snow Leopard
+  
+  # *DOCUMENTATION*
+diff -c -w -r -N linux-2.6.16/net/ipv4/icmp.c linux-2.6.16-ng/net/ipv4/icmp.c
+*** linux-2.6.16/net/ipv4/icmp.c	2006-03-20 00:53:29.000000000 -0500
+--- linux-2.6.16-ng/net/ipv4/icmp.c	2008-06-01 17:19:19.000000000 -0400
+***************
+*** 440,445 ****
+--- 440,447 ----
+  	u32 saddr;
+  	u8  tos;
+  
++ 	memset(&ipc, 0, sizeof(ipc));
++ 
+  	if (!rt)
+  		goto out;
+  
+diff -c -w -r -N linux-2.6.16/net/ipv4/ip_output.c linux-2.6.16-ng/net/ipv4/ip_output.c
+*** linux-2.6.16/net/ipv4/ip_output.c	2006-03-20 00:53:29.000000000 -0500
+--- linux-2.6.16-ng/net/ipv4/ip_output.c	2008-06-01 17:19:50.000000000 -0400
+***************
+*** 1343,1348 ****
+--- 1343,1350 ----
+  	u32 daddr;
+  	struct rtable *rt = (struct rtable*)skb->dst;
+  
++ 	memset(&ipc, 0, sizeof(ipc));
++ 
+  	if (ip_options_echo(&replyopts.opt, skb))
+  		return;
+  
+diff -c -w -r -N linux-2.6.16/net/ipv4/ip_sockglue.c linux-2.6.16-ng/net/ipv4/ip_sockglue.c
+*** linux-2.6.16/net/ipv4/ip_sockglue.c	2006-03-20 00:53:29.000000000 -0500
+--- linux-2.6.16-ng/net/ipv4/ip_sockglue.c	2008-06-01 17:20:11.000000000 -0400
+***************
+*** 1083,1088 ****
+--- 1083,1089 ----
+  }
+  
+  EXPORT_SYMBOL(ip_cmsg_recv);
++ EXPORT_SYMBOL(ip_cmsg_send);
+  
+  EXPORT_SYMBOL(ip_getsockopt);
+  EXPORT_SYMBOL(ip_setsockopt);
+diff -c -w -r -N linux-2.6.16/net/ipv4/raw.c linux-2.6.16-ng/net/ipv4/raw.c
+*** linux-2.6.16/net/ipv4/raw.c	2006-03-20 00:53:29.000000000 -0500
+--- linux-2.6.16-ng/net/ipv4/raw.c	2008-06-01 17:20:34.000000000 -0400
+***************
+*** 387,392 ****
+--- 387,394 ----
+  	u8  tos;
+  	int err;
+  
++ 	memset(&ipc, 0, sizeof(ipc));
++ 
+  	err = -EMSGSIZE;
+  	if (len > 0xFFFF)
+  		goto out;
