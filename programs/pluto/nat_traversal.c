@@ -814,8 +814,10 @@ static void nat_traversal_find_new_mapp_state (struct state *st, void *data)
 {
 	struct _new_mapp_nfo *nfo = (struct _new_mapp_nfo *)data;
 
-	if(st->st_serialno == nfo->st->st_clonedfrom ||
-	   st->st_clonedfrom == nfo->st->st_clonedfrom) {
+	if((!nfo->st->st_clonedfrom &&
+	    (st->st_serialno == nfo->st->st_clonedfrom &&
+	     st->st_clonedfrom == nfo->st->st_clonedfrom)) ||
+	   st->st_serialno == nfo->st->st_serialno) {
 		char b1[ADDRTOT_BUF];
 		char b2[ADDRTOT_BUF];
 		struct connection *c = st->st_connection;
