@@ -4,6 +4,7 @@ v2.5.60s
 * Bugtracker bugs fixed:
   #992: keyingretries default changed from %forever to 3 [ken]
         (bug was introduced in 2.6.x)
+  #994: reference a state st which we don't have in logging [paul]
 
 v2.5.59s
 * Fix parallel build (missing parser.tab.c dependancy) [tuomo]

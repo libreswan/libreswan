@@ -2411,11 +2411,19 @@ void process_packet_tail(struct msg_digest **mdp)
 		switch(p->payload.notification.isan_type) {
 		case INVALID_MESSAGE_ID:
 		default:
+		    if (st!=NULL) {
 		    loglog(RC_LOG_SERIOUS
 			   , "ignoring informational payload, type %s msgid=%08x"
 			   , enum_show(&ipsec_notification_names
 				       , p->payload.notification.isan_type), st->st_msgid);
+		    } else {
+			loglog(RC_LOG_SERIOUS
+			   , "ignoring informational payload, type %s on st==NULL (deleted?)"
+			   , enum_show(&ipsec_notification_names
+					, p->payload.notification.isan_type));
+		    }
 		}
+
 #ifdef DEBUG
 		if(st!=NULL
 		   && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO) {
