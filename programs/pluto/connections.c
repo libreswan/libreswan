@@ -837,6 +837,8 @@ load_end_certificate(const char *filename, struct end *dst)
 	    if(!valid_cert) {
 		whack_log(RC_FATAL, "can not load certificate file %s\n"
 			  , filename);
+	    /* clear the ID, we're expecting it via %fromcert */
+	    dst->id.kind = ID_NONE;
 		return;
 	    }
 	}
