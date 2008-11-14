@@ -3,6 +3,7 @@ Please see docs/KNOWN_BUGS file for more information
 v2.5.60s
 * Fix crasher when we fail to load a certificate, but have
   leftid=%fromcert [paul]
+* generated ipsec.conf.5 should be commited in tree [paul]
 * Bugtracker bugs fixed:
   #992: keyingretries default changed from %forever to 3 [ken]
         (bug was introduced in 2.6.x)

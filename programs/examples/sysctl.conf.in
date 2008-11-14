@@ -7,8 +7,10 @@ net.ipv4.ip_forward = 1
 # nowhere"
 net.ipv4.conf.default.rp_filter = 0
 
-# when using 1 interface for two networks, and in some other cases with
-# NETKEY, the kernel thinks it can be clever but breaks things.
+# when using 1 interface for two networks when using NETKEY, the kernel
+# kernel thinks it can be clever by sending a redirect (cause it cannot
+# tell an encrypted packet came in, but a decrypted packet came out),
+# so it sends a bogus ICMP redirect
 net.ipv4.conf.all.send_redirects = 0
 net.ipv4.conf.default.send_redirects = 0
 net.ipv4.icmp_ignore_bogus_error_responses = 1
@@ -20,4 +22,14 @@ net.ipv4.conf.default.accept_source_route = 0
 net.ipv4.conf.all.accept_redirects = 0
 net.ipv4.conf.default.accept_redirects = 0
 
-
+# When using KLIPS in some situations, you will see errors like:
+# [ 8648.409997] __ratelimit: 168 messages suppressed
+# [ 8648.410009] Neighbour table overflow.
+# Especially when on large cable networks, though we've also
+# seen it when using combinations of xen/bridging/VM's.
+# If you do, and you are SURE there are no routing loops,
+# you can try these below:
+#
+net.ipv4.neigh.default.gc_thresh1 = 1024
+net.ipv4.neigh.default.gc_thresh2 = 2048
+net.ipv4.neigh.default.gc_thresh3 = 4096
