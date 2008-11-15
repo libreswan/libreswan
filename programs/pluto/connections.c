@@ -2079,6 +2079,14 @@ route_owner(struct connection *c
 		    continue;
 		if (src->that.port != srd->that.port)
 		    continue;
+
+		/* with old eroutes/routing, we could not do this. This
+		* allows a host with two IP's to talk to 1 oter host
+		* with both IP's using two different tunnels.
+		*/
+		if (!sameaddr(&src->this.host_addr, &srd->this.host_addr))
+			continue;
+
 		passert(oriented(*d));
 		if (srd->routing > best_routing)
 		{
