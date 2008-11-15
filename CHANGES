@@ -3,10 +3,12 @@ Please see docs/KNOWN_BUGS file for more information
 v2.5.60s
 * Fix crasher when we fail to load a certificate, but have
   leftid=%fromcert [paul]
+* Fix for setting up connections using two different source IP's to the
+  same single destination IP using separate tunnels. [Avesh Agarwal]
 * generated ipsec.conf.5 should be commited in tree [paul]
+* Added example config to fix the "Neighbour table overflow." error.
 * Bugtracker bugs fixed:
   #992: keyingretries default changed from %forever to 3 [ken]
-        (bug was introduced in 2.6.x)
   #994: reference a state st which we don't have in logging [paul]
 
 v2.5.59s
