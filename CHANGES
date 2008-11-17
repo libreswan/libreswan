@@ -6,7 +6,9 @@ v2.5.60s
 * Fix for setting up connections using two different source IP's to the
   same single destination IP using separate tunnels. [Avesh Agarwal]
 * generated ipsec.conf.5 should be commited in tree [paul]
-* Added example config to fix the "Neighbour table overflow." error.
+* Added example config to fix the "Neighbour table overflow." error. [paul]
+* SAref fixes that missed the tree [Shingo Yamawaki]
+* Updated patches/kernel/2.6.16.54-0.2.5/* [paul]
 * Bugtracker bugs fixed:
   #992: keyingretries default changed from %forever to 3 [ken]
   #994: reference a state st which we don't have in logging [paul]
