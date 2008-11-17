@@ -1,6 +1,6 @@
-diff -rupN linux-2.6.16.54-0.2.5/include/net/xfrmudp.h linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/xfrmudp.h
+diff -Naur linux-2.6.16.54-0.2.5/include/net/xfrmudp.h linux-2.6.16.54-0.2.5.osw2.5.60s/include/net/xfrmudp.h
 --- linux-2.6.16.54-0.2.5/include/net/xfrmudp.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/xfrmudp.h	2008-06-05 00:01:45.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/include/net/xfrmudp.h	2008-07-03 00:48:48.000000000 -0400
 @@ -0,0 +1,10 @@
 +/*
 + * pointer to function for type that xfrm4_input wants, to permit
@@ -12,10 +12,10 @@ diff -rupN linux-2.6.16.54-0.2.5/include/net/xfrmudp.h linux-2.6.16.54-0.2.5.osw
 +extern int udp4_register_esp_rcvencap(xfrm4_rcv_encap_t func
 +                                    , xfrm4_rcv_encap_t *oldfunc);
 +extern int udp4_unregister_esp_rcvencap(xfrm4_rcv_encap_t func);
-diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/Kconfig linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/Kconfig
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/Kconfig linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/Kconfig
 --- linux-2.6.16.54-0.2.5/net/ipv4/Kconfig	2008-06-04 23:44:38.000000000 -0400
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/Kconfig	2008-06-04 23:51:39.000000000 -0400
-@@ -367,6 +367,12 @@ config SYN_COOKIES
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/Kconfig	2008-07-03 00:48:48.000000000 -0400
+@@ -367,6 +367,12 @@
  
  	  If unsure, say N.
  
@@ -28,9 +28,31 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/Kconfig linux-2.6.16.54-0.2.5.osw2.5.5
  config INET_AH
  	tristate "IP: AH transformation"
  	select XFRM
-diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/udp.c
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/af_inet.c linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/af_inet.c
+--- linux-2.6.16.54-0.2.5/net/ipv4/af_inet.c	2008-06-04 23:44:47.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/af_inet.c	2008-07-03 00:49:29.000000000 -0400
+@@ -1309,6 +1309,18 @@
+ #if defined(CONFIG_IP_MROUTE)
+ 	ip_mr_init();
+ #endif
++
++#if defined(CONFIG_KLIPS)
++	{
++               extern int ipsec_klips_init(void);
++		/*
++		 *  Initialise AF_INET ESP and AH protocol support including 
++		 *  e-routing and SA tables
++		 */
++		ipsec_klips_init();
++	}
++#endif /* CONFIG_IPSEC */
++
+ 	/*
+ 	 *	Initialise per-cpu ipv4 mibs
+ 	 */ 
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/udp.c
 --- linux-2.6.16.54-0.2.5/net/ipv4/udp.c	2008-06-04 23:44:38.000000000 -0400
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/udp.c	2008-06-04 23:53:52.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/udp.c	2008-07-03 00:48:52.000000000 -0400
 @@ -109,11 +109,14 @@
  #include <net/inet_common.h>
  #include <net/checksum.h>
@@ -46,7 +68,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s
  DEFINE_SNMP_STAT(struct udp_mib, udp_statistics) __read_mostly;
  
  struct hlist_head udp_hash[UDP_HTABLE_SIZE];
-@@ -882,6 +891,42 @@ static void udp_close(struct sock *sk, l
+@@ -882,6 +891,42 @@
  	sk_common_release(sk);
  }
  
@@ -89,7 +111,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s
  /* return:
   * 	1  if the the UDP system should process it
   *	0  if we should drop this packet
-@@ -889,9 +934,9 @@ static void udp_close(struct sock *sk, l
+@@ -889,9 +934,9 @@
   */
  static int udp_encap_rcv(struct sock * sk, struct sk_buff *skb)
  {
@@ -101,7 +123,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s
  	struct udp_sock *up = udp_sk(sk);
    	struct udphdr *uh;
  	struct iphdr *iph;
-@@ -1019,9 +1064,13 @@ static int udp_queue_rcv_skb(struct sock
+@@ -1019,9 +1064,13 @@
  			return 0;
  		}
  		if (ret < 0) {
@@ -118,7 +140,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s
  			return -ret;
  		}
  		/* FALLTHROUGH -- it's a UDP Packet */
-@@ -1569,3 +1616,9 @@ EXPORT_SYMBOL(udp_poll);
+@@ -1569,3 +1618,9 @@
  EXPORT_SYMBOL(udp_proc_register);
  EXPORT_SYMBOL(udp_proc_unregister);
  #endif
@@ -128,9 +150,9 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s
 +EXPORT_SYMBOL(udp4_unregister_esp_rcvencap);
 +#endif
 +
-diff -rupN linux-2.6.16.54-0.2.5/net/xfrmudp.h linux-2.6.16.54-0.2.5.osw2.5.55s/net/xfrmudp.h
+diff -Naur linux-2.6.16.54-0.2.5/net/xfrmudp.h linux-2.6.16.54-0.2.5.osw2.5.60s/net/xfrmudp.h
 --- linux-2.6.16.54-0.2.5/net/xfrmudp.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/xfrmudp.h	2008-06-04 23:51:30.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/xfrmudp.h	2008-07-03 00:48:48.000000000 -0400
 @@ -0,0 +1,10 @@
 +/*
 + * pointer to function for type that xfrm4_input wants, to permit

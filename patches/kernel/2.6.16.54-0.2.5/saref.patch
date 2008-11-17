@@ -1,7 +1,22 @@
-diff -rupN linux-2.6.16.54-0.2.5/include/linux/in.h linux-2.6.16.54-0.2.5.osw2.5.55s/include/linux/in.h
+diff -Naur linux-2.6.16.54-0.2.5/drivers/char/n_tty.c linux-2.6.16.54-0.2.5.osw2.5.60s/drivers/char/n_tty.c
+--- linux-2.6.16.54-0.2.5/drivers/char/n_tty.c	2008-06-04 23:44:43.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/drivers/char/n_tty.c	2008-10-07 16:44:00.000000000 -0400
+@@ -1393,8 +1393,10 @@
+ 		 * longer than TTY_THRESHOLD_UNTHROTTLE in canonical mode,
+ 		 * we won't get any more characters.
+ 		 */
+-		if (n_tty_chars_in_buffer(tty) <= TTY_THRESHOLD_UNTHROTTLE)
++		if (n_tty_chars_in_buffer(tty) <= TTY_THRESHOLD_UNTHROTTLE) {
++			n_tty_set_room(tty);
+ 			check_unthrottle(tty);
++		}
+ 
+ 		if (b - buf >= minimum)
+ 			break;
+diff -Naur linux-2.6.16.54-0.2.5/include/linux/in.h linux-2.6.16.54-0.2.5.osw2.5.60s/include/linux/in.h
 --- linux-2.6.16.54-0.2.5/include/linux/in.h	2006-03-20 00:53:29.000000000 -0500
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/include/linux/in.h	2008-06-04 23:51:07.000000000 -0400
-@@ -72,6 +72,7 @@ struct in_addr {
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/include/linux/in.h	2008-07-03 00:48:52.000000000 -0400
+@@ -72,6 +72,7 @@
  #define IP_FREEBIND	15
  #define IP_IPSEC_POLICY	16
  #define IP_XFRM_POLICY	17
@@ -9,10 +24,10 @@ diff -rupN linux-2.6.16.54-0.2.5/include/linux/in.h linux-2.6.16.54-0.2.5.osw2.5
  
  /* BSD compatibility */
  #define IP_RECVRETOPTS	IP_RETOPTS
-diff -rupN linux-2.6.16.54-0.2.5/include/linux/rtnetlink.h linux-2.6.16.54-0.2.5.osw2.5.55s/include/linux/rtnetlink.h
+diff -Naur linux-2.6.16.54-0.2.5/include/linux/rtnetlink.h linux-2.6.16.54-0.2.5.osw2.5.60s/include/linux/rtnetlink.h
 --- linux-2.6.16.54-0.2.5/include/linux/rtnetlink.h	2006-03-20 00:53:29.000000000 -0500
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/include/linux/rtnetlink.h	2008-06-30 23:35:32.000000000 -0400
-@@ -265,6 +265,9 @@ enum rtattr_type_t
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/include/linux/rtnetlink.h	2008-07-03 00:48:52.000000000 -0400
+@@ -265,6 +265,9 @@
  	__RTA_MAX
  };
  
@@ -22,10 +37,10 @@ diff -rupN linux-2.6.16.54-0.2.5/include/linux/rtnetlink.h linux-2.6.16.54-0.2.5
  #define RTA_MAX (__RTA_MAX - 1)
  
  #define RTM_RTA(r)  ((struct rtattr*)(((char*)(r)) + NLMSG_ALIGN(sizeof(struct rtmsg))))
-diff -rupN linux-2.6.16.54-0.2.5/include/net/ip.h linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/ip.h
+diff -Naur linux-2.6.16.54-0.2.5/include/net/ip.h linux-2.6.16.54-0.2.5.osw2.5.60s/include/net/ip.h
 --- linux-2.6.16.54-0.2.5/include/net/ip.h	2008-06-04 23:44:34.000000000 -0400
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/ip.h	2008-06-04 23:51:07.000000000 -0400
-@@ -49,6 +49,7 @@ struct ipcm_cookie
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/include/net/ip.h	2008-07-03 00:48:52.000000000 -0400
+@@ -49,6 +49,7 @@
  	u32			addr;
  	int			oif;
  	struct ip_options	*opt;
@@ -33,10 +48,10 @@ diff -rupN linux-2.6.16.54-0.2.5/include/net/ip.h linux-2.6.16.54-0.2.5.osw2.5.5
  };
  
  #define IPCB(skb) ((struct inet_skb_parm*)((skb)->cb))
-diff -rupN linux-2.6.16.54-0.2.5/include/net/xfrm.h linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/xfrm.h
+diff -Naur linux-2.6.16.54-0.2.5/include/net/xfrm.h linux-2.6.16.54-0.2.5.osw2.5.60s/include/net/xfrm.h
 --- linux-2.6.16.54-0.2.5/include/net/xfrm.h	2006-03-20 00:53:29.000000000 -0500
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/include/net/xfrm.h	2008-06-04 23:51:07.000000000 -0400
-@@ -587,13 +587,19 @@ struct sec_decap_state {
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/include/net/xfrm.h	2008-07-03 00:48:52.000000000 -0400
+@@ -587,13 +587,19 @@
  	struct xfrm_decap_state decap;
  };
  
@@ -56,10 +71,48 @@ diff -rupN linux-2.6.16.54-0.2.5/include/net/xfrm.h linux-2.6.16.54-0.2.5.osw2.5
  static inline struct sec_path *
  secpath_get(struct sec_path *sp)
  {
-diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/fib_rules.c
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/Kconfig linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/Kconfig
+--- linux-2.6.16.54-0.2.5/net/ipv4/Kconfig	2008-06-04 23:44:38.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/Kconfig	2008-07-03 00:48:48.000000000 -0400
+@@ -367,6 +367,12 @@
+ 
+ 	  If unsure, say N.
+ 
++config IPSEC_NAT_TRAVERSAL
++	bool "IPSEC NAT-Traversal (KLIPS compatible)"
++	depends on INET
++	---help---
++          Includes support for RFC3947/RFC3948 NAT-Traversal of ESP over UDP.
++
+ config INET_AH
+ 	tristate "IP: AH transformation"
+ 	select XFRM
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/af_inet.c linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/af_inet.c
+--- linux-2.6.16.54-0.2.5/net/ipv4/af_inet.c	2008-06-04 23:44:47.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/af_inet.c	2008-07-03 00:49:29.000000000 -0400
+@@ -1309,6 +1309,18 @@
+ #if defined(CONFIG_IP_MROUTE)
+ 	ip_mr_init();
+ #endif
++
++#if defined(CONFIG_KLIPS)
++	{
++               extern int ipsec_klips_init(void);
++		/*
++		 *  Initialise AF_INET ESP and AH protocol support including 
++		 *  e-routing and SA tables
++		 */
++		ipsec_klips_init();
++	}
++#endif /* CONFIG_IPSEC */
++
+ 	/*
+ 	 *	Initialise per-cpu ipv4 mibs
+ 	 */ 
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/fib_rules.c
 --- linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c	2006-03-20 00:53:29.000000000 -0500
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/fib_rules.c	2008-06-30 23:27:55.000000000 -0400
-@@ -68,6 +68,7 @@ struct fib_rule
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/fib_rules.c	2008-07-03 00:48:52.000000000 -0400
+@@ -68,6 +68,7 @@
  	u8		r_tos;
  #ifdef CONFIG_IP_ROUTE_FWMARK
  	u32		r_fwmark;
@@ -67,7 +120,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c linux-2.6.16.54-0.2.5.osw2
  #endif
  	int		r_ifindex;
  #ifdef CONFIG_NET_CLS_ROUTE
-@@ -116,7 +117,8 @@ int inet_rtm_delrule(struct sk_buff *skb
+@@ -116,7 +117,8 @@
  		    (!rta[RTA_DST-1] || memcmp(RTA_DATA(rta[RTA_DST-1]), &r->r_dst, 4) == 0) &&
  		    rtm->rtm_tos == r->r_tos &&
  #ifdef CONFIG_IP_ROUTE_FWMARK
@@ -77,7 +130,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c linux-2.6.16.54-0.2.5.osw2
  #endif
  		    (!rtm->rtm_type || rtm->rtm_type == r->r_action) &&
  		    (!rta[RTA_PRIORITY-1] || memcmp(RTA_DATA(rta[RTA_PRIORITY-1]), &r->r_preference, 4) == 0) &&
-@@ -200,8 +202,21 @@ int inet_rtm_newrule(struct sk_buff *skb
+@@ -200,8 +202,21 @@
  	new_r->r_dstmask = inet_make_mask(rtm->rtm_dst_len);
  	new_r->r_tos = rtm->rtm_tos;
  #ifdef CONFIG_IP_ROUTE_FWMARK
@@ -101,7 +154,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c linux-2.6.16.54-0.2.5.osw2
  #endif
  	new_r->r_action = rtm->rtm_type;
  	new_r->r_flags = rtm->rtm_flags;
-@@ -298,7 +313,7 @@ FRprintk("Lookup: %u.%u.%u.%u <- %u.%u.%
+@@ -298,7 +313,7 @@
  		    ((daddr^r->r_dst) & r->r_dstmask) ||
  		    (r->r_tos && r->r_tos != flp->fl4_tos) ||
  #ifdef CONFIG_IP_ROUTE_FWMARK
@@ -110,7 +163,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c linux-2.6.16.54-0.2.5.osw2
  #endif
  		    (r->r_ifindex && r->r_ifindex != flp->iif))
  			continue;
-@@ -382,8 +397,10 @@ static __inline__ int inet_fill_rule(str
+@@ -382,8 +397,10 @@
  	rtm->rtm_src_len = r->r_src_len;
  	rtm->rtm_tos = r->r_tos;
  #ifdef CONFIG_IP_ROUTE_FWMARK
@@ -123,10 +176,19 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/fib_rules.c linux-2.6.16.54-0.2.5.osw2
  #endif
  	rtm->rtm_table = r->r_table;
  	rtm->rtm_protocol = 0;
-diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/icmp.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/icmp.c
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/icmp.c linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/icmp.c
 --- linux-2.6.16.54-0.2.5/net/ipv4/icmp.c	2006-03-20 00:53:29.000000000 -0500
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/icmp.c	2008-06-04 23:51:07.000000000 -0400
-@@ -440,6 +440,8 @@ void icmp_send(struct sk_buff *skb_in, i
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/icmp.c	2008-08-29 15:25:43.000000000 -0400
+@@ -384,6 +384,8 @@
+ 	struct rtable *rt = (struct rtable *)skb->dst;
+ 	u32 daddr;
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	if (ip_options_echo(&icmp_param->replyopts, skb))
+ 		return;
+ 
+@@ -440,6 +442,8 @@
  	u32 saddr;
  	u8  tos;
  
@@ -135,9 +197,9 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/icmp.c linux-2.6.16.54-0.2.5.osw2.5.55
  	if (!rt)
  		goto out;
  
-diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_output.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/ip_output.c
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/ip_output.c linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/ip_output.c
 --- linux-2.6.16.54-0.2.5/net/ipv4/ip_output.c	2008-06-04 23:44:47.000000000 -0400
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/ip_output.c	2008-07-02 12:51:26.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/ip_output.c	2008-07-03 00:48:52.000000000 -0400
 @@ -75,6 +75,7 @@
  #include <net/arp.h>
  #include <net/icmp.h>
@@ -146,7 +208,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_output.c linux-2.6.16.54-0.2.5.osw2
  #include <net/inetpeer.h>
  #include <net/checksum.h>
  #include <linux/igmp.h>
-@@ -390,6 +391,8 @@ static void ip_copy_metadata(struct sk_b
+@@ -390,6 +391,8 @@
  	/* Copy the flags to each fragment. */
  	IPCB(to)->flags = IPCB(from)->flags;
  
@@ -155,7 +217,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_output.c linux-2.6.16.54-0.2.5.osw2
  #ifdef CONFIG_NET_SCHED
  	to->tc_index = from->tc_index;
  #endif
-@@ -929,6 +932,7 @@ alloc_new_skb:
+@@ -929,6 +932,7 @@
  			 */
  			skb->ip_summed = csummode;
  			skb->csum = 0;
@@ -163,7 +225,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_output.c linux-2.6.16.54-0.2.5.osw2
  			skb_reserve(skb, hh_len);
  
  			/*
-@@ -1341,6 +1345,8 @@ void ip_send_reply(struct sock *sk, stru
+@@ -1341,6 +1345,8 @@
  	u32 daddr;
  	struct rtable *rt = (struct rtable*)skb->dst;
  
@@ -172,9 +234,9 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_output.c linux-2.6.16.54-0.2.5.osw2
  	if (ip_options_echo(&replyopts.opt, skb))
  		return;
  
-diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/ip_sockglue.c
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/ip_sockglue.c
 --- linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c	2006-03-20 00:53:29.000000000 -0500
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/ip_sockglue.c	2008-07-02 12:56:39.000000000 -0400
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/ip_sockglue.c	2008-07-03 00:48:52.000000000 -0400
 @@ -50,6 +50,7 @@
  #define IP_CMSG_TOS		4
  #define IP_CMSG_RECVOPTS	8
@@ -183,7 +245,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.os
  
  /*
   *	SOL_IP control messages.
-@@ -112,6 +113,7 @@ static void ip_cmsg_recv_retopts(struct 
+@@ -112,6 +113,7 @@
  
  void ip_cmsg_recv(struct msghdr *msg, struct sk_buff *skb)
  {
@@ -191,7 +253,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.os
  	struct inet_sock *inet = inet_sk(skb->sk);
  	unsigned flags = inet->cmsg_flags;
  
-@@ -138,6 +140,12 @@ void ip_cmsg_recv(struct msghdr *msg, st
+@@ -138,6 +140,12 @@
  
  	if (flags & 1)
  		ip_cmsg_recv_retopts(msg, skb);
@@ -204,7 +266,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.os
  }
  
  int ip_cmsg_send(struct msghdr *msg, struct ipcm_cookie *ipc)
-@@ -167,6 +175,14 @@ int ip_cmsg_send(struct msghdr *msg, str
+@@ -167,6 +175,14 @@
  			ipc->addr = info->ipi_spec_dst.s_addr;
  			break;
  		}
@@ -219,7 +281,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.os
  		default:
  			return -EINVAL;
  		}
-@@ -389,6 +405,7 @@ int ip_setsockopt(struct sock *sk, int l
+@@ -389,6 +405,7 @@
  		return -ENOPROTOOPT;
  
  	if (((1<<optname) & ((1<<IP_PKTINFO) | (1<<IP_RECVTTL) | 
@@ -227,7 +289,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.os
  			    (1<<IP_RECVOPTS) | (1<<IP_RECVTOS) | 
  			    (1<<IP_RETOPTS) | (1<<IP_TOS) | 
  			    (1<<IP_TTL) | (1<<IP_HDRINCL) | 
-@@ -478,6 +495,12 @@ int ip_setsockopt(struct sock *sk, int l
+@@ -478,6 +495,12 @@
  			else
  				inet->cmsg_flags &= ~IP_CMSG_RETOPTS;
  			break;
@@ -240,7 +302,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.os
  		case IP_TOS:	/* This sets both TOS and Precedence */
  			if (sk->sk_type == SOCK_STREAM) {
  				val &= ~3;
-@@ -932,6 +955,9 @@ int ip_getsockopt(struct sock *sk, int l
+@@ -932,6 +955,9 @@
  		case IP_RETOPTS:
  			val = (inet->cmsg_flags & IP_CMSG_RETOPTS) != 0;
  			break;
@@ -250,7 +312,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.os
  		case IP_TOS:
  			val = inet->tos;
  			break;
-@@ -1083,6 +1109,7 @@ int ip_getsockopt(struct sock *sk, int l
+@@ -1083,6 +1109,7 @@
  }
  
  EXPORT_SYMBOL(ip_cmsg_recv);
@@ -258,10 +320,10 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/ip_sockglue.c linux-2.6.16.54-0.2.5.os
  
  EXPORT_SYMBOL(ip_getsockopt);
  EXPORT_SYMBOL(ip_setsockopt);
-diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/raw.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/raw.c
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/raw.c linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/raw.c
 --- linux-2.6.16.54-0.2.5/net/ipv4/raw.c	2006-03-20 00:53:29.000000000 -0500
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/raw.c	2008-06-04 23:51:07.000000000 -0400
-@@ -387,6 +387,8 @@ static int raw_sendmsg(struct kiocb *ioc
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/raw.c	2008-07-03 00:48:52.000000000 -0400
+@@ -387,6 +387,8 @@
  	u8  tos;
  	int err;
  
@@ -270,10 +332,10 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/raw.c linux-2.6.16.54-0.2.5.osw2.5.55s
  	err = -EMSGSIZE;
  	if (len > 0xFFFF)
  		goto out;
-diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/udp.c
+diff -Naur linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/udp.c
 --- linux-2.6.16.54-0.2.5/net/ipv4/udp.c	2008-06-04 23:44:38.000000000 -0400
-+++ linux-2.6.16.54-0.2.5.osw2.5.55s/net/ipv4/udp.c	2008-06-04 23:53:52.000000000 -0400
-@@ -497,6 +500,8 @@ int udp_sendmsg(struct kiocb *iocb, stru
++++ linux-2.6.16.54-0.2.5.osw2.5.60s/net/ipv4/udp.c	2008-07-03 00:48:52.000000000 -0400
+@@ -497,6 +500,8 @@
  	int err;
  	int corkreq = up->corkflag || msg->msg_flags&MSG_MORE;
  
@@ -282,7 +344,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s
  	if (len > 0xFFFF)
  		return -EMSGSIZE;
  
-@@ -658,6 +663,10 @@ out:
+@@ -658,6 +663,10 @@
  	ip_rt_put(rt);
  	if (free)
  		kfree(ipc.opt);
@@ -293,7 +355,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s
  	if (!err) {
  		UDP_INC_STATS_USER(UDP_MIB_OUTDATAGRAMS);
  		return len;
-@@ -904,11 +949,11 @@ static int udp_encap_rcv(struct sock * s
+@@ -904,11 +949,11 @@
  	/* if we're overly short, let UDP handle it */
  	len = skb->len - sizeof(struct udphdr);
  	if (len <= 0)
@@ -307,7 +369,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s
  
  	/* If this is a paged skb, make sure we pull up
  	 * whatever data we need to look at. */
-@@ -931,7 +976,7 @@ static int udp_encap_rcv(struct sock * s
+@@ -931,7 +976,7 @@
  			len = sizeof(struct udphdr);
  		} else
  			/* Must be an IKE packet.. pass it through */
@@ -316,7 +378,7 @@ diff -rupN linux-2.6.16.54-0.2.5/net/ipv4/udp.c linux-2.6.16.54-0.2.5.osw2.5.55s
  		break;
  	case UDP_ENCAP_ESPINUDP_NON_IKE:
  		/* Check if this is a keepalive packet.  If so, eat it. */
-@@ -944,7 +989,7 @@ static int udp_encap_rcv(struct sock * s
+@@ -944,7 +989,7 @@
  			len = sizeof(struct udphdr) + 2 * sizeof(u32);
  		} else
  			/* Must be an IKE packet.. pass it through */
