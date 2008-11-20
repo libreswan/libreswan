@@ -286,6 +286,10 @@
 /* turn a pointer into an offset for above macros */
 #define ipsec_skb_offset(skb, ptr) (((unsigned char *)(ptr)) - (skb)->data)
 
+#if !(defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && COINFIG_SLE_VERSION == 10 && CONFIG_SLE_SP >=2)
+# define ip_hdr(skb) ((skb)->nh.iph)
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
 /* 
  * The macro got introduced in 2,6,22 but it does not work properly, and
