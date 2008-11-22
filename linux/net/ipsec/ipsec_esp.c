@@ -97,6 +97,24 @@ ipsec_rcv_esp_checks(struct ipsec_rcv_state *irs,
 		return IPSEC_RCV_BADLEN;
 	}
 
+#if 0
+/* The problem with this check manifests itself when using l2tp over esp in
+ * udp over pptp/ppp. This check seems to break for ESPinUDP packets, 
+ * probably because of how hard_header_len is used with decapsulation.
+ *
+ * When pinging using -s 0 with Windows, one sees:
+ * skb->len = Payload(0) + ICMP (8) + IP (20) + ESP (16) + UDP (16) = 60.
+ * hard_header_len is calculated as 14 (ethernet) instead of 22 (ppp)
+ *
+ * Manifests itself only with Windows, not with xl2tpd as client.
+ *
+ * Disabling this check should not be harmfull, as broken too-short
+ * packets should fail their integrity check anyway.
+ *
+ * Thanks to Hiren Joshi for his excellent debugging on this
+ *
+ */
+
 	if(skb->len < (irs->hard_header_len + sizeof(struct iphdr) + sizeof(struct esphdr))) {
 		KLIPS_PRINT(debug_rcv & DB_RX_INAU,
 			    "klips_debug:ipsec_rcv: "
@@ -108,6 +126,7 @@ ipsec_rcv_esp_checks(struct ipsec_rcv_state *irs,
 		}
 		return IPSEC_RCV_BADLEN;
 	}
+#endif
 
 	irs->protostuff.espstuff.espp = (struct esphdr *)skb_transport_header(skb);
 	irs->said.spi = irs->protostuff.espstuff.espp->esp_spi;
