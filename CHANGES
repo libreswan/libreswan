@@ -1,5 +1,11 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.5.61s
+* define ip_hdr() for SLES 10.2 and up [Shingo Yamawaki]
+* Bugtracker bugs fixed:
+  #1007: NATed L2TP connection with Windows XP (SP2) terminates after 1
+         minute as small UDP packets can not pass the tunnel.[hiren/paul]
+
 v2.5.60s
 * Fix crasher when we fail to load a certificate, but have
   leftid=%fromcert [paul]
