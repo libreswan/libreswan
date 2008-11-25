@@ -28032,7 +28032,7 @@ diff -Naur linux-2.6.16.54-0.2.5/net/ipsec/ipsec_esp.c linux-2.6.16.54-0.2.5.osw
 +		}
 +		return IPSEC_RCV_BADLEN;
 +	}
-+
++#if 0
 +	if(skb->len < (irs->hard_header_len + sizeof(struct iphdr) + sizeof(struct esphdr))) {
 +		KLIPS_PRINT(debug_rcv & DB_RX_INAU,
 +			    "klips_debug:ipsec_rcv: "
@@ -28044,7 +28044,7 @@ diff -Naur linux-2.6.16.54-0.2.5/net/ipsec/ipsec_esp.c linux-2.6.16.54-0.2.5.osw
 +		}
 +		return IPSEC_RCV_BADLEN;
 +	}
-+
++#endif
 +	irs->protostuff.espstuff.espp = (struct esphdr *)skb_transport_header(skb);
 +	irs->said.spi = irs->protostuff.espstuff.espp->esp_spi;
 +
