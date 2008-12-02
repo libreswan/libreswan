@@ -9,7 +9,7 @@ May include positional parameters separated by white space
 including shell metacharacters is unwise. An example to enable
 routing when using the NETKEY stack, one can use:</para>
 <para>leftupdown="ipsec _updown --route yes"</para>
-See
+<para>See
 <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 for details.
 Relevant only locally, other end need not agree on it.</para>

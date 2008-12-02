@@ -60,7 +60,13 @@ static void default_values (struct starter_config *cfg)
 
 	cfg->setup.options[KBF_FRAGICMP] = TRUE;
 	cfg->setup.options[KBF_HIDETOS]  = TRUE;
+	cfg->setup.options[KBF_PLUTORESTARTONCRASH]  = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS]= FALSE;
+#ifdef NAT_TRAVERSAL
+	cfg->setup.options[KBF_DISABLEPORTFLOATING]= FALSE;
+	cfg->setup.options[KBF_FORCE_KEEPALIVE]= FALSE;
+	cfg->setup.options[KBF_KEEPALIVE]= 0;
+#endif
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 
 	cfg->conn_default.policy = POLICY_RSASIG|POLICY_TUNNEL|POLICY_ENCRYPT|POLICY_PFS;

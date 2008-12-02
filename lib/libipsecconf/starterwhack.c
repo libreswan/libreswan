@@ -487,10 +487,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 				    , conn->name);
 		}
 	}
-
+#ifdef NAT_TRAVERSAL
 	if(conn->options_set[KBF_FORCEENCAP]) {
 		msg.forceencaps=conn->options[KBF_FORCEENCAP];
 	}
+#endif
 
 	set_whack_end(cfg, "left",  &msg.left, &conn->left);
 	set_whack_end(cfg, "right", &msg.right, &conn->right);

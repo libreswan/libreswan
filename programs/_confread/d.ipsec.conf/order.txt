@@ -54,6 +54,9 @@ d.ipsec.conf/myid.xml
 d.ipsec.conf/protostack.xml
 d.ipsec.conf/interfaces.xml
 d.ipsec.conf/nat_traversal.xml
+d.ipsec.conf/disable_port_floating.xml
+d.ipsec.conf/force_keepalive.xml
+d.ipsec.conf/keep_alive.xml
 d.ipsec.conf/virtual_private.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml

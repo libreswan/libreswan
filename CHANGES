@@ -1,10 +1,18 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.5.62s
+* Parser was missing keep_alive= and force_keepalive= options [paul]
+* plutorestartoncrash= option was broken [paul]
+* Updated man pages for keep_alive, force_keepalive and
+  disable_port_floating [paul]
+
 v2.5.61s
 * define ip_hdr() for SLES 10.2 and up [Shingo Yamawaki]
 * re-added programs/_confread/ipsec.conf.5 in case xmlto is not present [paul]
 * removed duplicate patch sections between saref/nat-t patch [paul]
 * removed linux kernel version patching to make rpmbuild easier [paul]
+* Fix for L2TP/IPsec with Windows machines having their packets
+  disgarded by accident [Hiren Joshi]
 * Bugtracker bugs fixed:
   #1007: NATed L2TP connection with Windows XP (SP2) terminates after 1
          minute as small UDP packets can not pass the tunnel.[hiren/paul]

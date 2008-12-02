@@ -266,6 +266,9 @@ struct keyword_def ipsec_conf_keywords_v2[]={
 #ifdef NAT_TRAVERSAL
     {"virtual_private",kv_config,kt_string,     KSF_VIRTUALPRIVATE,NOT_ENUM},
     {"nat_traversal", kv_config,kt_bool,        KBF_NATTRAVERSAL, NOT_ENUM},
+    {"disable_port_floating", kv_config,kt_bool,KBF_DISABLEPORTFLOATING, NOT_ENUM},
+    {"keepalive", kv_config,kt_number,    KBF_KEEPALIVE, NOT_ENUM},
+    {"force_keepalive", kv_config,kt_bool,    KBF_FORCE_KEEPALIVE, NOT_ENUM},
 #endif
     {"protostack",     kv_config, kt_string,    KSF_PROTOSTACK, &kw_proto_stack},
     {"nhelpers",kv_config,kt_number, KBF_NHELPERS, NOT_ENUM},
@@ -300,7 +303,9 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"keylife",        kv_conn|kv_auto|kv_alias, kt_time,   KBF_SALIFETIME,NOT_ENUM},
     {"lifetime",       kv_conn|kv_auto|kv_alias, kt_time,   KBF_SALIFETIME,NOT_ENUM},
     {"salifetime",     kv_conn|kv_auto, kt_time,   KBF_SALIFETIME,NOT_ENUM},
+#ifdef NAT_TRAVERSAL
     {"forceencaps",    kv_conn|kv_auto, kt_bool,   KBF_FORCEENCAP, NOT_ENUM},
+#endif
     {"overlapip",      kv_conn|kv_auto, kt_bool,   KBF_OVERLAPIP, NOT_ENUM},
     {"rekey",          kv_conn|kv_auto, kt_bool,   KBF_REKEY, NOT_ENUM},
     {"rekeymargin",    kv_conn|kv_auto, kt_time,   KBF_REKEYMARGIN,NOT_ENUM},
