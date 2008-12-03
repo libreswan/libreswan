@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftsubnets</emphasis></term>
+  <listitem>
+<para>specify multiple private subnets behind the left participant, expressed as
+{
+<emphasis remap='I'>networkA</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmaskA</emphasis> 
+<emphasis remap='I'>networkB</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmaskB</emphasis>
+<emphasis remap='I'>[...]</emphasis>
+}
+If both a leftsubnets= and rightsubnets= is defined, all combinations of
+subnet tunnels will be instantiated. You cannot use leftsubnet and leftsubnets together. For examples see <emphasis remap='I'>testing/pluto/multinet-*</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>

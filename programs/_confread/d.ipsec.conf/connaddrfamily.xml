@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>connaddrfamily</emphasis></term>
+  <listitem>
+<para>the connection addrress family of the connection; currently the accepted
+values are
+<emphasis remap='B'>ipv4</emphasis>
+(the default); or
+<emphasis remap='B'>ipv6</emphasis>,
+</para>
+<para>The ipv6 family is currently only supported using the NETKEY stack.</para>
+  </listitem>
+  </varlistentry>

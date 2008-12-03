@@ -1,0 +1,8 @@
+  <varlistentry>
+  <term><emphasis remap='B'>leftxauthusername</emphasis></term>
+  <listitem>
+<para>The XAUTH username associated with this XAUTH connection. The XAUTH
+password can be configured in the <emphasis remap='I'>ipsec.secrets</emphasis>
+file.</para>
+  </listitem>
+  </varlistentry>

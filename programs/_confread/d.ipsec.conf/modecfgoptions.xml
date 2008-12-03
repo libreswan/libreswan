@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>modecfgdns1</emphasis></term>
+  <term><emphasis remap='B'>modecfgdns2</emphasis></term>
+  <term><emphasis remap='B'>modecfgwins1</emphasis></term>
+  <term><emphasis remap='B'>modecfgwins2</emphasis></term>
+  <listitem>
+<para>Specify the IP address for DNS or WINS servers for the client to use.
+</para>
+  </listitem>
+  </varlistentry>
+
