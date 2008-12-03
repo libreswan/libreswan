@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>force_keepalive</emphasis></term>
+  <listitem>
+<para>whether to force sending NAT-T keep-alives to support NAT which
+are send to prevent the NAT router from closing its port when there is
+not enough traffic on the IPsec connection. Acceptable values are:
+<emphasis remap='B'>no</emphasis>
+and
+<emphasis remap='B'>yes</emphasis>
+(the default).
+This parameter may eventually become per-connection.</para>
+  </listitem>
+  </varlistentry>
+

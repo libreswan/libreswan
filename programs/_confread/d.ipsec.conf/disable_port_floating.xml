@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>disable_port_floating</emphasis></term>
+  <listitem>
+<para>whether to enable the newer NAT-T standards for port floating. 
+Acceptable values are
+<emphasis remap='B'>no</emphasis>
+and
+<emphasis remap='B'>yes</emphasis>
+(the default).
+</para>
+
+  </listitem>
+  </varlistentry>
+
