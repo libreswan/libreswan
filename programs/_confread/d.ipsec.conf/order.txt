@@ -33,6 +33,7 @@ d.ipsec.conf/leftxauthusername.xml
 d.ipsec.conf/leftmodecfgserver.xml
 d.ipsec.conf/leftmodecfgclient.xml
 d.ipsec.conf/modecfgpull.xml
+d.ipsec.conf/modecfgoptions.xml
 d.ipsec.conf/forceencaps.xml
 d.ipsec.conf/overlapip.xml
 d.ipsec.conf/dpddelay.xml
