@@ -267,7 +267,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"virtual_private",kv_config,kt_string,     KSF_VIRTUALPRIVATE,NOT_ENUM},
     {"nat_traversal", kv_config,kt_bool,        KBF_NATTRAVERSAL, NOT_ENUM},
     {"disable_port_floating", kv_config,kt_bool,KBF_DISABLEPORTFLOATING, NOT_ENUM},
-    {"keepalive", kv_config,kt_number,    KBF_KEEPALIVE, NOT_ENUM},
+    {"keep_alive", kv_config,kt_number,    KBF_KEEPALIVE, NOT_ENUM},
     {"force_keepalive", kv_config,kt_bool,    KBF_FORCE_KEEPALIVE, NOT_ENUM},
 #endif
     {"protostack",     kv_config, kt_string,    KSF_PROTOSTACK, &kw_proto_stack},
