@@ -299,6 +299,18 @@ in general it is necessary for the two ends to agree exactly
 on the values of these parameters.</para>
 <variablelist remap='TP'>
   <varlistentry>
+  <term><emphasis remap='B'>connaddrfamily</emphasis></term>
+  <listitem>
+<para>the connection addrress family of the connection; currently the accepted
+values are
+<emphasis remap='B'>ipv4</emphasis>
+(the default); or
+<emphasis remap='B'>ipv6</emphasis>,
+</para>
+<para>The ipv6 family is currently only supported using the NETKEY stack.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>type</emphasis></term>
   <listitem>
 <para>the type of the connection; currently the accepted values
@@ -377,6 +389,20 @@ policy group file with the same name as the conn.</para>
 <citerefentry><refentrytitle>ipsec_ttosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry>);
 if omitted, essentially assumed to be <emphasis remap='I'>left</emphasis><filename>/32</filename>,
 signifying that the left end of the connection goes to the left participant only</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>leftsubnets</emphasis></term>
+  <listitem>
+<para>specify multiple private subnets behind the left participant, expressed as
+{
+<emphasis remap='I'>networkA</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmaskA</emphasis> 
+<emphasis remap='I'>networkB</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmaskB</emphasis>
+<emphasis remap='I'>[...]</emphasis>
+}
+If both a leftsubnets= and rightsubnets= is defined, all combinations of
+subnet tunnels will be instantiated. You cannot use leftsubnet and leftsubnets together. For examples see <emphasis remap='I'>testing/pluto/multinet-*</emphasis>.
+</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -823,6 +849,14 @@ Acceptable values are <emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>
   </varlistentry>
 
   <varlistentry>
+  <term><emphasis remap='B'>leftxauthusername</emphasis></term>
+  <listitem>
+<para>The XAUTH username associated with this XAUTH connection. The XAUTH
+password can be configured in the <emphasis remap='I'>ipsec.secrets</emphasis>
+file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>leftmodecfgserver</emphasis></term>
   <listitem>
 <para>Left is a Mode Config server. It can push network configuration to the client.
@@ -848,6 +882,17 @@ Acceptable values are <emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>
 <para>Pull the Mode Config network information from the server.
 Acceptable values are <emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>no</emphasis>
 (the default).
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>modecfgdns1</emphasis></term>
+  <term><emphasis remap='B'>modecfgdns2</emphasis></term>
+  <term><emphasis remap='B'>modecfgwins1</emphasis></term>
+  <term><emphasis remap='B'>modecfgwins2</emphasis></term>
+  <listitem>
+<para>Specify the IP address for DNS or WINS servers for the client to use.
 </para>
   </listitem>
   </varlistentry>
@@ -1425,9 +1470,9 @@ and
 <para>whether to force sending NAT-T keep-alives to support NAT which
 are send to prevent the NAT router from closing its port when there is
 not enough traffic on the IPsec connection. Acceptable values are:
-<emphasis remap='B'>no</emphasis>
-and
 <emphasis remap='B'>yes</emphasis>
+and
+<emphasis remap='B'>no</emphasis>
 (the default).
 This parameter may eventually become per-connection.</para>
   </listitem>
