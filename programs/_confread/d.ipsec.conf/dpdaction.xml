@@ -7,7 +7,7 @@
 <emphasis remap='B'>restart</emphasis> means the the SA will immediately be renegotiated, and
 <emphasis remap='B'>restart_by_peer</emphasis> means that <emphasis remap='I'>ALL</emphasis> SA's
 to the dead peer will renegotiated.</para>
-<para>dpdaction=clear</emphasis> is really only useful on the server of a Road Warrior config.
+<para><emphasis remap='I'>dpdaction=clear</emphasis> is really only useful on the server of a Road Warrior config.
 </para>
   </listitem>
   </varlistentry>
