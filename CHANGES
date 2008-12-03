@@ -1,5 +1,10 @@
 Please see docs/KNOWN_BUGS file for more information
 
+V2.5.63s
+* Fix for keep_alive keyword and man page fixes [Shingo Yamawaki]
+* Added missing man page sections [paul]
+* Fix ipsec whack --listevents [Shingo Yamawaki]
+
 v2.5.62s
 * Parser was missing keep_alive= and force_keepalive= options [paul]
 * plutorestartoncrash= option was broken [paul]
