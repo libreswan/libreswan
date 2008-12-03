@@ -265,7 +265,7 @@ struct whack_message {
 #define LIST_OCSP	0x0100	/* list all ocsp cache entries */
 #define LIST_CARDS	0x0200	/* list all smartcard records */
 #define LIST_PSKS       0x0400  /* list all preshared keys (by name) */
-#define LIST_EVENTS     0x8000  /* list all queued events */
+#define LIST_EVENTS     0x0800  /* list all queued events */
 
 /* omit events from listing options */
 #define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */

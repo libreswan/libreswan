@@ -1195,7 +1195,7 @@ main(int argc, char **argv)
         case LST_OCSP:          /* --listocsp */
         case LST_CARDS:         /* --listcards */
         case LST_PSKS:          /* --listpsks */
-        case LST_EVENTS:         /* --listcards */
+        case LST_EVENTS:         /* --listevents */
             msg.whack_list |= LELEM(c - LST_PUBKEYS);
             continue;
 
