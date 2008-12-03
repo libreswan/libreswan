@@ -2,9 +2,11 @@ d.ipsec.conf/head.xml
 d.ipsec.conf/connsections.xml
 d.ipsec.conf/exampleleftright.xml
 d.ipsec.conf/conngeneral.xml
+d.ipsec.conf/connaddrfamily.xml
 d.ipsec.conf/type.xml
 d.ipsec.conf/left.xml
 d.ipsec.conf/leftsubnet.xml
+d.ipsec.conf/leftsubnets.xml
 d.ipsec.conf/leftprotoport.xml
 d.ipsec.conf/leftnexthop.xml
 d.ipsec.conf/leftsourceip.xml
@@ -27,6 +29,7 @@ d.ipsec.conf/leftca.xml
 d.ipsec.conf/leftsendcert.xml
 d.ipsec.conf/leftxauthserver.xml
 d.ipsec.conf/leftxauthclient.xml
+d.ipsec.conf/leftxauthusername.xml
 d.ipsec.conf/leftmodecfgserver.xml
 d.ipsec.conf/leftmodecfgclient.xml
 d.ipsec.conf/modecfgpull.xml
