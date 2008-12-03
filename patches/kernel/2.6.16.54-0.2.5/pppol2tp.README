@@ -1,0 +1,58 @@
+From: Shingo Yamawaki <Shingo.Yamawaki@jp.sony.com>
+
+With oprofile tools, I checked the bottleneck of L2TP VPN, and found it
+lies between xl2tpd and ppp_async. Surely, xl2tpd encodes packets and
+ppp_async decodes them, and vice versa.  oprofile shows these
+encoding/decoding is rather heavier than encryption in some case.
+
+At first, I checked ppp_synctty as pptp-linux does.  But, I don't want
+to parse protocols on l2tp.
+So, I modified pppol2tp.ko and it works.  It surprises me.
+I used SLES 10 SP2 kernel + pppol2tp-kmod-0.17 + openl2tp's pppol2tp plugin.
+pppol2tp.patch is the patch for kernel with pppol2tp-kmod patch. xl2tpd
+needs to be recompiled with USE_KERNEL.  pppd plugin is copied from
+openl2tp.
+
+The logic is almost the same of xl2tpd.  When it receives a packet, it
+records refhim.  When it sends a packet, it attaches refhim with cmsg.
+The original openl2tp.ko tosses l2tp control packets to xl2tpd.
+
+I checked high traffic of tcp upstream and downstream, and keeping a
+connection as quiet as I can.  Both communications and rekeying work.
+
+Especially, almost 100Mbps traffic consumes 80-90% of my Core2Duo(3GHz)
+with user mode l2tp, but with kernel mode, only 50% is consumed.
+
+- kernel mode
+      - downstream to client
+        94/99 Mbps (ppp interface/ethernet interface)
+        Cpu(s):  0.0%us,  3.7%sy,  0.0%ni, 49.7%id,  0.7%wa,  0.0%hi, 46.0%si,  0.0%st
+        10203 root      10  -5     0    0    0 S 33.0  0.0   0:10.35 kl2tpd/0
+        10201 root      15   0  1652  524  424 S  0.7  0.0   0:00.30 xl2tpd
+      - upstream from client
+        93/99 Mbps
+        Cpu(s):  0.0%us,  1.0%sy,  0.0%ni, 51.7%id,  0.0%wa,  0.0%hi, 47.3%si,  0.0%st
+        10203 root      10  -5     0    0    0 S  7.7  0.0   0:01.35 kl2tpd/0
+        10201 root      15   0  1652  524  424 S  0.7  0.0   0:00.08 xl2tpd
+- user mode
+      - downstream to client
+        94/99 Mbps
+        Cpu(s):  8.7%us,  8.7%sy,  0.0%ni, 21.7%id,  0.0%wa,  0.0%hi, 60.9%si,  0.0%st
+        9870 root      15   0  1648  540  436 S 52.0  0.0   7:23.13 xl2tpd
+      - upstream from client
+        93/99 Mbps
+        Cpu(s):  7.3%us, 25.0%sy,  0.0%ni,  5.7%id,  0.7%wa,  0.0%hi, 61.3%si,  0.0%st
+        9870 root      15   0  1648  540  436 S 78.9  0.0   7:04.67 xl2tpd
+
+Though I made a patch and made it work,  it is unreliable enough, because:
+- It's just a holiday quick hack.
+- I've tested only on an uniprocessor kernel.
+- I've not checked this code is safe and stable.
+- refme/refhim is stored in xl2tpd and kernel without collaboration.
+- pppol2tp-kmod is a nearly obsoleted package.
+- newer kernel has very different pppol2tp.ko.
+
+The last two is fatal, I guess.  pppol2tp of kernel 2.6.26 doesn't call
+sendmsg but ip_queue_xmit, and doesn't have kl2tpd (in-kernel?) process.
+   Thus, I can't use cmsg to pass refhim to klips.
+

@@ -1,0 +1,116 @@
+--- linux-2.6.16/drivers/net/pppol2tp.c.orig	2008-11-24 12:47:45.000000000 +0900
++++ linux-2.6.16/drivers/net/pppol2tp.c	2008-11-24 15:38:50.000000000 +0900
+@@ -98,6 +98,9 @@
+ #include <asm/byteorder.h>
+ #include <asm/atomic.h>
+ 
++#ifdef CONFIG_KLIPS
++#include <openswan.h>
++#endif
+ 
+ #define PPPOL2TP_DRV_VERSION	"V0.17"
+ 
+@@ -234,6 +237,9 @@ struct pppol2tp_session
+ 	struct sk_buff_head	reorder_q;	/* receive reorder queue */
+ 	struct pppol2tp_ioc_stats stats;
+ 	struct hlist_node	hlist;		/* Hash list node */
++#ifdef CONFIG_KLIPS
++	xfrm_sec_unique_t saref;
++#endif
+ };
+ 
+ /* The sk_user_data field of the tunnel's UDP socket. It contains info to track
+@@ -599,6 +605,14 @@ static int pppol2tp_recv_core(struct soc
+ 	DPRINTK(session->debug, "%s: socket rcvbuf alloc=%d\n",
+ 		session->name, atomic_read(&sock->sk_rmem_alloc));
+ 
++#ifdef CONFIG_KLIPS	/* saref.patch should be applied */
++	/* If the socket has skb->sp->ref, record "refhim" in "session" */
++	if (skb->sp) {
++		extern xfrm_sec_unique_t ipsec_get_refhim(xfrm_sec_unique_t);
++		session->saref = ipsec_get_refhim(skb->sp->ref);
++	}
++#endif
++
+ 	/* The ref count on the socket was increased by the above call since
+ 	 * we now hold a pointer to the session. Take care to do sock_put()
+ 	 * when exiting this function from now on...
+@@ -1059,6 +1073,9 @@ static void pppol2tp_wq_send(void *data)
+ 	}
+ 
+ 	kfree(send->iov);
++#ifdef CONFIG_KLIPS
++	if (send->msg->msg_control) kfree(send->msg->msg_control);
++#endif
+ 	kfree(send->msg);
+ 	kfree_skb(send->skb);
+ 	kfree(send);
+@@ -1160,8 +1177,28 @@ static int pppol2tp_xmit(struct ppp_chan
+ 	msg->msg_name	 = &session->tunnel_addr.addr;
+ 	msg->msg_namelen = sizeof(session->tunnel_addr.addr);
+ 
++#ifdef CONFIG_KLIPS
++	if (session->saref != IPSEC_SAREF_NULL) {
++		union cbuf_t {
++			struct cmsghdr hdr;
++			char all[CMSG_SPACE(sizeof(xfrm_sec_unique_t))];
++		};
++		struct cmsghdr *cmh = kmalloc(sizeof(union cbuf_t), GFP_ATOMIC);
++		xfrm_sec_unique_t *refhim = CMSG_DATA(cmh);
++		cmh->cmsg_level = SOL_IP;
++		cmh->cmsg_type = IP_IPSEC_REFINFO;
++		cmh->cmsg_len = CMSG_LEN(sizeof(xfrm_sec_unique_t));
++		*refhim = session->saref;
++		msg->msg_control = cmh;
++		msg->msg_controllen = sizeof(union cbuf_t);
++	} else {
++		msg->msg_control    = NULL;
++		msg->msg_controllen = 0;
++	}
++#else
+ 	msg->msg_control    = NULL;
+ 	msg->msg_controllen = 0;
++#endif
+ 	msg->msg_flags	    = MSG_DONTWAIT;	/* Need this to prevent blocking */
+ 
+ 	send->session = session;
+@@ -1710,6 +1747,10 @@ int pppol2tp_connect(struct socket *sock
+ 
+ 	session->debug = PPPOL2TP_DEFAULT_DEBUG_FLAGS;
+ 
++#ifdef CONFIG_KLIPS
++	session->saref = IPSEC_SAREF_NULL;
++#endif
++
+ 	/* Default MTU must allow space for UDP/L2TP/PPP
+ 	 * headers. Leave some slack.
+ 	 */
+--- linux-2.6.16/net/ipsec/ipsec_rcv.c.orig	2008-11-17 22:44:33.000000000 +0900
++++ linux-2.6.16/net/ipsec/ipsec_rcv.c	2008-11-24 14:17:19.000000000 +0900
+@@ -373,6 +373,22 @@ ipsec_rcv_decap_lookup(struct ipsec_rcv_
+ 	return IPSEC_RCV_OK;
+ }
+ 
++xfrm_sec_unique_t ipsec_get_refhim(xfrm_sec_unique_t refme)
++{
++	struct ipsec_sa *sa;
++	xfrm_sec_unique_t refhim;
++
++	spin_lock_bh(&tdb_lock);
++	sa = ipsec_sa_getbyref(refme);
++	if (!sa) return 0;
++	refhim = sa->ips_refhim;
++	spin_unlock_bh(&tdb_lock);
++	ipsec_sa_put(sa);
++
++	return refhim;
++}
++EXPORT_SYMBOL(ipsec_get_refhim);
++
+ void ip_cmsg_recv_ipsec(struct msghdr *msg, struct sk_buff *skb)
+ {
+ 	struct ipsec_sa *sa1;
+
+
+
+
