@@ -4,6 +4,7 @@ V2.5.63s
 * Fix for keep_alive keyword and man page fixes [Shingo Yamawaki]
 * Added missing man page sections [paul]
 * Fix ipsec whack --listevents [Shingo Yamawaki]
+* Fix for l2tp when server is behind NAT  port forward [Paul]
 
 v2.5.62s
 * Parser was missing keep_alive= and force_keepalive= options [paul]
