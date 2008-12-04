@@ -1637,6 +1637,19 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 	struct connection *p = find_client_connection(c
 	    , our_net, his_net, b->my.proto, b->my.port, b->his.proto, b->his.port);
 
+#ifdef NAT_TRAVERSAL
+#ifdef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
+    if( (p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
+       && !(p1st->st_policy & POLICY_TUNNEL)
+       && (p1st->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
+       && (p == NULL) )
+        {
+          p = c;
+          DBG(DBG_CONTROL, DBG_log("using (something - hopefully the IP we are NAT'ed to) for transport mode connection \"%s\"", p->name));
+        }
+#endif
+#endif
+
 	if (p == NULL)
 	{
 	    /* This message occurs in very puzzling circumstances
