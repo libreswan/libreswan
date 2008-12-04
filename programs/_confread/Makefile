@@ -26,6 +26,8 @@ CONFDFILES=clear clear-or-private private-or-clear private block
 
 include ${srcdir}../Makefile.program
 
+ipsec.conf.5: ${srcdir}ipsec.conf.5.xml
+
 ${srcdir}ipsec.conf.5.xml: $(wildcard d.ipsec.conf/*.xml) ${srcdir}d.ipsec.conf/order.txt
 	cd ${srcdir} && cat `cat ${srcdir}d.ipsec.conf/order.txt` >ipsec.conf.5.xml
 
