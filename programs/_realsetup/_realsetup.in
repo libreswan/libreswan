@@ -440,12 +440,9 @@ case "$1" in
 
 	if test -r /proc/net/ipsec_eroute
 	then
-		if test " `wc -l < /proc/net/ipsec_eroute 2> /dev/null `" -gt 0
-		then
-			eroutes=`wc -l < /proc/net/ipsec_eroute 2> /dev/null | sed s/\ //g`
-		fi
+		eroutes=`wc -l < /proc/net/ipsec_eroute 2> /dev/null | sed s/\ //g`
 	else
-		eroutes=`ipsec eroute 2> /dev/null | wc -l | sed s/\ //g`
+		eroutes=`ipsec eroute 2> /dev/null | wc -l 2> /dev/null | sed s/\ //g`
 	fi
 
 	if test -r $ipsecversion
@@ -471,12 +468,9 @@ case "$1" in
 			0)      echo "No tunnels up"    ;;
 			*)      echo "$eroutes tunnels up"      ;;
 		esac
-		if test "$eroutes"
+		if test "$eroutes" -gt 0
 		then
-			if test "$eroutes" -gt 0
-			then
-				echo "some eroutes exist"
-			fi
+			echo "some eroutes exist"
 		fi
 		exit 0
 	else
