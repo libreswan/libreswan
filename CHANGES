@@ -1,5 +1,9 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.5.64s
+* Fix for nhelpers=0 [Shingo Yamawaki]
+* Fix for main_inI2_outR2_tail() without DEBUG [Shingo Yamawaki]
+
 V2.5.63s
 * Fix for keep_alive keyword and man page fixes [Shingo Yamawaki]
 * Added missing man page sections [paul]
