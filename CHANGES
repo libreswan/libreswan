@@ -15,9 +15,11 @@ v2.5.64s
 * Fix for bogus "but no (wildcard) connection has been configured"
   with Aggressive Mode, when you actually do have one but it found
   the wrong type. [David]
-
-
-
+* Make sure we only set NEXT_NONE on the last VID entry that we add. [David]
+* Only calculate (expensive) irs->sa_len when debug is enabled [David]
+* Repaired missing code responsible for sending IPCOMP request to peer [David]
+* Bugtracker bugs fixed:
+  #0982: kernel panic with compression=yes [Florian Westphal]
 
 V2.5.63s
 * Fix for keep_alive keyword and man page fixes [Shingo Yamawaki]
