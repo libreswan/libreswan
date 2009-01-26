@@ -8,6 +8,11 @@ v2.5.64s
 * Send the remote host address to PAM during XAUTH so that it
   may be used for better logging/authentication purposes at the
   PAM end. [Ken Wilson]
+* Fix for bogus "discarding packet received during asynchronous
+  work (DNS or crypto)". We were queueing/dropping packets that
+  were needed to get the tunnel going [David]
+* Removed duplicate declaration of for_each_state [David]
+
 
 
 

@@ -230,20 +230,10 @@ aggr_inI1_outR1_common(struct msg_digest *md
     {
 	/* see if a wildcarded connection can be found */
  	pb_stream pre_sa_pbs = sa_pd->pbs;
- 	lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs);
+ 	lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs) | POLICY_AGGRESSIVE;
 	c = find_host_connection(&md->iface->ip_addr, pluto_port
 				 , (ip_address*)NULL, md->sender_port, policy);
-	if (c != NULL && c->policy & POLICY_AGGRESSIVE)
-	{
-	    /* Create a temporary connection that is a copy of this one.
-	     * His ID isn't declared yet.
-	     */
-	    c = rw_instantiate(c, &md->sender,
-			       NULL,
-			       NULL);
-	}
-	else
-	{
+	if (c == NULL || (c->policy & POLICY_AGGRESSIVE) == 0) {
 	    loglog(RC_LOG_SERIOUS, "initial Aggressive Mode message from %s"
 		   " but no (wildcard) connection has been configured%s%s"
 		   , ip_str(&md->sender)
@@ -252,6 +242,11 @@ aggr_inI1_outR1_common(struct msg_digest *md
 	    /* XXX notification is in order! */
 	    return STF_IGNORE;
 	}
+	/* Create a temporary connection that is a copy of this one.
+	 * His ID isn't declared yet.
+	 */
+	c = rw_instantiate(c, &md->sender, NULL, NULL);
+
     }
 
     /* Set up state */
