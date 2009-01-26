@@ -407,7 +407,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
     }
     else
     {
-	openswan_log("  error in X.509 crl");
+	openswan_log("  error in X.509 crl %s", (char *)crl_uri.ptr);
 	free_crl(crl);
 	return FALSE;
     }
