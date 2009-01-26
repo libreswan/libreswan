@@ -2750,8 +2750,8 @@ main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc
     }
 #else
     /* Nr out */
-    if (!ship_nonce(&st->st_nr
-		    , &md->rbody, r
+    if (!ship_nonce(&st->st_nr, r 
+		    , &md->rbody 
 		    , (send_cr)? ISAKMP_NEXT_CR : ISAKMP_NEXT_NONE
 		    , "Nr"))
 	return STF_INTERNAL_ERROR;
