@@ -580,8 +580,9 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
 {
         struct sk_buff *n;
 	struct iphdr *iph;
-        unsigned long offset;
         unsigned int iphlen;
+
+	int headlen;
 	
 	if(!skb) {
 		KLIPS_PRINT(sysctl_ipsec_debug_ipcomp,
@@ -606,14 +607,9 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
         if(n==NULL)
                 return NULL;
 	
-        /*
-         *      Shift between the two data areas in bytes
-         */
-	
-        offset=n->head-skb->head;
-
         /* Set the data pointer */
-        skb_reserve(n,skb->data-skb->head);
+        headlen = skb_headroom(skb);
+	skb_reserve(n, headlen);
         /* Set the tail pointer and length */
         safe_skb_put(n,skb->len+data_growth);
         /* Copy the bytes up to and including the ip header */
@@ -627,14 +623,17 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
 	n->prev=NULL;
         n->sk=NULL;
         n->dev=skb->dev;
-	if (skb_transport_header(skb))
-		skb_set_transport_header(n, offset);
+	if (skb_transport_header(skb)) {
+		headlen = skb_transport_header(skb) - skb->data;
+		skb_set_transport_header(n, headlen);
+	}
         n->protocol=skb->protocol;
 #ifdef NET_21
         n->csum = 0;
         n->priority=skb->priority;
         n->dst=dst_clone(skb->dst);
-        skb_set_network_header(n, offset);
+        headlen = skb_network_header(skb) - skb->data;
+	skb_set_network_header(n, headlen);
 #ifndef NETDEV_23
         n->is_clone=0;
 #endif /* NETDEV_23 */
@@ -650,7 +649,8 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
 #else /* NET_21 */
 	n->link3=NULL;
 	n->when=skb->when;
-	n->ip_hdr=(struct iphdr *)(((char *)skb->ip_hdr)+offset);
+	headlen = skb->ip_hdr - skb->data;
+	n->ip_hdr=(struct iphdr *) (((char *) n->data) + headlen);
 	n->saddr=skb->saddr;
 	n->daddr=skb->daddr;
 	n->raddr=skb->raddr;
@@ -665,8 +665,10 @@ struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_ma
 	n->users=0;
 	memcpy(n->proto_priv, skb->proto_priv, sizeof(skb->proto_priv));
 #endif /* NET_21 */
-	if (skb_mac_header(skb))
-		skb_set_mac_header(n, offset);
+	if (skb_mac_header(skb)) {
+		headlen = skb_mac_header(skb) - skb->data;
+		skb_set_mac_header(n, headlen);
+	}
 #ifndef NETDEV_23
 	n->used=skb->used;
 #endif /* !NETDEV_23 */
