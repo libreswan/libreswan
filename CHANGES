@@ -12,6 +12,9 @@ v2.5.64s
   work (DNS or crypto)". We were queueing/dropping packets that
   were needed to get the tunnel going [David]
 * Removed duplicate declaration of for_each_state [David]
+* Fix for bogus "but no (wildcard) connection has been configured"
+  with Aggressive Mode, when you actually do have one but it found
+  the wrong type. [David]
 
 
 
