@@ -345,10 +345,6 @@ extern void show_states_status(void);
 void for_each_state(void *(f)(struct state *, void *data), void *data);
 #endif
 
-#if 1
-void for_each_state(void *(f)(struct state *, void *data), void *data);
-#endif
-
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
 extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st);
 extern void fmt_state(struct state *st, time_t n
