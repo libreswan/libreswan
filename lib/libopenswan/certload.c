@@ -228,7 +228,7 @@ load_cert(bool forcedtype, const char *filename,
 		    return TRUE;
 		    
 		} else {
-		    openswan_log("  error in X.509 certificate");
+		    openswan_log("  error in X.509 certificate %s", filename);
 		    free_x509cert(x509cert);
 		    return FALSE;
 		}
