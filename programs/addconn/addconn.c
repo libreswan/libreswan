@@ -390,7 +390,7 @@ main(int argc, char *argv[])
 		break;
 
 	    default:
-		if(cfg->setup.options[kd->field]) {
+		if(cfg->setup.options[kd->field] || cfg->setup.options_set[kd->field]) {
 		    printf("export %s%s='%d'\n",
 			   varprefix, kd->keyname,
 			   cfg->setup.options[kd->field]);
