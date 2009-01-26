@@ -3,6 +3,13 @@ Please see docs/KNOWN_BUGS file for more information
 v2.5.64s
 * Fix for nhelpers=0 [Shingo Yamawaki]
 * Fix for main_inI2_outR2_tail() without DEBUG [Shingo Yamawaki]
+* More verbose log for X509 errors to ensure filename is known. [David]
+* More verbose log for CRL errors to ensure filename is known. [David]
+* Send the remote host address to PAM during XAUTH so that it
+  may be used for better logging/authentication purposes at the
+  PAM end. [Ken Wilson]
+
+
 
 V2.5.63s
 * Fix for keep_alive keyword and man page fixes [Shingo Yamawaki]

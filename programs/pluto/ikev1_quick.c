@@ -1822,10 +1822,9 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
      * make it all work.
      */
 
+    hv = p1st->hidden_variables;
     if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	(p1st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA)) {
-
-	hv = p1st->hidden_variables;
 	nat_traversal_natoa_lookup(md, &hv);
     }
 
