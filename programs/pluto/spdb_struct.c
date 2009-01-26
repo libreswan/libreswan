@@ -152,6 +152,50 @@ out_sa(pb_stream *outs
 				       , st->st_connection->alg_info_esp
 				       , TRUE);
 
+	/* add IPcomp proposal if policy asks for it */
+
+	if (revised_sadb && ((st->st_policy) & POLICY_COMPRESS)) {
+
+	    struct db_trans *ipcomp_trans = malloc (sizeof (struct db_trans));
+
+	    /* allocate space for 2 proposals */
+	    struct db_prop *ipcomp_prop = malloc (sizeof (struct db_prop) * 2);
+
+	    if (ipcomp_trans && ipcomp_prop) {
+
+		passert (revised_sadb->prop_conjs->prop_cnt == 1);
+
+		/* construct the IPcomp proposal  */
+		ipcomp_trans->transid = IPCOMP_DEFLATE;
+		ipcomp_trans->attrs = NULL;
+		ipcomp_trans->attr_cnt = 0;
+
+		/* copy the original proposal */
+		ipcomp_prop[0].protoid   = revised_sadb->prop_conjs->props->protoid;
+		ipcomp_prop[0].trans     = revised_sadb->prop_conjs->props->trans;
+		ipcomp_prop[0].trans_cnt = revised_sadb->prop_conjs->props->trans_cnt;
+
+		/* and add our IPcomp proposal */
+		ipcomp_prop[1].protoid = PROTO_IPCOMP;
+		ipcomp_prop[1].trans = ipcomp_trans;
+		ipcomp_prop[1].trans_cnt = 1;
+
+		/* free the old proposal, and ... */
+		pfree (revised_sadb->prop_conjs->props);
+
+		/* ... use our new one instead */
+		revised_sadb->prop_conjs->props = ipcomp_prop;
+		revised_sadb->prop_conjs->prop_cnt += 1;
+
+	    }
+	    else {
+		/* couldn't malloc something, so skip adding the proposal */
+		if (ipcomp_trans)
+		    free (ipcomp_trans);
+		if (ipcomp_prop)
+		    free (ipcomp_prop);
+	    }
+	}
     }
 
     /* more sanity */
