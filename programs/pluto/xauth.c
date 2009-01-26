@@ -917,6 +917,10 @@ int do_pam_authentication(void *varg)
 
     retval = pam_start("pluto", arg->name.ptr, &conv, &pamh);
 
+    /* Send the remote host address to PAM */
+    if (retval == PAM_SUCCESS) 
+	retval = pam_set_item(pamh, PAM_RHOST, pluto_ip_str(&arg->st->st_remoteaddr));
+
     /*  Two factor authentication - Check that the user is valid, 
 	and then check if they are permitted access */
     if (retval == PAM_SUCCESS)
