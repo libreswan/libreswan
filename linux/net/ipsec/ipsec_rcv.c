@@ -858,7 +858,10 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 	ipp  = irs->ipp;
 	ipsp = irs->ipsp;
 	skb  = irs->skb;
-	irs->sa_len = satot(&irs->said, 0, irs->sa, sizeof(irs->sa));
+	if (debug_rcv)
+		irs->sa_len = satot(&irs->said, 0, irs->sa, sizeof(irs->sa));
+	else
+		irs->sa_len = 0;
 	if((ipp->protocol != IPPROTO_IPIP) && 
 	   (ipp->protocol != IPPROTO_ATT_HEARTBEAT)) {  /* AT&T heartbeats to SIG/GIG */
 		KLIPS_PRINT(debug_rcv,
