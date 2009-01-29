@@ -175,6 +175,7 @@ static bool read_packet(struct msg_digest *md);
  * that when a suspended STF resumes, its reply message buffer
  * must be at the same location -- there are pointers into it.
  */
+pb_stream reply_stream;
 u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 /* state_microcode is a tuple of information parameterizing certain
@@ -1169,7 +1170,7 @@ alloc_md(void)
      * (due to suspended state transitions), there is a single
      * global reply_buffer.  It will need to be saved and restored.
      */
-    init_pbs(&md->reply, reply_buffer, sizeof(reply_buffer), "reply packet");
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
     return md;
 }
@@ -2776,10 +2777,10 @@ complete_state_transition(struct msg_digest **mdp, stf_status result)
 			      , st->st_remoteport
 			      , st->st_interface->port));
 
-		close_output_pbs(&md->reply);   /* good form, but actually a no-op */
+		close_output_pbs(&reply_stream);   /* good form, but actually a no-op */
 
-		clonetochunk(st->st_tpacket, md->reply.start
-		    , pbs_offset(&md->reply), "reply packet");
+		clonetochunk(st->st_tpacket, reply_stream.start
+		    , pbs_offset(&reply_stream), "reply packet");
 
 		/* actually send the packet
 		 * Note: this is a great place to implement "impairments"

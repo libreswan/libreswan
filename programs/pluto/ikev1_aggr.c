@@ -380,12 +380,12 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
     pb_stream r_id_pbs;	/* ID Payload; also used for hash calculation */
 
     /* parse_isakmp_sa also spits out a winning SA into our reply,
-     * so we have to build our md->reply and emit HDR before calling it.
+     * so we have to build our reply_stream and emit HDR before calling it.
      */
 
     finish_dh_secretiv(st, r);
 
-    init_pbs(&md->reply, reply_buffer, sizeof(reply_buffer), "reply packet");
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
     /* HDR out */
     {
@@ -393,7 +393,7 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
 
 	memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 	r_hdr.isa_np = ISAKMP_NEXT_SA;
-	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &md->reply, &md->rbody))
+	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody))
 	    return STF_INTERNAL_ERROR;
     }
 
@@ -689,7 +689,7 @@ aggr_inR1_outI2_tail(struct msg_digest *md
 	/* outputting should back-patch previous struct/hdr with payload type */
 	r_hdr.isa_np = auth_payload;
 	r_hdr.isa_flags |= ISAKMP_FLAG_ENCRYPTION;  /* KLUDGE */
-	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &md->reply, &md->rbody))
+	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody))
 	    return STF_INTERNAL_ERROR;
     }
 
@@ -1015,7 +1015,7 @@ aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc
 	memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 	/* R-cookie, flags and MessageID are left zero */
 
-	if (!out_struct(&hdr, &isakmp_hdr_desc, &md->reply, &md->rbody))
+	if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody))
 	{
 	    cur_state = NULL;
 	    return STF_INTERNAL_ERROR;
@@ -1115,12 +1115,12 @@ aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc
     /* finish message */
 
     close_message(&md->rbody);
-    close_output_pbs(&md->reply);
+    close_output_pbs(&reply_stream);
 
     /* let TCL hack it before we mark the length and copy it */
     TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
 
-    clonetochunk(st->st_tpacket, md->reply.start, pbs_offset(&md->reply),
+    clonetochunk(st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream),
 		 "reply packet from aggr_outI1");
 
     /* Transmit */

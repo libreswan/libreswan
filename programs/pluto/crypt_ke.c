@@ -125,37 +125,30 @@ stf_status build_ke(struct pluto_crypto_req_cont *cn
     err_t e;
     bool toomuch = FALSE;
 
-    memset(&rd, 0, sizeof(rd));
-
-  r->pcr_len  = sizeof(struct pluto_crypto_req);
-  r->pcr_type = pcr_build_kenonce;
-  r->pcr_pcim = importance;
-
-  r->pcr_d.kn.thespace.start = 0;
-  r->pcr_d.kn.thespace.len   = sizeof(r->pcr_d.kn.space);
-  r->pcr_d.kn.oakley_group   = group->group;
-
-  cn->pcrc_serialno = st->st_serialno;
-  e= send_crypto_helper_request(r, cn, &toomuch);
-
-  if(e != NULL) {
-      loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
-      if(toomuch) {
-	  return STF_TOOMUCHCRYPTO;
-      } else {
-	  return STF_FAIL;
-      }
-  } else if(!toomuch) {
-      st->st_calculating = TRUE;
-      delete_event(st);
-      event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY, st);
-      return STF_SUSPEND;
-  } else {
-      /* we must have run the continuation directly, so
-       * complete_state_transition already got called. 
-       */
-      return STF_INLINE;
-  }
+    pcr_init(r, pcr_build_kenonce, importance);
+    r->pcr_d.kn.oakley_group   = group->group;
+    
+    cn->pcrc_serialno = st->st_serialno;
+    e= send_crypto_helper_request(r, cn, &toomuch);
+    
+    if(e != NULL) {
+	loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
+	if(toomuch) {
+	    return STF_TOOMUCHCRYPTO;
+	} else {
+	    return STF_FAIL;
+	}
+    } else if(!toomuch) {
+	st->st_calculating = TRUE;
+	delete_event(st);
+	event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY, st);
+	return STF_SUSPEND;
+    } else {
+	/* we must have run the continuation directly, so
+	 * complete_state_transition already got called. 
+	 */
+	return STF_INLINE;
+    }
 }
 
 
@@ -168,14 +161,7 @@ stf_status build_nonce(struct pluto_crypto_req_cont *cn
     err_t e;
     bool toomuch = FALSE;
 
-    memset(&rd, 0, sizeof(rd));
-  
-  r->pcr_len  = sizeof(struct pluto_crypto_req);
-  r->pcr_type = pcr_build_nonce;
-  r->pcr_pcim = importance;
-
-  r->pcr_d.kn.thespace.start = 0;
-  r->pcr_d.kn.thespace.len   = sizeof(r->pcr_d.kn.space);
+  pcr_init(r, pcr_build_nonce, importance);
 
   cn->pcrc_serialno = st->st_serialno;
   e = send_crypto_helper_request(r, cn, &toomuch);

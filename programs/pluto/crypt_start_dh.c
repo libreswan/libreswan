@@ -65,16 +65,11 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn
     err_t e;
     bool toomuch = FALSE;
 
-    r.pcr_len = sizeof(struct pluto_crypto_req);
-    r.pcr_type = pcr_compute_dh_iv;
-    r.pcr_pcim = importance;
+    pcr_init(&r, pcr_compute_dh_iv, importance);
 
     dhq = &r.pcr_d.dhq;
 
     passert(st->st_sec_in_use);
-
-    dhq->thespace.start = 0;
-    dhq->thespace.len   = sizeof(dhq->space);
 
     /* convert appropriate data to dhq */
     dhq->auth = st->st_oakley.auth;
@@ -168,16 +163,11 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn
     err_t e;
     bool toomuch = FALSE;
 
-    r.pcr_len = sizeof(struct pluto_crypto_req);
-    r.pcr_type = pcr_compute_dh;
-    r.pcr_pcim = importance;
+    pcr_init(&r, pcr_compute_dh, importance);
 
     dhq = &r.pcr_d.dhq;
 
     passert(st->st_sec_in_use);
-
-    dhq->thespace.start = 0;
-    dhq->thespace.len   = sizeof(dhq->space);
 
     /* convert appropriate data to dhq */
     dhq->auth = st->st_oakley.auth;

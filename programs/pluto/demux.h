@@ -26,6 +26,7 @@ extern void init_demux(void);
 extern bool send_packet(struct state *st, const char *where, bool verbose);
 extern void comm_handle(const struct iface_port *ifp);
 
+extern pb_stream reply_stream;
 extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 /* State transition function infrastructure
@@ -64,7 +65,6 @@ struct msg_digest {
     const struct state_microcode *smc;	/* microcode for initial state */
     bool new_iv_set;
     struct state *st;	/* current state object */
-    pb_stream reply;	/* room for reply */
     pb_stream rbody;	/* room for reply body (after header) */
     notification_t note;	/* reason for failure */
     bool dpd;           /* Peer supports RFC 3706 DPD */

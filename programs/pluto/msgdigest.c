@@ -104,7 +104,7 @@ alloc_md(void)
      * (due to suspended state transitions), there is a single
      * global reply_buffer.  It will need to be saved and restored.
      */
-    init_pbs(&md->reply, reply_buffer, sizeof(reply_buffer), "reply packet");
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
     return md;
 }

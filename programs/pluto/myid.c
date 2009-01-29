@@ -169,6 +169,7 @@ build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
     const struct id *id = resolve_myid(&end->id);
 
     zero(hd);
+    zero(tl);
     hd->isaiid_idtype = id->kind;
     switch (id->kind)
     {

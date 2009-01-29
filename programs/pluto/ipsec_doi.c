@@ -187,7 +187,7 @@ echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 	r_hdr.isa_flags |= ISAKMP_FLAG_ENCRYPTION;
     /* some day, we may have to set r_hdr.isa_version */
     r_hdr.isa_np = np;
-    if (!out_struct(&r_hdr, &isakmp_hdr_desc, &md->reply, &md->rbody)) {
+    if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody)) {
 	impossible();	/* surely must have room and be well-formed */
     }
 }
@@ -1005,7 +1005,7 @@ main_outI1(int whack_sock
 
     /* set up reply */
     zero(reply_buffer);
-    init_pbs(&md.reply, reply_buffer, sizeof(reply_buffer), "reply packet");
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
     /* HDR out */
     {
@@ -1018,7 +1018,7 @@ main_outI1(int whack_sock
 	memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 	/* R-cookie, flags and MessageID are left zero */
 
-	if (!out_struct(&hdr, &isakmp_hdr_desc, &md.reply, &md.rbody))
+	if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md.rbody))
 	{
 	    reset_cur_state();
 	    return STF_INTERNAL_ERROR;
@@ -1101,11 +1101,11 @@ main_outI1(int whack_sock
 #endif
 
     close_message(&md.rbody);
-    close_output_pbs(&md.reply);
+    close_output_pbs(&reply_stream);
 
     /* let TCL hack it before we mark the length and copy it */
     TCLCALLOUT("avoidEmitting", st, st->st_connection, &md);
-    clonetochunk(st->st_tpacket, md.reply.start, pbs_offset(&md.reply)
+    clonetochunk(st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream)
 	, "reply packet for main_outI1");
 
     /* Transmit */
@@ -2288,7 +2288,7 @@ main_inI1_outR1(struct msg_digest *md)
     }
 
     /* parse_isakmp_sa also spits out a winning SA into our reply,
-     * so we have to build our md->reply and emit HDR before calling it.
+     * so we have to build our reply_stream and emit HDR before calling it.
      */
 
     /* HDR out.
@@ -2303,7 +2303,7 @@ main_inI1_outR1(struct msg_digest *md)
 	r_hdr.isa_flags &= ~ISAKMP_FLAG_COMMIT;	/* we won't ever turn on this bit */
 	memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 	r_hdr.isa_np = ISAKMP_NEXT_SA;
-	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &md->reply, &md->rbody))
+	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody))
 	    return STF_INTERNAL_ERROR;
     }
 
@@ -2490,7 +2490,7 @@ main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc
     struct state *const st = md->st;
 
     /**************** build output packet HDR;KE;Ni ****************/
-    init_pbs(&md->reply, reply_buffer, sizeof(reply_buffer), "reply packet");
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
     /* HDR out.
      * We can't leave this to comm_handle() because the isa_np
@@ -3647,7 +3647,6 @@ send_isakmp_notification(struct state *st
 			 , u_int16_t type, const void *data, size_t len)
 {
     msgid_t msgid;
-    pb_stream reply;
     pb_stream rbody;
     u_char old_new_iv[MAX_DIGEST_LEN];
     u_char old_iv[MAX_DIGEST_LEN];
@@ -3658,7 +3657,7 @@ send_isakmp_notification(struct state *st
     msgid = generate_msgid(st);
     
     zero(reply_buffer);
-    init_pbs(&reply, reply_buffer, sizeof(reply_buffer), "ISAKMP notify");
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "ISAKMP notify");
     
     /* HDR* */
     {
@@ -3670,7 +3669,7 @@ send_isakmp_notification(struct state *st
         hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
         memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
         memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-        if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
+        if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
             impossible();
     }
     /* HASH -- create and note space to be filled later */
@@ -3735,7 +3734,7 @@ send_isakmp_notification(struct state *st
     {  
         chunk_t saved_tpacket = st->st_tpacket;
 
-        setchunk(st->st_tpacket, reply.start, pbs_offset(&reply));
+        setchunk(st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream));
         send_packet(st, "ISAKMP notify", TRUE);
         st->st_tpacket = saved_tpacket;
     }       
