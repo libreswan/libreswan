@@ -144,7 +144,7 @@ main(int argc, char **argv)
 	int error = 0;
 
 	char ipaddr_txt[ADDRTOT_BUF];                
-	struct sadb_ext *extensions[SADB_EXT_MAX + 1];
+	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 	struct sadb_msg *pfkey_msg;
 	ip_address pfkey_address_s_ska;
 	/*struct sockaddr_in pfkey_address_d_ska;*/
