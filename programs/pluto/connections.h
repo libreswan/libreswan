@@ -414,6 +414,10 @@ void host_pair_enqueue_pending(const struct connection *c
 			       , struct pending **pnext);
 struct pending **host_pair_first_pending(const struct connection *c);
 
+#ifdef DYNAMICDNS
+void connection_check_ddns(void);
+#endif
+
 void connection_check_phase2(void);
 void init_connections(void);
 

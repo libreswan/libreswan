@@ -172,10 +172,17 @@ initiate_a_connection(struct connection *c
     }
     else if (c->kind != CK_PERMANENT)
     {
-	if (isanyaddr(&c->spd.that.host_addr))
-	    loglog(RC_NOPEERIP, "cannot initiate connection without knowing peer IP address (kind=%s)"
-		   , enum_show(&connection_kind_names, c->kind));
-	else
+	if (isanyaddr(&c->spd.that.host_addr)) {
+#ifdef DYNAMICDNS
+	    if (c->dnshostname != NULL) {
+		loglog(RC_NOPEERIP, "cannot initiate connection without resolved dynamic peer IP address, will keep retrying");
+		success = 1;
+		c->policy |= POLICY_UP;
+	    } else
+#endif
+		loglog(RC_NOPEERIP, "cannot initiate connection without knowing peer IP address (kind=%s)"
+		       , enum_show(&connection_kind_names, c->kind));
+	} else
 	    loglog(RC_WILDCARD, "cannot initiate connection with ID wildcards (kind=%s)"
 		   , enum_show(&connection_kind_names, c->kind));
     }
@@ -259,6 +266,9 @@ void
 restart_connections_by_peer(struct connection *c)
 {
     struct connection *d;
+
+    if (c->host_pair == NULL)
+   	   return;
 
     d = c->host_pair->connections;
     for (; d != NULL; d = d->hp_next) {
@@ -1602,6 +1612,122 @@ shunt_owner(const ip_subnet *ours, const ip_subnet *his)
     return NULL;
 }
 
+
+#ifdef DYNAMICDNS
+
+#define PENDING_DDNS_INTERVAL (60) /* time before retrying DDNS host lookup
+                                     for phase 1*/
+
+/*
+ * call me periodically to check to see if any DDNS tunnel can come up
+ */
+
+static void connection_check_ddns1(struct connection *c)
+{
+    struct connection *d;
+    ip_address new_addr;
+    const struct af_info *afi;
+    const char *e;
+
+    if (NEVER_NEGOTIATE(c->policy))
+	return;
+
+    if (c->dnshostname == NULL)
+	return;
+
+    if (!isanyaddr(&c->spd.that.host_addr)) {
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("pending ddns: connection \"%s\" has address",
+	    c->name));
+	return;
+    }
+
+    if (c->spd.that.has_client_wildcard || c->spd.that.has_port_wildcard
+	    || ((c->policy & POLICY_SHUNT_MASK) == 0 &&
+	    c->spd.that.has_id_wildcards)) {
+	DBG(DBG_CONTROL,
+	    DBG_log("pending ddns: connection \"%s\" with wildcard not started",
+	    c->name));
+	return;
+    }
+
+
+    e = ttoaddr(c->dnshostname, 0, 0, &new_addr);
+    if (e != NULL) {
+	DBG(DBG_CONTROL,
+	    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",
+	    c->name, c->dnshostname, e));
+	return;
+    }
+
+    if (isanyaddr(&new_addr)) {
+	DBG(DBG_CONTROL,
+	    DBG_log("pending ddns: connection \"%s\" still no address for \"%s\"",
+	    c->name, c->dnshostname));
+	return;
+    }
+
+    /* I think this is ok now we check everything above ? */
+    c->kind = CK_PERMANENT;
+    c->spd.that.host_addr = new_addr;
+
+    /* a small bit of code from default_end to fixup the end point */
+    /* default nexthop to other side */
+    if (isanyaddr(&c->spd.this.host_nexthop))
+	c->spd.this.host_nexthop = c->spd.that.host_addr;
+
+    /* default client to subnet containing only self
+     * XXX This may mean that the client's address family doesn't match
+     * tunnel_addr_family.
+     */
+    if (!c->spd.that.has_client)
+	addrtosubnet(&c->spd.that.host_addr, &c->spd.that.client);
+
+    /*
+     * reduce the work we do by updating all connections waiting for this
+     * lookup
+     */
+    update_host_pairs(c);
+    initiate_connection(c->name, NULL_FD, 0, pcim_demand_crypto);
+
+    /* no host pairs,  no more to do */
+    if (c->host_pair == NULL)
+	return;
+
+    d = c->host_pair->connections;
+    for (; d != NULL; d = d->hp_next) {
+	/* just in case we see ourselves */
+	if (c == d)
+	    continue;
+	if ((c->dnshostname && d->dnshostname &&
+		(strcmp(c->dnshostname, d->dnshostname) == 0))
+		|| (c->dnshostname == NULL && d->dnshostname == NULL && 
+		sameaddr(&d->spd.that.host_addr, &c->spd.that.host_addr)))
+	    initiate_connection(d->name, NULL_FD, 0, pcim_demand_crypto);
+    }
+}
+
+
+void connection_check_ddns(void)
+{
+    struct connection *c, *cnext;
+
+    /* reschedule */
+    event_schedule(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
+
+    for (c = connections; c != NULL; c = cnext) {
+	cnext = c->ac_next;
+	connection_check_ddns1(c);
+    }
+    for (c = unoriented_connections; c != NULL; c = cnext) {
+	cnext = c->ac_next;
+	connection_check_ddns1(c);
+    }
+    check_orientations();
+}
+#endif /* DYNAMICDNS */
+
+
 #define PENDING_PHASE2_INTERVAL (60*2) /*time between scans of pending phase2*/
 
 /*
@@ -1674,6 +1800,9 @@ void connection_check_phase2(void)
 
 void init_connections(void)
 {
+#ifdef DYNAMICDNS
+    event_schedule(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
+#endif
     event_schedule(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
 }
 
