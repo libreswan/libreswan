@@ -151,8 +151,8 @@ update_host_pairs(struct connection *c)
     ip_address new_addr;
     char *dnshostname;
 
-    d = c->host_pair->connections;
     p = c->host_pair;
+    d = p ? p->connections : NULL;
 
     if (d == NULL
     	|| p == NULL
