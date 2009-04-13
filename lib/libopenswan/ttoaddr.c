@@ -445,16 +445,12 @@ ttoaddr(const char *src,
 	err = ttoaddr_base(src, srclen, af, &numfailed, dst);
 
 	if(err && numfailed) {
-		err = NULL;
 		if(af == 0) {
 			err = tryname(src, srclen, nultermd, AF_INET6, dst);
-			if(err) {
-				af=AF_INET;
-			}
-		}
-		if(err) {
+			if(err)
+				err = tryname(src, srclen, nultermd, AF_INET, dst);
+		} else
 			err = tryname(src, srclen, nultermd, af, dst);
-		}
 		return err;
 	}
 	
