@@ -1247,7 +1247,9 @@ main(int argc, char **argv)
 		    }
 		    if (dnshostname)
 		    	msg.dnshostname = optarg;
-		}
+		    ttoaddr(optarg, 0, msg.addr_family , &msg.right.host_addr);
+		    /* we don't fail here.  pluto will re-check the DNS later */
+		} else
 #endif /* DYNAMICDNS */
 		diagq(ttoaddr(optarg, 0, msg.addr_family
 		    , &msg.right.host_addr), optarg);
