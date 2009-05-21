@@ -265,7 +265,8 @@ enum phase1_role {
 				  |LELEM(STATE_AGGR_I1) | LELEM(STATE_AGGR_I2))
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
-				       LELEM(STATE_AGGR_I2))
+				       LELEM(STATE_AGGR_I2) | \
+				       LELEM(STATE_AGGR_R2))
 
 #define IS_PHASE1_INIT(s)         ((s) == STATE_MAIN_I1 \
 				   || (s) == STATE_MAIN_I2 \
