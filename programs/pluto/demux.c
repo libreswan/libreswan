@@ -1069,9 +1069,17 @@ informational(struct msg_digest *md)
         switch (n->isan_type)
         {
         case R_U_THERE:
+	   if(st==NULL) {
+		loglog(RC_LOG_SERIOUS, "received bogus  R_U_THERE informational message");
+		return STF_IGNORE;
+	   }
             return dpd_inI_outR(st, n, n_pbs);
 
         case R_U_THERE_ACK:
+	   if(st==NULL) {
+		loglog(RC_LOG_SERIOUS, "received bogus  R_U_THERE informational message");
+		return STF_IGNORE;
+	   }
             return dpd_inR(st, n, n_pbs);
 
 	case PAYLOAD_MALFORMED:
