@@ -257,7 +257,7 @@ asn1totime(const chunk_t *utctime, asn1_t type)
 
 	if (sscanf(eot+1, "%2d%2d", &tz_hour, &tz_min) != 2)
 	{
-	     eturn 0; /* error in negative timezone offset format */
+	     return 0; /* error in negative timezone offset format */
 	}
 	tz_offset = -3600*tz_hour - 60*tz_min;  /* negative time zone offset */
     }
