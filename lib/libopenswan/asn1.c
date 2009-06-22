@@ -306,7 +306,7 @@ asn1totime(const chunk_t *utctime, asn1_t type)
 	t.tm_year += 100;
     }
 
-    if (tm_mon < 1 || tm_mon > 12)
+    if (t.tm_mon < 1 || t.tm_mon > 12)
     {
 	return 0; /* error in month format */
     }
