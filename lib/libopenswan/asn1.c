@@ -11,7 +11,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * RCSID $Id: asn1.c,v 1.10 2005/08/05 17:33:27 mcr Exp $
  */
 
 #include <stdlib.h>
@@ -237,13 +236,21 @@ asn1totime(const chunk_t *utctime, asn1_t type)
 	int tz_hour, tz_min;
 
 	sscanf(eot+1, "%2d%2d", &tz_hour, &tz_min);
+	if (sscanf(eot+1, "%2d%2d", &tz_hour, &tz_min) != 2)
+	{
+	    return 0; /* error in positive timezone offset format */
+	}
+
 	tz_offset = 3600*tz_hour + 60*tz_min;  /* positive time zone offset */
     }
     else if ((eot = memchr(utctime->ptr, '-', utctime->len)) != NULL)
     {
 	int tz_hour, tz_min;
 
-	sscanf(eot+1, "%2d%2d", &tz_hour, &tz_min);
+	if (sscanf(eot+1, "%2d%2d", &tz_hour, &tz_min) != 2)
+	{
+	     eturn 0; /* error in negative timezone offset format */
+	}
 	tz_offset = -3600*tz_hour - 60*tz_min;  /* negative time zone offset */
     }
     else
@@ -255,14 +262,22 @@ asn1totime(const chunk_t *utctime, asn1_t type)
 	const char* format = (type == ASN1_UTCTIME)? "%2d%2d%2d%2d%2d":
 						     "%4d%2d%2d%2d%2d";
 
-	sscanf((char *)utctime->ptr, format, &t.tm_year, &t.tm_mon, &t.tm_mday,
-				     &t.tm_hour, &t.tm_min);
+	if (sscanf(utctime->ptr, format, &t.tm_year, &t.tm_mon, &t.tm_mday,
+					 &t.tm_hour, &t.tm_min) != 5)
+	{
+	    return 0; /* error in time st [yy]yymmddhhmm time format */
+	}
+
     }
 
     /* is there a seconds field? */
     if ((eot - (char *)utctime->ptr) == ((type == ASN1_UTCTIME)?12:14))
     {
-	sscanf(eot-2, "%2d", &t.tm_sec);
+	if (sscanf(eot-2, "%2d", &t.tm_sec) != 1)
+	{
+	    return 0; /* error in ss seconds field format */
+	}
+
     }
     else
     {
@@ -283,7 +298,11 @@ asn1totime(const chunk_t *utctime, asn1_t type)
 	t.tm_year += 100;
     }
 
-    /* representation of month 0..11*/
+    if (tm_mon < 1 || tm_mon > 12)
+    {
+	return 0; /* error in month format */
+    }
+    /* representation of month 0..11 in struct tm */
     t.tm_mon--;
 
     /* set daylight saving time to off */
