@@ -243,7 +243,6 @@ asn1totime(const chunk_t *utctime, asn1_t type)
     {
 	int tz_hour, tz_min;
 
-	sscanf(eot+1, "%2d%2d", &tz_hour, &tz_min);
 	if (sscanf(eot+1, "%2d%2d", &tz_hour, &tz_min) != 2)
 	{
 	    return 0; /* error in positive timezone offset format */
@@ -411,7 +410,7 @@ extract_object(asn1Object_t const *objects,
 
     blob1->len = asn1_length(blob);
 
-    if (blob1->len == ASN1_INVALID_LENGTH || blob->len < blob1->len)
+    if (blob1->len == ASN1_INVALID_LENGTH)
     {
 	DBG(DBG_PARSING,
 	    DBG_log("L%d - %s:  length of ASN1 object invalid or too large",
