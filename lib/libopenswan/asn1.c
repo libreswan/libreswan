@@ -76,8 +76,15 @@ asn1_length(chunk_t *blob)
     n = *blob->ptr++;
     blob->len--;
 
-    if ((n & 0x80) == 0) /* single length octet */
+    if ((n & 0x80) == 0) { /* single length octet */
+	if (n > blob->len) {
+	    DBG(DBG_PARSING,
+		DBG_log("number of length octets is larger than ASN.1 object")
+	    )
+	    return ASN1_INVALID_LENGTH;
+	}
 	return n;
+    }
 
     /* composite length, determine number of length octets */
     n &= 0x7f;
