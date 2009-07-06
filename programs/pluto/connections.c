@@ -2179,10 +2179,12 @@ find_host_connection2(const char *func
 	 * if we have requirements for the policy, choose the first matching
 	 * connection.
 	 */
+	DBG(DBG_CONTROLMORE,
+		DBG_log("searching for connection with policy = %s"
+			, bitnamesof(sa_policy_bit_names, policy)));
 	for (; c != NULL; c = c->hp_next) {
 	    DBG(DBG_CONTROLMORE,
-		DBG_log("searching for policy=%s, found=%s (%s)" 
-			, bitnamesof(sa_policy_bit_names, policy)
+		DBG_log("found policy = %s (%s)"
 			, bitnamesof(sa_policy_bit_names, c->policy)
 			, c->name));
 	    if(NEVER_NEGOTIATE(c->policy)) continue;
