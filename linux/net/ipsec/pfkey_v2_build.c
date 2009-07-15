@@ -395,7 +395,7 @@ pfkey_address_build(struct sadb_ext**	pfkey_ext,
 		    struct sockaddr*	address)
 {
 	int error = 0;
-	int saddr_len = 0;
+	int saddr_len = 0, len;
 	char ipaddr_txt[ADDRTOT_BUF + 6/*extra for port number*/];
 	struct sadb_address *pfkey_address = (struct sadb_address *)*pfkey_ext;
 	
@@ -443,12 +443,11 @@ pfkey_address_build(struct sadb_ext**	pfkey_ext,
 			"pfkey_address_build: "
 			"found address family AF_INET.\n");
 		saddr_len = sizeof(struct sockaddr_in);
-		sprintf(ipaddr_txt, "%d.%d.%d.%d:%d"
-			, (((struct sockaddr_in*)address)->sin_addr.s_addr >>  0) & 0xFF
-			, (((struct sockaddr_in*)address)->sin_addr.s_addr >>  8) & 0xFF
-			, (((struct sockaddr_in*)address)->sin_addr.s_addr >> 16) & 0xFF
-			, (((struct sockaddr_in*)address)->sin_addr.s_addr >> 24) & 0xFF
-			, ntohs(((struct sockaddr_in*)address)->sin_port));
+		len = addrtoa(((struct sockaddr_in*)address)->sin_addr, 0,
+			ipaddr_txt, sizeof(ipaddr_txt));
+		if (len > 0 && len < sizeof(ipaddr_txt))
+			sprintf(&ipaddr_txt[len-1], ":%d",
+				ntohs(((struct sockaddr_in*)address)->sin_port));
 		break;
 	case AF_INET6:
 		DEBUGGING(PF_KEY_DEBUG_BUILD,

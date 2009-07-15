@@ -384,11 +384,8 @@ pfkey_address_parse(struct sadb_ext *pfkey_ext)
 	switch(s->sa_family) {
 	case AF_INET:
 		saddr_len = sizeof(struct sockaddr_in);
-		sprintf(ipaddr_txt, "%d.%d.%d.%d"
-			, (((struct sockaddr_in*)s)->sin_addr.s_addr >>  0) & 0xFF
-			, (((struct sockaddr_in*)s)->sin_addr.s_addr >>  8) & 0xFF
-			, (((struct sockaddr_in*)s)->sin_addr.s_addr >> 16) & 0xFF
-			, (((struct sockaddr_in*)s)->sin_addr.s_addr >> 24) & 0xFF);
+		addrtoa(((struct sockaddr_in*)s)->sin_addr, 0,
+			ipaddr_txt, sizeof(ipaddr_txt));
 		DEBUGGING(PF_KEY_DEBUG_PARSE_STRUCT,
 			  "pfkey_address_parse: "
 			  "found exttype=%u(%s) family=%d(AF_INET) address=%s proto=%u port=%u.\n",
