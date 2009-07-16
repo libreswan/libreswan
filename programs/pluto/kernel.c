@@ -123,7 +123,39 @@ record_and_initiate_opportunistic(const ip_subnet *ours
                                   , int transport_proto
                                   , const char *why)
 {
+    struct connection *c;
+    struct spd_route *sr;
+    ip_address src, dst;
+
     passert(samesubnettype(ours, his));
+
+    networkof(ours, &src);
+    networkof(his, &dst);
+
+    c = find_connection_for_clients(&sr, ours, his, transport_proto);
+    if (!c) {
+	char ours[ADDRTOT_BUF];
+	char his[ADDRTOT_BUF];
+	int ourport;
+	int hisport;
+	char demandbuf[256];
+    
+	addrtot(&ours, 0, ours, sizeof(ours));
+	addrtot(&his, 0, his, sizeof(his));
+	ourport = ntohs(portof(ours));
+	hisport = ntohs(portof(his));
+
+	DBG(DBG_OPPO, DBG_log("Cannot initiate on demand from %s:%d to %s:%d proto %d: "
+		"no connection"
+	    , ours, ourport, his, hisport, transport_proto));
+    }
+
+    if ((c->policy & POLICY_OPPO) == 0) {
+	/* don't do anything here that we shouldn't */
+	DBG(DBG_OPPO, DBG_log("Cannot initiate on demand for %s: not opportunistic !"
+	    , c->name));
+    	return;
+    }
 
     /* Add to bare shunt list.
      * We need to do this because the shunt was installed by KLIPS
@@ -151,13 +183,7 @@ record_and_initiate_opportunistic(const ip_subnet *ours
     }
 
     /* actually initiate opportunism */
-    {
-        ip_address src, dst;
-
-        networkof(ours, &src);
-        networkof(his, &dst);
-        initiate_ondemand(&src, &dst, transport_proto, TRUE, NULL_FD, "acquire");
-    }
+    initiate_ondemand(&src, &dst, transport_proto, TRUE, NULL_FD, "acquire");
 
     pexpect(kernel_ops->remove_orphaned_holds != NULL);
     if(kernel_ops->remove_orphaned_holds) {
