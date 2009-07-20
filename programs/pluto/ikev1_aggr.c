@@ -1040,7 +1040,7 @@ aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc
     if (!ship_nonce(&st->st_ni, r, &md->rbody, ISAKMP_NEXT_ID, "Ni"))
 	return STF_INTERNAL_ERROR;
 
-    DBG_log("setting sec: %d", st->st_sec_in_use);
+    DBG(DBG_CONTROLMORE, DBG_log("setting sec: %d", st->st_sec_in_use));
 
     /* IDii out */
     {
