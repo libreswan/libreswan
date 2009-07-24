@@ -148,12 +148,23 @@ record_and_initiate_opportunistic(const ip_subnet *ours
 	DBG(DBG_OPPO, DBG_log("Cannot initiate on demand from %s:%d to %s:%d proto %d: "
 		"no connection"
 	    , ours, ourport, his, hisport, transport_proto));
+
+	/* clean it up so we don't get stuck in a loop doing nothing */
+	if(kernel_ops->remove_orphaned_holds) {
+	    (*kernel_ops->remove_orphaned_holds)(transport_proto, ours, his);
+	}
+    	return;
     }
 
     if ((c->policy & POLICY_OPPO) == 0) {
 	/* don't do anything here that we shouldn't */
 	DBG(DBG_OPPO, DBG_log("Cannot initiate on demand for %s: not opportunistic !"
 	    , c->name));
+
+	/* clean it up so we don't get stuck in a loop doing nothing */
+	if(kernel_ops->remove_orphaned_holds) {
+	    (*kernel_ops->remove_orphaned_holds)(transport_proto, ours, his);
+	}
     	return;
     }
 
