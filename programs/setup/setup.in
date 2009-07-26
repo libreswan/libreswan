@@ -1,5 +1,16 @@
 #!/bin/sh
 # IPsec startup and shutdown script
+#
+### BEGIN INIT INFO
+# Provides:          openswan
+# Required-Start:    $network $syslog $named
+# Required-Stop:     $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Openswan IPsec at boot time
+# Description:       Enable automatic key management for IPsec (KLIPS and NETKEY)
+### END INIT INFO
+#
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
 # Copyright (C) 2002              Michael Richardson <mcr@freeswan.org>
 # 
