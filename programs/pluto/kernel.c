@@ -1871,8 +1871,8 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
             set_text_said(text_said1, s[1].dst, s[1].spi, s[1].proto);
             
             DBG(DBG_KLIPS, DBG_log("grouping %s (ref=%u) and %s (ref=%u)"
-				   , text_said1, s[0].ref
-				   , text_said0, s[1].ref));
+				   , text_said0, s[0].ref
+				   , text_said1, s[1].ref));
             
             s[0].text_said = text_said0;
             s[1].text_said = text_said1;
