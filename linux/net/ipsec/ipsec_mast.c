@@ -142,13 +142,13 @@ int ip_cmsg_send_ipsec(struct cmsghdr *cmsg, struct ipcm_cookie *ipc)
 	KLIPS_PRINT(debug_mast, "sending with saref=%u\n", sp->ref);
 
 	spin_lock_bh(&tdb_lock);
-	sa1 = ipsec_sa_getbyref(sp->ref);
+	sa1 = ipsec_sa_getbyref(sp->ref, IPSEC_REFOTHER);
 	if(sa1 && sa1->ips_out) {
 		ipc->oif = sa1->ips_out->ifindex;
 		KLIPS_PRINT(debug_mast, "setting oif: %d\n", ipc->oif);
 	}
 	spin_unlock_bh(&tdb_lock);
-	ipsec_sa_put(sa1);
+	ipsec_sa_put(sa1, IPSEC_REFOTHER);
 	
 	ipc->sp  = sp;
 
@@ -277,7 +277,7 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	spin_lock_bh(&tdb_lock);
 
-	ixs->ipsp = ipsec_sa_getbyref(SAref);
+	ixs->ipsp = ipsec_sa_getbyref(SAref, IPSEC_REFOTHER);
 	if(ixs->ipsp == NULL) {
 		KLIPS_ERROR(debug_mast, "%s: no SA for saref=%d (sp=%p)\n",
 			    dev->name, SAref, skb->sp);

@@ -1061,7 +1061,7 @@ ipsec_xmit_encap_bundle_2(struct ipsec_xmit_state *ixs)
 	 * all the grouped transforms?
 	 */
 	saved_ipsp = ixs->ipsp;	/* save the head of the ipsec_sa chain */
-	ipsec_sa_get(saved_ipsp);
+	ipsec_sa_get(saved_ipsp, IPSEC_REFTX);
 	while (ixs->ipsp) {
 		if (debug_tunnel & DB_TN_XMIT) {
 		ixs->sa_len = KLIPS_SATOT(debug_tunnel, &ixs->ipsp->ips_said, 0, ixs->sa_txt, sizeof(ixs->sa_txt));
@@ -1500,7 +1500,7 @@ ipsec_xmit_encap_bundle_2(struct ipsec_xmit_state *ixs)
 	/* end encapsulation loop here XXX */
  cleanup:
 	ixs->ipsp = saved_ipsp;
-	ipsec_sa_put(saved_ipsp);
+	ipsec_sa_put(saved_ipsp,IPSEC_REFTX);
 	return bundle_stat;
 }
 
@@ -1658,7 +1658,7 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 	} /* if (ixs->outgoing_said.proto == IPPROTO_INT) */
 	
 	/* ipsec_sa_getbyid() takes a reference to the ixs */
-	ixs->ipsp = ipsec_sa_getbyid(&ixs->outgoing_said);
+	ixs->ipsp = ipsec_sa_getbyid(&ixs->outgoing_said, IPSEC_REFTX);
 	ixs->sa_len = satot(&ixs->outgoing_said, 0, ixs->sa_txt, sizeof(ixs->sa_txt));
 
 	if (ixs->ipsp == NULL) {
@@ -1676,7 +1676,7 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 	bundle_stat = ipsec_xmit_encap_bundle_2(ixs);
 
 	/* we are done with this SA */
-	ipsec_sa_put(ixs->ipsp); 
+	ipsec_sa_put(ixs->ipsp,IPSEC_REFTX); 
 
 cleanup:
 	return bundle_stat;
@@ -1714,7 +1714,7 @@ ipsec_xmit_cleanup(struct ipsec_xmit_state*ixs)
 		ixs->ips.ips_ident_d.data=NULL;
 	}
 	if(ixs->ipsp) {
-			ipsec_sa_put(ixs->ipsp);
+			ipsec_sa_put(ixs->ipsp, IPSEC_REFTX);
 			ixs->ipsp=NULL;
 	}
 }

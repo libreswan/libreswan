@@ -87,6 +87,10 @@ spinlock_t tdb_lock = SPIN_LOCK_UNLOCKED;
 spinlock_t tdb_lock;
 #endif /* SPINLOCK */
 
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+struct ipsec_sa *ipsec_sa_raw = NULL;
+#endif
+
 struct ipsec_sadb ipsec_sadb;
 
 /* the sub table must be narrower (or equal) in bits than the variable type
@@ -432,8 +436,13 @@ ipsec_sa_alloc(int*error) /* pass in error var by pointer */
 	}
 	memset((caddr_t)ips, 0, sizeof(*ips));
 
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	ips->ips_raw = ipsec_sa_raw;
+	ipsec_sa_raw = ips;
+#endif
+
 	/* return with at least counter = 1 */
-	ipsec_sa_get(ips);
+	ipsec_sa_get(ips, IPSEC_REFALLOC);
 
 	*error = 0;
 	return(ips);
@@ -453,7 +462,7 @@ ipsec_sa_untern(struct ipsec_sa *ips)
 
 	if(IPsecSAref2SA(ref) == ips) {
 		IPsecSAref2SA(ref) = NULL;
-		ipsec_sa_put(ips);
+		ipsec_sa_put(ips, IPSEC_REFINTERN);
 	} else {
 		KLIPS_PRINT(debug_xform,
 			    "ipsec_sa_untern: "
@@ -490,7 +499,7 @@ ipsec_sa_intern(struct ipsec_sa *ips)
 		return error;
 	}
 
-	ipsec_sa_get(ips);
+	ipsec_sa_get(ips, IPSEC_REFINTERN);
 	/*
 	 * if there is an existing SA at this reference, then free it
 	 * note, that nsa might == ips!. That's okay, we just incremented
@@ -499,12 +508,12 @@ ipsec_sa_intern(struct ipsec_sa *ips)
 	{
 		struct ipsec_sa *nsa = IPsecSAref2SA(ref);
 		if(nsa) {
-			ipsec_sa_put(nsa);
+			ipsec_sa_put(nsa, IPSEC_REFINTERN);
 		}
 	}
 
 	KLIPS_PRINT(debug_xform,
-		    "ipsec_sa_alloc: "
+		    "ipsec_sa_intern: "
 		    "SAref[%d]=%p\n",
 		    ips->ips_ref, ips);
 	IPsecSAref2SA(ips->ips_ref) = ips;
@@ -515,7 +524,7 @@ ipsec_sa_intern(struct ipsec_sa *ips)
 
 
 struct ipsec_sa *
-ipsec_sa_getbyid(ip_said *said)
+ipsec_sa_getbyid(ip_said *said, int type)
 {
 	int hashval;
 	struct ipsec_sa *ips;
@@ -551,7 +560,7 @@ ipsec_sa_getbyid(ip_said *said)
 		if ((ips->ips_said.spi == said->spi) &&
 		    (ips->ips_said.dst.u.v4.sin_addr.s_addr == said->dst.u.v4.sin_addr.s_addr) &&
 		    (ips->ips_said.proto == said->proto)) {
-			ipsec_sa_get(ips);
+			ipsec_sa_get(ips, type);
 			return ips;
 		}
 	}
@@ -565,7 +574,7 @@ ipsec_sa_getbyid(ip_said *said)
 }
 
 struct ipsec_sa *
-ipsec_sa_getbyref(IPsecSAref_t ref)
+ipsec_sa_getbyref(IPsecSAref_t ref, int type)
 {
 	struct ipsec_sa *ips;
 	struct IPsecSArefSubTable *st = ipsec_sadb.refTable[IPsecSAref2table(ref)];
@@ -576,13 +585,13 @@ ipsec_sa_getbyref(IPsecSAref_t ref)
 
 	ips = st->entry[IPsecSAref2entry(ref)];
 	if(ips) {
-		ipsec_sa_get(ips);
+		ipsec_sa_get(ips, type);
 	}
 	return ips;
 }
 
 void
-__ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
+__ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line, int type)
 {
 	if(ips == NULL) {
 		KLIPS_PRINT(debug_xform,
@@ -608,6 +617,19 @@ __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
 	}
 #endif
 
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	if (type >= 0 && type < sizeof(ips->ips_track)) {
+		unsigned long flags;
+		local_irq_save(flags);
+		if (ips->ips_track[type] == 0)
+			printk("ipsec_sa_put: UNDERFLOW for %d @ %s %d\n",type,func,line);
+		else
+			ips->ips_track[type]--;
+		local_irq_restore(flags);
+	} else
+		printk("BAD BAD BAD @ %s %d\n", func, line);
+#endif
+
 	if(atomic_dec_and_test(&ips->ips_refcount)) {
 		KLIPS_PRINT(debug_xform,
 			    "ipsec_sa_put: freeing %p\n",
@@ -621,7 +643,7 @@ __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line)
 
 /* git 9c9fa9ecc221aad09c19f034eee37a76d156c1d2 is confusing. It seems to add two __ipsec_sa_get's */
 struct ipsec_sa *
-__ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line)
+__ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line, int type)
 {
 
 	if (ips == NULL)
@@ -645,6 +667,19 @@ __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line)
 #endif
 
 	atomic_inc(&ips->ips_refcount);
+
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	if (type >= 0 && type < sizeof(ips->ips_track)) {
+		unsigned long flags;
+		local_irq_save(flags);
+		if (ips->ips_track[type] == 255)
+			printk("ipsec_sa_get: OVERFLOW for %d @ %s %d\n",type,func,line);
+		else
+			ips->ips_track[type]++;
+		local_irq_restore(flags);
+	} else
+		printk("BAD BAD BAD @ %s %d\n", func, line);
+#endif
 
 #if 0
 	/*
@@ -681,7 +716,7 @@ ipsec_sa_add(struct ipsec_sa *ips)
 	}
 	hashval = IPS_HASH(&ips->ips_said);
 
-	ipsec_sa_get(ips);
+	ipsec_sa_get(ips, IPSEC_REFSAADD);
 	spin_lock_bh(&tdb_lock);
 	
 	ips->ips_hnext = ipsec_sadb_hash[hashval];
@@ -722,7 +757,7 @@ void ipsec_sa_rm(struct ipsec_sa *ips)
 	if (ips == ipsec_sadb_hash[hashval]) {
 		ipsec_sadb_hash[hashval] = ipsec_sadb_hash[hashval]->ips_hnext;
 		ips->ips_hnext = NULL;
-		ipsec_sa_put(ips);
+		ipsec_sa_put(ips, IPSEC_REFSAADD);
 		KLIPS_PRINT(debug_xform,
 			    "klips_debug:ipsec_sa_del: "
 			    "successfully unhashed first ipsec_sa in chain.\n");
@@ -736,7 +771,7 @@ void ipsec_sa_rm(struct ipsec_sa *ips)
 			if (ipstp->ips_hnext == ips) {
 				ipstp->ips_hnext = ips->ips_hnext;
 				ips->ips_hnext = NULL;
-				ipsec_sa_put(ips);
+				ipsec_sa_put(ips, IPSEC_REFSAADD);
 				KLIPS_PRINT(debug_xform,
 					    "klips_debug:ipsec_sa_del: "
 					    "successfully unhashed link in ipsec_sa chain.\n");
@@ -857,7 +892,7 @@ ipsec_sadb_cleanup(__u8 proto)
 		while(ips) {
 			ipsec_sadb_hash[i]=ips->ips_hnext;
 			ips->ips_hnext=NULL;
-			ipsec_sa_put(ips);
+			ipsec_sa_put(ips, IPSEC_REFSAADD);
 
 			ips = ipsec_sadb_hash[i];
 		}
@@ -893,7 +928,7 @@ ipsec_sadb_cleanup(__u8 proto)
 			for(entry = 0; entry < IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES; entry++) {
 				if(ipsec_sadb.refTable[table]->entry[entry] != NULL) {
 					struct ipsec_sa *sa1 = ipsec_sadb.refTable[table]->entry[entry];
-					ipsec_sa_put(sa1);
+					ipsec_sa_put(sa1, IPSEC_REFOTHER);
 					ipsec_sadb.refTable[table]->entry[entry] = NULL;
 				}
 			}
@@ -939,7 +974,7 @@ ipsec_sadb_free(void)
 					struct ipsec_sa *sa1 = ipsec_sadb.refTable[table]->entry[entry];
 
 					BUG_ON(atomic_read(&sa1->ips_refcount) == 1);
-					ipsec_sa_put(sa1);
+					ipsec_sa_put(sa1, IPSEC_REFSAADD);
 					ipsec_sadb.refTable[table]->entry[entry] = NULL;
 				}
 			}
@@ -1035,17 +1070,32 @@ ipsec_sa_wipe(struct ipsec_sa *ips)
 		ips->ips_prev->ips_next = ips->ips_next;
 	if (ips->ips_next) {
 		ips->ips_next->ips_prev = ips->ips_prev;
-		ipsec_sa_put(ips->ips_next);
+		ipsec_sa_put(ips->ips_next, IPSEC_REFALLOC);
 	}
 	ips->ips_next = NULL;
 	ips->ips_prev = NULL;
 
 	if (ips->ips_hnext) {
-		ipsec_sa_put(ips->ips_hnext);
+		ipsec_sa_put(ips->ips_hnext, IPSEC_REFALLOC);
 	}
 	ips->ips_hnext = NULL;
 
 	BUG_ON(atomic_read(&ips->ips_refcount) != 0);
+
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	if (ips == ipsec_sa_raw) {
+		ipsec_sa_raw = ips->ips_raw;
+	} else {
+		struct ipsec_sa *raw = ipsec_sa_raw;
+		while (raw) {
+			if (raw->ips_raw == ips) {
+				raw->ips_raw = ips->ips_raw;
+				break;
+			}
+			raw = raw->ips_raw;
+		}
+	}
+#endif
 
 	memset((caddr_t)ips, 0, sizeof(*ips));
 	kfree(ips);

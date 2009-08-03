@@ -247,10 +247,10 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 
 	if(maxspi == minspi) {
 		extr->ips->ips_said.spi = maxspi;
-		ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
+		ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 		if(ipsq != NULL) {
 			sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
-			ipsec_sa_put(ipsq);
+			ipsec_sa_put(ipsq, IPSEC_REFSA);
 			spin_unlock_bh(&tdb_lock);
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_getspi_parse: "
@@ -274,11 +274,11 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 					      (rand_val %
 					      (spi_diff + 1)));
 			i++;
-			ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
+			ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 			if(ipsq == NULL) {
 				found_avail = 1;
 			} else {
-				ipsec_sa_put(ipsq);
+				ipsec_sa_put(ipsq, IPSEC_REFSA);
 			}
 		}
 	}
@@ -434,7 +434,7 @@ pfkey_update_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 
 	spin_lock_bh(&tdb_lock);
 
-	ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
+	ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 	if (ipsq == NULL) {
 		spin_unlock_bh(&tdb_lock);
 		KLIPS_PRINT(debug_pfkey,
@@ -486,7 +486,7 @@ pfkey_update_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		/* XXX extr->ips->ips_rcvif = &(enc_softc[em->em_if].enc_if);*/
 		extr->ips->ips_rcvif = NULL;
 		if ((error = pfkey_ipsec_sa_init(extr->ips))) {
-			ipsec_sa_put(ipsq);
+			ipsec_sa_put(ipsq, IPSEC_REFSA);
 			spin_unlock_bh(&tdb_lock);
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_update_parse: "
@@ -504,7 +504,7 @@ pfkey_update_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 
 		/* this will call delchain-equivalent if refcount -> 0
 	 	 * noting that get() above, added to ref count */
-		ipsec_sa_put(ipsq);
+		ipsec_sa_put(ipsq, IPSEC_REFSA);
 	}
 
 	spin_unlock_bh(&tdb_lock);
@@ -710,9 +710,9 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 
 	spin_lock_bh(&tdb_lock);
 
-	ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
+	ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 	if(ipsq != NULL) {
-		ipsec_sa_put(ipsq);
+		ipsec_sa_put(ipsq, IPSEC_REFSA);
 		spin_unlock_bh(&tdb_lock);
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_add_parse: "
@@ -938,7 +938,7 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 
 	spin_lock_bh(&tdb_lock);
 
-	ipsp = ipsec_sa_getbyid(&(extr->ips->ips_said));
+	ipsp = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 	if (ipsp == NULL) {
 		spin_unlock_bh(&tdb_lock);
 		KLIPS_PRINT(debug_pfkey,
@@ -970,7 +970,7 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 
 	/* this will call delchain-equivalent if refcount -> 0
 	 * noting that get() above, added to ref count */
-	ipsec_sa_put(ipsp);
+	ipsec_sa_put(ipsp, IPSEC_REFSA);
 
 	/* put the original ALLOC to free the SA */
 	ipsq = ipsp;
@@ -978,7 +978,7 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		ipsq = ipsq->ips_prev;
 	}
 	/* this should cause ipsec_sa_wipe to get called on the SA/group */
-	ipsec_sa_put(ipsq);
+	ipsec_sa_put(ipsq, IPSEC_REFALLOC);
 
 	spin_unlock_bh(&tdb_lock);
 
@@ -1077,7 +1077,7 @@ pfkey_get_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 
 	spin_lock_bh(&tdb_lock);
 
-	ipsp = ipsec_sa_getbyid(&(extr->ips->ips_said));
+	ipsp = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 	if (ipsp == NULL) {
 		spin_unlock_bh(&tdb_lock);
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_get_parse: "
@@ -1214,12 +1214,12 @@ pfkey_get_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 		     )) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_get_parse: "
 			    "failed to build the get reply message extensions\n");
-		ipsec_sa_put(ipsp);
+		ipsec_sa_put(ipsp, IPSEC_REFSA);
 		spin_unlock_bh(&tdb_lock);
 		SENDERR(-error);
 	}
 		
-	ipsec_sa_put(ipsp);
+	ipsec_sa_put(ipsp, IPSEC_REFSA);
 	spin_unlock_bh(&tdb_lock);
 	
 	if((error = pfkey_msg_build(&pfkey_reply, extensions_reply, EXT_BITS_OUT))) {
@@ -1684,7 +1684,7 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 
 	spin_lock_bh(&tdb_lock);
 
-	ips1p = ipsec_sa_getbyid(&(extr->ips->ips_said));
+	ips1p = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 	if(ips1p == NULL) {
 		spin_unlock_bh(&tdb_lock);
 		KLIPS_ERROR(debug_pfkey,
@@ -1698,9 +1698,9 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 
 		/* group ips2p to be after ips1p */
 
-		ips2p = ipsec_sa_getbyid(&(extr->ips2->ips_said));
+		ips2p = ipsec_sa_getbyid(&(extr->ips2->ips_said), IPSEC_REFSA);
 		if(ips2p == NULL) {
-			ipsec_sa_put(ips1p);
+			ipsec_sa_put(ips1p, IPSEC_REFSA);
 			spin_unlock_bh(&tdb_lock);
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_x_grpsa_parse: "
@@ -1721,8 +1721,8 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 
 		/* Is ips1p already linked? */
 		if(ips1p->ips_next) {
-			ipsec_sa_put(ips1p);
-			ipsec_sa_put(ips2p);
+			ipsec_sa_put(ips1p, IPSEC_REFSA);
+			ipsec_sa_put(ips2p, IPSEC_REFSA);
 			spin_unlock_bh(&tdb_lock);
 			KLIPS_ERROR(debug_pfkey,
 				    "klips_debug:pfkey_x_grpsa_parse: "
@@ -1735,8 +1735,8 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 		ipsp = ips2p;
 		while(ipsp) {
 			if(ipsp == ips1p) {
-				ipsec_sa_put(ips1p);
-				ipsec_sa_put(ips2p);
+				ipsec_sa_put(ips1p, IPSEC_REFSA);
+				ipsec_sa_put(ips2p, IPSEC_REFSA);
 				spin_unlock_bh(&tdb_lock);
 				KLIPS_ERROR(debug_pfkey,
 					    "klips_debug:pfkey_x_grpsa_parse: "
@@ -1756,8 +1756,8 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 			    sa_len2 ? sa2 : " (error)");
 		ips1p->ips_next = ips2p;
 		ips2p->ips_prev = ips1p;
-		ipsec_sa_put(ips1p);
-		ipsec_sa_put(ips2p);
+		ipsec_sa_put(ips1p, IPSEC_REFSA);
+		ipsec_sa_put(ips2p, IPSEC_REFSA);
 	} else { /* UNGRPSA */
 		while(ips1p) {
 			struct ipsec_sa *ipsn;
@@ -1770,7 +1770,7 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 			ips1p->ips_prev = NULL;
 
 			/* drop reference to current */
-			ipsec_sa_put(ips1p);
+			ipsec_sa_put(ips1p, IPSEC_REFSA);
 
 			ips1p = ipsn;
 		}
@@ -1931,7 +1931,7 @@ pfkey_x_addflow_parse(struct sock *sk, struct sadb_ext **extensions, struct pfke
 		char sa[SATOT_BUF];
 		size_t sa_len;
 
-		ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said));
+		ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 		if(ipsq == NULL) {
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_x_addflow_parse: "
@@ -1945,7 +1945,7 @@ pfkey_x_addflow_parse(struct sock *sk, struct sadb_ext **extensions, struct pfke
 		}
 
 		if(ipsp == NULL) {
-			ipsec_sa_put(ipsq);
+			ipsec_sa_put(ipsq, IPSEC_REFSA);
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_x_addflow_parse: "
 				    "SA chain does not have an IPIP SA, cannot set incoming policy.\n");
@@ -1960,7 +1960,7 @@ pfkey_x_addflow_parse(struct sock *sk, struct sadb_ext **extensions, struct pfke
 		ipsp->ips_mask_s = srcmask;
 		ipsp->ips_mask_d = dstmask;
 
-		ipsec_sa_put(ipsq);
+		ipsec_sa_put(ipsq, IPSEC_REFSA);
 
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_x_addflow_parse: "
@@ -3103,10 +3103,10 @@ pfkey_msg_interp(struct sock *sk, struct sadb_msg *pfkey_msg)
 
  errlab:
 	if(extr.ips != NULL) {
-		ipsec_sa_put(extr.ips);
+		ipsec_sa_put(extr.ips, IPSEC_REFALLOC);
 	}
 	if(extr.ips2 != NULL) {
-		ipsec_sa_put(extr.ips2);
+		ipsec_sa_put(extr.ips2, IPSEC_REFALLOC);
 	}
 	if (extr.eroute != NULL) {
 		kfree(extr.eroute);

@@ -96,6 +96,9 @@ static struct proc_dir_entry *proc_net_ipsec_dir = NULL;
 static struct proc_dir_entry *proc_eroute_dir    = NULL;
 static struct proc_dir_entry *proc_spi_dir       = NULL;
 static struct proc_dir_entry *proc_spigrp_dir    = NULL;
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+static struct proc_dir_entry *proc_saraw_dir     = NULL;
+#endif
 static struct proc_dir_entry *proc_birth_dir     = NULL;
 static struct proc_dir_entry *proc_stats_dir     = NULL;
 #endif
@@ -160,6 +163,262 @@ ipsec_eroute_get_info(char *buffer,
 	return w.len - (offset - w.begin);
 }
 
+
+IPSEC_PROCFS_DEBUG_NO_STATIC
+int
+ipsec_spi_format(struct ipsec_sa *sa_p,
+		 char *buffer,
+		 int len,
+		 int length)
+{
+	char sa[SATOT_BUF];
+	char buf_s[SUBNETTOA_BUF];
+	char buf_d[SUBNETTOA_BUF];
+	size_t sa_len;
+
+	ipsec_sa_get(sa_p, IPSEC_REFPROC);
+	sa_len = satot(&sa_p->ips_said, 'x', sa, sizeof(sa));
+	len += ipsec_snprintf(buffer+len, length-len, "%s ",
+		       sa_len ? sa : " (error)");
+
+	len += ipsec_snprintf(buffer+len, length-len, "%s%s%s",
+		       IPS_XFORM_NAME(sa_p));
+
+	len += ipsec_snprintf(buffer+len, length-len, ": dir=%s",
+		       (sa_p->ips_flags & EMT_INBOUND) ?
+		       "in " : "out");
+
+	if(sa_p->ips_addr_s) {
+		addrtoa(((struct sockaddr_in*)(sa_p->ips_addr_s))->sin_addr,
+			0, buf_s, sizeof(buf_s));
+		len += ipsec_snprintf(buffer+len, length-len, " src=%s",
+			       buf_s);
+	}
+
+	if((sa_p->ips_said.proto == IPPROTO_IPIP)
+	   && (sa_p->ips_flags & SADB_X_SAFLAGS_INFLOW)) {
+		subnettoa(sa_p->ips_flow_s.u.v4.sin_addr,
+			  sa_p->ips_mask_s.u.v4.sin_addr,
+			  0,
+			  buf_s,
+			  sizeof(buf_s));
+
+		subnettoa(sa_p->ips_flow_d.u.v4.sin_addr,
+			  sa_p->ips_mask_d.u.v4.sin_addr,
+			  0,
+			  buf_d,
+			  sizeof(buf_d));
+
+		len += ipsec_snprintf(buffer+len, length-len, " policy=%s->%s",
+			       buf_s, buf_d);
+	}
+	
+	if(sa_p->ips_iv_bits) {
+		int j;
+		len += ipsec_snprintf(buffer+len, length-len, " iv_bits=%dbits iv=0x",
+			       sa_p->ips_iv_bits);
+
+				for(j = 0; j < sa_p->ips_iv_bits / 8; j++) {
+					len += ipsec_snprintf(buffer+len, length-len, "%02x",
+						       (__u32)((__u8*)(sa_p->ips_iv))[j]);
+				}
+			}
+		} else
+#endif
+		for(j = 0; j < sa_p->ips_iv_bits / 8; j++) {
+			len += ipsec_snprintf(buffer+len, length-len, "%02x",
+				       (__u32)((__u8*)(sa_p->ips_iv))[j]);
+		}
+	}
+
+	if(sa_p->ips_encalg || sa_p->ips_authalg) {
+		if(sa_p->ips_replaywin) {
+			len += ipsec_snprintf(buffer+len, length-len, " ooowin=%d",
+				       sa_p->ips_replaywin);
+		}
+		if(sa_p->ips_errs.ips_replaywin_errs) {
+			len += ipsec_snprintf(buffer+len, length-len, " ooo_errs=%d",
+				       sa_p->ips_errs.ips_replaywin_errs);
+		}
+		if(sa_p->ips_replaywin_lastseq) {
+		       len += ipsec_snprintf(buffer+len, length-len, " seq=%d",
+				      sa_p->ips_replaywin_lastseq);
+		}
+		if(sa_p->ips_replaywin_bitmap) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
+			len += ipsec_snprintf(buffer+len, length-len, " bit=0x%Lx",
+				       sa_p->ips_replaywin_bitmap);
+#else
+			len += ipsec_snprintf(buffer+len, length-len, " bit=0x%x%08x",
+				       (__u32)(sa_p->ips_replaywin_bitmap >> 32),
+				       (__u32)sa_p->ips_replaywin_bitmap);
+#endif
+		}
+		if(sa_p->ips_replaywin_maxdiff) {
+			len += ipsec_snprintf(buffer+len, length-len, " max_seq_diff=%d",
+				       sa_p->ips_replaywin_maxdiff);
+		}
+	}
+	if(sa_p->ips_flags & ~EMT_INBOUND) {
+		len += ipsec_snprintf(buffer+len, length-len, " flags=0x%x",
+			       sa_p->ips_flags & ~EMT_INBOUND);
+		len += ipsec_snprintf(buffer+len, length-len, "<");
+		/* flag printing goes here */
+		len += ipsec_snprintf(buffer+len, length-len, ">");
+	}
+	if(sa_p->ips_auth_bits) {
+		len += ipsec_snprintf(buffer+len, length-len, " alen=%d",
+			       sa_p->ips_auth_bits);
+	}
+	if(sa_p->ips_key_bits_a) {
+		len += ipsec_snprintf(buffer+len, length-len, " aklen=%d",
+			       sa_p->ips_key_bits_a);
+	}
+	if(sa_p->ips_errs.ips_auth_errs) {
+		len += ipsec_snprintf(buffer+len, length-len, " auth_errs=%d",
+			       sa_p->ips_errs.ips_auth_errs);
+	}
+	if(sa_p->ips_key_bits_e) {
+		len += ipsec_snprintf(buffer+len, length-len, " eklen=%d",
+			       sa_p->ips_key_bits_e);
+	}
+	if(sa_p->ips_errs.ips_encsize_errs) {
+		len += ipsec_snprintf(buffer+len, length-len, " encr_size_errs=%d",
+			       sa_p->ips_errs.ips_encsize_errs);
+	}
+	if(sa_p->ips_errs.ips_encpad_errs) {
+		len += ipsec_snprintf(buffer+len, length-len, " encr_pad_errs=%d",
+			       sa_p->ips_errs.ips_encpad_errs);
+	}
+	
+	len += ipsec_snprintf(buffer+len, length-len, " life(c,s,h)=");
+
+	len += ipsec_lifetime_format(buffer + len,
+				     length - len,
+				     "alloc", 
+				     ipsec_life_countbased,
+				     &sa_p->ips_life.ipl_allocations);
+
+	len += ipsec_lifetime_format(buffer + len,
+				     length - len,
+				     "bytes",
+				     ipsec_life_countbased,
+				     &sa_p->ips_life.ipl_bytes);
+
+	len += ipsec_lifetime_format(buffer + len,
+				     length - len,
+				     "addtime",
+				     ipsec_life_timebased,
+				     &sa_p->ips_life.ipl_addtime);
+
+	len += ipsec_lifetime_format(buffer + len,
+				     length - len,
+				     "usetime",
+				     ipsec_life_timebased,
+				     &sa_p->ips_life.ipl_usetime);
+	
+	len += ipsec_lifetime_format(buffer + len,
+				     length - len,
+				     "packets",
+				     ipsec_life_countbased,
+				     &sa_p->ips_life.ipl_packets);
+	
+	if(sa_p->ips_life.ipl_usetime.ipl_last) { /* XXX-MCR should be last? */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
+		len += ipsec_snprintf(buffer+len, length-len, " idle=%Ld",
+			       jiffies / HZ - sa_p->ips_life.ipl_usetime.ipl_last);
+#else
+		len += ipsec_snprintf(buffer+len, length-len, " idle=%lu",
+			       jiffies / HZ - (unsigned long)sa_p->ips_life.ipl_usetime.ipl_last);
+#endif
+	}
+
+#ifdef CONFIG_KLIPS_IPCOMP
+	if(sa_p->ips_said.proto == IPPROTO_COMP &&
+	   (sa_p->ips_comp_ratio_dbytes ||
+	    sa_p->ips_comp_ratio_cbytes)) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
+		len += ipsec_snprintf(buffer+len, length-len, " ratio=%Ld:%Ld",
+			       sa_p->ips_comp_ratio_dbytes,
+			       sa_p->ips_comp_ratio_cbytes);
+#else
+		len += ipsec_snprintf(buffer+len, length-len, " ratio=%lu:%lu",
+			       (unsigned long)sa_p->ips_comp_ratio_dbytes,
+			       (unsigned long)sa_p->ips_comp_ratio_cbytes);
+#endif
+	}
+#endif /* CONFIG_KLIPS_IPCOMP */
+
+#ifdef NAT_TRAVERSAL
+	{
+		char *natttype_name;
+
+		switch(sa_p->ips_natt_type)
+		{
+		case 0:
+			natttype_name="none";
+			break;
+		case ESPINUDP_WITH_NON_IKE:
+			natttype_name="nonike";
+			break;
+		case ESPINUDP_WITH_NON_ESP:
+			natttype_name="nonesp";
+			break;
+		default:
+			natttype_name = "unknown";
+			break;
+		}
+
+		len += ipsec_snprintf(buffer + len, length-len, " natencap=%s",
+			       natttype_name);
+		
+		len += ipsec_snprintf(buffer + len, length-len, " natsport=%d",
+			       sa_p->ips_natt_sport);
+		
+		len += ipsec_snprintf(buffer + len,length-len, " natdport=%d",
+			       sa_p->ips_natt_dport);
+	}
+#else
+	len += ipsec_snprintf(buffer + len, length-len, " natencap=na");
+#endif /* NAT_TRAVERSAL */
+		
+	/* we decrement by one, because this SA has been referenced in order to dump this info */
+	len += ipsec_snprintf(buffer + len,length-len, " refcount=%d",
+		       atomic_read(&sa_p->ips_refcount)-1);
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	{
+		int f;
+		len += ipsec_snprintf(buffer + len,length-len, "[");
+		for (f=0; f<sizeof(sa_p->ips_track); f++)
+			len += ipsec_snprintf(buffer + len,length-len, "%s%d",
+					   f == 0 ? "" : ",", sa_p->ips_track[f]);
+		len += ipsec_snprintf(buffer + len,length-len, "]");
+	}
+#endif
+
+	len += ipsec_snprintf(buffer+len, length-len, " ref=%d",
+		       sa_p->ips_ref);
+	len += ipsec_snprintf(buffer+len, length-len, " refhim=%d",
+		       sa_p->ips_refhim);
+
+	if(sa_p->ips_out) {
+		len += ipsec_snprintf(buffer+len, length-len, " outif=%s:%d",
+				      sa_p->ips_out->name,
+				      sa_p->ips_transport_direct);
+	}
+	if(debug_xform) {
+		len += ipsec_snprintf(buffer+len, length-len, " reftable=%lu refentry=%lu",
+		       (unsigned long)IPsecSAref2table(sa_p->ips_ref),
+		       (unsigned long)IPsecSAref2entry(sa_p->ips_ref));
+	}
+
+	len += ipsec_snprintf(buffer+len, length-len, "\n");
+
+	ipsec_sa_put(sa_p, IPSEC_REFPROC);   
+	return len;
+}
+
+
 IPSEC_PROCFS_DEBUG_NO_STATIC
 int
 ipsec_spi_get_info(char *buffer,
@@ -172,10 +431,6 @@ ipsec_spi_get_info(char *buffer,
 	off_t begin = 0;
 	int i;
 	struct ipsec_sa *sa_p;
-	char sa[SATOT_BUF];
-	char buf_s[SUBNETTOA_BUF];
-	char buf_d[SUBNETTOA_BUF];
-	size_t sa_len;
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
 		    "klips_debug:ipsec_spi_get_info: "
@@ -191,230 +446,8 @@ ipsec_spi_get_info(char *buffer,
 		for (sa_p = ipsec_sadb_hash[i];
 		     sa_p;
 		     sa_p = sa_p->ips_hnext) {
-			ipsec_sa_get(sa_p);
-			sa_len = satot(&sa_p->ips_said, 'x', sa, sizeof(sa));
-			len += ipsec_snprintf(buffer+len, length-len, "%s ",
-				       sa_len ? sa : " (error)");
 
-			len += ipsec_snprintf(buffer+len, length-len, "%s%s%s",
-				       IPS_XFORM_NAME(sa_p));
-
-			len += ipsec_snprintf(buffer+len, length-len, ": dir=%s",
-				       (sa_p->ips_flags & EMT_INBOUND) ?
-				       "in " : "out");
-
-			if(sa_p->ips_addr_s) {
-				addrtoa(((struct sockaddr_in*)(sa_p->ips_addr_s))->sin_addr,
-					0, buf_s, sizeof(buf_s));
-				len += ipsec_snprintf(buffer+len, length-len, " src=%s",
-					       buf_s);
-			}
-
-			if((sa_p->ips_said.proto == IPPROTO_IPIP)
-			   && (sa_p->ips_flags & SADB_X_SAFLAGS_INFLOW)) {
-				subnettoa(sa_p->ips_flow_s.u.v4.sin_addr,
-					  sa_p->ips_mask_s.u.v4.sin_addr,
-					  0,
-					  buf_s,
-					  sizeof(buf_s));
-
-				subnettoa(sa_p->ips_flow_d.u.v4.sin_addr,
-					  sa_p->ips_mask_d.u.v4.sin_addr,
-					  0,
-					  buf_d,
-					  sizeof(buf_d));
-
-				len += ipsec_snprintf(buffer+len, length-len, " policy=%s->%s",
-					       buf_s, buf_d);
-			}
-			
-			if(sa_p->ips_iv_bits) {
-				int j;
-				len += ipsec_snprintf(buffer+len, length-len, " iv_bits=%dbits iv=0x",
-					       sa_p->ips_iv_bits);
-
-				for(j = 0; j < sa_p->ips_iv_bits / 8; j++) {
-					len += ipsec_snprintf(buffer+len, length-len, "%02x",
-						       (__u32)((__u8*)(sa_p->ips_iv))[j]);
-				}
-			}
-
-			if(sa_p->ips_encalg || sa_p->ips_authalg) {
-				if(sa_p->ips_replaywin) {
-					len += ipsec_snprintf(buffer+len, length-len, " ooowin=%d",
-						       sa_p->ips_replaywin);
-				}
-				if(sa_p->ips_errs.ips_replaywin_errs) {
-					len += ipsec_snprintf(buffer+len, length-len, " ooo_errs=%d",
-						       sa_p->ips_errs.ips_replaywin_errs);
-				}
-				if(sa_p->ips_replaywin_lastseq) {
-                                       len += ipsec_snprintf(buffer+len, length-len, " seq=%d",
-						      sa_p->ips_replaywin_lastseq);
-				}
-				if(sa_p->ips_replaywin_bitmap) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
-					len += ipsec_snprintf(buffer+len, length-len, " bit=0x%Lx",
-						       sa_p->ips_replaywin_bitmap);
-#else
-					len += ipsec_snprintf(buffer+len, length-len, " bit=0x%x%08x",
-						       (__u32)(sa_p->ips_replaywin_bitmap >> 32),
-						       (__u32)sa_p->ips_replaywin_bitmap);
-#endif
-				}
-				if(sa_p->ips_replaywin_maxdiff) {
-					len += ipsec_snprintf(buffer+len, length-len, " max_seq_diff=%d",
-						       sa_p->ips_replaywin_maxdiff);
-				}
-			}
-			if(sa_p->ips_flags & ~EMT_INBOUND) {
-				len += ipsec_snprintf(buffer+len, length-len, " flags=0x%x",
-					       sa_p->ips_flags & ~EMT_INBOUND);
-				len += ipsec_snprintf(buffer+len, length-len, "<");
-				/* flag printing goes here */
-				len += ipsec_snprintf(buffer+len, length-len, ">");
-			}
-			if(sa_p->ips_auth_bits) {
-				len += ipsec_snprintf(buffer+len, length-len, " alen=%d",
-					       sa_p->ips_auth_bits);
-			}
-			if(sa_p->ips_key_bits_a) {
-				len += ipsec_snprintf(buffer+len, length-len, " aklen=%d",
-					       sa_p->ips_key_bits_a);
-			}
-			if(sa_p->ips_errs.ips_auth_errs) {
-				len += ipsec_snprintf(buffer+len, length-len, " auth_errs=%d",
-					       sa_p->ips_errs.ips_auth_errs);
-			}
-			if(sa_p->ips_key_bits_e) {
-				len += ipsec_snprintf(buffer+len, length-len, " eklen=%d",
-					       sa_p->ips_key_bits_e);
-			}
-			if(sa_p->ips_errs.ips_encsize_errs) {
-				len += ipsec_snprintf(buffer+len, length-len, " encr_size_errs=%d",
-					       sa_p->ips_errs.ips_encsize_errs);
-			}
-			if(sa_p->ips_errs.ips_encpad_errs) {
-				len += ipsec_snprintf(buffer+len, length-len, " encr_pad_errs=%d",
-					       sa_p->ips_errs.ips_encpad_errs);
-			}
-			
-			len += ipsec_snprintf(buffer+len, length-len, " life(c,s,h)=");
-
-			len += ipsec_lifetime_format(buffer + len,
-						     length - len,
-						     "alloc", 
-						     ipsec_life_countbased,
-						     &sa_p->ips_life.ipl_allocations);
-
-			len += ipsec_lifetime_format(buffer + len,
-						     length - len,
-						     "bytes",
-						     ipsec_life_countbased,
-						     &sa_p->ips_life.ipl_bytes);
-
-			len += ipsec_lifetime_format(buffer + len,
-						     length - len,
-						     "addtime",
-						     ipsec_life_timebased,
-						     &sa_p->ips_life.ipl_addtime);
-
-			len += ipsec_lifetime_format(buffer + len,
-						     length - len,
-						     "usetime",
-						     ipsec_life_timebased,
-						     &sa_p->ips_life.ipl_usetime);
-			
-			len += ipsec_lifetime_format(buffer + len,
-						     length - len,
-						     "packets",
-						     ipsec_life_countbased,
-						     &sa_p->ips_life.ipl_packets);
-			
-			if(sa_p->ips_life.ipl_usetime.ipl_last) { /* XXX-MCR should be last? */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
-				len += ipsec_snprintf(buffer+len, length-len, " idle=%Ld",
-					       jiffies / HZ - sa_p->ips_life.ipl_usetime.ipl_last);
-#else
-				len += ipsec_snprintf(buffer+len, length-len, " idle=%lu",
-					       jiffies / HZ - (unsigned long)sa_p->ips_life.ipl_usetime.ipl_last);
-#endif
-			}
-
-#ifdef CONFIG_KLIPS_IPCOMP
-			if(sa_p->ips_said.proto == IPPROTO_COMP &&
-			   (sa_p->ips_comp_ratio_dbytes ||
-			    sa_p->ips_comp_ratio_cbytes)) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
-				len += ipsec_snprintf(buffer+len, length-len, " ratio=%Ld:%Ld",
-					       sa_p->ips_comp_ratio_dbytes,
-					       sa_p->ips_comp_ratio_cbytes);
-#else
-				len += ipsec_snprintf(buffer+len, length-len, " ratio=%lu:%lu",
-					       (unsigned long)sa_p->ips_comp_ratio_dbytes,
-					       (unsigned long)sa_p->ips_comp_ratio_cbytes);
-#endif
-			}
-#endif /* CONFIG_KLIPS_IPCOMP */
-
-#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-			{
-				char *natttype_name;
-
-				switch(sa_p->ips_natt_type)
-				{
-				case 0:
-					natttype_name="none";
-					break;
-				case ESPINUDP_WITH_NON_IKE:
-					natttype_name="nonike";
-					break;
-				case ESPINUDP_WITH_NON_ESP:
-					natttype_name="nonesp";
-					break;
-				default:
-					natttype_name = "unknown";
-					break;
-				}
-
-				len += ipsec_snprintf(buffer + len, length-len, " natencap=%s",
-					       natttype_name);
-				
-				len += ipsec_snprintf(buffer + len, length-len, " natsport=%d",
-					       sa_p->ips_natt_sport);
-				
-				len += ipsec_snprintf(buffer + len,length-len, " natdport=%d",
-					       sa_p->ips_natt_dport);
-			}
-#else
-			len += ipsec_snprintf(buffer + len, length-len, " natencap=na");
-#endif /* CONFIG_IPSEC_NAT_TRAVERSAL */
-				
-			/* we decrement by one, because this SA has been referenced in order to dump this info */
-			len += ipsec_snprintf(buffer + len,length-len, " refcount=%d",
-				       atomic_read(&sa_p->ips_refcount)-1);
-
-			len += ipsec_snprintf(buffer+len, length-len, " ref=%d",
-				       sa_p->ips_ref);
-			len += ipsec_snprintf(buffer+len, length-len, " refhim=%d",
-				       sa_p->ips_refhim);
-
-			if(sa_p->ips_out) {
-				len += ipsec_snprintf(buffer+len, length-len, " outif=%s:%d",
-						      sa_p->ips_out->name,
-						      sa_p->ips_transport_direct);
-			}
-#ifdef CONFIG_KLIPS_DEBUG
-			if(debug_xform) {
-			len += ipsec_snprintf(buffer+len, length-len, " reftable=%lu refentry=%lu",
-				       (unsigned long)IPsecSAref2table(sa_p->ips_ref),
-				       (unsigned long)IPsecSAref2entry(sa_p->ips_ref));
-			}
-#endif /* CONFIG_KLIPS_DEBUG */
-
-			len += ipsec_snprintf(buffer+len, length-len, "\n");
-
-                        ipsec_sa_put(sa_p);   
+		     	len = ipsec_spi_format(sa_p, buffer, len, length);
                        
                         if (len >= max_content) {
                                /* we've done all that can fit -- stop loops */
@@ -511,6 +544,60 @@ done_spigrp_i:
 	*start = buffer + (offset - begin);	/* Start of wanted data */
 	return len - (offset - begin);
 }
+
+
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+IPSEC_PROCFS_DEBUG_NO_STATIC
+int
+ipsec_saraw_get_info(char *buffer,
+		   char **start,
+		   off_t offset,
+		   int length    IPSEC_PROC_LAST_ARG)
+{
+	const int max_content = length > 0? length-1 : 0;
+	int len = 0;
+	off_t begin = 0;
+	struct ipsec_sa *sa_p;
+	extern struct ipsec_sa *ipsec_sa_raw;
+
+	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
+		    "klips_debug:ipsec_saraw_get_info: "
+		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
+		    buffer,
+		    *start,
+		    (int)offset,
+		    length);
+	
+	spin_lock_bh(&tdb_lock);
+
+	for (sa_p = ipsec_sa_raw; sa_p; sa_p = sa_p->ips_raw) {
+	       
+		len = ipsec_spi_format(sa_p, buffer, len, length);
+
+		if (len >= max_content) {
+		       /* we've done all that can fit -- stop loops */
+		       len = max_content;      /* truncate crap */
+			goto done_spi_i;
+		} else {
+		       const off_t pos = begin + len;  /* file position of end of what we've generated */
+
+		       if (pos <= offset) {
+			       /* all is before first interesting character:
+				* discard, but note where we are.
+				*/
+			       len = 0;
+			       begin = pos;
+		       }
+		}
+	}
+
+done_spi_i:	
+	spin_unlock_bh(&tdb_lock);
+
+	*start = buffer + (offset - begin);	/* Start of wanted data */
+	return len - (offset - begin);
+}
+#endif /* IPSEC_SA_RECOUNT_DEBUG */
 
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
@@ -813,6 +900,18 @@ struct proc_dir_entry ipsec_spigrp =
 	NULL, NULL, NULL, NULL, NULL
 };
 
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+struct proc_dir_entry ipsec_saraw =
+{
+	0,
+	12, "ipsec_saraw",
+	S_IFREG | S_IRUGO, 1, 0, 0, 0,
+	&proc_net_inode_operations,
+	ipsec_saraw_get_info,
+	NULL, NULL, NULL, NULL, NULL
+};
+#endif
+
 struct proc_dir_entry ipsec_tncfg =
 {
 	0,
@@ -866,6 +965,10 @@ static struct ipsec_proc_list proc_items[]={
 	{"all",        &proc_spi_dir,       NULL,             ipsec_spi_get_info,        NULL, NULL},
 	{"spigrp",     &proc_net_ipsec_dir, &proc_spigrp_dir, NULL, NULL, NULL},
 	{"all",        &proc_spigrp_dir,    NULL,             ipsec_spigrp_get_info,     NULL, NULL},
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	{"saraw",      &proc_net_ipsec_dir, &proc_saraw_dir,  NULL, NULL, NULL},
+	{"all",        &proc_saraw_dir,     NULL,             ipsec_saraw_get_info,      NULL, NULL},
+#endif
 	{"birth",      &proc_net_ipsec_dir, &proc_birth_dir,  NULL,      NULL, NULL},
 	{"ipv4",       &proc_birth_dir,     NULL,             ipsec_birth_info, ipsec_birth_set, (void *)&ipsec_ipv4_birth_packet},
 	{"ipv6",       &proc_birth_dir,     NULL,             ipsec_birth_info, ipsec_birth_set, (void *)&ipsec_ipv6_birth_packet},
@@ -900,11 +1003,12 @@ ipsec_proc_init()
 	error |= proc_register_dynamic(&proc_net, &ipsec_eroute);
 	error |= proc_register_dynamic(&proc_net, &ipsec_spi);
 	error |= proc_register_dynamic(&proc_net, &ipsec_spigrp);
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	error |= proc_register_dynamic(&proc_net, &ipsec_saraw);
+#endif
 	error |= proc_register_dynamic(&proc_net, &ipsec_tncfg);
 	error |= proc_register_dynamic(&proc_net, &ipsec_version);
-#ifdef CONFIG_KLIPS_DEBUG
 	error |= proc_register_dynamic(&proc_net, &ipsec_klipsdebug);
-#endif /* CONFIG_KLIPS_DEBUG */
 #endif
 
 	/* for 2.2 kernels */
@@ -912,11 +1016,12 @@ ipsec_proc_init()
 	error |= proc_register(proc_net, &ipsec_eroute);
 	error |= proc_register(proc_net, &ipsec_spi);
 	error |= proc_register(proc_net, &ipsec_spigrp);
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	error |= proc_register(proc_net, &ipsec_saraw);
+#endif
 	error |= proc_register(proc_net, &ipsec_tncfg);
 	error |= proc_register(proc_net, &ipsec_version);
-#ifdef CONFIG_KLIPS_DEBUG
 	error |= proc_register(proc_net, &ipsec_klipsdebug);
-#endif /* CONFIG_KLIPS_DEBUG */
 #endif
 
 	/* for 2.4 kernels */
@@ -963,6 +1068,9 @@ ipsec_proc_init()
 	proc_symlink("ipsec_eroute", proc_net, "ipsec/eroute/all");
 	proc_symlink("ipsec_spi",    proc_net, "ipsec/spi/all");
 	proc_symlink("ipsec_spigrp", proc_net, "ipsec/spigrp/all");
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	proc_symlink("ipsec_saraw",  proc_net, "ipsec/saraw/all");
+#endif
 	proc_symlink("ipsec_tncfg",  proc_net, "ipsec/tncfg");
 	proc_symlink("ipsec_version",proc_net, "ipsec/version");
 	proc_symlink("ipsec_klipsdebug",proc_net,"ipsec/klipsdebug");
@@ -997,6 +1105,11 @@ ipsec_proc_cleanup()
 	if (proc_net_unregister(ipsec_spigrp.low_ino) != 0)
 		printk("klips_debug:ipsec_cleanup: "
 		       "cannot unregister /proc/net/ipsec_spigrp\n");
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	if (proc_net_unregister(ipsec_saraw.low_ino) != 0)
+		printk("klips_debug:ipsec_cleanup: "
+		       "cannot unregister /proc/net/ipsec_saraw\n");
+#endif
 	if (proc_net_unregister(ipsec_tncfg.low_ino) != 0)
 		printk("klips_debug:ipsec_cleanup: "
 		       "cannot unregister /proc/net/ipsec_tncfg\n");
@@ -1023,10 +1136,13 @@ ipsec_proc_cleanup()
 
 #ifdef CONFIG_KLIPS_DEBUG
 	remove_proc_entry("ipsec_klipsdebug", proc_net);
-#endif /* CONFIG_KLIPS_DEBUG */
+#endif
 	remove_proc_entry("ipsec_eroute",     proc_net);
 	remove_proc_entry("ipsec_spi",        proc_net);
 	remove_proc_entry("ipsec_spigrp",     proc_net);
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+	remove_proc_entry("ipsec_saraw",      proc_net);
+#endif
 	remove_proc_entry("ipsec_tncfg",      proc_net);
 	remove_proc_entry("ipsec_version",    proc_net);
 	remove_proc_entry("ipsec",            proc_net);

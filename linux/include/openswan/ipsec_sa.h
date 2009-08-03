@@ -219,6 +219,30 @@ struct ipsec_sa
 #endif
 	struct ipsec_alg_enc *ips_alg_enc;
 	struct ipsec_alg_auth *ips_alg_auth;
+
+	int		ocf_in_use;
+	int64_t		ocf_cryptoid;
+
+	#define IPSEC_REFALLOC	0
+	#define IPSEC_REFINTERN	1
+	#define IPSEC_REFSAADD	2
+	#define IPSEC_REFOTHER	3
+	#define IPSEC_REFPROC	4
+	#define IPSEC_REFTX	5
+	#define IPSEC_REFRX	6
+	#define IPSEC_REFSA	7
+
+#if 0 /* IPSEC_SA_RECOUNT_DEBUG */
+	/*
+	 * define IPSEC_SA_RECOUNT_DEBUG to track recounts by use, makes
+	 * it a lot easier to determine problems with refcount and SA freeing
+	 */
+
+	#define IPSEC_SA_RECOUNT_DEBUG 1
+	unsigned char	ips_track[IPSEC_REFSA + 1];
+
+	struct ipsec_sa	*ips_raw;
+#endif
 };
 
 struct IPsecSArefSubTable
@@ -246,20 +270,24 @@ extern struct ipsec_sa *ipsec_sa_alloc(int*error); /* pass in error var by point
 extern IPsecSAref_t ipsec_SAref_alloc(int*erorr); /* pass in error var by pointer */
 extern int ipsec_sa_free(struct ipsec_sa* ips);
 
-#define ipsec_sa_get(ips) __ipsec_sa_get(ips, __FUNCTION__, __LINE__)
-extern struct ipsec_sa * __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line);
+#define ipsec_sa_get(ips,type) __ipsec_sa_get(ips, __FUNCTION__, __LINE__, type)
+extern struct ipsec_sa * __ipsec_sa_get(struct ipsec_sa *ips, const char
+*func, int line, int type);
 
-#define ipsec_sa_put(ips) __ipsec_sa_put(ips, __FUNCTION__, __LINE__)
-extern void __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line);
+#define ipsec_sa_put(ips,type) __ipsec_sa_put(ips, __FUNCTION__, __LINE__, type)
+extern void __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line,
+int type);
+
+
 extern int ipsec_sa_add(struct ipsec_sa *ips);
 extern void ipsec_sa_rm(struct ipsec_sa *ips);
 extern int ipsec_sadb_cleanup(__u8 proto);
 extern int ipsec_sadb_free(void);
 extern int ipsec_sa_wipe(struct ipsec_sa *ips);
 extern int ipsec_sa_intern(struct ipsec_sa *ips);
-extern void ipsec_sa_untern(struct ipsec_sa *ips);
-extern struct ipsec_sa *ipsec_sa_getbyref(IPsecSAref_t ref);
+extern struct ipsec_sa *ipsec_sa_getbyref(IPsecSAref_t ref, int type);
 
+extern void ipsec_sa_untern(struct ipsec_sa *ips);
 #endif /* __KERNEL__ */
 
 enum ipsec_direction {
