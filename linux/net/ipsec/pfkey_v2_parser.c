@@ -893,7 +893,6 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 			    error);
 		SENDERR(-error);
 	}
-	ipsec_sa_put(extr->ips);
 	extr->ips = NULL;
 	
 	KLIPS_PRINT(debug_pfkey,
@@ -912,7 +911,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 DEBUG_NO_STATIC int
 pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extracted_data* extr)
 {
-	struct ipsec_sa *ipsp;
+	struct ipsec_sa *ipsp, *ipsq, *ipsr;
 	char sa[SATOT_BUF];
 	size_t sa_len;
 	int error = 0;
@@ -949,14 +948,38 @@ pfkey_delete_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		SENDERR(ESRCH);
 	}
 
-	/* remove it from SAref tables */
-	ref = ipsp->ips_ref;
-	ipsec_sa_untern(ipsp);
-	ipsec_sa_rm(ipsp);
+	ref = ipsp->ips_ref; /* save a copy of ref */
+
+	/*
+	 * remove it from SAref tables
+	 *
+	 * if we are part of a group we must untern/rm the whole group
+	 * as this is what user space expects, so find the start of the chain.
+	 */
+
+	ipsq = ipsp;
+	while (ipsq->ips_prev) {
+		ipsq = ipsq->ips_prev;
+	}
+	while (ipsq) {
+		ipsr = ipsq->ips_next;
+		ipsec_sa_untern(ipsq); 
+		ipsec_sa_rm(ipsq);
+		ipsq = ipsr;
+	}
 
 	/* this will call delchain-equivalent if refcount -> 0
 	 * noting that get() above, added to ref count */
 	ipsec_sa_put(ipsp);
+
+	/* put the original ALLOC to free the SA */
+	ipsq = ipsp;
+	while (ipsq->ips_prev) {
+		ipsq = ipsq->ips_prev;
+	}
+	/* this should cause ipsec_sa_wipe to get called on the SA/group */
+	ipsec_sa_put(ipsq);
+
 	spin_unlock_bh(&tdb_lock);
 
 	memset(&sab, 0, sizeof(sab));
@@ -1732,14 +1755,19 @@ pfkey_x_grpsa_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_
 			    sa_len1 ? sa1 : " (error)",
 			    sa_len2 ? sa2 : " (error)");
 		ips1p->ips_next = ips2p;
+		ips2p->ips_prev = ips1p;
 		ipsec_sa_put(ips1p);
+		ipsec_sa_put(ips2p);
 	} else { /* UNGRPSA */
 		while(ips1p) {
 			struct ipsec_sa *ipsn;
 
 			/* take the reference to next */
 			ipsn = ips1p->ips_next;
+			if (ipsn)
+				ipsn->ips_prev = NULL;
 			ips1p->ips_next = NULL;
+			ips1p->ips_prev = NULL;
 
 			/* drop reference to current */
 			ipsec_sa_put(ips1p);

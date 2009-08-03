@@ -131,6 +131,7 @@ struct ipsec_sa
 	IPsecSAref_t	ips_ref;	/* reference table entry number */
 	IPsecSAref_t	ips_refhim;	/* ref of paired SA, if any */
 	struct ipsec_sa	*ips_next;	 	/* pointer to next xform */
+	struct ipsec_sa	*ips_prev;	 	/* pointer to prev xform */
 
 	struct ipsec_sa	*ips_hnext;		/* next in hash chain */
 
