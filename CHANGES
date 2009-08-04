@@ -1,5 +1,26 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.5.65s
+* Malicious X.509 certificates could crash the asn.1 parser.
+  Found by Orange Labs vulnerability research team. Patches via
+  an irresponsible 0-day public announcement by Andreas Steffen
+  (this is CVE-2009-2185)
+* Additional ASN.1 parser checks by David McCullough [David]
+  (this is related to CVE-2009-2185)
+* Fix for DPD crasher with bogus R_U_THERE packet [Paul]
+  (this is CVE-2009-0790)
+* auto=route tunnels could fail due to an Opportunstic Encryption bug [David]
+  (this would show up as a K_SADB_X_ADDFLOW errno -14, Bad address)
+* LSB compliance error in initscript (debian bug#537335) [Petter Reinholdtsen]
+* Fix for DYNAMICDNS when dns name was unknown on initial load [David]
+* Fix for ttoaddr when passing AF_INET/AF_INET6 [David]
+* Fix for concurrent ISAKMP negotiations from different hosts to a
+  single host with nhelpers>=1 [Anthony Tong]
+* Fix busy loop in pluto when invalid OPPO detected [David]
+* Added STATE_AGGR_R2 to ISAKMP_SA_ESTABLISHED_STATES. [Tim Horsburgh]
+  (this is  http://bugs.xelerance.com/view.php?id=1030)
+* Various small logging fixes [Hiren, dhr, David, Paul]
+
 v2.5.64s
 * Fix for nhelpers=0 [Shingo Yamawaki]
 * Fix for main_inI2_outR2_tail() without DEBUG [Shingo Yamawaki]
