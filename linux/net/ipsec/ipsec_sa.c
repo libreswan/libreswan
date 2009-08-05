@@ -122,13 +122,6 @@ ipsec_SAref_recycle(void)
 	ipsec_sadb.refFreeListHead = IPSEC_SAREF_NULL;
 	ipsec_sadb.refFreeListTail = IPSEC_SAREF_NULL;
 
-	if(ipsec_sadb.refFreeListCont == IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES * IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES) {
-		KLIPS_PRINT(debug_xform,
-			    "klips_debug:ipsec_SAref_recycle: "
-			    "end of table reached, continuing at start..\n");
-		ipsec_sadb.refFreeListCont = IPSEC_SAREF_FIRST;
-	}
-
 	KLIPS_PRINT(debug_xform,
 		    "klips_debug:ipsec_SAref_recycle: "
 		    "recycling, continuing from SAref=%d (0p%p), table=%d, entry=%d.\n",
@@ -140,15 +133,24 @@ ipsec_SAref_recycle(void)
 	/* add one additional table entry */
 	addone = 0;
 
-	/* Paul: git 9c9fa9ecc221aad09c19f034eee37a76d156c1d2 on top of 08d50334736c1c8c4bcf9a2538f6a49b994ed39f */
-	ipsec_sadb.refFreeListHead = IPSEC_SAREF_FIRST;
-	for(i = 0; i < IPSEC_SA_REF_FREELIST_NUM_ENTRIES; i++) {
+	for(i = 0; i < IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES; i++) {
+		if(ipsec_sadb.refFreeListCont == IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES * IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES) {
+			KLIPS_PRINT(debug_xform,
+				"klips_debug:ipsec_SAref_recycle: "
+				"end of table reached, continuing at start..\n");
+			ipsec_sadb.refFreeListCont = IPSEC_SAREF_FIRST;
+		}
+
 		table = IPsecSAref2table(ipsec_sadb.refFreeListCont);
-		if(addone == 0 && ipsec_sadb.refTable[table] == NULL) {
-			addone = 1;
-			error = ipsec_SArefSubTable_alloc(table);
-			if(error) {
-				return error;
+		if(ipsec_sadb.refTable[table] == NULL) {
+			if(addone == 0) {
+				addone = 1;
+				error = ipsec_SArefSubTable_alloc(table);
+				if(error) {
+					return error;
+				}
+			else
+				break;
 			}
 		}
 		for(entry = IPsecSAref2entry(ipsec_sadb.refFreeListCont);
@@ -165,9 +167,8 @@ ipsec_SAref_recycle(void)
 					return 0;
 				}
 			}
+			ipsec_sadb.refFreeListCont++;
 		}
-		ipsec_sadb.refFreeListCont++;
-		ipsec_sadb.refFreeListTail=i;
 	}
 
 	if(ipsec_sadb.refFreeListTail == IPSEC_SAREF_NULL) {
