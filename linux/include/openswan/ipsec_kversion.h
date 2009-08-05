@@ -279,6 +279,7 @@
 #  define udp_hdr(skb)  ((skb)->h.uh)
 #  define skb_transport_header(skb)  ((skb)->h.raw)
 #  define skb_set_transport_header(skb,off)  ((skb)->h.raw = (skb)->data + (off))
+#  define skb_reset_transport_header(skb) ((skb)->h.raw = (skb)->data - (skb)->head)
 #  define skb_mac_header(skb)  ((skb)->mac.raw)
 #  define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
 # endif
