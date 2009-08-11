@@ -130,6 +130,11 @@ struct pluto_crypto_req_cont {
   pcr_req_id                    pcrc_id;
   crypto_req_func               pcrc_func;
   crypto_req_func               pcrc_free;
+#ifdef IPSEC_PLUTO_PCRC_DEBUG
+  char                         *pcrc_function;
+  char                         *pcrc_file;
+  int                           pcrc_line;
+#endif
 };
 
   
@@ -192,6 +197,16 @@ extern void finish_dh_secret(struct state *st,
 
 extern void calc_dh_iv(struct pluto_crypto_req *r);
 extern void calc_dh(struct pluto_crypto_req *r);
+
+#ifdef IPSEC_PLUTO_PCRC_DEBUG
+#define pcrc_init(pcrc) ({ \
+		(pcrc)->pcrc_file = __FILE__; \
+		(pcrc)->pcrc_function = __FUNCTION__; \
+		(pcrc)->pcrc_line = __LINE__; \
+	})
+#else
+#define pcrc_init(pcrc) do { /* nothing yet */ } while (0)
+#endif
 
 #endif /* _PLUTO_CRYPT_H */
 

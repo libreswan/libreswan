@@ -178,6 +178,10 @@ echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 {
     struct isakmp_hdr r_hdr = md->hdr;	/* mostly same as incoming header */
 
+    /* make sure we start with a clean buffer */
+    zero(reply_buffer);
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
+
     r_hdr.isa_flags &= ~ISAKMP_FLAG_COMMIT;	/* we won't ever turn on this bit */
     if (enc)
 	r_hdr.isa_flags |= ISAKMP_FLAG_ENCRYPTION;
@@ -353,7 +357,7 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 		 , ip_str(&sndst->st_remoteaddr)
 		 , sndst->st_remoteport);
 
-    memset(buffer, 0, sizeof(buffer));
+    zero(buffer);
     init_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
 
     /* HDR* */
@@ -1000,6 +1004,7 @@ main_outI1(int whack_sock
 	openswan_log("initiating Main Mode to replace #%lu", predecessor->st_serialno);
 
     /* set up reply */
+    zero(reply_buffer);
     init_pbs(&md.reply, reply_buffer, sizeof(reply_buffer), "reply packet");
 
     /* HDR out */
@@ -2290,6 +2295,8 @@ main_inI1_outR1(struct msg_digest *md)
      * We can't leave this to comm_handle() because we must
      * fill in the cookie.
      */
+    zero(reply_buffer);
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
     {
 	struct isakmp_hdr r_hdr = md->hdr;
 
@@ -2457,6 +2464,7 @@ main_inR1_outI2(struct msg_digest *md)
 	ke->md = md;
 	
 	passert(st->st_sec_in_use==FALSE); 
+	pcrc_init(&ke->ke_pcrc);
 	ke->ke_pcrc.pcrc_func = main_inR1_outI2_continue;
 	set_suspended(st, md);
 	return build_ke(&ke->ke_pcrc, st, st->st_oakley.group, st->st_import);
@@ -2632,6 +2640,7 @@ main_inI2_outR2(struct msg_digest *md)
 	set_suspended(st, md);
 
 	passert(st->st_sec_in_use == FALSE);
+	pcrc_init(&ke->ke_pcrc);
 	ke->ke_pcrc.pcrc_func = main_inI2_outR2_continue;
 	return build_ke(&ke->ke_pcrc, st
 			, st->st_oakley.group, st->st_import);
@@ -2823,6 +2832,7 @@ main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc
 
 	dh->md = NULL;
 	dh->serialno = st->st_serialno;
+	pcrc_init(&dh->dh_pcrc);
 	dh->dh_pcrc.pcrc_func = main_inI2_outR2_calcdone;
 	passert(st->st_suspended_md == NULL);
 
@@ -3138,6 +3148,7 @@ main_inR2_outI3(struct msg_digest *md)
     
     dh->md = md;
     set_suspended(st, md);
+    pcrc_init(&dh->dh_pcrc);
     dh->dh_pcrc.pcrc_func = main_inR2_outI3_cryptotail;
     return start_dh_secretiv(&dh->dh_pcrc, st
 			     , st->st_import
@@ -3646,6 +3657,7 @@ send_isakmp_notification(struct state *st
         
     msgid = generate_msgid(st);
     
+    zero(reply_buffer);
     init_pbs(&reply, reply_buffer, sizeof(reply_buffer), "ISAKMP notify");
     
     /* HDR* */

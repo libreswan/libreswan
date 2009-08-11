@@ -792,6 +792,7 @@ quick_outI1(int whack_sock
     qke->st = st;
     qke->isakmp_sa = isakmp_sa;
     qke->replacing = replacing;
+    pcrc_init(&qke->qke_pcrc);
     qke->qke_pcrc.pcrc_func = quick_outI1_continue;
     
     if(policy & POLICY_PFS) {
@@ -1221,6 +1222,13 @@ quick_inI1_outR1(struct msg_digest *md)
     b.md = md;
     b.new_iv_len = p1st->st_new_iv_len;
     save_new_iv(p1st, b.new_iv);
+
+    /*
+     * FIXME - DAVIDM
+     * "b" is on the stack,  for OPPO  tunnels this will be bad, in
+     * quick_inI1_outR1_start_query it saves a pointer to it before
+     * a crypto (async op).
+     */
     return quick_inI1_outR1_authtail(&b, NULL);
 }
 
@@ -1931,6 +1939,7 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 	    qke->st = st;
 	    qke->isakmp_sa = p1st;
 	    qke->md = md;
+	    pcrc_init(&qke->qke_pcrc);
 	    qke->qke_pcrc.pcrc_func = quick_inI1_outR1_cryptocontinue1;
 
 	    if (st->st_pfs_group != NULL) {
@@ -1982,6 +1991,7 @@ quick_inI1_outR1_cryptocontinue1(struct pluto_crypto_req_cont *pcrc
 	/* set up second calculation */
 	dh->md = md;
 	set_suspended(st, md);
+	pcrc_init(&dh->dh_pcrc);
 	dh->dh_pcrc.pcrc_func = quick_inI1_outR1_cryptocontinue2;
 	e = start_dh_secret(&dh->dh_pcrc, st
 			    , st->st_import
@@ -2291,6 +2301,7 @@ quick_inR1_outI2(struct msg_digest *md)
 	/* set up DH calculation */
 	dh->md = md;
 	set_suspended(st, md);
+	pcrc_init(&dh->dh_pcrc);
 	dh->dh_pcrc.pcrc_func = quick_inR1_outI2_continue;
 	return start_dh_secret(&dh->dh_pcrc, st
 			       , st->st_import

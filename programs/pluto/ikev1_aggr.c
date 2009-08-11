@@ -181,6 +181,7 @@ aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc
 					       , "aggr outR1 DH");
       dh->md = md;
       set_suspended(st, md);
+      pcrc_init(&dh->dh_pcrc);
       dh->dh_pcrc.pcrc_func = aggr_inI1_outR1_continue2;
       e = start_dh_secretiv(&dh->dh_pcrc, st
 			    , st->st_import
@@ -340,6 +341,7 @@ aggr_inI1_outR1_common(struct msg_digest *md
 	set_suspended(st, md);
 
 	if (!st->st_sec_in_use) {
+	    pcrc_init(&ke->ke_pcrc);
 	    ke->ke_pcrc.pcrc_func = aggr_inI1_outR1_continue1;
 	    return build_ke(&ke->ke_pcrc, st, st->st_oakley.group
 			    , st->st_import);
@@ -603,6 +605,7 @@ aggr_inR1_outI2(struct msg_digest *md)
 						 , "aggr outR1 DH");
 	dh->md = md;
 	set_suspended(st, md);
+	pcrc_init(&dh->dh_pcrc);
 	dh->dh_pcrc.pcrc_func = aggr_inR1_outI2_crypto_continue;
 	return start_dh_secretiv(&dh->dh_pcrc, st
 				 , st->st_import
@@ -673,6 +676,10 @@ aggr_inR1_outI2_tail(struct msg_digest *md
 	? ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
     /**************** build output packet: HDR, HASH_I/SIG_I **************/
+
+    /* make sure HDR is at start of a clean buffer */
+    zero(reply_buffer);
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
     /* HDR out */
     {
@@ -964,6 +971,7 @@ aggr_outI1(int whack_sock,
 	set_suspended(st, ke->md);
 
 	if (!st->st_sec_in_use) {
+	    pcrc_init(&ke->ke_pcrc);
 	    ke->ke_pcrc.pcrc_func = aggr_outI1_continue;
 	    e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group, importance);
 	    if(e != STF_SUSPEND && e != STF_INLINE) {
@@ -991,6 +999,10 @@ aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc
     struct connection *c = st->st_connection;
 
     /* the MD is already set up by alloc_md() */
+
+    /* make sure HDR is at start of a clean buffer */
+    zero(reply_buffer);
+    init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
     /* HDR out */
     {
