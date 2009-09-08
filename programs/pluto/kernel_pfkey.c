@@ -484,6 +484,9 @@ pfkey_async(pfkey_buf *buf)
 /* asynchronous messages from our queue */
 void pfkey_dequeue(void)
 {
+    #define ORPHAN_HOLD_PROCESSING_LIMIT	200
+    int limit = ORPHAN_HOLD_PROCESSING_LIMIT;
+
     while (pfkey_iq_head != NULL)
     {
 	pfkey_item *it = pfkey_iq_head;
@@ -499,12 +502,16 @@ void pfkey_dequeue(void)
      * record_and_initiate_opportunistic will remove the current
      * record each time we call it.
      */
-    while (orphaned_holds != NULL && !pfkey_input_ready())
+    while (orphaned_holds != NULL && !pfkey_input_ready() && limit-- > 0)
       record_and_initiate_opportunistic(&orphaned_holds->ours
 					, &orphaned_holds->his
 					, orphaned_holds->transport_proto
 					, "%hold found-pfkey");
 
+    if (limit <= 0) {
+	loglog(RC_LOG_SERIOUS, "Excessive orphan hold handling stopped (%d)"
+	    , ORPHAN_HOLD_PROCESSING_LIMIT);
+    }
 }
 
 /* asynchronous messages directly from PF_KEY socket */
