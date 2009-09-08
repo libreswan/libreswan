@@ -67,9 +67,6 @@
 #include <openswan/pfkeyv2.h> /* SADB_X_CALG_DEFLATE */
 
 static
-struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_mask);
-
-static
 voidpf my_zcalloc(voidpf opaque, uInt items, uInt size)
 {
 	return (voidpf) kmalloc(items*size, GFP_ATOMIC);
@@ -457,12 +454,13 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips, unsign
 		    "max payload size: %d\n", pyldsz);
 	
 	while (pyldsz > (cpyldsz + sizeof(struct ipcomphdr)) && 
-	       (nskb = skb_copy_ipcomp(skb,
+	       (nskb = skb_copy_expand(skb,
+					   skb_headroom(skb),
 				       pyldsz - cpyldsz - sizeof(struct ipcomphdr),
 				       GFP_ATOMIC)) == NULL) {
 		KLIPS_PRINT(sysctl_ipsec_debug_ipcomp,
 			    "klips_error:skb_decompress: "
-			    "unable to skb_copy_ipcomp(skb, %d, GFP_ATOMIC), "
+			    "unable to skb_copy_expand(skb, 0, %d, GFP_ATOMIC), "
 			    "trying with less payload size.\n",
 			    (int)(pyldsz - cpyldsz - sizeof(struct ipcomphdr)));
 		pyldsz >>=1;
@@ -486,6 +484,8 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips, unsign
 		ipsec_dmp_block("decompress before", c, cpyldsz);
 	}
 #endif /* CONFIG_KLIPS_DEBUG */
+
+	safe_skb_put(nskb, pyldsz - cpyldsz - sizeof(struct ipcomphdr));
 
 #ifdef NET_21
 	iph = ip_hdr(nskb);
@@ -572,125 +572,3 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips, unsign
 	return nskb;
 }
 
-
-/* this is derived from skb_copy() in linux 2.2.14 */
-/* May be incompatible with other kernel versions!! */
-static
-struct sk_buff *skb_copy_ipcomp(struct sk_buff *skb, int data_growth, int gfp_mask)
-{
-        struct sk_buff *n;
-	struct iphdr *iph;
-        unsigned int iphlen;
-
-	int headlen;
-	
-	if(!skb) {
-		KLIPS_PRINT(sysctl_ipsec_debug_ipcomp,
-			    "klips_debug:skb_copy_ipcomp: "
-			    "passed in NULL skb, returning NULL.\n");
-		return NULL;
-	}
-
-        /*
-         *      Allocate the copy buffer
-         */
-	
-#ifdef NET_21
-	iph = ip_hdr(skb);
-#else /* NET_21 */
-	iph = skb->ip_hdr;
-#endif /* NET_21 */
-        if (!iph) return NULL;
-        iphlen = iph->ihl << 2;
-
-        n=alloc_skb(skb_end_pointer(skb) - skb->head + data_growth, gfp_mask);
-        if(n==NULL)
-                return NULL;
-	
-        /* Set the data pointer */
-        headlen = skb_headroom(skb);
-	skb_reserve(n, headlen);
-        /* Set the tail pointer and length */
-        safe_skb_put(n,skb->len+data_growth);
-        /* Copy the bytes up to and including the ip header */
-        memcpy(n->head,
-	       skb->head,
-	       ((char *)iph - (char *)skb->head) + iphlen);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,14)
-        n->list=NULL;
-#endif
-	n->next=NULL;
-	n->prev=NULL;
-        n->sk=NULL;
-        n->dev=skb->dev;
-	if (skb_transport_header(skb)) {
-		headlen = skb_transport_header(skb) - skb->data;
-		skb_set_transport_header(n, headlen);
-	}
-        n->protocol=skb->protocol;
-#ifdef NET_21
-        n->csum = 0;
-        n->priority=skb->priority;
-        n->dst=dst_clone(skb->dst);
-        headlen = skb_network_header(skb) - skb->data;
-	skb_set_network_header(n, headlen);
-#ifndef NETDEV_23
-        n->is_clone=0;
-#endif /* NETDEV_23 */
-        atomic_set(&n->users, 1);
-        n->destructor = NULL;
-#ifdef HAVE_SOCK_SECURITY
-        n->security=skb->security;
-#endif
-        memcpy(n->cb, skb->cb, sizeof(skb->cb));
-#ifdef CONFIG_IP_FIREWALL
-        n->fwmark = skb->fwmark;
-#endif
-#else /* NET_21 */
-	n->link3=NULL;
-	n->when=skb->when;
-	headlen = skb->ip_hdr - skb->data;
-	n->ip_hdr=(struct iphdr *) (((char *) n->data) + headlen);
-	n->saddr=skb->saddr;
-	n->daddr=skb->daddr;
-	n->raddr=skb->raddr;
-	n->seq=skb->seq;
-	n->end_seq=skb->end_seq;
-	n->ack_seq=skb->ack_seq;
-	n->acked=skb->acked;
-	n->free=1;
-	n->arp=skb->arp;
-	n->tries=0;
-	n->lock=0;
-	n->users=0;
-	memcpy(n->proto_priv, skb->proto_priv, sizeof(skb->proto_priv));
-#endif /* NET_21 */
-	if (skb_mac_header(skb)) {
-		headlen = skb_mac_header(skb) - skb->data;
-		skb_set_mac_header(n, headlen);
-	}
-#ifndef NETDEV_23
-	n->used=skb->used;
-#endif /* !NETDEV_23 */
-        n->pkt_type=skb->pkt_type;
-#ifndef NETDEV_23
-	n->pkt_bridged=skb->pkt_bridged;
-#endif /* NETDEV_23 */
-	n->ip_summed=0;
-#ifdef HAVE_TSTAMP
-	n->tstamp = skb->tstamp;
-#else
-        n->stamp=skb->stamp;
-#endif
-#ifndef NETDEV_23 /* this seems to have been removed in 2.4 */
-#if defined(CONFIG_SHAPER) || defined(CONFIG_SHAPER_MODULE)
-        n->shapelatency=skb->shapelatency;       /* Latency on frame */
-        n->shapeclock=skb->shapeclock;           /* Time it should go out */
-        n->shapelen=skb->shapelen;               /* Frame length in clocks */
-        n->shapestamp=skb->shapestamp;           /* Stamp for shaper    */
-        n->shapepend=skb->shapepend;             /* Pending */
-#endif /* defined(CONFIG_SHAPER) || defined(CONFIG_SHAPER_MODULE) */
-#endif /* NETDEV_23 */
-
-        return n;
-}
