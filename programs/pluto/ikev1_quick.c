@@ -1802,7 +1802,7 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 
 
 
-	else if (is_virtual_connection(c))
+	if (is_virtual_connection(c))
 	{
 	    char cthat[END_BUF];
 
@@ -2203,18 +2203,24 @@ quick_inI1_outR1_cryptotail(struct dh_continuation *dh
     }
 
 #ifdef NAT_TRAVERSAL
-#if 0
     DBG_log("NAT-OA: %d tunnel: %d \n"
-		,(st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA)
-    		,(st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TRANSPORT));
-    if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
-	(st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TRANSPORT)) {
-	/** Send NAT-OA if our address is NATed and if we use Transport Mode */
-	if (!nat_traversal_add_natoa(ISAKMP_NEXT_NONE, &md->rbody, md->st, FALSE)) {
-	    return STF_INTERNAL_ERROR;
+	    ,(st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA)
+	    ,(st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TRANSPORT));
+    if (st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TRANSPORT) {
+	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) {
+#if 0
+	    /** Send NAT-OA if our address is NATed and if we use Transport Mode */
+	    if (!nat_traversal_add_natoa(ISAKMP_NEXT_NONE, &md->rbody, md->st, FALSE)) {
+		return STF_INTERNAL_ERROR;
+	    }
+#endif
+	} else if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED &&
+		c->spd.that.has_client) {
+	    /** Remove client - bug #1004 **/
+	    addrtosubnet(&c->spd.that.host_addr, &c->spd.that.client);
+	    c->spd.that.has_client = FALSE;
 	}
     }
-#endif
 #endif
 
 #ifdef TPM
