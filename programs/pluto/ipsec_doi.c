@@ -409,7 +409,7 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 	}
 
 	if(spisize > 0) {
-	    if(out_raw(spi, spisize, &not_pbs, "spi")) {
+	    if(!out_raw(spi, spisize, &not_pbs, "spi")) {
 		openswan_log("failed to build notification for spisize=%d\n", (int)spisize);
 		return;
 	    }
