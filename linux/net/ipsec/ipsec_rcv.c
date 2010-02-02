@@ -878,7 +878,10 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		if((ipsnext = ipsp->ips_next)) {
 			char sa2[SATOT_BUF];
 			size_t sa_len2;
-			sa_len2 = satot(&ipsnext->ips_said, 0, sa2, sizeof(sa2));
+			if (debug_rcv)
+				sa_len2 = satot(&ipsnext->ips_said, 0, sa2, sizeof(sa2));
+			else
+				sa_len2 = 0;
 			KLIPS_PRINT(debug_rcv,
 				    "klips_debug:ipsec_rcv: "
 				    "unexpected SA:%s after IPIP SA:%s\n",
@@ -956,7 +959,8 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		
 		/* re-do any strings for debugging */
 		irs->ipp = ipp;
-                ipsec_rcv_redodebug(irs);
+                if (debug_rcv)
+			ipsec_rcv_redodebug(irs);
 
 		skb->protocol = htons(ETH_P_IP);
 		skb->ip_summed = 0;
