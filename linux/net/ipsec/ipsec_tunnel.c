@@ -534,12 +534,8 @@ ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	stat = IPSEC_XMIT_ERRMEMALLOC;
 	ixs = ipsec_xmit_state_new ();
 	if (! ixs) {
-		struct ipsecpriv *prv;
-		struct net_device_stats *stats;
-		prv = dev->priv;
-		stats = (struct net_device_stats *) &(prv->mystats);
-		stats->tx_dropped++;
-		goto alloc_error;
+		netif_stop_queue(dev);
+		return NETDEV_TX_BUSY;
 	}
 
 	ixs->dev = dev;
@@ -627,9 +623,6 @@ ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
  cleanup:
 	ipsec_xmit_cleanup(ixs);
         ipsec_xmit_state_delete (ixs);
-	return 0;
-alloc_error:
-	ipsec_kfree_skb(skb);
 	return 0;
 }
 
@@ -1865,6 +1858,9 @@ ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs)
 {
         if (unlikely (! ixs))
                 return;
+
+		if (netif_queue_stopped(ixs->dev))
+			netif_wake_queue(ixs->dev);
 
         spin_lock_bh (&ixs_cache_lock);
 
