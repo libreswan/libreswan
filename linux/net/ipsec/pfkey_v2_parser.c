@@ -243,10 +243,9 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		maxspi = ((struct sadb_spirange *)extensions[K_SADB_EXT_SPIRANGE])->sadb_spirange_max;
 	}
 
-	spin_lock_bh(&tdb_lock);
-
 	if(maxspi == minspi) {
 		extr->ips->ips_said.spi = maxspi;
+		spin_lock_bh(&tdb_lock);
 		ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 		if(ipsq != NULL) {
 			sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
@@ -260,6 +259,7 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 		} else {
 			found_avail = 1;
 		}
+		spin_unlock_bh(&tdb_lock);
 	} else {
 		int i = 0;
 		__u32 rand_val;
@@ -274,12 +274,14 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 					      (rand_val %
 					      (spi_diff + 1)));
 			i++;
+			spin_lock_bh(&tdb_lock);
 			ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 			if(ipsq == NULL) {
 				found_avail = 1;
 			} else {
 				ipsec_sa_put(ipsq, IPSEC_REFSA);
 			}
+			spin_unlock_bh(&tdb_lock);
 		}
 	}
 
@@ -373,6 +375,7 @@ pfkey_getspi_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 			    pfkey_socketsp->socketp);
 	}
 	
+	/* ipsec_sa_add does tdb_lock */
 	if((error = ipsec_sa_add(extr->ips))) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_getspi_parse: "
 			    "failed to add the larval SA=%s with error=%d.\n",
@@ -651,6 +654,7 @@ pfkey_update_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_e
 	}
 #endif
 
+	/* ipsec_sa_add does tdb_lock */
 	if((error = ipsec_sa_add(extr->ips))) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_update_parse: "
 			    "failed to update the mature SA=%s with error=%d.\n",
@@ -709,7 +713,6 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 	sa_len = KLIPS_SATOT(debug_pfkey, &extr->ips->ips_said, 0, sa, sizeof(sa));
 
 	spin_lock_bh(&tdb_lock);
-
 	ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 	if(ipsq != NULL) {
 		ipsec_sa_put(ipsq, IPSEC_REFSA);
@@ -720,6 +723,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 			    sa_len ? sa : " (error)");
 		SENDERR(EEXIST);
 	}
+	spin_unlock_bh(&tdb_lock);
 
 	if(ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR) {
 		extr->ips->ips_flags |= EMT_INBOUND;
@@ -754,6 +758,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 	}
 
 	/* attach it to the SAref table */
+	spin_lock_bh(&tdb_lock);
 	if((error = ipsec_sa_intern(extr->ips)) != 0) {
 		spin_unlock_bh(&tdb_lock);
 		KLIPS_ERROR(debug_pfkey,
@@ -762,6 +767,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 			    , (unsigned long)extr->ips->ips_ref);
 		SENDERR(-error);
 	}
+	spin_unlock_bh(&tdb_lock);
 
 	spin_unlock_bh(&tdb_lock);
 
@@ -886,6 +892,7 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 		extr->ips->ips_transport_direct = ipsec_mast_is_transport(extr->outif); 
 	}
 
+	/* ipsec_sa_add does tdb_lock */
 	if((error = ipsec_sa_add(extr->ips))) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_add_parse: "
 			    "failed to add the mature SA=%s with error=%d.\n",
@@ -1212,10 +1219,10 @@ pfkey_get_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 				    extensions_reply) : 1)
 #endif
 		     )) {
-		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_get_parse: "
-			    "failed to build the get reply message extensions\n");
 		ipsec_sa_put(ipsp, IPSEC_REFSA);
 		spin_unlock_bh(&tdb_lock);
+		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_get_parse: "
+			    "failed to build the get reply message extensions\n");
 		SENDERR(-error);
 	}
 		
@@ -1931,8 +1938,11 @@ pfkey_x_addflow_parse(struct sock *sk, struct sadb_ext **extensions, struct pfke
 		char sa[SATOT_BUF];
 		size_t sa_len;
 
+		spin_lock_bh(&tdb_lock);
+
 		ipsq = ipsec_sa_getbyid(&(extr->ips->ips_said), IPSEC_REFSA);
 		if(ipsq == NULL) {
+			spin_unlock_bh(&tdb_lock);
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_x_addflow_parse: "
 				    "ipsec_sa not found, cannot set incoming policy.\n");
@@ -1946,6 +1956,7 @@ pfkey_x_addflow_parse(struct sock *sk, struct sadb_ext **extensions, struct pfke
 
 		if(ipsp == NULL) {
 			ipsec_sa_put(ipsq, IPSEC_REFSA);
+			spin_unlock_bh(&tdb_lock);
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_x_addflow_parse: "
 				    "SA chain does not have an IPIP SA, cannot set incoming policy.\n");
@@ -1961,6 +1972,8 @@ pfkey_x_addflow_parse(struct sock *sk, struct sadb_ext **extensions, struct pfke
 		ipsp->ips_mask_d = dstmask;
 
 		ipsec_sa_put(ipsq, IPSEC_REFSA);
+
+		spin_unlock_bh(&tdb_lock);
 
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_x_addflow_parse: "
