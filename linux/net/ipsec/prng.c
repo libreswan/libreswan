@@ -17,6 +17,38 @@
  */
 #include "openswan.h"
 
+#ifdef __KERNEL__
+#include "openswan/ipsec_proto.h"
+
+/*
+ * A horrible locking hack,  we ride on tdb_lock for now since it
+ * is basically what we want.  Since all calls into prng_bytes pass in
+ * a pointer to ipsec_prng,  there is contention on the data in ipsec_prng
+ * as it is not always locked.  TO make sure we never messup the PRNG, just
+ * locked it if we don't already have the tdb_lock
+ */
+
+#define LOCK_PRNG() \
+	int ul = 0; \
+	if (!spin_is_locked(&tdb_lock)) { \
+		spin_lock_bh(&tdb_lock); \
+		ul = 1; \
+	} else
+
+#define UNLOCK_PRNG() \
+	if (ul) { \
+		spin_unlock_bh(&tdb_lock); \
+		ul = 0; \
+	} else
+
+#else
+
+#define LOCK_PRNG()
+#define UNLOCK_PRNG()
+
+#endif
+
+
 /*
  - prng_init - initialize PRNG from a key
  */
@@ -67,6 +99,8 @@ size_t dstlen;
 	size_t remain = dstlen;
 #	define	MAXCOUNT	4000000000ul
 
+	LOCK_PRNG();
+
 	while (remain > 0) {
 		i = (prng->i + 1) & 0xff;
 		prng->i = i;
@@ -83,6 +117,8 @@ size_t dstlen;
 		prng->count += dstlen;
 	else
 		prng->count = MAXCOUNT;
+
+	UNLOCK_PRNG();
 }
 
 /*
@@ -92,7 +128,11 @@ unsigned long
 prng_count(prng)
 struct prng *prng;
 {
-	return prng->count;
+	unsigned long c;
+	LOCK_PRNG();
+	c = prng->count;
+	UNLOCK_PRNG();
+	return c;
 }
 
 /*
