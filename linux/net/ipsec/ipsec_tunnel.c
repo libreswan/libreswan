@@ -407,10 +407,10 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 				    "shunt SA of HOLD: skb stored in HOLD.\n");
 			if(ixs->eroute->er_last != NULL) {
 				ipsec_kfree_skb(ixs->eroute->er_last);
+				ixs->stats->tx_dropped++;
 			}
 			ixs->eroute->er_last = ixs->skb;
 			ixs->skb = NULL;
-			ixs->stats->tx_dropped++;
 			spin_unlock(&eroute_lock);
 			return IPSEC_XMIT_STOLEN;
 		}
