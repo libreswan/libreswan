@@ -1,6 +1,8 @@
 Please see docs/KNOWN_BUGS file for more information
 
 v2.5.66s
+* There are a number of bugs with the SA refcount usage in klips.
+  (9dff3971df7314cbe8e3d47a13fceacbd541b10e)
 * Debug was mixing up SA's,  which is confusing to read later.
   (08084902c29c565ccb8447a01a5316bea686e87d)
 * Add compile time debug code for finer grain tracking of all SA's.
