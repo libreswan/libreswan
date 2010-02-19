@@ -1,5 +1,35 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.5.66s
+* Debug was mixing up SA's,  which is confusing to read later.
+  (08084902c29c565ccb8447a01a5316bea686e87d)
+* Add compile time debug code for finer grain tracking of all SA's.
+  (c02d725cc641551d73780d42eb53411292332b33)
+* skb_reset_transport_header for older kernels
+  (0c2a903dee7fc870993e1d51eb5bbf037f8c0536)
+* Ensure reply_buffer is initialised before use
+  (faf0b309e2b3b8a937a7a9f4485dc828c374ccac)
+* Limit the orphan holds checking to 200 iterations
+  (a7f7141bdc98cb0681268d2728710b75e0227ebf)
+* Changes to get asynchronous crypto working nicely in pluto (nhelpers > 0)
+  (268b8dcc27e65187d63824ef2be13d95b1205144)
+* Use skb_copy_expand to make a bigger skb
+  (078f030e4127802c736549e3caf92d7d65d81cec)
+* we did not route the NAT address through the tunnel on first connect
+  (a42a907963e0ce045b33a9355f5a3e3ada600e46)
+* send_notification() did a wrong check on out_raw when spisize > 0
+  (63be9bada8036d50906b8381ac237d17f544c7d5)
+* Stop the queue when we are overloaded
+  (62bd9b6c3ce7a4f76bfe47d1e2b74774ba0e5b84)
+* Fix possible auth corruption in due to static data
+  (88bc11b1579db71330a6da9f860cadf98f1dae51)
+* Correct locking for SA tables in pfkey interface
+  (91ae52f10973c44f58db0f37bf8b555256f23183)
+* Add locking for PRNG
+  (9e0dd33057e634bb3477cef8a2b44a15c6c0e9a6)
+* Fix oops on held packets
+  (65ca0cb35d056d515e701b69aac95ea41770531e)
+
 v2.5.65s
 * Malicious X.509 certificates could crash the asn.1 parser.
   Found by Orange Labs vulnerability research team. Patches via
