@@ -218,13 +218,6 @@ ipsec_spi_format(struct ipsec_sa *sa_p,
 		len += ipsec_snprintf(buffer+len, length-len, " iv_bits=%dbits iv=0x",
 			       sa_p->ips_iv_bits);
 
-				for(j = 0; j < sa_p->ips_iv_bits / 8; j++) {
-					len += ipsec_snprintf(buffer+len, length-len, "%02x",
-						       (__u32)((__u8*)(sa_p->ips_iv))[j]);
-				}
-			}
-		} else
-#endif
 		for(j = 0; j < sa_p->ips_iv_bits / 8; j++) {
 			len += ipsec_snprintf(buffer+len, length-len, "%02x",
 				       (__u32)((__u8*)(sa_p->ips_iv))[j]);
