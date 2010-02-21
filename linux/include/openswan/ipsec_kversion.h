@@ -265,30 +265,45 @@
 # define grab_socket_timeval(tv, sock)  { (tv) = ktime_to_timeval((sock).sk_stamp); }
 #else
 # define grab_socket_timeval(tv, sock)  { (tv) = (sock).sk_stamp; }
+#endif
+
+#if !defined(RHEL_RELEASE_CODE) 
+#define RHEL_RELEASE_CODE 0
+#define RHEL_RELEASE_VERSION(x,y) 10
+#endif
 
 /* internals of struct skbuff changed */
 /* but RedHat ported some of this back to their RHEL kernel, so check for that */
-# if defined(RHEL_MAJOR) && defined(RHEL_MINOR) && !(RHEL_MAJOR == 5 && RHEL_MINOR == 2)
-#  define        HAVE_DEV_NEXT
-#  define ip_hdr(skb)  ((skb)->nh.iph)
-#  define skb_tail_pointer(skb)  ((skb)->tail)
-#  define skb_end_pointer(skb)  ((skb)->end)
-#  define skb_network_header(skb)  ((skb)->nh.raw)
-#  define skb_set_network_header(skb,off)  ((skb)->nh.raw = (skb)->data + (off))
-#  define tcp_hdr(skb)  ((skb)->h.th)
-#  define udp_hdr(skb)  ((skb)->h.uh)
-#  define skb_transport_header(skb)  ((skb)->h.raw)
-#  define skb_set_transport_header(skb,off)  ((skb)->h.raw = (skb)->data + (off))
-#  define skb_reset_transport_header(skb) ((skb)->h.raw = (skb)->data - (skb)->head)
-#  define skb_mac_header(skb)  ((skb)->mac.raw)
-#  define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
-# endif
+#if defined(RHEL_MAJOR) && defined(RHEL_MINOR) && !(RHEL_MAJOR == 5 && RHEL_MINOR == 2)
+# define        HAVE_DEV_NEXT
+# define ip_hdr(skb)  ((skb)->nh.iph)
+# define skb_tail_pointer(skb)  ((skb)->tail)
+# define skb_end_pointer(skb)  ((skb)->end)
+# define skb_network_header(skb)  ((skb)->nh.raw)
+# define skb_set_network_header(skb,off)  ((skb)->nh.raw = (skb)->data + (off))
+# define tcp_hdr(skb)  ((skb)->h.th)
+# define udp_hdr(skb)  ((skb)->h.uh)
+# define skb_transport_header(skb)  ((skb)->h.raw)
+# define skb_set_transport_header(skb,off)  ((skb)->h.raw = (skb)->data + (off))
+# define skb_mac_header(skb)  ((skb)->mac.raw)
+# define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
 #endif
+
 /* turn a pointer into an offset for above macros */
 #define ipsec_skb_offset(skb, ptr) (((unsigned char *)(ptr)) - (skb)->data)
 
-#if !(defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && COINFIG_SLE_VERSION == 10 && CONFIG_SLE_SP >=2)
+#if !(defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && CONFIG_SLE_VERSION == 10 && CONFIG_SLE_SP >=2)
 # define ip_hdr(skb) ((skb)->nh.iph)
+# define skb_tail_pointer(skb)  ((skb)->tail)
+# define skb_end_pointer(skb)  ((skb)->end)
+# define skb_network_header(skb)  ((skb)->nh.raw)
+# define skb_set_network_header(skb,off)  ((skb)->nh.raw = (skb)->data + (off))
+# define tcp_hdr(skb)  ((skb)->h.th)
+# define udp_hdr(skb)  ((skb)->h.uh)
+# define skb_transport_header(skb)  ((skb)->h.raw)
+# define skb_set_transport_header(skb,off)  ((skb)->h.raw = (skb)->data + (off))
+# define skb_mac_header(skb)  ((skb)->mac.raw)
+# define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
