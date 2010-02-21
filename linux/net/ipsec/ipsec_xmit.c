@@ -1924,7 +1924,7 @@ ipsec_tunnel_send(struct ipsec_xmit_state *ixs)
 
 	/* new route/dst cache code from James Morris */
 	ixs->skb->dev = ixs->physdev;
- 	fl.oif = ixs->physdev->index;
+	fl.oif = ixs->physdev->ifindex;
 
 	return ipsec_xmit_send(ixs, &fl);
 }
