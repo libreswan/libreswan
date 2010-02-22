@@ -31,6 +31,8 @@ v2.5.66s
   (9e0dd33057e634bb3477cef8a2b44a15c6c0e9a6)
 * Fix oops on held packets
   (65ca0cb35d056d515e701b69aac95ea41770531e)
+* Fix boundary conditions within ipsec_sa_recycle
+  (e72f14fe1d181a096c556ac3fc6658b8cd8e655c(
 
 v2.5.65s
 * Malicious X.509 certificates could crash the asn.1 parser.
