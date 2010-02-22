@@ -236,6 +236,9 @@ static inline void pcr_init(struct pluto_crypto_req *r
 	break;
     case pcr_compute_dh_iv:
     case pcr_compute_dh:
+	r->pcr_d.dhq.thespace.start = 0;
+	r->pcr_d.dhq.thespace.len   = sizeof(r->pcr_d.dhq.space);
+	break;
     case pcr_rsa_sign:
     case pcr_rsa_check:
     case pcr_x509cert_fetch:
