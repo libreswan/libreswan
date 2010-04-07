@@ -3,7 +3,8 @@
  * header file for Openswan library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
- * Copyright (C) 2003 - 2008  Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2003 - 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2008 - 2009 David McCullough <david_mccullough@securecomputing.com>
  * 
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -36,6 +37,14 @@
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,1,0)
 # define HEADER_CACHE_BIND_21
 # error "KLIPS is no longer supported on Linux 2.0. Sorry"
+#endif
+
+/*
+ * We use a lot of config defines,  on older kernels that means we
+ * need to include config.h
+ */
+#ifndef AUTOCONF_INCLUDED
+#include <linux/config.h>
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,1,0)
@@ -104,6 +113,10 @@
 # define NET_26
 # define NETDEV_25
 # define NEED_SPINLOCK_TYPES
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
+# define HAVE_NETDEV_HEADER_OPS 1
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,8)
@@ -236,75 +249,50 @@
 # define ipsec_register_sysctl_table(a,b) register_sysctl_table(a,b)
 #endif
  
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
-/*
-   The eth_type_trans() function now sets the skb->dev field, consistent
-    with how similar functions for other link types operate. As a result,
-    many Ethernet drivers have been changed to remove the (now) redundant
-    assignment.
-   The header fields in the sk_buff structure have been renamed
-    and are no longer unions. Networking code and drivers can
-    now just use skb->transport_header, skb->network_header, and
-    skb->skb_mac_header. There are new functions for finding specific
-    headers within packets: tcp_hdr(), udp_hdr(), ipip_hdr(), and
-    ipipv6_hdr().
-   The crypto API has a new set of functions for use with asynchronous
-    block ciphers. There is also a new cryptd kernel thread which can
-    run any synchronous cipher in an asynchronous mode.
-   A new macro has been added to make the creation of slab caches easier:
-    struct kmem_cache KMEM_CACHE(struct-type, flags);
-    The result is the creation of a cache holding objects of the given
-     struct_type, named after that type, and with the additional slab
-     flags (if any). 
-*/
-
-/* need to include ip.h early, no longer pick it up in skbuff.h */
-# include <linux/ip.h>
-# define HAVE_KERNEL_TSTAMP
-/* type of sock.sk_stamp changed from timeval to ktime  */
-# define grab_socket_timeval(tv, sock)  { (tv) = ktime_to_timeval((sock).sk_stamp); }
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22) 
+#  define HAVE_KERNEL_TSTAMP
+#  define HAVE_KMEM_CACHE_MACRO
+#  define grab_socket_timeval(tv, sock)  { (tv) = ktime_to_timeval((sock).sk_stamp); }
 #else
-# define grab_socket_timeval(tv, sock)  { (tv) = (sock).sk_stamp; }
+#  define grab_socket_timeval(tv, sock)  { (tv) = (sock).sk_stamp; }
 #endif
 
+/* needs to be defined for the next line */
 #if !defined(RHEL_RELEASE_CODE) 
 #define RHEL_RELEASE_CODE 0
 #define RHEL_RELEASE_VERSION(x,y) 10
 #endif
-
+	
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22) || (RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(5,2)) 
+/* need to include ip.h early, no longer pick it up in skbuff.h */
+#include <linux/ip.h>
+/* type of sock.sk_stamp changed from timeval to ktime  */
+#else
 /* internals of struct skbuff changed */
-/* but RedHat ported some of this back to their RHEL kernel, so check for that */
-#if defined(RHEL_MAJOR) && defined(RHEL_MINOR) && !(RHEL_MAJOR == 5 && RHEL_MINOR == 2)
-# define        HAVE_DEV_NEXT
-# define ip_hdr(skb)  ((skb)->nh.iph)
-# define skb_tail_pointer(skb)  ((skb)->tail)
-# define skb_end_pointer(skb)  ((skb)->end)
-# define skb_network_header(skb)  ((skb)->nh.raw)
-# define skb_set_network_header(skb,off)  ((skb)->nh.raw = (skb)->data + (off))
-# define tcp_hdr(skb)  ((skb)->h.th)
-# define udp_hdr(skb)  ((skb)->h.uh)
-# define skb_transport_header(skb)  ((skb)->h.raw)
-# define skb_set_transport_header(skb,off)  ((skb)->h.raw = (skb)->data + (off))
-# define skb_mac_header(skb)  ((skb)->mac.raw)
-# define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
+/* but RedHat and SUSE ported some of this back to their RHEL kernel, so check for that */
+# if !defined(RHEL_MAJOR) || !defined(RHEL_MINOR) || !(RHEL_MAJOR == 5 && RHEL_MINOR >= 2)
+#  define        HAVE_DEV_NEXT
+#  if defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && (CONFIG_SLE_VERSION == 10 && CONFIG_SLE_SP <= 2)
+#    define ip_hdr(skb)  ((skb)->nh.iph)
+#  endif
+#  define skb_tail_pointer(skb)  ((skb)->tail)
+#  define skb_end_pointer(skb)  ((skb)->end)
+#  define skb_network_header(skb)  ((skb)->nh.raw)
+#  define skb_set_network_header(skb,off)  ((skb)->nh.raw = (skb)->data + (off))
+#  define tcp_hdr(skb)  ((skb)->h.th)
+#  define udp_hdr(skb)  ((skb)->h.uh)
+#  define skb_transport_header(skb)  ((skb)->h.raw)
+#  define skb_set_transport_header(skb,off)  ((skb)->h.raw = (skb)->data + (off))
+#  define skb_reset_transport_header(skb) ((skb)->h.raw = (skb)->data - (skb)->head)
+#  define skb_mac_header(skb)  ((skb)->mac.raw)
+#  define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
+# endif
+# if defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && (CONFIG_SLE_VERSION == 10 && CONFIG_SLE_SP == 2)
+#  define ip_hdr(skb) ((skb)->nh.iph)
+# endif
 #endif
-
 /* turn a pointer into an offset for above macros */
 #define ipsec_skb_offset(skb, ptr) (((unsigned char *)(ptr)) - (skb)->data)
-
-#if !(defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && CONFIG_SLE_VERSION == 10 && CONFIG_SLE_SP >=2)
-# define ip_hdr(skb) ((skb)->nh.iph)
-# define skb_tail_pointer(skb)  ((skb)->tail)
-# define skb_end_pointer(skb)  ((skb)->end)
-# define skb_network_header(skb)  ((skb)->nh.raw)
-# define skb_set_network_header(skb,off)  ((skb)->nh.raw = (skb)->data + (off))
-# define tcp_hdr(skb)  ((skb)->h.th)
-# define udp_hdr(skb)  ((skb)->h.uh)
-# define skb_transport_header(skb)  ((skb)->h.raw)
-# define skb_set_transport_header(skb,off)  ((skb)->h.raw = (skb)->data + (off))
-# define skb_mac_header(skb)  ((skb)->mac.raw)
-# define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
-#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
 /* 
@@ -318,11 +306,8 @@
   */
 # define HAVE_KMEM_CACHE_MACRO
 
-/* Try using the new kernel encaps hook for nat-t, instead of udp.c */
-# ifdef NOT_YET_FINISHED
-#  define HAVE_UDP_ENCAP_CONVERT
-# endif
-
+/* Try using the new klips encaps hook for nat-t, instead of udp.c */
+# define HAVE_UDP_ENCAP_CONVERT 1
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
@@ -339,6 +324,7 @@
  */
 # define HAVE_PROC_DIR_ENTRY
 # define        PROC_NET        init_net.proc_net
+# define	PROC_EOF_DATA
 
 # define __ipsec_dev_get(x) __dev_get_by_name(&init_net, x)
 # define ipsec_dev_get(x) dev_get_by_name(&init_net, x)
@@ -352,16 +338,22 @@
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,25)
 # define ip_chk_addr(a) inet_addr_type(&init_net, a)
-
 # define l_inet_addr_type(a)	inet_addr_type(&init_net, a)
-
 #else
 # define ip_chk_addr inet_addr_type
-
 #define l_inet_addr_type	inet_addr_type
-
 #endif
 
+/* not sure when network name spaces got introduced, but it is in 2.6.26 */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
+# define HAVE_NETWORK_NAMESPACE 1
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27)
+# define HAVE_CURRENT_UID
+#endif
+
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,31)
 #ifndef NETDEV_TX_BUSY
 # ifdef NETDEV_XMIT_CN
 #  define NETDEV_TX_BUSY NETDEV_XMIT_CN
@@ -369,7 +361,30 @@
 #  define NETDEV_TX_BUSY 1
 # endif
 #endif
+#endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,31)
+# define USE_NETDEV_OPS
+#else
+# define skb_dst_drop(s)	({ \
+					if ((s)->dst) \
+						dst_release((s)->dst); \
+					(s)->dst = NULL; \
+				})
+# define skb_dst_set(s,p)	(s)->dst = (p)
+# define skb_dst(s)		(s)->dst
+#endif
+
+#if 0
+/* nicely, latest netdevice.h includes this define */
+#ifndef HAVE_NETDEV_PRIV
+#define netdev_priv(dev) (dev->priv)
+#endif
+#endif
+
+#if !defined(HAVE_CURRENT_UID)
+#define current_uid() (current->uid)
+#endif
 
 #ifdef NET_21
 # define ipsec_kfree_skb(a) kfree_skb(a)
@@ -434,11 +449,11 @@
 	printk(sevlevel "%s: " format , netdev->name , ## arg)
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
-#define	PROC_NET	init_net.proc_net
-#define	PROC_EOF_DATA
-#else
-#define	PROC_NET	proc_net
+#ifndef late_initcall
+# include <linux/init.h>
+# ifndef late_initcall
+#  define	late_initcall(x)	module_init(x)
+# endif
 #endif
 
 #ifdef NET_21
@@ -451,6 +466,27 @@
 # define uint16_t __u16 
 # define uint32_t __u32 
 # define uint64_t __u64 
+#endif
+
+#if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && CONFIG_IPSEC_NAT_TRAVERSAL
+# define NAT_TRAVERSAL 1
+#else
+#undef CONFIG_IPSEC_NAT_TRAVERSAL
+# if defined(HAVE_UDP_ENCAP_CONVERT)
+#  define NAT_TRAVERSAL 1
+# endif
+#endif
+
+#ifndef NF_INET_LOCAL_OUT
+# define NF_INET_LOCAL_OUT NF_IP_LOCAL_OUT
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,33)
+#define	inet_sport	sport
+#define	inet_dport	dport
+#define	CTL_NAME(n)
+#else
+#define	CTL_NAME(n)	.ctl_name = n,
 #endif
 
 #if __KERNEL__
