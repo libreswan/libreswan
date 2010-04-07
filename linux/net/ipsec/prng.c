@@ -20,6 +20,9 @@
 #ifdef __KERNEL__
 #include "openswan/ipsec_proto.h"
 
+/* for local_bh_disable() on older kernels without linux/asm/softirq.h */
+#include <linux/interrupt.h>
+
 /*
  * A horrible locking hack,  we ride on tdb_lock for now since it
  * is basically what we want.  Since all calls into prng_bytes pass in
