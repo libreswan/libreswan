@@ -830,7 +830,10 @@ void ipsec_rcv_setoutif(struct ipsec_rcv_state *irs)
 {
 	struct sk_buff *skb = irs->skb;
 
-	if(skb!=NULL && irs->ipsp->ips_out) {
+	WARN_ON(!irs);
+	WARN_ON(!irs->ipsp);
+
+	if(skb!=NULL && irs && irs->ipsp && irs->ipsp->ips_out) {
 		if(skb->dev != irs->ipsp->ips_out) {
 			KLIPS_PRINT(debug_rcv,
 				    "changing originating interface from %s to %s\n",
