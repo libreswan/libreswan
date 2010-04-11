@@ -527,16 +527,17 @@ ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 		    "\n\nipsec_tunnel_start_xmit: STARTING");
 
-#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-	ixs->natt_type = 0, ixs->natt_head = 0;
-	ixs->natt_sport = 0, ixs->natt_dport = 0;
-#endif
 	stat = IPSEC_XMIT_ERRMEMALLOC;
 	ixs = ipsec_xmit_state_new ();
 	if (! ixs) {
 		netif_stop_queue(dev);
 		return NETDEV_TX_BUSY;
 	}
+
+#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
+	ixs->natt_type = 0, ixs->natt_head = 0;
+	ixs->natt_sport = 0, ixs->natt_dport = 0;
+#endif
 
 	ixs->dev = dev;
 	ixs->skb = skb;
