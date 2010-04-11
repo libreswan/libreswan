@@ -202,12 +202,11 @@ static inline void ipsec_rcv_redodebug(struct ipsec_rcv_state *irs)
 		
 /*
  * look up the SA from the said in the header.
- *
+ * assign irs->ipsp with a reference held, on success.
  */
-enum ipsec_rcv_value
+static enum ipsec_rcv_value
 ipsec_rcv_decap_lookup(struct ipsec_rcv_state *irs
-		       , struct xform_functions *proto_funcs
-		       , struct ipsec_sa **pnewipsp)
+		       , struct xform_functions *proto_funcs)
 {
 	__u8 proto;
 	struct ipsec_sa *newipsp;
@@ -358,7 +357,6 @@ ipsec_rcv_decap_lookup(struct ipsec_rcv_state *irs
 #endif		 
 	}
 
-	/* *pnewipsp = newipsp; */
 	if (newipsp != irs->ipsp) {
 		    if(irs->lastipsp) {
 			ipsec_sa_put(irs->lastipsp, IPSEC_REFRX);
@@ -1089,18 +1087,13 @@ ipsec_rcv_decap(struct ipsec_rcv_state *irs)
 	/* look up the first SA -- we need the protocol functions to figure
 	 * out how to do that.
 	 */
-	{
-		struct ipsec_sa *newipsp;
-		/* look up the first SA */
-		irv = ipsec_rcv_decap_lookup(irs, proto_funcs, &newipsp);
-		if(irv != IPSEC_RCV_OK) {
-			spin_unlock_bh(&tdb_lock);
-			return irv;
-		}
-		
-		/* newipsp is already referenced by the get() function */
-		irs->ipsp=newipsp;
+	/* look up the first SA */
+	irv = ipsec_rcv_decap_lookup(irs, proto_funcs);
+	if(irv != IPSEC_RCV_OK) {
+		spin_unlock_bh(&tdb_lock);
+		return irv;
 	}
+	WARN_ON(!irs->ipsp);
 
 	do {
 		ipsec_rcv_setoutif(irs);
