@@ -1657,6 +1657,9 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 		return IPSEC_XMIT_STOLEN;
 	} /* if (ixs->outgoing_said.proto == IPPROTO_INT) */
 	
+	/* at this point we expect to be SA free */
+	WARN_ON(ixs->ipsp);
+
 	/* ipsec_sa_getbyid() takes a reference to the ixs */
 	ixs->ipsp = ipsec_sa_getbyid(&ixs->outgoing_said, IPSEC_REFTX);
 	ixs->sa_len = satot(&ixs->outgoing_said, 0, ixs->sa_txt, sizeof(ixs->sa_txt));
@@ -1676,7 +1679,8 @@ ipsec_xmit_encap_bundle(struct ipsec_xmit_state *ixs)
 	bundle_stat = ipsec_xmit_encap_bundle_2(ixs);
 
 	/* we are done with this SA */
-	ipsec_sa_put(ixs->ipsp,IPSEC_REFTX); 
+	ipsec_sa_put(ixs->ipsp,IPSEC_REFTX);
+	ixs->ipsp = NULL;
 
 cleanup:
 	return bundle_stat;
