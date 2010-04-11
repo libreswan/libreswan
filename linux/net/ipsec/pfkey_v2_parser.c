@@ -769,7 +769,6 @@ pfkey_add_parse(struct sock *sk, struct sadb_ext **extensions, struct pfkey_extr
 	}
 	spin_unlock_bh(&tdb_lock);
 
-	spin_unlock_bh(&tdb_lock);
 
 	extr->ips->ips_life.ipl_addtime.ipl_count = jiffies / HZ;
 	if(!extr->ips->ips_life.ipl_allocations.ipl_count) {
