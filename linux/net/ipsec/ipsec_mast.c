@@ -258,6 +258,7 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 
 	ixs->skb = skb;
+	ixs->dev = dev;
 	SAref = 0;
 	if(skb->nfmark & 0x80000000) {
 		SAref = NFmark2IPsecSAref(skb->nfmark);
