@@ -252,7 +252,7 @@ case "$1" in
 			"{" rm -f $lock ";" exit 1 ";" "}"
 	fi
 
-	if $klips
+	if $klips -o $mast
 	then
 		# here we go
 		perform ipsec _startklips \
