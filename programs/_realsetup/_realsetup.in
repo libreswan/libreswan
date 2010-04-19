@@ -148,7 +148,7 @@ LOGONLY="logger -p $IPSECsyslog -t ipsec_setup"
 
 KILLKLIPS=":"
 
-if $klips
+if $klips || $mast
 then
         #
         # don't use ifconfig here,  there may be thousands of
@@ -252,7 +252,7 @@ case "$1" in
 			"{" rm -f $lock ";" exit 1 ";" "}"
 	fi
 
-	if $klips
+	if $klips || $mast
 	then
 		# here we go
 		perform ipsec _startklips \
