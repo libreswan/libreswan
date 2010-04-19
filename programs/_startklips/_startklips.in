@@ -291,7 +291,7 @@ then
 	@MODPROBE@ -v af_key
 fi
 
-if -f $netkey
+if test -f $netkey
 then
 	if test -f $modules
 	then
