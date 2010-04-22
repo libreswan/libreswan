@@ -1830,9 +1830,8 @@ ipsec_xmit_send(struct ipsec_xmit_state*ixs, struct flowi *fl)
 		ixs->stats->tx_errors++;
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 			    "klips_debug:ipsec_xmit_send: "
-			    "ip_route_output failed with error code %d, rt->u.dst.dev=%s, dropped\n",
-			    error,
-			    ixs->route->u.dst.dev->name);
+			    "ip_route_output failed with error code %d, dev=%s, dropped\n",
+			    error, ixs->dev->name);
 		return IPSEC_XMIT_ROUTEERR;
 	}
 
