@@ -235,6 +235,41 @@ ipsec_mast_send(struct ipsec_xmit_state*ixs)
 }
 #endif
 
+enum ipsec_xmit_value
+ipsec_mast_sanity_check_dev(struct ipsec_xmit_state *ixs)
+{
+
+	if (ixs->dev == NULL) {
+		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
+			    "klips_error:ipsec_xmit_sanity_check_dev: "
+			    "No device associated with skb!\n" );
+		return IPSEC_XMIT_NODEV;
+	}
+
+	ixs->prv = ixs->dev->priv;
+	if (ixs->prv == NULL) {
+		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
+			    "klips_error:ipsec_xmit_sanity_check_dev: "
+			    "Device has no private structure!\n" );
+		return 	IPSEC_XMIT_NOPRIVDEV;
+	}
+
+#if 0
+	ixs->physdev = ixs->prv->dev;
+	if (ixs->physdev == NULL) {
+		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
+			    "klips_error:ipsec_xmit_sanity_check_dev: "
+			    "Device is not attached to physical device!\n" );
+		return IPSEC_XMIT_NOPHYSDEV;
+	}
+	ixs->physmtu = ixs->physdev->mtu;
+        ixs->cur_mtu = ixs->physdev->mtu;
+#endif
+	ixs->stats = (struct net_device_stats *) &(ixs->prv->mystats);
+
+	return IPSEC_XMIT_OK;
+}
+
 /*
  *	This function assumes it is being called from dev_queue_xmit()
  *	and that skb is filled properly by that function.
@@ -246,13 +281,11 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	enum ipsec_xmit_value stat = IPSEC_XMIT_OK;
 	IPsecSAref_t SAref;
 
-	if(unlikely (skb == NULL || dev == NULL)) {
-		printk("mast start_xmit passed NULL %s\n",
-				skb ? "dev" :
-				dev ? "skb" : "skb & dev");
+	if(skb == NULL) {
+		printk("mast start_xmit passed NULL\n");
 		return 0;
 	}
-
+		
 	ixs = ipsec_xmit_state_new();
 	if(ixs == NULL) {
 		printk("mast failed to allocate IXS\n");
@@ -261,6 +294,12 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	ixs->skb = skb;
 	ixs->dev = dev;
+
+	stat = ipsec_mast_sanity_check_dev(ixs);
+	if(stat != IPSEC_XMIT_OK) {
+		return 0;
+	}
+
 	SAref = 0;
 	if(skb->nfmark & 0x80000000) {
 		SAref = NFmark2IPsecSAref(skb->nfmark);
@@ -276,7 +315,7 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	KLIPS_PRINT(debug_mast, "skb=%p\n", skb);
 
-	ipsec_xmit_sanity_check_skb(ixs);
+	stat = ipsec_xmit_sanity_check_skb(ixs);
 
 	spin_lock_bh(&tdb_lock);
 
