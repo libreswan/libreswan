@@ -1860,8 +1860,8 @@ ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs)
         if (unlikely (! ixs))
                 return;
 
-		if (netif_queue_stopped(ixs->dev))
-			netif_wake_queue(ixs->dev);
+        if (ixs->dev && netif_queue_stopped(ixs->dev))
+                netif_wake_queue(ixs->dev);
 
         spin_lock_bh (&ixs_cache_lock);
 

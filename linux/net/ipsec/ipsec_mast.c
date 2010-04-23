@@ -246,11 +246,13 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	enum ipsec_xmit_value stat = IPSEC_XMIT_OK;
 	IPsecSAref_t SAref;
 
-	if(skb == NULL) {
-		printk("mast start_xmit passed NULL\n");
+	if(unlikely (skb == NULL || dev == NULL)) {
+		printk("mast start_xmit passed NULL %s\n",
+				skb ? "dev" :
+				dev ? "skb" : "skb & dev");
 		return 0;
 	}
-		
+
 	ixs = ipsec_xmit_state_new();
 	if(ixs == NULL) {
 		printk("mast failed to allocate IXS\n");
