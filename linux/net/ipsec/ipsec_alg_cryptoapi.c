@@ -36,7 +36,7 @@
  *	special case: ipsec core modular with this static algo inside:
  *	must avoid MODULE magic for this file
  */
-#if CONFIG_KLIPS_MODULE && CONFIG_KLIPS_ENC_CRYPTOAPI
+#if defined(CONFIG_KLIPS_MODULE) && defined(CONFIG_KLIPS_ENC_CRYPTOAPI)
 #undef MODULE
 #endif
 
@@ -55,7 +55,7 @@
 
 /* warn the innocent */
 #if !defined (CONFIG_CRYPTO) && !defined (CONFIG_CRYPTO_MODULE)
-#warning "No linux CryptoAPI found, install 2.4.22+ or 2.6.x"
+#warning "No linux CryptoAPI configured, install 2.4.22+ or 2.6.x or enable CryptoAPI"
 #define NO_CRYPTOAPI_SUPPORT
 #endif
 
@@ -82,30 +82,129 @@ IPSEC_ALG_MODULE_INIT_STATIC( ipsec_cryptoapi_init )
 #include <asm/pgtable.h>
 #include <linux/mm.h>
 
-#define CIPHERNAME_AES		"aes"
-#define CIPHERNAME_1DES		"des"
-#define CIPHERNAME_3DES		"des3_ede"
-#define CIPHERNAME_BLOWFISH	"blowfish"
-#define CIPHERNAME_CAST		"cast5"
-#define CIPHERNAME_SERPENT	"serpent"
-#define CIPHERNAME_TWOFISH	"twofish"
+/*
+ * CryptoAPI compat code - we use the current API and macro back to
+ * the older ones.
+ */
 
-#define ESP_SERPENT		252	/* from ipsec drafts */
-#define ESP_TWOFISH		253	/* from ipsec drafts */
+#ifndef CRYPTO_TFM_MODE_CBC
+/*
+ * As of linux-2.6.21 this is no longer defined, and presumably no longer
+ * needed to be passed into the crypto core code.
+ */
+#define	CRYPTO_TFM_MODE_CBC	0
+#define	CRYPTO_TFM_MODE_ECB	0
+#endif
+
+/* cryptoapi changed in 2.6.19 */
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,19)
+# define IPSEC_HAVE_CRYPTOAPI_2619
+#endif
+
+/* ... SuSE ported this API to 2.6.16.x in SLES 10.2 */
+#if defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && CONFIG_SLE_VERSION == 10 && CONFIG_SLE_SP >=2
+# define IPSEC_HAVE_CRYPTOAPI_2619
+#endif
+
+#if !defined(IPSEC_HAVE_CRYPTOAPI_2619)
+	/*
+	 * Linux 2.6.19 introduced a new Crypto API, setup macro's to convert new
+	 * API into old API.
+	 */
+
+	/* Symmetric/Block Cipher */
+	struct blkcipher_desc
+	{
+		struct crypto_tfm *tfm;
+		void *info;
+	};
+	#define ecb(X)								#X
+	#define cbc(X)								#X
+	#define crypto_has_blkcipher(X, Y, Z)		crypto_alg_available(X, 0)
+	#define crypto_blkcipher_cast(X)			X
+	#define crypto_blkcipher_tfm(X)				X
+	#define crypto_alloc_blkcipher(X, Y, Z)		crypto_alloc_tfm(X, CRYPTO_TFM_MODE_CBC)
+	#define crypto_blkcipher_ivsize(X)			crypto_tfm_alg_ivsize(X)
+	#define crypto_blkcipher_blocksize(X)		crypto_tfm_alg_blocksize(X)
+	#define crypto_blkcipher_setkey(X, Y, Z)	crypto_cipher_setkey(X, Y, Z)
+	#define crypto_blkcipher_encrypt_iv(W, X, Y, Z)	\
+				crypto_cipher_encrypt_iv((W)->tfm, X, Y, Z, (u8 *)((W)->info))
+	#define crypto_blkcipher_decrypt_iv(W, X, Y, Z)	\
+				crypto_cipher_decrypt_iv((W)->tfm, X, Y, Z, (u8 *)((W)->info))
+
+	/* Hash/HMAC/Digest */
+	struct hash_desc
+	{
+		struct crypto_tfm *tfm;
+	};
+	#define hmac(X)							#X
+	#define crypto_has_hash(X, Y, Z)		crypto_alg_available(X, 0)
+	#define crypto_hash_cast(X)				X
+	#define crypto_hash_tfm(X)				X
+	#define crypto_alloc_hash(X, Y, Z)		crypto_alloc_tfm(X, 0)
+	#define crypto_hash_digestsize(X)		crypto_tfm_alg_digestsize(X)
+	#define crypto_hash_digest(W, X, Y, Z)	\
+				crypto_digest_digest((W)->tfm, X, sg_num, Z)
+
+	/* Asymmetric Cipher */
+	#define crypto_has_cipher(X, Y, Z)		crypto_alg_available(X, 0)
+
+	/* Compression */
+	#define crypto_has_comp(X, Y, Z)		crypto_alg_available(X, 0)
+	#define crypto_comp_tfm(X)				X
+	#define crypto_comp_cast(X)				X
+	#define crypto_alloc_comp(X, Y, Z)		crypto_alloc_tfm(X, 0)
+#else
+	#define ecb(X)	"ecb(" #X ")"
+	#define cbc(X)	"cbc(" #X ")"
+	#define hmac(X)	"hmac(" #X ")"
+#endif /* if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
+
+static inline void sg_set_page(struct scatterlist *sg,  struct page *page,
+			       unsigned int len, unsigned int offset)
+{
+	sg->page = page;
+	sg->offset = offset;
+	sg->length = len;
+}
+
+static inline void *sg_virt(struct scatterlist *sg)
+{
+	return page_address(sg->page) + sg->offset;
+}
+
+#endif
+
+#ifdef CONFIG_KLIPS_ENC_NULL
+# define CIPHERNAME_NULL		cbc(null)
+#endif
+#define CIPHERNAME_AES		cbc(aes)
+#define CIPHERNAME_1DES		cbc(des)
+#define CIPHERNAME_3DES		cbc(des3_ede)
+#define CIPHERNAME_BLOWFISH	cbc(blowfish)
+#define CIPHERNAME_CAST		cbc(cast5)
+#define CIPHERNAME_SERPENT	cbc(serpent)
+#define CIPHERNAME_TWOFISH	cbc(twofish)
 
 #define DIGESTNAME_MD5		"md5"
 #define DIGESTNAME_SHA1		"sha1"
 
+#define ESP_NULL		11
+#define ESP_SERPENT		252	/* from ipsec drafts */
+#define ESP_TWOFISH		253	/* from ipsec drafts */
+
 MODULE_AUTHOR("Juanjo Ciarlante, Harpo MAxx, Luciano Ruete");
 static int debug_crypto=0;
-MODULE_PARM(debug_crypto, "i");
 static int test_crypto=0;
-MODULE_PARM(test_crypto, "i");
 static int excl_crypto=0;
-MODULE_PARM(excl_crypto, "i");
-
 static int noauto = 0;
-MODULE_PARM(noauto,"i");
+module_param(debug_crypto,int,0644);
+module_param(test_crypto,int,0644);
+module_param(excl_crypto,int,0644);
+module_param(noauto,int,0644);
+
 MODULE_PARM_DESC(noauto, "Dont try all known algos, just setup enabled ones");
 
 #ifdef CONFIG_KLIPS_ENC_1DES
@@ -119,15 +218,18 @@ static int serpent[] = {-1, -1};
 static int twofish[] = {-1, -1};
 
 #ifdef CONFIG_KLIPS_ENC_1DES
-MODULE_PARM(des_ede1,"1-2i");
+module_param_array(des_ede1,int,NULL,0444);
 #endif
-MODULE_PARM(des_ede3,"1-2i");
-MODULE_PARM(aes,"1-2i");
-MODULE_PARM(blowfish,"1-2i");
-MODULE_PARM(cast,"1-2i");
-MODULE_PARM(serpent,"1-2i");
-MODULE_PARM(twofish,"1-2i");
+module_param_array(des_ede3,int,NULL,0444);
+module_param_array(aes,int,NULL,0444);
+module_param_array(blowfish,int,NULL,0444);
+module_param_array(cast,int,NULL,0444);
+module_param_array(serpent,int,NULL,0444);
+module_param_array(twofish,int,NULL,0444);
+
+#ifdef CONFIG_KLIPS_ENC_1DES
 MODULE_PARM_DESC(des_ede1, "0: disable | 1: force_enable | min,max: dontuse");
+#endif
 MODULE_PARM_DESC(des_ede3, "0: disable | 1: force_enable | min,max: dontuse");
 MODULE_PARM_DESC(aes, "0: disable | 1: force_enable | min,max: keybitlens");
 MODULE_PARM_DESC(blowfish, "0: disable | 1: force_enable | min,max: keybitlens");
@@ -174,7 +276,7 @@ static struct ipsec_alg_capi_cipher alg_capi_darray[] = {
  */
 int setup_cipher(const char *ciphername)
 {
-	return crypto_alg_available(ciphername, 0);
+	return crypto_has_blkcipher(ciphername, 0, 0);
 }
 
 /*
@@ -183,7 +285,7 @@ int setup_cipher(const char *ciphername)
  */
 static void _capi_destroy_key (struct ipsec_alg_enc *alg, __u8 *key_e);
 static __u8 * _capi_new_key (struct ipsec_alg_enc *alg, const __u8 *key, size_t keylen);
-static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e, __u8 * in, int ilen, const __u8 * iv, int encrypt);
+static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e, __u8 * in, int ilen, __u8 * iv, int encrypt);
 
 static int
 setup_ipsec_alg_capi_cipher(struct ipsec_alg_capi_cipher *cptr)
@@ -260,22 +362,22 @@ _capi_new_key (struct ipsec_alg_enc *alg, const __u8 *key, size_t keylen)
 	}
 	if (debug_crypto > 0)
 		printk(KERN_DEBUG "klips_debug:_capi_new_key:"
-				"name=%s cptr=%p key=%p keysize=%d\n",
+				"name=%s cptr=%p key=%p keysize=%zd\n",
 				alg->ixt_common.ixt_name, cptr, key, keylen);
 	
 	/*	
 	 *	alloc tfm
 	 */
-	tfm = crypto_alloc_tfm(cptr->ciphername, CRYPTO_TFM_MODE_CBC);
+	tfm = crypto_blkcipher_tfm(crypto_alloc_blkcipher(cptr->ciphername, 0, 0));
 	if (!tfm) {
 		printk(KERN_ERR "_capi_new_key(): "
 				"NULL tfm for \"%s\" cryptoapi (\"%s\") algo\n" 
 			, alg->ixt_common.ixt_name, cptr->ciphername);
 		goto err;
 	}
-	if (crypto_cipher_setkey(tfm, key, keylen) < 0) {
+	if (crypto_blkcipher_setkey(crypto_blkcipher_cast(tfm), key, keylen) < 0) {
 		printk(KERN_ERR "_capi_new_key(): "
-				"failed new_key() for \"%s\" cryptoapi algo (keylen=%d)\n" 
+				"failed new_key() for \"%s\" cryptoapi algo (keylen=%zd)\n" 
 			, alg->ixt_common.ixt_name, keylen);
 		crypto_free_tfm(tfm);
 		tfm=NULL;
@@ -283,7 +385,7 @@ _capi_new_key (struct ipsec_alg_enc *alg, const __u8 *key, size_t keylen)
 err:
 	if (debug_crypto > 0)
 		printk(KERN_DEBUG "klips_debug:_capi_new_key:"
-				"name=%s key=%p keylen=%d tfm=%p\n",
+				"name=%s key=%p keylen=%zd tfm=%p\n",
 				alg->ixt_common.ixt_name, key, keylen, tfm);
 	return (__u8 *) tfm;
 }
@@ -292,25 +394,35 @@ err:
  * 	cbc function
  */
 static int 
-_capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e, __u8 * in, int ilen, const __u8 * iv, int encrypt) {
+_capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e, __u8 * in, int ilen, __u8 * iv, int encrypt) {
 	int error =0;
 	struct crypto_tfm *tfm=(struct crypto_tfm *)key_e;
-	struct scatterlist sg = { 
-		.page = virt_to_page(in),
-		.offset = (unsigned long)(in) % PAGE_SIZE,
-		.length=ilen,
-	};
+	struct scatterlist sg;
+	struct blkcipher_desc desc;
+	int ivsize = crypto_blkcipher_ivsize(crypto_blkcipher_cast(tfm));
+	char ivp[ivsize];
+
+	/* we do not want them copying back the IV in place so copy it */
+	memcpy(ivp, iv, ivsize);
+
 	if (debug_crypto > 1)
 		printk(KERN_DEBUG "klips_debug:_capi_cbc_encrypt:"
 				"key_e=%p "
 				"in=%p out=%p ilen=%d iv=%p encrypt=%d\n"
 				, key_e
 				, in, in, ilen, iv, encrypt);
-	crypto_cipher_set_iv(tfm, iv, crypto_tfm_alg_ivsize(tfm));
+
+	memset(&sg, 0, sizeof(sg));
+	sg_set_page(&sg, virt_to_page(in), ilen, offset_in_page(in));
+
+	memset(&desc, 0, sizeof(desc));
+	desc.tfm = crypto_blkcipher_cast(tfm);
+	desc.info = (void *) &ivp[0];
+
 	if (encrypt)
-		error = crypto_cipher_encrypt (tfm, &sg, &sg, ilen);
+		error = crypto_blkcipher_encrypt_iv (&desc, &sg, &sg, ilen);
 	else
-		error = crypto_cipher_decrypt (tfm, &sg, &sg, ilen);
+		error = crypto_blkcipher_decrypt_iv (&desc, &sg, &sg, ilen);
 	if (debug_crypto > 1)
 		printk(KERN_DEBUG "klips_debug:_capi_cbc_encrypt:"
 				"error=%d\n"
@@ -342,6 +454,13 @@ setup_cipher_list (struct ipsec_alg_capi_cipher* clist)
 					, cptr->parm[0]
 					, cptr->parm[1]);
 			continue;
+		} else {
+ 			if (debug_crypto>0)
+ 				printk(KERN_INFO "setup_cipher_list(): going to init ciphername=%s: noauto=%d parm[0]=%d parm[1]=%d\n"
+ 				, cptr->ciphername
+				, noauto
+				, cptr->parm[0]
+				, cptr->parm[1]);
 		}
 		/* 
 		 * 	use a local ci to avoid touching cptr->ci,
