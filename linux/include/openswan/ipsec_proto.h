@@ -37,6 +37,8 @@ struct ipsec_lifetime64;
 struct ident;
 struct sockaddr_encap;
 struct ipsec_sa;
+struct sk_buff;
+struct iphdr;
 
 /* ipsec_init.c */
 extern struct prng ipsec_prng;
