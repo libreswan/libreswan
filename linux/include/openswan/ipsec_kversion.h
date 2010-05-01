@@ -178,12 +178,15 @@
     to produce a /proc/slab_allocators file with detailed allocation
     information.
  */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-# ifndef module_param
-#  define module_param(a,b,c)  MODULE_PARM(#a,"i")
-# endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+#include <linux/moduleparam.h>
+#else
 /* note below is only true for our current calls to module_param_array */
 # define module_param_array(a,b,c,d)  MODULE_PARM(#a,"1-2i")
+#endif
+#ifndef module_param
+/* assume that we only have int params */
+# define module_param(a,b,c)  MODULE_PARM(#a,"i")
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
@@ -249,48 +252,75 @@
 # define ipsec_register_sysctl_table(a,b) register_sysctl_table(a,b)
 #endif
  
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22) 
-#  define HAVE_KERNEL_TSTAMP
-#  define HAVE_KMEM_CACHE_MACRO
-#  define grab_socket_timeval(tv, sock)  { (tv) = ktime_to_timeval((sock).sk_stamp); }
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
+/*
+   The eth_type_trans() function now sets the skb->dev field, consistent
+    with how similar functions for other link types operate. As a result,
+    many Ethernet drivers have been changed to remove the (now) redundant
+    assignment.
+   The header fields in the sk_buff structure have been renamed
+    and are no longer unions. Networking code and drivers can
+    now just use skb->transport_header, skb->network_header, and
+    skb->skb_mac_header. There are new functions for finding specific
+    headers within packets: tcp_hdr(), udp_hdr(), ipip_hdr(), and
+    ipipv6_hdr().
+   The crypto API has a new set of functions for use with asynchronous
+    block ciphers. There is also a new cryptd kernel thread which can
+    run any synchronous cipher in an asynchronous mode.
+   A new macro has been added to make the creation of slab caches easier:
+    struct kmem_cache KMEM_CACHE(struct-type, flags);
+    The result is the creation of a cache holding objects of the given
+     struct_type, named after that type, and with the additional slab
+     flags (if any). 
+*/
+
+/* need to include ip.h early, no longer pick it up in skbuff.h */
+# include <linux/ip.h>
+# define HAVE_KERNEL_TSTAMP
+
+/* type of sock.sk_stamp changed from timeval to ktime  */
+# define grab_socket_timeval(tv, sock)  { (tv) = ktime_to_timeval((sock).sk_stamp); }
+
+/* internals of struct skbuff changed */
+# define IPSEC_SKB_USES_OFFSETS 1
 #else
-#  define grab_socket_timeval(tv, sock)  { (tv) = (sock).sk_stamp; }
+# define grab_socket_timeval(tv, sock)  { (tv) = (sock).sk_stamp; }
+# undef IPSEC_SKB_USES_OFFSETS
 #endif
 
-/* needs to be defined for the next line */
 #if !defined(RHEL_RELEASE_CODE) 
 #define RHEL_RELEASE_CODE 0
 #define RHEL_RELEASE_VERSION(x,y) 10
 #endif
-	
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22) || (RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(5,2)) 
-/* need to include ip.h early, no longer pick it up in skbuff.h */
-#include <linux/ip.h>
-/* type of sock.sk_stamp changed from timeval to ktime  */
-#else
-/* internals of struct skbuff changed */
-/* but RedHat and SUSE ported some of this back to their RHEL kernel, so check for that */
-# if !defined(RHEL_MAJOR) || !defined(RHEL_MINOR) || !(RHEL_MAJOR == 5 && RHEL_MINOR >= 2)
-#  define        HAVE_DEV_NEXT
-#  if defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && (CONFIG_SLE_VERSION == 10 && CONFIG_SLE_SP <= 2)
-#    define ip_hdr(skb)  ((skb)->nh.iph)
-#  endif
-#  define skb_tail_pointer(skb)  ((skb)->tail)
-#  define skb_end_pointer(skb)  ((skb)->end)
-#  define skb_network_header(skb)  ((skb)->nh.raw)
-#  define skb_set_network_header(skb,off)  ((skb)->nh.raw = (skb)->data + (off))
-#  define tcp_hdr(skb)  ((skb)->h.th)
-#  define udp_hdr(skb)  ((skb)->h.uh)
-#  define skb_transport_header(skb)  ((skb)->h.raw)
-#  define skb_set_transport_header(skb,off)  ((skb)->h.raw = (skb)->data + (off))
-#  define skb_reset_transport_header(skb) ((skb)->h.raw = (skb)->data - (skb)->head)
-#  define skb_mac_header(skb)  ((skb)->mac.raw)
-#  define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
-# endif
-# if defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && (CONFIG_SLE_VERSION == 10 && CONFIG_SLE_SP == 2)
-#  define ip_hdr(skb) ((skb)->nh.iph)
-# endif
+
+/* ... RedHat ported some of this back to their RHEL kernel, so check for that */
+#if defined(RHEL_MAJOR) && defined(RHEL_MINOR) && RHEL_MAJOR == 5 && RHEL_MINOR >= 2
+# define        HAVE_DEV_NEXT
+# define IPSEC_SKB_USES_OFFSETS 1
 #endif
+
+/* ... SuSE ported some different subset to their SLES kernel */
+#if defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && CONFIG_SLE_VERSION == 10 && CONFIG_SLE_SP >=1
+# define IPSEC_HAVE_IP_HDR 1
+#endif
+
+#if !defined(IPSEC_SKB_USES_OFFSETS)
+/* we don't have the skb-offset changes */
+# ifndef IPSEC_HAVE_IP_HDR
+#  define ip_hdr(skb)  ((skb)->nh.iph)
+# endif
+# define skb_tail_pointer(skb)  ((skb)->tail)
+# define skb_end_pointer(skb)  ((skb)->end)
+# define skb_network_header(skb)  ((skb)->nh.raw)
+# define skb_set_network_header(skb,off)  ((skb)->nh.raw = (skb)->data + (off))
+# define tcp_hdr(skb)  ((skb)->h.th)
+# define udp_hdr(skb)  ((skb)->h.uh)
+# define skb_transport_header(skb)  ((skb)->h.raw)
+# define skb_set_transport_header(skb,off)  ((skb)->h.raw = (skb)->data + (off))
+# define skb_mac_header(skb)  ((skb)->mac.raw)
+# define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
+#endif
+
 /* turn a pointer into an offset for above macros */
 #define ipsec_skb_offset(skb, ptr) (((unsigned char *)(ptr)) - (skb)->data)
 
