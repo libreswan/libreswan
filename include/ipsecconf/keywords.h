@@ -156,8 +156,8 @@ enum keyword_numeric_conn_field {
     KNCF_MAX              
 };
 
-#define KEY_STRINGS_MAX (KSF_MAX > KSCF_MAX ? KSF_MAX : KSCF_MAX)+1
-#define KEY_NUMERIC_MAX (KBF_MAX > KNCF_MAX ? KBF_MAX : KNCF_MAX)+1
+#define KEY_STRINGS_MAX ((int)KSF_MAX > (int)KSCF_MAX ? (int)KSF_MAX : (int)KSCF_MAX)+1
+#define KEY_NUMERIC_MAX ((int)KBF_MAX > (int)KNCF_MAX ? (int)KBF_MAX : (int)KNCF_MAX)+1
 
 /* these are bits set in a word */
 enum keyword_valid {
