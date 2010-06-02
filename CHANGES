@@ -1,5 +1,29 @@
 Please see docs/KNOWN_BUGS file for more information
 
+v2.5.67s
+* Fix for gcc-4.5.0 warning on enum comparision. Patch by Paweł Zuzelski.
+* backported cryptoapi backward-compatibility changes from #master (v2.5.66s)
+* fix ipsec_kversion.h for SLES kernels
+* validate device, get stats, on mast xmit
+* make sure that we don't crash when ixs->dev is NULL on cleanup
+* when route lookup fails, don't try to use the NULL pointer returned
+* ixs->dev cannot be NULL
+* updown.mast should use the iproute2 standard fwmark/mask format
+* add missing 'test' in startklips
+* call _startklips from _realsetup when using protostack=mast
+* Call _startklips for the mast stack as well as the klips stack
+* fix double deref on ixs->ipsp
+* don't overwrite irs->ipsp with garbage in ipsec_rcv_decap()
+* check for irs->ipsp in ipsec_rcv_setoutif()
+* fix null pointer deref in ipsec_tunnel_start_xmit
+* don't unlock tdb_lock twice in pfkey_add_parse()
+* change example to use 17/%any instead of 17/0
+* SUSE 10.3 includes a ip_hdr() backport.
+* include interrupt.h for local_bh_disable() on older kernels without linux/asm/softirq.h */
+* Fixes for skb_transport_header() and co. on kernels < 2.6.22
+* Update ipsec_kern24.h so ipsec_dev_put and co. is properly defined.
+* Update mast code from #master branch
+
 v2.5.66s
 * There are a number of bugs with the SA refcount usage in klips.
   (9dff3971df7314cbe8e3d47a13fceacbd541b10e)
