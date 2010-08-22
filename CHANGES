@@ -18,6 +18,7 @@ v2.6.29 (unreleased)
 * MAST: allow for setting of policy for inbound SAs [Bart]
 * MAST: favour deleting an SA even if the pfkey op failed [Bart]
 * HAVESTATSD: Log new phase2 messages as a result of a rekey [Paul]
+* VNET: differentiate instantiation of road warriors and vnet [Paul]
  
 v2.6.28 (July 29, 2010)
 * MAST: Fix SAref vmalloc() call that could cause a kernel panic [Bart]
