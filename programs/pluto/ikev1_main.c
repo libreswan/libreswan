@@ -819,6 +819,14 @@ main_inI1_outR1(struct msg_digest *md)
 	    c = rw_instantiate(c, &md->sender
 			       , NULL, NULL);
 	}
+     } else {
+	/* we found a non-wildcard conn. double check if it needs instantiation anyway (eg vnet=) */
+	if (c->spd.that.virt) {
+	   // FIXME: the kind should really have been set on "adding" the conn in the first place
+	   // c->kind = CK_TEMPLATE; 
+	   DBG(DBG_CONTROL, DBG_log("remote endpoint has virt (vnet?) set - needs instantiation"));
+	   c = rw_instantiate(c,&md->sender,NULL,NULL);
+	}
     }
 
 #ifdef XAUTH

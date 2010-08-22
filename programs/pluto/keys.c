@@ -659,8 +659,8 @@ osw_get_secret(const struct connection *c
 	free_public_key(my_public_key);
 	return best;
     }
-#if defined(AGGRESSIVE)
-    if (his_id_was_instantiated(c) && !(c->policy & POLICY_AGGRESSIVE))
+#if defined(AGGRESSIVE) 
+    if (his_id_was_instantiated(c) && (!(c->policy & POLICY_AGGRESSIVE)) && isanyaddr(&c->spd.that.host_addr) )
     {
 	DBG(DBG_CONTROL,
 	    DBG_log("instantiating him to 0.0.0.0"));
@@ -679,7 +679,11 @@ osw_get_secret(const struct connection *c
 	      && (((c->kind == CK_TEMPLATE)
 		   && (c->spd.that.id.kind == ID_NONE))
 		 || ((c->kind == CK_INSTANCE)
-		     && (id_is_ipaddr(&c->spd.that.id)))))
+		     && (id_is_ipaddr(&c->spd.that.id))
+		     /* Check if we are a road warrior instantiation, not a vnet: instantiation */
+		     && (isanyaddr(&c->spd.that.host_addr)))
+		 )
+	    )
     {
 	DBG(DBG_CONTROL,
 	    DBG_log("replace him to 0.0.0.0"));
