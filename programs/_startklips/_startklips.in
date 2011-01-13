@@ -26,8 +26,19 @@ ipsecversion=/proc/net/ipsec/version
 moduleplace=/lib/modules/`uname -r`/kernel/net/ipsec
 bareversion=`uname -r | sed -e 's/\.nptl//' | sed -e 's/^\(2\.[0-9]\.[1-9][0-9]*-[1-9][0-9]*\(\.[0-9][0-9]*\)*\(\.x\)*\).*$/\1/'`
 moduleinstplace=/lib/modules/$bareversion/kernel/net/ipsec
+
+# OCF tuning - If we have enough bogomips and RAM, use bigger OCF queues
 bogomips=`grep -i bogomips /proc/cpuinfo | head -1 | awk ' { print $3;}'| sed "s/\..*$//" `
 ram=`head -1 /proc/meminfo | awk '{print $2;}'`
+limit=1000
+if [ $bogomips > 1000 ]
+then
+	if [ $ram > 262143 ]
+	then
+		limit=10000
+		#echo "OCF limit set to $limit"
+	fi
+fi
 
 case $bareversion in
 	2.6*)
@@ -320,21 +331,9 @@ logonly() {
 	# OCF cryptodev is for userland IKE acceleration - let user do this
 	# @MODPROBE@ cryptodev 2>/dev/null
 
-	# If we have OCF with enough bogomips and RAM, use bigger OCF queues
-	if [ -f /sys/module/ocf ]
+	if [ -d /sys/module/ocf ]
 	then
-		limit = 1000
-		if [ $bogomips > 1000 ]
-		then
-			if [ $ram > 262143 ]
-			then
-				limit = 10000
-			fi
-		fi
-
 		echo $limit  > /sys/module/ocf/paramaters/crypto_q_max
-		echo $limit  > /sys/module/ipsec/paramaters/ipsec_irs_cache_allocated_max
-		echo $limit  > /sys/module/ipsec/paramaters/ipsec_ixs_cache_allocated_max
 	fi
 
 	# CryptoAPI drivers follow next
@@ -406,6 +405,13 @@ then
 	then
 		echo "klipsdebug=\`$debug' ignored, KLIPS lacks debug facilities"
 	fi
+fi
+
+# Tune ipsec module OCF settings
+if [ -d /sys/module/ocf ]
+then
+        echo $limit  > /sys/module/ipsec/parameters/ipsec_irs_cache_allocated_max
+        echo $limit  > /sys/module/ipsec/parameters/ipsec_ixs_cache_allocated_max
 fi
 
 # figure out misc. kernel config
