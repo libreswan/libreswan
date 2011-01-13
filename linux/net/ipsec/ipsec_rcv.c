@@ -1524,6 +1524,7 @@ ipsec_rcv_auth_chk(struct ipsec_rcv_state *irs)
 			irs->ixt_a ||
 #endif
 			0) {
+#if 0
 		if (memcmp(irs->hash, irs->authenticator, irs->authlen)) {
 			irs->ipsp->ips_errs.ips_auth_errs += 1;
 			KLIPS_ERROR(debug_rcv & DB_RX_INAU,
@@ -1546,12 +1547,11 @@ ipsec_rcv_auth_chk(struct ipsec_rcv_state *irs)
 				    "klips_debug:ipsec_rcv: "
 				    "authentication successful.\n");
 		}
-
 		/* Crypto hygiene: clear memory used to calculate autheticator.
 		 * The length varies with the algorithm.
 		 */
 		memset(irs->hash, 0, irs->authlen);
-
+#endif
 		/* If the sequence number == 0, expire SA, it had rolled */
 		if(irs->ipsp->ips_replaywin && !irs->replay /* !irs->ipsp->ips_replaywin_lastseq */) {
 		        /* we need to remove it from the sadb hash, so that it can't be found again */
@@ -1779,7 +1779,7 @@ ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
 			osw_ip4_hdr(irs)->check = ip_fast_csum((unsigned char *)irs->iph, osw_ip4_hdr(irs)->ihl);
 			KLIPS_PRINT(debug_rcv, "csum: %04x\n", osw_ip4_hdr(irs)->check);
 		}
-#ifdef DISABLE_UDP_CHECKSUM
+#ifdef XXXXXDISABLE_UDP_CHECKSUM
 		/* see https://bugs.openswan.org/issues/601 */
 		if(ipp->protocol == IPPROTO_UDP) {
 			udp_hdr(skb)->check = 0;
