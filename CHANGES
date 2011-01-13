@@ -13,6 +13,8 @@ v2.6.33 (unreleased)
 * Improved NetworkManager support [Avesh]
   - This is Red Hat bugzilla 642722, 658253, 659709 and 641068
 * Bugtracker bugs fixed:
+   #601  KLIPS: NAT-OA UDP checksum bad in transport mode when both sides are
+         NATted [Wolfgang]
    #1182 Verification of X509 certificate signed by SHA2 [fryasu@yahoo.co.jp]
    #1183 Fix documentation typo (in ipsec.conf) [Tuomo]
    #1190 nat-t broke on transport mode for klips between 2.6.31 and 2.6.32 [Paul]
