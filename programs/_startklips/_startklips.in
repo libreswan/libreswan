@@ -313,7 +313,10 @@ logonly() {
 
 # first load any OCF and CryptoAPI modules we might need for acceleration
 	# OCF cryptosoft is for kernel acceleration (ESP/AH)
-	@MODPROBE@ cryptosoft 2>/dev/null
+	# TEMP DISABLED IN DEAD BRANCH
+	# @MODPROBE@ cryptosoft 2>/dev/null
+	# TEMP ENSURE THERE IS NONE LOADED ALREADY
+	rmmod cryptosoft 2>/dev/null
 	# OCF cryptodev is for userland IKE acceleration - let user do this
 	# @MODPROBE@ cryptodev 2>/dev/null
 	# CryptoAPI drivers follow next
