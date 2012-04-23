@@ -12,7 +12,7 @@
  * for more details.
  */
 
-#ifndef USE_LWRES	/* whole file! */
+#ifndef USE_UNBOUND	/* whole file! */
 
 /* This program executes as multiple processes.  The Master process
  * receives queries (struct adns_query messages) from Pluto and distributes
@@ -619,4 +619,4 @@ main(int argc UNUSED, char **argv)
     return master();
 }
 
-#endif /* !USE_LWRES */
+#endif /* !USE_UNBOUND */

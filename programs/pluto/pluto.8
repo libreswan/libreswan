@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC_PLUTO
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
 .\"      Date: 26 October 2006
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
 .TH "IPSEC_PLUTO" "8" "26 October 2006" "[FIXME: source]" "[FIXME: manual]"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -102,7 +111,7 @@ provides a more convenient interface to
 \fBpluto\fR
 and
 \fBwhack\fR\&.
-.SS "IKE\'s Job"
+.SS "IKE\*(Aqs Job"
 .PP
 A
 \fISecurity Association\fR
@@ -124,7 +133,7 @@ IKE instances must be able to authenticate each other as part of their negotiati
 .PP
 IKE negotiation can be initiated by any instance with any other\&. If both can find an agreeable set of characteristics for a Security Association, and both recognize each others authenticity, they can set up a Security Association\&. The standards do not specify what causes an IKE instance to initiate a negotiation\&.
 .PP
-In summary, an IKE instance is prepared to automate the management of Security Associations in an IPsec environment, but a number of issues are considered policy and are left in the system administrator\'s hands\&.
+In summary, an IKE instance is prepared to automate the management of Security Associations in an IPsec environment, but a number of issues are considered policy and are left in the system administrator\*(Aqs hands\&.
 .SS "Pluto"
 .PP
 \fBpluto\fR
@@ -203,7 +212,7 @@ will attempt to fetch RSA keys using the Domain Name System\&.
 .PP
 The most basic network topology that
 \fBpluto\fR
-supports has two security gateways negotiating on behalf of client subnets\&. The diagram of RGB\'s testbed is a good example (see
+supports has two security gateways negotiating on behalf of client subnets\&. The diagram of RGB\*(Aqs testbed is a good example (see
 \fIklips/doc/rgb_setup\&.txt\fR)\&.
 .PP
 The file
@@ -297,19 +306,6 @@ is given, the connection will be rejected until a valid CRL has been loaded\&. P
 \fB\-\-ocspuri\fR
 option\&.
 .PP
-Pluto can use the BIND9 secure resolver, which means it has support for DNSSEC, using the BIND9
-\fIlwres {}\fR
-interface, see
-\fBnamed.conf\fR(5)\&. Pluto can also use the old
-\fIadns\fR
-interface if there is no BIND9 running with
-\fIlwres {}\fR
-on the host, but then pluto cannot do any DNSSEC processing\&. Pluto forks and starts these DNS helpers in separate children\&. The options
-\fB\-\-lwdnsq\fR
-and
-\fB\-\-adns\fR
-invoke these resolvers\&.
-.PP
 Pluto can also use helper children to off\-load cryptographic operations\&. This behavior can be fine tuned using the
 \fB\-\-nhelpers\fR\&. Pluto will start
 \fI(n\-1)\fR
@@ -330,7 +326,7 @@ exits \- this prevents multiple
 \fBpluto\fR
 will run\&.
 \fBpluto\fR
-writes its pid into this file so that scripts can find it\&. This lock will not function properly if it is on an NFS volume (but sharing locks on multiple machines doesn\'t make sense anyway)\&.
+writes its pid into this file so that scripts can find it\&. This lock will not function properly if it is on an NFS volume (but sharing locks on multiple machines doesn\*(Aqt make sense anyway)\&.
 .PP
 \fBpluto\fR
 then forks and the parent exits\&. This is the conventional \(lqdaemon fork\(rq\&. It can make debugging awkward, so there is an option to suppress this fork\&. In certain configurations, pluto might also launch helper programs to assist with DNS queries or to offload cryptographic operations\&.
@@ -352,7 +348,7 @@ Once
 \fBpluto\fR
 is started, it waits for requests from
 \fBwhack\fR\&.
-.SS "Pluto\'s Internal State"
+.SS "Pluto\*(Aqs Internal State"
 .PP
 To understand how to use
 \fBpluto\fR, it is helpful to understand a little about its internal state\&. Furthermore, the terminology is needed to decipher some of the diagnostic messages\&.
@@ -390,7 +386,7 @@ takes the responsibility of managing both of these special kinds of routes\&.
 \fBNETKEY\fR
 requires no special routing\&.
 .PP
-Each connection may be routed, and must be while it has an IPsec SA\&. The connection specifies the characteristics of the route: the interface on this machine, the \(lqgateway\(rq (the nexthop), and the peer\'s client subnet\&. Two connections may not be simultaneously routed if they are for the same peer\'s client subnet but use different interfaces or gateways (\fBpluto\fR\'s logic does not reflect any advanced routing capabilities)\&.
+Each connection may be routed, and must be while it has an IPsec SA\&. The connection specifies the characteristics of the route: the interface on this machine, the \(lqgateway\(rq (the nexthop), and the peer\*(Aqs client subnet\&. Two connections may not be simultaneously routed if they are for the same peer\*(Aqs client subnet but use different interfaces or gateways (\fBpluto\fR\*(Aqs logic does not reflect any advanced routing capabilities)\&.
 .PP
 On KLIPS, each eroute is associated with the state object for an IPsec SA because it has the particular characteristics of the SA\&. Two eroutes conflict if they specify the identical local and remote clients (unlike for routes, the local clients are taken into account)\&.
 .PP
@@ -403,7 +399,7 @@ There is an exception\&. If
 .PP
 When
 \fBpluto\fR
-needs to install an eroute for an IPsec SA (for a state object), first the state object\'s connection must be routed (if this cannot be done, the eroute and SA will not be installed)\&. If a conflicting eroute is already in place for another connection, the eroute and SA will not be installed (but note that the routing exception mentioned above may have already deleted potentially conflicting SAs)\&. If another IPsec SA for the same connection already has an eroute, all its outgoing traffic is taken over by the new eroute\&. The incoming traffic will still be processed\&. This characteristic is exploited during rekeying\&.
+needs to install an eroute for an IPsec SA (for a state object), first the state object\*(Aqs connection must be routed (if this cannot be done, the eroute and SA will not be installed)\&. If a conflicting eroute is already in place for another connection, the eroute and SA will not be installed (but note that the routing exception mentioned above may have already deleted potentially conflicting SAs)\&. If another IPsec SA for the same connection already has an eroute, all its outgoing traffic is taken over by the new eroute\&. The incoming traffic will still be processed\&. This characteristic is exploited during rekeying\&.
 .PP
 All of these routing characteristics are expected change when
 \fBKLIPS\fR
@@ -435,7 +431,7 @@ to set up routing for a connection; the unroute form undoes this\&. The initiate
 to negotiate an SA corresponding to a connection\&. The terminate form tells
 \fBpluto\fR
 to remove all SAs corresponding to a connection, including those being negotiated\&. The status form displays the
-\fBpluto\fR\'s internal state\&. The debug form tells
+\fBpluto\fR\*(Aqs internal state\&. The debug form tells
 \fBpluto\fR
 to change the selection of debugging output \(lqon the fly\(rq\&. The shutdown form tells
 \fBpluto\fR
@@ -526,7 +522,7 @@ parameter
 tries to guess what
 \fB%myid\fR
 should stand for: the IP address of
-\fB%defaultroute\fR, if it is supported by a suitable TXT record in the reverse domain for that IP address, or the system\'s hostname, if it is supported by a suitable TXT record in its forward domain\&.
+\fB%defaultroute\fR, if it is supported by a suitable TXT record in the reverse domain for that IP address, or the system\*(Aqs hostname, if it is supported by a suitable TXT record in its forward domain\&.
 .RE
 .PP
 \fB\-\-host\fR\ \&\fIip\-address\fR, \fB\-\-host\fR\ \&\fB%any\fR, \fB\-\-host\fR\ \&\fB%opportunistic\fR
@@ -552,7 +548,7 @@ on how to extrac this from the PKCS#12 file\&.
 .PP
 \fB\-\-ca\fR\ \&\fIdistinguished name\fR
 .RS 4
-the X\&.509 Certificate Authority\'s Distinguished Name (DN) used as trust anchor for this connection\&. This is the CA certificate that signed the host certificate, as well as the certificate of the incoming client\&.
+the X\&.509 Certificate Authority\*(Aqs Distinguished Name (DN) used as trust anchor for this connection\&. This is the CA certificate that signed the host certificate, as well as the certificate of the incoming client\&.
 .RE
 .PP
 \fB\-\-groups\fR\ \&\fIaccess control groups\fR
@@ -592,13 +588,13 @@ sends messages\&.)
 .PP
 \fB\-\-nexthop\fR\ \&\fIip\-address\fR
 .RS 4
-where to route packets for the peer\'s client (presumably for the peer too, but it will not be used for this)\&. When
+where to route packets for the peer\*(Aqs client (presumably for the peer too, but it will not be used for this)\&. When
 \fBpluto\fR
-installs an IPsec SA, it issues a route command\&. It uses the nexthop as the gateway\&. The default is the peer\'s IP address (this can be explicitly written as
+installs an IPsec SA, it issues a route command\&. It uses the nexthop as the gateway\&. The default is the peer\*(Aqs IP address (this can be explicitly written as
 \fB%direct\fR; the obsolete notation
 0\&.0\&.0\&.0
 is accepted)\&. This option is necessary if
-\fBpluto\fR\'s host\'s interface used for sending packets to the peer is neither point\-to\-point nor directly connected to the peer\&.
+\fBpluto\fR\*(Aqs host\*(Aqs interface used for sending packets to the peer is neither point\-to\-point nor directly connected to the peer\&.
 .RE
 .PP
 \fB\-\-client\fR\ \&\fIsubnet\fR
@@ -696,7 +692,7 @@ The IP address of the second WINS server to pass along to the ModeConfig Client
 .PP
 \fB\-\-dnskeyondemand\fR
 .RS 4
-specifies that when an RSA public key is needed to authenticate this host, and it isn\'t already known, fetch it from DNS\&.
+specifies that when an RSA public key is needed to authenticate this host, and it isn\*(Aqt already known, fetch it from DNS\&.
 .RE
 .PP
 \fB\-\-updown\fR\ \&\fIupdown\fR
@@ -783,7 +779,7 @@ so the flag can be safely used when no tunnel is actually specified\&. Note that
 .RS 4
 There should be Perfect Forward Secrecy \- new keying material will be generated for each IPsec SA rather than being derived from the ISAKMP SA keying material\&. Since the group to be used cannot be negotiated (a dubious feature of the standard),
 \fBpluto\fR
-will propose the same group that was used during Phase 1\&. We don\'t implement a stronger form of PFS which would require that the ISAKMP SA be deleted after the IPSEC SA is negotiated\&.
+will propose the same group that was used during Phase 1\&. We don\*(Aqt implement a stronger form of PFS which would require that the ISAKMP SA be deleted after the IPSEC SA is negotiated\&.
 .RE
 .PP
 \fB\-\-pfsgroup\fR\ \&\fImodp\-group\fR
@@ -1007,7 +1003,7 @@ will reject proposals that exceed the maximum\&.
 .PP
 \fB\-\-rekeymargin\fR\ \&\fIseconds\fR
 .RS 4
-how long before an SA\'s expiration should
+how long before an SA\*(Aqs expiration should
 \fBpluto\fR
 try to negotiate a replacement SA\&. This will only happen if
 \fBpluto\fR
@@ -1054,9 +1050,9 @@ The route form of the
 \fBwhack\fR
 command tells
 \fBpluto\fR
-to set up routing for a connection\&. Although like a traditional route, it uses an ipsec device as a virtual interface\&. Once routing is set up, no packets will be sent \(lqin the clear\(rq to the peer\'s client specified in the connection\&. A TRAP shunt eroute will be installed; if outbound traffic is caught, Pluto will initiate the connection\&. An explicit
+to set up routing for a connection\&. Although like a traditional route, it uses an ipsec device as a virtual interface\&. Once routing is set up, no packets will be sent \(lqin the clear\(rq to the peer\*(Aqs client specified in the connection\&. A TRAP shunt eroute will be installed; if outbound traffic is caught, Pluto will initiate the connection\&. An explicit
 \fBwhack\fR
-route is not always needed: if it hasn\'t been done when an IPsec SA is being installed, one will be automatically attempted\&.
+route is not always needed: if it hasn\*(Aqt been done when an IPsec SA is being installed, one will be automatically attempted\&.
 .PP
 \fB\-\-route\fR, \fB\-\-name\fR\ \&\fIconnection\-name\fR
 .RS 4
@@ -1173,7 +1169,7 @@ to start listening for IKE requests on its public interfaces\&. To avoid race co
 \fBpluto\fR
 before allowing it to listen\&. If
 \fBpluto\fR
-isn\'t listening, it is pointless to initiate negotiations, so it will refuse requests to do so\&. Whenever the listen form is used,
+isn\*(Aqt listening, it is pointless to initiate negotiations, so it will refuse requests to do so\&. Whenever the listen form is used,
 \fBpluto\fR
 looks for public interfaces and will notice when new ones have been added and when old ones have been removed\&. This is also the trigger for
 \fBpluto\fR
@@ -1242,9 +1238,9 @@ is ready to handle requests and replies via the public interfaces\&. We must tel
 .PP
 \ \&\ \&\ \&ipsec whack \-\-listen
 .PP
-If we don\'t immediately wish to bring up a secure connection between the two clients, we might wish to prevent insecure traffic\&. The routing form asks
+If we don\*(Aqt immediately wish to bring up a secure connection between the two clients, we might wish to prevent insecure traffic\&. The routing form asks
 \fBpluto\fR
-to cause the packets sent from our client to the peer\'s client to be routed through the ipsec0 device; if there is no SA, they will be discarded:
+to cause the packets sent from our client to the peer\*(Aqs client to be routed through the ipsec0 device; if there is no SA, they will be discarded:
 .PP
 \ \&\ \&\ \&ipsec whack \-\-route secret
 .PP
@@ -1306,7 +1302,7 @@ is run when bringing up a connection for a new peer client subnet (even if
 \fBprepare\-host\fR
 or
 \fBprepare\-client\fR
-was run)\&. The command should install a suitable route\&. Routing decisions are based only on the destination (peer\'s client) subnet address, unlike eroutes which discriminate based on source too\&.
+was run)\&. The command should install a suitable route\&. Routing decisions are based only on the destination (peer\*(Aqs client) subnet address, unlike eroutes which discriminate based on source too\&.
 .RE
 .PP
 \fBunroute\-host\fR or \fBunroute\-client\fR
@@ -1367,12 +1363,12 @@ is the IP address of our host\&.
 .PP
 \fBPLUTO_MY_CLIENT\fR
 .RS 4
-is the IP address / count of our client subnet\&. If the client is just the host, this will be the host\'s own IP address / max (where max is 32 for IPv4 and 128 for IPv6)\&.
+is the IP address / count of our client subnet\&. If the client is just the host, this will be the host\*(Aqs own IP address / max (where max is 32 for IPv4 and 128 for IPv6)\&.
 .RE
 .PP
 \fBPLUTO_MY_CLIENT_NET\fR
 .RS 4
-is the IP address of our client net\&. If the client is just the host, this will be the host\'s own IP address\&.
+is the IP address of our client net\&. If the client is just the host, this will be the host\*(Aqs own IP address\&.
 .RE
 .PP
 \fBPLUTO_MY_CLIENT_MASK\fR
@@ -1387,17 +1383,17 @@ is the IP address of our peer\&.
 .PP
 \fBPLUTO_PEER_CLIENT\fR
 .RS 4
-is the IP address / count of the peer\'s client subnet\&. If the client is just the peer, this will be the peer\'s own IP address / max (where max is 32 for IPv4 and 128 for IPv6)\&.
+is the IP address / count of the peer\*(Aqs client subnet\&. If the client is just the peer, this will be the peer\*(Aqs own IP address / max (where max is 32 for IPv4 and 128 for IPv6)\&.
 .RE
 .PP
 \fBPLUTO_PEER_CLIENT_NET\fR
 .RS 4
-is the IP address of the peer\'s client net\&. If the client is just the peer, this will be the peer\'s own IP address\&.
+is the IP address of the peer\*(Aqs client net\&. If the client is just the peer, this will be the peer\*(Aqs own IP address\&.
 .RE
 .PP
 \fBPLUTO_PEER_CLIENT_MASK\fR
 .RS 4
-is the mask for the peer\'s client net\&. If the client is just the peer, this will be 255\&.255\&.255\&.255\&.
+is the mask for the peer\*(Aqs client net\&. If the client is just the peer, this will be 255\&.255\&.255\&.255\&.
 .RE
 .PP
 \fBPLUTO_MY_PROTOCOL\fR
@@ -1427,12 +1423,12 @@ lists our id\&.
 .PP
 \fBPLUTO_PEER_ID\fR
 .RS 4
-Dlists our peer\'s id\&.
+Dlists our peer\*(Aqs id\&.
 .RE
 .PP
 \fBPLUTO_PEER_CA\fR
 .RS 4
-lists the peer\'s CA\&.
+lists the peer\*(Aqs CA\&.
 .RE
 .PP
 All output sent by the script to stderr or stdout is logged\&. The script should return an exit status of 0 if and only if it succeeds\&.
@@ -1448,11 +1444,11 @@ When an SA that was initiated by
 \fBpluto\fR
 has only a bit of lifetime left,
 \fBpluto\fR
-will initiate the creation of a new SA\&. This applies to ISAKMP and IPsec SAs\&. The rekeying will be initiated when the SA\'s remaining lifetime is less than the rekeymargin plus a random percentage, between 0 and rekeyfuzz, of the rekeymargin\&.
+will initiate the creation of a new SA\&. This applies to ISAKMP and IPsec SAs\&. The rekeying will be initiated when the SA\*(Aqs remaining lifetime is less than the rekeymargin plus a random percentage, between 0 and rekeyfuzz, of the rekeymargin\&.
 .PP
 Similarly, when an SA that was initiated by the peer has only a bit of lifetime left,
 \fBpluto\fR
-will try to initiate the creation of a replacement\&. To give preference to the initiator, this rekeying will only be initiated when the SA\'s remaining lifetime is half of rekeymargin\&. If rekeying is done by the responder, the roles will be reversed: the responder for the old SA will be the initiator for the replacement\&. The former initiator might also initiate rekeying, so there may be redundant SAs created\&. To avoid these complications, make sure that rekeymargin is generous\&.
+will try to initiate the creation of a replacement\&. To give preference to the initiator, this rekeying will only be initiated when the SA\*(Aqs remaining lifetime is half of rekeymargin\&. If rekeying is done by the responder, the roles will be reversed: the responder for the old SA will be the initiator for the replacement\&. The former initiator might also initiate rekeying, so there may be redundant SAs created\&. To avoid these complications, make sure that rekeymargin is generous\&.
 .PP
 One risk of having the former responder initiate is that perhaps none of its proposals is acceptable to the former initiator (they have not been used in a successful negotiation)\&. To reduce the chances of this happening, and to prevent loss of security, the policy settings are taken from the old SA (this is the case even if the former initiator is initiating)\&. These may be stricter than those of the connection\&.
 .PP
@@ -1476,7 +1472,7 @@ The ISAKMP SA is negotiated before the parties pass further identifying informat
 .PP
 Up to this point, all configuring has presumed that the IP addresses are known to all parties ahead of time\&. This will not work when either end is mobile (or assigned a dynamic IP address for other reasons)\&. We call this situation \(lqRoad Warrior\(rq\&. It is fairly tricky and has some important limitations, most of which are features of the IKE protocol\&.
 .PP
-Only the initiator may be mobile: the initiator may have an IP number unknown to the responder\&. When the responder doesn\'t recognize the IP address on the first Main Mode packet, it looks for a connection with itself as one end and
+Only the initiator may be mobile: the initiator may have an IP number unknown to the responder\&. When the responder doesn\*(Aqt recognize the IP address on the first Main Mode packet, it looks for a connection with itself as one end and
 \fB%any\fR
 as the other\&. If it cannot find one, it refuses to negotiate\&. If it does find one, it creates a temporary connection that is a duplicate except with the
 \fB%any\fR
@@ -1495,15 +1491,15 @@ will be receive an Identity Payload\&. At this point,
 \fBpluto\fR
 checks for a more appropriate connection, one with an identity for the peer that matches the payload but which would use the same keys so\-far used for authentication\&. If it finds one, it will switch to using this better connection (or a temporary derived from this, if it has
 \fB%any\fR
-for the peer\'s IP address)\&. It may even turn out that no connection matches the newly discovered identity, including the current connection; if so,
+for the peer\*(Aqs IP address)\&. It may even turn out that no connection matches the newly discovered identity, including the current connection; if so,
 \fBpluto\fR
 terminates negotiation\&.
 .PP
-Unfortunately, if preshared secret authentication is being used, the Identity Payload is encrypted using this secret, so the secret must be selected by the responder without knowing this payload\&. This limits there to being at most one preshared secret for all Road Warrior systems connecting to a host\&. RSA Signature authentications does not require that the responder know how to select the initiator\'s public key until after the initiator\'s Identity Payload is decoded (using the responder\'s private key, so that must be preselected)\&.
+Unfortunately, if preshared secret authentication is being used, the Identity Payload is encrypted using this secret, so the secret must be selected by the responder without knowing this payload\&. This limits there to being at most one preshared secret for all Road Warrior systems connecting to a host\&. RSA Signature authentications does not require that the responder know how to select the initiator\*(Aqs public key until after the initiator\*(Aqs Identity Payload is decoded (using the responder\*(Aqs private key, so that must be preselected)\&.
 .PP
 When
 \fBpluto\fR
-is responding to a Quick Mode negotiation via one of these temporary connection descriptions, it may well find that the subnets specified by the initiator don\'t match those in the temporary connection description\&. If so, it will look for a connection with matching subnets, its own host address, a peer address of
+is responding to a Quick Mode negotiation via one of these temporary connection descriptions, it may well find that the subnets specified by the initiator don\*(Aqt match those in the temporary connection description\&. If so, it will look for a connection with matching subnets, its own host address, a peer address of
 \fB%any\fR
 and matching identities\&. If it finds one, a new temporary connection is derived from this one and used for the Quick Mode negotiation of IPsec SAs\&. If it does not find one,
 \fBpluto\fR
@@ -1511,18 +1507,18 @@ terminates negotiation\&.
 .PP
 Be sure to specify an appropriate nexthop for the responder to send a message to the initiator:
 \fBpluto\fR
-has no way of guessing it (if forwarding isn\'t required, use an explicit
+has no way of guessing it (if forwarding isn\*(Aqt required, use an explicit
 \fB%direct\fR
 as the nexthop and the IP address of the initiator will be filled in; the obsolete notation
 0\&.0\&.0\&.0
 is still accepted)\&.
 .PP
 \fBpluto\fR
-has no special provision for the initiator side\&. The current (possibly dynamic) IP address and nexthop must be used in defining connections\&. These must be properly configured each time the initiator\'s IP address changes\&.
+has no special provision for the initiator side\&. The current (possibly dynamic) IP address and nexthop must be used in defining connections\&. These must be properly configured each time the initiator\*(Aqs IP address changes\&.
 \fBpluto\fR
 has no mechanism to do this automatically\&.
 .PP
-Although we call this Road Warrior Support, it could also be used to support encrypted connections with anonymous initiators\&. The responder\'s organization could announce the preshared secret that would be used with unrecognized initiators and let anyone connect\&. Of course the initiator\'s identity would not be authenticated\&.
+Although we call this Road Warrior Support, it could also be used to support encrypted connections with anonymous initiators\&. The responder\*(Aqs organization could announce the preshared secret that would be used with unrecognized initiators and let anyone connect\&. Of course the initiator\*(Aqs identity would not be authenticated\&.
 .PP
 If any Road Warrior connections are supported,
 \fBpluto\fR
@@ -1540,7 +1536,7 @@ accepts several optional arguments, useful mostly for debugging\&. Except for
 \fB\-\-interface\fR \fIinterfacename\fR
 .RS 4
 specifies that the named real public network interface should be considered\&. The interface name specified should not be
-\fBipsec\fR\fIN\fR\&. If the option doesn\'t appear, all interfaces are considered\&. To specify several interfaces, use the option once for each\&. One use of this option is to specify which interface should be used when two or more share the same IP address\&.
+\fBipsec\fR\fIN\fR\&. If the option doesn\*(Aqt appear, all interfaces are considered\&. To specify several interfaces, use the option once for each\&. One use of this option is to specify which interface should be used when two or more share the same IP address\&.
 .RE
 .PP
 \fB\-\-ikeport\fR \fIport\-number\fR
@@ -1573,7 +1569,7 @@ specifies the file for authentication secrets (default:
 \fB\-\-adns\fR \fIpath to adns\fR, \fB\-\-lwdnsq\fR \fIpath to lwdnsq\fR
 .RS 4
 specifies where to find
-\fBpluto\fR\'s helper program for asynchronous DNS lookup\&.
+\fBpluto\fR\*(Aqs helper program for asynchronous DNS lookup\&.
 \fBpluto\fR
 can be built to use one of two helper programs:
 \fB_pluto_adns\fR
@@ -1659,7 +1655,7 @@ show the structure of output messages
 \fB\-\-debug\-control\fR
 .RS 4
 show
-\fBpluto\fR\'s decision making
+\fBpluto\fR\*(Aqs decision making
 .RE
 .PP
 \fB\-\-debug\-controlmore\fR
@@ -1677,21 +1673,21 @@ decision making
 \fB\-\-debug\-klips\fR
 .RS 4
 show
-\fBpluto\fR\'s interaction with
+\fBpluto\fR\*(Aqs interaction with
 \fBKLIPS\fR
 .RE
 .PP
 \fB\-\-debug\-pfkey\fR
 .RS 4
 show
-\fBpluto\fR\'s
+\fBpluto\fR\*(Aqs
 \fBPFKEY\fRinterface communication
 .RE
 .PP
 \fB\-\-debug\-dns\fR
 .RS 4
 show
-\fBpluto\fR\'s interaction with
+\fBpluto\fR\*(Aqs interaction with
 \fBDNS\fR
 for KEY and TXT records
 .RE
@@ -1699,7 +1695,7 @@ for KEY and TXT records
 \fB\-\-debug\-dpd\fR
 .RS 4
 show
-\fBpluto\fR\'s
+\fBpluto\fR\*(Aqs
 \fBDead Peer Detection\fR
 handling
 .RE
@@ -1707,7 +1703,7 @@ handling
 \fB\-\-debug\-natt\fR
 .RS 4
 show
-\fBpluto\fR\'s
+\fBpluto\fR\*(Aqs
 \fBNAT Traversal\fR
 handling
 .RE
@@ -1716,7 +1712,7 @@ handling
 .RS 4
 show why
 \fBpluto\fR
-didn\'t find a suitable DNS TXT record to authorize opportunistic initiation
+didn\*(Aqt find a suitable DNS TXT record to authorize opportunistic initiation
 .RE
 .PP
 \fB\-\-debug\-oppoinfo\fR
@@ -1753,18 +1749,18 @@ to only display raw bytes:
 .PP
 whack \-\-debug\-raw
 .PP
-For testing, SSH\'s IKE test page is quite useful:
+For testing, SSH\*(Aqs IKE test page is quite useful:
 .PP
 \fI\m[blue]\fBhttp://isakmp\-test\&.ssh\&.fi/\fR\m[]\fR
 .PP
-Hint: ISAKMP SAs are often kept alive by IKEs even after the IPsec SA is established\&. This allows future IPsec SA\'s to be negotiated directly\&. If one of the IKEs is restarted, the other may try to use the ISAKMP SA but the new IKE won\'t know about it\&. This can lead to much confusion\&.
+Hint: ISAKMP SAs are often kept alive by IKEs even after the IPsec SA is established\&. This allows future IPsec SA\*(Aqs to be negotiated directly\&. If one of the IKEs is restarted, the other may try to use the ISAKMP SA but the new IKE won\*(Aqt know about it\&. This can lead to much confusion\&.
 \fBpluto\fR
 is not yet smart enough to get out of such a mess\&.
-.SS "Pluto\'s Behaviour When Things Go Wrong"
+.SS "Pluto\*(Aqs Behaviour When Things Go Wrong"
 .PP
 When
 \fBpluto\fR
-doesn\'t understand or accept a message, it just ignores the message\&. It is not yet capable of communicating the problem to the other IKE daemon (in the future it might use Notifications to accomplish this in many cases)\&. It does log a diagnostic\&.
+doesn\*(Aqt understand or accept a message, it just ignores the message\&. It is not yet capable of communicating the problem to the other IKE daemon (in the future it might use Notifications to accomplish this in many cases)\&. It does log a diagnostic\&.
 .PP
 When
 \fBpluto\fR
@@ -1774,9 +1770,9 @@ When pluto gets a message that it has already seen, there are many cases when it
 .PP
 Combine these three rules, and you can explain many apparently mysterious behaviours\&. In a
 \fBpluto\fR
-log, retrying isn\'t usually the interesting event\&. The critical thing is either earlier (\fBpluto\fR
-got a message which it didn\'t like and so ignored, so it was still awaiting an acceptable message and got impatient) or on the other system (\fBpluto\fR
-didn\'t send a reply because it wasn\'t happy with the previous message)\&.
+log, retrying isn\*(Aqt usually the interesting event\&. The critical thing is either earlier (\fBpluto\fR
+got a message which it didn\*(Aqt like and so ignored, so it was still awaiting an acceptable message and got impatient) or on the other system (\fBpluto\fR
+didn\*(Aqt send a reply because it wasn\*(Aqt happy with the previous message)\&.
 .SS "Notes"
 .PP
 If
@@ -1798,7 +1794,7 @@ and another IKE implementation to interoperate\&.
 .PP
 In Phase 1, only Main Mode is supported\&. We are not sure that Aggressive Mode is secure\&. For one thing, it does not support identity protection\&. It may allow more severe Denial Of Service attacks\&.
 .PP
-No Informational Exchanges are supported\&. These are optional and since their delivery is not assured, they must not matter\&. It is the case that some IKE implementations won\'t interoperate without Informational Exchanges, but we feel they are broken\&.
+No Informational Exchanges are supported\&. These are optional and since their delivery is not assured, they must not matter\&. It is the case that some IKE implementations won\*(Aqt interoperate without Informational Exchanges, but we feel they are broken\&.
 .PP
 No Informational Payloads are supported\&. These are optional, but useful\&. It is of concern that these payloads are not authenticated in Phase 1, nor in those Phase 2 messages authenticated with HASH(3)\&.
 .PP
@@ -1863,7 +1859,7 @@ PFS is acceptable, and will be proposed if the \-\-pfs flag was specified\&. The
 responds to
 \fBSIGHUP\fR
 by issuing a suggestion that ``\fBwhack\fR
-\-\-listen\'\' might have been intended\&.
+\-\-listen\*(Aq\*(Aq might have been intended\&.
 .PP
 \fBPluto\fR
 exits when it recieves
@@ -1957,7 +1953,7 @@ Kai Martius (admin@imib\&.med\&.tu\-dresden\&.de) contributed the initial versio
 .PP
 Richard Guy Briggs <rgb@conscoop\&.ottawa\&.on\&.ca> and Peter Onion <ponion@srd\&.bt\&.co\&.uk> added the PFKEY2 support\&.
 .PP
-We gratefully acknowledge that we use parts of Eric Young\'s
+We gratefully acknowledge that we use parts of Eric Young\*(Aqs
 \fIlibdes\fR
 package; see
 \fI\&.\&./libdes/COPYRIGHT\fR\&.
@@ -1967,7 +1963,7 @@ package; see
 is a work\-in\-progress\&. It currently has many limitations\&. For example, it ignores notification messages that it receives, and it generates only Delete Notifications and those only for IPSEC SAs\&.
 .PP
 \fBpluto\fR
-does not support the Commit Flag\&. The Commit Flag is a bad feature of the IKE protocol\&. It isn\'t protected \-\- neither encrypted nor authenticated\&. A man in the middle could turn it on, leading to DoS\&. We just ignore it, with a warning\&. This should let us interoperate with implementations that insist on it, with minor damage\&.
+does not support the Commit Flag\&. The Commit Flag is a bad feature of the IKE protocol\&. It isn\*(Aqt protected \-\- neither encrypted nor authenticated\&. A man in the middle could turn it on, leading to DoS\&. We just ignore it, with a warning\&. This should let us interoperate with implementations that insist on it, with minor damage\&.
 .PP
 \fBpluto\fR
 does not check that the SA returned by the Responder is actually one that was proposed\&. It only checks that the SA is acceptable\&. The difference is not large, but can show up in attributes such as SA lifetime\&.

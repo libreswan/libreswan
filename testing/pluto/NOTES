@@ -34,8 +34,4 @@ Example of a test (run in this directory):
 	export PLUTO=`pwd`/../../programs/pluto/pluto
 	export WHACK=`pwd`/../../programs/pluto/whack
 
-	# if using lwdnsq (i.e. if Makefile.inc includes USE_LWRES=true):
-		export USE_LWRES=true
-		export IPSEC_EXECDIR=`pwd`/../../programs/lwdnsq
-
 	doauto

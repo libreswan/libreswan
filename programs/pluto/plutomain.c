@@ -404,11 +404,7 @@ main(int argc, char **argv)
 	    { "coredir", required_argument, NULL, 'C' },
 	    { "ipsecdir", required_argument, NULL, 'f' },
 	    { "ipsec_dir", required_argument, NULL, 'f' },
-#ifdef USE_LWRES
-	    { "lwdnsq", required_argument, NULL, 'a' },
-#else /* !USE_LWRES */
 	    { "adns", required_argument, NULL, 'a' },
-#endif /* !USE_LWRES */
 #ifdef NAT_TRAVERSAL
 	    { "nat_traversal", no_argument, NULL, '1' },
 	    { "keep_alive", required_argument, NULL, '2' },

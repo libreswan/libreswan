@@ -273,14 +273,6 @@ RH_KERNELSRC?=/lib/modules/2.6.9-1.681_FC3/build
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
 
-# LWRES is the lightweight resolver, part of BIND9
-# We test with LWRES, but ship with it off, as it requires
-# additional headers not present on most systems.
-# Note you need a locally running bind9 nameserver with lwres{} enabled
-# to use this, or have the "lwres" package installed and running.
-# This only affects conns that use DNS for keys in lookups.
-USE_LWRES?=false
-
 # Do a new lookup every time a connection is (re)started. This works better
 # on hosts with some dyndns service, since DPD will cause a new dns lookup,
 # but it could be a potential security issue if receiving spoofed dns.
@@ -459,12 +451,7 @@ endif
 HAVE_BROKEN_POPEN?=false
 
 # For systems with no fork (uclibc nommu)
-# requires  USE_LWRES=false
 HAVE_NO_FORK?=false
-
-ifeq ($(HAVE_NO_FORK),true)
-USE_LWRES=false
-endif
 
 NONINTCONFIG=oldconfig
 
@@ -541,14 +528,6 @@ LIBRESWANLIB=${OBJDIRTOP}/lib/liblibreswan/liblibreswan.a
 PLUTOLIB=${OBJDIRTOP}/lib/libpluto/libpluto.a
 OSWLOGLIB=${OBJDIRTOP}/lib/liblibreswan/liboswlog.a
 
-LWRESDIR=${LIBRESWANSRCDIR}/lib/liblwres
-LIBLWRES=${OBJDIRTOP}/lib/liblwres/liblwres.a
-LIBDNS=${OBJDIRTOP}/lib/libdns/libdns.a
-LIBISC=${OBJDIRTOP}/lib/libisc/libisc.a
-LIBBSDPFKEY=${OBJDIRTOP}/lib/libbsdpfkey/libbsdpfkey.a
-ISCARCH?=unix
-ISCHOSTARCH?=unix
-
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
 LIBDESLITE:=${OBJDIRTOP}/lib/libcrypto/libdes/libdes.a
 LIBOSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liboswcrypto/liboswcrypto.a
@@ -579,8 +558,8 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
 export LIBLIBRESWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
-export LIBLIBRESWANDIR LIBRESWANLIB OSWLOGLIB PLUTOLIB LWRESDIR LIBLWRES LIBDNS
-export LIBISC ISCARCH ISCHOSTARCH LIBDESSRCDIR LIBDESLITE LIBAES
+export LIBLIBRESWANDIR LIBRESWANLIB OSWLOGLIB PLUTOLIB 
+export LIBDESSRCDIR LIBDESLITE LIBAES
 export LIBMD5 LIBMD2 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
 export LIBOSWCRYPTO

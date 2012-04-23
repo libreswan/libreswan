@@ -12,6 +12,3 @@ USE_KLIPS=false
 USE_NETKEY=false
 USE_WIN2K=true
 BUILD_KLIPS=false
-
-ISCARCH=cygwin
-

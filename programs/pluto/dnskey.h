@@ -51,14 +51,7 @@ struct adns_continuation {
 #endif
     struct adns_continuation *previous, *next;
     struct pubkey *last_info;  /* the last structure we accumulated */
-#ifdef USE_LWRES
-    bool used;	/* have we called the cont_fn yet? */
-    struct {
-	char name_buf[NS_MAXDNAME + 2];
-    } query;
-#else /* ! USE_LWRES */
     struct adns_query query;
-#endif /* ! USE_LWRES */
 };
 
 extern err_t start_adns_query(const struct id *id	/* domain to query */

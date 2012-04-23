@@ -77,35 +77,6 @@ if [ ! -x "$WHACK" -a "$WHACK" != "ipsec whack" ] ; then
 	#exit 1
 fi
 
-export LWDNSQOPTION=""
-case "${USE_LWRES:-true}" in
-true)
-	if [ -z "${LWDNSQ:-}" ]
-	then
-		if [ -x ${MYBOX:-}/${OBJDIR}programs/lwdnsq/lwdnsq ]
-		then
-			LWDNSQ=$MYBOX/${OBJDIR}programs/lwdnsq/lwdnsq
-		elif [ -x programs/lwdnsq/lwdnsq ]
-		then
-			LWDNSQ=`pwd`/programs/lwdnsq/lwdnsq
-		elif [ -x `pwd`/../../programs/lwdnsq/lwdnsq ]
-		then
-			LWDNSQ=`pwd`/../../programs/lwdnsq/lwdnsq
-		elif [ -x `dirname "$PLUTO"`/lwdnsq ] ; then
-			LWDNSQ=`dirname "$PLUTO"`/lwdnsq
-                elif [ "$PLUTO" = "ipsec pluto" ]; then
-			LWDNSQ=""
-		else
-			echo "ERROR: Where is lwdnsq?  Not in \"$LWDNSQ\"; set \$LWDNSQ correctly." >&2
-			#exit 1
-		fi
-	fi
-	if [ -n "${LWDNSQ}" ];	then
-	   LWDNSQOPTION="--lwdnsq $LWDNSQ"
-	   export LWDNSQ LWDNSQOPTION
-        fi
-	;;
-esac
 
 set -u
 

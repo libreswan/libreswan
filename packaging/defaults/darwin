@@ -8,7 +8,6 @@ USE_KLIPS=false
 USE_NETKEY=false
 USE_WIN2K=false
 BUILD_KLIPS=false
-USE_LWRES=false
 # no longer needed now the bison/yacc options got updated
 USE_YACC=false
 
@@ -19,10 +18,6 @@ USE_PFKEYv2=true
 
 # build modules, etc. for KLIPS.
 BUILD_KLIPS=false
-
-
-ISCARCH=unix
-ISCHOSTARCH=unix
 
 #not sure where this is supposed to come from, but the linux port has AR here
 RANLIB=ranlib

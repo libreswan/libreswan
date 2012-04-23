@@ -19,10 +19,6 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 SUBDIRS=
 
-ifeq ($(USE_LWRES),true)
-SUBDIRS+=lwdnsq
-endif
-
 ifeq ($(USE_IPSECPOLICY),true)
 SUBDIRS+=showpolicy
 endif

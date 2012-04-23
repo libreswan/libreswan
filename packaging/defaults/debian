@@ -29,8 +29,3 @@ USE_KLIPS?=true
 
 # build modules, etc. for KLIPS.
 BUILD_KLIPS?=true
-
-# ISC code should use unix definitions.
-ISCARCH=unix
-ISCHOSTARCH=unix
-

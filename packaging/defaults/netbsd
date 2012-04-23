@@ -30,9 +30,5 @@ BUILD_KLIPS=false
 
 CFLAGS+=-DHAVE_SETPROCTITLE -DSCANDIR_HAS_CONST
 
-# ISC code should use unix definitions.
-ISCARCH=unix
-ISCHOSTARCH=unix
-
 USERLINK=-L/usr/local/lib -lcrypt
 

@@ -1056,19 +1056,6 @@
       store can be given to pluto via the <option>--ocspuri</option>
       option.</para>
 
-      <para>Pluto can use the BIND9 secure resolver, which means it has
-      support for DNSSEC, using the BIND9 <emphasis remap="I">lwres
-      {}</emphasis> interface, see <citerefentry>
-          <refentrytitle>named.conf</refentrytitle>
-
-          <manvolnum>5</manvolnum>
-        </citerefentry>. Pluto can also use the old <emphasis
-      remap="I">adns</emphasis> interface if there is no BIND9 running with
-      <emphasis remap="I">lwres {}</emphasis> on the host, but then pluto
-      cannot do any DNSSEC processing. Pluto forks and starts these DNS
-      helpers in separate children. The options <option>--lwdnsq</option> and
-      <option>--adns</option> invoke these resolvers.</para>
-
       <para>Pluto can also use helper children to off-load cryptographic
       operations. This behavior can be fine tuned using the
       <option>--nhelpers</option>. Pluto will start <emphasis

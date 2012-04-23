@@ -15,7 +15,6 @@ USE_MAST=false
 USE_KLIPS=false
 USE_NETKEY=false
 USE_WIN2K=false
-USE_LWRES=false
 USE_YACC=false
 
 
@@ -25,10 +24,6 @@ USE_BSDKAME=true
 BUILD_KLIPS=false
 
 CFLAGS+=-DHAVE_SETPROCTITLE
-
-# ISC code should use unix definitions.
-ISCARCH=unix
-ISCHOSTARCH=unix
 
 USERLINK=-L/usr/local/lib -lcrypt
 

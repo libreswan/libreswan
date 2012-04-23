@@ -19,10 +19,6 @@ srcdir?=$(shell pwd)/
 
 SUBDIRS=liblibreswan libpluto libcrypto libwhack libipsecconf
 
-ifeq ($(USE_LWRES),true)
-SUBDIRS+=libisc libdns liblwres
-endif
-
 ifeq ($(USE_IPSECPOLICY),true)
 SUBDIRS+=libipsecpolicy
 endif

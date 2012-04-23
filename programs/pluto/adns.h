@@ -15,7 +15,7 @@
 #ifndef _ADNS_H
 #define _ADNS_H
 
-#ifndef USE_LWRES	/* whole file! */
+#ifndef UNBOUND	/* whole file! */
 
 #include <resolv.h>
 
@@ -75,6 +75,6 @@ enum helper_exit_status {
     HES_BAD_MAGIC,	/* .magic field wrong */
 };
 
-#endif /* !USE_LWRES */
+#endif /* !USE_UNBOUND */
 
 #endif /* _ADNS_H */
