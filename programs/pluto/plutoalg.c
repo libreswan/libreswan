@@ -609,8 +609,7 @@ kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg, struct alg_inf
 	 * if specified in "esp" string
 	 */
 	ealg_insecure=(key_len < 128) ;
-	if (ealg_insecure || 
-		(alg_info && alg_info->alg_info_flags & ALG_INFO_F_STRICT))
+	if (ealg_insecure || alg_info)
 	{
 		int i;
 		struct esp_info *esp_info;

@@ -128,8 +128,7 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group, 
 	 */
 	int ealg_insecure=(key_len < 128) ;
 
-	if (ealg_insecure || 
-		(alg_info_ike && alg_info_ike->alg_info_flags & ALG_INFO_F_STRICT))
+	if (ealg_insecure || alg_info_ike)
 	{
 		int i;
 		struct ike_info *ike_info;

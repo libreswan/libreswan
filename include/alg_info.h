@@ -35,7 +35,6 @@ enum parser_state_esp {
 	ST_AK,		/* auth. key length */
 	ST_AK_END,
 	ST_MODP,	/* modp spec */
-	ST_FLAG_STRICT,
 	ST_END,
 	ST_EOF,
 	ST_ERR
@@ -86,7 +85,6 @@ struct ike_info {
 #define ALG_INFO_COMMON \
 	int alg_info_cnt;		\
 	int ref_cnt;			\
-	unsigned alg_info_flags;	\
 	unsigned alg_info_protoid
 
 struct alg_info {
@@ -112,9 +110,6 @@ struct alg_info_ike {
 #define esp_aalg_id auth
 #define esp_ealg_keylen enckeylen	/* bits */
 #define esp_aalg_keylen authkeylen	/* bits */
-
-/*	alg_info_flags bits */
-#define ALG_INFO_F_STRICT	0x01
 
 extern enum ipsec_authentication_algo
 alg_info_esp_aa2sadb(enum ikev1_auth_attribute auth);

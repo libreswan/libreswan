@@ -349,7 +349,6 @@ static const char *parser_state_esp_names[] = {
 	"ST_AK",
 	"ST_AK_END",
 	"ST_MOPD",
-	"ST_FLAG_STRICT",
 	"ST_END",
 	"ST_EOF",
 	"ST_ERR"
@@ -377,7 +376,6 @@ parser_machine(struct parser_context *p_ctx)
 	/* chars that end algo strings */
 	switch(ch){
 	case 0:		/* end-of-string */
-	case '!':	/* flag as strict algo list */
 	case ',':	/* algo string separator */
 	    switch(p_ctx->state) {
 	    case ST_EA:
@@ -385,19 +383,17 @@ parser_machine(struct parser_context *p_ctx)
 	    case ST_AA:
 	    case ST_AK: 
 	    case ST_MODP:
-	    case ST_FLAG_STRICT:
-		{
-		    enum parser_state_esp next_state=0;
-		    switch(ch) {
-		    case 0:   next_state=ST_EOF;break;
-		    case ',': next_state=ST_END;break;
-		    case '!': next_state=ST_FLAG_STRICT;break;
-		    }
-		    /* ch? parser_set_state(p_ctx, ST_END) : parser_set_state(p_ctx, ST_EOF) ; */
-		    parser_set_state(p_ctx, next_state);
-		    goto out;
-		}
 	    default:
+               {
+                   enum parser_state_esp next_state=0;
+                   switch(ch) {
+                   case 0:   next_state=ST_EOF;break;
+                   case ',': next_state=ST_END;break;
+                   }
+                   /* ch? parser_set_state(p_ctx, ST_END) : parser_set_state(p_ctx, ST_EOF) ; */
+                   parser_set_state(p_ctx, next_state);
+                   goto out;
+               }
 		p_ctx->err="String ended with invalid char";
 		goto err;
 	    }
@@ -533,14 +529,6 @@ parser_machine(struct parser_context *p_ctx)
 	    }
 	    p_ctx->err="Non alphanum char found after in modp string";
 	    goto err;
-	case ST_FLAG_STRICT:
-	    if (ch == 0) {
-		parser_set_state(p_ctx, ST_END);
-	    }
-	    p_ctx->err="Flags character(s) must be at end of whole string";
-	    goto err;
-	    
-	    /* XXX */
 	case ST_END:
 	case ST_EOF:
 	case ST_ERR:
@@ -705,10 +693,6 @@ alg_info_parse_str (struct alg_info *alg_info
 	    ctx.ch=*ptr++;
 	    ret= parser_machine(&ctx);
 	    switch(ret) {
-	    case ST_FLAG_STRICT:
-		alg_info->alg_info_flags |= ALG_INFO_F_STRICT;
-		break;
-
 	    case ST_END:
 	    case ST_EOF:
 		/*
@@ -1075,18 +1059,6 @@ alg_info_snprint(char *buf, int buflen
 		buflen=0;
         }
 	goto out;
-    }
-    if(buflen > 0){
-	np=snprintf(ptr, buflen, "; flags=%s",
-		alg_info->alg_info_flags&ALG_INFO_F_STRICT?
-		"strict":"-strict");
-    	if(np < buflen) {
-		ptr+=np;
-		buflen-=np;
-    	} else {
-		ptr+=buflen;
-		buflen=0;
-    	}
     }
 
  out:
