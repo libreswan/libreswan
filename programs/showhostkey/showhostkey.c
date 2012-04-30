@@ -34,7 +34,7 @@
 #include <getopt.h>
 #include <fcntl.h>
 #include <netinet/in.h>
-#include <libreswan.h>
+#include <openswan.h>
 #include <sys/utsname.h>
 
 #include <arpa/nameser.h>
@@ -57,13 +57,12 @@
 # include <prinit.h>
 #endif
 
-char usage[] = "Usage: ipsec showhostkey [--ipseckey {gateway}] [--left ] [--right ]\n"
-             "                         [--dump ] [--list ] [--x509self]\n"
-             "                         [--x509req ] [--x509cert ]      \n"
-             "                         [ --txt gateway ] [--dhclient ] \n"
-             "                         [ --file secretfile ] \n"
-             "                         [ --keynum count ] [ --id identity ]\n"
-             "                         [ --rsaid keyid ] [--verbose] [--version]\n";
+char usage[] = "Usage: ipsec showhostkey [--ipseckey] | [--left ] | [--right ]\n"
+             "                         [--prio <priority> ] [--gateway <gateway>] \n"
+             "                         [--dump ] [--list ] \n"
+             "                         [--dhclient ] [--file secretfile ] \n"
+             "                         [--keynum count ] [--id identity ]\n"
+             "                         [--rsaid keyid ] [--verbose] [--version]\n";
 
 struct option opts[] = {
   {"help",	no_argument,	NULL,	'?',},
@@ -71,11 +70,8 @@ struct option opts[] = {
   {"right",	no_argument,	NULL,	'r',},
   {"dump",	no_argument,	NULL,	'D',},
   {"list",	no_argument,	NULL,	'L',},
-  {"x509self",	no_argument,	NULL,	's',},
-  {"x509req",	no_argument,	NULL,	'R',},
-  {"x509cert",	no_argument,	NULL,	'c',},
-  {"txt",	required_argument,NULL,	't',},
-  {"ipseckey",	required_argument,NULL,	'K',},
+  {"ipseckey",	no_argument,	NULL,	'K',},
+  {"gateway",	required_argument,NULL,	'g',},
   {"dhclient",	no_argument,    NULL,	'd',},
   {"file",	required_argument,NULL,	'f',},
   {"keynum",	required_argument,NULL,	'n',},
@@ -269,8 +265,7 @@ unsigned char *pubkey_to_rfc3110(const struct RSA_public_key *pub,
 void show_dnskey(struct secret *s
 		 , char *idname
 		 , int precedence
-		 , char *gateway
-		 , int rr_type)
+		 , char *gateway)
 {
     char qname[256];
     char base64[8192];
@@ -290,20 +285,8 @@ void show_dnskey(struct secret *s
 
     datatot(keyblob, keybloblen, 's', base64, sizeof(base64));
 
-    switch(rr_type) {
-    case ns_t_key:
-	printf("key record type has been obsoleted\n");
-	break;
-
-    case ns_t_ipseckey:
-	printf("ipseckey record type not yet implemented\n");
-	break;
-
-    case ns_t_txt:
-	printf("; info about key: %s\n", 
-	       pks->u.RSA_private_key.pub.keyid);
-	printf("%s.    IN    TXT    \"X-IPsec-Server(%d)=%s \" ",
-	       qname, precedence, gateway);
+	printf("%s.    IN    IPSECKEY  %d %d 2 %s ",
+	       qname, precedence, (gateway == NULL) ? 0 : 1 , (gateway == NULL) ? "." : gateway);
 	{
 	    int len = strlen(base64);
 	    char *p=base64+2;  /* skip 0s */
@@ -322,8 +305,6 @@ void show_dnskey(struct secret *s
 	    }
 	}
 	printf("\n");
-	break;
-    }
 }
      
 void show_confkey(struct secret *s
@@ -372,10 +353,6 @@ int main(int argc, char *argv[])
     bool right_flg=FALSE;
     bool dump_flg=FALSE;
     bool list_flg=FALSE;
-    bool x509self_flg=FALSE;
-    bool x509req_flg=FALSE;
-    bool x509cert_flg=FALSE;
-    bool txt_flg=FALSE;
     bool ipseckey_flg=FALSE;
     bool dhclient_flg=FALSE;
     char *gateway = NULL;
@@ -426,8 +403,8 @@ int main(int argc, char *argv[])
 	case 'c':
 	    break;
 
-	case 't':
-	    txt_flg=TRUE;
+	case 'g':
+	    ipseckey_flg=TRUE;
 	    gateway=clone_str(optarg, "gateway");
 	    break;
 
@@ -471,14 +448,12 @@ int main(int argc, char *argv[])
     }
     
     if(!left_flg && !right_flg && !dump_flg && !list_flg
-       && !x509self_flg && !x509req_flg && !x509cert_flg && !txt_flg
        && !ipseckey_flg && !dhclient_flg) {
 	fprintf(stderr, "You must specify some operation\n");
 	goto usage;
     }
     
     if((left_flg + right_flg + dump_flg + list_flg
-	+ x509self_flg + x509req_flg + x509cert_flg + txt_flg
 	+ ipseckey_flg + dhclient_flg) > 1) {
 	fprintf(stderr, "You must specify only one operation\n");
 	goto usage;
@@ -566,16 +541,9 @@ int main(int argc, char *argv[])
 	exit(0);
     }
 
-    if(ipseckey_flg || txt_flg) {
-	int rr_type = ns_t_invalid;
-	if(ipseckey_flg) {
-	    rr_type = ns_t_ipseckey;
-	} else if(txt_flg) {
-	    rr_type = ns_t_txt;
-	}
+    if(ipseckey_flg) {
 	show_dnskey(s, keyid,
-		    precedence, gateway,
-		    rr_type);
+		    precedence, gateway);
     }
 
     exit(0);
