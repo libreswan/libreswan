@@ -6,7 +6,7 @@
 <refmeta>
 <refentrytitle>IPSEC_SHOWHOSTKEY</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>3 December 2005</refmiscinfo>
+<refmiscinfo class='date'>29 April 2012</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec showhostkey</refname>
@@ -19,17 +19,15 @@
   <command>ipsec</command>    
 
     <arg choice='plain'><replaceable>showhostkey</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'>--ipseckey </arg><arg choice='opt'><replaceable>gateway</replaceable></arg></arg>
+    <arg choice='opt'>--ipseckey </arg>
     <arg choice='opt'>--left </arg>
     <arg choice='opt'>--right </arg>
     <arg choice='opt'>--dump </arg>
     <arg choice='opt'>--verbose </arg>
     <arg choice='opt'>--version </arg>
     <arg choice='opt'>--list </arg>
-    <arg choice='opt'>--x509self </arg>
-    <arg choice='opt'>--x509req </arg>
-    <arg choice='opt'>--x509cert </arg>
-    <arg choice='opt'><arg choice='plain'>--txt </arg><arg choice='plain'><replaceable>gateway</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--gateway </arg><arg choice='plain'><replaceable>gateway</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>--precedence </arg><arg choice='plain'><replaceable>precedence</replaceable></arg></arg>
     <arg choice='opt'>--dhclient </arg>
     <arg choice='opt'><arg choice='plain'>--file </arg><arg choice='plain'><replaceable>secretfile</replaceable></arg></arg>
     <arg choice='opt'><arg choice='plain'>--keynum </arg><arg choice='plain'><replaceable>count</replaceable></arg></arg>
@@ -47,32 +45,6 @@ using the host key information stored in
 In general only the super-user can run this command,
 since only he can read <emphasis remap='I'>ipsec.secrets</emphasis>.</para>
 
-<para>The <option>--txt</option>
-option causes the output to be in opportunistic-encryption DNS TXT record
-format, with the specified
-<emphasis remap='I'>gateway</emphasis> value.
-
-If information about how the key was generated is available, that is provided
-as a DNS-file comment.  For example,
-<option>--txt 10.11.12.13</option>
-might give (with the key data trimmed for clarity):</para>
-
-<literallayout remap='.nf'>
-  ; RSA 2048 bits   xy.example.com   Sat Apr 15 13:53:22 2000
-      IN TXT  "X-IPsec-Server(10)=10.11.12.13 AQOF8tZ2...+buFuFn/"
-</literallayout> <!-- .fi -->
-
-<para>No name is supplied in the TXT record because there are too many possibilities, depending on how it will be used.
-If the text string is longer than 255 bytes, it is split up into multiple
-strings (matching the restrictions of the DNS TXT binary format).
-
-If any split is needed, the first split will be at the start of the key:
-this increases the chances that later hand editing will work.</para>
-
-<para>The <option>--version</option> option causes the version of the binary to be emitted, and nothing else.</para>
-
-<para>The <option>--verbose</option> may be present one or more times. Each occurance increases the verbosity level. </para>
-
 <para>The
 <option>--left</option>
 and
@@ -84,8 +56,7 @@ format, as a
 or
 <emphasis remap='B'>rightrsasigkey</emphasis>
 parameter respectively.
-Again, generation information is included if available.
-For example,
+Generation information is included if available.  For example,
 <option>--left</option>
 might give (with the key data trimmed down for clarity):</para>
 
@@ -94,33 +65,32 @@ might give (with the key data trimmed down for clarity):</para>
   leftrsasigkey=0sAQOF8tZ2...+buFuFn/
 </literallayout> <!-- .fi -->
 
+<para>The <option>--ipseckey</option>
+option causes the output to be in opportunistic-encryption DNS IPSECKEY record
+format (RFC 4025). A gateway can be specified with the <option>--gateway</option>,
+which currently supports IPv4 and IPv6 addresses. The host name is the one included in the key information
+(or, if that is not available, the output of
+<userinput>hostname&nbsp;--fqdn</userinput>),
+with a <emphasis remap='B'>.</emphasis> appended. 
+
+For example,
+<option>--ipseckey --gateway 10.11.12.13</option>
+might give (with the key data trimmed for clarity):</para>
+
+<literallayout remap='.nf'>
+      IN    IPSECKEY  10 1 2 10.11.12.13  AQOF8tZ2...+buFuFn/"
+</literallayout> <!-- .fi -->
+
+<para>The <option>--version</option> option causes the version of the binary to be emitted, and nothing else.</para>
+
+<para>The <option>--verbose</option> may be present one or more times. Each occurance increases the verbosity level. </para>
+
 <para>The <option>--dhclient</option>
 option cause the output to be suitable for inclusion in
 <citerefentry><refentrytitle>dhclient.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 as part of configuring WAVEsec.
 See &lt;<ulink url='http://www.wavesec.org'>http://www.wavesec.org</ulink>&gt;.</para>
 
-<para>If <option>--ipseckey</option>
-is specified,
-the output format is the text form of a DNS IPSECKEY record (see RFC4025);
-the host name is the one included in the key information
-(or, if that is not available, the output of
-<userinput>hostname&nbsp;--fqdn</userinput>),
-with a <emphasis remap='B'>.</emphasis> appended. The gateway information,
-if provided, is is included, otherwise, the gateway is assumed to be self,
-and to be of type FQDN.
-Generation information is included if available.
-For example (with the key data trimmed down for clarity):</para>
-
-<literallayout remap='.nf'>
-  ; RSA 2048 bits   xy.example.com   Sat Apr 15 13:53:22 2000
-  xy.example.com.   IN   IPSECKEYKEY   floyd albert
-</literallayout> <!-- .fi -->
-
-<literallayout remap='.nf'>
-  ; RSA 2048 bits   xy.example.com   Sat Apr 15 13:53:22 2000
-  xy.example.com.   IN   KEY   0x4200 4 1 AQOF8tZ2...+buFuFn/
-</literallayout> <!-- .fi -->
 
 <para>Normally, the default key for this host
 (the one with no host identities specified for it) is the one extracted.
@@ -168,7 +138,7 @@ needs.</para>
 <refsect1 id='history'><title>HISTORY</title>
 <para>Written for the Linux FreeS/WAN project
 &lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
-by Henry Spencer.</para>
+by Henry Spencer. Updated by Paul Wouters for the IPSECKEY format.</para>
 </refsect1>
 
 <refsect1 id='bugs'><title>BUGS</title>
@@ -180,14 +150,6 @@ should be smart enough to run the existing key through
 with the
 <option>--oldkey</option>
 option, to generate a suitable output line.</para>
-
-<para>The need to specify the gateway address (etc.) for
-<option>--txt</option>
-is annoying, but there is no good way to determine it automatically.</para>
-
-<para>There should be a way to specify the priority value for TXT records;
-currently it is hardwired to
-<literal>10</literal>.</para>
 
 <para>The
 <option>--id</option>

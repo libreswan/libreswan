@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC_SHOWHOSTKEY
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/06/2010
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 04/29/2012
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
-.TH "IPSEC_SHOWHOSTKEY" "8" "10/06/2010" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC_SHOWHOSTKEY" "8" "04/29/2012" "[FIXME: source]" "[FIXME: manual]"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -19,45 +28,16 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-ipsec_showhostkey \- show host\'s authentication key
+ipsec_showhostkey \- show host\*(Aqs authentication key
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIshowhostkey\fR [\-\-ipseckey\ [\fIgateway\fR]] [\-\-left] [\-\-right] [\-\-dump] [\-\-verbose] [\-\-version] [\-\-list] [\-\-x509self] [\-\-x509req] [\-\-x509cert] [\-\-txt\ \fIgateway\fR] [\-\-dhclient] [\-\-file\ \fIsecretfile\fR] [\-\-keynum\ \fIcount\fR] [\-\-id\ \fIidentity\fR]
+\fBipsec\fR \fIshowhostkey\fR [\-\-ipseckey] [\-\-left] [\-\-right] [\-\-dump] [\-\-verbose] [\-\-version] [\-\-list] [\-\-gateway\ \fIgateway\fR] [\-\-precedence\ \fIprecedence\fR] [\-\-dhclient] [\-\-file\ \fIsecretfile\fR] [\-\-keynum\ \fIcount\fR] [\-\-id\ \fIidentity\fR]
 .SH "DESCRIPTION"
 .PP
 \fIShowhostkey\fR
 outputs (on standard output) a public key suitable for this host, in the format specified, using the host key information stored in
 /etc/ipsec\&.secrets\&. In general only the super\-user can run this command, since only he can read
 \fIipsec\&.secrets\fR\&.
-.PP
-The
-\fB\-\-txt\fR
-option causes the output to be in opportunistic\-encryption DNS TXT record format, with the specified
-\fIgateway\fR
-value\&. If information about how the key was generated is available, that is provided as a DNS\-file comment\&. For example,
-\fB\-\-txt 10\&.11\&.12\&.13\fR
-might give (with the key data trimmed for clarity):
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-  ; RSA 2048 bits   xy\&.example\&.com   Sat Apr 15 13:53:22 2000
-      IN TXT  "X\-IPsec\-Server(10)=10\&.11\&.12\&.13 AQOF8tZ2\&.\&.\&.+buFuFn/"
-.fi
-.if n \{\
-.RE
-.\}
-.PP
-No name is supplied in the TXT record because there are too many possibilities, depending on how it will be used\&. If the text string is longer than 255 bytes, it is split up into multiple strings (matching the restrictions of the DNS TXT binary format)\&. If any split is needed, the first split will be at the start of the key: this increases the chances that later hand editing will work\&.
-.PP
-The
-\fB\-\-version\fR
-option causes the version of the binary to be emitted, and nothing else\&.
-.PP
-The
-\fB\-\-verbose\fR
-may be present one or more times\&. Each occurance increases the verbosity level\&.
 .PP
 The
 \fB\-\-left\fR
@@ -69,7 +49,7 @@ format, as a
 \fBleftrsasigkey\fR
 or
 \fBrightrsasigkey\fR
-parameter respectively\&. Again, generation information is included if available\&. For example,
+parameter respectively\&. Generation information is included if available\&. For example,
 \fB\-\-left\fR
 might give (with the key data trimmed down for clarity):
 .sp
@@ -85,39 +65,38 @@ might give (with the key data trimmed down for clarity):
 .\}
 .PP
 The
+\fB\-\-ipseckey\fR
+option causes the output to be in opportunistic\-encryption DNS IPSECKEY record format (RFC 4025)\&. A gateway can be specified with the
+\fB\-\-gateway\fR, which currently supports IPv4 and IPv6 addresses\&. The host name is the one included in the key information (or, if that is not available, the output of
+\fBhostname\ \&\-\-fqdn\fR), with a
+\fB\&.\fR
+appended\&. For example,
+\fB\-\-ipseckey \-\-gateway 10\&.11\&.12\&.13\fR
+might give (with the key data trimmed for clarity):
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+      IN    IPSECKEY  10 1 2 10\&.11\&.12\&.13  AQOF8tZ2\&.\&.\&.+buFuFn/"
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+The
+\fB\-\-version\fR
+option causes the version of the binary to be emitted, and nothing else\&.
+.PP
+The
+\fB\-\-verbose\fR
+may be present one or more times\&. Each occurance increases the verbosity level\&.
+.PP
+The
 \fB\-\-dhclient\fR
 option cause the output to be suitable for inclusion in
 \fBdhclient.conf\fR(5)
 as part of configuring WAVEsec\&. See <\m[blue]\fBhttp://www\&.wavesec\&.org\fR\m[]>\&.
-.PP
-If
-\fB\-\-ipseckey\fR
-is specified, the output format is the text form of a DNS IPSECKEY record (see RFC4025); the host name is the one included in the key information (or, if that is not available, the output of
-\fBhostname\ \&\-\-fqdn\fR), with a
-\fB\&.\fR
-appended\&. The gateway information, if provided, is is included, otherwise, the gateway is assumed to be self, and to be of type FQDN\&. Generation information is included if available\&. For example (with the key data trimmed down for clarity):
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-  ; RSA 2048 bits   xy\&.example\&.com   Sat Apr 15 13:53:22 2000
-  xy\&.example\&.com\&.   IN   IPSECKEYKEY   floyd albert
-.fi
-.if n \{\
-.RE
-.\}
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-  ; RSA 2048 bits   xy\&.example\&.com   Sat Apr 15 13:53:22 2000
-  xy\&.example\&.com\&.   IN   KEY   0x4200 4 1 AQOF8tZ2\&.\&.\&.+buFuFn/
-.fi
-.if n \{\
-.RE
-.\}
 .PP
 Normally, the default key for this host (the one with no host identities specified for it) is the one extracted\&. The
 \fB\-\-id\fR
@@ -148,7 +127,7 @@ ipsec\&.\fBsecrets\fR(5), ipsec\&.\fBconf\fR(5),
 \fBipsec_rsasigkey\fR(8)
 .SH "HISTORY"
 .PP
-Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Henry Spencer\&.
+Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Henry Spencer\&. Updated by Paul Wouters for the IPSECKEY format\&.
 .SH "BUGS"
 .PP
 Arguably, rather than just reporting the no\-IN\-KEY\-line\-found problem,
@@ -158,13 +137,6 @@ should be smart enough to run the existing key through
 with the
 \fB\-\-oldkey\fR
 option, to generate a suitable output line\&.
-.PP
-The need to specify the gateway address (etc\&.) for
-\fB\-\-txt\fR
-is annoying, but there is no good way to determine it automatically\&.
-.PP
-There should be a way to specify the priority value for TXT records; currently it is hardwired to
-10\&.
 .PP
 The
 \fB\-\-id\fR

@@ -34,7 +34,7 @@
 #include <getopt.h>
 #include <fcntl.h>
 #include <netinet/in.h>
-#include <openswan.h>
+#include <libreswan.h>
 #include <sys/utsname.h>
 
 #include <arpa/nameser.h>
@@ -58,7 +58,7 @@
 #endif
 
 char usage[] = "Usage: ipsec showhostkey [--ipseckey] | [--left ] | [--right ]\n"
-             "                         [--prio <priority> ] [--gateway <gateway>] \n"
+             "                         [--precedence <precedence> ] [--gateway <gateway>] \n"
              "                         [--dump ] [--list ] \n"
              "                         [--dhclient ] [--file secretfile ] \n"
              "                         [--keynum count ] [--id identity ]\n"
@@ -72,6 +72,7 @@ struct option opts[] = {
   {"list",	no_argument,	NULL,	'L',},
   {"ipseckey",	no_argument,	NULL,	'K',},
   {"gateway",	required_argument,NULL,	'g',},
+  {"precedence",required_argument,NULL,	'p',},
   {"dhclient",	no_argument,    NULL,	'd',},
   {"file",	required_argument,NULL,	'f',},
   {"keynum",	required_argument,NULL,	'n',},
@@ -269,6 +270,7 @@ void show_dnskey(struct secret *s
 {
     char qname[256];
     char base64[8192];
+    int gateway_type = 0;
     const struct private_key_stuff *pks = osw_get_pks(s);
     unsigned char *keyblob;
     unsigned int keybloblen = 0;
@@ -285,8 +287,21 @@ void show_dnskey(struct secret *s
 
     datatot(keyblob, keybloblen, 's', base64, sizeof(base64));
 
+	if(gateway != NULL){
+		ip_address test;
+		if(ttoaddr(gateway, strlen(gateway), AF_INET, &test) == NULL)
+		   gateway_type = 1;
+		else
+		  if(ttoaddr(gateway, strlen(gateway), AF_INET6, &test) == NULL)
+		     gateway_type = 2;
+		  else {
+			printf("%s: unknown address family for gateway %s", progname,gateway);
+			exit(5);
+		  }
+	}
+			
 	printf("%s.    IN    IPSECKEY  %d %d 2 %s ",
-	       qname, precedence, (gateway == NULL) ? 0 : 1 , (gateway == NULL) ? "." : gateway);
+	       qname, precedence, gateway_type , (gateway == NULL) ? "." : gateway);
 	{
 	    int len = strlen(base64);
 	    char *p=base64+2;  /* skip 0s */
@@ -356,7 +371,7 @@ int main(int argc, char *argv[])
     bool ipseckey_flg=FALSE;
     bool dhclient_flg=FALSE;
     char *gateway = NULL;
-    int precedence=10;
+    int precedence = 10;
     int verbose=0;
     const struct osw_conf_options *oco = osw_init_options();
     char *rsakeyid, *keyid;
@@ -394,6 +409,13 @@ int main(int argc, char *argv[])
 	    gateway=clone_str(optarg, "gateway");
 	    break;
 
+	case 'p':
+	    precedence = atoi(optarg);
+	    if( (precedence < 0) || (precedence > 255)) {
+		fprintf(stderr, "precedence must be between 0 and 255\n");
+		exit(5);
+	    }
+	    break;
 	case 'L':
 	    list_flg=TRUE;
 	    break;
