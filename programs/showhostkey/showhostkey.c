@@ -300,26 +300,8 @@ void show_dnskey(struct secret *s
 		  }
 	}
 			
-	printf("%s.    IN    IPSECKEY  %d %d 2 %s ",
-	       qname, precedence, gateway_type , (gateway == NULL) ? "." : gateway);
-	{
-	    int len = strlen(base64);
-	    char *p=base64+2;  /* skip 0s */
-	    while(len > 0) {
-		int printlen = len;
-		char saveit;
-		if(printlen > 240) {
-		    printlen=240;
-		}
-		saveit=p[printlen];
-		p[printlen]='\0';
-		printf("\"%s\" ",p);
-		p[printlen]=saveit;
-		p+=printlen;
-		len-=printlen;
-	    }
-	}
-	printf("\n");
+	printf("%s.    IN    IPSECKEY  %d %d 2 %s %s\n",
+	       qname, precedence, gateway_type , (gateway == NULL) ? "." : gateway, base64);
 }
      
 void show_confkey(struct secret *s
