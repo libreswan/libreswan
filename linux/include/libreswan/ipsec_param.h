@@ -115,21 +115,10 @@
 /*
  * Worry about PROC_FS stuff
  */
-#if defined(PROC_FS_2325)
 /* kernel 2.4 */
 # define IPSEC_PROC_LAST_ARG ,int *eof,void *data
 # define IPSEC_PROCFS_DEBUG_NO_STATIC
 # define IPSEC_PROC_SUBDIRS
-#else
-/* kernel <2.4 */
-# define IPSEC_PROCFS_DEBUG_NO_STATIC DEBUG_NO_STATIC
-
-# ifndef PROC_NO_DUMMY
-#  define IPSEC_PROC_LAST_ARG , int dummy
-# else
-#  define IPSEC_PROC_LAST_ARG
-# endif /* !PROC_NO_DUMMY */
-#endif /* PROC_FS_2325 */
 
 #if !defined(LINUX_KERNEL_HAS_SNPRINTF)
 /* GNU CPP specific! */

@@ -951,94 +951,8 @@ ipsec_stats_get_int_info(char *buffer,
 
 }
 
-#ifndef PROC_FS_2325
-struct proc_dir_entry ipsec_eroute =
-{
-	0,
-	12, "ipsec_eroute",
-	S_IFREG | S_IRUGO, 1, 0, 0, 0,
-	&proc_net_inode_operations,
-	ipsec_eroute_get_info,
-	NULL, NULL, NULL, NULL, NULL
-};
-
-struct proc_dir_entry ipsec_spi =
-{
-	0,
-	9, "ipsec_spi",
-	S_IFREG | S_IRUGO, 1, 0, 0, 0,
-	&proc_net_inode_operations,
-	ipsec_spi_get_info,
-	NULL, NULL, NULL, NULL, NULL
-};
-
-struct proc_dir_entry ipsec_spigrp =
-{
-	0,
-	12, "ipsec_spigrp",
-	S_IFREG | S_IRUGO, 1, 0, 0, 0,
-	&proc_net_inode_operations,
-	ipsec_spigrp_get_info,
-	NULL, NULL, NULL, NULL, NULL
-};
-
-#ifdef IPSEC_SA_RECOUNT_DEBUG
-struct proc_dir_entry ipsec_saraw =
-{
-	0,
-	12, "ipsec_saraw",
-	S_IFREG | S_IRUGO, 1, 0, 0, 0,
-	&proc_net_inode_operations,
-	ipsec_saraw_get_info,
-	NULL, NULL, NULL, NULL, NULL
-};
-#endif
-
-struct proc_dir_entry ipsec_tncfg =
-{
-	0,
-	11, "ipsec_tncfg",
-	S_IFREG | S_IRUGO, 1, 0, 0, 0,
-	&proc_net_inode_operations,
-	ipsec_tncfg_get_info,
-	NULL, NULL, NULL, NULL, NULL
-};
-
-struct proc_dir_entry ipsec_version =
-{
-	0,
-	13, "ipsec_version",
-	S_IFREG | S_IRUGO, 1, 0, 0, 0,
-	&proc_net_inode_operations,
-	ipsec_version_get_info,
-	NULL, NULL, NULL, NULL, NULL
-};
-
-#ifdef IPSEC_PROC_SHOW_SAREF_INFO
-struct proc_dir_entry ipsec_saref =
-{
-	0,
-	13, "ipsec_saref",
-	S_IFREG | S_IRUGO, 1, 0, 0, 0,
-	&proc_net_inode_operations,
-	ipsec_saref_get_info,
-	NULL, NULL, NULL, NULL, NULL
-};
-#endif
-
-struct proc_dir_entry ipsec_klipsdebug =
-{
-	0,
-	16, "ipsec_klipsdebug",
-	S_IFREG | S_IRUGO, 1, 0, 0, 0,
-	&proc_net_inode_operations,
-	ipsec_klipsdebug_get_info,
-	NULL, NULL, NULL, NULL, NULL
-};
-#endif /* !PROC_FS_2325 */
 #endif /* CONFIG_PROC_FS */
 
-#if defined(PROC_FS_2325) 
 struct ipsec_proc_list {
 	char                   *name;
 	struct proc_dir_entry **parent;
@@ -1078,7 +992,6 @@ static struct ipsec_proc_list proc_items[]={
 #endif
 	{NULL,         NULL,                NULL,             NULL,      NULL, NULL}
 };
-#endif
 		
 int
 ipsec_proc_init()
@@ -1096,7 +1009,6 @@ ipsec_proc_init()
 #endif
 
 	/* for 2.4 kernels */
-#if defined(PROC_FS_2325)
 	/* create /proc/net/ipsec */
 
 	/* zero these out before we initialize /proc/net/ipsec/birth/stuff */
@@ -1149,46 +1061,12 @@ ipsec_proc_init()
 	proc_symlink("ipsec_version",PROC_NET, "ipsec/version");
 	proc_symlink("ipsec_klipsdebug",PROC_NET,"ipsec/klipsdebug");
 
-#endif /* !PROC_FS_2325 */
-
 	return error;
 }
 
 void
 ipsec_proc_cleanup()
 {
-
-	/* for 2.0 and 2.2 kernels */
-#if !defined(PROC_FS_2325) 
-
-	if (proc_net_unregister(ipsec_klipsdebug.low_ino) != 0)
-		printk("klips_debug:ipsec_cleanup: "
-		       "cannot unregister /proc/net/ipsec_klipsdebug\n");
-
-	if (proc_net_unregister(ipsec_version.low_ino) != 0)
-		printk("klips_debug:ipsec_cleanup: "
-		       "cannot unregister /proc/net/ipsec_version\n");
-	if (proc_net_unregister(ipsec_eroute.low_ino) != 0)
-		printk("klips_debug:ipsec_cleanup: "
-		       "cannot unregister /proc/net/ipsec_eroute\n");
-	if (proc_net_unregister(ipsec_spi.low_ino) != 0)
-		printk("klips_debug:ipsec_cleanup: "
-		       "cannot unregister /proc/net/ipsec_spi\n");
-	if (proc_net_unregister(ipsec_spigrp.low_ino) != 0)
-		printk("klips_debug:ipsec_cleanup: "
-		       "cannot unregister /proc/net/ipsec_spigrp\n");
-#ifdef IPSEC_SA_RECOUNT_DEBUG
-	if (proc_net_unregister(ipsec_saraw.low_ino) != 0)
-		printk("klips_debug:ipsec_cleanup: "
-		       "cannot unregister /proc/net/ipsec_saraw\n");
-#endif
-	if (proc_net_unregister(ipsec_tncfg.low_ino) != 0)
-		printk("klips_debug:ipsec_cleanup: "
-		       "cannot unregister /proc/net/ipsec_tncfg\n");
-#endif
-
-	/* for 2.4 kernels */
-#if defined(PROC_FS_2325)
 	{
 		struct ipsec_proc_list *it;
 
@@ -1216,7 +1094,6 @@ ipsec_proc_cleanup()
 	remove_proc_entry("ipsec_tncfg",      PROC_NET);
 	remove_proc_entry("ipsec_version",    PROC_NET);
 	remove_proc_entry("ipsec",            PROC_NET);
-#endif /* 2.4 kernel */
 }
 
 /*

@@ -1,6 +1,7 @@
 /*
  * @(#) RFC2367 PF_KEYv2 Key management API domain socket I/F
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs.
+ * Copyright (C) 2012  Paul Wouters <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1133,9 +1134,6 @@ pfkey_recvmsg(struct socket *sock
 }
 
 #ifdef CONFIG_PROC_FS
-#ifndef PROC_FS_2325
-DEBUG_NO_STATIC
-#endif /* PROC_FS_2325 */
 int
 pfkey_get_info(char *buffer, char **start, off_t offset, int length
 #ifndef  PROC_NO_DUMMY
@@ -1228,9 +1226,6 @@ pfkey_get_info(char *buffer, char **start, off_t offset, int length
 	return len - (offset - begin);
 }
 
-#ifndef PROC_FS_2325
-DEBUG_NO_STATIC
-#endif /* PROC_FS_2325 */
 int
 pfkey_supported_get_info(char *buffer, char **start, off_t offset, int length
 #ifndef  PROC_NO_DUMMY
@@ -1292,9 +1287,6 @@ pfkey_supported_get_info(char *buffer, char **start, off_t offset, int length
 	return len - (offset - begin);
 }
 
-#ifndef PROC_FS_2325
-DEBUG_NO_STATIC
-#endif /* PROC_FS_2325 */
 int
 pfkey_registered_get_info(char *buffer, char **start, off_t offset, int length
 #ifndef  PROC_NO_DUMMY
@@ -1348,32 +1340,6 @@ pfkey_registered_get_info(char *buffer, char **start, off_t offset, int length
 	return len - (offset - begin);
 }
 
-#ifndef PROC_FS_2325
-struct proc_dir_entry proc_net_pfkey =
-{
-	0,
-	6, "pf_key",
-	S_IFREG | S_IRUGO, 1, 0, 0,
-	0, &proc_net_inode_operations,
-	pfkey_get_info
-};
-struct proc_dir_entry proc_net_pfkey_supported =
-{
-	0,
-	16, "pf_key_supported",
-	S_IFREG | S_IRUGO, 1, 0, 0,
-	0, &proc_net_inode_operations,
-	pfkey_supported_get_info
-};
-struct proc_dir_entry proc_net_pfkey_registered =
-{
-	0,
-	17, "pf_key_registered",
-	S_IFREG | S_IRUGO, 1, 0, 0,
-	0, &proc_net_inode_operations,
-	pfkey_registered_get_info
-};
-#endif /* !PROC_FS_2325 */
 #endif /* CONFIG_PROC_FS */
 
 DEBUG_NO_STATIC int
@@ -1543,28 +1509,15 @@ pfkey_cleanup(void)
 	error |= supported_remove_all(K_SADB_X_SATYPE_IPIP);
 
 #ifdef CONFIG_PROC_FS
-#  ifndef PROC_FS_2325
-	if (proc_net_unregister(proc_net_pfkey.low_ino) != 0)
-		printk("klips_debug:pfkey_cleanup: "
-		       "cannot unregister /proc/net/pf_key\n");
-	if (proc_net_unregister(proc_net_pfkey_supported.low_ino) != 0)
-		printk("klips_debug:pfkey_cleanup: "
-		       "cannot unregister /proc/net/pf_key_supported\n");
-	if (proc_net_unregister(proc_net_pfkey_registered.low_ino) != 0)
-		printk("klips_debug:pfkey_cleanup: "
-		       "cannot unregister /proc/net/pf_key_registered\n");
-#  else /* !PROC_FS_2325 */
-#  if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
+# if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
 	proc_net_remove ("pf_key");
 	proc_net_remove ("pf_key_supported");
 	proc_net_remove ("pf_key_registered");
-#  else
+# else
 	proc_net_remove (&init_net, "pf_key");
 	proc_net_remove (&init_net, "pf_key_supported");
 	proc_net_remove (&init_net, "pf_key_registered");
-#    endif
-
-#  endif /* !PROC_FS_2325 */
+# endif
 #endif /* CONFIG_PROC_FS */
 
 	/* other module unloading cleanup happens here */
