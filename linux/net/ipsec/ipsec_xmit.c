@@ -556,11 +556,7 @@ ipsec_xmit_sanity_check_skb(struct ipsec_xmit_state *ixs)
 	   a copy of our own to modify */
 	if(skb_cloned(ixs->skb)) {
 		if
-#ifdef SKB_COW_NEW
 	       (skb_cow(ixs->skb, skb_headroom(ixs->skb)) != 0)
-#else /* SKB_COW_NEW */
-	       ((ixs->skb = skb_cow(ixs->skb, skb_headroom(ixs->skb))) == NULL)
-#endif /* SKB_COW_NEW */
 		{
 			KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 				    "klips_error:ipsec_xmit_sanity_check_skb: "
