@@ -89,10 +89,8 @@
  */
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,1,0)
-# define SPINLOCK
 # define PROC_FS_21
 # define NETLINK_SOCK
-# define NET_21
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,1,19)
@@ -100,7 +98,6 @@
 #endif                                                                         
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
-# define SPINLOCK_23
 # define NETDEV_23
 # ifndef CONFIG_IP_ALIAS
 #  define CONFIG_IP_ALIAS

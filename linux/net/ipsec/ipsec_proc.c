@@ -9,6 +9,7 @@
  * Copyright (C) 2006-2012 David McCullough <david_mccullough@mcafee.com>
  * Copyright (C) 2006-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2011 Bart Trojanowski <bart@jukie.net>
+ * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,8 +20,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
- * Split out from ipsec_init.c version 1.70.
  */
 
 #include <linux/version.h>
@@ -53,13 +52,7 @@
 #include <linux/skbuff.h>
 #include <asm/uaccess.h>       /* copy_from_user */
 #include <libreswan.h>
-#ifdef SPINLOCK
-#ifdef SPINLOCK_23
 #include <linux/spinlock.h> /* *lock* */
-#else /* SPINLOCK_23 */
-#include <asm/spinlock.h> /* *lock* */
-#endif /* SPINLOCK_23 */
-#endif /* SPINLOCK */
 
 #include <net/ip.h>
 #ifdef CONFIG_PROC_FS

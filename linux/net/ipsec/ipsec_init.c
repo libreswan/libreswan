@@ -3,6 +3,7 @@
  * Copyright (C) 1996, 1997   John Ioannidis.
  * Copyright (C) 1998 - 2002  Richard Guy Briggs <rgb@freeswan.org>
  *               2001 - 2004  Michael Richardson <mcr@xelerance.com>
+ *  Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -48,13 +49,7 @@
 
 #include <libreswan.h>
 
-#ifdef SPINLOCK
-# ifdef SPINLOCK_23
-#  include <linux/spinlock.h> /* *lock* */
-# else /* 23_SPINLOCK */
-#  include <asm/spinlock.h> /* *lock* */
-# endif /* 23_SPINLOCK */
-#endif /* SPINLOCK */
+#include <linux/spinlock.h> /* *lock* */
 
 #include <net/ip.h>
 

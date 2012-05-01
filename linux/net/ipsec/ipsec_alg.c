@@ -6,6 +6,7 @@
  * Michael Richardson <mcr@xelerance.com>
  * Paul Wouters <paul@xelerance.com>
  * Nick Jones <nick.jones@network-box.com>
+ *  Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,13 +38,7 @@
 #include <linux/string.h>	/* memcmp() */
 #include <linux/random.h>	/* get_random_bytes() */
 #include <linux/errno.h>  /* error codes */
-#ifdef SPINLOCK
-# ifdef SPINLOCK_23
-#  include <linux/spinlock.h> /* *lock* */
-# else /* SPINLOCK_23 */
-#  include <asm/spinlock.h> /* *lock* */
-# endif /* SPINLOCK_23 */
-#endif /* SPINLOCK */
+#include <linux/spinlock.h> /* *lock* */
 
 #include "libreswan/ipsec_param.h"
 #include <libreswan.h>

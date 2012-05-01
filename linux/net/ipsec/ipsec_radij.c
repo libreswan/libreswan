@@ -7,6 +7,7 @@
  * Copyright (C) 2006-2008 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2006-2011 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2009-2012 David McCullough <david_mccullough@mcafee.com>
+ * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,13 +43,7 @@
 #include <linux/ip.h>          /* struct iphdr */
 #include <linux/skbuff.h>
 #include <libreswan.h>
-#ifdef SPINLOCK
-# ifdef SPINLOCK_23
-#  include <linux/spinlock.h> /* *lock* */
-# else /* 23_SPINLOCK */
-#  include <asm/spinlock.h> /* *lock* */
-# endif /* 23_SPINLOCK */
-#endif /* SPINLOCK */
+#include <linux/spinlock.h> /* *lock* */
 
 #include <net/ip.h>
 

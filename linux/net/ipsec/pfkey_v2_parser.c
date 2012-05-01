@@ -1,6 +1,7 @@
 /*
  * @(#) RFC2367 PF_KEYv2 Key management API message parser
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs <rgb@freeswan.org>
+ * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
  * 
  * OCF support written by David McCullough <dmccullough@cyberguard.com>
  * Copyright (C) 2004-2005 Intel Corporation.  All Rights Reserved.
@@ -50,13 +51,7 @@
 
 #include <klips-crypto/des.h>
 
-#ifdef SPINLOCK
-# ifdef SPINLOCK_23
-#  include <linux/spinlock.h> /* *lock* */
-# else /* SPINLOCK_23 */
-#  include <asm/spinlock.h> /* *lock* */
-# endif /* SPINLOCK_23 */
-#endif /* SPINLOCK */
+#include <linux/spinlock.h> /* *lock* */
 # include <net/route.h>          /* inet_addr_type */
 # include <linux/in6.h>
 # include <net/ipv6.h>

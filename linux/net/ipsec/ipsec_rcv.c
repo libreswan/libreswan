@@ -4,6 +4,7 @@
  * Copyright (C) 1998-2003   Richard Guy Briggs.
  * Copyright (C) 2004-2007   Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008   Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
  *
  * OCF/receive state machine written by
  * David McCullough <dmccullough@cyberguard.com>
@@ -55,16 +56,10 @@
 #include <linux/skbuff.h>
 #include <libreswan.h>
 
-#ifdef SPINLOCK
-# ifdef SPINLOCK_23
-#  include <linux/spinlock.h> /* *lock* */
-#  ifdef NEED_SPINLOCK_TYPES
-#   include <linux/spinlock_types.h> 
-#  endif
-# else /* SPINLOCK_23 */
-#  include <asm/spinlock.h> /* *lock* */
-# endif /* SPINLOCK_23 */
-#endif /* SPINLOCK */
+#include <linux/spinlock.h> /* *lock* */
+#ifdef NEED_SPINLOCK_TYPES
+# include <linux/spinlock_types.h> 
+#endif
 
 #include <net/ip.h>
 

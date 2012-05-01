@@ -2,6 +2,7 @@
  * @(#) RFC2367 PF_KEYv2 Key management API message parser
  * Copyright (C) 1998-2003   Richard Guy Briggs.
  * Copyright (C) 2004-2006   Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -45,13 +46,7 @@
 
 #include <klips-crypto/des.h>
 
-#ifdef SPINLOCK
-# ifdef SPINLOCK_23
-#  include <linux/spinlock.h> /* *lock* */
-# else /* SPINLOCK_23 */
-#  include <asm/spinlock.h> /* *lock* */
-# endif /* SPINLOCK_23 */
-#endif /* SPINLOCK */
+#include <linux/spinlock.h> /* *lock* */
 # include <linux/in6.h>
 # define IS_MYADDR RTN_LOCAL
 

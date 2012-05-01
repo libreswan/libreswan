@@ -4,6 +4,7 @@
  * Copyright (C) 2001  Richard Guy Briggs  <rgb@freeswan.org>
  *                 and Michael Richardson  <mcr@freeswan.org>
  * Copyright (C) 2004  Michael Richardson  <mcr@xelerance.com>
+ * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -135,13 +136,7 @@
 # define snprintf(buf, len, fmt...) sprintf(buf, ##fmt)
 #endif /* !LINUX_KERNEL_HAS_SNPRINTF */
 
-#ifdef SPINLOCK
-# ifdef SPINLOCK_23
 #  include <linux/spinlock.h> /* *lock* */
-# else /* SPINLOCK_23 */
-#  include <asm/spinlock.h> /* *lock* */
-# endif /* SPINLOCK_23 */
-#endif /* SPINLOCK */
 
 #ifndef KLIPS_FIXES_DES_PARITY
 # define KLIPS_FIXES_DES_PARITY 1
