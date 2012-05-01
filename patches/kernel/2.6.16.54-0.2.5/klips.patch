@@ -43832,8 +43832,8 @@ diff -Naur linux-2.6.16.54-0.2.5/net/ipsec/pfkey_v2_debug.c linux-2.6.16.54-0.2.
 +/*
 + * @(#) pfkey version 2 debugging messages
 + *
-+ * Copyright (C) 2001  Richard Guy Briggs  <rgb@libreswan.org>
-+ *                 and Michael Richardson  <mcr@libreswan.org>
++ * Copyright (C) 2001  Richard Guy Briggs  <rgb@freeswan.org>
++ *                 and Michael Richardson  <mcr@freeswan.org>
 + * 
 + * This program is free software; you can redistribute it and/or modify it
 + * under the terms of the GNU General Public License as published by the
