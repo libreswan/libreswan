@@ -332,11 +332,7 @@ struct sk_buff *ipsec_rcv_unclone(struct sk_buff *skb,
 		}
 		skb_push(skb, irs->hard_header_len);
 		if
-#ifdef SKB_COW_NEW
 		  (skb_cow(skb, skb_headroom(skb)) != 0)
-#else /* SKB_COW_NEW */
-		  ((skb = skb_cow(skb, skb_headroom(skb))) == NULL)
-#endif /* SKB_COW_NEW */
 		{
 			return NULL;
 		}
