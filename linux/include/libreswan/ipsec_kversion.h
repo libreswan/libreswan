@@ -88,10 +88,6 @@
 # define CONFIG_IP_ALIAS
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,9)
-# define LINUX_KERNEL_HAS_SNPRINTF
-#endif                                                                         
-
 /* API changes are documented at: http://lwn.net/Articles/2.6-kernel-api/ */
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)

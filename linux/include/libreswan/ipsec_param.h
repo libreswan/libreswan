@@ -120,11 +120,6 @@
 # define IPSEC_PROCFS_DEBUG_NO_STATIC
 # define IPSEC_PROC_SUBDIRS
 
-#if !defined(LINUX_KERNEL_HAS_SNPRINTF)
-/* GNU CPP specific! */
-# define snprintf(buf, len, fmt...) sprintf(buf, ##fmt)
-#endif /* !LINUX_KERNEL_HAS_SNPRINTF */
-
 #  include <linux/spinlock.h> /* *lock* */
 
 #ifndef KLIPS_FIXES_DES_PARITY
