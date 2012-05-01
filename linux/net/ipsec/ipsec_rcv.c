@@ -2049,9 +2049,6 @@ ipsec_rsm(struct ipsec_rcv_state *irs)
 
 int
 ipsec_rcv(struct sk_buff *skb
-#ifndef PROTO_HANDLER_SINGLE_PARM
-	  unsigned short xlen
-#endif /* PROTO_HANDLER_SINGLE_PARM */
 	  )
 {
 	struct ipsec_rcv_state *irs = NULL;

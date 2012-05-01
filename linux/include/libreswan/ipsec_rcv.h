@@ -2,6 +2,7 @@
  * 
  * Copyright (C) 1996, 1997  John Ioannidis.
  * Copyright (C) 1998, 1999, 2000, 2001  Richard Guy Briggs.
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -173,12 +174,7 @@ extern int ipsec_irs_max;
 extern atomic_t ipsec_irs_cnt;
 
 extern int
-#ifdef PROTO_HANDLER_SINGLE_PARM
 ipsec_rcv(struct sk_buff *skb);
-#else /* PROTO_HANDLER_SINGLE_PARM */
-ipsec_rcv(struct sk_buff *skb,
-	  unsigned short xlen);
-#endif /* PROTO_HANDLER_SINGLE_PARM */
 
 extern int sysctl_ipsec_inbound_policy_check;
 extern int debug_rcv;
