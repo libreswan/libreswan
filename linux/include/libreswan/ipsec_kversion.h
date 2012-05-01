@@ -84,10 +84,8 @@
  * the new code to older kernels.
  */
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
-# ifndef CONFIG_IP_ALIAS
+#ifndef CONFIG_IP_ALIAS
 #  define CONFIG_IP_ALIAS
-# endif
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,30)
