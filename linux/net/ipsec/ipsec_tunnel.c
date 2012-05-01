@@ -1516,10 +1516,8 @@ ipsec_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	struct ipsectunnelconf *cf=(struct ipsectunnelconf *)ifr->ifr_ifru.ifru_newname;
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
 	struct net_device *them; /* physical device */
-#ifdef CONFIG_IP_ALIAS
 	char *colon;
 	char realphysname[IFNAMSIZ];
-#endif /* CONFIG_IP_ALIAS */
 	
 	if(dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
@@ -1540,16 +1538,12 @@ ipsec_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 			    "klips_debug:ipsec_tunnel_ioctl: "
 			    "calling ipsec_tunnel_attatch...\n");
-#ifdef CONFIG_IP_ALIAS
 		/* If this is an IP alias interface, get its real physical name */
 		strncpy(realphysname, cf->cf_name, IFNAMSIZ);
 		realphysname[IFNAMSIZ-1] = 0;
 		colon = strchr(realphysname, ':');
 		if (colon) *colon = 0;
 		them = ipsec_dev_get(realphysname);
-#else /* CONFIG_IP_ALIAS */
-		them = ipsec_dev_get(cf->cf_name);
-#endif /* CONFIG_IP_ALIAS */
 
 		if (them == NULL) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
