@@ -191,11 +191,6 @@ extern int sysctl_ipsec_regress_pfkey_lossage;
  */
 #define KLIPS_IMPAIRMENT_ESPIV_CBC_ATTACK 0
 
-
-/* IP_FRAGMENT_LINEARIZE is set in freeswan.h if Kernel > 2.4.4 */
-#ifndef IP_FRAGMENT_LINEARIZE
-# define IP_FRAGMENT_LINEARIZE 0
-#endif /* IP_FRAGMENT_LINEARIZE */
 #endif /* __KERNEL__ */
 
 #ifdef NEED_INET_PROTOCOL

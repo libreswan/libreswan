@@ -824,8 +824,7 @@ ipsec_rcv_init(struct ipsec_rcv_state *irs)
 		return IPSEC_RCV_REALLYBAD;
 	}
 
-#if IP_FRAGMENT_LINEARIZE
-	/* In Linux 2.4.4, we may have to reassemble fragments. They are
+	/* In Linux >2.4.4, we may have to reassemble fragments. They are
 	   not assembled automatically to save TCP from having to copy
 	   twice.
 	*/
@@ -839,7 +838,6 @@ ipsec_rcv_init(struct ipsec_rcv_state *irs)
 			return IPSEC_RCV_REALLYBAD;
 		}
 	}
-#endif /* IP_FRAGMENT_LINEARIZE */
 
 	irs->iph = (void *)ip_hdr(skb);
 
