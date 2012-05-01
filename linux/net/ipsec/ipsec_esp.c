@@ -581,15 +581,11 @@ struct inet_protocol esp_protocol =
 {
 	ipsec_rcv,			/* ESP handler		*/
 	NULL,				/* TUNNEL error control */
-#ifdef NETDEV_25
-	1,				/* no policy */
-#else
 	0,				/* next */
 	IPPROTO_ESP,			/* protocol ID */
 	0,				/* copy */
 	NULL,				/* data */
 	"ESP"				/* name */
-#endif
 };
 #endif /* NET_26 */
 #endif /* CONFIG_XFRM_ALTERNATE_STACK */

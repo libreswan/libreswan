@@ -259,7 +259,7 @@ struct inet_protocol comp_protocol =
 {
 	ipsec_rcv,			/* COMP handler		*/
 	NULL,				/* COMP error control	*/
-#ifdef NETDEV_25
+#ifdef NET_26
 	1,				/* no policy */
 #else
 	0,				/* next */

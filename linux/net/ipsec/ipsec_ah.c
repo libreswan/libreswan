@@ -339,15 +339,11 @@ struct inet_protocol ah_protocol =
 {
 	ipsec_rcv,				/* AH handler */
 	NULL,				/* TUNNEL error control */
-#ifdef NETDEV_25
-	1,				/* no policy */
-#else
 	0,				/* next */
 	IPPROTO_AH,			/* protocol ID */
 	0,				/* copy */
 	NULL,				/* data */
 	"AH"				/* name */
-#endif
 };
 #endif /* NET_26 */
 #endif /* CONFIG_XFRM_ALTERNATE_STACK */

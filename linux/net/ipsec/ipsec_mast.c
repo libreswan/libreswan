@@ -40,8 +40,8 @@ char ipsec_mast_c_version[] = "Please use ipsec --version instead";
 #include <linux/etherdevice.h> /* eth_type_trans */
 #include <linux/ip.h>          /* struct iphdr */
 #include <linux/skbuff.h>
-#ifdef NETDEV_25	/* 2.6 kernels */
-#include <net/xfrm.h>
+#ifdef NET_26	/* 2.6 kernels */
+# include <net/xfrm.h>
 #endif
 
 #include <libreswan.h>
@@ -72,7 +72,7 @@ char ipsec_mast_c_version[] = "Please use ipsec --version instead";
 
 #include "libreswan/ipsec_proto.h"
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-#include <linux/udp.h>
+# include <linux/udp.h>
 #endif
 
 int ipsec_mastdevice_count = -1;
@@ -107,7 +107,7 @@ ipsec_mast_close(struct net_device *dev)
 
 static inline int ipsec_mast_xmit2(struct sk_buff *skb)
 {
-#ifdef NETDEV_25	/* 2.6 kernels */
+#ifdef NET_26	/* 2.6 kernels */
 	return dst_output(skb);
 #else
 	return ip_send(skb);
@@ -442,15 +442,15 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	ixs->dev = dev;
 	ixs->skb = skb;
 	SAref = 0;
-#ifdef NETDEV_25
-#if defined(CONFIG_NETFILTER)
+#ifdef NET_26
+# if defined(CONFIG_NETFILTER)
 	if(skb->nfmark & IPSEC_NFMARK_IS_SAREF_BIT) {
 		SAref = NFmark2IPsecSAref(skb->nfmark);
 		KLIPS_PRINT(debug_mast, "klips_debug:ipsec_mast_start_xmit: "
 				"getting SAref=%d from nfmark\n",
 				SAref);
 	}
-#endif
+# endif
 #endif
 
 #ifdef CONFIG_INET_IPSEC_SAREF
@@ -494,13 +494,13 @@ ipsec_mast_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	/* fill in outgoing_said using the ipsp we have */
 	ixs->outgoing_said = ixs->ipsp->ips_said;
 
-#ifdef NETDEV_25
-#if defined(CONFIG_NETFILTER)
+#ifdef NET_26
+# if defined(CONFIG_NETFILTER)
 	/* prevent recursion through the saref route */
 	if(skb->nfmark & 0x80000000) {
 		skb->nfmark = 0;
 	}
-#endif
+# endif
 #endif
 #if 0
 	/* TODO: do we have to also have to do this? */

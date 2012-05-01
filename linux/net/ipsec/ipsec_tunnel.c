@@ -144,7 +144,7 @@ ipsec_tunnel_close(struct net_device *dev)
 static inline int ipsec_tunnel_xmit2(struct sk_buff *skb)
 {
 
-#ifdef NETDEV_25	/* 2.6 kernels */
+#ifdef NET_26	/* 2.6 kernels */
 	return dst_output(skb);
 #else
 	return ip_send(skb);

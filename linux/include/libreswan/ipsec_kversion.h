@@ -93,7 +93,6 @@
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 # define HAVE_NETDEV_PRINTK 1
 # define NET_26
-# define NETDEV_25
 # define NEED_SPINLOCK_TYPES
 /* Only enable IPv6 support on newer kernels with IPv6 enabled */
 # if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
