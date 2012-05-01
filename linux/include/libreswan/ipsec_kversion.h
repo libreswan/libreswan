@@ -85,11 +85,7 @@
  */
 
 #ifndef CONFIG_IP_ALIAS
-#  define CONFIG_IP_ALIAS
-#endif
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,30)
-# define PROC_NO_DUMMY
+# define CONFIG_IP_ALIAS
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,35)
