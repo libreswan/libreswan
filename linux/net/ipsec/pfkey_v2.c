@@ -45,11 +45,7 @@
 #include <linux/net.h> /* struct socket */
 #include <linux/in.h>
 #include <linux/fs.h>
-#ifdef MALLOC_SLAB
-# include <linux/slab.h> /* kmalloc() */
-#else /* MALLOC_SLAB */
-# include <linux/malloc.h> /* kmalloc() */
-#endif /* MALLOC_SLAB */
+#include <linux/slab.h> /* kmalloc() */
 #ifdef CONFIG_X86
 # include <asm/segment.h>
 #endif

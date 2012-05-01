@@ -89,7 +89,6 @@
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,9)
-# define MALLOC_SLAB
 # define LINUX_KERNEL_HAS_SNPRINTF
 #endif                                                                         
 

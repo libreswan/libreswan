@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2001  Richard Guy Briggs  <rgb@libreswan.org>
  *                 and Michael Richardson  <mcr@libreswan.org>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,11 +22,7 @@
 # include <linux/kernel.h>  /* for printk */
 
 # include "libreswan/ipsec_kversion.h" /* for malloc switch */
-# ifdef MALLOC_SLAB
-#  include <linux/slab.h> /* kmalloc() */
-# else /* MALLOC_SLAB */
-#  include <linux/malloc.h> /* kmalloc() */
-# endif /* MALLOC_SLAB */
+# include <linux/slab.h> /* kmalloc() */
 # include <linux/errno.h>  /* error codes */
 # include <linux/types.h>  /* size_t */
 # include <linux/interrupt.h> /* mark_bh */
