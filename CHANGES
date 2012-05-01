@@ -2,4 +2,11 @@
 See also http://www.libreswan.org/
 
 v1.0.0 (unreleased)
-
+* KLIPS: Removed support for Linux < 2.4.4 [Paul]
+* DNS: Removed LWRES code and old static ISC libraries [Paul]
+* OE: Removed support for old KEY and TXT DNS records [Paul]
+* OE: Add support for IPSECKEY in ipsec showhostkey [Paul]
+* pluto: Removed support for non-strict ike/esp lines [Paul]
+* pluto: Changed our vendorid prefix to "OEN" [Paul]
+* Rename from Openswan to Libreswan (working name) [Paul]
+  (for older CHANGES see docs/CHANGES.openswan)
