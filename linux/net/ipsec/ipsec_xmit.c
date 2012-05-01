@@ -4,6 +4,7 @@
  * Copyright (C) 1998-2003   Richard Guy Briggs.
  * Copyright (C) 2004-2005   Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2010-2011   David McCullough <david_mccullough@mcafee.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * 
  * OCF/receive state machine written by
  * David McCullough <dmccullough@cyberguard.com>
@@ -66,9 +67,7 @@
 
 #include <net/icmp.h>		/* icmp_send() */
 #include <net/ip.h>
-#ifdef NETDEV_23
-# include <linux/netfilter_ipv4.h>
-#endif /* NETDEV_23 */
+#include <linux/netfilter_ipv4.h>
 
 #include <linux/if_arp.h>
 #ifdef MSS_HACK_DELETE_ME_PLEASE
@@ -188,9 +187,6 @@ skb_copy_expand(const struct sk_buff *skb, int headroom,
 	skb_dst_set(n, dst_clone(skb_dst(skb)));
 	if(skb->nh.raw)
 		n->nh.raw=skb->nh.raw+offset;
-#ifndef NETDEV_23
-	n->is_clone=0;
-#endif /* NETDEV_23 */
 	atomic_set(&n->users, 1);
 	n->destructor = NULL;
 #ifdef HAVE_SOCK_SECURITY
@@ -205,9 +201,6 @@ skb_copy_expand(const struct sk_buff *skb, int headroom,
 	if(skb->mac.raw) 
 		n->mac.raw=skb->mac.raw+offset;
 	memcpy(n->proto_priv, skb->proto_priv, sizeof(skb->proto_priv));
-#ifndef NETDEV_23
-	n->used=skb->used;
-#endif /* !NETDEV_23 */
 	n->pkt_type=skb->pkt_type;
 	n->stamp=skb->stamp;
 	
@@ -2379,7 +2372,6 @@ ipsec_xmit_cleanup(struct ipsec_xmit_state*ixs)
 	}
 }
 
-#ifdef NETDEV_23
 static inline int ipsec_xmit_send2(struct sk_buff *skb)
 {
 #ifdef NETDEV_25	/* 2.6 kernels */
@@ -2401,7 +2393,6 @@ static inline int ipsec_xmit_send2_mast(struct sk_buff *skb)
 	return ipsec_xmit_send2(skb);
 
 }
-#endif /* NETDEV_23 */
 
 #ifdef NAT_TRAVERSAL
 enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs)
@@ -2644,7 +2635,6 @@ ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 		    ixs->skb->dev ? ixs->skb->dev->name : "NULL",
 			ixs->mast_mode ? "(mast)" : "");
 	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ip_hdr(ixs->skb));
-#ifdef NETDEV_23	/* 2.4 kernels */
 	{
 		int err;
 		if (ixs->mast_mode)
@@ -2675,9 +2665,6 @@ ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 			return IPSEC_XMIT_IPSENDFAILURE;
 		}
 	}
-#else /* NETDEV_23 */	/* 2.2 kernels */
-	ip_send(ixs->skb);
-#endif /* NETDEV_23 */
 	if(ixs->stats) {
 		ixs->stats->tx_packets++;
 	}

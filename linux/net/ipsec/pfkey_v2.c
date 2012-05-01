@@ -513,10 +513,6 @@ pfkey_destroy_socket(struct sock *sk)
 			}
 			printk(" len:%d", skb->len);
 			printk(" csum:%d", skb->csum);
-#ifndef NETDEV_23
-			printk(" used:%d", skb->used);
-			printk(" is_clone:%d", skb->is_clone);
-#endif /* NETDEV_23 */
 			printk(" cloned:%d", skb->cloned);
 			printk(" pkt_type:%d", skb->pkt_type);
 			printk(" ip_summed:%d", skb->ip_summed);
@@ -765,11 +761,7 @@ pfkey_create(struct socket *sock, int protocol)
 }
 
 DEBUG_NO_STATIC int
-#ifdef NETDEV_23
 pfkey_release(struct socket *sock)
-#else /* NETDEV_23 */
-pfkey_release(struct socket *sock, struct socket *peersock)
-#endif /* NETDEV_23 */
 {
 	struct sock *sk;
 	int i;

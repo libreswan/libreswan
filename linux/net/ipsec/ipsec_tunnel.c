@@ -2,6 +2,7 @@
  * IPSEC Tunneling code. Heavily based on drivers/net/new_tunnel.c
  * Copyright (C) 1996, 1997  John Ioannidis.
  * Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Richard Guy Briggs.
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * 
  * OCF/receive state machine written by
  * David McCullough <dmccullough@cyberguard.com>
@@ -70,9 +71,7 @@
 #include <net/ip.h>
 #include <net/ipv6.h>
 #include <net/arp.h>
-#ifdef NETDEV_23
 # include <linux/netfilter_ipv4.h>
-#endif /* NETDEV_23 */
 
 #include <linux/if_arp.h>
 #include <linux/delay.h>
@@ -2105,20 +2104,7 @@ ipsec_tunnel_createnum(int ifnum)
 	}
 #ifndef alloc_netdev
 	memset((caddr_t)dev_ipsec, 0, sizeof(struct net_device));
-#ifdef NETDEV_23
 	strncpy(dev_ipsec->name, name, sizeof(dev_ipsec->name));
-#else /* NETDEV_23 */
-	dev_ipsec->name = (char*)kmalloc(IFNAMSIZ, GFP_KERNEL);
-	if (dev_ipsec->name == NULL) {
-		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
-			    "klips_debug:ipsec_tunnel_init_devices: "
-			    "failed to allocate memory for device %s name, quitting device init.\n",
-			    name);
-		return -ENOMEM;
-	}
-	memset((caddr_t)dev_ipsec->name, 0, IFNAMSIZ);
-	strncpy(dev_ipsec->name, name, IFNAMSIZ);
-#endif /* NETDEV_23 */
 #ifdef PAUL_FIXME
 	dev_ipsec->next = NULL;
 #endif
@@ -2195,10 +2181,6 @@ ipsec_tunnel_deletenum(int vifnum)
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
 	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
-#ifndef NETDEV_23
-	kfree(dev_ipsec->name);
-	dev_ipsec->name=NULL;
-#endif /* !NETDEV_23 */
 #ifndef alloc_netdev
 	kfree(dev_ipsec->priv);
 	dev_ipsec->priv=NULL;
@@ -2244,10 +2226,6 @@ ipsec_tunnel_cleanup_devices(void)
 		KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 		unregister_netdev(dev_ipsec);
 		KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
-#ifndef NETDEV_23
-		kfree(dev_ipsec->name);
-		dev_ipsec->name=NULL;
-#endif /* !NETDEV_23 */
 #ifndef alloc_netdev
 		kfree(dev_ipsec->priv);
 		dev_ipsec->priv=NULL;

@@ -1,6 +1,7 @@
 /*
  * IPSEC MAST code.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,9 +52,7 @@ char ipsec_mast_c_version[] = "Please use ipsec --version instead";
 
 #include <net/icmp.h>		/* icmp_send() */
 #include <net/ip.h>
-#ifdef NETDEV_23
-# include <linux/netfilter_ipv4.h>
-#endif /* NETDEV_23 */
+#include <linux/netfilter_ipv4.h>
 
 #include <linux/if_arp.h>
 
@@ -1008,10 +1007,6 @@ ipsec_mast_deletenum(int vifnum)
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
 	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
-#ifndef NETDEV_23
-	kfree(dev_ipsec->name);
-	dev_ipsec->name=NULL;
-#endif /* !NETDEV_23 */
 #ifndef alloc_netdev
 	kfree(dev_ipsec->priv);
 	dev_ipsec->priv=NULL;
