@@ -57,11 +57,7 @@
 # include <linux/proc_fs.h>
 #endif /* CONFIG_PROC_FS */
 
-#ifdef NETLINK_SOCK
 # include <linux/netlink.h>
-#else
-# include <net/netlink.h>
-#endif
 
 #include "libreswan/radij.h"
 

@@ -51,11 +51,7 @@
 # define IS_MYADDR RTN_LOCAL
 
 #include <net/ip.h>
-#ifdef NETLINK_SOCK
-# include <linux/netlink.h>
-#else
-# include <net/netlink.h>
-#endif
+#include <linux/netlink.h>
 
 #include <linux/random.h>	/* get_random_bytes() */
 

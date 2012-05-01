@@ -7,6 +7,7 @@
  * Copyright (C) 2008 - 2011 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012 David McCullough <david_mccullough@mcafee.com>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * 
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -34,11 +35,6 @@
 #include <linux/version.h>
 #ifndef KERNEL_VERSION
 # define KERNEL_VERSION(x,y,z) (((x)<<16)+((y)<<8)+(z))
-#endif
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,1,0)
-# define HEADER_CACHE_BIND_21
-# error "KLIPS is no longer supported on Linux 2.0. Sorry"
 #endif
 
 #if __KERNEL__
@@ -87,10 +83,6 @@
  * If possible, use the latest native writing, and write macro's to port back
  * the new code to older kernels.
  */
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,1,0)
-# define NETLINK_SOCK
-#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,1,19)
 # define net_device_stats enet_statistics
