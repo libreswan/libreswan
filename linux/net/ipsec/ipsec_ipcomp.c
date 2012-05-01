@@ -166,11 +166,7 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 	/* make sure we update the pointer */
 	irs->skb = skb;
 	
-#ifdef NET_21
 	irs->iph = (void *) ip_hdr(skb);
-#else /* NET_21 */
-	irs->iph = (void *) skb->ip_hdr;
-#endif /* NET_21 */
 
 	if (osw_ip_hdr_version(irs) == 6)
 		ipsp->ips_comp_ratio_dbytes += ntohs(osw_ip6_hdr(irs)->payload_len)
@@ -208,11 +204,7 @@ ipsec_xmit_ipcomp_setup(struct ipsec_xmit_state *ixs)
 
   ixs->skb = skb_compress(ixs->skb, ixs->ipsp, &flags);
 
-#ifdef NET_21
   ixs->iph = (void *)ip_hdr(ixs->skb);
-#else /* NET_21 */
-  ixs->iph = (void *)ixs->skb->ip_hdr;
-#endif /* NET_21 */
   
 #ifdef CONFIG_KLIPS_IPV6
   if (osw_ip_hdr_version(ixs) == 6) {

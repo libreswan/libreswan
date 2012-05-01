@@ -59,12 +59,10 @@
 #include "libreswan/ipsec_param2.h"
 
 #include <libreswan.h>
-#ifdef NET_21
 # define MSS_HACK_		/* experimental */
 # include <linux/in6.h>
 # include <net/dst.h>
 # define proto_priv cb
-#endif /* NET_21 */
 
 #include <net/icmp.h>		/* icmp_send() */
 #include <net/ip.h>
@@ -148,11 +146,6 @@ skb_copy_expand(const struct sk_buff *skb, int headroom,
 	 *	Allocate the copy buffer
 	 */
 	 
-#ifndef NET_21
-	IS_SKB(skb);
-#endif /* !NET_21 */
-
-
 	n=alloc_skb(skb->end - skb->head + headroom + tailroom, priority);
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_CROUT,
@@ -190,7 +183,6 @@ skb_copy_expand(const struct sk_buff *skb, int headroom,
 
 	/* Copy the bytes */
 	memcpy(n->head + headroom, skb->head,skb->end-skb->head);
-#ifdef NET_21
 	n->csum=skb->csum;
 	n->priority=skb->priority;
 	skb_dst_set(n, dst_clone(skb_dst(skb)));
@@ -204,24 +196,6 @@ skb_copy_expand(const struct sk_buff *skb, int headroom,
 #ifdef HAVE_SOCK_SECURITY
 	n->security=skb->security;
 #endif
-#else /* NET_21 */
-	n->link3=NULL;
-	n->when=skb->when;
-	if(skb->ip_hdr)
-	        n->ip_hdr=(struct iphdr *)(((char *)skb->ip_hdr)+offset);
-	n->saddr=skb->saddr;
-	n->daddr=skb->daddr;
-	n->raddr=skb->raddr;
-	n->seq=skb->seq;
-	n->end_seq=skb->end_seq;
-	n->ack_seq=skb->ack_seq;
-	n->acked=skb->acked;
-	n->free=1;
-	n->arp=skb->arp;
-	n->tries=0;
-	n->lock=0;
-	n->users=0;
-#endif /* NET_21 */
 	n->protocol=skb->protocol;
 	n->list=NULL;
 	n->sk=NULL;
@@ -237,9 +211,6 @@ skb_copy_expand(const struct sk_buff *skb, int headroom,
 	n->pkt_type=skb->pkt_type;
 	n->stamp=skb->stamp;
 	
-#ifndef NET_21
-	IS_SKB(n);
-#endif /* !NET_21 */
 	return n;
 }
 #endif /* !SKB_COPY_EXPAND */
@@ -635,19 +606,6 @@ ipsec_xmit_sanity_check_skb(struct ipsec_xmit_state *ixs)
 			return IPSEC_XMIT_NOIPOPTIONS;
 		}
 #endif /* IPSEC_DISALLOW_IPOPTIONS */
-	
-#ifndef NET_21
-		if (osw_ip4_hdr(ixs)->ttl <= 0) {
-			/* Tell the sender its packet died... */
-			ICMP_SEND(ixs->skb, ICMP_TIME_EXCEEDED, ICMP_EXC_TTL, 0, ixs->physdev);
-
-			KLIPS_PRINT(debug_tunnel, "klips_debug:ipsec_xmit_sanity_check_skb: "
-				    "TTL=0, too many hops!\n");
-			if (ixs->stats)
-				ixs->stats->tx_dropped++;
-			return IPSEC_XMIT_TTLEXPIRED;
-		}
-#endif /* !NET_21 */
 	}
 	
 	return IPSEC_XMIT_OK;
@@ -905,9 +863,7 @@ ipsec_xmit_esp(struct ipsec_xmit_state *ixs)
 	unsigned char nexthdr;
 
 	ixs->espp = (struct esphdr *)(ixs->dat + ixs->iphlen);
-#ifdef NET_21
 	skb_set_transport_header(ixs->skb, ipsec_skb_offset(ixs->skb, ixs->espp));
-#endif /* NET_21 */
 	ixs->espp->esp_spi = ixs->ipsp->ips_said.spi;
 	ixs->espp->esp_rpl = htonl(++(ixs->ipsp->ips_replaywin_lastseq));
 	
@@ -1098,9 +1054,7 @@ ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 	}
 
 	ahp = (struct ahhdr *)(ixs->dat + ixs->iphlen);
-#ifdef NET_21
 	skb_set_transport_header(ixs->skb, ipsec_skb_offset(ixs->skb, ahp));
-#endif /* NET_21 */
 	ahp->ah_spi = ixs->ipsp->ips_said.spi;
 	ahp->ah_rpl = htonl(++(ixs->ipsp->ips_replaywin_lastseq));
 	ahp->ah_rv = 0;
@@ -1211,11 +1165,7 @@ ipsec_xmit_ipip(struct ipsec_xmit_state *ixs)
 		osw_ip4_hdr(ixs)->version  = 4;
 		switch(sysctl_ipsec_tos) {
 		case 0:
-	#ifdef NET_21
 			osw_ip4_hdr(ixs)->tos = ip_hdr(ixs->skb)->tos;
-	#else /* NET_21 */
-			osw_ip4_hdr(ixs)->tos = ixs->skb->ip_hdr->tos;
-	#endif /* NET_21 */
 			break;
 		case 1:
 			osw_ip4_hdr(ixs)->tos = 0;
@@ -1235,9 +1185,7 @@ ipsec_xmit_ipip(struct ipsec_xmit_state *ixs)
 		if (error != IPSEC_XMIT_OK)
 			return error;
 		KLIPS_IP_SELECT_IDENT(osw_ip4_hdr(ixs), ixs->skb);
-#ifdef NET_21
 		skb_set_transport_header(ixs->skb, ipsec_skb_offset(ixs->skb, ixs->iph));
-#endif /* NET_21 */
 	}
 
 	return IPSEC_XMIT_OK;
@@ -1270,11 +1218,7 @@ ipsec_xmit_ipcomp(struct ipsec_xmit_state *ixs)
 
 	ixs->skb = skb_compress(ixs->skb, ixs->ipsp, &flags);
 
-#ifdef NET_21
 	ixs->iph = ip_hdr(ixs->skb);
-#else /* NET_21 */
-	ixs->iph = ixs->skb->ip_hdr;
-#endif /* NET_21 */
 
 #ifdef CONFIG_KLIPS_IPV6
 	if (osw_ip_hdr_version(ixs) == 6) {
@@ -1325,11 +1269,7 @@ ipsec_xmit_ipcomp(struct ipsec_xmit_state *ixs)
 enum ipsec_xmit_value
 ipsec_xmit_cont(struct ipsec_xmit_state *ixs)
 {
-#ifdef NET_21
 	skb_set_network_header(ixs->skb, ipsec_skb_offset(ixs->skb, ixs->skb->data));
-#else /* NET_21 */
-	ixs->skb->ip_hdr = ixs->skb->h.iph = (struct iphdr *) ixs->skb->data;
-#endif /* NET_21 */
 
 	/*
 	 * if we have more work to do,  it's likely this checksum is getting
@@ -1667,9 +1607,7 @@ ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 			break;
 				
 		case SPI_PASS:
-#ifdef NET_21
 			ixs->pass = 1;
-#endif /* NET_21 */
 			KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 				    "klips_debug:ipsec_xmit_encap_bundle: "
 				    "PASS: calling dev_queue_xmit\n");
@@ -2361,9 +2299,6 @@ ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 
 	if ((skb_headroom(ixs->skb) >= ixs->max_headroom + 2 * ixs->ll_headroom) && 
 	    (skb_tailroom(ixs->skb) >= ixs->max_tailroom)
-#ifndef NET_21
-	    && ixs->skb->free
-#endif /* !NET_21 */
 		) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_CROUT,
 			    "klips_debug:ipsec_xmit_init2: "

@@ -83,16 +83,7 @@ struct ipsecpriv
 		void *daddr,
 		void *saddr,
 		unsigned len);
-#ifdef NET_21
 	int  (*rebuild_header)(struct sk_buff *skb);
-#else /* NET_21 */
-	int  (*rebuild_header)(void *buff, struct net_device *dev,
-			unsigned long raddr, struct sk_buff *skb);
-#endif /* NET_21 */
-#ifndef NET_21
-	void (*header_cache_bind)(struct hh_cache **hhp, struct net_device *dev,
-				 unsigned short htype, __u32 daddr);
-#endif /* !NET_21 */
 	void (*header_cache_update)(struct hh_cache *hh, struct net_device *dev, unsigned char *  haddr);
 #endif
 #ifdef USE_NETDEV_OPS

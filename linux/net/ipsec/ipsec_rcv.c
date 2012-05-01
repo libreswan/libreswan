@@ -924,14 +924,6 @@ ipsec_rcv_init(struct ipsec_rcv_state *irs)
 			skb->dev->name ? skb->dev->name : "NULL");
 	KLIPS_PRINTMORE(debug_rcv, "\n");
 
-#ifndef NET_21
-	if((!protocol) || (protocol->protocol != irs->proto)) {
-		KLIPS_PRINT(debug_rcv & DB_RX_IPSA,
-			    "klips_debug:ipsec_rcv_init: "
-			    "protocol arg is NULL or unequal to the packet contents, this is odd, using value in packet.\n");
-	}
-#endif /* !NET_21 */
-
 	if( (irs->proto != IPPROTO_AH) &&
 #ifdef CONFIG_KLIPS_IPCOMP_disabled_until_we_register_IPCOMP_HANDLER
 	    (irs->proto != IPPROTO_COMP) &&

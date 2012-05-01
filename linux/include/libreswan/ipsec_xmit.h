@@ -115,13 +115,9 @@ struct ipsec_xmit_state
 	short cur_mtu;          /* copy of prv->mtu, cause prv may == NULL */
 	short mtudiff;
 	__u8 next_header;               /* protocol of the nested header */
-#ifdef NET_21
 	struct rtable *route;
-#endif /* NET_21 */
 	ip_said outgoing_said;
-#ifdef NET_21
 	int pass;
-#endif /* NET_21 */
 	uint32_t eroute_pid;
 	struct ipsec_sa ips;
 #ifdef NAT_TRAVERSAL

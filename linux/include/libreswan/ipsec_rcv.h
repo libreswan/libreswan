@@ -151,11 +151,6 @@ struct ipsec_rcv_state {
 	int		state;
 	int		next_state;
 	int		auth_checked;
-
-#ifndef NET_21
-	struct net_device *devp;
-	struct inet_protocol *protop;
-#endif
 	struct xform_functions *proto_funcs;
 	__u8 proto;
 	int replay;

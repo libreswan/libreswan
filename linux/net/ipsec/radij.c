@@ -74,9 +74,7 @@
 #include <linux/etherdevice.h> /* eth_type_trans */
 #include <linux/ip.h>          /* struct iphdr */
 #include <linux/skbuff.h>
-#ifdef NET_21
 # include <linux/in6.h>
-#endif /* NET_21 */
 
 #include <net/ip.h>
 

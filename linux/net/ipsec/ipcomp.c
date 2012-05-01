@@ -144,11 +144,7 @@ struct sk_buff *skb_compress(struct sk_buff *skb, struct ipsec_sa *ips, unsigned
 		return NULL;
 	}
 	
-#ifdef NET_21
 	iph = ip_hdr(skb);
-#else /* NET_21 */
-	iph = skb->ip_hdr;
-#endif /* NET_21 */
 #ifdef CONFIG_KLIPS_IPV6
 	iph6 = ipv6_hdr(skb);
 #endif
@@ -396,11 +392,7 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips, unsign
 		return NULL;
 	}
 	
-#ifdef NET_21
 	oiph = ip_hdr(skb);
-#else /* NET_21 */
-	oiph = skb->ip_hdr;
-#endif /* NET_21 */
 #ifdef CONFIG_KLIPS_IPV6
 	oiph6 = ipv6_hdr(skb);
 #endif
@@ -535,11 +527,7 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips, unsign
 
 	safe_skb_put(nskb, pyldsz - cpyldsz - sizeof(struct ipcomphdr));
 
-#ifdef NET_21
 	iph = ip_hdr(nskb);
-#else /* NET_21 */
-	iph = nskb->ip_hdr;
-#endif /* NET_21 */
 #ifdef CONFIG_KLIPS_IPV6
 	iph6 = ipv6_hdr(nskb);
 #endif

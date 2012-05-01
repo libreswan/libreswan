@@ -317,9 +317,7 @@ ipsec_xmit_ah_setup(struct ipsec_xmit_state *ixs)
     ixs->stats->tx_errors++;
     return IPSEC_XMIT_AH_BADALG;
   }
-#ifdef NET_21
   skb_set_transport_header(ixs->skb, ipsec_skb_offset(ixs->skb, ahp));
-#endif /* NET_21 */
 
   return IPSEC_XMIT_OK;
 }

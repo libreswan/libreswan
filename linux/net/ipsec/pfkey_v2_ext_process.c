@@ -52,10 +52,8 @@
 #  include <asm/spinlock.h> /* *lock* */
 # endif /* SPINLOCK_23 */
 #endif /* SPINLOCK */
-#ifdef NET_21
 # include <linux/in6.h>
 # define IS_MYADDR RTN_LOCAL
-#endif
 
 #include <net/ip.h>
 #ifdef NETLINK_SOCK
