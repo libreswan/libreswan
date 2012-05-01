@@ -115,10 +115,10 @@ int ipsec_xmit_trap_sendcount = 0;
 
 #define dmp(_x,_y,_z) if(debug_xmit && sysctl_ipsec_debug_verbose) ipsec_dmp_block(_x,_y,_z)
 
-#if !defined(SKB_COPY_EXPAND) || defined(KLIPS_UNIT_TESTS)
-#ifdef CONFIG_KLIPS_IPV6
-#error "this code is broken for IPv6"
-#endif
+#if defined(KLIPS_UNIT_TESTS)
+# ifdef CONFIG_KLIPS_IPV6
+#  error "this code is broken for IPv6"
+# endif
 
 /*
  *	This is mostly skbuff.c:skb_copy().
@@ -206,7 +206,7 @@ skb_copy_expand(const struct sk_buff *skb, int headroom,
 	
 	return n;
 }
-#endif /* !SKB_COPY_EXPAND */
+#endif /* KLIPS_UNIT_TESTS */
 
 static void
 ipsec_print_ip4(struct iphdr *ip)

@@ -88,10 +88,6 @@
 # define CONFIG_IP_ALIAS
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,35)
-# define SKB_COPY_EXPAND
-#endif
-
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,37)
 # define IP_SELECT_IDENT
 #endif
