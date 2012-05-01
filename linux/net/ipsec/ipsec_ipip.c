@@ -68,11 +68,7 @@ ipsec_xmit_ipip_setup(struct ipsec_xmit_state *ixs)
 
   switch(sysctl_ipsec_tos) {
   case 0:
-#ifdef NET_21
     osw_ip4_hdr(ixs)->tos = ip_hdr(ixs->skb)->tos;
-#else /* NET_21 */
-    osw_ip4_hdr(ixs)->tos = ixs->skb->ip_hdr->tos;
-#endif /* NET_21 */
     break;
   case 1:
     osw_ip4_hdr(ixs)->tos = 0;

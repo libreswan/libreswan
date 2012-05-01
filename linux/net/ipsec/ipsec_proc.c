@@ -1095,32 +1095,6 @@ ipsec_proc_init()
 #error You must have PROC_FS built in to use KLIPS
 #endif
 
-        /* for 2.0 kernels */
-#if !defined(PROC_FS_2325) && !defined(PROC_FS_21)
-	error |= proc_register_dynamic(&PROC_NET, &ipsec_eroute);
-	error |= proc_register_dynamic(&PROC_NET, &ipsec_spi);
-	error |= proc_register_dynamic(&PROC_NET, &ipsec_spigrp);
-#ifdef IPSEC_SA_RECOUNT_DEBUG
-	error |= proc_register_dynamic(&PROC_NET, &ipsec_saraw);
-#endif
-	error |= proc_register_dynamic(&PROC_NET, &ipsec_tncfg);
-	error |= proc_register_dynamic(&PROC_NET, &ipsec_version);
-	error |= proc_register_dynamic(&PROC_NET, &ipsec_klipsdebug);
-#endif
-
-	/* for 2.2 kernels */
-#if !defined(PROC_FS_2325) && defined(PROC_FS_21)
-	error |= proc_register(PROC_NET, &ipsec_eroute);
-	error |= proc_register(PROC_NET, &ipsec_spi);
-	error |= proc_register(PROC_NET, &ipsec_spigrp);
-#ifdef IPSEC_SA_RECOUNT_DEBUG
-	error |= proc_register(PROC_NET, &ipsec_saraw);
-#endif
-	error |= proc_register(PROC_NET, &ipsec_tncfg);
-	error |= proc_register(PROC_NET, &ipsec_version);
-	error |= proc_register(PROC_NET, &ipsec_klipsdebug);
-#endif
-
 	/* for 2.4 kernels */
 #if defined(PROC_FS_2325)
 	/* create /proc/net/ipsec */

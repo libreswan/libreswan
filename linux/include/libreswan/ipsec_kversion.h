@@ -67,11 +67,11 @@
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,3,0)
-#define ipsec_ipv6_skip_exthdr ipv6_skip_exthdr
-#define IPSEC_FRAG_OFF_DECL(x) __be16 x;
+# define ipsec_ipv6_skip_exthdr ipv6_skip_exthdr
+# define IPSEC_FRAG_OFF_DECL(x) __be16 x;
 #else
-#define ipsec_ipv6_skip_exthdr(a,b,c,d) ipv6_skip_exthdr(a,b,c)
-#define IPSEC_FRAG_OFF_DECL(x)
+# define ipsec_ipv6_skip_exthdr(a,b,c,d) ipv6_skip_exthdr(a,b,c)
+# define IPSEC_FRAG_OFF_DECL(x)
 #endif
 
 /*
@@ -173,7 +173,6 @@
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,8)
 # define NEED_INET_PROTOCOL
-
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,12)
@@ -183,7 +182,6 @@
 # else
 #  define NET_26_12_SKALLOC
 # endif
-#endif
 #endif
 
 /* see <linux/security.h> */
@@ -322,7 +320,7 @@
 #  define skb_set_mac_header(skb,off)  ((skb)->mac.raw = (skb)->data + (off))
 # endif
 # if defined(CONFIG_SLE_VERSION) && defined(CONFIG_SLE_SP) && (CONFIG_SLE_VERSION == 10 && CONFIG_SLE_SP == 2)
-# define ip_hdr(skb) ((skb)->nh.iph)
+#  define ip_hdr(skb) ((skb)->nh.iph)
 # endif
 #endif
 /* turn a pointer into an offset for above macros */
@@ -376,7 +374,7 @@
 # define l_inet_addr_type(a)	inet_addr_type(&init_net, a)
 #else
 # define ip_chk_addr inet_addr_type
-#define l_inet_addr_type	inet_addr_type
+# define l_inet_addr_type	inet_addr_type
 #endif
 
 #include <linux/spinlock.h>
@@ -399,13 +397,13 @@
 #endif
 
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,31)
-#ifndef NETDEV_TX_BUSY
-# ifdef NETDEV_XMIT_CN
-#  define NETDEV_TX_BUSY NETDEV_XMIT_CN
-# else
-#  define NETDEV_TX_BUSY 1
+# ifndef NETDEV_TX_BUSY
+#  ifdef NETDEV_XMIT_CN
+#   define NETDEV_TX_BUSY NETDEV_XMIT_CN
+#  else
+#   define NETDEV_TX_BUSY 1
+#  endif
 # endif
-#endif
 #endif
 
 #if LINUX_VERSION_CODE == KERNEL_VERSION(2,6,30)
@@ -437,84 +435,20 @@
 #endif
 
 #if !defined(HAVE_CURRENT_UID)
-#define current_uid() (current->uid)
+# define current_uid() (current->uid)
 #endif
 
-#ifdef NET_21
-# define ipsec_kfree_skb(a) kfree_skb(a)
-#else /* NET_21 */
-# define ipsec_kfree_skb(a) kfree_skb(a, FREE_WRITE)
-#endif /* NET_21 */
+#define ipsec_kfree_skb(a) kfree_skb(a)
 
-#ifdef NETDEV_23
-
-#ifndef SPINLOCK
-#  include <linux/bios32.h>
-     /* simulate spin locks and read/write locks */
-     typedef struct {
-       volatile char lock;
-     } spinlock_t;
-
-     typedef struct {
-       volatile unsigned int lock;
-     } rwlock_t;                                                                     
-
-#  define SPIN_LOCK_UNLOCKED {0}
-
-#  define spin_lock_init(x) { (x)->lock = 0;}
-#  define rw_lock_init(x) { (x)->lock = 0; }
-
-#  define spin_lock(x) { while ((x)->lock) barrier(); (x)->lock=1;}
-#  define spin_lock_irq(x) { cli(); spin_lock(x);}
-#  define spin_lock_irqsave(x,flags) { save_flags(flags); spin_lock_irq(x);}
-
-#  define spin_unlock(x) { (x)->lock=0;}
-#  define spin_unlock_irq(x) { spin_unlock(x); sti();}
-#  define spin_unlock_irqrestore(x,flags) { spin_unlock(x); restore_flags(flags);}
-
-#  define read_lock(x) spin_lock(x)
-#  define read_lock_irq(x) spin_lock_irq(x)
-#  define read_lock_irqsave(x,flags) spin_lock_irqsave(x,flags)
-
-#  define read_unlock(x) spin_unlock(x)
-#  define read_unlock_irq(x) spin_unlock_irq(x)
-#  define read_unlock_irqrestore(x,flags) spin_unlock_irqrestore(x,flags)
-
-#  define write_lock(x) spin_lock(x)
-#  define write_lock_irq(x) spin_lock_irq(x)
-#  define write_lock_irqsave(x,flags) spin_lock_irqsave(x,flags)
-
-#  define write_unlock(x) spin_unlock(x)
-#  define write_unlock_irq(x) spin_unlock_irq(x)
-#  define write_unlock_irqrestore(x,flags) spin_unlock_irqrestore(x,flags)
-#endif /* !SPINLOCK */
-
-#ifndef SPINLOCK_23
-#  define spin_lock_bh(x)  spin_lock_irq(x)
-#  define spin_unlock_bh(x)  spin_unlock_irq(x)
-
-#  define read_lock_bh(x)  read_lock_irq(x)
-#  define read_unlock_bh(x)  read_unlock_irq(x)
-
-#  define write_lock_bh(x)  write_lock_irq(x)
-#  define write_unlock_bh(x)  write_unlock_irq(x)
-#endif /* !SPINLOCK_23 */
 
 #ifndef HAVE_NETDEV_PRINTK
-#define netdev_printk(sevlevel, netdev, msglevel, format, arg...) \
+# define netdev_printk(sevlevel, netdev, msglevel, format, arg...) \
 	printk(sevlevel "%s: " format , netdev->name , ## arg)
 #endif
 
-#ifdef NETDEV_23
-# define ipsec_dev_put(x) dev_put(x)
-# define __ipsec_dev_put(x) __dev_put(x)
-# define ipsec_dev_hold(x) dev_hold(x)
-#else /* NETDEV_23 */
-# define ipsec_dev_get dev_get
-# define __ipsec_dev_put(x) 
-# define ipsec_dev_put(x)
-# define ipsec_dev_hold(x) 
-#endif /* NETDEV_23 */
+#define ipsec_dev_put(x) dev_put(x)
+#define __ipsec_dev_put(x) __dev_put(x)
+#define ipsec_dev_hold(x) dev_hold(x)
 
 #ifndef late_initcall
 # include <linux/init.h>
@@ -523,22 +457,12 @@
 # endif
 #endif
 
-#ifdef NET_21
-# include <linux/in6.h>
-#else
-     /* old kernel in.h has some IPv6 stuff, but not quite enough */
-# define	s6_addr16	s6_addr
-# define	AF_INET6	10
-# define uint8_t __u8
-# define uint16_t __u16 
-# define uint32_t __u32 
-# define uint64_t __u64 
-#endif
+#include <linux/in6.h>
 
 #if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && CONFIG_IPSEC_NAT_TRAVERSAL
 # define NAT_TRAVERSAL 1
 #else
-#undef CONFIG_IPSEC_NAT_TRAVERSAL
+# undef CONFIG_IPSEC_NAT_TRAVERSAL
 # if defined(HAVE_UDP_ENCAP_CONVERT)
 #  define NAT_TRAVERSAL 1
 # endif
@@ -555,15 +479,15 @@
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,33)
-#define	inet_sport	sport
-#define	inet_dport	dport
-#define	CTL_NAME(n)	.ctl_name = n,
+# define	inet_sport	sport
+# define	inet_dport	dport
+# define	CTL_NAME(n)	.ctl_name = n,
 #else
-#define	CTL_NAME(n)
+# define	CTL_NAME(n)
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,35)
-#define HAVE_SOCKET_WQ
+# define HAVE_SOCKET_WQ
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
@@ -608,7 +532,6 @@
 #if !defined(DEFINE_RWLOCK)
 # define DEFINE_RWLOCK(x) rwlock_t x = RW_LOCK_UNLOCKED
 #endif
-
 
 #endif /* _LIBRESWAN_KVERSIONS_H */
 
