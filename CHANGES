@@ -3,6 +3,7 @@ See also http://www.libreswan.org/
 
 v1.0.0 (unreleased)
 * KLIPS: Removed support for Linux < 2.4.4 [Paul]
+* NSS is now mandatory - custom crypto code removed [Paul]
 * DNS: Removed LWRES code and old static ISC libraries [Paul]
 * OE: Removed support for old KEY and TXT DNS records [Paul]
 * OE: Add support for IPSECKEY in ipsec showhostkey [Paul]
