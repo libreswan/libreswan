@@ -1,6 +1,7 @@
 # Libreswan pathnames and other master configuration
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
+# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -356,16 +357,8 @@ ifeq ($(USE_XAUTHPAM),true)
 HAVE_THREADS=true
 endif
 
-# Support for integrity check for binaries (requires USE_LIBNSS and fipscheck-devel)
+# Support for integrity check for openswan on startup 
 USE_FIPSCHECK?=false
-
-# Support for NSS crypto library (does not requires HAVE_THREADS)
-# USE_LIBNSS uses pthreads by default.
-USE_LIBNSS?=false
-
-ifeq ($(USE_FIPSCHECK),true)
-USE_LIBNSS?=true
-endif
 
 #Enable Labeled IPSec Functionality (requires SElinux)
 USE_LABELED_IPSEC?=false
@@ -412,7 +405,7 @@ IPSEC_CONNECTION_LIMIT?=250
 
 # Do we have pthreads available?  Only yes if you need it for XAUTH+PAM,
 # or if you need it for CRL fetching.
-# Note: USE_LIBNSS by default uses pthreads, enabling it here will only 
+# Note: nss by default uses pthreads, enabling it here will only 
 # affect it for XAUTH+PAM, and CRL. 
 HAVE_THREADS?=false
 
@@ -533,13 +526,12 @@ LIBDESLITE:=${OBJDIRTOP}/lib/libcrypto/libdes/libdes.a
 LIBOSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liboswcrypto/liboswcrypto.a
 LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
 LIBMD5=${OBJDIRTOP}/lib/libcrypto/libmd5/libmd5.a
-LIBMD2=${OBJDIRTOP}/lib/libcrypto/libmd2/libmd2.a
 LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
 LIBBLOWFISH=${OBJDIRTOP}/lib/libcrypto/libblowfish/libblowfish.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
-CRYPTOLIBS=${LIBAES} ${LIBSHA1} ${LIBMD5} ${LIBMD2} ${LIBDESLITE} ${LIBSHA2}
+CRYPTOLIBS=${LIBAES} ${LIBSHA1} ${LIBMD5} ${LIBDESLITE} ${LIBSHA2}
 
 ifeq ($(USE_EXTRACRYPTO),true)
 CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH} ${LIBBLOWFISH}
@@ -560,7 +552,7 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 export LIBLIBRESWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
 export LIBLIBRESWANDIR LIBRESWANLIB OSWLOGLIB PLUTOLIB 
 export LIBDESSRCDIR LIBDESLITE LIBAES
-export LIBMD5 LIBMD2 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
+export LIBMD5 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
 export LIBOSWCRYPTO
 

@@ -8,6 +8,7 @@
  * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -81,22 +82,18 @@
 #include "nat_traversal.h"
 #endif
 
-#ifdef HAVE_LIBNSS
- /* nspr */
-# include <prerror.h>
-# include <prinit.h>
-# include <prmem.h>
- /* nss */
-# include <key.h>
-# include <keyt.h>
-# include <nss.h>
-# include <pk11pub.h>
-# include <seccomon.h>
-# include <secerr.h>
-# include <secport.h>
-# include <time.h>
-# include "oswconf.h"
-#endif
+#include <prerror.h>
+#include <prinit.h>
+#include <prmem.h>
+#include <key.h>
+#include <keyt.h>
+#include <nss.h>
+#include <pk11pub.h>
+#include <seccomon.h>
+#include <secerr.h>
+#include <secport.h>
+#include <time.h>
+#include "oswconf.h"
 
 const char *pluto_shared_secrets_file = SHARED_SECRETS_FILE;
 struct secret *pluto_secrets = NULL;
@@ -174,46 +171,9 @@ sign_hash(const struct RSA_private_key *k
 	  , const u_char *hash_val, size_t hash_len
 	  , u_char *sig_val, size_t sig_len)
 {
-#ifdef HAVE_LIBNSS
     sign_hash_nss(k,hash_val,hash_len,sig_val,sig_len);
-#else
-    chunk_t ch;
-    mpz_t t1;
-    size_t padlen;
-    u_char *p = sig_val;
-
-    DBG(DBG_CONTROL | DBG_CRYPT,
-	DBG_log("signing hash with RSA Key *%s", k->pub.keyid)
-    )
-    /* PKCS#1 v1.5 8.1 encryption-block formatting */
-    *p++ = 0x00;
-    *p++ = 0x01;	/* BT (block type) 01 */
-    padlen = sig_len - 3 - hash_len;
-    memset(p, 0xFF, padlen);
-    p += padlen;
-    *p++ = 0x00;
-    memcpy(p, hash_val, hash_len);
-    passert(p + hash_len - sig_val == (ptrdiff_t)sig_len);
-
-    /* PKCS#1 v1.5 8.2 octet-string-to-integer conversion */
-    n_to_mpz(t1, sig_val, sig_len);	/* (could skip leading 0x00) */
-
-    /* PKCS#1 v1.5 8.3 RSA computation y = x^c mod n
-     * Better described in PKCS#1 v2.0 5.1 RSADP.
-     * There are two methods, depending on the form of the private key.
-     * We use the one based on the Chinese Remainder Theorem.
-     */
-    oswcrypto.rsa_mod_exp_crt(t1, t1, &k->p, &k->dP, &k->q, &k->dQ, &k->qInv);
-    /* PKCS#1 v1.5 8.4 integer-to-octet-string conversion */
-    ch = mpz_to_n(t1, sig_len);
-    memcpy(sig_val, ch.ptr, sig_len);
-    pfree(ch.ptr);
-
-    mpz_clear(t1);
-#endif
 }
 
-#ifdef HAVE_LIBNSS
 int sign_hash_nss(const struct RSA_private_key *k
 	, const u_char *hash_val, size_t hash_len
 	, u_char *sig_val, size_t sig_len)
@@ -367,7 +327,6 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k
 
     return NULL;
 }
-#endif
 
 /* Check signature against all RSA public keys we can find.
  * If we need keys from DNS KEY records, and they haven't been fetched,

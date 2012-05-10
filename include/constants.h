@@ -6,6 +6,7 @@
  * Copyright (C) 2004-2009  Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,10 +59,7 @@ typedef int bool;
 #define dup_any(fd) ((fd) == NULL_FD? NULL_FD : dup(fd))
 #define close_any(fd) { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; } }
 
-
-#ifdef HAVE_LIBNSS
-# include <prcpucfg.h>
-#endif
+#include <prcpucfg.h>
 
 #ifndef BITS_PER_BYTE
 # define BITS_PER_BYTE	8

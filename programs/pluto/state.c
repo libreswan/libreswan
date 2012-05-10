@@ -6,6 +6,7 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009,2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,11 +61,9 @@
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "spdb.h"
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pk11pub.h>
-# include <keyhi.h>
-#endif
+#include <nss.h>
+#include <pk11pub.h>
+#include <keyhi.h>
 
 /*
  * Global variables: had to go somewhere, might as well be this file.
@@ -441,7 +440,6 @@ delete_state(struct state *st)
     st->st_sadb=NULL;
 
     if (st->st_sec_in_use) {
-#ifdef HAVE_LIBNSS
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey   *pubk;
 	memcpy(&pubk,st->pubk.ptr,st->pubk.len);
@@ -449,9 +447,6 @@ delete_state(struct state *st)
 	freeanychunk(st->pubk);
 	memcpy(&privk,st->st_sec_chunk.ptr,st->st_sec_chunk.len);
 	SECKEY_DestroyPrivateKey(privk);        
-#else
-	mpz_clear(&(st->st_sec));
-#endif
 	pfreeany(st->st_sec_chunk.ptr);
     }
 
@@ -465,7 +460,6 @@ delete_state(struct state *st)
     freeanychunk(st->st_shared);
     freeanychunk(st->st_ni);
     freeanychunk(st->st_nr);
-#ifdef HAVE_LIBNSS
     free_osw_nss_symkey(st->st_skeyid);
     free_osw_nss_symkey(st->st_skey_d);
     free_osw_nss_symkey(st->st_skey_ai);
@@ -487,7 +481,7 @@ delete_state(struct state *st)
 
     if(st->st_esp.peer_keymat!=NULL)
     memset(st->st_esp.peer_keymat, 0, st->st_esp.keymat_len);
-#endif
+
     freeanychunk(st->st_skeyid);
     freeanychunk(st->st_skey_d);
     freeanychunk(st->st_skey_ai);
@@ -884,13 +878,6 @@ duplicate_state(struct state *st)
 #   define clone_chunk(ch, name) \
 	clonetochunk(nst->ch, st->ch.ptr, st->ch.len, name)
 
-#if 0
-    clone_chunk(st_skeyid_d, "st_skeyid_d in duplicate_state");
-    clone_chunk(st_skeyid_a, "st_skeyid_a in duplicate_state");
-    clone_chunk(st_skeyid_e, "st_skeyid_e in duplicate_state");
-#endif
-
-#ifdef HAVE_LIBNSS
     dup_osw_nss_symkey(st->st_skeyseed);
     dup_osw_nss_symkey(st->st_skey_d);
     dup_osw_nss_symkey(st->st_skey_ai);
@@ -900,7 +887,6 @@ duplicate_state(struct state *st)
     dup_osw_nss_symkey(st->st_skey_pi);
     dup_osw_nss_symkey(st->st_skey_pr);
     dup_osw_nss_symkey(st->st_enc_key);
-#endif
 
     clone_chunk(st_enc_key,  "st_enc_key in duplicate_state");
 

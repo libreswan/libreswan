@@ -8,6 +8,7 @@
  * Copyright (C) 2009 Seong-hun Lim
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -303,92 +304,45 @@ main_outI1(int whack_sock
  * See draft-ietf-ipsec-ike-01.txt 4.1 and 6.1.1.2
  */
 
-#ifdef HAVE_LIBNSS
 void
 main_mode_hash_body(struct state *st
                     , bool hashi        /* Initiator? */
                     , const pb_stream *idpl     /* ID payload, as PBS */
                     , struct hmac_ctx *ctx 
-                    , hash_update_t hash_update_void)
-#else
-void
-main_mode_hash_body(struct state *st
-		    , bool hashi	/* Initiator? */
-		    , const pb_stream *idpl	/* ID payload, as PBS */
-		    , union hash_ctx *ctx
-		    , hash_update_t hash_update_void)
-#endif
+                    , hash_update_t hash_update_void UNUSED)
 {
-#ifndef HAVE_LIBNSS
-#define HASH_UPDATE_T (union hash_ctx *, const u_char *input, unsigned int len)
-    hash_update_t hash_update=(hash_update_t)  hash_update_void;
-#if 0	/* if desperate to debug hashing */
-#   define hash_update(ctx, input, len) { \
-	DBG_dump("hash input", input, len); \
-	(hash_update)(ctx, input, len); \
-	}
-#endif
-
-#   define hash_update_chunk(ctx, ch) hash_update((ctx), (ch).ptr, (ch).len)
-#else
  hash_update_void = NULL;
-#endif
 
     if (hashi)
     {
-#ifdef HAVE_LIBNSS
         hmac_update_chunk(ctx, st->st_gi);
         hmac_update_chunk(ctx, st->st_gr);
         hmac_update(ctx, st->st_icookie, COOKIE_SIZE);
         hmac_update(ctx, st->st_rcookie, COOKIE_SIZE);
-#else
-	hash_update_chunk(ctx, st->st_gi);
-	hash_update_chunk(ctx, st->st_gr);
-	hash_update(ctx, st->st_icookie, COOKIE_SIZE);
-	hash_update(ctx, st->st_rcookie, COOKIE_SIZE);
-#endif
     }
     else
     {
-#ifdef HAVE_LIBNSS
         hmac_update_chunk(ctx, st->st_gr);
         hmac_update_chunk(ctx, st->st_gi);
         hmac_update(ctx, st->st_rcookie, COOKIE_SIZE);
         hmac_update(ctx, st->st_icookie, COOKIE_SIZE);	
-#else
-	hash_update_chunk(ctx, st->st_gr);
-	hash_update_chunk(ctx, st->st_gi);
-	hash_update(ctx, st->st_rcookie, COOKIE_SIZE);
-	hash_update(ctx, st->st_icookie, COOKIE_SIZE);
-#endif
     }
 
     DBG(DBG_CRYPT, DBG_log("hashing %lu bytes of SA"
 	, (unsigned long) (st->st_p1isa.len - sizeof(struct isakmp_generic))));
 
     /* SA_b */
-#ifdef HAVE_LIBNSS
     hmac_update(ctx, st->st_p1isa.ptr + sizeof(struct isakmp_generic)
         , st->st_p1isa.len - sizeof(struct isakmp_generic));
-#else
-    hash_update(ctx, st->st_p1isa.ptr + sizeof(struct isakmp_generic)
-	, st->st_p1isa.len - sizeof(struct isakmp_generic));
-#endif
 
     /* Hash identification payload, without generic payload header.
      * We used to reconstruct ID Payload for this purpose, but now
      * we use the bytes as they appear on the wire to avoid
      * "spelling problems".
      */
-#ifdef HAVE_LIBNSS
     hmac_update(ctx
         , idpl->start + sizeof(struct isakmp_generic)
         , pbs_offset(idpl) - sizeof(struct isakmp_generic));
-#else
-    hash_update(ctx
-	, idpl->start + sizeof(struct isakmp_generic)
-	, pbs_offset(idpl) - sizeof(struct isakmp_generic));
-#endif
 
 #   undef hash_update_chunk
 #   undef hash_update
@@ -403,11 +357,7 @@ main_mode_hash(struct state *st
     struct hmac_ctx ctx;
 
     hmac_init_chunk(&ctx, st->st_oakley.prf_hasher, st->st_skeyid);
-#ifdef HAVE_LIBNSS
     main_mode_hash_body(st, hashi, idpl, &ctx, NULL);
-#else
-    main_mode_hash_body(st, hashi, idpl, &ctx.hash_ctx, ctx.h->hash_update);
-#endif
     hmac_final(hash_val, &ctx);
     return ctx.hmac_digest_len;
 }
@@ -486,10 +436,6 @@ try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN], size_t hash_len
 {
     const u_char *sig_val = sig_pbs->cur;
     size_t sig_len = pbs_left(sig_pbs);
-#ifndef HAVE_LIBNSS
-    u_char s[RSA_MAX_OCTETS];	/* for decrypted sig_val */
-    u_char *hash_in_s = &s[sig_len - hash_len];
-#endif
     const struct RSA_public_key *k = &kr->u.rsa;
 
     /* decrypt the signature -- reversing RSA_sign_hash */
@@ -499,93 +445,10 @@ try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN], size_t hash_len
 	return "1" "SIG length does not match public key length";
     }
 
-#ifdef HAVE_LIBNSS
     err_t ugh = RSA_signature_verify_nss (k,hash_val,hash_len,sig_val,sig_len);
     if(ugh!=NULL) {
 	return ugh;
     }
-#else
-    /* actual exponentiation; see PKCS#1 v2.0 5.1 */
-    {
-	chunk_t temp_s;
-	MP_INT c;
-
-	n_to_mpz(&c, sig_val, sig_len);
-	oswcrypto.mod_exp(&c, &c, &k->e, &k->n);
-
-	temp_s = mpz_to_n(&c, sig_len);	/* back to octets */
-	memcpy(s, temp_s.ptr, sig_len);
-	pfree(temp_s.ptr);
-	mpz_clear(&c);
-    }
-
-    /* sanity check on signature: see if it matches
-     * PKCS#1 v1.5 8.1 encryption-block formatting
-     */
-    {
-	err_t ugh = NULL;
-
-	if (s[0] != 0x00)
-	    ugh = "2" "no leading 00";
-	else if (hash_in_s[-1] != 0x00)
-	    ugh = "3" "00 separator not present";
-	else if (s[1] == 0x01)
-	{
-	    const u_char *p;
-
-	    for (p = &s[2]; p != hash_in_s - 1; p++)
-	    {
-		if (*p != 0xFF)
-		{
-		    ugh = "4" "invalid Padding String";
-		    break;
-		}
-	    }
-	}
-	else if (s[1] == 0x02)
-	{
-	    const u_char *p;
-
-	    for (p = &s[2]; p != hash_in_s - 1; p++)
-	    {
-		if (*p == 0x00)
-		{
-		    ugh = "5" "invalid Padding String";
-		    break;
-		}
-	    }
-	}
-	else
-	    ugh = "6" "Block Type not 01 or 02";
-
-	if (ugh != NULL)
-	{
-	    /* note: it might be a good idea to make sure that
-	     * an observer cannot tell what kind of failure happened.
-	     * I don't know what this means in practice.
-	     */
-	    /* We probably selected the wrong public key for peer:
-	     * SIG Payload decrypted into malformed ECB
-	     */
-	    /* XXX notification: INVALID_KEY_INFORMATION */
-	    return ugh;
-	}
-    }
-
-    /* We have the decoded hash: see if it matches. */
-    if (memcmp(hash_val, hash_in_s, hash_len) != 0)
-    {
-	/* good: header, hash, signature, and other payloads well-formed
-	 * good: we could find an RSA Sig key for the peer.
-	 * bad: hash doesn't match
-	 * Guess: sides disagree about key to be used.
-	 */
-	DBG_cond_dump(DBG_CRYPT, "decrypted SIG", s, sig_len);
-	DBG_cond_dump(DBG_CRYPT, "computed HASH", hash_val, hash_len);
-	/* XXX notification: INVALID_HASH_INFORMATION */
-	return "9" "authentication failure: received SIG does not match computed HASH, but message is well-formed";
-    }
-#endif
 
     /* Success: copy successful key into state.
      * There might be an old one if we previously aborted this

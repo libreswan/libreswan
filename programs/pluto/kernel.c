@@ -7,6 +7,7 @@
  * Copyright (C) 2010 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2010 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1815,19 +1816,13 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 	    outgoing_ref_set  = TRUE;
 	}
 
-#ifdef HAVE_LIBNSS
        if (!kernel_ops->add_sa(said_next, replace)) {
             memset(said_next->enckey, 0, said_next->enckeylen);
             memset(said_next->authkey, 0, said_next->authkeylen);
-#else
-        if (!kernel_ops->add_sa(said_next, replace))
-#endif
             goto fail;
-#ifdef HAVE_LIBNSS
        }
             memset(said_next->enckey, 0, said_next->enckeylen);
             memset(said_next->authkey, 0, said_next->authkeylen);
-#endif
 
 	/*
 	 * SA refs will have been allocated for this SA.
@@ -1922,17 +1917,11 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 	    outgoing_ref_set  = TRUE;
 	}
 
-#ifdef HAVE_LIBNSS
        if (!kernel_ops->add_sa(said_next, replace)) {
             memset(said_next->authkey, 0, said_next->authkeylen);
-#else
-        if (!kernel_ops->add_sa(said_next, replace))
-#endif
             goto fail;
-#ifdef HAVE_LIBNSS
        }
             memset(said_next->authkey, 0, said_next->authkeylen);
-#endif
 
 
 	/*

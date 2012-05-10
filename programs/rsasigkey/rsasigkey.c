@@ -4,6 +4,7 @@
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com> 
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com> 
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,30 +32,26 @@
 #include <libreswan.h>
 #include <gmp.h>
 
-#ifdef HAVE_LIBNSS
-  /* nspr */
-# include <prerror.h>
-# include <prinit.h>
-# include <prmem.h>
-# include <plstr.h>
-  /* nss */
-# include <key.h>
-# include <keyt.h>
-# include <nss.h>
-# include <pk11pub.h>
-# include <seccomon.h>
-# include <secerr.h>
-# include <secport.h>
-# include <time.h>
+#include <prerror.h>
+#include <prinit.h>
+#include <prmem.h>
+#include <plstr.h>
+#include <key.h>
+#include <keyt.h>
+#include <nss.h>
+#include <pk11pub.h>
+#include <seccomon.h>
+#include <secerr.h>
+#include <secport.h>
+#include <time.h>
 
-# include "constants.h"
-# include "oswalloc.h"
-# include "oswlog.h"
-# include "oswconf.h"
+#include "constants.h"
+#include "oswalloc.h"
+#include "oswlog.h"
+#include "oswconf.h"
 
-# ifdef FIPS_CHECK
+#ifdef FIPS_CHECK
 #  include <fipscheck.h>
-# endif
 #endif
 
 #ifndef DEVICE
@@ -74,13 +71,8 @@
 /* the code in getoldkey() knows about this */
 #define	E	3		/* standard public exponent */
 
-#ifdef HAVE_LIBNSS
 /*#define F4	65537*/	/* preferred public exponent, Fermat's 4th number */
 char usage[] = "rsasigkey [--verbose] [--random device] [--configdir dir] [--password password] nbits [--hostname host] [--noopt] [--rounds num]";
-#else
-char usage[] = "rsasigkey [--verbose] [--random device] nbits [--hostname host] [--noopt] [--rounds num]";
-char usage2[] = "rsasigkey [--verbose] --oldkey filename";
-#endif
 struct option opts[] = {
   {"verbose",	0,	NULL,	'v',},
   {"random",	1,	NULL,	'r',},
@@ -90,10 +82,8 @@ struct option opts[] = {
   {"noopt",	0,	NULL,	'n',},
   {"help",		0,	NULL,	'h',},
   {"version",	0,	NULL,	'V',},
-#ifdef HAVE_LIBNSS
   {"configdir",        1,      NULL,   'c' },
   {"password", 1,      NULL,   'P' },
-#endif
   {0,		0,	NULL,	0,}
 };
 int verbose = 0;		/* narrate the action? */
@@ -108,11 +98,7 @@ char me[] = "ipsec rsasigkey";	/* for messages */
 
 /* forwards */
 int getoldkey(char *filename);
-#ifdef HAVE_LIBNSS
 void rsasigkey(int nbits, char *configdir, char *password);
-#else
-void rsasigkey(int nbits, int useoldkey);
-#endif
 void initprime(mpz_t var, int nbits, int eval);
 void initrandom(mpz_t var, int nbits);
 void getrandom(size_t nbytes, unsigned char *buf);
@@ -121,7 +107,6 @@ char *conv(unsigned char *bits, size_t nbytes, int format);
 char *hexout(mpz_t var);
 void report(char *msg);
 
-#ifdef HAVE_LIBNSS
 
 /*#define NUM_KEYSTROKES 120*/
 #define RAND_BUF_SIZE 60
@@ -302,7 +287,6 @@ char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
     fprintf(stderr, "%s: Password check failed:  No password found.\n", me);
     return NULL;
 }
-#endif /* HAVE_LIBNSS */
 
 /*
  - main - mostly argument parsing
@@ -316,10 +300,8 @@ int main(int argc, char *argv[])
 	int i;
 	int nbits;
 	char *oldkeyfile = NULL;
-#ifdef HAVE_LIBNSS
 	char *configdir = NULL; /* where the NSS databases reside */
 	char *password = NULL;  /* password for token authentication */
-#endif
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
 		switch (opt) {
@@ -347,42 +329,27 @@ int main(int argc, char *argv[])
 			break;
 		case 'h':	/* help */
 			printf("Usage:\t%s\n", usage);
-#ifndef HAVE_LIBNSS
-			printf("\tor\n");
-			printf("\t%s\n", usage2);
-#endif
 			exit(0);
 			break;
 		case 'V':	/* version */
 			printf("%s %s\n", me, ipsec_version_code());
 			exit(0);
 			break;
-#ifdef HAVE_LIBNSS
 		case 'c':       /* nss configuration directory */
 			configdir = optarg;
 			break;
 		case 'P':       /* token authentication password */
 			password = optarg;
 			break;
-#endif
 		case '?':
 		default:
 			errflg = 1;
 			break;
 		}
-#ifdef HAVE_LIBNSS
 	if (errflg || optind != argc-1) {
 		printf("Usage:\t%s\n", usage);
 		exit(2);
 	}
-#else
-	if (errflg || optind != ((oldkeyfile != NULL) ? argc : argc-1)) {
-		printf("Usage:\t%s\n", usage);
-		printf("\tor\n");
-		printf("\t%s\n", usage2);
-		exit(2);
-	}
-#endif
 
 	if (outputhostname[0] == '\0') {
 		i = gethostname(outputhostname, sizeof(outputhostname));
@@ -413,11 +380,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-#ifdef HAVE_LIBNSS
 	rsasigkey(nbits, configdir, password);
-#else
-	rsasigkey(nbits, (oldkeyfile == NULL) ? 0 : 1);
-#endif
 	exit(0);
 }
 
@@ -537,7 +500,6 @@ char *filename;
  * real speed advantages.
  */
 
-#ifdef HAVE_LIBNSS
 /* Generates an RSA signature key using nss.
  * Curretly e is fixed at 3, but we may change that.  We may
  * use F4 if preformance doesn't degrade much realative to 3.
@@ -670,172 +632,7 @@ rsasigkey(int nbits, char *configdir, char *password)
     }
     (void) PR_Cleanup();
 }
-#else
-void
-rsasigkey(nbits, useoldkey)
-int nbits;
-int useoldkey;			/* take primes from old key? */
-{
-	mpz_t p;
-	mpz_t q;
-	mpz_t n;
-	mpz_t e;
-	mpz_t d;
-	mpz_t q1;			/* temporary */
-	mpz_t m;			/* internal modulus, (p-1)*(q-1) */
-	mpz_t t;			/* temporary */
-	mpz_t exp1;
-	mpz_t exp2;
-	mpz_t coeff;
-	unsigned char *bundp;
-	size_t bs;
-	int success;
-	time_t now = time((time_t *)NULL);
 
-	/* the easy stuff */
-	if (useoldkey) {
-		mpz_init_set(p, prime1);
-		mpz_init_set(q, prime2);
-	} else {
-		initprime(p, nbits/2, E);
-		initprime(q, nbits/2, E);
-	}
-	mpz_init(t);
-	if (mpz_cmp(p, q) < 0) {
-		report("swapping primes so p is the larger...");
-		mpz_set(t, p);
-		mpz_set(p, q);
-		mpz_set(q, t);
-	}
-	report("computing modulus...");
-	mpz_init(n);
-	mpz_mul(n, p, q);		/* n = p*q */
-	mpz_init_set_ui(e, E);
-
-	/* internal modulus */
-	report("computing lcm(p-1, q-1)...");
-	mpz_init_set(m, p);
-	mpz_sub_ui(m, m, 1);
-	mpz_init_set(q1, q);
-	mpz_sub_ui(q1, q1, 1);
-	mpz_gcd(t, m, q1);		/* t = gcd(p-1, q-1) */
-	mpz_mul(m, m, q1);		/* m = (p-1)*(q-1) */
-	if (do_lcm)
-		mpz_divexact(m, m, t);		/* m = lcm(p-1, q-1) */
-	mpz_gcd(t, m, e);
-	assert(mpz_cmp_ui(t, 1) == 0);	/* m and e relatively prime */
-
-	/* decryption key */
-	report("computing d...");
-	mpz_init(d);
-	success = mpz_invert(d, e, m);
-	assert(success);		/* e has an inverse mod m */
-	if (mpz_cmp_ui(d, 0) < 0)
-		mpz_add(d, d, m);
-	assert(mpz_cmp(d, m) < 0);
-
-	/* the speedup hacks */
-	report("computing exp1, exp1, coeff...");
-	mpz_init(exp1);
-	mpz_sub_ui(t, p, 1);
-	mpz_mod(exp1, d, t);		/* exp1 = d mod p-1 */
-	mpz_init(exp2);
-	mpz_sub_ui(t, q, 1);
-	mpz_mod(exp2, d, t);		/* exp2 = d mod q-1 */
-	mpz_init(coeff);
-	mpz_invert(coeff, q, p);	/* coeff = q^-1 mod p */
-	if (mpz_cmp_ui(coeff, 0) < 0)
-		mpz_add(coeff, coeff, p);
-	assert(mpz_cmp(coeff, p) < 0);
-
-	/* and the output */
-	/* note, getoldkey() knows about some of this */
-	report("output...\n");		/* deliberate extra newline */
-	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(&now));
-							/* ctime provides \n */
-	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
-	bundp = bundle(E, n, &bs);
-	printf("\t#pubkey=%s\n", conv(bundp, bs, 's'));	/* RFC2537ish format */
-	printf("\tModulus: %s\n", hexout(n));
-	printf("\tPublicExponent: %s\n", hexout(e));
-	printf("\t# everything after this point is secret\n");
-	printf("\tPrivateExponent: %s\n", hexout(d));
-	printf("\tPrime1: %s\n", hexout(p));
-	printf("\tPrime2: %s\n", hexout(q));
-	printf("\tExponent1: %s\n", hexout(exp1));
-	printf("\tExponent2: %s\n", hexout(exp2));
-	printf("\tCoefficient: %s\n", hexout(coeff));
-}
-#endif
-
-#ifndef HAVE_LIBNSS
-/*
- - initprime - initialize an mpz_t to a random prime of specified size
- * Efficiency tweak:  we reject candidates that are 1 higher than a multiple
- * of e, since they will make the internal modulus not relatively prime to e.
- */
-void
-initprime(var, nbits, eval)
-mpz_t var;
-int nbits;			/* known to be a multiple of CHAR_BIT */
-int eval;			/* value of e; 0 means don't bother w. tweak */
-{
-	unsigned long tries;
-	size_t len;
-#	define	OKAY(p)	(eval == 0 || mpz_fdiv_ui(p, eval) != 1)
-
-	initrandom(var, nbits);
-	assert(mpz_fdiv_ui(var, 2) == 1);	/* odd number */
-
-	report("looking for a prime starting there (can take a while)...");
-	tries = 1;
-	while (!( OKAY(var) && mpz_probab_prime_p(var, nrounds) )) {
-		mpz_add_ui(var, var, 2);
-		tries++;
-	}
-
-	len = mpz_sizeinbase(var, 2);
-	assert(len == (size_t)nbits || len == (size_t)(nbits+1));
-	if (len == (size_t)(nbits+1)) {
-		report("carry out occurred (!), retrying...");
-		mpz_clear(var);
-		initprime(var, nbits, eval);
-		return;
-	}
-	if (verbose)
-		fprintf(stderr, "found it after %lu tries.\n", tries);
-}
-
-/*
- - initrandom - initialize an mpz_t to a random number, specified bit count
- * Converting via hex is a bit weird, but it's the best route GMP gives us.
- * Note that highmost and lowmost bits are forced on -- highmost to give a
- * number of exactly the specified length, lowmost so it is an odd number.
- */
-void
-initrandom(var, nbits)
-mpz_t var;
-int nbits;			/* known to be a multiple of CHAR_BIT */
-{
-	size_t nbytes = (size_t)(nbits / CHAR_BIT);
-	static unsigned char bitbuf[MAXBITS/CHAR_BIT];
-	static char hexbuf[2 + MAXBITS/4 + 1];
-	size_t hsize = sizeof(hexbuf);
-
-	assert(nbytes <= sizeof(bitbuf));
-	getrandom(nbytes, bitbuf);
-	bitbuf[0] |= 01 << (CHAR_BIT-1);	/* force high bit on */
-	bitbuf[nbytes-1] |= 01;			/* force low bit on */
-	if (datatot(bitbuf, nbytes, 'x', hexbuf, hsize) > hsize) {
-		fprintf(stderr, "%s: can't-happen buffer overflow\n", me);
-		exit(1);
-	}
-	if (mpz_init_set_str(var, hexbuf, 0) < 0) {
-		fprintf(stderr, "%s: can't-happen hex conversion error\n", me);
-		exit(1);
-	}
-}
-#endif
 
 /*
  - getrandom - get some random bytes from /dev/random (or wherever)

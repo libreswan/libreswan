@@ -5,6 +5,10 @@
  *
  *  Copyright 2001 by Jari Ruusu.
  *  Redistribution of this file is permitted under the GNU Public License.
+ *
+ * (C)opyright 2005 Michael Richardson <mcr@xelerance.com>
+ * (C)opyright 2008-2009 Avesh Agarwal <avagarwa@redhat.com>
+ * (C)opyright 2012 Paul Wouters <paul@libreswan.org>
  */
 
 #ifdef __KERNEL__
@@ -13,10 +17,8 @@
 #else
 # include <string.h>
 # include <sys/types.h>
-# ifdef HAVE_LIBNSS
-#  include <pk11pub.h>
-#  include "oswlog.h"
-# endif
+# include <pk11pub.h>
+# include "oswlog.h"
 #endif
 #include "sha2.h"
 
@@ -102,7 +104,6 @@ static const u_int64_t sha512_K[80] = {
 #if defined(SHA256_NEEDED)
 void sha256_init(sha256_context *ctx)
 {
-#ifdef HAVE_LIBNSS
     DBG(DBG_CRYPT, DBG_log("NSS: sha256 init start"));
     SECStatus status;
     ctx->ctx_nss = NULL;
@@ -111,11 +112,6 @@ void sha256_init(sha256_context *ctx)
     status=PK11_DigestBegin(ctx->ctx_nss);
     PR_ASSERT(status==SECSuccess);
     DBG(DBG_CRYPT, DBG_log("NSS: sha256 init end"));
-#else
-    memcpy(&ctx->sha_H[0], &sha256_hashInit[0], sizeof(ctx->sha_H));
-    ctx->sha_blocks = 0;
-    ctx->sha_bufCnt = 0;
-#endif
 }
 
 #define S(x,y)      (((y) >> (x)) | ((y) << (32 - (x))))
@@ -124,132 +120,14 @@ void sha256_init(sha256_context *ctx)
 #define lSig0(x)    ((S(7,(x))) ^ (S(18,(x))) ^ (R(3,(x))))
 #define lSig1(x)    ((S(17,(x))) ^ (S(19,(x))) ^ (R(10,(x))))
 
-#ifndef HAVE_LIBNSS
-static void sha256_transform(sha256_context *ctx, const unsigned char *datap)
-{
-    register int    j;
-    u_int32_t       a, b, c, d, e, f, g, h;
-    u_int32_t       T1, T2, W[64], Wm2, Wm15;
-
-    /* read the data, big endian byte order */
-    j = 0;
-    do {
-        W[j] = (((u_int32_t)(datap[0]))<<24) | (((u_int32_t)(datap[1]))<<16) |
-               (((u_int32_t)(datap[2]))<<8 ) | ((u_int32_t)(datap[3]));
-        datap += 4;
-    } while(++j < 16);
-    
-    /* initialize variables a...h */
-    a = ctx->sha_H[0];
-    b = ctx->sha_H[1];
-    c = ctx->sha_H[2];
-    d = ctx->sha_H[3];
-    e = ctx->sha_H[4];
-    f = ctx->sha_H[5];
-    g = ctx->sha_H[6];
-    h = ctx->sha_H[7];
-
-    /* apply compression function */
-    j = 0;
-    do {
-        if(j >= 16) {
-            Wm2 = W[j - 2];
-            Wm15 = W[j - 15];
-            W[j] = lSig1(Wm2) + W[j - 7] + lSig0(Wm15) + W[j - 16];
-        }
-        T1 = h + uSig1(e) + Ch(e,f,g) + sha256_K[j] + W[j];
-        T2 = uSig0(a) + Maj(a,b,c);
-        h = g; g = f; f = e;
-        e = d + T1;
-        d = c; c = b; b = a;
-        a = T1 + T2;
-    } while(++j < 64);
-
-    /* compute intermediate hash value */
-    ctx->sha_H[0] += a;
-    ctx->sha_H[1] += b;
-    ctx->sha_H[2] += c;
-    ctx->sha_H[3] += d;
-    ctx->sha_H[4] += e;
-    ctx->sha_H[5] += f;
-    ctx->sha_H[6] += g;
-    ctx->sha_H[7] += h;
-
-    ctx->sha_blocks++;
-}
-#endif
 
 void sha256_write(sha256_context *ctx, const unsigned char *datap, int length)
 {
-#ifdef HAVE_LIBNSS
 	SECStatus status = PK11_DigestOp(ctx->ctx_nss, datap, length);
 	PR_ASSERT(status==SECSuccess);
 	DBG(DBG_CRYPT, DBG_log("NSS: sha256 write end"));
-#else
-    while(length > 0) {
-        if(!ctx->sha_bufCnt) {
-            while(length >= sizeof(ctx->sha_out)) {
-                sha256_transform(ctx, datap);
-                datap += sizeof(ctx->sha_out);
-                length -= sizeof(ctx->sha_out);
-            }
-            if(!length) return;
-        }
-        ctx->sha_out[ctx->sha_bufCnt] = *datap++;
-        length--;
-        if(++ctx->sha_bufCnt == sizeof(ctx->sha_out)) {
-            sha256_transform(ctx, &ctx->sha_out[0]);
-            ctx->sha_bufCnt = 0;
-        }
-    }
-#endif
 }
 
-#ifndef HAVE_LIBNSS
-void sha256_final(sha256_context *ctx)
-{
-    register int    j;
-    u_int64_t       bitLength;
-    u_int32_t       i;
-    unsigned char   padByte, *datap;
-
-    bitLength = (ctx->sha_blocks << 9) | (ctx->sha_bufCnt << 3);
-    padByte = 0x80;
-    sha256_write(ctx, &padByte, 1);
-
-    /* pad extra space with zeroes */
-    padByte = 0;
-    while(ctx->sha_bufCnt != 56) {
-        sha256_write(ctx, &padByte, 1);
-    }
-
-    /* write bit length, big endian byte order */
-    ctx->sha_out[56] = bitLength >> 56;
-    ctx->sha_out[57] = bitLength >> 48;
-    ctx->sha_out[58] = bitLength >> 40;
-    ctx->sha_out[59] = bitLength >> 32;
-    ctx->sha_out[60] = bitLength >> 24;
-    ctx->sha_out[61] = bitLength >> 16;
-    ctx->sha_out[62] = bitLength >> 8;
-    ctx->sha_out[63] = bitLength;
-    sha256_transform(ctx, &ctx->sha_out[0]);
-    
-    /* return results in ctx->sha_out[0...31] */
-    datap = &ctx->sha_out[0];
-    j = 0;
-    do {
-        i = ctx->sha_H[j];
-        datap[0] = i >> 24;
-        datap[1] = i >> 16;
-        datap[2] = i >> 8;
-        datap[3] = i;
-        datap += 4;
-    } while(++j < 8);
-
-    /* clear sensitive information */
-    memset(&ctx->sha_out[32], 0, sizeof(sha256_context) - 32);
-}
-#endif
 void sha256_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
 {
     sha256_context ctx;
@@ -259,18 +137,12 @@ void sha256_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
     if(ole > 32) ole = 32;
     sha256_init(&ctx);
     sha256_write(&ctx, ib, ile);
-#ifdef HAVE_LIBNSS
     unsigned int length;
     SECStatus status=PK11_DigestFinal(ctx.ctx_nss, ob, &length, ole);
     PR_ASSERT(length==ole);
     PR_ASSERT(status==SECSuccess);
     PK11_DestroyContext(ctx.ctx_nss, PR_TRUE);
     DBG(DBG_CRYPT, DBG_log("NSS: sha256 final end"));
-#else
-    sha256_final(&ctx);
-    memcpy(ob, &ctx.sha_out[0], ole);
-    memset(&ctx, 0, sizeof(ctx));
-#endif
 }
 
 #endif
@@ -278,7 +150,6 @@ void sha256_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
 #if defined(SHA512_NEEDED)
 void sha512_init(sha512_context *ctx)
 {
-#ifdef HAVE_LIBNSS
     DBG(DBG_CRYPT, DBG_log("NSS: sha512 init start"));
     SECStatus status;
     ctx->ctx_nss = NULL;
@@ -287,12 +158,6 @@ void sha512_init(sha512_context *ctx)
     status = PK11_DigestBegin(ctx->ctx_nss);
     PR_ASSERT(status==SECSuccess);
     DBG(DBG_CRYPT, DBG_log("NSS: sha512 init end"));
-#else
-    memcpy(&ctx->sha_H[0], &sha512_hashInit[0], sizeof(ctx->sha_H));
-    ctx->sha_blocks = 0;
-    ctx->sha_blocksMSB = 0;
-    ctx->sha_bufCnt = 0;
-#endif
 }
 #endif
 
@@ -307,146 +172,14 @@ void sha512_init(sha512_context *ctx)
 #define uSig1(x)    ((S(14,(x))) ^ (S(18,(x))) ^ (S(41,(x))))
 #define lSig0(x)    ((S(1,(x))) ^ (S(8,(x))) ^ (R(7,(x))))
 #define lSig1(x)    ((S(19,(x))) ^ (S(61,(x))) ^ (R(6,(x))))
-#ifndef HAVE_LIBNSS
-static void sha512_transform(sha512_context *ctx, const unsigned char *datap)
-{
-    register int    j;
-    u_int64_t       a, b, c, d, e, f, g, h;
-    u_int64_t       T1, T2, W[80], Wm2, Wm15;
 
-    /* read the data, big endian byte order */
-    j = 0;
-    do {
-        W[j] = (((u_int64_t)(datap[0]))<<56) | (((u_int64_t)(datap[1]))<<48) |
-               (((u_int64_t)(datap[2]))<<40) | (((u_int64_t)(datap[3]))<<32) |
-               (((u_int64_t)(datap[4]))<<24) | (((u_int64_t)(datap[5]))<<16) |
-               (((u_int64_t)(datap[6]))<<8 ) | ((u_int64_t)(datap[7]));
-        datap += 8;
-    } while(++j < 16);
-    
-    /* initialize variables a...h */
-    a = ctx->sha_H[0];
-    b = ctx->sha_H[1];
-    c = ctx->sha_H[2];
-    d = ctx->sha_H[3];
-    e = ctx->sha_H[4];
-    f = ctx->sha_H[5];
-    g = ctx->sha_H[6];
-    h = ctx->sha_H[7];
-
-    /* apply compression function */
-    j = 0;
-    do {
-        if(j >= 16) {
-            Wm2 = W[j - 2];
-            Wm15 = W[j - 15];
-            W[j] = lSig1(Wm2) + W[j - 7] + lSig0(Wm15) + W[j - 16];
-        }
-        T1 = h + uSig1(e) + Ch(e,f,g) + sha512_K[j] + W[j];
-        T2 = uSig0(a) + Maj(a,b,c);
-        h = g; g = f; f = e;
-        e = d + T1;
-        d = c; c = b; b = a;
-        a = T1 + T2;
-    } while(++j < 80);
-
-    /* compute intermediate hash value */
-    ctx->sha_H[0] += a;
-    ctx->sha_H[1] += b;
-    ctx->sha_H[2] += c;
-    ctx->sha_H[3] += d;
-    ctx->sha_H[4] += e;
-    ctx->sha_H[5] += f;
-    ctx->sha_H[6] += g;
-    ctx->sha_H[7] += h;
-
-    ctx->sha_blocks++;
-    if(!ctx->sha_blocks) ctx->sha_blocksMSB++;
-}
-#endif
 void sha512_write(sha512_context *ctx, const unsigned char *datap, int length)
 {
-#ifdef HAVE_LIBNSS
        SECStatus status=PK11_DigestOp(ctx->ctx_nss, datap, length);
 	PR_ASSERT(status==SECSuccess);
        DBG(DBG_CRYPT, DBG_log("NSS: sha512 write end"));
-#else
-    while(length > 0) {
-        if(!ctx->sha_bufCnt) {
-            while(length >= sizeof(ctx->sha_out)) {
-                sha512_transform(ctx, datap);
-                datap += sizeof(ctx->sha_out);
-                length -= sizeof(ctx->sha_out);
-            }
-            if(!length) return;
-        }
-        ctx->sha_out[ctx->sha_bufCnt] = *datap++;
-        length--;
-        if(++ctx->sha_bufCnt == sizeof(ctx->sha_out)) {
-            sha512_transform(ctx, &ctx->sha_out[0]);
-            ctx->sha_bufCnt = 0;
-        }
-    }
-#endif
 }
-#ifndef HAVE_LIBNSS
-void sha512_final(sha512_context *ctx)
-{
-    register int    j;
-    u_int64_t       bitLength, bitLengthMSB;
-    u_int64_t       i;
-    unsigned char   padByte, *datap;
 
-    bitLength = (ctx->sha_blocks << 10) | (ctx->sha_bufCnt << 3);
-    bitLengthMSB = (ctx->sha_blocksMSB << 10) | (ctx->sha_blocks >> 54);
-    padByte = 0x80;
-    sha512_write(ctx, &padByte, 1);
-
-    /* pad extra space with zeroes */
-    padByte = 0;
-    while(ctx->sha_bufCnt != 112) {
-        sha512_write(ctx, &padByte, 1);
-    }
-
-    /* write bit length, big endian byte order */
-    ctx->sha_out[112] = bitLengthMSB >> 56;
-    ctx->sha_out[113] = bitLengthMSB >> 48;
-    ctx->sha_out[114] = bitLengthMSB >> 40;
-    ctx->sha_out[115] = bitLengthMSB >> 32;
-    ctx->sha_out[116] = bitLengthMSB >> 24;
-    ctx->sha_out[117] = bitLengthMSB >> 16;
-    ctx->sha_out[118] = bitLengthMSB >> 8;
-    ctx->sha_out[119] = bitLengthMSB;
-    ctx->sha_out[120] = bitLength >> 56;
-    ctx->sha_out[121] = bitLength >> 48;
-    ctx->sha_out[122] = bitLength >> 40;
-    ctx->sha_out[123] = bitLength >> 32;
-    ctx->sha_out[124] = bitLength >> 24;
-    ctx->sha_out[125] = bitLength >> 16;
-    ctx->sha_out[126] = bitLength >> 8;
-    ctx->sha_out[127] = bitLength;
-    sha512_transform(ctx, &ctx->sha_out[0]);
-    
-    /* return results in ctx->sha_out[0...63] */
-    datap = &ctx->sha_out[0];
-    j = 0;
-    do {
-        i = ctx->sha_H[j];
-        datap[0] = i >> 56;
-        datap[1] = i >> 48;
-        datap[2] = i >> 40;
-        datap[3] = i >> 32;
-        datap[4] = i >> 24;
-        datap[5] = i >> 16;
-        datap[6] = i >> 8;
-        datap[7] = i;
-        datap += 8;
-    } while(++j < 8);
-
-    /* clear sensitive information */
-    memset(&ctx->sha_out[64], 0, sizeof(sha512_context) - 64);
-}
-#endif
 void sha512_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
 {
     sha512_context ctx;
@@ -456,25 +189,18 @@ void sha512_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
     if(ole > 64) ole = 64;
     sha512_init(&ctx);
     sha512_write(&ctx, ib, ile);
-#ifdef HAVE_LIBNSS
     unsigned int length;
     SECStatus status = PK11_DigestFinal(ctx.ctx_nss, ob, &length, ole);
     PR_ASSERT(length==ole);
     PR_ASSERT(status==SECSuccess);
     PK11_DestroyContext(ctx.ctx_nss, PR_TRUE);
     DBG(DBG_CRYPT, DBG_log("NSS: sha512 final end"));
-#else
-    sha512_final(&ctx);
-    memcpy(ob, &ctx.sha_out[0], ole);
-    memset(&ctx, 0, sizeof(ctx));
-#endif
 }
 #endif
 
 #if defined(SHA384_NEEDED)
 void sha384_init(sha512_context *ctx)
 {
-#ifdef HAVE_LIBNSS
     DBG(DBG_CRYPT, DBG_log("NSS: sha384 init start"));
     SECStatus status;
     ctx->ctx_nss = NULL;
@@ -483,12 +209,6 @@ void sha384_init(sha512_context *ctx)
     status=PK11_DigestBegin(ctx->ctx_nss);
     PR_ASSERT(status==SECSuccess);
     DBG(DBG_CRYPT, DBG_log("NSS: sha384 init end"));
-#else
-    memcpy(&ctx->sha_H[0], &sha384_hashInit[0], sizeof(ctx->sha_H));
-    ctx->sha_blocks = 0;
-    ctx->sha_blocksMSB = 0;
-    ctx->sha_bufCnt = 0;
-#endif
 }
 
 void sha384_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
@@ -499,7 +219,6 @@ void sha384_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
     memset(ob, 0, ole);
     if(ole > 48) ole = 48;
     sha384_init(&ctx);
-#ifdef HAVE_LIBNSS
     unsigned int length;
     SECStatus status = PK11_DigestOp(ctx.ctx_nss, ib, ile);
     PR_ASSERT(status==SECSuccess);
@@ -508,11 +227,5 @@ void sha384_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
     PR_ASSERT(status==SECSuccess);
     PK11_DestroyContext(ctx.ctx_nss, PR_TRUE);
     DBG(DBG_CRYPT, DBG_log("NSS: sha384 init end"));
-#else
-    sha512_write(&ctx, ib, ile);
-    sha512_final(&ctx);
-    memcpy(ob, &ctx.sha_out[0], ole);
-    memset(&ctx, 0, sizeof(ctx));
-#endif
 }
 #endif

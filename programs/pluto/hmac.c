@@ -3,7 +3,8 @@
  * Copyright (C) 2006  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
-*
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -27,40 +28,31 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pkcs11t.h>
-# include <pk11pub.h>
-# include <prlog.h>
-# include <prmem.h>
-# include <pk11priv.h>
-# include <secport.h>
-# include "oswconf.h"
-# include "oswlog.h"
-#endif
-
+#include <nss.h>
+#include <pkcs11t.h>
+#include <pk11pub.h>
+#include <prlog.h>
+#include <prmem.h>
+#include <pk11priv.h>
+#include <secport.h>
+#include "oswconf.h"
+#include "oswlog.h"
 
 /* HMAC package
  * rfc2104.txt specifies how HMAC works.
  */
 
-#ifdef HAVE_LIBNSS
 static CK_MECHANISM_TYPE nss_hash_mech(const struct hash_desc *hasher);
 static SECOidTag nss_hash_oid(const struct hash_desc *hasher);
-#endif
 
 void
 hmac_init(struct hmac_ctx *ctx,
     const struct hash_desc *h,
     const u_char *key, size_t key_len)
 {
-#ifndef HAVE_LIBNSS
-    int k;
-#endif
     ctx->h = h;
     ctx->hmac_digest_len = h->hash_digest_len;
 
-#ifdef HAVE_LIBNSS
     /* DBG(DBG_CRYPT, DBG_log("NSS: hmac init")); */
     SECStatus status;
     PK11SymKey *symkey=NULL, *tkey1=NULL; 
@@ -115,49 +107,12 @@ hmac_init(struct hmac_ctx *ctx,
     status=PK11_DigestKey(ctx->ctx_nss, ctx->ikey);
     PR_ASSERT(status==SECSuccess);
 
-#else
-
-    /* Prepare the two pads for the HMAC */
-
-    memset(ctx->buf1, '\0', HMAC_BUFSIZE);
-
-    if (key_len <= HMAC_BUFSIZE)
-    {
-	memcpy(ctx->buf1, key, key_len);
-    }
-    else
-    {
-	h->hash_init(&ctx->hash_ctx);
-	h->hash_update(&ctx->hash_ctx, key, key_len);
-	h->hash_final(ctx->buf1, &ctx->hash_ctx);
-    }
-
-    memcpy(ctx->buf2, ctx->buf1, HMAC_BUFSIZE);
-
-    for (k = 0; k < HMAC_BUFSIZE; k++)
-    {
-	ctx->buf1[k] ^= HMAC_IPAD;
-	ctx->buf2[k] ^= HMAC_OPAD;
-    }
-
-    hmac_reinit(ctx);
-#endif
 }
-
-#ifndef HAVE_LIBNSS
-void
-hmac_reinit(struct hmac_ctx *ctx)
-{
-    ctx->h->hash_init(&ctx->hash_ctx);
-    ctx->h->hash_update(&ctx->hash_ctx, ctx->buf1, HMAC_BUFSIZE);
-}
-#endif
 
 void
 hmac_update(struct hmac_ctx *ctx,
     const u_char *data, size_t data_len)
 {
-#ifdef HAVE_LIBNSS
     DBG(DBG_CRYPT, DBG_dump("hmac_update data value: ", data, data_len));
     if(data_len > 0) {
 	DBG(DBG_CRYPT, DBG_log("hmac_update: inside if"));
@@ -166,24 +121,11 @@ hmac_update(struct hmac_ctx *ctx,
 	PR_ASSERT(status == SECSuccess);
 	DBG(DBG_CRYPT, DBG_log("hmac_update: after assert"));
     }
-#else
-    ctx->h->hash_update(&ctx->hash_ctx, data, data_len);
-#endif
 }
 
 void
 hmac_final(u_char *output, struct hmac_ctx *ctx)
 {
-#ifndef HAVE_LIBNSS
-    const struct hash_desc *h = ctx->h;
-
-    h->hash_final(output, &ctx->hash_ctx);
-
-    h->hash_init(&ctx->hash_ctx);
-    h->hash_update(&ctx->hash_ctx, ctx->buf2, HMAC_BUFSIZE);
-    h->hash_update(&ctx->hash_ctx, output, h->hash_digest_len);
-    h->hash_final(output, &ctx->hash_ctx);
-#else
     unsigned int outlen = 0;
     SECStatus status = PK11_DigestFinal(ctx->ctx_nss, output, &outlen, ctx->hmac_digest_len);
     PR_ASSERT(status == SECSuccess);
@@ -215,10 +157,8 @@ hmac_final(u_char *output, struct hmac_ctx *ctx)
     PK11_FreeSymKey(ctx->okey);
     }
     /* DBG(DBG_CRYPT, DBG_log("NSS: hmac final end")); */
-#endif
 }
 
-#ifdef HAVE_LIBNSS
 static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
 {
     SECOidTag mechanism=0;
@@ -376,7 +316,6 @@ void nss_symkey_log(PK11SymKey *key, const char *msg)
 	}
      }
 }
-#endif
 
 /*
  * Local Variables:

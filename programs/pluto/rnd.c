@@ -4,6 +4,7 @@
  * Copyright (C) 2006-2007 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008 Antony Antony <antony@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,10 +71,8 @@
 #include "log.h"
 #include "timer.h"
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pk11pub.h>
-#endif
+#include <nss.h>
+#include <pk11pub.h>
 
 /*
  * we have removed /dev/hw_random, as it can produce very low quality
@@ -83,9 +82,6 @@
  * You have been warned.
  *
  */
-#ifndef HAVE_LIBNSS
-static int random_fd = -1;
-#endif
 
 const char *random_devices[]={
 /* Default on Linux + OSX is to use /dev/urandom as 1st choice, and fall back to /dev/random if /dev/urandom doesn't exist */
@@ -105,109 +101,16 @@ const char *random_devices[]={
  * rather than this file
  */
 
-#ifndef HAVE_LIBNSS
-#define RANDOM_POOL_SIZE   SHA1_DIGEST_SIZE
-static u_char random_pool[RANDOM_POOL_SIZE];
-
-/* Generate (what we hope is) a true random byte using a random device */
-static u_char
-generate_rnd_byte(void)
-{
-    u_char c;
-
-    if (read(random_fd, &c, sizeof(c)) == -1)
-	exit_log_errno((e, "read() failed in get_rnd_byte()"));
-
-    return c;
-}
-
-static void
-mix_pool(void)
-{
-    SHA1_CTX ctx;
-
-    SHA1Init(&ctx);
-    SHA1Update(&ctx, random_pool, RANDOM_POOL_SIZE);
-    SHA1Final(random_pool, &ctx);
-}
-
-/*
- * Get a single random byte.
- */
-static u_char
-get_rnd_byte(void)
-{
-    random_pool[RANDOM_POOL_SIZE - 1] = generate_rnd_byte();
-    random_pool[0] = generate_rnd_byte();
-    mix_pool();
-    return random_pool[0];
-}
-#endif
-
 
 void
 get_rnd_bytes(u_char *buffer, int length)
 {
-#ifdef HAVE_LIBNSS
    SECStatus rv; 
    rv = PK11_GenerateRandom(buffer,length);
    if(rv !=SECSuccess) {
 	loglog(RC_LOG_SERIOUS,"NSS RNG failed");
    }
    passert(rv==SECSuccess);
-#else
-    int i;
-
-    for (i = 0; i < length; i++)
-	buffer[i] = get_rnd_byte();
-#endif
-}
-
-/*
- * Initialize the random pool.
- */
-void
-init_rnd_pool(void)
-{
-#ifndef HAVE_LIBNSS
-    unsigned int i;
-    unsigned int max_rnd_devices = elemsof(random_devices);
-    const char *rnd_dev = NULL;
-
-    if(random_fd != -1) close(random_fd);
-    random_fd = -1;
-
-    for(i=0; random_fd == -1 && i<max_rnd_devices; i++) {
-	DBG(DBG_CONTROL, DBG_log("opening %s", random_devices[i]));
-	random_fd = open(random_devices[i], O_RDONLY);
-	rnd_dev = random_devices[i];
-
-	if (random_fd == -1) {
-	    libreswan_log("WARNING: open of %s failed: %s", random_devices[i]
-			 , strerror(errno));
-	}
-    }
-
-    if(random_fd == -1 || i == max_rnd_devices) {
-	libreswan_log("Failed to open any source of random. Unable to start any connections.");
-	return;
-    }
-
-    libreswan_log("using %s as source of random entropy", rnd_dev);
-
-    fcntl(random_fd, F_SETFD, FD_CLOEXEC);
-
-    get_rnd_bytes(random_pool, RANDOM_POOL_SIZE);
-    mix_pool();
-
-    /* start of rand(3) on the right foot */
-    {
-	unsigned int seed;
-
-	get_rnd_bytes((void *)&seed, sizeof(seed));
-	srand(seed);
-    }
-#endif
 }
 
 u_char    secret_of_the_day[SHA1_DIGEST_SIZE];

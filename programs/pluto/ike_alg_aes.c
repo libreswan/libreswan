@@ -15,13 +15,11 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 
-#ifdef HAVE_LIBNSS
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
 #include "oswconf.h"
 #include "oswlog.h"
-#endif
 
 #define  AES_KEY_MIN_LEN	128
 #define  AES_KEY_DEF_LEN	128
@@ -31,7 +29,6 @@ static void
 do_aes(u_int8_t *buf, size_t buf_len, u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc)
 {
 
-#ifdef HAVE_LIBNSS
     u_int8_t iv_bak[AES_CBC_BLOCK_SIZE];
     u_int8_t *new_iv = NULL;        /* logic will avoid copy to NULL */
     u_int8_t *tmp_buf; 
@@ -90,30 +87,6 @@ if (secparam)
     SECITEM_FreeItem(secparam, PR_TRUE);
 DBG(DBG_CRYPT, DBG_log("NSS do_aes: exit"));
 
-#else
-    aes_context aes_ctx;
-    char iv_bak[AES_CBC_BLOCK_SIZE];
-    char *new_iv = NULL;	/* logic will avoid copy to NULL */
-
-    aes_set_key(&aes_ctx, key, key_size, 0);
-
-    /*	
-     *	my AES cbc does not touch passed IV (optimization for
-     *	ESP handling), so I must "emulate" des-like IV
-     *	crunching
-     */
-    if (!enc)
-	    memcpy(new_iv=iv_bak, 
-			    (char*) buf + buf_len-AES_CBC_BLOCK_SIZE,
-			    AES_CBC_BLOCK_SIZE);
-
-    AES_cbc_encrypt(&aes_ctx, buf, buf, buf_len, iv, enc);
-
-    if (enc)
-	    new_iv = (char*) buf + buf_len-AES_CBC_BLOCK_SIZE;
-
-    memcpy(iv, new_iv, AES_CBC_BLOCK_SIZE);
-#endif
 
 }
 

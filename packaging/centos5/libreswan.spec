@@ -4,9 +4,6 @@ Version: IPSECBASEVERSION
 %{!?buildklips: %{expand: %%define buildklips 0}}
 %{!?buildxen: %{expand: %%define buildxen 0}}
 
-# nss build
-%{!?buildnss: %{expand: %%define buildnss 0}}
-
 # The default kernel version to build for is the latest of
 # the installed binary kernel
 # This can be overridden by "--define 'kversion x.x.x-y.y.y'"
@@ -26,9 +23,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Summary: Libreswan - An IPsec and IKE implementation
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex bind-devel redhat-rpm-config xmlto
-%if %{buildnss}
 BuildRequires: nss >= 3.12.6-2
-%endif
 Requires: iproute >= 2.6.8
 Requires(post): coreutils bash
 Requires(preun): initscripts chkconfig
@@ -77,11 +72,8 @@ kernels.
   USERCOMPILE="-g %{optflags} -fPIE -pie" \
   USERLINK="-g -pie" \
   HAVE_THREADS="true" \
-%if %{buildnss}
-  USE_LIBNSS="true" \
   USE_FIPSCHECK="true" \
   USE_LIBCAP_NG="true" \
-%endif
   USE_DYNAMICDNS="true" \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \

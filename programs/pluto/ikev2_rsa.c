@@ -4,6 +4,7 @@
  * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -151,11 +152,6 @@ try_RSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN]
 {
     const u_char *sig_val = sig_pbs->cur;
     size_t sig_len = pbs_left(sig_pbs);
-#ifndef HAVE_LIBNSS
-    u_char s[RSA_MAX_OCTETS];	/* for decrypted sig_val */
-    u_char *sig;
-    unsigned int padlen;
-#endif
     const struct RSA_public_key *k = &kr->u.rsa;
     
     if (k == NULL)
@@ -167,57 +163,10 @@ try_RSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN]
 	return "1""SIG length does not match public key length";
     }
 
-#ifdef HAVE_LIBNSS
     err_t ugh = RSA_signature_verify_nss (k,hash_val,hash_len,sig_val,sig_len);
     if(ugh!=NULL) {
 	return ugh;
     }
-#else
-    /* actual exponentiation; see PKCS#1 v2.0 5.1 */
-    {
-	chunk_t temp_s;
-	MP_INT c;
-
-	n_to_mpz(&c, sig_val, sig_len);
-	oswcrypto.mod_exp(&c, &c, &k->e, &k->n);
-
-	temp_s = mpz_to_n(&c, sig_len);	/* back to octets */
-	memcpy(s, temp_s.ptr, sig_len);
-	pfree(temp_s.ptr);
-	mpz_clear(&c);
-    }
-
-    /* check signature contents */
-    /* verify padding */
-    padlen = sig_len - 3 - (hash_len+der_digestinfo_len);
-    /* now check padding */
-    sig = s;
-
-    if(sig[0]    != 0x00
-       || sig[1] != 0x01
-       || sig[padlen+2] != 0x00) {
-	return "2""SIG padding does not check out";
-    }
-
-    /* skip padding */
-    sig += padlen+3;
-
-    /* 2 verify that the has was done with SHA1 */
-    if(memcmp(der_digestinfo, sig, der_digestinfo_len)!=0) {
-	return "SIG not performed with SHA1";
-    }
-
-    sig += der_digestinfo_len;
-
-    DBG(DBG_CRYPT,
-	DBG_dump("v2rsa decrypted SIG:", hash_val, hash_len);
-	DBG_dump("v2rsa computed hash:", sig, hash_len);
-    );
-	
-    if(memcmp(sig, hash_val, hash_len) != 0) {
-	return "9""authentication failure: received SIG does not match computed HASH, but message is well-formed";
-    }
-#endif
 
     unreference_key(&st->st_peer_pubkey);
     st->st_peer_pubkey = reference_key(kr);

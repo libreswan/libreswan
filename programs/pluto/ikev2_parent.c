@@ -2100,7 +2100,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			struct payload_digest *const tsi_pd = md->chain[ISAKMP_NEXT_v2TSi];
 			struct payload_digest *const tsr_pd = md->chain[ISAKMP_NEXT_v2TSr];
 			struct traffic_selector tsi[16], tsr[16];
-			int tsc=0;
 #if 0
 			bool instantiate = FALSE;
 			ip_subnet tsi_subnet, tsr_subnet;

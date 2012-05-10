@@ -4,6 +4,7 @@
 # Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
 # Copyright (C) 2009  Avesh Agarwal <avagarwa@redhat.com>
+# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -56,10 +57,7 @@ endif
 # and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
 HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC) 
 
-# Use LIBNSS
-ifeq ($(USE_LIBNSS),true)
 HDRDIRS+= -I/usr/include/nspr4 -I/usr/include/nss3	
-endif
 
 # BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=BIG_ENDIAN
 # BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=LITTLE_ENDIAN
@@ -295,7 +293,7 @@ DEFINES = $(EXTRA_DEFINES) \
 LIBSPLUTO =$(OBJSGCRYPT)
 LIBSPLUTO+=$(LIBOSWCRYPTO)
 LIBSPLUTO+=$(LIBDESLITE) $(LIBAES) $(LIBRESWANLIB) $(LIBPLUTO)
-LIBSPLUTO+=${LIBSHA1} ${LIBMD5} ${LIBMD2}
+LIBSPLUTO+=${LIBSHA1} ${LIBMD5}
 LIBSPLUTO+=$(IPSECPOLICY_LIBS) $(X509_LIBS) 
 LIBSPLUTO+=$(HAVE_THREADS_LIBS)
 LIBSPLUTO+=${CURL_LIBS} ${TPM_LIBS}
@@ -305,19 +303,15 @@ PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${TPM_LLIBS} ${HAVE_THREADS_LLIBS}
 PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS}
 PLUTOMINUSL+= ${OPENSSL_LIBS} ${LIBCRYPT} -lgmp # -lefence
 
-# Use LIBNSS
-ifeq ($(USE_LIBNSS),true)
-HAVE_LIBNSS=1
-DEFINES+=-DHAVE_LIBNSS
 LIBSPLUTO+= -lnspr4
 LIBSPLUTO+= -lnss3
+
 # For avoiding implicit DSO linking
 LIBSPLUTO+= -lpthread
 ifeq ($(USE_FIPSCHECK),true)
 FIPS_CHECK=1
 DEFINES+=-DFIPS_CHECK
 LIBSPLUTO+= -lfipscheck
-endif
 endif
 
 # Use MODP group described in RFC 5114

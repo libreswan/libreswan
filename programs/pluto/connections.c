@@ -4,6 +4,7 @@
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2010 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -819,11 +820,7 @@ load_end_certificate(const char *filename, struct end *dst)
 	    bool valid_cert = FALSE;
 	    
 	    /* load cert from file */
-#ifdef HAVE_LIBNSS
 	    valid_cert = load_cert_from_nss(FALSE, filename, TRUE,"host cert", &cert);
-#else
-	    valid_cert = load_host_cert(FALSE, filename, &cert, TRUE);
-#endif
 	    if(!valid_cert) {
 		whack_log(RC_FATAL, "can not load certificate file %s\n"
 			  , filename);
@@ -923,11 +920,7 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
 	/* certificate is a blob */
 	dst->cert.forced = TRUE;
 	dst->cert.type = src->certtype;
-#ifdef HAVE_LIBNSS
 	load_cert_from_nss(TRUE, src->cert, TRUE, "forced cert", &dst->cert);
-#else
-	load_cert(TRUE, src->cert, TRUE, "forced cert", &dst->cert);
-#endif
     } else {
 	/* load local end certificate and extract ID, if any */
 	load_end_certificate(src->cert, dst);

@@ -5,6 +5,7 @@
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -458,9 +459,7 @@ void whack_process(int whackfd, struct whack_message msg)
     if (msg.whack_reread & REREAD_CACERTS)
     {
 	load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
-#ifdef HAVE_LIBNSS
        load_authcerts_from_nss("CA cert", AUTH_CA);
-#endif
      }
 
     if (msg.whack_reread & REREAD_AACERTS)

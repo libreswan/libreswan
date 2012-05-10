@@ -8,6 +8,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Stefan Arentz <stefan@arentz.ca>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -59,11 +60,9 @@
 #include "rnd.h"
 #include "pluto_crypt.h"
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include "oswconf.h"
-# include <pthread.h>
-#endif
+#include <nss.h>
+#include "oswconf.h"
+#include <pthread.h>
 
 #include "oswcrypto.h"
 #include "osw_select.h"
@@ -72,16 +71,10 @@ TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 
 struct pluto_crypto_worker {
     int   pcw_helpernum;
-#ifdef HAVE_LIBNSS
     /* pthread_t pcw_pid; */
    long int pcw_pid;
-#else
-    pid_t pcw_pid;
-#endif
     int   pcw_pipe;
-#ifdef HAVE_LIBNSS
     int   pcw_helper_pipe;
-#endif
     int   pcw_work;         /* how many items outstanding */
     int   pcw_maxbasicwork; /* how many basic things can be queued */
     int   pcw_maxcritwork;  /* how many critical things can be queued */
@@ -98,9 +91,7 @@ static void cleanup_crypto_helper(struct pluto_crypto_worker *w, int status);
 static void handle_helper_comm(struct pluto_crypto_worker *w);
 extern void free_preshared_secrets(void);
 
-#ifdef HAVE_LIBNSS
 static void *pluto_helper_thread(void *w);
-#endif
 
 /* may be NULL if we are to do all the work ourselves */
 struct pluto_crypto_worker *pc_workers = NULL;
@@ -111,7 +102,6 @@ pcr_req_id pcw_id;
 /* local in child */
 int pc_helper_num=-1;
 
-#ifdef HAVE_LIBNSS
 void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 {
     DBG(DBG_CONTROL
@@ -119,15 +109,6 @@ void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		  , helpernum
 		  , enum_show(&pluto_cryptoop_names, r->pcr_type)
 		  , r->pcr_id));
-#else
-void pluto_do_crypto_op(struct pluto_crypto_req *r)
-{
-    DBG(DBG_CONTROL
-	, DBG_log("helper %d doing %s op id: %u"
-		  , pc_helper_num
-		  , enum_show(&pluto_cryptoop_names, r->pcr_type)
-		  , r->pcr_id));
-#endif
 #ifdef DEBUG
     {
 	char *d = getenv("PLUTO_CRYPTO_HELPER_DELAY");
@@ -171,18 +152,6 @@ void pluto_do_crypto_op(struct pluto_crypto_req *r)
     }
 }
 
-#ifndef HAVE_LIBNSS
-static void catchhup(int signo UNUSED)
-{
-    /* socket closed die */
-    exit(0);
-}
-
-static void catchusr1(int signo UNUSED)
-{
-    return;
-}
-#endif
 
 static void
 helper_passert_fail(const char *pred_str
@@ -208,7 +177,6 @@ helper_passert_fail(const char *pred_str
 
 void pluto_crypto_helper(int fd, int helpernum)
 {
-#ifdef HAVE_LIBNSS
     FILE *in  = fdopen(fd, "rb");
     FILE *out = fdopen(fd, "wb");
     long reqbuf[PCR_REQ_SIZE/sizeof(long)];
@@ -275,79 +243,6 @@ error:
     fclose(in);
     fclose(out);
     /*pthread_exit();*/
-#else
-    FILE *in  = fdopen(fd, "rb");
-    FILE *out = fdopen(fd, "wb");
-    struct pluto_crypto_req reqbuf[2];
-    struct pluto_crypto_req *r;
-
-    signal(SIGHUP, catchhup);
-    signal(SIGUSR1, catchusr1);
-
-    pc_worker_num = helpernum;
-    /* make us lower priority that average */
-    setpriority(PRIO_PROCESS, 0, 10);
-
-    DBG(DBG_CONTROL, DBG_log("helper %d waiting on fd: %d"
-			     , helpernum, fileno(in)));
-
-    memset(reqbuf, 0, sizeof(reqbuf));
-    while(fread((char*)reqbuf, sizeof(r->pcr_len), 1, in) == 1) {
-	int restlen;
-	int actnum;
-	unsigned char *reqrest = ((unsigned char *)reqbuf)+sizeof(r->pcr_len);
-
-	r = &reqbuf[0];
-	restlen = r->pcr_len-sizeof(r->pcr_len);
-	
-	passert(restlen < (signed)PCR_REQ_SIZE);
-	passert(restlen > 0);
-
-	actnum = fread(reqrest, 1, restlen, in);
-	/* okay, got a basic size, read the rest of it */
-
-	DBG(DBG_CONTROL, DBG_log("helper %d read %d+4/%d bytesfd: %d"
-				 , helpernum, actnum, (int)r->pcr_len, fileno(in)));
-
-	if(actnum != restlen) {
-	    /* faulty read. die, parent will restart us */
-
-	    loglog(RC_LOG_SERIOUS, "cryptographic helper(%d) fread(%d)=%d failed: %s\n",
-		   getpid(), restlen, actnum, strerror(errno));
-
-#ifdef DEBUG
-	    if(getenv("PLUTO_CRYPTO_HELPER_COREDUMP")) {
-		if(fork()==0) { /* in child */
-		    passert(actnum == 1);
-		}
-	    }
-#endif
-	loglog(RC_LOG_SERIOUS, "pluto_crypto_helper: helper (%d) is error exiting\n",helpernum);
-	    exit(1);
-	}
-
-	pluto_do_crypto_op(r);
-
-	actnum = fwrite((unsigned char *)r, r->pcr_len, 1, out);
-	fflush(out);
-
-	if(actnum != 1) {
-	    loglog(RC_LOG_SERIOUS, "failed to write answer: %d", actnum);
-	    exit(2);
-	}
-	memset(reqbuf, 0, sizeof(reqbuf));
-    }
-
-    if(!feof(in)) {
-	loglog(RC_LOG_SERIOUS, "helper %d got error: %s", helpernum, strerror(ferror(in)));
-    }
-
-    /* probably normal EOF */
-    fclose(in);
-    fclose(out);
-    loglog(RC_LOG_SERIOUS, "pluto_crypto_helper: helper (%d) is  normal exiting\n",helpernum);
-    exit(0);
-#endif
 }
 
 
@@ -407,11 +302,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r
     if(pc_workers == NULL) {
 	reset_cur_state();
 
-#ifdef HAVE_LIBNSS
 	pluto_do_crypto_op(r,pc_helper_num);
-#else
-	pluto_do_crypto_op(r);
-#endif
 	/* call the continuation */
 	(*cn->pcrc_func)(cn, r, NULL);
 
@@ -744,11 +635,7 @@ void handle_helper_comm(struct pluto_crypto_worker *w)
 	       , w->pcw_pid, (unsigned long)r->pcr_len
                , (unsigned long)sizeof(reqbuf));
     killit:
-#ifdef HAVE_LIBNSS
 	pthread_cancel((pthread_t)w->pcw_pid);
-#else
-	kill(w->pcw_pid, SIGTERM);
-#endif
 	w->pcw_dead = TRUE;
 	return;
     }
@@ -829,9 +716,6 @@ void handle_helper_comm(struct pluto_crypto_worker *w)
 static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 {
     int fds[2];
-#ifndef HAVE_LIBNSS
-    int errno2;
-#endif
 
     /* reset this */
     w->pcw_pid = -1;
@@ -844,9 +728,7 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 
     w->pcw_helpernum = n;
     w->pcw_pipe = fds[0];
-#ifdef HAVE_LIBNSS
     w->pcw_helper_pipe = fds[1];
-#endif
     w->pcw_maxbasicwork  = 2;
     w->pcw_maxcritwork   = 4;
     w->pcw_work     = 0;
@@ -869,18 +751,9 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	}
     }
 
-    /* flush various descriptors so that they don't get written twice */
-#ifndef HAVE_LIBNSS
-    fflush(stdout);
-    fflush(stderr);
-    close_log();
-    close_peerlog();
-#endif
-
     /* set local so that child inheirits it */
     pc_helper_num = n;
 
-#ifdef HAVE_LIBNSS
     int thread_status;
 
     thread_status = pthread_create((pthread_t*)&w->pcw_pid, NULL, pluto_helper_thread, (void*)w);
@@ -895,89 +768,8 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
     else{
 	libreswan_log("started helper (thread) pid=%ld (fd:%d)", w->pcw_pid,  w->pcw_pipe);
     }
-#else
-    w->pcw_pid = fork();
-    errno2 = errno;
-    if(w->pcw_pid == 0) { 
-
-	/* this is the CHILD */
-	int fd;
-	int maxfd;
-	struct rlimit nf;
-	int i, arg_len = 0;
-
-	/* diddle with our proc title */
-	memset(global_argv[0], '\0', strlen(global_argv[0])+1);
-	arg_len += strlen(global_argv[0]);
-	for(i = 1; i < global_argc; i++) {
-	    if(global_argv[i]) {
-		int l = strlen(global_argv[i]);
-		memset(global_argv[i], '\0', l);
-		arg_len += l;
-	    }
-	    global_argv[i]=NULL;
-	}
-	snprintf(global_argv[0], arg_len, "pluto helper %s #%3d "
-			, pluto_ifn_inst, n);
-
-	if(getenv("PLUTO_CRYPTO_HELPER_DEBUG")) {
-	    snprintf(global_argv[0], arg_len,
-	    	    "pluto helper %s #%3d (waiting for GDB) ",
-		    pluto_ifn_inst, n);
-	    sleep(60); /* for debugger to attach */
-	    sprintf(global_argv[0], "pluto helper %s #%3d                   "
-		    , pluto_ifn_inst, n);
-	}
-
-	if(getrlimit(RLIMIT_NOFILE, &nf) == -1) {
-	    maxfd = 256;
-	} else {
-	    maxfd = nf.rlim_max;
-	}
-
-	/* in child process, close all non-essential fds */
-	for(fd = 3; fd < maxfd; fd++) {
-	    if(fd != fds[1]) close(fd);
-	}
-	
-	pluto_init_log();
-
-
-	init_rnd_pool();
-	load_oswcrypto();
-	free_preshared_secrets();
-#ifdef DEBUG
-	libreswan_passert_fail = helper_passert_fail;
-	debug_prefix='!';
-#endif
-
-	pluto_crypto_helper(fds[1], n);
-
-	exit(0);
-	/* NOTREACHED */
-    }
-
-    /* open the log files again */
-    pluto_init_log();
-	
-    if(w->pcw_pid == -1) {
-	loglog(RC_LOG_SERIOUS, "failed to start child, error = %s"
-	       , strerror(errno2));
-	close(fds[1]);
-	close(fds[0]);
-	w->pcw_dead   = TRUE;
-	return;
-    }
-
-    /* PARENT */
-    libreswan_log("started helper pid=%d (fd:%d)", w->pcw_pid,  w->pcw_pipe);
-    
-    /* close client side of socket pair in parent */
-    close(fds[1]);
-#endif
 }
 
-#ifdef HAVE_LIBNSS
 void *
 pluto_helper_thread(void *w) {
     struct pluto_crypto_worker *helper;
@@ -985,7 +777,6 @@ pluto_helper_thread(void *w) {
     pluto_crypto_helper(helper->pcw_helper_pipe, helper->pcw_helpernum);
     return NULL;
 }
-#endif
 
 /*
  * clean up after a crypto helper

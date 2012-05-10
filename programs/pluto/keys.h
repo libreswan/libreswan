@@ -6,6 +6,7 @@
  * Copyright (C) 2003-2007  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,13 +31,11 @@ struct connection;
 extern void sign_hash(const struct RSA_private_key *k, const u_char *hash_val
 		      , size_t hash_len, u_char *sig_val, size_t sig_len);
 
-#ifdef HAVE_LIBNSS
 extern int sign_hash_nss(const struct RSA_private_key *k, const u_char *hash_val
 				, size_t hash_len, u_char *sig_val, size_t sig_len);
 extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k
 					, const u_char *hash_val, size_t hash_len
 					,const u_char *sig_val, size_t sig_len);
-#endif
 
 extern const struct RSA_private_key *get_RSA_private_key(const struct connection *c);
 

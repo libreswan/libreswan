@@ -1,6 +1,13 @@
 /* Libreswan config file parser (confread.c)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
+ * Copyright (C) 2006-2008 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
+ * Copyright (C) 2006-2012 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2010 Michael Smith <msmith@cbnco.com>
+ * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,9 +38,8 @@
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/oeconns.h"
 
-#ifdef HAVE_LIBNSS
-/* #ifdef FIPS_CHECK */
-#include "oswconf.h"
+#ifdef FIPS_CHECK
+# include "oswconf.h"
 #endif
 
 static char _tmp_err[512];
@@ -1005,8 +1011,7 @@ static int load_conn (struct starter_config *cfg
     if(conn->options_set[KBF_AUTHBY]) {
 	conn->policy &= ~(POLICY_ID_AUTH_MASK);
 
-#ifdef HAVE_LIBNSS
-/* #ifdef FIPS_CHECK */
+#ifdef FIPS_CHECK
         if(Pluto_IsFIPS()) {
 		if((conn->options[KBF_AUTHBY] & POLICY_PSK) == POLICY_PSK){
 		starter_log(LOG_LEVEL_INFO

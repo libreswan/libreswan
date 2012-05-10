@@ -1,5 +1,6 @@
 /* information about connections between hosts and clients
  * Copyright (C) 1998-2001  D. Hugh Redelmeier
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -479,9 +480,7 @@ extern struct connection *unoriented_connections;
 
 extern void update_host_pairs(struct connection *c);
 
-#ifdef HAVE_LIBNSS
 extern void load_authcerts_from_nss(const char *type, u_char auth_flags);
-#endif
 
 /*
  * Local Variables:

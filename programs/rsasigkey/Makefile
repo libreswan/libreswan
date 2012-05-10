@@ -15,28 +15,21 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
-ifeq ($(USE_LIBNSS),true)
-CFLAGS+=-DHAVE_LIBNSS
 ifeq ($(USE_FIPSCHECK),true)
 FIPS_CHECK=1
 CFLAGS+=-DFIPS_CHECK
 endif
+
 INCLUDES+=-I/usr/include/nspr4 -I/usr/include/nss3
-endif
 
 PROGRAM=rsasigkey
 LIBS=${LIBRESWANLIB} -lgmp
-ifeq ($(USE_LIBNSS),true)
 LIBS+= -lnspr4 -lnss3 -lplc4
 ifeq ($(USE_FIPSCHECK),true)
 LIBS+=  -lfipscheck
 endif
-endif
-
 
 include ${srcdir}../Makefile.program
 
-# temp workaround for bug in nspr 4.8.2 
-ifeq ($(USE_LIBNSS),true)
-CFLAGS+=-Wno-strict-prototypes
-endif
+# Enable for temp workaround for bug in nspr 4.8.2 
+# CFLAGS+=-Wno-strict-prototypes

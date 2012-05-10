@@ -7,6 +7,7 @@
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com> 
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,21 +47,17 @@
 #include "pgp.h"
 #include "certs.h"
 #include "secrets.h"
-#include "md2.h"
 #include "md5.h"
 #include "sha1.h"
 #ifdef USE_SHA2
 # include "sha2.h"
 #endif
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pk11pub.h>
-# include <keyhi.h>
-# include <secerr.h>
-# include "oswconf.h"
-#endif
-
+#include <nss.h>
+#include <pk11pub.h>
+#include <keyhi.h>
+#include <secerr.h>
+#include "oswconf.h"
 
 
 /* ASN.1 definition of a basicConstraints extension */
@@ -1176,16 +1173,6 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 {
     switch (alg)
     {
-	case OID_MD2:
-	case OID_MD2_WITH_RSA:
-	{
-	    MD2_CTX context;
-	    MD2Init(&context);
-	    MD2Update(&context, tbs.ptr, tbs.len);
-	    MD2Final(digest->ptr, &context);
-	    digest->len = MD2_DIGEST_SIZE;
-	    return TRUE;
-	}
 	case OID_MD5:
 	case OID_MD5_WITH_RSA:
 	{
@@ -1214,17 +1201,12 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	   sha256_context context;
 	   sha256_init(&context);
 	   sha256_write(&context, tbs.ptr, tbs.len);
-#ifdef HAVE_LIBNSS
 	   unsigned int len;
 	   SECStatus s;	
 	   s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len, SHA2_256_DIGEST_SIZE);
 	   passert(len==SHA2_256_DIGEST_SIZE);
 	   passert(s==SECSuccess);
 	   PK11_DestroyContext(context.ctx_nss, PR_TRUE);
-#else
-	   sha256_final(&context);
-	   memcpy(digest->ptr, context.sha_out, SHA2_256_DIGEST_SIZE);
-#endif
 	   digest->len = SHA2_256_DIGEST_SIZE;
 	   return TRUE;
 	}
@@ -1233,7 +1215,6 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	{
 	   sha512_context context;
 	   sha384_init(&context);
-#ifdef HAVE_LIBNSS
 	   unsigned int len;
 	   SECStatus s;
 	   s = PK11_DigestOp(context.ctx_nss, tbs.ptr, tbs.len);
@@ -1242,11 +1223,6 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	   passert(len==SHA2_384_DIGEST_SIZE);
 	   passert(s==SECSuccess);
 	   PK11_DestroyContext(context.ctx_nss, PR_TRUE);
-#else
-	   sha512_write(&context, tbs.ptr, tbs.len);
-	   sha512_final(&context);
-	   memcpy(digest->ptr, context.sha_out, SHA2_384_DIGEST_SIZE);
-#endif
 	   digest->len = SHA2_384_DIGEST_SIZE;
 	   return TRUE;
 	}
@@ -1257,17 +1233,12 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	   sha512_init(&context);
 	   sha512_write(&context, tbs.ptr, tbs.len);
 
-#ifdef HAVE_LIBNSS
 	   unsigned int len;
 	   SECStatus s;
 	   s=PK11_DigestFinal(context.ctx_nss, digest->ptr, &len, SHA2_512_DIGEST_SIZE);
 	   passert(len==SHA2_512_DIGEST_SIZE);
 	   passert(s==SECSuccess);
 	   PK11_DestroyContext(context.ctx_nss, PR_TRUE);
-#else
-	   sha512_final(&context);
-	   memcpy(digest->ptr, context.sha_out, SHA2_512_DIGEST_SIZE);
-#endif
 	   digest->len = SHA2_512_DIGEST_SIZE;
 	   return TRUE;
 	}
@@ -1281,7 +1252,6 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 /*
  *  decrypts an RSA signature using the issuer's certificate
  */
-#ifdef HAVE_LIBNSS
 static bool
 decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 	    chunk_t *digest)
@@ -1289,7 +1259,6 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
     switch (alg)
     {
 	case OID_RSA_ENCRYPTION:
-	case OID_MD2_WITH_RSA:
 	case OID_MD5_WITH_RSA:
 	case OID_SHA1_WITH_RSA:
 	case OID_SHA1_WITH_RSA_OIW:
@@ -1302,7 +1271,7 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 	   PRArenaPool *arena;
 	   SECStatus retVal = SECSuccess;
 	   SECItem nss_n, nss_e, dsig;
-	   SECItem signature, data;
+	   SECItem signature;
            mpz_t e;
            mpz_t n;
 	   mpz_t s;
@@ -1381,10 +1350,6 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 	    signature.data = sc.ptr;
 	    signature.len  = (unsigned int)sc.len;
 
-	    data.type = siBuffer;
-	    data.data = digest->ptr;
-	    data.len  = (unsigned int)digest->len;
-
 	    dsigc.len = (unsigned int)sc.len;
 	    dsigc.ptr = alloc_bytes(dsigc.len, "NSS decrypted signature");
             dsig.type = siBuffer;
@@ -1424,58 +1389,7 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
     }
 
 }
-#else
-static bool
-decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
-	    chunk_t *digest)
-{
-    switch (alg)
-    {
-	chunk_t decrypted;
-	case OID_RSA_ENCRYPTION:
-	case OID_MD2_WITH_RSA:
-	case OID_MD5_WITH_RSA:
-	case OID_SHA1_WITH_RSA:
-	case OID_SHA1_WITH_RSA_OIW:
-	case OID_SHA256_WITH_RSA:
-	case OID_SHA384_WITH_RSA:
-	case OID_SHA512_WITH_RSA:
-	{
-	    mpz_t s;
-	    mpz_t e;
-	    mpz_t n;
 
-	    n_to_mpz(s, sig.ptr, sig.len);
-	    n_to_mpz(e, issuer_cert->publicExponent.ptr,
-			issuer_cert->publicExponent.len);
-	    n_to_mpz(n, issuer_cert->modulus.ptr,
-			issuer_cert->modulus.len);
-
-	    /* decrypt the signature s = s^e mod n */
-	    mpz_powm(s, s, e, n);
-	    /* convert back to bytes */
-	    decrypted = mpz_to_n(s, issuer_cert->modulus.len);
-	    DBG(DBG_CRYPT, DBG_dump_chunk("decrypt_sig() decrypted signature: ", decrypted))
-
-	    /*  copy the least significant bits of decrypted signature
-	     *  into the digest string
-	    */
-	    memcpy(digest->ptr, decrypted.ptr + decrypted.len - digest->len,
-		   digest->len);
-
-	    /* free memory */
-	    pfree(decrypted.ptr);
-	    mpz_clear(s);
-	    mpz_clear(e);
-	    mpz_clear(n);
-	    return TRUE;
-	}
-	default:
-	    digest->len = 0;
-	    return FALSE;
-    }
-}
-#endif
 /*
  *   Check if a signature over binary blob is genuine
  */
@@ -1483,15 +1397,8 @@ bool
 check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 		const x509cert_t *issuer_cert)
 {
-#ifdef HAVE_LIBNSS
     u_char digest_buf[MAX_DIGEST_LEN];
     chunk_t digest = {digest_buf, MAX_DIGEST_LEN};
-#else
-    u_char digest_buf[MAX_DIGEST_LEN];
-    u_char decrypted_buf[MAX_DIGEST_LEN];
-    chunk_t digest = {digest_buf, MAX_DIGEST_LEN};
-    chunk_t decrypted = {decrypted_buf, MAX_DIGEST_LEN};
-#endif
 
     if (algorithm != OID_UNKNOWN)
     {
@@ -1516,26 +1423,12 @@ check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 	DBG_dump_chunk("  digest:", digest)
     )
 
-#ifdef HAVE_LIBNSS
     if (!decrypt_sig(sig, algorithm, issuer_cert, &digest))
     {
 	libreswan_log(" NSS: failure in verifying signature");
 	return FALSE;
     }
     return TRUE;
-#else
-
-    decrypted.len = digest.len; /* we want the same digest length */
-
-    if (!decrypt_sig(sig, algorithm, issuer_cert, &decrypted))
-    {
-    	libreswan_log("  decryption algorithm not supported");
-	return FALSE;
-    }
-
-    /* check if digests are equal */
-    return !memcmp(decrypted.ptr, digest.ptr, digest.len);
-#endif
 }
 
 /*

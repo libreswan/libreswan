@@ -6,6 +6,7 @@
  * Copyright (C) 2010-2011 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -196,7 +197,6 @@ unpack_KE(struct state *st
 	
 	clonetochunk(*g, wire_chunk_ptr(kn, &(kn->gi))
 		     , kn->gi.len, "saved gi value");
-#ifdef HAVE_LIBNSS
 	DBG(DBG_CRYPT, DBG_log("saving DH priv (local secret) and pub key into state struc"));
 	clonetochunk(st->st_sec_chunk
 		     , wire_chunk_ptr(kn, &(kn->secret))
@@ -205,14 +205,6 @@ unpack_KE(struct state *st
 	clonetochunk(st->pubk
 		     , wire_chunk_ptr(kn, &(kn->pubk))
 		     , kn->pubk.len, "pointer to DH public key");
-#else
-	n_to_mpz(&st->st_sec
-		 , wire_chunk_ptr(kn, &(kn->secret))
-		 , kn->secret.len);
-	clonetochunk(st->st_sec_chunk
-		     , wire_chunk_ptr(kn, &(kn->secret))
-		     , kn->secret.len, "long term secret");
-#endif
     }
 }
 

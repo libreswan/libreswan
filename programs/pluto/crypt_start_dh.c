@@ -3,6 +3,7 @@
  * Copyright (C) 2006-2008 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -94,13 +95,11 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn
     pluto_crypto_copychunk(&dhq->thespace, dhq->space
 			   , &dhq->secret, st->st_sec_chunk);
 
-#ifdef HAVE_LIBNSS
     /*copying required encryption algo*/
     /*dhq->encrypt_algo = st->st_oakley.encrypt;*/
     dhq->encrypter = st->st_oakley.encrypter;
     DBG(DBG_CRYPT, DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
     pluto_crypto_copychunk(&dhq->thespace, dhq->space , &dhq->pubk, st->pubk);
-#endif
 
     pluto_crypto_allocchunk(&dhq->thespace, &dhq->icookie, COOKIE_SIZE);
     memcpy(wire_chunk_ptr(dhq, &dhq->icookie)
@@ -195,14 +194,12 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn
     pluto_crypto_copychunk(&dhq->thespace, dhq->space
 			   , &dhq->secret, st->st_sec_chunk);
 
-#ifdef HAVE_LIBNSS
     /*copying required encryption algo*/
     /* XXX Avesh: you commented this out on purpose or by accident ?? */
     /*dhq->encrypter = st->st_oakley.encrypter;*/
     DBG(DBG_CRYPT, DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
     pluto_crypto_copychunk(&dhq->thespace, dhq->space
                           , &dhq->pubk, st->pubk);
-#endif
 
     pluto_crypto_allocchunk(&dhq->thespace, &dhq->icookie, COOKIE_SIZE);
     memcpy(wire_chunk_ptr(&r.pcr_d.dhq, &dhq->icookie)
@@ -286,14 +283,12 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn
     pluto_crypto_copychunk(&dhq->thespace, dhq->space
 			   , &dhq->secret, st->st_sec_chunk);
 
-#ifdef HAVE_LIBNSS
     /*copying required encryption algo*/
     /*dhq->encrypt_algo = st->st_oakley.encrypter->common.algo_v2id;*/
     dhq->encrypter = st->st_oakley.encrypter;
     DBG(DBG_CRYPT, DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
     pluto_crypto_copychunk(&dhq->thespace, dhq->space
                           , &dhq->pubk, st->pubk);
-#endif
 
     pluto_crypto_allocchunk(&dhq->thespace, &dhq->icookie, COOKIE_SIZE);
     memcpy(wire_chunk_ptr(dhq, &dhq->icookie)

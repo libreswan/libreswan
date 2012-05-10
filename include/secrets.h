@@ -3,6 +3,7 @@
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,10 +21,8 @@
 #include <gmp.h>    /* GNU MP library */
 #include "id.h"
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pk11pub.h>
-#endif
+#include <nss.h>
+#include <pk11pub.h>
 
 #ifndef SHARED_SECRETS_FILE
 # define SHARED_SECRETS_FILE  "/etc/ipsec.secrets"
@@ -43,9 +42,7 @@ struct RSA_public_key
     MP_INT
 	n,	/* modulus: p * q */
 	e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
-#ifdef HAVE_LIBNSS
     CERTCertificate *nssCert;
-#endif
 };
 
 struct RSA_private_key {
@@ -59,10 +56,8 @@ struct RSA_private_key {
 	dP,	/* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
 	dQ,	/* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
 	qInv;	/* (q^-1) mod p */
-#ifdef HAVE_LIBNSS
     unsigned char ckaid[HMAC_BUFSIZE];  /*ckaid for use in NSS*/
     unsigned int  ckaid_len;	
-#endif
 };
 
 extern void free_RSA_public_content(struct RSA_public_key *rsa);
@@ -145,10 +140,8 @@ extern void delete_public_keys(struct pubkey_list **head
 			       , enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize);
 
-#ifdef HAVE_LIBNSS
 extern void form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize);
 extern err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *rsak, char *nssHostCertNickName);
-#endif
 
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);

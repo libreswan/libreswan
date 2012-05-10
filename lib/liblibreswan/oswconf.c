@@ -1,6 +1,7 @@
 /* misc functions to get compile time and runtime options
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,20 +23,16 @@
 #include "oswconf.h"
 #include "oswalloc.h"
 
-#ifdef HAVE_LIBNSS
-# include <string.h>
-# include <nss.h>
-# include <nspr.h>
-# include <pk11pub.h>
-#endif
+#include <string.h>
+#include <nss.h>
+#include <nspr.h>
+#include <pk11pub.h>
 
 static struct osw_conf_options global_oco;
 static bool setup=FALSE;
 
-#ifdef HAVE_LIBNSS
 #define NSSpwdfilesize 4096
 static secuPWData NSSPassword;
-#endif
 
 #ifdef SINGLE_CONF_DIR
 #define SUBDIRNAME(X) ""
@@ -123,12 +120,10 @@ void osw_conf_setdefault(void)
     global_oco.confdir = ipsec_conf_dir;
     global_oco.conffile = conffile;
 
-#ifdef HAVE_LIBNSS
     /* path to NSS password file */
     snprintf(buf, sizeof(buf), "%s/nsspassword", global_oco.confddir);
     NSSPassword.data = clone_str(buf, "nss password file path");
     NSSPassword.source =  PW_FROMFILE;
-#endif
     /* DBG_log("default setting of ipsec.d to %s", global_oco.confddir); */
 }
 
@@ -185,7 +180,6 @@ const struct osw_conf_options *osw_init_ipsecdir(const char *ipsec_dir)
     return &global_oco;
 }
 
-#ifdef HAVE_LIBNSS
 secuPWData *osw_return_nss_password_file_info(void)
 {
     return &NSSPassword;
@@ -310,7 +304,6 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 libreswan_log("nss password source is not specified as file");
 return 0;
 }
-#endif
     
 /*
  * Local Variables:

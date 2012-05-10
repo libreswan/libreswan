@@ -6,6 +6,7 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -535,9 +536,6 @@ reapchildren(void)
 	/* got a child to reap */
 	if(adns_reapchild(child, status)) continue;
        /*Threads are created instead of child processes when using LIBNSS*/
-#ifndef HAVE_LIBNSS
-	if(pluto_crypt_handle_dead_child(child, status)) continue;
-#endif
 	libreswan_log("child pid=%d (status=%d) is not my child!", child, status);
     }
     

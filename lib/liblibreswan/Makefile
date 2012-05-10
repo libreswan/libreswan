@@ -1,6 +1,8 @@
 # Libreswan library
 # Copyright (C) 1998-2001  Henry Spencer.
 # Copyright (C) 2003, 2004 Xelerance Corporation
+# Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -54,6 +56,7 @@ PFKEYV2_SRCS+=pfkey_v2_build.c pfkey_v2_ext_bits.c pfkey_v2_parse.c
 PFKEYV2_SRCS+=pfkey_v2_debug.c 
 endif
 
+CFLAGS+=-I/usr/include/nspr4 -I/usr/include/nss3
 CFLAGS+=-DUSE_SHA2
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 
@@ -99,11 +102,6 @@ endif
 
 ifeq ($(USE_DMALLOC),true)
 CFLAGS+= -DDMALLOC
-endif
-
-ifeq ($(USE_LIBNSS),true)
-CFLAGS+=-DHAVE_LIBNSS
-CFLAGS+=-I/usr/include/nspr4 -I/usr/include/nss3
 endif
 
 ifeq ($(USE_MODP_RFC5114),true)

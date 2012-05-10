@@ -4,6 +4,7 @@
  * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,9 +54,7 @@ struct pcr_kenonce {
   wire_chunk_t secret;
   wire_chunk_t gi;
   wire_chunk_t n;
-#ifdef HAVE_LIBNSS
   wire_chunk_t pubk;
-#endif
 };
 
 #define DHCALC_SIZE 2560
@@ -78,11 +77,9 @@ struct pcr_skeyid_q {
   wire_chunk_t icookie;
   wire_chunk_t rcookie;
   wire_chunk_t secret;
-#ifdef HAVE_LIBNSS
   /* u_int16_t encrypt_algo; */
   struct encrypt_desc *encrypter;
   wire_chunk_t   pubk;
-#endif
 };
 
 struct pcr_skeyid_r {
@@ -175,11 +172,7 @@ extern err_t send_crypto_helper_request(struct pluto_crypto_req *r
 extern void pluto_crypto_helper_sockets(osw_fd_set *readfds);
 extern int  pluto_crypto_helper_ready(osw_fd_set *readfds);
 
-#ifdef HAVE_LIBNSS
 extern void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum);
-#else
-extern void pluto_do_crypto_op(struct pluto_crypto_req *r);
-#endif
 extern void pluto_crypto_helper(int fd, int helpernum);
 extern void pluto_crypto_allocchunk(wire_chunk_t *space
 				    , wire_chunk_t *new

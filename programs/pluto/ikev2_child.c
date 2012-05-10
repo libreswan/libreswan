@@ -495,7 +495,6 @@ int ikev2_evaluate_connection_fit(struct connection *d
 {
     unsigned int tsi_ni, tsr_ni;
     int bestfit = -1;
-    int best_tsr, best_tsi; 
     struct end *ei, *er;
     
     if(role == INITIATOR) {
@@ -595,8 +594,6 @@ int ikev2_evaluate_connection_fit(struct connection *d
 		);
 
 		if(fitbits > bestfit) {
-		    best_tsi = tsi_ni;
-		    best_tsr = tsr_ni;
 		    bestfit = fitbits;
 		}
 	    }

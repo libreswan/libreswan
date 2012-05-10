@@ -6,6 +6,7 @@
  * Copyright (C) 2003-2008  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -307,12 +308,8 @@ compute_proto_keymat(struct state *st
 	size_t i;
 
 	hmac_init_chunk(&ctx_me, st->st_oakley.prf_hasher, st->st_skeyid_d);
-#ifdef HAVE_LIBNSS
 	 /*PK11Context * DigestContext makes hmac not allowable for copy*/
 	hmac_init_chunk(&ctx_peer, st->st_oakley.prf_hasher, st->st_skeyid_d);
-#else
-	ctx_peer = ctx_me;	/* duplicate initial conditions */
-#endif
 	needed_space = needed_len + pad_up(needed_len, ctx_me.hmac_digest_len);
 	replace(pi->our_keymat, alloc_bytes(needed_space, "keymat in compute_keymat()"));
 	replace(pi->peer_keymat, alloc_bytes(needed_space, "peer_keymat in quick_inI1_outR1()"));
@@ -322,7 +319,6 @@ compute_proto_keymat(struct state *st
 	    if (st->st_shared.ptr != NULL)
 	    {
 		/* PFS: include the g^xy */
-#ifdef HAVE_LIBNSS
 		PK11SymKey *st_shared;
 		memcpy(&st_shared, st->st_shared.ptr, st->st_shared.len);
 
@@ -330,10 +326,6 @@ compute_proto_keymat(struct state *st
 		PR_ASSERT(s==SECSuccess);
 		s = PK11_DigestKey(ctx_peer.ctx_nss,st_shared);
 		PR_ASSERT(s==SECSuccess);
-#else
-		hmac_update_chunk(&ctx_me, st->st_shared);
-		hmac_update_chunk(&ctx_peer, st->st_shared);
-#endif
 	    }
 	    hmac_update(&ctx_me, &protoid, sizeof(protoid));
 	    hmac_update(&ctx_peer, &protoid, sizeof(protoid));
@@ -355,13 +347,8 @@ compute_proto_keymat(struct state *st
 		break;
 
 	    /* more keying material needed: prepare to go around again */
-#ifdef HAVE_LIBNSS
             hmac_init_chunk(&ctx_me, st->st_oakley.prf_hasher, st->st_skeyid_d); 
             hmac_init_chunk(&ctx_peer, st->st_oakley.prf_hasher, st->st_skeyid_d);           
-#else
-	    hmac_reinit(&ctx_me);
-	    hmac_reinit(&ctx_peer);
-#endif
 
 	    hmac_update(&ctx_me, pi->our_keymat + i - ctx_me.hmac_digest_len
 		, ctx_me.hmac_digest_len);
@@ -2513,8 +2500,7 @@ quick_inR1_outI2_cryptotail(struct dh_continuation *dh
     {
 	u_char	/* set by START_HASH_PAYLOAD: */
 	    *r_hashval,	/* where in reply to jam hash value */
-	    *r_hash_start;      /* start of what is to be hashed */
-
+	    *r_hash_start; /* start of what is to be hashed */
 
 #ifdef IMPAIR_UNALIGNED_I2_MSG
 	{

@@ -2,6 +2,7 @@
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,10 +21,8 @@
 
 #include "constants.h"
 
-#ifdef HAVE_LIBNSS
 # include <nss.h>
 # include <pk11pub.h>
-#endif
 
 struct paththing {
   char    *path;
@@ -47,7 +46,6 @@ struct osw_conf_options {
     char *ocspcerts_dir;          /* "/etc/ipsec.d/ocspcerts" */
 };
 
-#ifdef HAVE_LIBNSS
 typedef struct {
     enum {
       PW_NONE = 0,      /* no password */
@@ -57,18 +55,15 @@ typedef struct {
     } source ;
     char *data;
 } secuPWData;
-#endif
 
 extern const struct osw_conf_options *osw_init_options(void);
 extern void osw_conf_free_oco(void);
 extern const struct osw_conf_options *osw_init_ipsecdir(const char *ipsec_dir);
 extern const struct osw_conf_options *osw_init_rootdir(const char *root_dir);
 
-#ifdef HAVE_LIBNSS
 extern secuPWData *osw_return_nss_password_file_info(void);
 extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
 extern bool Pluto_IsFIPS(void);
-#endif
 
 #endif /* _OSW_ALLOC_H_ */
 

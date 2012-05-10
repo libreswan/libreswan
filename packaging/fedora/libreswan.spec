@@ -7,8 +7,6 @@ Version: 2.6.33rc1
 %{!?buildxen: %{expand: %%define buildxen 0}}
 %{!?buildefence: %{expand: %%define buildefence 0}}
 %{!?development: %{expand: %%define development 0}}
-# nss build
-%{!?buildnss: %{expand: %%define buildnss 0}}
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
@@ -29,10 +27,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Summary: Libreswan - An IPsec and IKE implementation
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex bind-devel redhat-rpm-config xmlto
-%if %{buildnss}
 BuildRequires: nss-devel >= 3.12.6-2, nspr-devel fipscheck-devel, libcap-ng-devel
 Requires: nss-tools
-%endif
 %if %{buildefence}
 BuildRequires: ElectricFence
 %endif
@@ -90,11 +86,8 @@ kernels.
 %endif
   USERLINK="-g -pie %{?efence}" \
   HAVE_THREADS="true" \
-%if %{buildnss}
-  USE_LIBNSS="true" \
   USE_FIPSCHECK="true" \
   USE_LIBCAP_NG="true" \
-%endif
   USE_DYNAMICDNS="true" \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \
@@ -160,9 +153,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %defattr(-,root,root)
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
 %doc OBJ.linux.*/programs/examples/*.conf
-%if %{buildnss}
 %doc doc/README.nss
-%endif
 #%doc doc/manpage.d/*
 # /usr/share/doc/libreswan/*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf

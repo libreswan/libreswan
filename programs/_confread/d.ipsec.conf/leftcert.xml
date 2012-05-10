@@ -5,8 +5,7 @@
 <emphasis remap='B'>leftrsasigkey=%cert</emphasis>
 this defines the certificate you would like to use. It should point to a X.509
 encoded certificate file. If you do not specify a full pathname, by default it
-will look in /etc/ipsec.d/certs. If libreswan has been compiled with
-<emphasis remap='B'>USE_LIBNSS=true</emphasis>, then libreswan will also check the
+will look in /etc/ipsec.d/certs. Libreswan will also check the
 NSS database for RSA keys. These can be software or hardware.
 </para>
   </listitem>

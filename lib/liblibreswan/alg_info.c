@@ -1,6 +1,7 @@
 /*
  * Algorithm info parsing and creation functions
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -34,9 +35,7 @@
 #include "oswlog.h"
 #include "oswalloc.h"
 
-#ifdef HAVE_LIBNSS
 #include "oswconf.h"
-#endif
 
 /* abstract reference */
 struct oakley_group_desc;
@@ -623,12 +622,11 @@ parser_alg_info_add(struct parser_context *p_ctx
 		goto out;
 	    }
 
-#ifdef HAVE_LIBNSS
             if ( Pluto_IsFIPS() && ((aalg_id == OAKLEY_SHA2_256 ) ||(aalg_id == OAKLEY_SHA2_384 ) || (aalg_id == OAKLEY_SHA2_512 ))  ) {
                 p_ctx->err="SHA2 Not supported in FIPS mode with NSS";
                 goto out;
             }
-#endif
+
 	    DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
 				   "aalg_getbyname(\"%s\")=%d",
 				   p_ctx->aalg_buf,

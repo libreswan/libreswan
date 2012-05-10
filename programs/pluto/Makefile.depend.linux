@@ -1422,7 +1422,7 @@ x509.o: x509.c ../../linux/include/libreswan.h \
   ../../include/x509.h ../../include/pgp.h keys.h \
   ../../include/secrets.h ../../include/packet.h demux.h \
   server.h quirks.h connections.h \
-  ../../include/certs.h state.h ../../include/md2.h \
+  ../../include/certs.h state.h  \
   ../../include/md5.h ../../include/sha1.h \
   ../../include/whack.h fetch.h ocsp.h ../../include/pkcs.h \
   plutocerts.h x509more.h
@@ -1442,7 +1442,7 @@ x509keys.o: x509keys.c ../../linux/include/libreswan.h \
   ../../include/x509.h ../../include/pgp.h keys.h \
   ../../include/secrets.h ../../include/packet.h demux.h \
   server.h quirks.h connections.h \
-  ../../include/certs.h state.h ../../include/md2.h \
+  ../../include/certs.h state.h \
   ../../include/md5.h ../../include/sha1.h \
   ../../include/whack.h fetch.h ocsp.h ../../include/pkcs.h \
   x509more.h

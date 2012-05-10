@@ -3,6 +3,7 @@
  * Copyright (C) 2003-2008 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,10 +28,8 @@
 #include "libsha2/sha2.h"
 #endif
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pk11pub.h>
-#endif
+#include <nss.h>
+#include <pk11pub.h>
 
 #include "mpzfuncs.h"
 
@@ -110,10 +109,8 @@ struct hmac_ctx {
     sha256_context ctx_sha256;
     sha512_context ctx_sha512;
 #endif
-#ifdef HAVE_LIBNSS
     PK11SymKey *ikey, *okey;
     PK11Context* ctx_nss;
-#endif
 };
 
 extern void hmac_init(
@@ -123,10 +120,6 @@ extern void hmac_init(
     size_t key_len);
 
 #define hmac_init_chunk(ctx, h, ch) hmac_init((ctx), (h), (ch).ptr, (ch).len)
-
-#ifndef HAVE_LIBNSS
-extern void hmac_reinit(struct hmac_ctx *ctx);	/* saves recreating pads */
-#endif
 
 extern void hmac_update(
     struct hmac_ctx *ctx,
@@ -145,7 +138,6 @@ extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
     }
 #endif
 
-#ifdef HAVE_LIBNSS
 extern CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher);
 extern void nss_symkey_log(PK11SymKey *key, const char *msg);
 extern chunk_t hmac_pads(u_char val, unsigned int len);
@@ -155,8 +147,6 @@ extern PK11SymKey *pk11_derive_wrapper_osw(PK11SymKey *base, CK_MECHANISM_TYPE m
 extern PK11SymKey *PK11_Derive_osw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
                                            , SECItem *param, CK_MECHANISM_TYPE target
                                            , CK_ATTRIBUTE_TYPE operation, int keySize);
-#endif
-
 #endif /* _CRYPTO_H */
 
 /*

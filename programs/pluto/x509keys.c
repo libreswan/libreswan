@@ -7,6 +7,7 @@
  * Copyright (C) 2006 Matthias Haas" <mh@pompase.net>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -48,7 +49,6 @@
 #include "demux.h"	/* needs packet.h */
 #include "connections.h"
 #include "state.h"
-#include "md2.h"
 #include "md5.h"
 #include "sha1.h"
 #include "whack.h"

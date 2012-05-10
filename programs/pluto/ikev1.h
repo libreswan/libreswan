@@ -76,21 +76,12 @@ extern void ikev1_delete_out(struct state *st);
 extern bool
 decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode);
 
-#ifdef HAVE_LIBNSS
 extern void
 main_mode_hash_body(struct state *st
                     , bool hashi        /* Initiator? */
                     , const pb_stream *idpl     /* ID payload, as PBS */
                     , struct hmac_ctx *ctx
                     , hash_update_t hash_update_void);
-#else
-extern void
-main_mode_hash_body(struct state *st
-		    , bool hashi	/* Initiator? */
-		    , const pb_stream *idpl	/* ID payload, as PBS */
-		    , union hash_ctx *ctx
-		    , hash_update_t hash_update_void);
-#endif
 
 extern size_t
 RSA_sign_hash(struct connection *c

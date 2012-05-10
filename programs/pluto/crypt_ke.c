@@ -3,6 +3,7 @@
  * Copyright (C) 2004 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 - 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,70 +54,23 @@
 
 #include "oswcrypto.h"
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pk11pub.h>
-# include <keyhi.h>
-# include "oswconf.h"
-#endif
+#include <nss.h>
+#include <pk11pub.h>
+#include <keyhi.h>
+#include "oswconf.h"
 
 void calc_ke(struct pluto_crypto_req *r)
 {
-#ifndef HAVE_LIBNSS
-    MP_INT mp_g;
-    MP_INT secret;
-    chunk_t gi;
-#else
     chunk_t  prime;
     chunk_t  base;
     SECKEYDHParams      dhp;
     PK11SlotInfo *slot = NULL;
     SECKEYPrivateKey *privk;
     SECKEYPublicKey   *pubk; 
-#endif
     struct pcr_kenonce *kn = &r->pcr_d.kn;
     const struct oakley_group_desc *group;
 
     group = lookup_group(kn->oakley_group);
-
-#ifndef HAVE_LIBNSS    
-    pluto_crypto_allocchunk(&kn->thespace
-			    , &kn->secret
-			    , LOCALSECRETSIZE);
-    
-    get_rnd_bytes(wire_chunk_ptr(kn, &(kn->secret)), LOCALSECRETSIZE);
-    
-    n_to_mpz(&secret, wire_chunk_ptr(kn, &(kn->secret)), LOCALSECRETSIZE);
-    
-    mpz_init(&mp_g);
-
-#ifdef USE_MODP_RFC5114
-    oswcrypto.mod_exp(&mp_g, group->generator, &secret, group->modulus);
-#else
-    oswcrypto.mod_exp(&mp_g, &groupgenerator, &secret, group->modulus);
-#endif
-    
-    gi = mpz_to_n(&mp_g, group->bytes);
-    
-    pluto_crypto_allocchunk(&kn->thespace, &kn->gi, gi.len);
-    
-    {
-	char *gip = wire_chunk_ptr(kn, &(kn->gi));
-	
-	memcpy(gip, gi.ptr, gi.len);
-    }
-    
-    DBG(DBG_CRYPT,
-	DBG_dump("Local DH secret:\n"
-		 , wire_chunk_ptr(kn, &(kn->secret))
-		 , LOCALSECRETSIZE);
-	DBG_dump_chunk("Public DH value sent:\n", gi));
-
-    /* clean up after ourselves */
-    mpz_clear(&mp_g);
-    mpz_clear(&secret);
-    freeanychunk(gi);
-#else
 
 #ifdef USE_MODP_RFC5114
     base  = mpz_to_n2(group->generator);
@@ -193,7 +147,6 @@ void calc_ke(struct pluto_crypto_req *r)
     /* if (pubk){SECKEY_DestroyPublicKey(pubk);} */
     freeanychunk(prime);
     freeanychunk(base);
-#endif
 }
 
 void calc_nonce(struct pluto_crypto_req *r)

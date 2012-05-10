@@ -2,6 +2,7 @@
  * Copyright (C) 2001-2004 Andreas Steffen, Zuercher Hochschule Winterthur
  * Copyright (C) 2003-2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,12 +38,10 @@
 #include "md5.h"
 #include "pem.h"
 
-#ifdef HAVE_LIBNSS
-# include <pk11pub.h>
-# include <prmem.h>
-# include <prerror.h>
-# include "oswconf.h"
-#endif
+#include <pk11pub.h>
+#include <prmem.h>
+#include <prerror.h>
+#include "oswconf.h"
 
 #include "oswcrypto.h"
 
@@ -197,11 +196,6 @@ pem_decrypt_3des(chunk_t *blob, chunk_t *iv, const char *passphrase)
     u_char digest[MD5_DIGEST_SIZE];
     u_char key[24];
 
-#ifndef HAVE_LIBNSS
-    u_char des_iv[DES_CBC_BLOCK_SIZE];
-    des_cblock *deskey = (des_cblock *)key;
-    des_key_schedule ks[3];
-#endif
     u_char padding, *last_padding_pos, *first_padding_pos;
 
     /* Convert passphrase to 3des key */
@@ -219,20 +213,8 @@ pem_decrypt_3des(chunk_t *blob, chunk_t *iv, const char *passphrase)
 
     memcpy(key + MD5_DIGEST_SIZE, digest, 24 - MD5_DIGEST_SIZE);
 
-#ifdef HAVE_LIBNSS
    do_3des_nss(blob->ptr, blob->len, 
         key, DES_CBC_BLOCK_SIZE * 3 , (u_int8_t*)iv, FALSE);
-#else
-    (void) oswcrypto.des_set_key(&deskey[0], ks[0]);
-    (void) oswcrypto.des_set_key(&deskey[1], ks[1]);
-    (void) oswcrypto.des_set_key(&deskey[2], ks[2]);
-
-    /* decrypt data block */
-    memcpy(des_iv, iv->ptr, DES_CBC_BLOCK_SIZE);
-    oswcrypto.des_ede3_cbc_encrypt((des_cblock *)blob->ptr, (des_cblock *)blob->ptr,
-	blob->len, ks[0], ks[1], ks[2], (des_cblock *)des_iv, FALSE);
-#endif
-
     /* determine amount of padding */
     last_padding_pos = blob->ptr + blob->len - 1;
     padding = *last_padding_pos;
@@ -477,7 +459,6 @@ pemtobin(chunk_t *blob, prompt_pass_t *pass, const char* label, bool *pgp)
 	return NULL;
 }
 
-#ifdef HAVE_LIBNSS
 void do_3des_nss(u_int8_t *buf, size_t buf_len
        , u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc)
 {
@@ -543,4 +524,3 @@ out:
 
     DBG(DBG_CRYPT, DBG_log("NSS: do_3des init end"));
 }
-#endif

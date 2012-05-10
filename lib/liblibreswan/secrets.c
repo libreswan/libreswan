@@ -6,6 +6,7 @@
  * Copyright (C) 1998-2004  D. Hugh Redelmeier.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -52,14 +53,12 @@
 #include "lex.h"
 #include "mpzfuncs.h"
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pk11pub.h>
-# include <prerror.h>
-# include <cert.h>
-# include <key.h>
-# include "oswconf.h"
-#endif
+#include <nss.h>
+#include <pk11pub.h>
+#include <prerror.h>
+#include <cert.h>
+#include <key.h>
+#include "oswconf.h"
 
 /* Maximum length of filename and passphrase buffer */
 #define BUF_LEN		256
@@ -83,9 +82,7 @@ static const struct fld RSA_private_field[] =
     { "Exponent1", offsetof(struct RSA_private_key, dP) },
     { "Exponent2", offsetof(struct RSA_private_key, dQ) },
     { "Coefficient", offsetof(struct RSA_private_key, qInv) },
-#ifdef HAVE_LIBNSS
     { "CKAIDNSS", offsetof(struct RSA_private_key, ckaid) },
-#endif
 
 };
 
@@ -119,11 +116,14 @@ RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
     }
 }
 
+#if 0
 /* debugging info that compromises security! */
-#ifndef HAVE_LIBNSS
 static void
 RSA_show_private_key(struct RSA_private_key *k)
 {
+#ifdef FIPS_CHECK
+if(!Pluto_IsFIPS())
+#endif
     RSA_show_key_fields(k, elemsof(RSA_private_field));
 }
 #endif
@@ -139,7 +139,6 @@ RSA_show_public_key(struct RSA_public_key *k)
 }
 #endif
 
-#ifdef HAVE_LIBNSS
 static const char *
 RSA_public_key_sanity(struct RSA_private_key *k)
 {
@@ -147,6 +146,9 @@ RSA_public_key_sanity(struct RSA_private_key *k)
     err_t ugh = NULL;
 
 #ifdef DEBUG    /* debugging info that compromises security */
+# ifdef FIPS_CHECK
+if(!Pluto_IsFIPS())
+# endif
     DBG(DBG_PRIVATE, RSA_show_public_key(&k->pub));
 #endif
 
@@ -162,85 +164,6 @@ RSA_public_key_sanity(struct RSA_private_key *k)
 
    return ugh;
 }
-#else
-static const char *
-RSA_private_key_sanity(struct RSA_private_key *k)
-{
-    /* note that the *last* error found is reported */
-    err_t ugh = NULL;
-    mpz_t t, u, q1;
-
-#ifdef DEBUG	/* debugging info that compromises security */
-    DBG(DBG_PRIVATE, RSA_show_private_key(k));
-#endif
-
-    /* PKCS#1 1.5 section 6 requires modulus to have at least 12 octets.
-     * We actually require more (for security).
-     */
-    if (k->pub.k < RSA_MIN_OCTETS)
-	return RSA_MIN_OCTETS_UGH;
-
-    /* we picked a max modulus size to simplify buffer allocation */
-    if (k->pub.k > RSA_MAX_OCTETS)
-	return RSA_MAX_OCTETS_UGH;
-
-    mpz_init(t);
-    mpz_init(u);
-    mpz_init(q1);
-
-    /* check that n == p * q */
-    mpz_mul(u, &k->p, &k->q);
-    if (mpz_cmp(u, &k->pub.n) != 0)
-	ugh = "n != p * q";
-
-    /* check that e divides neither p-1 nor q-1 */
-    mpz_sub_ui(t, &k->p, 1);
-    mpz_mod(t, t, &k->pub.e);
-    if (mpz_cmp_ui(t, 0) == 0)
-	ugh = "e divides p-1";
-
-    mpz_sub_ui(t, &k->q, 1);
-    mpz_mod(t, t, &k->pub.e);
-    if (mpz_cmp_ui(t, 0) == 0)
-	ugh = "e divides q-1";
-
-    /* check that d is e^-1 (mod lcm(p-1, q-1)) */
-    /* see PKCS#1v2, aka RFC 2437, for the "lcm" */
-    mpz_sub_ui(q1, &k->q, 1);
-    mpz_sub_ui(u, &k->p, 1);
-    mpz_gcd(t, u, q1);		/* t := gcd(p-1, q-1) */
-    mpz_mul(u, u, q1);		/* u := (p-1) * (q-1) */
-    mpz_divexact(u, u, t);	/* u := lcm(p-1, q-1) */
-
-    mpz_mul(t, &k->d, &k->pub.e);
-    mpz_mod(t, t, u);
-    if (mpz_cmp_ui(t, 1) != 0)
-	ugh = "(d * e) mod (lcm(p-1, q-1)) != 1";
-
-    /* check that dP is d mod (p-1) */
-    mpz_sub_ui(u, &k->p, 1);
-    mpz_mod(t, &k->d, u);
-    if (mpz_cmp(t, &k->dP) != 0)
-	ugh = "dP is not congruent to d mod (p-1)";
-
-    /* check that dQ is d mod (q-1) */
-    mpz_sub_ui(u, &k->q, 1);
-    mpz_mod(t, &k->d, u);
-    if (mpz_cmp(t, &k->dQ) != 0)
-	ugh = "dQ is not congruent to d mod (q-1)";
-
-    /* check that qInv is (q^-1) mod p */
-    mpz_mul(t, &k->qInv, &k->q);
-    mpz_mod(t, t, &k->p);
-    if (mpz_cmp_ui(t, 1) != 0)
-	ugh = "qInv is not conguent ot (q^-1) mod p";
-
-    mpz_clear(t);
-    mpz_clear(u);
-    mpz_clear(q1);
-    return ugh;
-}
-#endif
 
 struct secret {
     struct secret  *next;
@@ -301,7 +224,6 @@ form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize)
     *keysize = n.len;
 }
 
-#ifdef HAVE_LIBNSS
 void
 form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize)
 {
@@ -318,7 +240,6 @@ form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize)
     /* return the RSA modulus size in octets */
     *keysize = n.len;
 }
-#endif
 
 struct pubkey*
 allocate_RSA_public_key(const cert_t cert)
@@ -637,7 +558,6 @@ bool osw_has_private_key(struct secret *secrets, cert_t cert)
     return has_key;
 }
 
-#ifdef HAVE_LIBNSS
 err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *rsak, char *nssHostCertNickName)
 {
     err_t ugh = NULL; 
@@ -698,7 +618,6 @@ error:
    DBG(DBG_CRYPT, DBG_log("NSS: extract_and_add_secret_from_nss_cert_file: end"));
     return ugh;
 }
-#endif
 
 /* check the existence of an RSA private key matching an RSA public
  */
@@ -771,9 +690,6 @@ err_t osw_process_rsa_keyfile(struct secret **psecrets
 {
     char filename[BUF_LEN];
     err_t ugh = NULL;
-#ifndef HAVE_LIBNSS
-    rsa_privkey_t *key = NULL;
-#endif
 
     memset(filename,'\0', BUF_LEN);
     memset(pass->secret,'\0', sizeof(pass->secret));
@@ -808,62 +724,8 @@ err_t osw_process_rsa_keyfile(struct secret **psecrets
 	    ugh = "RSA private key file -- unexpected token after passphrase";
     }
 
-#ifdef HAVE_LIBNSS
     ugh = extract_and_add_secret_from_nss_cert_file(rsak, filename);
     if(ugh==NULL) return RSA_public_key_sanity(rsak);
-#else
-    key = load_rsa_private_key(filename, verbose, pass);
-    if (key == NULL)
-	ugh = "error loading RSA private key file";
-    else
-    {
-	mpz_t u;
-	u_int i;
-
-	for (i = 0; ugh == NULL && i < elemsof(RSA_private_field); i++)
-	{
-	    MP_INT *n = (MP_INT *) ((char *)rsak + RSA_private_field[i].offset);
-
-	    if (key->field[i].len > 0)
-	    {
-		/* PKCS#1 RSA private key format - complete */
-		n_to_mpz(n, key->field[i].ptr, key->field[i].len);
-	    }
-	    else
-	    {
-		/* PGP RSA private key format - missing fields */
-		switch (i)
-		{
-		case 5:		/* dP = d mod (p-1) */
-		    mpz_init(u);
-		    mpz_sub_ui(u, &rsak->p, 1);
-		    mpz_mod(n, &rsak->d, u);
-		    mpz_clear(u);
-		    break;
-		case 6:		/* dQ = d mod (q-1) */
-		    mpz_init(u);
-		    mpz_sub_ui(u, &rsak->q, 1);
-		    mpz_mod(n, &rsak->d, u);
-		    mpz_clear(u);
-		    break;
-		case 7:		/* qInv = (q^-1) mod p */
-		    mpz_invert(n, &rsak->q, &rsak->p);
-		    if (mpz_cmp_ui(n, 0) < 0)
-			mpz_add(n, n, &rsak->p);
-		    passert(mpz_cmp(n, &rsak->p) < 0);
-		    break;
-		default:
-		    break;
-		}
-	    }
-	}
-	form_keyid(key->field[1], key->field[0], rsak->pub.keyid,
-		   &rsak->pub.k);
-	ugh = RSA_private_key_sanity(rsak);
-	pfree(key->keyobject.ptr);
-	pfree(key);
-    }
-#endif
     return ugh;
 }
 
@@ -987,13 +849,12 @@ osw_process_rsa_secret(const struct secret *secrets
 	}
 	else
 	{
-#ifdef HAVE_LIBNSS
 	    if(strcmp(p->name,"CKAIDNSS")==0) {
 		memcpy(rsak->ckaid,buf,sz);
 		rsak->ckaid_len=sz;
 	    }
            else {
-#endif
+
 	    MP_INT *n = (MP_INT *) ((char *)rsak + p->offset);
 
 	    n_to_mpz(n, buf, sz);
@@ -1018,9 +879,7 @@ osw_process_rsa_secret(const struct secret *secrets
 		loglog(RC_LOG_SERIOUS, "%s: %s", p->name, buf);
 	    }
 #endif
-#ifdef HAVE_LIBNSS
          }
-#endif
 	}
     }
 
@@ -1046,11 +905,7 @@ osw_process_rsa_secret(const struct secret *secrets
 	splitkeytoid(pub_bytes[1].ptr, pub_bytes[1].len
 	    , pub_bytes[0].ptr, pub_bytes[0].len
 	    , rsak->pub.keyid, sizeof(rsak->pub.keyid));
-#ifdef HAVE_LIBNSS
 	return RSA_public_key_sanity(rsak);
-#else
-	return RSA_private_key_sanity(rsak);
-#endif
     }
 }
 
@@ -1264,9 +1119,7 @@ osw_process_secret_records(struct secret **psecrets, int verbose,
 	    s->secretlineno=flp->lino;
 	    s->next = NULL;
 
-#ifdef HAVE_LIBNSS
 	    s->pks.u.RSA_private_key.pub.nssCert = NULL;
-#endif
 
 	    while(s != NULL)
 	    {
@@ -1595,11 +1448,10 @@ bool
 same_RSA_public_key(const struct RSA_public_key *a
     , const struct RSA_public_key *b)
 {
-#ifdef HAVE_LIBNSS
     DBG(DBG_CRYPT, DBG_log("k did %smatch", (a->k == b->k) ? "" : "NOT "));
     DBG(DBG_CRYPT, DBG_log("n did %smatch", (mpz_cmp(&a->n, &b->n) == 0) ? "" : "NOT "));
     DBG(DBG_CRYPT, DBG_log("e did %smatch", (mpz_cmp(&a->e, &b->e) == 0) ? "" : "NOT "));
-#endif
+
     return a == b
     || (a->k == b->k && mpz_cmp(&a->n, &b->n) == 0 && mpz_cmp(&a->e, &b->e) == 0);
 }

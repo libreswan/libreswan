@@ -5,6 +5,7 @@
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com> 
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009,2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,10 +29,8 @@
 #include <gmp.h>    /* GNU MP library */
 #include "quirks.h"
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pk11pub.h>
-#endif
+#include <nss.h>
+#include <pk11pub.h>
 
 /* Message ID mechanism.
  *
@@ -304,10 +303,8 @@ struct state
     u_int8_t           st_sec_in_use;      /* bool: does st_sec hold a value */
     MP_INT             st_sec;             /* Our local secret value */
     chunk_t            st_sec_chunk;       /* copy of above */
-#ifdef HAVE_LIBNSS
     /*DH public key*/
     chunk_t            pubk;
-#endif
 
     chunk_t            st_shared;              /* Derived shared secret
                                                 * Note: during Quick Mode,

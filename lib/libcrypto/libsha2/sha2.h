@@ -7,39 +7,26 @@
  *
  *  Copyright 2001 by Jari Ruusu.
  *  Redistribution of this file is permitted under the GNU Public License.
+ *
+ * (C)opyright 2005 Michael Richardson <mcr@xelerance.com>
+ * (C)opyright 2008-2009 Avesh Agarwal <avagarwa@redhat.com>
+ * (C)opyright 2012 Paul Wouters <paul@libreswan.org>
  */
 
 #ifdef __KERNEL__
 # include <linux/types.h>
 #else
 # include <sys/types.h>
-# ifdef HAVE_LIBNSS
-#  include <nss.h>
-#  include <pk11pub.h>
-# endif
+# include <nss.h>
+# include <pk11pub.h>
 #endif
 
 typedef struct {
-#ifdef HAVE_LIBNSS
     PK11Context     *ctx_nss;
-#else
-    unsigned char   sha_out[64];    /* results are here, bytes 0...31 */
-    u_int32_t       sha_H[8];
-    u_int64_t       sha_blocks;
-    int             sha_bufCnt;
-#endif
 } sha256_context;
 
 typedef struct {
-#ifdef HAVE_LIBNSS
     PK11Context     *ctx_nss;
-#else
-    unsigned char   sha_out[128];   /* results are here, bytes 0...63 */
-    u_int64_t       sha_H[8];
-    u_int64_t       sha_blocks;
-    u_int64_t       sha_blocksMSB;
-    int             sha_bufCnt;
-#endif
 } sha512_context;
 
 /* no sha384_context, use sha512_context */

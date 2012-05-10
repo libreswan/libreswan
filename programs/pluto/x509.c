@@ -6,6 +6,7 @@
  * Copyright (C) 2006-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Gilles Espinasse <g.esp@free.fr>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -56,7 +57,6 @@
 #include "demux.h"	/* needs packet.h */
 #include "connections.h"
 #include "state.h"
-#include "md2.h"
 #include "md5.h"
 #include "sha1.h"
 #include "whack.h"

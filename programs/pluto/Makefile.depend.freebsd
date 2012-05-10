@@ -1636,7 +1636,6 @@ x509.o: x509.c \
   ../../include/sysqueue.h quirks.h \
   connections.h \
   ../../include/certs.h state.h \
-  ../../include/md2.h \
   ../../include/md5.h \
   ../../include/sha1.h \
   ../../include/whack.h fetch.h ocsp.h \
@@ -1671,7 +1670,6 @@ x509keys.o: x509keys.c \
   ../../include/sysqueue.h quirks.h \
   connections.h \
   ../../include/certs.h state.h \
-  ../../include/md2.h \
   ../../include/md5.h \
   ../../include/sha1.h \
   ../../include/whack.h fetch.h ocsp.h \

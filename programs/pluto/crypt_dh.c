@@ -6,6 +6,7 @@
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -55,11 +56,10 @@
 #include "keys.h"
 #include "ikev2_prfplus.h"
 
-#ifdef HAVE_LIBNSS
-# include <nss.h>
-# include <pk11pub.h>
-# include <keyhi.h>
-# include "oswconf.h"
+#include <nss.h>
+#include <pk11pub.h>
+#include <keyhi.h>
+#include "oswconf.h"
 
 /* #define PK11_Derive(base, mechanism, param, target, operation, keysize) \
  *	PK11_Derive_osw(base, mechanism, param, target, operation, keysize)
@@ -102,13 +102,11 @@ CK_MECHANISM_TYPE mechanism=0x80000000;
     }
 return mechanism;
 }
-#endif
 
 /** Compute DH shared secret from our local secret and the peer's public value.
  * We make the leap that the length should be that of the group
  * (see quoted passage at start of ACCEPT_KE).
  */
-#ifdef HAVE_LIBNSS
 static void
 calc_dh_shared(chunk_t *shared, const chunk_t g
               , chunk_t secret
@@ -220,58 +218,11 @@ calc_dh_shared(chunk_t *shared, const chunk_t g
 
     DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret pointer:\n", *shared);
 }
-#else
-static void
-calc_dh_shared(chunk_t *shared, const chunk_t g
-	       , const MP_INT *sec
-	       , const struct oakley_group_desc *group)
-{
-    MP_INT mp_g, mp_shared;
-    struct timeval tv0, tv1;
-    unsigned long tv_diff;
-
-    gettimeofday(&tv0, NULL);
-    n_to_mpz(&mp_g, g.ptr, g.len);
-    mpz_init(&mp_shared);
-    mpz_powm(&mp_shared, &mp_g, sec, group->modulus);
-    mpz_clear(&mp_g);
-
-    *shared = mpz_to_n(&mp_shared, group->bytes);
-    mpz_clear(&mp_shared);
-
-    gettimeofday(&tv1, NULL);
-    tv_diff=(tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
-    DBG(DBG_CRYPT, 
-	DBG_log("calc_dh_shared(): time elapsed (%s): %ld usec"
-		, enum_show(&oakley_group_names, group->group)
-		, tv_diff);
-       );
-#if 0
-    /*
-     * note,  a 533 MHz Xscale will exceed this test,  and that is a fast
-     * processor by embedded standards.  Disabling for now so we don't
-     * pollute the logs with nasty warnings that are actually perfectly
-     * normal operation.
-     */
-
-    /* if took more than 200 msec ... */
-    if (tv_diff > 200000) {
-	loglog(RC_LOG_SERIOUS, "WARNING: calc_dh_shared(): for %s took "
-			"%ld usec"
-		, enum_show(&oakley_group_names, group->group)
-		, tv_diff);
-    }
-#endif
-
-    DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret:\n", *shared);
-}
-#endif
 
 /* SKEYID for preshared keys.
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
 
-#ifdef HAVE_LIBNSS
 static void
 skeyid_preshared(const chunk_t pss
                  , const chunk_t ni
@@ -279,20 +230,11 @@ skeyid_preshared(const chunk_t pss
                  , const chunk_t shared_chunk
                  , const struct hash_desc *hasher
                  , chunk_t *skeyid_chunk)
-#else
-static void
-skeyid_preshared(const chunk_t pss
-		 , const chunk_t ni
-		 , const chunk_t nr
-		 , const struct hash_desc *hasher
-		 , chunk_t *skeyid)
-#endif
 {
     struct hmac_ctx ctx;
 
     passert(hasher != NULL);
 
-#ifdef HAVE_LIBNSS
     chunk_t nir;
     int k;
     CK_MECHANISM_TYPE mechanism;
@@ -378,19 +320,6 @@ skeyid_preshared(const chunk_t pss
 
     DBG(DBG_CRYPT,
         DBG_dump_chunk("NSS: st_skeyid in skeyid_preshared(): ", *skeyid_chunk));
-#else
-    DBG(DBG_CRYPT,
-	DBG_log("Skey inputs (PSK+NI+NR)");
-	DBG_dump_chunk("ni: ", ni);
-	DBG_dump_chunk("nr: ", nr));
-    
-    hmac_init_chunk(&ctx, hasher, pss);
-    hmac_update_chunk(&ctx, ni);
-    hmac_update_chunk(&ctx, nr);
-    hmac_final_chunk(*skeyid, "st_skeyid in skeyid_preshared()", &ctx);
-    DBG(DBG_CRYPT,
-	DBG_dump_chunk("keyid: ", *skeyid));
-#endif
 }
 
 static void
@@ -402,13 +331,11 @@ skeyid_digisig(const chunk_t ni
 {
     struct hmac_ctx ctx;
     chunk_t nir;
-#ifdef HAVE_LIBNSS
     int k;
     CK_MECHANISM_TYPE mechanism;
     u_char buf1[HMAC_BUFSIZE], buf2[HMAC_BUFSIZE];
     chunk_t buf1_chunk, buf2_chunk;
     PK11SymKey *shared, *skeyid;
-#endif
 
     DBG(DBG_CRYPT,
 	DBG_log("skeyid inputs (digi+NI+NR+shared) hasher: %s", hasher->common.name);
@@ -416,9 +343,7 @@ skeyid_digisig(const chunk_t ni
 	DBG_dump_chunk("ni: ", ni);
 	DBG_dump_chunk("nr: ", nr));
 
-#ifdef HAVE_LIBNSS
     memcpy(&shared, shared_chunk.ptr, shared_chunk.len);
-#endif
     
     /* We need to hmac_init with the concatenation of Ni_b and Nr_b,
      * so we have to build a temporary concatentation.
@@ -427,14 +352,6 @@ skeyid_digisig(const chunk_t ni
     nir.ptr = alloc_bytes(nir.len, "Ni + Nr in skeyid_digisig");
     memcpy(nir.ptr, ni.ptr, ni.len);
     memcpy(nir.ptr+ ni.len, nr.ptr, nr.len);
-#ifndef HAVE_LIBNSS
-    hmac_init_chunk(&ctx, hasher, nir);
-    pfree(nir.ptr);
-
-    hmac_update_chunk(&ctx, shared_chunk);
-    hmac_final_chunk(*skeyid_chunk, "st_skeyid in skeyid_digisig()", &ctx);
-    DBG(DBG_CRYPT, DBG_dump_chunk("keyid: ", *skeyid_chunk));
-#else
     memset(buf1, '\0', HMAC_BUFSIZE);
     if (nir.len <= HMAC_BUFSIZE)
     {
@@ -477,7 +394,6 @@ skeyid_digisig(const chunk_t ni
     PK11_FreeSymKey(tkey3);
 
     DBG(DBG_CRYPT, DBG_dump_chunk("NSS: digisig skeyid pointer: ", *skeyid_chunk));
-#endif
 }
 
 /* Generate the SKEYID_* and new IV
@@ -505,11 +421,9 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
     chunk_t gr;
     chunk_t icookie;
     chunk_t rcookie;
-#ifdef HAVE_LIBNSS
     PK11SymKey *shared, *skeyid, *skeyid_d, *skeyid_a, *skeyid_e, *enc_key; 
     /* const struct encrypt_desc *encrypter = crypto_get_encrypter(skq->encrypt_algo);*/
     const struct encrypt_desc *encrypter = skq->encrypter;
-#endif
 
     /* this doesn't take any memory */
     setchunk_fromwire(gi, &skq->gi, skq);
@@ -519,21 +433,14 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
     setchunk_fromwire(icookie, &skq->icookie, skq);
     setchunk_fromwire(rcookie, &skq->rcookie, skq);
 
-#ifdef HAVE_LIBNSS
     memcpy(&shared,shared_chunk.ptr, shared_chunk.len);
-#endif
 
     /* Generate the SKEYID */
     switch (auth)
     {
 	case OAKLEY_PRESHARED_KEY:
-#ifdef HAVE_LIBNSS
 	    setchunk_fromwire(pss,    &skq->pss, skq);
 	    skeyid_preshared(pss, ni, nr, shared_chunk, hasher, skeyid_chunk);
-#else
-	    setchunk_fromwire(pss,    &skq->pss, skq);
-	    skeyid_preshared(pss, ni, nr, hasher, skeyid_chunk);
-#endif
 	    break;
 
 	case OAKLEY_RSA_SIG:
@@ -553,7 +460,6 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
 	    bad_case(auth);
     }
 
-#ifdef HAVE_LIBNSS
     memcpy(&skeyid, skeyid_chunk->ptr, skeyid_chunk->len);
     /* generate SKEYID_* from SKEYID */
     {
@@ -934,40 +840,6 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
 
     }
 
-#else
-    /* generate SKEYID_* from SKEYID */
-    {
-	struct hmac_ctx ctx;
-	/* SKEYID_D */
-	hmac_init_chunk(&ctx, hasher, *skeyid_chunk);
-	hmac_update_chunk(&ctx, shared_chunk);
-	hmac_update_chunk(&ctx, icookie);
-	hmac_update_chunk(&ctx, rcookie);
-	hmac_update(&ctx, (const u_char *)"\0", 1);
-	hmac_final_chunk(*skeyid_d_chunk, "st_skeyid_d_chunk in generate_skeyids_iv()", &ctx);
-
-	/* SKEYID_A */
-	hmac_reinit(&ctx);
-	hmac_update_chunk(&ctx, *skeyid_d_chunk);
-	hmac_update_chunk(&ctx, shared_chunk);
-	hmac_update_chunk(&ctx, icookie);
-	hmac_update_chunk(&ctx, rcookie);
-	hmac_update(&ctx, (const u_char *)"\1", 1);
-	hmac_final_chunk(*skeyid_a_chunk, "st_skeyid_a_chunk in generate_skeyids_iv()", &ctx);
-
-	/* SKEYID_E */
-	hmac_reinit(&ctx);
-	hmac_update_chunk(&ctx, *skeyid_a_chunk);
-	hmac_update_chunk(&ctx, shared_chunk);
-	hmac_update_chunk(&ctx, icookie);
-	hmac_update_chunk(&ctx, rcookie);
-	hmac_update(&ctx, (const u_char *)"\2", 1);
-	hmac_final_chunk(*skeyid_e_chunk, "st_skeyid_e_chunk in generate_skeyids_iv()", &ctx);
-    }
-    DBG(DBG_CRYPT, DBG_log("NSS: end of key computation\n"));
-
-#endif
-
     /* generate IV */
     {
 	union hash_ctx hash_ctx;
@@ -986,46 +858,6 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
 	DBG(DBG_CRYPT, DBG_log("end of IV generation\n"));
     }
 
-#ifndef HAVE_LIBNSS
-    /* Oakley Keying Material
-     * Derived from Skeyid_e: if it is not big enough, generate more
-     * using the PRF.
-     * See RFC 2409 "IKE" Appendix B
-     */
-    {
-	u_char keytemp[MAX_OAKLEY_KEY_LEN + MAX_DIGEST_LEN];
-	u_char *k = skeyid_e_chunk->ptr;
-
-	if (keysize > skeyid_e_chunk->len)
-	{
-	    struct hmac_ctx ctx;
-	    size_t i = 0;
-
-	    hmac_init_chunk(&ctx, hasher, *skeyid_e_chunk);
-	    hmac_update(&ctx, (const u_char *)"\0", 1);
-	    for (;;)
-	    {
-		hmac_final(&keytemp[i], &ctx);
-		i += ctx.hmac_digest_len;
-		if (i >= keysize)
-		    break;
-		hmac_reinit(&ctx);
-		hmac_update(&ctx, &keytemp[i - ctx.hmac_digest_len], ctx.hmac_digest_len);
-	    }
-	    k = keytemp;
-	}
-	clonereplacechunk(*enc_key_chunk, k, keysize, "st_enc_key");
-    }
-
-
-    DBG(DBG_CRYPT,
-	DBG_dump_chunk("Skeyid:  ", *skeyid_chunk);
-	DBG_dump_chunk("Skeyid_d:", *skeyid_d_chunk);
-	DBG_dump_chunk("Skeyid_a:", *skeyid_a_chunk);
-	DBG_dump_chunk("Skeyid_e:", *skeyid_e_chunk);
-	DBG_dump_chunk("enc key:",  *enc_key_chunk);
-	DBG_dump_chunk("IV:",       *new_iv));
-#endif
 }
 
 void calc_dh_iv(struct pluto_crypto_req *r)
@@ -1037,11 +869,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
     chunk_t  shared, g, ltsecret;
     chunk_t  skeyid, skeyid_d, skeyid_a, skeyid_e; 
     chunk_t  new_iv, enc_key;
-#ifdef HAVE_LIBNSS
     chunk_t pubk;
-#else
-    MP_INT  sec;
-#endif
 
     /* copy the request, since we will use the same memory for the reply */
     memcpy(&dhq, skq, sizeof(struct pcr_skeyid_q));
@@ -1054,22 +882,8 @@ void calc_dh_iv(struct pluto_crypto_req *r)
     group = lookup_group(dhq.oakley_group);
     passert(group != NULL);
 
-#ifndef HAVE_LIBNSS
-    pluto_crypto_allocchunk(&skr->thespace
-			   , &skr->shared
-			   , group->bytes);
-    shared.ptr = wire_chunk_ptr(skr, &skr->shared);
-    shared.len = group->bytes;
-
-    ltsecret.ptr = wire_chunk_ptr(&dhq, &dhq.secret);
-    ltsecret.len = dhq.secret.len;
-
-    /* recover the long term secret */
-    n_to_mpz(&sec, ltsecret.ptr, ltsecret.len);
-#else
     setchunk_fromwire(ltsecret, &dhq.secret, &dhq);
     setchunk_fromwire(pubk, &dhq.pubk, &dhq);
-#endif
 
     /* now calculate the (g^x)(g^y) ---
        need gi on responder, gr on initiator */
@@ -1084,14 +898,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	DBG_dump_chunk("peer's g: ", g));
 	
 
-#ifndef HAVE_LIBNSS
-    DBG(DBG_CRYPT,
-    DBG_dump_chunk("long term secret: ", ltsecret));
-    calc_dh_shared(&shared, g, &sec, group);
-    mpz_clear (&sec);
-#else
     calc_dh_shared(&shared, g, ltsecret, group, pubk);
-#endif
 
     memset(&skeyid, 0, sizeof(skeyid));
     memset(&skeyid_d, 0, sizeof(skeyid_d));
@@ -1138,11 +945,7 @@ void calc_dh(struct pluto_crypto_req *r)
     struct pcr_skeyid_q dhq;
     const struct oakley_group_desc *group;
     chunk_t  shared, g;
-#ifndef HAVE_LIBNSS
-    MP_INT  sec;
-#else
     chunk_t ltsecret, pubk;
-#endif
 
     /* copy the request, since we will use the same memory for the reply */
     memcpy(&dhq, skq, sizeof(struct pcr_skeyid_q));
@@ -1155,19 +958,9 @@ void calc_dh(struct pluto_crypto_req *r)
     group = lookup_group(dhq.oakley_group);
     passert(group != NULL);
 
-#ifndef HAVE_LIBNSS
-    pluto_crypto_allocchunk(&skr->thespace
-			   , &skr->shared
-			   , group->bytes);
-    shared.ptr = wire_chunk_ptr(skr, &skr->shared);
-    shared.len = group->bytes;
-
-    /* recover the long term secret */
-    n_to_mpz(&sec, wire_chunk_ptr(&dhq, &dhq.secret), dhq.secret.len);
-#else
     setchunk_fromwire(ltsecret, &dhq.secret, &dhq);
     setchunk_fromwire(pubk, &dhq.pubk, &dhq);
-#endif
+
     /* now calculate the (g^x)(g^y) */
 
     if(dhq.init == RESPONDER) {
@@ -1177,12 +970,7 @@ void calc_dh(struct pluto_crypto_req *r)
     }
     DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-#ifdef HAVE_LIBNSS
     calc_dh_shared(&shared, g, ltsecret, group, pubk);
-#else
-    calc_dh_shared(&shared, g, &sec, group);
-    mpz_clear (&sec);
-#endif
 
     /* now translate it back to wire chunks, freeing the chunks */
     setwirechunk_fromchunk(skr->shared,   shared,   skr);
@@ -1213,14 +1001,13 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
     size_t total_keysize;
     memset(&vpss, 0, sizeof(vpss));
 
-#ifdef HAVE_LIBNSS
     chunk_t hmac_opad, hmac_ipad, hmac_pad_prf, counter; /*hmac_pad_integ, hmac_zerobyte, hmac_val1, hmac_val2;*/
     CK_OBJECT_HANDLE keyhandle;
     SECItem param, param1;
     DBG(DBG_CRYPT, DBG_log("NSS: Started key computation\n"));
 
     PK11SymKey *skeyseed_k, *SK_d_k, *SK_ai_k, *SK_ar_k, *SK_ei_k, *SK_er_k, *SK_pi_k, *SK_pr_k;
-#endif
+
     /* this doesn't take any memory, it's just moving pointers around */
     setchunk_fromwire(vpss.ni, &skq->ni, skq);
     setchunk_fromwire(vpss.nr, &skq->nr, skq);
@@ -1233,7 +1020,7 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 		  , enum_name(&trans_type_integ_names, skq->integ_hash)
 		  , (long unsigned)keysize));
 
-#ifdef HAVE_LIBNSS
+
     const struct hash_desc *hasher = (struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH, skq->prf_hash, 0);
     passert(hasher);
 
@@ -1254,42 +1041,6 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
     }
     passert(skeyseed_k);
 
-#else
-    vpss.prf_hasher = (struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH, skq->prf_hash, 0);
-    passert(vpss.prf_hasher);
-
-    /* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-    {
-	struct hmac_ctx ctx;
-	unsigned int keybytes;
-	unsigned char *kb;
-
-#if 0
-	if(vpss.prf_hasher->hash_key_size == 0) {
-#endif
-	keybytes = vpss.ni.len + vpss.nr.len;
-#if 0
-	} else {
-	    keybytes = vpss.prf_hasher->hash_key_size;
-	}
-#endif
-
-	kb = alloc_bytes(keybytes, "skeyseed prf key");
-	memset(kb, 0, keybytes);
-	memcpy(kb,               vpss.ni.ptr, vpss.ni.len);
-	memcpy(kb + vpss.ni.len, vpss.nr.ptr, vpss.nr.len);
-
-	/* SKEYSEED */
-	DBG(DBG_CRYPT,
-	    DBG_dump("Input to SKEYSEED: ", kb, keybytes));
-
-	hmac_init(&ctx, vpss.prf_hasher, kb, keybytes);
-	hmac_update_chunk(&ctx, shared);
-	hmac_final_chunk(*skeyseed, "skeyseed base", &ctx);
-	vpss.skeyseed = skeyseed;
-	pfree(kb);
-    }
-#endif
 
     /* now we have to generate the keys for everything */
     {
@@ -1299,13 +1050,8 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 	/* SK_e needs keysize*2 key bits */
 	/* SK_a needs hash's key bits size */
 	const struct hash_desc *integ_hasher = (struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_INTEG, skq->integ_hash, 0);
-#ifdef HAVE_LIBNSS
        int skd_bytes = hasher->hash_key_size;
        int skp_bytes = hasher->hash_key_size;       
-#else
-       int skd_bytes = vpss.prf_hasher->hash_key_size;
-       int skp_bytes = vpss.prf_hasher->hash_key_size;
-#endif
 	int ska_bytes = integ_hasher->hash_key_size;
 	int ske_bytes = keysize;
 
@@ -1321,7 +1067,6 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 	    DBG_dump_chunk("SPIr", vpss.spir);
 	    DBG_log("Total keysize needed %d", (int)total_keysize);
 	);
-#ifdef HAVE_LIBNSS
 	counter.ptr = &vpss.counter[0];
 	counter.len =1;
 
@@ -1526,17 +1271,6 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 	freeanychunk(hmac_opad);
 	freeanychunk(hmac_ipad);
 	freeanychunk(hmac_pad_prf);
-#else
-	/* SKEYSEED_T1 */
-	v2genbytes(SK_d,  skd_bytes, "SK_d", &vpss);
-	v2genbytes(SK_ai, ska_bytes, "SK_ai", &vpss);
-	v2genbytes(SK_ar, ska_bytes, "SK_ar", &vpss);
-	v2genbytes(SK_ei, ske_bytes, "SK_ei", &vpss);
-	v2genbytes(SK_er, ske_bytes, "SK_er", &vpss);
-	v2genbytes(SK_pi, skp_bytes, "SK_ei", &vpss);
-	v2genbytes(SK_pr, skp_bytes, "SK_er", &vpss);
-
-#endif
     }
     DBG(DBG_CRYPT,
 	DBG_dump_chunk("shared:  ", shared);
@@ -1559,11 +1293,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
     chunk_t  shared, g, ltsecret;
     chunk_t  skeyseed;
     chunk_t  SK_d, SK_ai, SK_ar, SK_ei, SK_er, SK_pi, SK_pr;
-#ifndef HAVE_LIBNSS
-    MP_INT  sec;
-#else
     chunk_t pubk;
-#endif
 
     /* copy the request, since we will use the same memory for the reply */
     memcpy(&dhq, skq, sizeof(struct pcr_skeyid_q));
@@ -1576,25 +1306,8 @@ void calc_dh_v2(struct pluto_crypto_req *r)
     group = lookup_group(dhq.oakley_group);
     passert(group != NULL);
 
-#ifndef HAVE_LIBNSS
-    pluto_crypto_allocchunk(&skr->thespace
-			   , &skr->shared
-			   , group->bytes);
-    shared.ptr = wire_chunk_ptr(skr, &skr->shared);
-    shared.len = group->bytes;
-
-    ltsecret.ptr = wire_chunk_ptr(&dhq, &dhq.secret);
-    ltsecret.len = dhq.secret.len;
-
-    /* recover the long term secret */
-    n_to_mpz(&sec, ltsecret.ptr, ltsecret.len);
-
-    DBG(DBG_CRYPT,
-	DBG_dump_chunk("long term secret: ", ltsecret));
-#else
     setchunk_fromwire(ltsecret, &dhq.secret, &dhq);
     setchunk_fromwire(pubk, &dhq.pubk, &dhq);
-#endif
 
     /* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
 
@@ -1605,11 +1318,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
     }
     DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-#ifndef HAVE_LIBNSS
-    calc_dh_shared(&shared, g, &sec, group);
-#else
     calc_dh_shared(&shared, g, ltsecret, group, pubk);
-#endif
     
     memset(&skeyseed,  0, sizeof(skeyseed));
     memset(&SK_d,      0, sizeof(SK_d));

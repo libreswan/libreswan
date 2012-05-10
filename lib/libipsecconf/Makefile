@@ -1,5 +1,6 @@
 # Libreswan library for parsing configuration files
 # Copyright (C) 2005 Michael Richardson <mcr@xelerance.com> Xelerance Corporation
+# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -31,10 +32,9 @@ SRCS+=interfaces.c
 
 #ifeq ($(USE_FIPSCHECK),true)
 #CFLAGS+=-DFIPS_CHECK
-ifeq ($(USE_LIBNSS),true)
-CFLAGS+=-DHAVE_LIBNSS
+#endif
+
 CFLAGS+=-I/usr/include/nspr4 -I/usr/include/nss3
-endif
 
 ifeq ($(USE_NM),true)
 CFLAGS+=-DHAVE_NM

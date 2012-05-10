@@ -44,7 +44,6 @@
 #include "pgp.h"
 #include "certs.h"
 #include "packet.h"
-#include "md2.h"
 #include "md5.h"
 #include "sha1.h"
 #include "pkcs.h"

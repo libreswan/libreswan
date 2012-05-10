@@ -433,7 +433,7 @@ x509chain.o: x509chain.c ../../linux/include/libreswan.h \
   ../../include/certs.h ../../include/secrets.h \
   ../../include/id.h ../../include/x509.h \
   ../../include/pgp.h ../../include/packet.h \
-  ../../include/md2.h ../../include/md5.h \
+  ../../include/md5.h \
   ../../include/sha1.h ../../include/pkcs.h
 x509dn.o: x509dn.c ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
@@ -452,6 +452,6 @@ x509dn.o: x509dn.c ../../linux/include/libreswan.h \
   ../../include/pgp.h ../../include/certs.h \
   ../../include/secrets.h ../../include/id.h \
   ../../include/x509.h ../../include/pgp.h \
-  ../../include/secrets.h ../../include/md2.h \
+  ../../include/secrets.h \
   ../../include/md5.h \
   ../../include/sha1.h ../../lib/libcrypto/libsha2/sha2.h
