@@ -2,6 +2,7 @@
  * Copyright (C) 2000-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -50,7 +51,7 @@
 #include "server.h"
 
 /* somebody has to decide */
-#define MAX_TXT_RDATA	((MAX_KEY_BYTES * 8 / 6) + 40)	/* somewhat arbitrary overkill */
+#define MAX_IPSECKEY_RDATA	((MAX_KEY_BYTES * 8 / 6) + 40)	/* somewhat arbitrary overkill */
 
 /* ADNS stuff */
 
@@ -256,10 +257,10 @@ stop_adns(void)
 #define TRY(x)	{ err_t ugh = x; if (ugh != NULL) return ugh; }
 
 
-/* Process TXT X-IPsec-Server record, accumulating relevant ones
+/* Process IPSECKEY X-IPsec-Server record, accumulating relevant ones
  * in cr->gateways_from_dns, a list sorted by "preference".
  *
- * Format of TXT record body: X-IPsec-Server ( nnn ) = iii kkk
+ * Format of IPSECKEY record body: X-IPsec-Server ( nnn ) = iii kkk
  *  nnn is a 16-bit unsigned integer preference
  *  iii is @FQDN or dotted-decimal IPv4 address or colon-hex IPv6 address
  *  kkk is an optional RSA public signing key in base 64.
@@ -268,8 +269,8 @@ stop_adns(void)
  * might have prepared it.
  */
 
-#define our_TXT_attr_string "X-IPsec-Server"
-static const char our_TXT_attr[] = our_TXT_attr_string;
+#define our_IPSECKEY_attr_string "X-IPsec-Server"
+static const char our_IPSECKEY_attr[] = our_IPSECKEY_attr_string;
 
 static err_t
 decode_iii(char **pp, struct id *gw_id)
@@ -279,7 +280,7 @@ decode_iii(char **pp, struct id *gw_id)
     char under = *e;
 
     if (p == e)
-	return "TXT " our_TXT_attr_string " badly formed (no gateway specified)";
+	return "IPSECKEY " our_IPSECKEY_attr_string " badly formed (no gateway specified)";
 
     *e = '\0';
     if (*p == '@')
@@ -288,7 +289,7 @@ decode_iii(char **pp, struct id *gw_id)
 	err_t ugh = atoid(p, gw_id, FALSE);
 
 	if (ugh != NULL)
-	    return builddiag("malformed FQDN in TXT " our_TXT_attr_string ": %s"
+	    return builddiag("malformed FQDN in IPSECKEY " our_IPSECKEY_attr_string ": %s"
 			     , ugh);
     }
     else
@@ -300,7 +301,7 @@ decode_iii(char **pp, struct id *gw_id)
 	    , &ip);
 
 	if (ugh != NULL)
-	    return builddiag("malformed IP address in TXT " our_TXT_attr_string ": %s"
+	    return builddiag("malformed IP address in IPSECKEY " our_IPSECKEY_attr_string ": %s"
 		, ugh);
 
 	if (isanyaddr(&ip))
@@ -316,7 +317,7 @@ decode_iii(char **pp, struct id *gw_id)
 }
 
 static err_t
-process_txt_rr_body(char *str
+process_ipseckey(char *str
 		    , bool doit	/* should we capture information? */
 		    , enum dns_auth_level dns_auth_level
 		    , struct adns_continuation *const cr)
@@ -329,10 +330,10 @@ process_txt_rr_body(char *str
     p += strspn(p, " \t");	/* ignore leading whitespace */
 
     /* is this for us? */
-    if (strncasecmp(p, our_TXT_attr, sizeof(our_TXT_attr)-1) != 0)
+    if (strncasecmp(p, our_IPSECKEY_attr, sizeof(our_IPSECKEY_attr)-1) != 0)
 	return NULL;	/* neither interesting nor bad */
 
-    p += sizeof(our_TXT_attr) - 1;	/* ignore our attribute name */
+    p += sizeof(our_IPSECKEY_attr) - 1;	/* ignore our attribute name */
     p += strspn(p, " \t");	/* ignore leading whitespace */
 
     /* decode '(' nnn ')' */
@@ -388,9 +389,9 @@ process_txt_rr_body(char *str
 
 		    idtoa(client_id, cidb, sizeof(cidb));
 		    idtoa(&gi.gw_id, gwidb, sizeof(gwidb));
-		    DBG_log("TXT %s record for %s: security gateway %s;"
+		    DBG_log("IPSECKEY %s record for %s: security gateway %s;"
 			" ignored because gateway's IP is unspecified"
-			, our_TXT_attr, cidb, gwidb);
+			, our_IPSECKEY_attr, cidb, gwidb);
 		});
 	    return NULL;	/* we cannot use this record, but it isn't wrong */
 	}
@@ -413,9 +414,9 @@ process_txt_rr_body(char *str
 		    idtoa(client_id, cidb, sizeof(cidb));
 		    idtoa(&gi.gw_id, gwidb, sizeof(gwidb));
 		    idtoa(peer_id, pidb, sizeof(pidb));
-		    DBG_log("TXT %s record for %s: security gateway %s;"
+		    DBG_log("IPSECKEY %s record for %s: security gateway %s;"
 			" ignored -- looking to confirm %s as gateway"
-			, our_TXT_attr, cidb, gwidb, pidb);
+			, our_IPSECKEY_attr, cidb, gwidb, pidb);
 		});
 	    return NULL;	/* we cannot use this record, but it isn't wrong */
 	}
@@ -507,384 +508,84 @@ rr_typename(int type)
 {
     switch (type)
     {
-    case ns_t_txt:
-	return "TXT";
-    case ns_t_key:
-	return "KEY";
+    case ns_t_ipseckey:
+	return "IPSECKEY";
     default:
 	return "???";
     }
 }
 
-/* structure of Query Reply (RFC 1035 4.1.1):
- *
- *  +---------------------+
- *  |        Header       |
- *  +---------------------+
- *  |       Question      | the question for the name server
- *  +---------------------+
- *  |        Answer       | RRs answering the question
- *  +---------------------+
- *  |      Authority      | RRs pointing toward an authority
- *  +---------------------+
- *  |      Additional     | RRs holding additional information
- *  +---------------------+
- */
 
-/* Header section format (as modified by RFC 2535 6.1):
- *                                  1  1  1  1  1  1
- *    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
- *  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *  |                      ID                       |
- *  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *  |QR|   Opcode  |AA|TC|RD|RA| Z|AD|CD|   RCODE   |
- *  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *  |                    QDCOUNT                    |
- *  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *  |                    ANCOUNT                    |
- *  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *  |                    NSCOUNT                    |
- *  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- *  |                    ARCOUNT                    |
- *  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- */
-struct qr_header {
-    u_int16_t	id;	/* 16-bit identifier to match query */
+/* RFC 4025 2,1: IPSECKEY RRs 
+ * unpack_ipseckey_rdata() deals with this peculiar representation.
 
-    u_int16_t	stuff;	/* packed crud: */
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  precedence   | gateway type  |  algorithm  |     gateway     |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-------------+                 +
+~                            gateway                            ~
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               /
+/                          public key                           /
+/                                                               /
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
 
-#define QRS_QR	0x8000	/* QR: on if this is a response */
+* precedence 0-255  (similar to preference in MX records)
+* gateway type: 
+*    0 no gateway
+*    1 IPv4
+*    2 IPv6
+*    3 wire-encoded uncompressed domain name (so length is implicit)
+* algo:
+*    1 DSA
+*    2 RSA
+* gateway (depends on gateway-type)
+*    32 bit IPV4
+*    128 bit IPv6
+*    section 3.3 of RFC 1035 domain name, uncompressed
+* public key
+*     the public key field contains the algorithm-specific portion of the KEY (or DNSKEY) RR RDATA
+*/
 
-#define QRS_OPCODE_SHIFT	11  /* OPCODE field */
-#define QRS_OPCODE_MASK	0xF
-#define QRSO_QUERY	0   /* standard query */
-#define QRSO_IQUERY	1   /* inverse query */
-#define QRSO_STATUS	2   /* server status request query */
-
-#define QRS_AA 0x0400	/* AA: on if Authoritative Answer */
-#define QRS_TC 0x0200	/* TC: on if truncation happened */
-#define QRS_RD 0x0100	/* RD: on if recursion desired */
-#define QRS_RA 0x0080	/* RA: on if recursion available */
-#define QRS_Z  0x0040	/* Z: reserved; must be zero */
-#define QRS_AD 0x0020	/* AD: on if authentic data (RFC 2535) */
-#define QRS_CD 0x0010	/* AD: on if checking disabled (RFC 2535) */
-
-#define QRS_RCODE_SHIFT	0 /* RCODE field: response code */
-#define QRS_RCODE_MASK	0xF
-#define QRSR_OK	    0
-
-
-    u_int16_t qdcount;	    /* number of entries in question section */
-    u_int16_t ancount;	    /* number of resource records in answer section */
-    u_int16_t nscount;	    /* number of name server resource records in authority section */
-    u_int16_t arcount;	    /* number of resource records in additional records section */
-};
-
-static field_desc qr_header_fields[] = {
-    { ft_nat, BYTES_FOR_BITS(16), "ID", NULL },
-    { ft_nat, BYTES_FOR_BITS(16), "stuff", NULL },
-    { ft_nat, BYTES_FOR_BITS(16), "QD Count", NULL },
-    { ft_nat, BYTES_FOR_BITS(16), "Answer Count", NULL },
-    { ft_nat, BYTES_FOR_BITS(16), "Authority Count", NULL },
-    { ft_nat, BYTES_FOR_BITS(16), "Additional Count", NULL },
-    { ft_end, 0, NULL, NULL }
-};
-
-static struct_desc qr_header_desc = {
-    "Query Response Header",
-    qr_header_fields,
-    sizeof(struct qr_header)
-};
-
-/* Messages for codes in RCODE (see RFC 1035 4.1.1) */
-static const err_t rcode_text[QRS_RCODE_MASK + 1] = {
-    NULL,   /* not an error */
-    "Format error - The name server was unable to interpret the query",
-    "Server failure - The name server was unable to process this query"
-	" due to a problem with the name server",
-    "Name Error - Meaningful only for responses from an authoritative name"
-	" server, this code signifies that the domain name referenced in"
-	" the query does not exist",
-    "Not Implemented - The name server does not support the requested"
-	" kind of query",
-    "Refused - The name server refuses to perform the specified operation"
-	" for policy reasons",
-    /* the rest are reserved for future use */
-    };
-
-/* throw away a possibly compressed domain name */
-
-static err_t
-eat_name(pb_stream *pbs)
-{
-    char name_buf[NS_MAXDNAME + 2];
-    u_char *ip = pbs->cur;
-    unsigned oi = 0;
-    unsigned jump_count = 0;
-
-    for (;;)
-    {
-	u_int8_t b;
-
-	if (ip >= pbs->roof)
-	    return "ran out of message while skipping domain name";
-
-	b = *ip++;
-	if (jump_count == 0)
-	    pbs->cur = ip;
-
-	if (b == 0)
-	    break;
-
-	switch (b & 0xC0)
-	{
-	    case 0x00:
-		/* we grab the next b characters */
-		if (oi + b > NS_MAXDNAME)
-		    return "domain name too long";
-
-		if (pbs->roof - ip <= b)
-		    return "domain name falls off end of message";
-
-		if (oi != 0)
-		    name_buf[oi++] = '.';
-
-		memcpy(name_buf + oi, ip, b);
-		oi += b;
-		ip += b;
-		if (jump_count == 0)
-		    pbs->cur = ip;
-		break;
-
-	    case 0xC0:
-		{
-		    unsigned ix;
-
-		    if (ip >= pbs->roof)
-			return "ran out of message in middle of compressed domain name";
-
-		    ix = ((b & ~0xC0u) << 8) | *ip++;
-		    if (jump_count == 0)
-			pbs->cur = ip;
-
-		    if (ix >= pbs_room(pbs))
-			return "impossible compressed domain name";
-
-		    /* Avoid infinite loop.
-		     * There can be no more jumps than there are bytes
-		     * in the packet.  Not a tight limit, but good enough.
-		     */
-		    jump_count++;
-		    if (jump_count > pbs_room(pbs))
-			return "loop in compressed domain name";
-
-		    ip = pbs->start + ix;
-		}
-		break;
-
-	    default:
-		return "invalid code in label";
-	}
-    }
-
-    name_buf[oi++] = '\0';
-
-    DBG(DBG_DNS, DBG_log("skipping name %s", name_buf));
-
-    return NULL;
-}
-
-static err_t
-eat_name_helpfully(pb_stream *pbs, const char *context)
-{
-    err_t ugh = eat_name(pbs);
-
-    return ugh == NULL? ugh
-	: builddiag("malformed name within DNS record of %s: %s", context, ugh);
-}
-
-/* non-variable part of 4.1.2 Question Section entry:
- *                                 1  1  1  1  1  1
- *   0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |                                               |
- * /                     QNAME                     /
- * /                                               /
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |                     QTYPE                     |
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |                     QCLASS                    |
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- */
-
-struct qs_fixed {
-    u_int16_t qtype;
-    u_int16_t qclass;
-};
-
-static field_desc qs_fixed_fields[] = {
-    { ft_loose_enum, BYTES_FOR_BITS(16), "QTYPE", &rr_qtype_names },
-    { ft_loose_enum, BYTES_FOR_BITS(16), "QCLASS", &rr_class_names },
-    { ft_end, 0, NULL, NULL }
-};
-
-static struct_desc qs_fixed_desc = {
-    "Question Section entry fixed part",
-    qs_fixed_fields,
-    sizeof(struct qs_fixed)
-};
-
-/* 4.1.3. Resource record format:
- *                                 1  1  1  1  1  1
- *   0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |                                               |
- * /                                               /
- * /                      NAME                     /
- * |                                               |
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |                      TYPE                     |
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |                     CLASS                     |
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |                      TTL                      |
- * |                                               |
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- * |                   RDLENGTH                    |
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--|
- * /                     RDATA                     /
- * /                                               /
- * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
- */
-
-struct rr_fixed {
-    u_int16_t type;
-    u_int16_t class;
-    u_int32_t ttl;	/* actually signed */
-    u_int16_t rdlength;
-};
-
-
-static field_desc rr_fixed_fields[] = {
-    { ft_loose_enum, BYTES_FOR_BITS(16), "type", &rr_type_names },
-    { ft_loose_enum, BYTES_FOR_BITS(16), "class", &rr_class_names },
-    { ft_nat, BYTES_FOR_BITS(32), "TTL", NULL },
-    { ft_nat, BYTES_FOR_BITS(16), "RD length", NULL },
-    { ft_end, 0, NULL, NULL }
-};
-
-static struct_desc rr_fixed_desc = {
-    "Resource Record fixed part",
-    rr_fixed_fields,
-    /* note: following is tricky: avoids padding problems */
-    offsetof(struct rr_fixed, rdlength) + sizeof(u_int16_t)
-};
-
-/* RFC 1035 3.3.14: TXT RRs have text in the RDATA field.
- * It is in the form of a sequence of <character-string>s as described in 3.3.
- * unpack_txt_rdata() deals with this peculiar representation.
- */
-
-/* RFC 2535 3.1 KEY RDATA format:
- *
- *                      1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
- *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |             flags             |    protocol   |   algorithm   |
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                                                               /
- * /                          public key                           /
- * /                                                               /
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-|
- */
-
-struct key_rdata {
-    u_int16_t flags;
-    u_int8_t protocol;
+struct ipseckey_rdata {
+    u_int8_t precedence;
+    u_int8_t gateway_type;
     u_int8_t algorithm;
+    /* gateway */
+    /* pubkey */
 };
 
-static field_desc key_rdata_fields[] = {
-    { ft_nat, BYTES_FOR_BITS(16), "flags", NULL },
-    { ft_nat, BYTES_FOR_BITS(8), "protocol", NULL },
+static field_desc ipseckey_rdata_fields[] = {
+    { ft_nat, BYTES_FOR_BITS(8), "precedence", NULL },
+    { ft_nat, BYTES_FOR_BITS(8), "gatewaytype", NULL },
     { ft_nat, BYTES_FOR_BITS(8), "algorithm", NULL },
     { ft_end, 0, NULL, NULL }
 };
 
-static struct_desc key_rdata_desc = {
-    "KEY RR RData fixed part",
-    key_rdata_fields,
-    sizeof(struct key_rdata)
+static struct_desc ipseckey_rdata_desc = {
+    "IPSECKEY RR RData fixed part",
+    ipseckey_rdata_fields,
+    sizeof(struct ipseckey_rdata)
 };
 
-/* RFC 2535 4.1 SIG RDATA format:
- *
- *                      1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
- *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |        type covered           |  algorithm    |     labels    |
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                         original TTL                          |
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                      signature expiration                     |
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                      signature inception                      |
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |            key  tag           |                               |
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+         signer's name         +
- * |                                                               /
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-/
- * /                                                               /
- * /                            signature                          /
- * /                                                               /
- * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- */
-
-struct sig_rdata {
-    u_int16_t type_covered;
-    u_int8_t algorithm;
-    u_int8_t labels;
-    u_int32_t original_ttl;
-    u_int32_t sig_expiration;
-    u_int32_t sig_inception;
-    u_int16_t key_tag;
-};
-
-static field_desc sig_rdata_fields[] = {
-    { ft_nat, BYTES_FOR_BITS(16), "type_covered", NULL},
-    { ft_nat, BYTES_FOR_BITS(8), "algorithm", NULL},
-    { ft_nat, BYTES_FOR_BITS(8), "labels", NULL},
-    { ft_nat, BYTES_FOR_BITS(32), "original ttl", NULL},
-    { ft_nat, BYTES_FOR_BITS(32), "sig expiration", NULL},
-    { ft_nat, BYTES_FOR_BITS(32), "sig inception", NULL},
-    { ft_nat, BYTES_FOR_BITS(16), "key tag", NULL},
-    { ft_end, 0, NULL, NULL }
-};
-
-static struct_desc sig_rdata_desc = {
-    "SIG RR RData fixed part",
-    sig_rdata_fields,
-    sizeof(struct sig_rdata)
-};
-
-/* handle a KEY Resource Record. */
-
-#ifdef USE_KEYRR
+/* handle an IPSECKEY Resource Record. */
+/* Likely will be completely redone using libunbound */
 static err_t
-process_key_rr(u_char *ptr, size_t len
+process_ipseckey_rr(u_char *ptr, size_t len
 , bool doit	/* should we capture information? */
 , enum dns_auth_level dns_auth_level
 , struct adns_continuation *const cr)
 {
     pb_stream pbs;
-    struct key_rdata kr;
+    struct ipseckey_rdata kr;
 
-    if (len < sizeof(struct key_rdata))
+    if (len < sizeof(struct ipseckey_rdata))
 	return "KEY Resource Record's RD Length is too small";
 
-    init_pbs(&pbs, ptr, len, "KEY RR");
+    init_pbs(&pbs, ptr, len, "IPSECKEY RR");
 
-    if (!in_struct(&kr, &key_rdata_desc, &pbs, NULL))
+    if (!in_struct(&kr, &ipseckey_rdata_desc, &pbs, NULL))
 	return "failed to get fixed part of KEY Resource Record RDATA";
 
     if (kr.protocol == 4	/* IPSEC (RFC 2535 3.1.3) */
@@ -905,143 +606,11 @@ process_key_rr(u_char *ptr, size_t len
     }
     return NULL;
 }
-#endif /* USE_KEYRR */
 
 
-/* unpack TXT rr RDATA into C string.
- * A sequence of <character-string>s as described in RFC 1035 3.3.
- * We concatenate them.
- */
-static err_t
-unpack_txt_rdata(char *d, size_t dlen, const u_char *s, size_t slen)
-{
-    size_t i = 0
-	, o = 0;
 
-    while (i < slen)
-    {
-	size_t cl = s[i++];
 
-	if (i + cl > slen)
-	    return "TXT rr RDATA representation malformed";
-
-	if (o + cl >= dlen)
-	    return "TXT rr RDATA too large";
-
-	memcpy(d + o, s + i, cl);
-	i += cl;
-	o += cl;
-    }
-    d[o] = '\0';
-    if (strlen((const char *)d) != o)
-	return "TXT rr RDATA contains a NUL";
-
-    return NULL;
-}
-
-static err_t
-process_txt_rr(u_char *rdata, size_t rdlen
-, bool doit	/* should we capture information? */
-, enum dns_auth_level dns_auth_level
-, struct adns_continuation *const cr)
-{
-    char str[RSA_MAX_ENCODING_BYTES * 8 / 6 + 200];	/* space for unpacked RDATA */
-
-    TRY(unpack_txt_rdata(str, sizeof(str), rdata, rdlen));
-    return process_txt_rr_body(str, doit, dns_auth_level, cr);
-}
-
-static err_t
-process_answer_section(pb_stream *pbs
-, bool doit	/* should we capture information? */
-, enum dns_auth_level *dns_auth_level
-, u_int16_t ancount	/* number of RRs in the answer section */
-, struct adns_continuation *const cr)
-{
-    const int type = cr->query.type;	/* type of RR of interest */
-    unsigned c;
-
-    DBG(DBG_DNS, DBG_log("*Answer Section:"));
-
-    for (c = 0; c != ancount; c++)
-    {
-	struct rr_fixed rrf;
-	size_t tail;
-
-	/* ??? do we need to match the name? */
-
-	TRY(eat_name_helpfully(pbs, "Answer Section"));
-
-	if (!in_struct(&rrf, &rr_fixed_desc, pbs, NULL))
-	    return "failed to get fixed part of Answer Section Resource Record";
-
-	if (rrf.rdlength > pbs_left(pbs))
-	    return "RD Length extends beyond end of message";
-
-	/* ??? should we care about ttl? */
-
-	tail = rrf.rdlength;
-
-	if (rrf.type == type && rrf.class == ns_c_in)
-	{
-	    err_t ugh = NULL;
-
-	    switch (type)
-	    {
-#ifdef USE_KEYRR
-	    case ns_t_key:
-		ugh = process_key_rr(pbs->cur, tail, doit, *dns_auth_level, cr);
-		break;
-#endif /* USE_KEYRR */
-	    case ns_t_txt:
-		ugh = process_txt_rr(pbs->cur, tail, doit, *dns_auth_level, cr);
-		break;
-	    case ns_t_sig:
-		/* Check if SIG RR authenticates what we are learning.
-		 * The RRset covered by a SIG must have the same owner,
-		 * class, and type.
-		 * For us, the class is always C_IN, so that matches.
-		 * We decode the SIG RR's fixed part to check
-		 * that the type_covered field matches our query type
-		 * (this may be redundant).
-		 * We don't check the owner (apparently this is the
-		 * name on the record) -- we assume that it matches
-		 * or we would not have been given this SIG in the
-		 * Answer Section.
-		 *
-		 * We only look on first pass, and only if we've something
-		 * to learn.  This cuts down on useless decoding.
-		 */
-		if (!doit && *dns_auth_level == DAL_UNSIGNED)
-		{
-		    struct sig_rdata sr;
-
-		    if (!in_struct(&sr, &sig_rdata_desc, pbs, NULL))
-			ugh = "failed to get fixed part of SIG Resource Record RDATA";
-		    else if (sr.type_covered == type)
-			*dns_auth_level = DAL_SIGNED;
-		}
-		break;
-	    default:
-		ugh = builddiag("unexpected RR type %d", type);
-		break;
-	    }
-	    if (ugh != NULL)
-		return ugh;
-	}
-	in_raw(NULL, tail, pbs, "RR RDATA");
-    }
-
-    return doit
-	&& cr->gateways_from_dns == NULL
-#ifdef USE_KEYRR
-	&& cr->keys_from_dns == NULL
-#endif /* USE_KEYRR */
-	? builddiag("no suitable %s record found in DNS", rr_typename(type))
-	: NULL;
-}
-
-/* process DNS answer -- TXT or KEY query */
+/* process DNS answer -- IPSECKEY query */
 
 static err_t
 process_dns_answer(struct adns_continuation *const cr
@@ -1303,12 +872,12 @@ gw_delref(struct gw_info **gwp)
 /* Start an asynchronous DNS query.
  *
  * For KEY record, the result will be a list in cr->keys_from_dns.
- * For TXT records, the result will be a list in cr->gateways_from_dns.
+ * For IPSECKEY records, the result will be a list in cr->gateways_from_dns.
  *
- * If sgw_id is null, only consider TXT records that specify an
+ * If sgw_id is null, only consider IPSECKEY records that specify an
  * IP address for the gatway: we need this in the initiation case.
  *
- * If sgw_id is non-null, only consider TXT records that specify
+ * If sgw_id is non-null, only consider IPSECKEY records that specify
  * this id as the security gatway; this is useful to the Responder
  * for confirming claims of gateways.
  *
@@ -1407,7 +976,7 @@ release_all_continuations()
 err_t
 start_adns_query(const struct id *id	/* domain to query */
 , const struct id *sgw_id	/* if non-null, any accepted gw_info must match */
-, int type	/* T_TXT or T_KEY, selecting rr type of interest */
+, int type	/* T_IPSECKEY or T_KEY, selecting rr type of interest */
 , cont_fn_t cont_fn
 , struct adns_continuation *cr)
 {

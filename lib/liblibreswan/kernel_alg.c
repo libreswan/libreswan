@@ -150,6 +150,25 @@ kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 	if (!ret) goto out;
 
 	alg_p=&esp_ealg[alg_id];
+
+	if(alg_id == ESP_AES_GCM_8
+		|| alg_id == ESP_AES_GCM_12
+		|| alg_id == ESP_AES_GCM_16) {
+		if(key_len != 128 && key_len!=192 && key_len!=256 ) {
+
+			ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, "
+                          "key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+                          alg_id, key_len,
+                          alg_p->sadb_alg_minbits,
+                          alg_p->sadb_alg_maxbits);
+			goto out;
+		}
+		else {
+			/* increase key length by 4 bytes (RFC 4106)*/
+			key_len = key_len + 4 * BITS_PER_BYTE;
+		}
+	}
+
 	/* 
 	 * test #2: if key_len specified, it must be in range 
 	 */

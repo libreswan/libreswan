@@ -1118,15 +1118,31 @@ linux_pfkey_add_aead(void)
 	struct sadb_alg alg;
 
 	alg.sadb_alg_ivlen = 8;
-	alg.sadb_alg_minbits = 128;
-	alg.sadb_alg_maxbits = 256;
+	alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
+	alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV8;
 	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+
+        alg.sadb_alg_ivlen = 12;
+        alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
+        alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
+
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV12;
 	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+
+        alg.sadb_alg_ivlen = 16;
+        alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
+        alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
+
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV16;
 	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+
+	/* keeping aes-ccm behaviour intact as before */
+        alg.sadb_alg_ivlen = 8;
+        alg.sadb_alg_minbits = 128;
+        alg.sadb_alg_maxbits = 256;
+
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV8;
 	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV12;

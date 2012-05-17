@@ -2357,7 +2357,12 @@ parse_ipsec_sa_body(
 				}
 			    break;
 #endif
-			    
+                        case ESP_AES_GCM_8:
+                        case ESP_AES_GCM_12:
+                        case ESP_AES_GCM_16:
+                                loglog(RC_LOG_SERIOUS, "kernel algorithm (AES-GCM) does not like: %s", ugh);
+				continue;
+
 			case ESP_DES:          /* NOT safe */
 			    loglog(RC_LOG_SERIOUS, "1DES was proposed, it is insecure");
 			default:
@@ -2583,7 +2588,13 @@ parse_ipsec_sa_body(
 	    st->st_ah.attrs = ah_attrs;
 
 	st->st_esp.present = esp_seen;
-	if (esp_seen){
+	if (esp_seen) {
+		if(esp_attrs.transattrs.encrypt ==  ESP_AES_GCM_8
+			|| esp_attrs.transattrs.encrypt == ESP_AES_GCM_12
+			|| esp_attrs.transattrs.encrypt == ESP_AES_GCM_16 ) {
+			esp_attrs.transattrs.enckeylen = esp_attrs.transattrs.enckeylen + 4 * BITS_PER_BYTE;
+		}
+
 	    st->st_esp.attrs = esp_attrs;
 	}
 

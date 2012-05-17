@@ -906,7 +906,27 @@ void complete_v2_state_transition(struct msg_digest **mdp
 
     cur_state = st = md->st;	/* might have changed */
 
-    passert(st); /* apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
+    /* passert(st);  // apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
+    /*
+     * XXX/SML:  There is no need to abort here in all cases if state is
+     * null, so moved this precondition to where it's needed.  Some previous
+     * logic appears to have been tooled to handle null state, and state might
+     * be null legitimately in certain failure cases (STF_FAIL + xxx).
+     *
+     * One condition for null state is when a new connection request packet
+     * arrives and there is no suitable matching configuration.  For example,
+     * ikev2parent_inI1outR1() will return (STF_FAIL + NO_PROPOSAL_CHOSEN) but
+     * no state in this case.  While other failures may be better caught before
+     * this function is called, we should be graceful here.  And for this
+     * particular case, and similar failure cases, we want SEND_NOTIFICATION
+     * (below) to let the peer know why we've rejected the request.
+     */
+    if(st) {
+        from_state_name = enum_name(&state_names, st->st_state);
+        from_state   = st->st_state;
+    } else {
+        from_state_name = "no-state";
+    }
 
     md->result = result;
     TCLCALLOUT("v2AdjustFailure", st, (st ? st->st_connection : NULL), md);
@@ -938,6 +958,7 @@ void complete_v2_state_transition(struct msg_digest **mdp
 
     case STF_OK:
 	/* advance the state */
+	passert(st);
 	success_v2_state_transition(mdp);
 	break;
 	
@@ -949,20 +970,22 @@ void complete_v2_state_transition(struct msg_digest **mdp
 	/* well, this should never happen during a whack, since
 	 * a whack will always force crypto.
 	 */
+	passert(st);
 	set_suspended(st, NULL);
 	pexpect(st->st_calculating == FALSE);
-    	from_state   = st->st_state;
-	libreswan_log("message in state %s ignored due to cryptographic overload"
-		     , enum_name(&state_names, from_state));
+	libreswan_log("message in state %s ignored due to "
+	             "cryptographic overload"
+	             , from_state_name);
 	break;
 
     case STF_FATAL:
 	/* update the previous packet history */
 	/* update_retransmit_history(st, md); */
 
+	passert(st);
 	whack_log(RC_FATAL
 		  , "encountered fatal error in state %s"
-		  , enum_name(&state_names, st->st_state));
+		  , from_state_name);
 	delete_event(st);
 	{
 	    struct state *pst;
@@ -983,11 +1006,6 @@ void complete_v2_state_transition(struct msg_digest **mdp
 	/* FALL THROUGH ... */
 
     case STF_FAIL:
-	if(st) {
-	    from_state_name = enum_name(&state_names, st->st_state);
-	} else {
-	    from_state_name = "no-state";
-	}
 	    
 	whack_log(RC_NOTIFICATION + md->note
 		  , "%s: %s"

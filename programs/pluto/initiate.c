@@ -7,6 +7,7 @@
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -354,9 +355,6 @@ enum find_oppo_step {
     fos_myid_hostname_key,
     fos_our_client,
     fos_our_txt,
-#ifdef USE_KEYRR
-    fos_our_key,
-#endif /* USE_KEYRR */
     fos_his_client,
     fos_done
 };
@@ -369,9 +367,6 @@ static const char *const oppo_step_name[] = {
     "fos_myid_hostname_key",
     "fos_our_client",
     "fos_our_txt",
-#ifdef USE_KEYRR
-    "fos_our_key",
-#endif /* USE_KEYRR */
     "fos_his_client",
     "fos_done"
 };
@@ -627,71 +622,14 @@ continue_oppo(struct adns_continuation *acr, err_t ugh)
     close_any(whackfd);
 }
 
-#ifdef USE_KEYRR
-static err_t
-check_key_recs(enum myid_state try_state
-, const struct connection *c
-, struct adns_continuation *ac)
-{
-    /* Check if KEY lookup yielded good results.
-     * Looking up based on our ID.  Used if
-     * client is ourself, or if TXT had no public key.
-     * Note: if c is different this time, there is
-     * a chance that we did the wrong query.
-     * If so, treat as a kind of failure.
-     */
-    enum myid_state old_myid_state = myid_state;
-    const struct RSA_private_key *our_RSA_pri;
-    err_t ugh = NULL;
-
-    myid_state = try_state;
-
-    if (old_myid_state != myid_state
-    && old_myid_state == MYID_SPECIFIED)
-    {
-	ugh = "%myid was specified while we were guessing";
-    }
-    else if ((our_RSA_pri = get_RSA_private_key(c)) == NULL)
-    {
-	ugh = "we don't know our own RSA key";
-    }
-    else if (!same_id(&ac->id, &c->spd.this.id))
-    {
-	ugh = "our ID changed underfoot";
-    }
-    else
-    {
-	/* Similar to code in RSA_check_signature
-	 * for checking the other side.
-	 */
-	struct pubkey_list *kr;
-
-	ugh = "no KEY RR found for us";
-	for (kr = ac->keys_from_dns; kr != NULL; kr = kr->next)
-	{
-	    ugh = "all our KEY RRs have the wrong public key";
-	    if (kr->key->alg == PUBKEY_ALG_RSA
-	    && same_RSA_public_key(&our_RSA_pri->pub, &kr->key->u.rsa))
-	    {
-		ugh = NULL;	/* good! */
-		break;
-	    }
-	}
-    }
-    if (ugh != NULL)
-	myid_state = old_myid_state;
-    return ugh;
-}
-#endif /* USE_KEYRR */
-
 static err_t
 check_txt_recs(enum myid_state try_state
 , const struct connection *c
 , struct adns_continuation *ac)
 {
-    /* Check if TXT lookup yielded good results.
+    /* Check if IPSECKEY lookup yielded good results.
      * Looking up based on our ID.  Used if
-     * client is ourself, or if TXT had no public key.
+     * client is ourself, or if IPSECKEY had no public key.
      * Note: if c is different this time, there is
      * a chance that we did the wrong query.
      * If so, treat as a kind of failure.
@@ -722,10 +660,10 @@ check_txt_recs(enum myid_state try_state
 	 */
 	struct gw_info *gwp;
 
-	ugh = "no TXT RR found for us";
+	ugh = "no IPSECKEY RR found for us";
 	for (gwp = ac->gateways_from_dns; gwp != NULL; gwp = gwp->next)
 	{
-	    ugh = "all our TXT RRs have the wrong public key";
+	    ugh = "all our IPSECKEY RRs have the wrong public key";
 	    if (gwp->key->alg == PUBKEY_ALG_RSA
 	    && same_RSA_public_key(&our_RSA_pri->pub, &gwp->key->u.rsa))
 	    {
@@ -903,18 +841,18 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 	    next_step = fos_myid_ip_txt;
 	    break;
 
-	case fos_myid_ip_txt:	/* TXT for our default IP address as %myid */
+	case fos_myid_ip_txt:	/* IPSECKEY for our default IP address as %myid */
 	    ugh = check_txt_recs(MYID_IP, c, ac);
 	    if (ugh != NULL)
 	    {
 		/* cannot use our IP as OE identitiy for initiation */
-		DBG(DBG_OPPO, DBG_log("can not use our IP (%s:TXT) as identity: %s"
+		DBG(DBG_OPPO, DBG_log("can not use our IP (%s:IPSECKEY) as identity: %s"
 				      , myid_str[MYID_IP]
 				      , ugh));
 		if (!logged_myid_ip_txt_warning)
 		{
 		    loglog(RC_LOG_SERIOUS
-			   , "can not use our IP (%s:TXT) as identity: %s"
+			   , "can not use our IP (%s:IPSECKEY) as identity: %s"
 			   , myid_str[MYID_IP]
 			   , ugh);
 		    logged_myid_ip_txt_warning = TRUE;
@@ -929,7 +867,7 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 		if (!logged_myid_ip_txt_warning)
 		{
 		    loglog(RC_LOG_SERIOUS
-			   , "using our IP (%s:TXT) as identity!"
+			   , "using our IP (%s:IPSECKEY) as identity!"
 			   , myid_str[MYID_IP]);
 		    logged_myid_ip_txt_warning = TRUE;
 		}
@@ -938,26 +876,22 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 	    }
 	    break;
 
-	case fos_myid_hostname_txt:	/* TXT for our hostname as %myid */
+	case fos_myid_hostname_txt:	/* IPSECKEY for our hostname as %myid */
 	    ugh = check_txt_recs(MYID_HOSTNAME, c, ac);
 	    if (ugh != NULL)
 	    {
 		/* cannot use our hostname as OE identitiy for initiation */
-		DBG(DBG_OPPO, DBG_log("can not use our hostname (%s:TXT) as identity: %s"
+		DBG(DBG_OPPO, DBG_log("can not use our hostname (%s:IPSECKEY) as identity: %s"
 				      , myid_str[MYID_HOSTNAME]
 				      , ugh));
 		if (!logged_myid_fqdn_txt_warning)
 		{
 		    loglog(RC_LOG_SERIOUS
-			   , "can not use our hostname (%s:TXT) as identity: %s"
+			   , "can not use our hostname (%s:IPSECKEY) as identity: %s"
 			   , myid_str[MYID_HOSTNAME]
 			   , ugh);
 		    logged_myid_fqdn_txt_warning = TRUE;
 		}
-#ifdef USE_KEYRR
-		next_step = fos_myid_ip_key;
-		ugh = NULL;	/* failure can be recovered from */
-#endif
 	    }
 	    else
 	    {
@@ -965,7 +899,7 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 		if (!logged_myid_fqdn_txt_warning)
 		{
 		    loglog(RC_LOG_SERIOUS
-			   , "using our hostname (%s:TXT) as identity!"
+			   , "using our hostname (%s:IPSECKEY) as identity!"
 			   , myid_str[MYID_HOSTNAME]);
 		    logged_myid_fqdn_txt_warning = TRUE;
 		}
@@ -973,79 +907,10 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 	    }
 	    break;
 
-#ifdef USE_KEYRR
-	case fos_myid_ip_key:	/* KEY for our default IP address as %myid */
-	    ugh = check_key_recs(MYID_IP, c, ac);
-	    if (ugh != NULL)
-	    {
-		/* cannot use our IP as OE identitiy for initiation */
-		DBG(DBG_OPPO, DBG_log("can not use our IP (%s:KEY) as identity: %s"
-				      , myid_str[MYID_IP]
-				      , ugh));
-		if (!logged_myid_ip_key_warning)
-		{
-		    loglog(RC_LOG_SERIOUS
-			   , "can not use our IP (%s:KEY) as identity: %s"
-			   , myid_str[MYID_IP]
-			   , ugh);
-		    logged_myid_ip_key_warning = TRUE;
-		}
 
-		next_step = fos_myid_hostname_key;
-		ugh = NULL;	/* failure can be recovered from */
-	    }
-	    else
+	case fos_our_client:	/* IPSECKEY for our client */
 	    {
-		/* we can use our IP as OE identity for initiation */
-		if (!logged_myid_ip_key_warning)
-		{
-		    loglog(RC_LOG_SERIOUS
-			   , "using our IP (%s:KEY) as identity!"
-			   , myid_str[MYID_IP]);
-		    logged_myid_ip_key_warning = TRUE;
-		}
-		next_step = fos_our_client;
-	    }
-	    break;
-
-	case fos_myid_hostname_key:	/* KEY for our hostname as %myid */
-	    ugh = check_key_recs(MYID_HOSTNAME, c, ac);
-	    if (ugh != NULL)
-	    {
-		/* cannot use our IP as OE identitiy for initiation */
-		DBG(DBG_OPPO, DBG_log("can not use our hostname (%s:KEY) as identity: %s"
-				      , myid_str[MYID_HOSTNAME]
-				      , ugh));
-		if (!logged_myid_fqdn_key_warning)
-		{
-		    loglog(RC_LOG_SERIOUS
-			   , "can not use our hostname (%s:KEY) as identity: %s"
-			   , myid_str[MYID_HOSTNAME]
-			   , ugh);
-		    logged_myid_fqdn_key_warning = TRUE;
-		}
-
-		next_step = fos_myid_hostname_key;
-		ugh = NULL;	/* failure can be recovered from */
-	    }
-	    else
-	    {
-		/* we can use our IP as OE identity for initiation */
-		if (!logged_myid_fqdn_key_warning)
-		{
-		    loglog(RC_LOG_SERIOUS
-			   , "using our hostname (%s:KEY) as identity!"
-			   , myid_str[MYID_HOSTNAME]);
-		    logged_myid_fqdn_key_warning = TRUE;
-		}
-		next_step = fos_our_client;
-	    }
-	    break;
-#endif
-
-	case fos_our_client:	/* TXT for our client */
-	    {
-		/* Our client is not us: we must check the TXT records.
+		/* Our client is not us: we must check the IPSECKEY records.
 		 * Note: if c is different this time, there is
 		 * a chance that we did the wrong query.
 		 * If so, treat as a kind of failure.
@@ -1077,20 +942,20 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 		     */
 		    struct gw_info *gwp;
 
-		    ugh = "no TXT RR for our client delegates us";
+		    ugh = "no IPSECKEY RR for our client delegates us";
 		    for (gwp = ac->gateways_from_dns; gwp != NULL; gwp = gwp->next)
 		    {
 			passert(same_id(&gwp->gw_id, &sr->this.id));
 
-			ugh = "TXT RR for our client has wrong key";
-			/* If there is a key from the TXT record,
+			ugh = "IPSECKEY RR for our client has wrong key";
+			/* If there is a key from the IPSECKEY record,
 			 * we count it as a win if we match the key.
 			 * If there was no key, we have a tentative win:
 			 * we need to check our KEY record to be sure.
 			 */
 			if (!gwp->gw_key_present)
 			{
-			    /* Success, but the TXT had no key
+			    /* Success, but the IPSECKEY had no key
 			     * so we must check our our own KEY records.
 			     */
 			    next_step = fos_our_txt;
@@ -1107,11 +972,11 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 	    }
 	    break;
 
-	case fos_our_txt:	/* TXT for us */
+	case fos_our_txt:	/* IPSECKEY for us */
 	    {
-		/* Check if TXT lookup yielded good results.
+		/* Check if IPSECKEY lookup yielded good results.
 		 * Looking up based on our ID.  Used if
-		 * client is ourself, or if TXT had no public key.
+		 * client is ourself, or if IPSECKEY had no public key.
 		 * Note: if c is different this time, there is
 		 * a chance that we did the wrong query.
 		 * If so, treat as a kind of failure.
@@ -1135,93 +1000,29 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 		     */
 		    struct gw_info *gwp;
 
-		    ugh = "no TXT RR for us";
+		    ugh = "no IPSECKEY RR for us";
 		    for (gwp = ac->gateways_from_dns; gwp != NULL; gwp = gwp->next)
 		    {
 			passert(same_id(&gwp->gw_id, &sr->this.id));
 
-			ugh = "TXT RR for us has wrong key";
+			ugh = "IPSECKEY RR for us has wrong key";
 			if (gwp->gw_key_present
 			&& same_RSA_public_key(&our_RSA_pri->pub, &gwp->key->u.rsa))
 			{
 			    DBG(DBG_CONTROL,
-				DBG_log("initiate on demand found TXT with right public key at: %s"
+				DBG_log("initiate on demand found IPSECKEY with right public key at: %s"
 					, mycredentialstr));
 			    ugh = NULL;
 			    break;
 			}
 		    }
-#ifdef USE_KEYRR
-		    if (ugh != NULL)
-		    {
-			/* if no TXT with right key, try KEY */
-			DBG(DBG_CONTROL,
-			    DBG_log("will try for KEY RR since initiate on demand found %s: %s"
-				    , ugh, mycredentialstr));
-			next_step = fos_our_key;
-			ugh = NULL;
-		    }
-#endif
 		}
 	    }
 	    break;
 
-#ifdef USE_KEYRR
-	case fos_our_key:	/* KEY for us */
+	case fos_his_client:	/* IPSECKEY for his client */
 	    {
-		/* Check if KEY lookup yielded good results.
-		 * Looking up based on our ID.  Used if
-		 * client is ourself, or if TXT had no public key.
-		 * Note: if c is different this time, there is
-		 * a chance that we did the wrong query.
-		 * If so, treat as a kind of failure.
-		 */
-		const struct RSA_private_key *our_RSA_pri = get_RSA_private_key(c);
-
-		next_step = fos_his_client;	/* always */
-
-		if (our_RSA_pri == NULL)
-		{
-		    ugh = "we don't know our own RSA key";
-		}
-		else if (!same_id(&ac->id, &c->spd.this.id))
-		{
-		    ugh = "our ID changed underfoot";
-		}
-		else
-		{
-		    /* Similar to code in RSA_check_signature
-		     * for checking the other side.
-		     */
-		    struct pubkey_list *kr;
-
-		    ugh = "no KEY RR found for us (and no good TXT RR)";
-		    for (kr = ac->keys_from_dns; kr != NULL; kr = kr->next)
-		    {
-			ugh = "all our KEY RRs have the wrong public key (and no good TXT RR)";
-			if (kr->key->alg == PUBKEY_ALG_RSA
-			&& same_RSA_public_key(&our_RSA_pri->pub, &kr->key->u.rsa))
-			{
-			    /* do this only once a day */
-			    if (!logged_txt_warning)
-			    {
-				loglog(RC_LOG_SERIOUS
-				       , "found KEY RR but not TXT RR for %s."
-				       , mycredentialstr);
-				logged_txt_warning = TRUE;
-			    }
-			    ugh = NULL;	/* good! */
-			    break;
-			}
-		    }
-		}
-	    }
-	    break;
-#endif /* USE_KEYRR */
-
-	case fos_his_client:	/* TXT for his client */
-	    {
-		/* We've finished last DNS queries: TXT for his client.
+		/* We've finished last DNS queries: IPSECKEY for his client.
 		 * Using the information, try to instantiate a connection
 		 * and start negotiating.
 		 * We now know the peer.  The chosing of "c" ignored this,
@@ -1376,7 +1177,7 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 		&& myid_state != MYID_SPECIFIED)
 		{
 		    cr->b.failure_ok = TRUE;
-		    cr->b.want = b->want = "TXT record for IP address as %myid";
+		    cr->b.want = b->want = "IPSECKEY record for IP address as %myid";
 		    ugh = start_adns_query(&myids[MYID_IP]
 			, &myids[MYID_IP]
 			, ns_t_txt
@@ -1391,12 +1192,8 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 		if (c->spd.this.id.kind == ID_MYID
 		&& myid_state != MYID_SPECIFIED)
 		{
-#ifdef USE_KEYRR
-		    cr->b.failure_ok = TRUE;
-#else
 		    cr->b.failure_ok = FALSE;
-#endif
-		    cr->b.want = b->want = "TXT record for hostname as %myid";
+		    cr->b.want = b->want = "IPSECKEY record for hostname as %myid";
 		    ugh = start_adns_query(&myids[MYID_HOSTNAME]
 			, &myids[MYID_HOSTNAME]
 			, ns_t_txt
@@ -1405,50 +1202,16 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 		    break;
 		}
 
-#ifdef USE_KEYRR
-		cr->b.step = fos_myid_ip_key;
-		/* fall through */
-
-	    case fos_myid_ip_key:
-		if (c->spd.this.id.kind == ID_MYID
-		&& myid_state != MYID_SPECIFIED)
-		{
-		    cr->b.failure_ok = TRUE;
-		    cr->b.want = b->want = "KEY record for IP address as %myid (no good TXT)";
-		    ugh = start_adns_query(&myids[MYID_IP]
-			, (const struct id *) NULL	/* security gateway meaningless */
-			, ns_t_key
-			, continue_oppo
-			, &cr->ac);
-		    break;
-		}
-		cr->b.step = fos_myid_hostname_key;
-		/* fall through */
-
-	    case fos_myid_hostname_key:
-		if (c->spd.this.id.kind == ID_MYID
-		&& myid_state != MYID_SPECIFIED)
-		{
-		    cr->b.failure_ok = FALSE;		/* last attempt! */
-		    cr->b.want = b->want = "KEY record for hostname as %myid (no good TXT)";
-		    ugh = start_adns_query(&myids[MYID_HOSTNAME]
-			, (const struct id *) NULL	/* security gateway meaningless */
-			, ns_t_key
-			, continue_oppo
-			, &cr->ac);
-		    break;
-		}
-#endif
 		cr->b.step = fos_our_client;
 		/* fall through */
 
-	    case fos_our_client:	/* TXT for our client */
+	    case fos_our_client:	/* IPSECKEY for our client */
 		if (!sameaddr(&c->spd.this.host_addr, &b->our_client))
 		{
-		    /* Check that at least one TXT(reverse(b->our_client)) is workable.
+		    /* Check that at least one IPSECKEY(reverse(b->our_client)) is workable.
 		     * Note: {unshare|free}_id_content not needed for id: ephemeral.
 		     */
-		    cr->b.want = b->want = "our client's TXT record";
+		    cr->b.want = b->want = "our client's IPSECKEY record";
 		    iptoid(&b->our_client, &id);
 		    ugh = start_adns_query(&id
 			, &c->spd.this.id	/* we are the security gateway */
@@ -1460,9 +1223,9 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 		cr->b.step = fos_our_txt;
 		/* fall through */
 
-	    case fos_our_txt:	/* TXT for us */
+	    case fos_our_txt:	/* IPSECKEY for us */
 		cr->b.failure_ok = b->failure_ok = TRUE;
-		cr->b.want = b->want = "our TXT record";
+		cr->b.want = b->want = "our IPSECKEY record";
 		ugh = start_adns_query(&sr->this.id
 		    , &sr->this.id	/* we are the security gateway XXX - maybe ignore? mcr */
 		    , ns_t_txt
@@ -1470,21 +1233,9 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 		    , &cr->ac);
 		break;
 
-#ifdef USE_KEYRR
-	    case fos_our_key:	/* KEY for us */
-		cr->b.want = b->want = "our KEY record";
-		cr->b.failure_ok = b->failure_ok = FALSE;
-		ugh = start_adns_query(&sr->this.id
-		    , (const struct id *) NULL	/* security gateway meaningless */
-		    , ns_t_key
-		    , continue_oppo
-		    , &cr->ac);
-		break;
-#endif /* USE_KEYRR */
-
-	    case fos_his_client:	/* TXT for his client */
+	    case fos_his_client:	/* IPSECKEY for his client */
 		/* note: {unshare|free}_id_content not needed for id: ephemeral */
-		cr->b.want = b->want = "target's TXT record";
+		cr->b.want = b->want = "target's IPSECKEY record";
 		cr->b.failure_ok = b->failure_ok = FALSE;
 		iptoid(&b->peer_client, &id);
 		ugh = start_adns_query(&id
@@ -1507,52 +1258,6 @@ initiate_ondemand_body(struct find_oppo_bundle *b
     close_any(b->whackfd);
     return work;
 }
-
-/* check nexthop safety
- * Our nexthop must not be within a routed client subnet, and vice versa.
- * Note: we don't think this is true.  We think that KLIPS will
- * not process a packet output by an eroute.
- */
-#ifdef NEVER
-/* bool
- * check_nexthop(const struct connection *c)
- * {
- *     struct connection *d;
- * 
- *     if (addrinsubnet(&c->spd.this.host_nexthop, &c->spd.that.client))
- *     {
- * 	loglog(RC_LOG_SERIOUS, "cannot perform routing for connection \"%s\""
- * 	    " because nexthop is within peer's client network",
- * 	    c->name);
- * 	return FALSE;
- *     }
- * 
- *     for (d = connections; d != NULL; d = d->next)
- *     {
- * 	if (d->routing != RT_UNROUTED)
- * 	{
- * 	    if (addrinsubnet(&c->spd.this.host_nexthop, &d->spd.that.client))
- * 	    {
- * 		loglog(RC_LOG_SERIOUS, "cannot do routing for connection \"%s\"
- * 		    " because nexthop is contained in"
- * 		    " existing routing for connection \"%s\"",
- * 		    c->name, d->name);
- * 		return FALSE;
- * 	    }
- * 	    if (addrinsubnet(&d->spd.this.host_nexthop, &c->spd.that.client))
- * 	    {
- * 		loglog(RC_LOG_SERIOUS, "cannot do routing for connection \"%s\"
- * 		    " because it contains nexthop of"
- * 		    " existing routing for connection \"%s\"",
- * 		    c->name, d->name);
- * 		return FALSE;
- * 	    }
- * 	}
- *     }
- *     return TRUE;
- * }
- */
-#endif /* NEVER */
 
 /* an ISAKMP SA has been established.
  * Note the serial number, and release any connections with
