@@ -597,10 +597,19 @@ struct_desc isakmp_nat_d = { "ISAKMP NAT-D Payload", isag_fields, sizeof(struct 
  */
 static field_desc isanat_oa_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
+#ifdef SUPPORT_BROKEN_ANDROID_ICS
+    { ft_nat, 8/BITS_PER_BYTE, NULL, NULL },
+#else
     { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+#end
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "ID type", &ident_names },
+#ifdef SUPPORT_BROKEN_ANDROID_ICS
+    { ft_nat, 16/BITS_PER_BYTE, NULL, NULL },
+    { ft_nat, 8/BITS_PER_BYTE, NULL, NULL },
+#else
     { ft_mbz, 24/BITS_PER_BYTE, NULL, NULL },
+#endif
     { ft_end, 0, NULL, NULL }
 };
 
