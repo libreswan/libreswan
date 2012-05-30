@@ -1,6 +1,7 @@
 # Makefile for the KLIPS interface utilities
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
+# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -24,7 +25,7 @@ SUBDIRS+=showpolicy
 endif
 
 SUBDIRS+=proc pluto addconn 
-SUBDIRS+=_confread _copyright _include _keycensor _plutoload _plutorun
+SUBDIRS+=_confread _include _keycensor _plutoload _plutorun
 SUBDIRS+=_realsetup _secretcensor _updown 
 SUBDIRS+=auto barf verify ipsec look newhostkey ranbits secrets
 SUBDIRS+=rsasigkey setup showdefaults showhostkey 
