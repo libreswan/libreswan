@@ -45,8 +45,12 @@ SRCS+=sanitizestring.c pfkey_print.c pfkey_sock.c pfkey_error.c
 
 ifeq ($(USE_KLIPS),true)
 KLIPS_DEFS=-DKLIPS 
-# for now, USE_KLIPS=>linux, which implies we have udpfromto() support.
-UDPFROMTO_DEFS=-DWITH_UDPFROMTO -DHAVE_IP_PKTINFO
+# Linux always supports udpfromto
+UDPFROMTO_SRCS=udpfromto.c
+endif
+
+ifeq ($(USE_BSDKAME),true)
+# BSD always supports udpfromto
 UDPFROMTO_SRCS=udpfromto.c
 endif
 
@@ -78,7 +82,7 @@ LIBL=liboswlog.a
 # Original flags
 CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
 CFLAGS+=-I${LIBRESWANSRCDIR} -DDEBUG
-CFLAGS+=${PFKEYV2_DEFS} ${KLIPS_DEFS} ${UDPFROMTO_DEFS}
+CFLAGS+=${PFKEYV2_DEFS} ${KLIPS_DEFS} 
 CFLAGS+= -I${LIBRESWANSRCDIR}/include ${PORTINCLUDE} $(USERCOMPILE) ${CROSSFLAGS}
 CFLAGS+= -Wall
 #CFLAGS+= -Wconversion

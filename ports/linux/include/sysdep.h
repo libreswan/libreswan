@@ -29,3 +29,7 @@
 #ifndef linux
 # define linux
 #endif
+
+/* udpfromto socket option for Linux */
+#define HAVE_UDPFROMTO 1
+#define HAVE_IP_PKTINFO 1
