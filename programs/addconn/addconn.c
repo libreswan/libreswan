@@ -155,10 +155,6 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 		}
 	}
 
-	if(af == AF_INET6) {
-		qtype = 28; /* AAAA */
-	}
-
 	{
 	  int ugh = ub_resolve(dnsctx, src, qtype, 1 /* CLASS IN */, &result);
 	  if(ugh != 0) {
@@ -202,20 +198,20 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 		for(i=0; result->data[i] != NULL; i++) {
 			printf("result data element %d has length %d\n",
 				i, result->len[i]);
-			printf("result data element %d is: %s\n",
-				i, inet_ntoa(*(struct in_addr*)result->data[i]));
 		}
 		printf("result has %d data element(s)\n", i);
 	}
 	/* XXX: for now pick the first one and return that */
 	passert(result->data[0] != NULL);
 	{
-	   err_t err = tnatoaddr(inet_ntoa(*(struct in_addr*)result->data[0]),
-			0, (result->qtype == 1) ? AF_INET : AF_INET6, ipaddr);
+	   char dst[INET6_ADDRSTRLEN];
+	   err_t err = tnatoaddr(inet_ntop(af, result->data[0], dst
+			, (af==AF_INET) ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN)
+			, 0, af, ipaddr);
 	   ub_resolve_free(result);
 	   if(err == NULL) {
 		if(verbose) {
-			printf("success");
+			printf("success for %s lookup", (af==AF_INET) ? "IPv4" : "IPv6");
 		}
 		return TRUE;
 	   } else {
@@ -444,10 +440,16 @@ main(int argc, char *argv[])
 	}
 	bool e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
 	if(!e) {
+		e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
+	}
+	if(!e) {
 	    printf("ignoring invalid defaultroute: %s\n", defaultroute);
 #else
 	err_t ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
-	if(ugh !=NULL) {
+	if(ugh != NULL) {
+		ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
+	}
+	if(ugh != NULL) {
 	    printf("ignoring invalid defaultroute: %s:%s\n", defaulroute, ugh);
 #endif
 	    defaultroute = NULL;
@@ -467,10 +469,16 @@ main(int argc, char *argv[])
 		printf("Calling unbound_resolve() for defaultroutenexthop value");
 	}
 	bool e = unbound_resolve(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
-	if(e) {
+	if(!e) {
+		e = unbound_resolve(defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh);
+	}
+	if(!e) {
 	    printf("ignoring invalid defaultnexthop: %s\n", defaultroute);
 #else
 	err_t ugh = ttoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
+	if(ugh != NULL) {
+		ugh = ttoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh);
+	}
 	if(ugh != NULL) {
 	    printf("ignoring invalid defaultnexthop: %s:%s\n", defaultroute, ugh);
 #endif
