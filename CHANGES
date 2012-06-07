@@ -9,8 +9,12 @@ v1.0.0 (unreleased)
 * OE: Add support for IPSECKEY in ipsec showhostkey [Paul]
 * pluto: Removed support for non-strict ike/esp lines [Paul]
 * pluto: Changed our vendorid prefix to "OEN" [Paul]
+* pluto: UDPFROMTO support was not enabled for NETKEY if not also build
+  with KLIPS [Paul]
+* Removed "ipsec copyright" command [Paul]
 * Rename from Openswan to Libreswan (working name) [Paul]
   (for older CHANGES see docs/CHANGES.openswan)
+* Only set MODP768_MODULUS with USE_VERYWEAK_DH1 [Paul]
 * Fix for three AES-GCM issues with key lengths 128, 192, 256 bits and IV
   of 8, 12, 16 bytes as per RFC 4106 [Avesh]
 * Bugtracker bugs fixed:

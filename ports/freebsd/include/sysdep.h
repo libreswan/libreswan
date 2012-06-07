@@ -22,3 +22,7 @@
 #endif
 
 #define NEED_SIN_LEN
+
+/* udpfromto socket option for BSD */
+#define HAVE_UDPFROMTO 1
+#define HAVE_IP_RECVDSTADDR 1
