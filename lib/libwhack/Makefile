@@ -66,6 +66,10 @@ ifeq ($(USE_DYNAMICDNS),true)
 CFLAGS+= -DDYNAMICDNS
 endif
 
+ifeq ($(USE_DNSSEC),true)
+CFLAGS+= -DDNSSEC
+endif
+
 ARFLAGS=crvs
 MANS=
 

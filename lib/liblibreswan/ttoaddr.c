@@ -185,7 +185,7 @@ ip_address *dst;
 	if (p != namebuf)
 		FREE(p);
 	if (h == NULL && ne == NULL)
-		return "does not look numeric and name lookup failed";
+		return "does not look numeric and name lookup failed (no validation performed)";
 
 	if (h != NULL) {
 		if (h->h_addrtype != af)

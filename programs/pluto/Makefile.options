@@ -22,6 +22,10 @@ ifeq ($(USE_DYNAMICDNS),true)
 DYNAMICDNSDEF=-DDYNAMICDNS
 endif
 
+ifeq ($(USE_DNSSEC),true)
+DNSSECDEF=-DDNSSEC
+endif
+
 ifeq ($(USE_LDAP),true)
 # Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
 # if you require LDAPv2 
@@ -268,6 +272,7 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(KEYRR_DEFINES) \
 	$(BYTE_ORDER) \
 	$(DYNAMICDNSDEF) \
+	$(DNSSECDEF) \
 	$(NETKEY_DEFS) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
