@@ -1,16 +1,23 @@
 /*
  * A program to read the configuration file and load a single conn
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
- * 
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
+ */
+
+/*
+ * This program performed synchronous DNS lookups via ttoaddr() and has been
+ * converted to using libunbound in asyncrhonous mode
+ * It should be rewriten to resolve/load connections asynchronously
  */
 
 #include <sys/types.h>
@@ -64,9 +71,148 @@ static const char *usage_string = ""
     "               [--ctlbase socketfile] \n"
     "               [--configsetup] \n"
     "               {--checkconfig] \n"
+    "               {--verbose] \n"
     "               [--defaultroute <addr>] [--defaultroutenexthop <addr>]\n"
-    
     "               names\n";
+
+#ifdef DNSSEC
+# include <unbound.h>
+# include "dnssec.h"
+struct ub_ctx* dnsctx;
+
+int unbound_init(int verbose){
+	int ugh;
+	/* create unbound resolver context */
+	dnsctx = ub_ctx_create();
+        if(!dnsctx) {
+                fprintf(stderr,"error: could not create unbound context\n");
+                return 0;
+        }
+	if(verbose) {
+		printf("unbound context created - setting debug level high\n");
+		ub_ctx_debuglevel(dnsctx,255);
+	}
+
+	/* lookup from /etc/hosts before DNS lookups as people expect that */
+	if( (ugh=ub_ctx_hosts(dnsctx, "/etc/hosts")) != 0) {
+		printf("error reading hosts: %s. errno says: %s\n",
+			ub_strerror(ugh), strerror(errno));
+		return 0;
+	}
+	if(verbose) {
+		printf("/etc/hosts lookups activated\n");
+	}
+
+	/*
+	 * Use /etc/resolv.conf as forwarding cache - we expect people to reconfigure this
+	 * file if they need to work around DHCP DNS obtained servers
+	 */
+	if( (ugh=ub_ctx_resolvconf(dnsctx, "/etc/resolv.conf")) != 0) {
+		printf("error reading resolv.conf: %s. errno says: %s\n",
+			ub_strerror(ugh), strerror(errno));
+		return 0;
+	}
+	if(verbose) {
+		printf("/etc/resolv.conf usage activated\n");
+	}
+
+        /* add trust anchors to libunbound context - make this configurable later */
+	if(verbose)
+		printf("Loading root key:%s\n",rootanchor);
+        ugh = ub_ctx_add_ta(dnsctx, rootanchor);
+        if(ugh != 0) {
+                fprintf(stderr, "error adding the DNSSEC root key: %s: %s\n", ub_strerror(ugh), strerror(errno));
+		return 0;
+	}
+
+        /* Enable DLV */
+	if(verbose)
+		printf("Loading dlv key:%s\n",dlvanchor);
+        ugh = ub_ctx_set_option(dnsctx, "dlv-anchor:",dlvanchor);
+        if(ugh != 0) {
+                fprintf(stderr, "error adding the DLV key: %s: %s\n", ub_strerror(ugh), strerror(errno));
+		return 0;
+	}
+
+	return 1;
+}
+
+/* synchronous blocking resolving - simple replacement of ttoaddr()
+ * src_len 0 means "apply strlen"
+ * af 0 means "try both families
+ */
+err_t unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
+{
+        char *err = NULL;
+	int qtype = 1; /* default to IPv4 */
+	int ugh;
+	struct ub_result* result;
+
+        if (srclen == 0) {
+                srclen = strlen(src);
+                if (srclen == 0)
+                        return "empty string";
+	}
+
+	if(af == AF_INET6) {
+		qtype = 28; /* AAAA */
+	}
+
+	ugh = ub_resolve(dnsctx, src, qtype, 1 /* CLASS IN */, &result);
+	if(ugh != 0) {
+		return ub_strerror(ugh);
+	}
+	if(result->bogus) {
+		fprintf(stderr,"ERROR: %s failed DNSSEC valdation!\n",
+			result->qname);
+	}
+	if(!result->havedata) {
+		if(result->secure)
+			sprintf(err,"Validated reply proves '%s' does not exist\n", src);
+		else
+			sprintf(err,"Failed to resolve '%s' (%s)\n", src, (result->bogus) ? "BOGUS" : "insecure");
+		ub_resolve_free(result);
+		return err;
+	} else if(!result->bogus) {
+		if(!result->secure) {
+			fprintf(stderr,"warning: %s lookup was not protected by DNSSEC!\n", result->qname);
+		}
+	}
+	
+	if(verbose) {
+		int i = 0;
+		printf("The result has:\n");
+		printf("qname: %s\n", result->qname);
+		printf("qtype: %d\n", result->qtype);
+		printf("qclass: %d\n", result->qclass);
+		if(result->canonname)
+			printf("canonical name: %s\n", result->canonname);
+		printf("DNS rcode: %d\n", result->rcode);
+
+		for(i=0; result->data[i]; i++) {
+			printf("result data element %d has length %d\n",
+				i, result->len[i]);
+			printf("result data element %d is: %s\n",
+				i, inet_ntoa(*(struct in_addr*)result->data[i]));
+		}
+		printf("result has %d data element(s)\n", i);
+	}
+	/* XXX: for now pick the first one and return that */
+	err = tnatoaddr(inet_ntoa(*(struct in_addr*)result->data[0]),
+			0, (result->qtype == 1) ? AF_INET : AF_INET6, ipaddr);
+	ub_resolve_free(result);
+	if(err == NULL) {
+		if(verbose) {
+			printf("success");
+		}
+		return NULL;
+	}
+
+	fprintf(stderr, "tnatoaddr failed in unbound_resolve()");
+	return "tnatoaddr failed in unbound_resolve()";
+}
+
+#endif /* DNSSEC */
 
 
 static void usage(void)
@@ -130,7 +276,7 @@ main(int argc, char *argv[])
     EF_PROTECT_BELOW=1;
     EF_PROTECT_FREE=1;
 #endif
-    
+
 
     progname = argv[0];
     rootdir[0]='\0';
@@ -226,7 +372,7 @@ main(int argc, char *argv[])
     {
 	confdir = IPSEC_CONFDIR;
     }
-	
+
     if(!configfile) {
 	configfile = alloc_bytes(strlen(confdir)+sizeof("/ipsec.conf")+2,"conf file");
 
@@ -253,8 +399,19 @@ main(int argc, char *argv[])
 	/* but not if we have no use for them... might cause delays too! */
 	resolvip=FALSE;
     }
+
+#ifdef DNSSEC
+    if(resolvip) {
+	/* initialise our DNSSEC resolver context */
+	if(!unbound_init(verbose)){
+		fprintf(stderr,"unbound_init() failed, aborting\n");
+		return 1;
+	}
+    }
+#endif
+
     cfg = confread_load(configfile, &err, resolvip, ctlbase,typeexport);
-    
+
     if(cfg == NULL) {
 	fprintf(stderr, "can not load config '%s': %s\n",
 		configfile, err);
@@ -265,10 +422,18 @@ main(int argc, char *argv[])
 	exit(0);
     }
 
+    /* XXX Seems we do not support IPv6 here! */
     if(defaultroute) {
 	err_t e;
 	char b[ADDRTOT_BUF];
+#ifdef DNSSEC
+	if(verbose) {
+		printf("Calling unbound_resolve() for defaultroute value");
+	}
+	e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
+#else
 	e = ttoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
+#endif
 	if(e) {
 	    printf("ignoring invalid defaultroute: %s\n", e);
 	    defaultroute = NULL;
@@ -284,7 +449,14 @@ main(int argc, char *argv[])
     if(defaultnexthop) {
 	err_t e;
 	char b[ADDRTOT_BUF];
+#ifdef DNSSEC
+	if(verbose) {
+		printf("Callnig unbound_resolve() for defaultroutenexthop value");
+	}
+	e = unbound_resolve(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
+#else
 	e = ttoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
+#endif
 	if(e) {
 	    printf("ignoring invalid defaultnexthop: %s\n", e);
 	    defaultnexthop = NULL;
@@ -297,7 +469,7 @@ main(int argc, char *argv[])
 	}
     }
 
-    if(all) 
+    if(all)
     {
 	if(verbose) {
 	    printf("loading all conns:");
@@ -351,7 +523,7 @@ main(int argc, char *argv[])
 
 	printf("%s_confreadstatus=\n", varprefix);
 	printf("%s_confreadnames=\"",varprefix);
-	
+
 	/* find conn names that have value set */
 	for(conn = cfg->conns.tqh_first;
 	    conn != NULL;
@@ -449,7 +621,7 @@ main(int argc, char *argv[])
 		    break;
 		}
 	    }
-	    
+
 	    if(conn == NULL) {
 		/* only if we don't find it, do we now look for aliases */
 
@@ -486,7 +658,10 @@ main(int argc, char *argv[])
 	if(verbose) printf("\n");
     }
 
-    confread_free(cfg);    
+#ifdef DNSSEC
+	ub_ctx_delete(dnsctx);
+#endif
+    confread_free(cfg);
     exit(exit_status);
 }
 

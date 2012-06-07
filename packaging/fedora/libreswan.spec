@@ -27,7 +27,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Summary: Libreswan - An IPsec and IKE implementation
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex bind-devel redhat-rpm-config xmlto
-BuildRequires: nss-devel >= 3.12.6-2, nspr-devel fipscheck-devel, libcap-ng-devel
+BuildRequires: nss-devel >= 3.12.6-2, unbound-devel, nspr-devel, fipscheck-devel, libcap-ng-devel
 Requires: nss-tools
 %if %{buildefence}
 BuildRequires: ElectricFence
@@ -89,6 +89,7 @@ kernels.
   USE_FIPSCHECK="true" \
   USE_LIBCAP_NG="true" \
   USE_DYNAMICDNS="true" \
+  USE_DNSSEC="true" \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \
   MANTREE=%{_mandir} \

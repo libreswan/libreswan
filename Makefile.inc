@@ -279,6 +279,9 @@ RH_KERNELSRC?=/lib/modules/2.6.9-1.681_FC3/build
 # but it could be a potential security issue if receiving spoofed dns.
 USE_DYNAMICDNS?=true
 
+# Enable support for DNSSEC. This requires the unbound library
+USE_DNSSEC?=true
+
 # Do we want all the configuration files like ipsec.conf and ipsec.secrets
 # and any certificates to be in a single directory defined by 
 # FINALCONFDDIR?

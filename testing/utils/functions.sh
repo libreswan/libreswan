@@ -317,10 +317,10 @@ prerunsetup() {
 	if [ -n "$WEST_NETKEY" ] 
 	 then
 	  WEST_START=${WEST_START-$POOLSPACE/$WESTHOST/start-netkey.sh}
-	  echo "functions.sh:prerunsetup: netkey: WEST_START==\"${WEST_START}\" WESTHOST=\"${WESTHOST}\""
+	  echo "functions.sh:prerunsetup: netkey: WEST_START=\"${WEST_START}\" WESTHOST=\"${WESTHOST}\""
 	else 
 	  WEST_START=${WEST_START-$POOLSPACE/$WESTHOST/start.sh}
-	  echo "functions.sh:prerunsetup: klips: WEST_START==\"${WEST_START}\" WESTHOST=\"${WESTHOST}\""
+	  echo "functions.sh:prerunsetup: klips: WEST_START=\"${WEST_START}\" WESTHOST=\"${WESTHOST}\""
 	fi
 	WEST_START=${WEST_START-$POOLSPACE/$WESTHOST/start.sh}
 	REPORT_NAME=${TESTNAME}

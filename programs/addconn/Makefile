@@ -19,11 +19,17 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 PROGLIBS=${WHACKLIB} ${IPSECCONFLIB} 
 #EXTRALIBS=-lefence
 
+ifeq ($(USE_DNSSEC),true)
+CFLAGS+= -DDNSSEC
+PROGLIBS+=-lunbound
+endif
+
 PROGRAM=addconn
 
 # reach into pluto for now.
 INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
 INCLUDES+=-I${srcdir}
+
 
 include ${srcdir}../Makefile.program
 
