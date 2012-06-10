@@ -4760,7 +4760,7 @@ packaging/utils/kernelpatch 2.6
 + */
 +
 +enum ipsec_cipher_algo {
-+  ESP_reserved=0,
++  ESP_RESERVED=0,
 +  ESP_DES_IV64=1,
 +  ESP_DES=2,
 +  ESP_3DES=3,
@@ -4783,7 +4783,7 @@ packaging/utils/kernelpatch 2.6
 +  IPCOMP_OUI=               1,
 +  IPCOMP_DEFLATE=           2,
 +  IPCOMP_LZS=               3,
-+  IPCOMP_V42BIS=            4
++  IPCOMP_LZJH=            4
 +};
 +
 +/* Identification type values
@@ -6208,7 +6208,7 @@ packaging/utils/kernelpatch 2.6
 +#define IPCOMP_OUI		1
 +#define IPCOMP_DEFLAT		2
 +#define IPCOMP_LZS		3
-+#define IPCOMP_V42BIS		4
++#define IPCOMP_LZJH		4
 +
 +#define XFT_AUTH		0x0001
 +#define XFT_CONF		0x0100

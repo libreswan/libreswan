@@ -4383,7 +4383,7 @@ diff -Naur linux-2.6.16.54-0.2.5/include/libreswan/ipsec_policy.h linux-2.6.16.5
 + */
 +
 +enum ipsec_cipher_algo {
-+  ESP_reserved=0,
++  ESP_RESERVED=0,
 +  ESP_DES_IV64=1,
 +  ESP_DES=2,
 +  ESP_3DES=3,
@@ -4406,7 +4406,7 @@ diff -Naur linux-2.6.16.54-0.2.5/include/libreswan/ipsec_policy.h linux-2.6.16.5
 +  IPCOMP_OUI=               1,
 +  IPCOMP_DEFLATE=           2,
 +  IPCOMP_LZS=               3,
-+  IPCOMP_V42BIS=            4
++  IPCOMP_LZJH=            4
 +};
 +
 +/* Identification type values
@@ -5845,7 +5845,7 @@ diff -Naur linux-2.6.16.54-0.2.5/include/libreswan/ipsec_xform.h linux-2.6.16.54
 +#define IPCOMP_OUI		1
 +#define IPCOMP_DEFLAT		2
 +#define IPCOMP_LZS		3
-+#define IPCOMP_V42BIS		4
++#define IPCOMP_LZJH		4
 +
 +#define XFT_AUTH		0x0001
 +#define XFT_CONF		0x0100
