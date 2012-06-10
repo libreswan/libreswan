@@ -24,4 +24,6 @@ v1.0.0 (unreleased)
          by subject DN [Tuomo]
    #1308 forceencaps= setting does now show up in "ipsec auto --status"
          [Matt Rogers]
+   #1334 Block rules created by openswan remain even after tunnel
+         establishment or XFRM_MSG_POLEXPIRE [Panagiotis Tamtamis]
 
