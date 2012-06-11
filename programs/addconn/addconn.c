@@ -141,38 +141,44 @@ int unbound_init(int verbose){
  * src_len 0 means "apply strlen"
  * af 0 means "try both families
  */
-err_t unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
+bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 {
-        char *err = NULL;
-	int qtype = 1; /* default to IPv4 */
-	int ugh;
+	const int qtype = (af == AF_INET6) ? 28 : 1; /* 28 = AAAA record, 1 = A record */
 	struct ub_result* result;
 
         if (srclen == 0) {
                 srclen = strlen(src);
-                if (srclen == 0)
-                        return "empty string";
+                if (srclen == 0) {
+                        fprintf(stderr, "empty hostname in host lookup\n");
+			ub_resolve_free(result);
+			return FALSE;
+		}
 	}
 
-	if(af == AF_INET6) {
-		qtype = 28; /* AAAA */
+	{
+	  int ugh = ub_resolve(dnsctx, src, qtype, 1 /* CLASS IN */, &result);
+	  if(ugh != 0) {
+		fprintf(stderr, "unbound error: %s", ub_strerror(ugh));
+		ub_resolve_free(result);
+		return FALSE;
+	  }
 	}
 
-	ugh = ub_resolve(dnsctx, src, qtype, 1 /* CLASS IN */, &result);
-	if(ugh != 0) {
-		return ub_strerror(ugh);
-	}
 	if(result->bogus) {
 		fprintf(stderr,"ERROR: %s failed DNSSEC valdation!\n",
 			result->qname);
+		ub_resolve_free(result);
+		return FALSE;
 	}
 	if(!result->havedata) {
-		if(result->secure)
-			sprintf(err,"Validated reply proves '%s' does not exist\n", src);
-		else
-			sprintf(err,"Failed to resolve '%s' (%s)\n", src, (result->bogus) ? "BOGUS" : "insecure");
+		if(result->secure) {
+			fprintf(stderr,"Validated reply proves '%s' does not exist\n", src);
+		} else {
+			fprintf(stderr,"Failed to resolve '%s' (%s)\n", src, (result->bogus) ? "BOGUS" : "insecure");
+		}
 		ub_resolve_free(result);
-		return err;
+		return FALSE;
+	
 	} else if(!result->bogus) {
 		if(!result->secure) {
 			fprintf(stderr,"warning: %s lookup was not protected by DNSSEC!\n", result->qname);
@@ -189,27 +195,30 @@ err_t unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 			printf("canonical name: %s\n", result->canonname);
 		printf("DNS rcode: %d\n", result->rcode);
 
-		for(i=0; result->data[i]; i++) {
+		for(i=0; result->data[i] != NULL; i++) {
 			printf("result data element %d has length %d\n",
 				i, result->len[i]);
-			printf("result data element %d is: %s\n",
-				i, inet_ntoa(*(struct in_addr*)result->data[i]));
 		}
 		printf("result has %d data element(s)\n", i);
 	}
 	/* XXX: for now pick the first one and return that */
-	err = tnatoaddr(inet_ntoa(*(struct in_addr*)result->data[0]),
-			0, (result->qtype == 1) ? AF_INET : AF_INET6, ipaddr);
-	ub_resolve_free(result);
-	if(err == NULL) {
+	passert(result->data[0] != NULL);
+	{
+	   char dst[INET6_ADDRSTRLEN];
+	   err_t err = tnatoaddr(inet_ntop(af, result->data[0], dst
+			, (af==AF_INET) ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN)
+			, 0, af, ipaddr);
+	   ub_resolve_free(result);
+	   if(err == NULL) {
 		if(verbose) {
-			printf("success");
+			printf("success for %s lookup", (af==AF_INET) ? "IPv4" : "IPv6");
 		}
-		return NULL;
+		return TRUE;
+	   } else {
+		fprintf(stderr, "tnatoaddr failed in unbound_resolve()");
+		return FALSE;
+	   }
 	}
-
-	fprintf(stderr, "tnatoaddr failed in unbound_resolve()");
-	return "tnatoaddr failed in unbound_resolve()";
 }
 
 #endif /* DNSSEC */
@@ -424,18 +433,25 @@ main(int argc, char *argv[])
 
     /* XXX Seems we do not support IPv6 here! */
     if(defaultroute) {
-	err_t e;
 	char b[ADDRTOT_BUF];
 #ifdef DNSSEC
 	if(verbose) {
-		printf("Calling unbound_resolve() for defaultroute value");
+		printf("Calling unbound_resolve() for defaultroute value\n");
 	}
-	e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
+	bool e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
+	if(!e) {
+		e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
+	}
+	if(!e) {
+	    printf("ignoring invalid defaultroute: %s\n", defaultroute);
 #else
-	e = ttoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
+	err_t ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
+	if(ugh != NULL) {
+		ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
+	}
+	if(ugh != NULL) {
+	    printf("ignoring invalid defaultroute: %s:%s\n", defaulroute, ugh);
 #endif
-	if(e) {
-	    printf("ignoring invalid defaultroute: %s\n", e);
 	    defaultroute = NULL;
 	    /* exit(4); */
 	} else
@@ -447,18 +463,25 @@ main(int argc, char *argv[])
     }
 
     if(defaultnexthop) {
-	err_t e;
 	char b[ADDRTOT_BUF];
 #ifdef DNSSEC
 	if(verbose) {
-		printf("Callnig unbound_resolve() for defaultroutenexthop value");
+		printf("Calling unbound_resolve() for defaultroutenexthop value");
 	}
-	e = unbound_resolve(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
+	bool e = unbound_resolve(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
+	if(!e) {
+		e = unbound_resolve(defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh);
+	}
+	if(!e) {
+	    printf("ignoring invalid defaultnexthop: %s\n", defaultroute);
 #else
-	e = ttoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
+	err_t ugh = ttoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
+	if(ugh != NULL) {
+		ugh = ttoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh);
+	}
+	if(ugh != NULL) {
+	    printf("ignoring invalid defaultnexthop: %s:%s\n", defaultroute, ugh);
 #endif
-	if(e) {
-	    printf("ignoring invalid defaultnexthop: %s\n", e);
 	    defaultnexthop = NULL;
 	    /* exit(4); */
 	} else
