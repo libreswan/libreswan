@@ -464,7 +464,7 @@ ipsecdoi_replace(struct state *st
 #endif
 			 );
     }
-    close_any(whack_sock);
+    /* don't close whack_sock here as some caller above might have placed it in the state object */
 }
 
 /*
