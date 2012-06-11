@@ -198,7 +198,8 @@ alg_info_snprint_esp(char *buf, int buflen, struct alg_info_esp *alg_info)
 	const char *sep="";
 
 	ptr=buf;
-	int slen = (buflen < sizeof("none")+1 ? buflen : sizeof("none")+1);
+	/* cast to signed int because we check for -1 in buflen pointer foo later */
+	int slen = (buflen < (signed int)sizeof("none")+1 ?  buflen : (signed int)sizeof("none")+1);
 	buf[0]=0; strncat(buf, "none", slen);
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
@@ -250,7 +251,8 @@ alg_info_snprint_ah(char *buf, int buflen, struct alg_info_esp *alg_info)
 
 	ptr=buf;
 
-	int slen = (buflen < sizeof("none")+1 ? buflen : sizeof("none")+1);
+	/* cast to signed int because we check for -1 in buflen pointer foo later */
+	int slen = (buflen < (signed int)sizeof("none")+1 ?  buflen : (signed int)sizeof("none")+1);
 	buf[0]=0; strncat(buf, "none", slen);
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
