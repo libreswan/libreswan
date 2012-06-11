@@ -534,8 +534,7 @@ format_end(char *buf
     if (isanyaddr(&this->host_addr))
     {
 	if(this->host_type == KH_IPHOSTNAME) {
-	    host=host_space;
-	    strcpy(host_space, "%dns");
+	    host = strcpy(host_space, "%dns");
 	    dohost_name=TRUE;
 	} else {
 	    switch (policy & (POLICY_GROUP | POLICY_OPPO))
@@ -597,17 +596,15 @@ format_end(char *buf
 
     if(dohost_name) {
     	if(this->host_addr_name) {
-	    int len = ADDRTOT_BUF + 256 - sizeof(this->host_addr_name) - sizeof("<") - sizeof(">");
-	    if(len >= 1) { /* we need a \0 too at the end */
-		strncat(host_space, "<", 1);
-		strncat(host_space, this->host_addr_name, sizeof(this->host_addr_name));
-		strncat(host_space, ">", 1);
-	    } else {
-		loglog(RC_BADID, "format_end: buffer too small for dohost_name - should not happen\n");
-	    }
+		size_t icl = strlen(host_space);
+		size_t room = sizeof(host_space) - icl - 1;
+		int needed = snprintf(host_space + icl, room, "<%s>", this->host_addr_name);
+
+		if (needed > room) {
+		   loglog(RC_BADID, "format_end: buffer too small for dohost_name - should not happen\n");
+		}
 	}
     }
-
 
     host_port[0] = '\0';
     if (this->host_port_specific)
