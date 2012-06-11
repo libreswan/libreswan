@@ -225,9 +225,6 @@ static int _iface_down (int sock, struct st_ipsec_if *iface)
 
 	/* tncfg --detach */
 	ioctl(sock, IPSEC_DEL_DEV, &req);
-	if(close(sock)){
-		starter_log(LOG_LEVEL_ERR,"closing socket failed:%s", strerror(errno));
-	}
 
 	memset(iface->phys, 0, sizeof(iface->phys));
 
@@ -254,6 +251,9 @@ void starter_ifaces_clear (void)
 
 	for (i=0; i<N_IPSEC_IF; i++) {
 		_iface_down (sock, &(_ipsec_if[i]));
+	}
+	if(close(sock)){
+		starter_log(LOG_LEVEL_ERR,"starter_ifaces_clear socket close() failed: %s", strerror(errno));
 	}
 }
 
