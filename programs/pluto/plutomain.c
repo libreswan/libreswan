@@ -867,7 +867,6 @@ main(int argc, char **argv)
 				        IPSECLIBDIR"/addconn",
 				        IPSECLIBDIR"/auto",
 				        IPSECLIBDIR"/barf",
-				        IPSECLIBDIR"/_copyright",
 				        IPSECLIBDIR"/eroute",
   				        IPSECLIBDIR"/ikeping",
 				        IPSECLIBDIR"/_include",

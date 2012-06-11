@@ -12,7 +12,6 @@
 <refnamediv id='name'>
 <refname>ipsec ipsec_version_code</refname>
 <refname>ipsec ipsec_version_string</refname>
-<refname>ipsec ipsec_copyright_notice</refname>
 <refpurpose>get IPsec version code, full version string, copyright notice</refpurpose>
 </refnamediv>
 <!-- body begins here -->
@@ -32,11 +31,6 @@
     <paramdef><parameter>void</parameter></paramdef>
 </funcprototype>
 
-<funcprototype>
-<funcdef>const char **<function>ipsec_copyright_notice</function></funcdef>
-    <paramdef><parameter>void</parameter></paramdef>
-</funcprototype>
-</funcsynopsis>
 </refsynopsisdiv>
 
 
@@ -54,16 +48,6 @@ returns a pointer to a string constant giving a full version identification,
 consisting of the version code preceded by a prefix identifying the software,
 e.g. &ldquo;Linux FreeS/WAN 1.92&rdquo;.</para>
 
-<para><emphasis remap='I'>Ipsec_copyright_notice</emphasis>
-returns a pointer to a vector of pointers,
-terminated by a
-<emphasis remap='B'>NULL</emphasis>,
-which is the text of a suitable copyright notice.
-Each pointer points to a string constant (possibly empty) which is one line
-of the somewhat-verbose copyright notice.
-The strings are NUL-terminated and do not contain a newline;
-supplying suitable line termination for the output device is
-the caller's responsibility.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
