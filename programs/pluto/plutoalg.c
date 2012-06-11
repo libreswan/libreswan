@@ -3,6 +3,7 @@
  * Originally by: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  * Reworked into libreswan 2.x by Michael Richardson <mcr@xelerance.com>
  * (C)opyright 2012 Paul Wouters <pwouters@redhat.com>
+ * (C)opyright 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -197,8 +198,8 @@ alg_info_snprint_esp(char *buf, int buflen, struct alg_info_esp *alg_info)
 	const char *sep="";
 
 	ptr=buf;
-
-	buf[0]=0; strncat(buf, "none", buflen);
+	int slen = (buflen < sizeof("none")+1 ? buflen : sizeof("none")+1);
+	buf[0]=0; strncat(buf, "none", slen);
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
 	    if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL)) {
@@ -249,7 +250,8 @@ alg_info_snprint_ah(char *buf, int buflen, struct alg_info_esp *alg_info)
 
 	ptr=buf;
 
-	buf[0]=0; strncat(buf, "none", buflen);
+	int slen = (buflen < sizeof("none")+1 ? buflen : sizeof("none")+1);
+	buf[0]=0; strncat(buf, "none", slen);
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
 
