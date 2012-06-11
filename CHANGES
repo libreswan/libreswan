@@ -12,7 +12,8 @@ v1.0.0 (unreleased)
 * pluto: UDPFROMTO support was not enabled for NETKEY if not also build
   with KLIPS [Paul]
 * Additional safety checks to strncat() calls for addrtot(), inet_addrtot(),
-  sin_addrtot(), alg_info_snprint_esp() and alg_info_snprint_ah() [Paul]
+  sin_addrtot(), alg_info_snprint_esp(), alg_info_snprint_ah(), idtoa() and
+  format_end() [Paul]
 * Removed "ipsec copyright" command [Paul]
 * Rename from Openswan to Libreswan (working name) [Paul]
   (for older CHANGES see docs/CHANGES.openswan)
