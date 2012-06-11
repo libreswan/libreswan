@@ -1086,11 +1086,7 @@ main(int argc, char **argv)
 
 	case 'v' - OPTION_OFFSET:	/* --version */
 	    {
-		const char **sp = ipsec_copyright_notice();
-
 		printf("%s\n", ipsec_version_string());
-		for (; *sp != NULL; sp++)
-		    puts(*sp);
 	    }
 	    return 0;	/* GNU coding standards say to stop here */
 

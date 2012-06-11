@@ -581,15 +581,10 @@ master(void)
 static void
 adns_usage(const char *fmt, const char *arg)
 {
-    const char **sp = ipsec_copyright_notice();
-
     fprintf(stderr, "INTERNAL TO PLUTO: DO NOT EXECUTE\n");
 
     fprintf(stderr, fmt, arg);
     fprintf(stderr, "\n%s\n", ipsec_version_string());
-
-    for (; *sp != NULL; sp++)
-	fprintf(stderr, "%s\n", *sp);
 
     syslog(LOG_ERR, fmt, arg);
     exit(HES_INVOCATION);

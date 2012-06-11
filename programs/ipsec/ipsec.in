@@ -95,7 +95,6 @@ case "$1" in
 version|--version)
 	fixversion
 	echo "Linux Libreswan $version"
-	echo "See \`ipsec --copyright' for copyright information."
 	if [ -f $IPSEC_LIBDIR/distro.txt ]
 	then
 	    cat $IPSEC_LIBDIR/distro.txt

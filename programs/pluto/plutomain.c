@@ -484,12 +484,8 @@ main(int argc, char **argv)
 
 	case 'v':	/* --version */
 	    {
-		const char **sp = ipsec_copyright_notice();
-
 		printf("%s%s\n", ipsec_version_string(),
 				 compile_time_interop_options);
-		for (; *sp != NULL; sp++)
-		    puts(*sp);
 	    }
 	    exit(0);	/* not exit_pluto because we are not initialized yet */
 	    break;	/* not actually reached */
@@ -871,7 +867,6 @@ main(int argc, char **argv)
 				        IPSECLIBDIR"/addconn",
 				        IPSECLIBDIR"/auto",
 				        IPSECLIBDIR"/barf",
-				        IPSECLIBDIR"/_copyright",
 				        IPSECLIBDIR"/eroute",
   				        IPSECLIBDIR"/ikeping",
 				        IPSECLIBDIR"/_include",

@@ -1,5 +1,6 @@
 /* identity representation, as in IKE ID Payloads (RFC 2407 DOI 4.6.2.1)
  * Copyright (C) 1999-2001  D. Hugh Redelmeier
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -225,8 +226,9 @@ idtoa(const struct id *id, char *dst, size_t dstlen)
     case ID_IPV4_ADDR:
     case ID_IPV6_ADDR:
 	if(isanyaddr(&id->ip_addr)) {
+	    int slen = (dstlen < sizeof("%any")+1 ? dstlen : sizeof("%any")+1);
 	    dst[0]='\0';
-	    strncat(dst, "%any", dstlen);
+	    strncat(dst, "%any", slen);
 	    n = strlen(dst);
 	} else {
 	    n = (int)addrtot(&id->ip_addr, 0, dst, dstlen) - 1;

@@ -51,6 +51,8 @@
 #include "oswlog.h"
 #include "socketwrapper.h"
 
+#include "sysdep.h"
+
 int udpfromto_init(int s)
 {
 	int err = -1, opt = 1;

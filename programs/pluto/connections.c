@@ -516,7 +516,7 @@ format_end(char *buf
     const char *client_sep = "";
     char protoport[sizeof(":255/65535")];
     const char *host = NULL;
-    char host_space[ADDRTOT_BUF+256];
+    char host_space[ADDRTOT_BUF+256]; /* if you change this, see below */
     bool dohost_name = FALSE;
     char host_port[sizeof(":65535")];
     char host_id[IDTOA_BUF + 2];
@@ -597,9 +597,14 @@ format_end(char *buf
 
     if(dohost_name) {
     	if(this->host_addr_name) {
-	    strncat(host_space, "<", sizeof(host_space)-1);
-	    strncat(host_space, this->host_addr_name, sizeof(host_space)-1);
-	    strncat(host_space, ">", sizeof(host_space));
+	    int len = ADDRTOT_BUF + 256 - sizeof(this->host_addr_name) - sizeof("<") - sizeof(">");
+	    if(len >= 1) { /* we need a \0 too at the end */
+		strncat(host_space, "<", 1);
+		strncat(host_space, this->host_addr_name, sizeof(this->host_addr_name));
+		strncat(host_space, ">", 1);
+	    } else {
+		loglog(RC_BADID, "format_end: buffer too small for dohost_name - should not happen\n");
+	    }
 	}
     }
 
