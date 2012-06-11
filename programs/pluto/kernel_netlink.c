@@ -625,6 +625,7 @@ netlink_raw_eroute(const ip_address *this_host
 
 	req.u.p.sel.sport = htons(icmp_type);
 	req.u.p.sel.dport = htons(icmp_code);
+	
     }
 
     req.u.p.sel.sport_mask = (req.u.p.sel.sport) ? ~0:0;
@@ -1826,7 +1827,6 @@ netlink_shunt_eroute(struct connection *c
       const ip_address *peer = &sr->that.host_addr;
       char buf2[256];
       const struct af_info *fam = aftoinfo(addrtypeof(peer));
-      bool ok;
       
       if(fam == NULL) {
 	      fam=aftoinfo(AF_INET);
@@ -1835,7 +1835,7 @@ netlink_shunt_eroute(struct connection *c
       snprintf(buf2, sizeof(buf2)
 	       , "eroute_connection %s", opname);
 
-      ok = netlink_raw_eroute(&sr->this.host_addr, &sr->this.client
+      if( ! netlink_raw_eroute(&sr->this.host_addr, &sr->this.client
 			      , fam->any
 			      , &sr->that.client
 			      , htonl(spi)
@@ -1846,7 +1846,8 @@ netlink_shunt_eroute(struct connection *c
 #ifdef HAVE_LABELED_IPSEC
 			      , c->policy_label
 #endif
-			      );
+			      ) )
+      { return FALSE; }
 
       switch (op)
       {
@@ -1863,7 +1864,7 @@ netlink_shunt_eroute(struct connection *c
       snprintf(buf2, sizeof(buf2)
 	       , "eroute_connection %s inbound", opname);
 
-      return (netlink_raw_eroute(&sr->this.host_addr, &sr->this.client
+      return netlink_raw_eroute(&sr->this.host_addr, &sr->this.client
 			      , fam->any
 			      , &sr->that.client
 			      , htonl(spi)
@@ -1874,7 +1875,7 @@ netlink_shunt_eroute(struct connection *c
 #ifdef HAVE_LABELED_IPSEC
                               , c->policy_label
 #endif
-			      ) && ok);
+			      );
     }
 }
 
