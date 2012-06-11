@@ -11,6 +11,8 @@ v1.0.0 (unreleased)
 * pluto: Changed our vendorid prefix to "OEN" [Paul]
 * pluto: UDPFROMTO support was not enabled for NETKEY if not also build
   with KLIPS [Paul]
+* Additional safety checks to addrtot(), inet_addrtot() and
+  sin_addrtot() [Paul]
 * Removed "ipsec copyright" command [Paul]
 * Rename from Openswan to Libreswan (working name) [Paul]
   (for older CHANGES see docs/CHANGES.openswan)
