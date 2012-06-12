@@ -187,8 +187,8 @@ in_loop:
  * print which ESP algorithm has actually been selected, based upon which
  * ones are actually loaded.
  */
-int
-alg_info_snprint_esp(char *buf, int buflen, struct alg_info_esp *alg_info)
+static void
+alg_info_snprint_esp(char *buf, size_t buflen, struct alg_info_esp *alg_info)
 {
 	char *ptr=buf;
 	int ret;
@@ -197,10 +197,11 @@ alg_info_snprint_esp(char *buf, int buflen, struct alg_info_esp *alg_info)
 	int eklen, aklen;
 	const char *sep="";
 
+	passert(buflen >= sizeof("none"));
+
 	ptr=buf;
-	/* cast to signed int because we check for -1 in buflen pointer foo later */
-	int slen = (buflen < (signed int)sizeof("none")+1 ?  buflen : (signed int)sizeof("none")+1);
-	buf[0]=0; strncat(buf, "none", slen);
+	buf[0]=0;
+	strncat(buf, "none", buflen - 1);
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
 	    if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL)) {
@@ -226,21 +227,23 @@ alg_info_snprint_esp(char *buf, int buflen, struct alg_info_esp *alg_info)
 			 , esp_info->esp_ealg_id, eklen
 			 , enum_name(&auth_alg_names, esp_info->esp_aalg_id) + (esp_info->esp_aalg_id ? sizeof("AUTH_ALGORITHM_HMAC") : sizeof("AUTH_ALGORITHM"))
 			 , esp_info->esp_aalg_id, aklen);
+
+	    if ( ret < 0 || (size_t)ret >= buflen) {
+		DBG_log("alg_info_snprint_esp: buffer too short for snprintf");
+		break;
+	    }
 	    ptr+=ret;
 	    buflen-=ret;
-	    if (buflen<0) break;
-
 	    sep = ", ";
 	}
-	return ptr-buf;
 }
 
 /*
  * print which AH algorithm has actually been selected, based upon which
  * ones are actually loaded.
  */
-int
-alg_info_snprint_ah(char *buf, int buflen, struct alg_info_esp *alg_info)
+static void
+alg_info_snprint_ah(char *buf, size_t buflen, struct alg_info_esp *alg_info)
 {
 	char *ptr=buf;
 	int ret;
@@ -249,11 +252,11 @@ alg_info_snprint_ah(char *buf, int buflen, struct alg_info_esp *alg_info)
 	int aklen;
 	const char *sep="";
 
+	passert(buflen >= sizeof("none"));
 	ptr=buf;
 
-	/* cast to signed int because we check for -1 in buflen pointer foo later */
-	int slen = (buflen < (signed int)sizeof("none")+1 ?  buflen : (signed int)sizeof("none")+1);
-	buf[0]=0; strncat(buf, "none", slen);
+	buf[0]=0;
+	strncat(buf, "none", buflen - 1);
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
 
@@ -270,23 +273,27 @@ alg_info_snprint_ah(char *buf, int buflen, struct alg_info_esp *alg_info)
 			 , sep
 			 , enum_name(&auth_alg_names, esp_info->esp_aalg_id)+sizeof("AUTH_ALGORITHM_HMAC")
 			 , esp_info->esp_aalg_id, aklen);
+
+	    if ( ret < 0 || (size_t)ret >= buflen) {
+		DBG_log("alg_info_snprint_ah: buffer too short for snprintf");
+		break;
+	    }
 	    ptr+=ret;
 	    buflen-=ret;
-	    if (buflen<0) break;
-
 	    sep = ", ";
 	}
-	return ptr-buf;
 }
 
-int
-alg_info_snprint_phase2(char *buf, int buflen, struct alg_info_esp *alg_info)
+void
+alg_info_snprint_phase2(char *buf, size_t buflen, struct alg_info_esp *alg_info)
 {
     switch(alg_info->alg_info_protoid) {
     case PROTO_IPSEC_ESP:
-	return alg_info_snprint_esp(buf, buflen, alg_info);
+	alg_info_snprint_esp(buf, buflen, alg_info);
+	return;
     case PROTO_IPSEC_AH:
-	return alg_info_snprint_ah(buf, buflen, alg_info);
+	alg_info_snprint_ah(buf, buflen, alg_info);
+	return;
     default:
 	bad_case(alg_info->alg_info_protoid);
     }
@@ -308,8 +315,8 @@ char *alg_info_snprint_ike1(struct ike_info *ike_info
     return buf;
 }
 
-int
-alg_info_snprint_ike(char *buf, int buflen, struct alg_info_ike *alg_info)
+void
+alg_info_snprint_ike(char *buf, size_t buflen, struct alg_info_ike *alg_info)
 {
 	char *ptr=buf;
 	int ret;
@@ -319,6 +326,7 @@ alg_info_snprint_ike(char *buf, int buflen, struct alg_info_ike *alg_info)
 	const char *sep="";
 	struct encrypt_desc *enc_desc;
 	struct hash_desc *hash_desc;
+
 
 	ALG_INFO_IKE_FOREACH(alg_info, ike_info, cnt) {
 	    if (ike_alg_enc_present(ike_info->ike_ealg) 
@@ -344,14 +352,14 @@ alg_info_snprint_ike(char *buf, int buflen, struct alg_info_ike *alg_info)
 			     , ike_info->ike_halg, aklen
 			     , enum_name(&oakley_group_names, ike_info->ike_modp)+sizeof("OAKLEY_GROUP")
 			     , ike_info->ike_modp);
+		if ( ret < 0 || (size_t)ret >= buflen) {
+		   DBG_log("alg_info_snprint_ike: buffer too short for snprintf");
+		   break;
+		}
 		ptr+=ret;
 		buflen-=ret;
-		if (buflen<0) break;
-
-		sep = ", ";
 	    }
 	}
-	return ptr-buf;
 }
 
 /*	
@@ -467,8 +475,9 @@ kernel_alg_db_add(struct db_context *db_ctx
 	    /*	open new transformation */
 	    db_trans_add(db_ctx, ealg_i);
 
+#warning todo: needs to handle ikev2 now as well - 
 	    /* add ESP auth attr (if present) */
-	    if (esp_info->esp_aalg_id != AUTH_ALGORITHM_NONE) {
+	    if (esp_info->esp_aalg_id != IKEv1_AUTH_ALGORITHM_NONE) {
 		db_attr_add_values(db_ctx,
 				   AUTH_ALGORITHM, esp_info->esp_aalg_id);
 	    }

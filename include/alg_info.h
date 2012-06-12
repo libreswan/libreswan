@@ -135,8 +135,7 @@ int alg_info_parse(const char *str);
 int alg_info_snprint(char *buf, int buflen
 		     , struct alg_info *alg_info, bool permitike);
 
-int alg_info_snprint_esp(char *buf, int buflen, struct alg_info_esp *alg_info);
-int alg_info_snprint_ike(char *buf, int buflen, struct alg_info_ike *alg_info);
+void alg_info_snprint_ike(char *buf, size_t buflen, struct alg_info_ike *alg_info);
 #define ALG_INFO_ESP_FOREACH(ai, ai_esp, i) \
 	for (i=(ai)->alg_info_cnt,ai_esp=(ai)->esp; i--; ai_esp++) 
 #define ALG_INFO_IKE_FOREACH(ai, ai_ike, i) \

@@ -226,9 +226,9 @@ idtoa(const struct id *id, char *dst, size_t dstlen)
     case ID_IPV4_ADDR:
     case ID_IPV6_ADDR:
 	if(isanyaddr(&id->ip_addr)) {
-	    int slen = (dstlen < sizeof("%any")+1 ? dstlen : sizeof("%any")+1);
+	    passert(dstlen > sizeof("%any"));
 	    dst[0]='\0';
-	    strncat(dst, "%any", slen);
+	    strncat(dst, "%any", dstlen -1);
 	    n = strlen(dst);
 	} else {
 	    n = (int)addrtot(&id->ip_addr, 0, dst, dstlen) - 1;

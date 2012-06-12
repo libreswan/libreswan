@@ -104,7 +104,7 @@ ike_alg_show_connection(struct connection *c, const char *instance)
 		    , instance
 		    , buf);
 
-		alg_info_snprint_ike(buf, sizeof(buf)-1, c->alg_info_ike);
+		alg_info_snprint_ike(buf, sizeof(buf), c->alg_info_ike);
 		whack_log(RC_COMMENT
 		    , "\"%s\"%s:   IKE algorithms found:  %s"
 		    , c->name
