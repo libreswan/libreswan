@@ -1652,7 +1652,8 @@ parse_ocsp(ocsp_location_t *location, chunk_t blob)
 	plog("ocsp response contains no nonce, replay attack possible");
     }
     /* check if the nonce is identical */
-    if (res.nonce.ptr != NULL && !same_chunk(res.nonce, location->nonce))
+    if (location->nonce.ptr != NULL && res.nonce.ptr != NULL
+	&& !same_chunk(res.nonce, location->nonce))
     {
 	plog("invalid nonce in ocsp response");
 	return;
