@@ -2284,8 +2284,12 @@ xauth_inI0(struct msg_digest *md)
 		break;
 		
 	    case XAUTH_MESSAGE:
-		if(len > 80) len=80;
-		memcpy(msgbuf, dat, len);
+		if(len > 80) {
+		    len=80;
+		}
+		if(dat) {
+		   memcpy(msgbuf, dat, len);
+		}
 		msgbuf[len]='\0';
 		loglog(RC_LOG_SERIOUS, "XAUTH: Bad Message: %s", msgbuf);
 		break;
