@@ -1,6 +1,7 @@
 /* Libreswan whack functions to communicate with pluto (whack.c)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004-2006 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -146,6 +147,10 @@ int starter_whack_read_reply(int sock,
 					xauthpasslen = whack_get_secret(xauthpass
 								  , sizeof(xauthpass));
 				}
+				if (xauthpasslen > 128) {
+					xauthpasslen = 128;
+					starter_log(LOG_LEVEL_ERR, "xauth password cannot be > 128 chars");
+				}
 				ret=send_reply(sock, xauthpass, xauthpasslen);
 				if(ret!=0) return ret;
 				break;
@@ -154,6 +159,10 @@ int starter_whack_read_reply(int sock,
 				if(xauthnamelen==0) {
 					xauthnamelen = whack_get_value(xauthname
 								 , sizeof(xauthname));
+					if (xauthnamelen > 128) {
+						xauthnamelen = 128;
+						starter_log(LOG_LEVEL_ERR, "xauth name cannot be > 128 chars");
+					}
 				}
 				ret=send_reply(sock, xauthname, xauthnamelen);
 				if(ret!=0) return ret;
