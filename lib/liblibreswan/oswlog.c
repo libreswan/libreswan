@@ -2,6 +2,7 @@
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -82,11 +83,11 @@ fmt_log(char *buf, size_t buf_len,
     buf[0] = '\0';
     if (reproc)
 	fmt++;	/* ~ at start of format suppresses this prefix */
-    else if (progname != NULL)
+    else if (progname != NULL && (strlen(progname)+1+1) < buf_len)
     {
 	/* start with name of connection */
-	strncat(buf, progname, buf_len);
-	strncat(buf, " ", buf_len);
+	strncat(buf, progname, buf_len - 1);
+	strncat(buf, " ", buf_len - 1);
     }
 
     ps = strlen(buf);
