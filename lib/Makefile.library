@@ -41,6 +41,10 @@ ifeq ($(USE_NAT_TRAVERSAL),true)
 CFLAGS+= -DNAT_TRAVERSAL
 endif
 
+ifeq ($(USE_DNSSEC),true)
+CFLAGS+= -DDNSSEC
+endif
+
 ifeq ($(USE_KLIPS),true)
 CFLAGS+= -DKLIPS
 endif
