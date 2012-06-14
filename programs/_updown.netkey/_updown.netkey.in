@@ -386,17 +386,15 @@ doroute() {
     parms="$PLUTO_PEER_CLIENT"
     parms2=$IPRARGS
     # use nexthop if (right/left)nexthop is set and nexthop is not %direct
-    if [ -n "$PLUTO_NEXT_HOP" -a "$PLUTO_NEXT_HOP" != "$PLUTO_PEER" ]; then
+    if [ ! "$PLUTO_NEXT_HOP" = "$PLUTO_PEER" ]; then
 	parms2="via $PLUTO_NEXT_HOP"
     fi
 
-    # old: route via pluto_interface
-    # parms2="$parms2 dev ${PLUTO_INTERFACE%:*} $IPROUTEARGS"
-    # new: route via proper interface according to routing table
+    # route via proper interface according to routing table
     if [ "$1" = "del" ]; then
 	PLUTO_PEER_INTERFACE=`ip -o route get $PLUTO_PEER_CLIENT | sed "s/^.*dev \([^ ]*\) .*/\1/"`
     else
-	PLUTO_PEER_INTERFACE=`ip -o route get $PLUTO_PEER | sed "s/^.*dev \([^ ]*\) .*/\1/"`
+	PLUTO_PEER_INTERFACE=`ip -o route get $PLUTO_NEXT_HOP | sed "s/^.*dev \([^ ]*\) .*/\1/"`
     fi
     if [ -z "$PLUTO_PEER_INTERFACE" ]; then
 	PLUTO_PEER_INTERFACE=$PLUTO_INTERFACE
