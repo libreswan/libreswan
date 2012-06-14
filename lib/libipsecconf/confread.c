@@ -54,6 +54,155 @@ static char _tmp_err[512];
 void free_list(char **list);
 char **new_list(char *value);
 
+#ifdef DNSSEC
+# include <unbound.h>
+# include <errno.h>
+#include <arpa/inet.h> /* for inet_ntop */
+# include "dnssec.h"
+struct ub_ctx* dnsctx;
+
+static int unbound_init(int verbose){
+	int ugh;
+	/* create unbound resolver context */
+	dnsctx = ub_ctx_create();
+        if(!dnsctx) {
+                fprintf(stderr,"error: could not create unbound context\n");
+                return 0;
+        }
+	if(verbose) {
+		starter_log(LOG_LEVEL_DEBUG, "unbound context created - setting debug level high\n");
+		ub_ctx_debuglevel(dnsctx,255);
+	}
+
+	/* lookup from /etc/hosts before DNS lookups as people expect that */
+	if( (ugh=ub_ctx_hosts(dnsctx, "/etc/hosts")) != 0) {
+		printf("error reading hosts: %s. errno says: %s\n",
+			ub_strerror(ugh), strerror(errno));
+		return 0;
+	}
+	if(verbose) {
+		starter_log(LOG_LEVEL_DEBUG, "/etc/hosts lookups activated\n");
+	}
+
+	/*
+	 * Use /etc/resolv.conf as forwarding cache - we expect people to reconfigure this
+	 * file if they need to work around DHCP DNS obtained servers
+	 */
+	if( (ugh=ub_ctx_resolvconf(dnsctx, "/etc/resolv.conf")) != 0) {
+		printf("error reading resolv.conf: %s. errno says: %s\n",
+			ub_strerror(ugh), strerror(errno));
+		return 0;
+	}
+	if(verbose) {
+		starter_log(LOG_LEVEL_DEBUG, "/etc/resolv.conf usage activated\n");
+	}
+
+        /* add trust anchors to libunbound context - make this configurable later */
+	if(verbose)
+		starter_log(LOG_LEVEL_DEBUG, "Loading root key:%s\n",rootanchor);
+        ugh = ub_ctx_add_ta(dnsctx, rootanchor);
+        if(ugh != 0) {
+                starter_log(LOG_LEVEL_ERR, "error adding the DNSSEC root key: %s: %s\n", ub_strerror(ugh), strerror(errno));
+		return 0;
+	}
+
+        /* Enable DLV */
+	if(verbose)
+		starter_log(LOG_LEVEL_DEBUG, "Loading dlv key:%s\n",dlvanchor);
+        ugh = ub_ctx_set_option(dnsctx, "dlv-anchor:",dlvanchor);
+        if(ugh != 0) {
+                starter_log(LOG_LEVEL_ERR, "error adding the DLV key: %s: %s\n", ub_strerror(ugh), strerror(errno));
+		return 0;
+	}
+
+	return 1;
+}
+
+/* synchronous blocking resolving - simple replacement of ttoaddr()
+ * src_len 0 means "apply strlen"
+ * af 0 means "try both families
+ */
+static bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
+{
+	const int qtype = (af == AF_INET6) ? 28 : 1; /* 28 = AAAA record, 1 = A record */
+	struct ub_result* result;
+
+        if (srclen == 0) {
+                srclen = strlen(src);
+                if (srclen == 0) {
+                        starter_log(LOG_LEVEL_ERR, "empty hostname in host lookup\n");
+			ub_resolve_free(result);
+			return FALSE;
+		}
+	}
+
+	{
+	  int ugh = ub_resolve(dnsctx, src, qtype, 1 /* CLASS IN */, &result);
+	  if(ugh != 0) {
+		starter_log(LOG_LEVEL_ERR, "unbound error: %s", ub_strerror(ugh));
+		ub_resolve_free(result);
+		return FALSE;
+	  }
+	}
+
+	if(result->bogus) {
+		starter_log(LOG_LEVEL_ERR, "ERROR: %s failed DNSSEC valdation!\n",
+			result->qname);
+		ub_resolve_free(result);
+		return FALSE;
+	}
+	if(!result->havedata) {
+		if(result->secure) {
+			starter_log(LOG_LEVEL_ERR, "Validated reply proves '%s' does not exist\n", src);
+		} else {
+			starter_log(LOG_LEVEL_ERR, "Failed to resolve '%s' (%s)\n", src, (result->bogus) ? "BOGUS" : "insecure");
+		}
+		ub_resolve_free(result);
+		return FALSE;
+	
+	} else if(!result->bogus) {
+		if(!result->secure) {
+			starter_log(LOG_LEVEL_INFO, "warning: %s lookup was not protected by DNSSEC!\n", result->qname);
+		}
+	}
+
+#ifdef PARSER_TYPE_DEBUG
+		int i = 0;
+		starter_log(LOG_LEVEL_DEBUG, "The result has:\n");
+		starter_log(LOG_LEVEL_DEBUG, "qname: %s\n", result->qname);
+		starter_log(LOG_LEVEL_DEBUG, "qtype: %d\n", result->qtype);
+		starter_log(LOG_LEVEL_DEBUG, "qclass: %d\n", result->qclass);
+		if(result->canonname)
+			starter_log(LOG_LEVEL_DEBUG, "canonical name: %s\n", result->canonname);
+		starter_log(LOG_LEVEL_DEBUG, "DNS rcode: %d\n", result->rcode);
+
+		for(i=0; result->data[i] != NULL; i++) {
+			starter_log(LOG_LEVEL_DEBUG, "result data element %d has length %d\n",
+				i, result->len[i]);
+		}
+		starter_log(LOG_LEVEL_DEBUG, "result has %d data element(s)\n", i);
+#endif
+	/* XXX: for now pick the first one and return that */
+	passert(result->data[0] != NULL);
+	{
+	   char dst[INET6_ADDRSTRLEN];
+	   err_t err = tnatoaddr(inet_ntop(af, result->data[0], dst
+			, (af==AF_INET) ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN)
+			, 0, af, ipaddr);
+	   ub_resolve_free(result);
+	   if(err == NULL) {
+#ifdef PARSER_TYPE_DEBUG
+			starter_log(LOG_LEVEL_DEBUG, "success for %s lookup", (af==AF_INET) ? "IPv4" : "IPv6");
+#endif
+		return TRUE;
+	   } else {
+		starter_log(LOG_LEVEL_ERR, "tnatoaddr failed in unbound_resolve()");
+		return FALSE;
+	   }
+	}
+}
+
+#endif /* DNSSEC */
 
 /** 
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -462,10 +611,21 @@ static int validate_end(struct starter_conn *conn_st
 	if(strcasecmp(value, "%defaultroute")==0) {
 	    end->nexttype=KH_DEFAULTROUTE;
 	} else {
-	    er = ttoaddr(value, 0, family, &(end->nexthop));
-	    if (er) ERR_FOUND("bad addr %snexthop=%s [%s]", leftright, value, er);
-
-	    end->nexttype = KH_IPADDR;
+		if (tnatoaddr(value, strlen(value), AF_INET, &(end->nexthop)) != NULL
+		  && tnatoaddr(value, strlen(value), AF_INET6, &(end->nexthop)) != NULL) {
+#ifdef DNSSEC
+		   starter_log(LOG_LEVEL_DEBUG, "Calling unbound_resolve() for %snexthop value\n",leftright);
+		   bool e = unbound_resolve(value, strlen(value), AF_INET, &(end->nexthop));
+		   if(!e) {
+			e = unbound_resolve(value, strlen(value), AF_INET6, &(end->nexthop));
+		   }
+		   if(!e) ERR_FOUND("bad value for %snexthop=%s\n", leftright, value);
+#else
+		   er = ttoaddr(value, 0, family, &(end->nexthop));
+		   if (er) ERR_FOUND("bad value for %snexthop=%s [%s]", leftright, value, er);
+#endif
+		}
+		end->nexttype = KH_IPADDR;
 	}
     } else {
 #if 0
@@ -521,9 +681,17 @@ static int validate_end(struct starter_conn *conn_st
     if(end->strings_set[KSCF_SOURCEIP])
     {
 	char *value = end->strings[KSCF_SOURCEIP];
-	
+#ifdef DNSSEC
+           starter_log(LOG_LEVEL_DEBUG, "Calling unbound_resolve() for %ssourceip value\n",leftright);
+           bool e = unbound_resolve(value, strlen(value), AF_INET, &(end->sourceip));
+           if(!e) {
+                e = unbound_resolve(value, strlen(value), AF_INET6, &(end->sourceip));
+           }
+           if(!e) ERR_FOUND("bad value for %ssourceip=%s\n", leftright, value);
+#else
 	er = ttoaddr(value, 0, family, &(end->sourceip));
 	if (er) ERR_FOUND("bad addr %ssourceip=%s [%s]", leftright, value, er);
+#endif
 
 	if(!end->has_client) {
 	    starter_log(LOG_LEVEL_INFO, "defaulting %ssubnet to %s\n", leftright, value);
@@ -1211,6 +1379,11 @@ int init_load_conn(struct starter_config *cfg
 {
     int connerr;
     struct starter_conn *conn;
+
+    if(!dnsctx){
+	starter_log(LOG_LEVEL_DEBUG, "Initiating unbound cache");
+	unbound_init(1); /* verbose for now */
+    }
     starter_log(LOG_LEVEL_DEBUG, "Loading conn %s", sconn->name);
 
     conn = alloc_add_conn(cfg, sconn->name, perr);
@@ -1394,6 +1567,7 @@ void confread_free(struct starter_config *cfg)
 	free(cfg);
 }
 #undef FREE_STR
+
 
 /*
  * Local Variables:
