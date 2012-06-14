@@ -58,6 +58,9 @@ d.ipsec.conf/compress.xml
 d.ipsec.conf/metric.xml
 d.ipsec.conf/mtu.xml
 d.ipsec.conf/disablearrivalcheck.xml
+d.ipsec.conf/labeled_ipsec.xml
+d.ipsec.conf/policy_label.xml
+d.ipsec.conf/loopback.xml
 d.ipsec.conf/failureshunt.xml
 d.ipsec.conf/connautoend.xml
 d.ipsec.conf/connmanual.xml
