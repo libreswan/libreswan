@@ -21,6 +21,8 @@ v1.0.0 (unreleased)
 * Only set MODP768_MODULUS with USE_VERYWEAK_DH1 [Paul]
 * Fix for three AES-GCM issues with key lengths 128, 192, 256 bits and IV
   of 8, 12, 16 bytes as per RFC 4106 [Avesh]
+* Fix _updown.netkey to insert route on correct interface when nexthop is
+  used [Tuomo]
 * Bugtracker bugs fixed:
    #1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
          tree [Steve Lanser]
