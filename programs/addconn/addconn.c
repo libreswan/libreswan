@@ -431,36 +431,41 @@ main(int argc, char *argv[])
 	exit(0);
     }
 
-    /* XXX Seems we do not support IPv6 here! */
     if(defaultroute) {
 	char b[ADDRTOT_BUF];
+	if (tnatoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr) != NULL
+	&& tnatoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr) != NULL) {
+
+	   /* It's not an IPv4 or IPv6 address, try a dns lookup */
 #ifdef DNSSEC
-	if(verbose) {
+	   if(verbose) {
 		printf("Calling unbound_resolve() for defaultroute value\n");
-	}
-	bool e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
-	if(!e) {
+	   }
+	   bool e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
+	   if(!e) {
 		e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
-	}
-	if(!e) {
-	    printf("ignoring invalid defaultroute: %s\n", defaultroute);
+	   }
+	   if(!e) {
+		printf("ignoring invalid defaultroute: %s\n", defaultroute);
 #else
-	err_t ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
-	if(ugh != NULL) {
+	   /* ttoaddr() ends up calling gethostbyname(), which does not support DNSSEC */
+	   err_t ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
+	   if(ugh != NULL) {
 		ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
-	}
-	if(ugh != NULL) {
-	    printf("ignoring invalid defaultroute: %s:%s\n", defaulroute, ugh);
+	   }
+	   if(ugh != NULL) {
+		printf("ignoring invalid defaultroute: %s:%s\n", defaulroute, ugh);
 #endif
 	    defaultroute = NULL;
 	    /* exit(4); */
-	} else
-
+	    } 
+	}
 	if(verbose) {
-	    addrtot(&cfg->dr, 0, b, sizeof(b));
-	    printf("default route is: %s\n", b);
+	   addrtot(&cfg->dr, 0, b, sizeof(b));
+	   printf("default route is: %s\n", b);
 	}
     }
+
 
     if(defaultnexthop) {
 	char b[ADDRTOT_BUF];
