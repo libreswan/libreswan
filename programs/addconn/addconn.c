@@ -80,7 +80,7 @@ static const char *usage_string = ""
 # include "dnssec.h"
 struct ub_ctx* dnsctx;
 
-int unbound_init(int verbose){
+static int unbound_init(int verbose){
 	int ugh;
 	/* create unbound resolver context */
 	dnsctx = ub_ctx_create();
@@ -141,7 +141,7 @@ int unbound_init(int verbose){
  * src_len 0 means "apply strlen"
  * af 0 means "try both families
  */
-bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
+static bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
 {
 	const int qtype = (af == AF_INET6) ? 28 : 1; /* 28 = AAAA record, 1 = A record */
 	struct ub_result* result;
@@ -434,7 +434,7 @@ main(int argc, char *argv[])
     if(defaultroute) {
 	char b[ADDRTOT_BUF];
 	if (tnatoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr) != NULL
-	&& tnatoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr) != NULL) {
+	&& tnatoaddr(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr) != NULL) {
 
 	   /* It's not an IPv4 or IPv6 address, try a dns lookup */
 #ifdef DNSSEC
@@ -470,7 +470,7 @@ main(int argc, char *argv[])
     if(defaultnexthop) {
 	char b[ADDRTOT_BUF];
 	if (tnatoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh) != NULL
-	&& tnatoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh) != NULL) {
+	&& tnatoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh) != NULL) {
 
 	   /* It's not an IPv4 or IPv6 address, try a dns lookup */
 #ifdef DNSSEC
