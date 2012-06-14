@@ -2,6 +2,7 @@
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -67,6 +68,7 @@ enum keyword_numeric_config_field {
     KBF_HIDETOS,
     KBF_UNIQUEIDS,
     KBF_PLUTOWAIT,
+    KBF_PLUTOSTDERRLOGTIME,
     KBF_OVERRIDEMTU,
     KBF_CONNMTU,
     KBF_STRICTCRLPOLICY,

@@ -1,4 +1,5 @@
 #!/bin/sh
+#
 # IPsec startup and shutdown command
 # Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
 # 
@@ -46,6 +47,7 @@ IPSECplutowait=${IPSECplutowait:-no}
 IPSECuniqueids=${IPSECuniqueids:-yes}
 IPSECcrlcheckinterval=${IPSECcrlcheckinterval:-0}
 IPSECprotostack=${IPSECprotostack:-bsdkame}
+IPSECplutostderrlogtime=${IPSECplutostderrlogtime:-no}
 # IPSECoverridemtu	""
 
 # which kernel are we using?
@@ -241,6 +243,7 @@ case "$1" in
 			--dump "\"$IPSECdumpdir\"" \
 			--opts "\"$IPSECplutoopts\"" \
 			--stderrlog "\"$IPSECplutostderrlog\"" \
+			--plutostderrlogtime "\"$IPSECplutostderrlogtime\"" \
 			--wait "\"$IPSECplutowait\"" \
 			--pre "\"$IPSECprepluto\"" \
 			--post "\"$IPSECpostpluto\"" \

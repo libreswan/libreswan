@@ -71,6 +71,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_FRAGICMP] = TRUE;
 	cfg->setup.options[KBF_HIDETOS]  = TRUE;
 	cfg->setup.options[KBF_PLUTORESTARTONCRASH]  = TRUE;
+	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = FALSE;
 	cfg->setup.options[KBF_UNIQUEIDS]= TRUE;
 #ifdef NAT_TRAVERSAL
 	cfg->setup.options[KBF_DISABLEPORTFLOATING]= FALSE;

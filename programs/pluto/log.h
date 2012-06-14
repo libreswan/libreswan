@@ -1,6 +1,7 @@
 /* logging definitions
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2004       Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012       Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,7 +28,8 @@
 extern bool
     log_to_stderr,	/* should log go to stderr? */
     log_to_syslog,	/* should log go to syslog? */
-    log_to_perpeer;     /* should log go to per-IP file? */
+    log_to_perpeer,     /* should log go to per-IP file? */
+    log_with_timestamp; /* prefix timestamp */
 
 extern bool log_did_something;  /* set if we should log time again to debug*/
 

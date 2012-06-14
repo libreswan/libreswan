@@ -72,6 +72,7 @@ IPSECuniqueids=${IPSECuniqueids:-yes}
 IPSECdisable_port_floating=${IPSECdisable_port_floating:-no}
 IPSECcrlcheckinterval=${IPSECcrlcheckinterval:-0}
 IPSECprotostack=${IPSECprotostack:-auto}
+IPSECplutostderrlogtime=${IPSECplutostderrlogtime:-no}
 # IPSECoverridemtu	""
 
 # set defaults
@@ -330,6 +331,7 @@ case "$1" in
 			--opts "\"$IPSECplutoopts\"" \
 			--stderrlog "\"$IPSECplutostderrlog\"" \
 			--wait "\"$IPSECplutowait\"" \
+			--plutostderrlogtime "\"$IPSECplutostderrlogtime\"" \
 			--pre "\"$IPSECprepluto\"" \
 			--post "\"$IPSECpostpluto\"" \
 			--log "\"$IPSECsyslog\"" $plutorestartoncrash \

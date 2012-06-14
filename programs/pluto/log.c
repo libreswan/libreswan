@@ -3,7 +3,7 @@
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2005-2007 Michael Richardson
  * Copyright (C) 2006-2010 Bart Trojanowski
- * Copyright (C) 2008-2010 Paul Wouters
+ * Copyright (C) 2008-2012 Paul Wouters
  * Copyright (C) 2008-2010 David McCullough.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -71,7 +71,9 @@ bool
     log_to_stderr = TRUE,	/* should log go to stderr? */
     log_to_syslog = TRUE,	/* should log go to syslog? */
     log_to_perpeer= FALSE,	/* should log go to per-IP file? */
-    log_did_something=TRUE;     /* set if we wrote something recently */
+    log_did_something=TRUE,     /* set if we wrote something recently */
+    log_with_timestamp= FALSE; /* some people want timestamps, but we
+				   don't want those in our test output */
 
 
 bool
@@ -421,8 +423,19 @@ libreswan_log(const char *message, ...)
 
     log_did_something=TRUE;
 
-    if (log_to_stderr)
-	fprintf(stderr, "%s\n", m);
+    if (log_to_stderr) {
+	if (log_with_timestamp) {
+		struct tm *timeinfo;
+		char fmt[32];
+		time_t rtime;
+		time(&rtime);
+		timeinfo = localtime (&rtime);
+		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
+		fprintf(stderr, "%s: %s\n", fmt, m);
+	} else {
+		fprintf(stderr, "%s\n", m);
+	}
+    }
     if (log_to_syslog)
 	syslog(LOG_WARNING, "%s", m);
     if (log_to_perpeer)
@@ -445,8 +458,19 @@ loglog(int mess_no, const char *message, ...)
 
     log_did_something=TRUE;
 
-    if (log_to_stderr)
-	fprintf(stderr, "%s\n", m);
+    if (log_to_stderr) {
+	if (log_with_timestamp) {
+		struct tm *timeinfo;
+		char fmt[32];
+		time_t rtime;
+		time(&rtime);
+		timeinfo = localtime (&rtime);
+		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
+		fprintf(stderr, "%s: %s\n", fmt, m);
+	} else {
+		fprintf(stderr, "%s\n", m);
+	}
+    }
     if (log_to_syslog)
 	syslog(LOG_WARNING, "%s", m);
     if (log_to_perpeer)
@@ -701,8 +725,19 @@ DBG_log(const char *message, ...)
     /* then sanitize anything else that is left. */
     (void)sanitize_string(m, sizeof(m));
 
-    if (log_to_stderr)
-	fprintf(stderr, "%c %s\n", debug_prefix, m);
+    if (log_to_stderr) {
+	if (log_with_timestamp) {
+		struct tm *timeinfo;
+		char fmt[32];
+		time_t rtime;
+		time(&rtime);
+		timeinfo = localtime (&rtime);
+		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
+		fprintf(stderr, "%c %s: %s\n", debug_prefix, fmt, m);
+	} else {
+		fprintf(stderr, "%c %s\n", debug_prefix, m);
+	}
+    }
     if (log_to_syslog)
 	syslog(LOG_DEBUG, "%c %s", debug_prefix, m);
     if (log_to_perpeer) {

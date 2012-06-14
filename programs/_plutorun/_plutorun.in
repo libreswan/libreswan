@@ -19,6 +19,7 @@ info=/var/run/pluto/ipsec.info
 
 popts=
 stderrlog=
+plutostderrlogtime=
 showonly=
 plutorestartoncrash=true
 
@@ -47,6 +48,7 @@ do
 	--dump)	                 dumpdir="$2" ; shift	;;
 	--opts)	                 popts="$2" ; shift	;;
 	--stderrlog)             stderrlog="$2" ; shift	;;
+	--plutostderrlogtime)               plutostderrlogtime="$2" ; shift	;;
 	--wait)	                 plutowait="$2" ; shift	;;
         --show)	                 show="--show"  ; shift ;;
 	--showonly)	         showonly="true" ;;
@@ -123,6 +125,11 @@ case "$disable_port_floating" in
 yes)  popts="$popts --disable_port_floating"  ;;
 no|'')                ;;
 *)    echo "unknown disable_port_floating (not yes/no) \`$disable_port_floating'" ;;
+esac
+case "$plutostderrlogtime" in
+yes)  popts="$popts --plutostderrlogtime"  ;;
+no|'')                ;;
+*)    echo "unknown plutostderrlogtime (not yes/no) \`$plutostderrlogtime'" ;;
 esac
 [ -n "$virtual_private" ] && popts="$popts --virtual_private $virtual_private"
 [ -n "$listen" ] && popts="$popts --listen $listen"

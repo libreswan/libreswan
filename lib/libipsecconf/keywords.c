@@ -2,6 +2,7 @@
  * Libreswan config file parser (keywords.c)
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -339,6 +340,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
 #endif
     {"plutoopts",      kv_config, kt_string,    KSF_PLUTOOPTS,NOT_ENUM},
     {"plutostderrlog", kv_config, kt_filename,  KSF_PLUTOSTDERRLOG,NOT_ENUM},
+    {"plutostderrlogtime",        kv_config, kt_bool,      KBF_PLUTOSTDERRLOGTIME,NOT_ENUM},
     {"plutorestartoncrash", kv_config, kt_bool, KBF_PLUTORESTARTONCRASH,NOT_ENUM},
     {"dumpdir",        kv_config, kt_dirname,   KSF_DUMPDIR,NOT_ENUM},
     {"manualstart",    kv_config, kt_string,    KSF_MANUALSTART,NOT_ENUM},

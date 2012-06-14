@@ -1,5 +1,6 @@
 /* get-next-event loop
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001  D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +20,7 @@
 
 extern bool no_retransmits;
 extern bool log_to_stderr_desired;
+extern bool log_with_timestamp_desired;
 
 extern int ctl_fd;	/* file descriptor of control (whack) socket */
 extern struct sockaddr_un ctl_addr;	/* address of control (whack) socket */

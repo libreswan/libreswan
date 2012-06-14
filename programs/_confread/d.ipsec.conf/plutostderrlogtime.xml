@@ -1,0 +1,15 @@
+  <varlistentry>
+  <term><emphasis remap='B'>plutostderrlogtime</emphasis></term>
+  <listitem>
+<para>Whether pluto logs messages with the current timestamp as prefix. This
+might be desired when using <emphasis remap='B'>plutostderrlog=</emphasis>,
+which per default does not log timestamps, as the output is used for
+the test suite and would have to be filtered out.
+Values are
+<emphasis remap='B'>no</emphasis>(the default)
+or
+<emphasis remap='B'>yes</emphasis>
+.</para>
+
+  </listitem>
+  </varlistentry>
