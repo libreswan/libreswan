@@ -7,9 +7,7 @@ Libreswan is an IPsec implementation for Linux. It has support for most
 of the extensions (RFC + IETF drafts) related to IPsec, including 
 IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
 
-Libreswan was originally based on FreeS/WAN 2.04 CVS with the X.509 Patch
-from Andreas Steffen, the NAT-T patch from Arkoon networks and some minor
-bug fixes from 2.05 and 2.06.  See CREDITS for the history.
+Libreswan is originally based on Openswan 2.6.38
 
 Download it from
 
@@ -20,8 +18,8 @@ Download it from
 # REQUIREMENTS
 #########################################################################
 
-A recent Linux distribution based on either Kernel 2.4.x, or 2.6.x are 
-the currently supported platforms.
+A recent Linux distribution based on either Kernel 2.4.x, 2.6.x or 3.x
+are the currently supported platforms.
 
 Most recent distributions have package support for libreswan.  Unless
 a source based build is truly needed,  it is often best to use the pre-built

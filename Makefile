@@ -25,16 +25,15 @@ srcdir?=$(shell pwd)
 
 # dummy default rule
 def:
-	@echo "Please read the README for detailed build instructions including how"
-	@echo "to enable NAT-T support for your kernel, if desired"
+	@echo "Please read the README for detailed build instructions"
 	@echo
 	@echo "Commonly used build commands:"
 	@echo
 	@echo "When using KLIPS:"
-	@echo " make KERNELSRC=/usr/src/linux-2.6.36 module minstall programs install"
+	@echo " make module module_install programs install"
 	@echo
 	@echo "When using KLIPS with OCF:"
-	@echo " make KERNELSRC=/usr/src/linux-2.6.36-ocf/ MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/ocf/config-all.hmodules module minstall programs install"
+	@echo " make MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/ocf/config-all.hmodules module module_install programs install"
 	@echo
 	@echo "When using NETKEY:"
 	@echo " make programs install"
@@ -105,18 +104,13 @@ applysarefpatch:
 # patch kernel
 PATCHER=packaging/utils/patcher
 
-patches:
-	@echo \"make patches\" is obsolete. See \"make kpatch\".
-	exit 1
-
 _patches:
 	echo "===============" >>out.kpatch
 	echo "`date` `cd $(KERNELSRC) ; pwd`" >>out.kpatch
 	$(MAKE) __patches$(KERNELREL) >>out.kpatch
 
 # Linux-2.4.0 version
-PATCHES22=klips/patches2.2
-__patches2.3 __patches2.4:
+__patches2.4:
 	@$(PATCHER) -v -c $(KERNELSRC) Documentation/Configure.help \
 		'CONFIG_KLIPS' $(PATCHES)/Documentation/Configure.help.fs2_2.patch
 	@$(PATCHER) -v $(KERNELSRC) net/Config.in \
@@ -196,16 +190,6 @@ checkprograms::
 		(cd $$d && $(MAKE) srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
 	done; 
 
-checkv199install:
-	@if [ "${LIBDIR}" != "${LIBEXECDIR}" ] && [ -f ${LIBDIR}/pluto ]; \
-	then \
-		echo WARNING: Old version of FreeS/WAN Libreswan 1.x installed. ;\
-		echo WARNING: moving ${LIBDIR} to ${LIBDIR}.v1 ;\
-		mv ${LIBDIR} ${LIBDIR}.v1 ;\
-	fi
-
-install:: checkv199install
-
 clean::
 	rm -rf $(RPMTMPDIR) $(RPMDEST)
 	rm -f out.*build out.*install	# but leave out.kpatch
@@ -217,19 +201,6 @@ KINSERT_PRE=precheck verset insert
 PRE=precheck verset kpatch
 POST=confcheck programs kernel install 
 MPOST=confcheck programs module install 
-#ogo:		$(PRE) pcf $(POST)
-#oldgo:		$(PRE) ocf $(POST)
-#nopromptgo:	$(PRE) rcf $(POST)
-#menugo:		$(PRE) mcf $(POST)
-#xgo:		$(PRE) xcf $(POST)
-
-ogo: obsolete_target
-oldgo: obsolete_target
-nopromptgo: obsolete_target
-menugo: obsolete_target
-xgo: obsolete_target
-obsolete_target:
-	@echo "The targets ogo, oldgo, menugo, nopromptgo and xgo are obsolete. Please read INSTALL"
 
 # preliminaries
 precheck:
@@ -318,28 +289,6 @@ kernel:
 	fi
 	${ERRCHECK} out.kbuild
 
-# this target takes a kernel source tree and it builds a link tree,
-# and then does make oldconfig for each .config file that was found in configs.
-# The location for the disk space required for the link tree is found via
-# $RH_KERNELSRC_POOL
-preprhkern4module:
-	if [ -z "${RH_KERNELSRC_POOL}" ]; then echo Please set RH_KERNELSRC_POOL.; exit 1; fi
-	mkdir -p ${RH_KERNELSRC_POOL}
-	KV=`${KVUTIL} $(RH_KERNELSRC)/Makefile` ; \
-	cd ${RH_KERNELSRC_POOL} && \
-	mkdir -p $$KV && cd $$KV && \
-	for config in ${RH_KERNELSRC}/configs/*; do \
-		basecfg=`basename $$config` ;\
-		mkdir -p ${RH_KERNELSRC_POOL}/$$KV/$$basecfg && \
-		cd ${RH_KERNELSRC_POOL}/$$KV/$$basecfg && \
-		lndir ${RH_KERNELSRC} . && \
-		rm -rf include/asm && \
-		(cd include/linux && sed -e '/#include "\/boot\/kernel.h"/d' <rhconfig.h >rhconfig.h-new && mv rhconfig.h-new rhconfig.h ) && \
-		rm -f include/linux/modules/*.stamp && \
-		${MAKE} dep && \
-		${MAKE} oldconfig; \
-	done;
-
 # module-only building, with error checks
 ifneq ($(strip $(MODBUILDDIR)),)
 ${MODBUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module.make
@@ -353,6 +302,12 @@ ${MODBUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module.make
 module:
 	@if [ -f ${KERNELSRC}/README.libreswan-2 ] ; then \
                 echo "WARNING: Kernel source ${KERNELSRC} has already been patched with libreswan-2, out of tree build might fail!"; \
+        fi;
+	@if [ -f ${KERNELSRC}/README.openswan ] ; then \
+                echo "WARNING: Kernel source ${KERNELSRC} has already been patched with openswan, out of tree build might fail!"; \
+        fi;
+	@if [ -f ${KERNELSRC}/README.openswan-2 ] ; then \
+                echo "WARNING: Kernel source ${KERNELSRC} has already been patched with openswan-2, out of tree build might fail!"; \
         fi;
 	@if [ -f ${KERNELSRC}/README.freeswan ] ; then \
                 echo "ERROR: Kernel source ${KERNELSRC} has already been patched with freeswan, out of tree build will fail!"; \
@@ -518,12 +473,6 @@ kernelpatch2.6 kernelpatch:
 kernelpatch2.4:
 	packaging/utils/kernelpatch 2.4
 
-kernelpatch2.2:
-	packaging/utils/kernelpatch 2.2
-
-kernelpatch2.0:
-	packaging/utils/kernelpatch 2.0
-
 nattpatch:
 	if [ -f ${KERNELSRC}/Makefile ]; then \
 		${MAKE} nattpatch${KERNELREL}; \
@@ -538,9 +487,6 @@ nattpatch2.6:
 
 nattpatch2.4:
 	packaging/utils/nattpatch 2.4
-
-nattpatch2.2:
-	packaging/utils/nattpatch 2.2
 
 nattupdate:
 	(cd UMLPOOL && diff -u plain26/net/ipv4/udp.c.orig plain26/net/ipv4/udp.c; exit 0) >nat-t/net/ipv4/udp.c.os2_6.patch
@@ -576,7 +522,7 @@ buildready:
 rpm:
 	@echo To build an rpm, use: rpmbuild -ba packaging/XXX/libreswan.spec
 	@echo where XXX is your rpm based vendor 
-	rpmbuild -bs packaging/centos5/bluerose.spec
+	rpmbuild -bs packaging/fedora/libreswan.spec
 
 ipkg_strip:
 	@echo "Minimizing size for ipkg binaries..."

@@ -17,8 +17,6 @@ patch26=false
 . packaging/utils/kernelpatching.sh
 
 case $KERN in
-    2.0) patchname=os2_0; altname=fs2_0; patch20=true ;;
-    2.2) patchname=os2_2; altname=fs2_2; patch22=true ;;
     2.4) patchname=os2_4; altname=fs2_4; patch24=true ;;
     2.6) patchname=os2_6; altname=fs2_6; patch26=true ;;
     *) echo "Invalid kernel patch target: $KERN"; exit 1;;
@@ -46,12 +44,8 @@ do
     *.${patchname}.patch) cat $file;;
     *.${altname}.patch) cat $file;;
     *.patch) ;;
-    *.fs2_0) fakeallpatch $patch20 $file $pname ;;
-    *.fs2_2) fakeallpatch $patch22 $file $pname ;;
     *.fs2_4) fakeallpatch $patch24 $file $pname ;;
     *.fs2_6) fakeallpatch $patch26 $file $pname ;;
-    *.os2_0) fakeallpatch $patch20 $file $pname ;;
-    *.os2_2) fakeallpatch $patch22 $file $pname ;;
     *.os2_4) fakeallpatch $patch24 $file $pname ;;
     *.os2_6) fakeallpatch $patch26 $file $pname ;;
     *) fakeallpatch true $file $file ;;
@@ -63,7 +57,7 @@ done
 # a file which is generated at runtime, so there is nothing in CVS.
 #
 echo '--- /dev/null   Fri May 10 13:59:54 2002'
-echo '+++ linux/net/ipsec/Makefile.ver  Sun Jul 28 22:10:40 2002'
+echo '+++ linux/net/ipsec/Makefile.ver  Wed Dec 31 19:00:00 1969'
 echo '@@ -0,0 +1 @@'
 echo -n '+'
 (cd ${LIBRESWANSRCDIR} && make env ) | grep IPSECVERSION
