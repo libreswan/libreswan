@@ -398,6 +398,9 @@ subnettypeof.o: subnettypeof.c internal.h \
 ttoaddr.o: ttoaddr.c internal.h ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
   ../../linux/include/libreswan/ipsec_param.h
+unbound.o: unbound.c internal.h ../../linux/include/libreswan.h \
+  ../../linux/include/libreswan/ipsec_kversion.h \
+  ../../linux/include/libreswan/ipsec_param.h
 ttodata.o: ttodata.c internal.h ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
   ../../linux/include/libreswan/ipsec_param.h
