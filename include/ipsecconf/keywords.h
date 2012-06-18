@@ -267,8 +267,6 @@ struct starter_comments {
 };
 
 TAILQ_HEAD(starter_comments_list, starter_comments);
-extern void move_comment_list(struct starter_comments_list *to,
-			      struct starter_comments_list *from);
 
 struct section_list {
     TAILQ_ENTRY(section_list) link;

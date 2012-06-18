@@ -1,6 +1,7 @@
 /* Libreswan config file parser (confread.h)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -149,18 +150,6 @@ extern struct starter_config *confread_load(const char *file
 					    , bool setuponly);
 extern struct starter_conn *alloc_add_conn(struct starter_config *cfg
 					   , char *name, err_t *perr);
-extern int init_load_conn(struct starter_config *cfg
-			  , struct config_parsed *cfgp
-			  , struct section_list *sconn
-			  , bool alsoprocessing
-			  , bool defaultconn
-			  , bool resolvip
-			  , err_t *perr);
-extern bool translate_conn (struct starter_conn *conn
-			    , struct section_list *sl
-			    , enum keyword_set   assigned_value
-			    , err_t *error);
-
 void confread_free(struct starter_config *cfg);
 
 void ipsecconf_default_values (struct starter_config *cfg);
