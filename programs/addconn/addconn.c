@@ -275,7 +275,9 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 		fprintf(stderr,"unbound_init() failed, aborting\n");
 		return 1;
 	}
-	fprintf(stderr,"unbound_init() called\n");
+	if(verbose) {
+	   fprintf(stderr,"unbound_init() called\n");
+	}
     }
 #endif
 
