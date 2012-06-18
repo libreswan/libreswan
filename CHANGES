@@ -11,6 +11,7 @@ v1.0.0 (unreleased)
 * pluto: Changed our vendorid prefix to "OEN" [Paul]
 * pluto: UDPFROMTO support was not enabled for NETKEY if not also build
   with KLIPS [Paul]
+* starter now supports USE_DNSSEC using libunbound [Paul]
 * Added new option plutostderrlogtime= (default=no) [paul]
 * Additional safety checks to strncat() calls for addrtot(), inet_addrtot(),
   sin_addrtot(), alg_info_snprint_esp(), alg_info_snprint_ah(), idtoa() and
