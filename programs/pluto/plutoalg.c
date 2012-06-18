@@ -477,7 +477,7 @@ kernel_alg_db_add(struct db_context *db_ctx
 
 #warning todo: needs to handle ikev2 now as well - 
 	    /* add ESP auth attr (if present) */
-	    if (esp_info->esp_aalg_id != IKEv1_AUTH_ALGORITHM_NONE) {
+	    if (esp_info->esp_aalg_id != AUTH_ALGORITHM_NONE) {
 		db_attr_add_values(db_ctx,
 				   AUTH_ALGORITHM, esp_info->esp_aalg_id);
 	    }
