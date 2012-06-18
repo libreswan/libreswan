@@ -46,7 +46,10 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <libreswan.h>
-
+#ifdef DNSSEC
+# include "dnssec.h"
+# include <unbound.h>
+#endif
 #include "sysdep.h"
 #include "constants.h"
 #include "oswalloc.h"
@@ -74,154 +77,6 @@ static const char *usage_string = ""
     "               {--verbose] \n"
     "               [--defaultroute <addr>] [--defaultroutenexthop <addr>]\n"
     "               names\n";
-
-#ifdef DNSSEC
-# include <unbound.h>
-# include "dnssec.h"
-struct ub_ctx* dnsctx;
-
-static int unbound_init(int verbose){
-	int ugh;
-	/* create unbound resolver context */
-	dnsctx = ub_ctx_create();
-        if(!dnsctx) {
-                fprintf(stderr,"error: could not create unbound context\n");
-                return 0;
-        }
-	if(verbose) {
-		printf("unbound context created - setting debug level high\n");
-		ub_ctx_debuglevel(dnsctx,255);
-	}
-
-	/* lookup from /etc/hosts before DNS lookups as people expect that */
-	if( (ugh=ub_ctx_hosts(dnsctx, "/etc/hosts")) != 0) {
-		printf("error reading hosts: %s. errno says: %s\n",
-			ub_strerror(ugh), strerror(errno));
-		return 0;
-	}
-	if(verbose) {
-		printf("/etc/hosts lookups activated\n");
-	}
-
-	/*
-	 * Use /etc/resolv.conf as forwarding cache - we expect people to reconfigure this
-	 * file if they need to work around DHCP DNS obtained servers
-	 */
-	if( (ugh=ub_ctx_resolvconf(dnsctx, "/etc/resolv.conf")) != 0) {
-		printf("error reading resolv.conf: %s. errno says: %s\n",
-			ub_strerror(ugh), strerror(errno));
-		return 0;
-	}
-	if(verbose) {
-		printf("/etc/resolv.conf usage activated\n");
-	}
-
-        /* add trust anchors to libunbound context - make this configurable later */
-	if(verbose)
-		printf("Loading root key:%s\n",rootanchor);
-        ugh = ub_ctx_add_ta(dnsctx, rootanchor);
-        if(ugh != 0) {
-                fprintf(stderr, "error adding the DNSSEC root key: %s: %s\n", ub_strerror(ugh), strerror(errno));
-		return 0;
-	}
-
-        /* Enable DLV */
-	if(verbose)
-		printf("Loading dlv key:%s\n",dlvanchor);
-        ugh = ub_ctx_set_option(dnsctx, "dlv-anchor:",dlvanchor);
-        if(ugh != 0) {
-                fprintf(stderr, "error adding the DLV key: %s: %s\n", ub_strerror(ugh), strerror(errno));
-		return 0;
-	}
-
-	return 1;
-}
-
-/* synchronous blocking resolving - simple replacement of ttoaddr()
- * src_len 0 means "apply strlen"
- * af 0 means "try both families
- */
-static bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr)
-{
-	const int qtype = (af == AF_INET6) ? 28 : 1; /* 28 = AAAA record, 1 = A record */
-	struct ub_result* result;
-
-        if (srclen == 0) {
-                srclen = strlen(src);
-                if (srclen == 0) {
-                        fprintf(stderr, "empty hostname in host lookup\n");
-			ub_resolve_free(result);
-			return FALSE;
-		}
-	}
-
-	{
-	  int ugh = ub_resolve(dnsctx, src, qtype, 1 /* CLASS IN */, &result);
-	  if(ugh != 0) {
-		fprintf(stderr, "unbound error: %s", ub_strerror(ugh));
-		ub_resolve_free(result);
-		return FALSE;
-	  }
-	}
-
-	if(result->bogus) {
-		fprintf(stderr,"ERROR: %s failed DNSSEC valdation!\n",
-			result->qname);
-		ub_resolve_free(result);
-		return FALSE;
-	}
-	if(!result->havedata) {
-		if(result->secure) {
-			fprintf(stderr,"Validated reply proves '%s' does not exist\n", src);
-		} else {
-			fprintf(stderr,"Failed to resolve '%s' (%s)\n", src, (result->bogus) ? "BOGUS" : "insecure");
-		}
-		ub_resolve_free(result);
-		return FALSE;
-	
-	} else if(!result->bogus) {
-		if(!result->secure) {
-			fprintf(stderr,"warning: %s lookup was not protected by DNSSEC!\n", result->qname);
-		}
-	}
-	
-	if(verbose) {
-		int i = 0;
-		printf("The result has:\n");
-		printf("qname: %s\n", result->qname);
-		printf("qtype: %d\n", result->qtype);
-		printf("qclass: %d\n", result->qclass);
-		if(result->canonname)
-			printf("canonical name: %s\n", result->canonname);
-		printf("DNS rcode: %d\n", result->rcode);
-
-		for(i=0; result->data[i] != NULL; i++) {
-			printf("result data element %d has length %d\n",
-				i, result->len[i]);
-		}
-		printf("result has %d data element(s)\n", i);
-	}
-	/* XXX: for now pick the first one and return that */
-	passert(result->data[0] != NULL);
-	{
-	   char dst[INET6_ADDRSTRLEN];
-	   err_t err = tnatoaddr(inet_ntop(af, result->data[0], dst
-			, (af==AF_INET) ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN)
-			, 0, af, ipaddr);
-	   ub_resolve_free(result);
-	   if(err == NULL) {
-		if(verbose) {
-			printf("success for %s lookup", (af==AF_INET) ? "IPv4" : "IPv6");
-		}
-		return TRUE;
-	   } else {
-		fprintf(stderr, "tnatoaddr failed in unbound_resolve()");
-		return FALSE;
-	   }
-	}
-}
-
-#endif /* DNSSEC */
 
 
 static void usage(void)
@@ -276,6 +131,10 @@ main(int argc, char *argv[])
     char *defaultnexthop = NULL;
     char *ctlbase = NULL;
     bool resolvip = FALSE;
+#ifdef DNSSEC
+/* our unbound resolver */
+struct ub_ctx *dnsctx = ub_ctx_create();
+#endif
 
 #if 0
     /* efence settings */
@@ -412,10 +271,11 @@ main(int argc, char *argv[])
 #ifdef DNSSEC
     if(resolvip) {
 	/* initialise our DNSSEC resolver context */
-	if(!unbound_init(verbose)){
+	if(!unbound_init(dnsctx)){
 		fprintf(stderr,"unbound_init() failed, aborting\n");
 		return 1;
 	}
+	fprintf(stderr,"unbound_init() called\n");
     }
 #endif
 
@@ -441,9 +301,9 @@ main(int argc, char *argv[])
 	   if(verbose) {
 		printf("Calling unbound_resolve() for defaultroute value\n");
 	   }
-	   bool e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
+	   bool e = unbound_resolve(dnsctx, defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
 	   if(!e) {
-		e = unbound_resolve(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
+		e = unbound_resolve(dnsctx, defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
 	   }
 	   if(!e) {
 		printf("ignoring invalid defaultroute: %s\n", defaultroute);
@@ -477,9 +337,9 @@ main(int argc, char *argv[])
 	   if(verbose) {
 		printf("Calling unbound_resolve() for defaultnexthop value\n");
 	   }
-	   bool e = unbound_resolve(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
+	   bool e = unbound_resolve(dnsctx, defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
 	   if(!e) {
-		e = unbound_resolve(defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh);
+		e = unbound_resolve(dnsctx, defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh);
 	   }
 	   if(!e) {
 		printf("ignoring invalid defaultnexthop: %s\n", defaultnexthop);

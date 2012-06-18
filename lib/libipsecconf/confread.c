@@ -51,16 +51,16 @@ static char _tmp_err[512];
  */
 #define POLICY_ONLY_CONN(conn) if(conn->options[KBF_AUTO] > STARTUP_ROUTE) { conn->options[KBF_AUTO]=STARTUP_POLICY; }
 
-void free_list(char **list);
-char **new_list(char *value);
+static void free_list(char **list);
+static char **new_list(char *value);
 
 #ifdef DNSSEC
 # include <unbound.h>
 # include <errno.h>
 #include <arpa/inet.h> /* for inet_ntop */
 # include "dnssec.h"
-struct ub_ctx* dnsctx;
 
+#if 0
 static int unbound_init(int verbose){
 	int ugh;
 	/* create unbound resolver context */
@@ -203,7 +203,7 @@ static bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr
 }
 
 #endif /* DNSSEC */
-
+#endif
 /** 
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
  *
@@ -280,6 +280,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 }
 
 /* format error, and append to string of errors */
+static
 int error_append(char **perr, const char *fmt, ...) 
 {
     va_list args;
@@ -331,6 +332,7 @@ int error_append(char **perr, const char *fmt, ...)
  * @param list list of pointers
  * @return void
  */
+static
 void free_list(char **list)
 {
 	char **s;
@@ -345,6 +347,7 @@ void free_list(char **list)
  * @param value 
  * @return new_list (pointer to list of pointers)
  */
+static
 char **new_list(char *value)
 {
 	char *val, *b, *e, *end, **nlist;
@@ -499,7 +502,8 @@ static int load_setup (struct starter_config *cfg
  * @param perr pointer to char containing error value
  * @return int 0 if successfull
  */
-static int validate_end(struct starter_conn *conn_st
+static int validate_end(struct ub_ctx *dnsctx
+			, struct starter_conn *conn_st
 			, struct starter_end *end
 			, bool left
 			, bool resolvip UNUSED
@@ -615,9 +619,9 @@ static int validate_end(struct starter_conn *conn_st
 		  && tnatoaddr(value, strlen(value), AF_INET6, &(end->nexthop)) != NULL) {
 #ifdef DNSSEC
 		   starter_log(LOG_LEVEL_DEBUG, "Calling unbound_resolve() for %snexthop value\n",leftright);
-		   bool e = unbound_resolve(value, strlen(value), AF_INET, &(end->nexthop));
+		   bool e = unbound_resolve(dnsctx, value, strlen(value), AF_INET, &(end->nexthop));
 		   if(!e) {
-			e = unbound_resolve(value, strlen(value), AF_INET6, &(end->nexthop));
+			e = unbound_resolve(dnsctx, value, strlen(value), AF_INET6, &(end->nexthop));
 		   }
 		   if(!e) ERR_FOUND("bad value for %snexthop=%s\n", leftright, value);
 #else
@@ -683,9 +687,9 @@ static int validate_end(struct starter_conn *conn_st
 	char *value = end->strings[KSCF_SOURCEIP];
 #ifdef DNSSEC
            starter_log(LOG_LEVEL_DEBUG, "Calling unbound_resolve() for %ssourceip value\n",leftright);
-           bool e = unbound_resolve(value, strlen(value), AF_INET, &(end->sourceip));
+           bool e = unbound_resolve(dnsctx, value, strlen(value), AF_INET, &(end->sourceip));
            if(!e) {
-                e = unbound_resolve(value, strlen(value), AF_INET6, &(end->sourceip));
+                e = unbound_resolve(dnsctx, value, strlen(value), AF_INET6, &(end->sourceip));
            }
            if(!e) ERR_FOUND("bad value for %ssourceip=%s\n", leftright, value);
 #else
@@ -749,6 +753,7 @@ static int validate_end(struct starter_conn *conn_st
  *        value is considered acceptable.
  * @return bool 0 if successfull
  */
+static
 bool translate_conn (struct starter_conn *conn
 		     , struct section_list *sl
 		     , enum keyword_set   assigned_value
@@ -968,7 +973,7 @@ bool translate_conn (struct starter_conn *conn
     return err;
 }
 
-
+static
 void move_comment_list(struct starter_comments_list *to,
 		       struct starter_comments_list *from)
 {
@@ -983,7 +988,9 @@ void move_comment_list(struct starter_comments_list *to,
     }
 }
 
-static int load_conn_basic(struct starter_conn *conn
+static
+int load_conn_basic(struct ub_ctx *dnsctx
+			   , struct starter_conn *conn
 			   , struct section_list *sl
 			   , enum keyword_set assigned_value
 			   , err_t *perr)
@@ -998,7 +1005,8 @@ static int load_conn_basic(struct starter_conn *conn
 
 
 
-static int load_conn (struct starter_config *cfg
+static int load_conn (struct ub_ctx *dnsctx
+		      , struct starter_config *cfg
 		      , struct starter_conn *conn
 		      , struct config_parsed *cfgp
 		      , struct section_list *sl
@@ -1017,7 +1025,7 @@ static int load_conn (struct starter_config *cfg
 	
     err = 0;
 
-    err += load_conn_basic(conn, sl, defaultconn ? k_default : k_set, perr);
+    err += load_conn_basic(dnsctx, conn, sl, defaultconn ? k_default : k_set, perr);
 
     move_comment_list(&conn->comments, &sl->comments);
 
@@ -1275,8 +1283,8 @@ static int load_conn (struct starter_config *cfg
 	}
     }
 
-    err += validate_end(conn, &conn->left,  TRUE,  resolvip, perr);
-    err += validate_end(conn, &conn->right, FALSE, resolvip, perr);
+    err += validate_end(dnsctx, conn, &conn->left,  TRUE,  resolvip, perr);
+    err += validate_end(dnsctx, conn, &conn->right, FALSE, resolvip, perr);
     /*
      * TODO:
      * verify both ends are using the same inet family, if one end
@@ -1369,7 +1377,9 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name, err_
     return conn;
 }
 
-int init_load_conn(struct starter_config *cfg
+static
+int init_load_conn(struct ub_ctx *dnsctx
+		   , struct starter_config *cfg
 		   , struct config_parsed *cfgp
 		   , struct section_list *sconn
 		   , bool alsoprocessing
@@ -1380,10 +1390,6 @@ int init_load_conn(struct starter_config *cfg
     int connerr;
     struct starter_conn *conn;
 
-    if(!dnsctx){
-	starter_log(LOG_LEVEL_DEBUG, "Initiating unbound cache");
-	unbound_init(1); /* verbose for now */
-    }
     starter_log(LOG_LEVEL_DEBUG, "Loading conn %s", sconn->name);
 
     conn = alloc_add_conn(cfg, sconn->name, perr);
@@ -1391,7 +1397,7 @@ int init_load_conn(struct starter_config *cfg
 	return -1;
     }
     
-    connerr = load_conn (cfg, conn, cfgp, sconn, TRUE,
+    connerr = load_conn (dnsctx, cfg, conn, cfgp, sconn, TRUE,
 			 defaultconn, resolvip, perr);
 		
     if(connerr != 0) {
@@ -1416,7 +1422,10 @@ struct starter_config *confread_load(const char *file
 	struct config_parsed *cfgp;
 	struct section_list *sconn;
 	unsigned int err = 0, connerr;
-
+#ifdef DNSSEC
+	struct ub_ctx *dnsctx =  ub_ctx_create();
+	unbound_init(dnsctx);
+#endif
 	/**
 	 * Load file
 	 */
@@ -1461,7 +1470,7 @@ struct starter_config *confread_load(const char *file
 	   {
 		if (strcmp(sconn->name,"%default")==0) {
 			starter_log(LOG_LEVEL_DEBUG, "Loading default conn");
-			err += load_conn (cfg, &cfg->conn_default,
+			err += load_conn (dnsctx, cfg, &cfg->conn_default,
 					  cfgp, sconn, FALSE,
 					  /*default conn*/TRUE,
 					  resolvip, perr);
@@ -1469,7 +1478,7 @@ struct starter_config *confread_load(const char *file
 
 		if (strcmp(sconn->name,"%oedefault")==0) {
 			starter_log(LOG_LEVEL_DEBUG, "Loading oedefault conn");
-			err += load_conn (cfg, &cfg->conn_oedefault,
+			err += load_conn (dnsctx, cfg, &cfg->conn_oedefault,
 					  cfgp, sconn, FALSE,
 					  /*default conn*/TRUE,
 					  resolvip, perr);
@@ -1487,7 +1496,7 @@ struct starter_config *confread_load(const char *file
 		if (strcmp(sconn->name,"%default")==0) continue;
 		if (strcmp(sconn->name,"%oedefault")==0) continue;
 
-		connerr = init_load_conn(cfg, cfgp, sconn, TRUE, FALSE,
+		connerr = init_load_conn(dnsctx, cfg, cfgp, sconn, TRUE, FALSE,
 					 resolvip, perr);
 
 		if(connerr == -1) {

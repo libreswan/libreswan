@@ -26,7 +26,7 @@ MANDIR=$(MANTREE)/man3
 
 X509LIB=x509dn.c certload.c pem.c pkcs.c asn1.c oid.c pgp.c x509chain.c
 
-SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
+SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c unbound.c \
 	atoasr.c atosubnet.c atoul.c constants.c datatot.c \
 	alloc.c biglset.c diag.c \
 	goodmask.c id.c initaddr.c initsaid.c initsubnet.c \
@@ -114,6 +114,10 @@ endif
 
 ifeq ($(USE_LABELED_IPSEC),true)
 CFLAGS+=-DHAVE_LABELED_IPSEC
+endif
+
+ifeq ($(USE_DNSSEC),true)
+CFLAGS+=-DDNSSEC
 endif
 
 CFLAGS+=-DFINALCONFDIR=\"${FINALCONFDIR}\"
