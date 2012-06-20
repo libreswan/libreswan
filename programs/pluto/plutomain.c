@@ -357,9 +357,6 @@ main(int argc, char **argv)
     libreswan_passert_fail = passert_fail;
 #endif
 
-    /* see if there is an environment variable */
-    coredir = getenv("PLUTO_CORE_DIR");
-
     if(getenv("PLUTO_WAIT_FOR_GDB")) {
 	sleep(120);
     }
