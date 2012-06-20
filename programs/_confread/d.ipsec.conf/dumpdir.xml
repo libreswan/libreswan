@@ -5,8 +5,10 @@
 <emphasis remap='I'>setup</emphasis>
 (notably the Pluto daemon) be allowed to
 dump core?
-The empty value (the default) means they are not
-allowed to.</para>
+The default value is <emphasis remap='I'>/var/run/pluto</emphasis>. When SElinux
+runs in enforced mode, changing this requires a similar change in the SElinux policy
+for the pluto daemon.
+</para>
 
   </listitem>
   </varlistentry>

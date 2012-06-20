@@ -322,6 +322,8 @@ main(int argc, char **argv)
     char *coredir;
     const struct osw_conf_options *oco;
 
+    coredir = NULL;
+
 #ifdef NAT_TRAVERSAL
     /** Overridden by nat_traversal= in ipsec.conf */
     bool nat_traversal = FALSE;
@@ -731,12 +733,14 @@ main(int argc, char **argv)
 	nhelpers = 0;
 #endif
 
-    /* if a core dir was set, chdir there */
-    if(coredir) 
-	if(chdir(coredir) == -1) {
-	   int e = errno;
-	   libreswan_log("pluto: chdir() do dumpdir failed (%d %s)\n",
-                    e, strerror(e));
+    /* default coredir to location compatible with SElinux */
+    if(!coredir) {
+	coredir = clone_str("/var/run/pluto", "coredir");
+    }
+    if(chdir(coredir) == -1) {
+	int e = errno;
+	libreswan_log("pluto: chdir() do dumpdir failed (%d: %s)\n",
+	   e, strerror(e));
     }
 
     oco = osw_init_options();
