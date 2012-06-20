@@ -1124,6 +1124,8 @@ linux_pfkey_add_aead(void)
 {
 	struct sadb_alg alg;
 
+	alg.sadb_alg_reserved = 0;
+
 	alg.sadb_alg_ivlen = 8;
 	alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
 	alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
