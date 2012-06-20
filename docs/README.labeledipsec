@@ -1,0 +1,4 @@
+Be careful with deploying this. Please see:
+
+http://marc.info/?l=selinux&m=119550363105309&w=2
+https://bugzilla.redhat.com/show_bug.cgi?id=235720
