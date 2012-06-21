@@ -354,6 +354,7 @@ if [ -n "`pidof unbound`" ]; then
         echo "flushing local nameserver of $PLUTO_CISCO_DOMAIN_INFO"
         /usr/sbin/unbound-control forward_remove $PLUTO_CISCO_DOMAIN_INFO
         /usr/sbin/unbound-control flush_zone $PLUTO_CISCO_DOMAIN_INFO
+    fi
     return
 fi
 
