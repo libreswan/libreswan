@@ -827,21 +827,29 @@ init_timer(void)
     valstr = getenv("PLUTO_EVENT_RETRANSMIT_DELAY");
     if(valstr) {
 	event_retransmit_delay_0 = atoi(valstr);
+	DBG(DBG_CONTROL, DBG_log("PLUTO_EVENT_RETRANSMIT_DELAY set to '%d'"
+		, event_retransmit_delay_0));
     }
 
     valstr = getenv("PLUTO_MAXIMUM_RETRANSMISSIONS");
     if(valstr) {
 	maximum_retransmissions  = atoi(valstr);
+	DBG(DBG_CONTROL, DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS set to '%d'"
+		, maximum_retransmissions));
     }
 
     valstr = getenv("PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL");
     if(valstr) {
 	maximum_retransmissions_initial = atoi(valstr);
+	DBG(DBG_CONTROL, DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL set to '%d'"
+		, maximum_retransmissions_initial));
     }
 
     valstr = getenv("PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1");
     if(valstr) {
 	maximum_retransmissions_quick_r1= atoi(valstr);
+	DBG(DBG_CONTROL, DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1 set to '%d'"
+		, maximum_retransmissions_quick_r1));
     }
 }
 
