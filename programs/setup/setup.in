@@ -80,6 +80,14 @@ fi
 test -f /etc/debian_version && BINARY_ERROR=0 || BINARY_ERROR=5
 test -x $IPSEC_SBINDIR/ipsec || exit $BINARY_ERROR
 
+# This is so we can get PLUTO_* env variables - the service/systemctl
+# commands won't pass the entire environment along.
+if [ -f /etc/sysconfig/ipsec ]; then
+     . /etc/sysconfig/ipsec
+elif [ -f /etc/default/ipsec ]; then
+     . /etc/default/ipsec
+fi
+
 # misc setup
 umask 022
 
