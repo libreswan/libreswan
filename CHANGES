@@ -25,6 +25,7 @@ v1.0.0 (unreleased)
 * Fix _updown.netkey to insert route on correct interface when nexthop is
   used [Tuomo]
 * Fixed _updown.mast missing incomplete if-clause [Harald]
+* Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
 * Bugtracker bugs fixed:
    #1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
          tree [Steve Lanser]
