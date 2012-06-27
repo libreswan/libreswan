@@ -55,6 +55,7 @@
 #include "oswcrypto.h"
 
 #include <nss.h>
+#include <nspr4/prerror.h>
 #include <pk11pub.h>
 #include <keyhi.h>
 #include "oswconf.h"
