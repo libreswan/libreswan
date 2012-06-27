@@ -70,6 +70,9 @@ west:~#
 117 "west--east-port3" #2: STATE_QUICK_I1: initiate
 004 "west--east-port3" #2: STATE_QUICK_I2: sent QI2, IPsec SA established
 west:~#
+
+FIXME HERE FOR KNOWN GOOD OUTPUT
+
  telnet east-out 3 | wc -l
 Connection closed by foreign host.
      30
