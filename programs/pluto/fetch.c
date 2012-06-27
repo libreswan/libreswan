@@ -710,7 +710,7 @@ fetch_ocsp(void)
     unlock_ocsp_fetch_list("fetch_ocsp");
 }
 
-static void*
+static void
 fetch_thread(void *arg UNUSED)
 {
     struct timespec wait_interval;
