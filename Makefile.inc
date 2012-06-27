@@ -193,6 +193,8 @@ BISONOSFLAGS=
 #USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
 GCC_LINT ?= -DGCC_LINT 
 USERCOMPILE?=-g -O3 ${WERROR} $(GCC_LINT) -DSUPPORT_BROKEN_ANDROID_ICS
+# on fedora/rhel 
+#USERCOMPILE?=-g -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4  -m64 -mtune=generic -fPIE -pie -DSUPPORT_BROKEN_ANDROID_ICS
 KLIPSCOMPILE=-O3 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # Additional debugging for developers (warning: can crash libreswan!)
 #USERCOMPILE?=-g -DLEAK_DETECTIVE -lefence
@@ -201,6 +203,8 @@ KLIPSCOMPILE=-O3 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
  
 # extra link flags
 USERLINK?=-Wl,-z,relro
+# on fedora/rhel
+#USERLINK=-g -pie
 
 PORTINCLUDE?=
 
