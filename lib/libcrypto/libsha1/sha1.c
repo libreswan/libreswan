@@ -142,11 +142,11 @@ void SHA1Update(SHA1_CTX* context, const unsigned char* data, u_int32_t len)
 
 /* Add padding and return the message digest. */
 
-void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
+void SHA1Final(unsigned char digest[SHA1_DIGEST_SIZE], SHA1_CTX* context)
 {
 	unsigned int length;
 	SECStatus status;
-	status=PK11_DigestFinal(context->ctx_nss, digest, &length, sizeof(digest));
+	status=PK11_DigestFinal(context->ctx_nss, digest, &length, SHA1_DIGEST_SIZE );
 	PR_ASSERT(length==SHA1_DIGEST_SIZE);
 	PR_ASSERT(status==SECSuccess);
 	PK11_DestroyContext(context->ctx_nss, PR_TRUE);

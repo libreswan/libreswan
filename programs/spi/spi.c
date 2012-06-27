@@ -50,6 +50,8 @@
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 
+#include "constants.h"
+
 #include "libreswan/radij.h"
 #include "libreswan/ipsec_encap.h"
 #include "libreswan/ipsec_xform.h"
@@ -58,7 +60,6 @@
 #include "libreswan/ipsec_esp.h"
 #include "libreswan/ipsec_sa.h"  /* IPSEC_SAREF_NULL */
 
-#include "constants.h"
 #include "oswlog.h"
 #include "alg_info.h"
 #include "kernel_alg.h"

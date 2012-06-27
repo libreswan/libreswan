@@ -134,7 +134,7 @@ void SHA1Update(void *vcontext, unsigned char* data, __u32 len)
 
 /* Add padding and return the message digest. */
 
-void SHA1Final(unsigned char digest[20], void *vcontext)
+void SHA1Final(unsigned char digest[SHA1_DIGEST_SIZE], void *vcontext)
 {
   __u32 i, j;
   unsigned char finalcount[8];

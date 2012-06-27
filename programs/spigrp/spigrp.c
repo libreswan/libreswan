@@ -37,6 +37,8 @@
 #include <linux/autoconf.h>	/* CONFIG_IPSEC_PFKEYv2 */
 #endif
 
+#include "constants.h"
+
 #include <signal.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
