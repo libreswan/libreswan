@@ -55,6 +55,3 @@ extern stf_status xauth_inI1(struct msg_digest *md);
 extern oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth);
 extern stf_status modecfg_send_request(struct state *st);
 
-/* How many times can remote users try to login ? */
-#define XAUTH_PROMPT_TRIES 3
-

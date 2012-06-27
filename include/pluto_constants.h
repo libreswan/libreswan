@@ -666,5 +666,8 @@ enum PrivateKeyKind {
     PPK_XAUTH=5,
 };
 
+#define XAUTH_PROMPT_TRIES 3
+#define XAUTH_MAX_NAME_LENGTH 128
+#define XAUTH_MAX_PASS_LENGTH 128
 
 

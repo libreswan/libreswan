@@ -75,8 +75,8 @@ send_reply(int sock, char *buf, ssize_t len)
 }
 
 int starter_whack_read_reply(int sock,
-			     char xauthname[128],
-			     char xauthpass[128],
+			     char xauthname[XAUTH_MAX_NAME_LENGTH],
+			     char xauthpass[XAUTH_MAX_PASS_LENGTH],
 			     int xauthnamelen,
 			     int xauthpasslen)
 {
@@ -145,11 +145,11 @@ int starter_whack_read_reply(int sock,
 			case RC_ENTERSECRET:
 				if(xauthpasslen==0) {
 					xauthpasslen = whack_get_secret(xauthpass
-								  , sizeof(xauthpass));
+								  , XAUTH_MAX_PASS_LENGTH);
 				}
-				if (xauthpasslen > 128) {
-					xauthpasslen = 128;
-					starter_log(LOG_LEVEL_ERR, "xauth password cannot be > 128 chars");
+				if (xauthpasslen > XAUTH_MAX_PASS_LENGTH) { /* for input >= 128, xauthpasslen would be 129 */
+					xauthpasslen = XAUTH_MAX_PASS_LENGTH;
+					starter_log(LOG_LEVEL_ERR, "xauth password cannot be >= %d chars", XAUTH_MAX_PASS_LENGTH);
 				}
 				ret=send_reply(sock, xauthpass, xauthpasslen);
 				if(ret!=0) return ret;
@@ -158,11 +158,11 @@ int starter_whack_read_reply(int sock,
 			case RC_XAUTHPROMPT:
 				if(xauthnamelen==0) {
 					xauthnamelen = whack_get_value(xauthname
-								 , sizeof(xauthname));
-					if (xauthnamelen > 128) {
-						xauthnamelen = 128;
-						starter_log(LOG_LEVEL_ERR, "xauth name cannot be > 128 chars");
-					}
+								 , XAUTH_MAX_NAME_LENGTH);
+				}
+				if (xauthnamelen > XAUTH_MAX_NAME_LENGTH) { /* for input >= 128, xauthnamelen would be 129 */
+					xauthnamelen = XAUTH_MAX_NAME_LENGTH;
+					starter_log(LOG_LEVEL_ERR, "xauth name cannot be >= %s chars", XAUTH_MAX_NAME_LENGTH);
 				}
 				ret=send_reply(sock, xauthname, xauthnamelen);
 				if(ret!=0) return ret;
@@ -241,8 +241,8 @@ static int send_whack_msg (struct whack_message *msg, char *ctlbase)
 	 * read reply
 	 */
 	{
-		char xauthname[128];
-		char xauthpass[128];
+		char xauthname[XAUTH_MAX_NAME_LENGTH];
+		char xauthpass[XAUTH_MAX_PASS_LENGTH];
 			
 		ret = starter_whack_read_reply(sock, xauthname,xauthpass,0,0);
 		close(sock);
