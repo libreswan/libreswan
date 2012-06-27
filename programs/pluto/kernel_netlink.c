@@ -824,6 +824,44 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
     else
     {
 	req.p.mode = XFRM_MODE_TRANSPORT;
+
+	req.p.sel.sport = portof(&sa->src_client->addr);
+	req.p.sel.dport = portof(&sa->dst_client->addr);
+
+	/* As per RFC 4301/5996, icmp type is put in the most significant 8 bits
+	* and icmp code is in the least significant 8 bits of port field. 
+	* Although Openswan does not have any configuration options for 
+	* icmp type/code values, it is possible to specify icmp type and code 
+	* using protoport option. For example, icmp echo request (type 8/code 0) 
+	* needs to be encoded as 0x0800 in the port field and can be specified 
+	* as left/rightprotoport=icmp/2048. Now with NETKEY, icmp type and code
+	* need to be passed as source and destination ports, respectively.
+	* therefore, this code extracts upper 8 bits and lower 8 bits and puts
+	* into source and destination ports before passing to NETKEY. */
+
+
+	if( 1 == sa->transport_proto /*icmp*/ || 58 == sa->transport_proto /*ipv6-icmp*/) {
+
+	u_int16_t icmp_type;
+	u_int16_t icmp_code;
+
+	icmp_type = ntohs(req.p.sel.sport) >> 8;
+	icmp_code = ntohs(req.p.sel.sport) & 0xFF;
+
+	req.p.sel.sport = htons(icmp_type);
+	req.p.sel.dport = htons(icmp_code);
+
+	}
+
+	req.p.sel.sport_mask = (req.p.sel.sport) ? ~0:0;
+	req.p.sel.dport_mask = (req.p.sel.dport) ? ~0:0;
+	ip2xfrm(&sa->src_client->addr, &req.p.sel.saddr);
+	ip2xfrm(&sa->dst_client->addr, &req.p.sel.daddr);
+	req.p.sel.prefixlen_s = sa->src_client->maskbits;
+	req.p.sel.prefixlen_d = sa->dst_client->maskbits;
+	req.p.sel.proto = sa->transport_proto;
+	req.p.sel.family = sa->src_client->addr.u.v4.sin_family;
+
     }
 
     req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window; 

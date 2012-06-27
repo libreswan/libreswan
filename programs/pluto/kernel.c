@@ -1439,6 +1439,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
         said_next->dst_client = &dst_client;
+        said_next->transport_proto = c->spd.this.protocol;
         said_next->spi = ipip_spi;
         said_next->esatype = ET_IPIP;
         said_next->text_said = text_said;
@@ -1531,6 +1532,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
         said_next->dst_client = &dst_client;
+        said_next->transport_proto = c->spd.this.protocol;
         said_next->spi = ipcomp_spi;
         said_next->esatype = ET_IPCOMP;
         said_next->encalg = compalg;
@@ -1743,6 +1745,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
         said_next->dst_client = &dst_client;
+        said_next->transport_proto = c->spd.this.protocol;
         said_next->spi = esp_spi;
         said_next->esatype = ET_ESP;
         said_next->replay_window = kernel_ops->replay_window;
@@ -1877,6 +1880,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
         said_next->dst_client = &dst_client;
+        said_next->transport_proto = c->spd.this.protocol;
         said_next->spi = ah_spi;
         said_next->esatype = ET_AH;
         said_next->replay_window = kernel_ops->replay_window;
