@@ -2,7 +2,9 @@
 #umount /var/tmp; mount /var/tmp
 #umount /usr/local && mount /usr/local
 
+# NOTE: nss threads don't use PLUTO_CRYPTO_HELPER_DEBUG!
 export PLUTO_CRYPTO_HELPER_DEBUG=true 
+
 TESTNAME=helper-queue-01
 source /testing/pluto/bin/westlocal.sh
 

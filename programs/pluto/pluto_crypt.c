@@ -152,29 +152,6 @@ void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
     }
 }
 
-
-static void
-helper_passert_fail(const char *pred_str
-		    , const char *file_str
-		    , unsigned long line_no) NEVER_RETURNS;
-
-static void
-helper_passert_fail(const char *pred_str
-		    , const char *file_str
-		    , unsigned long line_no)
-{
-
-    /* we will get a possibly unplanned prefix.  Hope it works */
-    loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s", file_str, line_no, pred_str);
-    if(chdir("helper") == -1) {
-	int e = errno;
-	loglog(RC_LOG_SERIOUS,"pluto: chdir() to 'helper' failed (%d %s)\n",
-                    e, strerror(e));
-    }
-    osw_abort();
-}
-
-
 void pluto_crypto_helper(int fd, int helpernum)
 {
     FILE *in  = fdopen(fd, "rb");
@@ -630,7 +607,7 @@ void handle_helper_comm(struct pluto_crypto_worker *w)
     r = &reqbuf[0];
 
     if(r->pcr_len > sizeof(reqbuf)) {
-	loglog(RC_LOG_SERIOUS, "helper(%d) pid=%d screwed up length: %lu > %lu, killing it"
+	loglog(RC_LOG_SERIOUS, "helper(%d) pid=%lu screwed up length: %lu > %lu, killing it"
 	       , w->pcw_helpernum
 	       , w->pcw_pid, (unsigned long)r->pcr_len
                , (unsigned long)sizeof(reqbuf));
@@ -785,7 +762,7 @@ static void cleanup_crypto_helper(struct pluto_crypto_worker *w
 				  , int status)
 {
     if(w->pcw_pipe) {
-	loglog(RC_LOG_SERIOUS, "closing helper(%u) pid=%d fd=%d exit=%d"
+	loglog(RC_LOG_SERIOUS, "closing helper(%u) pid=%lu fd=%d exit=%d"
 	       , w->pcw_helpernum, w->pcw_pid, w->pcw_pipe, status);
 	close(w->pcw_pipe);
     }

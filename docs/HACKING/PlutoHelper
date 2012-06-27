@@ -22,13 +22,6 @@ they insert that string, and finally, the process helper number. e.g:
 22188 ?        S      0:00 pluto helper lo:e   0 (waiting for GDB)                                                                                                
 22189 ?        S      0:00 lwdnsq -d
 
-If the environment variable $PLUTO_CRYPTO_HELPER_DEBUG exists, then the
-helper will mark itself as waiting, and sleep for 60 seconds. This gives a
-developer time to attach a GDB to the process. After 60 seconds, the helper
-changes its title back, and continues. The variable can be set with:
-
-   export PLUTO_CRYPTO_HELPER_DEBUG=true
-
 Debug output from the helpers should go to the same destination as pluto
 output. It may be interleaved, however. The helper uses "!" instead of "|" as
 a prefix for its debug output.
