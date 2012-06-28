@@ -13,6 +13,8 @@ v1.0.0 (unreleased)
   with KLIPS [Paul]
 * pluto: Pass traffic selectors to the kernel in Transport Mode [Avesh]
   (rhbz#831669)
+* IKEv2: Comply to RFC's for "must be zero" to ignore instead of abort [Paul]
+  (rhbz#831669)
 * starter now supports USE_DNSSEC using libunbound [Paul]
 * Added new option plutostderrlogtime= (default=no) [paul]
 * Additional safety checks to strncat() calls for addrtot(), inet_addrtot(),
