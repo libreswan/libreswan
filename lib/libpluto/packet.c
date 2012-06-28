@@ -601,7 +601,7 @@ static field_desc isanat_oa_fields[] = {
     { ft_nat, 8/BITS_PER_BYTE, NULL, NULL },
 #else
     { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
-#endif
+#end
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "ID type", &ident_names },
 #ifdef SUPPORT_BROKEN_ANDROID_ICS
