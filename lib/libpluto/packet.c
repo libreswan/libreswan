@@ -664,7 +664,7 @@ struct_desc ikev2_sa_desc = { "IKEv2 Security Association Payload",
  */
 static field_desc ikev2prop_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz,  8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig,  8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat,  8/BITS_PER_BYTE, "prop #", NULL },
     { ft_nat,  8/BITS_PER_BYTE, "proto ID", NULL },
@@ -695,10 +695,10 @@ struct_desc ikev2_prop_desc = { "IKEv2 Proposal Substructure Payload",
  */
 static field_desc ikev2trans_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz,  8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig,  8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat,  8/BITS_PER_BYTE, "transform type", &trans_type_names },
-    { ft_mbz,  8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig,  8/BITS_PER_BYTE, NULL, NULL },
     { ft_nat, 16/BITS_PER_BYTE, "transform ID", NULL },
     { ft_end,  0, NULL, NULL }
 };
@@ -757,7 +757,7 @@ static field_desc ikev2ke_fields[] = {
     { ft_set, 8/BITS_PER_BYTE, "critical bit", critical_names},
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat, 16/BITS_PER_BYTE, "transform type", &oakley_group_names },
-    { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end,  0, NULL, NULL }
 };
 
@@ -800,8 +800,8 @@ static field_desc ikev2id_fields[] = {
     { ft_set, 8/BITS_PER_BYTE, "critical bit", critical_names},
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "id_type", &ident_names },
-    { ft_mbz,  8/BITS_PER_BYTE, NULL, NULL },
-    { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig,  8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end,  0, NULL, NULL }
 };
 
@@ -883,8 +883,8 @@ static field_desc ikev2a_fields[] = {
     { ft_set, 8/BITS_PER_BYTE, "critical bit", critical_names},
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "auth method", &ikev2_auth_names },
-    { ft_mbz,  8/BITS_PER_BYTE, NULL, NULL },
-    { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig,  8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end,  0, NULL, NULL }
 };
 
@@ -1029,8 +1029,8 @@ static field_desc ikev2ts_fields[] = {
     { ft_set, 8/BITS_PER_BYTE, "critical bit", critical_names},
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat,  8/BITS_PER_BYTE, "number of TS", NULL},
-    { ft_mbz,  8/BITS_PER_BYTE, NULL, NULL },
-    { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig,  8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end,  0, NULL, NULL }
 };
 struct_desc ikev2_ts_desc = { "IKEv2 Traffic Selector Payload",
