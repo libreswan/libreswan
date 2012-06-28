@@ -38,7 +38,7 @@ typedef const struct struct_desc {
  */
 
 enum field_type {
-    ft_mbz,	/* must be zero */
+    ft_mbz,	/* must be zero, abort */
     ft_nat,	/* natural number (may be 0) */
     ft_len,	/* length of this struct and any following crud */
     ft_lv,	/* length/value field of attribute */
@@ -48,6 +48,7 @@ enum field_type {
     ft_af_loose_enum, /* Attribute Format + enumeration, some names known */
     ft_set,	/* bits representing set */
     ft_raw,	/* bytes to be left in network-order */
+    ft_zig,	/* should be zero, ignore if not. Continue */
     ft_end,	/* end of field list */
 };
 

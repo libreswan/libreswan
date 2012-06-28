@@ -597,10 +597,10 @@ struct_desc isakmp_nat_d = { "ISAKMP NAT-D Payload", isag_fields, sizeof(struct 
  */
 static field_desc isanat_oa_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "ID type", &ident_names },
-    { ft_mbz, 24/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 24/BITS_PER_BYTE, NULL, NULL },
     { ft_end, 0, NULL, NULL }
 };
 
@@ -1184,6 +1184,7 @@ DBG_print_struct(const char *label, const void *struct_ptr
 	switch (fp->field_type)
 	{
 	case ft_mbz:	/* must be zero */
+	case ft_zig:
 	    inp += i;
 	    break;
 	case ft_nat:	/* natural number (may be 0) */
@@ -1347,6 +1348,21 @@ in_struct(void *struct_ptr, struct_desc *sd
 			ugh = builddiag("byte %d of %s must be zero, but is not"
 			    , (int) (cur - ins->cur), sd->name);
 			break;
+		    }
+		    *outp++ = '\0';	/* probably redundant */
+		}
+		break;
+	    case ft_zig:	/* should be zero, ignore if not */
+		for (; i != 0; i--)
+		{
+		    if (*cur++ != 0)
+		    {
+			libreswan_log("byte %d of %s should have been zero, but was not"
+			    , (int) (cur - ins->cur), sd->name);
+			/*
+			 * We cannot zeroize it, it would break our hash calculation 
+			 * *cur = '\0';
+			 */
 		    }
 		    *outp++ = '\0';	/* probably redundant */
 		}
@@ -1565,6 +1581,7 @@ out_struct(const void *struct_ptr, struct_desc *sd
 	    switch (fp->field_type)
 	    {
 	    case ft_mbz:	/* must be zero */
+	    case ft_zig:	/* should be zero, but we'll let it go */
 		inp += i;
 		for (; i != 0; i--)
 		    *cur++ = '\0';
