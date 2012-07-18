@@ -267,10 +267,11 @@ enum_names isakmp_transformid_names =
 
 static const char *const ah_transform_name_private_use[] = {
 	"AH_NULL", /* verify with kame source? 251 */
+	"AH_SHA2_256_TRUNC", /* our own to signal bad truncation to kernel */
     };
 
 enum_names ah_transformid_names_private_use =
-    { AH_NULL, AH_NULL, ah_transform_name_private_use, NULL };
+    { AH_NULL, AH_SHA2_256_TRUNC, ah_transform_name_private_use, NULL };
 
 
 static const char *const ah_transform_name[] = {

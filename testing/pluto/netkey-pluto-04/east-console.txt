@@ -225,7 +225,7 @@ ike_alg_register_hash(): Activating OAKLEY_SHA2_256: Ok (ret=0)
 starting up 1 cryptographic helpers
 using /dev/urandom as source of random entropy
 started helper pid=925 (fd:6)
-Using Linux 2.6 IPsec interface code on 2.6.18.6 (experimental code)
+Using Linux XFRM/NETKY IPsec interface code on 2.6.18.6
 Changed path to directory '/tmp/netkey-pluto-02/ipsec.d/cacerts'
   loaded CA cert file 'otherca.crt' (1428 bytes)
   loaded CA cert file 'caCert.pem' (4854 bytes)
