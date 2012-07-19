@@ -66,6 +66,17 @@ ipsec addconn $options --addall
 # enable listening
 ipsec auto --ready
 
+# execute any post-startup cleanup
+if test " $postpluto" != " "
+then
+	$postpluto
+	st=$?
+	if test " $st" -ne 0
+	then
+	    echo "...postpluto command exited with status $st"
+	fi
+fi
+
 # quickly establish routing
 for tu in $plutoroute
 do
