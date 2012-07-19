@@ -34,6 +34,7 @@ v1.0.0 (unreleased)
 * Fixed _updown.mast missing incomplete if-clause [Harald]
 * Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
 * Changed _startklips to use ip route instead of netstat [Harald]
+* Fix _plutoload to actually run postpluto script [Tuomo]
 * Bugtracker bugs fixed:
    #1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
          tree [Steve Lanser]
