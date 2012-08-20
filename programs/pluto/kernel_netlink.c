@@ -14,6 +14,7 @@
  * Copyright (C) 2010 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2010 Roman Hoog Antink <rha@open.ch>
  * Copyright (C) 2010 D. Hugh Redelmeier
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -145,9 +146,8 @@ static sparse_names aalg_list = {
 	{ SADB_AALG_SHA1HMAC, "sha1" },
 	{ SADB_X_AALG_SHA2_256HMAC, "sha256" },
 	{ SADB_X_AALG_SHA2_256HMAC_TRUNCBUG, "hmac(sha256)" },
-	{ SADB_X_AALG_SHA2_256HMAC, "hmac(sha256)" },
-	{ SADB_X_AALG_SHA2_384HMAC, "hmac(sha384)" },
-	{ SADB_X_AALG_SHA2_512HMAC, "hmac(sha512)" },
+	{ SADB_X_AALG_SHA2_384HMAC, "sha384" },
+	{ SADB_X_AALG_SHA2_512HMAC, "sha512" },
 	{ SADB_X_AALG_RIPEMD160HMAC, "ripemd160" },
 	{ 0, sparse_end }
 };

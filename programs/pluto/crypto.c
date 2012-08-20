@@ -2,7 +2,7 @@
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2003-2008 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -126,6 +126,7 @@ static struct hash_desc crypto_hasher_md5 =
     hash_key_size:   MD5_DIGEST_SIZE,
     hash_digest_len: MD5_DIGEST_SIZE,
     hash_integ_len: 0,				/*Not applicable*/
+    hash_block_size: HMAC_BUFSIZE,
     hash_init: (void (*)(void *)) osMD5Init,
     hash_update: (void (*)(void *, const u_int8_t *, size_t)) osMD5Update,
     hash_final: (void (*)(u_char *, void *)) osMD5Final,
@@ -142,7 +143,8 @@ static struct hash_desc crypto_integ_md5 =
     hash_ctx_size: sizeof(MD5_CTX),
     hash_key_size:   MD5_DIGEST_SIZE,
     hash_digest_len: MD5_DIGEST_SIZE,
-    hash_integ_len: MD5_DIGEST_SIZE_96,	
+    hash_integ_len: MD5_DIGEST_SIZE_96,
+    hash_block_size: HMAC_BUFSIZE,
     hash_init: (void (*)(void *)) osMD5Init,
     hash_update: (void (*)(void *, const u_int8_t *, size_t)) osMD5Update,
     hash_final: (void (*)(u_char *, void *)) osMD5Final,
@@ -160,6 +162,7 @@ static struct hash_desc crypto_hasher_sha1 =
     hash_key_size:   SHA1_DIGEST_SIZE,
     hash_digest_len: SHA1_DIGEST_SIZE,
     hash_integ_len: 0,                          /*Not applicable*/
+    hash_block_size: HMAC_BUFSIZE,
     hash_init: (void (*)(void *)) SHA1Init,
     hash_update: (void (*)(void *, const u_int8_t *, size_t)) SHA1Update,
     hash_final: (void (*)(u_char *, void *)) SHA1Final,
@@ -177,6 +180,7 @@ static struct hash_desc crypto_integ_sha1 =
     hash_key_size:   SHA1_DIGEST_SIZE,
     hash_digest_len: SHA1_DIGEST_SIZE,
     hash_integ_len: SHA1_DIGEST_SIZE_96,
+    hash_block_size: HMAC_BUFSIZE,
     hash_init: (void (*)(void *)) SHA1Init,
     hash_update: (void (*)(void *, const u_int8_t *, size_t)) SHA1Update,
     hash_final: (void (*)(u_char *, void *)) SHA1Final,

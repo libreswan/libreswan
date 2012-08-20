@@ -1,5 +1,9 @@
 /* Security Policy Data Base/structure output 
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -283,6 +287,10 @@ enum ikev2_trans_type_integ v1tov2_integ(int oakley)
         return IKEv2_AUTH_HMAC_SHA1_96;
     case OAKLEY_SHA2_256:
         return IKEv2_AUTH_HMAC_SHA2_256_128;
+    case OAKLEY_SHA2_384:
+        return IKEv2_AUTH_HMAC_SHA2_384_192;
+    case OAKLEY_SHA2_512:
+        return IKEv2_AUTH_HMAC_SHA2_512_256;   
     default:
         return IKEv2_AUTH_INVALID;
    }
@@ -297,6 +305,10 @@ enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth)
 	return IKEv2_AUTH_HMAC_SHA1_96;
     case AUTH_ALGORITHM_HMAC_SHA2_256:
 	return IKEv2_AUTH_HMAC_SHA2_256_128;
+    case AUTH_ALGORITHM_HMAC_SHA2_384:
+	return IKEv2_AUTH_HMAC_SHA2_384_192;
+    case AUTH_ALGORITHM_HMAC_SHA2_512:
+	return IKEv2_AUTH_HMAC_SHA2_512_256;
     default:
 	return IKEv2_AUTH_INVALID;
    }
@@ -312,6 +324,10 @@ static enum ikev2_trans_type_prf v1tov2_prf(int oakley)
         return IKEv2_PRF_HMAC_SHA1;
     case OAKLEY_SHA2_256:
         return IKEv2_PRF_HMAC_SHA2_256;
+    case OAKLEY_SHA2_384:
+        return IKEv2_PRF_HMAC_SHA2_384;
+    case OAKLEY_SHA2_512:
+        return IKEv2_PRF_HMAC_SHA2_512;
     default:
         return IKEv2_PRF_INVALID;
     }
