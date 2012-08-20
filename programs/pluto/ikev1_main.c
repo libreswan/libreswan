@@ -2094,6 +2094,23 @@ main_inI3_outR3_tail(struct msg_digest *md
     st->st_ph1_iv_len = st->st_new_iv_len;
     set_ph1_iv(st, st->st_new_iv);
 
+    /* It seems as per Cisco implementation, XAUTH and MODECFG 
+     * are not supposed to be performed again during rekey */
+
+    if( st->st_connection->remotepeertype == CISCO &&
+	st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
+        st->st_connection->spd.this.xauth_client) {
+           DBG(DBG_CONTROL, DBG_log("Skipping XAUTH for rekey for Cisco Peer compatibility."));
+           st->hidden_variables.st_xauth_client_done = TRUE;
+           st->st_oakley.xauth = 0;
+
+           if(st->st_connection->spd.this.modecfg_client) {
+                DBG(DBG_CONTROL, DBG_log("Skipping ModeCFG for rekey for Cisco Peer compatibility."));
+                st->hidden_variables.st_modecfg_vars_set = TRUE;
+                st->hidden_variables.st_modecfg_started = TRUE;
+           }
+    }
+
     ISAKMP_SA_established(st->st_connection, st->st_serialno);
 
     /* ??? If st->st_connectionc->gw_info != NULL,
@@ -2151,6 +2168,22 @@ main_inR3_tail(struct msg_digest *md
      */
     memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
     st->st_ph1_iv_len = st->st_new_iv_len;
+
+    /* It seems as per Cisco implementation, XAUTH and MODECFG 
+     * are not supposed to be performed again during rekey */
+    if( st->st_connection->remotepeertype == CISCO &&
+	st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
+        st->st_connection->spd.this.xauth_client) {
+           DBG(DBG_CONTROL, DBG_log("Skipping XAUTH for rekey for Cisco Peer compatibility."));
+           st->hidden_variables.st_xauth_client_done = TRUE;
+           st->st_oakley.xauth = 0;
+
+           if(st->st_connection->spd.this.modecfg_client) {
+                DBG(DBG_CONTROL, DBG_log("Skipping ModeCFG for rekey for Cisco Peer compatibility."));
+                st->hidden_variables.st_modecfg_vars_set = TRUE;
+                st->hidden_variables.st_modecfg_started = TRUE;
+           }
+    }
     
     ISAKMP_SA_established(st->st_connection, st->st_serialno);
 
