@@ -556,12 +556,15 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 	if(conn->options_set[KBF_LOOPBACK]) {
 		msg.loopback=conn->options[KBF_LOOPBACK];
 	}
+	starter_log(LOG_LEVEL_INFO, "conn: \"%s\" loopback=%d", conn->name, msg.loopback);
 
         if(conn->options_set[KBF_LABELED_IPSEC]) {
                 msg.labeled_ipsec=conn->options[KBF_LABELED_IPSEC];
         }
+	starter_log(LOG_LEVEL_INFO, "conn: \"%s\" labeled_ipsec=%d", conn->name, msg.labeled_ipsec);
 
 	msg.policy_label = conn->policy_label;
+	starter_log(LOG_LEVEL_INFO, "conn: \"%s\" policy_label=%d", conn->name, msg.policy_label);
 #endif
 
 	set_whack_end(cfg, "left",  &msg.left, &conn->left);
