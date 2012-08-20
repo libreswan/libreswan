@@ -288,6 +288,21 @@ enum ikev2_trans_type_integ v1tov2_integ(int oakley)
    }
 }
 
+enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth)
+{
+    switch(ikev1_phase2_auth) {
+    case AUTH_ALGORITHM_HMAC_MD5:
+	return IKEv2_AUTH_HMAC_MD5_96;
+    case AUTH_ALGORITHM_HMAC_SHA1:
+	return IKEv2_AUTH_HMAC_SHA1_96;
+    case AUTH_ALGORITHM_HMAC_SHA2_256:
+	return IKEv2_AUTH_HMAC_SHA2_256_128;
+    default:
+	return IKEv2_AUTH_INVALID;
+   }
+}
+
+
 static enum ikev2_trans_type_prf v1tov2_prf(int oakley)
 {
     switch(oakley) {
@@ -385,7 +400,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 		    } else {
 			switch(attr->type.ipsec) {
 			case AUTH_ALGORITHM:
-			    dtfone->integ_transid = attr->val;
+			    dtfone->integ_transid = v1phase2tov2child_integ(attr->val);
 			    break;
 			    
 			case KEY_LENGTH:
@@ -1233,7 +1248,7 @@ ikev2_parse_child_sa_body(
     bool conjunction, gotmatch;
     struct ikev2_prop winning_prop;
     struct db_sa *p2alg;
-    struct trans_attrs ta;
+    struct trans_attrs ta,ta1;
     struct connection *c = st->st_connection;
     struct ikev2_transform_list itl0, *itl;
 
@@ -1250,6 +1265,7 @@ ikev2_parse_child_sa_body(
     gotmatch = FALSE;
     conjunction = FALSE;
     zero(&ta);
+    zero(&ta1);
 
     while(np == ISAKMP_NEXT_P) {
 	/*
@@ -1372,6 +1388,12 @@ ikev2_parse_child_sa_body(
      * algorithms.
      */
     ta.integ_hash  = itl->integ_transforms[itl->integ_i];
+    /*
+     * here we obtain auth value for esp, 
+     * but loosse what is correct to be sent in the propoasl
+     * so preserve the winning proposal.
+     */
+    ta1 = ta;
     ta.integ_hash  = alg_info_esp_v2tov1aa(ta.integ_hash);
 
     st->st_esp.attrs.transattrs = ta;
@@ -1386,7 +1408,7 @@ ikev2_parse_child_sa_body(
     if (r_sa_pbs != NULL)
     {
 	return ikev2_emit_winning_sa(st, r_sa_pbs
-				     , ta
+				     , ta1
 				     , /*parentSA*/FALSE
 				     , winning_prop);
     }

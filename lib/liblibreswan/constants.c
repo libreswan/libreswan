@@ -1211,9 +1211,18 @@ const char *const trans_type_integ_name[]={
     "auth-des-mac",
     "auth-kpdk-md5",
     "auth-aes-xcbc-96",
+    "AUTH_HMAC_MD5_128",
+    "AUTH_HMAC_SHA1_160",
+    "AUTH_AES_CMAC_96",
+    "AUTH_AES_128_GMAC",
+    "AUTH_AES_192_GMAC",
+    "AUTH_AES_256_GMAC",
+    "AUTH_HMAC_SHA2_256_128",
+    "AUTH_HMAC_SHA2_384_192",
+    "AUTH_HMAC_SHA2_512_256",
 };
 enum_names trans_type_integ_names =
-{ IKEv2_AUTH_NONE, IKEv2_AUTH_AES_XCBC_96, trans_type_integ_name, NULL};
+{ IKEv2_AUTH_NONE, IKEv2_AUTH_HMAC_SHA2_512_256, trans_type_integ_name, NULL};
 
 /* Transform-type Integrity */
 const char *const trans_type_esn_name[]={
