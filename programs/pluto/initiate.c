@@ -714,19 +714,17 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 
 
 #ifdef HAVE_LABELED_IPSEC
-    char sec_ctx_value[256];
+    char sec_ctx_value[MAX_SECCTX_LEN];
     memset(sec_ctx_value, 0, sizeof(sec_ctx_value)); 
     if(uctx != NULL) {
-    memcpy(sec_ctx_value, uctx->sec_ctx_value, uctx->ctx_len);
+	memcpy(sec_ctx_value, uctx->sec_ctx_value, uctx->ctx_len);
     }
-    snprintf(demandbuf, 256, "initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s with security context %s"
-             , ours, ourport, his, hisport, b->transport_proto
-             , oppo_step_name[b->step], b->want, sec_ctx_value);
-#else
+    DBG(DBG_CONTROLMORE, DBG_log("received security label string: %s", sec_ctx_value));
+#endif
+
     snprintf(demandbuf, 256, "initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s"
 	     , ours, ourport, his, hisport, b->transport_proto
 	     , oppo_step_name[b->step], b->want);
-#endif
     
     if(DBGP(DBG_OPPOINFO)) {
 	libreswan_log("%s", demandbuf);

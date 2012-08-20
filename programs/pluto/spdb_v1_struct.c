@@ -105,11 +105,23 @@ parse_secctx_attr (pb_stream *pbs, struct state *st)
 			return FALSE;
 		}
 
-		/* reading security label*/
-		memcpy(sec_ctx_value, pbs->cur, pbs_left(pbs) <= MAX_SECCTX_LEN ? pbs_left(pbs) : MAX_SECCTX_LEN);
-		i = pbs_left(pbs) <= MAX_SECCTX_LEN ? pbs_left(pbs) : MAX_SECCTX_LEN;
+		/* do not process security labels longer than MAX_SECCTX_LEN */
+		 if(pbs_left(pbs) > MAX_SECCTX_LEN) {
+		    DBG(DBG_PARSING, DBG_log("received security ctx longer than MAX_SECCTX_LEN which is not supported"));
+		    return FALSE;
+		}
 
-		/* checking if the received security label contains \0 */
+		/* reading security label*/
+		memcpy(sec_ctx_value, pbs->cur, pbs_left(pbs));
+		i = pbs_left(pbs);
+
+		/* 
+		 * Checking if the received security label contains \0.
+		 * We expect the received label to have '\0', however to be
+		 * compliant with implementations that don't send \0 
+		 * we can add a \0 if there is space left in the buffer.
+		 */
+
 		if( sec_ctx_value[i-1] != '\0') {
 			/*check if we have space left and then append \0*/
 			if (i < MAX_SECCTX_LEN) {
