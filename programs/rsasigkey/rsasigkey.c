@@ -526,14 +526,15 @@ rsasigkey(int nbits, char *configdir, char *password)
     mpz_init(n);
     mpz_init(e);
 
-    pwdata.source = password ? PW_PLAINTEXT : PW_NONE;
-    pwdata.data = password ? password : NULL;
-
     do {
 	if (!configdir) {
 		fprintf(stderr, "%s: configdir is required\n", me);
 		return;
 	}
+
+	snprintf(buf, sizeof(buf), "%s/nsspassword",configdir);
+	pwdata.source = password ? (strcmp(password, buf)? PW_PLAINTEXT: PW_FROMFILE) : PW_NONE;
+	pwdata.data = password ? password : NULL;
 
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
 	snprintf(buf, sizeof(buf), "%s",configdir);
