@@ -72,7 +72,7 @@ findlog() {		# findlog string fallbackstring possiblefile ...
 		fi
 	done
 	# nope, resort to a search, newest first, of uncompressed logs
-	for f in `ls -t $LOGS | egrep -v '^mail' | egrep -v '\.(gz|Z)$'`
+	for f in `ls -t $LOGS | egrep -v lastlog | egrep -v tmp | egrep -v '^mail' | egrep -v '\.(gz|Z)$'`
 	do
 		if test -f $LOGS/$f -a ! -d $LOGS/$f && egrep -q "$s" $LOGS/$f
 		then
@@ -83,7 +83,7 @@ findlog() {		# findlog string fallbackstring possiblefile ...
 			return 0
 		fi
 	done
-	for f in `ls -t $LOGS | egrep -v '^mail' | egrep -v '\.(gz|Z)$'`
+	for f in `ls -t $LOGS | egrep -v lastlog | egrep -v tmp | egrep -v '^mail' | egrep -v '\.(gz|Z)$'`
 	do
 		if test -s $LOGS/$f -a -f $LOGS/$f && egrep -q "$t" $LOGS/$f
 		then
