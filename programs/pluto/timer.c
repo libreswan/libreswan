@@ -539,7 +539,7 @@ handle_next_timer_event(void)
 
 		passert(st != NULL);
 		c = st->st_connection;
-		newest = IS_PHASE1(st->st_state)
+		newest = (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state ))
 		    ? c->newest_isakmp_sa : c->newest_ipsec_sa;
 
 		if (newest != st->st_serialno
@@ -548,7 +548,7 @@ handle_next_timer_event(void)
 		    /* not very interesting: no need to replace */
 		    DBG(DBG_LIFECYCLE
 			, libreswan_log("not replacing stale %s SA: #%lu will do"
-			    , IS_PHASE1(st->st_state)? "ISAKMP" : "IPsec"
+			    , (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state ))? "ISAKMP" : "IPsec"
 			    , newest));
 		}
 		else if (type == EVENT_SA_REPLACE_IF_USED
@@ -573,14 +573,14 @@ handle_next_timer_event(void)
 		     */
 		    DBG(DBG_LIFECYCLE
 			, libreswan_log("not replacing stale %s SA: inactive for %lus"
-			    , IS_PHASE1(st->st_state)? "ISAKMP" : "IPsec"
+			    , (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state ))? "ISAKMP" : "IPsec"
 			    , (unsigned long)(tm - st->st_outbound_time)));
 		}
 		else
 		{
 		    DBG(DBG_LIFECYCLE
 			, libreswan_log("replacing stale %s SA"
-			    , IS_PHASE1(st->st_state)? "ISAKMP" : "IPsec"));
+			    , (IS_PHASE1(st->st_state)|| IS_PHASE15(st->st_state ))? "ISAKMP" : "IPsec"));
 		    ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
 		delete_dpd_event(st);
@@ -597,7 +597,7 @@ handle_next_timer_event(void)
 		passert(st != NULL);
 		c = st->st_connection;
 
-		if (IS_PHASE1(st->st_state))
+		if (IS_PHASE1(st->st_state)|| IS_PHASE15(st->st_state ))
 		{
 		    satype = "ISAKMP";
 		    latest = c->newest_isakmp_sa;

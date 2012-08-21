@@ -372,7 +372,7 @@ dpd_event(struct state *st)
 {
     if(st==NULL) return;
 
-    if(IS_PHASE1(st->st_state)) {
+    if(IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state )) {
 	p1_dpd_outI1(st);
     } else {
 	p2_dpd_outI1(st);

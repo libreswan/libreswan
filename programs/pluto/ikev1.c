@@ -1597,7 +1597,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		switch (np)
 		{
 		case ISAKMP_NEXT_ID:
-		    sd = IS_PHASE1(from_state)
+		    sd = (IS_PHASE1(from_state) || IS_PHASE15(from_state))
 			? &isakmp_identification_desc : &isakmp_ipsec_identification_desc;
 		    break;
 
@@ -1702,7 +1702,7 @@ void process_packet_tail(struct msg_digest **mdp)
 
     /* more sanity checking: enforce most ordering constraints */
 
-    if (IS_PHASE1(from_state))
+    if (IS_PHASE1(from_state) || IS_PHASE15(from_state))
     {
 	/* rfc2409: The Internet Key Exchange (IKE), 5 Exchanges:
 	 * "The SA payload MUST precede all other payloads in a phase 1 exchange."
@@ -1987,6 +1987,22 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	    change_state(st, smc->next_state);
 
+	    /* XAUTH negotiation withOUT modecfg ends in STATE_XAUTH_I1
+ 	     * which is wrong and creates issues further in several places
+ 	     * As per libreswan design, it seems every phase 1 negotiation
+ 	     * including xauth/modecfg must end with STATE_MAIN_I4 to mark
+ 	     * actual end of phase 1. With modecfg, negotiation ends with
+ 	     * STATE_MAIN_I4 already.
+ 	     */
+	    /*if(st->st_connection->spd.this.xauth_client 
+		&& st->hidden_variables.st_xauth_client_done 
+		&& !st->st_connection->spd.this.modecfg_client
+		&& st->st_state == STATE_XAUTH_I1) {
+		DBG(DBG_CONTROL, DBG_log("As XAUTH is done and modecfg is not configured, 
+						so Phase 1 neogtiation finishes successfully"));
+		change_state(st, STATE_MAIN_I4);
+	    }*/
+
 	    /* Schedule for whatever timeout is specified */
 	    if(!md->event_already_set)
 	    {
@@ -2055,7 +2071,7 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		    break;
 
 		case EVENT_SA_REPLACE:	/* SA replacement event */
-		    if (IS_PHASE1(st->st_state))
+		    if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state ))
 		    {
 			/* Note: we will defer to the "negotiated" (dictated)
 			 * lifetime if we are POLICY_DONT_REKEY.

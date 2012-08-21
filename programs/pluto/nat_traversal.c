@@ -753,10 +753,7 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 	unsigned int *_kap_st = (unsigned int *)data;
 	const struct connection *c = st->st_connection;
 	if (!c) return;
-	if ( ((st->st_state == STATE_MAIN_R3)
-	      || (st->st_state == STATE_MAIN_I4)
-	      || (st->st_state == STATE_AGGR_R2)
-	      || (st->st_state == STATE_AGGR_I2))
+	if ( IS_ISAKMP_SA_ESTABLISHED(st->st_state)
 	     &&	(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
 	     &&	((st->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
 		 || (_force_ka)))
@@ -774,10 +771,7 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 		struct state *st_newest;
 		st_newest = state_with_serialno(c->newest_isakmp_sa);
 		if ((st_newest)
-		    && ((st_newest->st_state==STATE_MAIN_R3)
-			|| (st_newest->st_state==STATE_MAIN_I4)
-			|| (st_newest->st_state == STATE_AGGR_R2)
-			|| (st_newest->st_state == STATE_AGGR_I2))
+		    && IS_ISAKMP_SA_ESTABLISHED(st->st_state)
 		    && (st_newest->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
 		    && ((st_newest->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
 			|| (_force_ka)))
