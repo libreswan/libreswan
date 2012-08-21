@@ -4,6 +4,7 @@ See also http://www.libreswan.org/
 v1.0.0 (unreleased)
 * KLIPS: Removed support for Linux < 2.4.4 [Paul]
 * NSS is now mandatory - custom crypto code removed [Paul]
+* NSS: Support reading NSS password from file [Avesh]
 * DNS: Removed LWRES code and old static ISC libraries [Paul]
 * OE: Removed support for old KEY and TXT DNS records [Paul]
 * OE: Add support for IPSECKEY in ipsec showhostkey [Paul]
@@ -29,12 +30,15 @@ v1.0.0 (unreleased)
 * Only set MODP768_MODULUS with USE_VERYWEAK_DH1 [Paul]
 * Fix for three AES-GCM issues with key lengths 128, 192, 256 bits and IV
   of 8, 12, 16 bytes as per RFC 4106 [Avesh]
+* Labeled IPsec updates [Avesh]
+* Support for SHA384/SHA512 and integ(ikev2)  in ESP [Avesh]
 * Fix _updown.netkey to insert route on correct interface when nexthop is
   used [Tuomo]
 * Fixed _updown.mast missing incomplete if-clause [Harald]
 * Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
 * Changed _startklips to use ip route instead of netstat [Harald]
 * Fix _plutoload to actually run postpluto script [Tuomo]
+* XAUTH: Do not redo xauth/modecfg during rekey to cisco [Avesh]
 * Bugtracker bugs fixed:
    #1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
          tree [Steve Lanser]
