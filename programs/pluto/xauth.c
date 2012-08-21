@@ -936,6 +936,7 @@ int do_pam_authentication(void *varg)
     pam_handle_t *pamh=NULL;
     int retval;
 
+    conv.conv = xauth_pam_conv;
     conv.appdata_ptr = varg;
 
     retval = pam_start("pluto", arg->name.ptr, &conv, &pamh);
