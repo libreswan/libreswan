@@ -630,6 +630,13 @@ main_inI1_outR1(struct msg_digest *md)
     {
 	pb_stream pre_sa_pbs = sa_pd->pbs;
 	lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs);
+	/*
+	 * If there is XAUTH VID, copy it to policies.
+	 */
+	if (md->quirks.xauth_vid == TRUE)
+	{
+	  policy |= POLICY_XAUTH;
+	}
 	/* See if a wildcarded connection can be found.
 	 * We cannot pick the right connection, so we're making a guess.
 	 * All Road Warrior connections are fair game:

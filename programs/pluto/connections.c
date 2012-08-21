@@ -1358,6 +1358,11 @@ add_connection(const struct whack_message *wm)
 	same_leftca  = extract_end(&c->spd.this, &wm->left, "left");
 	same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
+	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
+	{
+	    c->policy |= POLICY_XAUTH;
+	}
+
 	if (same_rightca)
 	    c->spd.that.ca = c->spd.this.ca;
 	else if (same_leftca)
@@ -2357,6 +2362,8 @@ find_host_connection2(const char *func
 			, bitnamesof(sa_policy_bit_names, c->policy)
 			, c->name));
 	    if(NEVER_NEGOTIATE(c->policy)) continue;
+
+	    if ((policy & POLICY_XAUTH) != (c->policy & POLICY_XAUTH)) continue;
 
 	    if ((c->policy & policy) == policy)
 		break;

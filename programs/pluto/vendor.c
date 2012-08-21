@@ -583,6 +583,7 @@ static void handle_known_vendorid (struct msg_digest *md
 	  break;
 
 	case VID_MISC_XAUTH:
+	    md->quirks.xauth_vid = TRUE;
 	    vid_usefull=1;
 	    break;
 #endif
