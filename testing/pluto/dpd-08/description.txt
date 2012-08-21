@@ -1,0 +1,6 @@
+This tests the RFC3706 DPD implementation when east crashes.
+
+It is like dpd-01, except west sends a ipsec whack --crash
+
+dpd should hit, and we should see an infinite amount of keying
+attempts - confirming rhbz#848132 is fixed.

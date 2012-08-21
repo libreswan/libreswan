@@ -1,0 +1,17 @@
+east:~#
+ TESTNAME=dpd-08
+east:~#
+ source /testing/pluto/bin/eastlocal.sh
+east:~#
+ ipsec setup start
+ipsec_setup: Starting Openswan IPsec VERSION
+east:~#
+ ipsec auto --add west-east
+east:~#
+ 
+
+east:~#
+ echo end
+end
+east:~#
+
