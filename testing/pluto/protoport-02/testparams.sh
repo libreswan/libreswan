@@ -1,7 +1,8 @@
 #!/bin/sh
 
-TEST_PURPOSE=goal
-TEST_TYPE=umlXhost
+TEST_PURPOSE=regress
+TEST_PROB_REPORT=0
+TEST_TYPE=umlplutotest
 
 TESTNAME=protoport-02
 EASTHOST=east

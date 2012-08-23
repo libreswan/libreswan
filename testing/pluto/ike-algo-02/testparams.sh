@@ -1,7 +1,8 @@
 #!/bin/sh
 
 TEST_PURPOSE=regress
-TEST_TYPE=umlXhost
+TEST_PROB_REPORT=0
+TEST_TYPE=umlplutotest
 
 TESTNAME=ike-algo-02
 
