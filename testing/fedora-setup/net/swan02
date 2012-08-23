@@ -1,0 +1,19 @@
+<!--
+This net has no "nic" host in the diagram, so we made up 192.0.2.127
+and its mac address
+
+"nic" is not used as a VM, it is the host. It's
+interfaces are configured on the bridge. dhcp not used
+
+-->
+
+<network>
+  <name>192_0_2_0</name>
+  <bridge name='swan02' stp='on' delay='0' />
+  <mac address='12:00:00:32:32:BA'/>
+  <ip address='192.0.2.127' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.0.2.128' end='192.0.2.254' />
+    </dhcp>
+  </ip>
+</network>

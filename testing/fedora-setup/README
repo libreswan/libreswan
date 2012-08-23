@@ -1,0 +1,5 @@
+
+This is work in progress - use a disposable system :/
+Be aware this requires running a libvirtd to crate the networks
+and a qemu/kvm to create the first base image on which all umls
+are based.
