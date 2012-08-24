@@ -1,0 +1,47 @@
+'\" t
+.\"     Title: IPSEC_INITNSS
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 08/24/2012
+.\"    Manual: [FIXME: manual]
+.\"    Source: [FIXME: source]
+.\"  Language: English
+.\"
+.TH "IPSEC_INITNSS" "8" "08/24/2012" "[FIXME: source]" "[FIXME: manual]"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_initnss \- Initialise the IPsec NSS database
+.SH "SYNOPSIS"
+.HP \w'\fBipsec\ initnss\fR\ 'u
+\fBipsec initnss\fR
+.SH "DESCRIPTION"
+.PP
+\fIInitnss\fR
+initialises the NSS database where all private keys for RSA and certificate keypairs are stored\&. If already initialised, it will return an error\&. To remove an existing IPsec NSS database, remove all the *\&.db files from the ipsec data directory (default: /etc/ipsec\&.d/)
+.SH "SEE ALSO"
+.PP
+ipsec\&.\fBconf\fR(5),
+\fBipsec\fR(8),
+\fBipsec_auto\fR(8),
+\fBroute\fR(8)
+.SH "BUGS"
+.PP
+none

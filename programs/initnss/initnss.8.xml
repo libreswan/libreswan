@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry>
+<refmeta>
+<refentrytitle>IPSEC_INITNSS</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>24 August 2012</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec initnss</refname>
+<refpurpose>Initialise the IPsec NSS database</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>ipsec initnss</command>    
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Initnss</emphasis>
+initialises the NSS database where all private keys for RSA and
+certificate keypairs are stored. If already initialised, it will
+return an error. To remove an existing IPsec NSS database, remove all the
+*.db files from the ipsec data directory (default: /etc/ipsec.d/)
+</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para>ipsec.<citerefentry><refentrytitle>conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>route</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+
+
+<refsect1 id='bugs'><title>BUGS</title>
+<para>none</para>
+</refsect1>
+</refentry>
+
