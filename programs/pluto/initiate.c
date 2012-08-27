@@ -195,24 +195,46 @@ initiate_a_connection(struct connection *c
 	loglog(RC_INITSHUNT
 	       , "cannot initiate an authby=never connection");
     }
-    else if (c->kind != CK_PERMANENT)
+    else if ( (c->kind != CK_PERMANENT) && ! (c->policy & POLICY_IKEV2_ALLOW_NARROWING))
     {
-	if (isanyaddr(&c->spd.that.host_addr)) {
+	    if (isanyaddr(&c->spd.that.host_addr)){
 #ifdef DYNAMICDNS
-	    if (c->dnshostname != NULL) {
-		loglog(RC_NOPEERIP, "cannot initiate connection without resolved dynamic peer IP address, will keep retrying");
-		success = 1;
-		c->policy |= POLICY_UP;
-	    } else
+		    if (c->dnshostname != NULL) {
+
+			    loglog(RC_NOPEERIP, "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)"
+				,enum_show(&connection_kind_names, c->kind) );
+			    success = 1;
+			    c->policy |= POLICY_UP;
+		    } else
 #endif
-		loglog(RC_NOPEERIP, "cannot initiate connection without knowing peer IP address (kind=%s)"
-		       , enum_show(&connection_kind_names, c->kind));
-	} else
-	    loglog(RC_WILDCARD, "cannot initiate connection with ID wildcards (kind=%s)"
-		   , enum_show(&connection_kind_names, c->kind));
+			    loglog(RC_NOPEERIP, "cannot initiate connection without knowing peer IP address (kind=%s)"
+					    , enum_show(&connection_kind_names, c->kind));
+	    } else if (!(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+		    loglog(RC_WILDCARD, "cannot initiate connection with narrowing=no and (kind=%s)"
+				    , enum_show(&connection_kind_names, c->kind));
+	    }
+	    else
+		    loglog(RC_WILDCARD, "cannot initiate connection with ID wildcards (kind=%s)"
+				    , enum_show(&connection_kind_names, c->kind));
     }
     else
     {
+	    if (isanyaddr(&c->spd.that.host_addr) && (c->policy & POLICY_IKEV2_ALLOW_NARROWING) )
+	    {
+#ifdef DYNAMICDNS
+		    if (c->dnshostname != NULL) {
+			    loglog(RC_NOPEERIP, "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)"
+				,enum_show(&connection_kind_names, c->kind), (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
+			    success = 1;
+			    c->policy |= POLICY_UP;
+		    } else
+#endif
+			    loglog(RC_NOPEERIP, "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)"
+					    , enum_show(&connection_kind_names, c->kind), (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");	
+
+	    }
+	    else 
+	    {
 	/* We will only request an IPsec SA if policy isn't empty
 	 * (ignoring Main Mode items).
 	 * This is a fudge, but not yet important.
@@ -243,7 +265,8 @@ initiate_a_connection(struct connection *c
 			     );
 	    success = 1;
 	}
-    }
+    } 
+   }
     reset_cur_connection();
     
     return success;
@@ -264,6 +287,8 @@ initiate_connection(const char *name, int whackfd
 
     if (c != NULL)
     {
+	if ((c->policy &  POLICY_IKEV2_PROPOSE) && (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) 
+		c = instantiate(c, NULL, NULL); 
 	initiate_a_connection(c, &is);
 	close_any(is.whackfd);
 	return;

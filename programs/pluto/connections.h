@@ -379,12 +379,9 @@ extern struct connection *rw_instantiate(struct connection *c
 					 , const ip_subnet *his_net
 					 , const struct id *his_id);
 
-extern struct cnnection *ikev2_ts_instantiate(struct connection *c
-					, const ip_address *our_client
-					, const u_int16_t our_port
-					, const ip_address *peer_client
-					, const u_int16_t peer_port
-					, const u_int8_t protocol);
+extern struct connection * instantiate(struct connection *c
+					, const ip_address *him 
+					, const struct id *his_id);
 
 extern struct connection *oppo_instantiate(struct connection *c
 					   , const ip_address *him

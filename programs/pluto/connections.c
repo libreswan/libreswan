@@ -1430,6 +1430,11 @@ add_connection(const struct whack_message *wm)
 	{
 	   /* If we have a subnet=vnet: needing instantiation so we can accept multiple subnets from the remote peer */
 	    c->kind = CK_TEMPLATE;
+	} 
+	else if(c->policy & POLICY_IKEV2_ALLOW_NARROWING) 
+	{
+	    DBG(DBG_CONTROL, DBG_log("based upon policy narrowing=yes, the connection is a template."));
+	    c->kind = CK_TEMPLATE;
 	}
 	else
 	{
@@ -1626,7 +1631,7 @@ remove_group_instance(const struct connection *group USED_BY_DEBUG
  *
  * Note that instantiate can only deal with a single SPD/eroute.
  */
-static struct connection *
+struct connection *
 instantiate(struct connection *c, const ip_address *him
 	    , const struct id *his_id)
 {
@@ -1653,7 +1658,8 @@ instantiate(struct connection *c, const ip_address *him
     d->kind = CK_INSTANCE;
 
     passert(oriented(*d));
-    d->spd.that.host_addr = *him;
+    if(him != NULL)
+    	d->spd.that.host_addr = *him;
     setportof(htons(c->spd.that.port), &d->spd.that.host_addr);
     default_end(&d->spd.that, &d->spd.this.host_addr);
 

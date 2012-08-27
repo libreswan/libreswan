@@ -163,6 +163,16 @@ extern int ikev2_parse_ts(struct payload_digest *ts_pd
 				, struct traffic_selector *array
 				, unsigned int array_max);
 
+extern int ikev2_evaluate_connection_protocol_fit(struct connection *d
+				, struct spd_route *sr
+				, enum phase1_role role
+				, struct traffic_selector *tsi
+				, struct traffic_selector *tsr
+				, unsigned int tsi_n
+				, unsigned int tsr_n
+				, unsigned int *best_tsi_i
+				, unsigned int *best_tsr_i);
+
 extern stf_status ikev2_child_sa_respond(struct msg_digest *md
 					 , enum phase1_role role
 					 , pb_stream *outpbs);
