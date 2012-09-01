@@ -1,0 +1,10 @@
+
+Using netkey and the looopback feature, pluto connects to itself for an SA.
+This is used for MLS type labeling of connections on the same host
+
+Though this simple test does not use labelling, see the other loopback-*
+tests for that.
+
+This is using protoport for an assymetric connection, so it has two
+conns to properly match up left/rightprotoport=
+
