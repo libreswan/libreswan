@@ -188,6 +188,14 @@ downroute() {
     ip route flush cache
 }
 
+downrule() {
+        if [ -n "$PLUTO_MY_SOURCEIP" ]
+        then
+            doroute del
+            ip route flush cache
+        fi
+}
+
 updateresolvconf() {
     if [ -n "$PLUTO_CISCO_DNS_INFO" ]; then
 	if [ -n "`pidof unbound`" -a -n "$PLUTO_CISCO_DOMAIN_INFO"  ]; then
@@ -318,7 +326,12 @@ addsource() {
     st=0
     # check if given sourceip is local and add as alias if not
     if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep -q ^local; then
+
+	if [ -z "$PLUTO_IS_PEER_CISCO" -o "$PLUTO_IS_PEER_CISCO" = 0 ]; then
 	it="ip addr add ${PLUTO_MY_SOURCEIP%/*}/32 dev ${PLUTO_INTERFACE%:*}"
+	else
+	it="ip addr add ${PLUTO_MY_SOURCEIP%/*}/${PLUTO_PEER_CLIENT##*/} dev ${PLUTO_INTERFACE%:*}"
+	fi
 	oops="`eval $it 2>&1`"
 	st=$?
 	if [ " $oops" = " " -a " $st" != " 0" ]; then
@@ -343,15 +356,7 @@ delsource() {
     st=0
     # check if given sourceip is local and add as alias if not
     if  ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep -q ^local; then
-        #it="ip addr del ${PLUTO_MY_SOURCEIP%/*}/32 label ${PLUTO_INTERFACE%:*}:1 dev ${PLUTO_INTERFACE%:*}"
-
-                saddr=${PLUTO_MY_SOURCEIP%/*}/32
-                if test "${PLUTO_PEER_CLIENT##*/}" != 32
-                then
-                saddr=${PLUTO_MY_SOURCEIP%/*}/"${PLUTO_PEER_CLIENT##*/}"
-                fi
-
-        it="ip addr del ${saddr} dev ${PLUTO_INTERFACE%:*}"
+        it="ip addr del ${PLUTO_MY_SOURCEIP%/*}/${PLUTO_PEER_CLIENT##*/} dev ${PLUTO_INTERFACE%:*}"
 
         oops="`eval $it 2>&1`"
         st=$?
@@ -367,7 +372,7 @@ delsource() {
                 ;;
         esac
         if [ " $oops" != " " -o " $st" != " 0" ]; then
-            echo "$0: addsource \`$it' failed ($oops)" >&2
+            echo "$0: delsource \`$it' failed ($oops)" >&2
         fi
     fi
     return $st
@@ -457,6 +462,7 @@ case "$PLUTO_VERB" in
 	;;
     down-host)
 	# connection to me going down
+	downrule
 	# If you are doing a custom version, firewall commands go here.
 	;;
     up-client)
@@ -465,6 +471,7 @@ case "$PLUTO_VERB" in
 	;;
     down-client)
 	# connection to my client subnet going down
+	downrule
 	# If you are doing a custom version, firewall commands go here.
 	;;
     updateresolvconf-host|updateresolvconf-client)
