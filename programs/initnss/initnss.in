@@ -1,0 +1,42 @@
+#!/bin/sh -e
+
+test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
+
+prog='ipsec initnss'		# for messages
+
+IPSEC_CONFS="${IPSEC_CONFS-@IPSEC_CONFS@}"
+
+if [ `id -u` -ne 0 ]
+then
+    echo "permission denied (must be superuser)" |
+      logger -s -p daemon.error -t ipsec_setup 2>&1
+    exit 4
+fi
+
+# This is so we can get PLUTO_* env variables - the service/systemctl
+# commands won't pass the entire environment along.
+if [ -f /etc/sysconfig/ipsec ]; then
+     . /etc/sysconfig/ipsec
+elif [ -f /etc/default/ipsec ]; then
+     . /etc/default/ipsec
+fi
+
+if [ -z "$IPSEC_CONFS" ];
+then
+	IPSEC_CONFS="/etc/"
+fi
+
+if [ -f $IPSEC_CONFS/ipsec.d/cert8.db -o -f $IPSEC_CONFS/ipsec.d/key3.db -o -f $IPSEC_CONFS/ipsec.d/secmod.db ];
+then
+	echo "NSS database already initialised - aborted"
+	echo "To wipe the old NSS database, issue: rm $IPSEC_CONFS/ipsec.d/*.db"
+	exit 42
+fi
+
+echo ""
+echo "Initializing NSS database"
+echo ""
+echo "If you want to ensure the IPsec subsystem can start unattended, use an empty password"
+echo ""
+
+certutil -N -d $IPSEC_CONFS/ipsec.d

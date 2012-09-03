@@ -1,0 +1,1732 @@
+
+FIXME
+
+
+
+Starting UML /btmp/antony/ikev2/2008_01_14/UMLPOOL/west/start-netkey.sh
+spawn /btmp/antony/ikev2/2008_01_14/UMLPOOL/west/start-netkey.sh single
+Checking that ptrace can change system call numbers...OK
+Checking syscall emulation patch for ptrace...OK
+Checking advanced syscall emulation patch for ptrace...OK
+Checking for tmpfs mount on /dev/shm...OK
+Checking PROT_EXEC mmap in /dev/shm/...OK
+Checking for the skas3 patch in the host:
+  - /proc/mm...not found
+  - PTRACE_FAULTINFO...not found
+  - PTRACE_LDT...not found
+UML running in SKAS0 mode
+Checking that ptrace can change system call numbers...OK
+Checking syscall emulation patch for ptrace...OK
+Checking advanced syscall emulation patch for ptrace...OK
+Linux version 2.6.18.6 (antony@sal) (gcc version 4.2.3 20080114 (prerelease) (Debian 4.2.2-7)) #6 Wed Feb 13 11:18:26 EST 2008
+Built 1 zonelists.  Total pages: 8192
+Kernel command line: initrd=/btmp/antony/ikev2/2008_01_14/UMLPOOL/initrd.uml umlroot=/btmp/antony/ikev2/2008_01_14/UMLPOOL/west/root root=/dev/ram0 rw ssl=pty eth0=daemon,10:00:00:ab:cd:ff,unix,/tmp/umlN7rfs9.d/west/ctl,/tmp/umlN7rfs9.d/west/data eth1=daemon,10:00:00:64:64:45,unix,/tmp/umlN7rfs9.d/public/ctl,/tmp/umlN7rfs9.d/public/data eth2=daemon,10:00:00:32:64:45,unix,/tmp/umlN7rfs9.d/admin/ctl,/tmp/umlN7rfs9.d/admin/data init=/linuxrc single
+PID hash table entries: 256 (order: 8, 1024 bytes)
+Dentry cache hash table entries: 4096 (order: 2, 16384 bytes)
+Inode-cache hash table entries: 2048 (order: 1, 8192 bytes)
+Memory: 27028k available
+Mount-cache hash table entries: 512
+Checking for host processor cmov support...Yes
+Checking for host processor xmm support...No
+Checking that host ptys support output SIGIO...Yes
+Checking that host ptys support SIGIO on close...No, enabling workaround
+checking if image is initramfs...it isn't (bad gzip magic numbers); looks like an initrd
+Freeing initrd memory: 1212k freed
+Using 2.6 host AIO
+NET: Registered protocol family 16
+NET: Registered protocol family 2
+IP route cache hash table entries: 256 (order: -2, 1024 bytes)
+TCP established hash table entries: 1024 (order: 0, 4096 bytes)
+TCP bind hash table entries: 512 (order: -1, 2048 bytes)
+TCP: Hash tables configured (established 1024 bind 512)
+TCP reno registered
+daemon_setup : Ignoring data socket specification
+Netdevice 0 (10:00:00:ab:cd:ff) : daemon backend (uml_switch version 3) - unix:/tmp/umlN7rfs9.d/west/ctl
+daemon_setup : Ignoring data socket specification
+Netdevice 1 (10:00:00:64:64:45) : daemon backend (uml_switch version 3) - unix:/tmp/umlN7rfs9.d/public/ctl
+daemon_setup : Ignoring data socket specification
+Netdevice 2 (10:00:00:32:64:45) : daemon backend (uml_switch version 3) - unix:/tmp/umlN7rfs9.d/admin/ctl
+Checking host MADV_REMOVE support...OK
+mconsole (version 2) initialized on /home/antony/.uml/west/mconsole
+Host TLS support detected
+Detected host type: i386
+VFS: Disk quotas dquot_6.5.1
+Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+Initializing Cryptographic API
+io scheduler noop registered
+io scheduler anticipatory registered (default)
+io scheduler deadline registered
+io scheduler cfq registered
+RAMDISK driver initialized: 16 RAM disks of 4096K size 1024 blocksize
+loop: loaded (max 8 devices)
+nbd: registered device at major 43
+PPP generic driver version 2.4.2
+SLIP: version 0.8.4-NET3.019-NEWTTY (dynamic channels, max=256).
+tun: Universal TUN/TAP device driver, 1.6
+tun: (C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>
+Netfilter messages via NETLINK v0.30.
+IPv4 over IPv4 tunneling driver
+GRE over IPv4 tunneling driver
+ip_conntrack version 2.4 (211 buckets, 1688 max) - 224 bytes per conntrack
+ctnetlink v0.90: registering with nfnetlink.
+ip_conntrack_pptp version 3.1 loaded
+ip_nat_pptp version 3.0 loaded
+ip_tables: (C) 2000-2006 Netfilter Core Team
+ClusterIP Version 0.8 loaded successfully
+arp_tables: (C) 2002 David S. Miller
+TCP bic registered
+TCP westwood registered
+TCP highspeed registered
+TCP hybla registered
+TCP htcp registered
+TCP vegas registered
+TCP scalable registered
+Initializing IPsec netlink socket
+NET: Registered protocol family 1
+NET: Registered protocol family 17
+NET: Registered protocol family 15
+Initialized stdio console driver
+Console initialized on /dev/tty0
+Initializing software serial port version 1
+Failed to open 'root_fs', errno = 2
+RAMDISK: cramfs filesystem found at block 0
+RAMDISK: Loading 1212KiB [1 disk] into ram disk... |/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\done.
+VFS: Mounted root (cramfs filesystem) readonly.
+MOUNTING /btmp/antony/ikev2/2008_01_14/UMLPOOL/west/root for UML testing root.
+Mounting a tmpfs over /dev...done.
+Creating initial device nodes...done.
+Invoked with Arguments: single
+Creating initial device nodes...done.
+crw-r--r--    1 root     root       5,   1 Feb 13 23:54 /dev/console
+line_ioctl: tty0: ioctl KDSIGACCEPT called
+INIT: version 2.78 booting
+/dev/root on / type hostfs (rw)
+proc on /proc type proc (rw)
+devpts on /dev/pts type devpts (rw,gid=5,mode=620)
+/dev/shm on /tmp type tmpfs (rw)
+/dev/shm on /var/run type tmpfs (rw)
+none on /usr/share type hostfs (ro)
+none on /testing type hostfs (ro,/home/antony/ikev2/testing)
+none on /usr/src type hostfs (ro,/home/antony/ikev2)
+none on /usr/obj type hostfs (ro,/home/antony/ikev2/OBJ.linux.i386)
+none on /usr/local type hostfs (rw,/btmp/antony/ikev2/2008_01_14/UMLPOOL/west/root/usr/local)
+none on /var/tmp type hostfs (rw,/btmp/antony/ikev2/2008_01_14/UMLPOOL/west/root/var/tmp)
+none on /proc type proc (rw)
+crw-r--r--    1 root     root       5,   1 Feb 13 23:54 /dev/console
+mount: proc already mounted
+Activating swap...
+Checking all file systems...
+Parallelizing fsck version 1.18 (11-Nov-1999)
+Setting kernel variables.
+Mounting local filesystems...
+mount: devpts already mounted on /dev/pts
+/dev/shm on /tmp type tmpfs (rw)
+/dev/shm on /var/run type tmpfs (rw)
+none on /usr/share type hostfs (ro)
+none on /testing type hostfs (ro,/home/antony/ikev2/testing)
+none on /usr/src type hostfs (ro,/home/antony/ikev2)
+none on /usr/obj type hostfs (ro,/home/antony/ikev2/OBJ.linux.i386)
+none on /usr/local type hostfs (rw,/btmp/antony/ikev2/2008_01_14/UMLPOOL/west/root/usr/local)
+none on /var/tmp type hostfs (rw,/btmp/antony/ikev2/2008_01_14/UMLPOOL/west/root/var/tmp)
+Enabling packet forwarding: done.
+Configuring network interfaces: done.
+Cleaning: /tmp /var/lock /var/run.
+Initializing random number generator... done.
+Recovering nvi editor sessions... done.
+Give root password for maintenance
+(or type Control-D for normal startup): 
+west:~# echo Starting loading module
+Starting loading module
+west:~# exec bash --noediting
+west:~# ulimit -c unlimited
+west:~# echo Finished loading module
+Finished loading module
+west:~# klogd -c 4 -x -f /tmp/klog.log
+west:~# : ==== start ====
+west:~# TESTNAME=loopback-pluto-01
+west:~# source /testing/pluto/bin/westlocal.sh
+west:~# ping -n -c 4 192.0.2.254
+PING 192.0.2.254 (192.0.2.254): 56 data bytes
+64 bytes from 192.0.2.254: icmp_seq=0 ttl=64 time=33.0 ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.4 ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.4 ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.4 ms
+
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 packets received, 0% packet loss
+round-trip min/avg/max = 0.4/8.5/33.0 ms
+west:~# iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west:~# ping -n -c 4 192.0.2.254
+PING 192.0.2.254 (192.0.2.254): 56 data bytes
+
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 packets received, 100% packet loss
+west:~# ipsec setup start
+ipsec_setup: Starting Libreswan IPsec U2.5.testing-g21680e0d-dirty/K2.6.18.6...
+ipsec_setup: Trying hardware random, this may fail, which is okay.
+ipsec_setup: Trying to load all NETKEY modules:xfrm6_tunnel xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 ipcomp ipcomp6 af_key 
+ipsec_setup: Trying VIA padlock driver, this may fail, which is okay.
+ipsec_setup: Trying to load Crypto API modules, some may fail, which is okay.
+ipsec_setup: aes-x86_64 aes des sha512 sha256 md5 cbc xcbc ecb twofish blowfish serpent 
+west:~# ipsec auto --add westnet-eastnet
+west:~# ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
+west:~# /testing/pluto/bin/wait-until-pluto-started
+west:~# echo done
+done
+west:~# : === NETJIG start of WEST westrun.sh 
+west:~# ipsec auto --up  westnet-eastnet
+104 "westnet-eastnet" #1: STATE_MAIN_I1: initiate
+003 "westnet-eastnet" #1: received Vendor ID payload [Libreswan (this version) 2.5.testing-g21680e0d-dirty ]
+003 "westnet-eastnet" #1: received Vendor ID payload [Dead Peer Detection]
+106 "westnet-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+108 "westnet-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+004 "westnet-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
+117 "westnet-eastnet" #2: STATE_QUICK_I1: initiate
+004 "westnet-eastnet" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xc09c5241 <0x2d024a97 xfrm=3DES_0-HMAC_MD5 NATOA=none NATD=none DPD=none}
+west:~# ip xfrm state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xc09c5241 reqid 16385 mode tunnel
+	replay-window 32 
+	auth md5 0x4878fefe2844d53e41d6170c6884ad39
+	enc des3_ede 0xdf24f5dea362bf492157c225844f75a494c9ddaa045369c9
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0x2d024a97 reqid 16385 mode tunnel
+	replay-window 32 
+	auth md5 0xc5896ef86ddad9bb98ac1ce506bad646
+	enc des3_ede 0x15875b48fb27fc3281594e2fb5624026e60e0039dd46faf8
+west:~# ip xfrm policy
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir in priority 2344 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16385 mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir out priority 2344 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 16385 mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir fwd priority 2344 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16385 mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir in priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir in priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir in priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir in priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir out priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir out priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir out priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir out priority 0 
+west:~# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.9.4.0       0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.1.2.0       0.0.0.0         255.255.255.0   U     0      0        0 eth1
+192.0.1.0       0.0.0.0         255.255.255.0   U     0      0        0 eth0
+0.0.0.0         192.1.2.254     0.0.0.0         UG    0      0        0 eth1
+west:~# ipsec auto --delete westnet-eastnet
+west:~# ip xfrm state
+west:~# ip xfrm policy
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir out priority 2344 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 16385 mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir in priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir in priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir in priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir in priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir out priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir out priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir out priority 0 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	dir out priority 0 
+west:~# echo done
+done
+west:~# 
+
+west:~# : ==== cut ====
+west:~# ipsec auto --status
+whack: is Pluto running?  connect() for "/var/run/pluto/pluto.ctl" failed (111 Connection refused)
+west:~# cat /tmp/pluto.log
+Plutorun started on Wed Feb 13 23:55:15 GMT 2008
+Starting Pluto (Libreswan Version 2.5.testing-g21680e0d-dirty; Vendor ID OEGJMMweP{pQ) pid:923
+Setting NAT-Traversal port-4500 floating to off
+   port floating activation criteria nat_t=0/port_float=1
+   including NAT-Traversal patch (Version 0.6c) [disabled]
+using /dev/urandom as source of random entropy
+ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC_SSH: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_TWOFISH_CBC: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_SERPENT_CBC: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
+ike_alg_register_enc(): Activating OAKLEY_BLOWFISH_CBC: Ok (ret=0)
+ike_alg_register_hash(): Activating OAKLEY_SHA2_512: Ok (ret=0)
+ike_alg_register_hash(): Activating OAKLEY_SHA2_256: Ok (ret=0)
+starting up 1 cryptographic helpers
+using /dev/urandom as source of random entropy
+started helper pid=924 (fd:6)
+Using Linux XFRM/NETKEY IPsec interface code on 2.6.18.6
+Changed path to directory '/tmp/loopback-pluto-01/ipsec.d/cacerts'
+Changed path to directory '/tmp/loopback-pluto-01/ipsec.d/aacerts'
+Changed path to directory '/tmp/loopback-pluto-01/ipsec.d/ocspcerts'
+Changing to directory '/tmp/loopback-pluto-01/ipsec.d/crls'
+  Warning: empty directory
+listening for IKE messages
+adding interface lo/lo 127.0.0.1:500
+adding interface eth2/eth2 192.9.4.45:500
+adding interface eth1/eth1 192.1.2.45:500
+adding interface eth0/eth0 192.0.1.254:500
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+added connection description "westnet-eastnet"
+| base debugging = crypt+parsing+control+controlmore
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 119 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8140158) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8140158) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 119 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8141840) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8141840) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 117 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x81400e8) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x81400e8) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 115 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8142280) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8142280) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 113 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8142280) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8142280) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 110 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8140018) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8140018) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 108 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8140010) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8140010) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 106 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x81421f8) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x81421f8) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 104 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x813ff08) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x813ff08) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 102 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x81421f8) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x81421f8) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 100 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x813ff08) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x813ff08) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 98 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x81445d8) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x81445d8) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 96 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8143c90) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8143c90) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 94 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8144550) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8144550) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 92 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8146ce0) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8146ce0) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 90 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8149940) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8149940) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 87 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8146340) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8146340) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 85 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8148690) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8148690) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 83 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x814a258) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x814a258) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 81 seconds
+|  
+| *received whack message
+listening for IKE messages
+| found eth0 with address 192.0.1.254
+| found eth1 with address 192.1.2.45
+| found eth2 with address 192.9.4.45
+| found lo with address 127.0.0.1
+| could not open /proc/net/if_inet6
+forgetting secrets
+loading secrets from "/tmp/loopback-pluto-01/ipsec.secrets"
+loaded private key for keyid: PPK_RSA:AQNzGEFs1
+| id type added to secret(0x8144550) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8144550) 1: %any
+  could not open private key file '/etc/ipsec.d/private/west.key'
+"/tmp/loopback-pluto-01/ipsec.secrets" line 26: error loading RSA private key file
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 79 seconds
+|  
+| *received whack message
+| processing connection westnet-eastnet
+| kernel_alg_db_new() will return p_new->protoid=3, p_new->trans_cnt=1
+| kernel_alg_db_new()     trans[0]: transid=3, attr_cnt=1, attrs[0].type=5, attrs[0].val=1
+| returning new proposal from esp_info
+| creating state object #1 at 0x814c850
+| processing connection westnet-eastnet
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  00 00 00 00  00 00 00 00
+| state hash entry 15
+| inserting state object #1 on chain 15
+| inserting event EVENT_SO_DISCARD, timeout in 0 seconds for #1
+| processing connection westnet-eastnet
+| Queuing pending Quick Mode with 192.1.2.23 "westnet-eastnet"
+"westnet-eastnet" #1: initiating Main Mode
+| no IKE algorithms for this connection 
+| sending 404 bytes for main_outI1 through eth1:500 to 192.1.2.23:500 (using #1)
+| inserting event EVENT_RETRANSMIT, timeout in 10 seconds for #1
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_RETRANSMIT in 10 seconds for #1
+|  
+| *received 116 bytes from 192.1.2.23:500 on eth1 (port=500)
+| **parse ISAKMP Message:
+|    initiator cookie:
+|   f3 8b f8 08  3a fc b7 9c
+|    responder cookie:
+|   8b 14 41 08  19 7c f5 87
+|    next payload type: ISAKMP_NEXT_SA
+|    ISAKMP version: ISAKMP Version 1.0 (rfc2407)
+|    exchange type: ISAKMP_XCHG_IDPROT
+|    flags: none
+|    message ID:  00 00 00 00
+|    length: 116
+|  processing version=1.0 packet with exchange type=ISAKMP_XCHG_IDPROT (2)
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| v1 state object not found
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  00 00 00 00  00 00 00 00
+| state hash entry 15
+| v1 peer and cookies match on #1, provided msgid 00000000 vs 00000000
+| v1 state object #1 found, in STATE_MAIN_I1
+| processing connection westnet-eastnet
+| got payload 0x2(ISAKMP_NEXT_SA) needed: 0x2 opt: 0x2080
+| ***parse ISAKMP Security Association Payload:
+|    next payload type: ISAKMP_NEXT_VID
+|    length: 52
+|    DOI: ISAKMP_DOI_IPSEC
+| got payload 0x2000(ISAKMP_NEXT_VID) needed: 0x0 opt: 0x2080
+| ***parse ISAKMP Vendor ID Payload:
+|    next payload type: ISAKMP_NEXT_VID
+|    length: 16
+| got payload 0x2000(ISAKMP_NEXT_VID) needed: 0x0 opt: 0x2080
+| ***parse ISAKMP Vendor ID Payload:
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 20
+"westnet-eastnet" #1: received Vendor ID payload [Libreswan (this version) 2.5.testing-g21680e0d-dirty ]
+"westnet-eastnet" #1: received Vendor ID payload [Dead Peer Detection]
+| ****parse IPsec DOI SIT:
+|    IPsec DOI SIT: SIT_IDENTITY_ONLY
+| ****parse ISAKMP Proposal Payload:
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 40
+|    proposal number: 0
+|    protocol ID: PROTO_ISAKMP
+|    SPI size: 0
+|    number of transforms: 1
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 32
+|    transform number: 0
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+|    [1 is OAKLEY_LIFE_SECONDS]
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 7
+|    [7 is OAKLEY_AES_CBC]
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 2
+|    [2 is OAKLEY_SHA1]
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+|    [3 is OAKLEY_RSA_SIG]
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 14
+|    [14 is OAKLEY_GROUP_MODP2048]
+| Oakley Transform 0 accepted
+| sender checking NAT-t: 0 and 0
+| 0: w->pcw_dead: 0 w->pcw_work: 0 cnt: 1
+| asking helper 0 to do build_kenonce op on seq: 1 (len=2668, pcw_work=1)
+| crypto helper write of request: cnt=2668<wlen=2668.  
+| inserting event EVENT_CRYPTO_FAILED, timeout in 300 seconds for #1
+| complete state transition with STF_SUSPEND
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 76 seconds
+|  
+| helper 0 has finished work (cnt now 1)
+| helper 0 replies to id: q#1
+| calling callback function 0x8069c0d
+| main inR1_outI2: calculated ke+nonce, sending I2
+| processing connection westnet-eastnet
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  00 00 00 00  00 00 00 00
+| state hash entry 15
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| inserting state object #1 on chain 4
+| complete state transition with STF_OK
+"westnet-eastnet" #1: transition from state STATE_MAIN_I1 to state STATE_MAIN_I2
+| sending reply packet to 192.1.2.23:500 (from port 500)
+| sending 308 bytes for STATE_MAIN_I1 through eth1:500 to 192.1.2.23:500 (using #1)
+| inserting event EVENT_RETRANSMIT, timeout in 10 seconds for #1
+"westnet-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+| modecfg pull: noquirk policy:push not-client
+| phase 1 is done, looking for phase 2 to unpend
+| * processed 1 messages from cryptographic helpers 
+| next event EVENT_RETRANSMIT in 10 seconds for #1
+|  
+| *received 308 bytes from 192.1.2.23:500 on eth1 (port=500)
+| **parse ISAKMP Message:
+|    initiator cookie:
+|   f3 8b f8 08  3a fc b7 9c
+|    responder cookie:
+|   8b 14 41 08  19 7c f5 87
+|    next payload type: ISAKMP_NEXT_KE
+|    ISAKMP version: ISAKMP Version 1.0 (rfc2407)
+|    exchange type: ISAKMP_XCHG_IDPROT
+|    flags: none
+|    message ID:  00 00 00 00
+|    length: 308
+|  processing version=1.0 packet with exchange type=ISAKMP_XCHG_IDPROT (2)
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| v1 peer and cookies match on #1, provided msgid 00000000 vs 00000000
+| v1 state object #1 found, in STATE_MAIN_I2
+| processing connection westnet-eastnet
+| got payload 0x10(ISAKMP_NEXT_KE) needed: 0x410 opt: 0x102080
+| ***parse ISAKMP Key Exchange Payload:
+|    next payload type: ISAKMP_NEXT_NONCE
+|    length: 260
+| got payload 0x400(ISAKMP_NEXT_NONCE) needed: 0x400 opt: 0x102080
+| ***parse ISAKMP Nonce Payload:
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 20
+| DH public value received:
+|   08 78 3c af  e1 19 f4 d5  c5 2f cf b5  34 58 31 17
+|   19 56 a1 30  40 68 3d 5e  47 41 32 0c  95 4e d8 6a
+|   ae 7f 31 82  37 d9 35 2e  48 43 fa 63  6d c2 ab 2e
+|   2b c0 01 52  59 ca 3a 7f  7e 86 60 6f  7c e1 3c 09
+|   05 3a 9a 32  d8 df a0 8d  b2 ff 4a e7  ae b5 ea 1b
+|   58 09 92 23  74 26 8b 64  e5 93 56 2e  01 61 af 58
+|   ed 23 1e 66  53 90 07 34  16 3f 9e 0f  07 7f d6 16
+|   91 35 16 92  e0 7b 46 cb  49 55 c3 38  1f 8c 29 ea
+|   95 c7 8a 73  35 bd ae da  c9 fe a1 37  ef 10 16 6c
+|   7a b6 74 c4  0e 0b d4 a6  ed 95 56 84  a7 9f b7 7e
+|   65 71 7a 2f  23 93 f5 16  42 35 cb de  e2 fe 88 b8
+|   e6 13 16 5b  25 78 4e 45  79 5f f5 76  ca 97 f9 29
+|   f1 2d cb f4  04 bf 01 cc  06 31 6f 0e  90 bc 54 0c
+|   b2 3f 61 11  83 38 d8 ac  fc d7 59 08  48 d0 eb c0
+|   77 db 6f 0e  9c bb a4 18  c5 66 6a b5  69 45 44 24
+|   ee 14 7f a5  7f 2e 9c 5d  70 8f c2 1d  cc a3 0f c5
+| started looking for secret for @west->@east of kind PPK_PSK
+| actually looking for secret for @west->@east of kind PPK_PSK
+| line 8: key type PPK_PSK(@west) to type PPK_RSA 
+| concluding with best_match=0 best=(nil) (lineno=-1)
+| parent1 type: 7 group: 14 len: 2668 
+| 0: w->pcw_dead: 0 w->pcw_work: 0 cnt: 1
+| asking helper 0 to do compute dh+iv op on seq: 2 (len=2668, pcw_work=1)
+| crypto helper write of request: cnt=2668<wlen=2668.  
+| inserting event EVENT_CRYPTO_FAILED, timeout in 300 seconds for #1
+| complete state transition with STF_SUSPEND
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 76 seconds
+|  
+| helper 0 has finished work (cnt now 1)
+| helper 0 replies to id: q#2
+| calling callback function 0x806b553
+| main inR2_outI3: calculated DH, sending R1
+| processing connection westnet-eastnet
+| thinking about whether to send my certificate:
+|   I have RSA key: OAKLEY_RSA_SIG cert.type: CERT_NONE 
+|   sendcert: CERT_ALWAYSSEND and I did not get a certificate request 
+|   so do not send cert.
+| I did not send a certificate because I do not have one.
+|  I am not sending a certificate request
+| hashing 336 bytes of SA
+| started looking for secret for @west->@east of kind PPK_RSA
+| actually looking for secret for @west->@east of kind PPK_RSA
+| line 8: key type PPK_RSA(@west) to type PPK_RSA 
+| 1: compared key (none) to @west / @east -> 6
+| 2: compared key (none) to @west / @east -> 6
+| line 8: match=6 
+| best_match 0>6 best=0x814a1d0 (line=8)
+| concluding with best_match=6 best=0x814a1d0 (lineno=8)
+| signing hash with RSA Key *AQNzGEFs1
+| encrypting:
+|   09 00 00 0c  02 00 00 00  77 65 73 74  00 00 01 04
+|   5e 74 a0 6c  3a 03 4e 26  2a b7 24 71  19 54 81 5d
+|   06 37 54 07  1a ff 19 c2  83 cd d8 ea  9d 88 7b 37
+|   fb 4b c0 89  71 57 3a 58  a0 37 ce f7  88 36 db e2
+|   7c 44 9b af  8c 39 72 83  f2 aa b7 a9  d8 ce 6d b3
+|   e8 f9 2f d1  3e 39 c2 5c  ef de 6b 2b  bf 9d a2 11
+|   cb 26 2c 23  5a 48 ce a1  bb ab 56 03  7d 1c 94 2f
+|   42 fe cd 0e  68 4b ea 1a  2c 6c e6 f5  03 06 07 25
+|   7e b2 23 e1  1b eb 62 2b  e5 91 ca ce  64 dd ce 50
+|   ea f6 08 98  d0 29 18 4e  33 23 28 f6  0b d8 51 99
+|   c7 32 4f 97  8b 83 0c 5b  42 db 59 07  53 0a bc 4d
+|   af 30 66 8a  b1 2e c9 00  3a 19 7b 87  4d 62 a4 b3
+|   1e 5a 8a da  4f 0a 82 74  2a 82 c9 60  d5 71 b0 4a
+|   4d 0a 60 9a  0b 10 bf ef  70 e2 84 87  f4 00 b6 01
+|   99 35 af df  b7 34 cc 75  7e a2 9d 7f  52 ac eb c2
+|   6c ca fa ed  b1 a4 f6 9b  fd 3e c5 b1  93 18 22 6a
+|   2c 55 d9 3b  26 33 45 15  80 e4 65 e2  4c f0 c2 ed
+| IV:
+|   48 2a 21 df  01 f8 bc c7  01 a8 bb 16  a8 7b dd aa
+|   5d a8 13 e8
+| unpadded size is: 272
+| encrypting 272 using OAKLEY_AES_CBC
+| next IV:  6b 0c e1 72  3c de 99 1d  1e 03 38 87  a5 a7 53 15
+| complete state transition with STF_OK
+"westnet-eastnet" #1: transition from state STATE_MAIN_I2 to state STATE_MAIN_I3
+| sending reply packet to 192.1.2.23:500 (from port 500)
+| sending 300 bytes for STATE_MAIN_I2 through eth1:500 to 192.1.2.23:500 (using #1)
+| inserting event EVENT_RETRANSMIT, timeout in 10 seconds for #1
+"westnet-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+| modecfg pull: noquirk policy:push not-client
+| phase 1 is done, looking for phase 2 to unpend
+| * processed 1 messages from cryptographic helpers 
+| next event EVENT_RETRANSMIT in 10 seconds for #1
+|  
+| *received 300 bytes from 192.1.2.23:500 on eth1 (port=500)
+| **parse ISAKMP Message:
+|    initiator cookie:
+|   f3 8b f8 08  3a fc b7 9c
+|    responder cookie:
+|   8b 14 41 08  19 7c f5 87
+|    next payload type: ISAKMP_NEXT_ID
+|    ISAKMP version: ISAKMP Version 1.0 (rfc2407)
+|    exchange type: ISAKMP_XCHG_IDPROT
+|    flags: ISAKMP_FLAG_ENCRYPTION
+|    message ID:  00 00 00 00
+|    length: 300
+|  processing version=1.0 packet with exchange type=ISAKMP_XCHG_IDPROT (2)
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| v1 peer and cookies match on #1, provided msgid 00000000 vs 00000000
+| v1 state object #1 found, in STATE_MAIN_I3
+| processing connection westnet-eastnet
+| received encrypted packet from 192.1.2.23:500
+| decrypting 272 bytes using algorithm OAKLEY_AES_CBC
+| decrypted:
+|   09 00 00 0c  02 00 00 00  65 61 73 74  00 00 01 04
+|   4a a5 53 74  f3 61 f8 47  9b 2e 8f b9  7b 10 e4 a3
+|   db 48 78 bf  3a d3 00 4a  00 08 11 a5  89 50 0c 51
+|   3c 13 c9 e0  a2 a7 21 1b  6c fa c0 78  0b 21 ed e6
+|   5d 2b de ca  3c bc ea d2  57 b2 74 0e  e4 1a 09 20
+|   a3 f5 b8 8d  55 bd 69 c0  42 82 86 a5  d2 27 5b 89
+|   77 31 d6 dd  7c d4 dd 56  6e 8c ec 65  39 52 2c 7a
+|   68 38 a3 cb  47 83 7f 83  83 9f 99 92  45 b6 6b e8
+|   54 36 57 a5  ad 5b 50 5e  c0 6c 43 c3  b3 88 c3 be
+|   d8 28 fb 0a  1b a6 b0 3c  9e fb 0e 89  bc db d3 ae
+|   9f 56 35 3a  4e 37 8c 4e  6b 4d f1 85  24 22 a0 78
+|   9a 76 78 7c  df 11 d3 f1  8e 2c 36 70  f5 1f 7e c5
+|   9b 5f 63 2b  e3 b7 0f 10  f3 d3 c3 27  2e c0 71 ef
+|   35 39 96 5f  45 7b b9 eb  d1 cd 7c c0  8d b9 c8 33
+|   46 43 ea e8  40 be 44 0f  37 1d 48 50  eb cf e7 76
+|   62 ff d1 79  53 23 c7 48  3f d8 df 4a  61 95 ec 0c
+|   45 cf cd 59  07 28 63 89  83 ed 71 c8  4a b8 58 34
+| next IV:  04 4d 63 08  a0 05 5b bf  0d 16 08 9c  c5 72 8d c2
+| got payload 0x20(ISAKMP_NEXT_ID) needed: 0x220 opt: 0x20c0
+| ***parse ISAKMP Identification Payload:
+|    next payload type: ISAKMP_NEXT_SIG
+|    length: 12
+|    ID type: ID_FQDN
+|    DOI specific A: 0
+|    DOI specific B: 0
+|      obj:   65 61 73 74  00 00 01 04  4a a5 53 74
+| got payload 0x200(ISAKMP_NEXT_SIG) needed: 0x200 opt: 0x20c0
+| ***parse ISAKMP Signature Payload:
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 260
+"westnet-eastnet" #1: Main mode peer ID is ID_FQDN: '@east'
+| hashing 336 bytes of SA
+| required CA is '%any'
+|   trusted_ca called with a=(empty) b=(empty)
+| key issuer CA is '%any'
+| an RSA Sig check passed with *AQN3cn11F [preloaded key]
+| authentication succeeded
+| complete state transition with STF_OK
+"westnet-eastnet" #1: transition from state STATE_MAIN_I3 to state STATE_MAIN_I4
+| inserting event EVENT_SA_REPLACE, timeout in 2805 seconds for #1
+"westnet-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
+| modecfg pull: noquirk policy:push not-client
+| phase 1 is done, looking for phase 2 to unpend
+| unqueuing pending Quick Mode with 192.1.2.23 "westnet-eastnet" import:admin initiate
+| duplicating state object #1
+| creating state object #2 at 0x814de18
+| processing connection westnet-eastnet
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| inserting state object #2 on chain 4
+| inserting event EVENT_SO_DISCARD, timeout in 0 seconds for #2
+| kernel_alg_esp_auth_keylen(auth=1, sadb_aalg=2): a_keylen=16
+"westnet-eastnet" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW {using isakmp#1 msgid:32948df9 proposal=3DES(3)_192-MD5(1)_128 pfsgroup=OAKLEY_GROUP_MODP2048}
+| 0: w->pcw_dead: 0 w->pcw_work: 0 cnt: 1
+| asking helper 0 to do build_kenonce op on seq: 3 (len=2668, pcw_work=1)
+| crypto helper write of request: cnt=2668<wlen=2668.  
+| inserting event EVENT_CRYPTO_FAILED, timeout in 300 seconds for #2
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 76 seconds
+|  
+| helper 0 has finished work (cnt now 1)
+| helper 0 replies to id: q#3
+| calling callback function 0x806fcab
+| quick outI1: calculated ke+nonce, sending I1
+| processing connection westnet-eastnet
+| kernel_alg_db_new() will return p_new->protoid=3, p_new->trans_cnt=1
+| kernel_alg_db_new()     trans[0]: transid=3, attr_cnt=1, attrs[0].type=5, attrs[0].val=1
+| returning new proposal from esp_info
+| HASH(1) computed:
+|   b6 45 55 42  08 50 39 c3  5a 78 13 3f  d7 c8 b6 ed
+|   20 46 73 fb
+| last Phase 1 IV:  04 4d 63 08  a0 05 5b bf  0d 16 08 9c  c5 72 8d c2
+| current Phase 1 IV:  04 4d 63 08  a0 05 5b bf  0d 16 08 9c  c5 72 8d c2
+| computed Phase 2 IV:
+|   b5 32 1b 37  d7 39 45 52  42 4c 9c ac  ea 31 a9 43
+|   8c df 9f 58
+| encrypting:
+|   01 00 00 18  b6 45 55 42  08 50 39 c3  5a 78 13 3f
+|   d7 c8 b6 ed  20 46 73 fb  0a 00 00 34  00 00 00 01
+|   00 00 00 01  00 00 00 28  00 03 04 01  2d 02 4a 97
+|   00 00 00 1c  00 03 00 00  80 03 00 0e  80 04 00 01
+|   80 01 00 01  80 02 70 80  80 05 00 01  04 00 00 14
+|   c2 ed fc bd  40 e0 78 e8  48 b7 dc 26  47 05 42 90
+|   05 00 01 04  46 ef 3f 73  0b d2 12 39  e5 cd d1 c3
+|   8d 47 4e dc  96 9c 1a e3  cb b7 4c ee  69 4b ca 4d
+|   0d f2 e1 ce  71 92 38 56  68 97 01 76  c5 52 fe d1
+|   af 8d 93 60  ba 40 c8 be  72 45 65 66  da 97 83 9b
+|   d6 38 66 d7  b3 b1 07 1f  fe 8d df 60  84 f3 c5 76
+|   35 91 14 3b  c7 b3 36 1c  b1 70 cf 64  23 61 f2 c9
+|   b1 66 31 81  47 58 f1 e7  be eb 18 bf  e6 27 73 9d
+|   fa 9d aa c2  7f e0 3d 35  df ab 64 75  06 dd 4d 26
+|   bd b3 b3 db  3a 81 90 1f  a7 01 27 56  77 1c 40 53
+|   eb 42 19 00  3d 21 7e 6b  50 62 4b 7e  9a 1f 4b 57
+|   be da f7 e3  01 06 1a e8  81 39 42 84  77 6a 62 df
+|   ff 0f cc 63  a7 4b 6b 15  47 be 0b 53  d5 a7 2d 05
+|   ca 01 54 af  21 4b 13 83  74 bb 47 af  39 74 0a 92
+|   61 63 0e 51  0c 7c 28 9e  b6 3d 87 cd  3d 19 53 e5
+|   81 45 80 7e  f9 8c 63 68  a1 61 fd e2  b8 98 b2 f7
+|   43 19 16 86  88 f0 c1 22  64 bf 83 77  be 81 54 8b
+|   48 c1 e8 b7  05 00 00 10  04 00 00 00  c0 00 01 00
+|   ff ff ff 00  00 00 00 10  04 00 00 00  c0 00 02 00
+|   ff ff ff 00
+| IV:
+|   b5 32 1b 37  d7 39 45 52  42 4c 9c ac  ea 31 a9 43
+|   8c df 9f 58
+| unpadded size is: 388
+| encrypting 400 using OAKLEY_AES_CBC
+| next IV:  79 9e 45 f8  9d a2 54 27  03 f0 11 b1  d1 c7 66 65
+| sending 428 bytes for quick_outI1 through eth1:500 to 192.1.2.23:500 (using #2)
+| inserting event EVENT_RETRANSMIT, timeout in 10 seconds for #2
+| * processed 1 messages from cryptographic helpers 
+| next event EVENT_RETRANSMIT in 10 seconds for #2
+|  
+| *received 428 bytes from 192.1.2.23:500 on eth1 (port=500)
+| **parse ISAKMP Message:
+|    initiator cookie:
+|   f3 8b f8 08  3a fc b7 9c
+|    responder cookie:
+|   8b 14 41 08  19 7c f5 87
+|    next payload type: ISAKMP_NEXT_HASH
+|    ISAKMP version: ISAKMP Version 1.0 (rfc2407)
+|    exchange type: ISAKMP_XCHG_QUICK
+|    flags: ISAKMP_FLAG_ENCRYPTION
+|    message ID:  f9 8d 94 32
+|    length: 428
+|  processing version=1.0 packet with exchange type=ISAKMP_XCHG_QUICK (32)
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| v1 peer and cookies match on #2, provided msgid f98d9432 vs f98d9432
+| v1 state object #2 found, in STATE_QUICK_I1
+| processing connection westnet-eastnet
+| received encrypted packet from 192.1.2.23:500
+| decrypting 400 bytes using algorithm OAKLEY_AES_CBC
+| decrypted:
+|   01 00 00 18  63 8a 46 ba  ba 46 6c 1c  03 27 f9 54
+|   35 ca ca 88  b8 35 42 a2  0a 00 00 34  00 00 00 01
+|   00 00 00 01  00 00 00 28  00 03 04 01  c0 9c 52 41
+|   00 00 00 1c  00 03 00 00  80 03 00 0e  80 04 00 01
+|   80 01 00 01  80 02 70 80  80 05 00 01  04 00 00 14
+|   0a a6 1b 7f  9d da 0b b5  11 a5 6c ab  c1 b1 6a f5
+|   05 00 01 04  28 57 32 29  67 55 da bc  2b 42 50 19
+|   de 57 46 98  95 75 b9 43  10 36 af 1b  ed 15 ec 38
+|   ca ae 76 9c  82 60 27 44  f9 f9 83 48  08 b5 a7 50
+|   c0 7d 67 7d  d2 26 64 58  5a 34 4f cc  ef bb ca 96
+|   3d 5d dd 71  72 d3 c2 60  26 2c 6e 3f  23 87 35 e0
+|   b4 4a 50 4f  35 b6 98 ea  bd d3 e5 9f  02 b2 21 c6
+|   aa 6b c7 31  ea a2 f5 36  15 d4 c7 a4  97 3c 69 88
+|   0f 77 5b fc  3e 6f 96 85  9c e3 5c 2c  b5 9e c3 39
+|   25 f2 19 0d  4b fb f4 f6  fa ad 1d 0e  9e df fe f2
+|   c3 2c 06 88  f4 94 0c b3  46 cc 09 e4  d8 51 5f 97
+|   b1 ba ab e5  12 96 56 85  af 7b af 27  31 8f 6c 4f
+|   0c 9a ff c0  3a 75 ba 55  3b 05 bb b0  6b c9 e3 a5
+|   5e 02 fd ed  77 ae 6d 13  39 e8 92 cf  88 3f e8 fa
+|   a7 b9 ce 01  36 79 fb f3  af c5 a9 6c  7d 26 ae fe
+|   2a 4a e9 7e  e7 37 e1 6f  bd 23 79 cc  f9 ad de 8a
+|   2a ee 64 2b  93 d8 d0 85  0a c9 82 a9  ce 21 6b 45
+|   74 bc 50 e7  05 00 00 10  04 00 00 00  c0 00 01 00
+|   ff ff ff 00  00 00 00 10  04 00 00 00  c0 00 02 00
+|   ff ff ff 00  00 00 00 00  00 00 00 00  00 00 00 00
+| next IV:  42 0f 7f 12  86 6e f5 d8  52 a1 59 71  cd 6f 93 16
+| got payload 0x100(ISAKMP_NEXT_HASH) needed: 0x502 opt: 0x200030
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA
+|    length: 24
+| got payload 0x2(ISAKMP_NEXT_SA) needed: 0x402 opt: 0x200030
+| ***parse ISAKMP Security Association Payload:
+|    next payload type: ISAKMP_NEXT_NONCE
+|    length: 52
+|    DOI: ISAKMP_DOI_IPSEC
+| got payload 0x400(ISAKMP_NEXT_NONCE) needed: 0x400 opt: 0x200030
+| ***parse ISAKMP Nonce Payload:
+|    next payload type: ISAKMP_NEXT_KE
+|    length: 20
+| got payload 0x10(ISAKMP_NEXT_KE) needed: 0x0 opt: 0x200030
+| ***parse ISAKMP Key Exchange Payload:
+|    next payload type: ISAKMP_NEXT_ID
+|    length: 260
+| got payload 0x20(ISAKMP_NEXT_ID) needed: 0x0 opt: 0x200030
+| ***parse ISAKMP Identification Payload (IPsec DOI):
+|    next payload type: ISAKMP_NEXT_ID
+|    length: 16
+|    ID type: ID_IPV4_ADDR_SUBNET
+|    Protocol ID: 0
+|    port: 0
+|      obj:   c0 00 01 00  ff ff ff 00  00 00 00 10  04 00 00 00
+| got payload 0x20(ISAKMP_NEXT_ID) needed: 0x0 opt: 0x200030
+| ***parse ISAKMP Identification Payload (IPsec DOI):
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 16
+|    ID type: ID_IPV4_ADDR_SUBNET
+|    Protocol ID: 0
+|    port: 0
+|      obj:   c0 00 02 00  ff ff ff 00  00 00 00 00  00 00 00 00
+| removing 12 bytes of padding
+| HASH(2) computed:
+|   63 8a 46 ba  ba 46 6c 1c  03 27 f9 54  35 ca ca 88
+|   b8 35 42 a2
+| ****parse IPsec DOI SIT:
+|    IPsec DOI SIT: SIT_IDENTITY_ONLY
+| ****parse ISAKMP Proposal Payload:
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 40
+|    proposal number: 0
+|    protocol ID: PROTO_IPSEC_ESP
+|    SPI size: 4
+|    number of transforms: 1
+| parsing 4 raw bytes of ISAKMP Proposal Payload into SPI
+| SPI  c0 9c 52 41
+| *****parse ISAKMP Transform Payload (ESP):
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 28
+|    transform number: 0
+|    transform ID: ESP_3DES
+| ******parse ISAKMP IPsec DOI attribute:
+|    af+type: GROUP_DESCRIPTION
+|    length/value: 14
+|    [14 is OAKLEY_GROUP_MODP2048]
+| ******parse ISAKMP IPsec DOI attribute:
+|    af+type: ENCAPSULATION_MODE
+|    length/value: 1
+|    [1 is ENCAPSULATION_MODE_TUNNEL]
+| ******parse ISAKMP IPsec DOI attribute:
+|    af+type: SA_LIFE_TYPE
+|    length/value: 1
+|    [1 is SA_LIFE_TYPE_SECONDS]
+| ******parse ISAKMP IPsec DOI attribute:
+|    af+type: SA_LIFE_DURATION
+|    length/value: 28800
+| ******parse ISAKMP IPsec DOI attribute:
+|    af+type: AUTH_ALGORITHM
+|    length/value: 1
+|    [1 is AUTH_ALGORITHM_HMAC_MD5]
+| DH public value received:
+|   28 57 32 29  67 55 da bc  2b 42 50 19  de 57 46 98
+|   95 75 b9 43  10 36 af 1b  ed 15 ec 38  ca ae 76 9c
+|   82 60 27 44  f9 f9 83 48  08 b5 a7 50  c0 7d 67 7d
+|   d2 26 64 58  5a 34 4f cc  ef bb ca 96  3d 5d dd 71
+|   72 d3 c2 60  26 2c 6e 3f  23 87 35 e0  b4 4a 50 4f
+|   35 b6 98 ea  bd d3 e5 9f  02 b2 21 c6  aa 6b c7 31
+|   ea a2 f5 36  15 d4 c7 a4  97 3c 69 88  0f 77 5b fc
+|   3e 6f 96 85  9c e3 5c 2c  b5 9e c3 39  25 f2 19 0d
+|   4b fb f4 f6  fa ad 1d 0e  9e df fe f2  c3 2c 06 88
+|   f4 94 0c b3  46 cc 09 e4  d8 51 5f 97  b1 ba ab e5
+|   12 96 56 85  af 7b af 27  31 8f 6c 4f  0c 9a ff c0
+|   3a 75 ba 55  3b 05 bb b0  6b c9 e3 a5  5e 02 fd ed
+|   77 ae 6d 13  39 e8 92 cf  88 3f e8 fa  a7 b9 ce 01
+|   36 79 fb f3  af c5 a9 6c  7d 26 ae fe  2a 4a e9 7e
+|   e7 37 e1 6f  bd 23 79 cc  f9 ad de 8a  2a ee 64 2b
+|   93 d8 d0 85  0a c9 82 a9  ce 21 6b 45  74 bc 50 e7
+| started looking for secret for @west->@east of kind PPK_PSK
+| actually looking for secret for @west->@east of kind PPK_PSK
+| line 8: key type PPK_PSK(@west) to type PPK_RSA 
+| concluding with best_match=0 best=(nil) (lineno=-1)
+| 0: w->pcw_dead: 0 w->pcw_work: 0 cnt: 1
+| asking helper 0 to do compute dh(p2) op on seq: 4 (len=2668, pcw_work=1)
+| crypto helper write of request: cnt=2668<wlen=2668.  
+| inserting event EVENT_CRYPTO_FAILED, timeout in 300 seconds for #2
+| complete state transition with STF_SUSPEND
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 76 seconds
+|  
+| helper 0 has finished work (cnt now 1)
+| helper 0 replies to id: q#4
+| calling callback function 0x807329a
+| quick inI1_outR1: calculated ke+nonce, calculating DH
+| processing connection westnet-eastnet
+| our client is subnet 192.0.1.0/24
+| our client protocol/port is 0/0
+| peer client is subnet 192.0.2.0/24
+| peer client protocol/port is 0/0
+| HASH(3) computed:  ef d4 33 7e  0a a8 bb 4f  ff 8b 6f 18  32 4e d5 1c
+| HASH(3) computed:  ed 51 4b 1a
+| compute_proto_keymat:needed_len (after ESP enc)=24
+| compute_proto_keymat:needed_len (after ESP auth)=40
+| ESP KEYMAT 
+|   KEYMAT computed:
+|   15 87 5b 48  fb 27 fc 32  81 59 4e 2f  b5 62 40 26
+|   e6 0e 00 39  dd 46 fa f8  c5 89 6e f8  6d da d9 bb
+|   98 ac 1c e5  06 ba d6 46
+|   Peer KEYMAT computed:
+|   df 24 f5 de  a3 62 bf 49  21 57 c2 25  84 4f 75 a4
+|   94 c9 dd aa  04 53 69 c9  48 78 fe fe  28 44 d5 3e
+|   41 d6 17 0c  68 84 ad 39
+| install_ipsec_sa() for #2: inbound and outbound
+| route owner of "westnet-eastnet" unrouted: NULL; eroute owner: NULL
+| could_route called for westnet-eastnet (kind=CK_PERMANENT)
+| looking for alg with transid: 3 keylen: 0 auth: 1 
+| checking transid: 11 keylen: 0 auth: 1 
+| checking transid: 11 keylen: 0 auth: 2 
+| checking transid: 2 keylen: 8 auth: 0 
+| checking transid: 2 keylen: 8 auth: 1 
+| checking transid: 2 keylen: 8 auth: 2 
+| checking transid: 3 keylen: 24 auth: 0 
+| checking transid: 3 keylen: 24 auth: 1 
+| looking for alg with transid: 3 keylen: 0 auth: 1 
+| checking transid: 11 keylen: 0 auth: 1 
+| checking transid: 11 keylen: 0 auth: 2 
+| checking transid: 2 keylen: 8 auth: 0 
+| checking transid: 2 keylen: 8 auth: 1 
+| checking transid: 2 keylen: 8 auth: 2 
+| checking transid: 3 keylen: 24 auth: 0 
+| checking transid: 3 keylen: 24 auth: 1 
+| add inbound eroute 192.0.2.0/24:0 --0-> 192.0.1.0/24:0 => tun.10000@192.1.2.45 (raw_eroute)
+| raw_eroute result=1 
+| sr for #2: unrouted
+| route owner of "westnet-eastnet" unrouted: NULL; eroute owner: NULL
+| route_and_eroute with c: westnet-eastnet (next: none) ero:null esr:{(nil)} ro:null rosr:{(nil)} and state: 2
+| eroute_connection add eroute 192.0.1.0/24:0 --0-> 192.0.2.0/24:0 => tun.0@192.1.2.23 (raw_eroute)
+| raw_eroute result=1 
+| command executing up-client
+|   trusted_ca called with a=(empty) b=(empty)
+| executing up-client: 2>&1 PLUTO_VERSION='2.0' PLUTO_VERB='up-client' PLUTO_CONNECTION='westnet-eastnet' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_INTERFACE='eth1' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='@west' PLUTO_MY_CLIENT='192.0.1.0/24' PLUTO_MY_CLIENT_NET='192.0.1.0' PLUTO_MY_CLIENT_MASK='255.255.255.0' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='@east' PLUTO_PEER_CLIENT='192.0.2.0/24' PLUTO_PEER_CLIENT_NET='192.0.2.0' PLUTO_PEER_CLIENT_MASK='255.255.255.0' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='' PLUTO_STACK='netkey' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW' PLUTO_XAUTH_USERNAME=''  ipsec _updown
+| route_and_eroute: firewall_notified: true
+| command executing prepare-client
+|   trusted_ca called with a=(empty) b=(empty)
+| executing prepare-client: 2>&1 PLUTO_VERSION='2.0' PLUTO_VERB='prepare-client' PLUTO_CONNECTION='westnet-eastnet' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_INTERFACE='eth1' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='@west' PLUTO_MY_CLIENT='192.0.1.0/24' PLUTO_MY_CLIENT_NET='192.0.1.0' PLUTO_MY_CLIENT_MASK='255.255.255.0' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='@east' PLUTO_PEER_CLIENT='192.0.2.0/24' PLUTO_PEER_CLIENT_NET='192.0.2.0' PLUTO_PEER_CLIENT_MASK='255.255.255.0' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='' PLUTO_STACK='netkey' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW' PLUTO_XAUTH_USERNAME=''  ipsec _updown
+| command executing route-client
+|   trusted_ca called with a=(empty) b=(empty)
+| executing route-client: 2>&1 PLUTO_VERSION='2.0' PLUTO_VERB='route-client' PLUTO_CONNECTION='westnet-eastnet' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_INTERFACE='eth1' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='@west' PLUTO_MY_CLIENT='192.0.1.0/24' PLUTO_MY_CLIENT_NET='192.0.1.0' PLUTO_MY_CLIENT_MASK='255.255.255.0' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='@east' PLUTO_PEER_CLIENT='192.0.2.0/24' PLUTO_PEER_CLIENT_NET='192.0.2.0' PLUTO_PEER_CLIENT_MASK='255.255.255.0' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='' PLUTO_STACK='netkey' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW' PLUTO_XAUTH_USERNAME=''  ipsec _updown
+| route_and_eroute: instance "westnet-eastnet", setting eroute_owner {spd=0x81403e8,sr=0x81403e8} to #2 (was #0) (newest_ipsec_sa=#0)
+| encrypting:
+|   00 00 00 18  ef d4 33 7e  0a a8 bb 4f  ff 8b 6f 18
+|   32 4e d5 1c  ed 51 4b 1a
+| IV:
+|   42 0f 7f 12  86 6e f5 d8  52 a1 59 71  cd 6f 93 16
+| unpadded size is: 24
+| encrypting 32 using OAKLEY_AES_CBC
+| next IV:  82 2b 4c 19  ba 07 91 dc  bc c6 a6 e6  98 4f 82 28
+| inR1_outI2: instance westnet-eastnet[0], setting newest_ipsec_sa to #2 (was #0) (spd.eroute=#2)
+| complete state transition with STF_OK
+"westnet-eastnet" #2: transition from state STATE_QUICK_I1 to state STATE_QUICK_I2
+| sending reply packet to 192.1.2.23:500 (from port 500)
+| sending 60 bytes for STATE_QUICK_I1 through eth1:500 to 192.1.2.23:500 (using #2)
+| inserting event EVENT_SA_REPLACE, timeout in 27863 seconds for #2
+"westnet-eastnet" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xc09c5241 <0x2d024a97 xfrm=3DES_0-HMAC_MD5 NATOA=none NATD=none DPD=none}
+| modecfg pull: noquirk policy:push not-client
+| phase 1 is done, looking for phase 2 to unpend
+| * processed 1 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 76 seconds
+|  
+| *received whack message
+| processing connection westnet-eastnet
+"westnet-eastnet": deleting connection
+| processing connection westnet-eastnet
+"westnet-eastnet" #2: deleting state (STATE_QUICK_I2)
+| deleting state #2
+| processing connection westnet-eastnet
+| HASH(1) computed:
+|   55 a0 13 a5  77 c9 9e 43  98 44 ec f2  7b a1 09 17
+|   84 31 57 b1
+| last Phase 1 IV:  04 4d 63 08  a0 05 5b bf  0d 16 08 9c  c5 72 8d c2
+| current Phase 1 IV:  04 4d 63 08  a0 05 5b bf  0d 16 08 9c  c5 72 8d c2
+| computed Phase 2 IV:
+|   e6 97 6f c8  45 61 f7 55  7b 09 4f a3  f8 6d 42 f4
+|   73 d2 ce d3
+| encrypting:
+|   0c 00 00 18  55 a0 13 a5  77 c9 9e 43  98 44 ec f2
+|   7b a1 09 17  84 31 57 b1  00 00 00 10  00 00 00 01
+|   03 04 00 01  2d 02 4a 97
+| IV:
+|   e6 97 6f c8  45 61 f7 55  7b 09 4f a3  f8 6d 42 f4
+|   73 d2 ce d3
+| unpadded size is: 40
+| encrypting 48 using OAKLEY_AES_CBC
+| next IV:  70 e8 85 f9  e9 d0 04 dd  17 bb ba 13  0e f3 a2 d6
+| sending 76 bytes for delete notify through eth1:500 to 192.1.2.23:500 (using #1)
+| no suspended cryptographic state for 2 
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| command executing down-client
+|   trusted_ca called with a=(empty) b=(empty)
+| executing down-client: 2>&1 PLUTO_VERSION='2.0' PLUTO_VERB='down-client' PLUTO_CONNECTION='westnet-eastnet' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_INTERFACE='eth1' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='@west' PLUTO_MY_CLIENT='192.0.1.0/24' PLUTO_MY_CLIENT_NET='192.0.1.0' PLUTO_MY_CLIENT_MASK='255.255.255.0' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='@east' PLUTO_PEER_CLIENT='192.0.2.0/24' PLUTO_PEER_CLIENT_NET='192.0.2.0' PLUTO_PEER_CLIENT_MASK='255.255.255.0' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='' PLUTO_STACK='netkey' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW' PLUTO_XAUTH_USERNAME=''  ipsec _updown
+"westnet-eastnet" #2: request to replace with shunt a prospective erouted policy with netkey kernel --- not yet implemented
+| delete inbound eroute 192.0.2.0/24:0 --0-> 192.0.1.0/24:0 => unk255.10000@192.1.2.45 (raw_eroute)
+| raw_eroute result=1 
+| processing connection westnet-eastnet
+"westnet-eastnet" #1: deleting state (STATE_MAIN_I4)
+| deleting state #1
+| processing connection westnet-eastnet
+| HASH(1) computed:
+|   d3 00 99 b1  c9 3d d9 3a  ab 5b a1 be  3e ab e3 33
+|   b8 0e 2c ce
+| last Phase 1 IV:  04 4d 63 08  a0 05 5b bf  0d 16 08 9c  c5 72 8d c2
+| current Phase 1 IV:  04 4d 63 08  a0 05 5b bf  0d 16 08 9c  c5 72 8d c2
+| computed Phase 2 IV:
+|   19 12 de c3  7c f5 16 16  54 7e 1c 96  d0 aa 88 7e
+|   cb 0c 20 43
+| encrypting:
+|   0c 00 00 18  d3 00 99 b1  c9 3d d9 3a  ab 5b a1 be
+|   3e ab e3 33  b8 0e 2c ce  00 00 00 1c  00 00 00 01
+|   01 10 00 01  f3 8b f8 08  3a fc b7 9c  8b 14 41 08
+|   19 7c f5 87
+| IV:
+|   19 12 de c3  7c f5 16 16  54 7e 1c 96  d0 aa 88 7e
+|   cb 0c 20 43
+| unpadded size is: 52
+| encrypting 64 using OAKLEY_AES_CBC
+| next IV:  64 dd e1 4a  4f 6f 8b 80  ff f3 de cb  f3 f6 9d 09
+| sending 92 bytes for delete notify through eth1:500 to 192.1.2.23:500 (using #1)
+| no suspended cryptographic state for 1 
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| unreference key: 0x813fc70 @east cnt 2--
+"westnet-eastnet": request to delete a unrouted policy with netkey kernel --- not yet implemented
+| route owner of "westnet-eastnet" unrouted: NULL
+| command executing unroute-client
+|   trusted_ca called with a=(empty) b=(empty)
+| executing unroute-client: 2>&1 PLUTO_VERSION='2.0' PLUTO_VERB='unroute-client' PLUTO_CONNECTION='westnet-eastnet' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_INTERFACE='eth1' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='@west' PLUTO_MY_CLIENT='192.0.1.0/24' PLUTO_MY_CLIENT_NET='192.0.1.0' PLUTO_MY_CLIENT_MASK='255.255.255.0' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='@east' PLUTO_PEER_CLIENT='192.0.2.0/24' PLUTO_PEER_CLIENT_NET='192.0.2.0' PLUTO_PEER_CLIENT_MASK='255.255.255.0' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='' PLUTO_STACK='netkey' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW'   ipsec _updown
+| alg_info_delref(0x81406e8) alg_info->ref_cnt=2
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 75 seconds
+|  
+| *received 76 bytes from 192.1.2.23:500 on eth1 (port=500)
+| **parse ISAKMP Message:
+|    initiator cookie:
+|   f3 8b f8 08  3a fc b7 9c
+|    responder cookie:
+|   8b 14 41 08  19 7c f5 87
+|    next payload type: ISAKMP_NEXT_HASH
+|    ISAKMP version: ISAKMP Version 1.0 (rfc2407)
+|    exchange type: ISAKMP_XCHG_INFO
+|    flags: ISAKMP_FLAG_ENCRYPTION
+|    message ID:  d8 a4 bf ac
+|    length: 76
+|  processing version=1.0 packet with exchange type=ISAKMP_XCHG_INFO (5)
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| p15 state object not found
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  00 00 00 00  00 00 00 00
+| state hash entry 15
+| v1 state object not found
+packet from 192.1.2.23:500: Informational Exchange is for an unknown (expired?) SA
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 75 seconds
+|  
+| *received 92 bytes from 192.1.2.23:500 on eth1 (port=500)
+| **parse ISAKMP Message:
+|    initiator cookie:
+|   f3 8b f8 08  3a fc b7 9c
+|    responder cookie:
+|   8b 14 41 08  19 7c f5 87
+|    next payload type: ISAKMP_NEXT_HASH
+|    ISAKMP version: ISAKMP Version 1.0 (rfc2407)
+|    exchange type: ISAKMP_XCHG_INFO
+|    flags: ISAKMP_FLAG_ENCRYPTION
+|    message ID:  d4 de 71 26
+|    length: 92
+|  processing version=1.0 packet with exchange type=ISAKMP_XCHG_INFO (5)
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  8b 14 41 08  19 7c f5 87
+| state hash entry 4
+| p15 state object not found
+| ICOOKIE:  f3 8b f8 08  3a fc b7 9c
+| RCOOKIE:  00 00 00 00  00 00 00 00
+| state hash entry 15
+| v1 state object not found
+packet from 192.1.2.23:500: Informational Exchange is for an unknown (expired?) SA
+| * processed 0 messages from cryptographic helpers 
+| next event EVENT_PENDING_PHASE2 in 75 seconds
+|  
+| *received 404 bytes from 192.1.2.23:500 on eth1 (port=500)
+| **parse ISAKMP Message:
+|    initiator cookie:
+|   53 2b 6f db  28 d2 89 b6
+|    responder cookie:
+|   00 00 00 00  00 00 00 00
+|    next payload type: ISAKMP_NEXT_SA
+|    ISAKMP version: ISAKMP Version 1.0 (rfc2407)
+|    exchange type: ISAKMP_XCHG_IDPROT
+|    flags: none
+|    message ID:  00 00 00 00
+|    length: 404
+|  processing version=1.0 packet with exchange type=ISAKMP_XCHG_IDPROT (2)
+| got payload 0x2(ISAKMP_NEXT_SA) needed: 0x2 opt: 0x2080
+| ***parse ISAKMP Security Association Payload:
+|    next payload type: ISAKMP_NEXT_VID
+|    length: 340
+|    DOI: ISAKMP_DOI_IPSEC
+| got payload 0x2000(ISAKMP_NEXT_VID) needed: 0x0 opt: 0x2080
+| ***parse ISAKMP Vendor ID Payload:
+|    next payload type: ISAKMP_NEXT_VID
+|    length: 16
+| got payload 0x2000(ISAKMP_NEXT_VID) needed: 0x0 opt: 0x2080
+| ***parse ISAKMP Vendor ID Payload:
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 20
+packet from 192.1.2.23:500: received Vendor ID payload [Libreswan (this version) 2.5.testing-g21680e0d-dirty ]
+packet from 192.1.2.23:500: received Vendor ID payload [Dead Peer Detection]
+| find_host_connection called from main_inI1_outR1, me=192.1.2.45:500 him=192.1.2.23:500 policy=none
+| find_host_pair_conn (find_host_connection2): 192.1.2.45:500 192.1.2.23:500 -> hp:none 
+| find_host_connection returns empty
+| ****parse IPsec DOI SIT:
+|    IPsec DOI SIT: SIT_IDENTITY_ONLY
+| ****parse ISAKMP Proposal Payload:
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 328
+|    proposal number: 0
+|    protocol ID: PROTO_ISAKMP
+|    SPI size: 0
+|    number of transforms: 10
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_T
+|    length: 32
+|    transform number: 0
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 7
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 2
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 14
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_T
+|    length: 32
+|    transform number: 1
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 7
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 14
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_T
+|    length: 32
+|    transform number: 2
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 5
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 2
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 14
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_T
+|    length: 32
+|    transform number: 3
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 5
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 14
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_T
+|    length: 32
+|    transform number: 4
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 7
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 2
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 5
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_T
+|    length: 32
+|    transform number: 5
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 7
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 5
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_T
+|    length: 32
+|    transform number: 6
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 5
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 2
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 5
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_T
+|    length: 32
+|    transform number: 7
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 5
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 5
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_T
+|    length: 32
+|    transform number: 8
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 5
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 2
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 2
+| *****parse ISAKMP Transform Payload (ISAKMP):
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 32
+|    transform number: 9
+|    transform ID: KEY_IKE
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_TYPE
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_LIFE_DURATION
+|    length/value: 3600
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_ENCRYPTION_ALGORITHM
+|    length/value: 5
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_HASH_ALGORITHM
+|    length/value: 1
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_AUTHENTICATION_METHOD
+|    length/value: 3
+| ******parse ISAKMP Oakley attribute:
+|    af+type: OAKLEY_GROUP_DESCRIPTION
+|    length/value: 2
+west:~# : ==== tuc ====
+west:~# if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+CORE FOUND
+mv: preserving ownership for /var/tmp/core: Operation not permitted
+west:~# : ==== end ====
+west:~# ipsec setup stop
+ipsec_setup: Stopping Libreswan IPsec...
+ipsec_setup: Removing orphaned /var/run/pluto/pluto.pid:
+west:~# kill `cat /var/run/klogd.pid`; cat /tmp/klog.log
+klogd 1.3-3#33.1, log source = /proc/kmsg started.
+<5>Linux version 2.6.18.6 (antony@sal) (gcc version 4.2.3 20080114 (prerelease) (Debian 4.2.2-7)) #6 Wed Feb 13 11:18:26 EST 2008
+<7>On node 0 totalpages: 8192
+<7>  DMA zone: 8192 pages, LIFO batch:1
+<4>Built 1 zonelists.  Total pages: 8192
+<5>Kernel command line: initrd=/btmp/antony/ikev2/2008_01_14/UMLPOOL/initrd.uml umlroot=/btmp/antony/ikev2/2008_01_14/UMLPOOL/west/root root=/dev/ram0 rw ssl=pty eth0=daemon,10:00:00:ab:cd:ff,unix,/tmp/umlN7rfs9.d/west/ctl,/tmp/umlN7rfs9.d/west/data eth1=daemon,10:00:00:64:64:45,unix,/tmp/umlN7rfs9.d/public/ctl,/tmp/umlN7rfs9.d/public/data eth2=daemon,10:00:00:32:64:45,unix,/tmp/umlN7rfs9.d/admin/ctl,/tmp/umlN7rfs9.d/admin/data init=/linuxrc single
+<4>PID hash table entries: 256 (order: 8, 1024 bytes)
+<4>Dentry cache hash table entries: 4096 (order: 2, 16384 bytes)
+<4>Inode-cache hash table entries: 2048 (order: 1, 8192 bytes)
+<6>Memory: 27028k available
+<7>Calibrating delay loop... 3787.98 BogoMIPS (lpj=18939904)
+<4>Mount-cache hash table entries: 512
+<4>Checking for host processor cmov support...Yes
+<4>Checking for host processor xmm support...No
+<4>Checking that host ptys support output SIGIO...Yes
+<4>Checking that host ptys support SIGIO on close...No, enabling workaround
+<6>checking if image is initramfs...it isn't (bad gzip magic numbers); looks like an initrd
+<4>Freeing initrd memory: 1212k freed
+<4>Using 2.6 host AIO
+<6>NET: Registered protocol family 16
+<6>NET: Registered protocol family 2
+<4>IP route cache hash table entries: 256 (order: -2, 1024 bytes)
+<4>TCP established hash table entries: 1024 (order: 0, 4096 bytes)
+<4>TCP bind hash table entries: 512 (order: -1, 2048 bytes)
+<6>TCP: Hash tables configured (established 1024 bind 512)
+<6>TCP reno registered
+<4>daemon_setup : Ignoring data socket specification
+<6>Netdevice 0 (10:00:00:ab:cd:ff) : daemon backend (uml_switch version 3) - unix:/tmp/umlN7rfs9.d/west/ctl
+<4>daemon_setup : Ignoring data socket specification
+<6>Netdevice 1 (10:00:00:64:64:45) : daemon backend (uml_switch version 3) - unix:/tmp/umlN7rfs9.d/public/ctl
+<4>daemon_setup : Ignoring data socket specification
+<6>Netdevice 2 (10:00:00:32:64:45) : daemon backend (uml_switch version 3) - unix:/tmp/umlN7rfs9.d/admin/ctl
+<4>Checking host MADV_REMOVE support...OK
+<4>mconsole (version 2) initialized on /home/antony/.uml/west/mconsole
+<6>Host TLS support detected
+<6>Detected host type: i386
+<5>VFS: Disk quotas dquot_6.5.1
+<4>Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)
+<6>Initializing Cryptographic API
+<6>io scheduler noop registered
+<6>io scheduler anticipatory registered (default)
+<6>io scheduler deadline registered
+<6>io scheduler cfq registered
+<4>RAMDISK driver initialized: 16 RAM disks of 4096K size 1024 blocksize
+<6>loop: loaded (max 8 devices)
+<6>nbd: registered device at major 43
+<6>PPP generic driver version 2.4.2
+<6>SLIP: version 0.8.4-NET3.019-NEWTTY (dynamic channels, max=256).
+<6>tun: Universal TUN/TAP device driver, 1.6
+<6>tun: (C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>
+<4>Netfilter messages via NETLINK v0.30.
+<6>IPv4 over IPv4 tunneling driver
+<6>GRE over IPv4 tunneling driver
+<4>ip_conntrack version 2.4 (211 buckets, 1688 max) - 224 bytes per conntrack
+<4>ctnetlink v0.90: registering with nfnetlink.
+<4>ip_conntrack_pptp version 3.1 loaded
+<4>ip_nat_pptp version 3.0 loaded
+<4>ip_tables: (C) 2000-2006 Netfilter Core Team
+<5>ClusterIP Version 0.8 loaded successfully
+<4>arp_tables: (C) 2002 David S. Miller
+<6>TCP bic registered
+<6>TCP westwood registered
+<6>TCP highspeed registered
+<6>TCP hybla registered
+<6>TCP htcp registered
+<6>TCP vegas registered
+<6>TCP scalable registered
+<6>Initializing IPsec netlink socket
+<6>NET: Registered protocol family 1
+<6>NET: Registered protocol family 17
+<6>NET: Registered protocol family 15
+<6>Initialized stdio console driver
+<4>Console initialized on /dev/tty0
+<6>Initializing software serial port version 1
+<4>Failed to open 'root_fs', errno = 2
+<5>RAMDISK: cramfs filesystem found at block 0
+<5>RAMDISK: Loading 1212KiB [1 disk] into ram disk... |/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\done.
+<4>VFS: Mounted root (cramfs filesystem) readonly.
+<6>line_ioctl: tty0: ioctl KDSIGACCEPT called
+Kernel logging (proc) stopped.
+Kernel log daemon terminating.
+west:~# halt -p -f
+System halted.
+

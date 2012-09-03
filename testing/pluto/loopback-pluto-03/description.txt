@@ -1,0 +1,6 @@
+
+Using netkey and the looopback feature, pluto connects to itself for an SA.
+This is used for MLS type labeling of connections on the same host
+
+This test also sets an SElinux  policy label
+

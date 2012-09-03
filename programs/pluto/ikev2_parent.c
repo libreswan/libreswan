@@ -7,6 +7,7 @@
  * Copyright (C) 2010,2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -543,16 +544,79 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
     }
 #endif
 
-    if(c == NULL) {
-	/*
-	 * be careful about responding, or logging, since it may be that we
-	 * are under DOS
-	 */
-	DBG_log("no connection found\n");
-	/* SEND_NOTIFICATION(NO_PROPOSAL_CHOSEN); */
-	return STF_FAIL + NO_PROPOSAL_CHOSEN;
+    if(c == NULL) { 
+
+	    /* See if a wildcarded connection can be found.
+	     * We cannot pick the right connection, so we're making a guess.
+	     * All Road Warrior connections are fair game:
+	     * we pick the first we come across (if any).
+	     * If we don't find any, we pick the first opportunistic
+	     * with the smallest subnet that includes the peer.
+	     * There is, of course, no necessary relationship between
+	     * an Initiator's address and that of its client,
+	     * but Food Groups kind of assumes one.
+	     */
+	    {
+		    struct connection *d;
+		    d = find_host_connection(&md->iface->ip_addr, pluto_port
+				    , (ip_address*)NULL
+				    , md->sender_port, policy);
+
+		    for (; d != NULL; d = d->hp_next)
+		    {
+			    if (d->kind == CK_GROUP)
+			    {
+				    /* ignore */
+			    }
+			    else
+			    {
+				    if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPO))
+				    {
+					    /* must be Road Warrior: we have a winner */
+					    c = d;
+					    break;
+				    }
+
+				    /* Opportunistic or Shunt: pick tightest match */
+				    if (addrinsubnet(&md->sender, &d->spd.that.client)
+						    && (c == NULL || !subnetinsubnet(&c->spd.that.client, &d->spd.that.client)))
+					    c = d;
+			    }
+		    }
+	    }
+	    if (c == NULL)
+	    {
+		    loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
+				    " but no connection has been authorized%s%s"
+				    , ip_str(&md->iface->ip_addr), ntohs(portof(&md->iface->ip_addr))
+				    , (policy != LEMPTY) ? " with policy=" : ""
+				    , (policy != LEMPTY) ? bitnamesof(sa_policy_bit_names, policy) : "");
+		    return STF_FAIL + NO_PROPOSAL_CHOSEN;
+	    } 
+	    if (c->kind != CK_TEMPLATE)
+	    {
+		    loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
+				    " but \"%s\" forbids connection"
+				    , ip_str(&md->iface->ip_addr), pluto_port, c->name);
+		    return STF_FAIL + NO_PROPOSAL_CHOSEN;
+	    } 
+    	c = rw_instantiate(c, &md->sender, NULL, NULL);
+	    
     }
-	
+    else 
+    {
+	    /* we found a non-wildcard conn. double check if it needs instantiation anyway (eg vnet=) */
+	    /* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
+	    if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
+		    DBG(DBG_CONTROL, DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
+		    c = rw_instantiate(c,&md->sender,NULL,NULL);
+	    }
+	    else if ((c->kind == CK_TEMPLATE) && (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) 
+	    {
+		    DBG(DBG_CONTROL, DBG_log("local endpoint has narrowing=yes - needs instantiation"));
+		    c = rw_instantiate(c,&md->sender,NULL,NULL);
+	    }
+    } 
 
     DBG_log("found connection: %s\n", c ? c->name : "<none>");
 
@@ -2089,10 +2153,11 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
     }
 
     {
-			int bestfit_n, bestfit_p;
+			int bestfit_n, bestfit_p, bestfit_pr;
 			unsigned int best_tsi_i ,  best_tsr_i;
 			bestfit_n = -1;
 			bestfit_p = -1;
+			bestfit_pr = -1;
 
 			/* Check TSi/TSr http://tools.ietf.org/html/rfc5996#section-2.9 */
 			DBG(DBG_CONTROLMORE,DBG_log(" check narrowing - we are responding to I2"));
@@ -2123,8 +2188,17 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 					if (bfit_p > bestfit_p) {
 						DBG(DBG_CONTROLMORE, DBG_log("ikev2_evaluate_connection_port_fit found better fit c %s, tsi[%d],tsr[%d]"
 									, c->name, best_tsi_i, best_tsr_i));
-						bestfit_p = bfit_p;
-						bestfit_n = bfit_n;
+						int bfit_pr = ikev2_evaluate_connection_protocol_fit (c ,sra,INITIATOR,tsi,tsr, tsi_n,tsr_n, &best_tsi_i, &best_tsr_i);
+						if(bfit_pr > bestfit_pr )
+						{
+							DBG(DBG_CONTROLMORE, DBG_log("ikev2_evaluate_connection_protocol_fit found better fit c %s, tsi[%d],tsr[%d]"
+										, c->name, best_tsi_i, best_tsr_i));
+							bestfit_p = bfit_p;
+							bestfit_n = bfit_n;
+						}
+						else
+							DBG(DBG_CONTROLMORE, DBG_log("protocol range fit c %s c->name was rejected by protocol matching"
+										, c->name));
 					}
 				}
 				else
@@ -2138,6 +2212,42 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				memcpy (&st->st_ts_that , &tsr[best_tsr_i],  sizeof(struct traffic_selector));
 				ikev2_print_ts(&st->st_ts_this);
 				ikev2_print_ts(&st->st_ts_that);
+
+				ip_subnet tmp_subnet_i ;				
+				ip_subnet tmp_subnet_r ;				
+				rangetosubnet(&st->st_ts_this.low, &st->st_ts_this.high, &tmp_subnet_i); 
+				rangetosubnet(&st->st_ts_that.low, &st->st_ts_that.high, &tmp_subnet_r);  
+
+				c->spd.this.client = tmp_subnet_i;
+				c->spd.this.port  = st->st_ts_this.startport;
+				c->spd.this.protocol  = st->st_ts_this.ipprotoid;
+				setportof(htons(c->spd.this.port), &c->spd.this.host_addr);
+				setportof(htons(c->spd.this.port), &c->spd.this.client.addr);
+
+				if( subnetishost(&c->spd.this.client) 
+						&& addrinsubnet(&c->spd.this.host_addr, &c->spd.this.client)) 
+				{
+					c->spd.this.has_client = FALSE;
+				}
+				else {
+					c->spd.this.has_client = TRUE;
+				}
+
+				c->spd.that.client = tmp_subnet_r;
+				c->spd.that.port = st->st_ts_that.startport;
+				c->spd.that.protocol = st->st_ts_that.ipprotoid;
+				setportof(htons(c->spd.that.port), &c->spd.that.host_addr);
+				setportof(htons(c->spd.that.port), &c->spd.that.client.addr);
+
+				if( subnetishost(&c->spd.that.client) 
+						&& addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) 
+				{
+					c->spd.that.has_client = FALSE;
+				}
+				else {
+					c->spd.that.has_client = TRUE;
+				}
+					//AAAA
 			}
 			else {
 				DBG(DBG_CONTROLMORE, DBG_log(("reject responder TSi/TSr Traffic Selector")));
