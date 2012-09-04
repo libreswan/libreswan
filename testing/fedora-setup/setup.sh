@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Note: Replace this with your local Fedora tree if you have one.
-tree=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
-#tree=http://mirror.fedoraproject.org/linux/releases/17/Fedora/x86_64/os/
-
+#export tree=http://mirror.fedoraproject.org/linux/releases/17/Fedora/x86_64/os/
+export tree=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
+export BASE=/var/lib/libvirtd/images/
 
 for net in net/swan*
 do
@@ -53,10 +53,45 @@ virt-install --connect=qemu:///system \
     --location=$tree \
     --nographics 
 
-echo Creating Copy-On-Write files for images
+#echo Creating Copy-On-Write files for images
 # use base image for individual Copy-On-Write guests (west, east, etc)
-#$BASE=/var/lib/libvirtd/images/
 #qemu-img create -f qcow2 -b $BASE/swanbase.img $BASE/swanwest.img
 #qemu-img create -f qcow2 -b $BASE/swanbase.img $BASE/swaneast.img
 
+#Share the same disk for all east/west/etc images, we shouldn't be
+#writing anything outside of /tmp anyway
 
+# create mountable filesystem for /testing and /usr/local
+# assumes we have run 'make install' and that host/guests are same OS
+if [ ! -f $BASE/localswan.fs ]; then
+	dd if=/dev/zero of=$BASE/localswan.fs bs=1024k count=1
+	mkfs.ext2 -y $BASE/localswan.fs
+fi
+
+if [ ! -f $BASE/swan.fs ]; then
+	dd if=/dev/zero of=$BASE/testingswan.fs bs=1024k count=1
+	mkfs.ext2 -y $BASE/testingswan.fs
+fi
+
+if [ ! -d $BASE/tmp ]; then
+	mkdir $BASE/tmp
+fi
+
+if [ ! -f ../../Makefile.in ]; then
+	echo "Please run this from testing/fedora-setup/ as cwd"
+	exit (1)
+fi
+
+echo -n "Creating /testing image..."
+sudo mount -o loop,rw $BASE/testingswan.fs $BASE/tmp
+sudo cp -a ../../testing/* $BASE/tmp/
+sudo umount $BASE/tmp/
+echo "done"
+
+echo -n "Creating /usr/local image..."
+sudo mount -o loop,rw $BASE/localswan.fs $BASE/tmp
+sudo cp -a /usr/local/* $BASE/tmp/
+sudo umount $BASE/tmp/
+echo "done"
+
+C
