@@ -459,6 +459,7 @@ umlplutotest	ikev2-05-basic-psk			good
 umlplutotest	ikev2-06-6msg				good
 umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good
+umlplutotest	ikev2-09-rw-psk				good
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
@@ -480,6 +481,9 @@ umlplutotest	ikev2-allow-narrow-01			good
 umlplutotest	ikev2-allow-narrow-02			good
 umlplutotest	ikev2-allow-narrow-03			good
 umlplutotest	ikev2-allow-narrow-04			good
+umlplutotest	ikev2-allow-narrow-05			good
+umlplutotest	ikev2-allow-narrow-06			good
+umlplutotest	ikev2-allow-narrow-07			good
 umlplutotest	ikev2-no-nhelpers-01			good
 
 #################################################################

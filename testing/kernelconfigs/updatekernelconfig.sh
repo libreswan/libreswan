@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # this script goes into $POOLSPACE/{plain,swan}{,26} and looks for the .config
 # file that is there. It canonicalizes the file using "sort", and adds any

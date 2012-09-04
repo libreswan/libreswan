@@ -1,5 +1,5 @@
 : ==== start ====
-TESTNAME=ikev2-allow-narrow-01
+TESTNAME=ikev2-allow-narrow-05
 source /testing/pluto/bin/eastlocal.sh
 
 ipsec setup start
