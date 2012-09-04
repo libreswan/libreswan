@@ -15,8 +15,6 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
-INCLUDES+=-I/usr/include/nspr4 -I/usr/include/nss3
-
 PROGRAM=showhostkey
 
 include ${srcdir}../Makefile.program

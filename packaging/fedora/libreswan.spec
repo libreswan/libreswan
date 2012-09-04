@@ -27,6 +27,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Summary: Libreswan - An IPsec and IKE implementation
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex bind-devel redhat-rpm-config xmlto
+BuildRequires: pkg-config
 BuildRequires: nss-devel >= 3.12.6-2, unbound-devel, nspr-devel, fipscheck-devel, libcap-ng-devel
 Requires: nss-tools
 %if %{buildefence}

@@ -192,7 +192,8 @@ BISONOSFLAGS=
 #Example for a cross compile:
 #USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
 GCC_LINT ?= -DGCC_LINT 
-USERCOMPILE?=-g -O3 ${WERROR} $(GCC_LINT) 
+USERCOMPILE?=-g -O3 ${WERROR} $(GCC_LINT) `pkg-config --cflags nss`
+
 # on fedora/rhel 
 #USERCOMPILE?=-g -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4  -m64 -mtune=generic -fPIE -pie 
 KLIPSCOMPILE=-O3 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
