@@ -33,7 +33,31 @@ tcpdump
 
 %post
 echo "nameserver 193.110.157.123" >> /etc/resolv.conf
+/sbin/restorecon /etc/resolv.conf
 # TODO: if rhel/centos, we should install epel-release too
 yum update -y 
 yum install nc6 racoon2 -y
+# install special service that re-mount-bind's network config based on which test host
+# we are (i.e. east, west, north, ....)
+# note we cannot install the serviced file from /testing, as that's not mounted during
+# install time
+
+cat << EOSYSTEMD > /usr/lib/systemd/system/osw-bindmount.service
+# Installed via kickstart post section
+[Unit]
+Description=Bind mount a new /etc/sysconfig/network based on /proc/cmdline umid= VM hostname
+Before=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/testing/fedora-setup/osw-vm-net-bindmount.py
+ExecStart=/sbin/restorecon /etc/sysconfig/network*
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOSYSTEMD
+
+/sbin/restorecon /usr/lib/systemd/system/osw-bindmount.service
+
 %end
