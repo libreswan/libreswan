@@ -1,1 +1,0 @@
-../uml-files/umlsetup.sh
