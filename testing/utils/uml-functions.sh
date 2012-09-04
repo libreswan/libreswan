@@ -42,8 +42,14 @@ setup_make() {
     fi
 
     # now describe how to build the initrd.
-    echo "initrd.uml: ${LIBRESWANSRCDIR}/testing/utils/initrd-`uname -m`.list"
-    echo "$TAB fakeroot ${LIBRESWANSRCDIR}/testing/utils/buildinitrd ${LIBRESWANSRCDIR}/testing/utils/initrd-`uname -m`.list ${LIBRESWANSRCDIR} ${BASICROOT}" 
+    if [ -n $INITRD_FILES ]
+    then
+	INITRD_FILES_PATH="${LIBRESWANSRCDIR}/testing/utils/$INITRD_FILES"
+    else 
+       	INITRD_FILES_PATH="${LIBRESWANSRCDIR}/testing/utils/initrd-`uname -m`.list"
+    fi
+    echo "initrd.uml: $INITRD_FILES_PATH"
+    echo "$TAB fakeroot ${LIBRESWANSRCDIR}/testing/utils/buildinitrd $INITRD_FILES_PATH ${LIBRESWANSRCDIR} ${BASICROOT}" 
 }
 
 # output should directed to a Makefile
