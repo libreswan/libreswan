@@ -37,7 +37,6 @@ LIB=libwhack.a
 # Original flags
 INCLUDES=-I. -I${KLIPSSRCDIR} -I${KLIPSD} -I${LIBRESWANSRCDIR}
 INCLUDES+=-I${LIBRESWANSRCDIR}/include 
-INCLUDES+=-I/usr/include/nspr4 -I/usr/include/nss3
 
 CFLAGS+=${PORTINCLUDE} ${INCLUDES} 
 CFLAGS+=-DDEBUG

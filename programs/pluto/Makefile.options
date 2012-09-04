@@ -61,7 +61,6 @@ endif
 # and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
 HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC) 
 
-HDRDIRS+= -I/usr/include/nspr4 -I/usr/include/nss3	
 
 # BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=BIG_ENDIAN
 # BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=LITTLE_ENDIAN

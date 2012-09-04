@@ -10,6 +10,4 @@ ONEFILE=md5.c
 LIBRARY=crypto/libmd5
 LIB=libmd5.a
 
-CFLAGS+=-I/usr/include/nspr4 -I/usr/include/nss3
-
 include ${srcdir}../../Makefile.library

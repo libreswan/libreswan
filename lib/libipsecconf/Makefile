@@ -34,8 +34,6 @@ SRCS+=interfaces.c
 #CFLAGS+=-DFIPS_CHECK
 #endif
 
-CFLAGS+=-I/usr/include/nspr4 -I/usr/include/nss3
-
 ifeq ($(USE_NM),true)
 CFLAGS+=-DHAVE_NM
 endif

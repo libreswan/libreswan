@@ -20,8 +20,6 @@ FIPS_CHECK=1
 CFLAGS+=-DFIPS_CHECK
 endif
 
-INCLUDES+=-I/usr/include/nspr4 -I/usr/include/nss3
-
 PROGRAM=rsasigkey
 LIBS=${LIBRESWANLIB} -lgmp
 LIBS+= -lnspr4 -lnss3 -lplc4
