@@ -334,6 +334,8 @@ def installstartcheck():
 	printfun("Checking for IPsec support in kernel")
 	if not os.path.isfile("/proc/net/ipsec_eroute") and not os.path.isfile("/proc/net/pfkey"):
 		print_result("FAIL","FAILED")
+		if "no kernel code presently loaded" in output:
+			print("\n The ipsec service should be started before running 'ipsec verify'\n")
 		return
 	else:
 		print_result("OK","OK")
