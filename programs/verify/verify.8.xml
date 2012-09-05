@@ -10,7 +10,7 @@
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec verify</refname>
-<refpurpose>see if FreeSWAN has been installed correctly</refpurpose>
+<refpurpose>see if the IPsec subsystem has been installed correctly</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
@@ -49,27 +49,17 @@ to look for a TXT record for
 in forward and reverse DNS.</para>
 </refsect1>
 
-<refsect1 id='files'><title>FILES</title>
-<literallayout remap='.nf'>
-/proc/net/ipsec_eroute
-/etc/ipsec.secrets
-</literallayout> <!-- .fi -->
-</refsect1>
-
 <refsect1 id='history'><title>HISTORY</title>
-<para>Written for the Linux FreeS/WAN project
+<para>Written originally for the Linux FreeS/WAN project
 &lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
-by Michael Richardson.</para>
+by Michael Richardson. Rewritten in python by Paul Wouters</para>
 </refsect1>
 
 <refsect1 id='bugs'><title>BUGS</title>
 <para><emphasis remap='I'>Verify</emphasis>
-does not check for 
-<emphasis remap='B'>ipchains</emphasis>
-masquerading.</para>
+was converted from shell to perl to python, and some tests are incomplete.
+</para>
 
-<para><emphasis remap='I'>Verify</emphasis>
-does not look for TXT records for Opportunistic clients behind the system.</para>
 </refsect1>
 </refentry>
 

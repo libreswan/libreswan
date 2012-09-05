@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC_VERIFY
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/06/2010
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/04/2012
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
-.TH "IPSEC_VERIFY" "8" "10/06/2010" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC_VERIFY" "8" "09/04/2012" "[FIXME: source]" "[FIXME: manual]"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -19,7 +28,7 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-ipsec_verify \- see if FreeSWAN has been installed correctly
+ipsec_verify \- see if the IPsec subsystem has been installed correctly
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIverify\fR [\-\-host\ \fIname\fR]
@@ -31,7 +40,7 @@ examines the local system for a number of common system faults: IPsec not in pat
 .PP
 In addition,
 \fIverify\fR
-performs checks relevant to Opportunistic Encryption\&. It looks in forward DNS for a TXT record for the system\'s hostname, and in reverse DNS for a TXT record for the system\'s IP addresses\&. It checks whether the system has a public IP\&.
+performs checks relevant to Opportunistic Encryption\&. It looks in forward DNS for a TXT record for the system\*(Aqs hostname, and in reverse DNS for a TXT record for the system\*(Aqs IP addresses\&. It checks whether the system has a public IP\&.
 .PP
 The
 \fB\-\-host\fR
@@ -40,27 +49,10 @@ option causes
 to look for a TXT record for
 \fIname\fR
 in forward and reverse DNS\&.
-.SH "FILES"
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-/proc/net/ipsec_eroute
-/etc/ipsec\&.secrets
-.fi
-.if n \{\
-.RE
-.\}
 .SH "HISTORY"
 .PP
-Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Michael Richardson\&.
+Written originally for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Michael Richardson\&. Rewritten in python by Paul Wouters
 .SH "BUGS"
 .PP
 \fIVerify\fR
-does not check for
-\fBipchains\fR
-masquerading\&.
-.PP
-\fIVerify\fR
-does not look for TXT records for Opportunistic clients behind the system\&.
+was converted from shell to perl to python, and some tests are incomplete\&.
