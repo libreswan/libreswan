@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # This is the configuration file that helps setup for
 # a kernel pool for UML compilation w/FreeSWAN.
@@ -10,13 +10,15 @@
 # space for everything:
 # Just a shorthand for the following definitions.
 # Can be eliminated if available space is fragmented.
-UMLPREFIX=?/uml
+UMLPREFIX=/home/build/uml-testing
+
+REGRESSRESULTS=$UMLPREFIX/results
 
 # set this to someplace with at least 100Mb free.
 POOLSPACE=$UMLPREFIX/umlbuild
 
 # if you are using a 2.6 kernel,
-#KERNVER=26
+KERNVER=26
 
 # Set this to original kernel source.
 # It will not be modified.
@@ -24,20 +26,11 @@ POOLSPACE=$UMLPREFIX/umlbuild
 #KERNPOOL=/usr/src/linux
 #
 # or something you downloaded.
-KERNPOOL=$UMLPREFIX/kernel/linux-2.6.38
+KERNPOOL=/home/build/uml-files/linux-2.6.38
 
 # if you have a kernel that already has the NAT-T patch applies, then
 # set this to false.
 NATTPATCH=false
-
-# if you want a kernel that supports the BTNS IPsec API
-#   see draft-ietf-btns-capi-xx.txt
-# this requires your kernel to be rebuilt.
-SAREFPATCH=true
-
-# if you also have a copy of the L2TP IPsec API patch, you can
-# set this to true as well
-NGUDPPATCH=false
 
 # NONINTPATCH is a patch that comes from Redhat kernels. It permits
 # "make oldconfig" to complete without interacting with the user.
@@ -55,7 +48,7 @@ KERNEL_LINUS2_4_SRC=$KERNPOOL
 # set this to the UML tar file, gotten from, e.g.
 #     http://ftp.nl.linux.org/uml/uml-patch-2.4.18-53.bz2
 #
-UMLPATCH=$UMLPREFIX/download/uml-patch-2.4.19-47.bz2
+UMLPATCH=none
 
 # set BASICROOT this to an unpacked copy of the root file system you
 # want to use.
@@ -77,7 +70,10 @@ UMLPATCH=$UMLPREFIX/download/uml-patch-2.4.19-47.bz2
 # There is an advantage to having this on the same partition as
 # $POOLSPACE, as hard links can be used.
 #
-BASICROOT=$UMLPREFIX/basic-root/root-15.1
+BASICROOT=/home/build/uml-files/root-36
+BASICROOT=/home/build/uml-files/root-precise-i386
+
+INITRD_FILES='initrd-precise-i686.list'
 
 # the mini /usr/share has Canada zoneinfo and "en" locale only.
 # the all one has everything from the original UML debian root.
@@ -89,7 +85,7 @@ REGULARHOSTS='sunrise sunset nic carrot beet sec pole'
 LIBRESWANHOSTS='east west japan road north'
 
 # tell system location of special tcpdump, if any
-#export TCPDUMP="/usr/local/sbin/tcpdump"
+export TCPDUMP="/usr/sbin/tcpdump"
 
 # we always use OBJ directories for UML builds.
 USE_OBJDIR=true export USE_OBJDIR
@@ -121,4 +117,4 @@ USE_OBJDIR=true export USE_OBJDIR
 
 
 # comment this out to signify that you've customized this script
-echo "please create a umlsetup.sh" ; exit 99
+#echo "please create a umlsetup.sh" ; exit 99
