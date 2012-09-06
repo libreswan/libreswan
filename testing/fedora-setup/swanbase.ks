@@ -6,7 +6,7 @@ lang en_US.UTF-8
 keyboard us
 #network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname west 
 network --bootproto=dhcp --hostname base 
-rootpw openswan
+rootpw swan
 firewall --disable
 selinux --enforcing
 timezone --utc America/New_York
@@ -43,7 +43,6 @@ yum install nc6 racoon2 -y
 # install time
 
 cat << EOSYSTEMD > /usr/lib/systemd/system/osw-bindmount.service
-# Installed via kickstart post section
 [Unit]
 Description=Bind mount a new /etc/sysconfig/network based on /proc/cmdline umid= VM hostname
 Before=network.target
@@ -59,5 +58,10 @@ WantedBy=multi-user.target
 EOSYSTEMD
 
 /sbin/restorecon /usr/lib/systemd/system/osw-bindmount.service
+
+mkdir /testing
+echo "/dev/vdb /testing ext2 defaults,noauto 0 0" >> /etc/fstab
+echo "/dev/vdc /usr/local ext2 defaults,noauto 0 0" >> /etc/fstab
+
 
 %end
