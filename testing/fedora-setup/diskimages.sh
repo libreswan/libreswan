@@ -5,37 +5,6 @@
 export tree=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
 export BASE=/var/lib/libvirt/images/
 
-for net in net/swan*
-do
-  if [ ! -d /sys/class/$net ];
-  then
-     sudo virsh net-create $net
-     echo $net created and activated
-  else
-     echo $net already exists - not created
-  fi
-done
-
-# we need to be "nic", so we need some host routes
-sudo ip route add 192.0.1.0/24 via 192.1.2.45
-sudo ip route add 192.0.2.0/24 via  192.1.2.23
-sudo ip -6 addr add 2001:db8:1:2::254/64 dev swan12
-sudo ip addr add 192.1.2.129 dev swan12
-sudo ip addr add 192.1.2.130 dev swan12
-# okay, now add interfaces for when we are the default route for pieces
-# of the reverse name.
-sudo ip addr add 192.1.2.62 dev swan12
-sudo ip addr add 192.1.2.30 dev swan12
-
-#sudo ip addr add 192.1.3.254 dev swan13
-#sudo ip -6 addr add 2001:db8:1:3::254/64 dev swan13
-#sudo ip addr add 192.1.4.254 dev swan14
-
-# unused
-#sudo ip addr add 192.9.4.254 dev swan94
-#sudo ip -6 addr add 2001:db8:9:4::254/64 dev swan94
-
-
 if [ ! -f $BASE/swanbase.img ]
 then
 	echo "Creating swanbase image using libvirt"
