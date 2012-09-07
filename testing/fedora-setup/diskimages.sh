@@ -16,7 +16,7 @@ sudo virt-install --connect=qemu:///system \
       console=tty0 console=ttyS0,115200" \
     --name=swanbase \
     --disk $BASE/swanbase.img,size=8 \
-    --ram 512 \
+    --ram 1024 \
     --vcpus=1 \
     --check-cpu \
     --accelerate \
@@ -25,8 +25,9 @@ sudo virt-install --connect=qemu:///system \
     --nographics 
 fi
 
+
 if [ ! -f $BASE/localswan.fs ]; then
-	sudo dd if=/dev/zero of=$BASE/localswan.fs bs=1024k count=1024
+	sudo dd if=/dev/zero of=$BASE/localswan.fs bs=1024k count=4096
 	sudo mkfs.ext2 -F $BASE/localswan.fs
 fi
 
@@ -44,6 +45,13 @@ if [ ! -f ../../Makefile.inc ]; then
 	exit 1
 fi
 
+# make a root-fedora
+# sudo losetup -P -f /var/lib/libvirt/images/swanbase.img 
+# sudo mount /dev/loop0p1 /mnt
+# mkdir ~/umlbuild/root-fedora
+# sudo cp -a /mnt/* ~/umlbuild/root-fedora/
+# sudo chown -R paul ~/umlbuild/root-fedora/
+
 echo -n "Creating /testing image..."
 sudo mount -o loop,rw $BASE/testingswan.fs $BASE/tmp
 sudo cp -a ../../testing/* $BASE/tmp/
@@ -53,6 +61,8 @@ echo "done"
 echo -n "Creating /usr/local image..."
 sudo mount -o loop,rw $BASE/localswan.fs $BASE/tmp
 sudo cp -a /usr/local/* $BASE/tmp/
+sudo mkdir $BASE/tmp/src
+sudo cp -a ../../ $BASE/tmp/src
 sudo umount $BASE/tmp/
 echo "done"
 
