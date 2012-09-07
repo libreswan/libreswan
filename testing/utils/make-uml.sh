@@ -178,6 +178,23 @@ if [ ! -x $NETKEYKERNEL ]
      (make CC=${CC} ARCH=um allnoconfig KCONFIG_ALLCONFIG=$NETKEYCONF INSTALL_MOD_PATH=${BASICROOT}/ ARCH=um linux modules modules_install) || exit 1 </dev/null
 fi
 
+UMLFEDORA=$POOLSPACE/fedora${KERNVER}
+mkdir -p $UMLFEDORA
+FEDORAKERNEL=$UMLFEDORA/linux
+
+if [ ! -x $FEDORAKERNEL ] 
+  then
+   cd $UMLFEDORA
+
+    lndirkerndirnogit $KERNPOOL .
+
+    applypatches
+    sed -i 's/EXTRAVERSION =.*$/EXTRAVERSION =fedora/' Makefile 
+    FEDORACONF=${TESTINGROOT}/kernelconfigs/umlfedora${KERNVER}.config
+    echo "using $FEDORACONF to build fedora kernel"
+     (make CC=${CC} ARCH=um allnoconfig KCONFIG_ALLCONFIG=$FEDORACONF INSTALL_MOD_PATH=${BASICROOT}/ ARCH=um linux modules modules_install) || exit 1 </dev/null
+fi
+
 
 BUILD_MODULES=${BUILD_MODULES-true}
 if $NEED_plain
@@ -235,7 +252,7 @@ do
     fi
     echo Using kernel: $UMLKERNEL for $host
 
-    setup_host_make $host $UMLKERNEL libreswan ${KERNVER} $NEED_plain $NETKEYKERNEL  >>$UMLMAKE
+    setup_host_make $host $UMLKERNEL libreswan ${KERNVER} $NEED_plain $NETKEYKERNEL $FEDORAKERNEL >>$UMLMAKE
 done
 
 if $NEED_swan && [ ! -x $UMLSWAN/linux ]
