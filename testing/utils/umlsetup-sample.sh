@@ -16,7 +16,7 @@ UMLPREFIX=?/uml
 POOLSPACE=$UMLPREFIX/umlbuild
 
 # if you are using a 2.6 kernel,
-#KERNVER=26
+KERNVER=26
 
 # Set this to original kernel source.
 # It will not be modified.
@@ -33,7 +33,7 @@ NATTPATCH=false
 # if you want a kernel that supports the BTNS IPsec API
 #   see draft-ietf-btns-capi-xx.txt
 # this requires your kernel to be rebuilt.
-SAREFPATCH=true
+SAREFPATCH=false
 
 # if you also have a copy of the L2TP IPsec API patch, you can
 # set this to true as well
@@ -55,7 +55,7 @@ KERNEL_LINUS2_4_SRC=$KERNPOOL
 # set this to the UML tar file, gotten from, e.g.
 #     http://ftp.nl.linux.org/uml/uml-patch-2.4.18-53.bz2
 #
-UMLPATCH=$UMLPREFIX/download/uml-patch-2.4.19-47.bz2
+#UMLPATCH=$UMLPREFIX/download/uml-patch-2.4.19-47.bz2
 
 # set BASICROOT this to an unpacked copy of the root file system you
 # want to use.
