@@ -172,7 +172,7 @@ INSTALL=install
 # file, which is why -b is not specified for them.
 INSTBINFLAGS=-b --suffix=.old
 INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
-INSTMANFLAGS="-m 644"
+#INSTMANFLAGS="-m 644"
 INSTCONFFLAGS=
 # For OSX use
 #INSTBINFLAGS=-b -B .old
