@@ -685,6 +685,8 @@ static int validate_end(struct ub_ctx *dnsctx
     if(end->strings_set[KSCF_SOURCEIP])
     {
 	char *value = end->strings[KSCF_SOURCEIP];
+	if (tnatoaddr(value, strlen(value), AF_INET, &(end->nexthop)) != NULL
+	    && tnatoaddr(value, strlen(value), AF_INET6, &(end->nexthop)) != NULL) {
 #ifdef DNSSEC
            starter_log(LOG_LEVEL_DEBUG, "Calling unbound_resolve() for %ssourceip value\n",leftright);
            bool e = unbound_resolve(dnsctx, value, strlen(value), AF_INET, &(end->sourceip));
@@ -696,7 +698,10 @@ static int validate_end(struct ub_ctx *dnsctx
 	er = ttoaddr(value, 0, family, &(end->sourceip));
 	if (er) ERR_FOUND("bad addr %ssourceip=%s [%s]", leftright, value, er);
 #endif
-
+	} else {
+		er = tnatoaddr(value, 0, family, &(end->sourceip));
+		if (er) ERR_FOUND("bad numerical addr %ssourceip=%s [%s]", leftright, value, er);
+	}
 	if(!end->has_client) {
 	    starter_log(LOG_LEVEL_INFO, "defaulting %ssubnet to %s\n", leftright, value);
 	    er = addrtosubnet(&end->sourceip, &end->subnet);
