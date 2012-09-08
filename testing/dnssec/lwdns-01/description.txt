@@ -1,8 +1,0 @@
-This test case runs on the host, not in a UML. It exists for verification of
-lwdnsq under a debugger. It depends upon retriving information from the
-zone sandelman.ca.
-
-It requires that there be a local DNS that runs lwres.
-
-It is not to be automated.
-
