@@ -32,8 +32,6 @@ KERNPOOL=/home/build/uml-files/linux-2.6.38
 # set this to false.
 NATTPATCH=false
 
-<<<<<<< HEAD
-=======
 # if you want a kernel that supports the BTNS IPsec API
 #   see draft-ietf-btns-capi-xx.txt
 # this requires your kernel to be rebuilt.
@@ -43,7 +41,6 @@ SAREFPATCH=false
 # set this to true as well
 NGUDPPATCH=false
 
->>>>>>> aa1127c8a40947f6830d54a057b4ae116019484a
 # NONINTPATCH is a patch that comes from Redhat kernels. It permits
 # "make oldconfig" to complete without interacting with the user.
 # I think that 2.6. kernels have this. This patch is optional, if you
@@ -60,11 +57,8 @@ KERNEL_LINUS2_4_SRC=$KERNPOOL
 # set this to the UML tar file, gotten from, e.g.
 #     http://ftp.nl.linux.org/uml/uml-patch-2.4.18-53.bz2
 #
-<<<<<<< HEAD
-UMLPATCH=none
-=======
 #UMLPATCH=$UMLPREFIX/download/uml-patch-2.4.19-47.bz2
->>>>>>> aa1127c8a40947f6830d54a057b4ae116019484a
+UMLPATCH=none
 
 # set BASICROOT this to an unpacked copy of the root file system you
 # want to use.
@@ -86,7 +80,7 @@ UMLPATCH=none
 # There is an advantage to having this on the same partition as
 # $POOLSPACE, as hard links can be used.
 #
-BASICROOT=/home/build/uml-files/root-36
+# BASICROOT=/home/build/uml-files/root-36
 BASICROOT=/home/build/uml-files/root-precise-i386
 
 INITRD_FILES='initrd-precise-i686.list'
@@ -133,4 +127,4 @@ USE_OBJDIR=true export USE_OBJDIR
 
 
 # comment this out to signify that you've customized this script
-#echo "please create a umlsetup.sh" ; exit 99
+echo "please customise your umlsetup.sh" ; exit 99
