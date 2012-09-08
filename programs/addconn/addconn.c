@@ -316,7 +316,7 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 		ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
 	   }
 	   if(ugh != NULL) {
-		printf("ignoring invalid defaultroute: %s:%s\n", defaulroute, ugh);
+		printf("ignoring invalid defaultroute: %s:%s\n", defaultroute, ugh);
 #endif
 	    defaultroute = NULL;
 	    /* exit(4); */
@@ -352,7 +352,7 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 		ugh = ttoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh);
 	   }
 	   if(ugh != NULL) {
-		printf("ignoring invalid defaultnexthop: %s:%s\n", defaulroute, ugh);
+		printf("ignoring invalid defaultnexthop: %s:%s\n", defaultroute, ugh);
 #endif
 	    defaultnexthop = NULL;
 	    /* exit(4); */
