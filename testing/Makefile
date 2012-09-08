@@ -18,7 +18,7 @@ srcdir?=${LIBRESWANSRCDIR}/testing/
 
 SUBDIRS=lib utils 
 SUBDIRS+=klips 
-SUBDIRS+=pluto dnssec scripts packaging
+SUBDIRS+=pluto scripts packaging
 #SUBDIRS+=umltree
 #SUBDIRS+=kunit
 # FIXUP: pfkey should NOT be commented out, but it needs debuging:

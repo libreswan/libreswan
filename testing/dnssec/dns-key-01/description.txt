@@ -1,4 +1,0 @@
-This is a test for the knowledge of DNSSEC status by pluto.
-It uses the IPSEC_POLICY interface which is in the prototyping
-stages of development.
-

@@ -61,6 +61,7 @@ setup_host_make() {
     KERNVER=$4
     domodules=$5          # true or false
     NETKEY_KERNEL=$6
+    FEDORA_KERNEL=$7
 
     KERNDIR=`dirname $KERNEL`
     TAB="	@"
@@ -105,6 +106,7 @@ setup_host_make() {
     echo "$TAB if [ ! -d $hostroot/etc/rc.d/init.d ]; then (cd $hostroot/etc/rc.d && ln -fs ../init.d ../rc?.d . ); fi"
 
     # nuke certain other files that get in the way of booting
+    echo "$TAB chmod 755 $hostroot/sbin" # for fedora18
     echo "$TAB rm -f $hostroot/etc/mtab $hostroot/sbin/hwclock"
 
     # set up the timezone
@@ -245,6 +247,24 @@ setup_host_make() {
      echo
      depends="$depends $startscript"
     fi
+    if [ -x $FEDORA_KERNEL ] 
+    then 
+     # make startup script for FEDORA uml (no modules)
+     startscript=$POOLSPACE/$host/start-fedora.sh
+     echo "$startscript : $LIBRESWANSRCDIR/umlsetup.sh initrd.uml"
+     echo "$TAB echo '#!/bin/bash' >$startscript"
+     echo "$TAB echo ''          >>$startscript"
+     echo "$TAB echo '# get $net value from baseconfig'          >>$startscript"
+     echo "$TAB echo . ${TESTINGROOT}/baseconfigs/net.$host.sh   >>$startscript"
+     echo "$TAB echo ''          >>$startscript"
+     echo "$TAB # the umlroot= is a local hack >>$startscript"
+     #echo "$TAB echo '$FEDORA_KERNEL load_ramdisk=1 ramdisk_size=98304 mem=256M initrd=$POOLSPACE/initrd.uml rootfstype=hostfs umlroot=$POOLSPACE/$hostroot testname=$TESTNAME root=/dev/ram0 rw ssl=pty umid=$host \$\$net \$\$UML_DEBUG_OPT \$\$UML_"${host}"_OPT  selinux=0 init=/linuxrc \$\$*' >>$startscript"
+     echo "$TAB echo '$FEDORA_KERNEL initrd=$POOLSPACE/initrd.cpio rootfstype=hostfs umlroot=$POOLSPACE/$hostroot root=/dev/ram0 rw ssl=pty umid=$host \$\$net \$\$UML_DEBUG_OPT \$\$UML_"${host}"_OPT  rdinit=/linuxrc \$\$*' >>$startscript"
+     echo "$TAB echo 'if [ -n \"\$\$UML_SLEEP\" ]; then eval \$\$UML_SLEEP; fi'  >>$startscript"
+     echo "$TAB chmod +x $startscript"
+     echo
+     depends="$depends $startscript"
+    fi
     # make startup script for KLIPS uml (no modules)
     startscript=$POOLSPACE/$host/start.sh
     echo "$startscript : $LIBRESWANSRCDIR/umlsetup.sh initrd.cpio"
@@ -292,6 +312,7 @@ setup_host() {
     
     # nuke certain other files that get in the way of booting
     rm -f $hostroot/etc/mtab
+    chmod 755 $hostroot/sbin # fedora18 makes it 555
     rm -f $hostroot/sbin/hwclock
 
     # set up the timezone

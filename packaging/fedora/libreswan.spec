@@ -55,7 +55,7 @@ BuildRequires: ElectricFence
 
 Provides: ipsec-userland = %{version}-%{release}
 
-Requires: nss-tools
+Requires: nss-tools, nss-softokn
 Requires: iproute >= 2.6.8
 Requires(post): coreutils bash
 Requires(preun): initscripts chkconfig

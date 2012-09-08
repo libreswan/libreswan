@@ -1,5 +1,0 @@
- key 7534 private.abigail.freeswan.org.
-key 24323 desk.marajade.sandelman.ca.
-key 3456 cassidy.sandelman.ca.
-txt4 345 66.134.99.194
-txt4 2345 66.134.99.202

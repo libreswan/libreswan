@@ -26,7 +26,7 @@ MANDIR=$(MANTREE)/man3
 
 X509LIB=x509dn.c certload.c pem.c pkcs.c asn1.c oid.c pgp.c x509chain.c
 
-SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c unbound.c \
+SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
 	atoasr.c atosubnet.c atoul.c constants.c datatot.c \
 	alloc.c biglset.c diag.c \
 	goodmask.c id.c initaddr.c initsaid.c initsubnet.c \
@@ -40,6 +40,10 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c unbound.c \
 	subnettypeof.c ttoaddr.c ttodata.c ttoprotoport.c \
 	ttosa.c ttosubnet.c ttoul.c ultoa.c ultot.c \
 	$(X509LIB)
+
+ifeq ($(USE_DNSSEC),true)
+SRCS+=unbound.c
+endif
 
 SRCS+=sanitizestring.c pfkey_print.c pfkey_sock.c pfkey_error.c
 
