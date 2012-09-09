@@ -3,3 +3,9 @@ This is work in progress - use a disposable system :/
 Be aware this requires running a libvirtd to crate the networks
 and a qemu/kvm to create the first base image on which all umls
 are based.
+
+
+- Ensure all nic's user "virtio" and not "hypervisor-default". Double
+  check this setting for all nics, and remember "apply" only applies to
+  one screen/nic, not all changed you made.
+
