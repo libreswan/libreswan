@@ -68,5 +68,7 @@ mkdir /testing
 echo "/dev/vdb /testing ext2 defaults,noauto 0 0" >> /etc/fstab
 echo "/dev/vdc /usr/local ext2 defaults,noauto 0 0" >> /etc/fstab
 
+systemctl enable network.service
+
 yum update -y 
 %end
