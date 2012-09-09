@@ -1,0 +1,21 @@
+<!--
+Based on testing/baseconfigs/net.nic.sh
+"nic" is not used as a VM, it is the host. It's
+interfaces are configured on the bridge. dhcp not used
+
+Note: this network is on the diagram, but not used in test cases?
+-->
+
+<network>
+  <name>192_9_4</name>
+  <bridge name='swan94' stp='on' delay='0' />
+  <mac address='12:00:00:32:32:94'/>
+<!-- virt-manager won't allow 254 ??
+  <ip address='192.9.4.254' netmask='255.255.255.0'>
+-->
+  <ip address='192.9.4.253' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.9.4.128' end='192.9.4.196' />
+    </dhcp>
+  </ip>
+</network>
