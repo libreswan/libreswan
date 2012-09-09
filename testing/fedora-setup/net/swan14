@@ -7,7 +7,7 @@ Note: this network is on the diagram, but not used in test cases?
 -->
 
 <network>
-  <name>192_1_4_0</name>
+  <name>192_1_4</name>
   <bridge name='swan14' stp='on' delay='0' />
   <mac address='12:00:00:16:32:BA'/>
 <!-- virt-manager won't allow 254 ??

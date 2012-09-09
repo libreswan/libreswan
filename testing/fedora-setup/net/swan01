@@ -7,7 +7,7 @@ interfaces are configured on the bridge. dhcp not used
 -->
 
 <network>
-  <name>192_0_1_0</name>
+  <name>192_0_1</name>
   <bridge name='swan01' stp='on' delay='0' />
   <mac address='12:00:00:16:16:BA'/>
   <ip address='192.0.1.127' netmask='255.255.255.0'>

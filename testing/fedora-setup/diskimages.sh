@@ -2,7 +2,8 @@
 
 # Note: Replace this with your local Fedora tree if you have one.
 #export tree=http://mirror.fedoraproject.org/linux/releases/17/Fedora/x86_64/os/
-export tree=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
+#export tree=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
+export tree=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os/
 export BASE=/var/lib/libvirt/images/
 
 if [ ! -f $BASE/swanbase.img ]
