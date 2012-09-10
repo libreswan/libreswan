@@ -4,8 +4,8 @@ text
 reboot
 lang en_US.UTF-8
 keyboard us
-#network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname west 
-network --bootproto=dhcp --hostname base 
+#network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
+network --bootproto=dhcp --hostname swanbase 
 rootpw swan
 firewall --disable
 selinux --enforcing

@@ -1,13 +1,9 @@
 <!--
-WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE 
-OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
-  virsh edit west
-or other application using the libvirt API.
+You can load this machine definition into libvirt using:
+	sudo virsh define west.xml
 -->
-
 <domain type='kvm'>
   <name>west</name>
-  <uuid>dbfc4c33-abe1-ae1a-9195-e7429d3947d7</uuid>
   <memory unit='KiB'>524288</memory>
   <currentMemory unit='KiB'>524288</currentMemory>
   <vcpu>1</vcpu>
@@ -32,24 +28,26 @@ or other application using the libvirt API.
       <target dev='vda' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
     </disk>
-    <disk type='file' device='disk'>
-      <driver name='qemu' type='raw'/>
-      <source file='/var/lib/libvirt/images/testingswan.fs'/>
-      <target dev='vdb' bus='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
-    </disk>
-    <disk type='file' device='disk'>
-      <driver name='qemu' type='raw'/>
-      <source file='/var/lib/libvirt/images/localswan.fs'/>
-      <target dev='vdc' bus='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
-    </disk>
     <controller type='usb' index='0'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
     </controller>
     <controller type='virtio-serial' index='0'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
     </controller>
+<!---
+     Change path based on where the source tree lives, eg
+      <source dir='/vol/git/libreswan/testing'/>
+-->
+    <filesystem type='mount' accessmode='passthrough'>
+      <source dir='/vol/git/libreswan/testing'/>
+      <target dir='testing'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+    </filesystem>
+    <filesystem type='mount' accessmode='passthrough'>
+      <source dir='/tmp'/>
+      <target dir='tmp'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+    </filesystem>
     <interface type='network'>
       <mac address='12:00:00:ab:cd:ff'/>
       <source network='192_0_1'/>
@@ -67,6 +65,12 @@ or other application using the libvirt API.
       <source network='192_9_4'/>
       <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x0b' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <mac address='52:54:00:6f:1f:98'/>
+      <source network='default'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x0c' function='0x0'/>
     </interface>
     <serial type='pty'>
       <target port='0'/>
