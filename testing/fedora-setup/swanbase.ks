@@ -43,15 +43,14 @@ yum install -y nc6 racoon2 wget vim-enhanced bison flex gmp-devel nss-devel nss-
 # note we cannot install the serviced file from /testing, as that's not mounted during
 # install time
 
-# wget people.redhat.com/pwouters/osw/osw-bindmount.service -O /usr/lib/systemd/system/osw-bindmount.service
-cat << EOD > /usr/lib/systemd/system/osw-bindmount.service
+cat << EOD > /usr/lib/systemd/system/swan-bindmount.service
 [Unit]
 Description=Bind mount a new /etc/sysconfig/network based on /proc/cmdline umid= VM hostname
 Before=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/testing/fedora-setup/osw-vm-net-bindmount.py
+ExecStart=/testing/fedora-setup/swan-vm-net-bindmount.py
 ExecStart=/sbin/restorecon /etc/sysconfig/network*
 RemainAfterExit=yes
 
@@ -59,16 +58,14 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOD
 
-
-
-
-/sbin/restorecon /usr/lib/systemd/system/osw-bindmount.service
+/sbin/restorecon /usr/lib/systemd/system/swan-bindmount.service
 
 mkdir /testing
-echo "/dev/vdb /testing ext2 defaults,noauto 0 0" >> /etc/fstab
-echo "/dev/vdc /usr/local ext2 defaults,noauto 0 0" >> /etc/fstab
+echo "testing /testing 9p defaults,trans=virtio 0 0" >> /etc/fstab
+echo "tmp /tmp 9p defaults,,noautotrans=virtio 0 0" >> /etc/fstab
 
 systemctl enable network.service
+systemctl enable swan-bindmount.service
 
 yum update -y 
 %end
