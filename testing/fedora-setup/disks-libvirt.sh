@@ -19,7 +19,7 @@ then
 sudo virt-install --connect=qemu:///system \
     --network=network:default,model=virtio \
     --initrd-inject=./swanbase.ks \
-    --extra-args="swanname=base ks=file:/swanbase.ks \
+    --extra-args="swanname=swanbase ks=file:/swanbase.ks \
       console=tty0 console=ttyS0,115200" \
     --name=swanbase \
     --disk $BASE/swanbase.img,size=8 \
