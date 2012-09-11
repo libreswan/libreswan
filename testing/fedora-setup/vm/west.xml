@@ -39,7 +39,7 @@ You can load this machine definition into libvirt using:
       <source dir='/vol/git/libreswan/testing'/>
 -->
     <filesystem type='mount' accessmode='passthrough'>
-      <source dir='/vol/git/libreswan/testing'/>
+      <source dir='/home/paul/git/libreswan/testing'/>
       <target dir='testing'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
     </filesystem>

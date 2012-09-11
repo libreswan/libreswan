@@ -31,6 +31,6 @@ for hostname in macs.keys():
 			if not os.path.isfile("/etc/sysconfig/network-scripts/%s"%fname):
 				fp = open("/etc/sysconfig/network-scripts/%s"%fname,"w")
 				fp.close()
-				commands.getoutput("mount --bind %s /etc/sysconfig/network-scripts/%s"%(entry,fname))
+			commands.getoutput("mount --bind %s /etc/sysconfig/network-scripts/%s"%(entry,fname))
 		sys.exit()
 sys.exit("Failed to find our swan hostname based on the mac of eth0")

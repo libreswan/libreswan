@@ -4,7 +4,7 @@ Before=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/testing/fedora-setup/osw-vm-net-bindmount.py
+ExecStart=/testing/fedora-setup/swan-vm-net-bindmount.py
 ExecStart=/sbin/restorecon /etc/sysconfig/network*
 RemainAfterExit=yes
 
