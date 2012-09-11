@@ -189,7 +189,7 @@ downroute() {
 }
 
 downrule() {
-        if [ -n "$PLUTO_MY_SOURCEIP" ]
+        if [ -n "$PLUTO_MY_SOURCEIP" -a "$PLUTO_IS_PEER_CISCO" -eq "1" ]
         then
             doroute del
             ip route flush cache
