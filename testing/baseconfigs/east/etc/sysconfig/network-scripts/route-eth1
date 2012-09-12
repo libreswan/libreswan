@@ -1,3 +1,2 @@
 192.0.1.0/24 via 192.1.2.45 dev eth1
-# TODO: is this proper for ipv6?
--6 2001:db8:0:1::254/48 via  2001:db8:1:2::45 dev eth1
+default via 192.1.2.254
