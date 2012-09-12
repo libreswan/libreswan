@@ -28,8 +28,24 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 -sendmail
 gdb
 tcpdump
-#racoon2
-#nc6
+racoon2
+nc6
+# nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
+-NetworkManager
+# to compile openswan
+gcc
+make
+flex
+bison
+gmp-devel
+nss-devel
+nspr-devel
+unbound-devel
+fipscheck-devel
+libcap-ng-devel
+openldap-devel
+curl-devel 
+redhat-rpm-config
 %end
 
 %post 
