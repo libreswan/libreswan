@@ -80,6 +80,11 @@ mkdir /testing
 echo "testing /testing 9p defaults,trans=virtio 0 0" >> /etc/fstab
 echo "tmp /tmp 9p defaults,,noautotrans=virtio 0 0" >> /etc/fstab
 
+cat << EOD > /etc/modprobe.d/9p.conf
+# load 9p modules in time for auto mounts
+options 9pnet_virtio
+EOD
+
 systemctl enable network.service
 systemctl enable swan-bindmount.service
 
