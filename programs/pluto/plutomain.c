@@ -880,6 +880,7 @@ main(int argc, char **argv)
 				        IPSECLIBDIR"/barf",
 				        IPSECLIBDIR"/eroute",
   				        IPSECLIBDIR"/ikeping",
+  				        IPSECLIBDIR"/initnss",
 				        IPSECLIBDIR"/_include",
 					IPSECLIBDIR"/_keycensor",
 					IPSECLIBDIR"/klipsdebug",
