@@ -8,7 +8,7 @@ fi
 
 for hostname in east west;
 do
-        sudo virsh create vm/$hostname.xml
+        sudo virsh define vm/$hostname.xml
         sudo virsh start $hostname
 done
 
