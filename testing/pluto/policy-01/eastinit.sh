@@ -5,6 +5,8 @@ inetd
 dig road.uml.freeswan.org. key
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add private-or-clear
 ipsec auto --add us-private-or-clear
 ipsec auto --add us-private-or-clear-all

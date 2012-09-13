@@ -17,9 +17,10 @@ ping -n -c 4 192.0.2.254
 telnet east-out 3 | wc -l
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add west--east-port3
 ipsec auto --add west--east-pass
-/testing/pluto/bin/wait-until-pluto-started
 ipsec auto --route west--east-pass
 ipsec eroute
 ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt

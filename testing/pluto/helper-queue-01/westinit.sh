@@ -9,6 +9,8 @@ TESTNAME=helper-queue-01
 source /testing/pluto/bin/westlocal.sh
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add westnet-eastnet-aggr
 ipsec auto --add westnet-bogus01
 ipsec auto --add westnet-bogus02
@@ -20,7 +22,7 @@ ipsec auto --add westnet-bogus07
 ipsec auto --add westnet-bogus08
 ipsec auto --add westnet-bogus09
 ipsec auto --add westnet-bogus10
-/testing/pluto/bin/wait-until-pluto-started
+
 ipsec whack --name westnet-bogus01 --initiate >/dev/null &
 ipsec whack --name westnet-bogus02 --initiate >/dev/null &
 ipsec whack --name westnet-bogus03 --initiate >/dev/null &

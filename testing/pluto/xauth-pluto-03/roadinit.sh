@@ -14,6 +14,7 @@ TESTNAME=xauth-pluto-03
 source /testing/pluto/bin/roadlocal.sh
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
 
 echo done
 

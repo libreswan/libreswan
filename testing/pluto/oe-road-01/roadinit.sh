@@ -18,6 +18,7 @@ source /testing/pluto/bin/roadlocal.sh
 
 route add -net default gw 192.1.3.254
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
 
 /testing/pluto/oe-road-01/policy-wait.sh
 

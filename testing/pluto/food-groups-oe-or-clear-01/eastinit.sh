@@ -12,8 +12,8 @@ dig sunrise-oe.uml.freeswan.org a
 netstat -rne
 
 ipsec setup start
-
 /testing/pluto/bin/wait-until-pluto-started
+
 ipsec whack --debug-oppo
 
 ipsec auto --add private-or-clear

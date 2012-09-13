@@ -1,6 +1,7 @@
 : ==== start ====
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
 
 /testing/pluto/bin/wait-until-policy-loaded
 

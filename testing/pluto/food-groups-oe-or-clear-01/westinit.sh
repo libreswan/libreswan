@@ -10,7 +10,6 @@ route add -net default gw 192.1.2.23
 ping -n -c 4 192.0.1.3
 
 ipsec setup start
-
 : wait for packetdefault to show up
 /testing/pluto/bin/wait-until-pluto-started
 

@@ -13,8 +13,9 @@ iptables -A INPUT -i eth1 -s 192.1.2.23 -p udp --sport 1701 -j REJECT
 iptables -A OUTPUT -o eth1 -d 192.1.2.23 -p udp --dport 1701 -j REJECT
 
 ipsec setup restart
-ipsec auto --add l2tp-client-nat
 /testing/pluto/bin/wait-until-pluto-started
+
+ipsec auto --add l2tp-client-nat
 ipsec whack --debug-control --debug-controlmore --debug-natt
 
 if [ ! -f /etc/ppp/chap-secrets ]; then mount --bind /testing/pluto/l2tp-01 /etc/ppp; fi

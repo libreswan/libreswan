@@ -8,8 +8,9 @@ export TESTNAME=xauth-pluto-04
 source /testing/pluto/bin/eastlocal.sh
 
 ipsec setup start
-ipsec auto --add xauth-road--eastnet-psk
 /testing/pluto/bin/wait-until-pluto-started
+
+ipsec auto --add xauth-road--eastnet-psk
 
 echo done.
 

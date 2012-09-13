@@ -13,6 +13,7 @@ netstat -rn
 source /testing/pluto/bin/roadlocal.sh
 
 ipsec setup start
+/testing/pluto/bin/wait-until-policy-loaded
 
 echo done
 

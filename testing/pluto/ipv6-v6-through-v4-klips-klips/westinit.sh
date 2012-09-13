@@ -11,6 +11,7 @@ ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add westnet-eastnet-6in4
 ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
 

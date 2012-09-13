@@ -21,7 +21,6 @@ cp -a /etc/ipsec.conf /etc/ipsec.d $IPSEC_CONFS/
 cp -a /testing/baseconfigs/japan/etc/ipsec.secrets $IPSEC_CONFS/
 
 ipsec setup start
-
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add private

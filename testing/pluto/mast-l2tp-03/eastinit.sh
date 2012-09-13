@@ -5,10 +5,12 @@ source /testing/pluto/bin/eastlocal.sh
 sh /etc/init.d/inetd restart
 
 if [ -f /var/run/l2tpd.pid ]; then kill `cat /var/run/l2tpd.pid`; fi
+
 ipsec setup restart
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add client1--east-l2tp
 ipsec auto --add client2--east-l2tp
-/testing/pluto/bin/wait-until-pluto-started
 
 # make sure that clear text does not get through
 iptables -A INPUT  -i eth1 -d 192.1.2.23 -p udp --dport 1701 -j REJECT

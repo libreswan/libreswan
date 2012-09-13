@@ -24,6 +24,7 @@ echo 192.0.2.2/32	>>/tmp/oe-road-04/ipsec.d/policies/private
 IPSEC_CONFS=/tmp/oe-road-04 export IPSEC_CONFS
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
 
 /testing/pluto/oe-road-01/policy-wait.sh
 

@@ -16,5 +16,7 @@ ls -al /testing/pluto/bin/roadlocal.sh
 source /testing/pluto/bin/roadlocal.sh
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add road--eastnet-psk
 echo done

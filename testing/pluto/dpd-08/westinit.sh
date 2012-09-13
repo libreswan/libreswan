@@ -8,6 +8,7 @@ TESTNAME=dpd-08
 source /testing/pluto/bin/westlocal.sh
 
 ipsec setup start
-sleep 5
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add west-east
 

@@ -10,8 +10,9 @@ iptables -A INPUT -i lo -p icmp -j DROP
 ping -n -c 4 127.0.0.1
 
 ipsec setup start
-ipsec auto --add loopback-04
 /testing/pluto/bin/wait-until-pluto-started
+
+ipsec auto --add loopback-04
 
 echo done
 

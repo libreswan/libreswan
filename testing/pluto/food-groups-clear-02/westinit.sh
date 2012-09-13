@@ -18,7 +18,6 @@ ping -c 1 -n 192.1.2.62
 ping -c 1 -n 192.1.2.23
 
 ipsec setup start
-
 /testing/pluto/bin/wait-until-policy-loaded
 
 ipsec auto --add us-to-anyone

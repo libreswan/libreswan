@@ -13,6 +13,8 @@ dig sunrise-oe.uml.freeswan.org a
 netstat -rne
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
+
 
 : ==== cut ====
 ipsec look

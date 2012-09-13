@@ -4,6 +4,7 @@ route delete -net default
 route add -net default gw 192.1.2.45
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
 
 /testing/pluto/basic-pluto-01/eroutewait.sh trap
 

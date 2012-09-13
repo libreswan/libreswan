@@ -10,6 +10,7 @@ ping -q -c 8 -n 192.1.2.23
 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add northnet--eastnet-nat
 
 echo done

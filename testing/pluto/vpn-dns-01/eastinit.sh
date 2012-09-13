@@ -12,7 +12,6 @@ cp /etc/ipsec.d/policies/* /tmp/$TESTNAME/ipsec.d/policies
 IPSEC_CONFS=/tmp/$TESTNAME export IPSEC_CONFS
 
 ipsec setup start
-
 /testing/pluto/bin/wait-until-pluto-started
 
 dig eastkey.uml.freeswan.org. key

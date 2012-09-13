@@ -4,7 +4,6 @@ route delete -net default
 route add -net default gw 192.1.2.23
 
 ipsec setup start
-
 /testing/pluto/bin/wait-until-pluto-started
 
 # ipsec auto --show --up westnet-east-pass

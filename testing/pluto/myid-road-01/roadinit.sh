@@ -17,6 +17,7 @@ TESTNAME=myid-road-01
 source /testing/pluto/bin/roadlocal.sh
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
 
 /testing/pluto/oe-road-01/policy-wait.sh
 

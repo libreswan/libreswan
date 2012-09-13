@@ -10,8 +10,11 @@ TESTNAME=algo-pluto-01
 source /testing/pluto/bin/westlocal.sh
 
 ipsec setup start
-ipsec auto --add westnet-eastnet-aes256
+/testing/pluto/bin/wait-until-pluto-started
+
 /testing/pluto/basic-pluto-01/eroutewait.sh trap
+
+ipsec auto --add westnet-eastnet-aes256
 
 echo done
 

@@ -14,6 +14,8 @@ dig 2.2.0.192.in-addr.arpa. txt
 route delete -net 192.0.2.0 netmask 255.255.255.0 gw 192.1.2.23
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add us-private-or-clear-all
 ipsec auto --add let-my-dns-go
 ipsec auto --add us-let-my-dns-go

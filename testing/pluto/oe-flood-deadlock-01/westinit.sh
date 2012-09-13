@@ -8,7 +8,6 @@ route add -net default gw 192.1.2.23
 # arp -s 192.1.2.23 10:00:00:64:64:23
 
 ipsec setup start
-
 /testing/pluto/bin/wait-until-pluto-started
 
 # passive OE only.

@@ -8,6 +8,7 @@ source /testing/pluto/bin/eastlocal.sh
 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
+
 ipsec whack --whackrecord /var/tmp/aggr.record 
 
 ipsec auto --add westnet-eastnet-aggr

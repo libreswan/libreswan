@@ -5,10 +5,13 @@ source /testing/pluto/bin/eastlocal.sh
 sh /etc/init.d/inetd restart
 
 if [ -f /var/run/l2tpd.pid ]; then kill `cat /var/run/l2tpd.pid`; fi
+
 ipsec setup restart
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add client1--east-l2tp
 ipsec auto --add client2--east-l2tp
-/testing/pluto/bin/wait-until-pluto-started
+
 ipsec whack --debug-control --debug-controlmore --debug-natt
 
 # make sure that clear text does not get through

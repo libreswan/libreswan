@@ -8,6 +8,7 @@ echo 1 >/proc/sys/net/ipv4/conf/eth0/proxy_arp
 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add road--eastnet-nat
 ipsec auto --add road--eastnet-nat-within
 

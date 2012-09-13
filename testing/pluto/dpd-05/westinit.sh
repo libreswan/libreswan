@@ -6,6 +6,7 @@ iptables -F INPUT
 iptables -F OUTPUT
 
 ipsec setup start
-sleep 5
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add west-east
 

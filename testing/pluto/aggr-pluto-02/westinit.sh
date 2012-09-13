@@ -15,8 +15,9 @@ TESTNAME=aggr-pluto-02
 source /testing/pluto/bin/westlocal.sh
 
 ipsec setup start
-ipsec auto --add westnet-eastnet-aggr-psk
 /testing/pluto/bin/wait-until-pluto-started
+
+ipsec auto --add westnet-eastnet-aggr-psk
 ipsec auto --up  westnet-eastnet-aggr-psk
 
 echo done

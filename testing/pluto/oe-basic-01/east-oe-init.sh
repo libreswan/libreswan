@@ -1,6 +1,8 @@
 #!/bin/sh
 
 ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
+
 ipsec auto --add block
 ipsec auto --add us-block
 ipsec auto --add clear
