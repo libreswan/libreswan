@@ -80,9 +80,14 @@ mkdir /testing
 echo "testing /testing 9p defaults,trans=virtio 0 0" >> /etc/fstab
 echo "tmp /tmp 9p defaults,,noautotrans=virtio 0 0" >> /etc/fstab
 
-cat << EOD > /etc/modprobe.d/9p.conf
+cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
 # load 9p modules in time for auto mounts
-options 9pnet_virtio
+9pnet_virtio
+EOD
+cat << EOD > /etc/modules-load.d/virtio-rng.conf
+# load virtio RNG device to get entropy from the host
+# Note it should also be loaded on the host
+virtio-rng
 EOD
 
 systemctl enable network.service
