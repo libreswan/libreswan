@@ -4,12 +4,6 @@ MYDIR=`readlink -f $0  | sed "s/fedora-setup.*$/fedora-setup/"`
 TESTING=`readlink -f $0  | sed "s/testing.*$/testing/"`
 LIBRESWANSRCDIR=`echo $TESTING | sed "s/\/testing//"`
 
-echo $SWANDIR
-
-
-exit
-
-
 pushd $MYDIR
 
 for hostname in east west;
