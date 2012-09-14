@@ -9,3 +9,7 @@ are based.
   check this setting for all nics, and remember "apply" only applies to
   one screen/nic, not all changed you made.
 
+- Ensure the "testing" directory from this tree is world readable.
+  including any parent directories. So if this is in your homedir,
+  then your homedir needs to be world readable. Or else the /testing
+  directory cannot be exported to the VMs

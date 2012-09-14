@@ -58,4 +58,6 @@ v1.0.0 (unreleased)
          [Matt Rogers]
    #1334 Block rules created by openswan remain even after tunnel
          establishment or XFRM_MSG_POLEXPIRE [Panagiotis Tamtamis]
+   #1381 XAuth: the variable PLUTO_XAUTH_USERNAME is empty in the updown
+   	 script [Bram]
 
