@@ -198,9 +198,12 @@ conn westnet-eastnet-6in6
 	also=westnet-eastnet-ipv6
 
 conn westnet-eastnet-ipv4-rsa2
+	also=west-east-base-rsa2
+        also=westnet-eastnet-ipv4
+
+conn west-east-base-rsa2
         leftrsasigkey2=0sAQO2nvgDFcogH9VksI4nYNR/TmVxb8gEteT925CVBqJeV2OBJQ/1suz2aD5VepFYfh6Jf/4LbMqIhGeKPNR64SyeqYuuYeGMwiJrnFbQPRyZLpCtBx8KfTJbnU1KjeAio1DouxSbspG2hPLakq30akdeSyJ+cWbNEWi/+7SxcKYc2SHzXxfd/rI69mOXxyQQwSjw53lkblaUqmD4MEPsLPs3GQAeXUbYDSNTooWVIXPsS3EoX08sJcBh0x3P3uHqhnr3CNDj4BBox17wK0NqhezjKBqPqFMDM8xFynjLrpU56lDJpE7XYgIoAbFF17oBOcTZKCIBcmBh/hEhYoHwcIxanj5Y0M306ONlywgYoNTUGyJb
         rightrsasigkey2=0sAQPXCqe6OImZ3iTkEIOOJS0F18GkFXsGdqgizxERmANRwxmAhOSyqwX/mpQemZTq+86k6kE/bc2pLInTYDjJf35wuhibNqN8HV2OnpzIT7BAw2CQnSrDz4I4Lol47C8SofX9l3C9tJp5P/4gFAWZ31p5S61c30/tp0jVGSvFJek/6BaAFn8Nyhgov6AJTCmBUsp0+dW8Q6wnKMCtJF08ZECOAwYr2OdGZsWQ2HsBdXL+xYew5iZEgnId+nuvdMaR1xPgpJzggq1U1/F7m9U/5Rr8nN8RlgSdpcozfGmulCRZIvVxDJ1kqHxPhcew2vSZYdLYzURABcnOk4BE0hgkIl9udvfvHWb6owob5qiSCQuz2qEj
-        also=westnet-eastnet-ipv4
 
 conn westnet-eastnet-ipv4
 	also=west-east-base-id
