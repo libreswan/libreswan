@@ -28,8 +28,6 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 -sendmail
 gdb
 tcpdump
-racoon2
-nc6
 # nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
 -NetworkManager
 # to compile openswan
@@ -40,12 +38,15 @@ bison
 gmp-devel
 nss-devel
 nspr-devel
-unbound-devel
-fipscheck-devel
-libcap-ng-devel
 openldap-devel
 curl-devel 
 redhat-rpm-config
+# not available at install time in this repo??
+#racoon2
+#nc6
+#unbound-devel
+#fipscheck-devel
+#libcap-ng-devel
 %end
 
 %post 
@@ -114,4 +115,5 @@ systemctl enable iptables.service
 systemctl enable ip6tables.service
 
 yum update -y 
+yum install racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel -y
 %end
