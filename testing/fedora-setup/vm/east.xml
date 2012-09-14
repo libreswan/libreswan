@@ -35,11 +35,8 @@ You can load this machine definition into libvirt using:
     <controller type='virtio-serial' index='0'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
     </controller>
-<!---
-          Change path based on where the source tree lives, eg
-      <source dir='/vol/git/libreswan/testing'/>
     <filesystem type='mount' accessmode='passthrough'>
-      <source dir='/home/paul/git/libreswan/testing'/>
+      <source dir='@@TESTING@@'/>
       <target dir='testing'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
     </filesystem>
@@ -48,7 +45,6 @@ You can load this machine definition into libvirt using:
       <target dir='tmp'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
     </filesystem>
--->
     <interface type='network'>
       <mac address='12:00:00:dc:bc:ff'/>
       <source network='192_0_2'/>
