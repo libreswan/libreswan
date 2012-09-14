@@ -1,5 +1,19 @@
 #!/bin/sh
 
+if [ -z "$1" ]
+then
+  echo "No testname specified, use list to --list all test names"
+  exit 1
+fi
+
+if [ "$1" == "list" -o "$1" == "--list" ]
+then
+  pushd /vol/git/libreswan/testing/pluto
+  ls -d *
+  popd
+  exit 
+fi
+
 if [ ! -f /testing/pluto/$1/testparams.sh ]
 then
 	echo "Unknown or broken test case /testing/pluto/$1"
