@@ -90,8 +90,28 @@ cat << EOD > /etc/modules-load.d/virtio-rng.conf
 virtio-rng
 EOD
 
+cat << EOD >> /etc/sysconfig/iptables
+*filter
+:INPUT ACCEPT [111:7052]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [75:6652]
+:LOGDROP - [0:0]
+COMMIT
+EOD
+
+cat << EOD >> /etc/sysconfig/ip6tables
+*filter
+:INPUT ACCEPT [111:7052]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [75:6652]
+:LOGDROP - [0:0]
+COMMIT
+EOD
+
 systemctl enable network.service
 systemctl enable swan-bindmount.service
+systemctl enable iptables.service
+systemctl enable ip6tables.service
 
 yum update -y 
 %end
