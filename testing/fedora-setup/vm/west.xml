@@ -39,6 +39,10 @@ You can load this machine definition into libvirt using:
       <target dir='testing'/>
     </filesystem>
     <filesystem type='mount' accessmode='passthrough'>
+      <source dir='@@LIBRESWANSRCDIR@@'/>
+      <target dir='swansource'/>
+    </filesystem>
+    <filesystem type='mount' accessmode='passthrough'>
       <source dir='/tmp'/>
       <target dir='tmp'/>
     </filesystem>

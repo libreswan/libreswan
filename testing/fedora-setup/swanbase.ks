@@ -76,8 +76,10 @@ EOD
 
 /sbin/restorecon /usr/lib/systemd/system/swan-bindmount.service
 
-mkdir /testing
-echo "testing /testing 9p defaults,trans=virtio 0 0" >> /etc/fstab
+mkdir /testing /source
+
+echo "testing /testing 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
+echo "swansource /source 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
 echo "tmp /tmp 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
 
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
