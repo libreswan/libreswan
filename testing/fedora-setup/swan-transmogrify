@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+# run from rc.local by the testing VMs
 import sys, os, commands, glob
 
 # use the known MAC address to figure out who we are
@@ -23,6 +24,7 @@ for hostname in macs.keys():
 	if mac in eth0:
 		# print "we are %s"%hostname
 		# we seem to have found our identity
+		commands.getoutput("hostname %s"%hostname)
 		commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/sysconfig/network /etc/sysconfig/network"%hostname)
 		ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*"%hostname)
 		routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*"%hostname)
@@ -32,5 +34,7 @@ for hostname in macs.keys():
 				fp = open("/etc/sysconfig/network-scripts/%s"%fname,"w")
 				fp.close()
 			commands.getoutput("mount --bind %s /etc/sysconfig/network-scripts/%s"%(entry,fname))
+			commands.getoutput("systemctl restart network.service")
 		sys.exit()
+
 sys.exit("Failed to find our swan hostname based on the mac of eth0")

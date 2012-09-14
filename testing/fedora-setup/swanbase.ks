@@ -54,33 +54,20 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 # TODO: if rhel/centos, we should install epel-release too
 yum install -y nc6 racoon2 wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs
 
-# install special service that re-mount-bind's network config based on which test host
-# we are (i.e. east, west, north, ....)
-# note we cannot install the serviced file from /testing, as that's not mounted during
-# install time
-
-cat << EOD > /usr/lib/systemd/system/swan-bindmount.service
-[Unit]
-Description=Bind mount a new /etc/sysconfig/network based on /proc/cmdline umid= VM hostname
-Before=network.target
-
-[Service]
-Type=oneshot
-ExecStart=/testing/fedora-setup/swan-vm-net-bindmount.py
-ExecStart=/sbin/restorecon /etc/sysconfig/network*
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOD
-
-/sbin/restorecon /usr/lib/systemd/system/swan-bindmount.service
-
 mkdir /testing /source
 
+# noauto for now, as we seem to need more system parts started before we can mount 9p
 echo "testing /testing 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
 echo "swansource /source 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
-echo "tmp /tmp 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
+# mounting tmp as /tmp causes weird IO issues 
+#echo "tmp /tmp 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
+
+cat << EOD > /etc/rc.d/rc.local 
+mount /testing
+mount /source
+/testing/fedora-setup/swan-transmogrify
+EOD
+chmod 755 /etc/rc.d/rc.local
 
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
 # load 9p modules in time for auto mounts
@@ -111,7 +98,6 @@ COMMIT
 EOD
 
 systemctl enable network.service
-systemctl enable swan-bindmount.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
 
