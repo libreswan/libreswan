@@ -65,6 +65,7 @@ echo "swansource /source 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
 #echo "tmp /tmp 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
 
 cat << EOD > /etc/rc.d/rc.local 
+#!/bin/sh
 mount /testing
 mount /source
 /testing/guestbin/swan-transmogrify
