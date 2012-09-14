@@ -906,6 +906,8 @@ duplicate_state(struct state *st)
 
     nst->st_oakley = st->st_oakley;
 
+    strncpy(nst->st_xauth_username, st->st_xauth_username, sizeof(nst->st_xauth_username));
+
     return nst;
 }
 
