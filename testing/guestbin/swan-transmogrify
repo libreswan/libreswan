@@ -28,7 +28,7 @@ for hostname in macs.keys():
 		commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/sysconfig/network /etc/sysconfig/network"%hostname)
 		# fixup /etc/sysctl.conf
 		commands.getoutput("mount --bind /testing/baseconfigs/all/etc/sysctl.conf /etc/sysctl.conf")
-		commands.getouput("sysctl -p")
+		commands.getoutput("sysctl -p")
 		# pickup entries from "all" host
 		fnames = glob.glob("/testing/baseconfigs/all/etc/sysconfig/*")
 		for fname in fnames:
