@@ -1,9 +1,7 @@
 #!/bin/bash
 
-if [ ! -f ../../Makefile.inc ]; then
-       echo "Please run this from testing/fedora-setup/ as cwd until this becomes a Makefile"
-       exit 1
-fi
+TESTING=`readlink -f $0  | sed "s/fedora-setup.*$/fedora-setup/"`
+pushd $TESTING
 
 # Note: Replace this with your local Fedora tree if you have one.
 #export tree=http://mirror.fedoraproject.org/linux/releases/17/Fedora/x86_64/os/
@@ -29,10 +27,15 @@ sudo virt-install --connect=qemu:///system \
     --accelerate \
     --hvm \
     --location=$tree  \
-    --nographics 
+    --nographics \ 
+    --autostart  \
+    --noreboot
 fi
 
 for hostname in east west;
 do
 	sudo cp $BASE/swanbase.img  $BASE/$hostname.img
 done
+
+popd
+

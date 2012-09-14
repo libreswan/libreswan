@@ -2,6 +2,9 @@
 
 # if using libvirt, you can use network-libvirt.sh instead
 
+TESTING=`readlink -f $0  | sed "s/fedora-setup.*$/fedora-setup/"`
+pushd $TESTING
+
 
 for net in br-192_0_1 br-192_0_2 br-192_1_2 br-192_9_2 br-192_9_4
 do
@@ -27,4 +30,6 @@ ip tuntap add dev east_eth1 mode tap
 brctl addif br-192_1_2 east_eth1
 ip tuntap add dev east_eth2 mode tap
 brctl addif br-192_9_2 east_eth2
+
+popd
 
