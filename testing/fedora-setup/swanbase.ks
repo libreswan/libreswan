@@ -52,6 +52,9 @@ redhat-rpm-config
 %post 
 echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 /sbin/restorecon /etc/resolv.conf
+# Paul needs this due to broken isp
+ifconfig eth0 mtu 1400
+
 # TODO: if rhel/centos, we should install epel-release too
 yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs
 yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel 
@@ -72,7 +75,7 @@ mount /source
 EOD
 chmod 755 /etc/rc.d/rc.local
 
-cat << EOD > etc/profile.d/swanpath.sh
+cat << EOD > /etc/profile.d/swanpath.sh
 # add swan test binaries to path
 
 case ":${PATH:-}:" in
