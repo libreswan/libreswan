@@ -72,9 +72,14 @@ mount /source
 EOD
 chmod 755 /etc/rc.d/rc.local
 
-# add path to our scriprs
-cp -a /testing/utils/swanpath.sh /etc/profile.d
+cat << EOD > etc/profile.d/swanpath.sh
+# add swan test binaries to path
 
+case ":${PATH:-}:" in
+    *:/testing/scripts/guestbin:*) ;;
+    *) PATH="/testing/scripts/guestbin${PATH:+:$PATH}" ;;
+esac
+EOD
 
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
 # load 9p modules in time for auto mounts
