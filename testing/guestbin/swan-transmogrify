@@ -26,6 +26,15 @@ for hostname in macs.keys():
 		# we seem to have found our identity
 		commands.getoutput("hostname %s"%hostname)
 		commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/sysconfig/network /etc/sysconfig/network"%hostname)
+		# fixup /etc/sysctl.conf
+		commands.getoutput("mount --bind /testing/baseconfigs/all/etc/sysctl.conf /etc/sysctl.conf")
+		commands.getouput("sysctl -p")
+		# pickup entries from "all" host
+		fnames = glob.glob("/testing/baseconfigs/all/etc/sysconfig/*")
+		for fname in fnames:
+			if os.path.isfile(fname):
+				commands.getoutput("mount --bind %s /etc/sysconfig/%s"%(fname, os.path.basename(fname)))
+
 		ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*"%hostname)
 		routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*"%hostname)
 		for entry in (ifaces + routes):
@@ -35,6 +44,8 @@ for hostname in macs.keys():
 				fp.close()
 			commands.getoutput("mount --bind %s /etc/sysconfig/network-scripts/%s"%(entry,fname))
 			commands.getoutput("systemctl restart network.service")
+		# and some entries for all hosts
+		commands.getoutput("mount --bind %s /etc/sysconfig/network-scripts/%s"%(entry,fname))
 		sys.exit()
 
 sys.exit("Failed to find our swan hostname based on the mac of eth0")

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ -f /testing/pluto/$TESTNAME/`hostname`init.sh ]
+then
+	. /testing/pluto/$TESTNAME/`hostname`init.sh
+	echo "`hostname` initialised $TESTNAME"
+else
+	echo "broken test - missing /testing/pluto/$TESTNAME/`hostname`init.sh"
+	exit 1
+fi

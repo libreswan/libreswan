@@ -53,7 +53,8 @@ redhat-rpm-config
 echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 /sbin/restorecon /etc/resolv.conf
 # TODO: if rhel/centos, we should install epel-release too
-yum install -y nc6 racoon2 wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs
+yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs
+yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel 
 
 mkdir /testing /source
 
@@ -66,9 +67,13 @@ echo "swansource /source 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
 cat << EOD > /etc/rc.d/rc.local 
 mount /testing
 mount /source
-/testing/fedora-setup/swan-transmogrify
+/testing/guestbin/swan-transmogrify
 EOD
 chmod 755 /etc/rc.d/rc.local
+
+# add path to our scriprs
+cp -a /testing/utils/swanpath.sh /etc/profile.d
+
 
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
 # load 9p modules in time for auto mounts
@@ -80,28 +85,10 @@ cat << EOD > /etc/modules-load.d/virtio-rng.conf
 virtio-rng
 EOD
 
-cat << EOD >> /etc/sysconfig/iptables
-*filter
-:INPUT ACCEPT [111:7052]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [75:6652]
-:LOGDROP - [0:0]
-COMMIT
-EOD
-
-cat << EOD >> /etc/sysconfig/ip6tables
-*filter
-:INPUT ACCEPT [111:7052]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [75:6652]
-:LOGDROP - [0:0]
-COMMIT
-EOD
-
 systemctl enable network.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
 
-yum update -y 
-yum install racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel -y
+# Takes a long time, disable for now
+# yum update -y 
 %end

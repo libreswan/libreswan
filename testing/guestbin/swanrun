@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [ -f /testing/pluto/$TESTNAME/`hostname`run.sh ]
+then
+	. /testing/pluto/$TESTNAME/`hostname`run.sh
+	echo "`hostname` ran $TESTNAME, logs in /tmp/pluto.log"
+else
+	echo "broken test - missing /testing/pluto/$TESTNAME/`hostname`run.sh"
+	exit 1
+fi
