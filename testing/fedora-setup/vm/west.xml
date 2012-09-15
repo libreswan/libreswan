@@ -34,15 +34,15 @@ You can load this machine definition into libvirt using:
     <controller type='virtio-serial' index='0'>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
     </controller>
-    <filesystem type='mount' accessmode='passthrough'>
+    <filesystem type='mount' accessmode='squash'>
       <source dir='@@TESTING@@'/>
       <target dir='testing'/>
     </filesystem>
-    <filesystem type='mount' accessmode='passthrough'>
+    <filesystem type='mount' accessmode='squash'>
       <source dir='@@LIBRESWANSRCDIR@@'/>
       <target dir='swansource'/>
     </filesystem>
-    <filesystem type='mount' accessmode='passthrough'>
+    <filesystem type='mount' accessmode='squash'>
       <source dir='/tmp'/>
       <target dir='tmp'/>
     </filesystem>
