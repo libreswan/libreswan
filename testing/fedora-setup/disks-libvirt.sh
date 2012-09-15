@@ -34,9 +34,18 @@ sudo virt-install --connect=qemu:///system \
     --noreboot
 fi
 
-for hostname in east west;
+# create many copies of this image using copy-on-write
+sudo qemu-img convert -O qcow2 $BASE/swanbase.img $BASE/swanbase.qcow2
+sudo chown qemu.qemu $BASE/swanbase.qcow2
+
+for hostname in east west north road;
 do
-	sudo cp $BASE/swanbase.img  $BASE/$hostname.img
+	sudo qemu-img create -F qcow2 -f qcow2 -b $BASE/swanbase.qcow2 $BASE/$hostname.qcow2
+	sudo chown qemu.qemu $BASE/$hostname.qcow2
+	if [ -f /usr/sbin/restorecon ] 
+	then
+		sudo restorecon $BASE/$hostname.qcow2
+	fi
 done
 
 sudo virsh undefine swanbase

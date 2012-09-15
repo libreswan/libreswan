@@ -24,8 +24,8 @@ You can load this machine definition into libvirt using:
   <devices>
     <emulator>/usr/bin/qemu-kvm</emulator>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='raw'/>
-      <source file='/var/lib/libvirt/images/east.img'/>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/east.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
     </disk>
