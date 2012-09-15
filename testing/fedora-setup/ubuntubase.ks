@@ -1,0 +1,81 @@
+# Minimal Kickstart file
+install
+text
+reboot
+lang en_US
+langsupport en_US
+keyboard us
+#url --url http://76.10.157.69/ubuntu/
+url --url http://ftp.ubuntu.com/ubuntu/
+user --disabled
+timezone --utc America/New_York
+rootpw swan1234
+bootloader --location=mbr 
+zerombr
+clearpart --all --initlabel
+part / --fstype ext4 --size 7000 --asprimary
+part swap --size 1024
+#network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
+network --bootproto=dhcp --hostname swanbase 
+auth  --useshadow  --enablemd5
+firewall --disabled --ssh
+skipx
+#xconfig --depth=32 --resolution=1280x1024 --defaultdesktop=GNOME --startxonboot
+
+# ugh, packagges selection not supported in ubuntu installer
+#%packages
+
+
+%pre
+ip link set eth0 mtu 1400
+%end
+
+%post 
+echo "nameserver 193.110.157.123" >> /etc/resolv.conf
+#/sbin/restorecon /etc/resolv.conf
+# Paul needs this due to broken isp
+ip link set eth0 mtu 1400
+
+# TODO: Do we need to configure universe/multiverse/everythingverse?
+apt-get install -y wget vim bison flex gcc make netcat strace 
+# racoon2 not available on ubuntu?
+apt-get install -y libnss3-tools libnss3-dev libunbound-dev libgmp-devel libldap-dev libcurl4-nss-dev libcap-ng-dev
+# no package for fipscheck-devel?
+
+mkdir /testing /source
+
+# noauto for now, as we seem to need more system parts started before we can mount 9p
+echo "testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
+echo "swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
+echo "tmp /tmp 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
+
+cat << EOD > /etc//rc.local 
+#!/bin/sh
+mount /testing
+mount /source
+/testing/guestbin/swan-transmogrify
+EOD
+chmod 755 /etc/rc.local
+
+cat << EOD > /etc/profile.d/swanpath.sh
+# add swan test binaries to path
+
+case ":${PATH:-}:" in
+    *:/testing/scripts/guestbin:*) ;;
+    *) PATH="/testing/scripts/guestbin${PATH:+:$PATH}" ;;
+esac
+EOD
+
+cat << EOD >> /etc/modules
+# load 9p modules in time for auto mounts
+9p
+9pnet
+9pnet_virtio
+# load virtio RNG device to get entropy from the host
+# Note it should also be loaded on the host
+virtio-rng
+EOD
+
+# Takes a long time, disable for now
+# apt-get update -y
+%end
