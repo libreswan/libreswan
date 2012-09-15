@@ -12,17 +12,17 @@ echo "creating disks"
 export tree=http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
 export BASE=/var/lib/libvirt/images/
 
-if [ ! -f $BASE/ubuntubase.img ]
+if [ ! -f $BASE/swanubuntubase.img ]
 then
-	echo "Creating ubuntubase image using libvirt"
+	echo "Creating swanubuntubase image using libvirt"
 # install base guest to obtain a file image that will be used as uml root
 sudo virt-install --connect=qemu:///system \
     --network=network:default,model=virtio \
-    --initrd-inject=./ubuntubase.ks \
-    --extra-args="swanname=ubuntubase ks=file:/ubuntubase.ks \
+    --initrd-inject=./swanubuntubase.ks \
+    --extra-args="swanname=swanubuntubase ks=file:/swanubuntubase.ks \
       console=tty0 console=ttyS0,115200" \
-    --name=ubuntubase \
-    --disk $BASE/ubuntubase.img,size=8 \
+    --name=swanubuntubase \
+    --disk $BASE/swanubuntubase.img,size=8 \
     --ram 1024 \
     --vcpus=1 \
     --check-cpu \
@@ -36,12 +36,12 @@ sudo virt-install --connect=qemu:///system \
 fi
 
 # create many copies of this image using copy-on-write
-sudo qemu-img convert -O qcow2 $BASE/ubuntubase.img $BASE/ubuntubase.qcow2
-sudo chown qemu.qemu $BASE/ubuntubase.qcow2
+sudo qemu-img convert -O qcow2 $BASE/swanubuntubase.img $BASE/swanubuntubase.qcow2
+sudo chown qemu.qemu $BASE/swanubuntubase.qcow2
 
 for hostname in east west north road;
 do
-	sudo qemu-img create -F qcow2 -f qcow2 -b $BASE/ubuntubase.qcow2 $BASE/$hostname.qcow2
+	sudo qemu-img create -F qcow2 -f qcow2 -b $BASE/swanubuntubase.qcow2 $BASE/$hostname.qcow2
 	sudo chown qemu.qemu $BASE/$hostname.qcow2
 	if [ -f /usr/sbin/restorecon ] 
 	then
@@ -49,7 +49,7 @@ do
 	fi
 done
 
-sudo virsh undefine ubuntubase
+sudo virsh undefine swanubuntubase
 
 popd
 
