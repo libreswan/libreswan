@@ -62,10 +62,9 @@ yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel
 mkdir /testing /source
 
 # noauto for now, as we seem to need more system parts started before we can mount 9p
-echo "testing /testing 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
-echo "swansource /source 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
-# mounting tmp as /tmp causes weird IO issues 
-#echo "tmp /tmp 9p defaults,noauto,trans=virtio 0 0" >> /etc/fstab
+echo "testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
+echo "swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
+echo "tmp /tmp 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
 
 cat << EOD > /etc/rc.d/rc.local 
 #!/bin/sh
