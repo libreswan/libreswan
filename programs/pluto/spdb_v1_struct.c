@@ -1311,7 +1311,6 @@ parse_isakmp_sa_body(
 #ifdef IKE_ALG
 	/* 
 	 * ML: at last check for allowed transforms in alg_info_ike 
-	 *     (ALG_INFO_F_STRICT flag)
 	 */
 	if (ugh == NULL)
 	{
@@ -2429,7 +2428,6 @@ parse_ipsec_sa_body(
 #ifdef KERNEL_ALG
 	    /* 
 	     * ML: at last check for allowed transforms in alg_info_esp 
-	     *     (ALG_INFO_F_STRICT flag)
 	     *
 	     */
 	    if (c->alg_info_esp!=NULL
