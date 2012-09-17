@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # run from rc.local by the testing VMs
-import sys, os, commands, glob
+import sys, os, commands, glob, shutil
 
 # use the known MAC address to figure out who we are
 # we use the eth0 table from baseconfigs/net*sh
@@ -18,34 +18,85 @@ macs['sunrise'] = "12:00:00:dc:bc:01"
 macs['sunset'] = "12:00:00:ab:cd:01"
 macs['japan'] = "12:00:00:ab:cd:02"
 
-eth0 = commands.getoutput("ip link show eth0")
+if os.path.isfile("/etc/redhat-release"):
+	GUESTOS="redhat"
+elif os.path.isfile("/etc/debian_version"):
+	GUESTOS="debian"
+
+output = ""
+
+eth0 = "\n" + commands.getoutput("ip link show eth0")
 for hostname in macs.keys():
 	mac =  macs[hostname]
 	if mac in eth0:
 		# print "we are %s"%hostname
 		# we seem to have found our identity
-		commands.getoutput("hostname %s"%hostname)
-		commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/sysconfig/network /etc/sysconfig/network"%hostname)
-		# fixup /etc/sysctl.conf
-		commands.getoutput("mount --bind /testing/baseconfigs/all/etc/sysctl.conf /etc/sysctl.conf")
-		commands.getoutput("sysctl -p")
-		# pickup entries from "all" host
-		fnames = glob.glob("/testing/baseconfigs/all/etc/sysconfig/*")
-		for fname in fnames:
-			if os.path.isfile(fname):
-				commands.getoutput("mount --bind %s /etc/sysconfig/%s"%(fname, os.path.basename(fname)))
 
-		ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*"%hostname)
-		routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*"%hostname)
-		for entry in (ifaces + routes):
-			fname = os.path.basename(entry)
-			if not os.path.isfile("/etc/sysconfig/network-scripts/%s"%fname):
-				fp = open("/etc/sysconfig/network-scripts/%s"%fname,"w")
-				fp.close()
-			commands.getoutput("mount --bind %s /etc/sysconfig/network-scripts/%s"%(entry,fname))
-			commands.getoutput("systemctl restart network.service")
-		# and some entries for all hosts
-		commands.getoutput("mount --bind %s /etc/sysconfig/network-scripts/%s"%(entry,fname))
+		# install files common to all GUESTOS types
+		output += "\n" + commands.getoutput("hostname %s"%hostname)
+		# fixup /etc/sysctl.conf 
+		sysctl = "/testing/baseconfigs/%s/etc/sysctl.conf"%hostname
+		if not os.path.isfile(sysctl):
+			sysctl = "/testing/baseconfigs/all/etc/sysctl.conf"
+		output += "\n" + commands.getoutput("mount --bind %s /etc/sysctl.conf"%sysctl)
+		output += "\n" + commands.getoutput("sysctl -q -p")
+
+		# and resolv.conf
+		resolv = "/testing/baseconfigs/%s/etc/resolv.conf"
+		if not os.path.isfile(resolv):
+			resolv = "/testing/baseconfigs/%s/etc/resolv.conf"%hostname
+		output += "\n" + commands.getoutput("mount --bind %s /etc/resolv.conf"%resolv)
+
+		if GUESTOS == "redhat":
+			output += "\n" + commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/sysconfig/network /etc/sysconfig/network"%hostname)
+			# pickup entries from "all" host, for now only iptables services. cannot mount, must copy
+			fnames = glob.glob("/testing/baseconfigs/all/etc/sysconfig/*")
+			for fname in fnames:
+				if os.path.isfile(fname):
+					shutil.copy(fname,"/etc/sysconfig")
+	
+			ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*"%hostname)
+			routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*"%hostname)
+			for entry in (ifaces + routes):
+				fname = os.path.basename(entry)
+				if not os.path.isfile("/etc/sysconfig/network-scripts/%s"%fname):
+					fp = open("/etc/sysconfig/network-scripts/%s"%fname,"w")
+					fp.close()
+				output += "\n" + commands.getoutput("mount --bind %s /etc/sysconfig/network-scripts/%s"%(entry,fname))
+			if os.path.isfile("/usr/bin/systemctl"):
+				for service in ( "network", "iptables", "ip6tables"):
+					output += "\n" + commands.getoutput("systemctl restart %s.service"%service)
+			else:
+				for service in ( "network", "iptables", "ip6tables"):
+					output += "\n" + commands.getoutput("service %s restart"%service)
+			# get rid of damn cp/mv/rm aliases for root
+			if not "#alias" in open("/root/.bashrc","r").read():
+				output += "\n" + commands.getoutput("sed -i 's/alias/# alias/g' /root/.bashrc")
+
+		elif GUESTOS == "debian":
+			output += "\n" + commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/hostname /etc/hostname"%hostname)
+			output += "\n" + commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/network/interfaces /etc/network/interfaces"%hostname)
+			output += "\n" + commands.getoutput("/etc/init.d/networking restart")
+
+		# and some custom ipsec* files, but not directories
+		if os.path.isdir("/etc/ipsec.d"):
+			if not os.path.isdir("/etc/ipsec.d.stock"):
+				os.rename("/etc/ipsec.d", "/etc/ipsec.d.stock")
+			else:
+				shutil.rmtree("/etc/ipsec.d")
+		shutil.copytree("/testing/baseconfigs/all/etc/ipsec.d","/etc/ipsec.d",ignore=shutil.ignore_patterns("ipsec.conf.common"))
+		# copytree is not ideal to add to existing dir
+		output += "\n" + commands.getoutput("cp -a /testing/baseconfigs/%s/etc/ipsec.* /etc/"%hostname)
+
+		# fixup the nss files that are root-only on a real host, but are world-read
+		# in our repository so the qemu user can still read it to copy it
+		if os.path.isfile("/etc/ipsec.d/pkcs11.txt"):
+			os.chmod("/etc/ipsec.d/pkcs11.txt",0600)
+		for dbfile in glob.glob("/etc/ipsec.d/*.db"):
+			os.chmod(dbfile,0600)
+
+		if len(sys.argv) > 1:
+			print output.strip()
 		sys.exit()
 
 sys.exit("Failed to find our swan hostname based on the mac of eth0")
