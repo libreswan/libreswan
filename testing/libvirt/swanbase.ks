@@ -81,6 +81,11 @@ case ":${PATH:-}:" in
     *:/testing/scripts/guestbin:*) ;;
     *) PATH="/testing/scripts/guestbin${PATH:+:$PATH}" ;;
 esac
+# too often various login/sudo/ssh methods don't have /usr/local/sbin
+case ":${PATH:-}:" in
+    *:/usr/local/sbin:*) ;;
+    *) PATH="/usr/local/sbin${PATH:+:$PATH}" ;;
+esac
 EOD
 
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
