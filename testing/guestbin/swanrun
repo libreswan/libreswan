@@ -1,9 +1,18 @@
 #!/bin/sh
 
+TESTNAME=`cat /tmp/swan.current`
+
+if [ ! -f /testing/pluto/$TESTNAME/testparams.sh ]
+then
+	echo "Unknown or broken test case /testing/pluto/$TESTNAME"
+	exit 1
+else
+	source /testing/pluto/$TESTNAME/testparams.sh
+fi
 if [ -f /testing/pluto/$TESTNAME/`hostname`run.sh ]
 then
 	. /testing/pluto/$TESTNAME/`hostname`run.sh
-	echo "`hostname` ran $TESTNAME, logs in /tmp/pluto.log"
+	echo "`hostname` completed $TESTNAME"
 else
 	echo "broken test - missing /testing/pluto/$TESTNAME/`hostname`run.sh"
 	exit 1

@@ -1,8 +1,33 @@
 #!/bin/sh
 
+if [ -z "$1" ]
+then
+  echo "No testname specified, use list to --list all test names"
+  exit 1
+fi
+
+if [ "$1" == "list" -o "$1" == "--list" ]
+then
+  pushd /testing/pluto > /dev/null
+  ls -d *
+  popd > /dev/null
+  exit 
+fi
+
+rm -f /tmp/swan.current
+
+if [ ! -f /testing/pluto/$1/testparams.sh ]
+then
+	echo "Unknown or broken test case /testing/pluto/$1"
+	exit 1
+else
+	echo $TESTNAME > /tmp/swan.current
+	source /testing/pluto/$1/testparams.sh
+	echo "DEBUG: $TESTNAME"
+fi
 if [ -f /testing/pluto/$TESTNAME/`hostname`init.sh ]
 then
-	. /testing/pluto/$TESTNAME/`hostname`init.sh
+	eval /testing/pluto/$TESTNAME/`hostname`init.sh
 	echo "`hostname` initialised $TESTNAME"
 else
 	echo "broken test - missing /testing/pluto/$TESTNAME/`hostname`init.sh"

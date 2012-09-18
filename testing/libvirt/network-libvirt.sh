@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TESTING=`readlink -f $0  | sed "s/fedora-setup.*$/fedora-setup/"`
+TESTING=`readlink -f $0  | sed "s/libvirt.*$/libvirt/"`
 pushd $TESTING
 
 for netname in net/swan*
