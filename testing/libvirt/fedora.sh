@@ -6,8 +6,7 @@ pushd $TESTING
 echo "creating disks"
 
 # Note: Replace this with your local Fedora tree if you have one.
-export tree=http://mirror.fedoraproject.org/linux/releases/17/Fedora/x86_64/os/
-#export tree=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
+export tree=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
 #export tree=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os
 #export tree=http://192.168.157.69/linux/releases/17/Fedora/x86_64/os
 export BASE=/var/lib/libvirt/images/
@@ -16,10 +15,12 @@ if [ ! -f $BASE/swanfedorabase.img ]
 then
 	echo "Creating swanfedorabase image using libvirt"
 # install base guest to obtain a file image that will be used as uml root
+# For static networking add kernel args parameters ip=.... etc
+# (network settings in kickstart are ignored by modern dracut)
 sudo virt-install --connect=qemu:///system \
     --network=network:default,model=virtio \
-    --initrd-inject=./swanfedorabase.ks \
-    --extra-args="swanname=swanfedorabase ks=file:/swanfedorabase.ks \
+    --initrd-inject=./fedorabase.ks \
+    --extra-args="swanname=swanfedorabase ks=file:/fedorabase.ks \
       console=tty0 console=ttyS0,115200" \
     --name=swanfedorabase \
     --disk $BASE/swanfedorabase.img,size=8 \

@@ -18,8 +18,8 @@ then
 # install base guest to obtain a file image that will be used as uml root
 sudo virt-install --connect=qemu:///system \
     --network=network:default,model=virtio \
-    --initrd-inject=./swanubuntubase.ks \
-    --extra-args="swanname=swanubuntubase ks=file:/swanubuntubase.ks \
+    --initrd-inject=./ubuntubase.ks \
+    --extra-args="swanname=swanubuntubase ks=file:/ubuntubase.ks \
       console=tty0 console=ttyS0,115200" \
     --name=swanubuntubase \
     --disk $BASE/swanubuntubase.img,size=8 \

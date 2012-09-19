@@ -4,8 +4,9 @@ text
 reboot
 lang en_US.UTF-8
 keyboard us
-#network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
 network --bootproto=dhcp --hostname swanbase 
+# static network does not work with recent dracut, use kernel args instead
+#network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
 rootpw swan
 firewall --disable
 selinux --enforcing
@@ -49,6 +50,13 @@ redhat-rpm-config
 #libcap-ng-devel
 %end
 
+#%pre
+#!/bin/bash
+# Paul needs this due to bad ISP
+#ip link set eth0 mtu 1400
+#%end
+
+
 %post 
 echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 /sbin/restorecon /etc/resolv.conf
@@ -57,16 +65,22 @@ ifconfig eth0 mtu 1400
 
 # TODO: if rhel/centos, we should install epel-release too
 yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs
-yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel 
+yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git
 
 mkdir /testing /source
 
 # noauto for now, as we seem to need more system parts started before we can mount 9p
-echo "testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
-echo "swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
-echo "tmp /tmp 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
+cat << EOD >> /etc/fstab
+testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0
+swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0
+tmpfs                   /dev/shm                tmpfs   defaults        0 0
+tmpfs                   /tmp                    tmpfs   defaults        0 0
+devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
+sysfs                   /sys                    sysfs   defaults        0 0
+proc                    /proc                   proc    defaults        0 0
+EOD
 
-cat << EOD > /etc/rc.d/rc.local 
+cat << EOD >> /etc/rc.d/rc.local 
 #!/bin/sh
 mount /testing
 mount /source
