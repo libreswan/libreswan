@@ -21,18 +21,14 @@ You can load this machine definition into libvirt using:
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
   <devices>
-    <emulator>/usr/bin/qemu-kvm</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
       <source file='/var/lib/libvirt/images/west.qcow2'/>
       <target dev='vda' bus='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
     </disk>
     <controller type='usb' index='0'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
     </controller>
     <controller type='virtio-serial' index='0'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
     </controller>
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@TESTING@@'/>
@@ -50,25 +46,21 @@ You can load this machine definition into libvirt using:
       <mac address='12:00:00:ab:cd:ff'/>
       <source network='192_0_1'/>
       <model type='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>
     <interface type='network'>
       <mac address='12:00:00:64:64:45'/>
       <source network='192_1_2'/>
       <model type='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
     </interface>
     <interface type='network'>
       <mac address='12:00:00:32:64:45'/>
       <source network='192_9_4'/>
       <model type='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x0b' function='0x0'/>
     </interface>
     <interface type='network'>
       <mac address='52:54:00:6f:1f:98'/>
       <source network='default'/>
       <model type='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x0c' function='0x0'/>
     </interface>
     <serial type='pty'>
       <target port='0'/>
@@ -83,15 +75,10 @@ You can load this machine definition into libvirt using:
     <input type='tablet' bus='usb'/>
     <input type='mouse' bus='ps2'/>
     <graphics type='spice' autoport='yes'/>
-    <sound model='ich6'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
-    </sound>
     <video>
       <model type='qxl' vram='65536' heads='1'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
     </video>
     <memballoon model='virtio'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
     </memballoon>
   </devices>
 </domain>
