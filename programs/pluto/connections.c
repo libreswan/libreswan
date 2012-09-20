@@ -580,7 +580,12 @@ format_end(char *buf
 	if (isanyaddr(&client_net) && isanyaddr(&client_mask)
 	&& (policy & (POLICY_GROUP | POLICY_OPPO)))
 	    client_sep = "";	/* boring case */
-	else if (is_virtual_end(this) || subnetisnone(&this->client))
+	else if (is_virtual_end(this))
+	    if (is_virtual_vhost(this))
+		strcpy(client, "vhost:?");
+	    else
+		strcpy(client, "vnet:?");
+	else if (subnetisnone(&this->client))
 	    strcpy(client, "?");
 	else
 	    subnettot(&this->client, 0, client, sizeof(client));
