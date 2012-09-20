@@ -245,6 +245,13 @@ conn westnet-eastnet-x509
 	rightsourceip=192.0.2.254
 	also=west-east-x509
 
+# aliases for old test cases - ideally testcases stop using these two names
+conn eastnet
+	also=eastnet-ipv4
+
+conn westnet
+	also=westnet-ipv4
+
 conn eastnet-ipv4
 	rightsubnet=192.0.2.0/24
 
