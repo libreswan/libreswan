@@ -49,6 +49,7 @@ v1.0.0 (unreleased)
 * barf: do not grep lastlog, wtmp, tmp (rhbz#771612) [Paul]
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
 * verify: ported ipsec verify from perl to python [Paul]
+* auto: fix --status output for vnet/vhost case
 * Bugtracker bugs fixed:
    #1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
          tree [Steve Lanser]
