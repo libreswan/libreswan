@@ -1,5 +1,5 @@
 ipsec auto --up  westnet--eastnet-ikev2
 
-ping -n -c 2 -I 192.1.2.45 192.1.2.23
+ping -n -c 2 -I 192.0.1.254 192.0.2.254
 ipsec look
-echo westrundone
+echo done

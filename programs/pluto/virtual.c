@@ -323,6 +323,17 @@ is_virtual_sr(const struct spd_route *sr)
     return ((sr->that.virt)?TRUE:FALSE);
 }
 
+/** is_virtual_vhost - is the virt set to a host or a net?
+ *
+ * @param that end structure
+ * @return bool True if we do 
+ */
+bool
+is_virtual_vhost(const struct end *that)
+{
+    return ((that->virt && that->virt->flags & F_VIRTUAL_HOST)?TRUE:FALSE);
+}
+
 /** net_in_list - Check if a subnet is in a list
  *
  * @param peer_net IP Subnet to check

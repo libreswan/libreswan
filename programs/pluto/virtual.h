@@ -25,6 +25,7 @@ extern struct virtual_t *create_virtual(const struct connection *c,
 extern bool is_virtual_end(const struct end *that);
 extern bool is_virtual_connection(const struct connection *c);
 extern bool is_virtual_sr(const struct spd_route *sr);
+extern bool is_virtual_vhost(const struct end *that);
 extern err_t is_virtual_net_allowed(const struct connection *c,
     const ip_subnet *peer_net, const ip_address *his_addr);
 
