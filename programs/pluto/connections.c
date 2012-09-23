@@ -213,7 +213,7 @@ update_host_pairs(struct connection *c)
 /* Delete a connection */
 
 static void
-delete_end(struct connection *c UNUSED, struct spd_route *sr UNUSED, struct end *e)
+delete_end(struct end *e)
 {
     free_id_content(&e->id);
     pfreeany(e->updown);
@@ -226,10 +226,9 @@ delete_end(struct connection *c UNUSED, struct spd_route *sr UNUSED, struct end 
 static void
 delete_sr(struct connection *c, struct spd_route *sr)
 {
-    delete_end(c, sr, &sr->this);
-    delete_end(c, sr, &sr->that);
+    delete_end(&sr->this);
+    delete_end(&sr->that);
 }
-
 
 /*
  * delete_connection -- removes a connection by pointer
