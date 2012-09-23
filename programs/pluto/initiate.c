@@ -914,6 +914,7 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 			   , ugh);
 		    logged_myid_fqdn_txt_warning = TRUE;
 		}
+	        next_step = fos_done;
 	    }
 	    else
 	    {
@@ -1120,6 +1121,7 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 	    break;
 
 	default:
+	    next_step = fos_done; /* Not used, but pleases compiler */
 	    bad_case(b->step);
 	}
 
