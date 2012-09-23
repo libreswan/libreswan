@@ -3228,7 +3228,6 @@ connection_compare_qsort(const void *a, const void *b)
 static void
 show_one_sr(struct connection *c
 	    , struct spd_route *sr
-	    , int num UNUSED
 	    , char *instance)
 {
     char topo[CONN_BUF_LEN];
@@ -3341,13 +3340,11 @@ show_one_connection(struct connection *c)
     /* show topology */
     {
 	struct spd_route *sr = &c->spd;
-	int num=0;
 	
 	while (sr != NULL)
 	{
-	    show_one_sr(c, sr, num, instance);
+	    show_one_sr(c, sr, instance);
 	    sr = sr->next;
-	    num++;
 	}
     }
     
