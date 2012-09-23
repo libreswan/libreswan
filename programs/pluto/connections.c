@@ -2477,7 +2477,7 @@ refine_host_connection(const struct state *st, const struct id *peer_id
     u_int16_t auth = st->st_oakley.auth;
     struct connection *d;
     struct connection *best_found = NULL;
-    lset_t auth_policy;
+    lset_t auth_policy = NULL;
     lset_t p1mode_policy = aggrmode ? POLICY_AGGRESSIVE : LEMPTY;
     const struct RSA_private_key *my_RSA_pri = NULL;
     bool wcpip;	/* wildcard Peer IP? */
