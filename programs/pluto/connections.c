@@ -224,7 +224,7 @@ delete_end(struct end *e)
 }
 
 static void
-delete_sr(struct connection *c, struct spd_route *sr)
+delete_sr(struct spd_route *sr)
 {
     delete_end(&sr->this);
     delete_end(&sr->that);
@@ -331,7 +331,7 @@ delete_connection(struct connection *c, bool relations)
 
     sr = &c->spd;
     while(sr) {
-	delete_sr(c, sr);
+	delete_sr(sr);
 	sr = sr->next;
     }
 
