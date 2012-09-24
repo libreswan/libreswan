@@ -359,20 +359,20 @@ USE_XAUTH?=true
 
 # When doing XAUTH, include PAM support as well, requires HAVE_THREADS be
 # true as well
-USE_XAUTHPAM?=false
+USE_XAUTHPAM?=true
 
 ifeq ($(USE_XAUTHPAM),true)
 HAVE_THREADS=true
 endif
 
 # Support for integrity check for openswan on startup 
-USE_FIPSCHECK?=false
+USE_FIPSCHECK?=true
 
 #Enable Labeled IPSec Functionality (requires SElinux)
-USE_LABELED_IPSEC?=false
+USE_LABELED_IPSEC?=true
 
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
-USE_LIBCAP_NG?=false
+USE_LIBCAP_NG?=true
 
 # Support for Network Manager
 USE_NM?=true
@@ -387,10 +387,10 @@ USE_NAT_TRAVERSAL?=true
 USE_NAT_TRAVERSAL_TRANSPORT_MODE?=true
 
 # Include LDAP support (currently used for fetching CRLs)
-USE_LDAP?=false
+USE_LDAP?=true
 
 # Include libcurl support (currently used for fetching CRLs)
-USE_LIBCURL?=false
+USE_LIBCURL?=true
 
 # should we include all manner of known to be broken/weak?
 # use this only if you are building some kind of a testing
@@ -415,7 +415,7 @@ IPSEC_CONNECTION_LIMIT?=250
 # or if you need it for CRL fetching.
 # Note: nss by default uses pthreads, enabling it here will only 
 # affect it for XAUTH+PAM, and CRL. 
-HAVE_THREADS?=false
+HAVE_THREADS?=true
 
 # Do we have an external stats daemon we can push state changes to?
 # Currently hardcoded to /bin/libreswan-statsd
