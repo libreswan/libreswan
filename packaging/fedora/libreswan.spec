@@ -104,9 +104,9 @@ kernels.
 #796683: -fno-strict-aliasing
 %{__make} \
 %if %{development}
-   USERCOMPILE="-g $(GCC_LINT) `pkg-config --cflags nss` %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
+   USERCOMPILE="-g -DGCC_LINT `pkg-config --cflags nss` %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %else
-  USERCOMPILE="-g $(GCC_LINT) `pkg-config --cflags nss` %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
+  USERCOMPILE="-g -DGCC_LINT `pkg-config --cflags nss` %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %endif
   USERLINK="-g -pie %{?efence}" \
   HAVE_THREADS="true" \
