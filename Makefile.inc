@@ -46,6 +46,17 @@ export SHELL
 
 .PHONY:	programs checkprograms clean
 
+# supply kernel-configuration ARCH defaults
+ifeq ($(ARCH),)
+ARCH := $(shell uname -m)
+endif
+# always sanitize $(ARCH)
+ARCH := $(shell echo $(ARCH) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
+
+ifeq ($(OSDEP),)
+OSDEP:=$(shell uname -s | tr 'A-Z' 'a-z')
+endif
+
 ### install pathnames
 
 # DESTDIR can be used to supply a prefix to all install targets.
@@ -359,7 +370,18 @@ USE_XAUTH?=true
 
 # When doing XAUTH, include PAM support as well, requires HAVE_THREADS be
 # true as well
-USE_XAUTHPAM?=true
+ifeq ($(OSDEP),linux)
+USE_XAUTHPAM=true
+endif
+ifeq ($(OSDEP),bsd)
+USE_XAUTHPAM=true
+endif
+ifeq ($(OSDEP),darwin)
+USE_XAUTHPAM=true
+endif
+ifeq ($(OSDEP),sunos)
+USE_XAUTHPAM=true
+endif
 
 ifeq ($(USE_XAUTHPAM),true)
 HAVE_THREADS=true
@@ -461,17 +483,6 @@ NONINTCONFIG=oldconfig
 # by default we will start using object directories.
 ifeq ($(USE_OBJDIR),)
 USE_OBJDIR?=true
-endif
-
-# supply kernel-configuration ARCH defaults
-ifeq ($(ARCH),)
-ARCH := $(shell uname -m)
-endif
-# always sanitize $(ARCH)
-ARCH := $(shell echo $(ARCH) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
-
-ifeq ($(OSDEP),)
-OSDEP:=$(shell uname -s | tr 'A-Z' 'a-z')
 endif
 
 -include ${LIBRESWANSRCDIR}/Makefile.ver
