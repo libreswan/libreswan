@@ -1,6 +1,7 @@
 #! /bin/sh
 # quick look at current connections and related information
 # Copyright (C) 1998, 1999  Henry Spencer.
+# Copyright (C) 2012  Paul Wouters
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,26 +16,12 @@
 
 LC_ALL=C export LC_ALL
 
-info=/var/run/pluto/ipsec.info
 me="ipsec look"
 
 case "$1" in
 --help)		echo "Usage: ipsec look" ; exit 0	;;
 --version)	echo "$me $IPSEC_VERSION" ; exit 0	;;
 esac
-
-# Pick up IPsec configuration etc.
-eval `ipsec addconn --varprefix IPSEC --configsetup`
-if test " $IPSEC_confreadstatus" != " "
-then
-	echo "$IPSEC_confreadstatus -- aborting" |
-		logger -s -p daemon.error -t ipsec_look
-	exit 1
-fi
-if test -s $info
-then
-	. $info
-fi
 
 # label it just to be sure
 echo "`hostname` `date`"
@@ -83,18 +70,7 @@ if test -f /proc/net/pfkey ; then
 	ip xfrm policy
 	echo "XFRM done"
 fi
-# relevant routing information, including header line (which is good
-# enough as a separator, no need for another bar)
-pat="^Dest"
-if test " $defaultroutephys" != " "
-then
-	pat="$pat|$defaultroutephys|$defaultroutevirt"
-else
-	for i in `echo "$IPSECinterfaces" | sed 's/=/ /'`
-	do
-		pat="$pat|$i"
-	done
-fi
+
 echo IPSEC mangle TABLES
 iptables -n -t mangle -L IPSEC
 ip6tables -n -t mangle -L IPSEC
@@ -102,6 +78,6 @@ echo NEW_IPSEC_CONN mangle TABLES
 iptables -n -t mangle -L NEW_IPSEC_CONN
 ip6tables -n -t mangle -L NEW_IPSEC_CONN
 echo ROUTING TABLES
-ip route | egrep "$pat"
-ip -6 route | egrep "$pat"
+ip route 
+ip -6 route 
 
