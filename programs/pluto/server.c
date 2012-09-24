@@ -690,7 +690,7 @@ call_server(void)
 	    /* retry if terminated by signal */
 	}
 
-	DBG(DBG_CONTROL, DBG_log(BLANK_FORMAT));
+	DBG(DBG_CONTROL, DBG_log(""));
 
 	/*
 	 * we log the time when we are about to do something so that
