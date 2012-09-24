@@ -414,7 +414,6 @@ extern struct state
     *duplicate_state(struct state *st),
     *find_state_ikev1(const u_char *icookie
 	, const u_char *rcookie
-	, const ip_address *peer
 	, msgid_t msgid),
     *state_with_serialno(so_serial_t sn),
     *find_phase2_state_to_delete(const struct state *p1st, u_int8_t protoid
@@ -425,7 +424,6 @@ extern struct state
 #ifdef HAVE_LABELED_IPSEC
 extern struct state *find_state_ikev1_loopback(const u_char *icookie
                  , const u_char *rcookie
-                 , const ip_address *peer UNUSED
                  , msgid_t msgid
                  , struct msg_digest *md);
 #endif

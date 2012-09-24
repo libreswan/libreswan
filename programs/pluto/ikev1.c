@@ -886,15 +886,13 @@ process_v1_packet(struct msg_digest **mdp)
 	{
 	    /* not an initial message */
 
-	    st = find_state_ikev1(md->hdr.isa_icookie, md->hdr.isa_rcookie
-		, &md->sender, md->hdr.isa_msgid);
+	    st = find_state_ikev1(md->hdr.isa_icookie, md->hdr.isa_rcookie, md->hdr.isa_msgid);
 
 #ifdef HAVE_LABELED_IPSEC
 	    if(st != NULL && st->st_connection->loopback) {
 		DBG(DBG_CONTROL, DBG_log("loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
 		
-		st = find_state_ikev1_loopback(md->hdr.isa_icookie, md->hdr.isa_rcookie
-						, &md->sender, md->hdr.isa_msgid, md);
+		st = find_state_ikev1_loopback(md->hdr.isa_icookie, md->hdr.isa_rcookie, md->hdr.isa_msgid, md);
 		if (st != NULL) {
 		DBG(DBG_CONTROL, DBG_log("loopback scenario: found a correct state for the received message"));
 		}
@@ -909,8 +907,7 @@ process_v1_packet(struct msg_digest **mdp)
 		/* perhaps this is a first message from the responder
 		 * and contains a responder cookie that we've not yet seen.
 		 */
-		st = find_state_ikev1(md->hdr.isa_icookie, zero_cookie
-		    , &md->sender, md->hdr.isa_msgid);
+		st = find_state_ikev1(md->hdr.isa_icookie, zero_cookie, md->hdr.isa_msgid);
 
 		if (st == NULL)
 		{
@@ -934,8 +931,7 @@ process_v1_packet(struct msg_digest **mdp)
 	     * might be an informational response to our first
 	     * message, in which case, we don't know the rcookie yet.
 	     */
-	    st = find_state_ikev1(md->hdr.isa_icookie, zero_cookie
-			    , &md->sender, MAINMODE_MSGID);
+	    st = find_state_ikev1(md->hdr.isa_icookie, zero_cookie, MAINMODE_MSGID);
 	}
 
 	if (st != NULL)
@@ -1026,15 +1022,13 @@ process_v1_packet(struct msg_digest **mdp)
 	    return;
 	}
 
-	st = find_state_ikev1(md->hdr.isa_icookie, md->hdr.isa_rcookie
-	    , &md->sender, md->hdr.isa_msgid);
+	st = find_state_ikev1(md->hdr.isa_icookie, md->hdr.isa_rcookie, md->hdr.isa_msgid);
 
 #ifdef HAVE_LABELED_IPSEC
 	if(st != NULL && st->st_connection->loopback) {
 	   DBG(DBG_CONTROL,  DBG_log("loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
 
-	   st = find_state_ikev1_loopback(md->hdr.isa_icookie, md->hdr.isa_rcookie
-                , &md->sender, md->hdr.isa_msgid, md);
+	   st = find_state_ikev1_loopback(md->hdr.isa_icookie, md->hdr.isa_rcookie, md->hdr.isa_msgid, md);
 
 		if (st != NULL) {
 		DBG(DBG_CONTROL, DBG_log("loopback scenario: found a correct state for the received message"));
@@ -1050,8 +1044,7 @@ process_v1_packet(struct msg_digest **mdp)
 	     * See if we have a Main Mode state.
 	     * ??? what if this is a duplicate of another message?
 	     */
-	    st = find_state_ikev1(md->hdr.isa_icookie, md->hdr.isa_rcookie
-		, &md->sender, MAINMODE_MSGID);
+	    st = find_state_ikev1(md->hdr.isa_icookie, md->hdr.isa_rcookie, MAINMODE_MSGID);
 
 	    if (st == NULL)
 	    {

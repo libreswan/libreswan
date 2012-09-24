@@ -2859,7 +2859,6 @@ accept_delete(struct state *st, struct msg_digest *md, struct payload_digest *p)
 	     */
 	    struct state *dst = find_state_ikev1(spi /*iCookie*/
 		, spi+COOKIE_SIZE /*rCookie*/
-		, &st->st_connection->spd.that.host_addr
 		, MAINMODE_MSGID);
 
 	    if (dst == NULL)

@@ -932,7 +932,6 @@ void for_each_state(void *(f)(struct state *, void *data), void *data)
 struct state *
 find_state_ikev1(const u_char *icookie
 		 , const u_char *rcookie
-		 , const ip_address *peer UNUSED
 		 , msgid_t /*network order*/ msgid)
 {
     struct state *st = *state_hash(icookie, rcookie);
@@ -969,7 +968,6 @@ find_state_ikev1(const u_char *icookie
 struct state *
 find_state_ikev1_loopback(const u_char *icookie
                  , const u_char *rcookie
-                 , const ip_address *peer UNUSED
                  , msgid_t /*network order*/ msgid
 		 , struct msg_digest *md)
 {
