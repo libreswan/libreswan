@@ -359,7 +359,15 @@ USE_XAUTH?=true
 
 # When doing XAUTH, include PAM support as well, requires HAVE_THREADS be
 # true as well
-USE_XAUTHPAM?=true
+ifeq($(OS),Linux)
+USE_XAUTHPAM=true
+endif
+ifeq($(OS),FreeBSD)
+USE_XAUTHPAM=true
+endif
+ifeq($OS),Solaris)
+USE_XAUTHPAM=true
+endif
 
 ifeq ($(USE_XAUTHPAM),true)
 HAVE_THREADS=true
