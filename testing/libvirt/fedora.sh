@@ -14,6 +14,11 @@ export BASE=/var/lib/libvirt/images/
 if [ ! -f $BASE/swanfedorabase.img ]
 then
 	echo "Creating swanfedorabase image using libvirt"
+
+# check for hardware VM instructions
+cpu="--hvm"
+grep vmx /proc/cpuinfo > /dev/null || cpu=""
+
 # install base guest to obtain a file image that will be used as uml root
 # For static networking add kernel args parameters ip=.... etc
 # (network settings in kickstart are ignored by modern dracut)
@@ -28,11 +33,11 @@ sudo virt-install --connect=qemu:///system \
     --vcpus=1 \
     --check-cpu \
     --accelerate \
-    --hvm \
-    --location=$tree  \
+    --location=$tree \
     --nographics \
-    --autostart  \
-    --noreboot
+    --autostart \
+    --noreboot \
+    $cpu
 fi
 
 # create many copies of this image using copy-on-write
