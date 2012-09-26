@@ -44,12 +44,19 @@ apt-get install -y libnss3-tools libnss3-dev libunbound-dev libgmp-devel libldap
 
 mkdir /testing /source
 
-# noauto for now, as we seem to need more system parts started before we can mount 9p
-echo "testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
-echo "swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
-echo "tmp /tmp 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0" >> /etc/fstab
+cat << EOD >> /etc/issue
 
-cat << EOD > /etc//rc.local 
+The root password is "swan1234"
+EOD
+
+# noauto for now, as we seem to need more system parts started before we can mount 9p
+cat << EOD >> /etc/fstab
+testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0
+swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0
+EOD
+
+
+cat << EOD > /etc/rc.local 
 #!/bin/sh
 mount /testing
 mount /source
