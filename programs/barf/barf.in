@@ -178,6 +178,10 @@ _________________________ ip-xfrm-state
 	ip xfrm state
 _________________________ ip-xfrm-policy
 	ip xfrm policy
+_________________________ ip-l2tp-tunnel
+	ip l2tp tunnel
+_________________________ ip-l2tp-session
+	ip l2tp session
 fi
 _________________________ /proc/crypto
 if test -r /proc/crypto

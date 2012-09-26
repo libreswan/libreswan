@@ -13,7 +13,9 @@
  *
  */
 
-#ifdef HAVE_LABELED_IPSEC
+#ifndef HAVE_LABELED_IPSEC
+# error this file should not be used without HAVE_LABELED_IPSEC
+#endif
 
 #include "security_selinux.h"
 #include "oswlog.h"
@@ -85,4 +87,3 @@ within_range(security_context_t sl, security_context_t range)
         DBG_log("within_range: The sl (%s) is within range of (%s)", sl, range);
 	return 1;
 }
-#endif

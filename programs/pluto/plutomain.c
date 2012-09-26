@@ -108,11 +108,11 @@
 #endif
 
 #ifdef HAVE_LIBCAP_NG
-#include <cap-ng.h>
+# include <cap-ng.h>
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-#include "security_selinux.h"
+# include "security_selinux.h"
 #endif
 
 const char *ctlbase = "/var/run/pluto";

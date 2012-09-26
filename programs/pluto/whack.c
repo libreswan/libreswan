@@ -1567,23 +1567,13 @@ main(int argc, char **argv)
 	    continue;
 
 	case CD_SHA2_TRUNCBUG: /* --sha2_truncbug */
-	    if ( strcmp(optarg, "yes" ) == 0) {
-		msg.sha2_truncbug = SHA2_TRUNCBUG_YES;
-	    }
-	    else {
-		msg.sha2_truncbug = SHA2_TRUNCBUG_NO;
-	    }
-		continue;
+	    msg.sha2_truncbug = SHA2_TRUNCBUG_YES;
+	    continue;
 
 #ifdef HAVE_NM
 	case CD_NMCONFIGURED: /* --nm_configured */
-	    if ( strcmp(optarg, "yes" ) == 0) {
-		msg.nmconfigured = NM_YES;
-	    }
-	    else {
-		msg.nmconfigured = NM_NO;
-	    }
-		continue;
+	    msg.nmconfigured = NM_YES;
+	    continue;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
