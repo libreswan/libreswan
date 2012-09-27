@@ -2599,8 +2599,13 @@ route_and_eroute(struct connection *c USED_BY_KLIPS
     else if (ro == NULL)
     {
         /* a new route: no deletion required, but preparation is */
-        (void) do_command(c, sr, "prepare", st);    /* just in case; ignore failure */
+        if(!do_command(c, sr, "prepare", st)){
+		DBG(DBG_CONTROL, DBG_log("prepare command returned an error"));
+	    }
         route_installed = do_command(c, sr, "route", st);
+	    if(!route_installed) {
+		DBG(DBG_CONTROL, DBG_log("route command returned an error"));
+	    }
     }
     else if (routed(sr->routing)
     || routes_agree(ro, c))
@@ -2620,13 +2625,23 @@ route_and_eroute(struct connection *c USED_BY_KLIPS
          */
         if (sameaddr(&sr->this.host_nexthop, &esr->this.host_nexthop))
         {
-            (void) do_command(ro, sr, "unroute", st);
+            if(!do_command(ro, sr, "unroute", st)) {
+		DBG(DBG_CONTROL, DBG_log("unroute command returned an error"));
+	    }
             route_installed = do_command(c, sr, "route", st);
+	    if(!route_installed) {
+		DBG(DBG_CONTROL, DBG_log("route command returned an error"));
+	    }
         }
         else
         {
             route_installed = do_command(c, sr, "route", st);
-            (void) do_command(ro, sr, "unroute", st);
+	    if(!route_installed) {
+		DBG(DBG_CONTROL, DBG_log("route command returned an error"));
+	    }
+            if(!do_command(ro, sr, "unroute", st)) {
+		DBG(DBG_CONTROL, DBG_log("unroute command returned an error"));
+	    }
         }
 
         /* record unrouting */
@@ -2708,7 +2723,9 @@ route_and_eroute(struct connection *c USED_BY_KLIPS
     {
         /* Failure!  Unwind our work. */
         if (firewall_notified && sr->eroute_owner == SOS_NOBODY)
-            (void) do_command(c, sr, "down", st);
+            if(!do_command(c, sr, "down", st)){
+		DBG(DBG_CONTROL, DBG_log("down command returned an error"));
+	    }
 
         if (eroute_installed)
         {
@@ -2743,6 +2760,7 @@ route_and_eroute(struct connection *c USED_BY_KLIPS
             }
             else if (ero != NULL)
             {
+		passert(esr != NULL);
                 /* restore ero's former glory */
                 if (esr->eroute_owner == SOS_NOBODY)
                 {
