@@ -70,6 +70,11 @@ yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam
 
 mkdir /testing /source
 
+cat << EOD >> /etc/issue
+
+The root password is "swan"
+EOD
+
 # noauto for now, as we seem to need more system parts started before we can mount 9p
 cat << EOD >> /etc/fstab
 testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0
