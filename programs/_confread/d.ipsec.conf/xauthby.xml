@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>xauthby</emphasis></term>
+  <listitem>
+<para>When XAUTH support is available, set the method used by XAUTH to authenticate
+the user. The currently supported values are 'file' (the default) or 'pam'.
+</para>
+<para>
+The pam option is only available if compiled with USE_XAUTHPAM. Threads are used
+to launch an xauth authentication helper for file as well as pam methods.
+</para>
+</listitem>
+  </varlistentry>

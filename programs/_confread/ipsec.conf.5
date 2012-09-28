@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 04/21/2011
+.\"      Date: 09/28/2012
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "04/21/2011" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC\&.CONF" "5" "09/28/2012" "[FIXME: source]" "[FIXME: manual]"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -475,9 +475,11 @@ If libreswan was compiled with USE_MODP_RFC5114 support, then Diffie\-Hellman gr
 .RS 4
 Sets the type of SA that will be produced\&. Valid options are:
 \fBesp\fR
-for encryption (the default), and
+for encryption (the default),
 \fBah\fR
-for authentication only\&.
+for authentication only, and
+\fBah+esp\fR
+for nested AH+ESP\&. Note that ESP already includes AH \- the ah+esp option is for double ah headers, and should only be used when connecting to some racoon configurations that do this\&.
 .RE
 .PP
 \fBphase2alg\fR
@@ -493,6 +495,15 @@ For RFC\-5114 DH groups, use the "dh" keyword, eg "aes256\-sha1;dh23"
 The format for AH is AUTH followed by an optional PFSgroup\&. For instance, "md5" or "sha1;modp1536"\&.
 .sp
 A special case is AES CCM, which uses the syntax of "phase2alg=aes_ccm_a\-152\-null"
+.sp
+A special case is phase2=sha2_256\-96 which does not mean 96 bits, but means truncating the sha2_256 hash to 96 bit\&. This is the same as specifying sha2_truncbug=yes (only supported on NETKEY)\&.
+.RE
+.PP
+\fBsha2_truncbug\fR
+.RS 4
+The default hash truncation for sha2_256 is 128 bits\&. Linux implemented the draft version which stated 96 bits\&. This option enables using the bad 96 bits version to interop with older linux kernels (unpatched version 2\&.6\&.33 and older) and libreswan versions before 2\&.6\&.38\&. Currently the accepted values are
+\fBno\fR, (the default) signifying default IETF truncation of 128 bits, or
+\fByes\fR, signifying 96 bits broken Linux kernel style truncation\&.
 .RE
 .PP
 \fBesp\fR
@@ -531,6 +542,15 @@ If the ikev2= setting is set to
 or
 \fBpropose\fR, Libreswan will try and detect a "bid down" attack from IKEv2 to IKEv1\&. Since there is no standard for transmitting the IKEv2 capability with IKEv1, Libreswan uses a special Vendor ID "CAN\-IKEv2"\&. If a fall back from IKEv2 to IKEv1 was detected, and the IKEv1 negotiation contains Vendor ID "CAN\-IKEv2", Libreswan will immediately attempt and IKEv2 rekey and refuse to use the IKEv1 connection\&. With an ikev2= setting of
 \fBinsist\fR, no IKEv1 negotiation is allowed, and no bid down attack is possible\&.
+.RE
+.PP
+\fBnarrowing\fR
+.RS 4
+IKEv2 (RFC5996) Section 2\&.9 Traffic Selector narrowing options\&. Currently the accepted values are
+\fBno\fR, (the default) signifying no narrowing will be proposed or accepted, or
+\fByes\fR, signifying IKEv2 negotiation may allow establishing an IPsec connection with narrowed down traffic selectors\&. This option is ignored for IKEv1\&.
+.sp
+There are security implications in allowing narrowing down the proposal\&. For one, what should be done with packets that we hoped to tunnel, but cannot\&. Should these be dropped or send in the clear? Second, this could cause thousands of narrowed down Child SA\*(Aqs to be created if the conn has a broad policy (eg 0/0 to 0/0)\&. One possible good use case scenario is that a remote end (that you fully trust) allows you to define a 0/0 to them, while adjusting what traffic you route via them, and what traffic remains outside the tunnel\&. However, it is always preferred to setup the exact tunnel policy you want, as this will be much clearer to the user\&.
 .RE
 .PP
 \fBsareftrack\fR
@@ -612,8 +632,7 @@ if present, a second public key\&. Either key can authenticate the signature, al
 .RS 4
 If you are using
 \fBleftrsasigkey=%cert\fR
-this defines the certificate you would like to use\&. It should point to a X\&.509 encoded certificate file\&. If you do not specify a full pathname, by default it will look in /etc/ipsec\&.d/certs\&. If libreswan has been compiled with
-\fBUSE_LIBNSS=true\fR, then libreswan will also check the NSS database for RSA keys\&. These can be software or hardware\&.
+this defines the certificate you would like to use\&. It should point to a X\&.509 encoded certificate file\&. If you do not specify a full pathname, by default it will look in /etc/ipsec\&.d/certs\&. Libreswan will also check the NSS database for RSA keys\&. These can be software or hardware\&.
 .RE
 .PP
 \fBleftca\fR
@@ -694,6 +713,13 @@ Left is a Mode Config client\&. It can receive network configuration from the se
 or
 \fBno\fR
 (the default)\&.
+.RE
+.PP
+\fBxauthby\fR
+.RS 4
+When XAUTH support is available, set the method used by XAUTH to authenticate the user\&. The currently supported values are \*(Aqfile\*(Aq (the default) or \*(Aqpam\*(Aq\&.
+.sp
+The pam option is only available if compiled with USE_XAUTHPAM\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
 .RE
 .PP
 \fBmodecfgpull\fR
@@ -922,6 +948,21 @@ and
 (the default)\&. Tunnel\-exit checks improve security and do not break any normal configuration\&. Relevant only locally, other end need not agree on it\&.
 .RE
 .PP
+\fBlabeled_ipsec\fR
+.RS 4
+Avesh needs to write a man page entry for this\&.
+.RE
+.PP
+\fBpolicy_label\fR
+.RS 4
+Avesh needs to write a man page entry for this\&.
+.RE
+.PP
+\fBloopback\fR
+.RS 4
+Avesh needs to write a man page entry for this\&.
+.RE
+.PP
 \fBfailureshunt\fR
 .RS 4
 what to do with packets when negotiation fails\&. The default is
@@ -1073,7 +1114,7 @@ and IPv6 is denoted as
 \fIvirtual_private=%v4:10\&.0\&.0\&.0/8,%v4:192\&.168\&.0\&.0/16,%v4:172\&.16\&.0\&.0/12,%v4:!192\&.168\&.1\&.0/24\fR\&. This parameter is only needed on the server side and not on the client side that resides behind the NAT router, as the client will just use its IP address for the inner IP setting\&. This parameter may eventually become per\-connection\&. See also
 \fBleftsubnet=\fR
 .sp
-Note: It seems that T\-Mobile in the US and Rogers/Fido in Canada have started using 25\&.0\&.0\&.0/8 as their pre\-NAT range\&. This range technically belows to the Defence Interoperable Network Services Authority (DINSA), an agency of the Ministry of Defence of the United Kingdom\&. The network range seems to not have been announced for decades, which is probably why these organisasions "borrowed" this range\&. To support roadwarriors on these 3G networks, you might have to add it to the virtual_private= line\&.
+Note: It seems that T\-Mobile in the US and Rogers/Fido in Canada have started using 25\&.0\&.0\&.0/8 as their pre\-NAT range\&. This range technically belongs to the Defence Interoperable Network Services Authority (DINSA), an agency of the Ministry of Defence of the United Kingdom\&. The network range seems to not have been announced for decades, which is probably why these organisasions "borrowed" this range\&. To support roadwarriors on these 3G networks, you might have to add it to the virtual_private= line\&.
 .RE
 .PP
 \fBoe\fR
@@ -1187,6 +1228,15 @@ additional options to pass to pluto upon startup\&. See
 do not use syslog, but rather log to stderr, and direct stderr to the argument file\&.
 .RE
 .PP
+\fBplutostderrlogtime\fR
+.RS 4
+Whether pluto logs messages with the current timestamp as prefix\&. This might be desired when using
+\fBplutostderrlog=\fR, which per default does not log timestamps, as the output is used for the test suite and would have to be filtered out\&. Values are
+\fBno\fR(the default) or
+\fByes\fR
+\&.
+.RE
+.PP
 \fBpluto\fR
 .RS 4
 whether to start Pluto or not; Values are
@@ -1227,7 +1277,8 @@ or equivalent for their interaction\&. Default is none\&.
 .RS 4
 in what directory should things started by
 \fIsetup\fR
-(notably the Pluto daemon) be allowed to dump core? The empty value (the default) means they are not allowed to\&.
+(notably the Pluto daemon) be allowed to dump core? The default value is
+\fI/var/run/pluto\fR\&. When SElinux runs in enforced mode, changing this requires a similar change in the SElinux policy for the pluto daemon\&.
 .RE
 .PP
 \fBfragicmp\fR
