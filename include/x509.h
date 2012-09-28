@@ -195,7 +195,6 @@ extern bool trust_authcert_candidate(const x509cert_t *cert
 extern void load_authcerts(const char *type, const char *path
     , u_char auth_flags);
 extern void load_crls(void);
-extern void check_crls(void);
 extern bool insert_crl(chunk_t blob, chunk_t crl_uri);
 extern void list_x509_end_certs(bool utc);
 extern void list_authcerts(const char *caption, u_char auth_flags, bool utc);
@@ -212,8 +211,8 @@ extern bool same_x509cert(const x509cert_t *a, const x509cert_t *b);
 extern bool x509_check_revocation(const x509crl_t *crl, chunk_t serial);
 extern x509cert_t *x509_get_authcerts_chain(void);
 
-
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
+extern void check_crls(void);
 extern void lock_crl_list(const char *who);
 extern void unlock_crl_list(const char *who);
 extern void lock_cacert_list(const char *who);
@@ -223,6 +222,8 @@ extern void unlock_ocsp_cache(const char *who);
 extern void lock_authcert_list(const char *who);
 extern void unlock_authcert_list(const char *who);
 #else
+/* WARNING empty x509 locking functions defined bypassing real locking */
+/* not fixing this hack, see issues #1390, #1391, #1392 */
 #define lock_crl_list(who) /* nothing */
 #define unlock_crl_list(who) /* nothing */
 #define lock_cacert_list(who) /* nothing */

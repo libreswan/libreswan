@@ -99,10 +99,14 @@ add_x509cert(x509cert_t *cert)
     }
 
     /* insert new cert at the root of the chain */
+#if defined(LIBCURL) || defined(LDAP_VER)
     lock_certs_and_keys("add_x509cert");
+#endif
     cert->next = x509certs;
     x509certs = cert;
+#if defined(LIBCURL) || defined(LDAP_VER)
     unlock_certs_and_keys("add_x509cert");
+#endif
     return cert;
 }
 
@@ -168,9 +172,13 @@ release_x509cert(x509cert_t *cert)
 	x509cert_t **pp = &x509certs;
 	while (*pp != cert)
 	    pp = &(*pp)->next;
+#if defined(LIBCURL) || defined(LDAP_VER)
 	lock_certs_and_keys("release_x509cert");
+#endif
         *pp = cert->next;
+#if defined(LIBCURL) || defined(LDAP_VER)
 	unlock_certs_and_keys("release_x509cert");
+#endif
 	free_x509cert(cert);
     }
 }
@@ -373,7 +381,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 	{
 	    if (crl->thisUpdate > oldcrl->thisUpdate)
 	    {
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
 		/* keep any known CRL distribution points */
 		add_distribution_points(oldcrl->distributionPoints
 		    , &crl->distributionPoints);
@@ -492,7 +500,7 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	libreswan_log("no crl from issuer \"%s\" found (strict=%s)", ibuf
 		     , strict ? "yes" : "no");
 
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
 	if (cert->crlDistributionPoints != NULL)
 	{
 	    add_crl_fetch_request(cert->issuer, cert->crlDistributionPoints);
@@ -511,7 +519,7 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	    DBG_log("issuer crl \"%s\" found", ibuf)
 	)
      
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
 	add_distribution_points(cert->crlDistributionPoints
 		, &crl->distributionPoints);
 #endif
@@ -555,7 +563,7 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 			     , cbuf
 			     , timetoa(&crl->nextUpdate, TRUE, tbuf, sizeof(tbuf)));
 
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
 		/* try to fetch a crl update */
 		if (cert->crlDistributionPoints != NULL)
 		{
@@ -589,6 +597,44 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
     }
     return TRUE;
 }
+
+
+#if defined(LIBCURL) || defined(LDAP_VER)
+/*
+ * check if any crls are about to expire
+ */
+void
+check_crls(void)
+{
+    x509crl_t *crl;
+    time_t current_time = time(NULL);
+
+    lock_crl_list("check_crls");
+    crl = x509crls;
+
+    while (crl != NULL)
+    {
+	time_t time_left = crl->nextUpdate - current_time;
+	u_char buf[ASN1_BUF_LEN];
+
+	DBG(DBG_X509,
+	    dntoa(buf, ASN1_BUF_LEN, crl->issuer);
+	    DBG_log("issuer: '%s'",buf);
+	    if (crl->authKeyID.ptr != NULL)
+	    {
+		datatot(crl->authKeyID.ptr, crl->authKeyID.len, ':'
+		    , buf, ASN1_BUF_LEN);
+		DBG_log("authkey: %s", buf);
+	    }
+	    DBG_log("%ld seconds left", time_left)
+	)
+	if (time_left < 2*crl_check_interval)
+	    add_crl_fetch_request(crl->issuer, crl->distributionPoints);
+	crl = crl->next;
+    }
+    unlock_crl_list("check_crls");
+}
+#endif
 
 /*
  *  verifies a X.509 certificate
@@ -682,9 +728,12 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	else
 	{
 	    /* check certificate revocation using ocsp or crls */
-	    if (!verify_by_ocsp(cert, strict, until)
-	    &&  !verify_by_crl (cert, strict, until))
-		return FALSE;
+#ifdef HAVE_OCSP
+	    if (!verify_by_ocsp(cert, strict, until)) return FALSE;
+#endif
+#if defined(LIBCURL) || defined(LDAP_VER)
+	    if (!verify_by_crl (cert, strict, until)) return FALSE;
+#endif
 	}
         
 	/* go up one step in the trust chain */
@@ -829,7 +878,7 @@ list_crls(bool utc, bool strict)
 	dntoa(buf, ASN1_BUF_LEN, crl->issuer);
 	whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
 
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
 	/* list all distribution points */
 	list_distribution_points(crl->distributionPoints);
 #endif

@@ -1067,11 +1067,11 @@ main(int argc, char **argv)
     init_tpm();
 #endif
 
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
     init_fetch();
-#endif
 
     ocsp_set_default_uri(ocspuri);
+#endif
 
     /* loading X.509 CA certificates */
     load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
@@ -1120,7 +1120,7 @@ exit_pluto(int status)
     free_tpm();
 #endif
 
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
     free_crl_fetch();          /* free chain of crl fetch requests */
 #endif
 #ifdef HAVE_OCSP
@@ -1129,7 +1129,9 @@ exit_pluto(int status)
     free_authcerts();          /* free chain of X.509 authority certificates */
     free_crls();               /* free chain of X.509 CRLs */
     free_acerts();             /* free chain of X.509 attribute certificates */
+#ifdef HAVE_OCSP
     free_ocsp();               /* free ocsp cache */
+#endif
 
     osw_conf_free_oco();	/* free global_oco containing path names */
 

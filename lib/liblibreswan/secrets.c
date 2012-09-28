@@ -1011,7 +1011,14 @@ process_secret(struct secret **psecrets, int verbose,
     {
 
 	/* gauntlet has been run: install new secret */
+
+#if 0
+# if defined(LIBCURL) || defined(LDAP_VER)
 	lock_certs_and_keys("process_secret");
+# endif
+#else
+#warning locking code for CRL fetching needs to convert to proper pluto event, not thread/mutex locking
+#endif
 
 	if(s->ids == NULL) {
 	    /*
@@ -1036,7 +1043,13 @@ process_secret(struct secret **psecrets, int verbose,
 	}
 	s->next   = *psecrets;
 	*psecrets = s;
-	unlock_certs_and_keys("process_secrets");
+#if 0
+# if defined(LIBCURL) || defined(LDAP_VER)
+	unlock_certs_and_keys("process_secret");
+# endif
+#else
+#warning locking code for CRL fetching needs to convert to proper pluto event, not thread/mutex locking
+#endif
     }
 }
 
@@ -1264,7 +1277,13 @@ osw_process_secrets_file(struct secret **psecrets
 void
 osw_free_preshared_secrets(struct secret **psecrets)
 {
-    lock_certs_and_keys("free_preshared_secrets");
+#if 0
+# if defined(LIBCURL) || defined(LDAP_VER)
+	lock_certs_and_keys("free_preshared_secrets");
+# endif
+#else
+#warning locking code for CRL fetching needs to convert to proper pluto event, not thread/mutex locking
+#endif
     
     if (*psecrets != NULL)
     {
@@ -1308,7 +1327,13 @@ osw_free_preshared_secrets(struct secret **psecrets)
 	*psecrets = NULL;
     }
     
-    unlock_certs_and_keys("free_preshard_secrets");
+#if 0
+# if defined(LIBCURL) || defined(LDAP_VER)
+	unlock_certs_and_keys("free_preshard_secrets");
+# endif
+#else
+#warning locking code for CRL fetching needs to convert to proper pluto event, not thread/mutex locking
+#endif
 }
 
 void

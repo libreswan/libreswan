@@ -16,6 +16,7 @@
  *
  */
 
+#if defined(LIBCURL) || defined(LDAP_VER)
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/time.h>
@@ -244,11 +245,9 @@ wake_fetch_thread(const char *who)
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("fetch thread wake call by '%s'", who)
 	)
-#ifdef HAVE_THREADS
 	pthread_mutex_lock(&fetch_wake_mutex);
 	pthread_cond_signal(&fetch_wake_cond);
 	pthread_mutex_unlock(&fetch_wake_mutex);
-#endif
     }
 }
 
@@ -719,9 +718,7 @@ fetch_thread(void *arg UNUSED)
 	DBG_log("fetch thread started")
     )
 
-#ifdef HAVE_THREADS
     pthread_mutex_lock(&fetch_wake_mutex);
-#endif
     while(1)
     {
 	int status;
@@ -980,3 +977,7 @@ list_ocsp_fetch_requests(bool utc)
     unlock_ocsp_fetch_list("list_ocsp_fetch_requests");
 
 }
+
+#else
+#warning no LIBCURL or LDAP defined, file should not be used
+#endif

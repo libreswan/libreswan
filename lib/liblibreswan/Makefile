@@ -64,6 +64,14 @@ PFKEYV2_SRCS+=pfkey_v2_build.c pfkey_v2_ext_bits.c pfkey_v2_parse.c
 PFKEYV2_SRCS+=pfkey_v2_debug.c 
 endif
 
+ifeq ($(USE_LIBCURL),true)
+CFLAGS+=-DLIBCURL
+endif
+
+ifeq ($(USE_LDAP),true)
+CFLAGS+=-DLDAP_VER=3
+endif
+
 CFLAGS+=-DUSE_SHA2
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 

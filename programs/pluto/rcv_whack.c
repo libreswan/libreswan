@@ -541,7 +541,7 @@ void whack_process(int whackfd, struct whack_message msg)
     if (msg.whack_list & LIST_CRLS)
     {
 	list_crls(msg.whack_utc, strict_crl_policy);
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
 	list_crl_fetch_requests(msg.whack_utc);
 #endif
     }

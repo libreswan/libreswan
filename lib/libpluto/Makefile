@@ -33,6 +33,14 @@ ONEFILE=pluto_constants.c
 SRCS=pluto_constants.c x509support.c packet.c
 SRCS+=readwhackmsg.c
 
+ifeq ($(USE_LIBCURL),true)
+CFLAGS+=-DLIBCURL
+endif
+
+ifeq ($(USE_LDAP),true)
+CFLAGS+=-DLDAP_VER=3
+endif
+
 #enable to get lots more debugging about semantics.
 #CFLAGS+=-DPARSER_TYPE_DEBUG
 

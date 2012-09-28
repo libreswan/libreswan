@@ -172,12 +172,9 @@ extern struct secret *osw_find_secret_by_id(struct secret *secrets
 					    , const struct id *his_id
 					    , bool asym);
 
-#ifdef HAVE_THREADS
+#if defined(LIBCURL) || defined(LDAP_VER)
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
-#else
-#define lock_certs_and_keys(who)  /* nothing */
-#define unlock_certs_and_keys(who) /* nothing */
 #endif
 
 #include "x509.h"

@@ -409,7 +409,7 @@ USE_NAT_TRAVERSAL?=true
 USE_NAT_TRAVERSAL_TRANSPORT_MODE?=true
 
 # Include LDAP support (currently used for fetching CRLs)
-USE_LDAP?=true
+USE_LDAP?=false
 
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL?=true

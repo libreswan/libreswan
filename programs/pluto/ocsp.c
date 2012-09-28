@@ -18,6 +18,8 @@
  * for more details.
  */
 
+#if defined(LIBCURL) || defined(LDAP_VER)
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -430,7 +432,6 @@ verify_by_ocsp(/*const*/ x509cert_t *cert, bool strict, time_t *until)
     status = get_ocsp_status(&location, cert->serialNumber, &nextUpdate);
     unlock_ocsp_cache("verify_by_ocsp");
 
-#ifdef HAVE_THREADS
     if (status == CERT_UNDEFINED || nextUpdate < time(NULL))
     {
 	libreswan_log("ocsp status is stale or not in cache");
@@ -440,7 +441,6 @@ verify_by_ocsp(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	wake_fetch_thread("verify_by_ocsp");
 	return !strict;
     }
-#endif
     
     switch (status)
     {
@@ -487,9 +487,7 @@ check_ocsp(void)
 	bool first = TRUE;
 #endif
 	ocsp_certinfo_t *certinfo = location->certinfo;
-#ifdef HAVE_THREADS
 	time_t time_left = certinfo->nextUpdate - time(NULL);
-#endif
 
 	while (certinfo != NULL)
 	{
@@ -509,19 +507,15 @@ check_ocsp(void)
 			}
 			first = FALSE;
 		    } );
-#ifdef HAVE_THREADS
 		DBG(DBG_CONTROL,
 		    char buf[BUF_LEN];
 		    datatot(certinfo->serialNumber.ptr, certinfo->serialNumber.len
 			, ':', buf, BUF_LEN);
 		    DBG_log("serial: %s, %ld seconds left", buf
 			    , (unsigned long)time_left));
-#endif
 
-#ifdef HAVE_THREADS
 		if (time_left < 2*crl_check_interval)
 		    add_ocsp_fetch_request(location, certinfo->serialNumber);
-#endif
 	    }
 	    certinfo = certinfo->next;
 	}
@@ -1696,6 +1690,9 @@ parse_ocsp(ocsp_location_t *location, chunk_t blob)
     }
 }
 
+#else
+#warning ocsp not compiled in
+#endif
 /*
  * Local Variables:
  * c-basic-offset:4

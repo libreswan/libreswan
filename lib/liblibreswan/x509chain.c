@@ -343,43 +343,6 @@ bool x509_check_revocation(const x509crl_t *crl, chunk_t serial)
 
 
 /*
- * check if any crls are about to expire
- */
-void
-check_crls(void)
-{
-#ifdef HAVE_THREADS
-    x509crl_t *crl;
-    time_t current_time = time(NULL);
-
-    lock_crl_list("check_crls");
-    crl = x509crls;
-
-    while (crl != NULL)
-    {
-	time_t time_left = crl->nextUpdate - current_time;
-	u_char buf[ASN1_BUF_LEN];
-
-	DBG(DBG_X509,
-	    dntoa(buf, ASN1_BUF_LEN, crl->issuer);
-	    DBG_log("issuer: '%s'",buf);
-	    if (crl->authKeyID.ptr != NULL)
-	    {
-		datatot(crl->authKeyID.ptr, crl->authKeyID.len, ':'
-		    , buf, ASN1_BUF_LEN);
-		DBG_log("authkey: %s", buf);
-	    }
-	    DBG_log("%ld seconds left", time_left)
-	)
-	if (time_left < 2*crl_check_interval)
-	    add_crl_fetch_request(crl->issuer, crl->distributionPoints);
-	crl = crl->next;
-    }
-    unlock_crl_list("check_crls");
-#endif
-}
-
-/*
  * get a cacert with a given subject or keyid from an alternative list
  */
 static const x509cert_t*

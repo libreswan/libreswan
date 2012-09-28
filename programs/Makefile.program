@@ -24,6 +24,14 @@ CFLAGS+= -Wstrict-prototypes
 #CFLAGS+= -Wwrite-strings
 CFLAGS+= -Wbad-function-cast 
 
+ifeq ($(USE_LIBCURL),true)
+CFLAGS+=-DLIBCURL
+endif
+
+ifeq ($(USE_LDAP),true)
+CFLAGS+=-DLDAP_VER=3
+endif
+
 ifeq ($(USE_SAREF_KERNEL),true)
 CFLAGS+=-DSAREF_SUPPORTED
 endif

@@ -120,7 +120,6 @@ kernels.
   INC_RCDEFAULT=%{_initrddir} \
   USE_NM=%{USE_NM} \
 %if %{USE_CRL_FECTCHING}
-  USE_LDAP=true \
   USE_LIBCURL=true \
   HAVE_THREADS=true \
 %endif
