@@ -1,3 +1,0 @@
-This is a sample pluto file for use with XAUTH server while
-doing PAM authentication.  Tested on RH8 system, based on the
-ssh pam file
