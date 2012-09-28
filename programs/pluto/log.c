@@ -826,26 +826,26 @@ show_status(void)
     show_ifaces_status();
     show_myid_status();
     show_debug_status();
-    whack_log(RC_COMMENT, "");	/* spacer */
+    whack_log(RC_COMMENT, " ");	/* spacer */
     show_virtual_private();
-    whack_log(RC_COMMENT, "");	/* spacer */
+    whack_log(RC_COMMENT, " ");	/* spacer */
 #ifdef KERNEL_ALG
     kernel_alg_show_status();
-    whack_log(RC_COMMENT, "");	/* spacer */
+    whack_log(RC_COMMENT, " ");	/* spacer */
 #endif
 #ifdef IKE_ALG
     ike_alg_show_status();
-    whack_log(RC_COMMENT, "");	/* spacer */
+    whack_log(RC_COMMENT, " ");	/* spacer */
 #endif
 #ifndef NO_DB_OPS_STATS
     db_ops_show_status();
-    whack_log(RC_COMMENT, "");	/* spacer */
+    whack_log(RC_COMMENT, " ");	/* spacer */
 #endif
     show_connections_status();
-    whack_log(RC_COMMENT, "");	/* spacer */
+    whack_log(RC_COMMENT, " ");	/* spacer */
     show_states_status();
 #ifdef KLIPS
-    whack_log(RC_COMMENT, "");	/* spacer */
+    whack_log(RC_COMMENT, " ");	/* spacer */
     show_shunt_status();
 #endif
 }
