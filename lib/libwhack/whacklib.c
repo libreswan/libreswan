@@ -50,7 +50,7 @@
 static bool
 pack_str(struct whackpacker *wp, char **p)
 {
-    const char *s = *p == NULL? "" : *p;	/* note: NULL becomes ""! */
+    const char *s = (*p == NULL? "" : *p);	/* note: NULL becomes ""! */
     size_t len = strlen(s) + 1;
 
     if (wp->str_roof - wp->str_next < (ptrdiff_t)len)
