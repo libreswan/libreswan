@@ -213,7 +213,10 @@ struct connection {
    enum keyword_labeled_ipsec labeled_ipsec;
    char *policy_label;
 #endif
-    
+
+   enum keyword_xauthby xauthby;
+
+
     bool               forceencaps;         /* always use NAT-T encap */
     
     char              *log_file_name;       /* name of log file */
@@ -257,6 +260,7 @@ struct connection {
     struct connection *ac_next;	/* all connections list link */
     
     generalName_t *requested_ca;	/* collected certificate requests */
+    pthread_t tid;
 #ifdef XAUTH_USEPAM 
     pam_handle_t  *pamh;		/*  PAM handle for that connection  */
 #endif

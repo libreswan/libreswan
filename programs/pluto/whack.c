@@ -128,6 +128,8 @@ help(void)
 	    " \\\n   "
 	    "[--nm_configured]"
 	    " \\\n   "
+	    "[--xauthby file | pam]"
+	    " \\\n   "
 	    " [--dontrekey]"
 	    " [--aggrmode]"
 	    " [--forceencaps]"
@@ -490,6 +492,7 @@ enum option_enums {
     CD_LOOPBACK,
     CD_LABELED_IPSEC,
     CD_POLICY_LABEL,
+    CD_XAUTHBY,
     CD_ESP	
 #   define CD_LAST CD_ESP	/* last connection description */
 
@@ -715,6 +718,7 @@ static const struct option long_opts[] = {
     { "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO},
     { "policylabel", required_argument, NULL, CD_POLICY_LABEL + OO },
 #endif
+    { "xauthby", required_argument, NULL, CD_XAUTHBY + OO},
 #ifdef DEBUG
     { "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
     { "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
@@ -939,6 +943,8 @@ main(int argc, char **argv)
     msg.labeled_ipsec = LI_NO;
     msg.policy_label = NULL;
 #endif
+
+    msg.xauthby = XAUTHBY_FILE;
 
     msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
     msg.sa_ipsec_life_seconds = PLUTO_SA_LIFE_DURATION_DEFAULT;
@@ -1559,14 +1565,22 @@ main(int argc, char **argv)
 		msg.loopback = LB_YES;
 		continue;
 
-        case CD_LABELED_IPSEC:
-                msg.labeled_ipsec = LI_YES;
-                continue;
+	case CD_LABELED_IPSEC:
+		msg.labeled_ipsec = LI_YES;
+		continue;
 
-        case CD_POLICY_LABEL:
-                msg.policy_label = optarg;
-                continue;
+	case CD_POLICY_LABEL:
+		msg.policy_label = optarg;
+		continue;
 #endif
+
+	case CD_XAUTHBY: /* --xauthby <file or pam>*/
+		if ( strcmp(optarg, "pam" ) == 0) {
+			msg.xauthby = XAUTHBY_PAM;
+		} else {
+			msg.xauthby = XAUTHBY_FILE;
+		}
+		continue;
 
 	case CD_CONNIPV4:
 	    if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
@@ -1916,6 +1930,11 @@ main(int argc, char **argv)
             diag("remote_peer_type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
             msg.remotepeertype = NON_CISCO; /*NON_CISCO=0*/
     }
+
+   if (msg.xauthby != XAUTHBY_FILE && msg.xauthby != XAUTHBY_PAM) {
+          diag("xauthby can only be \"XAUTHBY_FILE\" or \"XAUTHBY_PAM\" - defaulting to file authentication");
+       msg.xauthby = XAUTHBY_FILE;
+   }
 
     /* pack strings for inclusion in message */
     wp.msg = &msg;

@@ -77,9 +77,8 @@
 #include "xauth.h"
 #include "virtual.h"
 
-#ifdef HAVE_THREADS
 #include <pthread.h>
-#endif
+#include <signal.h>
 
 static stf_status
 modecfg_inI2(struct msg_digest *md);
@@ -218,6 +217,8 @@ int get_internal_addresses(struct connection *con,struct internal_addr *ia)
 #endif
     {
 #ifdef XAUTH_USEPAM
+       if (con->xauthby == XAUTHBY_PAM)
+          {
 	    if(con->pamh == NULL)
 	    {
 		    /** Start PAM session, using 'pluto' as our PAM name */
@@ -254,6 +255,7 @@ int get_internal_addresses(struct connection *con,struct internal_addr *ia)
 		    get_addr(con->pamh,"WINS1",&ia->wins[0]);
 		    get_addr(con->pamh,"WINS2",&ia->wins[1]);
 	    }
+          }
 #endif
     }
     return 0;
@@ -900,11 +902,11 @@ int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
         switch (msgm[count]->msg_style) {
         case PAM_PROMPT_ECHO_OFF:
 	    string = alloc_bytes(arg->password.len+1, "pam_echo_off");
-	    strcpy(string,arg->password.ptr);
+	    strcpy(string,(const char *)arg->password.ptr);
             break;
         case PAM_PROMPT_ECHO_ON:
 	    string = alloc_bytes(arg->name.len+1,"pam_echo_on");
-	    strcpy(string,arg->name.ptr);
+	    strcpy(string,(const char *)arg->name.ptr);
             break;
         }
 	
@@ -935,11 +937,12 @@ int do_pam_authentication(void *varg)
     struct thread_arg	*arg = varg;
     pam_handle_t *pamh=NULL;
     int retval;
+    struct pam_conv conv;
 
     conv.conv = xauth_pam_conv;
     conv.appdata_ptr = varg;
 
-    retval = pam_start("pluto", arg->name.ptr, &conv, &pamh);
+    retval = pam_start("pluto", (const char *)arg->name.ptr, &conv, &pamh);
 
 	/* Send the remote host address to PAM */
     if (retval == PAM_SUCCESS) 
@@ -958,7 +961,7 @@ int do_pam_authentication(void *varg)
     else
       return FALSE;
 }
-#else /* XAUTH_USEPAM */
+#endif /* XAUTH_USEPAM */
 
 /** Do authentication via /etc/ipsec.d/passwd file using MD5 passwords
  *
@@ -1085,7 +1088,6 @@ int do_md5_authentication(void *varg)
     
     return FALSE;
 }
-#endif
 
 /** Main authentication routine will then call the actual compiled in 
  *  method to verify the user/password
@@ -1097,15 +1099,20 @@ static void * do_authentication(void *varg)
     int results=FALSE;
     libreswan_log("XAUTH: User %s: Attempting to login" , arg->name.ptr);
     
-    
-
 #ifdef XAUTH_USEPAM
-    libreswan_log("XAUTH: pam authentication being called to authenticate user %s",arg->name.ptr);
-    results=do_pam_authentication(varg);
-#else
-    libreswan_log("XAUTH: md5 authentication being called to authenticate user %s",arg->name.ptr);
-    results=do_md5_authentication(varg);
+    if (st->st_connection->xauthby == XAUTHBY_PAM) {
+	libreswan_log("XAUTH: pam authentication being called to authenticate user %s",arg->name.ptr);
+	results=do_pam_authentication(varg);
+    } else
 #endif
+    if (st->st_connection->xauthby == XAUTHBY_FILE) {
+	libreswan_log("XAUTH: md5 authentication being called to authenticate user %s",arg->name.ptr);
+	results=do_md5_authentication(varg);
+    } else {
+	libreswan_log("XAUTH: unknown authentication method requested to authenticate user %s",arg->name.ptr);
+	passert((st->st_connection->xauthby != XAUTHBY_PAM) && (st->st_connection->xauthby != XAUTHBY_FILE));
+    }
+
     if(results)
     {
         libreswan_log("XAUTH: User %s: Authentication Successful", arg->name.ptr);
@@ -1129,12 +1136,13 @@ static void * do_authentication(void *varg)
     freeanychunk(arg->name);
     freeanychunk(arg->connname);
     pfree(varg);
+    st->st_connection->tid = NULL;
     
     return NULL;
 }
 
 
-/** Launch an authenication prompt
+/** Launch an authentication prompt
  *
  * @param st State Structure
  * @param name Usernamd
@@ -1147,24 +1155,22 @@ int xauth_launch_authent(struct state *st
 			 , chunk_t password
 			 , chunk_t connname)
 {
-#ifdef HAVE_THREADS
     pthread_attr_t pattr;
-    pthread_t tid;
-#endif
     struct thread_arg	*arg;
     arg = alloc_thing(struct thread_arg,"ThreadArg");
     arg->st = st;
     arg->password = password;
     arg->name = name;
     arg->connname = connname;
-#ifdef HAVE_THREADS
+    /*
+     * Start any kind of authentication in a thread. This includes file
+     * authentication as the /etc/ipsec.d/passwd file may reside on a SAN,
+     * a NAS or an NFS disk
+     */
     pthread_attr_init(&pattr);
     pthread_attr_setdetachstate(&pattr,PTHREAD_CREATE_DETACHED);
-    pthread_create(&tid,&pattr,do_authentication, (void*) arg);
+    pthread_create(&st->st_connection->tid, &pattr, do_authentication, (void*) arg);
     pthread_attr_destroy(&pattr);
-#else
-    do_authentication(arg);
-#endif
     return 0;
 }
 

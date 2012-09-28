@@ -1349,6 +1349,9 @@ add_connection(const struct whack_message *wm)
 	DBG(DBG_CONTROL, DBG_log("loopback=%d labeled_ipsec=%d, policy_label=%s", c->loopback, c->labeled_ipsec, c->policy_label));
 #endif
 
+	/* XAUTH pam or file */
+	c->xauthby=wm->xauthby;
+
 	c->metric = wm->metric;
 	c->connmtu = wm->connmtu;
 

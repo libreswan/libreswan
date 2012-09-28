@@ -240,6 +240,15 @@ struct keyword_enum_values kw_labeled_ipsec=
     { kw_labeled_ipsec_list, sizeof(kw_labeled_ipsec_list)/sizeof(struct keyword_enum_value)};
 #endif
 
+struct keyword_enum_value kw_xauthby_list[]={
+    { "file",         XAUTHBY_FILE },
+    { "pam",         XAUTHBY_PAM },
+};
+
+struct keyword_enum_values kw_xauthby=
+    { kw_xauthby_list, sizeof(kw_xauthby_list)/sizeof(struct keyword_enum_value)};
+
+
 /*
  * Values for right= and left=
  */
@@ -426,6 +435,8 @@ struct keyword_def ipsec_conf_keywords_v2[]={
 #ifdef HAVE_NM
     {"nm_configured", kv_conn|kv_auto, kt_enum, KBF_NMCONFIGURED, &kw_nm_configured},
 #endif
+
+    {"xauthby", kv_conn|kv_auto, kt_enum, KBF_XAUTHBY, &kw_xauthby},
 
 #ifdef NAT_TRAVERSAL
     {"forceencaps",    kv_conn|kv_auto, kt_bool,   KBF_FORCEENCAP, NOT_ENUM},

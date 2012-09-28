@@ -138,6 +138,8 @@ struct whack_message {
     /* Checking if this connection is configured by Network Manager*/
     enum keyword_nmconfigured nmconfigured;
 
+    /* XAUTH Authentication can be file (default) or PAM */
+    enum keyword_xauthby xauthby;
     /* Force the MTU for this connection */
     int connmtu;
 

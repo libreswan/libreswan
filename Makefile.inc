@@ -371,20 +371,16 @@ USE_XAUTH?=true
 # When doing XAUTH, include PAM support as well, requires HAVE_THREADS be
 # true as well
 ifeq ($(OSDEP),linux)
-USE_XAUTHPAM=true
+USE_XAUTHPAM?=true
 endif
 ifeq ($(OSDEP),bsd)
-USE_XAUTHPAM=true
+USE_XAUTHPAM?=true
 endif
 ifeq ($(OSDEP),darwin)
-USE_XAUTHPAM=true
+USE_XAUTHPAM?=true
 endif
 ifeq ($(OSDEP),sunos)
-USE_XAUTHPAM=true
-endif
-
-ifeq ($(USE_XAUTHPAM),true)
-HAVE_THREADS=true
+USE_XAUTHPAM?=true
 endif
 
 # Support for integrity check for openswan on startup 

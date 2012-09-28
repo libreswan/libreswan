@@ -70,6 +70,11 @@ enum keyword_labeled_ipsec {
     LI_YES = 1,
 };
 
+enum keyword_xauthby {
+    XAUTHBY_FILE = 0,
+    XAUTHBY_PAM = 1,
+};
+
 /* Timer events */
 
 enum event_type {

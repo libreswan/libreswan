@@ -99,6 +99,9 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_LOOPBACK] = LB_NO;
 	cfg->conn_default.options[KBF_LABELED_IPSEC] = LI_NO;
 #endif
+
+	cfg->conn_default.options[KBF_XAUTHBY] = XAUTHBY_FILE;
+
 	cfg->conn_default.policy = POLICY_RSASIG|POLICY_TUNNEL|POLICY_ENCRYPT|POLICY_PFS;
 	cfg->conn_default.policy |= POLICY_IKEV2_ALLOW; /* ikev2=yes */
 	cfg->conn_default.policy |= POLICY_SAREF_TRACK;  /* sareftrack=yes */

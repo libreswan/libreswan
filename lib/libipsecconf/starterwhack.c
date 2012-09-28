@@ -550,7 +550,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 	}
 #endif
 
-
 #ifdef HAVE_LABELED_IPSEC
 	/*Labeled ipsec support*/
 	if(conn->options_set[KBF_LOOPBACK]) {
@@ -566,6 +565,12 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 	msg.policy_label = conn->policy_label;
 	starter_log(LOG_LEVEL_INFO, "conn: \"%s\" policy_label=%d", conn->name, msg.policy_label);
 #endif
+
+	if(conn->options_set[KBF_XAUTHBY]) {
+		msg.xauthby=conn->options[KBF_XAUTHBY];
+	}
+
+
 
 	set_whack_end(cfg, "left",  &msg.left, &conn->left);
 	set_whack_end(cfg, "right", &msg.right, &conn->right);
