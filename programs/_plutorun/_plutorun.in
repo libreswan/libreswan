@@ -44,7 +44,6 @@ do
 	--strictcrlpolicy)	 strictcrlpolicy="$2" ; shift	;;
 	--crlcheckinterval)	 crlcheckinterval="$2"; shift	;;
 	--force_busy)		 force_busy="$2"; shift	;;
-        --ocspuri)               ocspuri="$2"; shift    ;;
 	--dump)	                 dumpdir="$2" ; shift	;;
 	--opts)	                 popts="$2" ; shift	;;
 	--stderrlog)             stderrlog="$2" ; shift	;;
@@ -138,12 +137,6 @@ esac
 if test ${crlcheckinterval:-0} -gt 0
 then
 	popts="$popts --crlcheckinterval $crlcheckinterval"
-fi
-
-# add ocsp uri
-if test -n "$ocspuri"
-then
-        popts="$popts --ocspuri $ocspuri"
 fi
 
 if test -n "$nhelpers"

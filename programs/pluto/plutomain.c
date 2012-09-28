@@ -71,7 +71,6 @@
 #include "rnd.h"
 #include "state.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
-#include "ocsp.h"
 #include "fetch.h"
 #include "timer.h"
 
@@ -144,7 +143,6 @@ usage(const char *mess)
 	    " [--nocrsend]"
 	    " [--strictcrlpolicy]"
 	    " [--crlcheckinterval]"
-	    " [--ocspuri]"
 	    " [--uniqueids]"
 	    " [--use-auto]"
 	    " [--use-klips]"
@@ -317,7 +315,6 @@ main(int argc, char **argv)
 {
     bool fork_desired = TRUE;
     int lockfd;
-    char* ocspuri = NULL;
     int nhelpers = -1;
     char *coredir;
     const struct osw_conf_options *oco;
@@ -382,8 +379,6 @@ main(int argc, char **argv)
 	    { "nocrsend", no_argument, NULL, 'c' },
 	    { "strictcrlpolicy", no_argument, NULL, 'r' },
 	    { "crlcheckinterval", required_argument, NULL, 'x'},
-	    { "ocsprequestcert", required_argument, NULL, 'q'},
-	    { "ocspuri", required_argument, NULL, 'o'},
 	    { "uniqueids", no_argument, NULL, 'u' },
 	    { "useklips",  no_argument, NULL, 'k' },
 	    { "use-klips",  no_argument, NULL, 'k' },
@@ -612,10 +607,6 @@ main(int argc, char **argv)
             }
 	    continue
 	    ;
-
-	case 'o':	/* --ocspuri */
-	    ocspuri = optarg;
-	    continue;
 
 	case 'u':	/* --uniqueids */
 	    uniqueIDs = TRUE;
@@ -1069,16 +1060,12 @@ main(int argc, char **argv)
 
 #if defined(LIBCURL) || defined(LDAP_VER)
     init_fetch();
-
-    ocsp_set_default_uri(ocspuri);
 #endif
 
     /* loading X.509 CA certificates */
     load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
     /* loading X.509 AA certificates */
     load_authcerts("AA cert", oco->aacerts_dir, AUTH_AA);
-    /* loading X.509 OCSP certificates */
-    load_authcerts("OCSP cert", oco->ocspcerts_dir, AUTH_OCSP);
 
     /* loading X.509 CRLs */
     load_crls();
@@ -1123,15 +1110,9 @@ exit_pluto(int status)
 #if defined(LIBCURL) || defined(LDAP_VER)
     free_crl_fetch();          /* free chain of crl fetch requests */
 #endif
-#ifdef HAVE_OCSP
-    free_ocsp_fetch();         /* free chain of ocsp fetch requests */
-#endif
     free_authcerts();          /* free chain of X.509 authority certificates */
     free_crls();               /* free chain of X.509 CRLs */
     free_acerts();             /* free chain of X.509 attribute certificates */
-#ifdef HAVE_OCSP
-    free_ocsp();               /* free ocsp cache */
-#endif
 
     osw_conf_free_oco();	/* free global_oco containing path names */
 

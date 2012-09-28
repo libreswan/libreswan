@@ -114,7 +114,6 @@ DISTSRC = \
 	${EXTRA_CRYPTO_SRCS} ike_alg_sha2.c \
 	log.c log.h \
 	plutomain.c plutoalg.c \
-	ocsp.c ocsp.h \
 	pluto_crypt.c crypt_utils.c pluto_crypt.h \
 	crypt_ke.c crypt_dh.c crypt_start_dh.c \
 	keys.c keys.h \
@@ -189,7 +188,6 @@ doinstall: all
 	mkdir -p -m 755 $(CONFDIR)/ipsec.d
 	mkdir -p -m 755 $(CONFDIR)/ipsec.d/cacerts
 	mkdir -p -m 755 $(CONFDIR)/ipsec.d/aacerts
-	mkdir -p -m 755 $(CONFDIR)/ipsec.d/ocspcerts
 	mkdir -p -m 755 $(CONFDIR)/ipsec.d/certs
 	mkdir -p -m 755 $(CONFDIR)/ipsec.d/crls
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d/private

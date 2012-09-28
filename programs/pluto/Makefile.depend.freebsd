@@ -387,7 +387,7 @@ fetch.o: fetch.c \
   ../../include/x509.h \
   ../../include/whack.h \
   ../../linux/include/libreswan/ipsec_policy.h \
-  ocsp.h fetch.h
+  fetch.h
 foodgroups.o: foodgroups.c \
   ../../linux/include/libreswan.h \
   ../../ports/freebsd/include/sysdep.h \
@@ -944,62 +944,6 @@ nat_traversal.o: nat_traversal.c \
   ../../include/mpzfuncs.h vendor.h \
   ../../include/natt_defines.h \
   nat_traversal.h
-ocsp.o: ocsp.c \
-  ../../linux/include/libreswan.h \
-  ../../linux/include/libreswan/ipsec_policy.h \
-  ../../ports/freebsd/include/sysdep.h \
-  ../../include/sysqueue.h \
-  ../../include/constants.h \
-  ../../include/biglset.h \
-  ../../linux/include/libreswan/passert.h \
-  ../../include/ietf_constants.h \
-  ../../include/pluto_constants.h \
-  ../../include/names_constant.h \
-  ../../include/oswtime.h defs.h \
-  ../../include/oswalloc.h \
-  ../../include/constants.h \
-  ../../include/id.h log.h \
-  ../../include/oswlog.h \
-  ../../include/x509.h rnd.h \
-  ../../include/asn1.h \
-  ../../include/pgp.h \
-  ../../include/certs.h \
-  ../../include/secrets.h \
-  ../../include/id.h \
-  ../../include/x509.h \
-  ../../include/pgp.h \
-  ../../include/certs.h \
-  ../../include/oid.h \
-  ../../include/whack.h keys.h \
-  ../../include/secrets.h fetch.h ocsp.h
-ocsp.o: ocsp.c \
-  ../../linux/include/libreswan.h \
-  ../../linux/include/libreswan/ipsec_policy.h \
-  ../../ports/freebsd/include/sysdep.h \
-  ../../include/sysqueue.h \
-  ../../include/constants.h \
-  ../../include/biglset.h \
-  ../../linux/include/libreswan/passert.h \
-  ../../include/ietf_constants.h \
-  ../../include/pluto_constants.h \
-  ../../include/names_constant.h \
-  ../../include/oswtime.h defs.h \
-  ../../include/oswalloc.h \
-  ../../include/constants.h \
-  ../../include/id.h log.h \
-  ../../include/oswlog.h \
-  ../../include/x509.h rnd.h \
-  ../../include/asn1.h \
-  ../../include/pgp.h \
-  ../../include/certs.h \
-  ../../include/secrets.h \
-  ../../include/id.h \
-  ../../include/x509.h \
-  ../../include/pgp.h \
-  ../../include/certs.h \
-  ../../include/oid.h \
-  ../../include/whack.h keys.h \
-  ../../include/secrets.h fetch.h ocsp.h
 pending.o: pending.c \
   ../../include/arpa/nameser.h \
   ../../linux/include/libreswan.h \
@@ -1130,7 +1074,7 @@ plutomain.o: plutomain.c \
   ../../include/sysqueue.h quirks.h \
   kernel.h log.h ../../include/oswlog.h \
   keys.h ../../include/secrets.h adns.h \
-  dnskey.h rnd.h state.h ipsec_doi.h ikev1_quick.h ocsp.h fetch.h \
+  dnskey.h rnd.h state.h ipsec_doi.h ikev1_quick.h fetch.h \
   ../../include/sha1.h \
   ../../include/md5.h crypto.h \
   ../../lib/libcrypto/libsha2/sha2.h \
@@ -1212,7 +1156,7 @@ rcv_whack.o: rcv_whack.c \
   state.h ipsec_doi.h ikev1_quick.h kernel.h rcv_whack.h log.h \
   ../../include/oswlog.h keys.h \
   ../../include/secrets.h adns.h dnskey.h \
-  fetch.h ocsp.h timer.h \
+  fetch.h timer.h \
   ../../include/oswtime.h \
   ../../include/kernel_alg.h \
   ../../linux/include/libreswan/pfkeyv2.h \
@@ -1638,7 +1582,7 @@ x509.o: x509.c \
   ../../include/certs.h state.h \
   ../../include/md5.h \
   ../../include/sha1.h \
-  ../../include/whack.h fetch.h ocsp.h \
+  ../../include/whack.h fetch.h \
   ../../include/pkcs.h plutocerts.h \
   x509more.h
 x509keys.o: x509keys.c \
@@ -1672,7 +1616,7 @@ x509keys.o: x509keys.c \
   ../../include/certs.h state.h \
   ../../include/md5.h \
   ../../include/sha1.h \
-  ../../include/whack.h fetch.h ocsp.h \
+  ../../include/whack.h fetch.h \
   ../../include/pkcs.h x509more.h
 xauth.o: xauth.c \
   ../../linux/include/libreswan.h \

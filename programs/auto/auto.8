@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC_AUTO
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 07/25/2011
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 09/28/2012
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
-.TH "IPSEC_AUTO" "8" "07/25/2011" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC_AUTO" "8" "09/28/2012" "[FIXME: source]" "[FIXME: manual]"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -41,7 +50,7 @@ ipsec_auto \- control automatically\-keyed IPsec connections
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIauto\fR {\ \-\-route\ |\ \-\-unroute\ } \fIconnection\fR
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIauto\fR [\-\-utc] [\-\-listall\ |\ \-\-rereadall] [\-\-rereadsecrets] [\-\-listcerts] [\-\-listpubkeys] [\-\-checkpubkeys] [\-\-listcacerts\ |\ \-\-rereadcacerts] [\-\-listcrls\ |\ \-\-rereadcrls] [[\-\-listocspcerts\ |\ \-\-rereadocspcerts\ ]\ [\-\-listocsp\ |\ \-\-purgeocsp\ ]] [\-\-listacerts\ |\ \-\-rereadacerts] [\-\-listaacerts\ |\ \-\-rereadaacerts] [\-\-listgroups\ |\ \-\-rereadgroups]
+\fBipsec\fR \fIauto\fR [\-\-utc] [\-\-listall\ |\ \-\-rereadall] [\-\-rereadsecrets] [\-\-listcerts] [\-\-listpubkeys] [\-\-checkpubkeys] [\-\-listcacerts\ |\ \-\-rereadcacerts] [\-\-listcrls\ |\ \-\-rereadcrls] [\-\-listacerts\ |\ \-\-rereadacerts] [\-\-listaacerts\ |\ \-\-rereadaacerts] [\-\-listgroups\ |\ \-\-rereadgroups]
 .SH "DESCRIPTION"
 .PP
 \fIAuto\fR
@@ -74,13 +83,13 @@ operation adds a connection specification to the internal database within
 already has a specification by that name\&. The
 \fB\-\-delete\fR
 operation deletes a connection specification from
-\fIpluto\fR\'s internal database (also tearing down any connections based on it); it will fail if the specification does not exist\&. The
+\fIpluto\fR\*(Aqs internal database (also tearing down any connections based on it); it will fail if the specification does not exist\&. The
 \fB\-\-replace\fR
 operation is equivalent to
 \fB\-\-delete\fR
 (if there is already a specification by the given name) followed by
 \fB\-\-add\fR, and is a convenience for updating
-\fIpluto\fR\'s internal specification to match an external one\&. (Note that a
+\fIpluto\fR\*(Aqs internal specification to match an external one\&. (Note that a
 \fB\-\-rereadsecrets\fR
 may also be needed\&.) The
 \fB\-\-rereadgroups\fR
@@ -106,7 +115,7 @@ operation\&. However, the route and only the route can be established with the
 operation\&. Until and unless an actual connection is established, this discards any packets sent there, which may be preferable to having them sent elsewhere based on a more general route (e\&.g\&., a default route)\&.
 .PP
 Normally,
-\fIpluto\fR\'s route to a destination remains in place when a
+\fIpluto\fR\*(Aqs route to a destination remains in place when a
 \fB\-\-down\fR
 operation is used to take the connection down (or if connection setup, or later automatic rekeying, fails)\&. This permits establishing a new connection (perhaps using a different specification; the route is altered as necessary) without having a \(lqwindow\(rq in which packets might go elsewhere based on a more general route\&. Such a route can be removed using the
 \fB\-\-unroute\fR
@@ -153,10 +162,6 @@ The
 operation reads all certificate files contained in the /etc/ipsec\&.d/aacerts directory and adds them to pluto\(^as list of Authorization Authority (AA) certificates\&.
 .PP
 The
-\fB\-\-rereadocspcerts\fR
-operation reads all certificate files contained in the /etc/ipsec\&.d/ocspcerts directory and adds them to pluto\(^as list of OCSP signer certificates\&.
-.PP
-The
 \fB\-\-rereadacerts\fR
 operation reads all certificate files contained in the /etc/ipsec\&.d/acerts directory and adds them to pluto\(^as list of attribute certificates\&.
 .PP
@@ -168,7 +173,7 @@ The
 \fB\-\-rereadall\fR
 operation is equivalent to the execution of \-\-rereadse\- crets,
 \fB\-\-rereadcacerts,\fR
-\-\-rereadaacerts, \-\-rereadocspcerts, \-\-rereadac\- erts, and \-\-rereadcrls\&.
+\-\-rereadaacerts, \-\-rereadac\- erts, and \-\-rereadcrls\&.
 .PP
 The
 \fB\-\-listpubkeys\fR
@@ -191,10 +196,6 @@ The
 operation lists all X\&.509 AA certificates loaded locally from the /etc/ipsec\&.d/aacerts directory\&.
 .PP
 The
-\fB\-\-listocspcerts\fR
-operation lists all OCSP signer certificates either loaded locally from the /etc/ipsec\&.d/ocspcerts directory or received via the Online Certificate Status Protocol from an OCSP server\&.
-.PP
-The
 \fB\-\-listacerts\fR
 operation lists all X\&.509 attribute certificates loaded locally from the /etc/ipsec\&.d/acerts directory\&.
 .PP
@@ -211,16 +212,8 @@ The
 operation lists all Certificate Revocation Lists (CRLs) either loaded locally from the /etc/ipsec\&.d/crls directory or fetched dynamically from an HTTP or LDAP server\&.
 .PP
 The
-\fB\-\-listocsp\fR
-operation lists the certicates status information fetched from OCSP servers\&.
-.PP
-The
-\fB\-\-purgeocsp\fR
-operation deletes any cached certificate status infor\- mation and pending OCSP fetch requests\&.
-.PP
-The
 \fB\-\-listall\fR
-operation is equivalent to the execution of \-\-listpubkeys, \-\-listcerts, \-\-listcacerts, \-\-listaacerts, \-\-listoc\- spcerts, \-\-listacerts, \-\-listgroups, \-\-listcainfos, \-\-listcrls, \-\-lis\- tocsp\&.
+operation is equivalent to the execution of \-\-listpubkeys, \-\-listcerts, \-\-listcacerts, \-\-listaacerts, \-\-listoc\- spcerts, \-\-listacerts, \-\-listgroups, \-\-listcainfos, \-\-listcrls\&.
 .PP
 The
 \fB\-\-showonly\fR

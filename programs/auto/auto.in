@@ -18,14 +18,13 @@ usage="Usage:
 	$me [--showonly] --{add|delete|replace|down} connectionname
 	$me [--showonly] --{route|unroute} connectionname
 	$me [--showonly] --{ready|status|rereadsecrets|rereadgroups}
-        $me [--showonly] --{rereadcacerts|rereadaacerts|rereadocspcerts}
+        $me [--showonly] --{rereadcacerts|rereadaacerts}
         $me [--showonly] --{rereadacerts|rereadcrls|rereadall}
         $me [--showonly] [--utc] --{listpubkeys|listcerts}
         $me [--showonly] [--utc] --checkpubkeys
-        $me [--showonly] [--utc] --{listcacerts|listaacerts|listocspcerts}
+        $me [--showonly] [--utc] --{listcacerts|listaacerts}
         $me [--showonly] [--utc] --{listacerts|listgroups}
-        $me [--showonly] [--utc] --{listcrls|listocsp|listall}
-        $me [--showonly] --purgeocsp
+        $me [--showonly] [--utc] --{listcrls|listall}
 
 	other options: [--config ipsecconfigfile] [--verbose] [--show]"
 
@@ -60,14 +59,13 @@ do
 			argc=1
 			;;
 	--ready|--status|--rereadsecrets|--rereadgroups|\
-        --rereadcacerts|--rereadaacerts|--rereadocspcerts|\
+        --rereadcacerts|--rereadaacerts|\
         --rereadacerts|--rereadcrls|--rereadall|\
         --listpubkeys|--listcerts|\
         --checkpubkeys|\
-        --listcacerts|--listaacerts|--listocspcerts|\
+        --listcacerts|--listaacerts|\
         --listacerts|--listgroups|\
-        --listcrls|--listocsp|--listall|\
-        --purgeocsp)
+        --listcrls|--listall)
 			if test " $op" != " "
 			then
 				echo "$usage" >&2
@@ -91,12 +89,12 @@ case "$op$#:$1:$2" in
 		op="--$2"
 		;;
 1:ready:|1:status:|1:rereadsecrets:|\
-1:rereadcacerts:|1:rereadaacerts:|1:rereadocspcerts:|\
+1:rereadcacerts:|1:rereadaacerts:|\
 1:rereadacerts:|1:rereadcrls:|1:rereadall:\
 1:listpubkeys:|1:listcerts:|\
-1:listcacerts:|1:listaacerts:|1:listocspcerts:|\
+1:listcacerts:|1:listaacerts:|\
 1:listacerts:|1:listgroups:|\
-1:listcrls:|1:listocsp:|1:listall:|1:purgeocsp:)
+1:listcrls:|1:listall:)
 		echo "$me: warning: obsolete command syntax used" >&2
 		op="--$1"
 		;;
@@ -135,7 +133,6 @@ case "$op" in
 --rereadgroups)           echo "ipsec whack --listen"                | runit ; exit ;;
 --rereadcacerts)   echo "ipsec whack --rereadcacerts"         | runit ; exit ;;
 --rereadaacerts)   echo "ipsec whack --rereadaacerts"         | runit ; exit ;;
---rereadocspcerts) echo "ipsec whack --rereadocspcerts"       | runit ; exit ;;
 --rereadacerts)    echo "ipsec whack --rereadacerts"          | runit ; exit ;;
 --rereadcrls)     echo "ipsec whack --rereadcrls"            | runit ; exit ;;
 --rereadall)      echo "ipsec whack --rereadall"             | runit ; exit ;;
@@ -144,13 +141,10 @@ case "$op" in
 --listcerts)      echo "ipsec whack $utc --listcerts"        | runit ; exit ;;
 --listcacerts)    echo "ipsec whack $utc --listcacerts"      | runit ; exit ;;
 --listaacerts)    echo "ipsec whack $utc --listaacerts"      | runit ; exit ;;
---listocspcerts)   echo "ipsec whack $utc --listocspcerts"    | runit ; exit ;;
 --listacerts)     echo "ipsec whack $utc --listacerts"       | runit ; exit ;;
 --listgroups)     echo "ipsec whack $utc --listgroups"       | runit ; exit ;; 
 --listcrls)       echo "ipsec whack $utc --listcrls"         | runit ; exit ;; 
---listocsp)       echo "ipsec whack $utc --listocsp"         | runit ; exit ;;
 --listall)        echo "ipsec whack $utc --listall"          | runit ; exit ;;
---purgeocsp)      echo "ipsec whack $utc --purgeocsp"        | runit ; exit ;;
 --up)  echo "ipsec whack $async --name $names --initiate"    | runit ; exit ;;
 --down)        echo "ipsec whack --name $names --terminate"          | runit ; exit ;;
 --delete)         echo "ipsec whack --name $names --delete"  | runit ; exit ;; 

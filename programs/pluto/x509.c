@@ -61,7 +61,6 @@
 #include "sha1.h"
 #include "whack.h"
 #include "fetch.h"
-#include "ocsp.h"
 #include "pkcs.h"
 #include "plutocerts.h"
 #include "x509more.h"
@@ -727,10 +726,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	}
 	else
 	{
-	    /* check certificate revocation using ocsp or crls */
-#ifdef HAVE_OCSP
-	    if (!verify_by_ocsp(cert, strict, until)) return FALSE;
-#endif
+	    /* check certificate revocation crls */
 #if defined(LIBCURL) || defined(LDAP_VER)
 	    if (!verify_by_crl (cert, strict, until)) return FALSE;
 #endif

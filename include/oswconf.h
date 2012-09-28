@@ -43,7 +43,6 @@ struct osw_conf_options {
     char *private_dir;            /* "/etc/ipsec.d/private" */
     char *certs_dir;              /* "/etc/ipsec.d/certs" */
     char *aacerts_dir;            /* "/etc/ipsec.d/aacerts" */
-    char *ocspcerts_dir;          /* "/etc/ipsec.d/ocspcerts" */
 };
 
 typedef struct {

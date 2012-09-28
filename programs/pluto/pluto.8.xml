@@ -73,8 +73,6 @@
 
       <arg choice="opt">--crlcheckinterval</arg>
 
-      <arg choice="opt">--ocspuri</arg>
-
       <arg choice="opt">--interface
       <replaceable>interfacename</replaceable></arg>
 
@@ -666,13 +664,10 @@
 
       <arg choice="opt">--listaacerts</arg>
 
-      <arg choice="opt">--listocspcerts</arg>
-
       <arg choice="opt">--listgroups</arg>
 
       <arg choice="opt">--listcrls</arg>
 
-      <arg choice="opt">--listocsp</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -692,8 +687,6 @@
 
       <arg choice="opt">--rereadaacerts</arg>
 
-      <arg choice="opt">--rereadocspcerts</arg>
-
       <arg choice="opt">--rereadcrls</arg>
     </cmdsynopsis>
 
@@ -701,8 +694,6 @@
       <command>ipsec</command>
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
-
-      <arg choice="plain">--purgeocsp</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -1040,7 +1031,6 @@
       <filename>/etc/ipsec.d/certs</filename>,
       <filename>/etc/ipsec.d/cacerts</filename>,
       <filename>/etc/ipsec.d/aacerts</filename>,
-      <filename>/etc/ipsec.d/ocspcerts</filename>,
       <filename>/etc/ipsec.d/private</filename> and
       <filename>/etc/ipsec.d/crls</filename>. The <emphasis
       remap="I">Certificate Revocation Lists</emphasis> can also be retrieved
@@ -1050,11 +1040,8 @@
       remap="I">2*crlcheckinterval</emphasis> before the next update time.
       Pluto logs a warning if no valid CRL was loaded or obtained for a
       connection. If <option>--strictcrlpolicy</option> is given, the
-      connection will be rejected until a valid CRL has been loaded. Pluto
-      also has support for the <emphasis remap="I">Online Certificate Store
-      Protocol</emphasis> (OSCP) as defined in RFC 2560. The URL to the OSCP
-      store can be given to pluto via the <option>--ocspuri</option>
-      option.</para>
+      connection will be rejected until a valid CRL has been loaded.
+      </para>
 
       <para>Pluto can also use helper children to off-load cryptographic
       operations. This behavior can be fine tuned using the
@@ -2104,16 +2091,6 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--ocspcerts</option></term>
-
-          <listitem>
-            <para>list all of the X.509 certificates obtained via the
-            <emphasis remap="I">Online Certificate Store Protocol</emphasis>
-            (OCSP)</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
           <term><option>--listgroups</option></term>
 
           <listitem>
@@ -2135,8 +2112,7 @@
       <para>The corresponding options <option>--rereadsecrets</option>,
       <option>--rereadall</option>, <option>--rereadcacerts</option>,
       <option>--rereadacerts</option>, <option>--rereadaacerts</option>,
-      <option>--rereadocspcerts</option> <option>--rereadcrls</option>, and
-      <option>--purgeocsp</option>, options reread this information from their
+      and <option>--rereadcrls</option> options reread this information from their
       respective sources, and purge all the online obtained information. The
       option <option>--listevents</option> lists all pending CRL fetch
       commands.</para>

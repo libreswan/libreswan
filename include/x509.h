@@ -217,8 +217,6 @@ extern void lock_crl_list(const char *who);
 extern void unlock_crl_list(const char *who);
 extern void lock_cacert_list(const char *who);
 extern void unlock_cacert_list(const char *who);
-extern void lock_ocsp_cache(const char *who);
-extern void unlock_ocsp_cache(const char *who);
 extern void lock_authcert_list(const char *who);
 extern void unlock_authcert_list(const char *who);
 #else
@@ -228,8 +226,6 @@ extern void unlock_authcert_list(const char *who);
 #define unlock_crl_list(who) /* nothing */
 #define lock_cacert_list(who) /* nothing */
 #define unlock_cacert_list(who) /* nothing */
-#define lock_ocsp_cache(who) /* nothing */
-#define unlock_ocsp_cache(who) /* nothing */
 #define lock_authcert_list(who) /* nothing */
 #define unlock_authcert_list(who) /* nothing */
 #endif

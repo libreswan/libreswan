@@ -159,7 +159,7 @@ endif
 
 # the files are defined here so that TAGS: can catch them.
 #
-X509_DIST_OBJS=ac.o x509.o ocsp.o x509keys.o
+X509_DIST_OBJS=ac.o x509.o x509keys.o
 X509_DIST_SRCS=${X509_DIST_OBJS:.o=.c}
 X509_DIST_SRCS+=fetch.h 
 HAVE_THREADS_DIST_OBJS=fetch.o 

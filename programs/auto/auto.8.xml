@@ -72,10 +72,6 @@ connection</replaceable></arg>
     <arg choice='opt'>--checkpubkeys </arg>
     <arg choice='opt'>--listcacerts | --rereadcacerts</arg>
     <arg choice='opt'>--listcrls | --rereadcrls </arg>
-    <arg choice='opt'>
-      <arg choice='opt'>--listocspcerts | --rereadocspcerts </arg>
-      <arg choice='opt'>--listocsp | --purgeocsp </arg>
-    </arg>
     <arg choice='opt'>--listacerts | --rereadacerts </arg>
     <arg choice='opt'>--listaacerts | --rereadaacerts </arg>
     <arg choice='opt'>--listgroups | --rereadgroups </arg>
@@ -234,10 +230,6 @@ but that may change.)</para>
        the  /etc/ipsec.d/aacerts  directory  and  adds them to pluto’s list of
        Authorization Authority (AA) certificates.
 </para>
-<para>       The <option>--rereadocspcerts</option> operation reads all certificate  files  contained
-       in  the  /etc/ipsec.d/ocspcerts directory and adds them to pluto’s list
-       of OCSP signer certificates.
-</para>
 <para>       The <option>--rereadacerts</option> operation reads all certificate files  contained  in
        the  /etc/ipsec.d/acerts  directory  and  adds  them to pluto’s list of
        attribute certificates.
@@ -247,7 +239,7 @@ but that may change.)</para>
        pluto’s list of CRLs.
 </para>
 <para>       The <option>--rereadall</option> operation is equivalent to the execution of --rereadse-
-       crets, <option>--rereadcacerts,</option> --rereadaacerts, --rereadocspcerts, --rereadac-
+       crets, <option>--rereadcacerts,</option> --rereadaacerts, --rereadac-
        erts, and --rereadcrls.
 </para>
 <para>       The <option>--listpubkeys</option> operation lists all RSA public keys  either  received
@@ -270,10 +262,6 @@ but that may change.)</para>
 <para>       The  <option>--listaacerts</option>  operation  lists  all  X.509 AA certificates loaded
        locally from the /etc/ipsec.d/aacerts directory.
 </para>
-<para>       The <option>--listocspcerts</option> operation lists all OCSP signer certificates either
-       loaded  locally  from  the /etc/ipsec.d/ocspcerts directory or received
-       via the Online Certificate Status Protocol from an OCSP server.
-</para>
 <para>       The <option>--listacerts</option>  operation  lists  all  X.509  attribute  certificates
        loaded locally from the /etc/ipsec.d/acerts directory.
 </para>
@@ -288,16 +276,9 @@ but that may change.)</para>
        either  loaded  locally from the /etc/ipsec.d/crls directory or fetched
        dynamically from an HTTP or LDAP server.
 </para>
-<para>       The  <option>--listocsp</option>  operation  lists  the  certicates  status  information
-       fetched from OCSP servers.
-</para>
-<para>       The  <option>--purgeocsp</option> operation deletes any cached certificate status infor-
-       mation and pending OCSP fetch requests.
-</para>
 <para>       The  <option>--listall</option>  operation is equivalent to the execution of 
        --listpubkeys,  --listcerts,  --listcacerts,  --listaacerts,  --listoc-
-       spcerts,  --listacerts, --listgroups, --listcainfos, --listcrls, --lis-
-       tocsp.
+       spcerts,  --listacerts, --listgroups, --listcainfos, --listcrls.
 </para>
 
 <para>The

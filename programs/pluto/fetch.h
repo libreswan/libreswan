@@ -22,14 +22,9 @@ extern void free_fetch_requests(void);
 extern void list_distribution_points(const generalName_t *gn);
 extern void list_fetch_requests(bool utc);
 
-struct ocsp_location; /* forward declaration of ocsp_location defined in ocsp.h */
-
 extern void init_fetch(void);
 extern void free_crl_fetch(void);
-extern void free_ocsp_fetch(void);
 extern void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn);
-extern void add_ocsp_fetch_request(struct ocsp_location *location, chunk_t serialNumber);
 extern void list_crl_fetch_requests(bool utc);
-extern void list_ocsp_fetch_requests(bool utc);
 
 

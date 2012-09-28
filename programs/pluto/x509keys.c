@@ -53,7 +53,6 @@
 #include "sha1.h"
 #include "whack.h"
 #include "fetch.h"
-#include "ocsp.h"
 #include "pkcs.h"
 #include "x509more.h"
 

@@ -1,7 +1,6 @@
 /etc
 /etc/ipsec.d
 /etc/ipsec.d/cacerts
-/etc/ipsec.d/ocspcerts
 /etc/ipsec.d/crls
 /etc/ipsec.d/private
 /etc/ipsec.d/policies

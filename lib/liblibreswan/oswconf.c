@@ -63,9 +63,6 @@ static void osw_conf_calculate(struct osw_conf_options *oco)
     snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/aacerts"), oco->confddir);
     oco->aacerts_dir = clone_str(buf, "aacerts path");
 
-    snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/ocspcerts"), oco->confddir);
-    oco->ocspcerts_dir = clone_str(buf, "ocspcerts path");
-
     snprintf(buf, sizeof(buf), "%s/policies", oco->confddir);
     oco->policies_dir = clone_str(buf, "policies path");
 }
@@ -144,7 +141,6 @@ void osw_conf_free_oco(void)
     pfree(global_oco.private_dir);
     pfree(global_oco.certs_dir);
     pfree(global_oco.aacerts_dir);
-    pfree(global_oco.ocspcerts_dir);
 }
 
 const struct osw_conf_options *osw_init_options(void)

@@ -233,18 +233,13 @@ help(void)
             " \\\n   "
             " [--listacerts]"
             " [--listaacerts]"
-            " [--listocspcerts]"
             " \\\n   "
             " [--listgroups]"
 	    " [--listcrls]"
-            " [--listocsp]"
 
 	    " [--listpsks]"
 	    " [--listall]"
 	    "\n\n"
-        "purge: whack"
-            " [--purgeocsp]"
-            "\n\n"
 
         "purge: whack"
             " [--listevents]"
@@ -254,7 +249,6 @@ help(void)
 	    " [--rereadsecrets]"
 	    " [--rereadcacerts]"
             " [--rereadaacerts]"
-            " [--rereadocspcerts]"
             " \\\n   "
             " [--rereadacerts]"
 
@@ -362,12 +356,9 @@ enum option_enums {
     OPT_LISTEN,
     OPT_UNLISTEN,
 
-    OPT_PURGEOCSP,
-
     OPT_REREADSECRETS,
     OPT_REREADCACERTS,
     OPT_REREADAACERTS,
-    OPT_REREADOCSPCERTS,
     OPT_REREADACERTS,
     OPT_REREADCRLS,
     OPT_REREADALL,
@@ -404,10 +395,8 @@ enum option_enums {
     LST_CACERTS,
     LST_ACERTS,
     LST_AACERTS,
-    LST_OCSPCERTS,
     LST_GROUPS,
     LST_CRLS,
-    LST_OCSP,
     LST_CARDS,
     LST_PSKS,
     LST_EVENTS,
@@ -589,12 +578,10 @@ static const struct option long_opts[] = {
     { "crash", required_argument, NULL, OPT_DELETECRASH + OO },
     { "listen", no_argument, NULL, OPT_LISTEN + OO },
     { "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
-    { "purgeocsp", no_argument, NULL, OPT_PURGEOCSP + OO },
 
     { "rereadsecrets", no_argument, NULL, OPT_REREADSECRETS + OO },
     { "rereadcacerts", no_argument, NULL, OPT_REREADCACERTS + OO },
     { "rereadaacerts", no_argument, NULL, OPT_REREADAACERTS + OO },
-    { "rereadocspcerts", no_argument, NULL, OPT_REREADOCSPCERTS + OO },
     { "rereadacerts", no_argument, NULL, OPT_REREADACERTS + OO },
 
     { "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO },
@@ -620,10 +607,8 @@ static const struct option long_opts[] = {
     { "listcacerts", no_argument, NULL, LST_CACERTS + OO },
     { "listacerts", no_argument, NULL, LST_ACERTS + OO },
     { "listaacerts", no_argument, NULL, LST_AACERTS + OO },
-    { "listocspcerts", no_argument, NULL, LST_OCSPCERTS + OO },
     { "listgroups", no_argument, NULL, LST_GROUPS + OO },
     { "listcrls", no_argument, NULL, LST_CRLS + OO },
-    { "listocsp", no_argument, NULL, LST_OCSP + OO },
     { "listpsks", no_argument, NULL, LST_PSKS + OO },
     { "listevents", no_argument, NULL, LST_EVENTS + OO },
     { "listall", no_argument, NULL, LST_ALL + OO },
@@ -1188,14 +1173,9 @@ main(int argc, char **argv)
 	    msg.whack_unlisten = TRUE;
 	    continue;
 
-        case OPT_PURGEOCSP:     /* --purgeocsp */
-            msg.whack_purgeocsp = TRUE;
-            continue;
-
         case OPT_REREADSECRETS:   /* --rereadsecrets */
         case OPT_REREADCACERTS:   /* --rereadcacerts */
         case OPT_REREADAACERTS:   /* --rereadaacerts */
-        case OPT_REREADOCSPCERTS: /* --rereadocspcerts */
         case OPT_REREADACERTS:    /* --rereadacerts */
         case OPT_REREADCRLS:      /* --rereadcrls */
 	    msg.whack_reread |= LELEM(c-OPT_REREADSECRETS);
@@ -1242,10 +1222,8 @@ main(int argc, char **argv)
         case LST_CACERTS:       /* --listcacerts */
         case LST_ACERTS:        /* --listacerts */
         case LST_AACERTS:       /* --listaacerts */
-        case LST_OCSPCERTS:     /* --listocspcerts */
         case LST_GROUPS:        /* --listgroups */
         case LST_CRLS:          /* --listcrls */
-        case LST_OCSP:          /* --listocsp */
         case LST_PSKS:          /* --listpsks */
         case LST_EVENTS:         /* --listevents */
             msg.whack_list |= LELEM(c - LST_PUBKEYS);
@@ -1897,7 +1875,7 @@ main(int argc, char **argv)
 	  || msg.whack_initiate || msg.whack_oppo_initiate
 	  || msg.whack_terminate
 	  || msg.whack_route || msg.whack_unroute || msg.whack_listen
-	  || msg.whack_unlisten || msg.whack_list || msg.whack_purgeocsp
+	  || msg.whack_unlisten || msg.whack_list 
 	  || msg.whack_reread || msg.whack_crash
 	  || msg.whack_status || msg.whack_options || msg.whack_shutdown))
     {

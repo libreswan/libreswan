@@ -31,7 +31,7 @@
 ipsec_pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-optionsfrom\ \fIfilename\fR] [\-\-nofork] [\-\-stderrlog] [\-\-use\-auto] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_keepalive] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-ocspuri] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-lwdnsq\ \fIpathname\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits]
+\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-optionsfrom\ \fIfilename\fR] [\-\-nofork] [\-\-stderrlog] [\-\-use\-auto] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_keepalive] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-lwdnsq\ \fIpathname\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-help] [\-\-version]
 .HP \w'\fBipsec\fR\ 'u
@@ -79,11 +79,11 @@ ipsec_pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-name\ \fIconnection\-name\fR] [\-\-debug\-none] [\-\-debug\-all] [\-\-debug\-raw] [\-\-debug\-crypt] [\-\-debug\-parsing] [\-\-debug\-emitting] [\-\-debug\-control] [\-\-debug\-controlmore] [\-\-debug\-lifecycle] [\-\-debug\-klips] [\-\-debug\-pfkey] [\-\-debug\-dns] [\-\-debug\-dpd] [\-\-debug\-natt] [\-\-debug\-oppo] [\-\-debug\-oppoinfo] [\-\-debug\-whackwatch] [\-\-debug\-private] [\-\-impair\-delay\-adns\-key\-answer] [\-\-impair\-delay\-adns\-txt\-answer] [\-\-impair\-bust\-mi2] [\-\-impair\-bust\-mr2] [\-\-impair\-sa\-fail] [\-\-impair\-die\-oninfo] [\-\-impair\-jacob\-two\-two]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR [\-\-utc] [\-\-listall] [\-\-listpubkeys] [\-\-listcerts] [\-\-listcacerts] [\-\-listacerts] [\-\-listaacerts] [\-\-listocspcerts] [\-\-listgroups] [\-\-listcrls] [\-\-listocsp]
+\fBipsec\fR \fIwhack\fR [\-\-utc] [\-\-listall] [\-\-listpubkeys] [\-\-listcerts] [\-\-listcacerts] [\-\-listacerts] [\-\-listaacerts] [\-\-listgroups] [\-\-listcrls]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR [\-\-utc] [\-\-rereadsecrets] [\-\-rereadall] [\-\-rereadcacerts] [\-\-rereadacerts] [\-\-rereadaacerts] [\-\-rereadocspcerts] [\-\-rereadcrls]
+\fBipsec\fR \fIwhack\fR [\-\-utc] [\-\-rereadsecrets] [\-\-rereadall] [\-\-rereadcacerts] [\-\-rereadacerts] [\-\-rereadaacerts] [\-\-rereadcrls]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-purgeocsp
+\fBipsec\fR \fIwhack\fR
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-listevents
 .HP \w'\fBipsec\fR\ 'u
@@ -289,7 +289,6 @@ prevents pluto from sending these\&. At startup, pluto loads all the X\&.509 rel
 /etc/ipsec\&.d/certs,
 /etc/ipsec\&.d/cacerts,
 /etc/ipsec\&.d/aacerts,
-/etc/ipsec\&.d/ocspcerts,
 /etc/ipsec\&.d/private
 and
 /etc/ipsec\&.d/crls\&. The
@@ -300,11 +299,7 @@ sets the time between checking for CRL expiration and issuing new fetch commands
 \fI2*crlcheckinterval\fR
 before the next update time\&. Pluto logs a warning if no valid CRL was loaded or obtained for a connection\&. If
 \fB\-\-strictcrlpolicy\fR
-is given, the connection will be rejected until a valid CRL has been loaded\&. Pluto also has support for the
-\fIOnline Certificate Store Protocol\fR
-(OSCP) as defined in RFC 2560\&. The URL to the OSCP store can be given to pluto via the
-\fB\-\-ocspuri\fR
-option\&.
+is given, the connection will be rejected until a valid CRL has been loaded\&.
 .PP
 Pluto can also use helper children to off\-load cryptographic operations\&. This behavior can be fine tuned using the
 \fB\-\-nhelpers\fR\&. Pluto will start
@@ -951,13 +946,6 @@ list all the X\&.509 Attribute certificates that are currently loaded
 .RS 4
 .RE
 .PP
-\fB\-\-ocspcerts\fR
-.RS 4
-list all of the X\&.509 certificates obtained via the
-\fIOnline Certificate Store Protocol\fR
-(OCSP)
-.RE
-.PP
 \fB\-\-listgroups\fR
 .RS 4
 .RE
@@ -974,10 +962,9 @@ The corresponding options
 \fB\-\-rereadall\fR,
 \fB\-\-rereadcacerts\fR,
 \fB\-\-rereadacerts\fR,
-\fB\-\-rereadaacerts\fR,
-\fB\-\-rereadocspcerts\fR
-\fB\-\-rereadcrls\fR, and
-\fB\-\-purgeocsp\fR, options reread this information from their respective sources, and purge all the online obtained information\&. The option
+\fB\-\-rereadaacerts\fR, and
+\fB\-\-rereadcrls\fR
+options reread this information from their respective sources, and purge all the online obtained information\&. The option
 \fB\-\-listevents\fR
 lists all pending CRL fetch commands\&.
 .PP

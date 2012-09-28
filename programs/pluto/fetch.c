@@ -42,7 +42,6 @@
 #include "pem.h"
 #include "x509.h"
 #include "whack.h"
-#include "ocsp.h"
 #include "fetch.h"
 #include "oswtime.h"
 
@@ -75,16 +74,11 @@ fetch_req_t empty_fetch_req = {
 /* chained list of crl fetch requests */
 static fetch_req_t *crl_fetch_reqs  = NULL;
 
-/* chained list of ocsp fetch requests */
-static ocsp_location_t *ocsp_fetch_reqs = NULL;
-
 static pthread_t thread;
 static pthread_mutex_t certs_and_keys_mutex  = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t authcert_list_mutex   = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t crl_list_mutex        = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t ocsp_cache_mutex      = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t crl_fetch_list_mutex  = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t ocsp_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex      = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  fetch_wake_cond       = PTHREAD_COND_INITIALIZER;
 
@@ -163,30 +157,6 @@ unlock_crl_list(const char *who)
 }
 
 /*
- * lock access to the ocsp cache
- */
-extern void
-lock_ocsp_cache(const char *who)
-{
-    pthread_mutex_lock(&ocsp_cache_mutex);
-    DBG(DBG_CONTROLMORE,
-	DBG_log("ocsp cache locked by '%s'", who)
-    )
-}
-
-/*
- * unlock access to the ocsp cache
- */
-extern void
-unlock_ocsp_cache(const char *who)
-{
-    DBG(DBG_CONTROLMORE,
-	DBG_log("ocsp cache unlocked by '%s'", who)
-    )
-    pthread_mutex_unlock(&ocsp_cache_mutex);
-}
-
-/*
  * lock access to the chained crl fetch request list
  */
 static void
@@ -210,29 +180,6 @@ unlock_crl_fetch_list(const char *who)
     pthread_mutex_unlock(&crl_fetch_list_mutex);
 }
 
-/*
- * lock access to the chained ocsp fetch request list
- */
-static void
-lock_ocsp_fetch_list(const char *who)
-{
-    pthread_mutex_lock(&ocsp_fetch_list_mutex);
-    DBG(DBG_CONTROLMORE,
-	DBG_log("ocsp fetch request list locked by '%s'", who)
-    )
-}
-
-/*
- * unlock access to the chained ocsp fetch request list
- */
-static void
-unlock_ocsp_fetch_list(const char *who)
-{
-    DBG(DBG_CONTROLMORE,
-	DBG_log("ocsp fetch request list unlocked by '%s'", who)
-    )
-    pthread_mutex_unlock(&ocsp_fetch_list_mutex);
-}
 
 /*
  * wakes up the sleeping fetch thread
@@ -601,115 +548,6 @@ fetch_crls(void)
 }
 
 static void
-fetch_ocsp_status(ocsp_location_t* location LIBCURL_UNUSED)
-{
-#ifdef LIBCURL
-    chunk_t request;
-    chunk_t response = empty_chunk;
-
-    CURL* curl;
-    CURLcode res;
-
-    request = build_ocsp_request(location);
-
-    DBG(DBG_CONTROL,
-    	DBG_log("sending ocsp request to location '%.*s'"
-	    , (int)location->uri.len, location->uri.ptr)
-    )
-    DBG(DBG_RAW,
-	DBG_dump_chunk("OCSP request", request)
-    )
-
-    /* send via http post using libcurl */
-    curl = curl_easy_init();
-
-    if (curl != NULL)
-    {
-	char errorbuffer[CURL_ERROR_SIZE];
-	struct curl_slist *headers = NULL;
-	char* uri = alloc_bytes(location->uri.len+1, "ocsp uri");
-
-	/* we need a null terminated string for curl */
-	memcpy(uri, location->uri.ptr, location->uri.len);
-	*(uri + location->uri.len) = '\0';
-
-	/* set content type header */
-	headers = curl_slist_append(headers, "Content-Type: application/ocsp-request");
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-	curl_easy_setopt(curl, CURLOPT_URL, uri);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_buffer);
-	curl_easy_setopt(curl, CURLOPT_FILE, (void *)&response);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request.ptr);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, request.len);
-	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, &errorbuffer);
-        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, FETCH_CMD_TIMEOUT);
-
-
-	res = curl_easy_perform(curl);
-
-	if (res == CURLE_OK)
-	{
-	    DBG(DBG_CONTROL,
-		DBG_log("received ocsp response")
-	    )
-	    DBG(DBG_RAW,
-		DBG_dump_chunk("OCSP response", response)
-	    )
-	    parse_ocsp(location, response);
-	}
-	else
-	{
-	    plog("failed to fetch ocsp status (%s): %s", uri, errorbuffer);
-	}
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
-	pfree(uri);
-	/* not using freeanychunk because of realloc (no leak detective) */
-	curl_free(response.ptr);
-    }
-    freeanychunk(location->nonce);
-    freeanychunk(request);
-    
-    /* increment the trial counter of the unresolved fetch requests */
-    {
-	ocsp_certinfo_t *certinfo = location->certinfo;
-	
-	while (certinfo != NULL)
-	{
-	    certinfo->trials++;
-	    certinfo = certinfo->next;
-	}
-    }
-    return;
-#else
-    plog("ocsp error: pluto wasn't compiled with libcurl support");
-#endif
-}
-
-/*
- * try to fetch the necessary ocsp information
- */
-static void
-fetch_ocsp(void)
-{
-    ocsp_location_t *location;
-
-    lock_ocsp_fetch_list("fetch_ocsp");
-    location = ocsp_fetch_reqs;
-
-    /* fetch the ocps status for all locations */
-    while (location != NULL)
-    {
-	if (location->certinfo != NULL)
-	    fetch_ocsp_status(location);
-	location = location->next;
-    }
-
-    unlock_ocsp_fetch_list("fetch_ocsp");
-}
-
-static void
 fetch_thread(void *arg UNUSED)
 {
     struct timespec wait_interval;
@@ -736,9 +574,8 @@ fetch_thread(void *arg UNUSED)
 	{
 	    DBG(DBG_CONTROL,
 		DBG_log(" ");
-		DBG_log("*time to check crls and the ocsp cache")
+		DBG_log("*time to check crls")
 	    )
-	    check_ocsp();
 	    check_crls();
 	}
 	else
@@ -747,7 +584,6 @@ fetch_thread(void *arg UNUSED)
 		DBG_log("fetch thread was woken up")
 	    )
 	}
-	fetch_ocsp();
 	fetch_crls();
     }
 }
@@ -799,17 +635,6 @@ free_crl_fetch(void)
 	curl_global_cleanup();
     }
 #endif
-}
-
-/*
- * free the chained list of ocsp requests
- */
-void
-free_ocsp_fetch(void)
-{
-    lock_ocsp_fetch_list("free_ocsp_fetch");
-    free_ocsp_locations(&ocsp_fetch_reqs);
-    unlock_ocsp_fetch_list("free_ocsp_fetch");
 }
 
 
@@ -904,21 +729,6 @@ add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 }
 
 /*
- * add an ocsp fetch request to the chained list
- */
-void
-add_ocsp_fetch_request(ocsp_location_t *location, chunk_t serialNumber)
-{
-    ocsp_certinfo_t certinfo;
-    
-    certinfo.serialNumber = serialNumber;
-
-    lock_ocsp_fetch_list("add_ocsp_fetch_request");
-    add_certinfo(location, &certinfo, &ocsp_fetch_reqs, TRUE);
-    unlock_ocsp_fetch_list("add_ocsp_fetch_request");
-}
-
-/*
  * list all distribution points
  */
 void
@@ -967,15 +777,6 @@ list_crl_fetch_requests(bool utc)
 	req = req->next;
     }
     unlock_crl_fetch_list("list_crl_fetch_requests");
-}
-
-void
-list_ocsp_fetch_requests(bool utc)
-{
-    lock_ocsp_fetch_list("list_ocsp_fetch_requests");
-    list_ocsp_locations(ocsp_fetch_reqs, TRUE, utc, FALSE);
-    unlock_ocsp_fetch_list("list_ocsp_fetch_requests");
-
 }
 
 #else

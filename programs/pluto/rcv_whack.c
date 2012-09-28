@@ -66,7 +66,6 @@
 #include "dnskey.h"	/* needs keys.h and adns.h */
 #include "server.h"
 #include "fetch.h"
-#include "ocsp.h"
 #include "timer.h"
 
 #include "kernel_alg.h"
@@ -467,11 +466,6 @@ void whack_process(int whackfd, struct whack_message msg)
        load_authcerts("AA cert", oco->aacerts_dir, AUTH_AA);
     }
 
-    if (msg.whack_reread & REREAD_OCSPCERTS)
-    {
-       load_authcerts("OCSP cert", oco->ocspcerts_dir, AUTH_OCSP);
-    }
-
     if (msg.whack_reread & REREAD_ACERTS)
     {
        load_acerts();
@@ -493,14 +487,6 @@ void whack_process(int whackfd, struct whack_message msg)
 #endif	
     }
 
-#ifdef HAVE_OCSP
-    if (msg.whack_purgeocsp)
-    {
-       free_ocsp_fetch();
-       free_ocsp_cache();
-    }
-#endif
-
     if (msg.whack_list & LIST_PSKS)
     {
 	list_psks();
@@ -515,11 +501,6 @@ void whack_process(int whackfd, struct whack_message msg)
     if (msg.whack_list & LIST_AACERTS)
     {
        list_authcerts("AA", AUTH_AA, msg.whack_utc);
-    }
-
-    if (msg.whack_list & LIST_OCSPCERTS)
-    {
-       list_authcerts("OCSP", AUTH_OCSP, msg.whack_utc);
     }
 
     if (msg.whack_list & LIST_ACERTS)
@@ -545,14 +526,6 @@ void whack_process(int whackfd, struct whack_message msg)
 	list_crl_fetch_requests(msg.whack_utc);
 #endif
     }
-
-#ifdef HAVE_OCSP
-    if (msg.whack_list & LIST_OCSP)
-    {
-       list_ocsp_cache(msg.whack_utc, strict_crl_policy);
-       list_ocsp_fetch_requests(msg.whack_utc);
-    }
-#endif
 
     if (msg.whack_list & LIST_EVENTS)
     {
