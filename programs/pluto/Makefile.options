@@ -41,9 +41,9 @@ ifeq ($(USE_XAUTH),true)
 XAUTH=1
 # compile with PAM support will increase the size of the distribution
 # and thus it may not be the best solution for embeded systems. XAUTH
-# will use MD5/DES crypt() lib and a password file by default.
+# will use the crypt() lib and a password file by default.
 ifeq ($(USE_XAUTHPAM),true)
-XAUTH_USEPAM=1
+XAUTH_HAVE_PAM=1
 endif
 endif
 
@@ -206,7 +206,7 @@ XAUTH_LLIBS=-lcrypt
 endif
 # if we use pam for password checking then add it too
 ifeq ($(USE_XAUTHPAM),true)
-XAUTHPAM_DEFS=-DXAUTH_USEPAM
+XAUTHPAM_DEFS=-DXAUTH_HAVE_PAM
 XAUTHPAM_LIBS=-lpam -ldl
 endif
 endif

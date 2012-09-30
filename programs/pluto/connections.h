@@ -124,8 +124,10 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
 struct virtual_t;
 
-#ifdef XAUTH_USEPAM
-#include <security/pam_appl.h>
+#ifdef XAUTH_HAVE_PAM
+# include <security/pam_appl.h>
+# include <pthread.h>
+# include <signal.h>
 #endif
 
 struct ietfAttr;	/* forward declaration of ietfAttr defined in ac.h */
@@ -261,7 +263,8 @@ struct connection {
     
     generalName_t *requested_ca;	/* collected certificate requests */
     pthread_t tid;
-#ifdef XAUTH_USEPAM 
+    pthread_mutex_t mutex;
+#ifdef XAUTH_HAVE_PAM 
     pam_handle_t  *pamh;		/*  PAM handle for that connection  */
 #endif
 #ifdef DYNAMICDNS

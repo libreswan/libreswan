@@ -39,7 +39,7 @@
 #include "x509.h"
 #include "pgp.h"
 #include "certs.h"
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
 #endif
 #include "connections.h"	/* needs id.h */
@@ -355,6 +355,18 @@ delete_state(struct state *st)
 
     DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
 
+#ifdef XAUTH_USEPAM 
+    /*
+     * If there is still an authentication thread alive, kill it.
+     */
+    if (c->tid) {
+	pthread_kill(c->tid,SIGINT);
+	pthread_mutex_lock(&c->mutex);
+    }
+    pthread_mutex_trylock(&c->mutex);
+    pthread_mutex_unlock(&c->mutex);
+    pthread_mutex_destroy(&c->mutex);
+#endif
 
     /* If DPD is enabled on this state object, clear any pending events */
     if(st->st_dpd_event != NULL)

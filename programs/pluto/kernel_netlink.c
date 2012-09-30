@@ -70,7 +70,7 @@
 #define XFRM_STATE_AF_UNSPEC	32
 #endif
 
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
 #endif
 

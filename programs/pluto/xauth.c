@@ -52,9 +52,12 @@
 #include "x509.h"
 #include "pgp.h"
 #include "certs.h"
-#ifdef XAUTH_USEPAM
-#include <security/pam_appl.h>
+#ifdef XAUTH_HAVE_PAM
+# include <security/pam_appl.h>
 #endif
+#include <pthread.h>
+#include <signal.h>
+#include <setjmp.h>
 #include "connections.h"	/* needs id.h */
 #include "packet.h"
 #include "demux.h"	/* needs packet.h */
@@ -76,9 +79,6 @@
 
 #include "xauth.h"
 #include "virtual.h"
-
-#include <pthread.h>
-#include <signal.h>
 
 static stf_status
 modecfg_inI2(struct msg_digest *md);
@@ -106,7 +106,7 @@ struct internal_addr
 };
 
 
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
 static
 int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
               struct pam_response **response, void *appdata_ptr);
@@ -116,6 +116,16 @@ struct pam_conv conv = {
 	xauth_pam_conv,
 	NULL  };
 
+typedef struct
+{
+	struct state *st;
+	sigjmp_buf jbuf;
+} st_jbuf_t;
+
+static st_jbuf_t *st_jbuf_mem;
+
+pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /**
  * Get IP address from a PAM environment variable
  * 
@@ -124,6 +134,61 @@ struct pam_conv conv = {
  * @param addr Pointer to var where you want IP address stored
  * @return int Return code
  */
+static
+void dealloc_st_jbuf(st_jbuf_t *ptr)
+{
+     for (++ptr; ptr->st != NULL; ptr++)
+	*(ptr - 1) = *ptr;
+     ptr->st = NULL;
+     if (ptr == st_jbuf_mem + 1)
+     {
+	free(st_jbuf_mem);
+	st_jbuf_mem = NULL;
+     } else {
+	st_jbuf_mem = realloc(st_jbuf_mem,(int)(ptr - st_jbuf_mem)*sizeof(st_jbuf_t));
+     }
+}   
+
+static
+st_jbuf_t *alloc_st_jbuf(void)
+{
+    st_jbuf_t *ptr;
+
+    pthread_mutex_lock(&st_jbuf_mutex);
+    if (!st_jbuf_mem) {
+	st_jbuf_mem = calloc(2,sizeof(st_jbuf_t));
+	ptr = st_jbuf_mem;
+    } else {
+	for (ptr = st_jbuf_mem; ptr->st != NULL; ptr++);
+	st_jbuf_mem = realloc(st_jbuf_mem,(int)(ptr + 1 - st_jbuf_mem)*sizeof(st_jbuf_t));
+	(ptr + 1)->st = NULL;
+    }
+    pthread_mutex_unlock(&st_jbuf_mutex);
+    return ptr;
+}
+
+static __attribute__ ((noinline))
+void sigIntHandler(int sig)
+{
+    st_jbuf_t *ptr;
+
+    if (sig == SIGINT)
+    {
+	pthread_mutex_lock(&st_jbuf_mutex);
+	ptr = st_jbuf_mem;
+	while (ptr && ptr->st && ptr->st->st_connection->tid != pthread_self())
+		ptr++;
+	if (ptr && ptr->st  && ptr->st->st_connection->tid == pthread_self()) {
+	    DBG(DBG_CONTROL,
+		DBG_log("XAUTH: siglongjmp to thread %lu jump buf"
+		    ,(unsigned long)ptr->st->st_connection->tid));
+		    siglongjmp (target->jbuf,1);
+	} else {
+	    pthread_mutex_unlock(&st_jbuf_mutex);
+	}
+    }
+}
+
 static
 int get_addr(pam_handle_t *pamh,const char *var,ip_address *addr)
 {
@@ -189,7 +254,7 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 static
 int get_internal_addresses(struct connection *con,struct internal_addr *ia)
 {
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
     int retval;
     char str[IDTOA_BUF+sizeof("ID=")+2];
 #endif
@@ -216,7 +281,7 @@ int get_internal_addresses(struct connection *con,struct internal_addr *ia)
     else
 #endif
     {
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
        if (con->xauthby == XAUTHBY_PAM)
           {
 	    if(con->pamh == NULL)
@@ -866,12 +931,13 @@ stf_status xauth_send_status(struct state *st, int status)
 
     send_packet(st, "XAUTH: status", TRUE);
 
-    change_state(st, STATE_XAUTH_R1);
+    if (status)
+	change_state(st, STATE_XAUTH_R1);
 
     return STF_OK;
 }
 
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
 /** XAUTH PAM conversation
  *
  * @param num_msg Int.
@@ -924,7 +990,7 @@ int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 #endif
 
 
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
 /** Do authentication via PAM (Plugable Authentication Modules)
  *
  * We open a PAM session via pam_start, and try to authenticate the user
@@ -961,7 +1027,7 @@ int do_pam_authentication(void *varg)
     else
       return FALSE;
 }
-#endif /* XAUTH_USEPAM */
+#endif /* XAUTH_HAVE_PAM */
 
 /** Do authentication via /etc/ipsec.d/passwd file using MD5 passwords
  *
@@ -1097,12 +1163,53 @@ static void * do_authentication(void *varg)
     struct thread_arg	*arg = varg;
     struct state *st = arg->st;
     int results=FALSE;
+
+#ifdef XAUTH_HAVE_PAM
+    struct sigaction sa;
+    st_jbuf_t *ptr;
+
+    pthread_mutex_lock(&st_jbuf_mutex);
+    ptr = st_jbuf_mem;
+    while (ptr && ptr->st && ptr->st->st_connection->tid != pthread_self())
+    {
+           ptr++;
+    }
+    if (ptr && ptr->st && ptr->st->st_connection->tid == pthread_self()) {
+        DBG(DBG_CONTROL,
+                DBG_log("XAUTH: found thread with tid = %lu"
+                ,(unsigned long)ptr->st->st_connection->tid));
+    } else {
+	pthread_mutex_unlock(&st_jbuf_mutex);
+        DBG(DBG_CONTROL,
+                DBG_log("XAUTH: no such thread for user %s"
+                ,arg->name.ptr));
+       return NULL;
+    }   
+    if (sigsetjmp(ptr->jbuf,1) == 1)
+    {
+        DBG(DBG_CONTROL,
+                DBG_log("XAUTH: deallocating thread's jumpbuf for user %s"
+                ,arg->name.ptr));
+        dealloc_st_jbuf(ptr);
+	pthread_mutex_unlock(&st_jbuf_mutex);
+	pthread_mutex_unlock(&st->st_connection->mutex);
+        return NULL;
+    }
+
+    pthread_mutex_unlock(&st_jbuf_mutex);
+    sigemptyset(&sa.sa_mask);
+    pthread_sigmask(SIG_BLOCK,&sa.sa_mask,NULL);
+    sa.sa_handler=sigIntHandler;
+    sa.sa_flags= SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
+    sigaddset(&sa.sa_mask,SIGINT);
+    sigaction(SIGINT,&sa,NULL);
+#endif
     libreswan_log("XAUTH: User %s: Attempting to login" , arg->name.ptr);
     
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
     if (st->st_connection->xauthby == XAUTHBY_PAM) {
 	libreswan_log("XAUTH: pam authentication being called to authenticate user %s",arg->name.ptr);
-	results=do_pam_authentication(varg);
+	results = do_pam_authentication(varg);
     } else
 #endif
     if (st->st_connection->xauthby == XAUTHBY_FILE) {
@@ -1123,20 +1230,32 @@ static void * do_authentication(void *varg)
 	}
 
 	strncpy(st->st_xauth_username, (char *)arg->name.ptr, sizeof(st->st_xauth_username));
-    } else
-    {
+    } else {
 	/** Login attempt failed, display error, send XAUTH status to client
          *  and reset state to XAUTH_R0 */
         libreswan_log("XAUTH: User %s: Authentication Failed: Incorrect Username or Password", arg->name.ptr);
+	if(st->st_event->ev_type == EVENT_RETRANSMIT)
+	   delete_event(st);
         xauth_send_status(st,0);	
-        change_state(st, STATE_XAUTH_R0);
+        /* change_state(st, STATE_XAUTH_R0); */
     }   
     
     freeanychunk(arg->password);
     freeanychunk(arg->name);
     freeanychunk(arg->connname);
     pfree(varg);
-    st->st_connection->tid = NULL;
+
+    pthread_mutex_lock(&st_jbuf_mutex);
+    ptr = st_jbuf_mem;
+    while (ptr && ptr->st && ptr->st->st_connection->tid != pthread_self())
+    {
+	ptr++;
+    }
+    if (ptr && ptr->st && ptr->st->st_connection->tid == pthread_self()) {
+	dealloc_st_jbuf(ptr);
+    }
+    pthread_mutex_unlock(&st_jbuf_mutex);
+    st->st_connection->tid = 0;
     
     return NULL;
 }
@@ -1156,6 +1275,7 @@ int xauth_launch_authent(struct state *st
 			 , chunk_t connname)
 {
     pthread_attr_t pattr;
+    st_jbuf_t *ptr;
     struct thread_arg	*arg;
     arg = alloc_thing(struct thread_arg,"ThreadArg");
     arg->st = st;
@@ -1167,6 +1287,14 @@ int xauth_launch_authent(struct state *st
      * authentication as the /etc/ipsec.d/passwd file may reside on a SAN,
      * a NAS or an NFS disk
      */
+    if (st->st_connection->tid)
+    {
+	return 0;
+    }
+    ptr = alloc_st_jbuf();
+    ptr->st = st;
+    pthread_mutex_init(&st->st_connection->mutex,NULL);
+    pthread_mutex_lock(&st->st_connection->mutex);
     pthread_attr_init(&pattr);
     pthread_attr_setdetachstate(&pattr,PTHREAD_CREATE_DETACHED);
     pthread_create(&st->st_connection->tid, &pattr, do_authentication, (void*) arg);
@@ -2294,9 +2422,7 @@ xauth_inI0(struct msg_digest *md)
 		if(len > 80) {
 		    len=80;
 		}
-		if(dat) {
-		   memcpy(msgbuf, dat, len);
-		}
+		memcpy(msgbuf, dat, len);
 		msgbuf[len]='\0';
 		loglog(RC_LOG_SERIOUS, "XAUTH: Bad Message: %s", msgbuf);
 		break;

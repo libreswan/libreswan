@@ -54,7 +54,7 @@
 #include "pgp.h"
 #include "certs.h"
 #include "ac.h"
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
 #endif
 #include "connections.h"	/* needs id.h */
@@ -1000,12 +1000,18 @@ main(int argc, char **argv)
     }
 #endif
 
-	libreswan_log("NSS crypto used");
+	libreswan_log("NSS crypto [enabled]");
+
+#ifdef XAUTH_HAVE_PAM
+	libreswan_log("XAUTH PAM support [enabled]");
+#else
+	libreswan_log("XAUTH PAM support [disabled]");
+#endif
 
 #ifdef HAVE_STATSD
 	libreswan_log("HAVE_STATSD notification via /bin/libreswan-statsd enabled");
 #else
-	libreswan_log("HAVE_STATSD notification support not compiled in");
+	libreswan_log("HAVE_STATSD notification support [disabled]");
 #endif
 
 

@@ -46,7 +46,7 @@
 
 #include "defs.h"
 #include "ac.h"
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
 #endif
 #include "connections.h"	/* needs id.h */
@@ -1197,7 +1197,7 @@ add_connection(const struct whack_message *wm)
 	c->name = wm->name;
 	c->connalias = wm->connalias;
 
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
 	c->pamh = NULL;
 #endif
 

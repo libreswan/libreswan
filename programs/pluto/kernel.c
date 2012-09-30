@@ -61,7 +61,7 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
 
-#ifdef XAUTH_USEPAM
+#ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
 #endif
 
