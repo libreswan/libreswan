@@ -6,9 +6,11 @@ east:~#
  ipsec setup start
 ipsec_setup: Starting Libreswan IPsec VERSION
 east:~#
+ /testing/pluto/bin/wait-until-pluto-started
+east:~#
  ipsec whack --whackrecord /var/tmp/ikev2.record
 east:~#
- ipsec auto --add westnet--eastnet-ikev2
+ ipsec auto --add westnet-eastnet-ikev2
 east:~#
  ipsec auto --status
 000 using kernel interface: klips
@@ -42,18 +44,16 @@ east:~#
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
-000 "westnet--eastnet-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east-x509,S=C]...192.1.2.45<192.1.2.45>[@west-x509,S=C]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet--eastnet-ikev2":     myip=unset; hisip=unset; mycert=/testing/baseconfigs/all/etc/ipsec.d/certs/east.crt; hiscert=/testing/baseconfigs/all/etc/ipsec.d/certs/west.crt;
-000 "westnet--eastnet-ikev2":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'...'C=ca, ST=Ontario, L=Toronto, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
-000 "westnet--eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
-000 "westnet--eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init; prio: 24,24; interface: eth1; 
-000 "westnet--eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east-x509,S=C]...192.1.2.45<192.1.2.45>[@west-x509,S=C]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ikev2":     myip=unset; hisip=unset; mycert=/testing/baseconfigs/all/etc/ipsec.d/certs/east.crt; hiscert=/testing/baseconfigs/all/etc/ipsec.d/certs/west.crt;
+000 "westnet-eastnet-ikev2":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'...'C=ca, ST=Ontario, L=Toronto, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
+000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init; prio: 24,24; interface: eth1; 
+000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000  
 east:~#
  ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
-east:~#
- /testing/pluto/bin/wait-until-pluto-started
 east:~#
  echo done
 done

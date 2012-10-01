@@ -106,37 +106,37 @@ conn block
 
 # VPN connection
 conn west-east
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	also=west-east-base-ipv4
 	#auto=start
 
 conn west-eastnet
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	also=west-east-base-ipv4
 	also=eastnet-ipv4
 	#auto=start
 
 conn westnet-east
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	also=west-east-base-ipv4
 	also=westnet-ipv4
 	#auto=start
 
 conn west-east-pass
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	also=west-east-base-ipv4
 	type=passthrough
 	#auto=start
 
 conn westnet-east-pass
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	also=west-east-base-ipv4
 	also=westnet-ipv4
 	type=passthrough
 	#auto=start
 
 conn west-eastnet-pass
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	also=west-east-base-ipv4
 	also=eastnet-ipv4
 	type=passthrough
@@ -157,7 +157,7 @@ conn westnet-eastnet-sourceip
 #   also=westnet-eastnet-ipv6
 
 conn westnet-eastnet-6in4
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	left=192.1.2.45
 	#leftnexthop=192.1.2.23
 	right=192.1.2.23
@@ -168,7 +168,7 @@ conn westnet-eastnet-6in4
 
 # Same issue for this conn
 #conn westnet-eastnet-4in6
-#	also=west-east-base-id
+#	also=west-east-base-id-nss
 #	also=west-east-base-ipv6
 #	#connaddrfamily=ipv6
 #	also=westnet-ipv4
@@ -176,7 +176,7 @@ conn westnet-eastnet-6in4
 #	auto=ignore
 
 conn westnet-eastnet-4in6
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	#also=west-east-base-ipv6
 	left=2001:db8:1:2::45
 	#leftnexthop=2001:db8:1:2::23
@@ -189,7 +189,7 @@ conn westnet-eastnet-4in6
 
 # and this one
 conn westnet-eastnet-6in6
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	#also=west-east-base-ipv6
 	left=2001:db8:1:2::45
 	leftnexthop=2001:db8:1:2::23
@@ -197,20 +197,12 @@ conn westnet-eastnet-6in6
 	rightnexthop=2001:db8:1:2::45
 	also=westnet-eastnet-ipv6
 
-conn westnet-eastnet-ipv4-rsa2
-	also=west-east-base-rsa2
-        also=westnet-eastnet-ipv4
-
-conn west-east-base-rsa2
-        leftrsasigkey2=0sAQO2nvgDFcogH9VksI4nYNR/TmVxb8gEteT925CVBqJeV2OBJQ/1suz2aD5VepFYfh6Jf/4LbMqIhGeKPNR64SyeqYuuYeGMwiJrnFbQPRyZLpCtBx8KfTJbnU1KjeAio1DouxSbspG2hPLakq30akdeSyJ+cWbNEWi/+7SxcKYc2SHzXxfd/rI69mOXxyQQwSjw53lkblaUqmD4MEPsLPs3GQAeXUbYDSNTooWVIXPsS3EoX08sJcBh0x3P3uHqhnr3CNDj4BBox17wK0NqhezjKBqPqFMDM8xFynjLrpU56lDJpE7XYgIoAbFF17oBOcTZKCIBcmBh/hEhYoHwcIxanj5Y0M306ONlywgYoNTUGyJb
-        rightrsasigkey2=0sAQPXCqe6OImZ3iTkEIOOJS0F18GkFXsGdqgizxERmANRwxmAhOSyqwX/mpQemZTq+86k6kE/bc2pLInTYDjJf35wuhibNqN8HV2OnpzIT7BAw2CQnSrDz4I4Lol47C8SofX9l3C9tJp5P/4gFAWZ31p5S61c30/tp0jVGSvFJek/6BaAFn8Nyhgov6AJTCmBUsp0+dW8Q6wnKMCtJF08ZECOAwYr2OdGZsWQ2HsBdXL+xYew5iZEgnId+nuvdMaR1xPgpJzggq1U1/F7m9U/5Rr8nN8RlgSdpcozfGmulCRZIvVxDJ1kqHxPhcew2vSZYdLYzURABcnOk4BE0hgkIl9udvfvHWb6owob5qiSCQuz2qEj
-
 # alias for the testcases
 conn westnet-eastnet
 	also=westnet-eastnet-ipv4
 
 conn westnet-eastnet-ipv4
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	also=west-east-base-ipv4
 	also=westnet-ipv4
 	also=eastnet-ipv4
@@ -223,7 +215,7 @@ conn westnet-eastnet-ipv6
 	#auto=start
 
 conn westnet-eastnet-pass
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	also=west-east-base-ipv4
 	also=westnet-ipv4
 	also=eastnet-ipv4
@@ -231,7 +223,7 @@ conn westnet-eastnet-pass
 	#auto=start
 
 conn westnet-eastnet-drop
-	also=west-east-base-id
+	also=west-east-base-id-nss
 	also=west-east-base-ipv4
 	also=westnet-ipv4
 	also=eastnet-ipv4
@@ -260,7 +252,7 @@ conn westnet-ipv4
 
 conn west-east-base
 	also=west-east-base-ipv4
-	also=west-east-base-id
+	also=west-east-base-id-nss
 
 conn west-east-base-ipv4
 	left=192.1.2.45
@@ -275,13 +267,13 @@ conn west-east-base-ipv6
 	right=2001:db8:1:2::23
 	rightnexthop=2001:db8:1:2::45
 
-conn west-east-base-id
+conn west-east-base-id-nss
 	# Left security gateway, subnet behind it, next hop toward right.
 	leftid=@west
-	leftrsasigkey=0sAQNzGEFs18VKT00sA+4p+GUKn9C55PYuPQca6C+9Qhj0jfMdQnTRTDLeI+lp9TnidHH7fVpq+PkfiF2LHlZtDwMurLlwzbNOghlEYKfQ080WlOTTUAmOLhAzH28MF70q3hzq0m5fCaVZWtxcV+LfHWdxceCkjBUSaTFtR2W12urFCBz+SB3+OM33aeIbfHxmck2yzhJ8xyMods5kF3ek/RZlFvgN8VqBdcFVrZwTh0mXDCGN12HNFixL6FzQ1jQKerKBbjb0m/IPqugvpVPWVIUajUpLMEmi1FAXc1mFZE9x1SFuSr0NzYIu2ZaHfvsAZY5oN+I+R2oC67fUCjgxY+t7
+        leftrsasigkey=0sAQO2nvgDFcogH9VksI4nYNR/TmVxb8gEteT925CVBqJeV2OBJQ/1suz2aD5VepFYfh6Jf/4LbMqIhGeKPNR64SyeqYuuYeGMwiJrnFbQPRyZLpCtBx8KfTJbnU1KjeAio1DouxSbspG2hPLakq30akdeSyJ+cWbNEWi/+7SxcKYc2SHzXxfd/rI69mOXxyQQwSjw53lkblaUqmD4MEPsLPs3GQAeXUbYDSNTooWVIXPsS3EoX08sJcBh0x3P3uHqhnr3CNDj4BBox17wK0NqhezjKBqPqFMDM8xFynjLrpU56lDJpE7XYgIoAbFF17oBOcTZKCIBcmBh/hEhYoHwcIxanj5Y0M306ONlywgYoNTUGyJb
 	# Right security gateway, subnet behind it, next hop toward left.
 	rightid=@east
-	rightrsasigkey=0sAQN3cn11FrBVbZhWGwRnFDAf8O9FHBmBIyIvmvt0kfkI2UGDDq8k+vYgRkwBZDviLd1p3SkL30LzuV0rqG3vBriqaAUUGoCQ0UMgsuX+k01bROLsqGB1QNXYvYiPLsnoDhKd2Gx9MUMHEjwwEZeyskMT5k91jvoAZvdEkg+9h7urbJ+kRQ4e+IHkMUrreDGwGVptV/hYQVCD54RZep6xp5ymaKRCDgMpzWvlzO80fP7JDjSZf9LI/MMu6c+qwXIKnWoNha75IhFyLWniVczxK2RdhmMhLsi0kC0CoOwWDSIEOb+5zbECDjjud+SF5tT8qRCWnSomX8jtbCdZ50WraQlL
+        rightrsasigkey=0sAQPXCqe6OImZ3iTkEIOOJS0F18GkFXsGdqgizxERmANRwxmAhOSyqwX/mpQemZTq+86k6kE/bc2pLInTYDjJf35wuhibNqN8HV2OnpzIT7BAw2CQnSrDz4I4Lol47C8SofX9l3C9tJp5P/4gFAWZ31p5S61c30/tp0jVGSvFJek/6BaAFn8Nyhgov6AJTCmBUsp0+dW8Q6wnKMCtJF08ZECOAwYr2OdGZsWQ2HsBdXL+xYew5iZEgnId+nuvdMaR1xPgpJzggq1U1/F7m9U/5Rr8nN8RlgSdpcozfGmulCRZIvVxDJ1kqHxPhcew2vSZYdLYzURABcnOk4BE0hgkIl9udvfvHWb6owob5qiSCQuz2qEj
 
 conn road-east-base
 	right=192.1.2.23

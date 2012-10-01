@@ -8,11 +8,11 @@ east:~#
  ipsec setup start
 ipsec_setup: Starting Libreswan IPsec VERSION
 east:~#
+ /testing/pluto/bin/wait-until-pluto-started
+east:~#
  ipsec whack --whackrecord /var/tmp/ikev2.record
 east:~#
- ipsec auto --add  westnet--eastnet-ikev2
-east:~#
- /testing/pluto/bin/wait-until-pluto-started
+ ipsec auto --add  westnet-eastnet-ikev2
 east:~#
  
 

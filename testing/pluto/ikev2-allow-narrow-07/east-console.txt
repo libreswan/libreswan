@@ -8,7 +8,7 @@ ipsec_setup: Starting Openswan IPsec VERSION
 east:~#
  ipsec whack --whackrecord /var/tmp/ikev2.record
 east:~#
- ipsec auto --add  westnet--eastnet-ikev2
+ ipsec auto --add  westnet-eastnet-ikev2
 east:~#
  ipsec whack --debug-control --debug-controlmore --debug-crypt
 east:~#
