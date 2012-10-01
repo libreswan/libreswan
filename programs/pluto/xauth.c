@@ -115,6 +115,7 @@ static
 struct pam_conv conv = {
 	xauth_pam_conv,
 	NULL  };
+#endif
 
 typedef struct
 {
@@ -145,9 +146,23 @@ void dealloc_st_jbuf(st_jbuf_t *ptr)
 	free(st_jbuf_mem);
 	st_jbuf_mem = NULL;
      } else {
-	st_jbuf_mem = realloc(st_jbuf_mem,(int)(ptr - st_jbuf_mem)*sizeof(st_jbuf_t));
+	st_jbuf_mem = realloc(st_jbuf_mem,(int)(ptr + 1 - st_jbuf_mem));
      }
 }   
+
+static
+st_jbuf_t *get_ptr_matching_tid()
+{
+    st_jbuf_t *ptr;
+
+    ptr = st_jbuf_mem;
+    while (ptr && ptr->st && ptr->st->st_connection->tid != pthread_self())
+	ptr++;
+    if (ptr && ptr->st  && ptr->st->st_connection->tid == pthread_self())
+	return ptr;
+    else
+	return NULL;
+}
 
 static
 st_jbuf_t *alloc_st_jbuf(void)
@@ -160,7 +175,7 @@ st_jbuf_t *alloc_st_jbuf(void)
 	ptr = st_jbuf_mem;
     } else {
 	for (ptr = st_jbuf_mem; ptr->st != NULL; ptr++);
-	st_jbuf_mem = realloc(st_jbuf_mem,(int)(ptr + 1 - st_jbuf_mem)*sizeof(st_jbuf_t));
+	st_jbuf_mem = realloc(st_jbuf_mem,(int)(ptr + 2 - st_jbuf_mem));
 	(ptr + 1)->st = NULL;
     }
     pthread_mutex_unlock(&st_jbuf_mutex);
@@ -175,20 +190,16 @@ void sigIntHandler(int sig)
     if (sig == SIGINT)
     {
 	pthread_mutex_lock(&st_jbuf_mutex);
-	ptr = st_jbuf_mem;
-	while (ptr && ptr->st && ptr->st->st_connection->tid != pthread_self())
-		ptr++;
-	if (ptr && ptr->st  && ptr->st->st_connection->tid == pthread_self()) {
-	    DBG(DBG_CONTROL,
-		DBG_log("XAUTH: siglongjmp to thread %lu jump buf"
-		    ,(unsigned long)ptr->st->st_connection->tid));
-		    siglongjmp (target->jbuf,1);
+	ptr = get_ptr_matching_tid();
+	if (ptr) {
+		siglongjmp (ptr->jbuf,1);
 	} else {
 	    pthread_mutex_unlock(&st_jbuf_mutex);
 	}
     }
 }
 
+#ifdef XAUTH_HAVE_PAM
 static
 int get_addr(pam_handle_t *pamh,const char *var,ip_address *addr)
 {
@@ -987,10 +998,7 @@ int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
     *response = reply;
     return PAM_SUCCESS;
 }
-#endif
 
-
-#ifdef XAUTH_HAVE_PAM
 /** Do authentication via PAM (Plugable Authentication Modules)
  *
  * We open a PAM session via pam_start, and try to authenticate the user
@@ -1164,25 +1172,21 @@ static void * do_authentication(void *varg)
     struct state *st = arg->st;
     int results=FALSE;
 
-#ifdef XAUTH_HAVE_PAM
     struct sigaction sa;
     st_jbuf_t *ptr;
 
     pthread_mutex_lock(&st_jbuf_mutex);
-    ptr = st_jbuf_mem;
-    while (ptr && ptr->st && ptr->st->st_connection->tid != pthread_self())
-    {
-           ptr++;
-    }
-    if (ptr && ptr->st && ptr->st->st_connection->tid == pthread_self()) {
-        DBG(DBG_CONTROL,
-                DBG_log("XAUTH: found thread with tid = %lu"
-                ,(unsigned long)ptr->st->st_connection->tid));
+    ptr = get_ptr_matching_tid();
+    if (ptr) {
+	DBG(DBG_CONTROL, DBG_log("XAUTH: found thread with for user %s"
+	    , arg->name.ptr));
     } else {
 	pthread_mutex_unlock(&st_jbuf_mutex);
         DBG(DBG_CONTROL,
                 DBG_log("XAUTH: no such thread for user %s"
                 ,arg->name.ptr));
+	pthread_mutex_unlock(&st->st_connection->mutex);
+	st->st_connection->tid = 0;
        return NULL;
     }   
     if (sigsetjmp(ptr->jbuf,1) == 1)
@@ -1193,6 +1197,7 @@ static void * do_authentication(void *varg)
         dealloc_st_jbuf(ptr);
 	pthread_mutex_unlock(&st_jbuf_mutex);
 	pthread_mutex_unlock(&st->st_connection->mutex);
+	st->st_connection->tid = 0;
         return NULL;
     }
 
@@ -1203,7 +1208,6 @@ static void * do_authentication(void *varg)
     sa.sa_flags= SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
     sigaddset(&sa.sa_mask,SIGINT);
     sigaction(SIGINT,&sa,NULL);
-#endif
     libreswan_log("XAUTH: User %s: Attempting to login" , arg->name.ptr);
     
 #ifdef XAUTH_HAVE_PAM
@@ -1246,17 +1250,13 @@ static void * do_authentication(void *varg)
     pfree(varg);
 
     pthread_mutex_lock(&st_jbuf_mutex);
-    ptr = st_jbuf_mem;
-    while (ptr && ptr->st && ptr->st->st_connection->tid != pthread_self())
-    {
-	ptr++;
-    }
-    if (ptr && ptr->st && ptr->st->st_connection->tid == pthread_self()) {
+    ptr = get_ptr_matching_tid();
+    if (ptr) {
 	dealloc_st_jbuf(ptr);
     }
     pthread_mutex_unlock(&st_jbuf_mutex);
+    pthread_mutex_unlock(&st->st_connection->mutex);
     st->st_connection->tid = 0;
-    
     return NULL;
 }
 

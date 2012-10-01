@@ -355,16 +355,15 @@ delete_state(struct state *st)
 
     DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
 
-#ifdef XAUTH_USEPAM 
+#ifdef XAUTH_HAVE_PAM 
     /*
      * If there is still an authentication thread alive, kill it.
      */
     if (c->tid) {
 	pthread_kill(c->tid,SIGINT);
 	pthread_mutex_lock(&c->mutex);
+	pthread_mutex_unlock(&c->mutex);
     }
-    pthread_mutex_trylock(&c->mutex);
-    pthread_mutex_unlock(&c->mutex);
     pthread_mutex_destroy(&c->mutex);
 #endif
 
