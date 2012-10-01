@@ -126,7 +126,7 @@ DISTSRC = \
 	timer.c timer.h \
 	$(DISTGCRYPT) \
 	$(X509_DIST_SRCS) \
-	$(HAVE_THREADS_DIST_SRCS) \
+	$(THREADS_DIST_SRCS) \
 	vendor.c nat_traversal.c virtual.c \
 	adns.c adns.h \
 	whack.c whackinit.c \
@@ -162,7 +162,7 @@ OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o
 OBJSPLUTO += ${XAUTH_OBJS}
 OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${LABELED_IPSEC_OBJS}
-OBJSPLUTO += ${X509_OBJS} ${HAVE_THREADS_OBJS}
+OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
 OBJSPLUTO += ${OBJSLIBPLUTO}
 OBJSPLUTO += ${SYSDEP_OBJ} stubs.o
 

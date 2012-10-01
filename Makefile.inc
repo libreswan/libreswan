@@ -368,8 +368,8 @@ USE_AGGRESSIVE?=true
 # do additional configuration - but it is often needed for Cisco interop
 USE_XAUTH?=true
 
-# When doing XAUTH, include PAM support as well, requires HAVE_THREADS be
-# true as well
+# When doing XAUTH, include PAM support when available
+
 ifeq ($(OSDEP),linux)
 USE_XAUTHPAM?=true
 endif
@@ -428,12 +428,6 @@ USE_EXTRACRYPTO?=false
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
-
-# Do we have pthreads available?  Only yes if you need it for XAUTH+PAM,
-# or if you need it for CRL fetching.
-# Note: nss by default uses pthreads, enabling it here will only 
-# affect it for XAUTH+PAM, and CRL. 
-HAVE_THREADS?=true
 
 # Do we have an external stats daemon we can push state changes to?
 # Currently hardcoded to /bin/libreswan-statsd
