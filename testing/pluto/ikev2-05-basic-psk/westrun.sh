@@ -1,3 +1,3 @@
-ipsec auto --up  westnet--eastnet-ikev2
+ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
 ipsec look
 echo done

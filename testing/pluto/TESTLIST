@@ -462,7 +462,7 @@ umlplutotest	ikev2-05-basic-psk			good
 umlplutotest	ikev2-06-6msg				good
 umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good
-umlplutotest	ikev2-09-rw-psk				good
+umlplutotest	ikev2-09-rw-rsa				good
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good

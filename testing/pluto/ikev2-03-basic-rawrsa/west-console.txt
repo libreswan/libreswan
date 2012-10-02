@@ -22,9 +22,11 @@ west:~#
  ipsec setup start
 ipsec_setup: Starting Libreswan IPsec VERSION
 west:~#
+ /testing/pluto/bin/wait-until-pluto-started
+west:~#
  ipsec whack --whackrecord /var/tmp/ikev2.record
 west:~#
- ipsec auto --add westnet--eastnet-ikev2
+ ipsec auto --add westnet-eastnet-ikev2
 west:~#
  ipsec auto --status
 000 using kernel interface: klips
@@ -67,8 +69,6 @@ west:~#
 000  
 west:~#
  ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
-west:~#
- /testing/pluto/bin/wait-until-pluto-started
 west:~#
  echo done
 done

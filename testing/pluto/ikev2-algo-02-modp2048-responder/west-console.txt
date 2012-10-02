@@ -24,7 +24,7 @@ ipsec_setup: Starting Libreswan IPsec VERSION
 west:~#
  ipsec whack --whackrecord /var/tmp/ikev2.record
 west:~#
- ipsec auto --add westnet--eastnet-ikev2
+ ipsec auto --add westnet-eastnet-ikev2
 west:~#
  ipsec auto --status
 000 using kernel interface: klips
@@ -71,7 +71,7 @@ west:~#
  echo done
 done
 west:~#
- ipsec auto --up  westnet--eastnet-ikev2
+ ipsec auto --up  westnet-eastnet-ikev2
 133 "westnet--eastnet-ikev2" #1: STATE_PARENT_I1: initiate
 133 "westnet--eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "westnet--eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1 prf=oakley_sha group=modp2048}
