@@ -5,7 +5,7 @@
 . ./testparams.sh
 
 rm -fr OUTPUT/*
-mkdir -p  -m777 OUTPUT
+mkdir  -m777 OUTPUT
 touch OUTPUT/pluto.east.log
 touch OUTPUT/pluto.west.log 
 chmod a+rw OUTPUT/pluto.east.log 
@@ -34,9 +34,9 @@ sudo /sbin/tcpdump -w ./OUTPUT/$SWAN12_PCAP -n -i swan12  not port 22 &
 TCPDUMP_PID=$! 
 echo $TCPDUMP_PID  > ./OUTPUT/$SWAN12_PCAP.pid
 
-../../utils/runvm.py --host east --test $TESTNAME  &
+../../utils/runkvm.py --host east --test $TESTNAME  &
 EAST_PID=$!  
-../../utils/runvm.py --host west --test $TESTNAME  &
+../../utils/runkvm.py --host west --test $TESTNAME  &
 WEST_PID=$!
 
 wait_till_pid_end "runvm.py-west" $WEST_PID 
