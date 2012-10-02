@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd /source
+rm -rf OBJ*
+make programs module
