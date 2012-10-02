@@ -216,9 +216,9 @@ execdir=${IPSEC_EXECDIR-@IPSEC_EXECDIR@}
 libdir=${IPSEC_LIBDIR-@IPSEC_LIBDIR@}
 
 ipsecdiropt=""
-if [ -n "${IPSEC_CONFDDIR-@IPSEC_CONFDDIR@}" ]
+if [ -n "${IPSEC_CONFDDIR}" ]
 then
-    ipsecdiropt="--ipsecdir ${IPSEC_CONFDDIR-@IPSEC_CONFDDIR@}"
+    ipsecdiropt="--ipsecdir ${IPSEC_CONFDDIR}"
 fi
 
 if test -n "$showonly"
