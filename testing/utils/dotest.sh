@@ -5,7 +5,7 @@
 . ./testparams.sh
 
 rm -fr OUTPUT/*
-mkdir  -m777 OUTPUT
+mkdir -p  -m777 OUTPUT
 touch OUTPUT/pluto.east.log
 touch OUTPUT/pluto.west.log 
 chmod a+rw OUTPUT/pluto.east.log 
