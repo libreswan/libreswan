@@ -3,7 +3,7 @@ import pexpect
 import sys
 import getopt, sys
 import time
-import os 
+import os, commands
 import setproctitle
 
 def main():
@@ -26,9 +26,10 @@ def main():
 
 	output_file = "./OUTPUT/%s.console.txt" % (vmhost)
 	f = open(output_file, 'w') 
-	
-	cmd = "sudo virsh reset %s" % (vmhost)
-	r =  pexpect.spawn (cmd)
+
+	out = commands.getoutput("sudo virsh destroy %s"%vmhost)
+	time.sleep( 2 )
+	out = commands.getoutput("sudo virsh start %s"%vmhost)
 	time.sleep( 2 )
 
 	cmd = "sudo virsh console %s" % (vmhost)
