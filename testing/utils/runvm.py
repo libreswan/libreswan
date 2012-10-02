@@ -24,7 +24,7 @@ def main():
 	cmd = "%s-%s" % (sys.argv,vmhost)
 	setproctitle.setproctitle(cmd)
 
-	output_file = "./OUTPUT/27%s.console.txt" % (vmhost)
+	output_file = "./OUTPUT/%s.console.txt" % (vmhost)
 	f = open(output_file, 'w') 
 	
 	cmd = "sudo virsh reset %s" % (vmhost)
