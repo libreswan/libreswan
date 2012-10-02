@@ -1,5 +1,5 @@
 : ==== start ====
-TESTNAME=ikev2-09-rw-psk
+TESTNAME=ikev2-09-rw-rsa
 source /testing/pluto/bin/westnlocal.sh
 
 # confirm that the network is alive
