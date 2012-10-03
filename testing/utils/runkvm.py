@@ -3,8 +3,18 @@ import pexpect
 import sys
 import getopt, sys
 import time
-import os 
+import os, commands
 import setproctitle
+import re
+
+def read_exec_shell_cmd( ex, filename, prompt):
+	if os.path.exists(filename):
+		f_cmds = open(filename, "r")
+		for line in f_cmds:
+			print  line
+			ex.sendline(line)  
+			ex.expect (prompt,timeout=180, searchwindowsize=100) 
+	return
 
 def main():
 	options, remainder = getopt.gnu_getopt(sys.argv[1:], 'h', ['help', 'host=', 'test=', ])
@@ -24,12 +34,17 @@ def main():
 	cmd = "%s-%s" % (sys.argv,vmhost)
 	setproctitle.setproctitle(cmd)
 
-	output_file = "./OUTPUT/27%s.console.txt" % (vmhost)
+	output_file = "./OUTPUT/%s.boot-console.txt" % (vmhost)
 	f = open(output_file, 'w') 
 	
+	out = commands.getoutput("sudo virsh destroy %s"%vmhost)
 	cmd = "sudo virsh reset %s" % (vmhost)
 	r =  pexpect.spawn (cmd)
 	time.sleep( 2 )
+	time.sleep( 2 )
+        out = commands.getoutput("sudo virsh start %s"%vmhost)
+        time.sleep( 2 )
+
 
 	cmd = "sudo virsh console %s" % (vmhost)
 	child = pexpect.spawn (cmd)
@@ -57,22 +72,18 @@ def main():
 	print cmd
 	child.sendline(cmd)
 	child.expect (prompt, searchwindowsize=100) 
-
-	cmd = ".  ./testparams.sh"
-	print cmd
-	child.sendline(cmd)  
-	child.expect (prompt, searchwindowsize=100) 
+	
+	f.close
+	output_file = "./OUTPUT/%s.console.txt" % (vmhost)
+	f = open(output_file, 'w') 
+	child.logfile = f
 
 	cmd = "./%sinit.sh" %  (vmhost) 
-	print cmd
-	child.sendline(cmd)  
-	child.expect (prompt,timeout=180, searchwindowsize=100) 
+	read_exec_shell_cmd( child, cmd, prompt)
 
 	cmd = "./%srun.sh" %  (vmhost) 
 	if os.path.exists(cmd):
-		print cmd
-		child.sendline(cmd)  
-		child.expect (prompt, timeout=180, searchwindowsize=100) 
+		read_exec_shell_cmd( child, cmd, prompt)
 		time.sleep(60)
 
 	cmd = "END of test %s" % (testname)

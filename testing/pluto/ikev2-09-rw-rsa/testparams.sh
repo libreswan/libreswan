@@ -4,7 +4,7 @@ TEST_PURPOSE=regress
 TEST_PROB_REPORT=0
 TEST_TYPE=umlplutotest
 
-TESTNAME=ikev2-09-rw-psk
+TESTNAME=ikev2-09-rw-rsa
 EASTHOST=east
 WESTHOST=west
 

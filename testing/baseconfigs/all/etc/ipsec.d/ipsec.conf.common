@@ -201,6 +201,12 @@ conn westnet-eastnet-6in6
 conn westnet-eastnet
 	also=westnet-eastnet-ipv4
 
+conn westnet-eastnet-ipv4-psk
+	also=west-east-base-id-psk
+	also=west-east-base-ipv4
+	also=westnet-ipv4
+	also=eastnet-ipv4
+	
 conn westnet-eastnet-ipv4
 	also=west-east-base-id-nss
 	also=west-east-base-ipv4
@@ -267,7 +273,12 @@ conn west-east-base-ipv6
 	right=2001:db8:1:2::23
 	rightnexthop=2001:db8:1:2::45
 
-conn west-east-base-id-nss
+conn west-east-base-id-psk
+	leftid=@west
+	rightid=@east
+	authby=secret
+	
+conn west-east-base-id-rsa
 	# Left security gateway, subnet behind it, next hop toward right.
 	leftid=@west
         leftrsasigkey=0sAQO2nvgDFcogH9VksI4nYNR/TmVxb8gEteT925CVBqJeV2OBJQ/1suz2aD5VepFYfh6Jf/4LbMqIhGeKPNR64SyeqYuuYeGMwiJrnFbQPRyZLpCtBx8KfTJbnU1KjeAio1DouxSbspG2hPLakq30akdeSyJ+cWbNEWi/+7SxcKYc2SHzXxfd/rI69mOXxyQQwSjw53lkblaUqmD4MEPsLPs3GQAeXUbYDSNTooWVIXPsS3EoX08sJcBh0x3P3uHqhnr3CNDj4BBox17wK0NqhezjKBqPqFMDM8xFynjLrpU56lDJpE7XYgIoAbFF17oBOcTZKCIBcmBh/hEhYoHwcIxanj5Y0M306ONlywgYoNTUGyJb
