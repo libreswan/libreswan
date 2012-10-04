@@ -521,16 +521,14 @@ dpd_inR(struct state *p1st
 	DBG_log("DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
 		seqno, p1st->st_dpd_expectseqno, p1st->st_serialno));
 
-    if (!p1st->st_dpd_expectseqno && seqno != p1st->st_dpd_expectseqno) {
-        loglog(RC_LOG_SERIOUS, "DPD: unexpected R_U_THERE_ACK packet with sequence number %u", seqno);
-	p1st->st_dpd_expectseqno = 0;
-	/* do not update time stamp, so we'll send a new one sooner */
-    } else {
+    if (seqno == p1st->st_dpd_expectseqno) {
 	/* update the time stamp */
 	p1st->st_last_dpd = tm;
+	p1st->st_dpd_expectseqno = 0;
+    } else if (!p1st->st_dpd_expectseqno) {
+        loglog(RC_LOG_SERIOUS, "DPD: unexpected R_U_THERE_ACK packet with sequence number %u", seqno);
+	/* do not update time stamp, so we'll send a new one sooner */
     }
-
-    p1st->st_dpd_expectseqno = 0;
 
     /*
      * since there was activity, kill any EVENT_DPD_TIMEOUT that might
