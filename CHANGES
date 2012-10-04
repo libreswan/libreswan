@@ -53,6 +53,7 @@ v1.0.0 (unreleased)
 * auto: fix --status output for vnet/vhost case
 * X509: Removed unused OCSP code [Paul]
 * XAUTH: Fixup of defines [Paul/Philippe]
+* DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
 * Bugtracker bugs fixed:
    #1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
          tree [Steve Lanser]
