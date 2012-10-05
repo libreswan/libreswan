@@ -4,9 +4,11 @@ if [ -z "$1" ]
 then
   echo "No testname specified, use list to --list all test names"
   exit 1
+else
+	TESTNAME=$1
 fi
 
-if [ "$1" == "list" -o "$1" == "--list" ]
+if [ "$TESTNAME" == "list" -o "$TESTNAME" == "--list" ]
 then
   pushd /testing/pluto > /dev/null
   ls -d *
@@ -16,9 +18,9 @@ fi
 
 rm -f /tmp/swan.current
 
-if [ ! -f /testing/pluto/$1/testparams.sh ]
+if [ ! -f /testing/pluto/$TESTNAME/testparams.sh ]
 then
-	echo "Unknown or broken test case /testing/pluto/$1"
+	echo "Unknown or broken test case /testing/pluto/$TESTNAME"
 	exit 1
 else
 	echo $TESTNAME > /tmp/swan.current
