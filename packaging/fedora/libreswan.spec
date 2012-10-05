@@ -1,6 +1,7 @@
 %global USE_FIPSCHECK true
 %global USE_LIBCAP_NG true
 %global USE_NM true
+%global USE_XAUTHPAM true
 %global fipscheck_version 1.3.0
 %global USE_CRL_FECTCHING true
 %global USE_DNSSEC true
@@ -33,6 +34,9 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: gmp-devel bison flex redhat-rpm-config
 BuildRequires: pkgconfig
 BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
+%if %{USE_XAUTHPAM}
+BuildRequires: pam-devel
+%endif
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
 %endif
@@ -121,7 +125,9 @@ kernels.
   USE_NM=%{USE_NM} \
 %if %{USE_CRL_FECTCHING}
   USE_LIBCURL=true \
-  HAVE_THREADS=true \
+%endif
+%if %{USE_XAUTHPAM}
+  USE_XAUTHPAM=true \
 %endif
   programs
 FS=$(pwd)
