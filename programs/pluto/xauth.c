@@ -87,12 +87,22 @@ char pwdfile[PATH_MAX];
 
 extern bool encrypt_message(pb_stream *pbs, struct state *st); /* forward declaration */
 
+typedef struct
+{
+	int in_use;
+	struct state *st;
+	sigjmp_buf jbuf;
+} st_jbuf_t;
+
 struct thread_arg
 {
     struct state *st;
     chunk_t	name;
     chunk_t	password;
     chunk_t     connname;
+#ifdef XAUTH_HAVE_PAM
+    st_jbuf_t *ptr;
+#endif
 };
 
 /**
@@ -117,13 +127,7 @@ struct pam_conv conv = {
 	NULL  };
 #endif
 
-typedef struct
-{
-	struct state *st;
-	sigjmp_buf jbuf;
-} st_jbuf_t;
-
-static st_jbuf_t *st_jbuf_mem;
+static st_jbuf_t *st_jbuf_mem = NULL;
 
 pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -138,16 +142,22 @@ pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
 static
 void dealloc_st_jbuf(st_jbuf_t *ptr)
 {
-     for (++ptr; ptr->st != NULL; ptr++)
-	*(ptr - 1) = *ptr;
-     ptr->st = NULL;
-     if (ptr == st_jbuf_mem + 1)
-     {
+    if (st_jbuf_mem == NULL)
+	osw_abort();
+    if (ptr == NULL)
+	osw_abort();
+    ptr->in_use = 0;
+    ptr = st_jbuf_mem;
+    while (ptr->st != NULL) {
+	if (ptr->in_use) {
+	    return;
+	}
+	ptr++;
+    }
+    if (st_jbuf_mem) {
 	free(st_jbuf_mem);
 	st_jbuf_mem = NULL;
-     } else {
-	st_jbuf_mem = realloc(st_jbuf_mem,(int)(ptr + 1 - st_jbuf_mem));
-     }
+    }
 }   
 
 static
@@ -156,28 +166,51 @@ st_jbuf_t *get_ptr_matching_tid()
     st_jbuf_t *ptr;
 
     ptr = st_jbuf_mem;
-    while (ptr && ptr->st && ptr->st->st_connection->tid != pthread_self())
-	ptr++;
-    if (ptr && ptr->st  && ptr->st->st_connection->tid == pthread_self())
-	return ptr;
-    else
-	return NULL;
-}
+
+    while (ptr->st != NULL) {
+	if (ptr->in_use == 1 && ptr->st->tid == pthread_self()) {
+	   return ptr;
+	} else {
+	   ptr++;
+	}
+    }
+    return NULL;
+}	
 
 static
 st_jbuf_t *alloc_st_jbuf(void)
 {
     st_jbuf_t *ptr;
+    size_t offset;
 
     pthread_mutex_lock(&st_jbuf_mutex);
     if (!st_jbuf_mem) {
-	st_jbuf_mem = calloc(2,sizeof(st_jbuf_t));
+	st_jbuf_mem = calloc(2, sizeof(st_jbuf_t)*2);
 	ptr = st_jbuf_mem;
-    } else {
-	for (ptr = st_jbuf_mem; ptr->st != NULL; ptr++);
-	st_jbuf_mem = realloc(st_jbuf_mem,(int)(ptr + 2 - st_jbuf_mem));
-	(ptr + 1)->st = NULL;
+	goto end;
     }
+    ptr = st_jbuf_mem;
+    if (ptr == NULL)
+	osw_abort();
+    
+    while (ptr->st != NULL) {
+	if (ptr->in_use == 0 && ptr->st != NULL) {
+            goto end;
+	}
+        ptr++;
+    }      
+    offset = (size_t)((char *)ptr - (char *)st_jbuf_mem);
+    ptr = realloc(st_jbuf_mem, offset + sizeof(st_jbuf_t)*2);
+    if (ptr == NULL) {
+        osw_abort();
+    }
+    st_jbuf_mem = ptr;
+    ptr = (st_jbuf_t *)((char *)st_jbuf_mem + offset);
+    memset(ptr, 0, 2*sizeof(st_jbuf_t));
+    (ptr + 1)->in_use = 0;
+    (ptr + 1)->st = NULL;
+end:
+    ptr->in_use=1;
     pthread_mutex_unlock(&st_jbuf_mutex);
     return ptr;
 }
@@ -195,6 +228,7 @@ void sigIntHandler(int sig)
 		siglongjmp (ptr->jbuf,1);
 	} else {
 	    pthread_mutex_unlock(&st_jbuf_mutex);
+	    osw_abort();
 	}
     }
 }
@@ -1009,8 +1043,8 @@ static
 int do_pam_authentication(void *varg)
 {
     struct thread_arg	*arg = varg;
-    pam_handle_t *pamh=NULL;
     int retval;
+    pam_handle_t *pamh = NULL;
     struct pam_conv conv;
 
     conv.conv = xauth_pam_conv;
@@ -1170,44 +1204,51 @@ static void * do_authentication(void *varg)
 {
     struct thread_arg	*arg = varg;
     struct state *st = arg->st;
-    int results=FALSE;
+    int results = FALSE;
 
     struct sigaction sa;
-    st_jbuf_t *ptr;
+    struct sigaction oldsa;
+    st_jbuf_t *ptr = arg->ptr;
 
     pthread_mutex_lock(&st_jbuf_mutex);
-    ptr = get_ptr_matching_tid();
-    if (ptr) {
-	DBG(DBG_CONTROL, DBG_log("XAUTH: found thread with for user %s"
-	    , arg->name.ptr));
-    } else {
+    if (!ptr) {
 	pthread_mutex_unlock(&st_jbuf_mutex);
-        DBG(DBG_CONTROL,
-                DBG_log("XAUTH: no such thread for user %s"
-                ,arg->name.ptr));
-	pthread_mutex_unlock(&st->st_connection->mutex);
-	st->st_connection->tid = 0;
-       return NULL;
+	freeanychunk(arg->password);
+	freeanychunk(arg->name);
+	freeanychunk(arg->connname);
+	pfree(varg);
+	pthread_mutex_unlock(&st->mutex);
+	st->tid = 0;
+	return NULL;
     }   
-    if (sigsetjmp(ptr->jbuf,1) == 1)
-    {
-        DBG(DBG_CONTROL,
-                DBG_log("XAUTH: deallocating thread's jumpbuf for user %s"
-                ,arg->name.ptr));
-        dealloc_st_jbuf(ptr);
+    if (sigsetjmp(ptr->jbuf,1) == 1) {
+	dealloc_st_jbuf(ptr);
+	if (st_jbuf_mem) { /* Still one PAM thread ? */
+	    /* Yes, restart the one shot SIGINT handler */
+	    sigprocmask(SIG_BLOCK,NULL,&sa.sa_mask);
+	    sa.sa_handler=sigIntHandler;
+	    sa.sa_flags= SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
+	    sigaddset(&sa.sa_mask,SIGINT);
+	    sigaction(SIGINT,&sa,NULL);
+	} else {
+	    sigaction(SIGINT,&oldsa,NULL);
+	}
 	pthread_mutex_unlock(&st_jbuf_mutex);
-	pthread_mutex_unlock(&st->st_connection->mutex);
-	st->st_connection->tid = 0;
-        return NULL;
+	freeanychunk(arg->password);
+	freeanychunk(arg->name);
+	freeanychunk(arg->connname);
+	pfree(varg);
+	pthread_mutex_unlock(&st->mutex);
+	st->tid = 0;
+	return NULL;
     }
-
     pthread_mutex_unlock(&st_jbuf_mutex);
-    sigemptyset(&sa.sa_mask);
+    sigprocmask(SIG_BLOCK,NULL,&sa.sa_mask);
     pthread_sigmask(SIG_BLOCK,&sa.sa_mask,NULL);
     sa.sa_handler=sigIntHandler;
     sa.sa_flags= SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
     sigaddset(&sa.sa_mask,SIGINT);
-    sigaction(SIGINT,&sa,NULL);
+    sigaction(SIGINT,&sa,&oldsa);
     libreswan_log("XAUTH: User %s: Attempting to login" , arg->name.ptr);
     
 #ifdef XAUTH_HAVE_PAM
@@ -1226,24 +1267,35 @@ static void * do_authentication(void *varg)
 
     if(results)
     {
-        libreswan_log("XAUTH: User %s: Authentication Successful", arg->name.ptr);
-        xauth_send_status(st,1);
+	libreswan_log("XAUTH: User %s: Authentication Successful", arg->name.ptr);
+	xauth_send_status(st,1);
 
-        if(st->quirks.xauth_ack_msgid) {
+	if(st->quirks.xauth_ack_msgid) {
 	  st->st_msgid_phase15 = 0;
 	}
 
 	strncpy(st->st_xauth_username, (char *)arg->name.ptr, sizeof(st->st_xauth_username));
     } else {
-	/** Login attempt failed, display error, send XAUTH status to client
-         *  and reset state to XAUTH_R0 */
-        libreswan_log("XAUTH: User %s: Authentication Failed: Incorrect Username or Password", arg->name.ptr);
+	/*
+	 * Login attempt failed, display error, send XAUTH status to client
+	 * and reset state to XAUTH_R0
+	 */
+	libreswan_log("XAUTH: User %s: Authentication Failed: Incorrect Username or Password", arg->name.ptr);
 	if(st->st_event->ev_type == EVENT_RETRANSMIT)
 	   delete_event(st);
-        xauth_send_status(st,0);	
-        /* change_state(st, STATE_XAUTH_R0); */
+	xauth_send_status(st,0);
     }   
-    
+
+    pthread_mutex_lock(&st_jbuf_mutex);
+    dealloc_st_jbuf(ptr);
+    if (!st_jbuf_mem)
+    {
+        sigaction(SIGINT,&oldsa,NULL);
+    }    
+    pthread_mutex_unlock(&st_jbuf_mutex);
+    pthread_mutex_unlock(&st->mutex);
+    st->tid = 0;
+
     freeanychunk(arg->password);
     freeanychunk(arg->name);
     freeanychunk(arg->connname);
@@ -1255,8 +1307,8 @@ static void * do_authentication(void *varg)
 	dealloc_st_jbuf(ptr);
     }
     pthread_mutex_unlock(&st_jbuf_mutex);
-    pthread_mutex_unlock(&st->st_connection->mutex);
-    st->st_connection->tid = 0;
+    pthread_mutex_unlock(&st->mutex);
+    st->tid = 0;
     return NULL;
 }
 
@@ -1277,6 +1329,11 @@ int xauth_launch_authent(struct state *st
     pthread_attr_t pattr;
     st_jbuf_t *ptr;
     struct thread_arg	*arg;
+
+    if (st->tid) {
+	return 0;
+    }
+
     arg = alloc_thing(struct thread_arg,"ThreadArg");
     arg->st = st;
     arg->password = password;
@@ -1287,17 +1344,13 @@ int xauth_launch_authent(struct state *st
      * authentication as the /etc/ipsec.d/passwd file may reside on a SAN,
      * a NAS or an NFS disk
      */
-    if (st->st_connection->tid)
-    {
-	return 0;
-    }
     ptr = alloc_st_jbuf();
     ptr->st = st;
-    pthread_mutex_init(&st->st_connection->mutex,NULL);
-    pthread_mutex_lock(&st->st_connection->mutex);
+    pthread_mutex_init(&st->mutex,NULL);
+    pthread_mutex_lock(&st->mutex);
     pthread_attr_init(&pattr);
     pthread_attr_setdetachstate(&pattr,PTHREAD_CREATE_DETACHED);
-    pthread_create(&st->st_connection->tid, &pattr, do_authentication, (void*) arg);
+    pthread_create(&st->tid, &pattr, do_authentication, (void*) arg);
     pthread_attr_destroy(&pattr);
     return 0;
 }

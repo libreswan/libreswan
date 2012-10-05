@@ -359,12 +359,14 @@ delete_state(struct state *st)
     /*
      * If there is still an authentication thread alive, kill it.
      */
-    if (c->tid) {
-	pthread_kill(c->tid,SIGINT);
-	pthread_mutex_lock(&c->mutex);
-	pthread_mutex_unlock(&c->mutex);
+    if (st->tid) {
+	pthread_kill(st->tid,SIGINT);
+	/* The pthread_mutex_lock ensures that the do_authentication
+	 * thread completes when pthread_kill'ed */
+	pthread_mutex_lock(&st->mutex);
+	pthread_mutex_unlock(&st->mutex);
     }
-    pthread_mutex_destroy(&c->mutex);
+    pthread_mutex_destroy(&st->mutex);
 #endif
 
     /* If DPD is enabled on this state object, clear any pending events */

@@ -32,6 +32,11 @@
 #include <nss.h>
 #include <pk11pub.h>
 
+#ifdef XAUTH_HAVE_PAM
+# include <pthread.h>
+# include <signal.h>
+#endif
+
 /* Message ID mechanism.
  *
  * A Message ID is contained in each IKE message header.
@@ -193,6 +198,11 @@ struct state
     so_serial_t        st_serialno;          /* serial number (for seniority)*/
     so_serial_t        st_clonedfrom;        /* serial number of parent */
     int                st_usage;
+
+#ifdef XAUTH_HAVE_PAM
+    pthread_mutex_t    mutex;               /* per state mutex */
+    pthread_t          tid;                 /* per state XAUTH_RO thread id */
+#endif
 
     bool               st_ikev2;             /* is this an IKEv2 state? */
     bool               st_rekeytov2;         /* true if this IKEv1 is about
