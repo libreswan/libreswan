@@ -1,5 +1,0 @@
-library=
-name=NSS Internal PKCS #11 Module
-parameters=configdir='sql:/etc/ipsec.d' certPrefix='' keyPrefix='' secmod='secmod.db' flags= updatedir='' updateCertPrefix='' updateKeyPrefix='' updateid='' updateTokenDescription='' 
-NSS=trustOrder=75 cipherOrder=100 slotParams={0x00000001=[slotFlags=RSA,RC4,RC2,DES,DH,SHA1,MD5,MD2,SSL,TLS,AES,Camellia,SEED,RANDOM askpw=any timeout=30 ] }  Flags=internal,critical
-
