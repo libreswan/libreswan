@@ -59,7 +59,11 @@ static char **new_list(char *value);
 # include <errno.h>
 #include <arpa/inet.h> /* for inet_ntop */
 # include "dnssec.h"
+#else /* DNSSEC */
+struct ub_ctx {
+};
 #endif /* DNSSEC */
+
 /** 
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
  *
@@ -1293,6 +1297,8 @@ struct starter_config *confread_load(const char *file
 #ifdef DNSSEC
 	struct ub_ctx *dnsctx =  ub_ctx_create();
 	unbound_init(dnsctx);
+#else
+	struct ub_ctx *dnsctx = NULL;
 #endif
 	/**
 	 * Load file
