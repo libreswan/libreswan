@@ -1346,6 +1346,7 @@ int xauth_launch_authent(struct state *st
      */
     ptr = alloc_st_jbuf();
     ptr->st = st;
+    arg->ptr = ptr;
     pthread_mutex_init(&st->mutex,NULL);
     pthread_mutex_lock(&st->mutex);
     pthread_attr_init(&pattr);
