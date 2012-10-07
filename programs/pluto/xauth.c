@@ -1281,9 +1281,7 @@ static void * do_authentication(void *varg)
 	 * and reset state to XAUTH_R0
 	 */
 	libreswan_log("XAUTH: User %s: Authentication Failed: Incorrect Username or Password", arg->name.ptr);
-	if(st->st_event->ev_type == EVENT_RETRANSMIT)
-	   delete_event(st);
-	xauth_send_status(st,0);
+        xauth_send_status(st,0);
     }   
 
     pthread_mutex_lock(&st_jbuf_mutex);
@@ -1301,14 +1299,6 @@ static void * do_authentication(void *varg)
     freeanychunk(arg->connname);
     pfree(varg);
 
-    pthread_mutex_lock(&st_jbuf_mutex);
-    ptr = get_ptr_matching_tid();
-    if (ptr) {
-	dealloc_st_jbuf(ptr);
-    }
-    pthread_mutex_unlock(&st_jbuf_mutex);
-    pthread_mutex_unlock(&st->mutex);
-    st->tid = 0;
     return NULL;
 }
 
@@ -1346,6 +1336,7 @@ int xauth_launch_authent(struct state *st
      */
     ptr = alloc_st_jbuf();
     ptr->st = st;
+    arg->ptr = ptr;
     pthread_mutex_init(&st->mutex,NULL);
     pthread_mutex_lock(&st->mutex);
     pthread_attr_init(&pattr);
