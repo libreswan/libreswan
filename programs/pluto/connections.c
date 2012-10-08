@@ -2376,10 +2376,10 @@ find_host_connection2(const char *func
 			, c->name));
 	    if(NEVER_NEGOTIATE(c->policy)) continue;
 
-	    if ((policy & POLICY_XAUTH) != (c->policy & POLICY_XAUTH)) continue;
-
 	    if ((c->policy & policy) == policy)
 		break;
+
+	    if ((policy & POLICY_XAUTH) != (c->policy & POLICY_XAUTH)) continue;
 	}
 
     }

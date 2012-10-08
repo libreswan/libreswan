@@ -688,7 +688,11 @@ enum_names modecfg_cisco_attr_names_tv =
 enum_names modecfg_cisco_attr_names =
     { CISCO_BANNER, CISCO_DDNS_HOSTNAME, modecfg_cisco_attr_name , &modecfg_cisco_attr_names_tv };
 
-/* From draft-beaulieu-ike-xauth */
+/*
+ * From https://tools.ietf.org/html/draft-ietf-ipsec-isakmp-xauth-06
+ * The draft did not make it to an RFC
+ */
+
 const char *const xauth_attr_name[] = {
 	"XAUTH-TYPE",
 	"XAUTH-USER-NAME",

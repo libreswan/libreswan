@@ -412,6 +412,24 @@ enum next_payload_types {
 #define    SUPPORTED_ATTRIBUTES       14
 #define    INTERNAL_IP6_SUBNET        15
 
+/* extended authentication modes */
+#define XAUTH_AUTH_INIT_PSK             65001
+#define XAUTH_AUTH_RESP_PSK             65002
+#define XAUTH_AUTH_INIT_DSS             65003
+#define XAUTH_AUTH_RESP_DSS             65004
+#define XAUTH_AUTH_INIT_RSA             65005
+#define XAUTH_AUTH_RESP_RSA             65006
+#define XAUTH_AUTH_INIT_RSA_ENC         65007
+#define XAUTH_AUTH_RESP_RSA_ENC         65008
+#define XAUTH_AUTH_INIT_RSA_REV         65009
+#define XAUTH_AUTH_RESP_RSA_REV         65010
+
+/* hybrid authentication modes */
+#define HYBRID_AUTH_INIT_RSA            64221
+#define HYBRID_AUTH_RESP_RSA            64222
+#define HYBRID_AUTH_INIT_DSS            64223
+#define HYBRID_AUTH_RESP_DSS            64224
+
 /* XAUTH attribute values */
 #define    XAUTH_TYPE                16520
 #define    XAUTH_USER_NAME           16521
@@ -436,11 +454,27 @@ enum next_payload_types {
 #define   CISCO_SPLIT_DNS            28675
 #define   CISCO_SPLIT_INC            28676
 #define   CISCO_UDP_ENCAP_PORT       28677
-#define   CISCO_UNKNOWN              28678
+#define   CISCO_SPLIT_EXCLUDE        28678
 #define   CISCO_DO_PFS               28679
 #define   CISCO_FW_TYPE              28680
 #define   CISCO_BACKUP_SERVER        28681
 #define   CISCO_DDNS_HOSTNAME        28682
+
+/* checkpoint extended authentication attributes */
+#define CHKPT_TYPE                   13
+#define CHKPT_USER_NAME              14
+#define CHKPT_USER_PASSWORD          15
+#define CHKPT_MESSAGE                17
+#define CHKPT_CHALLENGE              18
+#define CHKPT_STATUS                 20
+
+/* checkpoint configuration attributes */
+#define CHKPT_DEF_DOMAIN             16387
+#define CHKPT_MAC_ADDRESS            16388
+#define CHKPT_MARCIPAN_REASON_CODE   16389
+#define CHKPT_UNKNOWN1               16400
+#define CHKPT_UNKNOWN2               16401
+#define CHKPT_UNKNOWN3               16402
 
 /*
   extern enum_names modecfg_attr_names;

@@ -161,7 +161,7 @@ void dealloc_st_jbuf(st_jbuf_t *ptr)
 }   
 
 static
-st_jbuf_t *get_ptr_matching_tid()
+st_jbuf_t *get_ptr_matching_tid(void)
 {
     st_jbuf_t *ptr;
 
@@ -1422,8 +1422,12 @@ xauth_inR0(struct msg_digest *md)
 	    switch(attr.isaat_af_type)
 	    {
 	    case XAUTH_TYPE:
-		if(val != 0)
-		    return NO_PROPOSAL_CHOSEN;
+		if(val != XAUTH_TYPE_GENERIC) {
+		   libreswan_log("XAUTH:  Unsupported XAUTH TYPE %s (%d) received."
+		     , enum_show(&xauth_type_names, attr.isaat_af_type)
+		     , attr.isaat_af_type);
+		   return NO_PROPOSAL_CHOSEN;
+		}
 		break;
 
 	    case XAUTH_USER_NAME:
@@ -1437,10 +1441,11 @@ xauth_inR0(struct msg_digest *md)
 		password.ptr[password.len-1] = 0;
 		gotpassword = TRUE;
 		break;
-		
+
 	    default:
-		libreswan_log("XAUTH:  Unsupported XAUTH parameter %s received."
-		     , enum_show(&modecfg_attr_names, attr.isaat_af_type));
+		libreswan_log("XAUTH:  Unsupported XAUTH parameter %s (%d) received."
+		     , enum_show(&xauth_type_names, attr.isaat_af_type)
+		     , attr.isaat_af_type);
 		break;
 	    }
 	}
