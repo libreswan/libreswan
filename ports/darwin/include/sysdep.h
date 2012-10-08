@@ -16,3 +16,6 @@
 #endif
 
 #define NEED_SIN_LEN
+
+/* Needed for proper handling of udpfromto */
+#define __APPLE_USE_RFC_3542
