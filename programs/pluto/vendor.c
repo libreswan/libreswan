@@ -238,6 +238,7 @@ static struct vid_struct _vid_tab[] = {
 	DEC_MD5_VID(NATT_HUTTUNEN, "ESPThruNAT")
 	DEC_MD5_VID(NATT_HUTTUNEN_ESPINUDP, "draft-huttunen-ipsec-esp-in-udp-00.txt")
 	DEC_MD5_VID(NATT_IETF_00, "draft-ietf-ipsec-nat-t-ike-00")
+	DEC_MD5_VID(NATT_IETF_01, "draft-ietf-ipsec-nat-t-ike-01")
 	DEC_MD5_VID(NATT_IETF_02, "draft-ietf-ipsec-nat-t-ike-02")
 	/* hash in draft-ietf-ipsec-nat-t-ike-02 contains '\n'... Accept both */
 	DEC_MD5_VID_D(NATT_IETF_02_N, "draft-ietf-ipsec-nat-t-ike-02\n", "draft-ietf-ipsec-nat-t-ike-02_n")
@@ -248,7 +249,7 @@ static struct vid_struct _vid_tab[] = {
 	DEC_MD5_VID(NATT_IETF_07, "draft-ietf-ipsec-nat-t-ike-07")
 	DEC_MD5_VID(NATT_IETF_08, "draft-ietf-ipsec-nat-t-ike-08")
 	DEC_MD5_VID(NATT_DRAFT_IETF_IPSEC_NAT_T_IKE,"draft-ietf-ipsec-nat-t-ike")
-	DEC_MD5_VID(NATT_RFC, "RFC 3947")
+	DEC_MD5_VID(NATT_RFC, "RFC 3947 (NAT travesal)")
 
 
 
