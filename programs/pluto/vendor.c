@@ -61,7 +61,6 @@
  * Netscreen:
  *  d6b45f82f24bacb288af59a978830ab7
  *  cf49908791073fb46439790fdeb6aeed981101ab0000000500000300
- *  64405f46f03b7660a23be116a1975058e69e83870000000400000403 - Netscreen-05
  *  
  * Cisco:
  *  1f07f70eaa6514d3b0fa96542a500300 (VPN 3000 version 3.0.0)
@@ -77,10 +76,6 @@
  *  3e984048101e66cc659fd002b0ed3655 (From a Cisco 1800 IOS device)
  *  ade1e70e9953c1328373ebf0257b85ed (From a Cisco PIX)
  *
- * Lucent VPN Gateway:
- *  4c5647392e322e3234353a425249434b3a392e322e323435 = "LVG9.1.255:BRICK:9.1.255" (no exact md5sum match)
- *  4C5643372E312E323A5850 = "LVC7.1.2:XP" (no exact md5sum match)
- *
  * Microsoft L2TP (???):
  * (This could be the MSL2TP client, which is a stripped version of SafeNet)
  *
@@ -92,12 +87,6 @@
  * 3COM-superstack
  *    da8e937880010000
  *    404bf439522ca3f6
- *
- * NCP.de
- *    101fb0b35c5a4f4c08b919f1cb9777b0
- *
- * Watchguard FireBox (II ?)
- * da8e937880010000
  *
  * Nortel contivity 251 (RAS F/W Version: VA251_2.0.0.0.013 | 12/3/2003  
  *   DSL FW Version: Alcatel, Version 3.9.122)
@@ -201,7 +190,6 @@ static struct vid_struct _vid_tab[] = {
 		"SSH Communications Security IPSEC Express version 4.2.0")
 
 
-	/* note: It's not md5/sha1? 'IKE Fragmentation' = 4048b7d56ebce88525e7de7f00d6c2d3c0000000 */
 	{ VID_CISCO_IKE_FRAGMENTATION, VID_KEEP, NULL, "Cisco IKE Fragmentation",
 		"\x40\x48\xb7\xd5\x6e\xbc\xe8\x85\x25\xe7\xde\x7f\x00\xd6\xc2\xd3\xc0\x00\x00\x00",
 		20 },
@@ -216,6 +204,8 @@ static struct vid_struct _vid_tab[] = {
 	{ VID_CISCO_UNITY, VID_KEEP, NULL, "Cisco-Unity",
 		"\x12\xf5\xf2\x8c\x45\x71\x68\xa9\x70\x2d\x9f\xe2\x74\xcc\x01\x00",
 		16 },
+	{ VID_CISCO_UNITY_FWTYPE, VID_KEEP, NULL, "Cisco-Unity FW type",
+	 "\x80\x01\x00\x01\x80\x02\x00\x01\x80\x03\x00\x02", 12 },
 
 	/*
 	 * Timestep VID seen:
@@ -241,7 +231,6 @@ static struct vid_struct _vid_tab[] = {
 	/* always make sure to include ourself! */
 	{ VID_LIBRESWANSELF,VID_SELF, "","Libreswan (this version)", NULL,0},
 	
-
 	/* NAT-Traversal */
 
 	DEC_MD5_VID(NATT_STENBERG_01, "draft-stenberg-ipsec-nat-traversal-01")
@@ -281,10 +270,6 @@ static struct vid_struct _vid_tab[] = {
 
 	{ VID_MISC_IKEv2, VID_STRING|VID_KEEP, "IKEv2", "CAN-IKEv2", NULL, 0},
 
-	/*
-	 * Netscreen:
-	 * 4865617274426561745f4e6f74696679386b0100  (HeartBeat_Notify + 386b0100)
-	 */
 	{ VID_MISC_HEARTBEAT_NOTIFY, VID_STRING | VID_SUBSTRING_DUMPHEXA,
 		"HeartBeat_Notify", "HeartBeat Notify", NULL, 0 },
 
@@ -380,6 +365,58 @@ static struct vid_struct _vid_tab[] = {
 	{ VID_NCP, VID_KEEP, "NCP client", NULL, 
 	  "\x10\x1f\xb0\xb3\x5c\x5a\x4f\x4c\x08\xb9\x19\xf1\xcb\x97\x77\xb0", 16 },
 	
+	{ VID_SHREWSOFT, VID_KEEP, "Shrew Soft client", NULL,
+	  "\xf1\x4b\x94\xb7\xbf\xf1\xfe\xf0\x27\x73\xb8\xc4\x9f\xed\xed\x26", 16 },
+
+	{ VID_NETSCREEN_01, VID_KEEP, "Netscreen-01", NULL,
+	  "\x29\x9e\xe8\x28\x9f\x40\xa8\x97\x3b\xc7\x86\x87\xe2\xe7\x22\x6b\x53\x2c\x3b\x76", 20 },
+	{ VID_NETSCREEN_02, VID_KEEP, "Netscreen-02", NULL,
+	  "\x3a\x15\xe1\xf3\xcf\x2a\x63\x58\x2e\x3a\xc8\x2d\x1c\x64\xcb\xe3\xb6\xd7\x79\xe7", 20 },
+	{ VID_NETSCREEN_03, VID_KEEP, "Netscreen-03", NULL,
+	  "\x47\xd2\xb1\x26\xbf\xcd\x83\x48\x97\x60\xe2\xcf\x8c\x5d\x4d\x5a\x03\x49\x7c\x15", 20 },
+	{ VID_NETSCREEN_04, VID_KEEP, "Netscreen-04", NULL,
+	  "\x4a\x43\x40\xb5\x43\xe0\x2b\x84\xc8\x8a\x8b\x96\xa8\xaf\x9e\xbe\x77\xd9\xac\xcc", 20 },
+	{ VID_NETSCREEN_05, VID_KEEP, "Netscreen-05", NULL,
+	  "\x64\x40\x5f\x46\xf0\x3b\x76\x60\xa2\x3b\xe1\x16\xa1\x97\x50\x58\xe6\x9e\x83\x87", 20 },
+	{ VID_NETSCREEN_06, VID_KEEP, "Netscreen-06", NULL,
+	  "\x69\x93\x69\x22\x87\x41\xc6\xd4\xca\x09\x4c\x93\xe2\x42\xc9\xde\x19\xe7\xb7\xc6", 20 },
+	{ VID_NETSCREEN_07, VID_KEEP, "Netscreen-07", NULL,
+	  "\x8c\x0d\xc6\xcf\x62\xa0\xef\x1b\x5c\x6e\xab\xd1\xb6\x7b\xa6\x98\x66\xad\xf1\x6a", 20 },
+	{ VID_NETSCREEN_08, VID_KEEP, "Netscreen-08", NULL,
+	  "\x92\xd2\x7a\x9e\xcb\x31\xd9\x92\x46\x98\x6d\x34\x53\xd0\xc3\xd5\x7a\x22\x2a\x61", 20 },
+	{ VID_NETSCREEN_09, VID_KEEP, "Netscreen-09", NULL,
+	  "\x9b\x09\x6d\x9a\xc3\x27\x5a\x7d\x6f\xe8\xb9\x1c\x58\x31\x11\xb0\x9e\xfe\xd1\xa0", 20 },
+	{ VID_NETSCREEN_10, VID_KEEP, "Netscreen-10", NULL,
+	  "\xbf\x03\x74\x61\x08\xd7\x46\xc9\x04\xf1\xf3\x54\x7d\xe2\x4f\x78\x47\x9f\xed\x12", 20 },
+	{ VID_NETSCREEN_11, VID_KEEP, "Netscreen-11", NULL,
+	  "\xc2\xe8\x05\x00\xf4\xcc\x5f\xbf\x5d\xaa\xee\xd3\xbb\x59\xab\xae\xee\x56\xc6\x52", 20 },
+	{ VID_NETSCREEN_12, VID_KEEP, "Netscreen-12", NULL,
+	  "\xc8\x66\x0a\x62\xb0\x3b\x1b\x61\x30\xbf\x78\x16\x08\xd3\x2a\x6a\x8d\x0f\xb8\x9f", 20 },
+	{ VID_NETSCREEN_13, VID_KEEP, "Netscreen-13", NULL,
+	  "\xf8\x85\xda\x40\xb1\xe7\xa9\xab\xd1\x76\x55\xec\x5b\xbe\xc0\xf2\x1f\x0e\xd5\x2e", 20 },
+	{ VID_NETSCREEN_14, VID_KEEP, "Netscreen-14", NULL,
+	  "\x2a\x2b\xca\xc1\x9b\x8e\x91\xb4\x26\x10\x78\x07\xe0\x2e\x72\x49\x56\x9d\x6f\xd3", 20 },
+	{ VID_NETSCREEN_15, VID_KEEP, "Netscreen-15", NULL,
+	  "\x16\x6f\x93\x2d\x55\xeb\x64\xd8\xe4\xdf\x4f\xd3\x7e\x23\x13\xf0\xd0\xfd\x84\x51", 20 },
+	{ VID_NETSCREEN_16, VID_KEEP, "Netscreen-16", NULL,
+	  "\xa3\x5b\xfd\x05\xca\x1a\xc0\xb3\xd2\xf2\x4e\x9e\x82\xbf\xcb\xff\x9c\x9e\x52\xb5", 20 },
+
+	{ VID_ZYWALL, VID_KEEP, "Zywall", NULL,
+	  "\x62\x50\x27\x74\x9d\x5a\xb9\x7f\x56\x16\xc1\x60\x27\x65\xcf\x48\x0a\x3b\x7d\x0b", 20 },
+
+	{ VID_SWIND, VID_KEEP, "Swind(?)", NULL,
+	  "\x84\x04\xad\xf9\xcd\xa0\x57\x60\xb2\xca\x29\x2e\x4b\xff\x53\x7b", 16 },
+
+	{ VID_WATCHGUARD, VID_KEEP, "Watchguard FireBox", NULL,
+	  "\xda\x8e\x93\x78\x80\x01\x00\x00", 8 }, 
+
+	{ VID_LUCENT_GW9, VID_KEEP, "Lucent VPN Gateway 9 (LVG9.1.255:BRICK:9.1.255)", NULL, 
+	  "\x4c\x56\x47\x39\x2e\x32\x2e\x32\x34\x35\x3a\x42\x52\x49\x43\x4b\x3a\x39\x2e\x32\x2e\x32\x34\x35",  24 },
+	{ VID_LUCENT_CL7, VID_KEEP, "Lucent VPN Client 7 (LVC7.1.2:XP)", NULL, 
+	  "\x4c\x56\x43\x37\x2e\x31\x2e\x32\x3a\x58\x50", 11 },
+
+	{ VID_CHECKPOINT, VID_KEEP, "Check Point", NULL,
+	  "\xf4\xed\x19\xe0\xc1\x14\xeb\x51\x6f\xaa\xac\x0e\xe3\x7d\xaf\x28\x07\xb4\x38\x1f", 20 },
 
 	/* -- */
 	{ 0, 0, NULL, NULL, NULL, 0 }

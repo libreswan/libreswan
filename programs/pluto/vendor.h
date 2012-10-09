@@ -59,11 +59,31 @@ enum known_vendorid {
   VID_SONICWALL_1           =39,
   VID_SONICWALL_2           =40,
   VID_CISCO_IKE_FRAGMENTATION=41,
+  VID_SHREWSOFT             =42,
+  VID_NETSCREEN_01          =43,
+  VID_NETSCREEN_02          =44,
+  VID_NETSCREEN_03          =45,
+  VID_NETSCREEN_04          =46,
+  VID_NETSCREEN_05          =47,
+  VID_NETSCREEN_06          =48,
+  VID_NETSCREEN_07          =49,
+  VID_NETSCREEN_08          =50,
+  VID_NETSCREEN_09          =51,
+  VID_NETSCREEN_10          =52,
+  VID_NETSCREEN_11          =53,
+  VID_NETSCREEN_12          =54,
+  VID_NETSCREEN_13          =55,
+  VID_NETSCREEN_14          =56,
+  VID_NETSCREEN_15          =57,
+  VID_NETSCREEN_16          =58,
+  VID_ZYWALL                =59,
+  VID_SWIND                 =60,
+  VID_WATCHGUARD            =61,
+  VID_LUCENT_GW9            =62,
+  VID_LUCENT_CL7            =63,
+  VID_CISCO_UNITY_FWTYPE    =64,
+  VID_CHECKPOINT            =65,
 
-/* World of Microsoft */
-  VID_VISTA_AUTHIP	    =51,
-  VID_VISTA_AUTHIP2	    =52,
-  VID_VISTA_AUTHIP3	    =53,
 
   /* 101 - 150 : NAT-Traversal */
   VID_NATT_STENBERG_01       =101,
@@ -81,6 +101,11 @@ enum known_vendorid {
   VID_NATT_IETF_08           =113,
   VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE =114,
   VID_NATT_RFC               =115,
+
+/* World of Microsoft */
+  VID_VISTA_AUTHIP	    =125,
+  VID_VISTA_AUTHIP2	    =126,
+  VID_VISTA_AUTHIP3	    =127,
 
 /* 125 - 200 Strongswan */
 
