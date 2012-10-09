@@ -833,7 +833,7 @@ main_inI1_outR1(struct msg_digest *md)
 
         next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 	/* reply if NAT-Traversal draft is supported */
-	st->hidden_variables.st_nat_traversal = nat_traversal_vid_to_method(md->quirks.nat_traversal_vid);
+	st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(md->quirks.nat_traversal_vid));
 	if ((st->hidden_variables.st_nat_traversal) && (!out_vendorid(next,
 	    &md->rbody, md->quirks.nat_traversal_vid))) {
 	    return STF_INTERNAL_ERROR;
@@ -934,9 +934,9 @@ main_inR1_outI2(struct msg_digest *md)
 				 , md->quirks.nat_traversal_vid))
 
     if (nat_traversal_enabled && md->quirks.nat_traversal_vid) {
-	st->hidden_variables.st_nat_traversal = nat_traversal_vid_to_method(md->quirks.nat_traversal_vid);
+	st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(md->quirks.nat_traversal_vid));
 	libreswan_log("enabling possible NAT-traversal with method %s"
-	     , bitnamesof(natt_type_bitnames, st->hidden_variables.st_nat_traversal));
+	     , enum_name(&natt_method_names, nat_traversal_vid_to_method(md->quirks.nat_traversal_vid)));
     }
 #endif
 
@@ -1032,9 +1032,9 @@ main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc
 #endif
 
 #ifdef NAT_TRAVERSAL
-    DBG(DBG_NATT, DBG_log("NAT-T checking st_nat_traversal for NAT_T_WITH_NATD"));
-    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
-        DBG(DBG_NATT, DBG_log("NAT-T found NAT_T_WITH_NATD"));
+    DBG(DBG_NATT, DBG_log("NAT-T checking st_nat_traversal"));
+    if (st->hidden_variables.st_nat_traversal) {
+        DBG(DBG_NATT, DBG_log("NAT-T found (implies NAT_T_WITH_NATD)"));
 	if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 	    return STF_INTERNAL_ERROR;
     }
@@ -1133,7 +1133,7 @@ main_inI2_outR2(struct msg_digest *md)
 		  , nat_traversal_enabled
 		  , st->hidden_variables.st_nat_traversal));
 
-    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
+    if (st->hidden_variables.st_nat_traversal) {
        DBG(DBG_NATT, DBG_log(" NAT_T_WITH_NATD detected"));
        nat_traversal_natd_lookup(md);
     }
@@ -1319,7 +1319,7 @@ main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc
     }
 
 #ifdef NAT_TRAVERSAL
-    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
+    if (st->hidden_variables.st_nat_traversal) {
 	if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 	    return STF_INTERNAL_ERROR;
     }
@@ -1486,7 +1486,7 @@ main_inR2_outI3_continue(struct msg_digest *md
     /* done parsing; initialize crypto  */
 
 #ifdef NAT_TRAVERSAL
-    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
+    if (st->hidden_variables.st_nat_traversal) {
       nat_traversal_natd_lookup(md);
     }
     if (st->hidden_variables.st_nat_traversal) {

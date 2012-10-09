@@ -79,6 +79,10 @@ extern enum_names ikev2_ts_type_names;
 extern u_int16_t secctx_attr_value;
 #endif
 
+#ifdef NAT_TRAVERSAL
+extern enum_names natt_method_names;
+#endif
+
 /* socket address family info */
 
 struct af_info

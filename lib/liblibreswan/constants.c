@@ -1429,28 +1429,6 @@ static const char *const ppk_name[] = {
 enum_names ppk_names = { PPK_PSK, PPK_XAUTH, ppk_name, NULL };
 
 /*
- * NAT-Traversal defines for nat_traveral type from nat_traversal.h
- *
- */
-const char *const natt_type_bitnames[] = {
-  "draft-ietf-ipsec-nat-t-ike-00/01",    /* 0 */
-  "draft-ietf-ipsec-nat-t-ike-02/03",
-  "draft-ietf-ipsec-nat-t-ike-05",
-  "draft-ietf-ipsec-nat-t-ike (MacOS X)", 
-  "RFC 3947 (NAT-Traversal)",		/* 4 */
-  "4",   "5",   "6",   "7", 
-  "8",   "9",   "10",  "11",
-  "12",  "13",  "14",  "15",
-  "16",  "17",  "18",  "19", 
-  "20",  "21",  "22",  "23", 
-  "24",  "25",  "26",  "27", 
-  "28",  "29",  
-  "nat is behind me",
-  "nat is behind peer"
-};
-
-
-/*
  * Values for right= and left=
  */
 struct keyword_enum_value kw_host_values[]={
