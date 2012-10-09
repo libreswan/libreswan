@@ -404,7 +404,7 @@ static struct vid_struct _vid_tab[] = {
 	{ VID_ZYWALL, VID_KEEP, "Zywall", NULL,
 	  "\x62\x50\x27\x74\x9d\x5a\xb9\x7f\x56\x16\xc1\x60\x27\x65\xcf\x48\x0a\x3b\x7d\x0b", 20 },
 
-	{ VID_SWIND, VID_KEEP, "Swind(?)", NULL,
+	{ VID_SIDEWINDER, VID_KEEP, "Sidewinder", NULL,
 	  "\x84\x04\xad\xf9\xcd\xa0\x57\x60\xb2\xca\x29\x2e\x4b\xff\x53\x7b", 16 },
 
 	{ VID_WATCHGUARD, VID_KEEP, "Watchguard FireBox", NULL,

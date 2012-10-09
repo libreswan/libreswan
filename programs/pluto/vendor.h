@@ -77,7 +77,7 @@ enum known_vendorid {
   VID_NETSCREEN_15          =57,
   VID_NETSCREEN_16          =58,
   VID_ZYWALL                =59,
-  VID_SWIND                 =60,
+  VID_SIDEWINDER            =60,
   VID_WATCHGUARD            =61,
   VID_LUCENT_GW9            =62,
   VID_LUCENT_CL7            =63,
