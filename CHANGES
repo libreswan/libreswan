@@ -56,14 +56,17 @@ v1.0.0 (unreleased)
 * DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
 * OSX: Set __APPLE_USE_RFC_3542 required for udpfromto functionality [Paul]
 * Bugtracker bugs fixed:
-   #1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
-         tree [Steve Lanser]
-   #1349 pluto logging no subjectAltName matches ID '%fromcert', replaced
-         by subject DN [Tuomo]
+    #993 ipsec showhostkey: wrong kind of key PPK_XAUTH [Philippe Vouters]
    #1308 forceencaps= setting does now show up in "ipsec auto --status"
          [Matt Rogers]
+   #1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
+         tree [Steve Lanser]
    #1334 Block rules created by openswan remain even after tunnel
          establishment or XFRM_MSG_POLEXPIRE [Panagiotis Tamtamis]
+   #1349 pluto logging no subjectAltName matches ID '%fromcert', replaced
+         by subject DN [Tuomo]
+   #1359 Openswan L2TP and IPhone vpn connection [Paul]
+   #1375 ipsec verify uses perl, should use python [Paul]
    #1381 XAuth: the variable PLUTO_XAUTH_USERNAME is empty in the updown
    	 script [Bram]
    #1384 confusing output from ipsec auto --status [Bram]
