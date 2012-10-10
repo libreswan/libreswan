@@ -202,18 +202,18 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, struct state *st)
 		      
 	if (nat_traversal_support_port_floating) {
 	    if (st->st_connection->remotepeertype == CISCO) {
-	    if (r) r = out_vid(np, outs, VID_NATT_RFC);
+		if (r) r = out_vid(np, outs, VID_NATT_RFC);
 	    } else {
-	    if (r) r = out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_RFC);
-	    if (r) r = out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_03);
-	    if (r) r = out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_02_N);
-	    if (r)
+		if (r) r = out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_RFC);
+		if (r) r = out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_03);
+		if (r) r = out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_02_N);
+		if (r)
 		r = out_vid(nat_traversal_support_non_ike ? ISAKMP_NEXT_VID : np,
 			outs, VID_NATT_IETF_02);
 	    }
 	}
 	if (nat_traversal_support_non_ike && st->st_connection->remotepeertype != CISCO) {
-	    if (r) r = out_vid(np, outs, VID_NATT_IETF_00);
+		if (r) r = out_vid(np, outs, VID_NATT_IETF_00);
 	}
 	return r;
 }
@@ -222,16 +222,25 @@ u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
 {
 	switch (nat_t_vid) {
 		case VID_NATT_IETF_00:
-			return LELEM(NAT_TRAVERSAL_IETF_00_01);
+			DBG(DBG_NATT, DBG_log("returning NATT method NAT_TRAVERSAL_METHOD_IETF_00_01"));
+			return NAT_TRAVERSAL_METHOD_IETF_00_01;
 
 		case VID_NATT_IETF_02:
 		case VID_NATT_IETF_02_N:
 		case VID_NATT_IETF_03:
-			return LELEM(NAT_TRAVERSAL_IETF_02_03);
+			DBG(DBG_NATT, DBG_log("returning NATT method NAT_TRAVERSAL_METHOD_IETF_02_03"));
+			return NAT_TRAVERSAL_METHOD_IETF_02_03;
+
+		case VID_NATT_IETF_04:
+		case VID_NATT_IETF_05:
+		case VID_NATT_IETF_06:
+		case VID_NATT_IETF_07:
+		case VID_NATT_IETF_08:
 		case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 			DBG(DBG_NATT, DBG_log("VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE assumed as VID_NATT_RFC"));
 		case VID_NATT_RFC:
-			return LELEM(NAT_TRAVERSAL_RFC);
+			DBG(DBG_NATT, DBG_log("returning NATT method NAT_TRAVERSAL_METHOD_IETF_RFC"));
+			return NAT_TRAVERSAL_METHOD_IETF_RFC;
 	}
 	return 0;
 }
@@ -605,21 +614,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 void nat_traversal_show_result (u_int32_t nt, u_int16_t sport)
 {
-	const char *mth = NULL, *rslt = NULL;
-	switch (nt & NAT_TRAVERSAL_METHOD) {
-	case LELEM(NAT_TRAVERSAL_IETF_00_01):
-	    mth = natt_type_bitnames[0];
-	    break;
-	case LELEM(NAT_TRAVERSAL_IETF_02_03):
-	    mth = natt_type_bitnames[1];
-	    break;
-	case LELEM(NAT_TRAVERSAL_IETF_05):
-	    mth = natt_type_bitnames[2];
-	    break;
-	case LELEM(NAT_TRAVERSAL_RFC):
-	    mth = natt_type_bitnames[3];
-	    break;
-	}
+	const char *rslt = NULL;
 	switch (nt & NAT_T_DETECTED) {
 		case 0:
 			rslt = "no NAT detected";
@@ -634,9 +629,14 @@ void nat_traversal_show_result (u_int32_t nt, u_int16_t sport)
 			rslt = "both are NATed";
 			break;
 	}
+	
 	loglog(RC_LOG_SERIOUS,
 		"NAT-Traversal: Result using %s: %s",
-		mth ? mth : "unknown method",
+			LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ? enum_name(&natt_method_names, NAT_TRAVERSAL_METHOD_IETF_RFC) :
+			     LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_05) ? enum_name(&natt_method_names, NAT_TRAVERSAL_METHOD_IETF_05) :
+				LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ? enum_name(&natt_method_names, NAT_TRAVERSAL_METHOD_IETF_02_03) :
+				   LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_00_01) ? enum_name(&natt_method_names, NAT_TRAVERSAL_METHOD_IETF_00_01) :
+				     "unknown method",
 		rslt ? rslt : "unknown result"
 		);
 	if ((nt & LELEM(NAT_TRAVERSAL_NAT_BHND_PEER)) &&

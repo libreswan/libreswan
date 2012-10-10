@@ -324,9 +324,9 @@ aggr_inI1_outR1_common(struct msg_digest *md
 				 , md->quirks.nat_traversal_vid))
     if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
 	/* reply if NAT-Traversal draft is supported */
-	st->hidden_variables.st_nat_traversal = nat_traversal_vid_to_method(md->quirks.nat_traversal_vid);
+	st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(md->quirks.nat_traversal_vid));
 	libreswan_log("enabling possible NAT-traversal with method %s"
-	     , bitnamesof(natt_type_bitnames, st->hidden_variables.st_nat_traversal));
+	     , enum_name(&natt_method_names, nat_traversal_vid_to_method(md->quirks.nat_traversal_vid)));
     }
 #endif
 
@@ -528,10 +528,8 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
 
 #ifdef NAT_TRAVERSAL
     if (st->hidden_variables.st_nat_traversal) {
-      if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
         if (!nat_traversal_add_natd(ISAKMP_NEXT_VID, &md->rbody, md))
 	  return STF_INTERNAL_ERROR;
-      }
       if (!out_vid(ISAKMP_NEXT_NONE
 		   , &md->rbody
 		   , md->quirks.nat_traversal_vid)) {
@@ -595,7 +593,7 @@ aggr_inR1_outI2(struct msg_digest *md)
 
 #ifdef NAT_TRAVERSAL
     if (nat_traversal_enabled && md->quirks.nat_traversal_vid) {
-	st->hidden_variables.st_nat_traversal = nat_traversal_vid_to_method(md->quirks.nat_traversal_vid);
+	st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(md->quirks.nat_traversal_vid));
     }
 #endif
 
@@ -616,10 +614,8 @@ aggr_inR1_outI2(struct msg_digest *md)
 	, DBG_log("inR1: checking NAT-t: %d and %d"
 		  , nat_traversal_enabled
 		  , st->hidden_variables.st_nat_traversal));
-    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
-	nat_traversal_natd_lookup(md);
-    }
     if (st->hidden_variables.st_nat_traversal) {
+	nat_traversal_natd_lookup(md);
 	nat_traversal_show_result(st->hidden_variables.st_nat_traversal, md->sender_port);
     }
     if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {
@@ -730,7 +726,7 @@ aggr_inR1_outI2_tail(struct msg_digest *md
     }
 
 #ifdef NAT_TRAVERSAL
-    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
+    if (st->hidden_variables.st_nat_traversal) {
 	if (!nat_traversal_add_natd(auth_payload, &md->rbody, md))
 	    return STF_INTERNAL_ERROR;
     }
@@ -864,10 +860,8 @@ aggr_inI2_tail(struct msg_digest *md
     struct payload_digest id_pd;
 
 #ifdef NAT_TRAVERSAL
-    if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATD) {
-	nat_traversal_natd_lookup(md);
-    }
     if (st->hidden_variables.st_nat_traversal) {
+	nat_traversal_natd_lookup(md);
 	nat_traversal_show_result(st->hidden_variables.st_nat_traversal, md->sender_port);
     }
     if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {

@@ -197,6 +197,23 @@ const char *const state_story[] = {
 enum_names state_stories =
     { STATE_MAIN_R0, STATE_IKEv2_ROOF-1, state_story, NULL };
 
+
+#ifdef NAT_TRAVERSAL
+static const char *const natt_method_result_name[] = {
+  "NAT behind me", /* 30 */
+  "NAT behind peer" /* 31 */
+};
+enum_names natt_method_result_names = { NAT_TRAVERSAL_NAT_BHND_ME, NAT_TRAVERSAL_NAT_BHND_PEER, natt_method_result_name, NULL };
+
+static const char *const natt_method_name[] = {
+  "draft-ietf-ipsec-nat-t-ike-00/01", /* 1 */
+  "draft-ietf-ipsec-nat-t-ike-02/03",
+  "draft-ietf-ipsec-nat-t-ike-05",
+  "RFC 3947 (NAT-Traversal)" /* 4*/
+};
+enum_names natt_method_names = { NAT_TRAVERSAL_METHOD_IETF_00_01, NAT_TRAVERSAL_METHOD_IETF_RFC, natt_method_name, &natt_method_result_names };
+#endif
+
 /* pluto crypto operations */
 static const char *const pluto_cryptoop_strings[] = {
 	"build_kenonce",	/* calculate g^i and nonce */
@@ -217,7 +234,7 @@ enum_names pluto_cryptoop_names =
 /* pluto crypto importance */
 static const char *const pluto_cryptoimportance_strings[] = {
 	"import:not set",
-  "import:respond to stranger",	
+  "import:respond to stranger",
   "import:respond to friend",
   "import:ongoing calculation",
   "import:local rekey",

@@ -232,7 +232,6 @@ static struct vid_struct _vid_tab[] = {
 	{ VID_LIBRESWANSELF,VID_SELF, "","Libreswan (this version)", NULL,0},
 	
 	/* NAT-Traversal */
-
 	DEC_MD5_VID(NATT_STENBERG_01, "draft-stenberg-ipsec-nat-traversal-01")
 	DEC_MD5_VID(NATT_STENBERG_02, "draft-stenberg-ipsec-nat-traversal-02")
 	DEC_MD5_VID(NATT_HUTTUNEN, "ESPThruNAT")
@@ -548,9 +547,8 @@ static void handle_known_vendorid (struct msg_digest *md
 	     * Note: most recent == higher id in vendor.h
 	     */
 
-	    /* PAUL TRY THIS IF BELOW FAILS WITH APPLE */
-	    /*case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE: */
 	case VID_NATT_IETF_00:
+	case VID_NATT_IETF_01:
 	    if (!nat_traversal_support_non_ike)
 		break;
 	    vid_usefull = 1;
@@ -568,18 +566,19 @@ static void handle_known_vendorid (struct msg_digest *md
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 	case VID_NATT_RFC:
+
 	    vid_usefull = 1;
 	    if(!nat_traversal_support_port_floating) {
 		loglog(RC_LOG_SERIOUS
-		       , "received Vendor ID payload [%s] meth=%d, "
+		       , "received Vendor ID payload [%s] method=%s, "
 		       "but port floating is off"
-		       , vid->descr, vid->id);
+		       , vid->descr,  enum_name(&natt_method_names, nat_traversal_vid_to_method(vid->id)));
 		return;
 	    } else {
 		if (md->quirks.nat_traversal_vid < vid->id) {
 		    loglog(RC_LOG_SERIOUS
-			   , "received Vendor ID payload [%s] method set to=%d "
-			   , vid->descr, vid->id);
+			   , "received Vendor ID payload [%s] method set to=%s "
+			   , vid->descr, enum_name(&natt_method_names, nat_traversal_vid_to_method(vid->id)));
 		    md->quirks.nat_traversal_vid = vid->id;
 		    return;
 		} else {
