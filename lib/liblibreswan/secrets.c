@@ -194,13 +194,25 @@ struct secret *osw_get_defaultsecret(struct secret *secrets)
 {
     struct secret *s,*s2;
 
-    /* get last element of array */
-    s=s2=secrets;
-    while(s2 != NULL) {
-	s=s2;
-	s2=s2->next;
+    /* Search for PPK_RSA pks */
+    s2 = secrets;
+    while (s2)
+    {
+        for (; s2 && s2->pks.kind == PPK_RSA; s2 = s2->next);
+	for (s = s2; s && s->pks.kind != PPK_RSA; s=s->next);
+	if (s) {
+	    struct secret *tmp=s->next;
+	    struct secret curr = *s;
+	    s2->next = tmp;
+	    s->next = s2;
+	    *s = *s2;
+	    *s2 = curr;
+            s2 = s;
+	}
+        else if (s2) 
+	    s2 = s2->next;
     }
-    return s;
+    return secrets;
 }
 
 
