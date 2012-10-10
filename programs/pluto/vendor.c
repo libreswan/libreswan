@@ -583,11 +583,7 @@ static void handle_known_vendorid (struct msg_digest *md
 		    md->quirks.nat_traversal_vid = vid->id;
 		    return;
 		} else {
-		    loglog(RC_LOG_SERIOUS
-			   , "received Vendor ID payload [%s] meth=%d, "
-			   "but already using method %d"
-			   , vid->descr, vid->id
-			   , md->quirks.nat_traversal_vid);
+			DBG(DBG_NATT, DBG_log("Ignoring older NAT-T Vendor ID paylad [%s]",vid->descr));
 		    return;
 		}
 	    }
