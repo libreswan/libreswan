@@ -24,6 +24,7 @@ v1.0.0 (unreleased)
 * pluto: Fix phase confusion in xauth/modeconfig [Avesh]
 * pluto: Added new option plutostderrlogtime= (default=no) [Paul]
 * pluto: Fix _plutoload to actually run postpluto script [Tuomo]
+* IKEv1: aggressive mode sometimes picked wrong RSA/PSK conn [Philippe]
 * IKEv2: Comply to RFC's for "must be zero" to ignore instead of abort [Paul]
   (rhbz#831669)
 * IKEv2: road warrior support [Antony/Paul/Avesh]
