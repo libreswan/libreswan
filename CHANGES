@@ -46,7 +46,8 @@ v1.0.0 (unreleased)
 * Fixed updown to remove ModeCfg obtained sourceip on --down [Avesh]
 * Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
 * XAUTH: Do not redo xauth/modecfg during rekey to cisco [Avesh]
-* XAUTH:  Use incoming XAUTH VID when picking best connection
+* XAUTH: Use incoming XAUTH VID when picking best connection [Philippe]
+* XAUTH: Add support for Mutual RSA + XAuth (aggr mode) [Philippe Vouters]
 * barf: do not grep lastlog, wtmp, tmp (rhbz#771612) [Paul]
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
 * PAM: move pam out of contrib, and install config when HAVE_XAUTHPAM [Paul]
