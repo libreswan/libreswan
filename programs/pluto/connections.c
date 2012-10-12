@@ -601,7 +601,7 @@ format_end(char *buf
     if(dohost_name) {
     	if(this->host_addr_name) {
 		size_t icl = strlen(host_space);
-		size_t room = sizeof(host_space) - icl - 1;
+		int room = sizeof(host_space) - icl - 1;
 		int needed = snprintf(host_space + icl, room, "<%s>", this->host_addr_name);
 
 		if (needed > room) {
@@ -2480,7 +2480,7 @@ refine_host_connection(const struct state *st, const struct id *peer_id
     u_int16_t auth = st->st_oakley.auth;
     struct connection *d;
     struct connection *best_found = NULL;
-    lset_t auth_policy = NULL;
+    lset_t auth_policy = LEMPTY;
     lset_t p1mode_policy = aggrmode ? POLICY_AGGRESSIVE : LEMPTY;
     const struct RSA_private_key *my_RSA_pri = NULL;
     bool wcpip;	/* wildcard Peer IP? */
@@ -2594,7 +2594,8 @@ refine_host_connection(const struct state *st, const struct id *peer_id
 		continue;
 
 	    /* authentication used must fit policy of this connection */
-	    if ((d->policy & auth_policy) == LEMPTY)
+	    if ((d->policy & auth_policy) == LEMPTY &&
+		(d->policy & POLICY_AGGRESSIVE) == LEMPTY)
 		continue;	/* our auth isn't OK for this connection */
 
 	    if ((d->policy & POLICY_AGGRESSIVE) ^ p1mode_policy)
