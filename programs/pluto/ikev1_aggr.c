@@ -372,8 +372,40 @@ aggr_inI1_outR1_common(struct msg_digest *md
     }
 }
 
+static void
+doi_log_cert_thinking(struct msg_digest *md UNUSED
+                      , u_int16_t auth
+                      , enum ipsec_cert_type certtype
+                      , enum certpolicy policy
+                      , bool gotcertrequest
+                      , bool send_cert)
+{
+    DBG(DBG_CONTROL
+        , DBG_log("thinking about whether to send my certificate:"));
 
+    DBG(DBG_CONTROL
+        , DBG_log("  I have RSA key: %s cert.type: %s "
+                  , enum_show(&oakley_auth_names, auth)
+                  , enum_show(&cert_type_names, certtype)));
 
+    DBG(DBG_CONTROL
+        , DBG_log("  sendcert: %s and I did%s get a certificate request "
+                  , enum_show(&certpolicy_type_names, policy)
+                  , gotcertrequest ? "" : " not"));
+
+    DBG(DBG_CONTROL
+        , DBG_log("  so %ssend cert.", send_cert ? "" : "do not "));
+
+    if(!send_cert) {
+        if(auth == OAKLEY_PRESHARED_KEY) {
+            DBG(DBG_CONTROL, DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)"));
+        } else if(certtype == CERT_NONE) {
+            DBG(DBG_CONTROL, DBG_log("I did not send a certificate because I do not have one."));
+        } else if(policy == cert_sendifasked) {
+            DBG(DBG_CONTROL, DBG_log("I did not send my certificate because I was not asked to."));
+        }
+    }
+}
 
 stf_status
 aggr_inI1_outR1_psk(struct msg_digest *md)
@@ -394,8 +426,13 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
     struct ke_continuation *ke = (struct ke_continuation *)pcrc;
     struct msg_digest *md = ke->md;
     struct state *st = md->st;
+    bool send_cert = FALSE;
+    bool send_cr = FALSE;
+    generalName_t *requested_ca = NULL;
     struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
     int auth_payload;
+    cert_t mycert = st->st_connection->spd.this.cert;
+
     pb_stream r_sa_pbs;
     pb_stream r_id_pbs;	/* ID Payload; also used for hash calculation */
 
@@ -404,6 +441,48 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
      */
 
     finish_dh_secretiv(st, r);
+
+    /* decode certificate requests */
+    decode_cr(md, &requested_ca);
+
+    if(requested_ca != NULL)
+    {
+        st->hidden_variables.st_got_certrequest = TRUE;
+    }
+
+    /*
+     * send certificate if we have one and auth is RSA, and we were
+     * told we can send one if asked, and we were asked, or we were told
+     * to always send one.
+     */
+    send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG
+        && mycert.type != CERT_NONE
+        && ((st->st_connection->spd.this.sendcert == cert_sendifasked
+             && st->hidden_variables.st_got_certrequest)
+            || st->st_connection->spd.this.sendcert==cert_alwayssend
+            || st->st_connection->spd.this.sendcert==cert_forcedtype);
+
+    doi_log_cert_thinking(md
+                          , st->st_oakley.auth
+                          , mycert.type
+                          , st->st_connection->spd.this.sendcert
+                          , st->hidden_variables.st_got_certrequest
+                          , send_cert);
+
+    /* send certificate request, if we don't have a preloaded RSA public key */
+    send_cr = !no_cr_send && send_cert && !has_preloaded_public_key(st);
+
+    DBG(DBG_CONTROL
+        , DBG_log(" I am %ssending a certificate request"
+                  , send_cr ? "" : "not "));
+
+    /*
+     * free collected certificate requests since as initiator
+     * we don't heed them anyway
+     */
+    free_generalNames(requested_ca, TRUE);
+
+    /* done parsing; initialize crypto  */
 
     init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
 
@@ -455,11 +534,48 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
 	chunk_t id_b;
 
 	build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this);
-	id_hd.isaiid_np = auth_payload;
+	id_hd.isaiid_np = (send_cert)? ISAKMP_NEXT_CERT : auth_payload;;
 	if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc, &md->rbody, &r_id_pbs)
 	|| !out_chunk(id_b, &r_id_pbs, "my identity"))
 	    return STF_INTERNAL_ERROR;
 	close_output_pbs(&r_id_pbs);
+    }
+
+    /* CERT out */
+    if (send_cert)
+    {
+        pb_stream cert_pbs;
+
+        struct isakmp_cert cert_hd;
+        cert_hd.isacert_np = (send_cr)? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
+        cert_hd.isacert_type = mycert.type;
+
+        libreswan_log("I am sending my cert");
+
+        if (!out_struct(&cert_hd
+                        , &isakmp_ipsec_certificate_desc
+                        , &md->rbody
+                        , &cert_pbs))
+            return STF_INTERNAL_ERROR;
+
+        if(mycert.forced) {
+          if (!out_chunk(mycert.u.blob, &cert_pbs, "forced CERT"))
+            return STF_INTERNAL_ERROR;
+        } else {
+          if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
+            return STF_INTERNAL_ERROR;
+        }
+        close_output_pbs(&cert_pbs);
+    }
+
+    /* CR out */
+    if (send_cr)
+    {
+        libreswan_log("I am sending a certificate request");
+        if (!build_and_ship_CR(mycert.type
+                               , st->st_connection->spd.that.ca
+                               , &md->rbody, ISAKMP_NEXT_SIG))
+            return STF_INTERNAL_ERROR;
     }
 
     update_iv(st);
@@ -473,7 +589,7 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
 	if (auth_payload == ISAKMP_NEXT_HASH)
 	{
 	    /* HASH_R out */
-	    if (!out_generic_raw(ISAKMP_NEXT_VID
+            if (!out_generic_raw(ISAKMP_NEXT_VID
 				 , &isakmp_hash_desc
 				 , &md->rbody
 				 , hash_val
@@ -499,7 +615,6 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
 		return STF_INTERNAL_ERROR;
 	}
     }
-
     /*
      * NOW SEND VENDOR ID payloads 
      */
