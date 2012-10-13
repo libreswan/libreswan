@@ -55,6 +55,7 @@ v1.0.0 (unreleased)
 * auto: fix --status output for vnet/vhost case
 * X509: Removed unused OCSP code [Paul]
 * XAUTH: Fixup of defines [Paul/Philippe]
+* aggresive mode: allow ISAKMP_NEXT_CR ISAKMP_NEXT_CERT as payloads [Philippe]
 * DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
 * OSX: Set __APPLE_USE_RFC_3542 required for udpfromto functionality [Paul]
 * Bugtracker bugs fixed:
