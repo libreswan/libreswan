@@ -1620,7 +1620,8 @@ void process_packet_tail(struct msg_digest **mdp)
 		if (LDISJOINT(s
 			      , needed | smc->opt_payloads|
 			      LELEM(ISAKMP_NEXT_VID) |
-			      LELEM(ISAKMP_NEXT_N) | LELEM(ISAKMP_NEXT_D)))
+			      LELEM(ISAKMP_NEXT_N) | LELEM(ISAKMP_NEXT_D) |
+			      LELEM(ISAKMP_NEXT_CR) | LELEM(ISAKMP_NEXT_CERT)))
 		{
 		    loglog(RC_LOG_SERIOUS, "%smessage ignored because it "
 			   "contains an unexpected payload type (%s)"
