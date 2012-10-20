@@ -15,6 +15,16 @@ export BASE=/var/lib/libvirt/images/
 if [ ! -f $BASE/swanubuntubase.img ]
 then
 	echo "Creating swanubuntubase image using libvirt"
+
+# check for hardware VM instructions
+cpu="--hvm"
+grep vmx /proc/cpuinfo > /dev/null || cpu=""
+
+# Looks like newer virt-install requires the disk image to exist?? How odd
+echo -n "creating 8 gig disk image...."
+dd if=/dev/zero of=$BASE/swanfedorabase.img bs=1024k count=8192
+echo done
+
 # install base guest to obtain a file image that will be used as uml root
 sudo virt-install --connect=qemu:///system \
     --network=network:default,model=virtio \
@@ -27,11 +37,11 @@ sudo virt-install --connect=qemu:///system \
     --vcpus=1 \
     --check-cpu \
     --accelerate \
-    --hvm \
     --location=$tree  \
     --autostart  \
     --noreboot \
     --nographics \
+    $cpu
 
 fi
 
