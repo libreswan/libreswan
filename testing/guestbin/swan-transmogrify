@@ -16,7 +16,8 @@ macs['pole'] = "12:00:00:de:cd:01"
 macs['road'] = "12:00:00:ab:cd:02"
 macs['sunrise'] = "12:00:00:dc:bc:01"
 macs['sunset'] = "12:00:00:ab:cd:01"
-macs['japan'] = "12:00:00:ab:cd:02"
+#conflicts with north
+#macs['japan'] = "12:00:00:ab:cd:02"
 
 if os.path.isfile("/etc/redhat-release"):
 	GUESTOS="redhat"
