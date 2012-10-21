@@ -6,7 +6,7 @@ LIBRESWANSRCDIR=`echo $TESTING | sed "s/\/testing//"`
 
 pushd $MYDIR
 
-for hostname in east west;
+for hostname in east west north road;
 do
 	rm -f vm/$hostname.xml.converted 
 	cp vm/$hostname.xml vm/$hostname.xml.converted

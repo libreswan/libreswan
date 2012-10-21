@@ -19,6 +19,11 @@ then
 cpu="--hvm"
 grep vmx /proc/cpuinfo > /dev/null || cpu=""
 
+# Looks like newer virt-install requires the disk image to exist?? How odd
+echo -n "creating 8 gig disk image...."
+sudo dd if=/dev/zero of=$BASE/swanfedorabase.img bs=1024k count=8192
+echo done
+
 # install base guest to obtain a file image that will be used as uml root
 # For static networking add kernel args parameters ip=.... etc
 # (network settings in kickstart are ignored by modern dracut)
