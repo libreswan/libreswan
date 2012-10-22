@@ -74,7 +74,7 @@ struct_desc isakmp_hdr_desc = { "ISAKMP Message", isa_fields, sizeof(struct isak
 
 static field_desc isag_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_end, 0, NULL, NULL }
 };
@@ -148,7 +148,7 @@ struct_desc isakmp_xauth_attribute_desc = {
  */
 static field_desc isasa_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 32/BITS_PER_BYTE, "DOI", &doi_names },
     { ft_end, 0, NULL, NULL }
@@ -179,7 +179,7 @@ struct_desc ipsec_sit_desc = { "IPsec DOI SIT", ipsec_sit_field, sizeof(u_int32_
  */
 static field_desc isap_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat, 8/BITS_PER_BYTE, "proposal number", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "protocol ID", &protocol_names },
@@ -210,11 +210,11 @@ struct_desc isakmp_proposal_desc = { "ISAKMP Proposal Payload", isap_fields, siz
 /* PROTO_ISAKMP */
 static field_desc isat_fields_isakmp[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat, 8/BITS_PER_BYTE, "transform number", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "transform ID", &isakmp_transformid_names },
-    { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end, 0, NULL, NULL }
 };
 
@@ -225,11 +225,11 @@ struct_desc isakmp_isakmp_transform_desc = {
 /* PROTO_IPSEC_AH */
 static field_desc isat_fields_ah[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat, 8/BITS_PER_BYTE, "transform number", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "transform ID", &ah_transformid_names },
-    { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end, 0, NULL, NULL }
 };
 
@@ -240,11 +240,11 @@ struct_desc isakmp_ah_transform_desc = {
 /* PROTO_IPSEC_ESP */
 static field_desc isat_fields_esp[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat, 8/BITS_PER_BYTE, "transform number", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "transform ID", &esp_transformid_names },
-    { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end, 0, NULL, NULL }
 };
 
@@ -255,11 +255,11 @@ struct_desc isakmp_esp_transform_desc = {
 /* PROTO_IPCOMP */
 static field_desc isat_fields_ipcomp[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_nat, 8/BITS_PER_BYTE, "transform number", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "transform ID", &ipcomp_transformid_names },
-    { ft_mbz, 16/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end, 0, NULL, NULL }
 };
 
@@ -303,7 +303,7 @@ struct_desc isakmp_keyex_desc = { "ISAKMP Key Exchange Payload", isag_fields, si
  */
 static field_desc isaid_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "ID type", &ident_names },	/* ??? depends on DOI? */
     { ft_nat, 8/BITS_PER_BYTE, "DOI specific A", NULL },	/* ??? depends on DOI? */
@@ -330,7 +330,7 @@ struct_desc isakmp_identification_desc = { "ISAKMP Identification Payload", isai
  */
 static field_desc isaiid_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "ID type", &ident_names },
     { ft_nat, 8/BITS_PER_BYTE, "Protocol ID", NULL },	/* ??? UDP/TCP or 0? */
@@ -357,7 +357,7 @@ struct_desc isakmp_ipsec_identification_desc = { "ISAKMP Identification Payload 
  */
 static field_desc isacert_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "cert encoding", &cert_type_names },
     { ft_end, 0, NULL, NULL }
@@ -384,7 +384,7 @@ static field_desc isacert_fields[] = {
  */
 static field_desc isacr_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "cert type", &cert_type_names },
     { ft_end, 0, NULL, NULL }
@@ -468,7 +468,7 @@ struct_desc isakmp_nonce_desc = { "ISAKMP Nonce Payload", isag_fields, sizeof(st
  */
 static field_desc isan_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 32/BITS_PER_BYTE, "DOI", &doi_names },
     { ft_nat, 8/BITS_PER_BYTE, "protocol ID", NULL },	/* ??? really enum: ISAKMP, IPSEC, ESP, ... */
@@ -499,7 +499,7 @@ struct_desc isakmp_notification_desc = { "ISAKMP Notification Payload", isan_fie
  */
 static field_desc isad_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 32/BITS_PER_BYTE, "DOI", &doi_names },
     { ft_nat, 8/BITS_PER_BYTE, "protocol ID", NULL },	/* ??? really enum: ISAKMP, IPSEC */
@@ -544,10 +544,10 @@ struct_desc isakmp_vendor_id_desc = { "ISAKMP Vendor ID Payload", isag_fields, s
 */    
 static field_desc isaattr_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "Attr Msg Type", &attr_msg_type_names },
-    { ft_mbz, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_nat, 16/BITS_PER_BYTE, "Identifier", NULL },
     { ft_end, 0, NULL, NULL }
 };
@@ -1183,8 +1183,7 @@ DBG_print_struct(const char *label, const void *struct_ptr
 
 	switch (fp->field_type)
 	{
-	case ft_mbz:	/* must be zero */
-	case ft_zig:
+	case ft_zig:	
 	    inp += i;
 	    break;
 	case ft_nat:	/* natural number (may be 0) */
@@ -1340,29 +1339,14 @@ in_struct(void *struct_ptr, struct_desc *sd
 #endif
 	    switch (fp->field_type)
 	    {
-	    case ft_mbz:	/* must be zero */
+	    case ft_zig:	/* should be zero, ignore if not - liberal in what to receive, strict to send */
 		for (; i != 0; i--)
 		{
 		    if (*cur++ != 0)
 		    {
-			ugh = builddiag("byte %d of %s must be zero, but is not"
+			/* We cannot zeroize it, it would break our hash calculation */
+			libreswan_log("byte %d of %s should have been zero, but was not (ignored)"
 			    , (int) (cur - ins->cur), sd->name);
-			break;
-		    }
-		    *outp++ = '\0';	/* probably redundant */
-		}
-		break;
-	    case ft_zig:	/* should be zero, ignore if not */
-		for (; i != 0; i--)
-		{
-		    if (*cur++ != 0)
-		    {
-			libreswan_log("byte %d of %s should have been zero, but was not"
-			    , (int) (cur - ins->cur), sd->name);
-			/*
-			 * We cannot zeroize it, it would break our hash calculation 
-			 * *cur = '\0';
-			 */
 		    }
 		    *outp++ = '\0';	/* probably redundant */
 		}
@@ -1580,8 +1564,7 @@ out_struct(const void *struct_ptr, struct_desc *sd
 #endif
 	    switch (fp->field_type)
 	    {
-	    case ft_mbz:	/* must be zero */
-	    case ft_zig:	/* should be zero, but we'll let it go */
+	    case ft_zig:	/* should be zero, so ensure it is */
 		inp += i;
 		for (; i != 0; i--)
 		    *cur++ = '\0';
