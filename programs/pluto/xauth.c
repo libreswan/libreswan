@@ -1412,6 +1412,7 @@ xauth_inR0(struct msg_digest *md)
 
 	    if (attr.isaat_af_type & 0x8000)
 	    {
+		attr.isaat_af_type &= ~0x8000;
 		len = 4;
 		val = attr.isaat_lv;
 	    } else {
@@ -1419,11 +1420,17 @@ xauth_inR0(struct msg_digest *md)
 		val = ntohs(*(u_int16_t *)strattr.cur);
 	    }
 
+#ifdef DEBUG
+	    DBG_log("attr.isaat_af_type = %s (%d)",
+		    enum_show(&xauth_attr_names, attr.isaat_af_type),
+		    attr.isaat_af_type);
+#endif
+
 	    switch(attr.isaat_af_type)
 	    {
 	    case XAUTH_TYPE:
 		if(val != XAUTH_TYPE_GENERIC) {
-		   libreswan_log("XAUTH:  Unsupported XAUTH TYPE %s (%d) received."
+		   libreswan_log("XAUTH: Unknown XAUTH_TYPE %s (%d) value received."
 		     , enum_show(&xauth_type_names, attr.isaat_af_type)
 		     , attr.isaat_af_type);
 		   return NO_PROPOSAL_CHOSEN;
@@ -1444,7 +1451,7 @@ xauth_inR0(struct msg_digest *md)
 
 	    default:
 		libreswan_log("XAUTH:  Unsupported XAUTH parameter %s (%d) received."
-		     , enum_show(&xauth_type_names, attr.isaat_af_type)
+		     , enum_show(&xauth_attr_names, attr.isaat_af_type)
 		     , attr.isaat_af_type);
 		break;
 	    }

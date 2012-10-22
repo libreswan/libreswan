@@ -34,6 +34,7 @@ extern const char *const payload_name[];
 extern enum_names attr_msg_type_names;
 extern enum_names modecfg_attr_names;
 extern enum_names xauth_type_names;
+extern enum_names xauth_attr_names;
 extern enum_names exchange_names;
 extern enum_names protocol_names;
 extern enum_names isakmp_transformid_names;
@@ -77,6 +78,10 @@ extern enum_names ikev2_ts_type_names;
 
 #ifdef HAVE_LABELED_IPSEC
 extern u_int16_t secctx_attr_value;
+#endif
+
+#ifdef NAT_TRAVERSAL
+extern enum_names natt_method_names;
 #endif
 
 #ifdef NAT_TRAVERSAL
