@@ -83,6 +83,8 @@ enum known_vendorid {
   VID_LUCENT_CL7            =63,
   VID_CISCO_UNITY_FWTYPE    =64,
   VID_CHECKPOINT            =65,
+  VID_GSSAPI                =66,
+  VID_GSSAPILONG            =67,
 
 
   /* 101 - 150 : NAT-Traversal */

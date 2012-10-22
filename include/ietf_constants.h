@@ -412,6 +412,10 @@ enum next_payload_types {
 #define    SUPPORTED_ATTRIBUTES       14
 #define    INTERNAL_IP6_SUBNET        15
 
+/* 65001 - 65535 Private Use */
+
+#define FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I	65500
+
 /* extended authentication modes */
 #define XAUTH_AUTH_INIT_PSK             65001
 #define XAUTH_AUTH_RESP_PSK             65002
@@ -423,6 +427,16 @@ enum next_payload_types {
 #define XAUTH_AUTH_RESP_RSA_ENC         65008
 #define XAUTH_AUTH_INIT_RSA_REV         65009
 #define XAUTH_AUTH_RESP_RSA_REV         65010
+
+/* 
+ * GSS mode - should only be allowed after receiving vendorids:
+ * MD5("A GSS-API Authentication Method for IKE")
+ * MD5("GSSAPI") (recognized by Windows 2000)
+ * MD5("MS NT5 ISAKMPOAKLEY") (sent by Windows 2000)
+ */
+#define OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB	65001
+#define OAKLEY_ATTR_GSS_ID		16384
+#define MAXPADLWORD			20
 
 /* hybrid authentication modes */
 #define HYBRID_AUTH_INIT_RSA            64221

@@ -150,6 +150,10 @@ static struct vid_struct _vid_tab[] = {
 	Windows Server 2008 R2 00 00 00 08
 	*/
 
+	/* These two VID's plus VID_MS_NT5 trigger GSS-API support */
+	DEC_MD5_VID(GSSAPILONG,"A GSS-API Authentication Method for IKE")
+	DEC_MD5_VID(GSSAPI,"GSSAPI")
+
 	DEC_MD5_VID(SSH_SENTINEL, "SSH Sentinel")
 	DEC_MD5_VID(SSH_SENTINEL_1_1, "SSH Sentinel 1.1")
 	DEC_MD5_VID(SSH_SENTINEL_1_2, "SSH Sentinel 1.2")
