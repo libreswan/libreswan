@@ -124,4 +124,10 @@ systemctl enable ip6tables.service
 
 # Takes a long time, disable for now
 # yum update -y 
+
+# Instal openswan
+mount /source
+cd /source
+make programs module install module_install
+
 %end

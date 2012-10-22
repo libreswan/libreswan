@@ -90,4 +90,10 @@ EOD
 
 # Takes a long time, disable for now
 # apt-get update -y
+
+# Instal openswan
+mount /source
+cd /source
+make programs module install module_install
+
 %end
