@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 09/28/2012
+.\"      Date: 10/22/2012
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "09/28/2012" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC\&.CONF" "5" "10/22/2012" "[FIXME: source]" "[FIXME: manual]"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -572,9 +572,9 @@ script which makes the actual decisions whether to perform any iptables/ip_connt
 how the left participant should be identified for authentication; defaults to
 \fBleft\fR\&. Can be an IP address (in any
 \fBipsec_ttoaddr\fR(3)
-syntax) or a fully\-qualified domain name preceded by
-\fB@\fR
-(which is used as a literal string and not resolved)\&. The magic value
+syntax) or a fully\-qualified domain name which will be resolved\&. If preceded by
+\fB@\fR, the value is used as a literal string and will not be resolved\&. To support opaque identifiers (usually of type ID_KEY_ID, such as used by Cisco to specify Group Name, use square brackets, eg
+\fBrightid=[GroupName]\fR\&. The magic value
 \fB%fromcert\fR
 causes the ID to be set to a DN taken from a certificate that is loaded\&. Prior to 2\&.5\&.16, this was the default if a certificate was specified\&. The magic value
 \fB%none\fR
