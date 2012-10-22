@@ -48,6 +48,15 @@ for hostname in macs.keys():
 			resolv = "/testing/baseconfigs/%s/etc/resolv.conf"%hostname
 		output += "\n" + commands.getoutput("mount --bind %s /etc/resolv.conf"%resolv)
 
+		if not os.path.isdir("/etc/ssh"):
+			os.makedirs("/etc/ssh",0755)
+		if not os.path.isdir("/root/.ssh"):
+			os.makedirs("/root/.ssh",0700)
+		output += "\n" + commands.getoutput("cp /testing/baseconfigs/all/ssh/*key* /etc/ssh/")
+		output += "\n" + commands.getoutput("cp /testing/baseconfigs/all/ssh/*key* /etc/ssh/")
+		shutil.copyfile("/testing/baseconfigs/all/ssh/authorized_keys","/root/.ssh/authorized_keys")
+		output += "\n" + commands.getoutput("chmod 600 /etc/ssh/*key* /root/.ssh/authorized_keys")
+
 		if GUESTOS == "redhat":
 			output += "\n" + commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/sysconfig/network /etc/sysconfig/network"%hostname)
 			# pickup entries from "all" host, for now only iptables services. cannot mount, must copy
@@ -73,6 +82,9 @@ for hostname in macs.keys():
 			# get rid of damn cp/mv/rm aliases for root
 			if not "#alias" in open("/root/.bashrc","r").read():
 				output += "\n" + commands.getoutput("sed -i 's/alias/# alias/g' /root/.bashrc")
+
+			# SElinux fixup
+			output += "\n" + commands.getoutput("restorecon -R /etc/ssh/ /root/.ssh /etc/sysconfig")
 
 		elif GUESTOS == "debian":
 			output += "\n" + commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/hostname /etc/hostname"%hostname)

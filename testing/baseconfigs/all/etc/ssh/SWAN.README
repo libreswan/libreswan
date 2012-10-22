@@ -1,0 +1,7 @@
+
+These keys are shared amongst all test machines to make it easier
+for developers to login. Note the authorized_keys is copied into
+/root/.ssh on each image too.
+
+The test machines all use the IETF "test" range IP addresses (192.0.2.0/24 etc)
+and these test machines should never get routed into the wild.
