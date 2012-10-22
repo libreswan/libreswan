@@ -16,7 +16,7 @@ or a fully-qualified domain name which will be resolved. If preceded by
 and will not be resolved.
 
 To support opaque identifiers (usually of type ID_KEY_ID, such as used by
-Cisco to specify Group Name, use square brackets, eg <emphasis remap='B'>rightid=[GroupName]</emphasis>.
+Cisco to specify Group Name, use square brackets, eg <emphasis remap='B'>rightid=@[GroupName]</emphasis>.
 
 The magic value
 <emphasis remap='B'>%fromcert</emphasis>
