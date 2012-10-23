@@ -278,11 +278,11 @@ struct whack_message {
 #define LIST_ACERTS	0x0008	/* list all attribute certs */
 #define LIST_AACERTS	0x0010	/* list all aa certs */
 /* #define LIST_OCSPCERTS	0x0020	obsoleted, was: list all ocsp certs */
-#define LIST_GROUPS	0x0040	/* list all access control groups */
-#define LIST_CRLS	0x0080	/* list all crls */
+#define LIST_GROUPS	0x0020	/* list all access control groups */
+#define LIST_CRLS	0x0040	/* list all crls */
 /* #define LIST_OCSP	0x0100	obsoleted, was list all ocsp cache entries */
-#define LIST_PSKS       0x0400  /* list all preshared keys (by name) */
-#define LIST_EVENTS     0x0800  /* list all queued events */
+#define LIST_PSKS       0x0080  /* list all preshared keys (by name) */
+#define LIST_EVENTS     0x0100  /* list all queued events */
 
 /* omit events from listing options */
 #define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */
@@ -294,10 +294,10 @@ struct whack_message {
 #define REREAD_CACERTS	  0x02	/* reread certs in /etc/ipsec.d/cacerts */
 #define REREAD_AACERTS	  0x04	/* reread certs in /etc/ipsec.d/aacerts */
 /* #define REREAD_OCSPCERTS  0x08	obsoleted, was reread certs in /etc/ipsec.d/ocspcerts */
-#define REREAD_ACERTS     0x10	/* reread certs in /etc/ipsec.d/acerts */
-#define REREAD_CRLS	  0x20	/* reread crls in /etc/ipsec.d/crls */
+#define REREAD_ACERTS     0x08	/* reread certs in /etc/ipsec.d/acerts */
+#define REREAD_CRLS	  0x10	/* reread crls in /etc/ipsec.d/crls */
 #define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_CRLS)  /* all reread options */
-#define REREAD_TPMEVAL    0x40  /* evaluate in Tcl */
+#define REREAD_TPMEVAL    0x20  /* evaluate in Tcl */
 
 
 struct whackpacker {
