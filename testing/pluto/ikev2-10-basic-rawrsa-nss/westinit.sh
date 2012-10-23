@@ -3,7 +3,7 @@ TESTNAME=ikev2-10-basic-rawrsa-nss
 source /testing/pluto/bin/westlocal.sh
 
 ipsec setup stop
-rm /tmp/pluto.log
+rm -f /tmp/pluto.log
 ln -s /testing/pluto/$TESTNAME/OUTPUT/pluto.west.log /tmp/pluto.log
 
 # confirm that the network is alive

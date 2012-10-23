@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Wait until the network has started - based on default route
+
+count=20
+until [ $count -eq 0 ] || [ -n "`ip route list | grep default`" ]  >/dev/null 2>&1
+do
+	count=`expr $count - 1`
+	sleep 1
+done 
+
