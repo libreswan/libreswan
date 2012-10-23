@@ -98,8 +98,8 @@ cat << EOD > /etc/profile.d/swanpath.sh
 # add swan test binaries to path
 
 case ":${PATH:-}:" in
-    *:/testing/scripts/guestbin:*) ;;
-    *) PATH="/testing/scripts/guestbin${PATH:+:$PATH}" ;;
+    *:/testing/guestbin:*) ;;
+    *) PATH="/testing/guestbin${PATH:+:$PATH}" ;;
 esac
 # too often various login/sudo/ssh methods don't have /usr/local/sbin
 case ":${PATH:-}:" in
