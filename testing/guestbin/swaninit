@@ -23,6 +23,7 @@ then
 	echo "Unknown or broken test case /testing/pluto/$TESTNAME"
 	exit 1
 else
+	pidof pluto && ipsec setup stop
 	echo $TESTNAME > /tmp/swan.current
 	source /testing/pluto/$1/testparams.sh
 	echo "DEBUG: $TESTNAME"
