@@ -3,10 +3,6 @@ TESTNAME=ikev2-06-6msg
 /testing/pluto/bin/wait-until-network-ready
 source /testing/pluto/bin/westlocal.sh
 
-ipsec setup stop
-rm -f /tmp/pluto.log
-ln -s /testing/pluto/$TESTNAME/OUTPUT/pluto.east.log /tmp/pluto.log
-
 # confirm that the network is alive
 ping -n -c 2 -I 192.0.1.254 192.0.2.254
 

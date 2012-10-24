@@ -7,10 +7,6 @@ source /testing/pluto/bin/westlocal.sh
 export PLUTO_EVENT_RETRANSMIT_DELAY=3
 export PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL=4
 
-ipsec setup stop
-rm -f /tmp/pluto.log
-ln -s /testing/pluto/$TESTNAME/OUTPUT/pluto.west.log /tmp/pluto.log
-
 # make sure that clear text does not get through
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 

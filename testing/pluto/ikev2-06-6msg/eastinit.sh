@@ -3,10 +3,6 @@ TESTNAME=ikev2-06-6msg
 /testing/pluto/bin/wait-until-network-ready
 source /testing/pluto/bin/eastlocal.sh
 
-ipsec setup stop
-rm -f /tmp/pluto.log
-ln -s /testing/pluto/$TESTNAME/OUTPUT/pluto.east.log /tmp/pluto.log
-
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 

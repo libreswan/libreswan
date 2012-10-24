@@ -1,5 +1,7 @@
 : ==== start ====
 TESTNAME=ikev2-algo-01-modp2048-initiator
+/testing/pluto/bin/wait-until-network-ready
+
 source /testing/pluto/bin/westlocal.sh
 
 # confirm that the network is alive
