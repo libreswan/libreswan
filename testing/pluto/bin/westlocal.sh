@@ -7,6 +7,11 @@
 # Redirect because we don't want to see diffs or ipv6 errors
 sysctl -p >/dev/null 2> /dev/null
 
+# if ipsec is running, stop it
+pidof pluto && ipsec setup stop
+
+# clear firewall from previous test rules
+iptables -F
 # prepare the LOGDROP table for use
 iptables -N LOGDROP
 iptables -A LOGDROP -j LOG --log-prefix "LOGDROP "
