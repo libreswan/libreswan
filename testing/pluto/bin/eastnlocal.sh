@@ -11,6 +11,9 @@ sysctl -p >/dev/null 2> /dev/null
 # if ipsec is running, stop it
 pidof pluto && ipsec setup stop
 
+rm -f /tmp/pluto.log
+ln -s /testing/pluto/$TESTNAME/OUTPUT/pluto.east.log /tmp/pluto.log
+
 # clear firewall from previous test rules
 iptables -F
 # prepare the LOGDROP table for use
