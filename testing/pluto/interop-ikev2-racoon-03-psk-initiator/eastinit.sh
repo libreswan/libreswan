@@ -9,7 +9,5 @@ chmod 700 /tmp/racoon2/psk/test.psk /tmp/racoon2/spmd.pwd
 
 /usr/local/racoon2/etc/init.d/spmd start
 /usr/local/racoon2/etc/init.d/iked start
-
 sleep 3
-
-echo done
+echo "initdone"

@@ -8,3 +8,4 @@ ipsec setup start
 ipsec whack --whackrecord /var/tmp/ikev2.record
 ipsec auto --add  westnet--eastnet-ikev2
 ipsec whack --debug-control --debug-controlmore --debug-crypt --impair-major-version-bump
+echo "initdone"

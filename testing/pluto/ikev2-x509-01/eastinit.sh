@@ -9,4 +9,4 @@ ipsec setup start
 
 ipsec whack --whackrecord /var/tmp/ikev2.record
 ipsec auto --add ikev2-westnet-eastnet-x509-cr
-echo "done"
+echo "initdone"

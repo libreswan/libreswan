@@ -13,3 +13,4 @@ ipsec auto --add  westnet-eastnet-ikev2-bait3
 ipsec auto --add  westnet-eastnet-ikev2-bait4
 ipsec auto --add  westnet-eastnet-ikev2-bait5
 ipsec whack --debug-control --debug-controlmore --debug-crypt
+echo "initdone"

@@ -14,4 +14,4 @@ chmod 600 /tmp/racoon2/spmd.pwd
 
 sleep 3
 
-echo now
+echo "initdone"

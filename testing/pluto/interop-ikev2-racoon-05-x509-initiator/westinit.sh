@@ -15,6 +15,4 @@ ipsec setup start
 ipsec whack --whackrecord /var/tmp/ikev2.record
 ipsec auto --add west--east-ikev2
 ipsec auto --status
-
-echo done
-
+echo "initdone"

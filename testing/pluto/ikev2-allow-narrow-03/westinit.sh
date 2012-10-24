@@ -18,6 +18,4 @@ ipsec whack --whackrecord /var/tmp/ikev2.record
 ipsec auto --add westnet-eastnet-ikev2
 ipsec auto --status
 ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
-
-echo done
-
+echo "initdone"

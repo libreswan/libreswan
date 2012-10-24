@@ -20,5 +20,5 @@ ipsec auto --add ikev2-westnet-eastnet-x509-cr
 ipsec auto --status
 S=5
 echo "sleep ${S} sec"
-sleep 5
-echo "done"
+sleep ${S}
+echo "initdone"

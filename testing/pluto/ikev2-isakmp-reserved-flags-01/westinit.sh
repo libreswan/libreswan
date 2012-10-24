@@ -16,6 +16,4 @@ ipsec whack --whackrecord /var/tmp/ikev2.record
 ipsec auto --add westnet--eastnet-ikev2
 ipsec whack --debug-all --debug-crypt --impair-send-bogus-isakmp-flag
 ipsec auto --status
-
-echo done
-
+echo "initdone"
