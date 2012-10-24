@@ -1,7 +1,5 @@
 : ==== start ====
 TESTNAME=ikev2-05-basic-psk
-/testing/pluto/bin/wait-until-network-ready
-
 source /testing/pluto/bin/westlocal.sh
 
 # confirm that the network is alive

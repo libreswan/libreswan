@@ -1,7 +1,5 @@
 : ==== start ====
 TESTNAME=ikev2-07-biddown
-/testing/pluto/bin/wait-until-network-ready
-
 source /testing/pluto/bin/eastlocal.sh
 
 ipsec setup start

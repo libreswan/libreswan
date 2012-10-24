@@ -1,7 +1,5 @@
 : ==== start ====
 TESTNAME=ikev2-03-basic-rawrsa
-/testing/pluto/bin/wait-until-network-ready
-
 source /testing/pluto/bin/eastlocal.sh
 
 ipsec setup start

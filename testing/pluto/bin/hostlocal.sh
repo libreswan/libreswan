@@ -3,6 +3,8 @@
 # this script is used by "$HOST" UMLs that want to have per-test
 # configuration files, and will be hitting sunrise-oe to test with.
 
+/testing/pluto/bin/wait-until-network-ready
+
 mkdir -p /tmp/$TESTNAME
 mkdir -p /tmp/$TESTNAME/ipsec.d/cacerts
 mkdir -p /tmp/$TESTNAME/ipsec.d/crls

@@ -1,6 +1,5 @@
 : ==== start ====
 TESTNAME=ikev2-08-delete-notify
-/testing/pluto/bin/wait-until-network-ready
 source /testing/pluto/bin/westlocal.sh
 
 # confirm that the network is alive

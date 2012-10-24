@@ -1,6 +1,5 @@
 : ==== start ====
 TESTNAME=ikev2-09-rw-rsa
-/testing/pluto/bin/wait-until-network-ready
 source /testing/pluto/bin/westnlocal.sh
 
 # confirm that the network is alive

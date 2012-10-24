@@ -3,6 +3,8 @@
 # this script is used by "east" UMLs that want to have per-test
 # configuration files, and will be hitting sunrise-oe to test with.
 
+/testing/pluto/bin/wait-until-network-ready
+
 # Seems our root-36 Lenny does not cause sysctl -p to be run.
 # Redirect because we don't want to see diffs or ipv6 errors
 sysctl -p >/dev/null 2> /dev/null

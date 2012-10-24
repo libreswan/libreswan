@@ -1,6 +1,5 @@
 : ==== start ====
 TESTNAME=ikev2-05-basic-psk
-/testing/pluto/bin/wait-until-network-ready
 source /testing/pluto/bin/eastlocal.sh
 
 ipsec setup start
