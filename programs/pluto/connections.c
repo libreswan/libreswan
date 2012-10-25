@@ -2522,18 +2522,20 @@ refine_host_connection(const struct state *st, const struct id *peer_id
     }
 
 #if defined(XAUTH)
-    auth = xauth_calcbaseauth(auth);
+//    auth = xauth_calcbaseauth(auth);
 #endif
     switch (auth)
     {
     case OAKLEY_PRESHARED_KEY:
 	auth_policy = POLICY_PSK;
-	psk = get_preshared_secret(c);
-	/* It should be virtually impossible to fail to find PSK:
-	 * we just used it to decode the current message!
-	 */
-	if (psk == NULL)
-	    return NULL;	/* cannot determine PSK! */
+	if (initiator) {
+	    psk = get_preshared_secret(c);
+	    /* It should be virtually impossible to fail to find PSK:
+	     * we just used it to decode the current message!
+	     */
+	    if (psk == NULL)
+		return NULL;	/* cannot determine PSK! */
+	}
 	break;
 		
     case OAKLEY_RSA_SIG:
@@ -2620,15 +2622,15 @@ refine_host_connection(const struct state *st, const struct id *peer_id
 		{
 		    const chunk_t *dpsk = get_preshared_secret(d);
 
-		    if (dpsk == NULL)
-			continue;	/* no secret */
-
 		    if (aggrmode) {
 			/*
 			 * we can change PSK mid startup in agressive mode
 			 */
 		    	break;
 		    }
+
+		    if (dpsk == NULL)
+			continue;	/* no secret */
 
 		    if (psk != dpsk)
 			if (psk->len != dpsk->len
