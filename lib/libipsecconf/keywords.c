@@ -364,7 +364,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"overridemtu",    kv_config, kt_number,    KBF_OVERRIDEMTU,NOT_ENUM},
     {"nocrsend",       kv_config, kt_bool,      KBF_NOCRSEND,NOT_ENUM},
     {"strictcrlpolicy",kv_config, kt_bool,      KBF_STRICTCRLPOLICY,NOT_ENUM},
-    {"crlcheckinterval",kv_config,kt_time,      KBF_CRLCHECKINTERVAL,NOT_ENUM},
+    {"crlcheckinterval",kv_config, kt_number,	KBF_CRLCHECKINTERVAL,NOT_ENUM},
     {"force_busy",     kv_config, kt_bool,      KBF_FORCEBUSY,NOT_ENUM},
 #ifdef NAT_TRAVERSAL
     {"virtual_private",kv_config,kt_string,     KSF_VIRTUALPRIVATE,NOT_ENUM},
