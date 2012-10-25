@@ -380,7 +380,22 @@ fetch_ldap_url(chunk_t url, chunk_t *blob)
 	    ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version);
 	    ldap_set_option(ldap, LDAP_OPT_NETWORK_TIMEOUT, &timeout);
 
-	    rc = ldap_simple_bind_s(ldap, NULL, NULL);
+	    rc = ldap_simple_bind(ldap, NULL, NULL);
+
+            rc = ldap_result(ldap, msgid, 1, &timeout, &result);
+
+            switch (rc) {
+                case -1:
+                        ldap_msgfree(result);
+                        return "ldap_simple_bind error";
+                case LDAP_SUCCESS:
+                        ldap_msgfree(result);
+                        return "ldap_simple_bind timeout";
+                case LDAP_RES_BIND:
+                        ldap_msgfree(result);
+                        rc = LDAP_SUCCESS;
+                        break;
+            }
 
 	    if (rc == LDAP_SUCCESS)
 	    {
