@@ -258,7 +258,7 @@ fetch_curl(chunk_t url LIBCURL_UNUSED, chunk_t *blob LIBCURL_UNUSED)
         curl_easy_setopt(curl, CURLOPT_URL, uri);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_buffer);
         curl_easy_setopt(curl, CURLOPT_FILE, (void *)&response);
-        curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, &errorbuffer);
+        curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, FETCH_CMD_TIMEOUT);
 
 
@@ -352,7 +352,9 @@ static err_t
 fetch_ldap_url(chunk_t url, chunk_t *blob)
 {
     LDAPURLDesc *lurl;
+    LDAPMessage *result;
     err_t ugh = NULL;
+    int msgid;
     int rc;
 
     char *ldap_url = alloc_bytes(url.len + 1, "ldap query");
@@ -380,27 +382,24 @@ fetch_ldap_url(chunk_t url, chunk_t *blob)
 	    ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version);
 	    ldap_set_option(ldap, LDAP_OPT_NETWORK_TIMEOUT, &timeout);
 
-	    rc = ldap_simple_bind(ldap, NULL, NULL);
+	    msgid = ldap_simple_bind(ldap, NULL, NULL);
 
-            rc = ldap_result(ldap, msgid, 1, &timeout, &result);
+	    rc = ldap_result(ldap, msgid, 1, &timeout, &result);
 
-            switch (rc) {
-                case -1:
-                        ldap_msgfree(result);
-                        return "ldap_simple_bind error";
-                case LDAP_SUCCESS:
-                        ldap_msgfree(result);
-                        return "ldap_simple_bind timeout";
-                case LDAP_RES_BIND:
-                        ldap_msgfree(result);
-                        rc = LDAP_SUCCESS;
-                        break;
-            }
-
+	    switch (rc) {
+		case -1:
+			ldap_msgfree(result);
+			return "ldap_simple_bind error";
+		case LDAP_SUCCESS:
+			ldap_msgfree(result);
+			return "ldap_simple_bind timeout";
+		case LDAP_RES_BIND:
+			ldap_msgfree(result);
+			rc = LDAP_SUCCESS;
+			break;
+	    }
 	    if (rc == LDAP_SUCCESS)
 	    {
-		LDAPMessage *result;
-
 		timeout.tv_sec = FETCH_CMD_TIMEOUT;
 		timeout.tv_usec = 0;
 		
@@ -455,7 +454,7 @@ fetch_asn1_blob(chunk_t url, chunk_t *blob)
 {
     err_t ugh = NULL;
 
-    if (url.len >= 4 && strncasecmp(url.ptr, "ldap", 4) == 0)
+    if (url.len >= 4 && strncasecmp((const char *)url.ptr, "ldap", 4) == 0)
     {
 	ugh = fetch_ldap_url(url, blob);
     }
@@ -562,7 +561,7 @@ fetch_crls(void)
     unlock_crl_fetch_list("fetch_crls");
 }
 
-static void
+static void *
 fetch_thread(void *arg UNUSED)
 {
     struct timespec wait_interval;
@@ -601,6 +600,7 @@ fetch_thread(void *arg UNUSED)
 	}
 	fetch_crls();
     }
+    return NULL;
 }
 
 /*
@@ -780,7 +780,7 @@ list_crl_fetch_requests(bool utc)
 
     while (req != NULL)
     {
-	u_char buf[BUF_LEN];	
+	char buf[BUF_LEN];	
 	char tbuf2[TIMETOA_BUF];
 
 	whack_log(RC_COMMENT, "%s, trials: %d"
