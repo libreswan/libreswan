@@ -1141,7 +1141,7 @@ is the number of CPU\*(Aqs you have (including hypherthreaded CPU\*(Aqs)\&. A va
 .PP
 \fBcrlcheckinterval\fR
 .RS 4
-interval, specified in seconds, after which pluto will verify loaded X\&.509 CRL\*(Aqs for expiration\&. If any of the CRL\*(Aqs is expired, or if they previously failed to get updated, a new attempt at updating the CRL is made\&. The first attempt to update a CRL is started at two times the crlcheckinterval\&. If set to
+interval in seconds, for example 60s or 1m for 1 minute, after which pluto will verify loaded X\&.509 CRL\*(Aqs for expiration\&. If any of the CRL\*(Aqs is expired, or if they previously failed to get updated, a new attempt at updating the CRL is made\&. The first attempt to update a CRL is started at two times the crlcheckinterval\&. If set to
 \fB0\fR, which is also the default value if this option is not specified, CRL updating is disabled\&.
 .RE
 .PP
