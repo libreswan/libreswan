@@ -7,3 +7,4 @@ ipsec setup start
 
 ipsec auto --add westnet-eastnet
 ipsec whack --debug-control --debug-controlmore --debug-crypt
+echo "initdone"
