@@ -7,3 +7,4 @@ ipsec setup start
 
 : intentionally comment out this policy
 # ipsec auto --add westnet-eastnet
+echo "initdone"
