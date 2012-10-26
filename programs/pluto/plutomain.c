@@ -341,10 +341,7 @@ main(int argc, char **argv)
 	capng_clear(CAPNG_SELECT_BOTH);
 	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE|CAPNG_PERMITTED,
 			CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
-			CAP_IPC_LOCK, 
-#ifdef XAUTH_HAVE_PAM
-			CAP_AUDIT_WRITE,
-#endif
+			CAP_IPC_LOCK, CAP_AUDIT_WRITE,
 			-1);
 	/* our children must be able to CAP_NET_ADMIN to change routes.
 	 */
