@@ -125,7 +125,6 @@ IPSEC_CONFS	directory containing configuration files
 <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>ipsec_showdefaults</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
 <!-- .ad -->
 <!-- .hy -->

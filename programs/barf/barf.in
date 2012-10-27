@@ -235,8 +235,6 @@ uptime
 _________________________ ps
 # -i ppid picks up the header
 ps alxwf | egrep -i 'ppid|pluto|ipsec|klips'
-_________________________ ipsec/showdefaults
-ipsec showdefaults
 _________________________ ipsec/conf
 ipsec _include $CONFS/ipsec.conf | ipsec _keycensor
 _________________________ ipsec/secrets

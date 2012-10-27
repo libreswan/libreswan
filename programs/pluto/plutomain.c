@@ -888,7 +888,6 @@ main(int argc, char **argv)
 					IPSECLIBDIR"/pluto",
 					IPSECLIBDIR"/_secretcensor",
 					IPSECLIBDIR"/secrets",
-					IPSECLIBDIR"/showdefaults",
 					IPSECLIBDIR"/showhostkey",
 					IPSECLIBDIR"/showpolicy",
 					IPSECLIBDIR"/spi",
