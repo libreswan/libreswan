@@ -32,7 +32,7 @@ Source: %{name}-%{srcpkgver}.tar.gz
 Group: System Environment/Daemons
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: gmp-devel bison flex redhat-rpm-config
-BuildRequires: pkgconfig
+BuildRequires: pkgconfig hostname
 BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
 %if %{USE_XAUTHPAM}
 BuildRequires: pam-devel
@@ -138,7 +138,7 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-  fipshmac -d $RPM_BUILD_ROOT%{_libdir}/fipscheck $RPM_BUILD_ROOT%{_libexecdir}/ipsec/* \
+  fipshmac -d $RPM_BUILD_ROOT%{_libdir}/fipscheck ` ls $RPM_BUILD_ROOT%{_libexecdir}/ipsec/*|grep -v setup` \
   fipshmac -d $RPM_BUILD_ROOT%{_libdir}/fipscheck $RPM_BUILD_ROOT%{_sbindir}/ipsec \
 %{nil}
 %endif
