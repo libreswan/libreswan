@@ -2522,7 +2522,7 @@ refine_host_connection(const struct state *st, const struct id *peer_id
     }
 
 #if defined(XAUTH)
-//    auth = xauth_calcbaseauth(auth);
+    auth = xauth_calcbaseauth(auth);
 #endif
     switch (auth)
     {
@@ -2552,7 +2552,10 @@ refine_host_connection(const struct state *st, const struct id *peer_id
 	break;
 
     default:
-	bad_case(auth);
+	/* don't die bad_case(auth); */
+	DBG(DBG_CONTROL
+	    , DBG_log("refine_connection: unsupported AUTH TYPE='%d' (needs fix for enum_names)", auth));
+	return NULL;
     }
 
     /* The current connection won't do: search for one that will.
