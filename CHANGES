@@ -2,62 +2,81 @@
 See also http://www.libreswan.org/
 
 v1.0.0 (unreleased)
-* Rename from Openswan to Libreswan (working name) [Paul]
-  (for older CHANGES see docs/CHANGES.openswan)
-* NSS is now mandatory - custom crypto code removed [Paul]
+* FORK: Rename from Openswan to Libreswan (working name) [Paul]
+        (for older CHANGES see docs/CHANGES.openswan)
+* FORK: Changed our VendorID prefix to "OEN" [Paul]
+* LICENSE: Updated FSF address on the GPLv2 COPYING file [Paul]
+* TRADEMARK: Give everyone unlimitel eternal royalty-free license to
+  use the name "libreswan" to refer to this software and website [Team]
+* NSS: is now mandatory - custom crypto code removed [Paul]
 * NSS: Support reading NSS password from file [Avesh]
 * NSS: Added "ipsec initnss" command [Paul]
-* NSS: We need to include nsperror.h for PR_GetError()
-* NSS/SHA1: PK11_DigestFinal() passed sizeof pointer instead of passing
-  sizeof *pointer [Paul]
+* NSS: We need to include nsperror.h for PR_GetError() [Paul]
+* NSS: PK11_DigestFinal() passed sizeof pointer instead of passing
+            sizeof *pointer [Paul]
 * DNS: Removed LWRES code and old static ISC libraries [Paul]
 * DNS: Don't attempt to resolve numerical sourceip= values [Paul]
-* DNS: starter now supports USE_DNSSEC using libunbound [Paul]
+* DNS: starter and pluto now support USE_DNSSEC using libunbound [Paul]
 * OE: Removed support for old KEY and TXT DNS records [Paul]
 * OE: Add support for IPSECKEY in ipsec showhostkey [Paul]
 * pluto: Removed support for non-strict ike/esp lines [Paul]
-* pluto: Changed our vendorid prefix to "OEN" [Paul]
 * pluto: UDPFROMTO support was not enabled for NETKEY if not also build
-  with KLIPS [Paul]
+         with KLIPS [Paul]
 * pluto: Pass traffic selectors to the kernel in Transport Mode [Avesh]
-  (rhbz#831669)
+         (rhbz#831669)
 * pluto: Fix phase confusion in xauth/modeconfig [Avesh]
 * pluto: Added new option plutostderrlogtime= (default=no) [Paul]
 * pluto: Fix _plutoload to actually run postpluto script [Tuomo]
-* IKEv1: aggressive mode sometimes picked wrong RSA/PSK conn [Philippe]
-* IKEv2: Comply to RFC's for "must be zero" to ignore instead of abort [Paul]
-  (rhbz#831669)
-* IKEv2: road warrior support [Antony/Paul/Avesh]
-* IKEv2: narrowing code extended to cover ports,protocol,subnets [Antony/Paul]
-* Additional safety checks to strncat() calls for addrtot(), inet_addrtot(),
-  sin_addrtot(), alg_info_snprint_esp(), alg_info_snprint_ah(), idtoa() and
-  format_end() [Paul]
-* Removed "ipsec copyright" command [Paul]
-* Only set MODP768_MODULUS with USE_VERYWEAK_DH1 [Paul]
-* NETKEY: Fix for three AES-GCM issues with key lengths 128, 192, 256 bits
-  and IV of 8, 12, 16 bytes as per RFC 4106 [Avesh]
-* NETKEY: Labeled IPsec updates [Avesh]
-* NETKEY Support for SHA384/SHA512 and integ(ikev2)  in ESP [Avesh]
-* KLIPS: Removed support for Linux < 2.4.4 [Paul]
-* KLIPS: Changed _startklips to use ip route instead of netstat [Harald]
-* Fix _updown.netkey to insert route on correct interface when nexthop is
-  used [Tuomo]
-* Fixed _updown.mast missing incomplete if-clause [Harald]
-* Fixed updown to remove ModeCfg obtained sourceip on --down [Avesh]
-* Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
-* XAUTH: Do not redo xauth/modecfg during rekey to cisco [Avesh]
-* XAUTH: Use incoming XAUTH VID when picking best connection [Philippe]
-* XAUTH: Add support for Mutual RSA + XAuth (aggr mode) [Philippe Vouters]
-* barf: do not grep lastlog, wtmp, tmp (rhbz#771612) [Paul]
+* pluto: Additional safety checks to strncat() calls for addrtot(), inet_addrtot(),
+         sin_addrtot(), alg_info_snprint_esp(), alg_info_snprint_ah(), idtoa() and
+         format_end() [Paul]
+* pluto: Removed unused OCSP code [Paul]
+* pluto: crlcheckinterval did not interpret plain numbers as seconds [Philippe]
+* pluto: Change ft_mbz to ft_zig - Don't error on "must be zero" but instead
+         "zero ignore". This works around an Android ICS/racoon bug [Paul]
+* pluto: Update known vendorids [Paul]
+* pluto: Fix XAUTH TYPE handling and logging [Philippe]
+* pluto: phased out HAVE_THREADS, pluto/pam now thread-safe [Philippe/Paul]
+* pluto: Fixed IPSEC_CONFDDIR handling which broke NSS in tests [Paul]
+* : whack: fix handling --sha2_truncbug and --nm_configured options [Paul]
+* DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
 * PAM: move pam out of contrib, and install config when HAVE_XAUTHPAM [Paul]
-* verify: ported ipsec verify from perl to python [Paul]
-* auto: fix --status output for vnet/vhost case
-* X509: Removed unused OCSP code [Paul]
+* IKEv1: In aggresive mode: allow ISAKMP_NEXT_CR ISAKMP_NEXT_CERT as
+         payloads [Philippe]
+* IKEv1: aggressive mode sometimes picked wrong RSA/PSK conn [Philippe]
+* IKEv1: Simplify outgoing NAT-T proposals, fix logging [Paul]
+* XAUTH: Support for runtime choice of xauthby=<pam|file> [Philippe]
+* XAUTH: Support for Mutual RSA + XAuth (interop with Shrew Soft) [Philippe]
+* XAUTH: Fixed updown to remove ModeCfg (cisco) obtained sourceip [Avesh/Tuomo]
+* XAUTH: Do not redo xauth/modecfg during rekey to cisco [Avesh]
+* XAUTH: Use incoming XAUTH VID when picking best connection [Philippe]
+* XAUTH: pam was failing when built with USE_LIBCAP_NG=true [Philippe Vouters]
 * XAUTH: Fixup of defines [Paul/Philippe]
-* aggresive mode: allow ISAKMP_NEXT_CR ISAKMP_NEXT_CERT as payloads [Philippe]
-* DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
+* IKEv2: Comply to RFC's for "must be zero" to ignore instead of abort [Paul]
+         (rhbz#831669)
+* IKEv2: road warrior support [Antony/Paul/Avesh]
+* IKEv2: narrowing code extended to cover ports,protocol,subnets [Antony/Paul]
+* Only set MODP768_MODULUS with USE_VERYWEAK_DH1 [Paul]
+* NETKEY: Fix for three AES-GCM issues with key lengths 128, 192, 256 bits
+          and IV of 8, 12, 16 bytes as per RFC 4106 [Avesh]
+* NETKEY: Labeled IPsec updates [Avesh]
+* NETKEY: Support for SHA384/SHA512 and integ(ikev2)  in ESP [Avesh]
+* NETKEY: In _updown.netkey, insert route on correct interface when nexthop
+          is used [Tuomo]
+* KLIPS: Removed support for Linux < 2.4.4 [Paul]
+* KLIPS: Changed _startklips to use ip route instead of netstat [Harald]
+* MAST: Fixed _updown.mast missing incomplete if-clause [Harald]
+* scripts: Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
+* barf: do not grep lastlog, wtmp, tmp (rhbz#771612) [Paul]
+* verify: ported ipsec verify from perl to python [Paul]
+* auto: fix --status output for vnet/vhost case [Ani]
+* copyright: Removed obsoleted/unmaintained "ipsec copyright" command [Paul]
 * OSX: Set __APPLE_USE_RFC_3542 required for udpfromto functionality [Paul]
+* DOCS: Add man page leftid= note on Cisco ID_KEY_ID Group Name [Philippe]
+* testing: Ported broken UML harness to KVM/libvirt/9p [Paul/Antony]
+           (see the wiki on libreswan.org for details on how to use it)
+* packaging: Updated openswan.spec to reflect updated options [Paul]
 * Bugtracker bugs fixed:
     #993 ipsec showhostkey: wrong kind of key PPK_XAUTH [Philippe Vouters]
    #1308 forceencaps= setting does now show up in "ipsec auto --status"
