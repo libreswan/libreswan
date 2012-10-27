@@ -238,7 +238,7 @@ skeyid_preshared(const chunk_t pss
     chunk_t nir;
     int k;
     CK_MECHANISM_TYPE mechanism;
-    u_char buf1[HMAC_BUFSIZE], buf2[HMAC_BUFSIZE];
+    u_char buf1[HMAC_BUFSIZE*2], buf2[HMAC_BUFSIZE*2];
     chunk_t buf1_chunk, buf2_chunk;
     PK11SymKey *shared, *skeyid;
 
