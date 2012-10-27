@@ -42,6 +42,7 @@ BuildRequires: unbound-devel
 %endif
 %if %{USE_FIPSCHECK}
 BuildRequires: fipscheck-devel >= %{fipscheck_version}
+# we need fipshmac
 Requires: fipscheck%{_isa} >= %{fipscheck_version}
 %endif
 %if %{USE_LIBCAP_NG}
@@ -49,7 +50,6 @@ BuildRequires: libcap-ng-devel
 %endif
 %if %{USE_CRL_FECTCHING}
 BuildRequires: openldap-devel curl-devel
-Requires: curl openldap
 %endif
 %if %{buildefence}
 BuildRequires: ElectricFence
@@ -81,9 +81,9 @@ Libreswan. It optionally also builds the Libreswan KLIPS IPsec stack that
 is an alternative for the NETKEY/XFRM IPsec stack that exists in the
 default Linux kernel.
 
-Libreswan 2.6.x also supports IKEv2 (RFC4309)
+Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
 
-Libreswan is based on Openswan which in turn is based on FreeS/WAN
+Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %if %{buildklips}
 %package klips
