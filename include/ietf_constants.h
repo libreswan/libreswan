@@ -931,13 +931,16 @@ typedef u_int16_t oakley_hash_t;
 #define OAKLEY_ELGAMAL_ENC_REV     7
 
 #define OAKLEY_AUTH_ROOF           8  /*roof on auth values THAT WE SUPPORT */
+/* Note: the below xauth names are mapped via xauth_calcbaseauth() to the
+ * base functions 1-7
+ * Note2: we don't support all of the below, or all of the below, so ROOF comment is lying */
 
 #define HybridInitRSA                                     64221
 #define HybridRespRSA                                     64222
 #define HybridInitDSS                                     64223
 #define HybridRespDSS                                     64224
 
-/* For XAUTH, store in st->xauth, and set equivalent in st->auth */
+/* For XAUTH, store in st->xauth, and set equivalent in st->auth via */
 #define XAUTHInitPreShared                                65001
 #define XAUTHRespPreShared                                65002
 #define XAUTHInitDSS                                      65003
