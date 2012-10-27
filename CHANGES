@@ -93,3 +93,4 @@ v1.0.0 (unreleased)
    	 script [Bram]
    #1384 confusing output from ipsec auto --status [Bram]
 
+For older changes, see docs/CHANGES.openswan
