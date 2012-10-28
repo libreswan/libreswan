@@ -598,6 +598,6 @@ if __name__ == "__main__":
 ##         }
 ##     }
 ##     # finally, run the config file through the parser checks
-##     run "ipsec auto addconn --checkconfig";
+##     run "ipsec addconn --checkconfig";
 ## }
 ## exit $reterr
