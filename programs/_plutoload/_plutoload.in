@@ -62,7 +62,7 @@ fi
 ipsec addconn $options --addall
 
 # enable listening
-ipsec auto --ready
+ipsec whack --listen
 
 # execute any post-startup cleanup
 if test " $postpluto" != " "
@@ -78,7 +78,7 @@ fi
 # quickly establish routing
 for tu in $plutoroute
 do
-	ipsec auto --route $tu ||
+	ipsec whack --name $tu --route ||
 		echo "...could not route conn \"$tu\""
 done
 
@@ -91,7 +91,7 @@ fi
 err=0
 for tu in $plutostart
 do
-	ipsec auto --up $async $tu
+	ipsec whack $async --name $tu --initiate
 	err=$?
 	if test -z "$async" -a $err -gt 0
 	then

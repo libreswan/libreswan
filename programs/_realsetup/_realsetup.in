@@ -451,7 +451,7 @@ case "$1" in
 	then
 		eroutes=`wc -l < /proc/net/ipsec_eroute 2> /dev/null | sed s/\ //g`
 	else
-		eroutes=`ipsec auto --status 2> /dev/null | grep -c -i "ipsec sa established"`
+		eroutes=`ipsec whack --status 2> /dev/null | grep -c -i "ipsec sa established"`
 	fi
 
 	if test -r $ipsecversion

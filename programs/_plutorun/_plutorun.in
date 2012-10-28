@@ -204,7 +204,7 @@ then
       ipsec newhostkey --quiet 
       
       # tell pluto to go re-read the file
-      ipsec auto --rereadsecrets
+      ipsec whack --rereadsecrets
       # XXX publish the key somehow?
     ) &
 fi

@@ -203,7 +203,7 @@ then
 	( cd /proc/sys/net/ipsec && egrep '^' * )
 fi
 _________________________ ipsec/status
-ipsec auto --status
+ipsec whack --status
 _________________________ ifconfig-a
 ifconfig -a
 _________________________ ip-addr-list
@@ -240,7 +240,7 @@ ipsec _include $CONFS/ipsec.conf | ipsec _keycensor
 _________________________ ipsec/secrets
 ipsec _include $CONFS/ipsec.secrets | ipsec _secretcensor
 _________________________ ipsec/listall
-ipsec auto --listall
+ipsec whack --listall
 if [ $POLICIES ]
 then
 	for policy in $POLICIES/*; do base=`basename $policy`;

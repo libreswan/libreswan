@@ -300,7 +300,7 @@ sub detect_libreswan_stack_mode
         return () if not have_libreswan;
         return () if not have_klips_module;
 
-        return () if not open(IN, 'ipsec auto --status |');
+        return () if not open(IN, 'ipsec whack --status |');
         my $ifline = <IN>;
         close(IN);
         dbg "read: $ifline";
