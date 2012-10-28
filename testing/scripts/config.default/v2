@@ -7,7 +7,5 @@ version 2
 config %default
 	interfaces=%none
 	uniqueids=no
-	rp_filter=%unchanged
-	plutowait=yes
 
 include v1

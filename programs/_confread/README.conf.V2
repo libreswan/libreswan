@@ -47,8 +47,6 @@ interfaces	""		%defaultroute		%defaultroute
 plutoload	""		%search			- [same as %search]
 plutostart	""		%search			- [same as %search]
 uniqueids	no		yes			yes
-rp_filter	-		-			0
-plutowait	yes		yes			no
 dump		no		no			- [use dumpdir]
 plutobackgroundload ignored	ignored			-
 no_eroute_pass	no		no			- [use packetdefault]

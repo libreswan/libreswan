@@ -47,7 +47,6 @@ do
 	--opts)	                 popts="$2" ; shift	;;
 	--stderrlog)             stderrlog="$2" ; shift	;;
 	--plutostderrlogtime)               plutostderrlogtime="$2" ; shift	;;
-	--wait)	                 plutowait="$2" ; shift	;;
         --show)	                 show="--show"  ; shift ;;
 	--showonly)	         showonly="true" ;;
 	--log)	                 wherelog="$2" ; shift	;;
@@ -243,7 +242,7 @@ until (
 	status=$?
 	echo "exit"
 	echo $status
-	) | $libdir/_plutoload --wait "$plutowait"
+	) | $libdir/_plutoload
 do
 	status=$?
 	case "$status" in

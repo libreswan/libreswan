@@ -4,7 +4,6 @@ config setup
 	interfaces=%none
 	plutoload=%none
 	plutostart=%none
-	plutowait=yes
 	uniqueids=no
 
 # no rpfilter [like %unchanged]

@@ -21,7 +21,6 @@ do
 	case "$1" in
 	--load)	plutoload="$2" ; shift	;;
 	--start)	plutostart="$2" ; shift	;;
-	--wait)	plutowait="$2" ; shift	;;
 	--)	shift ; break	;;
 	-*)	echo "$me: unknown option \`$1'" >&2 ; exit 2	;;
 	*)	break	;;
@@ -70,12 +69,10 @@ do
 		echo "...could not route conn \"$tu\""
 done
 
-# tunnel initiation, which may take a while
+# tunnel initiation, which may take a while - choice should move to /etc/sysconfig/addcon or something
 async=
-if test " $plutowait" = " no"
-then
-	async="--asynchronous"
-fi
+#async="--asynchronous"
+
 err=0
 for tu in $plutostart
 do

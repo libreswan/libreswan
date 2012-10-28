@@ -38,7 +38,6 @@ IPSECinterfaces=${IPSECinterfaces%%%none}
 # IPSECdumpdir	"" (no dump)
 # IPSECmanualstart	""
 # IPSECpluto	"yes"
-IPSECplutowait=${IPSECplutowait:-no}
 # IPSECfragicmp	"yes"
 # IPSEChidetos	"yes"
 IPSECuniqueids=${IPSECuniqueids:-yes}
@@ -186,7 +185,6 @@ case "$1" in
 			--dump "\"$IPSECdumpdir\"" \
 			--stderrlog "\"$IPSECplutostderrlog\"" \
 			--plutostderrlogtime "\"$IPSECplutostderrlogtime\"" \
-			--wait "\"$IPSECplutowait\"" \
 			--log "\"$IPSECsyslog\"" $plutorestartoncrash \
 			--pid "\"$plutopid\"" "||" "{" \
 	            $KILLKLIPS ";" \

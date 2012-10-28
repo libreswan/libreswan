@@ -4,7 +4,6 @@ config setup
 	interfaces=%defaultroute	# in v1 boilerplate
 	plutoload=%search	# in v1 boilerplate
 	plutostart=%search	# in v1 boilerplate
-	plutowait=no
 	uniqueids=yes	# in v1 boilerplate
 	# rpfilter=0
 
