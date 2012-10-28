@@ -873,7 +873,6 @@ main(int argc, char **argv)
 				        IPSECLIBDIR"/eroute",
   				        IPSECLIBDIR"/ikeping",
   				        IPSECLIBDIR"/initnss",
-				        IPSECLIBDIR"/_include",
 				        IPSECLIBDIR"/readwriteconf",
 					IPSECLIBDIR"/_keycensor",
 					IPSECLIBDIR"/klipsdebug",
