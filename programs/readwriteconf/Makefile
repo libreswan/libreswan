@@ -15,6 +15,10 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
+ifeq ($(USE_DNSSEC),true)
+PROGLIBS+=-lunbound
+endif
+
 #EXTRALIBS=-lefence
 
 PROGRAM=readwriteconf
