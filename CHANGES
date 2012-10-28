@@ -75,6 +75,7 @@ v1.0.0 (unreleased)
 * showdefaults: removed ipsec showdefaults [Paul]
 * _include: Removed obsolete _include program [Paul]
 * policy: Removed broken 'ipsec policy' [Paul]
+* mailkey: Removed obsolete command. Was already not build or installed [Paul]
 * scripts: phased out /var/run/pluto/ipsec.info [Paul]
 * OSX: Set __APPLE_USE_RFC_3542 required for udpfromto functionality [Paul]
 * DOCS: Add man page leftid= note on Cisco ID_KEY_ID Group Name [Philippe]
