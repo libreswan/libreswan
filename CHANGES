@@ -7,13 +7,13 @@ v1.0.0 (unreleased)
 * FORK: Changed our VendorID prefix to "OEN" [Paul]
 * LICENSE: Updated FSF address on the GPLv2 COPYING file [Paul]
 * TRADEMARK: Give everyone unlimitel eternal royalty-free license to
-  use the name "libreswan" to refer to this software and website [Team]
+        use the name "libreswan" to refer to this software and website [Team]
 * NSS: is now mandatory - custom crypto code removed [Paul]
 * NSS: Support reading NSS password from file [Avesh]
 * NSS: Added "ipsec initnss" command [Paul]
 * NSS: We need to include nsperror.h for PR_GetError() [Paul]
 * NSS: PK11_DigestFinal() passed sizeof pointer instead of passing
-            sizeof *pointer [Paul]
+        sizeof *pointer [Paul]
 * DNS: Removed LWRES code and old static ISC libraries [Paul]
 * DNS: Don't attempt to resolve numerical sourceip= values [Paul]
 * DNS: starter and pluto now support USE_DNSSEC using libunbound [Paul]
@@ -27,9 +27,9 @@ v1.0.0 (unreleased)
 * pluto: Fix phase confusion in xauth/modeconfig [Avesh]
 * pluto: Added new option plutostderrlogtime= (default=no) [Paul]
 * pluto: Fix _plutoload to actually run postpluto script [Tuomo]
-* pluto: Additional safety checks to strncat() calls for addrtot(), inet_addrtot(),
-         sin_addrtot(), alg_info_snprint_esp(), alg_info_snprint_ah(), idtoa() and
-         format_end() [Paul]
+* pluto: Additional safety checks to strncat() calls for addrtot(),
+         inet_addrtot(), sin_addrtot(), alg_info_snprint_esp(),
+         alg_info_snprint_ah(), idtoa() and format_end() [Paul]
 * pluto: Removed unused OCSP code [Paul]
 * pluto: crlcheckinterval did not interpret plain numbers as seconds [Philippe]
 * pluto: Change ft_mbz to ft_zig - Don't error on "must be zero" but instead
@@ -38,7 +38,7 @@ v1.0.0 (unreleased)
 * pluto: Fix XAUTH TYPE handling and logging [Philippe]
 * pluto: phased out HAVE_THREADS, pluto/pam now thread-safe [Philippe/Paul]
 * pluto: Fixed IPSEC_CONFDDIR handling which broke NSS in tests [Paul]
-* : whack: fix handling --sha2_truncbug and --nm_configured options [Paul]
+* whack: fix handling --sha2_truncbug and --nm_configured options [Paul]
 * DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
 * PAM: move pam out of contrib, and install config when HAVE_XAUTHPAM [Paul]
