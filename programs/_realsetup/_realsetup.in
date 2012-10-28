@@ -60,7 +60,6 @@ IPSECinterfaces=${IPSECinterfaces%%%none}
 # IPSECklipsdebug	"none"
 # IPSECplutodebug	"none"
 # IPSECdumpdir	"" (no dump)
-# IPSECmanualstart	""
 # IPSECpluto	"yes"
 IPSECplutowait=${IPSECplutowait:-no}
 # IPSECprepluto	""
@@ -134,30 +133,6 @@ perform() {
 	fi
 }
 
-# function to set up manually-keyed connections
-manualconns() {
-	if test " $IPSECmanualstart" != " "
-	then
-		for tu in $IPSECmanualstart
-		do
-			perform ipsec manual --up $tu
-		done
-	fi
-
-	# search for things to "ipsec manual --up": auto == "manual"
-	eval `ipsec addconn --varprefix MANUALSTART --search auto manual`
-	if test " $MANUALSTART_confreadstatus" != " "
-	then
-		echo "auto=manual search: $MANUALSTART_confreadstatus"
-		echo "unable to determine what conns to manual --up; none done"
-	elif test " $MANUALSTART_confreadnames" != " "
-	then
-		for tu in $MANUALSTART_confreadnames
-		do
-			perform ipsec manual --up $tu
-		done
-	fi
-}
 
 # for no-stdout logging:
 LOGONLY="logger -p $IPSECsyslog -t ipsec_setup"
@@ -289,8 +264,6 @@ case "$1" in
 	# misc pre-Pluto setup
 
 	perform test -d $subsysdir "&&" touch $subsyslock
-
-	manualconns
 
 	plutorestartoncrash=""
 	case "$IPSECplutorestartoncrash" in
