@@ -1217,12 +1217,6 @@ unique, so a new (automatically\-keyed) connection using the same ID is almost i
 prevent pluto from restarting after it crashed\&. This option should only be used when debugging a crasher\&. It will prevent overwriting a core file on a new start, or a cascade of core files\&. This option is also required if used with plutostderrlog= to avoid clearing the logs of the crasher\&. Values can be yes (the default) or no\&.
 .RE
 .PP
-\fBplutoopts\fR
-.RS 4
-additional options to pass to pluto upon startup\&. See
-\fBipsec_pluto\fR(8)\&.
-.RE
-.PP
 \fBplutostderrlog\fR
 .RS 4
 do not use syslog, but rather log to stderr, and direct stderr to the argument file\&.

@@ -86,7 +86,6 @@ d.ipsec.conf/klipsdebug.xml
 d.ipsec.conf/plutodebug.xml
 d.ipsec.conf/uniqueids.xml
 d.ipsec.conf/plutorestartoncrash.xml
-d.ipsec.conf/plutoopts.xml
 d.ipsec.conf/plutostderrlog.xml
 d.ipsec.conf/plutostderrlogtime.xml
 d.ipsec.conf/pluto.xml

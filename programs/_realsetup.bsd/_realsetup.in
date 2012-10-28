@@ -184,7 +184,6 @@ case "$1" in
 			--crlcheckinterval "\"$IPSECcrlcheckinterval\"" \
 			--nhelpers "\"$IPSECnhelpers\"" \
 			--dump "\"$IPSECdumpdir\"" \
-			--opts "\"$IPSECplutoopts\"" \
 			--stderrlog "\"$IPSECplutostderrlog\"" \
 			--plutostderrlogtime "\"$IPSECplutostderrlogtime\"" \
 			--wait "\"$IPSECplutowait\"" \

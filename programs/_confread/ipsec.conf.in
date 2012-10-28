@@ -17,7 +17,6 @@ config setup
 	# Again: only enable plutodebug or klipsdebug when asked by a developer
 	#
 	# enable to get logs per-peer
-	# plutoopts="--perpeerlog"
 	#
 	# Enable core dumps (might require system changes, like ulimit -C)
 	# This is required for abrtd to work properly

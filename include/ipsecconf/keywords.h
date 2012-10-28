@@ -42,7 +42,6 @@ enum keyword_string_config_field {
     KSF_PLUTOSTART,
     KSF_MYID,
     KSF_PLUTO,
-    KSF_PLUTOOPTS,
     KSF_PLUTOSTDERRLOG,
     KSF_PROTOSTACK,
     KSF_IKE,

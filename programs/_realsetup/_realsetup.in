@@ -293,7 +293,6 @@ case "$1" in
 			--nhelpers "\"$IPSECnhelpers\"" \
 			--secctx_attr_value "\"$IPSECsecctx_attr_value\"" \
 			--dump "\"$IPSECdumpdir\"" \
-			--opts "\"$IPSECplutoopts\"" \
 			--stderrlog "\"$IPSECplutostderrlog\"" \
 			--wait "\"$IPSECplutowait\"" \
 			--plutostderrlogtime "\"$IPSECplutostderrlogtime\"" \

@@ -347,7 +347,6 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"klipsdebug",     kv_config, kt_list,      KBF_KLIPSDEBUG, &kw_klipsdebug_list},
     {"plutodebug",     kv_config, kt_list,      KBF_PLUTODEBUG, &kw_plutodebug_list},
 #endif
-    {"plutoopts",      kv_config, kt_string,    KSF_PLUTOOPTS,NOT_ENUM},
     {"plutostderrlog", kv_config, kt_filename,  KSF_PLUTOSTDERRLOG,NOT_ENUM},
     {"plutostderrlogtime",        kv_config, kt_bool,      KBF_PLUTOSTDERRLOGTIME,NOT_ENUM},
     {"plutorestartoncrash", kv_config, kt_bool, KBF_PLUTORESTARTONCRASH,NOT_ENUM},
