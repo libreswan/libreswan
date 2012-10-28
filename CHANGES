@@ -73,6 +73,7 @@ v1.0.0 (unreleased)
 * auto: fix --status output for vnet/vhost case [Ani]
 * copyright: Removed obsoleted/unmaintained "ipsec copyright" command [Paul]
 * showdefaults: removed ipsec showdefaults [Paul]
+* scripts: phased out /var/run/pluto/ipsec.info [Paul]
 * OSX: Set __APPLE_USE_RFC_3542 required for udpfromto functionality [Paul]
 * DOCS: Add man page leftid= note on Cisco ID_KEY_ID Group Name [Philippe]
 * testing: Ported broken UML harness to KVM/libvirt/9p [Paul/Antony]
