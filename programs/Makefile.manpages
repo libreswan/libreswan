@@ -1,4 +1,3 @@
-# xmlto is from http://cyberelk.net/tim/xmlto/
 ifneq ($(strip $(XMLTO)),)
 %.8: %.8.xml
 	${XMLTO} man $< 
@@ -17,19 +16,3 @@ ifneq ($(strip $(XMLTO)),)
 	@for m in ipsec_*.1; do if [ -f $$m ]; then mv $$m $@; fi; done
 endif
 
-# pod2man comes with perl
-ifneq ($(strip ${POD2MAN}),)
-PROGRAM_PL      =  ${srcdir}${PROGRAM}.pl
-ifneq ($(wildcard ${PROGRAM_PL}),)
-MAN_SECTION     ?= 8
-PROGRAM_MAN     =  ${PROGRAM}.${MAN_SECTION}
-all: ${PROGRAM_MAN}
-${PROGRAM_MAN}: ${PROGRAM_PL} ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/programs/Makefile.manpages
-	${POD2MAN} \
-		--center='Libreswan IPSec' \
-		--name="ipsec_${PROGRAM}" \
-		--section="${MAN_SECTION}" \
-		--release="${IPSECBASEVERSION}" \
-		$< $@
-endif
-endif
