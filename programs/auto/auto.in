@@ -30,7 +30,6 @@ usage="Usage:
 
 showonly=
 config=
-info=/var/run/pluto/ipsec.info
 shopts=
 async=
 logfilter='$1 != "002"'
@@ -153,10 +152,15 @@ case "$op" in
 --status)         echo "ipsec whack --status"                | runit ; exit ;; 
 esac
 
-if test -s $info
+defaultroutephys=`ip ro  |grep default | awk '{ print $5;}'`
+if test -f /proc/net/pfkey 
 then
-	. $info
+       defaultroutevirt="none"
+else
+       defaultroutevirt="`ipsec tncfg  |grep " $defaultroutephys mtu" | awk '{ print $1;}'`"
 fi
+defaultroutenexthop=`ip ro |grep default | awk '{ print $3;}'`
+defaultrouteaddr=`ip route get $defaultroutenexthop | head -1 | awk '{ print $5;}'`
 
 # finally, handle --add|--replace
 if [ -n "$defaultrouteaddr" ]

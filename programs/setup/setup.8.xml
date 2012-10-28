@@ -136,8 +136,6 @@ parameter, which must be right or chaos will ensue.</para>
 <!-- .br -->
 /proc/sys/net/ipv4/ip_forward	forwarding control
 <!-- .br -->
-/var/run/pluto/ipsec.info	saved information
-<!-- .br -->
 /var/run/pluto/pluto.pid	Pluto lock file
 <!-- .br -->
 /var/run/pluto/ipsec_setup.pid	IPsec lock file</para>

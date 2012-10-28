@@ -87,15 +87,11 @@ nostack) klips=false; mast=false;;
     fi;;
 esac
 
-#should this not be /var/run/pluto/ipsec.info?
-#info=/dev/null
-info=/var/run/pluto/ipsec.info
 log=daemon.error
 for dummy
 do
 	case "$1" in
 	--log)		log="$2" ; shift	;;
-	--info)		info="$2" ; shift	;;
 	--debug)	debug="$2" ; shift	;;
 	--omtu)		omtu="$2" ; shift	;;
 	--fragicmp)	fragicmp="$2" ; shift	;;
@@ -201,8 +197,7 @@ klipsinterface() {
 	esac
 
 	# figure out config for interface
-	phys_addr=
-	eval `getinterfaceinfo $phys phys_`
+	phys_addr=`ip ro |grep default | awk '{ print $3;}'`
 	if test " $phys_addr" = " "
 	then
 		echo "unable to determine address of \`$phys'"
@@ -273,31 +268,11 @@ klipsinterface() {
                 ip link set mtu 16260 dev $virt
         fi
 
-	# if %defaultroute, note the facts
-	if test " $2" != " "
-	then
-		(
-			echo "defaultroutephys=$phys"
-			echo "defaultroutevirt=$virt"
-			echo "defaultrouteaddr=$phys_addr"
-			if test " $2" = " 0.0.0.0"
-			then
-				# this happens on people with ppp interfaces with 'route add default dev ppp0'.
-				echo "defaultroutenexthop=%direct"
-			else
-				echo "defaultroutenexthop=$2"
-			fi
-		) >>$info
-	else
-		echo '#dr: no default route' >>$info
-	fi
-
 }
 
 # interfaces=%defaultroute:  put ipsec0 on top of default route's interface
 defaultinterface() {
-        phys=
-        eval `getdefaultrouteinfo`
+        phys=`ip ro  |grep default | awk '{ print $5;}'`
 
 	if test " $phys" = " "
 	then

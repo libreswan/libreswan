@@ -46,11 +46,9 @@ do
 	esac
 done
 
-info=/var/run/pluto/ipsec.info
-if test -s $info
-then
-	. $info
-fi
+#defaultroutephys=`ip ro  |grep default | awk '{ print $5;}'`
+defaultroutenexthop=`ip ro |grep default | awk '{ print $3;}'`
+defaultrouteaddr=`ip route get $defaultroutenexthop | head -1 | awk '{ print $5;}'`
 
 # finally, handle --add|--replace
 if [ -n "$defaultrouteaddr" ]

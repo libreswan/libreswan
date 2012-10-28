@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Pluto control daemon
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
 # Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
@@ -15,7 +15,6 @@
 
 me='ipsec _plutorun'		# for messages
 
-info=/var/run/pluto/ipsec.info
 
 popts=
 stderrlog=
@@ -240,12 +239,18 @@ fi
 exec 1>/dev/null
 exec 2>/dev/null
 
+defaultroutephys=`ip ro  |grep default | awk '{ print $5;}'`
+if test -f /proc/net/pfkey 
+then
+	defaultroutevirt="none"
+else
+	defaultroutevirt="`ipsec tncfg  |grep " $defaultroutephys mtu" | awk '{ print $1;}'`"
+fi
+defaultroutenexthop=`ip ro |grep default | awk '{ print $3;}'`
+defaultrouteaddr=`ip route get $defaultroutenexthop | head -1 | awk '{ print $5;}'`
+
 until (
-	if test -s $info
-	then
-		. $info
-		export defaultroutephys defaultroutevirt defaultrouteaddr defaultroutenexthop
-	fi
+	export defaultroutephys defaultroutevirt defaultrouteaddr defaultroutenexthop
 	# eval allows $popts to contain redirection and other magic
 	eval $execdir/pluto --nofork --secretsfile "$IPSEC_SECRETS" $ipsecdiropt $popts
 	status=$?

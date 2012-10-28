@@ -25,7 +25,6 @@ plutoctl=/var/run/pluto/pluto.ctl
 subsysdir=/var/lock/subsys
 subsyslock=/var/lock/subsys/ipsec
 lock=/var/run/pluto/ipsec_setup.pid
-info=/var/run/pluto/ipsec.info
 sysflags=/proc/sys/net/ipsec
 modules=/proc/modules
 ipsecversion=/proc/net/ipsec_version
@@ -245,8 +244,6 @@ case "$1" in
 		exit 1 ";" \
 		"}"
 
-	perform ">" $info
-
 	# overridemtu is ignored on 2.6, so warn the user.
 	# no longer warn about %defaultroute, because it has some use on
 	# netkey for orienting ourselves when using left=%defaultroute
@@ -259,7 +256,6 @@ case "$1" in
 
 
 		perform ipsec _startnetkey \
-				--info $info \
 				--debug "\"$IPSECklipsdebug\"" \
 				--omtu "\"$IPSECoverridemtu\"" \
 				--fragicmp "\"$IPSECfragicmp\"" \
@@ -273,7 +269,6 @@ case "$1" in
 	then
 		# here we go
 		perform ipsec _startklips \
-				--info $info \
 				--debug "\"$IPSECklipsdebug\"" \
 				--omtu "\"$IPSECoverridemtu\"" \
 				--fragicmp "\"$IPSECfragicmp\"" \
@@ -352,7 +347,6 @@ case "$1" in
 		if test -r $lock ";" \
 		then \
 			status=0 ";" \
-			. $info ";" \
 		else \
 			echo "\"stop ordered, but IPsec appears to be already stopped!\"" ";" \
 			echo "\"doing cleanup anyway...\"" ";" \
@@ -413,7 +407,7 @@ case "$1" in
 
 	perform test -d $subsysdir "&&" rm -f $subsyslock
 
-	perform rm -f $info $lock $plutopid
+	perform rm -f $lock $plutopid
 	perform echo "...Libreswan ${VENDOR}IPsec stopped" "|" $LOGONLY
 	perform exit \$status
 	;;
@@ -423,11 +417,6 @@ case "$1" in
 	then
 		echo "$me $1 does not support $IPSEC_setupflags"
 		exit 4
-	fi
-
-	if test -f $info
-	then
-		hasinfo=yes
 	fi
 
 	if test -f $lock
@@ -480,7 +469,7 @@ case "$1" in
 		lk26sec=yes
 	fi
 
-	if test "$hassublock" -a "$haslock" -a "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \)  -a "$hasinfo"
+	if test "$hassublock" -a "$haslock" -a "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \) 
 	then
 		echo "IPsec running"  " - pluto pid: `cat $plutopid 2>/dev/null`"
 		echo "pluto pid `cat $plutopid`"
@@ -495,7 +484,7 @@ case "$1" in
 		exit 0
 	else
 		echo "IPsec stopped"
-		if test ! "$hassublock" -a ! "$hasinfo" -a "$plutokind" = "no" -a "$eroutes" -eq 0
+		if test ! "$hassublock" -a "$plutokind" = "no" -a "$eroutes" -eq 0
 		then
 			exit 3
 		fi
@@ -510,10 +499,6 @@ case "$1" in
 		then
 			echo "has subsystem lock ($subsyslock)!"
 			exit 2
-		fi
-		if test "$hasinfo"
-		then
-			echo "has $info file!"
 		fi
 		if test "$eroutes" -gt 0
 		then

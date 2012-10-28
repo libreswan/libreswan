@@ -332,7 +332,6 @@ for details of the configuration file.
 <literallayout remap='.nf'>
 /etc/ipsec.conf			default IPSEC configuration file
 /etc/ipsec.d/			X.509 and Opportunistic Encryption files
-/var/run/pluto/ipsec.info	<emphasis remap='B'>%defaultroute</emphasis> information
 /var/run/pluto/pluto.ctl	Pluto command socket
 </literallayout>
 </para>

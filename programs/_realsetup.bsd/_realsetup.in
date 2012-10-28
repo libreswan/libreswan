@@ -25,7 +25,6 @@ plutopid=/var/run/pluto/pluto.pid
 plutoctl=/var/run/pluto/pluto.ctl
 subsyslock=/var/lock/subsys/ipsec
 lock=/var/run/pluto/ipsec_setup.pid
-info=/var/run/pluto/ipsec.info
 
 kamepfkey=/proc/net/pfkey
 
@@ -153,64 +152,11 @@ case "$1" in
 		exit 1 ";" \
 		"}"
 
-	> $info
-
-	phys=`netstat -nr -f inet |
-		awk '$1 == "default" { print $NF; exit 0 }'`
-
-	next=`netstat -nr -f inet |
-		awk '$1 == "default" { print $2; exit 0 }'`
-	
-	addr=
-	eval `ifconfig $phys |
-		awk '$1 == "inet" && $3 == "netmask" {
-			print "addr=" $2
-			other = $5
-			if ($4 == "broadcast")
-				print "type=broadcast"
-			else if ($4 == "P-t-P")
-				print "type=pointopoint"
-			else if (NF == 5) {
-				print "type="
-				other = ""
-			} else
-				print "type=unknown"
-			print "otheraddr=" other
-			print "mask=" $4
-		}'`
-
-	# if %defaultroute, note the facts
-	if test " $next" != " "
-	then
-		(
-			echo "defaultroutephys=$phys"
-			echo "defaultrouteaddr=$addr"
-			if test " $next" != " 0.0.0.0"
-			then
-				echo "defaultroutenexthop=$next"
-			fi
-		) >>$info
-	else
-		echo '#dr: no default route' >>$info
-	fi
-
 
 	# misc pre-Pluto setup
 
 	perform test -d `dirname $subsyslock` "&&" touch $subsyslock
 
-	if test " $IPSECforwardcontrol" = " yes"
-	then
-	    forward=`sysctl -n net.inet.ip.forwarding`
-	    if [ $forward -ne 1 ]
-	    then	
-	        perform sysctl -w net.inet.ip.forwarding=1 "&&" "{" \
-			echo "\"enabling IP forwarding:\"" "|" $LOGONLY ";" \
-			echo "\"ipforwardingwas=$fw\"" ">>" $info ";" \
-			echo 1 ">" $ipforward ";" \
-			"}"
-	   fi
-	fi
 	manualconns
 
 	plutorestartoncrash=""
@@ -265,25 +211,11 @@ case "$1" in
 		if test -r $lock ";" \
 		then \
 			status=0 ";" \
-			. $info ";" \
 		else \
 			echo "\"stop ordered, but IPsec does not appear to be running!\"" ";" \
 			echo "\"doing cleanup anyway...\"" ";" \
 			status=1 ";" \
 		fi
-	if test " $IPSECforwardcontrol" = " yes"
-	then
-		perform test "\"X\$ipforwardingwas\"" = "\"X0\"" "&&" "{" \
-			echo "\"disabling IP forwarding:\"" "|" $LOGONLY ";" \
-			echo 0 ">" $ipforward ";" \
-			"}"
-	fi
-
-	if [ -f /var/run/pluto.pid -a ! -f /var/run/pluto/pluto.pid ]
-	then
-	    mkdir -p /var/run/pluto
-	    mv /var/run/pluto.pid /var/run/pluto/pluto.pid
-	fi
 
 	perform test -f $plutopid "&&" "{" \
 		if ps -p '`' cat $plutopid '`' ">" /dev/null ";" \
@@ -315,7 +247,7 @@ case "$1" in
 
 	perform test -d `dirname $subsyslock` "&&" rm -f $subsyslock
 
-	perform rm -f $info $lock $plutopid
+	perform rm -f $lock $plutopid
 	perform echo "...Libreswan IPsec stopped" "|" $LOGONLY
 	perform exit \$status
 	;;
@@ -325,11 +257,6 @@ case "$1" in
 	then
 		echo "$me $1 does not support $IPSEC_setupflags"
 		exit 1
-	fi
-
-	if test -f $info
-	then
-		hasinfo=yes
 	fi
 
 	if test -f $lock
@@ -372,7 +299,7 @@ case "$1" in
 	then
 		echo "IPsec running"  " - pluto pid: `cat $plutopid`"
 		# might not be a subsystem lock dir, ignore that issue
-		if test "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \)  -a "$hasinfo"
+		if test "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \) 
 		then
 			echo "pluto pid `cat $plutopid`"
                         case "$eroutes" in
@@ -385,10 +312,6 @@ case "$1" in
 		if test "$plutokind" != "normal"
 		then
 			echo "$plutokind Pluto running" " - pluto pid: `cat $plutopid`"
-		fi
-		if test ! "$hasinfo"
-		then
-			echo "$info file missing!"
 		fi
 		case $klips in
 		maybe)	echo "KLIPS module is not loaded!"	;;
@@ -403,7 +326,7 @@ case "$1" in
 		fi
 	else
 		echo "IPsec stopped"
-		if test ! "$hassublock" -a ! "$hasinfo" -a "$plutokind" = "no" -a "$eroutes" -eq 0
+		if test ! "$hassublock" -a "$plutokind" = "no" -a "$eroutes" -eq 0
 		then
 			exit 0
 		fi
@@ -411,10 +334,6 @@ case "$1" in
 		if test "$hassublock"
 		then
 			echo "has subsystem lock ($subsyslock)!"
-		fi
-		if test "$hasinfo"
-		then
-			echo "has $info file!"
 		fi
 		if test "$plutokind" != "no"
 		then
