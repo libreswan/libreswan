@@ -16,8 +16,6 @@
  * for more details.
  */
 
-char readwriteconf_c_version[] = "@(#) Xelerance Libreswan readwriteconf";
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
