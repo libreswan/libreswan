@@ -36,8 +36,6 @@ IPSECinterfaces=${IPSECinterfaces%%%none}
 # IPSECklipsdebug	"none"
 # IPSECplutodebug	"none"
 # IPSECdumpdir	"" (no dump)
-# IPSECmanualstart	""
-# IPSECpluto	"yes"
 # IPSECfragicmp	"yes"
 # IPSEChidetos	"yes"
 IPSECuniqueids=${IPSECuniqueids:-yes}
@@ -81,30 +79,6 @@ perform() {
 	fi
 }
 
-# function to set up manually-keyed connections
-manualconns() {
-	if test " $IPSECmanualstart" != " "
-	then
-		for tu in $IPSECmanualstart
-		do
-			perform ipsec manual --up $tu
-		done
-	fi
-
-	# search for things to "ipsec manual --up": auto == "manual"
-	eval `ipsec addconn --varprefix MANUALSTART --search auto manual`
-	if test " $MANUALSTART_confreadstatus" != " "
-	then
-		echo "auto=manual search: $MANUALSTART_confreadstatus"
-		echo "unable to determine what conns to manual --up; none done"
-	elif test " $MANUALSTART_confreadnames" != " "
-	then
-		for tu in $MANUALSTART_confreadnames
-		do
-			perform ipsec manual --up $tu
-		done
-	fi
-}
 
 # for no-stdout logging:
 LOGONLY="logger -p $IPSECsyslog -t ipsec_setup"
@@ -154,8 +128,6 @@ case "$1" in
 
 	perform test -d `dirname $subsyslock` "&&" touch $subsyslock
 
-	manualconns
-
 	plutorestartoncrash=""
 	case "$IPSECplutorestartoncrash" in
 	    true|[yY]|yes|restart) plutorestartoncrash="--plutorestartoncrash true";;
@@ -167,8 +139,6 @@ case "$1" in
 	start|--start)	re=	;;
 	_autostart)	re=--re	;;
 	esac
-	if test " $IPSECpluto" != " no"
-	then
 		perform ipsec _plutorun $re \
 			--debug "\"$IPSECplutodebug\"" \
 			--uniqueids "\"$IPSECuniqueids\"" \
@@ -191,7 +161,6 @@ case "$1" in
 		    rm -f $lock ";" \
 		    exit 1 ";" \
 		    "}"
-	fi
 
 	# done!
 	perform echo "\"...Libreswan IPsec started\"" "|" $LOGONLY

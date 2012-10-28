@@ -60,7 +60,6 @@ IPSECinterfaces=${IPSECinterfaces%%%none}
 # IPSECklipsdebug	"none"
 # IPSECplutodebug	"none"
 # IPSECdumpdir	"" (no dump)
-# IPSECpluto	"yes"
 # IPSECfragicmp	"yes"
 # IPSEChidetos	"yes"
 IPSECuniqueids=${IPSECuniqueids:-yes}
@@ -273,8 +272,6 @@ case "$1" in
 	start|--start)	re=	;;
 	_autostart)	re=--re	;;
 	esac
-	if test " $IPSECpluto" != " no"
-	then
 		perform ipsec _plutorun $re \
 			--debug "\"$IPSECplutodebug\"" \
 			--uniqueids "\"$IPSECuniqueids\"" \
@@ -300,7 +297,6 @@ case "$1" in
 		    rm -f $lock ";" \
 		    exit 1 ";" \
 		    "}"
-	fi
 
 	# done!
 	perform echo "\"...Libreswan ${VENDOR}IPsec started\"" "|" $LOGONLY
