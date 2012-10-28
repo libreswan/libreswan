@@ -16,8 +16,6 @@
  * for more details.
  */
 
-char readwriteconf_c_version[] = "@(#) Xelerance Libreswan readwriteconf";
-
 #include <asm/types.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -128,12 +126,12 @@ main(int argc, char *argv[])
 
 	case 'R':
 	    printf("#setting rootdir=%s\n", optarg);
-	    strncat(rootdir, optarg, sizeof(rootdir));
+	    strncat(rootdir, optarg, sizeof(rootdir)-1);
 	    break;
 
 	case 'S':
 	    printf("#setting rootdir2=%s\n", optarg);
-	    strncat(rootdir2, optarg, sizeof(rootdir2));
+	    strncat(rootdir2, optarg, sizeof(rootdir2)-1);
 	    break;
 	}
     }
