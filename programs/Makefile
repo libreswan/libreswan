@@ -29,7 +29,7 @@ SUBDIRS+=_confread _keycensor _plutoload _plutorun
 SUBDIRS+=_realsetup _secretcensor _updown 
 SUBDIRS+=auto barf verify ipsec look newhostkey ranbits secrets initnss
 SUBDIRS+=rsasigkey setup showhostkey
-SUBDIRS+=ikeping examples policy readwriteconf
+SUBDIRS+=ikeping examples readwriteconf
 
 ifeq ($(USE_KLIPS),true)
 SUBDIRS+= _startklips _updown.klips 
