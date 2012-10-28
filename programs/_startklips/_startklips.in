@@ -147,36 +147,6 @@ sysflag() {
 	esac
 }
 
-# get info about a given interface
-# getinterfaceinfo eth0 prefix_
-# see if we can find an IPv4/IPv6 address on the interface,
-# only use the first one here, otheraddr will include a /mask
-getinterfaceinfo() {
-	ip addr show dev $1 | awk '
-	BEGIN {
-		MTU=""
-		TYPE="unknown"
-	}
-	/BROADCAST/   { TYPE="broadcast" }
-	/POINTOPOINT/ { TYPE="pointtopoint" }
-	/mtu/ {
-			sub("^.*mtu ", "", $0)
-			MTU=$1
-		}
-	$1 == "inet" || $1 == "inet6" {
-			split($2,addr,"/")
-			other=""
-			if ($3 == "peer")
-				other=$4
-			print "'$2'type=" TYPE
-			print "'$2'addr=" addr[1]
-			print "'$2'mask=" addr[2]
-			print "'$2'otheraddr=" other
-			print "'$2'mtu=" MTU
-			exit 0
-		}'
-}
-
 # get default route info
 getdefaultrouteinfo() {
 	ip route list 0.0.0.0/0 | awk '$2 == "via" { print "phys=" $5; print "next=" $3; exit 0 } { print "phys=" $3; print "next=0.0.0.0"; exit 0 }'
@@ -187,6 +157,7 @@ klipsinterface() {
 	# pull apart the interface spec
 	virt=`expr $1 : '\([^=]*\)=.*'`
 	phys=`expr $1 : '[^=]*=\(.*\)'`
+	phys_mtu=`ip -oneline link show $phys | awk '{ print $5;}'`
 
         # we expect virt to be ipsec# in klips mode, and mast# in mast mode
         devprefix=ipsec
@@ -197,7 +168,9 @@ klipsinterface() {
 	esac
 
 	# figure out config for interface
-	phys_addr=`ip ro |grep default | awk '{ print $3;}'`
+	phys_addr_next=`ip ro |grep default | awk '{ print $3;}'`
+	phys_addr=`ip route get $phys_addr_next | head -1 | awk '{ print $5;}'`
+	phys_addrmask=`ip addr show dev $phys |grep $phys_addr | awk '{ print $2;}'`
 	if test " $phys_addr" = " "
 	then
 		echo "unable to determine address of \`$phys'"
@@ -212,14 +185,12 @@ klipsinterface() {
 	then
                 phys_mtu=$omtu
 	fi
-	echo "KLIPS $virt on $phys $phys_addr/$phys_mask $phys_type $phys_otheraddr mtu $phys_mtu" | logonly
+	echo "KLIPS $virt on $phys $phys_addrmask $phys_type $phys_otheraddr mtu $phys_mtu" | logonly
 
 	if $mast
 	then
         	# make sure this mast device exists, if not create it
-        	virt_addr=
-        	eval `getinterfaceinfo $virt virt_`
-        	if test " $virt_addr" = " "
+        	if test ! -f /sys/devices/virtual/net/$virt
         	then
                 	# in mast mode we just create the virtual interface
                 	ipsec tncfg --create $virt
@@ -231,9 +202,7 @@ klipsinterface() {
 	if $klips
 	then
 		# ipsecX might not exist yet
-		ipsec tncfg | grep $virt 
-		RETVAL=$?
-	        if [ "$RETVAL" -eq 1 ];
+        	if test ! -f /sys/devices/virtual/net/$virt
 		then
 			ipsec tncfg --create $virt
 		fi
