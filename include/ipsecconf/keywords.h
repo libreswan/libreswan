@@ -33,8 +33,6 @@
 enum keyword_string_config_field {
     KSF_DPDACTION    = 0,  /* loose_enum evantually */
     KSF_INTERFACES,
-    KSF_PREPLUTO,
-    KSF_POSTPLUTO,
     /* KSF_PACKETDEFAULT = 5, */
     KSF_VIRTUALPRIVATE,
     KSF_SYSLOG,

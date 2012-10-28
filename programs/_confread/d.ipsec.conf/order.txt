@@ -91,8 +91,6 @@ d.ipsec.conf/plutostderrlog.xml
 d.ipsec.conf/plutostderrlogtime.xml
 d.ipsec.conf/pluto.xml
 d.ipsec.conf/plutowait.xml
-d.ipsec.conf/prepluto.xml
-d.ipsec.conf/postpluto.xml
 d.ipsec.conf/dumpdir.xml
 d.ipsec.conf/fragicmp.xml
 d.ipsec.conf/hidetos.xml

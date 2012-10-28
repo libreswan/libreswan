@@ -84,8 +84,6 @@ int starter_cmp_pluto (struct starter_config *c1, struct starter_config *c2)
 {
 	if ((!c1) || (!c2)) return -1;
 	VARCMP(setup.options[KBF_PLUTODEBUG]);
-	STRCMP(setup.strings[KSF_PREPLUTO]);
-	STRCMP(setup.strings[KSF_POSTPLUTO]);
 	VARCMP(setup.options[KBF_UNIQUEIDS]);
 	VARCMP(setup.options[KBF_STRICTCRLPOLICY]);
 	VARCMP(setup.options[KBF_FORCEBUSY]);

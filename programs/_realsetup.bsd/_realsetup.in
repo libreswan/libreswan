@@ -39,8 +39,6 @@ IPSECinterfaces=${IPSECinterfaces%%%none}
 # IPSECmanualstart	""
 # IPSECpluto	"yes"
 IPSECplutowait=${IPSECplutowait:-no}
-# IPSECprepluto	""
-# IPSECpostpluto	""
 # IPSECfragicmp	"yes"
 # IPSEChidetos	"yes"
 IPSECuniqueids=${IPSECuniqueids:-yes}
@@ -190,8 +188,6 @@ case "$1" in
 			--stderrlog "\"$IPSECplutostderrlog\"" \
 			--plutostderrlogtime "\"$IPSECplutostderrlogtime\"" \
 			--wait "\"$IPSECplutowait\"" \
-			--pre "\"$IPSECprepluto\"" \
-			--post "\"$IPSECpostpluto\"" \
 			--log "\"$IPSECsyslog\"" $plutorestartoncrash \
 			--pid "\"$plutopid\"" "||" "{" \
 	            $KILLKLIPS ";" \

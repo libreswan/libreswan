@@ -22,7 +22,6 @@ do
 	--load)	plutoload="$2" ; shift	;;
 	--start)	plutostart="$2" ; shift	;;
 	--wait)	plutowait="$2" ; shift	;;
-	--post)	postpluto="$2" ; shift	;;
 	--)	shift ; break	;;
 	-*)	echo "$me: unknown option \`$1'" >&2 ; exit 2	;;
 	*)	break	;;
@@ -63,17 +62,6 @@ ipsec addconn $options --addall
 
 # enable listening
 ipsec whack --listen
-
-# execute any post-startup cleanup
-if test " $postpluto" != " "
-then
-	$postpluto
-	st=$?
-	if test " $st" -ne 0
-	then
-	    echo "...postpluto command exited with status $st"
-	fi
-fi
 
 # quickly establish routing
 for tu in $plutoroute

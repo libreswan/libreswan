@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: IPSEC.CONF
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 10/22/2012
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 10/28/2012
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "10/22/2012" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC\&.CONF" "5" "10/28/2012" "[FIXME: source]" "[FIXME: manual]"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -1141,7 +1141,7 @@ is the number of CPU\*(Aqs you have (including hypherthreaded CPU\*(Aqs)\&. A va
 .PP
 \fBcrlcheckinterval\fR
 .RS 4
-interval in seconds, for example 60s or 1m for 1 minute, after which pluto will verify loaded X\&.509 CRL\*(Aqs for expiration\&. If any of the CRL\*(Aqs is expired, or if they previously failed to get updated, a new attempt at updating the CRL is made\&. The first attempt to update a CRL is started at two times the crlcheckinterval\&. If set to
+interval expressed in second units, for example crlcheckinterval=60 for 60 seconds, after which pluto will verify loaded X\&.509 CRL\*(Aqs for expiration\&. If any of the CRL\*(Aqs is expired, or if they previously failed to get updated, a new attempt at updating the CRL is made\&. The first attempt to update a CRL is started at two times the crlcheckinterval\&. If set to
 \fB0\fR, which is also the default value if this option is not specified, CRL updating is disabled\&.
 .RE
 .PP
@@ -1253,24 +1253,6 @@ should Pluto wait for each negotiation attempt that is part of startup to finish
 or
 \fBno\fR
 (the default)\&.
-.RE
-.PP
-\fBprepluto\fR
-.RS 4
-shell command to run before starting Pluto (e\&.g\&., to decrypt an encrypted copy of the
-\fIipsec\&.secrets\fR
-file)\&. It\*(Aqs run in a very simple way; complexities like I/O redirection are best hidden within a script\&. Any output is redirected for logging, so running interactive commands is difficult unless they use
-/dev/tty
-or equivalent for their interaction\&. Default is none\&.
-.RE
-.PP
-\fBpostpluto\fR
-.RS 4
-shell command to run after starting Pluto (e\&.g\&., to remove a decrypted copy of the
-\fIipsec\&.secrets\fR
-file)\&. It\*(Aqs run in a very simple way; complexities like I/O redirection are best hidden within a script\&. Any output is redirected for logging, so running interactive commands is difficult unless they use
-/dev/tty
-or equivalent for their interaction\&. Default is none\&.
 .RE
 .PP
 \fBdumpdir\fR

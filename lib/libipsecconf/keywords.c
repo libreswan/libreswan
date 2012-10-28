@@ -356,8 +356,6 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"pluto",          kv_config, kt_filename,  KSF_PLUTO, NOT_ENUM},
     {"plutowait",      kv_config, kt_bool,      KBF_PLUTOWAIT,NOT_ENUM},
     {"oe",             kv_config, kt_bool,      KBF_OPPOENCRYPT,NOT_ENUM},
-    {"prepluto",       kv_config, kt_filename,  KSF_PREPLUTO,NOT_ENUM},
-    {"postpluto",      kv_config, kt_filename,  KSF_POSTPLUTO,NOT_ENUM},
     {"fragicmp",       kv_config, kt_bool,      KBF_FRAGICMP,NOT_ENUM},
     {"hidetos",        kv_config, kt_bool,      KBF_HIDETOS,NOT_ENUM},
     {"uniqueids",      kv_config, kt_bool,      KBF_UNIQUEIDS,NOT_ENUM},

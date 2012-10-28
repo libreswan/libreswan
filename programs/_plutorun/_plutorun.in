@@ -50,8 +50,6 @@ do
 	--wait)	                 plutowait="$2" ; shift	;;
         --show)	                 show="--show"  ; shift ;;
 	--showonly)	         showonly="true" ;;
-	--pre)	                 prepluto="$2" ; shift	;;
-	--post)	                 postpluto="$2" ; shift	;;
 	--log)	                 wherelog="$2" ; shift	;;
 	--pid)	                 pidfile="$2" ; shift	;;
 	--nhelpers)              nhelpers="$2"; shift   ;;
@@ -186,17 +184,6 @@ else
 	ulimit -c 0			# preclude them
 fi
 
-# execute any preliminaries
-if test " $prepluto" != " "
-then
-	$prepluto
-	st=$?
-	if test " $st" -ne 0
-	then
-		echo "...prepluto command exited with status $st"
-	fi
-fi
-
 IPSEC_SECRETS=${IPSEC_CONFS}/ipsec.secrets
 if test ! -f "${IPSEC_SECRETS}"
 then
@@ -256,7 +243,7 @@ until (
 	status=$?
 	echo "exit"
 	echo $status
-	) | $libdir/_plutoload --wait "$plutowait" --post "$postpluto"
+	) | $libdir/_plutoload --wait "$plutowait"
 do
 	status=$?
 	case "$status" in
