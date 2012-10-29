@@ -7,7 +7,7 @@ LIBRESWANSRCDIR=`echo $TESTING | sed "s/\/testing//"`
 #USER=`id -un`
 #GROUP=`id -gn`
 USER=`id -u`
-GROUP=`id -g`
+GROUP=`id -g qemu`
 
 
 
