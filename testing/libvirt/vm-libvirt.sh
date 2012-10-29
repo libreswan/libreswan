@@ -1,11 +1,3 @@
-#!/bin/sh
-
-MYDIR=`readlink -f $0  | sed "s/libvirt.*$/libvirt/"`
-TESTING=`readlink -f $0  | sed "s/testing.*$/testing/"`
-LIBRESWANSRCDIR=`echo $TESTING | sed "s/\/testing//"`
-
-pushd $MYDIR
-
 for hostname in east west north road;
 do
 	rm -f vm/$hostname.xml.converted 
@@ -16,5 +8,3 @@ do
 	rm -f vm/$hostname.xml.converted 
         sudo virsh start $hostname
 done
-popd
-

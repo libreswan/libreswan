@@ -13,3 +13,5 @@ are based.
   including any parent directories. So if this is in your homedir,
   then your homedir needs to be world readable. Or else the /testing
   directory cannot be exported to the VMs
+
+- Requires _recent_ qemu/libvirt, use qemu 1.* and libvirt 0.9.11.* or better
