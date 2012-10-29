@@ -873,7 +873,6 @@ main(int argc, char **argv)
 					IPSECLIBDIR"/_secretcensor",
 					IPSECLIBDIR"/secrets",
 					IPSECLIBDIR"/showhostkey",
-					IPSECLIBDIR"/showpolicy",
 					IPSECLIBDIR"/spi",
 					IPSECLIBDIR"/spigrp",
 					IPSECLIBDIR"/_startklips",
