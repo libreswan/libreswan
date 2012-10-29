@@ -53,14 +53,11 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 # declaration for make's benefit
 .PHONY:	def insert kpatch patches _patches _patches2.4 \
 	klipsdefaults programs install clean distclean \
-	ogo oldgo menugo xgo \
-	omod menumod xmod \
-	pcf ocf mcf xcf rcf nopromptgo \
 	precheck verset confcheck kernel \
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
 	backup unpatch uninstall install_file_list \
-	snapready relready ready buildready devready uml check taroldinstall \
+	uml check \
 	umluserland
 
 

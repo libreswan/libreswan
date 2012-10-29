@@ -44,15 +44,6 @@ install_file_list:
 		(cd $$d && $(MAKE) --no-print-directory srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} install_file_list ) || exit 1; \
 	done; 
 
-# uninstall, as much as possible
-uninstall:
-	$(MAKE) --no-print-directory install_file_list | egrep -v '(/ipsec.conf$$|/ipsec.d/)' | xargs rm -f
-
-taroldinstall:
-	tar --ignore-failed-read -c -z -f oldFreeSWAN.tar.gz `$(MAKE) --no-print-directory install_file_list`
-
-TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/libreswan/*.h linux/net/ipsec/*.[ch])
-
 tags:	$(TAGSFILES)
 	@LC_ALL=C ctags $(CTAGSFLAGS) ${TAGSFILES}
 
@@ -102,7 +93,7 @@ endif
 # USE_ variables determine if features are compiled into Libreswan.
 # export them so that "make env" can get at them
 export USE_IPSECPOLICY USE_IKEPING
-export USE_KEYRR USE_KLIPS USE_NETKEY USE_VENDORID
+export USE_KLIPS USE_NETKEY USE_VENDORID
 export USE_AGGRESSIVE USE_XAUTH USE_XAUTHPAM
 export USE_NAT_TRAVERSAL USE_NAT_TRAVERSAL_TRANSPORT_MODE USE_LDAP
 export USE_LIBCURL
