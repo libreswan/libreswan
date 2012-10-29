@@ -19,10 +19,6 @@ srcdir?=$(shell pwd)/
 
 SUBDIRS=liblibreswan libpluto libcrypto libwhack libipsecconf
 
-ifeq ($(USE_IPSECPOLICY),true)
-SUBDIRS+=libipsecpolicy
-endif
-
 ifeq ($(USE_BSDKAME),true)
 SUBDIRS+=libbsdpfkey
 endif

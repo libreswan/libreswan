@@ -14,7 +14,7 @@ diff -urN libreswan-2.3.1dr6.old/programs/pluto/Makefile libreswan-2.3.1dr6.dev/
 --- libreswan-2.3.1dr6.old/programs/pluto/Makefile	2005-04-05 03:00:36.000000000 +0200
 +++ libreswan-2.3.1dr6.dev/programs/pluto/Makefile	2005-04-05 03:06:18.000000000 +0200
 @@ -255,7 +255,7 @@
- LIBSPLUTO+=$(IPSECPOLICY_LIBS) $(X509_LIBS) $(SMARTCARD_LIBS) 
+ LIBSPLUTO+=$(X509_LIBS) 
  LIBSPLUTO+=$(HAVE_THREADS_LIBS) ${XAUTHPAM_LIBS}
  LIBSPLUTO+=${CURL_LIBS} 
 -LIBSPLUTO+= -lgmp -lresolv # -lefence

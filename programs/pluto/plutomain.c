@@ -771,19 +771,6 @@ main(int argc, char **argv)
 	}
     }
 
-#ifdef IPSECPOLICY
-    /* create info socket. */
-    {
-	err_t ugh = init_info_socket();
-
-	if (ugh != NULL)
-	{
-	    fprintf(stderr, "pluto: %s", ugh);
-	    exit_pluto(1);
-	}
-    }
-#endif
-
     /* If not suppressed, do daemon fork */
 
     if (fork_desired)
@@ -836,9 +823,6 @@ main(int argc, char **argv)
 
 	for (i = getdtablesize() - 1; i >= 0; i--)  /* Bad hack */
 	    if ((!log_to_stderr || i != 2)
-#ifdef IPSECPOLICY
-	    && i != info_fd
-#endif
 	    && i != ctl_fd)
 		close(i);
 

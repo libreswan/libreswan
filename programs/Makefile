@@ -20,10 +20,6 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 SUBDIRS=
 
-ifeq ($(USE_IPSECPOLICY),true)
-SUBDIRS+=showpolicy
-endif
-
 SUBDIRS+=proc pluto addconn 
 SUBDIRS+=configs _keycensor _plutoload _plutorun
 SUBDIRS+=_realsetup _secretcensor _updown 

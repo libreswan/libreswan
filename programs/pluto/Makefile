@@ -110,7 +110,6 @@ DISTSRC = \
 	ike_alg.c ike_alg_status.c ike_alg.h ikeping.c \
 	ike_alg_aes.c ike_alginit.c ikev2_rsa.c ikev2_psk.c ikev2_x509.c \
 	rcv_whack.c rcv_whack.h \
-	$(IPSECPOLICY_DIST_SRCS) \
 	${EXTRA_CRYPTO_SRCS} ike_alg_sha2.c \
 	log.c log.h \
 	plutomain.c plutoalg.c \
@@ -151,7 +150,7 @@ OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o spdb_v2_struct.o
 OBJSPLUTO += ikeping.o kernel.o 
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
 OBJSPLUTO += kernel_noklips.o rcv_whack.o 
-OBJSPLUTO += ${IPSECPOLICY_OBJS} demux.o msgdigest.o keys.o dnskey.o
+OBJSPLUTO += demux.o msgdigest.o keys.o dnskey.o
 OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
 OBJSPLUTO += ikev2_crypto.o ikev2_prfplus.o 
 OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_v1_struct.o spdb_print.o
