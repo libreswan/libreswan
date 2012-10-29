@@ -72,4 +72,8 @@ You can load this machine definition into libvirt using:
     <memballoon model='virtio'>
     </memballoon>
   </devices>
+  <seclabel type='static' model='dac' relabel='yes'>
+   <label>@@USER@@:@@GROUP@@</label>
+   <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
+  </seclabel>
 </domain>
