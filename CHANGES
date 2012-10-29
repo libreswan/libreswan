@@ -26,7 +26,6 @@ v1.0.0 (unreleased)
          (rhbz#831669)
 * pluto: Fix phase confusion in xauth/modeconfig [Avesh]
 * pluto: Added new option plutostderrlogtime= (default=no) [Paul]
-* pluto: Fix _plutoload to actually run postpluto script [Tuomo]
 * pluto: Additional safety checks to strncat() calls for addrtot(),
          inet_addrtot(), sin_addrtot(), alg_info_snprint_esp(),
          alg_info_snprint_ah(), idtoa() and format_end() [Paul]
@@ -85,7 +84,7 @@ v1.0.0 (unreleased)
 * DOCS: Add man page leftid= note on Cisco ID_KEY_ID Group Name [Philippe]
 * testing: Ported broken UML harness to KVM/libvirt/9p [Paul/Antony]
            (see the wiki on libreswan.org for details on how to use it)
-* packaging: Updated openswan.spec to reflect updated options [Paul]
+* packaging: Updated libreswan.spec to reflect updated options [Paul]
 * Bugtracker bugs fixed:
     #993 ipsec showhostkey: wrong kind of key PPK_XAUTH [Philippe Vouters]
    #1308 forceencaps= setting does now show up in "ipsec auto --status"
