@@ -1,0 +1,946 @@
+Changes to Pluto
+================
+
+- [MCR] changes to support co-terminal connections of the near kind.
+
+- --dontrekey is now a misnomer: the IPsec SA will be rekeyed if we
+  are the Initiator and there is outbound traffic in the period
+  leading up to the rekeying decision point.  This is a heuristic: a
+  mistake doesn't matter much since the connection, once deleted, will
+  be rekeyed on demand.
+
+- accept a proposal with compression even if the connection does not
+  have the POLICY_COMPRESSION flag.  This is a reversal of a policy
+  introduced in 1.6.
+
+- fixed load-triggered deadlock between asynch DNS process and pluto
+
+- add %myid to indirectly refer to current id.  Set from $IPSECmyid on
+  startup and via whack --myid
+
+- make whack/pluto version matching less stringent for --status and
+  --shutdown.
+
+- remove all code for DODGE_DH_MISSING_ZERO_BUG
+
+- when attempting outbound Opportunism, check our side's DNS
+  entries, not just the other side's.  If we don't have them,
+  fail: not worth attempting.
+
+
+Change since 2.00 release by MCR and DHR
+
+- "KEY Restrict": in each place where Pluto used the DNS KEY Resource
+  Record, it now uses one of our special TXT Resource Records.  For
+  now, we continue to accept KEY records if the TXT record is not
+  found.
+
+Changes since 1.99 release by D. Hugh Redelmeier <hugh@mimosa.com
+
+- when Responding with an Opportunistic connection, check our side's
+  DNS for proper delegation.  This avoids the promiscuous
+  "packetdefault" conn from licensing unexpected access to our clients.
+
+- many changes for "Policy Groups":
+  + host=%group and host=%opportunisticgroup signals that
+    contents of group files should be substituted
+  + an opportunistic connection can be constrained to only
+    apply to peers and their clients within a specified subnet
+  + Pluto can manage pure shunt connections (involving no IKE).
+  + failure-case shunts can now be specified.
+
+- add a listing of pending Phase 2 negotiations to status output
+
+- reorganize impairment mechanism.  Now controlled by unadvertised
+  runtime flags.
+
+- [MCR] tolerate Certificate Request Payloads any time
+
+- [MCR] generate Vendor ID Payloads (sent if PLUTO_SENDS_VENDORID defined)
+
+- [MCR] print some of content of Vendor ID Payloads received.
+
+- Corrected design bug in --dontrekey.  If IPsec SA lifetime chosen by
+  us is smaller than what other side specified in negotiation, we will
+  renegotiate when the shorter lifetime dictates.  This is the only
+  sane way to communicate the shorter lifetime.  For ISAKMP SA lifetime,
+  we accept the other side's choice.
+
+
+Changes since 1.98 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- Fixed assertion failure in quick_inI1_outR1_continue.  Can happen
+  when the result of a DNS TXT query is not needed by the time it
+  arrives (due to another negotiation providing the information).
+  Can be demonstrated by the test "ipsec-oppo-race-iinr-net".
+
+
+Changes since 1.97 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- added --dnskeyondemand option for connection ends.
+
+- Fixed a bug that provoked PF_KEY errors.  If an updown script fails
+  and it was invoked as part of a step that involved installing an
+  eroute, any previous eroute should be restored as part of undoing
+  that step.  The bug was that any old eroute was lost.
+
+- When representing a long string in a DNS TXT resource record,
+  it must be broken up into chunks less than 256.  When reconstitute
+  the original string, Pluto now just concatenates them.  It used to
+  add a space after a chunk if it was shorter than 255 characters.
+  This should make it easier (not easy!) to edit the TXT record
+  source by hand.
+
+- [mlafon@arkoon.net] fixed protocol numbers used in delete payload.
+
+- took -DDODGE_DH_MISSING_ZERO_BUG out of Makefile.  Anyone planning
+  on talking to FreeS/WAN 1.0 systems should put it back.  And
+  check into the Smithsonian Institution.
+
+- in --status and logging output, references to connection instances
+  now contain a sequence number for the instance and details of the
+  instantiation (i.e. more IP addresses).  Perhaps too bulky.
+
+- reworked initiate_opportunistic to avoid race conditions
+  introduced with Asynch DNS.
+
+- added impairment to aid testing: IMPAIR_DELAY_ADNS_ANSWER
+
+- whack --status now displays the bare shunt table.
+
+- Changed Main Mode hash calculation to use the ID Payload as sent
+  by peer, rather than reconstituting it from our tables.  This matters
+  if we use different case than peer did (eg @example.com vs @Example.Com).
+
+- renamed source files:
+  + kernel_comm.[hc] => rcv_whack.[hc]
+  + preshared.[hc] => keys.[hc]
+  + main.c => plutomain.c
+
+- added POLICY_UP to track whether our admin has requested that this
+  connection be up.
+
+
+Changes since 1.96 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- fixed a bug that would make the following (pointless) sequence to
+  trigger a failure of Pluto assertion "c->routing == RT_ROUTED_TUNNEL":
+	ipsec auto --add conn
+	ipsec auto --up conn
+	ipsec auto --route conn
+	ipsec auto --down conn
+
+- send Delete Notifications when deleting IPSEC SAs.  We don't yet
+  understand ones we receive.
+
+- added "keyid" (see ipsec_keyblobtoid(3)) to appropriate messages so
+  that RSA key being used is manifest.
+
+- track whether information (security gateway, public key) came from
+  DNSsec or unauthenticated DNS.  Untested since normal resolver calls
+  can no longer return DNSsec results.  The information isn't used.
+
+- use asynchronous DNS mechanism for all lookups during keying.
+
+- added --interface flag to Pluto to constrain interfaces considered.
+  One use of this option is to specify which interface should be used
+  when two or more share the same IP address.  Another is to assist
+  with test setups.
+
+- small cleanups:
+  + fix compile without no -DKLIPS
+  + use ttodatav in place of atobytes and ttodata
+  + use hosttosubnet
+  + define and use close_any
+  + define and use USED_BY_KLIPS and USED_BY_DEBUG
+  + define and use happy, a kind of assertion macro
+  + define and use impossible, a kind of assertion macro
+  + when an unknown attribute value is seen in an ISAKMP transform,
+    reject only that transform, not the whole proposal.
+  + add Hybrid auth methods to table to improve diagnostics
+
+Changes since 1.95 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- fixed bug in ipsec_doi.c:main_inR3 with unknown consequences.
+  When the Initiator finds out the peer's Phase 1 ID, it might
+  change which connection it thinks is being used.  If so,
+  this routine used to perform an operation on the old connection
+  data structure -- a mistake now corrected.  There are few cases
+  where the Responder surprises the Initiator about Phase 1 IDs.
+
+- fixed an error in network error handling that caused a segfault if
+  there was a MSG_ERRQUEUE report on the last message of a Quick Mode
+  exchange.
+
+- fix leak (detected by assertion failure) triggered by missing
+  private key.
+
+
+Changes since 1.94 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- added "whack --deletestate <state_object_number>" as a crude
+  tool for deleting instances of connections.
+
+- fix assertion in quick_inI1_outR1 introduced with key rollover
+  support in 1.92.  Assertion failed in Responder when Source
+  was not the same as Initiator.
+
+- reduce level of routine logging.  Add --debug-lifecycle,
+  a temporary hack: it controls some logging, not debugging.
+
+- Reorganize code to prepare for asynchronous DNS.
+
+- Arrange for our file descriptors to be close-on-exec so that
+  the updown script won't inherit them.  Some library facilities
+  (syslog?) may not be as careful.
+
+- Fix assertion failure in DNS record handling.  Provoked by a
+  malformed key in a TXT record.  Introduced in 1.93.
+
+- Change Responder cookie generation algorithm so that a particular
+  peer no longer gets the same cookie each time.
+
+- Tidy and correct setting and resetting cur_* variables.  A per-connection
+  debug setting could provoke a GLOBALS_ARE_RESET assertion failure.
+
+- Fix handing of pending list in release_dead_interfaces:
+  connection must be released before it is removed from host_pair list.
+
+- Ignore IPv6 interface addresses that are of link-local scope.
+  We think that they are never relevant.  Trying to bind to these
+  addresses without a scope-id causes bind to balk.
+
+
+Changes since 1.93 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- Only run the up-* updown script for tunnel eroutes, not shunt
+  eroutes.
+
+- Now only --routed connections may be initiated on demand
+  (i.e. triggered by SADB_ACQUIRE triggered by trapped outbound packet).
+  Among other things, this eliminates a bug whereby an ACQUIRE
+  could be ascribed by Pluto to a Road Warrior template connection.
+  Pluto will now refuse to --route a Road Warrior template.
+
+- Correct bug that lost track of a bare shunt table entry.
+  Add debugging logging for changes to that table.
+
+
+Changes since 1.92 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- [andreas.steffen@strongsec.com] Bug fix: carrying Phase 1 ID
+  over when instantiating a different RW connection due to
+  revelation of Phase 2 IDs.  This bug should only have affected
+  X509-authenticated negotiations.
+
+- add more context to log and status lines.  If the connection or
+  state is an instance, show the peer involved; if Opportunistic, also
+  show the client subnet.
+
+- seed rand(3) with bytes from /dev/urandom.
+
+- propose 1536 MODP Group before 1024 MODP Group.  This generates
+  more entropy, so should be a little safer.  And slower.
+
+- add --debug-dns flag
+
+- During Phase 1, when an RSA Public Key is require, only query DNS
+  for a KEY record for an Opportunistic connection.  (This does not
+  change the whack --keyid way of querying for a KEY record during
+  preconfiguration.)
+
+- Multiple RSA public keys, if available, will be tried when
+  authenticating a signature.  This facilitates key rollover.
+  New whack flag --addkey.
+  Multiple DNS TXT and KEY records are used if they are found
+  (but only one Responder is tried).
+
+- no longer try to figure out --rsasig or --psk if neither specified.
+  This would require an extra DNS lookup for a KEY record.
+
+Changes since 1.91 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- got rid of caching of DNS results.  They might become stale.
+
+- Added --dontrekey option for a connection.  Crudely useful
+  for Road Warrior and Opportunistic connections.
+
+- Ignore the Commit Flag.  This should let us interoperate with
+  implementations that insist on it.  The damage should be minor.
+
+- Don't split the topology line of --status output.  The output is now
+  more consistent (if wider).
+
+- Improve diagnosis when ipsec.secrets has a non-indented "}"
+  at the end of an RSA private key.
+
+- Savatier Sébastien <SebastienSavatier@lyon.msi-sa.fr>:
+  fix bug in emitting explicit IP address ID payload.
+
+- Support inbound policy check of source and destination inner
+  addresses of tunneled packets.  This will make it possible to
+  prevent one peer from successfully spoofing packets from another.
+
+- Use poll(2) to check for MSG_ERRQUEUE messages before recvfrom:
+  even though select(2) says that there is a message, a plain
+  recvfrom(2) can block if the only message is on MSG_ERRQUEUE.  I
+  think that this blocking is a kernel bug, or at least a
+  documentation bug.  Also check for MSG_ERRQUEUE messages before
+  sendto(2): their presence can cause sendto to fail confusingly (i.e.
+  the failure has nothing to do with the actual sendto).
+
+
+Changes since 1.9 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- SIGTERM now causes Pluto to exit cleanly.
+
+- if --nofork is used, Pluto prints the line "Pluto initialized" to
+  standard out after creating the lock file and the control socket.
+
+- the startup script relies on the property that whack can be
+  used immediately after the pluto command finishes (i.e.
+  right after the parent process of the daemon exits).
+  In the past, the control socket used by whack was created
+  after the fork: not necessarily before the parent exits.
+  This race condition has been eliminated.
+
+- refined the code for DODGE_DH_MISSING_ZERO_BUG to ensure
+  Responder never drops a negotiation.
+
+- added and exploited builddiag(), a routine make it easier to add
+  intermediate context to diagnostics.
+
+- For purposes of IPv4, Pluto will now only consider interfaces that
+  are "up".  It has always ignored those configured with address
+  0.0.0.0, thus ignoring "down" interfaces in most cases.
+
+- add a list of interface pairs to --status output.
+
+- replace signal(2) calls with sigaction(2) calls: glibc has further
+  broken the semantics of signal(2).  We want slow system calls
+  to be interruptable and not be restarted.
+
+- improved error message for lack of preshared key by showing
+  IDs that were used in lookup.  Collateral tidying.
+
+- documented complex logic of routing and erouting in routing.txt
+
+- When a connection is --routed, a route is installed to direct
+  outbound packets destined for the peer's client to go to the ipsec
+  interface implicit in the connection.  This is not allowed for Road
+  Warrior connections -- they are strictly inbound.  For Opportunistic
+  connections, a new default root is installed that points to the
+  ipsec interface.  Note that the route does not take into account the
+  source address.  In addition, a TRAP shunt eroute is installed to
+  catch any traffic sent on the not-yet-initiated connection.
+
+- When an outbound packet is trapped by the TRAP shunt eroute,
+  Pluto attempts to initiate the corresponding connection.
+  If the attempt fails because an Opportunistic connection was used
+  and no gateway information was found, a PASS shunt eroute is
+  installed (with no provision for automatic removal).
+
+- if negotiation fails at a later point, a shunt eroute is installed.
+  The kind of shunt is a policy decision.  It is specified as part of
+  the connection.  (Untested; can not be specified in ipsec.conf.)
+
+- When an inbound negotiation doesn't match a specific connection,
+  and there is an Opportunistic connection, Pluto will try to respond
+  using that connection.
+
+- Every 2 minutes (SHUNT_SCAN_INTERVAL seconds), Pluto scans for
+
+  + PASS eroutes that it installed that haven't been used recently.
+    These will be deleted.
+
+  + HOLD eroutes for which Pluto hasn't received a PFKEY_ACQUIRE message.
+    For any it finds, it will attempt an opportunistic initiate.
+
+- We no longer allow Phase 1 negotiations that we initiate to switch
+  which connection is being used based on the Peer's Phase 1 ID.
+  The fact that we used to do so was probably a bug.
+
+- When Pluto as the Responder receives the Peer's Phase 1 ID, it is
+  now willing to use a connection with a different ID and private
+  RSA key for our end.  Nothing has committed us to the current guess.
+
+- Changes in internal data structures to aid in better tracking of
+  history of attempted and successful communication.  Needed for
+  effective Opportunism.
+  + struct host_pair represents information about pairs of hosts.
+  + "Orientation" is done as soon as possible rather than as late
+    as possible.
+  + an arbitrary number of Quick Mode negotiations may now queue
+    for the completion of a Main Mode negotiation.  Formerly,
+    a negotiation could only use a previously completed Keying Channel.
+
+
+Changes since 1.8 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- [Svenning Soerensen] correct check requiring OAKLEY_LIFE_TYPE
+  attribute before OAKLEY_LIFE_DURATION.
+
+- Improved whack diagnostics for various cases of failure to connect
+  with Pluto.
+
+- Added function state_with_serialno to allow a serial number to be
+  used as a safe reference to a state object.  This avoids the risk
+  of dangling pointers.
+
+- Add crude support for PF_KEY SADB_ACQUIRE messages from the kernel.
+  These cause the initiation of opportunistic negotiation.
+
+- More processing of PF_KEY messages from the kernel.  We check that
+  each message we send to the kernel elicits a response.  Other messages
+  are queued to be processed at the head of the event loop.
+
+- Fix bug in find_client_connection.  The manifestation is a Pluto
+  segfault when a negotiation successfully gets to Phase 2, but there
+  is no connection with the appropriate clients AND there is no
+  wildcarded connection using our same host interface (not even an
+  inappropriate one).
+
+- Purely internal change: simplify EVENT_SO_DISCARD logic.
+
+- Accept GROUP_DESCRIPTION in IPCA (IPcomp SA) proposal.  Although
+  this SHOULD NOT appear according to
+  draft-shacham-ippcp-rfc2393bis-05.txt 4.1, it should harmlessly help
+  interoperation.
+
+- Adjust to whether KLIPS supports IPCOMP.  If it does not, ignore
+  --compress policy flag in Connections.  So Pluto would then neither
+  propose nor accept IPCOMP transforms.
+
+
+Changes since 1.7 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- Allow IPcomp transformations to use "well known CPIs".  This
+  perversion allows better interoperation.
+
+- Added rather experimental code to exploit IP_RECVERR.  This facility
+  allows us to report who refuses our packets when they are refused.
+  I don't understand the documentation of the mechanism, hence the
+  experimental nature of our use of it.  Our code is pretty ugly too.
+
+- [Svenning Soerensen] found a bug in the calculation of the verb for
+  the updown script and proposed a fix.  The -host suffix was being
+  used when the client subnet contained only one IP address, even if
+  that address was not of the host.
+
+- [Svenning Soerensen] Allow Phase 1 ID Payloads of type FQDN and
+  user@FQDN to specify UDP/500 explicitly as per RFC2407 (IPSEC DOI)
+  4.6.2.
+
+- When responding in Quick mode, after switching to an appropriate
+  connection based on the ID payloads, copy the connection's IPSEC
+  policy flags into the state object.  Do this before consulting these
+  flags.
+
+- --status output now indicates when a connection is an instance
+  of another.  "POLICY_" has been removed from the display of each
+  policy flag, reducing clutter.  An extra space has been added to
+  further indent lines in the --status report.
+
+- Fixed a bug in displaying subnets in the error message
+  "cannot respond to IPsec SA request..."
+
+- In SA proposals, accept CPIs that are 4 bytes too, as long as
+  the high order 2 bytes are 0.
+
+- bug fix: no longer allocate tunnel SPIs below IPSEC_DOI_SPI_OUR_MIN.
+
+- Added recognition (not support) for new Assigned Numbers for AES
+  and friends.
+
+
+Changes since 1.6 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- only accept a proposal with compression if the connection has the
+  POLICY_COMPRESSION flag.  Normally, these flags don't affect what we
+  propose.  In this case, we need this control since our IPCOMP
+  implementation has a history of crashing.
+
+- Fixed nasty bug in connections.c:fc_try().  For a Quick Mode
+  exchange, if Pluto picked a connection as a starting point
+  that had no peer client, it would not accept any proposed
+  peer client.  On the other hand, if it picked a connection
+  with a peer client, it would not accept any proposal without
+  a peer client.
+
+
+Changes since 1.5 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- added a global pluto option --uniqueids.  If this is enabled,
+  whenever a new ISAKMP SA is established, any connections with
+  the same Peer Id but different Peer IP address are unoriented,
+  blowing away any of their SAs.  This should help eliminate
+  dangling Road Warrior connections when the same Road Warrior
+  reconnects.  It thus requires that IDs not be shared by hosts
+  (a previously legal but probably useless capability).
+
+- introduced clearer notation:
+  + --host %any signifying any IP address, for Road Warrior,
+    replacing 0.0.0.0 or 0::0
+  + --nexthop %direct signifying "same IP as peer", replacing
+    0.0.0.0 or 0::0
+  + %any and %any6 as indices in ipsec.secrets to match IP addresses of
+    Road Warriors (replacing 0.0.0.0 or 0::0)
+  + --host %opportunistic signifying that the peer is actually
+    to be discovered from the reverse DNS entry for the peer's client.
+    This replaces --host 0.0.0.0 --client 0.0.0.0/32 (and IPv6 variants).
+
+- be more strict about Phase 2 ID payloads (the ones that specify clients):
+  reject if they specify protocol or port (which we do not support).
+
+- Remove support for Diffie Hellman MODP 768 Group.  Increase
+  support for MODP 1536 Group.
+
+- Remove NO_RSA option -- patent expired!!
+
+- Improve support for newer resolvers.
+
+- [initially from Svenning Soerensen <svenning@post5.tele.dk>]
+  support IPcomp (compression)
+
+- [mostly Gerhard Gessler <gessler@iabg.de>] initial support for IPv6.
+
+- As part of the IPv6 support, changes were made to the Pluto/updown
+  interface.  See pluto(8) for the details.  One oft-requested feature
+  is the new PLUTO_*_CLIENT environment variables.  The changes are
+  "upward compatible", so the PLUTO_VERSION environment variable
+  setting was changed from 1.0 to 1.1.  Unfortunately, this will break
+  many customized updown scripts.
+
+- Prototype support for initiating and responding to opportunistic
+  negotiation.  A connection is considered for instantiation for
+  opportunism if it has a peer of %opportunistic (the connection
+  description must not specify a client for the peer).  Currently, the
+  only way to provoke an opportunistic initiation is to use whack to
+  simulate the interception of an outbound flow (do a "whack --help"
+  and look at opportunistic initiation).  These features are not
+  documented because they are experimental.  Limitations:  no actual
+  interception of packets, DNS query synchronous.
+
+- in ipsec.secrets, if multiple entries are the best match for the
+  connection, they must all have the same secret.  In the past
+  there was no code to compare RSA keys, so separate RSA entries
+  were assumed to be different.  Now they are compared.
+
+- Introduce now() to protect against clock being set backwards.  The
+  risk is that events might be delayed a lot.  Still no protection
+  against clock being moved forward.
+
+- Don't "discover" interfaces that share IP addresses with others.
+  This avoids an assertion failure.  Eventually, Pluto will have to
+  ask KLIPS about interfaces.
+
+- prevent infinite loop decoding certain malformed DNS records
+
+- explain "Phase 1", "Phase 2", "Main Mode", and "Quick Mode"
+
+- fiddled with "max number of retransmissions" diagnostic to add a bit
+  of explanation.
+
+
+Changes since 1.4 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- reorganized how messages are logged.  More of the serious messages
+  are distinguished with the code RC_LOG_SERIOUS and hence should
+  make it through ipsec auto's filter.
+
+- Reserve Message IDs only within their ISAKMP SA.  This eliminates
+  the unbounded memory requirement when reserving them per peer.
+
+- Pluto's retransmission logic has been improved:
+  + the initial retransmission occurs after 10 seconds of silence,
+    down from 30 seconds.  The theory is that this will ungum a
+    lost-packet situation more quickly
+  + the delay after each retransmission is twice the delay before
+    it -- exponential backoff
+  + In the special case of the first message initiating Main Mode,
+    when --keyingtries is 0 (meaning unlimited retries), Pluto
+    will attempt more retransmissions at the same rate (no
+    exponential backoff).  This cuts down on the pointless
+    busywork while a peer isn't responding.
+
+- Pluto will no longer generate SPIs in the range 0x100-0xFFF.
+  This has the effect of reserving this range for manual keying.
+  Of course Pluto will still allow its peer to use this range.
+
+- Fixed another bug in Road Warrior support.  In responding to Phase 2
+  / Quick Mode, once the client subnets (if any) are known, Pluto must
+  reselect which connection to use.  If it didn't happen to be using
+  the right one already, and no ID was explicitly specified for the
+  peer, and the right one is a Road Warrior connection, the right one
+  would not be found.
+
+
+Changes since 1.3 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- Pluto can now acquire a public key from DNS.  It must be told
+  to do so.  Hint: --pubkeyrsa is optional when specifying keyid.
+
+- On the Responder, if a connection is to be routed, and the peer has
+  a client that is a fixed subnet, and that subnet is already routed
+  for other connections, and that route conflicts, Pluto will unorient
+  the old connections (deleting the SAs that depend on the old route)
+  on the theory that they have been superseded.  Too bad we can't
+  otherwise tell when a connection is outdated.
+
+- Support for netlink has been removed.  We always use PFKEYV2.
+  Pluto no longer #includes any kernel headers!
+
+- Added a TODO file
+
+- Road Warrior support is unconditionally included.  No more need to
+  define ROAD_WARRIOR_FUDGE.
+
+- Fixed bug preventing Road Warrior connections being instantiated
+  during the connection reselection prompted by receipt of Phase 1 ID
+  Payload [Kai Martius <kai@secunet.de>].  Fixed bug that caused Phase
+  1 ID to be ignored by connection reselection prompted by receipt of
+  Phase 2 client IDs.
+
+
+Changes since 1.2 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- fixed deficiencies in id handling
+
+- changed to use updown script for routing (and firewalling)
+
+- In quick Mode, when Responder, avoid selecting same SPIs as
+  initiator.  This prevents KEYMAT being the same in both directions.
+  See Ferguson and Schneier: "A Cryptographic Evaluation of IPsec",
+  http://www.counterpane.com/ipsec.pdf, 5.6 #2.
+
+- In Quick Mode, when Responder, install inbound IPsec SA one
+  message earlier.  This eliminates the chance of a message being
+  sent before the SA is established.
+
+- slight complication to RSA private key lookup rules to allow
+  match to an entry with multiple identities for the host.
+
+- support per-connection debugging flags
+
+- more use of PFKEY (RGB+DHR)
+
+- inbound SAs are now spigrped and an inbound IPIP SA is created
+  if tunneling is used.  This more symmetric with outbound processing
+  and it allows KLIPS to check that the correct SAs are all applied.
+
+- The way SA lifetime limits are proposed and accepted is better
+  documented.  whack now complains when a specified value exceeds the
+  limit.
+
+
+Changes since 1.1 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- Updated constants to track newer IETF drafts
+
+- added support for RSA Signature authentication
+  + augmented demux.c to support packet syntax differences
+    due to authentication technique.
+  + preshared.c now can record RSA private keys
+  + whack --keyid --pubkeyrsa records RSA public keys
+  + whack --unlisten to allow a sequence of whack operations to be atomic
+    with respect to IKE traffic (eg. loading public keys)
+  + ipsec_doi.c will now do RSA Signature authentication
+  + new policy bits are added to select authentication method (--rsasig, --psk)
+
+- started towards more general ids (@FQDN and user@FQDN,
+  in addition to IP addresses).
+  + Note: there is *no* meaning attached to the id used beyond
+    being an identifier.  Almost no syntax checking is done.
+  + these forms of id work in:
+    o ipsec.secrets indices
+    o whack's --keyid for defining public keys
+    o id payloads (generated and accepted)
+    o --id option for each side in a connection description
+  + the Id may be an IP address that isn't that of one end
+    (but it must authenticate)
+  + once and ID payload is received, Pluto will reconsider which
+    potential connection should be used.  It makes sure that any
+    authentication already done would apply to the new connection
+    too.  This should make RSASIG + Road Warrior useful.
+
+- [RGB, Peter Onion, and DHR] start of PFKEY2 support
+
+
+Changes since 1.00 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- revamped rekeying:
+  + added --rekeyfuzz; defaults to 100% so lifetime must now be
+    more than twice rekeymargin
+  + added rekeying for responders (but rigged to favour initiators)
+  + [BUGFIX] responder of an exchange will not reinitiate
+    the exchange if it does not complete
+
+- Renamed --rekeywindow to --rekeymargin to match ipsec.conf.
+  The old name will be accepted for a while.
+
+- improved error and debugging messages
+
+- updated list of notification messages (but we still don't support
+  them).
+
+- In ID payload, support range representation, but only for a subnet.
+  This may improve interoperability
+
+- scatter asterisks in debugging code to support EMACS outline mode.
+
+- many internal changes were made to improve to code.  This should
+  make it easier to add new states.  There should be few behaviour
+  changes.
+
+- whack --status now shows the SPIs for established SAs.
+
+- [BUGFIX] DH values are now represented with the length specified by
+  the group description, not the length actually needed.  About one
+  time in 256, this will make a difference.  In those cases, the new
+  Pluto won't interoperate with old Plutos.  It looks as if this
+  change brings us in line with other IKE daemons.  Added a fudge
+  (select with DODGE_DH_MISSING_ZERO_BUG) so that when a problem
+  arises, a new replacement exchange is initiated (idea from John
+  Gilmore).
+
+- [BUGFIX] whack no longer assumes that UNIX domain sockets preserve
+  record boundaries (they don't).  This faulty assumption caused
+  whack's exit status to be unreliable
+
+- [BUGFIX] pluto now correctly defaults the client subnet in a
+  connection created for a Road Warrior exchange.
+
+- [BUGFIX] Road Warrior code now supports multiple connections
+  terminating in a particular Road Warrior node (allowing all
+  appropriate combinations of host and subnets to be simultaneously
+  connected).
+
+- [BUGFIX] fix various peculiar Road Warrior crashes.
+
+- [BUGFIX] fix spurious deletion of control socket when lock could
+  not be acquired (Thomas Bellman <bellman@cendio.se>)
+
+- [BUGFIX] interface discovery properly ignores nonAF_NET interfaces
+
+
+Changes since .92 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- Communication between whack and pluto is now done using UNIX domain
+  sockets.  This channel can be secured!
+
+- liberalized ISAKMP SA acceptance.  Now anything up to and including
+  16 bytes long is accepted.  How silly.
+
+- All ISAKMP messages in UDP packets generated by pluto are now
+  explicitly padded to be a multiple of 4 octets long.  This was wrong
+  if certain big numbers (eg. nonces) happened to have leading zero
+  octets.
+
+- set socket option SO_REUSEADDR on pluto's whack socket.  This allows
+  Pluto to quickly restart.
+
+- Use new, consistent notation for topology:
+	client===host---nexthop...nexthop---host===client
+
+- prefix every line of status output with connection name.  This
+  allows selection of output using grep.
+
+- Replaced system's assert with passert.  This sends the diagnostic
+  to syslog.
+
+- Changed secrets file name processing to support sh-like "globbing"
+  for file names.
+
+- Where appropriate, log messages are prefixed by their connection
+  name and state object serial numbers.  Connection names are quoted
+  with double quotes and serial numbers are prefixed with the number
+  sign (#).  Otherwise, where appropriate, log messages are prefixed
+  by the IP address and port number from which the current message
+  was sent.
+
+- some attempt at making the messages more helpful
+  + warnings when authentication (preshared secrets) failure is
+    likely cause of the observed symptom
+  + status message now highlights which SAs are the most recent
+    (those are the ones that are subject to rekeying)and which are
+    erouted.
+  + state names are slightly improved
+  + status message prints the "meaning" of a state after its name.
+
+- the policy options of a connection (--pfs, --authenticate, --encrypt,
+  (but not --tunnel)) now apply to negotiations being responded to.
+  They continue to apply to negotiations initiated by Pluto.
+
+- The Oakley group used for PFS in Phase 2 is dictated by the initiator.
+  We used to dictate one of our choice.  To increase the chances for
+  success, we now dictate the same group as was used in Phase 1.
+
+- First, some context.  The "negotiated" lifetime of an SA is actually
+  dictated by the initiator.  If the responder doesn't like this
+  lifetime, it can tell the initiator in a NOTIFY message.  Pluto
+  doesn't do this.  Instead, it will just expire the lifetime sooner
+  than negotiated.  In the past, Pluto only initiated rekeying if it
+  was the initiator.  Now, a responder Pluto will initiate rekeying if
+  it is going to expire the SA earlier than negotiated.  To prevent an
+  explosion of SAs, rekeying will only be done if the SA is the newest
+  one for its connection.  Rekeying of IPsec SA will respect the
+  security properties of the old SA at the level of policy options
+  (i.e.  --pfs, --authenticate, --encrypt, --tunnel).
+
+- Replaced --rekeytries with --keyingtries.  This option now applies
+  to initial keying as well as rekeying, hence the name change.  Even
+  though initial keying will now try more than once, whack logging
+  will be stopped after the first attempt.  The value 0 is taken to
+  mean, effectively, infinity: don't give up.
+
+
+Changes since .91 release by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- A hack has been added to support mobile or anonymous initiators.
+
+- The isakmp-secrets file has been renamed ipsec.secrets and the
+  format spruced up to aid scalability.  Entries now can be shared
+  between relevant machines verbatim.  An include facility was added.
+  The file is now only read upon --listen commands.
+
+- If --firewall appears on our end of a connection, Pluto will
+  add a firewall rule to enable appropriate forwarding, without
+  masquerading for any route it adds.  It will delete the rule
+  when it deletes the route.
+
+- When Pluto thinks whack's message is malformed, it now says so
+  to whack, not just syslog.
+
+- In addition to the messages traditionally sent back to whack,
+  non-debugging messages sent to the log that relate to whack's
+  current activity are copied to whack.  Whack's exit status now
+  reflects the last message (if any) returned by Pluto.  This should
+  allow a script to tell, for example, if an SA was established.
+
+- top-level payload parsing has been centralized.  This should make
+  it easier to add new features.  Payload ordering constraints have
+  are now just those required by RFC2409 (IKE).  In most cases,
+  Pluto will now ignore duplicated packets.  It should recover better
+  from the reception of a corrupt packet.
+
+- Interface discovery is more clever.  It notes each configured
+  interface with a name ipsec[0-9] as a virtual public interface and
+  considers any interface with a different kind of name and the same
+  IP address to be the corresponding real public interface.  This is
+  only done when Pluto starts, so any interfaces of interest must be
+  configured before then.  This feature allows Pluto to support multiple
+  public networks.
+
+- Pluto now exploits the fact that eroutes only conflict if their
+  local clients AND peer clients are the same.  So we can now support
+  multiple subnets behind our security gateway all talking to clients
+  behind another security gateway.
+
+- Switched to using ipsec_spi_t to represent SPIs.  In the process
+  fixed a related bug found by Peter Onion.
+
+
+Changes since .9 release by D. Hugh Redelmeier <hugh@mimosa.com>
+[incomplete]
+
+- Message IDs are now random, rather than counting up from 1.  This
+  should help keep messages in different but simultaneous Phase 2
+  exchanges being mixed up.
+- syslogged informative (i.e. debugging) messages are now prefixed
+  with "| " to make the easier to ignore.
+- forbid zero cookies.  Among other things, this prevents feedback
+  confusing Pluto.
+- Use serial numbers to cause most recent of available ISAKMP SAs
+  to be chosen.  Also useful in debugging output.
+- Pluto will now only listen to Whack on the loopback interface
+  (important security limitation).
+- implement rekeying, based on time, for ISAKMP and IPsec SAs
+- Whack now talks to Pluto using TCP.  This allows status information
+  to be returned to Whack.  For now, not much interesting is sent back.
+  The TCP port is the *same* as the IKE port -- no longer 1 greater.
+  Pluto closes the socket once the "goal" is established or the
+  state object is freed.  All this will evolve.
+- For SAs that were initiated by Pluto, Pluto will try to replace
+  the SA before it expires.  There is a 10 minute window
+  (SA_REPLACEMENT_WINDOW) in which this can occur.
+- Support --peer_nexthop for initiator of ISAKMP SA.
+- Support --optionsfrom <file>
+- be more specific about error conditions: for each STF_FAIL,
+  designate which notification message most applies.
+- use these results in reporting to whack
+- make whack back-talk look like FTP messages
+- add and use notion of (potential) connection database.  All scripts change!
+- fix handling of the variable form of attribute
+- don't allow --initiate before --listen
+- use new number for ESP_NULL
+- demand each transform include an ENCAPSULATION_MODE attribute
+- demand each AH transform include an appropriate AUTH_ALGORITHM attribute
+- add not-yet-standardized OAKLEY_GROUP 5 (MODP 1536)
+- since KLIPS only allows one IPsec SA to be routed to a particular
+  subnet (for a peer's client), detect when a subnet is engaged.
+  If we are replacing that SA, OK.  Otherwise, balk.
+- [experimental] exploit the new UDP 500 hole to support host mode.
+- add --route and --unroute: hysteresis in routing should prevent
+  packets flowing in the clear during IPsec SA transitions.
+- add --status to display the internal state of Pluto.
+- deleted misleading README; other resources fulfill its role
+- eliminated EVENT_CLEANUP: using EVENT_RETRANSMIT seemed more correct
+- gave special meaning to combination of delete and add
+- improved and documented combinations of whack command types
+- improved logging
+- added and used LEAK_DETECTIVE.  Fixed some leaks.
+
+
+Changes between .85 and .9 release by D. Hugh Redelmeier <hugh@mimosa.com>
+[incomplete]
+
+- change pluto and whack's argument processing to use getopt_long:
+  the syntax and expressive power is quite different.
+- allow selection of debugging output.  Change pluto to accept
+  arguments for specifying this.  Change whack and pluto allow
+  settings to change during a run.
+- make most controls for debugging run-time rather than compile-time.
+  This required the addition of many command line arguments (see README)
+- support 3DES encryption of Oakley messages (OAKLEY_3DES_CBC)
+- accept modestly long attribute values (32 bits) for
+  OAKLEY_LIFE_DURATION and SA_LIFE_DURATION.
+
+
+Changes between .7alpha and .85 (highlights) by D. Hugh Redelmeier <hugh@mimosa.com>
+
+- support RHL5.0 (glibc): avoid clash between
+  <netinet/in.h> and <asm/byteorder.h>
+- Lessons from porting to Solaris: endianness, careful typing, alignment,
+  correct fd_set bugs in call_server(), correct rnd.c to use sig_atomic_t
+- Makefile: add distlist target to put out names of files in distribution
+- Makefile: when installing binaries, move old ones to .OLD
+- add and exploit pb_stream mechanism for systematically decoding and
+  encoding packets
+- More flexible security policy, but still hard-wired.
+- support new Oakley group (2 -- modp 1024)
+- make returned IPsec proposal for acceptance a copy of winning proposal
+  (as per spec)
+- add and use generic interface to hash functions
+- add many comments referencing the draft standards
+- change all uses of stdout to use stderr instead (choice between stdout
+  and stderr was haphazard)
+- fix SPI stuff: Oakley and IPSEC SPIs are different beasts
+- generate initial IPSEC SPI as a random number (avoid clashes)
+- fix layout bug for struct isakmp_transform
+- fix several dangerous memory allocation and buffer overflow errors;
+  eliminate all inline uses of calloc (use a wrapper)
+- avoid memory leak due to uncleared mpz variables
+- general tidying and restructuring; get rid of many "magic" numbers
+- de-lint everywhere (add -Wall -Wmissing-prototypes to Makefile)
+- switch from BSD b* functions to ANSI mem* functions
+- get rid of bitfields
+- generate the correct amount of keying material (PRF feedback, if needed)
+- improve get_preshared_key (new format too)
+- improve handling of informational exchanges.  Still poor.
+- improve tracing output
+- print version information (whack and pluto)
+- wherever an enum-like value is printed, print the name of the value
+- make duplicate_state() duplicate the st_myidentity_type field.
+- make kernel interface do required route commands
+- open and close /dev/ipsec more carefully
+- support separate keys for esp encryption and esp authentication
