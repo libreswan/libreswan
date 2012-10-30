@@ -190,7 +190,7 @@ enum keyword_keyexchange {
 
 /* values for auto={add,start,route,ignore} */
 enum keyword_auto {
-    STARTUP_NO      = 0,
+    STARTUP_IGNORE  = 0,
     STARTUP_POLICY  = 1,
     STARTUP_ADD     = 2,
     STARTUP_ROUTE   = 3,

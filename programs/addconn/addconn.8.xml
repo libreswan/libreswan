@@ -29,6 +29,8 @@
       <arg choice="opt">--ctlbase
       <replaceable>socketfile</replaceable></arg>
 
+      <arg choice="opt">--verbose</arg>
+      <arg choice="opt">--warningsfatal</arg>
     </cmdsynopsis>
 
 
@@ -45,13 +47,15 @@
       <arg choice="opt">--ctlbase
       <replaceable>socketfile</replaceable></arg>
 
+      <arg choice="opt">--verbose</arg>
+      <arg choice="opt">--warningsfatal</arg>
     </cmdsynopsis>
 
 
     <cmdsynopsis>
       <command>ipsec</command>
       <arg choice="plain"><replaceable>addconn</replaceable></arg>
-      <arg choice="plain">--addall</arg>
+      <arg choice="plain">--autoall</arg>
       <arg choice="opt">--rootdir
       <replaceable>dir</replaceable></arg>
 
@@ -61,6 +65,8 @@
       <arg choice="opt">--ctlbase
       <replaceable>socketfile</replaceable></arg>
 
+      <arg choice="opt">--verbose</arg>
+      <arg choice="opt">--warningsfatal</arg>
 
       <arg choice="opt">--defaultroute
       <replaceable>addr</replaceable></arg>
@@ -81,6 +87,9 @@
 
       <arg choice="opt">--ctlbase
       <replaceable>socketfile</replaceable></arg>
+
+      <arg choice="opt">--verbose</arg>
+      <arg choice="opt">--warningsfatal</arg>
 
       <arg choice="opt">--defaultroute
       <replaceable>addr</replaceable></arg>
@@ -95,8 +104,11 @@
     <cmdsynopsis>
       <command>ipsec</command>
       <arg choice="plain"><replaceable>addconn</replaceable></arg>
-      <arg choice="opt">--listroute</arg>
+      <arg choice="opt">--listall</arg>
       <arg choice="opt">--liststart</arg>
+      <arg choice="opt">--listroute</arg>
+      <arg choice="opt">--listadd</arg>
+      <arg choice="opt">--listignore</arg>
 
       <arg choice="opt">--rootdir
       <replaceable>dir</replaceable></arg>
@@ -106,6 +118,10 @@
 
       <arg choice="opt">--ctlbase
       <replaceable>socketfile</replaceable></arg>
+
+      <arg choice="opt">--verbose</arg>
+      <arg choice="opt">--warningsfatal</arg>
+
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -150,7 +166,7 @@ which connections the addcon command would act upon, without actually performing
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
-<para>Man page written for the Xelerance Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt;
+<para>Man page written for the Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt;
 by Paul Wouters</para>
 
 </refsect1>

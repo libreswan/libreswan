@@ -136,7 +136,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.right.key_from_DNS_on_demand = TRUE;
 
 
-	cfg->conn_default.options[KBF_AUTO] = STARTUP_NO;
+	cfg->conn_default.options[KBF_AUTO] = STARTUP_IGNORE;
 	cfg->conn_default.state = STATE_LOADED;
 
 	cfg->ctlbase = clone_str(CTL_FILE, "default base");
@@ -1240,7 +1240,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name, err_
     memset(conn, 0, sizeof(struct starter_conn));
     conn_default(name, conn, &cfg->conn_default);
     conn->name = xstrdup(name);
-    conn->desired_state = STARTUP_NO;
+    conn->desired_state = STARTUP_IGNORE;
     conn->state = STATE_FAILED;
 
     TAILQ_INIT(&conn->comments);

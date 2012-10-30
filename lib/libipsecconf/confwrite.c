@@ -431,7 +431,7 @@ void confwrite_conn(FILE *out,
 	fprintf(out, "\tmanual=add\n");
     } else {
 	switch(conn->desired_state) {
-	case STARTUP_NO:
+	case STARTUP_IGNORE:
 	    fprintf(out, "\tauto=ignore\n");
 	    break;
 
