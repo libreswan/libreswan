@@ -217,17 +217,6 @@ mpzfuncs.o: mpzfuncs.c ../../linux/include/libreswan.h \
   ../../include/names_constant.h ../../include/constants.h \
   ../../include/oswalloc.h ../../include/mpzfuncs.h
 oid.o: oid.c ../../include/oid.h
-optionsfrom.o: optionsfrom.c internal.h \
-  ../../linux/include/libreswan.h \
-  ../../linux/include/libreswan/ipsec_kversion.h \
-  ../../linux/include/libreswan/ipsec_param.h \
-  ../../include/oswlog.h ../../linux/include/libreswan.h \
-  ../../linux/include/libreswan/passert.h \
-  ../../include/constants.h ../../include/biglset.h \
-  ../../linux/include/libreswan/passert.h \
-  ../../include/ietf_constants.h \
-  ../../include/pluto_constants.h \
-  ../../include/names_constant.h
 oswconf.o: oswconf.c ../../include/oswlog.h \
   ../../include/constants.h ../../include/biglset.h \
   ../../linux/include/libreswan/passert.h \

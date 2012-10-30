@@ -31,7 +31,7 @@
 ipsec_pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-optionsfrom\ \fIfilename\fR] [\-\-nofork] [\-\-stderrlog] [\-\-use\-auto] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_keepalive] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-lwdnsq\ \fIpathname\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits]
+\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-nofork] [\-\-stderrlog] [\-\-use\-auto] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_keepalive] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-lwdnsq\ \fIpathname\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-help] [\-\-version]
 .HP \w'\fBipsec\fR\ 'u
@@ -53,17 +53,17 @@ ipsec_pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .br
 
 .br
-[\-\-tunnel] [\-\-psk] [\-\-rsasig] [\-\-encrypt] [\-\-authenticate] [\-\-compress] [\-\-pfs] [\-\-pfsgroup\ [modp1024]\ |\ [modp1536]\ |\ [modp2048]\ |\ [modp3072]\ |\ [modp4096]\ |\ [modp6144]\ |\ [modp8192]] [\-\-disablearrivalcheck] [\-\-ikelifetime\ \fIseconds\fR] [\-\-ipseclifetime\ \fIseconds\fR] [\-\-rekeymargin\ \fIseconds\fR] [\-\-rekeyfuzz\ \fIpercentage\fR] [\-\-keyingtries\ \fIcount\fR] [\-\-esp\ \fIesp\-algos\fR] [\-\-dontrekey] [\-\-aggrmode] [\-\-modecfgpull] [[\-\-dpddelay\ \fIseconds\fR] | [\-\-dpdtimeout\ \fIseconds\fR]] [\-\-dpdaction\ [clear]\ |\ [hold]\ |\ [restart]] [\-\-forceencaps] [[\-\-initiateontraffic]\ |\ [\-\-pass]\ |\ [\-\-drop]\ |\ [\-\-reject]] [[\-\-failnone]\ |\ [\-\-failpass]\ |\ [\-\-faildrop]\ |\ [\-\-failreject]] [\-\-ctlbase\ \fIpath\fR] [\-\-optionsfrom\ \fIfilename\fR] [\-\-label\ \fIstring\fR]
+[\-\-tunnel] [\-\-psk] [\-\-rsasig] [\-\-encrypt] [\-\-authenticate] [\-\-compress] [\-\-pfs] [\-\-pfsgroup\ [modp1024]\ |\ [modp1536]\ |\ [modp2048]\ |\ [modp3072]\ |\ [modp4096]\ |\ [modp6144]\ |\ [modp8192]] [\-\-disablearrivalcheck] [\-\-ikelifetime\ \fIseconds\fR] [\-\-ipseclifetime\ \fIseconds\fR] [\-\-rekeymargin\ \fIseconds\fR] [\-\-rekeyfuzz\ \fIpercentage\fR] [\-\-keyingtries\ \fIcount\fR] [\-\-esp\ \fIesp\-algos\fR] [\-\-dontrekey] [\-\-aggrmode] [\-\-modecfgpull] [[\-\-dpddelay\ \fIseconds\fR] | [\-\-dpdtimeout\ \fIseconds\fR]] [\-\-dpdaction\ [clear]\ |\ [hold]\ |\ [restart]] [\-\-forceencaps] [[\-\-initiateontraffic]\ |\ [\-\-pass]\ |\ [\-\-drop]\ |\ [\-\-reject]] [[\-\-failnone]\ |\ [\-\-failpass]\ |\ [\-\-faildrop]\ |\ [\-\-failreject]] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-keyid\ \fIid\fR [\-\-addkey] [\-\-pubkeyrsa\ \fIkey\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-optionsfrom\ \fIfilename\fR] [\-\-label\ \fIstring\fR]
+\fBipsec\fR \fIwhack\fR \-\-keyid\ \fIid\fR [\-\-addkey] [\-\-pubkeyrsa\ \fIkey\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-myid\ \fIid\fR
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-listen | \-\-unlisten  [\-\-ctlbase\ \fIpath\fR] [\-\-optionsfrom\ \fIfilename\fR] [\-\-label\ \fIstring\fR]
+\fBipsec\fR \fIwhack\fR \-\-listen | \-\-unlisten  [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-route | \-\-unroute  \-\-name\ \fIconnection\-name\fR [\-\-ctlbase\ \fIpath\fR] [\-\-optionsfrom\ \fIfilename\fR] [\-\-label\ \fIstring\fR]
+\fBipsec\fR \fIwhack\fR \-\-route | \-\-unroute  \-\-name\ \fIconnection\-name\fR [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-initiate | \-\-terminate  \-\-name\ \fIconnection\-name\fR [\-\-xauthuser\ \fIuser\fR] [\-\-xauthpass\ \fIpass\fR] [\-\-asynchronous] [\-\-ctlbase\ \fIpath\fR] [\-\-optionsfrom\ \fIfilename\fR] [\-\-label\ \fIstring\fR]
+\fBipsec\fR \fIwhack\fR \-\-initiate | \-\-terminate  \-\-name\ \fIconnection\-name\fR [\-\-xauthuser\ \fIuser\fR] [\-\-xauthpass\ \fIpass\fR] [\-\-asynchronous] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [[\-\-tunnelipv4] | [\-\-tunnelipv6]] \-\-oppohere\ \fIip\-address\fR \-\-oppothere\ \fIip\-address\fR
 .HP \w'\fBipsec\fR\ 'u
@@ -73,9 +73,9 @@ ipsec_pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-whackstoprecord
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-name\ \fIconnection\-name\fR \-\-delete [\-\-ctlbase\ \fIpath\fR] [\-\-optionsfrom\ \fIfilename\fR] [\-\-label\ \fIstring\fR]
+\fBipsec\fR \fIwhack\fR \-\-name\ \fIconnection\-name\fR \-\-delete [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-deletestate\ \fIstate\-number\fR [\-\-ctlbase\ \fIpath\fR] [\-\-optionsfrom\ \fIfilename\fR] [\-\-label\ \fIstring\fR]
+\fBipsec\fR \fIwhack\fR \-\-deletestate\ \fIstate\-number\fR [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-name\ \fIconnection\-name\fR] [\-\-debug\-none] [\-\-debug\-all] [\-\-debug\-raw] [\-\-debug\-crypt] [\-\-debug\-parsing] [\-\-debug\-emitting] [\-\-debug\-control] [\-\-debug\-controlmore] [\-\-debug\-lifecycle] [\-\-debug\-klips] [\-\-debug\-pfkey] [\-\-debug\-dns] [\-\-debug\-dpd] [\-\-debug\-natt] [\-\-debug\-oppo] [\-\-debug\-oppoinfo] [\-\-debug\-whackwatch] [\-\-debug\-private] [\-\-impair\-delay\-adns\-key\-answer] [\-\-impair\-delay\-adns\-txt\-answer] [\-\-impair\-bust\-mi2] [\-\-impair\-bust\-mr2] [\-\-impair\-sa\-fail] [\-\-impair\-die\-oninfo] [\-\-impair\-jacob\-two\-two]
 .HP \w'\fBipsec\fR\ 'u
@@ -87,9 +87,9 @@ ipsec_pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-listevents
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-status [\-\-ctlbase\ \fIpath\fR] [\-\-optionsfrom\ \fIfilename\fR] [\-\-label\ \fIstring\fR]
+\fBipsec\fR \fIwhack\fR \-\-status [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-shutdown [\-\-ctlbase\ \fIpath\fR] [\-\-optionsfrom\ \fIfilename\fR] [\-\-label\ \fIstring\fR]
+\fBipsec\fR \fIwhack\fR \-\-shutdown [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .SH "DESCRIPTION"
 .PP
 \fBpluto\fR
@@ -440,11 +440,6 @@ Most options are specific to one of the forms, and will be described with that f
 .RS 4
 \fIpath\fR\&.ctl is used as the UNIX domain socket for talking to
 \fBpluto\fR\&. This option facilitates debugging\&.
-.RE
-.PP
-\fB\-\-optionsfrom\fR\ \&\fIfilename\fR
-.RS 4
-adds the contents of the file to the argument list\&.
 .RE
 .PP
 \fB\-\-label\fR\ \&\fIstring\fR

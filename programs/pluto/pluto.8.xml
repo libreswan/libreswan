@@ -34,9 +34,6 @@
 
       <arg choice="opt">--version</arg>
 
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
-
       <arg choice="opt">--nofork</arg>
 
       <arg choice="opt">--stderrlog</arg>
@@ -404,9 +401,6 @@
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
 
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
-
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
 
@@ -422,9 +416,6 @@
       <arg choice="opt">--pubkeyrsa <replaceable>key</replaceable></arg>
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
-
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
 
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
@@ -450,9 +441,6 @@
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
 
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
-
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
 
@@ -471,9 +459,6 @@
       <replaceable>connection-name</replaceable></arg>
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
-
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
 
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
@@ -499,9 +484,6 @@
       <arg choice="opt">--asynchronous</arg>
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
-
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
 
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
@@ -564,9 +546,6 @@
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
 
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
-
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
 
@@ -579,9 +558,6 @@
       <replaceable>state-number</replaceable></arg>
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
-
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
 
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
@@ -713,9 +689,6 @@
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
 
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
-
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
 
@@ -727,9 +700,6 @@
       <arg choice="plain">--shutdown</arg>
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
-
-      <arg choice="opt">--optionsfrom
-      <replaceable>filename</replaceable></arg>
 
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
@@ -1244,15 +1214,6 @@
             <para><emphasis remap="I">path</emphasis>.ctl is used as the UNIX
             domain socket for talking to <emphasis remap="B">pluto</emphasis>.
             This option facilitates debugging.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--optionsfrom</option>&nbsp;<emphasis
-          remap="I">filename</emphasis></term>
-
-          <listitem>
-            <para>adds the contents of the file to the argument list.</para>
           </listitem>
         </varlistentry>
 

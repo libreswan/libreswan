@@ -52,7 +52,6 @@ help(void)
     fprintf(stderr
 	, "Usage:\n\n"
 	"all forms:"
-	    " [--optionsfrom <filename>]"
 	    " [--ctlbase <path>]"
 	    " [--label <string>]"
 	    "\n\n"
@@ -558,7 +557,6 @@ static const struct option long_opts[] = {
 
     { "help", no_argument, NULL, 'h' },
     { "version", no_argument, NULL, 'v' },
-    { "optionsfrom", required_argument, NULL, '+' },
     { "label", required_argument, NULL, 'l' },
 
     { "ctlbase", required_argument, NULL, OPT_CTLBASE + OO },
@@ -1083,11 +1081,6 @@ main(int argc, char **argv)
 
 	case 'l' - OPTION_OFFSET:	/* --label <string> */
 	    label = optarg;	/* remember for diagnostics */
-	    continue;
-
-	case '+' - OPTION_OFFSET:	/* --optionsfrom <filename> */
-	    optionsfrom(optarg, &argc, &argv, optind, stderr);
-	    /* does not return on error */
 	    continue;
 
 	/* the rest of the options combine in complex ways */

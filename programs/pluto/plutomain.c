@@ -134,7 +134,6 @@ usage(const char *mess)
 	, "Usage: pluto"
 	    " [--help]"
 	    " [--version]"
-	    " [--optionsfrom <filename>]"
 	    " \\\n\t"
 	    "[--nofork]"
 	    " [--stderrlog]"
@@ -369,7 +368,6 @@ main(int argc, char **argv)
 	    /* name, has_arg, flag, val */
 	    { "help", no_argument, NULL, 'h' },
 	    { "version", no_argument, NULL, 'v' },
-	    { "optionsfrom", required_argument, NULL, '+' },
 	    { "nofork", no_argument, NULL, 'd' },
 	    { "stderrlog", no_argument, NULL, 'e' },
 	    { "plutostderrlogtime", no_argument, NULL, 't' },
@@ -487,11 +485,6 @@ main(int argc, char **argv)
 	    }
 	    exit(0);	/* not exit_pluto because we are not initialized yet */
 	    break;	/* not actually reached */
-
-	case '+':	/* --optionsfrom <filename> */
-	    optionsfrom(optarg, &argc, &argv, optind, stderr);
-	    /* does not return on error */
-	    continue;
 
 	case 'j':	/* --nhelpers */
             if (optarg == NULL || !isdigit(optarg[0]))

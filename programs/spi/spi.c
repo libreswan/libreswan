@@ -389,7 +389,6 @@ static struct option const longopts[] =
 	{"clear", 0, 0, 'c'},
 	{"label", 1, 0, 'l'},
 	{"debug", 0, 0, 'g'},
-	{"optionsfrom", 1, 0, '+'},
 	{"life", 1, 0, 'f'},
 	{"outif",     required_argument, NULL, 'O'},
 	{"saref",     required_argument, NULL, 'b'},
@@ -1066,10 +1065,6 @@ main(int argc, char *argv[])
 		case 'v':
 			fprintf(stdout, "%s, %s\n", progname, ipsec_version_code());
 			exit(1);
-		case '+': /* optionsfrom */
-			optionsfrom(optarg, &argc, &argv, optind, stderr);
-			/* no return on error */
-			break;
 		case 'f':
 			if(parse_life_options(life,
 					   life_opt,
