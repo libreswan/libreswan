@@ -70,6 +70,7 @@ v3.0.0 (unreleased)
 * KLIPS: Removed support for Linux < 2.4.4 [Paul]
 * KLIPS: Changed _startklips to use ip route instead of netstat [Harald]
 * MAST: Fixed _updown.mast missing incomplete if-clause [Harald]
+* addconn: mimic _plutoload, cleanup and fixup of functions [Paul]
 * scripts: Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
 * barf: do not grep lastlog, wtmp, tmp (rhbz#771612) [Paul]
 * verify: ported ipsec verify from perl to python [Paul]
