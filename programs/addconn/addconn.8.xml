@@ -30,6 +30,7 @@
       <replaceable>socketfile</replaceable></arg>
 
       <arg choice="opt">--verbose</arg>
+      <arg choice="opt">--noexport</arg>
       <arg choice="opt">--warningsfatal</arg>
     </cmdsynopsis>
 
@@ -153,7 +154,8 @@ was loaded or initiated already, it will be replaced.
 </para>
 <para>When <emphasis remap='I'>--configsetup</emphasis> is specified, the configuration file
 is parsed for the <emphasis remap='I'>config setup</emphasis> section and printed to the terminal
-usable as a shell script.
+usable as a shell script. These are prefaced with <emphasis remap='I'>export </emphasis> unless
+ <emphasis remap='I'>--noexport</emphasis> is specified.
 </para>
 <para>When <emphasis remap='I'>--checkconfig</emphasis> is specified, the configuration file
 is parsed and all sections are checked for correct syntax. If an error is found, information

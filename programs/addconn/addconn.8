@@ -31,7 +31,7 @@
 ipsec_addconn \- load a given policy into the pluto IKE daemon
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIaddconn\fR \-\-configsetup [\-\-rootdir\ \fIdir\fR] [\-\-config\ \fIfilename\fR] [\-\-ctlbase\ \fIsocketfile\fR] [\-\-verbose] [\-\-warningsfatal]
+\fBipsec\fR \fIaddconn\fR \-\-configsetup [\-\-rootdir\ \fIdir\fR] [\-\-config\ \fIfilename\fR] [\-\-ctlbase\ \fIsocketfile\fR] [\-\-verbose] [\-\-noexport] [\-\-warningsfatal]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIaddconn\fR \-\-checkconfig [\-\-rootdir\ \fIdir\fR] [\-\-config\ \fIfilename\fR] [\-\-ctlbase\ \fIsocketfile\fR] [\-\-verbose] [\-\-warningsfatal]
 .HP \w'\fBipsec\fR\ 'u
@@ -64,7 +64,11 @@ When
 \fI\-\-configsetup\fR
 is specified, the configuration file is parsed for the
 \fIconfig setup\fR
-section and printed to the terminal usable as a shell script\&.
+section and printed to the terminal usable as a shell script\&. These are prefaced with
+\fIexport \fR
+unless
+\fI\-\-noexport\fR
+is specified\&.
 .PP
 When
 \fI\-\-checkconfig\fR
