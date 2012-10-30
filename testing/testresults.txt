@@ -105,7 +105,6 @@ You can find more info on FreeS/WAN's test suite in doc/makecheck.html.
    lib-initsaid                       missing                    
    lib-initsubnet                     missing                    
    lib-keyblobtoid                    passed                     
-   lib-optionsfrom                    missing                    
    lib-pfkey_v2_build                 missing                    
    lib-pfkey_v2_debug                 missing                    
    lib-pfkey_v2_ext_bits              missing                    
