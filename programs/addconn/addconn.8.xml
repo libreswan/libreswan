@@ -34,6 +34,23 @@
       <arg choice="opt">--warningsfatal</arg>
     </cmdsynopsis>
 
+    <cmdsynopsis>
+      <command>ipsec</command>
+      <arg choice="plain"><replaceable>addconn</replaceable></arg>
+      <arg choice="plain">--liststack</arg>
+      <arg choice="opt">--rootdir
+      <replaceable>dir</replaceable></arg>
+
+      <arg choice="opt">--config
+      <replaceable>filename</replaceable></arg>
+
+      <arg choice="opt">--ctlbase
+      <replaceable>socketfile</replaceable></arg>
+
+      <arg choice="opt">--verbose</arg>
+      <arg choice="opt">--noexport</arg>
+      <arg choice="opt">--warningsfatal</arg>
+    </cmdsynopsis>
 
     <cmdsynopsis>
       <command>ipsec</command>

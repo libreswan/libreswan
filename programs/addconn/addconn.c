@@ -71,13 +71,12 @@ static const char *usage_string = ""
     "Usage: addconn [--config file] [--rootdir dir] [--ctlbase socketfile] \n"
     "               [--varprefix prefix] [--noexport] \n"
     "               [--verbose] [--warningsfatal] \n"
-    "\n"
     "               [--configsetup] \n"
+    "               [--liststack] \n"
     "               [--checkconfig] \n"
-    "\n"
     "               [--addall] \n"
     "               [--listall] [--listadd] [--listroute] [--liststart] [--listignore] \n"
-    "\n"
+    "               [--listall] [--listadd] [--listroute] [--liststart] [--listignore] \n"
     "               [--defaultroute <addr>] [--defaultroutenexthop <addr>]\n"
     "               names\n";
 
@@ -110,6 +109,7 @@ static struct option const longopts[] =
 	{ "ctlbase",            required_argument, NULL, 'c' },
 	{"rootdir",             required_argument, NULL, 'R'},
 	{"configsetup",         no_argument, NULL, 'T'},
+	{"liststack",           no_argument, NULL, 'S'},
 	{"checkconfig",		no_argument, NULL, 'K'},
 	{"noexport",		no_argument, NULL, 'N'},
 	{"help",                no_argument, NULL, 'h'},
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
     int configsetup = 0;
     int checkconfig = 0;
     char *export ="export"; /* display export before the foo=bar or not */
-    int listroute=0, liststart=0, listignore=0, listadd=0, listall=0, dolist=0;
+    int listroute=0, liststart=0, listignore=0, listadd=0, listall=0, dolist=0,liststack=0;
     struct starter_config *cfg = NULL;
     err_t err = NULL;
     char *confdir = NULL;
@@ -209,6 +209,11 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 
 	case 's':
 	    liststart=1;
+	    dolist=1;
+	    break;
+
+	case 'S':
+	    liststack=1;
 	    dolist=1;
 	    break;
 
@@ -556,6 +561,16 @@ struct ub_ctx *dnsctx = ub_ctx_create();
        printf("\n");
       } 
 
+    if(liststack) {
+        struct keyword_def *kd;
+	for(kd=ipsec_conf_keywords_v2; kd->keyname != NULL; kd++) {
+	    if(strstr(kd->keyname,"protostack"))
+		printf("%s\n", cfg->setup.strings[kd->field]);
+	}
+	confread_free(cfg);
+	exit(0);
+    }
+
     if(configsetup) {
         struct keyword_def *kd;
 
@@ -576,16 +591,15 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 		break;
 
 	    case kt_bool:
-		printf("%s %s%s='%s'\n",
-		       export, varprefix, kd->keyname,
+		printf("%s %s%s='%s'\n", export, varprefix, kd->keyname,
 		       cfg->setup.options[kd->field] ? "yes" : "no");
 		break;
 
 	    case kt_list:
-		printf("%s %s%s='",
+		   printf("%s %s%s='",
 		       export, varprefix, kd->keyname);
-		confwrite_list(stdout, "", cfg->setup.options[kd->field], kd);
-		printf("'\n");
+		   confwrite_list(stdout, "", cfg->setup.options[kd->field], kd);
+		   printf("'\n");
 		break;
 
 	    case kt_obsolete:
