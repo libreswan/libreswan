@@ -300,8 +300,6 @@ bool force_busy = FALSE;
 /* whether or not to use klips */
 enum kernel_interface kern_interface = AUTO_PICK;
 
-char **global_argv;
-int    global_argc;
 bool   log_to_stderr_desired = FALSE;
 bool   log_with_timestamp_desired = FALSE;
 
@@ -350,8 +348,6 @@ main(int argc, char **argv)
 #endif
 
 
-    global_argv = argv;
-    global_argc = argc;
 #ifdef DEBUG
     libreswan_passert_fail = passert_fail;
 #endif
