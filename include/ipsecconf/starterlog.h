@@ -21,7 +21,6 @@
 
 extern void starter_log (int level, const char *fmt, ...);
 extern void starter_use_log (int debug, int console, int mysyslog);
-extern void passert_fail(const char *pred_str, const char *file_str, unsigned long line_no);
 
 extern int showonly;
 
