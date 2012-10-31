@@ -1,8 +1,8 @@
 /* Pluto main program
  * Copyright (C) 1997      Angelos D. Keromytis.
  * Copyright (C) 1998-2001 D. Hugh Redelmeier.
- * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com> 
- * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com> 
+ * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
+ * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
@@ -22,7 +22,7 @@
  *
  * Modifications to use OCF interface written by
  * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation. 
+ * Copyright (C) 2004-2005 Intel Corporation.
  *
  */
 
@@ -231,7 +231,7 @@ create_lock(void)
 	    exit_pluto(10);
 	}
     }
-	    
+
     fd = open(pluto_lock, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC
 	      , S_IRUSR | S_IRGRP | S_IROTH);
 
@@ -256,7 +256,7 @@ create_lock(void)
 }
 
 /** fill_lock - Populate the lock file with pluto's PID
- * 
+ *
  * @param lockfd File Descriptor for the lock file
  * @param pid PID (pid_t struct) to be put into the lock file
  * @return bool True if successful
@@ -274,7 +274,7 @@ fill_lock(int lockfd, pid_t pid)
 
 /** delete_lock - Delete the lock file
  *
- */ 
+ */
 static void
 delete_lock(void)
 {
@@ -611,7 +611,7 @@ main(int argc, char **argv)
 		usage("too many --interface specifications");
 	    continue;
 
-	/* 
+	/*
 	 * This option does not really work, as this is the "left"
 	 * site only, you also need --to --ikeport again later on
 	 * It will result in: yourport -> 500, still not bypassing filters
@@ -738,7 +738,7 @@ main(int argc, char **argv)
 	if (log_with_timestamp_desired)
 	   log_with_timestamp = TRUE;
     }
-    else 
+    else
 	log_to_stderr = FALSE;
 
 #ifdef DEBUG
@@ -874,7 +874,7 @@ main(int argc, char **argv)
 					IPSECLIBDIR"/_updown",
 					IPSECLIBDIR"/_updown.klips",
 					IPSECLIBDIR"/_updown.mast",
-					IPSECLIBDIR"/_updown.netkey", 
+					IPSECLIBDIR"/_updown.netkey",
 					IPSECLIBDIR"/verify",
 					IPSECLIBDIR"/whack",
 					IPSECSBINDIR"/ipsec",
@@ -937,9 +937,9 @@ main(int argc, char **argv)
         struct stat buf;
 	errno=0;
 
-	if( stat("/dev/crypto",&buf) != -1) 
+	if( stat("/dev/crypto",&buf) != -1)
 		libreswan_log("OCF support for IKE via /dev/crypto [enabled]");
-	else 
+	else
 		libreswan_log("OCF support for IKE via /dev/crypto [failed:%s]", strerror(errno));
        }
 #else
