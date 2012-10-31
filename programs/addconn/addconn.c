@@ -528,7 +528,8 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 		printf("%s ", conn->name);
 	    }
 	}
-      } 
+      }
+
        if(liststart && !listroute) {
 	if(verbose) {
 	    printf("listing all conns marked as auto=start\n");
@@ -543,6 +544,7 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	    }
 	}
       } 
+
        if(listignore) {
 	if(verbose) {
 	    printf("listing all conns marked as auto=ignore\n");
@@ -556,9 +558,8 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 		printf("%s ", conn->name);
 	    }
 	}
-
-       } 
        printf("\n");
+       } 
       } 
 
     if(liststack) {
