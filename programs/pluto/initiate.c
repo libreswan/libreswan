@@ -135,6 +135,7 @@ orient(struct connection *c)
 			    else
 				loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\" (%s, %s)"
 				       , c->name, c->interface->ip_dev->id_rname, p->ip_dev->id_rname);
+			    terminate_connection(c->name);
 			    c->interface = NULL;	/* withdraw orientation */
 			    return FALSE;
 			}
