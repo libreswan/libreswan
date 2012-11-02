@@ -9,6 +9,7 @@
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -73,6 +74,7 @@
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "fetch.h"
 #include "timer.h"
+#include "ipsecconf/confread.h"
 
 #include "sha1.h"
 #include "md5.h"
@@ -135,7 +137,8 @@ usage(const char *mess)
 	    " [--help]"
 	    " [--version]"
 	    " \\\n\t"
-	    "[--nofork]"
+	    "[--config <filename>]"
+	    " [--nofork]"
 	    " [--stderrlog]"
 	    " [--plutostderrlogtime]"
 	    " [--force_busy]"
@@ -285,6 +288,35 @@ delete_lock(void)
     }
 }
 
+/* parser.l and keywords.c need these global variables */
+/* FIXME: move them to confread_load() parameters */
+int verbose = 0;
+int warningsarefatal = 0;
+
+/** Read config file. exit() on error. */
+static struct starter_config *
+read_cfg_file(char *configfile)
+{
+    struct starter_config *cfg = NULL;
+    err_t err = NULL;
+
+    cfg = confread_load(configfile, &err, FALSE, NULL, TRUE);
+    if (cfg == NULL)
+        usage(err);
+    return cfg;
+}
+
+/** Helper function for config file mapper: set string option value */
+static void
+set_cfg_string(char **target, char *value)
+{
+    /* Do nothing if value is unset. */
+    if (value == NULL || *value == 0)
+	return;
+    /* Don't free previous target, it might be statically set. */
+    *target = strdup(value);
+}
+
 /** by default pluto sends certificate requests to its peers */
 bool no_cr_send = FALSE;
 
@@ -364,6 +396,7 @@ main(int argc, char **argv)
 	    /* name, has_arg, flag, val */
 	    { "help", no_argument, NULL, 'h' },
 	    { "version", no_argument, NULL, 'v' },
+	    { "config", required_argument, NULL, 'z' },
 	    { "nofork", no_argument, NULL, 'd' },
 	    { "stderrlog", no_argument, NULL, 'e' },
 	    { "plutostderrlogtime", no_argument, NULL, 't' },
@@ -690,6 +723,74 @@ main(int argc, char **argv)
 #endif
 	case '6':	/* --virtual_private */
 	    virtual_private = optarg;
+	    continue;
+
+	case 'z':	/* --config */
+	    ;
+	    /* Config struct to variables mapper. This will overwrite */
+	    /* all previously set options. Keep this in the same order than */
+	    /* long_opts[] is. */
+	    struct starter_config *cfg = read_cfg_file(optarg);
+
+	    /* no config option: fork_desired */
+	    /* no config option: log_to_stderr_desired */
+	    log_with_timestamp_desired =
+		cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
+	    force_busy = cfg->setup.options[KBF_FORCEBUSY];
+	    no_cr_send = cfg->setup.options[KBF_NOCRSEND];
+	    strict_crl_policy = cfg->setup.options[KBF_STRICTCRLPOLICY];
+	    crl_check_interval = cfg->setup.options[KBF_CRLCHECKINTERVAL];
+	    uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
+	    if (cfg->setup.strings[KSF_INTERFACES] != NULL &&
+		*cfg->setup.strings[KSF_INTERFACES] != 0)
+		use_interface(cfg->setup.strings[KSF_INTERFACES]);
+	    set_cfg_string(&pluto_listen, cfg->setup.strings[KSF_LISTEN]);
+	    /* no config option: pluto_port */
+	    /* no config option: ctlbase */
+	    /* no config option: pluto_shared_secrets_file */
+	    /* no config option: osw_init_ipsecdir() */
+	    /* no config option: base_perpeer_logdir */
+	    /* no config option: log_to_perpeer */
+	    /* no config option: no_retransmits */
+	    set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]);
+	    /* no config option: pluto_adns_option */
+#ifdef NAT_TRAVERSAL
+	    nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
+	    keep_alive = cfg->setup.options[KBF_KEEPALIVE];
+	    force_keepalive = cfg->setup.options[KBF_FORCE_KEEPALIVE];
+	    nat_t_spf = cfg->setup.options[KBF_DISABLEPORTFLOATING];
+#endif
+	    set_cfg_string(&virtual_private,
+			   cfg->setup.strings[KSF_VIRTUALPRIVATE]);
+	    nhelpers = cfg->setup.options[KBF_NHELPERS];
+#ifdef HAVE_LABELED_IPSEC
+	    secctx_attr_value = cfg->setup.options[KBF_SECCTX];
+#endif
+#ifdef DEBUG
+	    base_debugging = cfg->setup.options[KBF_PLUTODEBUG];
+#endif
+	    char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
+	    if (protostack == NULL || *protostack == 0)
+		/* nothing */ ;
+	    else if (strcmp(protostack, "none") == 0)
+		kern_interface = NO_KERNEL;
+	    else if (strcmp(protostack, "auto") == 0)
+		kern_interface = AUTO_PICK;
+	    else if (strcmp(protostack, "klips") == 0)
+		kern_interface = USE_KLIPS;
+	    else if (strcmp(protostack, "mast") == 0)
+		kern_interface = USE_MASTKLIPS;
+	    else if (strcmp(protostack, "netkey") == 0 ||
+		     strcmp(protostack, "native") == 0)
+		kern_interface = USE_NETKEY;
+	    else if (strcmp(protostack, "bsd") == 0 ||
+		     strcmp(protostack, "kame") == 0 ||
+		     strcmp(protostack, "bsdkame") == 0)
+		kern_interface = USE_BSDKAME;
+	    else if (strcmp(protostack, "win2k") == 0)
+		kern_interface = USE_WIN2K;
+
+	    confread_free(cfg);
 	    continue;
 
 	default:
