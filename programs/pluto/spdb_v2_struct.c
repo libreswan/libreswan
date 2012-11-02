@@ -1057,7 +1057,7 @@ ikev2_parse_parent_sa_body(
 
 	    winning_prop = proposal;
 	    gotmatch = TRUE;
-
+#warning gotmatch is always true - this code needs to be verified 
 	    if(selection && !gotmatch && np == ISAKMP_NEXT_P) {
 		libreswan_log("More than 1 proposal received from responder, ignoring rest. First one did not match");
 		return NO_PROPOSAL_CHOSEN;
@@ -1361,6 +1361,7 @@ ikev2_parse_child_sa_body(
 	    gotmatch = TRUE;
 	    winning_prop = proposal;
 
+#warning gotmatch is always true - this code needs to be verified 
 	    if(selection && !gotmatch && np == ISAKMP_NEXT_P) {
 		libreswan_log("More than 1 proposal received from responder, ignoring rest. First one did not match");
 		return NO_PROPOSAL_CHOSEN;
