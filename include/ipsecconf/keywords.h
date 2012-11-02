@@ -31,8 +31,7 @@
  * the "conn foo" stanzas
  */
 enum keyword_string_config_field {
-    KSF_DPDACTION    = 0,  /* loose_enum evantually */
-    KSF_INTERFACES,
+    KSF_INTERFACES    = 0,  /* loose_enum evantually */
     /* KSF_PACKETDEFAULT = 5, */
     KSF_VIRTUALPRIVATE,
     KSF_SYSLOG,
