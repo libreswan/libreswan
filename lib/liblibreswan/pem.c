@@ -259,6 +259,8 @@ pem_decrypt(chunk_t *blob, chunk_t *iv
 
 	pass->prompt(RC_ENTERSECRET, "need passphrase for '%s'", label);
 
+	clonetochunk(blob_copy, blob->ptr, blob->len, "blob copy");
+
 	for (i = 0; i < MAX_PROMPT_PASS_TRIALS; i++)
 	{
 	    int n;
@@ -284,8 +286,6 @@ pem_decrypt(chunk_t *blob, chunk_t *iv
 		return ugh;
 	    }
 
-	    clonetochunk(blob_copy, blob->ptr, blob->len, "blob copy");
-
 	    if (pem_decrypt_3des(blob, iv, pass->secret))
 	    {
 		pass->prompt(RC_SUCCESS, "valid passphrase, private key loaded successfully");
@@ -295,9 +295,10 @@ pem_decrypt(chunk_t *blob, chunk_t *iv
 	    
 	    /* blob is useless after wrong decryption, restore the original */
 	    pfree(blob->ptr);
-	    *blob = blob_copy;
+	    clonetochunk(*blob, blob_copy.ptr, blob_copy.len, "blob copy");
 	}
 	pass->prompt(RC_LOG_SERIOUS, "%s", ugh);
+	pfree(blob_copy.ptr);
 	return ugh;
     }
     else
