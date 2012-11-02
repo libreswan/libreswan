@@ -236,7 +236,7 @@ skeyid_preshared(const chunk_t pss
     passert(hasher != NULL);
 
     chunk_t nir;
-    int k;
+    unsigned int k;
     CK_MECHANISM_TYPE mechanism;
     u_char buf1[HMAC_BUFSIZE*2], buf2[HMAC_BUFSIZE*2];
     chunk_t buf1_chunk, buf2_chunk;
@@ -331,7 +331,7 @@ skeyid_digisig(const chunk_t ni
 {
     struct hmac_ctx ctx;
     chunk_t nir;
-    int k;
+    unsigned int k;
     CK_MECHANISM_TYPE mechanism;
     u_char buf1[HMAC_BUFSIZE*2], buf2[HMAC_BUFSIZE*2];
     chunk_t buf1_chunk, buf2_chunk;
