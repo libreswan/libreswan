@@ -505,7 +505,7 @@ main(int argc, char **argv)
 
 	case 'C':
 	    coredir = clone_str(optarg, "coredir");
-	    break;
+	    continue;
 
 	case 'v':	/* --version */
 	    {
@@ -731,7 +731,6 @@ main(int argc, char **argv)
 	    /* all previously set options. Keep this in the same order than */
 	    /* long_opts[] is. */
 	    struct starter_config *cfg = read_cfg_file(optarg);
-
 	    /* no config option: fork_desired */
 	    /* no config option: log_to_stderr_desired */
 	    log_with_timestamp_desired =
