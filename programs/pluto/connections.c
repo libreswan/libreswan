@@ -1643,9 +1643,7 @@ instantiate(struct connection *c, const ip_address *him
 	    , const struct id *his_id)
 {
     struct connection *d;
-#ifdef DEBUG
     int wildcards;
-#endif
 
     passert(c->kind == CK_TEMPLATE);
     passert(c->spd.next == NULL);
