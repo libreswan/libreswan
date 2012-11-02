@@ -86,9 +86,9 @@ alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti)
     case IKEv2_AUTH_HMAC_SHA2_256_128_TRUNCBUG:
 	return AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG;
     case IKEv2_AUTH_HMAC_SHA2_384_192: 
-	return AUTH_ALGORITHM_HMAC_SHA2_256;
+	return AUTH_ALGORITHM_HMAC_SHA2_384;
     case IKEv2_AUTH_HMAC_SHA2_512_256: 
-	return AUTH_ALGORITHM_HMAC_SHA2_256;
+	return AUTH_ALGORITHM_HMAC_SHA2_512;
 
     /* invalid or not yet supported */
     case IKEv2_AUTH_DES_MAC:
@@ -641,11 +641,6 @@ parser_alg_info_add(struct parser_context *p_ctx
 		p_ctx->err="hash_alg not found";
 		goto out;
 	    }
-
-            if ( Pluto_IsFIPS() && ((aalg_id == OAKLEY_SHA2_256 ) ||(aalg_id == OAKLEY_SHA2_384 ) || (aalg_id == OAKLEY_SHA2_512 ))  ) {
-                p_ctx->err="SHA2 Not supported in FIPS mode with NSS";
-                goto out;
-            }
 
 	    DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
 				   "aalg_getbyname(\"%s\")=%d",
