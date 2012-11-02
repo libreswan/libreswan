@@ -8,6 +8,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -931,8 +932,7 @@ static int load_conn (struct ub_ctx *dnsctx
 	for(alsosize=0; alsos[alsosize]!=NULL; alsosize++);
 
 	alsoplace = 0;
-	while(alsos != NULL
-	      && alsoplace < alsosize && alsos[alsoplace] != NULL 
+	while(alsoplace < alsosize && alsos[alsoplace] != NULL 
 	      && alsoplace < ALSO_LIMIT)
 	{
 	    /*
