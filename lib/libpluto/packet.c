@@ -600,7 +600,8 @@ static field_desc isanat_oa_fields[] = {
     { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
     { ft_len, 16/BITS_PER_BYTE, "length", NULL },
     { ft_enum, 8/BITS_PER_BYTE, "ID type", &ident_names },
-    { ft_zig, 24/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
+    { ft_zig, 16/BITS_PER_BYTE, NULL, NULL },
     { ft_end, 0, NULL, NULL }
 };
 
