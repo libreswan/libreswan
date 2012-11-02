@@ -3525,6 +3525,12 @@ eclipsed(struct connection *c, struct spd_route **esrp)
 
     ue = NULL;
 
+#warning FIXME eclipsed() will always return NULL
+    /* This while is never true as ue is NULL.
+     * The flow will never go inside while.
+     * This function will return NULL.
+     */
+
     while (sr1 != NULL && ue != NULL)
     {
 	for (ue = connections; ue != NULL; ue = ue->ac_next)
