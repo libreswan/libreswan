@@ -65,7 +65,10 @@ endif
 LIBSADNS = $(LIBRESWANLIB)
 LIBSADNS += -lresolv # -lefence
 
-LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB) -lunbound
+LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)
+ifeq ($(USE_DNSSEC),true)
+LIBSPLUTO += -lunbound
+endif
 
 # Solaris needs -lsocket -lnsl
 LIBSWHACK = ${WHACKLIB} ${LIBRESWANLIB}
