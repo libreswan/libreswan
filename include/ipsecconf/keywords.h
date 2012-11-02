@@ -44,7 +44,6 @@ enum keyword_string_config_field {
     KSF_ESP,
     KSF_ALSO,
     KSF_ALSOFLIP,
-    KSF_ACCELERATION,
     KSF_CONNALIAS,
     KSF_LISTEN,
     KSF_POLICY_LABEL,
