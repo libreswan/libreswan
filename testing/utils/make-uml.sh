@@ -281,7 +281,7 @@ fi
 
 cd $LIBRESWANSRCDIR || exit 1
 
-make ${WERROR:-WERROR=-Werror} USE_OBJDIR=true USE_IPSECPOLICY=true programs
+make ${WERROR:-WERROR=-Werror} USE_OBJDIR=true programs
 
 # now, execute the Makefile that we have created!
 cd $POOLSPACE && make $LIBRESWANHOSTS 

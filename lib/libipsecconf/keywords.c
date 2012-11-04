@@ -104,7 +104,7 @@ struct keyword_enum_values kw_dpdaction_list=
  * Values for auto={add,start,route,ignore}
  */
 struct keyword_enum_value kw_auto_values[]={
-    { "ignore", STARTUP_NO },
+    { "ignore", STARTUP_IGNORE },
     { "add",    STARTUP_ADD },
     { "route",  STARTUP_ROUTE },
     { "start",  STARTUP_START },

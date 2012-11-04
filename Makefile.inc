@@ -303,12 +303,6 @@ USE_DNSSEC?=true
 # FINALCONFDDIR?
 USE_SINGLE_CONF_DIR?=false
 
-# whether or not to include ipsec policy code into pluto. This allows non-root
-# users to query pluto for certain information without having full whack access
-# to make modifications. This was used in 2003 to convey DNSSEC status information
-# to other applications / webserver cgi. See further lib/libipsecpolicy/
-USE_IPSECPOLICY?=false
-
 # Build ikeping (a utility for testing IKE daemons) in the distribution
 USE_IKEPING?=true
 

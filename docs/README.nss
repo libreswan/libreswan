@@ -256,15 +256,11 @@ ipsec.conf at machine 1:
 conn pluto-1-2
 	left=w1.x1.y1.z1
 	leftid="CN=usercert1"
-	leftsourceip=w1.x1.y1.z1
 	leftrsasigkey=%cert
 	leftcert=usercert1
-	leftnexthop=w2.x2.y2.z2
 	right=w2.x2.y2.z2
 	rightid="CN=usercert2"
-	rightsourceip=w2.x2.y2.z2
 	rightrsasigkey=%cert
-	rightnexthop=w1.x1.y1.z1
 	rekey=no
 	esp="aes-sha1"
 	ike="aes-sha1"
@@ -277,15 +273,11 @@ ipsec.conf at machine 2:
 conn pluto-1-2
 	left=w2.x2.y2.z2
 	leftid="CN=usercert2"
-	leftsourceip=w2.x2.y2.z2
 	leftrsasigkey=%cert
 	leftcert=usercert2
-	leftnexthop=w1.x1.y1.z1
 	right=w1.x1.y1.z1
 	rightid="CN=usercert1"
-	rightsourceip=w1.x1.y1.z1
 	rightrsasigkey=%cert
-	rightnexthop=w2.x2.y2.z2
 	rekey=no
 	esp="aes-sha1"
 	ike="aes-sha1"

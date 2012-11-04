@@ -83,7 +83,6 @@ static struct option const longopts[] =
 	{"help", 0, 0, 'h'},
 	{"version", 0, 0, 'v'},
 	{"label", 1, 0, 'l'},
-	{"optionsfrom", 1, 0, '+'},
 	{"debug", 0, 0, 'g'},
 	{0, 0, 0, 0}
 };
@@ -243,10 +242,6 @@ main(int argc, char *argv[])
 				argv[0],
 				optarg);
 			argcount -= 2;
-			break;
-		case '+': /* optionsfrom */
-			optionsfrom(optarg, &argc, &argv, optind, stderr);
-			/* no return on error */
 			break;
 		default:
 			usage(progname);

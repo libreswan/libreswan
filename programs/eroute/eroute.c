@@ -121,7 +121,6 @@ static struct option const longopts[] =
 	{"said", 1, 0, 'I'},
 	{"version", 0, 0, 'v'},
 	{"label", 1, 0, 'l'},
-	{"optionsfrom", 1, 0, '+'},
 	{"debug", 0, 0, 'g'},
 	{0, 0, 0, 0}
 };
@@ -459,10 +458,6 @@ main(int argc, char **argv)
 				exit (1);
 			}
 			eroute_af_opt = optarg;
-			break;
-		case '+': /* optionsfrom */
-			optionsfrom(optarg, &argc, &argv, optind, stderr);
-			/* no return on error */
 			break;
 		default:
 			break;

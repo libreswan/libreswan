@@ -1643,9 +1643,7 @@ instantiate(struct connection *c, const ip_address *him
 	    , const struct id *his_id)
 {
     struct connection *d;
-#ifdef DEBUG
     int wildcards;
-#endif
 
     passert(c->kind == CK_TEMPLATE);
     passert(c->spd.next == NULL);
@@ -3564,6 +3562,12 @@ eclipsed(struct connection *c, struct spd_route **esrp)
     struct spd_route *sr1 = &c->spd;
 
     ue = NULL;
+
+#warning FIXME eclipsed() will always return NULL
+    /* This while is never true as ue is NULL.
+     * The flow will never go inside while.
+     * This function will return NULL.
+     */
 
     while (sr1 != NULL && ue != NULL)
     {

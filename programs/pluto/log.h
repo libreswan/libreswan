@@ -35,16 +35,13 @@ extern bool log_did_something;  /* set if we should log time again to debug*/
 
 extern const char *base_perpeer_logdir;
 
-extern char **global_argv; /* pointer to first arguments,
-			    * for setproctitle()-like usage */
-extern int    global_argc;
 extern char debug_prefix;
 
 /* used in some messages to distiguish
  * which pluto is which, when doing
  * unit testing
  */
-extern const char *pluto_ifn_inst;   
+extern const char *pluto_ifn_inst;
 
 
 /* maximum number of files to keep open for per-peer log files */

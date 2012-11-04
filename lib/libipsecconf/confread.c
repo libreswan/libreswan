@@ -8,6 +8,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -136,7 +137,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.right.key_from_DNS_on_demand = TRUE;
 
 
-	cfg->conn_default.options[KBF_AUTO] = STARTUP_NO;
+	cfg->conn_default.options[KBF_AUTO] = STARTUP_IGNORE;
 	cfg->conn_default.state = STATE_LOADED;
 
 	cfg->ctlbase = clone_str(CTL_FILE, "default base");
@@ -931,8 +932,7 @@ static int load_conn (struct ub_ctx *dnsctx
 	for(alsosize=0; alsos[alsosize]!=NULL; alsosize++);
 
 	alsoplace = 0;
-	while(alsos != NULL
-	      && alsoplace < alsosize && alsos[alsoplace] != NULL 
+	while(alsoplace < alsosize && alsos[alsoplace] != NULL 
 	      && alsoplace < ALSO_LIMIT)
 	{
 	    /*
@@ -1240,7 +1240,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name, err_
     memset(conn, 0, sizeof(struct starter_conn));
     conn_default(name, conn, &cfg->conn_default);
     conn->name = xstrdup(name);
-    conn->desired_state = STARTUP_NO;
+    conn->desired_state = STARTUP_IGNORE;
     conn->state = STATE_FAILED;
 
     TAILQ_INIT(&conn->comments);

@@ -171,7 +171,6 @@ rm -rf ${RPM_BUILD_ROOT}
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 rm -f %{buildroot}/%{_initrddir}/setup
-rm -rf %{buildroot}/etc/ipsec.d/examples
 #find %{buildroot}%{_mandir}  -type f | xargs chmod a-x
 
 install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
@@ -203,7 +202,6 @@ rm -rf ${RPM_BUILD_ROOT}
 %files 
 %defattr(-,root,root)
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
-%doc OBJ.linux.*/programs/examples/*.conf
 %doc docs/*.*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets

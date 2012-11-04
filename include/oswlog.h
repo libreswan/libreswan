@@ -168,10 +168,6 @@ extern void libreswan_exit_log_errno_routine(int e, const char *message, ...) PR
  * general utilities
  */
 
-/* option pickup from files (userland only because of use of FILE) */
-const char *optionsfrom(const char *filename, int *argcp, char ***argvp,
-						int opt_ind, FILE *errorreport);
-
 /* sanitize a string */
 extern size_t sanitize_string(char *buf, size_t size);
 

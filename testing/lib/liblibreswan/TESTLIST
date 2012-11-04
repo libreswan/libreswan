@@ -13,7 +13,6 @@ skiptest lib-initaddr incomplete
 skiptest lib-initsaid incomplete
 skiptest lib-initsubnet incomplete
 libtest keyblobtoid good
-skiptest lib-optionsfrom incomplete
 skiptest lib-pfkey_v2_build incomplete
 skiptest lib-pfkey_v2_debug incomplete
 skiptest lib-pfkey_v2_ext_bits incomplete

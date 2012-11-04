@@ -5,7 +5,7 @@
  *
  * Copyright (C) 1998-2004  D. Hugh Redelmeier.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1137,6 +1137,7 @@ osw_process_secret_records(struct secret **psecrets, int verbose,
 
 	    /* expecting a list of indices and then the key info */
 	    s = alloc_thing(struct secret, "secret");
+	    passert(s != NULL);
 
 	    s->ids = NULL;
 	    s->pks.kind = PPK_PSK;	/* default */
@@ -1146,7 +1147,7 @@ osw_process_secret_records(struct secret **psecrets, int verbose,
 
 	    s->pks.u.RSA_private_key.pub.nssCert = NULL;
 
-	    while(s != NULL)
+	    while(1)
 	    {
 		struct id id;
 		err_t ugh;
@@ -1156,7 +1157,6 @@ osw_process_secret_records(struct secret **psecrets, int verbose,
 		    /* found key part */
 		    shift();	/* discard explicit separator */
 		    process_secret(psecrets, verbose, s, pass);
-		    s = NULL;
 		    break;
 		}
 
@@ -1209,6 +1209,7 @@ osw_process_secret_records(struct secret **psecrets, int verbose,
 		    /* unexpected Record Boundary or EOF */
 		    loglog(RC_LOG_SERIOUS, "\"%s\" line %d: unexpected end of id list"
 			   , flp->filename, flp->lino);
+		    pfree(s);
 		    break;
 		}
 	    }

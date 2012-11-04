@@ -68,13 +68,15 @@ int verbose=0;
 int warningsarefatal = 0;
 
 static const char *usage_string = ""
-    "Usage: addconn [--config file] \n"
-    "               [--addall] [--listroute] [--liststart]\n"
-    "               [--rootdir dir] \n"
-    "               [--ctlbase socketfile] \n"
+    "Usage: addconn [--config file] [--rootdir dir] [--ctlbase socketfile] \n"
+    "               [--varprefix prefix] [--noexport] \n"
+    "               [--verbose] [--warningsfatal] \n"
     "               [--configsetup] \n"
-    "               {--checkconfig] \n"
-    "               {--verbose] \n"
+    "               [--liststack] \n"
+    "               [--checkconfig] \n"
+    "               [--addall] \n"
+    "               [--listall] [--listadd] [--listroute] [--liststart] [--listignore] \n"
+    "               [--listall] [--listadd] [--listroute] [--liststart] [--listignore] \n"
     "               [--defaultroute <addr>] [--defaultroutenexthop <addr>]\n"
     "               names\n";
 
@@ -97,14 +99,19 @@ static struct option const longopts[] =
 	{"verbose",             no_argument, NULL, 'D'},
 	{"warningsfatal",       no_argument, NULL, 'W'},
 	{"addall",              no_argument, NULL, 'a'},
+	{"autoall",             no_argument, NULL, 'a'},
+	{"listall",             no_argument, NULL, 'A'},
+	{"listadd",             no_argument, NULL, 'L'},
 	{"listroute",           no_argument, NULL, 'r'},
 	{"liststart",           no_argument, NULL, 's'},
+	{"listignore",          no_argument, NULL, 'i'},
 	{"varprefix",           required_argument, NULL, 'P'},
 	{ "ctlbase",            required_argument, NULL, 'c' },
-	{"search",              no_argument, NULL, 'S'},
 	{"rootdir",             required_argument, NULL, 'R'},
 	{"configsetup",         no_argument, NULL, 'T'},
+	{"liststack",           no_argument, NULL, 'S'},
 	{"checkconfig",		no_argument, NULL, 'K'},
+	{"noexport",		no_argument, NULL, 'N'},
 	{"help",                no_argument, NULL, 'h'},
 	{0, 0, 0, 0}
 };
@@ -115,11 +122,11 @@ int
 main(int argc, char *argv[])
 {
     int opt = 0;
-    int all = 0;
-    int search = 0;
-    int typeexport = 0;
+    int autoall = 0;
+    int configsetup = 0;
     int checkconfig = 0;
-    int listroute=0, liststart=0;
+    char *export ="export"; /* display export before the foo=bar or not */
+    int listroute=0, liststart=0, listignore=0, listadd=0, listall=0, dolist=0,liststack=0;
     struct starter_config *cfg = NULL;
     err_t err = NULL;
     char *confdir = NULL;
@@ -159,7 +166,7 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	    break;
 
 	case 'a':
-	    all=1;
+	    autoall=1;
 	    break;
 
 	case 'D':
@@ -170,16 +177,16 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	    warningsarefatal++;
 	    break;
 
-	case 'S':
-	    search++;
-	    break;
-
 	case 'T':
-	    typeexport++;
+	    configsetup++;
 	    break;
 
 	case 'K':
 	    checkconfig++;
+	    break;
+
+	case 'N':
+	    export = "";
 	    break;
 
 	case 'C':
@@ -190,16 +197,34 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	    ctlbase = clone_str(optarg, "control base");
 	    break;
 
-	case 'A':
-	    all=1;
+	case 'L':
+	    listadd=1;
+	    dolist=1;
 	    break;
 
 	case 'r':
 	    listroute=1;
+	    dolist=1;
 	    break;
 
 	case 's':
 	    liststart=1;
+	    dolist=1;
+	    break;
+
+	case 'S':
+	    liststack=1;
+	    dolist=1;
+	    break;
+
+	case 'i':
+	    listignore=1;
+	    dolist=1;
+	    break;
+
+	case 'A':
+	    listall=1;
+	    dolist=1;
 	    break;
 
 	case 'P':
@@ -225,7 +250,7 @@ struct ub_ctx *dnsctx = ub_ctx_create();
     }
 
     /* if nothing to add, then complain */
-    if(optind == argc && !all && !listroute && !liststart && !search && !typeexport && !checkconfig) {
+    if(optind == argc && !autoall && !dolist && !configsetup && !checkconfig) {
 	usage();
     }
 
@@ -263,7 +288,7 @@ struct ub_ctx *dnsctx = ub_ctx_create();
     err = NULL;      /* reset to no error */
     resolvip=TRUE;   /* default to looking up names */
 
-    if(typeexport || checkconfig || listroute || liststart || search) {
+    if(configsetup || checkconfig || dolist) {
 	/* but not if we have no use for them... might cause delays too! */
 	resolvip=FALSE;
     }
@@ -280,8 +305,7 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	}
     }
 #endif
-
-    cfg = confread_load(configfile, &err, resolvip, ctlbase,typeexport);
+    cfg = confread_load(configfile, &err, resolvip, ctlbase,configsetup);
 
     if(cfg == NULL) {
 	fprintf(stderr, "can not load config '%s': %s\n",
@@ -328,7 +352,6 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	}
     }
 
-
     if(defaultnexthop) {
 	char b[ADDRTOT_BUF];
 	if (tnatoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh) != NULL
@@ -364,127 +387,39 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	}
     }
 
-    if(all)
+    if(autoall)
     {
 	if(verbose) {
-	    printf("loading all conns:");
+	    printf("loading all conns according to their auto= settings\n");
 	}
-	/* load all conns marked as auto=add or better */
+	/*
+	 * Load all conns marked as auto=add or better
+	 * First, do the auto=route and auto=add conns to quickly get routes in
+	 * place, then do auto=start as these can be slower. This mimics behaviour
+	 * of the old _plutoload
+	 */
+	if(verbose) printf("  Pass #1: Loading auto=add and auto=route connections\n");
 	for(conn = cfg->conns.tqh_first;
 	    conn != NULL;
 	    conn = conn->link.tqe_next)
 	{
 	    if (conn->desired_state == STARTUP_ADD
-		|| conn->desired_state == STARTUP_START
 		|| conn->desired_state == STARTUP_ROUTE) {
 		if(verbose) printf(" %s", conn->name);
 		starter_whack_add_conn(cfg, conn);
 	    }
 	}
-	if(verbose) printf("\n");
-    } else if(listroute) {
-	if(verbose) {
-	    printf("listing all conns marked as auto=start\n");
-	}
-	/* list all conns marked as auto=route or start or better */
-	for(conn = cfg->conns.tqh_first;
-	    conn != NULL;
-	    conn = conn->link.tqe_next)
-	{
-	    if (conn->desired_state == STARTUP_START
-		|| conn->desired_state == STARTUP_ROUTE) {
-		printf("%s ", conn->name);
-	    }
-	}
-	printf("\n");
-    } else if(liststart) {
-	/* list all conns marked as auto=start */
+	if(verbose) printf("  Pass #2: Loading auto=start connections\n");
 	for(conn = cfg->conns.tqh_first;
 	    conn != NULL;
 	    conn = conn->link.tqe_next)
 	{
 	    if (conn->desired_state == STARTUP_START) {
-		printf("%s ", conn->name);
+		if(verbose) printf(" %s", conn->name);
+		starter_whack_add_conn(cfg, conn);
 	    }
 	}
-	printf("\n");
-    } else if(search) {
-	char *sep="";
-	if((argc-optind) < 2 ) {
-	    printf("%s_confreadstatus=failed\n", varprefix);
-	    confread_free(cfg);
-	    exit(3);
-	}
-
-	printf("%s_confreadstatus=\n", varprefix);
-	printf("%s_confreadnames=\"",varprefix);
-
-	/* find conn names that have value set */
-	for(conn = cfg->conns.tqh_first;
-	    conn != NULL;
-	    conn = conn->link.tqe_next)
-	{
-	    /* we recognize a limited set of values */
-	    if(strcasecmp(argv[optind],"auto")==0 &&
-	       strcasecmp(argv[optind+1],"manual")==0) {
-		if(conn->manualkey) {
-		    printf("%s%s", sep, conn->name);
-		    sep=" ";
-		}
-	    }
-	}
-	printf("\"\n");
-	confread_free(cfg);
-	exit(0);
-
-    } else if(typeexport) {
-        struct keyword_def *kd;
-
-	printf("export %sconfreadstatus=''\n", varprefix);
-	for(kd=ipsec_conf_keywords_v2; kd->keyname != NULL; kd++) {
-	    if((kd->validity & kv_config)==0) continue;
-
-	    switch(kd->type) {
-	    case kt_string:
-	    case kt_filename:
-	    case kt_dirname:
-	    case kt_loose_enum:
-		if(cfg->setup.strings[kd->field]) {
-		    printf("export %s%s='%s'\n",
-			   varprefix, kd->keyname,
-			   cfg->setup.strings[kd->field]);
-		}
-		break;
-
-	    case kt_bool:
-		printf("export %s%s='%s'\n",
-		       varprefix, kd->keyname,
-		       cfg->setup.options[kd->field] ? "yes" : "no");
-		break;
-
-	    case kt_list:
-		printf("export %s%s='",
-		       varprefix, kd->keyname);
-		confwrite_list(stdout, "", cfg->setup.options[kd->field], kd);
-		printf("'\n");
-		break;
-
-	    case kt_obsolete:
-		printf("# obsolete option '%s%s' ignored\n", varprefix, kd->keyname);
-		break;
-
-	    default:
-		if(cfg->setup.options[kd->field] || cfg->setup.options_set[kd->field]) {
-		    printf("export %s%s='%d'\n",
-			   varprefix, kd->keyname,
-			   cfg->setup.options[kd->field]);
-		}
-		break;
-	    }
-	}
-
-	confread_free(cfg);
-	exit(0);
+	if(verbose) printf("\n");
 
     } else {
 	/* load named conns, regardless of their state */
@@ -550,8 +485,141 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 		}
 	    }
 	}
-	if(verbose) printf("\n");
     }
+
+     if(listall) {
+	if(verbose) {
+	    printf("listing all conns\n");
+	}
+	for(conn = cfg->conns.tqh_first;
+	    conn != NULL;
+	    conn = conn->link.tqe_next)
+	{
+ 	    printf("%s ", conn->name);
+	}
+	printf("\n");
+    } else {
+
+      if(listadd) {
+	if(verbose) {
+	    printf("listing all conns marked as auto=add\n");
+	}
+	/* list all conns marked as auto=add */
+	for(conn = cfg->conns.tqh_first;
+	    conn != NULL;
+	    conn = conn->link.tqe_next)
+	{
+	    if (conn->desired_state == STARTUP_ADD) {
+		printf("%s ", conn->name);
+	    }
+	}
+      } 
+       if(listroute) {
+	if(verbose) {
+	    printf("listing all conns marked as auto=route and auto=start\n");
+	}
+	/* list all conns marked as auto=route or start or better */
+	for(conn = cfg->conns.tqh_first;
+	    conn != NULL;
+	    conn = conn->link.tqe_next)
+	{
+	    if (conn->desired_state == STARTUP_START
+		|| conn->desired_state == STARTUP_ROUTE) {
+		printf("%s ", conn->name);
+	    }
+	}
+      }
+
+       if(liststart && !listroute) {
+	if(verbose) {
+	    printf("listing all conns marked as auto=start\n");
+	}
+	/* list all conns marked as auto=start */
+	for(conn = cfg->conns.tqh_first;
+	    conn != NULL;
+	    conn = conn->link.tqe_next)
+	{
+	    if (conn->desired_state == STARTUP_START) {
+		printf("%s ", conn->name);
+	    }
+	}
+      } 
+
+       if(listignore) {
+	if(verbose) {
+	    printf("listing all conns marked as auto=ignore\n");
+	}
+	/* list all conns marked as auto=start */
+	for(conn = cfg->conns.tqh_first;
+	    conn != NULL;
+	    conn = conn->link.tqe_next)
+	{
+	    if (conn->desired_state == STARTUP_IGNORE) {
+		printf("%s ", conn->name);
+	    }
+	}
+       printf("\n");
+       } 
+      } 
+
+    if(liststack) {
+        struct keyword_def *kd;
+	for(kd=ipsec_conf_keywords_v2; kd->keyname != NULL; kd++) {
+	    if(strstr(kd->keyname,"protostack"))
+		printf("%s\n", cfg->setup.strings[kd->field]);
+	}
+	confread_free(cfg);
+	exit(0);
+    }
+
+    if(configsetup) {
+        struct keyword_def *kd;
+
+	printf("%s %sconfreadstatus=''\n", export, varprefix);
+	for(kd=ipsec_conf_keywords_v2; kd->keyname != NULL; kd++) {
+	    if((kd->validity & kv_config)==0) continue;
+
+	    switch(kd->type) {
+	    case kt_string:
+	    case kt_filename:
+	    case kt_dirname:
+	    case kt_loose_enum:
+		if(cfg->setup.strings[kd->field]) {
+		    printf("%s %s%s='%s'\n",
+			   export, varprefix, kd->keyname,
+			   cfg->setup.strings[kd->field]);
+		}
+		break;
+
+	    case kt_bool:
+		printf("%s %s%s='%s'\n", export, varprefix, kd->keyname,
+		       cfg->setup.options[kd->field] ? "yes" : "no");
+		break;
+
+	    case kt_list:
+		   printf("%s %s%s='",
+		       export, varprefix, kd->keyname);
+		   confwrite_list(stdout, "", cfg->setup.options[kd->field], kd);
+		   printf("'\n");
+		break;
+
+	    case kt_obsolete:
+		printf("# obsolete option '%s%s' ignored\n", varprefix, kd->keyname);
+		break;
+
+	    default:
+		if(cfg->setup.options[kd->field] || cfg->setup.options_set[kd->field]) {
+		    printf("%s %s%s='%d'\n",
+			   export, varprefix, kd->keyname,
+			   cfg->setup.options[kd->field]);
+		}
+		break;
+	    }
+	}
+	confread_free(cfg);
+	exit(0);
+
+     }
 
 #ifdef DNSSEC
 	ub_ctx_delete(dnsctx);

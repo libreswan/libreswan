@@ -20,16 +20,12 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 SUBDIRS=
 
-ifeq ($(USE_IPSECPOLICY),true)
-SUBDIRS+=showpolicy
-endif
-
 SUBDIRS+=proc pluto addconn 
-SUBDIRS+=_confread _keycensor _plutoload _plutorun
+SUBDIRS+=configs _keycensor _plutoload _plutorun
 SUBDIRS+=_realsetup _secretcensor _updown 
 SUBDIRS+=auto barf verify ipsec look newhostkey ranbits secrets initnss
 SUBDIRS+=rsasigkey setup showhostkey
-SUBDIRS+=ikeping examples readwriteconf
+SUBDIRS+=ikeping readwriteconf
 
 ifeq ($(USE_KLIPS),true)
 SUBDIRS+= _startklips _updown.klips 
@@ -47,21 +43,13 @@ endif
 
 
 def:
-	@echo "Please read doc/intro.html or INSTALL before running make"
+	@echo "Please read docs/ or INSTALL before running make"
 	@false
 
 # programs
 
 cleanall distclean mostlyclean realclean install programs checkprograms clean spotless install_file_list:
-#ifeq ($(USE_XAUTHPAM),true)
-#	# install pam config file for XAUTH
-#	$(INSTALL) $(INSTCONFFLAGS) $(LIBRESWANSRCDIR)/pam.d/pluto /etc/pam.d/pluto || exit 1;
-#endif
 	@for d in $(SUBDIRS) ; \
 	do \
 		(cd $$d && $(MAKE) srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
 	done; \
-
-check:
-	@echo "info: all tests (check) are now in ../testing, doing nothing here."
-

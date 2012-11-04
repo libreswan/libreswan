@@ -24,7 +24,7 @@ You can load this machine definition into libvirt using:
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
-      <source file='/var/lib/libvirt/images/road.qcow2'/>
+      <source file='@@POOLSPACE@@/road.qcow2'/>
       <target dev='vda' bus='virtio'/>
     </disk>
     <controller type='usb' index='0'>
@@ -67,4 +67,8 @@ You can load this machine definition into libvirt using:
     <memballoon model='virtio'>
     </memballoon>
   </devices>
+  <seclabel type='static' model='dac' relabel='yes'>
+   <label>@@USER@@:@@GROUP@@</label>
+   <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
+  </seclabel>
 </domain>

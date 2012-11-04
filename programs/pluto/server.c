@@ -75,7 +75,6 @@
 #include "packet.h"
 #include "demux.h"  /* needs packet.h */
 #include "rcv_whack.h"
-#include "rcv_info.h"
 #include "keys.h"
 #include "adns.h"	/* needs <resolv.h> */
 #include "dnskey.h"	/* needs keys.h and adns.h */
@@ -185,50 +184,6 @@ delete_ctl_socket(void)
     /* Is noting failure useful?  Not when used as preventative medicine. */
     unlink(ctl_addr.sun_path);
 }
-
-#ifdef IPSECPOLICY
-/* Initialize the info socket.
- */
-err_t
-init_info_socket(void)
-{
-    err_t failed = NULL;
-
-    delete_info_socket();	/* preventative medicine */
-    info_fd = safe_socket(AF_UNIX, SOCK_STREAM, 0);
-    if (info_fd == -1)
-	failed = "create";
-    else if (fcntl(info_fd, F_SETFD, FD_CLOEXEC) == -1)
-	failed = "fcntl FD+CLOEXEC";
-    else if (setsockopt(info_fd, SOL_SOCKET, SO_REUSEADDR, (const void *)&on, sizeof(on)) < 0)
-	failed = "setsockopt";
-    else
-    {
-	/* this socket should be openable by all proceses */
-	mode_t ou = umask(0);
-
-	if (bind(info_fd, (struct sockaddr *)&info_addr
-	, offsetof(struct sockaddr_un, sun_path) + strlen(info_addr.sun_path)) < 0)
-	    failed = "bind";
-	umask(ou);
-    }
-
-    /* 64 might be big enough, and the system may limit us anyway.
-     */
-    if (failed == NULL && listen(info_fd, 64) < 0)
-	failed = "listen() on";
-
-    return failed == NULL? NULL : builddiag("could not %s info socket: %d %s"
-	    , failed, errno, strerror(errno));
-}
-
-void
-delete_info_socket(void)
-{
-    unlink(info_addr.sun_path);
-}
-#endif /* IPSECPOLICY */
-
 
 bool listening = FALSE;	/* should we pay attention to IKE messages? */
 
@@ -608,11 +563,6 @@ call_server(void)
 	    OSW_FD_ZERO(&readfds);
 	    OSW_FD_ZERO(&writefds);
 	    OSW_FD_SET(ctl_fd, &readfds);
-#ifdef IPSECPOLICY
-	    OSW_FD_SET(info_fd, &readfds);
-	    if (maxfd < info_fd)
-		maxfd = info_fd;
-#endif
 
 	    /* the only write file-descriptor of interest */
 	    if (adns_qfd != NULL_FD && unsent_ADNS_queries)
@@ -774,18 +724,6 @@ call_server(void)
 		passert(GLOBALS_ARE_RESET());
 		ndes--;
 	    }
-
-#ifdef IPSECPOLICY
-	    if (OSW_FD_ISSET(info_fd, &readfds))
-	    {
-		passert(ndes > 0);
-		DBG(DBG_CONTROL,
-		    DBG_log("*received info message"));
-		info_handle(info_fd);
-		passert(GLOBALS_ARE_RESET());
-		ndes--;
-	    }
-#endif
 
 	    /* note we process helper things last on purpose */
 	    {

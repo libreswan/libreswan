@@ -95,20 +95,3 @@ void starter_use_log (int debug, int console, int mysyslog)
 	    starter_log(LOG_LEVEL_ERR, "debugging mode enabled\n");
 	}
 }
-
-void
-passert_fail(const char *pred_str, const char *file_str, unsigned long line_no)
-{
-  static int dying_breath = FALSE;
-
-    /* we will get a possibly unplanned prefix.  Hope it works */
-    starter_log(LOG_LEVEL_INFO, "ASSERTION FAILED at %s:%lu: %s", file_str, line_no, pred_str);
-    if (!dying_breath)
-    {
-	dying_breath = TRUE;
-    }
-    abort();	/* exiting correctly doesn't always work */
-}
-
-
-

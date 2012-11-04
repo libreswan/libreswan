@@ -2,14 +2,22 @@
 This is work in progress - use a disposable system :/
 --------------------------------------------------------
 
-Be aware this requires running a libvirtd to crate the networks
+Be aware this requires running a libvirtd to create the networks
 and a qemu/kvm to create the first base image on which all umls
 are based.
-
-- Run the usercheck.sh script to see if your user and the qemu user
-  are setup properly.
 
 - Ensure the "testing" directory from this tree is world readable.
   including any parent directories. So if this is in your homedir,
   then your homedir needs to be world readable. Or else the /testing
   directory cannot be exported to the VMs
+
+- Requires _recent_ qemu/libvirt, use qemu 1.* and libvirt 0.9.11.* or better
+
+- See libreswan-3.x.x/kvmsetup.sh for configurable options, notably POOLSPACE,
+  OSTYPE (fedora/ubuntu) and OSMEDIA (for netinstall)
+
+After running install.sh, you should end up with the VMs west, east, north and road.
+
+Run a single testing using: 
+	cd testing/pluto/ikev2-10-basic-rawrsa-nss
+	../../utils/dotest.sh

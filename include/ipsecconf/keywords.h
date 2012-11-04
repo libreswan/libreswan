@@ -31,8 +31,7 @@
  * the "conn foo" stanzas
  */
 enum keyword_string_config_field {
-    KSF_DPDACTION    = 0,  /* loose_enum evantually */
-    KSF_INTERFACES,
+    KSF_INTERFACES    = 0,  /* loose_enum evantually */
     /* KSF_PACKETDEFAULT = 5, */
     KSF_VIRTUALPRIVATE,
     KSF_SYSLOG,
@@ -44,7 +43,6 @@ enum keyword_string_config_field {
     KSF_ESP,
     KSF_ALSO,
     KSF_ALSOFLIP,
-    KSF_ACCELERATION,
     KSF_CONNALIAS,
     KSF_LISTEN,
     KSF_POLICY_LABEL,
@@ -98,7 +96,7 @@ enum keyword_numeric_config_field {
     KBF_IKEv2,
     KBF_IKEv2_ALLOW_NARROWING,
     KBF_CONNADDRFAMILY,
-    KBF_FORCEBUSY, 
+    KBF_FORCEBUSY,
     KBF_OVERLAPIP,
     KBF_REMOTEPEERTYPE, /*Cisco interop: remote peer type*/
     KBF_NMCONFIGURED, /*Network Manager support*/
@@ -108,7 +106,7 @@ enum keyword_numeric_config_field {
     KBF_WARNIGNORE, /* to ignore obsoleted keywords */
     KBF_SECCTX, /*security context attribute value for labeled ipsec*/
     KBF_XAUTHBY, /* method of xauth user auth, file or pam */
-    KBF_MAX         
+    KBF_MAX
 };
 
 /*
@@ -143,7 +141,7 @@ enum keyword_string_conn_field {
     KSCF_MODECFGDNS2  = 19,
     KSCF_MODECFGWINS1 = 20,
     KSCF_MODECFGWINS2 = 21,
-    KSCF_MAX          
+    KSCF_MAX
 };
 
 
@@ -162,7 +160,7 @@ enum keyword_numeric_conn_field {
     KNCF_SPI,
     KNCF_ESPREPLAYWINDOW,
     KNCF_SENDCERT,
-    KNCF_MAX              
+    KNCF_MAX
 };
 
 #define KEY_STRINGS_MAX ((int)KSF_MAX > (int)KSCF_MAX ? (int)KSF_MAX : (int)KSCF_MAX)+1
@@ -190,7 +188,7 @@ enum keyword_keyexchange {
 
 /* values for auto={add,start,route,ignore} */
 enum keyword_auto {
-    STARTUP_NO      = 0,
+    STARTUP_IGNORE  = 0,
     STARTUP_POLICY  = 1,
     STARTUP_ADD     = 2,
     STARTUP_ROUTE   = 3,
@@ -264,7 +262,7 @@ TAILQ_HEAD(starter_comments_list, starter_comments);
 struct section_list {
     TAILQ_ENTRY(section_list) link;
 
-    char *name;    
+    char *name;
     struct kw_list *kw;
     struct starter_comments_list comments;
     bool  beenhere;

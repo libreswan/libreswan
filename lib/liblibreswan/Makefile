@@ -33,7 +33,7 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
 	iprange.c \
         keyblobtoid.c \
 	kernel_alg.c lex.c mpzfuncs.c \
-	optionsfrom.c oswconf.c oswtime.c \
+	oswconf.c oswtime.c \
 	prng.c \
 	portof.c rangetoa.c rangetosubnet.c sameaddr.c \
 	satot.c secrets.c subnetof.c subnettoa.c subnettot.c \
@@ -143,7 +143,7 @@ ARFLAGS=crvs
 EXTHDRS=des.h
 EXTLIBS=libdes.a
 MANS=anyaddr.3 atoaddr.3 atoasr.3 atoul.3 goodmask.3 \
-	initaddr.3 initsubnet.3 optionsfrom.3 portof.3 rangetosubnet.3 \
+	initaddr.3 initsubnet.3 portof.3 rangetosubnet.3 \
 	sameaddr.3 subnetof.3 ttoaddr.3 ttodata.3 ttosa.3 ttoul.3 version.3
 
 .PHONY:	all install clean l t lt tar check depend checkprograms
@@ -245,16 +245,6 @@ t:	$(LIB)
 	ln -f -s ${KLIPSSRCDIR}/addrtot.c try7.c
 	${CC} ${CFLAGS} -DADDRTOT_MAIN try7.c $(LIB) -o try7
 	./try7 -r
-
-lt:	$(LIB)
-	$(MAKE) t
-	cp optionsfrom.c try5.c
-	cc -DTEST try5.c $(LIB) -o try5
-	echo --foo --bar >try5in1
-	echo --optionsfrom >>try5in1
-	echo try5in2 >>try5in1
-	echo --foo >try5in2
-	./try5 --foo --bar --optionsfrom try5in1 --bar something
 
 tar:	clean
 	tar -cvf /tmp/lib.tar Makefile [a-z]*

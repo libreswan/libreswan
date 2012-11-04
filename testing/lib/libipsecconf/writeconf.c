@@ -2,12 +2,12 @@
  * This test writes a configuration file from internal state.
  *
  * Copyright (C) 2009 Michael Richardson <mcr@sandelman.ca>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 
     memset(cfg, 0, sizeof(*cfg));
 
-    /**    
+    /**
      * Set default values
      */
     ipsecconf_default_values(cfg);
@@ -112,9 +112,6 @@ main(int argc, char *argv[])
     conn = alloc_add_conn(cfg, "mytestconn", &err);
 
     conn->connalias = xstrdup("anotheralias");
-
-    conn->strings[KSF_DPDACTION]="hold";
-    conn->strings_set[KSF_DPDACTION] = 1;
 
     conn->options[KBF_DPDDELAY]=60;
     conn->options_set[KBF_DPDDELAY]=1;

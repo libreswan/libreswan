@@ -37,10 +37,6 @@ cd /
 LIBRESWAN_RESOLV_CONF=/var/run/pluto/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=/etc/resolv.conf
 
-# customize some things
-if [ -f ${IPSEC_EXECDIR}/vendor ]; then
-    VENDOR=`cat ${IPSEC_EXECDIR}/vendor`
-fi
 
 if test `ip addr list|grep -c cipsec` -ne 0
 then
@@ -181,7 +177,7 @@ case "$1" in
   start|--start|_autostart)
 	# First, does it seem to be going already?
 	perform test ! -f $lock "||" "{" \
-		echo "\"Libreswan ${VENDOR}IPsec apparently already active, start aborted\"" ";" \
+		echo "\"Libreswan IPsec apparently already active, start aborted\"" ";" \
 		exit 0 ";" \
 		"}"
 
@@ -189,8 +185,8 @@ case "$1" in
 	# (Warning, changes to this log message may affect barf.)
 	version="`ipsec --version | awk 'NR == 1 { print $(3) }' | sed -e 's/^U\(.*\)\/K(.*/\1/'`"
 	case "$1" in
-	start|--start)	perform echo "\"Starting Libreswan ${VENDOR}IPsec $version...\""	;;
-	_autostart)	perform echo "\"Restarting Libreswan ${VENDOR}IPsec $version...\""	;;
+	start|--start)	perform echo "\"Starting Libreswan IPsec $version...\""	;;
+	_autostart)	perform echo "\"Restarting Libreswan IPsec $version...\""	;;
 	esac
 
 	# preliminaries
@@ -202,7 +198,7 @@ case "$1" in
 	for f in /dev/random /dev/urandom
 	do
 		perform test -r $f "||" "{" \
-			echo "\"...unable to start Libreswan ${VENDOR}IPsec, no $f!\"" ";" \
+			echo "\"...unable to start Libreswan IPsec, no $f!\"" ";" \
 			exit 1 ";" \
 			"}"
         done
@@ -299,12 +295,12 @@ case "$1" in
 		    "}"
 
 	# done!
-	perform echo "\"...Libreswan ${VENDOR}IPsec started\"" "|" $LOGONLY
+	perform echo "\"...Libreswan IPsec started\"" "|" $LOGONLY
 	;;
 
   stop|--stop|_autostop)		# _autostop is same as stop
 	# Shut things down.
-	perform echo "\"Stopping Libreswan ${VENDOR}IPsec...\""
+	perform echo "\"Stopping Libreswan IPsec...\""
 	perform \
 		if test -r $lock ";" \
 		then \
@@ -370,7 +366,7 @@ case "$1" in
 	perform test -d $subsysdir "&&" rm -f $subsyslock
 
 	perform rm -f $lock $plutopid
-	perform echo "...Libreswan ${VENDOR}IPsec stopped" "|" $LOGONLY
+	perform echo "...Libreswan IPsec stopped" "|" $LOGONLY
 	perform exit \$status
 	;;
 

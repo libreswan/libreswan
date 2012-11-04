@@ -65,8 +65,13 @@ endif
 LIBSADNS = $(LIBRESWANLIB)
 LIBSADNS += -lresolv # -lefence
 
+LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)
+ifeq ($(USE_DNSSEC),true)
+LIBSPLUTO += -lunbound
+endif
+
 # Solaris needs -lsocket -lnsl
-LIBSWHACK = ${WHACKLIB} ${LIBRESWANLIB} 
+LIBSWHACK = ${WHACKLIB} ${LIBRESWANLIB}
 
 
 RM = /bin/rm
@@ -110,7 +115,6 @@ DISTSRC = \
 	ike_alg.c ike_alg_status.c ike_alg.h ikeping.c \
 	ike_alg_aes.c ike_alginit.c ikev2_rsa.c ikev2_psk.c ikev2_x509.c \
 	rcv_whack.c rcv_whack.h \
-	$(IPSECPOLICY_DIST_SRCS) \
 	${EXTRA_CRYPTO_SRCS} ike_alg_sha2.c \
 	log.c log.h \
 	plutomain.c plutoalg.c \
@@ -146,19 +150,19 @@ OBJSPLUTO += pending.o cookie.o crypto.o defs.o dpd.o
 OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
-OBJSPLUTO += ikev1.o ikev1_main.o   ikev1_quick.o 
+OBJSPLUTO += ikev1.o ikev1_main.o   ikev1_quick.o
 OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o spdb_v2_struct.o
-OBJSPLUTO += ikeping.o kernel.o 
+OBJSPLUTO += ikeping.o kernel.o
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
-OBJSPLUTO += kernel_noklips.o rcv_whack.o 
-OBJSPLUTO += ${IPSECPOLICY_OBJS} demux.o msgdigest.o keys.o dnskey.o
+OBJSPLUTO += kernel_noklips.o rcv_whack.o
+OBJSPLUTO += demux.o msgdigest.o keys.o dnskey.o
 OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
-OBJSPLUTO += ikev2_crypto.o ikev2_prfplus.o 
+OBJSPLUTO += ikev2_crypto.o ikev2_prfplus.o
 OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_v1_struct.o spdb_print.o
-OBJSPLUTO += vendor.o nat_traversal.o virtual.o 
+OBJSPLUTO += vendor.o nat_traversal.o virtual.o
 OBJSPLUTO += ike_alg_aes.o ike_alginit.o ikev2_rsa.o ikev2_psk.o ikev2_x509.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
-OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o 
+OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o
 OBJSPLUTO += ${XAUTH_OBJS}
 OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${LABELED_IPSEC_OBJS}
@@ -177,7 +181,7 @@ ifeq ($(SHOULDWERESTART),trueplutomain.c)
 all programs clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/pluto && $(MAKE) $@
 else
-all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) #$(BINNAMEWHACKINIT) 
+all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) #$(BINNAMEWHACKINIT)
 programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) #$(BINNAMEWHACKINIT)
 clean:	cleanall
 install: doinstall
@@ -246,7 +250,7 @@ $(BINNAMEWHACKINIT): $(OBJSWHACKINIT)
 distlist:
 	@echo $(DIST)
 
-cleanall: 
+cleanall:
 	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
 		$(OBJSPLUTO) $(BINNAMEPLUTO) \
 		$(OBJSWHACK) $(BINNAMEWHACK) \

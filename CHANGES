@@ -1,7 +1,7 @@
 
 See also http://www.libreswan.org/
 
-v1.0.0 (unreleased)
+v3.0.0 (unreleased)
 * FORK: Rename from Openswan to Libreswan (working name) [Paul]
         (for older CHANGES see docs/CHANGES.openswan)
 * FORK: Changed our VendorID prefix to "OEN" [Paul]
@@ -26,7 +26,6 @@ v1.0.0 (unreleased)
          (rhbz#831669)
 * pluto: Fix phase confusion in xauth/modeconfig [Avesh]
 * pluto: Added new option plutostderrlogtime= (default=no) [Paul]
-* pluto: Fix _plutoload to actually run postpluto script [Tuomo]
 * pluto: Additional safety checks to strncat() calls for addrtot(),
          inet_addrtot(), sin_addrtot(), alg_info_snprint_esp(),
          alg_info_snprint_ah(), idtoa() and format_end() [Paul]
@@ -41,6 +40,8 @@ v1.0.0 (unreleased)
 * pluto: phased out prepluto= and postpluto= config setup options [Paul]
 * pluto: plutowait= option removed [Paul]
 * pluto: remove pluto=yes|no start option and manualconn remnants [Paul]
+* pluto: remove old unsused USE_IPSECPOLICY code [Paul]
+* pluto: rhbz#609343: pluto crashes when removing logical interface [Avesh]
 * whack: fix handling --sha2_truncbug and --nm_configured options [Paul]
 * DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
@@ -70,6 +71,7 @@ v1.0.0 (unreleased)
 * KLIPS: Removed support for Linux < 2.4.4 [Paul]
 * KLIPS: Changed _startklips to use ip route instead of netstat [Harald]
 * MAST: Fixed _updown.mast missing incomplete if-clause [Harald]
+* addconn: mimic _plutoload, cleanup and fixup of functions [Paul]
 * scripts: Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
 * barf: do not grep lastlog, wtmp, tmp (rhbz#771612) [Paul]
 * verify: ported ipsec verify from perl to python [Paul]
@@ -82,9 +84,10 @@ v1.0.0 (unreleased)
 * scripts: phased out /var/run/pluto/ipsec.info [Paul]
 * OSX: Set __APPLE_USE_RFC_3542 required for udpfromto functionality [Paul]
 * DOCS: Add man page leftid= note on Cisco ID_KEY_ID Group Name [Philippe]
+* liblibreswan: Remove unused optionsfrom() temp file handling [Paul]
 * testing: Ported broken UML harness to KVM/libvirt/9p [Paul/Antony]
            (see the wiki on libreswan.org for details on how to use it)
-* packaging: Updated openswan.spec to reflect updated options [Paul]
+* packaging: Updated libreswan.spec to reflect updated options [Paul]
 * Bugtracker bugs fixed:
     #993 ipsec showhostkey: wrong kind of key PPK_XAUTH [Philippe Vouters]
    #1308 forceencaps= setting does now show up in "ipsec auto --status"
