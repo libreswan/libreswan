@@ -2522,6 +2522,33 @@ refine_host_connection(const struct state *st, const struct id *peer_id
     }
 
 #if defined(XAUTH)
+    /*
+     * Philippe Vouters' comment:
+     * I do not understand the added value of this xauth_calcbaseauth call.
+     * When this refine_host_connection is invoked, it already comes up with
+     * auth=OAKLEY_PRESHARED_KEY when sollictied by Shrew VPN Client whether
+     * in Mutual PSK + XAuth or Mutual RSA + XAuth. The fact it comes up
+     * with OAKLEY_PRESHARED_KEY in both cases should be given by the
+     * Libreswan transitions state engine which can be viewed and understood
+     * while reading ./programs/pluto/ikev1.c. st->st_oakley.auth is only
+     * assigned inside aggr_inI1_outR1_common which is called by
+     * aggr_inI1_outR1_psk OR aggr_inI1_outR1_rsasig. The considered state
+     * transition is the following:
+     * { STATE_AGGR_R0, STATE_AGGR_R1,
+     *   SMF_PSK_AUTH| SMF_REPLY,
+     *   P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
+     *   EVENT_RETRANSMIT, aggr_inI1_outR1_psk },
+     *
+     * { STATE_AGGR_R0, STATE_AGGR_R1,
+     *   SMF_DS_AUTH | SMF_REPLY,
+     *   P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
+     *   EVENT_RETRANSMIT, aggr_inI1_outR1_rsasig },
+     *
+     * So st->st_oakley.auth should come up to refine_host_connection with
+     * OAKLEY_PRESHARED_KEY (because of aggr_inI1_outR1_psk) and afterwards
+     * with OAKLEY_RSA_SIG (because of aggr_inI1_outR1_rsasig). In such actual
+     * only possible context, xauth_calcbaseauth is NO-OP operation.
+     */
     auth = xauth_calcbaseauth(auth);
 #endif
     switch (auth)
@@ -2529,6 +2556,17 @@ refine_host_connection(const struct state *st, const struct id *peer_id
     case OAKLEY_PRESHARED_KEY:
 	auth_policy = POLICY_PSK;
 	if (initiator) {
+            /*
+	     *  Philippe Vouters' comment.
+	     *  Without the if (initiator), refine_connection was able to deal
+	     *  with:
+	     *  %none %none: PSK "Secret"
+	     *  but not with:
+	     *  192.168.1.2 @[GroupVPN]: PSK "Secret"
+	     *  leading to no suitable connection found for:
+	     *  : RSA "victor.vouters.dyndns.org - Vouters Illimited"
+	     *  when Shrew Client operates in Mutual RSA + XAuth mode.
+	     */-
 	    psk = get_preshared_secret(c);
 	    /* It should be virtually impossible to fail to find PSK:
 	     * we just used it to decode the current message!
