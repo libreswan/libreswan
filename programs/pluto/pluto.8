@@ -31,7 +31,7 @@
 ipsec_pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-nofork] [\-\-stderrlog] [\-\-use\-auto] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_keepalive] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-lwdnsq\ \fIpathname\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits]
+\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-nofork] [\-\-stderrlog] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_keepalive] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-lwdnsq\ \fIpathname\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-help] [\-\-version]
 .HP \w'\fBipsec\fR\ 'u
@@ -258,14 +258,17 @@ To fire up the daemon, just type
 \fBpluto\fR
 must be run by the superuser to be able to use the UDP 500 port\&. If pluto is told to enable NAT\-Traversal, then UDP port 4500 is also taken by pluto to listen on\&.
 .PP
-Pluto supports different IPstacks on different operating systems\&. The option
-\fB\-\-use\-auto\fR, which is also the default, lets pluto find a stack automatically\&. This behaviour can be changed by explicitly setting the stack using
+Pluto supports different IPstacks on different operating systems\&. This can be configured using one of the options
+\fB\-\-use\-netkey\fR
+(the default),
 \fB\-\-use\-klips\fR,
 \fB\-\-use\-mast\fR,
-\fB\-\-use\-bsdkame\fR
-\fB\-\-use\-netkey\fR
+\fB\-\-use\-bsdkame\fR,
+\fB\-\-use\-win2k\fR
 or
-\fB\-\-use\-nostack\fR\&. The latter is meant for testing only \- no actual IPsec connections will be loaded into the kernel\&.
+\fB\-\-use\-nostack\fR\&. The latter is meant for testing only \- no actual IPsec connections will be loaded into the kernel\&. The option
+\fB\-\-use\-auto\fR
+has been obsoleted\&.
 .PP
 Pluto supports the NAT\-Traversal drafts and the final standard, RFC 3947, if the
 \fB\-\-nat_traversal\fR

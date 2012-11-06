@@ -27,12 +27,11 @@
 
 enum kernel_interface {
   NO_KERNEL = 1,
-  AUTO_PICK = 2,
-  USE_KLIPS = 3,
-  USE_NETKEY= 4,
-  USE_WIN2K = 5,
-  USE_MASTKLIPS = 6,
-  USE_BSDKAME = 7,
+  USE_KLIPS = 2,
+  USE_NETKEY= 3,
+  USE_WIN2K = 4,
+  USE_MASTKLIPS = 5,
+  USE_BSDKAME = 6,
 };
 
 /* RFC 3706 Dead Peer Detection */

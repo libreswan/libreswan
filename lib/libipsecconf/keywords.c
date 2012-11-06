@@ -159,13 +159,13 @@ struct keyword_enum_values kw_rsasigkey_list=
 
 
 /*
- * Values for protostack={klips, none, auto, klipsmast, netkey }
+ * Values for protostack={netkey, klips, mast or none }
  */
 struct keyword_enum_value kw_proto_stack_list[]={
     { "none",         NO_KERNEL },
-    { "auto",         AUTO_PICK },
     { "klips",        USE_KLIPS },
     { "mast",         USE_MASTKLIPS }, 
+    { "auto",         USE_NETKEY }, /* auto now means netkey */
     { "netkey",       USE_NETKEY },
     { "native",       USE_NETKEY },
     { "bsd",          USE_BSDKAME },
