@@ -41,6 +41,7 @@ v3.0.0 (unreleased)
 * pluto: obsoleted prepluto= postpluto= plutoopts= config setup options [Paul]
 * pluto: obsoleted plutowait= and pluto= config setup option [Paul]
 * pluto: removed manual keying remnants [Paul]
+* pluto: remove protostack=auto and --use-auto, netkey is new default [Paul]
 * pluto: remove old unsused USE_IPSECPOLICY code [Paul]
 * pluto: rhbz#609343: pluto crashes when removing logical interface [Avesh]
 * pluto: dont stop processing after --coredir argument [Paul]
