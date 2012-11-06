@@ -38,8 +38,6 @@
 
       <arg choice="opt">--stderrlog</arg>
 
-      <arg choice="opt">--use-auto</arg>
-
       <arg choice="opt">--use-klips</arg>
 
       <arg choice="opt">--use-mast</arg>
@@ -968,13 +966,14 @@
       on.</para>
 
       <para>Pluto supports different IPstacks on different operating systems.
-      The option <option>--use-auto</option>, which is also the default, lets
-      pluto find a stack automatically. This behaviour can be changed by
-      explicitly setting the stack using <option>--use-klips</option>,
-      <option>--use-mast</option>, <option>--use-bsdkame</option>
-      <option>--use-netkey</option> or <option>--use-nostack</option>. The
+      This can be configured using one of the options <option>--use-netkey</option>  
+      (the default), <option>--use-klips</option>, <option>--use-mast</option>,
+      <option>--use-bsdkame</option>, <option>--use-win2k</option> or
+      <option>--use-nostack</option>. The
       latter is meant for testing only - no actual IPsec connections will be
-      loaded into the kernel.</para>
+      loaded into the kernel. The option <option>--use-auto</option> has
+      been obsoleted.
+      </para>
 
       <para>Pluto supports the NAT-Traversal drafts and the final standard,
       RFC 3947, if the <option>--nat_traversal</option> is specified. The

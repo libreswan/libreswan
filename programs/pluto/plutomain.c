@@ -146,7 +146,6 @@ usage(const char *mess)
 	    " [--strictcrlpolicy]"
 	    " [--crlcheckinterval]"
 	    " [--uniqueids]"
-	    " [--use-auto]"
 	    " [--use-klips]"
 	    " [--use-netkey]"
 	    " [--use-mast]"
@@ -330,7 +329,7 @@ long crl_check_interval = 0;
 bool force_busy = FALSE;
 
 /* whether or not to use klips */
-enum kernel_interface kern_interface = AUTO_PICK;
+enum kernel_interface kern_interface = USE_NETKEY; /* new default */
 
 bool   log_to_stderr_desired = FALSE;
 bool   log_with_timestamp_desired = FALSE;
@@ -560,7 +559,8 @@ main(int argc, char **argv)
 	    continue;
 
 	case 'G':       /* --use-auto */
-	    kern_interface = AUTO_PICK;
+	    libreswan_log("The option --use-auto is obsoleted, falling back to  --use-netkey\n");
+	    kern_interface = USE_NETKEY;
 	    continue;
 
 	case 'k':       /* --use-klips */
@@ -774,7 +774,10 @@ main(int argc, char **argv)
 	    else if (strcmp(protostack, "none") == 0)
 		kern_interface = NO_KERNEL;
 	    else if (strcmp(protostack, "auto") == 0)
-		kern_interface = AUTO_PICK;
+		{
+		    libreswan_log("The option protostack=auto is obsoleted, falling back to protostack=netkey\n");
+		    kern_interface = USE_NETKEY;
+		}
 	    else if (strcmp(protostack, "klips") == 0)
 		kern_interface = USE_KLIPS;
 	    else if (strcmp(protostack, "mast") == 0)

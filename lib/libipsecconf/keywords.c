@@ -159,13 +159,13 @@ struct keyword_enum_values kw_rsasigkey_list=
 
 
 /*
- * Values for protostack={klips, none, auto, klipsmast, netkey }
+ * Values for protostack={netkey, klips, mast or none }
  */
 struct keyword_enum_value kw_proto_stack_list[]={
     { "none",         NO_KERNEL },
-    { "auto",         AUTO_PICK },
     { "klips",        USE_KLIPS },
     { "mast",         USE_MASTKLIPS }, 
+    { "auto",         USE_NETKEY }, /* auto now means netkey */
     { "netkey",       USE_NETKEY },
     { "native",       USE_NETKEY },
     { "bsd",          USE_BSDKAME },
@@ -373,9 +373,14 @@ struct keyword_def ipsec_conf_keywords_v2[]={
 #ifdef HAVE_LABELED_IPSEC
     {"secctx_attr_value",kv_config,kt_number, KBF_SECCTX, NOT_ENUM},
 #endif
-    /* these two options are obsoleted. Don't die on them */
+    /* these options are obsoleted. Don't die on them */
     {"forwardcontrol", kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
     {"rp_filter",      kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
+    {"pluto",      kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
+    {"prepluto",      kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
+    {"postpluto",      kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
+    {"plutoopts",      kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
+    {"plutowait",      kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
 
     /* this is "left=" and "right=" */
     {"",               kv_conn|kv_leftright, kt_loose_enum, KSCF_IP, &kw_host_list},  
@@ -386,16 +391,10 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"subnets",        kv_conn|kv_auto|kv_leftright, kt_appendlist, KSCF_SUBNETS,NOT_ENUM}, 
     {"sourceip",       kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_SOURCEIP,NOT_ENUM}, 
     {"nexthop",        kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_NEXTHOP,NOT_ENUM},
-#ifdef OBSOLETE
-    {"firewall",       kv_conn|kv_auto|kv_leftright, kt_bool,   KNCF_FIREWALL,NOT_ENUM},
-#endif
     {"updown",         kv_conn|kv_auto|kv_leftright, kt_filename, KSCF_UPDOWN,NOT_ENUM},
     {"id",             kv_conn|kv_auto|kv_leftright, kt_idtype, KSCF_ID,NOT_ENUM},
     {"rsasigkey",      kv_conn|kv_auto|kv_leftright, kt_rsakey, KSCF_RSAKEY1, &kw_rsasigkey_list},
     {"rsasigkey2",     kv_conn|kv_auto|kv_leftright, kt_rsakey, KSCF_RSAKEY2, &kw_rsasigkey_list},
-#ifdef USE_MANUAL_KEYING
-    {"spibase",        kv_conn|kv_auto|kv_leftright, kt_number, KNCF_SPIBASE,NOT_ENUM},
-#endif
     {"cert",           kv_conn|kv_auto|kv_leftright, kt_filename, KSCF_CERT,NOT_ENUM},
     {"sendcert",       kv_conn|kv_auto|kv_leftright, kt_enum,   KNCF_SENDCERT, &kw_sendcert_list},
     {"ca",             kv_conn|kv_auto|kv_leftright, kt_string, KSCF_CA,NOT_ENUM},
@@ -478,13 +477,6 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"modecfgdns2", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGDNS2,NOT_ENUM},
     {"modecfgwins1", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGWINS1,NOT_ENUM},
     {"modecfgwins2", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGWINS2,NOT_ENUM},
-    /* things for manual keying only */
-#ifdef USE_MANUAL_KEYING
-    {"spi",            kv_conn|kv_leftright|kv_manual, kt_number, KNCF_SPI,NOT_ENUM},
-    {"espenckey",      kv_conn|kv_leftright|kv_manual, kt_bitstring, KSCF_ESPENCKEY,NOT_ENUM},
-    {"espauthkey",     kv_conn|kv_leftright|kv_manual, kt_bitstring, KSCF_ESPAUTHKEY,NOT_ENUM},
-    {"espreplay_window",kv_conn|kv_leftright|kv_manual, kt_number, KNCF_ESPREPLAYWINDOW,NOT_ENUM}, 
-#endif
     {NULL, 0, 0, 0, NOT_ENUM}
 };
 

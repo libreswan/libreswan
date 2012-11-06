@@ -2205,21 +2205,6 @@ init_kernel(void)
     strncpy(kversion, un.release, sizeof(kversion));
 
     switch(kern_interface) {
-    case AUTO_PICK:
-#if defined(NETKEY_SUPPORT) || defined(KLIPS) || defined(KLIPS_MAST)
-	/* If we detect NETKEY and KLIPS, we can't continue */
-	if(stat("/proc/net/pfkey", &buf) == 0 &&
-	   stat("/proc/net/pf_key", &buf) == 0) {
-	    /* we don't die, we just log and go to sleep */
-	    libreswan_log("Can not run with both NETKEY and KLIPS in the kernel");
-	    libreswan_log("Please check your kernel configuration, or specify a stack");
-	    libreswan_log("using protostack={klips,netkey,mast}");
-	    exit_pluto(0);
-	}
-#endif
-	libreswan_log("Kernel interface auto-pick");
-	/* FALL THROUGH */
-
 #if defined(NETKEY_SUPPORT)
     case USE_NETKEY:
 	if (stat("/proc/net/pfkey", &buf) == 0) {
@@ -2285,10 +2270,7 @@ init_kernel(void)
 	break;
 
     default:
-	if(kern_interface == AUTO_PICK)
-		libreswan_log("kernel interface auto-pick failed - no suitable kernel stack found");
-	else
-		libreswan_log("kernel interface '%s' not available"
+	libreswan_log("kernel interface '%s' not available"
 		     , enum_name(&kern_interface_names, kern_interface));
 	exit_pluto(5);
     }
