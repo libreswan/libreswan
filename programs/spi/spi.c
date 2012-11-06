@@ -1241,22 +1241,6 @@ main(int argc, char *argv[])
 	}
 
 
-#ifdef MANUAL_IS_NOT_ABLE_TO_NEGOTIATE
-	/* for registering SA types that can be negotiated */
-	if(pfkey_register(SADB_SATYPE_AH) != 0) {
-		exit(1);
-	}
-	if(pfkey_register(SADB_SATYPE_ESP) != 0) {
-		exit(1);
-	}
-	if(pfkey_register(SADB_X_SATYPE_IPIP) != 0) {
-		exit(1);
-	}
-	if(pfkey_register(SADB_X_SATYPE_COMP) != 0) {
-		exit(1);
-	}
-#endif /* MANUAL_IS_NOT_ABLE_TO_NEGOTIATE */
-
 	/* Build an SADB_ADD message to send down. */
 	/* It needs <base, SA, address(SD), key(AE)> minimum. */
 	/*   Lifetime(HS) could be added before addresses. */
