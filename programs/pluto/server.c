@@ -529,6 +529,20 @@ call_server(void)
 	passert(r == 0);
     }
 
+    /* do equivalent of ipsec whack --listen */
+        fflush(stderr);
+        fflush(stdout);
+        close_peerlog();    /* close any open per-peer logs */
+        libreswan_log("listening for IKE messages");
+        listening = TRUE;
+        daily_log_reset();
+        reset_adns_restart_count();
+        set_myFQDN();
+        find_ifaces();
+        load_preshared_secrets(NULL_FD);
+        load_groups();
+
+
     for (;;)
     {
 	osw_fd_set readfds;
