@@ -108,6 +108,21 @@ key_add_ugh(const struct id *keyid, err_t ugh)
 	, "failure to fetch key for %s from DNS: %s", name, ugh);
 }
 
+void do_whacklisten()
+{
+	fflush(stderr);
+	fflush(stdout);
+	close_peerlog();    /* close any open per-peer logs */
+	libreswan_log("listening for IKE messages");
+	listening = TRUE;
+	daily_log_reset();
+	reset_adns_restart_count();
+	set_myFQDN();
+	find_ifaces();
+	load_preshared_secrets(NULL_FD);
+	load_groups();
+}
+
 /* last one out: turn out the lights */
 static void
 key_add_merge(struct key_add_common *oc, const struct id *keyid)
@@ -426,17 +441,7 @@ void whack_process(int whackfd, struct whack_message msg)
     /* process "listen" before any operation that could require it */
     if (msg.whack_listen)
     {
-	fflush(stderr);
-	fflush(stdout);
-	close_peerlog();    /* close any open per-peer logs */
-	libreswan_log("listening for IKE messages");
-	listening = TRUE;
-	daily_log_reset();
-	reset_adns_restart_count();
-	set_myFQDN();
-	find_ifaces();
-	load_preshared_secrets(NULL_FD);
-	load_groups();
+	do_whacklisten();
     }
     if (msg.whack_unlisten)
     {
