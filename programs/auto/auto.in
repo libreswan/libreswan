@@ -159,7 +159,7 @@ then
 else
        defaultroutevirt="`ipsec tncfg  |grep " $defaultroutephys mtu" | awk '{ print $1;}'`"
 fi
-defaultroutenexthop=`ip ro |grep default | awk '{ print $3;}'`
+defaultroutenexthop=`ip ro |grep 'default via' | awk '{ print $3;}'`
 defaultrouteaddr=`ip route get $defaultroutenexthop | head -1 | awk '{ print $5;}'`
 
 # finally, handle --add|--replace
