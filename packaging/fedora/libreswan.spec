@@ -1,7 +1,6 @@
 %global USE_FIPSCHECK true
 %global USE_LIBCAP_NG true
 %global USE_NM true
-%global USE_XAUTHPAM true
 %global fipscheck_version 1.3.0
 %global USE_CRL_FECTCHING true
 %global USE_DNSSEC true
@@ -12,7 +11,8 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: IPSECBASEVERSION
+#Version: IPSECBASEVERSION
+Version: 2.7
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
@@ -20,6 +20,8 @@ Version: IPSECBASEVERSION
 %define defkv %(rpm -q kernel kernel-smp| grep -v "not installed" | sed "s/kernel-smp-\\\(.\*\\\)$/\\1smp/"| sed "s/kernel-//"| sort | tail -1)
 %{!?kversion: %{expand: %%define kversion %defkv}}
 %define krelver %(echo %{kversion} | tr -s '-' '_')
+
+%define nssflags %(pkg-config --cflags nss)
 
 # Libreswan -pre/-rc nomenclature has to co-exist with hyphen paranoia
 %define srcpkgver %(echo %{version} | tr -s '_' '-')
@@ -31,12 +33,14 @@ Url: http://www.libreswan.org/
 Source: %{name}-%{srcpkgver}.tar.gz
 Group: System Environment/Daemons
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: gmp-devel bison flex redhat-rpm-config
+BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
+BuildRequires: systemd
+Requires(post): coreutils bash systemd-units systemd-sysv
+Requires(preun): initscripts chkconfig systemd-units
+
 BuildRequires: pkgconfig hostname
 BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
-%if %{USE_XAUTHPAM}
 BuildRequires: pam-devel
-%endif
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
 %endif
@@ -56,8 +60,6 @@ BuildRequires: ElectricFence
 %endif
 # Only needed if xml man pages are modified and need regeneration
 # BuildRequires: xmlto
-
-Provides: ipsec-userland = %{version}-%{release}
 
 Requires: nss-tools, nss-softokn
 Requires: iproute >= 2.6.8
@@ -108,9 +110,9 @@ kernels.
 #796683: -fno-strict-aliasing
 %{__make} \
 %if %{development}
-   USERCOMPILE="-g -DGCC_LINT `pkg-config --cflags nss` %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
+   USERCOMPILE="-g -DGCC_LINT %{nssflags} %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %else
-  USERCOMPILE="-g -DGCC_LINT `pkg-config --cflags nss` %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
+  USERCOMPILE="-g -DGCC_LINT %{nssflags} %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %endif
   USERLINK="-g -pie %{?efence}" \
   HAVE_THREADS="true" \
@@ -123,11 +125,9 @@ kernels.
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   USE_NM=%{USE_NM} \
+  USE_XAUTHPAM=true \
 %if %{USE_CRL_FECTCHING}
   USE_LIBCURL=true \
-%endif
-%if %{USE_XAUTHPAM}
-  USE_XAUTHPAM=true \
 %endif
   programs
 FS=$(pwd)
@@ -178,6 +178,13 @@ install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
+install -d -m 0755 %{buildroot}/%{_sysconfdir}/sysconfig/
+install -m 0644 packaging/fedora/sysconfig.pluto %{buildroot}/%{_sysconfdir}/sysconfig/pluto
+
+# systemd service file addition
+mkdir -p $RPM_BUILD_ROOT%{_unitdir}
+install -m 0644 packaging/fedora/ipsec.service %{buildroot}/%{_unitdir}/
+
 %if %{USE_FIPSCHECK}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/fipscheck
 %endif
@@ -204,11 +211,13 @@ rm -rf ${RPM_BUILD_ROOT}
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
 %doc docs/*.*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %ghost %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
+%attr(0644,root,root) %{_unitdir}/ipsec.service
 %{_initrddir}/ipsec
 %{_libdir}/ipsec
 %{_sbindir}/ipsec
