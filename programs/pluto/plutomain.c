@@ -118,6 +118,7 @@
 
 const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
+bool fork_desired = TRUE;
 
 #ifdef DEBUG
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
@@ -241,9 +242,23 @@ create_lock(void)
     {
 	if (errno == EEXIST)
 	{
+	    /* if we did not fork, then we do't really need the pid to control, so wipe it */
+	    if(!fork_desired)
+	    {
+		if(unlink(pluto_lock) == -1)
+		{
+		   fprintf(stderr, "pluto: lock file \"%s\" already exists and could not be removed (%d %s)\n"
+				, pluto_lock, errno, strerror(errno));
+		   exit_pluto(10);
+		} else {
+			/* lock file removed, try creating it again */
+			return create_lock();
+		}
+	    } else {
 	    fprintf(stderr, "pluto: lock file \"%s\" already exists\n"
 		, pluto_lock);
 	    exit_pluto(10);
+	    }
 	}
 	else
 	{
@@ -338,10 +353,10 @@ bool   log_with_timestamp_desired = FALSE;
 u_int16_t secctx_attr_value=SECCTX;
 #endif
 
+
 int
 main(int argc, char **argv)
 {
-    bool fork_desired = TRUE;
     int lockfd;
     int nhelpers = -1;
     char *coredir;
