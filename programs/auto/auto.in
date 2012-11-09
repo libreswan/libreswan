@@ -250,16 +250,6 @@ esac
 	defaultroutephys=$phys
 	defaultroutenexthop=$next
 
-# finally, handle --add|--replace
-if [ -n "$defaultrouteaddr" ]
-then
-    options="--defaultroute $defaultrouteaddr"
-fi
-if [ -n "$defaultroutenexthop" ]
-then
-    options="$options --defaultroutenexthop $defaultroutenexthop"
-fi
-
 echo "ipsec addconn $config $options $names"             | runit
 exit 
  
