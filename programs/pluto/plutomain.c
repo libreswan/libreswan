@@ -971,7 +971,6 @@ main(int argc, char **argv)
 					IPSECLIBDIR"/newhostkey",
 					IPSECLIBDIR"/pf_key",
 					IPSECLIBDIR"/_pluto_adns",
-					IPSECLIBDIR"/_plutoload",
 					IPSECLIBDIR"/_plutorun",
 					IPSECLIBDIR"/ranbits",
 					IPSECLIBDIR"/_realsetup",

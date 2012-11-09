@@ -2,6 +2,7 @@
 # Pluto control daemon
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
 # Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -16,49 +17,7 @@
 me='ipsec _plutorun'		# for messages
 
 
-popts=
-stderrlog=
-plutostderrlogtime=
-showonly=
-plutorestartoncrash=true
-
-wherelog=daemon.error
 pidfile=/var/run/pluto/pluto.pid
-verb="Starting"
-for dummy
-do
-	case "$1" in
-	--re)	                 verb="Restarting"	;;
-	--plutorestartoncrash)   plutorestartoncrash="$2"; shift ;;
-	--debug)	         plutodebug="$2" ; shift	;;
-	--protostack)            protostack="$2" ; shift ;;
-	--uniqueids)	         uniqueids="$2" ; shift	;;
-	--nat_traversal)         nat_traversal="$2" ; shift  ;;
-	--keep_alive)            keep_alive="$2" ; shift ;;
-	--force_keepalive)       force_keepalive="$2" ; shift ;;
-	--disable_port_floating) disable_port_floating="$2" ; shift  ;;
-	--virtual_private)       virtual_private="$2" ; shift ;;
-	--listen)                listen="$2" ; shift ;;
-	--nocrsend)	         nocrsend="$2" ; shift	;;
-	--strictcrlpolicy)	 strictcrlpolicy="$2" ; shift	;;
-	--crlcheckinterval)	 crlcheckinterval="$2"; shift	;;
-	--force_busy)		 force_busy="$2"; shift	;;
-	--dump)	                 dumpdir="$2" ; shift	;;
-	--opts)	                 popts="$2" ; shift	;;
-	--stderrlog)             stderrlog="$2" ; shift	;;
-	--plutostderrlogtime)               plutostderrlogtime="$2" ; shift	;;
-        --show)	                 show="--show"  ; shift ;;
-	--showonly)	         showonly="true" ;;
-	--log)	                 wherelog="$2" ; shift	;;
-	--pid)	                 pidfile="$2" ; shift	;;
-	--nhelpers)              nhelpers="$2"; shift   ;;
-	--secctx_attr_value)     secctx_attr_value="$2"; shift   ;;
-	--)	                 shift ; break	;;
-	-*)	                 echo "$me: unknown option \`$1'" >&2 ; exit 2	;;
-	*)	                 break	;;
-	esac
-	shift
-done
 
 # initially we are in the foreground, with parent looking after logging
 
@@ -68,149 +27,11 @@ then
 	echo "pluto appears to be running already (\`$pidfile' exists), will not start another"
 	exit 1
 fi
-if test ! -e /dev/urandom
-then
-	echo "cannot start Pluto, system lacks \`/dev/urandom'!?!"
-	exit 1
-fi
-
-# sort out options
-for d in $plutodebug
-do
-	popts="$popts --debug-$d"
-done
-
-if [ -n "$protostack" ]
-then
-    popts="$popts --use-$protostack"
-fi
-
-case "$uniqueids" in
-yes)	popts="$popts --uniqueids"	;;
-no|'')				;;
-*)	echo "unknown uniqueids value (not yes/no) \`$IPSECuniqueids'"	;;
-esac
-case "$force_busy" in
-yes)  popts="$popts --force_busy"       ;;
-no|'')                                ;;
-*)    echo "unknown force_busy value (not yes/no) \`$IPSECforce_busy'"    ;;
-esac
-case "$nocrsend" in
-yes)  popts="$popts --nocrsend"       ;;
-no|'')                                ;;
-*)    echo "unknown nocrsend value (not yes/no) \`$IPSECnocrsend'"    ;;
-esac
-case "$strictcrlpolicy" in
-yes)  popts="$popts --strictcrlpolicy"        ;;
-no|'')                                ;;
-*)    echo "unknown strictcrlpolicy value (not yes/no) \`$IPSECstrictcrlpolicy'"      ;;
-esac
-case "$nat_traversal" in
-yes)  popts="$popts --nat_traversal"  ;;
-no|'')                ;;
-*)    echo "unknown nat_traversal value (not yes/no) \`$IPSECnat_traversal'" ;;
-esac
-[ -n "$keep_alive" ] && popts="$popts --keep_alive $keep_alive"
-case "$force_keepalive" in
-yes)  popts="$popts --force_keepalive"  ;;
-no|'')                ;;
-*)    echo "unknown force_keepalive value (not yes/no) \`$IPSECforce_keepalive'" ;;
-esac
-case "$disable_port_floating" in
-yes)  popts="$popts --disable_port_floating"  ;;
-no|'')                ;;
-*)    echo "unknown disable_port_floating (not yes/no) \`$disable_port_floating'" ;;
-esac
-case "$plutostderrlogtime" in
-yes)  popts="$popts --plutostderrlogtime"  ;;
-no|'')                ;;
-*)    echo "unknown plutostderrlogtime (not yes/no) \`$plutostderrlogtime'" ;;
-esac
-[ -n "$virtual_private" ] && popts="$popts --virtual_private $virtual_private"
-[ -n "$listen" ] && popts="$popts --listen $listen"
-
-# add crl check interval
-if test ${crlcheckinterval:-0} -gt 0
-then
-	popts="$popts --crlcheckinterval $crlcheckinterval"
-fi
-
-if test -n "$nhelpers"
-then
-        popts="$popts --nhelpers $nhelpers"
-fi
-
-if test -n "$secctx_attr_value"
-then
-        popts="$popts --secctx_attr_value $secctx_attr_value"
-fi
-
-if test -n "$stderrlog"
-then
-	popts="$popts --stderrlog 2>>$stderrlog"
-
-	if test -f $stderrlog
-	then
-		if test ! -w $stderrlog
-		then
-			echo Cannot write to \"$stderrlog\".
-			exit 1
-		fi
-	else
-		if test ! -w "${stderrlog%/*}"
-		then
-			echo Cannot write to directory to create \"$stderrlog\".
-			exit 1
-		fi
-	fi
-
-	echo "Plutorun started on "`date` >$stderrlog
-fi
-
-# set up dump directory
-if test " $dumpdir" = " "
-then
-	ulimit -c 0			# preclude core dumps
-elif test ! -d "$dumpdir"
-then
-	echo "dumpdir \`$dumpdir' does not exist, ignored"
-	ulimit -c 0			# preclude core dumps
-elif cd $dumpdir			# put them where desired
-then
-	ulimit -c unlimited		# permit them
-else
-	echo "cannot cd to dumpdir \`$dumpdir', ignored"
-	ulimit -c 0			# preclude them
-fi
-
-IPSEC_SECRETS=${IPSEC_CONFS}/ipsec.secrets
-if test ! -f "${IPSEC_SECRETS}"
-then
-    ( logger -p authpriv.info -t ipsec__plutorun No file ${IPSEC_SECRETS}, generating key.
-      ipsec newhostkey --quiet 
-      
-      # tell pluto to go re-read the file
-      ipsec whack --rereadsecrets
-      # XXX publish the key somehow?
-    ) &
-fi
 
 # spin off into the background, with our own logging
 echo "$verb Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun
 execdir=${IPSEC_EXECDIR-@IPSEC_EXECDIR@}
-libdir=${IPSEC_LIBDIR-@IPSEC_LIBDIR@}
-
-ipsecdiropt=""
-if [ -n "${IPSEC_CONFDDIR}" ]
-then
-    ipsecdiropt="--ipsecdir ${IPSEC_CONFDDIR}"
-fi
-
-if test -n "$showonly"
-then
-	echo $execdir/pluto --nofork --secretsfile "$IPSEC_SECRETS" $ipsecdiropt $popts
-	exit 0
-fi
+confdir=${IPSEC_CONFS-@IPSEC_CONFS@}
 
 # Work around problem with broken shells (e.g. Busybox sh).
 # We are called with stdout & stderr going to a logger process started
@@ -225,26 +46,12 @@ fi
 exec 1>/dev/null
 exec 2>/dev/null
 
-defaultroutephys=`ip ro  |grep default | awk '{ print $5;}'`
-if test -f /proc/net/pfkey 
-then
-	defaultroutevirt="none"
-else
-	defaultroutevirt="`ipsec tncfg  |grep " $defaultroutephys mtu" | awk '{ print $1;}'`"
-fi
-defaultroutenexthop=`ip ro |grep default | awk '{ print $3;}'`
-defaultrouteaddr=`ip route get $defaultroutenexthop | head -1 | awk '{ print $5;}'`
-
-until (
-	export defaultroutephys defaultroutevirt defaultrouteaddr defaultroutenexthop
-	# eval allows $popts to contain redirection and other magic
-	eval $execdir/pluto --nofork --secretsfile "$IPSEC_SECRETS" $ipsecdiropt $popts
+while true 
+do
+	$execdir/pluto --config ${IPSEC_CONFS}/ipsec.conf --nofork --secretsfile "$IPSEC_SECRETS" $ipsecdiropt
 	status=$?
 	echo "exit"
 	echo $status
-	) | $libdir/_plutoload
-do
-	status=$?
 	case "$status" in
 	13)	echo "internal failure in pluto scripts, impossible to carry on"
 		exit 1
@@ -260,10 +67,8 @@ do
 		exit 0
 		;;
 	*)	st=$status
-	        if $plutorestartoncrash
+	        if -n "`grep plutorestartoncrash=no`"
 		then
-		    :
-		else
 		    exit 0
 		fi
 
@@ -273,14 +78,8 @@ do
 		fi
 		echo "!pluto failure!:  exited with error status $st"
 		echo "restarting IPsec after pause..."
-		(
-			sleep 10
-			ipsec setup restart
-		) </dev/null >/dev/null 2>&1 &
-		exit 1
+		sleep 10
 		;;
 	esac
-done </dev/null 2>&1 |
-	logger -s -p $wherelog -t ipsec__plutorun >/dev/null 2>/dev/null &
-
+done </dev/null 2>&1 
 exit 0
