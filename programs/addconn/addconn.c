@@ -2,6 +2,7 @@
  * A program to read the configuration file and load a single conn
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,29 +15,22 @@
  * for more details.
  */
 
-/*
- * This program performed synchronous DNS lookups via ttoaddr() and has been
- * converted to using libunbound in asyncrhonous mode
- * It should be rewriten to resolve/load connections asynchronously
- */
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-/* #include <linux/netdevice.h> */
 #include <net/if.h>
-/* #include <linux/types.h> */ /* new */
 #include <sys/stat.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
 
-/* #include <sys/socket.h> */
-
 #include <netinet/in.h>
+
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+
 #include <arpa/inet.h>
-/* #include <linux/ip.h> */
 #include <netdb.h>
 
 #include <unistd.h>
@@ -46,10 +40,6 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <libreswan.h>
-#ifdef DNSSEC
-# include "dnssec.h"
-# include <unbound.h>
-#endif
 #include "sysdep.h"
 #include "constants.h"
 #include "oswalloc.h"
@@ -62,6 +52,42 @@
 #include "ipsecconf/files.h"
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/keywords.h"
+
+/* Where does this value come from? -- Paul */
+#define BUFSIZE 32768
+
+int read_netlink_socket(int sock, char *buf, int seqnum, pid_t pid)
+{
+	struct nlmsghdr *nlhdr;
+	int readlen = 0, msglen = 0;
+
+	do {
+		/* Read netlink message */
+		readlen = recv(sock, buf, BUFSIZE - msglen, 0);
+		if (readlen < 0)
+			return -1;
+
+		/* Verify it's valid */
+		nlhdr = (struct nlmsghdr *) buf;
+		if (NLMSG_OK(nlhdr, readlen) == 0 ||
+		    nlhdr->nlmsg_type == NLMSG_ERROR)
+			return -1;
+
+		/* Check if it is the last message */
+		if (nlhdr->nlmsg_type == NLMSG_DONE)
+			break;
+
+		/* Not last, move read pointer */
+		buf += readlen;
+		msglen += readlen;
+
+		/* All done if it's not a multi part */
+		if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
+			break;
+	} while (nlhdr->nlmsg_seq != seqnum || nlhdr->nlmsg_pid != pid);
+	return msglen;
+}
+
 
 char *progname;
 int verbose=0;
@@ -77,7 +103,6 @@ static const char *usage_string = ""
     "               [--addall] [--autoall] \n"
     "               [--listall] [--listadd] [--listroute] [--liststart] [--listignore] \n"
     "               [--listall] [--listadd] [--listroute] [--liststart] [--listignore] \n"
-    "               [--defaultroute <addr>] [--defaultroutenexthop <addr>]\n"
     "               names\n";
 
 
@@ -93,8 +118,6 @@ extern char rootdir[PATH_MAX];       /* when evaluating paths, prefix this to th
 static struct option const longopts[] =
 {
 	{"config",              required_argument, NULL, 'C'},
-	{"defaultroute",        required_argument, NULL, 'd'},
-	{"defaultroutenexthop", required_argument, NULL, 'n'},
 	{"debug",               no_argument, NULL, 'D'},
 	{"verbose",             no_argument, NULL, 'D'},
 	{"warningsfatal",       no_argument, NULL, 'W'},
@@ -134,14 +157,15 @@ main(int argc, char *argv[])
     char *varprefix = "";
     int exit_status = 0;
     struct starter_conn *conn = NULL;
-    char *defaultroute = NULL;
-    char *defaultnexthop = NULL;
     char *ctlbase = NULL;
     bool resolvip = FALSE;
-#ifdef DNSSEC
-/* our unbound resolver */
-struct ub_ctx *dnsctx = ub_ctx_create();
-#endif
+
+	struct nlmsghdr *nlmsg;
+	struct rtmsg *rtmsg;
+	struct rtattr *rtattr;
+
+	char msgbuf[BUFSIZE];
+	int sock, len, msgseq = 0;
 
 #if 0
     /* efence settings */
@@ -236,14 +260,6 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	    strncat(rootdir, optarg, sizeof(rootdir)-1);
 	    break;
 
-	case 'd':
-	    defaultroute=optarg;
-	    break;
-
-	case 'n':
-	    defaultnexthop=optarg;
-	    break;
-
 	default:
 	    usage();
 	}
@@ -293,18 +309,6 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	resolvip=FALSE;
     }
 
-#ifdef DNSSEC
-    if(resolvip) {
-	/* initialise our DNSSEC resolver context */
-	if(!unbound_init(dnsctx)){
-		fprintf(stderr,"unbound_init() failed, aborting\n");
-		return 1;
-	}
-	if(verbose) {
-	   fprintf(stderr,"unbound_init() called\n");
-	}
-    }
-#endif
     cfg = confread_load(configfile, &err, resolvip, ctlbase,configsetup);
 
     if(cfg == NULL) {
@@ -317,75 +321,123 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 	exit(0);
     }
 
-    if(defaultroute) {
-	char b[ADDRTOT_BUF];
-	if (tnatoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr) != NULL
-	&& tnatoaddr(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr) != NULL) {
-
-	   /* It's not an IPv4 or IPv6 address, try a dns lookup */
-#ifdef DNSSEC
-	   if(verbose) {
-		printf("Calling unbound_resolve() for defaultroute value\n");
-	   }
-	   bool e = unbound_resolve(dnsctx, defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
-	   if(!e) {
-		e = unbound_resolve(dnsctx, defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
-	   }
-	   if(!e) {
-		printf("ignoring invalid defaultroute: %s\n", defaultroute);
-#else
-	   /* ttoaddr() ends up calling gethostbyname(), which does not support DNSSEC */
-	   err_t ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET, &cfg->dr);
-	   if(ugh != NULL) {
-		ugh = ttoaddr(defaultroute, strlen(defaultroute), AF_INET6, &cfg->dr);
-	   }
-	   if(ugh != NULL) {
-		printf("ignoring invalid defaultroute: %s:%s\n", defaultroute, ugh);
-#endif
-	    defaultroute = NULL;
-	    /* exit(4); */
-	    } 
+    /* No longer rely on user or scripts for defaultroute sourceip and
+     * nexthop ip Ask the kernel via netlink, and store defaultroute in
+     * cfg->dr and defaultnexthop in cfg->dnh which are a struct ip_address */
+ 
+	/* Create socket */
+	if ((sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE)) < 0) {
+	        int e = errno;
+		printf("create socket: (%d: %s)", e, strerror(e));
 	}
+
+	/* Create request for route */
+	memset(msgbuf, 0, BUFSIZE);
+	nlmsg = (struct nlmsghdr *)msgbuf;
+
+	nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
+	nlmsg->nlmsg_flags = NLM_F_REQUEST;
+	nlmsg->nlmsg_type = RTM_GETROUTE;
+	nlmsg->nlmsg_seq = msgseq++;
+	nlmsg->nlmsg_pid = getpid();
+
+	rtmsg = (struct rtmsg *)NLMSG_DATA(nlmsg);
+	rtmsg->rtm_family = 0;
+	rtmsg->rtm_table = 0;
+        rtmsg->rtm_protocol = 0;
+        rtmsg->rtm_scope = 0;
+        rtmsg->rtm_type = 0;
+        rtmsg->rtm_src_len = 0;
+        rtmsg->rtm_dst_len = 0;
+        rtmsg->rtm_tos = 0;
+
+	/* Get 0.0.0.0 */
+	rtmsg->rtm_family = AF_INET;
+	rtmsg->rtm_dst_len = 32; /* bits */
+	rtattr = (struct rtattr *)RTM_RTA(rtmsg);
+	rtattr->rta_len = sizeof(struct rtattr) + 4; /* bytes */
+	rtattr->rta_type = RTA_DST;
+	((unsigned char*)RTA_DATA(rtattr))[0] = 8;
+	((unsigned char*)RTA_DATA(rtattr))[1] = 8;
+	((unsigned char*)RTA_DATA(rtattr))[2] = 8;
+	((unsigned char*)RTA_DATA(rtattr))[3] = 8;
+	nlmsg->nlmsg_len += rtattr->rta_len;
+
+	/* Send request */
+	if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0)
+		perror("write socket: ");
+
+	/* Read response */
+	len = read_netlink_socket(sock, msgbuf, msgseq, getpid());
+	if (len < 0) {
+		printf("read fail\n");
+		return -1;
+	}
+
+	/* Parse response */
+	for (; NLMSG_OK(nlmsg, len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
+		struct rtmsg *rtmsg;
+		struct rtattr *rtattr;
+		int rtlen;
+		char tmpbuf[IF_NAMESIZE + 128];
+
+		/* Check for IPv4 / IPv6 */
+		rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
+		if (rtmsg->rtm_family != AF_INET &&
+		     rtmsg->rtm_family != AF_INET6)
+			continue;
+
+		printf("\n");
+		rtattr = (struct rtattr *) RTM_RTA(rtmsg);
+		rtlen = RTM_PAYLOAD(nlmsg);
+		for (; RTA_OK(rtattr, rtlen); rtattr = RTA_NEXT(rtattr, rtlen))
+			switch (rtattr->rta_type) {
+			case RTA_OIF:
+				if_indextoname(*(int *)RTA_DATA(rtattr),
+					       tmpbuf);
+				printf("interface %s\n", tmpbuf);
+				break;
+			case RTA_GATEWAY:
+				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
+					  tmpbuf, sizeof(tmpbuf));
+				printf("gateway %s\n", tmpbuf);
+				if (tnatoaddr(tmpbuf, strlen(tmpbuf), rtmsg->rtm_family, &cfg->dnh) !=  NULL) {
+					printf("unknown gateway results from kernel\n");
+				}
+				break;
+			case RTA_PREFSRC:
+				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
+					  tmpbuf, sizeof(tmpbuf));
+				printf("source %s\n", tmpbuf);
+				if (tnatoaddr(tmpbuf, strlen(tmpbuf), rtmsg->rtm_family, &cfg->dr) !=  NULL) {
+					printf("unknown defaultsource results from kernel\n");
+				}
+				break;
+			case RTA_DST:
+				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
+					  tmpbuf, sizeof(tmpbuf));
+				printf("destination %s\n", tmpbuf);
+				break;
+			}
+	}
+
+	close(sock);
+
 	if(verbose) {
+	   char b[ADDRTOT_BUF];
 	   addrtot(&cfg->dr, 0, b, sizeof(b));
-	   printf("default route is: %s\n", b);
-	}
-    }
-
-    if(defaultnexthop) {
-	char b[ADDRTOT_BUF];
-	if (tnatoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh) != NULL
-	&& tnatoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh) != NULL) {
-
-	   /* It's not an IPv4 or IPv6 address, try a dns lookup */
-#ifdef DNSSEC
-	   if(verbose) {
-		printf("Calling unbound_resolve() for defaultnexthop value\n");
-	   }
-	   bool e = unbound_resolve(dnsctx, defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
-	   if(!e) {
-		e = unbound_resolve(dnsctx, defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh);
-	   }
-	   if(!e) {
-		printf("ignoring invalid defaultnexthop: %s\n", defaultnexthop);
-#else
-	   /* ttoaddr() ends up calling gethostbyname(), which does not support DNSSEC */
-	   err_t ugh = ttoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET, &cfg->dnh);
-	   if(ugh != NULL) {
-		ugh = ttoaddr(defaultnexthop, strlen(defaultnexthop), AF_INET6, &cfg->dnh);
-	   }
-	   if(ugh != NULL) {
-		printf("ignoring invalid defaultnexthop: %s:%s\n", defaultroute, ugh);
-#endif
-	    defaultnexthop = NULL;
-	    /* exit(4); */
-	    } 
-	}
-	if(verbose) {
+	   printf("default route source is: %s\n", b);
 	   addrtot(&cfg->dnh, 0, b, sizeof(b));
-	   printf("default route is: %s\n", b);
+	   printf("default route nexthop is: %s\n", b);
 	}
-    }
+
+
+
+
+
+
+
+
 
     if(autoall)
     {
@@ -621,9 +673,6 @@ struct ub_ctx *dnsctx = ub_ctx_create();
 
      }
 
-#ifdef DNSSEC
-	ub_ctx_delete(dnsctx);
-#endif
     confread_free(cfg);
     exit(exit_status);
 }
