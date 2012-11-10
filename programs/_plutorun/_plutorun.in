@@ -29,7 +29,7 @@ then
 fi
 
 # spin off into the background, with our own logging
-echo "$verb Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun
+echo "$verb Pluto subsystem..." 
 execdir=${IPSEC_EXECDIR-@IPSEC_EXECDIR@}
 confdir=${IPSEC_CONFS-@IPSEC_CONFS@}
 
