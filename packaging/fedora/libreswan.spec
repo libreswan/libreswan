@@ -12,7 +12,7 @@ Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
 #Version: IPSECBASEVERSION
-Version: 2.7
+Version: 3.0
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
