@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 # Pluto control daemon
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
-# Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2010-2012 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
@@ -14,10 +14,19 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-me='ipsec _plutorun'		# for messages
-
-
 pidfile=/var/run/pluto/pluto.pid
+verb="Starting"
+for dummy
+do
+	case "$1" in
+	--re)	                 verb="Restarting"	;;
+	--plutorestartoncrash)   plutorestartoncrash="$2"; shift ;;
+	--)	                 shift ; break	;;
+	-*)	                 echo "ipsec _plutorun: unknown option \`$1'" >&2 ; exit 2	;;
+	*)	                 break	;;
+	esac
+	shift
+done
 
 # initially we are in the foreground, with parent looking after logging
 
@@ -28,10 +37,14 @@ then
 	exit 1
 fi
 
+echo "Plutorun started on "`date` 
+
+
+
 # spin off into the background, with our own logging
-echo "$verb Pluto subsystem..." 
+echo "$verb Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun
 execdir=${IPSEC_EXECDIR-@IPSEC_EXECDIR@}
-confdir=${IPSEC_CONFS-@IPSEC_CONFS@}
+libdir=${IPSEC_LIBDIR-@IPSEC_LIBDIR@}
 
 # Work around problem with broken shells (e.g. Busybox sh).
 # We are called with stdout & stderr going to a logger process started
@@ -46,12 +59,15 @@ confdir=${IPSEC_CONFS-@IPSEC_CONFS@}
 exec 1>/dev/null
 exec 2>/dev/null
 
-while true 
-do
-	$execdir/pluto --config ${IPSEC_CONFS}/ipsec.conf --nofork --secretsfile "$IPSEC_SECRETS" $ipsecdiropt
+until (
+	# eval allows to contain redirection and other magic
+	eval $execdir/pluto --config ${IPSEC_CONFS}/ipsec.conf --nofork --secretsfile "$IPSEC_SECRETS"
 	status=$?
 	echo "exit"
 	echo $status
+	) 
+do
+	status=$?
 	case "$status" in
 	13)	echo "internal failure in pluto scripts, impossible to carry on"
 		exit 1
@@ -67,10 +83,6 @@ do
 		exit 0
 		;;
 	*)	st=$status
-	        if -n "`grep plutorestartoncrash=no`"
-		then
-		    exit 0
-		fi
 
 		if test $st -gt 128
 		then
@@ -78,8 +90,15 @@ do
 		fi
 		echo "!pluto failure!:  exited with error status $st"
 		echo "restarting IPsec after pause..."
-		sleep 10
+		(
+			sleep 10
+			# use start, not restart for now, due to module unloading/loading
+			ipsec setup start
+		) </dev/null >/dev/null 2>&1 &
+		exit 1
 		;;
 	esac
-done </dev/null 2>&1 
+done </dev/null 2>&1 |
+	logger -s -p daemon.error -t ipsec__plutorun >/dev/null 2>/dev/null &
+
 exit 0
