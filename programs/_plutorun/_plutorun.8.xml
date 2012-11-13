@@ -6,11 +6,11 @@
 <refmeta>
 <refentrytitle>_PLUTORUN</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>25 Apr 2002</refmiscinfo>
+<refmiscinfo class='date'>12 Nv 2012</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec _plutorun</refname>
-<refpurpose>internal script to start pluto</refpurpose>
+<refpurpose>internal script to (re)start pluto on old SYSV initscript systems</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 
@@ -19,19 +19,24 @@
 is called by
 <emphasis remap='B'>_realsetup</emphasis>
 to configure and bring up 
-<emphasis remap='B'>ipsec_pluto(8).</emphasis>
-It calls 
-<emphasis remap='B'>_plutoload</emphasis>
-to invoke pluto, and watches to makes sure that pluto is restarted if it fails.</para>
+<emphasis remap='B'>pluto(8).</emphasis>
+It invokes pluto, and watches to makes sure that pluto is restarted if it fails, as
+the SYSV initscripts do not provide a restart facility. When other init systems are
+used, such as systemd or upstart, _plutorun is not used.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec__realsetup</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec__plutoload</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec__realsetup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+</para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
 <para>Man page written for the Linux FreeS/WAN project &lt;<ulink url='http://www.freeswan.org/'>http://www.freeswan.org/</ulink>&gt;
-by Michael Richardson. Original program written by Henry Spencer.</para>
+by Michael Richardson. Original program written by Henry Spencer.
+Updated for the Libreswan project &lt;<ulink url='http://www.libreswan.org/'>http://www.libreswan.org/</ulink>&gt; by Paul Wouters</para>
 
 </refsect1>
 </refentry>
