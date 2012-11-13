@@ -85,8 +85,11 @@ then
 		# load hardware random related modules - some changed names over time
 		@MODPROBE@ hw_random 2>/dev/null
 		@MODPROBE@ hwrng 2>/dev/null
+		@MODPROBE@ virtio-rng 2>/dev/null
 		@MODPROBE@ amd-rng 2>/dev/null
 		@MODPROBE@ intel-rng 2>/dev/null
+		@MODPROBE@ geode-rng 2>/dev/null
+		# @MODPROBE@ timeriomem-rng 2>/dev/null
 
 		# load all NETKEY modules
 		for mod in ipcomp6 ipcomp xfrm6_tunnel xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
