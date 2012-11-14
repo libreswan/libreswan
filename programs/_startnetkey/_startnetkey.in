@@ -2,7 +2,8 @@
 # Netkey startup script
 # Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
 # Copyright (C) 2007 - 2008 Paul Wouters <paul@xelerance.com>
-# Copyright (C) 2008 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008-2011 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008-2012 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,181 +16,94 @@
 # for more details.
 #
 
-test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
-me='ipsec _startnetkey'		# for messages
-
-modules=/proc/modules
 kamepfkey=/proc/net/pfkey
 ipsecpfkey=/proc/net/ipsec/version
 
-info=/dev/null
-log=daemon.error
-for dummy
-do
-	case "$1" in
-	--log)		log="$2" ; shift	;;
-	--info)		info="$2" ; shift	;;
-	--debug)	debug="$2" ; shift	;;
-	--omtu)		omtu="$2" ; shift	;;
-	--fragicmp)	fragicmp="$2" ; shift	;;
-	--hidetos)	hidetos="$2" ; shift	;;
-	--)	shift ; break	;;
-	-*)	echo "$me: unknown option \`$1'" >&2 ; exit 2	;;
-	*)	break	;;
-	esac
-	shift
-done
+action="$1"
 
-
-logger -p $log -t ipsec_setup "Using NETKEY(XFRM) stack"
-
-
-# log only to syslog, not to stdout/stderr
-logonly() {
-	logger -p $log -t ipsec_setup
-}
-
-defaultinterface() {
-	local getphysdev getifaddr addr phys next multiaddr multidefault
-	addr=
-	phys=
-	next=
-	multiaddr=
-	multidefault=
-
-	getphysdev() {
-	    local phys next addr
-	    phys=
-	    next=
-	    addr=
-	    while test $# -gt 0
-	      do
-	      case $1 in
-		  dev)
-		      phys=$2
-		      shift; shift;
-		      ;;
-		  via)
-		      next=$2
-		      shift; shift;
-		      ;;
-		  src)
-		      addr=$2
-		      shift; shift
-		      ;;
-		  *)
-		      shift
-		      ;;
-	      esac
-	    done
-	    echo "phys=$phys"
-	    echo "next=$next"
-	    echo "addr=$addr"
-	}
-
-	getifaddr() {
-	    local addr peer
-	    addr=
-	    peer=
-	    while test $# -gt 0
-	      do
-	      case $1 in
-		  inet)
-		      addr=$2
-		      shift; shift
-		      ;;
-		  peer)
-		      peer=$2
-		      shift; shift
-		      ;;
-		  *)
-		      shift
-		      ;;
-	      esac
-	    done
-	    if test -n "$peer"
-	    then
-		echo "next=${peer%/*}"
-	    fi
-	    echo "addr=${addr%/*}"
-	}
-
-	iproutedefault=`ip route list 0.0.0.0/0`
-	if test -n "$iproutedefault"
-	then
-	  if test `echo "$iproutedefault" | wc -l` -gt 1
-	  then
-	    multidefault=1
-	    iproutedefault=`echo "$iproutedefault" | head -1`
-	  fi
-	  eval `getphysdev $iproutedefault`
-	  if test -z "$next" -o -z "$addr" -a -n "$phys"
-	  then
-	    ipaddrlist=`ip -o -f inet addr list dev $phys` 
-	    if test `echo "$ipaddrlist" | wc -l` -gt 1
-	    then
-	      multiaddr=1
-	      ipaddrlist=`echo "$ipaddrlist" | head -1`
-	    fi
-	    eval `getifaddr $ipaddrlist`
-	  fi
-	  if test -n "$multidefault"
-	  then
-	    echo "multiple default routes, using $next on $phys"
-	  fi
-	  if test -n "$multiaddr"
-	  then
-	    echo "multiple ip addresses, using  $addr on $phys"
-	  fi
-	else
-	  echo "no default routes detected"
-	fi
-	# simulate old silly output
-	echo "defaultroutephys=$phys" >> $info
-	echo "defaultroutevirt=none" >> $info
-	echo "defaultrouteaddr=$addr" >> $info
-	echo "defaultroutenexthop=$next" >> $info
-}
-
-# main line
-
-# since klips/mast now calls _startklips, we know we're called to use netkey
-# so if we find klips/mast, try to unload it or die
-if test -f $ipsecpfkey
+if [ $action = "stop" ]
 then
-	echo "Warning: found KLIPS/MAST stack loaded"
-	echo -n Trying to unload KLIPS/MAST module:
-	rmmod ipsec 2> /dev/null
-
-	if test -f $ipsecpfkey
+	# unload either stack - the user might have changed protostack=
+	if [ -f $kamepfkey ]
 	then
-		echo "FAILURE to unload KLIPS/MAST module. Use protostack=klips or protostack=mast, or recompile kernel without builtin KLIPS/MAST support"
-                exit 1
-        fi
-fi
+		# netkey stack found, let's unload - does this cause false positive for inline built?
+                for mod in ipcomp ipcomp6 xfrm6_tunnel xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
+                        xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel \
+                        xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key xfrm_user
+                   do
+                        # echo -n "$mod "
+                        rmmod $mod 2> /dev/null
+                   done
+                echo
+		if [ -f $kamepfkey -o -n '`lsmod | grep "^esp"`' ]
+		then
+			echo "FAILURE to unload NETKEY modules"
+                	exit 1
+		fi
+	fi
+	if [ -f $ipsecpfkey ]
+	then
+		echo "Warning: found KLIPS/MAST stack loaded"
+		echo -n "Trying to unload KLIPS/MAST module..."
+		rmmod ipsec 2> /dev/null
+		if [ -f $ipsecpfkey ]
+		then
+			echo "FAILURE to unload KLIPS/MAST module"
+                	exit 1
+        	fi
+		echo
+	fi
 
-	if test -f $modules
+elif [ $action = "start" ]
+then
+	if [ -f $ipsecpfkey ]
+	then
+		echo "Warning: found KLIPS/MAST stack loaded"
+		echo -n "Trying to unload KLIPS/MAST module..."
+		rmmod ipsec 2> /dev/null
+		if [ -f $ipsecpfkey ]
+		then
+			echo "FAILURE to unload KLIPS/MAST module"
+                	exit 1
+        	fi
+		echo
+        fi
+
+	# Test if we had any remnant policies from previous (hung) netkey modules
+	ip xfrm state > /dev/null 2>&1
+	RETVAL=$?
+	if [ $RETVAL -ne 0 ]
+	then
+		echo "Found existing NETKEY/XFRM state - flushing"
+		ip xfrm state flush
+		ip xfrm policy flush
+	fi
+
+	if test -f /proc/modules
 	then
 		# load hardware random related modules - some changed names over time
 		@MODPROBE@ hw_random 2>/dev/null
 		@MODPROBE@ hwrng 2>/dev/null
+		@MODPROBE@ virtio-rng 2>/dev/null
 		@MODPROBE@ amd-rng 2>/dev/null
 		@MODPROBE@ intel-rng 2>/dev/null
+		@MODPROBE@ geode-rng 2>/dev/null
+		# @MODPROBE@ timeriomem-rng 2>/dev/null
 
 		# load all NETKEY modules
 		for mod in ipcomp6 ipcomp xfrm6_tunnel xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
 			xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel \
-			xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 iaf_key
+			xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key
 		   do
-			#echo -n "$mod "
+			# echo -n "$mod "
 			@MODPROBE@ $mod 2> /dev/null
 		   done
 
 		# xfrm_user is the old name for xfrm4_tunnel - backwards compatibility
 		@MODPROBE@ xfrm_user 2> /dev/null
 
-		# padlock must load before aes module
+		# padlock must load before aes module - though does not exist on newer kernels
 		# padlock-aes must load before padlock-sha for some reason
 		@MODPROBE@ padlock 2>/dev/null
 		@MODPROBE@ padlock-aes 2>/dev/null
@@ -197,49 +111,17 @@ fi
 
 		# load the most common ciphers/algo's
 		# aes-x86_64 has higher priority in via crypto api
-		for crypto in aesni_intel es-x86_64 geode-aes aes aes_generic des sha512 sha256 md5 cbc xcbc ecb twofish blowfish serpent ccm gcm \
-				ctr cts deflate cast5 cast6 lzo sha256_generic sha512_generic camellia
+		for crypto in aesni_intel es-x86_64 geode-aes aes aes_generic des sha512 sha256 md5 cbc \
+			    xcbc ecb twofish blowfish serpent ccm gcm ctr cts deflate cast5 cast6 lzo \
+			    sha256_generic sha512_generic camellia
 		   do
-			#echo -n "$crypto "
+			# echo -n "$crypto "
 			@MODPROBE@ $crypto 2> /dev/null
 		   done
 	fi
-
-
-	if ip xfrm state > /dev/null 2>&1
-	then
-		ip xfrm state flush
-		ip xfrm policy flush
-	elif type setkey > /dev/null 2>&1
-	then
-	 	# Check that the setkey command is available.
-         	setkeycmd= 	 
-         	PATH=$PATH:/usr/local/sbin 	 
-         	for dir in `echo $PATH | tr ':' ' '` 	 
-         	do 	 
-                	if test -f $dir/setkey -a -x $dir/setkey 	 
-                 	then
-                         	setkeycmd=$dir/setkey
-                         	break                   # NOTE BREAK OUT 
-                	fi
-         	done
-        	$setkeycmd -F
-        	$setkeycmd -FP
-	else
-	
-        	echo "WARNING: cannot flush state/policy database -- \`$1'. Install a newer version of iproute/iproute2 or install the ipsec-tools package to obtain the setkey command." |
-                	logger -s -p daemon.error -t ipsec_setup
-	fi
-
-# figure out interfaces for defaultroute
-for i
-do
-        case "$i" in
-        %defaultroute)  defaultinterface        ;;
-        *)      echo "interface \`$i' not understood"
-                exit 1
-                ;;
-        esac
-done
+else
+	echo "ipsec _startnetkey: unknown action '$action' - only 'start' and 'stop' are supported"
+	exit 10
+fi
 
 exit 0

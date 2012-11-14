@@ -112,35 +112,12 @@ verify_config() {
 start() {
     verify_config
 
-    # Pick up IPsec configuration (until we have done this, successfully, we
-    # do not know where errors should go, hence the explicit "daemon.error"s.)
-    # Note the "--export", which exports the variables created.
-    variables=`ipsec addconn $IPSEC_CONFS/ipsec.conf --varprefix IPSEC --configsetup`
-    eval $variables
-    
-    IPSEC_confreadsection=${IPSEC_confreadsection:-setup}
-    export IPSEC_confreadsection
-
-    IPSECsyslog=${IPSECsyslog:-daemon.error}
-    export IPSECsyslog
-
-    # remove for: @cygwin_END@
-    (
     ipsec _realsetup start
-    RETVAL=$? 
-    ) 2>&1 | logger -s -p $IPSECsyslog -t ipsec_setup 2>&1  
-    return $RETVAL
 }
 
 
 stop() {
-    IPSECsyslog=${IPSECsyslog:-daemon.error}
-    export IPSECsyslog
-    (
     ipsec _realsetup stop
-    RETVAL=$? 
-    ) 2>&1 | logger -s -p $IPSECsyslog -t ipsec_setup 2>&1  
-    return $RETVAL
 }
 
 restart() {

@@ -21,7 +21,7 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 SUBDIRS=
 
 SUBDIRS+=proc pluto addconn 
-SUBDIRS+=configs _keycensor _plutoload _plutorun
+SUBDIRS+=configs _keycensor _plutorun
 SUBDIRS+=_realsetup _secretcensor _updown 
 SUBDIRS+=auto barf verify ipsec look newhostkey ranbits secrets initnss
 SUBDIRS+=rsasigkey setup showhostkey

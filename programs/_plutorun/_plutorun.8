@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: _PLUTORUN
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/06/2010
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 11/12/2012
 .\"    Manual: [FIXME: manual]
 .\"    Source: [FIXME: source]
 .\"  Language: English
 .\"
-.TH "_PLUTORUN" "8" "10/06/2010" "[FIXME: source]" "[FIXME: manual]"
+.TH "_PLUTORUN" "8" "11/12/2012" "[FIXME: source]" "[FIXME: manual]"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -19,24 +28,21 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-ipsec__plutorun \- internal script to start pluto
+ipsec__plutorun \- internal script to (re)start pluto on old SYSV initscript systems
 .SH "DESCRIPTION"
 .PP
 \fI_plutorun\fR
 is called by
 \fB_realsetup\fR
 to configure and bring up
-\fBipsec_pluto(8)\&.\fR
-It calls
-\fB_plutoload\fR
-to invoke pluto, and watches to makes sure that pluto is restarted if it fails\&.
+\fBpluto(8)\&.\fR
+It invokes pluto, and watches to makes sure that pluto is restarted if it fails, as the SYSV initscripts do not provide a restart facility\&. When other init systems are used, such as systemd or upstart, _plutorun is not used\&.
 .SH "SEE ALSO"
 .PP
 \fBipsec\fR(8),
 \fBipsec_setup\fR(8),
 \fBipsec__realsetup\fR(8),
-\fBipsec__plutoload\fR(8),
-\fBipsec_pluto\fR(8)\&.
+\fBpluto\fR(8)\&.
 .SH "HISTORY"
 .PP
-Man page written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org/\fR\m[]> by Michael Richardson\&. Original program written by Henry Spencer\&.
+Man page written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org/\fR\m[]> by Michael Richardson\&. Original program written by Henry Spencer\&. Updated for the Libreswan project <\m[blue]\fBhttp://www\&.libreswan\&.org/\fR\m[]> by Paul Wouters

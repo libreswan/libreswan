@@ -1,6 +1,7 @@
 #!/bin/sh
 # IPsec startup and shutdown command
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
+# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,21 +13,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-
-test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
-
-LC_ALL=C export LC_ALL
-
-me='ipsec setup'		# for messages
+# This is the version for use on Linux, see _realsetup.bsd for OSX/BSD
 
 # Misc. paths (some of this should perhaps be overrideable from ipsec.conf).
-plutopid=/var/run/pluto/pluto.pid
-plutoctl=/var/run/pluto/pluto.ctl
-subsysdir=/var/lock/subsys
-subsyslock=/var/lock/subsys/ipsec
-lock=/var/run/pluto/ipsec_setup.pid
-sysflags=/proc/sys/net/ipsec
-modules=/proc/modules
+rundir=/var/run/pluto
+plutopid=$rundir/pluto.pid
+plutoctl=$rundir/pluto.ctl
 ipsecversion=/proc/net/ipsec_version
 kamepfkey=/proc/net/pfkey
 
@@ -44,456 +36,125 @@ then
 	exit 1
 fi
 
-# defaults for "config setup" items
-
-#######################################################################
-### WARNING: some of these defaults are set using addconn --configsetup
-###          This will go away!
-#######################################################################
-IPSECinterfaces=${IPSECinterfaces:-%defaultroute}
-IPSECinterfaces=${IPSECinterfaces%%%none}
-# IPSECsyslog	"daemon.error"
-# IPSECklipsdebug	"none"
-# IPSECplutodebug	"none"
-# IPSECdumpdir	"" (no dump)
-# IPSECfragicmp	"yes"
-# IPSEChidetos	"yes"
-IPSECuniqueids=${IPSECuniqueids:-yes}
-IPSECdisable_port_floating=${IPSECdisable_port_floating:-no}
-IPSECcrlcheckinterval=${IPSECcrlcheckinterval:-0}
-IPSECprotostack=${IPSECprotostack:-auto}
-IPSECplutostderrlogtime=${IPSECplutostderrlogtime:-no}
-# IPSECoverridemtu	""
-
-# set defaults
-mast=false
-klips=false
-netkey=false
-
 # which kernel are we using?
-case $IPSECprotostack in
-auto)
-    # for now, you can not auto-select mast
-    #if test -f /proc/sys/net/ipsec/debug_mast
-    if false
-    then
-    	netkey=false; klips=false; mast=true;
-    elif test -f $kamepfkey
-	then
-	    netkey=true; klips=false;
-	else
-	    netkey=false; klips=true;
-    fi;;
-    
-klips)  netkey=false; klips=true;  mast=false;;
-mast)   netkey=false; klips=false; mast=true;;
-netkey) 
-    if test \! -f $kamepfkey
-    then
-        @MODPROBE@ af_key;
-    fi
-	netkey=true;  klips=false; mast=false;;
-none)   netkey=false; klips=false; mast=false;;
-nostack) netkey=false; klips=false; mast=false;;
-esac
-
-# Shall we trace?
-execute="true"
-display="false"
-for i in $IPSEC_setupflags
-do
-	case "$i" in
-	"--showonly")	execute="false" ; display=true ;;
-	"--show")	display=true ;;
-	esac
-done
-
-if $display
-then
-	echo "	" PATH="$PATH"
-fi
-
-perform() {
-	if $display
-	then
-		echo "	" "$*"
-	fi
-
-	if $execute
-	then
-		eval "$*"
-	fi
-}
-
-
-# for no-stdout logging:
-LOGONLY="logger -p $IPSECsyslog -t ipsec_setup"
-
-# What an ugly string.
-# Must be a string, not a function, because it is nested
-# within another sequence (for plutorun).
-# Luckily there are NO substitutions in it.
-
-KILLKLIPS=":"
-
-if $klips
-then
-        #
-        # don't use ifconfig here,  there may be thousands of
-        # interfaces to parse through,  much quicker to go
-        # direct to the source
-        #
-    KILLKLIPS='ifl=`grep -v NULL /proc/net/ipsec_tncfg 2> /dev/null | sed -n -e "/^ipsec/s/ .*//p" ` ;
-        test "X$ifl" != "X" &&
-        for i in  $ifl ;
-        do
-		ip link set $i down ;
-		ip addr flush dev $i ;
-		ipsec tncfg --detach --virtual $i ;
-	done ;
-	test -r /proc/net/ipsec_klipsdebug && ipsec klipsdebug --none ;
-	test -d /proc/net/ipsec/eroute && ipsec eroute --clear ;
-	test -d /proc/net/ipsec/spi && ipsec spi --clear'
-fi
-
-if $netkey
-then
-	KILLKLIPS='
-		if ip xfrm state > /dev/null 2>&1 ;
-		then
-			ip xfrm state flush ;
-			ip xfrm policy flush ;
-		elif type setkey > /dev/null 2>&1 ;
-		then
-			setkey -F ;
-			setkey -FP ;
-		fi'
-fi
-
-
+IPSECprotostack=`ipsec addconn --liststack`
 
 # do it
 case "$1" in
   start|--start|_autostart)
-	# First, does it seem to be going already?
-	perform test ! -f $lock "||" "{" \
-		echo "\"Libreswan IPsec apparently already active, start aborted\"" ";" \
-		exit 0 ";" \
-		"}"
-
-	# announcement
 	# (Warning, changes to this log message may affect barf.)
 	version="`ipsec --version | awk 'NR == 1 { print $(3) }' | sed -e 's/^U\(.*\)\/K(.*/\1/'`"
 	case "$1" in
-	start|--start)	perform echo "\"Starting Libreswan IPsec $version...\""	;;
-	_autostart)	perform echo "\"Restarting Libreswan IPsec $version...\""	;;
+	start|--start)	echo "Starting Libreswan IPsec $version..."	;;
+	_autostart)	echo "Restarting Libreswan IPsec $version..."	;;
 	esac
 
 	# preliminaries
-	perform rm -f $lock
-	mkdir -p $rundir > /dev/null 2>/dev/null
+	mkdir -p $rundir
 	chmod 700 $rundir > /dev/null 2>/dev/null
-	mkdir -p $subsysdir > /dev/null 2>/dev/null
 
-	for f in /dev/random /dev/urandom
-	do
-		perform test -r $f "||" "{" \
-			echo "\"...unable to start Libreswan IPsec, no $f!\"" ";" \
-			exit 1 ";" \
-			"}"
-        done
-
-	# the meaning of $$ at a different runtime is questionable!
-	perform echo '$$' ">" $lock
-	perform test -s $lock "||" "{" \
-		echo "\"...unable to create $lock, aborting start!\"" ";" \
-		rm -f $lock ";" \
-		exit 1 ";" \
-		"}"
-
-	# overridemtu is ignored on 2.6, so warn the user.
-	# no longer warn about %defaultroute, because it has some use on
-	# netkey for orienting ourselves when using left=%defaultroute
-	if $netkey
-	then
-        	if test $IPSECoverridemtu
-        	then
-                	echo "WARNING: overridemtu= is ignored when using the NETKEY stack"
-        	fi
-
-
-		perform ipsec _startnetkey \
-				--debug "\"$IPSECklipsdebug\"" \
-				--omtu "\"$IPSECoverridemtu\"" \
-				--fragicmp "\"$IPSECfragicmp\"" \
-				--hidetos "\"$IPSEChidetos\"" \
-				--log "\"$IPSECsyslog\"" \
-				$IPSECinterfaces "||" \
-			"{" rm -f $lock ";" exit 1 ";" "}"
-	fi
-
-	if $klips || $mast
-	then
-		# here we go
-		perform ipsec _startklips \
-				--debug "\"$IPSECklipsdebug\"" \
-				--omtu "\"$IPSECoverridemtu\"" \
-				--fragicmp "\"$IPSECfragicmp\"" \
-				--hidetos "\"$IPSEChidetos\"" \
-				--log "\"$IPSECsyslog\"" \
-				$IPSECinterfaces "||" \
-			"{" rm -f $lock ";" exit 1 ";" "}"
-
-# Paul: Shouldn't the below tests be outside the klips test?
-
-		perform test -f $ipsecversion "||" \
-			test -f $kamepfkey "||" "{" \
-			echo "\"OOPS, should have aborted!  Broken shell!\"" ";" \
-			exit 1 ";" \
-			"}"
-	fi
-
-	# misc pre-Pluto setup
-
-	perform test -d $subsysdir "&&" touch $subsyslock
-
-	plutorestartoncrash=""
-	case "$IPSECplutorestartoncrash" in
-	    true|[yY]|yes|restart) plutorestartoncrash="--plutorestartoncrash true";;
-	    false|[nN]|no|die) plutorestartoncrash="--plutorestartoncrash false" ;;
-        esac
-
-	# Pluto
-	case "$1" in
-	start|--start)	re=	;;
-	_autostart)	re=--re	;;
+	# in case we are switching stacks, remove the old one 
+	case $IPSECprotostack in
+	netkey) 
+		if [ -f $ipsecversion ]
+		then
+	   		ipsec _startklips stop
+		fi
+		;;
+	none|nostack)   ;;
+	klips) 
+		if [ -f $kamepfkey ]
+		then
+	   		ipsec _startnetkey stop
+		fi
+		;;
+	mast)
+		if [ -f $kamepfkey ]
+		then
+	   		ipsec _startnetkey stop
+		fi
+		;;
+	*)
+		echo "unexpected stack $IPSECprotostack"
+		;;
 	esac
-		perform ipsec _plutorun $re \
-			--debug "\"$IPSECplutodebug\"" \
-			--uniqueids "\"$IPSECuniqueids\"" \
-			--force_busy "\"$IPSECforce_busy\"" \
-			--nocrsend "\"$IPSECnocrsend\"" \
-			--strictcrlpolicy "\"$IPSECstrictcrlpolicy\"" \
-			--nat_traversal "\"$IPSECnat_traversal\"" \
-			--keep_alive "\"$IPSECkeep_alive\"" \
-			--protostack "\"$IPSECprotostack\"" \
-			--force_keepalive "\"$IPSECforce_keepalive\"" \
-			--disable_port_floating "\"$IPSECdisable_port_floating\"" \
-			--virtual_private "\"$IPSECvirtual_private\"" \
-			--listen "\"$IPSEClisten\"" \
-			--crlcheckinterval "\"$IPSECcrlcheckinterval\"" \
-			--nhelpers "\"$IPSECnhelpers\"" \
-			--secctx_attr_value "\"$IPSECsecctx_attr_value\"" \
-			--dump "\"$IPSECdumpdir\"" \
-			--stderrlog "\"$IPSECplutostderrlog\"" \
-			--plutostderrlogtime "\"$IPSECplutostderrlogtime\"" \
-			--log "\"$IPSECsyslog\"" $plutorestartoncrash \
-			--pid "\"$plutopid\"" "||" "{" \
-		    $KILLKLIPS ";" \
-		    rm -f $lock ";" \
-		    exit 1 ";" \
-		    "}"
 
+	if [ "$IPSECprotostack" = "netkey" ]
+	then
+		ipsec _startnetkey start
+	fi
+
+	if [ "$IPSECprotostack" = "klips" -o "$IPSECprotostack" = "mast" ]
+	then
+		ipsec _startklips start
+	fi
+
+	# Finally start the pluto daemon in a restart loop
+	ipsec _plutorun &
 	# done!
-	perform echo "\"...Libreswan IPsec started\"" "|" $LOGONLY
+	echo "...Libreswan IPsec started"
 	;;
 
   stop|--stop|_autostop)		# _autostop is same as stop
 	# Shut things down.
-	perform echo "\"Stopping Libreswan IPsec...\""
-	perform \
-		if test -r $lock ";" \
-		then \
-			status=0 ";" \
-		else \
-			echo "\"stop ordered, but IPsec appears to be already stopped!\"" ";" \
-			echo "\"doing cleanup anyway...\"" ";" \
-			status=0 ";" \
-		fi
-
-	if [ -f /var/run/pluto.pid -a ! -f /var/run/pluto/pluto.pid ]
+	echo "Stopping Libreswan IPsec..."
+	[ -f $plutoctl ] && ipsec whack --shutdown
+	RETVAL=$?
+	rm -f $plutoctl
+	if [ $RETVAL -ne 0 ]
 	then
-	    mkdir -p /var/run/pluto
-	    mv /var/run/pluto.pid /var/run/pluto/pluto.pid
+		sleep 1; 
+		if [ -s $plutopid ]
+		then
+			echo "Attempt to shut Pluto down failed!  Trying kill"
+			if [ -d /proc/$plutopid ]
+			then
+				kill `cat $plutopid` 
+				RETVAL=$?
+				sleep 5;
+				if [ $RETVAL -ne 0 ]
+				then
+				echo "Kill failed - removing orphaned $plutopid"
+				fi
+			else
+				echo "Removing orphaned $plutopid"
+			fi
+			rm -f $plutopid
+		fi
 	fi
+	# we could have pluto's with --nofork running, with no active pid
+	plutos=`pidof pluto`
+	for pluto in $plutos; do kill $pluto; done
 
-	perform test -f $plutopid "&&" "{" \
-		if test -d '/proc/`' cat $plutopid '`' ">" /dev/null ";" \
-		then \
-			ipsec whack --shutdown "|" grep -v "^002" ";" \
-			sleep 1 ";" \
-			if test -s $plutopid ";" \
-			then \
-				echo "\"Attempt to shut Pluto down failed!  Trying kill:\"" ";" \
-				kill '`' cat $plutopid '`' ";" \
-				sleep 5 ";" \
-			fi ";" \
-		else \
-			echo "\"Removing orphaned $plutopid:\"" ";" \
-		fi ";" \
-		rm -f $plutopid ";" \
-		"}"
-
-	perform $KILLKLIPS
-	rm -f /var/run/pluto.pid
+	if [ -f $kamepfkey ]
+	then
+	   	ipsec _startnetkey stop
+	fi
+	if [ -f $ipsecversion ]
+	then
+	   	ipsec _startklips stop
+	fi
 
 	#cleaning up backup resolv.conf
-	perform test -e $LIBRESWAN_RESOLV_CONF "&&" "{" \
-		if grep 'Libreswan' $ORIG_RESOLV_CONF > /dev/null 2>&1 ";" \
-		then \
-			cp $LIBRESWAN_RESOLV_CONF $ORIG_RESOLV_CONF ";" \
-		else \
-			echo "\"Current resolv.conf is not generated by Libreswan, so doing nothing\"" ";" \
-		fi ";" \
-		rm -f  $LIBRESWAN_RESOLV_CONF ";" \
-		"}"
-
-	# When we exit we clean up (remove) the modules we are using, even the kame'ish ones
-	if test -e ${kamepfkey}; then
-		for mod in ipcomp6 ipcomp xfrm6_tunnel xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
-			xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel  xfrm_user \
-			xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key \
-			xfrm_ipcomp tunnel6
-		    do
-			lsmod 2>&1 | grep "^$mod" > /dev/null && rmmod  $mod
-		    done
-	fi 
-
-	if test -e ${ipsecversion}; then
-		lsmod 2>&1 | grep "ipsec" > /dev/null && rmmod  ipsec
-	fi
-
-	perform test -d $subsysdir "&&" rm -f $subsyslock
-
-	perform rm -f $lock $plutopid
-	perform echo "...Libreswan IPsec stopped" "|" $LOGONLY
-	perform exit \$status
-	;;
-
-  status|--status)
-	if test " $IPSEC_setupflags" != " "
+	if [ -e $LIBRESWAN_RESOLV_CONF ]
 	then
-		echo "$me $1 does not support $IPSEC_setupflags"
-		exit 4
-	fi
-
-	if test -f $lock
-	then
-		haslock=yes
-	fi
-
-	if test -f $subsyslock
-	then
-		hassublock=yes
-	fi
-
-	if test -s $plutopid
-	then
-		if test -d /proc/`cat $plutopid 2> /dev/null` >/dev/null
+		if grep 'Libreswan' $ORIG_RESOLV_CONF > /dev/null 2>&1
 		then
-			plutokind=normal
-		elif ps -C pluto >/dev/null
-		then
-			plutokind=illicit
+			cp $LIBRESWAN_RESOLV_CONF $ORIG_RESOLV_CONF
 		else
-			plutokind=dead
+			echo "Current resolv.conf is not generated by Libreswan, so doing nothing"
 		fi
-	elif ps -C pluto >/dev/null
-	then
-		plutokind=orphaned
-	else
-		plutokind=no
+		rm -f  $LIBRESWAN_RESOLV_CONF
 	fi
 
-	if test -r /proc/net/ipsec_eroute
-	then
-		eroutes=`wc -l < /proc/net/ipsec_eroute 2> /dev/null | sed s/\ //g`
-	else
-		eroutes=`ipsec whack --status 2> /dev/null | grep -c -i "ipsec sa established"`
-	fi
-
-	if test -r $ipsecversion
-	then
-		klips=yes
-	elif test -r $modules
-	then
-		klips=maybe
-	else
-		klips=none
-	fi
-		
-	if test -r $kamepfkey
-	then
-		lk26sec=yes
-	fi
-
-	if test "$hassublock" -a "$haslock" -a "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \) 
-	then
-		echo "IPsec running"  " - pluto pid: `cat $plutopid 2>/dev/null`"
-		echo "pluto pid `cat $plutopid`"
-		case "$eroutes" in
-			0)      echo "No tunnels up"    ;;
-			*)      echo "$eroutes tunnels up"      ;;
-		esac
-		if test "$eroutes" -gt 0
-		then
-			echo "some eroutes exist"
-		fi
-		exit 0
-	else
-		echo "IPsec stopped"
-		if test ! "$hassublock" -a "$plutokind" = "no" -a "$eroutes" -eq 0
-		then
-			exit 3
-		fi
-		echo "but..."
-		if test "$plutokind" != "no"
-		then
-			echo "An ${plutokind} Pluto is active?"
-			exit 1
-		fi
-
-		if test "$hassublock"
-		then
-			echo "has subsystem lock ($subsyslock)!"
-			exit 2
-		fi
-		if test "$eroutes" -gt 0
-		then
-			echo "some (${eroutes}) eroutes exist!"
-		fi
-		exit 1
-	fi
-	# todo: ipsec verify --quiet that only shows problems
-	#/usr/sbin/ipsec verify;
-	#exit $?;
-	exit 4
+	exit 
 	;;
 
-  --version)
-	if test " $IPSEC_setupflags" != " "
-	then
-		echo "$me $1 does not support $IPSEC_setupflags"
-		exit 1
-	fi
-
-	echo "$me $IPSEC_VERSION"
-	exit 0
-	;;
-
-  --help)
-	if test " $IPSEC_setupflags" != " "
-	then
-		echo "$me $1 does not support $IPSEC_setupflags"
-		exit 1
-	fi
-
-	echo "Usage: $me {--start|--stop|--restart|--status}"
-	exit 0
+  --status)
 	;;
 
   *)
-	echo "Usage: $me {--start|--stop|--restart|--status}" >&2
+	echo "Usage: {--start|--stop|--restart|--status}" >&2
 	exit 2
 esac
 

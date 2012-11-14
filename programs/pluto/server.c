@@ -529,6 +529,81 @@ call_server(void)
 	passert(r == 0);
     }
 
+
+    /* do equivalent of ipsec whack --listen */
+        do_whacklisten();
+
+    /*
+     * fork to issue the command "ipsec addconn --autoall"
+     * (or vfork() when fork() isn't available, eg on embedded platforms
+     * without MMU, like uClibc
+     */
+    {
+	/* find a pathname to the addconn program */
+	const char *addconn_path = NULL;
+	const char *helper_bin_dir = getenv("IPSEC_EXECDIR");
+	static const char addconn_name[] = "addconn";
+	char addconn_path_space[4096]; /* plenty long? */
+	ssize_t n=0;
+	if (helper_bin_dir != NULL)
+	{
+	   n = strlen(helper_bin_dir);
+	   if ((size_t)n <= sizeof(addconn_path_space) - sizeof(addconn_name))
+	   {
+		strcpy(addconn_path_space, helper_bin_dir);
+		if (n > 0 && addconn_path_space[n -1] != '/')
+		    addconn_path_space[n++] = '/';
+	   }
+	}
+	else
+#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
+        {
+	  /* The program will be in the same directory as Pluto,
+	   * so we use the sympolic link /proc/self/exe to
+	   * tell us of the path prefix.
+	   */
+	   n = readlink("/proc/self/exe", addconn_path_space, sizeof(addconn_path_space));
+	   if (n < 0)
+# ifdef __uClibc__
+	   /* on some nommu we have no proc/self/exe, try without path */
+	   *addconn_path_space = '\0', n = 0;
+# else
+	   exit_log_errno((e
+		, "readlink(\"/proc/self/exe\") failed in call_server()"));
+# endif
+	}
+#else
+	/* This is wrong. Should end up in a resource_dir on MacOSX -- Paul */
+	addconn_path="/usr/local/libexec/ipsec/addconn";
+#endif
+	if ((size_t)n > sizeof(addconn_path_space) - sizeof(addconn_name))
+		exit_log("path to %s is too long", addconn_name);
+	while (n > 0 && addconn_path_space[n - 1] != '/')
+		n--;
+
+	strcpy(addconn_path_space + n, addconn_name);
+	addconn_path = addconn_path_space;
+
+	if (access(addconn_path, X_OK) < 0)
+		exit_log_errno((e, "%s missing or not executable", addconn_path));
+
+	char *newargv[] = {  "addconn", "--autoall" };
+#ifdef HAVE_NO_FORK
+	pid_t addconn_pid = vfork(); /* for better, for worse, in sickness and health..... */
+#else
+	pid_t addconn_pid = fork();
+#endif
+	if (addconn_pid == 0) {
+		/* child */
+		sleep(3);
+		execve(addconn_path, newargv, NULL);
+		_exit(42);
+	}
+	/* parent continues */
+    }
+
+
+
     for (;;)
     {
 	osw_fd_set readfds;
