@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refmeta>
+<refentrytitle>IPSEC_SETUP</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>20 October 2009</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec setup</refname>
+<refpurpose>control IPsec subsystem</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>ipsec</command>    
+    <arg choice='plain'><replaceable>setup</replaceable></arg>
+    <arg choice='plain'><replaceable>command</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='examples'><title>EXAMPLES</title>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>setup</replaceable></arg>
+    <arg choice='plain'>{ start | stop | restart }</arg>
+</cmdsynopsis>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>setup</replaceable></arg>
+    <arg choice='plain'> status </arg>
+</cmdsynopsis>
+</refsect1>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Setup</emphasis>
+controls the Libreswan IPsec subsystem,
+including both the Klips or Netkey (XFRM) kernel code and the Pluto
+key-negotiation daemon.
+(It is a synonym for the &ldquo;rc&rdquo; script for the subsystem;
+the system runs the equivalent of
+<emphasis remap='B'>ipsec setup start</emphasis>
+at boot time,
+and
+<emphasis remap='B'>ipsec setup stop</emphasis>
+at shutdown time, more or less.)</para>
+
+<para>The action taken depends on the specific
+<emphasis remap='I'>command</emphasis>,
+and on the contents of the
+<emphasis remap='B'>config</emphasis>
+<emphasis remap='B'>setup</emphasis>
+section of the
+IPsec configuration file (<filename>/etc/ipsec.conf</filename>,
+see
+<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>).
+Current
+<emphasis remap='I'>command</emphasis>s
+are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>start</emphasis></term>
+  <listitem>
+<para>start Klips and Pluto,
+including setting up Netkey (XFRM) or Klips to do crypto operations on the 
+interface(s) specified in the configuration file.
+and (if the configuration file so specifies)
+asking Pluto to negotiate automatically-keyed connections
+to other security gateways</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>stop</emphasis></term>
+  <listitem>
+<para>shut down Klips or Netkey (XFRM) and Pluto,
+including tearing down all existing crypto connections</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>restart</emphasis></term>
+  <listitem>
+<para>equivalent to
+<emphasis remap='B'>stop</emphasis>
+followed by
+<emphasis remap='B'>start</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>status</emphasis></term>
+  <listitem>
+<para>report the status of the subsystem;
+normally just reports
+<emphasis remap='B'>IPsec running</emphasis>
+and
+<emphasis remap='B'>pluto pid </emphasis><emphasis remap='I'>nnn</emphasis><emphasis remap='P->B'></emphasis>,
+or
+<emphasis remap='B'>IPsec stopped</emphasis>,
+and exits with status 0,
+but will go into more detail (and exit with status 1)
+if something strange is found.
+(An &ldquo;illicit&rdquo; Pluto is one that does not match the process ID in
+Pluto's lock file;
+an &ldquo;orphaned&rdquo; Pluto is one with no lock file.)</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The
+<emphasis remap='B'>stop</emphasis>
+operation tries to clean up properly even if assorted accidents
+have occurred,
+e.g. Pluto having died without removing its lock file.
+If
+<emphasis remap='B'>stop</emphasis>
+discovers that the subsystem is (supposedly) not running,
+it will complain,
+but will do its cleanup anyway before exiting with status 1.</para>
+
+<para>Although a number of configuration-file parameters influence
+<emphasis remap='I'>setup</emphasis>'s
+operations, the key one is the
+<emphasis remap='B'>interfaces</emphasis>
+parameter, which must be right or chaos will ensue.</para>
+</refsect1>
+
+<refsect1 id='files'><title>FILES</title>
+<!-- .ta \w'/proc/sys/net/ipv4/ip_forward'u+2n -->
+<para>/etc/rc.d/init.d/ipsec	the script itself
+<!-- .br -->
+/etc/init.d/ipsec	alternate location for the script
+<!-- .br -->
+/etc/ipsec.conf	IPsec configuration file
+<!-- .br -->
+/proc/sys/net/ipv4/ip_forward	forwarding control
+<!-- .br -->
+/var/run/pluto/pluto.pid	Pluto lock file
+<!-- .br -->
+/var/run/pluto/ipsec_setup.pid	IPsec lock file</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para>ipsec.<citerefentry><refentrytitle>conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_manual</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>route</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para>All output from the commands
+<emphasis remap='B'>start</emphasis>
+and
+<emphasis remap='B'>stop</emphasis>
+goes both to standard
+output and to
+<citerefentry><refentrytitle>syslogd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+via
+<citerefentry><refentrytitle>logger</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Selected additional information is logged only to
+<citerefentry><refentrytitle>syslogd</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written for the FreeS/WAN project
+&lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
+by Henry Spencer.</para>
+<para>Modified for Libreswan
+&lt;<ulink url='http://www.libreswan.org'>http://www.libreswan.org</ulink>&gt;
+by Tuomo Soini.</para>
+</refsect1>
+
+<refsect1 id='bugs'><title>BUGS</title>
+<para>Old versions of
+<citerefentry><refentrytitle>logger</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+inject spurious extra newlines onto standard output.</para>
+</refsect1>
+</refentry>
+
