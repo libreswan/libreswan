@@ -99,6 +99,8 @@
  * Astaro ?
  * 7f50cc4ebf04c2d9da73abfd69b77aa2
  *
+ * Solaris 10 has RF 3974 but also md5('RFC XXXX') whih is 810fa565f8ab14369105d706fbd57279
+ * (yes, the 'XXXX' are _really_ four times the letter X)
  */
 
 #define MAX_LOG_VID_LEN            32
