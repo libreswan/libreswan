@@ -47,6 +47,7 @@ v3.0.0 (unreleased)
 * pluto: dont stop processing after --coredir argument [Paul]
 * pluto: perform whack --listen and addconn --autoall on startup [Paul]
 * pluto: if started with --nofork, don't care about existing pid file [Paul]
+* pluto: incorrect free in scan_proc_shunts() [Roel van Meer]
 * _plutoload: obsoleted [Kim/Paul]
 * auto: no longer pass defaultroute/defaultrouteaddr to addconn [Paul]
 * whack: fix handling --sha2_truncbug and --nm_configured options [Paul]
