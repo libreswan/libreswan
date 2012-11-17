@@ -81,6 +81,7 @@ v3.0.0 (unreleased)
 * MAST: Fixed _updown.mast missing incomplete if-clause [Harald]
 * addconn: mimic _plutoload, cleanup and fixup of functions [Paul]
 * scripts: Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
+* _stackmanager: new script replacing _startnetkey/_startklips [Paul]
 * barf: do not grep lastlog, wtmp, tmp (rhbz#771612) [Paul]
 * verify: ported ipsec verify from perl to python [Paul]
 * auto: fix --status output for vnet/vhost case [Ani]
