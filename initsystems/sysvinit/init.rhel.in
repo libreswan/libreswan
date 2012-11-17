@@ -125,14 +125,24 @@ start() {
 
 
 stop() {
-
-	[ -f $plutoctl ] && ipsec whack --shutdown
-	RETVAL=$?
-	rm -f $plutoctl
-	if [ $RETVAL -ne 0 ]
+	if [ ! -f $plutoctl ]
 	then
-		sleep 1; 
-		if [ -s $plutopid ]
+		echo "Missing control file $plutoctl - cannot request pluto to shut down"
+	else
+		echo -n "Shutting down pluto IKE daemon"
+		ipsec whack --shutdown
+		for waitsec in 1 2 3 4 5 6 7 8 9 10 # don't use seq, might not exist on embedded
+		do
+			if [ -s $plutopid ]
+			then
+				echo -n "."
+				sleep 1
+			fi
+		done
+		echo ""
+		rm -f $plutoctl # we won't be using this anymore
+
+		if [ -s $plutopid ] # pluto did not die peacefully
 		then
 			echo "Attempt to shut Pluto down failed!  Trying kill"
 			if [ -d /proc/$plutopid ]
