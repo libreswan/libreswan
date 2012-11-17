@@ -107,16 +107,8 @@ case "$1" in
 		exit 3
 	fi
 		
-	# Remove any IPsec stack
-
-	if [ -f $kamepfkey ]
-	then
-	   	ipsec _startnetkey stop
-	fi
-	if [ -f $ipsecversion ]
-	then
-	   	ipsec _startklips stop
-	fi
+	# Remove any loaded IPsec stack
+	ipsec _stackmanager stop
 
 	# Cleaning up backup resolv.conf
 	if [ -e $LIBRESWAN_RESOLV_CONF ]
