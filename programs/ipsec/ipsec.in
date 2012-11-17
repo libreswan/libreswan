@@ -95,10 +95,6 @@ case "$1" in
 version|--version)
 	fixversion
 	echo "Linux Libreswan $version"
-	if [ -f $IPSEC_LIBDIR/distro.txt ]
-	then
-	    cat $IPSEC_LIBDIR/distro.txt
-	fi
 	exit 0
 	;;
 --versioncode)
