@@ -106,7 +106,13 @@ stopklips() {
 				ip link set $iface down
 				ip addr flush dev $iface
 				ipsec tncfg --detach --virtual $iface
+				ipsec tncfg --delete $iface # ipsec0 won't let itself be deleted
 			done
+			# mast0 is not listed in ipsec_tncfg
+			if [ -d /proc/sys/net/ipv4/conf/mast0 ]
+			then
+				ipsec tncfg --delete mast0
+			fi
 			test -r /proc/net/ipsec_klipsdebug && ipsec klipsdebug --none ;
 			test -d /proc/net/ipsec/eroute && ipsec eroute --clear ;
 			test -d /proc/net/ipsec/spi && ipsec spi --clear
@@ -222,7 +228,13 @@ startklips() {
 				modulename=ipsec.ko
 				;;
 		esac
+		# modprobe does not like specifying .o or .ko, but insmod needs it
+		if [ "`basename @MODPROBE@`" = "modprobe" ]
+		then
+			@MODPROBE@ ipsec
+		else
 			@MODPROBE@ $modulename
+		fi
 
 		if [ ! -f $ipsecpfkey ]
 		then
@@ -241,13 +253,16 @@ startklips() {
                 	ipsec tncfg --create $virt
 			ip link set $virt up
         	fi
+		# detach all ipsecX devices
+		ipsec tncfg --clear
     		# remove any ipsecX interfaces, as we are using mastX
     		# Note: currently it seems klips cannot delete ipsec0
     		for device in `ip -oneline link show | grep ipsec | cut -d: -f2 | sort -r`;
 		do
        			ipsec tncfg --delete $device
     		done
-		# PAUL: Shouldn't we configure an ip for mast0, but which one? best guess is the defaultroute one?
+		# PAUL: Shouldn't we configure an ip for mast0, but which one?
+		#       best guess is the defaultroute one?
 		# PAUL: We tell in the man page for ipsec.conf protostack= that the user should do this
 
 	elif [ $stack = "klips" ]
@@ -261,6 +276,8 @@ startklips() {
 		do
             		ipsec tncfg --delete $device
         	done
+		# detach all ipsecX devices
+		ipsec tncfg --clear
 
 		interfaces=`ipsec addconn --configsetup --noexport |grep interfaces |sed 's/ interfaces=//'| sed "s/'//g" | sed "s/,/ /g"`
 		for iface in $interfaces
@@ -281,9 +298,6 @@ startklips() {
         		if [ ! -d /sys/devices/virtual/net/$virt ]
 			then
 				ipsec tncfg --create $virt
-			else
-				# detach and re-attach, in case the user changed the interfaces= line
-				ipsec tncfg --detach --virtual $virt 
 			fi
 			ipsec tncfg --attach --virtual $virt --physical $phys
 			# configure all the IPv4/IPv6 addresses (including point-to-point)
