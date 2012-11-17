@@ -97,15 +97,6 @@ version|--version)
 	echo "Linux Libreswan $version"
 	exit 0
 	;;
---versioncode)
-	fixversion
-	echo "$version"
-	exit 0
-	;;
---copyright)
-	set _copyright
-	# and fall through, invoking "ipsec _copyright"
-	;;
 --directory)
 	echo "$IPSEC_DIR"
 	exit 0
