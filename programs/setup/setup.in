@@ -56,22 +56,7 @@ case "$1" in
 	chmod 700 $rundir > /dev/null 2>/dev/null
 
 	# starting a stack will unload any loaded stack first (same or different stack)
-	case $IPSECprotostack in
-	netkey) 
-		ipsec _startnetkey start
-		;;
-	none|nostack)
-		ipsec _startklips stop
-		ipsec _startnetkey stop
-		;;
-	mast|klips) 
-	   	ipsec _startklips start
-		;;
-	*)
-		echo "unexpected stack $IPSECprotostack"
-		exit
-		;;
-	esac
+	ipsec _stackmanager start
 
 	# Finally start the pluto daemon in a restart loop
 	if test $initsystem = "systemd";

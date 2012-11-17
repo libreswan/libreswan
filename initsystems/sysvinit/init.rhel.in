@@ -96,9 +96,6 @@ umask 022
 mkdir -p /var/run/pluto
 chmod 700 /var/run/pluto
 
-# which kernel are we using?
-IPSECprotostack=`ipsec addconn --liststack`
-
 verify_config() {
     test -f $IPSEC_CONFS/ipsec.conf || exit 6
 
@@ -115,24 +112,7 @@ verify_config() {
 
 start() {
 	echo -n "Starting pluto IKE daemon for IPsec: "
-
-	# starting a stack will unload any loaded stack first (same or different stack)
-	case $IPSECprotostack in
-	netkey) 
-		ipsec _startnetkey start
-		;;
-	none|nostack)
-		ipsec _startklips stop
-		ipsec _startnetkey stop
-		;;
-	mast|klips) 
-	   	ipsec _startklips start
-		;;
-	*)
-		echo "unexpected stack $IPSECprotostack"
-		exit
-		;;
-	esac
+	ipsec _stackmanager start
 
 	#pluto searches the current directory, so this is required for making it selinux compliant
 	cd /
@@ -171,14 +151,7 @@ stop() {
 		fi
 	fi
 
-	if [ -f $kamepfkey ]
-	then
-	   	ipsec _startnetkey stop
-	fi
-	if [ -f $ipsecversion ]
-	then
-	   	ipsec _startklips stop
-	fi
+	ipsec _stackmanager stop
 
 	#cleaning up backup resolv.conf
 	if [ -e $LIBRESWAN_RESOLV_CONF ]
