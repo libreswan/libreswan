@@ -40,7 +40,7 @@ fi
 IPSECprotostack=`ipsec addconn --liststack`
 
 systemd="`pidof systemd`"
-if test $systemd -eq 1;
+if test $systemd = "1";
 then
 	initsystem="systemd"
 else
