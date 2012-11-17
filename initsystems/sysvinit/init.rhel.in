@@ -144,6 +144,8 @@ stop() {
 			then
 				echo -n "."
 				sleep 1
+			else
+				break
 			fi
 		done
 		echo ""
