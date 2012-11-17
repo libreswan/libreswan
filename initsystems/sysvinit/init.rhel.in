@@ -31,8 +31,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-#
-# ipsec         init.d script for starting and stopping
+# ipsec         sysv style init.d script for starting and stopping
 #               the IPsec security subsystem (KLIPS and Pluto).
 #
 # This script becomes /etc/rc.d/init.d/ipsec (or possibly /etc/init.d/ipsec)
@@ -92,6 +91,14 @@ fi
 
 # misc setup
 umask 022
+
+if [ -z "$IPSEC_SBINDIR" ]
+then
+        $IPSEC_SBINDIR="${IPSEC_SBINDIR-@IPSEC_SBINDIR@}"
+fi
+# standardize PATH, and export it for everything else's benefit
+PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
+export PATH
 
 mkdir -p /var/run/pluto
 chmod 700 /var/run/pluto
