@@ -117,7 +117,7 @@ stopklips() {
 			rmmod ipsec 2> /dev/null
 		fi
 	fi
-	if [ -f $ipsecpfkey -o -n '`lsmod | grep "^ipsec"`' ]
+	if [ -f $ipsecpfkey -o -n "`lsmod | grep ^ipsec`" ]
 	then
 			echo "FAILURE to unload KLIPS/MAST module"
 			exit 1
