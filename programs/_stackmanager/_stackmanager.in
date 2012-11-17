@@ -26,11 +26,6 @@ then
 	exit 1
 fi
 
-stop() {
-stopnetkey()
-stopklips()
-}
-
 stopnetkey() {
 	if [ -f $kamepfkey ]
 	then
@@ -68,12 +63,12 @@ stopnetkey() {
 }
 
 startnetkey() {
-	cryptomodules()
+	cryptomodules
 
 	if [ -f $ipsecpfkey ]
 	then
 		echo -n "Warning: found KLIPS/MAST stack loaded - attempting to unload..."
-		stopklips()
+		stopklips
 		if [ -f $ipsecpfkey ]
 		then
 			echo "FAILURE to unload KLIPS/MAST module"
@@ -97,10 +92,6 @@ startnetkey() {
 		@MODPROBE@ xfrm_user 2> /dev/null
 
 	fi
-}
-
-stopmast() {
-	stopklips()
 }
 
 stopklips() {
@@ -138,6 +129,14 @@ stopklips() {
 	iptables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>/dev/null
 }
 
+stopmast() {
+	stopklips
+}
+
+stop() {
+	stopnetkey
+	stopklips
+}
 
 cryptomodules() {
 	# load hardware random and crypto related modules - some changed names over time
@@ -195,15 +194,15 @@ cryptomodules() {
 }
 
 startmast() {
-	startklips()
+	startklips
 }
 
 startklips() {
-	cryptomodules()
+	cryptomodules
 	if [ -f $kamepfkey ]
 	then
 		echo -n "Warning: found NETKEY/XFRM stack loaded - attempting to unload..."
-		stopnetkey()
+		stopnetkey
 		if [ -f $kamepfkey ]
 		then
 			echo "FAILURE to unload KLIPS/MAST module"
@@ -223,7 +222,7 @@ startklips() {
 				modulename=ipsec.ko
 				;;
 		esac
-			@@MODPROBE@@ $modulename
+			@MODPROBE@ $modulename
 
 		if [ ! -f $ipsecpfkey ]
 		then
@@ -343,24 +342,24 @@ esac
 case $action in
 	stop) 
 		# cleanup either stack, unload if module - the user might have changed protostack=
-		stop()
+		stop
 		;;
 	start) 
-		start()
+		start
 		case $stack in
 			netkey)
-				startnetkey()
+				startnetkey
 				;;
 			klips)
-				startklips()
+				startklips
 				;;
 			mast) 
-				startmast()
+				startmast
 				;;
 		esac
 	restart)
-		stop()
-		start()
+		stop
+		start
 		;;
 	*)
 		echo "unknown action $action" 
