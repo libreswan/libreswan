@@ -345,7 +345,6 @@ case $action in
 		stop
 		;;
 	start) 
-		start
 		case $stack in
 			netkey)
 				startnetkey
