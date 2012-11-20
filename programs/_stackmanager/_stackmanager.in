@@ -48,14 +48,14 @@ stopnetkey() {
 				xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel \
 				xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key xfrm_user
 			do
-				if [ -n '`egrep "^$mod" /proc/modules`' ]
+				if [ -n "`egrep ^$mod /proc/modules`" ]
 				then
 					# echo "unloading module $mod"
 					rmmod $mod 
 				fi
 			done
 
-			if [ -f $kamepfkey -o -n '`lsmod | grep "^esp"`' ]
+			if [ -f $kamepfkey -o -n "`lsmod | grep ^esp`" ]
 			then
 				echo "FAILURE to unload NETKEY esp module"
 				exit 1
