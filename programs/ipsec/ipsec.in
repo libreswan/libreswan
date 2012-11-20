@@ -50,7 +50,7 @@ fixversion() {
                 if test -f /proc/net/pfkey
                 then
 			stack=" (netkey)"
-                        kv="`uname -r`"
+                        kv=$version
                 else
 			if test -f /mach_kernel
 			then
@@ -65,7 +65,7 @@ fixversion() {
 	then
 	version="U$version/K$kv"
 	fi
-	version="$version$stack"
+	version="$version$stack on `uname -r`"
 }
 
 case "$1" in
