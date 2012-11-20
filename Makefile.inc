@@ -192,6 +192,7 @@ INSTCONFFLAGS=
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS=
 
+NSSFLAGS?=$(shell pkg-config --cflags nss)
 
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
@@ -203,7 +204,7 @@ BISONOSFLAGS=
 #Example for a cross compile:
 #USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
 GCC_LINT ?= -DGCC_LINT 
-USERCOMPILE?=-g -O3 ${WERROR} $(GCC_LINT) `pkg-config --cflags nss`
+USERCOMPILE?=-g -O3 ${WERROR} $(GCC_LINT) ${NSSFLAGS}
 
 # on fedora/rhel 
 #USERCOMPILE?=-g -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4  -m64 -mtune=generic -fPIE -pie 
