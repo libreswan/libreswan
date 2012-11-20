@@ -16,6 +16,8 @@
 # for more details.
 #
 
+test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
+
 kamepfkey=/proc/net/pfkey
 ipsecpfkey=/proc/net/ipsec/version
 action="$1"
@@ -48,8 +50,8 @@ stopnetkey() {
 			do
 				if [ -n '`egrep "^$mod" /proc/modules`' ]
 				then
-					echo "unloading module $mod"
-					rmmod $mod 2> /dev/null
+					# echo "unloading module $mod"
+					rmmod $mod 
 				fi
 			done
 

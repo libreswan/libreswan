@@ -68,6 +68,12 @@ fixversion() {
 	version="$version$stack on `uname -r`"
 }
 
+if [ `id -u` -ne 0 ]
+then
+    echo "permission denied (must be superuser)" |
+    exit 4
+fi
+
 case "$1" in
 '')
 	echo "Usage: ipsec <command> <argument ...>"
