@@ -16,7 +16,7 @@ version=$baseversion
 # Check for git and a git repo.
 if head=`git rev-parse --verify HEAD 2>/dev/null`; then
 
-        if descr=`git describe --tags --dirty 2>/dev/null` ; then
+        if descr=`head -1 .git/HEAD 2>/dev/null | sed "s/^.*\///"`-`git describe --tags --dirty` ; then
                 descr=${descr#v}
                 printf '%s' "$descr"
                 exit 0
