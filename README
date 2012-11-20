@@ -1,18 +1,18 @@
 #########################################################################
-#            Libreswan 2.X Release Notes
+#            Libreswan 3.X Release Notes
 #########################################################################
-************ See docs/RELEASE-NOTES.txt for more information ************
 
 Libreswan is an IPsec implementation for Linux. It has support for most 
 of the extensions (RFC + IETF drafts) related to IPsec, including 
 IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
 
-Libreswan is originally based on Openswan 2.6.38
+Libreswan has been forked from Openswan 2.6.38, which was forked from
+FreeS/WAN 1.99.
 
 Download it from
 
-    http://www.libreswan.org/code/
-    ftp://ftp.libreswan.org/libreswan/
+    https://download.libreswan.org/
+    ftp://ftp.libreswan.org/
 
 #########################################################################
 # REQUIREMENTS
@@ -27,32 +27,38 @@ distributions packaged version.
 
 There are a few packages required for Libreswan to compile from source:
 
-1. The GNU Math Precision Library:
+For Debian/Ubuntu
 
-   Debian package names: libgmp3, libgmp3-dev
-   Rpm package names:    gmp, gmp-devel
+	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
+		libcap-ng-dev libcap-ng-utils libselinux-dev \
+		libcurl4-nss-dev libgmp3-dev flex bison gcc make 
 
-2. awk, flex and bison
+	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
 
-   Debian package names: gawk/mawk, flex, bison
-   Rpm package names:    ????
+For Fedora/RHEL/CentOS
 
-3. iproute2, iptables, sed, awk, bash, cut and possible other tools
-   are required at runtime.
+	yum install nss-devel nspr-devel pkg-config pam-devel \
+		libcap-ng-devel libselinux-devel \
+		curl-devel gmp-devel flex bison gcc make \
+		fipscheck-devel
 
-   Debian package names: iproute, iptables, the rest are usually there
-   Rpm package names:    ????
+Runtime requirements (usually already present on the system)
 
-   perl is also required for "ipsec verify".
+	iproute2, iptables, sed, awk, bash, cut and possible other tools
+
+	(note: the busybox version of "ip" does not support 'ip xfrm', so
+	       ensure you enable the iproute(2) package for busybox)
+
+	python is used for "ipsec verify", which helps debugging problems
 
 #########################################################################
-# HOW TO INSTALL on Kernel 2.6 (And Kernels with 2.6 IPsec backport)
+# HOW TO INSTALL on Kernel 2.6 and higher
 #########################################################################
 
-NETKEY (Native linux IPsec stack)
+NETKEY/XFRM (Native linux IPsec stack)
 ---------------------------------
 
-To use Libreswan with the linux native (builtin) IPsec stack,  then the
+To use Libreswan with the linux native (builtin) IPsec stack,  the
 following steps should be all that are needed. Please use at least kernel
 version 2.6.9, as prior versions of the kernel have serious bugs in the
 native IPsec stack.  From the libreswan directory:
@@ -73,8 +79,14 @@ Kernels 2.6.23 and higher, the following steps should work.  From the
 libreswan directory:
 
     make programs
-    make KERNELSRC=/lib/modules/`uname -r`/build module
-    sudo make KERNELSRC=/lib/modules/`uname -r`/build install minstall
+    make module
+    sudo make module_install
+
+This builds a module against the running kernel. To compile a module for
+another kernel (for which the headers are installed), use:
+
+    make KERNELSRC=/lib/modules/`uname -r`/build module 
+    sudo make KERNELSRC=/lib/modules/`uname -r`/build module_install
 
 For Linux 2.6 Kernels before 2.6.23, including 2.4 linux systems, the kernel
 requires patching if NAT-T support or SAref tracking is required. Full kernel
@@ -135,12 +147,12 @@ See the ipsec.conf man page for more information on configuration options.
 # UPGRADING
 #########################################################################
 
-1. If you are upgrading from a 1.x product to Libreswan 2.x, you will
-   need to adjust your config files.  See doc/upgrading.html for details
-   on what has changed.
+1. If you are upgrading from FreeS/WAN 1.x or Openswan 2.x to Libreswan 3.x,
+   you might need to adjust your config files.  See 'man ipsec.conf.
+   details on what has changed.
 
-2. You can 'make install' overtop of your old version - it won't replace
-   your /etc/ipsec.* config files
+2. You can run 'make install' on top of your old version - it will not
+   overwrite your your /etc/ipsec.* config files
 
 #########################################################################
 # SUPPORT
@@ -148,30 +160,24 @@ See the ipsec.conf man page for more information on configuration options.
 
 Mailing Lists:
 
-    http://lists.libreswan.org is home of the mailing lists.  Note: these are 
-    closed lists - you *must* be subscribed to post.
+    https://lists.libreswan.org is home of the mailing lists
 
 Wiki:
 
-    http://wiki.libreswan.org is home to the Libreswan WIKI.  It has the most
+    https://libreswan.org is home to the Libreswan WIKI.  It has the most
     up to date documentation, interop guides and other related information.
 
 IRC:
 
-    Libreswan developers and users can be found on IRC, on #libreswan on
-    irc.freenode.net.  If you need more information on our IRC channel, see
-    http://www.libreswan.org/support/irc.php
-
-Commercial support for Libreswan is also available - see
-http://www.xelerance.com/libreswan/support.php for more information, or
-email sales@xelerance.com
+    Libreswan developers and users can be found on IRC, on #swan 
+    irc.freenode.net.
 
 #########################################################################
 # BUGS
 #########################################################################
 
-Bugs with the package can be filed into our Mantis system, at
-http://bugs.libreswan.org
+Bugs with the package can be filed into our bug tracking system, at
+https://bugs.libreswan.org
 
 #########################################################################
 # SECURITY HOLES
@@ -179,8 +185,8 @@ http://bugs.libreswan.org
 
 All security vulnerabilities found that require public disclosure will
 receive proper CVE tracking numbers (see http://mitre.org/) and co-ordinated
-via the vendor-sec mailing list. A complete list of known security
-vulnerabilities is   available at: http://www.libreswan.org/security/ 
+via the vendor-sec (or successor) mailing list. A complete list of known
+security vulnerabilities is available at: https://www.libreswan.org/security/ 
 
 #########################################################################
 # DEVELOPMENT
@@ -188,8 +194,8 @@ vulnerabilities is   available at: http://www.libreswan.org/security/
 
 Those interested in the development, patches, beta releases of Libreswan
 can join the development mailing list (http://lists.libreswan.org -
-dev@lists.libreswan.org) or join the development team on IRC in
-#libreswan-dev on irc.freenode.net
+dev@lists.libreswan.org) or join the development team on IRC in #swan
+on irc.freenode.net
 
 For those who want to track things a bit more closely, the
 commits@lists.libreswan.org mailinglist will mail all the commit messages.
@@ -198,15 +204,7 @@ commits@lists.libreswan.org mailinglist will mail all the commit messages.
 # DOCUMENTATION
 #########################################################################
 
-The most up to date docs are at http://wiki.libreswan.org/
-
-Several high-level documents are in the doc directory.  Most are in HTML
-format; See doc/index.html for the top level index.  These are now
-considered obselete.
-
-To build from source, you will need at least 60MB free (Source tree is 
-currently 40MB)
+The most up to date docs are in the man pages and at https://libreswan.org/
 
 The bulk of this software is under the GNU General Public License; see
 LICENSE.  Some parts of it are not; see CREDITS for the details.
-
