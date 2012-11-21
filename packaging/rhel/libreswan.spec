@@ -1,5 +1,5 @@
-%define USE_FIPSCHECK 0
-%define USE_LIBCAP_NG 0
+%define USE_FIPSCHECK 1
+%define USE_LIBCAP_NG 1
 %define USE_NM false
 %define fipscheck_version 1.2.0
 %define USE_CRL_FECTCHING true
@@ -140,23 +140,23 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-  fipshmac -d $RPM_BUILD_ROOT%{_libdir}/fipscheck ` ls $RPM_BUILD_ROOT%{_libexecdir}/ipsec/*|grep -v setup` \
-  fipshmac -d $RPM_BUILD_ROOT%{_libdir}/fipscheck $RPM_BUILD_ROOT%{_sbindir}/ipsec \
+  fipshmac $RPM_BUILD_ROOT%{_libexecdir}/ipsec/* \
+  fipshmac $RPM_BUILD_ROOT%{_sbindir}/ipsec \
 %{nil}
 %endif
 
 %if %{buildklips}
 mkdir -p BUILD.%{_target_cpu}
 
-cd packaging/fedora
+cd packaging/rhel
 # rpm doesn't know we're compiling kernel code. optflags will give us -m64
 %{__make} -C $FS MOD26BUILDDIR=$FS/BUILD.%{_target_cpu} \
     LIBRESWANSRCDIR=$FS \
     KLIPSCOMPILE="%{optflags}" \
     KERNELSRC=/lib/modules/%{kversion}/build \
     ARCH=%{_arch} \
-    MODULE_DEF_INCLUDE=$FS/packaging/fedora/config-%{_target_cpu}.h \
-    MODULE_EXTRA_INCLUDE=$FS/packaging/fedora/extra_%{krelver}.h \
+    MODULE_DEF_INCLUDE=$FS/packaging/rhel/config-%{_target_cpu}.h \
+    MODULE_EXTRA_INCLUDE=$FS/packaging/rhel/extra_%{krelver}.h \
     include module
 %endif
 
@@ -172,6 +172,12 @@ rm -rf ${RPM_BUILD_ROOT}
   install
 FS=$(pwd)
 rm -f %{buildroot}/%{_initrddir}/setup
+rm -f %{buildroot}/%{_initrddir}/ipsec
+rm -f %{buildroot}/%{_docdir}/libreswan/ipsec.conf-sample
+
+mkdir -p %{buildroot}/%{_initrddir}
+install -p -m0755 packaging/rhel/ipsec.init %{buildroot}/%{_initrddir}/ipsec
+
 #find %{buildroot}%{_mandir}  -type f | xargs chmod a-x
 
 install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
@@ -180,7 +186,7 @@ install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
 install -d -m 0755 %{buildroot}/%{_sysconfdir}/sysconfig/
-install -m 0644 packaging/fedora/sysconfig.pluto %{buildroot}/%{_sysconfdir}/sysconfig/pluto
+install -m 0644 packaging/rhel/sysconfig.pluto %{buildroot}/%{_sysconfdir}/sysconfig/pluto
 
 install -d -m 0700 $RPM_BUILD_ROOT%{_localstatedir}/run/pluto
 
@@ -201,7 +207,6 @@ done
 
 echo "include /etc/ipsec.d/*.secrets" > $RPM_BUILD_ROOT%{_sysconfdir}/ipsec.secrets
 rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
-rm -rf $RPM_BUILD_ROOT/usr/share/doc/
 %clean
 rm -rf ${RPM_BUILD_ROOT}
 
@@ -219,11 +224,13 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_initrddir}/ipsec
 %{_libdir}/ipsec
 %{_sbindir}/ipsec
-%{_libexecdir}/ipsec
+%dir %{_libexecdir}/ipsec
+%{_libexecdir}/ipsec/*
 %attr(0644,root,root) %doc %{_mandir}/*/*
 
 %if %{USE_FIPSCHECK}
-%{_libdir}/fipscheck/*.hmac
+%{_sbindir}/.ipsec.hmac
+%{_libexecdir}/ipsec/.*hmac
 %endif
 
 %if %{buildklips}
