@@ -46,6 +46,8 @@
 # description: IPsec provides encrypted and authenticated communications; \
 # NETKEY/KLIPS is the kernel half of it, Pluto is the user-level management daemon.
 
+test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
+
 # Source function library.
 . /etc/init.d/functions
 

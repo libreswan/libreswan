@@ -726,6 +726,39 @@ dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char* null_dn)
 	return dntoa(dst, dstlen, dn);
 }
 
+/*
+ * function for use in atodn() that removes a single comma
+ * when encountering ",," in the leftid/rightid string. It
+ * will do this only once for the first ",," found.
+ */
+
+static void
+remove_comma(char *str)
+{
+    char comma = ',';
+    char *src, *dst;
+    int once = 0;
+
+    src = dst = str;
+    while (*src != '\0' && once == 0)
+    {
+        *dst = *src;
+        src++;
+        if (*dst++ == comma && *src == comma)
+        {
+            src++;
+            once = 1;
+        }
+    }
+    while (*src != '\0')
+    {
+        *dst = *src;
+        src++;
+        dst++;
+    }
+    *dst = '\0';
+}
+
 /*  Converts an LDAP-style human-readable ASCII-encoded
  *  ASN.1 distinguished name into binary DER-encoded format
  */
@@ -824,6 +857,21 @@ atodn(char *src, chunk_t *dn)
 	    }
 	    else
 	    {
+		if (*src == ',')
+		{
+		   if (*++src == ',')
+		   {
+			src--;
+			name.len++;
+			remove_comma(src);
+			break;
+		   } 
+		   else 
+		   {
+			src--;
+		   }
+		}
+
 		name.len -= whitespace;
 		code_asn1_length(name.len, &asn1_name_len);
 
