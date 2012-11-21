@@ -79,6 +79,7 @@ v3.0.0 (unreleased)
 * KLIPS: Removed support for Linux < 2.4.4 [Paul]
 * KLIPS: Changed _startklips to use ip route instead of netstat [Harald]
 * MAST: Fixed _updown.mast missing incomplete if-clause [Harald]
+* SAREF: kernel patches updated to linux 3.2.0 [Simon Deziel]
 * addconn: mimic _plutoload, cleanup and fixup of functions [Paul]
 * scripts: Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
 * _stackmanager: new script replacing _startnetkey/_startklips [Paul]
