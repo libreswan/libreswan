@@ -129,8 +129,18 @@ start() {
 	cd /
 	# This script will enter an endless loop to ensure pluto restarts on crash
 	ipsec _plutorun &
-	echo
 	RETVAL=$?
+	if [ $RETVAL -eq 0 ];
+	then
+		success; echo
+	else
+		failure; echo; return $RETVAL
+	fi
+	if [ ! -d /var/lock/subsys ]
+	then
+		mkdir -p /var/lock/subsys
+	fi
+	touch /var/lock/subsys/ipsec
 	return $RETVAL
 }
 
@@ -187,6 +197,8 @@ stop() {
 		fi
 		rm -f  $LIBRESWAN_RESOLV_CONF
 	fi
+
+	rm /var/lock/subsys/ipsec
 }
 
 restart() {
