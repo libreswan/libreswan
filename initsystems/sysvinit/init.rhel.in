@@ -87,8 +87,12 @@ kamepfkey=/proc/net/pfkey
 LIBRESWAN_RESOLV_CONF=/var/run/pluto/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=/etc/resolv.conf
 
+# there is some confusion over the name - just do both
 if [ -f /etc/sysconfig/ipsec ]; then
      . /etc/sysconfig/ipsec
+fi
+if [ -f /etc/sysconfig/pluto ]; then
+     . /etc/sysconfig/pluto
 fi
 
 # misc setup
@@ -127,8 +131,18 @@ start() {
 	cd /
 	# This script will enter an endless loop to ensure pluto restarts on crash
 	ipsec _plutorun &
-	echo
 	RETVAL=$?
+	if [ $RETVAL -eq 0 ];
+	then
+		success; echo
+	else
+		failure; echo; return $RETVAL
+	fi
+	if [ ! -d /var/lock/subsys ]
+	then
+		mkdir -p /var/lock/subsys
+	fi
+	touch /var/lock/subsys/ipsec
 	return $RETVAL
 }
 
@@ -136,7 +150,7 @@ start() {
 stop() {
 	if [ ! -f $plutoctl ]
 	then
-		echo "Missing control file $plutoctl - cannot request pluto to shut down"
+		echo "Missing control file $plutoctl - is pluto running?"
 	else
 		echo -n "Shutting down pluto IKE daemon"
 		ipsec whack --shutdown
@@ -185,6 +199,8 @@ stop() {
 		fi
 		rm -f  $LIBRESWAN_RESOLV_CONF
 	fi
+
+	rm -f /var/lock/subsys/ipsec
 }
 
 restart() {
