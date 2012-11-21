@@ -95,7 +95,7 @@ v3.0.0 (unreleased)
 * DOCS: Add man page leftid= note on Cisco ID_KEY_ID Group Name [Philippe]
 * liblibreswan: Remove unused optionsfrom() temp file handling [Paul]
 * liblibreswan: Support comma's inside OID's by using ",," to mean ","
-  inside the OID [Matt Rogers]
+  inside the OID (rhbz#868986) [Matt Rogers]
 * testing: Ported broken UML harness to KVM/libvirt/9p [Paul/Antony]
            (see the wiki on libreswan.org for details on how to use it)
 * packaging: Updated libreswan.spec to reflect updated options [Paul]
