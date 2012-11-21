@@ -36,5 +36,8 @@ stands for the current setting of <emphasis remap='I'>myid</emphasis>.
 This is set in <emphasis remap='B'>config setup</emphasis> or by <citerefentry><refentrytitle>ipsec_whack</refentrytitle><manvolnum>8</manvolnum></citerefentry>), or, if not set,
 it is the IP address in <emphasis remap='B'>%defaultroute</emphasis> (if that is supported by a TXT record in its reverse domain), or otherwise
 it is the system's hostname (if that is supported by a TXT record in its forward domain), or otherwise it is undefined.</para>
+<para>
+When using certificate based ID's, one need to specify the full RDN, optionally using wildcard matching (eg CN='*'). If
+the RDN contains a comma, this can be masked using a comma (eg OU='Foo,, Bar and associates')</para>
   </listitem>
   </varlistentry>
