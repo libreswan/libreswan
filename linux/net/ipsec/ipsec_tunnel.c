@@ -2435,6 +2435,13 @@ ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
 	prv->hard_start_xmit = physdev->hard_start_xmit;
 	prv->get_stats       = physdev->get_stats;
 #endif
+
+	/* 
+	 * David: I haven't worked through this fully yet,  but we were
+	 * always copying SKB's because they didn't have enough head room
+	 * (even though they were large SKB's). This change got me a 20%
+	 * improvement (on TX IIRC)
+	 */
 	dev->hard_header_len = physdev->hard_header_len + 64;
 
 /*	prv->neigh_setup        = physdev->neigh_setup; */
