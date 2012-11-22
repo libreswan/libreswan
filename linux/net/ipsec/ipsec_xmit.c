@@ -3,7 +3,7 @@
  * Copyright (C) 1996, 1997  John Ioannidis.
  * Copyright (C) 1998-2003   Richard Guy Briggs.
  * Copyright (C) 2004-2005   Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2010-2011   David McCullough <david_mccullough@mcafee.com>
+ * Copyright (C) 2010-2012   David McCullough <david_mccullough@mcafee.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * 
  * OCF/receive state machine written by
@@ -2291,10 +2291,6 @@ ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 	} else {
 		struct sk_buff* tskb;
 
-		if(!ixs->oskb) {
-			ixs->oskb = ixs->skb;
-		}
-
 		tskb = skb_copy_expand(ixs->skb,
 				       /* The need for 2 * link layer length here remains unexplained...RGB */
 				       ixs->max_headroom + 2 * ixs->ll_headroom,
@@ -2305,8 +2301,10 @@ ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 			skb_set_owner_w(tskb, ixs->skb->sk);
 		}
 
-		if(ixs->skb != ixs->oskb) {
+		if (ixs->oskb) {
 			ipsec_kfree_skb(ixs->skb);
+		} else {
+			ixs->oskb = ixs->skb;
 		}
 		ixs->skb = tskb;
 		if (!ixs->skb) {
