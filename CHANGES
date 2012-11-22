@@ -78,6 +78,7 @@ v3.0.0 (unreleased)
           is used [Tuomo]
 * KLIPS: Removed support for Linux < 2.4.4 [Paul]
 * KLIPS: Changed _startklips to use ip route instead of netstat [Harald]
+* KLIPS: misc. fixes, mostly satot() related [David]
 * MAST: Fixed _updown.mast missing incomplete if-clause [Harald]
 * SAREF: kernel patches updated to linux 3.2.0 [Simon Deziel]
 * addconn: mimic _plutoload, cleanup and fixup of functions [Paul]
