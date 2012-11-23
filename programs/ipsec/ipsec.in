@@ -84,6 +84,9 @@ case "$1" in
 	echo "Linux Libreswan $version"
 	exit 0
 	;;
+status|--status)
+	ipsec auto --status
+	;;
 help|--help)
 	echo "Usage: ipsec <command> <argument ...>"
 	echo "where <command> is one of:\n"
