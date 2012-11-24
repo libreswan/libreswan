@@ -340,6 +340,12 @@ startklips() {
 
 # Start the actual work
 
+if [ `id -u` -ne 0 ]
+then
+    echo "permission denied (must be superuser)" |
+    exit 4
+fi
+
 stack="`ipsec addconn --liststack`"
 
 case $stack in
