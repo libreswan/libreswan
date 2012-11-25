@@ -274,7 +274,7 @@ Changes since 1.91 release by D. Hugh Redelmeier <hugh@mimosa.com>
 - Improve diagnosis when ipsec.secrets has a non-indented "}"
   at the end of an RSA private key.
 
-- Savatier Sébastien <SebastienSavatier@lyon.msi-sa.fr>:
+- Savatier SÃ©bastien <SebastienSavatier@lyon.msi-sa.fr>:
   fix bug in emitting explicit IP address ID payload.
 
 - Support inbound policy check of source and destination inner

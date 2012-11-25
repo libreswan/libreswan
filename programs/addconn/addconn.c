@@ -373,7 +373,7 @@ main(int argc, char *argv[])
 		printf("read fail\n");
 		return -1;
 	}
-
+	
 	/* Parse response */
 	for (; NLMSG_OK(nlmsg, len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
 		struct rtmsg *rtmsg;
@@ -387,7 +387,7 @@ main(int argc, char *argv[])
 		     rtmsg->rtm_family != AF_INET6)
 			continue;
 
-		printf("\n");
+		if (verbose) printf("\n");
 		rtattr = (struct rtattr *) RTM_RTA(rtmsg);
 		rtlen = RTM_PAYLOAD(nlmsg);
 		for (; RTA_OK(rtattr, rtlen); rtattr = RTA_NEXT(rtattr, rtlen))
@@ -395,28 +395,28 @@ main(int argc, char *argv[])
 			case RTA_OIF:
 				if_indextoname(*(int *)RTA_DATA(rtattr),
 					       tmpbuf);
-				printf("interface %s\n", tmpbuf);
+				if(verbose) printf("interface %s\n", tmpbuf);
 				break;
 			case RTA_GATEWAY:
 				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
 					  tmpbuf, sizeof(tmpbuf));
-				printf("gateway %s\n", tmpbuf);
+				if (verbose) printf("gateway %s\n", tmpbuf);
 				if (tnatoaddr(tmpbuf, strlen(tmpbuf), rtmsg->rtm_family, &cfg->dnh) !=  NULL) {
-					printf("unknown gateway results from kernel\n");
+					if(verbose) printf("unknown gateway results from kernel\n");
 				}
 				break;
 			case RTA_PREFSRC:
 				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
 					  tmpbuf, sizeof(tmpbuf));
-				printf("source %s\n", tmpbuf);
+				if (verbose) printf("source %s\n", tmpbuf);
 				if (tnatoaddr(tmpbuf, strlen(tmpbuf), rtmsg->rtm_family, &cfg->dr) !=  NULL) {
-					printf("unknown defaultsource results from kernel\n");
+					if(verbose) printf("unknown defaultsource results from kernel\n");
 				}
 				break;
 			case RTA_DST:
 				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
 					  tmpbuf, sizeof(tmpbuf));
-				printf("destination %s\n", tmpbuf);
+				if(verbose) printf("destination %s\n", tmpbuf);
 				break;
 			}
 	}

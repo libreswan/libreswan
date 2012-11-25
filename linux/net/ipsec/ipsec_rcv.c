@@ -4,7 +4,10 @@
  * Copyright (C) 1998-2003   Richard Guy Briggs.
  * Copyright (C) 2004-2007   Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008   Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2010 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2011 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
+ * Copyright (C) 2011-2012 David McCullough <david_mccullough@mcafee.com>
  *
  * OCF/receive state machine written by
  * David McCullough <dmccullough@cyberguard.com>
@@ -479,10 +482,7 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 
 	ipsp = irs->ipsp;
 	skb  = irs->skb;
-	if (debug_rcv)
-		irs->sa_len = satot(&irs->said, 0, irs->sa, sizeof(irs->sa));
-	else
-		irs->sa_len = 0;
+	irs->sa_len = KLIPS_SATOT(debug_rcv, &irs->said, 0, irs->sa, sizeof(irs->sa));
 	if(ipp->version == 4
 		&& ipp->protocol != IPPROTO_IPIP
 		&& ipp->protocol != IPPROTO_IPV6
@@ -503,10 +503,7 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		if((ipsnext = ipsp->ips_next)) {
 			char sa2[SATOT_BUF];
 			size_t sa_len2;
-			if (debug_rcv)
-				sa_len2 = satot(&ipsnext->ips_said, 0, sa2, sizeof(sa2));
-			else
-				sa_len2 = 0;
+			sa_len2 = KLIPS_SATOT(debug_rcv, &ipsnext->ips_said, 0, sa2, sizeof(sa2));
 			KLIPS_PRINT(debug_rcv,
 				    "klips_debug:ipsec_rcv_decap_ipip: "
 				    "unexpected SA:%s after IPIP SA:%s\n",
@@ -1065,14 +1062,7 @@ ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 			irs->state, irs->next_state);
 
 	irs->said.proto = irs->proto;
-	if (debug_rcv) {
-		irs->sa_len = satot(&irs->said, 0, irs->sa, sizeof(irs->sa));
-		if(irs->sa_len == 0) {
-			strcpy(irs->sa, "(error)");
-		}
-	} else
-		irs->sa_len = 0;
-
+	irs->sa_len = KLIPS_SATOT(debug_rcv, &irs->said, 0, irs->sa, sizeof(irs->sa));
 	newipsp = ipsec_sa_getbyid(&irs->said, IPSEC_REFRX);
 	if (newipsp == NULL) {
 		KLIPS_PRINT(debug_rcv,
@@ -1134,7 +1124,7 @@ ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 					ipsec_rcv_redodebug(irs);
 				/* regenerate sa_len */
 				if (!irs->sa_len)
-					irs->sa_len = satot(&irs->said, 0,
+					irs->sa_len = KLIPS_SATOT(debug_rcv, &irs->said, 0,
 						irs->sa, sizeof(irs->sa));
 			}
 			KLIPS_ERROR(debug_rcv,
@@ -2010,11 +2000,6 @@ ipsec_rsm(struct ipsec_rcv_state *irs)
 		}
 	}
 
-	/*
-	 * all done with anything needing locks
-	 */
-	spin_unlock_bh(&tdb_lock);
-
 	if (irs->lastipsp) {
 		ipsec_sa_put(irs->lastipsp, IPSEC_REFRX);
 		irs->lastipsp=NULL;
@@ -2024,6 +2009,11 @@ ipsec_rsm(struct ipsec_rcv_state *irs)
 		ipsec_sa_put(irs->ipsp, IPSEC_REFRX);
 		irs->ipsp=NULL;
 	}
+
+	/*
+	 * all done with anything needing locks
+	 */
+	spin_unlock_bh(&tdb_lock);
 
 	if (irs->skb) {
 		ipsec_kfree_skb(irs->skb);

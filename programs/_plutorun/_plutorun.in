@@ -37,9 +37,7 @@ then
 	exit 1
 fi
 
-echo "Plutorun started on "`date` 
-
-
+logger "Plutorun started on "`date` 
 
 # spin off into the background, with our own logging
 echo "$verb Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun

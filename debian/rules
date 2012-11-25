@@ -201,6 +201,7 @@ install-libreswan-modules-source: patch
 	cp -r patches/kernel/2.6.35 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
 	cp -r patches/kernel/2.6.38 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
 	cp -r patches/kernel/3.0.0  "$(BUILDDIR)/modules/libreswan/patches/kernel/"
+	cp -r patches/kernel/3.2.0  "$(BUILDDIR)/modules/libreswan/patches/kernel/"
 	find "$(BUILDDIR)/modules/libreswan/lib/" -name "*.o" | xargs --no-run-if-empty rm
 	install --mode=644 debian/libreswan-modules-source.kernel-config "$(BUILDDIR)/modules/libreswan/config-all.h"
 	install --mode=755 debian/libreswan-modules-source.rules "$(BUILDDIR)/modules/libreswan/debian/rules"

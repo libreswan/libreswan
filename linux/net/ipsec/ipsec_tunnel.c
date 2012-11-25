@@ -3,6 +3,7 @@
  * Copyright (C) 1996, 1997  John Ioannidis.
  * Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Richard Guy Briggs.
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012  David McCullough <david_mccullough@mcafee.com>
  * 
  * OCF/receive state machine written by
  * David McCullough <dmccullough@cyberguard.com>
@@ -2317,7 +2318,7 @@ ipsec_xmit_state_new (struct net_device *dev)
         spin_unlock_bh (&ixs_cache_lock);
 
         if (unlikely (NULL == ixs))
-                goto bail;
+                return NULL;
 
         /* initialize the object */
 #if 1 /* optimised to only clear the required bits */
@@ -2347,8 +2348,6 @@ ipsec_xmit_state_new (struct net_device *dev)
 		ixs->saved_header = NULL;	/* saved copy of the hard header */
 		ixs->route = NULL;
 #endif /* memset */
-
-bail:
         return ixs;
 }
 
@@ -2436,7 +2435,14 @@ ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
 	prv->hard_start_xmit = physdev->hard_start_xmit;
 	prv->get_stats       = physdev->get_stats;
 #endif
-	dev->hard_header_len = physdev->hard_header_len;
+
+	/* 
+	 * David: I haven't worked through this fully yet,  but we were
+	 * always copying SKB's because they didn't have enough head room
+	 * (even though they were large SKB's). This change got me a 20%
+	 * improvement (on TX IIRC)
+	 */
+	dev->hard_header_len = physdev->hard_header_len + 64;
 
 /*	prv->neigh_setup        = physdev->neigh_setup; */
 	dev->mtu = 16260; /* 0xfff0; */ /* dev->mtu; */

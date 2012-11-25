@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# This is the configuration file that helps setup for
+# a kernel pool for UML compilation w/FreeSWAN.
+#
+# Copy this file to the top of your FreeSWAN source directory as
+# umlsetup.sh, edit that copy, and populate the paths.
+
+
+# space for everything:
+# Just a shorthand for the following definitions.
+# Can be eliminated if available space is fragmented.
+UMLPREFIX=/home/build/uml-testing
+
+REGRESSRESULTS=$UMLPREFIX/results
+
+# set this to someplace with at least 100Mb free.
+POOLSPACE=$UMLPREFIX/umlbuild
+
+# note that "nic" and "sec" are the same host in different configurations
+REGULARHOSTS='sunrise sunset nic carrot beet sec pole'
+LIBRESWANHOSTS='east west japan road north'
+
+# tell system location of special tcpdump, if any
+export TCPDUMP="/usr/sbin/tcpdump"
+
+# we always use OBJ directories for UML builds.
+USE_OBJDIR=true export USE_OBJDIR
+
+# comment this out to signify that you've customized this script
+echo "please customise your umlsetup.sh" ; exit 99

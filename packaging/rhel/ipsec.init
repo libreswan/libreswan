@@ -72,10 +72,8 @@ then
 fi
 
 # where the private directory and the config files are
-IPSEC_EXECDIR="${IPSEC_EXECDIR-@IPSEC_EXECDIR@}"
-IPSEC_LIBDIR="${IPSEC_LIBDIR-@IPSEC_LIBDIR@}"
-IPSEC_SBINDIR="${IPSEC_SBINDIR-@IPSEC_SBINDIR@}"
-IPSEC_CONFS="${IPSEC_CONFS-@IPSEC_CONFS@}"
+IPSEC_SBINDIR="${IPSEC_SBINDIR-/usr/sbin}"
+IPSEC_CONFS="${IPSEC_CONFS-/etc}"
 
 rundir=/var/run/pluto
 plutopid=$rundir/pluto.pid
@@ -150,7 +148,7 @@ start() {
 stop() {
 	if [ ! -e $plutoctl ]
 	then
-		echo "Missing control file $plutoctl - is pluto running?"
+		echo "Missing control file $plutoctl - is pluto still running?"
 	else
 		echo "Shutting down pluto IKE daemon"
 		ipsec whack --shutdown

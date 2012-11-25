@@ -16,11 +16,11 @@ EnvironmentFile=-/etc/sysconfig/pluto
 #PIDFile=/var/run/pluto/pluto.pid
 #
 ExecStartPre=/usr/bin/sh -c 'eval `ipsec addconn --config $IPSEC_CONFS/ipsec.conf --checkconfig`'
+ExecStartPre=/usr/bin/sh -c 'eval `ipsec _stackmanager start`'
 ExecStart=/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf --nofork $PLUTO_OPTIONS
 PostExec=/usr/local/libexec/ipsec/addconn --autoall
 ExecStop=ipsec whack --shutdown 
-PostExecStop=ip xfrm policy flush 
-PostExecStop=ip xfrm state flush
+PostExecStop=ipsec _stackmanager stop
 ExecReload=ipsec whack --rereadall
 
 [Install]

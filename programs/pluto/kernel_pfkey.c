@@ -1532,7 +1532,7 @@ scan_proc_shunts(void)
         struct eroute_info *p = orphaned_holds;
 
         orphaned_holds = p->next;
-        pfree(orphaned_holds);
+        pfree(p);
     }
 
     /* decode the /proc file.  Don't do anything strenuous to it

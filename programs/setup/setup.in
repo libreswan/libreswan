@@ -40,7 +40,7 @@ fi
 IPSECprotostack=`ipsec addconn --liststack`
 
 systemd="`pidof systemd`"
-if test $systemd -eq 1;
+if test "$systemd" = "1";
 then
 	initsystem="systemd"
 else
@@ -56,22 +56,7 @@ case "$1" in
 	chmod 700 $rundir > /dev/null 2>/dev/null
 
 	# starting a stack will unload any loaded stack first (same or different stack)
-	case $IPSECprotostack in
-	netkey) 
-		ipsec _startnetkey start
-		;;
-	none|nostack)
-		ipsec _startklips stop
-		ipsec _startnetkey stop
-		;;
-	mast|klips) 
-	   	ipsec _startklips start
-		;;
-	*)
-		echo "unexpected stack $IPSECprotostack"
-		exit
-		;;
-	esac
+	ipsec _stackmanager start
 
 	# Finally start the pluto daemon in a restart loop
 	if test $initsystem = "systemd";
@@ -122,16 +107,8 @@ case "$1" in
 		exit 3
 	fi
 		
-	# Remove any IPsec stack
-
-	if [ -f $kamepfkey ]
-	then
-	   	ipsec _startnetkey stop
-	fi
-	if [ -f $ipsecversion ]
-	then
-	   	ipsec _startklips stop
-	fi
+	# Remove any loaded IPsec stack
+	ipsec _stackmanager stop
 
 	# Cleaning up backup resolv.conf
 	if [ -e $LIBRESWAN_RESOLV_CONF ]
