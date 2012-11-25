@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# some distro's don't add the sbin directories to the path
+PATH=$PATH:/sbin:/usr/sbin
+
 # hopefully this will be very cross platform. Standards people!!
 
 return_initsystem() {
@@ -26,7 +29,7 @@ fi
 
 if test -f /sbin/initctl -o -f /usr/sbin/initctl 
 then
-	if test -n "`initctl | grep upstart`"
+	if test -n "`initctl version| grep upstart`"
 	then
 		echo "upstart"
 		return
