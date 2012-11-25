@@ -1,25 +1,30 @@
 #!/bin/sh
 
-# some distro's don't add the sbin directories to the path
+#
+#  We use sh here so this might run correctly on ANY unix host.
+# hopefully this will be very cross platform. Standards people!!
+
+#
+#  Some distro's don't add the sbin directories to the normal users PATH
 PATH=$PATH:/sbin:/usr/sbin
 
-# hopefully this will be very cross platform. Standards people!!
 
 return_initsystem() {
 # try to detect the running init system, perhaps more then one can be installed?
 
-if test -z "`uname -o |grep inux`"
+if test -z "`uname -o 2> /dev/null | grep inux`"
 then
-	echo "non-linux init system not supported yet"
-	return
+	echo >&2 "Error: This non-supported init system not yet supported."
+	return 89
 fi
 
-# works for systemd, not upstart
-if test -f /proc/1/comm -a "`cat /proc/1/comm`" = "systemd"
-
-then
-	echo "systemd"
-	return
+#
+#  works for systemd, not upstart?
+if test -e /proc/1/comm ; then
+	if test "`cat /proc/1/comm`" = "systemd" ; then
+		echo "systemd"
+		return
+	fi
 fi
 
 if test -f /lib/systemd/systemd -a -d /var/run/systemd
@@ -37,7 +42,7 @@ then
 	fi
 fi
 
-# really, most have this, it is probably a backwards compatiblity or realy sysv
+# really, most have this, it is probably a backwards compatiblity or realy sysvinit
 if test -d /etc/init.d
 then
 	echo "sysvinit"
@@ -49,11 +54,11 @@ echo "unknown"
 
 return_distro() {
 
-if test -z "`uname -o |grep inux`"
+if test -z "`uname -o 2> /dev/null | grep inux`"
 then
 	# non-Linux, so this will be BSD, OSX or cygwin/Windows
-	echo "non-linux building not auto-detected yet"
-	return
+	echo >&2 "Error: This non-supported system is not configurable at this time."
+	return 88
 fi
 
 if test -f /etc/redhat-release
@@ -76,6 +81,28 @@ then
 		echo "centos/$VER"
 		return
 	fi
+fi
+
+#
+#  Test for OpenSuSE:
+if test -f /etc/SuSE-brand
+then
+	if test "`head -1 /etc/SuSE-brand | tr '[:upper:]' '[:lower:]'`" = "opensuse" ; then
+		echo "opensuse/`grep VERSION /etc/SuSE-brand | awk '{ print $3}'`"
+		return
+	fi
+fi
+
+#
+#  Test for SuSE/SLES:
+if test -f /etc/SuSE-release
+then
+	if grep -i suse /etc/SuSE-release > /dev/null 2>&1 ; then
+		VER="`grep VERSION /etc/SuSE-release | awk '{ print $3}'`"
+		PAT="`grep PATCHLEVEL /etc/SuSE-release | awk '{ print $3}'`"
+		echo "suse/${VER}.${PAT}"
+	fi
+	return
 fi
 
 # Check ubuntu before debian, as it also has /etc/debian_version
@@ -103,13 +130,6 @@ then
 	return
 fi
 
-if test -f /etc/SuSE-release
-then
-	VER="`grep openSUSE /etc/SuSE-release | awk '{ print $2}'`"
-	echo "opensuse/$VER"
-	return
-fi
-
 echo "unknown please email dev@libreswan.org with:"
 uname -a
 exit 1
@@ -118,9 +138,11 @@ exit 1
 
 case "$1" in
 help|--help|-h|'')
-	echo "Usage: distro | init"
-	echo "distro will detect the distribution (eg fedora/18)"
-	echo "init will detect the init system used (systemd, upstart, sysv)"
+	echo "Usage: $0 distro | init"
+	echo "    distro  will detect the distribution (eg fedora/18, ubuntu/12.10, etc.)"
+	echo "    init    will detect the init system used (systemd, upstart, sysvinit)"
+	echo " output is currently a single line used by make/scripts for configuration and installation."
+	echo
 	exit 1
 	;;
 distro|--distro)
@@ -131,3 +153,5 @@ init|--init|initsystem|--initsystem)
 	return_initsystem
 	;;
 esac
+
+
