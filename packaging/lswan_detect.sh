@@ -49,7 +49,9 @@ then
 	return
 fi
 
+echo >&2 "unknown init system, please email dev@libreswan.org with: `uname -a`"
 echo "unknown"
+exit 1
 }
 
 return_distro() {
@@ -80,6 +82,17 @@ then
 	then
 		echo "centos/$VER"
 		return
+	fi
+	VER="`grep 'Foobar Linux'  /etc/redhat-release | awk '{ print $4;}'`"
+	if test -n "$VER"
+	then
+		echo "foobar/$VER"
+		return
+	fi
+	if test -n "`grep enterprise-release /etc/redhat-release`"
+	then
+		echo >&2 "The unbreakable broke - Oracle is welcome to submit patches"
+		return 90
 	fi
 fi
 
@@ -130,18 +143,20 @@ then
 	return
 fi
 
-echo "unknown please email dev@libreswan.org with:"
-uname -a
+echo >&2 "unknown distribution, please email dev@libreswan.org with: `uname -a`"
+echo "unknown"
 exit 1
 
 }
 
 case "$1" in
 help|--help|-h|'')
-	echo "Usage: $0 distro | init"
+	echo "Usage: $0 <distro|init>"
 	echo "    distro  will detect the distribution (eg fedora/18, ubuntu/12.10, etc.)"
 	echo "    init    will detect the init system used (systemd, upstart, sysvinit)"
-	echo " output is currently a single line used by make/scripts for configuration and installation."
+	echo " "
+	echo " output is currently a single line used by make/scripts for configuration and"
+	echo " installation of distribtion and init-system specific files"
 	echo
 	exit 1
 	;;
