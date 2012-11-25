@@ -24,13 +24,10 @@ then
 	return
 fi
 
-if test -f /sbin/initctl -o -f /usr/sbin/initctl 
+if test -f /sbin/upstart-socket-bridge -a -f /var/run/upstart-socket-bridge.pid
 then
-	if test -n "`initctl | grep upstart`"
-	then
-		echo "upstart"
-		return
-	fi
+	echo "upstart"
+	return
 fi
 
 # really, most have this, it is probably a backwards compatiblity or realy sysv
