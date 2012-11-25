@@ -290,8 +290,11 @@ find_raw_ifaces4(void)
 	ri.name[IFNAMSIZ] = '\0';
 	DBG(DBG_CONTROLMORE, DBG_log("Inspecting interface %s ", ri.name));
 
-	/* ignore if our interface names were specified, and this isn't one */
-	if (pluto_ifn_roof != 0)
+	/* ignore if our interface names were specified, and this isn't one,
+	 * but only when using KLIPS or MAST, as NETKEY does not work using
+	 * interfaces/routing
+	 */
+	if ((kern_interface != USE_NETKEY) && ( pluto_ifn_roof != 0))
 	{
 	    int i;
 	    DBG(DBG_CONTROLMORE, DBG_log("interfaces= specified, applying filter"));
