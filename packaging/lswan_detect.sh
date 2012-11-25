@@ -15,7 +15,8 @@ then
 fi
 
 # works for systemd, not upstart
-if test "`cat /proc/1/comm`" = "systemd"
+if test -f /proc/1/comm -a "`cat /proc/1/comm`" = "systemd"
+
 then
 	echo "systemd"
 	return
