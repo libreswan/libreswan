@@ -1189,7 +1189,7 @@ complibtest() {
 
     eval $(cd ${LIBRESWANSRCDIR} && LIBRESWANSRCDIR=$(pwd) ${MAKE} --no-print-directory env )
 
-    EXTRAFLAGS=
+    EXTRAFLAGS="-Ilinux/include"
     EXTRALIBS=
     UNITTESTARGS=-r
 
