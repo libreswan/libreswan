@@ -57,9 +57,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
 	backup unpatch uninstall install_file_list \
-	uml check \
-	umluserland
-
+	check \
 
 kpatch: unapplypatch applypatch klipsdefaults
 npatch: unapplynpatch applynpatch
@@ -181,7 +179,11 @@ ${OBJDIR}/Makefile: ${srcdir}/Makefile packaging/utils/makeshadowdir
 
 endif
 
-checkprograms:: 
+checkprograms:
+	@echo KVM tests are not integrated into makefiles yet
+	exit
+
+delmecheckprograms:: 
 	@for d in $(SUBDIRS) ; \
 	do \
 		(cd $$d && $(MAKE) srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \

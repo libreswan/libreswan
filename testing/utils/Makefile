@@ -14,7 +14,7 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include $(LIBRESWANSRCDIR)/Makefile.inc
 
-SUBDIRS=uml_netjig pcap2skb
+SUBDIRS=pcap2skb
 
 def:
 	@echo "Please read doc/intro.html or INSTALL before running make"
