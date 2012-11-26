@@ -594,4 +594,6 @@ deb:
 	sudo module-assistant -u . prepare
 	sudo module-assistant -u . build libreswan
 
+release:
+	packaging/utils/makerelease 
 
