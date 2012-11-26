@@ -4,17 +4,15 @@ Thu, 10 Aug 2000 10:50:33 +0200.
 The Debian package was created from scratch with some hints taken from
 previous freeswan packages by Tommi Virtanen and Aaron Johnson.
 The upstream software was originally downloaded from http://www.freeswan.org
-while newer versions use the fork from http://www.libreswan.org.
+and http://www.openswan.org/ while newer versions use the fork
+from http://www.libreswan.org .
 Debian packaging is Copyright © 2000-2010 Rene Mayrhofer.
 
-Libreswan derives its copyright from FreeS/WAN: Richard Guy Briggs
-(KLIPS), D. Hugh Redelmeier (Pluto), Michael Richardson (technical lead,
-KLIPS, testing, etc.), Henry Spencer (past technical lead, scripts,
-libraries, packaging, etc.), Sandy Harris (documentation), Claudia
-Schmeing (support, documentation), and Sam Sgro (support, releases).
+Libreswan's code is DFSG-free. See CREDITS.
 
-After forking into Libreswan, it is now Copyright © 2003-2008 Xelerance,
-please see the file CREDITS for details. However, all of the code is DFSG-free.
+Libreswan derives its copyright from  Openswan. See CREDITS.openswan
+
+Openswan derives its copyright from FreeS/WAN. See CREDITS.freeswan
 
 The contents of this LICENSE file are:
 ------------------------------------------------------------------------------

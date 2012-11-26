@@ -1,5 +1,4 @@
-10-initd-header.dpatch
-46-programs--pluto--pluto.8-linebreak.dpatch
-47-programs--eroute--eroute.8-linebreak.dpatch
-48-programs--auto--auto.8-linebreak.dpatch
-49-programs--_confread--ipsec.conf.5-linebreak.dpatch
+#46-programs--pluto--pluto.8-linebreak.dpatch
+#47-programs--eroute--eroute.8-linebreak.dpatch
+#48-programs--auto--auto.8-linebreak.dpatch
+#49-programs--_confread--ipsec.conf.5-linebreak.dpatch

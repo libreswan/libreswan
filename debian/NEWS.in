@@ -1,4 +1,4 @@
-libreswan (1:2.9~rc1-1-gb191401-dirty-master) precise; urgency=low
+libreswan (1:@IPSECBASEVERSION@) precise; urgency=low
 
   The real changelog is in /usr/share/doc/libreswan/changelog.gz
 

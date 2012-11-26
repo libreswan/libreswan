@@ -37,7 +37,11 @@ build-stamp: patch
 			 MANTREE=/usr/share/man \
 			 CONFDIR=$(CURDIR)/debian \
 			 USE_LDAP=true USE_LIBCURL=true \
-			 USE_XAUTHPAM=true
+			 USE_XAUTHPAM=true \
+			 USE_FIPSCHECK=false \
+			 USE_LIBCAP_NG=false \
+			 USE_LABELED_IPSEC=false
+
 	# remove the temporary file, it will be created during install
 	rm -f $(CURDIR)/debian/ipsec.secrets
 
@@ -131,7 +135,6 @@ install-libreswan: build
 	chmod 700 -R $(CURDIR)/debian/libreswan/etc/ipsec.d/private/
 	# don't know why they come with +x set by default...
 	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.d/policies/*
-	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.d/examples/*
 
 	# create /var/lib/libreswan with permissions similar to ipsec.secrets
 	mkdir -p $(CURDIR)/debian/libreswan/var/lib/libreswan

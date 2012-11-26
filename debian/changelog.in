@@ -1,10 +1,16 @@
-libreswan (1:2.9~rc1-1-gb191401-dirty-master) precise; urgency=low
+libreswan (1:@IPSECBASEVERSION@) precise; urgency=low
+
+  * Update to @IPSECBASEVERSION@
 
   The real changelog is in /usr/share/doc/libreswan/changelog.gz
 
   This package is NOT an official Debian/Ubuntu package. Please do
   not file any Debian/Ubuntu bug reports for this package but contact
-  <dev@libreswan.org> 
+  <dev@libreswan.org> if you have a problem.
 
  -- Unknown User <unknown@libreswan.org>  Sun, 25 Nov 2012 19:00:00 +0200
 
+
+Local variables:
+mode: debian-changelog
+End:

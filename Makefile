@@ -575,5 +575,23 @@ war:
 showversion:
 	@echo ${IPSECVERSION} | sed "s/^v//"
 showdebversion:
-	@echo ${IPSECVERSION} |  sed "s/^v//" | sed "s/-/~/g"
+	@echo ${IPSECVERSION} |  sed "s/^v//" | sed -e "s/\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\(.*\)/\1.\2~\3/" | sed "s/~-/~/"
+showrpmversion:
+	@echo ${IPSECVERSION} | sed "s/^v//" | sed "s/-.*//"
+showrpmrelease:
+	@echo ${IPSECVERSION} | sed "s/^v//" | sed "s/^[^-]*-\(.*\)/\1/"
+
+# these need to move elsewhere and get fixed not to use root
+
+deb:
+	cp debian/changelog.in debian/changelog
+	cp debian/NEWS.in debian/NEWS
+	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/{changelog,NEWS}
+	debuild -i -us -uc -b
+	#debuild -S -sa
+	sudo module-assistant prepare -u .
+	sudo dpkg -i ../libreswan-modules-source_`make -s showdebversion`_all.deb
+	sudo module-assistant -u . prepare
+	sudo module-assistant -u . build libreswan
+
 

@@ -1,25 +1,28 @@
 Source: libreswan
 Section: net
 Priority: optional
-Maintainer: Simon Deziel <simon@xelerance.com>
-Vcs-Browser: http://git.libreswan.org/cgi-bin/gitweb.cgi?p=libreswan.public/.git;a=summary
-Vcs-Git: git://git.libreswan.org/public/scm/libreswan.public
+Maintainer: Paul Wouters <paul@libreswan.org>
+Vcs-Browser: http://git.libreswan.org/libreswan.git/.git;a=summary
+Vcs-Git: git://git.libreswan.org//libreswan.git
 Standards-Version: 3.8.4
-Build-Depends: debhelper (>= 7.1), libgmp3-dev, libssl-dev (>= 0.9.8), htmldoc, man2html, libcurl4-openssl-dev, libldap2-dev, libpam0g-dev, libkrb5-dev, bison, flex, dpatch, bzip2, po-debconf
+Build-Depends: debhelper (>= 7.1), libgmp3-dev, libssl-dev (>= 0.9.8), htmldoc, man2html, libcurl4-openssl-dev, libldap2-dev, libpam0g-dev, libkrb5-dev, bison, flex, dpatch, bzip2, po-debconf, libunbound-dev
 Homepage: http://www.libreswan.org/
 
 Package: libreswan
 Architecture: any
 Pre-Depends: debconf | debconf-2.0
-Depends: ${shlibs:Depends}, ${misc:Depends}, bsdmainutils, openssl, host, iproute, iproute (>=20041019-0.1) | ipsec-tools
+Depends: ${shlibs:Depends}, ${misc:Depends}, bsdmainutils, openssl, host, iproute, iproute (>=20041019-0.1) 
 Suggests: libreswan-modules-source | libreswan-modules-dkms, libreswan-doc, curl
 Provides: ike-server
 Conflicts: ike-server
 Replaces: ike-server
 Description: Internet Key Exchange daemon
- Libreswan is an IPsec based VPN solution for the Linux kernel. It can use the
- native IPsec stack as well as the KLIPS kernel module. Both IKEv1 and IKEv2
- protocols are supported.
+ Libreswan is an IPsec implementation for Linux. It has support for most 
+ of the extensions (RFC + IETF drafts) related to IPsec, including 
+ IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
+ .
+ Libreswan has been forked from Openswan 2.6.38, which was forked from
+ FreeS/WAN 1.99.
  .
  The Libreswan IKE daemon is named pluto. It was inherited from the FreeS/WAN
  project, but provides improved X.509 certificate support and other features.
