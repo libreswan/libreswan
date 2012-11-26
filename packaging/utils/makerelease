@@ -29,12 +29,12 @@ then
 	exit 1
 fi
 
-if [ -d release ]
+if [ -f release/libreswan-$version.tar.gz  ]
 then
-	echo >&2 "ERROR: release dir already exists. Aborted"
+	echo >&2 "ERROR: release already exists. Aborted"
 	exit 1
 else
-	mkdir release
+	mkdir -p release
 fi
 
 git archive --format=tgz --prefix=libreswan-$version/ HEAD > release/libreswan-$version.tar.gz
