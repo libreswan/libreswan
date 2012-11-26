@@ -42,7 +42,7 @@ git archive --format=tgz --prefix=libreswan-$version/ HEAD > release/libreswan-$
 # subshell for easier path
 (
 	cd release 
-	tar zxvf libreswan-$version.tar.gz
+	tar zxf libreswan-$version.tar.gz
 	cd libreswan-$version
 	echo "IPSECBASEVERSION?=$version" > Makefile.ver
 	sed -i "s/(unreleased)/(`C= LOCALE= LANG= date +"%B %d, %Y"`)/" CHANGES
