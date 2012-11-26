@@ -475,7 +475,7 @@ endif
 # make sure we only run this once per build,  its too expensive to run
 # every time Makefile.inc is included
 ifndef IPSECVERSION
-IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlocalversion ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
+IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
 export IPSECVERSION
 endif
 
