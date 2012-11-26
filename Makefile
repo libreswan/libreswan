@@ -559,8 +559,8 @@ tarpkg:
 	@rm -rf /var/tmp/libreswan-${USER}
 	@make DESTDIR=/var/tmp/libreswan-${USER} programs install
 	@rm /var/tmp/libreswan-${USER}/etc/ipsec.conf
-	@(cd /var/tmp/libreswan-${USER} && tar czf - . ) >libreswan${VENDOR}-${IPSECVERSION}.tgz 
-	@ls -l libreswan${VENDOR}-${IPSECVERSION}.tgz
+	@(cd /var/tmp/libreswan-${USER} && tar czf - . ) >libreswan-${IPSECVERSION}.tgz 
+	@ls -l libreswan-${IPSECVERSION}.tgz
 	@rm -rf /var/tmp/libreswan-${USER}
 
 
