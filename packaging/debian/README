@@ -9,6 +9,8 @@ sudo apt-get install fakeroot build-essential crash kexec-tools makedumpfile \
 
 (or try: sudo apt-get build-dep --no-install-recommends libreswan)
 
+for now, test with "make deb" to build everything. will be split into
+kmod/dkms
 
 Choose between a kmod kernel package or a dkms kernel package:
 
