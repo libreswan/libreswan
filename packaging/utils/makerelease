@@ -1,0 +1,58 @@
+#!/bin/sh
+
+
+if [ ! -f Makefile.ver ]
+then
+	echo >&2 "error: make release should be run from the top directory"
+	exit 1
+fi
+version=`cat Makefile.ver | sed "s/^.*=//"`
+
+if [ -n "`git diff | head -10`" ]
+then
+	echo >&2 "error: tree is not clean - changes would be lost. aborted"
+	exit 1
+fi
+
+# will become branch 'release' instead of master
+TOPUSH=`git log master ^origin/master`
+if [ -n "$TOPUSH" ]
+then
+	echo >&2 "ERROR: unpushed changes - git push first"
+	git log master ^origin/master
+	exit 1
+fi
+
+if [ "`git tag | tail -1`" != "v$version" ]
+then
+	echo >&2 "ERROR: version '$version' is not the latest git tag"
+	exit 1
+fi
+
+if [ -d release ]
+then
+	echo >&2 "ERROR: release dir already exists. Aborted"
+	exit 1
+else
+	mkdir release
+fi
+
+git archive --format=tgz --prefix=libreswan-$version/ HEAD > release/libreswan-$version.tar.gz
+
+# subshell for easier path
+(
+	cd release 
+	tar zxvf libreswan-$version.tar.gz
+	cd libreswan-$version
+	echo "IPSECBASEVERSION?=$version" > Makefile.ver
+	sed -i "s/(unreleased)/(`C= LOCALE= LANG= date +"%B %d, %Y"`)/" CHANGES
+	for file in debian/NEWS debian/changelog `find packaging -type f | xargs grep IPSECBASEVERSION |sed "s/:.*$//"`
+	do
+		sed -i "s/IPSECBASEVERSION/$version/" $file
+	done
+	cd .. 
+	tar zcf libreswan-$version.tar.gz libreswan-$version
+)
+ls -l release/libreswan-$version.tar.gz
+echo please sign the release now with GPG and upload it
+
