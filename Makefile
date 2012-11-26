@@ -572,4 +572,8 @@ env:
 war:
 	@echo "Not Love?"
 
+showversion:
+	@echo ${IPSECVERSION} | sed "s/^v//"
+showdebversion:
+	@echo ${IPSECVERSION} |  sed "s/^v//" | sed "s/-/~/g"
 
