@@ -33,7 +33,7 @@ extern bool
 
 extern bool log_did_something;  /* set if we should log time again to debug*/
 
-extern const char *base_perpeer_logdir;
+extern char *base_perpeer_logdir;
 
 extern char debug_prefix;
 

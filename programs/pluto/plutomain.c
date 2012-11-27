@@ -763,7 +763,9 @@ main(int argc, char **argv)
 	    /* no config option: ctlbase */
 	    /* no config option: pluto_shared_secrets_file */
 	    /* no config option: lsw_init_ipsecdir() */
-	    /* no config option: base_perpeer_logdir */
+	    set_cfg_string(&base_perpeer_logdir, cfg->setup.strings[KSF_DUMPDIR]); /* base_perpeer_logdir */
+	    log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];
+
 	    /* no config option: log_to_perpeer */
 	    /* no config option: no_retransmits */
 	    set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]);
