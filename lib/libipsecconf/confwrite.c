@@ -589,7 +589,7 @@ void confwrite(struct starter_config *cfg, FILE *out)
 /*	int i;
 */
 	/* output version number */
-	fprintf(out, "\nversion 2.0\n\n");
+	/* fprintf(out, "\nversion 2.0\n\n"); */
 
 	/* output config setup section */
 	fprintf(out, "config setup\n");
