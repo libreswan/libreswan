@@ -59,6 +59,7 @@ enum keyword_numeric_config_field {
     KBF_FRAGICMP,
     KBF_HIDETOS,
     KBF_UNIQUEIDS,
+    KBF_RETRANSMITS,
     KBF_PLUTOSTDERRLOGTIME,
     KBF_PERPEERLOG,
     KBF_OVERRIDEMTU,
