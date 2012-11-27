@@ -759,7 +759,7 @@ main(int argc, char **argv)
 		*cfg->setup.strings[KSF_INTERFACES] != 0)
 		use_interface(cfg->setup.strings[KSF_INTERFACES]);
 	    set_cfg_string(&pluto_listen, cfg->setup.strings[KSF_LISTEN]);
-	    /* no config option: pluto_port */
+	    /* no config option: pluto_port */ /* not true - we have 'p'  --ikeport */
 	    /* no config option: ctlbase */
 	    /* no config option: pluto_shared_secrets_file */
 	    /* no config option: lsw_init_ipsecdir() */
