@@ -51,10 +51,10 @@ documentation and/or software.
 #include <sys/types.h>	/* for u_int*_t */
 
 #include "md5.h"
-#include "oswendian.h" /* sets BYTE_ORDER, LITTLE_ENDIAN, and BIG_ENDIAN */
+#include "lswendian.h" /* sets BYTE_ORDER, LITTLE_ENDIAN, and BIG_ENDIAN */
 
 #include <pk11pub.h>
-#include "oswlog.h"
+#include "lswlog.h"
 
 #define HAVEMEMCOPY 1	/* use ISO C's memcpy and memset */
 

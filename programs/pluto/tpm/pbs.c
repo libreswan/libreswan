@@ -22,8 +22,8 @@
 #include <errno.h>
 
 #include <tcl.h>
-#include "oswlog.h"
-#include "oswalloc.h"
+#include "lswlog.h"
+#include "lswalloc.h"
 #include "tpm.h"
 #include "tpm_int.h"
 #include "paths.h"

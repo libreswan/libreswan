@@ -20,7 +20,7 @@
 <refsynopsisdiv id='synopsis'>
 <funcsynopsis>
 <funcsynopsisinfo>
-#include &lt;freeswan.h&gt;
+#include &lt;libreswan.h&gt;
 
 </funcsynopsisinfo>
 <funcprototype>
@@ -49,7 +49,7 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>The
-<emphasis remap='B'>&lt;freeswan.h&gt;</emphasis>
+<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
 internal type
 <emphasis remap='I'>ip_address</emphasis>
 contains one of the

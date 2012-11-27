@@ -22,7 +22,7 @@
 <refsynopsisdiv id='synopsis'>
 <funcsynopsis>
 <funcsynopsisinfo>
-#include &lt;freeswan.h&gt;
+#include &lt;libreswan.h&gt;
 
 </funcsynopsisinfo>
 <funcprototype>
@@ -65,7 +65,7 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>The
-<emphasis remap='B'>&lt;freeswan.h&gt;</emphasis>
+<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
 library uses an internal type
 <emphasis remap='I'>ip_subnet</emphasis>
 to contain a description of an IP subnet
@@ -128,7 +128,7 @@ normally
 or
 <emphasis remap='B'>AF_INET6</emphasis>.
 (The
-<emphasis remap='B'>&lt;freeswan.h&gt;</emphasis>
+<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
 header file arranges to include the necessary headers for these
 names to be known.)</para>
 

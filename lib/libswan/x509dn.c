@@ -35,9 +35,9 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
-#include "oswalloc.h"
-#include "oswtime.h"
+#include "lswlog.h"
+#include "lswalloc.h"
+#include "lswtime.h"
 #include "mpzfuncs.h"
 #include "id.h"
 #include "asn1.h"
@@ -56,7 +56,7 @@
 #include <pk11pub.h>
 #include <keyhi.h>
 #include <secerr.h>
-#include "oswconf.h"
+#include "lswconf.h"
 
 
 /* ASN.1 definition of a basicConstraints extension */
@@ -1404,7 +1404,7 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
             dsig.len  = (unsigned int)dsigc.len;
 
     	    /*Verifying RSA signature*/
-	    if(PK11_VerifyRecover(publicKey,&signature,&dsig,osw_return_nss_password_file_info()) == SECSuccess )
+	    if(PK11_VerifyRecover(publicKey,&signature,&dsig,lsw_return_nss_password_file_info()) == SECSuccess )
 	    {
             DBG(DBG_PARSING,
                 DBG_dump("NSS decrypted sig: ", dsig.data, dsig.len);

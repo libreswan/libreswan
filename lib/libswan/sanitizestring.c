@@ -20,7 +20,7 @@
 #include "libreswan.h"
 #include "libreswan/passert.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 /* Sanitize character string in situ: turns dangerous characters into \OOO.
  * With a bit of work, we could use simpler reps for \\, \r, etc.,

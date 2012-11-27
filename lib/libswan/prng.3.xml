@@ -19,7 +19,7 @@
 <refsynopsisdiv id='synopsis'>
 <funcsynopsis>
 <funcsynopsisinfo>
-#include &lt;freeswan.h&gt;
+#include &lt;libreswan.h&gt;
 
 </funcsynopsisinfo>
 <funcprototype>
@@ -99,7 +99,7 @@ obliterating all trace of the state used to generate its previous output.
 This requires on the order of 250 integer operations.</para>
 
 <para>The
-<emphasis remap='B'>&lt;freeswan.h&gt;</emphasis>
+<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
 header file supplies the definition of the
 <varname role='parameter'>prng</varname>
 structure.

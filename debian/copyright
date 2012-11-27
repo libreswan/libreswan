@@ -366,7 +366,7 @@ Files with different copyrights/licenses:
    Agency (DARPA) and Air Force Research Laboratory, Air Force
    Materiel Command, USAF, under agreement number F30602-01-2-0537.
 
- * lib/libcrypto/liboswcrypto/cryptodev.c
+ * lib/libcrypto/liblswcrypto/cryptodev.c
    Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
 
    Daniel Djamaludin

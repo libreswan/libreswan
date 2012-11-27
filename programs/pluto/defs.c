@@ -24,7 +24,7 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "libreswan/ipsec_policy.h"
-#include "oswtime.h"
+#include "lswtime.h"
 #include "defs.h"
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */

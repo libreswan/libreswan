@@ -19,16 +19,16 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdio.h>
-#include "oswlog.h"
-#include "oswconf.h"
-#include "oswalloc.h"
+#include "lswlog.h"
+#include "lswconf.h"
+#include "lswalloc.h"
 
 #include <string.h>
 #include <nss.h>
 #include <nspr.h>
 #include <pk11pub.h>
 
-static struct osw_conf_options global_oco;
+static struct lsw_conf_options global_oco;
 static bool setup=FALSE;
 
 #define NSSpwdfilesize 4096
@@ -40,7 +40,7 @@ static secuPWData NSSPassword;
 #define SUBDIRNAME(X) X
 #endif
 
-static void osw_conf_calculate(struct osw_conf_options *oco)
+static void lsw_conf_calculate(struct lsw_conf_options *oco)
 {
     char buf[PATH_MAX];
 
@@ -67,7 +67,7 @@ static void osw_conf_calculate(struct osw_conf_options *oco)
     oco->policies_dir = clone_str(buf, "policies path");
 }
 
-void osw_conf_setdefault(void)
+void lsw_conf_setdefault(void)
 {
     char buf[PATH_MAX];
     char *ipsec_conf_dir = FINALCONFDIR;
@@ -125,7 +125,7 @@ void osw_conf_setdefault(void)
 }
 
 /* mostly estatic value, to surpress within LEAK_DETECTIVE */
-void osw_conf_free_oco(void)
+void lsw_conf_free_oco(void)
 {
     /* Must be a nicer way to loop over this? */
     pfree(global_oco.crls_dir);
@@ -143,32 +143,32 @@ void osw_conf_free_oco(void)
     pfree(global_oco.aacerts_dir);
 }
 
-const struct osw_conf_options *osw_init_options(void)
+const struct lsw_conf_options *lsw_init_options(void)
 {
     if(setup) return &global_oco;
     setup = TRUE;
 
-    osw_conf_setdefault();
-    osw_conf_calculate(&global_oco);
+    lsw_conf_setdefault();
+    lsw_conf_calculate(&global_oco);
 
     return &global_oco;
 }
 
-const struct osw_conf_options *osw_init_rootdir(const char *root_dir)
+const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir)
 {
-    if(!setup) osw_conf_setdefault();
+    if(!setup) lsw_conf_setdefault();
     global_oco.rootdir = clone_str(root_dir, "override /");
-    osw_conf_calculate(&global_oco);
+    lsw_conf_calculate(&global_oco);
     setup = TRUE;
     
     return &global_oco;
 }
 
-const struct osw_conf_options *osw_init_ipsecdir(const char *ipsec_dir)
+const struct lsw_conf_options *lsw_init_ipsecdir(const char *ipsec_dir)
 {
-    if(!setup) osw_conf_setdefault();
+    if(!setup) lsw_conf_setdefault();
     global_oco.confddir = clone_str(ipsec_dir, "override ipsec.d");
-    osw_conf_calculate(&global_oco);
+    lsw_conf_calculate(&global_oco);
     setup = TRUE;
 
     libreswan_log("adjusting ipsec.d to %s", global_oco.confddir);
@@ -176,7 +176,7 @@ const struct osw_conf_options *osw_init_ipsecdir(const char *ipsec_dir)
     return &global_oco;
 }
 
-secuPWData *osw_return_nss_password_file_info(void)
+secuPWData *lsw_return_nss_password_file_info(void)
 {
     return &NSSPassword;
 }

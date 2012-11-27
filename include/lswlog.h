@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _OSWLOG_H_
-#define _OSWLOG_H_
+#ifndef _LSWLOG_H_
+#define _LSWLOG_H_
 
 #include <libreswan.h>
 #include <stdarg.h>
@@ -56,7 +56,7 @@ extern void tool_init_log(void);
 extern void tool_close_log(void);
 extern void set_debugging(lset_t deb);
 
-#define	osw_abort()	libreswan_log_abort(__FILE__, __LINE__)
+#define	lsw_abort()	libreswan_log_abort(__FILE__, __LINE__)
 
 #else /*!DEBUG*/
 
@@ -68,7 +68,7 @@ extern void set_debugging(lset_t deb);
 extern void tool_init_log(void);
 extern void tool_close_log(void);
 
-#define	osw_abort()	abort()
+#define	lsw_abort()	abort()
 
 #endif /*!DEBUG*/
 
@@ -171,5 +171,5 @@ extern void libreswan_exit_log_errno_routine(int e, const char *message, ...) PR
 /* sanitize a string */
 extern size_t sanitize_string(char *buf, size_t size);
 
-#endif /* _OSWLOG_H_ */
+#endif /* _LSWLOG_H_ */
 

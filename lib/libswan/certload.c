@@ -25,10 +25,10 @@
 #include <libreswan/ipsec_policy.h>
 
 #include "constants.h"
-#include "oswlog.h"
-#include "oswalloc.h"
-#include "oswconf.h"
-#include "oswtime.h"
+#include "lswlog.h"
+#include "lswalloc.h"
+#include "lswconf.h"
+#include "lswtime.h"
 #include "asn1.h"
 #include "id.h"
 #include "x509.h"
@@ -169,9 +169,9 @@ load_rsa_private_key(const char* filename, int verbose, prompt_pass_t *pass)
     bool pgp = FALSE;
     chunk_t blob = empty_chunk;
     char path[PATH_MAX];
-    const struct osw_conf_options *oco;
+    const struct lsw_conf_options *oco;
 
-    oco = osw_init_options();
+    oco = lsw_init_options();
 
     if (*filename == '/') {
 	/* absolute pathname --- might be hacked by local rootdir */
@@ -288,10 +288,10 @@ bool
 load_host_cert(enum ipsec_cert_type certtype, const char *filename,
 	       cert_t *cert, int verbose)
 {
-    const struct osw_conf_options *oco;
+    const struct lsw_conf_options *oco;
     char path[PATH_MAX];
 
-    oco = osw_init_options();
+    oco = lsw_init_options();
 
     if (*filename == '/')	/* absolute pathname */
     	strncpy(path, filename, ASN1_BUF_LEN);
@@ -346,7 +346,7 @@ load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName, int verbose
     nssCert=CERT_FindCertByNicknameOrEmailAddr(CERT_GetDefaultCertDB(), nssHostCertNickName);
 
     if(nssCert==NULL) {
-	nssCert=PK11_FindCertFromNickname(nssHostCertNickName, osw_return_nss_password_file_info());
+	nssCert=PK11_FindCertFromNickname(nssHostCertNickName, lsw_return_nss_password_file_info());
     }
 
     if(nssCert == NULL) {
@@ -400,7 +400,7 @@ load_authcerts_from_nss(const char *type, u_char auth_flags)
     CERTCertList *list = NULL;
     CERTCertListNode *node;
 
-    list = PK11_ListCerts(PK11CertListCA,  osw_return_nss_password_file_info());
+    list = PK11_ListCerts(PK11CertListCA,  lsw_return_nss_password_file_info());
 
     if(list) {
 		for (node = CERT_LIST_HEAD(list); !CERT_LIST_END(node, list);

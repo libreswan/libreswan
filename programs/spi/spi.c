@@ -60,12 +60,12 @@
 #include "libreswan/ipsec_esp.h"
 #include "libreswan/ipsec_sa.h"  /* IPSEC_SAREF_NULL */
 
-#include "oswlog.h"
+#include "lswlog.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "pfkey_help.h"
 
-#include "osw_select.h"
+#include "lsw_select.h"
 
 struct encap_msghdr *em;
 
@@ -103,7 +103,7 @@ char sa[SATOT_BUF];
 
 extern unsigned int pfkey_lib_debug; /* used by libfreeswan/pfkey_v2_build */
 int pfkey_sock;
-osw_fd_set pfkey_socks;
+lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
 enum life_severity {
 	life_soft = 0,

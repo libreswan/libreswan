@@ -551,35 +551,35 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 	ixs->matcher.sen_len = sizeof (struct sockaddr_encap);
 	ixs->matcher.sen_family = AF_ENCAP;
 #ifdef CONFIG_KLIPS_IPV6
-	if (osw_ip_hdr_version(ixs) == 6) {
+	if (lsw_ip_hdr_version(ixs) == 6) {
 		IPSEC_FRAG_OFF_DECL(frag_off)
-		nexthdr = osw_ip6_hdr(ixs)->nexthdr;
+		nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 		nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-			((void *)(osw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data, 
+			((void *)(lsw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data, 
 			&nexthdr, &frag_off);
 		ixs->matcher.sen_type = SENT_IP6;
-		ixs->matcher.sen_ip6_src = osw_ip6_hdr(ixs)->saddr;
-		ixs->matcher.sen_ip6_dst = osw_ip6_hdr(ixs)->daddr;
+		ixs->matcher.sen_ip6_src = lsw_ip6_hdr(ixs)->saddr;
+		ixs->matcher.sen_ip6_dst = lsw_ip6_hdr(ixs)->daddr;
 		ixs->matcher.sen_proto6 = nexthdr;
 		if (debug_tunnel & DB_TN_XMIT) {
-			inet_addrtot(AF_INET6, &osw_ip6_hdr(ixs)->saddr, 0, tsrc, sizeof(tsrc));
-			inet_addrtot(AF_INET6, &osw_ip6_hdr(ixs)->daddr, 0, tdst, sizeof(tdst));
+			inet_addrtot(AF_INET6, &lsw_ip6_hdr(ixs)->saddr, 0, tsrc, sizeof(tsrc));
+			inet_addrtot(AF_INET6, &lsw_ip6_hdr(ixs)->daddr, 0, tdst, sizeof(tdst));
 		}
 	} else
 #endif /* CONFIG_KLIPS_IPV6 */
 	{
-		nexthdr = osw_ip4_hdr(ixs)->protocol;
+		nexthdr = lsw_ip4_hdr(ixs)->protocol;
 		nexthdroff = 0;
-		if ((ntohs(osw_ip4_hdr(ixs)->frag_off) & IP_OFFSET) == 0)
-			nexthdroff = (ixs->iph + (osw_ip4_hdr(ixs)->ihl<<2)) -
+		if ((ntohs(lsw_ip4_hdr(ixs)->frag_off) & IP_OFFSET) == 0)
+			nexthdroff = (ixs->iph + (lsw_ip4_hdr(ixs)->ihl<<2)) -
 				(void *)ixs->skb->data;
 		ixs->matcher.sen_type = SENT_IP4;
-		ixs->matcher.sen_ip_src.s_addr = osw_ip4_hdr(ixs)->saddr;
-		ixs->matcher.sen_ip_dst.s_addr = osw_ip4_hdr(ixs)->daddr;
+		ixs->matcher.sen_ip_src.s_addr = lsw_ip4_hdr(ixs)->saddr;
+		ixs->matcher.sen_ip_dst.s_addr = lsw_ip4_hdr(ixs)->daddr;
 		ixs->matcher.sen_proto = nexthdr;
 		if (debug_tunnel & DB_TN_XMIT) {
-			inet_addrtot(AF_INET, &osw_ip4_hdr(ixs)->saddr, 0, tsrc, sizeof(tsrc));
-			inet_addrtot(AF_INET, &osw_ip4_hdr(ixs)->daddr, 0, tdst, sizeof(tdst));
+			inet_addrtot(AF_INET, &lsw_ip4_hdr(ixs)->saddr, 0, tsrc, sizeof(tsrc));
+			inet_addrtot(AF_INET, &lsw_ip4_hdr(ixs)->daddr, 0, tdst, sizeof(tdst));
 		}
 	}
 	ipsec_extract_ports(ixs->skb, nexthdr, nexthdroff, &ixs->matcher);
@@ -604,7 +604,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 			    "version: %d "
 			    "nexthdroff: %d "
 			    "udphdr: %p\n",
-			    osw_ip_hdr_version(ixs), nexthdroff, udphdr);
+			    lsw_ip_hdr_version(ixs), nexthdroff, udphdr);
 		
 		ixs->sport=0; ixs->dport=0;
 
@@ -678,7 +678,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 	}
 
 #ifdef CONFIG_KLIPS_IPV6
-	if (osw_ip_hdr_version(ixs) == 6) {
+	if (lsw_ip_hdr_version(ixs) == 6) {
 		char edst[ADDRTOT_BUF+1];
 		struct in6_addr addr6_any = IN6ADDR_ANY_INIT;
 
@@ -710,9 +710,9 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 		 * without interference since it is most likely an IKE packet.
 		 */
 
-		if (ip6_chk_addr(&osw_ip6_hdr(ixs)->saddr) == IS_MYADDR
+		if (ip6_chk_addr(&lsw_ip6_hdr(ixs)->saddr) == IS_MYADDR
 			&& (ixs->eroute==NULL
-			    || ipv6_addr_cmp(&osw_ip6_hdr(ixs)->daddr, &ixs->eroute->er_said.dst.u.v6.sin6_addr) == 0
+			    || ipv6_addr_cmp(&lsw_ip6_hdr(ixs)->daddr, &ixs->eroute->er_said.dst.u.v6.sin6_addr) == 0
 			    || ipv6_addr_any(&ixs->eroute->er_said.dst.u.v6.sin6_addr))
 			&& (nexthdr == IPPROTO_ESP || nexthdr == IPPROTO_AH ||
 			    (nexthdr == IPPROTO_UDP &&
@@ -727,7 +727,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 
 			ixs->outgoing_said.spi = htonl(SPI_PASS);
 			if(!ixs->skb->sk
-				&& osw_ipv6_find_hdr(ixs->skb, &ptr, NEXTHDR_FRAGMENT, NULL) != ENOENT) {
+				&& lsw_ipv6_find_hdr(ixs->skb, &ptr, NEXTHDR_FRAGMENT, NULL) != ENOENT) {
 				KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 						"klips_debug:ipsec_xmit_SAlookup: "
 						"local UDP/500 (probably IKE) passthrough: base fragment, rest of fragments will probably get filtered.\n");
@@ -758,9 +758,9 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 		 * without interference since it is most likely an IKE packet.
 		 */
 
-		if (ip_chk_addr(osw_ip4_hdr(ixs)->saddr) == IS_MYADDR
+		if (ip_chk_addr(lsw_ip4_hdr(ixs)->saddr) == IS_MYADDR
 			&& (ixs->eroute==NULL
-			|| osw_ip4_hdr(ixs)->daddr == ixs->eroute->er_said.dst.u.v4.sin_addr.s_addr
+			|| lsw_ip4_hdr(ixs)->daddr == ixs->eroute->er_said.dst.u.v4.sin_addr.s_addr
 			|| INADDR_ANY == ixs->eroute->er_said.dst.u.v4.sin_addr.s_addr)
 			&& (nexthdr == IPPROTO_ESP || nexthdr == IPPROTO_AH ||
 			    (nexthdr == IPPROTO_UDP &&
@@ -773,7 +773,7 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 			 */
 
 			ixs->outgoing_said.spi = htonl(SPI_PASS);
-			if(!(ixs->skb->sk) && ((ntohs(osw_ip4_hdr(ixs)->frag_off) & IP_MF) != 0)) {
+			if(!(ixs->skb->sk) && ((ntohs(lsw_ip4_hdr(ixs)->frag_off) & IP_MF) != 0)) {
 				KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 						"klips_debug:ipsec_xmit_SAlookup: "
 						"local UDP/500 (probably IKE) passthrough: base fragment, rest of fragments will probably get filtered.\n");
@@ -919,27 +919,27 @@ ipsec_tunnel_xsm_complete(
 	}
 
 #ifdef CONFIG_KLIPS_IPV6
-	if (osw_ip_hdr_version(ixs) == 6) {
+	if (lsw_ip_hdr_version(ixs) == 6) {
 		IPSEC_FRAG_OFF_DECL(frag_off)
-		nexthdr = osw_ip6_hdr(ixs)->nexthdr;
+		nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 		nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-			((void *)(osw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data,
+			((void *)(lsw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data,
 			&nexthdr, &frag_off);
 		ixs->matcher.sen_type = SENT_IP6;
-		ixs->matcher.sen_ip6_src = osw_ip6_hdr(ixs)->saddr;
-		ixs->matcher.sen_ip6_dst = osw_ip6_hdr(ixs)->daddr;
+		ixs->matcher.sen_ip6_src = lsw_ip6_hdr(ixs)->saddr;
+		ixs->matcher.sen_ip6_dst = lsw_ip6_hdr(ixs)->daddr;
 		ixs->matcher.sen_proto6 = nexthdr;
 	} else
 #endif /* CONFIG_KLIPS_IPV6 */
 	{
-		nexthdr = osw_ip4_hdr(ixs)->protocol;
+		nexthdr = lsw_ip4_hdr(ixs)->protocol;
 		nexthdroff = 0;
-		if ((ntohs(osw_ip4_hdr(ixs)->frag_off) & IP_OFFSET) == 0)
-			nexthdroff = (ixs->iph + (osw_ip4_hdr(ixs)->ihl<<2)) -
+		if ((ntohs(lsw_ip4_hdr(ixs)->frag_off) & IP_OFFSET) == 0)
+			nexthdroff = (ixs->iph + (lsw_ip4_hdr(ixs)->ihl<<2)) -
 				(void *)ixs->skb->data;
 		ixs->matcher.sen_type = SENT_IP4;
-		ixs->matcher.sen_ip_src.s_addr = osw_ip4_hdr(ixs)->saddr;
-		ixs->matcher.sen_ip_dst.s_addr = osw_ip4_hdr(ixs)->daddr;
+		ixs->matcher.sen_ip_src.s_addr = lsw_ip4_hdr(ixs)->saddr;
+		ixs->matcher.sen_ip_dst.s_addr = lsw_ip4_hdr(ixs)->daddr;
 		ixs->matcher.sen_proto = nexthdr;
 	}
 	ipsec_extract_ports(ixs->skb, nexthdr, nexthdroff, &ixs->matcher);
@@ -2492,7 +2492,7 @@ ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
  * isn't NULL.
  *
  */
-int osw_ipv6_find_hdr(const struct sk_buff *skb,
+int lsw_ipv6_find_hdr(const struct sk_buff *skb,
 	unsigned int *offset, int target, unsigned short *fragoff)
 {
 	unsigned int start = skb_network_offset(skb) + sizeof(struct ipv6hdr);

@@ -12,8 +12,8 @@
  * for more details.
  */
 
-#ifndef _OSWTIME_H_
-#define _OSWTIME_H_
+#ifndef _LSWTIME_H_
+#define _LSWTIME_H_
 
 extern time_t now(void);	/* careful version of time(2) */
 

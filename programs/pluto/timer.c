@@ -50,7 +50,7 @@
 #include "timer.h"
 #include "whack.h"
 #include "dpd.h"
-#include "oswtime.h"
+#include "lswtime.h"
 
 #ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"

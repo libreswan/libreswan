@@ -32,7 +32,7 @@
 #ifndef _PLUTO_CRYPT_H
 #define _PLUTO_CRYPT_H
 
-#include "osw_select.h"
+#include "lsw_select.h"
 #include "crypto.h"
 
 typedef unsigned int pcr_req_id;
@@ -169,8 +169,8 @@ extern void init_crypto_helpers(int nhelpers);
 extern err_t send_crypto_helper_request(struct pluto_crypto_req *r
 					, struct pluto_crypto_req_cont *cn
 					, bool *toomuch);
-extern void pluto_crypto_helper_sockets(osw_fd_set *readfds);
-extern int  pluto_crypto_helper_ready(osw_fd_set *readfds);
+extern void pluto_crypto_helper_sockets(lsw_fd_set *readfds);
+extern int  pluto_crypto_helper_ready(lsw_fd_set *readfds);
 
 extern void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum);
 extern void pluto_crypto_helper(int fd, int helpernum);

@@ -25,7 +25,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "lex.h"
 
 struct file_lex_position *flp = NULL;

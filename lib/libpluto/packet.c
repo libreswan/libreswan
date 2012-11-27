@@ -24,7 +24,7 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "packet.h"
 

@@ -21,7 +21,7 @@
 #include <klips-crypto/aes_cbc.h>
 #include <klips-crypto/des.h>
 
-struct oswcrypto_meth {
+struct lswcrypto_meth {
 	void (*rsa_mod_exp_crt)(mpz_t dst, const mpz_t src, const mpz_t p,
 							const mpz_t dP, const mpz_t q, const mpz_t qP,
 							const mpz_t qInv);
@@ -52,9 +52,9 @@ struct oswcrypto_meth {
 
 };
 
-extern struct oswcrypto_meth oswcrypto;
+extern struct lswcrypto_meth lswcrypto;
 
-extern void load_oswcrypto(void);
+extern void load_lswcrypto(void);
 #ifdef HAVE_OCF
 extern void load_cryptodev(void);
 #endif

@@ -27,18 +27,18 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <errno.h>
-#include <oswalloc.h>
+#include <lswalloc.h>
 
-#include <oswcrypto.h>
+#include <lswcrypto.h>
 
 /* leave the {0}, it is required on OSX */
-struct oswcrypto_meth oswcrypto = {0};
+struct lswcrypto_meth lswcrypto = {0};
 
 /*
  * Do the modular exponentiation with Chinese Remainder Theorem in sofware
  */
 static void
-oswcrypto_rsa_mod_exp_crt_sw(
+lswcrypto_rsa_mod_exp_crt_sw(
 	mpz_t dst, const mpz_t src,
 	const mpz_t p, const mpz_t dP, const mpz_t q, const mpz_t dQ,
 	const mpz_t qInv)
@@ -66,7 +66,7 @@ oswcrypto_rsa_mod_exp_crt_sw(
  * Do the modular exponentiation in sofware
  */
 static void
-oswcrypto_mod_exp_sw(mpz_t r0, const mpz_t mp_g,
+lswcrypto_mod_exp_sw(mpz_t r0, const mpz_t mp_g,
 	const mpz_t secret, const mpz_t modulus)
 {
 	mpz_powm(r0, mp_g, secret, modulus);
@@ -77,21 +77,21 @@ oswcrypto_mod_exp_sw(mpz_t r0, const mpz_t mp_g,
  * Find out what we can support and use it.
  */
 void
-load_oswcrypto(void)
+load_lswcrypto(void)
 {
-	oswcrypto.rsa_mod_exp_crt      = oswcrypto_rsa_mod_exp_crt_sw;
-	oswcrypto.mod_exp              = oswcrypto_mod_exp_sw;
+	lswcrypto.rsa_mod_exp_crt      = lswcrypto_rsa_mod_exp_crt_sw;
+	lswcrypto.mod_exp              = lswcrypto_mod_exp_sw;
 
-	oswcrypto.aes_set_key          = AES_set_key;
-	oswcrypto.aes_cbc_encrypt      = AES_cbc_encrypt;
+	lswcrypto.aes_set_key          = AES_set_key;
+	lswcrypto.aes_cbc_encrypt      = AES_cbc_encrypt;
 
-	oswcrypto.des_set_key          = des_set_key;
-	oswcrypto.des_cbc_encrypt      = des_cbc_encrypt;
-	oswcrypto.des_encrypt          = des_encrypt;
-	oswcrypto.des_ncbc_encrypt     = des_ncbc_encrypt;
-	oswcrypto.des_ecb_encrypt      = des_ecb_encrypt;
+	lswcrypto.des_set_key          = des_set_key;
+	lswcrypto.des_cbc_encrypt      = des_cbc_encrypt;
+	lswcrypto.des_encrypt          = des_encrypt;
+	lswcrypto.des_ncbc_encrypt     = des_ncbc_encrypt;
+	lswcrypto.des_ecb_encrypt      = des_ecb_encrypt;
 
-	oswcrypto.des_ede3_cbc_encrypt = des_ede3_cbc_encrypt;
+	lswcrypto.des_ede3_cbc_encrypt = des_ede3_cbc_encrypt;
 
 #ifdef HAVE_OCF
 	load_cryptodev();

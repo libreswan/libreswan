@@ -32,10 +32,10 @@
 
 #include "constants.h"
 #include "alg_info.h"
-#include "oswlog.h"
-#include "oswalloc.h"
+#include "lswlog.h"
+#include "lswalloc.h"
 
-#include "oswconf.h"
+#include "lswconf.h"
 
 /* abstract reference */
 struct oakley_group_desc;

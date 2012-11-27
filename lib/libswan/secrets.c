@@ -42,10 +42,10 @@
 #include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "constants.h"
-#include "oswalloc.h"
-#include "oswtime.h"
+#include "lswalloc.h"
+#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "secrets.h"
@@ -58,7 +58,7 @@
 #include <prerror.h>
 #include <cert.h>
 #include <key.h>
-#include "oswconf.h"
+#include "lswconf.h"
 
 /* Maximum length of filename and passphrase buffer */
 #define BUF_LEN		256
@@ -86,11 +86,11 @@ static const struct fld RSA_private_field[] =
 
 };
 
-static err_t osw_process_psk_secret(const struct secret *secrets
+static err_t lsw_process_psk_secret(const struct secret *secrets
 				    , chunk_t *psk);
-static err_t osw_process_rsa_secret(const struct secret *secrets
+static err_t lsw_process_rsa_secret(const struct secret *secrets
 				    , struct RSA_private_key *rsak);
-static err_t osw_process_rsa_keyfile(struct secret **psecrets
+static err_t lsw_process_rsa_keyfile(struct secret **psecrets
 				     , int verbose
 				     , struct RSA_private_key *rsak
 				     , prompt_pass_t *pass);
@@ -172,17 +172,17 @@ struct secret {
     struct private_key_stuff pks;
 };
 
-struct private_key_stuff *osw_get_pks(struct secret *s)
+struct private_key_stuff *lsw_get_pks(struct secret *s)
 {
     return &s->pks;
 }
 
-int osw_get_secretlineno(const struct secret *s)
+int lsw_get_secretlineno(const struct secret *s)
 {
     return s->secretlineno;
 }
 
-struct id_list *osw_get_idlist(const struct secret *s)
+struct id_list *lsw_get_idlist(const struct secret *s)
 {
     return s->ids;
 }
@@ -190,7 +190,7 @@ struct id_list *osw_get_idlist(const struct secret *s)
 /* This is a bad assumption, and failes when people put PSK
  * entries before the default RSA case, which most people do
  */
-struct secret *osw_get_defaultsecret(struct secret *secrets)
+struct secret *lsw_get_defaultsecret(struct secret *secrets)
 {
     struct secret *s,*s2;
 
@@ -318,7 +318,7 @@ free_public_key(struct pubkey *pk)
     pfree(pk);
 }
 
-struct secret *osw_foreach_secret(struct secret *secrets,
+struct secret *lsw_foreach_secret(struct secret *secrets,
 				  secret_eval func, void *uservoid)
 {
     struct secret *s;
@@ -338,7 +338,7 @@ struct secret_byid {
     struct pubkey *my_public_key;
 };
     
-int osw_check_secret_byid(struct secret *secret,
+int lsw_check_secret_byid(struct secret *secret,
 			  struct private_key_stuff *pks,
 			  void *uservoid)
 {
@@ -363,7 +363,7 @@ int osw_check_secret_byid(struct secret *secret,
     
 				  
 
-struct secret *osw_find_secret_by_public_key(struct secret *secrets
+struct secret *lsw_find_secret_by_public_key(struct secret *secrets
 					     , struct pubkey *my_public_key
 					     , int kind)
 {
@@ -372,10 +372,10 @@ struct secret *osw_find_secret_by_public_key(struct secret *secrets
     sb.kind = kind;
     sb.my_public_key = my_public_key;
 
-    return osw_foreach_secret(secrets, osw_check_secret_byid, &sb);
+    return lsw_foreach_secret(secrets, lsw_check_secret_byid, &sb);
 }
 
-struct secret *osw_find_secret_by_id(struct secret *secrets
+struct secret *lsw_find_secret_by_id(struct secret *secrets
 				     , enum PrivateKeyKind kind
 				     , const struct id *my_id
 				     , const struct id *his_id
@@ -547,7 +547,7 @@ struct secret *osw_find_secret_by_id(struct secret *secrets
 /* check the existence of an RSA private key matching an RSA public
  * key contained in an X.509 or OpenPGP certificate
  */
-bool osw_has_private_key(struct secret *secrets, cert_t cert)
+bool lsw_has_private_key(struct secret *secrets, cert_t cert)
 {
     struct secret *s;
     bool has_key = FALSE;
@@ -582,7 +582,7 @@ err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *rsak, ch
     nssCert=CERT_FindCertByNicknameOrEmailAddr(CERT_GetDefaultCertDB(), nssHostCertNickName);
 
     if(nssCert==NULL) {
-	nssCert=PK11_FindCertFromNickname(nssHostCertNickName, osw_return_nss_password_file_info());
+	nssCert=PK11_FindCertFromNickname(nssHostCertNickName, lsw_return_nss_password_file_info());
     }
 
     if(nssCert == NULL) {
@@ -600,8 +600,8 @@ err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *rsak, ch
     }
     DBG(DBG_CRYPT, DBG_log("NSS: extract_and_add_secret_from_nss_cert_file: public key found"));
 
-    /*certCKAID=PK11_GetLowLevelKeyIDForCert(nssCert->slot,nssCert,  osw_return_nss_password_file_info());*/ /*does not return any lowkeyid*/
-    certCKAID=PK11_GetLowLevelKeyIDForCert(NULL,nssCert, osw_return_nss_password_file_info());
+    /*certCKAID=PK11_GetLowLevelKeyIDForCert(nssCert->slot,nssCert,  lsw_return_nss_password_file_info());*/ /*does not return any lowkeyid*/
+    certCKAID=PK11_GetLowLevelKeyIDForCert(NULL,nssCert, lsw_return_nss_password_file_info());
     if(certCKAID == NULL) {
 	loglog(RC_LOG_SERIOUS, "extract_and_add_secret_from_nsscert: can not find cert's low level CKA ID (err %d)", PR_GetError());
 	ugh = "cert cka id not found";
@@ -633,7 +633,7 @@ error:
 
 /* check the existence of an RSA private key matching an RSA public
  */
-bool osw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
+bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
 {
     struct secret *s;
     bool has_key = FALSE;
@@ -695,7 +695,7 @@ bool osw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
  * process rsa key file protected with optional passphrase which can either be
  * read from ipsec.secrets or prompted for by using whack
  */
-err_t osw_process_rsa_keyfile(struct secret **psecrets
+err_t lsw_process_rsa_keyfile(struct secret **psecrets
 			      , int verbose
 			      , struct RSA_private_key *rsak
 			      , prompt_pass_t *pass)
@@ -742,7 +742,7 @@ err_t osw_process_rsa_keyfile(struct secret **psecrets
 }
 
 /* parse PSK from file */
-static err_t osw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
+static err_t lsw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
 {
     err_t ugh = NULL;
     
@@ -778,7 +778,7 @@ static err_t osw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
 }
 
 /* parse XAUTH secret from file */
-static err_t osw_process_xauth_secret(const struct secret *secrets, chunk_t *xauth)
+static err_t lsw_process_xauth_secret(const struct secret *secrets, chunk_t *xauth)
 {
     err_t ugh = NULL;
     
@@ -819,7 +819,7 @@ static err_t osw_process_xauth_secret(const struct secret *secrets, chunk_t *xau
  * The fields come from BIND 8.2's representation
  */
 static err_t
-osw_process_rsa_secret(const struct secret *secrets
+lsw_process_rsa_secret(const struct secret *secrets
 		       , struct RSA_private_key *rsak)
 {
     unsigned char buf[RSA_MAX_ENCODING_BYTES];	/* limit on size of binary representation of key */
@@ -925,7 +925,7 @@ osw_process_rsa_secret(const struct secret *secrets
  * get the matching RSA private key belonging to a given X.509 certificate
  */
 const struct RSA_private_key*
-osw_get_x509_private_key(struct secret *secrets, x509cert_t *cert)
+lsw_get_x509_private_key(struct secret *secrets, x509cert_t *cert)
 {
     struct secret *s;
     const struct RSA_private_key *pri = NULL;
@@ -964,20 +964,20 @@ process_secret(struct secret **psecrets, int verbose,
     if (*flp->tok == '"' || *flp->tok == '\'')
     {
 	/* old PSK format: just a string */
-	ugh = osw_process_psk_secret(secrets, &s->pks.u.preshared_secret);
+	ugh = lsw_process_psk_secret(secrets, &s->pks.u.preshared_secret);
     }
     else if (tokeqword("psk"))
     {
 	/* preshared key: quoted string or ttodata format */
 	ugh = !shift()? "unexpected end of record in PSK"
-	    : osw_process_psk_secret(secrets, &s->pks.u.preshared_secret);
+	    : lsw_process_psk_secret(secrets, &s->pks.u.preshared_secret);
     }
     else if (tokeqword("xauth"))
     {
 	/* xauth key: quoted string or ttodata format */
 	s->pks.kind = PPK_XAUTH;
 	ugh = !shift()? "unexpected end of record in PSK"
-	    : osw_process_xauth_secret(secrets, &s->pks.u.preshared_secret);
+	    : lsw_process_xauth_secret(secrets, &s->pks.u.preshared_secret);
     }
     else if (tokeqword("rsa"))
     {
@@ -991,11 +991,11 @@ process_secret(struct secret **psecrets, int verbose,
 	}
 	else if (tokeq("{"))
 	{
-	    ugh = osw_process_rsa_secret(secrets, &s->pks.u.RSA_private_key);
+	    ugh = lsw_process_rsa_secret(secrets, &s->pks.u.RSA_private_key);
 	}
 	else
 	{
-	    ugh = osw_process_rsa_keyfile(psecrets, verbose,
+	    ugh = lsw_process_rsa_keyfile(psecrets, verbose,
 					  &s->pks.u.RSA_private_key,pass);
 	}
 	if(!ugh && verbose) {
@@ -1066,14 +1066,14 @@ process_secret(struct secret **psecrets, int verbose,
 }
 
 /* forward declaration */
-static void osw_process_secrets_file(struct secret **psecrets
+static void lsw_process_secrets_file(struct secret **psecrets
 				     , int verbose
 				     , const char *file_pat
 				     , prompt_pass_t *pass);
 
 
 static void
-osw_process_secret_records(struct secret **psecrets, int verbose,
+lsw_process_secret_records(struct secret **psecrets, int verbose,
 			   prompt_pass_t *pass)
 {
     /* const struct secret *secret = *psecrets; */
@@ -1127,7 +1127,7 @@ osw_process_secret_records(struct secret **psecrets, int verbose,
 	    (void) shift();	/* move to Record Boundary, we hope */
 	    if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename"))
 	    {
-		osw_process_secrets_file(psecrets, verbose, fn, pass);
+		lsw_process_secrets_file(psecrets, verbose, fn, pass);
 		flp->tok = NULL;	/* correct, but probably redundant */
 	    }
 	}
@@ -1225,7 +1225,7 @@ globugh(const char *epath, int eerrno)
 }
 
 static void
-osw_process_secrets_file(struct secret **psecrets
+lsw_process_secrets_file(struct secret **psecrets
 			 , int verbose
 			 , const char *file_pat
 			 , prompt_pass_t *pass)
@@ -1279,7 +1279,7 @@ osw_process_secrets_file(struct secret **psecrets
 		libreswan_log("loading secrets from \"%s\"", *fnp);
 	    }
 	    (void) flushline("file starts with indentation (continuation notation)");
-	    osw_process_secret_records(psecrets, verbose, pass);
+	    lsw_process_secret_records(psecrets, verbose, pass);
 	    lexclose();
 	}
     }
@@ -1288,7 +1288,7 @@ osw_process_secrets_file(struct secret **psecrets
 }
 
 void
-osw_free_preshared_secrets(struct secret **psecrets)
+lsw_free_preshared_secrets(struct secret **psecrets)
 {
 #if 0
 # if defined(LIBCURL) || defined(LDAP_VER)
@@ -1350,13 +1350,13 @@ osw_free_preshared_secrets(struct secret **psecrets)
 }
 
 void
-osw_load_preshared_secrets(struct secret **psecrets
+lsw_load_preshared_secrets(struct secret **psecrets
 			   , int verbose
 			   , const char *secrets_file
 			   , prompt_pass_t *pass)
 {
-    osw_free_preshared_secrets(psecrets);
-    (void) osw_process_secrets_file(psecrets, verbose, secrets_file, pass);
+    lsw_free_preshared_secrets(psecrets);
+    (void) lsw_process_secrets_file(psecrets, verbose, secrets_file, pass);
 }
 
 

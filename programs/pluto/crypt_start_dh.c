@@ -44,7 +44,7 @@
 #include "rnd.h"
 #include "state.h"
 #include "pluto_crypt.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "log.h"
 #include "timer.h"
 #include "ike_alg.h"

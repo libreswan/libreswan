@@ -2,7 +2,7 @@
 .SH NAME
 ipsec_initsubnet, ipsec_addrtosubnet, ipsec_subnettypeof, ipsec_masktocount, ipsec_networkof, ipsec_maskof \- initialize an ip_subnet, initialize a singleton ip_subnet, get address type of an ip_subnet, convert subnet mask to bit count, get base address of an ip_subnet, get subnet mask of an ip_subnet
 .SH SYNOPSIS
-.B "#include <freeswan.h>"
+.B "#include <libreswan.h>"
 .sp
 .B "const char *initsubnet(const ip_address *addr,"
 .ti +1c
@@ -21,7 +21,7 @@ ipsec_initsubnet, ipsec_addrtosubnet, ipsec_subnettypeof, ipsec_masktocount, ips
 .B "void maskof(const ip_subnet *src, ip_address *dst);"
 .SH DESCRIPTION
 The
-.B <freeswan.h>
+.B <libreswan.h>
 library uses an internal type
 .I ip_subnet
 to contain a description of an IP subnet
@@ -74,7 +74,7 @@ normally
 or
 .BR AF_INET6 .
 (The
-.B <freeswan.h>
+.B <libreswan.h>
 header file arranges to include the necessary headers for these
 names to be known.)
 .PP

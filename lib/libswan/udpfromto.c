@@ -48,7 +48,7 @@
 
 #include "udpfromto.h"
 #include "libreswan.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "socketwrapper.h"
 
 #include "sysdep.h"

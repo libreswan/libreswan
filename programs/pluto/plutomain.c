@@ -48,7 +48,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswconf.h"
+#include "lswconf.h"
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
@@ -93,7 +93,7 @@
 #include "tpm/tpm.h"
 #endif
 
-#include "oswcrypto.h"
+#include "lswcrypto.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -360,7 +360,7 @@ main(int argc, char **argv)
     int lockfd;
     int nhelpers = -1;
     char *coredir;
-    const struct osw_conf_options *oco;
+    const struct lsw_conf_options *oco;
 
     coredir = NULL;
 
@@ -692,7 +692,7 @@ main(int argc, char **argv)
 	    continue;
 
 	case 'f':	/* --ipsecdir <ipsec-dir> */
-	    (void)osw_init_ipsecdir(optarg);
+	    (void)lsw_init_ipsecdir(optarg);
 	    continue;
 
 	case 'a':	/* --adns <pathname> */
@@ -762,7 +762,7 @@ main(int argc, char **argv)
 	    /* no config option: pluto_port */
 	    /* no config option: ctlbase */
 	    /* no config option: pluto_shared_secrets_file */
-	    /* no config option: osw_init_ipsecdir() */
+	    /* no config option: lsw_init_ipsecdir() */
 	    /* no config option: base_perpeer_logdir */
 	    /* no config option: log_to_perpeer */
 	    /* no config option: no_retransmits */
@@ -842,7 +842,7 @@ main(int argc, char **argv)
 	   e, strerror(e));
     }
 
-    oco = osw_init_options();
+    oco = lsw_init_options();
     lockfd = create_lock();
 
     /* select between logging methods */
@@ -935,11 +935,11 @@ main(int argc, char **argv)
 
 	/* make sure that stdin, stdout, stderr are reserved */
 	if (open("/dev/null", O_RDONLY) != 0)
-	    osw_abort();
+	    lsw_abort();
 	if (dup2(0, 1) != 1)
-	    osw_abort();
+	    lsw_abort();
 	if (!log_to_stderr && dup2(0, 2) != 2)
-	    osw_abort();
+	    lsw_abort();
     }
 
     init_constants();
@@ -1142,7 +1142,7 @@ main(int argc, char **argv)
     init_connections();
     init_crypto();
     init_crypto_helpers(nhelpers);
-    load_oswcrypto();
+    load_lswcrypto();
     init_demux();
     init_kernel();
     init_adns();
@@ -1208,7 +1208,7 @@ exit_pluto(int status)
     free_crls();               /* free chain of X.509 CRLs */
     free_acerts();             /* free chain of X.509 attribute certificates */
 
-    osw_conf_free_oco();	/* free global_oco containing path names */
+    lsw_conf_free_oco();	/* free global_oco containing path names */
 
     free_myFQDN();	    /* free myid FQDN */
 

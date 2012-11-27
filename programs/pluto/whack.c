@@ -38,7 +38,7 @@
 #include "sysdep.h"
 #include "socketwrapper.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "whack.h"

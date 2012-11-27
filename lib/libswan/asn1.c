@@ -21,9 +21,9 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
-#include "oswtime.h"
-#include "oswalloc.h"
+#include "lswlog.h"
+#include "lswtime.h"
+#include "lswalloc.h"
 #include "asn1.h"
 #include "oid.h"
 

@@ -17,7 +17,7 @@
 <refsynopsisdiv id='synopsis'>
 <funcsynopsis>
 <funcsynopsisinfo>
-#include &lt;freeswan.h&gt;
+#include &lt;libreswan.h&gt;
 
 </funcsynopsisinfo>
 <funcprototype>
@@ -120,7 +120,7 @@ need not be valid and no result is written,
 but the return value is unaffected;
 in all other cases, the (possibly truncated) result is NUL-terminated.
 The
-<emphasis remap='I'>freeswan.h</emphasis>
+<emphasis remap='I'>libreswan.h</emphasis>
 header file defines a constant,
 <emphasis remap='B'>ULTOT_BUF</emphasis>,
 which is the size of a buffer just large enough for worst-case results.</para>

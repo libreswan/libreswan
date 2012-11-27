@@ -29,9 +29,9 @@
 #include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "constants.h"
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "mpzfuncs.h"
 
 /* Convert MP_INT to network form (binary octets, big-endian).

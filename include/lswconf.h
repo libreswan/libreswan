@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef _OSW_CONF_H
-#define _OSW_CONF_H
+#ifndef _LSW_CONF_H
+#define _LSW_CONF_H
 
 #include "constants.h"
 
@@ -30,7 +30,7 @@ struct paththing {
 };
 
 
-struct osw_conf_options {
+struct lsw_conf_options {
     char *rootdir;                /* default is "" --- used for testing */
     char *confdir;                /* "/etc" */
     char *conffile;               /* "/etc/ipsec.conf" */
@@ -55,16 +55,16 @@ typedef struct {
     char *data;
 } secuPWData;
 
-extern const struct osw_conf_options *osw_init_options(void);
-extern void osw_conf_free_oco(void);
-extern const struct osw_conf_options *osw_init_ipsecdir(const char *ipsec_dir);
-extern const struct osw_conf_options *osw_init_rootdir(const char *root_dir);
+extern const struct lsw_conf_options *lsw_init_options(void);
+extern void lsw_conf_free_oco(void);
+extern const struct lsw_conf_options *lsw_init_ipsecdir(const char *ipsec_dir);
+extern const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir);
 
-extern secuPWData *osw_return_nss_password_file_info(void);
+extern secuPWData *lsw_return_nss_password_file_info(void);
 extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
 extern bool Pluto_IsFIPS(void);
 
-#endif /* _OSW_ALLOC_H_ */
+#endif /* _LSW_ALLOC_H_ */
 
 /*
  * Local Variables:

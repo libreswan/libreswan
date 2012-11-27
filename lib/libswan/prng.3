@@ -2,7 +2,7 @@
 .SH NAME
 ipsec_prng_init, ipsec_prng_bytes, ipsec_prng_final \- initialize IPsec pseudorandom-number generator, get bytes from IPsec pseudorandom-number generator, close down IPsec pseudorandom-number generator
 .SH SYNOPSIS
-.B "#include <freeswan.h>
+.B "#include <libreswan.h>
 .sp
 .B "void prng_init(struct prng *prng,"
 .ti +1c
@@ -65,7 +65,7 @@ obliterating all trace of the state used to generate its previous output.
 This requires on the order of 250 integer operations.
 .PP
 The
-.B <freeswan.h>
+.B <libreswan.h>
 header file supplies the definition of the
 .B prng
 structure.

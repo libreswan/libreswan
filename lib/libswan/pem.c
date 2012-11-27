@@ -32,18 +32,18 @@
 #define HEADER_DES_LOCL_H   /* stupid trick to force prototype decl in <des.h> */
 #include "sysdep.h"
 #include "constants.h"
-#include "oswalloc.h"
-#include "oswtime.h"
-#include "oswlog.h"
+#include "lswalloc.h"
+#include "lswtime.h"
+#include "lswlog.h"
 #include "md5.h"
 #include "pem.h"
 
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
-#include "oswconf.h"
+#include "lswconf.h"
 
-#include "oswcrypto.h"
+#include "lswcrypto.h"
 
 /*
  * check the presence of a pattern in a character string

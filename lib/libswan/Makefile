@@ -33,7 +33,7 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
 	iprange.c \
         keyblobtoid.c \
 	kernel_alg.c lex.c mpzfuncs.c \
-	oswconf.c oswtime.c \
+	lswconf.c lswtime.c \
 	prng.c \
 	portof.c rangetoa.c rangetosubnet.c sameaddr.c \
 	satot.c secrets.c subnetof.c subnettoa.c subnettot.c \
@@ -75,7 +75,7 @@ endif
 CFLAGS+=-DUSE_SHA2
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 
-LOGSRCS=oswlog.c oswid.c
+LOGSRCS=lswlog.c lswid.c
 
 
 OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} ${UDPFROMTO_SRCS:.c=.o} version.o
@@ -89,7 +89,7 @@ VPATH+= ${KLIPSSRCDIR}
 HDRS=${KLIPSINC}/libreswan.h internal.h
 
 LIBA=libswan.a
-LIBL=liboswlog.a
+LIBL=liblswlog.a
 # Original flags
 CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
 CFLAGS+=-I${LIBRESWANSRCDIR} -DDEBUG

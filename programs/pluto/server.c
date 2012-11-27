@@ -90,7 +90,7 @@
 #include "nat_traversal.h"
 #endif
 
-#include "osw_select.h"
+#include "lsw_select.h"
 
 /*
  *  Server main loop and socket initialization routines.
@@ -606,8 +606,8 @@ call_server(void)
 
     for (;;)
     {
-	osw_fd_set readfds;
-	osw_fd_set writefds;
+	lsw_fd_set readfds;
+	lsw_fd_set writefds;
 	int ndes;
 
 	/* wait for next interesting thing */
@@ -635,23 +635,23 @@ call_server(void)
 		reapchildren();
 	    }
 
-	    OSW_FD_ZERO(&readfds);
-	    OSW_FD_ZERO(&writefds);
-	    OSW_FD_SET(ctl_fd, &readfds);
+	    LSW_FD_ZERO(&readfds);
+	    LSW_FD_ZERO(&writefds);
+	    LSW_FD_SET(ctl_fd, &readfds);
 
 	    /* the only write file-descriptor of interest */
 	    if (adns_qfd != NULL_FD && unsent_ADNS_queries)
 	    {
 		if (maxfd < adns_qfd)
 		    maxfd = adns_qfd;
-		OSW_FD_SET(adns_qfd, &writefds);
+		LSW_FD_SET(adns_qfd, &writefds);
 	    }
 
 	    if (adns_afd != NULL_FD)
 	    {
 		if (maxfd < adns_afd)
 		    maxfd = adns_afd;
-		OSW_FD_SET(adns_afd, &readfds);
+		LSW_FD_SET(adns_afd, &readfds);
 	    }
 
 #ifdef KLIPS
@@ -663,8 +663,8 @@ call_server(void)
 		    kernel_ops->process_queue();
 		if (maxfd < fd)
 		    maxfd = fd;
-		passert(!OSW_FD_ISSET(fd, &readfds));
-		OSW_FD_SET(fd, &readfds);
+		passert(!LSW_FD_ISSET(fd, &readfds));
+		LSW_FD_SET(fd, &readfds);
 	    }
 #endif
 
@@ -674,8 +674,8 @@ call_server(void)
 		{
 		    if (maxfd < ifp->fd)
 			maxfd = ifp->fd;
-		    passert(!OSW_FD_ISSET(ifp->fd, &readfds));
-		    OSW_FD_SET(ifp->fd, &readfds);
+		    passert(!LSW_FD_ISSET(ifp->fd, &readfds));
+		    LSW_FD_SET(ifp->fd, &readfds);
 		}
 	    }
 
@@ -686,7 +686,7 @@ call_server(void)
 	    {
 		/* select without timer */
 
-		ndes = osw_select(maxfd + 1, &readfds, &writefds, NULL, NULL);
+		ndes = lsw_select(maxfd + 1, &readfds, &writefds, NULL, NULL);
 	    }
 	    else if (next_time == 0)
 	    {
@@ -703,7 +703,7 @@ call_server(void)
 
 		tm.tv_sec = next_time;
 		tm.tv_usec = 0;
-		ndes = osw_select(maxfd + 1, &readfds, &writefds, NULL, &tm);
+		ndes = lsw_select(maxfd + 1, &readfds, &writefds, NULL, &tm);
 	    }
 
 	    if (ndes != -1)
@@ -744,7 +744,7 @@ call_server(void)
 	{
 	    /* at least one file descriptor is ready */
 
-	    if (adns_qfd != NULL_FD && OSW_FD_ISSET(adns_qfd, &writefds))
+	    if (adns_qfd != NULL_FD && LSW_FD_ISSET(adns_qfd, &writefds))
 	    {
 		passert(ndes > 0);
 		send_unsent_ADNS_queries();
@@ -752,7 +752,7 @@ call_server(void)
 		ndes--;
 	    }
 
-	    if (adns_afd != NULL_FD && OSW_FD_ISSET(adns_afd, &readfds))
+	    if (adns_afd != NULL_FD && LSW_FD_ISSET(adns_afd, &readfds))
 	    {
 		passert(ndes > 0);
 		DBG(DBG_CONTROL,
@@ -764,7 +764,7 @@ call_server(void)
 
 #ifdef KLIPS
 	    if (kern_interface != NO_KERNEL
-		&& OSW_FD_ISSET(*kernel_ops->async_fdp, &readfds))
+		&& LSW_FD_ISSET(*kernel_ops->async_fdp, &readfds))
 	    {
 		passert(ndes > 0);
 		DBG(DBG_CONTROL,
@@ -777,7 +777,7 @@ call_server(void)
 
 	    for (ifp = interfaces; ifp != NULL; ifp = ifp->next)
 	    {
-		if (OSW_FD_ISSET(ifp->fd, &readfds))
+		if (LSW_FD_ISSET(ifp->fd, &readfds))
 		{
 		    /* comm_handle will print DBG_CONTROL intro,
 		     * with more info than we have here.
@@ -790,7 +790,7 @@ call_server(void)
 		}
 	    }
 
-	    if (OSW_FD_ISSET(ctl_fd, &readfds))
+	    if (LSW_FD_ISSET(ctl_fd, &readfds))
 	    {
 		passert(ndes > 0);
 		DBG(DBG_CONTROL,

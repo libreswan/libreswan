@@ -2,7 +2,7 @@
 .SH NAME
 ipsec_initaddr, ipsec_addrtypeof, ipsec_addrlenof, ipsec_addrbytesof, ipsec_addrbytesptr \- initialize an ip_address, get address type of an ip_address, get length of address within an ip_address, get copy of address within an ip_address, get pointer to address within an ip_address
 .SH SYNOPSIS
-.B "#include <freeswan.h>"
+.B "#include <libreswan.h>"
 .sp
 .B "const char *initaddr(const char *src, size_t srclen,"
 .ti +1c
@@ -21,7 +21,7 @@ ipsec_initaddr, ipsec_addrtypeof, ipsec_addrlenof, ipsec_addrbytesof, ipsec_addr
 .B "const unsigned char **dst);"
 .SH DESCRIPTION
 The
-.B <freeswan.h>
+.B <libreswan.h>
 library uses an internal type
 .I ip_address
 to contain one of the (currently two) types of IP address.
@@ -53,7 +53,7 @@ normally
 or
 .BR AF_INET6 .
 (The
-.B <freeswan.h>
+.B <libreswan.h>
 header file arranges to include the necessary headers for these
 names to be known.)
 .PP

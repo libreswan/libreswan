@@ -20,7 +20,7 @@
 <refsynopsisdiv id='synopsis'>
 <funcsynopsis>
 <funcsynopsisinfo>
-#include &lt;freeswan.h&gt;
+#include &lt;libreswan.h&gt;
 
 </funcsynopsisinfo>
 <funcprototype>
@@ -217,7 +217,7 @@ need not be valid and no result is written,
 but the return value is unaffected;
 in all other cases, the (possibly truncated) result is NUL-terminated.
 The
-<emphasis remap='I'>freeswan.h</emphasis>
+<emphasis remap='I'>libreswan.h</emphasis>
 header file defines constants,
 <emphasis remap='B'>ADDRTOA_BUF</emphasis>
 and

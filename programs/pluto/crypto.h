@@ -141,10 +141,10 @@ extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 extern CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher);
 extern void nss_symkey_log(PK11SymKey *key, const char *msg);
 extern chunk_t hmac_pads(u_char val, unsigned int len);
-extern PK11SymKey *pk11_derive_wrapper_osw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
+extern PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
                                            , chunk_t data, CK_MECHANISM_TYPE target
                                            , CK_ATTRIBUTE_TYPE operation, int keySize);
-extern PK11SymKey *PK11_Derive_osw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
+extern PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
                                            , SECItem *param, CK_MECHANISM_TYPE target
                                            , CK_ATTRIBUTE_TYPE operation, int keySize);
 #endif /* _CRYPTO_H */

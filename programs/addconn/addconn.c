@@ -42,9 +42,9 @@
 #include <libreswan.h>
 #include "sysdep.h"
 #include "constants.h"
-#include "oswalloc.h"
-#include "oswconf.h"
-#include "oswlog.h"
+#include "lswalloc.h"
+#include "lswconf.h"
+#include "lswlog.h"
 #include "whack.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
@@ -512,7 +512,7 @@ main(int argc, char *argv[])
 		    conn = conn->link.tqe_next)
 		{
 		    if(conn->strings_set[KSF_CONNALIAS]
-		       && osw_alias_cmp(connname
+		       && lsw_alias_cmp(connname
 					, conn->strings[KSF_CONNALIAS])) {
 
 			if(conn->state == STATE_ADDED) {

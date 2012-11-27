@@ -21,11 +21,11 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
-#include "oswtime.h"
+#include "lswlog.h"
+#include "lswtime.h"
 
-#include "oswalloc.h"
-#include "oswlog.h"
+#include "lswalloc.h"
+#include "lswlog.h"
 #include "id.h"
 #include "pgp.h"
 #include "x509.h"

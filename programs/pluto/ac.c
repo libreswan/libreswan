@@ -31,11 +31,11 @@
 #include <libreswan.h>
 
 #include "sysdep.h"
-#include "oswconf.h"
+#include "lswconf.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
-#include "oswtime.h"
+#include "lswtime.h"
 #include "defs.h"
 #include "asn1.h"
 #include "oid.h"
@@ -733,7 +733,7 @@ load_acerts(void)
 
     /* change directory to specified path */
     char *save_dir = getcwd(buf, BUF_LEN);
-    const struct osw_conf_options *oco = osw_init_options(); 
+    const struct lsw_conf_options *oco = lsw_init_options(); 
 
     if (!chdir(oco->acerts_dir))
     {

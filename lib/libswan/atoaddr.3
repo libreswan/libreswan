@@ -2,7 +2,7 @@
 .SH NAME
 ipsec_atoaddr, ipsec_addrtoa, ipsec_atosubnet, ipsec_subnettoa \- convert Internet addresses and Subnet masks to and from ASCII
 .SH SYNOPSIS
-.B "#include <freeswan.h>
+.B "#include <libreswan.h>
 .sp
 .B "const char *atoaddr(const char *src, size_t srclen,"
 .ti +1c
@@ -179,7 +179,7 @@ need not be valid and no result is written,
 but the return value is unaffected;
 in all other cases, the (possibly truncated) result is NUL-terminated.
 The
-.I freeswan.h
+.I libreswan.h
 header file defines constants,
 .B ADDRTOA_BUF
 and

@@ -31,7 +31,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswtime.h"
+#include "lswtime.h"
 #include "defs.h"
 #include "state.h"
 #include "id.h"

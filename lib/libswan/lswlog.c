@@ -33,7 +33,7 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "libreswan/pfkey_debug.h"
 
 bool

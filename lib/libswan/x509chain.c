@@ -31,11 +31,11 @@
 #include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
-#include "oswalloc.h"
-#include "oswconf.h"
+#include "lswalloc.h"
+#include "lswconf.h"
 #include "constants.h"
-#include "oswlog.h"
-#include "oswtime.h"
+#include "lswlog.h"
+#include "lswtime.h"
 
 #include "id.h"
 #include "asn1.h"

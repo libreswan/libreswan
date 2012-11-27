@@ -12,7 +12,7 @@
  * for more details.
  */
 
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "constants.h"
 #include "id.h"
 

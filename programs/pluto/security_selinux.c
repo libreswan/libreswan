@@ -18,7 +18,7 @@
 #endif
 
 #include "security_selinux.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 static int selinux_ready = 0;
 

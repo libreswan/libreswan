@@ -4,29 +4,29 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry>
 <refmeta>
-<refentrytitle>IPSEC_OSW_INIT_OPTIONS</refentrytitle>
+<refentrytitle>IPSEC_LSW_INIT_OPTIONS</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>4 December 2005</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>osw_init_options</refname>
+<refname>lsw_init_options</refname>
 <refpurpose>initialize and return a structure of relevant pathnames</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <funcsynopsis>
 <funcsynopsisinfo>
-#include &lt;oswconf.h&gt;
+#include &lt;lswconf.h&gt;
 
 </funcsynopsisinfo>
 <funcprototype>
-<funcdef>const struct osw_conf_options *<function>osw_init_options</function></funcdef>
+<funcdef>const struct lsw_conf_options *<function>lsw_init_options</function></funcdef>
     <paramdef>void</paramdef>
 </funcprototype>
 <funcsynopsisinfo>
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>osw_init_options</emphasis>,
+<para><emphasis remap='I'>lsw_init_options</emphasis>,
 Examines 
 </para>
 
@@ -216,7 +216,7 @@ inadequate for the desired message,
 <function>ttodatav</function>
 will fall back on returning a pointer to a literal string instead.
 The
-<emphasis remap='I'>freeswan.h</emphasis>
+<emphasis remap='I'>libreswan.h</emphasis>
 header file defines a constant
 <emphasis remap='B'>TTODATAV_BUF</emphasis>
 which is the size of a buffer large enough for worst-case results.</para>

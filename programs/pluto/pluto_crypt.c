@@ -53,7 +53,7 @@
 #include "defs.h"
 #include "packet.h"
 #include "demux.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "log.h"
 #include "state.h"
 #include "demux.h"
@@ -61,11 +61,11 @@
 #include "pluto_crypt.h"
 
 #include <nss.h>
-#include "oswconf.h"
+#include "lswconf.h"
 #include <pthread.h>
 
-#include "oswcrypto.h"
-#include "osw_select.h"
+#include "lswcrypto.h"
+#include "lsw_select.h"
 
 TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 
@@ -836,7 +836,7 @@ void init_crypto_helpers(int nhelpers)
 
 }
 
-void pluto_crypto_helper_sockets(osw_fd_set *readfds)
+void pluto_crypto_helper_sockets(lsw_fd_set *readfds)
 {
     int cnt;
     struct pluto_crypto_worker *w = pc_workers;
@@ -845,12 +845,12 @@ void pluto_crypto_helper_sockets(osw_fd_set *readfds)
 	if(w->pcw_pid != -1 && !w->pcw_dead) {
 	    passert(w->pcw_pipe > 0);
 
-	    OSW_FD_SET(w->pcw_pipe, readfds);
+	    LSW_FD_SET(w->pcw_pipe, readfds);
 	}
     }
 }
 
-int pluto_crypto_helper_ready(osw_fd_set *readfds)
+int pluto_crypto_helper_ready(lsw_fd_set *readfds)
 {
     int cnt;
     struct pluto_crypto_worker *w = pc_workers;
@@ -862,7 +862,7 @@ int pluto_crypto_helper_ready(osw_fd_set *readfds)
 	if(w->pcw_pid != -1 && !w->pcw_dead) {
 	    passert(w->pcw_pipe > 0);
 
-	    if(OSW_FD_ISSET(w->pcw_pipe, readfds)) {
+	    if(LSW_FD_ISSET(w->pcw_pipe, readfds)) {
 		handle_helper_comm(w);
 		ndes++;
 	    }

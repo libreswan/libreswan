@@ -12,7 +12,7 @@
 #include "ike_alg.h"
 
 #include <pk11pub.h>
-#include "oswlog.h"
+#include "lswlog.h"
 
 static void sha256_hash_final(u_char *hash, sha256_context *ctx)
 {

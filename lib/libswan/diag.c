@@ -20,7 +20,7 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 /* Build up a diagnostic in a static buffer.
  * Although this would be a generally useful function, it is very

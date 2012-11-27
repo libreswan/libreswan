@@ -51,7 +51,7 @@
 /* by default we abort when given a bad pointer (such as when talloc_free() is called 
    on a pointer that came from malloc() */
 #ifndef TALLOC_ABORT
-#define TALLOC_ABORT(reason) osw_abort()
+#define TALLOC_ABORT(reason) lsw_abort()
 #endif
 
 #ifndef discard_const_p

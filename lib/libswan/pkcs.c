@@ -18,10 +18,10 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
-#include "oswalloc.h"
-#include "oswconf.h"
+#include "lswalloc.h"
+#include "lswconf.h"
 #include "asn1.h"
 #include "oid.h"
 #include "id.h"

@@ -30,7 +30,7 @@
 #include <assert.h>
 #include <sys/queue.h>
 
-#include "oswalloc.h"
+#include "lswalloc.h"
 
 #include "ipsecconf/parser.h"
 #include "ipsecconf/files.h"
@@ -40,7 +40,7 @@
 #include "ipsecconf/oeconns.h"
 
 #ifdef FIPS_CHECK
-# include "oswconf.h"
+# include "lswconf.h"
 #endif
 
 static char _tmp_err[512];

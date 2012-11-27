@@ -19,7 +19,7 @@
 <refsynopsisdiv id='synopsis'>
 <funcsynopsis>
 <funcsynopsisinfo>
-#include &lt;freeswan.h&gt;
+#include &lt;libreswan.h&gt;
 
 typedef struct { ip_address dst; ipsec_spi_t spi; int proto; 
  } ip_said; </funcsynopsisinfo>
@@ -132,7 +132,7 @@ These forms too are known to both routines,
 so the internal representation of the magic SAs should never be visible.</para>
 
 <para>The
-<emphasis remap='B'>&lt;freeswan.h&gt;</emphasis>
+<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
 header file supplies the
 <emphasis remap='B'>ip_said</emphasis>
 structure, as well as a data type
@@ -144,7 +144,7 @@ is called, hence the header hides the differences.)</para>
 <para>The protocol code uses the same numbers that IP does.
 For user convenience, given the difficulty in acquiring the exact set of
 protocol names used by the kernel,
-<emphasis remap='B'>&lt;freeswan.h&gt;</emphasis>
+<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
 defines the names
 <emphasis remap='B'>SA_ESP</emphasis>,
 <emphasis remap='B'>SA_AH</emphasis>,
@@ -158,7 +158,7 @@ to have the same values as the kernel names
 and
 <emphasis remap='B'>IPPROTO_COMP</emphasis>.</para>
 
-<para><emphasis remap='B'>&lt;freeswan.h&gt;</emphasis>
+<para><emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
 also defines
 <emphasis remap='B'>SA_INT</emphasis>
 to have the value
@@ -222,7 +222,7 @@ need not be valid and no result is written,
 but the return value is unaffected;
 in all other cases, the (possibly truncated) result is NUL-terminated.
 The
-<emphasis remap='B'>&lt;freeswan.h&gt;</emphasis>
+<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
 header file defines a constant,
 <emphasis remap='B'>SATOT_BUF</emphasis>,
 which is the size of a buffer just large enough for worst-case results.</para>

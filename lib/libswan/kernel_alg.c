@@ -39,8 +39,8 @@
 #include "constants.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
-#include "oswlog.h"
-#include "oswalloc.h"
+#include "lswlog.h"
+#include "lswalloc.h"
 
 /* ALG storage */
 struct sadb_alg esp_aalg[K_SADB_AALG_MAX+1];

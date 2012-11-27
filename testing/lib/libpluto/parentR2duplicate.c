@@ -16,7 +16,7 @@
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include "constants.h"
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "whack.h"
 #include "../../programs/pluto/rcv_whack.h"
 

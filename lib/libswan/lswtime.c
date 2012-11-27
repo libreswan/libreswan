@@ -25,8 +25,8 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswtime.h"
-#include "oswlog.h"
+#include "lswtime.h"
+#include "lswlog.h"
 
 /* monotonic version of time(3) */
 time_t

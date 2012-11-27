@@ -31,7 +31,7 @@
 
 #include "constants.h"
 #include "enum_names.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 /* version */
 

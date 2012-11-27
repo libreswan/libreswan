@@ -77,9 +77,9 @@
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
 
-#include "oswlog.h"
-#include "oswalloc.h"
-#include "oswcrypto.h"
+#include "lswlog.h"
+#include "lswalloc.h"
+#include "lswcrypto.h"
 #include "mpzfuncs.h"
 
 /****************************************************************************/
@@ -90,7 +90,7 @@ static int cryptodev_fd = -1;
  * save a copy of the SW versions in case we get a HW error, we can revert
  * to running SW instead.
  */
-static struct oswcrypto_meth soft_meth;
+static struct lswcrypto_meth soft_meth;
 static int soft_meth_loaded = 0;
 
 /****************************************************************************/
@@ -823,7 +823,7 @@ void load_cryptodev(void)
 	struct session_op ses;
 	int assisted = 0;
 	u_int32_t feat;
-	struct oswcrypto_meth old_meth = oswcrypto;
+	struct lswcrypto_meth old_meth = lswcrypto;
 
 	if ((cryptodev_fd = get_dev_crypto()) == -1) {
 		libreswan_log("OCF assist for IKE disabled: is the cryptodev module loaded ?");
@@ -834,12 +834,12 @@ void load_cryptodev(void)
 	if (ioctl(cryptodev_fd, CIOCASYMFEAT, &feat) != -1) {
 		if (feat & CRF_MOD_EXP) {
 			/* Use modular exponentiation */
-			oswcrypto.mod_exp = cryptodev_mod_exp;
+			lswcrypto.mod_exp = cryptodev_mod_exp;
 			libreswan_log("OCF assist for IKE for modular exponentiation enabled");
 			assisted++;
 		}
 		if (feat & CRF_MOD_EXP_CRT) {
-			oswcrypto.rsa_mod_exp_crt = cryptodev_rsa_mod_exp_crt;
+			lswcrypto.rsa_mod_exp_crt = cryptodev_rsa_mod_exp_crt;
 			libreswan_log("OCF assist for IKE for modular exponentiation (CRT) enabled");
 			assisted++;
 		}
@@ -853,8 +853,8 @@ void load_cryptodev(void)
 	if (ioctl(cryptodev_fd, CIOCGSESSION, &ses) != -1 &&
 			ioctl(cryptodev_fd, CIOCFSESSION, &ses.ses) != -1) {
 		libreswan_log("OCF assist for IKE for AES crypto enabled");
-		oswcrypto.aes_set_key     = cryptodev_aes_set_key;
-		oswcrypto.aes_cbc_encrypt = cryptodev_aes_cbc_encrypt;
+		lswcrypto.aes_set_key     = cryptodev_aes_set_key;
+		lswcrypto.aes_cbc_encrypt = cryptodev_aes_cbc_encrypt;
 		assisted++;
 	}
 
@@ -866,11 +866,11 @@ void load_cryptodev(void)
 	if (ioctl(cryptodev_fd, CIOCGSESSION, &ses) != -1 &&
 			ioctl(cryptodev_fd, CIOCFSESSION, &ses.ses) != -1) {
 		libreswan_log("OCF assist for IKE for DES crypto enabled");
-		oswcrypto.des_set_key      = cryptodev_des_set_key;
-		oswcrypto.des_cbc_encrypt  = cryptodev_des_cbc_encrypt;
-		oswcrypto.des_encrypt      = cryptodev_des_encrypt;
-		oswcrypto.des_ncbc_encrypt = cryptodev_des_ncbc_encrypt;
-		oswcrypto.des_ecb_encrypt  = cryptodev_des_ecb_encrypt;
+		lswcrypto.des_set_key      = cryptodev_des_set_key;
+		lswcrypto.des_cbc_encrypt  = cryptodev_des_cbc_encrypt;
+		lswcrypto.des_encrypt      = cryptodev_des_encrypt;
+		lswcrypto.des_ncbc_encrypt = cryptodev_des_ncbc_encrypt;
+		lswcrypto.des_ecb_encrypt  = cryptodev_des_ecb_encrypt;
 		assisted++;
 		/* test we can do 3DES */
 		ses.cipher = CRYPTO_3DES_CBC;
@@ -878,7 +878,7 @@ void load_cryptodev(void)
 		if (ioctl(cryptodev_fd, CIOCGSESSION, &ses) != -1 &&
 				ioctl(cryptodev_fd, CIOCFSESSION, &ses.ses) != -1) {
 			libreswan_log("OCF assist for IKE for 3DES crypto enabled");
-			oswcrypto.des_ede3_cbc_encrypt = cryptodev_des_ede3_cbc_encrypt;
+			lswcrypto.des_ede3_cbc_encrypt = cryptodev_des_ede3_cbc_encrypt;
 			//DAVIDM 3des setkey is technically needed if HW can only do DES
 			assisted++;
 		}

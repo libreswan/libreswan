@@ -48,18 +48,18 @@
 #include "rnd.h"
 #include "state.h"
 #include "pluto_crypt.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "log.h"
 #include "timer.h"
 
-#include "oswcrypto.h"
+#include "lswcrypto.h"
 
 #include <nss.h>
 #include <nspr.h>
 #include <prerror.h>
 #include <pk11pub.h>
 #include <keyhi.h>
-#include "oswconf.h"
+#include "lswconf.h"
 
 void calc_ke(struct pluto_crypto_req *r)
 {
@@ -89,14 +89,14 @@ void calc_ke(struct pluto_crypto_req *r)
     dhp.base.data=base.ptr;
     dhp.base.len=base.len;
 
-    slot = PK11_GetBestSlot(CKM_DH_PKCS_KEY_PAIR_GEN,osw_return_nss_password_file_info());
+    slot = PK11_GetBestSlot(CKM_DH_PKCS_KEY_PAIR_GEN,lsw_return_nss_password_file_info());
     if(!slot) {
 	loglog(RC_LOG_SERIOUS, "NSS: slot for DH key gen is NULL");
     }
     PR_ASSERT(slot!=NULL);
 
     while(1) {
-	privk = PK11_GenerateKeyPair(slot, CKM_DH_PKCS_KEY_PAIR_GEN, &dhp, &pubk, PR_FALSE, PR_TRUE, osw_return_nss_password_file_info());
+	privk = PK11_GenerateKeyPair(slot, CKM_DH_PKCS_KEY_PAIR_GEN, &dhp, &pubk, PR_FALSE, PR_TRUE, lsw_return_nss_password_file_info());
 	if(!privk) {
 	   loglog(RC_LOG_SERIOUS, "NSS: DH private key creation failed (err %d)", PR_GetError());
 	}

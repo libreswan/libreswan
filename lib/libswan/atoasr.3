@@ -2,7 +2,7 @@
 .SH NAME
 ipsec_atoasr, ipsec_rangetoa \- convert ASCII to Internet address, subnet, or range, convert Internet address range to ASCII
 .SH SYNOPSIS
-.B "#include <freeswan.h>
+.B "#include <libreswan.h>
 .sp
 .B "const char *atoasr(const char *src, size_t srclen,"
 .ti +1c
@@ -110,7 +110,7 @@ need not be valid and no result is written,
 but the return value is unaffected;
 in all other cases, the (possibly truncated) result is NUL-terminated.
 The
-.I freeswan.h
+.I libreswan.h
 header file defines a constant,
 .BR RANGETOA_BUF ,
 which is the size of a buffer just large enough for worst-case results.

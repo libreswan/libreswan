@@ -16,7 +16,7 @@
 
 #include <libreswan.h>
 
-#include "oswlog.h"
+#include "lswlog.h"
 
 #ifndef PERPERRLOGDIR
 #define PERPERRLOGDIR "/var/log/pluto/peer"

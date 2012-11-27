@@ -29,7 +29,7 @@
 #include <arpa/inet.h>
 
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include <unbound.h>
 #include "dnssec.h"

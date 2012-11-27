@@ -65,11 +65,11 @@ extern const char *pluto_shared_secrets_file;
 extern void load_preshared_secrets(int whackfd);
 extern void free_preshared_secrets(void);
 
-extern struct secret *osw_find_secret_by_public_key(struct secret *secrets
+extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets
 						    , struct pubkey *my_public_key
 						    , int kind);
 
-extern struct secret *osw_get_xauthsecret(const struct connection *c UNUSED
+extern struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED
 					  , char *xauthname);
 
 /* keys from ipsec.conf */

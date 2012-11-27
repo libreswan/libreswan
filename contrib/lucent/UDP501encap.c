@@ -1,6 +1,6 @@
 
 
-before launching OSW as usual.
+before launching LSW as usual.
 
 RJZ-LNX UDP501 # cat UDP501encap.c
 /*
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 > configure a PSK like:
 >> <MyCompanysPSK> where the real PSK is 9 ASCII
 > characters long. However, I
->> could find that in order to have OSW establishing
+>> could find that in order to have LSW establishing
 > phase 1 succesfully I had to
 >> add the string "01234567890" as a trailer,
 > i.e. my ipsec.secrets looks like:
@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 > doesn't exchange any CFG at all...
 >> I'm wondering now if I need it indeed. The server
 > sends it to me but seems
->> like OSW only configures the local IP address based on
+>> like LSW only configures the local IP address based on
 > it. I supossed it was
 >> going to be able to configure something else, such as
 > DNS or things like that.
@@ -248,7 +248,7 @@ int main(int argc, char **argv)
 > the DNS and WINS servers
 >> for instance, something I'll need to do manually
 > via a script (or can it be
->> made automatically somehow by OSW?)
+>> made automatically somehow by LSW?)
 >
 > You can copy the stock _updown script and add resolv.conf
 > rewriting to it,

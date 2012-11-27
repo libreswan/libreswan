@@ -24,13 +24,13 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 /* leave enabled so support functions are always in libswan, and
  * pluto can be recompiled with just the leak detective changes
  */
 #define LEAK_DETECTIVE
-#include "oswalloc.h"
+#include "lswalloc.h"
 
 int leak_detective = 0;
 
@@ -102,7 +102,7 @@ void *alloc_bytes1(size_t size, const char *name, int leak_detective)
     if (p == NULL) {
 	if(getenv("LIBRESWAN_SNAPSHOT_MALLOC_FAIL")) {
 	    if(fork()==0) { /* in child */
-		osw_abort();
+		lsw_abort();
 	    }
 	}
 	if(exit_log_func) {

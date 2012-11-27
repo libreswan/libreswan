@@ -14,8 +14,8 @@
  * for more details.
  */
 
-#ifndef _OSW_ALLOC_H_
-#define _OSW_ALLOC_H_
+#ifndef _LSW_ALLOC_H_
+#define _LSW_ALLOC_H_
 
 #include "constants.h"
 
@@ -77,14 +77,14 @@ extern void set_exit_log_func(exit_log_func_t func);
 # include <dmalloc.h>
 #endif
 
-#define free_osw_nss_symkey(ch)  \
+#define free_lsw_nss_symkey(ch)  \
                { PK11SymKey *ptr=0; \
                  if((ch).ptr!=NULL) { memcpy(&ptr, (ch).ptr, (ch).len); memset((ch).ptr,0,(ch).len );} \
                  if(ptr!=NULL) { PK11_FreeSymKey(ptr);} }  
 
-#define dup_osw_nss_symkey(ch)  \
+#define dup_lsw_nss_symkey(ch)  \
                { PK11SymKey *ptr=0; \
                   if((ch).ptr!=NULL) { memcpy(&ptr, (ch).ptr, (ch).len);} \
                   if(ptr!=NULL) { PK11_ReferenceSymKey(ptr);} }
 
-#endif /* _OSW_ALLOC_H_ */
+#endif /* _LSW_ALLOC_H_ */

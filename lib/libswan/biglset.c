@@ -16,7 +16,7 @@
 #include "libreswan.h"
 #include "constants.h"
 #include "biglset.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 void biglset_format(char *buf, size_t blen, biglset_t b)
 {

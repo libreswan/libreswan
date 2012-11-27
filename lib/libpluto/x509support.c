@@ -25,12 +25,12 @@
 #include <libreswan.h>
 
 #include "sysdep.h"
-#include "oswconf.h"
-#include "oswalloc.h"
+#include "lswconf.h"
+#include "lswalloc.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
-#include "oswtime.h"
+#include "lswtime.h"
 #include "asn1.h"
 #include "oid.h"
 #include "ac.h"

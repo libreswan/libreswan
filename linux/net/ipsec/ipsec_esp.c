@@ -338,12 +338,12 @@ ipsec_rcv_esp_post_decrypt(struct ipsec_rcv_state *irs)
 		    irs->next_header,
 		    pad - 2 - irs->authlen);
 
-	if (osw_ip_hdr_version(irs) == 6)
-		osw_ip6_hdr(irs)->payload_len =
-			htons(ntohs(osw_ip6_hdr(irs)->payload_len) - (irs->esphlen + pad));
+	if (lsw_ip_hdr_version(irs) == 6)
+		lsw_ip6_hdr(irs)->payload_len =
+			htons(ntohs(lsw_ip6_hdr(irs)->payload_len) - (irs->esphlen + pad));
 	else
-		osw_ip4_hdr(irs)->tot_len =
-			htons(ntohs(osw_ip4_hdr(irs)->tot_len) - (irs->esphlen + pad));
+		lsw_ip4_hdr(irs)->tot_len =
+			htons(ntohs(lsw_ip4_hdr(irs)->tot_len) - (irs->esphlen + pad));
 
 	/*
 	 * move the IP header forward by the size of the ESP header, which
@@ -454,8 +454,8 @@ ipsec_xmit_esp_setup(struct ipsec_xmit_state *ixs)
   }
   dat[ixs->skb->len - ixs->authlen - 2] = padlen;
   
-  dat[ixs->skb->len - ixs->authlen - 1] = osw_ip4_hdr(ixs)->protocol;
-  osw_ip4_hdr(ixs)->protocol = IPPROTO_ESP;
+  dat[ixs->skb->len - ixs->authlen - 1] = lsw_ip4_hdr(ixs)->protocol;
+  lsw_ip4_hdr(ixs)->protocol = IPPROTO_ESP;
   
   switch(ixs->ipsp->ips_encalg) {
 #ifdef CONFIG_KLIPS_ENC_3DES
