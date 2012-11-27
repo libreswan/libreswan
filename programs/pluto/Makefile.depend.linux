@@ -514,7 +514,7 @@ ikev2_child.o: ikev2_child.c ../../linux/include/libreswan.h \
   ../../include/ietf_constants.h \
   ../../include/pluto_constants.h \
   ../../include/names_constant.h ../../include/oswlog.h \
-  ../../include/constants.h ../../include/liblibreswan.h defs.h \
+  ../../include/constants.h ../../include/libswan.h defs.h \
   ../../include/oswalloc.h cookie.h ../../include/id.h \
   ../../include/x509.h ../../include/pgp.h \
   ../../include/certs.h \
@@ -537,7 +537,7 @@ ikev2_crypto.o: ikev2_crypto.c ../../linux/include/libreswan.h \
   ../../include/ietf_constants.h \
   ../../include/pluto_constants.h \
   ../../include/names_constant.h ../../include/oswlog.h \
-  ../../include/constants.h ../../include/liblibreswan.h defs.h \
+  ../../include/constants.h ../../include/libswan.h defs.h \
   ../../include/oswalloc.h cookie.h ../../include/id.h \
   ../../include/x509.h ../../include/pgp.h \
   ../../include/certs.h \

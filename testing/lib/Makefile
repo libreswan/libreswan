@@ -16,7 +16,7 @@ include $(LIBRESWANSRCDIR)/Makefile.inc
 
 srcdir?=${LIBRESWANSRCDIR}/testing/lib/
 
-SUBDIRS=liblibreswan libpluto
+SUBDIRS=libswan libpluto
 
 def:
 	@echo "Please read doc/intro.html or INSTALL before running make"

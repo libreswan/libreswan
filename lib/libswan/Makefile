@@ -82,13 +82,13 @@ OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} ${UDPFROMTO_SRCS:.c=.o} version.o
 LOGOBJS=${LOGSRCS:.c=.o}
 
 KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
-MANSRCDIR=${LIBRESWANSRCDIR}/lib/liblibreswan
+MANSRCDIR=${LIBRESWANSRCDIR}/lib/libswan
 
 VPATH+= ${KLIPSSRCDIR}
 
 HDRS=${KLIPSINC}/libreswan.h internal.h
 
-LIBA=liblibreswan.a
+LIBA=libswan.a
 LIBL=liboswlog.a
 # Original flags
 CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
@@ -152,7 +152,7 @@ MANS=anyaddr.3 atoaddr.3 atoasr.3 atoul.3 goodmask.3 \
 SHOULDWERESTART=${USE_OBJDIR}$(wildcard ttodata.3.xml)
 ifeq ($(SHOULDWERESTART),truettodata.3.xml)
 all programs clean install:
-	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/liblibreswan && make $@
+	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/libswan && make $@
 else
 all:	$(LIBA) ${LIBL}
 programs: $(LIBA) ${LIBL}

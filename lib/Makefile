@@ -17,7 +17,7 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 srcdir?=$(shell pwd)/
 
-SUBDIRS=liblibreswan libpluto libcrypto libwhack libipsecconf
+SUBDIRS=libswan libpluto libcrypto libwhack libipsecconf
 
 ifeq ($(USE_BSDKAME),true)
 SUBDIRS+=libbsdpfkey

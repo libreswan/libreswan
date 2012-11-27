@@ -1,6 +1,6 @@
 /*
  * mechanisms for managing keys (public, private, and preshared secrets)
- * inside of pluto. Common code is in ../../include/secrets.h and liblibreswan.
+ * inside of pluto. Common code is in ../../include/secrets.h and libswan.
  *
  * Copyright (C) 1998-2005  D. Hugh Redelmeier.
  * Copyright (C) 2003-2007  Michael Richardson <mcr@xelerance.com>

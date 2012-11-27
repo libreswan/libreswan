@@ -35,7 +35,7 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "oswlog.h"
-#include "liblibreswan.h"
+#include "libswan.h"
 
 #include "defs.h"
 #include "cookie.h"

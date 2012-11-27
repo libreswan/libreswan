@@ -1,5 +1,5 @@
 /*
- * interfaces to the secrets.c library functions in liblibreswan.
+ * interfaces to the secrets.c library functions in libswan.
  * for now, just stupid wrappers!
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.

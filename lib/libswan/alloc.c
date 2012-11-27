@@ -26,7 +26,7 @@
 #include "constants.h"
 #include "oswlog.h"
 
-/* leave enabled so support functions are always in liblibreswan, and
+/* leave enabled so support functions are always in libswan, and
  * pluto can be recompiled with just the leak detective changes
  */
 #define LEAK_DETECTIVE
