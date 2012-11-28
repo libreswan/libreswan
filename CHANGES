@@ -44,6 +44,7 @@ v3.0 (unreleased)
 * pluto: remove protostack=auto and --use-auto, netkey is new default [Paul]
 * pluto: Added perpeerlog=yes|no and perpeerlogdir=/var/log [Paul]
 * pluto: Added retransmits=yes|no (matches pluto --noretransmits) [Paul]
+* pluto: Added plutofork=yes|no to match pluto --nofork [Paul]
 * pluto: remove old unsused USE_IPSECPOLICY code [Paul]
 * pluto: rhbz#609343: pluto crashes when removing logical interface [Avesh]
 * pluto: dont stop processing after --coredir argument [Paul]
