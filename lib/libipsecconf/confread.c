@@ -86,7 +86,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_RETRANSMITS]= TRUE;
 	cfg->setup.options[KBF_PLUTOFORK]= TRUE; /* change in the future */
 	cfg->setup.options[KBF_PERPEERLOG]= FALSE;
-	cfg->setup.options[KSF_PERPEERDIR]= "/var/log/pluto/peer";
 #ifdef NAT_TRAVERSAL
 	cfg->setup.options[KBF_DISABLEPORTFLOATING]= FALSE;
 	cfg->setup.options[KBF_FORCE_KEEPALIVE]= FALSE;
