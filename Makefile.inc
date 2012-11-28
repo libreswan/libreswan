@@ -192,6 +192,7 @@ INSTCONFFLAGS=
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS=
 
+NSSFLAGS?=$(shell pkg-config --cflags nss)
 
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
@@ -203,7 +204,7 @@ BISONOSFLAGS=
 #Example for a cross compile:
 #USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
 GCC_LINT ?= -DGCC_LINT 
-USERCOMPILE?=-g -O3 ${WERROR} $(GCC_LINT) `pkg-config --cflags nss`
+USERCOMPILE?=-g -O3 ${WERROR} $(GCC_LINT) ${NSSFLAGS}
 
 # on fedora/rhel 
 #USERCOMPILE?=-g -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4  -m64 -mtune=generic -fPIE -pie 
@@ -474,7 +475,7 @@ endif
 # make sure we only run this once per build,  its too expensive to run
 # every time Makefile.inc is included
 ifndef IPSECVERSION
-IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlocalversion ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
+IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
 export IPSECVERSION
 endif
 
@@ -519,14 +520,14 @@ KLIPSINC=${LIBRESWANSRCDIR}/linux/include
 KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 #KLIPSSRCDIR=/mara1/git/klips/net/ipsec
 
-LIBLIBRESWANDIR=${LIBRESWANSRCDIR}/lib/liblibreswan
-LIBRESWANLIB=${OBJDIRTOP}/lib/liblibreswan/liblibreswan.a
+LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
+LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
 PLUTOLIB=${OBJDIRTOP}/lib/libpluto/libpluto.a
-OSWLOGLIB=${OBJDIRTOP}/lib/liblibreswan/liboswlog.a
+LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
 LIBDESLITE:=${OBJDIRTOP}/lib/libcrypto/libdes/libdes.a
-LIBOSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liboswcrypto/liboswcrypto.a
+LIBLSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liblswcrypto/liblswcrypto.a
 LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
 LIBMD5=${OBJDIRTOP}/lib/libcrypto/libmd5/libmd5.a
 LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
@@ -540,7 +541,7 @@ ifeq ($(USE_EXTRACRYPTO),true)
 CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH} ${LIBBLOWFISH}
 endif
 
-CRYPTOLIBS += ${LIBOSWCRYPTO}
+CRYPTOLIBS += ${LIBLSWCRYPTO}
 ifeq ($(HAVE_OCF),true)
 CRYPTOLIBS += -lcrypto
 endif
@@ -552,12 +553,12 @@ WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
-export LIBLIBRESWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
-export LIBLIBRESWANDIR LIBRESWANLIB OSWLOGLIB PLUTOLIB 
+export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
+export LIBRESWANLIB LSWLOGLIB PLUTOLIB 
 export LIBDESSRCDIR LIBDESLITE LIBAES
 export LIBMD5 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
-export LIBOSWCRYPTO
+export LIBLSWCRYPTO
 
 #KERNELBUILDMFLAGS=--debug=biv V=1 
 

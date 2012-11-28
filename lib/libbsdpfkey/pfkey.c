@@ -45,7 +45,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "ipsec_strerror.h"
 #include "libbsdkame/libpfkey.h"

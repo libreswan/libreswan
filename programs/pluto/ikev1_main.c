@@ -83,7 +83,7 @@
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 
-#include "oswcrypto.h"
+#include "lswcrypto.h"
 
 #ifdef XAUTH
 #include "xauth.h"
@@ -1236,7 +1236,7 @@ main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc
     if (!ship_KE(st, r, &st->st_gr
 		 , &md->rbody, ISAKMP_NEXT_NONCE))
 	{
-	    osw_abort();
+	    lsw_abort();
 	return STF_INTERNAL_ERROR;
 	}
 

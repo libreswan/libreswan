@@ -9,45 +9,32 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libreswan 1:2.6.26+dfsg-1\n"
 "Report-Msgid-Bugs-To: libreswan@packages.debian.org\n"
-"POT-Creation-Date: 2010-08-06 00:50+0200\n"
+"POT-Creation-Date: 2012-11-25 19:54-0500\n"
 "PO-Revision-Date: 2010-07-19 11:33+0200\n"
 "Last-Translator: Martin Eberhard Schauer <Martin.E.Schauer@gmx.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: de\n"
 
-#. Type: note
+#. Type: boolean
 #. Description
 #: ../libreswan.templates:1001
-msgid "Old runlevel management superseded"
-msgstr "Alte Verwaltung der Runlevel abgelöst"
+#, fuzzy
+#| msgid "Restart Libreswan now?"
+msgid "Autostart Libreswan at boot?"
+msgstr "Libreswan jetzt neu starten?"
 
-# (mes) sync 1 Im letzten Satz:
-# Helge: setup -> Installation  Martin: setup -> Setup
-# strongswan :2001              libreswan: 1001
-#. Type: note
+#. Type: boolean
 #. Description
 #: ../libreswan.templates:1001
 msgid ""
-"Previous versions of the Libreswan package gave a choice between three "
-"different Start/Stop-Levels. Due to changes in the standard system startup "
-"procedure, this is no longer necessary or useful. For all new installations "
-"as well as old ones running in any of the predefined modes, sane default "
-"levels will now be set. If you are upgrading from a previous version and "
-"changed your Libreswan startup parameters, then please take a look at NEWS."
-"Debian for instructions on how to modify your setup accordingly."
+"It is possible to have Libreswan (ipsec) to start automatically at boot time "
+"by adding its init script (/etc/init.d/ipsec) to the boot sequence. Most  "
+"people will prefer to configure the daemon before enabling autostart. To  "
+"enable it manually, simply run \"update-rc.d ipsec defaults\"."
 msgstr ""
-"Frühere Versionen von Libreswan ermöglichten eine Wahl zwischen drei "
-"verschiedenen Start/Stopp-Modi. Aufgrund von Änderungen des standardmäßigen "
-"Systemstarts ist dies nicht mehr notwendig oder nützlich. Sowohl für alle "
-"neuen als auch bestehende Installationen, die in einem der vordefinierten "
-"Modi betrieben wurden, werden jetzt vernünftige Standardwerte gesetzt. Wenn "
-"Sie jetzt ein Upgrade von einer früheren Version durchführen und Sie die "
-"Libreswan-Startparameter angepasst haben, werfen Sie bitte einen Blick auf "
-"NEWS.Debian. Die Datei enthält Anweisungen, wie Sie Ihre Installation "
-"entsprechend ändern."
 
 #. Type: boolean
 #. Description
@@ -64,7 +51,8 @@ msgid ""
 "will not be applied until the daemon restarts. Most people expect the daemon "
 "to restart, so this is generally a good idea. However, this might take down "
 "existing connections and then bring them back up, so if you are using such "
-"an Libreswan tunnel to connect for this update, restarting is not recommended."
+"an Libreswan tunnel to connect for this update, restarting is not "
+"recommended."
 msgstr ""
 "Es wird empfohlen, Libreswan neu zu starten, da eine Sicherheitskorrektur "
 "erst nach dem Neustart des Daemons greift. Weil meisten Anwender einen "
@@ -446,3 +434,29 @@ msgstr ""
 "der opportunistischen Verschlüsselung diente. Diese kann jetzt nicht mehr "
 "mittels ipsec.conf aufgenommen werden. Jeder entsprechende Absatz wird jetzt "
 "automatisch entfernt, um einen korrekten Start von Libreswan sicherzustellen."
+
+#~ msgid "Old runlevel management superseded"
+#~ msgstr "Alte Verwaltung der Runlevel abgelöst"
+
+# (mes) sync 1 Im letzten Satz:
+# Helge: setup -> Installation  Martin: setup -> Setup
+# strongswan :2001              libreswan: 1001
+#~ msgid ""
+#~ "Previous versions of the Libreswan package gave a choice between three "
+#~ "different Start/Stop-Levels. Due to changes in the standard system "
+#~ "startup procedure, this is no longer necessary or useful. For all new "
+#~ "installations as well as old ones running in any of the predefined modes, "
+#~ "sane default levels will now be set. If you are upgrading from a previous "
+#~ "version and changed your Libreswan startup parameters, then please take a "
+#~ "look at NEWS.Debian for instructions on how to modify your setup "
+#~ "accordingly."
+#~ msgstr ""
+#~ "Frühere Versionen von Libreswan ermöglichten eine Wahl zwischen drei "
+#~ "verschiedenen Start/Stopp-Modi. Aufgrund von Änderungen des "
+#~ "standardmäßigen Systemstarts ist dies nicht mehr notwendig oder nützlich. "
+#~ "Sowohl für alle neuen als auch bestehende Installationen, die in einem "
+#~ "der vordefinierten Modi betrieben wurden, werden jetzt vernünftige "
+#~ "Standardwerte gesetzt. Wenn Sie jetzt ein Upgrade von einer früheren "
+#~ "Version durchführen und Sie die Libreswan-Startparameter angepasst haben, "
+#~ "werfen Sie bitte einen Blick auf NEWS.Debian. Die Datei enthält "
+#~ "Anweisungen, wie Sie Ihre Installation entsprechend ändern."

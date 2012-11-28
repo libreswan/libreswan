@@ -4,7 +4,10 @@
  * Copyright (C) 1998-2003   Richard Guy Briggs.
  * Copyright (C) 2004-2007   Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008   Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2010 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2011 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
+ * Copyright (C) 2011-2012 David McCullough <david_mccullough@mcafee.com>
  *
  * OCF/receive state machine written by
  * David McCullough <dmccullough@cyberguard.com>
@@ -214,12 +217,12 @@ struct auth_alg ipsec_rcv_sha1[]={
 
 static inline void ipsec_rcv_redodebug(struct ipsec_rcv_state *irs)
 {
-	if (osw_ip_hdr_version(irs) == 4) {
-		inet_addrtot(AF_INET, &osw_ip4_hdr(irs)->saddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
-		inet_addrtot(AF_INET, &osw_ip4_hdr(irs)->daddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
-	} else if (osw_ip_hdr_version(irs) == 6) {
-		inet_addrtot(AF_INET6, &osw_ip6_hdr(irs)->saddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
-		inet_addrtot(AF_INET6, &osw_ip6_hdr(irs)->daddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
+	if (lsw_ip_hdr_version(irs) == 4) {
+		inet_addrtot(AF_INET, &lsw_ip4_hdr(irs)->saddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
+		inet_addrtot(AF_INET, &lsw_ip4_hdr(irs)->daddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
+	} else if (lsw_ip_hdr_version(irs) == 6) {
+		inet_addrtot(AF_INET6, &lsw_ip6_hdr(irs)->saddr, 0, irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt));
+		inet_addrtot(AF_INET6, &lsw_ip6_hdr(irs)->daddr, 0, irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt));
 	} else {
 		snprintf(irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt), "<BAD ADDRESS>");
 		snprintf(irs->ipdaddr_txt, sizeof(irs->ipdaddr_txt), "<BAD ADDRESS>");
@@ -470,19 +473,16 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 	struct ipsec_sa *ipsp;
 	struct ipsec_sa* ipsnext = NULL;
 	struct sk_buff *skb;
-	struct iphdr *ipp = osw_ip4_hdr(irs);
+	struct iphdr *ipp = lsw_ip4_hdr(irs);
 #ifdef CONFIG_KLIPS_IPV6
-	struct ipv6hdr *ipp6 = osw_ip6_hdr(irs);
+	struct ipv6hdr *ipp6 = lsw_ip6_hdr(irs);
 #endif /* CONFIG_KLIPS_IPV6 */
 	int failed_inbound_check = 0;
 	enum ipsec_rcv_value result = IPSEC_RCV_DECAPFAIL;
 
 	ipsp = irs->ipsp;
 	skb  = irs->skb;
-	if (debug_rcv)
-		irs->sa_len = satot(&irs->said, 0, irs->sa, sizeof(irs->sa));
-	else
-		irs->sa_len = 0;
+	irs->sa_len = KLIPS_SATOT(debug_rcv, &irs->said, 0, irs->sa, sizeof(irs->sa));
 	if(ipp->version == 4
 		&& ipp->protocol != IPPROTO_IPIP
 		&& ipp->protocol != IPPROTO_IPV6
@@ -503,10 +503,7 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		if((ipsnext = ipsp->ips_next)) {
 			char sa2[SATOT_BUF];
 			size_t sa_len2;
-			if (debug_rcv)
-				sa_len2 = satot(&ipsnext->ips_said, 0, sa2, sizeof(sa2));
-			else
-				sa_len2 = 0;
+			sa_len2 = KLIPS_SATOT(debug_rcv, &ipsnext->ips_said, 0, sa2, sizeof(sa2));
 			KLIPS_PRINT(debug_rcv,
 				    "klips_debug:ipsec_rcv_decap_ipip: "
 				    "unexpected SA:%s after IPIP SA:%s\n",
@@ -624,7 +621,7 @@ ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		if (debug_rcv)
 			ipsec_rcv_redodebug(irs);
 
-		if (osw_ip_hdr_version(irs) == 6)
+		if (lsw_ip_hdr_version(irs) == 6)
 			skb->protocol = htons(ETH_P_IPV6);
 		else
 			skb->protocol = htons(ETH_P_IP);
@@ -860,8 +857,8 @@ ipsec_rcv_init(struct ipsec_rcv_state *irs)
 			    , irs->natt_len);
 
 		irs->iph = (struct iphdr *)skb->data;
-		irs->iphlen = osw_ip4_hdr(irs)->ihl << 2;
-		osw_ip4_hdr(irs)->tot_len = htons(ntohs(osw_ip4_hdr(irs)->tot_len) - irs->natt_len);
+		irs->iphlen = lsw_ip4_hdr(irs)->ihl << 2;
+		lsw_ip4_hdr(irs)->tot_len = htons(ntohs(lsw_ip4_hdr(irs)->tot_len) - irs->natt_len);
 		if (skb->len < irs->iphlen + irs->natt_len) {
 			printk(KERN_WARNING
 			       "klips_error:ipsec_rcv_init: "
@@ -875,7 +872,7 @@ ipsec_rcv_init(struct ipsec_rcv_state *irs)
 		skb->h.raw = skb->h.raw + irs->natt_len;
 
 		/* modify protocol */
-		osw_ip4_hdr(irs)->protocol = IPPROTO_ESP;
+		lsw_ip4_hdr(irs)->protocol = IPPROTO_ESP;
 
 		skb->sk = NULL;
 
@@ -887,19 +884,19 @@ ipsec_rcv_init(struct ipsec_rcv_state *irs)
 		ipsec_rcv_redodebug(irs);
 
 #ifdef CONFIG_KLIPS_IPV6
-	if (osw_ip_hdr_version(irs) == 6) {
+	if (lsw_ip_hdr_version(irs) == 6) {
 		IPSEC_FRAG_OFF_DECL(frag_off)
 		int nexthdroff;
-		irs->proto = osw_ip6_hdr(irs)->nexthdr;
+		irs->proto = lsw_ip6_hdr(irs)->nexthdr;
 		nexthdroff = ipsec_ipv6_skip_exthdr(irs->skb,
-			((void *)(osw_ip6_hdr(irs)+1)) - (void*)irs->skb->data,
+			((void *)(lsw_ip6_hdr(irs)+1)) - (void*)irs->skb->data,
 			&irs->proto, &frag_off);
 		irs->iphlen = nexthdroff - (irs->iph - (void*)irs->skb->data);
 	} else
 #endif /* CONFIG_KLIPS_IPV6 */
 	{
-		irs->iphlen = osw_ip4_hdr(irs)->ihl << 2;
-		irs->proto = osw_ip4_hdr(irs)->protocol;
+		irs->iphlen = lsw_ip4_hdr(irs)->ihl << 2;
+		irs->proto = lsw_ip4_hdr(irs)->protocol;
 	}
 
 	KLIPS_PRINT(debug_rcv,
@@ -1040,11 +1037,11 @@ ipsec_rcv_decap_lookup(struct ipsec_rcv_state *irs)
 	if (debug_rcv)
 		ipsec_rcv_redodebug(irs);
 
-	if (osw_ip_hdr_version(irs) == 6) {
-		irs->said.dst.u.v6.sin6_addr = osw_ip6_hdr(irs)->daddr;
+	if (lsw_ip_hdr_version(irs) == 6) {
+		irs->said.dst.u.v6.sin6_addr = lsw_ip6_hdr(irs)->daddr;
 		irs->said.dst.u.v6.sin6_family = AF_INET6;
 	} else {
-		irs->said.dst.u.v4.sin_addr.s_addr = osw_ip4_hdr(irs)->daddr;
+		irs->said.dst.u.v4.sin_addr.s_addr = lsw_ip4_hdr(irs)->daddr;
 		irs->said.dst.u.v4.sin_family = AF_INET;
 	}
 	
@@ -1065,14 +1062,7 @@ ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 			irs->state, irs->next_state);
 
 	irs->said.proto = irs->proto;
-	if (debug_rcv) {
-		irs->sa_len = satot(&irs->said, 0, irs->sa, sizeof(irs->sa));
-		if(irs->sa_len == 0) {
-			strcpy(irs->sa, "(error)");
-		}
-	} else
-		irs->sa_len = 0;
-
+	irs->sa_len = KLIPS_SATOT(debug_rcv, &irs->said, 0, irs->sa, sizeof(irs->sa));
 	newipsp = ipsec_sa_getbyid(&irs->said, IPSEC_REFRX);
 	if (newipsp == NULL) {
 		KLIPS_PRINT(debug_rcv,
@@ -1118,8 +1108,8 @@ ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 		} else if (((struct sockaddr_in*)(newipsp->ips_addr_s))->sin_family == AF_INET6) {
 			psin = (struct sockaddr_in*)(newipsp->ips_addr_s);
 		}
-		if ((psin && osw_ip4_hdr(irs)->saddr != psin->sin_addr.s_addr) ||
-			(psin6 && memcmp(&osw_ip6_hdr(irs)->saddr, &psin6->sin6_addr, sizeof(osw_ip6_hdr(irs)->saddr)) != 0)) {
+		if ((psin && lsw_ip4_hdr(irs)->saddr != psin->sin_addr.s_addr) ||
+			(psin6 && memcmp(&lsw_ip6_hdr(irs)->saddr, &psin6->sin6_addr, sizeof(lsw_ip6_hdr(irs)->saddr)) != 0)) {
 			if (debug_rcv) {
 				/* generate SA->saddr */
 				if (psin) {
@@ -1134,7 +1124,7 @@ ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 					ipsec_rcv_redodebug(irs);
 				/* regenerate sa_len */
 				if (!irs->sa_len)
-					irs->sa_len = satot(&irs->said, 0,
+					irs->sa_len = KLIPS_SATOT(debug_rcv, &irs->said, 0,
 						irs->sa, sizeof(irs->sa));
 			}
 			KLIPS_ERROR(debug_rcv,
@@ -1618,18 +1608,18 @@ ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 	irs->len = skb->len;
 	irs->iph = (void *) ip_hdr(skb);
 #ifdef CONFIG_KLIPS_IPV6
-	if (osw_ip_hdr_version(irs) == 6) {
+	if (lsw_ip_hdr_version(irs) == 6) {
 		IPSEC_FRAG_OFF_DECL(frag_off)
-		unsigned char nexthdr = osw_ip6_hdr(irs)->nexthdr;
+		unsigned char nexthdr = lsw_ip6_hdr(irs)->nexthdr;
 		int nexthdroff;
-		nexthdroff = ipsec_ipv6_skip_exthdr(irs->skb, ((void *)(osw_ip6_hdr(irs)+1))-
+		nexthdroff = ipsec_ipv6_skip_exthdr(irs->skb, ((void *)(lsw_ip6_hdr(irs)+1))-
 				(void*)irs->skb->data, &nexthdr, &frag_off);
 		irs->iphlen = nexthdroff - (irs->iph - (void*)irs->skb->data);
 		skb_set_transport_header(skb, ipsec_skb_offset(skb, skb_network_header(skb) + irs->iphlen));
 	} else
 #endif /* CONFIG_KLIPS_IPV6 */
 	{
-		irs->iphlen = osw_ip4_hdr(irs)->ihl<<2;
+		irs->iphlen = lsw_ip4_hdr(irs)->ihl<<2;
 		skb_set_transport_header(skb, ipsec_skb_offset(skb, skb_network_header(skb) + irs->iphlen));
 	}
 	
@@ -1642,13 +1632,13 @@ ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 	/*
 	 *	Discard the original ESP/AH header
 	 */
-	if (osw_ip_hdr_version(irs) == 6) {
-		osw_ip6_hdr(irs)->nexthdr = irs->next_header;
+	if (lsw_ip_hdr_version(irs) == 6) {
+		lsw_ip6_hdr(irs)->nexthdr = irs->next_header;
 		skb->protocol = htons(ETH_P_IPV6);
 	} else {
-		osw_ip4_hdr(irs)->protocol = irs->next_header;
-		osw_ip4_hdr(irs)->check = 0;	/* NOTE: this will be included in checksum */
-		osw_ip4_hdr(irs)->check = ip_fast_csum((unsigned char *)ip_hdr(skb), irs->iphlen >> 2);
+		lsw_ip4_hdr(irs)->protocol = irs->next_header;
+		lsw_ip4_hdr(irs)->check = 0;	/* NOTE: this will be included in checksum */
+		lsw_ip4_hdr(irs)->check = ip_fast_csum((unsigned char *)ip_hdr(skb), irs->iphlen >> 2);
 		skb->protocol = htons(ETH_P_IP);
 	}
 	irs->proto = irs->next_header; /* needed for decap_init recursion */
@@ -1701,10 +1691,10 @@ ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 	    && ipsnext->ips_said.proto == IPPROTO_COMP
 	    && irs->next_header != IPPROTO_COMP) {
 		int tot_len;
-		if (osw_ip_hdr_version(irs) == 6)
-			tot_len = ntohs(osw_ip6_hdr(irs)->payload_len) + sizeof(struct ipv6hdr);
+		if (lsw_ip_hdr_version(irs) == 6)
+			tot_len = ntohs(lsw_ip6_hdr(irs)->payload_len) + sizeof(struct ipv6hdr);
 		else
-			tot_len = ntohs(osw_ip4_hdr(irs)->tot_len);
+			tot_len = ntohs(lsw_ip4_hdr(irs)->tot_len);
 		ipsnext->ips_comp_ratio_cbytes += tot_len;
 		ipsnext->ips_comp_ratio_dbytes += tot_len;
 	}
@@ -1768,10 +1758,10 @@ ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
 
 		if (natt_oa != 0) {
 			/* reset source address to what it was before NAT */
-			osw_ip4_hdr(irs)->saddr = natt_oa;
-			osw_ip4_hdr(irs)->check = 0;
-			osw_ip4_hdr(irs)->check = ip_fast_csum((unsigned char *)irs->iph, osw_ip4_hdr(irs)->ihl);
-			KLIPS_PRINT(debug_rcv, "csum: %04x\n", osw_ip4_hdr(irs)->check);
+			lsw_ip4_hdr(irs)->saddr = natt_oa;
+			lsw_ip4_hdr(irs)->check = 0;
+			lsw_ip4_hdr(irs)->check = ip_fast_csum((unsigned char *)irs->iph, lsw_ip4_hdr(irs)->ihl);
+			KLIPS_PRINT(debug_rcv, "csum: %04x\n", lsw_ip4_hdr(irs)->check);
 		}
 /*
  * This fails when both systems are behind NAT
@@ -1782,7 +1772,7 @@ ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
  */
 #ifdef DISABLE_UDP_CHECKSUM
 		/* see https://bugs.libreswan.org/issues/601 */
-		if(osw_ip4_hdr(irs)->protocol == IPPROTO_UDP) {
+		if(lsw_ip4_hdr(irs)->protocol == IPPROTO_UDP) {
 			udp_hdr(skb)->check = 0;
 			KLIPS_PRINT(debug_rcv, "UDP checksum for NAT packet disabled at compile time\n");
 		}
@@ -2010,11 +2000,6 @@ ipsec_rsm(struct ipsec_rcv_state *irs)
 		}
 	}
 
-	/*
-	 * all done with anything needing locks
-	 */
-	spin_unlock_bh(&tdb_lock);
-
 	if (irs->lastipsp) {
 		ipsec_sa_put(irs->lastipsp, IPSEC_REFRX);
 		irs->lastipsp=NULL;
@@ -2024,6 +2009,11 @@ ipsec_rsm(struct ipsec_rcv_state *irs)
 		ipsec_sa_put(irs->ipsp, IPSEC_REFRX);
 		irs->ipsp=NULL;
 	}
+
+	/*
+	 * all done with anything needing locks
+	 */
+	spin_unlock_bh(&tdb_lock);
 
 	if (irs->skb) {
 		ipsec_kfree_skb(irs->skb);

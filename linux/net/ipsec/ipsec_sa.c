@@ -4,6 +4,7 @@
  * Copyright (C) 1996, 1997  John Ioannidis.
  * Copyright (C) 1998, 1999, 2000, 2001, 2002  Richard Guy Briggs.
  * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
+ * Copyright (C) 2012  David McCullough <david_mccullough@mcafee.com>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -367,7 +368,7 @@ ipsec_sa_print(struct ipsec_sa *ips)
 	if(ips->ips_prev != NULL) {
 		printk(" prev=0p%p", ips->ips_prev);
 	}
-	sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(1, &ips->ips_said, 0, sa, sizeof(sa));
 	printk(" said=%s", sa_len ? sa : " (error)");
 	if(ips->ips_seq) {
 		printk(" seq=%u", ips->ips_seq);
@@ -597,7 +598,7 @@ __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line, int type)
 	if(debug_xform) {
 		char sa[SATOT_BUF];
 		size_t sa_len;
-		sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+		sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 
 		KLIPS_PRINT(debug_xform,
 			    "ipsec_sa_put: "
@@ -642,7 +643,7 @@ __ipsec_sa_get(struct ipsec_sa *ips, const char *func, int line, int type)
 	if(debug_xform) {
 		char sa[SATOT_BUF];
 		size_t sa_len;
-	  sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+	 sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 
 	  KLIPS_PRINT(debug_xform,
 		      "ipsec_sa_get: "
@@ -995,7 +996,7 @@ ipsec_sa_wipe(struct ipsec_sa *ips)
 			subtable = ipsec_sadb.refTable[IPsecSAref2table(IPsecSA2SAref(ips))];
 		}
 
-		sa_len = satot(&ips->ips_said, 0, sa, sizeof(sa));
+		sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa, sizeof(sa));
 		KLIPS_PRINT(debug_xform,
 			    "klips_debug:ipsec_sa_wipe: "
 			    "removing SA=%s(0p%p), SAref=%d, table=%d(0p%p), entry=%d from the refTable.\n",

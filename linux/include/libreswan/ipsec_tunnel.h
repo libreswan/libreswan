@@ -29,9 +29,9 @@
 
 #if defined(KLIPS)
 
-#define	osw_ip_hdr_version(ixirs)	(((struct iphdr *) (ixirs)->iph)->version)
-#define	osw_ip4_hdr(ixirs)	((struct iphdr *) (ixirs)->iph)
-#define	osw_ip6_hdr(ixirs)	((struct ipv6hdr *) (ixirs)->iph)
+#define	lsw_ip_hdr_version(ixirs)	(((struct iphdr *) (ixirs)->iph)->version)
+#define	lsw_ip4_hdr(ixirs)	((struct iphdr *) (ixirs)->iph)
+#define	lsw_ip6_hdr(ixirs)	((struct ipv6hdr *) (ixirs)->iph)
 
 /*
  * Heavily based on drivers/net/new_tunnel.c.  Lots
@@ -123,7 +123,7 @@ extern struct net_device *ipsec_get_device(int inst);
 extern int debug_tunnel;
 extern int sysctl_ipsec_debug_verbose;
 
-extern int osw_ipv6_find_hdr(const struct sk_buff *skb, unsigned int *offset, int target, unsigned short *fragoff);
+extern int lsw_ipv6_find_hdr(const struct sk_buff *skb, unsigned int *offset, int target, unsigned short *fragoff);
 
 #ifdef CONFIG_KLIPS_IPV6
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)

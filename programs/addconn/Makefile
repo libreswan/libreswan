@@ -34,5 +34,5 @@ INCLUDES+=-I${srcdir}
 include ${srcdir}../Makefile.program
 
 TAGS:	$(DISTSRC)
-	LC_ALL=C etags $(ETAGSFLAGS) $(DISTSRC) $(LIBLIBRESWANDIR)/*.[ch]
+	LC_ALL=C etags $(ETAGSFLAGS) $(DISTSRC) $(LIBSWANDIR)/*.[ch]
 

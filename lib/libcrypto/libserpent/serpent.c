@@ -21,7 +21,7 @@
 #include <endian.h>
 #else
 #include <sys/types.h>
-#include "oswendian.h"
+#include "lswendian.h"
 #endif
 
 #include "serpent.h"

@@ -201,10 +201,10 @@ ipsec_ocf_ipcomp_copy_expand(struct ipsec_rcv_state *irs)
 		grow_to = irs->skb->dev->mtu < 16260 ? 16260 : irs->skb->dev->mtu;
 	} else {
 		int tot_len;
-		if (osw_ip_hdr_version(irs) == 6)
-			tot_len = ntohs(osw_ip6_hdr(irs)->payload_len) + sizeof(struct ipv6hdr);
+		if (lsw_ip_hdr_version(irs) == 6)
+			tot_len = ntohs(lsw_ip6_hdr(irs)->payload_len) + sizeof(struct ipv6hdr);
 		else
-			tot_len = ntohs(osw_ip4_hdr(irs)->tot_len);
+			tot_len = ntohs(lsw_ip4_hdr(irs)->tot_len);
 		grow_to = 65520 - tot_len;
 	}
 	grow_by = grow_to - irs->skb->len;
@@ -447,11 +447,11 @@ ipsec_ocf_rcv_cb(struct cryptop *crp)
 
 	case IPPROTO_AH:
 		/* AH post processing, put back fields we had to zero */
-		if (osw_ip_hdr_version(irs) == 4) {
-			osw_ip4_hdr(irs)->ttl      = irs->ttl;
-			osw_ip4_hdr(irs)->check    = irs->check;
-			osw_ip4_hdr(irs)->frag_off = irs->frag_off;
-			osw_ip4_hdr(irs)->tos      = irs->tos;
+		if (lsw_ip_hdr_version(irs) == 4) {
+			lsw_ip4_hdr(irs)->ttl      = irs->ttl;
+			lsw_ip4_hdr(irs)->check    = irs->check;
+			lsw_ip4_hdr(irs)->frag_off = irs->frag_off;
+			lsw_ip4_hdr(irs)->tos      = irs->tos;
 		}
 		irs->state         = IPSEC_RSM_AUTH_CHK;
 
@@ -494,13 +494,13 @@ ipsec_ocf_rcv_cb(struct cryptop *crp)
 				((unsigned char *) skb_transport_header(irs->skb))+
 					sizeof(struct ipcomphdr)));
 
-		if (osw_ip_hdr_version(irs) == 6) {
-			osw_ip6_hdr(irs)->nexthdr  = irs->next_header;
+		if (lsw_ip_hdr_version(irs) == 6) {
+			lsw_ip6_hdr(irs)->nexthdr  = irs->next_header;
 		} else {
-			osw_ip4_hdr(irs)->protocol = irs->next_header;
-			osw_ip4_hdr(irs)->tot_len = htons(irs->iphlen + decomp_len);
-			osw_ip4_hdr(irs)->check = 0;
-			osw_ip4_hdr(irs)->check = ip_fast_csum(irs->iph, osw_ip4_hdr(irs)->ihl);
+			lsw_ip4_hdr(irs)->protocol = irs->next_header;
+			lsw_ip4_hdr(irs)->tot_len = htons(irs->iphlen + decomp_len);
+			lsw_ip4_hdr(irs)->check = 0;
+			lsw_ip4_hdr(irs)->check = ip_fast_csum(irs->iph, lsw_ip4_hdr(irs)->ihl);
 		}
 
 		KLIPS_PRINT(debug_rcv, "comp after len adjustments:\n");
@@ -635,15 +635,15 @@ ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
 
 		if (!crde) { /* assume AH processing */
 			/* AH processing, save fields we have to zero */
-			if (osw_ip_hdr_version(irs) == 4) {
-				irs->ttl                   = osw_ip4_hdr(irs)->ttl;
-				irs->check                 = osw_ip4_hdr(irs)->check;
-				irs->frag_off              = osw_ip4_hdr(irs)->frag_off;
-				irs->tos                   = osw_ip4_hdr(irs)->tos;
-				osw_ip4_hdr(irs)->ttl      = 0;
-				osw_ip4_hdr(irs)->check    = 0;
-				osw_ip4_hdr(irs)->frag_off = 0;
-				osw_ip4_hdr(irs)->tos      = 0;
+			if (lsw_ip_hdr_version(irs) == 4) {
+				irs->ttl                   = lsw_ip4_hdr(irs)->ttl;
+				irs->check                 = lsw_ip4_hdr(irs)->check;
+				irs->frag_off              = lsw_ip4_hdr(irs)->frag_off;
+				irs->tos                   = lsw_ip4_hdr(irs)->tos;
+				lsw_ip4_hdr(irs)->ttl      = 0;
+				lsw_ip4_hdr(irs)->check    = 0;
+				lsw_ip4_hdr(irs)->frag_off = 0;
+				lsw_ip4_hdr(irs)->tos      = 0;
 			}
 			crda->crd_len      = irs->skb->len;
 			crda->crd_skip     = ((unsigned char *)irs->iph) - irs->skb->data;
@@ -718,12 +718,12 @@ ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
 		crdc->crd_skip   = ((unsigned char*)irs->iph) + irs->iphlen
 						 + sizeof (struct ipcomphdr) - irs->skb->data;
 		/* decompress all ip data past the ipcomp header */
-		if (osw_ip_hdr_version(irs) == 6) {
-			crdc->crd_len    = (ntohs(osw_ip6_hdr(irs)->payload_len) +
+		if (lsw_ip_hdr_version(irs) == 6) {
+			crdc->crd_len    = (ntohs(lsw_ip6_hdr(irs)->payload_len) +
 							   sizeof(struct ipv6hdr)) - irs->iphlen
 							 - sizeof(struct ipcomphdr);
 		} else {
-			crdc->crd_len    = ntohs(osw_ip4_hdr(irs)->tot_len) - irs->iphlen
+			crdc->crd_len    = ntohs(lsw_ip4_hdr(irs)->tot_len) - irs->iphlen
 						     - sizeof (struct ipcomphdr);
 		}
 		/* decompress inplace (some hardware can only do inplace) */
@@ -810,10 +810,10 @@ ipsec_ocf_xmit_cb(struct cryptop *crp)
 						"IPcomp on %u bytes failed, "
 						"but we have no clone!\n", 
 							(unsigned int)
-							(osw_ip_hdr_version(ixs) == 6 ?
-								(ntohs(osw_ip6_hdr(ixs)->payload_len)+
+							(lsw_ip_hdr_version(ixs) == 6 ?
+								(ntohs(lsw_ip6_hdr(ixs)->payload_len)+
 									sizeof(struct ipv6hdr)) :
-							ntohs(osw_ip4_hdr(ixs)->tot_len))
+							ntohs(lsw_ip4_hdr(ixs)->tot_len))
 						- ixs->iphlen);
 				/* this is a fail. */
 				break;
@@ -824,10 +824,10 @@ ipsec_ocf_xmit_cb(struct cryptop *crp)
 					"IPcomp on %u bytes failed, "
 					"using backup clone.\n", 
 						(unsigned int)
-						(osw_ip_hdr_version(ixs) == 6 ?
-							(ntohs(osw_ip6_hdr(ixs)->payload_len)+
+						(lsw_ip_hdr_version(ixs) == 6 ?
+							(ntohs(lsw_ip6_hdr(ixs)->payload_len)+
 								sizeof(struct ipv6hdr)) :
-						ntohs(osw_ip4_hdr(ixs)->tot_len))
+						ntohs(lsw_ip4_hdr(ixs)->tot_len))
 					- ixs->iphlen);
 
 			ptr_delta = ixs->pre_ipcomp_skb->data - ixs->skb->data;
@@ -861,11 +861,11 @@ ipsec_ocf_xmit_cb(struct cryptop *crp)
 
 	case IPPROTO_AH:
 		/* AH post processing, put back fields we had to zero */
-		if (osw_ip_hdr_version(ixs) == 4) {
-			osw_ip4_hdr(ixs)->ttl      = ixs->ttl;
-			osw_ip4_hdr(ixs)->check    = ixs->check;
-			osw_ip4_hdr(ixs)->frag_off = ixs->frag_off;
-			osw_ip4_hdr(ixs)->tos      = ixs->tos;
+		if (lsw_ip_hdr_version(ixs) == 4) {
+			lsw_ip4_hdr(ixs)->ttl      = ixs->ttl;
+			lsw_ip4_hdr(ixs)->check    = ixs->check;
+			lsw_ip4_hdr(ixs)->frag_off = ixs->frag_off;
+			lsw_ip4_hdr(ixs)->tos      = ixs->tos;
 		}
 		break;
 
@@ -880,10 +880,10 @@ ipsec_ocf_xmit_cb(struct cryptop *crp)
 			    ixs->sa_len ? ixs->sa_txt : " (error)");
 		KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->iph);
 
-		orig_len = (osw_ip_hdr_version(ixs) == 6 ?
-							(ntohs(osw_ip6_hdr(ixs)->payload_len)+
+		orig_len = (lsw_ip_hdr_version(ixs) == 6 ?
+							(ntohs(lsw_ip6_hdr(ixs)->payload_len)+
 								sizeof(struct ipv6hdr)) :
-						ntohs(osw_ip4_hdr(ixs)->tot_len))
+						ntohs(lsw_ip4_hdr(ixs)->tot_len))
 				 - ixs->iphlen;
 		comp_len = crp->crp_olen;
 
@@ -913,17 +913,17 @@ ipsec_ocf_xmit_cb(struct cryptop *crp)
 		cmph->ipcomp_cpi = htons((__u16)(ntohl(ixs->ipsp->ips_said.spi) & 0x0000ffff));
 
 		/* update the ip header to reflect the compression */
-		if (osw_ip_hdr_version(ixs) == 6) {
-			osw_ip6_hdr(ixs)->nexthdr     = IPPROTO_COMP;
-			osw_ip6_hdr(ixs)->payload_len = htons(ixs->iphlen +
+		if (lsw_ip_hdr_version(ixs) == 6) {
+			lsw_ip6_hdr(ixs)->nexthdr     = IPPROTO_COMP;
+			lsw_ip6_hdr(ixs)->payload_len = htons(ixs->iphlen +
 			        sizeof(struct ipcomphdr) +comp_len -sizeof(struct ipv6hdr));
 		} else {
-			osw_ip4_hdr(ixs)->protocol    = IPPROTO_COMP;
-			osw_ip4_hdr(ixs)->tot_len     = htons(ixs->iphlen +
+			lsw_ip4_hdr(ixs)->protocol    = IPPROTO_COMP;
+			lsw_ip4_hdr(ixs)->tot_len     = htons(ixs->iphlen +
 					sizeof(struct ipcomphdr) + comp_len);
-			osw_ip4_hdr(ixs)->check       = 0;
-			osw_ip4_hdr(ixs)->check       =
-					ip_fast_csum((char *) ixs->iph, osw_ip4_hdr(ixs)->ihl);
+			lsw_ip4_hdr(ixs)->check       = 0;
+			lsw_ip4_hdr(ixs)->check       =
+					ip_fast_csum((char *) ixs->iph, lsw_ip4_hdr(ixs)->ihl);
 		}
 
 		/* Update skb length/tail by "unputting" the shrinkage */
@@ -990,20 +990,20 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 		 * compress
 		 */
 #ifdef CONFIG_KLIPS_IPV6
-		if (osw_ip_hdr_version(ixs) == 6) {
+		if (lsw_ip_hdr_version(ixs) == 6) {
 			IPSEC_FRAG_OFF_DECL(frag_off)
 			int nexthdroff;
-			unsigned char nexthdr = osw_ip6_hdr(ixs)->nexthdr;
+			unsigned char nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 			nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-				((void *)(osw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data,
+				((void *)(lsw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data,
 				&nexthdr, &frag_off);
 			ixs->iphlen = nexthdroff - (ixs->iph - (void*)ixs->skb->data);
-			payload_size = ntohs(osw_ip6_hdr(ixs)->payload_len);
+			payload_size = ntohs(lsw_ip6_hdr(ixs)->payload_len);
 		} else
 #endif /* CONFIG_KLIPS_IPV6 */
 		{
-			ixs->iphlen = osw_ip4_hdr(ixs)->ihl << 2;
-			payload_size = ntohs(osw_ip4_hdr(ixs)->tot_len) - ixs->iphlen;
+			ixs->iphlen = lsw_ip4_hdr(ixs)->ihl << 2;
+			payload_size = ntohs(lsw_ip4_hdr(ixs)->tot_len) - ixs->iphlen;
 		}
 		if (payload_size < 90) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
@@ -1078,15 +1078,15 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 		if (!crde) { /* assume AH processing */
 			/* AH processing, save fields we have to zero */
 			crda->crd_skip = ((unsigned char *) ixs->iph) - ixs->skb->data;
-			if (osw_ip_hdr_version(ixs) == 4) {
-				ixs->ttl                   = osw_ip4_hdr(ixs)->ttl;
-				ixs->check                 = osw_ip4_hdr(ixs)->check;
-				ixs->frag_off              = osw_ip4_hdr(ixs)->frag_off;
-				ixs->tos                   = osw_ip4_hdr(ixs)->tos;
-				osw_ip4_hdr(ixs)->ttl      = 0;
-				osw_ip4_hdr(ixs)->check    = 0;
-				osw_ip4_hdr(ixs)->frag_off = 0;
-				osw_ip4_hdr(ixs)->tos      = 0;
+			if (lsw_ip_hdr_version(ixs) == 4) {
+				ixs->ttl                   = lsw_ip4_hdr(ixs)->ttl;
+				ixs->check                 = lsw_ip4_hdr(ixs)->check;
+				ixs->frag_off              = lsw_ip4_hdr(ixs)->frag_off;
+				ixs->tos                   = lsw_ip4_hdr(ixs)->tos;
+				lsw_ip4_hdr(ixs)->ttl      = 0;
+				lsw_ip4_hdr(ixs)->check    = 0;
+				lsw_ip4_hdr(ixs)->frag_off = 0;
+				lsw_ip4_hdr(ixs)->tos      = 0;
 			}
 			crda->crd_inject   =
 				(((struct ahhdr *)(ixs->dat + ixs->iphlen))->ah_data) -
@@ -1137,18 +1137,18 @@ ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 		}
 		crdc->crd_flags  = CRD_F_ENCRYPT;
 		/* store the nested protocol */
-		if (osw_ip_hdr_version(ixs) == 6)
-			ixs->next_header = osw_ip6_hdr(ixs)->nexthdr;
+		if (lsw_ip_hdr_version(ixs) == 6)
+			ixs->next_header = lsw_ip6_hdr(ixs)->nexthdr;
 		else
-			ixs->next_header = osw_ip4_hdr(ixs)->protocol;
+			ixs->next_header = lsw_ip4_hdr(ixs)->protocol;
 		/* start compressing after ip header */
 		crdc->crd_skip   = ipsec_skb_offset(ixs->skb,
 				((unsigned char*)ixs->iph) + ixs->iphlen);
 		/* compress all ip data */
-		if (osw_ip_hdr_version(ixs) == 6)
-			crdc->crd_len    = ntohs(osw_ip6_hdr(ixs)->payload_len);
+		if (lsw_ip_hdr_version(ixs) == 6)
+			crdc->crd_len    = ntohs(lsw_ip6_hdr(ixs)->payload_len);
 		else
-			crdc->crd_len    = ntohs(osw_ip4_hdr(ixs)->tot_len) - ixs->iphlen;
+			crdc->crd_len    = ntohs(lsw_ip4_hdr(ixs)->tot_len) - ixs->iphlen;
 		/* compress inplace (some hardware can only do inplace) */
 		crdc->crd_inject = crdc->crd_skip;
 

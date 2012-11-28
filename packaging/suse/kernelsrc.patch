@@ -200,13 +200,13 @@ index 462bd77..1973524 100644
  		$(MAKE) $(KERNMAKEOPTS) modules 2>&1 ) | tee -a out.kbuild ; \
  	fi
  	${ERRCHECK} out.kbuild
-@@ -347,33 +347,33 @@ ${MODBUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module.make
- 	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module.make ${MODBUILDDIR}/Makefile
- 	echo "# "                        >> ${MODBUILDDIR}/Makefile
- 	echo "# Local Variables: "       >> ${MODBUILDDIR}/Makefile
--	echo "# compile-command: \"${MAKE} LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} TOPDIR=${KERNELSRC} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG} -f Makefile ipsec.o\""         >> ${MODBUILDDIR}/Makefile
-+	echo "# compile-command: \"${MAKE} LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} TOPDIR=${KERNELDIR} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG} -f Makefile ipsec.o\""         >> ${MODBUILDDIR}/Makefile
- 	echo "# End: "       >> ${MODBUILDDIR}/Makefile
+@@ -347,33 +347,33 @@ ${MOD24BUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module.make
+ 	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module.make ${MOD24BUILDDIR}/Makefile
+ 	echo "# "                        >> ${MOD24BUILDDIR}/Makefile
+ 	echo "# Local Variables: "       >> ${MOD24BUILDDIR}/Makefile
+-	echo "# compile-command: \"${MAKE} LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} TOPDIR=${KERNELSRC} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG} -f Makefile ipsec.o\""         >> ${MOD24BUILDDIR}/Makefile
++	echo "# compile-command: \"${MAKE} LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} TOPDIR=${KERNELDIR} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG} -f Makefile ipsec.o\""         >> ${MOD24BUILDDIR}/Makefile
+ 	echo "# End: "       >> ${MOD24BUILDDIR}/Makefile
  
  module:
 -	@if [ -f ${KERNELSRC}/README.libreswan-2 ] ; then \
@@ -237,9 +237,9 @@ index 462bd77..1973524 100644
 +	@if [ ! -f ${KERNELDIR}/Rules.make ] ; then \
                  echo "Warning: Building for a 2.4 kernel in what looks like a 2.6 tree"; \
          fi ; \
-         ${MAKE} ${MODBUILDDIR}/Makefile
--	${MAKE} -C ${MODBUILDDIR}  LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} V=${V} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} TOPDIR=${KERNELSRC} -f Makefile ipsec.o
-+	${MAKE} -C ${MODBUILDDIR}  LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} V=${V} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} TOPDIR=${KERNELDIR} -f Makefile ipsec.o
+         ${MAKE} ${MOD24BUILDDIR}/Makefile
+-	${MAKE} -C ${MOD24BUILDDIR}  LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} V=${V} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} TOPDIR=${KERNELSRC} -f Makefile ipsec.o
++	${MAKE} -C ${MOD24BUILDDIR}  LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} V=${V} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} TOPDIR=${KERNELDIR} -f Makefile ipsec.o
  	@echo 
  	@echo '========================================================='
  	@echo 
@@ -262,22 +262,22 @@ index 462bd77..1973524 100644
  	fi ; \
  	if [ -z "$$OSMODLIB" ] ; then \
  		echo "No known place to install module. Aborting." ; \
-@@ -441,15 +441,15 @@ ${MOD26BUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module26.make
- 	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module26.make ${MOD26BUILDDIR}/Makefile
- 	echo "# "                        >> ${MOD26BUILDDIR}/Makefile
- 	echo "# Local Variables: "       >> ${MOD26BUILDDIR}/Makefile
--	echo "# compile-command: \"${MAKE} -C ${LIBRESWANSRCDIR} ARCH=${ARCH} KERNELSRC=${KERNELSRC} MOD26BUILDDIR=${MOD26BUILDDIR} module26\""         >> ${MOD26BUILDDIR}/Makefile
-+	echo "# compile-command: \"${MAKE} -C ${LIBRESWANSRCDIR} ARCH=${ARCH} KERNELDIR=${KERNELDIR} MOD26BUILDDIR=${MOD26BUILDDIR} module26\""         >> ${MOD26BUILDDIR}/Makefile
- 	echo "# End: "       >> ${MOD26BUILDDIR}/Makefile
- 	ln -s -f ${LIBRESWANSRCDIR}/linux/net/ipsec/match*.S ${MOD26BUILDDIR}
+@@ -441,15 +441,15 @@ ${MODBUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module26.make
+ 	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module26.make ${MODBUILDDIR}/Makefile
+ 	echo "# "                        >> ${MODBUILDDIR}/Makefile
+ 	echo "# Local Variables: "       >> ${MODBUILDDIR}/Makefile
+-	echo "# compile-command: \"${MAKE} -C ${LIBRESWANSRCDIR} ARCH=${ARCH} KERNELSRC=${KERNELSRC} MODBUILDDIR=${MODBUILDDIR} module26\""         >> ${MODBUILDDIR}/Makefile
++	echo "# compile-command: \"${MAKE} -C ${LIBRESWANSRCDIR} ARCH=${ARCH} KERNELDIR=${KERNELDIR} MODBUILDDIR=${MODBUILDDIR} module26\""         >> ${MODBUILDDIR}/Makefile
+ 	echo "# End: "       >> ${MODBUILDDIR}/Makefile
+ 	ln -s -f ${LIBRESWANSRCDIR}/linux/net/ipsec/match*.S ${MODBUILDDIR}
  
  module26:
 -	@if [ -f ${KERNELSRC}/Rules.make ] ; then \                 echo "Warning: Building for a 2.6 kernel in what looks like a 2.4 tree"; \
 +	@if [ -f ${KERNELDIR}/Rules.make ] ; then \                 echo "Warning: Building for a 2.6 kernel in what looks like a 2.4 tree"; \
          fi ; \
-         ${MAKE}  ${MOD26BUILDDIR}/Makefile
--	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MOD26BUILDDIR} SUBDIRS=${MOD26BUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
-+	${MAKE} -C ${KERNELDIR} ${KERNELBUILDMFLAGS} BUILDDIR=${MOD26BUILDDIR} SUBDIRS=${MOD26BUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
+         ${MAKE}  ${MODBUILDDIR}/Makefile
+-	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MODBUILDDIR} SUBDIRS=${MODBUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
++	${MAKE} -C ${KERNELDIR} ${KERNELBUILDMFLAGS} BUILDDIR=${MODBUILDDIR} SUBDIRS=${MODBUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
  	@echo 
  	@echo '========================================================='
  	@echo 

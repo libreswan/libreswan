@@ -1,5 +1,5 @@
 /*
- * interfaces to the secrets.c library functions in liblibreswan.
+ * interfaces to the secrets.c library functions in libswan.
  * for now, just stupid wrappers!
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
@@ -72,7 +72,7 @@
 #include "fetch.h"
 #include "x509more.h"
 
-#include "oswcrypto.h"
+#include "lswcrypto.h"
 
 /* Maximum length of filename and passphrase buffer */
 #define BUF_LEN		256
@@ -93,7 +93,7 @@
 #include <secerr.h>
 #include <secport.h>
 #include <time.h>
-#include "oswconf.h"
+#include "lswconf.h"
 
 const char *pluto_shared_secrets_file = SHARED_SECRETS_FILE;
 struct secret *pluto_secrets = NULL;
@@ -104,7 +104,7 @@ void load_preshared_secrets(int whackfd)
 
     pass.prompt = whack_log;
     pass.fd = whackfd;
-    osw_load_preshared_secrets(&pluto_secrets
+    lsw_load_preshared_secrets(&pluto_secrets
 #ifdef SINGLE_CONF_DIR
 			       , FALSE /* to much log noise in a shared directory mode */
 #else
@@ -116,7 +116,7 @@ void load_preshared_secrets(int whackfd)
 
 void free_preshared_secrets(void)
 {
-    osw_free_preshared_secrets(&pluto_secrets);
+    lsw_free_preshared_secrets(&pluto_secrets);
 }
 
 static int print_secrets(struct secret *secret
@@ -138,7 +138,7 @@ static int print_secrets(struct secret *secret
 	return 1;
     }
 
-    ids = osw_get_idlist(secret);
+    ids = lsw_get_idlist(secret);
     strcpy(idb1,"%any");
     strcpy(idb2,"");
 
@@ -148,7 +148,7 @@ static int print_secrets(struct secret *secret
 	if(ids->next->next) more="more";
     }
 
-    whack_log(RC_COMMENT, "    %d: %s %s %s%s", osw_get_secretlineno(secret),
+    whack_log(RC_COMMENT, "    %d: %s %s %s%s", lsw_get_secretlineno(secret),
 	      kind, 
 	      idb1, idb2, more);
 
@@ -160,7 +160,7 @@ static int print_secrets(struct secret *secret
 void list_psks(void)
 {
     whack_log(RC_COMMENT, "List of Pre-shared secrets (from %s)", pluto_shared_secrets_file);
-    osw_foreach_secret(pluto_secrets, print_secrets, NULL);
+    lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
 }
 
 /*
@@ -196,17 +196,17 @@ int sign_hash_nss(const struct RSA_private_key *k
 	return 0;
     }
 
-	if( PK11_Authenticate(slot, PR_FALSE,osw_return_nss_password_file_info()) == SECSuccess ) {
+	if( PK11_Authenticate(slot, PR_FALSE,lsw_return_nss_password_file_info()) == SECSuccess ) {
 	DBG(DBG_CRYPT, DBG_log("NSS: Authentication to NSS successful\n"));	
 	} 
 	else {
 	DBG(DBG_CRYPT, DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password\n"));
 	}
 
-    privateKey = PK11_FindKeyByKeyID(slot, &ckaId, osw_return_nss_password_file_info());
+    privateKey = PK11_FindKeyByKeyID(slot, &ckaId, lsw_return_nss_password_file_info());
     if(privateKey==NULL) {
 	if(k->pub.nssCert != NULL) {
-	   privateKey = PK11_FindKeyByAnyCert(k->pub.nssCert,  osw_return_nss_password_file_info()); 
+	   privateKey = PK11_FindKeyByAnyCert(k->pub.nssCert,  lsw_return_nss_password_file_info()); 
 	   DBG(DBG_CRYPT, DBG_log("Can't find the private key from the NSS CKA_ID\n"));
 	}
     }
@@ -302,7 +302,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k
     data.data = alloc_bytes(data.len, "NSS decrypted signature");
     data.type = siBuffer;
 
-    if(PK11_VerifyRecover(publicKey, &signature, &data, osw_return_nss_password_file_info()) == SECSuccess ) {
+    if(PK11_VerifyRecover(publicKey, &signature, &data, lsw_return_nss_password_file_info()) == SECSuccess ) {
 	DBG(DBG_CRYPT,DBG_dump("NSS RSA verify: decrypted sig: ", data.data, data.len));
     }
     else {
@@ -581,7 +581,7 @@ RSA_check_signature_gen(struct state *st
  * his_id = &c->spd.that.id
  */
 static struct secret *
-osw_get_secret(const struct connection *c
+lsw_get_secret(const struct connection *c
 	       , const struct id *my_id
 	       , const struct id *his_id
 	       , enum PrivateKeyKind kind, bool asym)
@@ -610,7 +610,7 @@ osw_get_secret(const struct connection *c
 	struct pubkey *my_public_key = allocate_RSA_public_key(c->spd.this.cert);
 	passert(my_public_key != NULL);
 
-	best = osw_find_secret_by_public_key(pluto_secrets
+	best = lsw_find_secret_by_public_key(pluto_secrets
 					     , my_public_key, kind);
 
 	free_public_key(my_public_key);
@@ -658,7 +658,7 @@ osw_get_secret(const struct connection *c
 		, idme, idhim2
 		, enum_name(&ppk_names, kind)));
 
-    best = osw_find_secret_by_id(pluto_secrets
+    best = lsw_find_secret_by_id(pluto_secrets
 				 , kind
 				 , my_id, his_id, asym);
 
@@ -669,7 +669,7 @@ osw_get_secret(const struct connection *c
  * find the struct secret associated with an XAUTH username.
  */
 struct secret *
-osw_get_xauthsecret(const struct connection *c UNUSED
+lsw_get_xauthsecret(const struct connection *c UNUSED
 		    , char *xauthname)
 {
     struct secret *best = NULL;
@@ -684,7 +684,7 @@ osw_get_xauthsecret(const struct connection *c UNUSED
     xa_id.name.ptr = (unsigned char *)xauthname;
     xa_id.name.len = strlen(xauthname);
 
-    best = osw_find_secret_by_id(pluto_secrets
+    best = lsw_find_secret_by_id(pluto_secrets
 				 , PPK_XAUTH
 				 , &xa_id, NULL, TRUE);
 
@@ -696,7 +696,7 @@ osw_get_xauthsecret(const struct connection *c UNUSED
 bool
 has_private_rawkey(struct pubkey *pk)
 {
-    return osw_has_private_rawkey(pluto_secrets, pk);
+    return lsw_has_private_rawkey(pluto_secrets, pk);
 }
 
 /* find the appropriate preshared key (see get_secret).
@@ -706,13 +706,13 @@ has_private_rawkey(struct pubkey *pk)
 const chunk_t *
 get_preshared_secret(const struct connection *c)
 {
-    struct secret *s = osw_get_secret(c
+    struct secret *s = lsw_get_secret(c
 					    , &c->spd.this.id
 					    , &c->spd.that.id
 					    , PPK_PSK, FALSE);
     const struct private_key_stuff *pks = NULL;
     
-    if(s != NULL) pks = osw_get_pks(s);
+    if(s != NULL) pks = lsw_get_pks(s);
 
 #ifdef DEBUG
     DBG(DBG_PRIVATE,
@@ -738,7 +738,7 @@ has_private_key(cert_t cert)
     pubkey = allocate_RSA_public_key(cert);
     if(pubkey == NULL) return FALSE;
 
-    has_key = osw_has_private_rawkey(pluto_secrets, pubkey);
+    has_key = lsw_has_private_rawkey(pluto_secrets, pubkey);
 
     free_public_key(pubkey);
     return has_key;
@@ -750,12 +750,12 @@ has_private_key(cert_t cert)
 const struct RSA_private_key *
 get_RSA_private_key(const struct connection *c)
 {
-    struct secret *s = osw_get_secret(c
+    struct secret *s = lsw_get_secret(c
 					, &c->spd.this.id, &c->spd.that.id
 					, PPK_RSA, TRUE);
     const struct private_key_stuff *pks = NULL;
     
-    if(s != NULL) pks = osw_get_pks(s);
+    if(s != NULL) pks = lsw_get_pks(s);
 
 #ifdef DEBUG
     DBG(DBG_PRIVATE,
@@ -774,7 +774,7 @@ get_RSA_private_key(const struct connection *c)
 const struct RSA_private_key*
 get_x509_private_key(x509cert_t *cert)
 {
-    return osw_get_x509_private_key(pluto_secrets, cert);
+    return lsw_get_x509_private_key(pluto_secrets, cert);
 }
 
 /* public key machinery

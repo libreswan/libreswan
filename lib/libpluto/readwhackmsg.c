@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "constants.h"
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "whack.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 void readwhackmsg(char *infile)
 {

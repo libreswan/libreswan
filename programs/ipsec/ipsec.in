@@ -50,7 +50,7 @@ fixversion() {
                 if test -f /proc/net/pfkey
                 then
 			stack=" (netkey)"
-                        kv="`uname -r`"
+                        kv=$version
                 else
 			if test -f /mach_kernel
 			then
@@ -65,50 +65,69 @@ fixversion() {
 	then
 	version="U$version/K$kv"
 	fi
-	version="$version$stack"
+	version="$version$stack on `uname -r`"
 }
+
+if [ `id -u` -ne 0 ]
+then
+    echo "permission denied (must be superuser)" |
+    exit 4
+fi
 
 case "$1" in
 '')
-	echo "Usage: ipsec command argument ..."
-	echo "Use --help for list of commands, or see ipsec(8) manual page"
-	echo "or the Libreswan documentation for names of the common ones."
-	echo "Most have their own manual pages, e.g. ipsec_auto(8)."
+	echo "Usage: ipsec <command> <argument ...>"
+	echo "Use --help for a list of commands, or see the ipsec(8) manual page"
+	echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
 	echo "See <http://www.libreswan.org> for more general info."
+	fixversion
+	echo "Linux Libreswan $version"
 	exit 0
 	;;
---help)
-	echo "Usage: ipsec command argument ..."
-	echo "where command is one of:"
+status|--status)
+	ipsec auto --status
+	;;
+help|--help)
+	echo "Usage: ipsec <command> <argument ...>"
+	echo "where <command> is one of:\n"
+	if test -x /bin/printf -o -x /usr/bin/printf
+	then
+		DOCOLS="1"
+	else
+		DOCOLS=""
+	fi
 	for f in `ls $IPSEC_LIBDIR $IPSEC_EXECDIR | egrep -v -i "$DONTMENTION"`
 	do
 		if test -x $IPSEC_LIBDIR/$f || test -x $IPSEC_EXECDIR/$f
 		then
-			echo "	$f"
+			if test -z "$DOCOLS"
+			then
+				# we can only produce a simply list, which scrolls beyond 24 lines
+				echo "	$f"
+			elif test -z "$GOTTWO"
+			then
+				# first of two entries
+				GOTTWO=$f
+			else
+				# second of two entries, we can print
+				printf "   %-10s   %15s\n" $GOTTWO $f
+				GOTTWO=""
+			fi
+	
 		fi
 	done
 	echo
-	echo "Most of these have their own manual pages, e.g. ipsec_auto(8)."
-	echo "See also the ipsec(8) manual page."
+	echo "See also: ipsec <command> --help"
+	echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
+	echo "See <http://www.libreswan.org> for more general info."
+	fixversion
+	echo "Linux Libreswan $version"
 	exit 0
 	;;
 version|--version)
 	fixversion
 	echo "Linux Libreswan $version"
-	if [ -f $IPSEC_LIBDIR/distro.txt ]
-	then
-	    cat $IPSEC_LIBDIR/distro.txt
-	fi
 	exit 0
-	;;
---versioncode)
-	fixversion
-	echo "$version"
-	exit 0
-	;;
---copyright)
-	set _copyright
-	# and fall through, invoking "ipsec _copyright"
 	;;
 --directory)
 	echo "$IPSEC_DIR"

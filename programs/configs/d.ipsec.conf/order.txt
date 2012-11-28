@@ -70,13 +70,16 @@ d.ipsec.conf/myid.xml
 d.ipsec.conf/protostack.xml
 d.ipsec.conf/interfaces.xml
 d.ipsec.conf/listen.xml
+d.ipsec.conf/ikeport.xml
 d.ipsec.conf/nat_traversal.xml
 d.ipsec.conf/disable_port_floating.xml
 d.ipsec.conf/force_keepalive.xml
+d.ipsec.conf/nat_ikeport.xml
 d.ipsec.conf/keep_alive.xml
 d.ipsec.conf/virtual_private.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml
+d.ipsec.conf/plutofork.xml
 d.ipsec.conf/crlcheckinterval.xml
 d.ipsec.conf/strictcrlpolicy.xml
 d.ipsec.conf/forwardcontrol.xml
@@ -89,6 +92,8 @@ d.ipsec.conf/plutorestartoncrash.xml
 d.ipsec.conf/plutostderrlog.xml
 d.ipsec.conf/plutostderrlogtime.xml
 d.ipsec.conf/dumpdir.xml
+d.ipsec.conf/perpeerlog.xml
+d.ipsec.conf/perpeerlogdir.xml
 d.ipsec.conf/fragicmp.xml
 d.ipsec.conf/hidetos.xml
 d.ipsec.conf/overridemtu.xml

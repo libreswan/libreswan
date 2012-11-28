@@ -39,7 +39,7 @@
 #include "sysdep.h"
 #include "socketwrapper.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "rnd.h"
@@ -288,17 +288,24 @@ find_raw_ifaces4(void)
 	/* build a NUL-terminated copy of the rname field */
 	memcpy(ri.name, buf[j].ifr_name, IFNAMSIZ);
 	ri.name[IFNAMSIZ] = '\0';
+	DBG(DBG_CONTROLMORE, DBG_log("Inspecting interface %s ", ri.name));
 
 	/* ignore if our interface names were specified, and this isn't one */
 	if (pluto_ifn_roof != 0)
 	{
 	    int i;
+	    DBG(DBG_CONTROLMORE, DBG_log("interfaces= specified, applying filter"));
 
 	    for (i = 0; i != pluto_ifn_roof; i++)
-		if (streq(ri.name, pluto_ifn[i]))
+		if (streq(ri.name, pluto_ifn[i])) {
+		    DBG(DBG_CONTROLMORE, DBG_log("interface name '%s' found in interfaces= line", ri.name));
 		    break;
-	    if (i == pluto_ifn_roof)
+		}
+
+	    if (i == pluto_ifn_roof) {
+		DBG(DBG_CONTROLMORE, DBG_log("interface name '%s' not present in interfaces= line - skipped", ri.name));
 		continue;	/* not found -- skip */
+		}
 	}
 
 	/* Find out stuff about this interface.  See netdevice(7). */

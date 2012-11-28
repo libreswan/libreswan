@@ -114,25 +114,25 @@ struct skey_rsacalc {
 const chunk_t *
 get_preshared_secret(const struct connection *c)
 {
-    osw_abort();
+    lsw_abort();
     return NULL;
 }
 
 void exit_log(const char *msg, ...)
 {
-    osw_abort();
+    lsw_abort();
 }
 
 struct state *
 state_with_serialno(so_serial_t sn)
 {
-    osw_abort();
+    lsw_abort();
     return NULL;
 }
 
 void whack_log(int rc, const char *msg, ...)
 {
-    osw_abort();
+    lsw_abort();
 }
 
 main(int argc, char *argv[])

@@ -1,9 +1,9 @@
 Source: libreswan
 Section: net
 Priority: optional
-Maintainer: Simon Deziel <simon@xelerance.com>
+Maintainer: Paul Wouters <paul@libreswan.org>
 Standards-Version: 3.8.4
-Vcs-Git: http://git.libreswan.org/cgi-bin/gitweb.cgi?p=libreswan.public/.git;a=summary
+Vcs-Git: http://git.libreswan.org/libreswan.git/.git;a=summary
 Build-Depends: debhelper
 Homepage: http://www.libreswan.org/
 

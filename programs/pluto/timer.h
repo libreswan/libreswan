@@ -14,7 +14,7 @@
 
 #ifndef _TIMER_H
 #define _TIMER_H
-#include "oswtime.h"
+#include "lswtime.h"
 
 struct state;	/* forward declaration */
 

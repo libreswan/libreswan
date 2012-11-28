@@ -18,7 +18,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "id.h"
 #include "defs.h"
 #include "packet.h"

@@ -80,7 +80,7 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
 %if %{buildklips}
 FS=$(pwd)
 for flavor in %flavors_to_build; do
-    %{__make} -C $FS MOD26BUILDDIR=$FS/BUILD.%{_target_cpu}.$flavor \
+    %{__make} -C $FS MODBUILDDIR=$FS/BUILD.%{_target_cpu}.$flavor \
         LIBRESWANSRCDIR=$FS \
         KERNELDIR=%{kernel_source $flavor} \
         ARCH=%{_arch} \

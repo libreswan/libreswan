@@ -1,6 +1,6 @@
 KLIPSD=${LIBRESWANSRCDIR}/linux/include
 KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
-MANSRCDIR=${LIBRESWANSRCDIR}/lib/liblibreswan
+MANSRCDIR=${LIBRESWANSRCDIR}/lib/libswan
 
 LEX=flex
 ifeq ($(USE_YACC),true)

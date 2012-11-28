@@ -36,7 +36,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "cookie.h"
@@ -963,7 +963,7 @@ void complete_v2_state_transition(struct msg_digest **mdp
 	break;
 	
     case STF_INTERNAL_ERROR:
-	osw_abort();
+	lsw_abort();
 	break;
 
     case STF_TOOMUCHCRYPTO:

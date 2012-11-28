@@ -35,8 +35,8 @@
 #include <prmem.h>
 #include <pk11priv.h>
 #include <secport.h>
-#include "oswconf.h"
-#include "oswlog.h"
+#include "lswconf.h"
+#include "lswlog.h"
 
 /* HMAC package
  * rfc2104.txt specifies how HMAC works.
@@ -69,7 +69,7 @@ hmac_init(struct hmac_ctx *ctx,
 
     if(klen > h->hash_block_size) 
     {
-	tkey1 = PK11_Derive_osw(symkey, nss_key_derivation_mech(h)
+	tkey1 = PK11_Derive_lsw(symkey, nss_key_derivation_mech(h)
 				, NULL, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE, 0);
     }
     else
@@ -77,15 +77,15 @@ hmac_init(struct hmac_ctx *ctx,
 	tkey1 = symkey; 
     }
 
-    PK11SymKey *tkey2 = pk11_derive_wrapper_osw(tkey1, CKM_CONCATENATE_BASE_AND_DATA
+    PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(tkey1, CKM_CONCATENATE_BASE_AND_DATA
 				, hmac_pad,CKM_XOR_BASE_AND_DATA, CKA_DERIVE, h->hash_block_size);
 
     PR_ASSERT(tkey2!=NULL);
-    ctx->ikey = pk11_derive_wrapper_osw(tkey2, CKM_XOR_BASE_AND_DATA
+    ctx->ikey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA
 					, hmac_ipad,nss_hash_mech(h), CKA_DIGEST, 0);
 
     PR_ASSERT(ctx->ikey !=NULL);
-    ctx->okey = pk11_derive_wrapper_osw(tkey2, CKM_XOR_BASE_AND_DATA
+    ctx->okey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA
 					, hmac_opad,nss_hash_mech(h), CKA_DIGEST, 0);
 
     PR_ASSERT(ctx->okey !=NULL);
@@ -189,7 +189,7 @@ static CK_MECHANISM_TYPE nss_hash_mech(const struct hash_desc *hasher)
     return mechanism;
 }
 
-PK11SymKey *pk11_derive_wrapper_osw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
+PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
                                            , chunk_t data, CK_MECHANISM_TYPE target
                                            , CK_ATTRIBUTE_TYPE operation, int keySize)
 {
@@ -204,7 +204,7 @@ PK11SymKey *pk11_derive_wrapper_osw(PK11SymKey *base, CK_MECHANISM_TYPE mechanis
     return PK11_Derive(base, mechanism, &param, target, operation, keySize);
 }
 
-PK11SymKey * PK11_Derive_osw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
+PK11SymKey * PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
 				    , SECItem *param, CK_MECHANISM_TYPE target
 				    , CK_ATTRIBUTE_TYPE  operation, int keysize)
 {
@@ -225,7 +225,7 @@ PK11SymKey * PK11_Derive_osw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
 	case CKM_SHA256_KEY_DERIVATION: oid = SEC_OID_SHA256; break;
         case CKM_SHA384_KEY_DERIVATION: oid = SEC_OID_SHA384; break;
         case CKM_SHA512_KEY_DERIVATION: oid = SEC_OID_SHA512; break;
-	default: DBG(DBG_CRYPT, DBG_log("PK11_Derive_osw: Invalid NSS mechanism ")); break; /*should not reach here*/
+	default: DBG(DBG_CRYPT, DBG_log("PK11_Derive_lsw: Invalid NSS mechanism ")); break; /*should not reach here*/
 	}
 
 	ctx = PK11_CreateDigestContext(oid);
@@ -240,7 +240,7 @@ PK11SymKey * PK11_Derive_osw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
 	dkey_chunk.ptr = dkey;
 	dkey_chunk.len = len;
 
-        PK11SymKey *tkey1 = pk11_derive_wrapper_osw(base, CKM_CONCATENATE_DATA_AND_BASE, dkey_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE, 0);
+        PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(base, CKM_CONCATENATE_DATA_AND_BASE, dkey_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE, 0);
         PR_ASSERT(tkey1!=NULL);
 
         bs=0;

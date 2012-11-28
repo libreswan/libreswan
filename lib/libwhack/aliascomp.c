@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include "sysdep.h"
 #include "constants.h"
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "whack.h"
 
 /*
@@ -29,7 +29,7 @@
  * of string. 
  *
  */
-bool osw_alias_cmp(const char *needle, const char *haystack)
+bool lsw_alias_cmp(const char *needle, const char *haystack)
 {
 	int nlen = strlen(needle);
 	const char *s = haystack;

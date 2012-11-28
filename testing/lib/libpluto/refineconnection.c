@@ -7,7 +7,7 @@
 #define USE_KEYRR 1
 
 #include "constants.h"
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "whack.h"
 #include "../../programs/pluto/rcv_whack.h"
 
@@ -42,7 +42,7 @@ main(int argc, char *argv[])
     EF_PROTECT_FREE=1;
     EF_FREE_WIPES  =1;
 
-    osw_init_rootdir("../../../baseconfigs/all");
+    lsw_init_rootdir("../../../baseconfigs/all");
 
     progname = argv[0];
     leak_detective = 1;

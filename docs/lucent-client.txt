@@ -4,7 +4,7 @@ From: Rolando J. Zappacosta
 > Interesting thing is, as explained to you privatelly, the way the PSK gets
 > handled here. Under the LVC (windows) I had to configure a PSK like:
 > <MyCompanysPSK> where the real PSK is 9 ASCII characters long. However, I
-> could find that in order to have OSW establishing phase 1 succesfully I had to
+> could find that in order to have LSW establishing phase 1 succesfully I had to
 > add the string "01234567890" as a trailer, i.e. my ipsec.secrets looks like:
 > !@#$% <MyCompanysGWipAddress> : PSK "<MyCompanysPSK>01234567890"
 > 

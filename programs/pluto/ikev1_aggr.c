@@ -235,7 +235,7 @@ aggr_inI1_outR1_common(struct msg_digest *md
 #ifdef NAT_TRAVERSAL
     if (c == NULL && md->iface->ike_float)
     {
-	c = find_host_connection(&md->iface->addr, NAT_T_IKE_FLOAT_PORT
+	c = find_host_connection(&md->iface->addr, pluto_natt_float_port
 				 , &md->sender, md->sender_port, LEMPTY);
     }
 #endif

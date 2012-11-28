@@ -46,9 +46,9 @@
 #include <time.h>
 
 #include "constants.h"
-#include "oswalloc.h"
-#include "oswlog.h"
-#include "oswconf.h"
+#include "lswalloc.h"
+#include "lswlog.h"
+#include "lswconf.h"
 
 #ifdef FIPS_CHECK
 #  include <fipscheck.h>

@@ -85,8 +85,6 @@
 
       <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
 
-      <arg choice="opt">--lwdnsq <replaceable>pathname</replaceable></arg>
-
       <arg choice="opt">--perpeerlog</arg>
 
       <arg choice="opt">--perpeerlogbase
@@ -3111,17 +3109,12 @@
           <term><option>--adns</option> <replaceable>path to
           adns</replaceable></term>
 
-          <term><option>--lwdnsq</option> <replaceable>path to
-          lwdnsq</replaceable></term>
-
           <listitem>
             <para>specifies where to find <emphasis
             remap="B">pluto</emphasis>'s helper program for asynchronous DNS
             lookup. <emphasis remap="B">pluto</emphasis> can be built to use
-            one of two helper programs: <emphasis
-            remap="B">_pluto_adns</emphasis> or <emphasis
-            remap="B">lwdnsq</emphasis>. You must use the program for which it
-            was built. By default, <emphasis remap="B">pluto</emphasis> will
+            <emphasis remap="B">_pluto_adns</emphasis>.
+            By default, <emphasis remap="B">pluto</emphasis> will
             look for the program in <emphasis remap="B">$IPSEC_DIR</emphasis>
             (if that environment variable is defined) or, failing that, in the
             same directory as <emphasis remap="B">pluto</emphasis>.</para>
@@ -3622,7 +3615,6 @@
     <filename>/var/run/pluto/pluto.ctl</filename> <!-- .br -->
     <filename>/etc/ipsec.secrets</filename> <!-- .br --> <emphasis
     remap="I">$IPSEC_LIBDIR/_pluto_adns</emphasis> <!-- .br --> <emphasis
-    remap="I">$IPSEC_EXECDIR/lwdnsq</emphasis> <!-- .br -->
     <filename>/dev/urandom</filename></para>
   </refsect1>
 

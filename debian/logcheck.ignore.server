@@ -1,10 +1,10 @@
 ipsec_setup: KLIPS debug \`none\'
-ipsec_setup: Stopping FreeS/WAN IPsec\.\.\.
+ipsec_setup: Stopping Libreswan IPsec\.\.\.
 ipsec_setup: stop ordered
 ipsec_setup: doing cleanup anywan...
-ipsec_setup: \.\.\.FreeS/WAN IPsec stopped
-ipsec_setup: Starting FreeS/WAN IPsec
-ipsec_setup: \.\.\.FreeS/WAN IPsec started
+ipsec_setup: \.\.\.Libreswan IPsec stopped
+ipsec_setup: Starting Libreswan IPsec
+ipsec_setup: \.\.\.Libreswan IPsec started
 ipsec_plutorun: .*: initiate
 pluto.*: deleting state
 pluto.*: forgetting secrets

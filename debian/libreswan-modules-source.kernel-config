@@ -1,7 +1,5 @@
 #ifndef _CONFIG_ALL_H_
 /*
- * Copyright (C) 2002              Michael Richardson <mcr@freeswan.org>
- *
  * This kernel module is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
@@ -101,8 +99,10 @@
 #ifndef CONFIG_IPSEC_ALG_CRYPTOAPI
 #define CONFIG_IPSEC_ALG_CRYPTOAPI 1
 #endif
-#ifndef CONFIG_IPSEC_ALG_NON_LIBRE
-#define CONFIG_IPSEC_ALG_NON_LIBRE 1
+
+/* disable OCF per default build */
+#ifdef CONFIG_KLIPS_OCF
+#undef CONFIG_KLIPS_OCF
 #endif
 
 #endif /* _CONFIG_ALL_H */

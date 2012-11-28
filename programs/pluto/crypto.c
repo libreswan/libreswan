@@ -40,7 +40,7 @@
 
 #include "tpm/tpm.h"
 
-#include "oswcrypto.h"
+#include "lswcrypto.h"
 
 #include "pem.h"
 
@@ -340,12 +340,12 @@ do_des(u_int8_t *buf, size_t buf_len, u_int8_t *key, size_t key_size, u_int8_t *
 {
     des_key_schedule ks;
 
-    oswcrypto.des_set_key((des_cblock *)key, ks);
+    lswcrypto.des_set_key((des_cblock *)key, ks);
 
     passert(key_size >= DES_CBC_BLOCK_SIZE);
     key_size = DES_CBC_BLOCK_SIZE;     /* truncate */
 
-    oswcrypto.des_ncbc_encrypt((des_cblock *)buf, (des_cblock *)buf, buf_len,
+    lswcrypto.des_ncbc_encrypt((des_cblock *)buf, (des_cblock *)buf, buf_len,
 			 ks, (des_cblock *)iv, enc);
 }
 #endif

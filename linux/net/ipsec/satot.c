@@ -1,6 +1,7 @@
 /*
  * convert from binary form of SA ID to text
  * Copyright (C) 2000, 2001  Henry Spencer.
+ * Copyright (C) 2012 David McCullough <david_mccullough@mcafee.com>
  * 
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -63,6 +64,7 @@ size_t dstlen;
 		showversion = 0;
 		break;
 	default:
+		strncpy(dst, "(error)", dstlen);
 		return 0;
 		break;
 	}

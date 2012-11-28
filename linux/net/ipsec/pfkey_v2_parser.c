@@ -2,6 +2,7 @@
  * @(#) RFC2367 PF_KEYv2 Key management API message parser
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs <rgb@freeswan.org>
  * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
+ * Copyright (C) 2012  David McCullough <david_mccullough@mcafee.com>
  * 
  * OCF support written by David McCullough <dmccullough@cyberguard.com>
  * Copyright (C) 2004-2005 Intel Corporation.  All Rights Reserved.
@@ -96,7 +97,7 @@ static void dump_said(ip_said *s, int line)
 	char msa[SATOT_BUF];
 	size_t msa_len;
 	
-	msa_len = satot(s, 0, msa, sizeof(msa));
+	msa_len = KLIPS_SATOT(1, s, 0, msa, sizeof(msa));
 	
 	printk("line: %d msa: %s\n", line, msa);
 }

@@ -36,7 +36,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "log.h"
@@ -86,8 +86,7 @@ bool
     logged_myid_fqdn_key_warning = FALSE,
     logged_myid_ip_key_warning   = FALSE;
 
-/* may include trailing / */
-const char *base_perpeer_logdir = PERPEERLOGDIR;
+char *base_perpeer_logdir = NULL;
 static int perpeer_count = 0;
 
 /* what to put in front of debug output */

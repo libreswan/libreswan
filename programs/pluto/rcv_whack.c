@@ -39,7 +39,7 @@
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
-#include "oswconf.h"
+#include "lswconf.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -340,7 +340,7 @@ key_add_request(const struct whack_message *msg)
  */
 void whack_process(int whackfd, struct whack_message msg)
 {
-    const struct osw_conf_options *oco = osw_init_options();
+    const struct lsw_conf_options *oco = lsw_init_options();
 
     if (msg.whack_options)
     {

@@ -46,10 +46,10 @@
 
 #include "libreswan/radij.h"
 #include "libreswan/ipsec_encap.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "pfkey_help.h"
 
-#include "osw_select.h"
+#include "lsw_select.h"
 
 #include <stdio.h>
 #include <getopt.h>
@@ -63,7 +63,7 @@ char *transport_proto_opt, *src_port_opt, *dst_port_opt;
 int action_type = 0;
 
 int pfkey_sock;
-osw_fd_set pfkey_socks;
+lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
 
 #define EMT_IFADDR	1	/* set enc if addr */

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='anyaddr3'>
+<refentryinfo><date>8 Sept 2000</date></refentryinfo>
+<refmeta>
+<refentrytitle>IPSEC_ANYADDR</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8 Sept 2000</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec anyaddr</refname>
+<refname>ipsec isanyaddr</refname>
+<refname>ipsec unspecaddr</refname>
+<refname>ipsec isunspecaddr</refname>
+<refname>ipsec loopbackaddr</refname>
+<refname>ipsec isloopbackaddr</refname>
+<refpurpose>get and test for addresses of type "any", "unspecified" and loopback get "any" address</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;libreswan.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>const char *<function>anyaddr</function></funcdef>
+    <paramdef>int <parameter>af</parameter></paramdef>
+    <paramdef>ip_address * <parameter>dst</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>int <function>isanyaddr</function></funcdef>
+    <paramdef>const ip_address * <parameter>src</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>const char *<function>unspecaddr</function></funcdef>
+    <paramdef>int <parameter>af</parameter></paramdef>
+    <paramdef>ip_address * <parameter>dst</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>int <function>isunspecaddr</function></funcdef>
+    <paramdef>const ip_address * <parameter>src</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>const char *<function>loopbackaddr</function></funcdef>
+    <paramdef>int <parameter>af</parameter></paramdef>
+    <paramdef>ip_address * <parameter>dst</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>int <function>isloopbackaddr</function></funcdef>
+    <paramdef>const ip_address * <parameter>src</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para>These functions fill in, and test for, special values of the
+<emphasis remap='I'>ip_address</emphasis>
+type.</para>
+
+<para><emphasis remap='I'>Anyaddr</emphasis>
+fills in the destination
+<emphasis remap='I'>*dst</emphasis>
+with the &ldquo;any&rdquo; address of address family
+<varname role='parameter'>af</varname>
+(normally
+<emphasis remap='B'>AF_INET</emphasis>
+or
+<emphasis remap='B'>AF_INET6</emphasis>).
+The IPv4 &ldquo;any&rdquo; address is the one embodied in the old
+<emphasis remap='B'>INADDR_ANY</emphasis>
+macro.</para>
+
+<para><emphasis remap='I'>Isanyaddr</emphasis>
+returns
+<literal>1</literal>
+if the
+<varname role='parameter'>src</varname>
+address equals the &ldquo;any&rdquo; address,
+and
+<literal>0</literal>
+otherwise.</para>
+
+<para>Similarly,
+<function>unspecaddr</function>
+supplies, and
+<function>isunspecaddr</function>
+tests for,
+the &ldquo;unspecified&rdquo; address,
+which may be the same as the &ldquo;any&rdquo; address.</para>
+
+<para>Similarly,
+<function>loopbackaddr</function>
+supplies, and
+<emphasis remap='I'>islookbackaddr</emphasis>
+tests for,
+the loopback address.</para>
+
+<para><emphasis remap='I'>Anyaddr</emphasis>,
+<function>unspecaddr</function>,
+and
+<function>loopbackaddr</function>
+return
+<emphasis remap='B'>NULL</emphasis>
+for success and
+a pointer to a string-literal error message for failure;
+see DIAGNOSTICS.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_addrtot</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_sameaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Fatal errors in the address-supplying functions are:
+unknown address family.</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written for the FreeS/WAN project by Henry Spencer.</para>
+</refsect1>
+</refentry>
+

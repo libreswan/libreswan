@@ -1,0 +1,10 @@
+libreswan (1:@IPSECBASEVERSION@) precise; urgency=low
+
+  The real changelog is in /usr/share/doc/libreswan/changelog.gz
+
+  This package is NOT an official Debian/Ubuntu package. Please do
+  not file any Debian/Ubuntu bug reports for this package but contact
+  <dev@libreswan.org> 
+
+ -- Unknown User <unknown@libreswan.org>  Sun, 25 Nov 2012 19:00:00 +0200
+

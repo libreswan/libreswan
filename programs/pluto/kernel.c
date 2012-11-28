@@ -41,7 +41,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "rnd.h"
@@ -598,7 +598,7 @@ could_route(struct connection *c)
     /* if routing would affect IKE messages, reject */
     if (kern_interface != NO_KERNEL
 #ifdef NAT_TRAVERSAL
-	&& c->spd.this.host_port != NAT_T_IKE_FLOAT_PORT
+	&& c->spd.this.host_port != pluto_natt_float_port
 #endif
 	&& c->spd.this.host_port != IKE_UDP_PORT
 	&& addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client))

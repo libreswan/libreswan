@@ -17,7 +17,7 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
-#include "oswalloc.h"
+#include "lswalloc.h"
 
 #ifdef KLIPS
 # define USED_BY_KLIPS	/* ignore */

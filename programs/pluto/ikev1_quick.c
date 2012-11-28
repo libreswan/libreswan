@@ -1722,7 +1722,7 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 	}
 
 	/* did we find a better connection? */
-	/* should we use an else here, as we did in osw 2.5.x? */
+	/* should we use an else here, as we did in lsw 2.5.x? */
 	if (p != c)
 	{
 	    /* We've got a better connection: it can support the

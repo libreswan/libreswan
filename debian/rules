@@ -37,7 +37,11 @@ build-stamp: patch
 			 MANTREE=/usr/share/man \
 			 CONFDIR=$(CURDIR)/debian \
 			 USE_LDAP=true USE_LIBCURL=true \
-			 USE_XAUTHPAM=true
+			 USE_XAUTHPAM=true \
+			 USE_FIPSCHECK=false \
+			 USE_LIBCAP_NG=false \
+			 USE_LABELED_IPSEC=false
+
 	# remove the temporary file, it will be created during install
 	rm -f $(CURDIR)/debian/ipsec.secrets
 
@@ -58,8 +62,8 @@ clean: unpatch
 
 	# Really clean (#356716)
 	# This is a hack: should be better implemented
-	rm -f lib/liblibreswan/liblibreswan.a || true
-	rm -f lib/liblibreswan/liboswlog.a || true
+	rm -f lib/libswan/libswan.a || true
+	rm -f lib/libswan/liblswlog.a || true
 	rm -rf OBJ.* || true
 
 	# just in case something went wrong
@@ -131,7 +135,6 @@ install-libreswan: build
 	chmod 700 -R $(CURDIR)/debian/libreswan/etc/ipsec.d/private/
 	# don't know why they come with +x set by default...
 	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.d/policies/*
-	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.d/examples/*
 
 	# create /var/lib/libreswan with permissions similar to ipsec.secrets
 	mkdir -p $(CURDIR)/debian/libreswan/var/lib/libreswan
@@ -201,6 +204,7 @@ install-libreswan-modules-source: patch
 	cp -r patches/kernel/2.6.35 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
 	cp -r patches/kernel/2.6.38 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
 	cp -r patches/kernel/3.0.0  "$(BUILDDIR)/modules/libreswan/patches/kernel/"
+	cp -r patches/kernel/3.2.0  "$(BUILDDIR)/modules/libreswan/patches/kernel/"
 	find "$(BUILDDIR)/modules/libreswan/lib/" -name "*.o" | xargs --no-run-if-empty rm
 	install --mode=644 debian/libreswan-modules-source.kernel-config "$(BUILDDIR)/modules/libreswan/config-all.h"
 	install --mode=755 debian/libreswan-modules-source.rules "$(BUILDDIR)/modules/libreswan/debian/rules"

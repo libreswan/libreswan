@@ -1,7 +1,7 @@
 
 See also http://www.libreswan.org/
 
-v3.0.0 (unreleased)
+v3.0 (unreleased)
 * FORK: Rename from Openswan to Libreswan (working name) [Paul]
         (for older CHANGES see docs/CHANGES.openswan)
 * FORK: Changed our VendorID prefix to "OEN" [Paul]
@@ -42,11 +42,16 @@ v3.0.0 (unreleased)
 * pluto: obsoleted plutowait= and pluto= config setup option [Paul]
 * pluto: removed manual keying remnants [Paul]
 * pluto: remove protostack=auto and --use-auto, netkey is new default [Paul]
+* pluto: Added perpeerlog=yes|no and perpeerlogdir=/var/log [Paul]
+* pluto: Added retransmits=yes|no (matches pluto --noretransmits) [Paul]
+* pluto: Added plutofork=yes|no to match pluto --nofork [Paul]
+* pluto: added ikeport= and nat_ikeport= options, and --natikeport [Paul]
 * pluto: remove old unsused USE_IPSECPOLICY code [Paul]
 * pluto: rhbz#609343: pluto crashes when removing logical interface [Avesh]
 * pluto: dont stop processing after --coredir argument [Paul]
 * pluto: perform whack --listen and addconn --autoall on startup [Paul]
 * pluto: if started with --nofork, don't care about existing pid file [Paul]
+* pluto: incorrect free in scan_proc_shunts() [Roel van Meer]
 * _plutoload: obsoleted [Kim/Paul]
 * auto: no longer pass defaultroute/defaultrouteaddr to addconn [Paul]
 * whack: fix handling --sha2_truncbug and --nm_configured options [Paul]
@@ -77,9 +82,13 @@ v3.0.0 (unreleased)
           is used [Tuomo]
 * KLIPS: Removed support for Linux < 2.4.4 [Paul]
 * KLIPS: Changed _startklips to use ip route instead of netstat [Harald]
+* KLIPS: misc. fixes, mostly satot() related [David]
+* KLIPS: 20% speed gain on transmitting packets [David]
 * MAST: Fixed _updown.mast missing incomplete if-clause [Harald]
+* SAREF: kernel patches updated to linux 3.2.0 [Simon Deziel]
 * addconn: mimic _plutoload, cleanup and fixup of functions [Paul]
 * scripts: Support /etc/sysconfig/ipsec and /etc/default/ipsec (rhbz#789917)
+* _stackmanager: new script replacing _startnetkey/_startklips [Paul]
 * barf: do not grep lastlog, wtmp, tmp (rhbz#771612) [Paul]
 * verify: ported ipsec verify from perl to python [Paul]
 * auto: fix --status output for vnet/vhost case [Ani]
@@ -92,6 +101,8 @@ v3.0.0 (unreleased)
 * OSX: Set __APPLE_USE_RFC_3542 required for udpfromto functionality [Paul]
 * DOCS: Add man page leftid= note on Cisco ID_KEY_ID Group Name [Philippe]
 * liblibreswan: Remove unused optionsfrom() temp file handling [Paul]
+* liblibreswan: Support comma's inside OID's by using ",," to mean ","
+  inside the OID (rhbz#868986) [Matt Rogers]
 * testing: Ported broken UML harness to KVM/libvirt/9p [Paul/Antony]
            (see the wiki on libreswan.org for details on how to use it)
 * packaging: Updated libreswan.spec to reflect updated options [Paul]

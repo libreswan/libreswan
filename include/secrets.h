@@ -73,9 +73,9 @@ struct private_key_stuff {
     } u;
 };
 
-extern struct private_key_stuff *osw_get_pks(struct secret *s);
-extern int osw_get_secretlineno(const struct secret *s);
-extern struct id_list *osw_get_idlist(const struct secret *s);
+extern struct private_key_stuff *lsw_get_pks(struct secret *s);
+extern int lsw_get_secretlineno(const struct secret *s);
+extern struct id_list *lsw_get_idlist(const struct secret *s);
 
 /*
  * return 1 to continue to next,
@@ -86,9 +86,9 @@ typedef int (*secret_eval)(struct secret *secret,
 			   struct private_key_stuff *pks,
 			   void *uservoid);
 			   
-extern struct secret *osw_foreach_secret(struct secret *secrets,
+extern struct secret *lsw_foreach_secret(struct secret *secrets,
 					 secret_eval func, void *uservoid);
-extern struct secret *osw_get_defaultsecret(struct secret *secrets);
+extern struct secret *lsw_get_defaultsecret(struct secret *secrets);
 
 
 /* public key machinery  */
@@ -158,15 +158,15 @@ extern void install_public_key(struct pubkey *pk, struct pubkey_list **head);
 
 extern void free_public_key(struct pubkey *pk);
 
-extern void osw_load_preshared_secrets(struct secret **psecrets
+extern void lsw_load_preshared_secrets(struct secret **psecrets
 				       , int verbose
 				       , const char *secrets_file
 				       , prompt_pass_t *pass);
-extern void osw_free_preshared_secrets(struct secret **psecrets);
+extern void lsw_free_preshared_secrets(struct secret **psecrets);
 
-extern bool osw_has_private_rawkey(struct secret *secrets, struct pubkey *pk);
+extern bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk);
 
-extern struct secret *osw_find_secret_by_id(struct secret *secrets
+extern struct secret *lsw_find_secret_by_id(struct secret *secrets
 					    , enum PrivateKeyKind kind
 					    , const struct id *my_id
 					    , const struct id *his_id
@@ -179,7 +179,7 @@ extern void unlock_certs_and_keys(const char *who);
 
 #include "x509.h"
 extern const struct RSA_private_key*
-osw_get_x509_private_key(struct secret *secrets, x509cert_t *cert);
+lsw_get_x509_private_key(struct secret *secrets, x509cert_t *cert);
 
 
 

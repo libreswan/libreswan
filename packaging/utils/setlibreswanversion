@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Copyright 2012 Paul Wouters <paul@libreswan.org>
+# Based on Openswan version
+# Called via Makefile.inc, IPSECVERSION is passed as $1, basedir as $2
+
+usage() {
+	echo "Usage: $0 <baseversion> [srctree]" >&2
+	exit 1
+}
+
+baseversion=$1
+[ -n "$baseversion" ] || usage
+
+cd "${2:-.}" || usage
+
+if test -d .git
+then
+	gitcheck="`git version 2> /dev/null`"
+	if test -z "$gitcheck"
+	then
+		echo >&2 "Error: git should be installed to determine exact Libreswan version"
+		# fallback
+		echo $baseversion
+		exit
+	fi
+	# use git to determine tree differences
+	BRANCH="`head -1 .git/HEAD  | sed \"s/^.*\///\"`"
+	CUR="`git describe --tags --dirty`"
+	echo "$CUR-$BRANCH"
+else
+	echo $baseversion
+fi

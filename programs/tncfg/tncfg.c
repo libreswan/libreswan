@@ -39,7 +39,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include "socketwrapper.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "libreswan/pfkey.h"
 #include "libreswan/pfkeyv2.h"

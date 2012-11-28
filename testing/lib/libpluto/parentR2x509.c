@@ -16,7 +16,7 @@
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include "constants.h"
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "whack.h"
 #include "../../programs/pluto/rcv_whack.h"
 
@@ -92,8 +92,8 @@ main(int argc, char *argv[])
    
     /* not sure if these works all case east.crt should be in cwd */
     pluto_shared_secrets_file = "../../../baseconfigs/east/etc/ipsec.secrets";
-    osw_init_ipsecdir("../../../baseconfigs/east/etc/ipsec.d");
-    osw_init_rootdir("../../../baseconfigs/east");
+    lsw_init_ipsecdir("../../../baseconfigs/east/etc/ipsec.d");
+    lsw_init_rootdir("../../../baseconfigs/east");
 
 
     init_crypto();

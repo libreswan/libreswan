@@ -1,0 +1,394 @@
+#!/bin/sh
+# STACK startup script
+# Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
+# Copyright (C) 2007 - 2008 Paul Wouters <paul@xelerance.com>
+# Copyright (C) 2008-2011 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008-2012 Paul Wouters <paul@libreswan.org>
+# 
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+
+test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
+
+kamepfkey=/proc/net/pfkey
+ipsecpfkey=/proc/net/ipsec/version
+action="$1"
+
+if [ -z "$action" ]
+then
+	echo "no action specified - aborted"
+	exit 1
+fi
+
+stopnetkey() {
+	if [ -f $kamepfkey ]
+	then
+		if ip xfrm state > /dev/null 2>&1 ;
+		then
+			ip xfrm state flush ;
+			ip xfrm policy flush ;
+		fi
+		if test -n "`ip xfrm state`" -o -n "`ip xfrm policy`"
+		then
+			echo "NETKEY IPsec stack could not be cleared"
+		fi
+
+		if [ -f /proc/modules ]
+		then
+			# netkey stack found, let's unload - does this cause false positive for inline built?
+			for mod in ipcomp ipcomp6 xfrm6_tunnel xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
+				xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel \
+				xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key xfrm_user
+			do
+				if [ -n "`egrep ^$mod /proc/modules`" ]
+				then
+					# echo "unloading module $mod"
+					rmmod $mod 
+				fi
+			done
+
+			if [ -f $kamepfkey -o -n "`lsmod | grep ^esp`" ]
+			then
+				echo "FAILURE to unload NETKEY esp module"
+				exit 1
+			fi
+		fi
+	fi
+}
+
+startnetkey() {
+	cryptomodules
+
+	if [ -f $ipsecpfkey ]
+	then
+		echo -n "Warning: found KLIPS/MAST stack loaded - attempting to unload..."
+		stopklips
+		if [ -f $ipsecpfkey ]
+		then
+			echo "FAILURE to unload KLIPS/MAST module"
+			exit 1
+		fi
+		echo "OK"
+	fi
+	
+	if [ -f /proc/modules ]
+	then
+		# load all NETKEY modules
+		for mod in ipcomp6 ipcomp xfrm6_tunnel xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
+			xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel \
+			xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key
+		do
+			# echo -n "$mod "
+			@MODPROBE@ $mod 2> /dev/null
+		done
+
+		# xfrm_user is the old name for xfrm4_tunnel - backwards compatibility
+		@MODPROBE@ xfrm_user 2> /dev/null
+
+	fi
+}
+
+stopklips() {
+	if [ -f $ipsecpfkey ]
+	then
+		# Bring down ipsecX and mast0 interfaces
+		ifl=`grep -v NULL /proc/net/ipsec_tncfg 2> /dev/null | sed -n -e "/^ipsec/s/ .*//p" ` ;
+		if [ -n "$ifl" ]
+		then
+			for iface in  $ifl 
+			do
+				ip link set $iface down
+				ip addr flush dev $iface
+				ipsec tncfg --detach --virtual $iface
+				ipsec tncfg --delete $iface # ipsec0 won't let itself be deleted
+			done
+			# mast0 is not listed in ipsec_tncfg
+			if [ -d /proc/sys/net/ipv4/conf/mast0 ]
+			then
+				ipsec tncfg --delete mast0
+			fi
+			test -r /proc/net/ipsec_klipsdebug && ipsec klipsdebug --none ;
+			test -d /proc/net/ipsec/eroute && ipsec eroute --clear ;
+			test -d /proc/net/ipsec/spi && ipsec spi --clear
+		fi
+
+		if [ -f /proc/modules ]
+		then
+			rmmod ipsec 2> /dev/null
+		fi
+	fi
+	if [ -f $ipsecpfkey -o -n "`lsmod | grep ^ipsec`" ]
+	then
+			echo "FAILURE to unload KLIPS/MAST module"
+			exit 1
+	fi
+
+	# Flush policy out in case of mast - NEW_IPSEC_CONN and IPSEC
+	# tables are created in _updown.mast on demand
+	iptables -t mangle -F IPSEC          >/dev/null 2>/dev/null
+	iptables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>/dev/null
+}
+
+stopmast() {
+	stopklips
+}
+
+stop() {
+	stopnetkey
+	stopklips
+}
+
+cryptomodules() {
+	# load hardware random and crypto related modules - some changed names over time
+	@MODPROBE@ hw_random 2>/dev/null
+	@MODPROBE@ hwrng 2>/dev/null
+	@MODPROBE@ virtio-rng 2>/dev/null
+	@MODPROBE@ amd-rng 2>/dev/null
+	@MODPROBE@ intel-rng 2>/dev/null
+	@MODPROBE@ geode-rng 2>/dev/null
+	# @MODPROBE@ timeriomem-rng 2>/dev/null
+
+	# load any OCF and CryptoAPI modules we might need for acceleration (OCF works for NETKEY and KLIPS/MAST)
+	# OCF cryptosoft is for kernel acceleration (ESP/AH)
+	@MODPROBE@ cryptosoft 2>/dev/null
+	# OCF cryptodev is for userland IKE acceleration - let user do this
+	# TODO: perhaps skip when on x86/x86_64 arch? It's really only useful on embedded systems
+	@MODPROBE@ cryptodev 2>/dev/null
+
+	if [ -d /sys/module/ocf ]
+	then
+		# OCF tuning - If we have enough bogomips and RAM, use bigger OCF queues
+		bogomips=`grep -i bogomips /proc/cpuinfo | head -1 | awk ' { print $3;}'| sed "s/\..*$//" `
+		ram=`head -1 /proc/meminfo | awk '{print $2;}'`
+		limit=1000
+		if [ $bogomips -gt 1000 ]
+		then
+			if [ $ram -gt 262143 ]
+			then
+				limit=10000
+				#echo "OCF limit set to $limit"
+			fi
+		fi
+		echo $limit  > /sys/module/ocf/parameters/crypto_q_max
+	        echo $limit  > /sys/module/ipsec/parameters/ipsec_irs_cache_allocated_max
+	        echo $limit  > /sys/module/ipsec/parameters/ipsec_ixs_cache_allocated_max
+	fi
+
+
+			# load the most common ciphers/algo's
+			# aes-x86_64 has higher priority in via crypto api
+	# padlock must load before aes module - though does not exist on newer kernels
+	# padlock-aes must load before padlock-sha for some reason
+	@MODPROBE@ padlock 2>/dev/null
+	@MODPROBE@ padlock-aes 2>/dev/null
+	@MODPROBE@ padlock-sha 2>/dev/null
+	# load the most common ciphers/algo's
+	# aes-x86_64 has higher priority in via crypto api
+	for crypto in aesni_intel es-x86_64 geode-aes aes aes_generic des sha512 sha256 md5 cbc \
+		    xcbc ecb twofish blowfish serpent ccm gcm ctr cts deflate cast5 cast6 lzo \
+		    sha256_generic sha512_generic camellia
+		do
+			# echo -n "$crypto "
+			@MODPROBE@ $crypto 2> /dev/null
+		done
+}
+
+startmast() {
+	startklips
+}
+
+startklips() {
+	cryptomodules
+	if [ -f $kamepfkey ]
+	then
+		echo -n "Warning: found NETKEY/XFRM stack loaded - attempting to unload..."
+		stopnetkey
+		if [ -f $kamepfkey ]
+		then
+			echo "FAILURE to unload KLIPS/MAST module"
+			exit 1
+		fi
+		echo "OK"
+	fi
+	if [ ! -f $ipsecpfkey ]
+	then
+		# KLIPS-related paths
+		bareversion=`uname -r | sed -e 's/\.nptl//' | sed -e 's/^\(2\.[0-9]\.[1-9][0-9]*-[1-9][0-9]*\(\.[0-9][0-9]*\)*\(\.x\)*\).*$/\1/'`
+		case $bareversion in
+			2.4*)
+				modulename=ipsec.o
+				;;
+			*)
+				modulename=ipsec.ko
+				;;
+		esac
+		# modprobe does not like specifying .o or .ko, but insmod needs it
+		if [ "`basename @MODPROBE@`" = "modprobe" ]
+		then
+			@MODPROBE@ ipsec
+		else
+			@MODPROBE@ $modulename
+		fi
+
+		if [ ! -f $ipsecpfkey ]
+		then
+			echo "FAILURE to load KLIPS/MAST module"
+			exit 1
+		fi
+	fi
+
+	if [ $stack = "mast" ]
+	then
+		virt="mast0" # we really just ignore the interfaces= line completely
+        	# make sure this mast device exists, if not create it
+        	if [ ! -d /sys/devices/virtual/net/$virt ]
+        	then
+                	# in mast mode we just create the virtual interface
+                	ipsec tncfg --create $virt
+			ip link set $virt up
+        	fi
+		# detach all ipsecX devices
+		ipsec tncfg --clear
+    		# remove any ipsecX interfaces, as we are using mastX
+    		# Note: currently it seems klips cannot delete ipsec0
+    		for device in `ip -oneline link show | grep ipsec | cut -d: -f2 | sort -r`;
+		do
+       			ipsec tncfg --delete $device
+    		done
+		# PAUL: Shouldn't we configure an ip for mast0, but which one?
+		#       best guess is the defaultroute one?
+		# PAUL: We tell in the man page for ipsec.conf protostack= that the user should do this
+
+	elif [ $stack = "klips" ]
+	then
+        	# in klips mode we attach it to the physical device
+		# clear tables out in case dregs have been left over
+		ipsec eroute --clear
+		ipsec spi --clear
+		# remove any mastX interfaces, as we are using ipsecX
+        	for device in `ip -oneline link show | grep mast | cut -d: -f2 | sort -r`;
+		do
+            		ipsec tncfg --delete $device
+        	done
+		# detach all ipsecX devices
+		ipsec tncfg --clear
+
+		interfaces=`ipsec addconn --configsetup --noexport |grep interfaces |sed 's/ interfaces=//'| sed "s/'//g" | sed "s/,/ /g"`
+		for iface in $interfaces
+		do
+			if [ "$iface" = "%none" ]
+			then
+				echo "ignoring obsolete interface %none"
+				continue
+			elif [ "$iface" = "%defaultroute" ]
+			then
+				virt="ipsec0"
+				phys=`ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/"`
+			else
+				virt="`expr $iface : '\([^=]*\)=.*'`"
+				phys="`expr $iface : '[^=]*=\(.*\)'`"
+			fi
+			# ipsecX might not exist yet
+        		if [ ! -d /sys/devices/virtual/net/$virt ]
+			then
+				ipsec tncfg --create $virt
+			fi
+			ipsec tncfg --attach --virtual $virt --physical $phys
+			# configure all the IPv4/IPv6 addresses (including point-to-point)
+			ip addr show dev $phys \
+			| awk '$1 == "inet" || ($1 == "inet6" && !/ dynamic/) {
+				cmd = "ip addr add"
+				if ($1 == "inet")
+					sub(" [^ ]+:[^ ]+"," ",$0)
+				sub("/.*","",$2)
+				for (i = 2; i < NF; i++) {
+					if ($i == "brd" || $i == "peer" || $i == "secondary")
+						i++
+					else
+						cmd = cmd " " $i
+				}
+				if ($NF != phys)
+					cmd = cmd " " $NF
+				cmd = cmd " dev " virt "> /dev/null"
+				system(cmd)
+			}' phys=$phys virt=$virt
+			ip link set up dev $virt
+
+		        # Double check the mtu is not 0 - if it is set it to a saner default
+			ip link show dev $virt | grep -q 'mtu 0 '
+        		RETVAL=$?
+        		if [ "$RETVAL" -eq 0 ];
+        		then
+                		echo "Fixup of mtu on $virt to 16260"
+                		ip link set mtu 16260 dev $virt
+        		fi
+		done
+
+	elif [ $stack = "none" ]
+	then
+		echo "protostack=none selected - No IPsec SA's will be injected into the kernel"
+	fi
+}
+
+# Start the actual work
+
+if [ `id -u` -ne 0 ]
+then
+    echo "permission denied (must be superuser)" |
+    exit 4
+fi
+
+stack="`ipsec addconn --liststack`"
+
+case $stack in
+	netkey|klips|mast|none) 
+		;;
+	auto)
+		echo "protostack=auto is not longer supported, please set it to netkey, klips, mast or none"
+		exit 1
+		;;
+	*)
+		echo "unknown stack $stack" 
+		exit 1
+		;;
+esac
+
+case $action in
+	stop) 
+		# cleanup either stack, unload if module - the user might have changed protostack=
+		stop
+		;;
+	start) 
+		case $stack in
+			netkey)
+				startnetkey
+				;;
+			klips)
+				startklips
+				;;
+			mast) 
+				startmast
+				;;
+		esac
+		;;
+	restart)
+		stop
+		start
+		;;
+	*)
+		echo "unknown action $action" 
+		exit 1
+		;;
+	esac
+
+
+	
+exit 0

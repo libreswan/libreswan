@@ -205,7 +205,7 @@ ipsec_makeroute(struct sockaddr_encap *eaddr,
 						   			0, buf2, sizeof(buf2));
 					   }
 
-                       sa_len = satot(&said, 0, sa, sizeof(sa));
+                       sa_len = KLIPS_SATOT(debug_eroute, &said, 0, sa, sizeof(sa));
                        KLIPS_PRINT(debug_eroute,
                                    "klips_debug:ipsec_makeroute: "
                                    "attempting to allocate %lu bytes to insert eroute for %s->%s, SA: %s, PID:%d, skb=0p%p, ident:%s->%s\n",
@@ -355,7 +355,7 @@ ipsec_makeroute(struct sockaddr_encap *eaddr,
 					rd_mask((&(retrt->er_rjt)))->sen_ip_dst, 0,
 					buf2, sizeof(buf2));
 		}
-		sa_len = satot(&retrt->er_said, 0, sa, sizeof(sa));
+		sa_len = KLIPS_SATOT(debug_eroute, &retrt->er_said, 0, sa, sizeof(sa));
 		
 		KLIPS_PRINT(debug_eroute,
 			    "klips_debug:ipsec_makeroute: "
@@ -493,7 +493,7 @@ ipsec_rj_walker_procprint(struct radij_node *rn, void *w0)
 	  sprintf(buf3, ":%d", key->sen_proto);
 	}
 
-	sa_len = satot(&ro->er_said, 'x', sa, sizeof(sa));
+	sa_len = KLIPS_SATOT(1, &ro->er_said, 'x', sa, sizeof(sa));
 	w->len += ipsec_snprintf(w->buffer + w->len,
 				 w->length - w->len,
 				 "%-10d "

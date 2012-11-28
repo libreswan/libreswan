@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='goodmask3'>
+<refentryinfo><date>11 June 2001</date></refentryinfo>
+<refmeta>
+<refentrytitle>IPSEC_GOODMASK</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>11 June 2001</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec goodmask</refname>
+<refname>ipsec masktobits</refname>
+<refname>ipsec bitstomask</refname>
+<refpurpose>check if Internet subnet mask is valid, convert Internet subnet mask to bit count, convert bit count to Internet subnet mask</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;libreswan.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>int <function>goodmask</function></funcdef>
+    <paramdef>struct in_addr <parameter>mask</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>int <function>masktobits</function></funcdef>
+    <paramdef>struct in_addr <parameter>mask</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>struct in_addr <function>bitstomask</function></funcdef>
+    <paramdef>int <parameter>n</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para>These functions are obsolete;
+see
+<citerefentry><refentrytitle>ipsec_masktocount</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+for a partial replacement.</para>
+
+<para><emphasis remap='I'>Goodmask</emphasis>
+reports whether the subnet
+<varname role='parameter'>mask</varname>
+is a valid one,
+i.e. consists of a (possibly empty) sequence of
+<literal>1</literal>s
+followed by a (possibly empty) sequence of
+<literal>0</literal>s.
+<emphasis remap='I'>Masktobits</emphasis>
+takes a (valid) subnet mask and returns the number of
+<literal>1</literal>
+bits in it.
+<emphasis remap='I'>Bitstomask</emphasis>
+reverses this,
+returning the subnet mask corresponding to bit count
+<varname role='parameter'>n</varname>.</para>
+
+<para>All masks are in network byte order.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_atosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para><emphasis remap='I'>Masktobits</emphasis>
+returns
+<option>-1</option>
+for an invalid mask.
+<emphasis remap='I'>Bitstomask</emphasis>
+returns an all-zeros mask for a negative or out-of-range
+<varname role='parameter'>n</varname>.</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written for the FreeS/WAN project by Henry Spencer.</para>
+</refsect1>
+
+<refsect1 id='bugs'><title>BUGS</title>
+<para>The error-reporting convention of
+<function>bitstomask</function>
+is less than ideal;
+zero is sometimes a legitimate mask.</para>
+</refsect1>
+</refentry>
+

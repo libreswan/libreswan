@@ -1,7 +1,8 @@
 /*
  * @(#) RFC2367 PF_KEYv2 Key management API domain socket I/F
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs.
- * Copyright (C) 2012  Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2010-12 David McCullough <david_mccullough@mcafee.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * 
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1457,11 +1458,14 @@ pfkey_init(void)
 	proc_net_create ("pf_key_registered", 0, pfkey_registered_get_info);
 #    else
 	entry = create_proc_entry ("pf_key", 0, init_net.proc_net);
-	entry->read_proc = pfkey_get_info;
+	if (entry)
+		entry->read_proc = pfkey_get_info;
 	entry = create_proc_entry ("pf_key_supported", 0, init_net.proc_net);
-	entry->read_proc = pfkey_supported_get_info;
+	if (entry)
+		entry->read_proc = pfkey_supported_get_info;
 	entry = create_proc_entry ("pf_key_registered", 0, init_net.proc_net);
-	entry->read_proc = pfkey_registered_get_info;
+	if (entry)
+		entry->read_proc = pfkey_registered_get_info;
 #    endif
 #endif /* CONFIG_PROC_FS */
 	return error;

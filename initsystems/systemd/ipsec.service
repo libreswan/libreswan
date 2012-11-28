@@ -1,0 +1,28 @@
+[Unit]
+Description=Internet Key Exchange (IKE) Protocol Daemon for IPsec
+After=syslog.target
+After=network.target
+#After=remote-fs.target
+
+[Service]
+Type=simple
+Restart=always
+EnvironmentFile=-/etc/sysconfig/pluto
+#Environment=IPSEC_LIBDIR=/usr/libexec/ipsec 
+#Environment=IPSEC_SBINDIR=/usr/sbin 
+#Environment=IPSEC_CONFS=/etc 
+#Environment=IPSEC_EXECDIR=/usr/libexec/ipsec
+#Environment=IPSECsyslog=daemon.error 
+#PIDFile=/var/run/pluto/pluto.pid
+#
+ExecStartPre=/usr/bin/sh -c 'eval `ipsec addconn --config $IPSEC_CONFS/ipsec.conf --checkconfig`'
+ExecStartPre=/usr/bin/sh -c 'eval `ipsec _stackmanager start`'
+ExecStart=/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf --nofork $PLUTO_OPTIONS
+PostExec=/usr/local/libexec/ipsec/addconn --autoall
+ExecStop=ipsec whack --shutdown 
+PostExecStop=ipsec _stackmanager stop
+ExecReload=ipsec whack --rereadall
+
+[Install]
+WantedBy=multi-user.target
+Alias=syslog.service

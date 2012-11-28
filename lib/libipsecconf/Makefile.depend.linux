@@ -14,7 +14,7 @@ cmp.o: cmp.c ../../include/ipsecconf/keywords.h \
   ../../include/ipsecconf/confread.h \
   ../../include/ipsecconf/keywords.h \
   ../../include/ipsecconf/cmp.h
-confread.o: confread.c ../../include/oswalloc.h \
+confread.o: confread.c ../../include/lswalloc.h \
   ../../include/constants.h \
   ../../include/biglset.h \
   ../../linux/include/libreswan/passert.h \
@@ -106,9 +106,9 @@ starterwhack.o: starterwhack.c \
   ../../include/names_constant.h \
   ../../include/ipsecconf/files.h \
   ../../include/ipsecconf/starterlog.h \
-  ../../include/oswalloc.h \
+  ../../include/lswalloc.h \
   ../../include/constants.h \
-  ../../include/oswlog.h \
+  ../../include/lswlog.h \
   ../../linux/include/libreswan.h \
   ../../include/whack.h \
   ../../linux/include/libreswan/ipsec_policy.h \

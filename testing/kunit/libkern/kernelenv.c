@@ -285,7 +285,7 @@ unsigned int skb_cow(struct sk_buff *skb, unsigned int headroom)
 
 	if (delta || skb_cloned(skb)) {
 	  /* XXX not yet written */
-	  osw_abort();
+	  lsw_abort();
 	  //return pskb_expand_head(skb, (delta + 15) & ~15, 0, GFP_ATOMIC);
 	}
 	return 0;

@@ -34,9 +34,9 @@ clean::
 
 distclean:	clean
 	rm -f out.kpatch 
-	if [ -f umlsetup.sh ]; then source umlsetup.sh; if [ -d "$$POOLSPACE" ]; then rm -rf $$POOLSPACE; fi; fi
+	if [ -f kvmsetup.sh ]; then source kvmsetup.sh; if [ -d "$$POOLSPACE" ]; then rm -rf $$POOLSPACE; fi; fi
 	if [ -d OBJ.$$OSDEP.$$ARCH ]; then rm -rf OBJ.$$OSDEP.$$ARCH/; fi
-	if [ -e programs/_confread/ipsec.conf.5.xml ]; then rm -f programs/_confread/ipsec.conf.5.xml; fi
+	if [ -e programs/configs/ipsec.conf.5.xml ]; then rm -f programs/configs/ipsec.conf.5.xml; fi
 
 install_file_list:
 	@for d in $(SUBDIRS) ; \
@@ -57,23 +57,8 @@ TAGS:	$(TAGSFILES)
 .PHONY: dummy
 dummy:
 
-uml:	checkprograms
-	-chmod +x packaging/utils/*.sh 
-	-chmod +x testing/utils/make-uml.sh testing/utils/verify-uml.sh
-	./testing/utils/verify-uml.sh
-	./testing/utils/make-uml.sh `pwd`
-
-umluserland:
-	(touch ${LIBRESWANSRCDIR}/Makefile.inc && source ${LIBRESWANSRCDIR}/umlsetup.sh && cd $$POOLSPACE && $(MAKE) $$LIBRESWANHOSTS $$REGULARHOSTS ) 
-
-
 # DESTDIR is normally set in Makefile.inc
-# These recipes explicitly pass it to the second-level makes so that
-# DESTDIR can be adjusted for building for UML without changing Makefile.inc
-# See	testing/utils/functions.sh
-#	testing/utils/make-uml.sh
-#	testing/utils/uml-functions.sh
-check:	uml Makefile.ver
+check:	kvm Makefile.ver
 ifneq ($(strip(${REGRESSRESULTS})),)
 	mkdir -p ${REGRESSRESULTS}
 endif
