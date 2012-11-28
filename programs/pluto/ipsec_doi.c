@@ -594,7 +594,7 @@ decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 #ifdef NAT_TRAVERSAL
     if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_PORT_FLOATING) &&
 	(id->isaid_doi_specific_a == IPPROTO_UDP) &&
-	((id->isaid_doi_specific_b == 0) || (id->isaid_doi_specific_b == NAT_T_IKE_FLOAT_PORT))) {
+	((id->isaid_doi_specific_b == 0) || (id->isaid_doi_specific_b == pluto_natt_float_port))) {
 	    DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
 		"accepted with port_floating NAT-T",
 		id->isaid_doi_specific_a, id->isaid_doi_specific_b);

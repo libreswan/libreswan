@@ -351,7 +351,7 @@ mast_process_raw_ifaces(struct raw_iface *rifaces)
 		if (nat_traversal_support_port_floating
 		    && addrtypeof(&ifp->addr) == AF_INET)
 		{
-		    fd = create_socket(ifp, q->ip_dev->id_vname, NAT_T_IKE_FLOAT_PORT);
+		    fd = create_socket(ifp, q->ip_dev->id_vname, pluto_natt_float_port);
 		    if (fd < 0) {
 			libreswan_log("failed to create socket for NAT-T: %s"
 				     , strerror(errno));
@@ -365,8 +365,8 @@ mast_process_raw_ifaces(struct raw_iface *rifaces)
 		    id->id_count++;
 		    
 		    q->ip_addr = ifp->addr;
-		    setportof(htons(NAT_T_IKE_FLOAT_PORT), &q->ip_addr);
-		    q->port = NAT_T_IKE_FLOAT_PORT;
+		    setportof(htons(pluto_natt_float_port), &q->ip_addr);
+		    q->port = pluto_natt_float_port;
 		    q->fd = fd;
 		    q->change = IFN_ADD;
 		    q->ike_float = TRUE;

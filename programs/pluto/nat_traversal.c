@@ -959,13 +959,13 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	     || (st->st_state == STATE_AGGR_I2))
 	    && (st->hidden_variables.st_nat_traversal & NAT_T_WITH_PORT_FLOATING)
 	    && (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
-	    && (st->st_localport != NAT_T_IKE_FLOAT_PORT))
+	    && (st->st_localport != pluto_natt_float_port))
 	{
 	    DBG(DBG_NATT
-		, DBG_log("NAT-T: floating to port %d", NAT_T_IKE_FLOAT_PORT));
+		, DBG_log("NAT-T: floating to port %d", pluto_natt_float_port));
 	    
-	    st->st_localport  = NAT_T_IKE_FLOAT_PORT;
-	    st->st_remoteport = NAT_T_IKE_FLOAT_PORT;
+	    st->st_localport  = pluto_natt_float_port;
+	    st->st_remoteport = pluto_natt_float_port;
 	    
 	    /*
 	     * Also update pending connections or they will be deleted if

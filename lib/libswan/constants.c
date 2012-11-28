@@ -626,12 +626,13 @@ static const char *const enc_draft_mode_name[] = {
 	"ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS",
     };
 
+#ifdef NAT_TRAVERSAL
 static enum_names enc_rfc_mode_names =
     { ENCAPSULATION_MODE_TUNNEL, ENCAPSULATION_MODE_UDP_TRANSPORT_RFC, enc_rfc_mode_name, NULL };
 
 enum_names enc_mode_names =
     { ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS, ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS, enc_draft_mode_name, &enc_rfc_mode_names };
-
+#endif
 
 /* Auth Algorithm attribute */
 

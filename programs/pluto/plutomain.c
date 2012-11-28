@@ -155,6 +155,7 @@ usage(const char *mess)
 	    " \\\n\t"
 	    "[--interface <ifname|ifaddr>]"
 	    " [--ikeport <port-number>]"
+	    " [--natikeport <port-number>]"
 	    "[--listen <ifaddr>]"
 	    " \\\n\t"
 	    "[--ctlbase <path>]"
@@ -433,6 +434,7 @@ main(int argc, char **argv)
 	    { "interface", required_argument, NULL, 'i' },
 	    { "listen", required_argument, NULL, 'L' },
 	    { "ikeport", required_argument, NULL, 'p' },
+	    { "natikeport", required_argument, NULL, 'q' },
 	    { "ctlbase", required_argument, NULL, 'b' },
 	    { "secretsfile", required_argument, NULL, 's' },
 	    { "foodgroupsdir", required_argument, NULL, 'f' },
@@ -674,6 +676,22 @@ main(int argc, char **argv)
 	    }
 	    continue;
 
+#ifdef NAT_TRAVERSAL
+	case 'q':	/* --natikeport <portnumber> */
+	    if (optarg == NULL || !isdigit(optarg[0]))
+		usage("missing port number");
+	    {
+		char *endptr;
+		long port = strtol(optarg, &endptr, 0);
+
+		if (*endptr != '\0' || endptr == optarg
+		|| port <= 0 || port > 0x10000)
+		    usage("<port-number> must be a number between 1 and 65535");
+		pluto_natt_float_port = port;
+	    }
+	    continue;
+#endif
+
 	case 'b':	/* --ctlbase <path> */
 	    ctlbase = optarg;
 	    if (snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path)
@@ -762,6 +780,7 @@ main(int argc, char **argv)
 		use_interface(cfg->setup.strings[KSF_INTERFACES]);
 	    set_cfg_string(&pluto_listen, cfg->setup.strings[KSF_LISTEN]);
 
+	    pluto_port = cfg->setup.options[KBF_IKEPORT];
 	    /* no config option: pluto_port */ /* not true - we have 'p'  --ikeport */
 	    /* no config option: ctlbase */
 	    /* no config option: pluto_shared_secrets_file */
@@ -772,6 +791,7 @@ main(int argc, char **argv)
 	    set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]);
 	    /* no config option: pluto_adns_option */
 #ifdef NAT_TRAVERSAL
+	    pluto_natt_float_port = cfg->setup.options[KBF_NATIKEPORT];
 	    nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
 	    keep_alive = cfg->setup.options[KBF_KEEPALIVE];
 	    force_keepalive = cfg->setup.options[KBF_FORCE_KEEPALIVE];

@@ -364,9 +364,11 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"strictcrlpolicy",kv_config, kt_bool,      KBF_STRICTCRLPOLICY,NOT_ENUM},
     {"crlcheckinterval",kv_config, kt_number,	KBF_CRLCHECKINTERVAL,NOT_ENUM},
     {"force_busy",     kv_config, kt_bool,      KBF_FORCEBUSY,NOT_ENUM},
+    {"ikeport",        kv_config,kt_number,     KBF_IKEPORT, NOT_ENUM},
 #ifdef NAT_TRAVERSAL
     {"virtual_private",kv_config,kt_string,     KSF_VIRTUALPRIVATE,NOT_ENUM},
     {"nat_traversal", kv_config,kt_bool,        KBF_NATTRAVERSAL, NOT_ENUM},
+    {"nat_ikeport",   kv_config,kt_number,      KBF_NATIKEPORT, NOT_ENUM},
     {"disable_port_floating", kv_config,kt_bool,KBF_DISABLEPORTFLOATING, NOT_ENUM},
     {"keep_alive", kv_config,kt_number,    KBF_KEEPALIVE, NOT_ENUM},
     {"force_keepalive", kv_config,kt_bool,    KBF_FORCE_KEEPALIVE, NOT_ENUM},
