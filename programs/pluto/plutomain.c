@@ -781,7 +781,6 @@ main(int argc, char **argv)
 	    set_cfg_string(&pluto_listen, cfg->setup.strings[KSF_LISTEN]);
 
 	    pluto_port = cfg->setup.options[KBF_IKEPORT];
-	    /* no config option: pluto_port */ /* not true - we have 'p'  --ikeport */
 	    /* no config option: ctlbase */
 	    /* no config option: pluto_shared_secrets_file */
 	    /* no config option: lsw_init_ipsecdir() */
