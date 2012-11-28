@@ -61,6 +61,7 @@ enum keyword_numeric_config_field {
     KBF_UNIQUEIDS,
     KBF_RETRANSMITS,
     KBF_PLUTOSTDERRLOGTIME,
+    KBF_PLUTOFORK,
     KBF_PERPEERLOG,
     KBF_OVERRIDEMTU,
     KBF_CONNMTU,

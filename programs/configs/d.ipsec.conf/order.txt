@@ -77,6 +77,7 @@ d.ipsec.conf/keep_alive.xml
 d.ipsec.conf/virtual_private.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml
+d.ipsec.conf/plutofork.xml
 d.ipsec.conf/crlcheckinterval.xml
 d.ipsec.conf/strictcrlpolicy.xml
 d.ipsec.conf/forwardcontrol.xml

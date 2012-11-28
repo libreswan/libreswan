@@ -91,6 +91,7 @@ int starter_cmp_pluto (struct starter_config *c1, struct starter_config *c2)
 	VARCMP(setup.options[KBF_NOCRSEND]);
 	VARCMP(setup.options[KBF_NHELPERS]);
 	VARCMP(setup.options[KBF_PERPEERLOG]);
+	VARCMP(setup.options[KBF_PLUTOFORK]);
 	STRCMP(setup.strings[KSF_LISTEN]);
 	STRCMP(setup.strings[KSF_PERPEERDIR]);
 #ifdef NAT_TRAVERSAL

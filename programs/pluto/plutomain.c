@@ -746,8 +746,10 @@ main(int argc, char **argv)
 	    /* all previously set options. Keep this in the same order than */
 	    /* long_opts[] is. */
 	    struct starter_config *cfg = read_cfg_file(optarg);
-	    /* no config option: fork_desired */
+
 	    /* no config option: log_to_stderr_desired */
+
+	    fork_desired = cfg->setup.options[KBF_PLUTOFORK]; /* plutofork= */
 	    log_with_timestamp_desired =
 		cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 	    force_busy = cfg->setup.options[KBF_FORCEBUSY];
@@ -759,15 +761,13 @@ main(int argc, char **argv)
 		*cfg->setup.strings[KSF_INTERFACES] != 0)
 		use_interface(cfg->setup.strings[KSF_INTERFACES]);
 	    set_cfg_string(&pluto_listen, cfg->setup.strings[KSF_LISTEN]);
+
 	    /* no config option: pluto_port */ /* not true - we have 'p'  --ikeport */
 	    /* no config option: ctlbase */
 	    /* no config option: pluto_shared_secrets_file */
 	    /* no config option: lsw_init_ipsecdir() */
 	    set_cfg_string(&base_perpeer_logdir, cfg->setup.strings[KSF_DUMPDIR]); /* --perpeerlogbase */
-	    log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];
-
-	    /* no config option: log_to_perpeer */
-
+	    log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG]; /* --perpeerlog */
 	    no_retransmits = !cfg->setup.options[KBF_RETRANSMITS]; /* --noretransmits */
 	    set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]);
 	    /* no config option: pluto_adns_option */
