@@ -95,7 +95,7 @@
 #include <time.h>
 #include "lswconf.h"
 
-const char *pluto_shared_secrets_file = SHARED_SECRETS_FILE;
+char *pluto_shared_secrets_file = SHARED_SECRETS_FILE;
 struct secret *pluto_secrets = NULL;
 
 void load_preshared_secrets(int whackfd)

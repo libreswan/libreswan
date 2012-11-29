@@ -351,6 +351,8 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"plutostderrlogtime",        kv_config, kt_bool,      KBF_PLUTOSTDERRLOGTIME,NOT_ENUM},
     {"plutorestartoncrash", kv_config, kt_bool, KBF_PLUTORESTARTONCRASH,NOT_ENUM},
     {"dumpdir",        kv_config, kt_dirname,   KSF_DUMPDIR,NOT_ENUM},
+    {"ipsecdir",        kv_config, kt_dirname,   KSF_IPSECDIR,NOT_ENUM},
+    {"secretsfile",        kv_config, kt_dirname,   KSF_SECRETSFILE,NOT_ENUM},
     {"plutofork",           kv_config, kt_bool,      KBF_PLUTOFORK,NOT_ENUM},
     {"perpeerlog",        kv_config, kt_bool,   KBF_PERPEERLOG,NOT_ENUM},
     {"perpeerlogdir",        kv_config, kt_dirname,   KSF_PERPEERDIR,NOT_ENUM},

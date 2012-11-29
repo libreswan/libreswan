@@ -36,6 +36,8 @@ enum keyword_string_config_field {
     KSF_VIRTUALPRIVATE,
     KSF_SYSLOG,
     KSF_DUMPDIR,
+    KSF_IPSECDIR,
+    KSF_SECRETSFILE,
     KSF_PERPEERDIR,
     KSF_MYID,
     KSF_PLUTOSTDERRLOG,

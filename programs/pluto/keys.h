@@ -61,7 +61,7 @@ extern void transfer_to_public_keys(struct gw_info *gateways_from_dns
 
 extern const chunk_t *get_preshared_secret(const struct connection *c);
 
-extern const char *pluto_shared_secrets_file;
+extern char *pluto_shared_secrets_file;
 extern void load_preshared_secrets(int whackfd);
 extern void free_preshared_secrets(void);
 

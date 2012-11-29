@@ -776,18 +776,22 @@ main(int argc, char **argv)
 	    crl_check_interval = cfg->setup.options[KBF_CRLCHECKINTERVAL];
 	    uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
 	    if (cfg->setup.strings[KSF_INTERFACES] != NULL &&
-		*cfg->setup.strings[KSF_INTERFACES] != 0)
-		use_interface(cfg->setup.strings[KSF_INTERFACES]);
+		*cfg->setup.strings[KSF_INTERFACES] != 0) {
+			use_interface(cfg->setup.strings[KSF_INTERFACES]);
+	    }
 	    set_cfg_string(&pluto_listen, cfg->setup.strings[KSF_LISTEN]);
 
-	    pluto_port = cfg->setup.options[KBF_IKEPORT];
+	    pluto_port = cfg->setup.options[KBF_IKEPORT]; /* --ikeport */
 	    /* no config option: ctlbase */
-	    /* no config option: pluto_shared_secrets_file */
-	    /* no config option: lsw_init_ipsecdir() */
-	    set_cfg_string(&base_perpeer_logdir, cfg->setup.strings[KSF_DUMPDIR]); /* --perpeerlogbase */
+	    set_cfg_string(&pluto_shared_secrets_file, cfg->setup.strings[KSF_SECRETSFILE]); /* --secrets */
+	    if(cfg->setup.strings[KSF_IPSECDIR] != NULL &&
+		*cfg->setup.strings[KSF_IPSECDIR] != 0) {
+			lsw_init_ipsecdir(cfg->setup.strings[KSF_IPSECDIR]); /* --ipsecdir */
+	    }
+	    set_cfg_string(&base_perpeer_logdir, cfg->setup.strings[KSF_PERPEERDIR]); /* --perpeerlogbase */
 	    log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG]; /* --perpeerlog */
 	    no_retransmits = !cfg->setup.options[KBF_RETRANSMITS]; /* --noretransmits */
-	    set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]);
+	    set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
 	    /* no config option: pluto_adns_option */
 #ifdef NAT_TRAVERSAL
 	    pluto_natt_float_port = cfg->setup.options[KBF_NATIKEPORT];
@@ -1058,6 +1062,9 @@ main(int argc, char **argv)
 
     if(coredir) {
 	libreswan_log("core dump dir: %s", coredir);
+    }
+    if(pluto_shared_secrets_file) {
+	libreswan_log("secrets file: %s", pluto_shared_secrets_file);
     }
 
 #ifdef LEAK_DETECTIVE
