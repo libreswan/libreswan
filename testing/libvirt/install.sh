@@ -9,8 +9,9 @@ echo "TESTING=$TESTING"
 echo "LIBRESWANSRC=$LIBRESWANSRC"
 echo "POOLSPACE=$POOLSPACE"
 echo "OSTYPE=$OSTYPE"
+echo "OSMEDIA=$OSMEDIA"
 
-if [ -z "$POOLSPACE" -o -z "$OSTYPE" ]
+if [ -z "$POOLSPACE" -o -z "$OSTYPE" -o -z "$OSMEDIA" ]
 then
 	echo "broken kvmsetup.sh, aborted"
 	exit 42
@@ -32,10 +33,6 @@ echo "creating VM disk images"
 if [ ! -f $POOLSPACE/swan"$OSTYPE"base.img ]
 then
 	echo "Creating base $OSTYPE image using libvirt"
-	# Looks like newer virt-install requires the disk image to exist?? How odd
-	echo -n "creating 8 gig disk image...."
-	sudo dd if=/dev/zero of=$POOLSPACE/swan"$OSTYPE"base.img bs=1024k count=8192
-	echo done
 
 	# check for hardware VM instructions
 	cpu="--hvm"
