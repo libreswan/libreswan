@@ -17,6 +17,12 @@ then
 	exit 42
 fi
 
+if [ ! -d "$POOLSPACE" ]
+then
+	mkdir -p $POOLSPACE 
+	chmod a+x $POOLSPACE
+fi
+
 # Let's start
 pushd $TESTING
 
