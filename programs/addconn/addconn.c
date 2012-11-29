@@ -490,8 +490,7 @@ main(int argc, char *argv[])
 		conn != NULL;
 		conn = conn->link.tqe_next)
 	    {
-		/* yes, let's make it case-insensitive */
-		if(strcasecmp(conn->name, connname)==0) {
+		if(strcmp(conn->name, connname)==0) {
 		    if(conn->state == STATE_ADDED) {
 			printf("\nconn %s already added\n", conn->name);
 		    } else if(conn->state == STATE_FAILED) {
