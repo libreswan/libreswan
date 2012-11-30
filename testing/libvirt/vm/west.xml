@@ -31,7 +31,7 @@ You can load this machine definition into libvirt using:
     <controller type='virtio-serial' index='0'>
     </controller>
     <filesystem type='mount' accessmode='squash'>
-      <source dir='@@TESTING@@'/>
+      <source dir='@@TESTDIR@@'/>
       <target dir='testing'/>
     </filesystem>
     <filesystem type='mount' accessmode='squash'>

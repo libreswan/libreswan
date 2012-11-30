@@ -1,17 +1,18 @@
 #!/bin/bash
 
 TESTING=`readlink -f $0  | sed "s/libvirt.*$/libvirt/"`
-LIBRESWANSRC=`readlink -f $0  | sed "s/libreswan.*$/libreswan/"`
+TESTDIR=`readlink -f $0  | sed "s/libvirt.*$//"`
+LIBRESWANSRCDIR=`readlink -f $0  | sed "s/libreswan.*$/libreswan/"`
 
-source $LIBRESWANSRC/kvmsetup.sh
+source $LIBRESWANSRCDIR/kvmsetup.sh
 
-echo "TESTING=$TESTING"
-echo "LIBRESWANSRC=$LIBRESWANSRC"
+echo "TESTDIR=$TESTDIR"
+echo "LIBRESWANSRCDIR=$LIBRESWANSRCDIR"
 echo "POOLSPACE=$POOLSPACE"
 echo "OSTYPE=$OSTYPE"
 echo "OSMEDIA=$OSMEDIA"
 
-if [ -z "$POOLSPACE" -o -z "$OSTYPE" -o -z "$OSMEDIA" ]
+if [ -z "$POOLSPACE" -o -z "$OSTYPE" -o -z "$OSMEDIA" -o -z "$LIBRESWANSRCDIR" ]
 then
 	echo "broken kvmsetup.sh, aborted"
 	exit 42
@@ -104,9 +105,11 @@ for hostname in $LIBRESWANHOSTS;
 do
 	rm -f vm/$hostname.xml.converted 
 	cp vm/$hostname.xml vm/$hostname.xml.converted
-	sed -i "s:@@TESTING@@:$TESTING:" vm/$hostname.xml.converted
+	sed -i "s:@@TESTDIR@@:$TESTDIR:" vm/$hostname.xml.converted
 	sed -i "s:@@LIBRESWANSRCDIR@@:$LIBRESWANSRCDIR:" vm/$hostname.xml.converted
 	sed -i "s:@@POOLSPACE@@:$POOLSPACE:" vm/$hostname.xml.converted
+	sed -i "s:@@USER@@:`id -u`:" vm/$hostname.xml.converted
+	sed -i "s:@@GROUP@@:`id -g qemu`:" vm/$hostname.xml.converted
         sudo virsh define vm/$hostname.xml.converted
 	rm -f vm/$hostname.xml.converted 
         sudo virsh start $hostname
