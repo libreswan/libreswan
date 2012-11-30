@@ -18,6 +18,12 @@ then
 	exit 42
 fi
 
+touch /var/lib/libvirt/qemu/lswantest || (
+	echo "The qemu group needs write permissions in /var/lib/libvirt/qemu/"
+	exit 43
+)
+rm -f /var/lib/libvirt/qemu/lswantest
+
 if [ ! -d "$POOLSPACE" ]
 then
 	mkdir -p $POOLSPACE 
