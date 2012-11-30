@@ -12,3 +12,19 @@ Building KLIPS kernel module on 2.4 (assuming your kernel source is /usr/src/lin
 Building KLIPS kernel module on 2.6
 
 	make KERNELSRC=/lib/modules/`uname -r`/build module minstall
+
+
+Build requirements:
+gmp-devel bison flex redhat-rpm-config pkgconfig gcc make xmlto
+
+for systemd: pkgconfig hostname systemd
+for nss: nss-devel >= 3.12.6-2, nspr-devel
+for pam/xauth: pam-devel
+for dnssec: unbound-devel
+for FIPS support: fipscheck-devel
+for libcap-ng support: libcap-ng-devel
+for CRL fetching support: openldap-devel curl-devel
+
+Testing runtime requirements:
+
+kvm, qemu, libvirt, virt-manager, sudo, pexpect, python-setproctitle, sudo, bridge-utils

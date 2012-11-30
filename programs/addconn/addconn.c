@@ -53,45 +53,288 @@
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/keywords.h"
 
-/* Where does this value come from? -- Paul */
-#define BUFSIZE 32768
-
-int read_netlink_socket(int sock, char *buf, int seqnum, pid_t pid)
-{
-	struct nlmsghdr *nlhdr;
-	int readlen = 0, msglen = 0;
-
-	do {
-		/* Read netlink message */
-		readlen = recv(sock, buf, BUFSIZE - msglen, 0);
-		if (readlen < 0)
-			return -1;
-
-		/* Verify it's valid */
-		nlhdr = (struct nlmsghdr *) buf;
-		if (NLMSG_OK(nlhdr, readlen) == 0 ||
-		    nlhdr->nlmsg_type == NLMSG_ERROR)
-			return -1;
-
-		/* Check if it is the last message */
-		if (nlhdr->nlmsg_type == NLMSG_DONE)
-			break;
-
-		/* Not last, move read pointer */
-		buf += readlen;
-		msglen += readlen;
-
-		/* All done if it's not a multi part */
-		if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
-			break;
-	} while (nlhdr->nlmsg_seq != seqnum || nlhdr->nlmsg_pid != pid);
-	return msglen;
-}
-
-
 char *progname;
 int verbose=0;
 int warningsarefatal = 0;
+
+/* Buffer size for netlink query (~100 bytes) and replies.
+ * If DST is specified, reply will be ~100 bytes.
+ * If DST is not specified, full route table will be returned.
+ * 16kB was too small for biggish router, so do 32kB.
+ * TODO: This should be dynamic! Fix it in netlink_read_reply().
+ */
+#define RTNL_BUFSIZE 32768
+
+/*
+ * Initialize netlink query message.
+ */
+void netlink_query_init(char *msgbuf, sa_family_t family)
+{
+    struct nlmsghdr *nlmsg;
+    struct rtmsg *rtmsg;
+
+    /* Create request for route */
+    memset(msgbuf, 0, RTNL_BUFSIZE);
+    nlmsg = (struct nlmsghdr *)msgbuf;
+
+    nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
+    nlmsg->nlmsg_flags = NLM_F_REQUEST;
+    nlmsg->nlmsg_type = RTM_GETROUTE;
+    nlmsg->nlmsg_seq = 0;
+    nlmsg->nlmsg_pid = getpid();
+
+    rtmsg = (struct rtmsg *)NLMSG_DATA(nlmsg);
+    rtmsg->rtm_family = family;
+    rtmsg->rtm_table = 0;
+    rtmsg->rtm_protocol = 0;
+    rtmsg->rtm_scope = 0;
+    rtmsg->rtm_type = 0;
+    rtmsg->rtm_src_len = 0;
+    rtmsg->rtm_dst_len = 0;
+    rtmsg->rtm_tos = 0;
+}
+
+/*
+ * Add RTA_SRC or RTA_DST attribute to netlink query message.
+ */
+void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
+{
+    struct nlmsghdr *nlmsg;
+    struct rtmsg *rtmsg;
+    struct rtattr *rtattr;
+    int len, rtlen;
+    void *p;
+
+    nlmsg = (struct nlmsghdr *)msgbuf;
+    rtmsg = (struct rtmsg *)NLMSG_DATA(nlmsg);
+
+    /* Find first empty attribute slot */
+    rtlen = RTM_PAYLOAD(nlmsg);
+    rtattr = (struct rtattr *)RTM_RTA(rtmsg);
+    while (RTA_OK(rtattr, rtlen))
+	rtattr = RTA_NEXT(rtattr, rtlen);
+
+    /* Add attribute */
+    if (rtmsg->rtm_family == AF_INET) {
+	len = 4;
+	p = (void*)&addr->u.v4.sin_addr.s_addr;
+    } else {
+	len = 16;
+	p = (void*)addr->u.v6.sin6_addr.s6_addr;
+    }
+    rtattr->rta_type = rta_type;
+    rtattr->rta_len = sizeof(struct rtattr) + len; /* bytes */
+    memmove(RTA_DATA(rtattr), p, len);
+    if (rta_type == RTA_SRC)
+	rtmsg->rtm_src_len = len * 8; /* bits */
+    else
+	rtmsg->rtm_dst_len = len * 8;
+    nlmsg->nlmsg_len += rtattr->rta_len;
+}
+
+int netlink_read_reply(int sock, char *buf, int seqnum, pid_t pid)
+{
+    struct nlmsghdr *nlhdr;
+    int readlen = 0, msglen = 0;
+
+    /* TODO: use dynamic buf */
+    do {
+	/* Read netlink message */
+	readlen = recv(sock, buf, RTNL_BUFSIZE - msglen, 0);
+	if (readlen < 0)
+	    return -1;
+
+	/* Verify it's valid */
+	nlhdr = (struct nlmsghdr *) buf;
+	if (NLMSG_OK(nlhdr, readlen) == 0 ||
+	    nlhdr->nlmsg_type == NLMSG_ERROR)
+	    return -1;
+
+	/* Check if it is the last message */
+	if (nlhdr->nlmsg_type == NLMSG_DONE)
+	    break;
+
+	/* Not last, move read pointer */
+	buf += readlen;
+	msglen += readlen;
+
+	/* All done if it's not a multi part */
+	if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
+	    break;
+    } while (nlhdr->nlmsg_seq != seqnum || nlhdr->nlmsg_pid != pid);
+    return msglen;
+}
+
+/*
+ * Send netlink query message and read reply.
+ */
+int netlink_query(char *msgbuf)
+{
+    struct nlmsghdr *nlmsg;
+    int sock;
+
+    /* Create socket */
+    if ((sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE)) < 0) {
+	int e = errno;
+	printf("create socket: (%d: %s)", e, strerror(e));
+	return -1;
+    }
+
+    /* Send request */
+    nlmsg = (struct nlmsghdr *)msgbuf;
+    if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0) {
+	int e = errno;
+	printf("write socket: (%d: %s)", e, strerror(e));
+	return -1;
+    }
+
+    /* Read response */
+    int len = netlink_read_reply(sock, msgbuf, 1, getpid());
+    if (len < 0) {
+	int e = errno;
+	printf("read socket: (%d: %s)", e, strerror(e));
+	return -1;
+    }
+    close(sock);
+    return len;
+}
+
+/*
+ * See if left->addr or left->next is %defaultroute and change it to IP.
+ */
+int resolve_defaultroute_one(struct starter_end *left,
+			     struct starter_end *right)
+{
+    /* TODO: this will probably not work with Point-to-Point links */
+
+    /* "left="         == left->addrtype + left->addr
+     * "leftnexthop="  == left->nexttype + left->nexthop
+     */
+
+    /* What kind of result we want to parse? */
+    int parse_src = (left->addrtype == KH_DEFAULTROUTE);
+    int parse_gateway = (left->nexttype == KH_DEFAULTROUTE);
+    if (parse_src == 0 && parse_gateway == 0)
+	return 0;
+
+    /* Fill netlink request */
+    char msgbuf[RTNL_BUFSIZE];
+    int has_dst = 0;
+    netlink_query_init(msgbuf, left->addr_family);
+    if (left->nexttype == KH_IPADDR) { /* My nexthop is specified */
+	netlink_query_add(msgbuf, RTA_DST, &left->nexthop);
+	has_dst = 1;
+    } else if (right->addrtype == KH_IPADDR) { /* Peer IP is specified */
+	netlink_query_add(msgbuf, RTA_DST, &right->addr);
+	has_dst = 1;
+    }
+    if (has_dst && left->addrtype == KH_IPADDR) /* SRC works only with DST */
+	netlink_query_add(msgbuf, RTA_SRC, &left->addr);
+
+    /* If we have for example left=%defaultroute + right=%any, the netlink
+     * reply will be full routing table. We just want default gateway for the
+     * first run.
+     */
+    if (has_dst == 0) {
+	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+	nlmsg->nlmsg_flags |= NLM_F_DUMP;
+	parse_src = 0;
+    }
+    if (verbose)
+	printf("\nparse_src = %d, parse_gateway = %d, has_dst = %d\n",
+	       parse_src, parse_gateway, has_dst);
+
+    /* Send netlink get_route request */
+    int len = netlink_query(msgbuf);
+    if (len < 0)
+	return -1;
+
+    /* Parse reply */
+    struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+    for (; NLMSG_OK(nlmsg, len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
+	struct rtmsg *rtmsg;
+	struct rtattr *rtattr;
+	int rtlen;
+	char r_interface[IF_NAMESIZE];
+	char r_source[ADDRTOT_BUF];
+	char r_gateway[ADDRTOT_BUF];
+	char r_destination[ADDRTOT_BUF];
+
+	/* Check for IPv4 / IPv6 */
+	rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
+	if (rtmsg->rtm_family != AF_INET &&
+	    rtmsg->rtm_family != AF_INET6)
+	    continue;
+
+	/* Parse one route entry */
+	*r_interface = *r_source = *r_gateway = *r_destination = 0;
+	rtattr = (struct rtattr *) RTM_RTA(rtmsg);
+	rtlen = RTM_PAYLOAD(nlmsg);
+	for (; RTA_OK(rtattr, rtlen); rtattr = RTA_NEXT(rtattr, rtlen)) {
+	    switch (rtattr->rta_type) {
+	    case RTA_OIF:
+		if_indextoname(*(int *)RTA_DATA(rtattr), r_interface);
+		break;
+
+	    case RTA_PREFSRC:
+		inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
+			  r_source, sizeof(r_source));
+		break;
+
+	    case RTA_GATEWAY:
+		inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
+			  r_gateway, sizeof(r_gateway));
+		break;
+
+	    case RTA_DST:
+		inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
+			  r_destination, sizeof(r_destination));
+		break;
+	    }
+	}
+	if (verbose)
+	    printf("dst %s via %s dev %s src %s\n",
+		   r_destination, r_gateway, r_interface, r_source);
+
+	err_t err;
+	if (parse_src && *r_source != 0) {
+	    err = tnatoaddr(r_source, 0, rtmsg->rtm_family, &left->addr);
+	    if (err == NULL) {
+		left->addrtype = KH_IPADDR;
+		parse_src = 0;
+		if (verbose)
+		    printf("set addr: %s\n", r_source);
+	    } else if (verbose)
+		printf("unknown source results from kernel: %s\n", err);
+	}
+	if (parse_gateway && *r_gateway != 0 && (has_dst || *r_source == 0)) {
+	    err = tnatoaddr(r_gateway, 0, rtmsg->rtm_family, &left->nexthop);
+	    if (err == NULL) {
+		left->nexttype = KH_IPADDR;
+		parse_gateway = 0; /* Use first if multiple */
+		if (verbose)
+		    printf("set nexthop: %s\n", r_gateway);
+	    } else if (verbose)
+		printf("unknown gateway results from kernel: %s\n", err);
+	}
+    }
+
+    /* If we parsed and found default_gateway, we must do the request again
+     * to find out the source IP for that gateway.
+     */
+    return has_dst == 0 && parse_gateway == 0;
+}
+
+/*
+ * See if conn's left or right is %defaultroute and resolve it.
+ */
+void resolve_defaultroute(struct starter_conn *conn)
+{
+    if (resolve_defaultroute_one(&conn->left, &conn->right) == 1)
+	resolve_defaultroute_one(&conn->left, &conn->right);
+    if (resolve_defaultroute_one(&conn->right, &conn->left) == 1)
+	resolve_defaultroute_one(&conn->right, &conn->left);
+}
 
 static const char *usage_string = ""
     "Usage: addconn [--config file] [--rootdir dir] [--ctlbase socketfile] \n"
@@ -159,13 +402,6 @@ main(int argc, char *argv[])
     struct starter_conn *conn = NULL;
     char *ctlbase = NULL;
     bool resolvip = FALSE;
-
-	struct nlmsghdr *nlmsg;
-	struct rtmsg *rtmsg;
-	struct rtattr *rtattr;
-
-	char msgbuf[BUFSIZE];
-	int sock, len, msgseq = 0;
 
 #if 0
     /* efence settings */
@@ -321,124 +557,6 @@ main(int argc, char *argv[])
 	exit(0);
     }
 
-    /* No longer rely on user or scripts for defaultroute sourceip and
-     * nexthop ip Ask the kernel via netlink, and store defaultroute in
-     * cfg->dr and defaultnexthop in cfg->dnh which are a struct ip_address */
- 
-	/* Create socket */
-	if ((sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE)) < 0) {
-	        int e = errno;
-		printf("create socket: (%d: %s)", e, strerror(e));
-	}
-
-	/* Create request for route */
-	memset(msgbuf, 0, BUFSIZE);
-	nlmsg = (struct nlmsghdr *)msgbuf;
-
-	nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
-	nlmsg->nlmsg_flags = NLM_F_REQUEST;
-	nlmsg->nlmsg_type = RTM_GETROUTE;
-	nlmsg->nlmsg_seq = msgseq++;
-	nlmsg->nlmsg_pid = getpid();
-
-	rtmsg = (struct rtmsg *)NLMSG_DATA(nlmsg);
-	rtmsg->rtm_family = 0;
-	rtmsg->rtm_table = 0;
-        rtmsg->rtm_protocol = 0;
-        rtmsg->rtm_scope = 0;
-        rtmsg->rtm_type = 0;
-        rtmsg->rtm_src_len = 0;
-        rtmsg->rtm_dst_len = 0;
-        rtmsg->rtm_tos = 0;
-
-	/* Get 0.0.0.0 */
-	rtmsg->rtm_family = AF_INET;
-	rtmsg->rtm_dst_len = 32; /* bits */
-	rtattr = (struct rtattr *)RTM_RTA(rtmsg);
-	rtattr->rta_len = sizeof(struct rtattr) + 4; /* bytes */
-	rtattr->rta_type = RTA_DST;
-	((unsigned char*)RTA_DATA(rtattr))[0] = 8;
-	((unsigned char*)RTA_DATA(rtattr))[1] = 8;
-	((unsigned char*)RTA_DATA(rtattr))[2] = 8;
-	((unsigned char*)RTA_DATA(rtattr))[3] = 8;
-	nlmsg->nlmsg_len += rtattr->rta_len;
-
-	/* Send request */
-	if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0)
-		perror("write socket: ");
-
-	/* Read response */
-	len = read_netlink_socket(sock, msgbuf, msgseq, getpid());
-	if (len < 0) {
-		printf("read fail\n");
-		return -1;
-	}
-	
-	/* Parse response */
-	for (; NLMSG_OK(nlmsg, len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
-		struct rtmsg *rtmsg;
-		struct rtattr *rtattr;
-		int rtlen;
-		char tmpbuf[IF_NAMESIZE + 128];
-
-		/* Check for IPv4 / IPv6 */
-		rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
-		if (rtmsg->rtm_family != AF_INET &&
-		     rtmsg->rtm_family != AF_INET6)
-			continue;
-
-		if (verbose) printf("\n");
-		rtattr = (struct rtattr *) RTM_RTA(rtmsg);
-		rtlen = RTM_PAYLOAD(nlmsg);
-		for (; RTA_OK(rtattr, rtlen); rtattr = RTA_NEXT(rtattr, rtlen))
-			switch (rtattr->rta_type) {
-			case RTA_OIF:
-				if_indextoname(*(int *)RTA_DATA(rtattr),
-					       tmpbuf);
-				if(verbose) printf("interface %s\n", tmpbuf);
-				break;
-			case RTA_GATEWAY:
-				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
-					  tmpbuf, sizeof(tmpbuf));
-				if (verbose) printf("gateway %s\n", tmpbuf);
-				if (tnatoaddr(tmpbuf, strlen(tmpbuf), rtmsg->rtm_family, &cfg->dnh) !=  NULL) {
-					if(verbose) printf("unknown gateway results from kernel\n");
-				}
-				break;
-			case RTA_PREFSRC:
-				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
-					  tmpbuf, sizeof(tmpbuf));
-				if (verbose) printf("source %s\n", tmpbuf);
-				if (tnatoaddr(tmpbuf, strlen(tmpbuf), rtmsg->rtm_family, &cfg->dr) !=  NULL) {
-					if(verbose) printf("unknown defaultsource results from kernel\n");
-				}
-				break;
-			case RTA_DST:
-				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
-					  tmpbuf, sizeof(tmpbuf));
-				if(verbose) printf("destination %s\n", tmpbuf);
-				break;
-			}
-	}
-
-	close(sock);
-
-	if(verbose) {
-	   char b[ADDRTOT_BUF];
-	   addrtot(&cfg->dr, 0, b, sizeof(b));
-	   printf("default route source is: %s\n", b);
-	   addrtot(&cfg->dnh, 0, b, sizeof(b));
-	   printf("default route nexthop is: %s\n", b);
-	}
-
-
-
-
-
-
-
-
-
     if(autoall)
     {
 	if(verbose) {
@@ -458,6 +576,7 @@ main(int argc, char *argv[])
 	    if (conn->desired_state == STARTUP_ADD
 		|| conn->desired_state == STARTUP_ROUTE) {
 		if(verbose) printf(" %s", conn->name);
+		resolve_defaultroute(conn);
 		starter_whack_add_conn(cfg, conn);
 	    }
 	}
@@ -468,6 +587,7 @@ main(int argc, char *argv[])
 	{
 	    if (conn->desired_state == STARTUP_START) {
 		if(verbose) printf(" %s", conn->name);
+		resolve_defaultroute(conn);
 		starter_whack_add_conn(cfg, conn);
 	    }
 	}
@@ -490,13 +610,13 @@ main(int argc, char *argv[])
 		conn != NULL;
 		conn = conn->link.tqe_next)
 	    {
-		/* yes, let's make it case-insensitive */
-		if(strcasecmp(conn->name, connname)==0) {
+		if(strcmp(conn->name, connname)==0) {
 		    if(conn->state == STATE_ADDED) {
 			printf("\nconn %s already added\n", conn->name);
 		    } else if(conn->state == STATE_FAILED) {
 			printf("\nconn %s did not load properly\n", conn->name);
 		    } else {
+			resolve_defaultroute(conn);
 			exit_status = starter_whack_add_conn(cfg, conn);
 			conn->state = STATE_ADDED;
 		    }
@@ -520,6 +640,7 @@ main(int argc, char *argv[])
 			} else if(conn->state == STATE_FAILED) {
 			    printf("\nalias: %s conn %s did not load properly\n", connname, conn->name);
 			} else {
+			    resolve_defaultroute(conn);
 			    exit_status = starter_whack_add_conn(cfg, conn);
 			    conn->state = STATE_ADDED;
 			}
@@ -565,7 +686,7 @@ main(int argc, char *argv[])
 		printf("%s ", conn->name);
 	    }
 	}
-      } 
+      }
        if(listroute) {
 	if(verbose) {
 	    printf("listing all conns marked as auto=route and auto=start\n");
@@ -595,7 +716,7 @@ main(int argc, char *argv[])
 		printf("%s ", conn->name);
 	    }
 	}
-      } 
+      }
 
        if(listignore) {
 	if(verbose) {
@@ -611,8 +732,8 @@ main(int argc, char *argv[])
 	    }
 	}
        printf("\n");
-       } 
-      } 
+       }
+      }
 
     if(liststack) {
         struct keyword_def *kd;
