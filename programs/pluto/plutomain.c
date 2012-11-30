@@ -1044,7 +1044,7 @@ main(int argc, char **argv)
 #endif
 	if(Pluto_IsFIPS()) {
 		libreswan_log("Pluto is running in FIPS mode");
-	} else
+	} else {
 		libreswan_log("Pluto is NOT running in FIPS mode");
 	}
 
