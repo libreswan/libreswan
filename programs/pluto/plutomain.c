@@ -979,7 +979,7 @@ main(int argc, char **argv)
 	    loglog(RC_LOG_SERIOUS, "NSS initialization failed (err %d)\n", PR_GetError());
         exit_pluto(10);
 	} else {
-	    loglog(RC_LOG_SERIOUS, "NSS Initialized");
+	    libreswan_log("NSS Initialized");
 	    PK11_SetPasswordFunc(getNSSPassword);
 
 #ifdef FIPS_CHECK
