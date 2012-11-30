@@ -1020,7 +1020,7 @@ main(int argc, char **argv)
 					};
 
        if (Pluto_IsFIPS() && !FIPSCHECK_verify_files(package_files)) {
-             loglog(RC_LOG_SERIOUS, "FIPS integrity verification test failed");
+             loglog(RC_LOG_SERIOUS, "FATAL: FIPS integrity verification test failed");
              exit_pluto(10);
         }
 #endif
