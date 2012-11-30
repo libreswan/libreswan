@@ -14,7 +14,7 @@ fi
 
 if [ ! -f $LIBRESWANSRCDIR/Makefile.inc ]
 then
-	echo Umlsetup not found at LIBRESWANSRCDIR=$LIBRESWANSRCDIR.
+	echo Makefile.inc not found at LIBRESWANSRCDIR=$LIBRESWANSRCDIR.
 	echo Is LIBRESWANSRCDIR set correctly'?'
 	exit 5
 fi
