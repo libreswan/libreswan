@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refmeta>
+<refentrytitle>IPSEC_RANGETOSUBNET</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>8 Sept 2000</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec rangetosubnet</refname>
+<refpurpose>convert address range to subnet</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;libreswan.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>const char *<function>rangetosubnet</function></funcdef>
+    <paramdef>const ip_address * <parameter>start</parameter></paramdef>
+    <paramdef>const ip_address * <parameter>stop</parameter></paramdef>
+    <paramdef>ip_subnet * <parameter>dst</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Rangetosubnet</emphasis>
+accepts two IP addresses which define an address range,
+from
+<varname role='parameter'>start</varname>
+to
+<varname role='parameter'>stop</varname>
+inclusive,
+and converts this to a subnet if possible.
+The addresses must both be IPv4 or both be IPv6,
+and the address family of the resulting subnet is the same.</para>
+
+<para><emphasis remap='I'>Rangetosubnet</emphasis>
+returns NULL for success and
+a pointer to a string-literal error message for failure;
+see DIAGNOSTICS.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ipsec_initsubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_ttosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Fatal errors in
+<function>rangetosubnet</function>
+are:
+mixed address families;
+unknown address family;
+<varname role='parameter'>start</varname>
+and
+<varname role='parameter'>stop</varname>
+do not define a subnet.</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written for the FreeS/WAN project by Henry Spencer.</para>
+</refsect1>
+
+<refsect1 id='bugs'><title>BUGS</title>
+<para>The restriction of error reports to literal strings
+(so that callers don't need to worry about freeing them or copying them)
+does limit the precision of error reporting.</para>
+
+<para>The error-reporting convention lends itself
+to slightly obscure code,
+because many readers will not think of NULL as signifying success.
+A good way to make it clearer is to write something like:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+<emphasis remap='B'>const char *error;</emphasis>
+
+<emphasis remap='B'>error = rangetosubnet( /* ... */ );</emphasis>
+<emphasis remap='B'>if (error != NULL) {</emphasis>
+<emphasis remap='B'>        /* something went wrong */</emphasis>
+</literallayout> <!-- .fi -->
+</refsect1>
+</refentry>
+

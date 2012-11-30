@@ -42,9 +42,9 @@
 #include <libreswan.h>
 #include "sysdep.h"
 #include "constants.h"
-#include "oswalloc.h"
-#include "oswconf.h"
-#include "oswlog.h"
+#include "lswalloc.h"
+#include "lswconf.h"
+#include "lswlog.h"
 #include "whack.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
@@ -324,7 +324,7 @@ main(int argc, char *argv[])
     /* No longer rely on user or scripts for defaultroute sourceip and
      * nexthop ip Ask the kernel via netlink, and store defaultroute in
      * cfg->dr and defaultnexthop in cfg->dnh which are a struct ip_address */
- 
+
 	/* Create socket */
 	if ((sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE)) < 0) {
 	        int e = errno;
@@ -373,7 +373,7 @@ main(int argc, char *argv[])
 		printf("read fail\n");
 		return -1;
 	}
-	
+
 	/* Parse response */
 	for (; NLMSG_OK(nlmsg, len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
 		struct rtmsg *rtmsg;
@@ -490,8 +490,7 @@ main(int argc, char *argv[])
 		conn != NULL;
 		conn = conn->link.tqe_next)
 	    {
-		/* yes, let's make it case-insensitive */
-		if(strcasecmp(conn->name, connname)==0) {
+		if(strcmp(conn->name, connname)==0) {
 		    if(conn->state == STATE_ADDED) {
 			printf("\nconn %s already added\n", conn->name);
 		    } else if(conn->state == STATE_FAILED) {
@@ -512,7 +511,7 @@ main(int argc, char *argv[])
 		    conn = conn->link.tqe_next)
 		{
 		    if(conn->strings_set[KSF_CONNALIAS]
-		       && osw_alias_cmp(connname
+		       && lsw_alias_cmp(connname
 					, conn->strings[KSF_CONNALIAS])) {
 
 			if(conn->state == STATE_ADDED) {
@@ -565,7 +564,7 @@ main(int argc, char *argv[])
 		printf("%s ", conn->name);
 	    }
 	}
-      } 
+      }
        if(listroute) {
 	if(verbose) {
 	    printf("listing all conns marked as auto=route and auto=start\n");
@@ -595,7 +594,7 @@ main(int argc, char *argv[])
 		printf("%s ", conn->name);
 	    }
 	}
-      } 
+      }
 
        if(listignore) {
 	if(verbose) {
@@ -611,8 +610,8 @@ main(int argc, char *argv[])
 	    }
 	}
        printf("\n");
-       } 
-      } 
+       }
+      }
 
     if(liststack) {
         struct keyword_def *kd;

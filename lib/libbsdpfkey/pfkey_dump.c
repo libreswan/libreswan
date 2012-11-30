@@ -50,7 +50,7 @@
 #include <time.h>
 #include <netdb.h>
 
-#include "oswlog.h"
+#include "lswlog.h"
 #include "ipsec_strerror.h"
 #include "libbsdkame/libpfkey.h"
 

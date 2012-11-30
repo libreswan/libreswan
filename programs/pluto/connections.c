@@ -36,8 +36,8 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswalloc.h"
-#include "oswtime.h"
+#include "lswalloc.h"
+#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "pgp.h"
@@ -360,7 +360,7 @@ int foreach_connection_by_alias(const char *alias
     {
 	pnext = p->ac_next;
 	
-	if (osw_alias_cmp(alias, p->connalias)) {
+	if (lsw_alias_cmp(alias, p->connalias)) {
 	    count += (*f)(p, arg);
 	}
     }
@@ -3202,7 +3202,7 @@ connection_compare(const struct connection *ca
 
     /* DBG_log("comparing %s to %s", ca->name, cb->name);  */
 
-    ret = strcasecmp(ca->name, cb->name);
+    ret = strcmp(ca->name, cb->name);
     if (ret != 0)
 	return ret;
 

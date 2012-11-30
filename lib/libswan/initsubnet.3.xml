@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='initsubnet3'>
+<refentryinfo><date>12 March 2002</date></refentryinfo>
+<refmeta>
+<refentrytitle>IPSEC_INITSUBNET</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>12 March 2002</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec initsubnet</refname>
+<refname>ipsec addrtosubnet</refname>
+<refname>ipsec subnettypeof</refname>
+<refname>ipsec masktocount</refname>
+<refname>ipsec networkof</refname>
+<refname>ipsec maskof</refname>
+<refpurpose>initialize an ip_subnet, initialize a singleton ip_subnet, get address type of an ip_subnet, convert subnet mask to bit count, get base address of an ip_subnet, get subnet mask of an ip_subnet</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;libreswan.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>const char *<function>initsubnet</function></funcdef>
+    <paramdef>const ip_address * <parameter>addr</parameter></paramdef>
+    <paramdef>int <parameter>maskbits</parameter></paramdef>
+    <paramdef>int <parameter>clash</parameter></paramdef>
+    <paramdef>ip_subnet * <parameter>dst</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>const char *<function>addrtosubnet</function></funcdef>
+    <paramdef>const ip_address * <parameter>addr</parameter></paramdef>
+    <paramdef>ip_subnet * <parameter>dst</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>subnettypeof</function></funcdef>
+    <paramdef>const ip_subnet * <parameter>src</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>int <function>masktocount</function></funcdef>
+    <paramdef>const ip_address * <parameter>src</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>networkof</function></funcdef>
+    <paramdef>const ip_subnet * <parameter>src</parameter></paramdef>
+    <paramdef>ip_address * <parameter>dst</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>maskof</function></funcdef>
+    <paramdef>const ip_subnet * <parameter>src</parameter></paramdef>
+    <paramdef>ip_address * <parameter>dst</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para>The
+<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
+library uses an internal type
+<emphasis remap='I'>ip_subnet</emphasis>
+to contain a description of an IP subnet
+(base address plus mask).
+These functions provide basic tools for creating and examining this type.</para>
+
+<para><emphasis remap='I'>Initsubnet</emphasis>
+initializes a variable
+<emphasis remap='I'>*dst</emphasis>
+of type
+<emphasis remap='I'>ip_subnet</emphasis>
+from a base address and
+a count of mask bits.
+The
+<varname role='parameter'>clash</varname>
+parameter specifies what to do if the base address includes
+<literal>1</literal>
+bits outside the prefix specified by the mask
+(that is, in the &ldquo;host number&rdquo; part of the address):</para>
+  <blockquote remap='RS'>
+  <variablelist remap='IP'>
+    <varlistentry>
+    <term>'0'</term>
+    <listitem>
+<para>zero out host-number bits</para>
+    </listitem>
+    </varlistentry>
+    <varlistentry>
+    <term>'x'</term>
+    <listitem>
+<para>non-zero host-number bits are an error</para>
+    </listitem>
+    </varlistentry>
+  </variablelist>
+  </blockquote> <!-- remap='RE' -->
+
+<para><emphasis remap='I'>Initsubnet</emphasis>
+returns
+<emphasis remap='B'>NULL</emphasis>
+for success and
+a pointer to a string-literal error message for failure;
+see DIAGNOSTICS.</para>
+
+<para><emphasis remap='I'>Addrtosubnet</emphasis>
+initializes an
+<emphasis remap='I'>ip_subnet</emphasis>
+variable
+<emphasis remap='I'>*dst</emphasis>
+to a &ldquo;singleton subnet&rdquo; containing the single address
+<emphasis remap='I'>*addr</emphasis>.
+It returns
+<emphasis remap='B'>NULL</emphasis>
+for success and
+a pointer to a string-literal error message for failure.</para>
+
+<para><emphasis remap='I'>Subnettypeof</emphasis>
+returns the address type of a subnet,
+normally
+<emphasis remap='B'>AF_INET</emphasis>
+or
+<emphasis remap='B'>AF_INET6</emphasis>.
+(The
+<emphasis remap='B'>&lt;libreswan.h&gt;</emphasis>
+header file arranges to include the necessary headers for these
+names to be known.)</para>
+
+<para><emphasis remap='I'>Masktocount</emphasis>
+converts a subnet mask, expressed as an address, to a bit count
+suitable for use with
+<function>initsubnet</function>.
+It returns
+<option>-1</option>
+for error; see DIAGNOSTICS.</para>
+
+<para><emphasis remap='I'>Networkof</emphasis>
+fills in
+<emphasis remap='I'>*dst</emphasis>
+with the base address of subnet
+<varname role='parameter'>src</varname>.</para>
+
+<para><emphasis remap='I'>Maskof</emphasis>
+fills in
+<emphasis remap='I'>*dst</emphasis>
+with the subnet mask of subnet
+<varname role='parameter'>src</varname>,
+expressed as an address.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>inet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_ttosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_rangetosubnet</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Fatal errors in
+<function>initsubnet</function>
+are:
+unknown address family;
+unknown
+<varname role='parameter'>clash</varname>
+value;
+impossible mask bit count;
+non-zero host-number bits and
+<varname role='parameter'>clash</varname>
+is
+<emphasis remap='B'>'x'</emphasis>.
+Fatal errors in
+<function>addrtosubnet</function>
+are:
+unknown address family.
+Fatal errors in
+<function>masktocount</function>
+are:
+unknown address family;
+mask bits not contiguous.</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written for the FreeS/WAN project by Henry Spencer.</para>
+</refsect1>
+</refentry>
+

@@ -33,7 +33,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "cookie.h"
@@ -59,7 +59,7 @@
 #include "dpd.h"
 #include "keys.h"
 
-#include "oswcrypto.h"
+#include "lswcrypto.h"
 
 static u_char der_digestinfo[]={
     0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,

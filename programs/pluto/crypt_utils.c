@@ -36,7 +36,7 @@
 #include "defs.h"
 #include "packet.h"
 #include "demux.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "log.h"
 #include "state.h"
 #include "demux.h"

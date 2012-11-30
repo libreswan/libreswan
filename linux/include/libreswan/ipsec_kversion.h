@@ -415,10 +415,10 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/netfilter_ipv6.h>
 #ifdef NF_IP_LOCAL_OUT
-# define OSW_NF_INET_LOCAL_OUT	NF_IP_LOCAL_OUT
+# define LSW_NF_INET_LOCAL_OUT	NF_IP_LOCAL_OUT
 #endif
-#ifndef OSW_NF_INET_LOCAL_OUT
-# define OSW_NF_INET_LOCAL_OUT NF_INET_LOCAL_OUT
+#ifndef LSW_NF_INET_LOCAL_OUT
+# define LSW_NF_INET_LOCAL_OUT NF_INET_LOCAL_OUT
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,33)

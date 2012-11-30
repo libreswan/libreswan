@@ -8,7 +8,7 @@
  * Copyright (C) 2003-2007  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010  Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009-2010 David McCullough <david_mccullough@securecomputing.com>
- * Copyright (C) 2010 Henry N <henrynmail-oswan@yahoo.de>
+ * Copyright (C) 2010 Henry N <henrynmail-lswan@yahoo.de>
  * Copyright (C) 2010 Ajay.V.Sarraju
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@
 #include "sysdep.h"
 #include "socketwrapper.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "id.h"
@@ -60,7 +60,7 @@
 #include "nat_traversal.h"
 #endif
 
-#include "osw_select.h"
+#include "lsw_select.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
 
@@ -232,18 +232,18 @@ static pfkey_item *pfkey_iq_tail;	/* youngest */
 static bool
 pfkey_input_ready(void)
 {
-    osw_fd_set readfds;
+    lsw_fd_set readfds;
     int ndes;
     struct timeval tm;
 
     tm.tv_sec = 0;	/* don't wait at all */
     tm.tv_usec = 0;
 
-    OSW_FD_ZERO(&readfds);	/* we only care about pfkeyfd */
-    OSW_FD_SET(pfkeyfd, &readfds);
+    LSW_FD_ZERO(&readfds);	/* we only care about pfkeyfd */
+    LSW_FD_SET(pfkeyfd, &readfds);
 
     do {
-	ndes = osw_select(pfkeyfd + 1, &readfds, NULL, NULL, &tm);
+	ndes = lsw_select(pfkeyfd + 1, &readfds, NULL, NULL, &tm);
     } while (ndes == -1 && errno == EINTR);
 
     if (ndes < 0)
@@ -255,7 +255,7 @@ pfkey_input_ready(void)
     if (ndes == 0)
 	return FALSE;	/* nothing to read */
 
-    passert(ndes == 1 && OSW_FD_ISSET(pfkeyfd, &readfds));
+    passert(ndes == 1 && LSW_FD_ISSET(pfkeyfd, &readfds));
     return TRUE;
 }
 

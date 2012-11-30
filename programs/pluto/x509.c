@@ -38,10 +38,10 @@
 #include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
-#include "oswconf.h"
+#include "lswconf.h"
 #include "constants.h"
-#include "oswlog.h"
-#include "oswtime.h"
+#include "lswlog.h"
+#include "lswtime.h"
 
 #include "defs.h"
 #include "log.h"
@@ -430,7 +430,7 @@ load_crls(void)
     char buf[PATH_MAX];
     char *save_dir;
     int n;
-    const struct osw_conf_options *oco = osw_init_options();
+    const struct lsw_conf_options *oco = lsw_init_options();
 
     /* change directory to specified path */
     save_dir = getcwd(buf, PATH_MAX);

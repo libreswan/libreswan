@@ -141,7 +141,7 @@ ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 	/* copy the initialized keying material */
 	memcpy(&tctx, irs->ictx, irs->ictx_len);
 
-	ipo = *osw_ip4_hdr(irs);
+	ipo = *lsw_ip4_hdr(irs);
 	ipo.tos = 0;	/* mutable RFC 2402 3.3.3.1.1.1 */
 	ipo.frag_off = 0;
 	ipo.ttl = 0;
@@ -186,7 +186,7 @@ ipsec_rcv_ah_decap(struct ipsec_rcv_state *irs)
 
 	ahhlen = AH_BASIC_LEN + (ahp->ah_hl << 2);
 
-	osw_ip4_hdr(irs)->tot_len = htons(ntohs(osw_ip4_hdr(irs)->tot_len) - ahhlen);
+	lsw_ip4_hdr(irs)->tot_len = htons(ntohs(lsw_ip4_hdr(irs)->tot_len) - ahhlen);
 	irs->next_header  = ahp->ah_nh;
 
 	/*
@@ -241,12 +241,12 @@ ipsec_xmit_ah_setup(struct ipsec_xmit_state *ixs)
   ahp->ah_spi = ixs->ipsp->ips_said.spi;
   ahp->ah_rpl = htonl(++(ixs->ipsp->ips_replaywin_lastseq));
   ahp->ah_rv = 0;
-  ahp->ah_nh = osw_ip4_hdr(ixs)->protocol;
+  ahp->ah_nh = lsw_ip4_hdr(ixs)->protocol;
   ahp->ah_hl = (sizeof(struct ahhdr) >> 2) - sizeof(__u64)/sizeof(__u32);
-  osw_ip4_hdr(ixs)->protocol = IPPROTO_AH;
+  lsw_ip4_hdr(ixs)->protocol = IPPROTO_AH;
   ipsec_xmit_dmp("ahp", (char*)ahp, sizeof(*ahp));
   
-  ipo = *osw_ip4_hdr(ixs);
+  ipo = *lsw_ip4_hdr(ixs);
   ipo.tos = 0;
   ipo.frag_off = 0;
   ipo.ttl = 0;

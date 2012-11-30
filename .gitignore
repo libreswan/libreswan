@@ -4,6 +4,8 @@ OBJ.*
 *.bak
 TAGS
 UMLPOOL
+modobj
+modobj24
 modobj26
 testing/*/OUTPUT/*
 testing/*/*/OUTPUT

@@ -32,7 +32,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "cookie.h"
@@ -98,7 +98,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st
 	struct hmac_ctx id_ctx;
 	chunk_t pss_chunk;
 
-	PK11SymKey *tkey1 = pk11_derive_wrapper_osw(shared, CKM_CONCATENATE_DATA_AND_BASE, *pss, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE, 0);	
+	PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(shared, CKM_CONCATENATE_DATA_AND_BASE, *pss, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE, 0);	
 	PR_ASSERT(tkey1!=NULL);
 
 	bs=0;
@@ -150,7 +150,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st
 	pp_chunk.ptr = prf_psk;
 	pp_chunk.len = hash_len;
 
-        PK11SymKey *tkey1 = pk11_derive_wrapper_osw(shared, CKM_CONCATENATE_DATA_AND_BASE, pp_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE, 0);      
+        PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(shared, CKM_CONCATENATE_DATA_AND_BASE, pp_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE, 0);      
         PR_ASSERT(tkey1!=NULL);
 
         bs=0;

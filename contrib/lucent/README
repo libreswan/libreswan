@@ -19,7 +19,7 @@ the gateway into a IP/UDP:XXX header
 
 May be there are better ways to do it but using iptables QUEUE is the
 one we used to encapsulate/decapsulate. I thougth about adding it to
-OSW code as well as some code to make it manipulate iptables QUEUE stuff
+LSW code as well as some code to make it manipulate iptables QUEUE stuff
 but got lost on it. :-(
 
 
@@ -34,7 +34,7 @@ Subject: Re: [Libreswan Users] Connection against a Lucent FW success!!!! but ma
 
 Hi all,
 
-I could finally manage to get OSW to work against a Lucen VPN Gateway
+I could finally manage to get LSW to work against a Lucen VPN Gateway
 even through NAT. So, in case someone else needs such connection,
 compile below code and then run this:
 
@@ -43,7 +43,7 @@ compile below code and then run this:
     iptables -A OUTPUT -d IPofLucentGW -j QUEUE
     iptables -A INPUT -s IPofLucentGW -j QUEUE
 
-before launching OSW as usual.
+before launching LSW as usual.
 
 
 > I discussed this subject here:
@@ -77,7 +77,7 @@ before launching OSW as usual.
 > configure a PSK like:
 >> <MyCompanysPSK> where the real PSK is 9 ASCII
 > characters long. However, I
->> could find that in order to have OSW establishing
+>> could find that in order to have LSW establishing
 > phase 1 succesfully I had to
 >> add the string "01234567890" as a trailer,
 > i.e. my ipsec.secrets looks like:
@@ -110,7 +110,7 @@ before launching OSW as usual.
 > doesn't exchange any CFG at all...
 >> I'm wondering now if I need it indeed. The server
 > sends it to me but seems
->> like OSW only configures the local IP address based on
+>> like LSW only configures the local IP address based on
 > it. I supossed it was
 >> going to be able to configure something else, such as
 > DNS or things like that.
@@ -127,7 +127,7 @@ before launching OSW as usual.
 > the DNS and WINS servers
 >> for instance, something I'll need to do manually
 > via a script (or can it be
->> made automatically somehow by OSW?)
+>> made automatically somehow by LSW?)
 >
 > You can copy the stock _updown script and add resolv.conf
 > rewriting to it,

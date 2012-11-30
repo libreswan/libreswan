@@ -60,24 +60,24 @@
 enum ipsec_xmit_value
 ipsec_xmit_ipip_setup(struct ipsec_xmit_state *ixs)
 {
-  osw_ip4_hdr(ixs)->version  = 4;
+  lsw_ip4_hdr(ixs)->version  = 4;
 
   switch(sysctl_ipsec_tos) {
   case 0:
-    osw_ip4_hdr(ixs)->tos = ip_hdr(ixs->skb)->tos;
+    lsw_ip4_hdr(ixs)->tos = ip_hdr(ixs->skb)->tos;
     break;
   case 1:
-    osw_ip4_hdr(ixs)->tos = 0;
+    lsw_ip4_hdr(ixs)->tos = 0;
     break;
   default:
     break;
   }
-  osw_ip4_hdr(ixs)->ttl      = SYSCTL_IPSEC_DEFAULT_TTL;
-  osw_ip4_hdr(ixs)->frag_off = 0;
-  osw_ip4_hdr(ixs)->saddr    = ((struct sockaddr_in*)(ixs->ipsp->ips_addr_s))->sin_addr.s_addr;
-  osw_ip4_hdr(ixs)->daddr    = ((struct sockaddr_in*)(ixs->ipsp->ips_addr_d))->sin_addr.s_addr;
-  osw_ip4_hdr(ixs)->protocol = IPPROTO_IPIP;
-  osw_ip4_hdr(ixs)->ihl      = sizeof(struct iphdr) >> 2;
+  lsw_ip4_hdr(ixs)->ttl      = SYSCTL_IPSEC_DEFAULT_TTL;
+  lsw_ip4_hdr(ixs)->frag_off = 0;
+  lsw_ip4_hdr(ixs)->saddr    = ((struct sockaddr_in*)(ixs->ipsp->ips_addr_s))->sin_addr.s_addr;
+  lsw_ip4_hdr(ixs)->daddr    = ((struct sockaddr_in*)(ixs->ipsp->ips_addr_d))->sin_addr.s_addr;
+  lsw_ip4_hdr(ixs)->protocol = IPPROTO_IPIP;
+  lsw_ip4_hdr(ixs)->ihl      = sizeof(struct iphdr) >> 2;
   
 #ifdef NET_21
   printk("THIS CODE IS NEVER CALLED\n");

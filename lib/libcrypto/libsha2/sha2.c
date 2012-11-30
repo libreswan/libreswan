@@ -18,7 +18,7 @@
 # include <string.h>
 # include <sys/types.h>
 # include <pk11pub.h>
-# include "oswlog.h"
+# include "lswlog.h"
 #endif
 #include "sha2.h"
 

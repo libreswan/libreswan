@@ -45,10 +45,10 @@
 #endif
 
 #include "constants.h"
-#include "oswalloc.h"
-#include "oswcrypto.h"
-#include "oswlog.h"
-#include "oswconf.h"
+#include "lswalloc.h"
+#include "lswcrypto.h"
+#include "lswlog.h"
+#include "lswconf.h"
 #include "secrets.h"
 #include "mpzfuncs.h"
 
@@ -105,8 +105,8 @@ int print_key(struct secret *secret
 	      , struct private_key_stuff *pks
 	      , void *uservoid, bool disclose)
 {
-    int lineno = osw_get_secretlineno(secret);
-    struct id_list *l = osw_get_idlist(secret);
+    int lineno = lsw_get_secretlineno(secret);
+    struct id_list *l = lsw_get_idlist(secret);
     char idb[IDTOA_BUF];
     int count=1;
 
@@ -177,17 +177,17 @@ int pickbyid(struct secret *secret,
 
 struct secret *get_key_byid(struct secret *host_secrets, char *rsakeyid)
 {
-    return osw_foreach_secret(host_secrets, pickbyid, rsakeyid);
+    return lsw_foreach_secret(host_secrets, pickbyid, rsakeyid);
 }
 
 void list_keys(struct secret *host_secrets)
 {
-    (void)osw_foreach_secret(host_secrets, list_key, NULL);
+    (void)lsw_foreach_secret(host_secrets, list_key, NULL);
 }
 
 char *get_default_keyid(struct secret *host_secrets)
 {
-    struct private_key_stuff *pks = osw_get_pks(host_secrets);
+    struct private_key_stuff *pks = lsw_get_pks(host_secrets);
 
     return pks->u.RSA_private_key.pub.keyid;
 }
@@ -195,7 +195,7 @@ char *get_default_keyid(struct secret *host_secrets)
      
 void dump_keys(struct secret *host_secrets)
 {
-    (void)osw_foreach_secret(host_secrets, dump_key, NULL);
+    (void)lsw_foreach_secret(host_secrets, dump_key, NULL);
 }
 
 struct secret *pick_key(struct secret *host_secrets
@@ -211,7 +211,7 @@ struct secret *pick_key(struct secret *host_secrets
 	exit(4);
     }
 
-    s = osw_find_secret_by_id(host_secrets, PPK_RSA
+    s = lsw_find_secret_by_id(host_secrets, PPK_RSA
 			      , &id, NULL, TRUE /* asymmetric */);
     
     if(s==NULL) {
@@ -270,7 +270,7 @@ void show_dnskey(struct secret *s
     char qname[256];
     char base64[8192];
     int gateway_type = 0;
-    const struct private_key_stuff *pks = osw_get_pks(s);
+    const struct private_key_stuff *pks = lsw_get_pks(s);
     unsigned char *keyblob;
     unsigned int keybloblen = 0;
 
@@ -308,7 +308,7 @@ void show_confkey(struct secret *s
 		  , char *side)
 {
     char base64[8192];
-    const struct private_key_stuff *pks = osw_get_pks(s);
+    const struct private_key_stuff *pks = lsw_get_pks(s);
     unsigned char *keyblob;
     unsigned int keybloblen = 0;
 
@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
     char *gateway = NULL;
     int precedence = 10;
     int verbose=0;
-    const struct osw_conf_options *oco = osw_init_options();
+    const struct lsw_conf_options *oco = lsw_init_options();
     char *rsakeyid, *keyid;
     struct secret *host_secrets = NULL;
     struct secret *s;
@@ -487,8 +487,8 @@ int main(int argc, char *argv[])
    nss_initialized = PR_TRUE; 
    PK11_SetPasswordFunc(getNSSPassword); 
 
-    load_oswcrypto();
-    osw_load_preshared_secrets(&host_secrets, verbose>0?TRUE:FALSE,
+    load_lswcrypto();
+    lsw_load_preshared_secrets(&host_secrets, verbose>0?TRUE:FALSE,
 			       secrets_file, &pass);
 
     if (nss_initialized) {
@@ -521,7 +521,7 @@ int main(int argc, char *argv[])
  	 * The proper test would be for ": RSA" vs "@something :RSA"
  	 */
 	/* default key is the *LAST* key, because it is first in the file.*/
-	s=osw_get_defaultsecret(host_secrets);
+	s=lsw_get_defaultsecret(host_secrets);
 	keyid="default";
     }
 

@@ -37,8 +37,8 @@
 #include "constants.h"
 #endif
 
-#include "oswalloc.h"
-#include "oswlog.h"
+#include "lswalloc.h"
+#include "lswlog.h"
 #include "whack.h"
 #include "id.h"
 

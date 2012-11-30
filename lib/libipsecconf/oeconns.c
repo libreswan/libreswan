@@ -483,7 +483,7 @@ void add_any_oeconns(struct starter_config *cfg,
 		
 	{
 	    for(i=0, oc=implicit_conns; *oc!=NULL; oc++, i++) {
-		if(strcasecmp((*oc)->oe_cn, sconn->name)==0) {
+		if(strcmp((*oc)->oe_cn, sconn->name)==0) {
 		    starter_log(LOG_LEVEL_DEBUG, "found non-implicit conn: %s\n", sconn->name);
 		    found_conns[i]=TRUE;
 		}

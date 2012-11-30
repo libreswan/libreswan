@@ -1,6 +1,6 @@
 packetsI1.o: packetsI1.c
 rsa-v2.o: rsa-v2.c ../../../include/sysqueue.h \
-  ../../../include/oswlog.h ../../../linux/include/libreswan.h \
+  ../../../include/lswlog.h ../../../linux/include/libreswan.h \
   ../../../linux/include/libreswan/ipsec_kversion.h \
   ../../../linux/include/libreswan/ipsec_param.h \
   ../../../linux/include/libreswan/passert.h \
@@ -8,9 +8,9 @@ rsa-v2.o: rsa-v2.c ../../../include/sysqueue.h \
   ../../../linux/include/libreswan/passert.h \
   ../../../include/ietf_constants.h \
   ../../../include/pluto_constants.h \
-  ../../../include/names_constant.h ../../../include/oswconf.h \
+  ../../../include/names_constant.h ../../../include/lswconf.h \
   ../../../include/packet.h ../../../programs/pluto/defs.h \
-  ../../../include/oswalloc.h ../../../programs/pluto/connections.h \
+  ../../../include/lswalloc.h ../../../programs/pluto/connections.h \
   ../../../include/x509.h ../../../include/pgp.h \
   ../../../include/certs.h \
   ../../../linux/include/libreswan/ipsec_policy.h \

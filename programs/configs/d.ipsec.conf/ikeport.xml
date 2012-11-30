@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ikeport</emphasis></term>
+  <listitem>
+<para>The IKE port to listen on. The default value is <emphasis remap='B'>500</emphasis>.
+As IKE is an internet standard, changing this means pluto will no longer be able to
+interop with other devices, unless they have also been explicitely configured to use a
+non-standard IKE port. There might also be other subtle assumptions within the kernel
+that port 500 is used. Changing this port is strongly discouraged, and should probably
+only be done for testing or when required to circumvent VPN blocking technologies as
+employed by certain commercial companies and national governments. See also 
+<emphasis remap='B'>nat_ikeport</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>

@@ -1,6 +1,6 @@
 /*
  * mechanisms for managing keys (public, private, and preshared secrets)
- * inside of pluto. Common code is in ../../include/secrets.h and liblibreswan.
+ * inside of pluto. Common code is in ../../include/secrets.h and libswan.
  *
  * Copyright (C) 1998-2005  D. Hugh Redelmeier.
  * Copyright (C) 2003-2007  Michael Richardson <mcr@xelerance.com>
@@ -61,15 +61,15 @@ extern void transfer_to_public_keys(struct gw_info *gateways_from_dns
 
 extern const chunk_t *get_preshared_secret(const struct connection *c);
 
-extern const char *pluto_shared_secrets_file;
+extern char *pluto_shared_secrets_file;
 extern void load_preshared_secrets(int whackfd);
 extern void free_preshared_secrets(void);
 
-extern struct secret *osw_find_secret_by_public_key(struct secret *secrets
+extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets
 						    , struct pubkey *my_public_key
 						    , int kind);
 
-extern struct secret *osw_get_xauthsecret(const struct connection *c UNUSED
+extern struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED
 					  , char *xauthname);
 
 /* keys from ipsec.conf */

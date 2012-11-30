@@ -22,7 +22,7 @@ A million repetitions of "a"
 /* #define SHA1HANDSOFF * Copies data before messing with it. */
 
 #include <pk11pub.h>
-#include "oswlog.h"
+#include "lswlog.h"
 
 #define SHA1HANDSOFF
 
@@ -30,7 +30,7 @@ A million repetitions of "a"
 #include <sys/types.h>	/* for u_int*_t */
 
 #include "sha1.h"
-#include "oswendian.h" /* sets BYTE_ORDER, LITTLE_ENDIAN, and BIG_ENDIAN */
+#include "lswendian.h" /* sets BYTE_ORDER, LITTLE_ENDIAN, and BIG_ENDIAN */
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 

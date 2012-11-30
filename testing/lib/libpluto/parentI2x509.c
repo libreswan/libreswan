@@ -16,7 +16,7 @@
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include "constants.h"
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "whack.h"
 #include "../../programs/pluto/rcv_whack.h"
 
@@ -77,8 +77,8 @@ main(int argc, char *argv[])
     
     pluto_shared_secrets_file = "../../../baseconfigs/west/etc/ipsec.secrets";
     
-    osw_init_ipsecdir("../../../baseconfigs/west/etc/ipsec.d");
-    osw_init_rootdir("../../../baseconfigs/west");
+    lsw_init_ipsecdir("../../../baseconfigs/west/etc/ipsec.d");
+    lsw_init_rootdir("../../../baseconfigs/west");
     
 
     init_crypto();

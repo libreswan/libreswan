@@ -34,7 +34,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "id.h"
@@ -252,7 +252,7 @@ add_entry:
 		    if (nat_traversal_support_port_floating
 			&& addrtypeof(&ifp->addr) == AF_INET)
 		    {
-			fd = create_socket(ifp, v->name, NAT_T_IKE_FLOAT_PORT);
+			fd = create_socket(ifp, v->name, pluto_natt_float_port);
 			if (fd < 0) 
 			    break;
 			nat_traversal_espinudp_socket(fd, "IPv4"
@@ -262,8 +262,8 @@ add_entry:
 			id->id_count++;
 			
 			q->ip_addr = ifp->addr;
-			setportof(htons(NAT_T_IKE_FLOAT_PORT), &q->ip_addr);
-			q->port = NAT_T_IKE_FLOAT_PORT;
+			setportof(htons(pluto_natt_float_port), &q->ip_addr);
+			q->port = pluto_natt_float_port;
 			q->fd = fd;
 			q->next = interfaces;
 			q->change = IFN_ADD;

@@ -18,8 +18,8 @@
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
-#include "oswconf.h"
-#include "oswlog.h"
+#include "lswconf.h"
+#include "lswlog.h"
 
 #define  AES_KEY_MIN_LEN	128
 #define  AES_KEY_DEF_LEN	128

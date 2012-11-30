@@ -44,9 +44,9 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswalloc.h"
-#include "oswconf.h"
-#include "oswlog.h"
+#include "lswalloc.h"
+#include "lswconf.h"
+#include "lswlog.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterlog.h"

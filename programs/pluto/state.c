@@ -70,6 +70,9 @@
  */
 
 u_int16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
+#ifdef NAT_TRAVERSAL
+u_int16_t pluto_natt_float_port = NAT_T_IKE_FLOAT_PORT;	/* Pluto's NAT-T port */
+#endif
 
 /*
  * This file has the functions that handle the
@@ -473,15 +476,15 @@ delete_state(struct state *st)
     freeanychunk(st->st_shared);
     freeanychunk(st->st_ni);
     freeanychunk(st->st_nr);
-    free_osw_nss_symkey(st->st_skeyid);
-    free_osw_nss_symkey(st->st_skey_d);
-    free_osw_nss_symkey(st->st_skey_ai);
-    free_osw_nss_symkey(st->st_skey_ar);
-    free_osw_nss_symkey(st->st_skey_ei);
-    free_osw_nss_symkey(st->st_skey_er);
-    free_osw_nss_symkey(st->st_skey_pi);
-    free_osw_nss_symkey(st->st_skey_pr);
-    free_osw_nss_symkey(st->st_enc_key);
+    free_lsw_nss_symkey(st->st_skeyid);
+    free_lsw_nss_symkey(st->st_skey_d);
+    free_lsw_nss_symkey(st->st_skey_ai);
+    free_lsw_nss_symkey(st->st_skey_ar);
+    free_lsw_nss_symkey(st->st_skey_ei);
+    free_lsw_nss_symkey(st->st_skey_er);
+    free_lsw_nss_symkey(st->st_skey_pi);
+    free_lsw_nss_symkey(st->st_skey_pr);
+    free_lsw_nss_symkey(st->st_enc_key);
 
     if(st->st_ah.our_keymat!=NULL)
     memset(st->st_ah.our_keymat, 0, st->st_ah.keymat_len);
@@ -891,15 +894,15 @@ duplicate_state(struct state *st)
 #   define clone_chunk(ch, name) \
 	clonetochunk(nst->ch, st->ch.ptr, st->ch.len, name)
 
-    dup_osw_nss_symkey(st->st_skeyseed);
-    dup_osw_nss_symkey(st->st_skey_d);
-    dup_osw_nss_symkey(st->st_skey_ai);
-    dup_osw_nss_symkey(st->st_skey_ar);
-    dup_osw_nss_symkey(st->st_skey_ei);
-    dup_osw_nss_symkey(st->st_skey_er);
-    dup_osw_nss_symkey(st->st_skey_pi);
-    dup_osw_nss_symkey(st->st_skey_pr);
-    dup_osw_nss_symkey(st->st_enc_key);
+    dup_lsw_nss_symkey(st->st_skeyseed);
+    dup_lsw_nss_symkey(st->st_skey_d);
+    dup_lsw_nss_symkey(st->st_skey_ai);
+    dup_lsw_nss_symkey(st->st_skey_ar);
+    dup_lsw_nss_symkey(st->st_skey_ei);
+    dup_lsw_nss_symkey(st->st_skey_er);
+    dup_lsw_nss_symkey(st->st_skey_pi);
+    dup_lsw_nss_symkey(st->st_skey_pr);
+    dup_lsw_nss_symkey(st->st_enc_key);
 
     clone_chunk(st_enc_key,  "st_enc_key in duplicate_state");
 

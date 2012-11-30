@@ -150,7 +150,7 @@ mkdir -p BUILD.%{_target_cpu}
 
 cd packaging/rhel
 # rpm doesn't know we're compiling kernel code. optflags will give us -m64
-%{__make} -C $FS MOD26BUILDDIR=$FS/BUILD.%{_target_cpu} \
+%{__make} -C $FS MODBUILDDIR=$FS/BUILD.%{_target_cpu} \
     LIBRESWANSRCDIR=$FS \
     KLIPSCOMPILE="%{optflags}" \
     KERNELSRC=/lib/modules/%{kversion}/build \

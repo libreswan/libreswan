@@ -48,12 +48,12 @@
 #include "libreswan/ipsec_encap.h"
 #include "libreswan/ipsec_ah.h"
 
-#include "osw_select.h"
+#include "lsw_select.h"
 
 char *progname;
 
 int pfkey_sock;
-osw_fd_set pfkey_socks;
+lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
  
 struct said_af {

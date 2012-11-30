@@ -1,6 +1,6 @@
 #include "socket.h"
 #include "ipsec_hack.h"
-#include "osw_select.h"
+#include "lsw_select.h"
 
 int listen_s;
 int send_s;
@@ -382,7 +382,7 @@ void user_signal_handler(int signum)
 
 int main(int argc, char *argv[]) {
 	option_data options = {0};
-	osw_fd_set rfds;
+	lsw_fd_set rfds;
 	struct timeval tv;
 	int dmac_set = 0;
 	int len;
@@ -524,21 +524,21 @@ int main(int argc, char *argv[]) {
 	/*  */
 	options.state = init;
 	
-	OSW_FD_ZERO(&rfds);
-	OSW_FD_SET(listen_s,&rfds);
+	LSW_FD_ZERO(&rfds);
+	LSW_FD_SET(listen_s,&rfds);
 
 	options.start_time = time(NULL);
 	
 	options.spi_last_seen = time(NULL);
 	while(1) {
-		OSW_FD_ZERO(&rfds);
-		OSW_FD_SET(listen_s,&rfds);
+		LSW_FD_ZERO(&rfds);
+		LSW_FD_SET(listen_s,&rfds);
 		tv.tv_sec = 0;
 		tv.tv_usec = 500000;
 		len = sizeof(listen_sockaddr);		
 		res = 0;
 		
-		res = osw_select((listen_s + 1), &rfds, NULL, NULL, &tv);
+		res = lsw_select((listen_s + 1), &rfds, NULL, NULL, &tv);
 		if (res) { 
 			res = recvfrom(listen_s, buffer, BUFSIZE, 0, &listen_sockaddr, &len);
 			if (res < 0) {

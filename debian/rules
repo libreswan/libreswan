@@ -62,8 +62,8 @@ clean: unpatch
 
 	# Really clean (#356716)
 	# This is a hack: should be better implemented
-	rm -f lib/liblibreswan/liblibreswan.a || true
-	rm -f lib/liblibreswan/liboswlog.a || true
+	rm -f lib/libswan/libswan.a || true
+	rm -f lib/libswan/liblswlog.a || true
 	rm -rf OBJ.* || true
 
 	# just in case something went wrong

@@ -43,7 +43,7 @@
 #include "x509.h"
 #include "whack.h"
 #include "fetch.h"
-#include "oswtime.h"
+#include "lswtime.h"
 
 #ifdef LIBCURL
 #define LIBCURL_UNUSED 

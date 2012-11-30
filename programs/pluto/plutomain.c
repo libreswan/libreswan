@@ -48,7 +48,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswconf.h"
+#include "lswconf.h"
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
@@ -93,7 +93,7 @@
 #include "tpm/tpm.h"
 #endif
 
-#include "oswcrypto.h"
+#include "lswcrypto.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -155,6 +155,7 @@ usage(const char *mess)
 	    " \\\n\t"
 	    "[--interface <ifname|ifaddr>]"
 	    " [--ikeport <port-number>]"
+	    " [--natikeport <port-number>]"
 	    "[--listen <ifaddr>]"
 	    " \\\n\t"
 	    "[--ctlbase <path>]"
@@ -360,7 +361,7 @@ main(int argc, char **argv)
     int lockfd;
     int nhelpers = -1;
     char *coredir;
-    const struct osw_conf_options *oco;
+    const struct lsw_conf_options *oco;
 
     coredir = NULL;
 
@@ -433,6 +434,7 @@ main(int argc, char **argv)
 	    { "interface", required_argument, NULL, 'i' },
 	    { "listen", required_argument, NULL, 'L' },
 	    { "ikeport", required_argument, NULL, 'p' },
+	    { "natikeport", required_argument, NULL, 'q' },
 	    { "ctlbase", required_argument, NULL, 'b' },
 	    { "secretsfile", required_argument, NULL, 's' },
 	    { "foodgroupsdir", required_argument, NULL, 'f' },
@@ -674,6 +676,22 @@ main(int argc, char **argv)
 	    }
 	    continue;
 
+#ifdef NAT_TRAVERSAL
+	case 'q':	/* --natikeport <portnumber> */
+	    if (optarg == NULL || !isdigit(optarg[0]))
+		usage("missing port number");
+	    {
+		char *endptr;
+		long port = strtol(optarg, &endptr, 0);
+
+		if (*endptr != '\0' || endptr == optarg
+		|| port <= 0 || port > 0x10000)
+		    usage("<port-number> must be a number between 1 and 65535");
+		pluto_natt_float_port = port;
+	    }
+	    continue;
+#endif
+
 	case 'b':	/* --ctlbase <path> */
 	    ctlbase = optarg;
 	    if (snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path)
@@ -692,7 +710,7 @@ main(int argc, char **argv)
 	    continue;
 
 	case 'f':	/* --ipsecdir <ipsec-dir> */
-	    (void)osw_init_ipsecdir(optarg);
+	    (void)lsw_init_ipsecdir(optarg);
 	    continue;
 
 	case 'a':	/* --adns <pathname> */
@@ -746,8 +764,10 @@ main(int argc, char **argv)
 	    /* all previously set options. Keep this in the same order than */
 	    /* long_opts[] is. */
 	    struct starter_config *cfg = read_cfg_file(optarg);
-	    /* no config option: fork_desired */
+
 	    /* no config option: log_to_stderr_desired */
+
+	    fork_desired = cfg->setup.options[KBF_PLUTOFORK]; /* plutofork= */
 	    log_with_timestamp_desired =
 		cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 	    force_busy = cfg->setup.options[KBF_FORCEBUSY];
@@ -756,19 +776,25 @@ main(int argc, char **argv)
 	    crl_check_interval = cfg->setup.options[KBF_CRLCHECKINTERVAL];
 	    uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
 	    if (cfg->setup.strings[KSF_INTERFACES] != NULL &&
-		*cfg->setup.strings[KSF_INTERFACES] != 0)
-		use_interface(cfg->setup.strings[KSF_INTERFACES]);
+		*cfg->setup.strings[KSF_INTERFACES] != 0) {
+			use_interface(cfg->setup.strings[KSF_INTERFACES]);
+	    }
 	    set_cfg_string(&pluto_listen, cfg->setup.strings[KSF_LISTEN]);
-	    /* no config option: pluto_port */
+
+	    pluto_port = cfg->setup.options[KBF_IKEPORT]; /* --ikeport */
 	    /* no config option: ctlbase */
-	    /* no config option: pluto_shared_secrets_file */
-	    /* no config option: osw_init_ipsecdir() */
-	    /* no config option: base_perpeer_logdir */
-	    /* no config option: log_to_perpeer */
-	    /* no config option: no_retransmits */
-	    set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]);
+	    set_cfg_string(&pluto_shared_secrets_file, cfg->setup.strings[KSF_SECRETSFILE]); /* --secrets */
+	    if(cfg->setup.strings[KSF_IPSECDIR] != NULL &&
+		*cfg->setup.strings[KSF_IPSECDIR] != 0) {
+			lsw_init_ipsecdir(cfg->setup.strings[KSF_IPSECDIR]); /* --ipsecdir */
+	    }
+	    set_cfg_string(&base_perpeer_logdir, cfg->setup.strings[KSF_PERPEERDIR]); /* --perpeerlogbase */
+	    log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG]; /* --perpeerlog */
+	    no_retransmits = !cfg->setup.options[KBF_RETRANSMITS]; /* --noretransmits */
+	    set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
 	    /* no config option: pluto_adns_option */
 #ifdef NAT_TRAVERSAL
+	    pluto_natt_float_port = cfg->setup.options[KBF_NATIKEPORT];
 	    nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
 	    keep_alive = cfg->setup.options[KBF_KEEPALIVE];
 	    force_keepalive = cfg->setup.options[KBF_FORCE_KEEPALIVE];
@@ -842,7 +868,7 @@ main(int argc, char **argv)
 	   e, strerror(e));
     }
 
-    oco = osw_init_options();
+    oco = lsw_init_options();
     lockfd = create_lock();
 
     /* select between logging methods */
@@ -935,11 +961,11 @@ main(int argc, char **argv)
 
 	/* make sure that stdin, stdout, stderr are reserved */
 	if (open("/dev/null", O_RDONLY) != 0)
-	    osw_abort();
+	    lsw_abort();
 	if (dup2(0, 1) != 1)
-	    osw_abort();
+	    lsw_abort();
 	if (!log_to_stderr && dup2(0, 2) != 2)
-	    osw_abort();
+	    lsw_abort();
     }
 
     init_constants();
@@ -1036,6 +1062,9 @@ main(int argc, char **argv)
 
     if(coredir) {
 	libreswan_log("core dump dir: %s", coredir);
+    }
+    if(pluto_shared_secrets_file) {
+	libreswan_log("secrets file: %s", pluto_shared_secrets_file);
     }
 
 #ifdef LEAK_DETECTIVE
@@ -1142,7 +1171,7 @@ main(int argc, char **argv)
     init_connections();
     init_crypto();
     init_crypto_helpers(nhelpers);
-    load_oswcrypto();
+    load_lswcrypto();
     init_demux();
     init_kernel();
     init_adns();
@@ -1208,7 +1237,7 @@ exit_pluto(int status)
     free_crls();               /* free chain of X.509 CRLs */
     free_acerts();             /* free chain of X.509 attribute certificates */
 
-    osw_conf_free_oco();	/* free global_oco containing path names */
+    lsw_conf_free_oco();	/* free global_oco containing path names */
 
     free_myFQDN();	    /* free myid FQDN */
 

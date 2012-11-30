@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refmeta>
+<refentrytitle>IPSEC_TTODATA</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='date'>16 August 2003</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec ttodata</refname>
+<refname>ipsec datatot</refname>
+<refpurpose>convert binary data bytes from and to text formats</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;libreswan.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>const char *<function>ttodata</function></funcdef>
+    <paramdef>const char * <parameter>src</parameter></paramdef>
+    <paramdef>size_t <parameter>srclen</parameter></paramdef>
+    <paramdef>int <parameter>base</parameter></paramdef>
+    <paramdef>char * <parameter>dst</parameter></paramdef>
+    <paramdef>size_t <parameter>dstlen</parameter></paramdef>
+    <paramdef>size_t * <parameter>lenp</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>const char *<function>ttodatav</function></funcdef>
+    <paramdef>const char * <parameter>src</parameter></paramdef>
+    <paramdef>size_t <parameter>srclen</parameter></paramdef>
+    <paramdef>int <parameter>base</parameter></paramdef>
+    <paramdef>char * <parameter>dst</parameter></paramdef>
+    <paramdef>size_t <parameter>dstlen</parameter></paramdef>
+    <paramdef>size_t * <parameter>lenp</parameter></paramdef>
+    <paramdef>char * <parameter>errp</parameter></paramdef>
+    <paramdef>size_t <parameter>errlen</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>size_t <function>datatot</function></funcdef>
+    <paramdef>const char * <parameter>src</parameter></paramdef>
+    <paramdef>size_t <parameter>srclen</parameter></paramdef>
+    <paramdef>int <parameter>format</parameter></paramdef>
+    <paramdef>char * <parameter>dst</parameter></paramdef>
+    <paramdef>size_t <parameter>dstlen</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Ttodata</emphasis>,
+<function>ttodatav</function>,
+and
+<function>datatot</function>
+convert arbitrary binary data (e.g. encryption or authentication keys)
+from and to more-or-less human-readable text formats.</para>
+
+<para>Currently supported formats are hexadecimal, base64, and characters.</para>
+
+<para>A hexadecimal text value begins with a
+<emphasis remap='B'>0x</emphasis>
+(or
+<emphasis remap='B'>0X</emphasis>)
+prefix and continues with two-digit groups
+of hexadecimal digits (0-9, and a-f or A-F),
+each group encoding the value of one binary byte, high-order digit first.
+A single
+<emphasis remap='B'>_</emphasis>
+(underscore)
+between consecutive groups is ignored, permitting punctuation to improve 
+readability; doing this every eight digits seems about right.</para>
+
+<para>A base64 text value begins with a
+<emphasis remap='B'>0s</emphasis>
+(or
+<emphasis remap='B'>0S</emphasis>)
+prefix 
+and continues with four-digit groups of base64 digits (A-Z, a-z, 0-9, +, and /),
+each group encoding the value of three binary bytes as described in
+section 6.8 of RFC 2045.
+If
+<varname role='parameter'>flags</varname>
+has the
+<emphasis remap='B'>TTODATAV_IGNORESPACE</emphasis>
+bit on, blanks are ignore (after the prefix).
+Note that the last one or two digits of a base64 group can be
+<emphasis remap='B'>=</emphasis>
+to indicate that fewer than three binary bytes are encoded.</para>
+
+<para>A character text value begins with a
+<emphasis remap='B'>0t</emphasis>
+(or
+<emphasis remap='B'>0T</emphasis>)
+prefix
+and continues with text characters, each being the value of one binary byte.</para> 
+
+<para>All these functions basically copy data from
+<varname role='parameter'>src</varname>
+(whose size is specified by
+<varname role='parameter'>srclen</varname>)
+to
+<varname role='parameter'>dst</varname>
+(whose size is specified by
+<varname role='parameter'>dstlen</varname>),
+doing the conversion en route.
+If the result will not fit in
+<varname role='parameter'>dst</varname>,
+it is truncated;
+under no circumstances are more than
+<varname role='parameter'>dstlen</varname>
+bytes of result written to
+<varname role='parameter'>dst</varname>.
+<emphasis remap='I'>Dstlen</emphasis>
+can be zero, in which case
+<varname role='parameter'>dst</varname>
+need not be valid and no result bytes are written at all.</para>
+
+<para>The
+<varname role='parameter'>base</varname>
+parameter of
+<function>ttodata</function>
+and
+<function>ttodatav</function>
+specifies what format the input is in;
+normally it should be
+<literal>0</literal>
+to signify that this gets figured out from the prefix.
+Values of
+<literal>16</literal>,
+<literal>64</literal>,
+and
+<literal>256</literal>
+respectively signify hexadecimal, base64, and character-text formats
+without prefixes.</para>
+
+<para>The
+<varname role='parameter'>format</varname>
+parameter of
+<function>datatot</function>,
+a single character used as a type code,
+specifies which text format is wanted.
+The value
+<literal>0</literal>
+(not ASCII
+<emphasis remap='B'>'0'</emphasis>,
+but a zero value) specifies a reasonable default.
+Other currently-supported values are:</para>
+<!-- .RS 2 -->
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>'x'</emphasis></term>
+  <listitem>
+<para>continuous lower-case hexadecimal with a
+<emphasis remap='B'>0x</emphasis>
+prefix</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>'h'</emphasis></term>
+  <listitem>
+<para>lower-case hexadecimal with a
+<emphasis remap='B'>0x</emphasis>
+prefix and a
+<emphasis remap='B'>_</emphasis>
+every eight digits</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>':'</emphasis></term>
+  <listitem>
+<para>lower-case hexadecimal with no prefix and a
+<emphasis remap='B'>:</emphasis>
+(colon) every two digits</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><literal>16</literal></term>
+  <listitem>
+<para>lower-case hexadecimal with no prefix or
+<emphasis remap='B'>_</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>'s'</emphasis></term>
+  <listitem>
+<para>continuous base64 with a
+<emphasis remap='B'>0s</emphasis>
+prefix</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><literal>64</literal></term>
+  <listitem>
+<para>continuous base64 with no prefix</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+<!-- .RE -->
+
+<para>The default format is currently
+<emphasis remap='B'>'h'</emphasis>.</para>
+
+<para><emphasis remap='I'>Ttodata</emphasis>
+returns NULL for success and
+a pointer to a string-literal error message for failure;
+see DIAGNOSTICS.
+On success,
+if and only if
+<varname role='parameter'>lenp</varname>
+is non-NULL,
+<emphasis remap='B'>*lenp</emphasis>
+is set to the number of bytes required to contain the full untruncated result.
+It is the caller's responsibility to check this against
+<varname role='parameter'>dstlen</varname>
+to determine whether he has obtained a complete result.
+The
+<emphasis remap='B'>*lenp</emphasis>
+value is correct even if
+<varname role='parameter'>dstlen</varname>
+is zero, which offers a way to determine how much space would be needed
+before having to allocate any.</para>
+
+<para><emphasis remap='I'>Ttodatav</emphasis>
+is just like
+<function>ttodata</function>
+except that in certain cases,
+if
+<varname role='parameter'>errp</varname>
+is non-NULL,
+the buffer pointed to by
+<varname role='parameter'>errp</varname>
+(whose length is given by
+<varname role='parameter'>errlen</varname>)
+is used to hold a more detailed error message.
+The return value is NULL for success,
+and is either
+<varname role='parameter'>errp</varname>
+or a pointer to a string literal for failure.
+If the size of the error-message buffer is
+inadequate for the desired message,
+<function>ttodatav</function>
+will fall back on returning a pointer to a literal string instead.
+The
+<emphasis remap='I'>libreswan.h</emphasis>
+header file defines a constant
+<emphasis remap='B'>TTODATAV_BUF</emphasis>
+which is the size of a buffer large enough for worst-case results.</para>
+
+<para>The normal return value of
+<function>datatot</function>
+is the number of bytes required
+to contain the full untruncated result.
+It is the caller's responsibility to check this against
+<varname role='parameter'>dstlen</varname>
+to determine whether he has obtained a complete result.
+The return value is correct even if
+<varname role='parameter'>dstlen</varname>
+is zero, which offers a way to determine how much space would be needed
+before having to allocate any.
+A return value of
+<literal>0</literal>
+signals a fatal error of some kind
+(see DIAGNOSTICS).</para>
+
+<para>A zero value for
+<varname role='parameter'>srclen</varname>
+in
+<function>ttodata</function>
+(but not
+<function>datatot</function>!)
+is synonymous with
+<emphasis remap='B'>strlen(src)</emphasis>.
+A non-zero
+<varname role='parameter'>srclen</varname>
+in
+<function>ttodata</function>
+must not include the terminating NUL.</para>
+
+<para>Unless
+<varname role='parameter'>dstlen</varname>
+is zero,
+the result supplied by
+<function>datatot</function>
+is always NUL-terminated,
+and its needed-size return value includes space for the terminating NUL.</para>
+
+<para>Several obsolete variants of these functions
+(<emphasis remap='I'>atodata</emphasis>,
+<emphasis remap='I'>datatoa</emphasis>,
+<emphasis remap='I'>atobytes</emphasis>,
+and
+<emphasis remap='I'>bytestoa</emphasis>)
+are temporarily also supported.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>sprintf</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_atoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Fatal errors in
+<function>ttodata</function>
+and
+<function>ttodatav</function>
+are:
+unknown characters in the input;
+unknown or missing prefix;
+unknown base;
+incomplete digit group;
+non-zero padding in a base64 less-than-three-bytes digit group;
+zero-length input.</para>
+
+<para>Fatal errors in
+<function>datatot</function>
+are:
+unknown format code;
+zero-length input.</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written for the FreeS/WAN project by Henry Spencer.</para>
+</refsect1>
+
+<refsect1 id='bugs'><title>BUGS</title>
+<para><emphasis remap='I'>Datatot</emphasis>
+should have a format code to produce character-text output.</para>
+
+<para>The
+<emphasis remap='B'>0s</emphasis>
+and
+<emphasis remap='B'>0t</emphasis>
+prefixes are the author's inventions and are not a standard
+of any kind.
+They have been chosen to avoid collisions with existing practice
+(some C implementations use
+<emphasis remap='B'>0b</emphasis>
+for binary)
+and possible confusion with unprefixed hexadecimal.</para>
+</refsect1>
+</refentry>
+

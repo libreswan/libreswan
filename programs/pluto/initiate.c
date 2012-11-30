@@ -41,8 +41,8 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "oswalloc.h"
-#include "oswtime.h"
+#include "lswalloc.h"
+#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "pgp.h"

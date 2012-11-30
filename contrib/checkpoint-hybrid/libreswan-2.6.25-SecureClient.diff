@@ -97,9 +97,9 @@ diff -ur libreswan-2.6.25/lib/libipsecconf/keywords.c libreswan-2.6.25.yair/lib/
      {"xauthserver", kv_conn|kv_auto|kv_leftright, kt_bool, KNCF_XAUTHSERVER,  NOT_ENUM},
      {"xauthclient", kv_conn|kv_auto|kv_leftright, kt_bool, KNCF_XAUTHCLIENT, NOT_ENUM},
      {"xauthname",   kv_conn|kv_auto|kv_leftright, kt_string, KSCF_XAUTHUSERNAME, NOT_ENUM},
-diff -ur libreswan-2.6.25/lib/liblibreswan/constants.c libreswan-2.6.25.yair/lib/liblibreswan/constants.c
---- libreswan-2.6.25/lib/liblibreswan/constants.c	2010-03-21 19:39:35.000000000 +0200
-+++ libreswan-2.6.25.yair/lib/liblibreswan/constants.c	2010-05-15 11:18:15.531956709 +0300
+diff -ur libreswan-2.6.25/lib/libswan/constants.c libreswan-2.6.25.yair/lib/libswan/constants.c
+--- libreswan-2.6.25/lib/libswan/constants.c	2010-03-21 19:39:35.000000000 +0200
++++ libreswan-2.6.25.yair/lib/libswan/constants.c	2010-05-15 11:18:15.531956709 +0300
 @@ -640,17 +640,34 @@
  	"INTERNAL_IP6_DNS",
  	"INTERNAL_IP6_NBNS",
@@ -136,9 +136,9 @@ diff -ur libreswan-2.6.25/lib/liblibreswan/constants.c libreswan-2.6.25.yair/lib
  
  /* Oakley Lifetime Type attribute */
  
-diff -ur libreswan-2.6.25/lib/liblibreswan/id.c libreswan-2.6.25.yair/lib/liblibreswan/id.c
---- libreswan-2.6.25/lib/liblibreswan/id.c	2010-03-21 19:39:35.000000000 +0200
-+++ libreswan-2.6.25.yair/lib/liblibreswan/id.c	2010-05-14 19:30:48.843957391 +0300
+diff -ur libreswan-2.6.25/lib/libswan/id.c libreswan-2.6.25.yair/lib/libswan/id.c
+--- libreswan-2.6.25/lib/libswan/id.c	2010-03-21 19:39:35.000000000 +0200
++++ libreswan-2.6.25.yair/lib/libswan/id.c	2010-05-14 19:30:48.843957391 +0300
 @@ -155,6 +155,13 @@
  		}
  		id->name.len = len;

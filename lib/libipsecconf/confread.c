@@ -30,7 +30,7 @@
 #include <assert.h>
 #include <sys/queue.h>
 
-#include "oswalloc.h"
+#include "lswalloc.h"
 
 #include "ipsecconf/parser.h"
 #include "ipsecconf/files.h"
@@ -40,7 +40,7 @@
 #include "ipsecconf/oeconns.h"
 
 #ifdef FIPS_CHECK
-# include "oswconf.h"
+# include "lswconf.h"
 #endif
 
 static char _tmp_err[512];
@@ -83,10 +83,15 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PLUTORESTARTONCRASH]  = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = FALSE;
 	cfg->setup.options[KBF_UNIQUEIDS]= TRUE;
+	cfg->setup.options[KBF_RETRANSMITS]= TRUE;
+	cfg->setup.options[KBF_PLUTOFORK]= TRUE; /* change in the future */
+	cfg->setup.options[KBF_PERPEERLOG]= FALSE;
+	cfg->setup.options[KBF_IKEPORT]= IKE_UDP_PORT;
 #ifdef NAT_TRAVERSAL
 	cfg->setup.options[KBF_DISABLEPORTFLOATING]= FALSE;
 	cfg->setup.options[KBF_FORCE_KEEPALIVE]= FALSE;
 	cfg->setup.options[KBF_KEEPALIVE]= 0;
+	cfg->setup.options[KBF_NATIKEPORT]= NAT_T_IKE_FLOAT_PORT;
 #endif
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 
@@ -942,7 +947,7 @@ static int load_conn (struct ub_ctx *dnsctx
 	     * checking for duplicates.
 	     */
 	    for(sl1 = cfgp->sections.tqh_first;
-		sl1 != NULL && strcasecmp(alsos[alsoplace], sl1->name) != 0;
+		sl1 != NULL && strcmp(alsos[alsoplace], sl1->name) != 0;
 		sl1 = sl1->link.tqe_next);
 
 	    starter_log(LOG_LEVEL_DEBUG, "\twhile loading conn '%s' also including '%s'"

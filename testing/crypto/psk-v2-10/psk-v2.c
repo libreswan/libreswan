@@ -27,8 +27,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "sysqueue.h"
-#include "oswlog.h"
-#include "oswconf.h"
+#include "lswlog.h"
+#include "lswconf.h"
 #include "packet.h"
 #include "defs.h"
 #include "connections.h"
@@ -117,12 +117,12 @@ int main(int argc, char *argv[])
 	memset(&st1, 0, sizeof(st1));
 	pluto_shared_secrets_file = "../../pluto/ikev2-psk-01/west.secrets";
 
-	osw_init_ipsecdir("../../baseconfigs/east/etc/ipsec.d");
-	osw_init_rootdir("../../baseconfigs/east");
+	lsw_init_ipsecdir("../../baseconfigs/east/etc/ipsec.d");
+	lsw_init_rootdir("../../baseconfigs/east");
 
 	/* initialize list of moduli */
 	init_crypto();
-	load_oswcrypto();
+	load_lswcrypto();
 
 	readwhackmsg("../../lib/libpluto/lib-parentI1psk/ikev2.record");
 	c1 = con_by_name("westnet--eastnet-ikev2", TRUE);

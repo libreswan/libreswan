@@ -63,8 +63,8 @@ extern void libreswan_switch_fail(int n
 
 #else /*!DEBUG*/
 
-# define impossible() osw_abort()
-# define bad_case(n) osw_abort()
+# define impossible() lsw_abort()
+# define bad_case(n) lsw_abort()
 # define passert(pred)  { }	/* do nothing */
 # define pexpect(pred)  { }	/* do nothing */
 # define happy(x)  { (void) x; }	/* evaluate non-judgementally */

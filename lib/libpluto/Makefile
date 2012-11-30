@@ -1,7 +1,7 @@
 # Libreswan library for pluto
 #
 # mostly contains minor support items that are placed here to make unit testing
-# of pluto easier. Generally, this code can depend upon -llibreswan, and -loswlog,
+# of pluto easier. Generally, this code can depend upon -lswan, and -llswlog,
 # it should not depend upon anything else (ideally, including other code in this
 # this library)
 #

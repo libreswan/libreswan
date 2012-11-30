@@ -127,11 +127,11 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 		return IPSEC_RCV_SAIDNOTFOUND;
 	}
 
-	if (osw_ip_hdr_version(irs) == 6)
-		ipsp->ips_comp_ratio_cbytes += ntohs(osw_ip6_hdr(irs)->payload_len)
+	if (lsw_ip_hdr_version(irs) == 6)
+		ipsp->ips_comp_ratio_cbytes += ntohs(lsw_ip6_hdr(irs)->payload_len)
 				+ sizeof(struct ipv6hdr);
 	else
-		ipsp->ips_comp_ratio_cbytes += ntohs(osw_ip4_hdr(irs)->tot_len);
+		ipsp->ips_comp_ratio_cbytes += ntohs(lsw_ip4_hdr(irs)->tot_len);
 	irs->next_header = irs->protostuff.ipcompstuff.compp->ipcomp_nh;
 
 #ifdef CONFIG_KLIPS_OCF
@@ -159,11 +159,11 @@ ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 	
 	irs->iph = (void *) ip_hdr(skb);
 
-	if (osw_ip_hdr_version(irs) == 6)
-		ipsp->ips_comp_ratio_dbytes += ntohs(osw_ip6_hdr(irs)->payload_len)
+	if (lsw_ip_hdr_version(irs) == 6)
+		ipsp->ips_comp_ratio_dbytes += ntohs(lsw_ip6_hdr(irs)->payload_len)
 				+ sizeof(struct ipv6hdr);
 	else
-		ipsp->ips_comp_ratio_dbytes += ntohs(osw_ip4_hdr(irs)->tot_len);
+		ipsp->ips_comp_ratio_dbytes += ntohs(lsw_ip4_hdr(irs)->tot_len);
 
 	KLIPS_PRINT(debug_rcv,
 		    "klips_debug:ipsec_rcv_ipcomp_decomp: "
@@ -186,11 +186,11 @@ ipsec_xmit_ipcomp_setup(struct ipsec_xmit_state *ixs)
   unsigned int tot_len, old_tot_len;
 
 #ifdef CONFIG_KLIPS_IPV6
-  if (osw_ip_hdr_version(ixs) == 6)
-    old_tot_len = ntohs(osw_ip6_hdr(ixs)->payload_len) + sizeof(struct ipv6hdr);
+  if (lsw_ip_hdr_version(ixs) == 6)
+    old_tot_len = ntohs(lsw_ip6_hdr(ixs)->payload_len) + sizeof(struct ipv6hdr);
   else
 #endif
-    old_tot_len = ntohs(osw_ip4_hdr(ixs)->tot_len);
+    old_tot_len = ntohs(lsw_ip4_hdr(ixs)->tot_len);
   ixs->ipsp->ips_comp_ratio_dbytes += old_tot_len;
 
   ixs->skb = skb_compress(ixs->skb, ixs->ipsp, &flags);
@@ -198,20 +198,20 @@ ipsec_xmit_ipcomp_setup(struct ipsec_xmit_state *ixs)
   ixs->iph = (void *)ip_hdr(ixs->skb);
   
 #ifdef CONFIG_KLIPS_IPV6
-  if (osw_ip_hdr_version(ixs) == 6) {
+  if (lsw_ip_hdr_version(ixs) == 6) {
 	IPSEC_FRAG_OFF_DECL(frag_off)
 	int nexthdroff;
-	unsigned char nexthdr = osw_ip6_hdr(ixs)->nexthdr;
+	unsigned char nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 	nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-		((void *)(osw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data,
+		((void *)(lsw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data,
 		&nexthdr, &frag_off);
 	ixs->iphlen = nexthdroff - (ixs->iph - (void*)ixs->skb->data);
-    tot_len = ntohs(osw_ip6_hdr(ixs)->payload_len) + sizeof(struct ipv6hdr);
+    tot_len = ntohs(lsw_ip6_hdr(ixs)->payload_len) + sizeof(struct ipv6hdr);
   } else
 #endif
   {
-	ixs->iphlen = osw_ip4_hdr(ixs)->ihl << 2;
-    tot_len = ntohs(osw_ip4_hdr(ixs)->tot_len);
+	ixs->iphlen = lsw_ip4_hdr(ixs)->ihl << 2;
+    tot_len = ntohs(lsw_ip4_hdr(ixs)->tot_len);
   }
   ixs->ipsp->ips_comp_ratio_cbytes += tot_len;
   
@@ -222,7 +222,7 @@ ipsec_xmit_ipcomp_setup(struct ipsec_xmit_state *ixs)
 		    "klips_debug:ipsec_xmit_ipcomp_setup: "
 		    "packet shrunk from %d to %d bytes after compression, cpi=%04x (should be from spi=%08x, spi&0xffff=%04x.\n",
 		    old_tot_len, tot_len,
-		    ntohs(((struct ipcomphdr*)(((char*)ixs->iph) + ((osw_ip4_hdr(ixs)->ihl) << 2)))->ipcomp_cpi),
+		    ntohs(((struct ipcomphdr*)(((char*)ixs->iph) + ((lsw_ip4_hdr(ixs)->ihl) << 2)))->ipcomp_cpi),
 		    ntohl(ixs->ipsp->ips_said.spi),
 		    (__u16)(ntohl(ixs->ipsp->ips_said.spi) & 0x0000ffff));
       else

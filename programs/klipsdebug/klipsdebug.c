@@ -46,7 +46,7 @@
 #include <libreswan/pfkey.h>
 
 #include "socketwrapper.h"
-#include "oswlog.h"
+#include "lswlog.h"
 #include "libreswan/radij.h"
 #include "libreswan/ipsec_encap.h"
 #ifndef CONFIG_KLIPS_DEBUG
@@ -57,13 +57,13 @@
 #include <stdio.h>
 #include <getopt.h>
 
-#include "osw_select.h"
-#include "oswlog.h"
+#include "lsw_select.h"
+#include "lswlog.h"
 __u32 bigbuf[1024];
 char *program_name;
 
 int pfkey_sock;
-osw_fd_set pfkey_socks;
+lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
 
 char copyright[] =

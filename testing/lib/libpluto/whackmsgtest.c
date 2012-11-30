@@ -7,7 +7,7 @@
 #define USE_KEYRR 1
 
 #include "constants.h"
-#include "oswalloc.h"
+#include "lswalloc.h"
 #include "whack.h"
 #include "rcv_whack.h"
 

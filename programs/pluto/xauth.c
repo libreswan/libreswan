@@ -39,12 +39,12 @@
 #include <libreswan.h>
 #include <libreswan/ipsec_policy.h>
 
-#include "oswalloc.h"
+#include "lswalloc.h"
 
 #include "sysdep.h"
-#include "oswconf.h"
+#include "lswconf.h"
 #include "constants.h"
-#include "oswlog.h"
+#include "lswlog.h"
 
 #include "defs.h"
 #include "state.h"
@@ -143,9 +143,9 @@ static
 void dealloc_st_jbuf(st_jbuf_t *ptr)
 {
     if (st_jbuf_mem == NULL)
-	osw_abort();
+	lsw_abort();
     if (ptr == NULL)
-	osw_abort();
+	lsw_abort();
     ptr->in_use = 0;
     ptr = st_jbuf_mem;
     while (ptr->st != NULL) {
@@ -191,7 +191,7 @@ st_jbuf_t *alloc_st_jbuf(void)
     }
     ptr = st_jbuf_mem;
     if (ptr == NULL)
-	osw_abort();
+	lsw_abort();
     
     while (ptr->st != NULL) {
 	if (ptr->in_use == 0 && ptr->st != NULL) {
@@ -202,7 +202,7 @@ st_jbuf_t *alloc_st_jbuf(void)
     offset = (size_t)((char *)ptr - (char *)st_jbuf_mem);
     ptr = realloc(st_jbuf_mem, offset + sizeof(st_jbuf_t)*2);
     if (ptr == NULL) {
-        osw_abort();
+        lsw_abort();
     }
     st_jbuf_mem = ptr;
     ptr = (st_jbuf_t *)((char *)st_jbuf_mem + offset);
@@ -228,7 +228,7 @@ void sigIntHandler(int sig)
 		siglongjmp (ptr->jbuf,1);
 	} else {
 	    pthread_mutex_unlock(&st_jbuf_mutex);
-	    osw_abort();
+	    lsw_abort();
 	}
     }
 }
@@ -1101,7 +1101,7 @@ int do_md5_authentication(void *varg)
     char *szconnid;
     char *sztemp;
     int loc = 0;
-    const struct osw_conf_options *oco = osw_init_options(); 
+    const struct lsw_conf_options *oco = lsw_init_options(); 
 
     snprintf(pwdfile, sizeof(pwdfile), "%s/passwd", oco->confddir);
 
@@ -1160,7 +1160,7 @@ int do_md5_authentication(void *varg)
 		    , szuser, arg->name.ptr
 		    , szpass, szconnid, arg->connname.ptr));
 
-        if ( strcasecmp(szconnid, (char *)arg->connname.ptr) == 0
+        if ( strcmp(szconnid, (char *)arg->connname.ptr) == 0
 	     && strcmp( szuser, (char *)arg->name.ptr ) == 0 ) /* user correct ?*/
         {
 	    char *cp;
@@ -2274,11 +2274,11 @@ stf_status xauth_client_resp(struct state *st
 		    if(st->st_xauth_password.ptr == NULL) {
 			struct secret *s;
 
-			s = osw_get_xauthsecret(st->st_connection, st->st_xauth_username);
+			s = lsw_get_xauthsecret(st->st_connection, st->st_xauth_username);
 			DBG(DBG_CONTROLMORE
 			    , DBG_log("looked up username=%s, got=%p", st->st_xauth_username, s));
 			if(s) {
-			    struct private_key_stuff *pks=osw_get_pks(s);
+			    struct private_key_stuff *pks=lsw_get_pks(s);
 
 			    clonetochunk(st->st_xauth_password
 					 , pks->u.preshared_secret.ptr

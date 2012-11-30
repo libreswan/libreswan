@@ -37,7 +37,7 @@
 #include "connections.h"	/* needs id.h */
 #include "foodgroups.h"
 #include "kernel.h"	/* needs connections.h */
-#include "oswconf.h"
+#include "lswconf.h"
 #include "lex.h"
 #include "log.h"
 #include "whack.h"
@@ -133,7 +133,7 @@ read_foodgroup(struct fg_groups *g)
 {
     const char *fgn = g->connection->name;
     const ip_subnet *lsn = &g->connection->spd.this.client;
-    const struct osw_conf_options *oco = osw_init_options(); 
+    const struct lsw_conf_options *oco = lsw_init_options(); 
     size_t plen = strlen(oco->policies_dir) + 2 + strlen(fgn) + 1;
     struct file_lex_position flp_space;
 

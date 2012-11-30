@@ -2325,7 +2325,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 /*
  * Cookie = <VersionIDofSecret> | Hash(Ni | IPi | SPIi | <secret>)
  * where <secret> is a randomly generated secret known only to the
- * in OSW implementation <VersionIDofSecret> is not used.
+ * in LSW implementation <VersionIDofSecret> is not used.
  */
 static bool ikev2_get_dcookie(u_char *dcookie,  chunk_t st_ni
 	,ip_address *addr, u_int8_t *spiI)
