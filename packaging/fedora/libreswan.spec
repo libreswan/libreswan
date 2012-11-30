@@ -4,6 +4,7 @@
 %global fipscheck_version 1.3.0
 %global USE_CRL_FECTCHING true
 %global USE_DNSSEC true
+%global USE_LINUX_AUDIT true
 %global buildklips 0
 %global buildefence 0
 %global development 0
@@ -49,6 +50,10 @@ BuildRequires: fipscheck-devel >= %{fipscheck_version}
 # we need fipshmac
 Requires: fipscheck%{_isa} >= %{fipscheck_version}
 %endif
+%if %{USE_LINUX_AUDIT}
+Buildrequires: audit-libs-devel
+%endif
+
 %if %{USE_LIBCAP_NG}
 BuildRequires: libcap-ng-devel
 %endif

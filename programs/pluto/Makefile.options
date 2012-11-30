@@ -26,6 +26,10 @@ ifeq ($(USE_DNSSEC),true)
 DNSSECDEF=-DDNSSEC
 endif
 
+ifeq ($(USE_LINUX_AUDIT),true)
+CFLAGS += -DUSE_LINUX_AUDIT
+endif
+
 ifeq ($(USE_LDAP),true)
 # Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
 # if you require LDAPv2 

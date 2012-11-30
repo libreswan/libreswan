@@ -69,6 +69,10 @@ ifeq ($(USE_DNSSEC),true)
 LIBSPLUTO += -lunbound
 endif
 
+ifeq ($(USE_LINUX_AUDIT),true)
+LIBSPLUTO += -laudit
+endif
+
 # Solaris needs -lsocket -lnsl
 LIBSWHACK = ${WHACKLIB} ${LIBRESWANLIB}
 

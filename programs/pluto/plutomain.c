@@ -116,6 +116,10 @@
 # include "security_selinux.h"
 #endif
 
+#ifdef USE_LINUX_AUDIT
+# include <libaudit.h>
+#endif
+
 const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 bool fork_desired = TRUE;
@@ -981,6 +985,7 @@ main(int argc, char **argv)
 	} else {
 	    libreswan_log("NSS Initialized");
 	    PK11_SetPasswordFunc(getNSSPassword);
+      }
 
 #ifdef FIPS_CHECK
 	const char *package_files[]= { IPSECLIBDIR"/setup",
@@ -1027,7 +1032,37 @@ main(int argc, char **argv)
 	libreswan_log("FIPS integrity support [disabled]");
 #endif
 
-      }
+#ifdef HAVE_LIBCAP_NG
+	libreswan_log("libcap-ng support [enabled]");
+#else
+	libreswan_log("libcap-ng support [disabled]");
+#endif
+
+#ifdef USE_LINUX_AUDIT
+	libreswan_log("Linux audit support [enabled]");
+	/* test and log if audit is enabled on the system */
+	int audit_fd, rc;
+	audit_fd = audit_open();
+	if (audit_fd < 0) {
+                if (errno == EINVAL || errno == EPROTONOSUPPORT ||
+                    errno == EAFNOSUPPORT)
+		{
+		 loglog(RC_LOG_SERIOUS, "Warning: kernel has no audit support");
+		} else {
+		loglog(RC_LOG_SERIOUS, "FATAL: audit_open() failed : %s", strerror(errno));
+		 exit_pluto(10);
+		}
+	}
+	rc = audit_log_acct_message(audit_fd, 14, "pluto",
+		"starting pluto daemon", NULL, -1, NULL, NULL, NULL, 1);
+	close(audit_fd);
+	if (rc < 0) {
+		loglog(RC_LOG_SERIOUS, "FATAL: audit_log_acct_message failed: %s", strerror(errno));
+		 exit_pluto(10);
+	}
+#else
+	libreswan_log("Linux audit support [disabled]");
+#endif
 
     /* Note: some scripts may look for this exact message -- don't change
      * ipsec barf was one, but it no longer does.
