@@ -981,6 +981,7 @@ main(int argc, char **argv)
 	} else {
 	    loglog(RC_LOG_SERIOUS, "NSS Initialized");
 	    PK11_SetPasswordFunc(getNSSPassword);
+      }
 
 #ifdef FIPS_CHECK
 	const char *package_files[]= { IPSECLIBDIR"/setup",
@@ -1025,7 +1026,6 @@ main(int argc, char **argv)
         }
 #endif
 
-      }
 
     /* Note: some scripts may look for this exact message -- don't change
      * ipsec barf was one, but it no longer does.
