@@ -979,7 +979,7 @@ main(int argc, char **argv)
 	    loglog(RC_LOG_SERIOUS, "NSS initialization failed (err %d)\n", PR_GetError());
         exit_pluto(10);
 	} else {
-	    loglog(RC_LOG_SERIOUS, "NSS Initialized");
+	    libreswan_log("NSS Initialized");
 	    PK11_SetPasswordFunc(getNSSPassword);
       }
 
@@ -1021,7 +1021,7 @@ main(int argc, char **argv)
 					};
 
        if (Pluto_IsFIPS() && !FIPSCHECK_verify_files(package_files)) {
-             loglog(RC_LOG_SERIOUS, "FIPS integrity verification test failed");
+             loglog(RC_LOG_SERIOUS, "FATAL: FIPS integrity verification test failed");
              exit_pluto(10);
         }
 #endif
@@ -1042,6 +1042,8 @@ main(int argc, char **argv)
 #endif
 	if(Pluto_IsFIPS()) {
 		libreswan_log("Pluto is running in FIPS mode");
+	} else {
+		libreswan_log("Pluto is NOT running in FIPS mode");
 	}
 
 	if((vc[0]=='c' && vc[1]=='v' && vc[2]=='s') ||
