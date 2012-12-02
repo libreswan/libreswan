@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>force_busy</emphasis></term>
+  <listitem>
+<para>Emulate a <emphasis remap='I'>busy system</emphasis> and take
+counter meassures. The value can be  <emphasis remap='I'>no</emphasis>
+(the default) or  <emphasis remap='I'>yes</emphasis>. If enabled,
+pluto will be forced to be "busy". In this state, which happens when
+there is a Denial of Service attack,  pluto will use cookies
+before accepting new incoming IKE packets. Cookies are send and required
+for IKEv1 Aggressive Mode and in IKEv2.  This option is mostly used for
+testing purposes, but can be selected by paranoid administrators as
+well.</para>
+  </listitem>
+  </varlistentry>

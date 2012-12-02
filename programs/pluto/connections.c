@@ -3240,7 +3240,7 @@ connection_compare(const struct connection *ca
 
     /* DBG_log("comparing %s to %s", ca->name, cb->name);  */
 
-    ret = strcasecmp(ca->name, cb->name);
+    ret = strcmp(ca->name, cb->name);
     if (ret != 0)
 	return ret;
 

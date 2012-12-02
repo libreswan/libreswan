@@ -1,21 +1,35 @@
 #!/bin/sh
 
 # This is the configuration file that helps setup for
-# a kernel pool for UML compilation w/FreeSWAN.
+# a kernel pool for KVM compilation w/FreeSWAN.
 #
 # Copy this file to the top of your FreeSWAN source directory as
-# umlsetup.sh, edit that copy, and populate the paths.
+# kvmsetup.sh, edit that copy, and populate the paths.
 
 
 # space for everything:
 # Just a shorthand for the following definitions.
 # Can be eliminated if available space is fragmented.
-UMLPREFIX=/home/build/uml-testing
+KVMPREFIX=/home/build/kvm-testing
 
-REGRESSRESULTS=$UMLPREFIX/results
+REGRESSRESULTS=$KVMPREFIX/results
 
 # set this to someplace with at least 100Mb free.
-POOLSPACE=$UMLPREFIX/umlbuild
+POOLSPACE=$KVMPREFIX/kvmbuild
+
+# Fedora media
+OSTYPE=fedora
+# Note: Replace this with your local Fedora tree if you have one.
+OSMEDIA=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
+# OSMEDIA=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os
+# OSMEDIA=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
+# OSMEDIA=http://fedora.mirror.nexicom.net/linux/releases/test/18-Alpha/Fedora/x86_64/os/
+
+# Ubuntu media
+# OSTYPE=ubuntu
+# OSMEDIA=http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
+
+# Everything below should probably be left unchanged
 
 # note that "nic" and "sec" are the same host in different configurations
 REGULARHOSTS='sunrise sunset nic carrot beet sec pole'
@@ -23,9 +37,13 @@ LIBRESWANHOSTS='east west japan road north'
 
 # tell system location of special tcpdump, if any
 export TCPDUMP="/usr/sbin/tcpdump"
+if [ ! -f $TCPDUMP ]
+then
+	echo "WARNING: tcpdump is not installed or invalid TCPDUMP= "
+fi
 
-# we always use OBJ directories for UML builds.
+# we always use OBJ directories for KVM builds.
 USE_OBJDIR=true export USE_OBJDIR
 
 # comment this out to signify that you've customized this script
-echo "please customise your umlsetup.sh" ; exit 99
+echo "please customise your kvmsetup.sh" ; exit 99

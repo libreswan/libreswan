@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ../../../umlsetup.sh
+. ../../../kvmsetup.sh
 . ../setup.sh
 . ./testparams.sh
 

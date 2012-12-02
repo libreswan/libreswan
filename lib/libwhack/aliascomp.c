@@ -1,5 +1,6 @@
 /* functions to compare a string/list
  * Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,7 +25,7 @@
 
 /*
  * this is just like "strstr()", only it won't find matches
- * that are substrings (case-insensitive compare), but rather each match
+ * that are substrings (case-sensitive compare), but rather each match
  * must be anchored in front and after with whitespace and/or start/end
  * of string. 
  *
@@ -41,7 +42,7 @@ bool lsw_alias_cmp(const char *needle, const char *haystack)
 		/* does it match, and does it end with a space?
 		 * check if things end at same place
 		 */
-		if(strncasecmp(s, needle, nlen)==0
+		if(strncmp(s, needle, nlen)==0
 		   && (s[nlen]==' ' || s[nlen]=='\t' || s[nlen]=='\0')) {
 			return TRUE;
 		}

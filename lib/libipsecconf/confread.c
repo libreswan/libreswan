@@ -947,7 +947,7 @@ static int load_conn (struct ub_ctx *dnsctx
 	     * checking for duplicates.
 	     */
 	    for(sl1 = cfgp->sections.tqh_first;
-		sl1 != NULL && strcasecmp(alsos[alsoplace], sl1->name) != 0;
+		sl1 != NULL && strcmp(alsos[alsoplace], sl1->name) != 0;
 		sl1 = sl1->link.tqe_next);
 
 	    starter_log(LOG_LEVEL_DEBUG, "\twhile loading conn '%s' also including '%s'"

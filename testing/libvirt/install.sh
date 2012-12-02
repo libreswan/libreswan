@@ -1,19 +1,33 @@
 #!/bin/bash
 
 TESTING=`readlink -f $0  | sed "s/libvirt.*$/libvirt/"`
-LIBRESWANSRC=`readlink -f $0  | sed "s/libreswan.*$/libreswan/"`
+TESTDIR=`readlink -f $0  | sed "s/libvirt.*$//"`
+LIBRESWANSRCDIR=`readlink -f $0  | sed "s/libreswan.*$/libreswan/"`
 
-source $LIBRESWANSRC/kvmsetup.sh
+source $LIBRESWANSRCDIR/kvmsetup.sh
 
-echo "TESTING=$TESTING"
-echo "LIBRESWANSRC=$LIBRESWANSRC"
+echo "TESTDIR=$TESTDIR"
+echo "LIBRESWANSRCDIR=$LIBRESWANSRCDIR"
 echo "POOLSPACE=$POOLSPACE"
 echo "OSTYPE=$OSTYPE"
+echo "OSMEDIA=$OSMEDIA"
 
-if [ -z "$POOLSPACE" -o -z "$OSTYPE" ]
+if [ -z "$POOLSPACE" -o -z "$OSTYPE" -o -z "$OSMEDIA" -o -z "$LIBRESWANSRCDIR" ]
 then
 	echo "broken kvmsetup.sh, aborted"
 	exit 42
+fi
+
+touch /var/lib/libvirt/qemu/lswantest || (
+	echo "The qemu group needs write permissions in /var/lib/libvirt/qemu/"
+	exit 43
+)
+rm -f /var/lib/libvirt/qemu/lswantest
+
+if [ ! -d "$POOLSPACE" ]
+then
+	mkdir -p $POOLSPACE 
+	chmod a+x $POOLSPACE
 fi
 
 # Let's start
@@ -32,10 +46,6 @@ echo "creating VM disk images"
 if [ ! -f $POOLSPACE/swan"$OSTYPE"base.img ]
 then
 	echo "Creating base $OSTYPE image using libvirt"
-	# Looks like newer virt-install requires the disk image to exist?? How odd
-	echo -n "creating 8 gig disk image...."
-	sudo dd if=/dev/zero of=$POOLSPACE/swan"$OSTYPE"base.img bs=1024k count=8192
-	echo done
 
 	# check for hardware VM instructions
 	cpu="--hvm"
@@ -101,9 +111,11 @@ for hostname in $LIBRESWANHOSTS;
 do
 	rm -f vm/$hostname.xml.converted 
 	cp vm/$hostname.xml vm/$hostname.xml.converted
-	sed -i "s:@@TESTING@@:$TESTING:" vm/$hostname.xml.converted
+	sed -i "s:@@TESTDIR@@:$TESTDIR:" vm/$hostname.xml.converted
 	sed -i "s:@@LIBRESWANSRCDIR@@:$LIBRESWANSRCDIR:" vm/$hostname.xml.converted
 	sed -i "s:@@POOLSPACE@@:$POOLSPACE:" vm/$hostname.xml.converted
+	sed -i "s:@@USER@@:`id -u`:" vm/$hostname.xml.converted
+	sed -i "s:@@GROUP@@:`id -g qemu`:" vm/$hostname.xml.converted
         sudo virsh define vm/$hostname.xml.converted
 	rm -f vm/$hostname.xml.converted 
         sudo virsh start $hostname

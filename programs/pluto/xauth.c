@@ -1160,7 +1160,7 @@ int do_md5_authentication(void *varg)
 		    , szuser, arg->name.ptr
 		    , szpass, szconnid, arg->connname.ptr));
 
-        if ( strcasecmp(szconnid, (char *)arg->connname.ptr) == 0
+        if ( strcmp(szconnid, (char *)arg->connname.ptr) == 0
 	     && strcmp( szuser, (char *)arg->name.ptr ) == 0 ) /* user correct ?*/
         {
 	    char *cp;
