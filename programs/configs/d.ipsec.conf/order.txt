@@ -91,7 +91,7 @@ d.ipsec.conf/uniqueids.xml
 d.ipsec.conf/plutorestartoncrash.xml
 d.ipsec.conf/plutostderrlog.xml
 d.ipsec.conf/plutostderrlogtime.xml
-d.ipsec.conf/forcebusy.xml
+d.ipsec.conf/force_busy.xml
 d.ipsec.conf/dumpdir.xml
 d.ipsec.conf/perpeerlog.xml
 d.ipsec.conf/perpeerlogdir.xml

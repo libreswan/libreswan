@@ -20,6 +20,7 @@ v3.0 (unreleased)
 * OE: Removed support for old KEY and TXT DNS records [Paul]
 * OE: Add support for IPSECKEY in ipsec showhostkey [Paul]
 * pluto: --config <fn> uses libipsecconf to read 'config setup' [Kim B. Heino]
+* pluto: left=%defaultroute now obtains src ip from routing table [Kim B. Heino]
 * pluto: Removed support for non-strict ike/esp lines [Paul]
 * pluto: UDPFROMTO support was not enabled for NETKEY if not also build
          with KLIPS [Paul]
