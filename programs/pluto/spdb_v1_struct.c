@@ -740,10 +740,12 @@ lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
 		case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
 		    switch (a.isaat_lv) {
 			case XAUTHInitPreShared:
+				 policy |= POLICY_XAUTH;
 			case OAKLEY_PRESHARED_KEY:
 				policy |= POLICY_PSK;
 			    break;
 			case XAUTHInitRSA:
+				policy |= POLICY_XAUTH;
 			case OAKLEY_RSA_SIG:
 				policy |= POLICY_RSASIG;
 			    break;
