@@ -290,8 +290,9 @@ find_raw_ifaces4(void)
 	ri.name[IFNAMSIZ] = '\0';
 	DBG(DBG_CONTROLMORE, DBG_log("Inspecting interface %s ", ri.name));
 
-	/* ignore if our interface names were specified, and this isn't one */
-	if (pluto_ifn_roof != 0)
+
+	/* ignore if our interface names were specified, and this isn't one - for KLIPS/MAST only */
+	if ((pluto_ifn_roof != 0) && ((kern_interface == USE_MASTKLIPS) || (kern_interface == USE_KLIPS)))
 	{
 	    int i;
 	    DBG(DBG_CONTROLMORE, DBG_log("interfaces= specified, applying filter"));
@@ -307,7 +308,6 @@ find_raw_ifaces4(void)
 		continue;	/* not found -- skip */
 		}
 	}
-
 	/* Find out stuff about this interface.  See netdevice(7). */
 	zero(&auxinfo);	/* paranoia */
 	memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ);
