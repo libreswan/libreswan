@@ -72,6 +72,7 @@ v3.0 (unreleased)
 * XAUTH: Use incoming XAUTH VID when picking best connection [Philippe]
 * XAUTH: pam was failing when built with USE_LIBCAP_NG=true [Philippe Vouters]
 * XAUTH: Fixup of defines [Paul/Philippe]
+* XAUTH: Don't set XAUTH policy on receiving XAUTH VID [Andrey Alexandrenko]
 * IKEv2: Comply to RFC's for "must be zero" to ignore instead of abort [Paul]
          (rhbz#831669)
 * IKEv2: road warrior support [Antony/Paul/Avesh]
