@@ -775,10 +775,11 @@ main(int argc, char **argv)
 	    strict_crl_policy = cfg->setup.options[KBF_STRICTCRLPOLICY];
 	    crl_check_interval = cfg->setup.options[KBF_CRLCHECKINTERVAL];
 	    uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
-	    if (cfg->setup.strings[KSF_INTERFACES] != NULL &&
-		*cfg->setup.strings[KSF_INTERFACES] != 0) {
-			use_interface(cfg->setup.strings[KSF_INTERFACES]);
-	    }
+	    /*
+	     * We don't check interfaces= here because that part has been dealt
+	     * with in _stackmanager before we started
+	     */
+
 	    set_cfg_string(&pluto_listen, cfg->setup.strings[KSF_LISTEN]);
 
 	    pluto_port = cfg->setup.options[KBF_IKEPORT]; /* --ikeport */
