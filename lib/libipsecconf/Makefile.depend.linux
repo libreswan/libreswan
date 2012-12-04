@@ -30,7 +30,6 @@ confread.o: confread.c ../../include/lswalloc.h \
   ../../include/ipsecconf/files.h \
   ../../include/ipsecconf/confread.h \
   ../../include/ipsecconf/keywords.h \
-  ../../include/ipsecconf/interfaces.h \
   ../../include/ipsecconf/starterlog.h \
   ../../include/ipsecconf/oeconns.h
 confwrite.o: confwrite.c \
@@ -57,7 +56,6 @@ interfaces.o: interfaces.c \
   ../../ports/linux/include/sysdep.h \
   ../../include/sysqueue.h \
   ../../linux/include/libreswan/ipsec_tunnel.h \
-  ../../include/ipsecconf/interfaces.h \
   ../../include/ipsecconf/exec.h \
   ../../include/ipsecconf/files.h \
   ../../include/ipsecconf/starterlog.h
@@ -75,7 +73,6 @@ oeconns.o: oeconns.c \
   ../../linux/include/libreswan.h \
   ../../include/ipsecconf/confread.h \
   ../../include/ipsecconf/keywords.h \
-  ../../include/ipsecconf/interfaces.h \
   ../../include/ipsecconf/starterlog.h \
   ../../include/ipsecconf/oeconns.h
 starterlog.o: starterlog.c \
@@ -113,15 +110,4 @@ starterwhack.o: starterwhack.c \
   ../../include/whack.h \
   ../../linux/include/libreswan/ipsec_policy.h \
   ../../include/id.h
-virtif.o: virtif.c \
-  ../../linux/include/libreswan.h \
-  ../../linux/include/libreswan/ipsec_kversion.h \
-  ../../linux/include/libreswan/ipsec_param.h \
-  ../../ports/linux/include/sysdep.h \
-  ../../include/sysqueue.h \
-  ../../linux/include/libreswan/ipsec_tunnel.h \
-  ../../include/ipsecconf/interfaces.h \
-  ../../include/ipsecconf/exec.h \
-  ../../include/ipsecconf/files.h \
-  ../../include/ipsecconf/starterlog.h
 parser.tab.c: parser.tab.h

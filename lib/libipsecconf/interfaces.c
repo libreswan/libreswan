@@ -39,10 +39,7 @@
 char *starter_find_physical_iface(int sock, char *iface)
 {
 	static char _if[IFNAMSIZ+1];
-	char *b;
 	struct ifreq req;
-	FILE *f;
-	char line[256];
 
 	strncpy(req.ifr_name, iface, IFNAMSIZ);
 	if (ioctl(sock, SIOCGIFFLAGS, &req)==0) {
