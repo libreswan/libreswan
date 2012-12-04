@@ -630,6 +630,12 @@ main_inI1_outR1(struct msg_digest *md)
     {
 	pb_stream pre_sa_pbs = sa_pd->pbs;
 	lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs);
+
+#if 0
+	Other IKE clients, such as strongswan, send the XAUTH
+	VID even for connections they do not want to run XAUTH on.
+	We need to depend on the policy negotiation, not the VID.
+
 	/*
 	 * If there is XAUTH VID, copy it to policies.
 	 */
@@ -637,6 +643,7 @@ main_inI1_outR1(struct msg_digest *md)
 	{
 	  policy |= POLICY_XAUTH;
 	}
+#endif
 	/* See if a wildcarded connection can be found.
 	 * We cannot pick the right connection, so we're making a guess.
 	 * All Road Warrior connections are fair game:
