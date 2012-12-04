@@ -8,20 +8,20 @@ After=network.target
 Type=simple
 Restart=always
 EnvironmentFile=-/etc/sysconfig/pluto
-#Environment=IPSEC_LIBDIR=/usr/libexec/ipsec 
-#Environment=IPSEC_SBINDIR=/usr/sbin 
-#Environment=IPSEC_CONFS=/etc 
-#Environment=IPSEC_EXECDIR=/usr/libexec/ipsec
-#Environment=IPSECsyslog=daemon.error 
+Environment=IPSEC_CONFS=/etc 
+# Makefile should replace these on install, eg if in /usr/local
+Environment=IPSEC_LIBDIR=/usr/libexec/ipsec 
+Environment=IPSEC_SBINDIR=/usr/sbin 
+Environment=IPSEC_EXECDIR=/usr/libexec/ipsec
+Environment=IPSECsyslog=daemon.error 
 #PIDFile=/var/run/pluto/pluto.pid
 #
-ExecStartPre=/usr/bin/sh -c 'eval `ipsec addconn --config $IPSEC_CONFS/ipsec.conf --checkconfig`'
-ExecStartPre=/usr/bin/sh -c 'eval `ipsec _stackmanager start`'
-ExecStart=/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf --nofork $PLUTO_OPTIONS
-PostExec=/usr/local/libexec/ipsec/addconn --autoall
-ExecStop=ipsec whack --shutdown 
-PostExecStop=ipsec _stackmanager stop
-ExecReload=ipsec whack --rereadall
+ExecStartPre=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec addconn --config $IPSEC_CONFS/ipsec.conf --checkconfig`'
+ExecStartPre=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec _stackmanager start`'
+ExecStart=/usr/bin/sh -c 'eval `$IPSEC_EXECDIR/pluto --stderrlog --config $IPSEC_CONFS/ipsec.conf --nofork $PLUTO_OPTIONS`'
+ExecStop=/usr/bin/sh -c 'eval `$IPSEC_SBINDIR/ipsec whack --shutdown`'
+PostExecStop=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec _stackmanager stop`'
+ExecReload=/usr/bin/sh -c 'eval `$IPSEC_SBINDIR/ipsec whack --rereadall`'
 
 [Install]
 WantedBy=multi-user.target
