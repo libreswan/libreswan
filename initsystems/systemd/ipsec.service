@@ -20,7 +20,7 @@ ExecStartPre=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec addconn --config $IPSEC_C
 ExecStartPre=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec _stackmanager start`'
 ExecStart=/usr/bin/sh -c 'eval `$IPSEC_EXECDIR/pluto --stderrlog --config $IPSEC_CONFS/ipsec.conf --nofork $PLUTO_OPTIONS`'
 ExecStop=/usr/bin/sh -c 'eval `$IPSEC_SBINDIR/ipsec whack --shutdown`'
-PostExecStop=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec _stackmanager stop`'
+ExecStopPost=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec _stackmanager stop`'
 ExecReload=/usr/bin/sh -c 'eval `$IPSEC_SBINDIR/ipsec whack --rereadall`'
 
 [Install]

@@ -18,8 +18,8 @@ EnvironmentFile=-/etc/sysconfig/pluto
 ExecStartPre=/usr/bin/sh -c 'eval `ipsec addconn --config /etc/ipsec.conf --checkconfig`'
 ExecStart=/usr/libexec/ipsec/pluto --config /etc/ipsec.conf --nofork $PLUTO_OPTIONS
 ExecStop=/usr/sbin/ipsec whack --shutdown 
-PostExecStop=/usr/sbin/ip xfrm policy flush 
-PostExecStop=/usr/sbin/ip xfrm state flush
+ExecStopPost=/usr/sbin/ip xfrm policy flush 
+ExecStopPost=/usr/sbin/ip xfrm state flush
 ExecReload=/usr/sbin/ipsec whack --rereadall
 
 [Install]
