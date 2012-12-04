@@ -2564,7 +2564,7 @@ refine_host_connection(const struct state *st, const struct id *peer_id
 	     *  leading to no suitable connection found for:
 	     *  : RSA "victor.vouters.dyndns.org - Vouters Illimited"
 	     *  when Shrew Client operates in Mutual RSA + XAuth mode.
-	     */-
+	     */
 	    psk = get_preshared_secret(c);
 	    /* It should be virtually impossible to fail to find PSK:
 	     * we just used it to decode the current message!
