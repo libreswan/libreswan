@@ -1,5 +1,6 @@
 /* FreeS/WAN interfaces management (interfaces.h)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,10 +16,7 @@
 #ifndef _STARTER_INTERFACES_H_
 #define _STARTER_INTERFACES_H_
 
-void starter_ifaces_init (void);
 int starter_iface_find(char *iface, int af, ip_address *dst, ip_address *nh);
-int starter_ifaces_load (char **ifaces, unsigned int omtu, int nat_t);
-void starter_ifaces_clear (void);
 
 #endif /* _STARTER_INTERFACES_H_ */
 

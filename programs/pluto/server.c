@@ -587,7 +587,8 @@ call_server(void)
 	if (access(addconn_path, X_OK) < 0)
 		exit_log_errno((e, "%s missing or not executable", addconn_path));
 
-	char *newargv[] = {  "addconn", "--autoall" };
+	char *newargv[] = { "addconn", "--autoall", NULL };
+	char *newenv[] = { NULL };
 #ifdef HAVE_NO_FORK
 	pid_t addconn_pid = vfork(); /* for better, for worse, in sickness and health..... */
 #else
@@ -596,7 +597,8 @@ call_server(void)
 	if (addconn_pid == 0) {
 		/* child */
 		sleep(3);
-		execve(addconn_path, newargv, NULL);
+		DBG(DBG_CONTROLMORE,DBG_log("calling addconn helper using execve"));
+		execve(addconn_path, newargv, newenv);
 		_exit(42);
 	}
 	/* parent continues */

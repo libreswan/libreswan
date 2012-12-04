@@ -35,7 +35,6 @@
 #include "ipsecconf/parser.h"
 #include "ipsecconf/files.h"
 #include "ipsecconf/confread.h"
-#include "ipsecconf/interfaces.h"
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/oeconns.h"
 

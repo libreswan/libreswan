@@ -281,17 +281,19 @@ find_raw_ifaces4(void)
 	const struct sockaddr_in *rs = (struct sockaddr_in *) &buf[j].ifr_addr;
 	struct ifreq auxinfo;
 
-	/* ignore all but AF_INET interfaces */
-	if (rs->sin_family != AF_INET)
-	    continue;	/* not interesting */
-
 	/* build a NUL-terminated copy of the rname field */
 	memcpy(ri.name, buf[j].ifr_name, IFNAMSIZ);
 	ri.name[IFNAMSIZ] = '\0';
 	DBG(DBG_CONTROLMORE, DBG_log("Inspecting interface %s ", ri.name));
 
-	/* ignore if our interface names were specified, and this isn't one */
-	if (pluto_ifn_roof != 0)
+	/* ignore all but AF_INET interfaces */
+	if (rs->sin_family != AF_INET) {
+	    DBG(DBG_CONTROLMORE, DBG_log("Ignoring non AF_INET interface %s ", ri.name));
+	    continue;	/* not interesting */
+	}
+
+	/* ignore if our interface names were specified, and this isn't one - for KLIPS/MAST only */
+	if ((pluto_ifn_roof != 0) && ((kern_interface == USE_MASTKLIPS) || (kern_interface == USE_KLIPS)))
 	{
 	    int i;
 	    DBG(DBG_CONTROLMORE, DBG_log("interfaces= specified, applying filter"));
@@ -307,7 +309,6 @@ find_raw_ifaces4(void)
 		continue;	/* not found -- skip */
 		}
 	}
-
 	/* Find out stuff about this interface.  See netdevice(7). */
 	zero(&auxinfo);	/* paranoia */
 	memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ);
@@ -317,13 +318,13 @@ find_raw_ifaces4(void)
 		, ri.name));
 	if (!(auxinfo.ifr_flags & IFF_UP))
 	   {
-		DBG(DBG_CONTROL, DBG_log("Ignored interface %s - it is not up"
+		DBG(DBG_CONTROLMORE, DBG_log("Ignored interface %s - it is not up"
 	    , ri.name));
 	    continue;	/* ignore an interface that isn't UP */
 	   }
         if (auxinfo.ifr_flags & IFF_SLAVE)
 	   {
-		DBG(DBG_CONTROL, DBG_log("Ignored interface %s - it is a slave interface"
+		DBG(DBG_CONTROLMORE, DBG_log("Ignored interface %s - it is a slave interface"
 	    , ri.name));
             continue;   /* ignore slave interfaces; they share IPs with their master */
 	   }
@@ -331,7 +332,7 @@ find_raw_ifaces4(void)
 	/* ignore unconfigured interfaces */
 	if (rs->sin_addr.s_addr == 0)
 	   {
-		DBG(DBG_CONTROL, DBG_log("Ignored interface %s - it is unconfigured"
+		DBG(DBG_CONTROLMORE, DBG_log("Ignored interface %s - it is unconfigured"
 	    , ri.name));
 	    continue;
 	   }
@@ -339,7 +340,7 @@ find_raw_ifaces4(void)
 	happy(initaddr((const void *)&rs->sin_addr, sizeof(struct in_addr)
 	    , AF_INET, &ri.addr));
 
-	DBG(DBG_CONTROL, DBG_log("found %s with address %s"
+	DBG(DBG_CONTROLMORE, DBG_log("found %s with address %s"
 	    , ri.name, ip_str(&ri.addr)));
 	ri.next = rifaces;
 	rifaces = clone_thing(ri, "struct raw_iface");

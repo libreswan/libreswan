@@ -42,10 +42,6 @@ ifeq ($(USE_LABELED_IPSEC),true)
 CFLAGS+=-DHAVE_LABELED_IPSEC
 endif
 
-ifeq ($(USE_KLIPS),true)
-SRCS+=virtif.c
-endif
-
 OBJS=${SRCS:.c=.o} 
 
 include ${srcdir}../Makefile.library
