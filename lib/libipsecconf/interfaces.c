@@ -51,45 +51,6 @@ char *starter_find_physical_iface(int sock, char *iface)
 			return _if;
 		}
 	}
-	else {
-		/**
-		 * If there is a file named /var/run/pluto/dynip/<iface>, look if we
-		 * can get interface name from there (IP_PHYS)
-		 */
-		b = (char *)malloc(strlen(DYNIP_DIR)+strlen(iface)+10);
-		if (b) {
-			sprintf(b, "%s/%s", DYNIP_DIR, iface);
-			f = fopen(b, "r");
-			free(b);
-			if (f) {
-				memset(_if, 0, sizeof(_if));
-				memset(line, 0, sizeof(line));
-				while (fgets(line, sizeof(line)-1, f)!=0) {
-					if ((strncmp(line,"IP_PHYS=\"", 9)==0) &&
-						(line[strlen(line)-2]=='"') &&
-						(line[strlen(line)-1]=='\n')) {
-						strncpy(_if, line+9, MIN(strlen(line)-11,IFNAMSIZ));
-						break;
-					}
-					else if ((strncmp(line,"IP_PHYS=", 8)==0) &&
-						(line[8]!='"') &&
-						(line[strlen(line)-1]=='\n')) {
-						strncpy(_if, line+8, MIN(strlen(line)-9,IFNAMSIZ));
-						break;
-					}
-				}
-				fclose(f);
-				if (*_if) {
-					strncpy(req.ifr_name, _if, IFNAMSIZ);
-					if (ioctl(sock, SIOCGIFFLAGS, &req)==0) {
-						if (req.ifr_flags & IFF_UP) {
-							return _if;
-						}
-					}
-				}
-			}
-		}
-	}
 	return NULL;
 }
 
