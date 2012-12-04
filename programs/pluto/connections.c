@@ -3563,22 +3563,20 @@ eclipsed(struct connection *c, struct spd_route **esrp)
 
     ue = NULL;
 
-#warning FIXME eclipsed() will always return NULL
-    /* This while is never true as ue is NULL.
-     * The flow will never go inside while.
-     * This function will return NULL.
+    /* This function was changed in freeswan 2.02 and since
+     * then has never worked because it always returned NULL.
+     * It should be caught by the testing/pluto/co-terminal test cases
      */
 
-    while (sr1 != NULL && ue != NULL)
-    {
-	for (ue = connections; ue != NULL; ue = ue->ac_next)
-	{
-	    struct spd_route *srue = &ue->spd;
+    if (sr1 == NULL) return NULL;
 
-	    while (srue != NULL
-	    && srue->routing == RT_ROUTED_ECLIPSED
-	    && !(samesubnet(&sr1->this.client, &srue->this.client)
-		 && samesubnet(&sr1->that.client, &srue->that.client)))
+    for (ue = connections; ue != NULL; ue = ue->ac_next)
+    {
+	struct spd_route *srue = &ue->spd;
+
+	while (srue != NULL && srue->routing == RT_ROUTED_ECLIPSED
+	   && !(samesubnet(&sr1->this.client, &srue->this.client)
+		&& samesubnet(&sr1->that.client, &srue->that.client)))
 	    {
 		srue = srue->next;
 	    }
@@ -3587,9 +3585,8 @@ eclipsed(struct connection *c, struct spd_route **esrp)
 		*esrp = srue;
 		break;
 	    }
-	}
-    }
-    return ue;
+     }
+     return ue;
 }
 
 /*
