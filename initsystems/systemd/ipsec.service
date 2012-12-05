@@ -16,13 +16,13 @@ Environment=IPSEC_EXECDIR=/usr/libexec/ipsec
 Environment=IPSECsyslog=daemon.error 
 #PIDFile=/var/run/pluto/pluto.pid
 #
-ExecStartPre=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec addconn --config $IPSEC_CONFS/ipsec.conf --checkconfig`'
-ExecStartPre=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec _stackmanager start`'
+ExecStartPre=/usr/bin/sh -c 'eval `$IPSEC_SBINDIR/ipsec addconn --config $IPSEC_CONFS/ipsec.conf --checkconfig`'
+ExecStartPre=/usr/bin/sh -c 'eval `$IPSEC_SBINDIR/ipsec _stackmanager start`'
 ExecStart=/usr/bin/sh -c 'eval `$IPSEC_EXECDIR/pluto --stderrlog --config $IPSEC_CONFS/ipsec.conf --nofork $PLUTO_OPTIONS`'
 ExecStop=/usr/bin/sh -c 'eval `$IPSEC_SBINDIR/ipsec whack --shutdown`'
-ExecStopPost=/usr/bin/sh -c 'eval `IPSEC_SBINDIR/ipsec _stackmanager stop`'
+ExecStopPost=/usr/bin/sh -c 'eval `$IPSEC_SBINDIR/ipsec _stackmanager stop`'
 ExecReload=/usr/bin/sh -c 'eval `$IPSEC_SBINDIR/ipsec whack --rereadall`'
 
 [Install]
 WantedBy=multi-user.target
-Alias=syslog.service
+Alias=ipsec.service
