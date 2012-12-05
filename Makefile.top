@@ -27,7 +27,24 @@ ERRCHECK=${MAKEUTILS}/errcheck
 KVUTIL=${MAKEUTILS}/kernelversion
 KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
 
-SUBDIRS?=lib programs testing
+SUBDIRS?=lib programs testing packaging
+
+TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):" \
+			-e "s:@IPSEC_DIR@:$(FINALBINDIR):" \
+			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):" \
+			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):" \
+			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):" \
+			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):" \
+			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
+			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):" \
+			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):" \
+			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):" \
+			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):" \
+			-e "s:@MODULE_GOO_LIST@:$(MODULE_GOO_LIST):" \
+			-e "s:@IPSEC_CONFS@:$(FINALCONFDIR):" \
+			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):" \
+			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):" \
+                        -e "s:@MODPROBE@:$(MODPROBE):" \
 
 clean::
 	-(cd ${LIBRESWANSRCDIR} && $(MAKE) modclean && $(MAKE) mod26clean)
