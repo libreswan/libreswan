@@ -7,20 +7,20 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-EnvironmentFile=-/etc/sysconfig/pluto
-#Environment=IPSEC_LIBDIR=/usr/libexec/ipsec 
-#Environment=IPSEC_SBINDIR=/usr/sbin 
-#Environment=IPSEC_CONFS=/etc 
-#Environment=IPSEC_EXECDIR=/usr/libexec/ipsec
+EnvironmentFile=-@FINALCONFDIR@/sysconfig/pluto
+#Environment=IPSEC_LIBDIR=@FINALLIBEXECDIR@
+#Environment=IPSEC_SBINDIR=@FINALSBINDIR@
+#Environment=IPSEC_CONFS=@FINALCONFDIR@
+#Environment=IPSEC_EXECDIR=@FINALLIBEXECDIR@/ipsec
 #Environment=IPSECsyslog=daemon.error 
-#PIDFile=/var/run/pluto/pluto.pid
+#PIDFile=@FINALVARDIR@/run/pluto/pluto.pid
 #
-ExecStartPre=/usr/bin/sh -c 'eval `ipsec addconn --config /etc/ipsec.conf --checkconfig`'
-ExecStart=/usr/libexec/ipsec/pluto --config /etc/ipsec.conf --nofork $PLUTO_OPTIONS
-ExecStop=/usr/sbin/ipsec whack --shutdown 
-ExecStopPost=/usr/sbin/ip xfrm policy flush 
-ExecStopPost=/usr/sbin/ip xfrm state flush
-ExecReload=/usr/sbin/ipsec whack --rereadall
+ExecStartPre=@FINALBINDIR@/sh -c 'eval `ipsec addconn --config @FINALCONFDIR@/ipsec.conf --checkconfig`'
+ExecStart=@FINALLIBEXECDIR@/ipsec/pluto --config @FINALCONFDIR@/ipsec.conf --nofork $PLUTO_OPTIONS
+ExecStop=@FINALSBINDIR@/ipsec whack --shutdown 
+ExecStopPost=@FINALSBINDIR@/ip xfrm policy flush 
+ExecStopPost=@FINALSBINDIR@/ip xfrm state flush
+ExecReload=@FINALSBINDIR@/ipsec whack --rereadall
 
 [Install]
 WantedBy=multi-user.target
