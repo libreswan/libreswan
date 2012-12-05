@@ -1,3 +1,3 @@
 #!/bin/sh
 
-make USE_OBJDIR=true programs
+make USE_OBJDIR=true "$@" programs
