@@ -1,12 +1,6 @@
 
 KLIPSSRC=${LIBRESWANSRCDIR}/linux/net/ipsec
 
-# the following is a list of symbols which will be used to construct
-# the module goo to identify which module goes with each kernel.
-MODULE_GOO_LIST=irq_stat netif_rx register_sysctl_table send_sig
-MODULE_GOO_LIST+=kmalloc __kfree_skb __ip_select_ident alloc_skb
-MODULE_GOO_LIST+=icmp_send ip_fragment sock_register 
-
 MODULE_DEF_INCLUDE=${LIBRESWANSRCDIR}/packaging/linus/config-all.h
 MODULE_DEFCONFIG?=${KLIPSSRC}/defconfig
 MOD24BUILDDIR?=${LIBRESWANSRCDIR}/modobj24
