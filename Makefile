@@ -52,7 +52,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 
 # declaration for make's benefit
 .PHONY:	def insert kpatch patches _patches _patches2.4 \
-	klipsdefaults programs install clean distclean \
+	klipsdefaults programs man config install clean distclean \
 	precheck verset confcheck kernel \
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
@@ -159,7 +159,7 @@ klipsdefaults:
 # programs
 
 ifeq ($(strip $(OBJDIR)),.) # If OBJDIR is LIBRESWANSRCDIR (ie dot) then the simple case:
-programs install clean:: 
+programs man config install clean:: 
 	@for d in $(SUBDIRS) ; \
 	do \
 		(cd $$d && $(MAKE) srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
@@ -169,7 +169,7 @@ ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
 
-programs install clean:: ${OBJDIR}/Makefile
+programs man config install clean:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
 	(cd ${ABSOBJDIR} && OBJDIRTOP=${ABSOBJDIR} OBJDIR=${ABSOBJDIR} ${MAKE} $@ )
 

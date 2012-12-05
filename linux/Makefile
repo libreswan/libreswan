@@ -20,7 +20,7 @@ def:
 	@echo "Please read doc/intro.html or INSTALL before running make"
 	@false
 
-cleanall distclean mostlyclean realclean install programs checkprograms check clean spotless modules install_file_list:
+cleanall distclean mostlyclean realclean install programs config man checkprograms check clean spotless modules install_file_list:
 	@true
 
 #	@for d in $(SUBDIRS); \

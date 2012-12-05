@@ -44,7 +44,7 @@
 SHELL=/bin/bash
 export SHELL
 
-.PHONY:	programs checkprograms clean
+.PHONY:	programs man config checkprograms clean
 
 # supply kernel-configuration ARCH defaults
 ifeq ($(ARCH),)

@@ -30,7 +30,7 @@ def:
 
 # programs
 
-prerequisites cleanall distclean mostlyclean realclean install programs checkprograms check clean spotless install_file_list:
+prerequisites cleanall distclean mostlyclean realclean install programs config man checkprograms check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
 		 ${MAKE} -C $$d srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ;\

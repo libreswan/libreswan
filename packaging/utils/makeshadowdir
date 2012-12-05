@@ -26,7 +26,7 @@ else
 	echo 'LIBRESWANSRCDIR='${srcdir}         >>${OBJDIRTOP}/Makefile
 	echo 'include ${srcdir}Makefile.top'   >>${OBJDIRTOP}/Makefile
 
-	echo 'programs install clean checkprograms:: ' >>${OBJDIRTOP}/Makefile
+	echo 'programs config man install clean checkprograms:: ' >>${OBJDIRTOP}/Makefile
 	echo '	@for d in $(SUBDIRS) ; \'                                >>${OBJDIRTOP}/Makefile
 	echo '	do \'                                                    >>${OBJDIRTOP}/Makefile
 	echo '		(cd $$d && $(MAKE) LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \'  >>${OBJDIRTOP}/Makefile

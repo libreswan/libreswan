@@ -93,17 +93,22 @@ SOURCEDIR=${PROGRAM}
 endif
 
 # the list of stuff to be built for "make programs"
-PROGRAMSLIST=${PROGRAM} $(CONFFILES) $(EXTRA8MAN) $(EXTRA5MAN) $(EXTRA5PROC) $(CONFDFILES)
+MANLIST=$(EXTRA8MAN) $(EXTRA5MAN) $(EXTRA5PROC) 
+CONFIGLIST=$(CONFFILES) $(CONFDFILES)
+PROGRAMSLIST=${PROGRAM} $(MANLIST) $(CONFIGLIST)
 
 # we can't do tests with two conditions, but we can concatenate the strings
 SHOULDWERESTART=${USE_OBJDIR}$(wildcard ../Makefile.program)
 ifeq ($(SHOULDWERESTART),true../Makefile.program)
-all programs clean install:
+all programs config man clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/${SOURCEDIR} && $(MAKE) $@
 else
 all: $(PROGRAMSLIST)
 programs: all
+man: $(MANLIST)
+config: $(CONFIGLIST)
 clean:	cleanall
+
 install: doinstall
 
 endif

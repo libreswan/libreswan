@@ -48,7 +48,7 @@ def:
 
 # programs
 
-cleanall distclean mostlyclean realclean install programs checkprograms clean spotless install_file_list:
+cleanall distclean mostlyclean realclean install programs man config checkprograms clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
 		(cd $$d && $(MAKE) srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\

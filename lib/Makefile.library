@@ -57,7 +57,7 @@ MANS=
 # we can't do tests with two conditions, but we can concatenate the strings
 SHOULDWERESTART=${USE_OBJDIR}$(wildcard ${ONEFILE})
 ifeq ($(SHOULDWERESTART),true${ONEFILE})
-all programs clean install:
+all programs man config clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/lib${LIBRARY} && ${MAKE} $@
 else
 all:	$(LIB) 
