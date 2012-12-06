@@ -2671,7 +2671,7 @@ refine_host_connection(const struct state *st, const struct id *peer_id
 		    if (dpsk == NULL)
 			continue;	/* no secret */
 
-		    if (psk != dpsk)
+		    if (initiator && psk != dpsk)
 			if (psk->len != dpsk->len
 			|| memcmp(psk->ptr, dpsk->ptr, psk->len) != 0)
 			    continue;	/* different secret */

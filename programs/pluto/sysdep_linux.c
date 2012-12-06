@@ -299,7 +299,7 @@ find_raw_ifaces4(void)
 	    DBG(DBG_CONTROLMORE, DBG_log("interfaces= specified, applying filter"));
 
 	    for (i = 0; i != pluto_ifn_roof; i++)
-		if (streq(ri.name, pluto_ifn[i])) {
+		if (streq(ri.name, pluto_ifn[i]) || streq(pluto_ifn[i],"%defaultroute")) {
 		    DBG(DBG_CONTROLMORE, DBG_log("interface name '%s' found in interfaces= line", ri.name));
 		    break;
 		}
