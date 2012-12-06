@@ -991,7 +991,6 @@ main(int argc, char **argv)
 				        IPSECLIBDIR"/barf",
 				        IPSECLIBDIR"/eroute",
   				        IPSECLIBDIR"/ikeping",
-  				        IPSECLIBDIR"/initnss",
 				        IPSECLIBDIR"/readwriteconf",
 					IPSECLIBDIR"/_keycensor",
 					IPSECLIBDIR"/klipsdebug",
