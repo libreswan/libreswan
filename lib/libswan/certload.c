@@ -400,8 +400,21 @@ load_authcerts_from_nss(const char *type, u_char auth_flags)
     CERTCertList *list = NULL;
     CERTCertListNode *node;
 
+/*
+ * Philippe Vouters comment:
+ *      This needs to checked : it happens that with libnss coming from:
+ *      nss-3.13.5-1.fc17.i686
+ *      PK11CertListCA has the same behaviour than PK11CertListCAUnique
+ *      Tests must be performed with PK11CertListAll and
+ *      su -c 'ipsec auto --listall'
+ *      to check whether the ipsec auto --listall display matches the one at:
+ *      http://vouters.dyndns.org/tima/Linux-Shrew-VPN-Client-Setting_an_Intranet_VPN_with_Windows_Seven-Part_2.html
+ */ 
+#if 0
     list = PK11_ListCerts(PK11CertListCA,  lsw_return_nss_password_file_info());
-
+#else
+    list = PK11_ListCerts(PK11CertListAll,  lsw_return_nss_password_file_info());
+#endif
     if(list) {
 		for (node = CERT_LIST_HEAD(list); !CERT_LIST_END(node, list);
 			node = CERT_LIST_NEXT(node)) {
