@@ -589,7 +589,9 @@ enum_names *ipsec_attr_val_descs[] = {
 	&sa_lifetime_names,	/* SA_LIFE_TYPE */
 	NULL,			/* SA_LIFE_DURATION */
 	&oakley_group_names,	/* GROUP_DESCRIPTION */
+#ifdef NAT_TRAVERSAL
 	&enc_mode_names,		/* ENCAPSULATION_MODE */
+#endif
 	&auth_alg_names,		/* AUTH_ALGORITHM */
 	NULL,			/* KEY_LENGTH */
 	NULL,			/* KEY_ROUNDS */

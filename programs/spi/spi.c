@@ -401,7 +401,7 @@ static struct option const longopts[] =
 	{0, 0, 0, 0}
 };
 
-
+#ifdef NAT_TRAVERSAL
 static bool
 pfkey_build(int error
 	    , const char *description
@@ -420,6 +420,7 @@ pfkey_build(int error
 	return FALSE;
     }
 }
+#endif
 
 int decode_esp(char *algname)
 {
@@ -520,8 +521,10 @@ main(int argc, char *argv[])
 	ip_address pfkey_ident_s_ska;
 	ip_address pfkey_ident_d_ska;
 #endif
+#ifdef NAT_TRAVERSAL
 	u_int32_t natt;
 	u_int16_t sport, dport;
+#endif
 	uint32_t life[life_maxsever][life_maxtype];
 	char *life_opt[life_maxsever][life_maxtype];
 	struct stat sts;
@@ -529,9 +532,11 @@ main(int argc, char *argv[])
 	
 	progname = argv[0];
 	mypid = getpid();
+#ifdef NAT_TRAVERSAL
 	natt = 0;
 	sport=0;
 	dport=0;
+#endif
 
 	tool_init_log();
 
@@ -993,7 +998,7 @@ main(int argc, char *argv[])
 			}
 			break;
 
-#ifdef NAT_TRAVERSAL		  
+#ifdef NAT_TRAVERSAL
 		case 'F':  /* src port */
 			sport = strtoul(optarg, &endptr, 0);
 			if(!(endptr == optarg + strlen(optarg))) {
