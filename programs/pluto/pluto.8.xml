@@ -970,7 +970,8 @@
       <option>--use-nostack</option>. The
       latter is meant for testing only - no actual IPsec connections will be
       loaded into the kernel. The option <option>--use-auto</option> has
-      been obsoleted.
+      been obsoleted. On startup, pluto might also read the  <option>protostack=</option> option to select the IPsec stack to use if  <option>--config /etc/ipsec.conf</option> is given as argument to pluto. If both  <option>--use-XXX</option> and  <option>--config /etc/ipsec.conf</option> are specified, the last
+      command line argument specified takes precedence.
       </para>
 
       <para>Pluto supports the NAT-Traversal drafts and the final standard,
