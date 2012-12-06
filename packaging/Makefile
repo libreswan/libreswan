@@ -2,9 +2,6 @@ LIBRESWANSRCDIR?=$(shell cd ..; pwd)
 srcdir?=${LIBRESWANSRCDIR}/packaging/
 SUBDIRS=$(shell $(SHELL) $(srcdir)/utils/lswan_detect.sh init)
 
-SYSTEMDFILES=fedora/ipsec.service
-INITFILES=rhel/ipsec.init
-
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
 
