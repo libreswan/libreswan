@@ -562,6 +562,27 @@ export LIBLSWCRYPTO
 
 #KERNELBUILDMFLAGS=--debug=biv V=1 
 
+# how to do variable substitution in sed-transformed files
+TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):" \
+			-e "s:@IPSEC_DIR@:$(FINALBINDIR):" \
+			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):" \
+			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):" \
+			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):" \
+			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):" \
+			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):" \
+			-e "s:@FINALBINDIR@:$(FINALBINDIR):" \
+			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):" \
+			-e "s:@FINALVARDIR@:$(FINALVARDIR):" \
+			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
+			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):" \
+			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):" \
+			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):" \
+			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):" \
+			-e "s:@IPSEC_CONFS@:$(FINALCONFDIR):" \
+			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):" \
+			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):" \
+                        -e "s:@MODPROBE@:$(MODPROBE):" \
+
 # for emacs
 #
 # Local Variables: ;;;
