@@ -50,12 +50,12 @@
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
 # Source function library.
-. @FINALCONFDIR@/init.d/functions
+. /etc/init.d/functions
 
 # Check that networking is up.
 [ "${NETWORKING}" = "no" ] && exit 6
 
-if [ ! -f @FINALCONFDIR@/sysconfig/network ]; then
+if [ ! -f /etc/sysconfig/network ]; then
     exit 6
 fi
 
@@ -87,11 +87,11 @@ LIBRESWAN_RESOLV_CONF=@FINALVARDIR@/run/pluto/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=/etc/resolv.conf
 
 # there is some confusion over the name - just do both
-if [ -f @FINALCONFDIR@/sysconfig/ipsec ]; then
-     . @FINALCONFDIR@/sysconfig/ipsec
+if [ -f /etc/sysconfig/ipsec ]; then
+     . /etc/sysconfig/ipsec
 fi
-if [ -f @FINALCONFDIR@/sysconfig/pluto ]; then
-     . @FINALCONFDIR@/sysconfig/pluto
+if [ -f /etc/sysconfig/pluto ]; then
+     . /etc/sysconfig/pluto
 fi
 
 # misc setup
@@ -210,7 +210,7 @@ restart() {
 
 condrestart() {
     verify_config
-    @FINALCONFDIR@/init.d/ipsec status || exit 0
+    /etc/init.d/ipsec status || exit 0
     restart
 }
 
