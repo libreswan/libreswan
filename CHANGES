@@ -60,6 +60,7 @@ v3.0 (unreleased)
 * whack: fix handling --sha2_truncbug and --nm_configured options [Paul]
 * whack: don't try to write to closed stdout tty [Philippe]
 * DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
+* DPD: We did not send DPD VID in aggressive mode with NAT-T disabled
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
 * PAM: move pam out of contrib, and install config when HAVE_XAUTHPAM [Paul]
 * IKEv1: In aggresive mode: allow ISAKMP_NEXT_CR ISAKMP_NEXT_CERT as
