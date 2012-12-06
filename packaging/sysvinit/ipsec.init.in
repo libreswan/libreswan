@@ -84,7 +84,7 @@ kamepfkey=/proc/net/pfkey
 
 #@FINALCONFDIR@/resolv.conf related paths
 LIBRESWAN_RESOLV_CONF=@FINALVARDIR@/run/pluto/libreswan-resolv-conf-backup
-ORIG_RESOLV_CONF=@FINALCONFDIR@/resolv.conf
+ORIG_RESOLV_CONF=/etc/resolv.conf
 
 # there is some confusion over the name - just do both
 if [ -f @FINALCONFDIR@/sysconfig/ipsec ]; then
