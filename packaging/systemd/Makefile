@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/packaging/fedora/
+srcdir?=${LIBRESWANSRCDIR}/packaging/systemd/
 
 SYSTEMDFILES=ipsec.service
 SUBDIRS=

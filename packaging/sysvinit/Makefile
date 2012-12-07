@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/packaging/fedora/
+srcdir?=${LIBRESWANSRCDIR}/packaging/sysvinit/
 
 INITDFILES=ipsec.init
 SUBDIRS=
