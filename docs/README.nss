@@ -13,12 +13,6 @@ anything else) never comes out of NSS database. Libreswan with NSS supports
 IKEV1, IKEv2, authentication using PSK, Raw RSA Sig key, and Digital Certs.
 
 
-How to enable NSS crypto library with Libreswan
------------------------------------------------
-Change the flag USE_LIBNSS in libreswan/Makefile.inc to "true" before
-compilation.
-
-
 Basic NSS tools required
 -------------------------
 certutil: To create/modify/delete NSS db, certificates etc. More description
@@ -39,6 +33,7 @@ You must create a NSS db before running pluto with NSS enabled. NSS db can be
 created as follows.
 
 certutil -N -d <path-to-ipsec.d- dir>/ipsec.d
+(or use "ipsec initnss")
 
 By default the path to ipsec.d is set to /etc/ipsec.d. 
 

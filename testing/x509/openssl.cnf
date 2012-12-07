@@ -131,7 +131,7 @@ localityName			= Locality Name (eg, city)
 localityName_default		= Toronto
 
 0.organizationName		= Organization Name (eg, company)
-0.organizationName_default	= Xelerance
+0.organizationName_default	= Libreswan
 
 # we can do this but it is not needed normally :-)
 #1.organizationName		= Second Organization Name (eg, company)
@@ -184,10 +184,10 @@ crlDistributionPoints= @crl_dp
 
 #tmp for OSX
 #subjectAltName=IP:209.112.44.56
-#subjectAltName=DNS:host.xelerance.com
+#subjectAltName=DNS:host.libreswan.org
 #subjectAltName=email:copy
 #@XXXsubjectAltName=IP:XXX.XXX.XXX.XXX
-#subjectAltName=DNS:aivd.xelerance.com
+#subjectAltName=DNS:gw.libreswan.org
 
 # This is typical in keyUsage for a client certificate.
 #paul changed 2005/06/09. was commented out:
@@ -274,6 +274,6 @@ authorityKeyIdentifier=keyid:always,issuer:always
 
 [ crl_dp ]
 
-	URI.1="http://certs.xelerance.com/revoked.crl"
-	URI.2="ldap://certs.xelerance.com/o=Xelerance, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)"
+	URI.1="http://certs.testing.libreswan.org/revoked.crl"
+	URI.2="ldap://certs.testing.libreswan.org/o=Libreswan, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)"
 

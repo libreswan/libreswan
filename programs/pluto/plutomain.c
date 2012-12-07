@@ -799,7 +799,7 @@ main(int argc, char **argv)
 	    nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
 	    keep_alive = cfg->setup.options[KBF_KEEPALIVE];
 	    force_keepalive = cfg->setup.options[KBF_FORCE_KEEPALIVE];
-	    nat_t_spf = cfg->setup.options[KBF_DISABLEPORTFLOATING];
+	    nat_t_spf = !cfg->setup.options[KBF_DISABLEPORTFLOATING];
 #endif
 	    set_cfg_string(&virtual_private,
 			   cfg->setup.strings[KSF_VIRTUALPRIVATE]);
@@ -991,7 +991,6 @@ main(int argc, char **argv)
 				        IPSECLIBDIR"/barf",
 				        IPSECLIBDIR"/eroute",
   				        IPSECLIBDIR"/ikeping",
-  				        IPSECLIBDIR"/initnss",
 				        IPSECLIBDIR"/readwriteconf",
 					IPSECLIBDIR"/_keycensor",
 					IPSECLIBDIR"/klipsdebug",

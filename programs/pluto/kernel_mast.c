@@ -49,6 +49,7 @@
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
 #endif
+#include "server.h"
 
 #include "alg_info.h"
 #include "kernel_alg.h"
