@@ -599,3 +599,13 @@ deb:
 release:
 	packaging/utils/makerelease 
 
+install::
+	@if test -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
+	if /usr/sbin/selinuxenabled ; then \
+		echo "************************** WARNING ***********************************" ; \
+		echo "selinux is enabled and the prefix path is not /usr." ; \
+		echo "This will cause software failures and selinux policies need to be updated." ; \
+			echo "**********************************************************************" ; \
+	fi \
+	fi \
+
