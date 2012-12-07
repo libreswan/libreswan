@@ -402,19 +402,34 @@ load_authcerts_from_nss(const char *type, u_char auth_flags)
 
 /*
  * Philippe Vouters comment:
- *      This needs to checked : it happens that with libnss coming from:
- *      nss-3.13.5-1.fc17.i686
- *      PK11CertListCA has the same behaviour than PK11CertListCAUnique
- *      Tests must be performed with PK11CertListAll and
- *      su -c 'ipsec auto --listall'
- *      to check whether the ipsec auto --listall display matches the one at:
- *      http://vouters.dyndns.org/tima/Linux-Shrew-VPN-Client-Setting_an_Intranet_VPN_with_Windows_Seven-Part_2.html
+ *    Revert back my change. It finally happens that PK11CertListCA has the
+ *    same behaviour than PK11CertListCAUnique because of a bug inside gcc when
+ *    the optimization level is set to -O3 with the following gcc version:
+ *
+ *    [philippe@victor libreswan]$ gcc -v
+ *    Using built-in specs.
+ *    COLLECT_GCC=gcc
+ *    COLLECT_LTO_WRAPPER=/usr/libexec/gcc/i686-redhat-linux/4.7.2/lto-wrapper
+ *    Target: i686-redhat-linux
+ *    Configured with: ../configure --prefix=/usr --mandir=/usr/share/man 
+ *    --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla 
+ *    --enable-bootstrap --enable-shared --enable-threads=posix --enable-checking=release 
+ *    --disable-build-with-cxx --disable-build-poststage1-with-cxx 
+ *    --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions 
+ *    --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu 
+ *    --enable-languages=c,c++,objc,obj-c++,java,fortran,ada,go,lto --enable-plugin 
+ *    --enable-initfini-array --enable-java-awt=gtk --disable-dssi 
+ *    --with-java-home=/usr/lib/jvm/java-1.5.0-gcj-1.5.0.0/jre 
+ *    --enable-libgcj-multifile --enable-java-maintainer-mode 
+ *    --with-ecj-jar=/usr/share/java/eclipse-ecj.jar 
+ *    --disable-libjava-multilib --with-ppl --with-cloog --with-tune=generic 
+ *    --with-arch=i686 --build=i686-redhat-linux
+ *    Thread model: posix
+ *    gcc version 4.7.2 20120921 (Red Hat 4.7.2-2) (GCC)
+ *    [philippe@victor libreswan]$
+ *
  */ 
-#if 0
     list = PK11_ListCerts(PK11CertListCA,  lsw_return_nss_password_file_info());
-#else
-    list = PK11_ListCerts(PK11CertListAll,  lsw_return_nss_password_file_info());
-#endif
     if(list) {
 		for (node = CERT_LIST_HEAD(list); !CERT_LIST_END(node, list);
 			node = CERT_LIST_NEXT(node)) {
