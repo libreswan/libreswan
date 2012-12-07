@@ -12,11 +12,15 @@ programs:     systemdfiles
 systemdfiles: $(SYSTEMDFILES)
 install:      programs doinstall
 
-doinstall: programs
+doinstall: programs systemdservice oldinitdcheck
+
+systemdservice:
 	@mkdir -p $(SYSTEMDDIR)
 	@for i in $(SYSTEMDFILES) ; do \
 		$(INSTALL) $$i $(SYSTEMDDIR);  \
 	done
+
+oldinitdcheck:
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
 		if egrep -i '(openswan|libreswan)' $(DESTDIR)/etc/init.d/ipsec* > /dev/null 2>&1 ; then \
 			echo "WARNING: removing older SYSV style init files" ; \
