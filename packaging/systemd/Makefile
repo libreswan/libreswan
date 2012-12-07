@@ -17,7 +17,17 @@ doinstall: programs
 	@for i in $(SYSTEMDFILES) ; do \
 		$(INSTALL) $$i $(SYSTEMDDIR);  \
 	done
-
+	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
+		if egrep -i '(openswan|libreswan)' $(DESTDIR)/etc/init.d/ipsec* > /dev/null 2>&1 ; then \
+			echo "WARNING: removing older SYSV style init files" ; \
+			echo "removing: " $(DESTDIR)/etc/init.d/ipsec* $(DESTDIR)/etc/rc*.d/[KS][0-9][0-9]ipsec* ; \
+			rm -f $(DESTDIR)/etc/init.d/ipsec* $(DESTDIR)/etc/rc*.d/[KS][0-9][0-9]ipsec* ; \
+		else \
+			echo "************************** WARNING ***********************************" ; \
+			echo "old " $(DESTDIR)/etc/init.d/ipsec* " files were found; these should be removed" ; \
+			echo "**********************************************************************" ; \
+		fi ; \
+	fi
 
 %: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@
