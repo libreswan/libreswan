@@ -4,6 +4,7 @@ srcdir?=${LIBRESWANSRCDIR}/packaging/sysvinit/
 INITDFILES=ipsec.init
 SUBDIRS=
 INITDDIR=$(CONFDIR)/init.d
+SYSCONFIGDIR=$(CONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
@@ -12,11 +13,21 @@ programs:     initdfiles
 initdfiles:   $(INITDFILES)
 install:      programs doinstall
 
-doinstall: programs
-	@mkdir -p $(INITDDIR)
+doinstall: programs installinitfiles installsysconfig checkenabled
+
+installinitfiles:
+	mkdir -p $(INITDDIR)
 	@for i in $(INITDFILES) ; do \
 		$(INSTALL) $$i $(INITDDIR);  \
 	done
+
+installsysconfig:
+	mkdir -p $(SYSCONFIGDIR)
+	if test ! -f $(SYSCONFIGDIR)/pluto ; then
+		$(INSTALL) sysconfig.pluto $(SYSCONFIGDIR)/pluto
+	fi
+
+checkenabled:
 	@count=0 ; \
 	for dir in $(DESTDIR)/etc/rc?.d ; do \
 		if test -f $$dir/S??ipsec.init ; then \
