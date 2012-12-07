@@ -563,25 +563,25 @@ export LIBLSWCRYPTO
 #KERNELBUILDMFLAGS=--debug=biv V=1 
 
 # how to do variable substitution in sed-transformed files
-TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):" \
-			-e "s:@IPSEC_DIR@:$(FINALBINDIR):" \
-			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):" \
-			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):" \
-			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):" \
-			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):" \
-			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):" \
-			-e "s:@FINALBINDIR@:$(FINALBINDIR):" \
-			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):" \
-			-e "s:@FINALVARDIR@:$(FINALVARDIR):" \
+TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
+			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
+			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
+			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
+			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):g" \
+			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
+			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
+			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
+			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
+			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
-			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):" \
-			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):" \
-			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):" \
-			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):" \
-			-e "s:@IPSEC_CONFS@:$(FINALCONFDIR):" \
-			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):" \
-			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):" \
-                        -e "s:@MODPROBE@:$(MODPROBE):" \
+			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
+			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
+			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
+			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):g" \
+			-e "s:@IPSEC_CONFS@:$(FINALCONFDIR):g" \
+			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
+			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
+                        -e "s:@MODPROBE@:$(MODPROBE):g" \
 
 # for emacs
 #
