@@ -4,6 +4,7 @@ srcdir?=${LIBRESWANSRCDIR}/packaging/systemd/
 SYSTEMDFILES=ipsec.service
 SUBDIRS=
 SYSTEMDDIR=$(DESTDIR)/lib/systemd/system
+SYSCONFIGDIR=$(CONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
@@ -12,13 +13,19 @@ programs:     systemdfiles
 systemdfiles: $(SYSTEMDFILES)
 install:      programs doinstall
 
-doinstall: programs systemdservice oldinitdcheck
+doinstall: programs installsystemdservice installsysconfig oldinitdcheck
 
-systemdservice:
+installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
 	@for i in $(SYSTEMDFILES) ; do \
 		$(INSTALL) $$i $(SYSTEMDDIR);  \
 	done
+
+installsysconfig:
+	mkdir -p $(SYSCONFIGDIR)
+	if test ! -f $(SYSCONFIGDIR)/pluto ; then \
+		$(INSTALL) sysconfig.pluto $(SYSCONFIGDIR)/pluto ; \
+	fi
 
 oldinitdcheck:
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
