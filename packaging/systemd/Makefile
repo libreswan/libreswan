@@ -2,6 +2,7 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 srcdir?=${LIBRESWANSRCDIR}/packaging/systemd/
 
 SYSTEMDFILES=ipsec.service
+SYSCONFIGFILES=sysconfig.pluto
 SUBDIRS=
 SYSTEMDDIR=$(DESTDIR)/lib/systemd/system
 SYSCONFIGDIR=$(CONFDIR)/sysconfig
@@ -9,8 +10,9 @@ SYSCONFIGDIR=$(CONFDIR)/sysconfig
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
 
-programs:     systemdfiles
+programs:     systemdfiles sysconfigfiles
 systemdfiles: $(SYSTEMDFILES)
+sysconfigfiles: $(SYSCONFIGFILES)
 install:      programs doinstall
 
 doinstall: programs installsystemdservice installsysconfig oldinitdcheck

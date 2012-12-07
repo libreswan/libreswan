@@ -2,6 +2,7 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 srcdir?=${LIBRESWANSRCDIR}/packaging/sysvinit/
 
 INITDFILES=ipsec.init
+SYSCONFIGFILES=sysconfig.pluto
 SUBDIRS=
 INITDDIR=$(CONFDIR)/init.d
 SYSCONFIGDIR=$(CONFDIR)/sysconfig
@@ -9,8 +10,9 @@ SYSCONFIGDIR=$(CONFDIR)/sysconfig
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
 
-programs:     initdfiles
+programs:     initdfiles sysconfigfiles
 initdfiles:   $(INITDFILES)
+sysconfigfiles: $(SYSCONFIGFILES)
 install:      programs doinstall
 
 doinstall: programs installinitfiles installsysconfig checkenabled
