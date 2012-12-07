@@ -1,5 +1,5 @@
 # You should not change the CORE values
-CORE="--stderrlog --plutostderrlogtime --coredir /var/run/pluto --uniqueids --ipsecdir /etc/ipsec.d --secretsfile /etc/ipsec.secrets "
+CORE="--stderrlog --plutostderrlogtime --coredir @FINALVARDIR@/run/pluto --uniqueids --ipsecdir @FINALCONFDIR@/ipsec.d --secretsfile @FINALCONFDIR@/ipsec.secrets "
 # Debug, pick --debug-all or one of these
 # --debug-raw --debug-crypt --debug-crypto --debug-parsing --debug-emitting
 # --debug-control --debug-lifecycle --debug-klips --debug-netkey --debug-x509
