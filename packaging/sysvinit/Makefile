@@ -23,8 +23,8 @@ installinitfiles:
 
 installsysconfig:
 	mkdir -p $(SYSCONFIGDIR)
-	if test ! -f $(SYSCONFIGDIR)/pluto ; then
-		$(INSTALL) sysconfig.pluto $(SYSCONFIGDIR)/pluto
+	if test ! -f $(SYSCONFIGDIR)/pluto ; then \
+		$(INSTALL) sysconfig.pluto $(SYSCONFIGDIR)/pluto ; \
 	fi
 
 checkenabled:
