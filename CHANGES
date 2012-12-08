@@ -90,6 +90,8 @@ v3.0 (unreleased)
 * NETKEY: Support for SHA384/SHA512 and integ(ikev2)  in ESP [Avesh]
 * NETKEY: In _updown.netkey, insert route on correct interface when nexthop
           is used [Tuomo]
+* NETKEY: Revert "Always use XFRM_MSG_UPDPOLICY instead of XFRM_MSG_NEWPOLICY"
+          This caused module unload issues and XFRM_MSG_REPLACE errors [Paul]
 * KLIPS: Removed support for Linux < 2.4.4 [Paul]
 * KLIPS: Changed _startklips to use ip route instead of netstat [Harald]
 * KLIPS: misc. fixes, mostly satot() related [David]
