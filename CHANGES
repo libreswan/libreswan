@@ -116,6 +116,7 @@ v3.0 (unreleased)
 * testing: Ported broken UML harness to KVM/libvirt/9p [Paul/Antony]
            (see the wiki on libreswan.org for details on how to use it)
 * packaging: Updated libreswan.spec to reflect updated options [Paul]
+* compiling: Update standard compile options to be more hardened [Paul]
 * Bugtracker bugs fixed:
     #993 ipsec showhostkey: wrong kind of key PPK_XAUTH [Philippe Vouters]
    #1308 forceencaps= setting does now show up in "ipsec auto --status"
