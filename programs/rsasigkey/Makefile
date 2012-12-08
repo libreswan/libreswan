@@ -22,7 +22,7 @@ endif
 
 PROGRAM=rsasigkey
 LIBS=${LIBRESWANLIB} -lgmp
-LIBS+= -lnspr4 -lnss3 -lplc4
+LIBS+=${NSSLIBS}
 ifeq ($(USE_FIPSCHECK),true)
 LIBS+=  -lfipscheck
 endif
