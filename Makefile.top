@@ -36,7 +36,6 @@ distclean:	clean
 	rm -f out.kpatch 
 	if [ -f kvmsetup.sh ]; then source kvmsetup.sh; if [ -d "$$POOLSPACE" ]; then rm -rf $$POOLSPACE; fi; fi
 	if [ -d OBJ.$$OSDEP.$$ARCH ]; then rm -rf OBJ.$$OSDEP.$$ARCH/; fi
-	if [ -e programs/configs/ipsec.conf.5.xml ]; then rm -f programs/configs/ipsec.conf.5.xml; fi
 
 install_file_list:
 	@for d in $(SUBDIRS) ; \
