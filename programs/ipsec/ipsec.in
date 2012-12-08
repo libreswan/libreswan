@@ -154,7 +154,7 @@ import|--import)
 	exit 0
 	;;
 initnss|--initnss)
-	if [ -f $IPSEC_CONFS/ipsec.d/cert8.db -o -f $IPSEC_CONFS/ipsec.d/key3.db -o -f $ IPSEC_CONFS/ipsec.d/secmod.db ];
+	if [ -f "$IPSEC_CONFS/ipsec.d/cert8.db" -o -f "$IPSEC_CONFS/ipsec.d/key3.db" -o -f "$IPSEC_CONFS/ipsec.d/secmod.db" ];
 	then
 		echo "NSS database already initialised - aborted"
 		echo "To wipe the old NSS database, issue: rm $IPSEC_CONFS/ipsec.d/*.db"
