@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/packaging/sysvinit/
+srcdir?=${LIBRESWANSRCDIR}/initsystems/sysvinit/
 
 INITDFILES=ipsec.init
 SYSCONFIGFILES=sysconfig.pluto

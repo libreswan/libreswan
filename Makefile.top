@@ -27,7 +27,7 @@ ERRCHECK=${MAKEUTILS}/errcheck
 KVUTIL=${MAKEUTILS}/kernelversion
 KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
 
-SUBDIRS?=lib programs testing packaging
+SUBDIRS?=lib programs testing initsystems packaging
 
 clean::
 	-(cd ${LIBRESWANSRCDIR} && $(MAKE) modclean && $(MAKE) mod26clean)

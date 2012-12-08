@@ -1,0 +1,29 @@
+# ipsec - ipsec services and ike demon (pluto)
+#
+# IPsec provides encrypted and authenticated communications;
+# NETKEY/KLIPS is the kernel half of it, Pluto is the user-level
+# management daemon.
+
+description	"libswan ipsec services"
+
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+respawn
+
+pre-start script
+    cd /
+    . /etc/default/ipsec
+    ipsec addconn --config @FINALCONFDIR@/ipsec.conf --checkconfig
+end script
+
+script
+    . /etc/default/ipsec
+    @FINALLIBEXECDIR@/ipsec/pluto --config @FINALCONFDIR@/ipsec.conf --nofork $PLUTO_OPTIONS
+end script
+
+post-stop script
+    ipsec whack --shutdown
+    ip xfrm policy flush 
+    ip xfrm state flush 
+end script

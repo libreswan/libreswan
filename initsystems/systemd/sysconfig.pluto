@@ -1,5 +1,0 @@
-# leave that space there, systemd does not like empty vars
-# Almost all pluto daemon options can now be set in ipsec.conf
-# Please see 'man ipsec.conf'
-PLUTO_OPTIONS=" "
-

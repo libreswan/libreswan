@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/packaging/systemd/
+srcdir?=${LIBRESWANSRCDIR}/initsystems/systemd/
 
 SYSTEMDFILES=ipsec.service
 SYSCONFIGFILES=sysconfig.pluto
