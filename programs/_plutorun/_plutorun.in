@@ -59,7 +59,7 @@ exec 2>/dev/null
 
 until (
 	# eval allows to contain redirection and other magic
-	eval $execdir/pluto --config ${IPSEC_CONFS}/ipsec.conf --nofork --secretsfile $secrets
+	eval $execdir/pluto --config ${IPSEC_CONFS}/ipsec.conf --nofork 
 	status=$?
 	echo "exit"
 	echo $status
