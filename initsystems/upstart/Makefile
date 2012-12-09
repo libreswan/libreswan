@@ -23,7 +23,9 @@ installupstartconf:
 
 installdefault:
 	mkdir -p $(DEFAULTDIR)
-	$(INSTALL) $(DEFAULTFILE) $(DEFAULTDIR)/pluto
+	if test ! -f $(DEFAULTDIR)/pluto ; then \
+		$(INSTALL) $(DEFAULTFILE) $(DEFAULTDIR)/pluto ; \
+	fi
 
 %: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@

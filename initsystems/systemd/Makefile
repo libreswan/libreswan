@@ -23,7 +23,9 @@ installsystemdservice:
 
 installsysconfig:
 	mkdir -p $(SYSCONFIGDIR)
-	$(INSTALL) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto
+	if test ! -f $(SYSCONFIGDIR)/pluto ; then \
+		$(INSTALL) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto ; \
+	fi
 
 oldinitdcheck:
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
