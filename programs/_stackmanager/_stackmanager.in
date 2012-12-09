@@ -16,6 +16,8 @@
 # for more details.
 #
 
+export PATH=@FINALSBINDIR@:$PATH
+
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
 kamepfkey=/proc/net/pfkey
