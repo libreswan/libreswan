@@ -4,7 +4,7 @@ srcdir?=${LIBRESWANSRCDIR}/initsystems/sysvinit/
 INITDFILE=ipsec.init
 SYSCONFIGFILE=sysconfig.pluto
 SUBDIRS=
-INITDDIR=$(CONFDIR)/init.d
+INITDDIR=$(CONFDIR)/rc.d/init.d
 SYSCONFIGDIR=$(CONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
