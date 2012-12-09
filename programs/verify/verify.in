@@ -241,7 +241,7 @@ def cmdchecks():
 			print_result("FAIL","FAILED")
 	p = subprocess.Popen(["ip", "xfrm"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 	output, err = p.communicate()
-	if not "XFRM-OBJECT" in err:
+	if not "XFRM" in err:
 			print_result("FAIL","IP XFRM BROKEN")
 	else:
 			print_result("OK","OK")
