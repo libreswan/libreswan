@@ -1,11 +1,11 @@
 
-See also http://www.libreswan.org/
+See also https://libreswan.org/
 
 v3.0 (unreleased)
-* FORK: Rename from Openswan to Libreswan (working name) [Paul]
+* FORK: Rename from Openswan to Libreswan [Team]
         (for older CHANGES see docs/CHANGES.openswan)
-* FORK: Changed our VendorID prefix to "OEN" [Paul]
-* LICENSE: Updated FSF address on the GPLv2 COPYING file [Paul]
+* FORK: Changed our VendorID prefix to "OEN" [Team]
+* LICENSE: Updated FSF address on the GPLv2 COPYING file [Team]
 * TRADEMARK: Give everyone unlimitel eternal royalty-free license to
         use the name "libreswan" to refer to this software and website [Team]
 * NSS: is now mandatory - custom crypto code removed [Paul]
@@ -36,7 +36,6 @@ v3.0 (unreleased)
 * pluto: Change ft_mbz to ft_zig - Don't error on "must be zero" but instead
          "zero ignore". This works around an Android ICS/racoon bug [Paul]
 * pluto: Update known vendorids [Paul]
-* pluto: Fix XAUTH TYPE handling and logging [Philippe]
 * pluto: phased out HAVE_THREADS, pluto/pam now thread-safe [Philippe/Paul]
 * pluto: Fixed IPSEC_CONFDDIR handling which broke NSS in tests [Paul]
 * pluto: obsoleted prepluto= postpluto= plutoopts= config setup options [Paul]
@@ -54,11 +53,16 @@ v3.0 (unreleased)
 * pluto: perform whack --listen and addconn --autoall on startup [Paul]
 * pluto: if started with --nofork, don't care about existing pid file [Paul]
 * pluto: incorrect free in scan_proc_shunts() [Roel van Meer]
+* pluto: eclipsed() was broken since freeswan-2.02 [Philippe]
 * addconn/pluto: ensure conn names are always treated case sensitive [Paul]
 * _plutoload: obsoleted [Kim/Paul]
 * auto: no longer pass defaultroute/defaultrouteaddr to addconn [Paul]
 * whack: fix handling --sha2_truncbug and --nm_configured options [Paul]
+* whack: don't try to write to closed stdout tty [Philippe]
 * DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
+* DPD: We did not send DPD VID in aggressive mode with NAT-T disabled
+* DPD: dpdaction=restart can cause full phase1 timeout after DPD 
+  (rhbz#848132) [Avesh]
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
 * PAM: move pam out of contrib, and install config when HAVE_XAUTHPAM [Paul]
 * IKEv1: In aggresive mode: allow ISAKMP_NEXT_CR ISAKMP_NEXT_CERT as
@@ -72,17 +76,22 @@ v3.0 (unreleased)
 * XAUTH: Use incoming XAUTH VID when picking best connection [Philippe]
 * XAUTH: pam was failing when built with USE_LIBCAP_NG=true [Philippe Vouters]
 * XAUTH: Fixup of defines [Paul/Philippe]
+* XAUTH: Don't use XAUTH VID to put conn in policy XAUTH [Andrey Alexandrenko]
+* XAUTH: Fix XAUTH TYPE handling and logging [Philippe]
 * IKEv2: Comply to RFC's for "must be zero" to ignore instead of abort [Paul]
          (rhbz#831669)
 * IKEv2: road warrior support [Antony/Paul/Avesh]
 * IKEv2: narrowing code extended to cover ports,protocol,subnets [Antony/Paul]
 * Only set MODP768_MODULUS with USE_VERYWEAK_DH1 [Paul]
+* NETKEY: ignore interfaces= line for NETKEY [Paul]
 * NETKEY: Fix for three AES-GCM issues with key lengths 128, 192, 256 bits
           and IV of 8, 12, 16 bytes as per RFC 4106 [Avesh]
 * NETKEY: Labeled IPsec updates [Avesh]
 * NETKEY: Support for SHA384/SHA512 and integ(ikev2)  in ESP [Avesh]
 * NETKEY: In _updown.netkey, insert route on correct interface when nexthop
           is used [Tuomo]
+* NETKEY: Revert "Always use XFRM_MSG_UPDPOLICY instead of XFRM_MSG_NEWPOLICY"
+          This caused module unload issues and XFRM_MSG_REPLACE errors [Paul]
 * KLIPS: Removed support for Linux < 2.4.4 [Paul]
 * KLIPS: Changed _startklips to use ip route instead of netstat [Harald]
 * KLIPS: misc. fixes, mostly satot() related [David]
@@ -109,6 +118,7 @@ v3.0 (unreleased)
 * testing: Ported broken UML harness to KVM/libvirt/9p [Paul/Antony]
            (see the wiki on libreswan.org for details on how to use it)
 * packaging: Updated libreswan.spec to reflect updated options [Paul]
+* compiling: Update standard compile options to be more hardened [Paul]
 * Bugtracker bugs fixed:
     #993 ipsec showhostkey: wrong kind of key PPK_XAUTH [Philippe Vouters]
    #1308 forceencaps= setting does now show up in "ipsec auto --status"

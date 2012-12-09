@@ -191,11 +191,11 @@ endif
 # set values for implicit rules.
 LOADLIBS=${OBJS} 
 
-LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp -lnspr4 -lnss3
+LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp ${NSSLIBS}
 
 
 %: %.o $(OBJS) ${LIBS}
-	$(CC) $(CFLAGS) -o $@ $@.o ${OBJS} $(LDFLAGS) $(LDLIBS) $(USERLINK) -lnspr4 -lnss3
+	$(CC) $(CFLAGS) -o $@ $@.o ${OBJS} $(LDFLAGS) $(LDLIBS) $(USERLINK) 
 
 # cancel direct version
 %: %.c

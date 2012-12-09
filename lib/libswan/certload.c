@@ -401,7 +401,6 @@ load_authcerts_from_nss(const char *type, u_char auth_flags)
     CERTCertListNode *node;
 
     list = PK11_ListCerts(PK11CertListCA,  lsw_return_nss_password_file_info());
-
     if(list) {
 		for (node = CERT_LIST_HEAD(list); !CERT_LIST_END(node, list);
 			node = CERT_LIST_NEXT(node)) {
