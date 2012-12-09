@@ -33,8 +33,9 @@ Group: System Environment/Daemons
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
 BuildRequires: systemd
-Requires(post): coreutils bash systemd-units systemd-sysv
-Requires(preun): initscripts chkconfig systemd-units
+Requires(post): coreutils bash systemd
+Requires(preun): systemd
+Requires(postun): systemd
 
 BuildRequires: pkgconfig hostname
 BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
@@ -61,11 +62,6 @@ BuildRequires: ElectricFence
 
 Requires: nss-tools, nss-softokn
 Requires: iproute >= 2.6.8
-Requires(post): coreutils bash
-Requires(preun): initscripts chkconfig
-Requires(post): /sbin/chkconfig
-Requires(preun): /sbin/chkconfig
-Requires(preun): /sbin/service
 
 %description
 Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is 
@@ -235,15 +231,10 @@ rm -rf ${RPM_BUILD_ROOT}
 %endif
 
 %preun
-if [ $1 -eq 0 ]; then
-        /sbin/service ipsec stop > /dev/null 2>&1 || :
-        /sbin/chkconfig --del ipsec
-fi
+%systemd_preun ipsec.service
 
 %postun
-if [ $1 -ge 1 ] ; then
- /sbin/service ipsec condrestart 2>&1 >/dev/null || :
-fi
+%systemd_postun_with_restart ipsec.service
 
 %if %{buildklips}
 %postun klips
@@ -253,9 +244,9 @@ fi
 %endif
 
 %post 
-/sbin/chkconfig --add ipsec || :
+%systemd_post ipsec.service
 
 %changelog
-* Wed Sep 05 2012 Paul Wouters <paul@libreswan.org> - 0.9.9-1
-- Merged in Avesh' spec file for fedora
+* Sun Dec 09 2012 Paul Wouters <paul@libreswan.org> - IPSECBASEVERSION-1
+- Automated build from release tar ball
 
