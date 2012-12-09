@@ -1,9 +1,10 @@
 %global USE_FIPSCHECK true
 %global USE_LIBCAP_NG true
-%global USE_NM true
-%global fipscheck_version 1.3.0
 %global USE_CRL_FECTCHING true
 %global USE_DNSSEC true
+%global USE_NM true
+
+%global fipscheck_version 1.3.0
 %global buildklips 0
 %global buildefence 0
 %global development 0
@@ -11,8 +12,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-#Version: IPSECBASEVERSION
-Version: 3.0
+Version: IPSECBASEVERSION
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
@@ -20,8 +20,6 @@ Version: 3.0
 %define defkv %(rpm -q kernel kernel-smp| grep -v "not installed" | sed "s/kernel-smp-\\\(.\*\\\)$/\\1smp/"| sed "s/kernel-//"| sort | tail -1)
 %{!?kversion: %{expand: %%define kversion %defkv}}
 %define krelver %(echo %{kversion} | tr -s '-' '_')
-
-%define nssflags %(pkg-config --cflags nss)
 
 # Libreswan -pre/-rc nomenclature has to co-exist with hyphen paranoia
 %define srcpkgver %(echo %{version} | tr -s '_' '-')
@@ -110,24 +108,25 @@ kernels.
 #796683: -fno-strict-aliasing
 %{__make} \
 %if %{development}
-   USERCOMPILE="-g -DGCC_LINT %{nssflags} %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
+   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %else
-  USERCOMPILE="-g -DGCC_LINT %{nssflags} %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
+  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %endif
   USERLINK="-g -pie %{?efence}" \
-  HAVE_THREADS="true" \
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_DYNAMICDNS="true" \
   USE_DNSSEC="%{USE_DNSSEC}" \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \
+  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
 %if %{USE_CRL_FECTCHING}
   USE_LIBCURL=true \
+  USE_LDAP=true \
 %endif
   programs
 FS=$(pwd)
@@ -164,6 +163,7 @@ rm -rf ${RPM_BUILD_ROOT}
   DESTDIR=%{buildroot} \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \
+  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   INSTMANFLAGS="-m 644" \
@@ -183,7 +183,7 @@ install -m 0644 packaging/fedora/sysconfig.pluto %{buildroot}/%{_sysconfdir}/sys
 
 # systemd service file addition
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
-install -m 0644 packaging/fedora/ipsec.service %{buildroot}/%{_unitdir}/
+install -m 0644 initsystems/systemd/ipsec.service %{buildroot}/%{_unitdir}/
 
 %if %{USE_FIPSCHECK}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/fipscheck
