@@ -27,7 +27,7 @@ installsystemdservice:
 
 installsysconfig:
 	mkdir -p $(SYSCONFIGDIR)
-	if test ! -f $(SYSCONFIGDIR)/pluto ; then \
+	@if test ! -f $(SYSCONFIGDIR)/pluto ; then \
 		$(INSTALL) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto ; \
 	fi
 
