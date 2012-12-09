@@ -13,13 +13,14 @@ include ${LIBRESWANSRCDIR}/Makefile.top
 programs:     systemdfiles sysconfigfiles
 systemdfiles: $(SYSTEMDFILE)
 sysconfigfiles: $(SYSCONFIGFILE)
-install:      programs doinstall
+install:      programs doinstall postcheck
 
-doinstall: programs installsystemdservice installsysconfig oldinitdcheck
+doinstall: programs installsystemdservice installsysconfig oldinitdcheck 
 
 installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
 	$(INSTALL) $(SYSTEMDFILE) $(SYSTEMDDIR)
+	@systemctl daemon-reload
 
 installsysconfig:
 	mkdir -p $(SYSCONFIGDIR)
@@ -38,6 +39,23 @@ oldinitdcheck:
 			echo "old " $(DESTDIR)/etc/init.d/ipsec* " files were found; these should be removed" ; \
 			echo "**********************************************************************" ; \
 		fi ; \
+	fi
+postcheck:
+	@if test "`systemctl is-enabled ipsec.service`" = "disabled" ; then \
+		echo "************************** WARNING ***********************************" ; \
+		echo "The ipsec service is currently disabled. To enable this service issue:" ; \
+		echo " systemctl enable ipsec.service" ; \
+		echo "**********************************************************************" ; \
+	fi ; \
+	if test "`systemctl is-active ipsec.service`" = "disabled" ; then \
+		echo "The ipsec service is currently disabled. To enable this service on boot issue:" ; \
+		echo " systemctl enable ipsec.servce" ; \
+	fi ; \
+	if test "`systemctl is-active ipsec.service`" = "active" ; then \
+		echo "************************** WARNING ***********************************" ; \
+		echo "The ipsec service is currently running. You need to restart the service using:" ; \
+		echo " systemctl restart ipsec.servce" ; \
+		echo "**********************************************************************" ; \
 	fi
 
 %: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
