@@ -166,7 +166,6 @@ rm -rf ${RPM_BUILD_ROOT}
   install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
-rm -f %{buildroot}/%{_initrddir}/setup
 
 install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase 
@@ -206,7 +205,6 @@ rm -rf ${RPM_BUILD_ROOT}
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_unitdir}/ipsec.service
-%{_initrddir}/ipsec
 %{_libdir}/ipsec
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
