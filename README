@@ -31,7 +31,8 @@ For Debian/Ubuntu
 
 	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
 		libcap-ng-dev libcap-ng-utils libselinux-dev \
-		libcurl4-nss-dev libgmp3-dev flex bison gcc make 
+		libcurl4-nss-dev libgmp3-dev flex bison gcc make \
+		libunbound-dev
 
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
 
@@ -40,7 +41,7 @@ For Fedora/RHEL/CentOS
 	yum install nss-devel nspr-devel pkg-config pam-devel \
 		libcap-ng-devel libselinux-devel \
 		curl-devel gmp-devel flex bison gcc make \
-		fipscheck-devel
+		fipscheck-devel unbound-devel
 
 Runtime requirements (usually already present on the system)
 

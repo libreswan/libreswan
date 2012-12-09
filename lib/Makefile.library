@@ -16,7 +16,7 @@ OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 INCLUDES+=-I. -I${KLIPSSRCDIR} -I${KLIPSD} -I${LIBRESWANSRCDIR}
 INCLUDES+=-I${LIBRESWANSRCDIR}/include 
 # nss
-INCLUDES+=-I/usr/include/nspr4 -I/usr/include/nss3
+INCLUDES+=${NSSFLAGS}
 
 CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${CROSSFLAGS}
 CFLAGS+=-DDEBUG
