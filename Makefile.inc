@@ -78,6 +78,8 @@ PUBDIR=$(DESTDIR)$(INC_USRLOCAL)/sbin
 # command will look for them when it is run. Also called LIBEXECDIR.
 FINALLIBEXECDIR?=$(INC_USRLOCAL)/libexec/ipsec
 LIBEXECDIR=$(DESTDIR)$(FINALBINDIR)
+FINALLIBDIR?=$(INC_USRLOCAL)/libexec/ipsec
+LIBDIR=$(DESTDIR)$(FINALLIBDIR)
 
 FINALBINDIR=${FINALLIBEXECDIR}
 BINDIR=${LIBEXECDIR}
@@ -87,9 +89,6 @@ BINDIR=${LIBEXECDIR}
 FINALSBINDIR?=$(INC_USRLOCAL)/sbin
 SBINDIR=$(DESTDIR)$(FINALSBINDIR)
 
-# libdir is where utility files go
-FINALLIBDIR?=$(INC_USRLOCAL)/lib/ipsec
-LIBDIR=$(DESTDIR)$(FINALLIBDIR)
 
 
 # where the appropriate manpage tree is located
