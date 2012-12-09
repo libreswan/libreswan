@@ -44,7 +44,7 @@ oldinitdcheck:
 		fi ; \
 	fi
 postcheck:
-	@if test $(SYSTEMDDIR) = ${UNITDIR} -a test $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
+	@if test $(SYSTEMDDIR) = ${UNITDIR} -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently disabled. To enable this service issue:" ; \
 		echo " systemctl enable ipsec.service" ; \
