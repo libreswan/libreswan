@@ -1,6 +1,7 @@
 %global USE_FIPSCHECK true
 %global USE_LIBCAP_NG true
-%global USE_CRL_FECTCHING true
+%global USE_LABELED_IPSEC true
+%global USE_CRL_FETCHING true
 %global USE_DNSSEC true
 %global USE_NM true
 
@@ -17,15 +18,14 @@ Version: IPSECBASEVERSION
 # The default kernel version to build for is the latest of
 # the installed binary kernel
 # This can be overridden by "--define 'kversion x.x.x-y.y.y'"
-%define defkv %(rpm -q kernel kernel-smp| grep -v "not installed" | sed "s/kernel-smp-\\\(.\*\\\)$/\\1smp/"| sed "s/kernel-//"| sort | tail -1)
+%define defkv %(rpm -q kernel kernel-debug| grep -v "not installed" | sed -e "s/kernel-debug-//" -e  "s/kernel-//" -e "s/\.[^.]*$//"  | sort | tail -1 )
 %{!?kversion: %{expand: %%define kversion %defkv}}
 %define krelver %(echo %{kversion} | tr -s '-' '_')
 
 # Libreswan -pre/-rc nomenclature has to co-exist with hyphen paranoia
 %define srcpkgver %(echo %{version} | tr -s '_' '-')
-%define ourrelease 1
 
-Release: %{ourrelease}%{?dist}
+Release: 1%{?dist}
 License: GPLv2
 Url: http://www.libreswan.org/
 Source: %{name}-%{srcpkgver}.tar.gz
@@ -50,7 +50,7 @@ Requires: fipscheck%{_isa} >= %{fipscheck_version}
 %if %{USE_LIBCAP_NG}
 BuildRequires: libcap-ng-devel
 %endif
-%if %{USE_CRL_FECTCHING}
+%if %{USE_CRL_FETCHING}
 BuildRequires: openldap-devel curl-devel
 %endif
 %if %{buildefence}
@@ -89,7 +89,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %package klips
 Summary: Libreswan kernel module
 Group:  System Environment/Kernel
-Release: %{krelver}_%{ourrelease}
+Release: %{krelver}_%{release}
 Requires: kernel = %{kversion}, %{name}-%{version}
 
 %description klips
@@ -113,21 +113,22 @@ kernels.
   USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %endif
   USERLINK="-g -pie %{?efence}" \
+  USE_DYNAMICDNS="true" \
+  USE_NM=%{USE_NM} \
+  USE_XAUTHPAM=true \
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
-  USE_DYNAMICDNS="true" \
+  USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
+%if %{USE_CRL_FETCHING}
+  USE_LDAP=true \
+  USE_LIBCURL=true \
+%endif
   USE_DNSSEC="%{USE_DNSSEC}" \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libdir}/ipsec \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
-  USE_NM=%{USE_NM} \
-  USE_XAUTHPAM=true \
-%if %{USE_CRL_FECTCHING}
-  USE_LIBCURL=true \
-  USE_LDAP=true \
-%endif
   programs
 FS=$(pwd)
 
@@ -178,12 +179,11 @@ install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
-install -d -m 0755 %{buildroot}/%{_sysconfdir}/sysconfig/
-install -m 0644 packaging/fedora/sysconfig.pluto %{buildroot}/%{_sysconfdir}/sysconfig/pluto
-
+#install -d -m 0755 %{buildroot}/%{_sysconfdir}/sysconfig/
+#install -m 0644 initsystems/systemd/fedora/sysconfig.pluto %{buildroot}/%{_sysconfdir}/sysconfig/pluto
 # systemd service file addition
-mkdir -p $RPM_BUILD_ROOT%{_unitdir}
-install -m 0644 initsystems/systemd/ipsec.service %{buildroot}/%{_unitdir}/
+#mkdir -p $RPM_BUILD_ROOT%{_unitdir}
+#install -m 0644 initsystems/systemd/ipsec.service %{buildroot}/%{_unitdir}/
 
 %if %{USE_FIPSCHECK}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/fipscheck
