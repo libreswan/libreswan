@@ -1,4 +1,2 @@
-# Ensure to put at least a space there if you remove all arguments,
-# or systemd will fail
-PLUTO_OPTIONS="--stderrlog --coredir @FINALVARDIR@/run/pluto --ipsecdir @FINALCONFDIR@/ipsec.d --secretsfile @FINALCONFDIR@/ipsec.secrets "
-
+# Put extra pluto command line options you want here
+PLUTO_OPTIONS=""
