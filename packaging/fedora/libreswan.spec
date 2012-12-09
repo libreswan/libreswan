@@ -21,7 +21,6 @@ Version: IPSECBASEVERSION
 %define defkv %(rpm -q kernel kernel-debug| grep -v "not installed" | sed -e "s/kernel-debug-//" -e  "s/kernel-//" -e "s/\.[^.]*$//"  | sort | tail -1 )
 %{!?kversion: %{expand: %%define kversion %defkv}}
 %define krelver %(echo %{kversion} | tr -s '-' '_')
-
 # Libreswan -pre/-rc nomenclature has to co-exist with hyphen paranoia
 %define srcpkgver %(echo %{version} | tr -s '_' '-')
 
@@ -168,18 +167,11 @@ rm -rf ${RPM_BUILD_ROOT}
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 rm -f %{buildroot}/%{_initrddir}/setup
-#find %{buildroot}%{_mandir}  -type f | xargs chmod a-x
 
 install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase 
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
-
-#install -d -m 0755 %{buildroot}/%{_sysconfdir}/sysconfig/
-#install -m 0644 initsystems/systemd/fedora/sysconfig.pluto %{buildroot}/%{_sysconfdir}/sysconfig/pluto
-# systemd service file addition
-#mkdir -p $RPM_BUILD_ROOT%{_unitdir}
-#install -m 0644 initsystems/systemd/ipsec.service %{buildroot}/%{_unitdir}/
 
 %if %{USE_FIPSCHECK}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/fipscheck
@@ -212,7 +204,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
-%ghost %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
+%attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %{_initrddir}/ipsec
 %{_libdir}/ipsec
