@@ -1,8 +1,8 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 srcdir?=${LIBRESWANSRCDIR}/initsystems/systemd/
 
-UPSTARTFILES=ipsec.conf
-DEFAULTFILES=default.pluto
+UPSTARTFILE=ipsec.conf
+DEFAULTFILE=default.pluto
 SUBDIRS=
 UPSTARTDIR=$(DESTDIR)/etc/init
 DEFAULTDIR=$(CONFDIR)/default
@@ -11,23 +11,19 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
 
 programs:     upstartfiles defaultfiles
-upstartfiles: $(UPSTARTFILES)
-defaultfiles: $(DEFAULTFILES)
+upstartfiles: $(UPSTARTFILE)
+defaultfiles: $(DEFAULTFILE)
 install:      programs doinstall
 
 doinstall: programs installupstartconf installdefault
 
 installupstartconf:
 	@mkdir -p $(UPSTARTDIR)
-	@for i in $(UPSTARTFILES) ; do \
-		$(INSTALL) $$i $(UPSTARTDIR);  \
-	done
+	$(INSTALL) $(UPSTARTFILE) $(UPSTARTDIR);
 
 installdefault:
 	mkdir -p $(DEFAULTDIR)
-	if test ! -f $(DEFAULTDIR)/pluto ; then \
-		$(INSTALL) default.pluto $(DEFAULTDIR)/pluto ; \
-	fi
+	$(INSTALL) $(DEFAULTFILE) $(DEFAULTDIR)/pluto
 
 %: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@

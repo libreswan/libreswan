@@ -1,8 +1,8 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 srcdir?=${LIBRESWANSRCDIR}/initsystems/sysvinit/
 
-INITDFILES=ipsec.init
-SYSCONFIGFILES=sysconfig.pluto
+INITDFILE=ipsec.init
+SYSCONFIGFILE=sysconfig.pluto
 SUBDIRS=
 INITDDIR=$(CONFDIR)/init.d
 SYSCONFIGDIR=$(CONFDIR)/sysconfig
@@ -11,23 +11,19 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
 
 programs:     initdfiles sysconfigfiles
-initdfiles:   $(INITDFILES)
-sysconfigfiles: $(SYSCONFIGFILES)
+initdfiles:   $(INITDFILE)
+sysconfigfiles: $(SYSCONFIGFILE)
 install:      programs doinstall
 
 doinstall: programs installinitfiles installsysconfig checkenabled
 
 installinitfiles:
 	mkdir -p $(INITDDIR)
-	@for i in $(INITDFILES) ; do \
-		$(INSTALL) $$i $(INITDDIR);  \
-	done
+	$(INSTALL) $(INITDFILE) $(INITDDIR)/ipsec
 
 installsysconfig:
 	mkdir -p $(SYSCONFIGDIR)
-	if test ! -f $(SYSCONFIGDIR)/pluto ; then \
-		$(INSTALL) sysconfig.pluto $(SYSCONFIGDIR)/pluto ; \
-	fi
+	$(INSTALL) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto
 
 checkenabled:
 	@count=0 ; \
