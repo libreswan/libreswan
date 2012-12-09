@@ -20,7 +20,9 @@ doinstall: programs installsystemdservice installsysconfig oldinitdcheck
 installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
 	$(INSTALL) $(SYSTEMDFILE) $(SYSTEMDDIR)
-	@systemctl daemon-reload
+	@if test $(SYSTEMDDIR) = "/lib/systemd/system" ; then \
+		systemctl daemon-reload
+	fi
 
 installsysconfig:
 	mkdir -p $(SYSCONFIGDIR)
