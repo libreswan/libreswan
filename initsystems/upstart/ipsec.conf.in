@@ -13,13 +13,13 @@ respawn
 
 pre-start script
     cd /
-    . /etc/default/ipsec
-    ipsec addconn --config @FINALCONFDIR@/ipsec.conf --checkconfig
+    . /etc/default/pluto
+    @FINALSBINDIR@/ipsec addconn --config @FINALCONFDIR@/ipsec.conf --checkconfig
 end script
 
 script
-    . /etc/default/ipsec
-    @FINALLIBEXECDIR@/ipsec/pluto --config @FINALCONFDIR@/ipsec.conf --nofork $PLUTO_OPTIONS
+    . /etc/default/pluto
+    @FINALLIBEXECDIR@/pluto --config @FINALCONFDIR@/ipsec.conf --nofork $PLUTO_OPTIONS
 end script
 
 post-stop script
