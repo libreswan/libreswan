@@ -5,7 +5,7 @@ SYSTEMDFILE=ipsec.service
 SYSCONFIGFILE=sysconfig.pluto
 SUBDIRS=
 SYSTEMDDIR=$(DESTDIR)/lib/systemd/system
-SYSCONFIGDIR=$(CONFDIR)/sysconfig
+SYSCONFIGDIR=$(DESTDIR)/$(CONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
