@@ -23,11 +23,11 @@ then
 	exit 1
 fi
 
-if [ "`git tag | tail -1`" != "v$version" ]
-then
-	echo >&2 "ERROR: version '$version' is not the latest git tag"
-	exit 1
-fi
+#if [ "`git tag | tail -1`" != "v$version" ]
+#then
+#	echo >&2 "ERROR: version '$version' is not the latest git tag"
+#	exit 1
+#fi
 
 if [ -f release/libreswan-$version.tar.gz  ]
 then
