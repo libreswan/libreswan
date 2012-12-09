@@ -601,11 +601,14 @@ release:
 
 install::
 	@if test -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
-	if /usr/sbin/selinuxenabled ; then \
-		echo "************************** WARNING ***********************************" ; \
-		echo "selinux is enabled and the prefix path is not /usr." ; \
-		echo "This will cause software failures and selinux policies need to be updated." ; \
-			echo "**********************************************************************" ; \
+	if /usr/sbin/selinuxenabled ; then  \
+		echo -e "\n************************** WARNING ***********************************" ; \
+		echo "SElinux is present on this system and the prefix path is not /usr." ; \
+		echo "This will cause software failures if selinux is enabled in Enforcing mode"; \
+		echo "unless selinux policies are updated manually" ; \
+		if test -x /usr/sbin/getenforce ; then \
+			echo -e "\nSElinux is currently running in `/usr/sbin/getenforce` mode" ; \
+		fi ; \
+		echo -e "**********************************************************************\n" ; \
 	fi \
 	fi \
-
