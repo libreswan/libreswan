@@ -21,7 +21,7 @@ installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
 	$(INSTALL) $(SYSTEMDFILE) $(SYSTEMDDIR)
 	@if test $(SYSTEMDDIR) = "/lib/systemd/system" ; then \
-		systemctl daemon-reload
+		systemctl daemon-reload ; \
 	fi
 
 installsysconfig:
