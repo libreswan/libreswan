@@ -1,10 +1,11 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 srcdir?=${LIBRESWANSRCDIR}/initsystems/systemd/
+UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
 
 SYSTEMDFILE=ipsec.service
 SYSCONFIGFILE=sysconfig.pluto
 SUBDIRS=
-SYSTEMDDIR=$(DESTDIR)/lib/systemd/system
+SYSTEMDDIR=$(DESTDIR)/${UNITDIR}
 SYSCONFIGDIR=$(DESTDIR)/$(CONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
@@ -20,7 +21,7 @@ doinstall: programs installsystemdservice installsysconfig oldinitdcheck
 installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
 	$(INSTALL) $(SYSTEMDFILE) $(SYSTEMDDIR)
-	@if test $(SYSTEMDDIR) = "/lib/systemd/system" ; then \
+	@if test $(SYSTEMDDIR) = ${UNITDIR} ; then \
 		systemctl daemon-reload ; \
 	fi
 
@@ -43,17 +44,17 @@ oldinitdcheck:
 		fi ; \
 	fi
 postcheck:
-	@if test "`systemctl is-enabled ipsec.service`" = "disabled" ; then \
+	@if test $(SYSTEMDDIR) = ${UNITDIR} -a test $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently disabled. To enable this service issue:" ; \
 		echo " systemctl enable ipsec.service" ; \
 		echo "**********************************************************************" ; \
 	fi ; \
-	if test "`systemctl is-active ipsec.service`" = "disabled" ; then \
+	if test $(shell systemctl is-active ipsec.service) = "disabled" ; then \
 		echo "The ipsec service is currently disabled. To enable this service on boot issue:" ; \
 		echo " systemctl enable ipsec.servce" ; \
 	fi ; \
-	if test "`systemctl is-active ipsec.service`" = "active" ; then \
+	if test $(shell systemctl is-active ipsec.service) = "active" ; then \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently running. You need to restart the service using:" ; \
 		echo " systemctl restart ipsec.servce" ; \
