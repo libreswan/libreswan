@@ -86,8 +86,6 @@ def print_result(rcode, rtext):
 		else:
 			print "\t[%s]"%rtext
 	elif rcode == "WARN":
-		# don't log warnings until we implemented IKE over TCP
-		# retcode = 1
 		if not rtext:
 			rtext = "WARNING"
 		if colour:
@@ -223,6 +221,8 @@ def rpfiltercheck():
 			print_result("FAIL","ENABLED")
 	if fail == 0:
 			print_result("OK","OK")
+	else:
+		print "  rp_filter is not fully aware of IPsec and should be disabled"
 		
 # Check if any NAT or MASQUERADE would accidentally mess up our packets
 def natcheck():
@@ -372,6 +372,8 @@ def installcheckklips():
 		ocf = open("/sys/module/ipsec/parameters/ocf_available","r").read().strip()
 		if ocf == "1":
 			print_result("OK","OK")
+		elif ocf == "0":
+			print_result("WARN","N/A")
 		else:
 			print_result("FAIL","UNKNOWN CODE")
 	except:
@@ -459,7 +461,7 @@ def main():
 	natcheck()
 	cmdchecks()
 	if retcode:
-		sys.exit("\nipsec verify: encountered errors")
+		sys.exit("\nipsec verify: encountered errors - see 'man ipsec_verify' for help")
 
 
 
