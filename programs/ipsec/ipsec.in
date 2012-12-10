@@ -125,7 +125,8 @@ help|--help)
 	echo "Linux Libreswan $version"
 	exit 0
 	;;
-version|--version)
+# some ubuntu/debian scripts use --versioncode, so let's keep the alias
+version|--version|--versioncode)
 	fixversion
 	echo "Linux Libreswan $version"
 	exit 0
