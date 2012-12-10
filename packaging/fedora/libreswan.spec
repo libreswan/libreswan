@@ -120,7 +120,7 @@ kernels.
 %endif
   USE_DNSSEC="%{USE_DNSSEC}" \
   INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libdir}/ipsec \
+  FINALLIBDIR=%{_libexecdir}/ipsec \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
@@ -158,7 +158,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %{__make} \
   DESTDIR=%{buildroot} \
   INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libdir}/ipsec \
+  FINALLIBDIR=%{_libexecdir}/ipsec \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
@@ -205,7 +205,6 @@ rm -rf ${RPM_BUILD_ROOT}
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_unitdir}/ipsec.service
-%{_libdir}/ipsec
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*

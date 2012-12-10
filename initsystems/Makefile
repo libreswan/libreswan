@@ -1,6 +1,7 @@
 LIBRESWANSRCDIR?=$(shell cd ..; pwd)
 srcdir?=${LIBRESWANSRCDIR}/initsystems/
-SUBDIRS=$(shell $(SHELL) $(LIBRESWANSRCDIR)/packaging/utils/lswan_detect.sh init)
+INITSYSTEM?=$(shell $(SHELL) $(LIBRESWANSRCDIR)/packaging/utils/lswan_detect.sh init)
+SUBDIRS=${INITSYSTEM}
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
