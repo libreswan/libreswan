@@ -45,7 +45,12 @@ then
 	initsystem="systemd"
 elif test -f /sbin/start
 then
-	initsystem="upstart"
+	if test -r /etc/redhat-release ;
+	then
+		initsystem="sysv"
+	else
+		initsystem="upstart"
+	fi
 else
 	initsystem="sysv"
 fi
