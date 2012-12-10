@@ -19,6 +19,7 @@ end script
 
 script
     . /etc/default/pluto
+    @FINALSBINDIR@/ipsec _stackmanager start
     @FINALLIBEXECDIR@/pluto --config @FINALCONFDIR@/ipsec.conf --nofork $PLUTO_OPTIONS
 end script
 
