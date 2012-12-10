@@ -35,7 +35,12 @@ fi
 
 if test -f /sbin/start
 then
-	echo "upstart"
+	# override for rhel/centos to use sysvinit
+	if test -e /etc/redhead-release
+	then
+		echo "sysvinit"
+	else
+		echo "upstart"
 	return
 fi
 
