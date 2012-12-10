@@ -362,8 +362,8 @@ case $stack in
 	netkey|klips|mast|none) 
 		;;
 	auto)
-		echo >&2 "protostack=auto is not longer supported, please set it to netkey, klips, mast or none"
-		exit 1
+		echo >&2 "protostack=auto is not longer supported, defaulting to netkey"
+		stack=netkey
 		;;
 	*)
 		echo >&2 "unknown stack $stack" 
