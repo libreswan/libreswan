@@ -50,14 +50,14 @@
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
 # Source function library.
-. /etc/init.d/functions
+if [ -f /etc/init.d/functions ] ; then
+    . /etc/init.d/functions
+elif [ -f /lib/lsb/init-functions ] ; then
+    . /lib/lsb/init-functions
+fi
 
 # Check that networking is up.
 [ "${NETWORKING}" = "no" ] && exit 6
-
-if [ ! -f /etc/sysconfig/network ]; then
-    exit 6
-fi
 
 if [ `id -u` -ne 0 ]
 then
