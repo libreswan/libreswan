@@ -43,8 +43,9 @@ systemd="`pidof systemd`"
 if test "$systemd" = "1";
 then
 	initsystem="systemd"
+elif test -f /sbin/start
+	initsystem="upstart"
 else
-	# upstart support not yet added
 	initsystem="sysv"
 fi
 
@@ -77,8 +78,8 @@ case "$1" in
 		exec service ipsec start
 	elif test $initsystem = "upstart";
 	then
-		echo "Redirecting to: upstart not yet implementd "
-		exit 2
+		echo "Redirecting to: start ipsec"
+		exec start ipsec
 	else
 		echo "Unknown init system in use - aborted"
 		exit 3
@@ -100,8 +101,8 @@ case "$1" in
 		service ipsec stop
 	elif test $initsystem = "upstart";
 	then
-		echo "Redirecting to: upstart not yet implemented"
-		exit 2
+		echo "Redirecting to: start ipsec"
+		exec stop ipsec
 	else
 		echo "Unknown init system in use - aborted"
 		exit 3
@@ -136,8 +137,8 @@ case "$1" in
 		exec service ipsec status
 	elif test $initsystem = "upstart";
 	then
-		echo "Redirecting to: upstart not yet implementd "
-		exit 2
+		echo "Redirecting to: status ipsec"
+		exec status ipsec
 	else
 		echo "Unknown init system in use - aborted"
 		exit 3
@@ -165,8 +166,8 @@ case "$1" in
 		exec service ipsec restart
 	elif test $initsystem = "upstart";
 	then
-		echo "Redirecting to: upstart not yet implementd "
-		exit 2
+		echo "Redirecting to: restart ipsec"
+		exec restart ipsec
 	else
 		echo "Unknown init system in use - aborted"
 		exit 3

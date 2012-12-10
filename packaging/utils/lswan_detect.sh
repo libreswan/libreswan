@@ -33,13 +33,10 @@ then
 	return
 fi
 
-if test -f /sbin/initctl -o -f /usr/sbin/initctl 
+if test -f /sbin/start
 then
-	if test -n "`initctl version| grep upstart`"
-	then
-		echo "upstart"
-		return
-	fi
+	echo "upstart"
+	return
 fi
 
 # really, most have this, it is probably a backwards compatiblity or realy sysvinit

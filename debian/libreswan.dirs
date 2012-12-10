@@ -5,6 +5,7 @@
 /etc/ipsec.d/private
 /etc/ipsec.d/policies
 /etc/init.d
+/etc/init
 /etc/logcheck/ignore.d.paranoid
 /etc/logcheck/ignore.d.server
 /etc/logcheck/ignore.d.workstation
