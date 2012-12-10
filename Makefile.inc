@@ -209,13 +209,18 @@ GCC_LINT ?= -DGCC_LINT
 # extra compile flags, for userland and kernel stuff, e.g. -g for debug info
 # you can add to this in the defaults file using +=
 # -DGCC_LINT uses gcc-specific declarations to improve compile-time diagnostics.
-# -DCOMPILER_HAS_NO_PRINTF_LIKE if your old compiler gives you errors with PRINTF_LIKE(x)
-#Example for a cross compile:
-#USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
-#USERCOMPILE?=-g -O3 ${WERROR} $(GCC_LINT)
+# -DCOMPILER_HAS_NO_PRINTF_LIKE if your old compiler gives you errors with
+# PRINTF_LIKE(x)
+#
+# Warning: Using -O3 is known to cause problems with the NSS code, see
+#          https://bugzilla.redhat.com/show_bug.cgi?id=884710
+#
+# Example for a cross compile:
+# USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
+# USERCOMPILE?=-g -O2 ${WERROR} $(GCC_LINT)
 USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} $(GCC_LINT) -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4  -mtune=generic -fno-strict-aliasing -fPIE -DPIE  -Wall -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wbad-function-cast
 
-KLIPSCOMPILE=-O3 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
+KLIPSCOMPILE=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # Additional debugging for developers (warning: can crash libreswan!)
 #USERCOMPILE?=-g -DLEAK_DETECTIVE -lefence
 # You can also run this before starting libreswan on glibc systems:
