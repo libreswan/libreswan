@@ -943,8 +943,11 @@ main(int argc, char **argv)
     {
 	/* no daemon fork: we have to fill in lock file */
 	(void) fill_lock(lockfd, getpid());
-	fprintf(stdout, "Pluto initialized\n");
-	fflush(stdout);
+	if (isatty(fileno(stdout)))
+	{
+	    fprintf(stdout, "Pluto initialized\n");
+	    fflush(stdout);
+	}
     }
 
     /** Close everything but ctl_fd and (if needed) stderr.
