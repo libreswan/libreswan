@@ -89,7 +89,8 @@ status|--status)
 	;;
 help|--help)
 	echo "Usage: ipsec <command> <argument ...>"
-	echo "where <command> is one of:\n"
+	echo "where <command> is one of:"
+	echo ""
 	if test -x /bin/printf -o -x /usr/bin/printf
 	then
 		DOCOLS="1"
