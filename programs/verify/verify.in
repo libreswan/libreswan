@@ -254,16 +254,21 @@ def cmdchecks():
 
 def udp500check():
 	printfun(" Pluto listening for IKE on udp 500")
-	if 1==1:
-		p = subprocess.Popen(["/usr/sbin/ss", "-n", "-a", "-u", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+	try:
+		if os.path.isfile("/usr/sbin/ss"):
+			SSCMD = "/usr/sbin/ss"
+		elif os.path.isfile("/bin/ss"):
+			SSCMD = "/bin/ss"
+		else:
+			print_result("WARN","ss CMD NOT FOUND")
+			return
+		p = subprocess.Popen([SSCMD, "-n", "-a", "-u", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
 		if ":500" in output:
 			print_result("OK","OK")
 		else:
-			print "fail in else:%s"%output
 			print_result("FAIL","FAILED")
-	else:
-			print "except hit?"
+	except:
 			print_result("FAIL","FAILED")
 
 # not yet implemented in *swan
