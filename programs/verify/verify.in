@@ -37,14 +37,15 @@ if not os.path.isfile(ipsecbin):
 	ipsecbin = "ipsec"
 
 if not os.path.isfile("%s/ipsec.conf"%confdir):
-	try:
-		p = subprocess.Popen("%s --config"%ipsecbin, stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
-		output, err = p.communicate()
-		output = output.strip()
-		if os.path.isfile("%s/ipsec.conf"%output):
-			confdir = output
-	except:
-		sys.exit("Failed to find ipsec.conf")
+	# try some fall backs
+	if os.path.isfile("/etc/ipsec.conf"):
+		print "WARNING: ipsec.conf not found at compiled-in location '%s/ipsec.conf', using /etc/ipsec.conf instead"%confdir
+		confdir = "/etc/"
+	elif os.path.isfile("/usr/local/etc/ipsec.conf"):
+		print "WARNING: ipsec.conf not found at compiled-in location '%s/ipsec.conf', using /etc/ipsec.conf instead"%confdir
+		confdir = "/usr/local/etc/"
+	else:
+		sys.exit("Failed to find ipsec.conf - checked %s, /etc and /usr/local/etc"%confdir)
 
 # Should we print in colour by default?
 colour = 0
