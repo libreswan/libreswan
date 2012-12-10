@@ -44,6 +44,7 @@ if test "$systemd" = "1";
 then
 	initsystem="systemd"
 elif test -f /sbin/start
+then
 	initsystem="upstart"
 else
 	initsystem="sysv"
