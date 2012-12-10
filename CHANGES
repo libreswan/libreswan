@@ -10,10 +10,11 @@ v3.0 (unreleased)
         use the name "libreswan" to refer to this software and website [Team]
 * NSS: is now mandatory - custom crypto code removed [Paul]
 * NSS: Support reading NSS password from file [Avesh]
-* NSS: Added "ipsec initnss" command [Paul]
+* NSS: Added "ipsec initnss" and "ipsec import" commands [Paul]
 * NSS: We need to include nsperror.h for PR_GetError() [Paul]
 * NSS: PK11_DigestFinal() passed sizeof pointer instead of passing
         sizeof *pointer [Paul]
+* NSS: use pkg-config to find the right cflags and libs [Paul]
 * DNS: Removed LWRES code and old static ISC libraries [Paul]
 * DNS: Don't attempt to resolve numerical sourceip= values [Paul]
 * DNS: starter and pluto now support USE_DNSSEC using libunbound [Paul]
@@ -115,9 +116,12 @@ v3.0 (unreleased)
 * liblibreswan: Remove unused optionsfrom() temp file handling [Paul]
 * liblibreswan: Support comma's inside OID's by using ",," to mean ","
   inside the OID (rhbz#868986) [Matt Rogers]
+* initsystems: Native support for systemd, upstart and sysvinit [Paul/Wes]
 * testing: Ported broken UML harness to KVM/libvirt/9p [Paul/Antony]
            (see the wiki on libreswan.org for details on how to use it)
 * packaging: Updated libreswan.spec to reflect updated options [Paul]
+* packaging: /usr/lib{64}/ipsec is no longer used [Paul]
+* manpages: Build during build phase, not during install phase [Wes]
 * compiling: Update standard compile options to be more hardened [Paul]
 * Bugtracker bugs fixed:
     #993 ipsec showhostkey: wrong kind of key PPK_XAUTH [Philippe Vouters]

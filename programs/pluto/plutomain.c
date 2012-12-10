@@ -812,7 +812,7 @@ main(int argc, char **argv)
 #endif
 	    char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 	    if (protostack == NULL || *protostack == 0)
-		/* nothing */ ;
+	        kern_interface = USE_NETKEY;
 	    else if (strcmp(protostack, "none") == 0)
 		kern_interface = NO_KERNEL;
 	    else if (strcmp(protostack, "auto") == 0)
