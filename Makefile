@@ -604,8 +604,11 @@ install::
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \
 		echo "SElinux is present on this system and the prefix path is not /usr." ; \
-		echo "This will cause software failures if selinux is enabled in Enforcing mode"; \
-		echo "unless selinux policies are updated manually" ; \
+		echo "This can cause software failures if selinux is running in Enforcing mode"; \
+		echo -e "unless selinux policies are updated manually to allow this.\n" ; \
+		echo "The following commands fix a common issue of /usr/local/ being mislabeled"; \
+		echo "    restorecon /usr/local/sbin -Rv"; \
+		echo "    restorecon /usr/local/libexec/ipsec -Rv"; \
 		if test -x /usr/sbin/getenforce ; then \
 			echo -e "\nSElinux is currently running in `/usr/sbin/getenforce` mode" ; \
 		fi ; \
