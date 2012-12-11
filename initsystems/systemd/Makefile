@@ -5,7 +5,11 @@ UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
 SYSTEMDFILE=ipsec.service
 SYSCONFIGFILE=sysconfig.pluto
 SUBDIRS=
+ifeq ($(DESTDIR),)
+SYSTEMDDIR=${UNITDIR}
+else
 SYSTEMDDIR=$(DESTDIR)/${UNITDIR}
+endif
 SYSCONFIGDIR=$(CONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
@@ -22,7 +26,7 @@ installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
 	$(INSTALL) $(SYSTEMDFILE) $(SYSTEMDDIR)
 	@if test $(SYSTEMDDIR) = ${UNITDIR} ; then \
-		systemctl daemon-reload ; \
+		systemctl --system daemon-reload ; \
 	fi
 
 installsysconfig:
