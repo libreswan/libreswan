@@ -614,4 +614,13 @@ install::
 		fi ; \
 		echo -e "**********************************************************************\n" ; \
 	fi \
-	fi \
+	fi
+	@if test ! -f $(DESTDIR)/etc/pam.d/pluto ; then \
+		mkdir -p $(DESTDIR)/etc/pam.d/ ; \
+		$(INSTALL) pam.d/pluto $(DESTDIR)/etc/pam.d/pluto ; \
+	else \
+		echo -e "\n************************** WARNING ***********************************" ; \
+		echo "We are not installing a new copy of the pam.d/pluto file, as one" ; \
+		echo "was already present.  You may wish to update it yourself if desired." ; \
+		echo -e "**********************************************************************\n" ; \
+	fi
