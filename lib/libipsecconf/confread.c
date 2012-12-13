@@ -37,6 +37,7 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/oeconns.h"
+#include "ipsecconf/interfaces.h"
 
 #ifdef FIPS_CHECK
 # include "lswconf.h"
