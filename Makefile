@@ -615,7 +615,8 @@ install::
 		echo -e "**********************************************************************\n" ; \
 	fi \
 	fi
-	@if test ! -f $(DESTDIR)/etc/pam.d/pluto ; then \
+	@if test "x$(USE_XAUTH)" = "xtrue" ; then \
+	if test ! -f $(DESTDIR)/etc/pam.d/pluto ; then \
 		mkdir -p $(DESTDIR)/etc/pam.d/ ; \
 		$(INSTALL) pam.d/pluto $(DESTDIR)/etc/pam.d/pluto ; \
 	else \
@@ -623,4 +624,5 @@ install::
 		echo "We are not installing a new copy of the pam.d/pluto file, as one" ; \
 		echo "was already present.  You may wish to update it yourself if desired." ; \
 		echo -e "**********************************************************************\n" ; \
+	fi ; \
 	fi
