@@ -6,6 +6,8 @@
 <refentrytitle>IPSEC_INITNSS</refentrytitle>
 <manvolnum>8</manvolnum>
 <refmiscinfo class='date'>24 August 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec initnss</refname>

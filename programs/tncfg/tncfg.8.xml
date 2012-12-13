@@ -6,6 +6,8 @@
 <refentrytitle>IPSEC_TNCFG</refentrytitle>
 <manvolnum>8</manvolnum>
 <refmiscinfo class='date'>21 Jun 2000</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec tncfg</refname>
@@ -48,18 +50,17 @@
 </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='obsolete'><title>OBSOLETE</title>
-<para>Note that tncfg is only supported on the classic KLIPS stack. It is
-not supported on any other stack and will be completely removed in future
-versions. A replacement command still needs to be designed</para>
+<refsect1 id='klips'><title>KLIPS</title>
+<para>Note that tncfg is only supported on the KLIPS stack which uses ipsecX interfaces
+bound to physical interfaces</para>
 </refsect1>
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para>The historical use of <emphasis remap='I'>tncfg</emphasis> is to 
+<para>The purpose of <emphasis remap='I'>tncfg</emphasis> is to 
 attach/detach IPsec virtual interfaces (e.g. ipsec0) to/from physical interfaces
 (e.g. eth0) through which packets will be forwarded once processed by KLIPS.</para>
 
-<para>The modern use of tncfg is to create and delete virtual interfaces known
+<para>When using the MAST stack, tncfg is used to create and delete virtual interfaces known
 as mastXXX. mast stands for Mooring and XXX.</para>
 
 <para>The form with no additional arguments lists the contents of

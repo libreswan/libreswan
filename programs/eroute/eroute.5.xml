@@ -7,6 +7,8 @@
 <refentrytitle>IPSEC_EROUTE</refentrytitle>
 <manvolnum>5</manvolnum>
 <refmiscinfo class='date'>20 Sep 2001</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec_eroute</refname>

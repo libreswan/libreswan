@@ -6,7 +6,9 @@
 <refmeta>
 <refentrytitle>IPSEC_VERIFY</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>8 June 2002</refmiscinfo>
+<refmiscinfo class='date'>12 Dec 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo> 
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec verify</refname>
