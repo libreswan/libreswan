@@ -60,6 +60,7 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 #include "ikev2.h"
+#include "demux.h"
 
 #ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"

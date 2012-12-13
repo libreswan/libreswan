@@ -42,7 +42,6 @@ logger "Plutorun started on "`date`
 # spin off into the background, with our own logging
 echo "$verb Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun
 execdir=${IPSEC_EXECDIR-@IPSEC_EXECDIR@}
-secrets=${IPSEC_SECRETS-/etc/ipsec.secrets}
 
 # Work around problem with broken shells (e.g. Busybox sh).
 # We are called with stdout & stderr going to a logger process started
@@ -59,7 +58,7 @@ exec 2>/dev/null
 
 until (
 	# eval allows to contain redirection and other magic
-	eval $execdir/pluto --config ${IPSEC_CONFS}/ipsec.conf --nofork --secretsfile $secrets
+	eval $execdir/pluto --config ${IPSEC_CONFS}/ipsec.conf --nofork 
 	status=$?
 	echo "exit"
 	echo $status

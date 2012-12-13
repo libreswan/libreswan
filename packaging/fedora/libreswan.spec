@@ -1,10 +1,12 @@
 %global USE_FIPSCHECK true
 %global USE_LIBCAP_NG true
-%global USE_NM true
-%global fipscheck_version 1.3.0
-%global USE_CRL_FECTCHING true
+%global USE_LABELED_IPSEC true
+%global USE_CRL_FETCHING true
 %global USE_DNSSEC true
+%global USE_NM true
 %global USE_LINUX_AUDIT true
+
+%global fipscheck_version 1.3.0
 %global buildklips 0
 %global buildefence 0
 %global development 0
@@ -12,23 +14,18 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-#Version: IPSECBASEVERSION
-Version: 3.0
+Version: IPSECBASEVERSION
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
 # This can be overridden by "--define 'kversion x.x.x-y.y.y'"
-%define defkv %(rpm -q kernel kernel-smp| grep -v "not installed" | sed "s/kernel-smp-\\\(.\*\\\)$/\\1smp/"| sed "s/kernel-//"| sort | tail -1)
+%define defkv %(rpm -q kernel kernel-debug| grep -v "not installed" | sed -e "s/kernel-debug-//" -e  "s/kernel-//" -e "s/\.[^.]*$//"  | sort | tail -1 )
 %{!?kversion: %{expand: %%define kversion %defkv}}
 %define krelver %(echo %{kversion} | tr -s '-' '_')
-
-%define nssflags %(pkg-config --cflags nss)
-
 # Libreswan -pre/-rc nomenclature has to co-exist with hyphen paranoia
 %define srcpkgver %(echo %{version} | tr -s '_' '-')
-%define ourrelease 1
 
-Release: %{ourrelease}%{?dist}
+Release: 1%{?dist}
 License: GPLv2
 Url: http://www.libreswan.org/
 Source: %{name}-%{srcpkgver}.tar.gz
@@ -36,8 +33,9 @@ Group: System Environment/Daemons
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
 BuildRequires: systemd
-Requires(post): coreutils bash systemd-units systemd-sysv
-Requires(preun): initscripts chkconfig systemd-units
+Requires(post): coreutils bash systemd
+Requires(preun): systemd
+Requires(postun): systemd
 
 BuildRequires: pkgconfig hostname
 BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
@@ -57,7 +55,7 @@ Buildrequires: audit-libs-devel
 %if %{USE_LIBCAP_NG}
 BuildRequires: libcap-ng-devel
 %endif
-%if %{USE_CRL_FECTCHING}
+%if %{USE_CRL_FETCHING}
 BuildRequires: openldap-devel curl-devel
 %endif
 %if %{buildefence}
@@ -68,11 +66,6 @@ BuildRequires: ElectricFence
 
 Requires: nss-tools, nss-softokn
 Requires: iproute >= 2.6.8
-Requires(post): coreutils bash
-Requires(preun): initscripts chkconfig
-Requires(post): /sbin/chkconfig
-Requires(preun): /sbin/chkconfig
-Requires(preun): /sbin/service
 
 %description
 Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is 
@@ -96,7 +89,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %package klips
 Summary: Libreswan kernel module
 Group:  System Environment/Kernel
-Release: %{krelver}_%{ourrelease}
+Release: %{krelver}_%{release}
 Requires: kernel = %{kversion}, %{name}-%{version}
 
 %description klips
@@ -115,25 +108,27 @@ kernels.
 #796683: -fno-strict-aliasing
 %{__make} \
 %if %{development}
-   USERCOMPILE="-g -DGCC_LINT %{nssflags} %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
+   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %else
-  USERCOMPILE="-g -DGCC_LINT %{nssflags} %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
+  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %endif
   USERLINK="-g -pie %{?efence}" \
-  HAVE_THREADS="true" \
-  USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-  USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_DYNAMICDNS="true" \
-  USE_DNSSEC="%{USE_DNSSEC}" \
-  INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libdir}/ipsec \
-  MANTREE=%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
-%if %{USE_CRL_FECTCHING}
+  USE_FIPSCHECK="%{USE_FIPSCHECK}" \
+  USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
+  USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
+%if %{USE_CRL_FETCHING}
+  USE_LDAP=true \
   USE_LIBCURL=true \
 %endif
+  USE_DNSSEC="%{USE_DNSSEC}" \
+  INC_USRLOCAL=%{_prefix} \
+  FINALLIBDIR=%{_libexecdir}/ipsec \
+  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+  MANTREE=%{_mandir} \
+  INC_RCDEFAULT=%{_initrddir} \
   programs
 FS=$(pwd)
 
@@ -168,27 +163,19 @@ rm -rf ${RPM_BUILD_ROOT}
 %{__make} \
   DESTDIR=%{buildroot} \
   INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libdir}/ipsec \
+  FINALLIBDIR=%{_libexecdir}/ipsec \
+  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   INSTMANFLAGS="-m 644" \
   install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
-rm -f %{buildroot}/%{_initrddir}/setup
-#find %{buildroot}%{_mandir}  -type f | xargs chmod a-x
 
 install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase 
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
-
-install -d -m 0755 %{buildroot}/%{_sysconfdir}/sysconfig/
-install -m 0644 packaging/fedora/sysconfig.pluto %{buildroot}/%{_sysconfdir}/sysconfig/pluto
-
-# systemd service file addition
-mkdir -p $RPM_BUILD_ROOT%{_unitdir}
-install -m 0644 packaging/fedora/ipsec.service %{buildroot}/%{_unitdir}/
 
 %if %{USE_FIPSCHECK}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/fipscheck
@@ -221,10 +208,8 @@ rm -rf ${RPM_BUILD_ROOT}
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
-%ghost %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
+%attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_unitdir}/ipsec.service
-%{_initrddir}/ipsec
-%{_libdir}/ipsec
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
@@ -240,15 +225,10 @@ rm -rf ${RPM_BUILD_ROOT}
 %endif
 
 %preun
-if [ $1 -eq 0 ]; then
-        /sbin/service ipsec stop > /dev/null 2>&1 || :
-        /sbin/chkconfig --del ipsec
-fi
+%systemd_preun ipsec.service
 
 %postun
-if [ $1 -ge 1 ] ; then
- /sbin/service ipsec condrestart 2>&1 >/dev/null || :
-fi
+%systemd_postun_with_restart ipsec.service
 
 %if %{buildklips}
 %postun klips
@@ -258,9 +238,9 @@ fi
 %endif
 
 %post 
-/sbin/chkconfig --add ipsec || :
+%systemd_post ipsec.service
 
 %changelog
-* Wed Sep 05 2012 Paul Wouters <paul@libreswan.org> - 0.9.9-1
-- Merged in Avesh' spec file for fedora
+* Sun Dec 09 2012 Paul Wouters <paul@libreswan.org> - IPSECBASEVERSION-1
+- Automated build from release tar ball
 

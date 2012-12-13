@@ -803,7 +803,7 @@ main(int argc, char **argv)
 	    nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
 	    keep_alive = cfg->setup.options[KBF_KEEPALIVE];
 	    force_keepalive = cfg->setup.options[KBF_FORCE_KEEPALIVE];
-	    nat_t_spf = cfg->setup.options[KBF_DISABLEPORTFLOATING];
+	    nat_t_spf = !cfg->setup.options[KBF_DISABLEPORTFLOATING];
 #endif
 	    set_cfg_string(&virtual_private,
 			   cfg->setup.strings[KSF_VIRTUALPRIVATE]);
@@ -816,7 +816,7 @@ main(int argc, char **argv)
 #endif
 	    char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 	    if (protostack == NULL || *protostack == 0)
-		/* nothing */ ;
+	        kern_interface = USE_NETKEY;
 	    else if (strcmp(protostack, "none") == 0)
 		kern_interface = NO_KERNEL;
 	    else if (strcmp(protostack, "auto") == 0)
@@ -947,8 +947,11 @@ main(int argc, char **argv)
     {
 	/* no daemon fork: we have to fill in lock file */
 	(void) fill_lock(lockfd, getpid());
-	fprintf(stdout, "Pluto initialized\n");
-	fflush(stdout);
+	if (isatty(fileno(stdout)))
+	{
+	    fprintf(stdout, "Pluto initialized\n");
+	    fflush(stdout);
+	}
     }
 
     /** Close everything but ctl_fd and (if needed) stderr.
@@ -995,7 +998,6 @@ main(int argc, char **argv)
 				        IPSECLIBDIR"/barf",
 				        IPSECLIBDIR"/eroute",
   				        IPSECLIBDIR"/ikeping",
-  				        IPSECLIBDIR"/initnss",
 				        IPSECLIBDIR"/readwriteconf",
 					IPSECLIBDIR"/_keycensor",
 					IPSECLIBDIR"/klipsdebug",

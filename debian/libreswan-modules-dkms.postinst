@@ -12,7 +12,7 @@ case "$1" in
 	if [ -x /usr/lib/dkms/common.postinst ]; then
 	    /usr/lib/dkms/common.postinst libreswan $VERSION /usr/share/libreswan-modules-dkms $ARCH $2
 
-	    if ipsec --versioncode | grep -q '(klips)'; then
+	    if ipsec --version | grep -q '(klips)'; then
 		db_get libreswan/restart
 
 		if [ "$RET" = "true" ]; then

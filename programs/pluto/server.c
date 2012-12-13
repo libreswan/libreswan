@@ -100,6 +100,8 @@ static const int on = TRUE;	/* by-reference parameter; constant, we hope */
 
 bool no_retransmits = FALSE;
 
+pid_t addconn_child_pid = 0;
+
 /* list of interface devices */
 struct iface_list interface_dev;
 
@@ -490,6 +492,11 @@ reapchildren(void)
     while((child = wait3(&status, WNOHANG, &r)) > 0) {
 	/* got a child to reap */
 	if(adns_reapchild(child, status)) continue;
+	if(child == addconn_child_pid){
+		DBG(DBG_CONTROLMORE,DBG_log("reaped addconn helper child"));
+		addconn_child_pid = 0;
+		continue;
+	}
        /*Threads are created instead of child processes when using LIBNSS*/
 	libreswan_log("child pid=%d (status=%d) is not my child!", child, status);
     }
@@ -590,13 +597,12 @@ call_server(void)
 	char *newargv[] = { "addconn", "--autoall", NULL };
 	char *newenv[] = { NULL };
 #ifdef HAVE_NO_FORK
-	pid_t addconn_pid = vfork(); /* for better, for worse, in sickness and health..... */
+	addconn_child_pid = vfork(); /* for better, for worse, in sickness and health..... */
 #else
-	pid_t addconn_pid = fork();
+	addconn_child_pid = fork();
 #endif
-	if (addconn_pid == 0) {
+	if (addconn_child_pid == 0) {
 		/* child */
-		sleep(3);
 		DBG(DBG_CONTROLMORE,DBG_log("calling addconn helper using execve"));
 		execve(addconn_path, newargv, newenv);
 		_exit(42);

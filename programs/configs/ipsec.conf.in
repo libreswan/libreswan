@@ -33,7 +33,7 @@ config setup
 	# OE is now off by default. Uncomment and change to on, to enable.
 	oe=off
 	# which IPsec stack to use. auto will try netkey, then klips then mast
-	protostack=auto
+	protostack=netkey
 	# Use this to log to a file, or disable logging on embedded systems (like openwrt)
 	#plutostderrlog=/dev/null
 

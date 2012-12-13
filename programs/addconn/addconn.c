@@ -401,7 +401,7 @@ main(int argc, char *argv[])
     int exit_status = 0;
     struct starter_conn *conn = NULL;
     char *ctlbase = NULL;
-    bool resolvip = FALSE;
+    bool resolvip = TRUE;  /* default to looking up names */
 
 #if 0
     /* efence settings */
@@ -538,10 +538,9 @@ main(int argc, char *argv[])
     starter_use_log (verbose, 1, verbose ? 0 : 1);
 
     err = NULL;      /* reset to no error */
-    resolvip=TRUE;   /* default to looking up names */
 
     if(configsetup || checkconfig || dolist) {
-	/* but not if we have no use for them... might cause delays too! */
+	/* skip if we have no use for them... causes delays */
 	resolvip=FALSE;
     }
 

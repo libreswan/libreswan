@@ -33,13 +33,16 @@ then
 	return
 fi
 
-if test -f /sbin/initctl -o -f /usr/sbin/initctl 
+if test -f /sbin/start
 then
-	if test -n "`initctl version| grep upstart`"
+	# override for rhel/centos to use sysvinit
+	if test -e /etc/redhead-release ;
 	then
+		echo "sysvinit"
+	else
 		echo "upstart"
-		return
 	fi
+	return
 fi
 
 # really, most have this, it is probably a backwards compatiblity or realy sysvinit

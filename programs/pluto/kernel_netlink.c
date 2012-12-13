@@ -541,13 +541,16 @@ netlink_raw_eroute(const ip_address *this_host
 	    }
 	    break;
     }
-    DBG(DBG_NETKEY,
-	DBG_log("satype(%d) is not used in netlink_raw_eroute.",satype));
-
+    if (satype != 0)
+    {
+       DBG(DBG_NETKEY,
+	   DBG_log("satype(%d) is not used in netlink_raw_eroute.",satype));
+    }
 
     /* log warning for RFC-breaking implementation in NETKEY/XFRM stack */
-    if( (proto_info[0].encapsulation != ENCAPSULATION_MODE_TUNNEL)
-	&& (transport_proto != 0)) {
+    if ( (proto_info[0].encapsulation != ENCAPSULATION_MODE_TUNNEL)
+	&& (transport_proto != 0)
+	&& (satype != 0)) {
 	   DBG_log("warning: NETKEY/XFRM in transport mode accepts ALL encrypted protoport packets between the hosts in violation of RFC 4301, Section 5.2");
     }
 
@@ -676,13 +679,7 @@ netlink_raw_eroute(const ip_address *this_host
 	req.u.p.lft.hard_byte_limit = XFRM_INF;
 	req.u.p.lft.hard_packet_limit = XFRM_INF;
 
-	/*
-	 * NEW will fail when an existing policy, UPD always works.
-	 * This seems to happen in cases with NAT'ed XP clients, or
-	 * quick recycling/resurfacing of roadwarriors on the same IP.
-	 * req.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
-	 */
-	req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
+	req.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
 	if (sadb_op == ERO_REPLACE)
 	{
 	    req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
@@ -1825,6 +1822,7 @@ netlink_shunt_eroute(struct connection *c
             bad_case(op);
         }
     }
+
     if (sr->routing == RT_ROUTED_ECLIPSED && c->kind == CK_TEMPLATE)
     {
         /* We think that we have an eroute, but we don't.
@@ -1853,6 +1851,7 @@ netlink_shunt_eroute(struct connection *c
         /* maybe we are uneclipsing something */
         struct spd_route *esr;
         struct connection *ue = eclipsed(c, &esr);
+
 
         if (ue != NULL)
         {

@@ -14,11 +14,13 @@ Virtanen's package, but had been mostly rewritten to fit the needs of different
 kernel versions (since version 1.9-1).
 
 After the decision of the FreeS/WAN project to cease the development of
-FreeS/WAN, the Debian package team decided to switch over to the Libreswan fork.
+FreeS/WAN, the Debian package team decided to switch over to the Openswan fork.
 This code base included all the patches that had to be applied manually before,
 which made packaging simple. Alexander List prepared the first preliminary
-libreswan package based on Rene Mayrhofer's freeswan packaging, who in turn
+openswan package based on Rene Mayrhofer's freeswan packaging, who in turn
 updated to the relevant parts of the last freeswan package.
+
+The libreswan package is forked from openswan-2.6.38
 
 2) Plain RSA key creation
 

@@ -44,7 +44,7 @@
 SHELL=/bin/bash
 export SHELL
 
-.PHONY:	programs checkprograms clean
+.PHONY:	programs man config checkprograms clean
 
 # supply kernel-configuration ARCH defaults
 ifeq ($(ARCH),)
@@ -78,6 +78,8 @@ PUBDIR=$(DESTDIR)$(INC_USRLOCAL)/sbin
 # command will look for them when it is run. Also called LIBEXECDIR.
 FINALLIBEXECDIR?=$(INC_USRLOCAL)/libexec/ipsec
 LIBEXECDIR=$(DESTDIR)$(FINALBINDIR)
+FINALLIBDIR?=$(INC_USRLOCAL)/libexec/ipsec
+LIBDIR=$(DESTDIR)$(FINALLIBDIR)
 
 FINALBINDIR=${FINALLIBEXECDIR}
 BINDIR=${LIBEXECDIR}
@@ -87,9 +89,6 @@ BINDIR=${LIBEXECDIR}
 FINALSBINDIR?=$(INC_USRLOCAL)/sbin
 SBINDIR=$(DESTDIR)$(FINALSBINDIR)
 
-# libdir is where utility files go
-FINALLIBDIR?=$(INC_USRLOCAL)/lib/ipsec
-LIBDIR=$(DESTDIR)$(FINALLIBDIR)
 
 
 # where the appropriate manpage tree is located
@@ -193,6 +192,16 @@ INSTCONFFLAGS=
 BISONOSFLAGS=
 
 NSSFLAGS?=$(shell pkg-config --cflags nss)
+NSSLIBS?=$(shell pkg-config --libs nss)
+
+ifeq ($(ARCH),i686)
+GCCM?=-m32
+endif
+ifeq ($(ARCH),x86_64)
+GCCM?=-m64
+endif
+
+GCC_LINT ?= -DGCC_LINT
 
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
@@ -200,20 +209,23 @@ NSSFLAGS?=$(shell pkg-config --cflags nss)
 # extra compile flags, for userland and kernel stuff, e.g. -g for debug info
 # you can add to this in the defaults file using +=
 # -DGCC_LINT uses gcc-specific declarations to improve compile-time diagnostics.
-# -DCOMPILER_HAS_NO_PRINTF_LIKE if your old compiler gives you errors with PRINTF_LIKE(x)
-#Example for a cross compile:
-#USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
-GCC_LINT ?= -DGCC_LINT 
-USERCOMPILE?=-g -O3 ${WERROR} $(GCC_LINT) ${NSSFLAGS}
+# -DCOMPILER_HAS_NO_PRINTF_LIKE if your old compiler gives you errors with
+# PRINTF_LIKE(x)
+#
+# Warning: Using -O3 is known to cause problems with the NSS code, see
+#          https://bugzilla.redhat.com/show_bug.cgi?id=884710
+#
+# Example for a cross compile:
+# USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
+# USERCOMPILE?=-g -O2 ${WERROR} $(GCC_LINT)
+USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} $(GCC_LINT) -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4  -mtune=generic -fno-strict-aliasing -fPIE -DPIE  -Wall -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wbad-function-cast
 
-# on fedora/rhel 
-#USERCOMPILE?=-g -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4  -m64 -mtune=generic -fPIE -pie 
-KLIPSCOMPILE=-O3 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
+KLIPSCOMPILE=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # Additional debugging for developers (warning: can crash libreswan!)
 #USERCOMPILE?=-g -DLEAK_DETECTIVE -lefence
 # You can also run this before starting libreswan on glibc systems:
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
- 
+
 # extra link flags
 USERLINK?=-Wl,-z,relro
 # on fedora/rhel
@@ -563,9 +575,31 @@ export LIBRESWANLIB LSWLOGLIB PLUTOLIB
 export LIBDESSRCDIR LIBDESLITE LIBAES
 export LIBMD5 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
-export LIBLSWCRYPTO
+export LIBLSWCRYPTO NSSFLAGS NSSLIBS
 
 #KERNELBUILDMFLAGS=--debug=biv V=1 
+
+# how to do variable substitution in sed-transformed files
+TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
+			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
+			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
+			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
+			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):g" \
+			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
+			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
+			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
+			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
+			-e "s:@FINALLIBDIR@:$(FINALLIBDIR):g" \
+			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \
+			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
+			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
+			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
+			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
+			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):g" \
+			-e "s:@IPSEC_CONFS@:$(FINALCONFDIR):g" \
+			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
+			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
+                        -e "s:@MODPROBE@:$(MODPROBE):g" \
 
 # for emacs
 #

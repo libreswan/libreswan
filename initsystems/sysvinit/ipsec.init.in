@@ -34,7 +34,8 @@
 # ipsec         sysv style init.d script for starting and stopping
 #               the IPsec security subsystem (KLIPS and Pluto).
 #
-# This script becomes /etc/rc.d/init.d/ipsec (or possibly /etc/init.d/ipsec)
+# This script becomes @FINALCONFDIR@/rc.d/init.d/ipsec
+# (or possibly @FINALCONFDIR@/init.d/ipsec)
 # and is also accessible as "ipsec setup" 
 #
 # The startup and shutdown times are a difficult compromise (in particular,
@@ -49,14 +50,14 @@
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
 # Source function library.
-. /etc/init.d/functions
+if [ -f /etc/init.d/functions ] ; then
+    . /etc/init.d/functions
+elif [ -f /lib/lsb/init-functions ] ; then
+    . /lib/lsb/init-functions
+fi
 
 # Check that networking is up.
 [ "${NETWORKING}" = "no" ] && exit 6
-
-if [ ! -f /etc/sysconfig/network ]; then
-    exit 6
-fi
 
 if [ `id -u` -ne 0 ]
 then
@@ -72,17 +73,17 @@ then
 fi
 
 # where the private directory and the config files are
-IPSEC_SBINDIR="${IPSEC_SBINDIR-/usr/sbin}"
-IPSEC_CONFS="${IPSEC_CONFS-/etc}"
+IPSEC_SBINDIR="${IPSEC_SBINDIR-@FINALSBINDIR@}"
+IPSEC_CONFS="${IPSEC_CONFS-@FINALCONFDIR@/}"
 
-rundir=/var/run/pluto
+rundir=@FINALVARDIR@/run/pluto
 plutopid=$rundir/pluto.pid
 plutoctl=$rundir/pluto.ctl
 ipsecversion=/proc/net/ipsec_version
 kamepfkey=/proc/net/pfkey
 
-#/etc/resolv.conf related paths
-LIBRESWAN_RESOLV_CONF=/var/run/pluto/libreswan-resolv-conf-backup
+#@FINALCONFDIR@/resolv.conf related paths
+LIBRESWAN_RESOLV_CONF=@FINALVARDIR@/run/pluto/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=/etc/resolv.conf
 
 # there is some confusion over the name - just do both
@@ -98,14 +99,14 @@ umask 022
 
 if [ -z "$IPSEC_SBINDIR" ]
 then
-        $IPSEC_SBINDIR="${IPSEC_SBINDIR-@IPSEC_SBINDIR@}"
+        $IPSEC_SBINDIR="${IPSEC_SBINDIR-@IPSEC_SBINDIR@/}"
 fi
 # standardize PATH, and export it for everything else's benefit
-PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
+PATH="${IPSEC_SBINDIR}":/sbin:@FINALSBINDIR@:/usr/local/bin:/bin:/usr/bin
 export PATH
 
-mkdir -p /var/run/pluto
-chmod 700 /var/run/pluto
+mkdir -p @FINALVARDIR@/run/pluto
+chmod 700 @FINALVARDIR@/run/pluto
 
 verify_config() {
     test -f $IPSEC_CONFS/ipsec.conf || exit 6
@@ -136,11 +137,11 @@ start() {
 	else
 		failure; echo; return $RETVAL
 	fi
-	if [ ! -d /var/lock/subsys ]
+	if [ ! -d @FINALVARDIR@/lock/subsys ]
 	then
-		mkdir -p /var/lock/subsys
+		mkdir -p @FINALVARDIR@/lock/subsys
 	fi
-	touch /var/lock/subsys/ipsec
+	touch @FINALVARDIR@/lock/subsys/ipsec
 	return $RETVAL
 }
 
@@ -198,7 +199,7 @@ stop() {
 		rm -f  $LIBRESWAN_RESOLV_CONF
 	fi
 
-	rm -f /var/lock/subsys/ipsec
+	rm -f @FINALVARDIR@/lock/subsys/ipsec
 }
 
 restart() {

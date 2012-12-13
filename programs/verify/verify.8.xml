@@ -58,6 +58,9 @@ by Michael Richardson. Rewritten in python by Paul Wouters</para>
 <refsect1 id='bugs'><title>BUGS</title>
 <para><emphasis remap='I'>Verify</emphasis>
 was converted from shell to perl to python, and some tests are incomplete.
+The <emphasis remap='I'>ss</emphasis> command is around in various non-intuitive and buggy
+versions, causing some false-positives with respect to listening on UDP port 500 and 4500.
+See https://bugzilla.redhat.com/show_bug.cgi?id=829630
 </para>
 
 </refsect1>

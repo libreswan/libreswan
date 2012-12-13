@@ -53,13 +53,13 @@ use vars qw ($project $from_email $dest_email $noisy $rpc_uri $sendmail
 $project = 'Libreswan';
 
 # The from address in generated mails.
-$from_email = 'nightly@xelerance.com';
+$from_email = 'commits@libreswan.org';
 
 # Mail all reports to this address.
 $dest_email = 'nightly@lists.libreswan.org';
 
 # If using XML-RPC, connect to this URI.
-$rpc_uri = 'http://cia.navi.cx/RPC2';
+$rpc_uri = 'http://cia.vc/xmlrpc.php'
 
 # Path to your USCD sendmail compatible binary (your mailer daemon created this
 # program somewhere).

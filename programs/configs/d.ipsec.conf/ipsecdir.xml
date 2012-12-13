@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ipsecdir</emphasis></term>
+  <listitem>
+<para>in what directory the X509, NSS and OE related files should be stored.
+The default value is <emphasis remap='I'>/etc/ipsec.d</emphasis>. When SElinux
+runs in enforced mode, changing this requires a similar change in the SElinux policy
+for the pluto daemon. Note that NSS generated db files contain their location within
+their files, so you cannot move this directory without re-creating the NSS files.
+</para>
+  </listitem>
+  </varlistentry>

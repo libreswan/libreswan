@@ -16,6 +16,8 @@
 # for more details.
 #
 
+export PATH=@FINALSBINDIR@:$PATH
+
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
 kamepfkey=/proc/net/pfkey
@@ -178,8 +180,6 @@ cryptomodules() {
 			fi
 		fi
 		echo $limit  > /sys/module/ocf/parameters/crypto_q_max
-	        echo $limit  > /sys/module/ipsec/parameters/ipsec_irs_cache_allocated_max
-	        echo $limit  > /sys/module/ipsec/parameters/ipsec_ixs_cache_allocated_max
 	fi
 
 
@@ -242,6 +242,12 @@ startklips() {
 		then
 			echo >&2 "FAILURE to load KLIPS/MAST module"
 			exit 1
+		fi
+
+		if [ -d /sys/module/ocf ]
+		then
+	        	echo $limit  > /sys/module/ipsec/parameters/ipsec_irs_cache_allocated_max
+	        	echo $limit  > /sys/module/ipsec/parameters/ipsec_ixs_cache_allocated_max
 		fi
 	fi
 
@@ -356,8 +362,8 @@ case $stack in
 	netkey|klips|mast|none) 
 		;;
 	auto)
-		echo >&2 "protostack=auto is not longer supported, please set it to netkey, klips, mast or none"
-		exit 1
+		echo >&2 "protostack=auto is not longer supported, defaulting to netkey"
+		stack=netkey
 		;;
 	*)
 		echo >&2 "unknown stack $stack" 

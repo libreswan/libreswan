@@ -6,7 +6,7 @@ then
 	echo >&2 "error: make release should be run from the top directory"
 	exit 1
 fi
-version=`cat Makefile.ver | sed "s/^.*=//"`
+version=`git tag | tail -1| sed -e "s/v//"`
 
 if [ -n "`git diff | head -10`" ]
 then
@@ -20,12 +20,6 @@ if [ -n "$TOPUSH" ]
 then
 	echo >&2 "ERROR: unpushed changes - git push first"
 	git log master ^origin/master
-	exit 1
-fi
-
-if [ "`git tag | tail -1`" != "v$version" ]
-then
-	echo >&2 "ERROR: version '$version' is not the latest git tag"
 	exit 1
 fi
 

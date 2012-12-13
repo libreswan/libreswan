@@ -89,7 +89,8 @@ status|--status)
 	;;
 help|--help)
 	echo "Usage: ipsec <command> <argument ...>"
-	echo "where <command> is one of:\n"
+	echo "where <command> is one of:"
+	echo ""
 	if test -x /bin/printf -o -x /usr/bin/printf
 	then
 		DOCOLS="1"
@@ -124,7 +125,8 @@ help|--help)
 	echo "Linux Libreswan $version"
 	exit 0
 	;;
-version|--version)
+# some ubuntu/debian scripts use --versioncode, so let's keep the alias
+version|--version|--versioncode)
 	fixversion
 	echo "Linux Libreswan $version"
 	exit 0
@@ -135,6 +137,38 @@ version|--version)
 	;;
 --confdir)
 	echo "$IPSEC_CONFS"
+	exit 0
+	;;
+import|--import)
+	if [ -z "$2" ]
+	then
+	echo >&2 "usage: ipsec import /path/to/pkcs.12"
+	exit 1
+	else
+		if [ ! -f $2 ]
+		then
+			echo >&2 "usage: ipsec import /path/to/pkcs.12"
+			exit 1
+		fi
+	fi
+	# this hardcoded ipsec.d needs to get fixed once we pass IPSECD properly
+	pk12util -i $2 -d /etc/ipsec.d
+	exit 0
+	;;
+initnss|--initnss)
+	if [ -f "$IPSEC_CONFS/ipsec.d/cert8.db" -o -f "$IPSEC_CONFS/ipsec.d/key3.db" -o -f "$IPSEC_CONFS/ipsec.d/secmod.db" ];
+	then
+		echo "NSS database already initialised - aborted"
+		echo "To wipe the old NSS database, issue: rm $IPSEC_CONFS/ipsec.d/*.db"
+		exit 42
+	fi
+
+	echo "Initializing NSS database"
+	echo "If you want to ensure the IPsec subsystem can start unattended,"
+	echo "   use an empty password"
+	echo ""
+
+	certutil -N -d $IPSEC_CONFS/ipsec.d
 	exit 0
 	;;
 --*)
