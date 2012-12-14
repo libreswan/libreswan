@@ -7,6 +7,8 @@
 <refentrytitle>SETUP</refentrytitle>
 <manvolnum>8</manvolnum>
 <refmiscinfo class='date'>14 Nov 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec setup</refname>

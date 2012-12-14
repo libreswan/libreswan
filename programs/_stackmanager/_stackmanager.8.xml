@@ -7,6 +7,8 @@
 <refentrytitle>_STACKMANAGER</refentrytitle>
 <manvolnum>8</manvolnum>
 <refmiscinfo class='date'>16 Nov 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec _stackmanager</refname>

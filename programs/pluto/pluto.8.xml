@@ -3,16 +3,14 @@
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry id="pluto8">
-  <refentryinfo>
-    <date>26 October 2006</date>
-  </refentryinfo>
-
   <refmeta>
     <refentrytitle>IPSEC_PLUTO</refentrytitle>
 
     <manvolnum>8</manvolnum>
 
     <refmiscinfo class="date">25 February 2008</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
 
   <refnamediv id="name">

@@ -6,7 +6,9 @@
 <refmeta>
 <refentrytitle>_PLUTORUN</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>12 Nv 2012</refmiscinfo>
+<refmiscinfo class='date'>12 Nov 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec _plutorun</refname>

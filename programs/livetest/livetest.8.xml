@@ -8,6 +8,8 @@
 <refentrytitle>IPSEC_LIVETEST</refentrytitle>
 <manvolnum>8</manvolnum>
 <refmiscinfo class='date'>13 July 2004</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 
 <refnamediv id='name'>

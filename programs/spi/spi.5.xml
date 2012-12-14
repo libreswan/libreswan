@@ -7,6 +7,8 @@
 <refentrytitle>IPSEC_SPI</refentrytitle>
 <manvolnum>5</manvolnum>
 <refmiscinfo class='date'>26 Jun 2000</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec_spi</refname>
