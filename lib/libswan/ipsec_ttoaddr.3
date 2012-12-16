@@ -1,0 +1,305 @@
+'\" t
+.\"     Title: IPSEC_TTOADDR
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_TTOADDR" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_ttoaddr, ipsec_tnatoaddr, ipsec_addrtot, ipsec_ttosubnet, ipsec_subnettot \- convert Internet addresses and Subnet masks to and from text
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'const\ char\ *ttoaddr('u
+.BI "const char *ttoaddr(const\ char\ *\ " "src" ", size_t\ " "srclen" ", int\ " "af" ", ip_address\ *\ " "addr" ");"
+.HP \w'const\ char\ *tnatoaddr('u
+.BI "const char *tnatoaddr(const\ char\ *\ " "src" ", size_t\ " "srclen" ", int\ " "af" ", ip_address\ *\ " "addr" ");"
+.HP \w'size_t\ addrtot('u
+.BI "size_t addrtot(const\ ip_address\ *\ " "addr" ", int\ " "format" ", char\ *\ " "dst" ", size_t\ " "dstlen" ");"
+.HP \w'const\ char\ *ttosubnet('u
+.BI "const char *ttosubnet(const\ char\ *\ " "src" ", size_t\ " "srclen" ", int\ " "af" ", ip_subnet\ *\ " "dst" ");"
+.HP \w'size_t\ subnettot('u
+.BI "size_t subnettot(const\ ip_subnet\ *\ " "sub" ", int\ " "format" ", char\ *\ " "dst" ", size_t\ " "dstlen" ");"
+.SH "DESCRIPTION"
+.PP
+\fITtoaddr\fR
+converts a text\-string name or numeric address into a binary address (in network byte order)\&.
+\fITnatoaddr\fR
+does the same conversion, but the only text forms it accepts are the \(lqofficial\(rq forms of numeric address (dotted\-decimal for IPv4, colon\-hex for IPv6)\&.
+\fIAddrtot\fR
+does the reverse conversion, from binary address back to a text form\&.
+\fITtosubnet\fR
+and
+\fBsubnettot\fR
+do likewise for the \(lqaddress/mask\(rq form used to write a specification of a subnet\&.
+.PP
+An IPv4 address is specified in text as a dotted\-decimal address (e\&.g\&.
+1\&.2\&.3\&.4), an eight\-digit network\-order hexadecimal number with the usual C prefix (e\&.g\&.
+\fB0x01020304\fR, which is synonymous with
+1\&.2\&.3\&.4), an eight\-digit host\-order hexadecimal number with a
+\fB0h\fR
+prefix (e\&.g\&.
+\fB0h01020304\fR, which is synonymous with
+1\&.2\&.3\&.4
+on a big\-endian host and
+4\&.3\&.2\&.1
+on a little\-endian host), a DNS name to be looked up via
+\fBgethostbyname\fR(3), or an old\-style network name to be looked up via
+\fBgetnetbyname\fR(3)\&.
+.PP
+A dotted\-decimal address may be incomplete, in which case text\-to\-binary conversion implicitly appends as many instances of
+\&.0
+as necessary to bring it up to four components\&. The components of a dotted\-decimal address are always taken as decimal, and leading zeros are ignored\&. For example,
+10
+is synonymous with
+10\&.0\&.0\&.0, and
+128\&.009\&.000\&.032
+is synonymous with
+128\&.9\&.0\&.32
+(the latter example is verbatim from RFC 1166)\&. The result of applying
+\fBaddrtot\fR
+to an IPv4 address is always complete and does not contain leading zeros\&.
+.PP
+Use of hexadecimal addresses is
+\fBstrongly\fR
+\fBdiscouraged\fR; they are included only to save hassles when dealing with the handful of perverted programs which already print network addresses in hexadecimal\&.
+.PP
+An IPv6 address is specified in text with colon\-hex notation (e\&.g\&.
+\fB0:56:78ab:22:33:44:55:66\fR), colon\-hex with
+\fB::\fR
+abbreviating at most one subsequence of multiple zeros (e\&.g\&.
+\fB99:ab::54:068\fR, which is synonymous with
+\fB99:ab:0:0:0:0:54:68\fR), or a DNS name to be looked up via
+\fBgethostbyname\fR(3)\&. The result of applying
+\fBaddrtot\fR
+to an IPv6 address will use
+\fB::\fR
+abbreviation if possible, and will not contain leading zeros\&.
+.PP
+The letters in hexadecimal may be uppercase or lowercase or any mixture thereof\&.
+.PP
+DNS names may be complete (optionally terminated with a \(lq\&.\(rq) or incomplete, and are looked up as specified by local system configuration (see
+\fBresolver\fR(5))\&. The
+\fIh_addr\fR
+value returned by
+\fBgethostbyname2\fR(3)
+is used, so with current DNS implementations, the result when the name corresponds to more than one address is difficult to predict\&. IPv4 name lookup resorts to
+\fBgetnetbyname\fR(3)
+only if
+\fBgethostbyname2\fR(3)
+fails\&.
+.PP
+A subnet specification is of the form
+\fInetwork\fR\fB/\fR\fImask\fR\&. The
+\fInetwork\fR
+and
+\fImask\fR
+can be any form acceptable to
+\fBttoaddr\fR\&. In addition, and preferably, the
+\fImask\fR
+can be a decimal integer (leading zeros ignored) giving a bit count, in which case it stands for a mask with that number of high bits on and all others off (e\&.g\&.,
+24
+in IPv4 means
+255\&.255\&.255\&.0)\&. In any case, the mask must be contiguous (a sequence of high bits on and all remaining low bits off)\&. As a special case, the subnet specification
+\fB%default\fR
+is a synonym for
+\fB0\&.0\&.0\&.0/0\fR
+or
+\fB::/0\fR
+in IPv4 or IPv6 respectively\&.
+.PP
+\fITtosubnet\fR
+ANDs the mask with the address before returning, so that any non\-network bits in the address are turned off (e\&.g\&.,
+\fB10\&.1\&.2\&.3/24\fR
+is synonymous with
+\fB10\&.1\&.2\&.0/24\fR)\&.
+\fISubnettot\fR
+always generates the decimal\-integer\-bit\-count form of the mask, with no leading zeros\&.
+.PP
+The
+\fIsrclen\fR
+parameter of
+\fBttoaddr\fR
+and
+\fBttosubnet\fR
+specifies the length of the text string pointed to by
+\fIsrc\fR; it is an error for there to be anything else (e\&.g\&., a terminating NUL) within that length\&. As a convenience for cases where an entire NUL\-terminated string is to be converted, a
+\fIsrclen\fR
+value of
+0
+is taken to mean
+\fBstrlen(src)\fR\&.
+.PP
+The
+\fIaf\fR
+parameter of
+\fBttoaddr\fR
+and
+\fBttosubnet\fR
+specifies the address family of interest\&. It should be either
+\fBAF_INET\fR
+or
+\fBAF_INET6\fR\&.
+.PP
+The
+\fIdstlen\fR
+parameter of
+\fBaddrtot\fR
+and
+\fBsubnettot\fR
+specifies the size of the
+\fIdst\fR
+parameter; under no circumstances are more than
+\fIdstlen\fR
+bytes written to
+\fIdst\fR\&. A result which will not fit is truncated\&.
+\fIDstlen\fR
+can be zero, in which case
+\fIdst\fR
+need not be valid and no result is written, but the return value is unaffected; in all other cases, the (possibly truncated) result is NUL\-terminated\&. The
+\fIlibreswan\&.h\fR
+header file defines constants,
+\fBADDRTOT_BUF\fR
+and
+\fBSUBNETTOT_BUF\fR, which are the sizes of buffers just large enough for worst\-case results\&.
+.PP
+The
+\fIformat\fR
+parameter of
+\fBaddrtot\fR
+and
+\fBsubnettot\fR
+specifies what format is to be used for the conversion\&. The value
+0
+(not the character
+\fB\*(Aq0\*(Aq\fR, but a zero value) specifies a reasonable default, and is in fact the only format currently available in
+\fBsubnettot\fR\&.
+\fIAddrtot\fR
+also accepts format values
+\fB\*(Aqr\*(Aq\fR
+(signifying a text form suitable for DNS reverse lookups, e\&.g\&.
+\fB4\&.3\&.2\&.1\&.IN\-ADDR\&.ARPA\&.\fR
+for IPv4 and RFC 2874 format for IPv6), and
+\fB\*(AqR\*(Aq\fR
+(signifying an alternate reverse\-lookup form, an error for IPv4 and RFC 1886 format for IPv6)\&. Reverse\-lookup names always end with a \(lq\&.\(rq\&.
+.PP
+The text\-to\-binary functions return NULL for success and a pointer to a string\-literal error message for failure; see DIAGNOSTICS\&. The binary\-to\-text functions return
+0
+for a failure, and otherwise always return the size of buffer which would be needed to accommodate the full conversion result, including terminating NUL; it is the caller\*(Aqs responsibility to check this against the size of the provided buffer to determine whether truncation has occurred\&.
+.SH "SEE ALSO"
+.PP
+\fBinet\fR(3)
+.SH "DIAGNOSTICS"
+.PP
+Fatal errors in
+\fBttoaddr\fR
+are: empty input; unknown address family; attempt to allocate temporary storage for a very long name failed; name lookup failed; syntax error in dotted\-decimal or colon\-hex form; dotted\-decimal or colon\-hex component too large\&.
+.PP
+Fatal errors in
+\fBttosubnet\fR
+are: no
+\fB/\fR
+in
+\fIsrc\fR;
+\fBttoaddr\fR
+error in conversion of
+\fInetwork\fR
+or
+\fImask\fR; bit\-count mask too big; mask non\-contiguous\&.
+.PP
+Fatal errors in
+\fBaddrtot\fR
+and
+\fBsubnettot\fR
+are: unknown format\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "BUGS"
+.PP
+The interpretation of incomplete dotted\-decimal addresses (e\&.g\&.
+\fB10/24\fR
+means
+\fB10\&.0\&.0\&.0/24\fR) differs from that of some older conversion functions, e\&.g\&. those of
+\fBinet\fR(3)\&. The behavior of the older functions has never been particularly consistent or particularly useful\&.
+.PP
+Ignoring leading zeros in dotted\-decimal components and bit counts is arguably the most useful behavior in this application, but it might occasionally cause confusion with the historical use of leading zeros to denote octal numbers\&.
+.PP
+\fITtoaddr\fR
+does not support the mixed colon\-hex\-dotted\-decimal convention used to embed an IPv4 address in an IPv6 address\&.
+.PP
+\fIAddrtot\fR
+always uses the
+\fB::\fR
+abbreviation (which can appear only once in an address) for the
+\fIfirst\fR
+sequence of multiple zeros in an IPv6 address\&. One can construct addresses (unlikely ones) in which this is suboptimal\&.
+.PP
+\fIAddrtot\fR
+\fB\*(Aqr\*(Aq\fR
+conversion of an IPv6 address uses lowercase hexadecimal, not the uppercase used in RFC 2874\*(Aqs examples\&. It takes careful reading of RFCs 2874, 2673, and 2234 to realize that lowercase is technically legitimate here, and there may be software which botches this and hence would have trouble with lowercase hex\&.
+.PP
+Possibly
+\fBsubnettot\fR
+ought to recognize the
+\fB%default\fR
+case and generate that string as its output\&. Currently it doesn\*(Aqt\&.
+.PP
+It is barely possible that somebody, somewhere, might have a legitimate use for non\-contiguous subnet masks\&.
+.PP
+\fBGetnetbyname\fR(3)
+is a historical dreg\&.
+.PP
+\fITnatoaddr\fR
+probably should enforce completeness of dotted\-decimal addresses\&.
+.PP
+The restriction of text\-to\-binary error reports to literal strings (so that callers don\*(Aqt need to worry about freeing them or copying them) does limit the precision of error reporting\&.
+.PP
+The text\-to\-binary error\-reporting convention lends itself to slightly obscure code, because many readers will not think of NULL as signifying success\&. A good way to make it clearer is to write something like:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBconst char *error;\fR
+
+\fBerror = ttoaddr( /* \&.\&.\&. */ );\fR
+\fBif (error != NULL) {\fR
+\fB        /* something went wrong */\fR
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE
