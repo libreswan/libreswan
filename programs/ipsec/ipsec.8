@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/06/2010
-.\"    Manual: [FIXME: manual]
-.\"    Source: [FIXME: source]
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC" "8" "10/06/2010" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC" "8" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -54,7 +63,7 @@ for
 \fIauto\fR\&.
 .PP
 \fBipsec \-\-version\fR
-outputs version information about Linux FreeS/WAN\&. A version code of the form ``U\fIxxx\fR/K\fIyyy\fR\'\' indicates that the user\-level utilities are version
+outputs version information about Linux FreeS/WAN\&. A version code of the form ``U\fIxxx\fR/K\fIyyy\fR\*(Aq\*(Aq indicates that the user\-level utilities are version
 \fIxxx\fR
 but the kernel portion appears to be version
 \fIyyy\fR
@@ -64,7 +73,7 @@ but the kernel portion appears to be version
 outputs
 \fIjust\fR
 the version code, with none of
-\fB\-\-version\fR\'s supporting information, for use by scripts\&.
+\fB\-\-version\fR\*(Aqs supporting information, for use by scripts\&.
 .PP
 \fBipsec \-\-copyright\fR
 supplies boring copyright details\&.
@@ -107,7 +116,6 @@ ipsec\&.\fBconf\fR(5), ipsec\&.\fBsecrets\fR(5),
 \fBipsec_auto\fR(8),
 \fBipsec_barf\fR(8),
 \fBipsec_setup\fR(8),
-\fBipsec_showdefaults\fR(8),
 \fBipsec_showhostkey\fR(8)
 .PP
 HTML documentation shipped with the release, starting with
@@ -121,3 +129,9 @@ Written for Linux FreeS/WAN <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by H
 .PP
 The provision of centralized services, while convenient, does compromise the original concept of making the utilities invocable directly as well as via
 \fBipsec\fR\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE
