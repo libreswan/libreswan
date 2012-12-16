@@ -72,7 +72,7 @@ masktocount(src)
 const ip_address *src;
 {
 	int b;
-	unsigned const char *bp;
+	unsigned char *bp;
 	size_t n;
 	unsigned const char *p;
 	unsigned const char *stop;

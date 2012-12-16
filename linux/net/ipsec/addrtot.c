@@ -73,7 +73,7 @@ int format;			/* character */
 char *dst;			/* need not be valid if dstlen is 0 */
 size_t dstlen;
 {
-	const unsigned char *b;
+	unsigned char *b;
 	size_t n;
 	char buf[1+ADDRTOT_BUF+1];	/* :address: */
 	char *p;

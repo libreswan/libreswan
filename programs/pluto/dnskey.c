@@ -1301,7 +1301,7 @@ build_dns_name(char name_buf[NS_MAXDNAME + 2]
 	/* XXX: this is really ugly and only temporary until addrtot can
 	 *      generate the correct format
 	 */
-	const unsigned char *b;
+	unsigned char *b;
 	size_t bl USED_BY_DEBUG = addrbytesptr(&id->ip_addr, &b);
 
 	passert(bl == 4);
@@ -1313,7 +1313,7 @@ build_dns_name(char name_buf[NS_MAXDNAME + 2]
     case ID_IPV6_ADDR:
     {
 	/* ??? is this correct? */
-	const unsigned char *b;
+	unsigned char *b;
 	size_t bl;
 	char *op = name_buf;
 	static const char suffix[] = "IP6.INT.";

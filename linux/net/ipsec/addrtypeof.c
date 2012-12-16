@@ -14,6 +14,16 @@
  */
 #include "libreswan.h"
 
+/* a macro to discard the const portion of a variable to avoid
+ * otherwise unavoidable -Wcast-qual warnings.
+ * USE WITH CAUTION and only when you know it's safe to discard the const
+ */
+#ifdef __GNUC__
+#define DISCARD_CONST(vartype, varname) (__extension__ ({ const vartype tmp = (varname); (vartype)(uintptr_t)tmp; }))
+#else
+#define DISCARD_CONST(vartype, varname) ((vartype)(uintptr_t)(varname))
+#endif
+
 /*
  - addrtypeof - get the type of an ip_address
  */
@@ -30,18 +40,18 @@ const ip_address *src;
 size_t				/* 0 for error */
 addrbytesptr(src, dstp)
 const ip_address *src;
-const unsigned char **dstp;	/* NULL means just a size query */
+unsigned char **dstp;	/* NULL means just a size query */
 {
-	const unsigned char *p;
+	unsigned char *p;
 	size_t n;
 
 	switch (src->u.v4.sin_family) {
 	case AF_INET:
-		p = (const unsigned char *)&src->u.v4.sin_addr.s_addr;
+        	p = DISCARD_CONST(unsigned char *, (const unsigned char *) &src->u.v4.sin_addr.s_addr);
 		n = 4;
 		break;
 	case AF_INET6:
-		p = (const unsigned char *)&src->u.v6.sin6_addr;
+        	p = DISCARD_CONST(unsigned char *, (const unsigned char *) &src->u.v6.sin6_addr);
 		n = 16;
 		break;
 	default:
@@ -103,7 +113,7 @@ const ip_address *src;
 unsigned char *dst;
 size_t dstlen;
 {
-	const unsigned char *p;
+	unsigned char *p;
 	size_t n;
 	size_t ncopy;
 
