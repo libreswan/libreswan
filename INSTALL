@@ -1,30 +1,43 @@
 
-Please read the documentation in doc/ & docs/
+Please read the documentation in docs or at https://libreswan.org/
+
+Specific vendors/distribution build instructions available in packaging/
 
 Building userland: 
 
-	make programs install
+	make programs 
+	sudo make install
 
-Building KLIPS kernel module on 2.4 (assuming your kernel source is /usr/src/linux-2.4)
+You can enable/disable features in Makefile.inc
 
-	make KERNELSRC=/usr/src/linux-2.4 module minstall
+Building KLIPS kernel module on Linux 2.6 or higher for the running kernel:
 
-Building KLIPS kernel module on 2.6
+	make module
+	sudo make minstall
 
-	make KERNELSRC=/lib/modules/`uname -r`/build module minstall
+Build for a kernel different from the running kernel:
+
+	make KERNELSRC=//usr/src/linux/linux-9.42 module
+
+Building KLIPS kernel module for the old Linux 2.4 kernel
+
+	make module24 
+	sudo make minstall24
 
 
 Build requirements:
-gmp-devel bison flex redhat-rpm-config pkgconfig gcc make xmlto
+bison flex redhat-rpm-config pkgconfig gcc make xmlto
+gmp-devel,  nss-devel, nspr-devel
 
 for systemd: pkgconfig hostname systemd
-for nss: nss-devel >= 3.12.6-2, nspr-devel
 for pam/xauth: pam-devel
-for dnssec: unbound-devel
+for dnssec support: unbound-devel, ldns-devel
 for FIPS support: fipscheck-devel
 for libcap-ng support: libcap-ng-devel
 for CRL fetching support: openldap-devel curl-devel
 
-Testing runtime requirements:
+KVM testing runtime requirements:
 
-kvm, qemu, libvirt, virt-manager, sudo, pexpect, python-setproctitle, sudo, bridge-utils
+kvm, qemu, libvirt, virt-manager, sudo, pexpect, python-setproctitle,
+sudo, bridge-utils, 9p fs with read-write support
+
