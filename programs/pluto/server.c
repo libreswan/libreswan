@@ -603,6 +603,7 @@ call_server(void)
 #endif
 	if (addconn_child_pid == 0) {
 		/* child */
+		sleep(1);
 		DBG(DBG_CONTROLMORE,DBG_log("calling addconn helper using execve"));
 		execve(addconn_path, newargv, newenv);
 		_exit(42);
