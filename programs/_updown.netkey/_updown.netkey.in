@@ -421,7 +421,6 @@ doroute() {
 
     case "$PLUTO_PEER_CLIENT" in
 	"0.0.0.0/0")
-	    # opportunistic encryption work around
 	    # need to provide route that eclipses default, without 
 	    # replacing it.
 	    it="ip route $1 0.0.0.0/1 $parms2 && ip route $1 128.0.0.0/1 $parms2"
