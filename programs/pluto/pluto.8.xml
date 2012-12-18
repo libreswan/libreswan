@@ -3615,8 +3615,7 @@
 
     <para><filename>/var/run/pluto/pluto.pid</filename> <!-- .br -->
     <filename>/var/run/pluto/pluto.ctl</filename> <!-- .br -->
-    <filename>/etc/ipsec.secrets</filename> <!-- .br --> <emphasis
-    remap="I">$IPSEC_LIBDIR/_pluto_adns</emphasis> <!-- .br --> <emphasis
+    <filename>/etc/ipsec.secrets</filename> <!-- .br -->
     <filename>/dev/urandom</filename></para>
   </refsect1>
 
