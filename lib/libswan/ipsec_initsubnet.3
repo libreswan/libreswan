@@ -1,0 +1,148 @@
+'\" t
+.\"     Title: IPSEC_INITSUBNET
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Library functions
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_INITSUBNET" "3" "12/16/2012" "libreswan" "Library functions"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_initsubnet, ipsec_addrtosubnet, ipsec_subnettypeof, ipsec_masktocount, ipsec_networkof, ipsec_maskof \- initialize an ip_subnet, initialize a singleton ip_subnet, get address type of an ip_subnet, convert subnet mask to bit count, get base address of an ip_subnet, get subnet mask of an ip_subnet
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'const\ char\ *initsubnet('u
+.BI "const char *initsubnet(const\ ip_address\ *\ " "addr" ", int\ " "maskbits" ", int\ " "clash" ", ip_subnet\ *\ " "dst" ");"
+.HP \w'const\ char\ *addrtosubnet('u
+.BI "const char *addrtosubnet(const\ ip_address\ *\ " "addr" ", ip_subnet\ *\ " "dst" ");"
+.HP \w'int\ subnettypeof('u
+.BI "int subnettypeof(const\ ip_subnet\ *\ " "src" ");"
+.HP \w'int\ masktocount('u
+.BI "int masktocount(const\ ip_address\ *\ " "src" ");"
+.HP \w'void\ networkof('u
+.BI "void networkof(const\ ip_subnet\ *\ " "src" ", ip_address\ *\ " "dst" ");"
+.HP \w'void\ maskof('u
+.BI "void maskof(const\ ip_subnet\ *\ " "src" ", ip_address\ *\ " "dst" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fB<libreswan\&.h>\fR
+library uses an internal type
+\fIip_subnet\fR
+to contain a description of an IP subnet (base address plus mask)\&. These functions provide basic tools for creating and examining this type\&.
+.PP
+\fIInitsubnet\fR
+initializes a variable
+\fI*dst\fR
+of type
+\fIip_subnet\fR
+from a base address and a count of mask bits\&. The
+\fIclash\fR
+parameter specifies what to do if the base address includes
+1
+bits outside the prefix specified by the mask (that is, in the \(lqhost number\(rq part of the address):
+.PP
+\*(Aq0\*(Aq
+.RS 4
+zero out host\-number bits
+.RE
+.PP
+\*(Aqx\*(Aq
+.RS 4
+non\-zero host\-number bits are an error
+.RE
+.PP
+\fIInitsubnet\fR
+returns
+\fBNULL\fR
+for success and a pointer to a string\-literal error message for failure; see DIAGNOSTICS\&.
+.PP
+\fIAddrtosubnet\fR
+initializes an
+\fIip_subnet\fR
+variable
+\fI*dst\fR
+to a \(lqsingleton subnet\(rq containing the single address
+\fI*addr\fR\&. It returns
+\fBNULL\fR
+for success and a pointer to a string\-literal error message for failure\&.
+.PP
+\fISubnettypeof\fR
+returns the address type of a subnet, normally
+\fBAF_INET\fR
+or
+\fBAF_INET6\fR\&. (The
+\fB<libreswan\&.h>\fR
+header file arranges to include the necessary headers for these names to be known\&.)
+.PP
+\fIMasktocount\fR
+converts a subnet mask, expressed as an address, to a bit count suitable for use with
+\fBinitsubnet\fR\&. It returns
+\fB\-1\fR
+for error; see DIAGNOSTICS\&.
+.PP
+\fINetworkof\fR
+fills in
+\fI*dst\fR
+with the base address of subnet
+\fIsrc\fR\&.
+.PP
+\fIMaskof\fR
+fills in
+\fI*dst\fR
+with the subnet mask of subnet
+\fIsrc\fR, expressed as an address\&.
+.SH "SEE ALSO"
+.PP
+\fBinet\fR(3),
+\fBipsec_ttosubnet\fR(3),
+\fBipsec_rangetosubnet\fR(3)
+.SH "DIAGNOSTICS"
+.PP
+Fatal errors in
+\fBinitsubnet\fR
+are: unknown address family; unknown
+\fIclash\fR
+value; impossible mask bit count; non\-zero host\-number bits and
+\fIclash\fR
+is
+\fB\*(Aqx\*(Aq\fR\&. Fatal errors in
+\fBaddrtosubnet\fR
+are: unknown address family\&. Fatal errors in
+\fBmasktocount\fR
+are: unknown address family; mask bits not contiguous\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

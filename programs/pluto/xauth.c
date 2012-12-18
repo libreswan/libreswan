@@ -493,7 +493,7 @@ stf_status modecfg_resp(struct state *st
 	    dont_advance = FALSE;
 	    if(resp & 1)
 	    {	
-		const unsigned char *byte_ptr;
+		unsigned char *byte_ptr;
 		unsigned int len;
 
 		/* ISAKMP attr out */

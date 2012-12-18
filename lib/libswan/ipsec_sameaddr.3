@@ -1,0 +1,157 @@
+'\" t
+.\"     Title: IPSEC_SAMEADDR
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_SAMEADDR" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_sameaddr, ipsec_addrcmp, ipsec_samesubnet, ipsec_addrinsubnet, ipsec_subnetinsubnet, ipsec_subnetishost, ipsec_samesaid, ipsec_sameaddrtype, ipsec_samesubnettype \- do comparisons for addresses, subnets, SA IDs and address families
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'int\ sameaddr('u
+.BI "int sameaddr(const\ ip_address\ *\ " "a" ", const\ ip_address\ *\ " "b" ");"
+.HP \w'int\ addrcmp('u
+.BI "int addrcmp(const\ ip_address\ *\ " "a" ", const\ ip_address\ *\ " "b" ");"
+.HP \w'int\ samesubnet('u
+.BI "int samesubnet(const\ ip_subnet\ *\ " "a" ", const\ ip_subnet\ *\ " "b" ");"
+.HP \w'int\ addrinsubnet('u
+.BI "int addrinsubnet(const\ ip_address\ *\ " "a" ", const\ ip_subnet\ *\ " "s" ");"
+.HP \w'int\ subnetinsubnet('u
+.BI "int subnetinsubnet(const\ ip_subnet\ *\ " "a" ", const\ ip_subnet\ *\ " "b" ");"
+.HP \w'int\ subnetishost('u
+.BI "int subnetishost(const\ ip_subnet\ *\ " "s" ");"
+.HP \w'int\ samesaid('u
+.BI "int samesaid(const\ ip_said\ *\ " "a" ", const\ ip_said\ *\ " "b" ");"
+.HP \w'int\ sameaddrtype('u
+.BI "int sameaddrtype(const\ ip_address\ *\ " "a" ", const\ ip_address\ *\ " "b" ");"
+.HP \w'int\ samesubnettype('u
+.BI "int samesubnettype(const\ ip_subnet\ *\ " "a" ", const\ ip_subnet\ *\ " "b" ");"
+.SH "DESCRIPTION"
+.PP
+These functions do various comparisons and tests on the
+\fIip_address\fR
+type and
+\fIip_subnet\fR
+types\&.
+.PP
+\fISameaddr\fR
+returns non\-zero if addresses
+\fIa\fR
+and
+\fIb\fR
+are identical, and
+0
+otherwise\&. Addresses of different families are never identical\&.
+.PP
+\fIAddrcmp\fR
+returns
+\fB\-1\fR,
+0, or
+1
+respectively if address
+\fIa\fR
+is less than, equal to, or greater than
+\fIb\fR\&. If they are not of the same address family, they are never equal; the ordering reported in this case is arbitrary (and probably not useful) but consistent\&.
+.PP
+\fISamesubnet\fR
+returns non\-zero if subnets
+\fIa\fR
+and
+\fIb\fR
+are identical, and
+0
+otherwise\&. Subnets of different address families are never identical\&.
+.PP
+\fIAddrinsubnet\fR
+returns non\-zero if address
+\fIa\fR
+is within subnet
+\fIs\fR
+and
+0
+otherwise\&. An address is never within a subnet of a different address family\&.
+.PP
+\fISubnetinsubnet\fR
+returns non\-zero if subnet
+\fIa\fR
+is a subset of subnet
+\fIb\fR
+and
+0
+otherwise\&. A subnet is deemed to be a subset of itself\&. A subnet is never a subset of another subnet if their address families differ\&.
+.PP
+\fISubnetishost\fR
+returns non\-zero if subnet
+\fIs\fR
+is in fact only a single host, and
+0
+otherwise\&.
+.PP
+\fISamesaid\fR
+returns non\-zero if SA IDs
+\fIa\fR
+and
+\fIb\fR
+are identical, and
+0
+otherwise\&.
+.PP
+\fISameaddrtype\fR
+returns non\-zero if addresses
+\fIa\fR
+and
+\fIb\fR
+are of the same address family, and
+0
+otherwise\&.
+.PP
+\fISamesubnettype\fR
+returns non\-zero if subnets
+\fIa\fR
+and
+\fIb\fR
+are of the same address family, and
+0
+otherwise\&.
+.SH "SEE ALSO"
+.PP
+\fBinet\fR(3),
+\fBipsec_initaddr\fR(3)
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

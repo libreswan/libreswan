@@ -1,0 +1,184 @@
+'\" t
+.\"     Title: IPSEC_ATOASR
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_ATOASR" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_atoasr, ipsec_rangetoa \- convert ASCII to Internet address, subnet, or range, convert Internet address range to ASCII
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'const\ char\ *atoasr('u
+.BI "const char *atoasr(const\ char\ *\ " "src" ", size_t\ " "srclen" ", char\ *\ " "type" ", struct\ in_addr\ *\ " "addrs" ");"
+.HP \w'size_t\ rangetoa('u
+.BI "size_t rangetoa(struct\ in_addr\ *\ " "addrs" ", int\ " "format" ", char\ *\ " "dst" ", size_t\ " "dstlen" ");"
+.SH "DESCRIPTION"
+.PP
+These functions are obsolete; there is no current equivalent, because so far they have not proved useful\&.
+.PP
+\fIAtoasr\fR
+converts an ASCII address, subnet, or address range into a suitable combination of binary addresses (in network byte order)\&.
+\fIRangetoa\fR
+converts an address range back into ASCII, using dotted\-decimal form for the addresses (the other reverse conversions are handled by
+\fBipsec_addrtoa\fR(3)
+and
+\fBipsec_subnettoa\fR(3))\&.
+.PP
+A single address can be any form acceptable to
+\fBipsec_atoaddr\fR(3): dotted decimal, DNS name, or hexadecimal number\&. A subnet specification uses the form
+\fInetwork\fR\fB/\fR\fImask\fR
+interpreted by
+\fBipsec_atosubnet\fR(3)\&.
+.PP
+An address range is two
+\fBipsec_atoaddr\fR(3)
+addresses separated by a
+\&.\&.\&.
+delimiter\&. If there are four dots rather than three, the first is taken as part of the begin address, e\&.g\&. for a complete DNS name which ends with
+\&.
+to suppress completion attempts\&. The begin address of a range must be less than or equal to the end address\&.
+.PP
+The
+\fIsrclen\fR
+parameter of
+\fBatoasr\fR
+specifies the length of the ASCII string pointed to by
+\fIsrc\fR; it is an error for there to be anything else (e\&.g\&., a terminating NUL) within that length\&. As a convenience for cases where an entire NUL\-terminated string is to be converted, a
+\fIsrclen\fR
+value of
+0
+is taken to mean
+\fBstrlen(src)\fR\&.
+.PP
+The
+\fItype\fR
+parameter of
+\fBatoasr\fR
+must point to a
+\fBchar\fR
+variable used to record which form was found\&. The
+\fIaddrs\fR
+parameter must point to a two\-element array of
+\fBstruct in_addr\fR
+which receives the results\&. The values stored into
+\fB*type\fR, and the corresponding values in the array, are:
+.PP
+*type addrs[0] addrs[1]
+.PP
+address
+\fB\*(Aqa\*(Aq\fR
+address \-
+subnet
+\fB\*(Aqs\*(Aq\fR
+network mask
+range
+\fB\*(Aqr\*(Aq\fR
+begin end
+.PP
+The
+\fIdstlen\fR
+parameter of
+\fBrangetoa\fR
+specifies the size of the
+\fIdst\fR
+parameter; under no circumstances are more than
+\fIdstlen\fR
+bytes written to
+\fIdst\fR\&. A result which will not fit is truncated\&.
+\fIDstlen\fR
+can be zero, in which case
+\fIdst\fR
+need not be valid and no result is written, but the return value is unaffected; in all other cases, the (possibly truncated) result is NUL\-terminated\&. The
+\fIlibreswan\&.h\fR
+header file defines a constant,
+\fBRANGETOA_BUF\fR, which is the size of a buffer just large enough for worst\-case results\&.
+.PP
+The
+\fIformat\fR
+parameter of
+\fBrangetoa\fR
+specifies what format is to be used for the conversion\&. The value
+0
+(not the ASCII character
+\fB\*(Aq0\*(Aq\fR, but a zero value) specifies a reasonable default, and is in fact the only format currently available\&. This parameter is a hedge against future needs\&.
+.PP
+\fIAtoasr\fR
+returns NULL for success and a pointer to a string\-literal error message for failure; see DIAGNOSTICS\&.
+\fIRangetoa\fR
+returns
+0
+for a failure, and otherwise always returns the size of buffer which would be needed to accommodate the full conversion result, including terminating NUL; it is the caller\*(Aqs responsibility to check this against the size of the provided buffer to determine whether truncation has occurred\&.
+.SH "SEE ALSO"
+.PP
+\fBipsec_atoaddr\fR(3),
+\fBipsec_atosubnet\fR(3)
+.SH "DIAGNOSTICS"
+.PP
+Fatal errors in
+\fBatoasr\fR
+are: empty input; error in
+\fBipsec_atoaddr\fR(3)
+or
+\fBipsec_atosubnet\fR(3)
+during conversion; begin address of range exceeds end address\&.
+.PP
+Fatal errors in
+\fBrangetoa\fR
+are: unknown format\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "BUGS"
+.PP
+The restriction of error reports to literal strings (so that callers don\*(Aqt need to worry about freeing them or copying them) does limit the precision of error reporting\&.
+.PP
+The error\-reporting convention lends itself to slightly obscure code, because many readers will not think of NULL as signifying success\&. A good way to make it clearer is to write something like:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBconst char *error;\fR
+
+\fBerror = atoasr( /* \&.\&.\&. */ );\fR
+\fBif (error != NULL) {\fR
+\fB        /* something went wrong */\fR
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

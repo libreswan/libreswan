@@ -95,7 +95,7 @@
 #include <time.h>
 #include "lswconf.h"
 
-char *pluto_shared_secrets_file = SHARED_SECRETS_FILE;
+char *pluto_shared_secrets_file;
 struct secret *pluto_secrets = NULL;
 
 void load_preshared_secrets(int whackfd)
@@ -188,7 +188,7 @@ int sign_hash_nss(const struct RSA_private_key *k
 
     ckaId.type=siBuffer;
     ckaId.len=k->ckaid_len;
-    ckaId.data=k->ckaid;
+    ckaId.data=DISCARD_CONST(unsigned char *, k->ckaid);
 
     slot = PK11_GetInternalKeySlot();
     if (slot == NULL) {
@@ -223,7 +223,7 @@ int sign_hash_nss(const struct RSA_private_key *k
 
    data.type=siBuffer;
    data.len=hash_len;
-   data.data=hash_val;
+   data.data=DISCARD_CONST(u_char *, hash_val);
 
    /*signature.len=PK11_SignatureLen(privateKey);*/
    signature.len=sig_len;
@@ -295,7 +295,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k
 	return "12" "NSS error: Not able to copy modulus or exponent or both while forming SECKEYPublicKey structure";
     }
     signature.type = siBuffer;
-    signature.data = sig_val;
+    signature.data = DISCARD_CONST(unsigned char *, sig_val);
     signature.len  = (unsigned int)sig_len;
 
     data.len = (unsigned int)sig_len;

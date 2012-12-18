@@ -143,7 +143,7 @@ emit_subnet_id(ip_subnet *net
     struct isakmp_ipsec_id id;
     pb_stream id_pbs;
     ip_address ta;
-    const unsigned char *tbp;
+    unsigned char *tbp;
     size_t tal;
     const struct af_info *ai;
     bool usehost = FALSE;
@@ -2499,8 +2499,7 @@ quick_inR1_outI2_cryptotail(struct dh_continuation *dh
     /* HASH(3) out -- sometimes, we add more content */
     {
 	u_char	/* set by START_HASH_PAYLOAD: */
-	    *r_hashval,	/* where in reply to jam hash value */
-	    *r_hash_start; /* start of what is to be hashed */
+	    *r_hashval;
 
 #ifdef IMPAIR_UNALIGNED_I2_MSG
 	{
@@ -2512,7 +2511,7 @@ quick_inR1_outI2_cryptotail(struct dh_continuation *dh
 		padsize = strtoul(padstr, NULL, 0);
 		
 		libreswan_log("inserting fake VID payload of %u size", padsize);
-		START_HASH_PAYLOAD(md->rbody, ISAKMP_NEXT_VID);
+		START_HASH_PAYLOAD_NO_R_HASH_START(md->rbody, ISAKMP_NEXT_VID);
 		
 		if (!out_generic(ISAKMP_NEXT_NONE,
 				 &isakmp_vendor_id_desc, &md->rbody, &vid_pbs))
@@ -2527,7 +2526,7 @@ quick_inR1_outI2_cryptotail(struct dh_continuation *dh
 	    }
 	}
 #else
-	START_HASH_PAYLOAD(md->rbody, ISAKMP_NEXT_NONE);
+	START_HASH_PAYLOAD_NO_R_HASH_START(md->rbody, ISAKMP_NEXT_NONE);
 #endif
 
 #ifdef TPM

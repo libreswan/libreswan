@@ -3,7 +3,9 @@
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry>
-
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC_LIVETEST</refentrytitle>
 <manvolnum>8</manvolnum>

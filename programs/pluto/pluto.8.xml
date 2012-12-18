@@ -3,6 +3,9 @@
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry id="pluto8">
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
   <refmeta>
     <refentrytitle>IPSEC_PLUTO</refentrytitle>
 
@@ -3612,8 +3615,7 @@
 
     <para><filename>/var/run/pluto/pluto.pid</filename> <!-- .br -->
     <filename>/var/run/pluto/pluto.ctl</filename> <!-- .br -->
-    <filename>/etc/ipsec.secrets</filename> <!-- .br --> <emphasis
-    remap="I">$IPSEC_LIBDIR/_pluto_adns</emphasis> <!-- .br --> <emphasis
+    <filename>/etc/ipsec.secrets</filename> <!-- .br -->
     <filename>/dev/urandom</filename></para>
   </refsect1>
 

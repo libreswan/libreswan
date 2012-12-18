@@ -1,0 +1,172 @@
+'\" t
+.\"     Title: IPSEC_ATOUL
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_ATOUL" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_atoul, ipsec_ultoa \- convert unsigned\-long numbers to and from ASCII
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'const\ char\ *atoul('u
+.BI "const char *atoul(const\ char\ *\ " "src" ", size_t\ " "srclen" ", int\ " "base" ", unsigned\ long\ *\ " "n" ");"
+.sp
+.ft B
+.nf
+
+.fi
+.ft
+.HP \w'size_t\ ultoa('u
+.BI "size_t ultoa(unsigned\ long\ " "n" ", int\ " "base" ", char\ *\ " "dst" ", size_t\ " "dstlen" ");"
+.SH "DESCRIPTION"
+.PP
+These functions are obsolete; see
+\fBipsec_ttoul\fR(3)
+for their replacements\&.
+.PP
+\fIAtoul\fR
+converts an ASCII number into a binary
+\fBunsigned long\fR
+value\&.
+\fIUltoa\fR
+does the reverse conversion, back to an ASCII version\&.
+.PP
+Numbers are specified in ASCII as decimal (e\&.g\&.
+123), octal with a leading zero (e\&.g\&.
+012, which has value 10), or hexadecimal with a leading
+\fB0x\fR
+(e\&.g\&.
+\fB0x1f\fR, which has value 31) in either upper or lower case\&.
+.PP
+The
+\fIsrclen\fR
+parameter of
+\fBatoul\fR
+specifies the length of the ASCII string pointed to by
+\fIsrc\fR; it is an error for there to be anything else (e\&.g\&., a terminating NUL) within that length\&. As a convenience for cases where an entire NUL\-terminated string is to be converted, a
+\fIsrclen\fR
+value of
+0
+is taken to mean
+\fBstrlen(src)\fR\&.
+.PP
+The
+\fIbase\fR
+parameter of
+\fBatoul\fR
+can be
+8,
+10, or
+16, in which case the number supplied is assumed to be of that form (and in the case of
+16, to lack any
+\fB0x\fR
+prefix)\&. It can also be
+0, in which case the number is examined for a leading zero or a leading
+\fB0x\fR
+to determine its base, or
+13
+(halfway between 10 and 16), which has the same effect as
+0
+except that a non\-hexadecimal number is considered decimal regardless of any leading zero\&.
+.PP
+The
+\fIdstlen\fR
+parameter of
+\fBultoa\fR
+specifies the size of the
+\fIdst\fR
+parameter; under no circumstances are more than
+\fIdstlen\fR
+bytes written to
+\fIdst\fR\&. A result which will not fit is truncated\&.
+\fIDstlen\fR
+can be zero, in which case
+\fIdst\fR
+need not be valid and no result is written, but the return value is unaffected; in all other cases, the (possibly truncated) result is NUL\-terminated\&.
+.PP
+The
+\fIbase\fR
+parameter of
+\fBultoa\fR
+must be
+8,
+10, or
+16\&.
+.PP
+\fIAtoul\fR
+returns NULL for success and a pointer to a string\-literal error message for failure; see DIAGNOSTICS\&.
+\fIUltoa\fR
+returns the size of buffer which would be needed to accommodate the full conversion result, including terminating NUL; it is the caller\*(Aqs responsibility to check this against the size of the provided buffer to determine whether truncation has occurred\&.
+.SH "SEE ALSO"
+.PP
+\fBatol\fR(3),
+\fBstrtoul\fR(3)
+.SH "DIAGNOSTICS"
+.PP
+Fatal errors in
+\fBatoul\fR
+are: empty input; unknown
+\fIbase\fR; non\-digit character found; number too large for an
+\fBunsigned long\fR\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "BUGS"
+.PP
+There is no provision for reporting an invalid
+\fIbase\fR
+parameter given to
+\fBultoa\fR\&.
+.PP
+The restriction of error reports to literal strings (so that callers don\*(Aqt need to worry about freeing them or copying them) does limit the precision of error reporting\&.
+.PP
+The error\-reporting convention lends itself to slightly obscure code, because many readers will not think of NULL as signifying success\&. A good way to make it clearer is to write something like:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBconst char *error;\fR
+
+\fBerror = atoul( /* \&.\&.\&. */ );\fR
+\fBif (error != NULL) {\fR
+\fB        /* something went wrong */\fR
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

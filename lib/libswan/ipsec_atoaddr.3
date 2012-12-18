@@ -1,0 +1,245 @@
+'\" t
+.\"     Title: IPSEC_ATOADDR
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_ATOADDR" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_atoaddr, ipsec_addrtoa, ipsec_atosubnet, ipsec_subnettoa \- convert Internet addresses and Subnet masks to and from ASCII
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'const\ char\ *atoaddr('u
+.BI "const char *atoaddr(const\ char\ *\ " "src" ", size_t\ " "srclen" ", struct\ in_addr\ *\ " "addr" ");"
+.HP \w'size_t\ addrtoa('u
+.BI "size_t addrtoa(struct\ in_addr\ " "addr" ", int\ " "format" ", char\ *\ " "dst" ", size_t\ " "dstlen" ");"
+.HP \w'const\ char\ *atosubnet('u
+.BI "const char *atosubnet(const\ char\ *\ " "src" ", size_t\ " "srclen" ", struct\ in_addr\ *\ " "addr" ", struct\ in_addr\ *\ " "mask" ");"
+.HP \w'size_t\ subnettoa('u
+.BI "size_t subnettoa(struct\ in_addr\ " "addr" ", struct\ in_addr\ " "mask" ", int\ " "format" ", char\ *\ " "dst" ", size_t\ " "dstlen" ");"
+.SH "DESCRIPTION"
+.PP
+These functions are obsolete; see
+\fBipsec_ttoaddr\fR(3)
+for their replacements\&.
+.PP
+\fIAtoaddr\fR
+converts an ASCII name or dotted\-decimal address into a binary address (in network byte order)\&.
+\fIAddrtoa\fR
+does the reverse conversion, back to an ASCII dotted\-decimal address\&.
+\fIAtosubnet\fR
+and
+\fBsubnettoa\fR
+do likewise for the \(lqaddress/mask\(rq ASCII form used to write a specification of a subnet\&.
+.PP
+An address is specified in ASCII as a dotted\-decimal address (e\&.g\&.
+1\&.2\&.3\&.4), an eight\-digit network\-order hexadecimal number with the usual C prefix (e\&.g\&.
+\fB0x01020304\fR, which is synonymous with
+1\&.2\&.3\&.4), an eight\-digit host\-order hexadecimal number with a
+\fB0h\fR
+prefix (e\&.g\&.
+\fB0h01020304\fR, which is synonymous with
+1\&.2\&.3\&.4
+on a big\-endian host and
+4\&.3\&.2\&.1
+on a little\-endian host), a DNS name to be looked up via
+\fBgethostbyname\fR(3), or an old\-style network name to be looked up via
+\fBgetnetbyname\fR(3)\&.
+.PP
+A dotted\-decimal address may be incomplete, in which case ASCII\-to\-binary conversion implicitly appends as many instances of
+\&.0
+as necessary to bring it up to four components\&. The components of a dotted\-decimal address are always taken as decimal, and leading zeros are ignored\&. For example,
+10
+is synonymous with
+10\&.0\&.0\&.0, and
+128\&.009\&.000\&.032
+is synonymous with
+128\&.9\&.0\&.32
+(the latter example is verbatim from RFC 1166)\&. The result of
+\fBaddrtoa\fR
+is always complete and does not contain leading zeros\&.
+.PP
+The letters in a hexadecimal address may be uppercase or lowercase or any mixture thereof\&. Use of hexadecimal addresses is
+\fBstrongly\fR
+\fBdiscouraged\fR; they are included only to save hassles when dealing with the handful of perverted programs which already print network addresses in hexadecimal\&.
+.PP
+DNS names may be complete (optionally terminated with a \(lq\&.\(rq) or incomplete, and are looked up as specified by local system configuration (see
+\fBresolver\fR(5))\&. The
+\fIh_addr\fR
+value returned by
+\fBgethostbyname\fR(3)
+is used, so with current DNS implementations, the result when the name corresponds to more than one address is difficult to predict\&. Name lookup resorts to
+\fBgetnetbyname\fR(3)
+only if
+\fBgethostbyname\fR(3)
+fails\&.
+.PP
+A subnet specification is of the form
+\fInetwork\fR\fB/\fR\fImask\fR\&. The
+\fInetwork\fR
+and
+\fImask\fR
+can be any form acceptable to
+\fBatoaddr\fR\&. In addition, the
+\fImask\fR
+can be a decimal integer (leading zeros ignored) giving a bit count, in which case it stands for a mask with that number of high bits on and all others off (e\&.g\&.,
+24
+means
+255\&.255\&.255\&.0)\&. In any case, the mask must be contiguous (a sequence of high bits on and all remaining low bits off)\&. As a special case, the subnet specification
+\fB%default\fR
+is a synonym for
+\fB0\&.0\&.0\&.0/0\fR\&.
+.PP
+\fIAtosubnet\fR
+ANDs the mask with the address before returning, so that any non\-network bits in the address are turned off (e\&.g\&.,
+\fB10\&.1\&.2\&.3/24\fR
+is synonymous with
+\fB10\&.1\&.2\&.0/24\fR)\&.
+\fISubnettoa\fR
+generates the decimal\-integer\-bit\-count form of the mask, with no leading zeros, unless the mask is non\-contiguous\&.
+.PP
+The
+\fIsrclen\fR
+parameter of
+\fBatoaddr\fR
+and
+\fBatosubnet\fR
+specifies the length of the ASCII string pointed to by
+\fIsrc\fR; it is an error for there to be anything else (e\&.g\&., a terminating NUL) within that length\&. As a convenience for cases where an entire NUL\-terminated string is to be converted, a
+\fIsrclen\fR
+value of
+0
+is taken to mean
+\fBstrlen(src)\fR\&.
+.PP
+The
+\fIdstlen\fR
+parameter of
+\fBaddrtoa\fR
+and
+\fBsubnettoa\fR
+specifies the size of the
+\fIdst\fR
+parameter; under no circumstances are more than
+\fIdstlen\fR
+bytes written to
+\fIdst\fR\&. A result which will not fit is truncated\&.
+\fIDstlen\fR
+can be zero, in which case
+\fIdst\fR
+need not be valid and no result is written, but the return value is unaffected; in all other cases, the (possibly truncated) result is NUL\-terminated\&. The
+\fIlibreswan\&.h\fR
+header file defines constants,
+\fBADDRTOA_BUF\fR
+and
+\fBSUBNETTOA_BUF\fR, which are the sizes of buffers just large enough for worst\-case results\&.
+.PP
+The
+\fIformat\fR
+parameter of
+\fBaddrtoa\fR
+and
+\fBsubnettoa\fR
+specifies what format is to be used for the conversion\&. The value
+0
+(not the ASCII character
+\fB\*(Aq0\*(Aq\fR, but a zero value) specifies a reasonable default, and is in fact the only format currently available\&. This parameter is a hedge against future needs\&.
+.PP
+The ASCII\-to\-binary functions return NULL for success and a pointer to a string\-literal error message for failure; see DIAGNOSTICS\&. The binary\-to\-ASCII functions return
+0
+for a failure, and otherwise always return the size of buffer which would be needed to accommodate the full conversion result, including terminating NUL; it is the caller\*(Aqs responsibility to check this against the size of the provided buffer to determine whether truncation has occurred\&.
+.SH "SEE ALSO"
+.PP
+\fBinet\fR(3)
+.SH "DIAGNOSTICS"
+.PP
+Fatal errors in
+\fBatoaddr\fR
+are: empty input; attempt to allocate temporary storage for a very long name failed; name lookup failed; syntax error in dotted\-decimal form; dotted\-decimal component too large to fit in 8 bits\&.
+.PP
+Fatal errors in
+\fBatosubnet\fR
+are: no
+\fB/\fR
+in
+\fIsrc\fR;
+\fBatoaddr\fR
+error in conversion of
+\fInetwork\fR
+or
+\fImask\fR; bit\-count mask too big; mask non\-contiguous\&.
+.PP
+Fatal errors in
+\fBaddrtoa\fR
+and
+\fBsubnettoa\fR
+are: unknown format\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "BUGS"
+.PP
+The interpretation of incomplete dotted\-decimal addresses (e\&.g\&.
+\fB10/24\fR
+means
+\fB10\&.0\&.0\&.0/24\fR) differs from that of some older conversion functions, e\&.g\&. those of
+\fBinet\fR(3)\&. The behavior of the older functions has never been particularly consistent or particularly useful\&.
+.PP
+Ignoring leading zeros in dotted\-decimal components and bit counts is arguably the most useful behavior in this application, but it might occasionally cause confusion with the historical use of leading zeros to denote octal numbers\&.
+.PP
+It is barely possible that somebody, somewhere, might have a legitimate use for non\-contiguous subnet masks\&.
+.PP
+\fBGetnetbyname\fR(3)
+is a historical dreg\&.
+.PP
+The restriction of ASCII\-to\-binary error reports to literal strings (so that callers don\*(Aqt need to worry about freeing them or copying them) does limit the precision of error reporting\&.
+.PP
+The ASCII\-to\-binary error\-reporting convention lends itself to slightly obscure code, because many readers will not think of NULL as signifying success\&. A good way to make it clearer is to write something like:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBconst char *error;\fR
+
+\fBerror = atoaddr( /* \&.\&.\&. */ );\fR
+\fBif (error != NULL) {\fR
+\fB        /* something went wrong */\fR
+.fi
+.if n \{\
+.RE
+.\}
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

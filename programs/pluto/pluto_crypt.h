@@ -78,7 +78,7 @@ struct pcr_skeyid_q {
   wire_chunk_t rcookie;
   wire_chunk_t secret;
   /* u_int16_t encrypt_algo; */
-  struct encrypt_desc *encrypter;
+  const struct encrypt_desc *encrypter;
   wire_chunk_t   pubk;
 };
 

@@ -346,7 +346,7 @@ err_t rangetosubnet(const ip_address *from, const ip_address *to, ip_subnet *dst
 int addrtypeof(const ip_address *src);
 int subnettypeof(const ip_subnet *src);
 size_t addrlenof(const ip_address *src);
-size_t addrbytesptr(const ip_address *src, const unsigned char **dst);
+size_t addrbytesptr(const ip_address *src, unsigned char **dst);
 size_t addrbytesptr_write(ip_address *src, unsigned char **dst);
 size_t addrbytesof(const ip_address *src, unsigned char *dst, size_t dstlen);
 int masktocount(const ip_address *src);
