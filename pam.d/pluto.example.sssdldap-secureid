@@ -1,0 +1,28 @@
+#%PAM-1.0
+#auth [success=done ignore=ignore default=bad] pam_selinux_permit.so
+auth required pam_securid.so
+#auth substack password-auth
+auth required pam_succeed_if.so user != root quiet
+auth optional pam_gnome_keyring.so
+auth include postlogin
+
+#account required pam_nologin.so
+#account include password-auth
+
+account include system-auth
+
+password include password-auth
+
+#session required pam_selinux.so close
+session include system-auth
+session required pam_loginuid.so
+session required pam_securid.so
+session required pam_sss.so
+session optional pam_console.so
+#session required pam_selinux.so open
+session optional pam_keyinit.so force revoke
+session required pam_namespace.so
+session optional pam_gnome_keyring.so auto_start
+session include password-auth
+session include postlogin
+session required as_pam_logon.so
