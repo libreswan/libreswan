@@ -1339,6 +1339,7 @@ void fmt_state(struct state *st, const time_t n
     long delta;
     char inst[CONN_INST_BUF];
     char dpdbuf[128];
+    char minor_buf[256];
     const char *np1 = c->newest_isakmp_sa == st->st_serialno
 	? "; newest ISAKMP" : "";
     const char *np2 = c->newest_ipsec_sa == st->st_serialno
@@ -1439,19 +1440,21 @@ void fmt_state(struct state *st, const time_t n
 	    add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi, SA_ESP);
 /* needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
-
+            
 	    if (get_sa_info(st, FALSE, &ago))
 	    {
-		snprintf(state_buf2, state_buf2_len,
-		  " (%'u bytes)" , st->st_esp.peer_bytes);
+		snprintf(minor_buf, sizeof(minor_buf)-1,
+                         " (%'u bytes/%lu bytes)" , st->st_esp.peer_bytes,
+                         ((u_long) st->st_esp.attrs.life_kilobytes) * 1024);
 	    }
 #endif
 	    add_said(&c->spd.this.host_addr, st->st_esp.our_spi, SA_ESP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
 	    if (get_sa_info(st, TRUE, &ago))
 	    {
-		snprintf(state_buf2, state_buf2_len,
-		  " (%'u bytes)" , st->st_esp.our_bytes);
+		snprintf(minor_buf, sizeof(minor_buf)-1,
+                         " (%'u/%lu bytes)" , st->st_esp.our_bytes,
+                         ((u_long) st->st_esp.attrs.life_kilobytes) * 1024);
 	    }
 #endif
 
@@ -1471,12 +1474,13 @@ void fmt_state(struct state *st, const time_t n
 	}
 #endif
 	snprintf(state_buf2, state_buf2_len
-	    , "#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu"
+	    , "#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu %s"
 	    , st->st_serialno
 	    , c->name, inst
 	    , lastused
 	    , buf
-		 , (unsigned long)st->st_ref, (unsigned long)st->st_refhim);
+		 , (unsigned long)st->st_ref, (unsigned long)st->st_refhim,
+            minor_buf);
 
 #	undef add_said
     }
