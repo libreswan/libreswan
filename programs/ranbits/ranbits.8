@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC_RANBITS
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/06/2010
-.\"    Manual: [FIXME: manual]
-.\"    Source: [FIXME: source]
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_RANBITS" "8" "10/06/2010" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC_RANBITS" "8" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -77,7 +86,7 @@ There is an internal limit on
 .PP
 Without
 \fB\-\-quick\fR,
-\fIranbits\fR\'s run time is difficult to predict\&. A request for a large number of bits, at a time when the system\'s entropy pool is low on randomness, may take quite a while to satisfy\&.
+\fIranbits\fR\*(Aqs run time is difficult to predict\&. A request for a large number of bits, at a time when the system\*(Aqs entropy pool is low on randomness, may take quite a while to satisfy\&.
 .PP
 Though not a bug of ranbits, the direct use of
 \fI/dev/hw_random\fR, the Linux hardware random number generator is not supported because it can produce very non\-random data\&. To properly use
@@ -88,3 +97,9 @@ daemon should be used to read from
 and write to
 \fI/dev/random\fR, while performing a FIPS test on the hardware random read\&. No changes to Libreswan are required for this support \- just a running
 \fIrngd\fR\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

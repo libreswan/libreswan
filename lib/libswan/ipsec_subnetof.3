@@ -1,0 +1,79 @@
+'\" t
+.\"     Title: IPSEC_SUBNETOF
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_SUBNETOF" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_subnetof, ipsec_hostof, ipsec_broadcastof \- given Internet address and subnet mask return subnet number, host part, broadcast address
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'struct\ in_addr\ subnetof('u
+.BI "struct in_addr subnetof(struct\ in_addr\ " "addr" ", struct\ in_addr\ " "mask" ");"
+.HP \w'struct\ in_addr\ hostof('u
+.BI "struct in_addr hostof(struct\ in_addr\ " "addr" ", struct\ in_addr\ " "mask" ");"
+.HP \w'struct\ in_addr\ broadcastof('u
+.BI "struct in_addr broadcastof(struct\ in_addr\ " "addr" ", struct\ in_addr\ " "mask" ");"
+.SH "DESCRIPTION"
+.PP
+These functions are obsolete; see
+\fBipsec_networkof\fR(3)
+for their replacements\&.
+.PP
+\fISubnetof\fR
+takes an Internet
+\fIaddress\fR
+and a subnet
+\fImask\fR
+and returns the network part of the address (all in network byte order)\&.
+\fIHostof\fR
+similarly returns the host part, and
+\fBbroadcastof\fR
+returns the broadcast address (all\-1s convention) for the network\&.
+.PP
+These functions are provided to hide the Internet bit\-munging inside an API, in hopes of easing the eventual transition to IPv6\&.
+.SH "SEE ALSO"
+.PP
+\fBinet\fR(3),
+\fBipsec_atosubnet\fR(3)
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "BUGS"
+.PP
+Calling functions for this is more costly than doing it yourself\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

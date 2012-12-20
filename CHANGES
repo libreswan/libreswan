@@ -55,7 +55,6 @@ v3.0 (unreleased)
 * pluto: if started with --nofork, don't care about existing pid file [Paul]
 * pluto: incorrect free in scan_proc_shunts() [Roel van Meer]
 * pluto: eclipsed() was broken since freeswan-2.02 [Philippe]
-* addconn/pluto: ensure conn names are always treated case sensitive [Paul]
 * _plutoload: obsoleted [Kim/Paul]
 * auto: no longer pass defaultroute/defaultrouteaddr to addconn [Paul]
 * whack: fix handling --sha2_truncbug and --nm_configured options [Paul]
@@ -124,19 +123,25 @@ v3.0 (unreleased)
 * manpages: Build during build phase, not during install phase [Wes]
 * compiling: Update standard compile options to be more hardened [Paul]
 * Bugtracker bugs fixed:
-    #993 ipsec showhostkey: wrong kind of key PPK_XAUTH [Philippe Vouters]
-   #1308 forceencaps= setting does now show up in "ipsec auto --status"
-         [Matt Rogers]
-   #1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
-         tree [Steve Lanser]
-   #1334 Block rules created by openswan remain even after tunnel
-         establishment or XFRM_MSG_POLEXPIRE [Panagiotis Tamtamis]
-   #1349 pluto logging no subjectAltName matches ID '%fromcert', replaced
-         by subject DN [Tuomo]
-   #1359 Openswan L2TP and IPhone vpn connection [Paul]
-   #1375 ipsec verify uses perl, should use python [Paul]
-   #1381 XAuth: the variable PLUTO_XAUTH_USERNAME is empty in the updown
-   	 script [Bram]
-   #1384 confusing output from ipsec auto --status [Bram]
+     #7    after 'make install' - check if the service is enabled
+           or not and notify the user [Wes]
+     #9    install /etc/pam.d/pluto if USE_XAUTH=true [Wes]
+     #25   addconn behaves differently from whack regarding case  [Paul]
+     #33   warn on /usr/local install with selinux enabled [Wes]
+     #40   ensure make install checks and restorecon's SElinux policies [Wes]
+  osw#993  ipsec showhostkey: wrong kind of key PPK_XAUTH [Philippe Vouters]
+  osw#1308 forceencaps= setting does now show up in "ipsec auto --status"
+           [Matt Rogers]
+  osw#1329 IKEv2 core dumps on 2.6.32 with changes backported from the 2.6.38
+           tree [Steve Lanser]
+  osw#1334 Block rules created by openswan remain even after tunnel
+           establishment or XFRM_MSG_POLEXPIRE [Panagiotis Tamtamis]
+  osw#1349 pluto logging no subjectAltName matches ID '%fromcert', replaced
+           by subject DN [Tuomo]
+  osw#1359 Openswan L2TP and IPhone vpn connection [Paul]
+  osw#1375 ipsec verify uses perl, should use python [Paul]
+  osw#1381 XAuth: the variable PLUTO_XAUTH_USERNAME is empty in the updown
+   	   script [Bram]
+  osw#1384 confusing output from ipsec auto --status [Bram]
 
 For older changes, see docs/CHANGES.openswan

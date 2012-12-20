@@ -3,13 +3,18 @@
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC_LSW_INIT_OPTIONS</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>4 December 2005</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Library functions</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>lsw_init_options</refname>
+<refname>ipsec_lsw_init_options</refname>
 <refpurpose>initialize and return a structure of relevant pathnames</refpurpose>
 </refnamediv>
 <!-- body begins here -->
@@ -19,11 +24,13 @@
 #include &lt;lswconf.h&gt;
 
 </funcsynopsisinfo>
+
 <funcprototype>
 <funcdef>const struct lsw_conf_options *<function>lsw_init_options</function></funcdef>
     <paramdef>void</paramdef>
 </funcprototype>
-<funcsynopsisinfo>
+</funcsynopsis>
+</refsynopsisdiv>
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>lsw_init_options</emphasis>,

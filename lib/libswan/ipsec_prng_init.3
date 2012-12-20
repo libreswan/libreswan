@@ -1,0 +1,115 @@
+'\" t
+.\"     Title: IPSEC_PRNG_INIT
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_PRNG_INIT" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_prng_init, ipsec_prng_bytes, ipsec_prng_final \- initialize IPsec pseudorandom\-number generator, get bytes from IPsec pseudorandom\-number generator, close down IPsec pseudorandom\-number generator
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'void\ prng_init('u
+.BI "void prng_init(struct\ prng\ *\ " "prng" ", const\ unsigned\ char\ *\ " "key" ", size_t\ " "keylen" ");"
+.HP \w'void\ prng_bytes('u
+.BI "void prng_bytes(struct\ prng\ *\ " "prng" ", char\ *\ " "dst" ", size_t\ " "dstlen" ");"
+.HP \w'unsigned\ long\ prng_count('u
+.BI "unsigned long prng_count(struct\ prng\ *\ " "prng" ");"
+.HP \w'void\ prng_final('u
+.BI "void prng_final(struct\ prng\ *\ " "prng" ");"
+.SH "DESCRIPTION"
+.PP
+\fIPrng_init\fR
+initializes a crypto\-quality pseudo\-random\-number generator from a key;
+\fBprng_bytes\fR
+obtains pseudo\-random bytes from it;
+\fBprng_count\fR
+reports the number of bytes extracted from it to date;
+\fBprng_final\fR
+closes it down\&. It is the user\*(Aqs responsibility to initialize a PRNG before using it, and not to use it again after it is closed down\&.
+.PP
+\fIPrng_init\fR
+initializes, or re\-initializes, the specified
+\fIprng\fR
+from the
+\fIkey\fR, whose length is given by
+\fIkeylen\fR\&. The user must allocate the
+\fBstruct prng\fR
+pointed to by
+\fIprng\fR\&. There is no particular constraint on the length of the key, although a key longer than 256 bytes is unnecessary because only the first 256 would be used\&. Initialization requires on the order of 3000 integer operations, independent of key length\&.
+.PP
+\fIPrng_bytes\fR
+obtains
+\fIdstlen\fR
+pseudo\-random bytes from the PRNG and puts them in
+\fIbuf\fR\&. This is quite fast, on the order of 10 integer operations per byte\&.
+.PP
+\fIPrng_count\fR
+reports the number of bytes obtained from the PRNG since it was (last) initialized\&.
+.PP
+\fIPrng_final\fR
+closes down a PRNG by zeroing its internal memory, obliterating all trace of the state used to generate its previous output\&. This requires on the order of 250 integer operations\&.
+.PP
+The
+\fB<libreswan\&.h>\fR
+header file supplies the definition of the
+\fIprng\fR
+structure\&. Examination of its innards is discouraged, as they may change\&.
+.PP
+The PRNG algorithm used by these functions is currently identical to that of RC4(TM)\&. This algorithm is cryptographically strong, sufficiently unpredictable that even a hostile observer will have difficulty determining the next byte of output from past history, provided it is initialized from a reasonably large key composed of highly random bytes (see
+\fBrandom\fR(4))\&. The usual run of software pseudo\-random\-number generators (e\&.g\&.
+\fBrandom\fR(3)) are
+\fInot\fR
+cryptographically strong\&.
+.PP
+The well\-known attacks against RC4(TM), e\&.g\&. as found in 802\&.11b\*(Aqs WEP encryption system, apply only if multiple PRNGs are initialized with closely\-related keys (e\&.g\&., using a counter appended to a base key)\&. If such keys are used, the first few hundred pseudo\-random bytes from each PRNG should be discarded, to give the PRNGs a chance to randomize their innards properly\&. No useful attacks are known if the key is well randomized to begin with\&.
+.SH "SEE ALSO"
+.PP
+\fBrandom\fR(3),
+\fBrandom\fR(4)
+Bruce Schneier,
+\fIApplied Cryptography\fR, 2nd ed\&., 1996, ISBN 0\-471\-11709\-9, pp\&. 397\-8\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "BUGS"
+.PP
+If an attempt is made to obtain more than 4e9 bytes between initializations, the PRNG will continue to work but
+\fBprng_count\fR\*(Aqs output will stick at
+4000000000\&. Fixing this would require a longer integer type and does not seem worth the trouble, since you should probably re\-initialize before then anyway\&.\&.\&.
+.PP
+\(lqRC4\(rq is a trademark of RSA Data Security, Inc\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

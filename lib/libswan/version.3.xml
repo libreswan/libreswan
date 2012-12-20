@@ -3,15 +3,19 @@
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry id='version3'>
-<refentryinfo><date>21 Nov 2001</date></refentryinfo>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
 <refmeta>
-<refentrytitle>IPSEC_IPSEC_VERSION_CODE</refentrytitle>
+<refentrytitle>IPSEC_VERSION_CODE</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='date'>21 Nov 2001</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Library functions</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec ipsec_version_code</refname>
-<refname>ipsec ipsec_version_string</refname>
+<refname>ipsec_version_code</refname>
+<refname>ipsec_version_string</refname>
 <refpurpose>get IPsec version code, full version string, copyright notice</refpurpose>
 </refnamediv>
 <!-- body begins here -->
@@ -30,7 +34,7 @@
 <funcdef>const char *<function>ipsec_version_string</function></funcdef>
     <paramdef><parameter>void</parameter></paramdef>
 </funcprototype>
-
+</funcsynopsis>
 </refsynopsisdiv>
 
 

@@ -1,0 +1,113 @@
+'\" t
+.\"     Title: IPSEC_ANYADDR
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_ANYADDR" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_anyaddr, ipsec_isanyaddr, ipsec_unspecaddr, ipsec_isunspecaddr, ipsec_loopbackaddr, ipsec_isloopbackaddr \- get and test for addresses of type "any", "unspecified" and loopback get "any" address
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'const\ char\ *anyaddr('u
+.BI "const char *anyaddr(int\ " "af" ", ip_address\ *\ " "dst" ");"
+.HP \w'int\ isanyaddr('u
+.BI "int isanyaddr(const\ ip_address\ *\ " "src" ");"
+.HP \w'const\ char\ *unspecaddr('u
+.BI "const char *unspecaddr(int\ " "af" ", ip_address\ *\ " "dst" ");"
+.HP \w'int\ isunspecaddr('u
+.BI "int isunspecaddr(const\ ip_address\ *\ " "src" ");"
+.HP \w'const\ char\ *loopbackaddr('u
+.BI "const char *loopbackaddr(int\ " "af" ", ip_address\ *\ " "dst" ");"
+.HP \w'int\ isloopbackaddr('u
+.BI "int isloopbackaddr(const\ ip_address\ *\ " "src" ");"
+.SH "DESCRIPTION"
+.PP
+These functions fill in, and test for, special values of the
+\fIip_address\fR
+type\&.
+.PP
+\fIAnyaddr\fR
+fills in the destination
+\fI*dst\fR
+with the \(lqany\(rq address of address family
+\fIaf\fR
+(normally
+\fBAF_INET\fR
+or
+\fBAF_INET6\fR)\&. The IPv4 \(lqany\(rq address is the one embodied in the old
+\fBINADDR_ANY\fR
+macro\&.
+.PP
+\fIIsanyaddr\fR
+returns
+1
+if the
+\fIsrc\fR
+address equals the \(lqany\(rq address, and
+0
+otherwise\&.
+.PP
+Similarly,
+\fBunspecaddr\fR
+supplies, and
+\fBisunspecaddr\fR
+tests for, the \(lqunspecified\(rq address, which may be the same as the \(lqany\(rq address\&.
+.PP
+Similarly,
+\fBloopbackaddr\fR
+supplies, and
+\fIislookbackaddr\fR
+tests for, the loopback address\&.
+.PP
+\fIAnyaddr\fR,
+\fBunspecaddr\fR, and
+\fBloopbackaddr\fR
+return
+\fBNULL\fR
+for success and a pointer to a string\-literal error message for failure; see DIAGNOSTICS\&.
+.SH "SEE ALSO"
+.PP
+\fBinet\fR(3),
+\fBipsec_addrtot\fR(3),
+\fBipsec_sameaddr\fR(3)
+.SH "DIAGNOSTICS"
+.PP
+Fatal errors in the address\-supplying functions are: unknown address family\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE
