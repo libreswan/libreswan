@@ -367,7 +367,7 @@ main(int argc, char **argv)
 
     /* set up initial defaults that need a cast */
     pluto_shared_secrets_file =
-        DISCARD_CONST(char *, pluto_shared_secrets_file);
+        DISCARD_CONST(char *, SHARED_SECRETS_FILE);
 
 #ifdef NAT_TRAVERSAL
     /** Overridden by nat_traversal= in ipsec.conf */
