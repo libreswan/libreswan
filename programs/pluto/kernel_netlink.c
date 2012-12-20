@@ -679,13 +679,7 @@ netlink_raw_eroute(const ip_address *this_host
 	req.u.p.lft.hard_byte_limit = XFRM_INF;
 	req.u.p.lft.hard_packet_limit = XFRM_INF;
 
-	/*
-	 * NEW will fail when an existing policy, UPD always works.
-	 * This seems to happen in cases with NAT'ed XP clients, or
-	 * quick recycling/resurfacing of roadwarriors on the same IP.
-	 * req.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
-	 */
-	req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
+	req.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
 	if (sadb_op == ERO_REPLACE)
 	{
 	    req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
