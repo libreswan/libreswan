@@ -139,6 +139,7 @@ v3.0 (unreleased)
   osw#1349 pluto logging no subjectAltName matches ID '%fromcert', replaced
            by subject DN [Tuomo]
   osw#1359 Openswan L2TP and IPhone vpn connection [Paul]
+  osw#1370 Segfault on no new line at the end of ipsec.conf [Wes]
   osw#1375 ipsec verify uses perl, should use python [Paul]
   osw#1381 XAuth: the variable PLUTO_XAUTH_USERNAME is empty in the updown
    	   script [Bram]
