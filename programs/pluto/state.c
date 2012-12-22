@@ -355,11 +355,17 @@ delete_state(struct state *st)
 {
     struct connection *const c = st->st_connection;
     struct state *old_cur_state = cur_state == st? NULL : cur_state;
+    char statebuf[1024], *sbcp = statebuf;
 
     DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
 
-    libreswan_log("SA traffic information: sent=%u recv=%u",
-                  st->st_esp.our_bytes, st->st_esp.peer_bytes);
+    sbcp = humanize_number(st->st_esp.peer_bytes,
+                           sbcp, sizeof(statebuf) - 1,
+                           "SA traffic information: in=%lu%s");
+    sbcp = humanize_number(st->st_esp.our_bytes,
+                           sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                           " out=%lu%s");
+    libreswan_log(statebuf);
 
 #ifdef XAUTH_HAVE_PAM 
     /*
