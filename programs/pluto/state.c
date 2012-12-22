@@ -1388,7 +1388,7 @@ void fmt_state(struct state *st, const time_t n
     long delta;
     char inst[CONN_INST_BUF];
     char dpdbuf[128];
-    char minor_buf[256], *mbcp;
+    char traffic_buf[512], *mbcp;
     const char *np1 = c->newest_isakmp_sa == st->st_serialno
 	? "; newest ISAKMP" : "";
     const char *np2 = c->newest_ipsec_sa == st->st_serialno
@@ -1397,6 +1397,9 @@ void fmt_state(struct state *st, const time_t n
     const char *eo = c->spd.eroute_owner == st->st_serialno
 	? "; eroute owner" : "";
     const char *idlestr;
+#if defined(linux) && defined(NETKEY_SUPPORT)
+	    time_t ago;
+#endif
 
     fmt_conn_instance(c, inst);
 
@@ -1475,20 +1478,46 @@ void fmt_state(struct state *st, const time_t n
 		, (unsigned long) (now() - st->st_outbound_time));
 	}
 
+        mbcp = traffic_buf +
+            snprintf(traffic_buf, sizeof(traffic_buf)-1, "Traffic:");
+
 	*p = '\0';
 	if (st->st_ah.present)
 	{
 	    add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi, SA_AH);
+/* needs proper fix, via kernel_ops? */
+#if defined(linux) && defined(NETKEY_SUPPORT)
+            
+	    if (get_sa_info(st, FALSE, &ago))
+	    {
+                mbcp =
+                    humanize_number(st->st_ah.peer_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " AHin=%lu%s");
+	    }
+#endif
 	    add_said(&c->spd.this.host_addr, st->st_ah.our_spi, SA_AH);
+#if defined(linux) && defined(NETKEY_SUPPORT)
+	    if (get_sa_info(st, TRUE, &ago))
+	    {
+                mbcp =
+                    humanize_number(st->st_ah.our_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " AHout=%lu%s");
+	    }
+#endif
+            mbcp =
+                humanize_number(((u_long)st->st_ah.attrs.life_kilobytes)*1024,
+                                mbcp,
+                                sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                " AHmax=%lu%s");
+/* needs proper fix, via kernel_ops? */
 	}
 	if (st->st_esp.present)
 	{
-#if defined(linux) && defined(NETKEY_SUPPORT)
-	    time_t ago;
-#endif
 	    add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi, SA_ESP);
-            mbcp = minor_buf +
-                snprintf(minor_buf, sizeof(minor_buf)-1, "Bytes:");
 /* needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
             
@@ -1497,8 +1526,8 @@ void fmt_state(struct state *st, const time_t n
                 mbcp =
                     humanize_number(st->st_esp.peer_bytes,
                                     mbcp,
-                                    sizeof(minor_buf) - 1 - (mbcp - minor_buf),
-                                    " in=%lu%s");
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " ESPin=%lu%s");
 	    }
 #endif
 	    add_said(&c->spd.this.host_addr, st->st_esp.our_spi, SA_ESP);
@@ -1508,21 +1537,48 @@ void fmt_state(struct state *st, const time_t n
                 mbcp =
                     humanize_number(st->st_esp.our_bytes,
                                     mbcp,
-                                    sizeof(minor_buf) - 1 - (mbcp - minor_buf),
-                                    " out=%lu%s");
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " ESPout=%lu%s");
 	    }
 #endif
 
             mbcp =
                 humanize_number(((u_long)st->st_esp.attrs.life_kilobytes)*1024,
                                 mbcp,
-                                sizeof(minor_buf) - 1 - (mbcp - minor_buf),
-                                " max=%lu%s");
+                                sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                " ESPmax=%lu%s");
 	}
 	if (st->st_ipcomp.present)
 	{
 	    add_said(&c->spd.that.host_addr, st->st_ipcomp.attrs.spi, SA_COMP);
+#if defined(linux) && defined(NETKEY_SUPPORT)
+            
+	    if (get_sa_info(st, FALSE, &ago))
+	    {
+                mbcp =
+                    humanize_number(st->st_ipcomp.peer_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " IPCOMPin=%lu%s");
+	    }
+#endif
 	    add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi, SA_COMP);
+#if defined(linux) && defined(NETKEY_SUPPORT)
+	    if (get_sa_info(st, TRUE, &ago))
+	    {
+                mbcp =
+                    humanize_number(st->st_ipcomp.our_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " IPCOMPout=%lu%s");
+	    }
+#endif
+
+            mbcp =
+                humanize_number(((u_long)st->st_ipcomp.attrs.life_kilobytes)*1024,
+                                mbcp,
+                                sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                " IPCOMPmax=%lu%s");
 	}
 #ifdef KLIPS
 	if (st->st_ah.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL
@@ -1540,7 +1596,7 @@ void fmt_state(struct state *st, const time_t n
 	    , lastused
 	    , buf
 		 , (unsigned long)st->st_ref, (unsigned long)st->st_refhim,
-            minor_buf);
+            traffic_buf);
 
 #	undef add_said
     }
