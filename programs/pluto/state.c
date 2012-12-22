@@ -369,6 +369,26 @@ delete_state(struct state *st)
         libreswan_log(statebuf);
     }
 
+    if (st->st_ah.present) {
+        sbcp = humanize_number(st->st_ah.peer_bytes,
+                               sbcp, sizeof(statebuf) - 1,
+                               "AH traffic information: in=%lu%s");
+        sbcp = humanize_number(st->st_ah.our_bytes,
+                               sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                               " out=%lu%s");
+        libreswan_log(statebuf);
+    }
+
+    if (st->st_ipcomp.present) {
+        sbcp = humanize_number(st->st_ipcomp.peer_bytes,
+                               sbcp, sizeof(statebuf) - 1,
+                               "IPCOMP traffic information: in=%lu%s");
+        sbcp = humanize_number(st->st_ipcomp.our_bytes,
+                               sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                               " out=%lu%s");
+        libreswan_log(statebuf);
+    }
+    
 #ifdef XAUTH_HAVE_PAM 
     /*
      * If there is still an authentication thread alive, kill it.
