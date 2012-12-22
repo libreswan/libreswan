@@ -1333,6 +1333,24 @@ state_eroute_usage(ip_subnet *ours, ip_subnet *his
 	});
 }
 
+char *humanize_number(unsigned long num, char *buf, size_t buf_len,
+                      const char *formatstr) {
+    if (num < 1024) {
+        return buf + snprintf(buf, buf_len, formatstr,
+                              num, "B");
+    }
+    if (num < 1024*1024) {
+        return buf + snprintf(buf, buf_len, formatstr,
+                              num/1024, "KB");
+    }
+    if (num < 1024*1024*1024) {
+        return buf + snprintf(buf, buf_len, formatstr,
+                              num/(1024*1024), "MB");
+    }
+    return buf + snprintf(buf, buf_len, formatstr,
+                          num/(1024*1024*1024), "GB");
+ }
+
 void fmt_state(struct state *st, const time_t n
 , char *state_buf, const size_t state_buf_len
 , char *state_buf2, const size_t state_buf2_len)
@@ -1448,26 +1466,30 @@ void fmt_state(struct state *st, const time_t n
             
 	    if (get_sa_info(st, FALSE, &ago))
 	    {
-                mbcp = mbcp +
-                    snprintf(mbcp, sizeof(minor_buf) - 1 - (mbcp - minor_buf),
-                             " in=%'u", st->st_esp.peer_bytes);
+                mbcp =
+                    humanize_number(st->st_esp.peer_bytes,
+                                    mbcp,
+                                    sizeof(minor_buf) - 1 - (mbcp - minor_buf),
+                                    " in=%lu%s");
 	    }
 #endif
 	    add_said(&c->spd.this.host_addr, st->st_esp.our_spi, SA_ESP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
 	    if (get_sa_info(st, TRUE, &ago))
 	    {
-                mbcp = mbcp +
-                    snprintf(mbcp, sizeof(minor_buf) - 1 - (mbcp - minor_buf),
-                             " out=%'u", st->st_esp.our_bytes);
+                mbcp =
+                    humanize_number(st->st_esp.our_bytes,
+                                    mbcp,
+                                    sizeof(minor_buf) - 1 - (mbcp - minor_buf),
+                                    " out=%lu%s");
 	    }
 #endif
 
-            mbcp = mbcp +
-                snprintf(mbcp, sizeof(minor_buf) - 1 - (mbcp - minor_buf),
-                         " max=%lu", 
-                         ((u_long) st->st_esp.attrs.life_kilobytes) * 1024);
-
+            mbcp =
+                humanize_number(((u_long)st->st_esp.attrs.life_kilobytes)*1024,
+                                mbcp,
+                                sizeof(minor_buf) - 1 - (mbcp - minor_buf),
+                                " max=%lu%s");
 	}
 	if (st->st_ipcomp.present)
 	{
