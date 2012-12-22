@@ -1442,7 +1442,7 @@ void fmt_state(struct state *st, const time_t n
 #endif
 	    add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi, SA_ESP);
             mbcp = minor_buf +
-                snprintf(minor_buf, sizeof(minor_buf)-1, "Bytes: ");
+                snprintf(minor_buf, sizeof(minor_buf)-1, "Bytes:");
 /* needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
             
@@ -1460,10 +1460,6 @@ void fmt_state(struct state *st, const time_t n
                 mbcp = mbcp +
                     snprintf(mbcp, sizeof(minor_buf) - 1 - (mbcp - minor_buf),
                              " out=%'u", st->st_esp.our_bytes);
-
-		snprintf(minor_buf, sizeof(minor_buf)-1,
-                         " (%'u/%lu bytes)" , st->st_esp.our_bytes,
-                         ((u_long) st->st_esp.attrs.life_kilobytes) * 1024);
 	    }
 #endif
 
