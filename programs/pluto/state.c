@@ -359,13 +359,15 @@ delete_state(struct state *st)
 
     DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
 
-    sbcp = humanize_number(st->st_esp.peer_bytes,
-                           sbcp, sizeof(statebuf) - 1,
-                           "SA traffic information: in=%lu%s");
-    sbcp = humanize_number(st->st_esp.our_bytes,
-                           sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
-                           " out=%lu%s");
-    libreswan_log(statebuf);
+    if (st->st_esp.present) {
+        sbcp = humanize_number(st->st_esp.peer_bytes,
+                               sbcp, sizeof(statebuf) - 1,
+                               "ESP traffic information: in=%lu%s");
+        sbcp = humanize_number(st->st_esp.our_bytes,
+                               sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                               " out=%lu%s");
+        libreswan_log(statebuf);
+    }
 
 #ifdef XAUTH_HAVE_PAM 
     /*
