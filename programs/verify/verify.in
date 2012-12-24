@@ -20,7 +20,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-import os, sys, subprocess, glob
+import os, sys, subprocess, glob, socket
 
 
 retcode = 0
@@ -78,7 +78,7 @@ def print_result(rcode, rtext):
 	ENDC = '\033[0m'
 
 	if rcode == "FAIL":
-		retcode = 1
+		retcode += 1
 		if not rtext:
 			rtext = "FAILED"
 		if colour:
@@ -103,92 +103,37 @@ def print_result(rcode, rtext):
 		print "INTERNAL ERROR - unknown rcode:%s"%rcode
 
 
-
-
-# Verification routines begin here...
-#
-# Check DNS Configuration based on a hostname
-# $1 = Hostname (string)
-# eg: checkdnshost oetest.freeswan.org
-#sub checkdnshost {
-#    run "host -t key $_[0]";
-#    ($keypresent)=grep /(0x4200|16896)/, @out;
-#    if($keypresent) 
-#    { 
-#	printfun "   Looking for KEY in forward dns zone: $_[0]";
-#	deprecated; 
-#    }
-#
-#
-#    printfun "   Looking for TXT in forward dns zone: $_[0]";
-#    run "host -t txt $_[0]";
-#    ($txtpresent)=grep /X-IPsec-Server/,@out;
-#    errchk "$txtpresent", "MISSING";
-#}
-
-# Check DNS Configuration based on IP address
-# $1 = IP Address (string)
-# eg: checkdnsip 127.0.0.2
-#sub checkdnsip {
-#    $fortxt=$_[0];
-#    $revtxt=join('.',reverse(split(/\./, $fortxt))).".in-addr.arpa.";
-#    printfun "   Looking for TXT in reverse dns zone: $revtxt";
-#    run "host -t txt $revtxt";
-#    ($txtpresent)=grep /X-IPsec-Server/,@out;
-#    errchk "$txtpresent", "MISSING";
-#
-#    if($txtpresent) {
-#	$txtpresent=~ s/.*X-IPsec-Server\([0-9].*\)=//; $txtpresent=~ s/[\"\ ].*//;
-#	$gwip=$txtpresent;
-#	chomp($gwip);
-#	$gwrev=join('.',reverse(split(/\./, $gwip))).".in-addr.arpa.";
-#	# Check for a KEY record for the indicated IPSec GW.
-#	run "host -t key $gwrev";
-#	($keypresent)=grep /(0x4200|16896)/, @out;
-#	if($keypresent) 
-#	{ 
-#	    printfun "   Looking for KEY in reverse dns zone: $gwrev";
-#	    deprecated; 
-#	    $print_deprecated = 1; 
-#
-#	}
-#	# If the host is its own gateway, then we know we've got a TXT record.
-#	if($gwip ne $fortxt) {	
-#	    printfun "Looking for TXT in reverse dns zone: $gwrev";
-#	    run "host -t txt $gwrev";
-#	    ($txtpresent)=grep /X-IPsec-Server/,@out;
-#	    errchk "$txtpresent", "MISSING";
-#	}
-#
-#    }
-#}
-
 def plutocheck():
+	global retcode
         printfun("Checking that pluto is running")
 	p = subprocess.Popen(["pidof", "pluto"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 	output, err = p.communicate()
 	if not output:
+		retcode += 1
 		print_result("FAIL","FAILED")
 		return
 	else:
 		print_result("OK","OK")
 
-	# only if pluto is running, do the listen tests
+	# only if pluto is running, do the listen tests and ipsec  secrets test
 	udp500check()
 	tcp500check()
 	udp4500check()
 	tcp4500check()
 	tcp10000check()
+	ipsecsecretcheck()
 
 # This is pretty broken, as you can enable forwarding specificaly via iptables as well
 # It also won't find/exclude all kinds of interfaces. Also, lots of people have one
 # ethernet and one wifi interface, but don't want to bridge these.
 # So, mostly left here for historic reasons - candidate to be changed/removed
 def forwardcheck():
+	global retcode
 	try:
 		output = open("/proc/net/dev","r").read().strip()
 	except:
 		printfun("Checking for multiple interfaces")
+		retcode += 1
 		print_result("FAIL","UNEXPECTED KERNEL DEV LIST")
 	count = 0
 	for line in output.split("\n"):
@@ -202,13 +147,16 @@ def forwardcheck():
 			output = open("/proc/sys/net/ipv4/ip_forward","r").read().strip()
 		except:
 			print_result("FAIL","MISSING ip_forward proc file")
+			retcode += 1
 			return
 		if output == "1":
 			print_result("OK","OK")
 		else:
 			print_result("FAIL","FAILED")
+			retcode += 1
 
 def rpfiltercheck():
+	global retcode
 	fail = 0
 	printfun("Checking rp_filter")
 	for dirname in glob.glob("/proc/sys/net/ipv4/conf/*"):
@@ -219,6 +167,7 @@ def rpfiltercheck():
 			fail = 1
 			printfun(" %s/rp_filter"%dirname)
 			print_result("FAIL","ENABLED")
+			retcode += 1
 	if fail == 0:
 			print_result("OK","OK")
 	else:
@@ -226,6 +175,7 @@ def rpfiltercheck():
 		
 # Check if any NAT or MASQUERADE would accidentally mess up our packets
 def natcheck():
+	global retcode
 	printfun("Checking NAT and MASQUERADEing")
 	print_result("WARN","TEST INCOMPLETE")
 
@@ -237,13 +187,16 @@ def natcheck():
 	# grep over ip xfrm state/policy and find overlap
 
 def cmdchecks():
+	global retcode
 	printfun("Checking 'ip' command")
 	if not os.path.isfile("/sbin/ip") and not os.path.isfile("/usr/sbin/ip"):
 			print_result("FAIL","FAILED")
+			retcode += 1
 	p = subprocess.Popen(["ip", "xfrm"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 	output, err = p.communicate()
 	if not "XFRM" in err:
 			print_result("FAIL","IP XFRM BROKEN")
+			retcode += 1
 	else:
 			print_result("OK","OK")
 
@@ -254,29 +207,31 @@ def cmdchecks():
 			print_result("OK","OK")
 
 def udp500check():
+	global retcode
 	printfun(" Pluto listening for IKE on udp 500")
 	try:
-		if os.path.isfile("/usr/sbin/ss"):
-			SSCMD = "/usr/sbin/ss"
-		elif os.path.isfile("/bin/ss"):
-			SSCMD = "/bin/ss"
-		else:
-			print_result("WARN","ss CMD NOT FOUND")
-			return
 		p = subprocess.Popen([SSCMD, "-n", "-a", "-u", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
 		if ":500" in output:
 			print_result("OK","OK")
 		else:
 			print_result("FAIL","FAILED")
+			retcode += 1
 	except:
 			print_result("FAIL","FAILED")
+			retcode += 1
 
 # not yet implemented in *swan
 def tcp500check():
+	global retcode
+	global sscmd
 	printfun(" Pluto listening for IKE on tcp 500")
+	if not sscmd:
+			print_result("WARN","UNKNOWN")
+			print "(install the 'ss' command to activate this test)"
+			return
 	try:
-		p = subprocess.Popen(["/usr/sbin/ss", "-n", "-l", "-t", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen([sscmd, "-n", "-l", "-t", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
 		if ":500" in output:
 			print_result("OK","OK")
@@ -286,22 +241,35 @@ def tcp500check():
 			print_result("WARN","NOT IMPLEMENTED")
 
 def udp4500check():
+	global retcode
+	global sscmd
 	printfun(" Pluto listening for IKE/NAT-T on udp 4500")
+	if not sscmd:
+			print_result("WARN","UNKNOWN")
+			print "(install the 'ss' command to activate this test)"
+			return
 	try:
-		p = subprocess.Popen(["/usr/sbin/ss", "-n", "-a", "-u", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen([sscmd, "-n", "-a", "-u", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
 		if ":4500" in output:
 			print_result("OK","OK")
 		else:
-			print_result("FAIL","DISABLED")
+			print_result("WARN","DISABLED")
 	except:
 			print_result("FAIL","DISABLED")
+			retcode += 1
 
 # not yet implemented in *swan
 def tcp4500check():
+	global retcode
+	global sscmd
 	printfun(" Pluto listening for IKE/NAT-T on tcp 4500")
+	if not sscmd:
+			print_result("WARN","UNKNOWN")
+			print "(install the 'ss' command to activate this test)"
+			return
 	try:
-		p = subprocess.Popen(["/usr/sbin/ss", "-n", "-l", "-t", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen([sscmd, "-n", "-l", "-t", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
 		if ":4500" in output:
 			print_result("OK","OK")
@@ -312,9 +280,15 @@ def tcp4500check():
 
 # not yet implemented in *swan
 def tcp10000check():
+	global retcode
+	global sscmd
 	printfun(" Pluto listening for IKE on tcp 10000 (cisco)")
+	if not sscmd:
+			print_result("WARN","UNKNOWN")
+			print "(install the 'ss' command to activate this test)"
+			return
 	try:
-		p = subprocess.Popen(["/usr/sbin/ss", "-n", "-l", "-t", "sport = :10000"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen([sscmd, "-n", "-l", "-t", "sport = :10000"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
 		if ":10000" in output:
 			print_result("OK","OK")
@@ -324,7 +298,8 @@ def tcp10000check():
 			print_result("WARN","NOT IMPLEMENTED")
 
 def installstartcheck():
-	print "Checking if IPsec got installed and started correctly:\n"
+	global retcode
+	print "Verifying installed system and configuration files\n"
 	printfun("Version check and ipsec on-path")
 	try:
 		p = subprocess.Popen(["ipsec", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
@@ -353,6 +328,7 @@ def installstartcheck():
 		installchecknetkey()
 
 def installcheckklips():
+	global retcode
 	# NAT-T patch check
 	printfun(" KLIPS: checking for NAT Traversal support")
 	try:
@@ -401,7 +377,8 @@ def installcheckklips():
 			
 
 def installchecknetkey():
-	print   (" NETKEY: Testing XFRM related proc values")
+	global retcode
+	print " NETKEY: Testing XFRM related proc values"
 	for option in ( "send_redirects", "accept_redirects"):
 		printfun("         ICMP default/%s"%option) 
 		try:
@@ -428,7 +405,8 @@ def installchecknetkey():
 
 	
 def randomdevcheck():
-	printfun("Hardware random device check")
+	global retcode
+	printfun("Hardware random device")
 	if os.path.isfile("/dev/hw_random") or os.path.isfile("/dev/hwrng"):
 		p = subprocess.Popen(["pidof", "rngd"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
@@ -443,27 +421,114 @@ def randomdevcheck():
 			print_result("OK","RNGD")
 	else:
 			print_result("OK","N/A")
-		
 
+def ipsecsecretcheck():
+	global retcode
+	# we need to be root, because the only way to check is to reload them
+	printfun(" Pluto ipsec.secret syntax")
+	uid = os.getuid()
+	if uid != 0:
+		print_result("WARN","UNKNOWN")
+		print " (run ipsec verify as root to test ipsec.secrets)"
+		return
 
+	p = subprocess.Popen(["ipsec","secrets"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	output, err = p.communicate()
+	if "ERROR" in output:
+		print_result("FAIL","PARSE ERROR")
+		for line in output.split("\n"):
+			line = line.strip()
+			if line and not "forgetting secrets" in line:
+				print "  %s"%line
+	else:
+		print_result("OK","OK")
 
+def ipsecconfcheck():
+	global retcode
+	printfun("Pluto ipsec.conf syntax")
+	p = subprocess.Popen(["ipsec","addconn","--checkconfig"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	output, err = p.communicate()
+	if "syntax error" in err:
+		print_result("FAIL","PARSE ERROR")
+		print err
+	else:
+		print_result("OK","OK")
 
+def configsetupcheck():
+	global retcode
+	p = subprocess.Popen(["ipsec","addconn","--configsetup"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	configsetup, err = p.communicate()
+	myid = ""
+	oe = "no"
+	# grab obsolete settings
+	printfun("Checking for obsolete ipsec.conf options")
+	if not err:
+		print_result("OK","OK")
+	else:
+		print_result("WARN","OBSOLETE KEYWORD")
+		err = err.replace("Warning"," Warning")
+		print err[:-1]
 
+	printfun("Opportunistic Encryption")
+	for line in configsetup.split("\n"):
+		# grab oe= setting
+		if " oe=" in line:
+			oe = line.split("oe='")[1].split("'")[0]
+		if " myid=" in line:
+			myid = line.split("myid='")[1].split("'")[0]
+	if oe == "no":
+		print_result("OK","DISABLED")
+		return
+	print_result("OK","ENABLED")
 
+	if not myid:
+		myid = socket.gethostname()
 
+	printfun(" FQDN check (%s)"%myid)
+	if "." in myid:
+		print_result("OK","OK")
+	else:
+		print_result("FAIL","UNUSABLE HOSTNAME")
+
+	printfun(" IPSECKEY DNS record present")
+	if not os.path.isfile("/usr/bin/dig") and not os.path.isfile("/bin/dig"):
+		print_result("WARN","UNKNOWN")
+		print "(install the dig command to active this test)"
+		return
+
+	p = subprocess.Popen(["dig","+short","ipseckey", myid ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	ipseckey, err = p.communicate()
+	if not ipseckey:
+		print_result("FAIL","MISSING")
+	try:
+		short = ipseckey.split(" ")[4][:8]
+		print_result("OK", "OK - %s"%short)
+	except:
+		print_result("FAIL","MANGLED")
 
 def main():
+	global retcode
+	global sscmd
+	if os.path.isfile("/usr/sbin/ss"):
+		sscmd = "/usr/sbin/ss"
+	elif os.path.isfile("/bin/ss"):
+		sscmd = "/bin/ss"
+
 	installstartcheck()
+	ipsecconfcheck()
 	randomdevcheck()
 	forwardcheck()
 	rpfiltercheck()
 	plutocheck()
 	natcheck()
 	cmdchecks()
+	configsetupcheck()
 	if retcode:
-		sys.exit("\nipsec verify: encountered errors - see 'man ipsec_verify' for help")
-
-
+		plural = ""
+		if retcode > 1:
+			plural = "s"
+		sys.stderr.write("\nipsec verify: encountered %s error%s - see 'man ipsec_verify' for help\n"%(retcode,plural))
+		sys.exit(retcode)
 
 if __name__ == "__main__":
 	main()
@@ -520,92 +585,3 @@ if __name__ == "__main__":
 ## 	}
 ##     }
 ## }
-## 
-##     
-## sub dnschecks {
-##     # Check the running hostname.
-##     printf "\nOpportunistic Encryption DNS checks:\n";
-##     run "hostname"; 
-##     ($hostname)=@out; chomp $hostname;
-##     checkdnshost $hostname;
-##     
-##     # Check all the public IP addresses...
-##     run "/sbin/ifconfig -a";
-##     foreach (grep /inet addr/,@out)
-##     {
-## 	$_=~ s/^\s*//;
-##         @temp=split(/[:\ ]+/, $_);
-## 	push(@address,$temp[2]);
-##     }
-##     # Purge all non-routeable IPs...
-##     @address=grep !/^(127.*|10.*|172.1[6789]+.*.*|172.2+.*.*|172.3[01]+.*.*|192.168.*.*|169.254.*.*)/,@address;
-##     printfun "   Does the machine have at least one non-private address?";
-##     errchk @address;
-##     foreach(@address=grep !$check{$_}++,@address)
-##     {
-## 	checkdnsip $_;
-##     }
-## }
-## 
-## 
-## # If you've passed --host or --ip, do only those checks.
-## if($hostname || $ip)
-## {
-## # Check this --host for OE.
-##     if($hostname)
-##     {
-## 	printf "Checking $hostname for Opportunistic Encryption:\n";
-## 	checkdnshost $hostname;
-## 	run "host -t A $hostname";
-## 	if(($ipaddr) = grep (/address/i, @out))
-## 	{
-## 	    $ipaddr=~ s/.*address\ //;
-## 	    chomp $ipaddr;
-## 	    checkdnsip $ipaddr;
-## 	}
-## 	else
-## 	{
-## 	    printf "$hostname does not resolve to an IP, no reverse lookup tests possible.\n";
-## 	}
-##     }
-## # Check this IP for OE.
-##     if($ip)
-##     {
-## 	printf "Checking IP $ip for Opportunistic Encryption:\n";
-## 	checkdnsip $ip;
-##     }
-## }
-## else
-## {
-##     # Call the default routines...
-##     # Root check...
-##     if($> != "0") 
-##     {
-## 	print "To check this machine, you need to run \"$me\" as root.\n"; exit;
-##     }
-##     else
-##     {
-## 	installstartcheck;
-## 	tunnelchecks;
-## 	cmdchecks;
-## 	run "ipsec addconn --configsetup";
-##         ($oe)=grep(/oe=\'yes\'/, @out);
-## 	if( $oe) {
-## 		dnschecks;
-##         	if($print_deprecated)
-##         	{
-##         	print "
-## 
-##    RFC 3445 restricts the use of the KEY RR to DNSSEC applications. The use of 
-##    a KEY record sub-type for Opporunistic Encryption (OE) has been deprecated.
-##    TXT records are used to provide all OE functionality.\n";
-##         	}
-## 	} else {
-## 		printfun "Opportunistic Encryption Support";
-## 		warnchk "", "DISABLED";
-##         }
-##     }
-##     # finally, run the config file through the parser checks
-##     run "ipsec addconn --checkconfig";
-## }
-## exit $reterr

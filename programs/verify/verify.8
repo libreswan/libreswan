@@ -2,12 +2,12 @@
 .\"     Title: IPSEC_VERIFY
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/16/2012
+.\"      Date: 12/23/2012
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_VERIFY" "8" "12/16/2012" "libreswan" "Executable programs"
+.TH "IPSEC_VERIFY" "8" "12/23/2012" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,31 +31,28 @@
 ipsec_verify \- see if the IPsec subsystem has been installed correctly
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIverify\fR [\-\-host\ \fIname\fR]
+\fBipsec\fR \fIverify\fR
 .SH "DESCRIPTION"
 .PP
-Invoked without argument,
-\fIverify\fR
-examines the local system for a number of common system faults: IPsec not in path, no secrets file generated, pluto not running, and IPsec support not present in kernel (or IPsec module not loaded)\&. If two or more interfaces are found, it performs checks relevant on an IPsec gateway: whether IP forwarding is allowed, and if so, whether MASQ or NAT rules are in play\&.
+The
+\fIipsec verify\fR
+examines the local system for a number of common system faults and configuration mistakes\&.
 .PP
 In addition,
 \fIverify\fR
-performs checks relevant to Opportunistic Encryption\&. It looks in forward DNS for a TXT record for the system\*(Aqs hostname, and in reverse DNS for a TXT record for the system\*(Aqs IP addresses\&. It checks whether the system has a public IP\&.
-.PP
-The
-\fB\-\-host\fR
-option causes
-\fBverify\fR
-to look for a TXT record for
-\fIname\fR
-in forward and reverse DNS\&.
+performs checks relevant to Opportunistic Encryption if this is enabled via
+\fIoe=yes\fR
+in the configuration file
+\fIipsec\&.conf\fR\&. It looks in forward DNS for an IPSECKEY record for the system\*(Aqs hostname or
+\fImyid=\fR
+value\&.
 .SH "HISTORY"
 .PP
 Written originally for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Michael Richardson\&. Rewritten in python by Paul Wouters
 .SH "BUGS"
 .PP
 \fIVerify\fR
-was converted from shell to perl to python, and some tests are incomplete\&. The
+was converted from shell to perl to python, and the MASQUERADING/NAT rule tests still need to be ported\&. The
 \fIss\fR
 command is around in various non\-intuitive and buggy versions, causing some false\-positives with respect to listening on UDP port 500 and 4500\&. See https://bugzilla\&.redhat\&.com/show_bug\&.cgi?id=829630
 .SH "AUTHOR"

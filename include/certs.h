@@ -64,11 +64,6 @@ typedef struct {
 /* used for initialization */
 extern const cert_t empty_cert;
 
-/*  do not send certificate requests
- *  flag set in plutomain.c and used in ipsec_doi.c
- */
-extern bool no_cr_send;
-
 extern chunk_t get_mycert(cert_t cert);
 extern bool load_cert(bool forcedtype
 		      , const char *filename
