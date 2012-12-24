@@ -9,7 +9,7 @@
 <refmeta>
 <refentrytitle>IPSEC_VERIFY</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>12 Dec 2012</refmiscinfo>
+<refmiscinfo class='date'>23 Dec 2012</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo> 
 </refmeta>
@@ -22,36 +22,24 @@
 <cmdsynopsis>
   <command>ipsec</command>    
     <arg choice='plain'><replaceable>verify</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'>--host </arg><arg choice='plain'><replaceable>name</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para>Invoked without argument,
-<emphasis remap='I'>verify</emphasis>
-examines the local system for a number of common system faults: 
-IPsec not in path, no secrets file generated, 
-pluto not running, and IPsec support not present in kernel
-(or IPsec module not loaded).
-If two or more interfaces are found, it performs checks relevant on an 
-IPsec gateway: whether IP forwarding is allowed, and if so, 
-whether MASQ or NAT rules are in play.</para>
+<para>The 
+<emphasis remap='I'>ipsec verify</emphasis>
+examines the local system for a number of common system faults and
+configuration mistakes.</para>
 
 <para>In addition, 
 <emphasis remap='I'>verify</emphasis>
-performs checks relevant to Opportunistic Encryption. 
-It looks in forward DNS for a TXT record for the system's hostname, and
-in reverse DNS for a TXT record for the system's IP addresses.
-It checks whether the system has a public IP.</para> 
+performs checks relevant to Opportunistic Encryption if this is enabled
+via <emphasis remap='I'>oe=yes</emphasis> in the configuration file
+<emphasis remap='I'>ipsec.conf</emphasis>.
+It looks in forward DNS for an IPSECKEY record for the system's hostname or
+<emphasis remap='I'>myid=</emphasis> value.</para> 
 
-<para>The
-<option>--host</option>
-option causes
-<emphasis remap='B'>verify</emphasis>
-to look for a TXT record for 
-<emphasis remap='I'>name</emphasis>
-in forward and reverse DNS.</para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
@@ -62,7 +50,8 @@ by Michael Richardson. Rewritten in python by Paul Wouters</para>
 
 <refsect1 id='bugs'><title>BUGS</title>
 <para><emphasis remap='I'>Verify</emphasis>
-was converted from shell to perl to python, and some tests are incomplete.
+was converted from shell to perl to python, and the MASQUERADING/NAT rule tests still need
+to be ported.
 The <emphasis remap='I'>ss</emphasis> command is around in various non-intuitive and buggy
 versions, causing some false-positives with respect to listening on UDP port 500 and 4500.
 See https://bugzilla.redhat.com/show_bug.cgi?id=829630
