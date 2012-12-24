@@ -1231,8 +1231,7 @@ main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc
 
     /**************** build output packet HDR;KE;Nr ****************/
 
-    send_cr = !no_cr_send
-	&& (st->st_oakley.auth == OAKLEY_RSA_SIG)
+    send_cr = (st->st_oakley.auth == OAKLEY_RSA_SIG)
 	&& !has_preloaded_public_key(st)
 	&& st->st_connection->spd.that.ca.ptr != NULL;
 
@@ -1478,7 +1477,7 @@ main_inR2_outI3_continue(struct msg_digest *md
 			  , send_cert);
 		  
     /* send certificate request, if we don't have a preloaded RSA public key */
-    send_cr = !no_cr_send && send_cert && !has_preloaded_public_key(st);
+    send_cr = send_cert && !has_preloaded_public_key(st);
 
     DBG(DBG_CONTROL
 	, DBG_log(" I am %ssending a certificate request"
