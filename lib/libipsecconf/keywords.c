@@ -362,7 +362,6 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"uniqueids",      kv_config, kt_bool,      KBF_UNIQUEIDS,NOT_ENUM},
     {"retransmits",    kv_config, kt_bool,      KBF_RETRANSMITS,NOT_ENUM},
     {"overridemtu",    kv_config, kt_number,    KBF_OVERRIDEMTU,NOT_ENUM},
-    {"nocrsend",       kv_config, kt_bool,      KBF_NOCRSEND,NOT_ENUM},
     {"strictcrlpolicy",kv_config, kt_bool,      KBF_STRICTCRLPOLICY,NOT_ENUM},
     {"crlcheckinterval",kv_config, kt_number,	KBF_CRLCHECKINTERVAL,NOT_ENUM},
     {"force_busy",     kv_config, kt_bool,      KBF_FORCEBUSY,NOT_ENUM},
@@ -389,6 +388,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"postpluto",      kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
     {"plutoopts",      kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
     {"plutowait",      kv_config, kt_obsolete, KBF_WARNIGNORE,NOT_ENUM},
+    {"nocrsend",       kv_config, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM},
 
     /* this is "left=" and "right=" */
     {"",               kv_conn|kv_leftright, kt_loose_enum, KSCF_IP, &kw_host_list},  

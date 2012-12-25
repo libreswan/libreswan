@@ -470,7 +470,7 @@ aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc
                           , send_cert);
 
     /* send certificate request, if we don't have a preloaded RSA public key */
-    send_cr = !no_cr_send && send_cert && !has_preloaded_public_key(st);
+    send_cr = send_cert && !has_preloaded_public_key(st);
 
     DBG(DBG_CONTROL
         , DBG_log(" I am %ssending a certificate request"

@@ -27,6 +27,7 @@ include ${srcdir}../Makefile.manpages
 
 FMANDIR=$(MANTREE)/man5
 PMANDIR=$(MANTREE)/man8
+MANPAGES=pluto.8 ipsec.secrets.5
 
 BINNAMEPLUTO = pluto
 BINNAMEWHACK = whack
@@ -183,7 +184,7 @@ all programs clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/pluto && $(MAKE) $@
 else
 all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) #$(BINNAMEWHACKINIT)
-programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) #$(BINNAMEWHACKINIT)
+programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(MANPAGES) #$(BINNAMEWHACKINIT) 
 clean:	cleanall
 install: doinstall
 endif
@@ -200,14 +201,16 @@ doinstall: all
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
 	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
-	$(INSTALL) $(INSTMANFLAGS) ${srcdir}pluto.8 $(PMANDIR)/ipsec_pluto.8
-	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink ${srcdir}pluto.8 | \
+	g=`if [ -r pluto.8 ]; then echo pluto.8; else echo ${srcdir}/pluto.8; fi`; \
+	$(INSTALL) $(INSTMANFLAGS) $$g $(PMANDIR)/ipsec_pluto.8 || exit 1; \
+	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \
 		while read from to ; \
 		do \
 			ln -s -f ipsec_$$from $(PMANDIR)/$$to; \
 		done
-	$(INSTALL) $(INSTMANFLAGS) ${srcdir}ipsec.secrets.5 $(FMANDIR)
-	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink ${srcdir}ipsec.secrets.5 | \
+	g=`if [ -r ipsec.secrets.5 ]; then echo ipsec.secrets.5; else echo ${srcdir}/ipsec.secrets.5; fi`; \
+	$(INSTALL) $(INSTMANFLAGS) $$g $(FMANDIR)/ipsec_secrets.5 || exit 1; \
+	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \
 		while read from to ; \
 		do \
 		 ln -s -f $$from $(FMANDIR)/$$to; \
