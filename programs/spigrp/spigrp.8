@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC_SPIGRP
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/06/2010
-.\"    Manual: [FIXME: manual]
-.\"    Source: [FIXME: source]
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_SPIGRP" "8" "10/06/2010" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC_SPIGRP" "8" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -42,7 +51,7 @@ Note that spi is only supported on the classic KLIPS stack\&. It is not supporte
 groups IPSEC Security Associations (SAs) together or ungroups previously grouped SAs\&. An entry in the IPSEC extended routing table can only point (via a destination address, a Security Parameters Index (SPI) and a protocol identifier) to one SA\&. If more than one transform must be applied to a given type of packet, this can be accomplished by setting up several SAs with the same destination address but potentially different SPIs and protocols, and grouping them with
 \fIspigrp\fR\&.
 .PP
-The SAs to be grouped, specified by destination address (DNS name lookup, IPv4 dotted quad or IPv6 coloned hex), SPI (\'0x\'\-prefixed hexadecimal number) and protocol ("ah", "esp", "comp" or "tun"), are listed from the inside transform to the outside; in other words, the transforms are applied in the order of the command line and removed in the reverse order\&. The resulting SA group is referred to by its first SA (by
+The SAs to be grouped, specified by destination address (DNS name lookup, IPv4 dotted quad or IPv6 coloned hex), SPI (\*(Aq0x\*(Aq\-prefixed hexadecimal number) and protocol ("ah", "esp", "comp" or "tun"), are listed from the inside transform to the outside; in other words, the transforms are applied in the order of the command line and removed in the reverse order\&. The resulting SA group is referred to by its first SA (by
 \fIaf1\fR,
 \fIdst1\fR,
 \fIspi1\fR
@@ -110,4 +119,10 @@ ipsec(8), ipsec_manual(8), ipsec_tncfg(8), ipsec_eroute(8), ipsec_spi(8), ipsec_
 Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org/\fR\m[]> by Richard Guy Briggs\&.
 .SH "BUGS"
 .PP
-Yes, it really is limited to a maximum of four SAs, although admittedly it\'s hard to see why you would need more\&.
+Yes, it really is limited to a maximum of four SAs, although admittedly it\*(Aqs hard to see why you would need more\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

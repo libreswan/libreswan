@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC_SPI
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 23 Oct 2001
-.\"    Manual: [FIXME: manual]
-.\"    Source: [FIXME: source]
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_SPI" "8" "23 Oct 2001" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC_SPI" "8" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -69,7 +78,7 @@ is the address family (inet for IPv4, inet6 for IPv6)\&.
 \fIDaddr\fR
 is a destination address in dotted\-decimal notation for IPv4 or in a coloned hex notation for IPv6\&.
 \fISpi\fR
-is a number, preceded by \'0x\' for hexadecimal, between
+is a number, preceded by \*(Aq0x\*(Aq for hexadecimal, between
 \fB0x100\fR
 and
 \fB0xffffffff\fR; values from
@@ -91,7 +100,7 @@ The source address,
 .PP
 Keys vectors must be entered as hexadecimal or base64 numbers\&. They should be cryptographically strong random numbers\&.
 .PP
-All hexadecimal numbers are entered as strings of hexadecimal digits (0\-9 and a\-f), without spaces, preceded by \'0x\', where each hexadecimal digit represents 4 bits\&. All base64 numbers are entered as strings of base64 digits (0\-9, A\-Z, a\-z, \'+\' and \'/\'), without spaces, preceded by \'0s\', where each hexadecimal digit represents 6 bits and \'=\' is used for padding\&.
+All hexadecimal numbers are entered as strings of hexadecimal digits (0\-9 and a\-f), without spaces, preceded by \*(Aq0x\*(Aq, where each hexadecimal digit represents 4 bits\&. All base64 numbers are entered as strings of base64 digits (0\-9, A\-Z, a\-z, \*(Aq+\*(Aq and \*(Aq/\*(Aq), without spaces, preceded by \*(Aq0s\*(Aq, where each hexadecimal digit represents 6 bits and \*(Aq=\*(Aq is used for padding\&.
 .PP
 The deletion of an SA which has been grouped will result in the entire chain being deleted\&.
 .PP
@@ -217,14 +226,14 @@ consists of a comma\-separated list of lifetime specifications without spaces; a
 \fBsoft\fR
 or
 \fBhard\fR
-followed by a \'\-\', followed by a lifetime type of
+followed by a \*(Aq\-\*(Aq, followed by a lifetime type of
 \fBallocations\fR,
 \fBbytes\fR,
 \fBaddtime\fR,
 \fBusetime\fR
 or
 \fBpackets\fR
-followed by an \'=\' and finally by a value
+followed by an \*(Aq=\*(Aq and finally by a value
 .RE
 .PP
 \fB\-\-comp\fR
@@ -295,7 +304,7 @@ display version information
 .RE
 .SH "EXAMPLES"
 .PP
-To keep line lengths down and reduce clutter, some of the long keys in these examples have been abbreviated by replacing part of their text with ``\&.\&.\&.\'\'\&. Keys used when the programs are actually run must, of course, be the full length required for the particular algorithm\&.
+To keep line lengths down and reduce clutter, some of the long keys in these examples have been abbreviated by replacing part of their text with ``\&.\&.\&.\*(Aq\*(Aq\&. Keys used when the programs are actually run must, of course, be the full length required for the particular algorithm\&.
 .PP
 \fBipsec spi \-\-af inet \-\-edst gw2 \-\-spi 0x125 \-\-proto esp \e\fR
 
@@ -378,3 +387,9 @@ Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org/
 .SH "BUGS"
 .PP
 The syntax is messy and the transform naming needs work\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

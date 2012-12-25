@@ -3,10 +3,15 @@
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC_TNCFG</refentrytitle>
 <manvolnum>5</manvolnum>
 <refmiscinfo class='date'>27 Jun 2000</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec_tncfg</refname>
@@ -22,10 +27,9 @@
 </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsect1 id='obsolete'><title>OBSOLETE</title>
-<para>Note that tncfg is only supported on the classic KLIPS stack. It is
-not supported on any other stack and will be completely removed in future
-versions. A replacement command still needs to be designed</para>
+<refsect1 id='klips'><title>KLIPS</title>
+<para>Note that tncfg is only supported on the KLIPS stack which uses ipsecX interfaces
+bound to physical interfaces </para>
 </refsect1>
 
 

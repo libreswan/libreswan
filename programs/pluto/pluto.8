@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: IPSEC_PLUTO
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 26 October 2006
-.\"    Manual: [FIXME: manual]
-.\"    Source: [FIXME: source]
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/19/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_PLUTO" "8" "26 October 2006" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC_PLUTO" "8" "12/19/2012" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 ipsec_pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-nofork] [\-\-stderrlog] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_keepalive] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-lwdnsq\ \fIpathname\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits]
+\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-nofork] [\-\-stderrlog] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_keepalive] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-help] [\-\-version]
 .HP \w'\fBipsec\fR\ 'u
@@ -268,7 +268,15 @@ Pluto supports different IPstacks on different operating systems\&. This can be 
 or
 \fB\-\-use\-nostack\fR\&. The latter is meant for testing only \- no actual IPsec connections will be loaded into the kernel\&. The option
 \fB\-\-use\-auto\fR
-has been obsoleted\&.
+has been obsoleted\&. On startup, pluto might also read the
+\fBprotostack=\fR
+option to select the IPsec stack to use if
+\fB\-\-config /etc/ipsec\&.conf\fR
+is given as argument to pluto\&. If both
+\fB\-\-use\-XXX\fR
+and
+\fB\-\-config /etc/ipsec\&.conf\fR
+are specified, the last command line argument specified takes precedence\&.
 .PP
 Pluto supports the NAT\-Traversal drafts and the final standard, RFC 3947, if the
 \fB\-\-nat_traversal\fR
@@ -1210,7 +1218,7 @@ Using
 .PP
 Since this silly connection description specifies neither encryption, authentication, nor tunneling, it could only be used to establish an ISAKMP SA\&.
 .PP
-\ \&\ \&\ \&ipsec whack \-\-name\ \&secret \-\-host\ \&10\&.0\&.0\&.1 \-\-client\ \&10\&.0\&.1\&.0/24 \-\-to \-\-host\ \&10\&.0\&.0\&.2 \-\-client\ \&10\&.0\&.2\&.0/24 \-\-encrypt
+\ \&\ \&\ \&ipsec whack \-\-name\ \&conn_name \-\-host\ \&10\&.0\&.0\&.1 \-\-client\ \&10\&.0\&.1\&.0/24 \-\-to \-\-host\ \&10\&.0\&.0\&.2 \-\-client\ \&10\&.0\&.2\&.0/24 \-\-encrypt
 .PP
 This is something that must be done on both sides\&. If the other side is
 \fBpluto\fR, the same
@@ -1227,13 +1235,13 @@ If we don\*(Aqt immediately wish to bring up a secure connection between the two
 \fBpluto\fR
 to cause the packets sent from our client to the peer\*(Aqs client to be routed through the ipsec0 device; if there is no SA, they will be discarded:
 .PP
-\ \&\ \&\ \&ipsec whack \-\-route secret
+\ \&\ \&\ \&ipsec whack \-\-route conn_name
 .PP
 Finally, we are ready to get
 \fBpluto\fR
 to initiate negotiation for an IPsec SA (and implicitly, an ISAKMP SA):
 .PP
-\ \&\ \&\ \&ipsec whack \-\-initiate\ \&\-\-name\ \&secret
+\ \&\ \&\ \&ipsec whack \-\-initiate\ \&\-\-name\ \&conn_name
 .PP
 A small log of interesting events will appear on standard output (other logging is sent to syslog)\&.
 .PP
@@ -1551,15 +1559,13 @@ specifies the file for authentication secrets (default:
 \fBsh\fR(1), so every file with a matching name is processed\&. Quoting is generally needed to prevent the shell from doing the globbing\&.
 .RE
 .PP
-\fB\-\-adns\fR \fIpath to adns\fR, \fB\-\-lwdnsq\fR \fIpath to lwdnsq\fR
+\fB\-\-adns\fR \fIpath to adns\fR
 .RS 4
 specifies where to find
 \fBpluto\fR\*(Aqs helper program for asynchronous DNS lookup\&.
 \fBpluto\fR
-can be built to use one of two helper programs:
-\fB_pluto_adns\fR
-or
-\fBlwdnsq\fR\&. You must use the program for which it was built\&. By default,
+can be built to use
+\fB_pluto_adns\fR\&. By default,
 \fBpluto\fR
 will look for the program in
 \fB$IPSEC_DIR\fR
@@ -1881,10 +1887,6 @@ detects a problem, it will return an exit status of 1\&. If it received progress
 
 /etc/ipsec\&.secrets
 
-\fI$IPSEC_LIBDIR/_pluto_adns\fR
-
-\fI$IPSEC_EXECDIR/lwdnsq\fR
-
 /dev/urandom
 .SH "ENVIRONMENT"
 .PP
@@ -1968,3 +1970,9 @@ Substitute your public interface for eth0 if it is different\&.
 The word \(lqauthenticate\(rq is used for two different features\&. We must authenticate each IKE peer to the other\&. This is an important task of Phase 1\&. Each packet must be authenticated, both in IKE and in IPsec, and the method for IPsec is negotiated as an AH SA or part of an ESP SA\&. Unfortunately, the protocol has no mechanism for authenticating the Phase 2 identities\&.
 .PP
 Bugs should be reported to the <users@lists\&.libreswan\&.org> mailing list\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

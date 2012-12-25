@@ -152,7 +152,11 @@ import|--import)
 		fi
 	fi
 	# this hardcoded ipsec.d needs to get fixed once we pass IPSECD properly
-	pk12util -i $2 -d /etc/ipsec.d
+	pk12util -i $2 -d $IPSEC_CONFS/ipsec.d
+	if  test -x /usr/sbin/restorecon
+	then
+		restorecon $IPSEC_CONFS/ipsec.d -Rv
+	fi
 	exit 0
 	;;
 initnss|--initnss)
@@ -169,6 +173,10 @@ initnss|--initnss)
 	echo ""
 
 	certutil -N -d $IPSEC_CONFS/ipsec.d
+	if  test -x /usr/sbin/restorecon
+	then
+		restorecon $IPSEC_CONFS/ipsec.d -Rv
+	fi
 	exit 0
 	;;
 --*)

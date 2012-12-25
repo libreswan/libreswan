@@ -31,8 +31,8 @@ const ip_address *b;
 {
 	int at = addrtypeof(a);
 	int bt = addrtypeof(b);
-	const unsigned char *ap;
-	const unsigned char *bp;
+	unsigned char *ap;
+	unsigned char *bp;
 	size_t as = addrbytesptr(a, &ap);
 	size_t bs = addrbytesptr(b, &bp);
 	size_t n = (as < bs) ? as : bs;		/* min(as, bs) */
@@ -163,8 +163,8 @@ const ip_address *a;
 const ip_address *b;
 int nbits;
 {
-	const unsigned char *ap;
-	const unsigned char *bp;
+	unsigned char *ap;
+	unsigned char *bp;
 	size_t n;
 	int m;
 

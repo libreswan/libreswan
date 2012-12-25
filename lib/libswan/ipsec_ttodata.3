@@ -1,0 +1,270 @@
+'\" t
+.\"     Title: IPSEC_TTODATA
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Library functions
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_TTODATA" "3" "12/16/2012" "libreswan" "Library functions"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_ttodata, ipsec_datatot \- convert binary data bytes from and to text formats
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'const\ char\ *ttodata('u
+.BI "const char *ttodata(const\ char\ *\ " "src" ", size_t\ " "srclen" ", int\ " "base" ", char\ *\ " "dst" ", size_t\ " "dstlen" ", size_t\ *\ " "lenp" ");"
+.sp
+.ft B
+.nf
+
+.fi
+.ft
+.HP \w'const\ char\ *ttodatav('u
+.BI "const char *ttodatav(const\ char\ *\ " "src" ", size_t\ " "srclen" ", int\ " "base" ", char\ *\ " "dst" ", size_t\ " "dstlen" ", size_t\ *\ " "lenp" ", char\ *\ " "errp" ", size_t\ " "errlen" ", int\ " "flags" ");"
+.sp
+.ft B
+.nf
+
+.fi
+.ft
+.HP \w'size_t\ datatot('u
+.BI "size_t datatot(const\ char\ *\ " "src" ", size_t\ " "srclen" ", int\ " "format" ", char\ *\ " "dst" ", size_t\ " "dstlen" ");"
+.SH "DESCRIPTION"
+.PP
+\fITtodata\fR,
+\fBttodatav\fR, and
+\fBdatatot\fR
+convert arbitrary binary data (e\&.g\&. encryption or authentication keys) from and to more\-or\-less human\-readable text formats\&.
+.PP
+Currently supported formats are hexadecimal, base64, and characters\&.
+.PP
+A hexadecimal text value begins with a
+\fB0x\fR
+(or
+\fB0X\fR) prefix and continues with two\-digit groups of hexadecimal digits (0\-9, and a\-f or A\-F), each group encoding the value of one binary byte, high\-order digit first\&. A single
+\fB_\fR
+(underscore) between consecutive groups is ignored, permitting punctuation to improve readability; doing this every eight digits seems about right\&.
+.PP
+A base64 text value begins with a
+\fB0s\fR
+(or
+\fB0S\fR) prefix and continues with four\-digit groups of base64 digits (A\-Z, a\-z, 0\-9, +, and /), each group encoding the value of three binary bytes as described in section 6\&.8 of RFC 2045\&. If
+\fIflags\fR
+has the
+\fBTTODATAV_IGNORESPACE\fR
+bit on, blanks are ignore (after the prefix)\&. Note that the last one or two digits of a base64 group can be
+\fB=\fR
+to indicate that fewer than three binary bytes are encoded\&.
+.PP
+A character text value begins with a
+\fB0t\fR
+(or
+\fB0T\fR) prefix and continues with text characters, each being the value of one binary byte\&.
+.PP
+All these functions basically copy data from
+\fIsrc\fR
+(whose size is specified by
+\fIsrclen\fR) to
+\fIdst\fR
+(whose size is specified by
+\fIdstlen\fR), doing the conversion en route\&. If the result will not fit in
+\fIdst\fR, it is truncated; under no circumstances are more than
+\fIdstlen\fR
+bytes of result written to
+\fIdst\fR\&.
+\fIDstlen\fR
+can be zero, in which case
+\fIdst\fR
+need not be valid and no result bytes are written at all\&.
+.PP
+The
+\fIbase\fR
+parameter of
+\fBttodata\fR
+and
+\fBttodatav\fR
+specifies what format the input is in; normally it should be
+0
+to signify that this gets figured out from the prefix\&. Values of
+16,
+64, and
+256
+respectively signify hexadecimal, base64, and character\-text formats without prefixes\&.
+.PP
+The
+\fIformat\fR
+parameter of
+\fBdatatot\fR, a single character used as a type code, specifies which text format is wanted\&. The value
+0
+(not ASCII
+\fB\*(Aq0\*(Aq\fR, but a zero value) specifies a reasonable default\&. Other currently\-supported values are:
+.PP
+\fB\*(Aqx\*(Aq\fR
+.RS 4
+continuous lower\-case hexadecimal with a
+\fB0x\fR
+prefix
+.RE
+.PP
+\fB\*(Aqh\*(Aq\fR
+.RS 4
+lower\-case hexadecimal with a
+\fB0x\fR
+prefix and a
+\fB_\fR
+every eight digits
+.RE
+.PP
+\fB\*(Aq:\*(Aq\fR
+.RS 4
+lower\-case hexadecimal with no prefix and a
+\fB:\fR
+(colon) every two digits
+.RE
+.PP
+16
+.RS 4
+lower\-case hexadecimal with no prefix or
+\fB_\fR
+.RE
+.PP
+\fB\*(Aqs\*(Aq\fR
+.RS 4
+continuous base64 with a
+\fB0s\fR
+prefix
+.RE
+.PP
+64
+.RS 4
+continuous base64 with no prefix
+.RE
+.PP
+The default format is currently
+\fB\*(Aqh\*(Aq\fR\&.
+.PP
+\fITtodata\fR
+returns NULL for success and a pointer to a string\-literal error message for failure; see DIAGNOSTICS\&. On success, if and only if
+\fIlenp\fR
+is non\-NULL,
+\fB*lenp\fR
+is set to the number of bytes required to contain the full untruncated result\&. It is the caller\*(Aqs responsibility to check this against
+\fIdstlen\fR
+to determine whether he has obtained a complete result\&. The
+\fB*lenp\fR
+value is correct even if
+\fIdstlen\fR
+is zero, which offers a way to determine how much space would be needed before having to allocate any\&.
+.PP
+\fITtodatav\fR
+is just like
+\fBttodata\fR
+except that in certain cases, if
+\fIerrp\fR
+is non\-NULL, the buffer pointed to by
+\fIerrp\fR
+(whose length is given by
+\fIerrlen\fR) is used to hold a more detailed error message\&. The return value is NULL for success, and is either
+\fIerrp\fR
+or a pointer to a string literal for failure\&. If the size of the error\-message buffer is inadequate for the desired message,
+\fBttodatav\fR
+will fall back on returning a pointer to a literal string instead\&. The
+\fIlibreswan\&.h\fR
+header file defines a constant
+\fBTTODATAV_BUF\fR
+which is the size of a buffer large enough for worst\-case results\&.
+.PP
+The normal return value of
+\fBdatatot\fR
+is the number of bytes required to contain the full untruncated result\&. It is the caller\*(Aqs responsibility to check this against
+\fIdstlen\fR
+to determine whether he has obtained a complete result\&. The return value is correct even if
+\fIdstlen\fR
+is zero, which offers a way to determine how much space would be needed before having to allocate any\&. A return value of
+0
+signals a fatal error of some kind (see DIAGNOSTICS)\&.
+.PP
+A zero value for
+\fIsrclen\fR
+in
+\fBttodata\fR
+(but not
+\fBdatatot\fR!) is synonymous with
+\fBstrlen(src)\fR\&. A non\-zero
+\fIsrclen\fR
+in
+\fBttodata\fR
+must not include the terminating NUL\&.
+.PP
+Unless
+\fIdstlen\fR
+is zero, the result supplied by
+\fBdatatot\fR
+is always NUL\-terminated, and its needed\-size return value includes space for the terminating NUL\&.
+.PP
+Several obsolete variants of these functions (\fIatodata\fR,
+\fIdatatoa\fR,
+\fIatobytes\fR, and
+\fIbytestoa\fR) are temporarily also supported\&.
+.SH "SEE ALSO"
+.PP
+\fBsprintf\fR(3),
+\fBipsec_atoaddr\fR(3)
+.SH "DIAGNOSTICS"
+.PP
+Fatal errors in
+\fBttodata\fR
+and
+\fBttodatav\fR
+are: unknown characters in the input; unknown or missing prefix; unknown base; incomplete digit group; non\-zero padding in a base64 less\-than\-three\-bytes digit group; zero\-length input\&.
+.PP
+Fatal errors in
+\fBdatatot\fR
+are: unknown format code; zero\-length input\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "BUGS"
+.PP
+\fIDatatot\fR
+should have a format code to produce character\-text output\&.
+.PP
+The
+\fB0s\fR
+and
+\fB0t\fR
+prefixes are the author\*(Aqs inventions and are not a standard of any kind\&. They have been chosen to avoid collisions with existing practice (some C implementations use
+\fB0b\fR
+for binary) and possible confusion with unprefixed hexadecimal\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

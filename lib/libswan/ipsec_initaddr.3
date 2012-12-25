@@ -1,0 +1,137 @@
+'\" t
+.\"     Title: IPSEC_INITADDR
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_INITADDR" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_initaddr, ipsec_addrtypeof, ipsec_addrlenof, ipsec_addrbytesof, ipsec_addrbytesptr \- initialize an ip_address, get address type of an ip_address, get length of address within an ip_address, get copy of address within an ip_address, get pointer to address within an ip_address
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'const\ char\ *initaddr('u
+.BI "const char *initaddr(const\ char\ *\ " "src" ", size_t\ " "srclen" ", int\ " "af" ", ip_address\ *\ " "dst" ");"
+.HP \w'int\ addrtypeof('u
+.BI "int addrtypeof(const\ ip_address\ *\ " "src" ");"
+.HP \w'size_t\ addrlenof('u
+.BI "size_t addrlenof(const\ ip_address\ *\ " "src" ");"
+.HP \w'size_t\ addrbytesof('u
+.BI "size_t addrbytesof(const\ ip_address\ *\ " "src" ", unsigned\ char\ *\ " "dst" ", size_t\ " "dstlen" ");"
+.HP \w'size_t\ addrbytesptr('u
+.BI "size_t addrbytesptr(const\ ip_address\ *\ " "src" ", const\ unsigned\ char\ **\ " "dst" ");"
+.SH "DESCRIPTION"
+.PP
+The
+\fB<libreswan\&.h>\fR
+library uses an internal type
+\fIip_address\fR
+to contain one of the (currently two) types of IP address\&. These functions provide basic tools for creating and examining this type\&.
+.PP
+\fIInitaddr\fR
+initializes a variable
+\fI*dst\fR
+of type
+\fIip_address\fR
+from an address (in network byte order, indicated by a pointer
+\fIsrc\fR
+and a length
+\fIsrclen\fR) and an address family
+\fIaf\fR
+(typically
+\fBAF_INET\fR
+or
+\fBAF_INET6\fR)\&. The length must be consistent with the address family\&.
+.PP
+\fIAddrtypeof\fR
+returns the address type of an address, normally
+\fBAF_INET\fR
+or
+\fBAF_INET6\fR\&. (The
+\fB<libreswan\&.h>\fR
+header file arranges to include the necessary headers for these names to be known\&.)
+.PP
+\fIAddrlenof\fR
+returns the size (in bytes) of the address within an
+\fIip_address\fR, to permit storage allocation etc\&.
+.PP
+\fIAddrbytesof\fR
+copies the address within the
+\fIip_address\fR
+\fIsrc\fR
+to the buffer indicated by the pointer
+\fIdst\fR
+and the length
+\fIdstlen\fR, and returns the address length (in bytes)\&. If the address will not fit, as many bytes as will fit are copied; the returned length is still the full length\&. It is the caller\*(Aqs responsibility to check the returned value to ensure that there was enough room\&.
+.PP
+\fIAddrbytesptr\fR
+sets
+\fI*dst\fR
+to a pointer to the internal address within the
+\fIip_address\fR, and returns the address length (in bytes)\&. If
+\fIdst\fR
+is
+\fBNULL\fR, it just returns the address length\&. The pointer points to
+\fBconst\fR
+to discourage misuse\&.
+.PP
+\fIInitaddr\fR
+returns
+\fBNULL\fR
+for success and a pointer to a string\-literal error message for failure; see DIAGNOSTICS\&.
+.PP
+The functions which return
+\fBsize_t\fR
+return
+0
+for a failure\&.
+.SH "SEE ALSO"
+.PP
+\fBinet\fR(3),
+\fBipsec_ttoaddr\fR(3)
+.SH "DIAGNOSTICS"
+.PP
+An unknown address family is a fatal error for any of these functions except
+\fBaddrtypeof\fR\&. An address\-size mismatch is a fatal error for
+\fBinitaddr\fR\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "BUGS"
+.PP
+\fIAddrtypeof\fR
+should probably have been named
+\fIaddrfamilyof\fR\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

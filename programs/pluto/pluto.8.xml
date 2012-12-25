@@ -3,16 +3,17 @@
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry id="pluto8">
-  <refentryinfo>
-    <date>26 October 2006</date>
-  </refentryinfo>
-
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
   <refmeta>
     <refentrytitle>IPSEC_PLUTO</refentrytitle>
 
     <manvolnum>8</manvolnum>
 
     <refmiscinfo class="date">25 February 2008</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
 
   <refnamediv id="name">
@@ -2536,7 +2537,7 @@
 
       <!-- .na -->
 
-      <para>&nbsp;&nbsp;&nbsp;ipsec whack --name&nbsp;secret
+      <para>&nbsp;&nbsp;&nbsp;ipsec whack --name&nbsp;conn_name
       --host&nbsp;10.0.0.1 --client&nbsp;10.0.1.0/24 --to --host&nbsp;10.0.0.2
       --client&nbsp;10.0.2.0/24 --encrypt</para>
 
@@ -2560,14 +2561,14 @@
       packets sent from our client to the peer's client to be routed through
       the ipsec0 device; if there is no SA, they will be discarded:</para>
 
-      <para>&nbsp;&nbsp;&nbsp;ipsec whack --route secret</para>
+      <para>&nbsp;&nbsp;&nbsp;ipsec whack --route conn_name</para>
 
       <para>Finally, we are ready to get <emphasis remap="B">pluto</emphasis>
       to initiate negotiation for an IPsec SA (and implicitly, an ISAKMP
       SA):</para>
 
       <para>&nbsp;&nbsp;&nbsp;ipsec whack
-      --initiate&nbsp;--name&nbsp;secret</para>
+      --initiate&nbsp;--name&nbsp;conn_name</para>
 
       <para>A small log of interesting events will appear on standard output
       (other logging is sent to syslog).</para>
@@ -3614,8 +3615,7 @@
 
     <para><filename>/var/run/pluto/pluto.pid</filename> <!-- .br -->
     <filename>/var/run/pluto/pluto.ctl</filename> <!-- .br -->
-    <filename>/etc/ipsec.secrets</filename> <!-- .br --> <emphasis
-    remap="I">$IPSEC_LIBDIR/_pluto_adns</emphasis> <!-- .br --> <emphasis
+    <filename>/etc/ipsec.secrets</filename> <!-- .br -->
     <filename>/dev/urandom</filename></para>
   </refsect1>
 

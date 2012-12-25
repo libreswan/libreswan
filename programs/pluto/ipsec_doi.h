@@ -71,6 +71,24 @@ extern stf_status dpd_inR(struct state *st
             , struct isakmp_notification *const n, pb_stream *n_pbs);
 extern void dpd_timeout(struct state *st);
 
+/* START_HASH_PAYLOAD_NO_HASH_START
+ *
+ * Emit a to-be-filled-in hash payload, noting the field start (r_hashval)
+ * and the start of the part of the message to be hashed (r_hash_start).
+ * This macro is magic.
+ * - it can cause the caller to return
+ * - it references variables local to the caller (r_hashval, st)
+ */
+#define START_HASH_PAYLOAD_NO_R_HASH_START(rbody, np) { \
+    pb_stream hash_pbs; \
+    if (!out_generic(np, &isakmp_hash_desc, &(rbody), &hash_pbs)) \
+	return STF_INTERNAL_ERROR; \
+    r_hashval = hash_pbs.cur;	/* remember where to plant value */ \
+    if (!out_zero(st->st_oakley.prf_hasher->hash_digest_len, &hash_pbs, "HASH")) \
+	return STF_INTERNAL_ERROR; \
+    close_output_pbs(&hash_pbs); \
+}
+
 /* START_HASH_PAYLOAD
  *
  * Emit a to-be-filled-in hash payload, noting the field start (r_hashval)
@@ -80,13 +98,7 @@ extern void dpd_timeout(struct state *st);
  * - it references variables local to the caller (r_hashval, r_hash_start, st)
  */
 #define START_HASH_PAYLOAD(rbody, np) { \
-    pb_stream hash_pbs; \
-    if (!out_generic(np, &isakmp_hash_desc, &(rbody), &hash_pbs)) \
-	return STF_INTERNAL_ERROR; \
-    r_hashval = hash_pbs.cur;	/* remember where to plant value */ \
-    if (!out_zero(st->st_oakley.prf_hasher->hash_digest_len, &hash_pbs, "HASH")) \
-	return STF_INTERNAL_ERROR; \
-    close_output_pbs(&hash_pbs); \
+    START_HASH_PAYLOAD_NO_R_HASH_START(rbody, np); \
     r_hash_start = (rbody).cur;	/* hash from after HASH payload */ \
 }
 

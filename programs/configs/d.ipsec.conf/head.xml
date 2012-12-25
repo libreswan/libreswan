@@ -3,10 +3,15 @@
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>documenter</para> </authorblurb></author>
+</refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC.CONF</refentrytitle>
 <manvolnum>5</manvolnum>
-<refmiscinfo class='date'>30 May 2008</refmiscinfo>
+<refmiscinfo class='date'>12 Dec 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec.conf</refname>

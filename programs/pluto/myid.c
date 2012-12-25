@@ -181,8 +181,7 @@ build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
     {
     case ID_NONE:
 	hd->isaiid_idtype = aftoinfo(addrtypeof(&end->host_addr))->id_addr;
-	tl->len = addrbytesptr(&end->host_addr
-	    , (const unsigned char **)&tl->ptr);	/* sets tl->ptr too */
+	tl->len = addrbytesptr(&end->host_addr, &tl->ptr);	/* sets tl->ptr too */
 	break;
     case ID_FQDN:
     case ID_USER_FQDN:
@@ -192,8 +191,7 @@ build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 	break;
     case ID_IPV4_ADDR:
     case ID_IPV6_ADDR:
-	tl->len = addrbytesptr(&id->ip_addr
-	    , (const unsigned char **)&tl->ptr);	/* sets tl->ptr too */
+	tl->len = addrbytesptr(&id->ip_addr, &tl->ptr);	/* sets tl->ptr too */
 	break;
     default:
 	bad_case(id->kind);

@@ -1,0 +1,93 @@
+'\" t
+.\"     Title: IPSEC_GOODMASK
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
+.\"  Language: English
+.\"
+.TH "IPSEC_GOODMASK" "3" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ipsec_goodmask, ipsec_masktobits, ipsec_bitstomask \- check if Internet subnet mask is valid, convert Internet subnet mask to bit count, convert bit count to Internet subnet mask
+.SH "SYNOPSIS"
+.sp
+.ft B
+.nf
+#include <libreswan\&.h>
+
+.fi
+.ft
+.HP \w'int\ goodmask('u
+.BI "int goodmask(struct\ in_addr\ " "mask" ");"
+.HP \w'int\ masktobits('u
+.BI "int masktobits(struct\ in_addr\ " "mask" ");"
+.HP \w'struct\ in_addr\ bitstomask('u
+.BI "struct in_addr bitstomask(int\ " "n" ");"
+.SH "DESCRIPTION"
+.PP
+These functions are obsolete; see
+\fBipsec_masktocount\fR(3)
+for a partial replacement\&.
+.PP
+\fIGoodmask\fR
+reports whether the subnet
+\fImask\fR
+is a valid one, i\&.e\&. consists of a (possibly empty) sequence of
+1s followed by a (possibly empty) sequence of
+0s\&.
+\fIMasktobits\fR
+takes a (valid) subnet mask and returns the number of
+1
+bits in it\&.
+\fIBitstomask\fR
+reverses this, returning the subnet mask corresponding to bit count
+\fIn\fR\&.
+.PP
+All masks are in network byte order\&.
+.SH "SEE ALSO"
+.PP
+\fBinet\fR(3),
+\fBipsec_atosubnet\fR(3)
+.SH "DIAGNOSTICS"
+.PP
+\fIMasktobits\fR
+returns
+\fB\-1\fR
+for an invalid mask\&.
+\fIBitstomask\fR
+returns an all\-zeros mask for a negative or out\-of\-range
+\fIn\fR\&.
+.SH "HISTORY"
+.PP
+Written for the FreeS/WAN project by Henry Spencer\&.
+.SH "BUGS"
+.PP
+The error\-reporting convention of
+\fBbitstomask\fR
+is less than ideal; zero is sometimes a legitimate mask\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

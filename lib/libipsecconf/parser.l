@@ -297,9 +297,12 @@ int parser_y_eof(void)
 %%
 
 <<EOF>>	{
-	if(parser_y_eof()) {
-		yyterminate();
-	}
+        static int once = 0; 
+        if (once = !once) {
+            stacktop->line++;
+        } else {
+            yyterminate();
+        }
 }
 
 ^[\t ]*#.*\n	        { /* eat comment lines */

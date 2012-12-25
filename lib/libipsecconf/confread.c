@@ -37,6 +37,7 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/oeconns.h"
+#include "ipsecconf/interfaces.h"
 
 #ifdef FIPS_CHECK
 # include "lswconf.h"
@@ -343,7 +344,7 @@ static int load_setup (struct starter_config *cfg
 	    case kt_comment:
 		break;
 	    case kt_obsolete:
-	        starter_log(LOG_LEVEL_INFO, "Warning: ignored obsolete keyword %s",kw->keyword.keydef->keyname);
+	        starter_log(LOG_LEVEL_INFO, "Warning: ignored obsolete keyword '%s'",kw->keyword.keydef->keyname);
 		break;
 	    }
 	}
@@ -847,7 +848,7 @@ bool translate_conn (struct starter_conn *conn
 	case kt_comment:
 	    break;
 	case kt_obsolete:
-	    starter_log(LOG_LEVEL_DEBUG,"Warning: obsolete keyword %s ignored\n",kw->keyword.keydef->keyname);
+	    starter_log(LOG_LEVEL_DEBUG,"Warning: obsolete keyword '%s' ignored\n",kw->keyword.keydef->keyname);
 	    break;
 	}
     }

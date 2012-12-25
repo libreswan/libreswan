@@ -614,7 +614,7 @@ check_crls(void)
     while (crl != NULL)
     {
 	time_t time_left = crl->nextUpdate - current_time;
-	u_char buf[ASN1_BUF_LEN];
+	char buf[ASN1_BUF_LEN];
 
 	DBG(DBG_X509,
 	    dntoa(buf, ASN1_BUF_LEN, crl->issuer);

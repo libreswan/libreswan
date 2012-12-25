@@ -1,13 +1,13 @@
 '\" t
-.\"     Title: IPSEC_INITNSS
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\"     Title: _REALSETUP
+.\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/06/2012
-.\"    Manual: [FIXME: manual]
-.\"    Source: [FIXME: source]
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_INITNSS" "8" "12/06/2012" "[FIXME: source]" "[FIXME: manual]"
+.TH "_REALSETUP" "8" "12/16/2012" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,20 +28,26 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-ipsec_initnss \- Initialise the IPsec NSS database
-.SH "SYNOPSIS"
-.HP \w'\fBipsec\ initnss\fR\ 'u
-\fBipsec initnss\fR
+ipsec__realsetup \- internal routine to start FreeS/WAN\&.
 .SH "DESCRIPTION"
 .PP
-\fIInitnss\fR
-initialises the NSS database where all private keys for RSA and certificate keypairs are stored\&. If already initialised, it will return an error\&. To remove an existing IPsec NSS database, remove all the *\&.db files from the ipsec data directory (default: /etc/ipsec\&.d/)
+\fI_realsetup\fR
+is called by the system init scripts to start the FreeS/WAN system\&. It starts
+\fBKLIPS\fR
+(the kernel component) and
+\fBpluto\fR
+(the userspace keying component)\&.
 .SH "SEE ALSO"
 .PP
-ipsec\&.\fBconf\fR(5),
 \fBipsec\fR(8),
-\fBipsec_auto\fR(8),
-\fBroute\fR(8)
-.SH "BUGS"
+\fBipsec__klipsstart\fR(8),
+\fBipsec__plutorun\fR(8)\&.
+.SH "HISTORY"
 .PP
-none
+Man page written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org/\fR\m[]> by Michael Richardson\&. Original program by Henry Spencer\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

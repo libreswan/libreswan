@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC_EROUTE
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 03 April 2007
-.\"    Manual: [FIXME: manual]
-.\"    Source: [FIXME: source]
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
+.\"      Date: 12/16/2012
+.\"    Manual: Executable programs
+.\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_EROUTE" "8" "03 April 2007" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC_EROUTE" "8" "12/16/2012" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -95,7 +104,7 @@ OR
 SAID (\fIsaid\fR), indicating which Security Association should be used to process the packet
 .RE
 .PP
-Addresses are written as IPv4 dotted quads or IPv6 coloned hex, protocol is one of "ah", "esp", "comp" or "tun" and SPIs are prefixed hexadecimal numbers where \'\&.\' represents IPv4 and \':\' stands for IPv6\&.
+Addresses are written as IPv4 dotted quads or IPv6 coloned hex, protocol is one of "ah", "esp", "comp" or "tun" and SPIs are prefixed hexadecimal numbers where \*(Aq\&.\*(Aq represents IPv4 and \*(Aq:\*(Aq stands for IPv6\&.
 .PP
 SAIDs are written as "protoafSPI@address"\&. There are also 5 "magic" SAIDs which have special meaning:
 .PP
@@ -247,3 +256,9 @@ ipsec(8), ipsec_manual(8), ipsec_tncfg(8), ipsec_spi(8), ipsec_spigrp(8), ipsec_
 .SH "HISTORY"
 .PP
 Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org/\fR\m[]> by Richard Guy Briggs\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

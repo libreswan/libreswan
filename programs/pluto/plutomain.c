@@ -336,9 +336,6 @@ set_cfg_string(char **target, char *value)
     *target = strdup(value);
 }
 
-/** by default pluto sends certificate requests to its peers */
-bool no_cr_send = FALSE;
-
 /** by default the CRL policy is lenient */
 bool strict_crl_policy = FALSE;
 
@@ -368,6 +365,10 @@ main(int argc, char **argv)
     const struct lsw_conf_options *oco;
 
     coredir = NULL;
+
+    /* set up initial defaults that need a cast */
+    pluto_shared_secrets_file =
+        DISCARD_CONST(char *, SHARED_SECRETS_FILE);
 
 #ifdef NAT_TRAVERSAL
     /** Overridden by nat_traversal= in ipsec.conf */
@@ -423,7 +424,6 @@ main(int argc, char **argv)
 	    { "use-nostack",  no_argument, NULL, 'n' },
 	    { "use-none",     no_argument, NULL, 'n' },
 	    { "force_busy", no_argument, NULL, 'D' },
-	    { "nocrsend", no_argument, NULL, 'c' },
 	    { "strictcrlpolicy", no_argument, NULL, 'r' },
 	    { "crlcheckinterval", required_argument, NULL, 'x'},
 	    { "uniqueids", no_argument, NULL, 'u' },
@@ -622,11 +622,6 @@ main(int argc, char **argv)
 	    continue
 	    ;
 
-	case 'c':	/* --nocrsend */
-	    no_cr_send = TRUE;
-	    continue
-	    ;
-
 	case 'r':	/* --strictcrlpolicy */
 	    strict_crl_policy = TRUE;
 	    continue
@@ -775,7 +770,6 @@ main(int argc, char **argv)
 	    log_with_timestamp_desired =
 		cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 	    force_busy = cfg->setup.options[KBF_FORCEBUSY];
-	    no_cr_send = cfg->setup.options[KBF_NOCRSEND];
 	    strict_crl_policy = cfg->setup.options[KBF_STRICTCRLPOLICY];
 	    crl_check_interval = cfg->setup.options[KBF_CRLCHECKINTERVAL];
 	    uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];

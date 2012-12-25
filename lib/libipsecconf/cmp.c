@@ -88,7 +88,6 @@ int starter_cmp_pluto (struct starter_config *c1, struct starter_config *c2)
 	VARCMP(setup.options[KBF_RETRANSMITS]);
 	VARCMP(setup.options[KBF_STRICTCRLPOLICY]);
 	VARCMP(setup.options[KBF_FORCEBUSY]);
-	VARCMP(setup.options[KBF_NOCRSEND]);
 	VARCMP(setup.options[KBF_NHELPERS]);
 	VARCMP(setup.options[KBF_PERPEERLOG]);
 	VARCMP(setup.options[KBF_PLUTOFORK]);
