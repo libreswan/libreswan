@@ -210,7 +210,7 @@ def udp500check():
 	global retcode
 	printfun(" Pluto listening for IKE on udp 500")
 	try:
-		p = subprocess.Popen([SSCMD, "-n", "-a", "-u", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+		p = subprocess.Popen(["ss", "-n", "-a", "-u", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
 		if ":500" in output:
 			print_result("OK","OK")
