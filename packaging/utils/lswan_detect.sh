@@ -36,7 +36,7 @@ fi
 if test -f /sbin/start
 then
 	# override for rhel/centos to use sysvinit
-	if test -e /etc/redhead-release ;
+	if test -e /etc/redhat-release ;
 	then
 		echo "sysvinit"
 	else
