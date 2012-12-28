@@ -13,7 +13,7 @@ except ImportError , e:
 
 parser = argparse.ArgumentParser(description='swanprep arguments')
 parser.add_argument('--testname', '-t', action='store', default='ikev2-05-basic-psk', help='The name of the test to prepapre')
-parser.add_argument('--hostname', '-H', action='store', default='west', help='The name of the host to prepare as')
+parser.add_argument('--hostname', '-H', action='store', default='', help='The name of the host to prepare as')
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
 args = parser.parse_args()
