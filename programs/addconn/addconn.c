@@ -238,7 +238,8 @@ int resolve_defaultroute_one(struct starter_end *left,
     if (has_dst == 0) {
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 	nlmsg->nlmsg_flags |= NLM_F_DUMP;
-	parse_src = 0;
+        if (parse_gateway)
+	    parse_src = 0;
     }
     if (verbose)
 	printf("\nparse_src = %d, parse_gateway = %d, has_dst = %d\n",
