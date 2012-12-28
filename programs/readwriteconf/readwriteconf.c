@@ -137,7 +137,6 @@ main(int argc, char *argv[])
     }
 
     /* find config file */
-    confdir = getenv(IPSEC_CONFDIR_VAR);
     if(confdir == NULL)
     {
 	confdir = IPSEC_CONFDIR;

@@ -89,28 +89,6 @@ void lsw_conf_setdefault(void)
     conffile   = clone_str(conffile, "default conf conffile");
     var_dir    = clone_str(var_dir, "default conf var_dir");
     
-    /* figure out what we are doing, look for variables in the environment */
-    if((env = getenv("IPSEC_CONFS")) != NULL) {
-	pfree(ipsec_conf_dir);
-	ipsec_conf_dir = clone_str(env, "ipsec_confs");
-
-	/* if they change IPSEC_CONFS, reassign ipsecd as well */
-	snprintf(buf, sizeof(buf), "%s/ipsec.d", ipsec_conf_dir);
-	pfree(ipsecd_dir);
-	ipsecd_dir = clone_str(buf, "ipsecdir");
-
-	/* if they change IPSEC_CONFS, reassign ipsec policies as well */
-	snprintf(buf, sizeof(buf), "%s/ipsec.conf", ipsec_conf_dir);
-	pfree(conffile);
-	conffile = clone_str(buf, "ipsec.conf");
-    }
-    
-    if((env = getenv("IPSEC_CONFFILE")) != NULL) {
-	pfree(conffile);
-	pfree(ipsec_conf_dir);
-	conffile = clone_str(env, "ipsec.conf");
-    }
-    
     global_oco.rootdir = "";
     global_oco.confddir= ipsecd_dir;
     global_oco.vardir  = var_dir;

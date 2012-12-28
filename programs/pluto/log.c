@@ -30,6 +30,7 @@
 #include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 
 #include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
@@ -69,12 +70,13 @@ static void perpeer_logclose(struct connection *c);	/* forward */
 
 bool
     log_to_stderr = TRUE,	/* should log go to stderr? */
+    log_to_file = TRUE,		/* should log go to logfile? */
     log_to_syslog = TRUE,	/* should log go to syslog? */
     log_to_perpeer= FALSE,	/* should log go to per-IP file? */
     log_did_something=TRUE,     /* set if we wrote something recently */
     log_with_timestamp= FALSE; /* some people want timestamps, but we
 				   don't want those in our test output */
-
+FILE *pluto_log_fd;
 
 bool
     logged_txt_warning = FALSE;  /* should we complain about finding KEY? */
@@ -86,6 +88,7 @@ bool
     logged_myid_fqdn_key_warning = FALSE,
     logged_myid_ip_key_warning   = FALSE;
 
+char *pluto_log_file = NULL;
 char *base_perpeer_logdir = NULL;
 static int perpeer_count = 0;
 
@@ -123,6 +126,17 @@ pluto_init_log(void)
     set_exit_log_func(exit_log);
     if (log_to_stderr)
 	setbuf(stderr, NULL);
+
+    if (log_to_file)
+	pluto_log_fd =  fopen(pluto_log_file, "a");
+
+	if(pluto_log_fd == NULL) {
+ 		fprintf(stderr, "Cannot open logfile '%s': %s", pluto_log_file, strerror(errno));
+		log_to_file = FALSE;
+	} else {
+		setbuf(pluto_log_fd, NULL);
+	}
+
     if (log_to_syslog)
 	openlog("pluto", LOG_CONS | LOG_NDELAY | LOG_PID, LOG_AUTHPRIV);
 
@@ -202,6 +216,9 @@ close_log(void)
 {
     if (log_to_syslog)
 	closelog();
+
+    if (log_to_file && pluto_log_fd)
+	(void)fclose(pluto_log_fd);
 
     close_peerlog();
 }
@@ -422,7 +439,7 @@ libreswan_log(const char *message, ...)
 
     log_did_something=TRUE;
 
-    if (log_to_stderr) {
+    if (log_to_stderr || (log_to_file && pluto_log_fd)) {
 	if (log_with_timestamp) {
 		struct tm *timeinfo;
 		char fmt[32];
@@ -430,9 +447,9 @@ libreswan_log(const char *message, ...)
 		time(&rtime);
 		timeinfo = localtime (&rtime);
 		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
-		fprintf(stderr, "%s: %s\n", fmt, m);
+		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s: %s\n", fmt, m);
 	} else {
-		fprintf(stderr, "%s\n", m);
+		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s\n", m);
 	}
     }
     if (log_to_syslog)
