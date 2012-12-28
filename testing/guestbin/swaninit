@@ -17,6 +17,7 @@ then
 fi
 
 rm -f /tmp/swan.current
+rm -rf /etc/ipsec*
 
 if [ ! -f /testing/pluto/$TESTNAME/testparams.sh ]
 then
@@ -25,7 +26,7 @@ then
 else
 	pidof pluto && ipsec setup stop
 	echo $TESTNAME > /tmp/swan.current
-	source /testing/pluto/$1/testparams.sh
+	source /testing/pluto/$TESTNAME/testparams.sh
 	echo "DEBUG: $TESTNAME"
 fi
 if [ -f /testing/pluto/$TESTNAME/`hostname`init.sh ]

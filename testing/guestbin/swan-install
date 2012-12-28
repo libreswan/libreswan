@@ -1,7 +1,6 @@
 #!/bin/sh
 
-ipsec setup stop 2> /dev/null
-rmmod ipsec 2> /dev/null
+pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
 cd /source
 make install
 make module_install
