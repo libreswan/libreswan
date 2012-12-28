@@ -78,7 +78,7 @@ def main():
 	f = open(output_file, 'w') 
 	child.logfile = f
 
-	cmd = './tparams.sh'
+	cmd = './testparams.sh'
 	read_exec_shell_cmd( child, cmd, prompt)
 
 	cmd = "./%sinit.sh" %  (vmhost) 
