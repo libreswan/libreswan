@@ -1052,7 +1052,7 @@ check_connection_end(const struct whack_end *this, const struct whack_end *that
 	/* other side is wildcard: we must check if other conditions met */
 	if (that->host_type != KH_IPHOSTNAME && isanyaddr(&this->host_addr))
 	{
-	    loglog(RC_ORIENT, "connection must specify host IP address for our side");
+	    loglog(RC_ORIENT, "connection %s must specify host IP address for our side", wm->name);
 	    return FALSE;
 	}
 	else if (!NEVER_NEGOTIATE(wm->policy))
