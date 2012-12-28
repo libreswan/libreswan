@@ -1050,7 +1050,7 @@ main(int argc, char **argv)
 		 /* temp disabled exit_pluto(10); */
 		}
 	}
-	rc = audit_log_acct_message(audit_fd, 14, "pluto",
+	rc = audit_log_acct_message(audit_fd, AUDIT_USER_START, NULL,
 		"starting pluto daemon", NULL, -1, NULL, NULL, NULL, 1);
 	close(audit_fd);
 	if (rc < 0) {
