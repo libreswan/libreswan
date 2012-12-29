@@ -25,11 +25,7 @@ import os, sys, subprocess, glob, socket
 
 retcode = 0
 
-confdir = os.getenv("IPSEC_CONFS")
-if not confdir:
-	# should get substituted by 'make programs'
-	confdir = "@IPSEC_DIR@"
-
+confdir = "@IPSEC_DIR@"
 ipsecbin = "@IPSEC_SBINDIR@/ipsec"
 
 if not os.path.isfile(ipsecbin):

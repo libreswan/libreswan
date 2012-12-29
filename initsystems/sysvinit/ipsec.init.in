@@ -74,7 +74,6 @@ fi
 
 # where the private directory and the config files are
 IPSEC_SBINDIR="${IPSEC_SBINDIR-@FINALSBINDIR@}"
-IPSEC_CONFS="${IPSEC_CONFS-@FINALCONFDIR@/}"
 
 rundir=@FINALVARDIR@/run/pluto
 plutopid=$rundir/pluto.pid
@@ -109,9 +108,9 @@ mkdir -p @FINALVARDIR@/run/pluto
 chmod 700 @FINALVARDIR@/run/pluto
 
 verify_config() {
-    test -f $IPSEC_CONFS/ipsec.conf || exit 6
+    test -f /etc/ipsec.conf || exit 6
 
-    config_error=`ipsec addconn --config $IPSEC_CONFS/ipsec.conf --checkconfig 2>&1`
+    config_error=`ipsec addconn --config /etc/ipsec.conf --checkconfig 2>&1`
     RETVAL=$?
     if [ $RETVAL != 0 ]
     then

@@ -10,7 +10,6 @@ Restart=always
 EnvironmentFile=-@FINALCONFDIR@/sysconfig/pluto
 #Environment=IPSEC_LIBDIR=@FINALLIBEXECDIR@
 #Environment=IPSEC_SBINDIR=@FINALSBINDIR@
-#Environment=IPSEC_CONFS=@FINALCONFDIR@
 #Environment=IPSEC_EXECDIR=@FINALLIBEXECDIR@/ipsec
 #PIDFile=@FINALVARDIR@/run/pluto/pluto.pid
 #
