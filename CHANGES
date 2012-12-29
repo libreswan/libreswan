@@ -53,6 +53,8 @@ v3.0 (unreleased)
 * pluto: rhbz#609343: pluto crashes when removing logical interface [Avesh]
 * pluto: dont stop processing after --coredir argument [Paul]
 * pluto: perform whack --listen and addconn --autoall on startup [Paul]
+* pluto: honour plutostderrlog= natively now _plutorun is gone
+         This also adds a new option --logfile to the pluto daemon [Paul]
 * pluto: if started with --nofork, don't care about existing pid file [Paul]
 * pluto: incorrect free in scan_proc_shunts() [Roel van Meer]
 * pluto: eclipsed() was broken since freeswan-2.02 [Philippe]
