@@ -145,6 +145,7 @@ usage(const char *mess)
 	    "[--config <filename>]"
 	    " [--nofork]"
 	    " [--stderrlog]"
+	    " [--logfile <filename>]"
 	    " [--plutostderrlogtime]"
 	    " [--force_busy]"
 	    " [--nocrsend]"
@@ -349,6 +350,7 @@ bool force_busy = FALSE;
 enum kernel_interface kern_interface = USE_NETKEY; /* new default */
 
 bool   log_to_stderr_desired = FALSE;
+bool   log_to_logfile_desired = FALSE;
 bool   log_with_timestamp_desired = FALSE;
 
 #ifdef HAVE_LABELED_IPSEC
@@ -419,6 +421,7 @@ main(int argc, char **argv)
 	    { "config", required_argument, NULL, 'z' },
 	    { "nofork", no_argument, NULL, 'd' },
 	    { "stderrlog", no_argument, NULL, 'e' },
+	    { "logfile", required_argument, NULL, 'g' },
 	    { "plutostderrlogtime", no_argument, NULL, 't' },
 	    { "noklips", no_argument, NULL, 'n' },
 	    { "use-nostack",  no_argument, NULL, 'n' },
@@ -441,13 +444,13 @@ main(int argc, char **argv)
 	    { "natikeport", required_argument, NULL, 'q' },
 	    { "ctlbase", required_argument, NULL, 'b' },
 	    { "secretsfile", required_argument, NULL, 's' },
-	    { "foodgroupsdir", required_argument, NULL, 'f' },
 	    { "perpeerlogbase", required_argument, NULL, 'P' },
 	    { "perpeerlog", no_argument, NULL, 'l' },
 	    { "noretransmits", no_argument, NULL, 'R' },
 	    { "coredir", required_argument, NULL, 'C' },
 	    { "ipsecdir", required_argument, NULL, 'f' },
 	    { "ipsec_dir", required_argument, NULL, 'f' },
+	    { "foodgroupsdir", required_argument, NULL, 'f' },
 	    { "adns", required_argument, NULL, 'a' },
 #ifdef NAT_TRAVERSAL
 	    { "nat_traversal", no_argument, NULL, '1' },
@@ -573,6 +576,11 @@ main(int argc, char **argv)
 
 	case 'e':	/* --stderrlog */
 	    log_to_stderr_desired = TRUE;
+	    continue;
+
+	case 'g':	/* --logfile */
+	    pluto_log_file = optarg;
+	    log_to_logfile_desired = TRUE;
 	    continue;
 
 	case 't':	/* --plutostderrlogtime */
@@ -765,6 +773,7 @@ main(int argc, char **argv)
 	    struct starter_config *cfg = read_cfg_file(optarg);
 
 	    /* no config option: log_to_stderr_desired */
+	    set_cfg_string(&pluto_log_file, cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
 
 	    fork_desired = cfg->setup.options[KBF_PLUTOFORK]; /* plutofork= */
 	    log_with_timestamp_desired =
