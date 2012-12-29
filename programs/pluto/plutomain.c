@@ -1046,8 +1046,8 @@ main(int argc, char **argv)
 		{
 		 loglog(RC_LOG_SERIOUS, "Warning: kernel has no audit support");
 		} else {
-		loglog(RC_LOG_SERIOUS, "FATAL: audit_open() failed : %s", strerror(errno));
-		 exit_pluto(10);
+		loglog(RC_LOG_SERIOUS, "FATAL (SOON): audit_open() failed : %s", strerror(errno));
+		 /* temp disabled exit_pluto(10); */
 		}
 	}
 	rc = audit_log_acct_message(audit_fd, 14, "pluto",
