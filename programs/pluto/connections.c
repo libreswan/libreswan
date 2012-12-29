@@ -1052,7 +1052,7 @@ check_connection_end(const struct whack_end *this, const struct whack_end *that
 	/* other side is wildcard: we must check if other conditions met */
 	if (that->host_type != KH_IPHOSTNAME && isanyaddr(&this->host_addr))
 	{
-	    loglog(RC_ORIENT, "connection must specify host IP address for our side");
+	    loglog(RC_ORIENT, "connection %s must specify host IP address for our side", wm->name);
 	    return FALSE;
 	}
 	else if (!NEVER_NEGOTIATE(wm->policy))
@@ -1473,7 +1473,14 @@ add_connection(const struct whack_message *wm)
 
 	unshare_connection_strings(c);
 
-	(void)orient(c);
+        /*
+         * Philippe Vouters:
+         * Commented out this (void)orient(c);. Call check_orientations();
+         * inside call_server() instead.
+         * Change to be checked by Paul Wouters with his "redhat" connection
+         * to an actual Cisco equipment.
+         */
+//	(void)orient(c);
 	connect_to_host_pair(c);
 
 	/* log all about this connection */
