@@ -73,7 +73,6 @@ fi
 IPSEC_EXECDIR="${IPSEC_EXECDIR-@IPSEC_EXECDIR@}"
 IPSEC_LIBDIR="${IPSEC_LIBDIR-@IPSEC_LIBDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR-@IPSEC_SBINDIR@}"
-IPSEC_CONFS="${IPSEC_CONFS-@IPSEC_CONFS@}"
 
 
 # Does not make any sense at all to continue without the main binary
@@ -104,7 +103,7 @@ fi
 IPSECprotostack=`ipsec addconn --liststack`
 
 verify_config() {
-    test -f $IPSEC_CONFS/ipsec.conf || exit 6
+    test -f /etc/ipsec.conf || exit 6
 
     config_error=`ipsec addconn --checkconfig 2>&1`
     RETVAL=$?

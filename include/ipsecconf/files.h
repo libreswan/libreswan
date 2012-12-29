@@ -22,7 +22,6 @@
 #ifndef IPSEC_CONFDIR
 #define IPSEC_CONFDIR   "/etc"
 #endif
-#define IPSEC_CONFDIR_VAR "IPSEC_CONFS"
 
 #ifndef IPSEC_CONFDDIR
 #define IPSEC_CONFDDIR   "/etc/ipsec.d"

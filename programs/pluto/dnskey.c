@@ -90,7 +90,6 @@ void
 init_adns(void)
 {
     const char *adns_path = pluto_adns_option;
-    const char *helper_bin_dir = getenv("IPSEC_EXECDIR");
 #ifndef USE_LWRES
     static const char adns_name[] = "_pluto_adns";
 #else /* USE_LWRES */
@@ -108,17 +107,6 @@ init_adns(void)
 	 */
 	ssize_t n=0;
 
-	if (helper_bin_dir != NULL)
-	{
-	    n = strlen(helper_bin_dir);
-	    if ((size_t)n <= sizeof(adns_path_space) - sizeof(adns_name))
-	    {
-		strcpy(adns_path_space, helper_bin_dir);
-		if (n > 0 && adns_path_space[n -1] != '/')
-		    adns_path_space[n++] = '/';
-	    }
-	}
-	else
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 	{
 	    /* The program will be in the same directory as Pluto,

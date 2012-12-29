@@ -548,21 +548,9 @@ call_server(void)
     {
 	/* find a pathname to the addconn program */
 	const char *addconn_path = NULL;
-	const char *helper_bin_dir = getenv("IPSEC_EXECDIR");
 	static const char addconn_name[] = "addconn";
 	char addconn_path_space[4096]; /* plenty long? */
 	ssize_t n=0;
-	if (helper_bin_dir != NULL)
-	{
-	   n = strlen(helper_bin_dir);
-	   if ((size_t)n <= sizeof(addconn_path_space) - sizeof(addconn_name))
-	   {
-		strcpy(addconn_path_space, helper_bin_dir);
-		if (n > 0 && addconn_path_space[n -1] != '/')
-		    addconn_path_space[n++] = '/';
-	   }
-	}
-	else
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
         {
 	  /* The program will be in the same directory as Pluto,

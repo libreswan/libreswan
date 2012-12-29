@@ -58,7 +58,7 @@ diff -uNr libreswan-2.3.0.orig/programs/setup/setup.in libreswan-2.3.0/programs/
 +	if [ "x${USER}" != "xroot" ]
  	then
  		echo "permission denied (must be superuser)" |
- 			logger -s -p $IPSECsyslog -t ipsec_setup 2>&1
+ 			logger -s -p daemon.error -t ipsec_setup 2>&1
  		exit 1
  	fi
 +

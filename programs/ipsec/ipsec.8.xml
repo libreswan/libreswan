@@ -56,18 +56,6 @@ as if it had been invoked directly.
 This largely eliminates possible name collisions with other software,
 and also permits some centralized services.</para>
 
-<para>In particular,
-<command>ipsec</command>
-supplies the invoked
-<emphasis remap='I'>command</emphasis>
-with a suitable PATH environment variable,
-and also provides IPSEC_DIR,
-IPSEC_CONFS, and IPSEC_VERSION environment variables,
-containing respectively
-the full pathname of the directory where the IPsec utilities are stored,
-the full pathname of the directory where the configuration files live,
-and the IPsec version number.</para>
-
 <para><userinput>ipsec --help</userinput>
 lists the available commands.
 Most have their own manual pages, e.g.
@@ -105,22 +93,6 @@ thinks the IPsec configuration files are stored.</para>
 
 <refsect1 id='files'><title>FILES</title>
 <para>/usr/local/lib/ipsec	usual utilities directory</para>
-</refsect1>
-
-<refsect1 id='environment'><title>ENVIRONMENT</title>
-<para>The following environment variables control where FreeS/WAN finds its
-components.
-The
-<command>ipsec</command>
-command sets them if they are not already set.</para>
-<literallayout remap='.nf'>
-<!-- .na -->
-IPSEC_EXECDIR	directory containing published commands
-IPSEC_LIBDIR	directory containing internal executables
-IPSEC_SBINDIR	directory containing <command>ipsec</command> command
-IPSEC_CONFS	directory containing configuration files
-<!-- .ad -->
-</literallayout> <!-- .fi -->
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
