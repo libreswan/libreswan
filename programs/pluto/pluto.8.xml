@@ -39,6 +39,9 @@
 
       <arg choice="opt">--stderrlog</arg>
 
+      <arg choice="opt">--logfile
+      <replaceable>filename</replaceable></arg>
+
       <arg choice="opt">--use-klips</arg>
 
       <arg choice="opt">--use-mast</arg>
@@ -1044,9 +1047,12 @@
 
           <manvolnum>3</manvolnum>
         </citerefentry> with facility=authpriv; it decides where to put these
-      messages (possibly in /var/log/secure). Since this too can make
+      messages (possibly in /var/log/secure or /var/log/auth.log). Since this too can make
       debugging awkward, the option <option>--stderrlog</option> is used to
-      steer logging to stderr.</para>
+      steer logging to stderr.  </para>
+
+      <para>Alternatively, <option>--logfile</option> can be used to send all logging
+      information to a specific file.</para>
 
       <para>If the <option>--perpeerlog</option> option is given, then pluto
       will open a log file per connection. By default, this is in
