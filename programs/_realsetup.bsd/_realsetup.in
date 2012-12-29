@@ -13,6 +13,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
+# WARNING: This script needs updating to use the new libreswan startup method
 
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
@@ -29,15 +30,6 @@ lock=/var/run/pluto/ipsec_setup.pid
 kamepfkey=/proc/net/pfkey
 
 # defaults for "config setup" items
-IPSECinterfaces=${IPSECinterfaces:-%defaultroute}
-IPSECinterfaces=${IPSECinterfaces%%%none}
-# IPSECforwardcontrol	"no"
-# IPSECsyslog	"daemon.error"
-# IPSECklipsdebug	"none"
-# IPSECplutodebug	"none"
-# IPSECdumpdir	"" (no dump)
-# IPSECfragicmp	"yes"
-# IPSEChidetos	"yes"
 IPSECuniqueids=${IPSECuniqueids:-yes}
 IPSECcrlcheckinterval=${IPSECcrlcheckinterval:-0}
 IPSECprotostack=${IPSECprotostack:-bsdkame}
@@ -81,7 +73,7 @@ perform() {
 
 
 # for no-stdout logging:
-LOGONLY="logger -p $IPSECsyslog -t ipsec_setup"
+LOGONLY="logger -p daemon.error -t ipsec_setup"
 
 KILLKLIPS='echo "Clearing out any lingering policy ";
            setkey -F;
@@ -155,7 +147,7 @@ case "$1" in
 			--dump "\"$IPSECdumpdir\"" \
 			--stderrlog "\"$IPSECplutostderrlog\"" \
 			--plutostderrlogtime "\"$IPSECplutostderrlogtime\"" \
-			--log "\"$IPSECsyslog\"" $plutorestartoncrash \
+			--log daemon.error $plutorestartoncrash \
 			--pid "\"$plutopid\"" "||" "{" \
 	            $KILLKLIPS ";" \
 		    rm -f $lock ";" \

@@ -12,7 +12,6 @@ EnvironmentFile=-@FINALCONFDIR@/sysconfig/pluto
 #Environment=IPSEC_SBINDIR=@FINALSBINDIR@
 #Environment=IPSEC_CONFS=@FINALCONFDIR@
 #Environment=IPSEC_EXECDIR=@FINALLIBEXECDIR@/ipsec
-#Environment=IPSECsyslog=daemon.error 
 #PIDFile=@FINALVARDIR@/run/pluto/pluto.pid
 #
 ExecStartPre=@FINALSBINDIR@/ipsec addconn --config @FINALCONFDIR@/ipsec.conf --checkconfig
