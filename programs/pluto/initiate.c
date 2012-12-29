@@ -187,6 +187,11 @@ initiate_a_connection(struct connection *c
     /* turn on any extra debugging asked for */
     c->extra_debugging |= moredebug;
     
+    if (!oriented(*c)) {
+	(void)orient(c);
+	connect_to_host_pair(c);
+    }
+
     if (!oriented(*c))
     {
 	loglog(RC_ORIENT, "We cannot identify ourselves with either end of this connection.");

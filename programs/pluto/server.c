@@ -643,6 +643,63 @@ call_server(void)
 
 	    if(sigchildflag) {
 		reapchildren();
+		/*
+		 * Philippe Vouters:
+		 * As (void)orient(c) has been commented out so that
+		 * check_connection_end always displays -> hp:none on
+		 * find_host_pair_connections call (for Openswan 2.6.38
+		 * compatibility) so that roadwarriors L2TP connections
+		 * work with such /etc/ipsec.conf:
+		 * version 2.0     # conforms to second version of ipsec.conf specification
+		 * config setup
+		 *    # Debug-logging controls:  "none" for (almost) none, "all" for lots.
+		 *    # For Red Hat Enterprise Linux and Fedora, leave protostack=netkey
+		 *     klipsdebug=none
+		 *     plutodebug=controlmore
+		 *     protostack=netkey
+		 *     nat_traversal=yes
+		 *     virtual_private=%v4:!192.168.1.0/24,%v4:192.168.0.0/16
+		 *     oe=no
+		 *     interfaces=%defaultroute
+		 *
+		 * conn %default
+		 *      keyingtries=1
+		 *      compress=no
+		 *      disablearrivalcheck=no
+		 *      pfs=no
+		 *
+		 * conn roadwarrior-l2tp-updatedwin
+		 *      leftprotoport=17/1701
+		 *      rightprotoport=17/1701
+		 *      also=roadwarrior
+		 *
+		 * conn roadwarrior-l2tp
+		 *      leftprotoport=17/0
+		 *      rightprotoport=17/1701
+		 *      also=roadwarrior
+		 *
+		 * conn macintosh-l2tp
+		 *      leftprotoport=17/1701
+		 *      rightprotoport=17/%any
+		 *      also=roadwarrior
+		 *
+		 * conn roadwarrior
+		 *      pfs=no
+		 *      left=%defaultroute
+		 *      leftupdown="ipsec _updown --route yes"
+		 *      right=%any
+		 *      rightsubnet=vhost:%no,%priv
+		 *      authby=secret
+		 *      auto=add
+		 *      type=tunnel
+		 *
+		 * add a call here to check_orientations() so that all conns
+		 * get crrectly oriented.
+		 *
+		 * To be checked by Paul Wouters on his readhat connection to
+		 * verify this brings NO regression.
+		 */
+		check_orientations();
 	    }
 
 	    LSW_FD_ZERO(&readfds);

@@ -391,7 +391,7 @@ USE_XAUTHPAM?=true
 endif
 
 # Build support for integrity check for libreswan on startup 
-USE_FIPSCHECK?=true
+USE_FIPSCHECK?=false
 
 # Build support for the Linux Audit system
 ifeq ($(OSDEP),linux)
@@ -399,7 +399,7 @@ USE_LINUX_AUDIT?=true
 endif
 
 # Enable Labeled IPSec Functionality (requires SElinux)
-USE_LABELED_IPSEC?=true
+USE_LABELED_IPSEC?=false
 
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
 USE_LIBCAP_NG?=true

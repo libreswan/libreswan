@@ -78,7 +78,10 @@ def main():
 	f = open(output_file, 'w') 
 	child.logfile = f
 
-	cmd = './tparams.sh'
+	cmd = '/testing/guestbin/swanprep --testname %s --hostname %s'%(testname,vmhost)
+	read_exec_shell_cmd( child, cmd, prompt)
+
+	cmd = './testparams.sh'
 	read_exec_shell_cmd( child, cmd, prompt)
 
 	cmd = "./%sinit.sh" %  (vmhost) 
