@@ -395,7 +395,7 @@ USE_FIPSCHECK?=false
 
 # Build support for the Linux Audit system
 ifeq ($(OSDEP),linux)
-USE_LINUX_AUDIT?=true
+USE_LINUX_AUDIT?=false
 endif
 
 # Enable Labeled IPSec Functionality (requires SElinux)
