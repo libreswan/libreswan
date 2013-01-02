@@ -358,7 +358,7 @@ then
     exit 4
 fi
 
-stack="`ipsec addconn --liststack`"
+stack="`ipsec addconn --config $IPSEC_CONF --liststack`"
 
 case $stack in
 	netkey|klips|mast|none) 
