@@ -25,6 +25,7 @@ import os, sys, subprocess, glob, socket
 
 retcode = 0
 
+conffile = "@FINALCONFFILE@"
 confdir = "@IPSEC_DIR@"
 ipsecbin = "@IPSEC_SBINDIR@/ipsec"
 
@@ -32,16 +33,17 @@ if not os.path.isfile(ipsecbin):
 	# hopefully somewhere in our path then
 	ipsecbin = "ipsec"
 
-if not os.path.isfile("%s/ipsec.conf"%confdir):
-	# try some fall backs
-	if os.path.isfile("/etc/ipsec.conf"):
-		print "WARNING: ipsec.conf not found at compiled-in location '%s/ipsec.conf', using /etc/ipsec.conf instead"%confdir
-		confdir = "/etc/"
-	elif os.path.isfile("/usr/local/etc/ipsec.conf"):
-		print "WARNING: ipsec.conf not found at compiled-in location '%s/ipsec.conf', using /etc/ipsec.conf instead"%confdir
-		confdir = "/usr/local/etc/"
-	else:
-		sys.exit("Failed to find ipsec.conf - checked %s, /etc and /usr/local/etc"%confdir)
+if not os.path.isfile(conffile):
+	if not os.path.isfile("%s/ipsec.conf"%confdir):
+		# try some fall backs
+		if os.path.isfile("/etc/ipsec.conf"):
+			print "WARNING: ipsec.conf not found at compiled-in location '%s/ipsec.conf', using /etc/ipsec.conf instead"%confdir
+			confdir = "/etc/"
+		elif os.path.isfile("/usr/local/etc/ipsec.conf"):
+			print "WARNING: ipsec.conf not found at compiled-in location '%s/ipsec.conf', using /etc/ipsec.conf instead"%confdir
+			confdir = "/usr/local/etc/"
+		else:
+			sys.exit("Failed to find ipsec.conf - checked %s, /etc and /usr/local/etc"%confdir)
 
 # Should we print in colour by default?
 colour = 0

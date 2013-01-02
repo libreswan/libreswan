@@ -16,9 +16,11 @@
 # for more details.
 #
 
+IPSEC_CONF="${FINALCONFFILE-@FINALCONFFILE@}"
 export PATH=@FINALSBINDIR@:$PATH
 
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
+
 
 kamepfkey=/proc/net/pfkey
 ipsecpfkey=/proc/net/ipsec/version
@@ -287,7 +289,7 @@ startklips() {
 		# detach all ipsecX devices
 		ipsec tncfg --clear
 
-		interfaces=`ipsec addconn --configsetup --noexport |grep interfaces |sed 's/ interfaces=//'| sed "s/'//g" | sed "s/,/ /g"`
+		interfaces=`ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep interfaces |sed 's/ interfaces=//'| sed "s/'//g" | sed "s/,/ /g"`
 		if [ -z "$interfaces" ]
 		then
 			interfaces="%defaultroute"
