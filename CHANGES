@@ -1,7 +1,9 @@
 
 See also https://libreswan.org/
 
-v3.0 (unreleased)
+v3.1 (unreleased)
+
+v3.0 (January 02, 2013)
 * FORK: Rename from Openswan to Libreswan [Team]
         (for older CHANGES see docs/CHANGES.openswan)
 * FORK: Changed our VendorID prefix to "OEN" [Team]
