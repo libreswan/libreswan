@@ -22,7 +22,7 @@ IPSEC_LIBDIR="${IPSEC_LIBDIR-@IPSEC_LIBDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR-@IPSEC_SBINDIR@}"
 
 IPSEC_DIR="$IPSEC_LIBDIR"
-export IPSEC_DIR IPSEC_LIBDIR IPSEC_EXECDIR
+export IPSEC_DIR IPSEC_LIBDIR IPSEC_EXECDIR IPSEC_CONF
 
 # standardize PATH, and export it for everything else's benefit
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
