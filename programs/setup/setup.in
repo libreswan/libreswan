@@ -15,6 +15,8 @@
 #
 # This is the version for use on Linux, see _realsetup.bsd for OSX/BSD
 
+IPSEC_CONF="${FINALCONFFILE-/etc/ipsec/ipsec.conf}"
+
 # Misc. paths (some of this should perhaps be overrideable from ipsec.conf).
 rundir=/var/run/pluto
 plutopid=$rundir/pluto.pid
@@ -37,7 +39,7 @@ then
 fi
 
 # which kernel are we using?
-IPSECprotostack=`ipsec addconn --liststack`
+IPSECprotostack=`ipsec addconn --config $IPSEC_CONF --liststack`
 
 systemd="`pidof systemd`"
 if test "$systemd" = "1";
