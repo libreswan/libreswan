@@ -33,6 +33,7 @@ v3.0 (unreleased)
          inet_addrtot(), sin_addrtot(), alg_info_snprint_esp(),
          alg_info_snprint_ah(), idtoa() and format_end() [Paul]
 * pluto: Removed unused OCSP code [Paul]
+* pluto: Add Linux audit support via USE_LINUX_AUDIT (incomplete) [Paul/Antony]
 * pluto: crlcheckinterval did not interpret plain numbers as seconds [Philippe]
 * pluto: Change ft_mbz to ft_zig - Don't error on "must be zero" but instead
          "zero ignore". This works around an Android ICS/racoon bug [Paul]
