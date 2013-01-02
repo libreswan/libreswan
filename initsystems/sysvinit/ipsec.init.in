@@ -47,6 +47,8 @@
 # description: IPsec provides encrypted and authenticated communications; \
 # NETKEY/KLIPS is the kernel half of it, Pluto is the user-level management daemon.
 
+IPSEC_CONF="${FINALCONFFILE-@FINALCONFFILE@}"
+
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
 # Source function library.
@@ -110,7 +112,7 @@ chmod 700 @FINALVARDIR@/run/pluto
 verify_config() {
     test -f /etc/ipsec.conf || exit 6
 
-    config_error=`ipsec addconn --config /etc/ipsec.conf --checkconfig 2>&1`
+    config_error=`ipsec addconn --config $IPSEC_CONF --checkconfig 2>&1`
     RETVAL=$?
     if [ $RETVAL != 0 ]
     then

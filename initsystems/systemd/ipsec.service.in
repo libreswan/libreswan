@@ -13,7 +13,7 @@ EnvironmentFile=-@FINALCONFDIR@/sysconfig/pluto
 #Environment=IPSEC_EXECDIR=@FINALLIBEXECDIR@/ipsec
 #PIDFile=@FINALVARDIR@/run/pluto/pluto.pid
 #
-ExecStartPre=@FINALSBINDIR@/ipsec addconn --config @FINALCONFDIR@/ipsec.conf --checkconfig
+ExecStartPre=@FINALSBINDIR@/ipsec addconn --config @FINALCONFFILE@ --checkconfig
 ExecStartPre=@FINALLIBDIR@/_stackmanager start
 ExecStart=/usr/bin/sh -c 'eval `@FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS`'
 ExecStop=@FINALSBINDIR@/ipsec whack --shutdown 

@@ -15,7 +15,8 @@
 #
 # This is the version for use on Linux, see _realsetup.bsd for OSX/BSD
 
-IPSEC_CONF="${FINALCONFFILE-/etc/ipsec/ipsec.conf}"
+IPSEC_CONF="${FINALCONFFILE-@FINALCONFFILE@}"
+
 
 # Misc. paths (some of this should perhaps be overrideable from ipsec.conf).
 rundir=/var/run/pluto
