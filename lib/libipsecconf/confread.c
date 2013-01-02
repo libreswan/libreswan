@@ -403,6 +403,7 @@ static int validate_end(struct ub_ctx *dnsctx
 	starter_log(LOG_LEVEL_DEBUG, "starter: case KH_IFACE empty");
 	break;
 	
+    case KH_IPHOSTNAME:
     case KH_IPADDR:
 	assert(end->strings[KSCF_IP] != NULL);
 
@@ -418,10 +419,26 @@ static int validate_end(struct ub_ctx *dnsctx
 	    break;
 	}
 
+	starter_log(LOG_LEVEL_DEBUG, "starter: check what we need to do for  '%s' ", end->strings[KNCF_IP]);
 	er = ttoaddr_num(end->strings[KNCF_IP], 0, family, &(end->addr));
 	if(er) {
+	    starter_log(LOG_LEVEL_DEBUG, "starter: ttoaddr_num failed, not numeric  '%s' ", end->strings[KNCF_IP]);
 	    /* not numeric, so set the type to the string type */
 	    end->addrtype = KH_IPHOSTNAME; 
+	    /* but also resolve it now */
+#ifdef DNSSEC
+		   starter_log(LOG_LEVEL_DEBUG, "Calling unbound_resolve() for endpoint value\n");
+		   bool e = unbound_resolve(dnsctx, end->strings[KNCF_IP], strlen(end->strings[KNCF_IP]), AF_INET, &(end->addr));
+		   if(!e) {
+			e = unbound_resolve(dnsctx, end->strings[KNCF_IP], strlen(end->strings[KNCF_IP]), AF_INET6, &(end->addr));
+		   }
+		   if(!e) ERR_FOUND("Resolving failed for remote address =%s\n", end->strings[KNCF_IP]);
+#else
+		   er = ttoaddr(end->strings[KNCF_IP], 0, family, &(end->addr));
+#endif
+	/* put it back into starter as textual ip */
+	addrtot(&end->addr, 0, end->strings[KNCF_IP],0 );
+	starter_log(LOG_LEVEL_DEBUG, "starter: Resolved to %s !",  end->strings[KNCF_IP]);
 	}
 
         if(end->id == NULL) {
@@ -444,11 +461,6 @@ static int validate_end(struct ub_ctx *dnsctx
 	conn_st->policy |= POLICY_GROUP;
 	break;
 	
-    case KH_IPHOSTNAME:
-	/* generally, this doesn't show up at this stage */
-	starter_log(LOG_LEVEL_DEBUG, "starter: case KH_IPHOSTNAME empty");
-	break;
-
     case KH_DEFAULTROUTE:
 	starter_log(LOG_LEVEL_DEBUG, "starter: case KH_DEFAULTROUTE: empty");
 	break;
