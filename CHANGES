@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v3.1 (unreleased)
+* pluto: fix for additional proposal sizes when enabling 1DES [Paul]
+* NETKEY: Show traffic stats in ipsec auto --status and teardown [Wes/Paul]
 
 v3.0 (January 02, 2013)
 * FORK: Rename from Openswan to Libreswan [Team]
