@@ -355,9 +355,40 @@ delete_state(struct state *st)
 {
     struct connection *const c = st->st_connection;
     struct state *old_cur_state = cur_state == st? NULL : cur_state;
+    char statebuf[1024], *sbcp = statebuf;
 
     DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
 
+    if (st->st_esp.present) {
+        sbcp = humanize_number(st->st_esp.peer_bytes,
+                               sbcp, sizeof(statebuf) - 1,
+                               "ESP traffic information: in=%lu%s");
+        sbcp = humanize_number(st->st_esp.our_bytes,
+                               sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                               " out=%lu%s");
+        libreswan_log(statebuf);
+    }
+
+    if (st->st_ah.present) {
+        sbcp = humanize_number(st->st_ah.peer_bytes,
+                               sbcp, sizeof(statebuf) - 1,
+                               "AH traffic information: in=%lu%s");
+        sbcp = humanize_number(st->st_ah.our_bytes,
+                               sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                               " out=%lu%s");
+        libreswan_log(statebuf);
+    }
+
+    if (st->st_ipcomp.present) {
+        sbcp = humanize_number(st->st_ipcomp.peer_bytes,
+                               sbcp, sizeof(statebuf) - 1,
+                               "IPCOMP traffic information: in=%lu%s");
+        sbcp = humanize_number(st->st_ipcomp.our_bytes,
+                               sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                               " out=%lu%s");
+        libreswan_log(statebuf);
+    }
+    
 #ifdef XAUTH_HAVE_PAM 
     /*
      * If there is still an authentication thread alive, kill it.
@@ -1330,6 +1361,24 @@ state_eroute_usage(ip_subnet *ours, ip_subnet *his
 	});
 }
 
+char *humanize_number(unsigned long num, char *buf, size_t buf_len,
+                      const char *formatstr) {
+    if (num < 1024) {
+        return buf + snprintf(buf, buf_len, formatstr,
+                              num, "B");
+    }
+    if (num < 1024*1024) {
+        return buf + snprintf(buf, buf_len, formatstr,
+                              num/1024, "KB");
+    }
+    if (num < 1024*1024*1024) {
+        return buf + snprintf(buf, buf_len, formatstr,
+                              num/(1024*1024), "MB");
+    }
+    return buf + snprintf(buf, buf_len, formatstr,
+                          num/(1024*1024*1024), "GB");
+ }
+
 void fmt_state(struct state *st, const time_t n
 , char *state_buf, const size_t state_buf_len
 , char *state_buf2, const size_t state_buf2_len)
@@ -1339,6 +1388,7 @@ void fmt_state(struct state *st, const time_t n
     long delta;
     char inst[CONN_INST_BUF];
     char dpdbuf[128];
+    char traffic_buf[512], *mbcp;
     const char *np1 = c->newest_isakmp_sa == st->st_serialno
 	? "; newest ISAKMP" : "";
     const char *np2 = c->newest_ipsec_sa == st->st_serialno
@@ -1347,6 +1397,9 @@ void fmt_state(struct state *st, const time_t n
     const char *eo = c->spd.eroute_owner == st->st_serialno
 	? "; eroute owner" : "";
     const char *idlestr;
+#if defined(linux) && defined(NETKEY_SUPPORT)
+	    time_t ago;
+#endif
 
     fmt_conn_instance(c, inst);
 
@@ -1425,41 +1478,107 @@ void fmt_state(struct state *st, const time_t n
 		, (unsigned long) (now() - st->st_outbound_time));
 	}
 
+        mbcp = traffic_buf +
+            snprintf(traffic_buf, sizeof(traffic_buf)-1, "Traffic:");
+
 	*p = '\0';
 	if (st->st_ah.present)
 	{
 	    add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi, SA_AH);
+/* needs proper fix, via kernel_ops? */
+#if defined(linux) && defined(NETKEY_SUPPORT)
+            
+	    if (get_sa_info(st, FALSE, &ago))
+	    {
+                mbcp =
+                    humanize_number(st->st_ah.peer_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " AHin=%lu%s");
+	    }
+#endif
 	    add_said(&c->spd.this.host_addr, st->st_ah.our_spi, SA_AH);
+#if defined(linux) && defined(NETKEY_SUPPORT)
+	    if (get_sa_info(st, TRUE, &ago))
+	    {
+                mbcp =
+                    humanize_number(st->st_ah.our_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " AHout=%lu%s");
+	    }
+#endif
+            mbcp =
+                humanize_number(((u_long)st->st_ah.attrs.life_kilobytes)*1024,
+                                mbcp,
+                                sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                " AHmax=%lu%s");
+/* needs proper fix, via kernel_ops? */
 	}
 	if (st->st_esp.present)
 	{
-#if defined(linux) && defined(NETKEY_SUPPORT)
-	    time_t ago;
-#endif
 	    add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi, SA_ESP);
 /* needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
-
+            
 	    if (get_sa_info(st, FALSE, &ago))
 	    {
-		snprintf(state_buf2, state_buf2_len,
-		  " (%'u bytes)" , st->st_esp.peer_bytes);
+                mbcp =
+                    humanize_number(st->st_esp.peer_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " ESPin=%lu%s");
 	    }
 #endif
 	    add_said(&c->spd.this.host_addr, st->st_esp.our_spi, SA_ESP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
 	    if (get_sa_info(st, TRUE, &ago))
 	    {
-		snprintf(state_buf2, state_buf2_len,
-		  " (%'u bytes)" , st->st_esp.our_bytes);
+                mbcp =
+                    humanize_number(st->st_esp.our_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " ESPout=%lu%s");
 	    }
 #endif
 
+            mbcp =
+                humanize_number(((u_long)st->st_esp.attrs.life_kilobytes)*1024,
+                                mbcp,
+                                sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                " ESPmax=%lu%s");
 	}
 	if (st->st_ipcomp.present)
 	{
 	    add_said(&c->spd.that.host_addr, st->st_ipcomp.attrs.spi, SA_COMP);
+#if defined(linux) && defined(NETKEY_SUPPORT)
+            
+	    if (get_sa_info(st, FALSE, &ago))
+	    {
+                mbcp =
+                    humanize_number(st->st_ipcomp.peer_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " IPCOMPin=%lu%s");
+	    }
+#endif
 	    add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi, SA_COMP);
+#if defined(linux) && defined(NETKEY_SUPPORT)
+	    if (get_sa_info(st, TRUE, &ago))
+	    {
+                mbcp =
+                    humanize_number(st->st_ipcomp.our_bytes,
+                                    mbcp,
+                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    " IPCOMPout=%lu%s");
+	    }
+#endif
+
+            mbcp =
+                humanize_number(((u_long)st->st_ipcomp.attrs.life_kilobytes)*1024,
+                                mbcp,
+                                sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                " IPCOMPmax=%lu%s");
 	}
 #ifdef KLIPS
 	if (st->st_ah.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL
@@ -1471,12 +1590,13 @@ void fmt_state(struct state *st, const time_t n
 	}
 #endif
 	snprintf(state_buf2, state_buf2_len
-	    , "#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu"
+	    , "#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu %s"
 	    , st->st_serialno
 	    , c->name, inst
 	    , lastused
 	    , buf
-		 , (unsigned long)st->st_ref, (unsigned long)st->st_refhim);
+		 , (unsigned long)st->st_ref, (unsigned long)st->st_refhim,
+            traffic_buf);
 
 #	undef add_said
     }

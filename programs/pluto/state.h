@@ -506,6 +506,9 @@ extern void delete_states_dead_interfaces(void);
 #define change_state(st, new_state) do { (st)->st_state=(new_state); } while(0)
 #endif
 
+char *humanize_number(unsigned long num, char *buf, size_t buf_len,
+                      const char *formatstr);
+
 #endif /* _STATE_H */
 
 /*
