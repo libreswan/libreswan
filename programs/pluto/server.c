@@ -776,7 +776,7 @@ call_server(void)
 	 * we log the time when we are about to do something so that
 	 * we know what time things happened, when not using syslog
 	 */
-	if(log_to_stderr_desired || log_to_logfile_desired) {
+	if(log_to_stderr || log_to_file) {
 	    time_t n;
 	    
 	    static time_t lastn = 0;

@@ -349,10 +349,6 @@ bool force_busy = FALSE;
 /* whether or not to use klips */
 enum kernel_interface kern_interface = USE_NETKEY; /* new default */
 
-bool   log_to_stderr_desired = FALSE;
-bool   log_to_logfile_desired = FALSE;
-bool   log_with_timestamp_desired = FALSE;
-
 #ifdef HAVE_LABELED_IPSEC
 u_int16_t secctx_attr_value=SECCTX;
 #endif
@@ -365,6 +361,12 @@ main(int argc, char **argv)
     int nhelpers = -1;
     char *coredir;
     const struct lsw_conf_options *oco;
+
+    /* really a switch for stderr or syslog */
+    bool   log_to_stderr_desired = FALSE;
+
+    bool   log_to_file_desired = FALSE;
+    bool   log_with_timestamp_desired = FALSE;
 
     coredir = NULL;
 
@@ -580,7 +582,7 @@ main(int argc, char **argv)
 
 	case 'g':	/* --logfile */
 	    pluto_log_file = optarg;
-	    log_to_logfile_desired = TRUE;
+	    log_to_file_desired = TRUE;
 	    continue;
 
 	case 't':	/* --plutostderrlogtime */
@@ -772,7 +774,6 @@ main(int argc, char **argv)
 	    /* long_opts[] is. */
 	    struct starter_config *cfg = read_cfg_file(optarg);
 
-	    /* no config option: log_to_stderr_desired */
 	    set_cfg_string(&pluto_log_file, cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
 
 	    fork_desired = cfg->setup.options[KBF_PLUTOFORK]; /* plutofork= */
@@ -881,13 +882,13 @@ main(int argc, char **argv)
 
     /* select between logging methods */
 
-    if (log_to_stderr_desired) {
+    if (log_to_stderr_desired || log_to_file_desired) {
 	log_to_syslog = FALSE;
 	if (log_with_timestamp_desired)
 	   log_with_timestamp = TRUE;
     }
-    else
-	log_to_stderr = FALSE;
+    if (!log_to_stderr_desired)
+	   log_to_stderr = FALSE;
 
 #ifdef DEBUG
 #if 0
