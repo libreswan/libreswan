@@ -127,7 +127,7 @@ pluto_init_log(void)
     if (log_to_stderr)
 	setbuf(stderr, NULL);
 
-    if (log_to_file)
+    if (log_to_file && (pluto_log_file != NULL))
 	pluto_log_fd =  fopen(pluto_log_file, "a");
 
 	if(pluto_log_fd == NULL) {
@@ -474,7 +474,7 @@ loglog(int mess_no, const char *message, ...)
 
     log_did_something=TRUE;
 
-    if (log_to_stderr) {
+    if (log_to_stderr || (log_to_file  && pluto_log_fd)) {
 	if (log_with_timestamp) {
 		struct tm *timeinfo;
 		char fmt[32];
@@ -482,9 +482,9 @@ loglog(int mess_no, const char *message, ...)
 		time(&rtime);
 		timeinfo = localtime (&rtime);
 		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
-		fprintf(stderr, "%s: %s\n", fmt, m);
+		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s: %s\n", fmt, m);
 	} else {
-		fprintf(stderr, "%s\n", m);
+		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s\n", m);
 	}
     }
     if (log_to_syslog)
@@ -507,8 +507,8 @@ libreswan_log_errno_routine(int e, const char *message, ...)
 
     log_did_something=TRUE;
 
-    if (log_to_stderr)
-	fprintf(stderr, "ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
+    if (log_to_stderr || (log_to_file && pluto_log_fd))
+	fprintf(log_to_stderr ? stderr : pluto_log_fd, "ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
     if (log_to_syslog)
 	syslog(LOG_ERR, "ERROR: %s. Errno %d: %s", m, e, strerror(e));
     if (log_to_perpeer)
@@ -532,8 +532,8 @@ exit_log(const char *message, ...)
 
     log_did_something=TRUE;
 
-    if (log_to_stderr)
-	fprintf(stderr, "FATAL ERROR: %s\n", m);
+    if (log_to_stderr || (log_to_file && pluto_log_fd))
+	fprintf(log_to_stderr ? stderr : pluto_log_fd, "FATAL ERROR: %s\n", m);
     if (log_to_syslog)
 	syslog(LOG_ERR, "FATAL ERROR: %s", m);
     if (log_to_perpeer)
@@ -556,8 +556,8 @@ libreswan_exit_log_errno_routine(int e, const char *message, ...)
 
     log_did_something=TRUE;
 
-    if (log_to_stderr)
-	fprintf(stderr, "FATAL ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
+    if (log_to_stderr || (log_to_file && pluto_log_fd))
+	fprintf(log_to_stderr ? stderr : pluto_log_fd, "FATAL ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
     if (log_to_syslog)
 	syslog(LOG_ERR, "FATAL ERROR: %s. Errno %d: %s", m, e, strerror(e));
     if (log_to_perpeer)
@@ -612,8 +612,8 @@ whack_log(int mess_no, const char *message, ...)
 	if (dying_breath)
 	{
 	    /* status output copied to log */
-	    if (log_to_stderr)
-		fprintf(stderr, "%s\n", m + prelen);
+	    if (log_to_stderr || (log_to_file && pluto_log_fd))
+		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s\n", m + prelen);
 	    if (log_to_syslog)
 		syslog(LOG_WARNING, "%s", m + prelen);
 	    if (log_to_perpeer)
@@ -741,7 +741,7 @@ DBG_log(const char *message, ...)
     /* then sanitize anything else that is left. */
     (void)sanitize_string(m, sizeof(m));
 
-    if (log_to_stderr) {
+    if (log_to_stderr || (log_to_file && pluto_log_fd)) {
 	if (log_with_timestamp) {
 		struct tm *timeinfo;
 		char fmt[32];
@@ -749,9 +749,9 @@ DBG_log(const char *message, ...)
 		time(&rtime);
 		timeinfo = localtime (&rtime);
 		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
-		fprintf(stderr, "%c %s: %s\n", debug_prefix, fmt, m);
+		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%c %s: %s\n", debug_prefix, fmt, m);
 	} else {
-		fprintf(stderr, "%c %s\n", debug_prefix, m);
+		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%c %s\n", debug_prefix, m);
 	}
     }
     if (log_to_syslog)

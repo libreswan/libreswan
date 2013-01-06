@@ -28,6 +28,7 @@
 extern bool
     log_to_stderr,	/* should log go to stderr? */
     log_to_syslog,	/* should log go to syslog? */
+    log_to_file,	/* should log to a file? */
     log_to_perpeer,     /* should log go to per-IP file? */
     log_with_timestamp; /* prefix timestamp */
 
