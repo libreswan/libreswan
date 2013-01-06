@@ -4,7 +4,7 @@ TEST_PURPOSE=regress
 TEST_PROB_REPORT=0
 TEST_TYPE=umlplutotest
 
-TESTNAME=basic-pluto-01
+TESTNAME=basic-pluto-11
 EASTHOST=east
 WESTHOST=west
 
