@@ -86,6 +86,7 @@ case "$1" in
 	;;
 status|--status)
 	ipsec auto --status
+	exit 0
 	;;
 help|--help)
 	echo "Usage: ipsec <command> <argument ...>"
