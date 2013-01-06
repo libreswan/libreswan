@@ -362,11 +362,15 @@ main(int argc, char **argv)
     char *coredir;
     const struct lsw_conf_options *oco;
 
-    /* really a switch for stderr or syslog */
+    /* 
+     * We read the intentions for how to log from command line options
+     * and the config file. Then we prepare to be able to log, but until
+     * then log to stderr (better then nothing). Once we are ready to
+     * actually do loggin according to the methods desired, we set the
+     * variables for those methods
+     */
     bool   log_to_stderr_desired = FALSE;
-
     bool   log_to_file_desired = FALSE;
-    bool   log_with_timestamp_desired = FALSE;
 
     coredir = NULL;
 
@@ -586,7 +590,7 @@ main(int argc, char **argv)
 	    continue;
 
 	case 't':	/* --plutostderrlogtime */
-	    log_with_timestamp_desired = TRUE;
+	    log_with_timestamp = TRUE;
 	    continue;
 
 	case 'G':       /* --use-auto */
@@ -777,7 +781,7 @@ main(int argc, char **argv)
 	    set_cfg_string(&pluto_log_file, cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
 
 	    fork_desired = cfg->setup.options[KBF_PLUTOFORK]; /* plutofork= */
-	    log_with_timestamp_desired =
+	    log_with_timestamp =
 		cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 	    force_busy = cfg->setup.options[KBF_FORCEBUSY];
 	    strict_crl_policy = cfg->setup.options[KBF_STRICTCRLPOLICY];
@@ -884,8 +888,6 @@ main(int argc, char **argv)
 
     if (log_to_stderr_desired || log_to_file_desired) {
 	log_to_syslog = FALSE;
-	if (log_with_timestamp_desired)
-	   log_with_timestamp = TRUE;
     }
     if (!log_to_stderr_desired)
 	   log_to_stderr = FALSE;
