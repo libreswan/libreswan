@@ -55,7 +55,15 @@ if os.path.isdir("/etc/ipsec.d"):
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
 	shutil.copy("/testing/pluto/%s/%s.conf"%(testname,hostname),"/etc/ipsec.conf")
-	shutil.copy("/testing/pluto/%s/%s.secrets"%(testname,hostname),"/etc/ipsec.secrets")
+		
+	src_file = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
+	if os.path.isfile(src_file):
+		shutil.copy(src_file,"/etc/ipsec.secrets")
+	else:
+		src_file = "/testing/baseconfigs/all/etc/ipsec.secrets"
+		if os.path.isfile(src_file):
+			shutil.copy(src_file,"/etc/ipsec.secrets")
+
 	os.chmod("/etc/ipsec.secrets",0600)
 	# this brings in the nss *.db files that are path-specific - they have pathnames hardcoded inside the file
 	#shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname, "/etc/")
