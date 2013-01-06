@@ -133,4 +133,8 @@ make programs module install module_install
 # ensure pluto does not get restarted by systemd on crash
 sed -i "s/Restart=always/Restart=no" /lib/systemd/system/ipsec.service
 
+#ensure we can get coredumps
+echo " * soft core unlimited" >> /etc/security/limits.conf
+echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
+
 %end
