@@ -14,6 +14,10 @@ def read_exec_shell_cmd( ex, filename, prompt):
 			print  line
 			ex.sendline(line)  
 			ex.expect (prompt,timeout=180, searchwindowsize=100) 
+	else:
+		print  filename 
+		ex.sendline(filename)
+		ex.expect (prompt,timeout=180, searchwindowsize=100)
 	return
 
 def main():
@@ -79,6 +83,12 @@ def main():
 	child.logfile = f
 
 	cmd = '/testing/guestbin/swanprep --testname %s --hostname %s'%(testname,vmhost)
+	read_exec_shell_cmd( child, cmd, prompt)
+	
+	cmd = "rm -fr /tmp/pluto.log"
+	read_exec_shell_cmd( child, cmd, prompt) 
+
+	cmd = 'ln -s /testing/pluto/%s/OUTPUT/pluto.%s.log /tmp/pluto.log'%(testname,vmhost)
 	read_exec_shell_cmd( child, cmd, prompt)
 
 	cmd = './testparams.sh'
