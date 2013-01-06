@@ -66,7 +66,7 @@ ifconfig eth0 mtu 1400
 
 # TODO: if rhel/centos, we should install epel-release too
 yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools
-yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel
+yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace
 
 mkdir /testing /source
 

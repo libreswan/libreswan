@@ -166,8 +166,11 @@ case "$1" in
 			echo "systemd: ipsec service is not running"
 			exit 1
 		else
-			echo "Redirecting to: systemctl restart ipsec.service"
-			exec systemctl restart ipsec.service
+			# do not use 'restart' because systemd is overly "smart"
+			# and will refuse the restart when stopped.
+			echo "Redirecting to: systemctl stop+start ipsec.service"
+			systemctl stop ipsec.service
+			exec systemctl start ipsec.service
 		fi
 	elif test $initsystem = "sysv";
 	then
