@@ -18,6 +18,8 @@ fi
 
 rm -f /tmp/swan.current
 rm -rf /etc/ipsec*
+# needed or ipsec setup stop complains about bad syntax due to missing file
+touch /etc/ipsec.conf
 
 if [ ! -f /testing/pluto/$TESTNAME/testparams.sh ]
 then
