@@ -60,7 +60,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	if os.path.isfile(src_file):
 		shutil.copy(src_file,"/etc/ipsec.secrets")
 	else:
-		src_file = "/testing/baseconfigs/all/etc/ipsec.secrets"
+		src_file = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
 		if os.path.isfile(src_file):
 			shutil.copy(src_file,"/etc/ipsec.secrets")
 
