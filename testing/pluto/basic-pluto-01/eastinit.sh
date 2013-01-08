@@ -1,8 +1,12 @@
 : ==== start ====
 TESTNAME=basic-pluto-01
-source /testing/pluto/bin/eastlocal.sh
+/testing/guestbin/swanprep --testname $TESTNAME
 
-ipsec setup start
+ipsec setup stop
+/usr/local/libexec/ipsec/_stackmanager stop
+/usr/local/libexec/ipsec/_stackmanager start 
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
+
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add westnet-eastnet
