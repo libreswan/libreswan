@@ -23,8 +23,8 @@ def:
 	@echo "Please read doc/intro.html or INSTALL before running make"
 	@false
 
-check: 	${LIBRESWANSRCDIR}/umlsetup.sh
-	. ${LIBRESWANSRCDIR}/umlsetup.sh; . ${srcdir}setup.sh; . ${UTILS}/functions.sh; . ${srcdir}TESTLIST
+check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
+	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ${srcdir}setup.sh; . ${UTILS}/functions.sh; . ${srcdir}TESTLIST
 
 one:
 	export LIBRESWANLIB=${LIBRESWANLIB} REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; eval `grep ${TEST} TESTLIST`
