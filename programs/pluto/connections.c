@@ -1473,14 +1473,7 @@ add_connection(const struct whack_message *wm)
 
 	unshare_connection_strings(c);
 
-        /*
-         * Philippe Vouters:
-         * Commented out this (void)orient(c);. Call check_orientations();
-         * inside call_server() instead.
-         * Change to be checked by Paul Wouters with his "redhat" connection
-         * to an actual Cisco equipment.
-         */
-//	(void)orient(c);
+	(void)orient(c);
 	connect_to_host_pair(c);
 
 	/* log all about this connection */
