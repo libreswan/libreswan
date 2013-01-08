@@ -10,7 +10,10 @@ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 # confirm with a ping to east-in
 ping -n -c 1 -I 192.0.1.254 192.0.2.254
 
-ipsec setup start
+ipsec setup stop
+/usr/local/libexec/ipsec/_stackmanager stop
+/usr/local/libexec/ipsec/_stackmanager start
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec whack --whackrecord /var/tmp/ikev2.record
