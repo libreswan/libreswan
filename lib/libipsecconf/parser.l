@@ -297,10 +297,12 @@ int parser_y_eof(void)
 %%
 
 <<EOF>>	{
-        static int once = 0; 
-        if (once = !once) {
-            stacktop->line++;
-        } else {
+	if(parser_y_eof()) {
+	    yyterminate();
+	}
+	if (stacktop->file != NULL) {
+	    fprintf(stderr,"ERROR: EOF at EOL condition found in %s\n",
+			stacktop->fileglob.gl_pathv[stacktop->fileglobcnt]);
             yyterminate();
         }
 }
