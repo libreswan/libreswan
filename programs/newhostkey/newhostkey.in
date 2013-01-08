@@ -45,9 +45,9 @@ do
 	shift
 done
 
-if test " $output" = " " && test ! -f ${IPSEC_CONFS}/ipsec.secrets
+if test " $output" = " " && test ! -f /etc/ipsec.secrets
 then
-    output=${IPSEC_CONFS}/ipsec.secrets
+    output=/etc/ipsec.secrets
 fi
 
 if test " $output" = " "

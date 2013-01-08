@@ -16,13 +16,13 @@
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
 # where the private directory and the config files are
+IPSEC_CONF="${FINALCONFFILE-@FINALCONFFILE@}"
 IPSEC_EXECDIR="${IPSEC_EXECDIR-@IPSEC_EXECDIR@}"
 IPSEC_LIBDIR="${IPSEC_LIBDIR-@IPSEC_LIBDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR-@IPSEC_SBINDIR@}"
-IPSEC_CONFS="${IPSEC_CONFS-@IPSEC_CONFS@}"
 
 IPSEC_DIR="$IPSEC_LIBDIR"
-export IPSEC_DIR IPSEC_CONFS IPSEC_LIBDIR IPSEC_EXECDIR
+export IPSEC_DIR IPSEC_LIBDIR IPSEC_EXECDIR IPSEC_CONF
 
 # standardize PATH, and export it for everything else's benefit
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
@@ -86,6 +86,7 @@ case "$1" in
 	;;
 status|--status)
 	ipsec auto --status
+	exit 0
 	;;
 help|--help)
 	echo "Usage: ipsec <command> <argument ...>"
@@ -135,10 +136,6 @@ version|--version|--versioncode)
 	echo "$IPSEC_DIR"
 	exit 0
 	;;
---confdir)
-	echo "$IPSEC_CONFS"
-	exit 0
-	;;
 import|--import)
 	if [ -z "$2" ]
 	then
@@ -152,18 +149,18 @@ import|--import)
 		fi
 	fi
 	# this hardcoded ipsec.d needs to get fixed once we pass IPSECD properly
-	pk12util -i $2 -d $IPSEC_CONFS/ipsec.d
+	pk12util -i $2 -d /etc/ipsec.d
 	if  test -x /usr/sbin/restorecon
 	then
-		restorecon $IPSEC_CONFS/ipsec.d -Rv
+		restorecon /etc/ipsec.d -Rv
 	fi
 	exit 0
 	;;
 initnss|--initnss)
-	if [ -f "$IPSEC_CONFS/ipsec.d/cert8.db" -o -f "$IPSEC_CONFS/ipsec.d/key3.db" -o -f "$IPSEC_CONFS/ipsec.d/secmod.db" ];
+	if [ -f "/etc/ipsec.d/cert8.db" -o -f "/etc/ipsec.d/key3.db" -o -f "/etc/ipsec.d/secmod.db" ];
 	then
 		echo "NSS database already initialised - aborted"
-		echo "To wipe the old NSS database, issue: rm $IPSEC_CONFS/ipsec.d/*.db"
+		echo "To wipe the old NSS database, issue: rm /etc/ipsec.d/*.db"
 		exit 42
 	fi
 
@@ -172,10 +169,10 @@ initnss|--initnss)
 	echo "   use an empty password"
 	echo ""
 
-	certutil -N -d $IPSEC_CONFS/ipsec.d
+	certutil -N -d /etc/ipsec.d
 	if  test -x /usr/sbin/restorecon
 	then
-		restorecon $IPSEC_CONFS/ipsec.d -Rv
+		restorecon /etc/ipsec.d -Rv
 	fi
 	exit 0
 	;;

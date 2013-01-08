@@ -15,6 +15,9 @@
 #
 # This is the version for use on Linux, see _realsetup.bsd for OSX/BSD
 
+IPSEC_CONF="${FINALCONFFILE-@FINALCONFFILE@}"
+
+
 # Misc. paths (some of this should perhaps be overrideable from ipsec.conf).
 rundir=/var/run/pluto
 plutopid=$rundir/pluto.pid
@@ -37,7 +40,7 @@ then
 fi
 
 # which kernel are we using?
-IPSECprotostack=`ipsec addconn --liststack`
+IPSECprotostack=`ipsec addconn --config $IPSEC_CONF --liststack`
 
 systemd="`pidof systemd`"
 if test "$systemd" = "1";
@@ -163,8 +166,11 @@ case "$1" in
 			echo "systemd: ipsec service is not running"
 			exit 1
 		else
-			echo "Redirecting to: systemctl restart ipsec.service"
-			exec systemctl restart ipsec.service
+			# do not use 'restart' because systemd is overly "smart"
+			# and will refuse the restart when stopped.
+			echo "Redirecting to: systemctl stop+start ipsec.service"
+			systemctl stop ipsec.service
+			exec systemctl start ipsec.service
 		fi
 	elif test $initsystem = "sysv";
 	then

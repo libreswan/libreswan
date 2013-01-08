@@ -116,6 +116,10 @@
 # include "security_selinux.h"
 #endif
 
+#ifdef USE_LINUX_AUDIT
+# include <libaudit.h>
+#endif
+
 const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 bool fork_desired = TRUE;
@@ -141,6 +145,7 @@ usage(const char *mess)
 	    "[--config <filename>]"
 	    " [--nofork]"
 	    " [--stderrlog]"
+	    " [--logfile <filename>]"
 	    " [--plutostderrlogtime]"
 	    " [--force_busy]"
 	    " [--nocrsend]"
@@ -344,9 +349,6 @@ bool force_busy = FALSE;
 /* whether or not to use klips */
 enum kernel_interface kern_interface = USE_NETKEY; /* new default */
 
-bool   log_to_stderr_desired = FALSE;
-bool   log_with_timestamp_desired = FALSE;
-
 #ifdef HAVE_LABELED_IPSEC
 u_int16_t secctx_attr_value=SECCTX;
 #endif
@@ -359,6 +361,16 @@ main(int argc, char **argv)
     int nhelpers = -1;
     char *coredir;
     const struct lsw_conf_options *oco;
+
+    /* 
+     * We read the intentions for how to log from command line options
+     * and the config file. Then we prepare to be able to log, but until
+     * then log to stderr (better then nothing). Once we are ready to
+     * actually do loggin according to the methods desired, we set the
+     * variables for those methods
+     */
+    bool   log_to_stderr_desired = FALSE;
+    bool   log_to_file_desired = FALSE;
 
     coredir = NULL;
 
@@ -415,6 +427,7 @@ main(int argc, char **argv)
 	    { "config", required_argument, NULL, 'z' },
 	    { "nofork", no_argument, NULL, 'd' },
 	    { "stderrlog", no_argument, NULL, 'e' },
+	    { "logfile", required_argument, NULL, 'g' },
 	    { "plutostderrlogtime", no_argument, NULL, 't' },
 	    { "noklips", no_argument, NULL, 'n' },
 	    { "use-nostack",  no_argument, NULL, 'n' },
@@ -437,13 +450,13 @@ main(int argc, char **argv)
 	    { "natikeport", required_argument, NULL, 'q' },
 	    { "ctlbase", required_argument, NULL, 'b' },
 	    { "secretsfile", required_argument, NULL, 's' },
-	    { "foodgroupsdir", required_argument, NULL, 'f' },
 	    { "perpeerlogbase", required_argument, NULL, 'P' },
 	    { "perpeerlog", no_argument, NULL, 'l' },
 	    { "noretransmits", no_argument, NULL, 'R' },
 	    { "coredir", required_argument, NULL, 'C' },
 	    { "ipsecdir", required_argument, NULL, 'f' },
 	    { "ipsec_dir", required_argument, NULL, 'f' },
+	    { "foodgroupsdir", required_argument, NULL, 'f' },
 	    { "adns", required_argument, NULL, 'a' },
 #ifdef NAT_TRAVERSAL
 	    { "nat_traversal", no_argument, NULL, '1' },
@@ -571,8 +584,13 @@ main(int argc, char **argv)
 	    log_to_stderr_desired = TRUE;
 	    continue;
 
+	case 'g':	/* --logfile */
+	    pluto_log_file = optarg;
+	    log_to_file_desired = TRUE;
+	    continue;
+
 	case 't':	/* --plutostderrlogtime */
-	    log_with_timestamp_desired = TRUE;
+	    log_with_timestamp = TRUE;
 	    continue;
 
 	case 'G':       /* --use-auto */
@@ -760,10 +778,10 @@ main(int argc, char **argv)
 	    /* long_opts[] is. */
 	    struct starter_config *cfg = read_cfg_file(optarg);
 
-	    /* no config option: log_to_stderr_desired */
+	    set_cfg_string(&pluto_log_file, cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
 
 	    fork_desired = cfg->setup.options[KBF_PLUTOFORK]; /* plutofork= */
-	    log_with_timestamp_desired =
+	    log_with_timestamp =
 		cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 	    force_busy = cfg->setup.options[KBF_FORCEBUSY];
 	    strict_crl_policy = cfg->setup.options[KBF_STRICTCRLPOLICY];
@@ -868,13 +886,11 @@ main(int argc, char **argv)
 
     /* select between logging methods */
 
-    if (log_to_stderr_desired) {
+    if (log_to_stderr_desired || log_to_file_desired) {
 	log_to_syslog = FALSE;
-	if (log_with_timestamp_desired)
-	   log_with_timestamp = TRUE;
     }
-    else
-	log_to_stderr = FALSE;
+    if (!log_to_stderr_desired)
+	   log_to_stderr = FALSE;
 
 #ifdef DEBUG
 #if 0
@@ -1021,8 +1037,41 @@ main(int argc, char **argv)
              loglog(RC_LOG_SERIOUS, "FATAL: FIPS integrity verification test failed");
              exit_pluto(10);
         }
+#else
+	libreswan_log("FIPS integrity support [disabled]");
 #endif
 
+#ifdef HAVE_LIBCAP_NG
+	libreswan_log("libcap-ng support [enabled]");
+#else
+	libreswan_log("libcap-ng support [disabled]");
+#endif
+
+#ifdef USE_LINUX_AUDIT
+	libreswan_log("Linux audit support [enabled]");
+	/* test and log if audit is enabled on the system */
+	int audit_fd, rc;
+	audit_fd = audit_open();
+	if (audit_fd < 0) {
+                if (errno == EINVAL || errno == EPROTONOSUPPORT ||
+                    errno == EAFNOSUPPORT)
+		{
+		 loglog(RC_LOG_SERIOUS, "Warning: kernel has no audit support");
+		} else {
+		loglog(RC_LOG_SERIOUS, "FATAL (SOON): audit_open() failed : %s", strerror(errno));
+		 /* temp disabled exit_pluto(10); */
+		}
+	}
+	rc = audit_log_acct_message(audit_fd, AUDIT_USER_START, NULL,
+		"starting pluto daemon", NULL, -1, NULL, NULL, NULL, 1);
+	close(audit_fd);
+	if (rc < 0) {
+		loglog(RC_LOG_SERIOUS, "FATAL: audit_log_acct_message failed: %s", strerror(errno));
+		 exit_pluto(10);
+	}
+#else
+	libreswan_log("Linux audit support [disabled]");
+#endif
 
     /* Note: some scripts may look for this exact message -- don't change
      * ipsec barf was one, but it no longer does.

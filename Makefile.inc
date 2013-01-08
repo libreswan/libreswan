@@ -390,10 +390,15 @@ ifeq ($(OSDEP),sunos)
 USE_XAUTHPAM?=true
 endif
 
-# Support for integrity check for openswan on startup 
+# Build support for integrity check for libreswan on startup 
 USE_FIPSCHECK?=false
 
-#Enable Labeled IPSec Functionality (requires SElinux)
+# Build support for the Linux Audit system
+ifeq ($(OSDEP),linux)
+USE_LINUX_AUDIT?=false
+endif
+
+# Enable Labeled IPSec Functionality (requires SElinux)
 USE_LABELED_IPSEC?=false
 
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
@@ -580,6 +585,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):g" \
+			-e "s:@FINALCONFFILE@:$(FINALCONFFILE):g" \
 			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
 			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
@@ -591,7 +597,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
 			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):g" \
-			-e "s:@IPSEC_CONFS@:$(FINALCONFDIR):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
                         -e "s:@MODPROBE@:$(MODPROBE):g" \

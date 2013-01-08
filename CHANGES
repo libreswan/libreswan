@@ -1,7 +1,14 @@
 
 See also https://libreswan.org/
 
-v3.0 (unreleased)
+v3.1 (unreleased)
+* libswan: logging cleanups from openswan 2.5.x era [DHR/Antony/Paul]
+* pluto: Debug logs were not written if a file was specified [Paul/Antony]
+* pluto: fix for additional proposal sizes when enabling 1DES [Paul]
+* NETKEY: Show traffic stats in ipsec auto --status and teardown [Wes/Paul]
+* SAREF: patches for Ubuntu kernel 3.2.0-33.52 [Simon]
+
+v3.0 (January 02, 2013)
 * FORK: Rename from Openswan to Libreswan [Team]
         (for older CHANGES see docs/CHANGES.openswan)
 * FORK: Changed our VendorID prefix to "OEN" [Team]
@@ -33,6 +40,7 @@ v3.0 (unreleased)
          inet_addrtot(), sin_addrtot(), alg_info_snprint_esp(),
          alg_info_snprint_ah(), idtoa() and format_end() [Paul]
 * pluto: Removed unused OCSP code [Paul]
+* pluto: Add Linux audit support via USE_LINUX_AUDIT (incomplete) [Paul/Antony]
 * pluto: crlcheckinterval did not interpret plain numbers as seconds [Philippe]
 * pluto: Change ft_mbz to ft_zig - Don't error on "must be zero" but instead
          "zero ignore". This works around an Android ICS/racoon bug [Paul]
@@ -53,6 +61,8 @@ v3.0 (unreleased)
 * pluto: rhbz#609343: pluto crashes when removing logical interface [Avesh]
 * pluto: dont stop processing after --coredir argument [Paul]
 * pluto: perform whack --listen and addconn --autoall on startup [Paul]
+* pluto: honour plutostderrlog= natively now _plutorun is gone
+         This also adds a new option --logfile to the pluto daemon [Paul]
 * pluto: if started with --nofork, don't care about existing pid file [Paul]
 * pluto: incorrect free in scan_proc_shunts() [Roel van Meer]
 * pluto: eclipsed() was broken since freeswan-2.02 [Philippe]

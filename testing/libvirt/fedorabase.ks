@@ -66,7 +66,7 @@ ifconfig eth0 mtu 1400
 
 # TODO: if rhel/centos, we should install epel-release too
 yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools
-yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel
+yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace
 
 mkdir /testing /source
 
@@ -122,12 +122,19 @@ systemctl enable network.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
 
-# Takes a long time, disable for now
-# yum update -y 
+# Needed for newer nss
+yum update -y 
 
 # Instal openswan
 mount /source
 cd /source
 make programs module install module_install
+
+# ensure pluto does not get restarted by systemd on crash
+sed -i "s/Restart=always/Restart=no" /lib/systemd/system/ipsec.service
+
+#ensure we can get coredumps
+echo " * soft core unlimited" >> /etc/security/limits.conf
+echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
 
 %end

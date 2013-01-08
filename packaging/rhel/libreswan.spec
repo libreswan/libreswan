@@ -29,7 +29,6 @@ License: GPLv2
 Url: http://www.libreswan.org/
 Source: %{name}-%{srcpkgver}.tar.gz
 Group: System Environment/Daemons
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
 Requires(post): coreutils bash
 Requires(preun): initscripts chkconfig
@@ -190,11 +189,7 @@ done
 echo "include /etc/ipsec.d/*.secrets" > $RPM_BUILD_ROOT/%{_sysconfdir}/ipsec.secrets
 rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
 %files 
-%defattr(-,root,root)
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
 %doc docs/*.*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
@@ -204,6 +199,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
+%{_sysconfdir}/pam.d/pluto
 %{_initrddir}/ipsec
 %{_libexecdir}/ipsec
 %{_sbindir}/ipsec
@@ -215,7 +211,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %if %{buildklips}
 %files klips
-%defattr (-,root,root)
 /lib/modules/%{kversion}/kernel/net/ipsec
 %endif
 
@@ -241,6 +236,6 @@ fi
 /sbin/chkconfig --add ipsec || :
 
 %changelog
-* Sun Dec 09 2012 Paul Wouters <paul@libreswan.org> - IPSECBASEVERSION-1
+* Tue Jan 01 2013 Libreswan Team <team@libreswan.org> - IPSECBASEVERSION-1
 - Automated build from release tar ball
 

@@ -16,15 +16,13 @@
 LC_ALL=C export LC_ALL
 
 LOGS=${LOGS-/var/log}
-CONFS=${IPSEC_CONFS-/etc}
-CONFDDIR=${IPSEC_CONFDDIR-/etc/ipsec.d}
 me="ipsec barf"
 # Max lines to use for things like 'route -n'
 maxlines=100
 
 # kludge to produce no barf output mentioning policygroups if none are present.
 # This will not catch ".file" policygroups. 
-PREPOLICIES=${CONFDDIR}/policies
+PREPOLICIES=/etc/ipsec.d/policies
 if [ `ls $PREPOLICIES 2> /dev/null | wc -l` -ne 0 ]
 then
 	POLICIES=$PREPOLICIES
@@ -236,9 +234,9 @@ _________________________ ps
 # -i ppid picks up the header
 ps alxwf | egrep -i 'ppid|pluto|ipsec|klips'
 _________________________ ipsec/conf
-ipsec readwriteconf --config $CONFS/ipsec.conf | ipsec _keycensor
+ipsec readwriteconf --config /etc/ipsec.conf | ipsec _keycensor
 _________________________ ipsec/secrets
-cat $CONFS/ipsec.secrets | ipsec _secretcensor
+cat /etc/ipsec.secrets | ipsec _secretcensor
 _________________________ ipsec/listall
 ipsec whack --listall
 if [ $POLICIES ]

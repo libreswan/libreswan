@@ -52,6 +52,8 @@ FIXME
 # description: IPsec provides encrypted and authenticated communications; \
 # NETKEY/KLIPS is the kernel half of it, Pluto is the user-level management daemon.
 
+IPSEC_CONF="${FINALCONFFILE-@FINALCONFFILE@}"
+
 # Source function library.
 . /etc/init.d/functions
 
@@ -73,7 +75,6 @@ fi
 IPSEC_EXECDIR="${IPSEC_EXECDIR-@IPSEC_EXECDIR@}"
 IPSEC_LIBDIR="${IPSEC_LIBDIR-@IPSEC_LIBDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR-@IPSEC_SBINDIR@}"
-IPSEC_CONFS="${IPSEC_CONFS-@IPSEC_CONFS@}"
 
 
 # Does not make any sense at all to continue without the main binary
@@ -101,12 +102,12 @@ then
 fi
 
 # which kernel are we using?
-IPSECprotostack=`ipsec addconn --liststack`
+IPSECprotostack=`ipsec addconn --config $IPSEC_CONF --liststack`
 
 verify_config() {
-    test -f $IPSEC_CONFS/ipsec.conf || exit 6
+    test -f $IPSEC_CONF || exit 6
 
-    config_error=`ipsec addconn --checkconfig 2>&1`
+    config_error=`ipsec addconn --config $IPSEC_CONF --checkconfig 2>&1`
     RETVAL=$?
     if [ $RETVAL != 0 ]
     then

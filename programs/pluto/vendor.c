@@ -583,8 +583,9 @@ static void handle_known_vendorid (struct msg_digest *md
 	    } else {
 		if (md->quirks.nat_traversal_vid < vid->id) {
 		    loglog(RC_LOG_SERIOUS
-			   , "received Vendor ID payload [%s] method set to=%s "
-			   , vid->descr, enum_name(&natt_method_names, nat_traversal_vid_to_method(vid->id)));
+			   , "received Vendor ID payload [%s]" , vid->descr);
+		    DBG(DBG_NATT, DBG_log(" method set to=%s "
+			, enum_name(&natt_method_names, nat_traversal_vid_to_method(vid->id))));
 		    md->quirks.nat_traversal_vid = vid->id;
 		    return;
 		} else {

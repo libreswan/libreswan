@@ -25,7 +25,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "lswlog.h"
+#include "log.h"
 #include "lswalloc.h"
 #include "defs.h"
 #include "id.h"
@@ -450,7 +450,7 @@ kernel_alg_db_add(struct db_context *db_ctx
 	    ealg_i=esp_info->esp_ealg_id;
 	    if (!ESP_EALG_PRESENT(ealg_i)) {
 		if(logit) {
-		    libreswan_loglog(RC_LOG_SERIOUS
+		    loglog(RC_LOG_SERIOUS
 				    , "requested kernel enc ealg_id=%d not present"
 				    , ealg_i);
 		} else {

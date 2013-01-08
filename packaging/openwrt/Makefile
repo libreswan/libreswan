@@ -12,7 +12,7 @@ PKG_VERSION:IPSECBASEVERSION
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.libreswan.org/download
+PKG_SOURCE_URL:=https://download.libreswan.org/
 PKG_MD5SUM:=calculate_me
 
 include $(INCLUDE_DIR)/package.mk
@@ -66,6 +66,9 @@ LIBRESWAN_MAKE := $(MAKE) -C $(PKG_BUILD_DIR) \
 	INC_USRLOCAL="/usr" \
 	INC_RCDEFAULT="/etc/init.d" \
 	MODPROBE="/sbin/insmod" \
+	USE_DNSSEC=false \
+	USE_LINUX_AUDIT=false \
+	USE_LABELED_IPSEC=false \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 	DESTDIR="$(PKG_INSTALL_DIR)"
 
