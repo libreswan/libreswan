@@ -10,9 +10,6 @@ Note: this network is on the diagram, but not used in test cases?
   <name>192_1_4</name>
   <bridge name='swan14' stp='on' delay='0' />
   <mac address='12:00:00:16:32:BA'/>
-<!-- virt-manager won't allow 254 ??
-  <ip address='192.1.4.254' netmask='255.255.255.0'>
--->
   <ip address='192.1.4.253' netmask='255.255.255.0'>
     <dhcp>
       <range start='192.1.4.128' end='192.1.4.196' />
