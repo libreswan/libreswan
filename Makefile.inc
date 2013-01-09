@@ -452,6 +452,9 @@ HAVE_OPENSSL?=false
 # Userland (IKE) Open Cryptographic Framework support (hw crypto offload)
 # For Kernel level OCF support, enable CONFIG_KLIPS_OCF on a kernel that
 # has support for OCF (inline or module)
+# Only enable this when compiling for embedded systems with very limited CPU
+# power, and only if there is actually some hardware accelerator present
+# for which there is an OCF kernel driver available.
 HAVE_OCF?=false
 
 ifeq ($(HAVE_OCF),true)
