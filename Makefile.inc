@@ -46,6 +46,9 @@ export SHELL
 
 .PHONY:	programs man config checkprograms clean
 
+# location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
+BINSH=/bin/sh
+
 # supply kernel-configuration ARCH defaults
 ifeq ($(ARCH),)
 ARCH := $(shell uname -m)
@@ -603,6 +606,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
                         -e "s:@MODPROBE@:$(MODPROBE):g" \
+                        -e "s:@BINSH@:$(BINSH):g" \
 
 # for emacs
 #
