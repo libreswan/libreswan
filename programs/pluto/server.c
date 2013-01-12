@@ -631,6 +631,7 @@ call_server(void)
 
 	    if(sigchildflag) {
 		reapchildren();
+		find_ifaces();
 	    }
 
 	    LSW_FD_ZERO(&readfds);
