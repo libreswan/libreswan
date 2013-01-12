@@ -465,7 +465,7 @@ struct config_parsed *parser_load_conf (const char *file, err_t *perr)
 			f = fdopen(STDIN_FILENO, "r");
 		}
 		else {
-			f = fopen(file, "r");
+			f = fopen(file, "r+");
 		}
 		if (f) {
 			yyin = f;

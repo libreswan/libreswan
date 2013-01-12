@@ -1,0 +1,26 @@
+This test is based on xauth-pluto-12
+
+This test has a road warrior, ("road") which is using racoon trying to immitate
+and iphone. It's configuration is based on an iphone 4s iOS5, using "Cisco IPsec"
+mode with certificate.
+
+certificate installed (on real iphone) by publishing the CA pem and PKCS#12
+on a website and downloading them both via safari to install.
+
+This test depends on the installation of racoon from the ipsec-tools package
+
+
+It shows up from a random IP.
+
+It uses PSK to authenticate for phase 1.
+It uses aggressive mode.
+It then uses XAUTH to authenticate the phase 1.5.
+It then uses MODECFG to configure the phase 2, in server push mode.
+It then sends DNS and WINS servers using modecfgdns1,modecfgdn2,modecfgwins1
+and modecfgwins2.
+
+NOTE: Some clients require that for these messages IV from phase2, not phase1
+is used. We need to turn that into an option.
+
+It then proceeds to phase 2.
+

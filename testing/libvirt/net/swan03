@@ -13,7 +13,7 @@ interfaces are configured on the bridge. dhcp not used
   <mac address='12:00:00:32:32:BB'/>
   <ip address='192.0.3.127' netmask='255.255.255.0'>
     <dhcp>
-      <range start='192.0.3.128' end='192.0.3.254' />
+      <range start='192.0.3.128' end='192.0.3.200' />
     </dhcp>
   </ip>
 </network>

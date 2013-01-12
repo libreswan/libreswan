@@ -46,6 +46,9 @@ export SHELL
 
 .PHONY:	programs man config checkprograms clean
 
+# location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
+BINSH=/bin/sh
+
 # supply kernel-configuration ARCH defaults
 ifeq ($(ARCH),)
 ARCH := $(shell uname -m)
@@ -452,6 +455,9 @@ HAVE_OPENSSL?=false
 # Userland (IKE) Open Cryptographic Framework support (hw crypto offload)
 # For Kernel level OCF support, enable CONFIG_KLIPS_OCF on a kernel that
 # has support for OCF (inline or module)
+# Only enable this when compiling for embedded systems with very limited CPU
+# power, and only if there is actually some hardware accelerator present
+# for which there is an OCF kernel driver available.
 HAVE_OCF?=false
 
 ifeq ($(HAVE_OCF),true)
@@ -600,6 +606,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
                         -e "s:@MODPROBE@:$(MODPROBE):g" \
+                        -e "s:@BINSH@:$(BINSH):g" \
 
 # for emacs
 #
