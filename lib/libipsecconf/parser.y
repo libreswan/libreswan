@@ -465,7 +465,7 @@ struct config_parsed *parser_load_conf (const char *file, err_t *perr)
 			f = fdopen(STDIN_FILENO, "r");
 		}
 		else {
-			f = fopen(file, "r+");
+			f = fopen(file, "r");
 		}
 		if (f) {
 			yyin = f;
@@ -481,7 +481,6 @@ struct config_parsed *parser_load_conf (const char *file, err_t *perr)
 						"Unknown error...");
 				}
 				_save_errors_=0;
-				while (yyparse()!=0);
 				err++;
 			}
 			else if (parser_errstring[0]!='\0') {

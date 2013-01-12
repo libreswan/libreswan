@@ -21,7 +21,6 @@
 
 #include <sys/queue.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
@@ -81,19 +80,7 @@ int  parser_cur_lineno(void)
 {
     return stacktop->line;
 }
-void parser_detect_and_correct_EOF_EOL (FILE *f)
-{
-    if (f){
-	int ch;
-	if (fseek(f,-1L,SEEK_END))
-	    return;
-       	if ((ch = fgetc(f)) == EOF)
-	    return;
-	if (ch != (int)'\n')
-	    fputs("\n",f);
-	rewind(f);
-    }
-}
+
 void parser_y_error(char *b, int size, const char *s)
 {
 #if defined(SOMETHING_FOR_SOME_ARCH)
@@ -107,7 +94,6 @@ void parser_y_error(char *b, int size, const char *s)
 
 void parser_y_init (const char *name, FILE *f)
 {
-	parser_detect_and_correct_EOF_EOL(f);
 	memset(&ic_private, 0, sizeof(ic_private));
 	ic_private.stack[0].line = 1;
 	ic_private.stack[0].file = f;
@@ -169,14 +155,13 @@ int parser_y_nextglobfile(struct ic_inputsource *iis)
 	iis->filename = strdup(iis->fileglob.gl_pathv[fcnt]);
 
 	/* open the file */
-	f = fopen(iis->filename, "r+");
+	f = fopen(iis->filename, "r");
 	if (!f) {
                 char ebuf[128];
 		snprintf(ebuf, 128, "can not open include filename: '%s'", iis->fileglob.gl_pathv[fcnt]);
                 yyerror(ebuf);
 		return -1;
 	}
-	parser_detect_and_correct_EOF_EOL(f);
 	iis->file  = f;
 
 	yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
@@ -312,8 +297,20 @@ int parser_y_eof(void)
 %%
 
 <<EOF>>	{
-	if (parser_y_eof()) {
-	    yyterminate();
+	if (stacktop->file){
+	    char ch;
+	    fseek(stacktop->file,-1L,SEEK_END);
+	    ch = (char)fgetc(stacktop->file);
+	    if (ch != '\n'){
+#if 0
+	        fprintf(stderr,"ERROR: EOF at EOL condition in %s\n",
+	                stacktop->filename);
+#endif
+	      yyterminate();
+	    }
+	}
+	if(parser_y_eof()) {
+	   yyterminate();
 	}
 }
 
