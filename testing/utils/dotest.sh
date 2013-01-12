@@ -1,15 +1,27 @@
 #!/bin/bash
-
-. ../../../kvmsetup.sh
-. ../setup.sh
-. ./testparams.sh
+. ./testparams.sh 
 
 rm -fr OUTPUT/*
 mkdir  -m777 OUTPUT
-touch OUTPUT/pluto.east.log
-touch OUTPUT/pluto.west.log 
-chmod a+rw OUTPUT/pluto.east.log 
-chmod a+rw OUTPUT/pluto.west.log 
+
+
+if [ -f eastinit.sh ] ; then
+	RESPONDER=east
+fi
+
+if [ -f westinit.sh ] ; then
+	INITIATOR=west
+elif [ -f roadinit.sh ] ; then
+	INITIATOR=road
+else 
+	echo "can't idenity INITIATOR"
+	exit 1
+fi
+
+touch OUTPUT/pluto.$INITIATOR.log
+touch OUTPUT/pluto.$RESPONDER.log 
+chmod a+rw OUTPUT/pluto.$INITIATOR.log 
+chmod a+rw OUTPUT/pluto.$RESPONDER.log
 
 SWAN12_PCAP=swan12.pcap
 
@@ -34,13 +46,13 @@ sudo /sbin/tcpdump -w ./OUTPUT/$SWAN12_PCAP -n -i swan12  not port 22 &
 TCPDUMP_PID=$! 
 echo $TCPDUMP_PID  > ./OUTPUT/$SWAN12_PCAP.pid
 
-../../utils/runkvm.py --host east --test $TESTNAME  &
-EAST_PID=$!  
-../../utils/runkvm.py --host west --test $TESTNAME  &
-WEST_PID=$!
+../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME  &
+INITIATOR_PID=$!  
+../../utils/runkvm.py --host $RESPONDER --testname $TESTNAME  &
+RESPONDER_PID=$!
 
-wait_till_pid_end "runvm.py-west" $WEST_PID 
-wait_till_pid_end "runvm.py-east" $EAST_PID 
+wait_till_pid_end "$INITIATOR" $INITIATOR_PID
+wait_till_pid_end "$RESPONDER" $RESPONDER_PID
 
 TCPDUMP_PID_R=`pidof sudo`
 if [ -f ./OUTPUT/$SWAN12_PCAP.pid ] ; then

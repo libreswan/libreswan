@@ -130,9 +130,8 @@ def main():
     parser = argparse.ArgumentParser(description='runkvm arguments.')
     parser.add_argument('--testname', '-t', action='store', default='basic-pluto-01', help='The name of the test to run.')
     parser.add_argument('--hostname', '-H', action='store', default='east', help='The name of the host to run.')
-    parser.add_argument('--compile', help='compile the source on east.')
-    parser.add_argument('--install', help='run make install programs module_install.')
-    parser.add_argument('--runtest', help='run the test')
+    parser.add_argument('--compile', help='compile the source on host <hostname>.')
+    parser.add_argument('--install', action="store_true", help='run make install module_install .')
     parser.add_argument('--reboot', help='first reboot the host')
     parser.add_argument('--timeout', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
@@ -144,7 +143,7 @@ def main():
     if args.install:
         make_install(args,child) 
 
-    if args.runtest:
+    if args.testname:
         run_test(args,child)
     return
 
