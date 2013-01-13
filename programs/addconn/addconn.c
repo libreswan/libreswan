@@ -653,7 +653,7 @@ main(int argc, char *argv[])
 		if(!verbose) {
 		    printf("conn '%s': not found (tried aliases)\n", connname);
 		} else {
-		    printf("(notfound)");
+		    printf(" (notfound)\n");
 		}
 	    }
 	}
