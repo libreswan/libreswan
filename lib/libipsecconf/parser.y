@@ -459,51 +459,52 @@ struct config_parsed *parser_load_conf (const char *file, err_t *perr)
 	if (perr) *perr = NULL;
 
 	cfg = (struct config_parsed *)malloc(sizeof(struct config_parsed));
-	if (cfg) {
-		memset(cfg, 0, sizeof(struct config_parsed));
-		if (strncmp(file, "-", sizeof("-")) == 0) {
-			f = fdopen(STDIN_FILENO, "r");
-		}
-		else {
-			f = fopen(file, "r+");
-		}
-		if (f) {
-			yyin = f;
-			parser_y_init(file, f);
-			_save_errors_=1;
-			TAILQ_INIT(&cfg->sections);
-			TAILQ_INIT(&cfg->comments);
-			_parser_cfg = cfg;
-
-	   	        if (yyparse()!=0) {
-				if (parser_errstring[0]=='\0') {
-					snprintf(parser_errstring, ERRSTRING_LEN,
-						"Unknown error...");
-				}
-				_save_errors_=0;
-				while (yyparse()!=0);
-				err++;
-			}
-			else if (parser_errstring[0]!='\0') {
-				err++;
-			}
-			else {
-				/**
-				 * Config valid
-				 */
-			}
-		}
-		else {
-			snprintf(parser_errstring, ERRSTRING_LEN, "can't load file '%s'",
-				file);
-			err++;
-		}
+	if (!cfg) 
+	{
+	    snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
+	    err++;
+	    goto end;
+	}
+	memset(cfg, 0, sizeof(struct config_parsed));
+	if (strncmp(file, "-", sizeof("-")) == 0) {
+		f = fdopen(STDIN_FILENO, "r");
 	}
 	else {
-		snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
-		err++;
+		f = fopen(file, "r");
+	}
+        if (!f)
+	{
+	    snprintf(parser_errstring, ERRSTRING_LEN, "can't load file '%s'",
+		     file);
+	    err++;
+	    goto end;
 	}
 
+	yyin = f;
+	parser_y_init(file, f);
+	_save_errors_=1;
+	TAILQ_INIT(&cfg->sections);
+	TAILQ_INIT(&cfg->comments);
+	_parser_cfg = cfg;
+
+        if (yyparse()!=0) {
+ 	    if (parser_errstring[0]=='\0') {
+		snprintf(parser_errstring, ERRSTRING_LEN,
+			"Unknown error...");
+	    }
+	   _save_errors_=0;
+	   while (yyparse()!=0);
+	   err++;
+           goto end;
+	}
+	if (parser_errstring[0]!='\0') {
+	    err++;
+	    goto end;
+	}
+	/**
+	 * Config valid
+	 */
+end:
 	if (err) {
 		if (perr) *perr = (err_t)strdup(parser_errstring);
 		if (cfg) parser_free_conf (cfg);
