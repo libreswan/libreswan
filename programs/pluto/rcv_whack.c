@@ -118,6 +118,7 @@ void do_whacklisten()
 	daily_log_reset();
 	reset_adns_restart_count();
 	set_myFQDN();
+//	find_ifaces();
 	load_preshared_secrets(NULL_FD);
 	load_groups();
 }
