@@ -300,29 +300,17 @@ int parser_y_eof(void)
 %%
 
 <<EOF>>	{
-<<<<<<< HEAD
 #if 0
 	printf("stacktop->filename = %s\n",
 		stacktop->filename != NULL ? stacktop->filename : "NULL");
 #endif
-=======
->>>>>>> 36605602d4681ec6343128d66d92f834f5338ad9
 	if (stacktop->file){
 	    char ch;
 	    fseek(stacktop->file,-1L,SEEK_END);
 	    ch = (char)fgetc(stacktop->file);
-<<<<<<< HEAD
 	    if (ch != '\n' && stacktop->once){
 		stacktop->once = 0;
 		return EOL;	
-=======
-	    if (ch != '\n'){
-#if 0
-	        fprintf(stderr,"ERROR: EOF at EOL condition in %s\n",
-	                stacktop->filename);
-#endif
-	      yyterminate();
->>>>>>> 36605602d4681ec6343128d66d92f834f5338ad9
 	    }
 	}
 	if(parser_y_eof()) {
