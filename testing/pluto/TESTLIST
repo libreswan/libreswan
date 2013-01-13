@@ -432,6 +432,7 @@ umlplutotest    netkey-pluto-02			good
 umlplutotest    netkey-pluto-03-sourceip        good
 umlplutotest    netkey-pluto-04			good
 umlplutotest    netkey-pluto-05			good
+umlplutotest    netkey-psk-pluto-06		good
 # Selinux / secure labeling tests (require netkey and selinux)
 umlplutotest    loopback-pluto-01		good
 umlplutotest    loopback-pluto-02		good
