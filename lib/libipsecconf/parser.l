@@ -59,6 +59,7 @@ struct ic_inputsource {
 	YY_BUFFER_STATE state;
 	FILE  *file;
 	unsigned int line;
+	unsigned int once;
 	char  *filename;
 	int    fileglobcnt;
 	glob_t fileglob;
@@ -96,6 +97,7 @@ void parser_y_init (const char *name, FILE *f)
 {
 	memset(&ic_private, 0, sizeof(ic_private));
 	ic_private.stack[0].line = 1;
+	ic_private.stack[0].once = 1;
 	ic_private.stack[0].file = f;
 	ic_private.stack[0].filename = strdup(name);
 	stacktop = &ic_private.stack[0];
@@ -152,6 +154,7 @@ int parser_y_nextglobfile(struct ic_inputsource *iis)
 	if(iis->filename) { free(iis->filename); iis->filename=NULL;}
 
 	iis->line  = 1;
+	iis->once = 1;
 	iis->filename = strdup(iis->fileglob.gl_pathv[fcnt]);
 
 	/* open the file */
@@ -297,16 +300,17 @@ int parser_y_eof(void)
 %%
 
 <<EOF>>	{
+#if 0
+	printf("stacktop->filename = %s\n",
+		stacktop->filename != NULL ? stacktop->filename : "NULL");
+#endif
 	if (stacktop->file){
 	    char ch;
 	    fseek(stacktop->file,-1L,SEEK_END);
 	    ch = (char)fgetc(stacktop->file);
-	    if (ch != '\n'){
-#if 0
-	        fprintf(stderr,"ERROR: EOF at EOL condition in %s\n",
-	                stacktop->filename);
-#endif
-	      yyterminate();
+	    if (ch != '\n' && stacktop->once){
+		stacktop->once = 0;
+		return EOL;	
 	    }
 	}
 	if(parser_y_eof()) {
