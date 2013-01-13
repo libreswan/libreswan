@@ -28,7 +28,7 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
 
 def connect_to_kvm(args):
     cmd = "sudo virsh console %s"%args.hostname
-    timeout = 180
+    timer = 180
     child = pexpect.spawn (cmd)
     prompt = "root@%s " % (args.hostname) 
 
@@ -63,31 +63,31 @@ def connect_to_kvm(args):
     return child
 
 def compile_on (args,child):
-    timeout = 900
+    timer = 900
     prompt = "root@%s source"%args.hostname
     cmd = "cd /source/"
-    read_exec_shell_cmd( child, cmd, prompt, timeout)
+    read_exec_shell_cmd( child, cmd, prompt, timer)
     cmd = "rm -fr OBJ*"
-    read_exec_shell_cmd( child, cmd, prompt, timeout)
+    read_exec_shell_cmd( child, cmd, prompt, timer)
     cmd = "make programs module 2>&1 > compile-log.txt"
-    read_exec_shell_cmd( child, cmd, prompt, timeout)
+    read_exec_shell_cmd( child, cmd, prompt, timer)
 
     return  
 
 def make_install (args, child):
-    timeout=300
+    timer=300
     prompt = "root@%s source"%args.hostname
     cmd = "cd /source/"
-    read_exec_shell_cmd( child, cmd, prompt, timeout)
+    read_exec_shell_cmd( child, cmd, prompt, timer)
     cmd = "make install mdoule_install  2>&1 >> compile-log.txt"
-    read_exec_shell_cmd( child, cmd, prompt, timeout)
+    read_exec_shell_cmd( child, cmd, prompt, timer)
     return
 
 def run_test(args, child):
     print 'HOST : ', args.hostname 
     print 'TEST : ', args.testname
 
-    timeout = 180
+    timer = 180
     prompt = "root@%s %s"%(args.hostname, args.testname)
 
     cmd = "cd /testing/pluto/%s " % (args.testname)
@@ -100,23 +100,23 @@ def run_test(args, child):
     child.logfile = f
 
     cmd = '/testing/guestbin/swanprep --testname %s --hostname %s'%(args.testname,args.hostname)
-    read_exec_shell_cmd( child, cmd, prompt, timeout)
+    read_exec_shell_cmd( child, cmd, prompt, timer)
 
     cmd = "rm -fr /tmp/pluto.log"
-    read_exec_shell_cmd( child, cmd, prompt, timeout) 
+    read_exec_shell_cmd( child, cmd, prompt, timer) 
 
     cmd = 'ln -s /testing/pluto/%s/OUTPUT/pluto.%s.log /tmp/pluto.log'%(args.testname,args.hostname)
-    read_exec_shell_cmd( child, cmd, prompt, timeout)
+    read_exec_shell_cmd( child, cmd, prompt, timer)
 
     cmd = './testparams.sh'
-    read_exec_shell_cmd( child, cmd, prompt, timeout)
+    read_exec_shell_cmd( child, cmd, prompt, timer)
 
     cmd = "./%sinit.sh" %  (args.hostname) 
-    read_exec_shell_cmd( child, cmd, prompt, timeout)
+    read_exec_shell_cmd( child, cmd, prompt, timer)
 
     cmd = "./%srun.sh" %  (args.hostname) 
     if os.path.exists(cmd):
-        read_exec_shell_cmd( child, cmd, prompt, timeout)
+        read_exec_shell_cmd( child, cmd, prompt, timer)
         time.sleep(60)
 
     cmd = "END of test %s" % (args.testname)
@@ -128,12 +128,12 @@ def run_test(args, child):
 def main():
 
     parser = argparse.ArgumentParser(description='runkvm arguments.')
-    parser.add_argument('--testname', '-t', action='store', default='basic-pluto-01', help='The name of the test to run.')
+    parser.add_argument('--testname', '-t', action='store', help='The name of the test to run.')
     parser.add_argument('--hostname', '-H', action='store', default='east', help='The name of the host to run.')
-    parser.add_argument('--compile', help='compile the source on host <hostname>.')
+    parser.add_argument('--compile', action="store_true", help='compile the source on host <hostname>.')
     parser.add_argument('--install', action="store_true", help='run make install module_install .')
     parser.add_argument('--reboot', help='first reboot the host')
-    parser.add_argument('--timeout', default=120, help='timeout for each command for expect.')
+    parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
 
     child = connect_to_kvm(args)
