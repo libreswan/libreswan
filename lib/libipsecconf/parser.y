@@ -459,6 +459,7 @@ struct config_parsed *parser_load_conf (const char *file, err_t *perr)
 	if (perr) *perr = NULL;
 
 	cfg = (struct config_parsed *)malloc(sizeof(struct config_parsed));
+<<<<<<< HEAD
 	if (!cfg) 
 	{
 	    snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
@@ -468,6 +469,46 @@ struct config_parsed *parser_load_conf (const char *file, err_t *perr)
 	memset(cfg, 0, sizeof(struct config_parsed));
 	if (strncmp(file, "-", sizeof("-")) == 0) {
 		f = fdopen(STDIN_FILENO, "r");
+=======
+	if (cfg) {
+		memset(cfg, 0, sizeof(struct config_parsed));
+		if (strncmp(file, "-", sizeof("-")) == 0) {
+			f = fdopen(STDIN_FILENO, "r");
+		}
+		else {
+			f = fopen(file, "r");
+		}
+		if (f) {
+			yyin = f;
+			parser_y_init(file, f);
+			_save_errors_=1;
+			TAILQ_INIT(&cfg->sections);
+			TAILQ_INIT(&cfg->comments);
+			_parser_cfg = cfg;
+
+	   	        if (yyparse()!=0) {
+				if (parser_errstring[0]=='\0') {
+					snprintf(parser_errstring, ERRSTRING_LEN,
+						"Unknown error...");
+				}
+				_save_errors_=0;
+				err++;
+			}
+			else if (parser_errstring[0]!='\0') {
+				err++;
+			}
+			else {
+				/**
+				 * Config valid
+				 */
+			}
+		}
+		else {
+			snprintf(parser_errstring, ERRSTRING_LEN, "can't load file '%s'",
+				file);
+			err++;
+		}
+>>>>>>> 36605602d4681ec6343128d66d92f834f5338ad9
 	}
 	else {
 		f = fopen(file, "r");

@@ -5,8 +5,10 @@ v3.1 (unreleased)
 * libswan: logging cleanups from openswan 2.5.x era [DHR/Antony/Paul]
 * pluto: Debug logs were not written if a file was specified [Paul/Antony]
 * pluto: fix for additional proposal sizes when enabling 1DES [Paul]
+* pluto: Fix for orienting certain rw conns caused by new addconn [Philippe]
 * NETKEY: Show traffic stats in ipsec auto --status and teardown [Wes/Paul]
 * SAREF: patches for Ubuntu kernel 3.2.0-33.52 [Simon]
+* libipsecconf: Improved fix for osw#1370  (segfault on no EOL) [Philippe]
 
 v3.0 (January 02, 2013)
 * FORK: Rename from Openswan to Libreswan [Team]

@@ -118,7 +118,10 @@ void do_whacklisten()
 	daily_log_reset();
 	reset_adns_restart_count();
 	set_myFQDN();
+<<<<<<< HEAD
 //	find_ifaces();
+=======
+>>>>>>> 36605602d4681ec6343128d66d92f834f5338ad9
 	load_preshared_secrets(NULL_FD);
 	load_groups();
 }
