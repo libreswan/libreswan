@@ -11,7 +11,7 @@ except ImportError , e:
         module = str(e)[16:]
         sys.exit("we requires the python argparse module")
 
-parser = argparse.ArgumentParser(description='swanprep arguments')
+parser = argparse.ArgumentParser(description='swan-prep arguments')
 parser.add_argument('--testname', '-t', action='store', default='ikev2-05-basic-psk', help='The name of the test to prepapre')
 parser.add_argument('--hostname', '-H', action='store', default='', help='The name of the host to prepare as')
 # we should get this from the testparams.sh file?
@@ -36,12 +36,12 @@ else:
 
 if args.userland:
 	if not args.userland in ( "libreswan","strongswan","racoon","shrew", "openswan"):
-		sys.exit("swanprep: unknown userland type '%s'"%args.userland)
+		sys.exit("swan-prep: unknown userland type '%s'"%args.userland)
 	userland = args.userland
 else:
 	userland = "libreswan"
 
-print "swanprep running on %s for test %s with userland %s"%(hostname,testname,userland)
+print "swan-prep running on %s for test %s with userland %s"%(hostname,testname,userland)
 
 # wipe any old configs in /etc/ipsec.*
 if os.path.isfile("/etc/ipsec.conf"):
@@ -54,17 +54,7 @@ if os.path.isdir("/etc/ipsec.d"):
 
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
-	shutil.copy("/testing/pluto/%s/%s.conf"%(testname,hostname),"/etc/ipsec.conf")
-		
-	src_file = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
-	if os.path.isfile(src_file):
-		shutil.copy(src_file,"/etc/ipsec.secrets")
-	else:
-		src_file = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
-		if os.path.isfile(src_file):
-			shutil.copy(src_file,"/etc/ipsec.secrets")
 
-	os.chmod("/etc/ipsec.secrets",0600)
 	# this brings in the nss *.db files that are path-specific - they have pathnames hardcoded inside the file
 	#shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname, "/etc/")
 	distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname, "/etc/ipsec.d/")
@@ -74,13 +64,27 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 		if not os.path.isdir(dir):
 			os.mkdir(dir)
 
+	# test specific files
+	shutil.copy("/testing/pluto/%s/%s.conf"%(testname,hostname),"/etc/ipsec.conf")
+	src_file = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
+	if os.path.isfile(src_file):
+		shutil.copy(src_file,"/etc/ipsec.secrets")
+	else:
+		src_file = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
+		if os.path.isfile(src_file):
+			shutil.copy(src_file,"/etc/ipsec.secrets")
+	os.chmod("/etc/ipsec.secrets",0600)
+
 if userland == "strongswan":
 	#  strongswan specific
 	for dir in ( "/etc/ipsec.d/aacerts", "/etc/ipsec.d/ocspcerts"):
 		os.mkdir(dir)
 
-if userland == "racoon2":
+if userland == "racoon2" or userland == "racoon":
 	# setup racoon
 	# note: tests do this manual - needs to be merged in
-	print "racoon2 setup needs to be pulled from individual tests into swanprep"
+	print "racoon setup needs to be pulled from individual tests into swan-prep"
+
+if userland == "shrew":
+	print "shrew not yet tested/integrated"
 

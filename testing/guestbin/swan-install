@@ -4,3 +4,10 @@ pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
 cd /source
 make install
 make module_install
+# ensure selinux bits
+restorecon /usr/local/sbin -Rv
+restorecon /usr/local/libexec/ipsec -Rv
+# disable autostarting via systemd
+sed -i "Restart=always/Restart=no/" /lib/systemd/system/ipsec.service
+systemctl daemon-reload
+

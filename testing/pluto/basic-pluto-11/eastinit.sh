@@ -1,6 +1,6 @@
 : ==== start ====
 TESTNAME=basic-pluto-11
-/testing/guestbin/swanprep --testname $TESTNAME
+/testing/guestbin/swan-prep --testname $TESTNAME
 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started

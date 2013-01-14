@@ -100,7 +100,7 @@ def run_test(args, child):
     f = open(output_file, 'w') 
     child.logfile = f
 
-    cmd = '/testing/guestbin/swanprep --testname %s --hostname %s'%(args.testname,args.hostname)
+    cmd = '/testing/guestbin/swan-prep --testname %s --hostname %s'%(args.testname,args.hostname)
     read_exec_shell_cmd( child, cmd, prompt, timer)
 
     cmd = "rm -fr /tmp/pluto.log"
