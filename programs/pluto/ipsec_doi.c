@@ -883,6 +883,21 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
     
     ini = " ";
     fin = "}";
+
+#ifdef XAUTH
+    if (st->st_xauth_username) {
+	b = b + strlen(b);
+	snprintf(b, sad_len-(b-sadetails)-1
+	     , "%sXAUTHuser=%s"
+	     , ini
+	     , st->st_xauth_username ? st->st_xauth_username : "none?"
+	     );
+    
+    ini = " ";
+    fin = "}";
+
+    }
+#endif
     
     strcat(b, fin);
 }
