@@ -132,7 +132,7 @@ def main():
     parser.add_argument('--hostname', '-H', action='store', default='east', help='The name of the host to run.')
     parser.add_argument('--compile', action="store_true", help='compile the source on host <hostname>.')
     parser.add_argument('--install', action="store_true", help='run make install module_install .')
-    parser.add_argument('--reboot', help='first reboot the host')
+    parser.add_argument('--reboot', action="store_true", help='first reboot the host')
     parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
 
