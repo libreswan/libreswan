@@ -1,6 +1,6 @@
 : ==== start ====
 TESTNAME=basic-pluto-01
-/testing/guestbin/swanprep --testname $TESTNAME
+/testing/guestbin/swan-prep --testname $TESTNAME
 
 # confirm that the network is alive
 ping -n -c 4 -I 192.0.1.254 192.0.2.254

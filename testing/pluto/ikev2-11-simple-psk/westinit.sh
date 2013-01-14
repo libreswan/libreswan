@@ -1,6 +1,6 @@
 : ==== start ====
 TESTNAME=ikev2-11-simple-psk
-/testing/guestbin/swanprep --testname $TESTNAME
+/testing/guestbin/swan-prep --testname $TESTNAME
 
 # confirm that the network is alive
 ping -n -c 2 -I 192.0.1.254 192.0.2.254

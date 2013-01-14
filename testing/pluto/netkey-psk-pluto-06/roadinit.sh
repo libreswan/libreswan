@@ -3,7 +3,7 @@
 TESTNAME=netkey-psk-pluto-06
 hostname road.uml.freeswan.org
 
-/testing/guestbin/swanprep --testname $TESTNAME 
+/testing/guestbin/swan-prep --testname $TESTNAME 
 ipsec setup stop
 pidof pluto >/dev/null && killall pluto 2> /dev/null
 rm -fr /var/run/pluto/pluto.pid
