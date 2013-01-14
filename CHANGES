@@ -6,6 +6,7 @@ v3.1 (unreleased)
 * pluto: Debug logs were not written if a file was specified [Paul/Antony]
 * pluto: fix for additional proposal sizes when enabling 1DES [Paul]
 * pluto: Fix for orienting certain rw conns caused by new addconn [Philippe]
+* pluto: log XAUTHusername in the "established IPsec SA" line [Paul]
 * NETKEY: Show traffic stats in ipsec auto --status and teardown [Wes/Paul]
 * SAREF: patches for Ubuntu kernel 3.2.0-33.52 [Simon]
 * libipsecconf: Improved fix for osw#1370  (segfault on no EOL) [Philippe]
