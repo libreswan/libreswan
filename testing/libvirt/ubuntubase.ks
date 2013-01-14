@@ -103,6 +103,7 @@ ln -s /testing/guestbin/swan-init /usr/bin/swan-init
 ln -s /testing/guestbin/swan-prep /usr/bin/swan-prep
 ln -s /testing/guestbin/swan-build /usr/bin/swan-build
 ln -s /testing/guestbin/swan-install /usr/bin/swan-install
+ln -s /testing/guestbin/swan-update /usr/bin/swan-update
 ln -s /testing/guestbin/swan-run /usr/bin/swan-run
 
 %end
