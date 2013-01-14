@@ -1,0 +1,90 @@
+#!/usr/bin/python
+#
+# This script is run by a VM host (eg "west") to prepare itself for testing
+# It should be passed a testname as its onyl argument
+
+import os,sys,socket,shutil,distutils.dir_util
+
+try:
+	import argparse
+except ImportError , e:
+        module = str(e)[16:]
+        sys.exit("we requires the python argparse module")
+
+parser = argparse.ArgumentParser(description='swanprep arguments')
+parser.add_argument('--testname', '-t', action='store', default='ikev2-05-basic-psk', help='The name of the test to prepapre')
+parser.add_argument('--hostname', '-H', action='store', default='', help='The name of the host to prepare as')
+# we should get this from the testparams.sh file?
+parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
+args = parser.parse_args()
+
+if args.hostname:
+	hostname = args.hostname
+else:
+	hostname = socket.gethostname()
+if "." in hostname:
+	hostname = hostname.split(".")[0]
+
+if args.testname:
+	#if os.path.isdir("/testing/pluto/%s"%args.testname):
+	#	testname = args.testname
+	#else:
+	#	sys.exit("Unknown or bad testname '%s'"%args.testname)
+	testname = args.testname
+else:
+	testname = "ikev2-05-basic-psk"
+
+if args.userland:
+	if not args.userland in ( "libreswan","strongswan","racoon","shrew", "openswan"):
+		sys.exit("swanprep: unknown userland type '%s'"%args.userland)
+	userland = args.userland
+else:
+	userland = "libreswan"
+
+print "swanprep running on %s for test %s with userland %s"%(hostname,testname,userland)
+
+# wipe any old configs in /etc/ipsec.*
+if os.path.isfile("/etc/ipsec.conf"):
+	os.unlink("/etc/ipsec.conf")
+if os.path.isfile("/etc/ipsec.secrets"):
+	os.unlink("/etc/ipsec.secrets")
+if os.path.isdir("/etc/ipsec.d"):
+	shutil.rmtree("/etc/ipsec.d")
+	os.mkdir("/etc/ipsec.d")
+
+if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
+	# copy in base configs
+
+	# this brings in the nss *.db files that are path-specific - they have pathnames hardcoded inside the file
+	#shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname, "/etc/")
+	distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname, "/etc/ipsec.d/")
+
+	# fill in any missing dirs
+	for dir in ( "/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
+		if not os.path.isdir(dir):
+			os.mkdir(dir)
+
+	# test specific files
+	shutil.copy("/testing/pluto/%s/%s.conf"%(testname,hostname),"/etc/ipsec.conf")
+	src_file = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
+	if os.path.isfile(src_file):
+		shutil.copy(src_file,"/etc/ipsec.secrets")
+	else:
+		src_file = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
+		if os.path.isfile(src_file):
+			shutil.copy(src_file,"/etc/ipsec.secrets")
+	os.chmod("/etc/ipsec.secrets",0600)
+
+if userland == "strongswan":
+	#  strongswan specific
+	for dir in ( "/etc/ipsec.d/aacerts", "/etc/ipsec.d/ocspcerts"):
+		os.mkdir(dir)
+
+if userland == "racoon2" or userland == "racoon":
+	# setup racoon
+	# note: tests do this manual - needs to be merged in
+	print "racoon setup needs to be pulled from individual tests into swanprep"
+
+if userland == "shrew":
+	print "shrew not yet tested/integrated"
+
