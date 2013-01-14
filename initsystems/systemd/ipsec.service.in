@@ -7,6 +7,8 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
+# backwards compatible with plutorestartoncrash=no
+#RestartPreventExitStatus=137 143 SIGTERM SIGKILL
 EnvironmentFile=-@FINALCONFDIR@/sysconfig/pluto
 #Environment=IPSEC_LIBDIR=@FINALLIBEXECDIR@
 #Environment=IPSEC_SBINDIR=@FINALSBINDIR@
