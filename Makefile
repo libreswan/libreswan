@@ -331,7 +331,7 @@ module24:
 	@echo 
 	@echo '========================================================='
 	@echo 
-	@echo 'KLIPS module built successfully. '
+	@echo 'KLIPS24 module built successfully. '
 	@echo ipsec.o is in ${MOD24BUILDDIR}
 	@echo 
 	@(cd ${MOD24BUILDDIR}; ls -l ipsec.o)
