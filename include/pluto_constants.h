@@ -72,6 +72,7 @@ enum keyword_labeled_ipsec {
 enum keyword_xauthby {
     XAUTHBY_FILE = 0,
     XAUTHBY_PAM = 1,
+    XAUTHBY_ALWAYSOK = 2,
 };
 
 #ifdef NAT_TRAVERSAL

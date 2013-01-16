@@ -1091,7 +1091,7 @@ int do_pam_authentication(void *varg)
  * @return int Return Code
  */
 static
-int do_md5_authentication(void *varg)
+int do_file_authentication(void *varg)
 {
     struct thread_arg	*arg = varg;
     char szline[1024]; /* more than enough */
@@ -1250,20 +1250,27 @@ static void * do_authentication(void *varg)
     sigaddset(&sa.sa_mask,SIGINT);
     sigaction(SIGINT,&sa,&oldsa);
     libreswan_log("XAUTH: User %s: Attempting to login" , arg->name.ptr);
-    
+
+    switch(st->st_connection->xauthby)
+    {
 #ifdef XAUTH_HAVE_PAM
-    if (st->st_connection->xauthby == XAUTHBY_PAM) {
+     case XAUTHBY_PAM:
 	libreswan_log("XAUTH: pam authentication being called to authenticate user %s",arg->name.ptr);
 	results = do_pam_authentication(varg);
-    } else
+	break;
 #endif
-    if (st->st_connection->xauthby == XAUTHBY_FILE) {
-	libreswan_log("XAUTH: md5 authentication being called to authenticate user %s",arg->name.ptr);
-	results=do_md5_authentication(varg);
-    } else {
+    case XAUTHBY_FILE:
+	libreswan_log("XAUTH: passwd file authentication being called to authenticate user %s",arg->name.ptr);
+	results = do_file_authentication(varg);
+	break;
+    case XAUTHBY_ALWAYSOK:
+	libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user %s",arg->name.ptr);
+	results = TRUE;
+	break;
+    default:
 	libreswan_log("XAUTH: unknown authentication method requested to authenticate user %s",arg->name.ptr);
-	passert((st->st_connection->xauthby != XAUTHBY_PAM) && (st->st_connection->xauthby != XAUTHBY_FILE));
-    }
+	bad_case(st->st_connection->xauthby);
+   }
 
     if(results)
     {

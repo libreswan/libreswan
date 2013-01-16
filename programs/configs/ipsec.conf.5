@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/23/2012
+.\"      Date: 01/15/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "12/23/2012" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "01/15/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -719,9 +719,23 @@ or
 .PP
 \fBxauthby\fR
 .RS 4
-When XAUTH support is available, set the method used by XAUTH to authenticate the user\&. The currently supported values are \*(Aqfile\*(Aq (the default) or \*(Aqpam\*(Aq\&.
+When XAUTH support is available, set the method used by XAUTH to authenticate the user\&. The currently supported values are
+\fIfile\fR
+(the default),
+\fIpam\fR
+or
+\fIalwaysok\fR\&. The password file is located at
+\fI/etc/ipsec\&.d/passwd\fR, and follows a syntax similar to the Apache htpasswd file, except an additional connection name argument is also present:
 .sp
-The pam option is only available if compiled with USE_XAUTHPAM\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
+\ \&\ \&\ \&\ \&\ \&
+\fIusername:password:conname\fR
+.sp
+For supported password hashing methods, see
+\fBcrypt\fR(3)\&. If pluto is running in FIPS mode, some hash methods, such as MD5, might not be available\&. The pam option is only available if compiled with USE_XAUTHPAM\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
+.sp
+The
+\fIalwaysok\fR
+should only be used if the XAUTH user authentication is not really used, but is required for interoperability, as it defeats the whole point of XAUTH which is to rely on a secret only known by a human\&.
 .RE
 .PP
 \fBmodecfgpull\fR

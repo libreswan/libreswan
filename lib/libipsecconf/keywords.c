@@ -243,6 +243,7 @@ struct keyword_enum_values kw_labeled_ipsec=
 struct keyword_enum_value kw_xauthby_list[]={
     { "file",         XAUTHBY_FILE },
     { "pam",         XAUTHBY_PAM },
+    { "alwaysok",    XAUTHBY_ALWAYSOK },
 };
 
 struct keyword_enum_values kw_xauthby=
