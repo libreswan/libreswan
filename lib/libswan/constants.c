@@ -141,8 +141,8 @@ const char *const payload_name[] = {
 	"ISAKMP_NEXT_17",
 	"ISAKMP_NEXT_18",
 	"ISAKMP_NEXT_19",
-	"ISAKMP_NEXT_NAT-D",
-	"ISAKMP_NEXT_NAT-OA",
+	"ISAKMP_NEXT_NAT-D",  /* 21 - Used to be ISAKMP_NEXT_NATOA_DRAFTS = 130 */
+	"ISAKMP_NEXT_NAT-OA", /* 22 - used to be ISAKMP_NEXT_NAT-OA = 131 */
 	NULL
     };
 
@@ -166,16 +166,22 @@ const char *const payload_names_ikev2[] = {
     NULL
 };
 
-const char *const payload_name_nat_d[] = {
-    "ISAKMP_NEXT_NAT-D",
-    "ISAKMP_NEXT_NAT-OA",
+const char *const payload_name_private_use[] = {
+/*
+    "ISAKMP_NEXT_UNUSED_128", 
+    "ISAKMP_NEXT_UNUSED_129", 
+*/
+    "ISAKMP_NEXT_NATD_DRAFTS", /* we convert this to RFC-3974 value of ISAKMP_NEXT_NAT-D */
+    "ISAKMP_NEXT_NATOA_DRAFTS", /* we convert this to RFC-3974 value of ISAKMP_NEXT_NAT-OA */
+    "ISAKMP_NEXT_CISCO_IKEFRAG", /* proprietary Cisco IKE fragmented payload */
     NULL
 };
 
-static enum_names payload_names_nat_d =
-{ ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_NATOA_DRAFTS, payload_name_nat_d, NULL };
+static enum_names payload_names_private_use =
+{ ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_CISCO_IKEFRAG, payload_name_private_use, NULL };
+
 static enum_names payload_names_ikev2_d =
-{ ISAKMP_NEXT_v2SA, ISAKMP_NEXT_v2EAP, payload_names_ikev2, &payload_names_nat_d };
+{ ISAKMP_NEXT_v2SA, ISAKMP_NEXT_v2EAP, payload_names_ikev2, &payload_names_private_use };
 
 enum_names payload_names =
 { ISAKMP_NEXT_NONE, ISAKMP_NEXT_NATOA_RFC, payload_name, &payload_names_ikev2_d };

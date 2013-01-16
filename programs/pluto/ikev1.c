@@ -1596,15 +1596,22 @@ void process_packet_tail(struct msg_digest **mdp)
 
 #ifdef NAT_TRAVERSAL
 		case ISAKMP_NEXT_NATD_DRAFTS:
-		    np = ISAKMP_NEXT_NATD_RFC;  /* NAT-D relocated */
+		    np = ISAKMP_NEXT_NATD_RFC;  /* NAT-D was a private use type before RFC-3947 */
 		    sd = payload_descs[np];
 		    break;
 
 		case ISAKMP_NEXT_NATOA_DRAFTS:
-		    np = ISAKMP_NEXT_NATOA_RFC;  /* NAT-OA relocated */
+		    np = ISAKMP_NEXT_NATOA_RFC;  /* NAT-OA was a private use type before RFC-3947 */
 		    sd = payload_descs[np];
 		    break;
 #endif
+		case ISAKMP_NEXT_CISCO_IKEFRAG: /* proprietary IKE extension */
+		    loglog(RC_LOG_SERIOUS, "%smessage ignored because proprietary Cisco payload"
+			" type %d (%s) of is not implemented yet "
+			, excuse, np, enum_show(&payload_names, np));
+		    SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
+		    return;
+
 		default:
 		    loglog(RC_LOG_SERIOUS, "%smessage ignored because it contains an unknown or"
 			" unexpected payload type (%s) at the outermost level"
