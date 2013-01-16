@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 01/15/2013
+.\"      Date: 01/16/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "01/15/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "01/16/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -937,11 +937,16 @@ encryption); acceptable values are
 \fByes\fR
 and
 \fBno\fR
-(the default)\&. The two ends need not agree\&. A value of
+(the default)\&.
+.sp
+As of libreswan 3\&.1, both ends
+\fBmust\fR
+agree\&. In previous versions of libreswan, openswan and freeswan, compression was always accepted even if not configured\&. In light of the BEAST attacks on TLS, using compression and encryptions has come under more scrutiny, and it was decided that it should be possible for the local policy of an endpoint to disallow compression\&. A value of
 \fByes\fR
-causes IPsec to propose both compressed and uncompressed, and prefer compressed\&. A value of
+causes pluto to propose compression and reject proposals without it\&. A value of
 \fBno\fR
-prevents IPsec from proposing compression; a proposal to compress will still be accepted\&.
+prevents pluto from proposing compression; a proposal to compress will be
+\fBrejected\fR\&.
 .RE
 .PP
 \fBmetric\fR
