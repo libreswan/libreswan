@@ -10,6 +10,7 @@ v3.1 (unreleased)
 * NETKEY: Show traffic stats in ipsec auto --status and teardown [Wes/Paul]
 * SAREF: patches for Ubuntu kernel 3.2.0-33.52 [Simon]
 * libipsecconf: Improved fix for osw#1370  (segfault on no EOL) [Philippe]
+* XAUTH: Added xauthby=alwaysok option [Paul]
 
 v3.0 (January 02, 2013)
 * FORK: Rename from Openswan to Libreswan [Team]
