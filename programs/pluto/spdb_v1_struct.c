@@ -2463,22 +2463,18 @@ parse_ipsec_sa_body(
 	    int previous_transnum = -1;
 	    int tn;
 
-#ifdef NEVER	/* we think IPcomp is working now */
-	    /**** FUDGE TO PREVENT UNREQUESTED IPCOMP:
-	     **** NEEDED BECAUSE OUR IPCOMP IS EXPERIMENTAL (UNSTABLE).
-	     ****/
 	    if (!(st->st_policy & POLICY_COMPRESS))
 	    {
-		plog("compression proposed by %s, but policy for \"%s\" forbids it"
+		libreswan_log("compression proposed by %s, but policy for \"%s\" forbids it"
 		    , ip_str(&c->spd.that.host_addr), c->name);
-		continue;	/* unwanted compression proposal */
+		return BAD_PROPOSAL_SYNTAX;
 	    }
-#endif
+
 	    if (!can_do_IPcomp)
 	    {
-		libreswan_log("compression proposed by %s, but KLIPS is not configured with IPCOMP"
+		libreswan_log("compression proposed by %s, but kernel has no IPCOMP support"
 		    , ip_str(&c->spd.that.host_addr));
-		continue;
+		return BAD_PROPOSAL_SYNTAX;
 	    }
 
 	    if (well_known_cpi != 0 && !ah_seen && !esp_seen)
