@@ -1,21 +1,24 @@
+# I really am not happy about using symlinks to make this work.
+#
+# I think that there should be a better way to do this.
+# see module26.sh in packaging/makefiles
+#
+
+
 ifndef LIBRESWANSRCDIR
 $(error You Must set LIBRESWANSRCDIR)
 endif
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
-export TOPDIR
-
-CONFIG_SHELL=/bin/sh 
-export CONFIG_SHELL
-
-CONFIG_MODULES=true
-
-KLIPS_TOP=${LIBRESWANSRCDIR}/linux
-VPATH+=${KLIPSSRC}
+KLIPS_TOP := ${LIBRESWANSRCDIR}/linux
 
 # include file with .h-style macros that would otherwise be created by
 # config. Must occur before other includes.
+ifneq ($(strip $(MODULE_EXTRA_INCLUDE)),)
+EXTRA_CFLAGS += -include ${MODULE_EXTRA_INCLUDE}
+endif
+
 ifneq ($(strip $(MODULE_DEF_INCLUDE)),)
 EXTRA_CFLAGS += -include ${MODULE_DEF_INCLUDE}
 endif
@@ -23,27 +26,53 @@ endif
 # Enable DISABLE_UDP_CHECKSUM for KLIPS, see bug #601
 EXTRA_CFLAGS += -DDISABLE_UDP_CHECKSUM
 
-EXTRA_CFLAGS += $(KLIPSCOMPILE)
-EXTRA_CFLAGS += -Wall -DIPCOMP_PREFIX
-#EXTRA_CFLAGS += -Werror
-#EXTRA_CFLAGS += -Wconversion 
-#EXTRA_CFLAGS += -Wmissing-prototypes 
-# 'override CFLAGS' should really be 'EXTRA_CFLAGS'
-
-KERNEL_CFLAGS= $(shell $(MAKE) -C $(TOPDIR) --no-print-directory -s -f Makefile ARCH=$(ARCH) MAKEFLAGS= script SCRIPT='@echo $$(CFLAGS)'   )
-
-MODULE_CFLAGS= $(shell $(MAKE) -C $(TOPDIR) --no-print-directory -s -f Makefile ARCH=$(ARCH) MAKEFLAGS= script SCRIPT='@echo $$(MODFLAGS)'  )
-
-EXTRA_CFLAGS += ${KERNEL_CFLAGS}
-
 EXTRA_CFLAGS += -I${KLIPS_TOP}/include
 EXTRA_CFLAGS += -I${KLIPSSRC}/.
 
-EXTRA_CFLAGS += -I${TOPDIR}/include 
-EXTRA_CFLAGS += -I${LIBZLIBSRCDIR}
+# build version.c using version number from Makefile.ver
+${BUILDDIR}/version.c:	${KLIPSSRC}/version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
+	sed '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' ${KLIPSSRC}/version.in.c >$@
 
-version.c:	${KLIPSSRC}/version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
-	sed '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' $< >$@
+${BUILDDIR}/%.c : ${KLIPSSRC}/%.c
+	ln -s -f $< $@
 
-include ${KLIPSSRC}/Makefile.fs2_4
+${BUILDDIR}/%.h : ${KLIPSSRC}/%.h
+	ln -s -f $< $@
+
+${BUILDDIR}/%.c : ${KLIPSSRC}/des/%.c
+	ln -s -f $< $@
+
+${BUILDDIR}/%.S : ${KLIPSSRC}/des/%.S
+	ln -s -f $< $@
+
+${BUILDDIR}/%.c : ${KLIPSSRC}/aes/%.c
+	ln -s -f $< $@
+
+${BUILDDIR}/%.c : ${KLIPSSRC}/alg/%.c
+	ln -s -f $< $@
+
+.PRECIOUS: ${BUILDDIR}/%.c ${BUILDDIR}/%.h
+
+# I'm not fixing this in a better way, because we should use the
+# in-kernel zlib!
+${BUILDDIR}/deflate.c: ${BUILDDIR}/deflate.h
+${BUILDDIR}/infblock.c: ${BUILDDIR}/infblock.h ${BUILDDIR}/inftrees.h
+${BUILDDIR}/infblock.c: ${BUILDDIR}/infcodes.h  ${BUILDDIR}/infutil.h
+${BUILDDIR}/infcodes.c: ${BUILDDIR}/inffast.h
+${BUILDDIR}/inftrees.c: ${BUILDDIR}/inffixed.h
+${BUILDDIR}/trees.c: ${BUILDDIR}/trees.h
+
+MODULE26=true
+include ${LIBRESWANSRCDIR}/packaging/makefiles/module.defs 
+ifneq ($(strip $(MODULE_DEFCONFIG)),)
+include ${MODULE_DEFCONFIG}
+endif
+include ${KLIPSSRC}/Makefile.fs2_6
+
+
+
+
+
+
+
 

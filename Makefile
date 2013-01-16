@@ -290,9 +290,9 @@ kernel:
 
 # module-only building, with error checks
 ifneq ($(strip $(MOD24BUILDDIR)),)
-${MOD24BUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module.make
+${MOD24BUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module24.make
 	mkdir -p ${MOD24BUILDDIR}
-	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module.make ${MOD24BUILDDIR}/Makefile
+	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module24.make ${MOD24BUILDDIR}/Makefile
 	echo "# "                        >> ${MOD24BUILDDIR}/Makefile
 	echo "# Local Variables: "       >> ${MOD24BUILDDIR}/Makefile
 	echo "# compile-command: \"${MAKE} LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} TOPDIR=${KERNELSRC} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG} -f Makefile ipsec.o\""         >> ${MOD24BUILDDIR}/Makefile
@@ -386,13 +386,13 @@ endif
 
 # module-only building, with error checks
 ifneq ($(strip $(MODBUILDDIR)),)
-${MODBUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module26.make
+${MODBUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module.make
 	mkdir -p ${MODBUILDDIR}
 	echo ln -s -f ${LIBRESWANSRCDIR}/linux/net/ipsec/des/*.S ${MODBUILDDIR}
 	(rm -f ${MODBUILDDIR}/des; mkdir -p ${MODBUILDDIR}/des && cd ${MODBUILDDIR}/des && ln -s -f ${LIBRESWANSRCDIR}/linux/net/ipsec/des/* . && ln -s -f Makefile.fs2_6 Makefile)
 	(rm -f ${MODBUILDDIR}/aes; mkdir -p ${MODBUILDDIR}/aes && cd ${MODBUILDDIR}/aes && ln -s -f ${LIBRESWANSRCDIR}/linux/net/ipsec/aes/* . && ln -s -f Makefile.fs2_6 Makefile)
 	mkdir -p ${MODBUILDDIR}/aes
-	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module26.make ${MODBUILDDIR}/Makefile
+	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module.make ${MODBUILDDIR}/Makefile
 	echo "# "                        >> ${MODBUILDDIR}/Makefile
 	echo "# Local Variables: "       >> ${MODBUILDDIR}/Makefile
 	echo "# compile-command: \"${MAKE} -C ${LIBRESWANSRCDIR} ARCH=${ARCH} KERNELSRC=${KERNELSRC} MODBUILDDIR=${MODBUILDDIR} module26\""         >> ${MODBUILDDIR}/Makefile
@@ -400,14 +400,14 @@ ${MODBUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module26.make
 	ln -s -f ${LIBRESWANSRCDIR}/linux/net/ipsec/match*.S ${MODBUILDDIR}
 
 module26:
-	@if [ -f ${KERNELSRC}/Rules.make ] ; then \                 echo "Warning: Building for a 2.6 kernel in what looks like a 2.4 tree"; \
+	@if [ -f ${KERNELSRC}/Rules.make ] ; then \                 echo "Warning: Building for a 2.6+ kernel in what looks like a 2.4 tree"; \
         fi ; \
         ${MAKE}  ${MODBUILDDIR}/Makefile
 	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MODBUILDDIR} SUBDIRS=${MODBUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
 	@echo 
 	@echo '========================================================='
 	@echo 
-	@echo 'KLIPS26 module built successfully. '
+	@echo 'KLIPS module built successfully. '
 	@echo ipsec.ko is in ${MODBUILDDIR}
 	@echo 
 	@(cd ${MODBUILDDIR}; ls -l ipsec.ko)
