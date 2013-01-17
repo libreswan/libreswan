@@ -6,8 +6,6 @@ section contains a
 defining a network connection to be made using IPsec.
 The name given is arbitrary, and is used to identify the connection to
 <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-and
-<citerefentry><refentrytitle>ipsec_manual</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
 Here's a simple example:</para>
 
 <!-- .ne 10 -->
@@ -72,7 +70,6 @@ and
 <emphasis remap='B'>right</emphasis>
 reversed.</para>
 
-<para>Parameters are optional unless marked &ldquo;(required)&rdquo;;
-a parameter required for manual keying need not be included for
-a connection which will use only automatic keying, and vice versa.</para>
+<para>Parameters are optional unless marked &ldquo;(required)&rdquo;
+</para>
 

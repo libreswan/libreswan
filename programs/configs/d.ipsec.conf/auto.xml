@@ -15,11 +15,6 @@ currently-accepted values are
 (signifying that plus an
 <emphasis remap='B'>ipsec auto</emphasis>
 <option>--up</option>),
-<emphasis remap='B'>manual</emphasis>
-(signifying an
-<emphasis remap='B'>ipsec</emphasis>
-<emphasis remap='B'>manual</emphasis>
-<option>--up</option>),
 and
 <emphasis remap='B'>ignore</emphasis>
 (also the default) (signifying no automatic startup operation).
