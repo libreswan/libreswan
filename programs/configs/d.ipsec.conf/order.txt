@@ -64,7 +64,6 @@ d.ipsec.conf/policy_label.xml
 d.ipsec.conf/loopback.xml
 d.ipsec.conf/failureshunt.xml
 d.ipsec.conf/connautoend.xml
-d.ipsec.conf/connmanual.xml
 d.ipsec.conf/configsections.xml
 d.ipsec.conf/myid.xml
 d.ipsec.conf/protostack.xml
