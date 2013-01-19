@@ -60,7 +60,9 @@ def connect_to_kvm(args):
             child.sendline ('swan')
             child.expect ('root.*')
             print  'logged in as root on %s'%args.hostname
-            child.sendline ('TERM=dumb; export TERM; unset LS_COLORS')
+    child.sendline ('TERM=dumb; export TERM; unset LS_COLORS')
+    child.setecho(False) ## this does not seems to work
+    child.sendline("stty -echo")
     return child
 
 def compile_on (args,child):
