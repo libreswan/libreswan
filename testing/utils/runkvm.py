@@ -17,9 +17,11 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
     if os.path.exists(filename):
         f_cmds = open(filename, "r")
         for line in f_cmds:
-            print  line
-            ex.sendline(line)  
-            ex.expect (prompt,timeout=timer, searchwindowsize=100) 
+            line = line.strip()    
+            if line and not line[0] == '#':
+                print  line
+                ex.sendline(line)  
+                ex.expect (prompt,timeout=timer, searchwindowsize=100) 
     else:
         print  filename 
         ex.sendline(filename)
