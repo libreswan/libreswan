@@ -11,6 +11,7 @@ v3.1 (unreleased)
 * SAREF: patches for Ubuntu kernel 3.2.0-33.52 [Simon]
 * libipsecconf: Improved fix for osw#1370  (segfault on no EOL) [Philippe]
 * XAUTH: Added xauthby=alwaysok option [Paul]
+* addconn: If no protostack= is configured, return "netkey" as default [Paul]
 * Bugtracker bugs fixed:
    #8 honour compress=no option [Matt Rogers]
 
