@@ -17,9 +17,11 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
     if os.path.exists(filename):
         f_cmds = open(filename, "r")
         for line in f_cmds:
-            print  line
-            ex.sendline(line)  
-            ex.expect (prompt,timeout=timer, searchwindowsize=100) 
+            line = line.strip()    
+            if line and not line[0] == '#':
+                print  line
+                ex.sendline(line)  
+                ex.expect (prompt,timeout=timer, searchwindowsize=100) 
     else:
         print  filename 
         ex.sendline(filename)
@@ -64,6 +66,21 @@ def connect_to_kvm(args):
     child.setecho(False) ## this does not seems to work
     child.sendline("stty -echo")
     return child
+
+def run_final (args, child):
+
+    timer = 180
+    prompt = "root@%s %s"%(args.hostname, args.testname)
+    output_file = "./OUTPUT/%s.console.txt" % (args.hostname)
+    f = open(output_file, 'a') 
+    child.logfile = f
+    cmd = "./final.sh"
+    if os.path.exists(cmd):
+        read_exec_shell_cmd( child, cmd, prompt, timer)
+    cmd = "ipsec whack --shutdown"
+    read_exec_shell_cmd( child, cmd, prompt, timer)
+    f.close 
+    return
 
 def compile_on (args,child):
     timer = 900
@@ -111,21 +128,16 @@ def run_test(args, child):
     cmd = 'ln -s /testing/pluto/%s/OUTPUT/pluto.%s.log /tmp/pluto.log'%(args.testname,args.hostname)
     read_exec_shell_cmd( child, cmd, prompt, timer)
 
-    cmd = './testparams.sh'
-    read_exec_shell_cmd( child, cmd, prompt, timer)
-
     cmd = "./%sinit.sh" %  (args.hostname) 
     read_exec_shell_cmd( child, cmd, prompt, timer)
 
     cmd = "./%srun.sh" %  (args.hostname) 
     if os.path.exists(cmd):
         read_exec_shell_cmd( child, cmd, prompt, timer)
-        time.sleep(60)
-
-    cmd = "END of test %s" % (args.testname)
-    f.write(cmd)
-    f.close 
-
+        f.close
+        run_final(args,child)
+    else:
+	    f.close 
     return  
 
 def main():
@@ -135,6 +147,7 @@ def main():
     parser.add_argument('--hostname', '-H', action='store', default='east', help='The name of the host to run.')
     parser.add_argument('--compile', action="store_true", help='compile the source on host <hostname>.')
     parser.add_argument('--install', action="store_true", help='run make install module_install .')
+    parser.add_argument('--final', action="store_true", help='run final.sh on the host.')
     parser.add_argument('--reboot', action="store_true", help='first reboot the host')
     parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
@@ -146,8 +159,12 @@ def main():
     if args.install:
         make_install(args,child) 
 
-    if args.testname:
+    if (args.testname and not args.final):
         run_test(args,child)
+
+    if args.final:
+	    run_final(args,child)
+
     return
 
 if __name__ == "__main__":

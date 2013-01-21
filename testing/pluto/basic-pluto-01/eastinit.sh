@@ -13,5 +13,4 @@ rm -fr /var/run/pluto/pluto.pid
 
 ipsec auto --add westnet-eastnet
 ipsec auto --status
-ipsec whack --debug-control --debug-controlmore --debug-crypt
 echo "initdone"
