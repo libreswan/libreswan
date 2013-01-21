@@ -561,7 +561,8 @@ void confwrite_conn(FILE *out,
 		fprintf(out, "\tikev2=insist\n");
 		break;
 	    }
-	    break;
+
+	    break; /* case POLICY_SHUNT_PASS trap */
 
 	case POLICY_SHUNT_PASS:
 	    fprintf(out, "\ttype=passthrough\n");
