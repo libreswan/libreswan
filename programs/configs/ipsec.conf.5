@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 01/16/2013
+.\"      Date: 01/21/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "01/16/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "01/21/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -34,9 +34,7 @@ ipsec.conf \- IPsec configuration and connections
 The optional
 \fIipsec\&.conf\fR
 file specifies most configuration and control information for the Libreswan IPsec subsystem\&. (The major exception is secrets for authentication; see
-\fBipsec.secrets\fR(5)\&.) Its contents are not security\-sensitive
-\fIunless\fR
-manual keying is being done for more than just testing, in which case the encryption/authentication keys in the descriptions for the manually\-keyed connections are very sensitive (and those connection descriptions are probably best kept in a separate file, via the include facility described below)\&.
+\fBipsec.secrets\fR(5)\&.) Its contents are not security\-sensitive\&.
 .PP
 The file is a text file, consisting of one or more
 \fIsections\fR\&. White space followed by
@@ -149,8 +147,7 @@ A
 section contains a
 \fIconnection specification\fR, defining a network connection to be made using IPsec\&. The name given is arbitrary, and is used to identify the connection to
 \fBipsec_auto\fR(8)
-and
-\fBipsec_manual\fR(8)\&. Here\*(Aqs a simple example:
+Here\*(Aqs a simple example:
 .sp
 .if n \{\
 .RS 4
@@ -202,10 +199,10 @@ and
 \fBright\fR
 reversed\&.
 .PP
-Parameters are optional unless marked \(lq(required)\(rq; a parameter required for manual keying need not be included for a connection which will use only automatic keying, and vice versa\&.
+Parameters are optional unless marked \(lq(required)\(rq
 .SS "CONN PARAMETERS: GENERAL"
 .PP
-The following parameters are relevant to both automatic and manual keying\&. Unless otherwise noted, for a connection to work, in general it is necessary for the two ends to agree exactly on the values of these parameters\&.
+The following parameters are relevant to IKE automatic keying\&. Unless otherwise noted, for a connection to work, in general it is necessary for the two ends to agree exactly on the values of these parameters\&.
 .PP
 \fBconnaddrfamily\fR
 .RS 4
@@ -385,7 +382,7 @@ tools\&. In situations calling for more control, it may be preferable for the us
 script, which makes the appropriate adjustments for his system\&.
 .SS "CONN PARAMETERS: AUTOMATIC KEYING"
 .PP
-The following parameters are relevant only to automatic keying, and are ignored in manual keying\&. Unless otherwise noted, for a connection to work, in general it is necessary for the two ends to agree exactly on the values of these parameters\&.
+The following parameters are relevant to automatic keying via IKE\&. Unless otherwise noted, for a connection to work, in general it is necessary for the two ends to agree exactly on the values of these parameters\&.
 .PP
 \fBauto\fR
 .RS 4
@@ -401,11 +398,6 @@ what operation, if any, should be done automatically at IPsec startup; currently
 \fBstart\fR
 (signifying that plus an
 \fBipsec auto\fR
-\fB\-\-up\fR),
-\fBmanual\fR
-(signifying an
-\fBipsec\fR
-\fBmanual\fR
 \fB\-\-up\fR), and
 \fBignore\fR
 (also the default) (signifying no automatic startup operation)\&. See the
@@ -993,19 +985,6 @@ what to do with packets when negotiation fails\&. The default is
 \fBreject\fR
 have the obvious meanings\&.
 .RE
-.SS "CONN PARAMETERS: MANUAL KEYING"
-.PP
-This command was obsoleted around the same time that Al Gore invented the internet\&. ipsec manual was used in the jurassic period to load static keys into the kernel\&. There are no rational reasons to use this, and it is not supported anymore\&. If you need to create static SAs, then you can use
-\fBipsec spi\fR
-and
-\fBipsec eroute\fR
-when using KLIPS or
-\fBip xfrm \fR
-or
-\fBsetkey\fR
-when using NETKEY\&.
-.PP
-No rational person uses static keys\&. They are not easier to use\&. REPEAT: they are not easier to use\&.
 .SH "CONFIG SECTIONS"
 .PP
 At present, the only
@@ -1025,7 +1004,6 @@ config setup
 	klipsdebug=none
 	plutodebug=control
 	protostack=auto
-	manualstart=
 \fR
 .fi
 .if n \{\
@@ -1073,8 +1051,6 @@ is the default;
 must be used to denote no interfaces, or when using the NETKEY stack\&. If
 \fB%defaultroute\fR
 is used (implicitly or explicitly) information about the default route and its interface is noted for use by
-\fBipsec_manual\fR(8)
-and
 \fBipsec_auto\fR(8)\&.)
 .RE
 .PP
@@ -1270,7 +1246,15 @@ unique, so a new (automatically\-keyed) connection using the same ID is almost i
 .PP
 \fBplutorestartoncrash\fR
 .RS 4
-prevent pluto from restarting after it crashed\&. This option should only be used when debugging a crasher\&. It will prevent overwriting a core file on a new start, or a cascade of core files\&. This option is also required if used with plutostderrlog= to avoid clearing the logs of the crasher\&. Values can be yes (the default) or no\&.
+prevent pluto from restarting after it crashed\&. This option should only be used by developers when debugging a crasher\&. It will prevent overwriting a core file on a new start, or a cascade of core files\&. This option is also required if used with plutostderrlog= to avoid clearing the logs of the crasher\&. Values can be yes (the default) or no\&.
+.sp
+This option is ignored on modern init systems such as
+\fBsystemd\fR(1)
+and upstart\&. For systemd, change the
+\fIipsec\&.service\fR
+file to contain
+\fIRestart=no\fR\&. See
+\fBsystemd.service\fR(5)
 .RE
 .PP
 \fBplutostderrlog\fR
@@ -1585,7 +1569,6 @@ When choosing a connection to use to respond to a negotiation which doesn\*(Aqt 
 \fBipsec\fR(8),
 \fBipsec_ttoaddr\fR(8),
 \fBipsec_auto\fR(8),
-\fBipsec_manual\fR(8),
 \fBipsec_rsasigkey\fR(8)
 .SH "HISTORY"
 .PP
@@ -1617,11 +1600,6 @@ option is ambiguous\&. Should the SA permits any port through or should the SA n
 \fB%one\fR
 may be introduced in the future to separate these two cases\&.
 .PP
-\fIipsec_manual\fR
-is not nearly as generous about the syntax of subnets, addresses, etc\&. as the usual Libreswan user interfaces\&. Four\-component dotted\-decimal must be used for all addresses\&. It
-\fIis\fR
-smart enough to translate bit\-count netmasks to dotted\-decimal form\&.
-.PP
 It would be good to have a line\-continuation syntax, especially for the very long lines involved in RSA signature keys\&.
 .PP
 \fBFirst packet caching\fR
@@ -1644,10 +1622,6 @@ The ability to specify different identities,
 In principle it might be necessary to control MTU on an interface\-by\-interface basis, rather than with the single global override that
 \fBoverridemtu\fR
 provides\&. This feature is planned for a future release\&.
-.PP
-A number of features which
-\fIcould\fR
-be implemented in both manual and automatic keying actually are not yet implemented for manual keying\&. This is unlikely to be fixed any time soon\&.
 .PP
 If conns are to be added before DNS is available,
 \fBleft=\fR\fIFQDN\fR,

@@ -3339,8 +3339,10 @@ show_one_sr(struct connection *c
 		 , sr->that.cert_filename);
     }
 
-    whack_log(RC_COMMENT, "\"%s\"%s:     myip=%s; hisip=%s%s%s%s%s%s%s;"
-	      , c->name, instance, srcip, dstip
+    whack_log(RC_COMMENT, "\"%s\"%s:     %s; myip=%s; hisip=%s%s%s%s%s%s%s;"
+	      , c->name, instance
+	      , oriented(*c) ? "oriented" : "unoriented"
+	      , srcip, dstip
 	      , thissemi, thisup
 	      , thatsemi, thatup
 	      , thiscertsemi

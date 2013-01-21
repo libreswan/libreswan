@@ -1,8 +1,10 @@
 #!/bin/bash
+. ../../../kvmsetup.sh
 . ./testparams.sh 
+. $LIBRESAWNBASE/testing/utils/functions.sh
 
 rm -fr OUTPUT/*
-mkdir  -m777 OUTPUT
+mkdir  -pm777 OUTPUT
 
 if [ -f eastinit.sh ] ; then
 	RESPONDER=east
@@ -41,6 +43,7 @@ function wait_till_pid_end {
 	PID=$2
 	echo "will wait till $NAME pid $PID ends"
 	p=$PID
+	set +e
 	while [ "$p" == "$PID" ]
 	do
 		P1=`ps -p $PID | grep $PID`
@@ -50,7 +53,9 @@ function wait_till_pid_end {
 			set $P1
 			p=$1
 		fi
+		sleep 2
 	done
+	set -e
 }
 
 sudo /sbin/tcpdump -w ./OUTPUT/$SWAN12_PCAP -n -i swan12  not port 22 & 
@@ -73,6 +78,10 @@ RESPONDER_PID=$!
 
 wait_till_pid_end "$INITIATOR" $INITIATOR_PID
 wait_till_pid_end "$RESPONDER" $RESPONDER_PID
+echo "start final.sh on responder $RESPONDER for $TESTNAME"
+../../utils/runkvm.py --final --hostname $RESPONDER --testname $TESTNAME &
+RESPONDER_FINAL_PID=$!
+wait_till_pid_end "$RESPONDER" $RESPONDER_FINAL_PID
 
 if [ -n "$NIC_PID" ] ; then
 	kill -9 $NIC_PID

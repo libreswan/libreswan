@@ -127,15 +127,15 @@ pluto_init_log(void)
     if (log_to_stderr)
 	setbuf(stderr, NULL);
 
-    if (log_to_file && (pluto_log_file != NULL))
+    if (log_to_file && (pluto_log_file != NULL)) {
 	pluto_log_fd =  fopen(pluto_log_file, "a");
-
 	if(pluto_log_fd == NULL) {
  		fprintf(stderr, "Cannot open logfile '%s': %s", pluto_log_file, strerror(errno));
 		log_to_file = FALSE;
 	} else {
 		setbuf(pluto_log_fd, NULL);
 	}
+    }
 
     if (log_to_syslog)
 	openlog("pluto", LOG_CONS | LOG_NDELAY | LOG_PID, LOG_AUTHPRIV);
