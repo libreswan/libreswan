@@ -458,6 +458,7 @@ void confwrite_conn(FILE *out,
 	lset_t failure_policy = (conn->policy & POLICY_FAIL_MASK);
 	lset_t shunt_policy= (conn->policy & POLICY_SHUNT_MASK);
 	lset_t ikev2_policy = (conn->policy & POLICY_IKEV2_MASK);
+	lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 
 	switch(shunt_policy) {
 	case POLICY_SHUNT_TRAP:
@@ -558,6 +559,21 @@ void confwrite_conn(FILE *out,
 		fprintf(out, "\tikev2=insist\n");
 		break;
 	    }
+
+	    switch(ike_frag_policy) {
+	    case 0:
+		fprintf(out, "\tike_frag=never\n"); 
+		break;
+
+	    case POLICY_IKE_FRAG_ALLOW:
+		/* it's the default, do not print anything */
+		/* fprintf(out, "\tike_frag=yes\n"); */
+		break;
+		
+	    case POLICY_IKE_FRAG_ALLOW|POLICY_IKE_FRAG_FORCE:
+		fprintf(out, "\tike_frag=force\n");
+		break;
+	     }
 
 	    break; /* case POLICY_SHUNT_PASS trap */
 

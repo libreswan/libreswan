@@ -443,6 +443,12 @@ enum four_options {
 	fo_insist  = 3   /* propose, and only accept if peer agrees */
 };
 
+enum ynf_options {
+	ynf_no   = 0,
+	ynf_yes  = 1,
+	ynf_force = 2,
+};
+
 enum saref_tracking {
 	sat_yes = 0, /* SAref tracking via _updown - the default */
 	sat_no = 1, /* no SAref tracking - third party will handle this */
@@ -539,6 +545,12 @@ enum pluto_policy {
 
 	POLICY_SAREF_TRACK    = LELEM(32), /* Saref tracking via _updown */
 	POLICY_SAREF_TRACK_CONNTRACK    = LELEM(33), /* use conntrack optimization */
+
+	POLICY_IKE_FRAG_ALLOW = LELEM(34),
+	POLICY_IKE_FRAG_FORCE = LELEM(35),
+	POLICY_IKE_FRAG_MASK = POLICY_IKE_FRAG_ALLOW|POLICY_IKE_FRAG_FORCE,
+
+	/* policy used to be an int, but is not lset_t (unsigned long long type), so max is 63 */
 };
 
 /* Any IPsec policy?  If not, a connection description

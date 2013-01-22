@@ -223,6 +223,17 @@ main_outI1(int whack_sock
 	}
     }
 
+    /* Announce our ability to do IKE Fragmentation */
+    if(c->policy & POLICY_IKE_FRAG_ALLOW) 
+    {
+	numvidtosend++;
+	int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+	if(!out_vid(np, &md.rbody, VID_IKE_FRAGMENTATION)) {
+	    reset_cur_state();
+	    return STF_INTERNAL_ERROR;
+	}
+    }
+
 #ifdef NAT_TRAVERSAL
     DBG(DBG_NATT, DBG_log("nat traversal enabled: %d"
 			  , nat_traversal_enabled));
@@ -719,12 +730,6 @@ main_inI1_outR1(struct msg_digest *md)
 	}
     }
 
-#ifdef XAUTH
-    if(c->spd.this.xauth_server || c->spd.this.xauth_client)
-    {
-        numvidtosend++;
-    }
-#endif
     /* Set up state */
     md->st = st = new_state();
 #ifdef XAUTH
@@ -826,6 +831,7 @@ main_inI1_outR1(struct msg_digest *md)
     /* If XAUTH is required, insert here Vendor ID */
     if(c->spd.this.xauth_server || c->spd.this.xauth_client)
     {
+	    numvidtosend++;
 	    next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 	    if (!out_vendorid(next, &md->rbody, VID_MISC_XAUTH))
 	       return STF_INTERNAL_ERROR;
