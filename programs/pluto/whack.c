@@ -1570,18 +1570,16 @@ main(int argc, char **argv)
 #endif
 
 	case CD_XAUTHBY:
-		switch (optarg)
-		{
-		 case "pam":
+		if ( strcmp(optarg, "pam" ) == 0) {
 			msg.xauthby = XAUTHBY_PAM;
 			continue;
-		 case "file":
+		} else if ( strcmp(optarg, "file" ) == 0) {
 			msg.xauthby = XAUTHBY_FILE;
 			continue;
-		 case "alwaysok":
+		} else  if ( strcmp(optarg, "alwaysok" ) == 0) {
 			msg.xauthby = XAUTHBY_ALWAYSOK;
 			continue;
-		  default:
+		} else {
 			fprintf(stderr, "whack: unknown xauthby method '%s' ignored",optarg);
 		}
 		continue;
