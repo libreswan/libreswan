@@ -1,10 +1,6 @@
 #!/bin/bash
 
 #
-# $Id: functions.sh,v 1.131 2005/11/16 21:31:50 mcr Exp $
-#
-
-#
 #  Root out incorrect shell invocations by failing if invoked with the wrong shell.
 #  This script uses extended BASH syntax, so it is NOT POSIX "/bin/sh" compliant.
 if test -z "${BASH_VERSION}" ; then 
@@ -15,7 +11,7 @@ fi
 #
 #  DHR says, alwasy eat your dogfood!:
 # set -u -e
-set     -e
+set -e
 
 # ??? NOTE:
 # This seems to only sometimes set $success.
@@ -53,15 +49,15 @@ consolediff() {
         fi
     done
 
-    fixedoutput=OUTPUT${KLIPS_MODULE}/${prefix}console-fixed.txt
-    rm -f $fixedoutput OUTPUT${KLIPS_MODULE}/${prefix}console.diff
+    fixedoutput=OUTPUT/${prefix}.console.fixed.txt
+    rm -f $fixedoutput OUTPUT/${prefix}.console.diff
     $CONSOLEDIFFDEBUG && echo Cleanups is $cleanups
     eval $cleanups >$fixedoutput
 
     # stick terminating newline in for fun.
     echo >>$fixedoutput
 
-    if diff -N -u -w -b -B $ref $fixedoutput >OUTPUT${KLIPS_MODULE}/${prefix}console.diff
+    if diff -N -u -w -b -B $ref $fixedoutput >OUTPUT/${prefix}.console.diff
     then
 	echo "${prefix}Console output matched"
     else

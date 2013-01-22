@@ -101,4 +101,5 @@ if [ -f ./OUTPUT/$SWAN12_PCAP.pid ] ; then
         done 
 fi
 
-consolediff "" OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt
+consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt
+consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.console.txt
