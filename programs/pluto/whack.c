@@ -127,7 +127,9 @@ help(void)
 	    " \\\n   "
 	    "[--nm_configured]"
 	    " \\\n   "
-	    "[--xauthby file | pam]"
+#ifdef XAUTH
+	    "[--xauthby file|pam|alwaysok]"
+#endif
 	    " \\\n   "
 	    " [--dontrekey]"
 	    " [--aggrmode]"
@@ -676,6 +678,7 @@ static const struct option long_opts[] = {
     { "xauth", no_argument, NULL, END_XAUTHSERVER + OO },
     { "xauthserver", no_argument, NULL, END_XAUTHSERVER + OO },
     { "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
+    { "xauthby", required_argument, NULL, CD_XAUTHBY + OO},
 #endif
 #ifdef MODECFG
     { "modecfgpull",   no_argument, NULL, CD_MODECFGPULL + OO },
@@ -716,7 +719,6 @@ static const struct option long_opts[] = {
     { "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO},
     { "policylabel", required_argument, NULL, CD_POLICY_LABEL + OO },
 #endif
-    { "xauthby", required_argument, NULL, CD_XAUTHBY + OO},
 #ifdef DEBUG
     { "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
     { "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
@@ -1567,11 +1569,20 @@ main(int argc, char **argv)
 		continue;
 #endif
 
-	case CD_XAUTHBY: /* --xauthby <file or pam>*/
-		if ( strcmp(optarg, "pam" ) == 0) {
+	case CD_XAUTHBY:
+		switch (optarg)
+		{
+		 case "pam":
 			msg.xauthby = XAUTHBY_PAM;
-		} else {
+			continue;
+		 case "file":
 			msg.xauthby = XAUTHBY_FILE;
+			continue;
+		 case "alwaysok":
+			msg.xauthby = XAUTHBY_ALWAYSOK;
+			continue;
+		  default:
+			fprintf(stderr, "whack: unknown xauthby method '%s' ignored",optarg);
 		}
 		continue;
 
