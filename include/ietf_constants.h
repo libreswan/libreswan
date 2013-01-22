@@ -387,7 +387,7 @@ enum next_payload_types {
 	/* SPECIAL CASES */
 	ISAKMP_NEXT_NATD_DRAFTS  = 130,   /* NAT-Traversal: NAT-D (drafts) */
 	ISAKMP_NEXT_NATOA_DRAFTS = 131,   /* NAT-Traversal: NAT-OA (drafts) */
-	ISAKMP_NEXT_CISCO_IKEFRAG = 132,    /* Cisco proprietary IKE fragmentation */
+	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,    /* Cisco proprietary IKE fragmentation */
 };
 
 /* These values are to be used within the Type field of an Attribute (14) 

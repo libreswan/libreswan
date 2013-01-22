@@ -349,6 +349,25 @@ release_whack(struct state *st)
     close_any(st->st_whack_sock);
 }
 
+void release_fragments(struct state *st)
+{
+	struct ike_frag *frag;
+
+	if (!st)
+		return;
+
+	frag = st->ike_frags;
+	while (frag)
+	{
+		struct ike_frag *this = frag;
+		frag = this->next;
+		release_md(this->md);
+		free(this);
+	}
+
+	st->ike_frags = NULL;
+}
+
 /* delete a state object */
 void
 delete_state(struct state *st)
@@ -482,6 +501,7 @@ delete_state(struct state *st)
     }
 
     unreference_key(&st->st_peer_pubkey);
+	release_fragments(st);
 
     free_sa(st->st_sadb);
     st->st_sadb=NULL;

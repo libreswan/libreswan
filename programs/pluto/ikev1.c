@@ -1297,6 +1297,129 @@ process_v1_packet(struct msg_digest **mdp)
 	libreswan_log("IKE message has the Commit Flag set but Pluto doesn't implement this feature; ignoring flag");
     }
 
+	/* Handle IKE fragmentation payloads */
+	if (md->hdr.isa_np == ISAKMP_NEXT_IKE_FRAGMENTATION)
+	{
+		struct isakmp_ikefrag fraghdr;
+		struct ike_frag *ike_frag, **i;
+		int last_frag_index = 0;  /* index of the last fragment */
+		pb_stream frag_pbs;
+ 		libreswan_log("handle IKE fragmentation");
+
+		if (st == NULL)
+		{
+			plog("received IKE fragment, but have no state. Ignoring packet.");
+			return;
+		}
+
+		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc, &md->message_pbs, &frag_pbs)
+		||  pbs_room(&frag_pbs) != fraghdr.isafrag_length || fraghdr.isafrag_np != 0
+		||  fraghdr.isafrag_index == 0 || fraghdr.isafrag_index > 16)
+		{
+			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			return;
+		}
+
+		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
+		if (ike_frag == NULL)
+			return;
+
+		ike_frag->md = md;
+		ike_frag->index = fraghdr.isafrag_index;
+		ike_frag->last = (fraghdr.isafrag_flags & 1);
+		ike_frag->size = pbs_left(&frag_pbs);
+		ike_frag->data = frag_pbs.cur;
+
+		/* Strip non-ESP marker from first fragment */
+		if (md->iface->ike_float == TRUE && ike_frag->index == 1 && ike_frag->data[0] == 0)
+		{
+			ike_frag->data += 1;
+			ike_frag->size -= 1;
+		}
+
+		/* Add the fragment to the state */
+		i = &st->ike_frags;
+		while (1)
+		{
+			if (ike_frag)
+			{
+				/* Still looking for a place to insert ike_frag */
+				if (*i == NULL || (*i)->index > ike_frag->index)
+				{
+					ike_frag->next = *i;
+					*i = ike_frag;
+					ike_frag = NULL;
+				}
+				else if ((*i)->index == ike_frag->index)
+				{
+					/* Replace fragment with same index */
+					struct ike_frag *old = *i;
+					ike_frag->next = old->next;
+					*i = ike_frag;
+					release_md(old->md);
+					free(old);
+					ike_frag = NULL;
+				}
+			}
+
+			if (*i == NULL)
+				break;
+			else if ((*i)->last)
+				last_frag_index = (*i)->index;
+
+			i = &(*i)->next;
+		};
+
+		/* We have the last fragment, reassemble if complete */
+		if (last_frag_index)
+		{
+			size_t size = 0;
+			int prev_index = 0;
+			struct ike_frag *frag;
+			for (frag = st->ike_frags; frag; frag = frag->next)
+			{
+				size += frag->size;
+				if (frag->index != ++prev_index)
+				{
+					break; /* fragment list incomplete */
+				}
+				else if (frag->index == last_frag_index)
+				{
+					struct msg_digest *md = alloc_md();
+					u_int8_t *buffer = alloc_bytes(size, "IKE fragments buffer");
+					size_t offset = 0;
+
+					md->iface = frag->md->iface;
+					md->sender = frag->md->sender;
+					md->sender_port = frag->md->sender_port;
+
+					/* Reassemble fragments in buffer */
+					frag = st->ike_frags;
+					while (frag && frag->index <= last_frag_index)
+					{
+						passert(offset + frag->size <= size);
+						memcpy(buffer + offset, frag->data, frag->size);
+						offset += frag->size;
+						frag = frag->next;
+					}
+
+					init_pbs(&md->packet_pbs, buffer, size, "packet");
+
+					process_packet(&md);
+					if (md != NULL)
+						release_md(md);
+					release_fragments(st);
+
+					break;
+				}
+			}
+		}
+
+		/* Don't release the md, taken care of by the ike_frag code */
+		*mdp = NULL;
+		return;
+	}
+
     /* Set smc to describe this state's properties.
      * Look up the appropriate microcode based on state and
      * possibly Oakley Auth type.
@@ -1605,13 +1728,6 @@ void process_packet_tail(struct msg_digest **mdp)
 		    sd = payload_descs[np];
 		    break;
 #endif
-		case ISAKMP_NEXT_CISCO_IKEFRAG: /* proprietary IKE extension */
-		    loglog(RC_LOG_SERIOUS, "%smessage ignored because proprietary Cisco payload"
-			" type %d (%s) of is not implemented yet "
-			, excuse, np, enum_show(&payload_names, np));
-		    SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
-		    return;
-
 		default:
 		    loglog(RC_LOG_SERIOUS, "%smessage ignored because it contains an unknown or"
 			" unexpected payload type (%s) at the outermost level"
@@ -2012,6 +2128,9 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 */
 		delete_event(st);
 	    }
+
+		/* Delete IKE fragments */
+		release_fragments(st);
 
 	    /* update the previous packet history */
 	    update_retransmit_history(st, md);

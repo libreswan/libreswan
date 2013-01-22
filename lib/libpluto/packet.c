@@ -607,6 +607,32 @@ static field_desc isanat_oa_fields[] = {
 
 struct_desc isakmp_nat_oa = { "ISAKMP NAT-OA Payload", isanat_oa_fields, sizeof(struct isakmp_nat_oa) };
 
+/* ISAKMP IKE Fragmentation Payload
+ * Cisco proprietary, undocumented
+ *
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !      UNKNOWN (always 1)       !     Index     !     Flags     !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~                         Fragment Data                         ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+static field_desc isafrag_fields[] = {
+	{ ft_zig, 8/BITS_PER_BYTE, "next payload type", NULL },
+	{ ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
+	{ ft_len, 16/BITS_PER_BYTE, "length", NULL },
+	{ ft_nat, 16/BITS_PER_BYTE, "unknown", NULL },
+	{ ft_nat, 8/BITS_PER_BYTE, "index", NULL },
+	{ ft_nat, 8/BITS_PER_BYTE, "flags", NULL },
+	{ ft_end, 0, NULL, NULL }
+};
+
+struct_desc isakmp_ikefrag_desc = { "ISAKMP IKE Fragment Payload", isafrag_fields, sizeof(struct isakmp_ikefrag) };
+
 /*
  * GENERIC IKEv2 header.
  * Note differs from IKEv1, in that it has a critical bit
