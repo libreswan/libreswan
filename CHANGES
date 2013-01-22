@@ -12,6 +12,8 @@ v3.1 (unreleased)
 * libipsecconf: Improved fix for osw#1370  (segfault on no EOL) [Philippe]
 * XAUTH: Added xauthby=alwaysok option [Paul]
 * addconn: If no protostack= is configured, return "netkey" as default [Paul]
+* IKEv1: Support for receiving IKEv1 fragments (not RFC) [Wolfgang Nothdurft]
+         (based on the strongswan patch)
 * Bugtracker bugs fixed:
    #8 honour compress=no option [Matt Rogers]
 
