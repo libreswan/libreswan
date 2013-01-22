@@ -8,7 +8,6 @@ rm -fr /var/run/pluto/pluto.pid
 /usr/local/libexec/ipsec/_stackmanager stop
 /usr/local/libexec/ipsec/_stackmanager start 
 /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
-
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add westnet-eastnet

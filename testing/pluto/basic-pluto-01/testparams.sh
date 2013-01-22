@@ -6,6 +6,8 @@ TEST_TYPE=kvmplutotest
 TESTNAME=basic-pluto-01
 XHOSTS='east west' 
 
+export TESTNAME
+
 REF_CONSOLE_FIXUPS="kern-list-fixups.sed nocr.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS east-prompt-splitline.pl"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS script-only.sed"
