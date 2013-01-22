@@ -454,13 +454,10 @@ void confwrite_conn(FILE *out,
     }
 
     if(conn->policy) {
-	int auth_policy, phase2_policy, shunt_policy, failure_policy;
-	int ikev2_policy;
-
-	phase2_policy = (conn->policy & (POLICY_AUTHENTICATE|POLICY_ENCRYPT));
-	failure_policy = (conn->policy & POLICY_FAIL_MASK);
-	shunt_policy=(conn->policy & POLICY_SHUNT_MASK);
-	ikev2_policy = conn->policy & POLICY_IKEV2_MASK;
+	lset_t phase2_policy = (conn->policy & (POLICY_AUTHENTICATE|POLICY_ENCRYPT));
+	lset_t failure_policy = (conn->policy & POLICY_FAIL_MASK);
+	lset_t shunt_policy= (conn->policy & POLICY_SHUNT_MASK);
+	lset_t ikev2_policy = (conn->policy & POLICY_IKEV2_MASK);
 
 	switch(shunt_policy) {
 	case POLICY_SHUNT_TRAP:
@@ -494,8 +491,8 @@ void confwrite_conn(FILE *out,
 		fprintf(out, "\toverlapip=no\n");
 	    }
 	    
-	    auth_policy=(conn->policy & POLICY_ID_AUTH_MASK);
-	    switch(auth_policy) {
+	    switch (conn->policy & POLICY_ID_AUTH_MASK)
+	    {
 	    case POLICY_PSK:
 		fprintf(out, "\tauthby=secret\n");
 		break;
@@ -561,7 +558,8 @@ void confwrite_conn(FILE *out,
 		fprintf(out, "\tikev2=insist\n");
 		break;
 	    }
-	    break;
+
+	    break; /* case POLICY_SHUNT_PASS trap */
 
 	case POLICY_SHUNT_PASS:
 	    fprintf(out, "\ttype=passthrough\n");
