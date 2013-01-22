@@ -4,7 +4,8 @@ TEST_PURPOSE=regress
 TEST_PROB_REPORT=0
 TEST_TYPE=umlXhost
 
-TESTNAME=psk-pluto-01
+TESTNAME=psk-pluto-01 
+export TESTNAME
 
 #THREEEIGHT=true
 
