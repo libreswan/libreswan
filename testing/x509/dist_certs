@@ -92,8 +92,7 @@ expect "Common"
 send "Libreswan test CA for $cauth\n"
 expect "Email"
 send "testing@libreswan.org\n"
-expect ""
-send "\n"
+wait
 EOF
 done
 
@@ -121,8 +120,7 @@ expect "challenge"
 send "\n"
 expect "optional"
 send "\n"
-expect ""
-send "\n"
+wait
 EOF
 # sign machine cert
 openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
@@ -153,8 +151,7 @@ expect "challenge"
 send "\n"
 expect "optional"
 send "\n"
-expect ""
-send "\n"
+wait
 EOF
 openssl ca -batch -in reqs/bigkey.req -startdate $START -days 365 -out certs/bigkey.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 
@@ -189,8 +186,7 @@ expect "challenge"
 send "\n"
 expect "optional"
 send "\n"
-expect ""
-send "\n"
+wait
 EOF
 openssl ca -batch -in reqs/wrongdnorg.req -startdate $START -days 365 -out certs/wrongdnorg.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 
@@ -215,8 +211,7 @@ expect "challenge"
 send "\n"
 expect "optional"
 send "\n"
-expect ""
-send "\n"
+wait
 EOF
 openssl ca -batch -in reqs/wrongdnnum.req -startdate $START -days 365 -out certs/wrongdnnum.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 
@@ -241,8 +236,7 @@ expect "challenge"
 send "\n"
 expect "optional"
 send "\n"
-expect ""
-send "\n"
+wait
 EOF
 openssl ca -batch -in reqs/unwisechar.req -startdate $START -days 365 -out certs/unwisechar.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 
@@ -267,8 +261,7 @@ expect "challenge"
 send "\n"
 expect "optional"
 send "\n"
-expect ""
-send "\n"
+wait
 EOF
 openssl ca -batch -in reqs/hashsha2.req -startdate $START -days 365 -out certs/hashsha2.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 
@@ -293,8 +286,7 @@ expect "challenge"
 send "\n"
 expect "optional"
 send "\n"
-expect ""
-send "\n"
+wait
 EOF
 openssl ca -batch -in reqs/spaceincn.req -startdate $START -days 365 -out certs/spaceincn.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 
@@ -319,8 +311,7 @@ expect "challenge"
 send "\n"
 expect "optional"
 send "\n"
-expect ""
-send "\n"
+wait
 EOF
 openssl ca -batch -in reqs/cnofca.req -startdate $START -days 365 -out certs/cnofca.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 # Revoke and generate CRL
