@@ -47,7 +47,7 @@ then
 fi
 TODAY="$YEAR$MONTH$DAY"
 TWODAYSAGO="$YEAR$MONTHMINONE$DAYMINONE"
-START="$TWODAYSAGO"000000Z 
+START="$TWODAYSAGO"000000Z
 END="$TWODAYSAGO"235959Z
 # future < 10*365 (length of CA validity)
 FUTURE="12$MONTH$DAY"000000Z
@@ -72,10 +72,10 @@ echo ""
 # Generate CA's
 for cauth in ca otherca
 do
-openssl genrsa -passout pass:foobar -des3 -out keys/$cauth.key 1024 
+openssl genrsa -passout pass:foobar -des3 -out keys/$cauth.key 1024
 openssl rsa -in keys/$cauth.key -out keys/$cauth.key -passin pass:foobar
 # use defaults to ensure the same values for all certs based on openssl.cnf
-# req -x509 does not accept -startdate, this might invalidate certs? 
+# req -x509 does not accept -startdate, this might invalidate certs?
 expect  <<EOF
 spawn openssl req -x509 -days 3650 -newkey rsa:1024 -keyout keys/$cauth.key -out cacerts/$cauth.crt -passin pass:foobar -passout pass:foobar
 expect "Country Name"
@@ -98,7 +98,7 @@ EOF
 done
 
 # Generate machine keys/certs
-for machine in east west sunset sunrise north south pole park beet carrot nic japan revoked notyetvalid notvalidanymore signedbyotherca 
+for machine in east west sunset sunrise north south pole park beet carrot nic japan revoked notyetvalid notvalidanymore signedbyotherca
 do
 # generate host key/cert
 expect  <<EOF
@@ -125,7 +125,7 @@ expect ""
 send "\n"
 EOF
 # sign machine cert
-openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar 
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 # package in pkcs#12
 openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/ca.crt -caname "Libreswan test CA for ca" -out pkcs12/$machine.p12 -passin pass:foobar -passout pass:foobar
 done
@@ -156,13 +156,13 @@ send "\n"
 expect ""
 send "\n"
 EOF
-openssl ca -batch -in reqs/bigkey.req -startdate $START -days 365 -out certs/bigkey.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar 
+openssl ca -batch -in reqs/bigkey.req -startdate $START -days 365 -out certs/bigkey.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 
 # cert that is not yet valid
-openssl ca -batch -in reqs/notvalidyet.req -startdate $FUTURE -enddate $FUTUREEND -out certs/notvalidyet.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar 
+openssl ca -batch -in reqs/notvalidyet.req -startdate $FUTURE -enddate $FUTUREEND -out certs/notvalidyet.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 
 # cert not valid anymore
-openssl ca -batch -in reqs/notvalidanymore.req -startdate $START -enddate $END -out certs/notvalidanymore.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar 
+openssl ca -batch -in reqs/notvalidanymore.req -startdate $START -enddate $END -out certs/notvalidanymore.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
 
 # signed by other ca
 rm certs/signedbyotherca.crt
