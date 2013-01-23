@@ -50,8 +50,8 @@ TWODAYSAGO="$YEAR$MONTHMINONE$DAYMINONE"
 START="$TWODAYSAGO"000000Z
 END="$TWODAYSAGO"235959Z
 # future < 10*365 (length of CA validity)
-FUTURE="12$MONTH$DAY"000000Z
-FUTUREEND="15$MONTH$DAY"000000Z
+FUTURE="$[ $YEAR + 1]$MONTH$DAY"000000Z
+FUTUREEND="$[ $YEAR + 2]$MONTH$DAY"000000Z
 
 echo "------------------------------------------"
 echo "Certificate dates being used for this run:"
