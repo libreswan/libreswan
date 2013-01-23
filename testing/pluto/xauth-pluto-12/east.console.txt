@@ -1,0 +1,32 @@
+east #
+ export TESTNAME=xauth-pluto-12
+east #
+ /testing/guestbin/swan-prep --testname $TESTNAME
+swan-prep running on east for test xauth-pluto-12 with userland libreswan
+east #
+ ipsec setup stop
+Redirecting to: systemctl stop ipsec.service
+east #
+ /usr/local/libexec/ipsec/_stackmanager stop
+east #
+ rm -fr /var/run/pluto/pluto.pid
+east #
+ /usr/local/libexec/ipsec/_stackmanager start
+[ 00.00] AVX instructions are not detected.
+[ 00.00] AVX instructions are not detected.
+[ 00.00] NET: Registered protocol family 15
+east #
+ /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+[ 00.00] alg: No test for cipher_null (cipher_null-generic)
+[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
+[ 00.00] alg: No test for digest_null (digest_null-generic)
+[ 00.00] alg: No test for compress_null (compress_null-generic)
+east #
+ ipsec auto --add modecfg-road--eastnet-psk
+east #
+ echo done.
+done.
+east #
+
