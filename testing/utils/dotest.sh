@@ -1,6 +1,7 @@
 #!/bin/bash
 . ../../../kvmsetup.sh
 . ./testparams.sh 
+. ../setup.sh
 . $LIBRESAWNBASE/testing/utils/functions.sh
 
 rm -fr OUTPUT/*
@@ -96,8 +97,9 @@ if [ -f ./OUTPUT/$SWAN12_PCAP.pid ] ; then
 			# -2 is SIGINT
 			echo "kill $s"
                 	sudo kill -2 $s
-			sleep 1
-                	sudo kill -9 $s
                 fi
         done 
 fi
+
+consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt
+consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.console.txt

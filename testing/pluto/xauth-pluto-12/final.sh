@@ -1,7 +1,8 @@
 : ==== cut ====
 ipsec auto --status
-cat /tmp/pluto.log
+ipsec look
+if [ -f /tmp/core* ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 : ==== tuc ====
 
 : ==== end ====
-halt
+

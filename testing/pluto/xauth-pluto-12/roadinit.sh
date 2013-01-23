@@ -2,22 +2,18 @@
 
 : ==== start ====
 
-ipsec setup stop
-umount /var/tmp; mount /var/tmp
-umount /usr/local; mount /usr/local
-
+export TESTNAME=xauth-pluto-12
+/testing/guestbin/swan-prep --testname $TESTNAME
 hostname road.uml.freeswan.org
-
-ifconfig eth0 inet 192.1.3.194
-route delete -net default 
-route add -net default gw 192.1.3.254
-
 netstat -rn
 
-export TESTNAME=xauth-pluto-12
-source /testing/pluto/bin/roadlocal.sh
+ipsec setup stop
+pidof pluto >/dev/null && killall pluto 2> /dev/null
+rm -fr /var/run/pluto/pluto.pid
+/usr/local/libexec/ipsec/_stackmanager stop
+/usr/local/libexec/ipsec/_stackmanager start
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 
-ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 
 echo done
