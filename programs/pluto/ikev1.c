@@ -1304,17 +1304,18 @@ process_v1_packet(struct msg_digest **mdp)
 		struct ike_frag *ike_frag, **i;
 		int last_frag_index = 0;  /* index of the last fragment */
 		pb_stream frag_pbs;
- 		libreswan_log("handle IKE fragmentation");
-
+		DBG(DBG_CONTROL, DBG_log("processing incoming IKE fragmentation"));
 		if (st == NULL)
 		{
-			plog("received IKE fragment, but have no state. Ignoring packet.");
+			libreswan_log("received IKE fragment, but have no state. Ignoring packet.");
 			return;
 		}
 
-		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc, &md->message_pbs, &frag_pbs)
-		||  pbs_room(&frag_pbs) != fraghdr.isafrag_length || fraghdr.isafrag_np != 0
-		||  fraghdr.isafrag_index == 0 || fraghdr.isafrag_index > 16)
+		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc, &md->message_pbs, &frag_pbs) ||
+		      pbs_room(&frag_pbs) != fraghdr.isafrag_length || 
+		      fraghdr.isafrag_np != 0 ||
+		      fraghdr.isafrag_index == 0 ||
+		      fraghdr.isafrag_index > MAX_IKE_FRAGMENTS)
 		{
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
