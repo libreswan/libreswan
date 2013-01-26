@@ -3377,6 +3377,7 @@ show_one_connection(struct connection *c)
     const char *ifn;
     char instance[1 + 10 + 1];
     char prio[POLICY_PRIO_BUF];
+    char mtustr[8];
     
     ifn = oriented(*c)? c->interface->ip_dev->id_rname : "";
 
@@ -3428,31 +3429,37 @@ show_one_connection(struct connection *c)
     if (c->policy_next)
     {
 	whack_log(RC_COMMENT
-		  , "\"%s\"%s:   policy_next: %s"
-		  , c->name, instance, c->policy_next->name);
+		 , "\"%s\"%s:   policy_next: %s"
+		 , c->name, instance, c->policy_next->name);
     }
     
-    /* Note: we display key_from_DNS_on_demand as if policy [lr]KOD */
+    /* Note: we _no longer_ display key_from_DNS_on_demand as if policy [lr]KOD */
     fmt_policy_prio(c->prio, prio);
     whack_log(RC_COMMENT
-	      , "\"%s\"%s:   policy: %s%s%s; prio: %s; interface: %s; "
-	      , c->name
-	      , instance
-	      , prettypolicy(c->policy)
-	      , c->spd.this.key_from_DNS_on_demand? "+lKOD" : ""
-	      , c->spd.that.key_from_DNS_on_demand? "+rKOD" : ""
-	      , prio
-	      , ifn);
-   
-    if(c->connmtu > 0 || c->metric > 0) {
-	whack_log(RC_COMMENT
-		  , "\"%s\"%s:   network params: metric:%lu; mtu:%lu; "
-		  , c->name
-		  , instance
-		  , (unsigned long)c->metric 
-		  , (unsigned long)c->connmtu);
+		, "\"%s\"%s:   policy: %s; %s%s%s"
+		, c->name
+		, instance
+		, prettypolicy(c->policy)
+		, c->spd.this.key_from_DNS_on_demand? "+lKOD" : ""
+		, c->spd.that.key_from_DNS_on_demand? "+rKOD" : ""
+		, (c->spd.this.key_from_DNS_on_demand || c->spd.this.key_from_DNS_on_demand) ? ";" : ""
+		);
+
+    if(c->connmtu > 0) {
+	snprintf(mtustr,15,"%d",c->connmtu);
+    } else {
+	strcpy(mtustr, "unset");
     }
- 
+    whack_log(RC_COMMENT
+		, "\"%s\"%s:   prio: %s; interface: %s; metric: %lu, mtu: %s;"
+		, c->name
+		, instance
+		, prio
+		, ifn
+		, (unsigned long)c->metric
+		, mtustr
+		);
+
     /* slightly complicated stuff to avoid extra crap */
     if(c->dpd_timeout > 0 || DBGP(DBG_DPD)) {
 	whack_log(RC_COMMENT
