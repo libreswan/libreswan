@@ -2113,6 +2113,7 @@ main_inI3_outR3_tail(struct msg_digest *md
     st->st_ph1_iv_len = st->st_new_iv_len;
     set_ph1_iv(st, st->st_new_iv);
 
+#ifdef XAUTH
     /* It seems as per Cisco implementation, XAUTH and MODECFG 
      * are not supposed to be performed again during rekey */
 
@@ -2129,6 +2130,7 @@ main_inI3_outR3_tail(struct msg_digest *md
                 st->hidden_variables.st_modecfg_started = TRUE;
            }
     }
+#endif
 
     ISAKMP_SA_established(st->st_connection, st->st_serialno);
 
@@ -2188,6 +2190,7 @@ main_inR3_tail(struct msg_digest *md
     memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
     st->st_ph1_iv_len = st->st_new_iv_len;
 
+#ifdef XAUTH
     /* It seems as per Cisco implementation, XAUTH and MODECFG 
      * are not supposed to be performed again during rekey */
     if( st->st_connection->remotepeertype == CISCO &&
@@ -2203,6 +2206,7 @@ main_inR3_tail(struct msg_digest *md
                 st->hidden_variables.st_modecfg_started = TRUE;
            }
     }
+#endif
     
     ISAKMP_SA_established(st->st_connection, st->st_serialno);
 
