@@ -138,9 +138,9 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.right.nexttype = KH_NOTSET;
 	anyaddr(AF_INET, &cfg->conn_default.right.nexthop);
 
-	/* default is to look in DNS */
-	cfg->conn_default.left.key_from_DNS_on_demand = TRUE;
-	cfg->conn_default.right.key_from_DNS_on_demand = TRUE;
+	/* default is NOT to look in DNS */
+	cfg->conn_default.left.key_from_DNS_on_demand = FALSE;
+	cfg->conn_default.right.key_from_DNS_on_demand = FALSE;
 
 
 	cfg->conn_default.options[KBF_AUTO] = STARTUP_IGNORE;
