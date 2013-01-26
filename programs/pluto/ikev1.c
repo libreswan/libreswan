@@ -1123,6 +1123,9 @@ process_v1_packet(struct msg_digest **mdp)
 
 #ifdef MODECFG
     case ISAKMP_XCHG_MODE_CFG:
+	DBG(DBG_CONTROLMORE , DBG_log(" in %s:%d case %s", __func__, __LINE__
+				, enum_show(&exchange_names, md->hdr.isa_xchg)));
+
 	if (is_zero_cookie(md->hdr.isa_icookie))
 	{
 	    libreswan_log("Mode Config message is invalid because"
@@ -1152,7 +1155,11 @@ process_v1_packet(struct msg_digest **mdp)
 
 	if (st == NULL)
 	{
-	    /* No appropriate Mode Config state.
+		DBG(DBG_CONTROLMORE 
+			, DBG_log(" in %s:%d No appropriate Mode Config state yet."
+				  "See if we have a Main Mode state" 
+				, __func__, __LINE__));
+	     /* No appropriate Mode Config state.
 	     * See if we have a Main Mode state.
 	     * ??? what if this is a duplicate of another message?
 	     */
@@ -1169,6 +1176,18 @@ process_v1_packet(struct msg_digest **mdp)
 
 	    set_cur_state(st);
 
+	    DBG(DBG_CONTROLMORE, DBG_log(" processing received "
+				    "isakmp_xchg_type %s."
+				    , enum_show(&exchange_names, md->hdr.isa_xchg)));
+	    DBG(DBG_CONTROLMORE, DBG_log("  this is a xauthserver=%s."
+				    " xauthclient=%s modecfgserver=%s " 
+				    "modecfgclient=%s"
+				    , st->st_connection->spd.this.xauth_server ? "yes" : "no"
+				    , st->st_connection->spd.this.xauth_client ? "yes" : "no"
+				    , st->st_connection->spd.this.modecfg_server ? "yes" : "no"
+				    , st->st_connection->spd.this.modecfg_client  ? "yes" : "no"
+				    ));
+
 	    if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state))
 	    {
 		loglog(RC_LOG_SERIOUS, "Mode Config message is unacceptable because"
@@ -1177,6 +1196,7 @@ process_v1_packet(struct msg_digest **mdp)
 		/* XXX Could send notification back */
 		return;
 	    }
+	    DBG(DBG_CONTROLMORE, DBG_log(" call  init_phase2_iv"));
 	    init_phase2_iv(st, &md->hdr.isa_msgid);
 	    new_iv_set = TRUE;
 
@@ -1205,11 +1225,21 @@ process_v1_packet(struct msg_digest **mdp)
 	       && st->quirks.xauth_ack_msgid)
 	    {
 		from_state = STATE_XAUTH_R1;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s "
+					"sate is STATE_XAUTH_R1 and quirks.xauth_ack_msgid==TRUE"
+					, enum_name(&state_names, st->st_state
+					)));
 	    }
 	    else if(st->st_connection->spd.this.xauth_client
 		    && IS_PHASE1(st->st_state))
 	    {
-		from_state = STATE_XAUTH_I0;
+		    from_state = STATE_XAUTH_I0;
+		    DBG(DBG_CONTROLMORE
+				    , DBG_log(" set from_state to %s"
+				    "this is xauth client and IS_PHASE1() == TRUE"
+				    , enum_name(&state_names, st->st_state
+				    )));
 	    }
 	    else if(st->st_connection->spd.this.xauth_client
 		    && st->st_state == STATE_XAUTH_I1)
@@ -1219,22 +1249,52 @@ process_v1_packet(struct msg_digest **mdp)
 		 * because it wants to start over again.
 		 */
 		from_state = STATE_XAUTH_I0;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s"
+				"this is xauth client and state == STATE_XAUTH_I1"
+				, enum_name(&state_names, st->st_state
+				)));
 	    }
 	    else if(st->st_connection->spd.this.modecfg_server
 		    && IS_PHASE1(st->st_state))
 	    {
 		from_state = STATE_MODE_CFG_R0;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s"
+				"this is modecfgserver and IS_PHASE1() == TRUE"
+				, enum_name(&state_names, st->st_state
+				)));
 	    }
 	    else if(st->st_connection->spd.this.modecfg_client
 		    && IS_PHASE1(st->st_state))
 	    {
 		from_state = STATE_MODE_CFG_R1;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s"
+				"this is modecfgserver and IS_PHASE1() == TRUE"
+				, enum_name(&state_names, st->st_state
+				)));
 	    }
 	    else {
-		/* XXX check if we are being a mode config server here */
-		libreswan_log("received MODECFG message when in state %s, and we aren't xauth client"
-		     , enum_name(&state_names, st->st_state));
-		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
+		    DBG(DBG_CONTROLMORE , DBG_log("in %s:%d processed received "
+					    "isakmp_xchg_type %s."
+					    , __func__, __LINE__ 
+					    , enum_show(&exchange_names, md->hdr.isa_xchg)));
+		    DBG(DBG_CONTROLMORE , DBG_log("this is a xauthserver=%s "
+					    "xauthclient=%s modecfgserver=%s " 
+					    "modecfgclient=%s in sate %s. "
+					    "reply with UNSUPPORTED_EXCHANGE_TYPE"
+					    , st->st_connection->spd.this.xauth_server ? "yes" : "no"
+					    , st->st_connection->spd.this.xauth_client ? "yes" : "no"
+					    , st->st_connection->spd.this.modecfg_server ? "yes" : "no"
+					    , st->st_connection->spd.this.modecfg_client  ? "yes" : "no"
+					    , enum_name(&state_names, st->st_state)
+					    ));
+		    libreswan_log("in state %s isakmp_xchg_types %s not supported."
+				    "reply UNSUPPORTED_EXCHANGE_TYPE" 	
+				    , enum_name(&state_names, st->st_state)
+				    , enum_show(&exchange_names, md->hdr.isa_xchg));
+		    SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	    }
 	}

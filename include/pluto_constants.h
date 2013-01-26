@@ -181,6 +181,8 @@ typedef enum {
 #define MAX_INPUT_UDP_SIZE             65536
 #define MAX_OUTPUT_UDP_SIZE            65536
 
+#define MAX_IKE_FRAGMENTS	16
+
 /* debugging settings: a set of selections for reporting
  * These would be more naturally situated in log.h,
  * but they are shared with whack.

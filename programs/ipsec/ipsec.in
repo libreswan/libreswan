@@ -85,8 +85,18 @@ case "$1" in
 	exit 0
 	;;
 status|--status)
-	ipsec auto --status
-	exit 0
+	exec ipsec auto --status
+	;;
+start|--start)
+	exec ipsec setup start
+	;;
+stop|--stop)
+	exec ipsec setup stop
+	;;
+restart|--restart)
+	# restart does not work when stoped in systemd - it's dumb
+	ipsec setup stop 
+	exec ipsec setup start
 	;;
 help|--help)
 	echo "Usage: ipsec <command> <argument ...>"
@@ -121,6 +131,7 @@ help|--help)
 	echo
 	echo "See also: ipsec <command> --help"
 	echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
+	echo "ipsec stop|start|restart is an alias for ipsec setup stop|start|restart"
 	echo "See <http://www.libreswan.org> for more general info."
 	fixversion
 	echo "Linux Libreswan $version"
