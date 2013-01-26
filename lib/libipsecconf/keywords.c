@@ -71,8 +71,23 @@ struct keyword_enum_value kw_fourvalued_values[]={
     { "always",    fo_insist },
     { "no",        fo_never  }
 };
+
 struct keyword_enum_values kw_fourvalued_list=
 { kw_fourvalued_values, sizeof(kw_fourvalued_values)/sizeof(struct keyword_enum_value)};
+
+/*
+ * Values for yes/no/force, used by ike_frag
+ */
+struct keyword_enum_value kw_ynf_values[]={
+    { "never",     ynf_no},
+    { "no",        ynf_no},
+    { "yes",       ynf_yes},
+    { "insist",     ynf_force},
+    { "force",     ynf_force},
+};
+
+struct keyword_enum_values kw_ynf_list=
+{ kw_ynf_values, sizeof(kw_ynf_values)/sizeof(struct keyword_enum_value)};
 
 /*
  * Values for authby={rsasig, secret}
@@ -417,6 +432,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"authby",         kv_conn|kv_auto, kt_enum,   KBF_AUTHBY,     &kw_authby_list},
     {"keyexchange",    kv_conn|kv_auto, kt_enum,   KBF_KEYEXCHANGE, &kw_keyexchange_list},
     {"ikev2",          kv_conn|kv_auto|kv_processed,kt_enum,KBF_IKEv2,&kw_fourvalued_list},
+    {"ike_frag",       kv_conn|kv_auto|kv_processed,kt_enum,KBF_IKE_FRAG,&kw_ynf_list},
     {"narrowing",      kv_conn|kv_auto, kt_bool,   KBF_IKEv2_ALLOW_NARROWING, NOT_ENUM},
     {"sareftrack",     kv_conn|kv_auto|kv_processed,kt_enum,KBF_SAREFTRACK,&kw_sareftrack_list},
     {"pfs",            kv_conn|kv_auto, kt_bool,   KBF_PFS,          NOT_ENUM},

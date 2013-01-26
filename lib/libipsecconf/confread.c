@@ -115,6 +115,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.policy = POLICY_RSASIG|POLICY_TUNNEL|POLICY_ENCRYPT|POLICY_PFS;
 	cfg->conn_default.policy |= POLICY_IKEV2_ALLOW; /* ikev2=yes */
 	cfg->conn_default.policy |= POLICY_SAREF_TRACK;  /* sareftrack=yes */
+	cfg->conn_default.policy |= POLICY_IKE_FRAG_ALLOW; /* ike_frag=yes */
 
 	cfg->conn_default.options[KBF_IKELIFETIME] = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
 	cfg->conn_default.options[KBF_SALIFETIME]  = SA_LIFE_DURATION_DEFAULT;
@@ -137,9 +138,9 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.right.nexttype = KH_NOTSET;
 	anyaddr(AF_INET, &cfg->conn_default.right.nexthop);
 
-	/* default is to look in DNS */
-	cfg->conn_default.left.key_from_DNS_on_demand = TRUE;
-	cfg->conn_default.right.key_from_DNS_on_demand = TRUE;
+	/* default is NOT to look in DNS */
+	cfg->conn_default.left.key_from_DNS_on_demand = FALSE;
+	cfg->conn_default.right.key_from_DNS_on_demand = FALSE;
 
 
 	cfg->conn_default.options[KBF_AUTO] = STARTUP_IGNORE;
@@ -1142,6 +1143,24 @@ static int load_conn (struct ub_ctx *dnsctx
 	case fo_insist:
 	    conn->policy |= POLICY_IKEV1_DISABLE;
 	    conn->policy |= POLICY_IKEV2_ALLOW|POLICY_IKEV2_PROPOSE;
+	    break;
+	}
+    }
+
+    if(conn->options_set[KBF_IKE_FRAG]) {
+	switch(conn->options[KBF_IKE_FRAG]) {
+	case ynf_no:
+	    conn->policy &= ~POLICY_IKE_FRAG_ALLOW;
+	    conn->policy &= ~POLICY_IKE_FRAG_FORCE;
+	    break;
+	    
+	case ynf_yes:
+	    /* this is the default */
+	    conn->policy |= POLICY_IKE_FRAG_ALLOW;
+	    break;
+	    
+	case ynf_force:
+	    conn->policy |= POLICY_IKE_FRAG_ALLOW|POLICY_IKE_FRAG_FORCE;
 	    break;
 	}
     }

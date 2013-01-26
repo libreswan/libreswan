@@ -126,6 +126,9 @@ extern void log_state(struct state *st, enum state_kind state);
 #define set_cur_state(s) { \
     cur_state = (s); \
     extra_debugging((s)->st_connection); \
+    DBG(DBG_CONTROLMORE, DBG_log("in %s:%d set current state of object #%lu to %s" \
+                , __func__, __LINE__ , st->st_serialno \
+                , enum_show(&state_names, st->st_state))); \
     }
 
 #define reset_cur_state() { \

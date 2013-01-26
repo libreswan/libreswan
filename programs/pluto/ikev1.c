@@ -1123,6 +1123,9 @@ process_v1_packet(struct msg_digest **mdp)
 
 #ifdef MODECFG
     case ISAKMP_XCHG_MODE_CFG:
+	DBG(DBG_CONTROLMORE , DBG_log(" in %s:%d case %s", __func__, __LINE__
+				, enum_show(&exchange_names, md->hdr.isa_xchg)));
+
 	if (is_zero_cookie(md->hdr.isa_icookie))
 	{
 	    libreswan_log("Mode Config message is invalid because"
@@ -1152,7 +1155,11 @@ process_v1_packet(struct msg_digest **mdp)
 
 	if (st == NULL)
 	{
-	    /* No appropriate Mode Config state.
+		DBG(DBG_CONTROLMORE 
+			, DBG_log(" in %s:%d No appropriate Mode Config state yet."
+				  "See if we have a Main Mode state" 
+				, __func__, __LINE__));
+	     /* No appropriate Mode Config state.
 	     * See if we have a Main Mode state.
 	     * ??? what if this is a duplicate of another message?
 	     */
@@ -1169,6 +1176,18 @@ process_v1_packet(struct msg_digest **mdp)
 
 	    set_cur_state(st);
 
+	    DBG(DBG_CONTROLMORE, DBG_log(" processing received "
+				    "isakmp_xchg_type %s."
+				    , enum_show(&exchange_names, md->hdr.isa_xchg)));
+	    DBG(DBG_CONTROLMORE, DBG_log("  this is a xauthserver=%s."
+				    " xauthclient=%s modecfgserver=%s " 
+				    "modecfgclient=%s"
+				    , st->st_connection->spd.this.xauth_server ? "yes" : "no"
+				    , st->st_connection->spd.this.xauth_client ? "yes" : "no"
+				    , st->st_connection->spd.this.modecfg_server ? "yes" : "no"
+				    , st->st_connection->spd.this.modecfg_client  ? "yes" : "no"
+				    ));
+
 	    if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state))
 	    {
 		loglog(RC_LOG_SERIOUS, "Mode Config message is unacceptable because"
@@ -1177,6 +1196,7 @@ process_v1_packet(struct msg_digest **mdp)
 		/* XXX Could send notification back */
 		return;
 	    }
+	    DBG(DBG_CONTROLMORE, DBG_log(" call  init_phase2_iv"));
 	    init_phase2_iv(st, &md->hdr.isa_msgid);
 	    new_iv_set = TRUE;
 
@@ -1205,11 +1225,21 @@ process_v1_packet(struct msg_digest **mdp)
 	       && st->quirks.xauth_ack_msgid)
 	    {
 		from_state = STATE_XAUTH_R1;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s "
+					"sate is STATE_XAUTH_R1 and quirks.xauth_ack_msgid==TRUE"
+					, enum_name(&state_names, st->st_state
+					)));
 	    }
 	    else if(st->st_connection->spd.this.xauth_client
 		    && IS_PHASE1(st->st_state))
 	    {
-		from_state = STATE_XAUTH_I0;
+		    from_state = STATE_XAUTH_I0;
+		    DBG(DBG_CONTROLMORE
+				    , DBG_log(" set from_state to %s"
+				    "this is xauth client and IS_PHASE1() == TRUE"
+				    , enum_name(&state_names, st->st_state
+				    )));
 	    }
 	    else if(st->st_connection->spd.this.xauth_client
 		    && st->st_state == STATE_XAUTH_I1)
@@ -1219,22 +1249,52 @@ process_v1_packet(struct msg_digest **mdp)
 		 * because it wants to start over again.
 		 */
 		from_state = STATE_XAUTH_I0;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s"
+				"this is xauth client and state == STATE_XAUTH_I1"
+				, enum_name(&state_names, st->st_state
+				)));
 	    }
 	    else if(st->st_connection->spd.this.modecfg_server
 		    && IS_PHASE1(st->st_state))
 	    {
 		from_state = STATE_MODE_CFG_R0;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s"
+				"this is modecfgserver and IS_PHASE1() == TRUE"
+				, enum_name(&state_names, st->st_state
+				)));
 	    }
 	    else if(st->st_connection->spd.this.modecfg_client
 		    && IS_PHASE1(st->st_state))
 	    {
 		from_state = STATE_MODE_CFG_R1;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s"
+				"this is modecfgserver and IS_PHASE1() == TRUE"
+				, enum_name(&state_names, st->st_state
+				)));
 	    }
 	    else {
-		/* XXX check if we are being a mode config server here */
-		libreswan_log("received MODECFG message when in state %s, and we aren't xauth client"
-		     , enum_name(&state_names, st->st_state));
-		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
+		    DBG(DBG_CONTROLMORE , DBG_log("in %s:%d processed received "
+					    "isakmp_xchg_type %s."
+					    , __func__, __LINE__ 
+					    , enum_show(&exchange_names, md->hdr.isa_xchg)));
+		    DBG(DBG_CONTROLMORE , DBG_log("this is a xauthserver=%s "
+					    "xauthclient=%s modecfgserver=%s " 
+					    "modecfgclient=%s in sate %s. "
+					    "reply with UNSUPPORTED_EXCHANGE_TYPE"
+					    , st->st_connection->spd.this.xauth_server ? "yes" : "no"
+					    , st->st_connection->spd.this.xauth_client ? "yes" : "no"
+					    , st->st_connection->spd.this.modecfg_server ? "yes" : "no"
+					    , st->st_connection->spd.this.modecfg_client  ? "yes" : "no"
+					    , enum_name(&state_names, st->st_state)
+					    ));
+		    libreswan_log("in state %s isakmp_xchg_types %s not supported."
+				    "reply UNSUPPORTED_EXCHANGE_TYPE" 	
+				    , enum_name(&state_names, st->st_state)
+				    , enum_show(&exchange_names, md->hdr.isa_xchg));
+		    SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	    }
 	}
@@ -1296,6 +1356,129 @@ process_v1_packet(struct msg_digest **mdp)
     {
 	libreswan_log("IKE message has the Commit Flag set but Pluto doesn't implement this feature; ignoring flag");
     }
+
+	/* Handle IKE fragmentation payloads */
+	if (md->hdr.isa_np == ISAKMP_NEXT_IKE_FRAGMENTATION)
+	{
+		struct isakmp_ikefrag fraghdr;
+		struct ike_frag *ike_frag, **i;
+		int last_frag_index = 0;  /* index of the last fragment */
+		pb_stream frag_pbs;
+ 		libreswan_log("handle IKE fragmentation");
+
+		if (st == NULL)
+		{
+			plog("received IKE fragment, but have no state. Ignoring packet.");
+			return;
+		}
+
+		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc, &md->message_pbs, &frag_pbs)
+		||  pbs_room(&frag_pbs) != fraghdr.isafrag_length || fraghdr.isafrag_np != 0
+		||  fraghdr.isafrag_index == 0 || fraghdr.isafrag_index > 16)
+		{
+			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			return;
+		}
+
+		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
+		if (ike_frag == NULL)
+			return;
+
+		ike_frag->md = md;
+		ike_frag->index = fraghdr.isafrag_index;
+		ike_frag->last = (fraghdr.isafrag_flags & 1);
+		ike_frag->size = pbs_left(&frag_pbs);
+		ike_frag->data = frag_pbs.cur;
+
+		/* Strip non-ESP marker from first fragment */
+		if (md->iface->ike_float == TRUE && ike_frag->index == 1 && ike_frag->data[0] == 0)
+		{
+			ike_frag->data += 1;
+			ike_frag->size -= 1;
+		}
+
+		/* Add the fragment to the state */
+		i = &st->ike_frags;
+		while (1)
+		{
+			if (ike_frag)
+			{
+				/* Still looking for a place to insert ike_frag */
+				if (*i == NULL || (*i)->index > ike_frag->index)
+				{
+					ike_frag->next = *i;
+					*i = ike_frag;
+					ike_frag = NULL;
+				}
+				else if ((*i)->index == ike_frag->index)
+				{
+					/* Replace fragment with same index */
+					struct ike_frag *old = *i;
+					ike_frag->next = old->next;
+					*i = ike_frag;
+					release_md(old->md);
+					free(old);
+					ike_frag = NULL;
+				}
+			}
+
+			if (*i == NULL)
+				break;
+			else if ((*i)->last)
+				last_frag_index = (*i)->index;
+
+			i = &(*i)->next;
+		};
+
+		/* We have the last fragment, reassemble if complete */
+		if (last_frag_index)
+		{
+			size_t size = 0;
+			int prev_index = 0;
+			struct ike_frag *frag;
+			for (frag = st->ike_frags; frag; frag = frag->next)
+			{
+				size += frag->size;
+				if (frag->index != ++prev_index)
+				{
+					break; /* fragment list incomplete */
+				}
+				else if (frag->index == last_frag_index)
+				{
+					struct msg_digest *md = alloc_md();
+					u_int8_t *buffer = alloc_bytes(size, "IKE fragments buffer");
+					size_t offset = 0;
+
+					md->iface = frag->md->iface;
+					md->sender = frag->md->sender;
+					md->sender_port = frag->md->sender_port;
+
+					/* Reassemble fragments in buffer */
+					frag = st->ike_frags;
+					while (frag && frag->index <= last_frag_index)
+					{
+						passert(offset + frag->size <= size);
+						memcpy(buffer + offset, frag->data, frag->size);
+						offset += frag->size;
+						frag = frag->next;
+					}
+
+					init_pbs(&md->packet_pbs, buffer, size, "packet");
+
+					process_packet(&md);
+					if (md != NULL)
+						release_md(md);
+					release_fragments(st);
+
+					break;
+				}
+			}
+		}
+
+		/* Don't release the md, taken care of by the ike_frag code */
+		*mdp = NULL;
+		return;
+	}
 
     /* Set smc to describe this state's properties.
      * Look up the appropriate microcode based on state and
@@ -1596,12 +1779,12 @@ void process_packet_tail(struct msg_digest **mdp)
 
 #ifdef NAT_TRAVERSAL
 		case ISAKMP_NEXT_NATD_DRAFTS:
-		    np = ISAKMP_NEXT_NATD_RFC;  /* NAT-D relocated */
+		    np = ISAKMP_NEXT_NATD_RFC;  /* NAT-D was a private use type before RFC-3947 */
 		    sd = payload_descs[np];
 		    break;
 
 		case ISAKMP_NEXT_NATOA_DRAFTS:
-		    np = ISAKMP_NEXT_NATOA_RFC;  /* NAT-OA relocated */
+		    np = ISAKMP_NEXT_NATOA_RFC;  /* NAT-OA was a private use type before RFC-3947 */
 		    sd = payload_descs[np];
 		    break;
 #endif
@@ -2005,6 +2188,9 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 */
 		delete_event(st);
 	    }
+
+		/* Delete IKE fragments */
+		release_fragments(st);
 
 	    /* update the previous packet history */
 	    update_retransmit_history(st, md);

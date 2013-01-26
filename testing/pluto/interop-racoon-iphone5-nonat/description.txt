@@ -1,0 +1,6 @@
+This test is based on interop-racoon-iphone4s-nonat.
+
+But now we set ike_frag force; in racoon.conf to emulate the behaviour of
+the iphone5.
+
+This test is incomplete and needs work

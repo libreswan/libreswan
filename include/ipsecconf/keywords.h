@@ -113,6 +113,7 @@ enum keyword_numeric_config_field {
     KBF_WARNIGNORE, /* to ignore obsoleted keywords */
     KBF_SECCTX, /*security context attribute value for labeled ipsec*/
     KBF_XAUTHBY, /* method of xauth user auth, file or pam */
+    KBF_IKE_FRAG,
     KBF_MAX
 };
 

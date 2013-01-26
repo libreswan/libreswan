@@ -663,6 +663,35 @@ struct isakmp_nat_oa
 extern struct_desc isakmp_nat_d;
 extern struct_desc isakmp_nat_oa;
 
+/* ISAKMP IKE Fragmentation Payload
+ * Cisco proprietary, undocumented
+ * This must be the first and only payload in a message,
+ * i.e. next payload field must always be zero.
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * ! Next Payload  !   RESERVED    !         Payload Length        !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !      UNKNOWN (always 1)       !     Index     !     Flags     !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * !                                                               !
+ * ~                         Fragment Data                         ~
+ * !                                                               !
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+
+struct isakmp_ikefrag
+{
+	u_int8_t    isafrag_np;
+	u_int8_t    isafrag_reserved_1;
+	u_int16_t   isafrag_length;
+	u_int16_t   isafrag_unknown_1;
+	u_int8_t    isafrag_index;
+	u_int8_t    isafrag_flags;
+};
+
+extern struct_desc isakmp_ikefrag_desc;
+
 /* descriptor for each payload type
  *
  * There is a slight problem in that some payloads differ, depending

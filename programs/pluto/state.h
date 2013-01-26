@@ -130,6 +130,16 @@ struct ipsec_proto_info {
     time_t peer_lastused;
 };
 
+struct ike_frag
+{
+	struct ike_frag *next;
+	struct msg_digest *md;
+	int index;
+	int last;
+	u_int8_t *data;
+	size_t size;
+};
+
 /*
  * internal state that
  * should get copied by god... to the child SA state.
@@ -217,6 +227,8 @@ struct state
     struct msg_digest *st_suspended_md;      /* suspended state-transition */
     const char        *st_suspended_md_func;
     int                st_suspended_md_line;
+
+	struct ike_frag *ike_frags;                /* collected ike fragments */
 
     struct trans_attrs st_oakley;
 
@@ -479,6 +491,7 @@ extern void fmt_state(struct state *st, const time_t n
 		     , char *state_buf2, const size_t state_buf_len2);
 extern void delete_states_by_peer(ip_address *peer);
 extern void replace_states_by_peer(ip_address *peer);
+extern void release_fragments(struct state *st);
 
 extern void set_state_ike_endpoints(struct state *st
 				    , struct connection *c);

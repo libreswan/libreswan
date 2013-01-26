@@ -187,7 +187,7 @@ enum known_vendorid {
   VID_MISC_XAUTH             =201,
   VID_MISC_DPD               =202,
   VID_MISC_HEARTBEAT_NOTIFY  =203,
-  VID_MISC_FRAGMENTATION     =204,
+  VID_IKE_FRAGMENTATION      =204,
   VID_INITIAL_CONTACT        =205,
   VID_MISC_IKEv2             =206
 

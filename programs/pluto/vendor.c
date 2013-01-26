@@ -196,7 +196,7 @@ static struct vid_struct _vid_tab[] = {
 		"SSH Communications Security IPSEC Express version 4.2.0")
 
 
-	{ VID_CISCO_IKE_FRAGMENTATION, VID_KEEP, NULL, "Cisco IKE Fragmentation",
+	{ VID_IKE_FRAGMENTATION, VID_KEEP, NULL, "IKE Fragmentation",
 		"\x40\x48\xb7\xd5\x6e\xbc\xe8\x85\x25\xe7\xde\x7f\x00\xd6\xc2\xd3\xc0\x00\x00\x00",
 		20 },
 
@@ -284,7 +284,7 @@ static struct vid_struct _vid_tab[] = {
 	{ VID_MACOSX, VID_STRING|VID_SUBSTRING_DUMPHEXA, "Mac OSX 10.x",
 	  "\x4d\xf3\x79\x28\xe9\xfc\x4f\xd1\xb3\x26\x21\x70\xd5\x15\xc6\x62", NULL, 0},
 
-	DEC_MD5_VID(MISC_FRAGMENTATION, "FRAGMENTATION")
+	DEC_MD5_VID(IKE_FRAGMENTATION, "FRAGMENTATION")
 	DEC_MD5_VID(INITIAL_CONTACT, "Vid-Initial-Contact")
 
 	/* Microsoft Windows Vista, and maybe Server 2008? */
@@ -361,7 +361,7 @@ static struct vid_struct _vid_tab[] = {
 	/**
 	 * Cisco VPN 3000
 	 */
-	{ VID_MISC_FRAGMENTATION, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
+	{ VID_IKE_FRAGMENTATION, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
 		"FRAGMENTATION", NULL, NULL, 0 },
 
 	/*
