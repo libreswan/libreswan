@@ -1,17 +1,17 @@
 #!/usr/bin/env python
-import pexpect
 import sys
 import getopt, sys
 import time
 import os, commands
-import setproctitle
 import re
 
 try:
     import argparse
+    import pexpect
+    import setproctitle
 except ImportError , e:
     module = str(e)[16:]
-    sys.exit("we requires the python argparse module")
+    sys.exit("we requires the python module %s "%module)
 
 def read_exec_shell_cmd( ex, filename, prompt, timer):
     if os.path.exists(filename):
