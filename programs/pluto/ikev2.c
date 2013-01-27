@@ -893,6 +893,15 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	    bad_case(kind);
 	}
     }
+#ifdef TPM
+ tpm_ignore:
+    return;
+
+ tpm_stolen:
+    *mdp = NULL;
+    return;
+#endif
+
 }
 
 void complete_v2_state_transition(struct msg_digest **mdp
@@ -1024,6 +1033,14 @@ void complete_v2_state_transition(struct msg_digest **mdp
 		    , from_state_name
 		    , (md->note) ? enum_name(&ipsec_notification_names, md->note) : "<no reason given>" )); 
     }
+#ifdef TPM
+ tpm_ignore:
+    return;
+
+ tpm_stolen:
+    *mdp = NULL;
+    return;
+#endif
 }
 
 v2_notification_t

@@ -178,6 +178,11 @@ process_packet(struct msg_digest **mdp)
     default:
 	bad_case(maj);
     }
+#ifdef TPM
+    tpm_stolen:
+    tpm_ignore:
+	return;
+#endif
 }
 
 /* wrapper for read_packet and process_packet
