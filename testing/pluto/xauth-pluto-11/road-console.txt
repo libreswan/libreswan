@@ -24,7 +24,7 @@ road:~#
  ipsec auto --replace xauth-road--eastnet
 road:~#
  ipsec whack --status | grep xauth-road--eastnet
-000 "xauth-road--eastnet": 192.1.3.194<192.1.3.194>[@road.testing.xelerance.com,XC+S?C]---192.1.3.254...192.1.2.45---192.1.2.23<192.1.2.23>[@east,XS+S?C]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "xauth-road--eastnet": 192.1.3.194<192.1.3.194>[@road.testing.libreswan.org,XC+S?C]---192.1.3.254...192.1.2.45---192.1.2.23<192.1.2.23>[@east,XS+S?C]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "xauth-road--eastnet":     myip=unset; hisip=unset;
 000 "xauth-road--eastnet":     xauth info: myxauthuser=use1; 
 000 "xauth-road--eastnet":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3

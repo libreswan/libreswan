@@ -194,9 +194,9 @@ west:~# ipsec auto --status
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
-000 "ikev2-westnet-eastnet-x509-cr": 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com,S=C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com,S=C]; unrouted; eroute owner: #0
+000 "ikev2-westnet-eastnet-x509-cr": 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org,S=C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org,S=C]; unrouted; eroute owner: #0
 000 "ikev2-westnet-eastnet-x509-cr":     myip=unset; hisip=unset; mycert=west.crt;
-000 "ikev2-westnet-eastnet-x509-cr":   CAs: 'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'...'%any'
+000 "ikev2-westnet-eastnet-x509-cr":   CAs: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'...'%any'
 000 "ikev2-westnet-eastnet-x509-cr":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
 000 "ikev2-westnet-eastnet-x509-cr":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+IKEv2Init; prio: 32,32; interface: eth1; 
 000 "ikev2-westnet-eastnet-x509-cr":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -265,9 +265,9 @@ west:~# ipsec auto --status
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
-000 "ikev2-westnet-eastnet-x509-cr": 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com,S=C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com,S=C]; erouted; eroute owner: #2
+000 "ikev2-westnet-eastnet-x509-cr": 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org,S=C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org,S=C]; erouted; eroute owner: #2
 000 "ikev2-westnet-eastnet-x509-cr":     myip=unset; hisip=unset; mycert=west.crt;
-000 "ikev2-westnet-eastnet-x509-cr":   CAs: 'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'...'%any'
+000 "ikev2-westnet-eastnet-x509-cr":   CAs: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'...'%any'
 000 "ikev2-westnet-eastnet-x509-cr":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
 000 "ikev2-westnet-eastnet-x509-cr":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+IKEv2Init; prio: 32,32; interface: eth1; 
 000 "ikev2-westnet-eastnet-x509-cr":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
@@ -471,7 +471,7 @@ Changing to directory '/tmp/ikev2-x509-01/ipsec.d/cacerts'
 |   20 63 61 31  24 30 22 06  09 2a 86 48  86 f7 0d 01
 |   09 01 16 15  74 65 73 74  69 6e 67 40  78 65 6c 65
 |   72 61 6e 63  65 2e 63 6f  6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L2 - validity:
 | L3 - notBefore:
 | L4 - utcTime:
@@ -490,7 +490,7 @@ Changing to directory '/tmp/ikev2-x509-01/ipsec.d/cacerts'
 |   20 63 61 31  24 30 22 06  09 2a 86 48  86 f7 0d 01
 |   09 01 16 15  74 65 73 74  69 6e 67 40  78 65 6c 65
 |   72 61 6e 63  65 2e 63 6f  6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L2 - subjectPublicKeyInfo:
 | L3 - algorithm:
 | L4 - algorithmIdentifier:
@@ -573,7 +573,7 @@ Changing to directory '/tmp/ikev2-x509-01/ipsec.d/cacerts'
 |   20 63 61 31  24 30 22 06  09 2a 86 48  86 f7 0d 01
 |   09 01 16 15  74 65 73 74  69 6e 67 40  78 65 6c 65
 |   72 61 6e 63  65 2e 63 6f  6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L7 - authorityCertSerialNumber:
 |   00 bb 38 7f  63 31 90 8b  41
 | L4 - extension:
@@ -666,7 +666,7 @@ Changing to directory '/tmp/ikev2-x509-01/ipsec.d/crls'
 |   6f 72 20 6f  74 68 65 72  63 61 31 24  30 22 06 09
 |   2a 86 48 86  f7 0d 01 09  01 16 15 74  65 73 74 69
 |   6e 67 40 78  65 6c 65 72  61 6e 63 65  2e 63 6f 6d
-|   'C=ca, ST=Ontario, L=Toronto, O=Xelerance, OU=Test Department, CN=Xelerance test CA for otherca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing.libreswan.org'
 | L2 - thisUpdate:
 | L3 - utcTime:
 |   'Jan 30 15:54:48 UTC 2008'
@@ -1285,7 +1285,7 @@ crl issuer cacert not found for (file:///tmp/ikev2-x509-01/ipsec.d/crls/crashcrl
 |   6f 72 20 63  61 31 24 30  22 06 09 2a  86 48 86 f7
 |   0d 01 09 01  16 15 74 65  73 74 69 6e  67 40 78 65
 |   6c 65 72 61  6e 63 65 2e  63 6f 6d
-|   'C=ca, ST=Ontario, L=Toronto, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L2 - thisUpdate:
 | L3 - utcTime:
 |   'Jan 30 15:54:48 UTC 2008'
@@ -1375,7 +1375,7 @@ crl issuer cacert not found for (file:///tmp/ikev2-x509-01/ipsec.d/crls/cacrlval
 |   6f 72 20 63  61 31 24 30  22 06 09 2a  86 48 86 f7
 |   0d 01 09 01  16 15 74 65  73 74 69 6e  67 40 78 65
 |   6c 65 72 61  6e 63 65 2e  63 6f 6d
-|   'C=ca, ST=Ontario, L=Toronto, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L2 - thisUpdate:
 | L3 - utcTime:
 |   'Jan 30 15:54:47 UTC 2008'
@@ -1458,7 +1458,7 @@ crl issuer cacert not found for (file:///tmp/ikev2-x509-01/ipsec.d/crls/cacrlnot
 |   6f 72 20 63  61 31 24 30  22 06 09 2a  86 48 86 f7
 |   0d 01 09 01  16 15 74 65  73 74 69 6e  67 40 78 65
 |   6c 65 72 61  6e 63 65 2e  63 6f 6d
-|   'C=ca, ST=Ontario, L=Toronto, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L2 - thisUpdate:
 | L3 - utcTime:
 |   'Jan 30 15:54:47 UTC 2008'
@@ -1657,7 +1657,7 @@ loading certificate from west.crt
 |   20 63 61 31  24 30 22 06  09 2a 86 48  86 f7 0d 01
 |   09 01 16 15  74 65 73 74  69 6e 67 40  78 65 6c 65
 |   72 61 6e 63  65 2e 63 6f  6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L2 - validity:
 | L3 - notBefore:
 | L4 - utcTime:
@@ -1676,7 +1676,7 @@ loading certificate from west.crt
 |   65 2e 63 6f  6d 31 24 30  22 06 09 2a  86 48 86 f7
 |   0d 01 09 01  16 15 74 65  73 74 69 6e  67 40 78 65
 |   6c 65 72 61  6e 63 65 2e  63 6f 6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org'
 | L2 - subjectPublicKeyInfo:
 | L3 - algorithm:
 | L4 - algorithmIdentifier:
@@ -1738,7 +1738,7 @@ loading certificate from west.crt
 |   68 74 74 70  3a 2f 2f 63  65 72 74 73  2e 78 65 6c
 |   65 72 61 6e  63 65 2e 63  6f 6d 2f 72  65 76 6f 6b
 |   65 64 2e 63  72 6c
-|   'http://certs.xelerance.com/revoked.crl'
+|   'http://certs.libreswan.org/revoked.crl'
 | L7 - DistributionPoint:
 | L8 - distributionPoint:
 | L9 - fullName:
@@ -1760,7 +1760,7 @@ loading certificate from west.crt
 |   6f 6e 4c 69  73 74 3f 62  61 73 65 3f  28 6f 62 6a
 |   65 63 74 43  6c 61 73 73  3d 63 65 72  74 69 66 69
 |   63 61 74 69  6f 6e 41 75  74 68 6f 72  69 74 79 29
-|   'ldap://certs.xelerance.com/o=Xelerance, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)'
+|   'ldap://certs.libreswan.org/o=Libreswan, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)'
 | L4 - extension:
 | L5 - extnID:
 |   'keyUsage'
@@ -1852,7 +1852,7 @@ loading certificate from west.crt
 |   20 63 61 31  24 30 22 06  09 2a 86 48  86 f7 0d 01
 |   09 01 16 15  74 65 73 74  69 6e 67 40  78 65 6c 65
 |   72 61 6e 63  65 2e 63 6f  6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L7 - authorityCertSerialNumber:
 |   00 bb 38 7f  63 31 90 8b  41
 | L1 - signatureAlgorithm:
@@ -1876,10 +1876,10 @@ loading certificate from west.crt
 |  keyid: *AwEAAcrHD
 |  Modulus: cac70fc10540b0fc48ee07f0672cd98f36e4b6b751e5e6cda18c34be92b18a08944de94ad70178397e2bd89b7faf4f6b6495b1efa20c0b2ba3c3683c989eeb6f2a22ad3cd23209e34f824f8664c24446ae89984539a25e38f7905781da0a22d60107464c868b65771a0cb25b140a0d327b8861b1fb90977ad638b958c9d9e239
 |  PublicExponent: 10001
-| counting wild cards for C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com is 0
-| counting wild cards for C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com is 0
+| counting wild cards for C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org is 0
+| counting wild cards for C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org is 0
 added connection description "ikev2-westnet-eastnet-x509-cr"
-| 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com,S=C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com,S=C]
+| 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org,S=C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org,S=C]
 | ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3; policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+IKEv2Init
 | * processed 0 messages from cryptographic helpers 
 | next event EVENT_SHUNT_SCAN in 120 seconds
@@ -1908,7 +1908,7 @@ loading secrets from "/tmp/ikev2-x509-01/ipsec.secrets"
 |  Exponent2: 5acde702de40111dace85aa440e49add015d0cd27eb4c35c442dc651024eefd606dd40fc5272f51dad8921ad287d442e9b1c04a26b6d1b2fda67c16dc602caef77385565191924fa3e8e8295394dd2b84f6e30044ea9dc0acc66550ebb5b1fd0971e9f053c7ca54b8f654abb9ba4b3529b6cb5241fd3513bb7c8689cca885a33
 |  Coefficient: 12bd2b0e8c94f608fe9cce897dffb61c4fc1fb172f6a4404c5cab5487b2552ee3e0a32bd55e3055bb26b56d675267b272fafe5606e1f36f81615564b7ca45c9ce08052eaa9d976d95ca2dccf5520d4ecdf15217fa2caa337158251041b62b6b0f42fe1266ef4f0155da9100066803b6b2e3b2e65c3b0f84a6eb5989cb4969f7b
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x81426a0) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x81426a0) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x81426a0) 1: %any
   loaded private key file '/etc/ipsec.d/private/west.key' (963 bytes)
 |   file content is not binary ASN.1
@@ -2202,7 +2202,7 @@ loading certificate from west.crt
 |   20 63 61 31  24 30 22 06  09 2a 86 48  86 f7 0d 01
 |   09 01 16 15  74 65 73 74  69 6e 67 40  78 65 6c 65
 |   72 61 6e 63  65 2e 63 6f  6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L2 - validity:
 | L3 - notBefore:
 | L4 - utcTime:
@@ -2221,7 +2221,7 @@ loading certificate from west.crt
 |   65 2e 63 6f  6d 31 24 30  22 06 09 2a  86 48 86 f7
 |   0d 01 09 01  16 15 74 65  73 74 69 6e  67 40 78 65
 |   6c 65 72 61  6e 63 65 2e  63 6f 6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org'
 | L2 - subjectPublicKeyInfo:
 | L3 - algorithm:
 | L4 - algorithmIdentifier:
@@ -2283,7 +2283,7 @@ loading certificate from west.crt
 |   68 74 74 70  3a 2f 2f 63  65 72 74 73  2e 78 65 6c
 |   65 72 61 6e  63 65 2e 63  6f 6d 2f 72  65 76 6f 6b
 |   65 64 2e 63  72 6c
-|   'http://certs.xelerance.com/revoked.crl'
+|   'http://certs.libreswan.org/revoked.crl'
 | L7 - DistributionPoint:
 | L8 - distributionPoint:
 | L9 - fullName:
@@ -2305,7 +2305,7 @@ loading certificate from west.crt
 |   6f 6e 4c 69  73 74 3f 62  61 73 65 3f  28 6f 62 6a
 |   65 63 74 43  6c 61 73 73  3d 63 65 72  74 69 66 69
 |   63 61 74 69  6f 6e 41 75  74 68 6f 72  69 74 79 29
-|   'ldap://certs.xelerance.com/o=Xelerance, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)'
+|   'ldap://certs.libreswan.org/o=Libreswan, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)'
 | L4 - extension:
 | L5 - extnID:
 |   'keyUsage'
@@ -2397,7 +2397,7 @@ loading certificate from west.crt
 |   20 63 61 31  24 30 22 06  09 2a 86 48  86 f7 0d 01
 |   09 01 16 15  74 65 73 74  69 6e 67 40  78 65 6c 65
 |   72 61 6e 63  65 2e 63 6f  6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L7 - authorityCertSerialNumber:
 |   00 bb 38 7f  63 31 90 8b  41
 | L1 - signatureAlgorithm:
@@ -2421,12 +2421,12 @@ loading certificate from west.crt
 |  keyid: *AwEAAcrHD
 |  Modulus: cac70fc10540b0fc48ee07f0672cd98f36e4b6b751e5e6cda18c34be92b18a08944de94ad70178397e2bd89b7faf4f6b6495b1efa20c0b2ba3c3683c989eeb6f2a22ad3cd23209e34f824f8664c24446ae89984539a25e38f7905781da0a22d60107464c868b65771a0cb25b140a0d327b8861b1fb90977ad638b958c9d9e239
 |  PublicExponent: 10001
-| unreference key: 0x8140838 C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com cnt 1--
-| counting wild cards for C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com is 0
-| counting wild cards for C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com is 0
+| unreference key: 0x8140838 C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org cnt 1--
+| counting wild cards for C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org is 0
+| counting wild cards for C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org is 0
 | connect_to_host_pair: 192.1.2.45:500 192.1.2.23:500 -> hp:none 
 added connection description "ikev2-westnet-eastnet-x509-cr"
-| 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com,S=C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com,S=C]
+| 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org,S=C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org,S=C]
 | ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3; policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+IKEv2Init
 | * processed 0 messages from cryptographic helpers 
 | next event EVENT_SHUNT_SCAN in 119 seconds
@@ -3056,7 +3056,7 @@ added connection description "ikev2-westnet-eastnet-x509-cr"
 | *****emit IKEv2 Authentication Payload:
 |    next payload type: ISAKMP_NEXT_v2SA
 |    auth method: v2_AUTH_RSA
-| started looking for secret for C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com->C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com of kind PPK_RSA
+| started looking for secret for C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org->C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org of kind PPK_RSA
 |  keyid: *AwEAAcrHD
 |  Modulus: cac70fc10540b0fc48ee07f0672cd98f36e4b6b751e5e6cda18c34be92b18a08944de94ad70178397e2bd89b7faf4f6b6495b1efa20c0b2ba3c3683c989eeb6f2a22ad3cd23209e34f824f8664c24446ae89984539a25e38f7905781da0a22d60107464c868b65771a0cb25b140a0d327b8861b1fb90977ad638b958c9d9e239
 |  PublicExponent: 10001
@@ -4180,7 +4180,7 @@ added connection description "ikev2-westnet-eastnet-x509-cr"
 | DER ASN1 DN:  65 2e 63 6f  6d 31 24 30  22 06 09 2a  86 48 86 f7
 | DER ASN1 DN:  0d 01 09 01  16 15 74 65  73 74 69 6e  67 40 78 65
 | DER ASN1 DN:  6c 65 72 61  6e 63 65 2e  63 6f 6d
-packet from 192.1.2.23:500: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com'
+packet from 192.1.2.23:500: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org'
 | idhash verify pr  ea ed ba 20  29 76 02 ee  69 46 2d 85  bb 25 29 cc
 | idhash verify pr  7e 53 58 31
 | idhash auth R2  09 00 00 00  30 81 98 31  0b 30 09 06  03 55 04 06
@@ -4360,7 +4360,7 @@ packet from 192.1.2.23:500: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Onta
 |   20 63 61 31  24 30 22 06  09 2a 86 48  86 f7 0d 01
 |   09 01 16 15  74 65 73 74  69 6e 67 40  78 65 6c 65
 |   72 61 6e 63  65 2e 63 6f  6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L2 - validity:
 | L3 - notBefore:
 | L4 - utcTime:
@@ -4379,7 +4379,7 @@ packet from 192.1.2.23:500: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Onta
 |   65 2e 63 6f  6d 31 24 30  22 06 09 2a  86 48 86 f7
 |   0d 01 09 01  16 15 74 65  73 74 69 6e  67 40 78 65
 |   6c 65 72 61  6e 63 65 2e  63 6f 6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org'
 | L2 - subjectPublicKeyInfo:
 | L3 - algorithm:
 | L4 - algorithmIdentifier:
@@ -4441,7 +4441,7 @@ packet from 192.1.2.23:500: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Onta
 |   68 74 74 70  3a 2f 2f 63  65 72 74 73  2e 78 65 6c
 |   65 72 61 6e  63 65 2e 63  6f 6d 2f 72  65 76 6f 6b
 |   65 64 2e 63  72 6c
-|   'http://certs.xelerance.com/revoked.crl'
+|   'http://certs.libreswan.org/revoked.crl'
 | L7 - DistributionPoint:
 | L8 - distributionPoint:
 | L9 - fullName:
@@ -4463,7 +4463,7 @@ packet from 192.1.2.23:500: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Onta
 |   6f 6e 4c 69  73 74 3f 62  61 73 65 3f  28 6f 62 6a
 |   65 63 74 43  6c 61 73 73  3d 63 65 72  74 69 66 69
 |   63 61 74 69  6f 6e 41 75  74 68 6f 72  69 74 79 29
-|   'ldap://certs.xelerance.com/o=Xelerance, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)'
+|   'ldap://certs.libreswan.org/o=Libreswan, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)'
 | L4 - extension:
 | L5 - extnID:
 |   'keyUsage'
@@ -4555,7 +4555,7 @@ packet from 192.1.2.23:500: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Onta
 |   20 63 61 31  24 30 22 06  09 2a 86 48  86 f7 0d 01
 |   09 01 16 15  74 65 73 74  69 6e 67 40  78 65 6c 65
 |   72 61 6e 63  65 2e 63 6f  6d
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L7 - authorityCertSerialNumber:
 |   00 bb 38 7f  63 31 90 8b  41
 | L1 - signatureAlgorithm:
@@ -4572,14 +4572,14 @@ packet from 192.1.2.23:500: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Onta
 |   bf 93 3e db  98 4a bd 07  90 c7 4d 0e  63 e9 4c fc
 |   3d a0 74 96  7a 37 9f 08  58 5f bd ad  0f 80 e5 af
 |   3f
-| subject: 'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com'
-| issuer:  'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+| subject: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org'
+| issuer:  'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | authkey:  45:d7:61:cd:80:1a:9c:73:9a:c9:25:b7:a5:9d:db:9a:55:5a:1b:04
 |   not before  : Jan 30 00:00:00 UTC 2008
 |   current time: Feb 01 23:10:03 UTC 2008
 |   not after   : Feb 03 00:00:00 UTC 2012
-| valid certificate for "C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com"
-| issuer cacert "C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com" found
+| valid certificate for "C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org"
+| issuer cacert "C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org" found
 | signature algorithm: 'md5WithRSAEncryption'
 |   digest:  64 2b fc c2  ad d2 a0 95  3f 66 8e db  51 bd b5 a6
 |   decrypted signature: 
@@ -4592,16 +4592,16 @@ packet from 192.1.2.23:500: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Onta
 |   20 30 0c 06  08 2a 86 48  86 f7 0d 02  05 05 00 04
 |   10 64 2b fc  c2 ad d2 a0  95 3f 66 8e  db 51 bd b5
 |   a6
-| valid certificate signature (C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com -> C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com)
-packet from 192.1.2.23:500: no crl from issuer "C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com" found (strict=no)
-| subject: 'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
-| issuer:  'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+| valid certificate signature (C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org -> C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org)
+packet from 192.1.2.23:500: no crl from issuer "C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org" found (strict=no)
+| subject: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
+| issuer:  'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | authkey:  45:d7:61:cd:80:1a:9c:73:9a:c9:25:b7:a5:9d:db:9a:55:5a:1b:04
 |   not before  : Feb 01 15:23:31 UTC 2008
 |   current time: Feb 01 23:10:03 UTC 2008
 |   not after   : Jan 29 15:23:31 UTC 2018
-| valid certificate for "C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com"
-| issuer cacert "C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com" found
+| valid certificate for "C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org"
+| issuer cacert "C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org" found
 | signature algorithm: 'sha-1WithRSAEncryption'
 |   digest:  32 c4 e1 3b  04 e8 d5 88  15 64 ce 72  e0 87 a2 08
 |   digest:  30 b9 9e 89
@@ -4615,7 +4615,7 @@ packet from 192.1.2.23:500: no crl from issuer "C=ca, ST=Ontario, O=Xelerance, O
 |   30 09 06 05  2b 0e 03 02  1a 05 00 04  14 32 c4 e1
 |   3b 04 e8 d5  88 15 64 ce  72 e0 87 a2  08 30 b9 9e
 |   89
-| valid certificate signature (C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com -> C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com)
+| valid certificate signature (C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org -> C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org)
 | reached self-signed root ca
 | Public key validated
 |  keyid: *AwEAAbSnl
@@ -4647,8 +4647,8 @@ packet from 192.1.2.23:500: no crl from issuer "C=ca, ST=Ontario, O=Xelerance, O
 | idhash  30 08 b3 d4  96 25 07 8a  27 af 42 86  dd 7d d8 8e
 | idhash  af b8 b5 67
 | required CA is '%any'
-|   trusted_ca called with a=C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com b=(empty)
-| key issuer CA is 'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   trusted_ca called with a=C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org b=(empty)
+| key issuer CA is 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | v2rsa decrypted SIG:
 |   82 7e 12 fe  04 80 85 cf  7b 78 67 eb  b7 26 3e 70
 |   b0 11 4d ab
@@ -5319,15 +5319,15 @@ packet from 192.1.2.23:500: no crl from issuer "C=ca, ST=Ontario, O=Xelerance, O
 | pfkey_get: K_SADB_X_ADDFLOW message 12
 | raw_eroute result=1 
 | command executing up-host
-|   trusted_ca called with a=C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com b=(empty)
-| executing up-host: 2>&1 PLUTO_VERB='up-host' PLUTO_VERSION='2.0' PLUTO_CONNECTION='ikev2-westnet-eastnet-x509-cr' PLUTO_INTERFACE='ipsec0' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com' PLUTO_MY_CLIENT='192.1.2.45/32' PLUTO_MY_CLIENT_NET='192.1.2.45' PLUTO_MY_CLIENT_MASK='255.255.255.255' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com' PLUTO_PEER_CLIENT='192.1.2.23/32' PLUTO_PEER_CLIENT_NET='192.1.2.23' PLUTO_PEER_CLIENT_MASK='255.255.255.255' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com' PLUTO_STACK='klips' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+IKEv2Init' PLUTO_XAUTH_USERNAME=''  ipsec _updown
+|   trusted_ca called with a=C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org b=(empty)
+| executing up-host: 2>&1 PLUTO_VERB='up-host' PLUTO_VERSION='2.0' PLUTO_CONNECTION='ikev2-westnet-eastnet-x509-cr' PLUTO_INTERFACE='ipsec0' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org' PLUTO_MY_CLIENT='192.1.2.45/32' PLUTO_MY_CLIENT_NET='192.1.2.45' PLUTO_MY_CLIENT_MASK='255.255.255.255' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org' PLUTO_PEER_CLIENT='192.1.2.23/32' PLUTO_PEER_CLIENT_NET='192.1.2.23' PLUTO_PEER_CLIENT_MASK='255.255.255.255' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org' PLUTO_STACK='klips' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+IKEv2Init' PLUTO_XAUTH_USERNAME=''  ipsec _updown
 | route_and_eroute: firewall_notified: true
 | command executing prepare-host
-|   trusted_ca called with a=C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com b=(empty)
-| executing prepare-host: 2>&1 PLUTO_VERB='prepare-host' PLUTO_VERSION='2.0' PLUTO_CONNECTION='ikev2-westnet-eastnet-x509-cr' PLUTO_INTERFACE='ipsec0' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com' PLUTO_MY_CLIENT='192.1.2.45/32' PLUTO_MY_CLIENT_NET='192.1.2.45' PLUTO_MY_CLIENT_MASK='255.255.255.255' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com' PLUTO_PEER_CLIENT='192.1.2.23/32' PLUTO_PEER_CLIENT_NET='192.1.2.23' PLUTO_PEER_CLIENT_MASK='255.255.255.255' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com' PLUTO_STACK='klips' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+IKEv2Init' PLUTO_XAUTH_USERNAME=''  ipsec _updown
+|   trusted_ca called with a=C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org b=(empty)
+| executing prepare-host: 2>&1 PLUTO_VERB='prepare-host' PLUTO_VERSION='2.0' PLUTO_CONNECTION='ikev2-westnet-eastnet-x509-cr' PLUTO_INTERFACE='ipsec0' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org' PLUTO_MY_CLIENT='192.1.2.45/32' PLUTO_MY_CLIENT_NET='192.1.2.45' PLUTO_MY_CLIENT_MASK='255.255.255.255' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org' PLUTO_PEER_CLIENT='192.1.2.23/32' PLUTO_PEER_CLIENT_NET='192.1.2.23' PLUTO_PEER_CLIENT_MASK='255.255.255.255' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org' PLUTO_STACK='klips' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+IKEv2Init' PLUTO_XAUTH_USERNAME=''  ipsec _updown
 | command executing route-host
-|   trusted_ca called with a=C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com b=(empty)
-| executing route-host: 2>&1 PLUTO_VERB='route-host' PLUTO_VERSION='2.0' PLUTO_CONNECTION='ikev2-westnet-eastnet-x509-cr' PLUTO_INTERFACE='ipsec0' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com' PLUTO_MY_CLIENT='192.1.2.45/32' PLUTO_MY_CLIENT_NET='192.1.2.45' PLUTO_MY_CLIENT_MASK='255.255.255.255' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com' PLUTO_PEER_CLIENT='192.1.2.23/32' PLUTO_PEER_CLIENT_NET='192.1.2.23' PLUTO_PEER_CLIENT_MASK='255.255.255.255' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com' PLUTO_STACK='klips' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+IKEv2Init' PLUTO_XAUTH_USERNAME=''  ipsec _updown
+|   trusted_ca called with a=C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org b=(empty)
+| executing route-host: 2>&1 PLUTO_VERB='route-host' PLUTO_VERSION='2.0' PLUTO_CONNECTION='ikev2-westnet-eastnet-x509-cr' PLUTO_INTERFACE='ipsec0' PLUTO_NEXT_HOP='192.1.2.23' PLUTO_ME='192.1.2.45' PLUTO_MY_ID='C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org' PLUTO_MY_CLIENT='192.1.2.45/32' PLUTO_MY_CLIENT_NET='192.1.2.45' PLUTO_MY_CLIENT_MASK='255.255.255.255' PLUTO_MY_PORT='0' PLUTO_MY_PROTOCOL='0' PLUTO_PEER='192.1.2.23' PLUTO_PEER_ID='C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org' PLUTO_PEER_CLIENT='192.1.2.23/32' PLUTO_PEER_CLIENT_NET='192.1.2.23' PLUTO_PEER_CLIENT_MASK='255.255.255.255' PLUTO_PEER_PORT='0' PLUTO_PEER_PROTOCOL='0' PLUTO_PEER_CA='C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org' PLUTO_STACK='klips' PLUTO_CONN_POLICY='RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+IKEv2Init' PLUTO_XAUTH_USERNAME=''  ipsec _updown
 | route_and_eroute: instance "ikev2-westnet-eastnet-x509-cr", setting eroute_owner {spd=0x8142928,sr=0x8142928} to #2 (was #0) (newest_ipsec_sa=#2)
 | complete v2 state transition with STF_OK
 "ikev2-westnet-eastnet-x509-cr" #2: transition from state STATE_PARENT_I2 to state STATE_PARENT_I3

@@ -22,10 +22,10 @@ Usage: ipsec showhostkey [--ipseckey {gateway}][--left ] [--right ]
 east:~#
  ipsec showhostkey --dump
 25(1): RSA keyid: AwEAAdCiZ with id: %any
-25(2): RSA keyid: AwEAAdCiZ with id: E=testing@xelerance.com
-25(3): RSA keyid: AwEAAdCiZ with id: CN=east.testing.xelerance.com
+25(2): RSA keyid: AwEAAdCiZ with id: E=testing.libreswan.org
+25(3): RSA keyid: AwEAAdCiZ with id: CN=east.testing.libreswan.org
 25(4): RSA keyid: AwEAAdCiZ with id: L=Toronto
-25(5): RSA keyid: AwEAAdCiZ with id: O=Xelerance
+25(5): RSA keyid: AwEAAdCiZ with id: O=Libreswan
 25(6): RSA keyid: AwEAAdCiZ with id: ST=Ontario
 25(7): RSA keyid: AwEAAdCiZ with id: C=ca
 8(1): RSA keyid: AQN3cn11F with id: (none)
@@ -37,10 +37,10 @@ ipsec showhostkey loaded private key for keyid: PPK_RSA:AQN3cn11F
 ipsec showhostkey   loaded private key file '/etc/ipsec.d/private/east.key' (963 bytes)
 ipsec showhostkey loaded private key for keyid: PPK_RSA:AwEAAdCiZ
 25(1): RSA keyid: AwEAAdCiZ with id: %any
-25(2): RSA keyid: AwEAAdCiZ with id: E=testing@xelerance.com
-25(3): RSA keyid: AwEAAdCiZ with id: CN=east.testing.xelerance.com
+25(2): RSA keyid: AwEAAdCiZ with id: E=testing.libreswan.org
+25(3): RSA keyid: AwEAAdCiZ with id: CN=east.testing.libreswan.org
 25(4): RSA keyid: AwEAAdCiZ with id: L=Toronto
-25(5): RSA keyid: AwEAAdCiZ with id: O=Xelerance
+25(5): RSA keyid: AwEAAdCiZ with id: O=Libreswan
 25(6): RSA keyid: AwEAAdCiZ with id: ST=Ontario
 25(7): RSA keyid: AwEAAdCiZ with id: C=ca
 8(1): RSA keyid: AQN3cn11F with id: (none)

@@ -274,6 +274,6 @@ authorityKeyIdentifier=keyid:always,issuer:always
 
 [ crl_dp ]
 
-	URI.1="http://certs.testing.libreswan.org/revoked.crl"
-	URI.2="ldap://certs.testing.libreswan.org/o=Libreswan, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)"
+	URI.1="http://nic.testing.libreswan.org/revoked.crl"
+	URI.2="ldap://nic.testing.libreswan.org/o=Libreswan, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)"
 

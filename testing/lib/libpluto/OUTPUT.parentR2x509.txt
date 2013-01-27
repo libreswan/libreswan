@@ -22,9 +22,9 @@ Pre-amble: #!-pluto-whack-file- recorded on east on 2008-02-03 12:28:01
 ../parentR2x509   loaded host cert file './east.crt' (1704 bytes)
 | interface "eth0" matched right side
 ../parentR2x509 added connection description "ikev2-westnet-eastnet-x509-cr"
-RC=0 "ikev2-westnet-eastnet-x509-cr": 192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com,S=C]...192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com,S=C]; unrouted; eroute owner: #0
+RC=0 "ikev2-westnet-eastnet-x509-cr": 192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org,S=C]...192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org,S=C]; unrouted; eroute owner: #0
 RC=0 "ikev2-westnet-eastnet-x509-cr":     myip=unset; hisip=unset; mycert=east.crt;
-RC=0 "ikev2-westnet-eastnet-x509-cr":   CAs: 'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'...'%any'
+RC=0 "ikev2-westnet-eastnet-x509-cr":   CAs: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'...'%any'
 RC=0 "ikev2-westnet-eastnet-x509-cr":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
 RC=0 "ikev2-westnet-eastnet-x509-cr":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+IKEv2Init; prio: 32,32; interface: eth0; 
 RC=0 "ikev2-westnet-eastnet-x509-cr":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -600,7 +600,7 @@ sending 308 bytes for STATE_IKEv2_START through eth0:500 to 192.1.2.45:500 (usin
 |   65 2e 63 6f  6d 31 24 30  22 06 09 2a  86 48 86 f7
 |   0d 01 09 01  16 15 74 65  73 74 69 6e  67 40 78 65
 |   6c 65 72 61  6e 63 65 2e  63 6f 6d
-../parentR2x509 IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com'
+../parentR2x509 IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org'
 | idhash verify pi  cc 07 97 44  b4 a3 4e 8a  0d 2f 27 8b  ee 06 6d 07
 |   a5 a5 75 2e
 | idhash verify I2  09 00 00 00  30 81 98 31  0b 30 09 06  03 55 04 06
@@ -625,7 +625,7 @@ sending 308 bytes for STATE_IKEv2_START through eth0:500 to 192.1.2.45:500 (usin
 | L4 - algorithm:
 |   'md5WithRSAEncryption'
 | L2 - issuer:
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L2 - validity:
 | L3 - notBefore:
 | L4 - utcTime:
@@ -634,7 +634,7 @@ sending 308 bytes for STATE_IKEv2_START through eth0:500 to 192.1.2.45:500 (usin
 | L4 - utcTime:
 |   'Feb 03 00:00:00 UTC 2012'
 | L2 - subject:
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org'
 | L2 - subjectPublicKeyInfo:
 | L3 - algorithm:
 | L4 - algorithmIdentifier:
@@ -668,14 +668,14 @@ sending 308 bytes for STATE_IKEv2_START through eth0:500 to 192.1.2.45:500 (usin
 | L10 - generalNames:
 | L11 - generalName:
 | L12 - uniformResourceIdentifier:
-|   'http://certs.xelerance.com/revoked.crl'
+|   'http://certs.libreswan.org/revoked.crl'
 | L7 - DistributionPoint:
 | L8 - distributionPoint:
 | L9 - fullName:
 | L10 - generalNames:
 | L11 - generalName:
 | L12 - uniformResourceIdentifier:
-|   'ldap://certs.xelerance.com/o=Xelerance, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)'
+|   'ldap://certs.libreswan.org/o=Libreswan, c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)'
 | L4 - extension:
 | L5 - extnID:
 |   'keyUsage'
@@ -721,7 +721,7 @@ sending 308 bytes for STATE_IKEv2_START through eth0:500 to 192.1.2.45:500 (usin
 | L8 - generalNames:
 | L9 - generalName:
 | L10 - directoryName:
-|   'C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=Xelerance test CA for ca, E=testing@xelerance.com'
+|   'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing.libreswan.org'
 | L7 - authorityCertSerialNumber:
 | L1 - signatureAlgorithm:
 | L2 - algorithmIdentifier:

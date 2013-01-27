@@ -70,7 +70,7 @@ echo "------------------------------------------"
 echo ""
 
 # Generate CA's
-for cauth in ca otherca
+for cauth in mainca otherca
 do
 openssl genrsa -passout pass:foobar -des3 -out keys/$cauth.key 1024
 openssl rsa -in keys/$cauth.key -out keys/$cauth.key -passin pass:foobar
@@ -123,9 +123,9 @@ send "\n"
 wait
 EOF
 # sign machine cert
-openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 # package in pkcs#12
-openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/ca.crt -caname "Libreswan test CA for ca" -out pkcs12/$machine.p12 -passin pass:foobar -passout pass:foobar
+openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/mainca.crt -caname "Libreswan test CA for mainca" -out pkcs12/$machine.p12 -passin pass:foobar -passout pass:foobar
 done
 
 # Special Cases follow
@@ -153,13 +153,13 @@ expect "optional"
 send "\n"
 wait
 EOF
-openssl ca -batch -in reqs/bigkey.req -startdate $START -days 365 -out certs/bigkey.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/bigkey.req -startdate $START -days 365 -out certs/bigkey.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 
 # cert that is not yet valid
-openssl ca -batch -in reqs/notvalidyet.req -startdate $FUTURE -enddate $FUTUREEND -out certs/notvalidyet.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/notvalidyet.req -startdate $FUTURE -enddate $FUTUREEND -out certs/notvalidyet.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 
 # cert not valid anymore
-openssl ca -batch -in reqs/notvalidanymore.req -startdate $START -enddate $END -out certs/notvalidanymore.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/notvalidanymore.req -startdate $START -enddate $END -out certs/notvalidanymore.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 
 # signed by other ca
 rm certs/signedbyotherca.crt
@@ -188,7 +188,7 @@ expect "optional"
 send "\n"
 wait
 EOF
-openssl ca -batch -in reqs/wrongdnorg.req -startdate $START -days 365 -out certs/wrongdnorg.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/wrongdnorg.req -startdate $START -days 365 -out certs/wrongdnorg.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 
 # wrong number of DN's
 expect  <<EOF
@@ -213,7 +213,7 @@ expect "optional"
 send "\n"
 wait
 EOF
-openssl ca -batch -in reqs/wrongdnnum.req -startdate $START -days 365 -out certs/wrongdnnum.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/wrongdnnum.req -startdate $START -days 365 -out certs/wrongdnnum.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 
 # Unwise charachters
 expect  <<EOF
@@ -238,7 +238,7 @@ expect "optional"
 send "\n"
 wait
 EOF
-openssl ca -batch -in reqs/unwisechar.req -startdate $START -days 365 -out certs/unwisechar.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/unwisechar.req -startdate $START -days 365 -out certs/unwisechar.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 
 # Using SHA2
 expect  <<EOF
@@ -263,7 +263,7 @@ expect "optional"
 send "\n"
 wait
 EOF
-openssl ca -batch -in reqs/hashsha2.req -startdate $START -days 365 -out certs/hashsha2.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/hashsha2.req -startdate $START -days 365 -out certs/hashsha2.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 
 # Space in CN
 expect  <<EOF
@@ -304,7 +304,7 @@ send "\n"
 expect "Organizational"
 send "\n"
 expect "Common"
-send "Libreswan test CA for ca\n"
+send "Libreswan test CA for mainca\n"
 expect "Email"
 send "testing@libreswan.org\n"
 expect "challenge"
@@ -313,14 +313,14 @@ expect "optional"
 send "\n"
 wait
 EOF
-openssl ca -batch -in reqs/cnofca.req -startdate $START -days 365 -out certs/cnofca.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/cnofca.req -startdate $START -days 365 -out certs/cnofca.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 # Revoke and generate CRL
-openssl ca -gencrl -crldays 15 -out crls/cacrlvalid.pem  -keyfile keys/ca.key -cert cacerts/ca.crt -passin pass:foobar
-openssl ca -gencrl -startdate $START -enddate $END -out crls/cacrlexpired.pem  -keyfile keys/ca.key -cert cacerts/ca.crt -passin pass:foobar
-openssl ca -gencrl -startdate $FUTURE -enddate $FUTUREEND -out crls/cacrlnotyetvalid.pem  -keyfile keys/ca.key -cert cacerts/ca.crt -passin pass:foobar
+openssl ca -gencrl -crldays 15 -out crls/cacrlvalid.pem  -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
+openssl ca -gencrl -startdate $START -enddate $END -out crls/cacrlexpired.pem  -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
+openssl ca -gencrl -startdate $FUTURE -enddate $FUTUREEND -out crls/cacrlnotyetvalid.pem  -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
 openssl ca -gencrl -crldays 15 -out crls/othercacrl.pem  -keyfile keys/otherca.key -cert cacerts/otherca.crt -passin pass:foobar
-openssl ca -revoke certs/revoked.crt -keyfile keys/ca.key -cert cacerts/ca.crt -passin pass:foobar
-openssl ca -gencrl -crldays 15 -out crls/cacrlvalid.pem -keyfile keys/ca.key -cert cacerts/ca.crt -passin pass:foobar
+openssl ca -revoke certs/revoked.crt -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
+openssl ca -gencrl -crldays 15 -out crls/cacrlvalid.pem -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
 
 
 # Copy to the same places as CA/dist_certs did

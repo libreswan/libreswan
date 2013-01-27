@@ -367,7 +367,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8140158) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8140158) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8140158) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -384,7 +384,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8141840) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8141840) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8141840) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -401,7 +401,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x81400e8) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x81400e8) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x81400e8) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -418,7 +418,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8142280) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8142280) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8142280) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -435,7 +435,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8142280) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8142280) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8142280) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -452,7 +452,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8140018) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8140018) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8140018) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -469,7 +469,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8140010) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8140010) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8140010) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -486,7 +486,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x81421f8) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x81421f8) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x81421f8) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -503,7 +503,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x813ff08) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x813ff08) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x813ff08) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -520,7 +520,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x81421f8) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x81421f8) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x81421f8) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -537,7 +537,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x813ff08) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x813ff08) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x813ff08) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -554,7 +554,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x81445d8) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x81445d8) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x81445d8) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -571,7 +571,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8143c90) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8143c90) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8143c90) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -588,7 +588,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8144550) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8144550) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8144550) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -605,7 +605,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8146ce0) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8146ce0) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8146ce0) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -622,7 +622,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8149940) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8149940) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8149940) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -639,7 +639,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8146340) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8146340) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8146340) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -656,7 +656,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8148690) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8148690) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8148690) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -673,7 +673,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x814a258) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x814a258) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x814a258) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file
@@ -690,7 +690,7 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/tmp/netkey-pluto-02/ipsec.secrets"
 loaded private key for keyid: PPK_RSA:AQNzGEFs1
-| id type added to secret(0x8144550) 1: C=ca, ST=Ontario, O=Xelerance, CN=west.xelerance.com, E=testing@xelerance.com
+| id type added to secret(0x8144550) 1: C=ca, ST=Ontario, O=Libreswan, CN=west.libreswan.org, E=testing.libreswan.org
 | id type added to secret(0x8144550) 1: %any
   could not open private key file '/etc/ipsec.d/private/west.key'
 "/tmp/netkey-pluto-02/ipsec.secrets" line 26: error loading RSA private key file

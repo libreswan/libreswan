@@ -1,6 +1,6 @@
 Basic pluto X.509 test:
 
-"westnet-eastnet": 192.0.1.0/24===192.1.2.45[CN=west.testing.xelerance.com]...192.1.2.23[CN=east.testing.xelerance.com]===192.0.2.0/24
+"westnet-eastnet": 192.0.1.0/24===192.1.2.45[CN=west.testing.libreswan.org]...192.1.2.23[CN=east.testing.libreswan.org]===192.0.2.0/24
 
 1) west 192.1.2.45 pings east-in/east-eth0/east 192.0.2.254 on eastnet 192.0.2.0/24
 2) west adds an iptable rule to block plaintext from eastnet

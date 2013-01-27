@@ -4,7 +4,7 @@ Basic pluto X.509 test, with full debugging enabled on both klips and pluto.
 
 Based off x509-pluto-01
 
-"westnet-eastnet": 192.0.1.0/24===192.1.2.45[CN=west.xelerance.com]...192.1.2.23[CN=east.xelerance.com]===192.0.2.0/24
+"westnet-eastnet": 192.0.1.0/24===192.1.2.45[CN=west.libreswan.org]...192.1.2.23[CN=east.libreswan.org]===192.0.2.0/24
 
 0) enable debugging
 1) west 192.1.2.45 pings east-in/east-eth0/east 192.0.2.254 on eastnet 192.0.2.0/24
