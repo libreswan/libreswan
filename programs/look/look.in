@@ -81,3 +81,7 @@ echo ROUTING TABLES
 ip route 
 ip -6 route 
 
+if test -f @IPSEC_CONFDDIR@/cert8.db ; then
+	echo NSS_CERTIFICATES
+	certutil -L -d @IPSEC_CONFDDIR@
+fi
