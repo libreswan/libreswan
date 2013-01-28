@@ -9,4 +9,9 @@ modobj24
 modobj26
 testing/*/OUTPUT/*
 testing/*/*/OUTPUT
+testing/x509/*/*
+testing/x509/index.*
+testing/x509/crlnumber.*
+testing/x509/serial*
+testing/x509/nss-pw
 osxApp/build
