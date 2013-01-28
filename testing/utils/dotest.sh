@@ -2,12 +2,15 @@
 . ../../../kvmsetup.sh
 . ./testparams.sh 
 . ../setup.sh
-. $LIBRESAWNBASE/testing/utils/functions.sh
+. $LIBRESWANDIR/testing/utils/functions.sh
+
+TESTNAME=`basename $PWD`
+echo "autodetet testname is $TESTNAME"
 
 rm -fr OUTPUT/*
 mkdir  -pm777 OUTPUT
 
-if [ -f eastinit.sh ] ; then
+if [ ! -f eastrun.sh ] ; then
 	RESPONDER=east
 else
 	P=`pwd`
@@ -23,9 +26,9 @@ if [ -f nicinit.sh ] ; then
 fi
 
 
-if [ -f westinit.sh ] ; then
+if [ -f westrun.sh ] ; then
 	INITIATOR=west
-elif [ -f roadinit.sh ] ; then
+elif [ -f roadrun.sh ] ; then
 	INITIATOR=road
 else 
 	echo "can't idenity INITIATOR"
