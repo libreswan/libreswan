@@ -1235,8 +1235,11 @@ main(int argc, char **argv)
 
     /* loading X.509 CA certificates */
     load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
+#if 0
+    /* unused */
     /* loading X.509 AA certificates */
     load_authcerts("AA cert", oco->aacerts_dir, AUTH_AA);
+#endif
 
     /* loading X.509 CRLs */
     load_crls();
