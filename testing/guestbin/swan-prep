@@ -80,10 +80,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 
 	if args.x509:
 		print "Preparing X.509 NSS files"
-		fp = open("/tmp/nss-pw","w")
-		fp.write("foobar")
-		fp.close()
-		commands.getoutput("pk12util -i pkcs12/%s.p12 -d /etc/ipsec.d -w /tmp/nss-pw"%hostname)
+		commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
 
 if userland == "strongswan":
 	#  strongswan specific
@@ -108,7 +105,7 @@ racoon = commands.getoutput("pidof racoon")
 
 for daemon in ( pluto, charon, shrew, racoon ):
 	if daemon:
-		os.kill(daemon,9)
+		os.kill(int(daemon),9)
 for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/racoon.pid"):
 	if os.path.isfile(pidfile):
 		os.unlink(pidfile)
