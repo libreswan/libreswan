@@ -6,12 +6,13 @@
 #
 # Setup a variety of X509 certificates for testcases
 
-#OUTDIR=`dirname $0`
-#pushd $OUTDIR
+OUTDIR=`dirname $0`
+pushd $OUTDIR
 
 # Clean
-rm -f reqs/* certs/* keys/* newcerts/* cacerts/* crls/* pkcs12/* index.txt* serial*
+rm -f reqs/* certs/* keys/* newcerts/* cacerts/* crls/* pkcs12/* index.txt* serial* nss-pw crlnumber
 
+echo -n "foobar" > nss-pw
 # Prep
 mkdir -p certs crls newcerts keys reqs pkcs12 cacerts
 /usr/bin/touch index.txt
@@ -125,7 +126,7 @@ EOF
 # sign machine cert
 openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 # package in pkcs#12
-openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/mainca.crt -caname "Libreswan test CA for mainca" -out pkcs12/$machine.p12 -passin pass:foobar -passout pass:foobar
+openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/$machine.p12 -passin pass:foobar -passout pass:foobar
 done
 
 # Special Cases follow
@@ -323,23 +324,4 @@ openssl ca -revoke certs/revoked.crt -keyfile keys/mainca.key -cert cacerts/main
 openssl ca -gencrl -crldays 15 -out crls/cacrlvalid.pem -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
 
 
-# Copy to the same places as CA/dist_certs did
-# cp certs/* ../baseconfigs/all/etc/ipsec.d/certs
-# cp cacerts/* ../baseconfigs/all/etc/ipsec.d/cacerts
-# cp crls/* ../baseconfigs/all/etc/ipsec.d/crls
-# cp keys/* ../baseconfigs/all/etc/ipsec.d/private
-
-# Copy private keys to individual baseconfig directories
-# cd keys
-# for i in *.key
-# do
-# 	HOST=`echo $i|sed "s/.key$//"`
-# 	if [ -d ../../baseconfigs/$HOST/etc/ipsec.d/private ]
-# 	then
-# 		cp $i ../../baseconfigs/$HOST/etc/ipsec.d/private
-# 		cp ../reqs/$HOST.req ../pkcs12/$HOST.p12 ../../baseconfigs/$HOST/etc/ipsec.d/private
-# 	fi
-# done
-# cd ..
-# back to original directory
-#popd
+popd
