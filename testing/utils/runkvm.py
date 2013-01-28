@@ -119,7 +119,23 @@ def run_test(args, child):
     f = open(output_file, 'w') 
     child.logfile = f
 
-    cmd = '/testing/guestbin/swan-prep --testname %s --hostname %s'%(args.testname,args.hostname)
+    # do we need to prep x509?
+    if args.x509:
+	# call to runkvm.py forced it
+	x509 = "--x509"
+    else:
+	x509 = ""
+	testdir = os.getcwd()
+	testparams = open("%s/testparams.sh"%testdir, "r").readlines()
+	for line in testparams:
+		try:
+			(testkey, testvalue) = line.split('=')
+			if testkey == "x509" or testkey == "X509":
+				x509 = "--x509"
+		except:
+			pass
+	
+    cmd = '/testing/guestbin/swan-prep --testname %s --hostname %s %s'%(args.testname,args.hostname, x509)
     read_exec_shell_cmd( child, cmd, prompt, timer)
 
     cmd = "rm -fr /tmp/pluto.log"
@@ -147,6 +163,7 @@ def main():
     parser.add_argument('--hostname', '-H', action='store', default='east', help='The name of the host to run.')
     parser.add_argument('--compile', action="store_true", help='compile the source on host <hostname>.')
     parser.add_argument('--install', action="store_true", help='run make install module_install .')
+    parser.add_argument('--x509', action="store_true", help='tell the guest to setup the X509 certs in NSS.')
     parser.add_argument('--final', action="store_true", help='run final.sh on the host.')
     parser.add_argument('--reboot', action="store_true", help='first reboot the host')
     parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
