@@ -10,11 +10,11 @@ OUTDIR=`dirname $0`
 pushd $OUTDIR
 
 # Clean
-rm -f reqs/* certs/* keys/* newcerts/* cacerts/* crls/* pkcs12/* index.txt* serial* nss-pw crlnumber
+rm -f reqs/* certs/* keys/* newcerts/* cacerts/* crls/* pkcs12/mainca/* pkcs12/otherca/* index.txt* serial* nss-pw crlnumber
 
 echo -n "foobar" > nss-pw
 # Prep
-mkdir -p certs crls newcerts keys reqs pkcs12 cacerts
+mkdir -p certs crls newcerts keys reqs pkcs12/mainca pkcs12/otherca cacerts
 /usr/bin/touch index.txt
 echo "01" > serial
 echo "01" > crlnumber
@@ -126,7 +126,7 @@ EOF
 # sign machine cert
 openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 # package in pkcs#12
-openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/$machine.p12 -passin pass:foobar -passout pass:foobar
+openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/$machine.p12 -passin pass:foobar -passout pass:foobar
 done
 
 # Special Cases follow
@@ -158,13 +158,16 @@ openssl ca -batch -in reqs/bigkey.req -startdate $START -days 365 -out certs/big
 
 # cert that is not yet valid
 openssl ca -batch -in reqs/notvalidyet.req -startdate $FUTURE -enddate $FUTUREEND -out certs/notvalidyet.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/notvalidyet.key -in certs/notvalidyet.crt -name "$machine" -certfile cacerts/mainca.crt -caname "otherca" -out pkcs12/otherca/notvalidyet.p12 -passin pass:foobar -passout pass:foobar
 
 # cert not valid anymore
 openssl ca -batch -in reqs/notvalidanymore.req -startdate $START -enddate $END -out certs/notvalidanymore.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/notvalidanymore.key -in certs/notvalidanymore.crt -name "$machine" -certfile cacerts/mainca.crt -caname "otherca" -out pkcs12/otherca/notvalidanymore.p12 -passin pass:foobar -passout pass:foobar
 
 # signed by other ca
-rm certs/signedbyotherca.crt
+rm -f certs/signedbyotherca.crt pkcs12/mainca/signedbyother.p12
 openssl ca -batch -in reqs/signedbyotherca.req -startdate $START -days 365 -out certs/signedbyotherca.crt -notext -cert cacerts/otherca.crt -keyfile keys/otherca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/signedbyotherca.key -in certs/signedbyotherca.crt -name "$machine" -certfile cacerts/otherca.crt -caname "otherca" -out pkcs12/otherca/signedbyotherca.p12 -passin pass:foobar -passout pass:foobar
 
 # wrong DN (Organisation is different)
 expect  <<EOF
@@ -190,6 +193,7 @@ send "\n"
 wait
 EOF
 openssl ca -batch -in reqs/wrongdnorg.req -startdate $START -days 365 -out certs/wrongdnorg.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/wrongdnorg.key -in certs/wrongdnorg.crt -name "wrongdnorg" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/wrongdnorg.p12 -passin pass:foobar -passout pass:foobar
 
 # wrong number of DN's
 expect  <<EOF
@@ -215,6 +219,7 @@ send "\n"
 wait
 EOF
 openssl ca -batch -in reqs/wrongdnnum.req -startdate $START -days 365 -out certs/wrongdnnum.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/wrongdnorg.key -in certs/wrongdnorg.crt -name "wrongdnorg" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/wrongdnorg.p12 -passin pass:foobar -passout pass:foobar
 
 # Unwise charachters
 expect  <<EOF
@@ -240,6 +245,7 @@ send "\n"
 wait
 EOF
 openssl ca -batch -in reqs/unwisechar.req -startdate $START -days 365 -out certs/unwisechar.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/unwisechar.key -in certs/unwisechar.crt -name "unwisechar" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/unwisechar.p12 -passin pass:foobar -passout pass:foobar
 
 # Using SHA2
 expect  <<EOF
@@ -265,6 +271,7 @@ send "\n"
 wait
 EOF
 openssl ca -batch -in reqs/hashsha2.req -startdate $START -days 365 -out certs/hashsha2.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/hashsha2.key -in certs/hashsha2.crt -name "hashsha2" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/hashsha2.p12 -passin pass:foobar -passout pass:foobar
 
 # Space in CN
 expect  <<EOF
@@ -290,6 +297,7 @@ send "\n"
 wait
 EOF
 openssl ca -batch -in reqs/spaceincn.req -startdate $START -days 365 -out certs/spaceincn.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/spaceincn.key -in certs/spaceincn.crt -name "spaceincn" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/spaceincn.p12 -passin pass:foobar -passout pass:foobar
 
 # CN of client cert is the same as the CA's CN
 expect  <<EOF
@@ -315,6 +323,9 @@ send "\n"
 wait
 EOF
 openssl ca -batch -in reqs/cnofca.req -startdate $START -days 365 -out certs/cnofca.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/cnofca.key -in certs/cnofca.crt -name "cnofca" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/cnofca.p12 -passin pass:foobar -passout pass:foobar
+
+
 # Revoke and generate CRL
 openssl ca -gencrl -crldays 15 -out crls/cacrlvalid.pem  -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
 openssl ca -gencrl -startdate $START -enddate $END -out crls/cacrlexpired.pem  -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
