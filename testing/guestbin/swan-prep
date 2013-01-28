@@ -81,6 +81,11 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	if args.x509:
 		print "Preparing X.509 NSS files"
 		commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
+		# install all other public certs
+		for certname in ( "west", "east", "road" ):
+			if certname is not hostname:
+				commands.getoutput("certutil -A -n %s -t 'P,u' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt"%(certname,certname))
+			
 
 if userland == "strongswan":
 	#  strongswan specific
