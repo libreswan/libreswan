@@ -1,11 +1,10 @@
 : ==== start ====
-TESTNAME=x509-pluto-01
-source /testing/pluto/bin/eastlocal.sh
+# /testing/guestbin/swan-prep --testname `basename $PWD` --x509 
 
-# make sure that packets don't sneak in
-iptables -A INPUT -i eth1 -s 192.0.3.0/24 -d 0.0.0.0/0 -j DROP
-
-ipsec setup start
+/usr/local/libexec/ipsec/_stackmanager start
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add westnet-eastnet-x509
+ipsec auto --status
+echo "initdone"
