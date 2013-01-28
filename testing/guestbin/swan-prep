@@ -3,7 +3,7 @@
 # This script is run by a VM host (eg "west") to prepare itself for testing
 # It should be passed a testname as its onyl argument
 
-import os,sys,socket,shutil,distutils.dir_util
+import os,sys,socket,shutil,distutils.dir_util,commands
 
 try:
 	import argparse
@@ -16,6 +16,7 @@ parser.add_argument('--testname', '-t', action='store', default='ikev2-05-basic-
 parser.add_argument('--hostname', '-H', action='store', default='', help='The name of the host to prepare as')
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
+parser.add_argument('--x509', '-x', action='store_true',  help='create X509 NSS file by importing test certs')
 args = parser.parse_args()
 
 if args.hostname:
@@ -52,6 +53,8 @@ if os.path.isdir("/etc/ipsec.d"):
 	shutil.rmtree("/etc/ipsec.d")
 	os.mkdir("/etc/ipsec.d")
 
+
+
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
 
@@ -75,6 +78,13 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 			shutil.copy(src_file,"/etc/ipsec.secrets")
 	os.chmod("/etc/ipsec.secrets",0600)
 
+	if args.x509:
+		print "Preparing X.509 NSS files"
+		fp = open("/tmp/nss-pw","w")
+		fp.write("foobar")
+		fp.close()
+		commands.getoutput("pk12util -i pkcs12/%s.p12 -d /etc/ipsec.d -w /tmp/nss-pw"%hostname)
+
 if userland == "strongswan":
 	#  strongswan specific
 	for dir in ( "/etc/ipsec.d/aacerts", "/etc/ipsec.d/ocspcerts"):
@@ -88,3 +98,20 @@ if userland == "racoon2" or userland == "racoon":
 if userland == "shrew":
 	print "shrew not yet tested/integrated"
 
+# final prep - this kills old userlands and starts new one
+output = commands.getoutput("ipsec stop")
+# python has no pidof :/
+pluto = commands.getoutput("pidof pluto")
+charon = commands.getoutput("pidof pluto")
+shrew = commands.getoutput("pidof iked")
+racoon = commands.getoutput("pidof racoon")
+
+for daemon in ( pluto, charon, shrew, racoon ):
+	if daemon:
+		os.kill(daemon,9)
+for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/racoon.pid"):
+	if os.path.isfile(pidfile):
+		os.unlink(pidfile)
+
+# remove stacks so test can start the stack it needs.
+commands.getoutput("/usr/local/libexec/ipsec/_stackmanager stop")
