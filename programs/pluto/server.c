@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1102,6 +1103,150 @@ check_msg_errqueue(const struct iface_port *ifp, short interest)
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
 bool
+send_frags(struct state *st, const char *where, bool verbose)
+{
+    struct isakmp_hdr *isakmphdr;
+    struct isakmp_ikefrag *fraghdr;
+    u_int8_t *ike_frag,*ike_fragptr;
+    u_int8_t *ptr, *fragptr;
+
+    size_t len;
+    size_t fraglen;
+    size_t datalen;
+    size_t max_datalen;
+    unsigned int trailer;
+    unsigned int espmarker;
+    unsigned int fragnum = 0;
+
+    if (st->st_suspended_md == NULL ) {
+    DBG_log("send_frags: Cannot access md\n");
+	return FALSE;
+    }
+
+    /*
+     * We want to send a a packet smaller than ISAKMP_FRAG_MAXLEN
+     * First compute the maximum data length that will fit in it
+     */
+    max_datalen = ISAKMP_FRAG_MAXLEN -
+        (sizeof(*isakmphdr) + sizeof(*fraghdr) + sizeof(trailer));
+
+    if (st->st_suspended_md->iface->ike_float == TRUE) {
+	max_datalen -= sizeof(espmarker);
+    }
+
+    ptr = st->st_tpacket.ptr;
+    len = (unsigned long) st->st_tpacket.len;
+
+    while (len > 0) {
+	DBG(DBG_CONTROL, DBG_log("sending IKE fragment\n"));
+	fragnum++;
+
+	if (len > max_datalen)
+	    datalen = max_datalen;
+	else
+	    datalen = len;
+
+	fraglen = sizeof(*isakmphdr)
+	          + sizeof(*fraghdr)
+	          + datalen;
+
+	if (st->st_suspended_md->iface->ike_float == TRUE) {
+	    fraglen += sizeof(espmarker);
+	}
+
+	if ((ike_frag = alloc_bytes(fraglen,"fraglen")) == NULL) {
+	    DBG_log("send_frags: error allocating memory \n");
+	    return FALSE;
+	}
+
+	ike_fragptr = ike_frag;
+
+	/* Set non-ESP marker */
+	if (st->st_suspended_md->iface->ike_float == TRUE)
+	{
+	    memset(ike_fragptr, 0, sizeof(espmarker));
+	    ike_fragptr += sizeof(espmarker);
+	}
+
+	// First set the isakmp header
+	isakmphdr = (struct isakmp_hdr*) ike_fragptr;
+	memcpy(isakmphdr->isa_icookie, st->st_icookie, COOKIE_SIZE);
+	memcpy(isakmphdr->isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+	isakmphdr->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION;
+	isakmphdr->isa_version = st->st_suspended_md->hdr.isa_version;
+	isakmphdr->isa_xchg = st->st_suspended_md->hdr.isa_xchg;
+	/* Do we need to set any of SAKMP_FLAG_ENCRYPTION, ISAKMP_FLAGS_R or ISAKMP_FLAGS_I ? */
+	/* seems there might be disagreement between Cisco and Microsoft */
+	isakmphdr->isa_flags = 0; // st->st_suspended_md->hdr.isa_flags; TODO must this be set?
+	isakmphdr->isa_msgid = st->st_msgid;
+	if (st->st_suspended_md->iface->ike_float == TRUE) {
+	    isakmphdr->isa_length = htonl(fraglen - sizeof(espmarker));
+	} else {
+	    isakmphdr->isa_length = htonl(fraglen);
+	}
+
+	/* Append the ike frag header */
+	ike_fragptr += sizeof(struct isakmp_hdr);
+	fraghdr = (struct isakmp_ikefrag*) ike_fragptr;
+	fraghdr->isafrag_np = 0; /* must be zero */
+	fraghdr->isafrag_reserved = 0; /* reserved at this time, must be zero */
+	if (st->st_suspended_md->iface->ike_float == TRUE) {
+	    fraghdr->isafrag_length = htons(fraglen - sizeof(*isakmphdr) - sizeof(espmarker));
+	} else {
+	    fraghdr->isafrag_length = htons(fraglen - sizeof(*isakmphdr));
+	}
+	fraghdr->isafrag_id = htons(1); // need this to be unique?
+	fraghdr->isafrag_number = fragnum;
+	if (len == datalen)
+	    fraghdr->isafrag_flags = ISAKMP_FRAG_LAST;
+	else
+	    fraghdr->isafrag_flags = 0;
+
+	/* Append the data block */
+	ike_fragptr += sizeof(struct isakmp_ikefrag);
+	fragptr = (u_int8_t*)(ike_fragptr);
+	memcpy(fragptr, ptr, datalen);
+
+	DBG(DBG_CONTROL|DBG_RAW
+	    , DBG_log("sending IKE fragment with %lu bytes for %s through %s:%d to %s:%u (using #%lu)"
+		      , (unsigned long) fraglen
+		      , where
+		      , st->st_interface->ip_dev->id_rname
+		      , st->st_interface->port
+		      , ip_str(&st->st_remoteaddr)
+		      , st->st_remoteport
+		      , st->st_serialno));
+	DBG(DBG_RAW
+	    , DBG_dump(NULL, ike_frag, fraglen));
+
+	if (sendto(st->st_interface->fd
+		   , ike_frag
+		   , fraglen, 0
+		   , sockaddrof(&st->st_remoteaddr)
+		   , sockaddrlenof(&st->st_remoteaddr)) != (ssize_t)fraglen ){
+
+	    free(ike_frag);
+
+	    if (!verbose)
+		return FALSE;
+	    log_errno((e, "sendto on %s to %s:%u failed in %s"
+			   , st->st_interface->ip_dev->id_rname
+			   , ip_str(&st->st_remoteaddr)
+			   , st->st_remoteport
+			   , where));
+	    return FALSE;
+	}
+
+	free(ike_frag);
+
+	len -= datalen;
+	ptr += datalen;
+    }
+    return TRUE;
+}
+
+
+bool
 send_packet(struct state *st, const char *where, bool verbose)
 {
     u_int8_t ike_pkt[MAX_OUTPUT_UDP_SIZE];
@@ -1145,11 +1290,28 @@ send_packet(struct state *st, const char *where, bool verbose)
     (void) check_msg_errqueue(st->st_interface, POLLOUT);
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
-    wlen = sendto(st->st_interface->fd
-		  , ptr
-		  , len, 0
-		  , sockaddrof(&st->st_remoteaddr)
-		  , sockaddrlenof(&st->st_remoteaddr));
+    if (((st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
+	&& (st->st_state == STATE_MAIN_I3 || st->st_state == STATE_MAIN_R3))
+	||
+	((st->st_tpacket.len > ISAKMP_FRAG_MAXLEN)
+	&& (st->st_state == STATE_MAIN_I3 || st->st_state == STATE_MAIN_R3)
+	&& (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)))
+	{
+	  if (send_frags(st, where, verbose) == -1)
+	   {
+		libreswan_log("isakmp_sendfrags failed\n");
+		return FALSE;
+	   }
+	  return TRUE;
+	} else
+	{
+	   DBG(DBG_CONTROLMORE,DBG_log("not using IKE fragments"));
+	   wlen = sendto(st->st_interface->fd
+		, ptr
+		, len, 0
+		, sockaddrof(&st->st_remoteaddr)
+		, sockaddrlenof(&st->st_remoteaddr));
+	}
 
 #ifdef DEBUG
     /* XXX This is a flow change depending on debug. not good. I assume it is only useful

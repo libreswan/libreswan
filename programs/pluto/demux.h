@@ -22,6 +22,7 @@
 struct state;	/* forward declaration of tag */
 extern void init_demux(void);
 extern bool send_packet(struct state *st, const char *where, bool verbose);
+extern bool send_frags(struct state *st, const char *where, bool verbose);
 extern void comm_handle(const struct iface_port *ifp);
 
 extern pb_stream reply_stream;

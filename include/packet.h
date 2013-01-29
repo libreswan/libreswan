@@ -6,6 +6,7 @@
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -665,6 +666,7 @@ extern struct_desc isakmp_nat_oa;
 
 /* ISAKMP IKE Fragmentation Payload
  * Cisco proprietary, undocumented
+ * Microsoft documentation link: http://msdn.microsoft.com/en-us/library/cc233452.aspx
  * This must be the first and only payload in a message,
  * i.e. next payload field must always be zero.
  *                      1                   2                   3
@@ -672,7 +674,7 @@ extern struct_desc isakmp_nat_oa;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * ! Next Payload  !   RESERVED    !         Payload Length        !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * !      UNKNOWN (always 1)       !     Index     !     Flags     !
+ * !          Fragment_ID          !  Fragment_num !     Flags     !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !                                                               !
  * ~                         Fragment Data                         ~
@@ -682,15 +684,19 @@ extern struct_desc isakmp_nat_oa;
 
 struct isakmp_ikefrag
 {
-	u_int8_t    isafrag_np;
-	u_int8_t    isafrag_reserved_1;
+	u_int8_t    isafrag_np; /* always zero, this must be the only payload */
+	u_int8_t    isafrag_reserved;
 	u_int16_t   isafrag_length;
-	u_int16_t   isafrag_unknown_1;
-	u_int8_t    isafrag_index;
-	u_int8_t    isafrag_flags;
+	u_int16_t   isafrag_id; /* MUST specify the same value for each fragment
+				   generated from the same IKE message */
+	u_int8_t    isafrag_number;
+	u_int8_t    isafrag_flags; /* LAST_FRAGMENT =  0x01 */
 };
 
 extern struct_desc isakmp_ikefrag_desc;
+
+#define ISAKMP_FRAG_MAXLEN      552
+#define ISAKMP_FRAG_LAST        1
 
 /* descriptor for each payload type
  *

@@ -6,6 +6,8 @@
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Hiren Joshi <joshihirenn@gmail.com>
  * Copyright (C) 2009 Anthony Tong <atong@TrustedCS.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1374,7 +1376,7 @@ process_v1_packet(struct msg_digest **mdp)
 
 		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc, &md->message_pbs, &frag_pbs)
 		||  pbs_room(&frag_pbs) != fraghdr.isafrag_length || fraghdr.isafrag_np != 0
-		||  fraghdr.isafrag_index == 0 || fraghdr.isafrag_index > 16)
+		||  fraghdr.isafrag_number == 0 || fraghdr.isafrag_number > 16)
 		{
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
@@ -1385,7 +1387,7 @@ process_v1_packet(struct msg_digest **mdp)
 			return;
 
 		ike_frag->md = md;
-		ike_frag->index = fraghdr.isafrag_index;
+		ike_frag->index = fraghdr.isafrag_number;
 		ike_frag->last = (fraghdr.isafrag_flags & 1);
 		ike_frag->size = pbs_left(&frag_pbs);
 		ike_frag->data = frag_pbs.cur;
@@ -1540,7 +1542,18 @@ process_v1_packet(struct msg_digest **mdp)
     {
 	if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE)
 	{
-	    if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS)
+	    if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS
+		&& (st->st_state == STATE_MAIN_I3 || st->st_state == STATE_MAIN_R3)
+		&& (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW))
+	    {
+		loglog(RC_RETRANSMISSION
+		    , "retransmitting using IKE fragments in response to duplicate packet; already %s"
+		    , enum_name(&state_names, st->st_state));
+		set_suspended(st, md);
+		send_packet(st, "ike fragmentation", TRUE);
+		set_suspended(st, NULL);
+	    }
+	    else if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS)
 	    {
 		st->st_retransmit++;
 		loglog(RC_RETRANSMISSION
