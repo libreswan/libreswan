@@ -608,6 +608,20 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
                         -e "s:@MODPROBE@:$(MODPROBE):g" \
                         -e "s:@BINSH@:$(BINSH):g" \
 
+# For KVM testing setup
+#POOL?=${LIBRESWANSRCDIR}/pool
+POOL?=/vol/pool
+# support types are fedora and ubuntu
+OSTYPE?=fedora
+#OSMEDIA?=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
+OSMEDIA?=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os
+
+# Ubuntu media
+# OSTYPE?=ubuntu
+# OSMEDIA?=http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
+
+
+
 # for emacs
 #
 # Local Variables: ;;;

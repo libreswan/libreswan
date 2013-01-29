@@ -19,7 +19,7 @@ srcdir?=${LIBRESWANSRCDIR}/testing/
 SUBDIRS=lib utils 
 SUBDIRS+=klips 
 SUBDIRS+=pluto scripts packaging
-#SUBDIRS+=umltree
+SUBDORS+=libvirt
 #SUBDIRS+=kunit
 # FIXUP: pfkey should NOT be commented out, but it needs debuging:
 #SUBDIRS+=pfkey
