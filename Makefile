@@ -179,11 +179,7 @@ ${OBJDIR}/Makefile: ${srcdir}/Makefile packaging/utils/makeshadowdir
 
 endif
 
-checkprograms:
-	@echo KVM tests are not integrated into makefiles yet
-	exit
-
-delmecheckprograms:: 
+checkprograms:: 
 	@for d in $(SUBDIRS) ; \
 	do \
 		(cd $$d && $(MAKE) srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \

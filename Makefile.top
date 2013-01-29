@@ -56,6 +56,17 @@ TAGS:	$(TAGSFILES)
 .PHONY: dummy
 dummy:
 
+
+
+kvm:	checkprograms 
+	# touch to get ownership of file
+	touch ${POOL}/swan${OSTYPE}base.img
+	./testing/utils/virtinstall-base ${POOL} ${OSTYPE} ${OSMEDIA}
+	./testing/utils/lswan-check --pool ${POOL} --ostype ${OSTYPE} --osmedia ${OSMEDIA}
+	@echo Done creating KVM infrastructure
+
+
+
 # DESTDIR is normally set in Makefile.inc
 check:	kvm Makefile.ver
 ifneq ($(strip(${REGRESSRESULTS})),)
