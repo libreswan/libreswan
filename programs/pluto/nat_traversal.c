@@ -739,6 +739,7 @@ static void nat_traversal_send_ka (struct state *st)
 
 	/** send keep alive */
 	setchunk(st->st_tpacket, &ka_payload, 1);
+	DBG(DBG_NATT|DBG_DPD,DBG_log("sending NAT-T Keep Alive"));
 	send_packet(st, "NAT-T Keep Alive", FALSE);
 
 	/** restore state chunk */
