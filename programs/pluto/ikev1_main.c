@@ -120,6 +120,12 @@ main_outI1(int whack_sock
     struct msg_digest md;   /* use reply/rbody found inside */
 
     int numvidtosend = 1;  /* we always send DPD VID */
+
+    /* Increase VID counter for VID_IKE_FRAGMENTATION */
+    if(c->policy & POLICY_IKE_FRAG_ALLOW) 
+    {
+	numvidtosend++;
+    }
 #ifdef NAT_TRAVERSAL
     if (nat_traversal_enabled) {
 	numvidtosend++;
@@ -226,7 +232,6 @@ main_outI1(int whack_sock
     /* Announce our ability to do IKE Fragmentation */
     if(c->policy & POLICY_IKE_FRAG_ALLOW) 
     {
-	numvidtosend++;
 	int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 	if(!out_vid(np, &md.rbody, VID_IKE_FRAGMENTATION)) {
 	    reset_cur_state();
@@ -821,17 +826,39 @@ main_inI1_outR1(struct msg_digest *md)
     /*
      * NOW SEND VENDOR ID payloads 
      */
-       
+
+    /* Increase VID counter for VID_IKE_FRAGMENTATION */
+    if(c->policy & POLICY_IKE_FRAG_ALLOW) 
+    {
+	numvidtosend++;
+    }
+
+#ifdef XAUTH
+    /* Increase VID counter for VID_MISC_XAUTH */
+    if(c->spd.this.xauth_server || c->spd.this.xauth_client)
+    {
+	numvidtosend++;
+    }
+#endif
+
     /* Announce our ability to do RFC 3706 Dead Peer Detection */
     next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
     if( !out_vid(next, &md->rbody, VID_MISC_DPD))
       return STF_INTERNAL_ERROR;
 
+    /* Announce our ability to do IKE Fragmentation */
+    if(c->policy & POLICY_IKE_FRAG_ALLOW) 
+    {
+	next = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+	if(!out_vid(next, &md->rbody, VID_IKE_FRAGMENTATION)) {
+	    return STF_INTERNAL_ERROR;
+	}
+    }
+
 #ifdef XAUTH
     /* If XAUTH is required, insert here Vendor ID */
     if(c->spd.this.xauth_server || c->spd.this.xauth_client)
     {
-	    numvidtosend++;
 	    next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 	    if (!out_vendorid(next, &md->rbody, VID_MISC_XAUTH))
 	       return STF_INTERNAL_ERROR;
