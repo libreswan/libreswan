@@ -189,6 +189,8 @@ ctltest	 	vpn-dns-01		good
 # incomplete test - disabled
 #umlplutotest	x509-pluto-01		good
 
+#umlplutotest	x509-pluto-frag-01		good
+#
 #
 # a test of sending and validating an X.509 cert
 #
