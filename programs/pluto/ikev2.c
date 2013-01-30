@@ -368,7 +368,7 @@ process_v2_packet(struct msg_digest **mdp)
 	    }
 	    if(st->st_msgid_lastrecv == md->msgid_received){
 		/* this is a recent retransmit. */
-		send_packet(st, "ikev2-responder-retransmit", FALSE);
+		send_packet(st, "ikev2-responder-retransmit", TRUE);
 		return;
 	    }
 	    /* update lastrecv later on */
