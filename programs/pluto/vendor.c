@@ -196,10 +196,6 @@ static struct vid_struct _vid_tab[] = {
 		"SSH Communications Security IPSEC Express version 4.2.0")
 
 
-	{ VID_IKE_FRAGMENTATION, VID_KEEP, NULL, "IKE Fragmentation",
-		"\x40\x48\xb7\xd5\x6e\xbc\xe8\x85\x25\xe7\xde\x7f\x00\xd6\xc2\xd3\xc0\x00\x00\x00",
-		20 },
-
 	{ VID_CISCO3K, VID_KEEP | VID_SUBSTRING_MATCH, 
           NULL, "Cisco VPN 3000 Series" , "\x1f\x07\xf7\x0e\xaa\x65\x14\xd3\xb0\xfa\x96\x54\x2a\x50", 14},
 
