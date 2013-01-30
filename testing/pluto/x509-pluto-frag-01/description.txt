@@ -1,0 +1,5 @@
+Basic pluto X.509 test from x509-pluto-01, but now
+west has ike_frag=force set so it will send MAIN_I3
+in fragments. East has to assemble the fragments into
+a valid IKE packet again.
+
