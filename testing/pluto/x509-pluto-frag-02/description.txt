@@ -1,0 +1,5 @@
+Basic pluto X.509 test from x509-pluto-01, but now
+west has ike_frag=force set so it should send out MAIN_I3
+in fragmentson the first run, and ignore not receiving any
+FRAGMENTATION support vendorid.
+

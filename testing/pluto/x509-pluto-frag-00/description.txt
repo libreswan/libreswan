@@ -1,0 +1,9 @@
+Basic pluto X.509 test from x509-pluto-01, but now
+west and east are dropped UDP fragments, and our policies forbid
+IKE fragmentation. The CERT payload is causing an IKE payload of
+more then 1500 bytes, so the UDP packet will be fragmented.
+
+As a result, this connection should fail to establish. This serves
+as a basis for our IKE fragmentation tests that work around the
+iussie of routers dropping UDP fragments.
+
