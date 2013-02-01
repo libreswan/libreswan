@@ -15,7 +15,9 @@ v3.1 (unreleased)
 * IKEv1: Support for receiving IKEv1 fragments (not RFC) [Wolfgang Nothdurft]
          (based on the strongswan patch)
 * Bugtracker bugs fixed:
-   #8 honour compress=no option [Matt Rogers]
+   #8  honour compress=no option [Matt Rogers]
+   #53  ipsec auto --status does not show phase2 parameters when using
+        (unspecified) defaults? [Matt Rogers]
 
 v3.0 (January 02, 2013)
 * FORK: Rename from Openswan to Libreswan [Team]
