@@ -695,23 +695,32 @@ kernel_alg_show_connection(struct connection *c, const char *instance)
 	char buf[1024];
 	struct state *st;
 	const char *satype;
+	const char *pfsbuf;
 
 	if(c->policy & POLICY_ENCRYPT) satype="ESP";
 	else if(c->policy & POLICY_AUTHENTICATE) satype="AH";
 	else satype="ESP+AH";
 
-	if(c->alg_info_esp == NULL) return;
+	if (c->policy & POLICY_PFS) {
+	    if (c->alg_info_esp && c->alg_info_esp->esp_pfsgroup) {
+		pfsbuf = enum_show(&oakley_group_names, c->alg_info_esp->esp_pfsgroup) +
+			 strlen("OAKLEY_GROUP_");
+	    } else {
+		pfsbuf = "<Phase1>";
+	    }
+	} else {
+		pfsbuf = "<N/A>";
+	}
+ 
+	if(c->alg_info_esp != NULL) {
 
-	if (c->alg_info_esp) {
 	    alg_info_snprint(buf, sizeof(buf), (struct alg_info *)c->alg_info_esp, TRUE);
 	    whack_log(RC_COMMENT
 		      , "\"%s\"%s:   %s algorithms wanted: %s"
 		      , c->name
 		      , instance, satype
 		      , buf);
-	}
 
-	if (c->alg_info_esp) {
 	    alg_info_snprint_phase2(buf, sizeof(buf), c->alg_info_esp);
 	    whack_log(RC_COMMENT
 		      , "\"%s\"%s:   %s algorithms loaded: %s"
@@ -728,18 +737,11 @@ kernel_alg_show_connection(struct connection *c, const char *instance)
 			  , instance, satype
 		, enum_show(&esp_transformid_names
 			    ,st->st_esp.attrs.transattrs.encrypt)
-		+4 /* strlen("ESP_") */
+		+ strlen("ESP_") 
 		, st->st_esp.attrs.transattrs.enckeylen
-		, enum_show(&auth_alg_names, st->st_esp.attrs.transattrs.integ_hash)+
-		+15 /* strlen("AUTH_ALGORITHM_") */
-		, c->policy & POLICY_PFS ?
-			c->alg_info_esp->esp_pfsgroup ?
-					enum_show(&oakley_group_names, 
-						c->alg_info_esp->esp_pfsgroup)
-						+13 /*strlen("OAKLEY_GROUP_")*/
-				: "<Phase1>"
-			: "<N/A>"
-		    );
+		, enum_show(&auth_alg_names, st->st_esp.attrs.transattrs.integ_hash)
+		  + strlen("AUTH_ALGORITHM_")
+		, pfsbuf);
 	
 	if (st && st->st_ah.present)
 		whack_log(RC_COMMENT
@@ -747,16 +749,8 @@ kernel_alg_show_connection(struct connection *c, const char *instance)
 		, c->name
 			  , instance, satype
 		, enum_show(&auth_alg_names, st->st_esp.attrs.transattrs.integ_hash)+
-		+15 /* strlen("AUTH_ALGORITHM_") */
-		, c->policy & POLICY_PFS ?
-			c->alg_info_esp->esp_pfsgroup ?
-					enum_show(&oakley_group_names, 
-						c->alg_info_esp->esp_pfsgroup)
-						+13 /*strlen("OAKLEY_GROUP_")*/
-				: "<Phase1>"
-			: "<N/A>"
-	);
-
+		+ strlen("AUTH_ALGORITHM_")
+		, pfsbuf);
 }
 
 struct db_sa *
