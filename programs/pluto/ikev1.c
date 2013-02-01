@@ -1227,7 +1227,7 @@ process_v1_packet(struct msg_digest **mdp)
 		from_state = STATE_XAUTH_R1;
 		DBG(DBG_CONTROLMORE
 				, DBG_log(" set from_state to %s "
-					"sate is STATE_XAUTH_R1 and quirks.xauth_ack_msgid==TRUE"
+					"state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid==TRUE"
 					, enum_name(&state_names, st->st_state
 					)));
 	    }
