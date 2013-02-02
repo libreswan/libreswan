@@ -81,8 +81,6 @@ struct starter_conn {
 
     bool  changed;
 
-    bool  manualkey;         /* TRUE if this conn is going to be manually keyed */
-    
     lset_t policy;
     char **alsos;
 
