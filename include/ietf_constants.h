@@ -401,7 +401,7 @@ enum next_payload_types {
 #define    INTERNAL_IP4_ADDRESS        1
 #define    INTERNAL_IP4_NETMASK        2
 #define    INTERNAL_IP4_DNS            3
-#define    INTERNAL_IP4_NBNS           4
+#define    INTERNAL_IP4_NBNS           4 /* unused by us, WINS is long dead */
 #define    INTERNAL_ADDRESS_EXPIRY     5
 #define    INTERNAL_IP4_DHCP           6
 #define    APPLICATION_VERSION         7

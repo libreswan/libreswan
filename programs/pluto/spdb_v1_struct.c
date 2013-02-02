@@ -1762,7 +1762,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
 						"%s must only be used with old IETF drafts",
 						enum_name(&enc_mode_names, val));
 					if(st->st_connection->remotepeertype == CISCO) {
-					DBG_log( "Allowing, as this may be due to rekey");
+					DBG_log( "Allowing, as this may be due to remote_peer Cisco rekey");
 					attrs->encapsulation = val - ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS + ENCAPSULATION_MODE_TUNNEL;
 					}
 					else {

@@ -110,7 +110,9 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_LABELED_IPSEC] = LI_NO;
 #endif
 
+#ifdef XAUTH
 	cfg->conn_default.options[KBF_XAUTHBY] = XAUTHBY_FILE;
+#endif
 
 	cfg->conn_default.policy = POLICY_RSASIG|POLICY_TUNNEL|POLICY_ENCRYPT|POLICY_PFS;
 	cfg->conn_default.policy |= POLICY_IKEV2_ALLOW; /* ikev2=yes */
@@ -481,6 +483,7 @@ static int validate_end(struct ub_ctx *dnsctx
     anyaddr(family, &end->nexthop);
     anyaddr(addrtypeof(&end->addr), &end->nexthop);
 
+
     /* validate the KSCF_NEXTHOP */
     if(end->strings_set[KSCF_NEXTHOP])
     {
@@ -607,9 +610,11 @@ static int validate_end(struct ub_ctx *dnsctx
 	if (ugh) ERR_FOUND("bad %sprotoport=%s [%s]", leftright, value, ugh);
     }
 
-    if(end->options_set[KNCF_XAUTHSERVER]) {
+#ifdef XAUTH
+    if(end->options_set[KNCF_XAUTHSERVER] || end->options_set[KNCF_XAUTHCLIENT]) {
 	conn_st->policy |= POLICY_XAUTH;
     }
+#endif
 
     /*
     KSCF_SUBNETWITHIN    --- not sure what to do with it.
@@ -1116,6 +1121,17 @@ static int load_conn (struct ub_ctx *dnsctx
 	conn->ike = xstrdup(conn->strings[KSF_IKE]);
     }
 
+#ifdef XAUTH
+    if(conn->strings_set[KSF_MODECFGDNS1]) {
+    starter_log(LOG_LEVEL_DEBUG,"connection's  conn->modecfg_dns1 set to: %s",conn->strings[KSF_MODECFGDNS1] );
+       conn->modecfg_dns1 = xstrdup(conn->strings[KSF_MODECFGDNS1]);
+    }
+    if(conn->strings_set[KSF_MODECFGDNS2]) {
+    starter_log(LOG_LEVEL_DEBUG,"connection's  conn->modecfg_dns2 set to: %s",conn->strings[KSF_MODECFGDNS2] );
+       conn->modecfg_dns2 = xstrdup(conn->strings[KSF_MODECFGDNS2]);
+    }
+#endif
+
     if(conn->strings_set[KSF_CONNALIAS]) {
 	conn->connalias = xstrdup(conn->strings[KSF_CONNALIAS]);
     }
@@ -1248,6 +1264,10 @@ void conn_default (char *n, struct starter_conn *conn,
     
     CONN_STR(conn->esp);
     CONN_STR(conn->ike);
+#ifdef XAUTH
+    CONN_STR(conn->modecfg_dns1);
+    CONN_STR(conn->modecfg_dns2);
+#endif
 #ifdef HAVE_LABELED_IPSEC
     CONN_STR(conn->policy_label);
 #endif
@@ -1450,6 +1470,10 @@ static void confread_free_conn(struct starter_conn *conn)
 #ifdef ALG_PATCH
 	FREE_STR(conn->esp);
 	FREE_STR(conn->ike);
+#endif
+#ifdef XAUTH
+	FREE_STR(conn->modecfg_dns1);
+	FREE_STR(conn->modecfg_dns2);
 #endif
 	FREE_STR(conn->left.virt);
 	FREE_STR(conn->right.virt);

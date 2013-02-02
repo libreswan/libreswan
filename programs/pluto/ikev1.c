@@ -1229,7 +1229,7 @@ process_v1_packet(struct msg_digest **mdp)
 		from_state = STATE_XAUTH_R1;
 		DBG(DBG_CONTROLMORE
 				, DBG_log(" set from_state to %s "
-					"sate is STATE_XAUTH_R1 and quirks.xauth_ack_msgid==TRUE"
+					"state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid==TRUE"
 					, enum_name(&state_names, st->st_state
 					)));
 	    }
@@ -2578,8 +2578,7 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		      , "encountered fatal error in state %s"
 		      , enum_name(&state_names, st->st_state));
 #ifdef HAVE_NM
-	   if (st->st_connection->remotepeertype == CISCO 
-	       && st->st_connection->nmconfigured) {
+	   if (st->st_connection->remotepeertype == CISCO && st->st_connection->nmconfigured) {
 		if(!do_command(st->st_connection, &st->st_connection->spd, "disconnectNM", st)) {
                 DBG(DBG_CONTROL, DBG_log("sending disconnect to NM failed, you may need to do it manually"));
                 }
@@ -2613,8 +2612,7 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			, enum_name(&state_names, from_state)
 			, enum_name(&ipsec_notification_names, md->note)));
 #ifdef HAVE_NM
-           if (st->st_connection->remotepeertype == CISCO
-               && st->st_connection->nmconfigured) {
+           if (st->st_connection->remotepeertype == CISCO && st->st_connection->nmconfigured) {
                 if(!do_command(st->st_connection, &st->st_connection->spd, "disconnectNM", st)) {
                 DBG(DBG_CONTROL, DBG_log("sending disconnect to NM failed, you may need to do it manually"));
                 }

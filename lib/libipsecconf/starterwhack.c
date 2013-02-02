@@ -570,8 +570,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 		msg.xauthby=conn->options[KBF_XAUTHBY];
 	}
 
-
-
 	set_whack_end(cfg, "left",  &msg.left, &conn->left);
 	set_whack_end(cfg, "right", &msg.right, &conn->right);
 
@@ -580,6 +578,20 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 
 	msg.esp = conn->esp;
 	msg.ike = conn->ike;
+
+	if(conn->modecfg_dns1) {
+	    if (!tnatoaddr(conn->modecfg_dns1, 0, AF_INET, &(msg.modecfg_dns1)) &&
+		!tnatoaddr(conn->modecfg_dns1, 0, AF_INET6, &(msg.modecfg_dns1))) {
+			starter_log(LOG_LEVEL_ERR,"Ignoring modecfg_dns1 entry, it is not a valid IPv4 or IPv6 address");
+	    }
+	}
+	if(conn->modecfg_dns2) {
+	    if (!tnatoaddr(conn->modecfg_dns2, 0, AF_INET, &(msg.modecfg_dns2)) &&
+		!tnatoaddr(conn->modecfg_dns2, 0, AF_INET6, &(msg.modecfg_dns2))) {
+			starter_log(LOG_LEVEL_ERR,"Ignoring modecfg_dns2 entry, it is not a valid IPv4 or IPv6 address");
+	    }
+	}
+
 	msg.tpmeval = NULL;
 
 	r =  send_whack_msg(&msg, cfg->ctlbase);

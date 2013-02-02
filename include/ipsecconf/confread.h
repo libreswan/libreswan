@@ -81,8 +81,6 @@ struct starter_conn {
 
     bool  changed;
 
-    bool  manualkey;         /* TRUE if this conn is going to be manually keyed */
-    
     lset_t policy;
     char **alsos;
 
@@ -106,6 +104,8 @@ struct starter_conn {
 
 	char *esp;
 	char *ike;
+	char *modecfg_dns1;
+	char *modecfg_dns2;
 	char *policy_label;
 };
 

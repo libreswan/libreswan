@@ -112,7 +112,6 @@ struct internal_addr
 {
     ip_address    ipaddr;
     ip_address    dns[2];
-    ip_address    wins[2];  
 };
 
 
@@ -315,13 +314,6 @@ int get_internal_addresses(struct connection *con,struct internal_addr *ia)
 	if (!isanyaddr(&con->modecfg_dns2)) {
 		ia->dns[1] = con->modecfg_dns2;
 	}
-	if (!isanyaddr(&con->modecfg_wins1)) {
-		ia->wins[0] = con->modecfg_wins1;
-	}
-	if (!isanyaddr(&con->modecfg_wins2)) {
-		ia->wins[1] = con->modecfg_wins2;
-	}
-
     }
     else
 #endif
@@ -362,8 +354,6 @@ int get_internal_addresses(struct connection *con,struct internal_addr *ia)
 		    get_addr(con->pamh,"IPADDR",&ia->ipaddr);
 		    get_addr(con->pamh,"DNS1",&ia->dns[0]);
 		    get_addr(con->pamh,"DNS2",&ia->dns[1]);
-		    get_addr(con->pamh,"WINS1",&ia->wins[0]);
-		    get_addr(con->pamh,"WINS2",&ia->wins[1]);
 	    }
           }
 #endif
@@ -449,7 +439,7 @@ stf_status modecfg_resp(struct state *st
 	pb_stream strattr,attrval;
 	int attr_type;
 	struct internal_addr ia;
-	int dns_idx, wins_idx;
+	int dns_idx;
 	bool dont_advance;
 
 	attrh.isama_np = ISAKMP_NEXT_NONE;
@@ -467,11 +457,6 @@ stf_status modecfg_resp(struct state *st
 	else
 		resp &= ~LELEM(INTERNAL_IP4_DNS);
 
-	if(!isanyaddr(&ia.wins[0]))	/* We got WINS addresses, answer with those */
-		resp |= LELEM(INTERNAL_IP4_NBNS);
-	else
-		resp &= ~LELEM(INTERNAL_IP4_NBNS);
-
 	if(use_modecfg_addr_as_client_addr) {
 	    if(memcmp(&st->st_connection->spd.that.client.addr
 		      ,&ia.ipaddr
@@ -487,7 +472,6 @@ stf_status modecfg_resp(struct state *st
 
 	attr_type = 0;
 	dns_idx = 0;
-	wins_idx = 0;
 	while(resp != 0)
 	{
 	    dont_advance = FALSE;
@@ -553,15 +537,6 @@ stf_status modecfg_resp(struct state *st
  				len = addrbytesptr(&ia.dns[dns_idx++], &byte_ptr);
  				out_raw(byte_ptr,len,&attrval,"IP4_dns");
 				if(dns_idx < 2 && !isanyaddr(&ia.dns[dns_idx]))
-				{
-					dont_advance = TRUE;
-				}
- 				break;
-
-			case INTERNAL_IP4_NBNS:
- 				len = addrbytesptr(&ia.wins[wins_idx++], &byte_ptr);
- 				out_raw(byte_ptr,len,&attrval,"IP4_wins");
-				if(wins_idx < 2 && !isanyaddr(&ia.wins[wins_idx]))
 				{
 					dont_advance = TRUE;
 				}
@@ -833,11 +808,6 @@ stf_status modecfg_send_request(struct state *st)
 	if(st->st_connection->remotepeertype == CISCO) {
 	/* ISAKMP attr out (INTERNAL_IP4_DNS) */
 	attr.isaat_af_type = INTERNAL_IP4_DNS;
-	attr.isaat_lv = 0;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
-
-	/* ISAKMP attr out (INTERNAL_IP4_NBNS) */
-	attr.isaat_af_type = INTERNAL_IP4_NBNS;
 	attr.isaat_lv = 0;
 	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
 
@@ -1653,9 +1623,12 @@ modecfg_inR0(struct msg_digest *md)
 		case INTERNAL_IP4_NETMASK:
 		case INTERNAL_IP4_DNS:
 		case INTERNAL_IP4_SUBNET:
-		case INTERNAL_IP4_NBNS:
 		    resp |= LELEM(attr.isaat_af_type);
 		    break;
+		case INTERNAL_IP4_NBNS:
+			/* ignore */
+		    break;
+
 
 		default:
 		    libreswan_log("unsupported mode cfg attribute %s received."
@@ -1786,8 +1759,10 @@ modecfg_inI2(struct msg_digest *md)
 		case INTERNAL_IP4_NETMASK:
 		case INTERNAL_IP4_DNS:
 		case INTERNAL_IP4_SUBNET:
-		case INTERNAL_IP4_NBNS:
 		    resp |= LELEM(attr.isaat_af_type);
+		    break;
+		case INTERNAL_IP4_NBNS:
+		    /* ignore */
 		    break;
 		default:
 		    libreswan_log("unsupported mode cfg attribute %s received."
@@ -1926,8 +1901,10 @@ modecfg_inR1(struct msg_digest *md)
 		case INTERNAL_IP4_NETMASK:
 		case INTERNAL_IP4_DNS:
 		case INTERNAL_IP4_SUBNET:
-		case INTERNAL_IP4_NBNS:
 		    resp |= LELEM(attr.isaat_af_type);
+		    break;
+		case INTERNAL_IP4_NBNS:
+		    /* ignore */
 		    break;
 		default:
 		    libreswan_log("unsupported mode cfg attribute %s received."
@@ -2053,8 +2030,10 @@ modecfg_inR1(struct msg_digest *md)
 
 
 		case INTERNAL_IP4_SUBNET:
-		case INTERNAL_IP4_NBNS:
 		    resp |= LELEM(attr.isaat_af_type);
+		    break;
+		case INTERNAL_IP4_NBNS:
+		    /* ignore */
 		    break;
 
 		case CISCO_BANNER:

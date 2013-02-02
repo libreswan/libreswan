@@ -245,13 +245,6 @@ void confwrite_side(FILE *out,
 		    char   *side)
 {
     char databuf[2048];  /* good for a 12288 bit rsa key */
-    int  keyingtype;
-
-    if(conn->manualkey) {
-	keyingtype=kv_manual;
-    } else {
-	keyingtype=kv_auto;
-    }
 
     switch(end->addrtype) {
     case KH_NOTSET:
@@ -363,11 +356,9 @@ void confwrite_side(FILE *out,
     }
 
     confwrite_int(out, side,
-		  kv_conn|kv_leftright,
-		  keyingtype,
+		  kv_conn|kv_leftright, kv_auto,
 		  end->options, end->options_set, end->strings);
-    confwrite_str(out, side, kv_conn|kv_leftright,
-		  keyingtype,
+    confwrite_str(out, side, kv_conn|kv_leftright, kv_auto,
 		  end->strings, end->strings_set);
 
 }
@@ -389,14 +380,6 @@ void confwrite_comments(FILE *out, struct starter_conn *conn)
 void confwrite_conn(FILE *out,
 		    struct starter_conn *conn)
 {
-    int  keyingtype;
-
-    if(conn->manualkey) {
-	keyingtype=kv_manual;
-    } else {
-	keyingtype=kv_auto;
-    }
-
     fprintf(out,"# begin conn %s\n",conn->name);
     
     fprintf(out, "conn %s\n", conn->name);
@@ -415,11 +398,9 @@ void confwrite_conn(FILE *out,
     }
     confwrite_side(out, conn, &conn->left,  "left");
     confwrite_side(out, conn, &conn->right, "right");
-    confwrite_int(out, "", kv_conn,
-		  keyingtype,
+    confwrite_int(out, "", kv_conn, kv_auto,
 		  conn->options, conn->options_set, conn->strings);
-    confwrite_str(out, "", kv_conn,
-		  keyingtype,
+    confwrite_str(out, "", kv_conn, kv_auto,
 		  conn->strings, conn->strings_set);
     confwrite_comments(out, conn);
 
@@ -427,9 +408,7 @@ void confwrite_conn(FILE *out,
 	fprintf(out, "\tconnalias=\"%s\"\n", conn->connalias);
     }
 
-    if(conn->manualkey) {
-	fprintf(out, "\tmanual=add\n");
-    } else {
+    {
 	switch(conn->desired_state) {
 	case STARTUP_IGNORE:
 	    fprintf(out, "\tauto=ignore\n");
