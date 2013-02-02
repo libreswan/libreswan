@@ -2875,7 +2875,7 @@ install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 	st->st_connection->spd.eroute_owner = sr->eroute_owner;
 	st->st_connection->spd.routing = sr->routing;
 
-	if(!st->st_connection->newest_ipsec_sa && st->spd->this.xauth_client) {
+	if(!st->st_connection->newest_ipsec_sa && st->st_connection->spd.this.xauth_client) {
 		if(!do_command(st->st_connection, &st->st_connection->spd, "updateresolvconf", st)) {
 		DBG(DBG_CONTROL, DBG_log("Updating resolv.conf failed, you may need to update it manually"));
 		}
@@ -2966,7 +2966,7 @@ delete_ipsec_sa(struct state *st USED_BY_KLIPS, bool inbound_only USED_BY_KLIPS)
             }
 #endif
 
-	if (st->st_connection->remotepeertype == CISCO && st->spd->this.xauth_client &&
+	if (st->st_connection->remotepeertype == CISCO && st->st_connection->spd.this.xauth_client &&
 	    st->st_serialno == st->st_connection->newest_ipsec_sa) {
 		if(!do_command(st->st_connection, &st->st_connection->spd, "restoreresolvconf", st)) {
 		DBG(DBG_CONTROL, DBG_log("Restoring resolv.conf failed, you may need to do it manually"));
