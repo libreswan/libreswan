@@ -272,8 +272,6 @@ struct connection {
 # ifdef MODECFG
     ip_address modecfg_dns1;
     ip_address modecfg_dns2;
-    ip_address modecfg_wins1;
-    ip_address modecfg_wins2;
 # endif
     char *cisco_dns_info;
     char *cisco_domain_info;

@@ -1379,8 +1379,6 @@ add_connection(const struct whack_message *wm)
 #ifdef MODECFG_DNSWINS
 	c->modecfg_dns1 = wm->modecfg_dns1;
 	c->modecfg_dns2 = wm->modecfg_dns2;
-	c->modecfg_wins1 = wm->modecfg_wins1;
-	c->modecfg_wins2 = wm->modecfg_wins2;
 #endif
 #endif
 
@@ -3278,11 +3276,7 @@ show_one_sr(struct connection *c
     char topo[CONN_BUF_LEN];
     char srcip[ADDRTOT_BUF], dstip[ADDRTOT_BUF];
     char thissemi[3+sizeof("myup=")];
-    char thatsemi[3+sizeof("hisup=")];
-#ifdef XAUTH
-    char thisxauthsemi[XAUTH_USERNAME_LEN+sizeof("myxauthuser=")];
-    char thatxauthsemi[XAUTH_USERNAME_LEN+sizeof("hisxauthuser=")];
-#endif
+    char thatsemi[3+sizeof("theirup=")];
     char thiscertsemi[3+sizeof("mycert=")+PATH_MAX];
     char thatcertsemi[3+sizeof("hiscert=")+PATH_MAX];
     char *thisup, *thatup;
@@ -3321,7 +3315,7 @@ show_one_sr(struct connection *c
 	thatsemi[0]=';';
 	thatsemi[1]=' ';
 	thatsemi[2]='\0';
-	strcat(thatsemi, "hisup=");
+	strcat(thatsemi, "theirup=");
 	thatup=sr->that.updown;
     }
     
@@ -3339,7 +3333,7 @@ show_one_sr(struct connection *c
 		 , sr->that.cert_filename);
     }
 
-    whack_log(RC_COMMENT, "\"%s\"%s:     %s; myip=%s; hisip=%s%s%s%s%s%s%s;"
+    whack_log(RC_COMMENT, "\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s%s%s;"
 	      , c->name, instance
 	      , oriented(*c) ? "oriented" : "unoriented"
 	      , srcip, dstip
@@ -3349,24 +3343,39 @@ show_one_sr(struct connection *c
 	      , thatcertsemi);
     
 #ifdef XAUTH
-    if(sr->this.xauth_name || sr->that.xauth_name) {
+    {
+	char thisxauthsemi[XAUTH_USERNAME_LEN+sizeof("my_xauthuser=")];
+	char thatxauthsemi[XAUTH_USERNAME_LEN+sizeof("their_xauthuser=")];
+	char dns1[ADDRTOT_BUF], dns2[ADDRTOT_BUF];
+
 	thisxauthsemi[0]='\0';
-	if(sr->this.xauth_name) {
 	    snprintf(thisxauthsemi, sizeof(thisxauthsemi)-1
-		     , "myxauthuser=%s; "
-		     , sr->this.xauth_name);
-	}
+		     , "my_xauthuser=%s; "
+		     , sr->this.xauth_name ? sr->this.xauth_name : "[any]");
 	
 	thatxauthsemi[0]='\0';
-	if(sr->that.xauth_name) {
 	    snprintf(thatxauthsemi, sizeof(thatxauthsemi)-1
-		     , "hisxauthuser=%s; "
-		     , sr->that.xauth_name);
+		     , "their_xauthuser=%s; "
+		     , sr->that.xauth_name ? sr->that.xauth_name : "[any]");
+
+	if(isanyaddr(&c->modecfg_dns1)) {
+		strcpy(dns1, "unset");
+	} else {
+		addrtot(&c->modecfg_dns1, 0, dns1, sizeof(dns1));
 	}
-	whack_log(RC_COMMENT, "\"%s\"%s:     xauth info: %s%s"
+	if(isanyaddr(&c->modecfg_dns2)) {
+		strcpy(dns2, "unset");
+	} else {
+		addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
+	}
+
+	whack_log(RC_COMMENT, "\"%s\"%s:     xauth info: %s%s; dns1:%s, dns2:%s;"
 		  , c->name, instance
 		  , thisxauthsemi
-		  , thatxauthsemi);
+		  , thatxauthsemi
+		  , dns1
+		  , dns2
+		);
     }
 #endif
 }
@@ -3414,7 +3423,7 @@ show_one_connection(struct connection *c)
     
     whack_log(RC_COMMENT
 	      , "\"%s\"%s:   ike_life: %lus; ipsec_life: %lus;"
-	      " rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu%s%s "
+	      " rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu%s%s;"
 	      , c->name
 	      , instance
 	      , (unsigned long) c->sa_ike_life_seconds

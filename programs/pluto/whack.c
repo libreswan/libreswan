@@ -150,8 +150,6 @@ help(void)
 #ifdef MODECFG_DNSWINS
 	    " [--modecfgdns1]"
 	    " [--modecfgdns2]"
-	    " [--modecfgwins1]"
-	    " [--modecfgwins2]"
 #endif
 #endif
 	    " \\\n   "
@@ -467,8 +465,6 @@ enum option_enums {
     CD_OVERLAPIP,    /* can two conns that have subnet=vhost: declare the same IP? */
     CD_MODECFGDNS1,
     CD_MODECFGDNS2,
-    CD_MODECFGWINS1,
-    CD_MODECFGWINS2,
     CD_METRIC,
     CD_CONNMTU,
     CD_TUNNELIPV4,
@@ -687,8 +683,6 @@ static const struct option long_opts[] = {
 #ifdef MODECFG_DNSWINS
     { "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
     { "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
-    { "modecfgwins1", required_argument, NULL, CD_MODECFGWINS1 + OO },
-    { "modecfgwins2", required_argument, NULL, CD_MODECFGWINS2 + OO },
     { "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
     { "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 #endif
@@ -1680,18 +1674,6 @@ main(int argc, char **argv)
 	   af_used_by = long_opts[long_index].name;
 	   diagq(ttoaddr(optarg, 0, msg.addr_family
 		, &msg.modecfg_dns2), optarg);
-	   continue;
-
-	case CD_MODECFGWINS1:
-	   af_used_by = long_opts[long_index].name;
-	   diagq(ttoaddr(optarg, 0, msg.addr_family
-		, &msg.modecfg_wins1), optarg);
-	   continue;
-
-	case CD_MODECFGWINS2:
-	   af_used_by = long_opts[long_index].name;
-	   diagq(ttoaddr(optarg, 0, msg.addr_family
-		, &msg.modecfg_wins2), optarg);
 	   continue;
 #endif
 #endif /* MODECFG */

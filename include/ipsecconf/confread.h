@@ -104,6 +104,8 @@ struct starter_conn {
 
 	char *esp;
 	char *ike;
+	char *modecfg_dns1;
+	char *modecfg_dns2;
 	char *policy_label;
 };
 

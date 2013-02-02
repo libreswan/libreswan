@@ -498,10 +498,12 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"modecfgclient", kv_conn|kv_auto|kv_leftright, kt_bool, KNCF_MODECONFIGCLIENT, NOT_ENUM},
     {"xauthusername", kv_conn|kv_auto|kv_leftright, kt_string, KSCF_XAUTHUSERNAME, NOT_ENUM},
     {"modecfgpull", kv_conn|kv_auto, kt_invertbool, KBF_MODECONFIGPULL , NOT_ENUM},
-    {"modecfgdns1", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGDNS1,NOT_ENUM},
-    {"modecfgdns2", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGDNS2,NOT_ENUM},
-    {"modecfgwins1", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGWINS1,NOT_ENUM},
-    {"modecfgwins2", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGWINS2,NOT_ENUM},
+    /* these are really kt_ipaddr, but we handle them as string until we load them into a whack message */
+    {"modecfgdns1", kv_conn|kv_auto, kt_string, KSF_MODECFGDNS1, NOT_ENUM}, 
+    {"modecfgdns2", kv_conn|kv_auto, kt_string, KSF_MODECFGDNS2, NOT_ENUM},
+    {"modecfgwins1", kv_conn|kv_auto, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM},
+    {"modecfgwins2", kv_conn|kv_auto, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM},
+
     {NULL, 0, 0, 0, NOT_ENUM}
 };
 
