@@ -567,27 +567,31 @@ main(int argc, char *argv[])
 	 * place, then do auto=start as these can be slower. This mimics behaviour
 	 * of the old _plutoload
 	 */
-	if(verbose) printf("  Pass #1: Loading auto=add and auto=route connections\n");
+	if(verbose) printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
 	for(conn = cfg->conns.tqh_first;
 	    conn != NULL;
 	    conn = conn->link.tqe_next)
 	{
-	    if (conn->desired_state == STARTUP_ADD
-		|| conn->desired_state == STARTUP_ROUTE) {
+	    if (conn->desired_state == STARTUP_ADD ||
+		conn->desired_state == STARTUP_ROUTE ||
+		conn->desired_state == STARTUP_START) {
 		if(verbose) printf(" %s", conn->name);
-		resolve_defaultroute(conn);
-		starter_whack_add_conn(cfg, conn);
+		   resolve_defaultroute(conn);
+		   starter_whack_add_conn(cfg, conn);
+	    }
+	    if (conn->desired_state == STARTUP_ROUTE) {
+		starter_whack_route_conn(cfg,conn);
 	    }
 	}
-	if(verbose) printf("  Pass #2: Loading auto=start connections\n");
+	if(verbose) printf("  Pass #2: Initiating auto=start connections\n");
 	for(conn = cfg->conns.tqh_first;
 	    conn != NULL;
 	    conn = conn->link.tqe_next)
 	{
 	    if (conn->desired_state == STARTUP_START) {
 		if(verbose) printf(" %s", conn->name);
-		resolve_defaultroute(conn);
-		starter_whack_add_conn(cfg, conn);
+		   resolve_defaultroute(conn);
+		   starter_whack_initiate_conn(cfg,conn);
 	    }
 	}
 	if(verbose) printf("\n");
