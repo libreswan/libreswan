@@ -362,7 +362,7 @@ static const struct state_microcode state_microcode_table[] = {
     , EVENT_SA_REPLACE, main_inR3 },
 
     { STATE_MAIN_I3, STATE_MAIN_I4
-    , SMF_DS_AUTH | SMF_INITIATOR
+    , SMF_DS_AUTH | SMF_INITIATOR | SMF_RETRANSMIT_ON_DUPLICATE
       | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2
     , P(ID) | P(SIG), P(VID) | P(CR) | P(CERT), PT(NONE)
     , EVENT_SA_REPLACE, main_inR3 },
