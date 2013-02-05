@@ -1120,7 +1120,7 @@ send_frags(struct state *st, const char *where, bool verbose)
 
     if (st->st_suspended_md == NULL ) {
     DBG_log("send_frags: Cannot access md\n");
-	return TRUE; /*  pretend we sent it, so on next round we have the md */
+	return FALSE;
     }
 
     /*
@@ -1291,7 +1291,7 @@ send_packet(struct state *st, const char *where, bool verbose)
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
     libreswan_log("FRAG: Current state is %s", enum_show(&state_names, st->st_state));
-    if ( (st->st_state == STATE_MAIN_I2 || st->st_state == STATE_MAIN_R3)
+    if ( ( strcmp(where, "ike fragmentation") == 0 )
 	&& ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
 	||
 	((st->st_tpacket.len > ISAKMP_FRAG_MAXLEN)
