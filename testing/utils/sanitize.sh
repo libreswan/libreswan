@@ -2,7 +2,7 @@
 . ../../../kvmsetup.sh
 . ./testparams.sh 
 . ../setup.sh
-. $LIBRESAWNBASE/testing/utils/functions.sh 
+. $LIBRESWANDIR/testing/utils/functions.sh 
 
 if [ -f eastinit.sh ] ; then
         RESPONDER=east

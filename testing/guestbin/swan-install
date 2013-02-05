@@ -2,8 +2,8 @@
 
 pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
 cd /source
-make install
-make module_install
+make install 2>&1 >> compile-log.txt
+make module_install 2>&1 >> compile-log.txt
 # ensure selinux bits
 restorecon /usr/local/sbin -Rv
 restorecon /usr/local/libexec/ipsec -Rv

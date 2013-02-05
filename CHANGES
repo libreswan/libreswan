@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.1 (unreleased)
+* starter: auto=route and auto=start only performed auto=add [Wolfgang]
 * libswan: logging cleanups from openswan 2.5.x era [DHR/Antony/Paul]
 * pluto: Debug logs were not written if a file was specified [Paul/Antony]
 * pluto: fix for additional proposal sizes when enabling 1DES [Paul]

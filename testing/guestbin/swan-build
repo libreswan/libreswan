@@ -2,4 +2,4 @@
 
 cd /source
 rm -rf OBJ* modobj*
-make programs module
+make programs module 2>&1 > compile-log.txt

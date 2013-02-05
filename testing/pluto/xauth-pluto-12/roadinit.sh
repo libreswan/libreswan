@@ -16,6 +16,8 @@ rm -fr /var/run/pluto/pluto.pid
 
 /testing/pluto/bin/wait-until-pluto-started
 
+ipsec auto --add modecfg-road--eastnet-psk
+
 echo done
 
 
