@@ -87,9 +87,7 @@ def compile_on (args,child):
     prompt = "root@%s source"%args.hostname
     cmd = "cd /source/"
     read_exec_shell_cmd( child, cmd, prompt, timer)
-    cmd = "rm -fr OBJ*"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
-    cmd = "make programs module 2>&1 > compile-log.txt"
+    cmd = "/testing/guestbin/swan-build"
     read_exec_shell_cmd( child, cmd, prompt, timer)
 
     return  
@@ -99,7 +97,7 @@ def make_install (args, child):
     prompt = "root@%s source"%args.hostname
     cmd = "cd /source/"
     read_exec_shell_cmd( child, cmd, prompt, timer)
-    cmd = "make install mdoule_install  2>&1 >> compile-log.txt"
+    cmd = "/testing/guestbin/swan-install"
     read_exec_shell_cmd( child, cmd, prompt, timer)
     return
 
