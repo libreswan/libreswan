@@ -14,7 +14,3 @@ rm -fr /var/run/pluto/pluto.pid
 ipsec auto --add modecfg-road--eastnet-psk
 
 echo done.
-
-
-
-
