@@ -3455,7 +3455,7 @@ show_one_connection(struct connection *c)
 		);
 
     if(c->connmtu > 0) {
-	snprintf(mtustr,15,"%d",c->connmtu);
+	snprintf(mtustr,7,"%d",c->connmtu);
     } else {
 	strcpy(mtustr, "unset");
     }
