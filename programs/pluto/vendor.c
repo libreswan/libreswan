@@ -776,7 +776,7 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 	if (!pvid->vid) return STF_INTERNAL_ERROR; /* not initialized */
 
 	DBG(DBG_EMITTING,
-		DBG_log("out_vendorid(): sending [%s]", pvid->descr);
+		DBG_log("out_vid(): sending [%s]", pvid->descr);
 	);
 
 	return out_generic_raw(np, &isakmp_vendor_id_desc, outs,

@@ -1102,7 +1102,7 @@ check_msg_errqueue(const struct iface_port *ifp, short interest)
 }
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
-bool
+static bool
 send_frags(struct state *st, const char *where, bool verbose)
 {
     struct isakmp_hdr *isakmphdr;
@@ -1154,7 +1154,7 @@ send_frags(struct state *st, const char *where, bool verbose)
 	    fraglen += sizeof(espmarker);
 	}
 
-	if ((ike_frag = alloc_bytes(fraglen,"fraglen")) == NULL) {
+	if ((ike_frag = alloc_bytes(fraglen,"ike fragment")) == NULL) {
 	    DBG_log("send_frags: error allocating memory \n");
 	    return FALSE;
 	}
