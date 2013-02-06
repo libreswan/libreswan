@@ -3369,7 +3369,7 @@ show_one_sr(struct connection *c
 		addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
 	}
 
-	whack_log(RC_COMMENT, "\"%s\"%s:     xauth info: %s%s; dns1:%s, dns2:%s;"
+	whack_log(RC_COMMENT, "\"%s\"%s:   xauth info: %s%s; dns1:%s, dns2:%s;"
 		  , c->name, instance
 		  , thisxauthsemi
 		  , thatxauthsemi
@@ -3378,6 +3378,18 @@ show_one_sr(struct connection *c
 		);
     }
 #endif
+#ifdef HAVE_LABELED_IPSEC
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s, loopback:%s; "
+		  , c->name, instance
+		  , c->labeled_ipsec ? "yes" : "no" 
+		  , c->loopback ? "yes" : "no" 
+		);
+       whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s; "
+		  , c->name, instance
+		  , (c->policy_label == NULL) ? "unset" : c->policy_label
+		);
+#endif
+
 }
 
 void 
