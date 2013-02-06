@@ -615,7 +615,7 @@ init_fetch(void)
     {
 #ifdef LIBCURL
 	/* init curl */
-	status = curl_global_init(CURL_GLOBAL_NOTHING);
+	status = curl_global_init(CURL_GLOBAL_DEFAULT);
 	if (status != 0)
 	{
 	    plog("libcurl could not be initialized, status = %d", status);
