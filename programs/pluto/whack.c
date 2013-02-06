@@ -125,8 +125,14 @@ help(void)
 	    " \\\n   "
 	    " [--remote_peer_type <cisco>]"
 	    " \\\n   "
+#ifdef HAVE_NM
 	    "[--nm_configured]"
 	    " \\\n   "
+#endif
+#ifdef HAVE_LABELED_IPSEC
+	    "[--loopback] [--labeledipsec] [--policylabel <label>]"
+	    " \\\n   "
+#endif
 #ifdef XAUTH
 	    "[--xauthby file|pam|alwaysok]"
 #endif
