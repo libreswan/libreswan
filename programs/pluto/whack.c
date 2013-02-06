@@ -1921,11 +1921,6 @@ main(int argc, char **argv)
             msg.remotepeertype = NON_CISCO; /*NON_CISCO=0*/
     }
 
-   if (msg.xauthby != XAUTHBY_FILE && msg.xauthby != XAUTHBY_PAM) {
-          diag("xauthby can only be \"XAUTHBY_FILE\" or \"XAUTHBY_PAM\" - defaulting to file authentication");
-       msg.xauthby = XAUTHBY_FILE;
-   }
-
     /* pack strings for inclusion in message */
     wp.msg = &msg;
 
