@@ -104,7 +104,7 @@ if userland == "shrew":
 output = commands.getoutput("ipsec stop")
 # python has no pidof :/
 pluto = commands.getoutput("pidof pluto")
-charon = commands.getoutput("pidof pluto")
+charon = commands.getoutput("pidof charon")
 shrew = commands.getoutput("pidof iked")
 racoon = commands.getoutput("pidof racoon")
 
