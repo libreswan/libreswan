@@ -4,12 +4,12 @@
 . ../setup.sh
 . $LIBRESWANDIR/testing/utils/functions.sh
 
-if [ ! -f  $LIBRESWANDIR/testing/x509/pkcs12/mainca/west.p12 ]
-then
-    echo "cannot run testcases without generating X509 certificates"
-    echo "Please run $LIBRESWANDIR/testing/x509/dist_certs and try again"
-    exit 1
-fi
+#if [ ! -f  $LIBRESWANDIR/testing/x509/pkcs12/mainca/west.p12 ]
+#then
+#    echo "cannot run testcases without generating X509 certificates"
+#    echo "Please run $LIBRESWANDIR/testing/x509/dist_certs and try again"
+#    exit 1
+#fi
 
 TESTNAME=`basename $PWD`
 echo "autodetet testname is $TESTNAME"
