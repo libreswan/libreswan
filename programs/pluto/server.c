@@ -1285,7 +1285,7 @@ send_packet(struct state *st, const char *where, bool verbose)
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
     libreswan_log("FRAG: Current state is %s", enum_show(&state_names, st->st_state));
-    if ( ( strcmp(where, "ike fragmentation") == 0 )
+    if ((strcmp(where, "retransmit in response to duplicate") == 0 || strcmp(where, "EVENT_RETRANSMIT") == 0)
 	&& ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
 	||
 	((st->st_tpacket.len > ISAKMP_FRAG_MAXLEN)

@@ -1541,18 +1541,7 @@ process_v1_packet(struct msg_digest **mdp)
     {
 	if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE)
 	{
-	    if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS
-		&& (st->st_state == STATE_MAIN_I3 || st->st_state == STATE_MAIN_R3)
-		&& (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW))
-	    {
-		loglog(RC_RETRANSMISSION
-		    , "retransmitting using IKE fragments in response to duplicate packet; already %s"
-		    , enum_name(&state_names, st->st_state));
-		set_suspended(st, md);
-		send_packet(st, "ike fragmentation", TRUE);
-		set_suspended(st, NULL);
-	    }
-	    else if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS)
+	    if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS)
 	    {
 		st->st_retransmit++;
 		loglog(RC_RETRANSMISSION
