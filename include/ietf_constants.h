@@ -302,6 +302,7 @@
 
 #define IKE_UDP_PORT	500
 #define NAT_T_IKE_FLOAT_PORT 4500 /* RFC-3947 */
+#define NON_ESP_MARKER_SIZE 4	/* RFC3948: bytes of zeros, same size as ESP SPI */
 
 /* Version numbers - IKEv1 */
 #define ISAKMP_MAJOR_VERSION   0x1

@@ -1115,13 +1115,7 @@ send_frags(struct state *st, const char *where, bool verbose)
     size_t datalen;
     size_t max_datalen;
     unsigned int trailer;
-    unsigned int espmarker;
     unsigned int fragnum = 0;
-
-    if (st->st_suspended_md == NULL ) {
-    DBG_log("send_frags: Cannot access md\n");
-	return FALSE;
-    }
 
     /*
      * We want to send a a packet smaller than ISAKMP_FRAG_MAXLEN
@@ -1131,7 +1125,7 @@ send_frags(struct state *st, const char *where, bool verbose)
         (sizeof(*isakmphdr) + sizeof(*fraghdr) + sizeof(trailer));
 
     if (st->st_suspended_md->iface->ike_float == TRUE) {
-	max_datalen -= sizeof(espmarker);
+	max_datalen -= NON_ESP_MARKER_SIZE;
     }
 
     ptr = st->st_tpacket.ptr;
@@ -1151,7 +1145,7 @@ send_frags(struct state *st, const char *where, bool verbose)
 	          + datalen;
 
 	if (st->st_suspended_md->iface->ike_float == TRUE) {
-	    fraglen += sizeof(espmarker);
+	    fraglen += NON_ESP_MARKER_SIZE;
 	}
 
 	if ((ike_frag = alloc_bytes(fraglen,"ike fragment")) == NULL) {
@@ -1164,8 +1158,8 @@ send_frags(struct state *st, const char *where, bool verbose)
 	/* Set non-ESP marker */
 	if (st->st_suspended_md->iface->ike_float == TRUE)
 	{
-	    memset(ike_fragptr, 0, sizeof(espmarker));
-	    ike_fragptr += sizeof(espmarker);
+	    memset(ike_fragptr, 0, NON_ESP_MARKER_SIZE);
+	    ike_fragptr += NON_ESP_MARKER_SIZE;
 	}
 
 	// First set the isakmp header
@@ -1180,7 +1174,7 @@ send_frags(struct state *st, const char *where, bool verbose)
 	isakmphdr->isa_flags = 0; // st->st_suspended_md->hdr.isa_flags; TODO must this be set?
 	isakmphdr->isa_msgid = st->st_msgid;
 	if (st->st_suspended_md->iface->ike_float == TRUE) {
-	    isakmphdr->isa_length = htonl(fraglen - sizeof(espmarker));
+	    isakmphdr->isa_length = htonl(fraglen - NON_ESP_MARKER_SIZE);
 	} else {
 	    isakmphdr->isa_length = htonl(fraglen);
 	}
@@ -1191,7 +1185,7 @@ send_frags(struct state *st, const char *where, bool verbose)
 	fraghdr->isafrag_np = 0; /* must be zero */
 	fraghdr->isafrag_reserved = 0; /* reserved at this time, must be zero */
 	if (st->st_suspended_md->iface->ike_float == TRUE) {
-	    fraghdr->isafrag_length = htons(fraglen - sizeof(*isakmphdr) - sizeof(espmarker));
+	    fraghdr->isafrag_length = htons(fraglen - sizeof(*isakmphdr) - NON_ESP_MARKER_SIZE);
 	} else {
 	    fraghdr->isafrag_length = htons(fraglen - sizeof(*isakmphdr));
 	}
@@ -1256,16 +1250,16 @@ send_packet(struct state *st, const char *where, bool verbose)
 
     if ((st->st_interface->ike_float == TRUE) && (st->st_tpacket.len != 1)) {
 	if ((unsigned long) st->st_tpacket.len >
-	    (MAX_OUTPUT_UDP_SIZE-sizeof(u_int32_t))) {
+	    (MAX_OUTPUT_UDP_SIZE - NON_ESP_MARKER_SIZE)) {
 	    DBG_log("send_packet(): really too big");
 	    return FALSE;
 	}
-	len = (unsigned long) st->st_tpacket.len + sizeof(u_int32_t);
+	len = (unsigned long) st->st_tpacket.len + NON_ESP_MARKER_SIZE;
 	passert(len <= MAX_OUTPUT_UDP_SIZE);
 	ptr = ike_pkt;
 	/** Add Non-ESP marker **/
-	memset(ike_pkt, 0, sizeof(u_int32_t));
-	memcpy(ike_pkt + sizeof(u_int32_t), st->st_tpacket.ptr,
+	memset(ike_pkt, 0, NON_ESP_MARKER_SIZE);
+	memcpy(ike_pkt + NON_ESP_MARKER_SIZE, st->st_tpacket.ptr,
 	       (unsigned long)st->st_tpacket.len);
     }
     else {

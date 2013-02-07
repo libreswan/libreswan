@@ -252,8 +252,9 @@ struct state
 
     ip_address         st_remoteaddr;          /* where to send packets to */
     u_int16_t          st_remoteport;          /* host byte order */
+
     
-    const struct iface_port *st_interface;     /* where to send from */
+    const struct iface_port *st_interface;     /* where to send from */  /* dhr 2013: why? There was already connection->interface */
     ip_address         st_localaddr;           /* where to send them from */
     u_int16_t          st_localport;           
 
