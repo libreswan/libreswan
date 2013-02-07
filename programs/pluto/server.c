@@ -1260,12 +1260,13 @@ send_packet(struct state *st, const char *where, bool verbose)
 	    DBG_log("send_packet(): really too big");
 	    return FALSE;
 	}
+	len = (unsigned long) st->st_tpacket.len + sizeof(u_int32_t);
+	passert(len <= MAX_OUTPUT_UDP_SIZE);
 	ptr = ike_pkt;
 	/** Add Non-ESP marker **/
 	memset(ike_pkt, 0, sizeof(u_int32_t));
 	memcpy(ike_pkt + sizeof(u_int32_t), st->st_tpacket.ptr,
 	       (unsigned long)st->st_tpacket.len);
-	len = (unsigned long) st->st_tpacket.len + sizeof(u_int32_t);
     }
     else {
 	ptr = st->st_tpacket.ptr;
