@@ -1,0 +1,29 @@
+#%PAM-1.0
+#
+# Requires pam_url. Ensure resource is on https, not http
+
+auth sufficient pam_url.so [config=/etc/pam_url.conf] [use_first_pass=1]
+account sufficient pam_url.so [config=/etc/pam_url.conf]
+
+# example /etc/pam_url.conf to run against Fedora FAS server (supports yubikey!)
+# pam_url:
+{
+        settings:
+        {
+		# URI to fetch
+                url = "https://id.dev.fedoraproject.org/pam";
+                # The remote script/cgi should return a 200 http code and
+		# this string as its only results
+                returncode = "OK";
+		# userfield name to send
+		userfield = "username";
+		# passwdfield name to send
+                passwdfield = "password";
+		# extradata to send
+                extradata = "&do=login";
+                prompt = "Password+Token: ";
+        };
+
+# debug version
+#auth sufficient pam_url.so [debug] [config=/etc/pam_url.conf] [use_first_pass=1]
+#account sufficient pam_url.so [debug] [config=/etc/pam_url.conf]
