@@ -1105,105 +1105,103 @@ check_msg_errqueue(const struct iface_port *ifp, short interest)
 static bool
 send_frags(struct state *st, const char *where, bool verbose)
 {
-    struct isakmp_hdr *isakmphdr;
-    struct isakmp_ikefrag *fraghdr;
-    u_int8_t *ike_frag,*ike_fragptr;
-    u_int8_t *ptr, *fragptr;
-
-    size_t len;
-    size_t fraglen;
-    size_t datalen;
+    u_int8_t *packet_cursor;
+    size_t packet_remainder_len;
     size_t max_datalen;
-    unsigned int trailer;
     unsigned int fragnum = 0;
+
+    /* each fragment, if we are doing NATT, needs a non-ESP_Marker prefix */
+    size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
 
     /*
      * We want to send a a packet smaller than ISAKMP_FRAG_MAXLEN
      * First compute the maximum data length that will fit in it
      */
+    /* BUG: sizeof(struct whatever) is usually right
+     * but not correctly constituted as wire-format
+     */
     max_datalen = ISAKMP_FRAG_MAXLEN -
-        (sizeof(*isakmphdr) + sizeof(*fraghdr) + sizeof(trailer));
+        (sizeof(struct isakmp_hdr) + sizeof(struct isakmp_ikefrag));
 
-    if (st->st_suspended_md->iface->ike_float == TRUE) {
+    if (st->st_interface->ike_float == TRUE) {
 	max_datalen -= NON_ESP_MARKER_SIZE;
     }
 
-    ptr = st->st_tpacket.ptr;
-    len = (unsigned long) st->st_tpacket.len;
+    packet_cursor = st->st_tpacket.ptr;
+    packet_remainder_len = (unsigned long) st->st_tpacket.len;
 
-    while (len > 0) {
+    while (packet_remainder_len > 0) {
+	struct isakmp_hdr *isakmphdr;
+	struct isakmp_ikefrag *fraghdr;
+	u_int8_t *frag,
+	    *fragcursor;
+	size_t fraglen;
+	size_t datalen;
+
 	DBG(DBG_CONTROL, DBG_log("sending IKE fragment\n"));
 	fragnum++;
 
-	if (len > max_datalen)
+	if (packet_remainder_len > max_datalen)
 	    datalen = max_datalen;
 	else
-	    datalen = len;
+	    datalen = packet_remainder_len;
 
 	fraglen = sizeof(*isakmphdr)
 	          + sizeof(*fraghdr)
 	          + datalen;
 
-	if (st->st_suspended_md->iface->ike_float == TRUE) {
-	    fraglen += NON_ESP_MARKER_SIZE;
-	}
-
-	if ((ike_frag = alloc_bytes(fraglen,"ike fragment")) == NULL) {
-	    DBG_log("send_frags: error allocating memory \n");
+	if ((frag = alloc_bytes(natt_bonus + fraglen, "ike fragment")) == NULL) {
+	    DBG_log("send_frags: error allocating memory");
 	    return FALSE;
 	}
 
-	ike_fragptr = ike_frag;
+	fragcursor = frag;
 
 	/* Set non-ESP marker */
-	if (st->st_suspended_md->iface->ike_float == TRUE)
+	if (st->st_interface->ike_float == TRUE)
 	{
-	    memset(ike_fragptr, 0, NON_ESP_MARKER_SIZE);
-	    ike_fragptr += NON_ESP_MARKER_SIZE;
+	    memset(fragcursor, 0, NON_ESP_MARKER_SIZE);
+	    fragcursor += NON_ESP_MARKER_SIZE;
 	}
 
 	// First set the isakmp header
-	isakmphdr = (struct isakmp_hdr*) ike_fragptr;
-	memcpy(isakmphdr->isa_icookie, st->st_icookie, COOKIE_SIZE);
-	memcpy(isakmphdr->isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-	isakmphdr->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION;
-	isakmphdr->isa_version = st->st_suspended_md->hdr.isa_version;
-	isakmphdr->isa_xchg = st->st_suspended_md->hdr.isa_xchg;
-	/* Do we need to set any of SAKMP_FLAG_ENCRYPTION, ISAKMP_FLAGS_R or ISAKMP_FLAGS_I ? */
+	/* BUG: sizeof(struct isakmp_hdr) is host format */
+	memcpy(fragcursor, st->st_tpacket.ptr, sizeof(struct isakmp_hdr));
+	isakmphdr = (struct isakmp_hdr*) fragcursor;
+	isakmphdr->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION;	/* one octet */
+	/* Do we need to set any of ISAKMP_FLAG_ENCRYPTION, ISAKMP_FLAGS_R or ISAKMP_FLAGS_I ? */
 	/* seems there might be disagreement between Cisco and Microsoft */
-	isakmphdr->isa_flags = 0; // st->st_suspended_md->hdr.isa_flags; TODO must this be set?
-	isakmphdr->isa_msgid = st->st_msgid;
-	if (st->st_suspended_md->iface->ike_float == TRUE) {
-	    isakmphdr->isa_length = htonl(fraglen - NON_ESP_MARKER_SIZE);
-	} else {
-	    isakmphdr->isa_length = htonl(fraglen);
-	}
+	/* st->st_suspended_md->hdr.isa_flags; TODO must this be set? */
+	isakmphdr->isa_flags &= ~ISAKMP_FLAG_ENCRYPTION;
+	isakmphdr->isa_length = htonl(fraglen);
 
 	/* Append the ike frag header */
-	ike_fragptr += sizeof(struct isakmp_hdr);
-	fraghdr = (struct isakmp_ikefrag*) ike_fragptr;
+	/* BUG: sizeof(struct isakmp_hdr) is usually right
+	 * but not correctly constituted as wire-format
+	 * Same is true of all sizeofs here!
+	 */
+	fragcursor += sizeof(struct isakmp_hdr);
+	fraghdr = (struct isakmp_ikefrag*) fragcursor;
 	fraghdr->isafrag_np = 0; /* must be zero */
 	fraghdr->isafrag_reserved = 0; /* reserved at this time, must be zero */
-	if (st->st_suspended_md->iface->ike_float == TRUE) {
-	    fraghdr->isafrag_length = htons(fraglen - sizeof(*isakmphdr) - NON_ESP_MARKER_SIZE);
-	} else {
-	    fraghdr->isafrag_length = htons(fraglen - sizeof(*isakmphdr));
-	}
-	fraghdr->isafrag_id = htons(1); // need this to be unique?
+	fraghdr->isafrag_length = htons(fraglen - sizeof(*isakmphdr));
+	fraghdr->isafrag_id = htons(1); /* In theory required to be unique, in practise not needed? */
 	fraghdr->isafrag_number = fragnum;
-	if (len == datalen)
+	if (packet_remainder_len == datalen)
 	    fraghdr->isafrag_flags = ISAKMP_FRAG_LAST;
 	else
 	    fraghdr->isafrag_flags = 0;
 
 	/* Append the data block */
-	ike_fragptr += sizeof(struct isakmp_ikefrag);
-	fragptr = (u_int8_t*)(ike_fragptr);
-	memcpy(fragptr, ptr, datalen);
+	/* BUG: sizeof(struct isakmp_ikefrag) is usually right
+	 * but not correctly constituted as wire-format
+	 */
+	fragcursor += sizeof(struct isakmp_ikefrag);
+	memcpy((void *)fragcursor, packet_cursor, datalen);
 
 	DBG(DBG_CONTROL|DBG_RAW
 	    , DBG_log("sending IKE fragment with %lu bytes for %s through %s:%d to %s:%u (using #%lu)"
-		      , (unsigned long) fraglen
+		      , (unsigned long) (natt_bonus + fraglen)
 		      , where
 		      , st->st_interface->ip_dev->id_rname
 		      , st->st_interface->port
@@ -1211,15 +1209,16 @@ send_frags(struct state *st, const char *where, bool verbose)
 		      , st->st_remoteport
 		      , st->st_serialno));
 	DBG(DBG_RAW
-	    , DBG_dump(NULL, ike_frag, fraglen));
+	    , DBG_dump(NULL, frag, natt_bonus + fraglen));
 
 	if (sendto(st->st_interface->fd
-		   , ike_frag
-		   , fraglen, 0
+		   , frag
+		   , natt_bonus + fraglen, 0
 		   , sockaddrof(&st->st_remoteaddr)
-		   , sockaddrlenof(&st->st_remoteaddr)) != (ssize_t)fraglen ){
+		   , sockaddrlenof(&st->st_remoteaddr))
+	     != (ssize_t)(natt_bonus + fraglen)){
 
-	    free(ike_frag);
+	    free(frag);
 
 	    if (!verbose)
 		return FALSE;
@@ -1231,10 +1230,10 @@ send_frags(struct state *st, const char *where, bool verbose)
 	    return FALSE;
 	}
 
-	free(ike_frag);
+	free(frag);
 
-	len -= datalen;
-	ptr += datalen;
+	packet_remainder_len -= datalen;
+	packet_cursor += datalen;
     }
     return TRUE;
 }
