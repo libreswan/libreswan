@@ -695,7 +695,17 @@ struct isakmp_ikefrag
 
 extern struct_desc isakmp_ikefrag_desc;
 
+/*
+ * What is a sane and safe value? iOS/Apple uses 1280, stock racoon uses 552.
+ * Why is there no RFC to guide interop people here :/ 
+ */
 #define ISAKMP_FRAG_MAXLEN      552
+
+/*
+ * This a really the least significant bit in the flags octet, but it's the
+ * only flag at the moment. Should really change from ft_nat to ft_set so we
+ * can do proper bit naming/setting
+ */
 #define ISAKMP_FRAG_LAST        1
 
 /* descriptor for each payload type
