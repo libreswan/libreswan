@@ -1102,6 +1102,14 @@ check_msg_errqueue(const struct iface_port *ifp, short interest)
 }
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
+/* 
+ * non-IETF magic voodoo we need to consider for interop:
+ * - www.cisco.com/en/US/docs/ios/sec_secure_connectivity/configuration/guide/sec_fragment_ike_pack.html
+ * - www.cisco.com/en/US/docs/ios-xml/ios/sec_conn_ikevpn/configuration/15-mt/sec-fragment-ike-pack.pdf
+ * - msdn.microsoft.com/en-us/library/cc233452.aspx 
+ * - iOS/Apple racoon source ipsec-164.9 at www.opensource.apple.com (frak length 1280)
+ * - stock racoon source (frak length 552)
+ */
 static bool
 send_frags(struct state *st, const char *where, bool verbose)
 {
@@ -1151,7 +1159,7 @@ send_frags(struct state *st, const char *where, bool verbose)
 	          + datalen;
 
 	if ((frag = alloc_bytes(natt_bonus + fraglen, "ike fragment")) == NULL) {
-	    DBG_log("send_frags: error allocating memory");
+	    libreswan_log("send_frags: error allocating memory");
 	    return FALSE;
 	}
 
@@ -1284,14 +1292,13 @@ send_packet(struct state *st, const char *where, bool verbose)
     (void) check_msg_errqueue(st->st_interface, POLLOUT);
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
-    libreswan_log("FRAG: Current state is %s", enum_show(&state_names, st->st_state));
     if ((strcmp(where, "retransmit in response to duplicate") == 0 || strcmp(where, "EVENT_RETRANSMIT") == 0)
 	&& ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
 	||
 	((st->st_tpacket.len > ISAKMP_FRAG_MAXLEN)
 	&& (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW))))
 	{
-	  libreswan_log("FRAG: planning to send fragments\n");
+	  DBG(DBG_CONTROLMORE, DBG_log("planning to send IKE fragments"));
 	  if (send_frags(st, where, verbose) == -1)
 	   {
 		libreswan_log("isakmp_sendfrags failed\n");
