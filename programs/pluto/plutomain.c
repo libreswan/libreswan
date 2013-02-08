@@ -337,6 +337,22 @@ set_cfg_string(char **target, char *value)
     *target = strdup(value);
 }
 
+static void
+pluto_init_nss(char *confddir)
+{
+	char buf[100];
+	snprintf(buf, sizeof(buf), "%s",confddir);
+	loglog(RC_LOG_SERIOUS,"nss directory plutomain: %s",buf);
+	SECStatus nss_init_status= NSS_InitReadWrite(buf);
+	if (nss_init_status != SECSuccess) {
+	    loglog(RC_LOG_SERIOUS, "NSS initialization failed (err %d)\n", PR_GetError());
+        exit_pluto(10);
+	} else {
+	    libreswan_log("NSS Initialized");
+	    PK11_SetPasswordFunc(getNSSPassword);
+      }
+}
+
 /** by default the CRL policy is lenient */
 bool strict_crl_policy = FALSE;
 
@@ -984,18 +1000,7 @@ main(int argc, char **argv)
 
     init_constants();
     pluto_init_log();
-
-	char buf[100];
-	snprintf(buf, sizeof(buf), "%s",oco->confddir);
-	loglog(RC_LOG_SERIOUS,"nss directory plutomain: %s",buf);
-	SECStatus nss_init_status= NSS_InitReadWrite(buf);
-	if (nss_init_status != SECSuccess) {
-	    loglog(RC_LOG_SERIOUS, "NSS initialization failed (err %d)\n", PR_GetError());
-        exit_pluto(10);
-	} else {
-	    libreswan_log("NSS Initialized");
-	    PK11_SetPasswordFunc(getNSSPassword);
-      }
+    pluto_init_nss(oco->confddir);
 
 #ifdef FIPS_CHECK
 	const char *package_files[]= { IPSECLIBDIR"/setup",

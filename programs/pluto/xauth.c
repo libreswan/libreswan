@@ -349,6 +349,7 @@ int get_internal_addresses(struct connection *con,struct internal_addr *ia)
 	    }
 	    if(con->pamh != NULL)
 	    {
+		/* Paul: Could pam give these to us? */
 		    /** Put IP addresses from various variables into our
                      *  internal address struct */
 		    get_addr(con->pamh,"IPADDR",&ia->ipaddr);
@@ -1241,6 +1242,17 @@ static void * do_authentication(void *varg)
 	libreswan_log("XAUTH: unknown authentication method requested to authenticate user %s",arg->name.ptr);
 	bad_case(st->st_connection->xauthby);
    }
+
+    /*
+     * If XAUTH authentication failed, should we soft fail or hard fail? 
+     * The soft fail mode is used to bring up the SA in a walled garden.
+     * This can be detected in the updown script by the env variable XAUTH_FAILED=1
+     */
+    if((results == FALSE) && (st->st_connection->xauthfail == XAUTHFAIL_SOFT)) {
+       libreswan_log("XAUTH: authentication for %s failed, but policy is set to soft fail", arg->name.ptr);
+       st->st_xauth_soft = TRUE; /* passed to updown for notification */
+       results = TRUE;
+    }
 
     if(results)
     {

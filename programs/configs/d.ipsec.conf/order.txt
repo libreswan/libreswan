@@ -37,6 +37,7 @@ d.ipsec.conf/leftxauthusername.xml
 d.ipsec.conf/leftmodecfgserver.xml
 d.ipsec.conf/leftmodecfgclient.xml
 d.ipsec.conf/xauthby.xml
+d.ipsec.conf/xauthfail.xml
 d.ipsec.conf/modecfgpull.xml
 d.ipsec.conf/modecfgoptions.xml
 d.ipsec.conf/remote_peer_type.xml

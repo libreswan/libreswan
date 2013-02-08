@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 02/02/2013
+.\"      Date: 02/06/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "02/02/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "02/06/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -728,6 +728,14 @@ For supported password hashing methods, see
 The
 \fIalwaysok\fR
 should only be used if the XAUTH user authentication is not really used, but is required for interoperability, as it defeats the whole point of XAUTH which is to rely on a secret only known by a human\&.
+.RE
+.PP
+\fBxauthfail\fR
+.RS 4
+When XAUTH support is available, set the failure method desired when authentication has failed\&. The currently supported values are
+\fIhard\fR
+(the default) and
+\fIsoft\fR\&. A soft failure means the IPsec SA is allowed to be established, as if authentication had passed successfully, but the XAUTH_FAILED environment variable will be set to 1 for the updown script, which can then be used to redirect the user into a walled garden, for example a payment portal\&.
 .RE
 .PP
 \fBmodecfgpull\fR
