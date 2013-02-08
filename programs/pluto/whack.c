@@ -135,6 +135,7 @@ help(void)
 #endif
 #ifdef XAUTH
 	    "[--xauthby file|pam|alwaysok]"
+	    "[--xauthfail hard|soft]"
 #endif
 	    " \\\n   "
 	    " [--dontrekey]"
@@ -496,6 +497,7 @@ enum option_enums {
     CD_LABELED_IPSEC,
     CD_POLICY_LABEL,
     CD_XAUTHBY,
+    CD_XAUTHFAIL,
     CD_ESP	
 #   define CD_LAST CD_ESP	/* last connection description */
 
@@ -681,6 +683,7 @@ static const struct option long_opts[] = {
     { "xauthserver", no_argument, NULL, END_XAUTHSERVER + OO },
     { "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
     { "xauthby", required_argument, NULL, CD_XAUTHBY + OO},
+    { "xauthfail", required_argument, NULL, CD_XAUTHFAIL + OO},
 #endif
 #ifdef MODECFG
     { "modecfgpull",   no_argument, NULL, CD_MODECFGPULL + OO },
@@ -944,7 +947,10 @@ main(int argc, char **argv)
     msg.policy_label = NULL;
 #endif
 
+#ifdef XAUTH
     msg.xauthby = XAUTHBY_FILE;
+    msg.xauthfail = XAUTHFAIL_HARD;
+#endif
 
     msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
     msg.sa_ipsec_life_seconds = PLUTO_SA_LIFE_DURATION_DEFAULT;
@@ -1568,7 +1574,7 @@ main(int argc, char **argv)
 		msg.policy_label = optarg;
 		continue;
 #endif
-
+#ifdef XAUTH
 	case CD_XAUTHBY:
 		if ( strcmp(optarg, "pam" ) == 0) {
 			msg.xauthby = XAUTHBY_PAM;
@@ -1583,6 +1589,18 @@ main(int argc, char **argv)
 			fprintf(stderr, "whack: unknown xauthby method '%s' ignored",optarg);
 		}
 		continue;
+	case CD_XAUTHFAIL:
+		if ( strcmp(optarg, "hard" ) == 0) {
+			msg.xauthfail = XAUTHFAIL_HARD;
+			continue;
+		} else if ( strcmp(optarg, "soft" ) == 0) {
+			msg.xauthfail = XAUTHFAIL_SOFT;
+			continue;
+		} else {
+			fprintf(stderr, "whack: unknown xauthfail method '%s' ignored",optarg);
+		}
+		continue;
+#endif
 
 	case CD_CONNIPV4:
 	    if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))

@@ -216,8 +216,10 @@ struct connection {
    char *policy_label;
 #endif
 
+#ifdef XAUTH
    enum keyword_xauthby xauthby;
-
+   enum keyword_xauthfail xauthfail;
+#endif
 
     bool               forceencaps;         /* always use NAT-T encap */
     

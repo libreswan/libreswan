@@ -401,13 +401,12 @@ struct state
     u_int32_t           st_dpd_expectseqno;     /* Next R_U_THERE_ACK
 						   to receive */
     u_int32_t           st_dpd_peerseqno;       /* global variables */
-    struct event       *st_dpd_event;          /* backpointer for DPD events */
+    struct event       *st_dpd_event;           /* backpointer for DPD events */
 
-    u_int32_t           st_seen_vendorid;      /* Bit field about
+    u_int32_t           st_seen_vendorid;       /* Bit field about
 						  recognized Vendor ID */
-    struct isakmp_quirks quirks;          /* work arounds for faults in other
- 					   * products */
-    
+    struct isakmp_quirks quirks;                /* work arounds for faults in other products */
+    bool                st_xauth_soft;          /* XAUTH failed but policy is to soft fail */
 };
 
 /* global variables */
