@@ -1024,21 +1024,37 @@ int do_pam_authentication(void *varg)
     retval = pam_start("pluto", (const char *)arg->name.ptr, &conv, &pamh);
 
 	/* Send the remote host address to PAM */
-    if (retval == PAM_SUCCESS) 
+    if (retval == PAM_SUCCESS) {
+	DBG(DBG_CONTROL, DBG_log("pam_start SUCCESS"));
         retval = pam_set_item(pamh, PAM_RHOST, pluto_ip_str(&arg->st->st_remoteaddr));
+    } else {
+	DBG(DBG_CONTROL, DBG_log("pam_start failed with '%d'", retval));
+    }
     /*  Two factor authentication - Check that the user is valid, 
 	and then check if they are permitted access */
-    if (retval == PAM_SUCCESS)
+    if (retval == PAM_SUCCESS) {
+	DBG(DBG_CONTROL, DBG_log("pam_set_item SUCCESS"));
         retval = pam_authenticate(pamh, PAM_SILENT);    /* is user really user? */
-    if (retval == PAM_SUCCESS)
+    } else {
+	DBG(DBG_CONTROL, DBG_log("pam_set_item failed with '%d'", retval));
+    }
+    if (retval == PAM_SUCCESS) {
+	DBG(DBG_CONTROL, DBG_log("pam_authenticate SUCCESS"));
         retval = pam_acct_mgmt(pamh, 0);       /* permitted access? */
+    } else {
+	DBG(DBG_CONTROL, DBG_log("pam_authenticate failed with '%d'", retval));
+    }
 
     pam_end(pamh, PAM_SUCCESS);
 
-    if(retval == PAM_SUCCESS)
-      return TRUE;
-    else
-      return FALSE;
+    if(retval == PAM_SUCCESS) {
+	libreswan_log("XAUTH: PAM_SUCCESS");
+	return TRUE;
+    } else {
+	libreswan_log("XAUTH: PAM auth chain failed with '%d'", retval);
+	return FALSE;
+    }
+
 }
 #endif /* XAUTH_HAVE_PAM */
 
