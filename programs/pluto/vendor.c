@@ -533,7 +533,7 @@ static void handle_known_vendorid (struct msg_digest *md
 				   , const char *vidstr
 				   , size_t len
 				   , struct vid_struct *vid
-				   , struct state *st UNUSED)
+				   , struct state *st)
 {
 	char vid_dump[128];
 	int vid_usefull = 0;
@@ -626,7 +626,16 @@ static void handle_known_vendorid (struct msg_digest *md
 	case VID_LIBRESWANSELF:
 	    vid_usefull=1;
 	    break;
-	    
+
+	case VID_CISCO_IKE_FRAGMENTATION:
+	case VID_IKE_FRAGMENTATION:
+	    vid_usefull=1;
+	    /* TODO we should really use st->st_seen_vendorid but no one else is */
+	    /* does the md bits survive packet processing? shouldn't this be on the state? */
+	    st->st_seen_fragvid = TRUE;
+	    break;
+		
+
 	default:
 	    break;
 	}

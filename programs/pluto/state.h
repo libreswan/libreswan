@@ -404,10 +404,11 @@ struct state
     u_int32_t           st_dpd_peerseqno;       /* global variables */
     struct event       *st_dpd_event;           /* backpointer for DPD events */
 
-    u_int32_t           st_seen_vendorid;       /* Bit field about
+    lset_t           st_seen_vendorid;       /* Bit field about
 						  recognized Vendor ID */
     struct isakmp_quirks quirks;                /* work arounds for faults in other products */
     bool                st_xauth_soft;          /* XAUTH failed but policy is to soft fail */
+    bool		st_seen_fragvid;	/* should really use st_seen_vendorid, but no one else is */
 };
 
 /* global variables */

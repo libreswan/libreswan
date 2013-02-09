@@ -1258,32 +1258,47 @@ send_packet(struct state *st, const char *where, bool verbose)
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
     libreswan_log("FRAG: Current state is %s", enum_show(&state_names, st->st_state));
-    if ((streq(where, "retransmit in response to duplicate") || streq(where, "EVENT_RETRANSMIT"))
-	&& ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
-	    || ((st->st_tpacket.len > ISAKMP_FRAG_MAXLEN)
-		&& (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW))))
+
+if((st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) && (st->st_tpacket.len > ISAKMP_FRAG_MAXLEN))
+ {
+   DBG(DBG_CONTROLMORE,DBG_log("IKE fragments allowed and packet size > ISAKMP_FRAG_MAXLEN"));
+ /* We are allowed to fragment, and might have a reason to fragment */
+ if( ((streq(where, "retransmit in response to duplicate") || streq(where, "EVENT_RETRANSMIT")) && st->st_seen_fragvid)
+    || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE))
+   {
+	DBG(DBG_CONTROLMORE,DBG_log(" using IKE fragments - retransmit or force policy "));
+	libreswan_log("FRAG: planning to send fragments\n");
+	if (send_frags(st, where, verbose) == -1)
 	{
-	  libreswan_log("FRAG: planning to send fragments\n");
-	  if (send_frags(st, where, verbose) == -1)
-	   {
-		libreswan_log("isakmp_sendfrags failed\n");
-		return FALSE;
+	   libreswan_log("isakmp_sendfrags failed\n");
+	   return FALSE;
+	} else {
+#ifdef DEBUG
+	   if(DBGP(IMPAIR_JACOB_TWO_TWO)) {
+		/* sleep for half a second, and second another packet */
+		usleep(500000);
+		DBG_log("JACOB 2-2: resending IKE fragment stream");
+		if (send_frags(st, where, verbose) == -1)
+		{
+	   	libreswan_log("isakmp_sendfrags JACOB 2-2: failed\n");
+		   return FALSE;
+		}
 	   }
-	  return TRUE;
-	} else
-	{
-	   DBG(DBG_CONTROLMORE,DBG_log("not using IKE fragments"));
-	   wlen = sendto(st->st_interface->fd
-		, ptr
-		, len, 0
-		, sockaddrof(&st->st_remoteaddr)
-		, sockaddrlenof(&st->st_remoteaddr));
+#endif
+	   return TRUE;
 	}
+   } 
+   DBG(DBG_CONTROLMORE,DBG_log(" no reason for using IKE fragments -"));
+ }
+
+   wlen = sendto(st->st_interface->fd
+	, ptr
+	, len, 0
+	, sockaddrof(&st->st_remoteaddr)
+	, sockaddrlenof(&st->st_remoteaddr));
 
 #ifdef DEBUG
-    /* XXX This is a flow change depending on debug. not good. I assume it is only useful
-     * for actual debugging something 
-     */
+    /* Send a duplicate packet when this impair is enabled - used for testing */
     if(DBGP(IMPAIR_JACOB_TWO_TWO)) {
 	/* sleep for half a second, and second another packet */
 	usleep(500000);

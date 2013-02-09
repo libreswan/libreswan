@@ -15,6 +15,11 @@
 #ifndef _QUIRKS_H_
 #define _QUIRKS_H_
 
+/*
+ * PAUL: Why are the quirks in the message digest and not in the state?
+ *       EECK: they are in both! Candidate to phase out completely
+ */
+
 /**
  * Where to store various quirks (ususally encountered during interop) 
  *
