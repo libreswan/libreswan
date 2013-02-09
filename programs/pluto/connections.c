@@ -1344,13 +1344,16 @@ add_connection(const struct whack_message *wm)
 	c->labeled_ipsec = wm->labeled_ipsec;
 	c->policy_label = NULL;
 	if(wm->policy_label) {
-	c->policy_label = clone_str(wm->policy_label, "security label");
+		c->policy_label = clone_str(wm->policy_label, "security label");
 	}
 	DBG(DBG_CONTROL, DBG_log("loopback=%d labeled_ipsec=%d, policy_label=%s", c->loopback, c->labeled_ipsec, c->policy_label));
 #endif
 
+#ifdef XAUTH
 	/* XAUTH pam or file */
-	c->xauthby=wm->xauthby;
+	c->xauthby = wm->xauthby;
+	c->xauthfail = wm->xauthfail;
+#endif
 
 	c->metric = wm->metric;
 	c->connmtu = wm->connmtu;
@@ -1377,6 +1380,7 @@ add_connection(const struct whack_message *wm)
 
 #ifdef MODECFG
 #ifdef MODECFG_DNSWINS
+	/* type is ip_address, not a string */ 
 	c->modecfg_dns1 = wm->modecfg_dns1;
 	c->modecfg_dns2 = wm->modecfg_dns2;
 #endif
@@ -3369,8 +3373,11 @@ show_one_sr(struct connection *c
 		addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
 	}
 
-	whack_log(RC_COMMENT, "\"%s\"%s:     xauth info: %s%s; dns1:%s, dns2:%s;"
+	whack_log(RC_COMMENT, "\"%s\"%s:   xauth info: %s %s%s; dns1:%s, dns2:%s;"
 		  , c->name, instance
+		  /* should really be an enum name */
+		  , (sr->this.xauth_server) ?  (c->xauthby == XAUTHBY_FILE) ? "method:file;" :
+		    ((c->xauthby == XAUTHBY_PAM) ? "method:pam;" : "method:alwaysok;" ) : ""
 		  , thisxauthsemi
 		  , thatxauthsemi
 		  , dns1
@@ -3378,6 +3385,18 @@ show_one_sr(struct connection *c
 		);
     }
 #endif
+#ifdef HAVE_LABELED_IPSEC
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s, loopback:%s; "
+		  , c->name, instance
+		  , c->labeled_ipsec ? "yes" : "no" 
+		  , c->loopback ? "yes" : "no" 
+		);
+       whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s; "
+		  , c->name, instance
+		  , (c->policy_label == NULL) ? "unset" : c->policy_label
+		);
+#endif
+
 }
 
 void 

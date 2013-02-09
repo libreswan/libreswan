@@ -112,6 +112,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 #ifdef XAUTH
 	cfg->conn_default.options[KBF_XAUTHBY] = XAUTHBY_FILE;
+	cfg->conn_default.options[KBF_XAUTHFAIL] = XAUTHFAIL_HARD;
 #endif
 
 	cfg->conn_default.policy = POLICY_RSASIG|POLICY_TUNNEL|POLICY_ENCRYPT|POLICY_PFS;

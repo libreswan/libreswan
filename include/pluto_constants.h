@@ -75,6 +75,11 @@ enum keyword_xauthby {
     XAUTHBY_ALWAYSOK = 2,
 };
 
+enum keyword_xauthfail {
+    XAUTHFAIL_HARD = 0,
+    XAUTHFAIL_SOFT = 1,
+};
+
 #ifdef NAT_TRAVERSAL
 /*
  *  * NAT-Traversal defines for nat_traveral type from nat_traversal.h

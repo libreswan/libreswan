@@ -369,6 +369,7 @@ static void set_whack_end(struct starter_config *cfg
 	w->virt = l->virt;
 	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;
 
+#ifdef XAUTH
 	if(l->options_set[KNCF_XAUTHSERVER]) {
 		w->xauth_server = l->options[KNCF_XAUTHSERVER];
 	}
@@ -378,12 +379,15 @@ static void set_whack_end(struct starter_config *cfg
 	if(l->strings_set[KSCF_XAUTHUSERNAME]) {
 		w->xauth_name = l->strings[KSCF_XAUTHUSERNAME];
 	}
+# ifdef MODECFG
 	if(l->options_set[KNCF_MODECONFIGSERVER]) {
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];
 	}
 	if(l->options_set[KNCF_MODECONFIGCLIENT]) {
 		w->modecfg_client = l->options[KNCF_MODECONFIGCLIENT];
 	}
+# endif
+#endif
 }
 
 static int starter_whack_add_pubkey (struct starter_config *cfg,
@@ -566,9 +570,14 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%d", conn->name, msg.policy_label);
 #endif
 
+#ifdef XAUTH
 	if(conn->options_set[KBF_XAUTHBY]) {
 		msg.xauthby=conn->options[KBF_XAUTHBY];
 	}
+	if(conn->options_set[KBF_XAUTHFAIL]) {
+		msg.xauthfail=conn->options[KBF_XAUTHFAIL];
+	}
+#endif
 
 	set_whack_end(cfg, "left",  &msg.left, &conn->left);
 	set_whack_end(cfg, "right", &msg.right, &conn->right);

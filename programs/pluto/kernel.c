@@ -440,6 +440,7 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
 		    "PLUTO_CONN_POLICY='%s' "
 		    "PLUTO_CONN_ADDRFAMILY='ipv%d' "
 #ifdef XAUTH
+		    "XAUTH_FAILED=%d "
 		    "%s "           /* XAUTH username - if any */
 #endif
 		    "%s "           /* PLUTO_MY_SRCIP - if any */
@@ -477,6 +478,7 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
 		    , prettypolicy(c->policy)
 		    , (c->addr_family == AF_INET) ? 4 : 6
 #ifdef XAUTH
+		    , (st && st->st_xauth_soft) ? 1 : 0
 		    , secure_xauth_username_str
 #endif
 		    , srcip_str
