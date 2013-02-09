@@ -1105,135 +1105,109 @@ check_msg_errqueue(const struct iface_port *ifp, short interest)
 static bool
 send_frags(struct state *st, const char *where, bool verbose)
 {
-    u_int8_t *packet_cursor;
-    size_t packet_remainder_len;
-    size_t max_datalen;
     unsigned int fragnum = 0;
 
-    /* each fragment, if we are doing NATT, needs a non-ESP_Marker prefix */
-    size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
-
-    /*
-     * We want to send a a packet smaller than ISAKMP_FRAG_MAXLEN
-     * First compute the maximum data length that will fit in it
+    /* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
+     * natt_bonus is the size of the addition (0 if not needed).
      */
-    /* BUG: sizeof(struct whatever) is usually right
-     * but not correctly constituted as wire-format
+    const size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
+
+    /* We limit fragment packets to ISAKMP_FRAG_MAXLEN octets.
+     * max_data_len is the maximum data length that will fit within it.
      */
-    max_datalen = ISAKMP_FRAG_MAXLEN -
-        (sizeof(struct isakmp_hdr) + sizeof(struct isakmp_ikefrag));
+    const size_t max_data_len = ISAKMP_FRAG_MAXLEN
+        - (natt_bonus + NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag);
 
-    if (st->st_interface->ike_float == TRUE) {
-	max_datalen -= NON_ESP_MARKER_SIZE;
-    }
+    u_int8_t *packet_cursor = st->st_tpacket.ptr;
+    size_t packet_remainder_len = st->st_tpacket.len;
 
-    packet_cursor = st->st_tpacket.ptr;
-    packet_remainder_len = (unsigned long) st->st_tpacket.len;
+    /* BUG: this code does not use the marshalling code
+     * in packet.h to translate between wire and host format.
+     * This is dangerous.  The following assertion should
+     * fail in most cases where this cheat won't work.
+     */
+    passert(sizeof(struct isakmp_hdr) == NSIZEOF_isakmp_hdr
+	&& sizeof(struct isakmp_ikefrag) == NSIZEOF_isakmp_ikefrag);
 
     while (packet_remainder_len > 0) {
-	struct isakmp_hdr *isakmphdr;
-	struct isakmp_ikefrag *fraghdr;
-	u_int8_t *frag,
-	    *fragcursor;
-	size_t fraglen;
-	size_t datalen;
+	u_int8_t frag[ISAKMP_FRAG_MAXLEN];
+	u_int8_t *frag_cursor = frag;
+	const size_t data_len = packet_remainder_len > max_data_len
+	    ? max_data_len : packet_remainder_len;
+	const size_t fragpl_len = NSIZEOF_isakmp_ikefrag + data_len;
+	const size_t isakmppl_len = NSIZEOF_isakmp_hdr + fragpl_len;
+	const size_t fpacket_len = natt_bonus + isakmppl_len;
 
+	passert(sizeof(frag) >= fpacket_len);
 	DBG(DBG_CONTROL, DBG_log("sending IKE fragment\n"));
 	fragnum++;
 
-	if (packet_remainder_len > max_datalen)
-	    datalen = max_datalen;
-	else
-	    datalen = packet_remainder_len;
+	/* emit non-ESP marker if required */
+	memset(frag_cursor, 0, natt_bonus);
+	frag_cursor += natt_bonus;
 
-	fraglen = sizeof(*isakmphdr)
-	          + sizeof(*fraghdr)
-	          + datalen;
-
-	if ((frag = alloc_bytes(natt_bonus + fraglen, "ike fragment")) == NULL) {
-	    DBG_log("send_frags: error allocating memory");
-	    return FALSE;
-	}
-
-	fragcursor = frag;
-
-	/* Set non-ESP marker */
-	if (st->st_interface->ike_float == TRUE)
+	/* emit isakmp header derived from original */
 	{
-	    memset(fragcursor, 0, NON_ESP_MARKER_SIZE);
-	    fragcursor += NON_ESP_MARKER_SIZE;
-	}
+	    struct isakmp_hdr *ih = (struct isakmp_hdr*) frag_cursor;
 
-	// First set the isakmp header
-	/* BUG: sizeof(struct isakmp_hdr) is host format */
-	memcpy(fragcursor, st->st_tpacket.ptr, sizeof(struct isakmp_hdr));
-	isakmphdr = (struct isakmp_hdr*) fragcursor;
-	isakmphdr->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION;	/* one octet */
-	/* Do we need to set any of ISAKMP_FLAG_ENCRYPTION, ISAKMP_FLAGS_R or ISAKMP_FLAGS_I ? */
-	/* seems there might be disagreement between Cisco and Microsoft */
-	/* st->st_suspended_md->hdr.isa_flags; TODO must this be set? */
-	isakmphdr->isa_flags &= ~ISAKMP_FLAG_ENCRYPTION;
-	isakmphdr->isa_length = htonl(fraglen);
+	    memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
+	    ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION;	/* one octet */
+	    /* Do we need to set any of ISAKMP_FLAG_ENCRYPTION, ISAKMP_FLAGS_R or ISAKMP_FLAGS_I ?
+	     * seems there might be disagreement between Cisco and Microsoft.
+	     * st->st_suspended_md->hdr.isa_flags; TODO must this be set?
+	     */
+	    ih->isa_flags &= ~ISAKMP_FLAG_ENCRYPTION;
+	    ih->isa_length = htonl(isakmppl_len);
+	    frag_cursor += NSIZEOF_isakmp_hdr;
+	}
 
 	/* Append the ike frag header */
-	/* BUG: sizeof(struct isakmp_hdr) is usually right
-	 * but not correctly constituted as wire-format
-	 * Same is true of all sizeofs here!
-	 */
-	fragcursor += sizeof(struct isakmp_hdr);
-	fraghdr = (struct isakmp_ikefrag*) fragcursor;
-	fraghdr->isafrag_np = 0; /* must be zero */
-	fraghdr->isafrag_reserved = 0; /* reserved at this time, must be zero */
-	fraghdr->isafrag_length = htons(fraglen - sizeof(*isakmphdr));
-	fraghdr->isafrag_id = htons(1); /* In theory required to be unique, in practise not needed? */
-	fraghdr->isafrag_number = fragnum;
-	if (packet_remainder_len == datalen)
-	    fraghdr->isafrag_flags = ISAKMP_FRAG_LAST;
-	else
-	    fraghdr->isafrag_flags = 0;
+	{
+	    struct isakmp_ikefrag *fh = (struct isakmp_ikefrag*) frag_cursor;
+
+	    fh->isafrag_np = 0; /* must be zero */
+	    fh->isafrag_reserved = 0; /* reserved at this time, must be zero */
+	    fh->isafrag_length = htons(fragpl_len);
+	    fh->isafrag_id = htons(1); /* In theory required to be unique, in practise not needed? */
+	    fh->isafrag_number = fragnum;
+	    fh->isafrag_flags = packet_remainder_len == data_len
+		? ISAKMP_FRAG_LAST : 0;
+	    frag_cursor += NSIZEOF_isakmp_ikefrag;
+	}
 
 	/* Append the data block */
-	/* BUG: sizeof(struct isakmp_ikefrag) is usually right
-	 * but not correctly constituted as wire-format
-	 */
-	fragcursor += sizeof(struct isakmp_ikefrag);
-	memcpy((void *)fragcursor, packet_cursor, datalen);
+	memcpy(frag_cursor, packet_cursor, data_len);
 
 	DBG(DBG_CONTROL|DBG_RAW
 	    , DBG_log("sending IKE fragment with %lu bytes for %s through %s:%d to %s:%u (using #%lu)"
-		      , (unsigned long) (natt_bonus + fraglen)
+		      , (unsigned long) (fpacket_len)
 		      , where
 		      , st->st_interface->ip_dev->id_rname
 		      , st->st_interface->port
 		      , ip_str(&st->st_remoteaddr)
 		      , st->st_remoteport
 		      , st->st_serialno));
-	DBG(DBG_RAW
-	    , DBG_dump(NULL, frag, natt_bonus + fraglen));
+	DBG(DBG_RAW, DBG_dump(NULL, frag, fpacket_len));
 
 	if (sendto(st->st_interface->fd
 		   , frag
-		   , natt_bonus + fraglen, 0
+		   , fpacket_len, 0
 		   , sockaddrof(&st->st_remoteaddr)
 		   , sockaddrlenof(&st->st_remoteaddr))
-	     != (ssize_t)(natt_bonus + fraglen)){
-
-	    free(frag);
-
-	    if (!verbose)
-		return FALSE;
-	    log_errno((e, "sendto on %s to %s:%u failed in %s"
-			   , st->st_interface->ip_dev->id_rname
-			   , ip_str(&st->st_remoteaddr)
-			   , st->st_remoteport
-			   , where));
+	     != (ssize_t)fpacket_len)
+	{
+	    if (verbose) {
+		log_errno((e, "sendto on %s to %s:%u failed in %s"
+			       , st->st_interface->ip_dev->id_rname
+			       , ip_str(&st->st_remoteaddr)
+			       , st->st_remoteport
+			       , where));
+	    }
 	    return FALSE;
 	}
 
-	free(frag);
-
-	packet_remainder_len -= datalen;
-	packet_cursor += datalen;
+	packet_remainder_len -= data_len;
+	packet_cursor += data_len;
     }
     return TRUE;
 }
@@ -1275,8 +1249,7 @@ send_packet(struct state *st, const char *where, bool verbose)
 		  , ip_str(&st->st_remoteaddr)
 		  , st->st_remoteport
 		  , st->st_serialno));
-    DBG(DBG_RAW
-	, DBG_dump(NULL, ptr, len));
+    DBG(DBG_RAW, DBG_dump(NULL, ptr, len));
 
     setportof(htons(st->st_remoteport), &st->st_remoteaddr);
 
@@ -1285,11 +1258,10 @@ send_packet(struct state *st, const char *where, bool verbose)
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
     libreswan_log("FRAG: Current state is %s", enum_show(&state_names, st->st_state));
-    if ((strcmp(where, "retransmit in response to duplicate") == 0 || strcmp(where, "EVENT_RETRANSMIT") == 0)
+    if ((streq(where, "retransmit in response to duplicate") || streq(where, "EVENT_RETRANSMIT"))
 	&& ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
-	||
-	((st->st_tpacket.len > ISAKMP_FRAG_MAXLEN)
-	&& (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW))))
+	    || ((st->st_tpacket.len > ISAKMP_FRAG_MAXLEN)
+		&& (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW))))
 	{
 	  libreswan_log("FRAG: planning to send fragments\n");
 	  if (send_frags(st, where, verbose) == -1)
@@ -1335,13 +1307,13 @@ send_packet(struct state *st, const char *where, bool verbose)
     if (wlen != (ssize_t)len)
     {
         /* do not log NAT-T Keep Alive packets */
-        if (!verbose)
-	    return FALSE; 
-	log_errno((e, "sendto on %s to %s:%u failed in %s"
-		   , st->st_interface->ip_dev->id_rname
-		   , ip_str(&st->st_remoteaddr)
-		   , st->st_remoteport
-		   , where));
+        if (verbose) {
+	    log_errno((e, "sendto on %s to %s:%u failed in %s"
+		       , st->st_interface->ip_dev->id_rname
+		       , ip_str(&st->st_remoteaddr)
+		       , st->st_remoteport
+		       , where));
+	}
 	return FALSE;
     }
     else
