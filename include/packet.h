@@ -682,6 +682,7 @@ extern struct_desc isakmp_nat_oa;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
+#define NSIZEOF_isakmp_ikefrag	8	/* on-the-wire sizeof struct isakmpg_ikefrag */
 struct isakmp_ikefrag
 {
 	u_int8_t    isafrag_np; /* always zero, this must be the only payload */
