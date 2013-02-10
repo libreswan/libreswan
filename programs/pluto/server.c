@@ -1,8 +1,8 @@
 /* get-next-event loop
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
- * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com> 
- * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com> 
+ * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
+ * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
@@ -111,7 +111,7 @@ int ctl_fd = NULL_FD;	/* file descriptor of control (whack) socket */
 struct sockaddr_un ctl_addr = { .sun_family=AF_UNIX,
 #if defined(HAS_SUN_LEN)
 				.sun_len=sizeof(struct sockaddr_un),
-#endif				
+#endif
 				.sun_path  =DEFAULT_CTLBASE CTL_SUFFIX };
 
 /* info (showpolicy) socket */
@@ -119,7 +119,7 @@ int policy_fd = NULL_FD;
 struct sockaddr_un info_addr= { .sun_family=AF_UNIX,
 #if defined(HAS_SUN_LEN)
 				.sun_len=sizeof(struct sockaddr_un),
-#endif				
+#endif
 				.sun_path  =DEFAULT_CTLBASE INFO_SUFFIX };
 
 /* Initialize the control socket.
@@ -493,18 +493,18 @@ reapchildren(void)
     while((child = wait3(&status, WNOHANG, &r)) > 0) {
 	/* got a child to reap */
 	if(adns_reapchild(child, status)) continue;
-	if(child == addconn_child_pid){
+	if(child == addconn_child_pid) {
 		DBG(DBG_CONTROLMORE,DBG_log("reaped addconn helper child"));
 		addconn_child_pid = 0;
 		continue;
 	}
-       /*Threads are created instead of child processes when using LIBNSS*/
+	/*Threads are created instead of child processes when using LIBNSS*/
 	libreswan_log("child pid=%d (status=%d) is not my child!", child, status);
     }
-    
+
     if(child == -1) {
-	libreswan_log("reapchild failed with errno=%d %s",
-		     errno, strerror(errno));
+	libreswan_log("reapchild failed with errno=%d %s"
+	    , errno, strerror(errno));
     }
 }
 
@@ -539,7 +539,7 @@ call_server(void)
 
 
     /* do equivalent of ipsec whack --listen */
-        do_whacklisten();
+    do_whacklisten();
 
     /*
      * fork to issue the command "ipsec addconn --autoall"
@@ -553,18 +553,18 @@ call_server(void)
 	char addconn_path_space[4096]; /* plenty long? */
 	ssize_t n=0;
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
-        {
-	  /* The program will be in the same directory as Pluto,
-	   * so we use the sympolic link /proc/self/exe to
-	   * tell us of the path prefix.
-	   */
-	   n = readlink("/proc/self/exe", addconn_path_space, sizeof(addconn_path_space));
-	   if (n < 0)
+	{
+	    /* The program will be in the same directory as Pluto,
+	     * so we use the sympolic link /proc/self/exe to
+	     * tell us of the path prefix.
+	     */
+	    n = readlink("/proc/self/exe", addconn_path_space, sizeof(addconn_path_space));
+	    if (n < 0)
 # ifdef __uClibc__
-	   /* on some nommu we have no proc/self/exe, try without path */
-	   *addconn_path_space = '\0', n = 0;
+	    /* on some nommu we have no proc/self/exe, try without path */
+	    *addconn_path_space = '\0', n = 0;
 # else
-	   exit_log_errno((e
+	    exit_log_errno((e
 		, "readlink(\"/proc/self/exe\") failed in call_server()"));
 # endif
 	}
@@ -722,12 +722,12 @@ call_server(void)
 	 */
 	if(log_to_stderr || log_to_file) {
 	    time_t n;
-	    
+
 	    static time_t lastn = 0;
 
 	    time(&n);
 
-	    if(log_did_something) { 
+	    if(log_did_something) {
 		lastn=n;
 		log_did_something=FALSE;
 		if((n-lastn) > 60) {
@@ -735,7 +735,7 @@ call_server(void)
 		}
 	    }
 	}
-		    
+
 	/* figure out what is interesting */
 	/* do FD's before events are processed */
 
@@ -803,7 +803,7 @@ call_server(void)
 	    {
 		int helpers = pluto_crypto_helper_ready(&readfds);
 		DBG(DBG_CONTROL, DBG_log("* processed %d messages from cryptographic helpers\n", helpers));
-		
+
 		ndes -= helpers;
 	    }
 
@@ -1102,8 +1102,137 @@ check_msg_errqueue(const struct iface_port *ifp, short interest)
 }
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
+/* send_ike_msg logic is broken into layers.
+ * The rest of the system thinks it is simple.
+ * We have three entrypoints that control options
+ * for reporting write failure and actions on resending (fragment?):
+ * send_ike_msg(), resend_ike_msg(), and send_keepalive().
+ *
+ * They all call send_ike_msg_with_options().
+ * That handles an IKE message.
+ * It calls send_frags() if the message needs to be fragmented.
+ * Otherwise it calls send_packet() to send it in one gulp.
+ *
+ * send_frags() breaks an IKE message into fragments and sends
+ * them by send_packet().
+ *
+ * send_packet() sends a UDP packet, possibly prefixed by a non-ESP Marker
+ * for NATT.  It accepts two chunks because this avoids double-copying.
+ */
+
 static bool
-send_frags(struct state *st, const char *where, bool verbose)
+send_packet(struct state *st, const char *where, bool just_a_keepalive
+, const u_int8_t *aptr, size_t alen
+, const u_int8_t *bptr, size_t blen)
+{
+    /* NOTE: on system with limited stack, buf could be made static */
+    u_int8_t buf[MAX_OUTPUT_UDP_SIZE];
+
+    /* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
+     * natt_bonus is the size of the addition (0 if not needed).
+     */
+    const size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
+
+    const u_int8_t *ptr;
+    unsigned long len = natt_bonus + alen + blen;
+    ssize_t wlen;
+
+    if (len > MAX_OUTPUT_UDP_SIZE) {
+	DBG_log("send_ike_msg(): really too big %lu bytes", (unsigned long) len);
+	return FALSE;
+    }
+
+    if (len != alen) {
+	/* copying required */
+
+	/* 1. non-ESP Marker (0x00 octets) */
+	memset(buf, 0xFF, natt_bonus);
+
+	/* 2. chunk a */
+	memcpy(buf + natt_bonus, aptr, alen);
+
+	/* 3. chunk b */
+	memcpy(buf + natt_bonus + alen, bptr, blen);
+
+	ptr = buf;
+    } else {
+	ptr = aptr;
+    }
+
+    DBG(DBG_CONTROL|DBG_RAW
+	, DBG_log("sending %lu bytes for %s through %s:%d to %s:%u (using #%lu)"
+		  , (unsigned long) st->st_tpacket.len
+		  , where
+		  , st->st_interface->ip_dev->id_rname
+		  , st->st_interface->port
+		  , ip_str(&st->st_remoteaddr)
+		  , st->st_remoteport
+		  , st->st_serialno));
+    DBG(DBG_RAW, DBG_dump(NULL, ptr, len));
+
+    setportof(htons(st->st_remoteport), &st->st_remoteaddr);
+
+#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
+    (void) check_msg_errqueue(st->st_interface, POLLOUT);
+#endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
+
+    libreswan_log("FRAG: Current state is %s", enum_show(&state_names, st->st_state));
+
+    wlen = sendto(st->st_interface->fd
+	, ptr
+	, len, 0
+	, sockaddrof(&st->st_remoteaddr)
+	, sockaddrlenof(&st->st_remoteaddr));
+
+    if (wlen != (ssize_t)len)
+    {
+	if (just_a_keepalive) {
+	    log_errno((e, "sendto on %s to %s:%u failed in %s"
+		       , st->st_interface->ip_dev->id_rname
+		       , ip_str(&st->st_remoteaddr)
+		       , st->st_remoteport
+		       , where));
+	}
+	return FALSE;
+    }
+
+#ifdef DEBUG
+    /* Send a duplicate packet when this impair is enabled - used for testing */
+    if (DBGP(IMPAIR_JACOB_TWO_TWO)) {
+	/* sleep for half a second, and second another packet */
+	usleep(500000);
+
+	DBG_log("JACOB 2-2: resending %lu bytes for %s through %s:%d to %s:%u:"
+		, (unsigned long) st->st_tpacket.len
+		, where
+		, st->st_interface->ip_dev->id_rname
+		, st->st_interface->port
+		, ip_str(&st->st_remoteaddr)
+		, st->st_remoteport);
+
+	wlen = sendto(st->st_interface->fd
+		      , ptr
+		      , len, 0
+		      , sockaddrof(&st->st_remoteaddr)
+		      , sockaddrlenof(&st->st_remoteaddr));
+	if (wlen != (ssize_t)len)
+	{
+	    if (just_a_keepalive) {
+		log_errno((e, "sendto on %s to %s:%u failed in %s"
+			   , st->st_interface->ip_dev->id_rname
+			   , ip_str(&st->st_remoteaddr)
+			   , st->st_remoteport
+			   , where));
+	    }
+	    return FALSE;
+	}
+    }
+#endif
+    return TRUE;
+}
+
+static bool
+send_frags(struct state *st, const char *where, bool just_a_keepalive)
 {
     unsigned int fragnum = 0;
 
@@ -1130,25 +1259,18 @@ send_frags(struct state *st, const char *where, bool verbose)
 	&& sizeof(struct isakmp_ikefrag) == NSIZEOF_isakmp_ikefrag);
 
     while (packet_remainder_len > 0) {
-	u_int8_t frag[ISAKMP_FRAG_MAXLEN];
-	u_int8_t *frag_cursor = frag;
+	u_int8_t frag_prefix[NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag];
 	const size_t data_len = packet_remainder_len > max_data_len
 	    ? max_data_len : packet_remainder_len;
 	const size_t fragpl_len = NSIZEOF_isakmp_ikefrag + data_len;
 	const size_t isakmppl_len = NSIZEOF_isakmp_hdr + fragpl_len;
-	const size_t fpacket_len = natt_bonus + isakmppl_len;
 
-	passert(sizeof(frag) >= fpacket_len);
 	DBG(DBG_CONTROL, DBG_log("sending IKE fragment\n"));
 	fragnum++;
 
-	/* emit non-ESP marker if required */
-	memset(frag_cursor, 0, natt_bonus);
-	frag_cursor += natt_bonus;
-
 	/* emit isakmp header derived from original */
 	{
-	    struct isakmp_hdr *ih = (struct isakmp_hdr*) frag_cursor;
+	    struct isakmp_hdr *ih = (struct isakmp_hdr*) frag_prefix;
 
 	    memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
 	    ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION;	/* one octet */
@@ -1158,12 +1280,11 @@ send_frags(struct state *st, const char *where, bool verbose)
 	     */
 	    ih->isa_flags &= ~ISAKMP_FLAG_ENCRYPTION;
 	    ih->isa_length = htonl(isakmppl_len);
-	    frag_cursor += NSIZEOF_isakmp_hdr;
 	}
 
 	/* Append the ike frag header */
 	{
-	    struct isakmp_ikefrag *fh = (struct isakmp_ikefrag*) frag_cursor;
+	    struct isakmp_ikefrag *fh = (struct isakmp_ikefrag*) (frag_prefix + NSIZEOF_isakmp_hdr);
 
 	    fh->isafrag_np = 0; /* must be zero */
 	    fh->isafrag_reserved = 0; /* reserved at this time, must be zero */
@@ -1172,38 +1293,13 @@ send_frags(struct state *st, const char *where, bool verbose)
 	    fh->isafrag_number = fragnum;
 	    fh->isafrag_flags = packet_remainder_len == data_len
 		? ISAKMP_FRAG_LAST : 0;
-	    frag_cursor += NSIZEOF_isakmp_ikefrag;
 	}
 
-	/* Append the data block */
-	memcpy(frag_cursor, packet_cursor, data_len);
-
-	DBG(DBG_CONTROL|DBG_RAW
-	    , DBG_log("sending IKE fragment with %lu bytes for %s through %s:%d to %s:%u (using #%lu)"
-		      , (unsigned long) (fpacket_len)
-		      , where
-		      , st->st_interface->ip_dev->id_rname
-		      , st->st_interface->port
-		      , ip_str(&st->st_remoteaddr)
-		      , st->st_remoteport
-		      , st->st_serialno));
-	DBG(DBG_RAW, DBG_dump(NULL, frag, fpacket_len));
-
-	if (sendto(st->st_interface->fd
-		   , frag
-		   , fpacket_len, 0
-		   , sockaddrof(&st->st_remoteaddr)
-		   , sockaddrlenof(&st->st_remoteaddr))
-	     != (ssize_t)fpacket_len)
+	if (!send_packet(st, where, just_a_keepalive
+	    , frag_prefix, NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag
+	    , packet_cursor, data_len))
 	{
-	    if (verbose) {
-		log_errno((e, "sendto on %s to %s:%u failed in %s"
-			       , st->st_interface->ip_dev->id_rname
-			       , ip_str(&st->st_remoteaddr)
-			       , st->st_remoteport
-			       , where));
-	    }
-	    return FALSE;
+		return FALSE;
 	}
 
 	packet_remainder_len -= data_len;
@@ -1213,131 +1309,47 @@ send_frags(struct state *st, const char *where, bool verbose)
 }
 
 
-bool
-send_packet(struct state *st, const char *where, bool verbose)
+static bool
+send_ike_msg_with_options(struct state *st, const char *where, bool resending, bool just_a_keepalive)
 {
-    u_int8_t ike_pkt[MAX_OUTPUT_UDP_SIZE];
-    u_int8_t *ptr;
-    unsigned long len;
-    ssize_t wlen;
+    size_t len = st->st_tpacket.len;
+    /* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
+     * natt_bonus is the size of the addition (0 if not needed).
+     */
+    const size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
 
-    if ((st->st_interface->ike_float == TRUE) && (st->st_tpacket.len != 1)) {
-	if ((unsigned long) st->st_tpacket.len >
-	    (MAX_OUTPUT_UDP_SIZE - NON_ESP_MARKER_SIZE)) {
-	    DBG_log("send_packet(): really too big");
-	    return FALSE;
-	}
-	len = (unsigned long) st->st_tpacket.len + NON_ESP_MARKER_SIZE;
-	passert(len <= MAX_OUTPUT_UDP_SIZE);
-	ptr = ike_pkt;
-	/** Add Non-ESP marker **/
-	memset(ike_pkt, 0, NON_ESP_MARKER_SIZE);
-	memcpy(ike_pkt + NON_ESP_MARKER_SIZE, st->st_tpacket.ptr,
-	       (unsigned long)st->st_tpacket.len);
-    }
-    else {
-	ptr = st->st_tpacket.ptr;
-	len = (unsigned long) st->st_tpacket.len;
-    }
-
-    DBG(DBG_CONTROL|DBG_RAW
-	, DBG_log("sending %lu bytes for %s through %s:%d to %s:%u (using #%lu)"
-		  , (unsigned long) st->st_tpacket.len
-		  , where
-		  , st->st_interface->ip_dev->id_rname
-		  , st->st_interface->port
-		  , ip_str(&st->st_remoteaddr)
-		  , st->st_remoteport
-		  , st->st_serialno));
-    DBG(DBG_RAW, DBG_dump(NULL, ptr, len));
-
-    setportof(htons(st->st_remoteport), &st->st_remoteaddr);
-
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-    (void) check_msg_errqueue(st->st_interface, POLLOUT);
-#endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
-
-    libreswan_log("FRAG: Current state is %s", enum_show(&state_names, st->st_state));
-
-if((st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) && (st->st_tpacket.len > ISAKMP_FRAG_MAXLEN))
- {
-   DBG(DBG_CONTROLMORE,DBG_log("IKE fragments allowed and packet size > ISAKMP_FRAG_MAXLEN"));
- /* We are allowed to fragment, and might have a reason to fragment */
- if( ((streq(where, "retransmit in response to duplicate") || streq(where, "EVENT_RETRANSMIT")) && st->st_seen_fragvid)
-    || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE))
-   {
-	DBG(DBG_CONTROLMORE,DBG_log(" using IKE fragments - retransmit or force policy "));
-	libreswan_log("FRAG: planning to send fragments\n");
-	if (send_frags(st, where, verbose) == -1)
-	{
-	   libreswan_log("isakmp_sendfrags failed\n");
-	   return FALSE;
-	} else {
-#ifdef DEBUG
-	   if(DBGP(IMPAIR_JACOB_TWO_TWO)) {
-		/* sleep for half a second, and second another packet */
-		usleep(500000);
-		DBG_log("JACOB 2-2: resending IKE fragment stream");
-		if (send_frags(st, where, verbose) == -1)
-		{
-	   	libreswan_log("isakmp_sendfrags JACOB 2-2: failed\n");
-		   return FALSE;
-		}
-	   }
-#endif
-	   return TRUE;
-	}
-   } 
-   DBG(DBG_CONTROLMORE,DBG_log(" no reason for using IKE fragments -"));
- }
-
-   wlen = sendto(st->st_interface->fd
-	, ptr
-	, len, 0
-	, sockaddrof(&st->st_remoteaddr)
-	, sockaddrlenof(&st->st_remoteaddr));
-
-#ifdef DEBUG
-    /* Send a duplicate packet when this impair is enabled - used for testing */
-    if(DBGP(IMPAIR_JACOB_TWO_TWO)) {
-	/* sleep for half a second, and second another packet */
-	usleep(500000);
-
-	DBG_log("JACOB 2-2: resending %lu bytes for %s through %s:%d to %s:%u:"
-		, (unsigned long) st->st_tpacket.len
-		, where
-		, st->st_interface->ip_dev->id_rname
-		, st->st_interface->port
-		, ip_str(&st->st_remoteaddr)
-		, st->st_remoteport);
-
-	wlen = sendto(st->st_interface->fd
-		      , ptr
-		      , len, 0
-		      , sockaddrof(&st->st_remoteaddr)
-		      , sockaddrlenof(&st->st_remoteaddr));
-    }
-#endif
-
-    if (wlen != (ssize_t)len)
+    /* decide of whether we're to fragment */
+    if (len+natt_bonus >= ISAKMP_FRAG_MAXLEN
+    && ((resending && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW))
+       || (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)))
     {
-        /* do not log NAT-T Keep Alive packets */
-        if (verbose) {
-	    log_errno((e, "sendto on %s to %s:%u failed in %s"
-		       , st->st_interface->ip_dev->id_rname
-		       , ip_str(&st->st_remoteaddr)
-		       , st->st_remoteport
-		       , where));
-	}
-	return FALSE;
-    }
-    else
-    {
-	return TRUE;
+	return send_frags(st, where, just_a_keepalive);
+    } else {
+	return send_packet(st, where, just_a_keepalive, st->st_tpacket.ptr, st->st_tpacket.len, NULL, (size_t) 0);
     }
 }
 
+bool
+send_ike_msg(struct state *st, const char *where)
+{
+    return send_ike_msg_with_options(st, where, FALSE, FALSE);
+}
 
+bool
+resend_ike_msg(struct state *st, const char *where)
+{
+    return send_ike_msg_with_options(st, where, TRUE, FALSE);
+}
+
+/* send keepalive is special in two ways:
+ * We don't want send errors logged (too noisy).
+ * We don't want the packet prefixed with a non-ESP Marker.
+ */
+bool
+send_keepalive(struct state *st, const char *where)
+{
+    return send_ike_msg_with_options(st, where, FALSE, TRUE);
+}
 
 /*
  * Local Variables:

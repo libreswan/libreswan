@@ -1547,7 +1547,7 @@ process_v1_packet(struct msg_digest **mdp)
 		loglog(RC_RETRANSMISSION
 		    , "retransmitting in response to duplicate packet; already %s"
 		    , enum_name(&state_names, st->st_state));
-		send_packet(st, "retransmit in response to duplicate", TRUE);
+		resend_ike_msg(st, "retransmit in response to duplicate");
 	    }
 	    else
 	    {
@@ -2228,11 +2228,11 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* actually send the packet
 		 * Note: this is a great place to implement "impairments"
 		 * for testing purposes.  Suppress or duplicate the
-		 * send_packet call depending on st->st_state.
+		 * send_ike_msg call depending on st->st_state.
 		 */
 
 		TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
-		send_packet(st, enum_name(&state_names, from_state), TRUE);
+		send_ike_msg(st, enum_name(&state_names, from_state));
 	    }
 
 	    TCLCALLOUT("adjustTimers", st, st->st_connection, md);
