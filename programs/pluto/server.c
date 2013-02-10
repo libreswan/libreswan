@@ -1280,7 +1280,6 @@ send_frags(struct state *st, const char *where)
 	const size_t fragpl_len = NSIZEOF_isakmp_ikefrag + data_len;
 	const size_t isakmppl_len = NSIZEOF_isakmp_hdr + fragpl_len;
 
-	DBG(DBG_CONTROL, DBG_log("sending IKE fragment\n"));
 	fragnum++;
 
 	/* emit isakmp header derived from original */
@@ -1305,10 +1304,15 @@ send_frags(struct state *st, const char *where)
 	    fh->isafrag_reserved = 0; /* reserved at this time, must be zero */
 	    fh->isafrag_length = htons(fragpl_len);
 	    fh->isafrag_id = htons(1); /* In theory required to be unique, in practise not needed? */
-	    fh->isafrag_number = fragnum;
+	    fh->isafrag_number = fragnum; /* one byte, no htons() call needed */
 	    fh->isafrag_flags = packet_remainder_len == data_len
 		? ISAKMP_FRAG_LAST : 0;
 	}
+	DBG(DBG_CONTROL, DBG_log("sending IKE fragment id '%d', number '%u'%s"
+		, 1 /* hard coded for now, seems to be what all the cool implementations do */
+		, fragnum
+		, (packet_remainder_len == data_len) ? " (last)" : ""
+		));
 
 	if (!send_packet(st, where, FALSE
 	    , frag_prefix, NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag
@@ -1336,8 +1340,8 @@ send_or_resend_ike_msg(struct state *st, const char *where, bool resending)
     /* decide of whether we're to fragment */
     if (!st->st_ikev2
     && len+natt_bonus >= ISAKMP_FRAG_MAXLEN
-    && ((resending && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW))
-       || (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)))
+    && ((resending && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) && st->st_seen_fragvid)
+       || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)))
     {
 	return send_frags(st, where);
     } else {

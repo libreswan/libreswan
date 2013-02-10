@@ -76,6 +76,7 @@ struct msg_digest {
     notification_t note;	/* reason for failure */
     bool dpd;           /* Peer supports RFC 3706 DPD */
     bool ikev2;         /* Peer supports IKEv2 */
+    bool fragvid;	/* Peer supports FRAGMENTATION */
     bool event_already_set;
     stf_status result;  /* temporary stored here for access by Tcl */
 

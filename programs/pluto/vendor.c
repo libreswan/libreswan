@@ -628,7 +628,7 @@ static void handle_known_vendorid (struct msg_digest *md
 	case VID_IKE_FRAGMENTATION:
 	    /* TODO we should really use st->st_seen_vendorid but no one else is */
 	    /* does the md bits survive packet processing? shouldn't this be on the state? */
-	    st->st_seen_fragvid = TRUE;
+	    md->fragvid = TRUE;
 	    break;
 
 	default:

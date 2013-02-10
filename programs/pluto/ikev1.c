@@ -2102,6 +2102,11 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
     TCLCALLOUT("adjustFailure", st, (st ? st->st_connection : NULL), md);
     result = md->result;
 
+    /* If state has FRAGMENTATION support, import it */
+    if( st && md->fragvid) {
+	DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
+	st->st_seen_fragvid = TRUE;
+    }
     /* If state has DPD support, import it */
     if( st && md->dpd && st->hidden_variables.st_dpd != md->dpd) {
 	DBG(DBG_DPD, DBG_log("peer supports dpd"));
