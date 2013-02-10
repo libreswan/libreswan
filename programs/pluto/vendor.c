@@ -29,7 +29,7 @@
 #include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
+#  include <security/pam_appl.h>
 #endif
 #include "connections.h"
 #include "packet.h"
@@ -42,7 +42,7 @@
 #include "state.h"
 
 #ifdef NAT_TRAVERSAL
-#include "nat_traversal.h"
+#  include "nat_traversal.h"
 #endif
 
 /**
@@ -103,17 +103,17 @@
  * (yes, the 'XXXX' are _really_ four times the letter X)
  */
 
-#define MAX_LOG_VID_LEN            32
+#define MAX_LOG_VID_LEN		32
 
-#define VID_KEEP                   0x0000  
-#define VID_MD5HASH                0x0001
-#define VID_STRING                 0x0002
-#define VID_FSWAN_HASH             0x0004
-#define VID_SELF                   0x0008
+#define VID_KEEP		0x0000  
+#define VID_MD5HASH		0x0001
+#define VID_STRING		0x0002
+#define VID_FSWAN_HASH		0x0004
+#define VID_SELF		0x0008
 
-#define VID_SUBSTRING_DUMPHEXA     0x0100
-#define VID_SUBSTRING_DUMPASCII    0x0200
-#define VID_SUBSTRING_MATCH        0x0400
+#define VID_SUBSTRING_DUMPHEXA	0x0100
+#define VID_SUBSTRING_DUMPASCII	0x0200
+#define VID_SUBSTRING_MATCH	0x0400
 #define VID_SUBSTRING  (VID_SUBSTRING_DUMPHEXA | VID_SUBSTRING_DUMPASCII | VID_SUBSTRING_MATCH)
 
 struct vid_struct {
@@ -197,10 +197,10 @@ static struct vid_struct _vid_tab[] = {
 
 
 	{ VID_CISCO3K, VID_KEEP | VID_SUBSTRING_MATCH, 
-          NULL, "Cisco VPN 3000 Series" , "\x1f\x07\xf7\x0e\xaa\x65\x14\xd3\xb0\xfa\x96\x54\x2a\x50", 14},
+	    NULL, "Cisco VPN 3000 Series" , "\x1f\x07\xf7\x0e\xaa\x65\x14\xd3\xb0\xfa\x96\x54\x2a\x50", 14},
 
 	{ VID_CISCO_IOS, VID_KEEP | VID_SUBSTRING_MATCH, 
-	  NULL, "Cisco IOS Device", "\x3e\x98\x40\x48", 4},
+	    NULL, "Cisco IOS Device", "\x3e\x98\x40\x48", 4},
 
 	/* note: md5('CISCO-UNITY') = 12f5f28c457168a9702d9fe274cc02d4 */
 	{ VID_CISCO_UNITY, VID_KEEP, NULL, "Cisco-Unity",
@@ -426,7 +426,7 @@ static struct vid_struct _vid_tab[] = {
 
 static const char _hexdig[] = "0123456789abcdef";
 
-static int _vid_struct_init = 0;
+static int vid_struct_init = 0;
 
 /* 
  * Setup VendorID structs, and populate them
@@ -439,12 +439,11 @@ static int _vid_struct_init = 0;
 void init_vendorid(void)
 {
 	struct vid_struct *vid;
-	MD5_CTX ctx;
-	int i;
 
 	for (vid = _vid_tab; vid->id; vid++) {
-	    if(vid->flags & VID_SELF) {
+	    if (vid->flags & VID_SELF) {
 		char *d;
+
 		vid->vid = clone_str(init_pluto_vendorid(),"init_pluto_vendorid");
 		vid->vid_len = strlen(vid->vid);
 		d = alloc_bytes(strlen(vid->descr)+4
@@ -467,6 +466,8 @@ void init_vendorid(void)
 		vid->vid = (char *)vidm;
 		if (vidm) {
 		    unsigned const char *d = (unsigned const char *)vid->data;
+		    MD5_CTX ctx;
+
 		    osMD5Init(&ctx);
 		    osMD5Update(&ctx, d, strlen(vid->data));
 		    osMD5Final(vidm, &ctx);
@@ -480,6 +481,9 @@ void init_vendorid(void)
 		char *vidm =  alloc_bytes(FSWAN_VID_SIZE,"fswan VID");
 		vid->vid = vidm;
 		if (vidm) {
+		    MD5_CTX ctx;
+		    int i;
+
 		    osMD5Init(&ctx);
 		    osMD5Update(&ctx, (const unsigned char *)vid->data, strlen(vid->data));
 		    osMD5Final(hash, &ctx);
@@ -512,14 +516,14 @@ void init_vendorid(void)
 	    if (vid->vid) DBG_dump("VID:", vid->vid, vid->vid_len);
 #endif
 	}
-	_vid_struct_init = 1;
+	vid_struct_init = 1;
 }
 
 
 /**
  * Handle Known VendorID's.  This function parses what the remote peer 
  * sends us, and enables/disables features based on it.  As we go along, 
- * we set vid_usefull =1 if we did something based on this VendorID.  This
+ * we set vid_useful to TRUE if we did something based on this VendorID.  This
  * supresses the 'Ignored VendorID ...' log message.
  *
  * @param md UNUSED - Deprecated
@@ -536,7 +540,7 @@ static void handle_known_vendorid (struct msg_digest *md
 				   , struct state *st)
 {
 	char vid_dump[128];
-	int vid_usefull = 0;
+	bool vid_useful = TRUE;	/* tentatively TRUE */
 	size_t i, j;
 
 	switch (vid->id) {
@@ -551,13 +555,15 @@ static void handle_known_vendorid (struct msg_digest *md
 
 	case VID_NATT_IETF_00:
 	case VID_NATT_IETF_01:
-	    if (!nat_traversal_support_non_ike)
+	    if (!nat_traversal_support_non_ike) {
+		vid_useful = FALSE;
 		break;
-	    vid_usefull = 1;
-	    if ((nat_traversal_enabled) && (!md->quirks.nat_traversal_vid)) {
+	    }
+	    if (nat_traversal_enabled && !md->quirks.nat_traversal_vid) {
 		md->quirks.nat_traversal_vid = vid->id;
 	    }
 	    break;
+
 	case VID_NATT_IETF_02:
 	case VID_NATT_IETF_02_N:
 	case VID_NATT_IETF_03:
@@ -568,14 +574,13 @@ static void handle_known_vendorid (struct msg_digest *md
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 	case VID_NATT_RFC:
-
-	    vid_usefull = 1;
-	    if(!nat_traversal_support_port_floating) {
+	    if (!nat_traversal_support_port_floating) {
 		loglog(RC_LOG_SERIOUS
-		       , "received Vendor ID payload [%s] method=%s, "
-		       "but port floating is off"
-		       , vid->descr,  enum_name(&natt_method_names, nat_traversal_vid_to_method(vid->id)));
-		return;
+		       , "ignoring received Vendor ID payload [%s] method=%s, "
+		         "because port floating is off"
+		       , vid->descr
+		       , enum_name(&natt_method_names, nat_traversal_vid_to_method(vid->id)));
+		vid_useful = FALSE;
 	    } else {
 		if (md->quirks.nat_traversal_vid < vid->id) {
 		    loglog(RC_LOG_SERIOUS
@@ -583,71 +588,64 @@ static void handle_known_vendorid (struct msg_digest *md
 		    DBG(DBG_NATT, DBG_log(" method set to=%s "
 			, enum_name(&natt_method_names, nat_traversal_vid_to_method(vid->id))));
 		    md->quirks.nat_traversal_vid = vid->id;
-		    return;
 		} else {
-			DBG(DBG_NATT, DBG_log("Ignoring older NAT-T Vendor ID paylad [%s]",vid->descr));
-		    return;
+		    DBG(DBG_NATT, DBG_log("Ignoring older NAT-T Vendor ID paylad [%s]",vid->descr));
+		    vid_useful = FALSE;
 		}
 	    }
 	    break;
 #endif
 	    
-        case VID_MISC_DPD:
+	case VID_MISC_DPD:
 	    /* Remote side would like to do DPD with us on this connection */
 	    md->dpd = 1;
-	    vid_usefull = 1;
-            break;
+	    break;
 
 	case VID_MISC_IKEv2:
 	    md->ikev2 = TRUE;
-	    vid_usefull = 1;
 	    break;
 
 /* We only need these when dealing with XAUTH */
 #ifdef XAUTH
 	case VID_SSH_SENTINEL_1_4_1:
-	  loglog(RC_LOG_SERIOUS
+	    loglog(RC_LOG_SERIOUS
 		 , "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
-	  md->quirks.xauth_ack_msgid = TRUE;
-	  vid_usefull = 1;
-	  break;
+	    md->quirks.xauth_ack_msgid = TRUE;
+	    break;
 
 	case VID_CISCO_UNITY:
-	  md->quirks.modecfg_pull_mode= TRUE;
-	  vid_usefull = 1;
-	  break;
+	    md->quirks.modecfg_pull_mode= TRUE;
+	    break;
 
 	case VID_MISC_XAUTH:
 	    md->quirks.xauth_vid = TRUE;
-	    vid_usefull=1;
 	    break;
 #endif
 	    
 	case VID_LIBRESWANSELF:
-	    vid_usefull=1;
 	    break;
 
 	case VID_CISCO_IKE_FRAGMENTATION:
 	case VID_IKE_FRAGMENTATION:
-	    vid_usefull=1;
 	    /* TODO we should really use st->st_seen_vendorid but no one else is */
 	    /* does the md bits survive packet processing? shouldn't this be on the state? */
 	    st->st_seen_fragvid = TRUE;
 	    break;
-		
 
 	default:
+	    vid_useful = FALSE;
 	    break;
 	}
 
 	if (vid->flags & VID_SUBSTRING_DUMPHEXA) {
 		/* Dump description + Hexa */
 		memset(vid_dump, 0, sizeof(vid_dump));
-		snprintf(vid_dump, sizeof(vid_dump), "%s ",
-			vid->descr ? vid->descr : "");
-		for (i=strlen(vid_dump), j=vid->vid_len;
-			(j<len) && (i<sizeof(vid_dump)-2);
-			i+=2, j++) {
+		snprintf(vid_dump, sizeof(vid_dump), "%s "
+			, vid->descr ? vid->descr : "");
+		for (i=strlen(vid_dump), j=vid->vid_len
+		; (j<len) && (i<sizeof(vid_dump)-2)
+		; i+=2, j++)
+		{
 			vid_dump[i] = _hexdig[(vidstr[j] >> 4) & 0xF];
 			vid_dump[i+1] = _hexdig[vidstr[j] & 0xF];
 		}
@@ -655,18 +653,18 @@ static void handle_known_vendorid (struct msg_digest *md
 	else if (vid->flags & VID_SUBSTRING_DUMPASCII) {
 		/* Dump ASCII content */
 		memset(vid_dump, 0, sizeof(vid_dump));
-		for (i=0; (i<len) && (i<sizeof(vid_dump)-1); i++) {
-			vid_dump[i] = (isprint(vidstr[i])) ? vidstr[i] : '.';
+		for (i=0; i<len && i<sizeof(vid_dump)-1; i++) {
+			vid_dump[i] = isprint(vidstr[i]) ? vidstr[i] : '.';
 		}
 	}
 	else {
 		/* Dump description (descr) */
-		snprintf(vid_dump, sizeof(vid_dump), "%s",
-			vid->descr ? vid->descr : "");
+		snprintf(vid_dump, sizeof(vid_dump), "%s"
+		    , vid->descr ? vid->descr : "");
 	}
 
-	loglog(RC_LOG_SERIOUS, "%s Vendor ID payload [%s]",
-		vid_usefull ? "received" : "ignoring", vid_dump);
+	loglog(RC_LOG_SERIOUS, "%s Vendor ID payload [%s]"
+	    , vid_useful ? "received" : "ignoring", vid_dump);
 }
 
 
@@ -687,7 +685,7 @@ void handle_vendorid (struct msg_digest *md, const char *vid, size_t len, struct
 {
 	struct vid_struct *pvid;
 
-	if (!_vid_struct_init) {
+	if (!vid_struct_init) {
 		init_vendorid();
 	}
 
@@ -743,7 +741,7 @@ bool out_vendorid (u_int8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
-	if (!_vid_struct_init) {
+	if (!vid_struct_init) {
 		init_vendorid();
 	}
 
@@ -775,7 +773,7 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
-	if (!_vid_struct_init) {
+	if (!vid_struct_init) {
 		init_vendorid();
 	}
 
