@@ -195,7 +195,7 @@ retransmit_v1_msg(struct state *st)
 		  , "%s: retransmission; will wait %lus for response"
 		  , enum_name(&state_names, st->st_state)
 		  , (unsigned long)delay);
-	resend_ike_msg(st, "EVENT_RETRANSMIT");
+	resend_ike_v1_msg(st, "EVENT_RETRANSMIT");
 	event_schedule(EVENT_RETRANSMIT, delay, st);
     }
     else

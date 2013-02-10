@@ -1106,15 +1106,19 @@ check_msg_errqueue(const struct iface_port *ifp, short interest)
  * The rest of the system thinks it is simple.
  * We have three entrypoints that control options
  * for reporting write failure and actions on resending (fragment?):
- * send_ike_msg(), resend_ike_msg(), and send_keepalive().
+ * send_ike_msg(), resend_ike_v1_msg(), and send_keepalive().
  *
- * They all call send_ike_msg_with_options().
+ * The first two call send_or_resend_ike_msg().
  * That handles an IKE message.
  * It calls send_frags() if the message needs to be fragmented.
  * Otherwise it calls send_packet() to send it in one gulp.
  *
  * send_frags() breaks an IKE message into fragments and sends
  * them by send_packet().
+ *
+ * send_keepalive() calls send_packet() directly: uses a special
+ * tiny packet; non-ESP marker does not apply; logging on write error
+ * is suppressed.
  *
  * send_packet() sends a UDP packet, possibly prefixed by a non-ESP Marker
  * for NATT.  It accepts two chunks because this avoids double-copying.
@@ -1131,7 +1135,8 @@ send_packet(struct state *st, const char *where, bool just_a_keepalive
     /* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
      * natt_bonus is the size of the addition (0 if not needed).
      */
-    const size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
+    const size_t natt_bonus = !just_a_keepalive && st->st_interface->ike_float
+	? NON_ESP_MARKER_SIZE : 0;
 
     const u_int8_t *ptr;
     unsigned long len = natt_bonus + alen + blen;
@@ -1232,7 +1237,7 @@ send_packet(struct state *st, const char *where, bool just_a_keepalive
 }
 
 static bool
-send_frags(struct state *st, const char *where, bool just_a_keepalive)
+send_frags(struct state *st, const char *where)
 {
     unsigned int fragnum = 0;
 
@@ -1295,7 +1300,7 @@ send_frags(struct state *st, const char *where, bool just_a_keepalive)
 		? ISAKMP_FRAG_LAST : 0;
 	}
 
-	if (!send_packet(st, where, just_a_keepalive
+	if (!send_packet(st, where, FALSE
 	    , frag_prefix, NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag
 	    , packet_cursor, data_len))
 	{
@@ -1310,7 +1315,7 @@ send_frags(struct state *st, const char *where, bool just_a_keepalive)
 
 
 static bool
-send_ike_msg_with_options(struct state *st, const char *where, bool resending, bool just_a_keepalive)
+send_or_resend_ike_msg(struct state *st, const char *where, bool resending)
 {
     size_t len = st->st_tpacket.len;
     /* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
@@ -1319,26 +1324,27 @@ send_ike_msg_with_options(struct state *st, const char *where, bool resending, b
     const size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
 
     /* decide of whether we're to fragment */
-    if (len+natt_bonus >= ISAKMP_FRAG_MAXLEN
+    if (!st->st_ikev2
+    && len+natt_bonus >= ISAKMP_FRAG_MAXLEN
     && ((resending && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW))
        || (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)))
     {
-	return send_frags(st, where, just_a_keepalive);
+	return send_frags(st, where);
     } else {
-	return send_packet(st, where, just_a_keepalive, st->st_tpacket.ptr, st->st_tpacket.len, NULL, (size_t) 0);
+	return send_packet(st, where, FALSE, st->st_tpacket.ptr, st->st_tpacket.len, NULL, (size_t) 0);
     }
 }
 
 bool
 send_ike_msg(struct state *st, const char *where)
 {
-    return send_ike_msg_with_options(st, where, FALSE, FALSE);
+    return send_or_resend_ike_msg(st, where, FALSE);
 }
 
 bool
-resend_ike_msg(struct state *st, const char *where)
+resend_ike_v1_msg(struct state *st, const char *where)
 {
-    return send_ike_msg_with_options(st, where, TRUE, FALSE);
+    return send_or_resend_ike_msg(st, where, TRUE);
 }
 
 /* send keepalive is special in two ways:
@@ -1348,7 +1354,9 @@ resend_ike_msg(struct state *st, const char *where)
 bool
 send_keepalive(struct state *st, const char *where)
 {
-    return send_ike_msg_with_options(st, where, FALSE, TRUE);
+    static const unsigned char ka_payload = 0xff;
+
+    return send_packet(st, where, TRUE, &ka_payload, sizeof(ka_payload), NULL, (size_t) 0);
 }
 
 /*

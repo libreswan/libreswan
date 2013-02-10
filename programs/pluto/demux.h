@@ -22,7 +22,7 @@
 struct state;	/* forward declaration of tag */
 extern void init_demux(void);
 extern bool send_ike_msg(struct state *st, const char *where);
-extern bool resend_ike_msg(struct state *st, const char *where);
+extern bool resend_ike_v1_msg(struct state *st, const char *where);
 extern bool send_keepalive(struct state *st, const char *where);
 extern void comm_handle(const struct iface_port *ifp);
 

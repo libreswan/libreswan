@@ -1547,7 +1547,7 @@ process_v1_packet(struct msg_digest **mdp)
 		loglog(RC_RETRANSMISSION
 		    , "retransmitting in response to duplicate packet; already %s"
 		    , enum_name(&state_names, st->st_state));
-		resend_ike_msg(st, "retransmit in response to duplicate");
+		resend_ike_v1_msg(st, "retransmit in response to duplicate");
 	    }
 	    else
 	    {
