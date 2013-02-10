@@ -132,7 +132,7 @@ struct vid_struct {
 #define DEC_FSWAN_VID(id,str,descr) \
 	{ VID_##id, VID_FSWAN_HASH, str, descr, NULL, 0 },
 
-static struct vid_struct _vid_tab[] = {
+static struct vid_struct vid_tab[] = {
 
 	/* Implementation names */
 
@@ -424,7 +424,7 @@ static struct vid_struct _vid_tab[] = {
 
 };
 
-static const char _hexdig[] = "0123456789abcdef";
+static const char hexdig[] = "0123456789abcdef";
 
 static int vid_struct_init = 0;
 
@@ -440,7 +440,7 @@ void init_vendorid(void)
 {
 	struct vid_struct *vid;
 
-	for (vid = _vid_tab; vid->id; vid++) {
+	for (vid = vid_tab; vid->id; vid++) {
 	    if (vid->flags & VID_SELF) {
 		char *d;
 
@@ -541,7 +541,6 @@ static void handle_known_vendorid (struct msg_digest *md
 {
 	char vid_dump[128];
 	bool vid_useful = TRUE;	/* tentatively TRUE */
-	size_t i, j;
 
 	switch (vid->id) {
 #ifdef NAT_TRAVERSAL
@@ -639,23 +638,27 @@ static void handle_known_vendorid (struct msg_digest *md
 
 	if (vid->flags & VID_SUBSTRING_DUMPHEXA) {
 		/* Dump description + Hexa */
-		memset(vid_dump, 0, sizeof(vid_dump));
+		size_t i, j;
+
 		snprintf(vid_dump, sizeof(vid_dump), "%s "
 			, vid->descr ? vid->descr : "");
 		for (i=strlen(vid_dump), j=vid->vid_len
 		; (j<len) && (i<sizeof(vid_dump)-2)
 		; i+=2, j++)
 		{
-			vid_dump[i] = _hexdig[(vidstr[j] >> 4) & 0xF];
-			vid_dump[i+1] = _hexdig[vidstr[j] & 0xF];
+			vid_dump[i] = hexdig[(vidstr[j] >> 4) & 0xF];
+			vid_dump[i+1] = hexdig[vidstr[j] & 0xF];
 		}
+		vid_dump[i] = '\0';
 	}
 	else if (vid->flags & VID_SUBSTRING_DUMPASCII) {
 		/* Dump ASCII content */
-		memset(vid_dump, 0, sizeof(vid_dump));
+		size_t i;
+
 		for (i=0; i<len && i<sizeof(vid_dump)-1; i++) {
 			vid_dump[i] = isprint(vidstr[i]) ? vidstr[i] : '.';
 		}
+		vid_dump[i] = '\0';
 	}
 	else {
 		/* Dump description (descr) */
@@ -690,9 +693,9 @@ void handle_vendorid (struct msg_digest *md, const char *vid, size_t len, struct
 	}
 
 	/*
-	 * Find known VendorID in _vid_tab
+	 * Find known VendorID in vid_tab
 	 */
-	for (pvid = _vid_tab; pvid->id; pvid++) {
+	for (pvid = vid_tab; pvid->id; pvid++) {
 		if (pvid->vid && vid && pvid->vid_len && len) {
 			if (pvid->vid_len == len) {
 				if (memcmp(pvid->vid, vid, len)==0) {
@@ -720,8 +723,8 @@ void handle_vendorid (struct msg_digest *md, const char *vid, size_t len, struct
 		size_t i;
 		memset(log_vid, 0, sizeof(log_vid));
 		for (i=0; (i<len) && (i<MAX_LOG_VID_LEN); i++) {
-			log_vid[2*i] = _hexdig[(vid[i] >> 4) & 0xF];
-			log_vid[2*i+1] = _hexdig[vid[i] & 0xF];
+			log_vid[2*i] = hexdig[(vid[i] >> 4) & 0xF];
+			log_vid[2*i+1] = hexdig[vid[i] & 0xF];
 		}
 		loglog(RC_LOG_SERIOUS, "ignoring unknown Vendor ID payload [%s%s]",
 			log_vid, (len>MAX_LOG_VID_LEN) ? "..." : "");
@@ -745,10 +748,11 @@ bool out_vendorid (u_int8_t np, pb_stream *outs, unsigned int vid)
 		init_vendorid();
 	}
 
-	for (pvid = _vid_tab; (pvid->id) && (pvid->id!=vid); pvid++);
+	for (pvid = vid_tab; pvid->id!=0 && pvid->id!=vid; pvid++)
+	    ;
 
-	if (pvid->id != vid) return STF_INTERNAL_ERROR; /* not found */
-	if (!pvid->vid) return STF_INTERNAL_ERROR; /* not initialized */
+	if (pvid->vid == 0)
+	    return FALSE; /* not found */
 
 	DBG(DBG_EMITTING,
 		DBG_log("out_vendorid(): sending [%s]", pvid->descr);
@@ -777,10 +781,11 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 		init_vendorid();
 	}
 
-	for (pvid = _vid_tab; (pvid->id) && (pvid->id!=vid); pvid++);
+	for (pvid = vid_tab; pvid->id!=0 && pvid->id!=vid; pvid++)
+	    ;
 
-	if (pvid->id != vid) return STF_INTERNAL_ERROR; /* not found */
-	if (!pvid->vid) return STF_INTERNAL_ERROR; /* not initialized */
+	if (pvid->id == 0)
+	    return FALSE; /* not found */
 
 	DBG(DBG_EMITTING,
 		DBG_log("out_vid(): sending [%s]", pvid->descr);
@@ -794,7 +799,7 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
  *
  * Note: it is a NUL-terminated ASCII string, but NUL won't go on the wire.
  */
-char pgp_vendorid[] = "OpenPGP10171";
+const char pgp_vendorid[] = "OpenPGP10171";
 const int pgp_vendorid_len = sizeof(pgp_vendorid);
 
 /*
