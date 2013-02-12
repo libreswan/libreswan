@@ -77,8 +77,6 @@ def run_final (args, child):
     cmd = "./final.sh"
     if os.path.exists(cmd):
         read_exec_shell_cmd( child, cmd, prompt, timer)
-    cmd = "ipsec whack --shutdown"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
     f.close 
     return
 
