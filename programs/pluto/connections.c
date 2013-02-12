@@ -3373,16 +3373,37 @@ show_one_sr(struct connection *c
 		addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
 	}
 
-	whack_log(RC_COMMENT, "\"%s\"%s:   xauth info: %s %s%s; dns1:%s, dns2:%s;"
-		  , c->name, instance
-		  /* should really be an enum name */
-		  , (sr->this.xauth_server) ?  (c->xauthby == XAUTHBY_FILE) ? "method:file;" :
-		    ((c->xauthby == XAUTHBY_PAM) ? "method:pam;" : "method:alwaysok;" ) : ""
-		  , thisxauthsemi
-		  , thatxauthsemi
-		  , dns1
-		  , dns2
-		);
+        whack_log(RC_COMMENT, "\"%s\"%s:   xauth info: us:%s, them:%s, %s %s%s;"
+                  , c->name, instance
+                  /* both should not be set, but if they are, we want to know */
+                  , (!sr->this.xauth_server && !sr->this.xauth_client) ? "none" :
+                    (sr->this.xauth_server && sr->this.xauth_client) ? "both??" :
+                    (sr->this.xauth_server) ? "server" : "client"
+                  , (!sr->that.xauth_server && !sr->that.xauth_client) ? "none" :
+                    (sr->that.xauth_server && sr->that.xauth_client) ? "both??" :
+                    (sr->that.xauth_server) ? "server" : "client"
+                  /* should really be an enum name */
+                  , (sr->this.xauth_server) ?  (c->xauthby == XAUTHBY_FILE) ? "method:file;" :
+                    ((c->xauthby == XAUTHBY_PAM) ? "method:pam;" : "method:alwaysok;" ) : ""
+                  , thisxauthsemi
+                  , thatxauthsemi
+                );
+
+# ifdef MODECFG
+        whack_log(RC_COMMENT, "\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns1:%s, dns2:%s;"
+                  , c->name, instance
+                  /* both should not be set, but if they are, we want to know */
+                  , (!sr->this.modecfg_server && !sr->this.modecfg_client) ? "none" :
+                    (sr->this.modecfg_server && sr->this.modecfg_client) ? "both??" :
+                    (sr->this.modecfg_server) ? "server" : "client"
+                  , (!sr->that.modecfg_server && !sr->that.modecfg_client) ? "none" :
+                    (sr->that.modecfg_server && sr->that.modecfg_client) ? "both??" :
+                    (sr->that.modecfg_server) ? "server" : "client"
+                  , (c->policy & POLICY_MODECFG_PULL) ? "pull" : "push"
+                  , dns1
+                  , dns2
+                );
+# endif
     }
 #endif
 #ifdef HAVE_LABELED_IPSEC
