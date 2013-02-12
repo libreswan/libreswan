@@ -46,7 +46,7 @@ CFLAGS+= -DDNSSEC
 endif
 
 ifeq ($(USE_XAUTH),true)
-CFLAGS+= -DXAUTH
+CFLAGS+= -DXAUTH -DMODECFG -DMODECFG_DNSWINS
 endif
 
 ifeq ($(USE_KLIPS),true)
