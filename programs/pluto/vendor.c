@@ -261,7 +261,7 @@ static struct vid_struct vid_tab[] = {
 
 	/* misc */
 
-	
+	/* draft-ietf-ipsra-isakmp-xauth-06.txt? */
 	{ VID_MISC_XAUTH, VID_KEEP, NULL, "XAUTH",
 		"\x09\x00\x26\x89\xdf\xd6\xb7\x12", 8 },
 
