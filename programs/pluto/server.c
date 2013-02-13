@@ -1182,8 +1182,6 @@ send_packet(struct state *st, const char *where, bool just_a_keepalive
     (void) check_msg_errqueue(st->st_interface, POLLOUT);
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
-    libreswan_log("FRAG: Current state is %s", enum_show(&state_names, st->st_state));
-
     wlen = sendto(st->st_interface->fd
 	, ptr
 	, len, 0
