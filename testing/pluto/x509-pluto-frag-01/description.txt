@@ -1,6 +1,8 @@
-Basic pluto X.509 test from x509-pluto-01, but now
-west is dropped UDP fragments, so the default policy for
-using IKE fragments should kick in when we don't get a response
-to our MAIN_I3 packet. We re-send it in IKE fragments, which east
-assembles and the IKE gets established successfully.
+Basic pluto X.509 test but now west and east are dropping UDP packets 
+> 1500 (tried dropping fragments but linux outsmarts us)
+
+Our default policy of ike_frag=yes should kick in and we start sending
+fragments.
+
+As a result, this connection should establish successfully.
 
