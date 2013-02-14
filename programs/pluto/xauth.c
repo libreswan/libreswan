@@ -839,33 +839,34 @@ stf_status modecfg_send_request(struct state *st)
 	    return STF_INTERNAL_ERROR;
 	}
 	if(st->st_connection->remotepeertype == CISCO) {
-	/* ISAKMP attr out (INTERNAL_IP4_DNS) */
-	attr.isaat_af_type = INTERNAL_IP4_DNS;
-	attr.isaat_lv = 0;
-	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
-	{
+	   /* ISAKMP attr out (INTERNAL_IP4_DNS) */
+	   attr.isaat_af_type = INTERNAL_IP4_DNS;
+	   attr.isaat_lv = 0;
+	   if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	   {
 	    return STF_INTERNAL_ERROR;
-	}
-	/* ISAKMP attr out (CISCO_BANNER) */
-	attr.isaat_af_type = CISCO_BANNER;
-	attr.isaat_lv = 0;
-	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
-	{
+	   }
+	   /* ISAKMP attr out (CISCO_BANNER) */
+	   attr.isaat_af_type = CISCO_BANNER;
+	   attr.isaat_lv = 0;
+	   if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	   {
 	    return STF_INTERNAL_ERROR;
-	}
-        /* ISAKMP attr out (CISCO_DEF_DOMAIN) */
-        attr.isaat_af_type = CISCO_DEF_DOMAIN;
-        attr.isaat_lv = 0;
-        if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
-	{
+	   }
+           /* ISAKMP attr out (CISCO_DEF_DOMAIN) */
+           attr.isaat_af_type = CISCO_DEF_DOMAIN;
+           attr.isaat_lv = 0;
+           if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	   {
 	    return STF_INTERNAL_ERROR;
-	}
-	/* ISAKMP attr out (CISCO_SPLIT_INC) */
-	attr.isaat_af_type = CISCO_SPLIT_INC;
-	attr.isaat_lv = 0;
-	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
-	{
+	   }
+	   /* ISAKMP attr out (CISCO_SPLIT_INC) */
+	   attr.isaat_af_type = CISCO_SPLIT_INC;
+	   attr.isaat_lv = 0;
+	   if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	   {
 	    return STF_INTERNAL_ERROR;
+	   }
 	}
 	close_message(&strattr);
     }
