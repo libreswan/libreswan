@@ -1381,6 +1381,18 @@ process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
+		DBG(DBG_CONTROL, DBG_log("received IKE fragment id '%d', number '%u'%s"
+		    , fraghdr.isafrag_id
+		    , fraghdr.isafrag_number
+		    , (fraghdr.isafrag_flags == 1) ? "(last)" : ""));
+
+		/* optimize: if receiving fragments, immediately respond with fragments too */
+		if(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) {
+			st->st_connection->policy |= POLICY_IKE_FRAG_FORCE;
+			st->st_seen_fragvid = TRUE;
+			DBG(DBG_CONTROL, DBG_log(" updated IKE policy to respond using fragments immediately"));
+		}
+
 		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
 		if (ike_frag == NULL)
 			return;
