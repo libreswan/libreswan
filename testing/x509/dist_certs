@@ -98,7 +98,7 @@ EOF
 done
 
 # Generate machine keys/certs
-for machine in east west sunset sunrise north south pole park beet carrot nic japan revoked notyetvalid notvalidanymore signedbyotherca
+for machine in east west sunset sunrise north south road pole park beet carrot nic japan revoked notyetvalid notvalidanymore signedbyotherca
 do
 # generate host key/cert
 expect  <<EOF
