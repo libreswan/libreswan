@@ -1337,6 +1337,7 @@ send_or_resend_ike_msg(struct state *st, const char *where, bool resending)
 
     /* decide of whether we're to fragment */
     if (!st->st_ikev2
+    && st->st_state != STATE_MAIN_I1
     && len+natt_bonus >= ISAKMP_FRAG_MAXLEN
     && ((resending && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) && st->st_seen_fragvid)
        || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)))
