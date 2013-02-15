@@ -1403,12 +1403,17 @@ process_v1_packet(struct msg_digest **mdp)
 		ike_frag->size = pbs_left(&frag_pbs);
 		ike_frag->data = frag_pbs.cur;
 
+#if 0 
+/* is this ever hit? It was wrongly checking one byte instead of 4 bytes of marker */
 		/* Strip non-ESP marker from first fragment */
-		if (md->iface->ike_float == TRUE && ike_frag->index == 1 && ike_frag->data[0] == 0)
+		if (md->iface->ike_float && ike_frag->index == 1
+		    && (ike_frag->size >= NON_ESP_MARKER_SIZE
+			&& memcmp(non_ESP_marker, ike_frag->data, NON_ESP_MARKER_SIZE) == 0))
 		{
-			ike_frag->data += 1;
-			ike_frag->size -= 1;
+			ike_frag->data += NON_ESP_MARKER_SIZE;
+			ike_frag->size -= NON_ESP_MARKER_SIZE;
 		}
+#endif
 
 		/* Add the fragment to the state */
 		i = &st->ike_frags;
