@@ -3491,7 +3491,7 @@ show_one_connection(struct connection *c)
 		, prettypolicy(c->policy)
 		, c->spd.this.key_from_DNS_on_demand? "+lKOD" : ""
 		, c->spd.that.key_from_DNS_on_demand? "+rKOD" : ""
-		, (c->spd.this.key_from_DNS_on_demand || c->spd.this.key_from_DNS_on_demand) ? ";" : ""
+		, (c->spd.this.key_from_DNS_on_demand || c->spd.that.key_from_DNS_on_demand) ? ";" : ""
 		);
 
     if(c->connmtu > 0) {
