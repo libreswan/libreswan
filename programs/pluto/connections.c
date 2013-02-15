@@ -381,6 +381,7 @@ void
 delete_connections_by_name(const char *name, bool strict)
 {
     bool f = FALSE;
+    passert(name != NULL);
     struct connection *c = con_by_name(name, strict);
 
     if(c==NULL) {
