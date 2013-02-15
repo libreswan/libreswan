@@ -1152,7 +1152,7 @@ send_packet(struct state *st, const char *where, bool just_a_keepalive
 	/* copying required */
 
 	/* 1. non-ESP Marker (0x00 octets) */
-	memset(buf, 0xFF, natt_bonus);
+	memset(buf, 0x00, natt_bonus);
 
 	/* 2. chunk a */
 	memcpy(buf + natt_bonus, aptr, alen);
