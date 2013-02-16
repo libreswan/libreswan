@@ -743,7 +743,7 @@ void
 _delete_dpd_event(struct state *st, const char *file, int lineno)
 {
     DBG(DBG_DPD|DBG_CONTROL
-	, DBG_log("state: %ld requesting event %s to be deleted by %s:%d"
+	, DBG_log("state: %ld requesting DPD event %s to be deleted by %s:%d"
 		  , st->st_serialno
 		  , (st->st_dpd_event!=NULL
 		   ? enum_show(&timer_event_names, st->st_dpd_event->ev_type)
@@ -759,7 +759,7 @@ _delete_dpd_event(struct state *st, const char *file, int lineno)
             if (*ev == NULL)
             {
                 DBG(DBG_DPD|DBG_CONTROL
-		    , DBG_log("event %s to be deleted not found",
+		    , DBG_log("DPD event %s to be deleted not found",
 			      enum_show(&timer_event_names
 					, st->st_dpd_event->ev_type)));
                 break;
