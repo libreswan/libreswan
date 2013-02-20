@@ -623,21 +623,21 @@ out_sa(pb_stream *outs
 			pb_stream val_pbs;
 			attr.isaat_af_type = secctx_attr_value | ISAKMP_ATTR_AF_TLV;
 			DBG(DBG_EMITTING, DBG_log("secctx_attr_value=%d, type=%d", secctx_attr_value, attr.isaat_af_type));
-			if(!out_struct(&attr, attr_desc, &trans_pbs, &val_pbs)
+			if(!out_struct(&attr, attr_desc, &trans_pbs, &val_pbs))
 			   return_on(ret, FALSE);
 			DBG(DBG_EMITTING, DBG_log("placing security context attribute in the out going structure"));
 			DBG(DBG_EMITTING, DBG_log("sending ctx_doi"));
-			if(!out_raw(&st->sec_ctx->ctx_doi, sizeof(st->sec_ctx->ctx_doi),  &val_pbs, " variable length sec ctx: ctx_doi")
+			if(!out_raw(&st->sec_ctx->ctx_doi, sizeof(st->sec_ctx->ctx_doi),  &val_pbs, " variable length sec ctx: ctx_doi"))
 			   return_on(ret, FALSE);
 			DBG(DBG_EMITTING, DBG_log("sending ctx_alg"));
-			if(!out_raw(&st->sec_ctx->ctx_alg, sizeof(st->sec_ctx->ctx_alg),  &val_pbs, " variable length sec ctx: ctx_alg")
+			if(!out_raw(&st->sec_ctx->ctx_alg, sizeof(st->sec_ctx->ctx_alg),  &val_pbs, " variable length sec ctx: ctx_alg"))
 			   return_on(ret, FALSE);
 			DBG(DBG_EMITTING, DBG_log("sending ctx_len after conversion to network byte order"));
 			u_int16_t net_ctx_len = htons(st->sec_ctx->ctx_len);
-			if(!out_raw(&net_ctx_len, sizeof(st->sec_ctx->ctx_len),  &val_pbs, " variable length sec ctx: ctx_len")
+			if(!out_raw(&net_ctx_len, sizeof(st->sec_ctx->ctx_len),  &val_pbs, " variable length sec ctx: ctx_len"))
 			   return_on(ret, FALSE);
 			/*Sending '\0'  with sec ctx as we get it from kernel*/
-			if(!out_raw(st->sec_ctx->sec_ctx_value, st->sec_ctx->ctx_len, &val_pbs, " variable length sec ctx")
+			if(!out_raw(st->sec_ctx->sec_ctx_value, st->sec_ctx->ctx_len, &val_pbs, " variable length sec ctx"))
 			   return_on(ret, FALSE);
 			DBG(DBG_EMITTING, DBG_log("placed security context attribute in the out going structure"));
         		close_output_pbs(&val_pbs);
