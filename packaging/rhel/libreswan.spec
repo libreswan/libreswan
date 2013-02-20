@@ -132,7 +132,7 @@ FS=$(pwd)
 
 %if %{USE_FIPSCHECK}
 # Add generation of HMAC checksums of the final stripped binaries
-%global __spec_install_post \
+%define __spec_install_post \
   %{?__debug_package:%{__debug_install_post}} \
   %{__arch_install_post} \
   %{__os_install_post} \
