@@ -33,7 +33,9 @@ if args.testname:
 	#	sys.exit("Unknown or bad testname '%s'"%args.testname)
 	testname = args.testname
 else:
-	testname = "ikev2-05-basic-psk"
+	testname = os.getcwd().split("/")[-1]
+	if not os.path.isdir("/testing/pluto/%s"%testnname):
+		sys.exit("Determing testname failed - aborted")
 
 if args.userland:
 	if not args.userland in ( "libreswan","strongswan","racoon","shrew", "openswan"):
