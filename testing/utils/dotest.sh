@@ -11,6 +11,8 @@
 #    exit 1
 #fi
 
+TCPDUMP_FILTER="not stp and not port 22"
+
 TESTNAME=`basename $PWD`
 echo "autodetet testname is $TESTNAME"
 
@@ -69,7 +71,7 @@ function wait_till_pid_end {
 	set -e
 }
 
-sudo /sbin/tcpdump -w ./OUTPUT/$SWAN12_PCAP -n -i swan12  not port 22 & 
+sudo /sbin/tcpdump -w ./OUTPUT/$SWAN12_PCAP -n -i swan12 $TCPDUMP_FILTER &
 TCPDUMP_PID=$! 
 echo $TCPDUMP_PID  > ./OUTPUT/$SWAN12_PCAP.pid
 
