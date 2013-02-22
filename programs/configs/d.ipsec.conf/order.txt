@@ -76,6 +76,7 @@ d.ipsec.conf/disable_port_floating.xml
 d.ipsec.conf/force_keepalive.xml
 d.ipsec.conf/nat_ikeport.xml
 d.ipsec.conf/keep_alive.xml
+d.ipsec.conf/retransmits.xml
 d.ipsec.conf/virtual_private.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml

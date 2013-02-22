@@ -121,8 +121,6 @@ oakley_alg_makedb(struct alg_info_ike *ai
 	return NULL;
     }
 
-    gsp = NULL;
-
     /*
      * for each group, we will create a new proposal item, and then
      * append it to the list of transforms in the conjoint point.
@@ -250,9 +248,6 @@ oakley_alg_makedb(struct alg_info_ike *ai
 					 , ike_info->ike_halg
 					 , ike_info->ike_modp
 					 , (long)ike_info->ike_eklen));
-		if(gsp) {
-		    free_sa(gsp);
-		}
 		gsp = emp_sp;
 	    } else {
 		free_sa(emp_sp);

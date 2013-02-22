@@ -11,6 +11,8 @@
 #    exit 1
 #fi
 
+TCPDUMP_FILTER="not stp and not port 22"
+
 TESTNAME=`basename $PWD`
 echo "autodetet testname is $TESTNAME"
 
@@ -21,7 +23,7 @@ if [ ! -f eastrun.sh ] ; then
 	RESPONDER=east
 else
 	P=`pwd`
-	echo "can't idenity INITIATOR no $P/eastinit.sh"
+	echo "can't identify INITIATOR no $P/eastinit.sh"
 	exit 1
 fi
 
@@ -38,7 +40,7 @@ if [ -f westrun.sh ] ; then
 elif [ -f roadrun.sh ] ; then
 	INITIATOR=road
 else 
-	echo "can't idenity INITIATOR"
+	echo "can't identify INITIATOR"
 	exit 1
 fi
 
@@ -69,7 +71,7 @@ function wait_till_pid_end {
 	set -e
 }
 
-sudo /sbin/tcpdump -w ./OUTPUT/$SWAN12_PCAP -n -i swan12  not port 22 & 
+sudo /sbin/tcpdump -w ./OUTPUT/$SWAN12_PCAP -n -i swan12 $TCPDUMP_FILTER &
 TCPDUMP_PID=$! 
 echo $TCPDUMP_PID  > ./OUTPUT/$SWAN12_PCAP.pid
 

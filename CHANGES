@@ -21,6 +21,7 @@ v3.1 (unreleased)
 * IKEv1: Support for receiving IKEv1 fragments (not RFC) [Wolfgang Nothdurft]
          (based on the strongswan patch)
 * X509: Initialise libcurl for SSL to support CRLs over HTTPS [Paul]
+* X509: Warn 14 days before certificates expire [Tuomo]
 * Bugtracker bugs fixed:
    #8  honour compress=no option [Matt Rogers]
    #53  ipsec auto --status does not show phase2 parameters when using
