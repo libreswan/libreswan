@@ -4,6 +4,7 @@
 # It should be passed a testname as its onyl argument
 
 import os,sys,socket,shutil,distutils.dir_util,commands
+import glob,pexpect
 
 try:
 	import argparse
