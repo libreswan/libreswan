@@ -24,6 +24,8 @@ if [ -f westinit.sh ] ; then
         INITIATOR=west
 elif [ -f roadinit.sh ] ; then
         INITIATOR=road
+elif [ -f northinit.sh ] ; then
+        INITIATOR=north
 else 
         echo "can't identify INITIATOR"
         exit 1
