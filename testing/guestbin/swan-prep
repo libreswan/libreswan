@@ -12,7 +12,7 @@ except ImportError , e:
         sys.exit("we requires the python argparse module")
 
 parser = argparse.ArgumentParser(description='swan-prep arguments')
-parser.add_argument('--testname', '-t', action='store', default='ikev2-05-basic-psk', help='The name of the test to prepapre')
+parser.add_argument('--testname', '-t', action='store', default='', help='The name of the test to prepapre')
 parser.add_argument('--hostname', '-H', action='store', default='', help='The name of the host to prepare as')
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
@@ -34,7 +34,7 @@ if args.testname:
 	testname = args.testname
 else:
 	testname = os.getcwd().split("/")[-1]
-	if not os.path.isdir("/testing/pluto/%s"%testnname):
+	if not os.path.isdir("/testing/pluto/%s"%testname):
 		sys.exit("Determing testname failed - aborted")
 
 if args.userland:
