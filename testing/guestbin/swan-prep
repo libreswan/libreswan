@@ -82,6 +82,16 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 
 	if args.x509:
 		print "Preparing X.509 NSS files"
+		# clean out old db files and generate new ones from scratch, does not support -w for password
+		oldfiles = glob.glob("/etc/ipsec.d/*db")
+		for oldfile in oldfiles:
+			os.unlink(oldfile)
+		cmd = "certutil -N -d /etc/ipsec.d"
+		timer = 10
+		child = pexpect.spawn(cmd)
+		child.sendline ('')
+		child.sendline ('')
+
 		commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
 		# install all other public certs
 		for certname in ( "west", "east", "road" ):
