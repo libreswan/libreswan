@@ -23,7 +23,7 @@ if [ ! -f eastrun.sh ] ; then
 	RESPONDER=east
 else
 	P=`pwd`
-	echo "can't identify INITIATOR no $P/eastinit.sh"
+	echo "can't identify RESPONDER no $P/eastinit.sh"
 	exit 1
 fi
 
@@ -39,6 +39,8 @@ if [ -f westrun.sh ] ; then
 	INITIATOR=west
 elif [ -f roadrun.sh ] ; then
 	INITIATOR=road
+elif [ -f northrun.sh ] ; then
+	INITIATOR=north
 else 
 	echo "can't identify INITIATOR"
 	exit 1
