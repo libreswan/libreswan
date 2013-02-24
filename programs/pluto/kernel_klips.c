@@ -213,9 +213,13 @@ add_entry:
 			break;
 
 #ifdef NAT_TRAVERSAL
+		    DBG(DBG_NATT, DBG_log("NAT-T KLIPS: checkng for nat_traversal_support_non_ike for IPv4"));
 		    if (nat_traversal_support_non_ike && addrtypeof(&ifp->addr) == AF_INET)
 		    {
+		    DBG(DBG_NATT, DBG_log("NAT-T KLIPS: found, calling nat_traversal_espinudp_socket"));
 			nat_traversal_espinudp_socket(fd, "IPv4", ESPINUDP_WITH_NON_IKE);
+		    } else {
+		    DBG(DBG_NATT, DBG_log("NAT-T KLIPS: support not found, nat_traversal_support_non_ike = %s", nat_traversal_support_non_ike ? "TRUE" : "FALSE"));
 		    }
 #endif
 
@@ -253,6 +257,7 @@ add_entry:
 		    if (nat_traversal_support_port_floating
 			&& addrtypeof(&ifp->addr) == AF_INET)
 		    {
+			DBG(DBG_NATT, DBG_log("NAT-T KLIPS: found floating port, calling nat_traversal_espinudp_socket"));
 			fd = create_socket(ifp, v->name, pluto_natt_float_port);
 			if (fd < 0) 
 			    break;
