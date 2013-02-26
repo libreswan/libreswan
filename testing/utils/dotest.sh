@@ -2,7 +2,7 @@
 . ../../../kvmsetup.sh
 . ./testparams.sh 
 . ../setup.sh
-. $LIBRESWANDIR/testing/utils/functions.sh
+. ../../utils/functions.sh
 
 #if [ ! -f  $LIBRESWANDIR/testing/x509/pkcs12/mainca/west.p12 ]
 #then
