@@ -144,4 +144,16 @@ ln -s /testing/guestbin/swan-build /usr/bin/swan-build
 ln -s /testing/guestbin/swan-install /usr/bin/swan-install
 ln -s /testing/guestbin/swan-update /usr/bin/swan-update
 ln -s /testing/guestbin/swan-run /usr/bin/swan-run
+
+# add easy names so we can jump from vm to vm
+
+cat << EOD >> /etc/hosts
+
+192.0.1.254 west
+192.0.2.254 east
+192.0.3.254 north
+192.1.3.209 road
+192.1.2.254 nic
+EOD
+
 %end
