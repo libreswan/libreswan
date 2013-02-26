@@ -18,7 +18,9 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
         f_cmds = open(filename, "r")
         for line in f_cmds:
             line = line.strip()    
-            if line and not line[0] == '#':
+            # We need the lines with # for the cut --- tuc sections
+            # if line and not line[0] == '#':
+            if line:
                 print  line
                 ex.sendline(line)  
                 ex.expect (prompt,timeout=timer, searchwindowsize=100) 
@@ -77,8 +79,6 @@ def run_final (args, child):
     cmd = "./final.sh"
     if os.path.exists(cmd):
         read_exec_shell_cmd( child, cmd, prompt, timer)
-    cmd = "ipsec whack --shutdown"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
     f.close 
     return
 
