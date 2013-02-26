@@ -14,7 +14,7 @@
 TCPDUMP_FILTER="not stp and not port 22"
 
 TESTNAME=`basename $PWD`
-echo "autodetet testname is $TESTNAME"
+echo "autodetect testname is $TESTNAME"
 
 rm -fr OUTPUT/*
 mkdir  -pm777 OUTPUT
