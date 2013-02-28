@@ -66,6 +66,7 @@ def connect_to_kvm(args):
     cmd = "sudo virsh console --force %s"%args.hostname
     timer = 180
     child = pexpect.spawn (cmd)
+    # don't match full prompt, we want it to work regardless cwd
     prompt = "root@%s " % (args.hostname) 
 
     done = 0
@@ -106,7 +107,7 @@ def connect_to_kvm(args):
 
 def run_final (args, child):
     timer = 30
-    prompt = "root@%s %s"%(args.hostname, args.testname)
+    prompt = "\[root@%s %s\]# "%(args.hostname, args.testname)
     output_file = "./OUTPUT/%s.console.txt" % (args.hostname)
     f = open(output_file, 'a') 
     child.logfile = f
