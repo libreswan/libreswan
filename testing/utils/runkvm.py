@@ -21,7 +21,8 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
             # We need the lines with # for the cut --- tuc sections
             # if line and not line[0] == '#':
             if line:
-                print "%s: %s"%(prompt, line)
+                print "%s: %s"%(prompt.replace("\\",""), line)
+		#time.sleep(1)
                 ex.sendline(line)
                 try:
                     ex.expect (prompt,timeout=timer, searchwindowsize=100) 
@@ -135,14 +136,15 @@ def make_install (args, child):
     return
 
 def run_test(args, child):
-    print 'HOST : ', args.hostname 
-    print 'TEST : ', args.testname
+    #print 'HOST : ', args.hostname 
+    #print 'TEST : ', args.testname
 
     timer = 120
-    prompt = "root@%s %s"%(args.hostname, args.testname)
+    # we MUST match the entire prompt, or elsewe end up sending too soon and getting mangling!
+    prompt = "\[root@%s %s\]# "%(args.hostname, args.testname)
 
     cmd = "cd /testing/pluto/%s " % (args.testname)
-    print "%s: %s"%(prompt,cmd)
+    print "%s: %s"%(prompt.replace("\\",""),cmd)
     child.sendline(cmd)
     try:
         child.expect (prompt, searchwindowsize=100,timeout=timer) 
@@ -171,7 +173,7 @@ def run_test(args, child):
 			pass
 	
     cmd = '/testing/guestbin/swan-prep --testname %s --hostname %s %s'%(args.testname,args.hostname, x509)
-    read_exec_shell_cmd( child, cmd, prompt, timer)
+    read_exec_shell_cmd( child, cmd, prompt, 10)
 
     cmd = "./%sinit.sh" %  (args.hostname) 
     read_exec_shell_cmd( child, cmd, prompt, timer)
