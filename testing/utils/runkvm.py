@@ -70,7 +70,7 @@ def connect_to_kvm(args):
     prompt = "root@%s " % (args.hostname) 
 
     done = 0
-    tries = 200
+    tries = 30
     print "Waiting on %s login: or %s prompt"%(args.hostname, prompt)
     while not done and tries != 0:
       try:
@@ -192,7 +192,7 @@ def main():
     setproctitle.setproctitle("swankvm")
     parser = argparse.ArgumentParser(description='runkvm arguments.')
     parser.add_argument('--testname', '-t', action='store', help='The name of the test to run.')
-    parser.add_argument('--hostname', '-H', action='store', default='east', help='The name of the host to run.')
+    parser.add_argument('--hostname', '-H', action='store', default='', help='The name of the host to run.')
     parser.add_argument('--compile', action="store_true", help='compile the source on host <hostname>.')
     parser.add_argument('--install', action="store_true", help='run make install module_install .')
     parser.add_argument('--x509', action="store_true", help='tell the guest to setup the X509 certs in NSS.')
