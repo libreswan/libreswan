@@ -4,13 +4,6 @@
 . ../setup.sh
 . ../../utils/functions.sh
 
-#if [ ! -f  $LIBRESWANDIR/testing/x509/pkcs12/mainca/west.p12 ]
-#then
-#    echo "cannot run testcases without generating X509 certificates"
-#    echo "Please run $LIBRESWANDIR/testing/x509/dist_certs and try again"
-#    exit 1
-#fi
-
 TCPDUMP_FILTER="not stp and not port 22"
 
 TESTNAME=`basename $PWD`
@@ -126,5 +119,18 @@ if [ -f ./OUTPUT/$SWAN12_PCAP.pid ] ; then
         done 
 fi
 
-consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt
-consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.console.txt
+initout=`consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt`
+respout=`consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.console.txt`
+echo "WARNING: tcpdump output is not yet compared to known good output!"
+if [ "$initout" = "output matched" -a "$respout" = "output matched" ] ; then
+	echo $TESTNAME PASSED
+	echo "PASSED" > $PWD/RESULT
+else
+	echo $TESTNAME FAILED
+	echo "FAILED" > $PWD/RESULT
+	echo $initout
+	echo $initout >> $PWD/RESULT
+	echo $respout
+	echo $respout >> $PWD/RESULT
+fi
+
