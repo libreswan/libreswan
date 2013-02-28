@@ -21,8 +21,9 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
             # We need the lines with # for the cut --- tuc sections
             # if line and not line[0] == '#':
             if line:
+                # give the prompt time to appear
+		time.sleep(0.5)
                 print "%s: %s"%(prompt.replace("\\",""), line)
-		#time.sleep(1)
                 ex.sendline(line)
                 try:
                     ex.expect (prompt,timeout=timer, searchwindowsize=100) 
