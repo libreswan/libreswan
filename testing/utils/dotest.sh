@@ -19,6 +19,17 @@ echo "autodetect testname is $TESTNAME"
 rm -fr OUTPUT/*
 mkdir  -pm777 OUTPUT
 
+# kill all hanging runkvm's, they get called swankvm
+if [ -n "`pidof swankvm`" ] ; then
+	echo "Killing existing swankvm VM controllers"
+	killall swankvm
+fi
+# kill any lingering tcpdumps
+if [ -n "`pidof tcpdump`" ] ; then
+	echo "Killing existing tcpdump controllers"
+	sudo killall tcpdump
+fi
+
 if [ ! -f eastrun.sh ] ; then
 	RESPONDER=east
 else
@@ -78,7 +89,7 @@ TCPDUMP_PID=$!
 echo $TCPDUMP_PID  > ./OUTPUT/$SWAN12_PCAP.pid
 
 if [ -n "$NIC" ] ; then
-	echo "../../utils/runkvm.py --host $NIC --testname $TESTNAME"
+	echo "../../utils/runkvm.py --host $NIC --testname $TESTNAME --reboot"
 	../../utils/runkvm.py --host $NIC --testname $TESTNAME  &
 	NIC_PID=$!
 fi
