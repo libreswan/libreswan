@@ -66,7 +66,7 @@ case "$1" in
 	chmod 700 $rundir > /dev/null 2>/dev/null
 
 	# starting a stack will unload any loaded stack first (same or different stack)
-	ipsec _stackmanager start
+	[ -f /proc/modules ] && ipsec _stackmanager start
 
 	# Finally start the pluto daemon in a restart loop
 	if test $initsystem = "systemd";
@@ -118,7 +118,7 @@ case "$1" in
 	fi
 		
 	# Remove any loaded IPsec stack
-	ipsec _stackmanager stop
+	[ -f /proc/modules ] && ipsec _stackmanager stop
 
 	# Cleaning up backup resolv.conf
 	if [ -e $LIBRESWAN_RESOLV_CONF ]
