@@ -521,12 +521,19 @@ static const struct state_microcode state_microcode_table[] = {
 
     /***** informational messages *****/
 
+    /* Informational Exchange (RFC 2408 4.8):
+     * HDR N/D
+     * Unencrypted: must not occur after ISAKMP Phase 1 exchange of keying material.
+     */
     /* STATE_INFO: */
     { STATE_INFO, STATE_UNDEFINED
     , SMF_ALL_AUTH
     , LEMPTY, LEMPTY, PT(NONE)
     , EVENT_NULL, informational },
 
+    /* Informational Exchange (RFC 2408 4.8):
+     * HDR* N/D
+     */
     /* STATE_INFO_PROTECTED: */
     { STATE_INFO_PROTECTED, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_ENCRYPTED
