@@ -67,6 +67,8 @@ ifconfig eth0 mtu 1400
 # TODO: if rhel/centos, we should install epel-release too
 yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools
 yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace
+# at least for f17 it is a separate package
+yum install -y pexpect 
 
 mkdir /testing /source
 
@@ -142,4 +144,16 @@ ln -s /testing/guestbin/swan-build /usr/bin/swan-build
 ln -s /testing/guestbin/swan-install /usr/bin/swan-install
 ln -s /testing/guestbin/swan-update /usr/bin/swan-update
 ln -s /testing/guestbin/swan-run /usr/bin/swan-run
+
+# add easy names so we can jump from vm to vm
+
+cat << EOD >> /etc/hosts
+
+192.0.1.254 west
+192.0.2.254 east
+192.0.3.254 north
+192.1.3.209 road
+192.1.2.254 nic
+EOD
+
 %end

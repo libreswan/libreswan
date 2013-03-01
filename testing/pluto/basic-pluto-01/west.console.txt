@@ -1,8 +1,8 @@
 west #
- TESTNAME=basic-pluto-01
-west #
- /testing/guestbin/swan-prep --testname $TESTNAME
+ /testing/guestbin/swan-prep
 swan-prep running on west for test basic-pluto-01 with userland libreswan
+west #
+ # confirm that the network is alive
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -10,12 +10,15 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
-
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
+ # make sure that clear text does not get through
+west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ # confirm with a ping to east-in
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -23,24 +26,19 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 [ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
 [ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=3 
 [ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
-
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
-
 west #
  ipsec setup stop
 Redirecting to: systemctl stop ipsec.service
 west #
  pidof pluto >/dev/null && killall pluto 2> /dev/null
 west #
- rm /var/run/pluto/pluto.pid
-rm: cannot remove `/var/run/pluto/pluto.pid': No such file or directory
+ rm -f /var/run/pluto/pluto.pid
 west #
  /usr/local/libexec/ipsec/_stackmanager stop
 west #
  /usr/local/libexec/ipsec/_stackmanager start
-[ 00.00] AVX instructions are not detected.
-[ 00.00] AVX instructions are not detected.
 [ 00.00] NET: Registered protocol family 15
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
@@ -105,9 +103,10 @@ west #
 000  
 000 "westnet-eastnet": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet":     xauth info: my_xauthuser=[any]; their_xauthuser=[any]; ; dns1:unset, dns2:unset;
+000 "westnet-eastnet":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+ModeCFGDNS1+ModeCFGWINS1; 
+000 "westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG;
 000 "westnet-eastnet":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "westnet-eastnet":   dpd: action:clear; delay:0; timeout:0;  
 000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -130,130 +129,18 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:de:ad:ba:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=63 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
+64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
-
 --- 192.0.2.254 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  echo done
 done
 west #
- ipsec auto --status
-000 using kernel interface: klips
-000 interface ipsec0/eth1 2001:db8:1:2::45
-000 interface ipsec0/eth1 192.1.2.45
-000 %myid = (none)
-000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
-000  
-000 virtual_private (%priv):
-000 - allowed 0 subnets: 
-000 - disallowed 0 subnets: 
-000 WARNING: Either virtual_private= is not specified, or there is a syntax 
-000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
-000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
-000          private address space in internal use, it should be excluded!
-000  
-000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192
-000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=64, keysizemin=128, keysizemax=128
-000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=64, keysizemin=96, keysizemax=448
-000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
-000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
-000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
-000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
-000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashsize=48
-000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashsize=64
-000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
-000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
-000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
-000 algorithm IKE dh group: id=15, name=OAKLEY_GROUP_MODP3072, bits=3072
-000 algorithm IKE dh group: id=16, name=OAKLEY_GROUP_MODP4096, bits=4096
-000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
-000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
-000 algorithm IKE dh group: id=22, name=OAKLEY_GROUP_DH22, bits=1024
-000 algorithm IKE dh group: id=23, name=OAKLEY_GROUP_DH23, bits=2048
-000 algorithm IKE dh group: id=24, name=OAKLEY_GROUP_DH24, bits=2048
-000  
-000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
-000  
-000 "westnet-eastnet": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #2
-000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet":     xauth info: my_xauthuser=[any]; their_xauthuser=[any]; ; dns1:unset, dns2:unset;
-000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+ModeCFGDNS1+ModeCFGWINS1; 
-000 "westnet-eastnet":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
-000 "westnet-eastnet":   dpd: action:clear; delay:0; timeout:0;  
-000 "westnet-eastnet":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
-000 "westnet-eastnet":   IKE algorithm newest: AES_CBC_128-SHA1-MODP2048
-000 "westnet-eastnet":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
-000  
-000 #2: "westnet-eastnet":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #2: "westnet-eastnet" esp.a6168c5@192.1.2.23 esp.4a03e52a@192.1.2.45 tun.1001@192.1.2.23 tun.1002@192.1.2.45 ref=3 refhim=1 Traffic: ESPmax=4095GB
-000 #1: "westnet-eastnet":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
-000  
-west #
- ipsec look
-west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
-ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45  natencap=none natsport=0 natdport=0   refhim=0
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128  natencap=none natsport=0 natdport=0   refhim=0
-esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128  natencap=none natsport=0 natdport=0   refhim=1
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<>  natencap=none natsport=0 natdport=0   refhim=1
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
-192.0.2.0/24 dev ipsec0  scope link 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-unreachable ::/96 dev lo  metric 1024  error -101
-unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
-2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
-2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
-2001:db8:1:2::45 dev ipsec0  proto kernel  metric 256 
-2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
-2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
-unreachable 2002:a00::/24 dev lo  metric 1024  error -101
-unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
-unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
-unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
-unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
-unreachable 2002:e000::/19 dev lo  metric 1024  error -101
-unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
-fe80::1000:ff:fe64:6445 dev ipsec0  proto kernel  metric 256 
-unreachable fe80::/64 dev lo  proto kernel  metric 256  error -101
-fe80::/64 dev eth0  proto kernel  metric 256 
-fe80::/64 dev eth1  proto kernel  metric 256 
-fe80::/64 dev eth2  proto kernel  metric 256 
-fe80::/64 dev ipsec0  proto kernel  metric 256 
-default via 2001:db8:1:2::254 dev eth1  metric 1 
-default via 2001:db8:1:2::254 dev eth1  metric 1024 
-NSS_CERTIFICATES
-
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-
-west #
- ipsec whack --shutdown
-002 shutting down
 west #
  if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core ./; fi
 west #
- ipsec whack --shutdown
-whack: Pluto is not running (no "/var/run/pluto/pluto.ctl")
-west #
- 
+

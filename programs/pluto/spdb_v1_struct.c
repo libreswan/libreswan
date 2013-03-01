@@ -1758,6 +1758,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
 		switch (val) {
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
+				DBG(DBG_NATT, DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is '%d'", st->hidden_variables.st_nat_traversal));
 				if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 					loglog(RC_LOG_SERIOUS,
 						"%s must only be used if "
@@ -1786,6 +1787,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
 #endif
 
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
+				DBG(DBG_NATT, DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'", st->hidden_variables.st_nat_traversal));
 				if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES) {
 					loglog(RC_LOG_SERIOUS,
 						"%s must only be used with old IETF drafts",
@@ -1820,6 +1822,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
 #endif
 
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
+				DBG(DBG_NATT, DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'", st->hidden_variables.st_nat_traversal));
 				if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 					(st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES)) {
 					attrs->encapsulation = val - ENCAPSULATION_MODE_UDP_TUNNEL_RFC + ENCAPSULATION_MODE_TUNNEL;

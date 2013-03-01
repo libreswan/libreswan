@@ -4,6 +4,7 @@
 # It should be passed a testname as its onyl argument
 
 import os,sys,socket,shutil,distutils.dir_util,commands
+import glob,pexpect
 
 try:
 	import argparse
@@ -12,7 +13,7 @@ except ImportError , e:
         sys.exit("we requires the python argparse module")
 
 parser = argparse.ArgumentParser(description='swan-prep arguments')
-parser.add_argument('--testname', '-t', action='store', default='ikev2-05-basic-psk', help='The name of the test to prepapre')
+parser.add_argument('--testname', '-t', action='store', default='', help='The name of the test to prepapre')
 parser.add_argument('--hostname', '-H', action='store', default='', help='The name of the host to prepare as')
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
@@ -21,6 +22,9 @@ args = parser.parse_args()
 
 if args.hostname:
 	hostname = args.hostname
+	if hostname == "nic":
+		# nothing to do, just stop
+		sys.exit()
 else:
 	hostname = socket.gethostname()
 if "." in hostname:
@@ -34,8 +38,14 @@ if args.testname:
 	testname = args.testname
 else:
 	testname = os.getcwd().split("/")[-1]
-	if not os.path.isdir("/testing/pluto/%s"%testnname):
+	if not os.path.isdir("/testing/pluto/%s"%testname):
 		sys.exit("Determing testname failed - aborted")
+
+# Setup pluto.log softlink
+if args.hostname != "nic":
+	if os.path.isfile("/tmp/pluto.log"):
+		os.unlink("/tmp/pluto.log")
+	os.symlink("/testing/pluto/%s/OUTPUT/pluto.%s.log"%(args.testname,args.hostname),"/tmp/pluto.log")
 
 if args.userland:
 	if not args.userland in ( "libreswan","strongswan","racoon","shrew", "openswan"):
@@ -70,18 +80,29 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 			os.mkdir(dir)
 
 	# test specific files
-	shutil.copy("/testing/pluto/%s/%s.conf"%(testname,hostname),"/etc/ipsec.conf")
-	src_file = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
-	if os.path.isfile(src_file):
-		shutil.copy(src_file,"/etc/ipsec.secrets")
-	else:
-		src_file = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
-		if os.path.isfile(src_file):
-			shutil.copy(src_file,"/etc/ipsec.secrets")
+	ipsecconf = "/testing/pluto/%s/%s.conf"%(testname,hostname)
+	ipsecsecrets = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
+	if not os.path.isfile(ipsecconf):
+		ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf"%hostname
+	if not os.path.isfile(ipsecsecrets):
+		ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
+
+	shutil.copy(ipsecconf, "/etc/ipsec.conf")
+	shutil.copy(ipsecsecrets,"/etc/ipsec.secrets")
 	os.chmod("/etc/ipsec.secrets",0600)
 
 	if args.x509:
 		print "Preparing X.509 NSS files"
+		# clean out old db files and generate new ones from scratch, does not support -w for password
+		oldfiles = glob.glob("/etc/ipsec.d/*db")
+		for oldfile in oldfiles:
+			os.unlink(oldfile)
+		cmd = "certutil -N -d /etc/ipsec.d"
+		timer = 10
+		child = pexpect.spawn(cmd)
+		child.sendline ('')
+		child.sendline ('')
+
 		commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
 		# install all other public certs
 		for certname in ( "west", "east", "road" ):

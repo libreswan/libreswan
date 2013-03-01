@@ -213,7 +213,7 @@ doinstall: all
 			ln -s -f ipsec_$$from $(PMANDIR)/$$to; \
 		done
 	g=`if [ -r ipsec.secrets.5 ]; then echo ipsec.secrets.5; else echo ${srcdir}/ipsec.secrets.5; fi`; \
-	$(INSTALL) $(INSTMANFLAGS) $$g $(FMANDIR)/ipsec_secrets.5 || exit 1; \
+	$(INSTALL) $(INSTMANFLAGS) $$g $(FMANDIR)/ipsec.secrets.5 || exit 1; \
 	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \
 		while read from to ; \
 		do \
