@@ -16,6 +16,9 @@
 # for more details.
 #
 
+# nothing to do if the kernel has no module loading/unloading support
+[ ! -f /proc/modules ] && exit 0
+
 IPSEC_CONF="${FINALCONFFILE-@FINALCONFFILE@}"
 export PATH=@FINALSBINDIR@:$PATH
 
