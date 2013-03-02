@@ -102,9 +102,10 @@ echo "start final.sh on responder $RESPONDER for $TESTNAME"
 RESPONDER_FINAL_PID=$!
 wait_till_pid_end "$RESPONDER" $RESPONDER_FINAL_PID
 
-if [ -n "$NIC_PID" ] ; then
-	kill -9 $NIC_PID
-fi
+# This causes this script to end itself?
+#if [ -n "$NIC_PID" ] ; then
+#	kill -9 $NIC_PID
+#fi
 
 TCPDUMP_PID_R=`pidof sudo`
 if [ -f ./OUTPUT/$SWAN12_PCAP.pid ] ; then
