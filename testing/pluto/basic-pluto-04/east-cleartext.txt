@@ -1,0 +1,71 @@
+12:12:06.457540 ARP, Request who-has 192.1.2.45 tell 192.1.2.23, length 28
+12:12:06.458651 ARP, Reply 192.1.2.45 is-at 12:00:00:64:64:45, length 28
+12:12:06.458721 IP 192.1.2.23.isakmp > 192.1.2.45.isakmp: isakmp: phase 2/others ? inf[E]
+12:12:06.481982 IP 192.1.2.45.isakmp > 192.1.2.23.isakmp: isakmp: phase 2/others ? inf[E]
+12:12:06.809929 IP 192.1.2.23.isakmp > 192.1.2.45.isakmp: isakmp: phase 2/others ? inf[E]
+12:12:06.938932 IP 192.1.2.45.isakmp > 192.1.2.23.isakmp: isakmp: phase 2/others ? inf[E]
+12:12:07.348803 IP6 fe80::1000:ff:fe64:6423 > ff02::16: HBH ICMP6, multicast listener report v2, 2 group record(s), length 48
+12:12:07.422479 IP6 fe80::1000:ff:fe64:6445 > ff02::16: HBH ICMP6, multicast listener report v2, 2 group record(s), length 48
+12:12:08.288712 IP 192.1.3.33.isakmp > 192.1.2.23.isakmp: isakmp: phase 1 I ident
+12:12:13.294703 ARP, Request who-has 192.1.2.23 tell 192.1.2.254, length 28
+12:12:14.296677 ARP, Request who-has 192.1.2.23 tell 192.1.2.254, length 28
+12:12:15.298698 ARP, Request who-has 192.1.2.23 tell 192.1.2.254, length 28
+12:12:21.379362 IP6 fe80::1000:ff:fe64:6423 > ff02::16: HBH ICMP6, multicast listener report v2, 3 group record(s), length 68
+12:12:21.381863 ARP, Request who-has 192.1.2.23 (Broadcast) tell 0.0.0.0, length 28
+12:12:22.382140 ARP, Request who-has 192.1.2.23 (Broadcast) tell 0.0.0.0, length 28
+12:12:23.378491 IP6 fe80::1000:ff:fe64:6445 > ff02::16: HBH ICMP6, multicast listener report v2, 3 group record(s), length 68
+12:12:23.381248 ARP, Request who-has 192.1.2.45 (Broadcast) tell 0.0.0.0, length 28
+12:12:23.386166 ARP, Reply 192.1.2.23 is-at 12:00:00:64:64:23, length 28
+12:12:23.430346 IP6 fe80::1000:ff:fe64:6423 > ff02::16: HBH ICMP6, multicast listener report v2, 4 group record(s), length 88
+12:12:23.441366 IP6 fe80::1000:ff:fe64:6423 > ff02::16: HBH ICMP6, multicast listener report v2, 4 group record(s), length 88
+12:12:24.381609 ARP, Request who-has 192.1.2.45 (Broadcast) tell 0.0.0.0, length 28
+12:12:25.384758 ARP, Reply 192.1.2.45 is-at 12:00:00:64:64:45, length 28
+12:12:25.393380 ARP, Request who-has 192.1.2.23 (Broadcast) tell 192.1.2.23, length 28
+12:12:25.428501 IP6 fe80::1000:ff:fe64:6445 > ff02::16: HBH ICMP6, multicast listener report v2, 4 group record(s), length 88
+12:12:25.438497 IP6 fe80::1000:ff:fe64:6445 > ff02::16: HBH ICMP6, multicast listener report v2, 4 group record(s), length 88
+12:12:25.743336 IP6 fe80::1000:ff:fe64:6423 > ff02::16: HBH ICMP6, multicast listener report v2, 2 group record(s), length 48
+12:12:27.391640 ARP, Request who-has 192.1.2.45 (Broadcast) tell 192.1.2.45, length 28
+12:12:27.784523 IP6 fe80::1000:ff:fe64:6445 > ff02::16: HBH ICMP6, multicast listener report v2, 2 group record(s), length 48
+12:12:29.832699 IP6 fe80::1000:ff:fe64:6445 > ff02::16: HBH ICMP6, multicast listener report v2, 2 group record(s), length 48
+12:12:35.377563 IP6 fe80::1000:ff:fe64:6423 > ff02::16: HBH ICMP6, multicast listener report v2, 2 group record(s), length 48
+12:12:40.086085 ARP, Request who-has 192.1.2.23 tell 192.0.1.254, length 28
+12:12:40.086341 ARP, Reply 192.1.2.23 is-at 12:00:00:64:64:23, length 28
+12:12:40.086557 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id 1266, seq 1, length 64
+12:12:40.086740 ARP, Request who-has 192.1.2.45 tell 192.0.2.254, length 28
+12:12:40.086877 ARP, Reply 192.1.2.45 is-at 12:00:00:64:64:45, length 28
+12:12:40.087001 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id 1266, seq 1, length 64
+12:12:41.087955 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id 1266, seq 2, length 64
+12:12:41.088255 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id 1266, seq 2, length 64
+12:12:42.089845 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id 1266, seq 3, length 64
+12:12:42.089998 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id 1266, seq 3, length 64
+12:12:43.090749 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id 1266, seq 4, length 64
+12:12:43.091059 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id 1266, seq 4, length 64
+12:12:45.534166 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id 1268, seq 1, length 64
+12:12:45.534416 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id 1268, seq 1, length 64
+12:12:46.533855 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id 1268, seq 2, length 64
+12:12:46.534085 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id 1268, seq 2, length 64
+12:12:47.533851 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id 1268, seq 3, length 64
+12:12:47.534108 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id 1268, seq 3, length 64
+12:12:48.330104 IP 192.1.3.33.isakmp > 192.1.2.23.isakmp: isakmp: phase 1 I ident
+12:12:48.533758 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id 1268, seq 4, length 64
+12:12:48.534064 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id 1268, seq 4, length 64
+12:12:53.343080 ARP, Request who-has 192.1.2.23 tell 192.1.2.254, length 28
+12:12:53.343255 ARP, Reply 192.1.2.23 is-at 12:00:00:64:64:23, length 28
+12:13:06.123068 IP 192.1.2.45.isakmp > 192.1.2.23.isakmp: isakmp: phase 1 I ident
+12:13:06.190120 IP 192.1.2.23.isakmp > 192.1.2.45.isakmp: isakmp: phase 1 R ident
+12:13:06.238407 IP 192.1.2.45.isakmp > 192.1.2.23.isakmp: isakmp: phase 1 I ident
+12:13:06.282425 IP 192.1.2.23.isakmp > 192.1.2.45.isakmp: isakmp: phase 1 R ident
+12:13:06.343180 IP 192.1.2.45.isakmp > 192.1.2.23.isakmp: isakmp: phase 1 I ident[E]
+12:13:06.403578 IP 192.1.2.23.isakmp > 192.1.2.45.isakmp: isakmp: phase 1 R ident[E]
+12:13:06.476196 IP 192.1.2.45.isakmp > 192.1.2.23.isakmp: isakmp: phase 2/others I oakley-quick[E]
+12:13:06.657856 IP 192.1.2.23.isakmp > 192.1.2.45.isakmp: isakmp: phase 2/others R oakley-quick[E]
+12:13:06.909940 IP 192.1.2.45.isakmp > 192.1.2.23.isakmp: isakmp: phase 2/others I oakley-quick[E]
+12:13:07.527089 IP 192.1.2.45 > 192.1.2.23: ESP(spi=0x4ff40539,seq=0x1), length 132
+12:13:07.527449 IP 192.1.2.23 > 192.1.2.45: ESP(spi=0x88e80748,seq=0x1), length 132
+12:13:08.528784 IP 192.1.2.45 > 192.1.2.23: ESP(spi=0x4ff40539,seq=0x2), length 132
+12:13:08.529247 IP 192.1.2.23 > 192.1.2.45: ESP(spi=0x88e80748,seq=0x2), length 132
+12:13:09.530126 IP 192.1.2.45 > 192.1.2.23: ESP(spi=0x4ff40539,seq=0x3), length 132
+12:13:09.530417 IP 192.1.2.23 > 192.1.2.45: ESP(spi=0x88e80748,seq=0x3), length 132
+12:13:10.531827 IP 192.1.2.45 > 192.1.2.23: ESP(spi=0x4ff40539,seq=0x4), length 132
+12:13:10.532162 IP 192.1.2.23 > 192.1.2.45: ESP(spi=0x88e80748,seq=0x4), length 132
+12:13:28.370952 IP 192.1.3.33.isakmp > 192.1.2.23.isakmp: isakmp: phase 1 I ident

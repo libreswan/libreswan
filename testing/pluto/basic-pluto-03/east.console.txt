@@ -1,9 +1,4 @@
-[root@east basic-pluto-03]# ipsec setup stop
-Redirecting to: systemctl stop ipsec.service
-[root@east basic-pluto-03]# pidof pluto >/dev/null && killall pluto 2> /dev/null
-[root@east basic-pluto-03]# rm -f /var/run/pluto/pluto.pid
-[root@east basic-pluto-03]# /usr/local/libexec/ipsec/_stackmanager stop
-[root@east basic-pluto-03]# /usr/local/libexec/ipsec/_stackmanager start
+[root@east basic-pluto-03]# ipsec _stackmanager start
 [ 00.00] NET: Registered protocol family 15
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
