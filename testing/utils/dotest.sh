@@ -41,10 +41,16 @@ fi
 
 if [ -f westrun.sh ] ; then
 	INITIATOR=west
+	SWAN_PCAP=swan12.pcap
+	TCPDUMP_DEV=swan12
 elif [ -f roadrun.sh ] ; then
 	INITIATOR=road
+	SWAN_PCAP=swan12.pcap
+	TCPDUMP_DEV=swan12
 elif [ -f northrun.sh ] ; then
 	INITIATOR=north
+	SWAN_PCAP=swan13.pcap
+	TCPDUMP_DEV=swan13
 else 
 	echo "can't identify INITIATOR"
 	exit 1
@@ -55,7 +61,6 @@ touch OUTPUT/pluto.$RESPONDER.log
 chmod a+rw OUTPUT/pluto.$INITIATOR.log 
 chmod a+rw OUTPUT/pluto.$RESPONDER.log
 
-SWAN12_PCAP=swan12.pcap
 
 function wait_till_pid_end {
 	NAME=$1 
@@ -77,9 +82,9 @@ function wait_till_pid_end {
 	set -e
 }
 
-sudo /sbin/tcpdump -w ./OUTPUT/$SWAN12_PCAP -n -i swan12 $TCPDUMP_FILTER &
+sudo /sbin/tcpdump -w ./OUTPUT/$SWAN_PCAP -n -i $TCPDUMP_DEV $TCPDUMP_FILTER &
 TCPDUMP_PID=$! 
-echo $TCPDUMP_PID  > ./OUTPUT/$SWAN12_PCAP.pid
+echo $TCPDUMP_PID  > ./OUTPUT/$SWAN_PCAP.pid
 
 if [ -n "$NIC" ] ; then
 	echo "../../utils/runkvm.py --host $NIC --testname $TESTNAME --reboot"
@@ -108,8 +113,8 @@ wait_till_pid_end "$RESPONDER" $RESPONDER_FINAL_PID
 #fi
 
 TCPDUMP_PID_R=`pidof sudo`
-if [ -f ./OUTPUT/$SWAN12_PCAP.pid ] ; then
-	TCPDUMP_PID=`cat  ./OUTPUT/$SWAN12_PCAP.pid`
+if [ -f ./OUTPUT/$SWAN_PCAP.pid ] ; then
+	TCPDUMP_PID=`cat  ./OUTPUT/$SWAN_PCAP.pid`
 	for s in $TCPDUMP_PID_R
 	do
 		if [ $s -eq $TCPDUMP_PID ] ; then
