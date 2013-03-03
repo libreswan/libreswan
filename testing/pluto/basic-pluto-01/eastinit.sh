@@ -1,5 +1,4 @@
 : ==== start ====
-/testing/guestbin/swan-prep
 ipsec setup stop
 pidof pluto >/dev/null && killall pluto 2> /dev/null
 rm -f /var/run/pluto/pluto.pid
