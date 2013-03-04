@@ -37,13 +37,14 @@ if args.testname:
 	#	sys.exit("Unknown or bad testname '%s'"%args.testname)
 	testname = args.testname
 else:
-	testname = "/testing/pluto/%s"%os.path.basename(os.getcwd())
-	if not os.path.isdir(testname):
+	testpath = "/testing/pluto/%s"%os.path.basename(os.getcwd())
+	testname = os.path.basename(testpath)
+	if not os.path.isdir(testpath):
 		sys.exit("testcase /testing/pluto/%s invalid - aborted"%testname)
 
 # Setup pluto.log softlink
 if hostname != "nic":
-	if os.path.lstat("/tmp/pluto.log"):
+	if os.lstat("/tmp/pluto.log"):
 		os.unlink("/tmp/pluto.log")
 	os.symlink("/testing/pluto/%s/OUTPUT/pluto.%s.log"%(testname,hostname),"/tmp/pluto.log")
 
