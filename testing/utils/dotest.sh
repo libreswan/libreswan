@@ -56,6 +56,7 @@ else
 	exit 1
 fi
 
+echo "RUNNING" > OUTPUT/RESULT
 touch OUTPUT/pluto.$INITIATOR.log
 touch OUTPUT/pluto.$RESPONDER.log 
 chmod a+rw OUTPUT/pluto.$INITIATOR.log 
@@ -130,13 +131,13 @@ respout=`consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.c
 echo "WARNING: tcpdump output is not yet compared to known good output!"
 if [ "$initout" = "output matched" -a "$respout" = "output matched" ] ; then
 	echo $TESTNAME PASSED
-	echo "PASSED" > $PWD/RESULT
+	echo "PASSED" > OUTPUT/RESULT
 else
 	echo $TESTNAME FAILED
-	echo "FAILED" > $PWD/RESULT
+	echo "FAILED" > OUTPUT/RESULT
 	echo $initout
-	echo $initout >> $PWD/RESULT
+	echo $initout >> OUTPUT/RESULT
 	echo $respout
-	echo $respout >> $PWD/RESULT
+	echo $respout >> OUTPUT/RESULT
 fi
 
