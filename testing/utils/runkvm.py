@@ -174,9 +174,6 @@ def run_test(args, child):
 		except:
 			pass
 	
-    cmd = '/testing/guestbin/swan-prep --testname %s --hostname %s %s'%(args.testname,args.hostname, x509)
-    read_exec_shell_cmd( child, cmd, prompt, 10)
-
     cmd = "./%sinit.sh" %  (args.hostname) 
     read_exec_shell_cmd( child, cmd, prompt, timer)
 
