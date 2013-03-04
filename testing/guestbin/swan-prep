@@ -123,7 +123,7 @@ if userland == "racoon2" or userland == "racoon":
 if userland == "shrew":
 	print "shrew not yet tested/integrated"
 
-# final prep - this kills old userlands and starts new one
+# final prep - this kills any running userland
 output = commands.getoutput("ipsec stop")
 # python has no pidof :/
 pluto = commands.getoutput("pidof pluto")
@@ -139,4 +139,4 @@ for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/ik
 		os.unlink(pidfile)
 
 # remove stacks so test can start the stack it needs.
-commands.getoutput("/usr/local/libexec/ipsec/_stackmanager stop")
+commands.getoutput("ipsec _stackmanager stop")
