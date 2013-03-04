@@ -445,6 +445,12 @@ umlplutotest    loopback-pluto-02		good
 umlplutotest    loopback-pluto-03		good
 umlplutotest    loopback-pluto-04		good
 
+# compress tests, some use netkey
+umlplutotest    compress-pluto-01		good
+umlplutotest    compress-pluto-02		bad
+umlplutotest    compress-pluto-03		good
+umlplutotest    compress-pluto-04		good
+
 # sourceip tests
 umlplutotest	sourceip-01			good
 umlplutotest	sourceip-02			good

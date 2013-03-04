@@ -37,15 +37,16 @@ if args.testname:
 	#	sys.exit("Unknown or bad testname '%s'"%args.testname)
 	testname = args.testname
 else:
-	testname = os.getcwd().split("/")[-1]
-	if not os.path.isdir("/testing/pluto/%s"%testname):
-		sys.exit("Determing testname failed - aborted")
+	testpath = "/testing/pluto/%s"%os.path.basename(os.getcwd())
+	testname = os.path.basename(testpath)
+	if not os.path.isdir(testpath):
+		sys.exit("testcase /testing/pluto/%s invalid - aborted"%testname)
 
 # Setup pluto.log softlink
-if args.hostname != "nic":
-	if os.path.isfile("/tmp/pluto.log"):
+if hostname != "nic":
+	if os.lstat("/tmp/pluto.log"):
 		os.unlink("/tmp/pluto.log")
-	os.symlink("/testing/pluto/%s/OUTPUT/pluto.%s.log"%(args.testname,args.hostname),"/tmp/pluto.log")
+	os.symlink("/testing/pluto/%s/OUTPUT/pluto.%s.log"%(testname,hostname),"/tmp/pluto.log")
 
 if args.userland:
 	if not args.userland in ( "libreswan","strongswan","racoon","shrew", "openswan"):
@@ -54,7 +55,7 @@ if args.userland:
 else:
 	userland = "libreswan"
 
-print "swan-prep running on %s for test %s with userland %s"%(hostname,testname,userland)
+#print "swan-prep running on %s for test %s with userland %s"%(hostname,testname,userland)
 
 # wipe any old configs in /etc/ipsec.*
 if os.path.isfile("/etc/ipsec.conf"):

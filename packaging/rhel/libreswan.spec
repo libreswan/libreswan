@@ -198,8 +198,11 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/cacerts
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
+%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %{_sysconfdir}/pam.d/pluto
 %{_initrddir}/ipsec
