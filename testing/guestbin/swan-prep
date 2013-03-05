@@ -133,8 +133,10 @@ shrew = commands.getoutput("pidof iked")
 racoon = commands.getoutput("pidof racoon")
 
 for daemon in ( pluto, charon, shrew, racoon ):
-	if daemon:
-		os.kill(int(daemon),9)
+	pids = commands.getoutput("pidof %s"%daemon)
+	if pids:
+		for pid in pids.split()
+		os.kill(pid,9)
 for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/racoon.pid"):
 	if os.path.isfile(pidfile):
 		os.unlink(pidfile)
