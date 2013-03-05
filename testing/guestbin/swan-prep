@@ -44,7 +44,7 @@ else:
 
 # Setup pluto.log softlink
 if hostname != "nic":
-	if os.lstat("/tmp/pluto.log"):
+	if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
 		os.unlink("/tmp/pluto.log")
 	os.symlink("/testing/pluto/%s/OUTPUT/pluto.%s.log"%(testname,hostname),"/tmp/pluto.log")
 
