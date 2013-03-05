@@ -401,7 +401,7 @@ delete_state(struct state *st)
     if (st->st_ipcomp.present) {
         sbcp = humanize_number(st->st_ipcomp.peer_bytes,
                                sbcp, sizeof(statebuf) - 1,
-                               "IPCOMP traffic information: in=%lu%s");
+                               " IPCOMP traffic information: in=%lu%s");
         sbcp = humanize_number(st->st_ipcomp.our_bytes,
                                sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
                                " out=%lu%s");
