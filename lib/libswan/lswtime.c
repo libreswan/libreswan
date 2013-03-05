@@ -64,11 +64,17 @@ timetoa(const time_t *timep, bool utc, char *b, size_t blen)
 	snprintf(b, blen, "--- -- --:--:--%s----", (utc)?" UTC ":" ");
     else
     {
-	struct tm *t = (utc)? gmtime(timep) : localtime(timep);
-
+	struct tm tm1, *tm;
+	if (utc)
+	{
+	  tm = gmtime_r(timep, &tm1);
+	} else {
+	  tm = localtime_r(timep, &tm1);
+	}
+	
 	snprintf(b, blen, "%s %02d %02d:%02d:%02d%s%04d",
-	    months[t->tm_mon], t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec,
-	    (utc)?" UTC ":" ", t->tm_year + 1900
+	    months[tm->tm_mon], tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec,
+	    (utc)?" UTC ":" ", tm->tm_year + 1900
 	);
     }
     return b;
