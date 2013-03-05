@@ -1,4 +1,6 @@
-[root@east basic-pluto-03]# ipsec _stackmanager start
+/testing/guestbin/swan-prep
+east #
+ ipsec _stackmanager start
 [ 00.00] NET: Registered protocol family 15
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
@@ -9,10 +11,14 @@
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=7 name=cbc(blowfish) keyminbits=96 keymaxbits=448, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] 
-[root@east basic-pluto-03]# /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
-[root@east basic-pluto-03]# /testing/pluto/bin/wait-until-pluto-started
-[root@east basic-pluto-03]# ipsec auto --add northnet--eastnet-nat
-[root@east basic-pluto-03]# ipsec auto --status
+east #
+ /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add northnet--eastnet-nonat
+east #
+ ipsec auto --status
 000 using kernel interface: klips
 000 interface ipsec0/eth1 2001:db8:1:2::23
 000 interface ipsec0/eth1 192.1.2.23
@@ -54,19 +60,22 @@
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
-000 "northnet--eastnet-nat": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]---192.1.2.254...%any[@north]; unrouted; eroute owner: #0
-000 "northnet--eastnet-nat":     oriented; my_ip=unset; their_ip=unset;
-000 "northnet--eastnet-nat":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "northnet--eastnet-nat":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
-000 "northnet--eastnet-nat":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "northnet--eastnet-nat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
-000 "northnet--eastnet-nat":   prio: 24,32; interface: eth1; metric: 0, mtu: unset;
-000 "northnet--eastnet-nat":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "northnet--eastnet-nonat": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]---192.1.2.254...%any[@north]; unrouted; eroute owner: #0
+000 "northnet--eastnet-nonat":     oriented; my_ip=unset; their_ip=unset;
+000 "northnet--eastnet-nonat":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "northnet--eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
+000 "northnet--eastnet-nonat":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "northnet--eastnet-nonat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "northnet--eastnet-nonat":   prio: 24,32; interface: eth1; metric: 0, mtu: unset;
+000 "northnet--eastnet-nonat":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000  
-[root@east basic-pluto-03]# echo "initdone"
+east #
+ echo "initdone"
 initdone
-[root@east basic-pluto-03]# 000 using kernel interface: klips
+east #
+east #
+ 000 using kernel interface: klips
 000 interface ipsec0/eth1 2001:db8:1:2::23
 000 interface ipsec0/eth1 192.1.2.23
 000 interface ipsec0/eth1 192.1.2.23
@@ -107,80 +116,14 @@ initdone
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
-000 "northnet--eastnet-nat": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]---192.1.2.254...%any[@north]; unrouted; eroute owner: #0
-000 "northnet--eastnet-nat":     oriented; my_ip=unset; their_ip=unset;
-000 "northnet--eastnet-nat":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "northnet--eastnet-nat":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
-000 "northnet--eastnet-nat":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "northnet--eastnet-nat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
-000 "northnet--eastnet-nat":   prio: 24,32; interface: eth1; metric: 0, mtu: unset;
-000 "northnet--eastnet-nat":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "northnet--eastnet-nat"[1]: 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]---192.1.2.254...192.1.3.33[@north]; erouted; eroute owner: #2
-000 "northnet--eastnet-nat"[1]:     oriented; my_ip=unset; their_ip=unset;
-000 "northnet--eastnet-nat"[1]:   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "northnet--eastnet-nat"[1]:   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
-000 "northnet--eastnet-nat"[1]:   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "northnet--eastnet-nat"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
-000 "northnet--eastnet-nat"[1]:   prio: 24,32; interface: eth1; metric: 0, mtu: unset;
-000 "northnet--eastnet-nat"[1]:   newest ISAKMP SA: #1; newest IPsec SA: #2; 
-000 "northnet--eastnet-nat"[1]:   IKE algorithm newest: AES_CBC_128-SHA1-MODP2048
-000 "northnet--eastnet-nat"[1]:   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
+000 "northnet--eastnet-nonat": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]---192.1.2.254...%any[@north]; unrouted; eroute owner: #0
+000 "northnet--eastnet-nonat":     oriented; my_ip=unset; their_ip=unset;
+000 "northnet--eastnet-nonat":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "northnet--eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
+000 "northnet--eastnet-nonat":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "northnet--eastnet-nonat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "northnet--eastnet-nonat":   prio: 24,32; interface: eth1; metric: 0, mtu: unset;
+000 "northnet--eastnet-nonat":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
-000 #2: "northnet--eastnet-nat"[1] 192.1.3.33:500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:not set
-000 #2: "northnet--eastnet-nat"[1] 192.1.3.33 esp.DEADF00D@192.1.3.33 esp.DEADF00D@192.1.2.23 tun.1001@192.1.3.33 tun.1002@192.1.2.23 ref=3 refhim=1 Traffic: ESPmax=4095GB
-000 #1: "northnet--eastnet-nat"[1] 192.1.3.33:500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
 000  
-[root@east basic-pluto-03]# nss directory plutomain: /etc/ipsec.d
-NSS Initialized
-FIPS integrity support [disabled]
-libcap-ng support [enabled]
-Linux audit support [disabled]
-Starting Pluto (Libreswan Version )
-Non-fips mode set in /proc/sys/crypto/fips_enabled
-Pluto is NOT running in FIPS mode
-core dump dir: /var/tmp
-secrets file: /etc/ipsec.secrets
-LEAK_DETECTIVE support [disabled]
-OCF support for IKE [disabled]
-SAref support [disabled]: Protocol not available
-SAbind support [disabled]: Protocol not available
-NSS crypto [enabled]
-XAUTH PAM support [enabled]
-HAVE_STATSD notification support [disabled]
-Setting NAT-Traversal port-4500 floating to on
-   port floating activation criteria nat_t=1/port_float=1
-   NAT-Traversal support  [enabled]
-ike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
-ike_alg_register_hash(): Activating OAKLEY_SHA2_512: Ok (ret=0)
-ike_alg_register_hash(): Activating OAKLEY_SHA2_384: Ok (ret=0)
-ike_alg_register_hash(): Activating OAKLEY_SHA2_256: Ok (ret=0)
-no helpers will be started, all cryptographic operations will be done inline
-listening for IKE messages
-adding interface ipsec0/eth1 192.1.2.23:500
-adding interface ipsec0/eth1 192.1.2.23:4500
-adding interface ipsec0/eth1 2001:db8:1:2::23:500
-loading secrets from "/etc/ipsec.secrets"
-loaded private key for keyid: PPK_RSA:ADEADBEEF
-listening for IKE messages
-forgetting secrets
-loading secrets from "/etc/ipsec.secrets"
-loaded private key for keyid: PPK_RSA:ADEADBEEF
-added connection description "northnet--eastnet-nat"
-packet from 192.1.3.33:500: received Vendor ID payload [Libreswan (this version)  VERSION
-packet from 192.1.3.33:500: received Vendor ID payload [Dead Peer Detection]
-packet from 192.1.3.33:500: ignoring Vendor ID payload [IKE Fragmentation]
-packet from 192.1.3.33:500: received Vendor ID payload [RFC 3947]
-packet from 192.1.3.33:500: received Vendor ID payload [draft-ietf-ipsec-nat-t-ike-00]
-"northnet--eastnet-nat"[1] 192.1.3.33 #1: responding to Main Mode from unknown peer 192.1.3.33
-"northnet--eastnet-nat"[1] 192.1.3.33 #1: STATE_MAIN_R1: sent MR1, expecting MI2
-"northnet--eastnet-nat"[1] 192.1.3.33 #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): no NAT detected
-"northnet--eastnet-nat"[1] 192.1.3.33 #1: STATE_MAIN_R2: sent MR2, expecting MI3
-"northnet--eastnet-nat"[1] 192.1.3.33 #1: Main mode peer ID is ID_FQDN: '@north'
-"northnet--eastnet-nat"[1] 192.1.3.33 #1: STATE_MAIN_R3: sent MR3, ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
-"northnet--eastnet-nat"[1] 192.1.3.33 #1: the peer proposed: 192.0.2.0/24:0/0 -> 192.1.3.33/32:0/0
-"northnet--eastnet-nat"[1] 192.1.3.33 #2: responding to Quick Mode proposal 
-"northnet--eastnet-nat"[1] 192.1.3.33 #2:     us: 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]---192.1.2.254
-"northnet--eastnet-nat"[1] 192.1.3.33 #2:   them: 192.1.3.33[@north]
-"northnet--eastnet-nat"[1] 192.1.3.33 #2: STATE_QUICK_R1: sent QR1, inbound IPsec SA installed, expecting QI2
-"northnet--eastnet-nat"[1] 192.1.3.33 #2: STATE_QUICK_R2: IPsec SA established tunnel mode
-
+east #
