@@ -11,6 +11,7 @@ echo "autodetect testname is $TESTNAME"
 
 rm -fr OUTPUT/*
 mkdir  -pm777 OUTPUT
+echo "RUNNING" > OUTPUT/RESULT
 
 # kill all hanging runkvm's, they get called swankvm
 if [ -n "`pidof swankvm`" ] ; then
@@ -56,7 +57,6 @@ else
 	exit 1
 fi
 
-echo "RUNNING" > OUTPUT/RESULT
 touch OUTPUT/pluto.$INITIATOR.log
 touch OUTPUT/pluto.$RESPONDER.log 
 chmod a+rw OUTPUT/pluto.$INITIATOR.log 
@@ -108,11 +108,6 @@ echo "start final.sh on responder $RESPONDER for $TESTNAME"
 RESPONDER_FINAL_PID=$!
 wait_till_pid_end "$RESPONDER" $RESPONDER_FINAL_PID
 
-# This causes this script to end itself?
-#if [ -n "$NIC_PID" ] ; then
-#	kill -9 $NIC_PID
-#fi
-
 TCPDUMP_PID_R=`pidof sudo`
 if [ -f ./OUTPUT/$SWAN_PCAP.pid ] ; then
 	TCPDUMP_PID=`cat  ./OUTPUT/$SWAN_PCAP.pid`
@@ -129,15 +124,15 @@ fi
 initout=`consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt`
 respout=`consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.console.txt`
 echo "WARNING: tcpdump output is not yet compared to known good output!"
-if [ "$initout" = "output matched" -a "$respout" = "output matched" ] ; then
-	echo $TESTNAME PASSED
-	echo "PASSED" > OUTPUT/RESULT
-else
+if [  -s OUTPUT/$INITIATOR.console.diff -o -s OUTPUT/$RESPONDER.console.diff ] ; then
 	echo $TESTNAME FAILED
 	echo "FAILED" > OUTPUT/RESULT
 	echo $initout
 	echo $initout >> OUTPUT/RESULT
 	echo $respout
 	echo $respout >> OUTPUT/RESULT
+else
+	echo $TESTNAME PASSED
+	echo "PASSED" > OUTPUT/RESULT
 fi
 

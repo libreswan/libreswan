@@ -59,8 +59,7 @@ consolediff() {
 
     if diff -N -u -w -b -B $ref $fixedoutput >OUTPUT/${prefix}.console.diff
     then
-	#echo "${prefix}Console output matched"
-	echo "output matched"
+	echo "${prefix}Console output matched"
     else
 	echo "${prefix}Console output differed"
 
