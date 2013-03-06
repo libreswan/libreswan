@@ -41,7 +41,7 @@ stopnetkey() {
 	    ip xfrm state flush ;
 	    ip xfrm policy flush ;
 	fi
-	if [ -n "`ip xfrm state`" -o -n "`ip xfrm policy`" ]; then
+	if [ -n "$(ip xfrm state)" -o -n "$(ip xfrm policy)" ]; then
 	    echo "NETKEY IPsec stack could not be cleared" >&2
 	fi
 
@@ -53,12 +53,12 @@ stopnetkey() {
 		xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel \
 		xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key xfrm_user
 	    do
-		if [ -n "`egrep ^$mod /proc/modules`" ]; then
+		if [ -n "$(egrep ^$mod /proc/modules)" ]; then
 		    # echo "unloading module $mod" >&2
 		    rmmod $mod 
 		fi
 	    done
-	    if [ -f $kamepfkey -o -n "`lsmod | grep ^esp`" ]; then
+	    if [ -f $kamepfkey -o -n "$(lsmod | grep ^esp)" ]; then
 		echo "FAILURE to unload NETKEY esp module" >&2
 		exit 1
 	    fi
@@ -99,7 +99,7 @@ startnetkey() {
 stopklips() {
     if [ -f $ipsecpfkey ]; then
 	# Bring down ipsecX and mast0 interfaces
-	ifl=`grep -v NULL /proc/net/ipsec_tncfg 2> /dev/null | sed -n -e "/^ipsec/s/ .*//p" ` ;
+	ifl=$(grep -v NULL /proc/net/ipsec_tncfg 2> /dev/null | sed -n -e "/^ipsec/s/ .*//p")
 	if [ -n "$ifl" ]; then
 	    for iface in  $ifl; do 
 		ip link set $iface down
@@ -121,8 +121,7 @@ stopklips() {
 	    rmmod ipsec 2> /dev/null
 	fi
     fi
-    if [ -f $ipsecpfkey -o -n "`lsmod | grep ^ipsec`" ]
-    then
+    if [ -f $ipsecpfkey -o -n "$(lsmod | grep ^ipsec)" ]; then
 	echo "FAILURE to unload KLIPS/MAST module" >&2
 	exit 1
     fi
@@ -165,8 +164,8 @@ cryptomodules() {
     if [ -d /sys/module/ocf ]; then
 	# OCF tuning - If we have enough bogomips and RAM,
 	# use bigger OCF queues
-	bogomips=`grep -i bogomips /proc/cpuinfo | head -1 | awk ' { print $3;}'| sed "s/\..*$//" `
-	ram=`head -1 /proc/meminfo | awk '{print $2;}'`
+	bogomips=$(grep -i bogomips /proc/cpuinfo | head -1 | awk ' { print $3;}'| sed "s/\..*$//")
+	ram=$(head -1 /proc/meminfo | awk '{print $2;}')
 	limit=1000
 	if [ $bogomips -gt 1000 ]; then
 	    if [ $ram -gt 262143 ]; then
@@ -213,7 +212,7 @@ startklips() {
     fi
     if [ ! -f $ipsecpfkey ]; then
 	# KLIPS-related paths
-	bareversion=`uname -r | sed -e 's/\.nptl//' | sed -e 's/^\(2\.[0-9]\.[1-9][0-9]*-[1-9][0-9]*\(\.[0-9][0-9]*\)*\(\.x\)*\).*$/\1/'`
+	bareversion=$(uname -r | sed -e 's/\.nptl//' | sed -e 's/^\(2\.[0-9]\.[1-9][0-9]*-[1-9][0-9]*\(\.[0-9][0-9]*\)*\(\.x\)*\).*$/\1/')
 	case $bareversion in
 	    2.4*)
 		modulename=ipsec.o
@@ -223,7 +222,7 @@ startklips() {
 		;;
 	esac
 	# modprobe does not like specifying .o or .ko, but insmod needs it
-	if [ "`basename @MODPROBE@`" = "modprobe" ]; then
+	if [ "$(basename @MODPROBE@)" = "modprobe" ]; then
 	    @MODPROBE@ ipsec
 	else
 	    @MODPROBE@ $modulename
@@ -253,7 +252,7 @@ startklips() {
 	ipsec tncfg --clear
 	# remove any ipsecX interfaces, as we are using mastX
 	# Note: currently it seems klips cannot delete ipsec0
-	for device in `ip -oneline link show | grep ipsec | cut -d: -f2 | sort -r`
+	for device in $(ip -oneline link show | grep ipsec | cut -d: -f2 | sort -r)
 	do
 	    ipsec tncfg --delete $device
 	done
@@ -268,14 +267,14 @@ startklips() {
 	ipsec eroute --clear
 	ipsec spi --clear
 	# remove any mastX interfaces, as we are using ipsecX
-	for device in `ip -oneline link show | grep mast | cut -d: -f2 | sort -r`
+	for device in $(ip -oneline link show | grep mast | cut -d: -f2 | sort -r)
 	do
 	    ipsec tncfg --delete $device
 	done
 	# detach all ipsecX devices
 	ipsec tncfg --clear
 
-	interfaces=`ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep interfaces |sed 's/ interfaces=//'| sed "s/'//g" | sed "s/,/ /g"`
+	interfaces=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep interfaces |sed 's/ interfaces=//'| sed "s/'//g" | sed "s/,/ /g")
 	if [ -z "$interfaces" ]; then
 	    interfaces="%defaultroute"
 	fi
@@ -285,10 +284,10 @@ startklips() {
 		continue
 	    elif [ "$iface" = "%defaultroute" ]; then
 		virt="ipsec0"
-		phys=`ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/"`
+		phys=$(ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/")
 	    else
-		virt="`expr $iface : '\([^=]*\)=.*'`"
-		phys="`expr $iface : '[^=]*=\(.*\)'`"
+		virt="$(expr $iface : '\([^=]*\)=.*')"
+		phys="$(expr $iface : '[^=]*=\(.*\)')"
 	    fi
 	    # ipsecX might not exist yet
 	    if [ ! -d /sys/devices/virtual/net/$virt ]; then
@@ -326,19 +325,18 @@ startklips() {
 	done
 
     elif [ $stack = "none" ]; then
-    then
 	echo "protostack=none selected - No IPsec SA's will be injected into the kernel" >&2
     fi
 }
 
 # Start the actual work
 
-if [ `id -u` -ne 0 ]; then
+if [ $(id -u) -ne 0 ]; then
     echo "permission denied (must be superuser)" >&2
     exit 4
 fi
 
-stack="`ipsec addconn --config $IPSEC_CONF --liststack`"
+stack="$(ipsec addconn --config $IPSEC_CONF --liststack)"
 
 case $stack in
     netkey|klips|mast|none) 
