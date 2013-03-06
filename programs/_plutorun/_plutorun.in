@@ -73,7 +73,7 @@ exec 2>/dev/null
 
 until (
     # eval allows to contain redirection and other magic
-    eval $execdir/pluto --config @FINALIPSECCONF@ --nofork ${PLUTO_OPTIONS}
+    eval $execdir/pluto --config @FINALCONFFILE@ --nofork ${PLUTO_OPTIONS}
     status=$?
     echo "exit"
     echo $status
