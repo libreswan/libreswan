@@ -25,6 +25,7 @@ v3.1 (unreleased)
 * packaging: add /etc/ipsec.d/{crls,cacerts} to rpm spec files [Tuomo]
 * Bugtracker bugs fixed:
    #8  honour compress=no option [Matt Rogers]
+   #50 It is assumed ipsec.conf lives in the same dir as rc.d/init.d [Tuomo]
    #53  ipsec auto --status does not show phase2 parameters when using
         (unspecified) defaults? [Matt Rogers]
 
