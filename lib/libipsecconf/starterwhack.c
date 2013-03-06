@@ -508,30 +508,25 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 		msg.connmtu   = conn->options[KBF_CONNMTU];
 	}
 
-	if(conn->options_set[KBF_DPDDELAY] &&
-	   conn->options_set[KBF_DPDTIMEOUT]) {
+	if (conn->options_set[KBF_DPDDELAY] && conn->options_set[KBF_DPDTIMEOUT])
+	{
 		msg.dpd_delay   = conn->options[KBF_DPDDELAY];
 		msg.dpd_timeout = conn->options[KBF_DPDTIMEOUT];
+		if (conn->options_set[KBF_DPDACTION])
+		{
+			msg.dpd_action = conn->options[KBF_DPDACTION];
+		}
 
-		if(conn->options_set[KBF_DPDACTION]) {
-			if( (conn->options_set[KBF_DPDACTION] == DPD_ACTION_RESTART_BY_PEER
-			     ||  conn->options_set[KBF_DPDACTION] == DPD_ACTION_RESTART)
-			   && conn->options_set[KBF_REKEY] == FALSE)
+		if (conn->options_set[KBF_REKEY] && conn->options[KBF_REKEY] == FALSE)
+		{
+			if( (conn->options[KBF_DPDACTION] == DPD_ACTION_RESTART_BY_PEER
+			     ||  conn->options[KBF_DPDACTION] == DPD_ACTION_RESTART))
 			{
 			 starter_log(LOG_LEVEL_ERR, "conn: \"%s\" warning dpdaction cannot be 'restart' or 'restart_by_peer' when rekey=no - defaulting to 'hold'"
 				    , conn->name);
 			 msg.dpd_action = DPD_ACTION_HOLD;
-			} else {
-			 msg.dpd_action = conn->options[KBF_DPDACTION];
 			}
-		} else {
-			/*
-			 * there is a default DPD action, but DPD is only
-			 * enabled if there is a dpd delay set.
-			 */
-			msg.dpd_action = DPD_ACTION_HOLD;
 		}
-
 	} else {
 		if(conn->options_set[KBF_DPDDELAY]  ||
 		   conn->options_set[KBF_DPDTIMEOUT]||

@@ -60,17 +60,11 @@ static const char* months[] = {
 char *
 timetoa(const time_t *timep, bool utc, char *b, size_t blen)
 {
-    if (*timep == UNDEFINED_TIME)
+    if (*timep == UNDEFINED_TIME) {
 	snprintf(b, blen, "--- -- --:--:--%s----", (utc)?" UTC ":" ");
-    else
-    {
-	struct tm tm1, *tm;
-	if (utc)
-	{
-	  tm = gmtime_r(timep, &tm1);
-	} else {
-	  tm = localtime_r(timep, &tm1);
-	}
+    } else {
+	struct tm tmbuf;
+	struct tm *tm = (utc? gmtime_r : localtime_r)(timep, &tmbuf);
 	
 	snprintf(b, blen, "%s %02d %02d:%02d:%02d%s%04d",
 	    months[tm->tm_mon], tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec,

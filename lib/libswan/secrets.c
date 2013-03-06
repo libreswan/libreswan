@@ -755,6 +755,7 @@ static err_t lsw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
     {
 	char buf[RSA_MAX_ENCODING_BYTES];	/* limit on size of binary representation of key */
 	size_t sz;
+	char diag_space[TTODATAV_BUF];
 
 	ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0, buf, sizeof(buf), &sz
 	    , diag_space, sizeof(diag_space), TTODATAV_SPACECOUNTS);
@@ -791,6 +792,7 @@ static err_t lsw_process_xauth_secret(const struct secret *secrets, chunk_t *xau
     {
 	char buf[RSA_MAX_ENCODING_BYTES];	/* limit on size of binary representation of key */
 	size_t sz;
+	char diag_space[TTODATAV_BUF];
 
 	ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0, buf, sizeof(buf), &sz
 	    , diag_space, sizeof(diag_space), TTODATAV_SPACECOUNTS);
@@ -834,6 +836,7 @@ lsw_process_rsa_secret(const struct secret *secrets
     for (p = RSA_private_field; p < &RSA_private_field[elemsof(RSA_private_field)]; p++)
     {
 	size_t sz;
+	char diag_space[TTODATAV_BUF];
 	err_t ugh;
 
 	if (!shift())
