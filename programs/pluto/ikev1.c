@@ -1980,7 +1980,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		case INVALID_MESSAGE_ID:
 		default:
 		    	loglog(RC_LOG_SERIOUS
-			   , "ignoring informational payload%s, type %s msgid=%08x"
+			   , "ignoring informational payload %s, type %s msgid=%08x"
 			   , enum_show(&ipsec_notification_names, p->payload.notification.isan_type)
 			   , (st == NULL) ? " [no state found]" : ""
 			   , (st == NULL) ? st->st_msgid : 0 );
