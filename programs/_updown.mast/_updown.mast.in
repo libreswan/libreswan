@@ -3,7 +3,7 @@
 #
 # Copyright (C) 2003-2004 Nigel Metheringham
 # Copyright (C) 2002-2007 Michael Richardson <mcr@xelerance.com>
-# Copyright (C) 2003-2011 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2003-2013 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2008 Paul Wouters <paul@xelerance.com>
 # 
 # This program is free software; you can redistribute it and/or modify it
@@ -24,41 +24,42 @@
 
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
-LC_ALL=C export LC_ALL
+LC_ALL=C
+export LC_ALL
 
 # things that this script gets (from ipsec_pluto(8) man page)
 #
 #
 #      PLUTO_VERSION
-#              indicates  what  version of this interface is being
-#              used.  This document describes version  1.1.   This
-#              is upwardly compatible with version 1.0.
+#		indicates  what	 version of this interface is being
+#		used.  This document describes version	1.1.   This
+#		is upwardly compatible with version 1.0.
 #
-#       PLUTO_VERB
-#              specifies the name of the operation to be performed
-#              (prepare-host, prepare-client, up-host, up-client,
-#              down-host, or down-client).  If the address family
-#              for security gateway to security gateway communications
-#              is IPv6, then a suffix of -v6 is added to the
-#              verb.
+#	PLUTO_VERB
+#		specifies the name of the operation to be performed
+#		(prepare-host, prepare-client, up-host, up-client,
+#		down-host, or down-client).  If the address family
+#		for security gateway to security gateway communications
+#		is IPv6, then a suffix of -v6 is added to the
+#		verb.
 #
-#       PLUTO_CONNECTION
-#              is the name of the  connection  for  which  we  are
-#              routing.
+#	PLUTO_CONNECTION
+#		is the name of the  connection	for  which  we	are
+#		routing.
 #
-#       PLUTO_CONN_POLICY
-#              the policy of the connection, as in:
+#	PLUTO_CONN_POLICY
+#		the policy of the connection, as in:
 #     RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failureDROP+lKOD+rKOD  
 #
-#       PLUTO_NEXT_HOP
-#              is the next hop to which packets bound for the peer
-#              must be sent.
+#	PLUTO_NEXT_HOP
+#		is the next hop to which packets bound for the peer
+#		must be sent.
 #
-#       PLUTO_INTERFACE
-#              is the name of the ipsec interface to be used.
+#	PLUTO_INTERFACE
+#		is the name of the ipsec interface to be used.
 #
-#       PLUTO_ME
-#              is the IP address of our host.
+#	PLUTO_ME
+#		is the IP address of our host.
 #
 #	PLUTO_METRIC
 #		is the metric to set for the route
@@ -66,62 +67,62 @@ LC_ALL=C export LC_ALL
 #	PLUTO_MTU
 #		is the mtu to set for the route
 #
-#       PLUTO_MY_CLIENT
-#              is the IP address / count of our client subnet.  If
-#              the  client  is  just  the  host,  this will be the
-#              host's own IP address / max (where max  is  32  for
-#              IPv4 and 128 for IPv6).
+#	PLUTO_MY_CLIENT
+#		is the IP address / count of our client subnet.	 If
+#		the  client  is	 just  the  host,  this will be the
+#		host's own IP address / max (where max	is  32	for
+#		IPv4 and 128 for IPv6).
 #
-#       PLUTO_MY_CLIENT_NET
-#              is the IP address of our client net.  If the client
-#              is just the host, this will be the  host's  own  IP
-#              address.
+#	PLUTO_MY_CLIENT_NET
+#		is the IP address of our client net.  If the client
+#		is just the host, this will be the  host's  own	 IP
+#		address.
 #
-#       PLUTO_MY_CLIENT_MASK
-#              is  the  mask for our client net.  If the client is
-#              just the host, this will be 255.255.255.255.
+#	PLUTO_MY_CLIENT_MASK
+#		is  the	 mask for our client net.  If the client is
+#		just the host, this will be 255.255.255.255.
 #
-#       PLUTO_MY_SOURCEIP
-#              if non-empty, then the source address for the route will be
-#              set to this IP address.
+#	PLUTO_MY_SOURCEIP
+#		if non-empty, then the source address for the route will be
+#		set to this IP address.
 #
-#       PLUTO_MY_PROTOCOL
-#              is the protocol  for this  connection.  Useful  for
-#              firewalling.
+#	PLUTO_MY_PROTOCOL
+#		is the protocol	 for this  connection.	Useful	for
+#		firewalling.
 #
-#       PLUTO_MY_PORT
-#              is the port. Useful for firewalling.
+#	PLUTO_MY_PORT
+#		is the port. Useful for firewalling.
 #
-#       PLUTO_PEER
-#              is the IP address of our peer.
+#	PLUTO_PEER
+#		is the IP address of our peer.
 #
-#       PLUTO_PEER_CLIENT
-#              is the IP address / count of the peer's client subnet.
-#              If the client is just the peer, this will be
-#              the peer's own IP address / max (where  max  is  32
-#              for IPv4 and 128 for IPv6).
+#	PLUTO_PEER_CLIENT
+#		is the IP address / count of the peer's client subnet.
+#		If the client is just the peer, this will be
+#		the peer's own IP address / max (where	max  is	 32
+#		for IPv4 and 128 for IPv6).
 #
-#       PLUTO_PEER_CLIENT_NET
-#              is the IP address of the peer's client net.  If the
-#              client is just the peer, this will  be  the  peer's
-#              own IP address.
+#	PLUTO_PEER_CLIENT_NET
+#		is the IP address of the peer's client net.  If the
+#		client is just the peer, this will  be	the  peer's
+#		own IP address.
 #
-#       PLUTO_PEER_CLIENT_MASK
-#              is  the  mask  for  the  peer's client net.  If the
-#              client   is   just   the   peer,   this   will   be
-#              255.255.255.255.
+#	PLUTO_PEER_CLIENT_MASK
+#		is  the	 mask  for  the	 peer's client net.  If the
+#		client	 is   just   the   peer,   this	  will	 be
+#		255.255.255.255.
 #
-#       PLUTO_PEER_PROTOCOL
-#              is  the  protocol  set  for  remote  end  with port
-#              selector.
+#	PLUTO_PEER_PROTOCOL
+#		is  the	 protocol  set	for  remote  end  with port
+#		selector.
 #
-#       PLUTO_PEER_PORT
-#              is the peer's port. Useful for firewalling.
+#	PLUTO_PEER_PORT
+#		is the peer's port. Useful for firewalling.
 #
-#       PLUTO_CONNECTION_TYPE
+#	PLUTO_CONNECTION_TYPE
 #
-#       PLUTO_CONN_ADDRFAMILY
-#               is the family type, "ipv4" or "ipv6"
+#	PLUTO_CONN_ADDRFAMILY
+#		is the family type, "ipv4" or "ipv6"
 #
 #	PLUTO_STACK
 #		IPsec stack used by pluto (eg protostack= values)
@@ -138,52 +139,58 @@ LC_ALL=C export LC_ALL
 #exec 2>&1
 #set -x
 
-# Import default _updown configs from the /etc/[sysconfig|default]pluto_updown file
+# Import default _updown configs from the @FINALSYSCONFDIR@/[sysconfig|default]pluto_updown file
 #
 # Two variables can be set in this file:
 #
-#       DEFAULTSOURCE
-#              is the default value for PLUTO_MY_SOURCEIP
+#	DEFAULTSOURCE
+#		is the default value for PLUTO_MY_SOURCEIP
 #
-#       IPROUTEARGS
-#              is the extra argument list for ip route command
+#	IPROUTEARGS
+#		is the extra argument list for ip route command
 #
-#       IPRULEARGS
-#              is the extra argument list for ip rule command
+#	IPRULEARGS
+#		is the extra argument list for ip rule command
 #
 
 # rpm based systems
-if [ -f /etc/sysconfig/pluto_updown ]
-then
-    . /etc/sysconfig/pluto_updown
+if [ -f @FINALSYSCONFDIR@/sysconfig/pluto_updown ]; then
+    . @FINALSYSCONFDIR@/sysconfig/pluto_updown
 # deb based systems
-elif [ -f /etc/default/pluto_updown ]
-then
-    . /etc/default/pluto_updown
+elif [ -f @FINALSYSCONFDIR@/default/pluto_updown ]; then
+    . @FINALSYSCONFDIR@/default/pluto_updown
 fi
+
+LIBRESWAN_RESOLV_CONF=@FINALVARDIR@/run/pluto/libreswan-resolv-conf-backup
+ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
 use_comment=true
 
 # check interface version
 case "$PLUTO_VERSION" in
-1.*)	# Older Pluto?!?  Play it safe, script may be using new features.
-	echo "$0: obsolete interface version \`$PLUTO_VERSION'," >&2
+    1.*)
+	# Older Pluto?!?  Play it safe, script may be using new features.
+	echo "$0: obsolete interface version \"$PLUTO_VERSION\"," >&2
 	echo "$0: 	called by obsolete Pluto?" >&2
 	exit 2
 	;;
-2.*)	;;
-*)	echo "$0: unknown interface version \`$PLUTO_VERSION'" >&2
+    2.*)
+	;;
+    *)	echo "$0: unknown interface version \"$PLUTO_VERSION\"" >&2
 	exit 2
 	;;
 esac
 
 # check parameter(s)
 case "$1:$*" in
-':')			# no parameters
+    ':')
+	# no parameters
 	;;
-custom:*)		# custom parameters (see above CAUTION comment)
+    custom:*)
+	# custom parameters (see above CAUTION comment)
 	;;
-*)	echo "$0: unknown parameters \`$*'" >&2
+    *)
+	echo "$0: unknown parameters \"$*\"" >&2
 	exit 2
 	;;
 esac
@@ -191,83 +198,82 @@ esac
 # function to see if iptables has an IPSEC chain already, and if not,
 # it will create one and insert it into the OUTPUT and FORWARD chains.
 checkipsec() {
-  if [ -z "$PLUTO_SAREF_TRACKING" -o "$PLUTO_SAREF_TRACKING" = "no" ]; then
+    if [ -z "$PLUTO_SAREF_TRACKING" -o "$PLUTO_SAREF_TRACKING" = "no" ]; then
 	echo "SAref table initialisation left to third party"
-  else if [ -z "$PLUTO_CONN_ADDRFAMILY" -o "$PLUTO_CONN_ADDRFAMILY" = "ipv6" ]; then
+    elif [ -z "$PLUTO_CONN_ADDRFAMILY" -o "$PLUTO_CONN_ADDRFAMILY" = "ipv6" ]; then
 	echo "SAref not activated for IPv6"
-  else
-    # make sure we have an IPSEC chain
-    if ! ( iptables -n -t mangle -L IPSEC >/dev/null 2>&1) ; then
-        iptables -t mangle -N IPSEC
-    fi
-
-    # we also need to have a NEW_IPSEC_CONN chain
-    if ! ( iptables -n -t mangle -L NEW_IPSEC_CONN >/dev/null 2>&1) ; then
-        iptables -t mangle -N NEW_IPSEC_CONN
-    fi
-
-    # initialize the IPSEC chain if needed
-    if [ "$PLUTO_SAREF_TRACKING" = "conntrack" ]; then
-        if [ "$(iptables -n -t mangle -L IPSEC | wc -l )" != 6 ] ; then
-            iptables -t mangle -F IPSEC
-            iptables -t mangle -A IPSEC -j CONNMARK --restore-mark
-            iptables -t mangle -A IPSEC -m mark --mark 0x80000000/0x80000000 -j RETURN
-            iptables -t mangle -A IPSEC -j NEW_IPSEC_CONN
-            iptables -t mangle -A IPSEC -j CONNMARK --save-mark
-        fi
     else
-        if [ "$(iptables -n -t mangle -L IPSEC | wc -l )" != 3 ] ; then
-            iptables -t mangle -F IPSEC
-            iptables -t mangle -A IPSEC -j NEW_IPSEC_CONN
-        fi
-    fi
+	# make sure we have an IPSEC chain
+	if ! ( iptables -n -t mangle -L IPSEC >/dev/null 2>&1); then
+            iptables -t mangle -N IPSEC
+	fi
 
-    # next, setup routing rules and tables:
-    # we pick table 50, cause proto50=ESP
-    if ! ( ip rule show | grep -qF 'from all fwmark 0x80000000/0x80000000 lookup 50' ) ; then
-        # note "fwmarkmask" is an (obsolete) Libreswan patch to "ip" command.
-        # note2: iproute2-2.6.22-070710 supports mask via /mask notation instead
-        # ip rule add fwmark 0x80000000 fwmarkmask 0x80000000 table 50
-        ip rule add from all fwmark 0x80000000/0x80000000 lookup 50
-        # This rule makes sure that packets originating from mast0 (ones that came
-        # out of a tunnel) go directly to the main table.  This makes sure that
-        # rp_filter can find the right reverse path route.
-        ip rule add from all iif $PLUTO_INTERFACE lookup main
-    fi
+	# we also need to have a NEW_IPSEC_CONN chain
+	if ! ( iptables -n -t mangle -L NEW_IPSEC_CONN >/dev/null 2>&1); then
+            iptables -t mangle -N NEW_IPSEC_CONN
+	fi
 
-    # the default route goes over the mast interface
-    if ! ( ip route show table 50 | grep -qF "default dev $PLUTO_INTERFACE" ) ; then
-        ip route add default dev $PLUTO_INTERFACE table 50
-    fi
+	# initialize the IPSEC chain if needed
+	if [ "$PLUTO_SAREF_TRACKING" = "conntrack" ]; then
+            if [ "$(iptables -n -t mangle -L IPSEC | wc -l )" != 6 ]; then
+		iptables -t mangle -F IPSEC
+		iptables -t mangle -A IPSEC -j CONNMARK --restore-mark
+		iptables -t mangle -A IPSEC -m mark --mark 0x80000000/0x80000000 -j RETURN
+		iptables -t mangle -A IPSEC -j NEW_IPSEC_CONN
+		iptables -t mangle -A IPSEC -j CONNMARK --save-mark
+            fi
+	else
+            if [ "$(iptables -n -t mangle -L IPSEC | wc -l )" != 3 ]; then
+		iptables -t mangle -F IPSEC
+		iptables -t mangle -A IPSEC -j NEW_IPSEC_CONN
+            fi
+	fi
 
-    # now look for -j IPSEC in OUTPUT chains.
-    if ! (iptables -n -t mangle -L OUTPUT | grep -q '^IPSEC') ; then
-	iptables -t mangle -I OUTPUT 1 -j IPSEC
-	iptables -t mangle -I OUTPUT 1 -p udp --sport 500 -j ACCEPT
-	iptables -t mangle -I OUTPUT 1 -p udp --dport 500 -j ACCEPT
-	iptables -t mangle -I OUTPUT 1 -p udp --sport 4500 -j ACCEPT
-	iptables -t mangle -I OUTPUT 1 -p udp --dport 4500 -j ACCEPT
-    fi
+	# next, setup routing rules and tables:
+	# we pick table 50, cause proto50=ESP
+	if ! ( ip rule show | grep -qF 'from all fwmark 0x80000000/0x80000000 lookup 50' ); then
+            # note "fwmarkmask" is an (obsolete) Libreswan patch to "ip" command.
+            # note2: iproute2-2.6.22-070710 supports mask via /mask notation instead
+            # ip rule add fwmark 0x80000000 fwmarkmask 0x80000000 table 50
+            ip rule add from all fwmark 0x80000000/0x80000000 lookup 50
+            # This rule makes sure that packets originating from mast0 (ones that came
+            # out of a tunnel) go directly to the main table.  This makes sure that
+            # rp_filter can find the right reverse path route.
+            ip rule add from all iif $PLUTO_INTERFACE lookup main
+	fi
 
-    # now look for -j IPSEC in PREROUTING chains.
-    if ! (iptables -n -t mangle -L PREROUTING | grep -q '^IPSEC') ; then
-	iptables -t mangle -I PREROUTING 1 -j IPSEC
-    fi
+	# the default route goes over the mast interface
+	if ! ( ip route show table 50 | grep -qF "default dev $PLUTO_INTERFACE" ); then
+            ip route add default dev $PLUTO_INTERFACE table 50
+	fi
 
-    if [ -w /proc/sys/net/ipv4/conf/$PLUTO_INTERFACE/src_valid_mark ] ; then
-        # finally make sure that the top bit of source vmark for mast0 is set
-        vmark=$(cat /proc/sys/net/ipv4/conf/$PLUTO_INTERFACE/src_valid_mark)
-        vmark=$(( $vmark | 0x80000000 ))
-        echo "$vmark" > /proc/sys/net/ipv4/conf/$PLUTO_INTERFACE/src_valid_mark
-    else
-        # In case that we don't have the means to get rp_filter to cooperate 
-        # with KLIPS nfmark based routing scheme, we disable rp_filter.
-        for n in /proc/sys/net/ipv4/conf/*/rp_filter ; do
-            echo 0 > $n
-        done
+	# now look for -j IPSEC in OUTPUT chains.
+	if ! (iptables -n -t mangle -L OUTPUT | grep -q '^IPSEC'); then
+	    iptables -t mangle -I OUTPUT 1 -j IPSEC
+	    iptables -t mangle -I OUTPUT 1 -p udp --sport 500 -j ACCEPT
+	    iptables -t mangle -I OUTPUT 1 -p udp --dport 500 -j ACCEPT
+	    iptables -t mangle -I OUTPUT 1 -p udp --sport 4500 -j ACCEPT
+	    iptables -t mangle -I OUTPUT 1 -p udp --dport 4500 -j ACCEPT
+	fi
+
+	# now look for -j IPSEC in PREROUTING chains.
+	if ! (iptables -n -t mangle -L PREROUTING | grep -q '^IPSEC'); then
+	    iptables -t mangle -I PREROUTING 1 -j IPSEC
+	fi
+
+	if [ -w /proc/sys/net/ipv4/conf/$PLUTO_INTERFACE/src_valid_mark ]; then
+            # finally make sure that the top bit of source vmark for mast0 is set
+            vmark=$(cat /proc/sys/net/ipv4/conf/$PLUTO_INTERFACE/src_valid_mark)
+            vmark=$(( $vmark | 0x80000000 ))
+            echo "$vmark" > /proc/sys/net/ipv4/conf/$PLUTO_INTERFACE/src_valid_mark
+	else
+            # In case that we don't have the means to get rp_filter to cooperate 
+            # with KLIPS nfmark based routing scheme, we disable rp_filter.
+            for n in /proc/sys/net/ipv4/conf/*/rp_filter; do
+		echo 0 > $n
+            done
+	fi
     fi
-  fi
-  fi
 }
 
 # utility functions for route manipulation
@@ -288,127 +294,125 @@ downroute() {
 
 # called XXXX
 uprule() {
-	doipsecrule delete
-	doipsecrule add
-	ip route flush cache
+    doipsecrule delete
+    doipsecrule add
+    ip route flush cache
 }
 
 # called XXXX
 downrule() {
-	doipsecrule delete
+    doipsecrule delete
 }
 
 updateresolvconf() {
     if [ -n "$PLUTO_CISCO_DNS_INFO" ]; then
-        if [ -n "`pidof unbound`" -a -n "$PLUTO_CISCO_DOMAIN_INFO"  ]; then
-          echo "updating local nameserver for $PLUTO_CISCO_DOMAIN_INFO with $PLUTO_CISCO_DNS_INFO"
-          /usr/sbin/unbound-control forward_add $PLUTO_CISCO_DOMAIN_INFO $PLUTO_CISCO_DNS_INFO
-          /usr/sbin/unbound-control flush_zone $PLUTO_CISCO_DOMAIN_INFO
-          return
-    fi
-fi
-
-if [ -z "$PLUTO_NM_CONFIGURED" -o "$PLUTO_NM_CONFIGURED" = 0 ]; then
-    echo "updating resolvconf"
-    if [ -e "$LIBRESWAN_RESOLV_CONF" ]; then
-        echo "Backup resolv.conf already exists, so doing nothing"
-        return 1
-    fi
-
-    if [ ! -e "$ORIG_RESOLV_CONF" ]; then
-        echo "resolv.conf does not exist, so doing nothing"
-        return 1
-    fi
-
-    cp -- $ORIG_RESOLV_CONF $LIBRESWAN_RESOLV_CONF
-
-    RESOLVE_CONF="#Generated by Libreswan (IPSec)"
-
-    if [ -n "$PLUTO_CISCO_DOMAIN_INFO" ]; then
-	if grep 'domain' $ORIG_RESOLV_CONF > /dev/null 2>&1 
-	then 
-	RESOLVE_CONF="$RESOLVE_CONF\ndomain $PLUTO_CISCO_DOMAIN_INFO\nsearch $PLUTO_CISCO_DOMAIN_INFO"
-	else
-	RESOLVE_CONF="$RESOLVE_CONF\nsearch $PLUTO_CISCO_DOMAIN_INFO"
+        if [ -n "$(pidof unbound)" -a -n "$PLUTO_CISCO_DOMAIN_INFO"  ]; then
+            echo "updating local nameserver for $PLUTO_CISCO_DOMAIN_INFO with $PLUTO_CISCO_DNS_INFO"
+            /usr/sbin/unbound-control forward_add $PLUTO_CISCO_DOMAIN_INFO $PLUTO_CISCO_DNS_INFO
+            /usr/sbin/unbound-control flush_zone $PLUTO_CISCO_DOMAIN_INFO
+            return
 	fi
     fi
 
-    if [ -n "$PLUTO_CISCO_DNS_INFO" ]; then
-	for i in $PLUTO_CISCO_DNS_INFO; do
-		RESOLVE_CONF="$RESOLVE_CONF\nnameserver $i"
-	done
-   fi
+    if [ -z "$PLUTO_NM_CONFIGURED" -o "$PLUTO_NM_CONFIGURED" = 0 ]; then
+	echo "updating resolvconf"
+	if [ -e "$LIBRESWAN_RESOLV_CONF" ]; then
+            echo "Backup resolv.conf already exists, so doing nothing"
+            return 1
+	fi
 
-   rm -f -- $ORIG_RESOLV_CONF
-   printf "$RESOLVE_CONF" > $ORIG_RESOLV_CONF
-   return $?
-else
-   echo "Updating resolv.conf is controlled by Network Manager"
-   return 0
-fi
+	if [ ! -e "$ORIG_RESOLV_CONF" ]; then
+            echo "resolv.conf does not exist, so doing nothing"
+            return 1
+	fi
+
+	cp -- $ORIG_RESOLV_CONF $LIBRESWAN_RESOLV_CONF
+
+	RESOLVE_CONF="#Generated by Libreswan (IPSec)"
+
+	if [ -n "$PLUTO_CISCO_DOMAIN_INFO" ]; then
+	    if grep 'domain' $ORIG_RESOLV_CONF > /dev/null 2>&1; then
+		RESOLVE_CONF="$RESOLVE_CONF\ndomain $PLUTO_CISCO_DOMAIN_INFO\nsearch $PLUTO_CISCO_DOMAIN_INFO"
+	    else
+		RESOLVE_CONF="$RESOLVE_CONF\nsearch $PLUTO_CISCO_DOMAIN_INFO"
+	    fi
+	fi
+
+	if [ -n "$PLUTO_CISCO_DNS_INFO" ]; then
+	    for i in $PLUTO_CISCO_DNS_INFO; do
+		RESOLVE_CONF="$RESOLVE_CONF\nnameserver $i"
+	    done
+	fi
+
+	rm -f -- $ORIG_RESOLV_CONF
+	printf "$RESOLVE_CONF" > $ORIG_RESOLV_CONF
+	return $?
+    else
+	echo "Updating resolv.conf is controlled by Network Manager"
+	return 0
+    fi
 }
 
 restoreresolvconf() {
-if [ -n "`pidof unbound`" ]; then
-    if [ -n "$PLUTO_CISCO_DNS_INFO" ]; then
-        echo "flushing local nameserver of $PLUTO_CISCO_DOMAIN_INFO"
-        /usr/sbin/unbound-control forward_remove $PLUTO_CISCO_DOMAIN_INFO
-        /usr/sbin/unbound-control flush_zone $PLUTO_CISCO_DOMAIN_INFO
-    fi
-    return
-fi
-
-if [ -z "$PLUTO_NM_CONFIGURED" -o "$PLUTO_NM_CONFIGURED" = 0 ]; then
-    echo "restoring resolvconf"
-
-    if [ ! -e "$LIBRESWAN_RESOLV_CONF" ]; then
-	echo "Problem in restoring the resolv.conf, as there is no backup file"
-	return 2
+    if [ -n "$(pidof unbound)" ]; then
+	if [ -n "$PLUTO_CISCO_DNS_INFO" ]; then
+            echo "flushing local nameserver of $PLUTO_CISCO_DOMAIN_INFO"
+            /usr/sbin/unbound-control forward_remove $PLUTO_CISCO_DOMAIN_INFO
+            /usr/sbin/unbound-control flush_zone $PLUTO_CISCO_DOMAIN_INFO
+	fi
+	return
     fi
 
-    if grep 'Libreswan' $ORIG_RESOLV_CONF > /dev/null 2>&1 
-    then
-	cp -- "$LIBRESWAN_RESOLV_CONF" $ORIG_RESOLV_CONF
+    if [ -z "$PLUTO_NM_CONFIGURED" -o "$PLUTO_NM_CONFIGURED" = 0 ]; then
+	echo "restoring resolvconf"
+
+	if [ ! -e "$LIBRESWAN_RESOLV_CONF" ]; then
+	    echo "Problem in restoring the resolv.conf, as there is no backup file"
+	    return 2
+	fi
+
+	if grep 'Libreswan' $ORIG_RESOLV_CONF > /dev/null 2>&1; then
+	    cp -- "$LIBRESWAN_RESOLV_CONF" $ORIG_RESOLV_CONF
+	else
+	    echo "Current resolv.conf is not generated by Libreswan, so doing nothing"
+	fi
+
+	rm -f -- "$LIBRESWAN_RESOLV_CONF"
+	return 0
     else
-	echo "Current resolv.conf is not generated by Libreswan, so doing nothing"
+	# Here disconnect signal is sent to NetworkManager
+	# whenever an already established connection is being terminated.
+	unset libreswan_reason
+	unset PLUTO_CISCO_DOMAIN_INFO
+	unset PLUTO_CISCO_DNS_INFO
+	unset PLUTO_PEER_BANNER
+	unset PLUTO_MY_SOURCEIP
+	unset PLUTO_PEER
+	echo "Restoring resolv.conf is controlled by Network Manager"
+	disconnectNM
     fi
-
-    rm -f -- "$LIBRESWAN_RESOLV_CONF"
-    return 0
-else
-# Here disconnect signal is sent to NetworkManager
-# whenever an already established connection is being terminated.
-    unset libreswan_reason
-    unset PLUTO_CISCO_DOMAIN_INFO
-    unset PLUTO_CISCO_DNS_INFO
-    unset PLUTO_PEER_BANNER
-    unset PLUTO_MY_SOURCEIP
-    unset PLUTO_PEER
-    echo "Restoring resolv.conf is controlled by Network Manager"
-    disconnectNM
-fi
 }
 
 disconnectNM() {
-# This will be called whenever a connection fails to establish 
-# due to a state (either phase 1, xauth phase, or phase 2) fails.
-# This will send a singal to NetworkManager over dbus so that NM
-# can clear up coonnections.
+    # This will be called whenever a connection fails to establish 
+    # due to a state (either phase 1, xauth phase, or phase 2) fails.
+    # This will send a singal to NetworkManager over dbus so that NM
+    # can clear up coonnections.
     libreswan_reason=disconnect
     export libreswan_reason
     echo "sending disconnect signal to NetworkManager"
     /usr/libexec/nm-libreswan-service-helper
     return 0
- }
+}
 
 addsource() {
     st=0
     # check if given sourceip is local and add as alias if not
     if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep -q ^local; then
 	it="ip addr add ${PLUTO_MY_SOURCEIP%/*}/32 dev ${PLUTO_INTERFACE%:*}"
-	oops="`eval $it 2>&1`"
+	oops="$(eval $it 2>&1)"
 	st=$?
-	if [ " $oops" = " " -a " $st" != " 0" ]; then
+	if [ -z "$oops" -a $st -ne 0 ]; then
 	    oops="silent error, exit status $st"
 	fi
 	case "$oops" in
@@ -419,8 +423,8 @@ addsource() {
 		st=0
 		;;
 	esac
-	if [ " $oops" != " " -o " $st" != " 0" ]; then
-	    echo "$0: addsource \`$it' failed ($oops)" >&2
+	if [ -n "$oops" -o $st -ne 0 ]; then
+	    echo "$0: addsource \"$it\" failed ($oops)" >&2
 	fi
     fi
     return $st
@@ -428,37 +432,33 @@ addsource() {
 
 # WARNING: changesource might not work as expected with mast
 changesource() {
-	st=0
-	parms="$PLUTO_PEER_CLIENT"
-	parms2="dev $PLUTO_INTERFACE"
-	parms3="src ${PLUTO_MY_SOURCEIP%/*}" 
-	if [ -n "$IPROUTETABLE" ]
-	then
-	    parms3="$parms3 table $IPROUTETABLE"
-	fi
-	cmd=add
-	if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep mast0
-	then
-	    cmd=change
-	fi
-	it="ip route $cmd $parms $parms2 $parms3"
- 	case "$PLUTO_PEER_CLIENT" in
+    st=0
+    parms="$PLUTO_PEER_CLIENT"
+    parms2="dev $PLUTO_INTERFACE"
+    parms3="src ${PLUTO_MY_SOURCEIP%/*}" 
+    if [ -n "$IPROUTETABLE" ]; then
+	parms3="$parms3 table $IPROUTETABLE"
+    fi
+    cmd=add
+    if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep mast0; then
+	cmd=change
+    fi
+    it="ip route $cmd $parms $parms2 $parms3"
+    case "$PLUTO_PEER_CLIENT" in
  	"0.0.0.0/0"|"::/0")
-		# opportunistic encryption work around
-		it=
- 		;;
- 	esac
-	oops="`eval $it 2>&1`"
- 	st=$?
-	if test " $oops" = " " -a " $st" != " 0"
- 	then
-	    oops="silent error, exit status $st"
-	fi
-	if test " $oops" != " " -o " $st" != " 0"
-	then
-	    echo "$0: changesource \`$it' failed ($oops)" >&2
- 	fi
- 	return $st
+	    # opportunistic encryption work around
+	    it=
+ 	    ;;
+    esac
+    oops="$(eval $it 2>&1)"
+    st=$?
+    if [ -z  "$oops" -a $st -ne 0 ]; then
+	oops="silent error, exit status $st"
+    fi
+    if [ -n "$oops" -o $st -ne 0 ]; then
+	echo "$0: changesource \"$it\" failed ($oops)" >&2
+    fi
+    return $st
 }
 
 # the purpose of this command is to add an entry to the NEW_IPSEC_CONN chain
@@ -469,11 +469,11 @@ changesource() {
 # This is not be done for OE packets --- they are supposed to get a
 # new netfilter module instead.
 doipsecrule() {
-  if [ -z "$PLUTO_SAREF_TRACKING" -o "$PLUTO_SAREF_TRACKING" = "no" ]; then
+    if [ -z "$PLUTO_SAREF_TRACKING" -o "$PLUTO_SAREF_TRACKING" = "no" ]; then
 	echo "SAref tracking left to third party"
-  else if [ -z "$PLUTO_CONN_ADDRFAMILY" -o "$PLUTO_CONN_ADDRFAMILY" = "ipv6" ]; then
+    elif [ -z "$PLUTO_CONN_ADDRFAMILY" -o "$PLUTO_CONN_ADDRFAMILY" = "ipv6" ]; then
 	echo "SAref not activated for IPv6"
-  else
+    else
 	saref=$PLUTO_PEER_REF
 	nf_saref=$(printf "0x%x0000" $(( $saref | 0x8000 )))
 
@@ -483,9 +483,9 @@ doipsecrule() {
 	#echo SAref: $saref '->' $nf_saref
 
         rulespec="--src $srcnet --dst $dstnet -m mark --mark 0/0x80000000 -j MARK --set-mark $nf_saref"
-        if $use_comment ; then
-                # WARNING: you should only edit use_comment while you have no established conns
-                rulespec="$rulespec -m comment --comment '$PLUTO_CONNECTION'"
+        if $use_comment; then
+            # WARNING: you should only edit use_comment while you have no established conns
+            rulespec="$rulespec -m comment --comment '$PLUTO_CONNECTION'"
         fi
 
 	case $1 in
@@ -497,102 +497,100 @@ doipsecrule() {
                 ;;
         esac
 
-	oops="`set +x; eval $it 2>&1`"
+	oops="$(set +x; eval $it 2>&1)"
 	st=$?
-	if test " $oops" = " " -a " $st" != " 0"
-	then
+	if [ -z  "$oops" -a $st -ne 0 ]; then
 	    oops="silent error, exit status $st"
 	fi
-	if test " $oops" != " " -o " $st" != " 0"
-	then
-	    echo "$0: doroute \`$it' failed ($oops)" >&2
+	if [ -n "$oops" -o $st -ne 0 ]; then
+	    echo "$0: doroute \"$it\" failed ($oops)" >&2
 	fi
 	return $st
-  fi
-  fi
+    fi
 }
  
 
 # the big choice
 case "$PLUTO_VERB:$1" in
-spdadd-client:*|spdadd-host:*)
+    spdadd-client:*|spdadd-host:*)
 	checkipsec;
 	doipsecrule add;;
 
-spddel-client:*|spddel-host:*)
+    spddel-client:*|spddel-host:*)
 	checkipsec
 	doipsecrule delete;;
 
-prepare-host:*|prepare-client:*)
+    prepare-host:*|prepare-client:*)
 	# set up a "%trap" equivalent (we don't know how do this yet!)
 	;;
 
-route-host:*|route-client:*)
+    route-host:*|route-client:*)
 	# connection to me or my client subnet being routed
 	# setup of %TRAP equivalent
 	;;
 
-unroute-host:*|unroute-client:*)
+    unroute-host:*|unroute-client:*)
 	# connection to me or my client subnet being unrouted
 	# remove %TRAP equivalent
 	;;
 
-up-host:*)
+    up-host:*)
 	# If you are doing a custom version, firewall commands go here.
 	;;
 
-down-host:*)
+    down-host:*)
 	# If you are doing a custom version, firewall commands go here.
 	;;
 
-up-client:)
+    up-client:)
 	# If you are doing a custom version, firewall commands go here.
 	;;
-down-client:)
+    down-client:)
 	# If you are doing a custom version, firewall commands go here.
 	;;
-updateresolvconf-host|updateresolvconf-client)
+    updateresolvconf-host|updateresolvconf-client)
         # updating resolv.conf using DNS info obtained from the server
         updateresolvconf
         ;;
-restoreresolvconf-host|restoreresolvconf-client)
+    restoreresolvconf-host|restoreresolvconf-client)
         # restoring resolv.conf
         restoreresolvconf
         ;;
-disconnectNM-host|disconnectNM-client)
+    disconnectNM-host|disconnectNM-client)
         # sending disconnect signal to NM, as something went wrong.
         disconnectNM
         ;;
-#
-# IPv6
-#
-prepare-host-v6:*|prepare-client-v6:*)
+    #
+    # IPv6
+    #
+    prepare-host-v6:*|prepare-client-v6:*)
 	;;
-route-host-v6:*|route-client-v6:*)
+    route-host-v6:*|route-client-v6:*)
 	# connection to me or my client subnet being routed
 	#uproute_v6
 	;;
-unroute-host-v6:*|unroute-client-v6:*)
+    unroute-host-v6:*|unroute-client-v6:*)
 	# connection to me or my client subnet being unrouted
 	#downroute_v6
 	;;
-up-host-v6:*)
+    up-host-v6:*)
 	# connection to me coming up
 	# If you are doing a custom version, firewall commands go here.
 	;;
-down-host-v6:*)
+    down-host-v6:*)
 	# connection to me going down
 	# If you are doing a custom version, firewall commands go here.
 	;;
-up-client-v6:)
+    up-client-v6:)
 	# connection to my client subnet coming up
 	# If you are doing a custom version, firewall commands go here.
 	;;
-down-client-v6:)
+    down-client-v6:)
 	# connection to my client subnet going down
 	# If you are doing a custom version, firewall commands go here.
 	;;
-*)	echo "$0: unknown verb \`$PLUTO_VERB' or parameter \`$1'" >&2
+    *)
+	echo "$0: unknown verb \"$PLUTO_VERB\" or parameter \"$1\"" >&2
 	exit 1
 	;;
 esac

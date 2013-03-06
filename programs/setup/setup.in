@@ -2,6 +2,7 @@
 # IPsec startup and shutdown command
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,13 +16,13 @@
 #
 # This is the version for use on Linux, see _realsetup.bsd for OSX/BSD
 
-IPSEC_CONF="${FINALCONFFILE-@FINALCONFFILE@}"
+IPSEC_CONF="${FINALCONFFILE:-@FINALCONFFILE@}"
 
 
 # Misc. paths (some of this should perhaps be overrideable from ipsec.conf).
-rundir=/var/run/pluto
-plutopid=$rundir/pluto.pid
-plutoctl=$rundir/pluto.ctl
+rundir=@FINALVARDIR@/run/pluto
+plutopid=${rundir}/pluto.pid
+plutoctl=${rundir}/pluto.ctl
 ipsecversion=/proc/net/ipsec_version
 kamepfkey=/proc/net/pfkey
 
@@ -29,8 +30,8 @@ kamepfkey=/proc/net/pfkey
 cd /
 
 #/etc/resolv.conf related paths
-LIBRESWAN_RESOLV_CONF=/var/run/pluto/libreswan-resolv-conf-backup
-ORIG_RESOLV_CONF=/etc/resolv.conf
+LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
+ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
 
 if test `ip addr list|grep -c cipsec` -ne 0
@@ -42,152 +43,123 @@ fi
 # which kernel are we using?
 IPSECprotostack=`ipsec addconn --config $IPSEC_CONF --liststack`
 
-systemd="`pidof systemd`"
-if test "$systemd" = "1";
-then
-	initsystem="systemd"
-elif test -f /sbin/start
-then
-	if test -r /etc/redhat-release ;
-	then
-		initsystem="sysv"
-	else
-		initsystem="upstart"
-	fi
+systemd=$(pidof systemd)
+if [ "${systemd}" = 1 ]; then
+    initsystem=systemd
+elif [ -f /sbin/start ]; then
+    if [ -r /etc/redhat-release ]; then
+	initsystem=sysv
+    else
+	initsystem=upstart
+    fi
 else
-	initsystem="sysv"
+    initsystem=sysv
 fi
 
 case "$1" in
-  start|--start|_autostart)
-
+    start|--start|_autostart)
 	# preliminaries
-	mkdir -p $rundir
-	chmod 700 $rundir > /dev/null 2>/dev/null
-
+	mkdir -p ${rundir}
+	chmod 700 ${rundir} > /dev/null 2>/dev/null
 	# starting a stack will unload any loaded stack first (same or different stack)
 	[ -f /proc/modules ] && ipsec _stackmanager start
-
 	# Finally start the pluto daemon in a restart loop
-	if test $initsystem = "systemd";
-	then
-		systemctl status ipsec.service > /dev/null
-		RETVAL=$?
-		if test $RETVAL -eq 0;
-		then
-			echo "systemd: ipsec service is already running"
-			exit 1
-		else
-			echo "Redirecting to: systemctl start ipsec.service"
-			exec systemctl start ipsec.service
-		fi
-	elif test $initsystem = "sysv";
-	then
-		echo "Redirecting to: service ipsec start"
-		exec service ipsec start
-	elif test $initsystem = "upstart";
-	then
-		echo "Redirecting to: start ipsec"
-		exec start ipsec
+	if [ ${initsystem} = systemd ]; then
+	    systemctl status ipsec.service > /dev/null
+	    RETVAL=$?
+	    if [ $RETVAL -eq 0 ]; then
+		echo "systemd: ipsec service is already running"
+		exit 1
+	    else
+		echo "Redirecting to: systemctl start ipsec.service"
+		exec systemctl start ipsec.service
+	    fi
+	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: service ipsec start"
+	    exec service ipsec start
+	elif [ ${initsystem} = upstart ]; then
+	    echo "Redirecting to: start ipsec"
+	    exec start ipsec
 	else
-		echo "Unknown init system in use - aborted"
-		exit 3
+	    echo "Unknown init system in use - aborted"
+	    exit 3
 	fi
-	exit 
+	exit 0
 	;;
-
-  stop|--stop|_autostop)		# _autostop is same as stop
+  stop|--stop|_autostop)	# _autostop is same as stop
 	# Shut things down.
-	if test $initsystem = "systemd";
-	then
-		echo "Redirecting to: systemctl stop ipsec.service"
-		# don't exec, we need to cleanup the IPsec stack afterwards
-		systemctl stop ipsec.service
-	elif test $initsystem = "sysv";
-	then
-		echo "Redirecting to: service ipsec stop"
-		# don't exec, we need to cleanup the IPsec stack afterwards
-		service ipsec stop
-	elif test $initsystem = "upstart";
-	then
-		echo "Redirecting to: start ipsec"
-		exec stop ipsec
+	if [ ${initsystem} = systemd ]; then
+	    echo "Redirecting to: systemctl stop ipsec.service"
+	    # don't exec, we need to cleanup the IPsec stack afterwards
+	    systemctl stop ipsec.service
+	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: service ipsec stop"
+	    # don't exec, we need to cleanup the IPsec stack afterwards
+	    service ipsec stop
+	elif [ ${initsystem} = upstart ]; then
+	    echo "Redirecting to: start ipsec"
+	    exec stop ipsec
 	else
-		echo "Unknown init system in use - aborted"
-		exit 3
+	    echo "Unknown init system in use - aborted"
+	    exit 3
 	fi
-		
-	# Remove any loaded IPsec stack
+       	# Remove any loaded IPsec stack
 	[ -f /proc/modules ] && ipsec _stackmanager stop
-
 	# Cleaning up backup resolv.conf
-	if [ -e $LIBRESWAN_RESOLV_CONF ]
+	if [ -e ${LIBRESWAN_RESOLV_CONF} ]
 	then
-		if grep 'Libreswan' $ORIG_RESOLV_CONF > /dev/null 2>&1
+		if grep 'Libreswan' ${ORIG_RESOLV_CONF} > /dev/null 2>&1
 		then
-			cp $LIBRESWAN_RESOLV_CONF $ORIG_RESOLV_CONF
-		else
-			echo "Current resolv.conf is not generated by Libreswan, so doing nothing"
+			cp ${LIBRESWAN_RESOLV_CONF} ${ORIG_RESOLV_CONF}
 		fi
-		rm -f  $LIBRESWAN_RESOLV_CONF
+		rm -f  ${LIBRESWAN_RESOLV_CONF}
 	fi
-
-	exit 
+	exit 0
 	;;
-
-  status|--status)
-	if test $initsystem = "systemd";
-	then
-		echo "Redirecting to: systemctl status ipsec.service"
-		exec systemctl status ipsec.service
-	elif test $initsystem = "sysv";
-	then
-		echo "Redirecting to: service ipsec status"
-		exec service ipsec status
-	elif test $initsystem = "upstart";
-	then
-		echo "Redirecting to: status ipsec"
-		exec status ipsec
+    status|--status)
+	if [ ${initsystem} = systemd ]; then
+	    echo "Redirecting to: systemctl status ipsec.service"
+	    exec systemctl status ipsec.service
+	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: service ipsec status"
+	    exec service ipsec status
+	elif [ ${initsystem} = upstart ]; then
+	    echo "Redirecting to: status ipsec"
+	    exec status ipsec
 	else
-		echo "Unknown init system in use - aborted"
-		exit 3
+	    echo "Unknown init system in use - aborted"
+	    exit 3
 	fi
-	exit 
+	exit 0
 	;;
-
-  restart|--restart)
+    restart|--restart)
 	# assumes preparations for running have already been done, as service should be running now
-	if test $initsystem = "systemd";
-	then
-		systemctl status ipsec.service > /dev/null
-		RETVAL=$?
-		if test $RETVAL -ne 0;
-		then
-			echo "systemd: ipsec service is not running"
-			exit 1
-		else
-			# do not use 'restart' because systemd is overly "smart"
-			# and will refuse the restart when stopped.
-			echo "Redirecting to: systemctl stop+start ipsec.service"
-			systemctl stop ipsec.service
-			exec systemctl start ipsec.service
-		fi
-	elif test $initsystem = "sysv";
-	then
-		echo "Redirecting to: service ipsec restart"
-		exec service ipsec restart
-	elif test $initsystem = "upstart";
-	then
-		echo "Redirecting to: restart ipsec"
-		exec restart ipsec
+	if [ ${initsystem} = systemd ]; then
+	    systemctl status ipsec.service > /dev/null
+	    RETVAL=$?
+	    if [ $RETVAL -ne 0 ]; then
+		echo "systemd: ipsec service is not running"
+		exit 1
+	    else
+		# do not use 'restart' because systemd is overly "smart"
+		# and will refuse the restart when stopped.
+		echo "Redirecting to: systemctl stop+start ipsec.service"
+		systemctl stop ipsec.service
+		exec systemctl start ipsec.service
+	    fi
+	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: service ipsec restart"
+	    exec service ipsec restart
+	elif [ ${initsystem} = upstart ]; then
+	    echo "Redirecting to: restart ipsec"
+	    exec restart ipsec
 	else
-		echo "Unknown init system in use - aborted"
-		exit 3
+	    echo "Unknown init system in use - aborted"
+	    exit 3
 	fi
-	exit 
+	exit 0 
 	;;
-
-  *)
+    *)
 	echo "Usage: {--start|--stop|--restart|--status}" >&2
 	exit 2
 esac

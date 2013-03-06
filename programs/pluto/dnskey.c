@@ -430,6 +430,7 @@ process_txt_rr_body(char *str
 	     */
 	    u_char kb[RSA_MAX_ENCODING_BYTES];	/* plenty of space for binary form of public key */
 	    chunk_t kbc;
+	    char diag_space[TTODATAV_BUF];
 	    struct RSA_public_key r;
 
 	    err_t ugh = ttodatav(p, 0, 64, (char *)kb, sizeof(kb), &kbc.len
@@ -563,7 +564,9 @@ process_lwdnsq_key(char *str
 	 * Similar code is in process_txt_rr_body.
 	 */
 	u_char kb[RSA_MAX_ENCODING_BYTES];	/* plenty of space for binary form of public key */
+	char diag_space[TTODATAV_BUF];
 	chunk_t kbc;
+
 	err_t ugh = ttodatav(rest, 0, 64, (char *)kb, sizeof(kb), &kbc.len
 	    , diag_space, sizeof(diag_space), TTODATAV_IGNORESPACE);
 

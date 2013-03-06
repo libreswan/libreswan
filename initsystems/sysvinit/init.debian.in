@@ -22,7 +22,7 @@ FIXME
 # Copyright (C) 2002              Michael Richardson <mcr@freeswan.org>
 # Copyright (C) 2006              Michael Richardson <mcr@xelerance.com>
 # Copyright (C) 2008              Michael Richardson <mcr@sandelman.ca>
-# Copyright (C) 2008-2011         Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008-2011, 2013   Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2012              Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
@@ -52,8 +52,6 @@ FIXME
 # description: IPsec provides encrypted and authenticated communications; \
 # NETKEY/KLIPS is the kernel half of it, Pluto is the user-level management daemon.
 
-IPSEC_CONF="${FINALCONFFILE-@FINALCONFFILE@}"
-
 # Source function library.
 . /etc/init.d/functions
 
@@ -72,9 +70,10 @@ then
 fi
 
 # where the private directory and the config files are
-IPSEC_EXECDIR="${IPSEC_EXECDIR-@IPSEC_EXECDIR@}"
-IPSEC_LIBDIR="${IPSEC_LIBDIR-@IPSEC_LIBDIR@}"
-IPSEC_SBINDIR="${IPSEC_SBINDIR-@IPSEC_SBINDIR@}"
+IPSEC_CONF="${FINALCONFFILE:-@FINALCONFFILE@}"
+IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
+IPSEC_LIBDIR="${IPSEC_LIBDIR:-@IPSEC_LIBDIR@}"
+IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 
 
 # Does not make any sense at all to continue without the main binary

@@ -9,7 +9,7 @@ Type=simple
 Restart=always
 # backwards compatible with plutorestartoncrash=no
 #RestartPreventExitStatus=137 143 SIGTERM SIGKILL
-EnvironmentFile=-@FINALCONFDIR@/sysconfig/pluto
+EnvironmentFile=-@FINALSYSCONFDIR@/sysconfig/pluto
 #Environment=IPSEC_LIBDIR=@FINALLIBEXECDIR@
 #Environment=IPSEC_SBINDIR=@FINALSBINDIR@
 #Environment=IPSEC_EXECDIR=@FINALLIBEXECDIR@/ipsec

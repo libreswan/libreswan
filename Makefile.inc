@@ -103,11 +103,16 @@ MANTREE=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
 MANPLACES=man3 man5 man8
 
 # where configuration files go
-FINALCONFFILE?=/etc/ipsec.conf
+FINALSYSCONFDIR?=/etc
+
+# final configuration file
+FINALCONFFILE?=$(FINALSYSCONFDIR)/ipsec.conf
 CONFFILE?=$(DESTDIR)$(FINALCONFFILE)
 
-FINALCONFDIR?=/etc
+FINALCONFDIR?=$(FINALSYSCONFDIR)
+
 CONFDIR?=$(DESTDIR)$(FINALCONFDIR)
+SYSCONFDIR?=$(DESTDIR)$(FINALSYSCONFDIR)
 
 FINALCONFDDIR?=${FINALCONFDIR}/ipsec.d
 CONFDDIR?=$(DESTDIR)$(FINALCONFDDIR)
@@ -607,6 +612,8 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
                         -e "s:@MODPROBE@:$(MODPROBE):g" \
                         -e "s:@BINSH@:$(BINSH):g" \
+                        -e "s:@FINALSYSCONFDIR@:$(FINALSYSCONFDIR):g" \
+                        -e "s:@FINALRCDIR@:$(FINALRCDIR):g" \
 
 # For KVM testing setup
 #POOL?=${LIBRESWANSRCDIR}/pool
