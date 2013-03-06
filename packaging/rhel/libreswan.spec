@@ -144,16 +144,13 @@ FS=$(pwd)
 %if %{buildklips}
 mkdir -p BUILD.%{_target_cpu}
 
-cd packaging/fedora
 # rpm doesn't know we're compiling kernel code. optflags will give us -m64
 %{__make} -C $FS MODBUILDDIR=$FS/BUILD.%{_target_cpu} \
     LIBRESWANSRCDIR=$FS \
     INITSYSTEM=sysvinit \
     KLIPSCOMPILE="%{optflags}" \
-    KERNELSRC=/lib/modules/%{kversion}/build \
+    KERNELSRC=/lib/modules/%{kversion}.%{_arch}/build \
     ARCH=%{_arch} \
-    MODULE_DEF_INCLUDE=$FS/packaging/fedora/config-%{_target_cpu}.h \
-    MODULE_EXTRA_INCLUDE=$FS/packaging/fedora/extra_%{krelver}.h \
     include module
 %endif
 
@@ -178,12 +175,12 @@ install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
 %if %{buildklips}
-mkdir -p %{buildroot}/lib/modules/%{kversion}/kernel/net/ipsec
+mkdir -p %{buildroot}/lib/modules/%{kversion}.%{_arch}/kernel/net/ipsec
 for i in $FS/BUILD.%{_target_cpu}/ipsec.ko  $FS/modobj/ipsec.o
 do
   if [ -f $i ]
   then
-    cp $i %{buildroot}/lib/modules/%{kversion}/kernel/net/ipsec 
+    cp $i %{buildroot}/lib/modules/%{kversion}.%{_arch}/kernel/net/ipsec 
   fi
 done
 %endif
@@ -216,7 +213,7 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 
 %if %{buildklips}
 %files klips
-/lib/modules/%{kversion}/kernel/net/ipsec
+/lib/modules/%{kversion}.%{_arch}/kernel/net/ipsec
 %endif
 
 %preun
@@ -232,9 +229,9 @@ fi
 
 %if %{buildklips}
 %postun klips
-/sbin/depmod -ae %{kversion}
+/sbin/depmod -ae %{kversion}.%{_arch}
 %post klips
-/sbin/depmod -ae %{kversion}
+/sbin/depmod -ae %{kversion}.%{_arch}
 %endif
 
 %post 
