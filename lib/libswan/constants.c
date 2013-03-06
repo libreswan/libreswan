@@ -33,6 +33,24 @@
 #include "enum_names.h"
 #include "lswlog.h"
 
+/* Jam a string into a buffer of limited size (truncation is silent).
+ * This is somewhat like what people mistakenly think strncpy does
+ * but the parameter order is like snprintf.
+ * The result is a pointer to the NUL at the end.  This is unconventional but useful.
+ * NOTE: Is it really wise to silently truncate?  Only the caller knows.
+ */
+char *
+jam_str(char *dest, size_t size, const char *src)
+{
+    size_t full_len = strlen(src);
+    size_t copy_len = size-1 < full_len? size-1 : full_len;
+
+    passert(size > 0);	/* need space for at least NJL */
+    memcpy(dest, src, copy_len);
+    dest[copy_len] = '\0';
+    return dest + copy_len;
+}
+
 /* version */
 
 static const char *const version_name_1[] = {
@@ -1488,7 +1506,7 @@ const char *keyword_name(struct keyword_enum_values *kevs, unsigned int value)
 
 
 /* find or construct a string to describe an enum value
- * Result may be in STATIC buffer!
+ * Result may be in STATIC buffer -- NOT RE-ENTRANT!
  */
 const char *
 enum_show(enum_names *ed, unsigned long val)
@@ -1505,8 +1523,6 @@ enum_show(enum_names *ed, unsigned long val)
     return p;
 }
 
-
-static char bitnamesbuf[200];   /* only one!  I hope that it is big enough! */
 
 int 
 enum_search(enum_names *ed, const char *str) 
@@ -1527,58 +1543,59 @@ enum_search(enum_names *ed, const char *str)
 }
 
 /* construct a string to name the bits on in a set
- * Result may be in STATIC buffer!
- * Note: prettypolicy depends on internal details.
+ * Result of bitnamesof may be in STATIC buffer -- NOT RE-ENTRANT!
+ * Note: prettypolicy depends on internal details of bitnamesofb.
  */
 const char *
 bitnamesofb(const char *const table[], lset_t val
 	    , char *b, size_t blen)
 {
+    char *const roof = b + blen;
     char *p = b;
     lset_t bit;
     const char *const *tp;
 
-    if (val == 0)
-	return "none";
+    passert(blen != 0);	/* need room for NUL */
+
+    /* if nothing gets filled in, default to "none" rather than "" */
+    (void) jam_str(p, (size_t)(roof - p), "none");
 
     for (tp = table, bit = 01; val != 0; bit <<= 1)
     {
 	if (val & bit)
 	{
 	    const char *n = *tp;
-	    size_t nl;
+
+	    if (p != b)
+		p = jam_str(p, (size_t)(roof - p), "+");
 
 	    if (n == NULL || *n == '\0')
 	    {
-		/* no name for this bit, so use hex */
-		static char flagbuf[sizeof("0x80000000")];
-
-		snprintf(flagbuf, sizeof(flagbuf), "0x%llx", bit);
-		n = flagbuf;
-	    }
-
-	    nl = strlen(n);
-
-	    if (p != b && p < b+blen - 1)
-		*p++ = '+';
-
-	    if (b+blen - p > (ptrdiff_t)nl)
-	    {
-		strcpy(p, n);
-		p += nl;
+		/* No name for this bit, so use hex.
+		 * if snprintf returns a different value from strlen, trunation happened
+		 */
+		(void)snprintf(p, (size_t)(roof - p), "0x%llx", bit);
+		p += strlen(p);
+	    } else {
+		p = jam_str(p, (size_t)(roof - p), n);
 	    }
 	    val -= bit;
 	}
+	/* Move on in the table, but not past end.
+	 * This is a bit of a trick: while we are at stuck the end,
+	 * the loop will print out the remaining bits in hex.
+	 */
 	if (*tp != NULL)
-	    tp++;   /* move on, but not past end */
+	    tp++;
     }
-    *p = '\0';
     return b;
 }
 
 const char *
 bitnamesof(const char *const table[], lset_t val)
 {
+    static char bitnamesbuf[200];   /* NOT RE-ENTRANT!  I hope that it is big enough! */
+
     return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
 }
 
@@ -1616,7 +1633,7 @@ const char *sparse_name(sparse_names sd, unsigned long val)
 }
 
 /* find or construct a string to describe an sparse value
- * Result may be in STATIC buffer!
+ * Result may be in STATIC buffer -- NOT RE-ENTRANT!
  */
 const char *
 sparse_val_show(sparse_names sd, unsigned long val)
