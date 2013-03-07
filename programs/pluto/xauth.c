@@ -84,6 +84,8 @@ static stf_status
 modecfg_inI2(struct msg_digest *md);
 
 char pwdfile[PATH_MAX];
+/* We use a mutex lock because not all systems have crypt_r() */
+pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 extern bool encrypt_message(pb_stream *pbs, struct state *st); /* forward declaration */
 
@@ -1203,6 +1205,7 @@ int do_file_authentication(void *varg)
         {
 	    char *cp;
 
+	    pthread_mutex_lock(&crypt_mutex);
 #if defined(__CYGWIN32__)
 	    /* password is in the clear! */
 	    cp = (char *)arg->password.ptr;
@@ -1225,13 +1228,14 @@ int do_file_authentication(void *varg)
            {
              /* we have a winner */
              fclose( fp );
+	     pthread_mutex_unlock(&crypt_mutex);
              return TRUE;
            }
 	   libreswan_log("XAUTH: nope");
         }
     }
     fclose( fp );
-    
+    pthread_mutex_unlock(&crypt_mutex);
     return FALSE;
 }
 
