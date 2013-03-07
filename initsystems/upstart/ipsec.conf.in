@@ -25,6 +25,6 @@ end script
 
 post-stop script
     ipsec whack --shutdown
-    ip xfrm policy flush 
-    ip xfrm state flush 
+    ip xfrm policy flush
+    ip xfrm state flush
 end script

@@ -24,12 +24,12 @@ FIXME
 # Copyright (C) 2008              Michael Richardson <mcr@sandelman.ca>
 # Copyright (C) 2008-2011, 2013   Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2012              Paul Wouters <paul@libreswan.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -120,14 +120,14 @@ verify_config() {
 start() {
 	# starting a stack will unload any loaded stack first (same or different stack)
 	case $IPSECprotostack in
-	netkey) 
+	netkey)
 		ipsec _startnetkey start
 		;;
 	none|nostack)
 		ipsec _startklips stop
 		ipsec _startnetkey stop
 		;;
-	mast|klips) 
+	mast|klips)
 	   	ipsec _startklips start
 		;;
 	*)
@@ -144,7 +144,7 @@ start() {
 
 
 stop() {
-    
+
 }
 
 restart() {
@@ -160,8 +160,8 @@ condrestart() {
 }
 
 status() {
-    
-    RETVAL=$?	
+
+    RETVAL=$?
     return $RETVAL
 }
 
@@ -199,5 +199,5 @@ case "$1" in
          echo "Usage: $0 {start|stop|restart|reload|force-reload|condrestart|try-restart|status|version}"
          RETVAL=2
 esac
- 	
+ 
 exit $RETVAL
