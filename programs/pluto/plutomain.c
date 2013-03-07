@@ -410,8 +410,12 @@ main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_LIBCAP_NG
-	/* Drop capabilities */
-	capng_clear(CAPNG_SELECT_BOTH);
+	/* 
+	 * Drop capabilities - this generates a false positive valgrind warning 
+	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
+	 */
+	capng_clear(CAPNG_SELECT_BOTH); 
+
 	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE|CAPNG_PERMITTED,
 			CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
 			CAP_IPC_LOCK, CAP_AUDIT_WRITE,
