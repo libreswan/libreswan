@@ -1220,8 +1220,8 @@ int do_file_authentication(void *varg)
 		libreswan_log("XAUTH: checking user(%s:%s) " , szuser, szconnid);
 	    }
 
-           /* Ok then now password check */
-           if ( strcmp(cp, szpass ) == 0 )  
+           /* Ok then now password check - note crypt() can return NULL */
+           if ( cp && strcmp(cp, szpass ) == 0 )  
            {
              /* we have a winner */
              fclose( fp );
