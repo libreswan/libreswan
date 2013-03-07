@@ -59,7 +59,7 @@ if [ ! -f /etc/sysconfig/network ]; then
 fi
 
 if [ $(id -u) -ne 0 ]; then
-    echo "permission denied (must be superuser)" |
+    echo "permission denied (must be superuser)" | \
 	logger -s -p daemon.error -t ipsec_setup 2>&1
     exit 4
 fi
