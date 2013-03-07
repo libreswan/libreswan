@@ -655,7 +655,7 @@ informational(struct msg_digest *md)
 	struct state *st = md->st;            /* may be NULL */
 
         /* Switch on Notification Type (enum) */
-	/* note that we can get notification payloads unencrypted
+	/* note that we _can_ get notification payloads unencrypted
 	 * once we are at least in R3/I4. 
 	 * and that the handler is expected to treat them suspiciously.
 	 */
@@ -1978,6 +1978,8 @@ void process_packet_tail(struct msg_digest **mdp)
 		case ISAKMP_N_CISCO_LOAD_BALANCE:
 		case PAYLOAD_MALFORMED:
 		case INVALID_MESSAGE_ID:
+			/* these are handled later on in informational() */
+			break;
 		default:
 		    	loglog(RC_LOG_SERIOUS
 			   , "ignoring informational payload %s, type %s msgid=%08x"
@@ -1985,12 +1987,12 @@ void process_packet_tail(struct msg_digest **mdp)
 			   , (st == NULL) ? " [no state found]" : ""
 			   , (st == NULL) ? st->st_msgid : 0 );
 #ifdef DEBUG
-		if(st!=NULL
-		   && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO) {
-		    loglog(RC_LOG_SERIOUS, "received and failed on unknown informational message");
-		    complete_v1_state_transition(mdp, STF_FATAL);
-		    return;
-		}
+			if(st!=NULL && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO)
+			{
+			   loglog(RC_LOG_SERIOUS, "received and failed on unknown informational message");
+			   complete_v1_state_transition(mdp, STF_FATAL);
+			   return;
+			}
 #endif	    
 	    }
 	    DBG_cond_dump(DBG_PARSING, "info:", p->pbs.cur, pbs_left(&p->pbs));

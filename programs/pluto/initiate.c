@@ -282,6 +282,7 @@ initiate_connection(const char *name, int whackfd
     struct connection *c = con_by_name(name, FALSE);
     int count;
 
+    passert(name != NULL);
     is.whackfd   = whackfd;
     is.moredebug = moredebug;
     is.importance= importance;
