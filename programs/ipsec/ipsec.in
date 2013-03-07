@@ -149,16 +149,16 @@ case "$1" in
 	    fi
 	fi
 	# this hardcoded ipsec.d needs to get fixed once we pass IPSECD properly
-	pk12util -i $2 -d /etc/ipsec.d
+	pk12util -i $2 -d @FINALCONFDDIR@
 	if [ -x /usr/sbin/restorecon ]; then
-	    restorecon /etc/ipsec.d -Rv
+	    restorecon @FINALCONFDDIR@ -Rv
 	fi
 	exit 0
 	;;
     initnss|--initnss)
-	if [ -f "/etc/ipsec.d/cert8.db" -o -f "/etc/ipsec.d/key3.db" -o -f "/etc/ipsec.d/secmod.db" ]; then
+	if [ -f "@FINALCONFDDIR@/cert8.db" -o -f "@FINALCONFDDIR@/key3.db" -o -f "@FINALCONFDDIR@/secmod.db" ]; then
 	    echo "NSS database already initialised - aborted"
-	    echo "To wipe the old NSS database, issue: rm /etc/ipsec.d/*.db"
+	    echo "To wipe the old NSS database, issue: rm @FINALCONFDDIR@/*.db"
 	    exit 42
 	fi
 
@@ -167,9 +167,9 @@ case "$1" in
 	echo "   use an empty password"
 	echo ""
 
-	certutil -N -d /etc/ipsec.d
+	certutil -N -d @FINALCONFDDIR@
 	if [ -x /usr/sbin/restorecon ]; then
-	    restorecon /etc/ipsec.d -Rv
+	    restorecon @FINALCONFDDIR@ -Rv
 	fi
 	exit 0
 	;;
