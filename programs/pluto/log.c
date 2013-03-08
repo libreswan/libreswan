@@ -59,6 +59,8 @@
 #include "plutoalg.h"
 #include "virtual.h" /* for show_virtual_private */
 
+#include "pthread.h"
+
 #ifndef NO_DB_OPS_STATS
 #define NO_DB_CONTEXT
 #include "db_ops.h"
@@ -146,10 +148,14 @@ pluto_init_log(void)
 /* format a string for the log, with suitable prefixes.
  * A format starting with ~ indicates that this is a reprocessing
  * of the message, so prefixing and quoting is suppressed.
+ *
+ * thread locks added until all non re-entrant functions it uses have been fixed
  */
+pthread_mutex_t fmtlog_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void
 fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 {
+    pthread_mutex_lock(&fmtlog_mutex);
     bool reproc = *fmt == '~';
     size_t ps;
     struct connection *c = cur_state != NULL ? cur_state->st_connection
@@ -197,6 +203,7 @@ fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
     vsnprintf(buf + ps, buf_len - ps, fmt, ap);
     if (!reproc)
 	(void)sanitize_string(buf, buf_len);
+    pthread_mutex_unlock(&fmtlog_mutex);
 }
 
 void
@@ -426,10 +433,12 @@ peerlog(const char *prefix, const char *m)
     }
 }
 
-
+/* thread locks added until all non re-entrant functions it uses have been fixed */
+pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 int
 libreswan_log(const char *message, ...)
 {
+    pthread_mutex_lock(&log_mutex);
     va_list args;
     char m[LOG_WIDTH];	/* longer messages will be truncated */
 
@@ -458,13 +467,16 @@ libreswan_log(const char *message, ...)
 	peerlog("", m);
 
     whack_log(RC_LOG, "~%s", m);
-    
+    pthread_mutex_unlock(&log_mutex);
     return 0;
 }
 
+/* thread locks added until all non re-entrant functions it uses have been fixed */
+pthread_mutex_t loglog_mutex = PTHREAD_MUTEX_INITIALIZER;
 void
 loglog(int mess_no, const char *message, ...)
 {
+    pthread_mutex_lock(&loglog_mutex);
     va_list args;
     char m[LOG_WIDTH];	/* longer messages will be truncated */
 
@@ -493,6 +505,7 @@ loglog(int mess_no, const char *message, ...)
 	peerlog("", m);
 
     whack_log(mess_no, "~%s", m);
+    pthread_mutex_unlock(&loglog_mutex);
 }
 
 void
@@ -727,10 +740,12 @@ set_debugging(lset_t deb)
 }
 
 /* log a debugging message (prefixed by "| ") */
-
+/* thread locks added until all non re-entrant functions it uses have been fixed */
+pthread_mutex_t dbglog_mutex = PTHREAD_MUTEX_INITIALIZER;
 int
 DBG_log(const char *message, ...)
 {
+    pthread_mutex_lock(&loglog_mutex);
     va_list args;
     char m[LOG_WIDTH];	/* longer messages will be truncated */
 
@@ -764,6 +779,7 @@ DBG_log(const char *message, ...)
 	peerlog(prefix, m);
     }
 
+    pthread_mutex_unlock(&loglog_mutex);
     return 0;
 }
 
