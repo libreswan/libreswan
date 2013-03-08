@@ -105,6 +105,25 @@ struct msgid_list
     struct msgid_list     *next;
 };
 
+static 
+char *humanize_number(unsigned long num, char *buf, size_t buf_len,
+                      const char *formatstr) {
+    if (num < 1024) {
+        return buf + snprintf(buf, buf_len, formatstr,
+                              num, "B");
+    }
+    if (num < 1024*1024) {
+        return buf + snprintf(buf, buf_len, formatstr,
+                              num/1024, "KB");
+    }
+    if (num < 1024*1024*1024) {
+        return buf + snprintf(buf, buf_len, formatstr,
+                              num/(1024*1024), "MB");
+    }
+    return buf + snprintf(buf, buf_len, formatstr,
+                          num/(1024*1024*1024), "GB");
+ }
+
 bool
 unique_msgid(struct state *isakmp_sa, msgid_t msgid)
 {
@@ -374,7 +393,7 @@ delete_state(struct state *st)
 {
     struct connection *const c = st->st_connection;
     struct state *old_cur_state = cur_state == st? NULL : cur_state;
-    char statebuf[1024], *sbcp = statebuf;
+    char statebuf[1024], statebufx[1024], *sbcp = statebuf;
 
     DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
 
@@ -385,7 +404,12 @@ delete_state(struct state *st)
         sbcp = humanize_number(st->st_esp.our_bytes,
                                sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
                                " out=%lu%s");
-        libreswan_log(statebuf);
+	if (st->st_xauth_username) {
+	    snprintf(statebufx, sizeof(statebufx) - 1 , "%s XAUTHuser=%s", statebuf, st->st_xauth_username);
+	    libreswan_log(statebufx);
+	} else {
+	    libreswan_log(statebuf);
+	}
     }
 
     if (st->st_ah.present) {
@@ -395,7 +419,13 @@ delete_state(struct state *st)
         sbcp = humanize_number(st->st_ah.our_bytes,
                                sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
                                " out=%lu%s");
-        libreswan_log(statebuf);
+	if (st->st_xauth_username) {
+	    snprintf(statebufx, sizeof(statebufx) - 1 , "%s XAUTHuser=%s", statebuf, st->st_xauth_username);
+	    libreswan_log(statebufx);
+	} else {
+	    libreswan_log(statebuf);
+	}
+
     }
 
     if (st->st_ipcomp.present) {
@@ -405,7 +435,12 @@ delete_state(struct state *st)
         sbcp = humanize_number(st->st_ipcomp.our_bytes,
                                sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
                                " out=%lu%s");
-        libreswan_log(statebuf);
+	if (st->st_xauth_username) {
+	    snprintf(statebufx, sizeof(statebufx) - 1 , "%s XAUTHuser=%s", statebuf, st->st_xauth_username);
+	    libreswan_log(statebufx);
+	} else {
+	    libreswan_log(statebuf);
+	}
     }
     
 #ifdef XAUTH_HAVE_PAM 
@@ -1381,24 +1416,6 @@ state_eroute_usage(ip_subnet *ours, ip_subnet *his
 	});
 }
 
-char *humanize_number(unsigned long num, char *buf, size_t buf_len,
-                      const char *formatstr) {
-    if (num < 1024) {
-        return buf + snprintf(buf, buf_len, formatstr,
-                              num, "B");
-    }
-    if (num < 1024*1024) {
-        return buf + snprintf(buf, buf_len, formatstr,
-                              num/1024, "KB");
-    }
-    if (num < 1024*1024*1024) {
-        return buf + snprintf(buf, buf_len, formatstr,
-                              num/(1024*1024), "MB");
-    }
-    return buf + snprintf(buf, buf_len, formatstr,
-                          num/(1024*1024*1024), "GB");
- }
-
 void fmt_state(struct state *st, const time_t n
 , char *state_buf, const size_t state_buf_len
 , char *state_buf2, const size_t state_buf2_len)
@@ -1610,13 +1627,14 @@ void fmt_state(struct state *st, const time_t n
 	}
 #endif
 	snprintf(state_buf2, state_buf2_len
-	    , "#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu %s"
+	    , "#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu XAUTHuser=%s %s"
 	    , st->st_serialno
 	    , c->name, inst
 	    , lastused
 	    , buf
-		 , (unsigned long)st->st_ref, (unsigned long)st->st_refhim,
-            traffic_buf);
+	    , (unsigned long)st->st_ref, (unsigned long)st->st_refhim
+	    , (st->st_xauth_username) ? st->st_xauth_username : "[none]"
+	    , traffic_buf);
 
 #	undef add_said
     }
