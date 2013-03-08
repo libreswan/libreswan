@@ -60,6 +60,8 @@
 #include <key.h>
 #include "lswconf.h"
 
+#include <pthread.h>
+
 /* Maximum length of filename and passphrase buffer */
 #define BUF_LEN		256
 
@@ -956,6 +958,56 @@ lsw_get_x509_private_key(struct secret *secrets, x509cert_t *cert)
     return pri;
 }
 
+static pthread_mutex_t certs_and_keys_mutex  = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t authcert_list_mutex   = PTHREAD_MUTEX_INITIALIZER;
+/*
+ * lock access to my certs and keys
+ */
+void
+lock_certs_and_keys(const char *who)
+{
+    pthread_mutex_lock(&certs_and_keys_mutex);
+    DBG(DBG_CONTROLMORE,
+	DBG_log("certs and keys locked by '%s'", who)
+    )
+}
+
+/*
+ * unlock access to my certs and keys
+ */
+void
+unlock_certs_and_keys(const char *who)
+{
+    DBG(DBG_CONTROLMORE,
+	DBG_log("certs and keys unlocked by '%s'", who)
+    )
+    pthread_mutex_unlock(&certs_and_keys_mutex);
+}
+
+/*
+ * lock access to the chained authcert list
+ */
+void
+lock_authcert_list(const char *who)
+{
+    pthread_mutex_lock(&authcert_list_mutex);
+    DBG(DBG_CONTROLMORE,
+	DBG_log("authcert list locked by '%s'", who)
+    )
+}
+
+/*
+ * unlock access to the chained authcert list
+ */
+void
+unlock_authcert_list(const char *who)
+{
+    DBG(DBG_CONTROLMORE,
+	DBG_log("authcert list unlocked by '%s'", who)
+    )
+    pthread_mutex_unlock(&authcert_list_mutex);
+}
+
 static void
 process_secret(struct secret **psecrets, int verbose,
 	       struct secret *s, prompt_pass_t *pass)
@@ -1027,13 +1079,7 @@ process_secret(struct secret **psecrets, int verbose,
 
 	/* gauntlet has been run: install new secret */
 
-#if 0
-# if defined(LIBCURL) || defined(LDAP_VER)
 	lock_certs_and_keys("process_secret");
-# endif
-#else
-#warning locking code for CRL fetching needs to convert to proper pluto event, not thread/mutex locking
-#endif
 
 	if(s->ids == NULL) {
 	    /*
@@ -1058,13 +1104,7 @@ process_secret(struct secret **psecrets, int verbose,
 	}
 	s->next   = *psecrets;
 	*psecrets = s;
-#if 0
-# if defined(LIBCURL) || defined(LDAP_VER)
 	unlock_certs_and_keys("process_secret");
-# endif
-#else
-#warning locking code for CRL fetching needs to convert to proper pluto event, not thread/mutex locking
-#endif
     }
 }
 
@@ -1293,13 +1333,7 @@ lsw_process_secrets_file(struct secret **psecrets
 void
 lsw_free_preshared_secrets(struct secret **psecrets)
 {
-#if 0
-# if defined(LIBCURL) || defined(LDAP_VER)
 	lock_certs_and_keys("free_preshared_secrets");
-# endif
-#else
-#warning locking code for CRL fetching needs to convert to proper pluto event, not thread/mutex locking
-#endif
     
     if (*psecrets != NULL)
     {
@@ -1343,13 +1377,7 @@ lsw_free_preshared_secrets(struct secret **psecrets)
 	*psecrets = NULL;
     }
     
-#if 0
-# if defined(LIBCURL) || defined(LDAP_VER)
 	unlock_certs_and_keys("free_preshard_secrets");
-# endif
-#else
-#warning locking code for CRL fetching needs to convert to proper pluto event, not thread/mutex locking
-#endif
 }
 
 void
