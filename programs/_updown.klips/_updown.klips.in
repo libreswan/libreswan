@@ -526,7 +526,7 @@ doroute() {
 	    # need to provide route that eclipses default, without
 	    # replacing it.
 	    it="ip -6 route $1 0::/1 $parms2 $parms3 &&
-		ip -6 route $1 8888::/1 $parms2 $parms3"
+		ip -6 route $1 8000::/1 $parms2 $parms3"
 	    ;;
 
 	*)
@@ -563,7 +563,7 @@ case "$PLUTO_VERB:$1" in
 		# need to provide route that eclipses default, without
 		# replacing it.
 		parms1="0::/1"
-		parms2="8888::/1"
+		parms2="8000::/1"
 		it="ip route delete $parms1 $IPROUTEARGS 2>&1 ; ip route delete $parms2 $IPROUTEARGS 2>&1"
 		oops="`ip route delete $parms1 $IPROUTEARGS 2>&1 ; ip route delete $parms2 $IPROUTEARGS 2>&1`"
 		;;
