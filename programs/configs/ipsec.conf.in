@@ -25,8 +25,9 @@ config setup
 	#plutodebug=none
 	#klipsdebug=none
 	#
-	# Use this to log to a file, or disable logging on embedded systems (like openwrt)
-	#plutostderrlog=/dev/null
+	# Normally, pluto logs via syslog. If you want to log to a file, specify below
+	# or to disable logging, eg for embedded systems, use the file /dev/null
+	#plutostderrlog=/var/log/pluto.log
 	#
 	# Enable core dumps (might require system changes, like ulimit -C)
 	# This is required for abrtd to work properly
