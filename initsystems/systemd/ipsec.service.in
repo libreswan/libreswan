@@ -9,7 +9,7 @@ Type=simple
 Restart=always
 # backwards compatible with plutorestartoncrash=no
 #RestartPreventExitStatus=137 143 SIGTERM SIGKILL
-EnvironmentFile=-@FINALCONFDIR@/sysconfig/pluto
+EnvironmentFile=-@FINALSYSCONFDIR@/sysconfig/pluto
 #Environment=IPSEC_LIBDIR=@FINALLIBEXECDIR@
 #Environment=IPSEC_SBINDIR=@FINALSBINDIR@
 #Environment=IPSEC_EXECDIR=@FINALLIBEXECDIR@/ipsec
@@ -18,8 +18,8 @@ EnvironmentFile=-@FINALCONFDIR@/sysconfig/pluto
 ExecStartPre=@FINALSBINDIR@/ipsec addconn --config @FINALCONFFILE@ --checkconfig
 ExecStartPre=@FINALLIBDIR@/_stackmanager start
 ExecStart=@BINSH@ -c 'eval `@FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS`'
-ExecStop=@FINALSBINDIR@/ipsec whack --shutdown 
-ExecStopPost=/sbin/ip xfrm policy flush 
+ExecStop=@FINALSBINDIR@/ipsec whack --shutdown
+ExecStopPost=/sbin/ip xfrm policy flush
 ExecStopPost=/sbin/ip xfrm state flush
 ExecReload=@FINALSBINDIR@/ipsec whack --listen
 

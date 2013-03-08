@@ -2,26 +2,33 @@
 . ../../../kvmsetup.sh
 . ./testparams.sh 
 . ../setup.sh
-. $LIBRESWANDIR/testing/utils/functions.sh
+. ../../utils/functions.sh
 
-#if [ ! -f  $LIBRESWANDIR/testing/x509/pkcs12/mainca/west.p12 ]
-#then
-#    echo "cannot run testcases without generating X509 certificates"
-#    echo "Please run $LIBRESWANDIR/testing/x509/dist_certs and try again"
-#    exit 1
-#fi
+TCPDUMP_FILTER="not stp and not port 22"
 
 TESTNAME=`basename $PWD`
-echo "autodetet testname is $TESTNAME"
+echo "autodetect testname is $TESTNAME"
 
 rm -fr OUTPUT/*
 mkdir  -pm777 OUTPUT
+echo "RUNNING" > OUTPUT/RESULT
+
+# kill all hanging runkvm's, they get called swankvm
+if [ -n "`pidof swankvm`" ] ; then
+	echo "Killing existing swankvm VM controllers"
+	killall swankvm
+fi
+# kill any lingering tcpdumps
+if [ -n "`pidof tcpdump`" ] ; then
+	echo "Killing existing tcpdump controllers"
+	sudo killall tcpdump
+fi
 
 if [ ! -f eastrun.sh ] ; then
 	RESPONDER=east
 else
 	P=`pwd`
-	echo "can't idenity INITIATOR no $P/eastinit.sh"
+	echo "can't identify RESPONDER no $P/eastinit.sh"
 	exit 1
 fi
 
@@ -35,10 +42,18 @@ fi
 
 if [ -f westrun.sh ] ; then
 	INITIATOR=west
+	SWAN_PCAP=swan12.pcap
+	TCPDUMP_DEV=swan12
 elif [ -f roadrun.sh ] ; then
 	INITIATOR=road
+	SWAN_PCAP=swan12.pcap
+	TCPDUMP_DEV=swan12
+elif [ -f northrun.sh ] ; then
+	INITIATOR=north
+	SWAN_PCAP=swan13.pcap
+	TCPDUMP_DEV=swan13
 else 
-	echo "can't idenity INITIATOR"
+	echo "can't identify INITIATOR"
 	exit 1
 fi
 
@@ -47,7 +62,6 @@ touch OUTPUT/pluto.$RESPONDER.log
 chmod a+rw OUTPUT/pluto.$INITIATOR.log 
 chmod a+rw OUTPUT/pluto.$RESPONDER.log
 
-SWAN12_PCAP=swan12.pcap
 
 function wait_till_pid_end {
 	NAME=$1 
@@ -69,12 +83,12 @@ function wait_till_pid_end {
 	set -e
 }
 
-sudo /sbin/tcpdump -w ./OUTPUT/$SWAN12_PCAP -n -i swan12  not port 22 & 
+sudo /sbin/tcpdump -w ./OUTPUT/$SWAN_PCAP -n -i $TCPDUMP_DEV $TCPDUMP_FILTER &
 TCPDUMP_PID=$! 
-echo $TCPDUMP_PID  > ./OUTPUT/$SWAN12_PCAP.pid
+echo $TCPDUMP_PID  > ./OUTPUT/$SWAN_PCAP.pid
 
 if [ -n "$NIC" ] ; then
-	echo "../../utils/runkvm.py --host $NIC --testname $TESTNAME"
+	echo "../../utils/runkvm.py --host $NIC --testname $TESTNAME --reboot"
 	../../utils/runkvm.py --host $NIC --testname $TESTNAME  &
 	NIC_PID=$!
 fi
@@ -94,13 +108,9 @@ echo "start final.sh on responder $RESPONDER for $TESTNAME"
 RESPONDER_FINAL_PID=$!
 wait_till_pid_end "$RESPONDER" $RESPONDER_FINAL_PID
 
-if [ -n "$NIC_PID" ] ; then
-	kill -9 $NIC_PID
-fi
-
 TCPDUMP_PID_R=`pidof sudo`
-if [ -f ./OUTPUT/$SWAN12_PCAP.pid ] ; then
-	TCPDUMP_PID=`cat  ./OUTPUT/$SWAN12_PCAP.pid`
+if [ -f ./OUTPUT/$SWAN_PCAP.pid ] ; then
+	TCPDUMP_PID=`cat  ./OUTPUT/$SWAN_PCAP.pid`
 	for s in $TCPDUMP_PID_R
 	do
 		if [ $s -eq $TCPDUMP_PID ] ; then
@@ -111,5 +121,18 @@ if [ -f ./OUTPUT/$SWAN12_PCAP.pid ] ; then
         done 
 fi
 
-consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt
-consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.console.txt
+initout=`consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt`
+respout=`consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.console.txt`
+echo "WARNING: tcpdump output is not yet compared to known good output!"
+if [  -s OUTPUT/$INITIATOR.console.diff -o -s OUTPUT/$RESPONDER.console.diff ] ; then
+	echo $TESTNAME FAILED
+	echo "FAILED" > OUTPUT/RESULT
+	echo $initout
+	echo $initout >> OUTPUT/RESULT
+	echo $respout
+	echo $respout >> OUTPUT/RESULT
+else
+	echo $TESTNAME PASSED
+	echo "PASSED" > OUTPUT/RESULT
+fi
+

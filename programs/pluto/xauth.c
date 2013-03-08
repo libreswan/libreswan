@@ -84,6 +84,8 @@ static stf_status
 modecfg_inI2(struct msg_digest *md);
 
 char pwdfile[PATH_MAX];
+/* We use a mutex lock because not all systems have crypt_r() */
+pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 extern bool encrypt_message(pb_stream *pbs, struct state *st); /* forward declaration */
 
@@ -448,8 +450,9 @@ stf_status modecfg_resp(struct state *st
 
 	attrh.isama_identifier = ap_id;
 	if(!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr))
+	{
 	    return STF_INTERNAL_ERROR;
-	
+	}
 	zero(&ia);
 	get_internal_addresses(st->st_connection, &ia);
 
@@ -483,12 +486,18 @@ stf_status modecfg_resp(struct state *st
 
 		/* ISAKMP attr out */
 		attr.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TLV;
-		out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &attrval);
+		if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &attrval))
+		{
+		   return STF_INTERNAL_ERROR;
+		}
 		switch(attr_type)
 		{
 		        case INTERNAL_IP4_ADDRESS:
 		                len = addrbytesptr(&ia.ipaddr, &byte_ptr);
- 				out_raw(byte_ptr,len,&attrval,"IP4_addr");
+				if(!out_raw(byte_ptr,len,&attrval,"IP4_addr"))
+				{
+				  return STF_INTERNAL_ERROR;
+				}
  				break;
 
 			case INTERNAL_IP4_NETMASK:
@@ -510,7 +519,10 @@ stf_status modecfg_resp(struct state *st
  					mask = 0;
  				else
  					mask = 0xffffffff * 1;
-				out_raw(&mask,4,&attrval,"IP4_mask");
+				if(!out_raw(&mask,4,&attrval,"IP4_mask"))
+				{
+				  return STF_INTERNAL_ERROR;
+				}
 			    }
 			    break;
 
@@ -528,15 +540,24 @@ stf_status modecfg_resp(struct state *st
 				    if(m < 0) m=0;
 				}
 				len = addrbytesptr(&st->st_connection->spd.this.client.addr, &byte_ptr);
-				out_raw(byte_ptr,len,&attrval,"IP4_subnet");
-				out_raw(mask,sizeof(mask),&attrval,"IP4_submsk"); 
+				if(!out_raw(byte_ptr,len,&attrval,"IP4_subnet"))
+				{
+				  return STF_INTERNAL_ERROR;
+				}
+				if(!out_raw(mask,sizeof(mask),&attrval,"IP4_submsk"))
+				{
+				  return STF_INTERNAL_ERROR;
+				}
 				    
 			    }
 			    break;
 		    
 			case INTERNAL_IP4_DNS:
  				len = addrbytesptr(&ia.dns[dns_idx++], &byte_ptr);
- 				out_raw(byte_ptr,len,&attrval,"IP4_dns");
+ 				if(!out_raw(byte_ptr,len,&attrval,"IP4_dns"))
+				{
+				  return STF_INTERNAL_ERROR;
+				}
 				if(dns_idx < 2 && !isanyaddr(&ia.dns[dns_idx]))
 				{
 					dont_advance = TRUE;
@@ -705,16 +726,23 @@ stf_status xauth_send_request(struct state *st)
 	attrh.isama_type = ISAKMP_CFG_REQUEST;
 	attrh.isama_identifier = 0;
 	if(!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
+	{
 	    return STF_INTERNAL_ERROR;
+	}
 	/* ISAKMP attr out (name) */
 	attr.isaat_af_type = XAUTH_USER_NAME;
 	attr.isaat_lv = 0;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
-	
+	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	{
+	    return STF_INTERNAL_ERROR;
+	}
 	/* ISAKMP attr out (password) */
 	attr.isaat_af_type = XAUTH_USER_PASSWORD;
 	attr.isaat_lv = 0;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
+	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	{
+	    return STF_INTERNAL_ERROR;
+	}
 
 	close_message(&strattr);
     }
@@ -795,39 +823,53 @@ stf_status modecfg_send_request(struct state *st)
 	attrh.isama_type = ISAKMP_CFG_REQUEST;
 	attrh.isama_identifier = 0;
 	if(!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
+	{
 	    return STF_INTERNAL_ERROR;
+	}
 	/* ISAKMP attr out (ipv4) */
 	attr.isaat_af_type = INTERNAL_IP4_ADDRESS;
 	attr.isaat_lv = 0;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
-	
+	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	{
+	    return STF_INTERNAL_ERROR;
+	}
 	/* ISAKMP attr out (netmask) */
 	attr.isaat_af_type = INTERNAL_IP4_NETMASK;
 	attr.isaat_lv = 0;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
-
-	if(st->st_connection->remotepeertype == CISCO) {
-	/* ISAKMP attr out (INTERNAL_IP4_DNS) */
-	attr.isaat_af_type = INTERNAL_IP4_DNS;
-	attr.isaat_lv = 0;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
-
-	/* ISAKMP attr out (CISCO_BANNER) */
-	attr.isaat_af_type = CISCO_BANNER;
-	attr.isaat_lv = 0;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
-
-        /* ISAKMP attr out (CISCO_DEF_DOMAIN) */
-        attr.isaat_af_type = CISCO_DEF_DOMAIN;
-        attr.isaat_lv = 0;
-        out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
-
-	/* ISAKMP attr out (CISCO_SPLIT_INC) */
-	attr.isaat_af_type = CISCO_SPLIT_INC;
-	attr.isaat_lv = 0;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
+	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	{
+	    return STF_INTERNAL_ERROR;
 	}
-
+	if(st->st_connection->remotepeertype == CISCO) {
+	   /* ISAKMP attr out (INTERNAL_IP4_DNS) */
+	   attr.isaat_af_type = INTERNAL_IP4_DNS;
+	   attr.isaat_lv = 0;
+	   if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	   {
+	    return STF_INTERNAL_ERROR;
+	   }
+	   /* ISAKMP attr out (CISCO_BANNER) */
+	   attr.isaat_af_type = CISCO_BANNER;
+	   attr.isaat_lv = 0;
+	   if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	   {
+	    return STF_INTERNAL_ERROR;
+	   }
+           /* ISAKMP attr out (CISCO_DEF_DOMAIN) */
+           attr.isaat_af_type = CISCO_DEF_DOMAIN;
+           attr.isaat_lv = 0;
+           if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	   {
+	    return STF_INTERNAL_ERROR;
+	   }
+	   /* ISAKMP attr out (CISCO_SPLIT_INC) */
+	   attr.isaat_af_type = CISCO_SPLIT_INC;
+	   attr.isaat_lv = 0;
+	   if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	   {
+	    return STF_INTERNAL_ERROR;
+	   }
+	}
 	close_message(&strattr);
     }
 
@@ -907,17 +949,28 @@ stf_status xauth_send_status(struct state *st, int status)
 	attrh.isama_type = ISAKMP_CFG_SET;
 	attrh.isama_identifier = 0;
 	if(!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
+	{
 	    return STF_INTERNAL_ERROR;
+	}
 	/* ISAKMP attr out (status) */
 #if 1
 	attr.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV;
 	attr.isaat_lv = status;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
+	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+	{
+	    return STF_INTERNAL_ERROR;
+	}
 #else
 	attr.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TLV;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &val);
+	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &val))
+	{
+	    return STF_INTERNAL_ERROR;
+	}
 	status = htonl(status);
-	out_raw(&status,4,&val,"Status");
+	if(!out_raw(&status,4,&val,"Status"))
+	{
+	    return STF_INTERNAL_ERROR;
+	}
 	close_output_pbs(&val);
 #endif
 	close_message(&strattr);
@@ -1152,6 +1205,7 @@ int do_file_authentication(void *varg)
         {
 	    char *cp;
 
+	    pthread_mutex_lock(&crypt_mutex);
 #if defined(__CYGWIN32__)
 	    /* password is in the clear! */
 	    cp = (char *)arg->password.ptr;
@@ -1169,18 +1223,19 @@ int do_file_authentication(void *varg)
 		libreswan_log("XAUTH: checking user(%s:%s) " , szuser, szconnid);
 	    }
 
-           /* Ok then now password check */
-           if ( strcmp(cp, szpass ) == 0 )  
+           /* Ok then now password check - note crypt() can return NULL */
+           if ( cp && strcmp(cp, szpass ) == 0 )  
            {
              /* we have a winner */
              fclose( fp );
+	     pthread_mutex_unlock(&crypt_mutex);
              return TRUE;
            }
 	   libreswan_log("XAUTH: nope");
         }
     }
     fclose( fp );
-    
+    pthread_mutex_unlock(&crypt_mutex);
     return FALSE;
 }
 
@@ -2226,8 +2281,9 @@ stf_status xauth_client_resp(struct state *st
 
 	attrh.isama_identifier = ap_id;
 	if(!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr))
+	{
 	    return STF_INTERNAL_ERROR;
-	
+	}
 	attr_type = XAUTH_TYPE;
 
 	while(xauth_resp != 0)
@@ -2242,12 +2298,18 @@ stf_status xauth_client_resp(struct state *st
 		case XAUTH_TYPE:
 		    attr.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TV;
 		    attr.isaat_lv = XAUTH_TYPE_GENERIC;
-		    out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL);
+		    if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, NULL))
+		    {
+			return STF_INTERNAL_ERROR;
+		    }
 		    break;
 		    
 		case XAUTH_USER_NAME:
 		    attr.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TLV;
-		    out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &attrval);
+		    if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &attrval))
+		    {
+			return STF_INTERNAL_ERROR;
+		    }
 
 		    if(st->st_xauth_username[0]=='\0') {
 			if(st->st_whack_sock == -1)
@@ -2274,16 +2336,21 @@ stf_status xauth_client_resp(struct state *st
 				sizeof(st->st_xauth_username));
 		    } 
 			
-		    out_raw(st->st_xauth_username
-			    , strlen(st->st_xauth_username)
-			    , &attrval, "XAUTH username");
+		    if(!out_raw(st->st_xauth_username , strlen(st->st_xauth_username)
+			    , &attrval, "XAUTH username"))
+		    {
+			return STF_INTERNAL_ERROR;
+		    }
 		    close_output_pbs(&attrval);
 
 		    break;
 		    
 		case XAUTH_USER_PASSWORD:
 		    attr.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TLV;
-		    out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &attrval);
+		    if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &attrval))
+		    {
+		    return STF_INTERNAL_ERROR;
+		    }
 
 		    if(st->st_xauth_password.ptr == NULL) {
 			struct secret *s;
@@ -2331,9 +2398,12 @@ stf_status xauth_client_resp(struct state *st
 			password_read_from_prompt = TRUE;
 		    }
 		    
-		    out_raw(st->st_xauth_password.ptr
+		    if(!out_raw(st->st_xauth_password.ptr
 			    , st->st_xauth_password.len
-			    , &attrval, "XAUTH password");
+			    , &attrval, "XAUTH password"))
+		    {
+			return STF_INTERNAL_ERROR;
+		    }
 
 		    /*
 		     * Do not store the password read from the prompt. The password
@@ -2632,12 +2702,17 @@ stf_status xauth_client_ackstatus(struct state *st
 
 	attrh.isama_identifier = ap_id;
 	if(!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr))
-	    return STF_INTERNAL_ERROR;
+	{
+	 return STF_INTERNAL_ERROR;
+	}
 	
 	/* ISAKMP attr out */
 	attr.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV;
 	attr.isaat_lv = 1;
-	out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &attrval);
+	if(!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr, &attrval))
+	{
+	 return STF_INTERNAL_ERROR;
+	}
 	close_output_pbs(&attrval);
 	close_message(&strattr);
     }

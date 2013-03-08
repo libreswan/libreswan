@@ -139,7 +139,9 @@ rm -rf ${RPM_BUILD_ROOT}
 # /usr/share/doc/libreswan/*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
-%dir %attr(700,root,root) /etc/ipsec.d/policies
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/cacerts
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %{_localstatedir}/run/pluto
 %{_initrddir}/ipsec

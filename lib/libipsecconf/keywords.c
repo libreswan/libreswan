@@ -388,7 +388,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"retransmits",    kv_config, kt_bool,      KBF_RETRANSMITS,NOT_ENUM},
     {"overridemtu",    kv_config, kt_number,    KBF_OVERRIDEMTU,NOT_ENUM},
     {"strictcrlpolicy",kv_config, kt_bool,      KBF_STRICTCRLPOLICY,NOT_ENUM},
-    {"crlcheckinterval",kv_config, kt_number,	KBF_CRLCHECKINTERVAL,NOT_ENUM},
+    {"crlcheckinterval",kv_config, kt_time,	KBF_CRLCHECKINTERVAL,NOT_ENUM},
     {"force_busy",     kv_config, kt_bool,      KBF_FORCEBUSY,NOT_ENUM},
     {"ikeport",        kv_config,kt_number,     KBF_IKEPORT, NOT_ENUM},
 #ifdef NAT_TRAVERSAL
