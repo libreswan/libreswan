@@ -3,13 +3,13 @@
 #
 # Copyright (C) 2003-2004 Nigel Metheringham
 # Copyright (C) 2002-2007 Michael Richardson <mcr@xelerance.com>
-# Copyright (C) 2003-2005 Tuomo Soini <tis@foobar.fi>
-# 
+# Copyright (C) 2003-2013 Tuomo Soini <tis@foobar.fi>
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -24,117 +24,119 @@
 
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
-LC_ALL=C export LC_ALL
+LC_ALL=C
+export LC_ALL
 
 # things that this script gets (from ipsec_pluto(8) man page)
 #
 #
-#      PLUTO_VERSION
-#              indicates  what  version of this interface is being
-#              used.  This document describes version  1.1.   This
-#              is upwardly compatible with version 1.0.
+#	PLUTO_VERSION
+#		indicates  what  version of this interface is being
+#		used.  This document describes version  1.1.   This
+#		is upwardly compatible with version 1.0.
 #
-#       PLUTO_VERB
-#              specifies the name of the operation to be performed
-#              (prepare-host, prepare-client, up-host, up-client,
-#              down-host, or down-client).  If the address family
-#              for security gateway to security gateway communications
-#              is IPv6, then a suffix of -v6 is added to the
-#              verb.
+#	PLUTO_VERB
+#		specifies the name of the operation to be performed
+#		(prepare-host, prepare-client, up-host, up-client,
+#		down-host, or down-client).  If the address family
+#		for security gateway to security gateway communications
+#		is IPv6, then a suffix of -v6 is added to the
+#		verb.
 #
-#       PLUTO_CONNECTION
-#              is the name of the  connection  for  which  we  are
-#              routing.
+#	PLUTO_CONNECTION
+#		is the name of the  connection  for  which  we  are
+#		routing.
 #
-#       PLUTO_CONN_POLICY
-#              the policy of the connection, as in:
-#     RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failureDROP+lKOD+rKOD  
+#	PLUTO_CONN_POLICY
+#		the policy of the connection, as in:
+#		RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failureDROP+lKOD+rKOD
 #
-#       PLUTO_NEXT_HOP
-#              is the next hop to which packets bound for the peer
-#              must be sent.
+#	PLUTO_NEXT_HOP
+#		is the next hop to which packets bound for the peer
+#		must be sent.
 #
-#       PLUTO_INTERFACE
-#              is the name of the ipsec interface to be used.
+#	PLUTO_INTERFACE
+#		is the name of the ipsec interface to be used.
 #
-#       PLUTO_ME
-#              is the IP address of our host.
+#	PLUTO_ME
+#		is the IP address of our host.
 #
-#       PLUTO_MY_CLIENT
-#              is the IP address / count of our client subnet.  If
-#              the  client  is  just  the  host,  this will be the
-#              host's own IP address / max (where max  is  32  for
-#              IPv4 and 128 for IPv6).
+#	PLUTO_MY_CLIENT
+#		is the IP address / count of our client subnet.  If
+#		the  client  is  just  the  host,  this will be the
+#		host's own IP address / max (where max  is  32  for
+#		IPv4 and 128 for IPv6).
 #
-#       PLUTO_MY_CLIENT_NET
-#              is the IP address of our client net.  If the client
-#              is just the host, this will be the  host's  own  IP
-#              address.
+#	PLUTO_MY_CLIENT_NET
+#		is the IP address of our client net.  If the client
+#		is just the host, this will be the  host's  own  IP
+#		address.
 #
-#       PLUTO_MY_CLIENT_MASK
-#              is  the  mask for our client net.  If the client is
-#              just the host, this will be 255.255.255.255.
+#	PLUTO_MY_CLIENT_MASK
+#		is  the  mask for our client net.  If the client is
+#		just the host, this will be 255.255.255.255.
 #
-#       PLUTO_MY_SOURCEIP
-#              if non-empty, then the source address for the route will be
-#              set to this IP address.
+#	PLUTO_MY_SOURCEIP
+#		if non-empty, then the source address for the route will be
+#		set to this IP address.
 #
-#       PLUTO_MY_PROTOCOL
-#              is the protocol  for this  connection.  Useful  for
-#              firewalling.
+#	PLUTO_MY_PROTOCOL
+#		is the protocol  for this  connection.  Useful  for
+#		firewalling.
 #
-#       PLUTO_MY_PORT
-#              is the port. Useful for firewalling.
+#	PLUTO_MY_PORT
+#		is the port. Useful for firewalling.
 #
-#       PLUTO_PEER
-#              is the IP address of our peer.
+#	PLUTO_PEER
+#		is the IP address of our peer.
 #
-#       PLUTO_PEER_CLIENT
-#              is the IP address / count of the peer's client subnet.
-#              If the client is just the peer, this will be
-#              the peer's own IP address / max (where  max  is  32
-#              for IPv4 and 128 for IPv6).
+#	PLUTO_PEER_CLIENT
+#		is the IP address / count of the peer's client subnet.
+#		If the client is just the peer, this will be
+#		the peer's own IP address / max (where  max  is  32
+#		for IPv4 and 128 for IPv6).
 #
-#       PLUTO_PEER_CLIENT_NET
-#              is the IP address of the peer's client net.  If the
-#              client is just the peer, this will  be  the  peer's
-#              own IP address.
+#	PLUTO_PEER_CLIENT_NET
+#		is the IP address of the peer's client net.  If the
+#		client is just the peer, this will  be  the  peer's
+#		own IP address.
 #
-#       PLUTO_PEER_CLIENT_MASK
-#              is  the  mask  for  the  peer's client net.  If the
-#              client   is   just   the   peer,   this   will   be
-#              255.255.255.255.
+#	PLUTO_PEER_CLIENT_MASK
+#		is  the  mask  for  the  peer's client net.  If the
+#		client   is   just   the   peer,   this   will   be
+#		255.255.255.255.
 #
-#       PLUTO_PEER_PROTOCOL
-#              is  the  protocol  set  for  remote  end  with port
-#              selector.
+#	PLUTO_PEER_PROTOCOL
+#		is  the  protocol  set  for  remote  end  with port
+#		selector.
 #
-#       PLUTO_PEER_PORT
-#              is the peer's port. Useful for firewalling.
+#	PLUTO_PEER_PORT
+#		is the peer's port. Useful for firewalling.
 #
-#       PLUTO_CONNECTION_TYPE
+#	PLUTO_CONNECTION_TYPE
 #
-#       PLUTO_MY_REF/PLUTO_PEER_REF
-#              KLIPSng(mast) references to the SA to be used in each
-#              direction.
+#	PLUTO_MY_REF/PLUTO_PEER_REF
+#		KLIPSng(mast) references to the SA to be used in each
+#		direction.
 #
 #	PLUTO_STACK
 #		The kernel level IPstack used (see protostack=)
 
 case $PLUTO_VERSION in
-    1.*) # Older Pluto?!?  Play it safe, script may be using new features.
-	echo "$0: obsolete interface version \`$PLUTO_VERSION'," >&2
+    1.*)
+	# Older Pluto?!?  Play it safe, script may be using new features.
+	echo "$0: obsolete interface version \"$PLUTO_VERSION\"," >&2
 	echo "$0: 	called by obsolete Pluto?" >&2
-	exit 2;;
-    2.*) ;;
+	exit 2
+	;;
+    2.*)
+	;;
 esac
 
-if [ -x @IPSEC_LIBDIR@/_updown.${PLUTO_STACK} ]
-then
-	exec @IPSEC_LIBDIR@/_updown.${PLUTO_STACK} $*
+if [ -x @IPSEC_LIBDIR@/_updown.${PLUTO_STACK} ]; then
+    exec @IPSEC_LIBDIR@/_updown.${PLUTO_STACK} $*
 else
-	echo "FATAL: Could not execute @IPSEC_LIBDIR@/_updown.${PLUTO_STACK} $*"
+    echo "FATAL: Could not execute @IPSEC_LIBDIR@/_updown.${PLUTO_STACK} $*"
 fi
 
-exit 3;
-
+exit 3

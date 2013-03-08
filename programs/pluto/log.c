@@ -59,6 +59,8 @@
 #include "plutoalg.h"
 #include "virtual.h" /* for show_virtual_private */
 
+#include "pthread.h"
+
 #ifndef NO_DB_OPS_STATS
 #define NO_DB_CONTEXT
 #include "db_ops.h"
@@ -146,10 +148,14 @@ pluto_init_log(void)
 /* format a string for the log, with suitable prefixes.
  * A format starting with ~ indicates that this is a reprocessing
  * of the message, so prefixing and quoting is suppressed.
+ *
+ * thread locks added until all non re-entrant functions it uses have been fixed
  */
+pthread_mutex_t fmtlog_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void
 fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 {
+    pthread_mutex_lock(&fmtlog_mutex);
     bool reproc = *fmt == '~';
     size_t ps;
     struct connection *c = cur_state != NULL ? cur_state->st_connection
@@ -197,6 +203,7 @@ fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
     vsnprintf(buf + ps, buf_len - ps, fmt, ap);
     if (!reproc)
 	(void)sanitize_string(buf, buf_len);
+    pthread_mutex_unlock(&fmtlog_mutex);
 }
 
 void
@@ -412,10 +419,10 @@ peerlog(const char *prefix, const char *m)
     {
 	char datebuf[32];
 	time_t n;
-	struct tm *t;
+	struct tm tm1, *t;
 
 	time(&n);
-	t = localtime(&n);
+	t = localtime_r(&n, &tm1);
 
 	strftime(datebuf, sizeof(datebuf), "%Y-%m-%d %T", t);
 	fprintf(cur_connection->log_file, "%s %s%s\n", datebuf, prefix, m);
@@ -426,10 +433,12 @@ peerlog(const char *prefix, const char *m)
     }
 }
 
-
+/* thread locks added until all non re-entrant functions it uses have been fixed */
+pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 int
 libreswan_log(const char *message, ...)
 {
+    pthread_mutex_lock(&log_mutex);
     va_list args;
     char m[LOG_WIDTH];	/* longer messages will be truncated */
 
@@ -441,11 +450,11 @@ libreswan_log(const char *message, ...)
 
     if (log_to_stderr || (log_to_file && pluto_log_fd)) {
 	if (log_with_timestamp) {
-		struct tm *timeinfo;
+		struct tm tm1, *timeinfo;
 		char fmt[32];
 		time_t rtime;
 		time(&rtime);
-		timeinfo = localtime (&rtime);
+		timeinfo = localtime_r(&rtime, &tm1);
 		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
 		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s: %s\n", fmt, m);
 	} else {
@@ -458,13 +467,16 @@ libreswan_log(const char *message, ...)
 	peerlog("", m);
 
     whack_log(RC_LOG, "~%s", m);
-    
+    pthread_mutex_unlock(&log_mutex);
     return 0;
 }
 
+/* thread locks added until all non re-entrant functions it uses have been fixed */
+pthread_mutex_t loglog_mutex = PTHREAD_MUTEX_INITIALIZER;
 void
 loglog(int mess_no, const char *message, ...)
 {
+    pthread_mutex_lock(&loglog_mutex);
     va_list args;
     char m[LOG_WIDTH];	/* longer messages will be truncated */
 
@@ -476,11 +488,11 @@ loglog(int mess_no, const char *message, ...)
 
     if (log_to_stderr || (log_to_file  && pluto_log_fd)) {
 	if (log_with_timestamp) {
-		struct tm *timeinfo;
+		struct tm tm1, *timeinfo;
 		char fmt[32];
 		time_t rtime;
 		time(&rtime);
-		timeinfo = localtime (&rtime);
+		timeinfo = localtime_r(&rtime, &tm1);
 		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
 		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s: %s\n", fmt, m);
 	} else {
@@ -493,6 +505,7 @@ loglog(int mess_no, const char *message, ...)
 	peerlog("", m);
 
     whack_log(mess_no, "~%s", m);
+    pthread_mutex_unlock(&loglog_mutex);
 }
 
 void
@@ -727,10 +740,12 @@ set_debugging(lset_t deb)
 }
 
 /* log a debugging message (prefixed by "| ") */
-
+/* thread locks added until all non re-entrant functions it uses have been fixed */
+pthread_mutex_t dbglog_mutex = PTHREAD_MUTEX_INITIALIZER;
 int
 DBG_log(const char *message, ...)
 {
+    pthread_mutex_lock(&loglog_mutex);
     va_list args;
     char m[LOG_WIDTH];	/* longer messages will be truncated */
 
@@ -743,11 +758,11 @@ DBG_log(const char *message, ...)
 
     if (log_to_stderr || (log_to_file && pluto_log_fd)) {
 	if (log_with_timestamp) {
-		struct tm *timeinfo;
+		struct tm tm1 ,*timeinfo;
 		char fmt[32];
 		time_t rtime;
 		time(&rtime);
-		timeinfo = localtime (&rtime);
+		timeinfo = localtime_r(&rtime, &tm1);
 		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
 		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%c %s: %s\n", debug_prefix, fmt, m);
 	} else {
@@ -764,6 +779,7 @@ DBG_log(const char *message, ...)
 	peerlog(prefix, m);
     }
 
+    pthread_mutex_unlock(&loglog_mutex);
     return 0;
 }
 
@@ -886,7 +902,7 @@ daily_log_reset(void)
 void
 daily_log_event(void)
 {
-    struct tm *ltime;
+    struct tm tm1, *ltime;
     time_t n, interval;
 
     /* attempt to schedule oneself to midnight, local time
@@ -894,7 +910,7 @@ daily_log_event(void)
      * by 86400 - hour*3600+minutes*60+seconds.
      */
     time(&n);
-    ltime = localtime(&n);
+    ltime = localtime_r(&n, &tm1);
     interval = (24 * 60 * 60)
       - (ltime->tm_sec
 	 + ltime->tm_min  * 60

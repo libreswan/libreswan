@@ -1349,7 +1349,6 @@ netlink_acquire(struct nlmsghdr *n)
 	xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
 	DBG(DBG_NETKEY, DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%d"
 				, xuctx->exttype, xuctx->len, xuctx->ctx_doi, xuctx->ctx_alg, xuctx->ctx_len));
-	DBG(DBG_NETKEY, DBG_log("xfrm xuctx security context: ", (xuctx+1), xuctx->ctx_len));
 
 	if(xuctx->ctx_len <= MAX_SECCTX_LEN) {
 	memcpy(sec_context_value, (xuctx+1), xuctx->ctx_len);

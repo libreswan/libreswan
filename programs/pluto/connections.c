@@ -381,6 +381,7 @@ void
 delete_connections_by_name(const char *name, bool strict)
 {
     bool f = FALSE;
+    passert(name != NULL);
     struct connection *c = con_by_name(name, strict);
 
     if(c==NULL) {
@@ -3491,7 +3492,7 @@ show_one_connection(struct connection *c)
 		, prettypolicy(c->policy)
 		, c->spd.this.key_from_DNS_on_demand? "+lKOD" : ""
 		, c->spd.that.key_from_DNS_on_demand? "+rKOD" : ""
-		, (c->spd.this.key_from_DNS_on_demand || c->spd.this.key_from_DNS_on_demand) ? ";" : ""
+		, (c->spd.this.key_from_DNS_on_demand || c->spd.that.key_from_DNS_on_demand) ? ";" : ""
 		);
 
     if(c->connmtu > 0) {
@@ -3554,7 +3555,7 @@ show_one_connection(struct connection *c)
 void
 show_connections_status(void)
 {
-    int count, i;
+    int count, i, active;
     struct connection *c;
     struct connection **array;
 
@@ -3572,9 +3573,14 @@ show_connections_status(void)
     array = alloc_bytes(sizeof(struct connection *)*count, "connection array");
 
     count=0;
+    active=0;
     for (c = connections; c != NULL; c = c->ac_next)
     {
 	array[count++]=c;
+	if (c->spd.routing == RT_ROUTED_TUNNEL)
+	{
+	 active++;
+	}
     }
 
     /* sort it! */
@@ -3585,6 +3591,8 @@ show_connections_status(void)
 	show_one_connection(array[i]);
     }
     pfree(array);
+    whack_log(RC_COMMENT, " "); /* spacer */
+    whack_log(RC_COMMENT,"Total IPsec connections: loaded %d, active %d",count,active);
 }
 
 /* Delete a connection if it is an instance and it is no longer in use.

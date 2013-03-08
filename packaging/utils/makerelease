@@ -31,7 +31,7 @@ else
 	mkdir -p release
 fi
 
-git archive --format=tgz --prefix=libreswan-$version/ HEAD > release/libreswan-$version.tar.gz
+git archive --format=tar --prefix=libreswan-$version/ HEAD | gzip > release/libreswan-$version.tar.gz
 
 # subshell for easier path
 (

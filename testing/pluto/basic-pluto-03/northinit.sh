@@ -1,12 +1,9 @@
 #!/bin/sh
-# make sure that NAT is working
-ping -c 4 -n sunrise
-
-TESTNAME=basic-pluto-03 
-source /testing/pluto/bin/northlocal.sh
-
-ipsec setup start
+/testing/guestbin/swan-prep
+ping -c 4 -n 192.0.3.254
+ipsec _stackmanager start 
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec auto --add northnet--eastnet-nat
+ipsec auto --add northnet--eastnet-nonat
+ipsec auto --status
 echo "initdone"
