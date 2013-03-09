@@ -537,7 +537,7 @@ static void handle_known_vendorid (struct msg_digest *md
 				   , const char *vidstr
 				   , size_t len
 				   , struct vid_struct *vid
-				   , struct state *st)
+				   , struct state *st UNUSED)
 {
 	char vid_dump[128];
 	bool vid_useful = TRUE;	/* tentatively TRUE */
