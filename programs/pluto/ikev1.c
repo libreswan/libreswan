@@ -1999,11 +1999,17 @@ void process_packet_tail(struct msg_digest **mdp)
 			/* these are handled later on in informational() */
 			break;
 		default:
-		    	loglog(RC_LOG_SERIOUS
-			   , "ignoring informational payload %s, type %s msgid=%08x"
+			if (st == NULL)
+			{
+		    	  loglog(RC_LOG_SERIOUS
+			   , "ignoring informational payload %s, no corresponding state"
+			   , enum_show(&ipsec_notification_names, p->payload.notification.isan_type));
+			} else {
+		    	  loglog(RC_LOG_SERIOUS
+			   , "ignoring informational payload %s, msgid=%08x"
 			   , enum_show(&ipsec_notification_names, p->payload.notification.isan_type)
-			   , (st == NULL) ? " [no state found]" : ""
-			   , (st == NULL) ? st->st_msgid : 0 );
+			   , st->st_msgid);
+			}
 #ifdef DEBUG
 			if(st!=NULL && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO)
 			{
