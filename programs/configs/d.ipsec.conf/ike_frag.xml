@@ -1,0 +1,17 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ike_frag</emphasis></term>
+  <listitem>
+<para>Whether or not to allow IKE fragmentation. Valid values are are
+<emphasis remap='B'>yes</emphasis>, (the default), <emphasis remap='B'>no</emphasis>
+or <emphasis remap='B'>force</emphasis>. 
+</para><para>
+IKE fragmentation capablities are negotiated via <emphasis remap='I'>vendor id</emphasis>.
+If pluto does not receive the FRAGMENTATION vendor id, no IKE fragments will be sent, regardless
+of the ike_fraa=g setting. When set to <emphasis remap='B'>yes</emphasis>, IKE fragmentation will be attempted
+on the first re-transmit of an IKE packet of a size larger then 572 bytes for IPv4 and 1280 bytes for IPv6.
+If ike_frag is set to force, IKE fragmentation is used on initial transmits of such sized packets as well.
+When we have received IKE fragments for a connection, pluto behaves as if in force mode.
+</para>
+  </listitem>
+  </varlistentry>
+
