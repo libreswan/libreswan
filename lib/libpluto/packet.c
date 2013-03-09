@@ -614,7 +614,7 @@ struct_desc isakmp_nat_oa = { "ISAKMP NAT-OA Payload", isanat_oa_fields, sizeof(
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * ! Next Payload  !   RESERVED    !         Payload Length        !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * !      UNKNOWN (always 1)       !     Index     !     Flags     !
+ * !          Fragment ID          !  Frag Number  !     Flags     !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !                                                               !
  * ~                         Fragment Data                         ~
@@ -623,11 +623,11 @@ struct_desc isakmp_nat_oa = { "ISAKMP NAT-OA Payload", isanat_oa_fields, sizeof(
  */
 static field_desc isafrag_fields[] = {
 	{ ft_zig, 8/BITS_PER_BYTE, "next payload type", NULL },
-	{ ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
+	{ ft_zig, 8/BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16/BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 16/BITS_PER_BYTE, "unknown", NULL },
-	{ ft_nat, 8/BITS_PER_BYTE, "index", NULL },
-	{ ft_nat, 8/BITS_PER_BYTE, "flags", NULL },
+	{ ft_nat, 16/BITS_PER_BYTE, "fragment id", NULL },
+	{ ft_nat, 8/BITS_PER_BYTE, "fragment number", NULL },
+	{ ft_nat, 8/BITS_PER_BYTE, "flags", NULL }, /* 0x1 means last fragment */
 	{ ft_end, 0, NULL, NULL }
 };
 

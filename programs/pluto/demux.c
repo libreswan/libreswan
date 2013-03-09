@@ -407,6 +407,24 @@ read_packet(struct msg_digest *md)
 	DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
 
 #ifdef NAT_TRAVERSAL
+
+	/* We think that in 2013 Feb, Apple iOS Racoon
+	 * sometimes generates an extra useless buggy confusing
+	 * Non ESP Marker
+	 */
+	{
+	    static const u_int8_t non_ESP_marker[NON_ESP_MARKER_SIZE] = { 0x00, };
+
+	    if(md->iface->ike_float
+	    && pbs_left(&md->packet_pbs) >= NON_ESP_MARKER_SIZE
+	    && memcmp(md->packet_pbs.cur, non_ESP_marker, NON_ESP_MARKER_SIZE) == 0)
+	    {
+		    bool happy = in_raw(NULL, NON_ESP_MARKER_SIZE, &md->packet_pbs, "spurious extra Non ESP Marker");
+		    libreswan_log("Removed spurious non-esp marker from IKE packet - Racoon bug");
+		    passert(happy);
+	    }
+	}
+
 	if ((pbs_room(&md->packet_pbs)==1) && (md->packet_pbs.start[0]==0xff)) {
 		/**
 		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP

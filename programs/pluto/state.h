@@ -252,8 +252,9 @@ struct state
 
     ip_address         st_remoteaddr;          /* where to send packets to */
     u_int16_t          st_remoteport;          /* host byte order */
+
     
-    const struct iface_port *st_interface;     /* where to send from */
+    const struct iface_port *st_interface;     /* where to send from */  /* dhr 2013: why? There was already connection->interface */
     ip_address         st_localaddr;           /* where to send them from */
     u_int16_t          st_localport;           
 
@@ -403,10 +404,12 @@ struct state
     u_int32_t           st_dpd_peerseqno;       /* global variables */
     struct event       *st_dpd_event;           /* backpointer for DPD events */
 
-    u_int32_t           st_seen_vendorid;       /* Bit field about
+    lset_t           st_seen_vendorid;       /* Bit field about
 						  recognized Vendor ID */
     struct isakmp_quirks quirks;                /* work arounds for faults in other products */
     bool                st_xauth_soft;          /* XAUTH failed but policy is to soft fail */
+    bool		st_seen_fragvid;	/* should really use st_seen_vendorid, but no one else is */
+    bool		st_seen_fragments;	/* did we receive ike fragments from peer, if so use them in return as well */
 };
 
 /* global variables */

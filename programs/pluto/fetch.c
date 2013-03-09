@@ -75,62 +75,12 @@ fetch_req_t empty_fetch_req = {
 static fetch_req_t *crl_fetch_reqs  = NULL;
 
 static pthread_t thread;
-static pthread_mutex_t certs_and_keys_mutex  = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t authcert_list_mutex   = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t crl_list_mutex        = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t crl_fetch_list_mutex  = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex      = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  fetch_wake_cond       = PTHREAD_COND_INITIALIZER;
 
 #define BUF_LEN		512
-
-/*
- * lock access to my certs and keys
- */
-void
-lock_certs_and_keys(const char *who)
-{
-    pthread_mutex_lock(&certs_and_keys_mutex);
-    DBG(DBG_CONTROLMORE,
-	DBG_log("certs and keys locked by '%s'", who)
-    )
-}
-
-/*
- * unlock access to my certs and keys
- */
-void
-unlock_certs_and_keys(const char *who)
-{
-    DBG(DBG_CONTROLMORE,
-	DBG_log("certs and keys unlocked by '%s'", who)
-    )
-    pthread_mutex_unlock(&certs_and_keys_mutex);
-}
-
-/*
- * lock access to the chained authcert list
- */
-void
-lock_authcert_list(const char *who)
-{
-    pthread_mutex_lock(&authcert_list_mutex);
-    DBG(DBG_CONTROLMORE,
-	DBG_log("authcert list locked by '%s'", who)
-    )
-}
-
-/*
- * unlock access to the chained authcert list
- */
-void
-unlock_authcert_list(const char *who)
-{
-    DBG(DBG_CONTROLMORE,
-	DBG_log("authcert list unlocked by '%s'", who)
-    )
-    pthread_mutex_unlock(&authcert_list_mutex);
-}
 
 /*
  * lock access to the chained crl list

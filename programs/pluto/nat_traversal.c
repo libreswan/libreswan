@@ -724,9 +724,7 @@ void nat_traversal_new_ka_event (void)
 
 static void nat_traversal_send_ka (struct state *st)
 {
-	static unsigned char ka_payload = 0xff;
-	chunk_t sav;
-
+	set_cur_state(st);
 	DBG(DBG_NATT|DBG_DPD,
 		DBG_log("ka_event: send NAT-KA to %s:%d (state=#%lu)"
 			, ip_str(&st->st_remoteaddr)
@@ -734,16 +732,10 @@ static void nat_traversal_send_ka (struct state *st)
 			, st->st_serialno);
 	);
 
-	/** save state chunk */
-	setchunk(sav, st->st_tpacket.ptr, st->st_tpacket.len);
-
 	/** send keep alive */
-	setchunk(st->st_tpacket, &ka_payload, 1);
 	DBG(DBG_NATT|DBG_DPD,DBG_log("sending NAT-T Keep Alive"));
-	send_packet(st, "NAT-T Keep Alive", FALSE);
-
-	/** restore state chunk */
-	setchunk(st->st_tpacket, sav.ptr, sav.len);
+	send_keepalive(st, "NAT-T Keep Alive");
+	reset_cur_state();
 }
 
 /**
@@ -780,9 +772,7 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 		    return;
 		}
 	    }
-	    set_cur_state(st);
 	    nat_traversal_send_ka(st);
-	    reset_cur_state();
 	    (*_kap_st)++;
 	}
 
@@ -814,9 +804,7 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 		    return;
 		}
 	    }
-	    set_cur_state(st);
 	    nat_traversal_send_ka(st);
-	    reset_cur_state();
 	    (*_kap_st)++;
 	}
 	

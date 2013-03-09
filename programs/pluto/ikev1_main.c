@@ -120,6 +120,12 @@ main_outI1(int whack_sock
     struct msg_digest md;   /* use reply/rbody found inside */
 
     int numvidtosend = 1;  /* we always send DPD VID */
+
+    /* Increase VID counter for VID_IKE_FRAGMENTATION */
+    if(c->policy & POLICY_IKE_FRAG_ALLOW) 
+    {
+	numvidtosend++;
+    }
 #ifdef NAT_TRAVERSAL
     if (nat_traversal_enabled) {
 	numvidtosend++;
@@ -205,7 +211,7 @@ main_outI1(int whack_sock
 
     if (SEND_PLUTO_VID || c->spd.this.cert.type == CERT_PGP)
     {
-	char *vendorid = (c->spd.this.cert.type == CERT_PGP) ?
+	const char *vendorid = (c->spd.this.cert.type == CERT_PGP) ?
 	    pgp_vendorid : pluto_vendorid;
 	int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
@@ -226,7 +232,6 @@ main_outI1(int whack_sock
     /* Announce our ability to do IKE Fragmentation */
     if(c->policy & POLICY_IKE_FRAG_ALLOW) 
     {
-	numvidtosend++;
 	int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 	if(!out_vid(np, &md.rbody, VID_IKE_FRAGMENTATION)) {
 	    reset_cur_state();
@@ -274,7 +279,7 @@ main_outI1(int whack_sock
 	, "reply packet for main_outI1");
 
     /* Transmit */
-    send_packet(st, "main_outI1", TRUE);
+    send_ike_msg(st, "main_outI1");
 
     /* Set up a retransmission event, half a minute henceforth */
     TCLCALLOUT("adjustTimers", st, st->st_connection, &md);
@@ -809,7 +814,7 @@ main_inI1_outR1(struct msg_digest *md)
 
     if (SEND_PLUTO_VID || openpgp_peer)
     {
-	char *vendorid = (openpgp_peer) ?
+	const char *vendorid = (openpgp_peer) ?
 	    pgp_vendorid : pluto_vendorid;
 
 	next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
@@ -821,17 +826,39 @@ main_inI1_outR1(struct msg_digest *md)
     /*
      * NOW SEND VENDOR ID payloads 
      */
-       
+
+    /* Increase VID counter for VID_IKE_FRAGMENTATION */
+    if(c->policy & POLICY_IKE_FRAG_ALLOW) 
+    {
+	numvidtosend++;
+    }
+
+#ifdef XAUTH
+    /* Increase VID counter for VID_MISC_XAUTH */
+    if(c->spd.this.xauth_server || c->spd.this.xauth_client)
+    {
+	numvidtosend++;
+    }
+#endif
+
     /* Announce our ability to do RFC 3706 Dead Peer Detection */
     next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
     if( !out_vid(next, &md->rbody, VID_MISC_DPD))
       return STF_INTERNAL_ERROR;
 
+    /* Announce our ability to do IKE Fragmentation */
+    if(c->policy & POLICY_IKE_FRAG_ALLOW) 
+    {
+	next = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+	if(!out_vid(next, &md->rbody, VID_IKE_FRAGMENTATION)) {
+	    return STF_INTERNAL_ERROR;
+	}
+    }
+
 #ifdef XAUTH
     /* If XAUTH is required, insert here Vendor ID */
     if(c->spd.this.xauth_server || c->spd.this.xauth_client)
     {
-	    numvidtosend++;
 	    next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 	    if (!out_vendorid(next, &md->rbody, VID_MISC_XAUTH))
 	       return STF_INTERNAL_ERROR;
@@ -2346,7 +2373,7 @@ send_isakmp_notification(struct state *st
         chunk_t saved_tpacket = st->st_tpacket;
 
         setchunk(st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream));
-        send_packet(st, "ISAKMP notify", TRUE);
+        send_ike_msg(st, "ISAKMP notify");
         st->st_tpacket = saved_tpacket;
     }       
     /* get back old IV for this state */
@@ -2543,7 +2570,7 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 
 	setchunk(sndst->st_tpacket, pbs.start, pbs_offset(&pbs));
 	TCLCALLOUT_notify("avoidEmittingNotification", sndst, &pbs, &hdr);
-	send_packet(sndst, "notification packet", TRUE);
+	send_ike_msg(sndst, "notification packet");
 #ifdef TPM
     tpm_stolen:  
     tpm_ignore:
@@ -2588,7 +2615,7 @@ void
 send_notification_from_md(struct msg_digest *md, u_int16_t type)
 {
     /**
-     * Create a dummy state to be able to use send_packet in
+     * Create a dummy state to be able to use send_ike_msg in
      * send_notification
      *
      * we need to set:
@@ -2783,7 +2810,7 @@ ikev1_delete_out(struct state *st)
 
 	setchunk(p1st->st_tpacket, reply_pbs.start, pbs_offset(&reply_pbs));
 	TCLCALLOUT_notify("avoidEmittingDelete", p1st, &reply_pbs, &hdr);
-	send_packet(p1st, "delete notify", TRUE);
+	send_ike_msg(p1st, "delete notify");
 #ifdef TPM
     tpm_stolen:  
     tpm_ignore:

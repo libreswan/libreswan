@@ -1,0 +1,8 @@
+Basic pluto X.509 test but now west and east are dropping UDP packets 
+> 1500 (tried dropping fragments but linux outsmarts us)
+
+Our default policy of ike_frag=yes should kick in and we start sending
+fragments.
+
+As a result, this connection should establish successfully.
+

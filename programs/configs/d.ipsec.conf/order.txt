@@ -22,6 +22,7 @@ d.ipsec.conf/phase2alg.xml
 d.ipsec.conf/sha2_truncbug.xml
 d.ipsec.conf/esp.xml
 d.ipsec.conf/ah.xml
+d.ipsec.conf/ike_frag.xml
 d.ipsec.conf/ikev2.xml
 d.ipsec.conf/narrowing.xml
 d.ipsec.conf/sareftrack.xml

@@ -21,7 +21,9 @@
 
 struct state;	/* forward declaration of tag */
 extern void init_demux(void);
-extern bool send_packet(struct state *st, const char *where, bool verbose);
+extern bool send_ike_msg(struct state *st, const char *where);
+extern bool resend_ike_v1_msg(struct state *st, const char *where);
+extern bool send_keepalive(struct state *st, const char *where);
 extern void comm_handle(const struct iface_port *ifp);
 
 extern pb_stream reply_stream;
@@ -74,6 +76,7 @@ struct msg_digest {
     notification_t note;	/* reason for failure */
     bool dpd;           /* Peer supports RFC 3706 DPD */
     bool ikev2;         /* Peer supports IKEv2 */
+    bool fragvid;	/* Peer supports FRAGMENTATION */
     bool event_already_set;	/* (ikev1 only) */
     stf_status result;  /* temporary stored here for access by Tcl */
 

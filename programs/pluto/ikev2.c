@@ -368,7 +368,7 @@ process_v2_packet(struct msg_digest **mdp)
 	    }
 	    if(st->st_msgid_lastrecv == md->msgid_received){
 		/* this is a recent retransmit. */
-		send_packet(st, "ikev2-responder-retransmit", TRUE);
+		send_ike_msg(st, "ikev2-responder-retransmit");
 		return;
 	    }
 	    /* update lastrecv later on */
@@ -643,7 +643,7 @@ send_v2_notification_from_md(struct msg_digest *md UNUSED, u_int16_t type
     struct connection cnx;
 
     /**
-     * Create a dummy state to be able to use send_packet in
+     * Create a dummy state to be able to use send_ike_msg in
      * send_notification
      *
      * we need to set:
@@ -783,11 +783,11 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	/* actually send the packet
 	 * Note: this is a great place to implement "impairments"
 	 * for testing purposes.  Suppress or duplicate the
-	 * send_packet call depending on st->st_state.
+	 * send_ike_msg call depending on st->st_state.
 	 */
 
 	TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
-	send_packet(st, enum_name(&state_names, from_state), TRUE);
+	send_ike_msg(st, enum_name(&state_names, from_state));
     }
 
     TCLCALLOUT("adjustTimers", st, st->st_connection, md);

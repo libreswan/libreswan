@@ -204,7 +204,7 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid);
 
 extern const char compile_time_interop_options[];
 
-extern char pgp_vendorid[];
+extern const char pgp_vendorid[];
 extern const int pgp_vendorid_len;
 
 extern char dpd_vendorid[];
