@@ -8,7 +8,7 @@ if [ -f eastinit.sh ] ; then
         RESPONDER=east
 else
         P=`pwd`
-        echo "can't idenity INITIATOR no $P/eastinit.sh"
+        echo "can't identify INITIATOR no $P/eastinit.sh"
         exit 1
 fi
 
@@ -24,8 +24,10 @@ if [ -f westinit.sh ] ; then
         INITIATOR=west
 elif [ -f roadinit.sh ] ; then
         INITIATOR=road
+elif [ -f northinit.sh ] ; then
+        INITIATOR=north
 else 
-        echo "can't idenity INITIATOR"
+        echo "can't identify INITIATOR"
         exit 1
 fi
 

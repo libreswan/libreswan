@@ -145,15 +145,12 @@ FS=$(pwd)
 %if %{buildklips}
 mkdir -p BUILD.%{_target_cpu}
 
-cd packaging/fedora
 # rpm doesn't know we're compiling kernel code. optflags will give us -m64
 %{__make} -C $FS MODBUILDDIR=$FS/BUILD.%{_target_cpu} \
     LIBRESWANSRCDIR=$FS \
     KLIPSCOMPILE="%{optflags}" \
-    KERNELSRC=/lib/modules/%{kversion}/build \
+    KERNELSRC=/lib/modules/%{kversion}.%{_arch}/build \
     ARCH=%{_arch} \
-    MODULE_DEF_INCLUDE=$FS/packaging/fedora/config-%{_target_cpu}.h \
-    MODULE_EXTRA_INCLUDE=$FS/packaging/fedora/extra_%{krelver}.h \
     include module
 %endif
 
@@ -181,12 +178,12 @@ mkdir -p $RPM_BUILD_ROOT%{_libdir}/fipscheck
 %endif
 
 %if %{buildklips}
-mkdir -p %{buildroot}/lib/modules/%{kversion}/kernel/net/ipsec
+mkdir -p %{buildroot}/lib/modules/%{kversion}.%{_arch}/kernel/net/ipsec
 for i in $FS/BUILD.%{_target_cpu}/ipsec.ko  $FS/modobj/ipsec.o
 do
   if [ -f $i ]
   then
-    cp $i %{buildroot}/lib/modules/%{kversion}/kernel/net/ipsec 
+    cp $i %{buildroot}/lib/modules/%{kversion}.%{_arch}/kernel/net/ipsec 
   fi
 done
 %endif
@@ -201,8 +198,11 @@ rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/cacerts
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
+%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %{_sysconfdir}/pam.d/pluto
@@ -216,7 +216,7 @@ rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 
 %if %{buildklips}
 %files klips
-/lib/modules/%{kversion}/kernel/net/ipsec
+/lib/modules/%{kversion}.%{_arch}/kernel/net/ipsec
 %endif
 
 %preun
@@ -227,9 +227,9 @@ rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 
 %if %{buildklips}
 %postun klips
-/sbin/depmod -ae %{kversion}
+/sbin/depmod -ae %{kversion}.%{_arch}
 %post klips
-/sbin/depmod -ae %{kversion}
+/sbin/depmod -ae %{kversion}.%{_arch}
 %endif
 
 %post 

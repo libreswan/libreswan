@@ -217,47 +217,50 @@ PK11SymKey * PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
 	CK_EXTRACT_PARAMS bs;
         chunk_t dkey_chunk;
 
-	if( ((mechanism == CKM_SHA256_KEY_DERIVATION) || 
-	     (mechanism == CKM_SHA384_KEY_DERIVATION)||
-	      (mechanism == CKM_SHA512_KEY_DERIVATION)) && (param == NULL) && (keysize ==0)) {
+	if( (param == NULL) && (keysize ==0)) {
+	   switch (mechanism) {
+		case CKM_SHA256_KEY_DERIVATION:
+			oid = SEC_OID_SHA256;
+			break;
+		case CKM_SHA384_KEY_DERIVATION:
+			oid = SEC_OID_SHA384;
+			break;
+		case CKM_SHA512_KEY_DERIVATION:
+			oid = SEC_OID_SHA512;
+			break;
+		default:
+			return PK11_Derive(base, mechanism, param, target, operation, keysize);
+		}
 
-	switch (mechanism) {
-	case CKM_SHA256_KEY_DERIVATION: oid = SEC_OID_SHA256; break;
-        case CKM_SHA384_KEY_DERIVATION: oid = SEC_OID_SHA384; break;
-        case CKM_SHA512_KEY_DERIVATION: oid = SEC_OID_SHA512; break;
-	default: DBG(DBG_CRYPT, DBG_log("PK11_Derive_lsw: Invalid NSS mechanism ")); break; /*should not reach here*/
-	}
+	   ctx = PK11_CreateDigestContext(oid);
+	   PR_ASSERT(ctx!=NULL);
+	   status=PK11_DigestBegin(ctx);
+	   PR_ASSERT(status == SECSuccess);
+	   status=PK11_DigestKey(ctx, base);
+	   PR_ASSERT(status == SECSuccess);
+	   PK11_DigestFinal(ctx, dkey, &len, sizeof dkey);
+	   PK11_DestroyContext(ctx, PR_TRUE);
 
-	ctx = PK11_CreateDigestContext(oid);
-	PR_ASSERT(ctx!=NULL);
-	status=PK11_DigestBegin(ctx);
-        PR_ASSERT(status == SECSuccess);
-	status=PK11_DigestKey(ctx, base);
-        PR_ASSERT(status == SECSuccess);
-	PK11_DigestFinal(ctx, dkey, &len, sizeof dkey);
-	PK11_DestroyContext(ctx, PR_TRUE);	
+	   dkey_chunk.ptr = dkey;
+	   dkey_chunk.len = len;
 
-	dkey_chunk.ptr = dkey;
-	dkey_chunk.len = len;
+	   PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(base, CKM_CONCATENATE_DATA_AND_BASE, dkey_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE, 0);
+	   PR_ASSERT(tkey1!=NULL);
 
-        PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(base, CKM_CONCATENATE_DATA_AND_BASE, dkey_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE, 0);
-        PR_ASSERT(tkey1!=NULL);
+	   bs=0;
+	   dkey_param.data = (unsigned char*)&bs;
+	   dkey_param.len = sizeof (bs);
+	   PK11SymKey *tkey2 = PK11_Derive(tkey1, CKM_EXTRACT_KEY_FROM_KEY, &dkey_param, target, operation, len);
+	   PR_ASSERT(tkey2!=NULL);
 
-        bs=0;
-        dkey_param.data = (unsigned char*)&bs;
-        dkey_param.len = sizeof (bs);
-        PK11SymKey *tkey2 = PK11_Derive(tkey1, CKM_EXTRACT_KEY_FROM_KEY, &dkey_param, target, operation, len);
-        PR_ASSERT(tkey2!=NULL);
-	
-	if(tkey1!=NULL) {
-        PK11_FreeSymKey(tkey1);
-	}
-	
-	return tkey2;
+	   if(tkey1!=NULL) {
+		PK11_FreeSymKey(tkey1);
+	   }
 
-	}
-	else {
-	return PK11_Derive(base, mechanism, param, target, operation, keysize);
+	   return tkey2;
+
+	} else {
+	   return PK11_Derive(base, mechanism, param, target, operation, keysize);
 	}
 
 }

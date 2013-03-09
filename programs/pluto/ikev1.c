@@ -523,12 +523,19 @@ static const struct state_microcode state_microcode_table[] = {
 
     /***** informational messages *****/
 
+    /* Informational Exchange (RFC 2408 4.8):
+     * HDR N/D
+     * Unencrypted: must not occur after ISAKMP Phase 1 exchange of keying material.
+     */
     /* STATE_INFO: */
     { STATE_INFO, STATE_UNDEFINED
     , SMF_ALL_AUTH
     , LEMPTY, LEMPTY, PT(NONE)
     , EVENT_NULL, informational },
 
+    /* Informational Exchange (RFC 2408 4.8):
+     * HDR* N/D
+     */
     /* STATE_INFO_PROTECTED: */
     { STATE_INFO_PROTECTED, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_ENCRYPTED
@@ -647,12 +654,10 @@ informational(struct msg_digest *md)
     {
         pb_stream *const n_pbs = &n_pld->pbs;
         struct isakmp_notification *const n = &n_pld->payload.notification;
-        int disp_len;
-        char disp_buf[200];
 	struct state *st = md->st;            /* may be NULL */
 
         /* Switch on Notification Type (enum) */
-	/* note that we can get notification payloads unencrypted
+	/* note that we _can_ get notification payloads unencrypted
 	 * once we are at least in R3/I4. 
 	 * and that the handler is expected to treat them suspiciously.
 	 */
@@ -805,22 +810,18 @@ informational(struct msg_digest *md)
 #ifdef DEBUG
 	    if(st!=NULL
 	       && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO) {
-		loglog(RC_LOG_SERIOUS, "received and failed on unknown informational message");
+		loglog(RC_LOG_SERIOUS, "received unhandled informational notification payload %d: '%s'"
+			, n->isan_type
+			, enum_name(&notification_names, n->isan_type));
 		return STF_FATAL;
 	    }
-#endif	    
-            if (pbs_left(n_pbs) >= sizeof(disp_buf)-1)
-                disp_len = sizeof(disp_buf)-1;
-            else
-                disp_len = pbs_left(n_pbs);
-            memcpy(disp_buf, n_pbs->cur, disp_len);
-            disp_buf[disp_len] = '\0';
-            break;
+#endif
+	    loglog(RC_LOG_SERIOUS, "received and ignored informational message for unknown state");
+	    return STF_IGNORE;
         }
     }
 
-    loglog(RC_LOG_SERIOUS, "received and ignored informational message");
-
+    loglog(RC_LOG_SERIOUS, "received and ignored empty informational notification payload");
     return STF_IGNORE;
 }
 
@@ -1282,21 +1283,19 @@ process_v1_packet(struct msg_digest **mdp)
 					    "isakmp_xchg_type %s."
 					    , __func__, __LINE__ 
 					    , enum_show(&exchange_names, md->hdr.isa_xchg)));
-		    DBG(DBG_CONTROLMORE , DBG_log("this is a xauthserver=%s "
-					    "xauthclient=%s modecfgserver=%s " 
-					    "modecfgclient=%s in sate %s. "
-					    "reply with UNSUPPORTED_EXCHANGE_TYPE"
-					    , st->st_connection->spd.this.xauth_server ? "yes" : "no"
-					    , st->st_connection->spd.this.xauth_client ? "yes" : "no"
-					    , st->st_connection->spd.this.modecfg_server ? "yes" : "no"
-					    , st->st_connection->spd.this.modecfg_client  ? "yes" : "no"
-					    , enum_name(&state_names, st->st_state)
-					    ));
-		    libreswan_log("in state %s isakmp_xchg_types %s not supported."
+		DBG(DBG_CONTROLMORE , DBG_log("this is a%s%s%s%s in state %s. "
+		   "Reply with UNSUPPORTED_EXCHANGE_TYPE"
+		   , st->st_connection->spd.this.xauth_server ? " xauthserver" : ""
+		   , st->st_connection->spd.this.xauth_client ? " xauthclient" : ""
+		   , st->st_connection->spd.this.modecfg_server ? " modecfgserver" : ""
+		   , st->st_connection->spd.this.modecfg_client  ? " modecfgclient" : ""
+		   , enum_name(&state_names, st->st_state)
+		   ));
+		libreswan_log("in state %s isakmp_xchg_types %s not supported."
 				    "reply UNSUPPORTED_EXCHANGE_TYPE" 	
 				    , enum_name(&state_names, st->st_state)
 				    , enum_show(&exchange_names, md->hdr.isa_xchg));
-		    SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
+		    // SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	    }
 	}
@@ -1982,7 +1981,7 @@ void process_packet_tail(struct msg_digest **mdp)
     }
 
     /* Ignore payloads that we don't handle:
-     * Delete, Notification, VendorID
+     * Delete, Notification, VendorID (comment about what we don't handle outdated?)
      */
     /* XXX Handle Notifications */
     {
@@ -1990,35 +1989,28 @@ void process_packet_tail(struct msg_digest **mdp)
 
 	p = md->chain[ISAKMP_NEXT_N];
 	while(p != NULL) {
-	    if(p->payload.notification.isan_type != R_U_THERE
-	       && p->payload.notification.isan_type != R_U_THERE_ACK
-		&& p->payload.notification.isan_type != ISAKMP_N_CISCO_LOAD_BALANCE
-	       && p->payload.notification.isan_type != PAYLOAD_MALFORMED) {
-		
 		switch(p->payload.notification.isan_type) {
-		case INVALID_MESSAGE_ID:
-		default:
-		    if (st!= NULL) {
-		    	loglog(RC_LOG_SERIOUS
-			   , "ignoring informational payload, type %s msgid=%08x"
-			   , enum_show(&ipsec_notification_names
-				       , p->payload.notification.isan_type), st->st_msgid);
-		    } 
-		    else {
-		    	loglog(RC_LOG_SERIOUS
-			   , "ignoring informational payload, type %s on st==NULL (deleted?)"
-			   , enum_show(&ipsec_notification_names
-				       , p->payload.notification.isan_type));
 
-		    }
-		}
+		case R_U_THERE:
+		case R_U_THERE_ACK:
+		case ISAKMP_N_CISCO_LOAD_BALANCE:
+		case PAYLOAD_MALFORMED:
+		case INVALID_MESSAGE_ID:
+			/* these are handled later on in informational() */
+			break;
+		default:
+		    	loglog(RC_LOG_SERIOUS
+			   , "ignoring informational payload %s, type %s msgid=%08x"
+			   , enum_show(&ipsec_notification_names, p->payload.notification.isan_type)
+			   , (st == NULL) ? " [no state found]" : ""
+			   , (st == NULL) ? st->st_msgid : 0 );
 #ifdef DEBUG
-		if(st!=NULL
-		   && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO) {
-		    loglog(RC_LOG_SERIOUS, "received and failed on unknown informational message");
-		    complete_v1_state_transition(mdp, STF_FATAL);
-		    return;
-		}
+			if(st!=NULL && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO)
+			{
+			   loglog(RC_LOG_SERIOUS, "received and failed on unknown informational message");
+			   complete_v1_state_transition(mdp, STF_FATAL);
+			   return;
+			}
 #endif	    
 	    }
 	    DBG_cond_dump(DBG_PARSING, "info:", p->pbs.cur, pbs_left(&p->pbs));

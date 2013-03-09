@@ -98,6 +98,7 @@ terminate_connection(const char *nm)
     struct connection *c, *n;
     int count;
 
+    passert(nm != NULL);
     c = con_by_name(nm, TRUE);
 
     if(c) {

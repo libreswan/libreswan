@@ -412,10 +412,10 @@ peerlog(const char *prefix, const char *m)
     {
 	char datebuf[32];
 	time_t n;
-	struct tm *t;
+	struct tm tm1, *t;
 
 	time(&n);
-	t = localtime(&n);
+	t = localtime_r(&n, &tm1);
 
 	strftime(datebuf, sizeof(datebuf), "%Y-%m-%d %T", t);
 	fprintf(cur_connection->log_file, "%s %s%s\n", datebuf, prefix, m);
@@ -441,11 +441,11 @@ libreswan_log(const char *message, ...)
 
     if (log_to_stderr || (log_to_file && pluto_log_fd)) {
 	if (log_with_timestamp) {
-		struct tm *timeinfo;
+		struct tm tm1, *timeinfo;
 		char fmt[32];
 		time_t rtime;
 		time(&rtime);
-		timeinfo = localtime (&rtime);
+		timeinfo = localtime_r(&rtime, &tm1);
 		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
 		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s: %s\n", fmt, m);
 	} else {
@@ -476,11 +476,11 @@ loglog(int mess_no, const char *message, ...)
 
     if (log_to_stderr || (log_to_file  && pluto_log_fd)) {
 	if (log_with_timestamp) {
-		struct tm *timeinfo;
+		struct tm tm1, *timeinfo;
 		char fmt[32];
 		time_t rtime;
 		time(&rtime);
-		timeinfo = localtime (&rtime);
+		timeinfo = localtime_r(&rtime, &tm1);
 		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
 		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s: %s\n", fmt, m);
 	} else {
@@ -743,11 +743,11 @@ DBG_log(const char *message, ...)
 
     if (log_to_stderr || (log_to_file && pluto_log_fd)) {
 	if (log_with_timestamp) {
-		struct tm *timeinfo;
+		struct tm tm1 ,*timeinfo;
 		char fmt[32];
 		time_t rtime;
 		time(&rtime);
-		timeinfo = localtime (&rtime);
+		timeinfo = localtime_r(&rtime, &tm1);
 		strftime (fmt,sizeof(fmt),"%b %e %T",timeinfo);
 		fprintf(log_to_stderr ? stderr : pluto_log_fd, "%c %s: %s\n", debug_prefix, fmt, m);
 	} else {
@@ -886,7 +886,7 @@ daily_log_reset(void)
 void
 daily_log_event(void)
 {
-    struct tm *ltime;
+    struct tm tm1, *ltime;
     time_t n, interval;
 
     /* attempt to schedule oneself to midnight, local time
@@ -894,7 +894,7 @@ daily_log_event(void)
      * by 86400 - hour*3600+minutes*60+seconds.
      */
     time(&n);
-    ltime = localtime(&n);
+    ltime = localtime_r(&n, &tm1);
     interval = (24 * 60 * 60)
       - (ltime->tm_sec
 	 + ltime->tm_min  * 60

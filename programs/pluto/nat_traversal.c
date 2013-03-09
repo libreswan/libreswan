@@ -97,9 +97,9 @@ void init_nat_traversal (bool activate, unsigned int keep_alive_period,
 		     , activate, spf);
 	{ 
 	  FILE *f = fopen("/proc/net/ipsec/natt", "r");
-	  char n;
 	  if(f != NULL) {
-	    n=getc(f);
+	    int n=getc(f);
+
 	    if(n=='0') {
 	      nat_traversal_enabled = FALSE;
 	      nat_traversal_support_non_ike=FALSE;

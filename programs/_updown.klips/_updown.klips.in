@@ -5,12 +5,12 @@
 # Copyright (C) 2002-2007 Michael Richardson <mcr@xelerance.com>
 # Copyright (C) 2003-2012 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2003-2007 Paul Wouters <paul@xelerance.com>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -24,7 +24,8 @@
 
 test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
 
-LC_ALL=C export LC_ALL
+LC_ALL=C
+export LC_ALL
 
 # things that this script gets (from ipsec_pluto(8) man page)
 #
@@ -48,7 +49,7 @@ LC_ALL=C export LC_ALL
 #
 #       PLUTO_CONN_POLICY
 #              the policy of the connection, as in:
-#     RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failureDROP+lKOD+rKOD  
+#     RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failureDROP+lKOD+rKOD
 #
 #       PLUTO_NEXT_HOP
 #              is the next hop to which packets bound for the peer
@@ -130,7 +131,7 @@ LC_ALL=C export LC_ALL
 #		is NetworkManager used for resolv.conf update
 #
 
-# Import default _updown configs from the /etc/[sysconfig|default]/pluto_updown file
+# Import default _updown configs from the @FINALSYSCONFDIR@/[sysconfig|default]/pluto_updown file
 #
 # Two variables can be set in this file:
 #
@@ -147,38 +148,42 @@ LC_ALL=C export LC_ALL
 #              is the extra argument list for ip rule command
 
 # rpm based systems
-if [ -f /etc/sysconfig/pluto_updown ]
-then
-    . /etc/sysconfig/pluto_updown
+if [ -f @FINALSYSCONFDIR@/sysconfig/pluto_updown ]; then
+    . @FINALSYSCONFDIR@/sysconfig/pluto_updown
 # deb based systems
-elif [ -f /etc/default/pluto_updown ]
-then
-    . /etc/default/pluto_updown
+elif [ -f @FINALSYSCONFDIR@/default/pluto_updown ]; then
+    . @FINALSYSCONFDIR@/default/pluto_updown
 fi
 
-LIBRESWAN_RESOLV_CONF=/var/run/pluto/libreswan-resolv-conf-backup
-ORIG_RESOLV_CONF=/etc/resolv.conf
+LIBRESWAN_RESOLV_CONF=@FINALVARDIR@/run/pluto/libreswan-resolv-conf-backup
+ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
 # check interface version
 case "$PLUTO_VERSION" in
-1.*)	# Older Pluto?!?  Play it safe, script may be using new features.
-	echo "$0: obsolete interface version \`$PLUTO_VERSION'," >&2
+    1.*)
+	# Older Pluto?!?  Play it safe, script may be using new features.
+	echo "$0: obsolete interface version \"$PLUTO_VERSION\"," >&2
 	echo "$0: 	called by obsolete Pluto?" >&2
 	exit 2
 	;;
-2.*)	;;
-*)	echo "$0: unknown interface version \`$PLUTO_VERSION'" >&2
+    2.*)
+	;;
+    *)
+	echo "$0: unknown interface version \"$PLUTO_VERSION\"" >&2
 	exit 2
 	;;
 esac
 
 # check parameter(s)
 case "$1:$*" in
-':')			# no parameters
+    ':')
+	# no parameters
 	;;
-custom:*)		# custom parameters (see above CAUTION comment)
+    custom:*)
+	# custom parameters (see above CAUTION comment)
 	;;
-*)	echo "$0: unknown parameters \`$*'" >&2
+    *)
+	echo "$0: unknown parameters \"$*\"" >&2
 	exit 2
 	;;
 esac
@@ -186,42 +191,39 @@ esac
 # utility functions for route manipulation
 # Meddling with this stuff should not be necessary and requires great care.
 uproute() {
-	doroute add
-	ip route flush cache
+    doroute add
+    ip route flush cache
 }
 
 downroute() {
-	doroute delete
-	ip route flush cache
+    doroute delete
+    ip route flush cache
 }
 
 uprule() {
-	# policy based advanced routing
-	if [ -n "$IPROUTETABLE" ]
-	then
-	    dorule delete
-	    dorule add
-	fi
-	# virtual sourceip support
-	if [ -n "$PLUTO_MY_SOURCEIP" ]
-	then
-	    addsource
-	    changesource
-	fi
-	ip route flush cache
+    # policy based advanced routing
+    if [ -n "$IPROUTETABLE" ]; then
+	dorule delete
+	dorule add
+    fi
+    # virtual sourceip support
+    if [ -n "$PLUTO_MY_SOURCEIP" ]; then
+	addsource
+	changesource
+    fi
+    ip route flush cache
 }
 
 downrule() {
-	if [ -n "$PLUTO_MY_SOURCEIP" ]
-	then
-	    dorule delete
-	    ip route flush cache
-	fi
+    if [ -n "$PLUTO_MY_SOURCEIP" ]; then
+	dorule delete
+	ip route flush cache
+    fi
 }
 
 updateresolvconf() {
     if [ -n "$PLUTO_CISCO_DNS_INFO" ]; then
-        if [ -n "`pidof unbound`" -a -n "$PLUTO_CISCO_DOMAIN_INFO"  ]; then
+        if [ -n "$(pidof unbound)" -a -n "$PLUTO_CISCO_DOMAIN_INFO"  ]; then
 	    echo "updating local nameserver for $PLUTO_CISCO_DOMAIN_INFO with $PLUTO_CISCO_DNS_INFO"
 	    /usr/sbin/unbound-control forward_add $PLUTO_CISCO_DOMAIN_INFO $PLUTO_CISCO_DNS_INFO
 	    /usr/sbin/unbound-control flush_zone $PLUTO_CISCO_DOMAIN_INFO
@@ -239,8 +241,7 @@ updateresolvconf() {
 	fi
 
 	if [ -e "$LIBRESWAN_RESOLV_CONF" ]; then
-	    if grep 'Libreswan' $ORIG_RESOLV_CONF > /dev/null 2>&1
-	    then
+	    if grep 'Libreswan' $ORIG_RESOLV_CONF > /dev/null 2>&1; then
 		echo "Current resolv.conf is generated by Libreswan, and backup resolv.conf already exists, so doing nothing"
 		return 1
 	    else
@@ -254,8 +255,7 @@ updateresolvconf() {
 	RESOLVE_CONF="# Generated by Libreswan (IPSec)"
 
 	if [ -n "$PLUTO_CISCO_DOMAIN_INFO" ]; then
-	    if grep 'domain' $ORIG_RESOLV_CONF > /dev/null 2>&1 
-	    then 
+	    if grep 'domain' $ORIG_RESOLV_CONF > /dev/null 2>&1; then
 		RESOLVE_CONF="$RESOLVE_CONF\ndomain $PLUTO_CISCO_DOMAIN_INFO\nsearch $PLUTO_CISCO_DOMAIN_INFO"
 	    else
 		RESOLVE_CONF="$RESOLVE_CONF\nsearch $PLUTO_CISCO_DOMAIN_INFO"
@@ -268,7 +268,7 @@ updateresolvconf() {
 	    done
 	fi
 
-	ORIG_NAMESERVER=`grep -m 1 ^nameserver $ORIG_RESOLV_CONF`
+	ORIG_NAMESERVER=$(grep -m 1 ^nameserver $ORIG_RESOLV_CONF)
 	RESOLVE_CONF="$RESOLVE_CONF\n$ORIG_NAMESERVER\n"
 
 	rm -f -- $ORIG_RESOLV_CONF
@@ -293,7 +293,7 @@ updateresolvconf() {
 
 restoreresolvconf() {
     if [ -n "$PLUTO_CISCO_DNS_INFO" ]; then
-	if [ -n "`pidof unbound`" ]; then
+	if [ -n "$(pidof unbound)" ]; then
             echo "flushing local nameserver of $PLUTO_CISCO_DOMAIN_INFO"
 	    /usr/sbin/unbound-control forward_remove $PLUTO_CISCO_DOMAIN_INFO
 	    /usr/sbin/unbound-control flush_zone $PLUTO_CISCO_DOMAIN_INFO
@@ -310,8 +310,7 @@ restoreresolvconf() {
 	    return 2
 	fi
 
-	if grep 'Libreswan' $ORIG_RESOLV_CONF > /dev/null 2>&1 
-	then
+	if grep 'Libreswan' $ORIG_RESOLV_CONF > /dev/null 2>&1; then
 	    cp -- "$LIBRESWAN_RESOLV_CONF" $ORIG_RESOLV_CONF
 	else
 	    echo "Current resolv.conf is not generated by Libreswan, so doing nothing"
@@ -334,7 +333,7 @@ restoreresolvconf() {
 }
 
 disconnectNM() {
-    # This will be called whenever a connection fails to establish 
+    # This will be called whenever a connection fails to establish
     # due to a state (either phase 1, xauth phase, or phase 2) fails.
     # This will send a singal to NetworkManager over dbus so that NM
     # can clear up coonnections.
@@ -350,9 +349,9 @@ addsource() {
     # check if given sourceip is local and add as alias if not
     if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep -q ^local; then
 	it="ip addr add ${PLUTO_MY_SOURCEIP%/*}/32 dev ${PLUTO_INTERFACE%:*}"
-	oops="`eval $it 2>&1`"
+	oops="$(eval $it 2>&1)"
 	st=$?
-	if [ " $oops" = " " -a " $st" != " 0" ]; then
+	if [ -z "$oops" -a $st -ne 0 ]; then
 	    oops="silent error, exit status $st"
 	fi
 	case "$oops" in
@@ -363,343 +362,321 @@ addsource() {
 		st=0
 		;;
 	esac
-	if [ " $oops" != " " -o " $st" != " 0" ]; then
-	    echo "$0: addsource \`$it' failed ($oops)" >&2
+	if [ -n "$oops" -o $st -ne 0 ]; then
+	    echo "$0: addsource \"$it\" failed ($oops)" >&2
 	fi
     fi
     return $st
 }
 
 changesource() {
-	st=0
-	parms="$PLUTO_PEER_CLIENT"
-	parms2="dev $PLUTO_INTERFACE"
-	parms3="src ${PLUTO_MY_SOURCEIP%/*}" 
-	if [ -n "$IPROUTETABLE" ]
-	then
-	    parms3="$parms3 table $IPROUTETABLE"
-	fi
-	cmd=add
-	if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep ipsec0
-	then
-	    cmd=change
-	fi
-	it="ip route $cmd $parms $parms2 $parms3"
- 	case "$PLUTO_PEER_CLIENT" in
+    st=0
+    parms="$PLUTO_PEER_CLIENT"
+    parms2="dev $PLUTO_INTERFACE"
+    parms3="src ${PLUTO_MY_SOURCEIP%/*}"
+    if [ -n "$IPROUTETABLE" ]; then
+	parms3="$parms3 table $IPROUTETABLE"
+    fi
+    cmd=add
+    if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep ipsec0; then
+	cmd=change
+    fi
+    it="ip route $cmd $parms $parms2 $parms3"
+    case "$PLUTO_PEER_CLIENT" in
  	"0.0.0.0/0"|"::/0")
-		# opportunistic encryption work around
-		it=
- 		;;
- 	esac
-	oops="`eval $it 2>&1`"
- 	st=$?
-	if test " $oops" = " " -a " $st" != " 0"
- 	then
-	    oops="silent error, exit status $st"
-	fi
-	if test " $oops" != " " -o " $st" != " 0"
-	then
-	    echo "$0: changesource \`$it' failed ($oops)" >&2
- 	fi
- 	return $st
+	    # opportunistic encryption work around
+	    it=
+ 	    ;;
+    esac
+    oops="$(eval $it 2>&1)"
+    st=$?
+    if [ -z "$oops" -a $st -ne 0 ]; then
+	oops="silent error, exit status $st"
+    fi
+    if [ -n "$oops" -o $st -ne 0 ]; then
+	echo "$0: changesource \"$it\" failed ($oops)" >&2
+    fi
+    return $st
 }
 
 dorule() {
-	st=0
-	it2=
-	iprule="from $PLUTO_MY_CLIENT"
-	iprule2="to $PLUTO_PEER_CLIENT"
-	if [ -n "$IPROUTETABLE" ]
-	then
-	    iprule2="$iprule2 table $IPROUTETABLE"
-	fi
-	iprule2="$iprule2 $IPRULEARGS"
+    st=0
+    it2=
+    iprule="from $PLUTO_MY_CLIENT"
+    iprule2="to $PLUTO_PEER_CLIENT"
+    if [ -n "$IPROUTETABLE" ]; then
+	iprule2="$iprule2 table $IPROUTETABLE"
+    fi
+    iprule2="$iprule2 $IPRULEARGS"
 
-	case "$PLUTO_PEER_CLIENT" in
+    case "$PLUTO_PEER_CLIENT" in
 	"0.0.0.0/0"|"::/0")
-		# opportunistic encryption work around
-		st=0
-		;;
+	    # opportunistic encryption work around
+	    st=0
+	    ;;
 	*)
-		if [ -z "$PLUTO_MY_SOURCEIP" ]
-		then
-		    if [ "$PLUTO_ME" = "${PLUTO_MY_CLIENT%/*}" ]
-		    then
-			it="ip rule $1 iif lo $iprule2"
-		    else
-			it="ip rule $1 $iprule $iprule2"
-		    fi
+	    if [ -z "$PLUTO_MY_SOURCEIP" ]; then
+		if [ "$PLUTO_ME" = "${PLUTO_MY_CLIENT%/*}" ]; then
+		    it="ip rule $1 iif lo $iprule2"
 		else
-		    if [ "${PLUTO_MY_SOURCEIP%/*}" = "${PLUTO_MY_CLIENT%/*}" ]
-		    then
-			it="ip rule $1 iif lo $iprule2"
-		    else
-			it="ip rule $1 $iprule $iprule2"
-			it2="ip rule $1 iif lo $iprule2"
-		    fi
+		    it="ip rule $1 $iprule $iprule2"
 		fi
-		oops="`eval $it 2>&1`"
+	    else
+		if [ "${PLUTO_MY_SOURCEIP%/*}" = "${PLUTO_MY_CLIENT%/*}" ]; then
+		    it="ip rule $1 iif lo $iprule2"
+		else
+		    it="ip rule $1 $iprule $iprule2"
+		    it2="ip rule $1 iif lo $iprule2"
+		fi
+	    fi
+	    oops="$(eval $it 2>&1)"
+	    st=$?
+	    if [ -z "$oops" -a $st -ne 0 ]; then
+	    then
+		oops="silent error, exit status $st"
+	    fi
+	    case "$oops" in
+		'RTNETLINK answers: No such process'*)
+		    # This is what ip rule gives
+		    # for "could not find such a rule"
+		    oops=
+		    st=0
+		    ;;
+	    esac
+	    if [ -n "$oops" -o $st -ne 0 ]; then
+		echo "$0: dorule \"$it\" failed ($oops)" >&2
+	    fi
+	    if [ $st -eq 0 -a -n "$it2" ]; then
+		oops="$(eval $it2 2>&1)"
 		st=$?
-		if test " $oops" = " " -a " $st" != " 0"
-		then
+		if [ -z "$oops" -a $st -ne 0 ]; then
 		    oops="silent error, exit status $st"
 		fi
 		case "$oops" in
-		'RTNETLINK answers: No such process'*)
+		    'RTNETLINK answers: No such process'*)
 			# This is what ip rule gives
 			# for "could not find such a rule"
 			oops=
 			st=0
 			;;
 		esac
-		if test " $oops" != " " -o " $st" != " 0"
-		then
-		    echo "$0: dorule \`$it' failed ($oops)" >&2
+		if [ -n "$oops" -o $st -ne 0 ]; then
+		    echo "$0: dorule \"$it2\" failed ($oops)" >&2
 		fi
-		if test "$st" = "0" -a -n "$it2"
-		then
-		    oops="`eval $it2 2>&1`"
-		    st=$?
-		    if test " $oops" = " " -a " $st" != " 0"
-		    then
-			oops="silent error, exit status $st"
-		    fi
-		    case "$oops" in
-		    'RTNETLINK answers: No such process'*)
-			    # This is what ip rule gives
-			    # for "could not find such a rule"
-			    oops=
-			    st=0
-			    ;;
-		    esac
-		    if test " $oops" != " " -o " $st" != " 0"
-		    then
-			echo "$0: dorule \`$it2' failed ($oops)" >&2
-		    fi
-		fi
-		;;
-	    esac
-	return $st
+	    fi
+	    ;;
+    esac
+    return $st
 }
 
 
 doroute() {
-	st=0
-	parms="$PLUTO_PEER_CLIENT"
-	parms2=
+    st=0
+    parms="$PLUTO_PEER_CLIENT"
+    parms2=
 
-	if [ -z "$PLUTO_MY_SOURCEIP" ] && [ -n "$DEFAULTSOURCE" ]
-	then
-	    PLUTO_MY_SOURCEIP="${DEFAULTSOURCE%/*}"
+    if [ -z "$PLUTO_MY_SOURCEIP" -a -n "$DEFAULTSOURCE" ]; then
+	PLUTO_MY_SOURCEIP="${DEFAULTSOURCE%/*}"
+    fi
+
+    # skip creating any routing in case it is a host to host
+    # tunnel and the peer network(=host) is equal to peer ip,
+    # except there is some different source ip to use.
+    #if test "$PLUTO_PEER_CLIENT" == "$PLUTO_PEER/32" ; then
+    #    test "$PLUTO_ME" != "$PLUTO_MY_SOURCEIP" && \
+    #    test -n "$PLUTO_MY_SOURCEIP" || return 0
+    #fi
+
+    if [ -n "$PLUTO_NEXT_HOP" -a "$PLUTO_NEXT_HOP" != "$PLUTO_PEER" ]; then
+	# nexthop is not needed on ppp interfaces. unset it to make cases
+	# work, where left is set but no leftnexthop (e.g. left=%dynamic)
+	ip link show "$PLUTO_INTERFACE" | grep -qs POINTOPOINT && unset PLUTO_NEXT_HOP
+
+	# skip routing via nexthop if it is not reachable through any
+	# directly connected network (but via default route only):
+	ip route list match "$PLUTO_NEXT_HOP" dev "$PLUTO_INTERFACE" | \
+	    grep -qs -v default || unset PLUTO_NEXT_HOP
+
+	if [ -n "$PLUTO_NEXT_HOP" ]; then
+	    parms2="via $PLUTO_NEXT_HOP"
 	fi
+    fi
 
-	# skip creating any routing in case it is a host to host
-	# tunnel and the peer network(=host) is equal to peer ip,
-	# except there is some different source ip to use.
-	#if test "$PLUTO_PEER_CLIENT" == "$PLUTO_PEER/32" ; then
-	#    test "$PLUTO_ME" != "$PLUTO_MY_SOURCEIP" && \
-	#    test -n "$PLUTO_MY_SOURCEIP" || return 0
-	#fi
+    parms2="$parms2 dev ${PLUTO_INTERFACE}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}}"
+    parms3="$IPROUTEARGS"
+    if [ -n "$IPROUTETABLE" ]; then
+	parms3="$parms3 table $IPROUTETABLE"
+    fi
 
-	if [ -n "$PLUTO_NEXT_HOP" ] && [ "$PLUTO_NEXT_HOP" != "$PLUTO_PEER" ]
-	then
-	   # nexthop is not needed on ppp interfaces. unset it to make cases
-	   # work, where left is set but no leftnexthop (e.g. left=%dynamic)
-	   ip link show "$PLUTO_INTERFACE" | grep -qs POINTOPOINT && \
-		unset PLUTO_NEXT_HOP
+    if [ "$1" = "add" -a -n "$PLUTO_MY_SOURCEIP" ]; then
+	addsource
+	parms3="$parms3 src ${PLUTO_MY_SOURCEIP%/*}"
+    fi
 
-	   # skip routing via nexthop if it is not reachable through any
-	   # directly connected network (but via default route only):
-	   ip route list match "$PLUTO_NEXT_HOP" dev "$PLUTO_INTERFACE" | \
-		grep -qs -v default || unset PLUTO_NEXT_HOP
-
-	   if [ -n "$PLUTO_NEXT_HOP" ]
-	   then
-		parms2="via $PLUTO_NEXT_HOP"
-	   fi
-	fi
-
-	parms2="$parms2 dev ${PLUTO_INTERFACE}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}}"
-	parms3="$IPROUTEARGS"
-	if [ -n "$IPROUTETABLE" ]
-	then
-	    parms3="$parms3 table $IPROUTETABLE"
-	fi
-
-	if test "$1" = "add" -a -n "$PLUTO_MY_SOURCEIP" 
-	then
-	    addsource
-	    parms3="$parms3 src ${PLUTO_MY_SOURCEIP%/*}"
-	fi
-
-	case "$PLUTO_PEER_CLIENT" in
+    case "$PLUTO_PEER_CLIENT" in
 	"0.0.0.0/0")
-		# opportunistic encryption work around
-		# need to provide route that eclipses default, without 
-		# replacing it.
-		it="ip route $1 0.0.0.0/1 $parms2 $parms3 &&
-			ip route $1 128.0.0.0/1 $parms2 $parms3"
-		;;
+	    # opportunistic encryption work around
+	    # need to provide route that eclipses default, without
+	    # replacing it.
+	    it="ip route $1 0.0.0.0/1 $parms2 $parms3 &&
+		ip route $1 128.0.0.0/1 $parms2 $parms3"
+	    ;;
 	"::/0")
-		# opportunistic encryption work around
-		# need to provide route that eclipses default, without 
-		# replacing it.
-		it="ip -6 route $1 0::/1 $parms2 $parms3 &&
-			ip -6 route $1 1::/1 $parms2 $parms3"
-		;;
+	    # opportunistic encryption work around
+	    # need to provide route that eclipses default, without
+	    # replacing it.
+	    it="ip -6 route $1 0::/1 $parms2 $parms3 &&
+		ip -6 route $1 8888::/1 $parms2 $parms3"
+	    ;;
 
 	*)
-		# Despite not having -6, the ip route commands works for ipv6
-		it="ip route $1 $parms $parms2 $parms3"
-		;;
-	esac
-	oops="`eval $it 2>&1`"
-	st=$?
-	if test " $oops" = " " -a " $st" != " 0"
-	then
-	    oops="silent error, exit status $st"
-	fi
-	if test " $oops" != " " -o " $st" != " 0"
-	then
-	    echo "$0: doroute \`$it' failed ($oops)" >&2
-	fi
-	return $st
+	    # Despite not having -6, the ip route commands works for ipv6
+	    it="ip route $1 $parms $parms2 $parms3"
+	    ;;
+    esac
+    oops="$(eval $it 2>&1)"
+    st=$?
+    if [ -z "$oops" -a $st -ne 0 ]; then
+	oops="silent error, exit status $st"
+    fi
+    if [ -n "$oops" -o $st -ne 0 ]; then
+	echo "$0: doroute \"$it\" failed ($oops)" >&2
+    fi
+    return $st
 }
- 
+
 
 # the big choice
 case "$PLUTO_VERB:$1" in
-prepare-host:*|prepare-client:*)
+    prepare-host:*|prepare-client:*)
 	# delete possibly-existing route (preliminary to adding a route)
 	case "$PLUTO_PEER_CLIENT" in
-	"0.0.0.0/0")
-		# need to provide route that eclipses default, without 
+	    "0.0.0.0/0")
+		# need to provide route that eclipses default, without
 		# replacing it.
 		parms1="0.0.0.0/1"
 		parms2="128.0.0.0/1"
 		it="ip route delete $parms1 $IPROUTEARGS 2>&1 ; ip route delete $parms2 $IPROUTEARGS 2>&1"
 		oops="`ip route delete $parms1 $IPROUTEARGS 2>&1 ; ip route delete $parms2 $IPROUTEARGS 2>&1`"
 		;;
-	"::/0")
-		# need to provide route that eclipses default, without 
+	    "::/0")
+		# need to provide route that eclipses default, without
 		# replacing it.
 		parms1="0::/1"
-		parms2="1::/1"
+		parms2="8888::/1"
 		it="ip route delete $parms1 $IPROUTEARGS 2>&1 ; ip route delete $parms2 $IPROUTEARGS 2>&1"
 		oops="`ip route delete $parms1 $IPROUTEARGS 2>&1 ; ip route delete $parms2 $IPROUTEARGS 2>&1`"
 		;;
-	*)
+	    *)
 		parms="$PLUTO_PEER_CLIENT $IPROUTEARGS"
-		if [ -n "$IPROUTETABLE" ]
-		then
+		if [ -n "$IPROUTETABLE" ]; then
 		    parms="$parms table $IPROUTETABLE"
 		fi
 		it="ip route delete $parms 2>&1"
 		oops="`ip route delete $parms 2>&1`"
 		;;
 	esac
-	status="$?"
-	if test " $oops" = " " -a " $status" != " 0"
-	then
-		oops="silent error, exit status $status"
+	st="$?"
+	if [ -z "$oops" -a $st -ne 0 ]; then
+	    oops="silent error, exit status $st"
 	fi
 	case "$oops" in
-	*'RTNETLINK answers: No such process'*)	
+	    *'RTNETLINK answers: No such process'*)
 		# This is what route (currently -- not documented!) gives
 		# for "could not find such a route".
 		oops=
-		status=0
+		st=0
 		;;
 	esac
-	if test " $oops" != " " -o " $status" != " 0"
-	then
-		echo "$0: \`$it' failed ($oops)" >&2
+	if [ -n "$oops" -o $st -ne 0 ]; then
+	    echo "$0: \`$it' failed ($oops)" >&2
 	fi
-	exit $status
+	exit $st
 	;;
-route-host:*|route-client:*)
+    route-host:*|route-client:*)
 	# connection to me or my client subnet being routed
 	uproute
 	;;
-unroute-host:*|unroute-client:*)
+    unroute-host:*|unroute-client:*)
 	# connection to me or my client subnet being unrouted
 	downroute
 	;;
-up-host:*)
+    up-host:*)
 	# connection to me coming up
 	uprule
 	# If you are doing a custom version, firewall commands go here.
 	;;
-down-host:*)
+    down-host:*)
 	# connection to me going down
 	downrule
 	# If you are doing a custom version, firewall commands go here.
 	;;
-up-client:)
+    up-client:)
 	# connection to my client subnet coming up
 	uprule
 	# If you are doing a custom version, firewall commands go here.
 	;;
-down-client:)
+    down-client:)
 	# connection to my client subnet going down
 	downrule
 	# If you are doing a custom version, firewall commands go here.
 	;;
-updateresolvconf-host|updateresolvconf-client)
+    updateresolvconf-host|updateresolvconf-client)
 	# updating resolv.conf using DNS info obtained from the server
 	updateresolvconf
 	;;
-restoreresolvconf-host|restoreresolvconf-client)
+    restoreresolvconf-host|restoreresolvconf-client)
 	# restoring resolv.conf
 	restoreresolvconf
 	;;
-disconnectNM-host|disconnectNM-client)
+    disconnectNM-host|disconnectNM-client)
 	# sending disconnect signal to NM, as something went wrong.
 	disconnectNM
 	;;
-#
-# IPv6
-#
-prepare-host-v6:*|prepare-client-v6:*)
-	case "${PLUTO_PEER_CLIENT_NET}" in 
-	"0.0.0.0"|"::/0"|"%any")
+    #
+    # IPv6
+    #
+    prepare-host-v6:*|prepare-client-v6:*)
+	case "${PLUTO_PEER_CLIENT_NET}" in
+	    "0.0.0.0"|"::/0"|"%any")
 		;;
-	*)
-		ip -6 route del ${PLUTO_PEER_CLIENT} || echo ""
+	    *)
+		ip -6 route del ${PLUTO_PEER_CLIENT} || echo
 		;;
 	esac
 	;;
-route-host-v6:*|route-client-v6:*)
+    route-host-v6:*|route-client-v6:*)
 	# connection to me or my client subnet being routed
 	uproute
 	#uproute_v6
 	;;
-unroute-host-v6:*|unroute-client-v6:*)
+    unroute-host-v6:*|unroute-client-v6:*)
 	# connection to me or my client subnet being unrouted
 	downroute
 	#downroute_v6
 	;;
-up-host-v6:*)
+    up-host-v6:*)
 	# connection to me coming up
 	uprule
 	# If you are doing a custom version, firewall commands go here.
 	;;
-down-host-v6:*)
+    down-host-v6:*)
 	# connection to me going down
 	downrule
 	# If you are doing a custom version, firewall commands go here.
 	;;
-up-client-v6:)
+    up-client-v6:)
 	# connection to my client subnet coming up
 	uprule
 	# If you are doing a custom version, firewall commands go here.
 	;;
-down-client-v6:)
+    down-client-v6:)
 	# connection to my client subnet going down
 	downrule
 	# If you are doing a custom version, firewall commands go here.
 	;;
-*)	echo "$0: unknown verb \`$PLUTO_VERB' or parameter \`$1'" >&2
+    *)
+	echo "$0: unknown verb \"$PLUTO_VERB\" or parameter \"$1\"" >&2
 	exit 1
 	;;
 esac

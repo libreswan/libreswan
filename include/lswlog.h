@@ -75,7 +75,7 @@ extern void tool_close_log(void);
 #define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
 #define DBG_cond_dump_chunk(cond, label, ch) DBG(cond, DBG_dump_chunk(label, ch))
 
-/* Build up a diagnostic in a static buffer.
+/* Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
  * Although this would be a generally useful function, it is very
  * hard to come up with a discipline that prevents different uses
  * from interfering.  It is intended that by limiting it to building
@@ -87,8 +87,7 @@ extern void tool_close_log(void);
  */
 #define LOG_WIDTH   1024    /* roof of number of chars in log line */
 
-extern char diag_space[LOG_WIDTH];	/* output buffer, but can be occupied at call */
-extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);
+extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 
 extern char *progname;
 

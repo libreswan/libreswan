@@ -310,24 +310,24 @@ conn west-east-x509
 
 conn north-east-x509
 	# Left security gateway, subnet behind it, next hop toward right.
-	left=192.1.2.49
+	left=192.1.3.33
+	leftnexthop=192.1.3.254
         leftrsasigkey=%cert
         leftcert=north
-	leftnexthop=192.1.2.23
 	leftid=%fromcert
 	# Right security gateway, subnet behind it, next hop toward left.
 	right=192.1.2.23
 	rightid=%fromcert
         rightrsasigkey=%cert
 	rightcert=east
-	rightnexthop=192.1.2.49
+	rightnexthop=192.1.2.254
 
 conn north-east
 	# Left security gateway, subnet behind it, next hop toward right.
 	left=%any
-	leftnexthop=192.2.3.254
+	#leftnexthop=192.2.3.254
 	leftid=@north
-        leftrsasigkey=0sAQPwDB+4k65xvxQ3qtPV6rUucJovYeRGnfv6T7HaeK/5TcBXDyhEDrfNLS13p5cJYUu13LJbeLYS9MQZSZq7PRsg8DsG1oVeDmJbQM9CaVKs9REMnTiRbzye3mDnsQQRRr63BnU/IMDJrmO54ZenkQIbtEkFOX6vm2gtmf/s8C0lPvQk/cNXgkHx6fTq3sZs7pUiFvspj/CrZTx4ShhFNkyvv6RrUu728HspGZwseoZqC7ZbIqnsMqjPeG65qLl+IRYk4s8yT6JBYjYxX96LoHf9V8v0Qbjq4LJm7UpaqX4EJscDRGPByVZaiAwntCU3uzc/NAlgyZJN14yzwXfv1kQUJFLDGYNBF+z0dqON+0DfuCTR
+        leftrsasigkey=0sAQPE3uygDISpUe9byKWwBBpSOFthVYsvacZXazlKmqgJBPZeqxoyV63zFz2p3vYeiWhhAng9MMr2VI5G3RY5ihzz9fhUqkc38uXVzB4SxTVbP/r/11GvCxkHLPR64M7fwGW0m3mwDRvzrnKoRNFWcdU7dh4ySOG7B526xuc0weeOdFiNN3JosR7Rs6VjKaWDesv1DFVI+NTpzkTxL0ca7VqdeU1ecBlnOkorcMEAogubw0E9XkrjQi9G/F9qDsHELqoQ7Nex/3qHGmRnQCb84LcKVtaBWcB/OdGQN9uro1JTC6LuHL7p/M0CcW3M/l9Xde3330/ZozPy1bfMV4WmxxEPLYAufbe2PO3BAJM75CxwAx/b
 	# Right security gateway, subnet behind it, next hop toward left.
 	right=192.1.2.23
 	rightid=@east
