@@ -4,7 +4,7 @@
 # It should be passed a testname as its onyl argument
 
 import os,sys,socket,shutil,distutils.dir_util,commands
-import glob,pexpect
+import pexpect, glob
 
 try:
 	import argparse
@@ -103,6 +103,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 		child = pexpect.spawn(cmd)
 		child.sendline ('')
 		child.sendline ('')
+
 		commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
 		# install all other public certs
 		for certname in ( "west", "east", "road" ):

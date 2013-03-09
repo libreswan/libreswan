@@ -700,7 +700,8 @@ extern struct_desc isakmp_ikefrag_desc;
  * What is a sane and safe value? iOS/Apple uses 1280, stock racoon uses 552.
  * Why is there no RFC to guide interop people here :/ 
  */
-#define ISAKMP_FRAG_MAXLEN      552
+#define ISAKMP_FRAG_MAXLEN_IPv4      552  /* 576 - 24 (2*4 + 16) */
+#define ISAKMP_FRAG_MAXLEN_IPv6      1240
 
 /*
  * This a really the least significant bit in the flags octet, but it's the

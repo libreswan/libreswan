@@ -1257,7 +1257,7 @@ send_frags(struct state *st, const char *where)
     /* We limit fragment packets to ISAKMP_FRAG_MAXLEN octets.
      * max_data_len is the maximum data length that will fit within it.
      */
-    const size_t max_data_len = ISAKMP_FRAG_MAXLEN
+    const size_t max_data_len = ((st->st_connection->addr_family == AF_INET) ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
         - (natt_bonus + NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag);
 
     u_int8_t *packet_cursor = st->st_tpacket.ptr;
@@ -1335,10 +1335,10 @@ send_or_resend_ike_msg(struct state *st, const char *where, bool resending)
      */
     const size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
 
-    /* decide of whether we're to fragment */
+    /* decide of whether we're to fragment  - IKEv1 only, draft-smyslov-ipsecme-ikev2-fragmentation not implemented yet */
     if (!st->st_ikev2
     && st->st_state != STATE_MAIN_I1
-    && len+natt_bonus >= ISAKMP_FRAG_MAXLEN
+    && len+natt_bonus >= ((st->st_connection->addr_family == AF_INET) ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
     && ((resending && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) && st->st_seen_fragvid)
        || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)))
     {
