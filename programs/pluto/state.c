@@ -975,6 +975,8 @@ duplicate_state(struct state *st)
     nst->st_clonedfrom = st->st_serialno;
     nst->st_import     = st->st_import;
     nst->st_ikev2      = st->st_ikev2;
+    nst->st_seen_fragvid  = st->st_seen_fragvid;
+    nst->st_seen_fragments  = st->st_seen_fragments;
     nst->st_event      = NULL;
 
 #   define clone_chunk(ch, name) \
