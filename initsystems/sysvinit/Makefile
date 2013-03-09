@@ -5,7 +5,7 @@ INITDFILE=ipsec.init
 SYSCONFIGFILE=sysconfig.pluto
 SUBDIRS=
 INITDDIR=$(RCDIR)
-SYSCONFIGDIR=$(CONFDIR)/sysconfig
+SYSCONFIGDIR=$(SYSCONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
