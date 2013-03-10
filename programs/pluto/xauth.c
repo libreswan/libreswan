@@ -19,6 +19,8 @@
  * Porting to 2.x by Sean Mathews
  */
 
+#include <pthread.h>	/* Must be the first include file */
+
 /* #ifdef XAUTH */
 
 #include <stdio.h>
@@ -55,7 +57,6 @@
 #ifdef XAUTH_HAVE_PAM
 # include <security/pam_appl.h>
 #endif
-#include <pthread.h>
 #include <signal.h>
 #include <setjmp.h>
 #include "connections.h"	/* needs id.h */

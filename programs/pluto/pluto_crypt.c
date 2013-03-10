@@ -28,6 +28,8 @@
  *
  */
 
+#include <pthread.h>	/* Must be the first include file */
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -62,7 +64,6 @@
 
 #include <nss.h>
 #include "lswconf.h"
-#include <pthread.h>
 
 #include "lswcrypto.h"
 #include "lsw_select.h"

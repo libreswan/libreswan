@@ -18,6 +18,8 @@
  *
  */
 
+#include "pthread.h"	/* Must be the first include file */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -58,8 +60,6 @@
 #include "ike_alg.h"
 #include "plutoalg.h"
 #include "virtual.h" /* for show_virtual_private */
-
-#include "pthread.h"
 
 #ifndef NO_DB_OPS_STATS
 #define NO_DB_CONTEXT

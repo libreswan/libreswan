@@ -115,6 +115,12 @@ typedef unsigned long policy_prio_t;
 #define POLICY_PRIO_BUF	(3+1+3+1)
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
+#ifdef XAUTH_HAVE_PAM
+# include <pthread.h>	/* Must be the first include file */
+# include <security/pam_appl.h>
+# include <signal.h>
+#endif
+
 /* Note that we include this even if not X509, because we do not want the
  * structures to change lots.
  */
@@ -124,11 +130,6 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
 struct virtual_t;
 
-#ifdef XAUTH_HAVE_PAM
-# include <security/pam_appl.h>
-# include <pthread.h>
-# include <signal.h>
-#endif
 
 struct ietfAttr;	/* forward declaration of ietfAttr defined in ac.h */
 struct host_pair;    /* opaque type */

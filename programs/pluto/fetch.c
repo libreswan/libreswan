@@ -17,10 +17,10 @@
  */
 
 #if defined(LIBCURL) || defined(LDAP_VER)
+#include <pthread.h>	/* Must be the first include file */
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/time.h>
-#include <pthread.h>
 #include <string.h>
 
 #ifdef LIBCURL
