@@ -205,7 +205,7 @@ rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_unitdir}/ipsec.service
-%attr(0644,root,root) %{_sysconfdir}/pam.d/pluto
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
