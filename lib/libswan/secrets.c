@@ -20,6 +20,8 @@
  *
  */
 
+#include <pthread.h>	/* pthread.h must be firts include file */
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,8 +61,6 @@
 #include <cert.h>
 #include <key.h>
 #include "lswconf.h"
-
-#include <pthread.h>
 
 /* Maximum length of filename and passphrase buffer */
 #define BUF_LEN		256

@@ -22,6 +22,7 @@
 #ifndef _STATE_H
 #define _STATE_H
 
+#include <pthread.h>	/* Must be the first include file */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -33,7 +34,6 @@
 #include <pk11pub.h>
 
 #ifdef XAUTH_HAVE_PAM
-# include <pthread.h>
 # include <signal.h>
 #endif
 

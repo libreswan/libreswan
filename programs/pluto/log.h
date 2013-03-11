@@ -37,7 +37,7 @@ extern bool log_did_something;  /* set if we should log time again to debug*/
 extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
 
-extern char debug_prefix;
+extern const char debug_prefix;
 
 /* used in some messages to distiguish
  * which pluto is which, when doing
