@@ -23,7 +23,9 @@ v3.1 (unreleased)
 * X509: Initialise libcurl for SSL to support CRLs over HTTPS [Paul]
 * X509: Warn 14 days before certificates expire [Tuomo]
 * packaging: add /etc/ipsec.d/{crls,cacerts} to rpm spec files [Tuomo]
-: compiling: added -pthread to CFLAGS [Tuomo]
+* compiling: added -pthread to CFLAGS [Tuomo]
+* _plutorun: pass all command line options to pluto [Tuomo]
+* initsystem: change sysv initscripts to use new _plutorun interface [Tuomo]
 * Bugtracker bugs fixed:
    #8  honour compress=no option [Matt Rogers]
    #50 It is assumed ipsec.conf lives in the same dir as rc.d/init.d [Tuomo]
