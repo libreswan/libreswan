@@ -137,7 +137,7 @@ start() {
 	esac
 	echo -n "Starting pluto IKE daemon for IPsec: "
 
-	ipsec _plutorun &
+	ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS} &
 	RETVAL=$?
 	return $RETVAL
 }

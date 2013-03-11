@@ -46,7 +46,7 @@
 # description: IPsec provides encrypted and authenticated communications; \
 # NETKEY/KLIPS is the kernel half of it, Pluto is the user-level management daemon.
 
-test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
+test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 
 # Source function library.
 if [ -f @FINALRCDIR@/functions ]; then
@@ -122,7 +122,7 @@ start() {
     # pluto searches the current directory, so this is required for making it selinux compliant
     cd /
     # This script will enter an endless loop to ensure pluto restarts on crash
-    ipsec _plutorun --extraoptions "$PLUTO_OPTIONS" &
+    ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS} &
     RETVAL=$?
     if [ ${RETVAL} -eq 0 ]; then
 	[ -d ${lockdir} ] || mkdir -p ${lockdir}
