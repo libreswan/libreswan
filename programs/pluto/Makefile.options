@@ -189,8 +189,8 @@ ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
-XAUTH_DIST_SRCS=xauth.c xauth.h
-XAUTH_DIST_OBJS=xauth.o
+XAUTH_DIST_SRCS=xauth.c xauth.h addresspool.c addresspool.h
+XAUTH_DIST_OBJS=xauth.o addresspool.o
 ifeq ($(USE_XAUTH),true)
 # This compile option activates xauth code and modecfg needed by xauth
 XAUTH_DEFS=-DXAUTH -DMODECFG -DMODECFG_DNSWINS
