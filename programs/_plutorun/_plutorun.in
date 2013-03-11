@@ -14,49 +14,19 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+PLUTO_OPTIONS=$@
 pidfile=@FINALVARDIR@/run/pluto/pluto.pid
-verb="Starting"
-for dummy; do
-    case "$1" in
-	--re)
-	    verb="Restarting"
-	    ;;
-	--plutorestartoncrash)
-	    plutorestartoncrash="$2"
-	    shift
-	    ;;
-	--extraoptions)
-	    PLUTO_OPTIONS="$2"
-	    shift
-	    ;;
-	--)
-	    shift
-	    break
-	    ;;
-	-*)
-	    echo "ipsec _plutorun: unknown option \`$1'" >&2
-	    exit 2
-	    ;;
-	*)
-	    break
-	    ;;
-    esac
-    shift
-done
-
-# initially we are in the foreground, with parent looking after logging
+execdir=${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}
 
 # precautions
 if [ -f ${pidfile} ]; then
-    echo "pluto appears to be running already (\`$pidfile' exists), will not start another"
+    echo "pluto appears to be running already (\"${pidfile}\" exists), will not start another" | \
+	logger -s -p authpriv.error -t ipsec__plutorun >/dev/null 2>&1
     exit 1
 fi
 
-logger "Plutorun started on "$(date)
-
 # spin off into the background, with our own logging
-echo "$verb Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun
-execdir=${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}
+echo "Starting Pluto subsystem..." | logger -p authpriv.error -t ipsec__plutorun >/dev/null 2>&1
 
 # Work around problem with broken shells (e.g. Busybox sh).
 # We are called with stdout & stderr going to a logger process started
@@ -66,55 +36,49 @@ execdir=${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}
 # logger (and "ipsec setup") can never exit. By closing fds 1 & 2
 # before they can be dup'd to 11, we somehow avoid the problem.
 # This problem may also apply to Ubuntu's dash shell
-# (http://archives.free.net.ph/message/20090803.221025.1b0ebafd.en.html)
 # but the workaround has not been tested there.
 exec 1>/dev/null
 exec 2>/dev/null
 
-until (
-    # eval allows to contain redirection and other magic
-    eval $execdir/pluto --config @FINALCONFFILE@ --nofork ${PLUTO_OPTIONS}
-    status=$?
-    echo "exit"
-    echo $status
-    ) 
-do
-    status=$?
-    case "$status" in
-    13)
-	echo "internal failure in pluto scripts, impossible to carry on"
-	exit 1
-	;;
+${execdir}/pluto ${PLUTO_OPTIONS}
+status=$?
+case "$status" in
     10)
-	echo "pluto apparently already running (?!?), giving up"
-	exit 1
-	;;
-    137)
-	echo "pluto killed by SIGKILL, terminating without restart or unlock"
+	echo "pluto apparently already running (?!?), giving up" | \
+	    logger -s -p authpriv.error -t ipsec__plutorun >/dev/null 2>&1
 	exit 0
 	;;
-    143)
-	echo "pluto killed by SIGTERM, terminating without restart"
+    137)
+	echo "pluto killed by SIGKILL, terminating without restart or unlock" | \
+	    logger -s -p authpriv.error -t ipsec__plutorun >/dev/null 2>&1
+	rm -f ${pidfile}
+	exit 0
+	;;
+    0)
+	echo "pluto killed by SIGTERM, terminating without restart" | \
+	    logger -s -p authpriv.error -t ipsec__plutorun >/dev/null 2>&1
 	# pluto now does its own unlock for this
 	exit 0
 	;;
     *)
-	st=$status
+	st=${status}
 
-	if [ $st -gt 128 ]; then
-	    st="$st (signal $(expr $st - 128))"
+	if [ ${st} -gt 128 ]; then
+	    st="${st} (signal $((${st} - 128)))"
 	fi
-	echo "!pluto failure!:  exited with error status $st"
-	echo "restarting IPsec after pause..."
+	echo "!pluto failure!:  exited with error status ${st}" | \
+	    logger -s -p authpriv.error -t ipsec__plutorun >/dev/null 2>&1
+	echo "restarting IPsec after pause..." | \
+	    logger -s -p authpriv.error -t ipsec__plutorun >/dev/null 2>&1
 	(
 	    sleep 10
 	    # use start, not restart for now, due to module unloading/loading
+	    # clean up old pidfile so new start will be successful
+	    rm -f ${pidfile}
 	    ipsec setup start
 	) </dev/null >/dev/null 2>&1 &
 	exit 1
 	;;
-    esac
-done </dev/null 2>&1 |
-    logger -s -p daemon.error -t ipsec__plutorun >/dev/null 2>/dev/null &
+esac
 
 exit 0
