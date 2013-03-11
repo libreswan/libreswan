@@ -224,8 +224,6 @@ struct whack_message {
     /* for MODECFG */
     ip_address modecfg_dns1;
     ip_address modecfg_dns2;
-    ip_address modecfg_wins1;
-    ip_address modecfg_wins2; 
 
 	/* what metric to put on ipsec routes */
 	int metric;
