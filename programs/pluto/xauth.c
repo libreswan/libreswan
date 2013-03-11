@@ -3,6 +3,8 @@
  * Copyright (C) 2001-2002 Colubris Networks
  * Copyright (C) 2003 Sean Mathews - Nu Tech Software Solutions, inc.
  * Copyright (C) 2003-2004 Xelerance Corporation
+ * Copyright (C) 2013 Xelerance Corporation
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -80,6 +82,7 @@
 
 #include "xauth.h"
 #include "virtual.h"
+#include "addresspool.h"
 
 static stf_status
 modecfg_inI2(struct msg_digest *md);
@@ -106,15 +109,6 @@ struct thread_arg
 #ifdef XAUTH_HAVE_PAM
     st_jbuf_t *ptr;
 #endif
-};
-
-/**
-* Addresses assigned (usually via MODE_CONFIG) to the Initiator
-*/
-struct internal_addr
-{
-    ip_address    ipaddr;
-    ip_address    dns[2];
 };
 
 
@@ -236,6 +230,7 @@ void sigIntHandler(int sig)
 }
 
 #ifdef XAUTH_HAVE_PAM
+
 static
 int get_addr(pam_handle_t *pamh,const char *var,ip_address *addr)
 {
@@ -305,12 +300,20 @@ int get_internal_addresses(struct connection *con,struct internal_addr *ia)
     int retval;
     char str[IDTOA_BUF+sizeof("ID=")+2];
 #endif
+    char buftest[ADDRTOT_BUF];
 
 #ifdef NAT_TRAVERSAL /* only NAT-T code lets us do virtual ends */
     if (!isanyaddr(&con->spd.that.client.addr))
     {
 	/** assumes IPv4, and also that the mask is ignored */
-	ia->ipaddr = con->spd.that.client.addr;
+	if(con->pool)
+	{
+		get_addr_lease(con, ia);
+	}
+	else 
+	{
+		ia->ipaddr = con->spd.that.client.addr;
+	}
 	if (!isanyaddr(&con->modecfg_dns1)) {
 		ia->dns[0] = con->modecfg_dns1;
 	}

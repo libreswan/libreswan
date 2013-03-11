@@ -81,6 +81,7 @@ void confwrite_int(FILE *out,
 	case kt_percent:
 	case kt_ipaddr:
 	case kt_subnet:
+	case kt_range:
 	case kt_idtype:
 	case kt_bitstring:
 	    /* none of these are valid number types */
@@ -197,6 +198,7 @@ void confwrite_str(FILE *out,
 
 	case kt_rsakey:
 	case kt_ipaddr:
+	case kt_range:
 	case kt_subnet:
 	case kt_idtype:
 	case kt_bitstring:

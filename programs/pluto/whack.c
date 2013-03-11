@@ -154,6 +154,7 @@ help(void)
 	    " [--modecfgserver]"
 	    " [--modecfgclient]"
 	    " [--modecfgpull]"
+	    " [--addresspool]"
 #ifdef MODECFG_DNSWINS
 	    " [--modecfgdns1]"
 	    " [--modecfgdns2]"
@@ -432,6 +433,7 @@ enum option_enums {
     END_XAUTHCLIENT,
     END_MODECFGCLIENT,
     END_MODECFGSERVER,
+    END_ADDRESSPOOL,
     END_SENDCERT,
     END_CERTTYPE,
     END_SRCIP,
@@ -689,6 +691,7 @@ static const struct option long_opts[] = {
     { "modecfgpull",   no_argument, NULL, CD_MODECFGPULL + OO },
     { "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
     { "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
+    { "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
 #ifdef MODECFG_DNSWINS
     { "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
     { "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
@@ -1685,6 +1688,9 @@ main(int argc, char **argv)
 
 	case END_MODECFGSERVER:
 	    msg.right.modecfg_server = TRUE;
+	    continue;
+	case END_ADDRESSPOOL:
+	    ttorange(optarg, 0, AF_INET, &msg.right.pool_range);
 	    continue;
 
 #ifdef MODECFG_DNSWINS

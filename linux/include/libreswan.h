@@ -187,6 +187,11 @@ typedef struct {
 	ip_address addr;
 	int maskbits;
 } ip_subnet;
+typedef struct {
+	ip_address start;
+	ip_address end;
+} ip_range;
+
 #define ip_address_family(a)	((a)->u.v4.sin_family)
 #define ip_address_cmp(a, b) \
 	(ip_address_family((a)) != ip_address_family((b)) || \
@@ -304,6 +309,7 @@ size_t inet_addrtot(int type,const void *src, int format, char *buf, size_t bufl
 size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define	ADDRTOT_BUF	(32*2 + 3 + 1 + 3 + 1 + 1)
+err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst);
 err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
 size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
 #define	SUBNETTOT_BUF	(ADDRTOT_BUF + 1 + 3)

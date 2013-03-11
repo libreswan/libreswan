@@ -4,7 +4,6 @@
 
 export TESTNAME=xauth-pluto-12
 /testing/guestbin/swan-prep --testname $TESTNAME
-hostname road.uml.freeswan.org
 netstat -rn
 
 ipsec setup stop

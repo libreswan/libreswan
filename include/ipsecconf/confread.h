@@ -61,6 +61,7 @@ struct starter_end {
     char *cert;
     char *ca;
     char *updown;
+    ip_range pool_range;        /* store start of v4 addresspool */
     ksf  strings;
     knf  options;
 

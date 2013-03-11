@@ -70,7 +70,8 @@
 #include "plutocerts.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "xauth.h"
+#include "xauth.h" 
+#include "addresspool.h"
 #ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
 #endif
@@ -270,6 +271,9 @@ delete_connection(struct connection *c, bool relations)
 	     , ip_str(&c->spd.that.host_addr)
 	     , c->newest_isakmp_sa, c->newest_ipsec_sa);
 	c->kind = CK_GOING_AWAY;
+#ifdef MODECFG
+	rel_lease_addr(c);
+#endif	
     }
     else
     {
@@ -321,6 +325,14 @@ delete_connection(struct connection *c, bool relations)
     pfreeany(c->cisco_dns_info);
     pfreeany(c->cisco_domain_info);
     pfreeany(c->cisco_banner);
+
+#ifdef PAUL_DISABLED
+    if(c->pool) {
+            pfreeany(c->pool);
+            c->pool = NULL;
+    }
+#endif 
+
 #endif
 #ifdef HAVE_LABELED_IPSEC
     pfreeany(c->policy_label);
@@ -958,6 +970,8 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
 #ifdef MODECFG
     dst->modecfg_server = src->modecfg_server;
     dst->modecfg_client = src->modecfg_client;
+    dst->pool_range = src->pool_range;
+
 #endif
 #ifdef XAUTH
     dst->xauth_server = src->xauth_server;
@@ -1369,6 +1383,23 @@ add_connection(const struct whack_message *wm)
 	same_leftca  = extract_end(&c->spd.this, &wm->left, "left");
 	same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
+
+	/* 
+	 * How to add addresspool only for responder? 
+	 * It is not necessary on the initiator
+	 */
+	 
+	if (wm->left.pool_range.start.u.v4.sin_addr.s_addr) {
+		/* there is address pool range add to the global list */
+		c->pool = install_addresspool(&wm->left.pool_range
+				,&pluto_pools);
+	}
+	if (wm->right.pool_range.start.u.v4.sin_addr.s_addr) {
+		/* there is address pool range add to the global list */
+		c->pool = install_addresspool(&wm->right.pool_range
+				, &pluto_pools);
+	}
+
 	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 	{
 	    c->policy |= POLICY_XAUTH;
@@ -1384,7 +1415,7 @@ add_connection(const struct whack_message *wm)
 	/* type is ip_address, not a string */ 
 	c->modecfg_dns1 = wm->modecfg_dns1;
 	c->modecfg_dns2 = wm->modecfg_dns2;
-#endif
+#endif 
 #endif
 
 	default_end(&c->spd.this, &c->spd.that.host_addr);

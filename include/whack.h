@@ -64,6 +64,7 @@ struct whack_end {
     u_int16_t port;		/* host order */
     u_int8_t protocol;
     char *virt;
+    ip_range pool_range; 	/* store start of v4 addresspool */
     bool xauth_server;          /* for XAUTH */
     bool xauth_client;
     char *xauth_name;
@@ -224,7 +225,7 @@ struct whack_message {
     ip_address modecfg_dns1;
     ip_address modecfg_dns2;
     ip_address modecfg_wins1;
-    ip_address modecfg_wins2;
+    ip_address modecfg_wins2; 
 
 	/* what metric to put on ipsec routes */
 	int metric;

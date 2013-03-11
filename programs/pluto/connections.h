@@ -127,6 +127,8 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "x509.h"
 #include "pgp.h"
 #include "certs.h"
+#include "defs.h"
+#include <sys/queue.h>
 
 struct virtual_t;
 
@@ -170,6 +172,7 @@ struct end {
     bool xauth_client;
     char *xauth_name;
     char *xauth_password;
+    ip_range pool_range;        /* store start of v4 addresspool */
 /*#ifdef MODECFG */
     bool modecfg_server;        /* Give local addresses to tunnel's end */
     bool modecfg_client;        /* request address for local end */
@@ -272,10 +275,11 @@ struct connection {
     char *dnshostname;
 #endif /* DYNAMICDNS */
 #ifdef XAUTH
-# ifdef MODECFG
+#ifdef MODECFG
     ip_address modecfg_dns1;
     ip_address modecfg_dns2;
-# endif
+    struct ip_pool *pool;  /*v4 addresspool as a range, start end */
+#endif
     char *cisco_dns_info;
     char *cisco_domain_info;
     char *cisco_banner;

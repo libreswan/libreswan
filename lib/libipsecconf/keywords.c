@@ -513,6 +513,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     /* these are really kt_ipaddr, but we handle them as string until we load them into a whack message */
     {"modecfgdns1", kv_conn|kv_auto, kt_string, KSF_MODECFGDNS1, NOT_ENUM}, 
     {"modecfgdns2", kv_conn|kv_auto, kt_string, KSF_MODECFGDNS2, NOT_ENUM},
+    {"addresspool", kv_conn|kv_auto|kv_leftright, kt_range, KSCF_ADDRESSPOOL, NOT_ENUM},
     {"modecfgwins1", kv_conn|kv_auto, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM},
     {"modecfgwins2", kv_conn|kv_auto, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM},
 

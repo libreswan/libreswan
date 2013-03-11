@@ -178,6 +178,7 @@ statement_kw:
                     case kt_ipaddr:
                     case kt_bitstring:
 		    case kt_idtype:
+		    case kt_range:	
 		    case kt_subnet:
 		        new->string = strdup(value);
 			break;
@@ -250,6 +251,7 @@ statement_kw:
                     case kt_ipaddr:
                     case kt_bitstring:
 		    case kt_idtype:
+		    case kt_range:
 		    case kt_subnet:
 		        new->string = $3;
 			break;

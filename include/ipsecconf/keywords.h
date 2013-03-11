@@ -148,6 +148,7 @@ enum keyword_string_conn_field {
     KSCF_SOURCEIP     = 15,
     KSCF_XAUTHUSERNAME= 16,
     KSCF_SUBNETS      = 17,
+    KSCF_ADDRESSPOOL  = 18,
     KSCF_MAX
 };
 
@@ -226,6 +227,7 @@ enum keyword_type {
     kt_number,             /* an integer */
     kt_time,               /* a number representing time */
     kt_percent,            /* a number representing percentage */
+    kt_range,		   /* ip address range 1.2.3.4-1.2.3.10 */
     kt_ipaddr,             /* an IP address */
     kt_subnet,             /* an IP address subnet */
     kt_idtype,             /* an ID type */

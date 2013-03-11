@@ -341,6 +341,7 @@ static int load_setup (struct starter_config *cfg
 	    case kt_rsakey:
 	    case kt_ipaddr:
 	    case kt_subnet:
+		case kt_range:
 	    case kt_idtype:
 		err++;
 		break;
@@ -612,6 +613,12 @@ static int validate_end(struct ub_ctx *dnsctx
     }
 
 #ifdef XAUTH
+    if (end->strings_set[KSCF_ADDRESSPOOL]) {
+	    char *addresspool = end->strings[KSCF_ADDRESSPOOL];
+	    starter_log(LOG_LEVEL_DEBUG,"connection's  addresspool set to: %s",end->strings[KSCF_ADDRESSPOOL] );
+	    ttorange(addresspool, 0, AF_INET, &end->pool_range);
+    }
+
     if(end->options_set[KNCF_XAUTHSERVER] || end->options_set[KNCF_XAUTHCLIENT]) {
 	conn_st->policy |= POLICY_XAUTH;
     }
@@ -711,6 +718,7 @@ bool translate_conn (struct starter_conn *conn
 	case kt_dirname:
 	case kt_bitstring:
 	case kt_ipaddr:
+	case kt_range:
 	case kt_subnet:
 	case kt_idtype:
 	    /* all treated as strings for now */
@@ -1135,8 +1143,8 @@ static int load_conn (struct ub_ctx *dnsctx
     if(conn->strings_set[KSF_MODECFGDNS2]) {
     starter_log(LOG_LEVEL_DEBUG,"connection's  conn->modecfg_dns2 set to: %s",conn->strings[KSF_MODECFGDNS2] );
        conn->modecfg_dns2 = xstrdup(conn->strings[KSF_MODECFGDNS2]);
-    }
-# endif
+    } 
+    # endif
 #endif
 
     if(conn->strings_set[KSF_CONNALIAS]) {
