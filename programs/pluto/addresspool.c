@@ -12,6 +12,7 @@
  * for more details.
  *
  */
+
 #include "libreswan.h"
 #include "lswalloc.h"
 #include "lswlog.h"
@@ -24,22 +25,21 @@
 #include "xauth.h"
 #include "addresspool.h"
 
-void unreference_addrespool(struct  ip_pool **pp); 
-void free_remembered_addresspools(void);
-void free_addresspools(struct ip_pool **pools);
-void free_addresspool(struct ip_pool *pool);
-struct ip_pool *free_addresspool_entry(struct ip_pool *p);
-struct ip_pool *reference_addresspool(struct  ip_pool *pool);
-struct lease_addr *delete_lease_entry(struct lease_addr *h);
-int get_next_free_addr(struct lease_addr **head,u_int32_t *idx, u_int32_t  size);
-int delete_lease(struct lease_addr **head, u_int32_t lease);
-void delete_lease_list(struct lease_addr **head);
-struct ip_pool *find_addresspool(ip_range *pool_range, struct ip_pool **head);
+static void free_remembered_addresspools(void);
+static void free_addresspools(struct ip_pool **pools);
+static void free_addresspool(struct ip_pool *pool);
+static struct ip_pool *free_addresspool_entry(struct ip_pool *p);
+static struct ip_pool *reference_addresspool(struct  ip_pool *pool);
+static struct lease_addr *delete_lease_entry(struct lease_addr *h);
+static int get_next_free_addr(struct lease_addr **head,u_int32_t *idx, u_int32_t  size);
+static int delete_lease(struct lease_addr **head, u_int32_t lease);
+static void delete_lease_list(struct lease_addr **head);
+static struct ip_pool *find_addresspool(const ip_range *pool_range, struct ip_pool **head);
 
 /* root of chained addresspool  list */
 struct ip_pool *pluto_pools = NULL; /* addresspool from ipsec.onf */
 
-void delete_lease_list(struct lease_addr **head)
+static void delete_lease_list(struct lease_addr **head)
 {
 	while (*head != NULL) 
 		*head =  delete_lease_entry (*head);
@@ -227,13 +227,13 @@ err_t get_addr_lease(struct connection *c, struct internal_addr *ia)
 				, abuf1, abuf2, i,c->pool->used, c->pool->size));
 	return NULL;
 }
-void free_remembered_addresspools(void)
+static void free_remembered_addresspools(void)
 {
 	free_addresspools(&pluto_pools);
 }
 
 
-struct ip_pool *free_addresspool_entry(struct ip_pool *p)
+static struct ip_pool *free_addresspool_entry(struct ip_pool *p)
 {
 	struct ip_pool *nxt = p->next;
 
@@ -246,8 +246,7 @@ struct ip_pool *free_addresspool_entry(struct ip_pool *p)
 	return nxt;
 }
 
-	void
-free_addresspools(struct ip_pool **pools)
+static void free_addresspools(struct ip_pool **pools)
 {
 	while (*pools != NULL)
 		*pools = free_addresspool_entry(*pools);
@@ -277,8 +276,7 @@ struct ip_pool *reference_addresspool(struct  ip_pool *pool)
 	return pool;
 } 
 
-
-struct ip_pool *find_addresspool(ip_range *pool_range, struct ip_pool **head)  
+static struct ip_pool *find_addresspool(const ip_range *pool_range, struct ip_pool **head)  
 {	
 	struct ip_pool *h = *head;
 	if (h) {
@@ -313,7 +311,7 @@ struct ip_pool *find_addresspool(ip_range *pool_range, struct ip_pool **head)
 	return NULL;
 }
 
-struct ip_pool *install_addresspool(ip_range *pool_range, struct ip_pool **head) 
+struct ip_pool *install_addresspool(const ip_range *pool_range, struct ip_pool **head) 
 {
 	struct ip_pool *pool;
 
@@ -357,3 +355,4 @@ struct ip_pool *install_addresspool(ip_range *pool_range, struct ip_pool **head)
 	*head = p;
 	return p;
 }
+

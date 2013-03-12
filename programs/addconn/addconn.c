@@ -32,6 +32,7 @@
 
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <ifaddrs.h>
 
 #include <unistd.h>
 #include <getopt.h>
@@ -200,13 +201,45 @@ int netlink_query(char *msgbuf)
 }
 
 /*
+ * Resolve interface's peer.
+ * Return: 0 = ok, fill peer
+ *         -1 = not found
+ */
+int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
+{
+    struct ifaddrs *ifap, *ifa;
+    struct sockaddr *sa;
+
+    /* Get info about all interfaces */
+    if (getifaddrs(&ifap) != 0)
+	return -1;
+
+    /* Find the right interface */
+    for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next)
+	if ((ifa->ifa_flags & IFF_POINTOPOINT) != 0 &&
+	    strcmp(ifa->ifa_name, interface) == 0) {
+	    sa = ifa->ifa_ifu.ifu_dstaddr;
+	    if (sa != NULL && sa->sa_family == family &&
+		getnameinfo(sa, ((sa->sa_family == AF_INET) ?
+				 sizeof(struct sockaddr_in) :
+				 sizeof(struct sockaddr_in6)),
+			    peer, NI_MAXHOST, NULL, 0,  NI_NUMERICHOST) == 0) {
+		if (verbose)
+		    printf("found peer %s to interface %s\n", peer, interface);
+		freeifaddrs(ifap);
+		return 0;
+	    }
+	}
+    freeifaddrs(ifap);
+    return -1;
+}
+
+/*
  * See if left->addr or left->next is %defaultroute and change it to IP.
  */
 int resolve_defaultroute_one(struct starter_end *left,
 			     struct starter_end *right)
 {
-    /* TODO: this will probably not work with Point-to-Point links */
-
     /* "left="         == left->addrtype + left->addr
      * "leftnexthop="  == left->nexttype + left->nexthop
      */
@@ -307,6 +340,11 @@ int resolve_defaultroute_one(struct starter_end *left,
 		    printf("set addr: %s\n", r_source);
 	    } else if (verbose)
 		printf("unknown source results from kernel: %s\n", err);
+	}
+	if (parse_gateway && *r_gateway == 0 && *r_interface != 0 &&
+	    (has_dst || *r_source == 0)) {
+	    /* Point-to-Point default gw without "via IP" */
+	    resolve_ppp_peer(r_interface, left->addr_family, r_gateway);
 	}
 	if (parse_gateway && *r_gateway != 0 && (has_dst || *r_source == 0)) {
 	    err = tnatoaddr(r_gateway, 0, rtmsg->rtm_family, &left->nexthop);

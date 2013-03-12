@@ -37,7 +37,7 @@ ip_range *dst;
 	ip_address addr_start_tmp;
 	ip_address addr_end_tmp;
 
-	if(src == NULL)
+	if (src == NULL)
 			return "src is empty";
 	if (srclen == 0)
 		srclen = strlen(src);
@@ -96,11 +96,8 @@ ip_range *dst;
 			return "range size is -ve. start is grater than the end";
 
 	/* we validated the range. no put them in dst */
-	
 	dst->start = addr_start_tmp;
 	dst->end = addr_end_tmp;
-	//oops = ttoaddr(src, dash - src, af, &dst->start);
-	//oops = ttoaddr(high, hlen, af, &dst->end);
 	return FALSE;
 }
 

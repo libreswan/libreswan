@@ -41,7 +41,8 @@ struct ip_pool
 	struct ip_pool *next;
 };
 struct ip_pool *pluto_pools;
-struct ip_pool *install_addresspool(ip_range *pool_range, struct ip_pool **head);
+struct ip_pool *install_addresspool(const ip_range *pool_range, struct ip_pool **head);
 err_t  get_addr_lease(struct connection *c, struct internal_addr *ia);
 int rel_lease_addr(struct connection *c);
+void unreference_addrespool(struct  ip_pool **pp);
 #endif /* _ADDRESSPOOL_H */
