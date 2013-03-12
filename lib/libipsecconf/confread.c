@@ -468,6 +468,12 @@ static int validate_end(struct ub_ctx *dnsctx
     {
 	char *value = end->strings[KSCF_SUBNET];
 
+	if(end->strings_set[KSCF_ADDRESSPOOL])
+	{
+	   ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=", leftright, leftright);
+	}
+
+
         if ( ((strlen(value)>=6) && (strncmp(value,"vhost:",6)==0)) ||
 	     ((strlen(value)>=5) && (strncmp(value,"vnet:",5)==0)) ) {
 	    er = NULL;
@@ -614,9 +620,13 @@ static int validate_end(struct ub_ctx *dnsctx
 
 #ifdef XAUTH
     if (end->strings_set[KSCF_ADDRESSPOOL]) {
-	    char *addresspool = end->strings[KSCF_ADDRESSPOOL];
-	    starter_log(LOG_LEVEL_DEBUG,"connection's  addresspool set to: %s",end->strings[KSCF_ADDRESSPOOL] );
-	    ttorange(addresspool, 0, AF_INET, &end->pool_range);
+	   char *addresspool = end->strings[KSCF_ADDRESSPOOL];
+	   if(end->strings_set[KSCF_SUBNET])
+	   {
+		ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=", leftright, leftright);
+	   }
+	   starter_log(LOG_LEVEL_DEBUG,"connection's  addresspool set to: %s",end->strings[KSCF_ADDRESSPOOL] );
+	   ttorange(addresspool, 0, AF_INET, &end->pool_range);
     }
 
     if(end->options_set[KNCF_XAUTHSERVER] || end->options_set[KNCF_XAUTHCLIENT]) {
