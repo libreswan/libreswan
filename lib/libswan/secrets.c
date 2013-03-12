@@ -984,6 +984,7 @@ unlock_certs_and_keys(const char *who)
     pthread_mutex_unlock(&certs_and_keys_mutex);
 }
 
+#if defined(LIBCURL) || defined(LDAP_VER)
 /*
  * lock access to the chained authcert list
  */
@@ -1007,6 +1008,7 @@ unlock_authcert_list(const char *who)
     )
     pthread_mutex_unlock(&authcert_list_mutex);
 }
+#endif
 
 static void
 process_secret(struct secret **psecrets, int verbose,
