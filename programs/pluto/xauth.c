@@ -299,7 +299,6 @@ int get_internal_addresses(struct connection *con,struct internal_addr *ia)
     int retval;
     char str[IDTOA_BUF+sizeof("ID=")+2];
 #endif
-    char buftest[ADDRTOT_BUF];
 
 #ifdef NAT_TRAVERSAL /* only NAT-T code lets us do virtual ends */
     if (!isanyaddr(&con->spd.that.client.addr))
