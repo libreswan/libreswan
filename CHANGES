@@ -50,6 +50,7 @@ v3.1 (unreleased)
    #50 It is assumed ipsec.conf lives in the same dir as rc.d/init.d [Tuomo]
    #53  ipsec auto --status does not show phase2 parameters when using
         (unspecified) defaults? [Matt Rogers]
+   #71 Libreswan pre-3.1 git version breaks on-demand ipv6 tunneling [Tuomo]
 
 v3.0 (January 02, 2013)
 * FORK: Rename from Openswan to Libreswan [Team]
