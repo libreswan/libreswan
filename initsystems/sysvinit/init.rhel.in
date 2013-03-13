@@ -108,10 +108,10 @@ verify_config() {
     config_error=$(ipsec addconn --config ${IPSEC_CONF} --checkconfig 2>&1)
     RETVAL=$?
     if [ ${RETVAL} -gt 0 ]; then
-        echo "Configuration error - the following error occured:"
-        echo ${config_error}
-        echo "IKE daemon status was not modified"
-        exit ${RETVAL}
+	echo "Configuration error - the following error occured:"
+	echo ${config_error}
+	echo "IKE daemon status was not modified"
+	exit ${RETVAL}
     fi
 }
 
@@ -233,5 +233,5 @@ case "$1" in
 	echo "Usage: $0 {start|stop|restart|reload|force-reload|condrestart|try-restart|status|version}"
 	RETVAL=2
 esac
- 
+
 exit ${RETVAL}
