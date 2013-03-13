@@ -588,7 +588,8 @@ static int validate_end(struct ub_ctx *dnsctx
 		if (er) ERR_FOUND("bad numerical addr %ssourceip=%s [%s]", leftright, value, er);
 	}
 	if(!end->has_client) {
-	    starter_log(LOG_LEVEL_INFO, "defaulting %ssubnet to %s\n", leftright, value);
+	    starter_log(LOG_LEVEL_INFO, "%ssourceip= used but not %ssubnet= defined, defaulting %ssubnet to %s\n"
+		, leftright, leftright, leftright, value);
 	    er = addrtosubnet(&end->sourceip, &end->subnet);
 	    if (er) ERR_FOUND("attempt to default %ssubnet from %s failed: %s", leftright, value, er);
 	    end->has_client = TRUE;
