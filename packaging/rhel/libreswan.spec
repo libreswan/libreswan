@@ -104,8 +104,8 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
   USE_FIPSCHECK=%{USE_FIPSCHECK} \
   USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
   USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
-  USE_LDAP=%{USE_CRL_FETCHIG} \
-  USE_LIBCURL=%{USE_CRL_FETCHIG} \
+  USE_LDAP=%{USE_CRL_FETCHING} \
+  USE_LIBCURL=%{USE_CRL_FETCHING} \
   USE_DNSSEC=%{USE_DNSSEC} \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libexecdir}/ipsec \
