@@ -64,8 +64,7 @@ int verbose=0;
 int warningsarefatal = 0;
 
 static const char *usage_string = ""
-    "Usage: readwriteconn [--config file] \n";
-
+    "Usage: readwriteconn [--config <file>] [--debug] [--rootdir <dir>] [--rootdir2 <dir2>] \n";
 
 static void usage(void)
 {
@@ -102,6 +101,7 @@ main(int argc, char *argv[])
 
     progname = argv[0];
     rootdir[0]='\0';
+    rootdir2[0]='\0';
 
     tool_init_log();
 
