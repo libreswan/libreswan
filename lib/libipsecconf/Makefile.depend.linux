@@ -1,19 +1,5 @@
 alloc.o: alloc.c \
   ../../include/ipsecconf/starterlog.h
-cmp.o: cmp.c ../../include/ipsecconf/keywords.h \
-  ../../linux/include/libreswan.h \
-  ../../linux/include/libreswan/ipsec_kversion.h \
-  ../../linux/include/libreswan/ipsec_param.h \
-  ../../include/constants.h \
-  ../../include/biglset.h \
-  ../../linux/include/libreswan/passert.h \
-  ../../linux/include/libreswan.h \
-  ../../include/ietf_constants.h \
-  ../../include/pluto_constants.h \
-  ../../include/names_constant.h \
-  ../../include/ipsecconf/confread.h \
-  ../../include/ipsecconf/keywords.h \
-  ../../include/ipsecconf/cmp.h
 confread.o: confread.c ../../include/lswalloc.h \
   ../../include/constants.h \
   ../../include/biglset.h \
