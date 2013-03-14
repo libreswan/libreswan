@@ -2,7 +2,7 @@
 %define kmod_name libreswan
 
 # If kversion isn't defined on the rpmbuild line, define it here.
-%{!?kversion: %define kversion 2.6.32-358.0.1.el6.%{_target_cpu}}
+%{!?kversion: %define kversion 3.0.68-2.ocf.nopl-%{_target_cpu}}
 
 Name:    %{kmod_name}-kmod
 Version: IPSECBASEVERSION
@@ -12,15 +12,17 @@ License: GPLv2
 Summary: %{kmod_name} kernel module(s)
 URL:     http://www.kernel.org/
 
+# so spec can be used on rhel5 and newer
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
 BuildRequires: redhat-rpm-config
 ExclusiveArch: i686 x86_64
 
 # Sources.
 Source0:  %{kmod_name}-%{version}.tar.gz
-Source10: kmodtool-%{kmod_name}-el6.sh
 
 # Magic hidden here.
-%{expand:%(sh %{SOURCE10} rpmtemplate %{kmod_name} %{kversion} "")}
+%{expand:%(sh /usr/lib/rpm/redhat/kmodtool rpmtemplate %{kmod_name} %{kversion} "")}
 
 # Disable the building of the debug package(s).
 %define debug_package %{nil}
@@ -35,16 +37,16 @@ of the same variant of the Linux kernel and not on any one specific build.
 echo "override %{kmod_name} * weak-updates/%{kmod_name}" > kmod-%{kmod_name}.conf
 
 %build
-KSRC=%{_usrsrc}/kernels/%{kversion}
-#%{__make} -C "${KSRC}" %{?_smp_mflags} modules M=$PWD
-%{__make} %{?_smp_mflags} module #M=$PWD
+%{__make} KERNELSRC=%{_usrsrc}/kernels/%{kversion} %{?_smp_mflags} module
 
 %install
+rm -rf %{buildroot}
 export INSTALL_MOD_PATH=%{buildroot}
-export INSTALL_MOD_DIR=extra/%{kmod_name}
-#KSRC=%{_usrsrc}/kernels/%{kversion}
-#%{__make} -C "${KSRC}" modules_install M=$PWD
-%{__make} OSMOD_DESTDIR=${INSTALL_MOD_DIR} module_install #M=$PWD
+export INSTALL_MOD_DIR=/lib/modules/%{kversion}/extra/%{kmod_name}
+
+%{__install} -d %{buildroot}/$INSTALL_MOD_DIR
+%{__install} modobj/ipsec.ko %{buildroot}/$INSTALL_MOD_DIR
+
 %{__install} -d %{buildroot}%{_sysconfdir}/depmod.d/
 %{__install} kmod-%{kmod_name}.conf %{buildroot}%{_sysconfdir}/depmod.d/
 %{__install} -d %{buildroot}%{_defaultdocdir}/kmod-%{kmod_name}-%{version}/
@@ -53,6 +55,11 @@ export INSTALL_MOD_DIR=extra/%{kmod_name}
 find %{buildroot} -type f -name \*.ko -exec %{__chmod} u+x \{\} \;
 # Remove the unrequired files.
 %{__rm} -f %{buildroot}/lib/modules/%{kversion}/modules.*
+
+%files
+/lib/modules/%{kversion}/extra/%{kmod_name}/ipsec.ko
+%{_sysconfdir}/depmod.d/kmod-%{kmod_name}.conf
+%{_defaultdocdir}/kmod-%{kmod_name}-%{version}/LICENSE
 
 %clean
 %{__rm} -rf %{buildroot}
