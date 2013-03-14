@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 02/06/2013
+.\"      Date: 03/13/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "02/06/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "03/13/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -297,6 +297,30 @@ specify multiple private subnets behind the left participant, expressed as {
 \fItesting/pluto/multinet\-*\fR\&.
 .RE
 .PP
+\fBleftaddresspool\fR
+.RS 4
+address pool from with the XAUTH server can assign IP addresses to clients\&. When configured as an XAUTH server, using
+\fIleftxauthserver=yes\fR
+this option specifies the address pool from which IP addresses are taken to assign the the XAUTH clients\&. The syntax of the address pool specifies a range (not a CIDR), in the following syntax:
+\fIrightaddresspool=192\&.168\&.1\&.100\-192\&.168\&.1\&.200\fR\&. Generally, the
+\fIrightaddresspool=\fR
+option will be accompanied by
+\fIrightxauthclient=yes\fR,
+\fIleftxauthserver=yes\fR
+and
+\fIleftsubnet=0\&.0\&.0\&.0/0\fR
+option\&.
+.sp
+When
+\fIleftaddresspool=\fR
+is specified, the connection may not specify either
+\fIleftsubnet=\fR
+or
+\fIleftsubnets=\fR\&. Address pools are fully allocated when the connection is loaded, so the ranges should be sane\&. For example, specifing a range
+\fIrightaddresspool=10\&.0\&.0\&.0\-11\&.0\&.0\&.0\fR
+will lead to massive memory allocation\&. Address pools specifying the exact same range are shared between different connections\&. Different addresspools should not be defined to partially overlap\&.
+.RE
+.PP
 \fBleftprotoport\fR
 .RS 4
 allowed protocols and ports over connection, also called Port Selectors\&. The argument is in the form
@@ -513,6 +537,19 @@ The options must be suitable as a value of
 \fBipsec_spi\fR(8)\*(Aqs
 \fB\-\-ah\fR
 option\&. The default is not to use AH\&. If for some (invalid) reason you still think you need AH, please use esp with the null encryption cipher instead\&. Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarilly supported here\&.
+.RE
+.PP
+\fBike_frag\fR
+.RS 4
+Whether or not to allow IKE fragmentation\&. Valid values are are
+\fByes\fR, (the default),
+\fBno\fR
+or
+\fBforce\fR\&.
+.sp
+IKE fragmentation capablities are negotiated via
+\fIvendor id\fR\&. If pluto does not receive the FRAGMENTATION vendor id, no IKE fragments will be sent, regardless of the ike_frag= setting\&. When set to
+\fByes\fR, IKE fragmentation will be attempted on the first re\-transmit of an IKE packet of a size larger then 576 bytes for IPv4 and 1280 bytes for IPv6\&. If ike_frag is set to force, IKE fragmentation is used on initial transmits of such sized packets as well\&. When we have received IKE fragments for a connection, pluto behaves as if in force mode\&.
 .RE
 .PP
 \fBikev2\fR
@@ -1115,6 +1152,12 @@ The IKE NAT Traversal floating port (see RFC\-3947) to listen on\&. The default 
 The delay (in seconds) for NAT\-T keep\-alive packets, if these are enabled using
 \fBforce_keepalive\fR
 This parameter may eventually become per\-connection\&.
+.RE
+.PP
+\fBretransmits\fR
+.RS 4
+Whether pluto should attempt to retransmit packets that get no reply\&. This is mostly used to disable retransmits while debugging a problem\&. Production use should always leave this enabled\&. The default is
+\fByes\fR\&.
 .RE
 .PP
 \fBvirtual_private\fR

@@ -7,7 +7,6 @@
 %global USE_LINUX_AUDIT true
 
 %global fipscheck_version 1.2.0-1
-%global buildklips 0
 %global buildefence 0
 %global development 0
 
@@ -76,25 +75,11 @@ decrypted by the gateway at the other end of the tunnel.  The resulting
 tunnel is a virtual private network or VPN.
 
 This package contains the daemons and userland tools for setting up
-Libreswan. It optionally also builds the Libreswan KLIPS IPsec stack that
-is an alternative for the NETKEY/XFRM IPsec stack that exists in the
-default Linux kernel.
+Libreswan. To build KLIPS, see the kmod-libreswan.spec file.
 
 Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
 
 Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
-
-%if %{buildklips}
-%package klips
-Summary: Libreswan kernel module
-Group:  System Environment/Kernel
-Release: %{krelver}_%{release}
-Requires: kernel = %{kversion}, %{name}-%{version}
-
-%description klips
-This package contains only the ipsec module for the RedHat/Fedora series of
-kernels.
-%endif
 
 %prep
 %setup -q -n libreswan-%{srcpkgver}
@@ -119,8 +104,8 @@ kernels.
   USE_FIPSCHECK=%{USE_FIPSCHECK} \
   USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
   USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
-  USE_LDAP=%{USE_CRL_FETCHIG} \
-  USE_LIBCURL=%{USE_CRL_FETCHIG} \
+  USE_LDAP=%{USE_CRL_FETCHING} \
+  USE_LIBCURL=%{USE_CRL_FETCHING} \
   USE_DNSSEC=%{USE_DNSSEC} \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBDIR=%{_libexecdir}/ipsec \
@@ -139,19 +124,6 @@ FS=$(pwd)
   fipshmac %{buildroot}%{_sbindir}/ipsec \
   fipshmac %{buildroot}%{_libexecdir}/ipsec/* \
 %{nil}
-%endif
-
-%if %{buildklips}
-mkdir -p BUILD.%{_target_cpu}
-
-# rpm doesn't know we're compiling kernel code. optflags will give us -m64
-%{__make} -C $FS MODBUILDDIR=$FS/BUILD.%{_target_cpu} \
-    LIBRESWANSRCDIR=$FS \
-    INITSYSTEM=sysvinit \
-    KLIPSCOMPILE="%{optflags}" \
-    KERNELSRC=/lib/modules/%{kversion}.%{_arch}/build \
-    ARCH=%{_arch} \
-    include module
 %endif
 
 %install
@@ -173,17 +145,6 @@ install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase 
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
-
-%if %{buildklips}
-mkdir -p %{buildroot}/lib/modules/%{kversion}.%{_arch}/kernel/net/ipsec
-for i in $FS/BUILD.%{_target_cpu}/ipsec.ko  $FS/modobj/ipsec.o
-do
-  if [ -f $i ]
-  then
-    cp $i %{buildroot}/lib/modules/%{kversion}.%{_arch}/kernel/net/ipsec 
-  fi
-done
-%endif
 
 echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}/etc/rc.d/rc*
@@ -211,11 +172,6 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %{_sbindir}/.ipsec.hmac
 %endif
 
-%if %{buildklips}
-%files klips
-/lib/modules/%{kversion}.%{_arch}/kernel/net/ipsec
-%endif
-
 %preun
 if [ $1 -eq 0 ]; then
         /sbin/service ipsec stop > /dev/null 2>&1 || :
@@ -226,13 +182,6 @@ fi
 if [ $1 -ge 1 ] ; then
  /sbin/service ipsec condrestart 2>&1 >/dev/null || :
 fi
-
-%if %{buildklips}
-%postun klips
-/sbin/depmod -ae %{kversion}.%{_arch}
-%post klips
-/sbin/depmod -ae %{kversion}.%{_arch}
-%endif
 
 %post 
 /sbin/chkconfig --add ipsec || :
