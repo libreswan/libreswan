@@ -26,6 +26,7 @@ v3.1 (unreleased)
 * libipsecconf: crlcheckinterval unit is time, not number [Tuomo]
 * libipsecconf: Remove bogus key_from_DNS_on_demand policy for PSK [Paul]
 * libipsecconf: Raise POLICY bits from int (32) to lset_t(64) [Paul]
+* libipsecconf: sourceip= setting could overwrite nexthop= setting [Paul]
 * XAUTH: ModeConfig DNS options only worked via whack, not config file [Paul]
 * XAUTH: modecfg_wins[12]= support removed [Paul]
 * XAUTH: Use re_entrant versions of localtime_r/gmtime_r [Paul]
