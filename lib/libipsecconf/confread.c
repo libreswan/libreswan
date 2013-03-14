@@ -570,8 +570,8 @@ static int validate_end(struct ub_ctx *dnsctx
     if(end->strings_set[KSCF_SOURCEIP])
     {
 	char *value = end->strings[KSCF_SOURCEIP];
-	if (tnatoaddr(value, strlen(value), AF_INET, &(end->nexthop)) != NULL
-	    && tnatoaddr(value, strlen(value), AF_INET6, &(end->nexthop)) != NULL) {
+	if (tnatoaddr(value, strlen(value), AF_INET, &(end->sourceip)) != NULL
+	    && tnatoaddr(value, strlen(value), AF_INET6, &(end->sourceip)) != NULL) {
 #ifdef DNSSEC
            starter_log(LOG_LEVEL_DEBUG, "Calling unbound_resolve() for %ssourceip value\n",leftright);
            bool e = unbound_resolve(dnsctx, value, strlen(value), AF_INET, &(end->sourceip));
