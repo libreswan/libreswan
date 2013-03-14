@@ -52,12 +52,6 @@
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/files.h"
 #include "ipsecconf/starterwhack.h"
-/* #include "ipsecconf/pluto.h"
- * #include "ipsecconf/klips.h"
- * #include "ipsecconf/netkey.h"
- * #include "ipsecconf/cmp.h"
- * #include "ipsecconf/interfaces.h"
- * #include "ipsecconf/keywords.h" */
 
 char *progname;
 int verbose=0;
