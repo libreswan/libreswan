@@ -1,7 +1,9 @@
 
 See also https://libreswan.org/
 
-v3.1 (unreleased)
+v3.2 (unreleased)
+
+v3.1 (March 14, 2013)
 * XAUTH: Support for leftaddresspool= [Antony]
 * XAUTH: Added xauthby=alwaysok option [Paul]
 * XAUTH: Added xauthfail=hard|soft option [Paul]
