@@ -45,6 +45,11 @@ do
 	shift
 done
 
+if test " $configdir" = " "
+then
+    configdir="--configdir @FINALCONFDDIR@"
+fi
+
 if test " $output" = " " && test ! -f /etc/ipsec.secrets
 then
     output=/etc/ipsec.secrets
