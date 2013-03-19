@@ -672,7 +672,16 @@ netlink_raw_eroute(const ip_address *this_host
 	req.u.p.lft.hard_byte_limit = XFRM_INF;
 	req.u.p.lft.hard_packet_limit = XFRM_INF;
 
-	req.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
+	/*
+	 * NEW will fail when an existing policy, UPD always works.
+	 * This seems to happen in cases with NAT'ed XP clients, or
+	 * quick recycling/resurfacing of roadwarriors on the same IP.
+	 *
+	 * UPD is also needed for two separate tunnels with same end subnets
+	 * Like A = B = C config where both A - B and B - C have tunnel A = C
+	 * configured.
+	 */
+	req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
 	if (sadb_op == ERO_REPLACE)
 	{
 	    req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
