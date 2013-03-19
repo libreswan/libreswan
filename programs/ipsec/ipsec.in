@@ -14,7 +14,7 @@
 # for more details.
 #
 
-test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
+test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 
 # where the private directory and the config files are
 IPSEC_CONF="${FINALCONFFILE:-@FINALCONFFILE@}"
@@ -22,7 +22,7 @@ IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
 IPSEC_LIBDIR="${IPSEC_LIBDIR:-@IPSEC_LIBDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 
-IPSEC_DIR="$IPSEC_LIBDIR"
+IPSEC_DIR="${IPSEC_LIBDIR}"
 export IPSEC_DIR IPSEC_LIBDIR IPSEC_EXECDIR IPSEC_CONF
 
 # standardize PATH, and export it for everything else's benefit
@@ -38,7 +38,7 @@ DONTMENTION='^(ipsec|_.*|.*\.old|.*~)$'
 version="@IPSECVERSION@"
 
 # export the version information
-IPSEC_VERSION="$version"
+IPSEC_VERSION="${version}"
 export IPSEC_VERSION
 
 # function for the funky user/kernel version stuff
@@ -47,22 +47,22 @@ fixversion() {
 	stack=" (klips)"
 	kv="$(awk '{print $NF}' /proc/net/ipsec_version)"
     else
-        if [ -f /proc/net/pfkey ]; then
+	if [ -f /proc/net/pfkey ]; then
 	    stack=" (netkey)"
-            kv=$version
-        else
+	    kv=${version}
+	else
 	    if [ -f /mach_kernel ]; then
 		stack=" (OSX)"
-                kv="$(uname -r)"
+		kv="$(uname -r)"
 	    else
-                kv="(no kernel code presently loaded)"
+		kv="(no kernel code presently loaded)"
 	    fi
-        fi
+	fi
     fi
-    if [ "$kv" != "$version" ]; then
-	version="U$version/K$kv"
+    if [ "${kv}" != "${version}" ]; then
+	version="U${version}/K${kv}"
     fi
-    version="$version$stack on $(uname -r)"
+    version="${version}${stack} on $(uname -r)"
 }
 
 if [ $(id -u) -ne 0 ]; then
@@ -70,14 +70,14 @@ if [ $(id -u) -ne 0 ]; then
     exit 4
 fi
 
-case "$1" in
+case "${1}" in
     '')
 	echo "Usage: ipsec <command> <argument ...>"
 	echo "Use --help for a list of commands, or see the ipsec(8) manual page"
 	echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
 	echo "See <http://www.libreswan.org> for more general info."
 	fixversion
-	echo "Linux Libreswan $version"
+	echo "Linux Libreswan ${version}"
 	exit 0
 	;;
     status|--status)
@@ -103,17 +103,17 @@ case "$1" in
 	else
 	    DOCOLS=""
 	fi
-	for f in $(ls $IPSEC_LIBDIR $IPSEC_EXECDIR | egrep -v -i "$DONTMENTION"); do
-	    if [ -x $IPSEC_LIBDIR/$f || test -x $IPSEC_EXECDIR/$f ]; then
-		if [ -z "$DOCOLS" ]; then
+	for f in $(ls ${IPSEC_LIBDIR} ${IPSEC_EXECDIR} | egrep -v -i "${DONTMENTION}"); do
+	    if [ -x ${IPSEC_LIBDIR}/${f} || test -x ${IPSEC_EXECDIR}/${f} ]; then
+		if [ -z "${DOCOLS}" ]; then
 		    # we can only produce a simply list, which scrolls beyond 24 lines
-		    echo "	$f"
-		elif [ -z "$GOTTWO" ]; then
+		    echo "	${f}"
+		elif [ -z "${GOTTWO}" ]; then
 		    # first of two entries
-		    GOTTWO=$f
+		    GOTTWO=${f}
 		else
 		    # second of two entries, we can print
-		    printf "   %-10s   %15s\n" $GOTTWO $f
+		    printf "   %-10s   %15s\n" ${GOTTWO} ${f}
 		    GOTTWO=""
 		fi
 	    fi
@@ -124,32 +124,32 @@ case "$1" in
 	echo "ipsec stop|start|restart is an alias for ipsec setup stop|start|restart"
 	echo "See <http://www.libreswan.org> for more general info."
 	fixversion
-	echo "Linux Libreswan $version"
+	echo "Linux Libreswan ${version}"
 	exit 0
 	;;
     # some ubuntu/debian scripts use --versioncode, so let's keep the alias
     version|--version|--versioncode)
 	fixversion
-	echo "Linux Libreswan $version"
+	echo "Linux Libreswan ${version}"
 	exit 0
 	;;
     --directory)
-	echo "$IPSEC_DIR"
+	echo "${IPSEC_DIR}"
 	exit 0
 	;;
     import|--import)
-	if [ -z "$2" ]; then
+	if [ -z "${2}" ]; then
 	    echo >&2 "usage: ipsec import /path/to/pkcs.12"
 	    exit 1
 	else
-	    if [ ! -f $2 ]
+	    if [ ! -f ${2} ]
 	    then
 		echo >&2 "usage: ipsec import /path/to/pkcs.12"
 		exit 1
 	    fi
 	fi
 	# this hardcoded ipsec.d needs to get fixed once we pass IPSECD properly
-	pk12util -i $2 -d @FINALCONFDDIR@
+	pk12util -i ${2} -d @FINALCONFDDIR@
 	if [ -x /usr/sbin/restorecon ]; then
 	    restorecon @FINALCONFDDIR@ -Rv
 	fi
@@ -174,22 +174,22 @@ case "$1" in
 	exit 0
 	;;
     --*)
-	echo "$0: unknown option \"$1\" (perhaps command name was omitted?)" >&2
+	echo "${0}: unknown option \"${1}\" (perhaps command name was omitted?)" >&2
 	exit 1
 	;;
 esac
 
-cmd="$1"
+cmd="${1}"
 shift
 
-path="$IPSEC_EXECDIR/$cmd"
+path="${IPSEC_EXECDIR}/${cmd}"
 
-if [ ! -x "$path" ]; then
-    path="$IPSEC_LIBDIR/$cmd"
-    if [ ! -x "$path" ]; then
-	echo "$0: unknown IPsec command \"$cmd\" (\"ipsec --help\" for list)" >&2
+if [ ! -x "${path}" ]; then
+    path="${IPSEC_LIBDIR}/${cmd}"
+    if [ ! -x "${path}" ]; then
+	echo "${0}: unknown IPsec command \"${cmd}\" (\"ipsec --help\" for list)" >&2
 	exit 1
     fi
 fi
 
-exec $path "$@"
+exec ${path} "$@"
