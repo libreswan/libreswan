@@ -1,6 +1,6 @@
 # /etc/ipsec.conf - Libreswan IPsec configuration file
 
-# This file:  @FINALEXAMPLECONFDIR@/ipsec.conf
+# This file:  @FINALCONFDIR@/ipsec.conf
 #
 # Manual:     ipsec.conf.5
 
