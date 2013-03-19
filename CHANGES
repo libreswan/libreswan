@@ -4,6 +4,8 @@ See also https://libreswan.org/
 v3.2 (unreleased)
 * Bugtracker bugs fixed:
    #75: Libreswan inserts wrong xfrm policies on some configurations [Tuomo]
+   #76: initnss: ipsec initnss fails with a @FINALCONFDDIR@ replace and
+        no default configdir [Tuomo]
 
 v3.1 (March 14, 2013)
 * XAUTH: Support for leftaddresspool= [Antony]
