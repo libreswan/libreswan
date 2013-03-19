@@ -100,6 +100,8 @@ west #
 000 "westnet-eastnet":   dpd: action:clear; delay:0; timeout:0;  
 000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
+000 Total IPsec connections: loaded 1, active 0
+000  
 000  
 west #
  echo "initdone"
@@ -109,6 +111,7 @@ west #
 104 "westnet-eastnet" #1: STATE_MAIN_I1: initiate
 003 "westnet-eastnet" #1: received Vendor ID payload [Libreswan 
 003 "westnet-eastnet" #1: received Vendor ID payload [Dead Peer Detection]
+003 "westnet-eastnet" #1: received Vendor ID payload [FRAGMENTATION]
 106 "westnet-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "westnet-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "westnet-eastnet" #1: received Vendor ID payload [CAN-IKEv2]

@@ -73,6 +73,8 @@ east #
 000 "westnet-eastnet":   dpd: action:clear; delay:0; timeout:0;  
 000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
+000 Total IPsec connections: loaded 1, active 0
+000  
 000  
 east #
  echo "initdone"
