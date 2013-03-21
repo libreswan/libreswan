@@ -592,28 +592,29 @@ export LIBLSWCRYPTO NSSFLAGS NSSLIBS
 
 # how to do variable substitution in sed-transformed files
 TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
-			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
-			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
-			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
-			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):g" \
-			-e "s:@FINALCONFFILE@:$(FINALCONFFILE):g" \
-			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
-			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
-			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
-			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
-			-e "s:@FINALLIBDIR@:$(FINALLIBDIR):g" \
-			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \
-			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
+			-e "s:@BINSH@:$(BINSH):g" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
+			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
+			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
+			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
+			-e "s:@FINALCONFFILE@:$(FINALCONFFILE):g" \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
+			-e "s:@FINALLIBDIR@:$(FINALLIBDIR):g" \
+			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
+			-e "s:@FINALRCDIR@:$(FINALRCDIR):g" \
+			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
+			-e "s:@FINALSYSCONFDIR@:$(FINALSYSCONFDIR):g" \
+			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \
+			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
+			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
+			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
+			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):g" \
+			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
+			-e "s:@MODPROBE@:$(MODPROBE):g" \
 			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
-                        -e "s:@MODPROBE@:$(MODPROBE):g" \
-                        -e "s:@BINSH@:$(BINSH):g" \
-                        -e "s:@FINALSYSCONFDIR@:$(FINALSYSCONFDIR):g" \
-                        -e "s:@FINALRCDIR@:$(FINALRCDIR):g" \
 
 # For KVM testing setup
 #POOL?=${LIBRESWANSRCDIR}/pool
