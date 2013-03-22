@@ -49,7 +49,7 @@ consolediff() {
         fi
     done
 
-    fixedoutput=OUTPUT/${prefix}.console.fixed.txt
+    fixedoutput=OUTPUT/${prefix}.console.txt
     rm -f $fixedoutput OUTPUT/${prefix}.console.diff
     $CONSOLEDIFFDEBUG && echo Cleanups is $cleanups
     eval $cleanups >$fixedoutput

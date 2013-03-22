@@ -46,7 +46,7 @@ else:
 if hostname != "nic":
 	if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
 		os.unlink("/tmp/pluto.log")
-	os.symlink("/testing/pluto/%s/OUTPUT/pluto.%s.log"%(testname,hostname),"/tmp/pluto.log")
+	os.symlink("/testing/pluto/%s/OUTPUT/%s.pluto.log"%(testname,hostname),"/tmp/pluto.log")
 
 if args.userland:
 	if not args.userland in ( "libreswan","strongswan","racoon","shrew", "openswan"):

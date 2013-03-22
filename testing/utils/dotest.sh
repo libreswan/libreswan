@@ -57,11 +57,10 @@ else
 	exit 1
 fi
 
-touch OUTPUT/pluto.$INITIATOR.log
-touch OUTPUT/pluto.$RESPONDER.log 
-chmod a+rw OUTPUT/pluto.$INITIATOR.log 
-chmod a+rw OUTPUT/pluto.$RESPONDER.log
-
+touch OUTPUT/$INITIATOR.pluto.log
+touch OUTPUT/$RESPONDER.pluto.log 
+chmod a+rw OUTPUT/$INITIATOR.pluto.log 
+chmod a+rw OUTPUT/$RESPONDER.pluto.log
 
 function wait_till_pid_end {
 	NAME=$1 
@@ -107,6 +106,11 @@ echo "start final.sh on responder $RESPONDER for $TESTNAME"
 ../../utils/runkvm.py --final --hostname $RESPONDER --testname $TESTNAME &
 RESPONDER_FINAL_PID=$!
 wait_till_pid_end "$RESPONDER" $RESPONDER_FINAL_PID
+echo "start final.sh on initiator $INITIATOR for $TESTNAME"
+../../utils/runkvm.py --final --hostname $INITIATOR --testname $TESTNAME &
+INITIATOR_FINAL_PID=$!
+wait_till_pid_end "$RESPONDER" $RESPONDER_FINAL_PID
+wait_till_pid_end "$INITIATOR" $INITIATOR_FINAL_PID
 
 TCPDUMP_PID_R=`pidof sudo`
 if [ -f ./OUTPUT/$SWAN_PCAP.pid ] ; then
@@ -121,8 +125,8 @@ if [ -f ./OUTPUT/$SWAN_PCAP.pid ] ; then
         done 
 fi
 
-initout=`consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt`
-respout=`consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.console.txt`
+initout=`consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.verbose.txt ${INITIATOR}.console.txt`
+respout=`consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.verbose..txt ${RESPONDER}.console.txt`
 echo "WARNING: tcpdump output is not yet compared to known good output!"
 if [  -s OUTPUT/$INITIATOR.console.diff -o -s OUTPUT/$RESPONDER.console.diff ] ; then
 	echo $TESTNAME FAILED

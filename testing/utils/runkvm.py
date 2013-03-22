@@ -109,7 +109,7 @@ def connect_to_kvm(args):
 def run_final (args, child):
     timer = 30
     prompt = "\[root@%s %s\]# "%(args.hostname, args.testname)
-    output_file = "./OUTPUT/%s.console.txt" % (args.hostname)
+    output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'a') 
     child.logfile = f
     cmd = "./final.sh"
@@ -154,7 +154,7 @@ def run_test(args, child):
         print "%s: failed to cd into test case at %s"%(args.hostname,args.testname)
         return
 
-    output_file = "./OUTPUT/%s.console.txt" % (args.hostname)
+    output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'w') 
     child.logfile = f
 
