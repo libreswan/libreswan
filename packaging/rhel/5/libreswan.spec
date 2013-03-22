@@ -1,14 +1,17 @@
-%global USE_FIPSCHECK true
-%global USE_LIBCAP_NG true
-%global USE_LABELED_IPSEC true
-%global USE_CRL_FETCHING true
-%global USE_DNSSEC true
-%global USE_NM true
-%global USE_LINUX_AUDIT true
+%define USE_FIPSCHECK true
+%define USE_LABELED_IPSEC true
+%define USE_CRL_FETCHING true
+%define USE_DNSSEC true
+%define USE_NM true
+%define USE_LINUX_AUDIT true
+# Eanble for OCF, requires <crypto/cryptodev.h> See ocf-linux.sourceforge.net
+%define USE_OCF 0
+# Not available for RHEL5
+%define USE_LIBCAP_NG 0
 
-%global fipscheck_version 1.2.0-1
-%global buildefence 0
-%global development 0
+%define fipscheck_version 1.2.0-1
+%define buildefence 0
+%define development 0
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -18,11 +21,11 @@ Version: IPSECBASEVERSION
 # The default kernel version to build for is the latest of
 # the installed binary kernel
 # This can be overridden by "--define 'kversion x.x.x-y.y.y'"
-%global defkv %(rpm -q kernel kernel-debug| grep -v "not installed" | sed -e "s/kernel-debug-//" -e  "s/kernel-//" -e "s/\.[^.]*$//"  | sort | tail -1 )
-%{!?kversion: %{expand: %%global kversion %defkv}}
-%global krelver %(echo %{kversion} | tr -s '-' '_')
+%define defkv %(rpm -q kernel kernel-lt kernel-debug| grep -v "not installed" | sed -e "s/kernel-debug-//" -e  "s/kernel-//" -e "s/\.[^.]*$//"  | sort | tail -1 )
+%{!?kversion: %{expand: %%define kversion %defkv}}
+%define krelver %(echo %{kversion} | tr -s '-' '_')
 # Libreswan -pre/-rc nomenclature has to co-exist with hyphen paranoia
-%global srcpkgver %(echo %{version} | tr -s '_' '-')
+%define srcpkgver %(echo %{version} | tr -s '_' '-')
 
 Release: 1%{?dist}
 License: GPLv2
@@ -35,6 +38,7 @@ Requires(preun): initscripts chkconfig
 Requires(post): /sbin/chkconfig
 Requires(preun): /sbin/chkconfig
 Requires(preun): /sbin/service
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: pkgconfig net-tools
 BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
@@ -86,7 +90,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %build
 %if %{buildefence}
- %global efence "-lefence"
+ %define efence "-lefence"
 %endif
 
 #796683: -fno-strict-aliasing
@@ -103,6 +107,9 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
   USE_XAUTHPAM=true \
   USE_FIPSCHECK=%{USE_FIPSCHECK} \
   USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
+%if %{USE_OCF}
+  USE_OCF=true \
+%endif
   USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
   USE_LDAP=%{USE_CRL_FETCHING} \
   USE_LIBCURL=%{USE_CRL_FETCHING} \
@@ -187,6 +194,6 @@ fi
 /sbin/chkconfig --add ipsec || :
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.1-1
 - Automated build from release tar ball
 

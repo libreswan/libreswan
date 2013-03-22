@@ -2,15 +2,20 @@
 %define kmod_name libreswan
 
 # If kversion isn't defined on the rpmbuild line, define it here.
-%{!?kversion: %define kversion 3.0.68-2.ocf.nopl-%{_target_cpu}}
+%{!?kversion: %define kversion 3.0.68-3.ocf.nopl-%{_target_cpu}}
+
+#% define with_ocf 1
+%if %{with_ocf}
+%define ocf _ocf
+%endif
 
 Name:    %{kmod_name}-kmod
 Version: IPSECBASEVERSION
-Release: 1%{?dist}
+Release: 1%{?dist}%{ocf}
 Group:   System Environment/Kernel
 License: GPLv2
-Summary: %{kmod_name} kernel module(s)
-URL:     http://www.kernel.org/
+Summary: %{kmod_name} kernel module
+URL:     https://libreswan.org/
 
 # so spec can be used on rhel5 and newer
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -37,7 +42,12 @@ of the same variant of the Linux kernel and not on any one specific build.
 echo "override %{kmod_name} * weak-updates/%{kmod_name}" > kmod-%{kmod_name}.conf
 
 %build
+%if %{with_ocf}
+%{__make} KERNELSRC=%{_usrsrc}/kernels/%{kversion} %{?_smp_mflags} MODULE_DEF_INCLUDE=`pwd`/packaging/ocf/config-all.h MODULE_DEFCONFIG=`pwd`/packaging/ocf/defconfig module
+%else
 %{__make} KERNELSRC=%{_usrsrc}/kernels/%{kversion} %{?_smp_mflags} module
+%endif
+
 
 %install
 rm -rf %{buildroot}
