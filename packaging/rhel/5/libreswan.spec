@@ -49,7 +49,7 @@ BuildRequires: unbound-devel
 %if %{USE_FIPSCHECK}
 BuildRequires: fipscheck-devel >= %{fipscheck_version}
 # we need fipshmac
-Requires: fipscheck%{_isa} >= %{fipscheck_version}
+Requires: fipscheck >= %{fipscheck_version}
 %endif
 %if %{USE_LINUX_AUDIT}
 Buildrequires: audit-libs-devel
@@ -66,7 +66,7 @@ BuildRequires: ElectricFence
 # Only needed if xml man pages are modified and need regeneration
 # BuildRequires: xmlto
 
-Requires: nss-tools, nss-softokn
+Requires: nss-tools
 Requires: iproute >= 2.6.8
 
 %description
