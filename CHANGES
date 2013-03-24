@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.2 (unreleased)
+* ipsec: fix syntax error in --help introduced in 3.1 [Tuomo]
 * Bugtracker bugs fixed:
    #75: Libreswan inserts wrong xfrm policies on some configurations [Tuomo]
    #76: initnss: ipsec initnss fails with a @FINALCONFDDIR@ replace and
