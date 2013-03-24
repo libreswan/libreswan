@@ -198,14 +198,14 @@ status() {
     local RC
     if [ -f ${pidfile} ]; then
 	if [ -r ${pidfile} ]; then
-	    RC=4	# insufficient privileges
-	else
 	    pid=$(cat ${pidfile})
 	    if [ -n "$pid" -a -d /proc/${pid} ]; then
 		RC=0	# running
 	    else
 		RC=1	# not running but pid exists
 	    fi
+	else
+	    RC=4	# insufficient privileges
 	fi
     fi
     if [ -z "${RC}" ]; then
