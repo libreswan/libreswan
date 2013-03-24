@@ -105,7 +105,7 @@ case "${1}" in
 	    DOCOLS=""
 	fi
 	for f in $(ls ${IPSEC_LIBDIR} ${IPSEC_EXECDIR} | egrep -v -i "${DONTMENTION}"); do
-	    if [ -x ${IPSEC_LIBDIR}/${f} || test -x ${IPSEC_EXECDIR}/${f} ]; then
+	    if [ -x ${IPSEC_LIBDIR}/${f} -o -x ${IPSEC_EXECDIR}/${f} ]; then
 		if [ -z "${DOCOLS}" ]; then
 		    # we can only produce a simply list, which scrolls beyond 24 lines
 		    echo "	${f}"
