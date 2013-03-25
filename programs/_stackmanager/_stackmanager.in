@@ -37,10 +37,8 @@ fi
 
 stopnetkey() {
     if [ -f $kamepfkey ]; then
-	if ip xfrm state > /dev/null 2>&1; then
-	    ip xfrm state flush ;
-	    ip xfrm policy flush ;
-	fi
+	ip xfrm state flush ;
+	ip xfrm policy flush ;
 	if [ -n "$(ip xfrm state)" -o -n "$(ip xfrm policy)" ]; then
 	    echo "NETKEY IPsec stack could not be cleared" >&2
 	fi
