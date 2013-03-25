@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.2 (unreleased)
+* compiling: fix use of variables in buidlsystem consitent [Tuomo]
 * ipsec: fix syntax error in --help introduced in 3.1 [Tuomo]
 * verify: fix wrong confdir location [Tuomo]
 * Bugtracker bugs fixed:
