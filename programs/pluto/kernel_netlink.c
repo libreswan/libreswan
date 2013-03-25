@@ -547,6 +547,13 @@ netlink_raw_eroute(const ip_address *this_host
 	   DBG_log("satype(%d) is not used in netlink_raw_eroute.",satype));
     }
 
+    /* log warning for RFC-breaking implementation in NETKEY/XFRM stack */
+    if ( (proto_info[0].encapsulation != ENCAPSULATION_MODE_TUNNEL)
+	&& (transport_proto != 0)
+	&& (satype != 0)) {
+	   DBG_log("warning: NETKEY/XFRM in transport mode accepts ALL encrypted protoport packets between the hosts in violation of RFC 4301, Section 5.2");
+    }
+
     /* Bug #1004 fix.
      * There really isn't "client" with NETKEY and transport mode
      * so eroute must be done to natted, visible ip. If we don't hide
