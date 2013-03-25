@@ -70,14 +70,14 @@ static void lsw_conf_calculate(struct lsw_conf_options *oco)
 void lsw_conf_setdefault(void)
 {
     char buf[PATH_MAX];
-    char *ipsec_conf_dir = FINALCONFDIR;
-    char *ipsecd_dir = FINALCONFDDIR;
-    char *conffile   = FINALCONFFILE;
-    char *var_dir    = FINALVARDIR;
+    char *ipsec_conf_dir = IPSEC_CONFDIR;
+    char *ipsecd_dir = IPSEC_CONFDDIR;
+    char *conffile   = IPSEC_CONFFILE;
+    char *var_dir    = IPSEC_VARDIR;
 #if 0
-    char *exec_dir   = FINALLIBEXECDIR;
-    char *lib_dir    = FINALLIBDIR;
-    char *sbin_dir   = FINALSBINDIR;
+    char *exec_dir   = IPSEC_EXECDIR;
+    char *lib_dir    = IPSEC_LIBDIR;
+    char *sbin_dir   = IPSEC_SBINDIR;
 #endif
 
     memset(&global_oco, 0, sizeof(global_oco));

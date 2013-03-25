@@ -34,10 +34,12 @@
 # where our Makefiles are not the end of the installation process.)
 # Paths with FINAL in their names are the only ones that the installed
 # software itself depends on.  (Very few things should know about the
-# FINAL paths; think twice and consult Henry before making something new
+# FINAL paths; think twice and consult Tuomo before making something new
 # depend on them.)  All other paths are install targets.
 # See also DESTDIR, below.
-
+#
+# Note: Variables here are for Makefiles and build system only.
+# IPSEC_ prefixed variables are to be used in source code
 
 
 ### boilerplate, do not change, various scripts use extended BASH syntax!
@@ -84,8 +86,8 @@ LIBEXECDIR=$(DESTDIR)$(FINALBINDIR)
 FINALLIBDIR?=$(INC_USRLOCAL)/libexec/ipsec
 LIBDIR=$(DESTDIR)$(FINALLIBDIR)
 
-FINALBINDIR=${FINALLIBEXECDIR}
-BINDIR=${LIBEXECDIR}
+FINALBINDIR=$(FINALLIBEXECDIR)
+BINDIR=$(LIBEXECDIR)
 
 
 # SBINDIR is where the user interface command goes.
@@ -114,22 +116,22 @@ FINALCONFDIR?=$(FINALSYSCONFDIR)
 CONFDIR?=$(DESTDIR)$(FINALCONFDIR)
 SYSCONFDIR?=$(DESTDIR)$(FINALSYSCONFDIR)
 
-FINALCONFDDIR?=${FINALCONFDIR}/ipsec.d
+FINALCONFDDIR?=$(FINALCONFDIR)/ipsec.d
 CONFDDIR?=$(DESTDIR)$(FINALCONFDDIR)
 
 # sample configuration files go into
 INC_DOCDIR?=share/doc
-FINALEXAMPLECONFDIR?=${INC_USRLOCAL}/${INC_DOCDIR}/libreswan
-EXAMPLECONFDIR?=${DESTDIR}${FINALEXAMPLECONFDIR}
+FINALEXAMPLECONFDIR?=$(INC_USRLOCAL)/$(INC_DOCDIR)/libreswan
+EXAMPLECONFDIR?=$(DESTDIR)$(FINALEXAMPLECONFDIR)
 
-FINALDOCDIR?=${INC_USRLOCAL}/${INC_DOCDIR}/libreswan
-DOCDIR=${DESTDIR}${FINALDOCDIR}
+FINALDOCDIR?=$(INC_USRLOCAL)/$(INC_DOCDIR)/libreswan
+DOCDIR=$(DESTDIR)$(FINALDOCDIR)
 
 # where per-conn pluto logs go
 FINALVARDIR?=/var
-VARDIR?=${DESTDIR}${FINALVARDIR}
-FINALLOGDIR?=${FINALVARDIR}/log
-LOGDIR?=${DESTDIR}${FINALLOGDIR}
+VARDIR?=$(DESTDIR)$(FINALVARDIR)
+FINALLOGDIR?=$(FINALVARDIR)/log
+LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
 
 
 # An attempt is made to automatically figure out where boot/shutdown scripts 
@@ -607,9 +609,11 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@FINALSYSCONFDIR@:$(FINALSYSCONFDIR):g" \
 			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \
+			-e "s:@IPSEC_CONF@:$(FINALCONFFILE):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
+			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@MODPROBE@:$(MODPROBE):g" \

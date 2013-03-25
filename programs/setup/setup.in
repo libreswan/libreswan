@@ -16,7 +16,7 @@
 #
 # This is the version for use on Linux, see _realsetup.bsd for OSX/BSD
 
-IPSEC_CONF="${FINALCONFFILE:-@FINALCONFFILE@}"
+IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 
 
 # Misc. paths (some of this should perhaps be overrideable from ipsec.conf).

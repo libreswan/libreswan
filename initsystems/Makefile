@@ -1,10 +1,10 @@
 LIBRESWANSRCDIR?=$(shell cd ..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/initsystems/
+srcdir?=$(LIBRESWANSRCDIR)/initsystems/
 INITSYSTEM?=$(shell $(SHELL) $(LIBRESWANSRCDIR)/packaging/utils/lswan_detect.sh init)
-SUBDIRS=${INITSYSTEM}
+SUBDIRS=$(INITSYSTEM)
 
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.top
+include $(LIBRESWANSRCDIR)/Makefile.inc
+include $(LIBRESWANSRCDIR)/Makefile.top
 
 cleanall mostlyclean realclean install programs man config checkprograms spotless:
 	@for d in $(SUBDIRS) ; \

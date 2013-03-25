@@ -19,7 +19,7 @@
 # nothing to do if the kernel has no module loading/unloading support
 [ ! -f /proc/modules ] && exit 0
 
-IPSEC_CONF="${FINALCONFFILE:-@FINALCONFFILE@}"
+IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 PATH=@FINALSBINDIR@:$PATH
 export PATH
 

@@ -557,7 +557,7 @@ main(int argc, char *argv[])
     }
 
     if(!configfile) {
-	configfile = alloc_bytes(strlen(FINALCONFFILE)+2,"conf file");
+	configfile = alloc_bytes(strlen(IPSEC_CONF)+2,"conf file");
 
 	/* calculate default value for configfile */
 	configfile[0]='\0';
