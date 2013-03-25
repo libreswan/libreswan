@@ -72,7 +72,7 @@ void lsw_conf_setdefault(void)
     char buf[PATH_MAX];
     char *ipsec_conf_dir = IPSEC_CONFDIR;
     char *ipsecd_dir = IPSEC_CONFDDIR;
-    char *conffile   = IPSEC_CONFFILE;
+    char *conffile   = IPSEC_CONF;
     char *var_dir    = IPSEC_VARDIR;
 #if 0
     char *exec_dir   = IPSEC_EXECDIR;
