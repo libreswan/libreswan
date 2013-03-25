@@ -26,7 +26,7 @@ import os, sys, subprocess, glob, socket
 retcode = 0
 
 conffile = "@FINALCONFFILE@"
-confdir = "@IPSEC_DIR@"
+confdir = "@FINALCONFDIR@"
 ipsecbin = "@IPSEC_SBINDIR@/ipsec"
 
 if not os.path.isfile(ipsecbin):
@@ -103,7 +103,7 @@ def print_result(rcode, rtext):
 
 def plutocheck():
 	global retcode
-        printfun("Checking that pluto is running")
+	printfun("Checking that pluto is running")
 	p = subprocess.Popen(["pidof", "pluto"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 	output, err = p.communicate()
 	if not output:
