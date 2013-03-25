@@ -237,9 +237,7 @@ KLIPSCOMPILE=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
 # extra link flags
-USERLINK?=-Wl,-z,relro
-# on fedora/rhel
-#USERLINK=-g -pie
+USERLINK?=-Wl,-z,relro -g -pie
 
 PORTINCLUDE?=
 
