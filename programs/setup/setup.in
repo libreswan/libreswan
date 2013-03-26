@@ -97,14 +97,19 @@ case "$1" in
 	    # don't exec, we need to cleanup the IPsec stack afterwards
 	    service ipsec stop
 	elif [ ${initsystem} = upstart ]; then
-	    echo "Redirecting to: start ipsec"
-	    exec stop ipsec
+	    echo "Redirecting to: stop ipsec"
+	    stop ipsec
 	else
 	    echo "Unknown init system in use - aborted"
 	    exit 3
 	fi
        	# Remove any loaded IPsec stack
 	[ -f /proc/modules ] && ipsec _stackmanager stop
+
+	# If stack is non-modular, we want to force clean too
+	[ -f /proc/net/pf_key ] && ipsec eroute --clear
+	[ -f /proc/net/pfkey ] && ip xfrm state flush && ip xfrm policy flush
+
 	# Cleaning up backup resolv.conf
 	if [ -e ${LIBRESWAN_RESOLV_CONF} ]
 	then
