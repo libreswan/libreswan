@@ -252,7 +252,7 @@ int resolve_defaultroute_one(struct starter_end *left,
 
     /* Fill netlink request */
     char msgbuf[RTNL_BUFSIZE];
-    int has_dst = 0;
+    int has_dst = 0, query_again = 0;
     netlink_query_init(msgbuf, left->addr_family);
     if (left->nexttype == KH_IPADDR) { /* My nexthop is specified */
 	netlink_query_add(msgbuf, RTA_DST, &left->nexthop);
@@ -260,19 +260,34 @@ int resolve_defaultroute_one(struct starter_end *left,
     } else if (right->addrtype == KH_IPADDR) { /* Peer IP is specified */
 	netlink_query_add(msgbuf, RTA_DST, &right->addr);
 	has_dst = 1;
+	if (parse_src && parse_gateway && left->addr_family == AF_INET) {
+	    /* If we have only peer IP and no gateway/src we must do two
+	     * queries:
+	     * 1) find out gateway for dst
+	     * 2) find out src for that gateway
+	     * Doing both in one query returns src for dst.
+	     *
+	     * IPv6 returns link-local for gateway so query both in one query.
+	     */
+	    parse_src = 0;
+	    query_again = 1;
+	}
     }
     if (has_dst && left->addrtype == KH_IPADDR) /* SRC works only with DST */
 	netlink_query_add(msgbuf, RTA_SRC, &left->addr);
 
-    /* If we have for example left=%defaultroute + right=%any, the netlink
-     * reply will be full routing table. We just want default gateway for the
-     * first run.
+    /* If we have for example left=%defaultroute + right=%any (no destination)
+     * the netlink reply will be full routing table. We must do two queries:
+     * 1) find out default gateway
+     * 2) find out src for that default gateway
      */
     if (has_dst == 0) {
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 	nlmsg->nlmsg_flags |= NLM_F_DUMP;
-        if (parse_gateway)
+	if (parse_src && parse_gateway) {
 	    parse_src = 0;
+	    query_again = 1;
+	}
     }
     if (verbose)
 	printf("\nparse_src = %d, parse_gateway = %d, has_dst = %d\n",
@@ -357,11 +372,7 @@ int resolve_defaultroute_one(struct starter_end *left,
 		printf("unknown gateway results from kernel: %s\n", err);
 	}
     }
-
-    /* If we parsed and found default_gateway, we must do the request again
-     * to find out the source IP for that gateway.
-     */
-    return has_dst == 0 && parse_gateway == 0;
+    return query_again;
 }
 
 /*
