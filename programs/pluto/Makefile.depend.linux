@@ -2,40 +2,19 @@ ac.o: ac.c ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/lswconf.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
- ../../include/names_constant.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/names_constant.h \
  ../../include/constants.h \
  ../../include/lswlog.h \
  ../../include/lswtime.h defs.h \
  ../../include/lswalloc.h \
  ../../include/asn1.h \
- ../../include/oid.h ../../include/ac.h \
+ ../../include/oid.h \
+ ../../include/ac.h \
  ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
@@ -49,7 +28,7 @@ ac.o: ac.c ../../linux/include/libreswan.h \
 addresspool.o: addresspool.c \
  ../../linux/include/libreswan.h \
  ../../include/lswalloc.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -61,36 +40,16 @@ addresspool.o: addresspool.c \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h defs.h \
  ../../include/constants.h demux.h server.h \
  ../../include/sysqueue.h \
- ../../include/packet.h quirks.h xauth.h addresspool.h
-adns.o: adns.c ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/packet.h quirks.h xauth.h \
+ addresspool.h
+adns.o: adns.c \
+ ../../linux/include/libreswan.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -104,7 +63,7 @@ connections.o: connections.c \
  ../../include/linux/pfkeyv2.h kameipsec.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -118,42 +77,22 @@ connections.o: connections.c \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/secrets.h defs.h \
- ../../include/ac.h connections.h pending.h foodgroups.h \
- ../../include/packet.h demux.h server.h quirks.h \
- state.h timer.h ipsec_doi.h ikev1_quick.h kernel.h log.h \
- ../../include/lswlog.h keys.h adns.h dnskey.h \
+ ../../include/ac.h connections.h pending.h \
+ foodgroups.h ../../include/packet.h \
+ demux.h server.h quirks.h state.h timer.h ipsec_doi.h ikev1_quick.h \
+ kernel.h log.h ../../include/lswlog.h \
+ keys.h adns.h dnskey.h \
  ../../include/whack.h \
- ../../include/alg_info.h spdb.h ike_alg.h plutocerts.h \
- ../../include/kernel_alg.h plutoalg.h xauth.h \
- addresspool.h nat_traversal.h virtual.h hostpair.h
-cookie.o: cookie.c ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/alg_info.h spdb.h ike_alg.h \
+ plutocerts.h ../../include/kernel_alg.h \
+ plutoalg.h xauth.h addresspool.h nat_traversal.h virtual.h hostpair.h
+cookie.o: cookie.c \
+ ../../linux/include/libreswan.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -161,34 +100,14 @@ cookie.o: cookie.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/sha1.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h rnd.h cookie.h
-crypt_dh.o: crypt_dh.c ../../linux/include/libreswan.h \
+ ../../include/sha1.h \
+  rnd.h cookie.h
+crypt_dh.o: crypt_dh.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -196,34 +115,12 @@ crypt_dh.o: crypt_dh.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/packet.h demux.h server.h quirks.h \
- crypto.h ../../include/sha1.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h crypto.h ../../include/sha1.h \
  ../../include/md5.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h rnd.h state.h pluto_crypt.h \
- ../../include/lsw_select.h \
+ ../../include/mpzfuncs.h rnd.h state.h \
+ pluto_crypt.h ../../include/lsw_select.h \
  ../../include/lswlog.h log.h timer.h \
  ../../include/lswtime.h ike_alg.h \
  ../../include/id.h \
@@ -234,12 +131,13 @@ crypt_dh.o: crypt_dh.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../include/secrets.h \
  ../../include/pgp.h ikev2_prfplus.h \
- /usr/include/nss3/keyhi.h ../../include/lswconf.h
-crypt_ke.o: crypt_ke.c ../../linux/include/libreswan.h \
+ ../../include/lswconf.h
+crypt_ke.o: crypt_ke.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -247,34 +145,12 @@ crypt_ke.o: crypt_ke.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/packet.h demux.h server.h quirks.h \
- crypto.h ../../include/sha1.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h crypto.h ../../include/sha1.h \
  ../../include/md5.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h rnd.h state.h pluto_crypt.h \
- ../../include/lsw_select.h \
+ ../../include/mpzfuncs.h rnd.h state.h \
+ pluto_crypt.h ../../include/lsw_select.h \
  ../../include/lswlog.h log.h timer.h \
  ../../include/lswtime.h \
  ../../include/lswcrypto.h \
@@ -282,26 +158,11 @@ crypt_ke.o: crypt_ke.c ../../linux/include/libreswan.h \
  ../../linux/include/klips-crypto/aes_cbc.h \
  ../../linux/include/klips-crypto/aes.h \
  ../../linux/include/klips-crypto/des.h \
- /usr/include/nspr4/nspr.h /usr/include/nspr4/pratom.h \
- /usr/include/nspr4/prbit.h /usr/include/nspr4/prclist.h \
- /usr/include/nspr4/prcmon.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prdtoa.h \
- /usr/include/nspr4/prenv.h /usr/include/nspr4/prerror.h \
- /usr/include/nspr4/prerr.h /usr/include/nspr4/prinit.h \
- /usr/include/nspr4/prthread.h /usr/include/nspr4/prwin16.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/pripcsem.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/prmem.h /usr/include/nspr4/prmwait.h \
- /usr/include/nspr4/prnetdb.h /usr/include/nspr4/prprf.h \
- /usr/include/nspr4/prproces.h /usr/include/nspr4/prrng.h \
- /usr/include/nspr4/prrwlock.h /usr/include/nspr4/prshm.h \
- /usr/include/nspr4/prshma.h /usr/include/nspr4/prsystem.h \
- /usr/include/nspr4/prtpool.h /usr/include/nspr4/prtrace.h \
- /usr/include/nspr4/prerror.h /usr/include/nss3/keyhi.h \
  ../../include/lswconf.h
-crypto.o: crypto.c ../../linux/include/libreswan.h \
+crypto.o: crypto.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/klips-crypto/des.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -309,36 +170,14 @@ crypto.o: crypto.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h state.h quirks.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h log.h \
+  log.h \
  ../../include/lswlog.h \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h \
- ../../include/alg_info.h ike_alg.h tpm/tpm.h \
- ../../include/lswcrypto.h \
+ ../../include/alg_info.h ike_alg.h \
+ tpm/tpm.h ../../include/lswcrypto.h \
  ../../linux/include/klips-crypto/aes.h \
  ../../linux/include/klips-crypto/aes_cbc.h \
  ../../linux/include/klips-crypto/aes.h \
@@ -354,7 +193,7 @@ crypt_start_dh.o: crypt_start_dh.c \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -362,34 +201,12 @@ crypt_start_dh.o: crypt_start_dh.c \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/packet.h demux.h server.h quirks.h \
- crypto.h ../../include/sha1.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h crypto.h ../../include/sha1.h \
  ../../include/md5.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h rnd.h state.h pluto_crypt.h \
- ../../include/lsw_select.h \
+ ../../include/mpzfuncs.h rnd.h state.h \
+ pluto_crypt.h ../../include/lsw_select.h \
  ../../include/lswlog.h log.h timer.h \
  ../../include/lswtime.h ike_alg.h \
  ../../include/id.h \
@@ -405,7 +222,7 @@ crypt_utils.o: crypt_utils.c \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -413,40 +230,19 @@ crypt_utils.o: crypt_utils.c \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/packet.h demux.h server.h quirks.h \
- ../../include/lswlog.h log.h state.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h rnd.h pluto_crypt.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h ../../include/lswlog.h log.h \
+  rnd.h pluto_crypt.h \
  ../../include/lsw_select.h crypto.h \
  ../../include/sha1.h \
  ../../include/md5.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h
-db_ops.o: db_ops.c ../../linux/include/libreswan.h \
+db_ops.o: db_ops.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -454,36 +250,15 @@ db_ops.o: db_ops.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h state.h quirks.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/packet.h \
- spdb.h db_ops.h log.h ../../include/lswlog.h \
+ ../../include/packet.h spdb.h db_ops.h \
+ log.h ../../include/lswlog.h \
  ../../include/whack.h \
  ../../linux/include/libreswan/ipsec_policy.h
-defs.o: defs.c ../../linux/include/libreswan.h \
+defs.o: defs.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -495,10 +270,11 @@ defs.o: defs.c ../../linux/include/libreswan.h \
  ../../include/constants.h log.h \
  ../../include/lswlog.h \
  ../../include/whack.h
-demux.o: demux.c ../../linux/include/libreswan.h \
+demux.o: demux.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -513,52 +289,32 @@ demux.o: demux.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ike_alg.h log.h demux.h \
- server.h ikev1.h pluto_crypt.h \
- ../../include/lsw_select.h ikev1_continuations.h \
- ike_continuations.h dnskey.h adns.h ipsec_doi.h ikev1_quick.h timer.h \
+ ../../include/mpzfuncs.h ike_alg.h log.h \
+ demux.h server.h ikev1.h pluto_crypt.h \
+ ../../include/lsw_select.h \
+ ikev1_continuations.h ike_continuations.h dnskey.h adns.h ipsec_doi.h \
+ ikev1_quick.h timer.h \
  ../../include/lswtime.h \
  ../../include/udpfromto.h tpm/tpm.h
-dnskey.o: dnskey.c ../../linux/include/libreswan.h \
+dnskey.o: dnskey.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
- ../../include/names_constant.h adns.h defs.h \
- ../../include/lswalloc.h \
+ ../../include/names_constant.h adns.h \
+ defs.h ../../include/lswalloc.h \
  ../../include/constants.h \
  ../../include/id.h log.h \
  ../../include/lswlog.h \
@@ -566,39 +322,18 @@ dnskey.o: dnskey.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h connections.h keys.h \
  ../../include/secrets.h dnskey.h \
  ../../include/packet.h timer.h \
  ../../include/lswtime.h server.h
-dpd.o: dpd.c ../../linux/include/libreswan.h \
+dpd.o: dpd.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -607,29 +342,7 @@ dpd.o: dpd.c ../../linux/include/libreswan.h \
  ../../include/lswtime.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h state.h quirks.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/id.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -638,12 +351,15 @@ dpd.o: dpd.c ../../linux/include/libreswan.h \
  ../../include/x509.h \
  ../../include/pgp.h connections.h keys.h \
  ../../include/secrets.h \
- ../../include/packet.h demux.h server.h adns.h dnskey.h \
- kernel.h log.h ../../include/lswlog.h cookie.h spdb.h \
+ ../../include/packet.h demux.h server.h \
+ adns.h dnskey.h kernel.h log.h \
+ ../../include/lswlog.h cookie.h spdb.h \
  timer.h rnd.h ipsec_doi.h ikev1_quick.h \
- ../../include/whack.h pending.h dpd.h x509more.h
-dsa.o: dsa.c ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/whack.h pending.h dpd.h \
+ x509more.h
+dsa.o: dsa.c \
+ ../../linux/include/libreswan.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -651,9 +367,11 @@ dsa.o: dsa.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h log.h \
- ../../include/lswlog.h rnd.h gcryptfix.h dsa.h
-elgamal.o: elgamal.c ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/lswlog.h rnd.h gcryptfix.h \
+ dsa.h
+elgamal.o: elgamal.c \
+ ../../linux/include/libreswan.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -661,9 +379,11 @@ elgamal.o: elgamal.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h log.h \
- ../../include/lswlog.h rnd.h gcryptfix.h elgamal.h
-fetch.o: fetch.c ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/lswlog.h rnd.h gcryptfix.h \
+ elgamal.h
+fetch.o: fetch.c \
+ ../../linux/include/libreswan.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -678,29 +398,7 @@ fetch.o: fetch.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/x509.h \
@@ -710,7 +408,7 @@ foodgroups.o: foodgroups.c \
  ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -724,37 +422,17 @@ foodgroups.o: foodgroups.c \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h foodgroups.h kernel.h \
+ ../../include/pgp.h connections.h \
+ foodgroups.h kernel.h \
  ../../include/lswconf.h \
  ../../include/lex.h log.h \
  ../../include/lswlog.h \
  ../../include/whack.h
-gcryptfix.o: gcryptfix.c ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+gcryptfix.o: gcryptfix.c \
+ ../../linux/include/libreswan.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -763,8 +441,9 @@ gcryptfix.o: gcryptfix.c ../../linux/include/libreswan.h \
  ../../include/lswalloc.h \
  ../../include/constants.h log.h \
  ../../include/lswlog.h rnd.h gcryptfix.h
-hmac.o: hmac.c ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+hmac.o: hmac.c \
+ ../../linux/include/libreswan.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -772,44 +451,21 @@ hmac.o: hmac.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/md5.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h \
  ../../include/alg_info.h ike_alg.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nspr4/prmem.h \
- /usr/include/nss3/pk11priv.h /usr/include/nss3/secport.h \
  ../../include/lswconf.h \
  ../../include/lswlog.h
-hostpair.o: hostpair.c ../../linux/include/libreswan.h \
+hostpair.o: hostpair.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h kameipsec.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -823,43 +479,22 @@ hostpair.o: hostpair.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/secrets.h defs.h \
- ../../include/ac.h connections.h pending.h foodgroups.h \
- ../../include/packet.h demux.h server.h quirks.h \
- state.h timer.h ipsec_doi.h ikev1_quick.h kernel.h log.h \
- ../../include/lswlog.h keys.h adns.h dnskey.h \
+ ../../include/ac.h connections.h pending.h \
+ foodgroups.h ../../include/packet.h \
+ demux.h server.h quirks.h state.h timer.h ipsec_doi.h ikev1_quick.h \
+ kernel.h log.h ../../include/lswlog.h \
+ keys.h adns.h dnskey.h \
  ../../include/whack.h \
- ../../include/alg_info.h spdb.h ike_alg.h plutocerts.h \
- ../../include/kernel_alg.h plutoalg.h xauth.h \
- nat_traversal.h virtual.h hostpair.h
+ ../../include/alg_info.h spdb.h ike_alg.h \
+ plutocerts.h ../../include/kernel_alg.h \
+ plutoalg.h xauth.h nat_traversal.h virtual.h hostpair.h
 ike_alg_aes.o: ike_alg_aes.c \
  ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -871,36 +506,14 @@ ike_alg_aes.o: ike_alg_aes.c \
  ../../linux/include/klips-crypto/aes_cbc.h \
  ../../linux/include/klips-crypto/aes.h \
  ../../include/alg_info.h ike_alg.h \
- /usr/include/nss3/pk11pub.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nspr4/plarenas.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
- /usr/include/nspr4/prmem.h /usr/include/nspr4/prerror.h \
- /usr/include/nspr4/prerr.h ../../include/lswconf.h \
+ ../../include/lswconf.h \
  /usr/include/nss3/nss.h
-ike_alg.o: ike_alg.c ../../linux/include/libreswan.h \
+ike_alg.o: ike_alg.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -908,37 +521,15 @@ ike_alg.o: ike_alg.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/sha1.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h state.h quirks.h \
  ../../include/packet.h log.h \
  ../../include/lswlog.h \
  ../../include/whack.h spdb.h \
- ../../include/alg_info.h ike_alg.h db_ops.h \
- ../../include/id.h connections.h \
+ ../../include/alg_info.h ike_alg.h \
+ db_ops.h ../../include/id.h connections.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -949,7 +540,7 @@ ike_alg.o: ike_alg.c ../../linux/include/libreswan.h \
 ike_alginit.o: ike_alginit.c
 ike_alg_sha2.o: ike_alg_sha2.c \
  ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -959,36 +550,13 @@ ike_alg_sha2.o: ike_alg_sha2.c \
  ../../include/constants.h log.h \
  ../../include/lswlog.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/alg_info.h \
- ike_alg.h
+ ../../include/alg_info.h ike_alg.h
 ike_alg_status.o: ike_alg_status.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -996,37 +564,15 @@ ike_alg_status.o: ike_alg_status.c \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/sha1.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h state.h quirks.h \
  ../../include/packet.h log.h \
  ../../include/lswlog.h \
  ../../include/whack.h spdb.h \
- ../../include/alg_info.h ike_alg.h db_ops.h \
- ../../include/id.h connections.h \
+ ../../include/alg_info.h ike_alg.h \
+ db_ops.h ../../include/id.h connections.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -1034,10 +580,11 @@ ike_alg_status.o: ike_alg_status.c \
  ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h kernel.h plutoalg.h
-ikeping.o: ikeping.c ../../linux/include/libreswan.h \
+ikeping.o: ikeping.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1047,7 +594,8 @@ ikeping.o: ikeping.c ../../linux/include/libreswan.h \
  ../../include/constants.h defs.h \
  ../../include/lswalloc.h cookie.h \
  ../../include/id.h log.h \
- ../../include/packet.h demux.h server.h quirks.h
+ ../../include/packet.h demux.h server.h \
+ quirks.h
 ikev1_aggr.o: ikev1_aggr.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
@@ -1055,7 +603,7 @@ ikev1_aggr.o: ikev1_aggr.c \
  ../../include/linux/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1063,29 +611,7 @@ ikev1_aggr.o: ikev1_aggr.c \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h state.h quirks.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/id.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -1094,24 +620,27 @@ ikev1_aggr.o: ikev1_aggr.c \
  ../../include/x509.h \
  ../../include/pgp.h connections.h keys.h \
  ../../include/secrets.h \
- ../../include/packet.h demux.h server.h adns.h dnskey.h \
- kernel.h log.h ../../include/lswlog.h cookie.h spdb.h \
- timer.h ../../include/lswtime.h rnd.h ipsec_doi.h \
- ikev1_quick.h ../../include/whack.h fetch.h \
+ ../../include/packet.h demux.h server.h \
+ adns.h dnskey.h kernel.h log.h \
+ ../../include/lswlog.h cookie.h spdb.h \
+ timer.h ../../include/lswtime.h rnd.h \
+ ipsec_doi.h ikev1_quick.h \
+ ../../include/whack.h fetch.h \
  ../../include/pkcs.h \
  ../../include/asn1.h \
  ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h ike_alg.h \
- ../../include/kernel_alg.h plutoalg.h pluto_crypt.h \
- ../../include/lsw_select.h ikev1.h \
- ikev1_continuations.h ike_continuations.h xauth.h vendor.h \
+ ../../include/kernel_alg.h plutoalg.h \
+ pluto_crypt.h ../../include/lsw_select.h \
+ ikev1.h ikev1_continuations.h ike_continuations.h xauth.h vendor.h \
  nat_traversal.h virtual.h dpd.h x509more.h tpm/tpm.h
-ikev1.o: ikev1.c ../../linux/include/libreswan.h \
+ikev1.o: ikev1.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1126,48 +655,29 @@ ikev1.o: ikev1.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ike_alg.h log.h demux.h \
- server.h ikev1.h pluto_crypt.h \
- ../../include/lsw_select.h ikev1_continuations.h \
- ike_continuations.h dnskey.h adns.h ipsec_doi.h ikev1_quick.h timer.h \
+ ../../include/mpzfuncs.h ike_alg.h log.h \
+ demux.h server.h ikev1.h pluto_crypt.h \
+ ../../include/lsw_select.h \
+ ikev1_continuations.h ike_continuations.h dnskey.h adns.h ipsec_doi.h \
+ ikev1_quick.h timer.h \
  ../../include/lswtime.h \
- ../../include/whack.h xauth.h nat_traversal.h vendor.h \
- dpd.h ../../include/udpfromto.h tpm/tpm.h hostpair.h
+ ../../include/whack.h xauth.h \
+ nat_traversal.h vendor.h dpd.h \
+ ../../include/udpfromto.h tpm/tpm.h \
+ hostpair.h
 ikev1_quick.o: ikev1_quick.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1175,29 +685,7 @@ ikev1_quick.o: ikev1_quick.c \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h state.h quirks.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/id.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -1206,10 +694,12 @@ ikev1_quick.o: ikev1_quick.c \
  ../../include/x509.h \
  ../../include/pgp.h connections.h keys.h \
  ../../include/secrets.h \
- ../../include/packet.h demux.h server.h adns.h dnskey.h \
- kernel.h log.h ../../include/lswlog.h cookie.h spdb.h \
- timer.h ../../include/lswtime.h rnd.h ipsec_doi.h \
- ikev1_quick.h ../../include/whack.h fetch.h \
+ ../../include/packet.h demux.h server.h \
+ adns.h dnskey.h kernel.h log.h \
+ ../../include/lswlog.h cookie.h spdb.h \
+ timer.h ../../include/lswtime.h rnd.h \
+ ipsec_doi.h ikev1_quick.h \
+ ../../include/whack.h fetch.h \
  ../../include/pkcs.h \
  ../../include/asn1.h \
  ../../include/sha1.h \
@@ -1218,14 +708,15 @@ ikev1_quick.o: ikev1_quick.c \
  ../../include/mpzfuncs.h ike_alg.h \
  ../../include/kernel_alg.h \
  ../../linux/include/libreswan/pfkeyv2.h \
- ../../include/linux/pfkeyv2.h plutoalg.h pluto_crypt.h \
- ../../include/lsw_select.h ikev1.h \
- ikev1_continuations.h ike_continuations.h xauth.h vendor.h \
+ ../../include/linux/pfkeyv2.h plutoalg.h \
+ pluto_crypt.h ../../include/lsw_select.h \
+ ikev1.h ikev1_continuations.h ike_continuations.h xauth.h vendor.h \
  nat_traversal.h virtual.h dpd.h x509more.h tpm/tpm.h
-ikev2.o: ikev2.c ../../linux/include/libreswan.h \
+ikev2.o: ikev2.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1240,45 +731,24 @@ ikev2.o: ikev2.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ike_alg.h log.h demux.h \
- server.h ikev2.h ipsec_doi.h ikev1_quick.h timer.h \
+ ../../include/mpzfuncs.h ike_alg.h log.h \
+ demux.h server.h ikev2.h ipsec_doi.h ikev1_quick.h timer.h \
  ../../include/lswtime.h \
- ../../include/whack.h xauth.h nat_traversal.h vendor.h \
- dpd.h ../../include/udpfromto.h tpm/tpm.h
+ ../../include/whack.h xauth.h \
+ nat_traversal.h vendor.h dpd.h \
+ ../../include/udpfromto.h tpm/tpm.h
 ikev2_child.o: ikev2_child.c \
  ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1294,46 +764,24 @@ ikev2_child.o: ikev2_child.c \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ike_alg.h log.h demux.h \
- server.h ikev2.h ipsec_doi.h ikev1_quick.h timer.h \
+ ../../include/mpzfuncs.h ike_alg.h log.h \
+ demux.h server.h ikev2.h ipsec_doi.h ikev1_quick.h timer.h \
  ../../include/lswtime.h \
  ../../include/whack.h vendor.h dpd.h \
- ../../include/udpfromto.h tpm/tpm.h kernel.h virtual.h \
- hostpair.h
+ ../../include/udpfromto.h tpm/tpm.h \
+ kernel.h virtual.h hostpair.h
 ikev2_crypto.o: ikev2_crypto.c \
  ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1349,37 +797,16 @@ ikev2_crypto.o: ikev2_crypto.c \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h demux.h server.h ikev2.h \
- ikev2_prfplus.h ike_alg.h ../../include/alg_info.h \
+ ../../include/mpzfuncs.h demux.h server.h \
+ ikev2.h ikev2_prfplus.h ike_alg.h \
+ ../../include/alg_info.h \
  ../../include/kernel_alg.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h
@@ -1388,7 +815,7 @@ ikev2_parent.o: ikev2_parent.c \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1396,30 +823,8 @@ ikev2_parent.o: ikev2_parent.c \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h state.h quirks.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/id.h \
- connections.h ../../include/x509.h \
+ ../../include/id.h connections.h \
+ ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
@@ -1434,17 +839,18 @@ ikev2_parent.o: ikev2_parent.c \
  ../../include/secrets.h ike_alg.h \
  ../../include/kernel_alg.h \
  ../../linux/include/libreswan/pfkeyv2.h \
- ../../include/linux/pfkeyv2.h plutoalg.h pluto_crypt.h \
- ../../include/lsw_select.h ikev2.h log.h \
- ../../include/lswlog.h spdb.h ipsec_doi.h ikev1_quick.h \
- vendor.h timer.h ../../include/lswtime.h \
+ ../../include/linux/pfkeyv2.h plutoalg.h \
+ pluto_crypt.h ../../include/lsw_select.h \
+ ikev2.h log.h ../../include/lswlog.h \
+ spdb.h ipsec_doi.h ikev1_quick.h vendor.h timer.h \
+ ../../include/lswtime.h \
  ike_continuations.h cookie.h rnd.h pending.h kernel.h tpm/tpm.h
 ikev2_prfplus.o: ikev2_prfplus.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1452,34 +858,12 @@ ikev2_prfplus.o: ikev2_prfplus.c \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/packet.h demux.h server.h quirks.h \
- crypto.h ../../include/sha1.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h crypto.h ../../include/sha1.h \
  ../../include/md5.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h rnd.h state.h pluto_crypt.h \
- ../../include/lsw_select.h \
+ ../../include/mpzfuncs.h rnd.h state.h \
+ pluto_crypt.h ../../include/lsw_select.h \
  ../../include/lswlog.h log.h timer.h \
  ../../include/lswtime.h ike_alg.h \
  ../../include/id.h \
@@ -1490,10 +874,11 @@ ikev2_prfplus.o: ikev2_prfplus.c \
  ../../include/certs.h \
  ../../include/secrets.h \
  ../../include/pgp.h ikev2_prfplus.h
-ikev2_psk.o: ikev2_psk.c ../../linux/include/libreswan.h \
+ikev2_psk.o: ikev2_psk.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1508,42 +893,21 @@ ikev2_psk.o: ikev2_psk.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ike_alg.h log.h demux.h \
- server.h ikev2.h vendor.h dpd.h keys.h \
+ ../../include/mpzfuncs.h ike_alg.h log.h \
+ demux.h server.h ikev2.h vendor.h dpd.h keys.h \
  ../../include/secrets.h
-ikev2_rsa.o: ikev2_rsa.c ../../linux/include/libreswan.h \
+ikev2_rsa.o: ikev2_rsa.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1558,37 +922,15 @@ ikev2_rsa.o: ikev2_rsa.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ike_alg.h log.h demux.h \
- server.h ikev2.h vendor.h dpd.h keys.h \
+ ../../include/mpzfuncs.h ike_alg.h log.h \
+ demux.h server.h ikev2.h vendor.h dpd.h keys.h \
  ../../include/secrets.h \
  ../../include/lswcrypto.h \
  ../../linux/include/klips-crypto/aes.h \
@@ -1599,7 +941,7 @@ ikev2_x509.o: ikev2_x509.c \
  ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1610,31 +952,9 @@ ikev2_x509.o: ikev2_x509.c \
  ../../include/lswalloc.h cookie.h \
  ../../include/id.h \
  ../../include/x509.h x509more.h \
- ../../include/packet.h demux.h server.h quirks.h \
- ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h ../../include/secrets.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -1644,15 +964,16 @@ ikev2_x509.o: ikev2_x509.c \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ike_alg.h log.h ikev2.h \
- vendor.h dpd.h keys.h ipsec_doi.h ikev1_quick.h
-initiate.o: initiate.c ../../linux/include/libreswan.h \
+ ../../include/mpzfuncs.h ike_alg.h log.h \
+ ikev2.h vendor.h dpd.h keys.h ipsec_doi.h ikev1_quick.h
+initiate.o: initiate.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h kameipsec.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1666,47 +987,27 @@ initiate.o: initiate.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/secrets.h defs.h \
- ../../include/ac.h connections.h pending.h foodgroups.h \
- ../../include/packet.h demux.h server.h quirks.h \
- state.h timer.h ipsec_doi.h ikev1_quick.h kernel.h log.h \
- ../../include/lswlog.h keys.h adns.h dnskey.h \
+ ../../include/ac.h connections.h pending.h \
+ foodgroups.h ../../include/packet.h \
+ demux.h server.h quirks.h state.h timer.h ipsec_doi.h ikev1_quick.h \
+ kernel.h log.h ../../include/lswlog.h \
+ keys.h adns.h dnskey.h \
  ../../include/whack.h \
- ../../include/alg_info.h spdb.h ike_alg.h plutocerts.h \
- ../../include/kernel_alg.h plutoalg.h xauth.h \
- nat_traversal.h virtual.h hostpair.h
-ipsec_doi.o: ipsec_doi.c ../../linux/include/libreswan.h \
+ ../../include/alg_info.h spdb.h ike_alg.h \
+ plutocerts.h ../../include/kernel_alg.h \
+ plutoalg.h xauth.h nat_traversal.h virtual.h hostpair.h
+ipsec_doi.o: ipsec_doi.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1714,29 +1015,7 @@ ipsec_doi.o: ipsec_doi.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h state.h quirks.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/id.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -1745,25 +1024,28 @@ ipsec_doi.o: ipsec_doi.c ../../linux/include/libreswan.h \
  ../../include/x509.h \
  ../../include/pgp.h connections.h \
  ../../include/packet.h keys.h \
- ../../include/secrets.h demux.h server.h adns.h \
- dnskey.h kernel.h log.h ../../include/lswlog.h cookie.h \
- spdb.h timer.h ../../include/lswtime.h rnd.h \
- ipsec_doi.h ikev1_quick.h ../../include/whack.h fetch.h \
+ ../../include/secrets.h demux.h server.h \
+ adns.h dnskey.h kernel.h log.h \
+ ../../include/lswlog.h cookie.h spdb.h \
+ timer.h ../../include/lswtime.h rnd.h \
+ ipsec_doi.h ikev1_quick.h \
+ ../../include/whack.h fetch.h \
  ../../include/pkcs.h \
  ../../include/asn1.h \
  ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h ike_alg.h \
- ../../include/kernel_alg.h plutoalg.h pluto_crypt.h \
- ../../include/lsw_select.h ikev1.h \
- ikev1_continuations.h ike_continuations.h ikev2.h xauth.h vendor.h \
- nat_traversal.h virtual.h dpd.h x509more.h tpm/tpm.h
-kernel.o: kernel.c ../../linux/include/libreswan.h \
+ ../../include/kernel_alg.h plutoalg.h \
+ pluto_crypt.h ../../include/lsw_select.h \
+ ikev1.h ikev1_continuations.h ike_continuations.h ikev2.h xauth.h \
+ vendor.h nat_traversal.h virtual.h dpd.h x509more.h tpm/tpm.h
+kernel.o: kernel.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1777,37 +1059,15 @@ kernel.o: kernel.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h state.h quirks.h timer.h \
- ../../include/lswtime.h kernel.h kernel_netlink.h \
- kernel_pfkey.h kernel_noklips.h kernel_bsdkame.h \
+ ../../include/pgp.h state.h quirks.h \
+ timer.h ../../include/lswtime.h kernel.h \
+ kernel_netlink.h kernel_pfkey.h kernel_noklips.h kernel_bsdkame.h \
  ../../include/packet.h log.h server.h \
  ../../include/whack.h keys.h \
- ../../include/secrets.h nat_traversal.h demux.h \
- ../../include/alg_info.h \
+ ../../include/secrets.h nat_traversal.h \
+ demux.h ../../include/alg_info.h \
  ../../include/kernel_alg.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h
@@ -1819,7 +1079,7 @@ kernel_klips.o: kernel_klips.c \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1834,35 +1094,14 @@ kernel_klips.o: kernel_klips.c \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h state.h quirks.h kernel.h \
- kernel_pfkey.h timer.h ../../include/lswtime.h log.h \
+ ../../include/pgp.h state.h quirks.h \
+ kernel.h kernel_pfkey.h timer.h \
+ ../../include/lswtime.h log.h \
  ../../include/whack.h \
- ../../include/packet.h nat_traversal.h demux.h server.h \
- ../../include/alg_info.h \
+ ../../include/packet.h nat_traversal.h \
+ demux.h server.h ../../include/alg_info.h \
  ../../include/kernel_alg.h
 kernel_mast.o: kernel_mast.c \
  ../../linux/include/libreswan.h \
@@ -1872,7 +1111,7 @@ kernel_mast.o: kernel_mast.c \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1887,35 +1126,14 @@ kernel_mast.o: kernel_mast.c \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h state.h quirks.h kernel.h \
- kernel_pfkey.h timer.h ../../include/lswtime.h log.h \
+ ../../include/pgp.h state.h quirks.h \
+ kernel.h kernel_pfkey.h timer.h \
+ ../../include/lswtime.h log.h \
  ../../include/whack.h \
- ../../include/packet.h nat_traversal.h demux.h server.h \
- ../../include/alg_info.h \
+ ../../include/packet.h nat_traversal.h \
+ demux.h server.h ../../include/alg_info.h \
  ../../include/kernel_alg.h
 kernel_netlink.o: kernel_netlink.c \
  ../../include/linux/pfkeyv2.h kameipsec.h \
@@ -1929,7 +1147,7 @@ kernel_netlink.o: kernel_netlink.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/socketwrapper.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1938,29 +1156,7 @@ kernel_netlink.o: kernel_netlink.c \
  ../../include/lswalloc.h \
  ../../include/constants.h \
  ../../include/id.h state.h quirks.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h connections.h \
+  connections.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -1968,13 +1164,16 @@ kernel_netlink.o: kernel_netlink.c \
  ../../include/secrets.h \
  ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h kernel.h server.h nat_traversal.h \
- demux.h ../../include/packet.h kernel_netlink.h \
- kernel_pfkey.h log.h ../../include/lswlog.h \
+ ../../include/pgp.h kernel.h server.h \
+ nat_traversal.h demux.h \
+ ../../include/packet.h kernel_netlink.h \
+ kernel_pfkey.h log.h \
+ ../../include/lswlog.h \
  ../../include/whack.h \
  ../../include/kernel_alg.h \
  ../../linux/include/klips-crypto/aes_cbc.h \
- ../../linux/include/klips-crypto/aes.h ike_alg.h
+ ../../linux/include/klips-crypto/aes.h \
+ ike_alg.h
 kernel_noklips.o: kernel_noklips.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/pfkeyv2.h \
@@ -1983,7 +1182,7 @@ kernel_noklips.o: kernel_noklips.c \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -1997,38 +1196,18 @@ kernel_noklips.o: kernel_noklips.c \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h kernel.h kernel_noklips.h log.h \
+ ../../include/pgp.h kernel.h \
+ kernel_noklips.h log.h \
  ../../include/lswlog.h \
  ../../include/whack.h
-keys.o: keys.c ../../linux/include/libreswan.h \
+keys.o: keys.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2041,56 +1220,29 @@ keys.o: keys.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/lex.h keys.h \
- ../../include/secrets.h adns.h dnskey.h log.h \
- ../../include/lswlog.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/lex.h keys.h \
+ ../../include/secrets.h adns.h dnskey.h \
+ log.h ../../include/lswlog.h \
  ../../include/whack.h timer.h \
  ../../include/lswtime.h \
- ../../include/mpzfuncs.h fetch.h x509more.h \
- ../../include/packet.h demux.h server.h \
- ../../include/lswcrypto.h \
+ ../../include/mpzfuncs.h fetch.h \
+ x509more.h ../../include/packet.h demux.h \
+ server.h ../../include/lswcrypto.h \
  ../../linux/include/klips-crypto/aes.h \
  ../../linux/include/klips-crypto/aes_cbc.h \
  ../../linux/include/klips-crypto/aes.h \
- ../../linux/include/klips-crypto/des.h nat_traversal.h \
- /usr/include/nspr4/prerror.h /usr/include/nspr4/prerr.h \
- /usr/include/nspr4/prinit.h /usr/include/nspr4/prthread.h \
- /usr/include/nspr4/prwin16.h /usr/include/nspr4/prmem.h \
- /usr/include/nss3/key.h /usr/include/nss3/keyhi.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/secerr.h /usr/include/nss3/secport.h \
+ ../../linux/include/klips-crypto/des.h \
  ../../include/lswconf.h
-log.o: log.c ../../linux/include/libreswan.h \
+log.o: log.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2098,30 +1250,8 @@ log.o: log.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h \
  ../../include/lswlog.h \
  ../../include/constants.h defs.h \
- ../../include/lswalloc.h log.h server.h state.h \
- quirks.h /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/id.h \
+ ../../include/lswalloc.h log.h server.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -2132,12 +1262,14 @@ log.o: log.c ../../linux/include/libreswan.h \
  ../../include/pgp.h connections.h kernel.h \
  ../../include/whack.h timer.h \
  ../../include/lswtime.h \
- ../../include/kernel_alg.h ike_alg.h plutoalg.h \
- virtual.h db_ops.h spdb.h ../../include/packet.h
-msgdigest.o: msgdigest.c ../../linux/include/libreswan.h \
+ ../../include/kernel_alg.h ike_alg.h \
+ plutoalg.h virtual.h db_ops.h spdb.h \
+ ../../include/packet.h
+msgdigest.o: msgdigest.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2152,42 +1284,21 @@ msgdigest.o: msgdigest.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h \
  ../../include/md5.h \
  ../../include/sha1.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ike_alg.h log.h demux.h \
- server.h
-myid.o: myid.c ../../linux/include/libreswan.h \
+ ../../include/mpzfuncs.h ike_alg.h log.h \
+ demux.h server.h
+myid.o: myid.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2201,29 +1312,7 @@ myid.o: myid.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h connections.h \
  ../../include/packet.h \
@@ -2239,7 +1328,7 @@ nat_traversal.o: nat_traversal.c \
  ../../linux/include/libreswan/ipsec_param.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2247,30 +1336,8 @@ nat_traversal.o: nat_traversal.c \
  ../../include/names_constant.h \
  ../../include/lswlog.h \
  ../../include/constants.h defs.h \
- ../../include/lswalloc.h log.h server.h state.h \
- quirks.h /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/id.h \
+ ../../include/lswalloc.h log.h server.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -2285,13 +1352,16 @@ nat_traversal.o: nat_traversal.c \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h vendor.h \
- ../../include/natt_defines.h nat_traversal.h
-pending.o: pending.c ../../include/arpa/nameser.h \
+ ../../include/natt_defines.h \
+ nat_traversal.h
+pending.o: pending.c \
+ ../../include/arpa/nameser.h \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
- kameipsec.h ../../ports/linux/include/sysdep.h \
+ kameipsec.h \
+ ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2304,42 +1374,23 @@ pending.o: pending.c ../../include/arpa/nameser.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h ../../include/ac.h \
- connections.h pending.h log.h ../../include/lswlog.h \
- state.h quirks.h ../../include/packet.h demux.h \
- server.h ikev1_quick.h timer.h ../../include/lswtime.h
-plutoalg.o: plutoalg.c ../../linux/include/libreswan.h \
+ ../../include/pgp.h \
+ ../../include/ac.h connections.h pending.h \
+ log.h ../../include/lswlog.h state.h \
+ quirks.h ../../include/packet.h demux.h \
+ server.h ikev1_quick.h timer.h \
+ ../../include/lswtime.h
+plutoalg.o: plutoalg.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h \
  ../../linux/include/libreswan/passert.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -2352,34 +1403,12 @@ plutoalg.o: plutoalg.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h state.h quirks.h \
  ../../include/kernel_alg.h \
- ../../include/alg_info.h ike_alg.h plutoalg.h crypto.h \
- ../../include/sha1.h \
+ ../../include/alg_info.h ike_alg.h \
+ plutoalg.h crypto.h ../../include/sha1.h \
  ../../include/md5.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h spdb.h \
@@ -2390,7 +1419,7 @@ pluto_crypt.o: pluto_crypt.c \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2398,31 +1427,9 @@ pluto_crypt.o: pluto_crypt.c \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/packet.h demux.h server.h quirks.h \
- ../../include/lswlog.h log.h state.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h rnd.h pluto_crypt.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h ../../include/lswlog.h log.h \
+  rnd.h pluto_crypt.h \
  ../../include/lsw_select.h crypto.h \
  ../../include/sha1.h \
  ../../include/md5.h \
@@ -2434,43 +1441,23 @@ pluto_crypt.o: pluto_crypt.c \
  ../../linux/include/klips-crypto/aes_cbc.h \
  ../../linux/include/klips-crypto/aes.h \
  ../../linux/include/klips-crypto/des.h
-plutomain.o: plutomain.c ../../linux/include/libreswan.h \
+plutomain.o: plutomain.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h \
  ../../linux/include/libreswan/pfkey.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
  ../../include/names_constant.h \
  ../../include/lswconf.h \
- ../../include/constants.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h defs.h \
+ ../../include/constants.h \
+  defs.h \
  ../../include/lswalloc.h \
  ../../include/id.h \
  ../../include/x509.h \
@@ -2480,43 +1467,31 @@ plutomain.o: plutomain.c ../../linux/include/libreswan.h \
  ../../include/secrets.h \
  ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h ../../include/ac.h \
- connections.h foodgroups.h ../../include/packet.h \
+ ../../include/pgp.h \
+ ../../include/ac.h connections.h \
+ foodgroups.h ../../include/packet.h \
  demux.h server.h quirks.h kernel.h log.h \
  ../../include/lswlog.h keys.h \
- ../../include/secrets.h adns.h dnskey.h rnd.h state.h \
- ipsec_doi.h ikev1_quick.h fetch.h timer.h \
+ ../../include/secrets.h adns.h dnskey.h \
+ rnd.h state.h ipsec_doi.h ikev1_quick.h fetch.h timer.h \
  ../../include/lswtime.h \
  ../../include/ipsecconf/confread.h \
  ../../include/ipsecconf/keywords.h \
  ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h vendor.h pluto_crypt.h \
- ../../include/lsw_select.h virtual.h nat_traversal.h \
+ ../../include/mpzfuncs.h vendor.h \
+ pluto_crypt.h ../../include/lsw_select.h \
+ virtual.h nat_traversal.h \
  ../../include/lswcrypto.h \
  ../../linux/include/klips-crypto/aes.h \
  ../../linux/include/klips-crypto/aes_cbc.h \
  ../../linux/include/klips-crypto/aes.h \
  ../../linux/include/klips-crypto/des.h \
- /usr/include/nspr4/nspr.h /usr/include/nspr4/pratom.h \
- /usr/include/nspr4/prbit.h /usr/include/nspr4/prclist.h \
- /usr/include/nspr4/prcmon.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prdtoa.h \
- /usr/include/nspr4/prenv.h /usr/include/nspr4/prerror.h \
- /usr/include/nspr4/prerr.h /usr/include/nspr4/prinit.h \
- /usr/include/nspr4/prthread.h /usr/include/nspr4/prwin16.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/pripcsem.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/prmem.h /usr/include/nspr4/prmwait.h \
- /usr/include/nspr4/prnetdb.h /usr/include/nspr4/prprf.h \
- /usr/include/nspr4/prproces.h /usr/include/nspr4/prrng.h \
- /usr/include/nspr4/prrwlock.h /usr/include/nspr4/prshm.h \
- /usr/include/nspr4/prshma.h /usr/include/nspr4/prsystem.h \
- /usr/include/nspr4/prtpool.h /usr/include/nspr4/prtrace.h \
  ../../include/ipsec_saref.h
-primegen.o: primegen.c ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+primegen.o: primegen.c \
+ ../../linux/include/libreswan.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2525,40 +1500,19 @@ primegen.o: primegen.c ../../linux/include/libreswan.h \
  ../../include/lswalloc.h \
  ../../include/constants.h log.h \
  ../../include/lswlog.h rnd.h gcryptfix.h
-rcv_whack.o: rcv_whack.c ../../linux/include/libreswan.h \
+rcv_whack.o: rcv_whack.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/lswconf.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
- ../../include/names_constant.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/names_constant.h \
  ../../include/constants.h defs.h \
  ../../include/lswalloc.h \
  ../../include/id.h \
@@ -2569,39 +1523,19 @@ rcv_whack.o: rcv_whack.c ../../linux/include/libreswan.h \
  ../../include/secrets.h \
  ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h ../../include/ac.h \
- connections.h foodgroups.h ../../include/whack.h \
- ../../include/packet.h demux.h server.h quirks.h \
- state.h ipsec_doi.h ikev1_quick.h kernel.h rcv_whack.h log.h \
+ ../../include/pgp.h \
+ ../../include/ac.h connections.h \
+ foodgroups.h ../../include/whack.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h state.h ipsec_doi.h ikev1_quick.h kernel.h rcv_whack.h log.h \
  ../../include/lswlog.h keys.h \
- ../../include/secrets.h adns.h dnskey.h fetch.h timer.h \
- ../../include/lswtime.h \
+ ../../include/secrets.h adns.h dnskey.h \
+ fetch.h timer.h ../../include/lswtime.h \
  ../../include/kernel_alg.h ike_alg.h
-rnd.o: rnd.c ../../linux/include/libreswan.h \
- ../../include/sha1.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+rnd.o: rnd.c \
+ ../../linux/include/libreswan.h \
+ ../../include/sha1.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2615,16 +1549,17 @@ security_selinux.o: security_selinux.c security_selinux.h \
  ../../include/lswlog.h \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/passert.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
  ../../include/names_constant.h
-server.o: server.c ../../linux/include/libreswan.h \
+server.o: server.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/socketwrapper.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2632,29 +1567,7 @@ server.o: server.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h state.h quirks.h \
- /usr/include/nss3/nss.h /usr/include/nss3/seccomon.h \
- /usr/include/nss3/utilrename.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prcpucfg.h /usr/include/nspr4/obsolete/protypes.h \
- /usr/include/nss3/secport.h /usr/include/nspr4/prlink.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prlog.h \
- /usr/include/nspr4/plarena.h /usr/include/nspr4/plarenas.h \
- /usr/include/nspr4/plstr.h /usr/include/nss3/pk11pub.h \
- /usr/include/nss3/secoidt.h /usr/include/nss3/secitem.h \
- /usr/include/nspr4/plhash.h /usr/include/nss3/secdert.h \
- /usr/include/nss3/keyt.h /usr/include/nss3/keythi.h \
- /usr/include/nss3/pkcs11t.h /usr/include/nss3/pkcs11p.h \
- /usr/include/nss3/pkcs11n.h /usr/include/nss3/pkcs11u.h \
- /usr/include/nss3/secmodt.h /usr/include/nss3/nssrwlkt.h \
- /usr/include/nss3/nssilock.h /usr/include/nspr4/prmon.h \
- /usr/include/nspr4/prinrval.h /usr/include/nspr4/prlock.h \
- /usr/include/nspr4/prcvar.h /usr/include/nspr4/prlock.h \
- /usr/include/nss3/nssilckt.h /usr/include/nss3/secoid.h \
- /usr/include/nss3/secasn1t.h /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h \
- /usr/include/nss3/certt.h /usr/include/nspr4/prio.h \
- /usr/include/nspr4/prlong.h /usr/include/nspr4/prtime.h \
- /usr/include/nspr4/prinet.h /usr/include/nss3/pkcs7t.h \
- /usr/include/nss3/cmsreclist.h ../../include/id.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -2662,14 +1575,14 @@ server.o: server.c ../../linux/include/libreswan.h \
  ../../include/secrets.h \
  ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h kernel.h log.h \
- ../../include/lswlog.h server.h timer.h \
- ../../include/lswtime.h \
- ../../include/packet.h demux.h rcv_whack.h keys.h \
- ../../include/secrets.h adns.h dnskey.h \
- ../../include/whack.h pluto_crypt.h \
- ../../include/lsw_select.h crypto.h \
- ../../include/sha1.h \
+ ../../include/pgp.h connections.h kernel.h \
+ log.h ../../include/lswlog.h server.h \
+ timer.h ../../include/lswtime.h \
+ ../../include/packet.h demux.h rcv_whack.h \
+ keys.h ../../include/secrets.h adns.h \
+ dnskey.h ../../include/whack.h \
+ pluto_crypt.h ../../include/lsw_select.h \
+ crypto.h ../../include/sha1.h \
  ../../include/md5.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h \
@@ -2677,11 +1590,11 @@ server.o: server.c ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h \
  ../../linux/include/libreswan/pfkey.h \
- ../../linux/include/libreswan/pfkeyv2.h kameipsec.h \
- nat_traversal.h
+ ../../linux/include/libreswan/pfkeyv2.h \
+ kameipsec.h nat_traversal.h
 smallprime.o: smallprime.c \
  ../../linux/include/libreswan.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2689,13 +1602,14 @@ smallprime.o: smallprime.c \
  ../../include/names_constant.h defs.h \
  ../../include/lswalloc.h \
  ../../include/constants.h gcryptfix.h
-spdb.o: spdb.c ../../linux/include/libreswan.h \
+spdb.o: spdb.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2709,47 +1623,25 @@ spdb.o: spdb.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h keys.h \
- ../../include/secrets.h kernel.h log.h spdb.h \
- ../../include/whack.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h keys.h \
+ ../../include/secrets.h kernel.h log.h \
+ spdb.h ../../include/whack.h \
  ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h \
  ../../include/alg_info.h \
- ../../include/kernel_alg.h ike_alg.h db_ops.h \
- nat_traversal.h demux.h server.h
+ ../../include/kernel_alg.h ike_alg.h \
+ db_ops.h nat_traversal.h demux.h server.h
 spdb_print.o: spdb_print.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2763,34 +1655,12 @@ spdb_print.o: spdb_print.c \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h keys.h \
- ../../include/secrets.h kernel.h log.h spdb.h \
- ../../include/whack.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h keys.h \
+ ../../include/secrets.h kernel.h log.h \
+ spdb.h ../../include/whack.h \
  ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
@@ -2798,7 +1668,8 @@ spdb_print.o: spdb_print.c \
  ../../include/alg_info.h \
  ../../include/kernel_alg.h \
  ../../linux/include/libreswan/pfkeyv2.h \
- ../../include/linux/pfkeyv2.h ike_alg.h db_ops.h
+ ../../include/linux/pfkeyv2.h ike_alg.h \
+ db_ops.h
 spdb_struct.o: spdb_struct.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
@@ -2806,7 +1677,7 @@ spdb_struct.o: spdb_struct.c \
  ../../include/linux/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2820,41 +1691,19 @@ spdb_struct.o: spdb_struct.c \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h keys.h \
- ../../include/secrets.h kernel.h log.h spdb.h \
- ../../include/whack.h plutoalg.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h keys.h \
+ ../../include/secrets.h kernel.h log.h \
+ spdb.h ../../include/whack.h plutoalg.h \
  ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h \
  ../../include/alg_info.h \
- ../../include/kernel_alg.h ike_alg.h db_ops.h \
- nat_traversal.h demux.h server.h
+ ../../include/kernel_alg.h ike_alg.h \
+ db_ops.h nat_traversal.h demux.h server.h
 spdb_v1_struct.o: spdb_v1_struct.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
@@ -2862,7 +1711,7 @@ spdb_v1_struct.o: spdb_v1_struct.c \
  ../../include/linux/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2876,41 +1725,19 @@ spdb_v1_struct.o: spdb_v1_struct.c \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h keys.h \
- ../../include/secrets.h kernel.h log.h spdb.h \
- ../../include/whack.h plutoalg.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h keys.h \
+ ../../include/secrets.h kernel.h log.h \
+ spdb.h ../../include/whack.h plutoalg.h \
  ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h \
  ../../include/alg_info.h \
- ../../include/kernel_alg.h ike_alg.h db_ops.h \
- nat_traversal.h demux.h server.h
+ ../../include/kernel_alg.h ike_alg.h \
+ db_ops.h nat_traversal.h demux.h server.h
 spdb_v2_struct.o: spdb_v2_struct.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
@@ -2918,7 +1745,7 @@ spdb_v2_struct.o: spdb_v2_struct.c \
  ../../include/linux/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2932,45 +1759,24 @@ spdb_v2_struct.o: spdb_v2_struct.c \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h keys.h \
- ../../include/secrets.h kernel.h log.h spdb.h \
- ../../include/whack.h plutoalg.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h keys.h \
+ ../../include/secrets.h kernel.h log.h \
+ spdb.h ../../include/whack.h plutoalg.h \
  ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h \
  ../../include/alg_info.h \
- ../../include/kernel_alg.h ike_alg.h db_ops.h demux.h \
- server.h ikev2.h nat_traversal.h
-state.o: state.c ../../linux/include/libreswan.h \
+ ../../include/kernel_alg.h ike_alg.h \
+ db_ops.h demux.h server.h ikev2.h nat_traversal.h
+state.o: state.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -2984,48 +1790,29 @@ state.o: state.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- kernel.h log.h ../../include/lswlog.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h kernel.h log.h \
+ ../../include/lswlog.h \
  ../../include/packet.h keys.h \
  ../../include/secrets.h rnd.h timer.h \
  ../../include/lswtime.h \
- ../../include/whack.h demux.h server.h pending.h \
- ipsec_doi.h ikev1_quick.h ../../include/sha1.h \
+ ../../include/whack.h demux.h server.h \
+ pending.h ipsec_doi.h ikev1_quick.h \
+ ../../include/sha1.h \
  ../../include/md5.h cookie.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
  ../../include/mpzfuncs.h spdb.h \
  /usr/include/nss3/keyhi.h
-stubs.o: stubs.c ../../linux/include/libreswan.h \
+stubs.o: stubs.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3038,53 +1825,33 @@ stubs.o: stubs.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h ../../include/ac.h \
- connections.h pending.h foodgroups.h \
- ../../include/packet.h demux.h server.h quirks.h \
- state.h timer.h ../../include/lswtime.h ipsec_doi.h \
- ikev1_quick.h kernel.h log.h ../../include/lswlog.h \
- keys.h ../../include/secrets.h adns.h dnskey.h \
+ ../../include/pgp.h \
+ ../../include/ac.h connections.h pending.h \
+ foodgroups.h ../../include/packet.h \
+ demux.h server.h quirks.h state.h timer.h \
+ ../../include/lswtime.h ipsec_doi.h \
+ ikev1_quick.h kernel.h log.h \
+ ../../include/lswlog.h keys.h \
+ ../../include/secrets.h adns.h dnskey.h \
  ../../include/whack.h \
  ../../include/alg_info.h spdb.h ike_alg.h \
- ../../include/kernel_alg.h plutoalg.h xauth.h \
- nat_traversal.h virtual.h pluto_crypt.h \
+ ../../include/kernel_alg.h plutoalg.h \
+ xauth.h nat_traversal.h virtual.h pluto_crypt.h \
  ../../include/lsw_select.h crypto.h \
  ../../include/sha1.h \
  ../../include/md5.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ikev1.h ikev1_continuations.h \
- ike_continuations.h
+ ../../include/mpzfuncs.h ikev1.h \
+ ikev1_continuations.h ike_continuations.h
 sysdep_linux.o: sysdep_linux.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/socketwrapper.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3098,42 +1865,22 @@ sysdep_linux.o: sysdep_linux.c \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h state.h quirks.h timer.h \
- ../../include/lswtime.h kernel.h kernel_netlink.h \
- kernel_pfkey.h kernel_noklips.h ../../include/packet.h \
- log.h server.h ../../include/whack.h keys.h \
+ ../../include/pgp.h state.h quirks.h \
+ timer.h ../../include/lswtime.h kernel.h \
+ kernel_netlink.h kernel_pfkey.h kernel_noklips.h \
+ ../../include/packet.h log.h server.h \
+ ../../include/whack.h keys.h \
  ../../include/secrets.h
-terminate.o: terminate.c ../../linux/include/libreswan.h \
+terminate.o: terminate.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../linux/include/libreswan/pfkeyv2.h \
  ../../include/linux/pfkeyv2.h kameipsec.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3147,44 +1894,24 @@ terminate.o: terminate.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/secrets.h defs.h \
- ../../include/ac.h connections.h pending.h foodgroups.h \
- ../../include/packet.h demux.h server.h quirks.h \
- state.h timer.h ipsec_doi.h ikev1_quick.h kernel.h log.h \
- ../../include/lswlog.h keys.h adns.h dnskey.h \
+ ../../include/ac.h connections.h pending.h \
+ foodgroups.h ../../include/packet.h \
+ demux.h server.h quirks.h state.h timer.h ipsec_doi.h ikev1_quick.h \
+ kernel.h log.h ../../include/lswlog.h \
+ keys.h adns.h dnskey.h \
  ../../include/whack.h \
- ../../include/alg_info.h spdb.h ike_alg.h plutocerts.h \
- ../../include/kernel_alg.h plutoalg.h xauth.h \
- nat_traversal.h virtual.h hostpair.h
-timer.o: timer.c ../../linux/include/libreswan.h \
+ ../../include/alg_info.h spdb.h ike_alg.h \
+ plutocerts.h ../../include/kernel_alg.h \
+ plutoalg.h xauth.h nat_traversal.h virtual.h hostpair.h
+timer.o: timer.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3198,39 +1925,20 @@ timer.o: timer.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
- ../../include/pgp.h connections.h state.h quirks.h \
- ../../include/packet.h demux.h server.h ipsec_doi.h \
- ikev1_quick.h kernel.h log.h ../../include/lswlog.h \
- rnd.h timer.h ../../include/lswtime.h \
- ../../include/whack.h dpd.h nat_traversal.h
-vendor.o: vendor.c ../../linux/include/libreswan.h \
+ ../../include/pgp.h connections.h state.h \
+ quirks.h ../../include/packet.h demux.h \
+ server.h ipsec_doi.h ikev1_quick.h kernel.h log.h \
+ ../../include/lswlog.h rnd.h timer.h \
+ ../../include/lswtime.h \
+ ../../include/whack.h dpd.h \
+ nat_traversal.h
+vendor.o: vendor.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3239,29 +1947,7 @@ vendor.o: vendor.c ../../linux/include/libreswan.h \
  ../../include/lswalloc.h \
  ../../include/constants.h log.h \
  ../../include/lswlog.h \
- ../../include/md5.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/md5.h \
  ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
@@ -3271,13 +1957,14 @@ vendor.o: vendor.c ../../linux/include/libreswan.h \
  ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h connections.h \
- ../../include/packet.h demux.h server.h quirks.h \
- ../../include/whack.h vendor.h kernel.h state.h \
- nat_traversal.h
-virtual.o: virtual.c ../../linux/include/libreswan.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h ../../include/whack.h vendor.h \
+ kernel.h state.h nat_traversal.h
+virtual.o: virtual.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3292,37 +1979,16 @@ virtual.o: virtual.c ../../linux/include/libreswan.h \
  ../../include/certs.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h connections.h \
  ../../include/whack.h virtual.h
-whack.o: whack.c ../../linux/include/libreswan.h \
+whack.o: whack.c \
+ ../../linux/include/libreswan.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/socketwrapper.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3333,9 +1999,10 @@ whack.o: whack.c ../../linux/include/libreswan.h \
  ../../include/lswalloc.h \
  ../../include/whack.h \
  ../../linux/include/libreswan/ipsec_policy.h
-whackinit.o: whackinit.c ../../linux/include/libreswan.h \
+whackinit.o: whackinit.c \
+ ../../linux/include/libreswan.h \
  ../../include/socketwrapper.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3346,39 +2013,18 @@ whackinit.o: whackinit.c ../../linux/include/libreswan.h \
  ../../include/lswalloc.h \
  ../../include/whack.h \
  ../../linux/include/libreswan/ipsec_policy.h
-x509.o: x509.c ../../linux/include/libreswan.h \
+x509.o: x509.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/lswconf.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
- ../../include/names_constant.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/names_constant.h \
  ../../include/constants.h \
  ../../include/lswlog.h \
  ../../include/lswtime.h defs.h \
@@ -3395,16 +2041,19 @@ x509.o: x509.c ../../linux/include/libreswan.h \
  ../../include/x509.h \
  ../../include/pgp.h keys.h \
  ../../include/secrets.h \
- ../../include/packet.h demux.h server.h quirks.h \
- connections.h state.h ../../include/md5.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h connections.h state.h \
+ ../../include/md5.h \
  ../../include/sha1.h \
  ../../include/whack.h fetch.h \
- ../../include/pkcs.h plutocerts.h x509more.h
-x509keys.o: x509keys.c ../../linux/include/libreswan.h \
+ ../../include/pkcs.h plutocerts.h \
+ x509more.h
+x509keys.o: x509keys.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3420,41 +2069,21 @@ x509keys.o: x509keys.c ../../linux/include/libreswan.h \
  ../../include/pgp.h \
  ../../include/certs.h \
  ../../include/secrets.h \
- ../../include/id.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h keys.h \
  ../../include/secrets.h \
- ../../include/packet.h demux.h server.h quirks.h \
- connections.h state.h ../../include/md5.h \
+ ../../include/packet.h demux.h server.h \
+ quirks.h connections.h state.h \
+ ../../include/md5.h \
  ../../include/sha1.h \
  ../../include/whack.h fetch.h \
  ../../include/pkcs.h x509more.h
-xauth.o: xauth.c ../../linux/include/libreswan.h \
+xauth.o: xauth.c \
+ ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/lswalloc.h \
- ../../include/constants.h /usr/include/nspr4/prcpucfg.h \
+ ../../include/constants.h \
  ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
@@ -3462,32 +2091,10 @@ xauth.o: xauth.c ../../linux/include/libreswan.h \
  ../../include/names_constant.h \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
- ../../include/lswconf.h /usr/include/nss3/nss.h \
- /usr/include/nss3/seccomon.h /usr/include/nss3/utilrename.h \
- /usr/include/nspr4/prtypes.h /usr/include/nspr4/prcpucfg.h \
- /usr/include/nspr4/obsolete/protypes.h /usr/include/nss3/secport.h \
- /usr/include/nspr4/prlink.h /usr/include/nspr4/prtypes.h \
- /usr/include/nspr4/prlog.h /usr/include/nspr4/plarena.h \
- /usr/include/nspr4/plarenas.h /usr/include/nspr4/plstr.h \
- /usr/include/nss3/pk11pub.h /usr/include/nss3/secoidt.h \
- /usr/include/nss3/secitem.h /usr/include/nspr4/plhash.h \
- /usr/include/nss3/secdert.h /usr/include/nss3/keyt.h \
- /usr/include/nss3/keythi.h /usr/include/nss3/pkcs11t.h \
- /usr/include/nss3/pkcs11p.h /usr/include/nss3/pkcs11n.h \
- /usr/include/nss3/pkcs11u.h /usr/include/nss3/secmodt.h \
- /usr/include/nss3/nssrwlkt.h /usr/include/nss3/nssilock.h \
- /usr/include/nspr4/prmon.h /usr/include/nspr4/prinrval.h \
- /usr/include/nspr4/prlock.h /usr/include/nspr4/prcvar.h \
- /usr/include/nspr4/prlock.h /usr/include/nss3/nssilckt.h \
- /usr/include/nss3/secoid.h /usr/include/nss3/secasn1t.h \
- /usr/include/nss3/secasn1.h \
- /usr/include/nspr4/prclist.h /usr/include/nss3/certt.h \
- /usr/include/nspr4/prio.h /usr/include/nspr4/prlong.h \
- /usr/include/nspr4/prtime.h /usr/include/nspr4/prinet.h \
- /usr/include/nss3/pkcs7t.h /usr/include/nss3/cmsreclist.h \
+ ../../include/lswconf.h \
  ../../include/constants.h \
- ../../include/lswlog.h defs.h state.h quirks.h \
- ../../include/id.h \
+ ../../include/lswlog.h defs.h state.h \
+ quirks.h ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h \
  ../../include/certs.h \
@@ -3495,12 +2102,13 @@ xauth.o: xauth.c ../../linux/include/libreswan.h \
  ../../include/id.h \
  ../../include/x509.h \
  ../../include/pgp.h connections.h \
- ../../include/packet.h demux.h server.h kernel.h log.h \
- cookie.h spdb.h timer.h ../../include/lswtime.h rnd.h \
- keys.h ../../include/secrets.h ipsec_doi.h \
+ ../../include/packet.h demux.h server.h \
+ kernel.h log.h cookie.h spdb.h timer.h \
+ ../../include/lswtime.h rnd.h keys.h \
+ ../../include/secrets.h ipsec_doi.h \
  ikev1_quick.h ../../include/whack.h \
  ../../include/sha1.h \
  ../../include/md5.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h ike_alg.h xauth.h virtual.h \
- addresspool.h
+ ../../include/mpzfuncs.h ike_alg.h xauth.h \
+ virtual.h addresspool.h
