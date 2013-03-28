@@ -506,8 +506,7 @@ ike_alg_aes.o: ike_alg_aes.c \
  ../../linux/include/klips-crypto/aes_cbc.h \
  ../../linux/include/klips-crypto/aes.h \
  ../../include/alg_info.h ike_alg.h \
- ../../include/lswconf.h \
- /usr/include/nss3/nss.h
+ ../../include/lswconf.h
 ike_alg.o: ike_alg.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
@@ -1803,8 +1802,7 @@ state.o: state.c \
  ../../include/sha1.h \
  ../../include/md5.h cookie.h crypto.h \
  ../../lib/libcrypto/libsha2/sha2.h \
- ../../include/mpzfuncs.h spdb.h \
- /usr/include/nss3/keyhi.h
+ ../../include/mpzfuncs.h spdb.h 
 stubs.o: stubs.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/ipsec_policy.h \
