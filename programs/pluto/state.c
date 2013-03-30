@@ -397,7 +397,8 @@ delete_state(struct state *st)
 
     DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
 
-    if (st->st_esp.present) {
+    if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+      if (st->st_esp.present) {
         sbcp = humanize_number(st->st_esp.peer_bytes,
                                sbcp, sizeof(statebuf) - 1,
                                "ESP traffic information: in=%lu%s");
@@ -410,9 +411,9 @@ delete_state(struct state *st)
 	} else {
 	    libreswan_log(statebuf);
 	}
-    }
+      }
 
-    if (st->st_ah.present) {
+      if (st->st_ah.present) {
         sbcp = humanize_number(st->st_ah.peer_bytes,
                                sbcp, sizeof(statebuf) - 1,
                                "AH traffic information: in=%lu%s");
@@ -426,7 +427,7 @@ delete_state(struct state *st)
 	    libreswan_log(statebuf);
 	}
 
-    }
+      }
 
     if (st->st_ipcomp.present) {
         sbcp = humanize_number(st->st_ipcomp.peer_bytes,
@@ -441,6 +442,7 @@ delete_state(struct state *st)
 	} else {
 	    libreswan_log(statebuf);
 	}
+      }
     }
     
 #ifdef XAUTH_HAVE_PAM 
