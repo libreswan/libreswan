@@ -2381,7 +2381,7 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	    {
 		const char *story = enum_name(&state_stories, st->st_state);
 		enum rc_type w = RC_NEW_STATE + st->st_state;
-		char sadetails[256];
+		char sadetails[512];
 
 		passert(st->st_state < STATE_IKE_ROOF);
 		
