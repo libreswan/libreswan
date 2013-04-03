@@ -86,10 +86,7 @@ kvmplutotest () {
 skiptest() {
 	testdir=$1
 	testexpect=$2
-
-	export TEST_PURPOSE=regress
-
-	UML_BRAND=0 recordresults $testdir "$testexpect" skipped $testdir${KLIPS_MODULE} ""
+	echo '****** skip test $testdir yet to be migrated to kvm style '
 }
 
 ctltest() {
@@ -103,3 +100,10 @@ umlXhost () {
         testexpect=$2
 	echo '****** umlXhost test $testdir yet to be migrated to kvm style '
 }
+
+umlplutotest () {
+	testdir=$1
+	testexpect=$2
+	echo '****** umlplutotest test $testdir yet to be migrated to kvm style '
+}
+

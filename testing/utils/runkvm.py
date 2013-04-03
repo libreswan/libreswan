@@ -181,7 +181,6 @@ def run_test(args, child):
     if os.path.exists(cmd):
         read_exec_shell_cmd( child, cmd, prompt, timer)
         f.close
-        run_final(args,child)
     else:
 	    f.close 
     return  
