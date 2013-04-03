@@ -857,7 +857,7 @@ static struct db_trans espa_trans[] = {
     };
 
 static struct db_trans esp_trans[] = {
-    { transid: ESP_3DES, attrs: NULL },
+    { .transid = ESP_3DES, .attrs = NULL },
     };
 
 #ifdef SUPPORT_ESP_NULL
@@ -873,7 +873,7 @@ static struct db_trans ah_trans[] = {
     };
 
 static struct db_trans ipcomp_trans[] = {
-    { transid: IPCOMP_DEFLATE, attrs: NULL },
+    { .transid = IPCOMP_DEFLATE, .attrs = NULL },
     };
 
 /* arrays of proposals to be conjoined */
