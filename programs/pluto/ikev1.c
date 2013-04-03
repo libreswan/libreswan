@@ -1355,7 +1355,7 @@ process_v1_packet(struct msg_digest **mdp)
      */
     if (md->hdr.isa_flags & ISAKMP_FLAG_COMMIT)
     {
-	libreswan_log("IKE message has the Commit Flag set but Pluto doesn't implement this feature; ignoring flag");
+	libreswan_log("IKE message has the Commit Flag set but Pluto doesn't implement this feature due to security concerns; ignoring flag");
     }
 
 	/* Handle IKE fragmentation payloads */
