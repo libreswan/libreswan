@@ -1366,16 +1366,16 @@ process_v1_packet(struct msg_digest **mdp)
 		int last_frag_index = 0;  /* index of the last fragment */
 		pb_stream frag_pbs;
 
-		if ((st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) == 0)
-		{
-		   loglog(RC_LOG, "discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
-		   return;
-		}
-
 		if (st == NULL)
 		{
 			plog("received IKE fragment, but have no state. Ignoring packet.");
 			return;
+		}
+
+		if ((st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) == 0)
+		{
+		   loglog(RC_LOG, "discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
+		   return;
 		}
 
 		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc, &md->message_pbs, &frag_pbs)
