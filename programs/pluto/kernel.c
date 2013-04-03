@@ -87,14 +87,14 @@ static void set_text_said(char *text_said
 
 const struct pfkey_proto_info null_proto_info[2] = {
         {
-                proto: IPPROTO_ESP,
-                encapsulation: ENCAPSULATION_MODE_TRANSPORT,
-                reqid: 0
+                .proto = IPPROTO_ESP,
+                .encapsulation = ENCAPSULATION_MODE_TRANSPORT,
+                .reqid = 0
         },
         {
-                proto: 0,
-                encapsulation: 0,
-                reqid: 0
+                .proto = 0,
+                .encapsulation = 0,
+                .reqid = 0
         }
 };
 

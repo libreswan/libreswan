@@ -92,19 +92,19 @@ DBG(DBG_CRYPT, DBG_log("NSS do_aes: exit"));
 
 struct encrypt_desc algo_aes =
 {
-	common: {
-	  name: "aes",
-	  officname: "aes",
-	  algo_type: 	IKE_ALG_ENCRYPT,
-	  algo_id:   	OAKLEY_AES_CBC,
-	  algo_v2id:    IKEv2_ENCR_AES_CBC,
-	  algo_next: 	NULL, },
-	enc_ctxsize: 	sizeof(aes_context),
-	enc_blocksize: 	AES_CBC_BLOCK_SIZE,
-	keyminlen: 	AES_KEY_MIN_LEN,
-	keydeflen: 	AES_KEY_DEF_LEN,
-	keymaxlen: 	AES_KEY_MAX_LEN,
-	do_crypt: 	do_aes,
+	.common = {
+	  .name = "aes",
+	  .officname = "aes",
+	  .algo_type = 	 IKE_ALG_ENCRYPT,
+	  .algo_id =   	 OAKLEY_AES_CBC,
+	  .algo_v2id =   IKEv2_ENCR_AES_CBC,
+	  .algo_next = 	 NULL, },
+	.enc_ctxsize = 	 sizeof(aes_context),
+	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.keyminlen = 	AES_KEY_MIN_LEN,
+	.keydeflen = 	AES_KEY_DEF_LEN,
+	.keymaxlen = 	AES_KEY_MAX_LEN,
+	.do_crypt = 	do_aes,
 };
 int ike_alg_aes_init(void);
 int
