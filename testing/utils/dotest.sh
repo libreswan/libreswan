@@ -126,7 +126,7 @@ if [ -f ./OUTPUT/$SWAN_PCAP.pid ] ; then
 fi
 
 initout=`consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.verbose.txt ${INITIATOR}.console.txt`
-respout=`consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.verbose..txt ${RESPONDER}.console.txt`
+respout=`consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.verbose.txt ${RESPONDER}.console.txt`
 echo "WARNING: tcpdump output is not yet compared to known good output!"
 if [  -s OUTPUT/$INITIATOR.console.diff -o -s OUTPUT/$RESPONDER.console.diff ] ; then
 	echo $TESTNAME FAILED

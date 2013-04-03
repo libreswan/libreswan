@@ -70,3 +70,36 @@ consolediff() {
 	success=false
     fi
 }
+
+# test entry point:
+kvmplutotest () {
+	testdir=$1
+	testexpect=$2
+	echo '***** KVM PLUTO RUNNING' $testdir${KLIPS_MODULE} '*******'
+  	cd $testdir 
+	${UTILS}/dotest.sh 
+	cd ../
+}
+
+#
+#  ???
+skiptest() {
+	testdir=$1
+	testexpect=$2
+
+	export TEST_PURPOSE=regress
+
+	UML_BRAND=0 recordresults $testdir "$testexpect" skipped $testdir${KLIPS_MODULE} ""
+}
+
+ctltest() {
+	testdir=$1
+        testexpect=$2
+	echo '****** ctltest test $testdir yet to be migrated to kvm style '
+}
+
+umlXhost () {
+	testdir=$1
+        testexpect=$2
+	echo '****** umlXhost test $testdir yet to be migrated to kvm style '
+}

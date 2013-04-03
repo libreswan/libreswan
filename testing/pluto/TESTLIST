@@ -7,9 +7,9 @@
 
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
-umlplutotest	basic-pluto-01	good
+kvmplutotest	basic-pluto-01	good
 umlplutotest	basic-pluto-02	good
-umlXhost	basic-pluto-03	good
+kvmplutotest	basic-pluto-03	good
 
 # fails due to refineconnection bug.
 umlplutotest	basic-pluto-06	bad
@@ -278,7 +278,7 @@ umlXhost	x509-pluto-06		good
 
 #
 # a test case of PSK with aggressive mode
-umlXhost	psk-pluto-01		good
+kvmplutotest	psk-pluto-01		good
 
 #
 # a test case of PSK with aggressive mode, with missing PSKs
@@ -303,6 +303,12 @@ umlXhost	xauth-pluto-10		good
 #
 # a test case of xauth using xauthname= in ipsec.conf and XAUTH password in ipsec.secrets
 umlXhost	xauth-pluto-11		good
+
+kvmplutotest	xauth-pluto-12		good
+kvmplutotest	xauth-pluto-13		good
+kvmplutotest	xauth-pluto-13		good
+kvmplutotest	xauth-pluto-15		good
+kvmplutotest	xauth-pluto-16		good
 
 
 #
@@ -349,6 +355,8 @@ umlplutotest	basic-pluto-09		good
 # will normally fail, do not run it.
 #
 umlplutotest	basic-pluto-10		skip
+
+kvmplutotest	basic-pluto-11		good
 
 #
 # test cases of what happens to X.509 based authorization system
