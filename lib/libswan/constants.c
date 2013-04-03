@@ -45,7 +45,7 @@ jam_str(char *dest, size_t size, const char *src)
     size_t full_len = strlen(src);
     size_t copy_len = size-1 < full_len? size-1 : full_len;
 
-    passert(size > 0);	/* need space for at least NJL */
+    passert(size > 0);	/* need space for at least NUL */
     memcpy(dest, src, copy_len);
     dest[copy_len] = '\0';
     return dest + copy_len;

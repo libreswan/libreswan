@@ -84,14 +84,14 @@ extern const struct pfkey_proto_info null_proto_info[2];
 
 static const struct pfkey_proto_info broad_proto_info[2] = { 
         {
-                proto: IPPROTO_ESP,
-                encapsulation: ENCAPSULATION_MODE_TUNNEL,
-                reqid: 0
+                .proto = IPPROTO_ESP,
+                .encapsulation = ENCAPSULATION_MODE_TUNNEL,
+                .reqid = 0
         },
         {
-                proto: 0,
-                encapsulation: 0,
-                reqid: 0
+                .proto = 0,
+                .encapsulation = 0,
+                .reqid = 0
         }
 };
 
@@ -1043,86 +1043,86 @@ netlink_del_sa(const struct kernel_sa *sa)
 
 struct encrypt_desc algo_aes_ccm_8 =
 {
-	common: {
-	  name: "aes_ccm_8",
-	  officname: "aes_ccm_8",
-	  algo_type:    IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_CCM_8,
-	  algo_next:    NULL, },
-	enc_blocksize:  AES_CBC_BLOCK_SIZE,
-	keyminlen:      AES_KEY_MIN_LEN + 3,
-	keydeflen:      AES_KEY_DEF_LEN + 3,
-	keymaxlen:      AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_ccm_8",
+	  .officname = "aes_ccm_8",
+	  .algo_type =    IKE_ALG_ENCRYPT,
+	  .algo_v2id =    IKEv2_ENCR_AES_CCM_8,
+	  .algo_next =    NULL, },
+	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
+	.keyminlen =      AES_KEY_MIN_LEN + 3,
+	.keydeflen =      AES_KEY_DEF_LEN + 3,
+	.keymaxlen =      AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_ccm_12 =
 {
-	common: {
-	  name: "aes_ccm_12",
-	  officname: "aes_ccm_12",
-	  algo_type:    IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_CCM_12,
-	  algo_next:    NULL, },
-	enc_blocksize:  AES_CBC_BLOCK_SIZE,
-	keyminlen:      AES_KEY_MIN_LEN + 3,
-	keydeflen:      AES_KEY_DEF_LEN + 3,
-	keymaxlen:      AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_ccm_12",
+	  .officname = "aes_ccm_12",
+	  .algo_type =    IKE_ALG_ENCRYPT,
+	  .algo_v2id =    IKEv2_ENCR_AES_CCM_12,
+	  .algo_next =    NULL, },
+	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
+	.keyminlen =      AES_KEY_MIN_LEN + 3,
+	.keydeflen =      AES_KEY_DEF_LEN + 3,
+	.keymaxlen =      AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_ccm_16 =
 {
-	common: {
-	  name: "aes_ccm_16",
-	  officname: "aes_ccm_16",
-	  algo_type: 	IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_CCM_16,
-	  algo_next: 	NULL, },
-	enc_blocksize: 	AES_CBC_BLOCK_SIZE,
-	keyminlen: 	AES_KEY_MIN_LEN + 3,
-	keydeflen: 	AES_KEY_DEF_LEN + 3,
-	keymaxlen: 	AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_ccm_16",
+	  .officname = "aes_ccm_16",
+	  .algo_type = 	 IKE_ALG_ENCRYPT,
+	  .algo_v2id =   IKEv2_ENCR_AES_CCM_16,
+	  .algo_next = 	 NULL, },
+	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.keyminlen = 	 AES_KEY_MIN_LEN + 3,
+	.keydeflen = 	 AES_KEY_DEF_LEN + 3,
+	.keymaxlen = 	 AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_gcm_8 =
 {
-	common: {
-	  name: "aes_gcm_8",
-	  officname: "aes_gcm_8",
-	  algo_type: 	IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_GCM_8,
-	  algo_next: 	NULL, },
-	enc_blocksize: 	AES_CBC_BLOCK_SIZE,
-	keyminlen: 	AES_KEY_MIN_LEN + 3,
-	keydeflen: 	AES_KEY_DEF_LEN + 3,
-	keymaxlen: 	AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_gcm_8",
+	  .officname = "aes_gcm_8",
+	  .algo_type = 	 IKE_ALG_ENCRYPT,
+	  .algo_v2id =   IKEv2_ENCR_AES_GCM_8,
+	  .algo_next =   NULL, },
+	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.keyminlen = 	 AES_KEY_MIN_LEN + 3,
+	.keydeflen = 	 AES_KEY_DEF_LEN + 3,
+	.keymaxlen = 	 AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_gcm_12 =
 {
-	common: {
-	  name: "aes_gcm_12",
-	  officname: "aes_gcm_12",
-	  algo_type: 	IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_GCM_12,
-	  algo_next: 	NULL, },
-	enc_blocksize: 	AES_CBC_BLOCK_SIZE,
-	keyminlen: 	AES_KEY_MIN_LEN + 3,
-	keydeflen: 	AES_KEY_DEF_LEN + 3,
-	keymaxlen: 	AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_gcm_12",
+	  .officname = "aes_gcm_12",
+	  .algo_type = 	 IKE_ALG_ENCRYPT,
+	  .algo_v2id =   IKEv2_ENCR_AES_GCM_12,
+	  .algo_next = 	 NULL, },
+	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.keyminlen = 	 AES_KEY_MIN_LEN + 3,
+	.keydeflen = 	 AES_KEY_DEF_LEN + 3,
+	.keymaxlen = 	 AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_gcm_16 =
 {
-	common: {
-	  name: "aes_gcm_16",
-	  officname: "aes_gcm_16",
-	  algo_type: 	IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_GCM_16,
-	  algo_next: 	NULL, },
-	enc_blocksize: 	AES_CBC_BLOCK_SIZE,
-	keyminlen: 	AES_KEY_MIN_LEN + 3,
-	keydeflen: 	AES_KEY_DEF_LEN + 3,
-	keymaxlen: 	AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_gcm_16",
+	  .officname = "aes_gcm_16",
+	  .algo_type = 	IKE_ALG_ENCRYPT,
+	  .algo_v2id =    IKEv2_ENCR_AES_GCM_16,
+	  .algo_next = 	NULL, },
+	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.keyminlen = 	AES_KEY_MIN_LEN + 3,
+	.keydeflen = 	AES_KEY_DEF_LEN + 3,
+	.keymaxlen = 	AES_KEY_MAX_LEN + 3,
 };
 
 static void
@@ -2230,37 +2230,37 @@ netkey_do_command(struct connection *c, struct spd_route *sr
 }
 
 const struct kernel_ops netkey_kernel_ops = {
-    kern_name: "netkey",
-    type: USE_NETKEY,
-    inbound_eroute:  TRUE,
-    policy_lifetime: TRUE,
-    async_fdp: &netlink_bcast_fd,
-    replay_window: 32,
+    .kern_name = "netkey",
+    .type = USE_NETKEY,
+    .inbound_eroute =  TRUE,
+    .policy_lifetime = TRUE,
+    .async_fdp = &netlink_bcast_fd,
+    .replay_window = 32,
     
-    init: init_netlink,
-    pfkey_register: linux_pfkey_register,
-    pfkey_register_response: linux_pfkey_register_response,
-    process_msg: netlink_process_msg,
-    raw_eroute: netlink_raw_eroute,
-    add_sa: netlink_add_sa, 
-    del_sa: netlink_del_sa,
-    get_sa: netlink_get_sa,
-    process_queue: NULL,
-    grp_sa: NULL,
-    get_spi: netlink_get_spi,
-    exceptsocket: NULL,
-    docommand: netkey_do_command,
-    process_ifaces: netlink_process_raw_ifaces,
-    shunt_eroute: netlink_shunt_eroute,
-    sag_eroute: netlink_sag_eroute,
-    eroute_idle: netlink_eroute_idle,
-    set_debug: NULL,    /* pfkey_set_debug, */
+    .init = init_netlink,
+    .pfkey_register = linux_pfkey_register,
+    .pfkey_register_response = linux_pfkey_register_response,
+    .process_msg = netlink_process_msg,
+    .raw_eroute = netlink_raw_eroute,
+    .add_sa = netlink_add_sa, 
+    .del_sa = netlink_del_sa,
+    .get_sa = netlink_get_sa,
+    .process_queue = NULL,
+    .grp_sa = NULL,
+    .get_spi = netlink_get_spi,
+    .exceptsocket = NULL,
+    .docommand = netkey_do_command,
+    .process_ifaces = netlink_process_raw_ifaces,
+    .shunt_eroute = netlink_shunt_eroute,
+    .sag_eroute = netlink_sag_eroute,
+    .eroute_idle = netlink_eroute_idle,
+    .set_debug = NULL,    /* pfkey_set_debug, */
     /* We should implement netlink_remove_orphaned_holds
      * if netlink  specific changes are needed.
      */
-    remove_orphaned_holds: pfkey_remove_orphaned_holds,
-    overlap_supported: FALSE,
-    sha2_truncbug_support: TRUE,
+    .remove_orphaned_holds = pfkey_remove_orphaned_holds,
+    .overlap_supported = FALSE,
+    .sha2_truncbug_support = TRUE,
 };
 #endif /* linux && NETKEY_SUPPORT */
 

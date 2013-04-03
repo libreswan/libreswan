@@ -19,7 +19,8 @@
 #define LOG_LEVEL_ERR    2
 #define LOG_LEVEL_DEBUG  3
 
-extern void starter_log (int level, const char *fmt, ...);
+extern void starter_log (int level, const char *fmt, ...)
+  __attribute__((format(printf, 2, 3)));
 extern void starter_use_log (int debug, int console, int mysyslog);
 
 extern int showonly;
