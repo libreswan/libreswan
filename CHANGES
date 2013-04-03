@@ -6,6 +6,7 @@ v3.2 (unreleased)
 * compiling: fix use of variables in buidlsystem consitent [Tuomo]
 * ipsec: fix syntax error in --help introduced in 3.1 [Tuomo]
 * verify: fix wrong confdir location [Tuomo]
+* pluto: cleanup of XAUTHuser and traffic statistics logging [Paul]
 * Bugtracker bugs fixed:
    #75: Libreswan inserts wrong xfrm policies on some configurations [Tuomo]
    #76: initnss: ipsec initnss fails with a @FINALCONFDDIR@ replace and
