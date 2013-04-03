@@ -8,6 +8,6 @@ make module_install 2>&1 >> compile-log.txt
 restorecon /usr/local/sbin -Rv
 restorecon /usr/local/libexec/ipsec -Rv
 # disable autostarting via systemd
-sed -i "Restart=always/Restart=no/" /lib/systemd/system/ipsec.service
+sed -i "s/Restart=always/Restart=no/" /lib/systemd/system/ipsec.service
 systemctl daemon-reload
 
