@@ -44,9 +44,18 @@ else:
 
 # Setup pluto.log softlink
 if hostname != "nic":
-	if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
-		os.unlink("/tmp/pluto.log")
-	os.symlink("/testing/pluto/%s/OUTPUT/%s.pluto.log"%(testname,hostname),"/tmp/pluto.log")
+    if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
+        os.unlink("/tmp/pluto.log")
+
+    outputdir="/testing/pluto/%s/OUTPUT/"%testname
+    if  not os.path.isdir(outputdir):
+            os.mkdir(outputdir)
+            os.chmod(outputdir, 0777)
+    plutologfile="%s/%s.pluto.log"%(outputdir,hostname)
+    os.symlink(plutologfile,"/tmp/pluto.log")
+    f = open(plutologfile,'w')
+    f.close()
+    os.chmod(plutologfile, 0777)
 
 if args.userland:
 	if not args.userland in ( "libreswan","strongswan","racoon","shrew", "openswan"):
