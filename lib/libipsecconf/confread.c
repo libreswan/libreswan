@@ -90,8 +90,9 @@ void ipsecconf_default_values(struct starter_config *cfg)
 #ifdef NAT_TRAVERSAL
 	cfg->setup.options[KBF_DISABLEPORTFLOATING]= FALSE;
 	cfg->setup.options[KBF_FORCE_KEEPALIVE]= FALSE;
-	cfg->setup.options[KBF_KEEPALIVE]= 0;
+	cfg->setup.options[KBF_KEEPALIVE]= 0; /* config setup */
 	cfg->setup.options[KBF_NATIKEPORT]= NAT_T_IKE_FLOAT_PORT;
+	cfg->conn_default.options[KBF_NAT_KEEPALIVE] = TRUE; /* per conn */
 #endif
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 

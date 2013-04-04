@@ -445,6 +445,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"narrowing",      kv_conn|kv_auto, kt_bool,   KBF_IKEv2_ALLOW_NARROWING, NOT_ENUM},
     {"sareftrack",     kv_conn|kv_auto|kv_processed,kt_enum,KBF_SAREFTRACK,&kw_sareftrack_list},
     {"pfs",            kv_conn|kv_auto, kt_bool,   KBF_PFS,          NOT_ENUM},
+    {"nat_keepalive",  kv_conn|kv_auto, kt_bool,   KBF_NAT_KEEPALIVE,          NOT_ENUM},
     {"sha2_truncbug",  kv_conn|kv_auto, kt_enum,   KBF_SHA2_TRUNCBUG,          &kw_sha2_truncbug},
     {"keylife",        kv_conn|kv_auto|kv_alias, kt_time,   KBF_SALIFETIME,NOT_ENUM},
     {"lifetime",       kv_conn|kv_auto|kv_alias, kt_time,   KBF_SALIFETIME,NOT_ENUM},

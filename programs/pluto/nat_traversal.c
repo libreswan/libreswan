@@ -346,6 +346,11 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 	    st->hidden_variables.st_nat_traversal |= LELEM(NAT_TRAVERSAL_NAT_BHND_ME);
 	    st->hidden_variables.st_natd = md->sender;
 	}
+
+	if(st->st_connection->nat_keepalive) {
+	    DBG(DBG_NATT,
+		DBG_log("NAT_TRAVERSAL nat_keepalive enabled"));
+	}
 }
 
 bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
@@ -746,6 +751,16 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 	unsigned int *_kap_st = (unsigned int *)data;
 	const struct connection *c = st->st_connection;
 	if (!c) return;
+
+	if(c->nat_keepalive == FALSE) {
+		DBG(DBG_NATT,DBG_log("Suppressing sending of NAT-T KEEP-ALIVE by per-conn configuration (nat_keepalive=no)"));
+		return;
+	}
+	DBG(DBG_NATT,DBG_log("Sending of NAT-T KEEP-ALIVE enabled by per-conn configuration (nat_keepalive=yes)"));
+	if(_force_ka) {
+	   DBG(DBG_NATT,DBG_log("Sending of NAT-T KEEP-ALIVE forced by global configuration (force_keepalive=yes)"));
+	}
+
 	if ( IS_ISAKMP_SA_ESTABLISHED(st->st_state)
 	     &&	(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
 	     &&	((st->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
@@ -772,6 +787,7 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 		    return;
 		}
 	    }
+	    /* TODO: We should check idleness of SA before sending keep-alive. If there is traffic, no need for it */
 	    nat_traversal_send_ka(st);
 	    (*_kap_st)++;
 	}

@@ -541,6 +541,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 	if(conn->options_set[KBF_FORCEENCAP]) {
 		msg.forceencaps=conn->options[KBF_FORCEENCAP];
 	}
+	if(conn->options_set[KBF_NAT_KEEPALIVE]) {
+		msg.nat_keepalive=conn->options[KBF_NAT_KEEPALIVE];
+	} else msg.nat_keepalive = TRUE;
 #endif
 
 	/*Cisco interop : remote peer type*/

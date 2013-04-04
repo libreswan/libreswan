@@ -45,6 +45,7 @@ d.ipsec.conf/modecfgoptions.xml
 d.ipsec.conf/remote_peer_type.xml
 d.ipsec.conf/nm_configured.xml
 d.ipsec.conf/forceencaps.xml
+d.ipsec.conf/nat_keepalive.xml
 d.ipsec.conf/overlapip.xml
 d.ipsec.conf/dpddelay.xml
 d.ipsec.conf/dpdtimeout.xml

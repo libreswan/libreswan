@@ -134,6 +134,9 @@ struct whack_message {
     /* Force the use of NAT-T on a connection */
     bool forceencaps;
 
+    /* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
+    bool nat_keepalive;
+
     enum keyword_sha2_truncbug sha2_truncbug;
 
     /* Checking if this connection is configured by Network Manager*/

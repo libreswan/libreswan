@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 03/13/2013
+.\"      Date: 04/04/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "03/13/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "04/04/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -818,6 +818,16 @@ needs to be set\&. Acceptable values are
 or
 \fBno\fR
 (the default)\&.
+.RE
+.PP
+\fBnat_keepalive\fR
+.RS 4
+whether to send any NAT\-T keep\-alives\&. These 1 byte packets are send to prevent the NAT router from closing its port when there is not enough traffic on the IPsec connection\&. Acceptable values are:
+\fByes\fR
+(the deault) and
+\fBno\fR\&. This per\-conn option takes precedence over the global (config setup)
+\fIforce_keepalive=\fR
+option\&.
 .RE
 .PP
 \fBoverlapip\fR

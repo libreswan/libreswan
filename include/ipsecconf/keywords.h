@@ -117,6 +117,7 @@ enum keyword_numeric_config_field {
     KBF_XAUTHBY, /* method of xauth user auth - file, pam or alwaysok */
     KBF_XAUTHFAIL, /* method of failing, soft or hard */
     KBF_IKE_FRAG,
+    KBF_NAT_KEEPALIVE, /* per conn enabling/disabling of sending keep-alives - different from global force_keepalives */
     KBF_MAX
 };
 
