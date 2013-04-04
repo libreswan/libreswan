@@ -81,12 +81,10 @@ bool nat_traversal_enabled = FALSE;
 bool nat_traversal_support_non_ike = FALSE;
 bool nat_traversal_support_port_floating = FALSE;
 
-static unsigned int _kap = 0;
-static unsigned int _ka_evt = 0;
-static bool _force_ka = 0;
+static unsigned int nat_kap = 0;
+static unsigned int nat_kap_event = 0;
 
-void init_nat_traversal (bool activate, unsigned int keep_alive_period,
-	bool fka, bool spf)
+void init_nat_traversal (bool activate, unsigned int keep_alive_period, bool spf)
 {
 	nat_traversal_enabled = activate;
 	nat_traversal_support_non_ike = activate;
@@ -110,11 +108,9 @@ void init_nat_traversal (bool activate, unsigned int keep_alive_period,
 	  }
 	}
 
-	_force_ka = fka;
-	_kap = keep_alive_period ? keep_alive_period : DEFAULT_KEEP_ALIVE_PERIOD;
-	plog("   NAT-Traversal support %s%s%s",
+	nat_kap = keep_alive_period ? keep_alive_period : DEFAULT_KEEP_ALIVE_PERIOD;
+	plog("   NAT-Traversal support %s%s",
 	     activate ? " [enabled]" : " [disabled]",
-	     activate & fka ? " [Force KeepAlive]" : "",
 	     activate & !spf ? " [Port Floating disabled]" : "");
 
 }
@@ -722,9 +718,9 @@ int nat_traversal_espinudp_socket (int sk, const char *fam, u_int32_t type)
 
 void nat_traversal_new_ka_event (void)
 {
-	if (_ka_evt) return;  /* Event already schedule */
-	event_schedule(EVENT_NAT_T_KEEPALIVE, _kap, NULL);
-	_ka_evt = 1;
+	if (nat_kap_event) return;  /* Event already schedule */
+	event_schedule(EVENT_NAT_T_KEEPALIVE, nat_kap, NULL);
+	nat_kap_event = 1;
 }
 
 static void nat_traversal_send_ka (struct state *st)
@@ -748,7 +744,7 @@ static void nat_traversal_send_ka (struct state *st)
  */
 static void nat_traversal_ka_event_state (struct state *st, void *data)
 {
-	unsigned int *_kap_st = (unsigned int *)data;
+	unsigned int *nat_kap_st = (unsigned int *)data;
 	const struct connection *c = st->st_connection;
 	if (!c) return;
 
@@ -757,14 +753,10 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 		return;
 	}
 	DBG(DBG_NATT,DBG_log("Sending of NAT-T KEEP-ALIVE enabled by per-conn configuration (nat_keepalive=yes)"));
-	if(_force_ka) {
-	   DBG(DBG_NATT,DBG_log("Sending of NAT-T KEEP-ALIVE forced by global configuration (force_keepalive=yes)"));
-	}
 
 	if ( IS_ISAKMP_SA_ESTABLISHED(st->st_state)
 	     &&	(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
-	     &&	((st->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
-		 || (_force_ka)))
+	     &&	(st->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME)))
 	{
 	    /**
 	     * - ISAKMP established
@@ -781,22 +773,20 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 		if ((st_newest)
 		    && IS_ISAKMP_SA_ESTABLISHED(st->st_state)
 		    && (st_newest->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
-		    && ((st_newest->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
-			|| (_force_ka)))
+		    && (st_newest->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME)))
 		{
 		    return;
 		}
 	    }
 	    /* TODO: We should check idleness of SA before sending keep-alive. If there is traffic, no need for it */
 	    nat_traversal_send_ka(st);
-	    (*_kap_st)++;
+	    (*nat_kap_st)++;
 	}
 
 	if ( ((st->st_state == STATE_QUICK_R2)
 	      || (st->st_state == STATE_QUICK_I2))
 	     &&	(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
-	     &&	((st->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
-		 || (_force_ka)))
+	     &&	(st->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME)))
 	{
 	    /**
 	     * - IPSEC SA established
@@ -814,27 +804,26 @@ static void nat_traversal_ka_event_state (struct state *st, void *data)
 		    && ((st_newest->st_state==STATE_QUICK_R2)
 			|| (st_newest->st_state == STATE_QUICK_I2))
 		    && (st_newest->hidden_variables.st_nat_traversal & NAT_T_DETECTED)
-		    && ((st_newest->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
-			|| (_force_ka)))
+		    && (st_newest->hidden_variables.st_nat_traversal & LELEM(NAT_TRAVERSAL_NAT_BHND_ME)))
 		{
 		    return;
 		}
 	    }
 	    nat_traversal_send_ka(st);
-	    (*_kap_st)++;
+	    (*nat_kap_st)++;
 	}
 	
 }
 
 void nat_traversal_ka_event (void)
 {
-	unsigned int _kap_st = 0;
+	unsigned int nat_kap_st = 0;
 
-	_ka_evt = 0;  /* ready to be reschedule */
+	nat_kap_event = 0;  /* ready to be reschedule */
 
-	for_each_state((void *)nat_traversal_ka_event_state, &_kap_st);
+	for_each_state((void *)nat_traversal_ka_event_state, &nat_kap_st);
 
-	if (_kap_st) {
+	if (nat_kap_st) {
 	    /**
 	     * If there are still states who needs Keep-Alive, schedule new event
 	     */

@@ -1143,11 +1143,9 @@ whether to enable the newer NAT\-T standards for port floating\&. Acceptable val
 .PP
 \fBforce_keepalive\fR
 .RS 4
-whether to force sending NAT\-T keep\-alives to support NAT which are send to prevent the NAT router from closing its port when there is not enough traffic on the IPsec connection\&. Acceptable values are:
-\fByes\fR
-and
-\fBno\fR
-(the default)\&. This parameter may eventually become per\-connection\&.
+This option has been obsoleted since libreswan version 3\&.2\&. See the
+\fIforce_keepalive\fR
+option to enable/disable NAT\-KA packets on a per\-connection basis\&.
 .RE
 .PP
 \fBnat_ikeport\fR

@@ -397,7 +397,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"nat_ikeport",   kv_config,kt_number,      KBF_NATIKEPORT, NOT_ENUM},
     {"disable_port_floating", kv_config,kt_bool,KBF_DISABLEPORTFLOATING, NOT_ENUM},
     {"keep_alive", kv_config,kt_number,    KBF_KEEPALIVE, NOT_ENUM},
-    {"force_keepalive", kv_config,kt_bool,    KBF_FORCE_KEEPALIVE, NOT_ENUM},
+    {"force_keepalive", kv_config,kt_obsolete,    KBF_WARNIGNORE, NOT_ENUM},
 #endif
     {"listen",     kv_config, kt_string, KSF_LISTEN,NOT_ENUM},
     {"protostack",     kv_config, kt_string,    KSF_PROTOSTACK, &kw_proto_stack},
