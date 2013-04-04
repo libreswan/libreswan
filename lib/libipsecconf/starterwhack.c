@@ -162,7 +162,7 @@ int starter_whack_read_reply(int sock,
 				}
 				if (xauthnamelen > XAUTH_MAX_NAME_LENGTH) { /* for input >= 128, xauthnamelen would be 129 */
 					xauthnamelen = XAUTH_MAX_NAME_LENGTH;
-					starter_log(LOG_LEVEL_ERR, "xauth name cannot be >= %s chars", XAUTH_MAX_NAME_LENGTH);
+					starter_log(LOG_LEVEL_ERR, "xauth name cannot be >= %d chars", XAUTH_MAX_NAME_LENGTH);
 				}
 				ret=send_reply(sock, xauthname, xauthnamelen);
 				if(ret!=0) return ret;
