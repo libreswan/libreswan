@@ -141,7 +141,7 @@ alg_enum_search_prefix (enum_names *ed, const char *prefix, const char *str, int
 	int ret;
 	int len=sizeof(buf)-1;	/* reserve space for final \0 */
 
-	for (ptr=buf; *prefix; *ptr++=*prefix++, len--);
+	for (ptr=buf; len&&*prefix; *ptr++=*prefix++, len--);
 
 	while (str_len--&&len--&&*str) *ptr++=toupper(*str++);
 	*ptr=0;
@@ -164,7 +164,7 @@ alg_enum_search_ppfix (enum_names *ed, const char *prefix
 	char *ptr;
 	int ret;
 	int len=sizeof(buf)-1;	/* reserve space for final \0 */
-	for (ptr=buf; *prefix; *ptr++=*prefix++, len--);
+	for (ptr=buf; len&&*prefix; *ptr++=*prefix++, len--);
 	while (str_len--&&len--&&*str) *ptr++=toupper(*str++);
 	while (len--&&*postfix) *ptr++=*postfix++;
 	*ptr=0;
