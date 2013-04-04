@@ -7,6 +7,8 @@ v3.2 (unreleased)
 * ipsec: fix syntax error in --help introduced in 3.1 [Tuomo]
 * verify: fix wrong confdir location [Tuomo]
 * pluto: cleanup of XAUTHuser and traffic statistics logging [Paul]
+* pluto: Obsoleted force_keepalive= and --force_keepalive
+* pluto: Added per-conn nat_keepalive=yes|no (default yes) [Paul]
 * Bugtracker bugs fixed:
    #75: Libreswan inserts wrong xfrm policies on some configurations [Tuomo]
    #76: initnss: ipsec initnss fails with a @FINALCONFDDIR@ replace and
