@@ -92,6 +92,7 @@
  *   DSL FW Version: Alcatel, Version 3.9.122)
  * 4485152d18b6bbcd0be8a8469579ddcc
  * 625027749d5ab97f5616c1602765cf480a3b7d0b)
+ * 424e455300000009 (Nortel Contivity)
  *
  * Zyxel Zywall 2 / Zywall 30w
  * 625027749d5ab97f5616c1602765cf480a3b7d0b
