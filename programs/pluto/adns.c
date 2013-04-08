@@ -326,7 +326,7 @@ spawn_worker(void)
 	    close(w->qfd);
 	    close(w->afd);
 	}
-	exit(worker(qfds[0], afds[1]));
+	_exit(worker(qfds[0], afds[1]));
     }
     else
     {
