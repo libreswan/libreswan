@@ -74,34 +74,6 @@
 #include <nss.h>
 #include <pk11pub.h>
 
-/*
- * we have removed /dev/hw_random, as it can produce very low quality
- * entropy. One must run rngd to verify the entropy and feed it into
- * /dev/random properly.
- *
- * You have been warned.
- *
- */
-
-const char *random_devices[]={
-/* Default on Linux + OSX is to use /dev/urandom as 1st choice, and fall back to /dev/random if /dev/urandom doesn't exist */
-#if defined(linux) 
-  "/dev/urandom",
-  "/dev/random"
-#elif defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-  "/dev/urandom"
-#elif defined(__OpenBSD__)
-  "/dev/random"
-#elif defined(__CYGWIN__)
-  "/dev/random"
-#endif
-};
-
-/* if we want to use ARC4, then the Makefile should have compiled rndarc4.c
- * rather than this file
- */
-
-
 void
 get_rnd_bytes(u_char *buffer, int length)
 {
