@@ -550,6 +550,13 @@ const char *pluto_ip_str(const ip_address *src)
     return buf;
 }
 
+bool duplicate_id(struct id *dst, struct id *src) {
+	dst->kind =  src->kind;
+	dst->ip_addr = src->ip_addr;
+	dst->name.len = src->name.len;
+	dst->name.ptr = clone_bytes(src->name.ptr, src->name.len, "copy of id");
+}
+
 /*
  * Local Variables:
  * c-basic-offset:4

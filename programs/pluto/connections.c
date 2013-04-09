@@ -282,7 +282,20 @@ delete_connection(struct connection *c, bool relations)
     release_connection(c, relations);	/* won't delete c */
 
     if (c->kind == CK_GROUP)
-	delete_group(c);
+	delete_group(c); 
+
+#if 0
+    /* TODO:  this will be enabled in the next version */
+    if((c->pool != NULL) && (c->kind == CK_TEMPLATE)){
+	    DBG(DBG_CONTROLMORE ,DBG_log(" free addresspool entry for the"
+				    " conn %s kind %s conn serial %d pool" 
+				    " refcnt %u", c->name
+				    ,enum_name(&connection_kind_names,c->kind)
+				    , c->instance_serial, c->pool->refcnt));
+	    free_addresspool_entry(c->pool);
+	    *&c->pool = NULL;
+    }
+#endif
 
     /* free up any logging resources */
     perpeer_logfree(c);
@@ -325,13 +338,6 @@ delete_connection(struct connection *c, bool relations)
     pfreeany(c->cisco_dns_info);
     pfreeany(c->cisco_domain_info);
     pfreeany(c->cisco_banner);
-
-#ifdef PAUL_DISABLED
-    if(c->pool) {
-            pfreeany(c->pool);
-            c->pool = NULL;
-    }
-#endif 
 
 #endif
 #ifdef HAVE_LABELED_IPSEC

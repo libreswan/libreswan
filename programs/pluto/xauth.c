@@ -292,32 +292,49 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
  * @param ia internal_addr struct
  * @return int Return Code
  */
-static
-int get_internal_addresses(struct connection *con,struct internal_addr *ia)
+static int get_internal_addresses(struct state *st, struct internal_addr *ia)
 {
 #ifdef XAUTH_HAVE_PAM
     int retval;
     char str[IDTOA_BUF+sizeof("ID=")+2];
 #endif
+    struct connection *con = st->st_connection;
 
 #ifdef NAT_TRAVERSAL /* only NAT-T code lets us do virtual ends */
     if (!isanyaddr(&con->spd.that.client.addr))
     {
-	/** assumes IPv4, and also that the mask is ignored */
-	if(con->pool)
-	{
-		get_addr_lease(con, ia);
-	}
-	else 
-	{
-		ia->ipaddr = con->spd.that.client.addr;
-	}
-	if (!isanyaddr(&con->modecfg_dns1)) {
-		ia->dns[0] = con->modecfg_dns1;
-	}
-	if (!isanyaddr(&con->modecfg_dns2)) {
-		ia->dns[1] = con->modecfg_dns2;
-	}
+	    /** assumes IPv4, and also that the mask is ignored */
+
+	    if(con->pool)
+	    {
+	    	get_addr_lease(con, ia);
+		/*
+		if(st->st_ia)
+		{
+			char abuf1[ADDRTOT_BUF];
+			ia = clone_thing(st->st_ia, "re-use lease");
+			addrtot(&ia->ipaddr,0, abuf1, sizeof(abuf1));
+			DBG(DBG_CONTROLMORE, 
+					DBG_log("re-using existing lease %s"
+						, abuf1));
+		}
+		else {
+			get_addr_lease(con, ia);
+			st->st_ia = clone_thing(*ia,"store current lease");
+		}
+		*/
+	    }
+	    else 
+	    {
+		    ia->ipaddr = con->spd.that.client.addr;
+	    }
+
+	    if (!isanyaddr(&con->modecfg_dns1)) {
+		    ia->dns[0] = con->modecfg_dns1;
+	    }
+	    if (!isanyaddr(&con->modecfg_dns2)) {
+		    ia->dns[1] = con->modecfg_dns2;
+	    }
     }
     else
 #endif
@@ -456,7 +473,7 @@ stf_status modecfg_resp(struct state *st
 	    return STF_INTERNAL_ERROR;
 	}
 	zero(&ia);
-	get_internal_addresses(st->st_connection, &ia);
+	get_internal_addresses(st, &ia);
 
 	if(!isanyaddr(&ia.dns[0]))	/* We got DNS addresses, answer with those */
 		resp |= LELEM(INTERNAL_IP4_DNS);
