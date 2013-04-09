@@ -546,6 +546,10 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 	} else msg.nat_keepalive = TRUE;
 #endif
 
+	if(conn->options_set[KBF_INITIAL_CONTACT]) {
+		msg.initial_contact=conn->options[KBF_INITIAL_CONTACT];
+	}
+
 	/*Cisco interop : remote peer type*/
 	if(conn->options_set[KBF_REMOTEPEERTYPE]) {
 		msg.remotepeertype=conn->options[KBF_REMOTEPEERTYPE];

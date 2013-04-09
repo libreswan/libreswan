@@ -137,6 +137,9 @@ struct whack_message {
     /* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
     bool nat_keepalive;
 
+    /* Option to allow sending INITIAL-CONTACT payload - default is disabled */
+    bool initial_contact;
+
     enum keyword_sha2_truncbug sha2_truncbug;
 
     /* Checking if this connection is configured by Network Manager*/

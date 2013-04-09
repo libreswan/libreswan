@@ -1381,6 +1381,7 @@ add_connection(const struct whack_message *wm)
 
 	c->forceencaps = wm->forceencaps;
 	c->nat_keepalive = wm->nat_keepalive;
+	c->initial_contact = wm->initial_contact;
 
 	c->addr_family = wm->addr_family;
 	c->tunnel_addr_family = wm->tunnel_addr_family;
@@ -3502,7 +3503,7 @@ show_one_connection(struct connection *c)
     
     whack_log(RC_COMMENT
 	      , "\"%s\"%s:   ike_life: %lus; ipsec_life: %lus;"
-	      " rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu; sha2_truncbug:%s;"
+	      " rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu; sha2_truncbug:%s; initial_contact:%s;"
 	      , c->name
 	      , instance
 	      , (unsigned long) c->sa_ike_life_seconds
@@ -3511,6 +3512,7 @@ show_one_connection(struct connection *c)
 	      , (unsigned long) c->sa_rekey_fuzz
 	      , (unsigned long) c->sa_keying_tries
 	      , (c->sha2_truncbug) ? "yes" : "no"
+	      , (c->initial_contact) ? "yes" : "no"
 	     );
 
     if (c->policy_next)

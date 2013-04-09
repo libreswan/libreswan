@@ -95,6 +95,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 #endif
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 
+	cfg->conn_default.options[KBF_INITIAL_CONTACT] = FALSE;
+
 	/*Cisco interop: remote peer type*/
 	cfg->conn_default.options[KBF_REMOTEPEERTYPE] = NON_CISCO;
 

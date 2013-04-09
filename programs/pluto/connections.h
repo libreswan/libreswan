@@ -205,6 +205,7 @@ struct connection {
     enum dpd_action dpd_action;             /* what to do when we die */
 
     bool	    nat_keepalive;      /* Suppress sending NAT-T Keep-Alives */
+    bool	    initial_contact;      /* Send INITIAL_CONTACT (RFC-2407) payload? */
 
     /*Cisco interop: remote peer type*/
     enum keyword_remotepeertype remotepeertype;

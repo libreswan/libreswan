@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 04/04/2013
+.\"      Date: 04/09/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "04/04/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "04/09/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -828,6 +828,16 @@ whether to send any NAT\-T keep\-alives\&. These 1 byte packets are send to prev
 \fBno\fR\&. This per\-conn option takes precedence over the global (config setup)
 \fIforce_keepalive=\fR
 option\&.
+.RE
+.PP
+\fBinitial_contact\fR
+.RS 4
+whether to send an INITIAL_CONTACT payload to the peer we are initiating to, if we currently have no IPsec SA\*(Aqs up with that peer\&. Acceptable values are:
+\fBno\fR
+(the default) and
+\fByes\fR\&. It is recommended to leave this option unset, unless the remote peer requires it to allow reconnects\&. The only known peer at this time is Cisco, which will not allow a reconnect (despite authentication) to replace an existing IPsec SA unless it receives an INITIAL_CONTACT payload\&. Receiving this payload is ignored and the choice to replace or add an IPsec SA when libreswan is a responder is purely based on the
+\fBuniqueids\fR
+setting, which should be left enabled unless libreswan acts as an XAUTH server using PSK ("group secret")\&. This option can cause a few seconds of downtime on the IPsec tunnel between the time the remote clears the old IPsec SA in response to our INITIAL_CONTACT message, and the time we finish setting up the new IPsec SA\&. If there is an XAUTH step in between, and especially when XAUTH requires the use of some two\-factor token, this downtime could be even longer\&.
 .RE
 .PP
 \fBoverlapip\fR
