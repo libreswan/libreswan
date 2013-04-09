@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.2 (unreleased)
+* addresspool: Identify reconnecting client and re-use lease [Antony]
 * addconn: improve defaultroute finder [Kim]
 * compiling: fix use of variables in buidlsystem consitent [Tuomo]
 * ipsec: fix syntax error in --help introduced in 3.1 [Tuomo]
