@@ -154,7 +154,7 @@ help(void)
 	    " [--modecfgserver]"
 	    " [--modecfgclient]"
 	    " [--modecfgpull]"
-	    " [--addresspool]"
+	    " [--addresspool <network range>]"
 #ifdef MODECFG_DNSWINS
 	    " [--modecfgdns1]"
 	    " [--modecfgdns2]"
