@@ -90,11 +90,6 @@ int free_lease(struct lease_addr **head, u_int32_t lease)
 			else {
 				p_prev->next = p->next;
 			}
-			/*
-			DBG(DBG_CONTROL ,DBG_log("addresspool could have freeed lease "
-						"index %u ptr %p head %p", lease, p, *head));
-
-			*/
 			p->index=0;
 			DBG(DBG_CONTROL ,DBG_log("addresspool freeing lease "
 						" index %u ptr %p head %p"

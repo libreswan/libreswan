@@ -308,21 +308,6 @@ static int get_internal_addresses(struct state *st, struct internal_addr *ia)
 	    if(con->pool)
 	    {
 	    	get_addr_lease(con, ia);
-		/*
-		if(st->st_ia)
-		{
-			char abuf1[ADDRTOT_BUF];
-			ia = clone_thing(st->st_ia, "re-use lease");
-			addrtot(&ia->ipaddr,0, abuf1, sizeof(abuf1));
-			DBG(DBG_CONTROLMORE, 
-					DBG_log("re-using existing lease %s"
-						, abuf1));
-		}
-		else {
-			get_addr_lease(con, ia);
-			st->st_ia = clone_thing(*ia,"store current lease");
-		}
-		*/
 	    }
 	    else 
 	    {
