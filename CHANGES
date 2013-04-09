@@ -8,14 +8,27 @@ v3.2 (unreleased)
 * ipsec: fix syntax error in --help introduced in 3.1 [Tuomo]
 * verify: fix wrong confdir location [Tuomo]
 * pluto: cleanup of XAUTHuser and traffic statistics logging [Paul]
-* pluto: Obsoleted force_keepalive= and --force_keepalive
+* pluto: Obsoleted force_keepalive= and --force_keepalive [Paul]
 * pluto: Added per-conn nat_keepalive=yes|no (default yes) [Paul]
-* IKEv2: 
+* pluto: Log out own vendorid as "received" instead of "ignored" [Paul]
+* pluto: Prevent logging from truncating XAUTHuser= [Paul]
+* pluto: Don't log (0 byte) SA traffic statistics for ISAKMP SA's [Paul]
+* pluto: Some more changes in the output of ipsec auto --status [Paul]
+* pluto: wipe old logfile on restart (match previous behaviour) [Antony]
+* _stackmanager: When unloading NETKEY, unload ip_vti before xfrm*tunnel [Paul]
+* _stackmanager: Stack was not cleaned up for upstart / non-modular [Paul]
+* building: Fix warnings when compiling with clang [Florian Weimer]
+* building: Add -pie to linker flags, ensure relro is not overwritten [Paul]
+* building: fix "make depend" in programs/pluto [Antony]
+* packaging: Split RHEL spec file into rhel5/rhel6, add USE_OCF flag [Paul]
+* initsystem: fixed default sysv init status function [Tuomo]
+* NETKEY: IPcomp in tunnel mode installed bogus traffic selector [Kim/Tuomo]
+* KLIPS: SAref patches for 3.0.55+ and RHEL 2.6.32-358.2.1 [Pavel Kopchyk]
 * Bugtracker bugs fixed:
    #75: Libreswan inserts wrong xfrm policies on some configurations [Tuomo]
-   #76: initnss: ipsec initnss fails with a @FINALCONFDDIR@ replace and
+   #76: NSS:: ipsec initnss fails with a @FINALCONFDDIR@ replace and
         no default configdir [Tuomo]
-   #78:  segfault on libnss functions when using ikev2 [Antony]
+   #78: NSS: segfault on libnss functions when using ikev2 [Antony]
 
 v3.1 (March 14, 2013)
 * XAUTH: Support for leftaddresspool= [Antony]
