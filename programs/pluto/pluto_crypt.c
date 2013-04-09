@@ -475,24 +475,6 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
     }
 }
 
-bool pluto_crypt_handle_dead_child(int pid, int status)
-{
-    int cnt;
-    struct pluto_crypto_worker *w = pc_workers;
-
-    for(cnt = 0; cnt < pc_workers_cnt; cnt++, w++) {
-	if(w->pcw_pid == pid) {
-	    w->pcw_reaped = TRUE;
-	    
-	    if(w->pcw_dead == TRUE) {
-		cleanup_crypto_helper(w, status);
-	    }
-	    return TRUE;
-	}
-    }
-    return FALSE;
-}    
-
 /*
  * look for any states attaches to continuations
  * also check the backlog
