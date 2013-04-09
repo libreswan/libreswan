@@ -10,10 +10,12 @@ v3.2 (unreleased)
 * pluto: cleanup of XAUTHuser and traffic statistics logging [Paul]
 * pluto: Obsoleted force_keepalive= and --force_keepalive
 * pluto: Added per-conn nat_keepalive=yes|no (default yes) [Paul]
+* IKEv2: 
 * Bugtracker bugs fixed:
    #75: Libreswan inserts wrong xfrm policies on some configurations [Tuomo]
    #76: initnss: ipsec initnss fails with a @FINALCONFDDIR@ replace and
         no default configdir [Tuomo]
+   #78:  segfault on libnss functions when using ikev2 [Antony]
 
 v3.1 (March 14, 2013)
 * XAUTH: Support for leftaddresspool= [Antony]
