@@ -6,34 +6,32 @@
 %global USE_NM true
 %global USE_LINUX_AUDIT true
 
+%global _hardened_build 1
+
 %global fipscheck_version 1.3.0
 %global buildefence 0
 %global development 0
 
+%global prever rc1
+
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: IPSECBASEVERSION
-
-# The default kernel version to build for is the latest of
-# the installed binary kernel
-# This can be overridden by "--define 'kversion x.x.x-y.y.y'"
-%define defkv %(rpm -q kernel kernel-debug| grep -v "not installed" | sed -e "s/kernel-debug-//" -e  "s/kernel-//" -e "s/\.[^.]*$//"  | sort | tail -1 )
-%{!?kversion: %{expand: %%define kversion %defkv}}
-%define krelver %(echo %{kversion} | tr -s '-' '_')
-# Libreswan -pre/-rc nomenclature has to co-exist with hyphen paranoia
-%define srcpkgver %(echo %{version} | tr -s '_' '-')
-
-Release: 1%{?dist}
+#Version: IPSECBASEVERSION
+Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
-Source: https://download.libreswan.org/%{name}-%{srcpkgver}.tar.gz
+Source: https://download.libreswan.org/%{name}-%{version}%{?prever}.tar.gz
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
 BuildRequires: systemd
 Requires(post): coreutils bash systemd
 Requires(preun): systemd
 Requires(postun): systemd
+
+Conflicts: openswan < %{version}-%{release}
+Obsoletes: openswan < %{version}-%{release}
+Provides: openswan = %{version}-%{release}
 
 BuildRequires: pkgconfig hostname
 BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
@@ -82,7 +80,7 @@ Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
 Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
-%setup -q -n libreswan-%{srcpkgver}
+%setup -q -n libreswan-%{version}%{?prever}
 
 %build
 %if %{buildefence}
@@ -92,11 +90,12 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 #796683: -fno-strict-aliasing
 %{__make} \
 %if %{development}
-   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
+   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %else
-  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
+  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %endif
-  USERLINK="-g -pie %{?efence}" \
+  USERLINK="-g -pie -Wl,-z,relro %{?efence}" \
+  INITSYSTEM=systemd \
   USE_DYNAMICDNS="true" \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
@@ -188,4 +187,3 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
 - Automated build from release tar ball
-
