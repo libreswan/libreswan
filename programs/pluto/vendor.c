@@ -102,6 +102,9 @@
  *
  * Solaris 10 has RF 3974 but also md5('RFC XXXX') whih is 810fa565f8ab14369105d706fbd57279
  * (yes, the 'XXXX' are _really_ four times the letter X)
+ *
+ * Juniper, unknown vid:
+ * 699369228741c6d4ca094c93e242c9de19e7b7c60000000500000500
  */
 
 #define MAX_LOG_VID_LEN		32
