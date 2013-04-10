@@ -195,13 +195,13 @@ endif
 
 doinstall: all
 	mkdir -p ${LIBEXECDIR} ${LIBDIR}
-	mkdir -p -m 755 $(CONFDIR)/ipsec.d
-	mkdir -p -m 755 $(CONFDIR)/ipsec.d/cacerts
-	mkdir -p -m 755 $(CONFDIR)/ipsec.d/aacerts
-	mkdir -p -m 755 $(CONFDIR)/ipsec.d/certs
-	mkdir -p -m 755 $(CONFDIR)/ipsec.d/crls
+	mkdir -p -m 700 $(CONFDIR)/ipsec.d
+	mkdir -p -m 700 $(CONFDIR)/ipsec.d/cacerts
+	mkdir -p -m 700 $(CONFDIR)/ipsec.d/aacerts
+	mkdir -p -m 700 $(CONFDIR)/ipsec.d/certs
+	mkdir -p -m 700 $(CONFDIR)/ipsec.d/crls
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d/private
-	mkdir -p -m 700 $(VARDIR)/run/pluto
+	mkdir -p -m 755 $(VARDIR)/run/pluto
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
 	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi

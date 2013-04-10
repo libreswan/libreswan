@@ -103,7 +103,7 @@ rm -rf %{buildroot}/usr/share/doc/libreswan
 rm -rf %{buildroot}/%{_initrddir}/setup
 rm -rf %{buildroot}/etc/ipsec.d/examples
 find %{buildroot}%{_mandir}  -type f | xargs chmod a-x
-install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
+install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 install -d %{buildroot}%{_sbindir}
 #suse specific
 ln -sf /etc/init.d/ipsec ${RPM_BUILD_ROOT}%{_prefix}/sbin/rcipsec
@@ -143,7 +143,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
-%ghost %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
+%ghost %attr(0755,root,root) %dir %{_localstatedir}/run/pluto
 %{_initrddir}/ipsec
 %{_libdir}/ipsec
 %{_sbindir}/rcipsec
