@@ -122,8 +122,8 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-  fipshmac -d $RPM_BUILD_ROOT%{_libdir}/fipscheck ` ls $RPM_BUILD_ROOT%{_libexecdir}/ipsec/*|grep -v setup` \
-  fipshmac -d $RPM_BUILD_ROOT%{_libdir}/fipscheck $RPM_BUILD_ROOT%{_sbindir}/ipsec \
+  fipshmac -d %{buildroot}%{_libdir}/fipscheck ` ls %{buildroot}%{_libexecdir}/ipsec/*|grep -v setup` \
+  fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
 %{nil}
 %endif
 
@@ -147,11 +147,11 @@ install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
 %if %{USE_FIPSCHECK}
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/fipscheck
+mkdir -p %{buildroot}%{_libdir}/fipscheck
 %endif
 
-echo "include /etc/ipsec.d/*.secrets" > $RPM_BUILD_ROOT%{_sysconfdir}/ipsec.secrets
-rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
+echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+rm -fr %{buildroot}/etc/rc.d/rc*
 
 %files 
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
