@@ -136,6 +136,7 @@ rm -rf ${RPM_BUILD_ROOT}
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   INSTMANFLAGS="-m 644" \
+  INITSYSTEM=systemd \
   install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
