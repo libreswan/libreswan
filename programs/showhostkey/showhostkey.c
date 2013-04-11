@@ -7,7 +7,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Stefan Arentz <stefan@arentz.ca>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com> 
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com> 
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -298,7 +298,7 @@ void show_dnskey(struct secret *s
 	}
 			
 	printf("%s.    IN    IPSECKEY  %d %d 2 %s %s\n",
-	       qname, precedence, gateway_type , (gateway == NULL) ? "." : gateway, base64);
+	       qname, precedence, gateway_type , (gateway == NULL) ? "." : gateway, base64+sizeof("0s")-1);
 }
      
 void show_confkey(struct secret *s
@@ -473,7 +473,9 @@ int main(int argc, char *argv[])
     SECStatus rv;
     char buf[100];
     snprintf(buf, sizeof(buf), "%s",oco->confddir);
-    fprintf(stderr, "nss directory showhostkey: %s",buf);
+    if (verbose){
+	fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",buf);
+    }
     PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
     if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
 	fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",progname, PR_GetError());
@@ -504,11 +506,15 @@ int main(int argc, char *argv[])
     }
 
     if(rsakeyid) {
-	printf("; picking by rsakeyid=%s\n", rsakeyid);
+	if (verbose) {
+		printf("; picking by rsakeyid=%s\n", rsakeyid);
+	}
 	s = get_key_byid(host_secrets, rsakeyid);
 	keyid=rsakeyid;
     } else if(keyid) {
-	printf("; picking by keyid=%s\n", keyid);
+	if (verbose) {
+		printf("; picking by keyid=%s\n", keyid);
+	}
 	s = pick_key(host_secrets, keyid);
     } else {
 	/* Paul: This assumption is WRONG. Mostly I have PSK's above my
