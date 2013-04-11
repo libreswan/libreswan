@@ -20,7 +20,7 @@ config setup
 	# plutodebug / klipsdebug = "all", "none" or a combation from below:
 	# "raw crypt parsing emitting control klips pfkey natt x509 dpd private"
 	# eg:
-	#plutodebug="control parsing"
+	# plutodebug="control parsing"
 	# Again: only enable plutodebug or klipsdebug when asked by a developer
 	#plutodebug=none
 	#klipsdebug=none
@@ -34,7 +34,7 @@ config setup
 	# Note: SElinux policies might prevent pluto writing the core at unusual locations
 	dumpdir=/var/run/pluto/
 	#
-	# NAT-TRAVERSAL support, see README.NAT-Traversal
+	# NAT-TRAVERSAL support
 	# exclude networks used on server side by adding %v4:!a.b.c.0/24
 	# It seems that T-Mobile in the US and Rogers/Fido in Canada are
 	# using 25/8 as "private" address space on their wireless networks.
@@ -44,22 +44,11 @@ config setup
 
 # Add connections here
 
-# For more examples, see your distribution's documentation directory, for example
+# For example connections, see your distribution's documentation directory, for example
 #  /usr/share/docs/libreswan-3.*/ or look at https://www.libreswan.org/
 #
 # There is also a lot of information in the manual page, "man ipsec.conf"
-#
-# sample VPN connection
-#conn sample
-#		# Left security gateway, subnet behind it, nexthop toward right.
-#		left=10.0.0.1
-#		leftsubnet=172.16.0.0/24
-#		leftnexthop=10.22.33.44
-#		# Right security gateway, subnet behind it, nexthop toward left.
-#		right=10.12.12.1
-#		rightsubnet=192.168.0.0/24
-#		rightnexthop=10.101.102.103
-#		# To authorize this connection, but not actually start it, 
-#		# at startup, uncomment this.
-#		#auto=add
 
+# You may put your configuration (.conf) file in the "/etc/ipsec.d/" directory
+# by uncommenting this line
+#include /etc/ipsec.d/*.conf
