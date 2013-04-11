@@ -1,6 +1,7 @@
 : ==== start ====
 TESTNAME=ikev2-04-basic-x509
-source /testing/pluto/bin/eastnlocal.sh
+
+/testing/guestbin/swan-prep --x509
 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
