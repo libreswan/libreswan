@@ -94,10 +94,10 @@ west #
 000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
-000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
 000 "westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
 000 "westnet-eastnet":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
-000 "westnet-eastnet":   dpd: action:clear; delay:0; timeout:0;  
+000 "westnet-eastnet":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
 000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 1, active 0
@@ -132,6 +132,7 @@ west #
  echo done
 done
 west #
+002 shutting down
 west #
  if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core ./; fi
 
