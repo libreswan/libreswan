@@ -79,6 +79,7 @@ struct kernel_sa {
 
 	ipsec_spi_t spi;
 	unsigned proto;
+	unsigned int transport_proto;
 	enum eroute_type esatype;
 	unsigned replay_window;
 	unsigned reqid;
