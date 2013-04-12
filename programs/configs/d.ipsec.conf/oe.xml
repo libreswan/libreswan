@@ -1,24 +1,14 @@
   <varlistentry>
   <term><emphasis remap='B'>oe</emphasis></term>
   <listitem>
-<para>a boolean (yes/no) that determines if Opportunistic Encryption will
+<para>This option is ignored for now. It used to determine if Opportunistic Encryption will
 be enabled. Opportunistic Encryption is the term to describe using IPsec
 tunnels without prearrangement. It uses IPSECKEY or TXT records to
-announce public RSA keys for certain IP's or identities.
-</para>
-<para>
-For a complete description see /doc/draft-richardson-ipsec-opportunistic.txt,
-doc/opportunism-spec.txt and doc/opportunism.howto. See also the IETF BTNS
-working group and RFC4025.
-</para>
-<para>
-The default is no. 
-</para>
-<para>
-This feature is only available with kernel drivers that support the caching of
-packets (%hold eroutes or equivalent) that allows us to respond to a packet
-from an unknown IP address.
-At present only the (klips)mast protocol stack supports this feature.
+announce public RSA keys for certain IP's or identities. However, this feature is going to
+be moved outside of the pluto IKE daemon into a separate process, more closely tied with a
+local DNS(SEC) server. The default value used to be <emphasis remap='B'>no</emphasis>, so
+this should not affect anyone. Contact the developers if you are interested in working on
+the re-implementation of OE.
 </para>
 </listitem>
   </varlistentry>
