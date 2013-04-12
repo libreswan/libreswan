@@ -579,23 +579,6 @@ netlink_raw_eroute(const ip_address *this_host
 		    , proto, that_client_t, local_that_client_t);
 	    });
 
-	/* We have a bug somewhere in the code where NATD port of remote
-	 * gets applied to protoport port of host. Happily it only seem
-	 * to affect natted transport mode so we can undo that corruption
-	 * here. This corruption of that_host port is random and we couldn't
-	 * find the place where it happens. Port of that_client is anyway the
-	 * port we should use here.
-	 * Bug #1101. Tuomo
-	 */
-	if(portof(&that_client->addr) != portof(that_host)) {
-	    libreswan_log("%s: WARNING: that_client port %u and that_host"
-			 " port %u don't match. Using that_client port."
-			 , __FUNCTION__
-			 , ntohs(portof(&that_client->addr))
-			 , ntohs(portof(that_host)));
-	    setportof(portof(&that_client->addr), &local_that_client.addr);
-	}
-
  	that_client = &local_that_client;
     }
 
