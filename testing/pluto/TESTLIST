@@ -306,7 +306,7 @@ umlXhost	xauth-pluto-11		good
 
 kvmplutotest	xauth-pluto-12		good
 kvmplutotest	xauth-pluto-13		good
-kvmplutotest	xauth-pluto-13		good
+kvmplutotest	xauth-pluto-14		good
 kvmplutotest	xauth-pluto-15		good
 kvmplutotest	xauth-pluto-16		good
 
@@ -478,8 +478,8 @@ umlplutotest	ipv6-v6-through-v4-klips-klips		good
 umlplutotest	ikev2-01-fallback-ikev1			good
 umlplutotest	ikev2-02-responder-send-notify		good
 umlplutotest	ikev2-03-basic-rawrsa			good
-umlplutotest	ikev2-04-basic-x509			good
-umlplutotest	ikev2-05-basic-psk			good
+kvmplutotest	ikev2-04-basic-x509			good
+kvmplutotest	ikev2-05-basic-psk			good
 umlplutotest	ikev2-06-6msg				good
 umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good

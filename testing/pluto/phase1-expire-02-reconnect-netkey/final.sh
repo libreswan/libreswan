@@ -1,6 +1,5 @@
 : ==== cut ====
 ipsec auto --status
-cat /tmp/pluto.log
 # for netkey, show policies
 echo "ip xfrm policy"
 ip xfrm policy
