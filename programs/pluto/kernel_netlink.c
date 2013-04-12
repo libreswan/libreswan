@@ -806,6 +806,33 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
     else
     {
 	req.p.mode = XFRM_MODE_TRANSPORT;
+    }
+
+    /* We only add traffic selectors for transport mode. The problem is that
+     * Tunnel mode ipsec with ipcomp is layered so that ipcomp tunnel is
+     * protected with transport mode ipsec but in this case we shouldn't any
+     * more add traffic selectors. Caller function will inform us if we
+     * need or don't need selectors. */
+    if (sa->add_selector) {
+	ip_subnet src_tmp;
+	ip_subnet dst_tmp;
+	const ip_subnet *src;
+	const ip_subnet *dst;
+
+	/* With XFRM/NETKEY and transport mode with nat-traversal we need
+	 * to change outbound IPsec SA to point to exteral ip of the peer.
+	 * Here we substitute real client ip with NATD ip. */
+	if (sa->inbound == 0) {
+	    addrtosubnet(sa->dst, &dst_tmp);
+	    dst = &dst_tmp;
+	} else
+	    dst = sa->dst_client;
+
+	if (sa->inbound == 1) {
+	    addrtosubnet(sa->src, &src_tmp);
+	    src = &src_tmp;
+	} else
+	    src = sa->src_client;
 
 	req.p.sel.sport = portof(&sa->src_client->addr);
 	req.p.sel.dport = portof(&sa->dst_client->addr);
@@ -837,12 +864,12 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	req.p.sel.sport_mask = (req.p.sel.sport) ? ~0:0;
 	req.p.sel.dport_mask = (req.p.sel.dport) ? ~0:0;
-	ip2xfrm(&sa->src_client->addr, &req.p.sel.saddr);
-	ip2xfrm(&sa->dst_client->addr, &req.p.sel.daddr);
-	req.p.sel.prefixlen_s = sa->src_client->maskbits;
-	req.p.sel.prefixlen_d = sa->dst_client->maskbits;
+	ip2xfrm(&src->addr, &req.p.sel.saddr);
+	ip2xfrm(&dst->addr, &req.p.sel.daddr);
+	req.p.sel.prefixlen_s = src->maskbits;
+	req.p.sel.prefixlen_d = dst->maskbits;
 	req.p.sel.proto = sa->transport_proto;
-	req.p.sel.family = sa->src_client->addr.u.v4.sin_family;
+	req.p.sel.family = src->addr.u.v4.sin_family;
 
     }
 
