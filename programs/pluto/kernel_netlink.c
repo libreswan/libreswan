@@ -547,13 +547,6 @@ netlink_raw_eroute(const ip_address *this_host
 	   DBG_log("satype(%d) is not used in netlink_raw_eroute.",satype));
     }
 
-    /* log warning for RFC-breaking implementation in NETKEY/XFRM stack */
-    if ( (proto_info[0].encapsulation != ENCAPSULATION_MODE_TUNNEL)
-	&& (transport_proto != 0)
-	&& (satype != 0)) {
-	   DBG_log("warning: NETKEY/XFRM in transport mode accepts ALL encrypted protoport packets between the hosts in violation of RFC 4301, Section 5.2");
-    }
-
     /* Bug #1004 fix.
      * There really isn't "client" with NETKEY and transport mode
      * so eroute must be done to natted, visible ip. If we don't hide
@@ -578,23 +571,6 @@ netlink_raw_eroute(const ip_address *this_host
 		    " substituting %s with %s"
 		    , proto, that_client_t, local_that_client_t);
 	    });
-
-	/* We have a bug somewhere in the code where NATD port of remote
-	 * gets applied to protoport port of host. Happily it only seem
-	 * to affect natted transport mode so we can undo that corruption
-	 * here. This corruption of that_host port is random and we couldn't
-	 * find the place where it happens. Port of that_client is anyway the
-	 * port we should use here.
-	 * Bug #1101. Tuomo
-	 */
-	if(portof(&that_client->addr) != portof(that_host)) {
-	    libreswan_log("%s: WARNING: that_client port %u and that_host"
-			 " port %u don't match. Using that_client port."
-			 , __FUNCTION__
-			 , ntohs(portof(&that_client->addr))
-			 , ntohs(portof(that_host)));
-	    setportof(portof(&that_client->addr), &local_that_client.addr);
-	}
 
  	that_client = &local_that_client;
     }
@@ -830,6 +806,71 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
     else
     {
 	req.p.mode = XFRM_MODE_TRANSPORT;
+    }
+
+    /* We only add traffic selectors for transport mode. The problem is that
+     * Tunnel mode ipsec with ipcomp is layered so that ipcomp tunnel is
+     * protected with transport mode ipsec but in this case we shouldn't any
+     * more add traffic selectors. Caller function will inform us if we
+     * need or don't need selectors. */
+    if (sa->add_selector) {
+	ip_subnet src_tmp;
+	ip_subnet dst_tmp;
+	const ip_subnet *src;
+	const ip_subnet *dst;
+
+	/* With XFRM/NETKEY and transport mode with nat-traversal we need
+	 * to change outbound IPsec SA to point to exteral ip of the peer.
+	 * Here we substitute real client ip with NATD ip. */
+	if (sa->inbound == 0) {
+	    addrtosubnet(sa->dst, &dst_tmp);
+	    dst = &dst_tmp;
+	} else
+	    dst = sa->dst_client;
+
+	if (sa->inbound == 1) {
+	    addrtosubnet(sa->src, &src_tmp);
+	    src = &src_tmp;
+	} else
+	    src = sa->src_client;
+
+	req.p.sel.sport = portof(&sa->src_client->addr);
+	req.p.sel.dport = portof(&sa->dst_client->addr);
+
+	/* As per RFC 4301/5996, icmp type is put in the most significant 8 bits
+	* and icmp code is in the least significant 8 bits of port field. 
+	* Although Openswan does not have any configuration options for 
+	* icmp type/code values, it is possible to specify icmp type and code 
+	* using protoport option. For example, icmp echo request (type 8/code 0) 
+	* needs to be encoded as 0x0800 in the port field and can be specified 
+	* as left/rightprotoport=icmp/2048. Now with NETKEY, icmp type and code
+	* need to be passed as source and destination ports, respectively.
+	* therefore, this code extracts upper 8 bits and lower 8 bits and puts
+	* into source and destination ports before passing to NETKEY. */
+
+
+	if( 1 == sa->transport_proto /*icmp*/ || 58 == sa->transport_proto /*ipv6-icmp*/) {
+
+	u_int16_t icmp_type;
+	u_int16_t icmp_code;
+
+	icmp_type = ntohs(req.p.sel.sport) >> 8;
+	icmp_code = ntohs(req.p.sel.sport) & 0xFF;
+
+	req.p.sel.sport = htons(icmp_type);
+	req.p.sel.dport = htons(icmp_code);
+
+	}
+
+	req.p.sel.sport_mask = (req.p.sel.sport) ? ~0:0;
+	req.p.sel.dport_mask = (req.p.sel.dport) ? ~0:0;
+	ip2xfrm(&src->addr, &req.p.sel.saddr);
+	ip2xfrm(&dst->addr, &req.p.sel.daddr);
+	req.p.sel.prefixlen_s = src->maskbits;
+	req.p.sel.prefixlen_d = dst->maskbits;
+	req.p.sel.proto = sa->transport_proto;
+	req.p.sel.family = src->addr.u.v4.sin_family;
+
     }
 
     req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window; 

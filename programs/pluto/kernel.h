@@ -77,8 +77,11 @@ struct kernel_sa {
 	const ip_subnet *src_client;
 	const ip_subnet *dst_client;
 
+	bool inbound;
+	bool add_selector;
 	ipsec_spi_t spi;
 	unsigned proto;
+	unsigned int transport_proto;
 	enum eroute_type esatype;
 	unsigned replay_window;
 	unsigned reqid;
