@@ -29,6 +29,8 @@ v3.2 (unreleased)
    #76: NSS:: ipsec initnss fails with a @FINALCONFDDIR@ replace and
         no default configdir [Tuomo]
    #78: NSS: segfault on libnss functions when using ikev2 [Antony]
+   #85: NETKEY: Pass traffic selectors to the kernel in Transport Mode
+        support was incomplete and broke nat-t trasport mode [Kim/Tuomo]
 
 v3.1 (March 14, 2013)
 * XAUTH: Support for leftaddresspool= [Antony]
