@@ -23,7 +23,6 @@ v3.2 (unreleased)
 * building: fix "make depend" in programs/pluto [Antony]
 * packaging: Split RHEL spec file into rhel5/rhel6, add USE_OCF flag [Paul]
 * initsystem: fixed default sysv init status function [Tuomo]
-* NETKEY: IPcomp in tunnel mode installed bogus traffic selector [Kim/Tuomo]
 * KLIPS: SAref patches for 3.0.55+ and RHEL 2.6.32-358.2.1 [Pavel Kopchyk]
 * Bugtracker bugs fixed:
    #75: Libreswan inserts wrong xfrm policies on some configurations [Tuomo]
