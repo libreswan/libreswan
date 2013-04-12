@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
-.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 04/09/2013
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 04/12/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "04/09/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "04/12/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -46,8 +46,7 @@ A line which contains
 and a file name, separated by white space, is replaced by the contents of that file, preceded and followed by empty lines\&. If the file name is not a full pathname, it is considered to be relative to the directory containing the including file\&. Such inclusions can be nested\&. Only a single filename may be supplied, and it may not contain white space, but it may include shell wildcards (see
 \fBsh\fR(1)); for example:
 .PP
-\fBinclude\fR
-\fBipsec\&.*\&.conf\fR
+\fBinclude\fR\fBipsec\&.*\&.conf\fR
 .PP
 The intention of the include facility is mostly to permit keeping information on connections, or sets of connections, separate from the main configuration file\&. This permits such connection descriptions to be changed, copied to the other security gateways involved, etc\&., without having to constantly extract them from the configuration file and then insert them back into it\&. Note also the
 \fBalso\fR
@@ -61,8 +60,7 @@ The first significant line of the file must specify the version of this specific
 .PP
 A section begins with a line of the form:
 .PP
-\fItype\fR
-\fIname\fR
+\fItype\fR\fIname\fR
 .PP
 where
 \fItype\fR
@@ -230,13 +228,11 @@ the type of the connection; currently the accepted values are
 (required) the IP address of the left participant\*(Aqs public\-network interface, in any form accepted by
 \fBipsec_ttoaddr\fR(3)\&. Currently, IPv4 and IPv6 IP addresses are supported\&. There are several magic values\&. If it is
 \fB%defaultroute\fR, and the
-\fBconfig\fR
-\fBsetup\fR
+\fBconfig\fR\fBsetup\fR
 section\*(Aqs,
 \fBinterfaces\fR
 specification contains
-\fB%defaultroute,\fR
-\fBleft\fR
+\fB%defaultroute,\fR\fBleft\fR
 will be filled in automatically with the local address of the default\-route interface (as determined at IPsec startup time); this also overrides any value supplied for
 \fBleftnexthop\fR\&. (Either
 \fBleft\fR
@@ -290,9 +286,7 @@ option can be used to allow RFC1918 subnets without hardcoding them\&. When usin
 \fBleftsubnets\fR
 .RS 4
 specify multiple private subnets behind the left participant, expressed as {
-\fInetworkA\fR\fB/\fR\fInetmaskA\fR
-\fInetworkB\fR\fB/\fR\fInetmaskB\fR
-\fI[\&.\&.\&.]\fR
+\fInetworkA\fR\fB/\fR\fInetmaskA\fR\fInetworkB\fR\fB/\fR\fInetmaskB\fR\fI[\&.\&.\&.]\fR
 } If both a leftsubnets= and rightsubnets= is defined, all combinations of subnet tunnels will be instantiated\&. You cannot use leftsubnet and leftsubnets together\&. For examples see
 \fItesting/pluto/multinet\-*\fR\&.
 .RE
@@ -363,8 +357,7 @@ is
 \fB%defaultroute\fR, and
 \fBinterfaces=%defaultroute\fR
 is used in the
-\fBconfig\fR
-\fBsetup\fR
+\fBconfig\fR\fBsetup\fR
 section, the next\-hop gateway address of the default\-route interface will be used\&. The magic value
 \fB%direct\fR
 signifies a value to be filled in (by automatic keying) with the peer\*(Aqs address\&. Relevant only locally, other end need not agree on it\&.
@@ -413,20 +406,16 @@ The following parameters are relevant to automatic keying via IKE\&. Unless othe
 what operation, if any, should be done automatically at IPsec startup; currently\-accepted values are
 \fBadd\fR
 (signifying an
-\fBipsec auto\fR
-\fB\-\-add\fR),
+\fBipsec auto\fR\fB\-\-add\fR),
 \fBroute\fR
 (signifying that plus an
-\fBipsec auto\fR
-\fB\-\-route\fR),
+\fBipsec auto\fR\fB\-\-route\fR),
 \fBstart\fR
 (signifying that plus an
-\fBipsec auto\fR
-\fB\-\-up\fR), and
+\fBipsec auto\fR\fB\-\-up\fR), and
 \fBignore\fR
 (also the default) (signifying no automatic startup operation)\&. See the
-\fBconfig\fR
-\fBsetup\fR
+\fBconfig\fR\fBsetup\fR
 discussion below\&. Relevant only locally, other end need not agree on it (but in general, for an intended\-to\-be\-permanent connection, both ends should use
 \fBauto=start\fR
 to ensure that any reboot causes immediate renegotiation)\&.
@@ -1080,8 +1069,7 @@ Parameters are optional unless marked \(lq(required)\(rq\&.
 The currently\-accepted
 \fIparameter\fR
 names in a
-\fBconfig\fR
-\fBsetup\fR
+\fBconfig\fR\fBsetup\fR
 section are:
 .PP
 \fBmyid\fR
@@ -1199,13 +1187,8 @@ Note: It seems that T\-Mobile in the US and Rogers/Fido in Canada have started u
 .PP
 \fBoe\fR
 .RS 4
-a boolean (yes/no) that determines if Opportunistic Encryption will be enabled\&. Opportunistic Encryption is the term to describe using IPsec tunnels without prearrangement\&. It uses IPSECKEY or TXT records to announce public RSA keys for certain IP\*(Aqs or identities\&.
-.sp
-For a complete description see /doc/draft\-richardson\-ipsec\-opportunistic\&.txt, doc/opportunism\-spec\&.txt and doc/opportunism\&.howto\&. See also the IETF BTNS working group and RFC4025\&.
-.sp
-The default is no\&.
-.sp
-This feature is only available with kernel drivers that support the caching of packets (%hold eroutes or equivalent) that allows us to respond to a packet from an unknown IP address\&. At present only the (klips)mast protocol stack supports this feature\&.
+This option is ignored for now\&. It used to determine if Opportunistic Encryption will be enabled\&. Opportunistic Encryption is the term to describe using IPsec tunnels without prearrangement\&. It uses IPSECKEY or TXT records to announce public RSA keys for certain IP\*(Aqs or identities\&. However, this feature is going to be moved outside of the pluto IKE daemon into a separate process, more closely tied with a local DNS(SEC) server\&. The default value used to be
+\fBno\fR, so this should not affect anyone\&. Contact the developers if you are interested in working on the re\-implementation of OE\&.
 .RE
 .PP
 \fBnhelpers\fR
