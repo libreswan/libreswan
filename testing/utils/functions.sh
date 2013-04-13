@@ -75,10 +75,14 @@ consolediff() {
 kvmplutotest () {
 	testdir=$1
 	testexpect=$2
-	echo '***** KVM PLUTO RUNNING' $testdir${KLIPS_MODULE} '*******'
-  	cd $testdir 
-	${UTILS}/dotest.sh 
-	cd ../
+	if [ -f ./stop-tests-now ] ; then
+		echo "****** skip test $testdir found stop-tests-now *****"
+	else
+		echo '***** KVM PLUTO RUNNING' $testdir${KLIPS_MODULE} '*******'
+		cd $testdir 
+		${UTILS}/dotest.sh 
+		cd ../
+	fi
 }
 
 #
@@ -86,24 +90,24 @@ kvmplutotest () {
 skiptest() {
 	testdir=$1
 	testexpect=$2
-	echo '****** skip test $testdir yet to be migrated to kvm style '
+	echo "****** skip test $testdir yet to be migrated to kvm style "
 }
 
 ctltest() {
 	testdir=$1
         testexpect=$2
-	echo '****** ctltest test $testdir yet to be migrated to kvm style '
+	echo "****** ctltest test $testdir yet to be migrated to kvm style "
 }
 
 umlXhost () {
 	testdir=$1
         testexpect=$2
-	echo '****** umlXhost test $testdir yet to be migrated to kvm style '
+	echo "****** umlXhost test $testdir yet to be migrated to kvm style "
 }
 
 umlplutotest () {
 	testdir=$1
 	testexpect=$2
-	echo '****** umlplutotest test $testdir yet to be migrated to kvm style '
+	echo "****** umlplutotest test $testdir yet to be migrated to kvm style "
 }
 
