@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.2 (unreleased)
+v3.2 (April 13, 2013)
 * addresspool: Identify reconnecting client and re-use lease [Antony]
 * IKEv1: Support for sending initial_contact in Main Mode [Paul]
 * addconn: improve defaultroute finder [Kim]
