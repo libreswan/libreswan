@@ -68,7 +68,7 @@ def connect_to_kvm(args):
     timer = 180
     child = pexpect.spawn (cmd)
     # don't match full prompt, we want it to work regardless cwd
-    prompt = "root@%s " % (args.hostname) 
+    prompt = "\[root@%s " % (args.hostname) 
 
     done = 0
     tries = 30
@@ -101,9 +101,12 @@ def connect_to_kvm(args):
 
 
     child.sendline ('TERM=dumb; export TERM; unset LS_COLORS')
+    res = child.expect (['login: ', prompt], timeout=3) 
     child.setecho(False) ## this does not seems to work
     child.sendline("stty sane")
+    res = child.expect (['login: ', prompt], timeout=3) 
     child.sendline("stty -echo")
+    res = child.expect (['login: ', prompt], timeout=3) 
     return child
 
 def run_final (args, child):
