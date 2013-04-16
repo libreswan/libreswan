@@ -79,8 +79,8 @@ EOD
 
 # noauto for now, as we seem to need more system parts started before we can mount 9p
 cat << EOD >> /etc/fstab
-testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0
-swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L 0 0
+testing /testing 9p defaults,noauto,trans=virtio,version=9p2000.L,context=system_u:object_r:var_log_t:s0 0 0
+swansource /source 9p defaults,noauto,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0 0 0
 tmpfs                   /dev/shm                tmpfs   defaults        0 0
 tmpfs                   /tmp                    tmpfs   defaults        0 0
 devpts                  /dev/pts                devpts  gid=5,mode=620  0 0

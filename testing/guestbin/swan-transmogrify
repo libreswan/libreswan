@@ -39,14 +39,14 @@ for hostname in macs.keys():
 		sysctl = "/testing/baseconfigs/%s/etc/sysctl.conf"%hostname
 		if not os.path.isfile(sysctl):
 			sysctl = "/testing/baseconfigs/all/etc/sysctl.conf"
-		output += "\n" + commands.getoutput("mount --bind %s /etc/sysctl.conf"%sysctl)
+		shutil.copyfile(sysctl,"/etc/sysctl.conf")
 		output += "\n" + commands.getoutput("sysctl -q -p")
 
 		# and resolv.conf
 		resolv = "/testing/baseconfigs/%s/etc/resolv.conf"
 		if not os.path.isfile(resolv):
 			resolv = "/testing/baseconfigs/%s/etc/resolv.conf"%hostname
-		output += "\n" + commands.getoutput("mount --bind %s /etc/resolv.conf"%resolv)
+		shutil.copyfile(resolv,"/etc/resolv.conf")
 
 		if not os.path.isdir("/etc/ssh"):
 			os.makedirs("/etc/ssh",0755)
@@ -58,8 +58,7 @@ for hostname in macs.keys():
 		output += "\n" + commands.getoutput("chmod 600 /etc/ssh/*key* /root/.ssh/authorized_keys")
 
 		if GUESTOS == "redhat":
-			output += "\n" + commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/sysconfig/network /etc/sysconfig/network"%hostname)
-			# pickup entries from "all" host, for now only iptables services. cannot mount, must copy
+			shutil.copyfile("/testing/baseconfigs/%s/etc/sysconfig/network"%hostname, "/etc/sysconfig/network")
 			fnames = glob.glob("/testing/baseconfigs/all/etc/sysconfig/*")
 			for fname in fnames:
 				if os.path.isfile(fname):
@@ -68,11 +67,16 @@ for hostname in macs.keys():
 			ifaces = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*"%hostname)
 			routes = glob.glob("/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*"%hostname)
 			for entry in (ifaces + routes):
-				fname = os.path.basename(entry)
-				if not os.path.isfile("/etc/sysconfig/network-scripts/%s"%fname):
-					fp = open("/etc/sysconfig/network-scripts/%s"%fname,"w")
-					fp.close()
-				output += "\n" + commands.getoutput("mount --bind %s /etc/sysconfig/network-scripts/%s"%(entry,fname))
+				shutil.copyfile(entry,"/etc/sysconfig/network-scripts/%s"%os.path.basename(entry))
+
+			# SElinux fixup
+			output += "\n" + commands.getoutput("restorecon -R /etc/ /root/.ssh")
+			output += "\n" + commands.getoutput("chcon -R --reference /var/log /testing/pluto")
+
+			# we have to cleanup the audit log or we could get entries from before this boot
+			fp = open("/var/log/audit.log","w")
+			fp.close()
+
 			if os.path.isfile("/usr/bin/systemctl"):
 				for service in ( "network", "iptables", "ip6tables"):
 					output += "\n" + commands.getoutput("systemctl restart %s.service"%service)
@@ -83,12 +87,10 @@ for hostname in macs.keys():
 			if not "#alias" in open("/root/.bashrc","r").read():
 				output += "\n" + commands.getoutput("sed -i 's/alias/# alias/g' /root/.bashrc")
 
-			# SElinux fixup
-			output += "\n" + commands.getoutput("restorecon -R /etc/ssh/ /root/.ssh /etc/sysconfig")
 
 		elif GUESTOS == "debian":
-			output += "\n" + commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/hostname /etc/hostname"%hostname)
-			output += "\n" + commands.getoutput("mount --bind /testing/baseconfigs/%s/etc/network/interfaces /etc/network/interfaces"%hostname)
+			shutil.copyfile("/testing/baseconfigs/%s/etc/hostname"%hostname,"/etc/hostname")
+			shutil.copyfile("/testing/baseconfigs/%s/etc/network/interfaces"%hostname, "/etc/network/interfaces")
 			output += "\n" + commands.getoutput("/etc/init.d/networking restart")
 
 		# and some custom ipsec* files, but not directories
@@ -108,8 +110,12 @@ for hostname in macs.keys():
 		for dbfile in glob.glob("/etc/ipsec.d/*.db"):
 			os.chmod(dbfile,0600)
 
+		# SElinux fixup
+		if GUESTOS == "redhat":
+			output += "\n" + commands.getoutput("restorecon -R /etc/")
+
 		if len(sys.argv) > 1:
 			print output.strip()
 		sys.exit()
 
-sys.exit("Failed to find our swan hostname based on the mac of eth0")
+sys.exit("ERROR: Failed to find our swan hostname based on the mac of eth0")
