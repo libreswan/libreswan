@@ -58,7 +58,7 @@ while(<>) {
 
     $_=<>;
     # east Thu Nov  7 22:22:34 GMT 2002
-    s/(.*) ... ... .. ..:..:.. (?:GMT|EST|EET|CET) ..../\1 NOW/;
+    s/(.*) ... ... .. ..:..:.. (?:GMT|EDT|EST|EET|CET|UTC) ..../\1 NOW/;
 
     $ineroute=1;
     $intncfg=0;
