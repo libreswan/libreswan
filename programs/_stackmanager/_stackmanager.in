@@ -259,6 +259,15 @@ startklips() {
 	# PAUL: We tell in the man page for ipsec.conf protostack= that
 	#	the user should do this
 
+	# Double check the mtu is not 0
+	# if it is set it to a saner default
+	ip link show dev $virt | grep -q 'mtu 0 '
+	RETVAL=$?
+	if [ "$RETVAL" -eq 0 ]; then
+		echo "Fixup of mtu on $virt to 16260" >&2
+		ip link set mtu 16260 dev $virt
+	fi
+
     elif [ $stack = "klips" ]; then
 	# in klips mode we attach it to the physical device
 	# clear tables out in case dregs have been left over
