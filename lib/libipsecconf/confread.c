@@ -353,6 +353,9 @@ static int load_setup (struct starter_config *cfg
 	    case kt_obsolete:
 	        starter_log(LOG_LEVEL_INFO, "Warning: ignored obsolete keyword '%s'",kw->keyword.keydef->keyname);
 		break;
+	    case kt_obsolete_quiet:
+	        starter_log(LOG_LEVEL_DEBUG, "Warning: ignored obsolete keyword '%s'",kw->keyword.keydef->keyname);
+		break;
 	    }
 	}
 		
@@ -876,6 +879,9 @@ bool translate_conn (struct starter_conn *conn
 	case kt_comment:
 	    break;
 	case kt_obsolete:
+	    starter_log(LOG_LEVEL_INFO,"Warning: obsolete keyword '%s' ignored\n",kw->keyword.keydef->keyname);
+	    break;
+	case kt_obsolete_quiet:
 	    starter_log(LOG_LEVEL_DEBUG,"Warning: obsolete keyword '%s' ignored\n",kw->keyword.keydef->keyname);
 	    break;
 	}

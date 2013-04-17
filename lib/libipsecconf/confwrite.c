@@ -152,6 +152,7 @@ void confwrite_int(FILE *out,
 	    continue;
 
 	case kt_obsolete:
+	case kt_obsolete_quiet:
 	    continue;
 	}
 
@@ -224,6 +225,7 @@ void confwrite_str(FILE *out,
 	    continue;
 
 	case kt_obsolete:
+	case kt_obsolete_quiet:
 	    continue;
 	}
 
