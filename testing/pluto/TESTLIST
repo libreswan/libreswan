@@ -471,6 +471,12 @@ umlplutotest	ipv6-v6-through-v6-netkey-netkey	good
 umlplutotest	ipv6-v6-through-v6-klips-netkey		good
 umlplutotest	ipv6-v4-through-v6-klips-klips		good
 umlplutotest	ipv6-v6-through-v4-klips-klips		good
+kvmplutotest	ipv6-transport-mode-01-klips-klips	good
+kvmplutotest	ipv6-transport-mode-02-netkey-netkey	good
+kvmplutotest	ipv6-transport-mode-03-klips-netkey	good
+kvmplutotest	ipv6-tunnel-mode-01-klips-klips		good
+kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	good
+kvmplutotest	ipv6-tunnel-mode-03-klips-netkey	good
 
 #################################################################
 # IKEv2 tests
