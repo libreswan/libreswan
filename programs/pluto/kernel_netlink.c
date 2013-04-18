@@ -82,7 +82,7 @@ extern char *pluto_listen;
 
 extern const struct pfkey_proto_info null_proto_info[2];
 
-static const struct pfkey_proto_info broad_proto_info[2] = { 
+static const struct pfkey_proto_info broad_proto_info[2] = {
         {
                 .proto = IPPROTO_ESP,
                 .encapsulation = ENCAPSULATION_MODE_TUNNEL,
@@ -256,7 +256,7 @@ static void init_netlink(void)
  * @param hdr - Data to be sent.
  * @param rbuf - Return Buffer - contains data returned from the send.
  * @param rbuf_len - Length of rbuf
- * @param description - String - user friendly description of what is 
+ * @param description - String - user friendly description of what is
  *                      being attempted.  Used for diagnostics
  * @param text_said - String
  * @return bool True if the message was succesfully sent.
@@ -399,12 +399,12 @@ send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf, size_t rbuf_len
     return TRUE;
 }
 
-/** netlink_policy - 
+/** netlink_policy -
  *
  * @param hdr - Data to check
  * @param enoent_ok - Boolean - OK or not OK.
  * @param text_said - String
- * @return boolean 
+ * @return boolean
  */
 static bool
 netlink_policy(struct nlmsghdr *hdr, bool enoent_ok, const char *text_said)
@@ -452,11 +452,11 @@ netlink_policy(struct nlmsghdr *hdr, bool enoent_ok, const char *text_said)
  * @param proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
  * @param transport_proto int (Currently unused) Contains protocol (u=tcp, 17=udp, etc...)
  * @param esatype int
- * @param pfkey_proto_info proto_info 
+ * @param pfkey_proto_info proto_info
  * @param use_lifetime time_t (Currently unused)
  * @param pluto_sadb_opterations sadb_op (operation - ie: ERO_DELETE)
  * @param text_said char
- * @return boolean True if successful 
+ * @return boolean True if successful
  */
 static bool
 netlink_raw_eroute(const ip_address *this_host
@@ -585,11 +585,11 @@ netlink_raw_eroute(const ip_address *this_host
     req.u.p.sel.dport = portof(&that_client->addr);
 
     /* As per RFC 4301/5996, icmp type is put in the most significant 8 bits
-     * and icmp code is in the least significant 8 bits of port field. 
-     * Although Libreswan does not have any configuration options for 
-     * icmp type/code values, it is possible to specify icmp type and code 
-     * using protoport option. For example, icmp echo request (type 8/code 0) 
-     * needs to be encoded as 0x0800 in the port field and can be specified 
+     * and icmp code is in the least significant 8 bits of port field.
+     * Although Libreswan does not have any configuration options for
+     * icmp type/code values, it is possible to specify icmp type and code
+     * using protoport option. For example, icmp echo request (type 8/code 0)
+     * needs to be encoded as 0x0800 in the port field and can be specified
      * as left/rightprotoport=icmp/2048. Now with NETKEY, icmp type and code
      * need to be passed as source and destination ports, respectively.
      * therefore, this code extracts upper 8 bits and lower 8 bits and puts
@@ -604,7 +604,7 @@ netlink_raw_eroute(const ip_address *this_host
 
 	req.u.p.sel.sport = htons(icmp_type);
 	req.u.p.sel.dport = htons(icmp_code);
-	
+
     }
 
     req.u.p.sel.sport_mask = (req.u.p.sel.sport) ? ~0:0;
@@ -838,11 +838,11 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 	req.p.sel.dport = portof(&sa->dst_client->addr);
 
 	/* As per RFC 4301/5996, icmp type is put in the most significant 8 bits
-	* and icmp code is in the least significant 8 bits of port field. 
-	* Although Openswan does not have any configuration options for 
-	* icmp type/code values, it is possible to specify icmp type and code 
-	* using protoport option. For example, icmp echo request (type 8/code 0) 
-	* needs to be encoded as 0x0800 in the port field and can be specified 
+	* and icmp code is in the least significant 8 bits of port field.
+	* Although Openswan does not have any configuration options for
+	* icmp type/code values, it is possible to specify icmp type and code
+	* using protoport option. For example, icmp echo request (type 8/code 0)
+	* needs to be encoded as 0x0800 in the port field and can be specified
 	* as left/rightprotoport=icmp/2048. Now with NETKEY, icmp type and code
 	* need to be passed as source and destination ports, respectively.
 	* therefore, this code extracts upper 8 bits and lower 8 bits and puts
@@ -873,7 +873,7 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 
     }
 
-    req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window; 
+    req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window;
     req.p.reqid = sa->reqid;
     req.p.lft.soft_byte_limit = XFRM_INF;
     req.p.lft.soft_packet_limit = XFRM_INF;
@@ -899,7 +899,7 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 	 * According to RFC-4868 the hash should be nnn/2, so 128 bits for SHA256 and 256
 	 * for SHA512. The XFRM/NETKEY kernel uses a default of 96, which was the value in
 	 * an earlier draft. The kernel then introduced a new struct xfrm_algo_auth to
-	 * replace struct xfrm_algo to deal with this 
+	 * replace struct xfrm_algo to deal with this
 	 */
 	if( (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256) ||
 	    (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) ) {
@@ -1023,7 +1023,7 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-   if (sa->sec_ctx != NULL) 
+   if (sa->sec_ctx != NULL)
    {
 	struct xfrm_user_sec_ctx xuctx;
 
@@ -1035,7 +1035,7 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	attr->rta_type = XFRMA_SEC_CTX;
 	attr->rta_len = RTA_LENGTH(xuctx.len);
-	
+
         memcpy(RTA_DATA(attr), &xuctx, sizeof(xuctx));
         memcpy((char *)RTA_DATA(attr) + sizeof(xuctx), sa->sec_ctx->sec_ctx_value
             , sa->sec_ctx->ctx_len);
@@ -1049,7 +1049,7 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 }
 
 /** netlink_del_sa - Delete an SA from the Kernel
- * 
+ *
  * @param sa Kernel SA to be deleted
  * @return bool True if successfull
  */
@@ -1247,10 +1247,10 @@ linux_pfkey_register(void)
 }
 
 /** Create ip_address out of xfrm_address_t.
- * 
- * @param family 
+ *
+ * @param family
  * @param src xfrm formatted IP address
- * @param dst ip_address formatted destination 
+ * @param dst ip_address formatted destination
  * @return err_t NULL if okay, otherwise an error
  */
 static err_t
@@ -1356,7 +1356,7 @@ netlink_acquire(struct nlmsghdr *n)
 			}
 		}
    }
-	
+
    if(found_sec_ctx) {
 	xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
 	DBG(DBG_NETKEY, DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%d"
@@ -1366,10 +1366,10 @@ netlink_acquire(struct nlmsghdr *n)
 	memcpy(sec_context_value, (xuctx+1), xuctx->ctx_len);
 
 	DBG(DBG_NETKEY, DBG_log("xfrm: xuctx security context value: %s", sec_context_value));
-   
+
 	uctx = alloc_thing(struct xfrm_user_sec_ctx_ike , "struct xfrm_user_sec_ctx_ike");
 
-	if(uctx != NULL) {	
+	if(uctx != NULL) {
 	uctx->len = xuctx->len;
 	uctx->exttype = xuctx->exttype;
 	uctx->ctx_alg = xuctx->ctx_alg;
@@ -1377,9 +1377,9 @@ netlink_acquire(struct nlmsghdr *n)
 	uctx->ctx_len = xuctx->ctx_len; /*Length includes '\0'*/
 
 	memcpy(uctx->sec_ctx_value, (xuctx+1), xuctx->ctx_len);
-	} 
+	}
 	else {
-	DBG(DBG_NETKEY, DBG_log("not enough memory for struct xfrm_user_sec_ctx_ike")); 
+	DBG(DBG_NETKEY, DBG_log("not enough memory for struct xfrm_user_sec_ctx_ike"));
 	}
 	}
 	else {
@@ -1430,7 +1430,7 @@ netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
     unsigned family;
     unsigned transport_proto;
     err_t ugh = NULL;
-  
+
     srcx = &pol->sel.saddr;
     dstx = &pol->sel.daddr;
     family = pol->sel.family;
@@ -1779,17 +1779,17 @@ netlink_eroute_idle(struct state *st, time_t idle_max)
     time_t idle_time;
 
     passert(st != NULL);
-    if(!get_sa_info(st, TRUE, &idle_time)) 
+    if(!get_sa_info(st, TRUE, &idle_time))
     	return TRUE;
     else
 	return (idle_time >= idle_max);
 }
 
 static bool
-netlink_shunt_eroute(struct connection *c 
-                   , struct spd_route *sr 
+netlink_shunt_eroute(struct connection *c
+                   , struct spd_route *sr
                    , enum routing_t rt_kind
-                   , enum pluto_sadb_operations op 
+                   , enum pluto_sadb_operations op
 		   , const char *opname)
 {
     ipsec_spi_t spi;
@@ -1877,11 +1877,11 @@ netlink_shunt_eroute(struct connection *c
       const ip_address *peer = &sr->that.host_addr;
       char buf2[256];
       const struct af_info *fam = aftoinfo(addrtypeof(peer));
-      
+
       if(fam == NULL) {
 	      fam=aftoinfo(AF_INET);
       }
-      
+
       snprintf(buf2, sizeof(buf2)
 	       , "eroute_connection %s", opname);
 
@@ -1892,7 +1892,7 @@ netlink_shunt_eroute(struct connection *c
 			      , SA_INT
 			      , sr->this.protocol
 			      , ET_INT
-			      , null_proto_info, 0, op, buf2 
+			      , null_proto_info, 0, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 			      , c->policy_label
 #endif
@@ -2119,14 +2119,14 @@ add_entry:
 			&& addrtypeof(&ifp->addr) == AF_INET)
 		    {
 			fd = create_socket(ifp, v->name, pluto_natt_float_port);
-			if (fd < 0) 
+			if (fd < 0)
 			    break;
 			nat_traversal_espinudp_socket(fd, "IPv4"
 						      , ESPINUDP_WITH_NON_ESP);
 			q = alloc_thing(struct iface_port, "struct iface_port");
 			q->ip_dev = id;
 			id->id_count++;
-			
+
 			q->ip_addr = ifp->addr;
 			setportof(htons(pluto_natt_float_port), &q->ip_addr);
 			q->port = pluto_natt_float_port;
@@ -2277,13 +2277,13 @@ const struct kernel_ops netkey_kernel_ops = {
     .policy_lifetime = TRUE,
     .async_fdp = &netlink_bcast_fd,
     .replay_window = 32,
-    
+
     .init = init_netlink,
     .pfkey_register = linux_pfkey_register,
     .pfkey_register_response = linux_pfkey_register_response,
     .process_msg = netlink_process_msg,
     .raw_eroute = netlink_raw_eroute,
-    .add_sa = netlink_add_sa, 
+    .add_sa = netlink_add_sa,
     .del_sa = netlink_del_sa,
     .get_sa = netlink_get_sa,
     .process_queue = NULL,
