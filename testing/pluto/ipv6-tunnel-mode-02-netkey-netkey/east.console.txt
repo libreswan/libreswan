@@ -2,26 +2,27 @@
 east #
  ipsec _stackmanager start
 [ 00.00] NET: Registered protocol family 15
-[ 00.00] registered KLIPS /proc/sys/net
-[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=7 name=cbc(blowfish) keyminbits=96 keymaxbits=448, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] 
 east #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
 east #
  /testing/pluto/bin/wait-until-pluto-started
+[ 00.00] alg: No test for cipher_null (cipher_null-generic)
+[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
+[ 00.00] alg: No test for digest_null (digest_null-generic)
+[ 00.00] alg: No test for compress_null (compress_null-generic)
 east #
- ipsec auto --add westnet-eastnet-6in6
+ ipsec auto --add v6-tunnel
 east #
  ipsec auto --status
-000 using kernel interface: klips
-000 interface ipsec0/eth1 2001:db8:1:2::23
-000 interface ipsec0/eth1 192.1.2.23
+000 using kernel interface: netkey
+000 interface eth2/eth2 2001:db8:9:2::23
+000 interface eth1/eth1 2001:db8:1:2::23
+000 interface eth0/eth0 2001:db8:0:2::254
+000 interface lo/lo ::1
+000 interface lo/lo 127.0.0.1
+000 interface eth0/eth0 192.0.2.254
+000 interface eth1/eth1 192.1.2.23
+000 interface eth2/eth2 192.9.2.23
 000 %myid = (none)
 000 debug none
 000  
@@ -33,15 +34,30 @@ east #
 000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
 000          private address space in internal use, it should be excluded!
 000  
-000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192
-000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=64, keysizemin=128, keysizemax=128
-000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=64, keysizemin=96, keysizemax=448
-000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=2, name=ESP_DES, ivlen=8, keysizemin=64, keysizemax=64
+000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=8, keysizemin=40, keysizemax=128
+000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=8, keysizemin=40, keysizemax=448
+000 algorithm ESP encrypt: id=11, name=ESP_NULL, ivlen=0, keysizemin=0, keysizemax=0
+000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=13, name=ESP_AES_CTR, ivlen=8, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
 000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm ESP auth attr: id=5, name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
+000 algorithm ESP auth attr: id=6, name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
+000 algorithm ESP auth attr: id=7, name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
+000 algorithm ESP auth attr: id=8, name=AUTH_ALGORITHM_HMAC_RIPEMD, keysizemin=160, keysizemax=160
 000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm ESP auth attr: id=251, name=AUTH_ALGORITHM_NULL_KAME, keysizemin=0, keysizemax=0
 000  
 000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
@@ -63,14 +79,14 @@ east #
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
-000 "westnet-eastnet-6in6": 2001:db8:0:2::/64===2001:db8:1:2::23<2001:db8:1:2::23>[@east]...2001:db8:1:2::45<2001:db8:1:2::45>[@west]===2001:db8:0:1::/64; unrouted; eroute owner: #0
-000 "westnet-eastnet-6in6":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-6in6":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "westnet-eastnet-6in6":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
-000 "westnet-eastnet-6in6":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "westnet-eastnet-6in6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
-000 "westnet-eastnet-6in6":   prio: 64,64; interface: eth1; metric: 0, mtu: unset;
-000 "westnet-eastnet-6in6":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "v6-tunnel": 2001:db8:1:2::23<2001:db8:1:2::23>[@east]...2001:db8:1:2::45<2001:db8:1:2::45>[@west]; unrouted; eroute owner: #0
+000 "v6-tunnel":     oriented; my_ip=unset; their_ip=unset;
+000 "v6-tunnel":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "v6-tunnel":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
+000 "v6-tunnel":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
+000 "v6-tunnel":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "v6-tunnel":   prio: 128,128; interface: eth1; metric: 0, mtu: unset;
+000 "v6-tunnel":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -80,9 +96,70 @@ east #
 initdone
 east #
  ipsec look
-v6-v6-through-v6-klips-klips]# east NOW
-2001:db8:0:2::/64  -> 2001:db8:0:1::/64  => tun0x1001@2001:db8:1:2::45 esp0xafaae4b1@2001:db8:1:2::45  (4)   PAUL: sanitizer missed this line
-ipsec0->eth1 mtu=16260(9999)->1500
+east NOW
+XFRM state:
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0x2828d28a reqid 16385 mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xdce0b42e08179026fcb2e3fea2defb7ec27b0beb 96
+	enc cbc(aes) 0xe4713dc71fbcb746bf4897c52eb47dba
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0x627b2fd9 reqid 16385 mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xe068c6142aed41430ec44c74ecc0aa48f3c47b4e 96
+	enc cbc(aes) 0xe9962492057ccee349563e0ad1509b30
+XFRM policy:
+src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+	dir out priority 17536 ptype main 
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto esp reqid 16385 mode tunnel
+src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+	dir fwd priority 17536 ptype main 
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto esp reqid 16385 mode tunnel
+src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+	dir in priority 17536 ptype main 
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto esp reqid 16385 mode tunnel
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+iptables: No chain/target/match by that name.
+ip6tables: No chain/target/match by that name.
+NEW_IPSEC_CONN mangle TABLES
+iptables: No chain/target/match by that name.
+ip6tables: No chain/target/match by that name.
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -94,12 +171,8 @@ default via 192.1.2.254 dev eth1
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
-2001:db8:0:1::254 via 2001:db8:0:1::254 dev ipsec0  metric 0 
-    cache 
-2001:db8:0:1::/64 dev ipsec0  metric 1024 
 2001:db8:0:2::/64 dev eth0  proto kernel  metric 256 
 2001:db8::/48 via 2001:db8:1:2::45 dev eth1  metric 1024 
-2001:db8:1:2::23 dev ipsec0  proto kernel  metric 256 
 2001:db8:1:2::45 via 2001:db8:1:2::45 dev eth1  metric 0 
     cache  hoplimit 255
 2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
@@ -111,11 +184,9 @@ unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
 unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
 unreachable 2002:e000::/19 dev lo  metric 1024  error -101
 unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
-fe80::1000:ff:fe64:6423 dev ipsec0  proto kernel  metric 256 
 fe80::/64 dev eth0  proto kernel  metric 256 
 fe80::/64 dev eth1  proto kernel  metric 256 
 fe80::/64 dev eth2  proto kernel  metric 256 
-fe80::/64 dev ipsec0  proto kernel  metric 256 
 default via 2001:db8:1:2::254 dev eth1  metric 1 
 default via 2001:db8:1:2::254 dev eth1  metric 1024 
 NSS_CERTIFICATES
