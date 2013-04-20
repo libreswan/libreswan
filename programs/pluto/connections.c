@@ -1199,7 +1199,7 @@ add_connection(const struct whack_message *wm)
 	} 
 
 	loglog(RC_NOALGO
-	       , "esp string error: %s"
+	       , "ike string error: %s"
 	       , ugh? ugh : "Unknown");
 	return;
     }
