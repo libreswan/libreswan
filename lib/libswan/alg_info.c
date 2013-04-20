@@ -708,18 +708,6 @@ alg_info_parse_str (struct alg_info *alg_info
 	    switch(ret) {
 	    case ST_END:
 	    case ST_EOF:
-		/*
-		 * If we detect sha2_256 with key size 96, we know they really meant
-		 * to configure sha2_256_trunc 256 bit with a hash truncation of 96
-		 */
-#warning paul check and redo me
-#if 0
-		if( !strncmp( ctx.aalg_buf, sha2_256, 8) && (ctx.eklen==0) && (ctx.aklen==96)) {
-		   DBG(DBG_CRYPT,DBG_log(" converting sha2_256-96 to sha2_256_trunc-256"));
-		   strncpy(ctx.aalg_buf, "sha2_256_trunc", sizeof("sha2_256_trunc"));
-		   ctx.aklen = 256;
-		}
-#endif
 
 		DBG(DBG_CRYPT, DBG_log("alg_info_parse_str() "
 				       "ealg_buf=%s aalg_buf=%s "
