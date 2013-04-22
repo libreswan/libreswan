@@ -1,50 +1,57 @@
+THIS STILL NEEDS SANTIZING
 /testing/guestbin/swan-prep
 west #
  # confirm that the network is alive
 west #
- ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
-PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
-64 bytes from 2001:db8:0:2::254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 2001:db8:0:2::254 ping statistics ---
+ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  # make sure that clear text does not get through
 west #
- ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -j DROP
+ ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::45 -p icmp -j DROP
 west #
  # confirm with a ping to east-in
 west #
- ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
-PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
---- 2001:db8:0:2::254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=255 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec _stackmanager start
 [ 00.00] NET: Registered protocol family 15
-[ 00.00] registered KLIPS /proc/sys/net
-[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=7 name=cbc(blowfish) keyminbits=96 keymaxbits=448, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] 
 west #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
 west #
  /testing/pluto/bin/wait-until-pluto-started
+[ 00.00] alg: No test for cipher_null (cipher_null-generic)
+[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
+[ 00.00] alg: No test for digest_null (digest_null-generic)
+[ 00.00] alg: No test for compress_null (compress_null-generic)
 west #
- ipsec auto --add westnet-eastnet-6in6
+ ipsec auto --add v6-transport
 west #
  ipsec auto --status
-000 using kernel interface: klips
-000 interface ipsec0/eth1 2001:db8:1:2::45
-000 interface ipsec0/eth1 192.1.2.45
+000 using kernel interface: netkey
+000 interface eth2/eth2 2001:db8:9:4::45
+000 interface eth1/eth1 2001:db8:1:2::45
+000 interface eth0/eth0 2001:db8:0:1::254
+000 interface lo/lo ::1
+000 interface lo/lo 127.0.0.1
+000 interface eth0/eth0 192.0.1.254
+000 interface eth1/eth1 192.1.2.45
+000 interface eth2/eth2 192.9.4.45
 000 %myid = (none)
 000 debug none
 000  
@@ -56,15 +63,30 @@ west #
 000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
 000          private address space in internal use, it should be excluded!
 000  
-000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192
-000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=64, keysizemin=128, keysizemax=128
-000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=64, keysizemin=96, keysizemax=448
-000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=2, name=ESP_DES, ivlen=8, keysizemin=64, keysizemax=64
+000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=8, keysizemin=40, keysizemax=128
+000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=8, keysizemin=40, keysizemax=448
+000 algorithm ESP encrypt: id=11, name=ESP_NULL, ivlen=0, keysizemin=0, keysizemax=0
+000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=13, name=ESP_AES_CTR, ivlen=8, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
 000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm ESP auth attr: id=5, name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
+000 algorithm ESP auth attr: id=6, name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
+000 algorithm ESP auth attr: id=7, name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
+000 algorithm ESP auth attr: id=8, name=AUTH_ALGORITHM_HMAC_RIPEMD, keysizemin=160, keysizemax=160
 000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm ESP auth attr: id=251, name=AUTH_ALGORITHM_NULL_KAME, keysizemin=0, keysizemax=0
 000  
 000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
@@ -86,14 +108,14 @@ west #
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
-000 "westnet-eastnet-6in6": 2001:db8:0:1::/64===2001:db8:1:2::45<2001:db8:1:2::45>[@west]...2001:db8:1:2::23<2001:db8:1:2::23>[@east]===2001:db8:0:2::/64; unrouted; eroute owner: #0
-000 "westnet-eastnet-6in6":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-6in6":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "westnet-eastnet-6in6":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
-000 "westnet-eastnet-6in6":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "westnet-eastnet-6in6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
-000 "westnet-eastnet-6in6":   prio: 64,64; interface: eth1; metric: 0, mtu: unset;
-000 "westnet-eastnet-6in6":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "v6-transport": 2001:db8:1:2::45<2001:db8:1:2::45>[@west]...2001:db8:1:2::23<2001:db8:1:2::23>[@east]; unrouted; eroute owner: #0
+000 "v6-transport":     oriented; my_ip=unset; their_ip=unset;
+000 "v6-transport":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
+000 "v6-transport":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
+000 "v6-transport":   policy: RSASIG+ENCRYPT+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "v6-transport":   prio: 128,128; interface: eth1; metric: 0, mtu: unset;
+000 "v6-transport":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -102,82 +124,86 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up  westnet-eastnet-6in6
-104 "westnet-eastnet-6in6" #1: STATE_MAIN_I1: initiate
-003 "westnet-eastnet-6in6" #1: received Vendor ID payload [Libreswan 
-003 "westnet-eastnet-6in6" #1: received Vendor ID payload [Dead Peer Detection]
-003 "westnet-eastnet-6in6" #1: received Vendor ID payload [FRAGMENTATION]
-106 "westnet-eastnet-6in6" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-108 "westnet-eastnet-6in6" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-003 "westnet-eastnet-6in6" #1: received Vendor ID payload [CAN-IKEv2]
-004 "westnet-eastnet-6in6" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
-117 "westnet-eastnet-6in6" #2: STATE_QUICK_I1: initiate
-004 "westnet-eastnet-6in6" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
+ ipsec auto --up  v6-transport
+104 "v6-transport" #1: STATE_MAIN_I1: initiate
+003 "v6-transport" #1: received Vendor ID payload [Libreswan 
+003 "v6-transport" #1: received Vendor ID payload [Dead Peer Detection]
+003 "v6-transport" #1: received Vendor ID payload [FRAGMENTATION]
+106 "v6-transport" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+108 "v6-transport" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+003 "v6-transport" #1: received Vendor ID payload [CAN-IKEv2]
+004 "v6-transport" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
+117 "v6-transport" #2: STATE_QUICK_I1: initiate
+[ 00.00] alg: No test for authenc(hmac(sha1),cbc(aes)) (authenc(hmac(sha1-generic),cbc(aes-asm)))
+004 "v6-transport" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode
 west #
- ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
-PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
-64 bytes from 2001:db8:0:2::254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 2001:db8:0:2::254 ping statistics ---
+ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=255 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec look
 west NOW
-2001:db8:0:1::/64  -> 2001:db8:0:2::/64  => tun0x1001@2001:db8:1:2::23 esp0xf2818484@2001:db8:1:2::23  (4)  PAUL: sanitizer missed this line
-ipsec0->eth1 mtu=16260(9999)->1500
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-unreachable ::/96 dev lo  metric 1024  error -101
-unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
-2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
-2001:db8:0:2::254 via 2001:db8:0:2::254 dev ipsec0  metric 0 
-    cache 
-2001:db8:0:2::/64 dev ipsec0  metric 1024 
-2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
-2001:db8:1:2::23 via 2001:db8:1:2::23 dev eth1  metric 0 
-    cache 
-2001:db8:1:2::45 dev ipsec0  proto kernel  metric 256 
-2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
-2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
-unreachable 2002:a00::/24 dev lo  metric 1024  error -101
-unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
-unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
-unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
-unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
-unreachable 2002:e000::/19 dev lo  metric 1024  error -101
-unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
-fe80::1000:ff:fe64:6445 dev ipsec0  proto kernel  metric 256 
-fe80::/64 dev eth0  proto kernel  metric 256 
-fe80::/64 dev eth1  proto kernel  metric 256 
-fe80::/64 dev eth2  proto kernel  metric 256 
-fe80::/64 dev ipsec0  proto kernel  metric 256 
-default via 2001:db8:1:2::254 dev eth1  metric 1 
-default via 2001:db8:1:2::254 dev eth1  metric 1024 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-west #
- echo done
-done
-west #
- ipsec look
-west NOW
-2001:db8:0:1::/64  -> 2001:db8:0:2::/64  => tun0x1001@2001:db8:1:2::23 esp0xf2818484@2001:db8:1:2::23  (4)  PAUL: sanitizer missed this line
-ipsec0->eth1 mtu=16260(1500)->1500
-esp0xafaae4b1@2001:db8:1:2::45 ESP_AES_HMAC_SHA1: dir=in  src=2001:db8:1:2::23 iv_bits=128bits iv=0x1483f5c8aaaed18e6a2cc546be56993a ooowin=64 seq=4 bit=0xf alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(416,0,0) idle=1 natencap=none natsport=0 natdport=0 refcount=3 ref=4 refhim=1  PAUL: sanitizer missed this line
-esp0xf2818484@2001:db8:1:2::23 ESP_AES_HMAC_SHA1: dir=out src=2001:db8:1:2::45 iv_bits=128bits iv=0x97575aec5a12c28975cb588e3c0684a3 ooowin=64 seq=4 alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(752,0,0) idle=1 natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0  PAUL: sanitizer missed this line
-tun0x1001@2001:db8:1:2::23 IPIP: dir=out src=2001:db8:1:2::45 life(c,s,h)=bytes(576,0,0) idle=1 natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
-tun0x1002@2001:db8:1:2::45 IPIP: dir=in  src=2001:db8:1:2::23 policy=2001:db8:0:2::/64->2001:db8:0:1::/64 flags=0x8<> life(c,s,h)=bytes(416,0,0) idle=1 natencap=none natsport=0 natdport=0 refcount=3 ref=3 refhim=1
+XFRM state:
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xfd33ee92 reqid 16385 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0x74f3f053be0047d8536e50140c64af7f66cd74c6 96
+	enc cbc(aes) 0x942627a375d169ecafb1c9f570331fce
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0x04715a60 reqid 16385 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xd7d42e2595ddafca0e67a7adc68d97b55a2ef07d 96
+	enc cbc(aes) 0xc5fa92dbd495d7a7085ac1e621c3e53e
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+XFRM policy:
+src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+	dir out priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid 16385 mode transport
+src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+	dir in priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid 16385 mode transport
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
 IPSEC mangle TABLES
 iptables: No chain/target/match by that name.
 ip6tables: No chain/target/match by that name.
@@ -196,13 +222,9 @@ default via 192.1.2.254 dev eth1
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
 2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
-2001:db8:0:2::254 via 2001:db8:0:2::254 dev ipsec0  metric 0 
-    cache 
-2001:db8:0:2::/64 dev ipsec0  metric 1024 
 2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
 2001:db8:1:2::23 via 2001:db8:1:2::23 dev eth1  metric 0 
     cache 
-2001:db8:1:2::45 dev ipsec0  proto kernel  metric 256 
 2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
 2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
 unreachable 2002:a00::/24 dev lo  metric 1024  error -101
@@ -212,11 +234,108 @@ unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
 unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
 unreachable 2002:e000::/19 dev lo  metric 1024  error -101
 unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
-fe80::1000:ff:fe64:6445 dev ipsec0  proto kernel  metric 256 
 fe80::/64 dev eth0  proto kernel  metric 256 
 fe80::/64 dev eth1  proto kernel  metric 256 
 fe80::/64 dev eth2  proto kernel  metric 256 
-fe80::/64 dev ipsec0  proto kernel  metric 256 
+default via 2001:db8:1:2::254 dev eth1  metric 1 
+default via 2001:db8:1:2::254 dev eth1  metric 1024 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ echo done
+done
+west #
+ ipsec look
+west NOW
+XFRM state:
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xfd33ee92 reqid 16385 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0x74f3f053be0047d8536e50140c64af7f66cd74c6 96
+	enc cbc(aes) 0x942627a375d169ecafb1c9f570331fce
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0x04715a60 reqid 16385 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xd7d42e2595ddafca0e67a7adc68d97b55a2ef07d 96
+	enc cbc(aes) 0xc5fa92dbd495d7a7085ac1e621c3e53e
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+XFRM policy:
+src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+	dir out priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid 16385 mode transport
+src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+	dir in priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid 16385 mode transport
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+iptables: No chain/target/match by that name.
+ip6tables: No chain/target/match by that name.
+NEW_IPSEC_CONN mangle TABLES
+iptables: No chain/target/match by that name.
+ip6tables: No chain/target/match by that name.
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+169.254.0.0/16 dev eth2  scope link  metric 1004 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+unreachable ::/96 dev lo  metric 1024  error -101
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
+2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
+2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
+2001:db8:1:2::23 via 2001:db8:1:2::23 dev eth1  metric 0 
+    cache 
+2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
+2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -101
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
+unreachable 2002:e000::/19 dev lo  metric 1024  error -101
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
+fe80::/64 dev eth0  proto kernel  metric 256 
+fe80::/64 dev eth1  proto kernel  metric 256 
+fe80::/64 dev eth2  proto kernel  metric 256 
 default via 2001:db8:1:2::254 dev eth1  metric 1 
 default via 2001:db8:1:2::254 dev eth1  metric 1024 
 NSS_CERTIFICATES
