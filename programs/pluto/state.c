@@ -393,12 +393,13 @@ delete_state(struct state *st)
 {
     struct connection *const c = st->st_connection;
     struct state *old_cur_state = cur_state == st? NULL : cur_state;
-    char statebuf[1024], statebufx[1024], *sbcp = statebuf;
 
     DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
 
     if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
       if (st->st_esp.present) {
+        char statebuf[1024], *sbcp = statebuf;
+
         sbcp = humanize_number(st->st_esp.peer_bytes,
                                sbcp, sizeof(statebuf) - 1,
                                "ESP traffic information: in=%lu%s");
@@ -406,14 +407,15 @@ delete_state(struct state *st)
                                sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
                                " out=%lu%s");
 	if (st->st_xauth_username && st->st_xauth_username[0]!='\0') {
-	    snprintf(statebufx, sizeof(statebufx) - 1 , "%s XAUTHuser=%s", statebuf, st->st_xauth_username);
-	    libreswan_log(statebufx);
+	    libreswan_log("%s XAUTHuser=%s", statebuf, st->st_xauth_username);
 	} else {
-	    libreswan_log(statebuf);
+	    libreswan_log("%s", statebuf);
 	}
       }
 
       if (st->st_ah.present) {
+        char statebuf[1024], *sbcp = statebuf;
+
         sbcp = humanize_number(st->st_ah.peer_bytes,
                                sbcp, sizeof(statebuf) - 1,
                                "AH traffic information: in=%lu%s");
@@ -421,15 +423,15 @@ delete_state(struct state *st)
                                sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
                                " out=%lu%s");
 	if (st->st_xauth_username && st->st_xauth_username[0]!='\0') {
-	    snprintf(statebufx, sizeof(statebufx) - 1 , "%s XAUTHuser=%s", statebuf, st->st_xauth_username);
-	    libreswan_log(statebufx);
+	    libreswan_log("%s XAUTHuser=%s", statebuf, st->st_xauth_username);
 	} else {
-	    libreswan_log(statebuf);
+	    libreswan_log("%s", statebuf);
 	}
-
       }
 
     if (st->st_ipcomp.present) {
+        char statebuf[1024], *sbcp = statebuf;
+
         sbcp = humanize_number(st->st_ipcomp.peer_bytes,
                                sbcp, sizeof(statebuf) - 1,
                                " IPCOMP traffic information: in=%lu%s");
@@ -437,10 +439,9 @@ delete_state(struct state *st)
                                sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
                                " out=%lu%s");
 	if (st->st_xauth_username && st->st_xauth_username[0]!='\0') {
-	    snprintf(statebufx, sizeof(statebufx) - 1 , "%s XAUTHuser=%s", statebuf, st->st_xauth_username);
-	    libreswan_log(statebufx);
+	    libreswan_log("%s XAUTHuser=%s", statebuf, st->st_xauth_username);
 	} else {
-	    libreswan_log(statebuf);
+	    libreswan_log("%s", statebuf);
 	}
       }
     }
