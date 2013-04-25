@@ -1492,6 +1492,9 @@ unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
     if (mod.len > RSA_MAX_OCTETS)
 	return RSA_MAX_OCTETS_UGH;
 
+    if (mod.len > pubkey->ptr + pubkey->len - mod.ptr)
+	return "RSA public key blob too short";
+
     n_to_mpz(&rsa->e, exponent.ptr, exponent.len);
     n_to_mpz(&rsa->n, mod.ptr, mod.len);
 
