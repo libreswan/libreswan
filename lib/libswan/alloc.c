@@ -94,6 +94,9 @@ void *alloc_bytes1(size_t size, const char *name, int leak_detective)
     }
 
     if(leak_detective) {
+	if (sizeof(union mhdr) + size < size) {
+	    return NULL;
+	}
 	p = malloc(sizeof(union mhdr) + size);
     } else {
 	p = malloc(size);
