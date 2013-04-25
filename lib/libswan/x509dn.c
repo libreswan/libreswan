@@ -477,11 +477,25 @@ static const x501rdn_t x501rdns[] = {
 /* Maximum length of ASN.1 distinquished name */
 #define ASN1_BUF_LEN	      512
 
+static void format_chunk(chunk_t *ch, const char *format, ...) PRINTF_LIKE(2);
+
 static void
-update_chunk(chunk_t *ch, int n)
+format_chunk(chunk_t *ch, const char *format, ...)
 {
-    n = (n > -1 && n < (int)ch->len)? n : (int)ch->len-1;
-    ch->ptr += n; ch->len -= n;
+    if (ch->len > 0) {
+	size_t len = ch->len;
+	va_list args;
+	va_start(args, format);
+	int ret = vsnprintf((char *)ch->ptr, len, format, args);
+	va_end(args);
+	if (ret < 0 || ret > len) {
+	    ch->ptr += len;
+	    ch->len = 0;
+	} else {
+	    ch->ptr += ret;
+	    ch->len -= ret;
+	}
+    }
 }
 
 
@@ -612,9 +626,7 @@ dn_parse(chunk_t dn, chunk_t *str)
     err_t ugh;
 
     if(dn.ptr == NULL) {
-	const char *e = "(empty)";
-	strncpy((char *)str->ptr, e, str->len);
-	update_chunk(str, strlen(e));
+	format_chunk(str, "(empty)");
 	return NULL;
     }
     ugh = init_rdn(dn, &rdn, &attribute, &next);
@@ -632,19 +644,17 @@ dn_parse(chunk_t dn, chunk_t *str)
 	if (first)		/* first OID/value pair */
 	    first = FALSE;
 	else			/* separate OID/value pair by a comma */
-	    update_chunk(str, snprintf((char *)str->ptr,str->len,", "));
+	    format_chunk(str, ", ");
 
 	/* print OID */
 	oid_code = known_oid(oid);
 	if (oid_code == OID_UNKNOWN)	/* OID not found in list */
 	    hex_str(oid, str);
 	else
-	    update_chunk(str, snprintf((char *)str->ptr,str->len,"%s",
-			      oid_names[oid_code].name));
+	    format_chunk(str, "%s", oid_names[oid_code].name);
 
 	/* print value */
-	update_chunk(str, snprintf((char *)str->ptr,str->len,"=%.*s",
-			      (int)value.len,value.ptr));
+	format_chunk(str, "=%.*s", (int)value.len, value.ptr);
     }
     return NULL;
 }
@@ -684,9 +694,9 @@ void
 hex_str(chunk_t bin, chunk_t *str)
 {
     u_int i;
-    update_chunk(str, snprintf((char *)str->ptr,str->len,"0x"));
+    format_chunk(str, "0x");
     for (i=0; i < bin.len; i++)
-	update_chunk(str, snprintf((char *)str->ptr,str->len,"%02X",*bin.ptr++));
+	format_chunk(str, "%02X", *bin.ptr++);
 }
 
 
