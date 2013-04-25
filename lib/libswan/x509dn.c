@@ -472,7 +472,7 @@ static const x501rdn_t x501rdns[] = {
   {"TCGID"        , {oid_TCGID, 12}, ASN1_PRINTABLESTRING}
 };
 
-#define X501_RDN_ROOF   24
+#define X501_RDN_ROOF   elemsof(x501rdns)
 
 /* Maximum length of ASN.1 distinquished name */
 #define ASN1_BUF_LEN	      512
@@ -775,11 +775,11 @@ atodn(char *src, chunk_t *dn)
         UNKNOWN_OID =	4
     } state_t;
 
-    u_char oid_len_buf[3];
-    u_char name_len_buf[3];
-    u_char rdn_seq_len_buf[3];
-    u_char rdn_set_len_buf[3];
-    u_char dn_seq_len_buf[3];
+    u_char oid_len_buf[ASN1_MAX_LEN_LEN];
+    u_char name_len_buf[ASN1_MAX_LEN_LEN];
+    u_char rdn_seq_len_buf[ASN1_MAX_LEN_LEN];
+    u_char rdn_set_len_buf[ASN1_MAX_LEN_LEN];
+    u_char dn_seq_len_buf[ASN1_MAX_LEN_LEN];
 
     chunk_t asn1_oid_len     = { oid_len_buf,     0 };
     chunk_t asn1_name_len    = { name_len_buf,    0 };
@@ -797,7 +797,7 @@ atodn(char *src, chunk_t *dn)
 
     err_t ugh = NULL;
 
-    u_char *dn_ptr = dn->ptr + 4;
+    u_char *dn_ptr = dn->ptr + 1 + ASN1_MAX_LEN_LEN;	/* leave room for prefix */
 
     state_t state = SEARCH_OID;
 
@@ -885,25 +885,37 @@ atodn(char *src, chunk_t *dn)
 		code_asn1_length(rdn_set_len, &asn1_rdn_set_len);
 
 		/* encode the relative distinguished name */
-		*dn_ptr++ = ASN1_SET;
-		chunkcpy(dn_ptr, asn1_rdn_set_len);
-		*dn_ptr++ = ASN1_SEQUENCE;
-		chunkcpy(dn_ptr, asn1_rdn_seq_len);
-		*dn_ptr++ = ASN1_OID;
-		chunkcpy(dn_ptr, asn1_oid_len);
-		chunkcpy(dn_ptr, x501rdns[pos].oid);
-		/* encode the ASN.1 character string type of the name */
-		*dn_ptr++ = (x501rdns[pos].type == ASN1_PRINTABLESTRING
-		    && !is_printablestring(name))? ASN1_T61STRING : x501rdns[pos].type;
-		chunkcpy(dn_ptr, asn1_name_len);
-		chunkcpy(dn_ptr, name);
+		if (IDTOA_BUF <  dn_ptr - dn->ptr
+		+ 1 + asn1_rdn_set_len.len	/* set */
+		+ 1 + asn1_rdn_seq_len.len	/* sequence */
+		+ 1 + asn1_oid_len.len + x501rdns[pos].oid.len	/* oid len, oid */
+		+ 1 + asn1_name_len.len + name.len  /* type name */
+		) {
+		    /* no room! */
+		    ugh = "DN is too big";
+		    state = UNKNOWN_OID;
+		    /* I think that it is safe to continue (but perhaps pointless) */
+		} else {
+		    *dn_ptr++ = ASN1_SET;
+		    chunkcpy(dn_ptr, asn1_rdn_set_len);
+		    *dn_ptr++ = ASN1_SEQUENCE;
+		    chunkcpy(dn_ptr, asn1_rdn_seq_len);
+		    *dn_ptr++ = ASN1_OID;
+		    chunkcpy(dn_ptr, asn1_oid_len);
+		    chunkcpy(dn_ptr, x501rdns[pos].oid);
+		    /* encode the ASN.1 character string type of the name */
+		    *dn_ptr++ = (x501rdns[pos].type == ASN1_PRINTABLESTRING
+			&& !is_printablestring(name))? ASN1_T61STRING : x501rdns[pos].type;
+		    chunkcpy(dn_ptr, asn1_name_len);
+		    chunkcpy(dn_ptr, name);
 
-		/* accumulate the length of the distinguished name sequence */
-		dn_seq_len += 1 + asn1_rdn_set_len.len + rdn_set_len;
+		    /* accumulate the length of the distinguished name sequence */
+		    dn_seq_len += 1 + asn1_rdn_set_len.len + rdn_set_len;
 
-		/* reset name and change state */
-		name = empty_chunk;
-		state = SEARCH_OID;
+		    /* reset name and change state */
+		    name = empty_chunk;
+		    state = SEARCH_OID;
+		}
 	    }
 	    break;
 	case UNKNOWN_OID:
@@ -911,9 +923,9 @@ atodn(char *src, chunk_t *dn)
 	}
     } while (*src++ != '\0');
 
-    /* complete the distinguished name sequence*/
-    code_asn1_length(dn_seq_len, &asn1_dn_seq_len);
-    dn->ptr += 3 - asn1_dn_seq_len.len;
+    /* complete the distinguished name sequence: prefix it with ASN1_SEQUENCE and length */
+    code_asn1_length((size_t)dn_seq_len, &asn1_dn_seq_len);
+    dn->ptr += ASN1_MAX_LEN_LEN + 1 - 1 - asn1_dn_seq_len.len;
     dn->len =  1 + asn1_dn_seq_len.len + dn_seq_len;
     dn_ptr = dn->ptr;
     *dn_ptr++ = ASN1_SEQUENCE;

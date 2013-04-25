@@ -259,7 +259,7 @@ static void
 key_add_request(const struct whack_message *msg)
 {
     struct id keyid;
-    err_t ugh = atoid(msg->keyid, &keyid, FALSE);
+    err_t ugh = atoid(msg->keyid, &keyid, FALSE, FALSE);
 
     if (ugh != NULL)
     {

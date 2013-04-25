@@ -1223,7 +1223,7 @@ lsw_process_secret_records(struct secret **psecrets, int verbose,
 		}
 		else
 		{
-		    ugh = atoid(flp->tok, &id, FALSE);
+		    ugh = atoid(flp->tok, &id, FALSE, FALSE);
 		}
 		
 		if (ugh != NULL)

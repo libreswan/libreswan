@@ -911,7 +911,7 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
     }
     else
     {
-	err_t ugh = atoid(src->id, &dst->id, TRUE);
+	err_t ugh = atoid(src->id, &dst->id, TRUE, FALSE);
 
 	if (ugh != NULL)
 	{
