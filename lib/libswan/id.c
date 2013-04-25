@@ -277,7 +277,7 @@ idtoa(const struct id *id, char *dst, size_t dstlen)
 void
 escape_metachar(const char *src, char *dst, size_t dstlen)
 {
-    while (*src != '\0' && dstlen > 4)
+    while (*src != '\0' && dstlen > 5)
     {
 	switch (*src)
 	{
@@ -286,7 +286,7 @@ escape_metachar(const char *src, char *dst, size_t dstlen)
 	case '"':
 	case '`':
 	case '$':
-	    sprintf(dst,"\\%s%o", (*src < 64)?"0":"", *src);
+	    sprintf(dst,"\\03%o", *src & 0xFF);
 	    dst += 4;
 	    dstlen -= 4;
 	    break;
