@@ -5,6 +5,13 @@ v3.3 (unreleased)
 * security: atodn() / atoid() buffer overflow fixes [Florian/Hugh/Paul]
   (only libreswan 3.0 and 3.1 are affected, and openswan up to 2.6.38 affected)
 * security: dn_parse(), hex_str() write beyond end of the buffer [Florian]
+* security: Multiple hardening fixes from security audit [Florian Weimar]
+* security: get_rnd_bytes: Abort on random number generator failure [Florian]
+* security: Integer overflow if the leak detective enabled [Florian]
+* security: Check that origin of netlink message is the kernel [Florian]
+* security: Abort pluto on crypto failure for 3des/aes to prevent leaks [Florian]
+* security: RSA: Check modulus length against key overall length [Florian]
+* security: fetch_curl: Set timeout for the entire request [Florian]
 
 v3.2 (April 13, 2013)
 * addresspool: Identify reconnecting client and re-use lease [Antony]
