@@ -12,6 +12,7 @@ v3.3 (unreleased)
 * security: RSA: Check modulus length against key overall length [Florian]
 * security: fetch_curl: Set timeout for the entire request [Florian]
 * security: Multiple hardening fixes from security audit [Florian Weimar]
+* security: Cleanup buffer usage for traffic logging with XAUTH [Hugh]
 
 v3.2 (April 13, 2013)
 * addresspool: Identify reconnecting client and re-use lease [Antony]
