@@ -405,6 +405,7 @@ delete_state(struct state *st)
     DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
 
     if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+      /* Note that a state/SA can have more then one of ESP/AH/IPCOMP */
       if (st->st_esp.present) {
         char statebuf[1024], *sbcp = statebuf;
 
