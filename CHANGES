@@ -9,6 +9,7 @@ v3.3 (unreleased)
 * security: Integer overflow if the leak detective enabled [Florian]
 * security: Check that origin of netlink message is the kernel [Florian]
 * security: Abort pluto on crypto failure for 3des/aes to prevent leaks [Florian]
+* security: Check PK11_CreateContextBySymKey() for NULL and SECFailure [Paul]
 * security: RSA: Check modulus length against key overall length [Florian]
 * security: fetch_curl: Set timeout for the entire request [Florian]
 * security: Multiple hardening fixes from security audit [Florian Weimar]
