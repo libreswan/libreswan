@@ -280,32 +280,6 @@ load_cert(bool forcedtype, const char *filename,
     return FALSE;
 }
 
-#if 0
-/*
- *  Loads a host certificate
- */
-bool
-load_host_cert(enum ipsec_cert_type certtype, const char *filename,
-	       cert_t *cert, int verbose)
-{
-    const struct lsw_conf_options *oco;
-    char path[PATH_MAX]; /* is 1024 */
-
-    oco = lsw_init_options();
-
-    if (*filename == '/')	/* absolute pathname */
-    	strncpy(path, filename, PATH_MAX - 1 );
-    else if(oco->certs_dir == NULL) /* pathname relative to cwd */
-	snprintf(path, PATH_MAX - 1 , "./%s", filename);
-    else 			/* pathname relative to rootdir */
-	snprintf(path, PATHMAX - 1 , "%s%s/%s", oco->rootdir
-		 , oco->certs_dir, filename);
-
-    return load_cert(certtype, path, verbose, "host cert", cert);
-}
-
-#endif
-
 /*
  * establish equality of two certificates
  */

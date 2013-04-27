@@ -69,11 +69,7 @@ extern bool load_cert(bool forcedtype
 		      , const char *filename
 		      , int verbose
 		      , const char *label, cert_t *cert);
-#if 0
-extern bool load_host_cert(enum ipsec_cert_type certtype,
-			   const char *filename,
-			   cert_t *cert, int verbose);
-#endif
+
 extern bool same_cert(const cert_t *a, const cert_t *b);
 extern void share_cert(cert_t cert);
 extern void release_cert(cert_t cert);
