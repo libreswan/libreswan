@@ -474,9 +474,6 @@ static const x501rdn_t x501rdns[] = {
 
 #define X501_RDN_ROOF   elemsof(x501rdns)
 
-/* Maximum length of ASN.1 distinquished name */
-#define ASN1_BUF_LEN	      512
-
 static void format_chunk(chunk_t *ch, const char *format, ...) PRINTF_LIKE(2);
 
 static void

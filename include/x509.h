@@ -18,6 +18,8 @@
 #ifndef _X509_H
 #define _X509_H
 
+#define ASN1_BUF_LEN	      512
+
 /* Definition of generalNames kinds */
 
 typedef enum {
