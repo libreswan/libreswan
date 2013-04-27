@@ -203,7 +203,7 @@ struct secret *pick_key(struct secret *host_secrets
     struct secret *s;
     err_t e;
 
-    e = atoid(idname, &id, FALSE);
+    e = atoid(idname, &id, FALSE, FALSE);
     if(e) {
 	printf("%s: key '%s' is invalid\n", progname, idname);
 	exit(4);

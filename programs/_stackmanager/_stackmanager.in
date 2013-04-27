@@ -56,11 +56,11 @@ stopnetkey() {
 		    rmmod $mod 
 		fi
 	    done
-	    if [ -f $kamepfkey -o -n "$(lsmod | grep ^esp)" ]; then
-		echo "FAILURE to unload NETKEY esp module" >&2
-		exit 1
-	    fi
 	fi
+    fi
+    if [ -n "$(lsmod | grep ^esp)" ]; then
+	echo "FAILURE to unload NETKEY esp4/esp6 module" >&2
+	exit 1
     fi
 }
 

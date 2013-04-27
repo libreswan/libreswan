@@ -483,7 +483,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len
     memcpy(&symkey, key, key_size);
     if (symkey == NULL) {
 	loglog(RC_LOG_SERIOUS, "do_3des: NSS derived enc key is NULL \n");
-	goto out;
+	abort();
     }
 
     ivitem.type = siBuffer;
@@ -493,7 +493,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len
     secparam = PK11_ParamFromIV(ciphermech, &ivitem);
     if (secparam == NULL) {
 	loglog(RC_LOG_SERIOUS, "do_3des: Failure to set up PKCS11 param (err %d)\n",PR_GetError());
-	goto out;
+	abort();
     }
 
     outlen = 0;
@@ -505,8 +505,15 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len
     }
 
     enccontext = PK11_CreateContextBySymKey(ciphermech, enc? CKA_ENCRYPT: CKA_DECRYPT, symkey, secparam);
+    if (enccontext == NULL) {
+        loglog(RC_LOG_SERIOUS, "do_3des: PKCS11 context creation failure (err %d)\n", PR_GetError());
+        abort();
+    }
     rv = PK11_CipherOp(enccontext, tmp_buf, &outlen, buf_len, buf, buf_len);
-    passert(rv==SECSuccess);
+    if (rv != SECSuccess) {
+        loglog(RC_LOG_SERIOUS, "do_3des: PKCS11 operation failure (err %d)\n", PR_GetError());
+        abort();
+    }
 
     if(enc) {
 	memcpy(new_iv, (char*) tmp_buf + buf_len-DES_CBC_BLOCK_SIZE, DES_CBC_BLOCK_SIZE);
@@ -518,7 +525,6 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len
     PR_Free(tmp_buf);
     PR_Free(new_iv);
 
-out:
     if (secparam) {
 	SECITEM_FreeItem(secparam, PR_TRUE);
     }

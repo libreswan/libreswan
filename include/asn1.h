@@ -84,8 +84,10 @@ typedef enum {
 #define ASN1_BODY	0x20
 #define ASN1_RAW	0x40
 
-#define ASN1_INVALID_LENGTH     0xffffffff
+#define ASN1_INVALID_LENGTH     (~(size_t) 0)	/* largest size_t */
 
+#define ASN1_MAX_LEN	(1U << (8*3))	/* don't handle objects with length greater than this */
+#define ASN1_MAX_LEN_LEN    4	/* no coded length takes more than 4 bytes. */
 
 /* definition of an ASN.1 object */
 

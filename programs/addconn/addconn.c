@@ -136,14 +136,19 @@ void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 int netlink_read_reply(int sock, char *buf, int seqnum, pid_t pid)
 {
     struct nlmsghdr *nlhdr;
+    struct sockaddr_nl sa;
+    socklen_t salen = sizeof(sa);
     int readlen = 0, msglen = 0;
 
     /* TODO: use dynamic buf */
     do {
-	/* Read netlink message */
-	readlen = recv(sock, buf, RTNL_BUFSIZE - msglen, 0);
-	if (readlen < 0)
-	    return -1;
+	/* Read netlink message, verifying kernel origin. */
+	do {
+	    readlen = recvfrom(sock, buf, RTNL_BUFSIZE - msglen, 0,
+			       (struct sockaddr *)&sa, &salen);
+	    if (readlen < 0)
+		return -1;
+	} while (sa.nl_pid != 0);
 
 	/* Verify it's valid */
 	nlhdr = (struct nlmsghdr *) buf;

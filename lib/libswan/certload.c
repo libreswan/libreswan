@@ -41,7 +41,6 @@
 #include <pk11pub.h>
 #include <cert.h>
 
-#define ASN1_BUF_LEN		256
 
 /*
  * used for initialization of private keys
@@ -279,29 +278,6 @@ load_cert(bool forcedtype, const char *filename,
 	fclose(fd);
     }
     return FALSE;
-}
-
-/*
- *  Loads a host certificate
- */
-bool
-load_host_cert(enum ipsec_cert_type certtype, const char *filename,
-	       cert_t *cert, int verbose)
-{
-    const struct lsw_conf_options *oco;
-    char path[PATH_MAX];
-
-    oco = lsw_init_options();
-
-    if (*filename == '/')	/* absolute pathname */
-    	strncpy(path, filename, ASN1_BUF_LEN);
-    else if(oco->certs_dir == NULL) /* pathname relative to cwd */
-	snprintf(path, ASN1_BUF_LEN, "./%s", filename);
-    else 			/* pathname relative to rootdir */
-	snprintf(path, ASN1_BUF_LEN, "%s%s/%s", oco->rootdir
-		 , oco->certs_dir, filename);
-
-    return load_cert(certtype, path, verbose, "host cert", cert);
 }
 
 /*
