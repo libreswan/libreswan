@@ -505,7 +505,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len
     }
 
     enccontext = PK11_CreateContextBySymKey(ciphermech, enc? CKA_ENCRYPT: CKA_DECRYPT, symkey, secparam);
-    if (enccontext) {
+    if (enccontext == NULL || enccontext == SECFailure) {
         loglog(RC_LOG_SERIOUS, "do_3des: PKCS11 context creation failure (err %d)\n", PR_GetError());
         abort();
     }
