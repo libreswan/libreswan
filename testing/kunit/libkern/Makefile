@@ -47,17 +47,8 @@ CFLAGS+= -I${LIBRESWANSRCDIR}/include -g -O2
 #KLIPS_FLAGS+=-I${UMLPLAIN}/arch/um/kernel/tt/include
 #KLIPS_FLAGS+=-I${UMLPLAIN}/arch/um/kernel/skas/include
 CFLAGS+=${KLIPS_FLAGS}
-CFLAGS+= -Wall
-#CFLAGS+= -Wconversion
-#CFLAGS+= -Wmissing-prototypes
-CFLAGS+= -Wpointer-arith
-CFLAGS+= -Wcast-qual
-#CFLAGS+= -Wmissing-declarations
-CFLAGS+= -Wstrict-prototypes
-#CFLAGS+= -pedantic
-#CFLAGS+= -W
-#CFLAGS+= -Wwrite-strings
-CFLAGS+= -Wbad-function-cast 
+CFLAGS+= ${WERROR}
+
 CFLAGS+= -fno-inline
 
 ARFLAGS=crvs
