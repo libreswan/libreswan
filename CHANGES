@@ -16,6 +16,7 @@ v3.3 (unreleased)
 * security: Cleanup buffer usage for traffic logging with XAUTH [Hugh]
 * security: Cleanup ASN1_BUF_LEN use and remove unused load_host_cert() [Paul]
 * security: cleanup CFLAGS handling [Paul]
+* security: IKEv2 crashed when using nhelpers=0 [Paul]
 * _stackmanager: fix loading of aes-x86_64 module [Tuomo]
 * Bugtracker bugs fixed:
    #85: NETKEY: Transport mode inbound eroute is to client [Kim/Tuomo]
