@@ -17,6 +17,8 @@ v3.3 (unreleased)
 * security: Cleanup ASN1_BUF_LEN use and remove unused load_host_cert() [Paul]
 * security: cleanup CFLAGS handling [Paul]
 * _stackmanager: fix loading of aes-x86_64 module [Tuomo]
+* Bugtracker bugs fixed:
+   #85: NETKEY: Transport mode inbound eroute is to client [Kim/Tuomo]
 
 v3.2 (April 13, 2013)
 * addresspool: Identify reconnecting client and re-use lease [Antony]
