@@ -198,6 +198,7 @@ struct connection {
     time_t sa_rekey_margin;
     unsigned long sa_rekey_fuzz;
     unsigned long sa_keying_tries;
+    int encapsulation;
     
     /* RFC 3706 DPD */
     time_t          dpd_delay;              /* time between checks */

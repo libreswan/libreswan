@@ -8,6 +8,7 @@
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2010 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1406,19 +1407,23 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * transport mode */
 	add_selector = 1;
     }
+    c->encapsulation = encapsulation;
 
     memset(said, 0, sizeof(said));
 
-    /* If we are tunnelling, set up IP in IP pseudo SA */
+    if (kernel_ops->inbound_eroute) {
+	inner_spi = 256;
+	if (encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+	    /* If we are tunnelling, set up IP in IP pseudo SA */
+	    proto = SA_IPIP;
+	    esatype = ET_IPIP;
+	} else {
+	    /* For transport mode set ESP */
+	    proto = SA_ESP;
+	    esatype = ET_ESP;
+	}
 
-    if (kernel_ops->inbound_eroute)
-    {
-        inner_spi = 256;
-        proto = SA_IPIP;
-        esatype = ET_IPIP; /* XXX bart: used to be "UNSPEC" */
-    }
-    else if (encapsulation == ENCAPSULATION_MODE_TUNNEL)
-    {
+    } else if (encapsulation == ENCAPSULATION_MODE_TUNNEL) {
         /* XXX hack alert -- we SHOULD NOT HAVE TO HAVE A DIFFERENT SPI
          * XXX FOR IP-in-IP ENCAPSULATION!
          */
@@ -2126,9 +2131,9 @@ teardown_half_ipsec_sa(struct state *st, bool inbound)
         (void) raw_eroute(&c->spd.that.host_addr, &c->spd.that.client
                           , &c->spd.this.host_addr, &c->spd.this.client
                           , 256
-			  , IPSEC_PROTO_ANY
+			  , c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY
                           , c->spd.this.protocol
-                          , ET_UNSPEC
+                          , c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC
                           , null_proto_info, 0
                           , ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
