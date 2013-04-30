@@ -175,7 +175,6 @@ cryptomodules() {
     fi
 
     # load the most common ciphers/algo's
-    # aes-x86_64 has higher priority in via crypto api
     # padlock must load before aes module - though does not exist on newer
     # kernels
     # padlock-aes must load before padlock-sha for some reason
@@ -184,7 +183,7 @@ cryptomodules() {
     @MODPROBE@ padlock-sha 2>/dev/null
     # load the most common ciphers/algo's
     # aes-x86_64 has higher priority in via crypto api
-    for crypto in aesni_intel es-x86_64 geode-aes aes aes_generic des sha512 \
+    for crypto in aesni-intel aes-x86_64 geode-aes aes aes_generic des sha512 \
 	sha256 md5 cbc xcbc ecb twofish blowfish serpent ccm gcm ctr cts \
 	deflate cast5 cast6 lzo sha256_generic sha512_generic camellia
     do
