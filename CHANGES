@@ -16,6 +16,9 @@ v3.3 (unreleased)
 * security: Cleanup buffer usage for traffic logging with XAUTH [Hugh]
 * security: Cleanup ASN1_BUF_LEN use and remove unused load_host_cert() [Paul]
 * security: cleanup CFLAGS handling [Paul]
+* Bugtracker bugs fixed:
+   #85: traffic selectors in Transport Mode support was incomplete [Kim/Tuomo]
+   #91: SAREF: Patches updated for 3.4.x kernels. Tested on 3.4.42 [Andreas Herz]
 
 v3.2 (April 13, 2013)
 * addresspool: Identify reconnecting client and re-use lease [Antony]
