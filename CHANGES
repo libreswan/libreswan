@@ -20,7 +20,7 @@ v3.3 (unreleased)
 * security: Remove stale non-NSS ASN1 handling and pem decryption code [Paul]
 * _stackmanager: fix loading of aes-x86_64 module [Tuomo]
 * Bugtracker bugs fixed:
-   #85: NETKEY: Transport mode inbound eroute is to client [Kim/Tuomo]
+   #90: NETKEY: Transport mode inbound eroute was from client [Kim/Tuomo]
    #91: SAREF: Patches updated for 3.4.x kernels. Tested on 3.4.42 [Andreas Herz]
 
 v3.2 (April 13, 2013)
