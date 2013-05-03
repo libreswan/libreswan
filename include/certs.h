@@ -78,10 +78,7 @@ extern void list_certs(bool utc);
 
 
 extern struct pubkey* allocate_RSA_public_key(const cert_t cert);
-extern rsa_privkey_t* load_rsa_private_key(const char* filename
-					   , int verbose
-					   , prompt_pass_t *pass);
-extern bool load_coded_file(const char *filename, prompt_pass_t *pass
+extern bool load_coded_file(const char *filename
 			    , int verbose
 			    , const char *type, chunk_t *blob, bool *pgp);
 

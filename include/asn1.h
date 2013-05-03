@@ -109,7 +109,7 @@ typedef struct {
 } asn1_ctx_t;
 
 extern int known_oid(chunk_t object);
-extern u_int asn1_length(chunk_t *blob);
+extern size_t asn1_length(chunk_t *blob);
 extern void code_asn1_length(size_t length, chunk_t *code);
 extern u_char* build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
 extern u_char* build_asn1_explicit_object(chunk_t *object, asn1_t outer_type

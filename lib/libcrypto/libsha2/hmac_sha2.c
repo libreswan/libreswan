@@ -16,7 +16,7 @@
 #include "sha2.h"
 #include "hmac_sha2.h"
 
-void inline sha256_result(sha256_context *ctx, u_int8_t * hash, int hashlen) {
+inline void sha256_result(sha256_context *ctx, u_int8_t * hash, int hashlen) {
 	unsigned int len;
 	SECStatus s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, hashlen);
 	PR_ASSERT(len==hashlen);
@@ -24,7 +24,7 @@ void inline sha256_result(sha256_context *ctx, u_int8_t * hash, int hashlen) {
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
 }
 
-void inline sha512_result(sha512_context *ctx, u_int8_t * hash, int hashlen) {
+inline void sha512_result(sha512_context *ctx, u_int8_t * hash, int hashlen) {
 	unsigned int len;
 	SECStatus s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, hashlen);
 	PR_ASSERT(len==hashlen);

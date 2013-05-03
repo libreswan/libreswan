@@ -107,7 +107,7 @@ pfkey_register(uint8_t satype) {
 
 int dienow;
 
-void controlC(int foo)
+void controlC(int foo UNUSED)
 {
 	fflush(stdout);
 	printf("%s: Exiting on signal 15\n", progname);

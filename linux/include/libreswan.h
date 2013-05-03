@@ -26,6 +26,8 @@
 #define FALSE 0
 #endif
 
+#include <stddef.h>
+
 /*
  * When using uclibc, malloc(0) returns NULL instead of success. This is
  * to make it use the inbuilt work-around.

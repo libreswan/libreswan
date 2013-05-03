@@ -80,7 +80,7 @@ bool
 subnetishost(a)
 const ip_subnet *a;
 {
-	return (a->maskbits == addrlenof(&a->addr)*8) ? 1 : 0;
+	return (a->maskbits == (int)addrlenof(&a->addr) * 8) ? 1 : 0;
 }
 
 /*
@@ -174,7 +174,7 @@ int nbits;
 	if (n == 0)
 		return 0;	/* arbitrary */
 	(void) addrbytesptr(b, &bp);
-	if (nbits > n*8)
+	if (nbits > (int)n * 8)
 		return 0;	/* "can't happen" */
 
 	for (; nbits >= 8 && *ap == *bp; nbits -= 8, ap++, bp++)

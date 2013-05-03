@@ -89,8 +89,8 @@ void exit_tool(int code)
     exit(code);
 }
 
-void
-phasemeout_loglog(int mess_no, const char *message, ...)
+static void
+phasemeout_loglog(int mess_no UNUSED, const char *message, ...)
 {
     va_list args;
 
@@ -99,9 +99,9 @@ phasemeout_loglog(int mess_no, const char *message, ...)
     va_end(args);
 }
 
-int print_key(struct secret *secret
+static void print_key(struct secret *secret
 	      , struct private_key_stuff *pks
-	      , void *uservoid, bool disclose)
+	      , bool disclose)
 {
     int lineno = lsw_get_secretlineno(secret);
     struct id_list *l = lsw_get_idlist(secret);
@@ -142,26 +142,26 @@ int print_key(struct secret *secret
 	l=l->next;
 	count++;
     }
-    
+}
+
+static int list_key(struct secret *secret,
+	     struct private_key_stuff *pks,
+	     void *uservoid UNUSED)
+{
+    print_key(secret, pks, FALSE);
     return 1;
 }
 
-int list_key(struct secret *secret,
+static int dump_key(struct secret *secret,
 	     struct private_key_stuff *pks,
-	     void *uservoid)
+	     void *uservoid UNUSED)
 {
-    return print_key(secret, pks, uservoid, FALSE);
-}
-
-int dump_key(struct secret *secret,
-	     struct private_key_stuff *pks,
-	     void *uservoid)
-{
-    return print_key(secret, pks, uservoid, TRUE);
+    print_key(secret, pks, TRUE);
+    return 1;
 }
 
 
-int pickbyid(struct secret *secret,
+static int pickbyid(struct secret *secret UNUSED,
 	     struct private_key_stuff *pks,
 	     void *uservoid)
 {
@@ -260,8 +260,7 @@ unsigned char *pubkey_to_rfc3110(const struct RSA_public_key *pub,
     return buf;
 }    
 
-void show_dnskey(struct secret *s
-		 , char *idname
+static void show_dnskey(struct secret *s
 		 , int precedence
 		 , char *gateway)
 {
@@ -301,8 +300,7 @@ void show_dnskey(struct secret *s
 	       qname, precedence, gateway_type , (gateway == NULL) ? "." : gateway, base64+sizeof("0s")-1);
 }
      
-void show_confkey(struct secret *s
-		  , char *idname
+static void show_confkey(struct secret *s
 		  , char *side)
 {
     char base64[8192];
@@ -532,18 +530,17 @@ int main(int argc, char *argv[])
     }
 
     if(left_flg) {
-	show_confkey(s, keyid, "left");
+	show_confkey(s, "left");
 	exit(0);
     }
 
     if(right_flg) {
-	show_confkey(s, keyid, "right");
+	show_confkey(s, "right");
 	exit(0);
     }
 
     if(ipseckey_flg) {
-	show_dnskey(s, keyid,
-		    precedence, gateway);
+	show_dnskey(s, precedence, gateway);
     }
 
     exit(0);

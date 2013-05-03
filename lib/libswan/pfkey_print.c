@@ -40,11 +40,11 @@ pfkey_print(struct sadb_msg *msg, FILE *out)
     len -= sizeof(struct sadb_msg);
     
     se = (struct sadb_ext *)(&msg[1]);
-    while(len > sizeof(struct sadb_ext)) {
+    while(len > (int)sizeof(struct sadb_ext)) {
 	fprintf(out, "{ext=%d len=%d ", se->sadb_ext_type, se->sadb_ext_len);
 	
 	/* make sure that there is enough left */
-	if(IPSEC_PFKEYv2_LEN(se->sadb_ext_len) > len) {
+	if((int)IPSEC_PFKEYv2_LEN(se->sadb_ext_len) > len) {
 	    fprintf(out, "short-packet(%d<%d) ", len,
 		    (int)IPSEC_PFKEYv2_LEN(se->sadb_ext_len));
 	    

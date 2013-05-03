@@ -426,7 +426,7 @@ fetch_asn1_blob(chunk_t url, chunk_t *blob)
     {
 	bool pgp = FALSE;
 
-	ugh = pemtobin(blob, NULL, "", &pgp);
+	ugh = pemtobin(blob, &pgp);
 	if (ugh == NULL)
 	{
 	    if (is_asn1(*blob))

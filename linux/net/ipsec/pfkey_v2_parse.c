@@ -1118,12 +1118,12 @@ pfkey_x_ext_protocol_parse(struct sadb_ext *pfkey_ext)
 
 #ifdef NAT_TRAVERSAL
 DEBUG_NO_STATIC int
-pfkey_x_ext_nat_t_type_parse(struct sadb_ext *pfkey_ext)
+pfkey_x_ext_nat_t_type_parse(struct sadb_ext *pfkey_ext UNUSED)
 {
 	return 0;
 }
 DEBUG_NO_STATIC int
-pfkey_x_ext_nat_t_port_parse(struct sadb_ext *pfkey_ext)
+pfkey_x_ext_nat_t_port_parse(struct sadb_ext *pfkey_ext UNUSED)
 {
 	return 0;
 }

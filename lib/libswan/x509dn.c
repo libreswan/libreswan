@@ -476,6 +476,11 @@ static const x501rdn_t x501rdns[] = {
 
 static void format_chunk(chunk_t *ch, const char *format, ...) PRINTF_LIKE(2);
 
+/* format into a chunk.
+ * The chunk is used as a cursor for free space at the end of the buffer.
+ * We leave it advanced to the remainder of the free space.
+ * BUG: if there is no free space to start with, we don't do anything.
+ */
 static void
 format_chunk(chunk_t *ch, const char *format, ...)
 {
@@ -485,7 +490,14 @@ format_chunk(chunk_t *ch, const char *format, ...)
 	va_start(args, format);
 	int ret = vsnprintf((char *)ch->ptr, len, format, args);
 	va_end(args);
-	if (ret < 0 || ret > len) {
+	if (ret < 0) {
+	    /* BUG: if ret < 0, vsnprintf encountered some error, we ought to raise a stink
+	     * For now: pretend nothing happened!
+	     */
+	} else if ((size_t)ret > len) {
+	    /* BUG: if ret >= len, then the vsnprintf output was truncate, we ought to raise a stink!
+	     * For now: accept truncated output.
+	     */
 	    ch->ptr += len;
 	    ch->len = 0;
 	} else {
@@ -825,7 +837,7 @@ atodn(char *src, chunk_t *dn)
 		oid.len++;
 	    else
 	    {
-		for (pos = 0; pos < X501_RDN_ROOF; pos++)
+		for (pos = 0; pos < (int)X501_RDN_ROOF; pos++)
 		{
 		    if (strlen(x501rdns[pos].name) == oid.len &&
 			strncasecmp(x501rdns[pos].name, (char *)oid.ptr, oid.len) == 0)

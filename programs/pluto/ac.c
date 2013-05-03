@@ -750,7 +750,7 @@ load_acerts(void)
 		chunk_t blob = empty_chunk;
 		bool pgp = FALSE;
 
-		if (load_coded_file(filelist[n]->d_name, NULL,
+		if (load_coded_file(filelist[n]->d_name,
 #ifdef SINGLE_CONF_DIR
 				FALSE, /* too verbose in a shared dir */
 #else

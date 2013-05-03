@@ -278,7 +278,7 @@ static void
 alg_info_esp_add (struct alg_info *alg_info,
 		  int ealg_id, int ek_bits,
 		  int aalg_id, int ak_bits,
-		  int modp_id, bool permit_manconn)
+		  int modp_id UNUSED, bool permit_manconn)
 {
 	/*	Policy: default to 3DES */
 	if (ealg_id==0)
@@ -315,7 +315,7 @@ static void
 alg_info_ah_add (struct alg_info *alg_info,
 		  int ealg_id, int ek_bits,
 		  int aalg_id, int ak_bits,
-		  int modp_id, bool permit_manconn)
+		  int modp_id UNUSED, bool permit_manconn)
 {
     if(aalg_id > 0 ||
        (permit_manconn && aalg_id == 0))

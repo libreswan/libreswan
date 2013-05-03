@@ -79,7 +79,7 @@ get_mycert(cert_t cert)
  * of binary DER or base64 PEM ASN.1 formats and armored PGP format
  */
 bool
-load_coded_file(const char *filename, prompt_pass_t *pass,
+load_coded_file(const char *filename,
 		int verbose,
 		const char *type, chunk_t *blob, bool *pgp)
 {
@@ -125,7 +125,7 @@ load_coded_file(const char *filename, prompt_pass_t *pass,
 	}
 
 	/* try PEM format */
-	ugh = pemtobin(blob, pass, filename, pgp);
+	ugh = pemtobin(blob, pgp);
 
 	if (ugh == NULL)
 	{
@@ -160,50 +160,6 @@ load_coded_file(const char *filename, prompt_pass_t *pass,
 }
 
 /*
- *  Loads a PKCS#1 or PGP private RSA key file
- */
-rsa_privkey_t*
-load_rsa_private_key(const char* filename, int verbose, prompt_pass_t *pass)
-{
-    bool pgp = FALSE;
-    chunk_t blob = empty_chunk;
-    char path[PATH_MAX];
-    const struct lsw_conf_options *oco;
-
-    oco = lsw_init_options();
-
-    if (*filename == '/') {
-	/* absolute pathname --- might be hacked by local rootdir */
-	snprintf(path, sizeof(path), "%s%s", oco->rootdir, filename);
-    }
-    else			/* relative pathname */
-	snprintf(path, sizeof(path), "%s/%s", oco->private_dir, filename);
-
-    if (load_coded_file(path, pass, verbose, "private key", &blob, &pgp))
-    {
-	rsa_privkey_t *key = alloc_thing(rsa_privkey_t, "rsa_privkey");
-	*key = empty_rsa_privkey;
-	if (pgp)
-	{
-	    if (parse_pgp(blob, NULL, key))
-		return key;
-	    else
-		libreswan_log("  error in PGP private key");
-	}
-	else
-	{
-	    if (parse_pkcs1_private_key(blob, key))
-		return key;
-	    else
-		libreswan_log("  error in PKCS#1 private key");
-	}
-	pfree(blob.ptr);
-	pfree(key);
-    }
-    return NULL;
-}
-
-/*
  *  Loads a X.509 or OpenPGP certificate
  */
 bool
@@ -219,7 +175,7 @@ load_cert(bool forcedtype, const char *filename,
     cert->u.x509 = NULL;
 
     if(!forcedtype) {
-	if (load_coded_file(filename, NULL, verbose, label, &blob, &pgp)) {
+	if (load_coded_file(filename, verbose, label, &blob, &pgp)) {
 	    if (pgp) {
 		pgpcert_t *pgpcert = alloc_thing(pgpcert_t, "pgpcert");
 		*pgpcert = empty_pgpcert;

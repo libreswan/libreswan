@@ -88,13 +88,9 @@ static const struct fld RSA_private_field[] =
 
 };
 
-static err_t lsw_process_psk_secret(const struct secret *secrets
-				    , chunk_t *psk);
-static err_t lsw_process_rsa_secret(const struct secret *secrets
-				    , struct RSA_private_key *rsak);
-static err_t lsw_process_rsa_keyfile(struct secret **psecrets
-				     , int verbose
-				     , struct RSA_private_key *rsak
+static err_t lsw_process_psk_secret(chunk_t *psk);
+static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
+static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak
 				     , prompt_pass_t *pass);
 
 #ifdef DEBUG
@@ -336,11 +332,11 @@ struct secret *lsw_foreach_secret(struct secret *secrets,
 }
 
 struct secret_byid {
-    int            kind;
+    enum PrivateKeyKind kind;
     struct pubkey *my_public_key;
 };
     
-int lsw_check_secret_byid(struct secret *secret,
+static int lsw_check_secret_byid(struct secret *secret UNUSED,
 			  struct private_key_stuff *pks,
 			  void *uservoid)
 {
@@ -367,7 +363,7 @@ int lsw_check_secret_byid(struct secret *secret,
 
 struct secret *lsw_find_secret_by_public_key(struct secret *secrets
 					     , struct pubkey *my_public_key
-					     , int kind)
+					     , enum PrivateKeyKind kind)
 {
     struct secret_byid sb;
 
@@ -697,9 +693,7 @@ bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
  * process rsa key file protected with optional passphrase which can either be
  * read from ipsec.secrets or prompted for by using whack
  */
-err_t lsw_process_rsa_keyfile(struct secret **psecrets
-			      , int verbose
-			      , struct RSA_private_key *rsak
+static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak
 			      , prompt_pass_t *pass)
 {
     char filename[BUF_LEN];
@@ -744,7 +738,7 @@ err_t lsw_process_rsa_keyfile(struct secret **psecrets
 }
 
 /* parse PSK from file */
-static err_t lsw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
+static err_t lsw_process_psk_secret(chunk_t *psk)
 {
     err_t ugh = NULL;
     
@@ -781,7 +775,7 @@ static err_t lsw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
 }
 
 /* parse XAUTH secret from file */
-static err_t lsw_process_xauth_secret(const struct secret *secrets, chunk_t *xauth)
+static err_t lsw_process_xauth_secret(chunk_t *xauth)
 {
     err_t ugh = NULL;
     
@@ -823,8 +817,7 @@ static err_t lsw_process_xauth_secret(const struct secret *secrets, chunk_t *xau
  * The fields come from BIND 8.2's representation
  */
 static err_t
-lsw_process_rsa_secret(const struct secret *secrets
-		       , struct RSA_private_key *rsak)
+lsw_process_rsa_secret(struct RSA_private_key *rsak)
 {
     unsigned char buf[RSA_MAX_ENCODING_BYTES];	/* limit on size of binary representation of key */
     const struct fld *p;
@@ -1015,26 +1008,25 @@ process_secret(struct secret **psecrets, int verbose,
 	       struct secret *s, prompt_pass_t *pass)
 {
     err_t ugh = NULL;
-    struct secret *secrets = *psecrets;
 
     s->pks.kind = PPK_PSK;	/* default */
     if (*flp->tok == '"' || *flp->tok == '\'')
     {
 	/* old PSK format: just a string */
-	ugh = lsw_process_psk_secret(secrets, &s->pks.u.preshared_secret);
+	ugh = lsw_process_psk_secret(&s->pks.u.preshared_secret);
     }
     else if (tokeqword("psk"))
     {
 	/* preshared key: quoted string or ttodata format */
 	ugh = !shift()? "unexpected end of record in PSK"
-	    : lsw_process_psk_secret(secrets, &s->pks.u.preshared_secret);
+	    : lsw_process_psk_secret(&s->pks.u.preshared_secret);
     }
     else if (tokeqword("xauth"))
     {
 	/* xauth key: quoted string or ttodata format */
 	s->pks.kind = PPK_XAUTH;
 	ugh = !shift()? "unexpected end of record in PSK"
-	    : lsw_process_xauth_secret(secrets, &s->pks.u.preshared_secret);
+	    : lsw_process_xauth_secret(&s->pks.u.preshared_secret);
     }
     else if (tokeqword("rsa"))
     {
@@ -1048,12 +1040,11 @@ process_secret(struct secret **psecrets, int verbose,
 	}
 	else if (tokeq("{"))
 	{
-	    ugh = lsw_process_rsa_secret(secrets, &s->pks.u.RSA_private_key);
+	    ugh = lsw_process_rsa_secret(&s->pks.u.RSA_private_key);
 	}
 	else
 	{
-	    ugh = lsw_process_rsa_keyfile(psecrets, verbose,
-					  &s->pks.u.RSA_private_key,pass);
+	    ugh = lsw_process_rsa_keyfile(&s->pks.u.RSA_private_key,pass);
 	}
 	if(!ugh && verbose) {
 	    libreswan_log("loaded private key for keyid: %s:%s",
@@ -1465,10 +1456,10 @@ unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
     chunk_t exponent;
     chunk_t mod;
 
-    rsa->keyid[0] = '\0';	/* in case of keybolbtoid failure */
+    rsa->keyid[0] = '\0';	/* in case of keyblobtoid failure */
 
     if (pubkey->len < 3)
-	return "RSA public key blob way to short";	/* not even room for length! */
+	return "RSA public key blob way too short";	/* not even room for length! */
 
     if (pubkey->ptr[0] != 0x00)
     {
@@ -1491,9 +1482,6 @@ unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 
     if (mod.len > RSA_MAX_OCTETS)
 	return RSA_MAX_OCTETS_UGH;
-
-    if (mod.len > pubkey->ptr + pubkey->len - mod.ptr)
-	return "RSA public key blob too short";
 
     n_to_mpz(&rsa->e, exponent.ptr, exponent.len);
     n_to_mpz(&rsa->n, mod.ptr, mod.len);

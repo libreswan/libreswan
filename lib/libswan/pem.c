@@ -196,7 +196,7 @@ fetchline(chunk_t *src, chunk_t *line)
  *  We no longer support decrypting PEM files - those can only come in via NSS
  */
 err_t
-pemtobin(chunk_t *blob, prompt_pass_t *pass, const char* label, bool *pgp)
+pemtobin(chunk_t *blob, bool *pgp)
 {
     typedef enum {
 	PEM_PRE    = 0,
@@ -212,16 +212,9 @@ pemtobin(chunk_t *blob, prompt_pass_t *pass, const char* label, bool *pgp)
     chunk_t src    = *blob;
     chunk_t dst    = *blob;
     chunk_t line   = empty_chunk;
-    chunk_t iv     = empty_chunk;
-
-    u_char iv_buf[MAX_DIGEST_LEN];
 
     /* zero size of converted blob */
     dst.len = 0;
-
-    /* zero size of IV */
-    iv.ptr = iv_buf;
-    iv.len = 0;
 
     while (fetchline(&src, &line))
     {
