@@ -105,27 +105,39 @@ struct msgid_list
     struct msgid_list     *next;
 };
 
-static 
-char *humanize_number(unsigned long num, char *buf, size_t buf_len,
-                      const char *prefix) {
-    unsigned long to_print;
+/* humanize_number: make large numbers clearer by expressing them as KB or MB, as appropriate.
+ * The prefix is literally copied into the output.
+ * Tricky representation: if the prefix starts with !, the number
+ * is taken as kilobytes.  This prevents the caller scaling, with the attendant
+ * risk of overflow.  The ! is not printed.
+ */
+static char *
+humanize_number(unsigned long num,
+		char *buf,
+		char *buf_roof,
+                const char *prefix)
+{
+    size_t buf_len = buf_roof - buf;
+    unsigned long to_print = num;
     const char *suffix;
     int ret;
+    bool kilos = prefix[0] == '!';
 
-    if (num < 1024) {
-	to_print = num;
+    if (!kilos &&num < 1024) {
 	suffix = "B";
-    }
-    if (num < 1024*1024) {
-	to_print = num / 1024;
-	suffix = "KB";
-    }
-    if (num < 1024*1024*1024) {
-	to_print = num / (1024 * 1024);
-	suffix = "MB";
+    } else {
+	if (!kilos)
+	    to_print /= 1024;
+
+	if (to_print < 1024) {
+	    suffix = "KB";
+	} else {
+	    to_print /= 1024;
+	    suffix = "MB";
+	}
     }
 
-    ret = snprintf(buf, buf_len, "%s%lu%s", prefix, to_print, suffix);
+    ret = snprintf(buf, buf_len, "%s%lu%s", prefix, to_print, suffix+kilos);
     if (ret < 0 || (size_t) ret >= buf_len) {
 	return buf;
     }
@@ -407,13 +419,13 @@ delete_state(struct state *st)
     if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
       /* Note that a state/SA can have more then one of ESP/AH/IPCOMP */
       if (st->st_esp.present) {
-        char statebuf[1024], *sbcp = statebuf;
+        char statebuf[1024], *sbcp;
 
         sbcp = humanize_number(st->st_esp.peer_bytes,
-                               sbcp, sizeof(statebuf) - 1,
+                               statebuf, statebuf+sizeof(statebuf),
                                "ESP traffic information: in=");
         sbcp = humanize_number(st->st_esp.our_bytes,
-                               sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                               sbcp, statebuf+sizeof(statebuf),
                                " out=%lu%s");
 	if (st->st_xauth_username && st->st_xauth_username[0]!='\0') {
 	    libreswan_log("%s XAUTHuser=%s", statebuf, st->st_xauth_username);
@@ -423,13 +435,13 @@ delete_state(struct state *st)
       }
 
       if (st->st_ah.present) {
-        char statebuf[1024], *sbcp = statebuf;
+        char statebuf[1024], *sbcp;
 
         sbcp = humanize_number(st->st_ah.peer_bytes,
-                               sbcp, sizeof(statebuf) - 1,
+                               statebuf, statebuf+sizeof(statebuf),
                                "AH traffic information: in=");
         sbcp = humanize_number(st->st_ah.our_bytes,
-                               sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                               sbcp, statebuf+sizeof(statebuf),
                                " out=");
 	if (st->st_xauth_username && st->st_xauth_username[0]!='\0') {
 	    libreswan_log("%s XAUTHuser=%s", statebuf, st->st_xauth_username);
@@ -439,13 +451,13 @@ delete_state(struct state *st)
       }
 
     if (st->st_ipcomp.present) {
-        char statebuf[1024], *sbcp = statebuf;
+        char statebuf[1024], *sbcp;
 
         sbcp = humanize_number(st->st_ipcomp.peer_bytes,
-                               sbcp, sizeof(statebuf) - 1,
+                               statebuf, statebuf+sizeof(statebuf),
                                " IPCOMP traffic information: in=");
         sbcp = humanize_number(st->st_ipcomp.our_bytes,
-                               sbcp, sizeof(statebuf) - 1 - (sbcp - statebuf),
+                               sbcp, statebuf+sizeof(statebuf),
                                " out=");
 	if (st->st_xauth_username && st->st_xauth_username[0]!='\0') {
 	    libreswan_log("%s XAUTHuser=%s", statebuf, st->st_xauth_username);
@@ -1544,7 +1556,7 @@ void fmt_state(struct state *st, const time_t n
                 mbcp =
                     humanize_number(st->st_ah.peer_bytes,
                                     mbcp,
-                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    traffic_buf+sizeof(traffic_buf),
                                     " AHin=");
 	    }
 #endif
@@ -1555,15 +1567,15 @@ void fmt_state(struct state *st, const time_t n
                 mbcp =
                     humanize_number(st->st_ah.our_bytes,
                                     mbcp,
-                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    traffic_buf+sizeof(traffic_buf),
                                     " AHout=");
 	    }
 #endif
             mbcp =
-                humanize_number(((u_long)st->st_ah.attrs.life_kilobytes)*1024,
+                humanize_number((u_long)st->st_ah.attrs.life_kilobytes,
                                 mbcp,
-                                sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
-                                " AHmax=");
+                                traffic_buf+sizeof(traffic_buf),
+                                "! AHmax=");
 /* needs proper fix, via kernel_ops? */
 	}
 	if (st->st_esp.present)
@@ -1577,7 +1589,7 @@ void fmt_state(struct state *st, const time_t n
                 mbcp =
                     humanize_number(st->st_esp.peer_bytes,
                                     mbcp,
-                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    traffic_buf+sizeof(traffic_buf),
                                     " ESPin=");
 	    }
 #endif
@@ -1588,16 +1600,16 @@ void fmt_state(struct state *st, const time_t n
                 mbcp =
                     humanize_number(st->st_esp.our_bytes,
                                     mbcp,
-                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    traffic_buf+sizeof(traffic_buf),
                                     " ESPout=");
 	    }
 #endif
 
             mbcp =
-                humanize_number(((u_long)st->st_esp.attrs.life_kilobytes)*1024,
+                humanize_number((u_long)st->st_esp.attrs.life_kilobytes,
                                 mbcp,
-                                sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
-                                " ESPmax=");
+                                traffic_buf+sizeof(traffic_buf),
+                                "! ESPmax=");
 	}
 	if (st->st_ipcomp.present)
 	{
@@ -1609,7 +1621,7 @@ void fmt_state(struct state *st, const time_t n
                 mbcp =
                     humanize_number(st->st_ipcomp.peer_bytes,
                                     mbcp,
-                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    traffic_buf+sizeof(traffic_buf),
                                     " IPCOMPin=");
 	    }
 #endif
@@ -1620,16 +1632,16 @@ void fmt_state(struct state *st, const time_t n
                 mbcp =
                     humanize_number(st->st_ipcomp.our_bytes,
                                     mbcp,
-                                    sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
+                                    traffic_buf+sizeof(traffic_buf),
                                     " IPCOMPout=");
 	    }
 #endif
 
             mbcp =
-                humanize_number(((u_long)st->st_ipcomp.attrs.life_kilobytes)*1024,
+                humanize_number((u_long)st->st_ipcomp.attrs.life_kilobytes,
                                 mbcp,
-                                sizeof(traffic_buf) - 1 - (mbcp - traffic_buf),
-                                " IPCOMPmax=");
+                                traffic_buf+sizeof(traffic_buf),
+                                "! IPCOMPmax=");
 	}
 #ifdef KLIPS
 	if (st->st_ah.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL
