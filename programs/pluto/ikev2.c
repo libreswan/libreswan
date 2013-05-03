@@ -950,6 +950,13 @@ void complete_v2_state_transition(struct msg_digest **mdp
     case STF_IGNORE:
 	break;
 
+    case STF_INLINE:         /* this is second time through complete
+			      * state transition, so the MD has already
+			      * been freed.
+			      0				  */
+	*mdp = NULL;
+	break;
+
     case STF_SUSPEND:
 	/* update the previous packet history */
 	/* IKEv2 XXX */ /* update_retransmit_history(st, md); */
@@ -957,13 +964,6 @@ void complete_v2_state_transition(struct msg_digest **mdp
 	/* the stf didn't complete its job: don't relase md */
 	*mdp = NULL;
 	break;
-
-    case STF_INLINE:         /* mcr: this is second time through complete
-			      * state transition, so the MD has already
-			      * been freed.
-			      0				  */
-			      *mdp = NULL;
-			      /* fall through to STF_OK */
 
     case STF_OK:
 	/* advance the state */

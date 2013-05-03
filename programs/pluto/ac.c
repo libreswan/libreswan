@@ -750,7 +750,7 @@ load_acerts(void)
 		chunk_t blob = empty_chunk;
 		bool pgp = FALSE;
 
-		if (load_coded_file(filelist[n]->d_name, NULL,
+		if (load_coded_file(filelist[n]->d_name,
 #ifdef SINGLE_CONF_DIR
 				FALSE, /* too verbose in a shared dir */
 #else
@@ -846,6 +846,7 @@ list_acerts(bool utc)
 	{
 	    bool first = TRUE;
 	    char *pos = buf;
+	    const char *const end = buf + sizeof(buf);
 
 	    ietfAttrList_t *list = ac->groups;
 
@@ -855,12 +856,9 @@ list_acerts(bool utc)
 
 		if (attr->kind != IETF_ATTRIBUTE_OID)
 		{
-		    int n = snprintf(pos, BUF_LEN, "%s%.*s", (first? "":", ")
-			, (int)attr->value.len, attr->value.ptr);
-		    
-		    if (n == -1) /* print buffer is full */
-			break;
-		    pos += n;
+		    snprintf(pos, end - pos, "%s%.*s", (first? "":", ")
+			     , (int)attr->value.len, attr->value.ptr);
+		    pos += strlen(pos);
 		    first = FALSE;
 		}
 		list = list->next;

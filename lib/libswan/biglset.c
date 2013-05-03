@@ -30,7 +30,8 @@ void biglset_format(char *buf, size_t blen, biglset_t b)
 	int base=(i<<BLSHIFT);
 	for(j=0; j<(1 << BLSHIFT); j++) {
 	    if(LHAS(b.lsts[i],j)) {
-		int len = snprintf(buf, blen, "%c%d", sep, base+j);
+		snprintf(buf, blen, "%c%d", sep, base+j);
+		size_t len = strlen(buf);
 		buf += len;
 		blen-= len;
 		sep=',';

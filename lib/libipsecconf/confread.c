@@ -274,8 +274,7 @@ char **new_list(char *value)
  * @return int 0 if successfull
  */
 static int load_setup (struct starter_config *cfg
-		       , struct config_parsed *cfgp
-		       , err_t *perr)
+		       , struct config_parsed *cfgp)
 {
 	unsigned int err = 0;
 	struct kw_list *kw;
@@ -820,7 +819,7 @@ bool translate_conn (struct starter_conn *conn
 		starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
 		
 		/* only fatal if we try to change values */
-		if((*the_options)[field] != kw->number
+		if((*the_options)[field] != (int)kw->number
 		   || !((*the_options)[field] == LOOSE_ENUM_OTHER
 			&& kw->number == LOOSE_ENUM_OTHER
 			&& kw->keyword.string != NULL
@@ -861,7 +860,7 @@ bool translate_conn (struct starter_conn *conn
 			 , conn->name
 			 , sl->name);
 		starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
-		if((*the_options)[field] != kw->number)
+		if((*the_options)[field] != (int)kw->number)
 		{
 		    err++;
 		    break;
@@ -1375,7 +1374,8 @@ struct starter_config *confread_load(const char *file
 	struct starter_config *cfg = NULL;
 	struct config_parsed *cfgp;
 	struct section_list *sconn;
-	unsigned int err = 0, connerr;
+	int err = 0;
+	int connerr;
 #ifdef DNSSEC
 	struct ub_ctx *dnsctx =  ub_ctx_create();
 	unbound_init(dnsctx);
@@ -1409,7 +1409,7 @@ struct starter_config *confread_load(const char *file
 	/**
 	 * Load setup
 	 */
-	err += load_setup(cfg, cfgp, perr);
+	err += load_setup(cfg, cfgp);
 
 	if(err) {
 		parser_free_conf(cfgp);

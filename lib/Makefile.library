@@ -24,19 +24,7 @@ CFLAGS+=-DDEBUG
 CFLAGS+=-pthread
 
 CFLAGS+= $(USERCOMPILE)
-ifneq ($(BUILDENV),darwin)
-CFLAGS+= -Wall
-endif
-#CFLAGS+= -Wconversion
-#CFLAGS+= -Wmissing-prototypes
-CFLAGS+= -Wpointer-arith
-CFLAGS+= -Wcast-qual
-#CFLAGS+= -Wmissing-declarations
-CFLAGS+= -Wstrict-prototypes
-#CFLAGS+= -pedantic
-#CFLAGS+= -W
-#CFLAGS+= -Wwrite-strings
-CFLAGS+= -Wbad-function-cast 
+CFLAGS+= ${WERROR}
 
 ifeq ($(USE_NAT_TRAVERSAL),true)
 CFLAGS+= -DNAT_TRAVERSAL

@@ -64,7 +64,7 @@ known_oid(chunk_t object)
 /*
  *  Decodes the length in bytes of an ASN.1 object
  */
-u_int
+size_t
 asn1_length(chunk_t *blob)
 {
     u_char n;
@@ -275,17 +275,14 @@ asn1totime(const chunk_t *utctime, asn1_t type)
     }
 
     /* parse ASN.1 time string */
+    if (sscanf((const char *)utctime->ptr,
+	    (type == ASN1_UTCTIME)? "%2d%2d%2d%2d%2d" : "%4d%2d%2d%2d%2d",
+	    &t.tm_year, &t.tm_mon, &t.tm_mday,
+	    &t.tm_hour, &t.tm_min) != 5)
     {
-	const char* format = (type == ASN1_UTCTIME)? "%2d%2d%2d%2d%2d":
-						     "%4d%2d%2d%2d%2d";
-
-	if (sscanf((const char *)utctime->ptr, format, &t.tm_year, &t.tm_mon, &t.tm_mday,
-					 &t.tm_hour, &t.tm_min) != 5)
-	{
-	    return 0; /* error in time st [yy]yymmddhhmm time format */
-	}
-
+	return 0; /* error in time st [yy]yymmddhhmm time format */
     }
+
 
     /* is there a seconds field? */
     if ((eot - (char *)utctime->ptr) == ((type == ASN1_UTCTIME)?12:14))

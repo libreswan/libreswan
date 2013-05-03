@@ -15,6 +15,7 @@
  * Copyright (C) 2010 Roman Hoog Antink <rha@open.ch>
  * Copyright (C) 2010 D. Hugh Redelmeier
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -490,7 +491,7 @@ netlink_raw_eroute(const ip_address *this_host
     int policy;
     bool ok;
     bool enoent_ok;
-    ip_subnet local_that_client;
+    ip_subnet local_client;
     int satype = 0;
 
     policy = IPSEC_POLICY_IPSEC;
@@ -547,32 +548,31 @@ netlink_raw_eroute(const ip_address *this_host
 	   DBG_log("satype(%d) is not used in netlink_raw_eroute.",satype));
     }
 
+    if (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND)
+	dir = XFRM_POLICY_IN;
+    else
+	dir = XFRM_POLICY_OUT;
+
     /* Bug #1004 fix.
      * There really isn't "client" with NETKEY and transport mode
      * so eroute must be done to natted, visible ip. If we don't hide
      * internal IP, communication doesn't work.
      */
-    if((proto == ET_ESP || proto == ET_IPCOMP)
-	&& !addrinsubnet(that_host, that_client)
-	&& !isanyaddr(that_host))
-    {
-	addrtosubnet(that_host, &local_that_client);
+    if (esatype == ET_ESP || esatype == ET_IPCOMP || proto == SA_ESP) {
+	/*
+	 * Variable "that" should be remote, but here it's not.
+	 * We must check "dir" to find out remote address.
+	 */
+	if (dir == XFRM_POLICY_OUT) {
+	    addrtosubnet(that_host, &local_client);
+	    that_client = &local_client;
+	} else {
+	    addrtosubnet(this_host, &local_client);
+	    this_client = &local_client;
+	}
 	DBG(DBG_NETKEY,
-	    {
-		char that_client_t[SUBNETTOT_BUF];
-		char local_that_client_t[SUBNETTOT_BUF];
-
-		subnettot(that_client, 0, that_client_t
-		    , sizeof(that_client_t));
-		subnettot(&local_that_client, 0, local_that_client_t
-		    , sizeof(local_that_client_t));
-		DBG_log(
-		    "netlink_raw_eroute: proto = %u,"
-		    " substituting %s with %s"
-		    , proto, that_client_t, local_that_client_t);
-	    });
-
- 	that_client = &local_that_client;
+	    DBG_log("%s: using host address instead of client subnet",
+		__func__));
     }
 
     memset(&req, 0, sizeof(req));
@@ -615,12 +615,6 @@ netlink_raw_eroute(const ip_address *this_host
     req.u.p.sel.prefixlen_d = that_client->maskbits;
     req.u.p.sel.proto = transport_proto;
     req.u.p.sel.family = family;
-
-    dir = XFRM_POLICY_OUT;
-    if (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND)
-    {
-	dir = XFRM_POLICY_IN;
-    }
 
     if (sadb_op == ERO_DELETE || sadb_op == ERO_DEL_INBOUND)
     {
@@ -1886,10 +1880,10 @@ netlink_shunt_eroute(struct connection *c
 	       , "eroute_connection %s", opname);
 
       if( ! netlink_raw_eroute(&sr->this.host_addr, &sr->this.client
-			      , fam->any
+			      , &sr->that.host_addr
 			      , &sr->that.client
 			      , htonl(spi)
-			      , SA_INT
+			      , c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : SA_INT
 			      , sr->this.protocol
 			      , ET_INT
 			      , null_proto_info, 0, op, buf2
@@ -1915,10 +1909,10 @@ netlink_shunt_eroute(struct connection *c
 	       , "eroute_connection %s inbound", opname);
 
       return netlink_raw_eroute(&sr->this.host_addr, &sr->this.client
-			      , fam->any
+			      , &sr->that.host_addr
 			      , &sr->that.client
 			      , htonl(spi)
-			      , SA_INT
+			      , c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : SA_INT
 			      , sr->this.protocol
 			      , ET_INT
 			      , null_proto_info, 0, op, buf2

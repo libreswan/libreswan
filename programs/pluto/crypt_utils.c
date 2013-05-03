@@ -51,7 +51,7 @@ void pluto_crypto_allocchunk(wire_chunk_t *space
      * passert for now, since we should be able to figure out what
      * the maximum is.
      */
-    passert(space->start + howbig < space->len);
+    passert(howbig < space->len - space->start);
 
     new->start = space->start;
     new->len   = howbig;

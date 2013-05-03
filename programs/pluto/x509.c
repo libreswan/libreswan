@@ -443,7 +443,7 @@ load_crls(void)
 		chunk_t blob = empty_chunk;
 		char *filename = filelist[n]->d_name;
 
-		if (load_coded_file(filename, NULL, 
+		if (load_coded_file(filename, 
 #ifdef SINGLE_CONF_DIR
 			FALSE, /* too verbose in a shared dir */
 #else

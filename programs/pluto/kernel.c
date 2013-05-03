@@ -8,6 +8,7 @@
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2010 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -134,7 +135,7 @@ record_and_initiate_opportunistic(const ip_subnet *ours
                                   , const ip_subnet *his
                                   , int transport_proto
 #ifdef HAVE_LABELED_IPSEC
-                                  , struct xfrm_user_sec_ctx_ike *uctx 
+                                  , struct xfrm_user_sec_ctx_ike *uctx
 #endif
                                   , const char *why)
 {
@@ -327,9 +328,9 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
 	secure_peerca_str[IDTOA_BUF] = "",
 	nexthop_str[sizeof("PLUTO_NEXT_HOP='' ")+ADDRTOT_BUF],
 	secure_xauth_username_str[IDTOA_BUF] = "";
-    
+
     ip_address ta;
-    
+
     nexthop_str[0]='\0';
     if(addrbytesptr(&sr->this.host_nexthop, NULL)
        && !isanyaddr(&sr->this.host_nexthop))
@@ -350,7 +351,7 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
     addrtot(&ta, 0, myclientnet_str, sizeof(myclientnet_str));
     maskof(&sr->this.client, &ta);
     addrtot(&ta, 0, myclientmask_str, sizeof(myclientmask_str));
-    
+
     addrtot(&sr->that.host_addr, 0, peer_str, sizeof(peer_str));
     idtoa(&sr->that.id, peerid_str, sizeof(peerid_str));
     escape_metachar(peerid_str, secure_peerid_str, sizeof(secure_peerid_str));
@@ -372,14 +373,14 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
     if (st != NULL && st->st_xauth_username) {
 	size_t len;
 	strcpy(secure_xauth_username_str, "PLUTO_XAUTH_USERNAME='");
-	
+
 	len = strlen(secure_xauth_username_str);
 	remove_metachar((unsigned char *)st->st_xauth_username
 			,secure_xauth_username_str+len
 			,sizeof(secure_xauth_username_str)-(len+2));
 	strncat(secure_xauth_username_str, "'", sizeof(secure_xauth_username_str)-1);
     }
-    
+
     srcip_str[0]='\0';
     if(addrbytesptr(&sr->this.host_srcip, NULL) != 0
        && !isanyaddr(&sr->this.host_srcip))
@@ -390,20 +391,20 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
 	strncat(srcip_str, "'", sizeof(srcip_str)-strlen(srcip_str)-1);
 	l = strlen(srcip_str);
 	p = srcip_str + l;
-        
+
 	addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str));
 	strncat(srcip_str, "'", sizeof(srcip_str)-strlen(srcip_str)-1);
     }
-    
+
     {
 	struct pubkey_list *p;
 	char peerca_str[IDTOA_BUF];
-	
+
 	for (p = pluto_pubkeys; p != NULL; p = p->next)
 	{
 	    struct pubkey *key = p->key;
 	    int pathlen;
-            
+
 	    if (key->alg == PUBKEY_ALG_RSA && same_id(&sr->that.id, &key->id)
 		&& trusted_ca(key->issuer, sr->that.ca, &pathlen))
 	    {
@@ -413,7 +414,7 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
 	    }
 	}
     }
-    
+
     result = snprintf(buf, blen,
 		    "PLUTO_VERSION='2.0' "  /* change VERSION when interface spec changes */
 		    "PLUTO_CONNECTION='%s' "
@@ -492,7 +493,7 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
 		    , c->nmconfigured
 #endif
 		);
-	/* 
+	/*
 	 * works for both old and new way of snprintf() returning
 	 * eiter -1 or the output length  -- by Carsten Schlote
 	 */
@@ -951,7 +952,7 @@ raw_eroute(const ip_address *this_host
 				  , policy_label
 #endif
 				  );
-    
+
     if(result == FALSE || DBGP(DBG_CONTROL|DBG_KLIPS)) {
 	   DBG_log("raw_eroute result=%u\n", result);
     }
@@ -1003,7 +1004,7 @@ clear_narrow_holds(
 
 	initsubnet(&p->ours.addr, ours->maskbits, '0', &po);
 	initsubnet(&p->his.addr, his->maskbits, '0', &ph);
-		
+
 	if (samesubnet(ours, &po) && samesubnet(his, &ph)
 		&& transport_proto == p->transport_proto
 		&& portof(&ours->addr) == portof(&p->ours.addr)
@@ -1047,7 +1048,7 @@ replace_bare_shunt(const ip_address *src, const ip_address *dst
      * shunt spi, and then we add a %HOLD for what was there before.
      *
      * this is at odds with repl == 0, which should delete things.
-     * 
+     *
      */
 
     if(transport_proto != 0) {
@@ -1057,12 +1058,12 @@ replace_bare_shunt(const ip_address *src, const ip_address *dst
         that_broad_client = that_client;
         setportof(0, &this_broad_client.addr);
         setportof(0, &that_broad_client.addr);
-        
+
         if (repl)
             {
                 struct bare_shunt **bs_pp = bare_shunt_ptr(&this_broad_client
                                                            , &that_broad_client, 0);
-                
+
                 /* is there already a broad host-to-host bare shunt? */
                 if (bs_pp == NULL)
                     {
@@ -1079,7 +1080,7 @@ replace_bare_shunt(const ip_address *src, const ip_address *dst
 				       ))
                             {
                                 struct bare_shunt *bs = alloc_thing(struct bare_shunt, "bare shunt");
-                                
+
                                 bs->ours = this_broad_client;
                                 bs->his =  that_broad_client;
                                 bs->transport_proto = transport_proto;
@@ -1097,7 +1098,7 @@ replace_bare_shunt(const ip_address *src, const ip_address *dst
                     }
                 shunt_spi = SPI_HOLD;
             }
-        
+
 	DBG(DBG_KLIPS, DBG_log("adding specific host-to-host bare shunt"));
         if (raw_eroute(null_host, &this_client, null_host, &that_client
                        , htonl(shunt_spi)
@@ -1112,10 +1113,10 @@ replace_bare_shunt(const ip_address *src, const ip_address *dst
             {
                 struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client, &that_client
                                                            , transport_proto);
-                
+
                 /* delete bare eroute */
                 free_bare_shunt(bs_pp);
-                
+
                 return TRUE;
             }
         else
@@ -1125,7 +1126,7 @@ replace_bare_shunt(const ip_address *src, const ip_address *dst
     }
     else {
         unsigned int op = repl ? ERO_REPLACE : ERO_DELETE;
-        
+
 	DBG(DBG_KLIPS, DBG_log("%s specific host-to-host bare shunt", repl ? "replacing" : "removing"));
         if (raw_eroute(null_host, &this_client, null_host, &that_client
                        , htonl(shunt_spi), SA_INT
@@ -1139,7 +1140,7 @@ replace_bare_shunt(const ip_address *src, const ip_address *dst
             {
                 struct bare_shunt **bs_pp = bare_shunt_ptr(&this_client
                                                            , &that_client, 0);
-                
+
 		passert(bs_pp != NULL);
                 if (repl)
                     {
@@ -1147,7 +1148,7 @@ replace_bare_shunt(const ip_address *src, const ip_address *dst
 			 * ours, his, transport_proto are the same.
 			 */
                         struct bare_shunt *bs = *bs_pp;
-                        
+
                         pfree(bs->why);
                         bs->why = clone_str(why, "bare shunt story");
                         bs->policy_prio = policy_prio;
@@ -1170,7 +1171,7 @@ replace_bare_shunt(const ip_address *src, const ip_address *dst
                 return FALSE;
             }
     }
-        
+
 }
 
 bool eroute_connection(struct spd_route *sr
@@ -1406,19 +1407,23 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * transport mode */
 	add_selector = 1;
     }
+    c->encapsulation = encapsulation;
 
     memset(said, 0, sizeof(said));
 
-    /* If we are tunnelling, set up IP in IP pseudo SA */
+    if (kernel_ops->inbound_eroute) {
+	inner_spi = 256;
+	if (encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+	    /* If we are tunnelling, set up IP in IP pseudo SA */
+	    proto = SA_IPIP;
+	    esatype = ET_IPIP;
+	} else {
+	    /* For transport mode set ESP */
+	    proto = SA_ESP;
+	    esatype = ET_ESP;
+	}
 
-    if (kernel_ops->inbound_eroute)
-    {
-        inner_spi = 256;
-        proto = SA_IPIP;
-        esatype = ET_IPIP; /* XXX bart: used to be "UNSPEC" */
-    }
-    else if (encapsulation == ENCAPSULATION_MODE_TUNNEL)
-    {
+    } else if (encapsulation == ENCAPSULATION_MODE_TUNNEL) {
         /* XXX hack alert -- we SHOULD NOT HAVE TO HAVE A DIFFERENT SPI
          * XXX FOR IP-in-IP ENCAPSULATION!
          */
@@ -1657,7 +1662,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 	    } else {
 		natt_type = ESPINUDP_WITH_NON_IKE;
 	    }
-	       
+
 	    if(inbound) {
 		natt_sport = st->st_remoteport;
 		natt_dport = st->st_localport;
@@ -1665,7 +1670,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 		natt_sport = st->st_localport;
 		natt_dport = st->st_remoteport;
 	    }
-		
+
             natt_oa = st->hidden_variables.st_nat_oa;
         }
 #endif
@@ -1675,10 +1680,10 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 		      , st->st_esp.attrs.transattrs.encrypt
 		      , st->st_esp.attrs.transattrs.enckeylen
 		      , st->st_esp.attrs.transattrs.integ_hash));
-		    
+
         for (ei = esp_info; ; ei++)
         {
-	    
+
 	    /* if it is the last key entry, then ask algo */
             if (ei == &esp_info[elemsof(esp_info)])
             {
@@ -1706,7 +1711,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 	    DBG(DBG_CRYPT
 		, DBG_log("checking transid: %d keylen: %d auth: %d\n"
 			  , ei->transid, ei->enckeylen, ei->auth));
-		    
+
             if (st->st_esp.attrs.transattrs.encrypt == ei->transid
 		&& (st->st_esp.attrs.transattrs.enckeylen ==0 || st->st_esp.attrs.transattrs.enckeylen == ei->enckeylen * BITS_PER_BYTE)
 		&& st->st_esp.attrs.transattrs.integ_hash == ei->auth)
@@ -1714,7 +1719,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         }
 
 	if (st->st_esp.attrs.transattrs.encrypt != ei->transid
-	    && st->st_esp.attrs.transattrs.enckeylen != ei->enckeylen  * BITS_PER_BYTE 
+	    && st->st_esp.attrs.transattrs.enckeylen != ei->enckeylen  * BITS_PER_BYTE
 	    && st->st_esp.attrs.transattrs.integ_hash != ei->auth) {
 	    loglog(RC_LOG_SERIOUS, "failed to find key info for %s/%s"
 		   , enum_name(&esp_transformid_names, st->st_esp.attrs.transattrs.encrypt)
@@ -1737,11 +1742,11 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         /* Grrrrr.... f*cking 7 bits jurassic algos  */
 
         /* 168 bits in kernel, need 192 bits for keymat_len */
-        if (ei->transid == ESP_3DES && key_len == 21) 
+        if (ei->transid == ESP_3DES && key_len == 21)
                 key_len = 24;
 
         /* 56 bits in kernel, need 64 bits for keymat_len */
-        if (ei->transid == ESP_DES && key_len == 7) 
+        if (ei->transid == ESP_DES && key_len == 7)
                 key_len = 8;
 
         /* divide up keying material */
@@ -1983,7 +1988,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         {
             struct pfkey_proto_info proto_info[4];
             int i = 0;
-            
+
             if (st->st_ipcomp.present)
             {
                 proto_info[i].proto = IPPROTO_COMP;
@@ -1991,7 +1996,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
                 proto_info[i].reqid = c->spd.reqid + 2;
                 i++;
             }
-            
+
             if (st->st_esp.present)
             {
                 proto_info[i].proto = IPPROTO_ESP;
@@ -1999,7 +2004,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
                 proto_info[i].reqid = c->spd.reqid + 1;
                 i++;
             }
-            
+
             if (st->st_ah.present)
             {
                 proto_info[i].proto = IPPROTO_AH;
@@ -2007,9 +2012,9 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
                 proto_info[i].reqid = c->spd.reqid;
                 i++;
             }
-            
+
             proto_info[i].proto = 0;
-            
+
             if (kernel_ops->inbound_eroute
                 && encapsulation == ENCAPSULATION_MODE_TUNNEL)
             {
@@ -2019,7 +2024,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
                     proto_info[i].encapsulation = ENCAPSULATION_MODE_TRANSPORT;
                 }
             }
-            
+
             /* MCR - should be passed a spd_eroute structure here */
             (void) raw_eroute(&c->spd.that.host_addr   /* this_host */
 			      , &c->spd.that.client    /* this_client */
@@ -2041,11 +2046,11 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
     }
 
     /* If there are multiple SPIs, group them. */
-    
+
     if (kernel_ops->grp_sa && said_next > &said[1])
     {
         struct kernel_sa *s;
-        
+
         /* group SAs, two at a time, inner to outer (backwards in said[])
          * The grouping is by pairs.  So if said[] contains ah esp ipip,
          * the grouping would be ipip:esp, esp:ah.
@@ -2057,17 +2062,17 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
                 text_said1[SATOT_BUF];
 
             /* group s[1] and s[0], in that order */
-            
+
             set_text_said(text_said0, s[0].dst, s[0].spi, s[0].proto);
             set_text_said(text_said1, s[1].dst, s[1].spi, s[1].proto);
-            
+
             DBG(DBG_KLIPS, DBG_log("grouping %s (ref=%u) and %s (ref=%u)"
 				   , text_said0, s[0].ref
 				   , text_said1, s[1].ref));
-            
+
             s[0].text_said = text_said0;
             s[1].text_said = text_said1;
-            
+
             if (!kernel_ops->grp_sa(s + 1, s))
                 goto fail;
         }
@@ -2126,9 +2131,9 @@ teardown_half_ipsec_sa(struct state *st, bool inbound)
         (void) raw_eroute(&c->spd.that.host_addr, &c->spd.that.client
                           , &c->spd.this.host_addr, &c->spd.this.client
                           , 256
-			  , IPSEC_PROTO_ANY
+			  , c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY
                           , c->spd.this.protocol
-                          , ET_UNSPEC
+                          , c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC
                           , null_proto_info, 0
                           , ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
@@ -2234,7 +2239,7 @@ init_kernel(void)
 	/* FALL THROUGH */
 #endif
 
-#if defined(KLIPS) 
+#if defined(KLIPS)
     case USE_KLIPS:
 	if (stat("/proc/net/pf_key", &buf) == 0) {
 	    kern_interface = USE_KLIPS;
@@ -2247,7 +2252,7 @@ init_kernel(void)
 	/* FALL THROUGH */
 #endif
 
-#if defined(KLIPS_MAST) 
+#if defined(KLIPS_MAST)
     case USE_MASTKLIPS:
         if (stat("/proc/sys/net/ipsec/debug_mast", &buf) == 0) {
 	    kern_interface = USE_MASTKLIPS;
@@ -2260,7 +2265,7 @@ init_kernel(void)
 	/* FALL THROUGH */
 #endif
 
-#if defined(BSD_KAME) 
+#if defined(BSD_KAME)
     case USE_BSDKAME:
 	kern_interface = USE_BSDKAME;
 	libreswan_log("Using BSD/KAME IPsec interface code on %s"
@@ -2269,7 +2274,7 @@ init_kernel(void)
 	break;
 #endif
 
-#if defined(WIN32) && defined(WIN32_NATIVE) 
+#if defined(WIN32) && defined(WIN32_NATIVE)
     case USE_WIN32_NATIVE:
 	kern_interface = USE_WIN32_NATIVE;
 	libreswan_log("Using Win2K native IPsec interface code on %s"
@@ -2327,7 +2332,7 @@ static void look_for_replacement_state(struct state *st)
 {
     struct connection *c = st->st_connection;
     struct state *ost = state_with_serialno(c->newest_ipsec_sa);
-    
+
     DBG(DBG_CONTROL,
 	DBG_log("checking if this is a replacement state");
 	DBG_log("  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu "
@@ -2393,8 +2398,8 @@ install_inbound_ipsec_sa(struct state *st)
 		    && LIN(POLICY_OVERLAPIP, o->policy))
 		    break;
             }
-		
-	    loglog(RC_LOG_SERIOUS, "route to peer's client conflicts with \"%s\" %s; releasing old connection to free the route"		
+
+	    loglog(RC_LOG_SERIOUS, "route to peer's client conflicts with \"%s\" %s; releasing old connection to free the route"
 		   , o->name, ip_str(&o->spd.that.host_addr));
 	    release_connection(o, FALSE);
         }
@@ -2439,7 +2444,7 @@ install_inbound_ipsec_sa(struct state *st)
 	    return FALSE;
 	}
 #ifdef HAVE_LABELED_IPSEC
-	} 
+	}
 	else {
 	DBG(DBG_CONTROL,
 	DBG_log("in case of loopback, the state that initiated this quick mode exchange will install outgoing SAs, so skipping this"));
@@ -2454,7 +2459,7 @@ install_inbound_ipsec_sa(struct state *st)
 
 #ifdef HAVE_LABELED_IPSEC
 	if(!st->st_connection->loopback) {
-#endif 
+#endif
 
     return setup_half_ipsec_sa(st, TRUE);
 
@@ -2496,7 +2501,7 @@ route_and_eroute(struct connection *c USED_BY_KLIPS
                 , c->name
                 , (c->policy_next ? c->policy_next->name : "none")
                 , ero ? ero->name : "null"
-                , esr 
+                , esr
                 , ro ? ro->name : "null"
                 , rosr
                 , st ? st->st_serialno : 0));
@@ -2919,16 +2924,16 @@ delete_ipsec_sa(struct state *st USED_BY_KLIPS, bool inbound_only USED_BY_KLIPS)
 	     */
 	    struct connection *c = st->st_connection;
 	    struct spd_route *sr;
-	    
+
 	    passert(st->st_connection);
-	    
+
 	    for (sr = &c->spd; sr; sr = sr->next)
 	    {
 		if (sr->eroute_owner == st->st_serialno
 		    && sr->routing == RT_ROUTED_TUNNEL)
 		{
 		    sr->eroute_owner = SOS_NOBODY;
-		    
+
 		    /* Routing should become RT_ROUTED_FAILURE,
 		     * but if POLICY_FAIL_NONE, then we just go
 		     * right back to RT_ROUTED_PROSPECTIVE as if no
@@ -3068,7 +3073,7 @@ bool was_eroute_idle(struct state *st, time_t since_when)
     if(kernel_ops->eroute_idle) {
 	return kernel_ops->eroute_idle(st, since_when);
     }
-    
+
     /* it is never idle if we can't check */
     return FALSE;
 }

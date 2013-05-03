@@ -34,7 +34,6 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
         keyblobtoid.c \
 	kernel_alg.c lex.c mpzfuncs.c \
 	lswconf.c lswtime.c \
-	prng.c \
 	portof.c rangetoa.c rangetosubnet.c sameaddr.c \
 	satot.c secrets.c subnetof.c subnettoa.c subnettot.c \
 	subnettypeof.c ttoaddr.c ttodata.c ttoprotoport.c \
@@ -95,17 +94,7 @@ CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
 CFLAGS+=-I${LIBRESWANSRCDIR} -DDEBUG
 CFLAGS+=${PFKEYV2_DEFS} ${KLIPS_DEFS} $(NSSFLAGS)
 CFLAGS+= -I${LIBRESWANSRCDIR}/include ${PORTINCLUDE} $(USERCOMPILE) ${CROSSFLAGS}
-CFLAGS+= -Wall
-#CFLAGS+= -Wconversion
-#CFLAGS+= -Wmissing-prototypes
-CFLAGS+= -Wpointer-arith
-CFLAGS+= -Wcast-qual
-#CFLAGS+= -Wmissing-declarations
-CFLAGS+= -Wstrict-prototypes
-#CFLAGS+= -pedantic
-#CFLAGS+= -W
-#CFLAGS+= -Wwrite-strings
-CFLAGS+= -Wbad-function-cast 
+CFLAGS+= ${WERROR}
 
 ifeq ($(USE_NAT_TRAVERSAL),true)
 CFLAGS+= -DNAT_TRAVERSAL

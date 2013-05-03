@@ -33,7 +33,7 @@ void confwrite_list(FILE *out, char *prefix, int val, struct keyword_def *k)
     unsigned int mask=1;
     char *sep="";
 
-    while(i <kevs->valuesize) {
+    while(i < (int)kevs->valuesize) {
 	mask = kev[i].value;
 	if(mask != 0 && (val & mask) == mask) {
 	    fprintf(out, "%s%s%s", sep, prefix, kev[i].name);
@@ -119,8 +119,8 @@ void confwrite_int(FILE *out,
 		    struct keyword_enum_value  *kev  = kevs->values;
 		    int i=0;
 
-		    while(i <kevs->valuesize) {
-			if(kev[i].value == val) {
+		    while(i < (int)kevs->valuesize) {
+			if((int)kev[i].value == val) {
 			    fprintf(out, "%s", kev[i].name);
 			    break;
 			}
@@ -164,8 +164,8 @@ void confwrite_int(FILE *out,
 		   
 void confwrite_str(FILE *out,
 		   char   *side,
-		   int     context,
-		   int     keying_context,
+		   unsigned int     context,
+		   unsigned int     keying_context,
 		   ksf     strings,
 		   str_set strings_set)
 {

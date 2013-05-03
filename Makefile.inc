@@ -213,6 +213,9 @@ endif
 
 GCC_LINT ?= -DGCC_LINT
 
+# some defaults that cause most if not all warnings
+WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security #-pedantic
+
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
 
@@ -228,7 +231,7 @@ GCC_LINT ?= -DGCC_LINT
 # Example for a cross compile:
 # USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
 # USERCOMPILE?=-g -O2 ${WERROR} $(GCC_LINT)
-USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} $(GCC_LINT) -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all --param=ssp-buffer-size=4  -mtune=generic -fno-strict-aliasing -fPIE -DPIE  -Wall -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wbad-function-cast -Wformat-nonliteral -Wformat-security
+USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} $(GCC_LINT) -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all --param=ssp-buffer-size=4  -mtune=generic -fno-strict-aliasing -fPIE -DPIE 
 
 KLIPSCOMPILE=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # Additional debugging for developers (warning: can crash libreswan!)

@@ -2,7 +2,7 @@
  * Copyright (C) 2001-2004 Andreas Steffen, Zuercher Hochschule Winterthur
  * Copyright (C) 2003-2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,6 +14,8 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
+ * Decryption support removed - we only supported private key files via NSS
+ * (if we do an openssl port, it needs to use native openssl functions for this)
  */
 
 /* decrypt a PEM encoded data block using DES-EDE3-CBC
@@ -186,137 +188,15 @@ fetchline(chunk_t *src, chunk_t *line)
     return TRUE;
 }
 
-/*
- * decrypts a DES-EDE-CBC encrypted data block
- */
-static bool
-pem_decrypt_3des(chunk_t *blob, chunk_t *iv, const char *passphrase)
-{
-    MD5_CTX context;
-    u_char digest[MD5_DIGEST_SIZE];
-    u_char key[24];
-
-    u_char padding, *last_padding_pos, *first_padding_pos;
-
-    /* Convert passphrase to 3des key */
-    osMD5Init(&context);
-    osMD5Update(&context, (const unsigned char *)passphrase, strlen(passphrase));
-    osMD5Update(&context, iv->ptr, iv->len);
-    osMD5Final(digest, &context);
-
-    memcpy(key, digest, MD5_DIGEST_SIZE);
-    osMD5Init(&context);
-    osMD5Update(&context, digest, MD5_DIGEST_SIZE);
-    osMD5Update(&context, (const unsigned char *)passphrase, strlen(passphrase));
-    osMD5Update(&context, iv->ptr, iv->len);
-    osMD5Final(digest, &context);
-
-    memcpy(key + MD5_DIGEST_SIZE, digest, 24 - MD5_DIGEST_SIZE);
-
-   do_3des_nss(blob->ptr, blob->len, 
-        key, DES_CBC_BLOCK_SIZE * 3 , (u_int8_t*)iv, FALSE);
-    /* determine amount of padding */
-    last_padding_pos = blob->ptr + blob->len - 1;
-    padding = *last_padding_pos;
-    first_padding_pos = (padding > blob->len)?
-			 blob->ptr : last_padding_pos - padding;
-
-    /* check the padding pattern */
-    while (--last_padding_pos > first_padding_pos)
-    {
-	if (*last_padding_pos != padding)
-	    return FALSE;
-    }
-
-    /* remove padding */
-    blob->len -= padding;
-    return TRUE;
-}
-
-/*
- * optionally prompts for a passphrase before decryption
- * currently we support DES-EDE3-CBC, only
- */
-static err_t
-pem_decrypt(chunk_t *blob, chunk_t *iv
-	    , prompt_pass_t *pass, const char* label)
-{
-    DBG(DBG_CRYPT,
-	DBG_log("  decrypting file using 'DES-EDE3-CBC'");
-    )
-    if (iv->len != DES_CBC_BLOCK_SIZE)
-	return "size of DES-EDE3-CBC IV is not 8 bytes";
-
-    if (pass == NULL)
-	return "no passphrase available";
-
-    /* do we prompt for the passphrase? */
-    if (pass->prompt && pass->fd != NULL_FD)
-    {
-	int i;
-	chunk_t blob_copy;
- 	err_t ugh = "invalid passphrase, too many trials";
-
-	pass->prompt(RC_ENTERSECRET, "need passphrase for '%s'", label);
-
-	clonetochunk(blob_copy, blob->ptr, blob->len, "blob copy");
-
-	for (i = 0; i < MAX_PROMPT_PASS_TRIALS; i++)
-	{
-	    int n;
-
-	    if (i > 0)
-	    pass->prompt(RC_ENTERSECRET, "invalid passphrase, please try again");
-
-	    n = read(pass->fd, pass->secret, PROMPT_PASS_LEN);
-
-	    if (n == -1)
-	    {
-		ugh = "read(whackfd) failed";
-
-		pass->prompt(RC_LOG_SERIOUS,"%s", ugh);
-		return ugh;
-	    }
-
-	    if (strlen(pass->secret) == 0)
-	    {
-	        ugh = "no passphrase entered, aborted";
-
-		pass->prompt(RC_LOG_SERIOUS, "%s", ugh);
-		return ugh;
-	    }
-
-	    if (pem_decrypt_3des(blob, iv, pass->secret))
-	    {
-		pass->prompt(RC_SUCCESS, "valid passphrase, private key loaded successfully");
-		pfree(blob_copy.ptr);
-		return NULL;
-	    }
-	    
-	    /* blob is useless after wrong decryption, restore the original */
-	    pfree(blob->ptr);
-	    clonetochunk(*blob, blob_copy.ptr, blob_copy.len, "blob copy");
-	}
-	pass->prompt(RC_LOG_SERIOUS, "%s", ugh);
-	pfree(blob_copy.ptr);
-	return ugh;
-    }
-    else
-    {
-	if (pem_decrypt_3des(blob, iv, pass->secret))
-	    return NULL;
-	else
-	    return "invalid passphrase";
-    }
-}
-
 /*  Converts a PEM encoded file into its binary form
  *
  *  RFC 1421 Privacy Enhancement for Electronic Mail, February 1993
  *  RFC 934 Message Encapsulation, January 1985
+ *
+ *  We no longer support decrypting PEM files - those can only come in via NSS
  */
 err_t
-pemtobin(chunk_t *blob, prompt_pass_t *pass, const char* label, bool *pgp)
+pemtobin(chunk_t *blob, bool *pgp)
 {
     typedef enum {
 	PEM_PRE    = 0,
@@ -327,23 +207,14 @@ pemtobin(chunk_t *blob, prompt_pass_t *pass, const char* label, bool *pgp)
 	PEM_ABORT  = 5
     } state_t;
 
-    bool encrypted = FALSE;
-
     state_t state  = PEM_PRE;
 
     chunk_t src    = *blob;
     chunk_t dst    = *blob;
     chunk_t line   = empty_chunk;
-    chunk_t iv     = empty_chunk;
-
-    u_char iv_buf[MAX_DIGEST_LEN];
 
     /* zero size of converted blob */
     dst.len = 0;
-
-    /* zero size of IV */
-    iv.ptr = iv_buf;
-    iv.len = 0;
 
     while (fetchline(&src, &line))
     {
@@ -385,27 +256,10 @@ pemtobin(chunk_t *blob, prompt_pass_t *pass, const char* label, bool *pgp)
 		    continue;
 
 		if (match("Proc-Type", &name) && *value.ptr == '4')
-			encrypted = TRUE;
+			return "Proc-Type: encrypted files no longer supported outside of the NSS database, please import these into NSS";
 		else if (match("DEK-Info", &name))
 		{
-		    const char *ugh = NULL;
-		    size_t len = 0;
-		    chunk_t dek;
-
-		    if (!extract_token(&dek, ',', &value))
-			dek = value;
-
-		    /* we support DES-EDE3-CBC encrypted files, only */
-		    if (!match("DES-EDE3-CBC", &dek))
-			return "we support DES-EDE3-CBC encrypted files, only";
-
-		    eat_whitespace(&value);
-		    ugh = ttodata((char *)value.ptr, value.len, 16,
-		    		  (char *)iv.ptr, MAX_DIGEST_LEN, &len);
-		    if (ugh)
-			return "error in IV";
-
-		    iv.len = len;
+			return "DEK-Info: encrypted files no longer supported outside of the NSS database, please import these into NSS";
 		}
 	    }
 	    else /* state is PEM_BODY */
@@ -454,10 +308,7 @@ pemtobin(chunk_t *blob, prompt_pass_t *pass, const char* label, bool *pgp)
     if (state != PEM_POST)
 	return "file coded in unknown format, discarded";
 
-    if (encrypted)
-	return pem_decrypt(blob, &iv, pass, label);
-    else
-	return NULL;
+    return NULL;
 }
 
 void do_3des_nss(u_int8_t *buf, size_t buf_len
@@ -483,7 +334,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len
     memcpy(&symkey, key, key_size);
     if (symkey == NULL) {
 	loglog(RC_LOG_SERIOUS, "do_3des: NSS derived enc key is NULL \n");
-	goto out;
+	abort();
     }
 
     ivitem.type = siBuffer;
@@ -493,7 +344,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len
     secparam = PK11_ParamFromIV(ciphermech, &ivitem);
     if (secparam == NULL) {
 	loglog(RC_LOG_SERIOUS, "do_3des: Failure to set up PKCS11 param (err %d)\n",PR_GetError());
-	goto out;
+	abort();
     }
 
     outlen = 0;
@@ -505,8 +356,15 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len
     }
 
     enccontext = PK11_CreateContextBySymKey(ciphermech, enc? CKA_ENCRYPT: CKA_DECRYPT, symkey, secparam);
+    if (enccontext == NULL) {
+        loglog(RC_LOG_SERIOUS, "do_3des: PKCS11 context creation failure (err %d)\n", PR_GetError());
+        abort();
+    }
     rv = PK11_CipherOp(enccontext, tmp_buf, &outlen, buf_len, buf, buf_len);
-    passert(rv==SECSuccess);
+    if (rv != SECSuccess) {
+        loglog(RC_LOG_SERIOUS, "do_3des: PKCS11 operation failure (err %d)\n", PR_GetError());
+        abort();
+    }
 
     if(enc) {
 	memcpy(new_iv, (char*) tmp_buf + buf_len-DES_CBC_BLOCK_SIZE, DES_CBC_BLOCK_SIZE);
@@ -518,7 +376,6 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len
     PR_Free(tmp_buf);
     PR_Free(new_iv);
 
-out:
     if (secparam) {
 	SECITEM_FreeItem(secparam, PR_TRUE);
     }

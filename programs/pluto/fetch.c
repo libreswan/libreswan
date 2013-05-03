@@ -210,6 +210,7 @@ fetch_curl(chunk_t url LIBCURL_UNUSED, chunk_t *blob LIBCURL_UNUSED)
         curl_easy_setopt(curl, CURLOPT_FILE, (void *)&response);
         curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, FETCH_CMD_TIMEOUT);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2 * FETCH_CMD_TIMEOUT);
 
 
         res = curl_easy_perform(curl);
@@ -425,7 +426,7 @@ fetch_asn1_blob(chunk_t url, chunk_t *blob)
     {
 	bool pgp = FALSE;
 
-	ugh = pemtobin(blob, NULL, "", &pgp);
+	ugh = pemtobin(blob, &pgp);
 	if (ugh == NULL)
 	{
 	    if (is_asn1(*blob))

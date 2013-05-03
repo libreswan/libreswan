@@ -12,20 +12,6 @@ CFLAGS+=-pthread
 
 CFLAGS+=${USERCOMPILE} ${PORTINCLUDE} ${INCLUDES} ${CROSSFLAGS}
 
-ifneq ($(BUILDENV),darwin)
-CFLAGS+= -Wall
-endif
-#CFLAGS+= -Wconversion
-#CFLAGS+= -Wmissing-prototypes
-CFLAGS+= -Wpointer-arith
-CFLAGS+= -Wcast-qual
-#CFLAGS+= -Wmissing-declarations
-CFLAGS+= -Wstrict-prototypes
-#CFLAGS+= -pedantic
-#CFLAGS+= -W
-#CFLAGS+= -Wwrite-strings
-CFLAGS+= -Wbad-function-cast 
-
 ifeq ($(USE_LIBCURL),true)
 CFLAGS+=-DLIBCURL
 endif
@@ -58,11 +44,6 @@ CFLAGS+=-DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
 CFLAGS+=-DIPSEC_CONFDDIR=\"$(FINALCONFDDIR)\"
 CFLAGS+=-DIPSEC_CONF=\"$(FINALCONFFILE)\"
 CFLAGS+=-DIPSEC_VARDIR=\"$(FINALVARDIR)\"
-
-# die if there are any warnings
-ifndef WERROR
-WERROR:= -Werror
-endif
 
 CFLAGS+= ${WERROR}
 

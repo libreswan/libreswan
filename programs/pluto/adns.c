@@ -326,7 +326,7 @@ spawn_worker(void)
 	    close(w->qfd);
 	    close(w->afd);
 	}
-	exit(worker(qfds[0], afds[1]));
+	_exit(worker(qfds[0], afds[1]));
     }
     else
     {
@@ -579,14 +579,14 @@ master(void)
  */
 
 static void
-adns_usage(const char *fmt, const char *arg)
+unexpected_arg_exit(const char *arg)
 {
-    fprintf(stderr, "INTERNAL TO PLUTO: DO NOT EXECUTE\n");
+    fprintf(stderr, "%s INTERNAL TO PLUTO: DO NOT EXECUTE\n", name);
 
-    fprintf(stderr, fmt, arg);
-    fprintf(stderr, "\n%s\n", ipsec_version_string());
+    fprintf(stderr, "unexpected argument \"%s\"\n", arg);
+    fprintf(stderr, "%s\n", ipsec_version_string());
 
-    syslog(LOG_ERR, fmt, arg);
+    syslog(LOG_ERR, "%s: unexpected argument \"%s\"", name, arg);
     exit(HES_INVOCATION);
 }
 
@@ -606,7 +606,7 @@ main(int argc UNUSED, char **argv)
 	}
 	else
 	{
-	    adns_usage("unexpected argument \"%s\"", argv[i]);
+	    unexpected_arg_exit(argv[i]);
 	    /*NOTREACHED*/
 	}
     }
