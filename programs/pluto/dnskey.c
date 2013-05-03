@@ -278,7 +278,7 @@ decode_iii(char **pp, struct id *gw_id)
     {
 	/* gateway specification in this record is @FQDN */
 
-	if(strspn(p,' ') >= IDTOA_BUF) {
+	if(strspn(p," ") >= IDTOA_BUF) {
 	    return builddiag("malformed FQDN in TXT " our_TXT_attr_string ": ID too large for IDTOA_BUF");
 	}
 
