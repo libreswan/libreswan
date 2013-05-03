@@ -1446,9 +1446,9 @@ free_public_keys(struct pubkey_list **keys)
  * - format specified in RFC 2537 RSA/MD5 Keys and SIGs in the DNS
  * - exponent length in bytes (1 or 3 octets)
  *   + 1 byte if in [1, 255]
- *   + otherwise 0x00 followed by 2 bytes of length
- * - exponent
- * - modulus
+ *   + otherwise 0x00 followed by 2 bytes of length (big-endian)
+ * - exponent (of specified length)
+ * - modulus (the rest of the pubkey chunk)
  */
 err_t
 unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
@@ -1461,19 +1461,28 @@ unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
     if (pubkey->len < 3)
 	return "RSA public key blob way too short";	/* not even room for length! */
 
+    /* exponent */
     if (pubkey->ptr[0] != 0x00)
     {
+	/* one-byte length, followed by that many exponent bytes */
 	setchunk(exponent, pubkey->ptr + 1, pubkey->ptr[0]);
     }
     else
     {
+	/* 0x00 followed by 2 bytes of length (big-endian),
+	 * followed by that many exponent bytes
+	 */
 	setchunk(exponent, pubkey->ptr + 3
 	    , (pubkey->ptr[1] << BITS_PER_BYTE) + pubkey->ptr[2]);
     }
 
+    /* check that exponent fits within pubkey and leaves room for a reasonable modulus.
+     * Take care to avoid overflow in this check.
+     */
     if (pubkey->len - (exponent.ptr - pubkey->ptr) < exponent.len + RSA_MIN_OCTETS_RFC)
 	return "RSA public key blob too short";
 
+    /* modulus: all that's left in pubkey */
     mod.ptr = exponent.ptr + exponent.len;
     mod.len = &pubkey->ptr[pubkey->len] - mod.ptr;
 
@@ -1491,7 +1500,6 @@ unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 #ifdef DEBUG
     DBG(DBG_PRIVATE, RSA_show_public_key(rsa));
 #endif
-
 
     rsa->k = mpz_sizeinbase(&rsa->n, 2);	/* size in bits, for a start */
     rsa->k = (rsa->k + BITS_PER_BYTE - 1) / BITS_PER_BYTE;	/* now octets */
