@@ -18,6 +18,7 @@ v3.3 (unreleased)
 * security: cleanup CFLAGS handling [Paul]
 * security: IKEv2 crashed when using nhelpers=0 [Paul]
 * security: Remove stale non-NSS ASN1 handling and pem decryption code [Paul]
+* security: Initial loading of file CRL fails for NSS CAs (rhbz#960171) [Matt Rogers]
 * _stackmanager: fix loading of aes-x86_64 module [Tuomo]
 * Bugtracker bugs fixed:
    #90: NETKEY: Transport mode inbound eroute was from client [Kim/Tuomo]
