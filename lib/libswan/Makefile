@@ -71,7 +71,7 @@ ifeq ($(USE_LDAP),true)
 CFLAGS+=-DLDAP_VER=3
 endif
 
-CFLAGS+=-DUSE_SHA2
+CFLAGS+=-DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 
 LOGSRCS=lswlog.c lswid.c

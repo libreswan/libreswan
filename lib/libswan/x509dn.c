@@ -46,8 +46,12 @@
 #include "pgp.h"
 #include "certs.h"
 #include "secrets.h"
-#include "md5.h"
-#include "sha1.h"
+#ifdef USE_MD5
+# include "md5.h"
+#endif
+#ifdef USE_SHA1
+# include "sha1.h"
+#endif
 #ifdef USE_SHA2
 # include "sha2.h"
 #endif
@@ -1251,6 +1255,7 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 {
     switch (alg)
     {
+#ifdef USE_MD5
 	case OID_MD5:
 	case OID_MD5_WITH_RSA:
 	{
@@ -1261,6 +1266,8 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	    digest->len = MD5_DIGEST_SIZE;
 	    return TRUE;
 	}
+#endif
+#ifdef USE_SHA1
 	case OID_SHA1:
 	case OID_SHA1_WITH_RSA:
 	case OID_SHA1_WITH_RSA_OIW:
@@ -1272,6 +1279,7 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	    digest->len = SHA1_DIGEST_SIZE;
 	    return TRUE;
 	}
+#endif
 #ifdef USE_SHA2
 	case OID_SHA256:
 	case OID_SHA256_WITH_RSA:
