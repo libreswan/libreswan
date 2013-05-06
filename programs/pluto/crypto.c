@@ -47,10 +47,8 @@
 /* moduli and generator. */
 
 static MP_INT
-#if defined(USE_VERYWEAK_DH1) 	/* modp768 not sufficiently strong */
-    modp768_modulus,
-#endif
-    modp1024_modulus,
+    /* modp768_modulus no longer supported - it is too weak */
+    modp1024_modulus, /* migrate away from this if you are still using it */
     modp1536_modulus,
     modp2048_modulus,
     modp3072_modulus,
@@ -74,26 +72,6 @@ MP_INT generator_dh22,
 #endif
 
 #ifdef IKE_ALG
-
-# ifdef USE_1DES
-static void do_des(u_int8_t *buf, size_t buf_len, u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc);
-
-static struct encrypt_desc crypto_encrypter_des =
-{
-    .common = {.name = "oakley_des_cbc",
-	       .officname =         "1des",
-	       .algo_type =         IKE_ALG_ENCRYPT,
-	       .algo_id =           OAKLEY_DES_CBC,
-	       .algo_v2id =         IKEv2_ENCR_DES,
-	       .algo_next =         NULL, },
-    .enc_ctxsize =        sizeof(des_key_schedule),
-    .enc_blocksize =      DES_CBC_BLOCK_SIZE,
-    .keydeflen =  DES_CBC_BLOCK_SIZE * BITS_PER_BYTE,
-    .keyminlen =  DES_CBC_BLOCK_SIZE * BITS_PER_BYTE,
-    .keymaxlen =  DES_CBC_BLOCK_SIZE * BITS_PER_BYTE,
-    .do_crypt =   do_des,
-};
-# endif
 
 # ifdef USE_3DES
 static void do_3des(u_int8_t *buf, size_t buf_len, u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc);
@@ -200,9 +178,7 @@ init_crypto(void)
     ||  mpz_init_set_str(&generator_dh23, MODP_GENERATOR_DH23, 16) != 0
     ||  mpz_init_set_str(&generator_dh24, MODP_GENERATOR_DH24, 16) != 0
 #endif
-#if defined(USE_VERYWEAK_DH1)	                        /* modp768 not sufficiently strong */
-    || mpz_init_set_str(&modp768_modulus, MODP768_MODULUS, 16) != 0
-#endif
+    /* modp768_modulus no longer supported */
     || mpz_init_set_str(&modp1024_modulus, MODP1024_MODULUS, 16) != 0
     || mpz_init_set_str(&modp1536_modulus, MODP1536_MODULUS, 16) != 0
     || mpz_init_set_str(&modp2048_modulus, MODP2048_MODULUS, 16) != 0
@@ -254,13 +230,6 @@ init_crypto(void)
 	    }
 #endif
 
-#ifdef USE_1DES
-/*#warning YOUR PLUTO IS INSECURE, IT HAS 1DES. DO NOT USE IT. */
-	    {
-		ike_alg_add((struct ike_alg *) &crypto_encrypter_des);
-	    }
-#endif
-
 #ifdef USE_SHA2
 	    {
 		extern int ike_alg_sha2_init(void);
@@ -288,9 +257,7 @@ init_crypto(void)
 const struct oakley_group_desc unset_group = {0, NULL, 0};	/* magic signifier */
 
 const struct oakley_group_desc oakley_group[] = {
-#if defined(USE_VERYWEAK_DH1)    	/* modp768 not sufficiently strong */
-    { OAKLEY_GROUP_MODP768, &modp768_modulus, BYTES_FOR_BITS(768) },
-#endif
+    /* modp768_modulus no longer supported - too weak */
     { OAKLEY_GROUP_MODP1024, &modp1024_modulus, BYTES_FOR_BITS(1024) },
     { OAKLEY_GROUP_MODP1536, &modp1536_modulus, BYTES_FOR_BITS(1536) },
     { OAKLEY_GROUP_MODP2048, &modp2048_modulus, BYTES_FOR_BITS(2048) },
@@ -303,9 +270,7 @@ const struct oakley_group_desc oakley_group[] = {
 const struct oakley_group_desc unset_group = {0, NULL, NULL, 0};      /* magic signifier */
 
 const struct oakley_group_desc oakley_group[] = {
-#if defined(USE_VERYWEAK_DH1)           /* modp768 not sufficiently strong */
-    { OAKLEY_GROUP_MODP768, &groupgenerator, &modp768_modulus, BYTES_FOR_BITS(768) },
-#endif
+    /* modp768_modulus no longer supported - too weak */
     { OAKLEY_GROUP_MODP1024, &groupgenerator, &modp1024_modulus, BYTES_FOR_BITS(1024) },
     { OAKLEY_GROUP_MODP1536, &groupgenerator, &modp1536_modulus, BYTES_FOR_BITS(1536) },
     { OAKLEY_GROUP_MODP2048, &groupgenerator, &modp2048_modulus, BYTES_FOR_BITS(2048) },
@@ -337,26 +302,8 @@ lookup_group(u_int16_t group)
  *
  * Each uses and updates the state object's st_new_iv.
  * This must already be initialized.
+ * 1DES support removed - it is simply too weak
  */
-
-#ifdef USE_1DES
-/* encrypt or decrypt part of an IKE message using DES
- * See RFC 2409 "IKE" Appendix B
- */
-static void
-do_des(u_int8_t *buf, size_t buf_len, u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc)
-{
-    des_key_schedule ks;
-
-    lswcrypto.des_set_key((des_cblock *)key, ks);
-
-    passert(key_size >= DES_CBC_BLOCK_SIZE);
-    key_size = DES_CBC_BLOCK_SIZE;     /* truncate */
-
-    lswcrypto.des_ncbc_encrypt((des_cblock *)buf, (des_cblock *)buf, buf_len,
-			 ks, (des_cblock *)iv, enc);
-}
-#endif
 
 /* encrypt or decrypt part of an IKE message using 3DES
  * See RFC 2409 "IKE" Appendix B

@@ -77,15 +77,6 @@ config KLIPS_ENC_CRYPTOAPI
 	   Enable the algorithm interface to make all CryptoAPI 1.0 algorithms
 	   available to KLIPS.
 
-config KLIPS_ENC_1DES
-	bool 'Include 1DES with CryptoAPI'
-	default n
-	depends on KLIPS_ENC_CRYPTOAPI
-	help
-	   The CryptoAPI interface does not include support for every algorithm
-	   yet, and one that it doesn't support by default is the VERY WEAK
-	   1DES. Select this if you are terminally stupid.
-	
 config KLIPS_ENC_3DES
 	bool '3DES encryption algorithm'
 	default y

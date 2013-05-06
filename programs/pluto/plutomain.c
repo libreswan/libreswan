@@ -1110,9 +1110,6 @@ main(int argc, char **argv)
 	     */
 	    libreswan_log("@(#) built on "__DATE__":" __TIME__ " by " BUILDER);
 	}
-#if defined(USE_1DES)
-	libreswan_log("WARNING: 1DES is enabled");
-#endif
     }
 
     if(coredir) {

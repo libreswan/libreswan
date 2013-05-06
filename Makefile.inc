@@ -433,15 +433,6 @@ USE_LDAP?=false
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL?=true
 
-# should we include all manner of known to be broken/weak?
-# use this only if you are building some kind of a testing
-# device. Normal use does not need any of this.
-USE_WEAKSTUFF?=false
-
-# Build algorithms that don't even encrypt (also must set WEAKSTUFF)
-# unless you are doing negative testing, turning this on is foolish.
-USE_NOCRYPTO?=false
-
 # should we include additional (strong) algorithms?  It adds a measureable
 # amount of code space to pluto, and many of the algorithms have not had
 # the same scrutiny that AES and 3DES have received, but offers possibilities 

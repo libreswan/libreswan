@@ -1050,19 +1050,14 @@ parse_isakmp_sa_body(
 #endif
 		    switch (val)
 		    {
-#if defined(USE_1DES)
-		    case OAKLEY_DES_CBC:
-			libreswan_log("1DES is not encryption");
-			/* FALL THROUGH */
-#endif
 		    case OAKLEY_3DES_CBC:
 			ta.encrypt = val;
 			ta.encrypter = crypto_get_encrypter(val);
 			break;
 
-#if !defined(USE_1DES)
 		    case OAKLEY_DES_CBC:
-#endif
+			libreswan_log("1DES is not encryption");
+			/* FALL THROUGH */
 		    default:
 			ugh = builddiag("%s is not supported"
 			    , enum_show(&oakley_enc_names, val));
@@ -2415,7 +2410,7 @@ parse_ipsec_sa_body(
 				continue;
 
 			case ESP_DES:          /* NOT safe */
-			    loglog(RC_LOG_SERIOUS, "1DES was proposed, it is insecure");
+			    loglog(RC_LOG_SERIOUS, "1DES was proposed, it is insecure and was rejected");
 			default:
 			    loglog(RC_LOG_SERIOUS, "kernel algorithm does not like: %s", ugh);
 			    loglog(RC_LOG_SERIOUS, "unsupported ESP Transform %s from %s"
