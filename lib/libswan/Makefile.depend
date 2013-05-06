@@ -26,6 +26,10 @@ initaddr.o: ../../linux/net/ipsec/initaddr.c \
   ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
   ../../linux/include/libreswan/ipsec_param.h
+prng.o: ../../linux/net/ipsec/prng.c \
+  ../../linux/include/libreswan.h \
+  ../../linux/include/libreswan/ipsec_kversion.h \
+  ../../linux/include/libreswan/ipsec_param.h
 rangetoa.o: ../../linux/net/ipsec/rangetoa.c \
   ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
