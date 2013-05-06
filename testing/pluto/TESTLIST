@@ -407,14 +407,14 @@ umlplutotest	basic-pluto-08		bad
 # 
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
-umlplutotest    algo-pluto-01          good
-umlplutotest    algo-pluto-02          good
-umlplutotest    algo-pluto-03          good
-umlplutotest    algo-pluto-04          good
+kvmplutotest    algo-pluto-01          good
+kvmplutotest    algo-pluto-02          good
+kvmplutotest    algo-pluto-03          good
+kvmplutotest    algo-pluto-04          good
 umlplutotest    algo-pluto-05          good
 umlplutotest    algo-pluto-06          good
 
-umlplutotest    algo-pluto-09          good
+kvmplutotest    algo-pluto-09          good
 #
 # tests for usnig multiple subnets using conn aliases
 #
@@ -436,7 +436,8 @@ umlplutotest	protoport-02		good
 umlplutotest	ike-algo-02		good
 
 # Tests below require testing infrastructure with netkey support
-umlplutotest    algo-pluto-07			good
+kvmplutotest    algo-pluto-07			good
+kvmplutotest    algo-pluto-08			good
 umlplutotest    netkey-pluto-01			good
 umlplutotest    netkey-pluto-02			good
 umlplutotest    netkey-pluto-03-sourceip        good
