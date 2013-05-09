@@ -1350,6 +1350,7 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 	case OID_SHA256_WITH_RSA:
 	case OID_SHA384_WITH_RSA:
 	case OID_SHA512_WITH_RSA:
+	case OID_SHA224_WITH_RSA:
 	{
 
 	   SECKEYPublicKey *publicKey;
@@ -1461,6 +1462,13 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 	    pfree(dsig.data);
 
 	    loglog(RC_LOG_SERIOUS, "NSS: RSA Signature FAILED verification");
+	    digest->len = 0;
+	    return FALSE;
+	}
+
+	case OID_MD2_WITH_RSA:
+	{
+	    loglog(RC_LOG_SERIOUS, "NSS: RSA Signature FAILED verification - RSA with MD2 not supported - too weak");
 	    digest->len = 0;
 	    return FALSE;
 	}
