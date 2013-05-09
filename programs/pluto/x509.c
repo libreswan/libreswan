@@ -339,7 +339,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 		    (crl->distributionPoints->name.len < PATH_MAX ?
 		     crl->distributionPoints->name.len : PATH_MAX));
 	    
-	    libreswan_log("crl issuer cacert not found for (%s)",
+	    loglog(RC_LOG_SERIOUS, "CRL rejected: crl issuer cacert not found for (%s)",
 			 distpoint);;
 
 	    free_crl(crl);
@@ -406,7 +406,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
     }
     else
     {
-	libreswan_log("  error in X.509 crl %s", (char *)crl_uri.ptr);
+	loglog(RC_LOG_SERIOUS, "  error in X.509 crl %s", (char *)crl_uri.ptr);
 	free_crl(crl);
 	return FALSE;
     }
