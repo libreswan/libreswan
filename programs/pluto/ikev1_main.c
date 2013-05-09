@@ -648,10 +648,12 @@ main_inI1_outR1(struct msg_digest *md)
 	lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs);
 
 #if 0
+	/*
 	Other IKE clients, such as strongswan, send the XAUTH
 	VID even for connections they do not want to run XAUTH on.
 	We need to depend on the policy negotiation, not the VID.
-
+	*/
+	
 	/*
 	 * If there is XAUTH VID, copy it to policies.
 	 */
