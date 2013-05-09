@@ -167,6 +167,7 @@ int main(int argc, char **argv)
          return 0;
 }
 
+/*
 >> I discussed this subject here:
 >>
 > http://lists.libreswan.org/pipermail/users/2008-February/014030.html
@@ -273,6 +274,6 @@ int main(int argc, char **argv)
 > similarly.
 >
 > Paul
-
+*/
 
 
