@@ -2,12 +2,12 @@
  * IPSEC interface configuration
  * Copyright (C) 1996  John Ioannidis.
  * Copyright (C) 1998, 1999, 2000, 2001  Richard Guy Briggs.
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -40,7 +40,7 @@
 
 static void
 usage(char *name)
-{	
+{
 	fprintf(stdout,"%s <virtual-device>\n",	name);
 	exit(1);
 }
@@ -49,7 +49,7 @@ int
 main(int argc, char *argv[])
 {
 	struct ifreq ifr;
-     
+
 	memset(&ifr, 0, sizeof(ifr));
 	program_name = argv[0];
 
@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
- if (ioctl(fd, SIOCDEVPRIVATE, &ifr) >= 0) {
+	//if (ioctl(fd, SIOCDEVPRIVATE, &ifr) >= 0) {
 
 	if(ioctl(s, shc->cf_cmd, &ifr)==-1)
 	{
