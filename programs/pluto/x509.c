@@ -840,12 +840,8 @@ list_crls(bool utc, bool strict)
     lock_crl_list("list_crls");
     crl = x509crls;
 
-    if (crl != NULL)
-    {
-	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, "List of X.509 CRLs:");
-	whack_log(RC_COMMENT, " ");
-    }
+    whack_log(RC_COMMENT, " ");
+    whack_log(RC_COMMENT, "List of X.509 CRLs:");
 
     while (crl != NULL)
     {
