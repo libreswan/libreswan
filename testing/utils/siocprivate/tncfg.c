@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	//if (ioctl(fd, SIOCDEVPRIVATE, &ifr) >= 0) {
+	/* if (ioctl(fd, SIOCDEVPRIVATE, &ifr) >= 0) { */
 
 	if(ioctl(s, shc->cf_cmd, &ifr)==-1)
 	{
