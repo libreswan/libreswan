@@ -925,7 +925,7 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
     /* decode CA distinguished name, if any */
     if (src->ca != NULL)
     {
-	if streq(src->ca, "%same")
+	if (streq(src->ca, "%same"))
 	    same_ca = TRUE;
 	else if (!streq(src->ca, "%any"))
 	{
