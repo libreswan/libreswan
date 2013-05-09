@@ -21,6 +21,8 @@ v3.3 (unreleased)
 * security: Initial loading of file CRL fails for NSS CAs (rhbz#960171) [Matt Rogers]
 * security: Removal of USE_WEAKSTUFF and USE_NOCRYPTO (1DES and modp768) [Paul]
 * security: Removal of 1DES for KLIPS using CryptoAPI [Paul]
+* pluto: Add support for OID_SHA224_WITH_RSA signatures [Paul]
+* X509: Fix for CRL sig failure if first byte is a zero [Dhr/Matt/Paul]
 * _stackmanager: fix loading of aes-x86_64 module [Tuomo]
 * Bugtracker bugs fixed:
    #90: NETKEY: Transport mode inbound eroute was from client [Kim/Tuomo]
