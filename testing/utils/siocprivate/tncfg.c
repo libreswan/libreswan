@@ -62,7 +62,6 @@ main(int argc, char *argv[])
 	}
 
  if (ioctl(fd, SIOCDEVPRIVATE, &ifr) >= 0) {
-    new_i
 
 	if(ioctl(s, shc->cf_cmd, &ifr)==-1)
 	{
