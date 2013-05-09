@@ -504,6 +504,7 @@ process_v2_packet(struct msg_digest **mdp)
 	       , bitnamesof(payload_name, needed));
 	SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 	return;
+    }
 #endif
 
     md->svm = svm;
