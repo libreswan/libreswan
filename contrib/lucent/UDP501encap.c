@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 /*
 >> I discussed this subject here:
 >>
-> http://lists.libreswan.org/pipermail/users/2008-February/014030.html
+> http://lists.openswan.org/pipermail/users/2008-February/014030.html
 > based on
 >> what I could capture under Windows, the relevant part
 > of it is:

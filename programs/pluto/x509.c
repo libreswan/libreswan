@@ -739,11 +739,13 @@ static void
 list_x509cert_chain(const char *caption, x509cert_t* cert, u_char auth_flags
  , bool utc)
 {
-    bool first = TRUE;
     time_t tnow;
 
     /* determine the current time */
     time(&tnow);
+
+    whack_log(RC_COMMENT, " ");
+    whack_log(RC_COMMENT, "List of X.509 %s Certificates:", caption);
 
     while (cert != NULL)
     {
@@ -758,14 +760,6 @@ list_x509cert_chain(const char *caption, x509cert_t* cert, u_char auth_flags
 
 	    c.type = CERT_X509_SIGNATURE;
 	    c.u.x509 = cert;
-
-	    if (first)
-	    {
-		whack_log(RC_COMMENT, " ");
-		whack_log(RC_COMMENT, "List of X.509 %s Certificates:", caption);
-		whack_log(RC_COMMENT, " ");
-		first = FALSE;
-	    }
 
 	    whack_log(RC_COMMENT, "%s, count: %d", timetoa(&cert->installed, utc, tbuf, sizeof(tbuf)),
 		      cert->count);
@@ -840,12 +834,8 @@ list_crls(bool utc, bool strict)
     lock_crl_list("list_crls");
     crl = x509crls;
 
-    if (crl != NULL)
-    {
-	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, "List of X.509 CRLs:");
-	whack_log(RC_COMMENT, " ");
-    }
+    whack_log(RC_COMMENT, " ");
+    whack_log(RC_COMMENT, "List of X.509 CRLs:");
 
     while (crl != NULL)
     {
