@@ -134,15 +134,17 @@ parse_secctx_attr (pb_stream *pbs, struct state *st)
 			}
 		}
 		
-		/*while (pbs_left(pbs) != 0){
+		/*
+		while (pbs_left(pbs) != 0){
 		sec_ctx_value[i++]= *pbs->cur++;
 		    if(i == MAX_SECCTX_LEN){
 		    DBG(DBG_PARSING, DBG_log("security label reached maximum length (MAX_SECCTX_LEN) allowed"));
 		    break;
 		    }	
-		}*/
+		}
 
-		//sec_ctx_value[i]='\0';
+		sec_ctx_value[i]='\0';
+		*/
 		DBG(DBG_PARSING, DBG_log("   sec ctx value: %s, len=%d", sec_ctx_value, i));
 
 		if(st->sec_ctx == NULL && st->st_state==STATE_QUICK_R0) {

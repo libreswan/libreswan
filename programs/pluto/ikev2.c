@@ -456,8 +456,10 @@ process_v2_packet(struct msg_digest **mdp)
  	   Since the wrong state is a responder, we just add a check for initiator,
 	   so we hit STATE_IKEv2_ROOF
 	 */
-	//if ( ((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0) )
-        //        continue;
+	/*
+	  if ( ((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0) )
+               continue;
+	*/
 	
 	/* must be the right state */
 	break;
@@ -916,7 +918,7 @@ void complete_v2_state_transition(struct msg_digest **mdp
 
     cur_state = st = md->st;	/* might have changed */
 
-    /* passert(st);  // apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
+    /* passert(st);   apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
     /*
      * XXX/SML:  There is no need to abort here in all cases if state is
      * null, so moved this precondition to where it's needed.  Some previous
