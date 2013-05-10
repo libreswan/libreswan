@@ -75,11 +75,11 @@ void calc_ke(struct pluto_crypto_req *r)
     group = lookup_group(kn->oakley_group);
 
 #ifdef USE_MODP_RFC5114
-    base  = mpz_to_n2(group->generator);
+    base  = mpz_to_n_autosize(group->generator);
 #else
-    base  = mpz_to_n2(&groupgenerator);
+    base  = mpz_to_n_autosize(&groupgenerator);
 #endif
-    prime = mpz_to_n2(group->modulus);
+    prime = mpz_to_n_autosize(group->modulus);
 
     DBG(DBG_CRYPT,DBG_dump_chunk("NSS: Value of Prime:\n", prime));
     DBG(DBG_CRYPT,DBG_dump_chunk("NSS: Value of base:\n", base));
