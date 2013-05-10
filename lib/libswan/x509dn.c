@@ -1439,10 +1439,7 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 		DBG_log("NSS: length of digest sig = %d", dsig.len);
 		);
 	    } else {
-		/* this nss/nspr error handling clearly need to be functionised, it's terrible */
-		char *e_nspr[(int)PR_GetErrorTextLength()];
-		PR_GetErrorText(e_nspr);
-		loglog(RC_LOG_SERIOUS, "NSS: PK11_VerifyRecover() failed (%d): %s", PR_GetError(), e_nspr);
+			loglog(RC_LOG_SERIOUS, "NSS: PK11_VerifyRecover() failed (%d)", PR_GetError());
 	    }
 	
 	    SECKEY_DestroyPublicKey(publicKey);
