@@ -905,7 +905,7 @@ ikev2_parent_inI1outR1_tail(struct pluto_crypto_req_cont *pcrc
     /* keep it for a retransmit if necessary */
     freeanychunk(st->st_tpacket);
     clonetochunk(st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream)
-		 , "reply packet for ikev2_parent_inI1outR1_tail")
+		 , "reply packet for ikev2_parent_inI1outR1_tail");
 
     /* save packet for later signing */
     freeanychunk(st->st_firstpacket_me);
@@ -1970,7 +1970,7 @@ ikev2_parent_inI2outR2_tail(struct pluto_crypto_req_cont *pcrc
 	    ret = ikev2_child_sa_respond(md, RESPONDER, &e_pbs_cipher);
 	    if(ret > STF_FAIL) {
 		v2_notify_num = ret - STF_FAIL;
-		DBG(DBG_CONTROL,DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s", enum_name(&ikev2_notify_names, v2_notify_num)))
+		DBG(DBG_CONTROL,DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s", enum_name(&ikev2_notify_names, v2_notify_num)));
 		np = ISAKMP_NEXT_NONE;
 	    } else if(ret != STF_OK) {
 		DBG_log("ikev2_child_sa_respond returned %s", enum_name(&stfstatus_name, ret));

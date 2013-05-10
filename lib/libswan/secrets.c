@@ -269,7 +269,7 @@ allocate_RSA_public_key(const cert_t cert)
 	break;
     default:
 	libreswan_log("RSA public key allocation error");
-	pfreeany(pk)
+	pfreeany(pk);
 	return NULL;
     }
 

@@ -973,7 +973,7 @@ main_inR1_outI2(struct msg_digest *md)
 #ifdef NAT_TRAVERSAL
     DBG(DBG_NATT, DBG_log("sender checking NAT-T: %d and %d"
 				 , nat_traversal_enabled
-				 , md->quirks.nat_traversal_vid))
+				 , md->quirks.nat_traversal_vid));
 
     if (nat_traversal_enabled && md->quirks.nat_traversal_vid) {
 	st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(md->quirks.nat_traversal_vid));

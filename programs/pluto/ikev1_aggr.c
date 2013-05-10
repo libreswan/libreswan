@@ -321,7 +321,7 @@ aggr_inI1_outR1_common(struct msg_digest *md
 #ifdef NAT_TRAVERSAL
     DBG(DBG_CONTROLMORE, DBG_log("sender checking NAT-t: %d and %d"
 				 , nat_traversal_enabled
-				 , md->quirks.nat_traversal_vid))
+				 , md->quirks.nat_traversal_vid));
     if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
 	/* reply if NAT-Traversal draft is supported */
 	st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(md->quirks.nat_traversal_vid));

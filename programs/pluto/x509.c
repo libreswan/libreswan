@@ -617,8 +617,8 @@ check_crls(void)
 		    , buf, ASN1_BUF_LEN);
 		DBG_log("authkey: %s", buf);
 	    }
-	    DBG_log("%ld seconds left", time_left)
-	)
+	    DBG_log("%ld seconds left", time_left);
+	);
 	if (time_left < 2*crl_check_interval)
 	    add_crl_fetch_request(crl->issuer, crl->distributionPoints);
 	crl = crl->next;
@@ -665,7 +665,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 			, abuf, ASN1_BUF_LEN);
 		DBG_log("authkey:  %s", abuf);
 	    }
-	)
+	);
 
 	ugh = check_validity(cert, until);
 
