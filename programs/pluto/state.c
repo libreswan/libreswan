@@ -426,7 +426,7 @@ delete_state(struct state *st)
                                "ESP traffic information: in=");
         sbcp = humanize_number(st->st_esp.our_bytes,
                                sbcp, statebuf+sizeof(statebuf),
-                               " out=%lu%s");
+                               " out=");
 	if (st->st_xauth_username && st->st_xauth_username[0]!='\0') {
 	    libreswan_log("%s XAUTHuser=%s", statebuf, st->st_xauth_username);
 	} else {
