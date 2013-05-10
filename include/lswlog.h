@@ -42,7 +42,7 @@ extern lset_t base_debugging;	/* bits selecting what to report */
 extern lset_t cur_debugging;	/* current debugging level */
 
 #define DBGP(cond)         (cur_debugging & (cond))
-#define DBG(cond, action)   { if (DBGP(cond)) { action ; } }
+#define DBG(cond, action)   do { if (DBGP(cond)) { action ; } } while (0)
 
 #define DBG_log libreswan_DBG_log
 #define DBG_dump libreswan_DBG_dump
@@ -60,7 +60,7 @@ extern void set_debugging(lset_t deb);
 
 #else /*!DEBUG*/
 
-#define DBG(cond, action)	{ }	/* do nothing */
+#define DBG(cond, action)	do { } while (0)	/* do nothing */
 #define DBGP(...) (0)
 #define exit_tool exit
 #define libreswan_DBG_dump(...) do { } while(0)
@@ -158,9 +158,9 @@ enum rc_type {
  * A call must doubly parenthesize the argument list (no varargs macros).
  * The first argument must be "e", the local variable that captures errno.
  */
-#define log_errno(a) { int e = errno; libreswan_log_errno_routine a; }
+#define log_errno(a) do { int e = errno; libreswan_log_errno_routine a; } while (0)
 extern void libreswan_log_errno_routine(int e, const char *message, ...) PRINTF_LIKE(2);
-#define exit_log_errno(a) { int e = errno; libreswan_exit_log_errno_routine a; }
+#define exit_log_errno(a) do { int e = errno; libreswan_exit_log_errno_routine a; } while (0)
 extern void libreswan_exit_log_errno_routine(int e, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS NEVER_RETURNS;
 
 /*
