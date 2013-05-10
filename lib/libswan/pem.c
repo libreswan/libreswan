@@ -99,7 +99,7 @@ find_boundary(const char* tag, chunk_t *line)
 	    DBG(DBG_PARSING,
 		DBG_log("  -----%s %.*s-----",
 			tag, (int)name.len, name.ptr);
-	    )
+	    );
 	    return TRUE;
 	}
 	line->ptr++;  line->len--;  name.len++;
@@ -152,7 +152,7 @@ extract_parameter(chunk_t *name, chunk_t *value, chunk_t *line)
 {
     DBG(DBG_PARSING,
 	DBG_log("  %.*s", (int)line->len, line->ptr);
-    )
+    );
 
     /* extract name */
     if (!extract_token(name,':', line))
@@ -280,7 +280,7 @@ pemtobin(chunk_t *blob, bool *pgp)
 		    data.len--;
 		    DBG(DBG_PARSING,
 			DBG_log("  Armor checksum: %.*s", (int)data.len, data.ptr);
-		    )
+		    );
 		    continue;
 		}
 
@@ -290,7 +290,7 @@ pemtobin(chunk_t *blob, bool *pgp)
 		{
 		    DBG(DBG_PARSING,
 			DBG_log("  %s", ugh);
-		    )
+		    );
 		    state = PEM_ABORT;
 		    break;
 		}

@@ -82,7 +82,7 @@ asn1_length(chunk_t *blob)
 	if (n > blob->len) {
 	    DBG(DBG_PARSING,
 		DBG_log("number of length octets is larger than ASN.1 object")
-	    )
+	    );
 	    return ASN1_INVALID_LENGTH;
 	}
 	return n;
@@ -95,7 +95,7 @@ asn1_length(chunk_t *blob)
     {
 	DBG(DBG_PARSING,
 	    DBG_log("number of length octets is larger than ASN.1 object")
-	)
+	);
 	return ASN1_INVALID_LENGTH;
     }
 
@@ -104,7 +104,7 @@ asn1_length(chunk_t *blob)
 	DBG(DBG_PARSING,
 	    DBG_log("number of length octets is larger than limit of %d octets"
 		, (int) sizeof(len))
-	)
+	);
 	return ASN1_INVALID_LENGTH;
     }
 
@@ -119,7 +119,7 @@ asn1_length(chunk_t *blob)
     {
 	DBG(DBG_PARSING,
 	    DBG_log("length is larger than remaining blob size")
-	)
+	);
 	return ASN1_INVALID_LENGTH;
     }
 
@@ -382,7 +382,7 @@ extract_object(asn1Object_t const *objects,
 	/* field is missing */
 	DBG(DBG_PARSING,
 	    DBG_log("L%d - %s:", *level, obj.name);
-	)
+	);
 	if (obj.type & ASN1_CONSTRUCTED)
 	{
 	    (*objectID)++ ;  /* skip context-specific tag */
@@ -411,7 +411,7 @@ extract_object(asn1Object_t const *objects,
        DBG(DBG_PARSING,
            DBG_log("L%d - %s:  ASN.1 object smaller than 2 octets",
                    ctx->level0+obj.level, obj.name);
-       )
+       );
        return FALSE;
      }
 
@@ -423,7 +423,7 @@ extract_object(asn1Object_t const *objects,
 	DBG(DBG_PARSING,
 	    DBG_log("L%d - %s:  length of ASN1 object invalid or too large",
                    *level, obj.name);
-	)
+	);
 	return FALSE;
     }
 
@@ -437,7 +437,7 @@ extract_object(asn1Object_t const *objects,
     {
 	DBG(DBG_PARSING,
 	    DBG_log("L%d - %s:", *level, obj.name);
-        )
+        );
 	object->ptr = start_ptr;
 	object->len = (size_t)(blob->ptr - start_ptr);
 	return TRUE;
@@ -449,13 +449,13 @@ extract_object(asn1Object_t const *objects,
 	    DBG_log("L%d - %s: ASN1 tag 0x%02x expected, but is 0x%02x",
 		*level, obj.name, obj.type, *start_ptr);
 	    DBG_dump("", start_ptr, (u_int)(blob->ptr - start_ptr));
-	)
+	);
 	return FALSE;
     }
 
     DBG(DBG_PARSING,
 	DBG_log("L%d - %s:", ctx->level0+obj.level, obj.name);
-    )
+    );
 
     /* In case of "SEQUENCE OF" or "SET OF" start a loop */
 
@@ -484,7 +484,7 @@ extract_object(asn1Object_t const *objects,
 	object->len = (size_t)(blob->ptr - start_ptr);
 	DBG(ctx->cond,
 	    DBG_dump_chunk("", *object);
-	)
+	);
     }
     else if (obj.flags & ASN1_BODY)
     {
@@ -499,7 +499,7 @@ extract_object(asn1Object_t const *objects,
 	    {
 		DBG(DBG_PARSING,
 		   DBG_log("  '%s'",oid_names[oid].name);
-		)
+		);
 		return TRUE;
 	    }
 	    break;
@@ -510,7 +510,7 @@ extract_object(asn1Object_t const *objects,
 	case ASN1_VISIBLESTRING:
 	    DBG(DBG_PARSING,
 		DBG_log("  '%.*s'", (int)object->len, object->ptr);
-	    )
+	    );
 	    return TRUE;
 	case ASN1_UTCTIME:
 	case ASN1_GENERALIZEDTIME:
@@ -518,7 +518,7 @@ extract_object(asn1Object_t const *objects,
 		time_t timep = asn1totime(object, obj.type);
 		char tbuf[TIMETOA_BUF];
 		DBG_log("  '%s'", timetoa(&timep, TRUE, tbuf, sizeof(tbuf)));
-	    )
+	    );
 	    return TRUE;
 
 	default:
@@ -526,7 +526,7 @@ extract_object(asn1Object_t const *objects,
 	}
 	DBG(ctx->cond,
 	    DBG_dump_chunk("", *object);
-	)
+	);
     }
     return TRUE;
 }
@@ -544,7 +544,7 @@ is_asn1(chunk_t blob)
     {
 	DBG(DBG_PARSING,
 	    DBG_log("  file content is not binary ASN.1");
-	)
+	);
 	return FALSE;
     }
     len = asn1_length(&blob);
@@ -552,7 +552,7 @@ is_asn1(chunk_t blob)
     {
 	DBG(DBG_PARSING,
 	    DBG_log("  file size does not match ASN.1 coded length");
-	)
+	);
 	return FALSE;
     }
     return TRUE;

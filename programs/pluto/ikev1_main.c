@@ -630,7 +630,7 @@ main_inI1_outR1(struct msg_digest *md)
 			    openpgp_peer = TRUE;
 			    DBG(DBG_PARSING,
 				DBG_log("we have an OpenPGP peer")
-				)
+				);
 				}
 		}
     }
@@ -2578,7 +2578,7 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 	DBG(DBG_CRYPT,
 	    DBG_log("HASH(1) computed:");
 	    DBG_dump("", r_hashval, ctx.hmac_digest_len);
-	)
+	);
     }
 
     /* Encrypt message (preserve st_iv) */
@@ -2835,7 +2835,7 @@ ikev1_delete_out(struct state *st)
 	DBG(DBG_CRYPT,
 	    DBG_log("HASH(1) computed:");
 	    DBG_dump("", r_hashval, ctx.hmac_digest_len);
-	)
+	);
     }
 
     /* Do a dance to avoid needing a new state object.

@@ -1524,7 +1524,7 @@ scan_proc_shunts(void)
 
     DBG(DBG_CONTROL,
         DBG_log("scanning for shunt eroutes")
-    )
+    );
 
     /* free any leftover entries: they will be refreshed if still current */
     while (orphaned_holds != NULL)
@@ -1686,7 +1686,7 @@ scan_proc_shunts(void)
                         int hisport = ntohs(portof(&eri.his.addr));
                         DBG_log("add orphaned shunt %s:%d -> %s:%d => %s:%d"
                             , ourst, ourport, hist, hisport, sat, eri.transport_proto)
-                     )
+                     );
                     eri.next = orphaned_holds;
                     orphaned_holds = clone_thing(eri, "orphaned %hold");
                 }

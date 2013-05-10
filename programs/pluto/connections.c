@@ -3030,7 +3030,7 @@ fc_try(const struct connection *c
     DBG(DBG_CONTROLMORE,
 	DBG_log("  fc_try concluding with %s [%ld]"
 		, (best ? best->name : "none"), best_prio)
-    )
+    );
 
     if(best == NULL) {
 	if(virtualwhy != NULL) {
@@ -3135,7 +3135,7 @@ fc_try_oppo(const struct connection *c
     DBG(DBG_CONTROLMORE,
 	DBG_log("  fc_try_oppo concluding with %s [%ld]"
 		, (best ? best->name : "none"), best_prio)
-    )
+    );
     return best;
 
 }
@@ -3214,7 +3214,7 @@ find_client_connection(struct connection *c
 	    DBG_log("  fc_try %s gives %s"
 		    , c->name
 		    , (d ? d->name : "none"))
-	)
+	);
 
 	if (d == NULL)
 	    d = unrouted;
@@ -3270,7 +3270,7 @@ find_client_connection(struct connection *c
     DBG(DBG_CONTROLMORE,
 	DBG_log("  concluding with d = %s"
 		, (d ? d->name : "none"))
-    )
+    );
     return d;
 }
 

@@ -962,7 +962,7 @@ lock_certs_and_keys(const char *who)
     pthread_mutex_lock(&certs_and_keys_mutex);
     DBG(DBG_CONTROLMORE,
 	DBG_log("certs and keys locked by '%s'", who)
-    )
+    );
 }
 
 /*
@@ -973,7 +973,7 @@ unlock_certs_and_keys(const char *who)
 {
     DBG(DBG_CONTROLMORE,
 	DBG_log("certs and keys unlocked by '%s'", who)
-    )
+    );
     pthread_mutex_unlock(&certs_and_keys_mutex);
 }
 
@@ -987,7 +987,7 @@ lock_authcert_list(const char *who)
     pthread_mutex_lock(&authcert_list_mutex);
     DBG(DBG_CONTROLMORE,
 	DBG_log("authcert list locked by '%s'", who)
-    )
+    );
 }
 
 /*
@@ -998,7 +998,7 @@ unlock_authcert_list(const char *who)
 {
     DBG(DBG_CONTROLMORE,
 	DBG_log("authcert list unlocked by '%s'", who)
-    )
+    );
     pthread_mutex_unlock(&authcert_list_mutex);
 }
 #endif
