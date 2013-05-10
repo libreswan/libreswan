@@ -25,6 +25,7 @@ extern const oid_t oid_names[];
 #define OID_EXTENDED_KEY_USAGE		48
 #define OID_TARGET_INFORMATION		49
 #define OID_NO_REV_AVAIL		50
+
 #define OID_RSA_ENCRYPTION		59
 #define OID_MD2_WITH_RSA		60
 #define OID_MD5_WITH_RSA		61
@@ -32,6 +33,7 @@ extern const oid_t oid_names[];
 #define OID_SHA256_WITH_RSA		63
 #define OID_SHA384_WITH_RSA		64
 #define OID_SHA512_WITH_RSA		65
+#define OID_SHA224_WITH_RSA		66
 #define OID_PKCS7_DATA			67
 #define OID_PKCS7_SIGNED_DATA		68
 #define OID_PKCS9_EMAIL			74
