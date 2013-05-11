@@ -2,15 +2,15 @@
 See also https://libreswan.org/
 
 v3.3 (unreleased)
-* security: atodn() buffer overflow with oe=yes [Florian/Hugh/Paul]
+* SECURITY: atodn() buffer overflow with oe=yes [Florian/Hugh/Paul]
             affected: libreswan 3.0 and 3.1 (CVE-2013-2053)
-            also: openswan up to 2.6.38 (CVE-2013-2052)
-            also: strongswan up to 4.3.4 (CVE-2013-2054)
+            see also: openswan up to 2.6.38 (CVE-2013-2052)
+            see also: strongswan up to 4.3.4 (CVE-2013-2054)
 * security: dn_parse(), hex_str() write beyond end of the buffer [Florian]
 * security: get_rnd_bytes: Abort on random number generator failure [Florian]
 * security: Integer overflow if the leak detective enabled [Florian]
 * security: Check that origin of netlink message is the kernel [Florian]
-* security: Abort pluto on crypto failure for 3des/aes to prevent leaks [Florian]
+* security: Abort on crypto failure for 3des/aes to prevent leaks [Florian]
 * security: Check PK11_CreateContextBySymKey() for NULL and SECFailure [Paul]
 * security: RSA: Check modulus length against key overall length [Florian]
 * security: fetch_curl: Set timeout for the entire request [Florian]
@@ -22,16 +22,18 @@ v3.3 (unreleased)
 * security: Remove stale non-NSS ASN1 handling and pem decryption code [Paul]
 * security: Initial loading of file CRL fails for NSS CAs  [Matt Rogers]
             (rhbz#960171)
-* security: Removal of USE_WEAKSTUFF and USE_NOCRYPTO (1DES and modp768) [Paul]
+* security: Removal of USE_WEAKSTUFF and USE_NOCRYPTO (1DES, modp768) [Paul]
 * security: Removal of 1DES for KLIPS using CryptoAPI [Paul]
+* security: * security: Cleanup of ASN1_BUF_LEN/BUF_LEN/PATH_MAX defines [Paul]
 * pluto: Add support for OID_SHA224_WITH_RSA signatures [Paul]
 * pluto: Always list section headers --list* calls, even when empty [Paul]
 * X509: Fix for CRL sig failure if first byte is zero [Dhr/Matt/Paul]
         (rhbz#958969)
 * _stackmanager: fix loading of aes-x86_64 module [Tuomo]
 * Bugtracker bugs fixed:
+   #64: removal of /dev/*random everywhere put feeding nss pools [Paul]
    #90: NETKEY: Transport mode inbound eroute was from client [Kim/Tuomo]
-   #91: SAREF: Patches updated for 3.4.x kernels. Tested on 3.4.42 [Andreas Herz]
+   #91: SAREF: Patches updated for 3.4.x (tested on 3.4.42) [Andreas Herz]
 
 v3.2 (April 13, 2013)
 * addresspool: Identify reconnecting client and re-use lease [Antony]
