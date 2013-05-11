@@ -49,9 +49,6 @@
 #include "pkcs.h"
 #include "paths.h"
 
-/* Maximum length of ASN.1 distinquished name */
-#define ASN1_BUF_LEN	      512
-
 /*
  * Filter eliminating the directory entries starting with .,
  * and also "CVS" (thus eliminating '.' and '..')

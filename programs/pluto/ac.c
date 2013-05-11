@@ -217,11 +217,6 @@ const x509acert_t empty_ac = {
     { NULL, 0 }, /*   signature */
 };
 
-
-/* Maximum length of ASN.1 distinquished name */
-
-#define BUF_LEN	      512
-
 /*  compare two ietfAttributes, returns zero if a equals b
  *  negative/positive if a is earlier/later in the alphabet than b
  */
@@ -678,10 +673,10 @@ verify_x509acert(x509acert_t *ac, bool strict)
     time_t valid_until = ac->notAfter;
 
     DBG(DBG_CONTROL,
-	u_char buf[BUF_LEN];
-	dntoa((char *)buf, BUF_LEN, ac->entityName);
+	u_char buf[ASN1_BUF_LEN];
+	dntoa((char *)buf, ASN1_BUF_LEN, ac->entityName);
 	DBG_log("holder: '%s'",buf);
-	dntoa((char *)buf, BUF_LEN, ac->issuerName);
+	dntoa((char *)buf, ASN1_BUF_LEN, ac->issuerName);
 	DBG_log("issuer: '%s'",buf);
     )
     
@@ -729,10 +724,10 @@ verify_x509acert(x509acert_t *ac, bool strict)
 void
 load_acerts(void)
 {
-    char buf[BUF_LEN];
+    char buf[PATH_MAX];
 
     /* change directory to specified path */
-    char *save_dir = getcwd(buf, BUF_LEN);
+    char *save_dir = getcwd(buf, PATH_MAX);
     const struct lsw_conf_options *oco = lsw_init_options(); 
 
     if (!chdir(oco->acerts_dir))
@@ -816,30 +811,30 @@ list_acerts(bool utc)
 
     while (ac != NULL)
     {
-	char buf[BUF_LEN];
+	char buf[ASN1_BUF_LEN];
 	char   tbuf[TIMETOA_BUF];
 
 	whack_log(RC_COMMENT, "%s",timetoa(&ac->installed, utc, tbuf, sizeof(tbuf)));
 	if (ac->entityName.ptr != NULL)
 	{
-	    dntoa(buf, BUF_LEN, ac->entityName);
+	    dntoa(buf, ASN1_BUF_LEN, ac->entityName);
 	    whack_log(RC_COMMENT, "       holder:  '%s'", buf);
 	}
 	if (ac->holderIssuer.ptr != NULL)
 	{
-	    dntoa(buf, BUF_LEN, ac->holderIssuer);
+	    dntoa(buf, ASN1_BUF_LEN, ac->holderIssuer);
 	    whack_log(RC_COMMENT, "       hissuer: '%s'", buf);
 	}
 	if (ac->holderSerial.ptr != NULL)
 	{
 	    datatot(ac->holderSerial.ptr, ac->holderSerial.len, ':'
-		, buf, BUF_LEN);
+		, buf, ASN1_BUF_LEN);
 	    whack_log(RC_COMMENT, "       hserial:  %s", buf);
 	}
-	dntoa(buf, BUF_LEN, ac->issuerName);
+	dntoa(buf, ASN1_BUF_LEN, ac->issuerName);
 	whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
 	datatot(ac->serialNumber.ptr, ac->serialNumber.len, ':'
-		, buf, BUF_LEN);
+		, buf, ASN1_BUF_LEN);
 	whack_log(RC_COMMENT, "       serial:   %s", buf);
 
 	if (ac->groups != NULL)

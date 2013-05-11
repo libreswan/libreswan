@@ -74,9 +74,6 @@
 
 #include "lswcrypto.h"
 
-/* Maximum length of filename and passphrase buffer */
-#define BUF_LEN		256
-
 #ifdef NAT_TRAVERSAL
 #define PB_STREAM_UNDEFINED
 #include "nat_traversal.h"

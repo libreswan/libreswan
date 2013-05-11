@@ -62,9 +62,6 @@
 #include <key.h>
 #include "lswconf.h"
 
-/* Maximum length of filename and passphrase buffer */
-#define BUF_LEN		256
-
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
 
@@ -696,10 +693,10 @@ bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
 static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak
 			      , prompt_pass_t *pass)
 {
-    char filename[BUF_LEN];
+    char filename[PATH_MAX];
     err_t ugh = NULL;
 
-    memset(filename,'\0', BUF_LEN);
+    memset(filename,'\0', PATH_MAX);
     memset(pass->secret,'\0', sizeof(pass->secret));
 
     /* we expect the filename of a PKCS#1 private key file */

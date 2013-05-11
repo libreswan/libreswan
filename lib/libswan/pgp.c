@@ -34,11 +34,6 @@
 #include "secrets.h"
 
 /*
- * Size of temporary buffers
- */
-#define BUF_LEN		256
-
-/*
  * OpenPGP packet tags defined in section 4.3 of RFC 2440
  */
 #define PGP_PKT_RESERVED		 0

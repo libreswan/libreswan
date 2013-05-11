@@ -80,8 +80,6 @@ static pthread_mutex_t crl_fetch_list_mutex  = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex      = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  fetch_wake_cond       = PTHREAD_COND_INITIALIZER;
 
-#define BUF_LEN		512
-
 /*
  * lock access to the chained crl list
  */
@@ -731,13 +729,13 @@ list_crl_fetch_requests(bool utc)
 
     while (req != NULL)
     {
-	char buf[BUF_LEN];	
+	char buf[ASN1_BUF_LEN];	
 	char tbuf2[TIMETOA_BUF];
 
 	whack_log(RC_COMMENT, "%s, trials: %d"
 		  , timetoa(&req->installed, utc, tbuf2, sizeof(tbuf2))
 		  , req->trials);
-	dntoa(buf, BUF_LEN, req->issuer);
+	dntoa(buf, ASN1_BUF_LEN, req->issuer);
 	whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
 	list_distribution_points(req->distributionPoints);
 	req = req->next;

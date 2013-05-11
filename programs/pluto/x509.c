@@ -75,10 +75,6 @@ static x509crl_t  *x509crls    = NULL;
  */
 static pgpcert_t *pgpcerts   = NULL;
 
-
-/* Maximum length of ASN.1 distinquished name */
-#define ASN1_BUF_LEN	      512
-
 /*
  *  add a X.509 user/host certificate to the chained list
  */
