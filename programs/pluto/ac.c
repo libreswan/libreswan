@@ -434,7 +434,7 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 	    ac->version = (object.len) ? (1 + (u_int)*object.ptr) : 1;
 	    DBG(DBG_PARSING,
 		DBG_log("  v%d", ac->version);
-	    )
+	    );
 	    if (ac->version != 2)
 	    {
 		libreswan_log("v%d attribute certificates are not supported"
@@ -477,12 +477,12 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 		case OID_AUTHENTICATION_INFO:
 		    DBG(DBG_PARSING,
 			DBG_log("  need to parse authenticationInfo")
-		    )
+		    );
 		    break;
 		case OID_ACCESS_IDENTITY:
 		    DBG(DBG_PARSING,
 			DBG_log("  need to parse accessIdentity")
-		    )
+		    );
 		    break;
 		case OID_CHARGING_IDENTITY:
 		    ac->charging = parse_ietfAttrSyntax(object, level);
@@ -505,7 +505,7 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 	    critical = object.len && *object.ptr;
 	    DBG(DBG_PARSING,
 		DBG_log("  %s",(critical)?"TRUE":"FALSE");
-	    )
+	    );
 	    break;
 	case AC_OBJ_EXTN_VALUE:
 	    {
@@ -515,7 +515,7 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 		case OID_CRL_DISTRIBUTION_POINTS:
 		    DBG(DBG_PARSING,
 			DBG_log("  need to parse crlDistributionPoints")
-		    )
+		    );
 		    break;
 		case OID_AUTHORITY_KEY_ID:
 		    parse_authorityKeyIdentifier(object, level
@@ -524,7 +524,7 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 		case OID_TARGET_INFORMATION:
 		    DBG(DBG_PARSING,
 			DBG_log("  need to parse targetInformation")
-		    )
+		    );
 		    break;
 		case OID_NO_REV_AVAIL:
 		    ac->noRevAvail = TRUE;
@@ -652,7 +652,7 @@ check_ac_validity(const x509acert_t *ac)
 	DBG_log("  not before  : %s", timetoa(&ac->notBefore, TRUE, tbuf, sizeof(tbuf)));
 	DBG_log("  current time: %s", timetoa(&current_time, TRUE, tbuf, sizeof(tbuf)));
 	DBG_log("  not after   : %s", timetoa(&ac->notAfter, TRUE, tbuf, sizeof(tbuf)));
-    )
+    );
 
     if (current_time < ac->notBefore)
 	return "attribute certificate is not valid yet";
@@ -678,7 +678,7 @@ verify_x509acert(x509acert_t *ac, bool strict)
 	DBG_log("holder: '%s'",buf);
 	dntoa((char *)buf, ASN1_BUF_LEN, ac->issuerName);
 	DBG_log("issuer: '%s'",buf);
-    )
+    );
     
     ugh = check_ac_validity(ac);
 
@@ -689,7 +689,7 @@ verify_x509acert(x509acert_t *ac, bool strict)
     }
     DBG(DBG_CONTROL,
 	DBG_log("attribute certificate is valid")
-    )
+    );
 
     lock_authcert_list("verify_x509acert");
     aacert = get_authcert(ac->issuerName, ac->authKeySerialNumber
@@ -703,7 +703,7 @@ verify_x509acert(x509acert_t *ac, bool strict)
     }
     DBG(DBG_CONTROL,
 	DBG_log("issuer aacert found")
-    )
+    );
 
     if (!check_signature(ac->certificateInfo, ac->signature
 			 , ac->algorithm, aacert))
@@ -713,7 +713,7 @@ verify_x509acert(x509acert_t *ac, bool strict)
     }
     DBG(DBG_CONTROL,
 	DBG_log("attribute certificate signature is valid");
-    )
+    );
 
     return verify_x509cert(aacert, strict, &valid_until);
 }

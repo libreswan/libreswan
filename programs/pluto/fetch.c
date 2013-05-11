@@ -89,7 +89,7 @@ lock_crl_list(const char *who)
     pthread_mutex_lock(&crl_list_mutex);
     DBG(DBG_CONTROLMORE,
 	DBG_log("crl list locked by '%s'", who)
-    )
+    );
 }
 
 /*
@@ -100,7 +100,7 @@ unlock_crl_list(const char *who)
 {
     DBG(DBG_CONTROLMORE,
 	DBG_log("crl list unlocked by '%s'", who)
-    )
+    );
     pthread_mutex_unlock(&crl_list_mutex);
 }
 
@@ -113,7 +113,7 @@ lock_crl_fetch_list(const char *who)
     pthread_mutex_lock(&crl_fetch_list_mutex);
     DBG(DBG_CONTROLMORE,
 	DBG_log("crl fetch request list locked by '%s'", who)
-    )
+    );
 }
 
 /*
@@ -124,7 +124,7 @@ unlock_crl_fetch_list(const char *who)
 {
     DBG(DBG_CONTROLMORE,
 	DBG_log("crl fetch request list unlocked by '%s'", who)
-    )
+    );
     pthread_mutex_unlock(&crl_fetch_list_mutex);
 }
 
@@ -139,7 +139,7 @@ wake_fetch_thread(const char *who)
     {
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("fetch thread wake call by '%s'", who)
-	)
+	);
 	pthread_mutex_lock(&fetch_wake_mutex);
 	pthread_cond_signal(&fetch_wake_cond);
 	pthread_mutex_unlock(&fetch_wake_mutex);
@@ -201,7 +201,7 @@ fetch_curl(chunk_t url LIBCURL_UNUSED, chunk_t *blob LIBCURL_UNUSED)
 
         DBG(DBG_CONTROL,
             DBG_log("Trying cURL '%s'", uri)
-        )
+        );
 
         curl_easy_setopt(curl, CURLOPT_URL, uri);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_buffer);
@@ -312,7 +312,7 @@ fetch_ldap_url(chunk_t url, chunk_t *blob)
 
     DBG(DBG_CONTROL,
 	DBG_log("Trying LDAP URL '%s'", ldap_url)
-    )
+    );
 
     rc = ldap_url_parse(ldap_url, &lurl);
     pfree(ldap_url);
@@ -418,7 +418,7 @@ fetch_asn1_blob(chunk_t url, chunk_t *blob)
     {
 	DBG(DBG_PARSING,
 	    DBG_log("  fetched blob coded in DER format")
-	)
+	);
     }
     else
     {
@@ -431,7 +431,7 @@ fetch_asn1_blob(chunk_t url, chunk_t *blob)
 	    {
 		DBG(DBG_PARSING,
 		    DBG_log("  fetched blob coded in PEM format")
-		)
+		);
 	    }
 	    else
 	    {
@@ -482,7 +482,7 @@ fetch_crls(void)
 		{
 		    DBG(DBG_CONTROL,
 			DBG_log("we have a valid crl")
-		    )
+		    );
 		    valid_crl = TRUE;
 		    break;
 		}		    
@@ -517,7 +517,7 @@ fetch_thread(void *arg UNUSED)
 
     DBG(DBG_CONTROL,
 	DBG_log("fetch thread started")
-    )
+    );
 
     pthread_mutex_lock(&fetch_wake_mutex);
     while(1)
@@ -529,7 +529,7 @@ fetch_thread(void *arg UNUSED)
 
 	DBG(DBG_CONTROL,
 	    DBG_log("next regular crl check in %ld seconds", crl_check_interval)
-	)
+	);
 	status = pthread_cond_timedwait(&fetch_wake_cond, &fetch_wake_mutex
 					, &wait_interval);
 
@@ -538,14 +538,14 @@ fetch_thread(void *arg UNUSED)
 	    DBG(DBG_CONTROL,
 		DBG_log(" ");
 		DBG_log("*time to check crls")
-	    )
+	    );
 	    check_crls();
 	}
 	else
 	{
 	    DBG(DBG_CONTROL,
 		DBG_log("fetch thread was woken up")
-	    )
+	    );
 	}
 	fetch_crls();
     }
@@ -659,7 +659,7 @@ add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 	    /* there is already a fetch request */
 	    DBG(DBG_CONTROL,
 		DBG_log("crl fetch request already exists")
-	    )
+	    );
 
 	    /* there might be new distribution points */
 	    add_distribution_points(gn, &req->distributionPoints);
@@ -688,7 +688,7 @@ add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 
     DBG(DBG_CONTROL,
 	DBG_log("crl fetch request added")
-    )
+    );
     unlock_crl_fetch_list("add_crl_fetch_request");
 }
 

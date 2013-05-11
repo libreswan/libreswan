@@ -1381,15 +1381,15 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 
             DBG(DBG_X509 | DBG_CONTROL, /* n */
                 DBG_dump("NSS cert: modulus : ", issuer_cert->modulus.ptr, issuer_cert->modulus.len);
-            )
+            );
 
             DBG(DBG_X509 | DBG_CONTROL, /* e */
                 DBG_dump("NSS cert: exponent : ", issuer_cert->publicExponent.ptr, issuer_cert->publicExponent.len);
-            )
+            );
 
             DBG(DBG_X509 | DBG_CONTROL, /* s */
                 DBG_dump("NSS: input signature : ", sig.ptr, sig.len);
-            )
+            );
 
 	    /*Converting n and e to nss_n and nss_e*/
 	    skip = (issuer_cert->modulus.len > 0 && issuer_cert->modulus.ptr[0] == 0x00) ? 1 : 0;
@@ -1492,13 +1492,13 @@ check_signature(chunk_t tbs, chunk_t sig, int algorithm,
     {
 	DBG(DBG_X509 | DBG_CONTROL,
 	    DBG_log("signature algorithm: '%s'",oid_names[algorithm].name);
-	)
+	);
     }
     else
     {
 	DBG(DBG_X509 | DBG_CONTROL,
 	    DBG_log("unknown signature algorithm");
-	)
+	);
     }
 
     if (!compute_digest(tbs, algorithm, &digest))
@@ -1509,7 +1509,7 @@ check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 
     DBG(DBG_CONTROL,
 	DBG_dump_chunk("  digest:", digest)
-    )
+    );
 
     if (!decrypt_sig(sig, algorithm, issuer_cert, &digest))
     {
@@ -1544,7 +1544,7 @@ parse_basicConstraints(chunk_t blob, int level0)
 	    isCA = object.len && *object.ptr;
 	    DBG(DBG_CONTROL,
 		DBG_log("  %s",(isCA)?"TRUE":"FALSE");
-	    )
+	    );
 	}
 	objectID++;
     }
@@ -1613,7 +1613,7 @@ parse_generalName(chunk_t blob, int level0)
 	case GN_OBJ_URI:
 	    DBG(DBG_PARSING,
 		DBG_log("  '%.*s'", (int)object.len, object.ptr);
-	    )
+	    );
 	    valid_gn = TRUE;
 	    break;
 	case GN_OBJ_DIRECTORY_NAME:
@@ -1621,14 +1621,14 @@ parse_generalName(chunk_t blob, int level0)
 		u_char buf[ASN1_BUF_LEN];
 		dntoa((char *)buf, ASN1_BUF_LEN, object);
 		DBG_log("  '%s'", buf)
-	    )
+	    );
 	    valid_gn = TRUE;
 	    break;
 	case GN_OBJ_IP_ADDRESS:
 	    DBG(DBG_PARSING,
 		DBG_log("  '%d.%d.%d.%d'", *object.ptr, *(object.ptr+1),
 				      *(object.ptr+2), *(object.ptr+3));
-	    )
+	    );
 	    valid_gn = TRUE;
 	    break;
 	case GN_OBJ_OTHER_NAME:
@@ -1976,7 +1976,7 @@ parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 	    cert->version = (object.len) ? (1+(u_int)*object.ptr) : 1;
 	    DBG(DBG_PARSING,
 		DBG_log("  v%d", cert->version);
-	    )
+	    );
 	    break;
 	case X509_OBJ_SERIAL_NUMBER:
 	    cert->serialNumber = object;
@@ -2049,7 +2049,7 @@ parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 	    critical = object.len && *object.ptr;
 	    DBG(DBG_PARSING,
 		DBG_log("  %s",(critical)?"TRUE":"FALSE");
-	    )
+	    );
 	    break;
 	case X509_OBJ_EXTN_VALUE:
 	    {
@@ -2138,7 +2138,7 @@ parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 	    crl->version = (object.len) ? (1+(u_int)*object.ptr) : 1;
 	    DBG(DBG_PARSING,
 		DBG_log("  v%d", crl->version);
-	    )
+	    );
 	    break;
 	case CRL_OBJ_SIG_ALG:
 	    crl->sigAlg = parse_algorithmIdentifier(object, level);
@@ -2181,7 +2181,7 @@ parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 	    critical = object.len && *object.ptr;
 	    DBG(DBG_PARSING,
 		DBG_log("  %s",(critical)?"TRUE":"FALSE");
-	    )
+	    );
 	    break;
 	case CRL_OBJ_EXTN_VALUE:
 	    {

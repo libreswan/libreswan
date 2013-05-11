@@ -120,7 +120,7 @@ load_coded_file(const char *filename,
 	{
 	    DBG(DBG_PARSING,
 		DBG_log("  file coded in DER format");
-	    )
+	    );
 	    return TRUE;
 	}
 
@@ -133,14 +133,14 @@ load_coded_file(const char *filename,
 	    {
                 DBG(DBG_PARSING,
                     DBG_log("  file coded in armored PGP format");
-                )
+                );
                 return TRUE;
 	    }
 	    if (is_asn1(*blob))
 	    {
 		DBG(DBG_PARSING,
 		    DBG_log("  file coded in PEM format");
-		)
+		);
 		return TRUE;
 	    }
 	    ugh = "file coded in unknown format, discarded";

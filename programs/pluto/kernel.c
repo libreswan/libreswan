@@ -856,7 +856,7 @@ free_bare_shunt(struct bare_shunt **pp)
     {
         DBG(DBG_CONTROL,
             DBG_log("delete bare shunt: null pointer")
-        )
+        );
     }
     else
     {
@@ -3134,7 +3134,7 @@ get_sa_info(struct state *st, bool inbound, time_t *ago)
 
     DBG(DBG_KLIPS,
 	DBG_log("get %s", text_said)
-    )
+    );
     if (!kernel_ops->get_sa(&sa, &bytes))
 	return FALSE;
 

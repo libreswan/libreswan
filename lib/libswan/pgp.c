@@ -174,7 +174,7 @@ pgp_version(chunk_t *blob)
     DBG(DBG_PARSING,
 	DBG_log("L3 - version:");
 	DBG_log("  V%d", version)
-    )
+    );
     return version;
 }
 
@@ -198,7 +198,7 @@ parse_pgp_pubkey_packet(chunk_t *packet, pgpcert_t *cert)
 	char tbuf[TIMETOA_BUF];
 	DBG_log("L3 - created:");
 	DBG_log("  %s", timetoa(&cert->created, TRUE, tbuf, sizeof(tbuf)))
-    )
+    );
 
     if (version == 3)
     {
@@ -226,7 +226,7 @@ parse_pgp_pubkey_packet(chunk_t *packet, pgpcert_t *cert)
 	cert->pubkeyAlg = PUBKEY_ALG_RSA;
 	DBG(DBG_PARSING,
 	    DBG_log("  RSA")
-	)
+	);
 	/* modulus n */
 	cert->modulus.len = (pgp_size(packet, 2)+7) / BITS_PER_BYTE;
 	cert->modulus.ptr = packet->ptr;
@@ -234,7 +234,7 @@ parse_pgp_pubkey_packet(chunk_t *packet, pgpcert_t *cert)
 	packet->len -= cert->modulus.len;
 	DBG(DBG_PARSING,
 	    DBG_log("L3 - modulus:")
-	)
+	);
 	DBG_cond_dump_chunk(DBG_RAW, "", cert->modulus);
 
 	/* public exponent e */
@@ -244,7 +244,7 @@ parse_pgp_pubkey_packet(chunk_t *packet, pgpcert_t *cert)
 	packet->len -= cert->publicExponent.len;
 	DBG(DBG_PARSING,
 	    DBG_log("L3 - public exponent:")
-	)
+	);
 	DBG_cond_dump_chunk(DBG_RAW, "", cert->publicExponent);
 
 	if (version == 3)
@@ -265,14 +265,14 @@ parse_pgp_pubkey_packet(chunk_t *packet, pgpcert_t *cert)
 	cert->pubkeyAlg = PUBKEY_ALG_DSA;
 	DBG(DBG_PARSING,
 	    DBG_log("  DSA")
-	)
+	);
 	libreswan_log("  DSA public keys not supported");
 	return FALSE;
      default:
 	cert->pubkeyAlg = 0;
 	DBG(DBG_PARSING,
 	    DBG_log("  other")
-	)
+	);
 	libreswan_log(" exotic not RSA public keys not supported");
 	return FALSE;
     }
@@ -301,7 +301,7 @@ parse_pgp_secretkey_packet(chunk_t *packet, rsa_privkey_t *key)
 
     DBG(DBG_PARSING,
 	DBG_log("L3 - string-to-key:  %d", s2k)
-    )
+    );
 
     if (s2k == 255)
     {
@@ -319,7 +319,7 @@ parse_pgp_secretkey_packet(chunk_t *packet, rsa_privkey_t *key)
     /* a known symmetric key algorithm is specified*/
     DBG(DBG_PARSING,
 	DBG_log("  %s", pgp_sym_alg_name[s2k])
-    )
+    );
 
     /* private key is unencrypted */
     if (s2k == PGP_SYM_ALG_PLAIN)
@@ -332,7 +332,7 @@ parse_pgp_secretkey_packet(chunk_t *packet, rsa_privkey_t *key)
 	    packet->len -= key->field[i].len;
 	    DBG(DBG_PARSING,
 		DBG_log("L3 - %s:", pgp_rsa_privkey_name[i-2])
-	    )
+	    );
 	    DBG_cond_dump_chunk(DBG_PRIVATE, "", key->field[i]);
 	}
 	return TRUE;
@@ -367,14 +367,14 @@ parse_pgp_signature_packet(chunk_t *packet, pgpcert_t *cert)
     sig_type = (u_char)pgp_size(packet, 1);
     DBG(DBG_PARSING,
 	DBG_log("L3 - signature type:  0x%2x", sig_type)
-    )
+    );
 
     /* creation date - 4 bytes */
     DBG(DBG_PARSING,
 	char tbuf[TIMETOA_BUF];
 	DBG_log("L3 - created:");
 	DBG_log("  %s", timetoa(&cert->created, TRUE, tbuf, sizeof(tbuf)))
-    )
+    );
 
     /* key ID of signer - 8 bytes */
     keyid.ptr = packet->ptr;
@@ -389,7 +389,7 @@ parse_pgp(chunk_t blob, pgpcert_t *cert, rsa_privkey_t *key)
 {
     DBG(DBG_PARSING,
 	DBG_log("L0 - PGP file:")
-    )
+    );
     DBG_cond_dump_chunk(DBG_RAW, "", blob);
 
     if (cert != NULL)
@@ -412,7 +412,7 @@ parse_pgp(chunk_t blob, pgpcert_t *cert, rsa_privkey_t *key)
 
 	DBG(DBG_PARSING,
 	    DBG_log("L1 - PGP packet:  tag= 0x%2x", packet_tag)
-	)
+	);
 
 	/* bit 7 must be set */
 	if (!(packet_tag & 0x80))
@@ -441,7 +441,7 @@ parse_pgp(chunk_t blob, pgpcert_t *cert, rsa_privkey_t *key)
 		    pgp_packet_type_name[packet_type] :
 		    "Undefined Packet Type", packet_type, (int)packet.len);
 		DBG_log("L2 - body:")
-	    )
+	    );
 	    DBG_cond_dump_chunk(DBG_RAW, "", packet);
 
 	    if (cert != NULL)
@@ -461,7 +461,7 @@ parse_pgp(chunk_t blob, pgpcert_t *cert, rsa_privkey_t *key)
 		    DBG(DBG_PARSING,
 			DBG_log("L3 - user ID:");
 			DBG_log("  '%.*s'", (int)packet.len, packet.ptr)
-		    )
+		    );
 		    break;
 		default:
 		    break;

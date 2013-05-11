@@ -344,7 +344,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 	}
 	DBG(DBG_X509,
 	    DBG_log("crl issuer cacert found")
-	)
+	);
 
 	/* check the issuer's signature of the crl */
 	valid_sig = check_signature(crl->tbsCertList, crl->signature
@@ -358,7 +358,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 	}
 	DBG(DBG_X509,
 	    DBG_log("valid crl signature")
-	)
+	);
 
 	lock_crl_list("insert_crl");
 	oldcrl = get_x509crl(crl->issuer, crl->authKeySerialNumber
@@ -378,14 +378,14 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 		free_first_crl();
 		DBG(DBG_X509,
 		    DBG_log("thisUpdate is newer - existing crl deleted")
-		)
+		);
 	    }
 	    else
 	    {
 		unlock_crl_list("insert_crls");
 		DBG(DBG_X509,
 		    DBG_log("thisUpdate is not newer - existing crl not replaced");
-		)
+		);
 		free_crl(crl);
 		return oldcrl->nextUpdate - time(NULL) > 2*crl_check_interval;
 	    }
@@ -504,7 +504,7 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 
 	DBG(DBG_X509,
 	    DBG_log("issuer crl \"%s\" found", ibuf)
-	)
+	);
      
 #if defined(LIBCURL) || defined(LDAP_VER)
 	add_distribution_points(cert->crlDistributionPoints
@@ -527,7 +527,7 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
      
 	    DBG(DBG_X509,
 		DBG_log("valid crl signature on \"%s\"", cbuf)
-	    )
+	    );
 
 	    /* with strict crl policy the public key must have the same
 	     * lifetime as the crl
@@ -564,7 +564,7 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	    {
 		DBG(DBG_X509,
 		    DBG_log("crl is \"%s\" valid", cbuf)
-		)
+		);
 	    }
 
 	    if (revoked_crl || (strict && expired_crl))
@@ -613,8 +613,8 @@ check_crls(void)
 		    , buf, ASN1_BUF_LEN);
 		DBG_log("authkey: %s", buf);
 	    }
-	    DBG_log("%ld seconds left", time_left)
-	)
+	    DBG_log("%ld seconds left", time_left);
+	);
 	if (time_left < 2*crl_check_interval)
 	    add_crl_fetch_request(crl->issuer, crl->distributionPoints);
 	crl = crl->next;
@@ -661,7 +661,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 			, abuf, ASN1_BUF_LEN);
 		DBG_log("authkey:  %s", abuf);
 	    }
-	)
+	);
 
 	ugh = check_validity(cert, until);
 
@@ -673,7 +673,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 
 	DBG(DBG_X509,
 	    DBG_log("valid certificate for \"%s\"", sbuf)
-	)
+	);
 
 	lock_authcert_list("verify_x509cert");
 	issuer_cert = get_authcert(cert->issuer, cert->authKeySerialNumber
@@ -687,7 +687,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	}
 	DBG(DBG_X509,
 	    DBG_log("issuer cacert \"%s\" found", ibuf)
-	)
+	);
 
 	if (!check_signature(cert->tbsCertificate, cert->signature,
 			     cert->algorithm, issuer_cert))
@@ -700,7 +700,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	DBG(DBG_X509,
 	    DBG_log("valid certificate signature (%s -> %s)"
 		    , ibuf, sbuf);
-	)
+	);
 	unlock_authcert_list("verify_x509cert");
 
 
@@ -709,7 +709,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	{
 	    DBG(DBG_CONTROL,
 		DBG_log("reached self-signed root ca")
-	    )
+	    );
 	    return TRUE;
 	}
 	else

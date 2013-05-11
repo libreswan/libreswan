@@ -1352,7 +1352,7 @@ gw_addref(struct gw_info *gw)
 {
     if (gw != NULL)
     {
-	DBG(DBG_DNS, DBG_log("gw_addref: %p refcnt: %d++", gw, gw->refcnt))
+	DBG(DBG_DNS, DBG_log("gw_addref: %p refcnt: %d++", gw, gw->refcnt));
 	gw->refcnt++;
     }
 }

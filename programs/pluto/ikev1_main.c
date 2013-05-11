@@ -630,7 +630,7 @@ main_inI1_outR1(struct msg_digest *md)
 			    openpgp_peer = TRUE;
 			    DBG(DBG_PARSING,
 				DBG_log("we have an OpenPGP peer")
-				)
+				);
 				}
 		}
     }
@@ -973,7 +973,7 @@ main_inR1_outI2(struct msg_digest *md)
 #ifdef NAT_TRAVERSAL
     DBG(DBG_NATT, DBG_log("sender checking NAT-T: %d and %d"
 				 , nat_traversal_enabled
-				 , md->quirks.nat_traversal_vid))
+				 , md->quirks.nat_traversal_vid));
 
     if (nat_traversal_enabled && md->quirks.nat_traversal_vid) {
 	st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(md->quirks.nat_traversal_vid));
@@ -2578,7 +2578,7 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 	DBG(DBG_CRYPT,
 	    DBG_log("HASH(1) computed:");
 	    DBG_dump("", r_hashval, ctx.hmac_digest_len);
-	)
+	);
     }
 
     /* Encrypt message (preserve st_iv) */
@@ -2835,7 +2835,7 @@ ikev1_delete_out(struct state *st)
 	DBG(DBG_CRYPT,
 	    DBG_log("HASH(1) computed:");
 	    DBG_dump("", r_hashval, ctx.hmac_digest_len);
-	)
+	);
     }
 
     /* Do a dance to avoid needing a new state object.

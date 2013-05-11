@@ -232,8 +232,8 @@ unsigned char *pubkey_to_rfc3110(const struct RSA_public_key *pub,
     chunk_t e, n;
 
 
-    e = mpz_to_n2(&pub->e);
-    n = mpz_to_n2(&pub->n);
+    e = mpz_to_n_autosize(&pub->e);
+    n = mpz_to_n_autosize(&pub->n);
     elen = e.len;
 
     buf = alloc_bytes(e.len+n.len+3, "buffer for rfc3110");

@@ -38,8 +38,8 @@ extern void report_leaks(void);
 #define clone_str(str, name) \
     ((str) == NULL? NULL : clone_bytes((str), strlen((str))+1, (name)))
 
-#define pfreeany(p) { if ((p) != NULL) pfree(p); }
-#define replace(p, q) { pfreeany(p); (p) = (q); }
+#define pfreeany(p) do { if ((p) != NULL) pfree(p); } while (0)
+#define replace(p, q) do { pfreeany(p); (p) = (q); } while (0)
 
 
 /* chunk is a simple pointer-and-size abstraction */
@@ -50,15 +50,15 @@ struct chunk {
     };
 typedef struct chunk chunk_t;
 
-#define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
+#define setchunk(ch, addr, size) do { (ch).ptr = (addr); (ch).len = (size); } while (0)
 /* NOTE: freeanychunk, unlike pfreeany, NULLs .ptr */
-#define freeanychunk(ch) { pfreeany((ch).ptr); (ch).ptr = NULL; }
+#define freeanychunk(ch) do { pfreeany((ch).ptr); (ch).ptr = NULL; } while (0)
 #define clonetochunk(ch, addr, size, name) \
-    { (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
+    do { (ch).ptr = clone_bytes((addr), (ch).len = (size), name); } while (0)
 #define clonereplacechunk(ch, addr, size, name) \
-    { pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); }
+    do { pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); } while (0)
 #define chunkcpy(dst, chunk) \
-    { memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len;}
+    do { memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len;} while (0)
 #define same_chunk(a, b) \
     (a).len == (b).len && memcmp((a).ptr, (b).ptr, (b).len) == 0
   
@@ -78,13 +78,13 @@ extern void set_exit_log_func(exit_log_func_t func);
 #endif
 
 #define free_lsw_nss_symkey(ch)  \
-               { PK11SymKey *ptr=0; \
+               do { PK11SymKey *ptr=0; \
                  if((ch).ptr!=NULL) { memcpy(&ptr, (ch).ptr, (ch).len); memset((ch).ptr,0,(ch).len );} \
-                 if(ptr!=NULL) { PK11_FreeSymKey(ptr);} }  
+                 if(ptr!=NULL) { PK11_FreeSymKey(ptr);} } while (0)
 
 #define dup_lsw_nss_symkey(ch)  \
-               { PK11SymKey *ptr=0; \
+               do { PK11SymKey *ptr=0; \
                   if((ch).ptr!=NULL) { memcpy(&ptr, (ch).ptr, (ch).len);} \
-                  if(ptr!=NULL) { PK11_ReferenceSymKey(ptr);} }
+                  if(ptr!=NULL) { PK11_ReferenceSymKey(ptr);} } while (0)
 
 #endif /* _LSW_ALLOC_H_ */

@@ -155,7 +155,7 @@ add_authcert(x509cert_t *cert, u_char auth_flags)
 	    old_cert->authority_flags |= cert->authority_flags;
 	    DBG(DBG_X509 | DBG_PARSING ,
 		DBG_log("  authcert is already present and identical")
-	    )
+	    );
 	    unlock_authcert_list("add_authcert");
 	    
 	    free_x509cert(cert);
@@ -167,7 +167,7 @@ add_authcert(x509cert_t *cert, u_char auth_flags)
 	    free_first_authcert();
 	    DBG(DBG_X509 | DBG_PARSING ,
 		DBG_log("  existing authcert deleted")
-	    )
+	    );
 	}
     }
     
@@ -177,7 +177,7 @@ add_authcert(x509cert_t *cert, u_char auth_flags)
     share_x509cert(cert);  /* set count to one */
     DBG(DBG_X509 | DBG_PARSING,
 	DBG_log("  authcert inserted")
-    )
+    );
     unlock_authcert_list("add_authcert");
 }
 
@@ -318,7 +318,7 @@ bool x509_check_revocation(const x509crl_t *crl, chunk_t serial)
 
     DBG(DBG_X509,
 	DBG_dump_chunk("serial number:", serial)
-    )
+    );
 
     while(revokedCert != NULL)
     {
@@ -334,7 +334,7 @@ bool x509_check_revocation(const x509crl_t *crl, chunk_t serial)
     }
     DBG(DBG_X509,
 	DBG_log("certificate not revoked")
-    )
+    );
     return FALSE;
 }
 
@@ -396,7 +396,7 @@ trust_authcert_candidate(const x509cert_t *cert, const x509cert_t *alt_chain)
        {
            DBG(DBG_CONTROL,
                DBG_log("issuer cacert found in alternative chain")
-           )
+           );
        }
        else
        {
@@ -408,7 +408,7 @@ trust_authcert_candidate(const x509cert_t *cert, const x509cert_t *alt_chain)
            {
                DBG(DBG_CONTROL,
                    DBG_log("issuer cacert found")
-               )
+               );
            }
            else
            {
@@ -427,14 +427,14 @@ trust_authcert_candidate(const x509cert_t *cert, const x509cert_t *alt_chain)
        }
        DBG(DBG_CONTROL,
            DBG_log("valid certificate signature")
-       )
+       );
 
        /* check if cert is a self-signed root ca */
        if (pathlen > 0 && same_dn(cert->issuer, cert->subject))
        {
            DBG(DBG_CONTROL,
                DBG_log("reached self-signed root ca")
-           )
+           );
            unlock_authcert_list("trust_authcert_candidate");
            return TRUE;
        }

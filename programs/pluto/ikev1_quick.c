@@ -541,7 +541,7 @@ decode_net_id(struct isakmp_ipsec_id *id
 
     DBG(DBG_PARSING | DBG_CONTROL,
         DBG_log("%s protocol/port is %d/%d", which, id->isaiid_protoid, id->isaiid_port)
-    )
+    );
 
     return TRUE;
 }
