@@ -1019,7 +1019,6 @@ main(int argc, char **argv)
 					IPSECLIBDIR"/pf_key",
 					IPSECLIBDIR"/_pluto_adns",
 					IPSECLIBDIR"/_plutorun",
-					IPSECLIBDIR"/ranbits",
 					IPSECLIBDIR"/_realsetup",
 					IPSECLIBDIR"/rsasigkey",
 					IPSECLIBDIR"/pluto",
