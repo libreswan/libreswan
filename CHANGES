@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.3 (unreleased)
+v3.3 (May 13, 2013)
 * SECURITY: atodn() buffer overflow with oe=yes [Florian/Hugh/Paul]
             affected: libreswan 3.0 and 3.1 (CVE-2013-2053)
             see also: openswan up to 2.6.38 (CVE-2013-2052)
