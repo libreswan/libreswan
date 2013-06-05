@@ -1,0 +1,18 @@
+# Uncrustify version:
+
+uncrustify-0.60-3.0.6f840f2d.foo6.x86_64
+
+# Uncrustify's default settings:
+
+uncrustify -c /dev/null --update-config-with-doc -o uncrustify.cfg.defaults
+
+# Run uncrustify:
+
+find libreswan -name '*.[ch]' > filelist
+sed -i '/^libreswan\/osxApp/d' filelist
+sed -i '/^libreswan\/linux\/net\/ipsec\/adler32/d' filelist
+sed -i '/^libreswan\/linux\/net\/ipsec\/deflate/d' filelist
+sed -i '/^libreswan\/linux\/net\/ipsec\/inf/d' filelist
+sed -i '/^libreswan\/linux\/net\/ipsec\/trees/d' filelist
+sed -i '/^libreswan\/linux\/net\/ipsec\/zutil/d' filelist
+uncrustify -F filelist -l C --no-backup -c uncrustify.cfg > /dev/null
