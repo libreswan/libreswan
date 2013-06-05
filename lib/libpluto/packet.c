@@ -529,19 +529,19 @@ struct_desc isakmp_vendor_id_desc = { "ISAKMP Vendor ID Payload", isag_fields, s
 /* MODECFG */
 /*
  * From draft-dukes-ike-mode-cfg
-3.2. Attribute Payload 
-                           1                   2                   3 
-       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
-     ! Next Payload  !   RESERVED    !         Payload Length        ! 
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
-     !     Type      !   RESERVED    !           Identifier          ! 
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
-     !                                                               ! 
-     ~                           Attributes                          ~ 
-     !                                                               ! 
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
-*/    
+ * 3.2. Attribute Payload 
+ *                         1                   2                   3 
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+ *   ! Next Payload  !   RESERVED    !         Payload Length        ! 
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+ *   !     Type      !   RESERVED    !           Identifier          ! 
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+ *   !                                                               ! 
+ *   ~                           Attributes                          ~ 
+ *   !                                                               ! 
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+ */    
 static field_desc isaattr_fields[] = {
     { ft_enum, 8/BITS_PER_BYTE, "next payload type", &payload_names },
     { ft_zig, 8/BITS_PER_BYTE, NULL, NULL },
@@ -554,20 +554,20 @@ static field_desc isaattr_fields[] = {
 
 /* MODECFG */
 /* From draft-dukes-ike-mode-cfg
-3.2. Attribute Payload
-                           1                   2                   3  
-       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-     ! Next Payload  !   RESERVED    !         Payload Length        !
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-     !     Type      !   RESERVED    !           Identifier          !
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-     !                                                               !
-     !                                                               !
-     ~                           Attributes                          ~
-     !                                                               !
-     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-*/
+ * 3.2. Attribute Payload
+ *                         1                   2                   3  
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   ! Next Payload  !   RESERVED    !         Payload Length        !
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   !     Type      !   RESERVED    !           Identifier          !
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   !                                                               !
+ *   !                                                               !
+ *   ~                           Attributes                          ~
+ *   !                                                               !
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
 
 struct_desc isakmp_attr_desc = { "ISAKMP Mode Attribute", isaattr_fields, sizeof(struct isakmp_mode_attr) };
 
