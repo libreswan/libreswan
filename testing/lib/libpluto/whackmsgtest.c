@@ -1,7 +1,7 @@
 #define LEAK_DETECTIVE
 #define AGGRESSIVE 1
-#define XAUTH 
-#define MODECFG 
+#define XAUTH
+#define MODECFG
 #define DEBUG 1
 #define PRINT_SA_DEBUG 1
 #define USE_KEYRR 1
@@ -22,38 +22,37 @@
 #include "seam_initiate.c"
 #include "seam_terminate.c"
 #include "seam_xauth.c"
-#include "seam_alg.c" 
+#include "seam_alg.c"
 #include "seam_spdb.c"
 #include "seam_keys.c"
 #include "seam_exitlog.c"
 #include "seam_whack.c"
 #include "seam_kernel.c"
 
-main(int argc, char *argv[])
-{
-    int   len;
-    char *infile;
+main(int argc, char *argv[]){
+	int len;
+	char *infile;
 
-    EF_PROTECT_FREE=1;
-    EF_FREE_WIPES  =1;
+	EF_PROTECT_FREE = 1;
+	EF_FREE_WIPES  = 1;
 
-    progname = argv[0];
-    leak_detective = 1;
+	progname = argv[0];
+	leak_detective = 1;
 
-    if(argc > 2 ) {
-	fprintf(stderr, "Usage: %s <whackrecord>\n", progname);
-	    exit(10);
-    }
-    /* argv[1] == "-r" */
+	if (argc > 2 ) {
+		fprintf(stderr, "Usage: %s <whackrecord>\n", progname);
+		exit(10);
+	}
+	/* argv[1] == "-r" */
 
-    tool_init_log();
-    
-    infile = argv[1];
+	tool_init_log();
 
-    readwhackmsg(infile);
+	infile = argv[1];
 
-    report_leaks();
+	readwhackmsg(infile);
 
-    tool_close_log();
-    exit(0);
+	report_leaks();
+
+	tool_close_log();
+	exit(0);
 }

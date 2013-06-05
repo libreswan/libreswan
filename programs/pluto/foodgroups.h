@@ -12,7 +12,7 @@
  * for more details.
  */
 
-struct connection;	/* forward declaration */
+struct connection;      /* forward declaration */
 extern void add_group(struct connection *c);
 extern void route_group(struct connection *c);
 extern void unroute_group(struct connection *c);

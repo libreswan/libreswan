@@ -29,10 +29,14 @@ struct msg_digest;
 
 extern void decode_cert(struct msg_digest *md);
 extern void ikev2_decode_cert(struct msg_digest *md);
-extern void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca);
+extern void ikev2_decode_cr(struct msg_digest *md,
+			    generalName_t **requested_ca);
 extern void decode_cr(struct msg_digest *md, generalName_t **requested_ca);
-extern bool collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top);
-extern bool build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np);
-extern bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np);
+extern bool collect_rw_ca_candidates(struct msg_digest *md,
+				     generalName_t **top);
+extern bool build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
+			      u_int8_t np);
+extern bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
+				    u_int8_t np);
 extern err_t process_rsa_keyfile(struct RSA_private_key *rsak, int whackfd);
 #endif /* _X509MORE_H */

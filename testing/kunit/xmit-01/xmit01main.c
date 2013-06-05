@@ -28,23 +28,22 @@ extern void *malloc(unsigned int size);
 struct prng ipsec_prng;
 DEFINE_SPINLOCK(eroute_lock);
 
-struct supported_list *pfkey_supported_list[SADB_SATYPE_MAX+1];
+struct supported_list *pfkey_supported_list[SADB_SATYPE_MAX + 1];
 
-int
-pfkey_list_insert_supported(struct ipsec_alg_supported *supported,
-			    struct supported_list **supported_list)
+int pfkey_list_insert_supported(struct ipsec_alg_supported *supported,
+				struct supported_list **supported_list)
 {
-  return -1;
+	return -1;
 }
 
 bool should_i_fail(const char *func)
 {
-  return 0;
+	return 0;
 }
 
 bool should_i_fail_once(const char *func)
 {
-  return 0;
+	return 0;
 }
 
 void sock_wfree(struct sk_buff *skb)
@@ -57,7 +56,7 @@ void sock_rfree(struct sk_buff *skb)
 
 void *field_value(const void *strct, const char *name)
 {
-  return NULL;
+	return NULL;
 }
 
 void field_attach(const void *strct, const char *name, void *val)
@@ -79,17 +78,16 @@ void field_detach_all(const void *strct, const char *name)
 /* needed because protocol handlers point to this for receive */
 int ipsec_rcv(struct sk_buff *skb)
 {
-  return 0;
+	return 0;
 }
 
 struct net_device *loopback_dev_p;
 void *nfsim_tallocs;
 
-int
-pfkey_list_remove_supported(struct ipsec_alg_supported *supported,
-			    struct supported_list **supported_list)
+int pfkey_list_remove_supported(struct ipsec_alg_supported *supported,
+				struct supported_list **supported_list)
 {
-  return -1;
+	return -1;
 }
 
 #include "xmit01pack.c"
@@ -99,7 +97,7 @@ int ipsec_breakroute(struct sockaddr_encap *ea,
 		     struct sk_buff **first,
 		     struct sk_buff **last)
 {
-  return 0;
+	return 0;
 }
 
 int ipsec_makeroute(struct sockaddr_encap *ea,
@@ -110,194 +108,189 @@ int ipsec_makeroute(struct sockaddr_encap *ea,
 		    struct ident *ident_s,
 		    struct ident *ident_d)
 {
-  return 1;
+	return 1;
 }
 
-struct eroute *
-ipsec_findroute(struct sockaddr_encap *eaddr)
+struct eroute *ipsec_findroute(struct sockaddr_encap *eaddr)
 {
-  return (struct eroute *)1;
+	return (struct eroute *)1;
 }
 
-
-
-int
-pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
+int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 {
-  return 0;
+	return 0;
 }
 
 int pfkey_expire(struct ipsec_sa *sa, int time)
 {
-  return 1;
+	return 1;
 }
 
 int pfkey_acquire(struct ipsec_sa *sa)
 {
-  return 0;
+	return 0;
 }
 
 int pfkey_nat_t_new_mapping(struct ipsec_sa *sa, struct sockaddr *mapping,
 			    __u16 port)
 {
-  return 1;
+	return 1;
 }
 
 struct sk_buff *skb_decompress(struct sk_buff *skb)
 {
-  return skb;
+	return skb;
 }
 
 struct sk_buff *skb_compress(struct sk_buff *skb)
 {
-  return skb;
+	return skb;
 }
 
-unsigned char seed[8]={ 0x01, 0x02, 0x03, 0x04,
-			0x05, 0x06, 0x07, 0x08};
+unsigned char seed[8] = { 0x01, 0x02, 0x03, 0x04,
+			  0x05, 0x06, 0x07, 0x08 };
 
 int main(char *argv[], int argc)
 {
-  int error;
-  struct sockaddr_in saddr,daddr;
-  struct sockaddr_in saddr2,daddr2;
+	int error;
+	struct sockaddr_in saddr, daddr;
+	struct sockaddr_in saddr2, daddr2;
 
-  void *main_talloc = NULL;
-  struct ipsec_sa *sa, *sa1;
-  char auth1[]={0x87, 0x65, 0x87, 0x65,
-	       0x87, 0x65, 0x87, 0x65,
-	       0x87, 0x65, 0x87, 0x65,
-	       0x87, 0x65, 0x87, 0x65};
-  char enc[] ={0x40, 0x43, 0x43, 0x45, 0x45, 0x46, 0x46, 0x49,
-	       0x49, 0x4a, 0x4a, 0x4c, 0x4c, 0x4f, 0x4f, 0x51,
-	       0x51, 0x52, 0x52, 0x54, 0x54, 0x57, 0x57, 0x58};
+	void *main_talloc = NULL;
+	struct ipsec_sa *sa, *sa1;
+	char auth1[] = { 0x87, 0x65, 0x87, 0x65,
+			 0x87, 0x65, 0x87, 0x65,
+			 0x87, 0x65, 0x87, 0x65,
+			 0x87, 0x65, 0x87, 0x65 };
+	char enc[] = { 0x40, 0x43, 0x43, 0x45, 0x45, 0x46, 0x46, 0x49,
+		       0x49, 0x4a, 0x4a, 0x4c, 0x4c, 0x4f, 0x4f, 0x51,
+		       0x51, 0x52, 0x52, 0x54, 0x54, 0x57, 0x57, 0x58 };
 
-  debug_xform = 1;
-  init_kmalloc();
-  debug_tunnel=0xffffffff;
-  debug_xmit=0xffffffff;
-  sysctl_ipsec_debug_verbose = 1;
-  prng_init(&ipsec_prng, seed, sizeof(seed));
-  ipsec_sadb_init();
-  ipsec_alg_init();
+	debug_xform = 1;
+	init_kmalloc();
+	debug_tunnel = 0xffffffff;
+	debug_xmit = 0xffffffff;
+	sysctl_ipsec_debug_verbose = 1;
+	prng_init(&ipsec_prng, seed, sizeof(seed));
+	ipsec_sadb_init();
+	ipsec_alg_init();
 
-  {
-    sa1 = ipsec_sa_alloc(&error);
-    assert(error == 0);
+	{
+		sa1 = ipsec_sa_alloc(&error);
+		assert(error == 0);
 
-    ipsec_sa_intern(sa1);
+		ipsec_sa_intern(sa1);
 
-    sa1->ips_seq = 1;
-    sa1->ips_pid = 10;
-    
-    sa1->ips_said.spi = htonl(0x12345678);
-    sa1->ips_said.proto = IPPROTO_IPIP;
-    sa1->ips_said.dst.u.v4.sin_addr.s_addr = htonl(0xc001022D);
+		sa1->ips_seq = 1;
+		sa1->ips_pid = 10;
 
-    sa1->ips_state = SADB_SASTATE_MATURE;
-    daddr2.sin_addr.s_addr = htonl(0xc001022D);
-    saddr2.sin_addr.s_addr = htonl(0xc0010217);
-    sa1->ips_addr_s = (struct sockaddr *)&saddr2;
-    sa1->ips_addr_d = (struct sockaddr *)&daddr2;
-  }
-    
-  {
-    sa = ipsec_sa_alloc(&error);
-    assert(error == 0);
+		sa1->ips_said.spi = htonl(0x12345678);
+		sa1->ips_said.proto = IPPROTO_IPIP;
+		sa1->ips_said.dst.u.v4.sin_addr.s_addr = htonl(0xc001022D);
 
-    ipsec_sa_intern(sa);
+		sa1->ips_state = SADB_SASTATE_MATURE;
+		daddr2.sin_addr.s_addr = htonl(0xc001022D);
+		saddr2.sin_addr.s_addr = htonl(0xc0010217);
+		sa1->ips_addr_s = (struct sockaddr *)&saddr2;
+		sa1->ips_addr_d = (struct sockaddr *)&daddr2;
+	}
 
-    sa->ips_said.spi = htonl(0x12345678);
-    sa->ips_said.proto = IPPROTO_ESP;
-    sa->ips_said.dst.u.v4.sin_addr.s_addr = htonl(0xc001022D);
-    sa->ips_said.dst.u.v4.sin_family      = AF_INET;
+	{
+		sa = ipsec_sa_alloc(&error);
+		assert(error == 0);
 
-    sa->ips_seq = 1;
-    sa->ips_pid = 10;
-    sa->ips_inext = sa1;
+		ipsec_sa_intern(sa);
 
-    {
-      /* make a copy so that ipsec_sa_init() can zero it out */
-      char *auth = talloc_size(main_talloc, AHMD596_KLEN);
+		sa->ips_said.spi = htonl(0x12345678);
+		sa->ips_said.proto = IPPROTO_ESP;
+		sa->ips_said.dst.u.v4.sin_addr.s_addr = htonl(0xc001022D);
+		sa->ips_said.dst.u.v4.sin_family      = AF_INET;
 
-      memcpy(auth, auth1, AHMD596_KLEN);
-      sa->ips_authalg = AH_MD5;
-      sa->ips_key_bits_a = AHMD596_KLEN * 8;
-      sa->ips_key_a = auth;
-    }
+		sa->ips_seq = 1;
+		sa->ips_pid = 10;
+		sa->ips_inext = sa1;
 
-    sa->ips_encalg = ESP_3DES;
-    sa->ips_key_bits_e = 192;
-    sa->ips_iv_bits = 128;
-    sa->ips_key_e_size = 0;
-    
-    sa->ips_key_e = talloc_memdup(main_talloc, enc, sa->ips_key_bits_e);
-    sa->ips_state = SADB_SASTATE_MATURE;
-    daddr.sin_addr.s_addr = htonl(0xc001022D);
-    saddr.sin_addr.s_addr = htonl(0xc0010217);
-    sa->ips_addr_s = (struct sockaddr *)&saddr;
-    sa->ips_addr_d = (struct sockaddr *)&daddr;
+		{
+			/* make a copy so that ipsec_sa_init() can zero it out */
+			char *auth = talloc_size(main_talloc, AHMD596_KLEN);
 
-    ipsec_sa_add(sa);
-    assert(ipsec_sa_init(sa) == 0);
-    ipsec_sa_put(sa);
-  }
-    
-  {
-    struct ipsec_xmit_state ixs_mem;
-    struct ipsec_xmit_state *ixs = &ixs_mem;
-    enum ipsec_xmit_value stat;
-    struct net_device_stats stats;
-    int iphlen;
+			memcpy(auth, auth1, AHMD596_KLEN);
+			sa->ips_authalg = AH_MD5;
+			sa->ips_key_bits_a = AHMD596_KLEN * 8;
+			sa->ips_key_a = auth;
+		}
 
-    struct sk_buff *skb = skbFromArray(packet2, packet2_len);
+		sa->ips_encalg = ESP_3DES;
+		sa->ips_key_bits_e = 192;
+		sa->ips_iv_bits = 128;
+		sa->ips_key_e_size = 0;
 
-    skb->nh.raw = skb_pull(skb, skb->mac_len);
-    iphlen = (skb->nh.iph->ihl<<2);
+		sa->ips_key_e = talloc_memdup(main_talloc, enc,
+					      sa->ips_key_bits_e);
+		sa->ips_state = SADB_SASTATE_MATURE;
+		daddr.sin_addr.s_addr = htonl(0xc001022D);
+		saddr.sin_addr.s_addr = htonl(0xc0010217);
+		sa->ips_addr_s = (struct sockaddr *)&saddr;
+		sa->ips_addr_d = (struct sockaddr *)&daddr;
 
-    /* do not use skb_pull, since data should stay at IP header */
-    skb->h.raw = skb->nh.raw + iphlen;
+		ipsec_sa_add(sa);
+		assert(ipsec_sa_init(sa) == 0);
+		ipsec_sa_put(sa);
+	}
 
-    memset((caddr_t)ixs, 0, sizeof(*ixs));
-    memset(&stats, 0, sizeof(stats));
-    ixs->stats = &stats;
-    ixs->oskb = NULL;
-    ixs->saved_header = NULL;	/* saved copy of the hard header */
-    ixs->route = NULL;
-    memset((caddr_t)&(ixs->ips), 0, sizeof(ixs->ips));
-    ixs->dev = NULL;
-    ixs->skb = skb;
-    ixs->physmtu = 1500;
-    ixs->cur_mtu = 1500;
-    ixs->outgoing_said.spi   = htonl(0x12345678);
-    ixs->outgoing_said.proto = IPPROTO_ESP;
-    ixs->outgoing_said.dst.u.v4.sin_family = AF_INET;
-    ixs->outgoing_said.dst.u.v4.sin_addr.s_addr = htonl(0xc001022D);
-    
-    stat = ipsec_xmit_sanity_check_skb(ixs);
-    assert(stat == IPSEC_XMIT_OK);
+	{
+		struct ipsec_xmit_state ixs_mem;
+		struct ipsec_xmit_state *ixs = &ixs_mem;
+		enum ipsec_xmit_value stat;
+		struct net_device_stats stats;
+		int iphlen;
 
-#if 0    
-    stat = ipsec_tunnel_strip_hard_header(ixs);
-    assert(stat == IPSEC_XMIT_OK);
-    
-    stat = ipsec_tunnel_SAlookup(ixs);
-    assert(stat == IPSEC_XMIT_OK);
-#endif
-    
-    stat = ipsec_xmit_encap_bundle(ixs);
-    assert(stat == IPSEC_XMIT_OK);
+		struct sk_buff *skb = skbFromArray(packet2, packet2_len);
+
+		skb->nh.raw = skb_pull(skb, skb->mac_len);
+		iphlen = (skb->nh.iph->ihl << 2);
+
+		/* do not use skb_pull, since data should stay at IP header */
+		skb->h.raw = skb->nh.raw + iphlen;
+
+		memset((caddr_t)ixs, 0, sizeof(*ixs));
+		memset(&stats, 0, sizeof(stats));
+		ixs->stats = &stats;
+		ixs->oskb = NULL;
+		ixs->saved_header = NULL; /* saved copy of the hard header */
+		ixs->route = NULL;
+		memset((caddr_t)&(ixs->ips), 0, sizeof(ixs->ips));
+		ixs->dev = NULL;
+		ixs->skb = skb;
+		ixs->physmtu = 1500;
+		ixs->cur_mtu = 1500;
+		ixs->outgoing_said.spi   = htonl(0x12345678);
+		ixs->outgoing_said.proto = IPPROTO_ESP;
+		ixs->outgoing_said.dst.u.v4.sin_family = AF_INET;
+		ixs->outgoing_said.dst.u.v4.sin_addr.s_addr =
+			htonl(0xc001022D);
+
+		stat = ipsec_xmit_sanity_check_skb(ixs);
+		assert(stat == IPSEC_XMIT_OK);
 
 #if 0
-    stat = ipsec_tunnel_restore_hard_header(ixs);
+		stat = ipsec_tunnel_strip_hard_header(ixs);
+		assert(stat == IPSEC_XMIT_OK);
+
+		stat = ipsec_tunnel_SAlookup(ixs);
+		assert(stat == IPSEC_XMIT_OK);
 #endif
 
-    ipsec_print_ip(ixs->iph);
-  }
-  
-  return 0;
+		stat = ipsec_xmit_encap_bundle(ixs);
+		assert(stat == IPSEC_XMIT_OK);
+
+#if 0
+		stat = ipsec_tunnel_restore_hard_header(ixs);
+#endif
+
+		ipsec_print_ip(ixs->iph);
+	}
+
+	return 0;
 }
 
-  
-
-  

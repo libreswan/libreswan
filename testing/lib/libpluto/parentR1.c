@@ -1,7 +1,7 @@
 #define LEAK_DETECTIVE
 #define AGGRESSIVE 1
-#define XAUTH 
-#define MODECFG 
+#define XAUTH
+#define MODECFG
 #define DEBUG 1
 #define PRINT_SA_DEBUG 1
 #define USE_KEYRR 1
@@ -40,86 +40,91 @@
 
 #include "seam_commhandle.c"
 
-void recv_pcap_packet(u_char *user
-		      , const struct pcap_pkthdr *h
-		      , const u_char *bytes)
+void recv_pcap_packet(u_char *user,
+		      const struct pcap_pkthdr *h,
+		      const u_char *bytes)
 {
-    struct state *st;
-    struct pcr_kenonce *kn = &r->pcr_d.kn;
-
-    recv_pcap_packet_gen(user, h, bytes);
-
-    /* find st involved */
-    st = state_with_serialno(1);
-    st->st_connection->extra_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE;
-
-    /* now fill in the KE values from a constant.. not calculated */
-    clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret,tc3_secret_len);
-    clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_nr, tc3_nr_len);
-    clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gr, tc3_gr_len);
-    
-    run_continuation(r);
-
-}
-
-main(int argc, char *argv[])
-{
-    int   len;
-    char *infile;
-    char *conn_name;
-    int  lineno=0;
-    struct connection *c1;
-    pcap_t *pt;
-    char   eb1[256];
-
-    EF_PROTECT_BELOW=1;
-    EF_PROTECT_FREE=1;
-    EF_FREE_WIPES  =1;
-
-    progname = argv[0];
-    leak_detective = 1;
-
-    init_crypto();
-
-    if(argc != 4) {
-	fprintf(stderr, "Usage: %s <whackrecord> <conn-name> <pcapin>\n", progname);
-	exit(10);
-    }
-    /* argv[1] == "-r" */
-
-    tool_init_log();
-    init_fake_vendorid();
-    
-    infile = argv[1];
-    conn_name = argv[2];
-
-    readwhackmsg(infile);
-
-    send_packet_setup_pcap("parentR1.pcap");
- 
-    c1 = con_by_name(conn_name, TRUE);
-
-    show_one_connection(c1);
-
-    pt = pcap_open_offline(argv[3], eb1);
-    if(!pt) {
-	perror(argv[3]);
-	exit(50);
-    }
-
-    cur_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE;
-    pcap_dispatch(pt, 1, recv_pcap_packet, NULL);
-
-    {
 	struct state *st;
+	struct pcr_kenonce *kn = &r->pcr_d.kn;
+
+	recv_pcap_packet_gen(user, h, bytes);
 
 	/* find st involved */
 	st = state_with_serialno(1);
-	delete_state(st);
-    }
+	st->st_connection->extra_debugging = DBG_EMITTING | DBG_CONTROL |
+					     DBG_CONTROLMORE;
 
-    report_leaks();
+	/* now fill in the KE values from a constant.. not calculated */
+	clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret,
+			 tc3_secret_len);
+	clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_nr,
+			 tc3_nr_len);
+	clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gr,
+			 tc3_gr_len);
 
-    tool_close_log();
-    exit(0);
+	run_continuation(r);
+
+}
+
+main(int argc, char *argv[]){
+	int len;
+	char *infile;
+	char *conn_name;
+	int lineno = 0;
+	struct connection *c1;
+	pcap_t *pt;
+	char eb1[256];
+
+	EF_PROTECT_BELOW = 1;
+	EF_PROTECT_FREE = 1;
+	EF_FREE_WIPES  = 1;
+
+	progname = argv[0];
+	leak_detective = 1;
+
+	init_crypto();
+
+	if (argc != 4) {
+		fprintf(stderr,
+			"Usage: %s <whackrecord> <conn-name> <pcapin>\n",
+			progname);
+		exit(10);
+	}
+	/* argv[1] == "-r" */
+
+	tool_init_log();
+	init_fake_vendorid();
+
+	infile = argv[1];
+	conn_name = argv[2];
+
+	readwhackmsg(infile);
+
+	send_packet_setup_pcap("parentR1.pcap");
+
+	c1 = con_by_name(conn_name, TRUE);
+
+	show_one_connection(c1);
+
+	pt = pcap_open_offline(argv[3], eb1);
+	if (!pt) {
+		perror(argv[3]);
+		exit(50);
+	}
+
+	cur_debugging = DBG_EMITTING | DBG_CONTROL | DBG_CONTROLMORE;
+	pcap_dispatch(pt, 1, recv_pcap_packet, NULL);
+
+	{
+		struct state *st;
+
+		/* find st involved */
+		st = state_with_serialno(1);
+		delete_state(st);
+	}
+
+	report_leaks();
+
+	tool_close_log();
+	exit(0);
 }

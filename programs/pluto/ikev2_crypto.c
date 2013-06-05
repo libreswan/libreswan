@@ -40,7 +40,7 @@
 #include "x509.h"
 #include "pgp.h"
 #include "certs.h"
-#include "connections.h"	/* needs id.h */
+#include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
 #include "md5.h"
@@ -56,12 +56,12 @@
 void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 {
 	struct v2prf_stuff childsacalc;
-	
-	chunk_t ikeymat,rkeymat;
+
+	chunk_t ikeymat, rkeymat;
 	struct ipsec_proto_info *ipi = &st->st_esp;
-	
-	ipi->attrs.transattrs.ei=kernel_alg_esp_info(
-		ipi->attrs.transattrs.encrypt, 
+
+	ipi->attrs.transattrs.ei = kernel_alg_esp_info(
+		ipi->attrs.transattrs.encrypt,
 		ipi->attrs.transattrs.enckeylen,
 		ipi->attrs.transattrs.integ_hash);
 
@@ -71,17 +71,16 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 
 	setchunk(childsacalc.ni, st->st_ni.ptr, st->st_ni.len);
 	setchunk(childsacalc.nr, st->st_nr.ptr, st->st_nr.len);
-	childsacalc.spii.len=0;
-	childsacalc.spir.len=0;
-	
+	childsacalc.spii.len = 0;
+	childsacalc.spir.len = 0;
+
 	childsacalc.counter[0] = 1;
 	childsacalc.skeyseed = &st->st_skey_d;
-	
+
 	st->st_esp.present = TRUE;
-	st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen+
-		st->st_esp.attrs.transattrs.ei->authkeylen;
-	
-	
+	st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
+				st->st_esp.attrs.transattrs.ei->authkeylen;
+
 /*
  *
  * Keying material MUST be taken from the expanded KEYMAT in the
@@ -99,12 +98,12 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
  *    the authentication key is taken from the next octets.
  *
  */
-	
-	v2genbytes(&ikeymat, st->st_esp.keymat_len
-		   , "initiator keys", &childsacalc);
 
-	v2genbytes(&rkeymat, st->st_esp.keymat_len
-		   , "responder keys", &childsacalc);
+	v2genbytes(&ikeymat, st->st_esp.keymat_len,
+		   "initiator keys", &childsacalc);
+
+	v2genbytes(&rkeymat, st->st_esp.keymat_len,
+		   "responder keys", &childsacalc);
 
 	/* This should really be role == INITIATOR, but then our keys are
 	 * installed reversed. This is a workaround until we locate the
@@ -114,21 +113,21 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	 * Found by Herbert Xu
 	 * if(role == INITIATOR) {
 	 */
-	if(role != INITIATOR) {
-	    DBG(DBG_CRYPT, {
-		DBG_dump_chunk("our  keymat", ikeymat);
-		DBG_dump_chunk("peer keymat", rkeymat);
-	    });
-	    st->st_esp.our_keymat = ikeymat.ptr;
-	    st->st_esp.peer_keymat= rkeymat.ptr;
+	if (role != INITIATOR) {
+		DBG(DBG_CRYPT, {
+			    DBG_dump_chunk("our  keymat", ikeymat);
+			    DBG_dump_chunk("peer keymat", rkeymat);
+		    });
+		st->st_esp.our_keymat = ikeymat.ptr;
+		st->st_esp.peer_keymat = rkeymat.ptr;
 	} else {
-	    DBG(DBG_CRYPT, {
-		DBG_dump_chunk("our  keymat", rkeymat);
-		DBG_dump_chunk("peer keymat", ikeymat);
-	    });
-	    st->st_esp.peer_keymat= ikeymat.ptr;
-	    st->st_esp.our_keymat = rkeymat.ptr;
+		DBG(DBG_CRYPT, {
+			    DBG_dump_chunk("our  keymat", rkeymat);
+			    DBG_dump_chunk("peer keymat", ikeymat);
+		    });
+		st->st_esp.peer_keymat = ikeymat.ptr;
+		st->st_esp.our_keymat = rkeymat.ptr;
 	}
-	
+
 }
- 
+

@@ -74,28 +74,26 @@
 #include <nss.h>
 #include <pk11pub.h>
 
-void
-get_rnd_bytes(u_char *buffer, int length)
+void get_rnd_bytes(u_char *buffer, int length)
 {
-   SECStatus rv; 
-   rv = PK11_GenerateRandom(buffer,length);
-   if(rv !=SECSuccess) {
-	loglog(RC_LOG_SERIOUS,"NSS RNG failed");
-	abort();
-   }
-   passert(rv==SECSuccess);
+	SECStatus rv;
+	rv = PK11_GenerateRandom(buffer, length);
+	if (rv != SECSuccess) {
+		loglog(RC_LOG_SERIOUS, "NSS RNG failed");
+		abort();
+	}
+	passert(rv == SECSuccess);
 }
 
-u_char    secret_of_the_day[SHA1_DIGEST_SIZE];
-u_char    ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
+u_char secret_of_the_day[SHA1_DIGEST_SIZE];
+u_char ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
 
-void
-init_secret(void)
+void init_secret(void)
 {
-    /*
-     * Generate the secret value for responder cookies, and
-     * schedule an event for refresh.
-     */
-    get_rnd_bytes(secret_of_the_day, sizeof(secret_of_the_day));
-    event_schedule(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
+	/*
+	 * Generate the secret value for responder cookies, and
+	 * schedule an event for refresh.
+	 */
+	get_rnd_bytes(secret_of_the_day, sizeof(secret_of_the_day));
+	event_schedule(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
 }

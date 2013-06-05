@@ -17,112 +17,104 @@
 
 char *progname;
 
-bool can_do_IPcomp = TRUE;  
+bool can_do_IPcomp = TRUE;
 
 void exit_log(const char *msg, ...)
 {
-    lsw_abort();
+	lsw_abort();
 }
 
-struct state *
-state_with_serialno(so_serial_t sn)
+struct state *state_with_serialno(so_serial_t sn)
 {
-    lsw_abort();
-    return NULL;
+	lsw_abort();
+	return NULL;
 }
 
 void whack_log(int rc, const char *msg, ...)
 {
-    lsw_abort();
+	lsw_abort();
 }
 
 void exit_tool(int stat)
 {
-    exit(stat);
+	exit(stat);
 }
 
-const chunk_t *
-get_preshared_secret(const struct connection *c)
+const chunk_t *get_preshared_secret(const struct connection *c)
 {
-    lsw_abort();
-    return NULL;
+	lsw_abort();
+	return NULL;
 }
 
 struct spd_route;
-ipsec_spi_t
-get_my_cpi(struct spd_route *sr, bool tunnel)
+ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel)
 {
-    return 10;
+	return 10;
 }
 
-ipsec_spi_t
-get_ipsec_spi(ipsec_spi_t avoid, int proto, struct spd_route *sr, bool tunnel)
+ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, struct spd_route *sr,
+			  bool tunnel)
 {
-    return 10;
+	return 10;
 }
 
-ipsec_spi_t
-uniquify_his_cpi(ipsec_spi_t cpi, struct state *st)
+ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st)
 {
-    return 12;
+	return 12;
 }
 
-const char *
-ip_str(const ip_address *src)
+const char *ip_str(const ip_address *src)
 {
-    static char buf[ADDRTOT_BUF];
+	static char buf[ADDRTOT_BUF];
 
-    addrtot(src, 0, buf, sizeof(buf));
-    return buf;
+	addrtot(src, 0, buf, sizeof(buf));
+	return buf;
 }
 
-main(int argc, char *argv[])
-{
-    int i;
-    struct db_sa *gsp = NULL;
-    struct db_sa *sa1 = NULL;
-    struct db_sa *sa2 = NULL;
-    struct alg_info_esp *aii;
-    err_t ugh;
+main(int argc, char *argv[]){
+	int i;
+	struct db_sa *gsp = NULL;
+	struct db_sa *sa1 = NULL;
+	struct db_sa *sa2 = NULL;
+	struct alg_info_esp *aii;
+	err_t ugh;
 
-    EF_PROTECT_FREE=1;
-    EF_FREE_WIPES  =1;
-    EF_PROTECT_BELOW=1;
+	EF_PROTECT_FREE = 1;
+	EF_FREE_WIPES  = 1;
+	EF_PROTECT_BELOW = 1;
 
-    progname = argv[0];
-    leak_detective=1;
+	progname = argv[0];
+	leak_detective = 1;
 
-    tool_init_log();
-    init_crypto();
+	tool_init_log();
+	init_crypto();
 
-    {
-	int algo;
-	for(algo=1; algo <= K_SADB_EALG_MAX; algo++) {
-	    esp_ealg[(algo)].sadb_alg_id=(algo);
+	{
+		int algo;
+		for (algo = 1; algo <= K_SADB_EALG_MAX; algo++)
+			esp_ealg[(algo)].sadb_alg_id = (algo);
 	}
-    }
-    {
-	int algo;
-	for(algo=1; algo <= K_SADB_AALG_MAX; algo++) {
-	    esp_aalg[(algo)].sadb_alg_id=(algo);
+	{
+		int algo;
+		for (algo = 1; algo <= K_SADB_AALG_MAX; algo++)
+			esp_aalg[(algo)].sadb_alg_id = (algo);
 	}
-    }
-    esp_ealg_num = 10;
-    esp_aalg_num = 10;
+	esp_ealg_num = 10;
+	esp_aalg_num = 10;
 
-    aii = alg_info_esp_create_from_str("aes128-sha1", &ugh, FALSE);
+	aii = alg_info_esp_create_from_str("aes128-sha1", &ugh, FALSE);
 
-    gsp = kernel_alg_makedb(POLICY_ENCRYPT|POLICY_AUTHENTICATE
-			    , aii
-			    , TRUE);
-    sa_print(gsp);
+	gsp = kernel_alg_makedb(POLICY_ENCRYPT | POLICY_AUTHENTICATE,
+				aii,
+				TRUE);
+	sa_print(gsp);
 
-    gsp = sa_v2_convert(gsp);
+	gsp = sa_v2_convert(gsp);
 
-    sa_v2_print(gsp);
+	sa_v2_print(gsp);
 
-    tool_close_log();
+	tool_close_log();
 
-    free_sa(gsp);
-    exit(0);
+	free_sa(gsp);
+	exit(0);
 }

@@ -26,11 +26,11 @@
 #include "libreswan/passert.h"
 
 extern bool
-    log_to_stderr,	/* should log go to stderr? */
-    log_to_syslog,	/* should log go to syslog? */
-    log_to_file,	/* should log to a file? */
-    log_to_perpeer,     /* should log go to per-IP file? */
-    log_with_timestamp; /* prefix timestamp */
+	log_to_stderr,          /* should log go to stderr? */
+	log_to_syslog,          /* should log go to syslog? */
+	log_to_file,            /* should log to a file? */
+	log_to_perpeer,         /* should log go to per-IP file? */
+	log_with_timestamp;     /* prefix timestamp */
 
 extern bool log_did_something;  /* set if we should log time again to debug*/
 
@@ -45,7 +45,6 @@ extern const char debug_prefix;
  */
 extern const char *pluto_ifn_inst;
 
-
 /* maximum number of files to keep open for per-peer log files */
 #define MAX_PEERLOG_COUNT 16
 
@@ -57,21 +56,21 @@ extern const char *pluto_ifn_inst;
  * If the context provides a whack file descriptor, messages
  * should be copied to it -- see whack_log()
  */
-extern int whack_log_fd;	/* only set during whack_handle() */
-extern struct state *cur_state;	/* current state, for diagnostics */
-extern struct connection *cur_connection;	/* current connection, for diagnostics */
-extern const ip_address *cur_from;	/* source of current current message */
-extern u_int16_t cur_from_port;	/* host order */
+extern int whack_log_fd;                        /* only set during whack_handle() */
+extern struct state *cur_state;                 /* current state, for diagnostics */
+extern struct connection *cur_connection;       /* current connection, for diagnostics */
+extern const ip_address *cur_from;              /* source of current current message */
+extern u_int16_t cur_from_port;                 /* host order */
 
-extern bool whack_prompt_for(int whackfd
-			     , const char *prompt1
-			     , const char *prompt2
-			     , bool echo
-			     , char *ansbuf, size_t ansbuf_len);
+extern bool whack_prompt_for(int whackfd,
+			     const char *prompt1,
+			     const char *prompt2,
+			     bool echo,
+			     char *ansbuf, size_t ansbuf_len);
 
-extern void passert_fail(const char *pred_str
-			 , const char *file_str
-			 , unsigned long line_no) NEVER_RETURNS;
+extern void passert_fail(const char *pred_str,
+			 const char *file_str,
+			 unsigned long line_no) NEVER_RETURNS;
 
 #ifdef HAVE_STATSD
 /* for pushing state to other subsystems */
@@ -80,16 +79,16 @@ extern void log_state(struct state *st, enum state_kind state);
 
 #ifdef DEBUG
 
-  extern void extra_debugging(const struct connection *c);
-  extern void set_debugging(lset_t debugging);
+extern void extra_debugging(const struct connection *c);
+extern void set_debugging(lset_t debugging);
 
 # define reset_debugging() { set_debugging(base_debugging); }
 
 # define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
-    && cur_state == NULL \
-    && cur_connection == NULL \
-    && cur_from == NULL \
-    && cur_debugging == base_debugging)
+			      && cur_state == NULL \
+			      && cur_connection == NULL \
+			      && cur_from == NULL \
+			      && cur_debugging == base_debugging)
 
 #else /*!DEBUG*/
 
@@ -98,40 +97,38 @@ extern void log_state(struct state *st, enum state_kind state);
 # define reset_debugging() { }
 
 # define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
-    && cur_state == NULL \
-    && cur_connection == NULL \
-    && cur_from == NULL)
+			      && cur_state == NULL \
+			      && cur_connection == NULL \
+			      && cur_from == NULL)
 
 #endif /*!DEBUG*/
 
 #define reset_globals() { \
-    whack_log_fd = NULL_FD; \
-    cur_state = NULL; \
-    cur_from = NULL; \
-    reset_cur_connection(); \
-    }
-
+		whack_log_fd = NULL_FD; \
+		cur_state = NULL; \
+		cur_from = NULL; \
+		reset_cur_connection(); \
+}
 
 #define set_cur_connection(c) { \
-    cur_connection = (c); \
-    extra_debugging(c); \
-    }
+		cur_connection = (c); \
+		extra_debugging(c); \
+}
 
 #define reset_cur_connection() { \
-    cur_connection = NULL; \
-    reset_debugging(); \
-    }
-
+		cur_connection = NULL; \
+		reset_debugging(); \
+}
 
 #define set_cur_state(s) { \
-    cur_state = (s); \
-    extra_debugging((s)->st_connection); \
-    }
+		cur_state = (s); \
+		extra_debugging((s)->st_connection); \
+}
 
 #define reset_cur_state() { \
-    cur_state = NULL; \
-    reset_debugging(); \
-    }
+		cur_state = NULL; \
+		reset_debugging(); \
+}
 
 extern void pluto_init_log(void);
 extern void close_log(void);

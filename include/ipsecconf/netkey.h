@@ -15,10 +15,10 @@
 #ifndef _STARTER_NETKEY_H_
 #define _STARTER_NETKEY_H_
 
-void starter_netkey_cleanup (void);
-void starter_netkey_clear (void);
-int starter_netkey_init (void);
-int starter_netkey_set_config (struct starter_config *);
+void starter_netkey_cleanup(void);
+void starter_netkey_clear(void);
+int starter_netkey_init(void);
+int starter_netkey_set_config(struct starter_config *);
 
 #endif /* _STARTER_NETKEY_H_ */
 

@@ -20,21 +20,21 @@
 
 #include "constants.h"
 
-/*	
- *	Creates a new alg_info by parsing passed string		
+/*
+ *	Creates a new alg_info by parsing passed string
  */
 enum parser_state_esp {
-        ST_INI,         /* parse esp= string */
+	ST_INI,         /* parse esp= string */
 	ST_INI_AA,      /* parse ah= string */
-	ST_EA,		/* encrypt algo   */
-	ST_EA_END,	
-	ST_EK,		/* enc. key length */
+	ST_EA,          /* encrypt algo   */
+	ST_EA_END,
+	ST_EK,          /* enc. key length */
 	ST_EK_END,
-	ST_AA,		/* auth algo */
+	ST_AA,          /* auth algo */
 	ST_AA_END,
-	ST_AK,		/* auth. key length */
+	ST_AK,          /* auth. key length */
 	ST_AK_END,
-	ST_MODP,	/* modp spec */
+	ST_MODP,        /* modp spec */
 	ST_END,
 	ST_EOF,
 	ST_ERR
@@ -55,36 +55,36 @@ struct parser_context {
 	char *modp_str;
 	int eklen;
 	int aklen;
-    bool ealg_permit;
-    bool aalg_permit;
+	bool ealg_permit;
+	bool aalg_permit;
 	int ch;
 	const char *err;
 };
 
 struct esp_info {
-        bool     esp_default; 
-	u_int8_t transid;	/* ESP transform (AES, 3DES, etc.)*/
-	u_int16_t auth;		/* AUTH */
-	u_int32_t enckeylen;	/* keylength for ESP transform (bytes)*/
-	u_int32_t authkeylen;	/* keylength for AUTH (bytes)*/
-	u_int8_t encryptalg;	/* normally  encryptalg=transid */
-	u_int16_t authalg;	/* normally  authalg=auth+1
-				 * Paul: apparently related to magic at
-				 * lib/libswan/alg_info.c alg_info_esp_aa2sadb() */
+	bool esp_default;
+	u_int8_t transid;       /* ESP transform (AES, 3DES, etc.)*/
+	u_int16_t auth;         /* AUTH */
+	u_int32_t enckeylen;    /* keylength for ESP transform (bytes)*/
+	u_int32_t authkeylen;   /* keylength for AUTH (bytes)*/
+	u_int8_t encryptalg;    /* normally  encryptalg=transid */
+	u_int16_t authalg;      /* normally  authalg=auth+1
+	                         * Paul: apparently related to magic at
+	                         * lib/libswan/alg_info.c alg_info_esp_aa2sadb() */
 };
 
 struct ike_info {
-    bool      ike_default;
-    u_int16_t ike_ealg;	  /* encrytion algorithm - bit 15set for reserved*/
-    u_int8_t  ike_halg;   /* hash algorithm */
-    size_t    ike_eklen;     /* how many bits required by encryption algo */
-    size_t    ike_hklen;     /* how many bits required by hash algo */
-    oakley_group_t ike_modp;  /* which modp group to use */
+	bool ike_default;
+	u_int16_t ike_ealg;             /* encrytion algorithm - bit 15set for reserved*/
+	u_int8_t ike_halg;              /* hash algorithm */
+	size_t ike_eklen;               /* how many bits required by encryption algo */
+	size_t ike_hklen;               /* how many bits required by hash algo */
+	oakley_group_t ike_modp;        /* which modp group to use */
 };
 
 #define ALG_INFO_COMMON \
-	int alg_info_cnt;		\
-	int ref_cnt;			\
+	int alg_info_cnt;               \
+	int ref_cnt;                    \
 	unsigned alg_info_protoid
 
 struct alg_info {
@@ -105,59 +105,61 @@ struct alg_info_ike {
 #define ESPTOINFO(X) (struct alg_info *)X
 #define IKETOINFO(X) (struct alg_info *)X
 
-
 #define esp_ealg_id transid
 #define esp_aalg_id auth
-#define esp_ealg_keylen enckeylen	/* bits */
-#define esp_aalg_keylen authkeylen	/* bits */
+#define esp_ealg_keylen enckeylen       /* bits */
+#define esp_aalg_keylen authkeylen      /* bits */
 
-extern enum ipsec_authentication_algo
-alg_info_esp_aa2sadb(enum ikev1_auth_attribute auth);
+extern enum ipsec_authentication_algo alg_info_esp_aa2sadb(
+	enum ikev1_auth_attribute auth);
 int alg_info_esp_sadb2aa(int sadb_aalg);
-enum ikev1_auth_attribute
-alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti);
+enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti);
 
 void alg_info_free(struct alg_info *alg_info);
 void alg_info_addref(struct alg_info *alg_info);
 void alg_info_delref(struct alg_info **alg_info);
-struct alg_info_esp * alg_info_esp_create_from_str(const char *alg_str
-						   , err_t *err_p
-						   , bool permitmann);
+struct alg_info_esp * alg_info_esp_create_from_str(const char *alg_str,
+						   err_t *err_p,
+						   bool permitmann);
 
-struct alg_info_esp * alg_info_ah_create_from_str(const char *alg_str
-						  , err_t *err_p
-						  , bool permitmann);
+struct alg_info_esp * alg_info_ah_create_from_str(const char *alg_str,
+						  err_t *err_p,
+						  bool permitmann);
 
-struct alg_info_ike * alg_info_ike_create_from_str(const char *alg_str
-						   , err_t *err_p);
+struct alg_info_ike * alg_info_ike_create_from_str(const char *alg_str,
+						   err_t *err_p);
 
 int alg_info_parse(const char *str);
-int alg_info_snprint(char *buf, int buflen
-		     , struct alg_info *alg_info, bool permitike);
+int alg_info_snprint(char *buf, int buflen,
+		     struct alg_info *alg_info, bool permitike);
 
-void alg_info_snprint_ike(char *buf, size_t buflen, struct alg_info_ike *alg_info);
+void alg_info_snprint_ike(char *buf, size_t buflen,
+			  struct alg_info_ike *alg_info);
 #define ALG_INFO_ESP_FOREACH(ai, ai_esp, i) \
-	for (i=(ai)->alg_info_cnt,ai_esp=(ai)->esp; i--; ai_esp++) 
+	for (i = (ai)->alg_info_cnt, ai_esp = (ai)->esp; i--; ai_esp++)
 #define ALG_INFO_IKE_FOREACH(ai, ai_ike, i) \
-	for (i=(ai)->alg_info_cnt,ai_ike=(ai)->ike; i--; ai_ike++) 
+	for (i = (ai)->alg_info_cnt, ai_ike = (ai)->ike; i--; ai_ike++)
 
-extern int alg_enum_search_prefix (enum_names *ed, const char *prefix, const char *str, int str_len);
-extern int alg_enum_search_ppfix (enum_names *ed, const char *prefix
-				  , const char *postfix, const char *str
-				  , int str_len);
+extern int alg_enum_search_prefix(enum_names *ed, const char *prefix,
+				  const char *str, int str_len);
+extern int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
+				 const char *postfix, const char *str,
+				 int str_len);
 
 struct parser_context;
 struct oakley_group_desc;
-extern int alg_info_parse_str (struct alg_info *alg_info
-			       , const char *alg_str
-			       , const char **err_p
-			       , void (*parser_init)(struct parser_context *p_ctx)
-			       , void (*alg_info_add)(struct alg_info *alg_info
-						      , int ealg_id, int ek_bits
-						      , int aalg_id, int ak_bits
-						      , int modp_id
-						      , bool permitmann)
-			       , const struct oakley_group_desc *(*lookup_group_f)(u_int16_t group)
-			       , bool permitmann);
+extern int alg_info_parse_str(struct alg_info *alg_info,
+			      const char *alg_str,
+			      const char **err_p,
+			      void (*parser_init)(
+				      struct parser_context *p_ctx),
+			      void (*alg_info_add)(struct alg_info *alg_info,
+						   int ealg_id, int ek_bits,
+						   int aalg_id, int ak_bits,
+						   int modp_id,
+						   bool permitmann),
+			      const struct oakley_group_desc *(*lookup_group_f)(
+				      u_int16_t group),
+			      bool permitmann);
 
 #endif /* ALG_INFO_H */

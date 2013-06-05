@@ -41,21 +41,21 @@
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
 #endif
-#include "connections.h"	/* needs id.h */
+#include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
 #include "packet.h"
-#include "demux.h"	/* needs packet.h */
+#include "demux.h"      /* needs packet.h */
 #include "state.h"
 #include "timer.h"
-#include "ipsec_doi.h"	/* needs demux.h and state.h */
+#include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "server.h"
-#include "kernel.h"	/* needs connections.h */
+#include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "keys.h"
 #include "secrets.h"
-#include "adns.h"	/* needs <resolv.h> */
-#include "dnskey.h"	/* needs keys.h and adns.h */
+#include "adns.h"       /* needs <resolv.h> */
+#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "whack.h"
 #include "alg_info.h"
 #include "spdb.h"
@@ -73,15 +73,16 @@
 #include "crypto.h"
 #include "ikev1.h"
 
-stf_status aggr_not_present(int whack_sock UNUSED
-			    , struct connection *c UNUSED
-			    , struct state *predecessor UNUSED
-			    , lset_t policy UNUSED
-			    , unsigned long try UNUSED
-			    , enum crypto_importance importance UNUSED)
+stf_status aggr_not_present(int whack_sock UNUSED,
+			    struct connection *c UNUSED,
+			    struct state *predecessor UNUSED,
+			    lset_t policy UNUSED,
+			    unsigned long try UNUSED,
+			    enum crypto_importance importance UNUSED)
 {
-    libreswan_log("An attempt to use aggressive mode was made.");
-    libreswan_log("This pluto does not have aggressive mode (congradulations on your wisdom)");
+	libreswan_log("An attempt to use aggressive mode was made.");
+	libreswan_log(
+		"This pluto does not have aggressive mode (congradulations on your wisdom)");
 
-    return STF_FATAL;
+	return STF_FATAL;
 }

@@ -21,87 +21,86 @@
 
 #ifndef _LIBRESWAN_H
 #include <libreswan.h>
-#include "constants.h"  
+#include "constants.h"
 #endif
-
 
 /* define an upper limit to number of times also= can be used */
 #define ALSO_LIMIT 32
 
 enum keyword_set {
-    k_unset   =FALSE,
-    k_set     =TRUE,
-    k_default = 2
+	k_unset   =FALSE,
+	k_set     =TRUE,
+	k_default = 2
 };
 typedef char *ksf[KEY_STRINGS_MAX];
-typedef int   knf[KEY_NUMERIC_MAX];
+typedef int knf[KEY_NUMERIC_MAX];
 typedef enum keyword_set str_set[KEY_STRINGS_MAX];
 typedef enum keyword_set int_set[KEY_NUMERIC_MAX];
 
 struct starter_end {
-    sa_family_t addr_family;
-    enum keyword_host addrtype;
-    enum keyword_host nexttype;
-    ip_address addr, nexthop, sourceip;
-    bool has_client;
-    ip_subnet subnet;
-    char *iface;
-    char *id;
-    
-    enum pubkey_source rsakey1_type, rsakey2_type;
-    unsigned char *rsakey1;
-    unsigned char *rsakey2;
-    u_int16_t port;
-    u_int8_t  protocol;
-    bool has_client_wildcard;
-    bool key_from_DNS_on_demand;
-    bool has_port_wildcard;
-    bool has_id_wildcards;
-    char *virt;
-    char *cert;
-    char *ca;
-    char *updown;
-    ip_range pool_range;        /* store start of v4 addresspool */
-    ksf  strings;
-    knf  options;
+	sa_family_t addr_family;
+	enum keyword_host addrtype;
+	enum keyword_host nexttype;
+	ip_address addr, nexthop, sourceip;
+	bool has_client;
+	ip_subnet subnet;
+	char *iface;
+	char *id;
 
-    str_set strings_set;
-    int_set options_set;
+	enum pubkey_source rsakey1_type, rsakey2_type;
+	unsigned char *rsakey1;
+	unsigned char *rsakey2;
+	u_int16_t port;
+	u_int8_t protocol;
+	bool has_client_wildcard;
+	bool key_from_DNS_on_demand;
+	bool has_port_wildcard;
+	bool has_id_wildcards;
+	char *virt;
+	char *cert;
+	char *ca;
+	char *updown;
+	ip_range pool_range;    /* store start of v4 addresspool */
+	ksf strings;
+	knf options;
+
+	str_set strings_set;
+	int_set options_set;
 };
 
 struct starter_conn {
-    TAILQ_ENTRY(starter_conn) link;
-    struct starter_comments_list comments;
-    char *name;
-    char *connalias;			      
+	TAILQ_ENTRY(starter_conn) link;
+	struct starter_comments_list comments;
+	char *name;
+	char *connalias;
 
-    ksf   strings;
-    knf   options;
-    str_set strings_set;
-    int_set options_set;
+	ksf strings;
+	knf options;
+	str_set strings_set;
+	int_set options_set;
 
-    bool  changed;
+	bool changed;
 
-    lset_t policy;
-    char **alsos;
+	lset_t policy;
+	char **alsos;
 
-    struct starter_end left, right;
+	struct starter_end left, right;
 
-    unsigned long id;
+	unsigned long id;
 
-    enum keyword_auto desired_state;
+	enum keyword_auto desired_state;
 
-    enum {
-	STATE_INVALID,
-	STATE_LOADED,
-	STATE_INCOMPLETE,
-	STATE_TO_ADD,
-	STATE_ADDED,
-	STATE_UP,
-	STATE_REPLACED,
-	STATE_FAILED,
-	STATE_IGNORE
-    } state;
+	enum {
+		STATE_INVALID,
+		STATE_LOADED,
+		STATE_INCOMPLETE,
+		STATE_TO_ADD,
+		STATE_ADDED,
+		STATE_UP,
+		STATE_REPLACED,
+		STATE_FAILED,
+		STATE_IGNORE
+	} state;
 
 	char *esp;
 	char *ike;
@@ -111,48 +110,48 @@ struct starter_conn {
 };
 
 struct starter_config {
-    struct {
-	ksf   strings;
-	knf   options;
-	str_set strings_set;
-	int_set options_set;
-	
-	/* derived types */
-	char **interfaces;
-	bool strictcrlpolicy;
-	bool nocrsend;
-	bool nat_traversal;
-	bool force_busy;
-	unsigned int keep_alive;
-	char *virtual_private;
-	char *listen;
-    } setup;
+	struct {
+		ksf strings;
+		knf options;
+		str_set strings_set;
+		int_set options_set;
 
-    /* conn %default */
-    struct starter_conn conn_default;
-    bool                got_default;
+		/* derived types */
+		char **interfaces;
+		bool strictcrlpolicy;
+		bool nocrsend;
+		bool nat_traversal;
+		bool force_busy;
+		unsigned int keep_alive;
+		char *virtual_private;
+		char *listen;
+	} setup;
 
-    struct starter_conn conn_oedefault;
-    bool                got_oedefault;
+	/* conn %default */
+	struct starter_conn conn_default;
+	bool got_default;
 
-    ip_address dr;  /* default route */
-    ip_address dnh; /* next hop value */
+	struct starter_conn conn_oedefault;
+	bool got_oedefault;
 
-    char *ctlbase;  /* location of pluto control socket */
+	ip_address dr;  /* default route */
+	ip_address dnh; /* next hop value */
 
-    /* connections list (without %default) */
-    TAILQ_HEAD(, starter_conn) conns;
+	char *ctlbase;  /* location of pluto control socket */
+
+	/* connections list (without %default) */
+	TAILQ_HEAD(, starter_conn) conns;
 };
 
-extern struct starter_config *confread_load(const char *file
-					    , err_t *perr
-					    , bool resolvip
-					    , char *ctlbase
-					    , bool setuponly);
-extern struct starter_conn *alloc_add_conn(struct starter_config *cfg
-					   , char *name, err_t *perr);
+extern struct starter_config *confread_load(const char *file,
+					    err_t *perr,
+					    bool resolvip,
+					    char *ctlbase,
+					    bool setuponly);
+extern struct starter_conn *alloc_add_conn(struct starter_config *cfg,
+					   char *name, err_t *perr);
 void confread_free(struct starter_config *cfg);
 
-void ipsecconf_default_values (struct starter_config *cfg);
+void ipsecconf_default_values(struct starter_config *cfg);
 
 #endif /* _IPSEC_CONFREAD_H_ */

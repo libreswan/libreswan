@@ -46,7 +46,7 @@
 #include "certs.h"
 #include "keys.h"
 #include "packet.h"
-#include "demux.h"	/* needs packet.h */
+#include "demux.h"      /* needs packet.h */
 #include "connections.h"
 #include "state.h"
 #include "md5.h"
@@ -59,380 +59,358 @@
 /* extract id and public key from x.509 certificate and
  * insert it into a pubkeyrec
  */
-void
-add_x509_public_key(struct id *keyid
-		    , x509cert_t *cert
-		    , time_t until
-		    , enum dns_auth_level dns_auth_level)
+void add_x509_public_key(struct id *keyid,
+			 x509cert_t *cert,
+			 time_t until,
+			 enum dns_auth_level dns_auth_level)
 {
-    generalName_t *gn;
-    struct pubkey *pk;
-    cert_t c = { FALSE, CERT_X509_SIGNATURE, {cert} };
+	generalName_t *gn;
+	struct pubkey *pk;
+	cert_t c = { FALSE, CERT_X509_SIGNATURE, { cert } };
 
-    /* we support RSA only */
-    if (cert->subjectPublicKeyAlgorithm != PUBKEY_ALG_RSA) return;
+	/* we support RSA only */
+	if (cert->subjectPublicKeyAlgorithm != PUBKEY_ALG_RSA)
+		return;
 
-    /* ID type: ID_DER_ASN1_DN  (X.509 subject field) */
-    pk = allocate_RSA_public_key(c);
-    passert(pk != NULL);
-    pk->id.kind = ID_DER_ASN1_DN;
-    pk->id.name = cert->subject;
-    pk->dns_auth_level = dns_auth_level;
-    pk->until_time = until;
-    pk->issuer = cert->issuer;
-    delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-    install_public_key(pk, &pluto_pubkeys);
-
-    gn = cert->subjectAltName;
-
-    while (gn != NULL) /* insert all subjectAltNames */
-    {
-	struct id id = empty_id;
-
-	gntoid(&id, gn);
-	if (id.kind != ID_NONE)
-	{
-	    pk = allocate_RSA_public_key(c);
-	    pk->id = id;
-	    pk->dns_auth_level = dns_auth_level;
-	    pk->until_time = until;
-	    pk->issuer = cert->issuer;
-	    delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-	    install_public_key(pk, &pluto_pubkeys);
-	}
-	gn = gn->next;
-    }
-
-    if(keyid != NULL &&
-       keyid->kind != ID_DER_ASN1_DN &&
-       keyid->kind != ID_DER_ASN1_GN) {
+	/* ID type: ID_DER_ASN1_DN  (X.509 subject field) */
 	pk = allocate_RSA_public_key(c);
-	pk->id = *keyid;
-	
+	passert(pk != NULL);
+	pk->id.kind = ID_DER_ASN1_DN;
+	pk->id.name = cert->subject;
 	pk->dns_auth_level = dns_auth_level;
 	pk->until_time = until;
 	pk->issuer = cert->issuer;
 	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
 	install_public_key(pk, &pluto_pubkeys);
-    }
-}
 
+	gn = cert->subjectAltName;
+
+	while (gn != NULL) { /* insert all subjectAltNames */
+		struct id id = empty_id;
+
+		gntoid(&id, gn);
+		if (id.kind != ID_NONE) {
+			pk = allocate_RSA_public_key(c);
+			pk->id = id;
+			pk->dns_auth_level = dns_auth_level;
+			pk->until_time = until;
+			pk->issuer = cert->issuer;
+			delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
+			install_public_key(pk, &pluto_pubkeys);
+		}
+		gn = gn->next;
+	}
+
+	if (keyid != NULL &&
+	    keyid->kind != ID_DER_ASN1_DN &&
+	    keyid->kind != ID_DER_ASN1_GN) {
+		pk = allocate_RSA_public_key(c);
+		pk->id = *keyid;
+
+		pk->dns_auth_level = dns_auth_level;
+		pk->until_time = until;
+		pk->issuer = cert->issuer;
+		delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
+		install_public_key(pk, &pluto_pubkeys);
+	}
+}
 
 /*  when a X.509 certificate gets revoked, all instances of
  *  the corresponding public key must be removed
  */
-void
-remove_x509_public_key(/*const*/ x509cert_t *cert)
+void remove_x509_public_key(/*const*/ x509cert_t *cert)
 {
-    const cert_t c = {FALSE, CERT_X509_SIGNATURE, {cert}};
-    struct pubkey_list *p, **pp;
-    struct pubkey *revoked_pk;
+	const cert_t c = { FALSE, CERT_X509_SIGNATURE, { cert } };
+	struct pubkey_list *p, **pp;
+	struct pubkey *revoked_pk;
 
-    revoked_pk = allocate_RSA_public_key(c);
-    p          = pluto_pubkeys;
-    pp         = &pluto_pubkeys;
+	revoked_pk = allocate_RSA_public_key(c);
+	p          = pluto_pubkeys;
+	pp         = &pluto_pubkeys;
 
-    while(p != NULL)
-   {
-	if (same_RSA_public_key(&p->key->u.rsa, &revoked_pk->u.rsa))
-	{
-	    /* remove p from list and free memory */
-	    *pp = free_public_keyentry(p);
-	    loglog(RC_LOG_SERIOUS,
-		"invalid RSA public key deleted");
+	while (p != NULL) {
+		if (same_RSA_public_key(&p->key->u.rsa, &revoked_pk->u.rsa)) {
+			/* remove p from list and free memory */
+			*pp = free_public_keyentry(p);
+			loglog(RC_LOG_SERIOUS,
+			       "invalid RSA public key deleted");
+		} else {
+			pp = &p->next;
+		}
+		p = *pp;
 	}
-	else
-	{
-	    pp = &p->next;
-	}
-	p =*pp;
-    }
-    free_public_key(revoked_pk);
+	free_public_key(revoked_pk);
 }
 
 /*
  * Decode the CERT payload of Phase 1.
  */
-void
-decode_cert(struct msg_digest *md)
+void decode_cert(struct msg_digest *md)
 {
-    struct payload_digest *p;
+	struct payload_digest *p;
 
-    for (p = md->chain[ISAKMP_NEXT_CERT]; p != NULL; p = p->next)
-    {
-	struct isakmp_cert *const cert = &p->payload.cert;
-	chunk_t blob;
-	time_t valid_until;
-	blob.ptr = p->pbs.cur;
-	blob.len = pbs_left(&p->pbs);
-	if (cert->isacert_type == CERT_X509_SIGNATURE)
-	{
-	    x509cert_t cert2 = empty_x509cert;
-	    if (parse_x509cert(blob, 0, &cert2))
-	    {
-		if (verify_x509cert(&cert2, strict_crl_policy, &valid_until))
-		{
-		    DBG(DBG_X509 | DBG_PARSING,
-			DBG_log("Public key validated")
-		    );
-			add_x509_public_key(NULL, &cert2, valid_until, DAL_SIGNED);
-		}
-		else
-		{
-		    plog("X.509 certificate rejected");
-		}
-		free_generalNames(cert2.subjectAltName, FALSE);
-		free_generalNames(cert2.crlDistributionPoints, FALSE);
-	    }
-	    else
-		plog("Syntax error in X.509 certificate");
-	}
-	else if (cert->isacert_type == CERT_PKCS7_WRAPPED_X509)
-	{
-	    x509cert_t *cert2 = NULL;
+	for (p = md->chain[ISAKMP_NEXT_CERT]; p != NULL; p = p->next) {
+		struct isakmp_cert *const cert = &p->payload.cert;
+		chunk_t blob;
+		time_t valid_until;
+		blob.ptr = p->pbs.cur;
+		blob.len = pbs_left(&p->pbs);
+		if (cert->isacert_type == CERT_X509_SIGNATURE) {
+			x509cert_t cert2 = empty_x509cert;
+			if (parse_x509cert(blob, 0, &cert2)) {
+				if (verify_x509cert(&cert2, strict_crl_policy,
+						    &valid_until)) {
+					DBG(DBG_X509 | DBG_PARSING,
+					    DBG_log("Public key validated")
+					    );
+					add_x509_public_key(NULL, &cert2,
+							    valid_until,
+							    DAL_SIGNED);
+				} else {
+					plog("X.509 certificate rejected");
+				}
+				free_generalNames(cert2.subjectAltName, FALSE);
+				free_generalNames(cert2.crlDistributionPoints,
+						  FALSE);
+			} else {
+				plog("Syntax error in X.509 certificate");
+			}
+		} else if (cert->isacert_type == CERT_PKCS7_WRAPPED_X509) {
+			x509cert_t *cert2 = NULL;
 
-	    if (parse_pkcs7_cert(blob, &cert2))
-		store_x509certs(&cert2, strict_crl_policy);
-	    else
-		plog("Syntax error in PKCS#7 wrapped X.509 certificates");
+			if (parse_pkcs7_cert(blob, &cert2))
+				store_x509certs(&cert2, strict_crl_policy);
+			else
+				plog(
+					"Syntax error in PKCS#7 wrapped X.509 certificates");
+
+
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "ignoring %s certificate payload",
+			       enum_show(&cert_type_names,
+					 cert->isacert_type));
+			DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
+		}
 	}
-	else
-	{
-	    loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
-		   enum_show(&cert_type_names, cert->isacert_type));
-	    DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
-	}
-    }
 }
 
 /* Decode IKEV2 CERT Payload */
 
-void
-ikev2_decode_cert(struct msg_digest *md)
+void ikev2_decode_cert(struct msg_digest *md)
 {
-    struct payload_digest *p;
+	struct payload_digest *p;
 
-    for (p = md->chain[ISAKMP_NEXT_v2CERT]; p != NULL; p = p->next)
-    {
-	struct ikev2_cert *const v2cert = &p->payload.v2cert;
-	chunk_t blob;
-	time_t valid_until;
-	blob.ptr = p->pbs.cur;
-	blob.len = pbs_left(&p->pbs);
-	if (v2cert->isac_enc == CERT_X509_SIGNATURE)
-	{
-	    x509cert_t cert2 = empty_x509cert;
-	    if (parse_x509cert(blob, 0, &cert2))
-	    {
-		if (verify_x509cert(&cert2, strict_crl_policy, &valid_until))
-		{
-		    DBG(DBG_X509 | DBG_PARSING,
-			DBG_log("Public key validated")
-		    );
-			add_x509_public_key(NULL, &cert2, valid_until, DAL_SIGNED);
-		}
-		else
-		{
-		    plog("X.509 certificate rejected");
-		}
-		free_generalNames(cert2.subjectAltName, FALSE);
-		free_generalNames(cert2.crlDistributionPoints, FALSE);
-	    }
-	    else
-		plog("Syntax error in X.509 certificate");
-	}
-	else if (v2cert->isac_enc == CERT_PKCS7_WRAPPED_X509)
-	{
-	    x509cert_t *cert2 = NULL;
+	for (p = md->chain[ISAKMP_NEXT_v2CERT]; p != NULL; p = p->next) {
+		struct ikev2_cert *const v2cert = &p->payload.v2cert;
+		chunk_t blob;
+		time_t valid_until;
+		blob.ptr = p->pbs.cur;
+		blob.len = pbs_left(&p->pbs);
+		if (v2cert->isac_enc == CERT_X509_SIGNATURE) {
+			x509cert_t cert2 = empty_x509cert;
+			if (parse_x509cert(blob, 0, &cert2)) {
+				if (verify_x509cert(&cert2, strict_crl_policy,
+						    &valid_until)) {
+					DBG(DBG_X509 | DBG_PARSING,
+					    DBG_log("Public key validated")
+					    );
+					add_x509_public_key(NULL, &cert2,
+							    valid_until,
+							    DAL_SIGNED);
+				} else {
+					plog("X.509 certificate rejected");
+				}
+				free_generalNames(cert2.subjectAltName, FALSE);
+				free_generalNames(cert2.crlDistributionPoints,
+						  FALSE);
+			} else {
+				plog("Syntax error in X.509 certificate");
+			}
+		} else if (v2cert->isac_enc == CERT_PKCS7_WRAPPED_X509) {
+			x509cert_t *cert2 = NULL;
 
-	    if (parse_pkcs7_cert(blob, &cert2))
-		store_x509certs(&cert2, strict_crl_policy);
-	    else
-		plog("Syntax error in PKCS#7 wrapped X.509 certificates");
+			if (parse_pkcs7_cert(blob, &cert2))
+				store_x509certs(&cert2, strict_crl_policy);
+			else
+				plog(
+					"Syntax error in PKCS#7 wrapped X.509 certificates");
+
+
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "ignoring %s certificate payload",
+			       enum_show(&ikev2_cert_type_names,
+					 v2cert->isac_enc));
+			DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
+		}
 	}
-	else
-	{
-	    loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
-		   enum_show(&ikev2_cert_type_names, v2cert->isac_enc));
-	    DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
-	}
-    }
 }
-
-
 
 /*
  * Decode the CR payload of Phase 1.
  */
-void
-decode_cr(struct msg_digest *md, generalName_t **requested_ca)
+void decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 {
-    struct payload_digest *p;
+	struct payload_digest *p;
 
-    for (p = md->chain[ISAKMP_NEXT_CR]; p != NULL; p = p->next)
-    {
-	struct isakmp_cr *const cr = &p->payload.cr;
-	chunk_t ca_name;
-	
-	ca_name.len = pbs_left(&p->pbs);
-	ca_name.ptr = (ca_name.len > 0)? p->pbs.cur : NULL;
+	for (p = md->chain[ISAKMP_NEXT_CR]; p != NULL; p = p->next) {
+		struct isakmp_cr *const cr = &p->payload.cr;
+		chunk_t ca_name;
 
-	DBG_cond_dump_chunk(DBG_PARSING, "CR", ca_name);
+		ca_name.len = pbs_left(&p->pbs);
+		ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
 
-	if (cr->isacr_type == CERT_X509_SIGNATURE)
-	{
+		DBG_cond_dump_chunk(DBG_PARSING, "CR", ca_name);
 
-	    if (ca_name.len > 0)
-	    {
-		generalName_t *gn;
-		
-		if (!is_asn1(ca_name))
-		    continue;
+		if (cr->isacr_type == CERT_X509_SIGNATURE) {
 
-		gn = alloc_thing(generalName_t, "generalName");
-		clonetochunk(ca_name, ca_name.ptr,ca_name.len, "ca name");
-		gn->kind = GN_DIRECTORY_NAME;
-		gn->name = ca_name;
-		gn->next = *requested_ca;
-		*requested_ca = gn;
-	    }
+			if (ca_name.len > 0) {
+				generalName_t *gn;
 
-	    DBG(DBG_PARSING | DBG_CONTROL, {
-		char buf[IDTOA_BUF];
-		dntoa_or_null(buf, IDTOA_BUF, ca_name, "%any");
-		DBG_log("requested CA: '%s'", buf);
-	    });
+				if (!is_asn1(ca_name))
+					continue;
+
+				gn = alloc_thing(generalName_t, "generalName");
+				clonetochunk(ca_name, ca_name.ptr, ca_name.len,
+					     "ca name");
+				gn->kind = GN_DIRECTORY_NAME;
+				gn->name = ca_name;
+				gn->next = *requested_ca;
+				*requested_ca = gn;
+			}
+
+			DBG(DBG_PARSING | DBG_CONTROL, {
+				    char buf[IDTOA_BUF];
+				    dntoa_or_null(buf, IDTOA_BUF, ca_name,
+						  "%any");
+				    DBG_log("requested CA: '%s'", buf);
+			    });
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "ignoring %s certificate request payload",
+			       enum_show(&cert_type_names, cr->isacr_type));
+		}
 	}
-	else
-	    loglog(RC_LOG_SERIOUS, "ignoring %s certificate request payload",
-		   enum_show(&cert_type_names, cr->isacr_type));
-    }
 }
 
 /*
  * Decode the IKEv2 CR payload of Phase 1.
  */
-void
-ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
+void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 {
-    struct payload_digest *p;
+	struct payload_digest *p;
 
-    for (p = md->chain[ISAKMP_NEXT_v2CERTREQ]; p != NULL; p = p->next)
-    {
-	struct ikev2_certreq *const cr = &p->payload.v2certreq;
-	chunk_t ca_name;
-	
-	ca_name.len = pbs_left(&p->pbs);
-	ca_name.ptr = (ca_name.len > 0)? p->pbs.cur : NULL;
+	for (p = md->chain[ISAKMP_NEXT_v2CERTREQ]; p != NULL; p = p->next) {
+		struct ikev2_certreq *const cr = &p->payload.v2certreq;
+		chunk_t ca_name;
 
-	DBG_cond_dump_chunk(DBG_PARSING, "CR", ca_name);
+		ca_name.len = pbs_left(&p->pbs);
+		ca_name.ptr = (ca_name.len > 0) ? p->pbs.cur : NULL;
 
-	if (cr->isacertreq_enc == CERT_X509_SIGNATURE)
-	{
+		DBG_cond_dump_chunk(DBG_PARSING, "CR", ca_name);
 
-	    if (ca_name.len > 0)
-	    {
-		generalName_t *gn;
-		
-		if (!is_asn1(ca_name))
-		    continue;
+		if (cr->isacertreq_enc == CERT_X509_SIGNATURE) {
 
-		gn = alloc_thing(generalName_t, "generalName");
-		clonetochunk(ca_name, ca_name.ptr,ca_name.len, "ca name");
-		gn->kind = GN_DIRECTORY_NAME;
-		gn->name = ca_name;
-		gn->next = *requested_ca;
-		*requested_ca = gn;
-	    }
+			if (ca_name.len > 0) {
+				generalName_t *gn;
 
-	    DBG(DBG_PARSING | DBG_CONTROL, {
-		char buf[IDTOA_BUF];
-		dntoa_or_null(buf, IDTOA_BUF, ca_name, "%any");
-		DBG_log("requested CA: '%s'", buf);
-	    });
-	}
-	else
-	    loglog(RC_LOG_SERIOUS, "ignoring %s certificate request payload",
-		   enum_show(&ikev2_cert_type_names, cr->isacertreq_enc));
-    }
-}
+				if (!is_asn1(ca_name))
+					continue;
 
-bool
-build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np)
-{
-    pb_stream cr_pbs;
-    struct isakmp_cr cr_hd;
-    cr_hd.isacr_np = np;
-    cr_hd.isacr_type = type;
+				gn = alloc_thing(generalName_t, "generalName");
+				clonetochunk(ca_name, ca_name.ptr, ca_name.len,
+					     "ca name");
+				gn->kind = GN_DIRECTORY_NAME;
+				gn->name = ca_name;
+				gn->next = *requested_ca;
+				*requested_ca = gn;
+			}
 
-    /* build CR header */
-    if (!out_struct(&cr_hd, &isakmp_ipsec_cert_req_desc, outs, &cr_pbs))
-	return FALSE;
-
-    if (ca.ptr != NULL)
-    {
-	/* build CR body containing the distinguished name of the CA */
-	if (!out_chunk(ca, &cr_pbs, "CA"))
-	    return FALSE;
-    }
-    close_output_pbs(&cr_pbs);
-    return TRUE;
-}
-
-bool
-ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np)
-{
-    pb_stream cr_pbs;
-    struct ikev2_certreq  cr_hd;
-    cr_hd.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL;
-    cr_hd.isacertreq_np= np;
-    cr_hd.isacertreq_enc = type;
-
-    /* build CR header */
-    if (!out_struct(&cr_hd, &ikev2_certificate_req_desc, outs, &cr_pbs))
-	return FALSE;
-
-    if (ca.ptr != NULL)
-    {
-	/* build CR body containing the distinguished name of the CA */
-	if (!out_chunk(ca, &cr_pbs, "CA"))
-	    return FALSE;
-    }
-    close_output_pbs(&cr_pbs);
-    return TRUE;
-}
-bool
-collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
-{
-    struct connection *d = find_host_connection(&md->iface->ip_addr
-	, pluto_port, (ip_address*)NULL, md->sender_port, LEMPTY);
-
-    for (; d != NULL; d = d->hp_next)
-    {
-	/* must be a road warrior connection */
-	if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPO)
-	&& d->spd.that.ca.ptr != NULL)
-	{
-	    generalName_t *gn;
-	    bool new_entry = TRUE;
-
-	    for (gn = *top; gn != NULL; gn = gn->next)
-	    {
-		if (same_dn(gn->name, d->spd.that.ca))
-		{
-		    new_entry = FALSE;
-		    break;
+			DBG(DBG_PARSING | DBG_CONTROL, {
+				    char buf[IDTOA_BUF];
+				    dntoa_or_null(buf, IDTOA_BUF, ca_name,
+						  "%any");
+				    DBG_log("requested CA: '%s'", buf);
+			    });
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "ignoring %s certificate request payload",
+			       enum_show(&ikev2_cert_type_names,
+					 cr->isacertreq_enc));
 		}
-	    }
-	    if (new_entry)
-	    {
-		gn = alloc_thing(generalName_t, "generalName");
-		gn->kind = GN_DIRECTORY_NAME;
-		gn->name = d->spd.that.ca;
-		gn->next = *top;
-		*top = gn;
-	    }
 	}
-    }
-    return *top != NULL;
+}
+
+bool build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np)
+{
+	pb_stream cr_pbs;
+	struct isakmp_cr cr_hd;
+	cr_hd.isacr_np = np;
+	cr_hd.isacr_type = type;
+
+	/* build CR header */
+	if (!out_struct(&cr_hd, &isakmp_ipsec_cert_req_desc, outs, &cr_pbs))
+		return FALSE;
+
+	if (ca.ptr != NULL) {
+		/* build CR body containing the distinguished name of the CA */
+		if (!out_chunk(ca, &cr_pbs, "CA"))
+			return FALSE;
+	}
+	close_output_pbs(&cr_pbs);
+	return TRUE;
+}
+
+bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
+			     u_int8_t np)
+{
+	pb_stream cr_pbs;
+	struct ikev2_certreq cr_hd;
+	cr_hd.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL;
+	cr_hd.isacertreq_np = np;
+	cr_hd.isacertreq_enc = type;
+
+	/* build CR header */
+	if (!out_struct(&cr_hd, &ikev2_certificate_req_desc, outs, &cr_pbs))
+		return FALSE;
+
+	if (ca.ptr != NULL) {
+		/* build CR body containing the distinguished name of the CA */
+		if (!out_chunk(ca, &cr_pbs, "CA"))
+			return FALSE;
+	}
+	close_output_pbs(&cr_pbs);
+	return TRUE;
+}
+bool collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
+{
+	struct connection *d = find_host_connection(&md->iface->ip_addr,
+						    pluto_port,
+						    (ip_address*)NULL,
+						    md->sender_port, LEMPTY);
+
+	for (; d != NULL; d = d->hp_next) {
+		/* must be a road warrior connection */
+		if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPO) &&
+		    d->spd.that.ca.ptr != NULL) {
+			generalName_t *gn;
+			bool new_entry = TRUE;
+
+			for (gn = *top; gn != NULL; gn = gn->next) {
+				if (same_dn(gn->name, d->spd.that.ca)) {
+					new_entry = FALSE;
+					break;
+				}
+			}
+			if (new_entry) {
+				gn = alloc_thing(generalName_t, "generalName");
+				gn->kind = GN_DIRECTORY_NAME;
+				gn->name = d->spd.that.ca;
+				gn->next = *top;
+				*top = gn;
+			}
+		}
+	}
+	return *top != NULL;
 }

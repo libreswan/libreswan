@@ -27,7 +27,7 @@
  * and external constants (defined by IETF, etc.)
  *
  * Constants which are kernel/IPsec related are in appropriate
- * libreswan / *.h files. 
+ * libreswan / *.h files.
  *
  */
 
@@ -37,7 +37,7 @@
  * Any changes here should be reflected there.
  */
 
-#define elemsof(array) (sizeof(array) / sizeof(*(array)))	/* number of elements in an array */
+#define elemsof(array) (sizeof(array) / sizeof(*(array)))       /* number of elements in an array */
 
 /* Many routines return only success or failure, but wish to describe
  * the failure in a message.  We use the convention that they return
@@ -52,22 +52,23 @@
 typedef int bool;
 #endif
 
-#define FALSE	0
-#define TRUE	1
+#define FALSE   0
+#define TRUE    1
 
-#define NULL_FD	(-1)	/* NULL file descriptor */
-#define dup_any(fd) ((fd) == NULL_FD? NULL_FD : dup(fd))
-#define close_any(fd) do { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; } } while (0)
+#define NULL_FD (-1)    /* NULL file descriptor */
+#define dup_any(fd) ((fd) == NULL_FD ? NULL_FD : dup(fd))
+#define close_any(fd) do { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; \
+			   } } while (0)
 
 #include <prcpucfg.h>
 
 #ifndef BITS_PER_BYTE
-# define BITS_PER_BYTE	8
+# define BITS_PER_BYTE  8
 #endif
 #define BYTES_FOR_BITS(b)   (((b) + BITS_PER_BYTE - 1) / BITS_PER_BYTE)
 
-#define streq(a, b) (strcmp((a), (b)) == 0)	/* clearer shorthand */
-#define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)	/* clearer shorthand */
+#define streq(a, b) (strcmp((a), (b)) == 0)             /* clearer shorthand */
+#define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)     /* clearer shorthand */
 
 /* Jam a string into a buffer of limited size (truncation is silent).
  * This is somewhat like what people mistakenly think strncpy does
@@ -105,14 +106,14 @@ typedef unsigned long long lset_t;
 typedef const struct enum_names enum_names;
 
 extern const char *enum_name(enum_names *ed, unsigned long val);
-extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
+extern const char *enum_show(enum_names *ed, unsigned long val);        /* NOT RE-ENTRANT */
 extern int enum_search(enum_names *ed, const char *string);
 
 extern bool testset(const char *const table[], lset_t val);
-extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
-extern const char *bitnamesofb(const char *const table[]
-			       , lset_t val
-			       , char *buf, size_t blen);
+extern const char *bitnamesof(const char *const table[], lset_t val);   /* NOT RE-ENTRANT */
+extern const char *bitnamesofb(const char *const table[],
+			       lset_t val,
+			       char *buf, size_t blen);
 
 /*
  * The sparser_name should be transformed into keyword_enum_value
@@ -124,16 +125,17 @@ extern const char *bitnamesofb(const char *const table[]
 #define LOOSE_ENUM_OTHER 255
 
 struct keyword_enum_value {
-    const char *name;
-    unsigned int value;
+	const char *name;
+	unsigned int value;
 };
 
 struct keyword_enum_values {
-    struct keyword_enum_value *values;
-    size_t                     valuesize;
+	struct keyword_enum_value *values;
+	size_t valuesize;
 };
 
-extern const char *keyword_name(struct keyword_enum_values *kevs, unsigned int value);
+extern const char *keyword_name(struct keyword_enum_values *kevs,
+				unsigned int value);
 
 /* sparse_names is much like enum_names, except values are
  * not known to be contiguous or ordered.
@@ -142,14 +144,14 @@ extern const char *keyword_name(struct keyword_enum_values *kevs, unsigned int v
  * Often appropriate for enums defined by others.
  */
 struct sparse_name {
-    unsigned long val;
-    const char *const name;
+	unsigned long val;
+	const char *const name;
 };
 
 typedef const struct sparse_name sparse_names[];
 
 extern const char *sparse_name(sparse_names sd, unsigned long val);
-extern const char *sparse_val_show(sparse_names sd, unsigned long val);	/* uses static buffer -- NOT RE-ENTRANT */
+extern const char *sparse_val_show(sparse_names sd, unsigned long val); /* uses static buffer -- NOT RE-ENTRANT */
 extern const char sparse_end[];
 
 #define FULL_INET_ADDRESS_SIZE    6
@@ -162,5 +164,4 @@ extern void init_constants(void);
 
 #define _CONSTANTS_H_
 #endif /* _CONSTANTS_H_ */
-
 

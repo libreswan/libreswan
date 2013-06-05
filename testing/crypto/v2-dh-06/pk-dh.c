@@ -1,4 +1,4 @@
-/* 
+/*
  * unit tests for cryptographic helper function - calculate KE and nonce
  *
  * Copyright (C) 2006 Michael C. Richardson <mcr@xelerance.com>
@@ -30,7 +30,7 @@ char *progname;
 void exit_log(const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
+	char m[LOG_WIDTH];      /* longer messages will be truncated */
 
 	va_start(args, message);
 	vsnprintf(m, sizeof(m), message, args);
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
 	progname = argv[0];
 	cur_debugging = DBG_CRYPT;
-	
+
 	/* initialize list of moduli */
 	init_crypto();
 
@@ -67,14 +67,14 @@ int main(int argc, char *argv[])
 	skq->integ_hash = tc2_hash;
 	skq->oakley_group = tc2_oakleygroup;
 	skq->init = tc2_init;
-	skq->keysize = tc2_encrypter->keydeflen/BITS_PER_BYTE;
+	skq->keysize = tc2_encrypter->keydeflen / BITS_PER_BYTE;
 
 #define copydatlen(field, data, len) do { \
 		chunk_t tchunk;           \
 		setchunk(tchunk, data, len); \
 		pluto_crypto_copychunk(&skq->thespace, skq->space \
 				       , &skq->field, tchunk); }   \
-		while(0)
+	while (0)
 
 	copydatlen(ni, tc2_ni, tc2_ni_len);
 	copydatlen(nr, tc2_nr, tc2_nr_len);
@@ -85,9 +85,9 @@ int main(int argc, char *argv[])
 	copydatlen(rcookie, tc2_rcookie, tc2_rcookie_len);
 
 #define dumpdat(field) \
-	libreswan_DBG_dump(#field,	\
-			  wire_chunk_ptr(skq, &skq->field), \
-			  skq->field.len);
+	libreswan_DBG_dump(#field,      \
+			   wire_chunk_ptr(skq, &skq->field), \
+			   skq->field.len);
 
 	dumpdat(icookie);
 	dumpdat(rcookie);
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 
 	fflush(stdout);
 	fflush(stderr);
-	
+
 	calc_dh_v2(&r);
 
 	printf("\noutput:\n");
@@ -107,9 +107,9 @@ int main(int argc, char *argv[])
 	fflush(stdout);
 	fflush(stderr);
 
-#define dumpskr(FOO) { void *FOO = wire_chunk_ptr(skr, &skr->FOO);\
-		libreswan_DBG_dump(#FOO, FOO, skr->FOO.len); \
-	}
+#define dumpskr(FOO) { void *FOO = wire_chunk_ptr(skr, &skr->FOO); \
+		       libreswan_DBG_dump(#FOO, FOO, skr->FOO.len); \
+}
 
 	dumpskr(shared);
 	dumpskr(skeyseed);

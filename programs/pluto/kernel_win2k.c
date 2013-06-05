@@ -37,7 +37,7 @@
 #include "kernel_netlink.h"
 #include "kernel_pfkey.h"
 #include "log.h"
-#include "whack.h"	/* for RC_LOG_SERIOUS */
+#include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
 
 /** init_netlink - Initialize the netlink inferface.  Opens the sockets and
@@ -45,7 +45,7 @@
  */
 static void win2k_init(void)
 {
-    /* open access to the kernel */
+	/* open access to the kernel */
 }
 
 /** netlink_raw_eroute
@@ -58,30 +58,29 @@ static void win2k_init(void)
  * @param proto int (Currently unused) 4=tunnel, 50=esp, 108=ipcomp, etc ...
  * @param transport_proto int (Currently unused) Contains protocol (u=tcp, 17=udp, etc...)
  * @param esatype int
- * @param proto_info 
+ * @param proto_info
  * @param lifetime (Currently unused)
- * @param op int 
- * @return boolean True if successful 
+ * @param op int
+ * @return boolean True if successful
  */
-static bool
-win2k_raw_eroute(const ip_address *this_host UNUSED
-		   , const ip_subnet *this_client UNUSED
-		   , const ip_address *that_host  UNUSED
-		   , const ip_subnet *that_client UNUSED
-		   , ipsec_spi_t spi    UNUSED
-		   , unsigned int proto UNUSED
-		   , unsigned int transport_proto UNUSED
-		   , unsigned int esatype UNUSED
-		   , const struct pfkey_proto_info *proto_info UNUSED
-		   , time_t use_lifetime UNUSED 
-		   , unsigned int op UNUSED
-		   , const char *text_said UNUSED
+static bool win2k_raw_eroute(const ip_address *this_host UNUSED,
+			     const ip_subnet *this_client UNUSED,
+			     const ip_address *that_host UNUSED,
+			     const ip_subnet *that_client UNUSED,
+			     ipsec_spi_t spi UNUSED,
+			     unsigned int proto UNUSED,
+			     unsigned int transport_proto UNUSED,
+			     unsigned int esatype UNUSED,
+			     const struct pfkey_proto_info *proto_info UNUSED,
+			     time_t use_lifetime UNUSED,
+			     unsigned int op UNUSED,
+			     const char *text_said UNUSED
 #ifdef HAVE_LABELED_IPSEC
-		   , char *policy_label UNSUSED
+			     , char *policy_label UNSUSED
 #endif
-		   )
+			     )
 {
-    return FALSE;
+	return FALSE;
 }
 
 /** netlink_add_sa - Add an SA into the kernel SPDB via netlink
@@ -90,81 +89,74 @@ win2k_raw_eroute(const ip_address *this_host UNUSED
  * @param replace boolean - true if this replaces an existing SA
  * @return bool True if successfull
  */
-static bool
-win2k_add_sa(const struct kernel_sa *sa, bool replace)
+static bool win2k_add_sa(const struct kernel_sa *sa, bool replace)
 {
-    return FALSE;
+	return FALSE;
 }
 
 /** netlink_del_sa - Delete an SA from the Kernel
- * 
+ *
  * @param sa Kernel SA to be deleted
  * @return bool True if successfull
  */
-static bool
-win2k_del_sa(const struct kernel_sa *sa)
+static bool win2k_del_sa(const struct kernel_sa *sa)
 {
-    /* delete an SA */
-    return FALSE;
+	/* delete an SA */
+	return FALSE;
 }
 
-static void
-win2k_pfkey_register_response(const struct sadb_msg *msg)
+static void win2k_pfkey_register_response(const struct sadb_msg *msg)
 {
-    /* something */
+	/* something */
 }
 
 /** linux_pfkey_register - Register via PFKEY our capabilities
  *
  */
-static void
-win2k_pfkey_register(void)
+static void win2k_pfkey_register(void)
 {
-    /* do something */
+	/* do something */
 }
 
-
-static bool
-win2k_get(void)
+static bool win2k_get(void)
 {
-    return TRUE;
+	return TRUE;
 }
 
-static ipsec_spi_t
-win2k_get_spi(const ip_address *src
-		, const ip_address *dst
-		, int proto
-		, bool tunnel_mode
-		, unsigned reqid
-		, ipsec_spi_t min
-		, ipsec_spi_t max
-		, const char *text_said)
+static ipsec_spi_t win2k_get_spi(const ip_address *src,
+				 const ip_address *dst,
+				 int proto,
+				 bool tunnel_mode,
+				 unsigned reqid,
+				 ipsec_spi_t min,
+				 ipsec_spi_t max,
+				 const char *text_said)
 {
-    return 0;
+	return 0;
 }
 
 const struct kernel_ops win2k_kernel_ops = {
-    type: USE_WIN2K,
-    inbound_eroute: 1,
-    policy_lifetime: 1,
-    async_fdp: &win2k_bcast_fd,
-    replay_window: 32,
-    
-    init: win2k_init,
-    pfkey_register: win2k_pfkey_register,
-    pfkey_register_response: win2_pfkey_register_response,
-    process_msg: win2k_process_msg,
-    raw_eroute:  win2k_raw_eroute,
-    add_sa: win2k_add_sa,
-    del_sa: win2k_del_sa,
-    get_sa: NULL,
-    process_queue: NULL,
-    grp_sa: NULL,
-    get_spi: win2k_get_spi,
-    exceptsocket: NULL,
-    docommand: do_command_win2k,
-    opname: "win2k",
-    overlap_supported: FALSE,
-    sha2_truncbug_support: FALSE,
+	type: USE_WIN2K,
+	inbound_eroute: 1,
+	policy_lifetime: 1,
+	async_fdp: &win2k_bcast_fd,
+	replay_window: 32,
+
+	init: win2k_init,
+	pfkey_register: win2k_pfkey_register,
+	pfkey_register_response: win2_pfkey_register_response,
+	process_msg: win2k_process_msg,
+	raw_eroute:  win2k_raw_eroute,
+	add_sa: win2k_add_sa,
+	del_sa: win2k_del_sa,
+	get_sa: NULL,
+	process_queue: NULL,
+	grp_sa: NULL,
+	get_spi: win2k_get_spi,
+	exceptsocket: NULL,
+	docommand: do_command_win2k,
+	opname: "win2k",
+	overlap_supported: FALSE,
+	sha2_truncbug_support: FALSE,
 };
 #endif /* WIN32_NATIVE */

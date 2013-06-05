@@ -35,7 +35,8 @@
 /****************************************************************************/
 #ifdef __KERNEL__
 #include <linux/version.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,38) && !defined(AUTOCONF_INCLUDED)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 38) && \
+	!defined(AUTOCONF_INCLUDED)
 #include <linux/config.h>
 #endif
 
@@ -46,23 +47,25 @@
 typedef struct ocf_device *device_t;
 
 typedef struct {
-	int (*cryptodev_newsession)(device_t dev, u_int32_t *sidp, struct cryptoini *cri);
+	int (*cryptodev_newsession)(device_t dev, u_int32_t *sidp,
+				    struct cryptoini *cri);
 	int (*cryptodev_freesession)(device_t dev, u_int64_t tid);
 	int (*cryptodev_process)(device_t dev, struct cryptop *crp, int hint);
-	int (*cryptodev_kprocess)(device_t dev, struct cryptkop *krp, int hint);
+	int (*cryptodev_kprocess)(device_t dev, struct cryptkop *krp,
+				  int hint);
 } device_method_t;
-#define DEVMETHOD(id, func)	id: func
+#define DEVMETHOD(id, func)     id : func
 
 struct ocf_device {
-	char name[32];		/* the driver name */
-	char nameunit[32];	/* the driver name + HW instance */
-	int  unit;
-	device_method_t	methods;
+	char name[32];          /* the driver name */
+	char nameunit[32];      /* the driver name + HW instance */
+	int unit;
+	device_method_t methods;
 	void *softc;
 };
 
 #define CRYPTODEV_NEWSESSION(dev, sid, cri) \
-	((*(dev)->methods.cryptodev_newsession)(dev,sid,cri))
+	((*(dev)->methods.cryptodev_newsession)(dev, sid, cri))
 #define CRYPTODEV_FREESESSION(dev, sid) \
 	((*(dev)->methods.cryptodev_freesession)(dev, sid))
 #define CRYPTODEV_PROCESS(dev, crp, hint) \
@@ -70,33 +73,35 @@ struct ocf_device {
 #define CRYPTODEV_KPROCESS(dev, krp, hint) \
 	((*(dev)->methods.cryptodev_kprocess)(dev, krp, hint))
 
-#define device_get_name(dev)	((dev)->name)
-#define device_get_nameunit(dev)	((dev)->nameunit)
-#define device_get_unit(dev)	((dev)->unit)
-#define device_get_softc(dev)	((dev)->softc)
+#define device_get_name(dev)    ((dev)->name)
+#define device_get_nameunit(dev)        ((dev)->nameunit)
+#define device_get_unit(dev)    ((dev)->unit)
+#define device_get_softc(dev)   ((dev)->softc)
 
-#define	softc_device_decl \
-		struct ocf_device _device; \
-		device_t
+#define softc_device_decl \
+	struct ocf_device _device; \
+	device_t
 
-#define	softc_device_init(_sc, _name, _unit, _methods) \
-	if (1) {\
-	strncpy((_sc)->_device.name, _name, sizeof((_sc)->_device.name) - 1); \
-	snprintf((_sc)->_device.nameunit, sizeof((_sc)->_device.name), "%s%d", _name, _unit); \
-	(_sc)->_device.unit = _unit; \
-	(_sc)->_device.methods = _methods; \
-	(_sc)->_device.softc = (void *) _sc; \
-	*(device_t *)((softc_get_device(_sc))+1) = &(_sc)->_device; \
+#define softc_device_init(_sc, _name, _unit, _methods) \
+	if (1) { \
+		strncpy((_sc)->_device.name, _name, \
+			sizeof((_sc)->_device.name) - 1); \
+		snprintf((_sc)->_device.nameunit, sizeof((_sc)->_device.name), \
+			 "%s%d", _name, _unit); \
+		(_sc)->_device.unit = _unit; \
+		(_sc)->_device.methods = _methods; \
+		(_sc)->_device.softc = (void *) _sc; \
+		*(device_t *)((softc_get_device(_sc)) + 1) = &(_sc)->_device; \
 	} else
 
-#define	softc_get_device(_sc)	(&(_sc)->_device)
+#define softc_get_device(_sc)   (&(_sc)->_device)
 
 /*
  * iomem support for 2.4 and 2.6 kernels
  */
 #include <linux/version.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-#define ocf_iomem_t	unsigned long
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
+#define ocf_iomem_t     unsigned long
 
 /*
  * implement simple workqueue like support for older kernels
@@ -119,42 +124,44 @@ struct ocf_device {
 		mark_bh(IMMEDIATE_BH); \
 	} while (0)
 
-#define flush_scheduled_work()	run_task_queue(&tq_immediate)
+#define flush_scheduled_work()  run_task_queue(&tq_immediate)
 
 #else
-#define ocf_iomem_t	void __iomem *
+#define ocf_iomem_t     void __iomem *
 
 #include <linux/workqueue.h>
 
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,26)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 26)
 #include <linux/fdtable.h>
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,11)
-#define files_fdtable(files)	(files)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 11)
+#define files_fdtable(files)    (files)
 #endif
 
 #ifdef MODULE_PARM
-#undef module_param	/* just in case */
-#define	module_param(a,b,c)		MODULE_PARM(a,"i")
+#undef module_param     /* just in case */
+#define module_param(a, b, c)             MODULE_PARM(a, "i")
 #endif
 
-#define bzero(s,l)		memset(s,0,l)
-#define bcopy(s,d,l)	memcpy(d,s,l)
-#define bcmp(x, y, l)	memcmp(x,y,l)
+#define bzero(s, l)              memset(s, 0, l)
+#define bcopy(s, d, l)    memcpy(d, s, l)
+#define bcmp(x, y, l)   memcmp(x, y, l)
 
-#define MIN(x,y)	((x) < (y) ? (x) : (y))
+#define MIN(x, y)        ((x) < (y) ? (x) : (y))
 
-#define device_printf(dev, a...) ({ \
-				printk("%s: ", device_get_nameunit(dev)); printk(a); \
-			})
+#define device_printf(dev, a ...) ({ \
+					   printk("%s: ", \
+						  device_get_nameunit(dev)); \
+					   printk(a); \
+				   })
 
 #undef printf
-#define printf(fmt...)	printk(fmt)
+#define printf(fmt ...)  printk(fmt)
 
-#define KASSERT(c,p)	if (!(c)) { printk p ; } else
+#define KASSERT(c, p)    if (!(c)) { printk p; } else
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
 #define ocf_daemonize(str) \
 	daemonize(); \
 	spin_lock_irq(&current->sigmask_lock); \
@@ -166,22 +173,22 @@ struct ocf_device {
 #define ocf_daemonize(str) daemonize(str);
 #endif
 
-#define	TAILQ_INSERT_TAIL(q,d,m) list_add_tail(&(d)->m, (q))
-#define	TAILQ_EMPTY(q)	list_empty(q)
-#define	TAILQ_FOREACH(v, q, m) list_for_each_entry(v, q, m)
+#define TAILQ_INSERT_TAIL(q, d, m) list_add_tail(&(d)->m, (q))
+#define TAILQ_EMPTY(q)  list_empty(q)
+#define TAILQ_FOREACH(v, q, m) list_for_each_entry(v, q, m)
 
-#define read_random(p,l) get_random_bytes(p,l)
+#define read_random(p, l) get_random_bytes(p, l)
 
-#define DELAY(x)	((x) > 2000 ? mdelay((x)/1000) : udelay(x))
+#define DELAY(x)        ((x) > 2000 ? mdelay((x) / 1000) : udelay(x))
 #define strtoul simple_strtoul
 
-#define pci_get_vendor(dev)	((dev)->vendor)
-#define pci_get_device(dev)	((dev)->device)
+#define pci_get_vendor(dev)     ((dev)->vendor)
+#define pci_get_device(dev)     ((dev)->device)
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
 #define pci_set_consistent_dma_mask(dev, mask) (0)
 #endif
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 10)
 #define pci_dma_sync_single_for_cpu pci_dma_sync_single
 #endif
 
@@ -190,16 +197,16 @@ struct ocf_device {
 #endif
 
 #ifndef htole32
-#define htole32(x)	cpu_to_le32(x)
+#define htole32(x)      cpu_to_le32(x)
 #endif
 #ifndef htobe32
-#define htobe32(x)	cpu_to_be32(x)
+#define htobe32(x)      cpu_to_be32(x)
 #endif
 #ifndef htole16
-#define htole16(x)	cpu_to_le16(x)
+#define htole16(x)      cpu_to_le16(x)
 #endif
 #ifndef htobe16
-#define htobe16(x)	cpu_to_be16(x)
+#define htobe16(x)      cpu_to_be16(x)
 #endif
 
 /* older kernels don't have these */
@@ -214,19 +221,19 @@ struct ocf_device {
 typedef irqreturn_t (*irq_handler_t)(int irq, void *arg, struct pt_regs *regs);
 #endif
 #ifndef IRQF_SHARED
-#define IRQF_SHARED	SA_SHIRQ
+#define IRQF_SHARED     SA_SHIRQ
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
-# define strlcpy(dest,src,len) \
-		({strncpy(dest,src,(len)-1); ((char *)dest)[(len)-1] = '\0'; })
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 5, 0)
+# define strlcpy(dest, src, len) \
+	({ strncpy(dest, src, (len) - 1); ((char *)dest)[(len) - 1] = '\0'; })
 #endif
 
 #ifndef MAX_ERRNO
-#define MAX_ERRNO	4095
+#define MAX_ERRNO       4095
 #endif
 #ifndef IS_ERR_VALUE
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,5)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 5, 5)
 #include <linux/err.h>
 #endif
 #ifndef IS_ERR_VALUE
@@ -238,19 +245,20 @@ typedef irqreturn_t (*irq_handler_t)(int irq, void *arg, struct pt_regs *regs);
  * common debug for all
  */
 #if 1
-#define dprintk(a...)	do { if (debug) printk(a); } while(0)
+#define dprintk(a ...)   do { if (debug) \
+				      printk(a); } while (0)
 #else
-#define dprintk(a...)
+#define dprintk(a ...)
 #endif
 
 #ifndef SLAB_ATOMIC
 /* Changed in 2.6.20, must use GFP_ATOMIC now */
-#define	SLAB_ATOMIC	GFP_ATOMIC
+#define SLAB_ATOMIC     GFP_ATOMIC
 #endif
 
 /*
  * need some additional support for older kernels */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,2)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 2)
 #define pci_register_driver_compat(driver, rc) \
 	do { \
 		if ((rc) > 0) { \
@@ -261,13 +269,13 @@ typedef irqreturn_t (*irq_handler_t)(int irq, void *arg, struct pt_regs *regs);
 			pci_unregister_driver(driver); \
 		} \
 	} while (0)
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
-#define pci_register_driver_compat(driver,rc) ((rc) = (rc) < 0 ? (rc) : 0)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 10)
+#define pci_register_driver_compat(driver, rc) ((rc) = (rc) < 0 ? (rc) : 0)
 #else
-#define pci_register_driver_compat(driver,rc)
+#define pci_register_driver_compat(driver, rc)
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24)
 
 #include <linux/mm.h>
 #include <asm/scatterlist.h>
@@ -293,23 +301,23 @@ static inline void *sg_virt(struct scatterlist *sg)
 #define late_initcall(init) module_init(init)
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,4) || !defined(CONFIG_SMP)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 4) || !defined(CONFIG_SMP)
 #define ocf_for_each_cpu(cpu) for ((cpu) = 0; (cpu) == 0; (cpu)++)
 #else
 #define ocf_for_each_cpu(cpu) for_each_cpu(cpu, cpu_present_mask)
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)
 #include <linux/sched.h>
-#define	kill_proc(p,s,v)	send_sig(s,find_task_by_vpid(p),0)
+#define kill_proc(p, s, v)        send_sig(s, find_task_by_vpid(p), 0)
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,4)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 4)
 
 struct ocf_thread {
-	struct task_struct	*task;
-	int					(*func)(void *arg);
-	void				*arg;
+	struct task_struct      *task;
+	int (*func)(void *arg);
+	void                            *arg;
 };
 
 /* thread startup helper func */
@@ -318,6 +326,7 @@ static inline int ocf_run_thread(void *arg)
 	struct ocf_thread *t = (struct ocf_thread *) arg;
 	if (!t)
 		return -1; /* very bad */
+
 	t->task = current;
 	daemonize();
 	spin_lock_irq(&current->sigmask_lock);
@@ -327,33 +336,33 @@ static inline int ocf_run_thread(void *arg)
 	return (*t->func)(t->arg);
 }
 
-#define kthread_create(f,a,fmt...) \
+#define kthread_create(f, a, fmt ...) \
 	({ \
-		struct ocf_thread t; \
-		pid_t p; \
-		t.task = NULL; \
-		t.func = (f); \
-		t.arg = (a); \
-		p = kernel_thread(ocf_run_thread, &t, CLONE_FS|CLONE_FILES); \
-		while (p != (pid_t) -1 && t.task == NULL) \
-			schedule(); \
-		if (t.task) \
-			snprintf(t.task->comm, sizeof(t.task->comm), fmt); \
-		(t.task); \
-	})
+		 struct ocf_thread t; \
+		 pid_t p; \
+		 t.task = NULL; \
+		 t.func = (f); \
+		 t.arg = (a); \
+		 p = kernel_thread(ocf_run_thread, &t, CLONE_FS | CLONE_FILES); \
+		 while (p != (pid_t) -1 && t.task == NULL) \
+			 schedule(); \
+		 if (t.task) \
+			 snprintf(t.task->comm, sizeof(t.task->comm), fmt); \
+		 (t.task); \
+	 })
 
-#define kthread_bind(t,cpu)	/**/
+#define kthread_bind(t, cpu)     /**/
 
-#define kthread_should_stop()	(strcmp(current->comm, "stopping") == 0)
+#define kthread_should_stop()   (strcmp(current->comm, "stopping") == 0)
 
 #define kthread_stop(t) \
 	({ \
-		strcpy((t)->comm, "stopping"); \
-		kill_proc((t)->pid, SIGTERM, 1); \
-		do { \
-			schedule(); \
-		} while (kill_proc((t)->pid, SIGTERM, 1) == 0); \
-	})
+		 strcpy((t)->comm, "stopping"); \
+		 kill_proc((t)->pid, SIGTERM, 1); \
+		 do { \
+			 schedule(); \
+		 } while (kill_proc((t)->pid, SIGTERM, 1) == 0); \
+	 })
 
 #else
 #include <linux/kthread.h>

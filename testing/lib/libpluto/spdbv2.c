@@ -16,96 +16,91 @@
 
 char *progname;
 
-bool can_do_IPcomp = TRUE;  
+bool can_do_IPcomp = TRUE;
 
 void exit_log(const char *msg, ...)
 {
-    lsw_abort();
+	lsw_abort();
 }
 
-struct state *
-state_with_serialno(so_serial_t sn)
+struct state *state_with_serialno(so_serial_t sn)
 {
-    lsw_abort();
-    return NULL;
+	lsw_abort();
+	return NULL;
 }
 
 void whack_log(int rc, const char *msg, ...)
 {
-    lsw_abort();
+	lsw_abort();
 }
 
 void exit_tool(int stat)
 {
-    exit(stat);
+	exit(stat);
 }
 
-const chunk_t *
-get_preshared_secret(const struct connection *c)
+const chunk_t *get_preshared_secret(const struct connection *c)
 {
-    lsw_abort();
-    return NULL;
+	lsw_abort();
+	return NULL;
 }
 
 struct spd_route;
-ipsec_spi_t
-get_my_cpi(struct spd_route *sr, bool tunnel)
+ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel)
 {
-    return 10;
+	return 10;
 }
 
-ipsec_spi_t
-get_ipsec_spi(ipsec_spi_t avoid, int proto, struct spd_route *sr, bool tunnel)
+ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, struct spd_route *sr,
+			  bool tunnel)
 {
-    return 10;
+	return 10;
 }
 
-ipsec_spi_t
-uniquify_his_cpi(ipsec_spi_t cpi, struct state *st)
+ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st)
 {
-    return 12;
+	return 12;
 }
 
-const char *
-ip_str(const ip_address *src)
+const char *ip_str(const ip_address *src)
 {
-    static char buf[ADDRTOT_BUF];
+	static char buf[ADDRTOT_BUF];
 
-    addrtot(src, 0, buf, sizeof(buf));
-    return buf;
+	addrtot(src, 0, buf, sizeof(buf));
+	return buf;
 }
 
-main(int argc, char *argv[])
-{
-    int i;
-    struct db_sa *gsp = NULL;
-    struct db_sa *sa1 = NULL;
-    struct db_sa *sa2 = NULL;
-    struct alg_info_ike *aii;
-    err_t ugh;
+main(int argc, char *argv[]){
+	int i;
+	struct db_sa *gsp = NULL;
+	struct db_sa *sa1 = NULL;
+	struct db_sa *sa2 = NULL;
+	struct alg_info_ike *aii;
+	err_t ugh;
 
-    EF_PROTECT_FREE=1;
-    EF_FREE_WIPES  =1;
+	EF_PROTECT_FREE = 1;
+	EF_FREE_WIPES  = 1;
 
-    progname = argv[0];
-    leak_detective=1;
+	progname = argv[0];
+	leak_detective = 1;
 
-    tool_init_log();
-    init_crypto();
-    
-    aii = alg_info_ike_create_from_str("3des", &ugh);
+	tool_init_log();
+	init_crypto();
 
-    gsp = oakley_alg_makedb(aii
-			    , &oakley_sadb[POLICY_RSASIG >> POLICY_ISAKMP_SHIFT]
-			    , -1);
-    sa_print(gsp);
+	aii = alg_info_ike_create_from_str("3des", &ugh);
 
-    gsp = sa_v2_convert(gsp);
+	gsp = oakley_alg_makedb(aii,
+				&oakley_sadb[POLICY_RSASIG >>
+					     POLICY_ISAKMP_SHIFT],
+				-1);
+	sa_print(gsp);
 
-    sa_v2_print(gsp);
+	gsp = sa_v2_convert(gsp);
 
-    tool_close_log();
+	sa_v2_print(gsp);
 
-    free_sa(gsp);
-    exit(0);
+	tool_close_log();
+
+	free_sa(gsp);
+	exit(0);
 }

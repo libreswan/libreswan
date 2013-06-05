@@ -27,68 +27,62 @@
 #include "lswtime.h"
 #include "defs.h"
 #include "log.h"
-#include "whack.h"	/* for RC_LOG_SERIOUS */
+#include "whack.h"      /* for RC_LOG_SERIOUS */
 
 /*  checks if the expiration date has been reached and
  *  warns during the warning_interval of the imminent
  *  expiry. strict=TRUE declares a fatal error,
  *  strict=FALSE issues a warning upon expiry.
  */
-const char*
-check_expiry(time_t expiration_date, int warning_interval, bool strict)
+const char*check_expiry(time_t expiration_date, int warning_interval,
+			bool strict)
 {
-    time_t tnow;
-    int time_left;
+	time_t tnow;
+	int time_left;
 
-    if (expiration_date == UNDEFINED_TIME)
-      return "ok (expires never)";
+	if (expiration_date == UNDEFINED_TIME)
+		return "ok (expires never)";
 
-    /* determine the current time */
-    time(&tnow);
+	/* determine the current time */
+	time(&tnow);
 
-    time_left = (expiration_date - tnow);
-    if (time_left < 0)
-	return strict? "fatal (expired)" : "warning (expired)";
+	time_left = (expiration_date - tnow);
+	if (time_left < 0)
+		return strict ? "fatal (expired)" : "warning (expired)";
 
-    if (time_left > 86400*warning_interval)
-	return "ok";
-    {
-	static char buf[35]; /* temporary storage */
-	const char* unit = "second";
+	if (time_left > 86400 * warning_interval)
+		return "ok";
 
-	if (time_left > 172800)
 	{
-	    time_left /= 86400;
-	    unit = "day";
+		static char buf[35]; /* temporary storage */
+		const char* unit = "second";
+
+		if (time_left > 172800) {
+			time_left /= 86400;
+			unit = "day";
+		} else if (time_left > 7200) {
+			time_left /= 3600;
+			unit = "hour";
+		} else if (time_left > 120) {
+			time_left /= 60;
+			unit = "minute";
+		}
+		snprintf(buf, 35, "warning (expires in %d %s%s)", time_left,
+			 unit, (time_left == 1) ? "" : "s");
+		return buf;
 	}
-	else if (time_left > 7200)
-	{
-	    time_left /= 3600;
-	    unit = "hour";
-	}
-	else if (time_left > 120)
-	{
-	    time_left /= 60;
-	    unit = "minute";
-	}
-	snprintf(buf, 35, "warning (expires in %d %s%s)", time_left,
-		 unit, (time_left == 1)?"":"s");
-	return buf;
-    }
 }
-
 
 /*  compare two chunks, returns zero if a equals b
  *  negative/positive if a is earlier/later in the alphabet than b
  */
-bool
-cmp_chunk(chunk_t a, chunk_t b)
+bool cmp_chunk(chunk_t a, chunk_t b)
 {
-    int cmp_len, len, cmp_value;
-    
-    cmp_len = a.len - b.len;
-    len = (cmp_len < 0)? a.len : b.len;
-    cmp_value = memcmp(a.ptr, b.ptr, len);
+	int cmp_len, len, cmp_value;
 
-    return (cmp_value == 0)? cmp_len : cmp_value;
+	cmp_len = a.len - b.len;
+	len = (cmp_len < 0) ? a.len : b.len;
+	cmp_value = memcmp(a.ptr, b.ptr, len);
+
+	return (cmp_value == 0) ? cmp_len : cmp_value;
 };

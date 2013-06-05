@@ -20,16 +20,16 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/time.h>	/* only used for belt-and-suspenders select call */
-#include <sys/poll.h>	/* only used for forensic poll call */
+#include <sys/time.h>   /* only used for belt-and-suspenders select call */
+#include <sys/poll.h>   /* only used for forensic poll call */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-#  include <asm/types.h>	/* for __u8, __u32 */
+#  include <asm/types.h>        /* for __u8, __u32 */
 #  include <linux/errqueue.h>
-#  include <sys/uio.h>	/* struct iovec */
+#  include <sys/uio.h>          /* struct iovec */
 #endif
 
 #include <libreswan.h>
@@ -43,7 +43,7 @@
 #include "id.h"
 #include "log.h"
 #include "packet.h"
-#include "demux.h"	/* needs packet.h */
+#include "demux.h"      /* needs packet.h */
 
 /*
  * receive and decode reply packet
@@ -51,38 +51,38 @@
  */
 void receive_ike_echo_request(struct msg_digest *md)
 {
-    char b1[ADDRTOT_BUF];
+	char b1[ADDRTOT_BUF];
 
-    addrtot(&md->sender, 0, b1, sizeof(b1));
+	addrtot(&md->sender, 0, b1, sizeof(b1));
 
-    libreswan_log("received ike-echo-request-%d packet from %s/%d\n",
-		 md->hdr.isa_xchg, b1, md->sender_port);
+	libreswan_log("received ike-echo-request-%d packet from %s/%d\n",
+		      md->hdr.isa_xchg, b1, md->sender_port);
 
 #if 0
 	op->isa_np    = NOTHING_WRONG;
 	op->isa_version = (1 << ISA_MAJ_SHIFT) | 0;
 	op->isa_xchg  = ISAKMP_XCHG_ECHOREPLY;
-	op->isa_flags =0;
-	op->isa_msgid =rand();
-	op->isa_length=0;
+	op->isa_flags = 0;
+	op->isa_msgid = rand();
+	op->isa_length = 0;
 #endif
 }
 
 void receive_ike_echo_reply(struct msg_digest *md)
 {
-    char b1[ADDRTOT_BUF];
+	char b1[ADDRTOT_BUF];
 
-    addrtot(&md->sender, 0, b1, sizeof(b1));
+	addrtot(&md->sender, 0, b1, sizeof(b1));
 
-    libreswan_log("received ike-echo-reply-%d packet from %s/%d\n",
-		 md->hdr.isa_xchg, b1, md->sender_port);
+	libreswan_log("received ike-echo-reply-%d packet from %s/%d\n",
+		      md->hdr.isa_xchg, b1, md->sender_port);
 
 #if 0
 	op->isa_np    = NOTHING_WRONG;
 	op->isa_version = (1 << ISA_MAJ_SHIFT) | 0;
 	op->isa_xchg  = ISAKMP_XCHG_ECHOREPLY;
-	op->isa_flags =0;
-	op->isa_msgid =rand();
-	op->isa_length=0;
+	op->isa_flags = 0;
+	op->isa_msgid = rand();
+	op->isa_length = 0;
 #endif
 }

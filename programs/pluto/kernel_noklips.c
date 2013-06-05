@@ -41,120 +41,107 @@
 #include "kernel.h"
 #include "kernel_noklips.h"
 #include "log.h"
-#include "whack.h"	/* for RC_LOG_SERIOUS */
+#include "whack.h"      /* for RC_LOG_SERIOUS */
 
-void
-init_noklips(void)
+void init_noklips(void)
 {
-  return;
+	return;
 }
 
 /* asynchronous messages from our queue */
-static void
-noklips_dequeue(void)
+static void noklips_dequeue(void)
 {
 }
 
 /* asynchronous messages directly from PF_KEY socket */
-static void
-noklips_event(void)
+static void noklips_event(void)
 {
 }
 
-static void
-noklips_register_response(const struct sadb_msg *msg UNUSED)
+static void noklips_register_response(const struct sadb_msg *msg UNUSED)
 {
 }
 
-static void
-noklips_register(void)
+static void noklips_register(void)
 {
 }
 
-static bool
-noklips_raw_eroute(const ip_address *this_host UNUSED
-		   , const ip_subnet *this_client UNUSED
-		   , const ip_address *that_host UNUSED
-		   , const ip_subnet *that_client UNUSED
-		   , ipsec_spi_t spi UNUSED
-		   , unsigned int proto UNUSED
-		   , unsigned int transport_proto UNUSED
-		   , unsigned int satype UNUSED
-		   , const struct pfkey_proto_info *proto_info UNUSED
-		   , time_t use_lifetime UNUSED
-		   , unsigned int op UNUSED
-		   , const char *text_said UNUSED
+static bool noklips_raw_eroute(const ip_address *this_host UNUSED,
+			       const ip_subnet *this_client UNUSED,
+			       const ip_address *that_host UNUSED,
+			       const ip_subnet *that_client UNUSED,
+			       ipsec_spi_t spi UNUSED,
+			       unsigned int proto UNUSED,
+			       unsigned int transport_proto UNUSED,
+			       unsigned int satype UNUSED,
+			       const struct pfkey_proto_info *proto_info UNUSED,
+			       time_t use_lifetime UNUSED,
+			       unsigned int op UNUSED,
+			       const char *text_said UNUSED
 #ifdef HAVE_LABELED_IPSEC
-		   , char *policy_label UNUSED
+			       , char *policy_label UNUSED
 #endif
-		   )
+			       )
 {
-  return TRUE;
+	return TRUE;
 }
 
-static bool
-noklips_add_sa(struct kernel_sa *sa UNUSED
-	       , bool replace UNUSED)
+static bool noklips_add_sa(struct kernel_sa *sa UNUSED,
+			   bool replace UNUSED)
 {
-  return TRUE;
+	return TRUE;
 }
 
-static bool
-noklips_grp_sa(const struct kernel_sa *sa0 UNUSED
-	       , const struct kernel_sa *sa1 UNUSED)
+static bool noklips_grp_sa(const struct kernel_sa *sa0 UNUSED,
+			   const struct kernel_sa *sa1 UNUSED)
 {
-  return TRUE;
+	return TRUE;
 }
 
-static bool
-noklips_del_sa(const struct kernel_sa *sa UNUSED)
+static bool noklips_del_sa(const struct kernel_sa *sa UNUSED)
 {
-  return TRUE;
+	return TRUE;
 }
 
-static bool
-noklips_sag_eroute(struct state *st UNUSED
-		   , struct spd_route *sr UNUSED
-		   , enum pluto_sadb_operations op UNUSED
-		   , const char *opname UNUSED)
+static bool noklips_sag_eroute(struct state *st UNUSED,
+			       struct spd_route *sr UNUSED,
+			       enum pluto_sadb_operations op UNUSED,
+			       const char *opname UNUSED)
 {
-    return TRUE;
+	return TRUE;
 }
 
-static bool
-noklips_shunt_eroute(struct connection *c UNUSED
-		     , struct spd_route *sr UNUSED
-		     , enum routing_t rt_kind UNUSED
-		     , enum pluto_sadb_operations op UNUSED
-		     , const char *opname UNUSED)
+static bool noklips_shunt_eroute(struct connection *c UNUSED,
+				 struct spd_route *sr UNUSED,
+				 enum routing_t rt_kind UNUSED,
+				 enum pluto_sadb_operations op UNUSED,
+				 const char *opname UNUSED)
 {
-    return TRUE;
+	return TRUE;
 }
-
-
 
 const struct kernel_ops noklips_kernel_ops = {
-    .type = NO_KERNEL,
-    .async_fdp = NULL,
+	.type = NO_KERNEL,
+	.async_fdp = NULL,
 
-    .init = init_noklips,
-    .pfkey_register = noklips_register,
-    .pfkey_register_response = noklips_register_response,
-    .process_queue = noklips_dequeue,
-    .process_msg = noklips_event,
-    .raw_eroute = noklips_raw_eroute,
-    .add_sa = noklips_add_sa,
-    .grp_sa = noklips_grp_sa,
-    .del_sa = noklips_del_sa,
-    .get_sa = NULL,
-    .sag_eroute = noklips_sag_eroute,
-    .shunt_eroute = noklips_shunt_eroute,
-    .get_spi = NULL,
-    .inbound_eroute = FALSE,
-    .policy_lifetime = FALSE,
-    .exceptsocket = NULL,
-    .docommand = NULL,
-    .kern_name = "noklips",
-    .overlap_supported = FALSE,
-    .sha2_truncbug_support = FALSE,
+	.init = init_noklips,
+	.pfkey_register = noklips_register,
+	.pfkey_register_response = noklips_register_response,
+	.process_queue = noklips_dequeue,
+	.process_msg = noklips_event,
+	.raw_eroute = noklips_raw_eroute,
+	.add_sa = noklips_add_sa,
+	.grp_sa = noklips_grp_sa,
+	.del_sa = noklips_del_sa,
+	.get_sa = NULL,
+	.sag_eroute = noklips_sag_eroute,
+	.shunt_eroute = noklips_shunt_eroute,
+	.get_spi = NULL,
+	.inbound_eroute = FALSE,
+	.policy_lifetime = FALSE,
+	.exceptsocket = NULL,
+	.docommand = NULL,
+	.kern_name = "noklips",
+	.overlap_supported = FALSE,
+	.sha2_truncbug_support = FALSE,
 };

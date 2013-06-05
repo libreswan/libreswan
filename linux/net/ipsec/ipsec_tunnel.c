@@ -4,7 +4,7 @@
  * Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Richard Guy Briggs.
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012  David McCullough <david_mccullough@mcafee.com>
- * 
+ *
  * OCF/receive state machine written by
  * David McCullough <dmccullough@cyberguard.com>
  * Copyright (C) 2004-2005 Intel Corporation.  All Rights Reserved.
@@ -13,7 +13,7 @@
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -23,29 +23,31 @@
 #include <linux/version.h>
 #define __NO_VERSION__
 #include <linux/module.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,26)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0) && LINUX_VERSION_CODE >= \
+	KERNEL_VERSION(2, 4, 26)
 # include <linux/moduleparam.h>
 #endif
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,38) && !defined(AUTOCONF_INCLUDED)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 38) && \
+	!defined(AUTOCONF_INCLUDED)
 #include <linux/config.h>
 #endif
 #include <linux/kernel.h> /* printk() */
 
 #include "libreswan/ipsec_param.h"
 
-#include <linux/slab.h> /* kmalloc() */
-#include <linux/errno.h>  /* error codes */
-#include <linux/types.h>  /* size_t */
-#include <linux/file.h> 
-#include <linux/interrupt.h> /* mark_bh */
+#include <linux/slab.h>         /* kmalloc() */
+#include <linux/errno.h>        /* error codes */
+#include <linux/types.h>        /* size_t */
+#include <linux/file.h>
+#include <linux/interrupt.h>    /* mark_bh */
 
 #include <net/tcp.h>
 #include <net/udp.h>
 #include <linux/skbuff.h>
 
-#include <linux/netdevice.h>   /* struct device, struct net_device_stats, dev_queue_xmit() and other headers */
-#include <linux/etherdevice.h> /* eth_type_trans */
-#include <linux/ip.h>          /* struct iphdr */
+#include <linux/netdevice.h>    /* struct device, struct net_device_stats, dev_queue_xmit() and other headers */
+#include <linux/etherdevice.h>  /* eth_type_trans */
+#include <linux/ip.h>           /* struct iphdr */
 #include <net/arp.h>
 #include <linux/skbuff.h>
 
@@ -64,7 +66,7 @@
 # endif
 #endif
 
-#include <net/icmp.h>		/* icmp_send() */
+#include <net/icmp.h>           /* icmp_send() */
 #include <net/ip.h>
 #include <net/ipv6.h>
 #include <net/arp.h>
@@ -100,7 +102,8 @@
 static __u32 zeroes[64];
 
 /* forward references */
-DEBUG_NO_STATIC int ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev);
+DEBUG_NO_STATIC int ipsec_tunnel_attach(struct net_device *dev,
+					struct net_device *physdev);
 DEBUG_NO_STATIC int ipsec_tunnel_detach(struct net_device *dev);
 extern const struct net_device_ops klips_device_ops;
 
@@ -114,11 +117,10 @@ DEBUG_NO_STATIC void ipsec_tunnel_upd_encap_cleanup(void);
 int debug_tunnel = 0;
 #endif /* CONFIG_KLIPS_DEBUG */
 
-DEBUG_NO_STATIC int
-ipsec_tunnel_open(struct net_device *dev)
+DEBUG_NO_STATIC int ipsec_tunnel_open(struct net_device *dev)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
-	
+
 	/*
 	 * Can't open until attached.
 	 */
@@ -126,17 +128,16 @@ ipsec_tunnel_open(struct net_device *dev)
 	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 		    "klips_debug:ipsec_tunnel_open: "
 		    "dev = %s, prv->dev = %s\n",
-		    dev->name, prv->dev?prv->dev->name:"NONE");
+		    dev->name, prv->dev ? prv->dev->name : "NONE");
 
 	if (prv->dev == NULL)
 		return -ENODEV;
-	
+
 	KLIPS_INC_USE;
 	return 0;
 }
 
-DEBUG_NO_STATIC int
-ipsec_tunnel_close(struct net_device *dev)
+DEBUG_NO_STATIC int ipsec_tunnel_close(struct net_device *dev)
 {
 	KLIPS_DEC_USE;
 	return 0;
@@ -145,10 +146,12 @@ ipsec_tunnel_close(struct net_device *dev)
 static inline int ipsec_tunnel_xmit2(struct sk_buff *skb)
 {
 
-#ifdef NET_26	/* 2.6 kernels */
+#ifdef NET_26   /* 2.6 kernels */
 	return dst_output(skb);
+
 #else
 	return ip_send(skb);
+
 #endif
 }
 
@@ -161,16 +164,16 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
 	struct net_device *tmp;
 	int ret;
-	struct net_device_stats *stats;	/* This device's statistics */
-	
-	if(skb == NULL) {
+	struct net_device_stats *stats; /* This device's statistics */
+
+	if (skb == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "no skb...\n");
 		return -ENODATA;
 	}
 
-	if(dev == NULL) {
+	if (dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "no device...\n");
@@ -182,8 +185,8 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 		    "skb->dev=%s dev=%s.\n",
 		    skb->dev ? skb->dev->name : "NULL",
 		    dev->name);
-	
-	if(prv == NULL) {
+
+	if (prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "no private space associated with dev=%s\n",
@@ -193,7 +196,7 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 
 	stats = (struct net_device_stats *) &(prv->mystats);
 
-	if(prv->dev == NULL) {
+	if (prv->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "no physical device associated with dev=%s\n",
@@ -202,14 +205,14 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 		return -ENODEV;
 	}
 
-	if(prv->dev->header_ops == NULL ||
-			prv->dev->header_ops->create == NULL) {
+	if (prv->dev->header_ops == NULL ||
+	    prv->dev->header_ops->create == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "cannot revector dev=%s op=%p func=%p",
 			    dev->name ? dev->name : "NULL",
-				prv->dev->header_ops, prv->dev->header_ops ?
-				prv->dev->header_ops->create : 0);
+			    prv->dev->header_ops, prv->dev->header_ops ?
+			    prv->dev->header_ops->create : 0);
 		/* don't fail here or devices without header ops (like ppp) fail */
 		return 0;
 	}
@@ -224,10 +227,10 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 	   called!!  If this is no IPv6 packet, we can print debugging
 	   messages, otherwise we skip all debugging messages and just
 	   build the ll header */
-	if(type != ETH_P_IPV6) {
+	if (type != ETH_P_IPV6) {
 		/* execute this only, if we don't have to build the
 		   header for a IPv6 packet */
-		if(!prv->dev) {
+		if (!prv->dev) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 				    "klips_debug:ipsec_tunnel_hard_header: "
 				    "physical device has been detached, packet dropped 0p%p->0p%p len=%d type=%d dev=%s->NULL ",
@@ -243,7 +246,7 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 			stats->tx_dropped++;
 			return -ENODEV;
 		}
-		
+
 #define da ((struct net_device *)(prv->dev))->dev_addr
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
@@ -256,14 +259,14 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 			    prv->dev->name,
 			    da[0], da[1], da[2], da[3], da[4], da[5]);
 		KLIPS_PRINTMORE(debug_tunnel & DB_TN_REVEC,
-			    "ip=%08x->%08x\n",
-			    (__u32)ntohl(ip_hdr(skb)->saddr),
-			    (__u32)ntohl(ip_hdr(skb)->daddr) );
+				"ip=%08x->%08x\n",
+				(__u32)ntohl(ip_hdr(skb)->saddr),
+				(__u32)ntohl(ip_hdr(skb)->daddr) );
 	} else {
 		KLIPS_PRINT(debug_tunnel,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "is IPv6 packet, skip debugging messages, only revector and build linklocal header.\n");
-	}                                                                       
+	}
 	tmp = skb->dev;
 	skb->dev = prv->dev;
 	ret = prv->dev->header_ops->create(skb, prv->dev, type,
@@ -275,11 +278,11 @@ int klips_header(struct sk_buff *skb, struct net_device *dev,
 int klips_header_parse(const struct sk_buff *skb, unsigned char *haddr)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(skb->dev);
-	struct net_device_stats *stats;	/* This device's statistics */
+	struct net_device_stats *stats; /* This device's statistics */
 	int ret;
 
 	stats = (struct net_device_stats *) &(prv->mystats);
-	if(prv->dev == NULL) {
+	if (prv->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:klips_header_parse: "
 			    "no physical device associated with dev=%s",
@@ -288,24 +291,23 @@ int klips_header_parse(const struct sk_buff *skb, unsigned char *haddr)
 		return 0;
 	}
 
-	if(prv->dev->header_ops == NULL ||
-			prv->dev->header_ops->parse == NULL) {
+	if (prv->dev->header_ops == NULL ||
+	    prv->dev->header_ops->parse == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:klips_header_parse: "
 			    "cannot revector dev=%s op=%p func=%p",
 			    skb->dev->name ? skb->dev->name : "NULL",
-				prv->dev->header_ops, prv->dev->header_ops ?
-				prv->dev->header_ops->parse : 0);
+			    prv->dev->header_ops, prv->dev->header_ops ?
+			    prv->dev->header_ops->parse : 0);
 		stats->tx_dropped++;
 		return 0;
 	}
 
-	
 	{
-#if 0	
+#if 0
 		struct net_device *tmp;
 		tmp = skb->dev;
-		skb->dev = prv->dev; 
+		skb->dev = prv->dev;
 #endif
 		ret = prv->dev->header_ops->parse(skb, haddr);
 #if 0
@@ -315,22 +317,21 @@ int klips_header_parse(const struct sk_buff *skb, unsigned char *haddr)
 	return ret;
 }
 
-DEBUG_NO_STATIC int
-klips_rebuild_header(struct sk_buff *skb)
+DEBUG_NO_STATIC int klips_rebuild_header(struct sk_buff *skb)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(skb->dev);
 	struct net_device *tmp;
 	int ret;
-	struct net_device_stats *stats;	/* This device's statistics */
-	
-	if(skb->dev == NULL) {
+	struct net_device_stats *stats; /* This device's statistics */
+
+	if (skb->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_rebuild_header: "
 			    "no device...");
 		return -ENODEV;
 	}
 
-	if(prv == NULL) {
+	if (prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_rebuild_header: "
 			    "no private space associated with dev=%s",
@@ -340,7 +341,7 @@ klips_rebuild_header(struct sk_buff *skb)
 
 	stats = (struct net_device_stats *) &(prv->mystats);
 
-	if(prv->dev == NULL) {
+	if (prv->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_rebuild_header: "
 			    "no physical device associated with dev=%s",
@@ -349,14 +350,14 @@ klips_rebuild_header(struct sk_buff *skb)
 		return -ENODEV;
 	}
 
-	if(prv->dev->header_ops == NULL ||
-			prv->dev->header_ops->rebuild == NULL) {
+	if (prv->dev->header_ops == NULL ||
+	    prv->dev->header_ops->rebuild == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_rebuild_header: "
 			    "cannot revector dev=%s op=%p func=%p",
 			    skb->dev->name ? skb->dev->name : "NULL",
-				prv->dev->header_ops, prv->dev->header_ops ?
-				prv->dev->header_ops->rebuild : 0);
+			    prv->dev->header_ops, prv->dev->header_ops ?
+			    prv->dev->header_ops->rebuild : 0);
 		stats->tx_dropped++;
 		return -ENODEV;
 	}
@@ -371,26 +372,25 @@ klips_rebuild_header(struct sk_buff *skb)
 		    (__u32)ntohl(ip_hdr(skb)->daddr) );
 	tmp = skb->dev;
 	skb->dev = prv->dev;
-	
+
 	ret = prv->dev->header_ops->rebuild(skb);
 	skb->dev = tmp;
 	return ret;
 }
 
-int klips_header_cache(
-	const struct neighbour *neigh,
-	struct hh_cache *hh
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,1,0)
-	, __be16 type
+int klips_header_cache(const struct neighbour *neigh,
+		       struct hh_cache *hh
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 1, 0)
+		       , __be16 type
 #endif
-	)
+		       )
 {
 	const struct net_device *dev = neigh->dev;
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
 	struct net_device_stats *stats;
 
 	stats = (struct net_device_stats *) &(prv->mystats);
-	if(prv->dev == NULL) {
+	if (prv->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:klips_header_cache: "
 			    "no physical device associated with dev=%s",
@@ -399,14 +399,14 @@ int klips_header_cache(
 		return -1;
 	}
 
-	if(prv->dev->header_ops == NULL ||
-			prv->dev->header_ops->cache == NULL) {
+	if (prv->dev->header_ops == NULL ||
+	    prv->dev->header_ops->cache == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:klips_header_cache: "
 			    "cannot revector dev=%s op=%p func=%p",
 			    dev->name ? dev->name : "NULL",
-				prv->dev->header_ops, prv->dev->header_ops ?
-				prv->dev->header_ops->cache : 0);
+			    prv->dev->header_ops, prv->dev->header_ops ?
+			    prv->dev->header_ops->cache : 0);
 		/* don't fail here or devices without header ops (like ppp) fail */
 		return 0;
 	}
@@ -415,29 +415,28 @@ int klips_header_cache(
 		    "klips_debug:ipsec_tunnel: "
 		    "Revectored cache_update\n");
 	return prv->dev->header_ops->cache(neigh, hh
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,1,0)
-									, type
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 1, 0)
+					   , type
 #endif
-									);
+					   );
 }
 
-DEBUG_NO_STATIC void
-klips_header_cache_update(struct hh_cache *hh,
-			  const struct net_device *dev,
-			  const unsigned char *  haddr)
+DEBUG_NO_STATIC void klips_header_cache_update(struct hh_cache *hh,
+					       const struct net_device *dev,
+					       const unsigned char *  haddr)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
-	
-	struct net_device_stats *stats;	/* This device's statistics */
-	
-	if(dev == NULL) {
+
+	struct net_device_stats *stats; /* This device's statistics */
+
+	if (dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_cache_update: "
 			    "no device...");
 		return;
 	}
 
-	if(prv == NULL) {
+	if (prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_cache_update: "
 			    "no private space associated with dev=%s",
@@ -447,7 +446,7 @@ klips_header_cache_update(struct hh_cache *hh,
 
 	stats = (struct net_device_stats *) &(prv->mystats);
 
-	if(prv->dev == NULL) {
+	if (prv->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_cache_update: "
 			    "no physical device associated with dev=%s",
@@ -456,14 +455,14 @@ klips_header_cache_update(struct hh_cache *hh,
 		return;
 	}
 
-	if(prv->dev->header_ops == NULL ||
-			prv->dev->header_ops->cache_update == NULL) {
+	if (prv->dev->header_ops == NULL ||
+	    prv->dev->header_ops->cache_update == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_cache_update: "
 			    "cannot revector dev=%s op=%p func=%p",
 			    dev->name ? dev->name : "NULL",
-				prv->dev->header_ops, prv->dev->header_ops ?
-				prv->dev->header_ops->cache_update : 0);
+			    prv->dev->header_ops, prv->dev->header_ops ?
+			    prv->dev->header_ops->cache_update : 0);
 		stats->tx_dropped++;
 		return;
 	}
@@ -475,37 +474,37 @@ klips_header_cache_update(struct hh_cache *hh,
 	return;
 }
 
-
 const struct header_ops klips_header_ops ____cacheline_aligned = {
-	.create		= klips_header,
-	.parse		= klips_header_parse,
-	.rebuild	= klips_rebuild_header,
-	.cache		= klips_header_cache,
-	.cache_update	= klips_header_cache_update,
+	.create         = klips_header,
+	.parse          = klips_header_parse,
+	.rebuild        = klips_rebuild_header,
+	.cache          = klips_header_cache,
+	.cache_update   = klips_header_cache_update,
 };
 
 #endif /* HAVE_NETDEV_HEADER_OPS */
 
-enum ipsec_xmit_value
-ipsec_tunnel_strip_hard_header(struct ipsec_xmit_state *ixs)
+enum ipsec_xmit_value ipsec_tunnel_strip_hard_header(
+	struct ipsec_xmit_state *ixs)
 {
 	/* ixs->physdev->hard_header_len is unreliable and should not be used */
 	ixs->hard_header_len = (unsigned char *)ixs->iph - ixs->skb->data;
 
-	if(ixs->hard_header_len < 0) {
+	if (ixs->hard_header_len < 0) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 			    "klips_error:ipsec_xmit_strip_hard_header: "
-			    "Negative hard_header_len (%d)?!\n", ixs->hard_header_len);
+			    "Negative hard_header_len (%d)?!\n",
+			    ixs->hard_header_len);
 		ixs->stats->tx_dropped++;
 		return IPSEC_XMIT_BADHHLEN;
 	}
 
 	/* while ixs->physdev->hard_header_len is unreliable and
 	 * should not be trusted, it accurate and required for ATM, GRE and
-	 * some other interfaces to work. Thanks to Willy Tarreau 
+	 * some other interfaces to work. Thanks to Willy Tarreau
 	 * <willy@w.ods.org>.
 	 */
-	if(ixs->hard_header_len == 0) { /* no hard header present */
+	if (ixs->hard_header_len == 0) { /* no hard header present */
 		ixs->hard_header_stripped = 1;
 		ixs->hard_header_len = ixs->physdev->hard_header_len;
 	}
@@ -513,12 +512,12 @@ ipsec_tunnel_strip_hard_header(struct ipsec_xmit_state *ixs)
 	if (debug_tunnel & DB_TN_XMIT) {
 		int i;
 		char c;
-		
+
 		printk(KERN_INFO "klips_debug:ipsec_xmit_strip_hard_header: "
 		       ">>> skb->len=%ld hard_header_len:%d",
 		       (unsigned long int)ixs->skb->len, ixs->hard_header_len);
 		c = ' ';
-		for (i=0; i < ixs->hard_header_len; i++) {
+		for (i = 0; i < ixs->hard_header_len; i++) {
 			printk("%c%02x", c, ixs->skb->data[i]);
 			c = ':';
 		}
@@ -535,51 +534,62 @@ ipsec_tunnel_strip_hard_header(struct ipsec_xmit_state *ixs)
 	return IPSEC_XMIT_OK;
 }
 
-enum ipsec_xmit_value
-ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
+enum ipsec_xmit_value ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 {
 	unsigned int bypass;
 	unsigned char nexthdr;
 	int nexthdroff;
-	char tsrc[ADDRTOT_BUF+1], tdst[ADDRTOT_BUF+1];
+	char tsrc[ADDRTOT_BUF + 1], tdst[ADDRTOT_BUF + 1];
 
 	bypass = FALSE;
 
 	/*
 	 * First things first -- look us up in the erouting tables.
 	 */
-	ixs->matcher.sen_len = sizeof (struct sockaddr_encap);
+	ixs->matcher.sen_len = sizeof(struct sockaddr_encap);
 	ixs->matcher.sen_family = AF_ENCAP;
 #ifdef CONFIG_KLIPS_IPV6
 	if (lsw_ip_hdr_version(ixs) == 6) {
 		IPSEC_FRAG_OFF_DECL(frag_off)
 		nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 		nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-			((void *)(lsw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data, 
-			&nexthdr, &frag_off);
+						    ((void *)(lsw_ip6_hdr(
+								      ixs) +
+							      1)) - (void*)ixs->skb->data,
+						    &nexthdr, &frag_off);
 		ixs->matcher.sen_type = SENT_IP6;
 		ixs->matcher.sen_ip6_src = lsw_ip6_hdr(ixs)->saddr;
 		ixs->matcher.sen_ip6_dst = lsw_ip6_hdr(ixs)->daddr;
 		ixs->matcher.sen_proto6 = nexthdr;
 		if (debug_tunnel & DB_TN_XMIT) {
-			inet_addrtot(AF_INET6, &lsw_ip6_hdr(ixs)->saddr, 0, tsrc, sizeof(tsrc));
-			inet_addrtot(AF_INET6, &lsw_ip6_hdr(ixs)->daddr, 0, tdst, sizeof(tdst));
+			inet_addrtot(AF_INET6, &lsw_ip6_hdr(
+					     ixs)->saddr, 0, tsrc,
+				     sizeof(tsrc));
+			inet_addrtot(AF_INET6, &lsw_ip6_hdr(
+					     ixs)->daddr, 0, tdst,
+				     sizeof(tdst));
 		}
 	} else
-#endif /* CONFIG_KLIPS_IPV6 */
+#endif  /* CONFIG_KLIPS_IPV6 */
 	{
 		nexthdr = lsw_ip4_hdr(ixs)->protocol;
 		nexthdroff = 0;
-		if ((ntohs(lsw_ip4_hdr(ixs)->frag_off) & IP_OFFSET) == 0)
-			nexthdroff = (ixs->iph + (lsw_ip4_hdr(ixs)->ihl<<2)) -
+		if ((ntohs(lsw_ip4_hdr(ixs)->frag_off) & IP_OFFSET) == 0) {
+			nexthdroff =
+				(ixs->iph + (lsw_ip4_hdr(ixs)->ihl << 2)) -
 				(void *)ixs->skb->data;
+		}
 		ixs->matcher.sen_type = SENT_IP4;
 		ixs->matcher.sen_ip_src.s_addr = lsw_ip4_hdr(ixs)->saddr;
 		ixs->matcher.sen_ip_dst.s_addr = lsw_ip4_hdr(ixs)->daddr;
 		ixs->matcher.sen_proto = nexthdr;
 		if (debug_tunnel & DB_TN_XMIT) {
-			inet_addrtot(AF_INET, &lsw_ip4_hdr(ixs)->saddr, 0, tsrc, sizeof(tsrc));
-			inet_addrtot(AF_INET, &lsw_ip4_hdr(ixs)->daddr, 0, tdst, sizeof(tdst));
+			inet_addrtot(AF_INET, &lsw_ip4_hdr(
+					     ixs)->saddr, 0, tsrc,
+				     sizeof(tsrc));
+			inet_addrtot(AF_INET, &lsw_ip4_hdr(
+					     ixs)->daddr, 0, tdst,
+				     sizeof(tdst));
 		}
 	}
 	ipsec_extract_ports(ixs->skb, nexthdr, nexthdroff, &ixs->matcher);
@@ -589,15 +599,16 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 	 * the eroute while we are using and updating it.
 	 */
 	spin_lock_bh(&eroute_lock);
-	
+
 	ixs->eroute = ipsec_findroute(&ixs->matcher);
 
 	if (nexthdr == IPPROTO_UDP) {
 		struct udphdr _udphdr, *udphdr = NULL;
-		
+
 		if (nexthdroff)
 			udphdr = skb_header_pointer(ixs->skb, nexthdroff,
-				sizeof(*udphdr), &_udphdr);
+						    sizeof(*udphdr), &_udphdr);
+
 
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 			    "klips_debug:udp port check: "
@@ -605,17 +616,18 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 			    "nexthdroff: %d "
 			    "udphdr: %p\n",
 			    lsw_ip_hdr_version(ixs), nexthdroff, udphdr);
-		
-		ixs->sport=0; ixs->dport=0;
 
-		if(ixs->skb->sk) {
+		ixs->sport = 0;
+		ixs->dport = 0;
+
+		if (ixs->skb->sk) {
 #ifdef NET_26
 #ifdef HAVE_INET_SK_SPORT
 			ixs->sport = ntohs(inet_sk(ixs->skb->sk)->inet_sport);
 			ixs->dport = ntohs(inet_sk(ixs->skb->sk)->inet_dport);
 #else
 			struct udp_sock *us;
-			
+
 			us = (struct udp_sock *)ixs->skb->sk;
 
 			ixs->sport = ntohs(us->inet.sport);
@@ -625,15 +637,13 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 			ixs->sport = ntohs(ixs->skb->sk->sport);
 			ixs->dport = ntohs(ixs->skb->sk->dport);
 #endif
-		} 
+		}
 
-		if(udphdr != NULL) {
-			if(ixs->sport == 0) {
+		if (udphdr != NULL) {
+			if (ixs->sport == 0)
 				ixs->sport = ntohs(udphdr->source);
-			}
-			if(ixs->dport == 0) {
+			if (ixs->dport == 0)
 				ixs->dport = ntohs(udphdr->dest);
-			}
 		}
 	}
 
@@ -643,14 +653,16 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 	 */
 	if (nexthdr == IPPROTO_TCP) {
 		struct tcphdr _tcphdr, *tcphdr = NULL;
-		
+
 		if (nexthdroff)
 			tcphdr = skb_header_pointer(ixs->skb, nexthdroff,
-				sizeof(*tcphdr), &_tcphdr);
+						    sizeof(*tcphdr), &_tcphdr);
 
-		ixs->sport=0; ixs->dport=0;
 
-		if(ixs->skb->sk) {
+		ixs->sport = 0;
+		ixs->dport = 0;
+
+		if (ixs->skb->sk) {
 #ifdef NET_26
 #ifdef HAVE_INET_SK_SPORT
 			ixs->sport = ntohs(inet_sk(ixs->skb->sk)->inet_sport);
@@ -665,21 +677,19 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 			ixs->sport = ntohs(ixs->skb->sk->sport);
 			ixs->dport = ntohs(ixs->skb->sk->dport);
 #endif
-		} 
+		}
 
-		if(tcphdr != NULL) {
-			if(ixs->sport == 0) {
+		if (tcphdr != NULL) {
+			if (ixs->sport == 0)
 				ixs->sport = ntohs(tcphdr->source);
-			}
-			if(ixs->dport == 0) {
+			if (ixs->dport == 0)
 				ixs->dport = ntohs(tcphdr->dest);
-			}
 		}
 	}
 
 #ifdef CONFIG_KLIPS_IPV6
 	if (lsw_ip_hdr_version(ixs) == 6) {
-		char edst[ADDRTOT_BUF+1];
+		char edst[ADDRTOT_BUF + 1];
 		struct in6_addr addr6_any = IN6ADDR_ANY_INIT;
 
 		/* default to a %drop eroute */
@@ -688,36 +698,40 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 		ixs->outgoing_said.dst.u.v6.sin6_addr = addr6_any;
 		if (debug_tunnel & DB_TN_XMIT) {
 			if (ixs->eroute)
-				sin_addrtot(&ixs->eroute->er_said.dst.u, 0, edst, sizeof(edst));
+				sin_addrtot(&ixs->eroute->er_said.dst.u, 0,
+					    edst, sizeof(edst));
 			else
 				memcpy(edst, "0", 2);
 		}
 
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
-				"klips_debug:ipsec_xmit_SAlookup: "
-				"checking for local udp/500 IKE, udp/4500 NAT-T, ESP or AH packets "
-				"saddr=%s, er=0p%p, daddr=%s, er_dst=%s, proto=%d sport=%d dport=%d\n",
-				tsrc,
-				ixs->eroute,
-				tdst,
-				edst,
-				nexthdr,
-				ixs->sport,
-				ixs->dport); 
+			    "klips_debug:ipsec_xmit_SAlookup: "
+			    "checking for local udp/500 IKE, udp/4500 NAT-T, ESP or AH packets "
+			    "saddr=%s, er=0p%p, daddr=%s, er_dst=%s, proto=%d sport=%d dport=%d\n",
+			    tsrc,
+			    ixs->eroute,
+			    tdst,
+			    edst,
+			    nexthdr,
+			    ixs->sport,
+			    ixs->dport);
 
 		/*
 		 * cheat for now...are we udp/500? If so, let it through
 		 * without interference since it is most likely an IKE packet.
 		 */
 
-		if (ip6_chk_addr(&lsw_ip6_hdr(ixs)->saddr) == IS_MYADDR
-			&& (ixs->eroute==NULL
-			    || ipv6_addr_cmp(&lsw_ip6_hdr(ixs)->daddr, &ixs->eroute->er_said.dst.u.v6.sin6_addr) == 0
-			    || ipv6_addr_any(&ixs->eroute->er_said.dst.u.v6.sin6_addr))
-			&& (nexthdr == IPPROTO_ESP || nexthdr == IPPROTO_AH ||
-			    (nexthdr == IPPROTO_UDP &&
-			    (ixs->sport == 500 || ixs->sport == 4500)))) {
-			/* Whatever the eroute, this is an IKE message 
+		if (ip6_chk_addr(&lsw_ip6_hdr(ixs)->saddr) == IS_MYADDR &&
+		    (ixs->eroute == NULL ||
+		     ipv6_addr_cmp(&lsw_ip6_hdr(ixs)->daddr,
+				   &ixs->eroute->er_said.dst.u.v6.sin6_addr) ==
+		     0 ||
+		     ipv6_addr_any(&ixs->eroute->er_said.dst.u.v6.sin6_addr))
+		    &&
+		    (nexthdr == IPPROTO_ESP || nexthdr == IPPROTO_AH ||
+		     (nexthdr == IPPROTO_UDP &&
+		      (ixs->sport == 500 || ixs->sport == 4500)))) {
+			/* Whatever the eroute, this is an IKE message
 			 * from us (i.e. not being forwarded).
 			 * Furthermore, if there is a tunnel eroute,
 			 * the destination is the peer for this eroute.
@@ -726,46 +740,51 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 			unsigned int ptr;
 
 			ixs->outgoing_said.spi = htonl(SPI_PASS);
-			if(!ixs->skb->sk
-				&& lsw_ipv6_find_hdr(ixs->skb, &ptr, NEXTHDR_FRAGMENT, NULL) != ENOENT) {
+			if (!ixs->skb->sk &&
+			    lsw_ipv6_find_hdr(ixs->skb, &ptr, NEXTHDR_FRAGMENT,
+					      NULL) != ENOENT) {
 				KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
-						"klips_debug:ipsec_xmit_SAlookup: "
-						"local UDP/500 (probably IKE) passthrough: base fragment, rest of fragments will probably get filtered.\n");
+					    "klips_debug:ipsec_xmit_SAlookup: "
+					    "local UDP/500 (probably IKE) passthrough: base fragment, rest of fragments will probably get filtered.\n");
 			}
 			bypass = TRUE;
 		}
 	} else
-#endif /* CONFIG_KLIPS_IPV6 */
+#endif  /* CONFIG_KLIPS_IPV6 */
 	{
 		/* default to a %drop eroute */
 		ixs->outgoing_said.proto = IPPROTO_INT;
 		ixs->outgoing_said.spi = htonl(SPI_DROP);
 		ixs->outgoing_said.dst.u.v4.sin_addr.s_addr = INADDR_ANY;
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
-				"klips_debug:ipsec_xmit_SAlookup: "
-				"checking for local udp/500 IKE, udp/4500 NAT-T, ESP or AH packets "
-				"saddr=%s, er=0p%p, daddr=%s, er_dst=%x, proto=%d sport=%d dport=%d\n",
-				tsrc,
-				ixs->eroute,
-				tdst,
-				ixs->eroute ? ntohl((unsigned int)ixs->eroute->er_said.dst.u.v4.sin_addr.s_addr) : 0,
-				nexthdr,
-				ixs->sport,
-				ixs->dport); 
+			    "klips_debug:ipsec_xmit_SAlookup: "
+			    "checking for local udp/500 IKE, udp/4500 NAT-T, ESP or AH packets "
+			    "saddr=%s, er=0p%p, daddr=%s, er_dst=%x, proto=%d sport=%d dport=%d\n",
+			    tsrc,
+			    ixs->eroute,
+			    tdst,
+			    ixs->eroute ? ntohl((unsigned int)ixs->eroute->
+						er_said.dst.u.v4.sin_addr.
+						s_addr) : 0,
+			    nexthdr,
+			    ixs->sport,
+			    ixs->dport);
 
 		/*
 		 * cheat for now...are we udp/500? If so, let it through
 		 * without interference since it is most likely an IKE packet.
 		 */
 
-		if (ip_chk_addr(lsw_ip4_hdr(ixs)->saddr) == IS_MYADDR
-			&& (ixs->eroute==NULL
-			|| lsw_ip4_hdr(ixs)->daddr == ixs->eroute->er_said.dst.u.v4.sin_addr.s_addr
-			|| INADDR_ANY == ixs->eroute->er_said.dst.u.v4.sin_addr.s_addr)
-			&& (nexthdr == IPPROTO_ESP || nexthdr == IPPROTO_AH ||
-			    (nexthdr == IPPROTO_UDP &&
-			    (ixs->sport == 500 || ixs->sport == 4500)))) {
-			/* Whatever the eroute, this is an IKE message 
+		if (ip_chk_addr(lsw_ip4_hdr(ixs)->saddr) == IS_MYADDR &&
+		    (ixs->eroute == NULL ||
+		     lsw_ip4_hdr(ixs)->daddr ==
+		     ixs->eroute->er_said.dst.u.v4.sin_addr.s_addr ||
+		     INADDR_ANY ==
+		     ixs->eroute->er_said.dst.u.v4.sin_addr.s_addr) &&
+		    (nexthdr == IPPROTO_ESP || nexthdr == IPPROTO_AH ||
+		     (nexthdr == IPPROTO_UDP &&
+		      (ixs->sport == 500 || ixs->sport == 4500)))) {
+			/* Whatever the eroute, this is an IKE message
 			 * from us (i.e. not being forwarded).
 			 * Furthermore, if there is a tunnel eroute,
 			 * the destination is the peer for this eroute.
@@ -773,25 +792,26 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 			 */
 
 			ixs->outgoing_said.spi = htonl(SPI_PASS);
-			if(!(ixs->skb->sk) && ((ntohs(lsw_ip4_hdr(ixs)->frag_off) & IP_MF) != 0)) {
+			if (!(ixs->skb->sk) &&
+			    ((ntohs(lsw_ip4_hdr(ixs)->frag_off) & IP_MF) !=
+			     0)) {
 				KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
-						"klips_debug:ipsec_xmit_SAlookup: "
-						"local UDP/500 (probably IKE) passthrough: base fragment, rest of fragments will probably get filtered.\n");
+					    "klips_debug:ipsec_xmit_SAlookup: "
+					    "local UDP/500 (probably IKE) passthrough: base fragment, rest of fragments will probably get filtered.\n");
 			}
 			bypass = TRUE;
 		}
 	}
 
-	if (bypass==FALSE && ixs->eroute) {
+	if (bypass == FALSE && ixs->eroute) {
 		ixs->eroute->er_count++;
-		ixs->eroute->er_lasttime = jiffies/HZ;
-		if(ixs->eroute->er_said.proto==IPPROTO_INT
-		   && ixs->eroute->er_said.spi==htonl(SPI_HOLD))
-		{
+		ixs->eroute->er_lasttime = jiffies / HZ;
+		if (ixs->eroute->er_said.proto == IPPROTO_INT &&
+		    ixs->eroute->er_said.spi == htonl(SPI_HOLD)) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 				    "klips_debug:ipsec_xmit_SAlookup: "
 				    "shunt SA of HOLD: skb stored in HOLD.\n");
-			if(ixs->eroute->er_last != NULL) {
+			if (ixs->eroute->er_last != NULL) {
 				ipsec_kfree_skb(ixs->eroute->er_last);
 				ixs->stats->tx_dropped++;
 			}
@@ -804,50 +824,60 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 		ixs->eroute_pid = ixs->eroute->er_pid;
 
 		/* Copy of the ident for the TRAP/TRAPSUBNET eroutes */
-		if(ixs->outgoing_said.proto==IPPROTO_INT
-		   && (ixs->outgoing_said.spi==htonl(SPI_TRAP)
-		       || (ixs->outgoing_said.spi==htonl(SPI_TRAPSUBNET)))) {
+		if (ixs->outgoing_said.proto == IPPROTO_INT &&
+		    (ixs->outgoing_said.spi == htonl(SPI_TRAP) ||
+		     (ixs->outgoing_said.spi == htonl(SPI_TRAPSUBNET)))) {
 			int len;
-			
-			ixs->ips.ips_ident_s.type = ixs->eroute->er_ident_s.type;
+
+			ixs->ips.ips_ident_s.type =
+				ixs->eroute->er_ident_s.type;
 			ixs->ips.ips_ident_s.id = ixs->eroute->er_ident_s.id;
 			ixs->ips.ips_ident_s.len = ixs->eroute->er_ident_s.len;
-			if (ixs->ips.ips_ident_s.len)
-			{
-				len = ixs->ips.ips_ident_s.len * IPSEC_PFKEYv2_ALIGN - sizeof(struct sadb_ident);
+			if (ixs->ips.ips_ident_s.len) {
+				len = ixs->ips.ips_ident_s.len *
+				      IPSEC_PFKEYv2_ALIGN -
+				      sizeof(struct sadb_ident);
 				KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 					    "klips_debug:ipsec_xmit_SAlookup: "
 					    "allocating %d bytes for ident_s shunt SA of HOLD: skb stored in HOLD.\n",
 					    len);
-				if ((ixs->ips.ips_ident_s.data = kmalloc(len, GFP_ATOMIC)) == NULL) {
+				if ((ixs->ips.ips_ident_s.data =
+					     kmalloc(len,
+						     GFP_ATOMIC)) == NULL) {
 					printk(KERN_WARNING "klips_debug:ipsec_xmit_SAlookup: "
-					       "Failed, tried to allocate %d bytes for source ident.\n", 
+					       "Failed, tried to allocate %d bytes for source ident.\n",
 					       len);
 					ixs->stats->tx_dropped++;
 					spin_unlock_bh(&eroute_lock);
 					return IPSEC_XMIT_ERRMEMALLOC;
 				}
-				memcpy(ixs->ips.ips_ident_s.data, ixs->eroute->er_ident_s.data, len);
+				memcpy(ixs->ips.ips_ident_s.data,
+				       ixs->eroute->er_ident_s.data, len);
 			}
-			ixs->ips.ips_ident_d.type = ixs->eroute->er_ident_d.type;
+			ixs->ips.ips_ident_d.type =
+				ixs->eroute->er_ident_d.type;
 			ixs->ips.ips_ident_d.id = ixs->eroute->er_ident_d.id;
 			ixs->ips.ips_ident_d.len = ixs->eroute->er_ident_d.len;
-			if (ixs->ips.ips_ident_d.len)
-			{
-				len = ixs->ips.ips_ident_d.len * IPSEC_PFKEYv2_ALIGN - sizeof(struct sadb_ident);
+			if (ixs->ips.ips_ident_d.len) {
+				len = ixs->ips.ips_ident_d.len *
+				      IPSEC_PFKEYv2_ALIGN -
+				      sizeof(struct sadb_ident);
 				KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 					    "klips_debug:ipsec_xmit_SAlookup: "
 					    "allocating %d bytes for ident_d shunt SA of HOLD: skb stored in HOLD.\n",
 					    len);
-				if ((ixs->ips.ips_ident_d.data = kmalloc(len, GFP_ATOMIC)) == NULL) {
+				if ((ixs->ips.ips_ident_d.data =
+					     kmalloc(len,
+						     GFP_ATOMIC)) == NULL) {
 					printk(KERN_WARNING "klips_debug:ipsec_xmit_SAlookup: "
-					       "Failed, tried to allocate %d bytes for dest ident.\n", 
+					       "Failed, tried to allocate %d bytes for dest ident.\n",
 					       len);
 					ixs->stats->tx_dropped++;
 					spin_unlock_bh(&eroute_lock);
 					return IPSEC_XMIT_ERRMEMALLOC;
 				}
-				memcpy(ixs->ips.ips_ident_d.data, ixs->eroute->er_ident_d.data, len);
+				memcpy(ixs->ips.ips_ident_d.data,
+				       ixs->eroute->er_ident_d.data, len);
 			}
 		}
 	}
@@ -856,9 +886,8 @@ ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 	return IPSEC_XMIT_OK;
 }
 
-
-enum ipsec_xmit_value
-ipsec_tunnel_restore_hard_header(struct ipsec_xmit_state*ixs)
+enum ipsec_xmit_value ipsec_tunnel_restore_hard_header(
+	struct ipsec_xmit_state*ixs)
 {
 	KLIPS_PRINT(debug_tunnel & DB_TN_CROUT,
 		    "klips_debug:ipsec_xmit_restore_hard_header: "
@@ -866,8 +895,8 @@ ipsec_tunnel_restore_hard_header(struct ipsec_xmit_state*ixs)
 		    skb_headroom(ixs->skb),
 		    skb_tailroom(ixs->skb));
 
-	if(ixs->saved_header) {
-		if(skb_headroom(ixs->skb) < ixs->hard_header_len) {
+	if (ixs->saved_header) {
+		if (skb_headroom(ixs->skb) < ixs->hard_header_len) {
 			printk(KERN_WARNING
 			       "klips_error:ipsec_xmit_restore_hard_header: "
 			       "tried to skb_push hhlen=%d, %d available.  This should never happen, please report.\n",
@@ -880,9 +909,8 @@ ipsec_tunnel_restore_hard_header(struct ipsec_xmit_state*ixs)
 		skb_push(ixs->skb, ixs->hard_header_len);
 		{
 			int i;
-			for (i = 0; i < ixs->hard_header_len; i++) {
+			for (i = 0; i < ixs->hard_header_len; i++)
 				ixs->skb->data[i] = ixs->saved_header[i];
-			}
 		}
 	}
 
@@ -895,26 +923,22 @@ ipsec_tunnel_restore_hard_header(struct ipsec_xmit_state*ixs)
 	return IPSEC_XMIT_OK;
 }
 
-
 /*
  * when encap processing is complete it call this for us to continue
  */
 
-void
-ipsec_tunnel_xsm_complete(
-	struct ipsec_xmit_state *ixs,
-	enum ipsec_xmit_value stat)
+void ipsec_tunnel_xsm_complete(struct ipsec_xmit_state *ixs,
+			       enum ipsec_xmit_value stat)
 {
 	unsigned char nexthdr;
 	int nexthdroff;
-	if(stat != IPSEC_XMIT_OK) {
-		if(stat == IPSEC_XMIT_PASS) {
+	if (stat != IPSEC_XMIT_OK) {
+		if (stat == IPSEC_XMIT_PASS)
 			goto bypass;
-		}
-		
+
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
-				"klips_debug:ipsec_tunnel_start_xmit: encap_bundle failed: %d\n",
-				stat);
+			    "klips_debug:ipsec_tunnel_start_xmit: encap_bundle failed: %d\n",
+			    stat);
 		goto cleanup;
 	}
 
@@ -923,20 +947,24 @@ ipsec_tunnel_xsm_complete(
 		IPSEC_FRAG_OFF_DECL(frag_off)
 		nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 		nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-			((void *)(lsw_ip6_hdr(ixs)+1)) - (void*)ixs->skb->data,
-			&nexthdr, &frag_off);
+						    ((void *)(lsw_ip6_hdr(
+								      ixs) +
+							      1)) - (void*)ixs->skb->data,
+						    &nexthdr, &frag_off);
 		ixs->matcher.sen_type = SENT_IP6;
 		ixs->matcher.sen_ip6_src = lsw_ip6_hdr(ixs)->saddr;
 		ixs->matcher.sen_ip6_dst = lsw_ip6_hdr(ixs)->daddr;
 		ixs->matcher.sen_proto6 = nexthdr;
 	} else
-#endif /* CONFIG_KLIPS_IPV6 */
+#endif  /* CONFIG_KLIPS_IPV6 */
 	{
 		nexthdr = lsw_ip4_hdr(ixs)->protocol;
 		nexthdroff = 0;
-		if ((ntohs(lsw_ip4_hdr(ixs)->frag_off) & IP_OFFSET) == 0)
-			nexthdroff = (ixs->iph + (lsw_ip4_hdr(ixs)->ihl<<2)) -
+		if ((ntohs(lsw_ip4_hdr(ixs)->frag_off) & IP_OFFSET) == 0) {
+			nexthdroff =
+				(ixs->iph + (lsw_ip4_hdr(ixs)->ihl << 2)) -
 				(void *)ixs->skb->data;
+		}
 		ixs->matcher.sen_type = SENT_IP4;
 		ixs->matcher.sen_ip_src.s_addr = lsw_ip4_hdr(ixs)->saddr;
 		ixs->matcher.sen_ip_dst.s_addr = lsw_ip4_hdr(ixs)->daddr;
@@ -946,36 +974,35 @@ ipsec_tunnel_xsm_complete(
 
 	spin_lock_bh(&eroute_lock);
 	ixs->eroute = ipsec_findroute(&ixs->matcher);
-	if(ixs->eroute) {
+	if (ixs->eroute) {
 		ixs->outgoing_said = ixs->eroute->er_said;
 		ixs->eroute_pid = ixs->eroute->er_pid;
 		ixs->eroute->er_count++;
-		ixs->eroute->er_lasttime = jiffies/HZ;
+		ixs->eroute->er_lasttime = jiffies / HZ;
 	}
 	spin_unlock_bh(&eroute_lock);
 
-	if (/*((ixs->orgdst != ixs->newdst) || (ixs->orgsrc != ixs->newsrc))*/
-			ip_address_cmp(&ixs->orgedst, &ixs->outgoing_said.dst) != 0 &&
-			!ip_address_isany(&ixs->outgoing_said.dst) &&
-			ixs->eroute) {
+	if ( /*((ixs->orgdst != ixs->newdst) || (ixs->orgsrc != ixs->newsrc))*/
+		ip_address_cmp(&ixs->orgedst, &ixs->outgoing_said.dst) != 0 &&
+		!ip_address_isany(&ixs->outgoing_said.dst) &&
+		ixs->eroute) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
-			"klips_debug:ipsec_tunnel_start_xmit: "
-			"We are recursing here.\n");
+			    "klips_debug:ipsec_tunnel_start_xmit: "
+			    "We are recursing here.\n");
 		ipsec_xsm(ixs);
 		return;
 	}
 
 #ifdef NAT_TRAVERSAL
 	stat = ipsec_nat_encap(ixs);
-	if(stat != IPSEC_XMIT_OK) {
+	if (stat != IPSEC_XMIT_OK)
 		goto cleanup;
-	}
+
 #endif
 
 	stat = ipsec_tunnel_restore_hard_header(ixs);
-	if(stat != IPSEC_XMIT_OK) {
+	if (stat != IPSEC_XMIT_OK)
 		goto cleanup;
-	}
 
 bypass:
 	stat = ipsec_tunnel_send(ixs);
@@ -985,13 +1012,11 @@ cleanup:
 	ipsec_xmit_state_delete(ixs);
 }
 
-
 /*
  *	This function assumes it is being called from dev_queue_xmit()
  *	and that skb is filled properly by that function.
  */
-int
-ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
+int ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct ipsec_xmit_state *ixs = NULL;
 	enum ipsec_xmit_value stat;
@@ -1001,48 +1026,45 @@ ipsec_tunnel_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	stat = IPSEC_XMIT_ERRMEMALLOC;
 	ixs = ipsec_xmit_state_new(dev);
-	if(ixs == NULL)
+	if (ixs == NULL)
 		return NETDEV_TX_BUSY;
 
 	ixs->dev = dev;
 	ixs->skb = skb;
 
 	stat = ipsec_xmit_sanity_check_ipsec_dev(ixs);
-	if(stat != IPSEC_XMIT_OK) {
+	if (stat != IPSEC_XMIT_OK)
 		goto cleanup;
-	}
 
 	stat = ipsec_xmit_sanity_check_skb(ixs);
-	if(stat != IPSEC_XMIT_OK) {
+	if (stat != IPSEC_XMIT_OK)
 		goto cleanup;
-	}
 
 	stat = ipsec_tunnel_strip_hard_header(ixs);
-	if(stat != IPSEC_XMIT_OK) {
+	if (stat != IPSEC_XMIT_OK)
 		goto cleanup;
-	}
 
 	stat = ipsec_tunnel_SAlookup(ixs);
-	if(stat != IPSEC_XMIT_OK) {
+	if (stat != IPSEC_XMIT_OK) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
 			    "klips_debug:ipsec_tunnel_start_xmit: SAlookup failed: %d\n",
 			    stat);
 		goto cleanup;
 	}
-	
+
 	ixs->xsm_complete = ipsec_tunnel_xsm_complete;
 
 	ipsec_xsm(ixs);
 	return 0;
 
- cleanup:
+cleanup:
 	ipsec_xmit_cleanup(ixs);
 	ipsec_xmit_state_delete(ixs);
 	return 0;
 }
 
-DEBUG_NO_STATIC struct net_device_stats *
-ipsec_tunnel_get_stats(struct net_device *dev)
+DEBUG_NO_STATIC struct net_device_stats *ipsec_tunnel_get_stats(
+	struct net_device *dev)
 {
 	return &(netdev_to_ipsecpriv(dev)->mystats);
 }
@@ -1052,23 +1074,25 @@ ipsec_tunnel_get_stats(struct net_device *dev)
  * For each of these calls, a field exists in our private structure.
  */
 
-DEBUG_NO_STATIC int
-ipsec_tunnel_hard_header(struct sk_buff *skb, struct net_device *dev,
-	unsigned short type, const void *daddr, const void *saddr, unsigned len)
+DEBUG_NO_STATIC int ipsec_tunnel_hard_header(struct sk_buff *skb,
+					     struct net_device *dev,
+					     unsigned short type,
+					     const void *daddr,
+					     const void *saddr, unsigned len)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
 	struct net_device *tmp;
 	int ret;
-	struct net_device_stats *stats;	/* This device's statistics */
-	
-	if(skb == NULL) {
+	struct net_device_stats *stats; /* This device's statistics */
+
+	if (skb == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "no skb...\n");
 		return -ENODATA;
 	}
 
-	if(dev == NULL) {
+	if (dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "no device...\n");
@@ -1080,8 +1104,8 @@ ipsec_tunnel_hard_header(struct sk_buff *skb, struct net_device *dev,
 		    "skb->dev=%s dev=%s.\n",
 		    skb->dev ? skb->dev->name : "NULL",
 		    dev->name);
-	
-	if(prv == NULL) {
+
+	if (prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "no private space associated with dev=%s\n",
@@ -1091,7 +1115,7 @@ ipsec_tunnel_hard_header(struct sk_buff *skb, struct net_device *dev,
 
 	stats = (struct net_device_stats *) &(prv->mystats);
 
-	if(prv->dev == NULL) {
+	if (prv->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "no physical device associated with dev=%s\n",
@@ -1110,13 +1134,13 @@ ipsec_tunnel_hard_header(struct sk_buff *skb, struct net_device *dev,
 	   called!!  If this is no IPv6 packet, we can print debugging
 	   messages, otherwise we skip all debugging messages and just
 	   build the ll header */
-	if(type != ETH_P_IPV6) {
+	if (type != ETH_P_IPV6) {
 		/* execute this only, if we don't have to build the
 		   header for a IPv6 packet */
 #ifdef HAVE_NETDEV_HEADER_OPS
-		if(!prv->header_ops->create)
+		if (!prv->header_ops->create)
 #else
-		if(!prv->hard_header)
+		if (!prv->hard_header)
 #endif
 		{
 			KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
@@ -1134,7 +1158,7 @@ ipsec_tunnel_hard_header(struct sk_buff *skb, struct net_device *dev,
 			stats->tx_dropped++;
 			return -ENODEV;
 		}
-		
+
 #define da ((struct net_device *)(prv->dev))->dev_addr
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_hard_header: "
@@ -1147,41 +1171,43 @@ ipsec_tunnel_hard_header(struct sk_buff *skb, struct net_device *dev,
 			    prv->dev->name,
 			    da[0], da[1], da[2], da[3], da[4], da[5]);
 		KLIPS_PRINTMORE(debug_tunnel & DB_TN_REVEC,
-			    "ip=%08x->%08x\n",
-			    (__u32)ntohl(ip_hdr(skb)->saddr),
-			    (__u32)ntohl(ip_hdr(skb)->daddr) );
+				"ip=%08x->%08x\n",
+				(__u32)ntohl(ip_hdr(skb)->saddr),
+				(__u32)ntohl(ip_hdr(skb)->daddr) );
 	} else {
 		KLIPS_PRINT(debug_tunnel,
 			    "klips_debug:ipsec_tunnel_hard_header: "
 			    "is IPv6 packet, skip debugging messages, only revector and build linklocal header.\n");
-	}                                                                       
+	}
 	tmp = skb->dev;
 	skb->dev = prv->dev;
 #ifdef HAVE_NETDEV_HEADER_OPS
-	ret = prv->header_ops->create(skb, prv->dev, type, (void *)daddr, (void *)saddr, len);
+	ret =
+		prv->header_ops->create(skb, prv->dev, type, (void *)daddr,
+					(void *)saddr, len);
 #else
-	ret = prv->hard_header(skb, prv->dev, type, (void *)daddr, (void *)saddr, len);
+	ret = prv->hard_header(skb, prv->dev, type, (void *)daddr,
+			       (void *)saddr, len);
 #endif
 	skb->dev = tmp;
 	return ret;
 }
 
-DEBUG_NO_STATIC int
-ipsec_tunnel_rebuild_header(struct sk_buff *skb)
+DEBUG_NO_STATIC int ipsec_tunnel_rebuild_header(struct sk_buff *skb)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(skb->dev);
 	struct net_device *tmp;
 	int ret;
-	struct net_device_stats *stats;	/* This device's statistics */
-	
-	if(skb->dev == NULL) {
+	struct net_device_stats *stats; /* This device's statistics */
+
+	if (skb->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_rebuild_header: "
 			    "no device...");
 		return -ENODEV;
 	}
 
-	if(prv == NULL) {
+	if (prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_rebuild_header: "
 			    "no private space associated with dev=%s",
@@ -1191,7 +1217,7 @@ ipsec_tunnel_rebuild_header(struct sk_buff *skb)
 
 	stats = (struct net_device_stats *) &(prv->mystats);
 
-	if(prv->dev == NULL) {
+	if (prv->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_rebuild_header: "
 			    "no physical device associated with dev=%s",
@@ -1201,9 +1227,9 @@ ipsec_tunnel_rebuild_header(struct sk_buff *skb)
 	}
 
 #ifdef HAVE_NETDEV_HEADER_OPS
-	if(!prv->header_ops->rebuild)
+	if (!prv->header_ops->rebuild)
 #else
-	if(!prv->rebuild_header)
+	if (!prv->rebuild_header)
 #endif
 	{
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
@@ -1239,21 +1265,21 @@ ipsec_tunnel_rebuild_header(struct sk_buff *skb)
 }
 
 #ifdef HAVE_SET_MAC_ADDR
-DEBUG_NO_STATIC int
-ipsec_tunnel_set_mac_address(struct net_device *dev, void *addr)
+DEBUG_NO_STATIC int ipsec_tunnel_set_mac_address(struct net_device *dev,
+						 void *addr)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
-	
-	struct net_device_stats *stats;	/* This device's statistics */
-	
-	if(dev == NULL) {
+
+	struct net_device_stats *stats; /* This device's statistics */
+
+	if (dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_set_mac_address: "
 			    "no device...");
 		return -ENODEV;
 	}
 
-	if(prv == NULL) {
+	if (prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_set_mac_address: "
 			    "no private space associated with dev=%s",
@@ -1263,7 +1289,7 @@ ipsec_tunnel_set_mac_address(struct net_device *dev, void *addr)
 
 	stats = (struct net_device_stats *) &(prv->mystats);
 
-	if(prv->dev == NULL) {
+	if (prv->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_set_mac_address: "
 			    "no physical device associated with dev=%s",
@@ -1272,7 +1298,7 @@ ipsec_tunnel_set_mac_address(struct net_device *dev, void *addr)
 		return -ENODEV;
 	}
 
-	if(!prv->dev) {
+	if (!prv->dev) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_set_mac_address: "
 			    "physical device has been detached, cannot set - skb->dev=%s->NULL\n",
@@ -1289,22 +1315,22 @@ ipsec_tunnel_set_mac_address(struct net_device *dev, void *addr)
 }
 #endif /* HAVE_SET_MAC_ADDR */
 
-DEBUG_NO_STATIC void
-ipsec_tunnel_cache_update(struct hh_cache *hh, const struct net_device *dev,
-				const unsigned char *  haddr)
+DEBUG_NO_STATIC void ipsec_tunnel_cache_update(struct hh_cache *hh,
+					       const struct net_device *dev,
+					       const unsigned char *  haddr)
 {
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
-	
-	struct net_device_stats *stats;	/* This device's statistics */
-	
-	if(dev == NULL) {
+
+	struct net_device_stats *stats; /* This device's statistics */
+
+	if (dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_cache_update: "
 			    "no device...");
 		return;
 	}
 
-	if(prv == NULL) {
+	if (prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_cache_update: "
 			    "no private space associated with dev=%s",
@@ -1314,7 +1340,7 @@ ipsec_tunnel_cache_update(struct hh_cache *hh, const struct net_device *dev,
 
 	stats = (struct net_device_stats *) &(prv->mystats);
 
-	if(prv->dev == NULL) {
+	if (prv->dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_cache_update: "
 			    "no physical device associated with dev=%s",
@@ -1324,9 +1350,9 @@ ipsec_tunnel_cache_update(struct hh_cache *hh, const struct net_device *dev,
 	}
 
 #ifdef HAVE_NETDEV_HEADER_OPS
-	if(!prv->header_ops->cache_update)
+	if (!prv->header_ops->cache_update)
 #else
-	if(!prv->header_cache_update)
+	if (!prv->header_cache_update)
 #endif
 	{
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
@@ -1349,61 +1375,59 @@ ipsec_tunnel_cache_update(struct hh_cache *hh, const struct net_device *dev,
 
 #ifdef HAVE_NETDEV_HEADER_OPS
 const struct header_ops ipsec_tunnel_header_ops = {
-	.create		= ipsec_tunnel_hard_header,
-	.rebuild	= ipsec_tunnel_rebuild_header,
-	.cache_update	= ipsec_tunnel_cache_update,
+	.create         = ipsec_tunnel_hard_header,
+	.rebuild        = ipsec_tunnel_rebuild_header,
+	.cache_update   = ipsec_tunnel_cache_update,
 };
 #endif
 
-DEBUG_NO_STATIC int
-ipsec_tunnel_neigh_setup(struct neighbour *n)
+DEBUG_NO_STATIC int ipsec_tunnel_neigh_setup(struct neighbour *n)
 {
 	KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 		    "klips_debug:ipsec_tunnel_neigh_setup:\n");
 
-        if (n->nud_state == NUD_NONE) {
+	if (n->nud_state == NUD_NONE) {
 #ifndef PRIVATE_ARP_BROKEN_OPS
-                n->ops = &arp_broken_ops;
+		n->ops = &arp_broken_ops;
 #endif
-                n->output = n->ops->output;
-        }
-        return 0;
+		n->output = n->ops->output;
+	}
+	return 0;
 }
 
-DEBUG_NO_STATIC int
-ipsec_tunnel_neigh_setup_dev(struct net_device *dev, struct neigh_parms *p)
+DEBUG_NO_STATIC int ipsec_tunnel_neigh_setup_dev(struct net_device *dev,
+						 struct neigh_parms *p)
 {
 	KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 		    "klips_debug:ipsec_tunnel_neigh_setup_dev: "
 		    "setting up %s\n",
 		    dev ? dev->name : "NULL");
 
-        if (p->tbl->family == AF_INET) {
-                p->neigh_setup = ipsec_tunnel_neigh_setup;
-                p->ucast_probes = 0;
-                p->mcast_probes = 0;
-        }
-        return 0;
+	if (p->tbl->family == AF_INET) {
+		p->neigh_setup = ipsec_tunnel_neigh_setup;
+		p->ucast_probes = 0;
+		p->mcast_probes = 0;
+	}
+	return 0;
 }
 
 /*
  * We call the detach routine to detach the ipsec tunnel from another device.
  */
 
-DEBUG_NO_STATIC int
-ipsec_tunnel_detach(struct net_device *dev)
+DEBUG_NO_STATIC int ipsec_tunnel_detach(struct net_device *dev)
 {
 	int i;
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
 
-	if(dev == NULL) {
+	if (dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_detach: "
 			    "no device...");
 		return -ENODEV;
 	}
 
-	if(prv == NULL) {
+	if (prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_detach: "
 			    "no private space associated with dev=%s",
@@ -1445,25 +1469,23 @@ ipsec_tunnel_detach(struct net_device *dev)
 	dev->set_mac_address = NULL;
 #endif
 	dev->mtu = 0;
-#endif /* DETACH_AND_DOWN */
-	
+#endif  /* DETACH_AND_DOWN */
+
 	prv->mtu = 0;
-	for (i=0; i<MAX_ADDR_LEN; i++) {
+	for (i = 0; i < MAX_ADDR_LEN; i++)
 		dev->dev_addr[i] = 0;
-	}
 	dev->addr_len = 0;
 #ifdef PHYSDEV_TYPE
 	dev->type = ARPHRD_VOID; /* ARPHRD_TUNNEL; */
 #endif /*  PHYSDEV_TYPE */
-	
+
 	return 0;
 }
 
 /*
  * We call the clear routine to detach all ipsec tunnels from other devices.
  */
-DEBUG_NO_STATIC int
-ipsec_tunnel_clear(void)
+DEBUG_NO_STATIC int ipsec_tunnel_clear(void)
 {
 	int i;
 	struct net_device *ipsecdev = NULL, *prvdev;
@@ -1473,9 +1495,9 @@ ipsec_tunnel_clear(void)
 	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 		    "klips_debug:ipsec_tunnel_clear: .\n");
 
-	for(i = 0; i < IPSEC_NUM_IFMAX; i++) {
+	for (i = 0; i < IPSEC_NUM_IFMAX; i++) {
 		ipsecdev = ipsecdevices[i];
-		if(!ipsecdev || !netdev_priv(ipsecdev))
+		if (!ipsecdev || !netdev_priv(ipsecdev))
 			continue;
 
 		prv = netdev_to_ipsecpriv(ipsecdev);
@@ -1483,40 +1505,41 @@ ipsec_tunnel_clear(void)
 			continue;
 
 		prvdev = (struct net_device *)(prv->dev);
-		if(!prvdev)
+		if (!prvdev)
 			continue;
 
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
-				"klips_debug:ipsec_tunnel_clear: "
-				"physical device for device %s is %s\n",
-				ipsecdev->name, prvdev->name);
-		if((ret = ipsec_tunnel_detach(ipsecdev))) {
+			    "klips_debug:ipsec_tunnel_clear: "
+			    "physical device for device %s is %s\n",
+			    ipsecdev->name, prvdev->name);
+		if ((ret = ipsec_tunnel_detach(ipsecdev))) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
-					"klips_debug:ipsec_tunnel_clear: "
-					"error %d detatching device %s from device %s.\n",
-					ret, ipsecdev->name, prvdev->name);
+				    "klips_debug:ipsec_tunnel_clear: "
+				    "error %d detatching device %s from device %s.\n",
+				    ret, ipsecdev->name, prvdev->name);
 			return ret;
 		}
 	}
 	return 0;
 }
 
-/* 
+/*
  * Used mostly for KLIPS to setup interface, for also with NETKEY when using
  * 2.6.23+ UDP XFRM code to mark sockets UDP_ENCAP_ESPINUDP_NON_IKE
  */
-DEBUG_NO_STATIC int
-ipsec_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+DEBUG_NO_STATIC int ipsec_tunnel_ioctl(struct net_device *dev,
+				       struct ifreq *ifr, int cmd)
 {
 	/* struct ipsectunnelconf *cf = (struct ipsectunnelconf *)&ifr->ifr_data;*/
 	/* overlay our struct ipsectunnel onto ifr.ifr_ifru union (hope it fits!) */
-	struct ipsectunnelconf *cf=(struct ipsectunnelconf *)ifr->ifr_ifru.ifru_newname;
+	struct ipsectunnelconf *cf =
+		(struct ipsectunnelconf *)ifr->ifr_ifru.ifru_newname;
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
 	struct net_device *them; /* physical device */
 	char *colon;
 	char realphysname[IFNAMSIZ];
-	
-	if(dev == NULL) {
+
+	if (dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 			    "klips_debug:ipsec_tunnel_ioctl: "
 			    "device not supplied.\n");
@@ -1537,9 +1560,10 @@ ipsec_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 			    "calling ipsec_tunnel_attatch...\n");
 		/* If this is an IP alias interface, get its real physical name */
 		strncpy(realphysname, cf->cf_name, IFNAMSIZ);
-		realphysname[IFNAMSIZ-1] = 0;
+		realphysname[IFNAMSIZ - 1] = 0;
 		colon = strchr(realphysname, ':');
-		if (colon) *colon = 0;
+		if (colon)
+			*colon = 0;
 		them = ipsec_dev_get(realphysname);
 
 		if (them == NULL) {
@@ -1549,7 +1573,7 @@ ipsec_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 				    cf->cf_name);
 			return -ENXIO;
 		}
-		
+
 #if 0
 		if (them->flags & IFF_UP) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
@@ -1560,7 +1584,7 @@ ipsec_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 			return -ENXIO;
 		}
 #endif
-		
+
 		if (prv && prv->dev) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 				    "klips_debug:ipsec_tunnel_ioctl: "
@@ -1575,20 +1599,21 @@ ipsec_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 			    "klips_debug:ipsec_tunnel_ioctl: "
 			    "calling ipsec_tunnel_detatch.\n");
-		if (! prv->dev) {
+		if (!prv->dev) {
 			KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 				    "klips_debug:ipsec_tunnel_ioctl: "
 				    "physical device not connected.\n");
 			return -ENODEV;
 		}
 		return ipsec_tunnel_detach(dev);
-	       
+
 	case IPSEC_CLR_DEV:
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 			    "klips_debug:ipsec_tunnel_ioctl: "
 			    "calling ipsec_tunnel_clear.\n");
 		return ipsec_tunnel_clear();
-#endif /* KLIPS */
+
+#endif          /* KLIPS */
 
 #ifdef HAVE_UDP_ENCAP_CONVERT
 	/*
@@ -1599,11 +1624,11 @@ ipsec_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	{
 		/*unsigned int *ifp =(unsigned int *)&ifr->ifr_data;*/
 		/* overlay our struct ipsectunnel onto ifr.ifr_ifru union (hope it fits!) */
-		unsigned int *ifp =(unsigned int *)ifr->ifr_ifru.ifru_newname;
+		unsigned int *ifp = (unsigned int *)ifr->ifr_ifru.ifru_newname;
 
 		return ipsec_tunnel_udp_encap_prepare(ifp[0], ifp[1]);
 	}
-#endif /* HAVE_UDP_ENCAP_CONVERT */
+#endif          /* HAVE_UDP_ENCAP_CONVERT */
 
 	default:
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
@@ -1643,8 +1668,8 @@ DEBUG_NO_STATIC int ipsec_tunnel_udp_encap_prepare(int fd, int encap_type)
 	case UDP_ENCAP_ESPINUDP_NON_IKE:
 		break;
 	default:
-		printk ("ipsec: pid %d sent fd %d with invalid encap_type %d\n",
-				fd, current->pid, encap_type);
+		printk("ipsec: pid %d sent fd %d with invalid encap_type %d\n",
+		       fd, current->pid, encap_type);
 		return -EINVAL;
 	}
 
@@ -1652,8 +1677,8 @@ DEBUG_NO_STATIC int ipsec_tunnel_udp_encap_prepare(int fd, int encap_type)
 	err = -EBADF;
 	sock = sockfd_lookup(fd, &err);
 	if (!sock) {
-		printk ("ipsec: failed to lookup socket for fd %d for pid %d\n",
-				fd, current->pid);
+		printk("ipsec: failed to lookup socket for fd %d for pid %d\n",
+		       fd, current->pid);
 		goto error;
 	}
 	sk = sock->sk;
@@ -1661,38 +1686,38 @@ DEBUG_NO_STATIC int ipsec_tunnel_udp_encap_prepare(int fd, int encap_type)
 	/* Quick sanity checks */
 	err = -EAFNOSUPPORT;
 	if (sock->ops->family != AF_INET) {
-		printk ("ipsec: pid %d sent fd %d with wrong family, "
-				"got %d, expected %d\n",
-				current->pid, fd, sock->ops->family, AF_INET);
+		printk("ipsec: pid %d sent fd %d with wrong family, "
+		       "got %d, expected %d\n",
+		       current->pid, fd, sock->ops->family, AF_INET);
 		goto error;
 	}
 
 	err = -EPROTONOSUPPORT;
 	if (sk->sk_protocol != IPPROTO_UDP) {
-		printk ("ipsec: pid %d sent fd %d with wrong protocol, "
-				"got %d, expected %d\n",
-				current->pid, fd, sk->sk_protocol, IPPROTO_UDP);
+		printk("ipsec: pid %d sent fd %d with wrong protocol, "
+		       "got %d, expected %d\n",
+		       current->pid, fd, sk->sk_protocol, IPPROTO_UDP);
 		goto error;
 	}
 
 	err = -EBUSY;
 	if (udp_sk(sk)->encap_type) {
-		printk ("ipsec: pid %d sent fd %d with encap_type "
-				"assigned to %d",
-				current->pid, fd, udp_sk(sk)->encap_type);
+		printk("ipsec: pid %d sent fd %d with encap_type "
+		       "assigned to %d",
+		       current->pid, fd, udp_sk(sk)->encap_type);
 		goto error;
 	}
 
 	err = -EBUSY;
 	ctx = (struct ipsec_tunnel_udp_encap_ctx*)sk->sk_user_data;
 	if (ctx) {
-		printk ("ipsec: pid %d sent fd %d with user_data assigned\n",
-				current->pid, fd);
+		printk("ipsec: pid %d sent fd %d with user_data assigned\n",
+		       current->pid, fd);
 		goto error;
 	}
 
 	err = -ENOMEM;
-	sk->sk_user_data = ctx = kzalloc(sizeof (*ctx), GFP_KERNEL);
+	sk->sk_user_data = ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
 		goto error;
 
@@ -1713,13 +1738,13 @@ DEBUG_NO_STATIC int ipsec_tunnel_udp_encap_prepare(int fd, int encap_type)
 
 	spin_unlock_irqrestore(&ipsec_tunnel_udp_encap_lock, flags);
 
-	KLIPS_PRINT(debug_tunnel
-			, "UDP socket: %u set to %s (0x%x) encap mode\n"
-			, fd
-			, encap_type == UDP_ENCAP_ESPINUDP_NON_IKE ?
-			"UDP_ENCAP_ESPINUDP_NON_IKE" : "UDP_ENCAP_ESPINUDP_NON_ESP"
-			, encap_type
-		   );
+	KLIPS_PRINT(debug_tunnel,
+		    "UDP socket: %u set to %s (0x%x) encap mode\n",
+		    fd,
+		    encap_type == UDP_ENCAP_ESPINUDP_NON_IKE ?
+		    "UDP_ENCAP_ESPINUDP_NON_IKE" : "UDP_ENCAP_ESPINUDP_NON_ESP",
+		    encap_type
+		    );
 
 	/* success */
 	err = 0;
@@ -1745,15 +1770,16 @@ DEBUG_NO_STATIC void ipsec_tunnel_udp_encap_destruct(struct sock *sk)
 
 	ctx = (struct ipsec_tunnel_udp_encap_ctx*)sk->sk_user_data;
 	if (ctx->magic != IPSEC_TUNNEL_UDP_ENCAP_MAGIC) {
-		printk ("ipsec: called to destroy ctx with wrong magic, "
-				"got %08x, expected %08x\n",
-				ctx->magic, IPSEC_TUNNEL_UDP_ENCAP_MAGIC);
+		printk("ipsec: called to destroy ctx with wrong magic, "
+		       "got %08x, expected %08x\n",
+		       ctx->magic, IPSEC_TUNNEL_UDP_ENCAP_MAGIC);
 		return;
 	}
 
 	if (ctx->sk != sk) {
-		printk("ipsec: called to destroy ctx with sk(%p) != ctx->sk(%p)\n",
-				sk, ctx->sk);
+		printk(
+			"ipsec: called to destroy ctx with sk(%p) != ctx->sk(%p)\n",
+			sk, ctx->sk);
 		return;
 	}
 
@@ -1793,7 +1819,8 @@ DEBUG_NO_STATIC void ipsec_tunnel_upd_encap_cleanup(void)
 	 * destructor
 	 */
 	spin_lock_irqsave(&ipsec_tunnel_udp_encap_lock, flags);
-	list_for_each_entry_safe(ctx, tmp, &ipsec_tunnel_udp_encap_list, link) {
+	list_for_each_entry_safe(ctx, tmp, &ipsec_tunnel_udp_encap_list,
+				 link) {
 		struct sock *sk = ctx->sk;
 		/* revert the socket back */
 		udp_sk(sk)->encap_type = 0;
@@ -1810,23 +1837,20 @@ DEBUG_NO_STATIC void ipsec_tunnel_upd_encap_cleanup(void)
 }
 #endif
 
-
-
 struct net_device *ipsec_get_device(int inst)
 {
-  struct net_device *ipsec_dev;
+	struct net_device *ipsec_dev;
 
-  ipsec_dev = NULL;
+	ipsec_dev = NULL;
 
-  if(inst < IPSEC_NUM_IFMAX) {
-    ipsec_dev = ipsecdevices[inst];
-  }
+	if (inst < IPSEC_NUM_IFMAX)
+		ipsec_dev = ipsecdevices[inst];
 
-  return ipsec_dev;
+	return ipsec_dev;
 }
 
-int
-ipsec_device_event(struct notifier_block *unused, unsigned long event, void *ptr)
+int ipsec_device_event(struct notifier_block *unused, unsigned long event,
+		       void *ptr)
 {
 	struct net_device *dev = ptr;
 	struct net_device *ipsec_dev;
@@ -1838,18 +1862,17 @@ ipsec_device_event(struct notifier_block *unused, unsigned long event, void *ptr
 			    "klips_debug:ipsec_device_event: "
 			    "dev=NULL for event type %ld.\n",
 			    event);
-		return(NOTIFY_DONE);
+		return NOTIFY_DONE;
 	}
 
 	/* check for loopback devices */
-	if (dev && (dev->flags & IFF_LOOPBACK)) {
-		return(NOTIFY_DONE);
-	}
+	if (dev && (dev->flags & IFF_LOOPBACK))
+		return NOTIFY_DONE;
 
 	switch (event) {
 	case NETDEV_DOWN:
-		/* look very carefully at the scope of these compiler
-		   directives before changing anything... -- RGB */
+	/* look very carefully at the scope of these compiler
+	   directives before changing anything... -- RGB */
 	case NETDEV_UNREGISTER:
 		switch (event) {
 		case NETDEV_DOWN:
@@ -1858,9 +1881,11 @@ ipsec_device_event(struct notifier_block *unused, unsigned long event, void *ptr
 				    "NETDEV_DOWN dev=%s flags=%x\n",
 				    dev->name,
 				    dev->flags);
-			if(strncmp(dev->name, "ipsec", strlen("ipsec")) == 0) {
-				printk(KERN_CRIT "IPSEC EVENT: KLIPS device %s shut down.\n",
-				       dev->name);
+			if (strncmp(dev->name, "ipsec",
+				    strlen("ipsec")) == 0) {
+				printk(
+					KERN_CRIT "IPSEC EVENT: KLIPS device %s shut down.\n",
+					dev->name);
 			}
 			break;
 		case NETDEV_UNREGISTER:
@@ -1871,30 +1896,31 @@ ipsec_device_event(struct notifier_block *unused, unsigned long event, void *ptr
 				    dev->flags);
 			break;
 		}
-		
+
 		/* find the attached physical device and detach it. */
-		for(i = 0; i < IPSEC_NUM_IFMAX; i++) {
+		for (i = 0; i < IPSEC_NUM_IFMAX; i++) {
 			ipsec_dev = ipsecdevices[i];
-			if(!ipsec_dev || !netdev_priv(ipsec_dev))
+			if (!ipsec_dev || !netdev_priv(ipsec_dev))
 				continue;
 
 			priv = netdev_to_ipsecpriv(ipsec_dev);
-			if(priv) {
-				if(((struct net_device *)(priv->dev)) == dev) {
+			if (priv) {
+				if (((struct net_device *)(priv->dev)) ==
+				    dev) {
 					/* dev_close(ipsec_dev); */
 					/* return */
 					ipsec_tunnel_detach(ipsec_dev);
 					KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
-							"klips_debug:ipsec_device_event: "
-							"device '%s' has been detached.\n",
-							ipsec_dev->name);
+						    "klips_debug:ipsec_device_event: "
+						    "device '%s' has been detached.\n",
+						    ipsec_dev->name);
 					break;
 				}
 			} else {
 				KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
-						"klips_debug:ipsec_device_event: "
-						"device '%s' has no private data space!\n",
-						ipsec_dev->name);
+					    "klips_debug:ipsec_device_event: "
+					    "device '%s' has no private data space!\n",
+					    ipsec_dev->name);
 			}
 		}
 		break;
@@ -1963,9 +1989,8 @@ ipsec_device_event(struct notifier_block *unused, unsigned long event, void *ptr
  *	Called when an ipsec tunnel device is initialized.
  *	The ipsec tunnel device structure is passed to us.
  */
- 
-int
-ipsec_tunnel_init(struct net_device *dev)
+
+int ipsec_tunnel_init(struct net_device *dev)
 {
 	int i;
 	struct ipsecpriv *iprv;
@@ -1986,6 +2011,7 @@ ipsec_tunnel_init(struct net_device *dev)
 		priv_dev = kmalloc(sizeof(struct ipsecpriv), GFP_KERNEL);
 		if (priv_dev == NULL)
 			return;
+
 		dev->priv = priv_dev;
 	}
 #endif
@@ -1993,43 +2019,42 @@ ipsec_tunnel_init(struct net_device *dev)
 	memset(iprv, 0, sizeof(struct ipsecpriv));
 	iprv->magic = IPSECPRIV_MAGIC;
 
-	for(i = 0; i < sizeof(zeroes); i++) {
+	for (i = 0; i < sizeof(zeroes); i++)
 		((__u8*)(zeroes))[i] = 0;
-	}
-	
+
 #ifdef HAVE_NETDEV_HEADER_OPS
-	dev->header_ops		= NULL;
+	dev->header_ops         = NULL;
 #else
-	dev->hard_header	= NULL;
-	dev->rebuild_header 	= NULL;
-	dev->header_cache_update= NULL;
+	dev->hard_header        = NULL;
+	dev->rebuild_header     = NULL;
+	dev->header_cache_update = NULL;
 #endif
 #ifdef HAVE_NET_DEVICE_OPS
 	dev->netdev_ops         = &klips_device_ops;
 #else
-        dev->open               = ipsec_tunnel_open;
-        dev->stop               = ipsec_tunnel_close;
-        dev->hard_start_xmit    = ipsec_tunnel_start_xmit;
-        dev->get_stats          = ipsec_tunnel_get_stats;
+	dev->open               = ipsec_tunnel_open;
+	dev->stop               = ipsec_tunnel_close;
+	dev->hard_start_xmit    = ipsec_tunnel_start_xmit;
+	dev->get_stats          = ipsec_tunnel_get_stats;
 #ifdef HAVE_SET_MAC_ADDR
-        dev->set_mac_address    = NULL;
+	dev->set_mac_address    = NULL;
 #endif
-        dev->do_ioctl           = ipsec_tunnel_ioctl;
-        dev->neigh_setup        = ipsec_tunnel_neigh_setup_dev;
+	dev->do_ioctl           = ipsec_tunnel_ioctl;
+	dev->neigh_setup        = ipsec_tunnel_neigh_setup_dev;
 #endif
 
-	dev->hard_header_len 	= 0;
-	dev->mtu		= 0;
-	dev->addr_len		= 0;
-	dev->type		= ARPHRD_VOID; /* ARPHRD_TUNNEL; */ /* ARPHRD_ETHER; */
-	dev->tx_queue_len	= 10;		/* Small queue */
+	dev->hard_header_len    = 0;
+	dev->mtu                = 0;
+	dev->addr_len           = 0;
+	dev->type               = ARPHRD_VOID;  /* ARPHRD_TUNNEL; */ /* ARPHRD_ETHER; */
+	dev->tx_queue_len       = 10;           /* Small queue */
 #ifdef IFF_XMIT_DST_RELEASE
-	dev->priv_flags	       &= ~IFF_XMIT_DST_RELEASE;
+	dev->priv_flags        &= ~IFF_XMIT_DST_RELEASE;
 #endif
-	memset((caddr_t)(dev->broadcast),0xFF, ETH_ALEN);	/* what if this is not attached to ethernet? */
+	memset((caddr_t)(dev->broadcast), 0xFF, ETH_ALEN);       /* what if this is not attached to ethernet? */
 
 	/* New-style flags. */
-	dev->flags		= IFF_NOARP /* 0 */ /* Petr Novak */;
+	dev->flags              = IFF_NOARP /* 0 */ /* Petr Novak */;
 
 	/* We're done.  Have I forgotten anything? */
 	return 0;
@@ -2039,10 +2064,9 @@ ipsec_tunnel_init(struct net_device *dev)
 /*  Module specific interface (but it links with the rest of IPSEC)  */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-int
-ipsec_tunnel_probe(struct net_device *dev)
+int ipsec_tunnel_probe(struct net_device *dev)
 {
-	ipsec_tunnel_init(dev); 
+	ipsec_tunnel_init(dev);
 	return 0;
 }
 
@@ -2053,29 +2077,25 @@ static void ipsec_tunnel_netdev_setup(struct net_device *dev)
 #endif
 
 struct net_device *ipsecdevices[IPSEC_NUM_IFMAX];
-int ipsecdevices_max=-1;
+int ipsecdevices_max = -1;
 
-int
-ipsec_tunnel_createnum(int ifnum)
+int ipsec_tunnel_createnum(int ifnum)
 {
 	char name[IFNAMSIZ];
 	struct net_device *dev_ipsec;
 	int vifentry;
 
-	if(ifnum >= IPSEC_NUM_IFMAX) {
+	if (ifnum >= IPSEC_NUM_IFMAX)
 		return -ENOENT;
-	}
 
-	if(ipsecdevices[ifnum]!=NULL) {
+	if (ipsecdevices[ifnum] != NULL)
 		return -EEXIST;
-	}
-	
+
 	/* no identical device */
-	if(ifnum > ipsecdevices_max) {
-		ipsecdevices_max=ifnum;
-	}
+	if (ifnum > ipsecdevices_max)
+		ipsecdevices_max = ifnum;
 	vifentry = ifnum;
-	
+
 	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 		    "klips_debug:ipsec_tunnel_init_devices: "
 		    "creating and registering IPSEC_NUM_IF=%u device\n",
@@ -2083,9 +2103,11 @@ ipsec_tunnel_createnum(int ifnum)
 
 	sprintf(name, IPSEC_DEV_FORMAT, ifnum);
 #ifdef alloc_netdev
-	dev_ipsec = alloc_netdev(sizeof(struct ipsecpriv), name, ipsec_tunnel_netdev_setup);
+	dev_ipsec = alloc_netdev(sizeof(struct ipsecpriv), name,
+				 ipsec_tunnel_netdev_setup);
 #else
-	dev_ipsec = (struct net_device*)kmalloc(sizeof(struct net_device), GFP_KERNEL);
+	dev_ipsec = (struct net_device*)kmalloc(sizeof(struct net_device),
+						GFP_KERNEL);
 #endif
 	if (dev_ipsec == NULL) {
 		printk(KERN_ERR "klips_debug:ipsec_tunnel_init_devices: "
@@ -2099,7 +2121,7 @@ ipsec_tunnel_createnum(int ifnum)
 #ifdef PAUL_FIXME
 	dev_ipsec->next = NULL;
 #endif
-#endif /* alloc_netdev */
+#endif  /* alloc_netdev */
 #ifndef USE_NETDEV_OPS
 	dev_ipsec->init = &ipsec_tunnel_probe;
 #else
@@ -2109,11 +2131,11 @@ ipsec_tunnel_createnum(int ifnum)
 		    "klips_debug:ipsec_tunnel_init_devices: "
 		    "registering device %s\n",
 		    dev_ipsec->name);
-	
+
 	/* reference and hold the device reference */
 	ipsec_dev_hold(dev_ipsec);
-	ipsecdevices[vifentry]=dev_ipsec;
-	
+	ipsecdevices[vifentry] = dev_ipsec;
+
 	if (register_netdev(dev_ipsec) != 0) {
 		KLIPS_PRINT(1 || debug_tunnel & DB_TN_INIT,
 			    "klips_debug:ipsec_tunnel_init_devices: "
@@ -2128,14 +2150,12 @@ ipsec_tunnel_createnum(int ifnum)
 	}
 	return 0;
 }
-	
 
-int 
-ipsec_tunnel_init_devices(void)
+int ipsec_tunnel_init_devices(void)
 {
 	int i;
 	int error;
-	
+
 	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 		    "klips_debug:ipsec_tunnel_init_devices: "
 		    "creating and registering IPSEC_NUM_IF=%u devices, allocating %lu per device, IFNAMSIZ=%u.\n",
@@ -2143,53 +2163,50 @@ ipsec_tunnel_init_devices(void)
 		    (unsigned long) (sizeof(struct net_device) + IFNAMSIZ),
 		    IFNAMSIZ);
 
-	for(i = 0; i < IPSEC_NUM_IF; i++) {
+	for (i = 0; i < IPSEC_NUM_IF; i++) {
 		error = ipsec_tunnel_createnum(i);
-		
-		if(error) break;
+
+		if (error)
+			break;
 	}
 	return 0;
 }
 
-int
-ipsec_tunnel_deletenum(int vifnum)
+int ipsec_tunnel_deletenum(int vifnum)
 {
 	struct net_device *dev_ipsec;
-	
-	if(vifnum >= IPSEC_NUM_IFMAX) {
+
+	if (vifnum >= IPSEC_NUM_IFMAX)
 		return -ENOENT;
-	}
 
 	dev_ipsec = ipsecdevices[vifnum];
-	if(dev_ipsec == NULL) {
+	if (dev_ipsec == NULL)
 		return -ENOENT;
-	}
 
 	/* release reference */
-	ipsecdevices[vifnum]=NULL;
+	ipsecdevices[vifnum] = NULL;
 	ipsec_dev_put(dev_ipsec);
-	
+
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
 	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
 #ifndef alloc_netdev
 	kfree(dev_ipsec->priv);
-	dev_ipsec->priv=NULL;
-#endif /* alloc_netdev */
+	dev_ipsec->priv = NULL;
+#endif  /* alloc_netdev */
 
 	return 0;
 }
 
-
-struct net_device *
-ipsec_tunnel_get_device(int vifnum)
+struct net_device *ipsec_tunnel_get_device(int vifnum)
 {
 	struct net_device *nd;
-	
-	if(vifnum < ipsecdevices_max) {
+
+	if (vifnum < ipsecdevices_max) {
 		nd = ipsecdevices[vifnum];
 
-		if(nd) ipsec_dev_hold(nd);
+		if (nd)
+			ipsec_dev_hold(nd);
 		return nd;
 	} else {
 		return NULL;
@@ -2197,30 +2214,29 @@ ipsec_tunnel_get_device(int vifnum)
 }
 
 /* void */
-int
-ipsec_tunnel_cleanup_devices(void)
+int ipsec_tunnel_cleanup_devices(void)
 {
 	int error = 0;
 	int i;
 	struct net_device *dev_ipsec;
-	
-	for(i = 0; i <= ipsecdevices_max; i++) {
-   	        dev_ipsec = ipsecdevices[i];
-		if(dev_ipsec == NULL) {
-		  continue;
-		}
+
+	for (i = 0; i <= ipsecdevices_max; i++) {
+		dev_ipsec = ipsecdevices[i];
+		if (dev_ipsec == NULL)
+			continue;
 
 		/* release reference */
-		ipsecdevices[i]=NULL;
+		ipsecdevices[i] = NULL;
 		ipsec_dev_put(dev_ipsec);
 
-		KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
+		KLIPS_PRINT(debug_tunnel, "Unregistering %s\n",
+			    dev_ipsec->name);
 		unregister_netdev(dev_ipsec);
 		KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
 #ifndef alloc_netdev
 		kfree(dev_ipsec->priv);
-		dev_ipsec->priv=NULL;
-#endif /* alloc_netdev */
+		dev_ipsec->priv = NULL;
+#endif          /* alloc_netdev */
 	}
 
 #ifdef HAVE_UDP_ENCAP_CONVERT
@@ -2242,136 +2258,133 @@ static struct kmem_cache *ixs_cache_allocator = NULL;
 #else
 static kmem_cache_t *ixs_cache_allocator = NULL;
 #endif
-static unsigned  ixs_cache_allocated_count = 0;
+static unsigned ixs_cache_allocated_count = 0;
 
 int ipsec_ixs_cache_allocated_max = 1000;
-module_param(ipsec_ixs_cache_allocated_max,int,0644);
+module_param(ipsec_ixs_cache_allocated_max, int, 0644);
 MODULE_PARM_DESC(ipsec_ixs_cache_allocated_max,
-	"Maximum outstanding transmit packets");
+		 "Maximum outstanding transmit packets");
 
-int
-ipsec_xmit_state_cache_init (void)
+int ipsec_xmit_state_cache_init(void)
 {
-        if (ixs_cache_allocator)
-                return -EBUSY;
+	if (ixs_cache_allocator)
+		return -EBUSY;
 
-        spin_lock_init(&ixs_cache_lock);
+	spin_lock_init(&ixs_cache_lock);
 #ifdef HAVE_KMEM_CACHE_MACRO
 	/* ixs_cache_allocator = KMEM_CACHE(ipsec_ixs,0); */
-        ixs_cache_allocator = kmem_cache_create ("ipsec_ixs",
-                sizeof (struct ipsec_xmit_state), 0,
-                0, NULL);
+	ixs_cache_allocator = kmem_cache_create("ipsec_ixs",
+						sizeof(struct ipsec_xmit_state), 0,
+						0, NULL);
 #else
-        ixs_cache_allocator = kmem_cache_create ("ipsec_ixs",
-                sizeof (struct ipsec_xmit_state), 0,
-                0, NULL, NULL);
+	ixs_cache_allocator = kmem_cache_create("ipsec_ixs",
+						sizeof(struct ipsec_xmit_state), 0,
+						0, NULL, NULL);
 #endif
-        if (! ixs_cache_allocator)
-                return -ENOMEM;
+	if (!ixs_cache_allocator)
+		return -ENOMEM;
 
-        return 0;
+	return 0;
 }
 
-void
-ipsec_xmit_state_cache_cleanup (void)
+void ipsec_xmit_state_cache_cleanup(void)
 {
-        if (unlikely (ixs_cache_allocated_count))
-                printk ("ipsec: deleting ipsec_ixs kmem_cache while in use\n");
+	if (unlikely(ixs_cache_allocated_count))
+		printk("ipsec: deleting ipsec_ixs kmem_cache while in use\n");
 
-        if (ixs_cache_allocator) {
-                kmem_cache_destroy (ixs_cache_allocator);
-                ixs_cache_allocator = NULL;
-        }
-        ixs_cache_allocated_count = 0;
+	if (ixs_cache_allocator) {
+		kmem_cache_destroy(ixs_cache_allocator);
+		ixs_cache_allocator = NULL;
+	}
+	ixs_cache_allocated_count = 0;
 }
 
-struct ipsec_xmit_state *
-ipsec_xmit_state_new (struct net_device *dev)
+struct ipsec_xmit_state *ipsec_xmit_state_new(struct net_device *dev)
 {
 	struct ipsec_xmit_state *ixs;
 
-        spin_lock_bh (&ixs_cache_lock);
+	spin_lock_bh(&ixs_cache_lock);
 
 	if (ixs_cache_allocated_count >= ipsec_ixs_cache_allocated_max) {
 		/* check for something that should never happen */
 		if (!netif_queue_stopped(dev)) {
 			netif_stop_queue(dev);
-			printk("ipsec_tunnel_start_xmit: cannot TX while awake\n");
+			printk(
+				"ipsec_tunnel_start_xmit: cannot TX while awake\n");
 		}
-		spin_unlock_bh (&ixs_cache_lock);
+		spin_unlock_bh(&ixs_cache_lock);
 		KLIPS_PRINT(debug_tunnel,
-			"klips_debug:ipsec_xmit_state_new: "
-			"exceeded maximum outstanding TX packet cnt %d\n",
-			ixs_cache_allocated_count);
+			    "klips_debug:ipsec_xmit_state_new: "
+			    "exceeded maximum outstanding TX packet cnt %d\n",
+			    ixs_cache_allocated_count);
 		return NULL;
 	}
 
-        ixs = kmem_cache_alloc (ixs_cache_allocator, GFP_ATOMIC);
+	ixs = kmem_cache_alloc(ixs_cache_allocator, GFP_ATOMIC);
 
-        if (likely (ixs != NULL)) {
-                ixs_cache_allocated_count++;
+	if (likely(ixs != NULL)) {
+		ixs_cache_allocated_count++;
 		/* stop the Q if we took the last one */
 		if (ixs_cache_allocated_count >= ipsec_ixs_cache_allocated_max)
 			netif_stop_queue(dev);
 	}
 
-        spin_unlock_bh (&ixs_cache_lock);
+	spin_unlock_bh(&ixs_cache_lock);
 
-        if (unlikely (NULL == ixs))
-                return NULL;
+	if (unlikely(NULL == ixs))
+		return NULL;
 
-        /* initialize the object */
-#if 1 /* optimised to only clear the required bits */
-		memset((caddr_t)ixs, 0, sizeof(*ixs));
+	/* initialize the object */
+#if 1   /* optimised to only clear the required bits */
+	memset((caddr_t)ixs, 0, sizeof(*ixs));
 #else
-		ixs->pass = 0;
-		ixs->state = 0;
-		ixs->next_state = 0;
-		ixs->ipsp = NULL;
-		ixs->sa_len = 0;
-		ixs->stats = NULL;
-		ixs->ips.ips_ident_s.data = NULL;
-		ixs->ips.ips_ident_d.data = NULL;
-		ixs->outgoing_said.proto = 0;
+	ixs->pass = 0;
+	ixs->state = 0;
+	ixs->next_state = 0;
+	ixs->ipsp = NULL;
+	ixs->sa_len = 0;
+	ixs->stats = NULL;
+	ixs->ips.ips_ident_s.data = NULL;
+	ixs->ips.ips_ident_d.data = NULL;
+	ixs->outgoing_said.proto = 0;
 #ifdef NAT_TRAVERSAL
-		ixs->natt_type = 0, ixs->natt_head = 0;
-		ixs->natt_sport = 0, ixs->natt_dport = 0;
+	ixs->natt_type = 0, ixs->natt_head = 0;
+	ixs->natt_sport = 0, ixs->natt_dport = 0;
 #endif
-		ixs->tot_headroom = 0;
-		ixs->tot_tailroom = 0;
-		ixs->eroute = NULL;
-		ixs->hard_header_stripped = 0;
-		ixs->hard_header_len = 0;
-		ixs->cur_mtu = 0; /* FIXME: can we do something better ? */
+	ixs->tot_headroom = 0;
+	ixs->tot_tailroom = 0;
+	ixs->eroute = NULL;
+	ixs->hard_header_stripped = 0;
+	ixs->hard_header_len = 0;
+	ixs->cur_mtu = 0;         /* FIXME: can we do something better ? */
 
-		ixs->oskb = NULL;
-		ixs->saved_header = NULL;	/* saved copy of the hard header */
-		ixs->route = NULL;
+	ixs->oskb = NULL;
+	ixs->saved_header = NULL;               /* saved copy of the hard header */
+	ixs->route = NULL;
 #endif /* memset */
-        return ixs;
+	return ixs;
 }
 
-void
-ipsec_xmit_state_delete (struct ipsec_xmit_state *ixs)
+void ipsec_xmit_state_delete(struct ipsec_xmit_state *ixs)
 {
-        struct net_device *dev;
+	struct net_device *dev;
 
-        if (unlikely (! ixs))
-                return;
+	if (unlikely(!ixs))
+		return;
 
-        dev = ixs->dev;
+	dev = ixs->dev;
 
-        spin_lock_bh (&ixs_cache_lock);
-        ixs_cache_allocated_count--;
-        kmem_cache_free (ixs_cache_allocator, ixs);
+	spin_lock_bh(&ixs_cache_lock);
+	ixs_cache_allocated_count--;
+	kmem_cache_free(ixs_cache_allocator, ixs);
 #if defined(HAS_NETIF_QUEUE) || defined (HAVE_NETIF_QUEUE)
-        if (dev && netif_queue_stopped(dev))
-                netif_wake_queue(dev);
-#else /* defined(HAS_NETIF_QUEUE) || defined (HAVE_NETIF_QUEUE) */
-        if (dev)
-                dev->tbusy = 0;
-#endif /* defined(HAS_NETIF_QUEUE) || defined (HAVE_NETIF_QUEUE) */
-        spin_unlock_bh (&ixs_cache_lock);
+	if (dev && netif_queue_stopped(dev))
+		netif_wake_queue(dev);
+#else   /* defined(HAS_NETIF_QUEUE) || defined (HAVE_NETIF_QUEUE) */
+	if (dev)
+		dev->tbusy = 0;
+#endif  /* defined(HAS_NETIF_QUEUE) || defined (HAVE_NETIF_QUEUE) */
+	spin_unlock_bh(&ixs_cache_lock);
 }
 
 #ifdef HAVE_NET_DEVICE_OPS
@@ -2379,11 +2392,11 @@ const struct net_device_ops klips_device_ops = {
 	/* Add our tunnel functions to the device */
 	.ndo_init               = ipsec_tunnel_probe,
 	.ndo_open               = ipsec_tunnel_open,
-	.ndo_stop		= ipsec_tunnel_close,
-	.ndo_start_xmit 	= ipsec_tunnel_start_xmit,
-	.ndo_get_stats  	= ipsec_tunnel_get_stats,
+	.ndo_stop               = ipsec_tunnel_close,
+	.ndo_start_xmit         = ipsec_tunnel_start_xmit,
+	.ndo_get_stats          = ipsec_tunnel_get_stats,
 	.ndo_neigh_setup        = ipsec_tunnel_neigh_setup_dev,
-	.ndo_do_ioctl		= ipsec_tunnel_ioctl,
+	.ndo_do_ioctl           = ipsec_tunnel_ioctl,
 
 #ifdef HAVE_SET_MAC_ADDR
 	.ndo_set_mac_address = ipsec_tunnel_set_mac_address,
@@ -2395,20 +2408,20 @@ const struct net_device_ops klips_device_ops = {
  * We call the attach routine to attach another device.
  */
 
-DEBUG_NO_STATIC int
-ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
+DEBUG_NO_STATIC int ipsec_tunnel_attach(struct net_device *dev,
+					struct net_device *physdev)
 {
-        int i;
+	int i;
 	struct ipsecpriv *prv = netdev_to_ipsecpriv(dev);
 
-	if(dev == NULL) {
+	if (dev == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_attach: "
 			    "no device...");
 		return -ENODEV;
 	}
 
-	if(prv == NULL) {
+	if (prv == NULL) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_REVEC,
 			    "klips_debug:ipsec_tunnel_attach: "
 			    "no private space associated with dev=%s",
@@ -2417,15 +2430,15 @@ ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
 	}
 
 #ifdef HAVE_NETDEV_HEADER_OPS
-	dev->header_ops = &klips_header_ops;                                    
-#endif                                                                         
+	dev->header_ops = &klips_header_ops;
+#endif
 #ifdef HAVE_NET_DEVICE_OPS
 	dev->netdev_ops = &klips_device_ops;
 #else
 # ifdef HAVE_SET_MAC_ADDR
 	dev->set_mac_address = ipsec_tunnel_set_mac_address;
 # endif
-#endif /* HAVE_NET_DEVICE_OPS */
+#endif  /* HAVE_NET_DEVICE_OPS */
 	prv->dev = physdev;
 
 #ifdef HAVE_NET_DEVICE_OPS
@@ -2436,7 +2449,7 @@ ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
 	prv->get_stats       = physdev->get_stats;
 #endif
 
-	/* 
+	/*
 	 * David: I haven't worked through this fully yet,  but we were
 	 * always copying SKB's because they didn't have enough head room
 	 * (even though they were large SKB's). This change got me a 20%
@@ -2453,20 +2466,19 @@ ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
 #endif /*  PHYSDEV_TYPE */
 
 	dev->addr_len = physdev->addr_len;
-	for (i=0; i<dev->addr_len; i++) {
+	for (i = 0; i < dev->addr_len; i++)
 		dev->dev_addr[i] = physdev->dev_addr[i];
-	}
+
 #ifdef CONFIG_KLIPS_DEBUG
-	if(debug_tunnel & DB_TN_INIT) {
+	if (debug_tunnel & DB_TN_INIT) {
 		printk(KERN_INFO "klips_debug:ipsec_tunnel_attach: "
 		       "physical device %s being attached has HW address: %2x",
 		       physdev->name, physdev->dev_addr[0]);
-		for (i=1; i < physdev->addr_len; i++) {
+		for (i = 1; i < physdev->addr_len; i++)
 			printk(":%02x", physdev->dev_addr[i]);
-		}
 		printk("\n");
 	}
-#endif /* CONFIG_KLIPS_DEBUG */
+#endif  /* CONFIG_KLIPS_DEBUG */
 
 	return 0;
 }
@@ -2493,7 +2505,8 @@ ipsec_tunnel_attach(struct net_device *dev, struct net_device *physdev)
  *
  */
 int lsw_ipv6_find_hdr(const struct sk_buff *skb,
-	unsigned int *offset, int target, unsigned short *fragoff)
+		      unsigned int *offset, int target,
+		      unsigned short *fragoff)
 {
 	unsigned int start = skb_network_offset(skb) + sizeof(struct ipv6hdr);
 	u8 nexthdr = ipv6_hdr(skb)->nexthdr;
@@ -2515,12 +2528,14 @@ int lsw_ipv6_find_hdr(const struct sk_buff *skb,
 		hp = skb_header_pointer(skb, start, sizeof(_hdr), &_hdr);
 		if (hp == NULL)
 			return -EBADMSG;
+
 		if (nexthdr == NEXTHDR_FRAGMENT) {
 			unsigned short _frag_off;
 			__be16 *fp;
 			fp = skb_header_pointer(skb,
-						start+offsetof(struct frag_hdr,
-							       frag_off),
+						start +
+						offsetof(struct frag_hdr,
+							 frag_off),
 						sizeof(_frag_off),
 						&_frag_off);
 			if (fp == NULL)
@@ -2538,10 +2553,11 @@ int lsw_ipv6_find_hdr(const struct sk_buff *skb,
 				return -ENOENT;
 			}
 			hdrlen = 8;
-		} else if (nexthdr == NEXTHDR_AUTH)
+		} else if (nexthdr == NEXTHDR_AUTH) {
 			hdrlen = (hp->hdrlen + 2) << 2;
-		else
+		} else {
 			hdrlen = ipv6_optlen(hp);
+		}
 
 		nexthdr = hp->nexthdr;
 		len -= hdrlen;

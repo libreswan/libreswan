@@ -4,12 +4,12 @@
  * Copyright (C) 1996, 1997  John Ioannidis.
  * Copyright (C) 1998, 1999, 2000, 2001  Richard Guy Briggs <rgb@freeswan.org>
  * Copyright (C) 2001                    Michael Richardson <mcr@freeswan.org>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -33,33 +33,30 @@
  */
 
 /*
- * An entry in the radix tree 
+ * An entry in the radix tree
  */
 
-struct rjtentry
-{
-	struct	radij_node rd_nodes[2];	/* tree glue, and other values */
-#define	rd_key(r)	((struct sockaddr_encap *)((r)->rd_nodes->rj_key))
-#define	rd_mask(r)	((struct sockaddr_encap *)((r)->rd_nodes->rj_mask))
-	short	rd_flags;
-	short	rd_count;
+struct rjtentry {
+	struct  radij_node rd_nodes[2]; /* tree glue, and other values */
+#define rd_key(r)       ((struct sockaddr_encap *)((r)->rd_nodes->rj_key))
+#define rd_mask(r)      ((struct sockaddr_encap *)((r)->rd_nodes->rj_mask))
+	short rd_flags;
+	short rd_count;
 };
 
-struct ident
-{
-	__u16	type;	/* identity type */
-	__u64	id;	/* identity id */
-	__u8	len;	/* identity len */
-	caddr_t	data;	/* identity data */
+struct ident {
+	__u16 type;     /* identity type */
+	__u64 id;       /* identity id */
+	__u8 len;       /* identity len */
+	caddr_t data;   /* identity data */
 };
 
 /*
- * An encapsulation route consists of a pointer to a 
+ * An encapsulation route consists of a pointer to a
  * radix tree entry and a SAID (a destination_address/SPI/protocol triple).
  */
 
-struct eroute
-{
+struct eroute {
 	struct rjtentry er_rjt;
 	ip_said er_said;
 	uint32_t er_pid;
@@ -67,8 +64,8 @@ struct eroute
 	uint64_t er_lasttime;
 	struct sockaddr_encap er_eaddr; /* MCR get rid of _encap, it is silly*/
 	struct sockaddr_encap er_emask;
-        struct ident er_ident_s;
-        struct ident er_ident_d;
+	struct ident er_ident_s;
+	struct ident er_ident_d;
 	struct sk_buff* er_first;
 	struct sk_buff* er_last;
 };

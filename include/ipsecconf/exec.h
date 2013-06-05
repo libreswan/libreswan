@@ -15,7 +15,7 @@
 #ifndef _STARTER_EXEC_H_
 #define _STARTER_EXEC_H_
 
-int starter_exec (const char *fmt, ...);
+int starter_exec(const char *fmt, ...);
 
 #endif /* _STARTER_EXEC_H_ */
 

@@ -52,89 +52,85 @@
 #include "ipsecconf/starterwhack.h"
 
 char *progname;
-int verbose=0;
+int verbose = 0;
 int warningsarefatal = 0;
 
 static const char *usage_string = ""
-    "Usage: writeconf \n";
-
+				  "Usage: writeconf \n";
 
 static void usage(void)
 {
-    /* print usage */
-    fputs(usage_string, stderr);
-    exit(10);
+	/* print usage */
+	fputs(usage_string, stderr);
+	exit(10);
 }
 
-extern char rootdir[PATH_MAX];       /* when evaluating paths, prefix this to them */
-extern char rootdir2[PATH_MAX];       /* when evaluating paths, prefix this to them */
+extern char rootdir[PATH_MAX];          /* when evaluating paths, prefix this to them */
+extern char rootdir2[PATH_MAX];         /* when evaluating paths, prefix this to them */
 
 static struct option const longopts[] =
 {
-	{"config",              required_argument, NULL, 'C'},
-	{"debug",               no_argument, NULL, 'D'},
-	{"verbose",             no_argument, NULL, 'D'},
-	{"rootdir",             required_argument, NULL, 'R'},
-	{"rootdir2",            required_argument, NULL, 'S'},
-	{"help",                no_argument, NULL, 'h'},
-	{0, 0, 0, 0}
+	{ "config",              required_argument, NULL, 'C' },
+	{ "debug",               no_argument, NULL, 'D' },
+	{ "verbose",             no_argument, NULL, 'D' },
+	{ "rootdir",             required_argument, NULL, 'R' },
+	{ "rootdir2",            required_argument, NULL, 'S' },
+	{ "help",                no_argument, NULL, 'h' },
+	{ 0, 0, 0, 0 }
 };
 
-
-
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-    int opt = 0;
-    struct starter_config *cfg = NULL;
-    err_t err = NULL;
-    char *confdir = NULL;
-    char *configfile = NULL;
-    struct starter_conn *conn = NULL;
+	int opt = 0;
+	struct starter_config *cfg = NULL;
+	err_t err = NULL;
+	char *confdir = NULL;
+	char *configfile = NULL;
+	struct starter_conn *conn = NULL;
 
-    progname = argv[0];
-    tool_init_log();
-    starter_use_log (verbose, 1, verbose ? 0 : 1);
+	progname = argv[0];
+	tool_init_log();
+	starter_use_log(verbose, 1, verbose ? 0 : 1);
 
-    cfg = (struct starter_config *)malloc(sizeof(struct starter_config));
-    if (!cfg) {
-	fprintf(stderr, "can't allocate mem in %s\n", progname);
-	exit(10);
-    }
+	cfg = (struct starter_config *)malloc(sizeof(struct starter_config));
+	if (!cfg) {
+		fprintf(stderr, "can't allocate mem in %s\n", progname);
+		exit(10);
+	}
 
-    memset(cfg, 0, sizeof(*cfg));
+	memset(cfg, 0, sizeof(*cfg));
 
-    /**
-     * Set default values
-     */
-    ipsecconf_default_values(cfg);
+	/**
+	 * Set default values
+	 */
+	ipsecconf_default_values(cfg);
 
-    conn = alloc_add_conn(cfg, "mytestconn", &err);
+	conn = alloc_add_conn(cfg, "mytestconn", &err);
 
-    conn->connalias = xstrdup("anotheralias");
+	conn->connalias = xstrdup("anotheralias");
 
-    conn->options[KBF_DPDDELAY]=60;
-    conn->options_set[KBF_DPDDELAY]=1;
+	conn->options[KBF_DPDDELAY] = 60;
+	conn->options_set[KBF_DPDDELAY] = 1;
 
-    conn->policy = POLICY_ENCRYPT|POLICY_PFS|POLICY_COMPRESS;
+	conn->policy = POLICY_ENCRYPT | POLICY_PFS | POLICY_COMPRESS;
 
-    conn->left.rsakey1 = "0sabcdabcdabcd";
-    conn->left.rsakey2 = "0s23489234ba28934243";
-    conn->left.cert = "/my/cert/file";
-    ttoaddr("192.168.2.102", 0, AF_INET, &conn->left.sourceip);
+	conn->left.rsakey1 = "0sabcdabcdabcd";
+	conn->left.rsakey2 = "0s23489234ba28934243";
+	conn->left.cert = "/my/cert/file";
+	ttoaddr("192.168.2.102", 0, AF_INET, &conn->left.sourceip);
 
-    ttoaddr("192.168.1.101", 0, AF_INET, &conn->left.addr);
-    conn->left.addr_family = AF_INET;
-    conn->left.addrtype   = KH_IPADDR;
+	ttoaddr("192.168.1.101", 0, AF_INET, &conn->left.addr);
+	conn->left.addr_family = AF_INET;
+	conn->left.addrtype   = KH_IPADDR;
 
-    conn->right.addrtype  = KH_DEFAULTROUTE;
+	conn->right.addrtype  = KH_DEFAULTROUTE;
 
-    confwrite(cfg, stdout);
+	confwrite(cfg, stdout);
 
-    exit(0);
+	exit(0);
 }
 
 void exit_tool(int x)
 {
-  exit(x);
+	exit(x);
 }

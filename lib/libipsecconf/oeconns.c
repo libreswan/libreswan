@@ -35,9 +35,9 @@ enum oe_conn_type {
 };
 
 struct oe_conn {
-	enum oe_conn_type    oe_ct;
+	enum oe_conn_type oe_ct;
 	char                *oe_cn;
-	struct starter_conn  oe_sc;
+	struct starter_conn oe_sc;
 };
 
 /*
@@ -60,59 +60,60 @@ struct oe_conn oe_packet_default = {
 	.oe_ct = OE_PACKETDEFAULT,
 	.oe_cn = "packetdefault",
 	.oe_sc = {
-		.policy = POLICY_TUNNEL|POLICY_RSASIG|POLICY_ENCRYPT|POLICY_PFS|
-		POLICY_OPPO|POLICY_FAIL_PASS|POLICY_IKEV2_ALLOW,
-		
-		.options[KBF_REKEY]=FALSE,
-		.options_set[KBF_REKEY]=TRUE,
+		.policy = POLICY_TUNNEL | POLICY_RSASIG | POLICY_ENCRYPT |
+			  POLICY_PFS |
+			  POLICY_OPPO | POLICY_FAIL_PASS | POLICY_IKEV2_ALLOW,
 
-		.options[KBF_KEYINGTRIES]=3,
-		.options_set[KBF_KEYINGTRIES]=TRUE,
+		.options[KBF_REKEY] = FALSE,
+		.options_set[KBF_REKEY] = TRUE,
 
-		.options[KBF_IKELIFETIME]=3600,
-		.options_set[KBF_IKELIFETIME]=TRUE,
-		
-		.options[KBF_SALIFETIME]=1800,
-		.options_set[KBF_SALIFETIME]=TRUE,
-		
+		.options[KBF_KEYINGTRIES] = 3,
+		.options_set[KBF_KEYINGTRIES] = TRUE,
+
+		.options[KBF_IKELIFETIME] = 3600,
+		.options_set[KBF_IKELIFETIME] = TRUE,
+
+		.options[KBF_SALIFETIME] = 1800,
+		.options_set[KBF_SALIFETIME] = TRUE,
+
 		.desired_state = STARTUP_ROUTE,
-		
+
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,
-		.left.has_client=TRUE,
-		.left.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.has_client = TRUE,
+		.left.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.left.key_from_DNS_on_demand = TRUE,
-		
+
 		.right.addr_family = AF_INET,
 		.right.addrtype = KH_OPPO,
-		.right.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
-		.right.has_client=TRUE,
+		.right.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
+		.right.has_client = TRUE,
 		.right.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.right.nexttype = KH_NOTSET,
-		.right.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.right.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
@@ -130,49 +131,48 @@ struct oe_conn oe_clear = {
 	.oe_ct = OE_CLEAR,
 	.oe_cn = "clear",
 	.oe_sc = {
-		.policy = POLICY_TUNNEL|POLICY_PFS|POLICY_GROUP|POLICY_GROUTED|POLICY_SHUNT_PASS,
-		
+		.policy = POLICY_TUNNEL | POLICY_PFS | POLICY_GROUP |
+			  POLICY_GROUTED | POLICY_SHUNT_PASS,
+
 		.desired_state = STARTUP_ROUTE,
-		
+
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,
-		.left.has_client=FALSE,
-		.left.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.has_client = FALSE,
+		.left.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
-		
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
+
 		.right.addr_family = AF_INET,
 		.right.addrtype = KH_GROUP,
-		.right.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
-		.right.has_client=TRUE,
+		.right.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
+		.right.has_client = TRUE,
 		.right.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.right.nexttype = KH_NOTSET,
-		.right.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.right.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 	},
 };
-
-
 
 /*
  *		if (jam("clear-or-private", "route")) {
@@ -191,61 +191,63 @@ struct oe_conn oe_clear_or_private = {
 	.oe_ct = OE_CLEAR_OR_PRIVATE,
 	.oe_cn = "clear-or-private",
 	.oe_sc = {
-		.policy = POLICY_RSASIG|POLICY_ENCRYPT|POLICY_TUNNEL|POLICY_PFS|
-		POLICY_DONT_REKEY|POLICY_OPPO|POLICY_GROUP|POLICY_GROUTED|
-		POLICY_SHUNT_PASS|POLICY_FAIL_PASS|POLICY_IKEV2_ALLOW,
-		
-		.options[KBF_KEYINGTRIES]=3,
-		.options_set[KBF_KEYINGTRIES]=TRUE,
+		.policy = POLICY_RSASIG | POLICY_ENCRYPT | POLICY_TUNNEL |
+			  POLICY_PFS |
+			  POLICY_DONT_REKEY | POLICY_OPPO | POLICY_GROUP |
+			  POLICY_GROUTED |
+			  POLICY_SHUNT_PASS | POLICY_FAIL_PASS |
+			  POLICY_IKEV2_ALLOW,
 
-		.options[KBF_IKELIFETIME]=3600,
-		.options_set[KBF_IKELIFETIME]=TRUE,
-		
-		.options[KBF_SALIFETIME]=1800,
-		.options_set[KBF_SALIFETIME]=TRUE,
-		
+		.options[KBF_KEYINGTRIES] = 3,
+		.options_set[KBF_KEYINGTRIES] = TRUE,
+
+		.options[KBF_IKELIFETIME] = 3600,
+		.options_set[KBF_IKELIFETIME] = TRUE,
+
+		.options[KBF_SALIFETIME] = 1800,
+		.options_set[KBF_SALIFETIME] = TRUE,
+
 		.desired_state = STARTUP_ROUTE,
-		
+
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,
-		.left.has_client=FALSE,
-		.left.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.has_client = FALSE,
+		.left.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.left.key_from_DNS_on_demand = TRUE,
-		
+
 		.right.addr_family = AF_INET,
 		.right.addrtype = KH_OPPOGROUP,
-		.right.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
-		.right.has_client=TRUE,
+		.right.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
+		.right.has_client = TRUE,
 		.right.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.right.nexttype = KH_NOTSET,
-		.right.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.right.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
-
 
 /*
  *		if (jam("private-or-clear", "route")) {
@@ -264,57 +266,59 @@ struct oe_conn oe_private_or_clear = {
 	.oe_ct = OE_PRIVATE_OR_CLEAR,
 	.oe_cn = "private-or-clear",
 	.oe_sc = {
-		.policy = POLICY_RSASIG|POLICY_ENCRYPT|POLICY_TUNNEL|POLICY_PFS|
-		POLICY_DONT_REKEY|POLICY_OPPO|POLICY_GROUP|POLICY_GROUTED|
-		POLICY_FAIL_PASS|POLICY_IKEV2_ALLOW,
-		
-		.desired_state = STARTUP_ROUTE,
-		
-		.options[KBF_KEYINGTRIES]=3,
-		.options_set[KBF_KEYINGTRIES]=TRUE,
+		.policy = POLICY_RSASIG | POLICY_ENCRYPT | POLICY_TUNNEL |
+			  POLICY_PFS |
+			  POLICY_DONT_REKEY | POLICY_OPPO | POLICY_GROUP |
+			  POLICY_GROUTED |
+			  POLICY_FAIL_PASS | POLICY_IKEV2_ALLOW,
 
-		.options[KBF_IKELIFETIME]=3600,
-		.options_set[KBF_IKELIFETIME]=TRUE,
-		
-		.options[KBF_SALIFETIME]=1800,
-		.options_set[KBF_SALIFETIME]=TRUE,
-		
+		.desired_state = STARTUP_ROUTE,
+
+		.options[KBF_KEYINGTRIES] = 3,
+		.options_set[KBF_KEYINGTRIES] = TRUE,
+
+		.options[KBF_IKELIFETIME] = 3600,
+		.options_set[KBF_IKELIFETIME] = TRUE,
+
+		.options[KBF_SALIFETIME] = 1800,
+		.options_set[KBF_SALIFETIME] = TRUE,
+
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,
-		.left.has_client=FALSE,
-		.left.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.has_client = FALSE,
+		.left.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.left.key_from_DNS_on_demand = TRUE,
-		
+
 		.right.addr_family = AF_INET,
 		.right.addrtype = KH_OPPOGROUP,
-		.right.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
-		.right.has_client=TRUE,
+		.right.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
+		.right.has_client = TRUE,
 		.right.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.right.nexttype = KH_NOTSET,
-		.right.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.right.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
@@ -337,60 +341,61 @@ struct oe_conn oe_private = {
 	.oe_ct = OE_PRIVATE,
 	.oe_cn = "private",
 	.oe_sc = {
-		.policy = POLICY_RSASIG|POLICY_ENCRYPT|POLICY_TUNNEL|POLICY_PFS|
-		POLICY_OPPO|POLICY_GROUP|POLICY_GROUTED|
-		POLICY_FAIL_DROP|POLICY_IKEV2_ALLOW,
-		
-		.options[KBF_REKEY]=FALSE,    /* really want REKEY if used */
-		.options_set[KBF_REKEY]=TRUE,
+		.policy = POLICY_RSASIG | POLICY_ENCRYPT | POLICY_TUNNEL |
+			  POLICY_PFS |
+			  POLICY_OPPO | POLICY_GROUP | POLICY_GROUTED |
+			  POLICY_FAIL_DROP | POLICY_IKEV2_ALLOW,
+
+		.options[KBF_REKEY] = FALSE,    /* really want REKEY if used */
+		.options_set[KBF_REKEY] = TRUE,
 
 		.desired_state = STARTUP_ROUTE,
-		
-		.options[KBF_KEYINGTRIES]=3,
-		.options_set[KBF_KEYINGTRIES]=TRUE,
 
-		.options[KBF_IKELIFETIME]=3600,
-		.options_set[KBF_IKELIFETIME]=TRUE,
-		
-		.options[KBF_SALIFETIME]=1800,
-		.options_set[KBF_SALIFETIME]=TRUE,
-		
+		.options[KBF_KEYINGTRIES] = 3,
+		.options_set[KBF_KEYINGTRIES] = TRUE,
+
+		.options[KBF_IKELIFETIME] = 3600,
+		.options_set[KBF_IKELIFETIME] = TRUE,
+
+		.options[KBF_SALIFETIME] = 1800,
+		.options_set[KBF_SALIFETIME] = TRUE,
+
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,
-		.left.has_client=FALSE,
-		.left.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.has_client = FALSE,
+		.left.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.left.key_from_DNS_on_demand = TRUE,
-		
+
 		.right.addr_family = AF_INET,
 		.right.addrtype = KH_OPPOGROUP,
-		.right.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
-		.right.has_client=TRUE,
+		.right.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
+		.right.has_client = TRUE,
 		.right.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.right.nexttype = KH_NOTSET,
-		.right.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.right.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
@@ -404,59 +409,60 @@ struct oe_conn oe_private = {
  *		}
  *
  * However, in addition it also does "also=%oedefault"
- * 
+ *
  */
 
 struct oe_conn oe_block = {
 	.oe_ct = OE_BLOCK,
 	.oe_cn = "block",
 	.oe_sc = {
-		.policy = POLICY_TUNNEL|POLICY_PFS|
-		POLICY_GROUP|POLICY_GROUTED|POLICY_SHUNT_REJECT|POLICY_IKEV2_ALLOW,
-		
+		.policy = POLICY_TUNNEL | POLICY_PFS |
+			  POLICY_GROUP | POLICY_GROUTED | POLICY_SHUNT_REJECT |
+			  POLICY_IKEV2_ALLOW,
+
 		.desired_state = STARTUP_ROUTE,
-		
+
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,
-		.left.has_client=FALSE,
-		.left.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.has_client = FALSE,
+		.left.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.left.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.left.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.left.key_from_DNS_on_demand = TRUE,
-		
+
 		.right.addr_family = AF_INET,
 		.right.addrtype = KH_OPPOGROUP,
-		.right.addr={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
-		.right.has_client=TRUE,
+		.right.addr = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
+		.right.has_client = TRUE,
 		.right.subnet = {
-			 .addr={
-				 .u={.v4 = { .sin_family=AF_INET,
-					     .sin_addr.s_addr=0 }},
-			 },
-			 .maskbits=0
-		 },
+			.addr = {
+				.u = { .v4 = { .sin_family = AF_INET,
+					       .sin_addr.s_addr = 0 } },
+			},
+			.maskbits = 0
+		},
 		.right.nexttype = KH_NOTSET,
-		.right.nexthop={
-			 .u={.v4 = { .sin_family=AF_INET }},
-		 },
+		.right.nexthop = {
+			.u = { .v4 = { .sin_family = AF_INET } },
+		},
 		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
 
-struct oe_conn *implicit_conns[]={
+struct oe_conn *implicit_conns[] = {
 	&oe_packet_default,
 	&oe_clear,
 	&oe_clear_or_private,
@@ -465,7 +471,6 @@ struct oe_conn *implicit_conns[]={
 	&oe_block,
 	NULL
 };
-
 
 void add_any_oeconns(struct starter_config *cfg,
 		     struct config_parsed *cfgp)
@@ -476,23 +481,24 @@ void add_any_oeconns(struct starter_config *cfg,
 	err_t perr;
 	int i;
 
-	for(i=0;i<OE_MAX;i++) found_conns[i]=FALSE;
-	
+	for (i = 0; i < OE_MAX; i++)
+		found_conns[i] = FALSE;
+
 	/* look for the conn. */
-	for(sconn = cfgp->sections.tqh_first; sconn != NULL; sconn = sconn->link.tqe_next)
-		
-	{
-	    for(i=0, oc=implicit_conns; *oc!=NULL; oc++, i++) {
-		if(strcmp((*oc)->oe_cn, sconn->name)==0) {
-		    starter_log(LOG_LEVEL_DEBUG, "found non-implicit conn: %s\n", sconn->name);
-		    found_conns[i]=TRUE;
+	for (sconn = cfgp->sections.tqh_first; sconn != NULL;
+	     sconn = sconn->link.tqe_next) {
+		for (i = 0, oc = implicit_conns; *oc != NULL; oc++, i++) {
+			if (strcmp((*oc)->oe_cn, sconn->name) == 0) {
+				starter_log(LOG_LEVEL_DEBUG,
+					    "found non-implicit conn: %s\n",
+					    sconn->name);
+				found_conns[i] = TRUE;
+			}
 		}
-	    }
 	}
 
-	
-	for(i=0, oc=implicit_conns; *oc!=NULL; oc++, i++) {
-		if(found_conns[i]==FALSE) {
+	for (i = 0, oc = implicit_conns; *oc != NULL; oc++, i++) {
+		if (found_conns[i] == FALSE) {
 			struct starter_conn *conn;
 			const struct starter_conn *tconn;
 
@@ -502,26 +508,31 @@ void add_any_oeconns(struct starter_config *cfg,
 				    (*oc)->oe_cn);
 
 			conn = alloc_add_conn(cfg, (*oc)->oe_cn, &perr);
-			if(conn == NULL) {
-				starter_log(LOG_LEVEL_INFO, "Can not create conn %s:%s\n",
+			if (conn == NULL) {
+				starter_log(LOG_LEVEL_INFO,
+					    "Can not create conn %s:%s\n",
 					    (*oc)->oe_cn, perr);
 				continue;
 			}
 
 #if 0
 			/* this doesn't help at all, since we memcpy below. */
-			if(cfg->got_oedefault) {
+			if (cfg->got_oedefault) {
 				/* get oedefaults too */
-				conn_default (conn, &cfg->conn_oedefault);
+				conn_default(conn, &cfg->conn_oedefault);
 			}
 #endif
 
-			memcpy(&conn->strings, &tconn->strings, sizeof(tconn->strings));
-			memcpy(&conn->options, &tconn->options, sizeof(tconn->options));
-			memcpy(&conn->strings_set, &tconn->strings_set, sizeof(tconn->strings_set));
-			memcpy(&conn->options_set, &tconn->options_set, sizeof(tconn->options_set));
+			memcpy(&conn->strings, &tconn->strings,
+			       sizeof(tconn->strings));
+			memcpy(&conn->options, &tconn->options,
+			       sizeof(tconn->options));
+			memcpy(&conn->strings_set, &tconn->strings_set,
+			       sizeof(tconn->strings_set));
+			memcpy(&conn->options_set, &tconn->options_set,
+			       sizeof(tconn->options_set));
 			conn->left = tconn->left;
-			conn->right= tconn->right;
+			conn->right = tconn->right;
 			conn->esp  = tconn->esp;
 			conn->ike  = tconn->ike;
 			conn->desired_state = tconn->desired_state;
@@ -531,4 +542,3 @@ void add_any_oeconns(struct starter_config *cfg,
 	}
 }
 
-	    

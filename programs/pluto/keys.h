@@ -28,36 +28,39 @@
 
 struct connection;
 
-extern void sign_hash(const struct RSA_private_key *k, const u_char *hash_val
-		      , size_t hash_len, u_char *sig_val, size_t sig_len);
+extern void sign_hash(const struct RSA_private_key *k, const u_char *hash_val,
+		      size_t hash_len, u_char *sig_val, size_t sig_len);
 
-extern int sign_hash_nss(const struct RSA_private_key *k, const u_char *hash_val
-				, size_t hash_len, u_char *sig_val, size_t sig_len);
-extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k
-					, const u_char *hash_val, size_t hash_len
-					,const u_char *sig_val, size_t sig_len);
+extern int sign_hash_nss(const struct RSA_private_key *k,
+			 const u_char *hash_val,
+			 size_t hash_len, u_char *sig_val, size_t sig_len);
+extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
+				      const u_char *hash_val, size_t hash_len,
+				      const u_char *sig_val, size_t sig_len);
 
-extern const struct RSA_private_key *get_RSA_private_key(const struct connection *c);
+extern const struct RSA_private_key *get_RSA_private_key(
+	const struct connection *c);
 
-extern const struct RSA_private_key *get_x509_private_key(/*const*/ x509cert_t *cert);
+extern const struct RSA_private_key *get_x509_private_key(
+        /*const*/ x509cert_t *cert);
 
 extern bool has_private_key(cert_t cert);
 extern bool has_private_rawkey(struct pubkey *pk);
-extern void add_x509_public_key(struct id *keyid
-				, x509cert_t *cert, time_t until
-				, enum dns_auth_level dns_auth_level);
-extern void add_pgp_public_key(pgpcert_t *cert, time_t until
-    , enum dns_auth_level dns_auth_level);
+extern void add_x509_public_key(struct id *keyid,
+				x509cert_t *cert, time_t until,
+				enum dns_auth_level dns_auth_level);
+extern void add_pgp_public_key(pgpcert_t *cert, time_t until,
+			       enum dns_auth_level dns_auth_level);
 extern void remove_x509_public_key(/*const*/ x509cert_t *cert);
 extern void list_public_keys(bool utc, bool check_pub_keys);
 extern void list_psks(void);
 
-struct gw_info;	/* forward declaration of tag (defined in dnskey.h) */
+struct gw_info; /* forward declaration of tag (defined in dnskey.h) */
 extern void transfer_to_public_keys(struct gw_info *gateways_from_dns
 #ifdef USE_KEYRR
-    , struct pubkey_list **keys
+				    , struct pubkey_list **keys
 #endif /* USE_KEYRR */
-    );
+				    );
 
 extern const chunk_t *get_preshared_secret(const struct connection *c);
 
@@ -65,30 +68,30 @@ extern char *pluto_shared_secrets_file;
 extern void load_preshared_secrets(int whackfd);
 extern void free_preshared_secrets(void);
 
-extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets
-						    , struct pubkey *my_public_key
-						    , enum PrivateKeyKind kind);
+extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
+						    struct pubkey *my_public_key,
+						    enum PrivateKeyKind kind);
 
-extern struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED
-					  , char *xauthname);
+extern struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
+					  char *xauthname);
 
 /* keys from ipsec.conf */
 extern struct pubkey_list *pluto_pubkeys;
 
 struct packet_byte_stream;
-extern stf_status
-RSA_check_signature_gen(struct state *st
-			, const u_char hash_val[MAX_DIGEST_LEN]
-			, size_t hash_len
-			, const struct packet_byte_stream *sig_pbs
+extern stf_status RSA_check_signature_gen(struct state *st,
+					  const u_char hash_val[MAX_DIGEST_LEN],
+					  size_t hash_len,
+					  const struct packet_byte_stream *sig_pbs
 #ifdef USE_KEYRR
-			, const struct pubkey_list *keys_from_dns
+					  , const struct pubkey_list *keys_from_dns
 #endif /* USE_KEYRR */
-			, const struct gw_info *gateways_from_dns
-			, err_t (*try_RSA_signature)(const u_char hash_val[MAX_DIGEST_LEN]
-						     , size_t hash_len
-						     , const struct packet_byte_stream *sig_pbs
-						     , struct pubkey *kr
-						     , struct state *st));
+					  , const struct gw_info *gateways_from_dns,
+					  err_t (*try_RSA_signature)(
+						  const u_char hash_val[MAX_DIGEST_LEN],
+						  size_t hash_len,
+						  const struct packet_byte_stream *sig_pbs,
+						  struct pubkey *kr,
+						  struct state *st));
 
 #endif /* _KEYS_H */

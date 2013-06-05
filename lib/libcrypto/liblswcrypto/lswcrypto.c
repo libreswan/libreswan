@@ -1,4 +1,4 @@
-/* 
+/*
  * Pluto interface to crypto
  *
  * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
@@ -32,31 +32,30 @@
 #include <lswcrypto.h>
 
 /* leave the {0}, it is required on OSX */
-struct lswcrypto_meth lswcrypto = {0};
+struct lswcrypto_meth lswcrypto = { 0 };
 
 /*
  * Do the modular exponentiation with Chinese Remainder Theorem in sofware
  */
-static void
-lswcrypto_rsa_mod_exp_crt_sw(
-	mpz_t dst, const mpz_t src,
-	const mpz_t p, const mpz_t dP, const mpz_t q, const mpz_t dQ,
-	const mpz_t qInv)
+static void lswcrypto_rsa_mod_exp_crt_sw(mpz_t dst, const mpz_t src,
+					 const mpz_t p, const mpz_t dP,
+					 const mpz_t q, const mpz_t dQ,
+					 const mpz_t qInv)
 {
 	mpz_t t2, t3;
 	mpz_init(t2);
 	mpz_init(t3);
 
-	mpz_powm(t2, src, dP, p);	/* m1 = c^dP mod p */
+	mpz_powm(t2, src, dP, p);       /* m1 = c^dP mod p */
 
-	mpz_powm(t3, src, dQ, q);	/* m2 = c^dQ mod Q */
+	mpz_powm(t3, src, dQ, q);       /* m2 = c^dQ mod Q */
 
-	mpz_sub(t2, t2, t3);		/* h = qInv (m1 - m2) mod p */
+	mpz_sub(t2, t2, t3);            /* h = qInv (m1 - m2) mod p */
 	mpz_mod(t2, t2, p);
 	mpz_mul(t2, t2, qInv);
 	mpz_mod(t2, t2, p);
 
-	mpz_mul(t2, t2, q);			/* m = m2 + h q */
+	mpz_mul(t2, t2, q);                     /* m = m2 + h q */
 	mpz_add(dst, t3, t2);
 	mpz_clear(t2);
 	mpz_clear(t3);
@@ -65,19 +64,16 @@ lswcrypto_rsa_mod_exp_crt_sw(
 /*
  * Do the modular exponentiation in sofware
  */
-static void
-lswcrypto_mod_exp_sw(mpz_t r0, const mpz_t mp_g,
-	const mpz_t secret, const mpz_t modulus)
+static void lswcrypto_mod_exp_sw(mpz_t r0, const mpz_t mp_g,
+				 const mpz_t secret, const mpz_t modulus)
 {
 	mpz_powm(r0, mp_g, secret, modulus);
 }
 
-
 /*
  * Find out what we can support and use it.
  */
-void
-load_lswcrypto(void)
+void load_lswcrypto(void)
 {
 	lswcrypto.rsa_mod_exp_crt      = lswcrypto_rsa_mod_exp_crt_sw;
 	lswcrypto.mod_exp              = lswcrypto_mod_exp_sw;

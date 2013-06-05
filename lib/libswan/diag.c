@@ -1,6 +1,6 @@
 /*
  * Diagnostic builder
- * Copyright (C) 1998-2003  D. Hugh Redelmeier 
+ * Copyright (C) 1998-2003  D. Hugh Redelmeier
  * Copyright (C) 2004       Michael Richardson <mcr@xelerance.com>
  *
  * alg_info.c,v 1.1.2.1 2003/11/21 18:12:23 jjo Exp
@@ -35,19 +35,18 @@
  *
  * @param fmt String format
  * @param ... strings
- * @return err_t 
+ * @return err_t
  */
-err_t
-builddiag(const char *fmt, ...)
+err_t builddiag(const char *fmt, ...)
 {
-    static char mydiag_space[LOG_WIDTH];	/* longer messages will be truncated */
-    char t[sizeof(mydiag_space)];	/* build result here first */
-    va_list args;
+	static char mydiag_space[LOG_WIDTH];    /* longer messages will be truncated */
+	char t[sizeof(mydiag_space)];           /* build result here first */
+	va_list args;
 
-    va_start(args, fmt);
-    t[0] = '\0';	/* in case nothing terminates string */
-    vsnprintf(t, sizeof(t), fmt, args);
-    va_end(args);
-    strcpy(mydiag_space, t);
-    return mydiag_space;
+	va_start(args, fmt);
+	t[0] = '\0';    /* in case nothing terminates string */
+	vsnprintf(t, sizeof(t), fmt, args);
+	va_end(args);
+	strcpy(mydiag_space, t);
+	return mydiag_space;
 }

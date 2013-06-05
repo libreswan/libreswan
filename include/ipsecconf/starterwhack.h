@@ -19,18 +19,21 @@
 struct starter_conn;
 struct starter_config;
 
-int starter_whack_add_conn (struct starter_config *cfg, struct starter_conn *conn);
-int starter_whack_del_conn (struct starter_config *cfg, struct starter_conn *conn);
-int starter_whack_route_conn (struct starter_config *cfg, struct starter_conn *conn);
-int starter_whack_initiate_conn (struct starter_config *cfg, struct starter_conn *conn);
-int starter_whack_listen (struct starter_config *cfg);
-int starter_whack_shutdown (struct starter_config *cfg);
+int starter_whack_add_conn(struct starter_config *cfg,
+			   struct starter_conn *conn);
+int starter_whack_del_conn(struct starter_config *cfg,
+			   struct starter_conn *conn);
+int starter_whack_route_conn(struct starter_config *cfg,
+			     struct starter_conn *conn);
+int starter_whack_initiate_conn(struct starter_config *cfg,
+				struct starter_conn *conn);
+int starter_whack_listen(struct starter_config *cfg);
+int starter_whack_shutdown(struct starter_config *cfg);
 
-extern int starter_permutate_conns(int (*operation)(struct starter_config *cfg
-						    , struct starter_conn *conn)
-				   , struct starter_config *cfg
-				   , struct starter_conn *conn);
-
+extern int starter_permutate_conns(int (*operation)(struct starter_config *cfg,
+						    struct starter_conn *conn),
+				   struct starter_config *cfg,
+				   struct starter_conn *conn);
 
 #endif /* _STARTER_WHACK_H_ */
 

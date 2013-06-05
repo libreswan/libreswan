@@ -5,12 +5,12 @@
  *                 and Michael Richardson  <mcr@freeswan.org>
  * Copyright (C) 2004  Michael Richardson  <mcr@xelerance.com>
  * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -19,7 +19,7 @@
  *
  */
 
-/* 
+/*
  * This file provides a set of #define's which may be tuned by various
  * people/configurations. It keeps all compile-time tunables in one place.
  *
@@ -41,14 +41,14 @@
 #define IPSEC_NUM_IFMAX CONFIG_KLIPS_IF_MAX
 #endif
 #ifndef IPSEC_NUM_IFMAX
-#define IPSEC_NUM_IFMAX	64
+#define IPSEC_NUM_IFMAX 64
 #endif
 
 /* default number of ipsecX devices to create */
 #ifdef CONFIG_KLIPS_IF_NUM
-#define IPSEC_NUM_IF	CONFIG_KLIPS_IF_NUM
+#define IPSEC_NUM_IF    CONFIG_KLIPS_IF_NUM
 #else
-#define IPSEC_NUM_IF	2
+#define IPSEC_NUM_IF    2
 #endif
 
 /* The field width must be < IF_NAM_SIZ - strlen("ipsec") - 1. */
@@ -71,11 +71,10 @@
 #define CONFIG_KLIPS_DYNDEV 1
 #endif /* CONFIG_KLIPS_DYNDEV */
 
-
 #ifdef CONFIG_KLIPS_BIGGATE
 # define SADB_HASHMOD   8069
 #else /* CONFIG_KLIPS_BIGGATE */
-# define SADB_HASHMOD	257
+# define SADB_HASHMOD   257
 #endif /* CONFIG_KLIPS_BIGGATE */
 
 #endif /* __KERNEL__ */
@@ -89,16 +88,16 @@
  * MAIN_TABLE_WIDTH is the number of bits used for the primary index table.
  *
  */
-#ifndef IPSEC_SA_REF_MAINTABLE_IDX_WIDTH 
-# define IPSEC_SA_REF_MAINTABLE_IDX_WIDTH 4 
+#ifndef IPSEC_SA_REF_MAINTABLE_IDX_WIDTH
+# define IPSEC_SA_REF_MAINTABLE_IDX_WIDTH 4
 #endif
 
-#ifndef IPSEC_SA_REF_FREELIST_NUM_ENTRIES 
+#ifndef IPSEC_SA_REF_FREELIST_NUM_ENTRIES
 # define IPSEC_SA_REF_FREELIST_NUM_ENTRIES 256
 #endif
 
-#ifndef IPSEC_SA_REF_CODE 
-# define IPSEC_SA_REF_CODE 1 
+#ifndef IPSEC_SA_REF_CODE
+# define IPSEC_SA_REF_CODE 1
 #endif
 
 #ifdef __KERNEL__
@@ -108,7 +107,7 @@
 #endif
 
 /* always turn on IPIP mode */
-#ifndef CONFIG_KLIPS_IPIP 
+#ifndef CONFIG_KLIPS_IPIP
 #define CONFIG_KLIPS_IPIP 1
 #endif
 
@@ -116,7 +115,7 @@
  * Worry about PROC_FS stuff
  */
 /* kernel 2.4 */
-# define IPSEC_PROC_LAST_ARG ,int *eof,void *data
+# define IPSEC_PROC_LAST_ARG , int *eof, void *data
 # define IPSEC_PROCFS_DEBUG_NO_STATIC
 # define IPSEC_PROC_SUBDIRS
 
@@ -142,7 +141,7 @@
 /* extra toggles for regression testing */
 #ifdef CONFIG_KLIPS_REGRESS
 
-/* 
+/*
  * should pfkey_acquire() become 100% lossy?
  *
  */
@@ -154,28 +153,30 @@ extern int sysctl_ipsec_regress_pfkey_lossage;
 /* not by default! */
 #  define KLIPS_PFKEY_ACQUIRE_LOSSAGE 0
 # endif /* CONFIG_KLIPS_PFKEY_ACQUIRE_LOSSAGE */
-#endif /* KLIPS_PFKEY_ACQUIRE_LOSSAGE */
+#endif  /* KLIPS_PFKEY_ACQUIRE_LOSSAGE */
 
-#endif /* CONFIG_KLIPS_REGRESS */
-
+#endif  /* CONFIG_KLIPS_REGRESS */
 
 /*
  * debugging routines.
  */
-        #define KLIPS_ERROR(flag, format, args...) if(printk_ratelimit() || flag) printk(KERN_ERR "KLIPS " format, ## args)
-	#define KLIPS_PRINT(flag, format, args...) \
-		((flag) ? printk(KERN_INFO format , ## args) : 0)
-	#define KLIPS_PRINTMORE(flag, format, args...) \
-		((flag) ? printk(format , ## args) : 0)
+	#define KLIPS_ERROR(flag, format, args ...) if (printk_ratelimit() || \
+							flag) \
+		printk(KERN_ERR "KLIPS " format, ## args)
+	#define KLIPS_PRINT(flag, format, args ...) \
+	((flag) ? printk(KERN_INFO format, ## args) : 0)
+	#define KLIPS_PRINTMORE(flag, format, args ...) \
+	((flag) ? printk(format, ## args) : 0)
 	#define KLIPS_IP_PRINT(flag, ip) \
-		((flag) ? ipsec_print_ip(ip) : 0)
+	((flag) ? ipsec_print_ip(ip) : 0)
 	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) \
-		((flag) ? satot(sa, format, dst, dstlen) : 0)
+	((flag) ? satot(sa, format, dst, dstlen) : 0)
 #if 0 /* not CONFIG_KLIPS_DEBUG */
-        #define KLIPS_ERROR(flag, format, args...) if(printk_ratelimit()) printk(KERN_ERR "KLIPS " format, ## args)
-	#define KLIPS_PRINT(flag, format, args...) do ; while(0)
-	#define KLIPS_PRINTMORE(flag, format, args...) do ; while(0)
-	#define KLIPS_IP_PRINT(flag, ip) do ; while(0)
+	#define KLIPS_ERROR(flag, format, args ...) if (printk_ratelimit()) \
+		printk(KERN_ERR "KLIPS " format, ## args)
+	#define KLIPS_PRINT(flag, format, args ...) do ; while (0)
+	#define KLIPS_PRINTMORE(flag, format, args ...) do ; while (0)
+	#define KLIPS_IP_PRINT(flag, ip) do ; while (0)
 	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) (0)
 #endif /* CONFIG_KLIPS_DEBUG */
 

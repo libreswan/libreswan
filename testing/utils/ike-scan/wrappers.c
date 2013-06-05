@@ -41,45 +41,50 @@
 
 #include "ike-scan.h"
 
-static char rcsid[] = "$Id: wrappers.c,v 1.1.1.1 2005/01/13 18:45:14 mcr Exp $";	/* RCS ID for ident(1) */
+static char rcsid[] =
+	"$Id: wrappers.c,v 1.1.1.1 2005/01/13 18:45:14 mcr Exp $";                      /* RCS ID for ident(1) */
 
 /*
  * We omit the timezone arg from this wrapper since it's obsolete and we never
  * use it.
  */
-int Gettimeofday(struct timeval *tv) {
-   int result;
+int Gettimeofday(struct timeval *tv)
+{
+	int result;
 
-   result = gettimeofday(tv, NULL);
+	result = gettimeofday(tv, NULL);
 
-   if (result != 0)
-      err_sys("gettimeofday");
+	if (result != 0)
+		err_sys("gettimeofday");
 
-   return result;
+	return result;
 }
 
-void *Malloc(size_t size) {
-   void *result;
+void *Malloc(size_t size)
+{
+	void *result;
 
-   result = malloc(size);
+	result = malloc(size);
 
-   if (result == NULL)
-      err_sys("malloc");
+	if (result == NULL)
+		err_sys("malloc");
 
-   return result;
+	return result;
 }
 
-void *Realloc(void *ptr, size_t size) {
-   void *result;
+void *Realloc(void *ptr, size_t size)
+{
+	void *result;
 
-   result=realloc(ptr, size);
+	result = realloc(ptr, size);
 
-   if (result == NULL)
-      err_sys("realloc");
+	if (result == NULL)
+		err_sys("realloc");
 
-   return result;
+	return result;
 }
 
-void wrappers_use_rcsid(void) {
-   fprintf(stderr, "%s\n", rcsid);	/* Use rcsid to stop compiler optimising away */
+void wrappers_use_rcsid(void)
+{
+	fprintf(stderr, "%s\n", rcsid); /* Use rcsid to stop compiler optimising away */
 }

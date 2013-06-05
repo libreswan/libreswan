@@ -1,7 +1,7 @@
 #define LEAK_DETECTIVE
 #define AGGRESSIVE 1
-#define XAUTH 
-#define MODECFG 
+#define XAUTH
+#define MODECFG
 #define DEBUG 1
 #define PRINT_SA_DEBUG 1
 #define USE_KEYRR 1
@@ -31,72 +31,73 @@
 #include "seam_exitlog.c"
 #include "seam_whack.c"
 
-main(int argc, char *argv[])
-{
-    int   len;
-    char *infile;
-    FILE *idfile;
-    char idbuf[256];
-    int  lineno=0;
+main(int argc, char *argv[]){
+	int len;
+	char *infile;
+	FILE *idfile;
+	char idbuf[256];
+	int lineno = 0;
 
-    EF_PROTECT_FREE=1;
-    EF_FREE_WIPES  =1;
+	EF_PROTECT_FREE = 1;
+	EF_FREE_WIPES  = 1;
 
-    lsw_init_rootdir("../../../baseconfigs/all");
+	lsw_init_rootdir("../../../baseconfigs/all");
 
-    progname = argv[0];
-    leak_detective = 1;
+	progname = argv[0];
+	leak_detective = 1;
 
-    if(argc != 3 ) {
-	fprintf(stderr, "Usage: %s <whackrecord> <idfile>\n", progname);
-	exit(10);
-    }
-    /* argv[1] == "-r" */
+	if (argc != 3 ) {
+		fprintf(stderr, "Usage: %s <whackrecord> <idfile>\n",
+			progname);
+		exit(10);
+	}
+	/* argv[1] == "-r" */
 
-    tool_init_log();
-    
-    infile = argv[1];
+	tool_init_log();
 
-    readwhackmsg(infile);
+	infile = argv[1];
 
-    idfile = fopen(argv[2], "r");
-    if(!idfile) {
-	perror(argv[2]);
-	exit(11);
-    }
+	readwhackmsg(infile);
 
-    cur_debugging = DBG_CONTROL|DBG_CONTROLMORE;
+	idfile = fopen(argv[2], "r");
+	if (!idfile) {
+		perror(argv[2]);
+		exit(11);
+	}
 
-    while(fgets(idbuf, sizeof(idbuf), idfile) != NULL)
-    {
-	struct state *st1;
-	struct connection *nc;
-	struct id peer_id;
-	int aggrmode, initiate;
-	char id1[256];
-	
-	/* ignore comments */
-	if(idbuf[0]=='#') continue;
+	cur_debugging = DBG_CONTROL | DBG_CONTROLMORE;
 
-	st1 = new_state();
-	
-	sscanf(idbuf, "%s %u %u", id1, &initiate, &aggrmode);
+	while (fgets(idbuf, sizeof(idbuf), idfile) != NULL) {
+		struct state *st1;
+		struct connection *nc;
+		struct id peer_id;
+		int aggrmode, initiate;
+		char id1[256];
 
-	/* set it to the first connection, there may be only one?? */
-	st1->st_connection = connections;
-	st1->st_oakley.auth = OAKLEY_RSA_SIG;
+		/* ignore comments */
+		if (idbuf[0] == '#')
+			continue;
 
-	passert(connections != NULL);
+		st1 = new_state();
 
-	atoid(id1, &peer_id, TRUE);
-	
-	nc = refine_host_connection(st1, &peer_id, initiate, aggrmode);
-	
-	printf("%u: %s -> conn: %s\n", ++lineno, id1,nc ? nc->name : "<none>");
-    }
+		sscanf(idbuf, "%s %u %u", id1, &initiate, &aggrmode);
 
-    report_leaks();
+		/* set it to the first connection, there may be only one?? */
+		st1->st_connection = connections;
+		st1->st_oakley.auth = OAKLEY_RSA_SIG;
 
-    tool_close_log();
-    exit(0);
+		passert(connections != NULL);
+
+		atoid(id1, &peer_id, TRUE);
+
+		nc = refine_host_connection(st1, &peer_id, initiate, aggrmode);
+
+		printf("%u: %s -> conn: %s\n", ++lineno, id1,
+		       nc ? nc->name : "<none>");
+	}
+
+	report_leaks();
+
+	tool_close_log();
+	exit(0);
 }

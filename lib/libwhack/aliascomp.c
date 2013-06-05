@@ -27,7 +27,7 @@
  * this is just like "strstr()", only it won't find matches
  * that are substrings (case-sensitive compare), but rather each match
  * must be anchored in front and after with whitespace and/or start/end
- * of string. 
+ * of string.
  *
  */
 bool lsw_alias_cmp(const char *needle, const char *haystack)
@@ -36,29 +36,28 @@ bool lsw_alias_cmp(const char *needle, const char *haystack)
 	const char *s = haystack;
 
 	if (s == NULL)
-	   return FALSE;
+		return FALSE;
 
-	while(*s!='\0') {
+	while (*s != '\0') {
 		/* does it match, and does it end with a space?
 		 * check if things end at same place
 		 */
-		if(strncmp(s, needle, nlen)==0
-		   && (s[nlen]==' ' || s[nlen]=='\t' || s[nlen]=='\0')) {
+		if (strncmp(s, needle, nlen) == 0 &&
+		    (s[nlen] == ' ' || s[nlen] == '\t' || s[nlen] == '\0'))
 			return TRUE;
+
+		for (;; ) {
+			s++;
+			if (*s == '\0')
+				break; /* or return FALSE: we're done */
+			if (*s == ' ' || *s == '\t') {
+				/* at whitespace: start next scan right after */
+				s++;
+				break;
+			}
 		}
-		
-        	for (;;) {
-            	s++;
-            	if (*s == '\0')
-                	break;  /* or return FALSE: we're done */
-            	if (*s == ' ' || *s == '\t') {
-                	/* at whitespace: start next scan right after */
-                	s++;
-                	break;
-            		}
-        	}
 
 	}
-	
+
 	return FALSE;
 }

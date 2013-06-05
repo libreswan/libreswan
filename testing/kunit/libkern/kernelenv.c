@@ -1,33 +1,34 @@
 /*
 
-Copyright (c) 2003,2004 Jeremy Kerr & Rusty Russell
+   Copyright (c) 2003,2004 Jeremy Kerr & Rusty Russell
 
-This file is part of nfsim.
+   This file is part of nfsim.
 
-nfsim is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   nfsim is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-nfsim is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   nfsim is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with nfsim; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+   You should have received a copy of the GNU General Public License
+   along with nfsim; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 #include <kernelenv.h>
 #include "utils.h"
 #include "field.h"
 #if 0
-#include "tui.h" 
+#include "tui.h"
 #endif
 
 /* Root of talloc trees for different allocators */
-void *__skb_ctx, *__vmalloc_ctx, *__kmalloc_ctx, *__kmalloc_atomic_ctx, *__kmem_cache_ctx, *__lock_ctx, *__timer_ctx;
+void *__skb_ctx, *__vmalloc_ctx, *__kmalloc_ctx, *__kmalloc_atomic_ctx,
+*__kmem_cache_ctx, *__lock_ctx, *__timer_ctx;
 
 unsigned long num_physpages = 1024;
 
@@ -37,7 +38,7 @@ u32 htonl(u32 hostlong)
 {
 	return __cpu_to_be32(hostlong);
 }
-	
+
 u16 htons(u16 hostshort)
 {
 	return __cpu_to_be16(hostshort);
@@ -92,7 +93,7 @@ struct sk_buff *nfsim_nonlinear_skb(const void *data1,
 	extra->writable_len = 0;
 	extra->data = talloc_size(extra, extra->len);
 	memcpy(extra->data, data1, size1);
-	memcpy(extra->data+size1, data2, size2);
+	memcpy(extra->data + size1, data2, size2);
 	field_attach(skb, "extra_data", extra);
 
 	/* Place linear data in skb. */
@@ -224,7 +225,7 @@ unsigned char *skb_put(struct sk_buff *skb, unsigned int len)
 }
 
 unsigned char *skb_push(struct sk_buff *skb, unsigned int len)
-{	
+{
 	skb->data -= len;
 	skb->len  += len;
 	if (skb->data < skb->head)
@@ -233,7 +234,7 @@ unsigned char *skb_push(struct sk_buff *skb, unsigned int len)
 }
 
 unsigned char *skb_pull(struct sk_buff *skb, unsigned int len)
-{	
+{
 	skb->data += len;
 	skb->len  -= len;
 
@@ -284,15 +285,12 @@ unsigned int skb_cow(struct sk_buff *skb, unsigned int headroom)
 		delta = 0;
 
 	if (delta || skb_cloned(skb)) {
-	  /* XXX not yet written */
-	  lsw_abort();
-	  //return pskb_expand_head(skb, (delta + 15) & ~15, 0, GFP_ATOMIC);
+		/* XXX not yet written */
+		lsw_abort();
+		//return pskb_expand_head(skb, (delta + 15) & ~15, 0, GFP_ATOMIC);
 	}
 	return 0;
 }
-
-
-
 
 void skb_reserve(struct sk_buff *skb, unsigned int len)
 {
@@ -308,7 +306,7 @@ void skb_reserve(struct sk_buff *skb, unsigned int len)
 void copy_skb_header(struct sk_buff *new, const struct sk_buff *old)
 {
 	unsigned long offset = new->data - old->data;
-	
+
 	__copy(dev);
 	__copy(seq);
 	__copy(local_df);
@@ -318,11 +316,10 @@ void copy_skb_header(struct sk_buff *new, const struct sk_buff *old)
 	__copy(nfmark);
 	__copy(nfcache);
 	__copy(nfct);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,9)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 9)
 	__copy(nfctinfo);
 #endif
 	nf_conntrack_get(new->nfct);
-	
 
 	/* dst_clone() ? */
 	__copy(dst);
@@ -360,7 +357,8 @@ int skb_copy_bits(const struct sk_buff *skb, int offset,
 
 	/* Can we copy some from linear part of packet? */
 	if (offset < nfsim_linear_length(skb)) {
-		int len_from_data = min(len, nfsim_linear_length(skb)-offset);
+		int len_from_data =
+			min(len, nfsim_linear_length(skb) - offset);
 
 		memcpy(to, skb->data + offset, len_from_data);
 		offset += len_from_data;
@@ -378,7 +376,8 @@ int skb_copy_bits(const struct sk_buff *skb, int offset,
 	return 0;
 }
 
-struct sk_buff *skb_realloc_headroom(struct sk_buff *skb, unsigned int headroom)
+struct sk_buff *skb_realloc_headroom(struct sk_buff *skb,
+				     unsigned int headroom)
 {
 	int delta = headroom - skb_headroom(skb);
 
@@ -387,7 +386,7 @@ struct sk_buff *skb_realloc_headroom(struct sk_buff *skb, unsigned int headroom)
 
 int pskb_may_pull(struct sk_buff *skb, unsigned int len)
 {
-	return (len <= skb_headroom(skb));
+	return len <= skb_headroom(skb);
 }
 
 static int __skb_checksum_help(struct sk_buff *skb, int inward)
@@ -414,7 +413,7 @@ static int __skb_checksum_help(struct sk_buff *skb, int inward)
 
 	if (offset > (int)skb->len)
 		BUG();
-	csum = skb_checksum(skb, offset, skb->len-offset, 0);
+	csum = skb_checksum(skb, offset, skb->len - offset, 0);
 
 	offset = skb->tail - skb->h.raw;
 	if (offset <= 0)
@@ -424,16 +423,16 @@ static int __skb_checksum_help(struct sk_buff *skb, int inward)
 
 	*(u16*)(skb->h.raw + skb->csum) = csum_fold(csum);
 	skb->ip_summed = CHECKSUM_NONE;
-out:	
+out:
 	return ret;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,7)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 7)
 int skb_checksum_help(struct sk_buff *skb)
 {
 	return __skb_checksum_help(skb, 0);
 }
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10)
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 10)
 int skb_checksum_help(struct sk_buff **pskb, int inward)
 {
 	return __skb_checksum_help(*pskb, inward);
@@ -480,10 +479,10 @@ void skb_trim(struct sk_buff *skb, unsigned int len)
 
 void skb_orphan(struct sk_buff *skb)
 {
-        if (skb->destructor)
-                skb->destructor(skb);
-        skb->destructor = NULL;
-        skb->sk         = NULL;
+	if (skb->destructor)
+		skb->destructor(skb);
+	skb->destructor = NULL;
+	skb->sk         = NULL;
 }
 
 int skb_is_nonlinear(const struct sk_buff *skb)
@@ -589,14 +588,14 @@ void sock_put(struct sock *sk)
 void skb_set_owner_w(struct sk_buff *skb, struct sock *sk)
 {
 	/*
-	sock_hold(sk);
-	skb->sk = sk;
-	skb->destructor = sock_wfree;
-	atomic_add(skb->truesize, &sk->sk_wmem_alloc);
-	*/
+	   sock_hold(sk);
+	   skb->sk = sk;
+	   skb->destructor = sock_wfree;
+	   atomic_add(skb->truesize, &sk->sk_wmem_alloc);
+	 */
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,9)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 9)
 void nf_conntrack_put(struct nf_ct_info *nfct)
 {
 	if (nfct && atomic_dec_and_test(&nfct->master->use))
@@ -642,7 +641,6 @@ u32 dst_path_metric(struct dst_entry *dst, int metric)
 /*	return dst->path->metrics[metric-1]; */
 }
 
-
 u32 dst_pmtu(struct dst_entry *dst)
 {
 	u32 mtu = dst_path_metric(dst, RTAX_MTU);
@@ -677,7 +675,7 @@ void __generic_write_lock(spinlock_t *lock, const char *location)
 {
 	if (lock->lock)
 		panic("write lock (called at %s) already held by %s.\n",
-		        location, lock->location);
+		      location, lock->location);
 	lock->lock = -1;
 	lock->location = talloc_strdup(__lock_ctx, location);
 }
@@ -686,7 +684,7 @@ void __generic_write_unlock(spinlock_t *lock, const char *location)
 {
 	if (lock->lock != -1) {
 		fprintf(stderr, "write lock (called at %s) isn't held\n",
-		        location);
+			location);
 	}
 	lock->lock = 0;
 	talloc_free(lock->location);
@@ -697,7 +695,7 @@ void __generic_read_lock(spinlock_t *lock, const char *location)
 {
 	if (lock->lock == -1)
 		panic("read lock (called at %s) already held by %s.\n",
-		        location, lock->location);
+		      location, lock->location);
 	lock->lock++;
 	talloc_free(lock->location);
 	lock->location = talloc_strdup(__lock_ctx, location);
@@ -707,7 +705,7 @@ void __generic_read_unlock(spinlock_t *lock, const char *location)
 {
 	if (lock->lock <= 0) {
 		fprintf(stderr, "read lock (called at %s) isn't held\n",
-		        location);
+			location);
 	}
 	lock->lock--;
 
@@ -764,16 +762,16 @@ void sema_init(struct semaphore *sem, int val)
 /* bitops.h */
 int test_bit(int nr, const long * addr)
 {
-	int	mask;
+	int mask;
 
 	addr += nr >> 5;
 	mask = 1 << (nr & 0x1f);
-	return ((mask & *addr) != 0);
+	return (mask & *addr) != 0;
 }
 
-int set_bit(int nr,long * addr)
+int set_bit(int nr, long * addr)
 {
-	int	mask, retval;
+	int mask, retval;
 
 	addr += nr >> 5;
 	mask = 1 << (nr & 0x1f);
@@ -786,7 +784,7 @@ int set_bit(int nr,long * addr)
 
 int clear_bit(int nr, long * addr)
 {
-	int     mask, retval;
+	int mask, retval;
 
 	addr += nr >> 5;
 	mask = 1 << (nr & 0x1f);
@@ -794,7 +792,7 @@ int clear_bit(int nr, long * addr)
 	retval = (mask & *addr) != 0;
 	*addr &= ~mask;
 	sti();
-        return retval;
+	return retval;
 }
 
 /* timer */
@@ -802,7 +800,7 @@ LIST_HEAD(__timers);
 LIST_HEAD(__running_timers);
 
 void __init_timer(struct timer_list * timer, struct module *owner,
-	const char *function)
+		  const char *function)
 {
 	timer->magic = TIMER_MAGIC;
 	timer->owner = owner;
@@ -814,7 +812,7 @@ void __add_timer(struct timer_list *timer, const char *location)
 {
 	struct timer_list *t;
 	list_for_each_entry(t, &__timers, entry) {
-		if (time_after(t->expires, timer->expires)) 
+		if (time_after(t->expires, timer->expires))
 			break;
 	}
 	list_add_tail(&timer->entry, &t->entry);
@@ -878,15 +876,15 @@ void increment_time(unsigned int inc)
 	struct timer_list *t;
 
 	jiffies += inc;
-	
+
 	i = __timers.next;
-	
+
 	while (i != &__timers) {
 		t = list_entry(i, struct timer_list, entry);
 		if (time_before(jiffies, t->expires))
 			break;
 		nfsim_log(LOG_UI, "running timer to %s:%s()", t->owner->name,
-			t->ownerfunction, t->function);
+			  t->ownerfunction, t->function);
 		i = i->next;
 		list_del(&t->entry);
 		talloc_free(t->use);
@@ -898,7 +896,8 @@ void increment_time(unsigned int inc)
 /* notifier */
 /*static rwlock_t notifier_lock = RW_LOCK_UNLOCKED;*/
 
-int notifier_chain_register(struct notifier_block **list, struct notifier_block *n)
+int notifier_chain_register(struct notifier_block **list,
+			    struct notifier_block *n)
 {
 	/* Detect if they don't unregister. */
 	field_attach_static(n, "notifier_chain_register", NULL);
@@ -907,15 +906,16 @@ int notifier_chain_register(struct notifier_block **list, struct notifier_block 
 	while (*list) {
 		if (n->priority > (*list)->priority)
 			break;
-		list= &((*list)->next);
+		list = &((*list)->next);
 	}
 	n->next = *list;
-	*list=n;
+	*list = n;
 	/*write_unlock(&notifier_lock);*/
 	return 0;
 }
 
-int notifier_chain_unregister(struct notifier_block **nl, struct notifier_block *n)
+int notifier_chain_unregister(struct notifier_block **nl,
+			      struct notifier_block *n)
 {
 	/*write_lock(&notifier_lock);*/
 	while ((*nl) != NULL) {
@@ -940,18 +940,18 @@ int notifier_call_chain(struct notifier_block **n, unsigned long val, void *v)
 		ret = nb->notifier_call(nb, val, v);
 		if (ret & NOTIFY_STOP_MASK)
 			return ret;
+
 		nb = nb->next;
 	}
 	return ret;
 }
-
 
 /* random */
 void get_random_bytes(void *buf, int nbytes)
 {
 	while (nbytes--)
 		*((char *)buf + nbytes) = random();
-		
+
 }
 
 /* cache */
@@ -965,9 +965,11 @@ void *__malloc(unsigned int size, void *ctx, const char *location)
 
 #if 0
 kmem_cache_t *kmem_cache_create(const char *name, size_t objsize,
-        size_t offset, unsigned long flags,
-	void (*ctor)(void *, kmem_cache_t *, unsigned long),
-	void (*dtor)(void *, kmem_cache_t *, unsigned long))
+				size_t offset, unsigned long flags,
+				void (*ctor)(void *, kmem_cache_t *,
+					     unsigned long),
+				void (*dtor)(void *, kmem_cache_t *,
+					     unsigned long))
 {
 	kmem_cache_t *cache;
 
@@ -990,7 +992,6 @@ int kmem_cache_destroy(kmem_cache_t *cache)
 	return 0;
 }
 
-
 void *kmem_cache_alloc(kmem_cache_t *cache, int flags)
 {
 	struct kmem_cache_obj *obj;
@@ -1009,7 +1010,7 @@ void *kmem_cache_alloc(kmem_cache_t *cache, int flags)
 void kmem_cache_free(kmem_cache_t *cache, void *ptr)
 {
 	struct kmem_cache_obj *i;
-	
+
 	list_for_each_entry(i, &(cache->objs), entry) {
 		if (i->ptr == ptr) {
 			list_del(&i->entry);
@@ -1022,8 +1023,7 @@ void kmem_cache_free(kmem_cache_t *cache, void *ptr)
 }
 #endif
 
-unsigned long
-__get_free_pages(unsigned int gfp_mask, unsigned int order)
+unsigned long __get_free_pages(unsigned int gfp_mask, unsigned int order)
 {
 	return (unsigned long)(kmalloc(PAGE_SIZE << order, gfp_mask));
 }
@@ -1038,7 +1038,7 @@ int get_order(unsigned long size)
 {
 	int order;
 
-	size = (size-1) >> (PAGE_SHIFT-1);
+	size = (size - 1) >> (PAGE_SHIFT - 1);
 	order = -1;
 	do {
 		size >>= 1;
@@ -1068,20 +1068,20 @@ int get_order(unsigned long size)
 
 /* NOTE: Arguments are modified. */
 #define __jhash_mix(a, b, c) \
-{ \
-  a -= b; a -= c; a ^= (c>>13); \
-  b -= c; b -= a; b ^= (a<<8); \
-  c -= a; c -= b; c ^= (b>>13); \
-  a -= b; a -= c; a ^= (c>>12);  \
-  b -= c; b -= a; b ^= (a<<16); \
-  c -= a; c -= b; c ^= (b>>5); \
-  a -= b; a -= c; a ^= (c>>3);  \
-  b -= c; b -= a; b ^= (a<<10); \
-  c -= a; c -= b; c ^= (b>>15); \
-}
+	{ \
+		a -= b; a -= c; a ^= (c >> 13); \
+		b -= c; b -= a; b ^= (a << 8); \
+		c -= a; c -= b; c ^= (b >> 13); \
+		a -= b; a -= c; a ^= (c >> 12);  \
+		b -= c; b -= a; b ^= (a << 16); \
+		c -= a; c -= b; c ^= (b >> 5); \
+		a -= b; a -= c; a ^= (c >> 3);  \
+		b -= c; b -= a; b ^= (a << 10); \
+		c -= a; c -= b; c ^= (b >> 15); \
+	}
 
 /* The golden ration: an arbitrary value */
-#define JHASH_GOLDEN_RATIO	0x9e3779b9
+#define JHASH_GOLDEN_RATIO      0x9e3779b9
 
 /* The most generic version, hashes an arbitrary sequence
  * of bytes.  No alignment or length assumptions are made about
@@ -1097,11 +1097,20 @@ u32 jhash(void *key, u32 length, u32 initval)
 	c = initval;
 
 	while (len >= 12) {
-		a += (k[0] +((u32)k[1]<<8) +((u32)k[2]<<16) +((u32)k[3]<<24));
-		b += (k[4] +((u32)k[5]<<8) +((u32)k[6]<<16) +((u32)k[7]<<24));
-		c += (k[8] +((u32)k[9]<<8) +((u32)k[10]<<16)+((u32)k[11]<<24));
+		a +=
+			(k[0] +
+			 ((u32)k[1] <<
+			  8) + ((u32)k[2] << 16) + ((u32)k[3] << 24));
+		b +=
+			(k[4] +
+			 ((u32)k[5] <<
+			  8) + ((u32)k[6] << 16) + ((u32)k[7] << 24));
+		c +=
+			(k[8] +
+			 ((u32)k[9] <<
+			  8) + ((u32)k[10] << 16) + ((u32)k[11] << 24));
 
-		__jhash_mix(a,b,c);
+		__jhash_mix(a, b, c);
 
 		k += 12;
 		len -= 12;
@@ -1109,20 +1118,21 @@ u32 jhash(void *key, u32 length, u32 initval)
 
 	c += length;
 	switch (len) {
-	case 11: c += ((u32)k[10]<<24);
-	case 10: c += ((u32)k[9]<<16);
-	case 9 : c += ((u32)k[8]<<8);
-	case 8 : b += ((u32)k[7]<<24);
-	case 7 : b += ((u32)k[6]<<16);
-	case 6 : b += ((u32)k[5]<<8);
-	case 5 : b += k[4];
-	case 4 : a += ((u32)k[3]<<24);
-	case 3 : a += ((u32)k[2]<<16);
-	case 2 : a += ((u32)k[1]<<8);
-	case 1 : a += k[0];
-	};
+	case 11: c += ((u32)k[10] << 24);
+	case 10: c += ((u32)k[9] << 16);
+	case 9: c += ((u32)k[8] << 8);
+	case 8: b += ((u32)k[7] << 24);
+	case 7: b += ((u32)k[6] << 16);
+	case 6: b += ((u32)k[5] << 8);
+	case 5: b += k[4];
+	case 4: a += ((u32)k[3] << 24);
+	case 3: a += ((u32)k[2] << 16);
+	case 2: a += ((u32)k[1] << 8);
+	case 1: a += k[0];
+	}
+	;
 
-	__jhash_mix(a,b,c);
+	__jhash_mix(a, b, c);
 
 	return c;
 }
@@ -1143,21 +1153,22 @@ u32 jhash2(u32 *k, u32 length, u32 initval)
 		b += k[1];
 		c += k[2];
 		__jhash_mix(a, b, c);
-		k += 3; len -= 3;
+		k += 3;
+		len -= 3;
 	}
 
 	c += length * 4;
 
 	switch (len) {
-	case 2 : b += k[1];
-	case 1 : a += k[0];
-	};
+	case 2: b += k[1];
+	case 1: a += k[0];
+	}
+	;
 
-	__jhash_mix(a,b,c);
+	__jhash_mix(a, b, c);
 
 	return c;
 }
-
 
 /* A special ultra-optimized versions that knows they are hashing exactly
  * 3, 2 or 1 word(s).
@@ -1205,7 +1216,7 @@ void kernelenv_init(void)
 
 int IS_ERR(const void *ptr)
 {
-         return (unsigned long)ptr > (unsigned long)-1000L;
+	return (unsigned long)ptr > (unsigned long)-1000L;
 }
 
 void atomic_inc(atomic_t *v)
@@ -1220,5 +1231,5 @@ void atomic_dec(atomic_t *v)
 
 int atomic_dec_and_test(atomic_t *v)
 {
-	return (--(v->counter) == 0);
+	return --(v->counter) == 0;
 }

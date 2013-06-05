@@ -1,14 +1,14 @@
-#include <stdio.h>/* printf */
-#include <string.h>/* strncpy */
-#include <unistd.h>/* close */
+#include <stdio.h>              /* printf */
+#include <string.h>             /* strncpy */
+#include <unistd.h>             /* close */
 #include <signal.h>
-#include <arpa/inet.h> /* inet_ntoa */
-#include <sys/socket.h>/* socket */
-#include <linux/if_ether.h>/* ETH_P_IP, struct ethhdr */
-#include <linux/if.h>/* IFNAMSIZ, IFF_PROMISC, struct ethreq */
+#include <arpa/inet.h>          /* inet_ntoa */
+#include <sys/socket.h>         /* socket */
+#include <linux/if_ether.h>     /* ETH_P_IP, struct ethhdr */
+#include <linux/if.h>           /* IFNAMSIZ, IFF_PROMISC, struct ethreq */
 #include <linux/udp.h>
-#include <netinet/ip.h>/* struct iphdr */
-#include <sys/ioctl.h>/* ioctl */
+#include <netinet/ip.h>         /* struct iphdr */
+#include <sys/ioctl.h>          /* ioctl */
 #include <sys/types.h>
 #include <linux/if_packet.h>
 #include <linux/if_arp.h>
@@ -21,28 +21,27 @@
 #define u8 unsigned char
 
 typedef struct {
-        u32 spi;
-        u32 SequenceNumber;
-        u8 iv[8]; /* iv 32bit/64bit */
-        u8 payloaddata[1]; /* payload data, length variable */
+	u32 spi;
+	u32 SequenceNumber;
+	u8 iv[8];               /* iv 32bit/64bit */
+	u8 payloaddata[1];      /* payload data, length variable */
 } EspHeader;
 
 typedef struct {
-        u8 nextheader;
-        u8 length; /* length of authentication data field */
-        u16 RESERVED;
-        u32 spi;
-        u32 SequenceNumber;
-        u8 authenticationdata[1]; /* variable length */
+	u8 nextheader;
+	u8 length; /* length of authentication data field */
+	u16 RESERVED;
+	u32 spi;
+	u32 SequenceNumber;
+	u8 authenticationdata[1]; /* variable length */
 } AhHeader;
 
 typedef struct {
-        u16 SourcePort;
-        u16 DestinationPort;
-        u16 TotaLength;
-        u16 CheckSum;
+	u16 SourcePort;
+	u16 DestinationPort;
+	u16 TotaLength;
+	u16 CheckSum;
 } UdpHeader;
-
 
 typedef struct {
 	u32 src_address;
@@ -62,7 +61,7 @@ typedef struct {
 	time_t spi_last_seen;
 	time_t start_time;
 	u32 spi_wait_time;
-	enum {init, wait, send_done} state;
+	enum { init, wait, send_done } state;
 	u8 guess[8];
 	u8 block_to_crack[8];
 	u8 original_iv[8];
@@ -74,7 +73,6 @@ typedef struct {
 	u32 gw;
 	u8 rsv_bit;
 } option_data;
-
 
 int read_hex_int(char *c);
 u8 read_nyble(FILE *fp, int *err);

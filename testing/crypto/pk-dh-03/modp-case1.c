@@ -1,4 +1,4 @@
-/* 
+/*
  * unit tests for cryptographic helper function - calculate KE and nonce
  *
  * Copyright (C) 2006 Michael C. Richardson <mcr@xelerance.com>
@@ -32,7 +32,7 @@ char *progname;
 void exit_log(const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
+	char m[LOG_WIDTH];      /* longer messages will be truncated */
 
 	va_start(args, message);
 	vsnprintf(m, sizeof(m), message, args);
@@ -52,88 +52,87 @@ void exit_tool(int code)
  *
  */
 u_int32_t aModExpOperandA[] = {
-    0x80000000, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
+	0x80000000, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
 };
 
 /* Operand_B */
 u_int32_t aModExpOperandB[] = {
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000004
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000004
 };
 
 /* ExpectedResult */
 u_int32_t aModExpExpectedRes[] = {
-    0x7FFFFFFC, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000001
+	0x7FFFFFFC, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000001
 };
 
 /******************* MODULUS data *******************/
 u_int32_t aModulus[] = {
-    0x80000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000
+	0x80000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000,
+	0x00000000, 0x00000000, 0x00000000, 0x00000000
 };
-
 
 /******************* RECIPROCAL of MODULUS data *******************/
 u_int32_t aReciprocal[] = {
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+	0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
 };
 
 void bigendianize(u_int32_t *data, int len)
 {
-	while(len-->0) {
+	while (len-- > 0) {
 		*data = htonl(*data);
 		data++;
 	}
@@ -149,7 +148,7 @@ int main(int argc, char *argv[])
 	u_int8_t aReciprocal_l[192];
 	u_int8_t gtothex[192];
 	struct pkprogram expModP;
-	
+
 	memset(&expModP, 0, sizeof(expModP));
 
 	progname = argv[0];
@@ -160,40 +159,41 @@ int main(int argc, char *argv[])
 	vulcanpk_init(mapping);
 
 	memcpy(aModExpOperandA_l, aModExpOperandA, 192);
-	bigendianize((u_int32_t *)aModExpOperandA_l, 192/sizeof(u_int32_t));
+	bigendianize((u_int32_t *)aModExpOperandA_l, 192 / sizeof(u_int32_t));
 
 	memcpy(aModExpOperandB_l, aModExpOperandB, 192);
-	bigendianize((u_int32_t *)aModExpOperandB_l, 192/sizeof(u_int32_t));
+	bigendianize((u_int32_t *)aModExpOperandB_l, 192 / sizeof(u_int32_t));
 
 	memcpy(aModExpExpectedRes_l, aModExpExpectedRes, 192);
-	bigendianize((u_int32_t *)aModExpExpectedRes_l, 192/sizeof(u_int32_t));
+	bigendianize((u_int32_t *)aModExpExpectedRes_l, 192 /
+		     sizeof(u_int32_t));
 
 	memcpy(aModulus_l, aModulus, 192);
-	bigendianize((u_int32_t *)aModulus_l, 192/sizeof(u_int32_t));
+	bigendianize((u_int32_t *)aModulus_l, 192 / sizeof(u_int32_t));
 
 	memcpy(aReciprocal_l, aReciprocal, 192);
-	bigendianize((u_int32_t *)aReciprocal_l, 192/sizeof(u_int32_t));
+	bigendianize((u_int32_t *)aReciprocal_l, 192 / sizeof(u_int32_t));
 
 	expModP.valuesLittleEndian = FALSE;
 
 	/* g-value */
 	expModP.aValues[0]  = aModExpOperandA_l;
-	expModP.aValueLen[0]= 192;
+	expModP.aValueLen[0] = 192;
 
 	/* ^x-value */
 	expModP.aValues[2]  = aModExpOperandB_l;
-	expModP.aValueLen[2]= 192;
+	expModP.aValueLen[2] = 192;
 
 	/* register 2 is result. */
 	/* register 3 is scratch */
-	
+
 	/* M = modulus */
 	expModP.aValues[8]  = aModulus_l;
-	expModP.aValueLen[8]= 192;
+	expModP.aValueLen[8] = 192;
 
 	/* reciprocal M(1) */
 	expModP.aValues[9]  = aReciprocal_l;
-	expModP.aValueLen[9]= 192;
+	expModP.aValueLen[9] = 192;
 
 	/* registers 6,7,8 is M(2),M(3),M(4), scratch */
 
@@ -203,14 +203,14 @@ int main(int argc, char *argv[])
 	expModP.oValueLen = sizeof(gtothex);
 
 	/* ask to have the exponentiation done now! */
-	expModP.pk_program[0]=/* sizes are ModLen=48(*32=1536),
-				 EXP_len=1535+1, RED_len=0 */
-		(0<<24)|(1535<<8)|(48);
-	expModP.pk_program[1]=/* opcode 1100=0xC (mod-exp),
-				 with A=0, B=2(6),M=8(24)*/
-		(0xC<<24)|(24<<16)|(6<<8)|(0<<0);
+	expModP.pk_program[0] = /* sizes are ModLen=48(*32=1536),
+	                           EXP_len=1535+1, RED_len=0 */
+				(0 << 24) | (1535 << 8) | (48);
+	expModP.pk_program[1] = /* opcode 1100=0xC (mod-exp),
+	                           with A=0, B=2(6),M=8(24)*/
+				(0xC << 24) | (24 << 16) | (6 << 8) | (0 << 0);
 
-	expModP.pk_proglen=2;
+	expModP.pk_proglen = 2;
 	execute_pkprogram(mapping, &expModP);
 
 	printf("got: \n");
@@ -219,9 +219,8 @@ int main(int argc, char *argv[])
 	printf("expected: \n");
 	hexdump(aModExpExpectedRes_l, 0, 192);
 
-	if(memcmp(gtothex, aModExpExpectedRes_l, 192)==0) {
+	if (memcmp(gtothex, aModExpExpectedRes_l, 192) == 0)
 		printf("SUCCESS\n");
-	}
 
 	exit(0);
 }

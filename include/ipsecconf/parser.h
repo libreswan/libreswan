@@ -18,20 +18,18 @@
 #include "constants.h"
 #include "libreswan.h"
 
-struct config_parsed *parser_load_conf (const char *file, err_t *perr);
-void parser_free_conf (struct config_parsed *cfg);
+struct config_parsed *parser_load_conf(const char *file, err_t *perr);
+void parser_free_conf(struct config_parsed *cfg);
 
 extern int warningsarefatal;
 
 extern char *parser_cur_filename(void);
 extern int   parser_cur_lineno(void);
 extern void parser_y_error(char *b, int size, const char *s);
-extern void parser_y_init (const char *name, FILE *f );
-extern void parser_y_fini (void);
-extern int  parser_y_include (const char *filename);
+extern void parser_y_init(const char *name, FILE *f );
+extern void parser_y_fini(void);
+extern int  parser_y_include(const char *filename);
 extern char rootdir[PATH_MAX];       /* when evaluating paths, prefix this to them */
-
-
 
 #define THIS_IPSEC_CONF_VERSION 2
 

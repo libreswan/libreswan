@@ -26,21 +26,21 @@
 
 void *xmalloc(size_t s)
 {
-  void *m = malloc(s);
-  
-  return m;
+	void *m = malloc(s);
+
+	return m;
 }
 
 char *xstrdup(char *s)
 {
-  char *m = strdup(s);
+	char *m = strdup(s);
 
-  return m;
+	return m;
 }
 
 void *xrealloc(void *o, size_t s)
 {
-  void *m = realloc(o, s);
-  
-  return m;
+	void *m = realloc(o, s);
+
+	return m;
 }

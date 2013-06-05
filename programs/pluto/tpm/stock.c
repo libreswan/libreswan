@@ -31,59 +31,60 @@
 #include "tpm_int.h"
 #include "paths.h"
 
-char *tpm_template=
-"proc preEncrypt  {state pb off len} { return \"ignore\" } \n"
-"proc postEncrypt {state pb off len} { return \"ignore\" } \n"
-"proc preDecrypt  {state pb off len} { return \"ignore\" } \n"
-"proc postDecrypt {state pb off len} { return \"ignore\" } \n"
-"proc preHash     {state pb off len} { return \"ignore\" } \n"
-"proc postHash    {state pb off len} { return \"ignore\" } \n"
-"proc changeState {state conn md} {       \n"
-"    return \"ignore\"                    \n"
-"}                                        \n"
-"                                         \n"
-"proc processRawPacket {state conn md} {  \n"
-"    return \"ignore\"                    \n"
-"}                                        \n"
-"                                         \n"
-"proc adjustFailure {state conn md} {     \n"
-"    return \"ignore\"                    \n"
-"}                                        \n"
-"                                         \n"
-"proc recvMessage {state conn md} {       \n"
-"    return \"ignore\"                    \n"
-"}                                        \n"
-"                                         \n"
-"proc avoidEmitting {state conn md} {     \n"
-"    return \"ignore\"                    \n"
-"}                                        \n"
-"                                         \n"
-"proc adjustTimers {state conn md} {   return \"ignore\" } \n"
-"                                           \n"
-"proc avoidEmittingNotify {state pbs hdr} { \n"
-"    return \"ignore\"                      \n"
-"}                                          \n"
-"                                           \n"
-"proc avoidEmittingDelete {state pbs hdr} { \n"
-"    return \"ignore\"                      \n"
-"}                                          \n"
+char *tpm_template =
+	"proc preEncrypt  {state pb off len} { return \"ignore\" } \n"
+	"proc postEncrypt {state pb off len} { return \"ignore\" } \n"
+	"proc preDecrypt  {state pb off len} { return \"ignore\" } \n"
+	"proc postDecrypt {state pb off len} { return \"ignore\" } \n"
+	"proc preHash     {state pb off len} { return \"ignore\" } \n"
+	"proc postHash    {state pb off len} { return \"ignore\" } \n"
+	"proc changeState {state conn md} {       \n"
+	"    return \"ignore\"                    \n"
+	"}                                        \n"
+	"                                         \n"
+	"proc processRawPacket {state conn md} {  \n"
+	"    return \"ignore\"                    \n"
+	"}                                        \n"
+	"                                         \n"
+	"proc adjustFailure {state conn md} {     \n"
+	"    return \"ignore\"                    \n"
+	"}                                        \n"
+	"                                         \n"
+	"proc recvMessage {state conn md} {       \n"
+	"    return \"ignore\"                    \n"
+	"}                                        \n"
+	"                                         \n"
+	"proc avoidEmitting {state conn md} {     \n"
+	"    return \"ignore\"                    \n"
+	"}                                        \n"
+	"                                         \n"
+	"proc adjustTimers {state conn md} {   return \"ignore\" } \n"
+	"                                           \n"
+	"proc avoidEmittingNotify {state pbs hdr} { \n"
+	"    return \"ignore\"                      \n"
+	"}                                          \n"
+	"                                           \n"
+	"proc avoidEmittingDelete {state pbs hdr} { \n"
+	"    return \"ignore\"                      \n"
+	"}                                          \n"
 ;
 
-void tpm_initCallbacks(Tcl_Interp *PlutoInterp) 
+void tpm_initCallbacks(Tcl_Interp *PlutoInterp)
 {
 	int val;
 
 	val = Tcl_Eval(PlutoInterp, tpm_template);
 
-	switch(val) {
+	switch (val) {
 	case TCL_OK:
 		return;
-	
+
 	case TCL_ERROR:
 	case TCL_RETURN:
 	case TCL_BREAK:
 	case TCL_CONTINUE:
-		libreswan_log("tpm init callback error: %s\n", Tcl_GetObjResult(PlutoInterp));
+		libreswan_log("tpm init callback error: %s\n", Tcl_GetObjResult(
+				      PlutoInterp));
 		break;
 	}
 }

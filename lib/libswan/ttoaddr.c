@@ -1,12 +1,12 @@
 /*
  * conversion from text forms of addresses to internal ones
  * Copyright (C) 2000  Henry Spencer.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
@@ -17,7 +17,7 @@
 #include "libreswan.h"
 
 #if defined(__CYGWIN32__)
-#define gethostbyname2(X,Y) gethostbyname(X)
+#define gethostbyname2(X, Y) gethostbyname(X)
 #endif
 
 /*
@@ -28,7 +28,7 @@
  */
 static const char namechars[] = "abcdefghijklmnopqrstuvwxyz0123456789"
 				"ABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
-#define	ISASCII(c)	(((c) & 0x80) == 0)
+#define ISASCII(c)      (((c) & 0x80) == 0)
 
 static err_t tryname(const char *, size_t, int, int, ip_address *);
 static err_t tryhex(const char *, size_t, int, ip_address *);
@@ -38,66 +38,67 @@ static err_t colon(const char *, size_t, ip_address *);
 static err_t getpiece(const char **, const char *, unsigned *);
 
 /*
- - ttoaddr - convert text name or dotted-decimal address to binary address
+   - ttoaddr - convert text name or dotted-decimal address to binary address
  */
-err_t				/* NULL for success, else string literal */
+err_t                           /* NULL for success, else string literal */
 ttoaddr_base(const char *src,
-	     size_t srclen,		/* 0 means "apply strlen" */
-	     int    af,			/* address family */
+	     size_t srclen,     /* 0 means "apply strlen" */
+	     int af,            /* address family */
 	     int   *allnumericfailed,
 	     ip_address *dst)
 {
 	err_t oops;
-#	define	HEXLEN	10	/* strlen("0x11223344") */
+#       define  HEXLEN  10      /* strlen("0x11223344") */
 
 	switch (af) {
 	case AF_INET:
 	case AF_INET6:
 	case 0:                  /* guess */
 		break;
-	    
+
 	default:
 		return "invalid address family";
 	}
 
 	if (af == AF_INET && srclen == HEXLEN && *src == '0') {
-		if (*(src+1) == 'x' || *(src+1) == 'X')
-			return tryhex(src+2, srclen-2, 'x', dst);
-		if (*(src+1) == 'h' || *(src+1) == 'H')
-			return tryhex(src+2, srclen-2, 'h', dst);
+		if (*(src + 1) == 'x' || *(src + 1) == 'X')
+			return tryhex(src + 2, srclen - 2, 'x', dst);
+
+		if (*(src + 1) == 'h' || *(src + 1) == 'H')
+			return tryhex(src + 2, srclen - 2, 'h', dst);
 	}
 
 	if (memchr(src, ':', srclen) != NULL) {
-	    if(af == 0)
-	    {
-		af = AF_INET6;
-	    }
-	    
+		if (af == 0)
+			af = AF_INET6;
+
 		if (af != AF_INET6)
 			return "non-ipv6 address may not contain `:'";
+
 		return colon(src, srclen, dst);
 	}
 
 	if (af == 0 || af == AF_INET) {
 		oops = trydotted(src, srclen, dst);
 		if (oops == NULL)
-			return NULL;		/* it worked */
+			return NULL;            /* it worked */
+
 		if (*oops != '?')
-			return oops;		/* probably meant as d-d */
+			return oops;            /* probably meant as d-d */
 	}
 
-	*allnumericfailed=1;
+	*allnumericfailed = 1;
 	return "not numeric";
 }
 
 /*
- - tnatoaddr - convert text numeric address (only) to binary address
+   - tnatoaddr - convert text numeric address (only) to binary address
  */
-err_t				/* NULL for success, else string literal */
+err_t                           /* NULL for success, else string literal */
 tnatoaddr(src, srclen, af, dst)
 const char *src;
-size_t srclen;			/* 0 means "apply strlen" */
-int af;				/* address family */
+size_t srclen;                  /* 0 means "apply strlen" */
+int af;                         /* address family */
 ip_address *dst;
 {
 	err_t oops;
@@ -110,51 +111,55 @@ ip_address *dst;
 
 	switch (af) {
 	case 0:  /* guess */
-	        oops = colon(src, srclen, dst);
-		if(oops == NULL)
-		{
-		    return NULL;
-		}
+		oops = colon(src, srclen, dst);
+		if (oops == NULL)
+			return NULL;
+
 		oops = trydotted(src, srclen, dst);
-		if(oops == NULL)
-		{
-		    return NULL;
-		}
-		return "does not appear to be either IPv4 or IPv6 numeric address";
+		if (oops == NULL)
+			return NULL;
+
+		return
+			"does not appear to be either IPv4 or IPv6 numeric address";
+
 		break;
-	    
+
 	case AF_INET6:
 		return colon(src, srclen, dst);
+
 		break;
 	case AF_INET:
 		oops = trydotted(src, srclen, dst);
 		if (oops == NULL)
-			return NULL;		/* it worked */
+			return NULL;            /* it worked */
+
 		if (*oops != '?')
-			return oops;		/* probably meant as d-d */
+			return oops;            /* probably meant as d-d */
+
 		return "does not appear to be numeric address";
+
 		break;
 	default:
 		return "unknown address family in tnatoaddr";
+
 		break;
 	}
 }
 
 /*
- - tryname - try it as a name
+   - tryname - try it as a name
  * Slightly complicated by lack of reliable NUL termination in source.
  */
-static err_t
-tryname(src, srclen, nultermd, af, dst)
+static err_t tryname(src, srclen, nultermd, af, dst)
 const char *src;
 size_t srclen;
-int nultermd;			/* is it known to be NUL-terminated? */
+int nultermd;                   /* is it known to be NUL-terminated? */
 int af;
 ip_address *dst;
 {
 	struct hostent *h;
 	struct netent *ne = NULL;
-	char namebuf[100];	/* enough for most DNS names */
+	char namebuf[100];      /* enough for most DNS names */
 	const char *cp;
 	char *p = namebuf;
 	size_t n;
@@ -163,15 +168,17 @@ ip_address *dst;
 		if (ISASCII(*cp) && strchr(namechars, *cp) == NULL)
 			return "illegal (non-DNS-name) character in name";
 
-	if (nultermd)
+	if (nultermd) {
 		cp = src;
-	else {
-		if (srclen+1 > sizeof(namebuf)) {
-			p = (char *) MALLOC(srclen+1);
+	} else {
+		if (srclen + 1 > sizeof(namebuf)) {
+			p = (char *) MALLOC(srclen + 1);
 			if (p == NULL)
 				return "unable to get temporary space for name";
+
+
 		}
-		p[0] = '\0';	/* strncpy semantics are wrong */
+		p[0] = '\0';    /* strncpy semantics are wrong */
 		strncat(p, src, srclen);
 		cp = (const char *)p;
 	}
@@ -185,29 +192,34 @@ ip_address *dst;
 	if (p != namebuf)
 		FREE(p);
 	if (h == NULL && ne == NULL)
-		return "does not look numeric and name lookup failed (no validation performed)";
+		return
+			"does not look numeric and name lookup failed (no validation performed)";
+
+
 
 	if (h != NULL) {
 		if (h->h_addrtype != af)
 			return "address-type mismatch from gethostbyname2!!!";
-		return initaddr((unsigned char *)h->h_addr, h->h_length, af, dst);
+
+		return initaddr((unsigned char *)h->h_addr, h->h_length, af,
+				dst);
 	} else {
 		if (ne->n_addrtype != af)
 			return "address-type mismatch from getnetbyname!!!";
+
 		ne->n_net = htonl(ne->n_net);
 		return initaddr((unsigned char *)&ne->n_net, sizeof(ne->n_net),
-								af, dst);
+				af, dst);
 	}
 }
 
 /*
- - tryhex - try conversion as an eight-digit hex number (AF_INET only)
+   - tryhex - try conversion as an eight-digit hex number (AF_INET only)
  */
-static err_t
-tryhex(src, srclen, flavor, dst)
+static err_t tryhex(src, srclen, flavor, dst)
 const char *src;
-size_t srclen;			/* should be 8 */
-int flavor;			/* 'x' for network order, 'h' for host order */
+size_t srclen;                  /* should be 8 */
+int flavor;                     /* 'x' for network order, 'h' for host order */
 ip_address *dst;
 {
 	err_t oops;
@@ -229,21 +241,20 @@ ip_address *dst;
 }
 
 /*
- - trydotted - try conversion as dotted decimal (AF_INET only)
+   - trydotted - try conversion as dotted decimal (AF_INET only)
  *
  * If the first char of a complaint is '?', that means "didn't look like
  * dotted decimal at all".
  */
-static err_t
-trydotted(src, srclen, dst)
+static err_t trydotted(src, srclen, dst)
 const char *src;
 size_t srclen;
 ip_address *dst;
 {
-	const char *stop = src + srclen;	/* just past end */
+	const char *stop = src + srclen;        /* just past end */
 	int byte;
 	err_t oops;
-#	define	NBYTES	4
+#       define  NBYTES  4
 	unsigned char buf[NBYTES];
 	int i;
 
@@ -252,17 +263,24 @@ ip_address *dst;
 		oops = getbyte(&src, stop, &byte);
 		if (oops != NULL) {
 			if (*oops != '?')
-				return oops;	/* bad number */
+				return oops;    /* bad number */
+
 			if (i > 1)
-				return oops+1;	/* failed number */
-			return oops;		/* with leading '?' */
+				return oops + 1;        /* failed number */
+
+			return oops;                    /* with leading '?' */
 		}
 		buf[i] = byte;
 		if (i < 3 && src < stop && *src++ != '.') {
 			if (i == 0)
-				return "?syntax error in dotted-decimal address";
+				return
+					"?syntax error in dotted-decimal address";
+
+
 			else
 				return "syntax error in dotted-decimal address";
+
+
 		}
 	}
 	if (src != stop)
@@ -272,7 +290,7 @@ ip_address *dst;
 }
 
 /*
- - getbyte - try to scan a byte in dotted decimal
+   - getbyte - try to scan a byte in dotted decimal
  * A subtlety here is that all this arithmetic on ASCII digits really is
  * highly portable -- ANSI C guarantees that digits 0-9 are contiguous.
  * It's easier to just do it ourselves than set up for a call to ttoul().
@@ -280,11 +298,10 @@ ip_address *dst;
  * If the first char of a complaint is '?', that means "didn't look like a
  * number at all".
  */
-err_t
-getbyte(srcp, stop, retp)
-const char **srcp;		/* *srcp is updated */
-const char *stop;		/* first untouchable char */
-int *retp;			/* return-value pointer */
+err_t getbyte(srcp, stop, retp)
+const char **srcp;              /* *srcp is updated */
+const char *stop;               /* first untouchable char */
+int *retp;                      /* return-value pointer */
 {
 	char c;
 	const char *p;
@@ -296,70 +313,76 @@ int *retp;			/* return-value pointer */
 	no = 0;
 	p = *srcp;
 	while (p < stop && no <= 255 && (c = *p) >= '0' && c <= '9') {
-		no = no*10 + (c - '0');
+		no = no * 10 + (c - '0');
 		p++;
 	}
 	if (p == *srcp)
 		return "?non-numeric component in dotted-decimal address";
+
 	*srcp = p;
 	if (no > 255)
 		return "byte overflow in dotted-decimal address";
+
 	*retp = no;
 	return NULL;
 }
 
 /*
- - colon - convert IPv6 "numeric" address
+   - colon - convert IPv6 "numeric" address
  */
-static err_t
-colon(src, srclen, dst)
+static err_t colon(src, srclen, dst)
 const char *src;
-size_t srclen;			/* known to be >0 */
+size_t srclen;                  /* known to be >0 */
 ip_address *dst;
 {
-	const char *stop = src + srclen;	/* just past end */
+	const char *stop = src + srclen;        /* just past end */
 	unsigned piece;
-	int gapat;		/* where was empty piece seen */
+	int gapat;                              /* where was empty piece seen */
 	err_t oops;
-#	define	NPIECES	8
-	unsigned char buf[NPIECES*2];	/* short may have wrong byte order */
+#       define  NPIECES 8
+	unsigned char buf[NPIECES * 2];   /* short may have wrong byte order */
 	int i;
 	int j;
-#	define	IT	"IPv6 numeric address"
+#       define  IT      "IPv6 numeric address"
 	int naftergap;
 
 	/* leading or trailing :: becomes single empty field */
-	if (*src == ':') {		/* legal only if leading :: */
-		if (srclen == 1 || *(src+1) != ':')
+	if (*src == ':') {              /* legal only if leading :: */
+		if (srclen == 1 || *(src + 1) != ':')
 			return "illegal leading `:' in " IT;
+
 		if (srclen == 2) {
 			unspecaddr(AF_INET6, dst);
 			return NULL;
 		}
-		src++;		/* past first but not second */
+		src++;          /* past first but not second */
 		srclen--;
 	}
-	if (*(stop-1) == ':') {		/* legal only if trailing :: */
-		if (srclen == 1 || *(stop-2) != ':')
+	if (*(stop - 1) == ':') {         /* legal only if trailing :: */
+		if (srclen == 1 || *(stop - 2) != ':')
 			return "illegal trailing `:' in " IT;
-		srclen--;		/* leave one */
+
+		srclen--;               /* leave one */
 	}
 
 	gapat = -1;
-	piece=0;
+	piece = 0;
 	for (i = 0; i < NPIECES && src < stop; i++) {
 		oops = getpiece(&src, stop, &piece);
-		if (oops != NULL && *oops == ':') {	/* empty field */
+		if (oops != NULL && *oops == ':') {     /* empty field */
 			if (gapat >= 0)
 				return "more than one :: in " IT;
+
 			gapat = i;
-		} else if (oops != NULL)
+		} else if (oops != NULL) {
 			return oops;
-		buf[2*i] = piece >> 8;
-		buf[2*i + 1] = piece & 0xff;
-		if (i < NPIECES-1) {	/* there should be more input */
+		}
+		buf[2 * i] = piece >> 8;
+		buf[2 * i + 1] = piece & 0xff;
+		if (i < NPIECES - 1) {    /* there should be more input */
 			if (src == stop && gapat < 0)
 				return IT " ends prematurely";
+
 			if (src != stop && *src++ != ':')
 				return "syntax error in " IT;
 		}
@@ -367,39 +390,42 @@ ip_address *dst;
 	if (src != stop)
 		return "extra garbage on end of " IT;
 
-	if (gapat < 0 && i < NPIECES)	/* should have been caught earlier */
+	if (gapat < 0 && i < NPIECES)   /* should have been caught earlier */
 		return "incomplete " IT " (internal error)";
+
 	if (gapat >= 0 && i == NPIECES)
 		return "non-abbreviating empty field in " IT;
+
 	if (gapat >= 0) {
 		naftergap = i - (gapat + 1);
-		for (i--, j = NPIECES-1; naftergap > 0; i--, j--, naftergap--) {
-			buf[2*j] = buf[2*i];
-			buf[2*j + 1] = buf[2*i + 1];
+		for (i--, j = NPIECES - 1; naftergap > 0;
+		     i--, j--, naftergap--) {
+			buf[2 * j] = buf[2 * i];
+			buf[2 * j + 1] = buf[2 * i + 1];
 		}
 		for (; j >= gapat; j--)
-			buf[2*j] = buf[2*j + 1] = 0;
+			buf[2 * j] = buf[2 * j + 1] = 0;
 	}
 
 	return initaddr(buf, sizeof(buf), AF_INET6, dst);
 }
 
 /*
- - getpiece - try to scan one 16-bit piece of an IPv6 address
+   - getpiece - try to scan one 16-bit piece of an IPv6 address
  */
-err_t				/* ":" means "empty field seen" */
+err_t                           /* ":" means "empty field seen" */
 getpiece(srcp, stop, retp)
-const char **srcp;		/* *srcp is updated */
-const char *stop;		/* first untouchable char */
-unsigned *retp;			/* return-value pointer */
+const char **srcp;              /* *srcp is updated */
+const char *stop;               /* first untouchable char */
+unsigned *retp;                 /* return-value pointer */
 {
 	const char *p;
-#	define	NDIG	4
+#       define  NDIG    4
 	int d;
 	unsigned long ret;
 	err_t oops;
 
-	if (*srcp >= stop || **srcp == ':') {	/* empty field */
+	if (*srcp >= stop || **srcp == ':') {   /* empty field */
 		*retp = 0;
 		return ":";
 	}
@@ -412,11 +438,14 @@ unsigned *retp;			/* return-value pointer */
 	}
 	if (d == 0)
 		return "non-hex field in IPv6 numeric address";
+
 	if (p < stop && d == NDIG && isxdigit(*p))
 		return "field in IPv6 numeric address longer than 4 hex digits";
 
+
+
 	oops = ttoul(*srcp, d, 16, &ret);
-	if (oops != NULL)	/* shouldn't happen, really... */
+	if (oops != NULL)       /* shouldn't happen, really... */
 		return oops;
 
 	*srcp = p;
@@ -424,51 +453,55 @@ unsigned *retp;			/* return-value pointer */
 	return NULL;
 }
 
-err_t				/* NULL for success, else string literal */
+err_t                   /* NULL for success, else string literal */
 ttoaddr(const char *src,
-	size_t srclen,	/* 0 means "apply strlen" */
-	int af,		/* address family */
+	size_t srclen,  /* 0 means "apply strlen" */
+	int af,         /* address family */
 	ip_address *dst)
 {
 	int nultermd;
-	int numfailed=0;
+	int numfailed = 0;
 	err_t err;
 	if (srclen == 0) {
 		srclen = strlen(src);
 		if (srclen == 0)
 			return "empty string";
-		nultermd = 1;
-	} else
-		nultermd = 0;	/* at least, not *known* to be terminated */
 
+		nultermd = 1;
+	} else {
+		nultermd = 0;   /* at least, not *known* to be terminated */
+
+	}
 	err = ttoaddr_base(src, srclen, af, &numfailed, dst);
 
-	if(err && numfailed) {
-		if(af == 0) {
+	if (err && numfailed) {
+		if (af == 0) {
 			err = tryname(src, srclen, nultermd, AF_INET6, dst);
-			if(err)
-				err = tryname(src, srclen, nultermd, AF_INET, dst);
-		} else
+			if (err)
+				err = tryname(src, srclen, nultermd, AF_INET,
+					      dst);
+		} else {
 			err = tryname(src, srclen, nultermd, af, dst);
+		}
 		return err;
 	}
-	
+
 	return err;
 }
 
-err_t				/* NULL for success, else string literal */
+err_t                           /* NULL for success, else string literal */
 ttoaddr_num(const char *src,
-	    size_t srclen,	/* 0 means "apply strlen" */
-	    int af,		/* address family */
+	    size_t srclen,      /* 0 means "apply strlen" */
+	    int af,             /* address family */
 	    ip_address *dst)
 {
-	int numfailed=0;
+	int numfailed = 0;
 
 	if (srclen == 0) {
 		srclen = strlen(src);
 		if (srclen == 0)
 			return "empty string";
-	} 
+	}
 
 	return ttoaddr_base(src, srclen, af, &numfailed, dst);
 }
@@ -483,12 +516,11 @@ ttoaddr_num(const char *src,
 
 void regress(void);
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s {addr|net/mask|begin...end|-r}\n",
-								argv[0]);
+			argv[0]);
 		exit(2);
 	}
 
@@ -502,25 +534,25 @@ main(int argc, char *argv[])
 
 struct rtab {
 	char *input;
-	char  numonly;
-        char  format;
-	char  expectfailure;
-	char *output;			/* NULL means error expected */
+	char numonly;
+	char format;
+	char expectfailure;
+	char *output;                   /* NULL means error expected */
 } rtab[] = {
-	{"1.2.3.0",	0,	0,   0,       "1.2.3.0"},
-	{"1:2::3:4",    0,      0,   0,       "1:2::3:4"},
-	{"1:2::3:4",    0,      'Q', 0,       "1:2:0:0:0:0:3:4"},
-	{"1:2:0:0:3:4:0:0", 0,    0, 0,       "1:2::3:4:0:0"},
-	{"www.libreswan.org", 0,   0, 0,       "193.110.157.129"},
-	{"www.libreswan.org", 1,   0, 'F',     "1.2.3.4"},
-	{"1.2.3.4",         0,   'r',0,       "4.3.2.1.IN-ADDR.ARPA."},
- 	/*                                   0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 4 5 6 7 8 9 a b c d e f */
-	{"1:2::3:4",        0,   'r',0,     "4.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.2.0.0.0.1.0.0.0.IP6.ARPA."},
-	{NULL,		    0,  0, 0, NULL}
+	{ "1.2.3.0",     0,      0,   0,       "1.2.3.0" },
+	{ "1:2::3:4",    0,      0,   0,       "1:2::3:4" },
+	{ "1:2::3:4",    0,      'Q', 0,       "1:2:0:0:0:0:3:4" },
+	{ "1:2:0:0:3:4:0:0", 0,    0, 0,       "1:2::3:4:0:0" },
+	{ "www.libreswan.org", 0,   0, 0,       "193.110.157.129" },
+	{ "www.libreswan.org", 1,   0, 'F',     "1.2.3.4" },
+	{ "1.2.3.4",         0,   'r', 0,       "4.3.2.1.IN-ADDR.ARPA." },
+	/*                                   0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 4 5 6 7 8 9 a b c d e f */
+	{ "1:2::3:4",        0,   'r', 0,
+	  "4.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.2.0.0.0.1.0.0.0.IP6.ARPA." },
+	{ NULL,              0,  0, 0, NULL }
 };
 
-void
-regress()
+void regress()
 {
 	struct rtab *r;
 	int status = 0;
@@ -529,14 +561,14 @@ regress()
 	char buf[100];
 	const char *oops;
 	size_t n;
-	int count=0;
+	int count = 0;
 
 	for (r = rtab; r->input != NULL; r++) {
 		++count;
 		memset(&a, 0, sizeof(a));
 		strcpy(in, r->input);
 
-		if(r->numonly) {
+		if (r->numonly) {
 			/* convert it *to* internal format (no DNS) */
 			oops = ttoaddr_num(in, strlen(in), 0, &a);
 		} else {
@@ -544,18 +576,20 @@ regress()
 			oops = ttoaddr(in, strlen(in), 0, &a);
 		}
 
-		if(r->expectfailure && oops==NULL) {
+		if (r->expectfailure && oops == NULL) {
 			printf("%u: '%s' expected failure, but it succeeded\n",
 			       count, r->input);
 			status++;
 			continue;
 		}
-			
-		if(oops) {
-			if(r->expectfailure) continue;
+
+		if (oops) {
+			if (r->expectfailure)
+				continue;
 			printf("%u: '%s' failed to parse: %s\n",
 			       count, r->input, oops);
-			status++;;
+			status++;
+			;
 			continue;
 		}
 
@@ -563,23 +597,22 @@ regress()
 
 		n = addrtot(&a, r->format, buf, sizeof(buf));
 
-		if (n == 0 && r->output == NULL)
-			{}		/* okay, error expected */
-		
+		if (n == 0 && r->output == NULL) {
+		}                       /* okay, error expected */
 		else if (n == 0) {
 			printf("`%s' atoasr failed\n", r->input);
 			status++;
-			
+
 		} else if (r->output == NULL) {
 			printf("`%s' atoasr succeeded unexpectedly '%c'\n",
-							r->input, r->format);
+			       r->input, r->format);
 			status++;
 		} else {
-		  if (strcasecmp(r->output, buf) != 0) {
-		    printf("`%s' '%u' gave `%s', expected `%s'\n",
-			   r->input, r->format, buf, r->output);
-		    status++;
-		  }
+			if (strcasecmp(r->output, buf) != 0) {
+				printf("`%s' '%u' gave `%s', expected `%s'\n",
+				       r->input, r->format, buf, r->output);
+				status++;
+			}
 		}
 	}
 	exit(status);

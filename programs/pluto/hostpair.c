@@ -49,20 +49,20 @@
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
 #endif
-#include "connections.h"	/* needs id.h */
+#include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
 #include "packet.h"
-#include "demux.h"	/* needs packet.h */
+#include "demux.h"      /* needs packet.h */
 #include "state.h"
 #include "timer.h"
-#include "ipsec_doi.h"	/* needs demux.h and state.h */
+#include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "server.h"
-#include "kernel.h"	/* needs connections.h */
+#include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "keys.h"
-#include "adns.h"	/* needs <resolv.h> */
-#include "dnskey.h"	/* needs keys.h and adns.h */
+#include "adns.h"       /* needs <resolv.h> */
+#include "dnskey.h"     /* needs keys.h and adns.h */
 #include "whack.h"
 #include "alg_info.h"
 #include "spdb.h"
@@ -92,237 +92,237 @@
 
 struct host_pair *host_pairs = NULL;
 
-void host_pair_enqueue_pending(const struct connection *c
-			       , struct pending *p
-			       , struct pending **pnext)
+void host_pair_enqueue_pending(const struct connection *c,
+			       struct pending *p,
+			       struct pending **pnext)
 {
-    *pnext = c->host_pair->pending;
-    c->host_pair->pending = p;
+	*pnext = c->host_pair->pending;
+	c->host_pair->pending = p;
 }
 
 struct pending **host_pair_first_pending(const struct connection *c)
 {
-    if(c->host_pair == NULL) return NULL;
+	if (c->host_pair == NULL)
+		return NULL;
 
-    return &c->host_pair->pending;
+	return &c->host_pair->pending;
 }
 
-    
 /* check to see that Ids of peers match */
-bool
-same_peer_ids(const struct connection *c, const struct connection *d
-, const struct id *his_id)
+bool same_peer_ids(const struct connection *c, const struct connection *d,
+		   const struct id *his_id)
 {
-    return same_id(&c->spd.this.id, &d->spd.this.id)
-	&& same_id(his_id == NULL? &c->spd.that.id : his_id, &d->spd.that.id);
+	return same_id(&c->spd.this.id, &d->spd.this.id) &&
+	       same_id(his_id == NULL ? &c->spd.that.id : his_id,
+		       &d->spd.that.id);
 }
 
 /** returns a host pair based upon addresses.
- * 
+ *
  * find_host_pair is given a pair of addresses, plus UDP ports, and
  * returns a host_pair entry that covers it. It also moves the relevant
  * pair description to the beginning of the list, so that it can be
  * found faster next time.
- * 
+ *
  */
-struct host_pair *
-find_host_pair(const ip_address *myaddr
-	       , u_int16_t myport
-	       , const ip_address *hisaddr
-	       , u_int16_t hisport)
+struct host_pair *find_host_pair(const ip_address *myaddr,
+				 u_int16_t myport,
+				 const ip_address *hisaddr,
+				 u_int16_t hisport)
 {
-    struct host_pair *p, *prev;
+	struct host_pair *p, *prev;
 
-    /* default hisaddr to an appropriate any */
-    if (hisaddr == NULL) {
+	/* default hisaddr to an appropriate any */
+	if (hisaddr == NULL) {
 #if 0
-	/* broken */
-	const struct af_info *af = aftoinfo(addrtypeof(myaddr));
+		/* broken */
+		const struct af_info *af = aftoinfo(addrtypeof(myaddr));
 
-	if(af == NULL) {
-	    af = aftoinfo(AF_INET);
-	}
-	
-	if(af) {
-	    hisaddr = af->any;
-	}
+		if (af == NULL)
+			af = aftoinfo(AF_INET);
+
+		if (af)
+			hisaddr = af->any;
+
 #else
-	hisaddr = aftoinfo(addrtypeof(myaddr))->any;
+		hisaddr = aftoinfo(addrtypeof(myaddr))->any;
 #endif
-    }
-
-    /*
-     * look for a host-pair that has the right set of ports/address.
-     *
-     */
-    
-    /*
-     * for the purposes of comparison, port 500 and 4500 are identical,
-     * but other ports are not.
-     * So if any port==4500, then set it to 500.
-     */
-    if(myport == 4500) myport=500;
-    if(hisport== 4500) hisport=500;
-
-    for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next)
-    {
-	DBG(DBG_CONTROLMORE, {
-	    char b1[ADDRTOT_BUF];
-	    char b2[ADDRTOT_BUF];
-	    DBG_log("find_host_pair: comparing to %s:%d %s:%d\n"
-		      , (addrtot(&p->me.addr, 0, b1, sizeof(b1)), b1)
-		      , p->me.host_port
-		      , (addrtot(&p->him.addr, 0, b2, sizeof(b2)), b2)
-		      , p->him.host_port);
-	});
-		   
-	if (sameaddr(&p->me.addr, myaddr)
-	    && (!p->me.host_port_specific || p->me.host_port == myport)
-	    && sameaddr(&p->him.addr, hisaddr)
-	    && (!p->him.host_port_specific || p->him.host_port == hisport)
-	    )
-	{
-	    if (prev != NULL)
-	    {
-		prev->next = p->next;	/* remove p from list */
-		p->next = host_pairs;	/* and stick it on front */
-		host_pairs = p;
-	    }
-	    break;
 	}
-    }
-    return p;
+
+	/*
+	 * look for a host-pair that has the right set of ports/address.
+	 *
+	 */
+
+	/*
+	 * for the purposes of comparison, port 500 and 4500 are identical,
+	 * but other ports are not.
+	 * So if any port==4500, then set it to 500.
+	 */
+	if (myport == 4500)
+		myport = 500;
+	if (hisport == 4500)
+		hisport = 500;
+
+	for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next) {
+		DBG(DBG_CONTROLMORE, {
+			    char b1[ADDRTOT_BUF];
+			    char b2[ADDRTOT_BUF];
+			    DBG_log(
+				    "find_host_pair: comparing to %s:%d %s:%d\n",
+				    (addrtot(&p->me.addr, 0, b1,
+					     sizeof(b1)), b1),
+				    p->me.host_port,
+				    (addrtot(&p->him.addr, 0, b2,
+					     sizeof(b2)), b2),
+				    p->him.host_port);
+		    });
+
+		if (sameaddr(&p->me.addr, myaddr) &&
+		    (!p->me.host_port_specific || p->me.host_port == myport) &&
+		    sameaddr(&p->him.addr, hisaddr) &&
+		    (!p->him.host_port_specific || p->him.host_port == hisport)
+		    ) {
+			if (prev != NULL) {
+				prev->next = p->next;   /* remove p from list */
+				p->next = host_pairs;   /* and stick it on front */
+				host_pairs = p;
+			}
+			break;
+		}
+	}
+	return p;
 }
 
 void remove_host_pair(struct host_pair *hp)
 {
-    list_rm(struct host_pair, next, hp, host_pairs);
+	list_rm(struct host_pair, next, hp, host_pairs);
 }
 
 /* find head of list of connections with this pair of hosts */
-struct connection *
-find_host_pair_connections(const char *func
-			   , const ip_address *myaddr, u_int16_t myport			   
-			   , const ip_address *hisaddr, u_int16_t hisport)
+struct connection *find_host_pair_connections(const char *func,
+					      const ip_address *myaddr,
+					      u_int16_t myport,
+					      const ip_address *hisaddr,
+					      u_int16_t hisport)
 {
-    struct host_pair *hp = find_host_pair(myaddr, myport, hisaddr, hisport);
-
-    DBG(DBG_CONTROLMORE, {
-	char b1[ADDRTOT_BUF];
-	char b2[ADDRTOT_BUF];
-	DBG_log("find_host_pair_conn (%s): %s:%d %s:%d -> hp:%s\n"
-		  , func
-		  , (addrtot(myaddr,  0, b1, sizeof(b1)), b1)
-		  , myport
-		  , hisaddr ? (addrtot(hisaddr, 0, b2, sizeof(b2)), b2) : "%any"
-		  , hisport
-		  , (hp && hp->connections) ? hp->connections->name : "none");
-    });
-		   
-    return hp == NULL? NULL : hp->connections;
-}
-
-void
-connect_to_host_pair(struct connection *c)
-{
-    if (oriented(*c))
-    {
-	struct host_pair *hp = find_host_pair(&c->spd.this.host_addr
-					      , c->spd.this.host_port
-					      , &c->spd.that.host_addr
-					      , c->spd.that.host_port);
-
+	struct host_pair *hp =
+		find_host_pair(myaddr, myport, hisaddr, hisport);
 
 	DBG(DBG_CONTROLMORE, {
-	    char b1[ADDRTOT_BUF];
-	    char b2[ADDRTOT_BUF];
-	    DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp:%s\n"
-		      , (addrtot(&c->spd.this.host_addr, 0, b1,sizeof(b1)), b1)
-		      , c->spd.this.host_port
-		      , (addrtot(&c->spd.that.host_addr, 0, b2,sizeof(b2)), b2)
-		      , c->spd.that.host_port
-		      , (hp && hp->connections) ? hp->connections->name : "none");
-	});
-		   
-	if (hp == NULL)
-	{
-	    /* no suitable host_pair -- build one */
-	    hp = alloc_thing(struct host_pair, "host_pair");
-	    hp->me.addr = c->spd.this.host_addr;
-	    hp->him.addr = c->spd.that.host_addr;
-#ifdef NAT_TRAVERSAL
-	    hp->me.host_port = nat_traversal_enabled ? pluto_port : c->spd.this.host_port;
-	    hp->him.host_port = nat_traversal_enabled ? pluto_port : c->spd.that.host_port;
-#else
-	    hp->me.host_port = c->spd.this.host_port;
- 	    hp->him.host_port = c->spd.that.host_port;
-#endif
-	    hp->connections = NULL;
-	    hp->pending = NULL;
-	    hp->next = host_pairs;
-	    host_pairs = hp;
-	}
-	c->host_pair = hp;
-	c->hp_next = hp->connections;
-	hp->connections = c;
-    }
-    else
-    {
-	/* since this connection isn't oriented, we place it
-	 * in the unoriented_connections list instead.
-	 */
-	c->host_pair = NULL;
-	c->hp_next = unoriented_connections;
-	unoriented_connections = c;
-    }
+		    char b1[ADDRTOT_BUF];
+		    char b2[ADDRTOT_BUF];
+		    DBG_log("find_host_pair_conn (%s): %s:%d %s:%d -> hp:%s\n",
+			    func,
+			    (addrtot(myaddr,  0, b1, sizeof(b1)), b1),
+			    myport,
+			    hisaddr ? (addrtot(hisaddr, 0, b2,
+					       sizeof(b2)), b2) : "%any",
+			    hisport,
+			    (hp &&
+			     hp->connections) ? hp->connections->name : "none");
+	    });
+
+	return hp == NULL ? NULL : hp->connections;
 }
 
-void
-release_dead_interfaces(void)
+void connect_to_host_pair(struct connection *c)
 {
-    struct host_pair *hp;
+	if (oriented(*c)) {
+		struct host_pair *hp = find_host_pair(&c->spd.this.host_addr,
+						      c->spd.this.host_port,
+						      &c->spd.that.host_addr,
+						      c->spd.that.host_port);
 
-    for (hp = host_pairs; hp != NULL; hp = hp->next)
-    {
-	struct connection **pp
-	    , *p;
+		DBG(DBG_CONTROLMORE, {
+			    char b1[ADDRTOT_BUF];
+			    char b2[ADDRTOT_BUF];
+			    DBG_log(
+				    "connect_to_host_pair: %s:%d %s:%d -> hp:%s\n",
+				    (addrtot(&c->spd.this.host_addr, 0, b1,
+					     sizeof(b1)), b1),
+				    c->spd.this.host_port,
+				    (addrtot(&c->spd.that.host_addr, 0, b2,
+					     sizeof(b2)), b2),
+				    c->spd.that.host_port,
+				    (hp &&
+				     hp->connections) ? hp->connections->name :
+				    "none");
+		    });
 
-	for (pp = &hp->connections; (p = *pp) != NULL; )
-	{
-	    if (p->interface->change == IFN_DELETE)
-	    {
-		/* this connection's interface is going away */
-		enum connection_kind k = p->kind;
-
-		release_connection(p, TRUE);
-
-		if (k <= CK_PERMANENT)
-		{
-		    /* The connection should have survived release:
-		     * move it to the unoriented_connections list.
-		     */
-		    passert(p == *pp);
-
-		    terminate_connection(p->name);
-		    p->interface = NULL;
-
-		    *pp = p->hp_next;	/* advance *pp */
-		    p->host_pair = NULL;
-		    p->hp_next = unoriented_connections;
-		    unoriented_connections = p;
+		if (hp == NULL) {
+			/* no suitable host_pair -- build one */
+			hp = alloc_thing(struct host_pair, "host_pair");
+			hp->me.addr = c->spd.this.host_addr;
+			hp->him.addr = c->spd.that.host_addr;
+#ifdef NAT_TRAVERSAL
+			hp->me.host_port =
+				nat_traversal_enabled ? pluto_port : c->spd.
+				this.
+				host_port;
+			hp->him.host_port =
+				nat_traversal_enabled ? pluto_port : c->spd.
+				that.
+				host_port;
+#else
+			hp->me.host_port = c->spd.this.host_port;
+			hp->him.host_port = c->spd.that.host_port;
+#endif
+			hp->connections = NULL;
+			hp->pending = NULL;
+			hp->next = host_pairs;
+			host_pairs = hp;
 		}
-		else
-		{
-		    /* The connection should have vanished,
-		     * but the previous connection remains.
-		     */
-		    passert(p != *pp);
-		}
-	    }
-	    else
-	    {
-		pp = &p->hp_next;	/* advance pp */
-	    }
+		c->host_pair = hp;
+		c->hp_next = hp->connections;
+		hp->connections = c;
+	} else {
+		/* since this connection isn't oriented, we place it
+		 * in the unoriented_connections list instead.
+		 */
+		c->host_pair = NULL;
+		c->hp_next = unoriented_connections;
+		unoriented_connections = c;
 	}
-    }
+}
+
+void release_dead_interfaces(void)
+{
+	struct host_pair *hp;
+
+	for (hp = host_pairs; hp != NULL; hp = hp->next) {
+		struct connection **pp,
+		*p;
+
+		for (pp = &hp->connections; (p = *pp) != NULL; ) {
+			if (p->interface->change == IFN_DELETE) {
+				/* this connection's interface is going away */
+				enum connection_kind k = p->kind;
+
+				release_connection(p, TRUE);
+
+				if (k <= CK_PERMANENT) {
+					/* The connection should have survived release:
+					 * move it to the unoriented_connections list.
+					 */
+					passert(p == *pp);
+
+					terminate_connection(p->name);
+					p->interface = NULL;
+
+					*pp = p->hp_next; /* advance *pp */
+					p->host_pair = NULL;
+					p->hp_next = unoriented_connections;
+					unoriented_connections = p;
+				} else {
+					/* The connection should have vanished,
+					 * but the previous connection remains.
+					 */
+					passert(p != *pp);
+				}
+			} else {
+				pp = &p->hp_next; /* advance pp */
+			}
+		}
+	}
 }

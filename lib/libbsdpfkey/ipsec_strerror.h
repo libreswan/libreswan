@@ -33,31 +33,31 @@
 extern int __ipsec_errcode;
 extern void __ipsec_set_strerror(const char *);
 
-#define EIPSEC_NO_ERROR		0	/*success*/
-#define EIPSEC_NOT_SUPPORTED	1	/*not supported*/
-#define EIPSEC_INVAL_ARGUMENT	2	/*invalid argument*/
-#define EIPSEC_INVAL_SADBMSG	3	/*invalid sadb message*/
-#define EIPSEC_INVAL_VERSION	4	/*invalid version*/
-#define EIPSEC_INVAL_POLICY	5	/*invalid security policy*/
-#define EIPSEC_INVAL_ADDRESS	6	/*invalid address specification*/
-#define EIPSEC_INVAL_PROTO	7	/*invalid ipsec protocol*/
-#define EIPSEC_INVAL_MODE	8	/*Invalid ipsec mode*/
-#define EIPSEC_INVAL_LEVEL	9	/*invalid ipsec level*/
-#define EIPSEC_INVAL_SATYPE	10	/*invalid SA type*/
-#define EIPSEC_INVAL_MSGTYPE	11	/*invalid message type*/
-#define EIPSEC_INVAL_EXTTYPE	12	/*invalid extension type*/
-#define EIPSEC_INVAL_ALGS	13	/*Invalid algorithm type*/
-#define EIPSEC_INVAL_KEYLEN	14	/*invalid key length*/
-#define EIPSEC_INVAL_FAMILY	15	/*invalid address family*/
-#define EIPSEC_INVAL_PREFIXLEN	16	/*SPI range violation*/
-#define EIPSEC_INVAL_DIR	17	/*Invalid direciton*/
-#define EIPSEC_INVAL_SPI	18	/*invalid prefixlen*/
-#define EIPSEC_NO_PROTO		19	/*no protocol specified*/
-#define EIPSEC_NO_ALGS		20	/*No algorithm specified*/
-#define EIPSEC_NO_BUFS		21	/*no buffers available*/
-#define EIPSEC_DO_GET_SUPP_LIST	22	/*must get supported algorithm first*/
-#define EIPSEC_PROTO_MISMATCH	23	/*protocol mismatch*/
-#define EIPSEC_FAMILY_MISMATCH	24	/*family mismatch*/
-#define EIPSEC_FEW_ARGUMENTS	25	/*Too few arguments*/
-#define EIPSEC_SYSTEM_ERROR	26	/*system error*/
-#define EIPSEC_MAX		27	/*unknown error*/
+#define EIPSEC_NO_ERROR         0       /*success*/
+#define EIPSEC_NOT_SUPPORTED    1       /*not supported*/
+#define EIPSEC_INVAL_ARGUMENT   2       /*invalid argument*/
+#define EIPSEC_INVAL_SADBMSG    3       /*invalid sadb message*/
+#define EIPSEC_INVAL_VERSION    4       /*invalid version*/
+#define EIPSEC_INVAL_POLICY     5       /*invalid security policy*/
+#define EIPSEC_INVAL_ADDRESS    6       /*invalid address specification*/
+#define EIPSEC_INVAL_PROTO      7       /*invalid ipsec protocol*/
+#define EIPSEC_INVAL_MODE       8       /*Invalid ipsec mode*/
+#define EIPSEC_INVAL_LEVEL      9       /*invalid ipsec level*/
+#define EIPSEC_INVAL_SATYPE     10      /*invalid SA type*/
+#define EIPSEC_INVAL_MSGTYPE    11      /*invalid message type*/
+#define EIPSEC_INVAL_EXTTYPE    12      /*invalid extension type*/
+#define EIPSEC_INVAL_ALGS       13      /*Invalid algorithm type*/
+#define EIPSEC_INVAL_KEYLEN     14      /*invalid key length*/
+#define EIPSEC_INVAL_FAMILY     15      /*invalid address family*/
+#define EIPSEC_INVAL_PREFIXLEN  16      /*SPI range violation*/
+#define EIPSEC_INVAL_DIR        17      /*Invalid direciton*/
+#define EIPSEC_INVAL_SPI        18      /*invalid prefixlen*/
+#define EIPSEC_NO_PROTO         19      /*no protocol specified*/
+#define EIPSEC_NO_ALGS          20      /*No algorithm specified*/
+#define EIPSEC_NO_BUFS          21      /*no buffers available*/
+#define EIPSEC_DO_GET_SUPP_LIST 22      /*must get supported algorithm first*/
+#define EIPSEC_PROTO_MISMATCH   23      /*protocol mismatch*/
+#define EIPSEC_FAMILY_MISMATCH  24      /*family mismatch*/
+#define EIPSEC_FEW_ARGUMENTS    25      /*Too few arguments*/
+#define EIPSEC_SYSTEM_ERROR     26      /*system error*/
+#define EIPSEC_MAX              27      /*unknown error*/

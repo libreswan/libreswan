@@ -6,8 +6,8 @@
 
 #define LEAK_DETECTIVE
 #define AGGRESSIVE 1
-#define XAUTH 
-#define MODECFG 
+#define XAUTH
+#define MODECFG
 #define DEBUG 1
 #define PRINT_SA_DEBUG 1
 #define USE_KEYRR 1
@@ -48,78 +48,82 @@
 #include "seam_commhandle.c"
 #include "ikev2sendI1.c"
 
-int add_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_PRIVATE|DBG_CRYPT;
+int add_debugging = DBG_EMITTING | DBG_CONTROL | DBG_CONTROLMORE |
+		    DBG_PRIVATE | DBG_CRYPT;
 
 #include "seam_recv1i.c"
 
-main(int argc, char *argv[])
-{
-    int   len;
-    char *infile;
-    char *conn_name;
-    int  lineno=0;
-    struct connection *c1;
-    pcap_t *pt;
-    char   eb1[256];
-    struct state *st;
-
-    EF_PROTECT_FREE=1;
-    EF_FREE_WIPES  =1;
-
-    progname = argv[0];
-    printf("Started %s\n", progname);
-
-    leak_detective = 1;
-
-    init_crypto();
-    init_seam_kernelalgs();
-
-    if(argc != 4) {
-	fprintf(stderr, "Usage: %s <whackrecord> <conn-name> <pcapin>\n", progname);
-	exit(10);
-    }
-    /* argv[1] == "-r" */
-
-    tool_init_log();
-    init_fake_vendorid();
-    
-    infile = argv[1];
-    conn_name = argv[2];
-
-    readwhackmsg(infile);
-
-    send_packet_setup_pcap("parentI2.pcap");
-    pt = pcap_open_offline(argv[3], eb1);
-    if(!pt) {
-	perror(argv[3]);
-	exit(50);
-    }
- 
-    c1 = con_by_name(conn_name, TRUE);
-    show_one_connection(c1);
-
-    /* now, send the I1 packet, really just so that we are in the right
-     * state to receive the R1 packet and process it.
-     */
-    st = sendI1(c1, 0);
-
-    cur_debugging = DBG_EMITTING|DBG_CONTROL|DBG_CONTROLMORE|DBG_PARSING|DBG_PRIVATE|DBG_CRYPT;
-    pcap_dispatch(pt, 1, recv_pcap_packet1, NULL);
-
-    {
+main(int argc, char *argv[]){
+	int len;
+	char *infile;
+	char *conn_name;
+	int lineno = 0;
+	struct connection *c1;
+	pcap_t *pt;
+	char eb1[256];
 	struct state *st;
 
-	/* find st involved */
-	st = state_with_serialno(1);
-	delete_state(st);
+	EF_PROTECT_FREE = 1;
+	EF_FREE_WIPES  = 1;
 
-	/* find st involved */
-	st = state_with_serialno(2);
-	if(st) delete_state(st);
-    }
+	progname = argv[0];
+	printf("Started %s\n", progname);
 
-    report_leaks();
+	leak_detective = 1;
 
-    tool_close_log();
-    exit(0);
+	init_crypto();
+	init_seam_kernelalgs();
+
+	if (argc != 4) {
+		fprintf(stderr,
+			"Usage: %s <whackrecord> <conn-name> <pcapin>\n",
+			progname);
+		exit(10);
+	}
+	/* argv[1] == "-r" */
+
+	tool_init_log();
+	init_fake_vendorid();
+
+	infile = argv[1];
+	conn_name = argv[2];
+
+	readwhackmsg(infile);
+
+	send_packet_setup_pcap("parentI2.pcap");
+	pt = pcap_open_offline(argv[3], eb1);
+	if (!pt) {
+		perror(argv[3]);
+		exit(50);
+	}
+
+	c1 = con_by_name(conn_name, TRUE);
+	show_one_connection(c1);
+
+	/* now, send the I1 packet, really just so that we are in the right
+	 * state to receive the R1 packet and process it.
+	 */
+	st = sendI1(c1, 0);
+
+	cur_debugging = DBG_EMITTING | DBG_CONTROL | DBG_CONTROLMORE |
+			DBG_PARSING | DBG_PRIVATE | DBG_CRYPT;
+	pcap_dispatch(pt, 1, recv_pcap_packet1, NULL);
+
+	{
+		struct state *st;
+
+		/* find st involved */
+		st = state_with_serialno(1);
+		delete_state(st);
+
+		/* find st involved */
+		st = state_with_serialno(2);
+		if (st)
+			delete_state(st);
+	}
+
+	report_leaks();
+
+	tool_close_log();
+	exit(0);
 }

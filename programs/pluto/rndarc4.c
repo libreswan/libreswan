@@ -13,7 +13,7 @@
  * for more details.
  */
 
-/* 
+/*
  * Use this file if you want use of arc4random(). This is not the default.
  */
 
@@ -61,39 +61,36 @@
 
 #define get_rnd_byte() (arc4random() % 256)
 
-void
-get_rnd_bytes(u_char *buffer, int length)
+void get_rnd_bytes(u_char *buffer, int length)
 {
-    int i;
+	int i;
 
-    for (i = 0; i < length; i++)
-	buffer[i] = get_rnd_byte();
+	for (i = 0; i < length; i++)
+		buffer[i] = get_rnd_byte();
 }
 
 /*
  * Initialize the random pool.
  */
-void
-init_rnd_pool(void)
+void init_rnd_pool(void)
 {
-    /* start of rand(3) on the right foot */
-    {
-	unsigned int seed;
+	/* start of rand(3) on the right foot */
+	{
+		unsigned int seed;
 
-	get_rnd_bytes((void *)&seed, sizeof(seed));
-	srand(seed);
-    }
+		get_rnd_bytes((void *)&seed, sizeof(seed));
+		srand(seed);
+	}
 }
 
-u_char    secret_of_the_day[SHA1_DIGEST_SIZE];
+u_char secret_of_the_day[SHA1_DIGEST_SIZE];
 
-void
-init_secret(void)
+void init_secret(void)
 {
-    /*
-     * Generate the secret value for responder cookies, and
-     * schedule an event for refresh.
-     */
-    get_rnd_bytes(secret_of_the_day, sizeof(secret_of_the_day));
-    event_schedule(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
+	/*
+	 * Generate the secret value for responder cookies, and
+	 * schedule an event for refresh.
+	 */
+	get_rnd_bytes(secret_of_the_day, sizeof(secret_of_the_day));
+	event_schedule(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
 }

@@ -3,12 +3,12 @@
  *
  * Copyright (C) 2004 Michael Richardson <mcr@sandelman.ottawa.on.ca>
  * Copyright (C) 2005 - 2008 Paul Wouters <paul@xelerance.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -28,10 +28,11 @@ static inline void random_ether_addr(u8 *addr)
 	addr[0] |= 0x02;
 }
 
-#define ip_hdr(skb)	((skb)->nh.iph)
+#define ip_hdr(skb)     ((skb)->nh.iph)
 
 #ifdef NET_26
-#error "ipsec_kern24.h should not be included directly or at all on 2.6 kernels"
+#error \
+	"ipsec_kern24.h should not be included directly or at all on 2.6 kernels"
 #endif
 
 #define sk_receive_queue  receive_queue
@@ -49,7 +50,8 @@ static inline void random_ether_addr(u8 *addr)
 #define sk_socket         socket
 #define sk_sndbuf         sndbuf
 #define sock_flag(sk, flag)  sk->dead
-#define sk_for_each(sk, node, plist) for(sk=*plist; sk!=NULL; sk = sk->next)
+#define sk_for_each(sk, node, plist) for (sk = *plist; sk != NULL; \
+					  sk = sk->next)
 
 /* deal with 2.4 vs 2.6 issues with module counts */
 
@@ -81,7 +83,7 @@ static inline void *skb_header_pointer(const struct sk_buff *skb, int offset,
 
 static inline struct ethhdr *eth_hdr(const struct sk_buff *skb)
 {
-    return (struct ethhdr *)skb_mac_header(skb);
+	return (struct ethhdr *)skb_mac_header(skb);
 }
 #define _IPSEC_KERN24_H 1
 

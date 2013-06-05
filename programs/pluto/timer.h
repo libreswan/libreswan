@@ -16,14 +16,13 @@
 #define _TIMER_H
 #include "lswtime.h"
 
-struct state;	/* forward declaration */
+struct state;   /* forward declaration */
 
-struct event
-{
-    time_t          ev_time;
-    enum event_type ev_type;        /* Event type */
-    struct state   *ev_state;       /* Pointer to relevant state (if any) */
-    struct event   *ev_next;        /* Pointer to next event */
+struct event {
+	time_t ev_time;
+	enum event_type ev_type;        /* Event type */
+	struct state   *ev_state;       /* Pointer to relevant state (if any) */
+	struct event   *ev_next;        /* Pointer to next event */
 };
 
 extern void event_schedule(enum event_type type, time_t tm, struct state *st);

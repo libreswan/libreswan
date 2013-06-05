@@ -1,12 +1,12 @@
 /*
  * convert from text form of subnet specification to binary
  * Copyright (C) 2000  Henry Spencer.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
@@ -17,18 +17,17 @@
 #include "libreswan.h"
 
 #ifndef DEFAULTSUBNET
-#define	DEFAULTSUBNET	"%default"
+#define DEFAULTSUBNET   "%default"
 #endif
 
 /*
- - ttosubnet - convert text "addr/mask" to address and mask
+   - ttosubnet - convert text "addr/mask" to address and mask
  * Mask can be integer bit count.
  */
-err_t
-ttosubnet(src, srclen, af, dst)
+err_t ttosubnet(src, srclen, af, dst)
 const char *src;
-size_t srclen;			/* 0 means "apply strlen" */
-int af;				/* AF_INET or AF_INET6 */
+size_t srclen;                  /* 0 means "apply strlen" */
+int af;                         /* AF_INET or AF_INET6 */
 ip_subnet *dst;
 {
 	const char *slash;
@@ -38,11 +37,11 @@ ip_subnet *dst;
 	const char *oops;
 	unsigned long bc;
 	static char def[] = DEFAULTSUBNET;
-#	define	DEFLEN	(sizeof(def) - 1)	/* -1 for NUL */
+#       define  DEFLEN  (sizeof(def) - 1)       /* -1 for NUL */
 	static char defis4[] = "0/0";
-#	define	DEFIS4LEN	(sizeof(defis4) - 1)
+#       define  DEFIS4LEN       (sizeof(defis4) - 1)
 	static char defis6[] = "::/0";
-#	define	DEFIS6LEN	(sizeof(defis6) - 1)
+#       define  DEFIS6LEN       (sizeof(defis6) - 1)
 	ip_address addrtmp;
 	ip_address masktmp;
 	int nbits;
@@ -65,9 +64,10 @@ ip_subnet *dst;
 	slash = memchr(src, '/', srclen);
 	if (slash == NULL)
 		return "no / in subnet specification";
+
 	mask = slash + 1;
 	mlen = srclen - (mask - src);
-	oops = ttoaddr(src, slash-src, af, &addrtmp);
+	oops = ttoaddr(src, slash - src, af, &addrtmp);
 	if (oops != NULL)
 		return oops;
 
@@ -83,22 +83,21 @@ ip_subnet *dst;
 		break;
 	default:
 		return "unknown address family in ttosubnet";
+
 		break;
 	}
 
 	/* extract port, as last : */
 	colon = memchr(mask, ':', mlen);
-	if (colon == 0)
-	{
+	if (colon == 0) {
 		setportof(0, &addrtmp);
-	}
-	else
-	{
+	} else {
 		unsigned long port;
 
-		oops =  ttoul(colon+1, mlen-(colon-mask+1), 0, &port);
+		oops =  ttoul(colon + 1, mlen - (colon - mask + 1), 0, &port);
 		if (oops != NULL)
 			return oops;
+
 		setportof(htons(port), &addrtmp);
 		mlen = colon - mask;
 	}
@@ -109,21 +108,21 @@ ip_subnet *dst;
 		/* ttoul succeeded, it's a bit-count mask */
 		if (bc > (unsigned long)nbits)
 			return "subnet mask bit count too large";
+
 		i = bc;
-	} else if(af == AF_INET) {
+	} else if (af == AF_INET) {
 		oops = ttoaddr(mask, mlen, af, &masktmp);
 		if (oops != NULL)
 			return oops;
+
 		i = masktocount(&masktmp);
 		if (i < 0)
 			return "non-contiguous or otherwise erroneous mask";
 	} else {
-	  return "masks are not permitted for IPv6 addresses";
+		return "masks are not permitted for IPv6 addresses";
 	}
 	return initsubnet(&addrtmp, i, '0', dst);
 }
-
-
 
 #ifdef TTOSUBNET_MAIN
 
@@ -158,8 +157,9 @@ int main(int argc, char *argv[])
 	if (strcmp(argv[1], "-6") == 0) {
 		af = AF_INET6;
 		p = argv[2];
-	} else if (strchr(argv[1], ':') != NULL)
+	} else if (strchr(argv[1], ':') != NULL) {
 		af = AF_INET6;
+	}
 	oops = ttosubnet(p, 0, af, &s);
 	if (oops != NULL) {
 		fprintf(stderr, "%s: conversion failed: %s\n", argv[0], oops);
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%s/", buf2);
 		fprintf(stderr, "%d", s.maskbits);
 		fprintf(stderr, " failed: need %ld bytes, have only %ld\n",
-						(long)n, (long)sizeof(buf));
+			(long)n, (long)sizeof(buf));
 		exit(1);
 	}
 	printf("%s\n", buf);
@@ -183,83 +183,83 @@ int main(int argc, char *argv[])
 struct rtab {
 	int family;
 	char *input;
-	char *output;			/* NULL means error expected */
+	char *output;                   /* NULL means error expected */
 } rtab[] = {
-	{4, "1.2.3.0/255.255.255.0",	"1.2.3.0/24"},
-	{4, "1.2.3.0/24",		"1.2.3.0/24"},
-	{4, "1.2.3.0/24:10",		"1.2.3.0/24:10"},
-	{4, "1.2.3.0/24:-1",		NULL},
-	{4, "1.2.3.0/24:none",		NULL},
-	{4, "1.2.3.0/24:",		NULL},
-	{4, "1.2.3.0/24:0x10",		"1.2.3.0/24:16"},
-	{4, "1.2.3.0/24:0X10",		"1.2.3.0/24:16"},
-	{4, "1.2.3.0/24:010",		"1.2.3.0/24:8"},
-	{4, "1.2.3.1/255.255.255.240",	"1.2.3.0/28"},
-	{4, "1.2.3.1/32",		"1.2.3.1/32"},
-	{4, "1.2.3.1/0",			"0.0.0.0/0"},
+	{ 4, "1.2.3.0/255.255.255.0",    "1.2.3.0/24" },
+	{ 4, "1.2.3.0/24",               "1.2.3.0/24" },
+	{ 4, "1.2.3.0/24:10",            "1.2.3.0/24:10" },
+	{ 4, "1.2.3.0/24:-1",            NULL },
+	{ 4, "1.2.3.0/24:none",          NULL },
+	{ 4, "1.2.3.0/24:",              NULL },
+	{ 4, "1.2.3.0/24:0x10",          "1.2.3.0/24:16" },
+	{ 4, "1.2.3.0/24:0X10",          "1.2.3.0/24:16" },
+	{ 4, "1.2.3.0/24:010",           "1.2.3.0/24:8" },
+	{ 4, "1.2.3.1/255.255.255.240",  "1.2.3.0/28" },
+	{ 4, "1.2.3.1/32",               "1.2.3.1/32" },
+	{ 4, "1.2.3.1/0",                        "0.0.0.0/0" },
 /*	{4, "1.2.3.1/255.255.127.0",	"1.2.3.0/255.255.127.0"},	*/
-	{4, "1.2.3.1/255.255.127.0",	NULL},
-	{4, "128.009.000.032/32",	"128.9.0.32/32"},
-	{4, "128.0x9.0.32/32",		NULL},
-	{4, "0x80090020/32",		"128.9.0.32/32"},
-	{4, "0x800x0020/32",		NULL},
-	{4, "128.9.0.32/0xffFF0000",	"128.9.0.0/16"},
-	{4, "128.9.0.32/0xff0000FF",	NULL},
-	{4, "128.9.0.32/0x0000ffFF",	NULL},
-	{4, "128.9.0.32/0x00ffFF0000",	NULL},
-	{4, "128.9.0.32/0xffFF",	NULL},
-	{4, "128.9.0.32.27/32",		NULL},
-	{4, "128.9.0k32/32",		NULL},
-	{4, "328.9.0.32/32",		NULL},
-	{4, "128.9..32/32",		NULL},
-	{4, "10/8",			"10.0.0.0/8"},
-	{4, "10.0/8",			"10.0.0.0/8"},
-	{4, "10.0.0/8",			"10.0.0.0/8"},
-	{4, "10.0.1/24",		"10.0.1.0/24"},
-	{4, "_",				NULL},
-	{4, "_/_",			NULL},
-	{4, "1.2.3.1",			NULL},
-	{4, "1.2.3.1/_",			NULL},
-	{4, "1.2.3.1/24._",		NULL},
-	{4, "1.2.3.1/99",		NULL},
-	{4, "localhost/32", 		NULL},
-	{4, "%default",			"0.0.0.0/0"},
-	{6, "3049:1::8007:2040/0",	"::/0"},
-	{6, "3049:1::8007:2040/128",	"3049:1::8007:2040/128"},
-	{6, "3049:1::192.168.0.1/128", NULL},	/*"3049:1::c0a8:1/128",*/
-	{6, "3049:1::8007::2040/128",	NULL},
-	{6, "3049:1::8007:2040/ffff:0",	NULL},
-	{6, "3049:1::8007:2040/64",	"3049:1::/64"},
-	{6, "3049:1::8007:2040/64:53",	"3049:1::/64:53"},
-	{6, "3049:1::8007:2040/ffff:",	NULL},
-	{6, "3049:1::8007:2040/0000:ffff::0",	NULL},
-	{6, "3049:1::8007:2040/ff1f:0",	NULL},
-	{6, "3049:1::8007:x:2040/128",	NULL},
-	{6, "3049:1t::8007:2040/128",	NULL},
-	{6, "3049:1::80071:2040/128",	NULL},
-	{6, "::/21",			"::/21"},
-	{6, "::1/128",			"::1/128"},
-	{6, "1::/21",			"1::/21"},
-	{6, "1::2/128",			"1::2/128"},
-	{6, "1:0:0:0:0:0:0:2/128",	"1::2/128"},
-	{6, "1:0:0:0:3:0:0:2/128",	"1::3:0:0:2/128"},
-	{6, "1:0:0:3:0:0:0:2/128",	"1::3:0:0:0:2/128"},
-	{6, "1:0:3:0:0:0:0:2/128",	"1:0:3::2/128"},
-	{6, "abcd:ef01:2345:6789:0:00a:000:20/128",	"abcd:ef01:2345:6789:0:a:0:20/128"},
-	{6, "3049:1::8007:2040/ffff:ffff:",	NULL},
-	{6, "3049:1::8007:2040/ffff:88:",	NULL},
-	{6, "3049:12::9000:3200/ffff:fff0",	NULL},
-	{6, "3049:12::9000:3200/28",	"3049:10::/28"},
-	{6, "3049:12::9000:3200/ff00:",	NULL},
-	{6, "3049:12::9000:3200/ffff:",	NULL},
-	{6, "3049:12::9000:3200/128_",	NULL},
-	{6, "3049:12::9000:3200/",	NULL},
-	{6, "%default",			"::/0"},
-        {4, NULL,			NULL}
+	{ 4, "1.2.3.1/255.255.127.0",    NULL },
+	{ 4, "128.009.000.032/32",       "128.9.0.32/32" },
+	{ 4, "128.0x9.0.32/32",          NULL },
+	{ 4, "0x80090020/32",            "128.9.0.32/32" },
+	{ 4, "0x800x0020/32",            NULL },
+	{ 4, "128.9.0.32/0xffFF0000",    "128.9.0.0/16" },
+	{ 4, "128.9.0.32/0xff0000FF",    NULL },
+	{ 4, "128.9.0.32/0x0000ffFF",    NULL },
+	{ 4, "128.9.0.32/0x00ffFF0000",  NULL },
+	{ 4, "128.9.0.32/0xffFF",        NULL },
+	{ 4, "128.9.0.32.27/32",         NULL },
+	{ 4, "128.9.0k32/32",            NULL },
+	{ 4, "328.9.0.32/32",            NULL },
+	{ 4, "128.9..32/32",             NULL },
+	{ 4, "10/8",                     "10.0.0.0/8" },
+	{ 4, "10.0/8",                   "10.0.0.0/8" },
+	{ 4, "10.0.0/8",                 "10.0.0.0/8" },
+	{ 4, "10.0.1/24",                "10.0.1.0/24" },
+	{ 4, "_",                                NULL },
+	{ 4, "_/_",                      NULL },
+	{ 4, "1.2.3.1",                  NULL },
+	{ 4, "1.2.3.1/_",                        NULL },
+	{ 4, "1.2.3.1/24._",             NULL },
+	{ 4, "1.2.3.1/99",               NULL },
+	{ 4, "localhost/32",             NULL },
+	{ 4, "%default",                 "0.0.0.0/0" },
+	{ 6, "3049:1::8007:2040/0",      "::/0" },
+	{ 6, "3049:1::8007:2040/128",    "3049:1::8007:2040/128" },
+	{ 6, "3049:1::192.168.0.1/128", NULL },   /*"3049:1::c0a8:1/128",*/
+	{ 6, "3049:1::8007::2040/128",   NULL },
+	{ 6, "3049:1::8007:2040/ffff:0", NULL },
+	{ 6, "3049:1::8007:2040/64",     "3049:1::/64" },
+	{ 6, "3049:1::8007:2040/64:53",  "3049:1::/64:53" },
+	{ 6, "3049:1::8007:2040/ffff:",  NULL },
+	{ 6, "3049:1::8007:2040/0000:ffff::0",   NULL },
+	{ 6, "3049:1::8007:2040/ff1f:0", NULL },
+	{ 6, "3049:1::8007:x:2040/128",  NULL },
+	{ 6, "3049:1t::8007:2040/128",   NULL },
+	{ 6, "3049:1::80071:2040/128",   NULL },
+	{ 6, "::/21",                    "::/21" },
+	{ 6, "::1/128",                  "::1/128" },
+	{ 6, "1::/21",                   "1::/21" },
+	{ 6, "1::2/128",                 "1::2/128" },
+	{ 6, "1:0:0:0:0:0:0:2/128",      "1::2/128" },
+	{ 6, "1:0:0:0:3:0:0:2/128",      "1::3:0:0:2/128" },
+	{ 6, "1:0:0:3:0:0:0:2/128",      "1::3:0:0:0:2/128" },
+	{ 6, "1:0:3:0:0:0:0:2/128",      "1:0:3::2/128" },
+	{ 6, "abcd:ef01:2345:6789:0:00a:000:20/128",
+	  "abcd:ef01:2345:6789:0:a:0:20/128" },
+	{ 6, "3049:1::8007:2040/ffff:ffff:",     NULL },
+	{ 6, "3049:1::8007:2040/ffff:88:",       NULL },
+	{ 6, "3049:12::9000:3200/ffff:fff0",     NULL },
+	{ 6, "3049:12::9000:3200/28",    "3049:10::/28" },
+	{ 6, "3049:12::9000:3200/ff00:", NULL },
+	{ 6, "3049:12::9000:3200/ffff:", NULL },
+	{ 6, "3049:12::9000:3200/128_",  NULL },
+	{ 6, "3049:12::9000:3200/",      NULL },
+	{ 6, "%default",                 "::/0" },
+	{ 4, NULL,                       NULL }
 };
 
-void
-regress(void)
+void regress(void)
 {
 	struct rtab *r;
 	int status = 0;
@@ -273,27 +273,27 @@ regress(void)
 	for (r = rtab; r->input != NULL; r++) {
 		af = (r->family == 4) ? AF_INET : AF_INET6;
 		strcpy(in, r->input);
-		printf("Testing `%s' ... ",in);
+		printf("Testing `%s' ... ", in);
 		oops = ttosubnet(in, 0, af, &s);
-		if (oops != NULL && r->output == NULL ) { /* Error was expected, do nothing */
-			printf("OK (%s)\n",oops);
-		}
-		if (oops == NULL && r->output != NULL ) { /* No error, no error expected */
+		if (oops != NULL && r->output == NULL )         /* Error was expected, do nothing */
+			printf("OK (%s)\n", oops);
+		if (oops == NULL && r->output != NULL )         /* No error, no error expected */
 			printf("OK\n");
-		} 
-		if (oops == NULL && r->output == NULL ) { /* If no errors, but we expected one */
-			printf("`%s' ttosubnet succeeded unexpectedly\n", r->input);
+		if (oops == NULL && r->output == NULL ) {       /* If no errors, but we expected one */
+			printf("`%s' ttosubnet succeeded unexpectedly\n",
+			       r->input);
 			status = 1;
 		}
 		if (oops != NULL && r->output != NULL ) { /* Error occurred, but we didn't expect one  */
 			printf("`%s' ttosubnet failed: %s\n", r->input, oops);
 			status = 1;
 			n = subnetporttot(&s, 0, buf, sizeof(buf));
-			if (n > sizeof(buf)) {
-				printf("`%s' subnettot failed:  need %ld\n", r->input, (long)n);
-			} else if (strcmp(r->output, buf) != 0) {
-				printf("`%s' gave `%s', expected `%s'\n", r->input, buf, r->output);
-			}
+			if (n > sizeof(buf))
+				printf("`%s' subnettot failed:  need %ld\n",
+				       r->input, (long)n);
+			else if (strcmp(r->output, buf) != 0)
+				printf("`%s' gave `%s', expected `%s'\n",
+				       r->input, buf, r->output);
 		}
 	}
 	exit(status);

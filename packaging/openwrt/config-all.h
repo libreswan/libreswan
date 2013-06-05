@@ -1,12 +1,12 @@
 #ifndef _CONFIG_ALL_H_
 /*
  * Copyright (C) 2011              Paul Wouters <paul@xelerance.com>
- * 
+ *
  * This kernel module is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
- * 
+ *
  * This kernel module is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
@@ -17,7 +17,7 @@
  * hardware offload (via kmod-ocf-ubsec_ssb)
  * I also plan to add SAref patches to the kernel for better L2TP support
  */
-#define	_CONFIG_ALL_H_	/* seen it, no need to see it again */
+#define _CONFIG_ALL_H_  /* seen it, no need to see it again */
 
 #define CONFIG_KLIPS 1
 

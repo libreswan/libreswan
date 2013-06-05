@@ -12,8 +12,8 @@
  * for more details.
  */
 
-extern u_char    secret_of_the_day[SHA1_DIGEST_SIZE];
-extern u_char    ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
+extern u_char secret_of_the_day[SHA1_DIGEST_SIZE];
+extern u_char ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
 
 extern void get_rnd_bytes(u_char *buffer, int length);
 extern void init_rnd_pool(void);

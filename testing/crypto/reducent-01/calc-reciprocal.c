@@ -1,4 +1,4 @@
-/* 
+/*
  * unit tests for cryptographic helper function - calculate KE and nonce
  *
  * Copyright (C) 2006 Michael C. Richardson <mcr@xelerance.com>
@@ -29,7 +29,7 @@ char *progname;
 void exit_log(const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
+	char m[LOG_WIDTH];      /* longer messages will be truncated */
 
 	va_start(args, message);
 	vsnprintf(m, sizeof(m), message, args);
@@ -56,9 +56,9 @@ void exit_tool(int code)
  */
 void calc_reciprocal(const struct oakley_group_desc *group)
 {
-	mpz_t n, one,reciprocal;
-	int nlen = 2*group->bytes*BITS_PER_BYTE-1;
-	int tries=1000000;
+	mpz_t n, one, reciprocal;
+	int nlen = 2 * group->bytes * BITS_PER_BYTE - 1;
+	int tries = 1000000;
 
 	mpz_init(one);
 	mpz_init(reciprocal);
@@ -75,7 +75,7 @@ void calc_reciprocal(const struct oakley_group_desc *group)
 	mpz_mul(n, group->modulus, reciprocal);
 
 	/* make sure that result has a 1 bit in highest position */
-	while(mpz_tstbit(n, nlen) == 1 && tries-->0) {
+	while (mpz_tstbit(n, nlen) == 1 && tries-- > 0) {
 
 		mpz_sub_ui(reciprocal, reciprocal, 1);
 		mpz_mul(n, group->modulus, reciprocal);
@@ -102,14 +102,13 @@ int main(int argc, char *argv[])
 	int i;
 
 	progname = argv[0];
-	
+
 	/* initialize list of moduli */
 	init_crypto();
 
-	for (i = 0; i != elemsof(oakley_group); i++) {
+	for (i = 0; i != elemsof(oakley_group); i++)
 		calc_reciprocal(&oakley_group[i]);
-	}
-	
+
 	exit(0);
 }
-			
+

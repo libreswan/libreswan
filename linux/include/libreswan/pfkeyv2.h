@@ -1,14 +1,14 @@
 /*
-RFC 2367               PF_KEY Key Management API               July 1998
+   RFC 2367               PF_KEY Key Management API               July 1998
 
 
-Appendix D: Sample Header File
+   Appendix D: Sample Header File
 
-This file defines structures and symbols for the PF_KEY Version 2
-key management interface. It was written at the U.S. Naval Research
-Laboratory. This file is in the public domain. The authors ask that
-you leave this credit intact on any copies of this file.
-*/
+   This file defines structures and symbols for the PF_KEY Version 2
+   key management interface. It was written at the U.S. Naval Research
+   Laboratory. This file is in the public domain. The authors ask that
+   you leave this credit intact on any copies of this file.
+ */
 
 #ifndef __PFKEY_V2_H
 #define __PFKEY_V2_H 1
@@ -42,12 +42,12 @@ enum sadb_msg_t {
 	K_SADB_MAX=19
 };
 
-#define SADB_X_GRPSA	    K_SADB_X_GRPSA		    
-#define SADB_X_ADDFLOW	    K_SADB_X_ADDFLOW	    
-#define SADB_X_DELFLOW	    K_SADB_X_DELFLOW	    
-#define SADB_X_DEBUG	    K_SADB_X_DEBUG		    
-#define SADB_X_PLUMBIF	    K_SADB_X_PLUMBIF	    
-#define SADB_X_UNPLUMBIF    K_SADB_X_UNPLUMBIF	    
+#define SADB_X_GRPSA        K_SADB_X_GRPSA
+#define SADB_X_ADDFLOW      K_SADB_X_ADDFLOW
+#define SADB_X_DELFLOW      K_SADB_X_DELFLOW
+#define SADB_X_DEBUG        K_SADB_X_DEBUG
+#define SADB_X_PLUMBIF      K_SADB_X_PLUMBIF
+#define SADB_X_UNPLUMBIF    K_SADB_X_UNPLUMBIF
 
 struct k_sadb_sa {
 	uint16_t sadb_sa_len;
@@ -63,39 +63,39 @@ struct k_sadb_sa {
 } __attribute__((packed));
 
 struct sadb_sa_v1 {
-  uint16_t sadb_sa_len;
-  uint16_t sadb_sa_exttype;
-  uint32_t sadb_sa_spi;
-  uint8_t sadb_sa_replay;
-  uint8_t sadb_sa_state;
-  uint8_t sadb_sa_auth;
-  uint8_t sadb_sa_encrypt;
-  uint32_t sadb_sa_flags;
+	uint16_t sadb_sa_len;
+	uint16_t sadb_sa_exttype;
+	uint32_t sadb_sa_spi;
+	uint8_t sadb_sa_replay;
+	uint8_t sadb_sa_state;
+	uint8_t sadb_sa_auth;
+	uint8_t sadb_sa_encrypt;
+	uint32_t sadb_sa_flags;
 } __attribute__((packed));
 
 struct sadb_x_satype {
-  uint16_t sadb_x_satype_len;
-  uint16_t sadb_x_satype_exttype;
-  uint8_t sadb_x_satype_satype;
-  uint8_t sadb_x_satype_reserved[3];
+	uint16_t sadb_x_satype_len;
+	uint16_t sadb_x_satype_exttype;
+	uint8_t sadb_x_satype_satype;
+	uint8_t sadb_x_satype_reserved[3];
 } __attribute__((packed));
-  
+
 struct sadb_x_debug {
-  uint16_t sadb_x_debug_len;
-  uint16_t sadb_x_debug_exttype;
-  uint32_t sadb_x_debug_tunnel;
-  uint32_t sadb_x_debug_netlink;
-  uint32_t sadb_x_debug_xform;
-  uint32_t sadb_x_debug_eroute;
-  uint32_t sadb_x_debug_spi;
-  uint32_t sadb_x_debug_radij;
-  uint32_t sadb_x_debug_esp;
-  uint32_t sadb_x_debug_ah;
-  uint32_t sadb_x_debug_rcv;
-  uint32_t sadb_x_debug_pfkey;
-  uint32_t sadb_x_debug_ipcomp;
-  uint32_t sadb_x_debug_verbose;
-  uint8_t sadb_x_debug_reserved[4];
+	uint16_t sadb_x_debug_len;
+	uint16_t sadb_x_debug_exttype;
+	uint32_t sadb_x_debug_tunnel;
+	uint32_t sadb_x_debug_netlink;
+	uint32_t sadb_x_debug_xform;
+	uint32_t sadb_x_debug_eroute;
+	uint32_t sadb_x_debug_spi;
+	uint32_t sadb_x_debug_radij;
+	uint32_t sadb_x_debug_esp;
+	uint32_t sadb_x_debug_ah;
+	uint32_t sadb_x_debug_rcv;
+	uint32_t sadb_x_debug_pfkey;
+	uint32_t sadb_x_debug_ipcomp;
+	uint32_t sadb_x_debug_verbose;
+	uint8_t sadb_x_debug_reserved[4];
 } __attribute__((packed));
 
 /*
@@ -107,7 +107,7 @@ struct sadb_x_debug {
  *
  * the create/delete part could/should be replaced with netlink equivalents,
  * or better yet, FORCES versions of same.
- * 
+ *
  */
 struct sadb_x_plumbif {
 	uint16_t sadb_x_outif_len;
@@ -122,8 +122,8 @@ struct sadb_x_plumbif {
  * devices 40960-49141 are mastXXX devices with transport set.
  * devices 49152-65536 are deprecated ipsecXXX devices.
  */
-#define IPSECDEV_OFFSET       (48*1024)
-#define MASTTRANSPORT_OFFSET  (40*1024)
+#define IPSECDEV_OFFSET       (48 * 1024)
+#define MASTTRANSPORT_OFFSET  (40 * 1024)
 
 /*
  * an saref extension sets the SA's reference number, and
@@ -133,7 +133,7 @@ struct sadb_x_plumbif {
 struct sadb_x_saref {
 	uint16_t sadb_x_saref_len;
 	uint16_t sadb_x_saref_exttype;
-	uint32_t sadb_x_saref_me;       
+	uint32_t sadb_x_saref_me;
 	uint32_t sadb_x_saref_him;
 } __attribute__((packed));
 
@@ -144,12 +144,12 @@ struct sadb_x_saref {
  * OpenBSD (http://www.openbsd.org/cgi-bin/cvsweb/src/sys/net/pfkeyv2.h)
  */
 struct sadb_protocol {
-  uint16_t sadb_protocol_len;
-  uint16_t sadb_protocol_exttype;
-  uint8_t  sadb_protocol_proto;
-  uint8_t  sadb_protocol_direction;
-  uint8_t  sadb_protocol_flags;
-  uint8_t  sadb_protocol_reserved2;
+	uint16_t sadb_protocol_len;
+	uint16_t sadb_protocol_exttype;
+	uint8_t sadb_protocol_proto;
+	uint8_t sadb_protocol_direction;
+	uint8_t sadb_protocol_flags;
+	uint8_t sadb_protocol_reserved2;
 } __attribute__((packed));
 
 /*
@@ -194,30 +194,27 @@ enum sadb_extension_t {
 	K_SADB_EXT_MAX=             32,
 };
 
+#define SADB_X_EXT_SATYPE2              K_SADB_X_EXT_SATYPE2
+#define SADB_X_EXT_ADDRESS_DST2         K_SADB_X_EXT_ADDRESS_DST2
+#define SADB_X_EXT_ADDRESS_SRC_FLOW     K_SADB_X_EXT_ADDRESS_SRC_FLOW
+#define SADB_X_EXT_ADDRESS_DST_FLOW     K_SADB_X_EXT_ADDRESS_DST_FLOW
+#define SADB_X_EXT_ADDRESS_SRC_MASK     K_SADB_X_EXT_ADDRESS_SRC_MASK
+#define SADB_X_EXT_ADDRESS_DST_MASK     K_SADB_X_EXT_ADDRESS_DST_MASK
+#define SADB_X_EXT_DEBUG                K_SADB_X_EXT_DEBUG
+#define SADB_X_EXT_PROTOCOL             K_SADB_X_EXT_PROTOCOL
 
-#define SADB_X_EXT_SATYPE2		K_SADB_X_EXT_SATYPE2		
-#define SADB_X_EXT_ADDRESS_DST2	        K_SADB_X_EXT_ADDRESS_DST2	
-#define SADB_X_EXT_ADDRESS_SRC_FLOW	K_SADB_X_EXT_ADDRESS_SRC_FLOW	
-#define SADB_X_EXT_ADDRESS_DST_FLOW	K_SADB_X_EXT_ADDRESS_DST_FLOW	
-#define SADB_X_EXT_ADDRESS_SRC_MASK	K_SADB_X_EXT_ADDRESS_SRC_MASK	
-#define SADB_X_EXT_ADDRESS_DST_MASK	K_SADB_X_EXT_ADDRESS_DST_MASK	
-#define SADB_X_EXT_DEBUG		K_SADB_X_EXT_DEBUG		
-#define SADB_X_EXT_PROTOCOL		K_SADB_X_EXT_PROTOCOL		
-
-#undef SADB_X_EXT_NAT_T_TYPE		
-#undef SADB_X_EXT_NAT_T_SPORT	        
-#undef SADB_X_EXT_NAT_T_DPORT	        
-#undef SADB_X_EXT_NAT_T_OA		
-#define SADB_X_EXT_PLUMBIF		K_SADB_X_EXT_PLUMBIF		
-
-
+#undef SADB_X_EXT_NAT_T_TYPE
+#undef SADB_X_EXT_NAT_T_SPORT
+#undef SADB_X_EXT_NAT_T_DPORT
+#undef SADB_X_EXT_NAT_T_OA
+#define SADB_X_EXT_PLUMBIF              K_SADB_X_EXT_PLUMBIF
 
 /* K_SADB_X_DELFLOW required over and above K_SADB_X_SAFLAGS_CLEARFLOW */
 #define K_SADB_X_EXT_ADDRESS_DELFLOW \
-	( (1<<K_SADB_X_EXT_ADDRESS_SRC_FLOW) \
-	| (1<<K_SADB_X_EXT_ADDRESS_DST_FLOW) \
-	| (1<<K_SADB_X_EXT_ADDRESS_SRC_MASK) \
-	| (1<<K_SADB_X_EXT_ADDRESS_DST_MASK))
+	( (1 << K_SADB_X_EXT_ADDRESS_SRC_FLOW) \
+	  | (1 << K_SADB_X_EXT_ADDRESS_DST_FLOW) \
+	  | (1 << K_SADB_X_EXT_ADDRESS_SRC_MASK) \
+	  | (1 << K_SADB_X_EXT_ADDRESS_DST_MASK))
 
 enum sadb_satype {
 	K_SADB_SATYPE_UNSPEC=SADB_SATYPE_UNSPEC,
@@ -234,10 +231,10 @@ enum sadb_satype {
 #define K_SADB_SATYPE_MAX       11
 
 enum sadb_sastate {
-  K_SADB_SASTATE_LARVAL=0,
-  K_SADB_SASTATE_MATURE=1,
-  K_SADB_SASTATE_DYING=2,
-  K_SADB_SASTATE_DEAD=3
+	K_SADB_SASTATE_LARVAL=0,
+	K_SADB_SASTATE_MATURE=1,
+	K_SADB_SASTATE_DYING=2,
+	K_SADB_SASTATE_DEAD=3
 };
 #undef  SADB_SASTATE_LARVAL
 #undef  SADB_SASTATE_MATURE
@@ -245,34 +242,34 @@ enum sadb_sastate {
 #undef  SADB_SASTATE_DEAD
 #define K_SADB_SASTATE_MAX 3
 
-#define SADB_SAFLAGS_PFS		1
-#define SADB_X_SAFLAGS_REPLACEFLOW	2
-#define SADB_X_SAFLAGS_CLEARFLOW	4
-#define SADB_X_SAFLAGS_INFLOW		8
+#define SADB_SAFLAGS_PFS                1
+#define SADB_X_SAFLAGS_REPLACEFLOW      2
+#define SADB_X_SAFLAGS_CLEARFLOW        4
+#define SADB_X_SAFLAGS_INFLOW           8
 #define SADB_X_SAFLAGS_POLICYONLY       16  /* suppress eroute creation */
 
 /* not obvious, but these are the same values as used in isakmp,
  * and in freeswan/ipsec_policy.h. If you need to add any, they
- * should be added as according to 
+ * should be added as according to
  *   http://www.iana.org/assignments/isakmp-registry
- * 
+ *
  * and if not, then please try to use a private-use value, and
  * consider asking IANA to assign a value.
  */
 #define SADB_AALG_NONE                  0
 #define SADB_AALG_MD5HMAC               2
 #define SADB_AALG_SHA1HMAC              3
-#define SADB_X_AALG_SHA2_256HMAC	5
-#define SADB_X_AALG_SHA2_384HMAC	6
-#define SADB_X_AALG_SHA2_512HMAC	7
-#define SADB_X_AALG_RIPEMD160HMAC	8
-#define SADB_X_AALG_NULL		251	/* kame */
-#define SADB_X_AALG_SHA2_256HMAC_TRUNCBUG	252 /* used internally to signal for broken linux kernel behaviour */
+#define SADB_X_AALG_SHA2_256HMAC        5
+#define SADB_X_AALG_SHA2_384HMAC        6
+#define SADB_X_AALG_SHA2_512HMAC        7
+#define SADB_X_AALG_RIPEMD160HMAC       8
+#define SADB_X_AALG_NULL                251             /* kame */
+#define SADB_X_AALG_SHA2_256HMAC_TRUNCBUG       252     /* used internally to signal for broken linux kernel behaviour */
 
 enum sadb_aalg {
-	K_SADB_AALG_NONE=          SADB_AALG_NONE,           	
-	K_SADB_AALG_MD5HMAC=       SADB_AALG_MD5HMAC,        	
-	K_SADB_AALG_SHA1HMAC=      SADB_AALG_SHA1HMAC,       	
+	K_SADB_AALG_NONE=          SADB_AALG_NONE,
+	K_SADB_AALG_MD5HMAC=       SADB_AALG_MD5HMAC,
+	K_SADB_AALG_SHA1HMAC=      SADB_AALG_SHA1HMAC,
 	K_SADB_X_AALG_SHA2_256HMAC=SADB_X_AALG_SHA2_256HMAC,
 	K_SADB_X_AALG_SHA2_256HMAC_TRUNCBUG=SADB_X_AALG_SHA2_256HMAC_TRUNCBUG,
 	K_SADB_X_AALG_SHA2_384HMAC=SADB_X_AALG_SHA2_384HMAC,
@@ -280,33 +277,33 @@ enum sadb_aalg {
 	K_SADB_X_AALG_RIPEMD160HMAC=SADB_X_AALG_RIPEMD160HMAC,
 	K_SADB_X_AALG_NULL=SADB_X_AALG_NULL,
 };
-#define K_SADB_AALG_MAX			255 /* Is this really one octets, not two? */
-					    /* gets mapped into AUTH_ALGORITHM which is two octets */
+#define K_SADB_AALG_MAX                 255     /* Is this really one octets, not two? */
+                                                /* gets mapped into AUTH_ALGORITHM which is two octets */
 
 #define SADB_EALG_NONE                  0
 #define SADB_EALG_DESCBC                2
 #define SADB_EALG_3DESCBC               3
-#define SADB_X_EALG_CASTCBC		6
-#define SADB_X_EALG_BLOWFISHCBC		7
-#define SADB_EALG_NULL			11
-#define SADB_X_EALG_AESCBC		12
-#define SADB_X_EALG_AESCTR		13
-#define SADB_X_EALG_AES_CCM_ICV8	14
-#define SADB_X_EALG_AES_CCM_ICV12	15
-#define SADB_X_EALG_AES_CCM_ICV16	16
-#define SADB_X_EALG_AES_GCM_ICV8	18
-#define SADB_X_EALG_AES_GCM_ICV12	19
-#define SADB_X_EALG_AES_GCM_ICV16	20
-#define SADB_X_EALG_CAMELLIACBC		22
+#define SADB_X_EALG_CASTCBC             6
+#define SADB_X_EALG_BLOWFISHCBC         7
+#define SADB_EALG_NULL                  11
+#define SADB_X_EALG_AESCBC              12
+#define SADB_X_EALG_AESCTR              13
+#define SADB_X_EALG_AES_CCM_ICV8        14
+#define SADB_X_EALG_AES_CCM_ICV12       15
+#define SADB_X_EALG_AES_CCM_ICV16       16
+#define SADB_X_EALG_AES_GCM_ICV8        18
+#define SADB_X_EALG_AES_GCM_ICV12       19
+#define SADB_X_EALG_AES_GCM_ICV16       20
+#define SADB_X_EALG_CAMELLIACBC         22
 
 enum sadb_ealg {
-	K_SADB_EALG_NONE=SADB_EALG_NONE,		 
-	K_SADB_EALG_DESCBC=SADB_EALG_DESCBC,	 
-	K_SADB_EALG_3DESCBC=SADB_EALG_3DESCBC,	 
-	K_SADB_X_EALG_CASTCBC=SADB_X_EALG_CASTCBC,	 
-	K_SADB_X_EALG_BLOWFISHCBC=SADB_X_EALG_BLOWFISHCBC, 
-	K_SADB_EALG_NULL=SADB_EALG_NULL,		 
-	K_SADB_X_EALG_AESCBC=SADB_X_EALG_AESCBC,    
+	K_SADB_EALG_NONE=SADB_EALG_NONE,
+	K_SADB_EALG_DESCBC=SADB_EALG_DESCBC,
+	K_SADB_EALG_3DESCBC=SADB_EALG_3DESCBC,
+	K_SADB_X_EALG_CASTCBC=SADB_X_EALG_CASTCBC,
+	K_SADB_X_EALG_BLOWFISHCBC=SADB_X_EALG_BLOWFISHCBC,
+	K_SADB_EALG_NULL=SADB_EALG_NULL,
+	K_SADB_X_EALG_AESCBC=SADB_X_EALG_AESCBC,
 	K_SADB_X_EALG_AESCTR=SADB_X_EALG_AESCTR,
 	K_SADB_X_EALG_AES_CCM_ICV8=SADB_X_EALG_AES_CCM_ICV8,
 	K_SADB_X_EALG_AES_CCM_ICV12=SADB_X_EALG_AES_CCM_ICV12,
@@ -318,7 +315,7 @@ enum sadb_ealg {
 };
 
 #undef SADB_EALG_MAX
-#define K_SADB_EALG_MAX			255
+#define K_SADB_EALG_MAX                 255
 
 #define SADB_X_CALG_NONE          0
 #define SADB_X_CALG_OUI           1
@@ -335,7 +332,6 @@ enum sadb_talg {
 	K_SADB_X_TALG_IPv6_in_IPv6=4,
 };
 #define SADB_X_TALG_MAX         4
-
 
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1

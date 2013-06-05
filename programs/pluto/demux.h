@@ -19,7 +19,7 @@
 #include "packet.h"
 #include "quirks.h"
 
-struct state;	/* forward declaration of tag */
+struct state;   /* forward declaration of tag */
 extern void init_demux(void);
 extern bool send_ike_msg(struct state *st, const char *where);
 extern bool resend_ike_v1_msg(struct state *st, const char *where);
@@ -42,9 +42,9 @@ extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
  */
 
 struct payload_digest {
-    pb_stream pbs;
-    union payload payload;
-    struct payload_digest *next;   /* of same kind */
+	pb_stream pbs;
+	union payload payload;
+	struct payload_digest *next; /* of same kind */
 };
 
 /* message digest
@@ -52,52 +52,51 @@ struct payload_digest {
  */
 
 struct msg_digest {
-    struct msg_digest *next;	/* for free list */
-    chunk_t raw_packet;		/* if encrypted, received packet before decryption */
-    const struct iface_port *iface;	/* interface on which message arrived */
-    ip_address sender;	        /* where message came from (network order) */
-    u_int16_t sender_port;	/* host order */
-    pb_stream packet_pbs;	/* whole packet */
-    pb_stream message_pbs;	/* message to be processed */
-    pb_stream clr_pbs;          /* place to store decrypted packet */
-    struct isakmp_hdr hdr;	/* message's header */
-    bool encrypted;	/* was it encrypted? */
-    enum state_kind from_state;	/* state we started in */
-    const struct state_microcode *smc;	  /* microcode for initial state (v1)*/
-    const struct state_v2_microcode *svm; /* microcode for initial state (v2)*/
-    bool new_iv_set;
-    struct state *st;	/* current state object */
-    struct state *pst;  /* parent state object (if any) */
+	struct msg_digest *next;                /* for free list */
+	chunk_t raw_packet;                     /* if encrypted, received packet before decryption */
+	const struct iface_port *iface;         /* interface on which message arrived */
+	ip_address sender;                      /* where message came from (network order) */
+	u_int16_t sender_port;                  /* host order */
+	pb_stream packet_pbs;                   /* whole packet */
+	pb_stream message_pbs;                  /* message to be processed */
+	pb_stream clr_pbs;                      /* place to store decrypted packet */
+	struct isakmp_hdr hdr;                  /* message's header */
+	bool encrypted;                         /* was it encrypted? */
+	enum state_kind from_state;             /* state we started in */
+	const struct state_microcode *smc;      /* microcode for initial state (v1)*/
+	const struct state_v2_microcode *svm;   /* microcode for initial state (v2)*/
+	bool new_iv_set;
+	struct state *st;                       /* current state object */
+	struct state *pst;                      /* parent state object (if any) */
 
-    enum phase1_role role;	/* (ikev2 only) */
-    msgid_t          msgid_received;	/* (ikev2 only) */
-    
-    pb_stream rbody;	/* room for reply body (after header) */
-    notification_t note;	/* reason for failure */
-    bool dpd;           /* Peer supports RFC 3706 DPD */
-    bool ikev2;         /* Peer supports IKEv2 */
-    bool fragvid;	/* Peer supports FRAGMENTATION */
-    bool event_already_set;	/* (ikev1 only) */
-    stf_status result;  /* temporary stored here for access by Tcl */
+	enum phase1_role role;                  /* (ikev2 only) */
+	msgid_t msgid_received;                 /* (ikev2 only) */
 
+	pb_stream rbody;                        /* room for reply body (after header) */
+	notification_t note;                    /* reason for failure */
+	bool dpd;                               /* Peer supports RFC 3706 DPD */
+	bool ikev2;                             /* Peer supports IKEv2 */
+	bool fragvid;                           /* Peer supports FRAGMENTATION */
+	bool event_already_set;                 /* (ikev1 only) */
+	stf_status result;                      /* temporary stored here for access by Tcl */
 
 #   define PAYLIMIT 30
-    struct payload_digest
-	digest[PAYLIMIT],
+	struct payload_digest
+		digest[PAYLIMIT],
 	*digest_roof,
 	*chain[ISAKMP_NEXT_ROOF];
-    struct isakmp_quirks quirks;
+	struct isakmp_quirks quirks;
 };
 
 extern struct msg_digest *alloc_md(void);
 extern void release_md(struct msg_digest *md);
 
-typedef stf_status state_transition_fn(struct msg_digest *md);
+typedef stf_status state_transition_fn (struct msg_digest *md);
 
-extern void fmt_ipsec_sa_established(struct state *st
-				     , char *sadetails, int sad_len);
-extern void fmt_isakmp_sa_established(struct state *st
-				      , char *sadetails, int sad_len);
+extern void fmt_ipsec_sa_established(struct state *st,
+				     char *sadetails, int sad_len);
+extern void fmt_isakmp_sa_established(struct state *st,
+				      char *sadetails, int sad_len);
 
 extern void free_md_pool(void);
 
@@ -109,6 +108,5 @@ extern void process_packet(struct msg_digest **mdp);
 extern void process_v1_packet(struct msg_digest **mdp);
 extern void process_v2_packet(struct msg_digest **mdp);
 extern bool check_msg_errqueue(const struct iface_port *ifp, short interest);
-
 
 #endif /* _DEMUX_H */

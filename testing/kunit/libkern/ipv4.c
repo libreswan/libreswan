@@ -1,23 +1,23 @@
 /*
 
-Copyright (c) 2003,2004 Jeremy Kerr & Rusty Russell
+   Copyright (c) 2003,2004 Jeremy Kerr & Rusty Russell
 
-This file is part of nfsim.
+   This file is part of nfsim.
 
-nfsim is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   nfsim is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-nfsim is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   nfsim is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with nfsim; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+   You should have received a copy of the GNU General Public License
+   along with nfsim; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 #include "ipv4.h"
 #include "utils.h"
@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #if 0
 #include <linux/netfilter_ipv4.h>
 #endif
-
 
 int route(struct sk_buff *skb);
 
@@ -51,7 +50,8 @@ void add_route_for_device(struct in_device *indev)
 	route = talloc(indev, struct ipv4_route);
 	talloc_set_destructor(route, destroy_route);
 	route->netmask = indev->ifa_list->ifa_mask;
-	route->network = indev->ifa_list->ifa_address & indev->ifa_list->ifa_mask;
+	route->network = indev->ifa_list->ifa_address &
+			 indev->ifa_list->ifa_mask;
 	route->interface = indev->dev;
 	route->gateway = indev->ifa_list->ifa_address;
 	list_add_tail(&route->entry, &routes);
@@ -116,7 +116,7 @@ static int ip_rcv_finish(struct sk_buff *skb)
 		kfree_skb(skb);
 		return -1;
 	}
-		
+
 	return dst_input(skb);
 }
 #endif
@@ -133,12 +133,13 @@ int ip_rcv(struct sk_buff *skb)
 	log_packet(skb, "rcv:%s", skb->dev->name);
 
 	return NF_HOOK(PF_INET, NF_IP_PRE_ROUTING, skb, skb->dev, NULL,
-	               ip_rcv_finish);
+		       ip_rcv_finish);
+
 #else
 	return 0;
+
 #endif
 }
-
 
 int ip_rcv_local(struct sk_buff *skb)
 {
@@ -154,9 +155,8 @@ int ip_rcv_local(struct sk_buff *skb)
 	if (rt)
 		goto routed;
 
-
 	memset(&fl, 0, sizeof(fl));
-	
+
 	fl.fl4_dst    = skb->nh.iph->daddr;
 	fl.fl4_src    = skb->nh.iph->saddr;
 	fl.fl4_tos    = skb->nh.iph->tos;
@@ -169,44 +169,52 @@ int ip_rcv_local(struct sk_buff *skb)
 		kfree_skb(skb);
 		return 1;
 	}
-	
+
 	skb->dst = (struct dst_entry *)rt;
 	dst_hold(skb_dst);
 routed:
 	skb->dev = skb->dst->dev;
 #if 0
-	return NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, skb, NULL, skb->dev, dst_output);
+	return NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, skb, NULL, skb->dev,
+		       dst_output);
+
 #else
 	return 0;
+
 #endif
 }
 
 static int ip_local_deliver(struct sk_buff *skb)
 {
 #if 0
-	return NF_HOOK(PF_INET, NF_IP_LOCAL_IN, skb, skb->dev, NULL, nf_send_local);
+	return NF_HOOK(PF_INET, NF_IP_LOCAL_IN, skb, skb->dev, NULL,
+		       nf_send_local);
+
 #else
 	return 0;
+
 #endif
 }
 
 int ip_finish_output(struct sk_buff *skb)
 {
 	struct net_device *dev = skb->dst->dev;
-	
+
 	skb->dev = dev;
 	skb->protocol = htons(ETH_P_IP);
 	/*
-	if (skb->mac.ethernet)
-		skb->mac.ethernet->h_proto = skb->protocol;
-	*/
+	   if (skb->mac.ethernet)
+	        skb->mac.ethernet->h_proto = skb->protocol;
+	 */
 
 #if 0
 	return NF_HOOK(PF_INET, NF_IP_POST_ROUTING, skb, NULL, dev,
-		nf_send);
+		       nf_send);
+
 #else
 	return 0;
-#endif	
+
+#endif
 }
 
 static int ip_output(struct sk_buff *skb)
@@ -217,7 +225,7 @@ static int ip_output(struct sk_buff *skb)
 
 unsigned short ip_compute_csum(unsigned char * buff, int len)
 {
-    return csum_fold (csum_partial(buff, len, 0));
+	return csum_fold(csum_partial(buff, len, 0));
 }
 
 static int __ip_route_output_key(struct rtable **rp, struct flowi *flp)
@@ -239,15 +247,15 @@ static int __ip_route_output_key(struct rtable **rp, struct flowi *flp)
 		    rth->fl.fl4_fwmark == flp->fl4_fwmark &&
 #endif
 		    rth->fl.fl4_tos == flp->fl4_tos) {
-		    	dst_hold(&rth->u.dst)
-			*rp = rth;
+			dst_hold(&rth->u.dst) *
+			rp = rth;
 			return 0;
 		}
 	}
 
 	list_for_each_entry(dev, &interfaces, entry) {
 		struct in_ifaddr *ifaddr;
-		
+
 		if (!dev->ip_ptr)
 			continue;
 
@@ -260,17 +268,17 @@ static int __ip_route_output_key(struct rtable **rp, struct flowi *flp)
 				rth->u.dst.output = ip_output;
 				rth->u.dst.input  = ip_local_deliver;
 				rth->u.dst.dev    = &loopback_dev;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
-				rth->u.dst.pmtu	  = 1500;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 5, 0)
+				rth->u.dst.pmtu   = 1500;
 #endif
-				rth->rt_src       = rth->fl.fl4_src
-				                  = flp->fl4_src;
-				rth->rt_dst       = rth->fl.fl4_dst
-				                  = flp->fl4_dst;
+				rth->rt_src       = rth->fl.fl4_src =
+							    flp->fl4_src;
+				rth->rt_dst       = rth->fl.fl4_dst =
+							    flp->fl4_dst;
 				rth->rt_gateway   = flp->fl4_dst;
 				rth->rt_iif       = rth->fl.iif = flp->iif;
 
-				rth->fl.fl4_tos	= flp->fl4_tos;
+				rth->fl.fl4_tos = flp->fl4_tos;
 #ifdef CONFIG_IP_ROUTE_FWMARK
 				rth->fl.fl4_fwmark = flp->fl4_fwmark;
 #endif
@@ -283,33 +291,34 @@ static int __ip_route_output_key(struct rtable **rp, struct flowi *flp)
 			}
 			ifaddr = ifaddr->ifa_next;
 		}
-		
+
 	}
 
 	/* otherwise, find the appropriate route & create an rcache entry */
 	list_for_each_entry(route, &routes, entry) {
 		if ((flp->fl4_dst & route->netmask) ==
-		           route->network) {
+		    route->network) {
 			rth = talloc_zero(route, struct rtable);
 			talloc_set_destructor(rth, destroy_rtable);
 
 			rth->u.dst.dev    =  route->interface;
 			rth->u.dst.output = ip_output;
 			rth->u.dst.input  = NULL;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
-			rth->u.dst.pmtu	  = 1500;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 5, 0)
+			rth->u.dst.pmtu   = 1500;
 #endif
 			rth->rt_src       = rth->fl.fl4_src = flp->fl4_src;
-			if (!rth->rt_src)
-				rth->rt_src
-					= inet_select_addr(route->interface,
-							   flp->fl4_dst,
-							   RT_SCOPE_UNIVERSE);
+			if (!rth->rt_src) {
+				rth->rt_src =
+					inet_select_addr(route->interface,
+							 flp->fl4_dst,
+							 RT_SCOPE_UNIVERSE);
+			}
 			rth->rt_dst       = rth->fl.fl4_dst = flp->fl4_dst;
 			rth->rt_gateway   = route->gateway;
 			rth->fl.oif       = route->interface->ifindex;
 			rth->fl.oif = flp->oif;
-			rth->fl.fl4_tos	= flp->fl4_tos;
+			rth->fl.fl4_tos = flp->fl4_tos;
 #ifdef CONFIG_IP_ROUTE_FWMARK
 			rth->fl.fl4_fwmark = flp->fl4_fwmark;
 #endif
@@ -324,11 +333,10 @@ static int __ip_route_output_key(struct rtable **rp, struct flowi *flp)
 	}
 
 	return 1;
-	
+
 }
 
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,5,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 5, 0)
 int ip_route_output_key(struct rtable **rp, struct rt_key *key)
 {
 	struct flowi fl;
@@ -375,7 +383,7 @@ static int ip_forward(struct sk_buff *skb)
 
 	check = skb->nh.iph->check;
 	check += htons(0x0100);
-	skb->nh.iph->check = check + (check>=0xFFFF);
+	skb->nh.iph->check = check + (check >= 0xFFFF);
 
 	/* Tell nfsim it's me changing data here. */
 	nfsim_update_skb(skb, &skb->nh.iph->check, sizeof(skb->nh.iph->check));
@@ -384,9 +392,11 @@ static int ip_forward(struct sk_buff *skb)
 
 #if 0
 	return NF_HOOK(PF_INET, NF_IP_FORWARD, skb, skb->dev, skb->dst->dev,
-		dst_output);
+		       dst_output);
+
 #else
 	return 0;
+
 #endif
 }
 #endif
@@ -417,7 +427,7 @@ int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
 	/* is this a local packet ? */
 	list_for_each_entry(dev, &interfaces, entry) {
 		struct in_ifaddr *ifaddr;
-		
+
 		if (!dev->ip_ptr)
 			continue;
 
@@ -425,8 +435,8 @@ int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
 		while (ifaddr) {
 			if (skb->nh.iph->daddr == ifaddr->ifa_local) {
 				log_route(skb,
-					"route:local packet (%s)",
-			 		dev->name);
+					  "route:local packet (%s)",
+					  dev->name);
 				rth = talloc_zero(dev->ip_ptr, struct rtable);
 				talloc_set_destructor(rth, destroy_rtable);
 
@@ -438,7 +448,7 @@ int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
 				rth->rt_gateway   = daddr;
 				rth->rt_iif       = rth->fl.iif = dev->ifindex;
 
-				rth->fl.fl4_tos	= tos;
+				rth->fl.fl4_tos = tos;
 #ifdef CONFIG_IP_ROUTE_FWMARK
 				rth->fl.fl4_fwmark = skb->nfmark;
 #endif
@@ -448,13 +458,13 @@ int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
 			}
 			ifaddr = ifaddr->ifa_next;
 		}
-		
+
 	}
 
 	/* otherwise, find the appropriate route & create an rcache entry */
 	list_for_each_entry(route, &routes, entry) {
 		if ((skb->nh.iph->daddr & route->netmask) ==
-		           route->network) {
+		    route->network) {
 			rth = talloc_zero(route, struct rtable);
 			talloc_set_destructor(rth, destroy_rtable);
 
@@ -466,29 +476,28 @@ int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
 			rth->rt_dst       = rth->fl.fl4_dst = daddr;
 			rth->rt_gateway   = route->gateway;
 			rth->rt_iif       = rth->fl.iif =
-						route->interface->ifindex;
+						    route->interface->ifindex;
 			rth->fl.oif = 0;
-			rth->fl.fl4_tos	= tos;
+			rth->fl.fl4_tos = tos;
 #ifdef CONFIG_IP_ROUTE_FWMARK
 			rth->fl.fl4_fwmark = skb->nfmark;
 #endif
 			/* add to rcache list */
 			rth->u.rt_next = rcache;
 			rcache = rth;
-			
+
 			skb->dst = &rth->u.dst;
 
 			return 0;
 		}
 	}
 
-
 	log_route(skb, "ERROR: packet is not local and no matching "
-		"route (dst=%u.%u.%u.%u)",
-		       ((unsigned char *)&daddr)[0],
-		       ((unsigned char *)&daddr)[1],
-		       ((unsigned char *)&daddr)[2],
-		       ((unsigned char *)&daddr)[3]);
+		  "route (dst=%u.%u.%u.%u)",
+		  ((unsigned char *)&daddr)[0],
+		  ((unsigned char *)&daddr)[1],
+		  ((unsigned char *)&daddr)[2],
+		  ((unsigned char *)&daddr)[3]);
 
 	return 1;
 
@@ -502,8 +511,7 @@ int ip_fragment(struct sk_buff *skb, int (*output)(struct sk_buff*))
 	return 0;
 }
 
-struct fraglist
-{
+struct fraglist {
 	struct list_head list;
 	struct sk_buff *frags[20];
 };
@@ -535,9 +543,9 @@ static struct sk_buff *gather_frag(struct fraglist *f, struct sk_buff *skb)
 			skb = NULL;
 		}
 
-		off = (ntohs(f->frags[i]->nh.iph->frag_off) & IP_OFFSET)*8;
-		len = ntohs(f->frags[i]->nh.iph->tot_len) 
-			- f->frags[i]->nh.iph->ihl * 4;
+		off = (ntohs(f->frags[i]->nh.iph->frag_off) & IP_OFFSET) * 8;
+		len = ntohs(f->frags[i]->nh.iph->tot_len) -
+		      f->frags[i]->nh.iph->ihl * 4;
 		if (len + off > max)
 			max = len + off;
 
@@ -560,12 +568,12 @@ static struct sk_buff *gather_frag(struct fraglist *f, struct sk_buff *skb)
 	suppress_failtest--;
 
 	skb->nh.iph = (void *)skb->data;
-	memcpy(skb->nh.iph, f->frags[0]->nh.iph, f->frags[0]->nh.iph->ihl*4);
+	memcpy(skb->nh.iph, f->frags[0]->nh.iph, f->frags[0]->nh.iph->ihl * 4);
 	memcpy(skb_put(skb, max), data, max);
 
 	/* Except we're not a fragment, and we're longer. */
 	skb->nh.iph->frag_off = 0;
-	skb->nh.iph->tot_len = htons(max + skb->nh.iph->ihl*4);
+	skb->nh.iph->tot_len = htons(max + skb->nh.iph->ihl * 4);
 
 	list_del(&f->list);
 	talloc_free(f);
@@ -577,9 +585,9 @@ static struct sk_buff *ip_defrag_user(struct sk_buff *skb, u32 user)
 	struct fraglist *i;
 
 	list_for_each_entry(i, &fraglist[user], list) {
-		if (i->frags[0]->nh.iph->saddr != skb->nh.iph->saddr
-		    || i->frags[0]->nh.iph->daddr != skb->nh.iph->daddr
-		    || i->frags[0]->nh.iph->protocol!=skb->nh.iph->protocol)
+		if (i->frags[0]->nh.iph->saddr != skb->nh.iph->saddr ||
+		    i->frags[0]->nh.iph->daddr != skb->nh.iph->daddr ||
+		    i->frags[0]->nh.iph->protocol != skb->nh.iph->protocol)
 			continue;
 		return gather_frag(i, skb);
 	}
@@ -591,7 +599,7 @@ static struct sk_buff *ip_defrag_user(struct sk_buff *skb, u32 user)
 	return NULL;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,11)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 11)
 struct sk_buff *ip_defrag(struct sk_buff *skb)
 {
 	return ip_defrag_user(skb, 0);
@@ -611,7 +619,7 @@ void ipfrag_flush(void)
 void icmp_send(struct sk_buff *skb_in, int type, int code, u32 info)
 {
 	log_packet(skb_in, "icmp_send:type=%d, code=%d, info=%d",
-	      type, code, info);
+		   type, code, info);
 }
 
 void ip_send_check(struct iphdr *iph)
@@ -643,7 +651,7 @@ static unsigned long do_csum(const unsigned char * buff, int len)
 		len--;
 		buff++;
 	}
-	count = len >> 1;		/* nr of 16-bit words.. */
+	count = len >> 1;               /* nr of 16-bit words.. */
 	if (count) {
 		if (2 & (unsigned long) buff) {
 			result += *(const unsigned short *) buff;
@@ -651,9 +659,9 @@ static unsigned long do_csum(const unsigned char * buff, int len)
 			len -= 2;
 			buff += 2;
 		}
-		count >>= 1;		/* nr of 32-bit words.. */
+		count >>= 1;            /* nr of 32-bit words.. */
 		if (count) {
-		        unsigned long carry = 0;
+			unsigned long carry = 0;
 			do {
 				unsigned int w = *(const unsigned int *) buff;
 				count--;
@@ -681,7 +689,7 @@ static unsigned long do_csum(const unsigned char * buff, int len)
 
 unsigned short ip_fast_csum(void * iph, unsigned int ihl)
 {
-	return ~do_csum(iph, ihl*4);
+	return ~do_csum(iph, ihl * 4);
 }
 
 unsigned int csum_fold(unsigned int sum)
@@ -718,21 +726,20 @@ u32 csum_tcpudp_nofold(unsigned long saddr,
 }
 
 unsigned short csum_tcpudp_magic(unsigned long saddr,
-						   unsigned long daddr,
-						   unsigned short len,
-						   unsigned short proto,
-						   unsigned int sum)
+				 unsigned long daddr,
+				 unsigned short len,
+				 unsigned short proto,
+				 unsigned int sum)
 {
-	return csum_fold(csum_tcpudp_nofold(saddr,daddr,len,proto,sum));
+	return csum_fold(csum_tcpudp_nofold(saddr, daddr, len, proto, sum));
 }
 
 uint16_t tcp_v4_check(struct tcphdr *th, int len,
-				   unsigned long saddr, unsigned long daddr,
-				   unsigned long base)
+		      unsigned long saddr, unsigned long daddr,
+		      unsigned long base)
 {
-	return csum_tcpudp_magic(saddr,daddr,len,IPPROTO_TCP,base);
+	return csum_tcpudp_magic(saddr, daddr, len, IPPROTO_TCP, base);
 }
-
 
 unsigned inet_addr_type(u32 addr)
 {
@@ -740,19 +747,18 @@ unsigned inet_addr_type(u32 addr)
 
 	if (ZERONET(addr) || BADCLASS(addr))
 		return RTN_BROADCAST;
+
 	if (MULTICAST(addr))
 		return RTN_MULTICAST;
 
-
 	list_for_each_entry(dev, &interfaces, entry) {
 		struct in_ifaddr *ifaddr;
-		
+
 		if (!dev->ip_ptr)
 			continue;
 
-		
 		for (ifaddr = ((struct in_device *)(dev->ip_ptr))->ifa_list;
-				ifaddr; ifaddr = ifaddr->ifa_next)
+		     ifaddr; ifaddr = ifaddr->ifa_next)
 			if (ifaddr->ifa_local == addr)
 				return RTN_LOCAL;
 	}
@@ -763,7 +769,7 @@ unsigned inet_addr_type(u32 addr)
 
 static __inline__ int inet_ifa_match(u32 addr, struct in_ifaddr *ifa)
 {
-	return !((addr^ifa->ifa_address)&ifa->ifa_mask);
+	return !((addr ^ ifa->ifa_address) & ifa->ifa_mask);
 }
 
 /* Not strictly correct for loopback packets: they ignore device if it
@@ -785,12 +791,13 @@ u32 inet_select_addr(const struct net_device *dev, u32 dst, int scope)
 		}
 		if (!addr)
 			addr = ifa->ifa_local;
-	};
+	}
+	;
 
 	return addr;
 }
 
-int lastid=4;
+int lastid = 4;
 void __ip_select_ident(struct iphdr *iph,
 		       struct dst_entry *dst, struct sock *sk)
 {
@@ -798,14 +805,14 @@ void __ip_select_ident(struct iphdr *iph,
 }
 
 void ip_select_ident(struct iphdr *iph,
-		       struct dst_entry *dst, struct sock *sk)
+		     struct dst_entry *dst, struct sock *sk)
 {
-  __ip_select_ident(iph, dst, sk);
+	__ip_select_ident(iph, dst, sk);
 }
 
 static char *print_data(char *ptr, const char *data, int len)
 {
-	static const char hexbuf[]= "0123456789abcdef";
+	static const char hexbuf[] = "0123456789abcdef";
 	int i;
 
 	ptr += sprintf(ptr, "DATA ");
@@ -830,8 +837,9 @@ static char *print_data(char *ptr, const char *data, int len)
 			*ptr++ = 'x';
 			*ptr++ = hexbuf[(data[i] >> 4) & 0xf];
 			*ptr++ = hexbuf[data[i] & 0xf];
-		} else
+		} else {
 			*ptr++ = data[i];
+		}
 	}
 	*ptr = '\0';
 	return ptr;
@@ -853,15 +861,15 @@ static char *describe(char *ptr, int len, struct iphdr *iph, char *dump_flags)
 		goto out;
 	}
 
-	if (csum_partial(iph, sizeof(struct iphdr), 0)
-		    != 0xFFFF) {
+	if (csum_partial(iph, sizeof(struct iphdr), 0) !=
+	    0xFFFF) {
 		strcat(ptr, "-BAD IP CSUM-");
 		goto out;
 	}
 
 	if (ntohs(iph->frag_off) & IP_OFFSET)
 		ptr += sprintf(ptr, "FRAG=%u ",
-			(ntohs(iph->frag_off) & IP_OFFSET)*8);
+			       (ntohs(iph->frag_off) & IP_OFFSET) * 8);
 	if (ntohs(iph->frag_off) & IP_DF)
 		ptr += sprintf(ptr, "DF ");
 	if (ntohs(iph->frag_off) & IP_MF)
@@ -889,15 +897,15 @@ static char *describe(char *ptr, int len, struct iphdr *iph, char *dump_flags)
 
 	if (ntohs(iph->frag_off) & IP_OFFSET)
 		goto out;
-	
+
 	iplen = htons(iph->tot_len) - sizeof(struct iphdr);
 	len -= sizeof(struct iphdr);
-	
+
 	switch (iph->protocol) {
 	case IPPROTO_ICMP:
 		icmph = (struct icmphdr *)(iph + 1);
 		ptr += sprintf(ptr, "%Zu %u ",
-		       iplen - sizeof(struct icmphdr), iph->protocol);
+			       iplen - sizeof(struct icmphdr), iph->protocol);
 
 		if (len < sizeof(struct icmphdr)) {
 			ptr += sprintf(ptr, "-TRUNCATED-");
@@ -910,30 +918,31 @@ static char *describe(char *ptr, int len, struct iphdr *iph, char *dump_flags)
 			goto out;
 		}
 
-		if (!(ntohs(iph->frag_off) & IP_MF)
-		    && csum_partial((char *)icmph, iplen, 0) != 0xFFFF) {
-				ptr += sprintf(ptr, "-BAD ICMP CSUM-");
-				goto out;
-				
+		if (!(ntohs(iph->frag_off) & IP_MF) &&
+		    csum_partial((char *)icmph, iplen, 0) != 0xFFFF) {
+			ptr += sprintf(ptr, "-BAD ICMP CSUM-");
+			goto out;
+
 		}
 
 		if (icmph->type == 0 || icmph->type == 8) {
 			ptr += sprintf(ptr, "%u %u ",
-				ntohs(icmph->un.echo.id),
-				ntohs(icmph->un.echo.sequence));
+				       ntohs(icmph->un.echo.id),
+				       ntohs(icmph->un.echo.sequence));
 		} else {
 			/* Print out packet inside it. */
 			ptr += sprintf(ptr, "CONTAINS ");
 			ptr = describe(ptr,
 				       iplen - sizeof(struct icmphdr),
-				       (struct iphdr *)(icmph + 1), dump_flags);
+				       (struct iphdr *)(icmph + 1),
+				       dump_flags);
 		}
 		break;
 
 	case IPPROTO_UDP:
 		udph = (struct udphdr *)(iph + 1);
 		ptr += sprintf(ptr, "%Zu %u ",
-		       iplen - sizeof(struct udphdr), iph->protocol);
+			       iplen - sizeof(struct udphdr), iph->protocol);
 
 		if (len < sizeof(struct udphdr)) {
 			ptr += sprintf(ptr, "-TRUNCATED-");
@@ -941,20 +950,20 @@ static char *describe(char *ptr, int len, struct iphdr *iph, char *dump_flags)
 		}
 
 		ptr += sprintf(ptr, "%u %u ",
-			ntohs(udph->source),
-			ntohs(udph->dest));
+			       ntohs(udph->source),
+			       ntohs(udph->dest));
 
 		if (len < iplen) {
 			ptr += sprintf(ptr, "-TRUNCATED-");
 			goto out;
 		}
 
-		if (!(ntohs(iph->frag_off) & IP_MF)
-		    && udph->check
-		    && csum_tcpudp_magic(iph->saddr, iph->daddr,
-					 iplen, IPPROTO_UDP, 
-					 csum_partial(udph, iplen, 0))) {
-			ptr += sprintf(ptr, "-BAD UDP CSUM- (%04x)", 
+		if (!(ntohs(iph->frag_off) & IP_MF) &&
+		    udph->check &&
+		    csum_tcpudp_magic(iph->saddr, iph->daddr,
+				      iplen, IPPROTO_UDP,
+				      csum_partial(udph, iplen, 0))) {
+			ptr += sprintf(ptr, "-BAD UDP CSUM- (%04x)",
 				       udph->check);
 			goto out;
 		}
@@ -975,7 +984,7 @@ static char *describe(char *ptr, int len, struct iphdr *iph, char *dump_flags)
 			goto out;
 		}
 		ptr += sprintf(ptr, "%u %u ",
-		       iplen - tcph->doff*4, iph->protocol);
+			       iplen - tcph->doff * 4, iph->protocol);
 
 		ptr += sprintf(ptr, "%u %u ",
 			       ntohs(tcph->source), ntohs(tcph->dest));
@@ -1015,11 +1024,12 @@ static char *describe(char *ptr, int len, struct iphdr *iph, char *dump_flags)
 		if (tcph->window)
 			ptr += sprintf(ptr, "WIN=%u ", ntohs(tcph->window));
 
-		if (tcph->doff*4 != sizeof(struct tcphdr)) {
+		if (tcph->doff * 4 != sizeof(struct tcphdr)) {
 			char sep = '=';
 			int i;
 			ptr += sprintf(ptr, "OPT");
-			for (i = sizeof(struct tcphdr); i < tcph->doff*4; i++){
+			for (i = sizeof(struct tcphdr); i < tcph->doff * 4;
+			     i++) {
 				ptr += sprintf(ptr, "%c%u",
 					       sep,
 					       ((u_int8_t *)tcph)[i]);
@@ -1028,20 +1038,20 @@ static char *describe(char *ptr, int len, struct iphdr *iph, char *dump_flags)
 			ptr += sprintf(ptr, " ");
 		}
 
-		if (!(ntohs(iph->frag_off) & IP_MF)
-		    && csum_tcpudp_magic(iph->saddr, iph->daddr,
-					 iplen, IPPROTO_TCP, 
-					 csum_partial(tcph, iplen, 0))) {
+		if (!(ntohs(iph->frag_off) & IP_MF) &&
+		    csum_tcpudp_magic(iph->saddr, iph->daddr,
+				      iplen, IPPROTO_TCP,
+				      csum_partial(tcph, iplen, 0))) {
 			ptr += sprintf(ptr, "-BAD TCP CSUM- (%04x)",
 				       tcph->check);
 			goto out;
 		}
 
 		if (dump_flags && strstr(dump_flags, "data"))
-			ptr = print_data(ptr, (char *)tcph + tcph->doff*4,
-					 iplen - tcph->doff*4);
+			ptr = print_data(ptr, (char *)tcph + tcph->doff * 4,
+					 iplen - tcph->doff * 4);
 		break;
-			
+
 	default:
 		ptr += sprintf(ptr, "%u %u", iplen, iph->protocol);
 		if (len < iplen) {

@@ -1,8 +1,8 @@
 /*
  * RSA signature key generation
  * Copyright (C) 1999, 2000, 2001  Henry Spencer.
- * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com> 
- * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com> 
+ * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
+ * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
@@ -10,7 +10,7 @@
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -62,37 +62,38 @@
  * 0 effect. It's better to fail or bail out of generating a key, then
  * generate a bad one.
  */
-#define	DEVICE	"/dev/random"
+#define DEVICE  "/dev/random"
 #endif
 #ifndef MAXBITS
-#define	MAXBITS	20000
+#define MAXBITS 20000
 #endif
 
-#define	E	3		/* standard public exponent */
+#define E       3               /* standard public exponent */
 /*#define F4	65537*/	/* preferred public exponent, Fermat's 4th number */
 
-char usage[] = "rsasigkey [--verbose] [--random device] [--configdir dir] [--password password] nbits [--hostname host] [--noopt] [--rounds num]";
+char usage[] =
+	"rsasigkey [--verbose] [--random device] [--configdir dir] [--password password] nbits [--hostname host] [--noopt] [--rounds num]";
 struct option opts[] = {
-  {"verbose",	0,	NULL,	'v',},
-  {"random",	1,	NULL,	'r',},
-  {"rounds",	1,	NULL,	'p',},
-  {"hostname",	1,	NULL,	'H',},
-  {"noopt",	0,	NULL,	'n',},
-  {"help",		0,	NULL,	'h',},
-  {"version",	0,	NULL,	'V',},
-  {"configdir",        1,      NULL,   'c' },
-  {"password", 1,      NULL,   'P' },
-  {0,		0,	NULL,	0,}
+	{ "verbose",   0,      NULL,   'v', },
+	{ "random",    1,      NULL,   'r', },
+	{ "rounds",    1,      NULL,   'p', },
+	{ "hostname",  1,      NULL,   'H', },
+	{ "noopt",     0,      NULL,   'n', },
+	{ "help",              0,      NULL,   'h', },
+	{ "version",   0,      NULL,   'V', },
+	{ "configdir",        1,      NULL,   'c' },
+	{ "password", 1,      NULL,   'P' },
+	{ 0,           0,      NULL,   0, }
 };
-int verbose = 0;		/* narrate the action? */
-char *device = DEVICE;		/* where to get randomness */
-int nrounds = 30;		/* rounds of prime checking; 25 is good */
-mpz_t prime1;			/* old key's prime1 */
-mpz_t prime2;			/* old key's prime2 */
-char outputhostname[1024];	/* hostname for output */
-int do_lcm = 1;			/* use lcm(p-1, q-1), not (p-1)*(q-1) */
+int verbose = 0;                /* narrate the action? */
+char *device = DEVICE;          /* where to get randomness */
+int nrounds = 30;               /* rounds of prime checking; 25 is good */
+mpz_t prime1;                   /* old key's prime1 */
+mpz_t prime2;                   /* old key's prime2 */
+char outputhostname[1024];      /* hostname for output */
+int do_lcm = 1;                 /* use lcm(p-1, q-1), not (p-1)*(q-1) */
 
-char me[] = "ipsec rsasigkey";	/* for messages */
+char me[] = "ipsec rsasigkey";  /* for messages */
 
 /* forwards */
 void rsasigkey(int nbits, char *configdir, char *password);
@@ -104,29 +105,33 @@ char *conv(unsigned char *bits, size_t nbytes, int format);
 char *hexout(mpz_t var);
 void report(char *msg);
 
-
 /*#define NUM_KEYSTROKES 120*/
 #define RAND_BUF_SIZE 60
 
-#define GEN_BREAK(e) rv=e; break;
+#define GEN_BREAK(e) rv = e; break;
 
 /* getModulus - returns modulus of the RSA public key */
-SECItem *getModulus(SECKEYPublicKey *pk) { return &pk->u.rsa.modulus; }
+SECItem *getModulus(SECKEYPublicKey *pk)
+{
+	return &pk->u.rsa.modulus;
+}
 
 /* getPublicExponent - returns public exponent of the RSA public key */
-SECItem *getPublicExponent(SECKEYPublicKey *pk) { return &pk->u.rsa.publicExponent; }
+SECItem *getPublicExponent(SECKEYPublicKey *pk)
+{
+	return &pk->u.rsa.publicExponent;
+}
 
 /* Caller must ensure that dst is at least item->len*2+1 bytes long */
 void SECItemToHex(const SECItem * item, char * dst)
 {
-    if (dst && item && item->data) {
-	unsigned char * src = item->data;
-	unsigned int    len = item->len;
-	for (; len > 0; --len, dst += 2) {
-		sprintf(dst, "%02x", *src++);
+	if (dst && item && item->data) {
+		unsigned char * src = item->data;
+		unsigned int len = item->len;
+		for (; len > 0; --len, dst += 2)
+			sprintf(dst, "%02x", *src++);
+		*dst = '\0';
 	}
-	*dst = '\0';
-    }
 }
 
 /*
@@ -137,32 +142,31 @@ void SECItemToHex(const SECItem * item, char * dst)
  */
 char *hexOut(SECItem *data)
 {
-    unsigned i;
-    static char hexbuf[3 + MAXBITS/4 + 1];
-    char *hexp;
+	unsigned i;
+	static char hexbuf[3 + MAXBITS / 4 + 1];
+	char *hexp;
 
-    memset(hexbuf, 0, 3 + MAXBITS/4 + 1);
-    for (i = 0, hexp = hexbuf+3; i < data->len; i++, hexp += 2) {
-	sprintf(hexp, "%02x", data->data[i]);
-    }
-    *hexp='\0';     
+	memset(hexbuf, 0, 3 + MAXBITS / 4 + 1);
+	for (i = 0, hexp = hexbuf + 3; i < data->len; i++, hexp += 2)
+		sprintf(hexp, "%02x", data->data[i]);
+	*hexp = '\0';
 
-    hexp = hexbuf+1;
-    hexp[0] = '0';
-    hexp[1] = 'x';
+	hexp = hexbuf + 1;
+	hexp[0] = '0';
+	hexp[1] = 'x';
 
-    return hexp;
+	return hexp;
 }
 
 /* UpdateRNG - Updates NSS's PRNG with user generated entropy. */
 void UpdateNSS_RNG(void)
 {
-    SECStatus rv;
-    unsigned char buf[RAND_BUF_SIZE];
-    getrandom(RAND_BUF_SIZE, buf);
-    rv = PK11_RandomUpdate(buf, sizeof buf);
-    assert(rv == SECSuccess);
-    memset(buf, 0, sizeof buf);
+	SECStatus rv;
+	unsigned char buf[RAND_BUF_SIZE];
+	getrandom(RAND_BUF_SIZE, buf);
+	rv = PK11_RandomUpdate(buf, sizeof buf);
+	assert(rv == SECSuccess);
+	memset(buf, 0, sizeof buf);
 }
 
 /*  Returns the password passed in in the text file.
@@ -171,122 +175,123 @@ void UpdateNSS_RNG(void)
  */
 char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
-    char* phrases, *phrase;
-    PRFileDesc *fd;
-    PRInt32 nb;
-    const char *pwFile = (const char *)arg;
-    int i;
-    const long maxPwdFileSize = 4096;
-    char* tokenName = NULL;
-    int tokenLen = 0;
+	char* phrases, *phrase;
+	PRFileDesc *fd;
+	PRInt32 nb;
+	const char *pwFile = (const char *)arg;
+	int i;
+	const long maxPwdFileSize = 4096;
+	char* tokenName = NULL;
+	int tokenLen = 0;
 
-    if (!pwFile) {
+	if (!pwFile)
 		return 0;
-    }
 
-    if (retry) {
+	if (retry)
 		return 0;  /* no good retrying - the files contents will be the same */
-    }
 
-    phrases = PORT_ZAlloc(maxPwdFileSize);
+	phrases = PORT_ZAlloc(maxPwdFileSize);
 
-    if (!phrases) {
+	if (!phrases)
 		return 0; /* out of memory */
-    }
 
-    fd = PR_Open(pwFile, PR_RDONLY, 0);
-    if (!fd) {
+	fd = PR_Open(pwFile, PR_RDONLY, 0);
+	if (!fd) {
 		fprintf(stderr, "No password file \"%s\" exists.\n", pwFile);
 		PORT_Free(phrases);
 		return NULL;
-    }
-    nb = PR_Read(fd, phrases, maxPwdFileSize);
+	}
+	nb = PR_Read(fd, phrases, maxPwdFileSize);
 
-    PR_Close(fd);
+	PR_Close(fd);
 
-    if (nb == 0) {
-		fprintf(stderr,"password file contains no data\n");
+	if (nb == 0) {
+		fprintf(stderr, "password file contains no data\n");
 		PORT_Free(phrases);
 		return NULL;
-    }
+	}
 
-    if (slot) {
+	if (slot) {
 		tokenName = PK11_GetTokenName(slot);
-		if (tokenName) {
-	    	tokenLen = PORT_Strlen(tokenName);
-		}
-    }
-    i = 0;
-    do {
+		if (tokenName)
+			tokenLen = PORT_Strlen(tokenName);
+	}
+	i = 0;
+	do {
 		int startphrase = i;
 		int phraseLen;
 		/* handle the Windows EOL case */
-		while (phrases[i] != '\r' && phrases[i] != '\n' && i < nb) i++;
+		while (phrases[i] != '\r' && phrases[i] != '\n' && i < nb)
+			i++;
 		/* terminate passphrase */
 		phrases[i++] = '\0';
 		/* clean up any EOL before the start of the next passphrase */
-		while ( (i<nb) && (phrases[i] == '\r' || phrases[i] == '\n')) {
+		while ( (i < nb) && (phrases[i] == '\r' || phrases[i] == '\n'))
 			phrases[i++] = '\0';
-		}
 		/* now analyze the current passphrase */
 		phrase = &phrases[startphrase];
 		if (!tokenName)
 			break;
-		if (PORT_Strncmp(phrase, tokenName, tokenLen)) continue;
+		if (PORT_Strncmp(phrase, tokenName, tokenLen))
+			continue;
 		phraseLen = PORT_Strlen(phrase);
-		if (phraseLen < (tokenLen+1)) continue;
-		if (phrase[tokenLen] != ':') continue;
-		phrase = &phrase[tokenLen+1];
+		if (phraseLen < (tokenLen + 1))
+			continue;
+		if (phrase[tokenLen] != ':')
+			continue;
+		phrase = &phrase[tokenLen + 1];
 		break;
-    } while (i<nb);
+	} while (i < nb);
 
-    phrase = PORT_Strdup((char*)phrase);
-    PORT_Free(phrases);
-    return phrase;
+	phrase = PORT_Strdup((char*)phrase);
+	PORT_Free(phrases);
+	return phrase;
 }
 
 char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
-    secuPWData *pwdata = (secuPWData *)arg;
-    secuPWData pwnull = { PW_NONE, 0 };
-    secuPWData pwxtrn = { PW_EXTERNAL, "external" };
-    char *pw;
+	secuPWData *pwdata = (secuPWData *)arg;
+	secuPWData pwnull = { PW_NONE, 0 };
+	secuPWData pwxtrn = { PW_EXTERNAL, "external" };
+	char *pw;
 
-    if (pwdata == NULL) {
+	if (pwdata == NULL)
 		pwdata = &pwnull;
-    }
 
-    if (PK11_ProtectedAuthenticationPath(slot)) {
+	if (PK11_ProtectedAuthenticationPath(slot))
 		pwdata = &pwxtrn;
-    }
-    if (retry && pwdata->source != PW_NONE) {
+	if (retry && pwdata->source != PW_NONE) {
 		fprintf(stderr, "%s: Incorrect password/PIN entered.\n", me);
 		return NULL;
-    }
+	}
 
-    switch (pwdata->source) {
+	switch (pwdata->source) {
 	case PW_FROMFILE:
 		/* Instead of opening and closing the file every time, get the pw
-		* once, then keep it in memory (duh).
-		*/
+		 * once, then keep it in memory (duh).
+		 */
 		pw = GetFilePasswd(slot, retry, pwdata->data);
 		pwdata->source = PW_PLAINTEXT;
 		pwdata->data = strdup(pw);
 		/* it's already been dup'ed */
 		return pw;
+
 	case PW_PLAINTEXT:
 		return strdup(pwdata->data);
-	default: /* cases PW_NONE and PW_EXTERNAL not supported */
-		fprintf(stderr, "Unknown or unsupported case in GetModulePassword");
-		break;
-    }
 
-    fprintf(stderr, "%s: Password check failed:  No password found.\n", me);
-    return NULL;
+	default: /* cases PW_NONE and PW_EXTERNAL not supported */
+		fprintf(stderr,
+			"Unknown or unsupported case in GetModulePassword");
+		break;
+	}
+
+	fprintf(stderr, "%s: Password check failed:  No password found.\n",
+		me);
+	return NULL;
 }
 
 /*
- - main - mostly argument parsing
+   - main - mostly argument parsing
  */
 int main(int argc, char *argv[])
 {
@@ -301,30 +306,31 @@ int main(int argc, char *argv[])
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
 		switch (opt) {
-		case 'v':	/* verbose description */
+		case 'v':       /* verbose description */
 			verbose = 1;
 			break;
-		case 'r':	/* nonstandard /dev/random */
+		case 'r':       /* nonstandard /dev/random */
 			device = optarg;
 			break;
-		case 'p':	/* number of prime-check rounds */
+		case 'p':       /* number of prime-check rounds */
 			nrounds = atoi(optarg);
 			if (nrounds <= 0) {
-				fprintf(stderr, "%s: rounds must be > 0\n", me);
+				fprintf(stderr, "%s: rounds must be > 0\n",
+					me);
 				exit(2);
 			}
 			break;
-		case 'H':	/* set hostname for output */
+		case 'H':       /* set hostname for output */
 			strcpy(outputhostname, optarg);
 			break;
-		case 'n':	/* don't optimize the private key */
+		case 'n':       /* don't optimize the private key */
 			do_lcm = 0;
 			break;
-		case 'h':	/* help */
+		case 'h':       /* help */
 			printf("Usage:\t%s\n", usage);
 			exit(0);
 			break;
-		case 'V':	/* version */
+		case 'V':       /* version */
 			printf("%s %s\n", me, ipsec_version_code());
 			exit(0);
 			break;
@@ -339,7 +345,7 @@ int main(int argc, char *argv[])
 			errflg = 1;
 			break;
 		}
-	if (errflg || optind != argc-1) {
+	if (errflg || optind != argc - 1) {
 		printf("Usage:\t%s\n", usage);
 		exit(2);
 	}
@@ -362,11 +368,11 @@ int main(int argc, char *argv[])
 		exit(1);
 	} else if (nbits > MAXBITS) {
 		fprintf(stderr, "%s: overlarge bit count (max %d)\n", me,
-								MAXBITS);
+			MAXBITS);
 		exit(1);
-	} else if (nbits % (CHAR_BIT*2) != 0) {	/* *2 for nbits/2-bit primes */
+	} else if (nbits % (CHAR_BIT * 2) != 0) { /* *2 for nbits/2-bit primes */
 		fprintf(stderr, "%s: bit count (%d) not multiple of %d\n", me,
-						nbits, (int)CHAR_BIT*2);
+			nbits, (int)CHAR_BIT * 2);
 		exit(1);
 	}
 
@@ -375,7 +381,7 @@ int main(int argc, char *argv[])
 }
 
 /*
- - rsasigkey - generate an RSA signature key
+   - rsasigkey - generate an RSA signature key
  * e is fixed at 3, without discussion.  That would not be wise if these
  * keys were to be used for encryption, but for signatures there are some
  * real speed advantages.
@@ -385,138 +391,153 @@ int main(int argc, char *argv[])
  * Curretly e is fixed at 3, but we may change that.  We may
  * use F4 if preformance doesn't degrade much realative to 3.
  */
-void
-rsasigkey(int nbits, char *configdir, char *password)
+void rsasigkey(int nbits, char *configdir, char *password)
 {
-    SECStatus rv;
-    PK11RSAGenParams rsaparams      = { nbits, (long) E };
-    secuPWData  pwdata              = { PW_NONE, NULL };
-    PK11SlotInfo *slot              = NULL;
-    SECKEYPrivateKey *privkey       = NULL;
-    SECKEYPublicKey *pubkey         = NULL;
-    unsigned char *bundp            = NULL;
-    mpz_t n;
-    mpz_t e;
-    size_t bs;
-    char n_str[3 + MAXBITS/4 + 1];
-    char buf[100];
-    time_t now = time((time_t *)NULL);
+	SECStatus rv;
+	PK11RSAGenParams rsaparams      = { nbits, (long) E };
+	secuPWData pwdata              = { PW_NONE, NULL };
+	PK11SlotInfo *slot              = NULL;
+	SECKEYPrivateKey *privkey       = NULL;
+	SECKEYPublicKey *pubkey         = NULL;
+	unsigned char *bundp            = NULL;
+	mpz_t n;
+	mpz_t e;
+	size_t bs;
+	char n_str[3 + MAXBITS / 4 + 1];
+	char buf[100];
+	time_t now = time((time_t *)NULL);
 
-    mpz_init(n);
-    mpz_init(e);
+	mpz_init(n);
+	mpz_init(e);
 
-    do {
-	if (!configdir) {
-		fprintf(stderr, "%s: configdir is required\n", me);
-		return;
-	}
+	do {
+		if (!configdir) {
+			fprintf(stderr, "%s: configdir is required\n", me);
+			return;
+		}
 
-	snprintf(buf, sizeof(buf), "%s/nsspassword",configdir);
-	pwdata.source = password ? (strcmp(password, buf)? PW_PLAINTEXT: PW_FROMFILE) : PW_NONE;
-	pwdata.data = password ? password : NULL;
+		snprintf(buf, sizeof(buf), "%s/nsspassword", configdir);
+		pwdata.source =
+			password ? (strcmp(password,
+					   buf) ? PW_PLAINTEXT : PW_FROMFILE) :
+			PW_NONE;
+		pwdata.data = password ? password : NULL;
 
-	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
-	snprintf(buf, sizeof(buf), "%s",configdir);
-	if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
-		fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n", me, PR_GetError());
-		break;
-	}
+		PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
+		snprintf(buf, sizeof(buf), "%s", configdir);
+		if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
+			fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
+				me, PR_GetError());
+			break;
+		}
 #ifdef FIPS_CHECK
-	if (PK11_IsFIPS() && !FIPSCHECK_verify(NULL, NULL)) {
-		printf("FIPS integrity verification test failed.\n");
-		exit(1);
-	}
-#endif 
+		if (PK11_IsFIPS() && !FIPSCHECK_verify(NULL, NULL)) {
+			printf("FIPS integrity verification test failed.\n");
+			exit(1);
+		}
+#endif
 
-	if (PK11_IsFIPS() && !password) {
-		fprintf(stderr, "%s: On FIPS mode a password is required\n", me);
-		break;
-	}
+		if (PK11_IsFIPS() && !password) {
+			fprintf(stderr,
+				"%s: On FIPS mode a password is required\n",
+				me);
+			break;
+		}
 
-	PK11_SetPasswordFunc(GetModulePassword);
+		PK11_SetPasswordFunc(GetModulePassword);
 
-	/* Good for now but someone may want to use a hardware token */
-	slot = PK11_GetInternalKeySlot();
-	/* In which case this may be better */
-	/* slot = PK11_GetBestSlot(CKM_RSA_PKCS_KEY_PAIR_GEN, password ? &pwdata : NULL); */
-	/* or the user may specify the name of a token. */
+		/* Good for now but someone may want to use a hardware token */
+		slot = PK11_GetInternalKeySlot();
+		/* In which case this may be better */
+		/* slot = PK11_GetBestSlot(CKM_RSA_PKCS_KEY_PAIR_GEN, password ? &pwdata : NULL); */
+		/* or the user may specify the name of a token. */
 
-	/*if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
-		rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
-		if (rv != SECSuccess) {
-			fprintf(stderr, "%s: could not authenticate to token '%s'\n",
-				me, PK11_GetTokenName(slot));
+		/*if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
+		        rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
+		        if (rv != SECSuccess) {
+		                fprintf(stderr, "%s: could not authenticate to token '%s'\n",
+		                        me, PK11_GetTokenName(slot));
+		                GEN_BREAK(SECFailure);
+		        }
+		   }*/
+
+		/* Do some random-number initialization. */
+		UpdateNSS_RNG();
+		/* Log in to the token */
+		if (password) {
+			rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
+			if (rv != SECSuccess) {
+				fprintf(stderr,
+					"%s: could not authenticate to token '%s'\n",
+					me, PK11_GetTokenName(slot));
+				GEN_BREAK(SECFailure);
+			}
+		}
+		privkey = PK11_GenerateKeyPair(slot,
+					       CKM_RSA_PKCS_KEY_PAIR_GEN,
+					       &rsaparams, &pubkey,
+					       PR_TRUE,
+					       password ? PR_TRUE : PR_FALSE,
+					       &pwdata);
+		/* inTheToken, isSensitive, passwordCallbackFunction */
+		if (!privkey) {
+			fprintf(stderr,
+				"%s: key pair generation failed: \"%d\"\n", me,
+				PORT_GetError());
 			GEN_BREAK(SECFailure);
 		}
-	}*/
 
-	/* Do some random-number initialization. */
-	UpdateNSS_RNG();
-	/* Log in to the token */
-	if (password) {
-	    rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
-	    if (rv != SECSuccess) {
-		fprintf(stderr, "%s: could not authenticate to token '%s'\n",
-			me, PK11_GetTokenName(slot));
-		GEN_BREAK(SECFailure);
-	    }
-	}
-	privkey = PK11_GenerateKeyPair(slot
-		, CKM_RSA_PKCS_KEY_PAIR_GEN, &rsaparams, &pubkey
-		, PR_TRUE, password ? PR_TRUE : PR_FALSE, &pwdata);
-	/* inTheToken, isSensitive, passwordCallbackFunction */
-	if (!privkey) {
-		fprintf(stderr, "%s: key pair generation failed: \"%d\"\n", me, PORT_GetError());
-		GEN_BREAK(SECFailure);
-	}
+		/*privkey->wincx = &pwdata;*/
+		PORT_Assert(pubkey != NULL);
+		fprintf(stderr,
+			"Generated RSA key pair using the NSS database\n");
 
-	/*privkey->wincx = &pwdata;*/
-	PORT_Assert(pubkey != NULL);
-	fprintf(stderr, "Generated RSA key pair using the NSS database\n");
-       
-	SECItemToHex(getModulus(pubkey), n_str);
-	assert(!mpz_set_str(n, n_str, 16));
+		SECItemToHex(getModulus(pubkey), n_str);
+		assert(!mpz_set_str(n, n_str, 16));
 
-	/* and the output */
-	report("output...\n");          /* deliberate extra newline */
-	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(&now));
-                                                       /* ctime provides \n */
-	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
-	bundp = bundle(E, n, &bs);
-	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
-	printf("\tModulus: %s\n", hexOut(getModulus(pubkey)));
-	printf("\tPublicExponent: %s\n", hexOut(getPublicExponent(pubkey)));
+		/* and the output */
+		report("output...\n");  /* deliberate extra newline */
+		printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(
+			       &now));
+		/* ctime provides \n */
+		printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
+		bundp = bundle(E, n, &bs);
+		printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
+		printf("\tModulus: %s\n", hexOut(getModulus(pubkey)));
+		printf("\tPublicExponent: %s\n",
+		       hexOut(getPublicExponent(pubkey)));
 
-	SECItem *ckaID=PK11_MakeIDFromPubKey(getModulus(pubkey));
-	if(ckaID!=NULL) {
-		printf("\t# everything after this point is CKA_ID in hex formati - not the real values \n");
-		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
-		printf("\tPrime1: %s\n", hexOut(ckaID));
-		printf("\tPrime2: %s\n", hexOut(ckaID));
-		printf("\tExponent1: %s\n", hexOut(ckaID));
-		printf("\tExponent2: %s\n", hexOut(ckaID));
-		printf("\tCoefficient: %s\n", hexOut(ckaID));
-		printf("\tCKAIDNSS: %s\n", hexOut(ckaID));
-		SECITEM_FreeItem(ckaID, PR_TRUE);
-	}
+		SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
+		if (ckaID != NULL) {
+			printf(
+				"\t# everything after this point is CKA_ID in hex formati - not the real values \n");
+			printf("\tPrivateExponent: %s\n", hexOut(ckaID));
+			printf("\tPrime1: %s\n", hexOut(ckaID));
+			printf("\tPrime2: %s\n", hexOut(ckaID));
+			printf("\tExponent1: %s\n", hexOut(ckaID));
+			printf("\tExponent2: %s\n", hexOut(ckaID));
+			printf("\tCoefficient: %s\n", hexOut(ckaID));
+			printf("\tCKAIDNSS: %s\n", hexOut(ckaID));
+			SECITEM_FreeItem(ckaID, PR_TRUE);
+		}
 
-	} while(0);
+	} while (0);
 
-    if (privkey) SECKEY_DestroyPrivateKey(privkey);
-    if (pubkey) SECKEY_DestroyPublicKey(pubkey);    
+	if (privkey)
+		SECKEY_DestroyPrivateKey(privkey);
+	if (pubkey)
+		SECKEY_DestroyPublicKey(pubkey);
 
 	(void) NSS_Shutdown();
-    (void) PR_Cleanup();
+	(void) PR_Cleanup();
 }
 
-
 /*
- - getrandom - get some random bytes from /dev/random (or wherever)
+   - getrandom - get some random bytes from /dev/random (or wherever)
  */
-void
-getrandom(nbytes, buf)
+void getrandom(nbytes, buf)
 size_t nbytes;
-unsigned char *buf;			/* known to be big enough */
+unsigned char *buf;                     /* known to be big enough */
 {
 	size_t ndone;
 	int dev;
@@ -525,19 +546,21 @@ unsigned char *buf;			/* known to be big enough */
 	dev = open(device, 0);
 	if (dev < 0) {
 		fprintf(stderr, "%s: could not open %s (%s)\n", me,
-						device, strerror(errno));
+			device, strerror(errno));
 		exit(1);
 	}
 
 	ndone = 0;
-	if (verbose)
-		fprintf(stderr, "getting %d random bytes from %s...\n", (int) nbytes,
-							device);
+	if (verbose) {
+		fprintf(stderr, "getting %d random bytes from %s...\n",
+			(int) nbytes,
+			device);
+	}
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
 		if (got < 0) {
 			fprintf(stderr, "%s: read error on %s (%s)\n", me,
-						device, strerror(errno));
+				device, strerror(errno));
 			exit(1);
 		}
 		if (got == 0) {
@@ -551,21 +574,21 @@ unsigned char *buf;			/* known to be big enough */
 }
 
 /*
- - hexout - prepare hex output, guaranteeing even number of digits
+   - hexout - prepare hex output, guaranteeing even number of digits
  * (The current FreeS/WAN conversion routines want an even digit count,
  * but mpz_get_str doesn't promise one.)
  */
-char *				/* pointer to static buffer (ick) */
+char *                          /* pointer to static buffer (ick) */
 hexout(var)
 mpz_t var;
 {
-	static char hexbuf[3 + MAXBITS/4 + 1];
+	static char hexbuf[3 + MAXBITS / 4 + 1];
 	char *hexp;
 
-	mpz_get_str(hexbuf+3, 16, var);
-	if (strlen(hexbuf+3)%2 == 0)	/* even number of hex digits */
-		hexp = hexbuf+1;
-	else {				/* odd, must pad */
+	mpz_get_str(hexbuf + 3, 16, var);
+	if (strlen(hexbuf + 3) % 2 == 0) {      /* even number of hex digits */
+		hexp = hexbuf + 1;
+	} else {                                /* odd, must pad */
 		hexp = hexbuf;
 		hexp[2] = '0';
 	}
@@ -576,32 +599,33 @@ mpz_t var;
 }
 
 /*
- - bundle - bundle e and n into an RFC2537-format lump
+   - bundle - bundle e and n into an RFC2537-format lump
  * Note, calls hexout.
  */
-unsigned char *				/* pointer to static buffer (ick) */
+unsigned char *                         /* pointer to static buffer (ick) */
 bundle(e, n, sizep)
 int e;
 mpz_t n;
 size_t *sizep;
 {
 	char *hexp = hexout(n);
-	static unsigned char bundbuf[2 + MAXBITS/8];
+	static unsigned char bundbuf[2 + MAXBITS / 8];
 	const char *er;
 	size_t size;
 
 	assert(e <= 255);
 	bundbuf[0] = 1;
 	bundbuf[1] = e;
-	er = ttodata(hexp, 0, 0, (char *)bundbuf+2, sizeof(bundbuf)-2, &size);
+	er = ttodata(hexp, 0, 0, (char *)bundbuf + 2, sizeof(bundbuf) - 2,
+		     &size);
 	if (er != NULL) {
 		fprintf(stderr, "%s: can't-happen bundle convert error `%s'\n",
-								me, er);
+			me, er);
 		exit(1);
 	}
-	if (size > sizeof(bundbuf)-2) {
+	if (size > sizeof(bundbuf) - 2) {
 		fprintf(stderr, "%s: can't-happen bundle overflow (need %d)\n",
-								me, (int) size);
+			me, (int) size);
 		exit(1);
 	}
 	if (sizep != NULL)
@@ -610,15 +634,15 @@ size_t *sizep;
 }
 
 /*
- - conv - convert bits to output in specified format
+   - conv - convert bits to output in specified format
  */
-char *				/* pointer to static buffer (ick) */
+char *                          /* pointer to static buffer (ick) */
 conv(bits, nbytes, format)
 unsigned char *bits;
 size_t nbytes;
-int format;			/* datatot() code */
+int format;                                     /* datatot() code */
 {
-	static char convbuf[MAXBITS/4 + 50];	/* enough for hex */
+	static char convbuf[MAXBITS / 4 + 50];  /* enough for hex */
 	size_t n;
 
 	n = datatot(bits, nbytes, format, convbuf, sizeof(convbuf));
@@ -627,21 +651,22 @@ int format;			/* datatot() code */
 		exit(1);
 	}
 	if (n > sizeof(convbuf)) {
-		fprintf(stderr, "%s: can't-happen convert overflow (need %d)\n",
-								me, (int) n);
+		fprintf(stderr,
+			"%s: can't-happen convert overflow (need %d)\n",
+			me, (int) n);
 		exit(1);
 	}
 	return convbuf;
 }
 
 /*
- - report - report progress, if indicated
+   - report - report progress, if indicated
  */
-void
-report(msg)
+void report(msg)
 char *msg;
 {
 	if (!verbose)
 		return;
+
 	fprintf(stderr, "%s\n", msg);
 }

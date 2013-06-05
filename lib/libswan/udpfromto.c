@@ -77,8 +77,8 @@ int udpfromto_init(int s)
 }
 
 int recvfromto(int s, void *buf, size_t len, int flags,
-	struct sockaddr *from, socklen_t *fromlen,
-	struct sockaddr *to, socklen_t *tolen)
+	       struct sockaddr *from, socklen_t *fromlen,
+	       struct sockaddr *to, socklen_t *tolen)
 {
 #if defined(HAVE_IP_PKTINFO) || defined(HAVE_IP_RECVDSTADDR)
 	struct msghdr msgh;
@@ -107,7 +107,8 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 
 		((struct sockaddr_in *)to)->sin_family = AF_INET;
 #ifdef NEED_SIN_LEN
-		((struct sockaddr_in *)to)->sin_len = sizeof( struct sockaddr_in );
+		((struct sockaddr_in *)to)->sin_len =
+			sizeof( struct sockaddr_in );
 #endif
 
 		((struct sockaddr_in *)to)->sin_port = 0;
@@ -116,7 +117,8 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 			((struct sockaddr_in *)to)->sin_port = si.sin_port;
 			((struct sockaddr_in *)to)->sin_addr = si.sin_addr;
 		}
-		if (tolen) *tolen = sizeof(struct sockaddr_in);
+		if (tolen)
+			*tolen = sizeof(struct sockaddr_in);
 	}
 
 	/* Set up iov and msgh structures. */
@@ -132,52 +134,57 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 	msgh.msg_flags = 0;
 
 	/* Receive one packet. */
-	if ((err = recvmsg(s, &msgh, flags)) < 0) {
+	if ((err = recvmsg(s, &msgh, flags)) < 0)
 		return err;
-	}
-	if (fromlen) *fromlen = msgh.msg_namelen;
+
+	if (fromlen)
+		*fromlen = msgh.msg_namelen;
 
 	/* Process auxiliary received data in msgh */
 	for (cmsg = CMSG_FIRSTHDR(&msgh);
 	     cmsg != NULL;
-	     cmsg = CMSG_NXTHDR(&msgh,cmsg)) {
+	     cmsg = CMSG_NXTHDR(&msgh, cmsg)) {
 
 # ifdef HAVE_IP_PKTINFO
-		if (cmsg->cmsg_level == SOL_IP
-		    && cmsg->cmsg_type == IP_PKTINFO) {
+		if (cmsg->cmsg_level == SOL_IP &&
+		    cmsg->cmsg_type == IP_PKTINFO) {
 			struct in_pktinfo *i =
 				(struct in_pktinfo *)CMSG_DATA(cmsg);
 			if (to) {
 				((struct sockaddr_in *)to)->sin_addr =
 					i->ipi_addr;
-				if (tolen) *tolen = sizeof(struct sockaddr_in);
+				if (tolen)
+					*tolen = sizeof(struct sockaddr_in);
 			}
 			break;
 		}
 # endif
 
 # ifdef HAVE_IP_RECVDSTADDR
-		if (cmsg->cmsg_level == IPPROTO_IP
-		    && cmsg->cmsg_type == IP_RECVDSTADDR) {
+		if (cmsg->cmsg_level == IPPROTO_IP &&
+		    cmsg->cmsg_type == IP_RECVDSTADDR) {
 			struct in_addr *i = (struct in_addr *)CMSG_DATA(cmsg);
 			if (to) {
 				((struct sockaddr_in *)to)->sin_addr = *i;
-				if (tolen) *tolen = sizeof(struct sockaddr_in);
+				if (tolen)
+					*tolen = sizeof(struct sockaddr_in);
 			}
 			break;
 		}
 # endif
 	}
 	return err;
+
 #else
 	/* fallback: call recvfrom */
 	return recvfrom(s, buf, len, flags, from, fromlen);
-#endif /* defined(HAVE_IP_PKTINFO) || defined(HAVE_IP_RECVDSTADDR) */
+
+#endif  /* defined(HAVE_IP_PKTINFO) || defined(HAVE_IP_RECVDSTADDR) */
 }
 
 int sendfromto(int s, void *buf, size_t len, int flags,
-			  struct sockaddr *from,
-			  struct sockaddr *to, socklen_t tolen)
+	       struct sockaddr *from,
+	       struct sockaddr *to, socklen_t tolen)
 {
 #if defined(HAVE_IP_PKTINFO) || defined(HAVE_IP_SENDSRCADDR)
 	struct msghdr msgh;
@@ -222,16 +229,18 @@ int sendfromto(int s, void *buf, size_t len, int flags,
 	cmsg->cmsg_type = IP_SENDSRCADDR;
 	cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_addr));
 	memcpy((struct in_addr *)CMSG_DATA(cmsg),
-	       &((struct sockaddr_in *)from)->sin_addr, sizeof(struct in_addr));
+	       &((struct sockaddr_in *)from)->sin_addr,
+	       sizeof(struct in_addr));
 # endif
 
 	return sendmsg(s, &msgh, flags);
+
 #else
 	/* fallback: call sendto() */
 	return sendto(s, buf, len, flags, to, tolen);
-#endif	/* defined(HAVE_IP_PKTINFO) || defined (HAVE_IP_SENDSRCADDR) */
-}
 
+#endif  /* defined(HAVE_IP_PKTINFO) || defined (HAVE_IP_SENDSRCADDR) */
+}
 
 #ifdef UDPFROMTO_MAIN
 /*
@@ -250,10 +259,10 @@ int sendfromto(int s, void *buf, size_t len, int flags,
 #include <sys/wait.h>
 #include "socket.h"
 
-#define DEF_PORT 20000		/* default port to listen on */
-#define DESTIP "127.0.0.1"	/* send packet to localhost per default */
-#define TESTSTRING "foo"	/* what to send */
-#define TESTLEN 4			/* 4 bytes */
+#define DEF_PORT 20000          /* default port to listen on */
+#define DESTIP "127.0.0.1"      /* send packet to localhost per default */
+#define TESTSTRING "foo"        /* what to send */
+#define TESTLEN 4               /* 4 bytes */
 
 int main(int argc, char **argv)
 {
@@ -263,8 +272,10 @@ int main(int argc, char **argv)
 	int port = DEF_PORT;
 	int n, server_socket, client_socket, fl, tl, pid;
 
-	if (argc > 1) destip = argv[1];
-	if (argc > 2) port = atoi(argv[2]);
+	if (argc > 1)
+		destip = argv[1];
+	if (argc > 2)
+		port = atoi(argv[2]);
 
 	in.sin_family = AF_INET;
 #ifdef NEED_SIN_LEN
@@ -276,14 +287,15 @@ int main(int argc, char **argv)
 	memset(&from, 0, sizeof(from));
 	memset(&to,   0, sizeof(to));
 
-	switch(pid = fork()) {
-		case -1:
-			perror("fork");
-			return 0;
-		case 0:
-			/* child */
-			usleep(100000);
-			goto client;
+	switch (pid = fork()) {
+	case -1:
+		perror("fork");
+		return 0;
+
+	case 0:
+		/* child */
+		usleep(100000);
+		goto client;
 	}
 
 	/* parent: server */
@@ -302,8 +314,8 @@ int main(int argc, char **argv)
 
 	printf("server: waiting for packets on INADDR_ANY:%d\n", port);
 	if ((n = recvfromto(server_socket, buf, sizeof(buf), 0,
-	    (struct sockaddr *)&from, &fl,
-	    (struct sockaddr *)&to, &tl)) < 0) {
+			    (struct sockaddr *)&from, &fl,
+			    (struct sockaddr *)&to, &tl)) < 0) {
 		perror("server: recvfromto");
 		waitpid(pid, NULL, WNOHANG);
 		return 0;
@@ -311,17 +323,17 @@ int main(int argc, char **argv)
 
 	printf("server: received a packet of %d bytes [%s] ", n, buf);
 	printf("(src ip:port %s:%d ",
-		inet_ntoa(from.sin_addr), ntohs(from.sin_port));
+	       inet_ntoa(from.sin_addr), ntohs(from.sin_port));
 	printf(" dst ip:port %s:%d)\n",
-		inet_ntoa(to.sin_addr), ntohs(to.sin_port));
+	       inet_ntoa(to.sin_addr), ntohs(to.sin_port));
 
-	printf("server: replying from address packet was received on to source address\n");
+	printf(
+		"server: replying from address packet was received on to source address\n");
 
 	if ((n = sendfromto(server_socket, buf, n, 0,
-		(struct sockaddr *)&to
-		(struct sockaddr *)&from, fl)) < 0) {
+			    (struct sockaddr *)&to
+				    (struct sockaddr *) & from, fl)) < 0)
 		perror("server: sendfromto");
-	}
 
 	waitpid(pid, NULL, 0);
 	return 0;
@@ -334,7 +346,7 @@ client:
 		_exit(0);
 	}
 	/* bind client on different port */
-	in.sin_port = htons(port+1);
+	in.sin_port = htons(port + 1);
 	if (bind(client_socket, (struct sockaddr *)&in, sizeof(in)) < 0) {
 		perror("client: bind");
 		_exit(0);
@@ -345,25 +357,26 @@ client:
 
 	printf("client: sending packet to %s:%d\n", destip, port);
 	if (sendto(client_socket, TESTSTRING, TESTLEN, 0,
-			(struct sockaddr *)&in, sizeof(in)) < 0) {
+		   (struct sockaddr *)&in, sizeof(in)) < 0) {
 		perror("client: sendto");
 		_exit(0);
 	}
 
-	printf("client: waiting for reply from server on INADDR_ANY:%d\n", port+1);
+	printf("client: waiting for reply from server on INADDR_ANY:%d\n",
+	       port + 1);
 
 	if ((n = recvfromto(client_socket, buf, sizeof(buf), 0,
-	    (struct sockaddr *)&from, &fl,
-	    (struct sockaddr *)&to, &tl)) < 0) {
+			    (struct sockaddr *)&from, &fl,
+			    (struct sockaddr *)&to, &tl)) < 0) {
 		perror("client: recvfromto");
 		_exit(0);
 	}
 
 	printf("client: received a packet of %d bytes [%s] ", n, buf);
 	printf("(src ip:port %s:%d",
-		inet_ntoa(from.sin_addr), ntohs(from.sin_port));
+	       inet_ntoa(from.sin_addr), ntohs(from.sin_port));
 	printf(" dst ip:port %s:%d)\n",
-		inet_ntoa(to.sin_addr), ntohs(to.sin_port));
+	       inet_ntoa(to.sin_addr), ntohs(to.sin_port));
 
 	_exit(0);
 }
