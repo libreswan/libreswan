@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.4 (unreleased)
+* Change coding style to Linux kernel [Team]
 
 v3.3 (May 13, 2013)
 * SECURITY: atodn() buffer overflow with oe=yes [Florian/Hugh/Paul]
@@ -184,7 +185,7 @@ v3.0 (January 02, 2013)
 * whack: don't try to write to closed stdout tty [Philippe]
 * DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
 * DPD: We did not send DPD VID in aggressive mode with NAT-T disabled
-* DPD: dpdaction=restart can cause full phase1 timeout after DPD 
+* DPD: dpdaction=restart can cause full phase1 timeout after DPD
   (rhbz#848132) [Avesh]
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
 * PAM: move pam out of contrib, and install config when HAVE_XAUTHPAM [Paul]
