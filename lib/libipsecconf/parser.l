@@ -464,11 +464,3 @@ include			return INCLUDE;
 int yywrap(void) {
 	return 1;
 }
-
-/*
- * Local Variables:
- * mode: flex
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

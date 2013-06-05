@@ -148,10 +148,3 @@ extern PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism
                                            , SECItem *param, CK_MECHANISM_TYPE target
                                            , CK_ATTRIBUTE_TYPE operation, int keySize);
 #endif /* _CRYPTO_H */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

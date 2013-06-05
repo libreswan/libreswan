@@ -57,10 +57,3 @@ static inline bool BLCHECK(biglset_t b, int elem)
 extern void biglset_format(char *buf, size_t blen, biglset_t b);
 
 #endif /* _BIGLSET_H */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

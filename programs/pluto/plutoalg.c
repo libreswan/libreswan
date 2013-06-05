@@ -810,10 +810,3 @@ y	if (can_do_IPcomp)
 	, DBG_log("returning new proposal from esp_info"));
     return n;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

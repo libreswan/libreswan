@@ -3057,10 +3057,3 @@ accept_delete(struct state *st, struct msg_digest *md, struct payload_digest *p)
 	}
     }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -472,11 +472,3 @@ delete_group(const struct connection *c)
 
     pfree(g);
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

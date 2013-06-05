@@ -948,11 +948,3 @@ union payload {
 
 
 #endif /* _PACKET_H */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
- 

@@ -1227,10 +1227,3 @@ sa_merge_proposals(struct db_sa *a, struct db_sa *b)
     n->parentSA = a->parentSA;
     return n;
 }
-
-/*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset: 4
- * End:
- */

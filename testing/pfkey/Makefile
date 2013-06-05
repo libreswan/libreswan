@@ -28,8 +28,3 @@ cleanall distclean mostlyclean realclean install programs checkprograms check cl
 	do \
 		${MAKE} -C $$d srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ;\
 	done; 
-
-# 
-# Local Variables: 
-# compile-command: "make"
-# End: 

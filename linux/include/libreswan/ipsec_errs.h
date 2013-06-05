@@ -28,10 +28,3 @@ struct ipsec_errs {
 	__u32		ips_encpad_errs;       /* # of encryption pad  errors*/
 	__u32		ips_replaywin_errs;    /* # of pkt sequence errors */
 };
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

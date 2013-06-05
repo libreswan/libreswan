@@ -294,10 +294,3 @@ enum ipsec_direction {
 
 #define _IPSEC_SA_H_
 #endif /* _IPSEC_SA_H_ */
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

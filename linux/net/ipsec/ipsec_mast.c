@@ -1082,13 +1082,3 @@ ipsec_mast_cleanup_devices(void)
 	}
 	return error;
 }
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */
-
-

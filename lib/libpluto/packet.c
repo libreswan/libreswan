@@ -1845,10 +1845,3 @@ close_output_pbs(pb_stream *pbs)
     if (pbs->container != NULL)
 	pbs->container->cur = pbs->cur;	/* pass space utilization up */
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

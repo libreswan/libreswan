@@ -1053,12 +1053,3 @@ accept_v2_nonce(struct msg_digest *md, chunk_t *dest, const char *name)
 {
     return accept_nonce(md, dest, name, ISAKMP_NEXT_v2Ni);
 }
-
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

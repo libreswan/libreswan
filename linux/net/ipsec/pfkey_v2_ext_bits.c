@@ -798,11 +798,3 @@ int pfkey_extensions_missing(enum pfkey_ext_required inout,
 	}
 	return 0;
 }
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

@@ -2651,10 +2651,3 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 #endif    
 
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

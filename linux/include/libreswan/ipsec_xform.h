@@ -184,10 +184,3 @@ extern void ipsec_dmp(char *s, caddr_t bb, int len);
 
 #define _IPSEC_XFORM_H_
 #endif /* _IPSEC_XFORM_H_ */
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

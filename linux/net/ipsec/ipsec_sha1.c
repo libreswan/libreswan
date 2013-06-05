@@ -163,11 +163,3 @@ void SHA1Final(unsigned char digest[SHA1_DIGEST_SIZE], void *vcontext)
     SHA1Transform(context->state, context->buffer);
 #endif
 }
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

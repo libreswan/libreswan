@@ -161,10 +161,3 @@ extern int alg_info_parse_str (struct alg_info *alg_info
 			       , bool permitmann);
 
 #endif /* ALG_INFO_H */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

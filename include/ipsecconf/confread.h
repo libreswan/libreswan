@@ -156,10 +156,3 @@ void confread_free(struct starter_config *cfg);
 void ipsecconf_default_values (struct starter_config *cfg);
 
 #endif /* _IPSEC_CONFREAD_H_ */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -1628,12 +1628,3 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 errlab:
 	return(error);
 }
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */
-

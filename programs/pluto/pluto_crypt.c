@@ -854,10 +854,3 @@ int pluto_crypto_helper_ready(lsw_fd_set *readfds)
     
     return ndes;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

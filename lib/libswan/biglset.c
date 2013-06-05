@@ -97,11 +97,3 @@ main()
     exit(fails);
 }
 #endif
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
-

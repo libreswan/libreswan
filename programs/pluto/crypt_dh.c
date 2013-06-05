@@ -1371,11 +1371,3 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 
     return;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
-

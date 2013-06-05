@@ -512,11 +512,3 @@ main(int argc, char **argv)
 	  numSenders > 0 ? 100-numReceived*100/numSenders : 0);
    exit(numSenders - numReceived);
 }
-
-/*
- * Local variables:
- * c-file-style: "pluto"
- * c-basic-offset: 4
- * End:
- *
- */

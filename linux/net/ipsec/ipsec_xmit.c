@@ -2799,12 +2799,3 @@ ipsec_xsm(struct ipsec_xmit_state *ixs)
 	 */
 	ixs->xsm_complete(ixs, stat);
 }
-
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

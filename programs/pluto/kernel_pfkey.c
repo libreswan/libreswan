@@ -1921,10 +1921,3 @@ pfkey_plumb_mast_device(int mast_dev)
 
 
 #endif /* PFKEY */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

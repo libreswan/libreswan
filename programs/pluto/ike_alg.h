@@ -101,10 +101,3 @@ extern struct db_sa *kernel_alg_makedb(lset_t policy
 				       , struct alg_info_esp *ei
 				       , bool logit);
 #endif /* _IKE_ALG_H */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

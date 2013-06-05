@@ -723,14 +723,3 @@ unsigned int parser_loose_enum(struct keyword *k, const char *s)
     k->string = strdup(s);
     return 255;
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
-	
-
-    

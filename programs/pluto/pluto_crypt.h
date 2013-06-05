@@ -294,12 +294,3 @@ static inline void pcr_init(struct pluto_crypto_req *r
 #endif
 
 #endif /* _PLUTO_CRYPT_H */
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
- 

@@ -1111,10 +1111,3 @@ log_state(struct state *st, enum state_kind new_state)
 }
 
 #endif
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -3692,10 +3692,3 @@ eclipsed(struct connection *c, struct spd_route **esrp)
      }
      return ue;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

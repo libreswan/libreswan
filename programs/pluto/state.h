@@ -523,10 +523,3 @@ extern void delete_states_dead_interfaces(void);
 
 
 #endif /* _STATE_H */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

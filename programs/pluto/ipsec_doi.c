@@ -941,10 +941,3 @@ void fmt_isakmp_sa_established(struct state *st, char *sadetails, int sad_len)
 	     , (int)st->st_oakley.group->bytes*8);
     st->hidden_variables.st_logged_p1algos = TRUE;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

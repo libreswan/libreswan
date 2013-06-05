@@ -347,10 +347,3 @@ struct inet_protocol ah_protocol =
 };
 #endif /* NET_26 */
 #endif /* CONFIG_XFRM_ALTERNATE_STACK */
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

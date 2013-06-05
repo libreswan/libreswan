@@ -1899,9 +1899,3 @@ void set_state_ike_endpoints(struct state *st
 
     st->st_interface = c->interface;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * End:
- */

@@ -401,11 +401,3 @@ const struct kernel_ops klips_kernel_ops = {
     .sha2_truncbug_support = FALSE,
 };
 #endif /* KLIPS */
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

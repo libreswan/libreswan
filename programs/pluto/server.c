@@ -1371,9 +1371,3 @@ send_keepalive(struct state *st, const char *where)
 
     return send_packet(st, where, TRUE, &ka_payload, sizeof(ka_payload), NULL, (size_t) 0);
 }
-
-/*
- * Local Variables:
- * c-basic-offset: 4
- * End Variables:
- */

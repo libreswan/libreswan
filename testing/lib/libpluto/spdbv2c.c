@@ -126,11 +126,3 @@ main(int argc, char *argv[])
     free_sa(gsp);
     exit(0);
 }
-
-/*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset: 4
- * compile-command: "make TEST=spdbv2c one"
- * End:
- */

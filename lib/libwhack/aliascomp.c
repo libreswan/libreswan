@@ -62,10 +62,3 @@ bool lsw_alias_cmp(const char *needle, const char *haystack)
 	
 	return FALSE;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

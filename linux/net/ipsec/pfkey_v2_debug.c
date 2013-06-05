@@ -131,11 +131,3 @@ pfkey_v2_sadb_type_string(unsigned sadb_type)
     return "unknown-sadb-type";
   }
 }
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

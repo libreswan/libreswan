@@ -44,11 +44,3 @@ void *xrealloc(void *o, size_t s)
   
   return m;
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

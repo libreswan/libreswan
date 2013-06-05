@@ -126,12 +126,3 @@ extern int debug_netlink;
 
 #define _IPSEC_PROTO_H
 #endif /* _IPSEC_PROTO_H_ */
-
-/*
- *
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */
-

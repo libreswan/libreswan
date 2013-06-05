@@ -184,13 +184,3 @@ void exit_tool(int x)
 {
   exit(x);
 }
-
-/*
- * $Log: spi.c,v $
- *
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- *
- */

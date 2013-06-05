@@ -441,10 +441,3 @@ read_packet(struct msg_digest *md)
 
     return TRUE;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

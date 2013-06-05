@@ -606,10 +606,3 @@ void confwrite(struct starter_config *cfg, FILE *out)
 	}
 	fprintf(out,"# end of config\n");
 }
-
-/*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset:4
- * End:
- */

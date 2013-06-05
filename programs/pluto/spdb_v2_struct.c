@@ -1470,9 +1470,3 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md
 
     
     
-/*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset: 4
- * End:
- */

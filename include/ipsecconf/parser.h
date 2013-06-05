@@ -36,11 +36,3 @@ extern char rootdir[PATH_MAX];       /* when evaluating paths, prefix this to th
 #define THIS_IPSEC_CONF_VERSION 2
 
 #endif /* _IPSEC_PARSER_H_ */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
-

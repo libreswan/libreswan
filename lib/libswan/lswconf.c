@@ -278,9 +278,3 @@ libreswan_log("nss password source is not specified as file");
 return 0;
 }
     
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

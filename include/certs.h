@@ -87,10 +87,3 @@ extern bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName
 extern void load_authcerts_from_nss(const char *type, u_char auth_flags);
 
 #endif /* _CERTS_H */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

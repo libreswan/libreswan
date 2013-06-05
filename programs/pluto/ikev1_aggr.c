@@ -1382,10 +1382,3 @@ aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc
     return STF_IGNORE;
 }
 #endif /* AGGRESSIVE */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

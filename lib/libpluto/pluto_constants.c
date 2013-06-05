@@ -353,11 +353,3 @@ prettypolicy(lset_t policy)
 	     NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "");
     return buf;
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -40,7 +40,3 @@ EXTRALIBS="${EXTRALIBS} ${LSWLOGLIB} ${LIBRESWANLIB} ${LSWLOGLIB}"
 EXTRALIBS="${EXTRALIBS} -lgmp -lefence -lpcap"
 
 UNITTESTARGS="../lib-parentI1/ikev2.record westnet--eastnet-ikev2 ../lib-parentI2/parentI2.pcap"
-
-# Local Variables:
-# compile-command: "make TEST=parentR1retrans one"
-# End:

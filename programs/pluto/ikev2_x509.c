@@ -279,10 +279,3 @@ doi_send_ikev2_cert_thinking(struct state *st)
   
     return send_cert;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

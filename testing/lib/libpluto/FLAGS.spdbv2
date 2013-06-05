@@ -23,10 +23,3 @@ EXTRALIBS="${EXTRALIBS} ${LIBDESLITE} ${LIBAES} ${LIBTWOFISH} ${LIBSERPENT}"
 EXTRALIBS="${EXTRALIBS} ${LIBSHA2} ${LIBBLOWFISH}"
 EXTRALIBS="${EXTRALIBS} ${LIBMD5} ${LIBSHA1} "
 EXTRALIBS="${EXTRALIBS} -lgmp -lefence"
-
-# Local Variables:
-# compile-command: "make spdbv2"
-# End:
-
-
-

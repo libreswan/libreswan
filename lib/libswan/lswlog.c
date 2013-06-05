@@ -319,10 +319,3 @@ libreswan_DBG_dump(const char *label, const void *p, size_t len)
 }
 
 #endif /* DEBUG */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

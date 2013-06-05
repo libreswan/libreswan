@@ -111,10 +111,3 @@ void ipsec_dmp_block(char *s, caddr_t bb, int len)
 	}
 }
 		
-/*
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */
-

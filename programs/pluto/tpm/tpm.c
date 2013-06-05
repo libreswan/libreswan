@@ -276,11 +276,3 @@ stf_status tpm_call_out_notify(const char *name
 
     return ret;
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

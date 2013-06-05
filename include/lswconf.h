@@ -65,10 +65,3 @@ extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
 extern bool Pluto_IsFIPS(void);
 
 #endif /* _LSW_ALLOC_H_ */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -31,10 +31,3 @@ struct ipsec_stats {
 
 #define _IPSEC_STATS_H_
 #endif /* _IPSEC_STATS_H_ */
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

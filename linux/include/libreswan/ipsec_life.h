@@ -85,11 +85,3 @@ enum ipsec_life_type {
 
 #define _IPSEC_LIFE_H_
 #endif /* _IPSEC_LIFE_H_ */
-
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

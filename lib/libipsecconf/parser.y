@@ -566,11 +566,3 @@ struct starter_comments *alloc_comment(void)
 	memset(new, 0, sizeof(struct starter_comments));
 	return new;
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

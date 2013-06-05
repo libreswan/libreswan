@@ -200,10 +200,3 @@ ikev2_verify_rsa_sha1(struct state *st
 				   , try_RSA_signature_v2);
     
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -477,10 +477,3 @@ none:
 		transid, auth));
 	return NULL;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -1529,11 +1529,3 @@ void pfkey_proto_init(struct net_protocol *pro)
 	pfkey_init();
 }
 #endif /* MODULE */
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

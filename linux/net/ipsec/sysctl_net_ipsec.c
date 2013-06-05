@@ -372,11 +372,3 @@ void ipsec_sysctl_unregister(void)
 }
 
 #endif /* CONFIG_SYSCTL */
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

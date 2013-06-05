@@ -226,12 +226,3 @@ void *clone_bytes2(const void *orig, size_t size, const char *name, int leak_det
     memcpy(p, orig, size);
     return p;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
-
-

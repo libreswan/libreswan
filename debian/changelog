@@ -9,7 +9,3 @@ libreswan (1:IPSECBASEVERSION-1) precise; urgency=low
   <dev@libreswan.org> if you have a problem.
 
  -- Unknown User <unknown@libreswan.org>  Sun, 25 Nov 2012 19:00:00 +0200
-
-Local variables:
-mode: debian-changelog
-End:

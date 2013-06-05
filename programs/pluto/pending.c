@@ -389,10 +389,3 @@ bool in_pending_use(struct connection *c)
 
     return FALSE;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

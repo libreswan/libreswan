@@ -132,11 +132,3 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	
 }
  
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
- 

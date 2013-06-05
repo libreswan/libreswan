@@ -11,7 +11,3 @@ EXTRALIBS="${EXTRALIBS} ${PLUTOLIB} ${CRYPTOLIBS} ${WHACKLIB}"
 EXTRALIBS="${EXTRALIBS} ${LSWLOGLIB} ${LIBRESWANLIB} ${LSWLOGLIB} -lgmp -lefence"
 
 UNITTESTARGS="east.record"
-
-# Local Variables:
-# compile-command: "make TEST=whackmsgtest one"
-# End:

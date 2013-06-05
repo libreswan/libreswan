@@ -855,11 +855,3 @@ init_timer(void)
 		, maximum_retransmissions_quick_r1));
     }
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

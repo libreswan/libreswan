@@ -1560,10 +1560,3 @@ delete_public_keys(struct pubkey_list **head
 	    pp = &p->next;
     }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -83,10 +83,3 @@ void readwhackmsg(char *infile)
 	perror(infile);
     }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

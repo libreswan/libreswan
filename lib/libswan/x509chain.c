@@ -520,11 +520,3 @@ match_requested_ca(generalName_t *requested_ca, chunk_t our_ca, int *our_pathlen
 
     return *our_pathlen <= MAX_CA_PATH_LEN;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
-

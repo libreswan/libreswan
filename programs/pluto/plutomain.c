@@ -1307,10 +1307,3 @@ exit_pluto(int status)
     close_log();            /* close the logfiles */
     exit(status);           /* exit, with our error code */
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

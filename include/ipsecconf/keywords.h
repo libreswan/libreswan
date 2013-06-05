@@ -299,10 +299,3 @@ extern unsigned int parser_loose_enum(struct keyword *k, const char *s);
 
 
 #endif /* _KEYWORDS_H_ */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

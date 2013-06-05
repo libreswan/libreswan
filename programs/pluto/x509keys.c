@@ -436,10 +436,3 @@ collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
     }
     return *top != NULL;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

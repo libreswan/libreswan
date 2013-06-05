@@ -2298,10 +2298,3 @@ const struct kernel_ops netkey_kernel_ops = {
     .sha2_truncbug_support = TRUE,
 };
 #endif /* linux && NETKEY_SUPPORT */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -123,10 +123,3 @@ terminate_connection(const char *nm)
 		  , "no connection named \"%s\"", nm);
     }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

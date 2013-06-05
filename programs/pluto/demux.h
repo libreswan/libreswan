@@ -112,11 +112,3 @@ extern bool check_msg_errqueue(const struct iface_port *ifp, short interest);
 
 
 #endif /* _DEMUX_H */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
- 

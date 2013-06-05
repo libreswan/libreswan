@@ -312,11 +312,3 @@ oakley_alg_makedb(struct alg_info_ike *ai
 
     return gsp;
 }
-
-
-/*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset: 4
- * End:
- */

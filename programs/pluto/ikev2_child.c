@@ -930,11 +930,3 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md
 
     return STF_OK;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
- 

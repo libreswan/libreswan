@@ -207,9 +207,3 @@ sa_v2_print(struct db_sa *f)
 }
 
     
-/*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset: 4
- * End:
- */

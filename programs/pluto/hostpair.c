@@ -326,12 +326,3 @@ release_dead_interfaces(void)
 	}
     }
 }
-
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

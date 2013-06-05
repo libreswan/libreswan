@@ -770,10 +770,3 @@ bool whack_prompt_for(int whackfd
 	
     return TRUE;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

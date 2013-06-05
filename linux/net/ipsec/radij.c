@@ -993,11 +993,3 @@ radijcleanup(void)
 
 	return error;
 }
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

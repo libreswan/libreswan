@@ -392,11 +392,3 @@ unsigned int len;
 }
 #endif
 #endif
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

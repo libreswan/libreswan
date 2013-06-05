@@ -99,11 +99,3 @@ init_secret(void)
     get_rnd_bytes(secret_of_the_day, sizeof(secret_of_the_day));
     event_schedule(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -912,10 +912,3 @@ pfkey_x_debug_process(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* e
 errlab:
 	return error;
 }
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

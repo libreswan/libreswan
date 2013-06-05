@@ -591,10 +591,3 @@ struct inet_protocol esp_protocol =
 #endif /* CONFIG_XFRM_ALTERNATE_STACK */
 
 #endif /* !CONFIG_KLIPS_ESP */
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

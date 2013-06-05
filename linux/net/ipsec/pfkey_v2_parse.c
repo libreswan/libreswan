@@ -1569,10 +1569,3 @@ pfkey_msg_parse(struct sadb_msg *pfkey_msg,
 errlab:
 	return error;
 }
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

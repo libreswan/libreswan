@@ -314,10 +314,3 @@ ike_alg_pfsgroup(struct connection *c, lset_t policy)
 		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);
 	return ret;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

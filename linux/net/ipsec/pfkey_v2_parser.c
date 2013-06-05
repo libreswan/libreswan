@@ -3163,11 +3163,3 @@ pfkey_msg_interp(struct sock *sk, struct sadb_msg *pfkey_msg)
 	}
 	return(error);
 }
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

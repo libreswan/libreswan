@@ -26,8 +26,3 @@ IPSEC_OBJS+=ipsec_snprintf.o ipsec_alg.o
 IPSEC_OBJS+=aes.o aes_cbc.o aes_xcbc_mac.o ipsec_alg_aes.o
 
 include ${srcdir}../Makefile.kunit
-
-# 
-# Local Variables: 
-# compile-command: "make"
-# End: 

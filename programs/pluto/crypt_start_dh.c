@@ -346,12 +346,3 @@ void finish_dh_v2(struct state *st,
     
     st->hidden_variables.st_skeyid_calculated = TRUE;
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
-

@@ -43,7 +43,3 @@ EXTRALIBS="${EXTRALIBS} ${LSWLOGLIB} ${LIBRESWANLIB} ${LSWLOGLIB}"
 EXTRALIBS="${EXTRALIBS} -lgmp -lefence -lpcap"
 
 UNITTESTARGS="ikev2.record ikev2-westnet-eastnet-x509-cr ../lib-parentI2x509/parentI2x509.pcap"
-
-# Local Variables:
-# compile-command: "make TEST=parentR2x509 one"
-# End:

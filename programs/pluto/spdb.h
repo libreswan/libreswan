@@ -194,10 +194,3 @@ extern bool ikev2_acceptable_group(struct state *st, oakley_group_t group);
 
 
 #endif /*  _SPDB_H_ */
-
-/*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset: 4
- * End:
- */

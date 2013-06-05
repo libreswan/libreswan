@@ -216,11 +216,3 @@ main(int argc, char **argv)
 
 	exit(0);
 }
-
-/*
- * Local variables:
- * c-file-style: "pluto"
- * c-basic-offset: 4
- * End:
- *
- */

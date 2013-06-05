@@ -142,12 +142,3 @@ main(int argc, char *argv[])
     tool_close_log();
     exit(0);
 }
-
-
-/*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset: 4
- * compile-command: "make TEST=parentR2 one"
- * End:
- */

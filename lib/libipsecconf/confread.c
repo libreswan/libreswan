@@ -1536,11 +1536,3 @@ void confread_free(struct starter_config *cfg)
 	free(cfg);
 }
 #undef FREE_STR
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

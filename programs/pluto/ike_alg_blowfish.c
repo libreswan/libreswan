@@ -52,10 +52,3 @@ ike_alg_blowfish_init(void)
 /*
 IKE_ALG_INIT_NAME: ike_alg_blowfish_init
 */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

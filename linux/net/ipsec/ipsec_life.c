@@ -215,10 +215,3 @@ ipsec_lifetime_update_soft(struct ipsec_lifetime64 *lifetime,
 }
 
 	
-/*
- *
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

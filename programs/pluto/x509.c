@@ -963,10 +963,3 @@ list_certs(bool utc)
     list_x509_end_certs(utc);
     list_pgp_end_certs(utc);
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

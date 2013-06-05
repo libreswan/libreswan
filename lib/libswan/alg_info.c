@@ -1032,10 +1032,3 @@ alg_info_snprint(char *buf, int buflen
     
     return ptr-buf;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

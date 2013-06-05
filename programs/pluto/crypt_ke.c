@@ -235,11 +235,3 @@ stf_status build_nonce(struct pluto_crypto_req_cont *cn
       return STF_INLINE;
   }
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset: 4
- * c-style: pluto
- * End:
- */

@@ -85,12 +85,3 @@ stf_status aggr_not_present(int whack_sock UNUSED
 
     return STF_FATAL;
 }
-
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

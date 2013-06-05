@@ -1801,10 +1801,3 @@ void exit_tool(int x)
 {
   exit(x);
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

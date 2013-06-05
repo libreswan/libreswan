@@ -350,10 +350,3 @@ load_authcerts_from_nss(const char *type, u_char auth_flags)
 			}
 	     }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

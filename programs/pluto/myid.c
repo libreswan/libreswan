@@ -197,10 +197,3 @@ build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 	bad_case(id->kind);
     }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

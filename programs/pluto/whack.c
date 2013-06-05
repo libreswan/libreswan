@@ -2129,10 +2129,3 @@ main(int argc, char **argv)
 	return exit_status;
     }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -3162,9 +3162,3 @@ get_sa_info(struct state *st, bool inbound, time_t *ago)
     }
     return TRUE;
 }
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

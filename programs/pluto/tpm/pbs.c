@@ -192,11 +192,3 @@ void *tpm_relocateHash(struct packet_byte_stream *pbs)
     return NULL;
 }
 	
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -2653,10 +2653,3 @@ parse_ipsec_sa_body(
     loglog(RC_LOG_SERIOUS, "no acceptable Proposal in IPsec SA");
     return NO_PROPOSAL_CHOSEN;
 }
-
-/*
- * Local Variables:
- * c-style: pluto
- * c-basic-offset: 4
- * End:
- */

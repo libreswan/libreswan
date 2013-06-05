@@ -2208,11 +2208,3 @@ parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
     time(&crl->installed);
     return TRUE;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
-

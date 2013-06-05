@@ -158,11 +158,3 @@ const struct kernel_ops noklips_kernel_ops = {
     .overlap_supported = FALSE,
     .sha2_truncbug_support = FALSE,
 };
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

@@ -355,11 +355,3 @@ crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc
       e->cbc_crypt(&ctx, buf, size, st->st_new_iv, enc);
     */
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
-

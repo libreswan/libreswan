@@ -2419,11 +2419,3 @@ ipsec_rcv_state_delete (struct ipsec_rcv_state *irs)
 
         spin_unlock_bh (&irs_cache_lock);
 }
-
-/*
- *
- * Local Variables:
- * c-set-style: linux
- * End:
- *
- */

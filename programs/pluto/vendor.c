@@ -804,10 +804,3 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
  */
 const char pgp_vendorid[] = "OpenPGP10171";
 const int pgp_vendorid_len = sizeof(pgp_vendorid);
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

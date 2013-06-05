@@ -252,10 +252,3 @@ stf_status ikev2_verify_psk_auth(struct state *st
 	return STF_OK;
     }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

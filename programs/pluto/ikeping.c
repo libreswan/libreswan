@@ -86,11 +86,3 @@ void receive_ike_echo_reply(struct msg_digest *md)
 	op->isa_length=0;
 #endif
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- *
- */

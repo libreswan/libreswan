@@ -11,8 +11,3 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 TESTCASE=tncfg01
 
 include ${srcdir}../Makefile.pfkey
-
-# 
-# Local Variables: 
-# compile-command: "make"
-# End: 

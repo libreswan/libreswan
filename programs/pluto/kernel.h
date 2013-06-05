@@ -399,12 +399,3 @@ extern void show_kernel_interface(void);
 
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */
-
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

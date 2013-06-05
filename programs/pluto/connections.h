@@ -492,10 +492,3 @@ extern struct connection *unoriented_connections;
 extern void update_host_pairs(struct connection *c);
 
 extern void load_authcerts_from_nss(const char *type, u_char auth_flags);
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

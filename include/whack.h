@@ -327,10 +327,3 @@ extern bool lsw_alias_cmp(const char *needle, const char *haystack);
 extern void whack_process(int whackfd, struct whack_message msg);
 
 #endif /* _WHACK_H */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

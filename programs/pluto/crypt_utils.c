@@ -70,10 +70,3 @@ void pluto_crypto_copychunk(wire_chunk_t *spacetrack
     /* copy data into it */
     memcpy(space_chunk_ptr(space, new), data.ptr, data.len);
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

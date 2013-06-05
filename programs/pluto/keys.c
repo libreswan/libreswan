@@ -941,10 +941,3 @@ void list_public_keys(bool utc, bool check_pub_keys)
 	p = p->next;
     }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

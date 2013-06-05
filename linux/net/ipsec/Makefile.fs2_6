@@ -140,9 +140,3 @@ ipsec-$(CONFIG_KLIPS_IPCOMP) += ${base-ipcomp-objs}
 
 EXTRA_CFLAGS += -DIPCOMP_PREFIX -DKLIPS
 EXTRA_CFLAGS += -Icrypto/ocf
-
-# Local Variables:
-# compile-command: "(cd ../../.. && source umlsetup.sh && make -C ${POOLSPACE} module/ipsec.o)"
-# End Variables:
-#
-

@@ -2845,38 +2845,3 @@ xauth_inI1(struct msg_digest *md)
     /* what? */
     return stat;
 }
-
-
-/*
- * $Id: xauth.c,v 1.44 2005/08/05 19:18:47 mcr Exp $
- *
- * $Log: xauth.c,v $
- * Revision 1.44  2005/08/05 19:18:47  mcr
- * 	adjustments for signed issues.
- * 	use sysdep.h.
- *
- * Revision 1.43  2005/07/22 14:05:51  mcr
- * 	fixes for -Werror warnings.
- *
- * Revision 1.42  2005/07/22 14:00:19  mcr
- * 	fixes for -Werror warnings.
- *
- * Revision 1.41  2005/02/16 17:27:41  mcr
- * 	moved recording of xauth username to after the username
- * 	has actually been authenticated.
- * 	Do not record username on client -- I don't think that this
- * 	makes any sense. If it is important, it should be recorded
- * 	(and expressed in do_command()) in a different way.
- *
- * Revision 1.40  2005/02/14 05:58:46  ken
- * Add support for saving the XAUTH username, and then passing it to _updown as PLUTO_XAUTH_USERNAME environment variable
- *
- * Revision 1.39  2005/01/26 07:01:55  mcr
- * 	use phase1.5 msgid instead of msgid.
- *
- *
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

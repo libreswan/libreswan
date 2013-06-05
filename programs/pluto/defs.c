@@ -92,10 +92,3 @@ cmp_chunk(chunk_t a, chunk_t b)
 
     return (cmp_value == 0)? cmp_len : cmp_value;
 };
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

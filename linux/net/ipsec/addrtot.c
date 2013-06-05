@@ -427,9 +427,3 @@ regress()
 }
 
 #endif /* ADDRTOT_MAIN */
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- */

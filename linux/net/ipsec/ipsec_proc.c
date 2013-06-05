@@ -1087,11 +1087,3 @@ ipsec_proc_cleanup()
 	remove_proc_entry("ipsec_version",    PROC_NET);
 	remove_proc_entry("ipsec",            PROC_NET);
 }
-
-/*
- *
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

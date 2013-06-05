@@ -560,10 +560,3 @@ bool duplicate_id(struct id *dst, struct id *src) {
 	dst->name.ptr = clone_bytes(src->name.ptr, src->name.len, "copy of id");
 	return TRUE;
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

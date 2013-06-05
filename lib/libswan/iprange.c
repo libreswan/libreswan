@@ -234,11 +234,3 @@ regress()
 }
 
 #endif /* IPRANGE_MAIN */
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */
- 

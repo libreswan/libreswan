@@ -48,11 +48,3 @@
 
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */

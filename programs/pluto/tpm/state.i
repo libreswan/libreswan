@@ -396,10 +396,3 @@ struct msg_digest {
 	*digest_roof,
 	*chain[ISAKMP_NEXT_ROOF];
 };
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

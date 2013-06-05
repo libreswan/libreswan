@@ -633,11 +633,3 @@ dpd_timeout(struct state *st)
     }
     reset_cur_connection();
 }
-
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

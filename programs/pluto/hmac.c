@@ -319,10 +319,3 @@ void nss_symkey_log(PK11SymKey *key, const char *msg)
 	}
      }
 }
-
-/*
- * Local Variables:
- * c-basic-offset:4
- * c-style: pluto
- * End:
- */

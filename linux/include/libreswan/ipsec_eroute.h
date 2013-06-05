@@ -78,10 +78,3 @@ struct eroute
 
 #define _IPSEC_EROUTE_H_
 #endif /* _IPSEC_EROUTE_H_ */
-
-/*
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

@@ -2552,10 +2552,3 @@ int lsw_ipv6_find_hdr(const struct sk_buff *skb,
 	return nexthdr;
 }
 #endif /* CONFIG_KLIPS_IPV6 */
-
-
-/*
- * Local Variables:
- * c-style: linux
- * End:
- */

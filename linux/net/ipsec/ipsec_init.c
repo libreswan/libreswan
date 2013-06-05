@@ -510,11 +510,3 @@ cleanup_module(void)
 }
 #endif
 #endif /* MODULE */
-
-/*
- *
- * Local variables:
- * c-file-style: "linux"
- * End:
- *
- */

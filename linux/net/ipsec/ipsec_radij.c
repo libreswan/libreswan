@@ -587,11 +587,3 @@ ipsec_rj_walker_delete(struct radij_node *rn, void *w0)
 	
 	return 0;
 }
-
-/*
- *
- * Local Variables:
- * c-file-style: "linux"
- * End:
- *
- */
