@@ -130,11 +130,12 @@ void calc_ke(struct pluto_crypto_req *r)
 	memcpy(gip, &pubk, sizeof(SECKEYPublicKey*));
     }
     
-    DBG(DBG_CRYPT,
+    DBG(DBG_CRYPT, {
        DBG_dump("NSS: Local DH secret:\n"
                 , wire_chunk_ptr(kn, &(kn->secret))
                 , sizeof(SECKEYPrivateKey*));
-       DBG_dump("NSS: Public DH value sent(computed in NSS):\n", wire_chunk_ptr(kn, &(kn->gi)),pubk->u.dh.publicValue.len));
+       DBG_dump("NSS: Public DH value sent(computed in NSS):\n", wire_chunk_ptr(kn, &(kn->gi)),pubk->u.dh.publicValue.len);
+    });
 
     DBG(DBG_CRYPT,
         DBG_dump("NSS: Local DH public value (pointer):\n"

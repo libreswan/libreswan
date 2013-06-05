@@ -357,10 +357,11 @@ compute_proto_keymat(struct state *st
 	}
     }
 
-    DBG(DBG_CRYPT,
+    DBG(DBG_CRYPT, {
 	DBG_log("%s KEYMAT\n",satypename);
 	DBG_dump("  KEYMAT computed:\n", pi->our_keymat, pi->keymat_len);
-	DBG_dump("  Peer KEYMAT computed:\n", pi->peer_keymat, pi->keymat_len));
+	DBG_dump("  Peer KEYMAT computed:\n", pi->peer_keymat, pi->keymat_len);
+    });
 }
 
 static void
@@ -630,9 +631,10 @@ quick_mode_hash12(u_char *dest, const u_char *start, const u_char *roof
     hmac_update(&ctx, start, roof-start);
     hmac_final(dest, &ctx);
 
-    DBG(DBG_CRYPT,
+    DBG(DBG_CRYPT, {
 	DBG_log("HASH(%d) computed:", hash2 + 1);
-	DBG_dump("", dest, ctx.hmac_digest_len));
+	DBG_dump("", dest, ctx.hmac_digest_len);
+    });
     return ctx.hmac_digest_len;
 #   undef hmac_update
 }

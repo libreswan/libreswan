@@ -98,14 +98,15 @@ event_schedule(enum event_type type, time_t tm, struct state *st)
 	    }
     }
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	if (st == NULL)
 	    DBG_log("inserting event %s, timeout in %lu seconds"
 		, enum_show(&timer_event_names, type), (unsigned long)tm);
 	else
 	    DBG_log("inserting event %s, timeout in %lu seconds for #%lu"
 		, enum_show(&timer_event_names, type), (unsigned long)tm
-		, ev->ev_state->st_serialno));
+		, ev->ev_state->st_serialno);
+    });
 
     if (evlist == (struct event *) NULL
 	|| evlist->ev_time >= ev->ev_time)
@@ -122,14 +123,15 @@ event_schedule(enum event_type type, time_t tm, struct state *st)
 	    if (evt->ev_next->ev_time >= ev->ev_time)
 		break;
 
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_CONTROLMORE, {
 	    if (evt->ev_state == NULL)
 		DBG_log("event added after event %s"
 		    , enum_show(&timer_event_names, evt->ev_type));
 	    else
 		DBG_log("event added after event %s for #%lu"
 		    , enum_show(&timer_event_names, evt->ev_type)
-		    , evt->ev_state->st_serialno));
+		    , evt->ev_state->st_serialno);
+	});
 
 	ev->ev_next = evt->ev_next;
 	evt->ev_next = ev;
@@ -684,7 +686,7 @@ next_event(void)
 
     tm = now();
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	if (evlist->ev_state == NULL)
 	    DBG_log("next event %s in %ld seconds"
 		, enum_show(&timer_event_names, evlist->ev_type)
@@ -693,7 +695,8 @@ next_event(void)
 	    DBG_log("next event %s in %ld seconds for #%lu"
 		, enum_show(&timer_event_names, evlist->ev_type)
 		, (long)evlist->ev_time - (long)tm
-		, evlist->ev_state->st_serialno));
+		, evlist->ev_state->st_serialno);
+    });
 
     if (evlist->ev_time - tm <= 0)
 	return 0;

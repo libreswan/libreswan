@@ -757,10 +757,10 @@ informational(struct msg_digest *md)
                 }
 
                 if(tmp_c->gw_info!=NULL){
-                DBG(DBG_CONTROLMORE,
-                DBG_log("Current gw_client_addr: %s", (addrtot(&tmp_c->gw_info->client_id.ip_addr, 0, buftest, sizeof(buftest)), buftest)));
-                DBG(DBG_CONTROLMORE, 
-                DBG_log("Current gw_gw_addr: %s", (addrtot(&tmp_c->gw_info->gw_id.ip_addr, 0, buftest, sizeof(buftest)), buftest)));
+                DBG(DBG_CONTROLMORE, {
+                DBG_log("Current gw_client_addr: %s", (addrtot(&tmp_c->gw_info->client_id.ip_addr, 0, buftest, sizeof(buftest)), buftest));
+                DBG_log("Current gw_gw_addr: %s", (addrtot(&tmp_c->gw_info->gw_id.ip_addr, 0, buftest, sizeof(buftest)), buftest));
+		});
                 }
 
                 }
@@ -777,7 +777,7 @@ informational(struct msg_digest *md)
                 tmp_c->spd.that.host_addr_name = NULL;
                 tmp_c->spd.that.id.ip_addr= tmp_c->spd.that.host_addr;
 
-                DBG(DBG_CONTROLMORE,
+                DBG(DBG_CONTROLMORE, {
                     char buftest[ADDRTOT_BUF];
                     if(sameaddr(&tmp_c->spd.this.host_nexthop, &old_addr)) {
                        DBG_log("Old remote addr %s", (addrtot(&old_addr, 0, buftest, sizeof(buftest)), buftest));
@@ -797,7 +797,7 @@ informational(struct msg_digest *md)
                        tmp_c->spd.that.client.addr = tmp_c->spd.that.host_addr;
                        DBG_log("New that client ip %s", (addrtot(&tmp_c->spd.that.client.addr, 0, buftest, sizeof(buftest)), buftest));
                     }
-                   );
+		});
 
 		tmp_c->host_pair->him.addr = tmp_c->spd.that.host_addr;
 
@@ -947,9 +947,10 @@ process_v1_packet(struct msg_digest **mdp)
 		libreswan_log("Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08lx",
 			     (unsigned long)md->hdr.isa_msgid);
 		/* Let's try and log some info about these to track them down */
-		DBG(DBG_PARSING ,
+		DBG(DBG_PARSING , {
 		DBG_dump("- unknown SA's md->hdr.isa_icookie:", md->hdr.isa_icookie, COOKIE_SIZE);
-		DBG_dump("- unknown SA's md->hdr.isa_rcookie:", md->hdr.isa_rcookie, COOKIE_SIZE) );
+		DBG_dump("- unknown SA's md->hdr.isa_rcookie:", md->hdr.isa_rcookie, COOKIE_SIZE);
+		});
 
 		/* XXX Could send notification back */
 		return;
@@ -1877,9 +1878,10 @@ void process_packet_tail(struct msg_digest **mdp)
 
 	md->digest_roof = pd;
 
-	DBG(DBG_PARSING,
+	DBG(DBG_PARSING, {
 	    if (pbs_left(&md->message_pbs) != 0)
-		DBG_log("removing %d bytes of padding", (int) pbs_left(&md->message_pbs)));
+		DBG_log("removing %d bytes of padding", (int) pbs_left(&md->message_pbs));
+	});
 
 	md->message_pbs.roof = md->message_pbs.cur;
 
@@ -2233,13 +2235,14 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	    if (smc->flags & SMF_REPLY)
 	    {
 
-		DBG(DBG_CONTROL,
+		DBG(DBG_CONTROL, {
 		    char buf[ADDRTOT_BUF];
 		    DBG_log("sending reply packet to %s:%u (from port %u)"
 			      , (addrtot(&st->st_remoteaddr
 					 , 0, buf, sizeof(buf)), buf)
 			      , st->st_remoteport
-			      , st->st_interface->port));
+			      , st->st_interface->port);
+		});
 
 		close_output_pbs(&reply_stream);   /* good form, but actually a no-op */
 

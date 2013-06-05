@@ -147,11 +147,12 @@ read_foodgroup(struct fg_groups *g)
     if (!lexopen(&flp_space, fg_path, TRUE))
     {
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
 	    char cwd[PATH_MAX];
 	    DBG_log("no group file \"%s\" (pwd:%s)"
 		      , fg_path
-		      , getcwd(cwd, sizeof(cwd))));
+		      , getcwd(cwd, sizeof(cwd)));
+	});
     }
     else
     {

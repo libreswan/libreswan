@@ -646,13 +646,13 @@ check_ac_validity(const x509acert_t *ac)
     time_t current_time;
 
     time(&current_time);
-    DBG(DBG_CONTROL | DBG_PARSING,
+    DBG(DBG_CONTROL | DBG_PARSING, {
 	char tbuf[TIMETOA_BUF];
 
 	DBG_log("  not before  : %s", timetoa(&ac->notBefore, TRUE, tbuf, sizeof(tbuf)));
 	DBG_log("  current time: %s", timetoa(&current_time, TRUE, tbuf, sizeof(tbuf)));
 	DBG_log("  not after   : %s", timetoa(&ac->notAfter, TRUE, tbuf, sizeof(tbuf)));
-    );
+    });
 
     if (current_time < ac->notBefore)
 	return "attribute certificate is not valid yet";
@@ -672,13 +672,13 @@ verify_x509acert(x509acert_t *ac, bool strict)
     err_t ugh = NULL;
     time_t valid_until = ac->notAfter;
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	u_char buf[ASN1_BUF_LEN];
 	dntoa((char *)buf, ASN1_BUF_LEN, ac->entityName);
 	DBG_log("holder: '%s'",buf);
 	dntoa((char *)buf, ASN1_BUF_LEN, ac->issuerName);
 	DBG_log("issuer: '%s'",buf);
-    );
+    });
     
     ugh = check_ac_validity(ac);
 

@@ -297,11 +297,11 @@ decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 		*requested_ca = gn;
 	    }
 
-	    DBG(DBG_PARSING | DBG_CONTROL,
+	    DBG(DBG_PARSING | DBG_CONTROL, {
 		char buf[IDTOA_BUF];
 		dntoa_or_null(buf, IDTOA_BUF, ca_name, "%any");
 		DBG_log("requested CA: '%s'", buf);
-	    );
+	    });
 	}
 	else
 	    loglog(RC_LOG_SERIOUS, "ignoring %s certificate request payload",
@@ -345,11 +345,11 @@ ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 		*requested_ca = gn;
 	    }
 
-	    DBG(DBG_PARSING | DBG_CONTROL,
+	    DBG(DBG_PARSING | DBG_CONTROL, {
 		char buf[IDTOA_BUF];
 		dntoa_or_null(buf, IDTOA_BUF, ca_name, "%any");
 		DBG_log("requested CA: '%s'", buf);
-	    );
+	    });
 	}
 	else
 	    loglog(RC_LOG_SERIOUS, "ignoring %s certificate request payload",

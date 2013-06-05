@@ -1512,13 +1512,13 @@ add_connection(const struct whack_message *wm)
 
 	/* log all about this connection */
 	libreswan_log("added connection description \"%s\"", c->name);
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
 	    char topo[CONN_BUF_LEN];
 
 	    (void) format_connection(topo, sizeof(topo), c, &c->spd);
 
 	    DBG_log("%s", topo);
-	);
+	});
 
 #ifdef HAVE_LABELED_IPSEC
 	if(c->loopback 
@@ -1777,10 +1777,11 @@ ikev2_ts_instantiate(struct connection *c
 		, d->name, c->name
 		, enum_name(&routing_story, c->spd.routing)
 		, enum_name(&routing_story, d->spd.routing)));
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	char instbuf[512];
 	DBG_log("new ikev2_ts instance: %s"
-		, (format_connection(instbuf, sizeof(instbuf), d, &d->spd), instbuf)));
+		, (format_connection(instbuf, sizeof(instbuf), d, &d->spd), instbuf));
+    });
 
     passert(d->spd.next == NULL);
 
@@ -1824,12 +1825,12 @@ ikev2_ts_instantiate(struct connection *c
 	d->instance_initiation_ok = TRUE;
 #endif
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	char topo[CONN_BUF_LEN];
 
 	(void) format_connection(topo, sizeof(topo), d, &d->spd);
 	DBG_log("instantiated \"%s\": %s", d->name, topo);
-    );
+    });
     return d;
 }
 #endif
@@ -1849,10 +1850,11 @@ oppo_instantiate(struct connection *c
 		, d->name, c->name
 		, enum_name(&routing_story, c->spd.routing)
 		, enum_name(&routing_story, d->spd.routing)));
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	char instbuf[512];
 	DBG_log("new oppo instance: %s"
-		, (format_connection(instbuf, sizeof(instbuf), d, &d->spd), instbuf)));
+		, (format_connection(instbuf, sizeof(instbuf), d, &d->spd), instbuf));
+    });
 
     passert(d->spd.next == NULL);
 
@@ -1907,12 +1909,12 @@ oppo_instantiate(struct connection *c
     if (routed(c->spd.routing))
 	d->instance_initiation_ok = TRUE;
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	char topo[CONN_BUF_LEN];
 
 	(void) format_connection(topo, sizeof(topo), d, &d->spd);
 	DBG_log("instantiated \"%s\": %s", d->name, topo);
-    );
+    });
     return d;
 }
 
@@ -2024,7 +2026,7 @@ find_connection_for_clients(struct spd_route **srp,
 
     passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	char ocb[ADDRTOT_BUF];
 	char pcb[ADDRTOT_BUF];
 
@@ -2032,7 +2034,8 @@ find_connection_for_clients(struct spd_route **srp,
 	addrtot(peer_client, 0, pcb, sizeof(pcb));
 	DBG_log("find_connection: "
 		"looking for policy for connection: %s:%d/%d -> %s:%d/%d"
-		, ocb, transport_proto, our_port, pcb, transport_proto, peer_port));
+		, ocb, transport_proto, our_port, pcb, transport_proto, peer_port);
+    });
 
 
     for (c = connections; c != NULL; c = c->ac_next)
@@ -2384,13 +2387,14 @@ find_host_connection2(const char *func
 		     , const ip_address *him, u_int16_t his_port, lset_t policy)
 {
     struct connection *c;
-    DBG(DBG_CONTROLMORE,
+    DBG(DBG_CONTROLMORE, {
         char mebuf[ADDRTOT_BUF];
         char himbuf[ADDRTOT_BUF];
 	DBG_log("find_host_connection2 called from %s, me=%s:%d him=%s:%d policy=%s", func
 		, (addrtot(me,  0, mebuf,  sizeof(mebuf)),mebuf),   my_port
 		, him ?  (addrtot(him, 0, himbuf, sizeof(himbuf)),himbuf) : "%any"
-		, his_port , bitnamesof(sa_policy_bit_names, policy)));
+		, his_port , bitnamesof(sa_policy_bit_names, policy));
+    });
     c = find_host_pair_connections(__FUNCTION__, me, my_port, him, his_port);
 
     if (policy != LEMPTY) {

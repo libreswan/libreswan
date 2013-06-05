@@ -115,17 +115,17 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	 * if(role == INITIATOR) {
 	 */
 	if(role != INITIATOR) {
-	    DBG(DBG_CRYPT,
+	    DBG(DBG_CRYPT, {
 		DBG_dump_chunk("our  keymat", ikeymat);
 		DBG_dump_chunk("peer keymat", rkeymat);
-	    );
+	    });
 	    st->st_esp.our_keymat = ikeymat.ptr;
 	    st->st_esp.peer_keymat= rkeymat.ptr;
 	} else {
-	    DBG(DBG_CRYPT,
+	    DBG(DBG_CRYPT, {
 		DBG_dump_chunk("our  keymat", rkeymat);
 		DBG_dump_chunk("peer keymat", ikeymat);
-	    );
+	    });
 	    st->st_esp.peer_keymat= ikeymat.ptr;
 	    st->st_esp.our_keymat = rkeymat.ptr;
 	}

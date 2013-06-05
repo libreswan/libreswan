@@ -223,12 +223,13 @@ out_attr(int type
 	    return FALSE;
 	close_output_pbs(&val_pbs);
     }
-    DBG(DBG_EMITTING,
+    DBG(DBG_EMITTING, {
 	enum_names *d = attr_val_descs[type];
 
 	if (d != NULL)
 	    DBG_log("    [%lu is %s]"
-		, val, enum_show(d, val)));
+		, val, enum_show(d, val));
+    });
     return TRUE;
 }
 
@@ -1675,10 +1676,11 @@ parse_ipsec_transform(struct isakmp_transform *trans
 		    , (unsigned)val, enum_show(&ipsec_attr_names, a.isaat_af_type));
 		return FALSE;
 	    }
-	    DBG(DBG_PARSING
-		, if ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV)
+	    DBG(DBG_PARSING, {
+		if ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV)
 		    DBG_log("   [%u is %s]"
-			, (unsigned)val, enum_show(vdesc, val)));
+			, (unsigned)val, enum_show(vdesc, val));
+	    });
 	}
 
 	switch (a.isaat_af_type)

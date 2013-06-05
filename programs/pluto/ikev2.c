@@ -491,9 +491,10 @@ process_v2_packet(struct msg_digest **mdp)
     }
 
     DBG(DBG_CONTROL, DBG_log("Now lets proceed with state specific processing"));
-    DBG(DBG_PARSING,
+    DBG(DBG_PARSING, {
 	if (pbs_left(&md->message_pbs) != 0)
-	    DBG_log("removing %d bytes of padding", (int) pbs_left(&md->message_pbs)));
+	    DBG_log("removing %d bytes of padding", (int) pbs_left(&md->message_pbs));
+    });
     
     md->message_pbs.roof = md->message_pbs.cur;
     
@@ -770,13 +771,14 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	    nat_traversal_change_port_lookup(md, st);
 	}
 #endif
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
 	    char buf[ADDRTOT_BUF];
 	    DBG_log("sending reply packet to %s:%u (from port %u)"
 		      , (addrtot(&st->st_remoteaddr
 				 , 0, buf, sizeof(buf)), buf)
 		      , st->st_remoteport
-		      , st->st_interface->port));
+		      , st->st_interface->port);
+	});
 
 	close_output_pbs(&reply_stream);   /* good form, but actually a no-op */
 

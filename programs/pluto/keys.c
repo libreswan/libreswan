@@ -443,10 +443,11 @@ RSA_check_signature_gen(struct state *st
 
 	{
 	  
-	  DBG(DBG_CONTROL,
+	  DBG(DBG_CONTROL, {
 	      char buf[IDTOA_BUF];
 	      dntoa_or_null(buf, IDTOA_BUF, c->spd.that.ca, "%any");
-	      DBG_log("required CA is '%s'", buf));
+	      DBG_log("required CA is '%s'", buf);
+	  });
 	}
   
 	for (p = pluto_pubkeys; p != NULL; p = *pp)
@@ -459,10 +460,11 @@ RSA_check_signature_gen(struct state *st
 	    {
 		time_t tnow;
 
-		DBG(DBG_CONTROL,
+		DBG(DBG_CONTROL, {
 		    char buf[IDTOA_BUF];
 		    dntoa_or_null(buf, IDTOA_BUF, key->issuer, "%any");
-		    DBG_log("key issuer CA is '%s'", buf));
+		    DBG_log("key issuer CA is '%s'", buf);
+		});
 
 		/* check if found public key has expired */
 		time(&tnow);
@@ -712,12 +714,12 @@ get_preshared_secret(const struct connection *c)
     if(s != NULL) pks = lsw_get_pks(s);
 
 #ifdef DEBUG
-    DBG(DBG_PRIVATE,
+    DBG(DBG_PRIVATE, {
 	if (s == NULL)
 	    DBG_log("no Preshared Key Found");
 	else
 	    DBG_dump_chunk("Preshared Key", pks->u.preshared_secret);
-	);
+    });
 #endif
     return s == NULL? NULL : &pks->u.preshared_secret;
 }
@@ -755,12 +757,12 @@ get_RSA_private_key(const struct connection *c)
     if(s != NULL) pks = lsw_get_pks(s);
 
 #ifdef DEBUG
-    DBG(DBG_PRIVATE,
+    DBG(DBG_PRIVATE, {
 	if (s == NULL)
 	    DBG_log("no RSA key Found");
 	else
 	    DBG_log("rsa key %s found", pks->u.RSA_private_key.pub.keyid);
-	);
+    });
 #endif
     return s == NULL? NULL : &pks->u.RSA_private_key;
 }

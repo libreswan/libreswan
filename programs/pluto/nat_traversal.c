@@ -168,7 +168,7 @@ static void _natd_hash(const struct hash_desc *hasher, unsigned char *hash
 	}
 	hasher->hash_update(&ctx, (const u_char *)&port, sizeof(u_int16_t));
 	hasher->hash_final(hash, &ctx);
-	DBG(DBG_NATT,
+	DBG(DBG_NATT, {
 		DBG_log("_natd_hash: hasher=%p(%d)", hasher, (int)hasher->hash_digest_len);
 		DBG_dump("_natd_hash: icookie=", icookie, COOKIE_SIZE);
 		DBG_dump("_natd_hash: rcookie=", rcookie, COOKIE_SIZE);
@@ -180,7 +180,7 @@ static void _natd_hash(const struct hash_desc *hasher, unsigned char *hash
 		}
 		DBG_log("_natd_hash: port=%d", ntohs(port));
 		DBG_dump("_natd_hash: hash=", hash, hasher->hash_digest_len);
-	);
+	});
 }
 
 /**
@@ -289,7 +289,7 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 	     p != NULL && (!found_me || !found_him);
 	     p = p->next)
 	  {
-	    DBG(DBG_NATT,
+	    DBG(DBG_NATT, {
 		DBG_log("NAT_TRAVERSAL hash=%d (me:%d) (him:%d)"
 			, i, found_me, found_him);
 		DBG_dump("expected NAT-D(me):", hash_me,
@@ -297,7 +297,7 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 		DBG_dump("expected NAT-D(him):", hash_him,
 			 st->st_oakley.prf_hasher->hash_digest_len);
 		DBG_dump("received NAT-D:", p->pbs.cur, pbs_left(&p->pbs));
-		);
+	    });
 
 	    if ( (pbs_left(&p->pbs) == st->st_oakley.prf_hasher->hash_digest_len)
 		 && (memcmp(p->pbs.cur, hash_me
@@ -977,15 +977,15 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	    
 	{
 
-	    DBG(DBG_NATT,
+	    DBG(DBG_NATT, {
 	        char b1[ADDRTOT_BUF];
 	        char b2[ADDRTOT_BUF];
 		DBG_log("NAT-T connection has wrong interface definition %s:%u vs %s:%u"
 			, (addrtot(&st->st_localaddr, 0, b1, sizeof(b1)),b1)
 			, st->st_localport
 			, (addrtot(&st->st_interface->ip_addr, 0, b2, sizeof(b2)),b2)
-			, st->st_interface->port)
-	    );
+			, st->st_interface->port);
+	    });
 
 	    for (i = interfaces; i !=  NULL; i = i->next) {
 		if ((sameaddr(&st->st_localaddr, &i->ip_addr))
@@ -1056,7 +1056,7 @@ void process_pfkey_nat_t_new_mapping(
 			dsta->sa_family, &(nfo.dst));
 		nfo.dport = ntohs(((const struct sockaddr_in *)dsta)->sin_port);
 
-		DBG(DBG_NATT,
+		DBG(DBG_NATT, {
 			char text_said[SATOT_BUF];
 			char _srca[ADDRTOT_BUF];
 			char _dsta[ADDRTOT_BUF];
@@ -1068,7 +1068,7 @@ void process_pfkey_nat_t_new_mapping(
 			addrtot(&nfo.dst, 0, _dsta, ADDRTOT_BUF);
 			DBG_log("new klips mapping %s %s:%d %s:%d",
 				text_said, _srca, nfo.sport, _dsta, nfo.dport);
-		);
+		});
 
 		for_each_state((void *)nat_t_new_klips_mapp, &nfo);
 	}

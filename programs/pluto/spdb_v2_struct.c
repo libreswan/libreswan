@@ -101,11 +101,12 @@ ikev2_out_attr(int type
 		return FALSE;
 	close_output_pbs(&val_pbs);
     }
-    DBG(DBG_EMITTING,
+    DBG(DBG_EMITTING, {
 	enum_names *d = attr_val_descs[type];
 
 	if (d != NULL)
-		DBG_log("    [%lu is %s]", val, enum_show(d, val)));
+		DBG_log("    [%lu is %s]", val, enum_show(d, val));
+    });
     return TRUE;
 }
 

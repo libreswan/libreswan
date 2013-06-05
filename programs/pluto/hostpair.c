@@ -166,14 +166,15 @@ find_host_pair(const ip_address *myaddr
 
     for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next)
     {
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_CONTROLMORE, {
 	    char b1[ADDRTOT_BUF];
 	    char b2[ADDRTOT_BUF];
 	    DBG_log("find_host_pair: comparing to %s:%d %s:%d\n"
 		      , (addrtot(&p->me.addr, 0, b1, sizeof(b1)), b1)
 		      , p->me.host_port
 		      , (addrtot(&p->him.addr, 0, b2, sizeof(b2)), b2)
-		      , p->him.host_port));
+		      , p->him.host_port);
+	});
 		   
 	if (sameaddr(&p->me.addr, myaddr)
 	    && (!p->me.host_port_specific || p->me.host_port == myport)
@@ -206,7 +207,7 @@ find_host_pair_connections(const char *func
 {
     struct host_pair *hp = find_host_pair(myaddr, myport, hisaddr, hisport);
 
-    DBG(DBG_CONTROLMORE,
+    DBG(DBG_CONTROLMORE, {
 	char b1[ADDRTOT_BUF];
 	char b2[ADDRTOT_BUF];
 	DBG_log("find_host_pair_conn (%s): %s:%d %s:%d -> hp:%s\n"
@@ -215,7 +216,8 @@ find_host_pair_connections(const char *func
 		  , myport
 		  , hisaddr ? (addrtot(hisaddr, 0, b2, sizeof(b2)), b2) : "%any"
 		  , hisport
-		  , (hp && hp->connections) ? hp->connections->name : "none"));
+		  , (hp && hp->connections) ? hp->connections->name : "none");
+    });
 		   
     return hp == NULL? NULL : hp->connections;
 }
@@ -231,7 +233,7 @@ connect_to_host_pair(struct connection *c)
 					      , c->spd.that.host_port);
 
 
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_CONTROLMORE, {
 	    char b1[ADDRTOT_BUF];
 	    char b2[ADDRTOT_BUF];
 	    DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp:%s\n"
@@ -239,7 +241,8 @@ connect_to_host_pair(struct connection *c)
 		      , c->spd.this.host_port
 		      , (addrtot(&c->spd.that.host_addr, 0, b2,sizeof(b2)), b2)
 		      , c->spd.that.host_port
-		      , (hp && hp->connections) ? hp->connections->name : "none"));
+		      , (hp && hp->connections) ? hp->connections->name : "none");
+	});
 		   
 	if (hp == NULL)
 	{

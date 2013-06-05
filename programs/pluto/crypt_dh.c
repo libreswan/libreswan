@@ -242,11 +242,12 @@ skeyid_preshared(const chunk_t pss
     chunk_t buf1_chunk, buf2_chunk;
     PK11SymKey *shared, *skeyid;
 
-    DBG(DBG_CRYPT,
+    DBG(DBG_CRYPT, {
         DBG_log("NSS: skeyid inputs (pss+NI+NR+shared) hasher: %s", hasher->common.name);
         DBG_dump_chunk("shared-secret: ", shared_chunk);
         DBG_dump_chunk("ni: ", ni);
-        DBG_dump_chunk("nr: ", nr));
+        DBG_dump_chunk("nr: ", nr);
+    });
 
      memcpy(&shared, shared_chunk.ptr, shared_chunk.len);
 
@@ -337,11 +338,12 @@ skeyid_digisig(const chunk_t ni
     chunk_t buf1_chunk, buf2_chunk;
     PK11SymKey *shared, *skeyid;
 
-    DBG(DBG_CRYPT,
+    DBG(DBG_CRYPT, {
 	DBG_log("skeyid inputs (digi+NI+NR+shared) hasher: %s", hasher->common.name);
 	DBG_dump_chunk("shared-secret: ", shared_chunk);
 	DBG_dump_chunk("ni: ", ni);
-	DBG_dump_chunk("nr: ", nr));
+	DBG_dump_chunk("nr: ", nr);
+    });
 
     memcpy(&shared, shared_chunk.ptr, shared_chunk.len);
     
@@ -847,10 +849,10 @@ calc_skeyids_iv(struct pcr_skeyid_q *skq
 	new_iv->len = hasher->hash_digest_len;
 	new_iv->ptr = alloc_bytes(new_iv->len, "calculated new iv");
 
-        DBG(DBG_CRYPT,
+        DBG(DBG_CRYPT, {
             DBG_dump_chunk("DH_i:", gi);
             DBG_dump_chunk("DH_r:", gr);
-        );
+	});
 	hasher->hash_init(&hash_ctx);
 	hasher->hash_update(&hash_ctx, gi.ptr, gi.len);
 	hasher->hash_update(&hash_ctx, gr.ptr, gr.len);
@@ -1061,14 +1063,14 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 	vpss.t.len = 0;
 	total_keysize = skd_bytes + (2*(ska_bytes + ske_bytes + skp_bytes));
 
-	DBG(DBG_CRYPT,
+	DBG(DBG_CRYPT, {
 	    DBG_log("PRF+ input");
 	    DBG_dump_chunk("Ni", vpss.ni);
 	    DBG_dump_chunk("Nr", vpss.nr);
 	    DBG_dump_chunk("SPIi", vpss.spii);
 	    DBG_dump_chunk("SPIr", vpss.spir);
 	    DBG_log("Total keysize needed %d", (int)total_keysize);
-	);
+	});
 	counter.ptr = &vpss.counter[0];
 	counter.len =1;
 
@@ -1274,7 +1276,7 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 	freeanychunk(hmac_ipad);
 	freeanychunk(hmac_pad_prf);
     }
-    DBG(DBG_CRYPT,
+    DBG(DBG_CRYPT, {
 	DBG_dump_chunk("shared:  ", shared);
 	DBG_dump_chunk("skeyseed:", *skeyseed);
 	DBG_dump_chunk("SK_d:", *SK_d);
@@ -1283,7 +1285,8 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 	DBG_dump_chunk("SK_ei:", *SK_ei);
 	DBG_dump_chunk("SK_er:", *SK_er);
 	DBG_dump_chunk("SK_pi:", *SK_pi);
-	DBG_dump_chunk("SK_pr:", *SK_pr));
+	DBG_dump_chunk("SK_pr:", *SK_pr);
+    });
 }
 
 void calc_dh_v2(struct pluto_crypto_req *r)

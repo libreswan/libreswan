@@ -604,7 +604,7 @@ check_crls(void)
 	time_t time_left = crl->nextUpdate - current_time;
 	char buf[ASN1_BUF_LEN];
 
-	DBG(DBG_X509,
+	DBG(DBG_X509, {
 	    dntoa(buf, ASN1_BUF_LEN, crl->issuer);
 	    DBG_log("issuer: '%s'",buf);
 	    if (crl->authKeyID.ptr != NULL)
@@ -614,7 +614,7 @@ check_crls(void)
 		DBG_log("authkey: %s", buf);
 	    }
 	    DBG_log("%ld seconds left", time_left);
-	);
+	});
 	if (time_left < 2*crl_check_interval)
 	    add_crl_fetch_request(crl->issuer, crl->distributionPoints);
 	crl = crl->next;
@@ -651,7 +651,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	dntoa(sbuf, ASN1_BUF_LEN, cert->subject);
 	dntoa(ibuf, ASN1_BUF_LEN, cert->issuer);
 
-	DBG(DBG_X509,
+	DBG(DBG_X509, {
 	    DBG_log("subject: '%s'", sbuf);
 	    DBG_log("issuer:  '%s'", ibuf);
 	    if (cert->authKeyID.ptr != NULL)
@@ -661,7 +661,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 			, abuf, ASN1_BUF_LEN);
 		DBG_log("authkey:  %s", abuf);
 	    }
-	);
+	});
 
 	ugh = check_validity(cert, until);
 

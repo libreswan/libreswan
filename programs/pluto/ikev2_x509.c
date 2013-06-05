@@ -258,12 +258,12 @@ doi_send_ikev2_cert_thinking(struct state *st)
 		     (c->policy & POLICY_RSASIG) ? "" : "no",
 		     prettypolicy(c->policy)));
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	bool gotcertrequest = st->hidden_variables.st_got_certrequest;
 	DBG_log(" sendcert: %s and I did%s get a certificate request "
 		  , enum_show(&certpolicy_type_names, policy)
-		  , gotcertrequest ? "" : " not")
-       );
+		  , gotcertrequest ? "" : " not");
+    });
 
     DBG(DBG_CONTROL, DBG_log(" so %ssend cert.", send_cert ? "" : "do not "));
 

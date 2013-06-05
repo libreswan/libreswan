@@ -1681,12 +1681,12 @@ scan_proc_shunts(void)
                     subnettot(&eri.his, 0, hist, sizeof(hist));
                     satot(&eri.said, 0, sat, sizeof(sat));
 
-                    DBG(DBG_CONTROL,
+                    DBG(DBG_CONTROL, {
                         int ourport = ntohs(portof(&eri.ours.addr));
                         int hisport = ntohs(portof(&eri.his.addr));
                         DBG_log("add orphaned shunt %s:%d -> %s:%d => %s:%d"
-                            , ourst, ourport, hist, hisport, sat, eri.transport_proto)
-                     );
+                            , ourst, ourport, hist, hisport, sat, eri.transport_proto);
+		    });
                     eri.next = orphaned_holds;
                     orphaned_holds = clone_thing(eri, "orphaned %hold");
                 }

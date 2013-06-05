@@ -65,11 +65,11 @@ v2prfplus(struct v2prf_stuff *vps)
     hmac_update_chunk(&ctx, vps->spir);
     hmac_update(&ctx, vps->counter, 1);
     hmac_final_chunk(vps->t, "skeyseed_t1", &ctx);
-    DBG(DBG_CRYPT,
+    DBG(DBG_CRYPT, {
 	char b[20];
 	sprintf(b, "prf+[%u]:", vps->counter[0]);
 	DBG_dump_chunk(b, vps->t);
-    );
+    });
 
     vps->counter[0]++;
     vps->availbytes  = vps->t.len;

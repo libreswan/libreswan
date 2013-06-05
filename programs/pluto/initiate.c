@@ -842,10 +842,11 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 	err_t ugh = ac_ugh;
 	char mycredentialstr[IDTOA_BUF];
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
 	    char cib[CONN_INST_BUF];
 	    DBG_log("creating new instance from \"%s\"%s" , c->name
-				 , (fmt_conn_instance(c, cib), cib)));
+				 , (fmt_conn_instance(c, cib), cib));
+	});
 
 	idtoa(&sr->this.id, mycredentialstr, sizeof(mycredentialstr));
 

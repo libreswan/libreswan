@@ -2400,9 +2400,10 @@ send_isakmp_notification(struct state *st
         hmac_update(&ctx, r_hash_start, rbody.cur-r_hash_start);
         hmac_final(r_hashval, &ctx);  
      
-        DBG(DBG_CRYPT,
+        DBG(DBG_CRYPT, {
                 DBG_log("HASH computed:");
-                DBG_dump("", r_hashval, ctx.hmac_digest_len));
+                DBG_dump("", r_hashval, ctx.hmac_digest_len);
+	});
     }
     /* save old IV (this prevents from copying a whole new state object
      * for NOTIFICATION / DELETE messages we don't need to maintain a state
@@ -2575,10 +2576,10 @@ send_notification(struct state *sndst, u_int16_t type, struct state *encst,
 	hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur-r_hash_start);
 	hmac_final(r_hashval, &ctx);
 
-	DBG(DBG_CRYPT,
+	DBG(DBG_CRYPT, {
 	    DBG_log("HASH(1) computed:");
 	    DBG_dump("", r_hashval, ctx.hmac_digest_len);
-	);
+	});
     }
 
     /* Encrypt message (preserve st_iv) */
@@ -2832,10 +2833,10 @@ ikev1_delete_out(struct state *st)
 	hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur-r_hash_start);
 	hmac_final(r_hashval, &ctx);
 
-	DBG(DBG_CRYPT,
+	DBG(DBG_CRYPT, {
 	    DBG_log("HASH(1) computed:");
 	    DBG_dump("", r_hashval, ctx.hmac_digest_len);
-	);
+	});
     }
 
     /* Do a dance to avoid needing a new state object.

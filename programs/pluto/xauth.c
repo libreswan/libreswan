@@ -391,9 +391,10 @@ xauth_mode_cfg_hash(u_char *dest
     hmac_update(&ctx, start, roof-start);
     hmac_final(dest, &ctx);
 
-    DBG(DBG_CRYPT,
+    DBG(DBG_CRYPT, {
 	DBG_log("XAUTH: HASH computed:");
- 	DBG_dump("", dest, ctx.hmac_digest_len)); 
+ 	DBG_dump("", dest, ctx.hmac_digest_len);
+    }); 
     return ctx.hmac_digest_len;
 }
 

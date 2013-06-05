@@ -395,13 +395,12 @@ read_packet(struct msg_digest *md)
 	, packet_len, "packet");
 
     DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL,
-	{
 	    DBG_log("*received %d bytes from %s:%u on %s (port=%d)"
 		    , (int) pbs_room(&md->packet_pbs)
 		    , ip_str(cur_from), (unsigned) cur_from_port
 		    , ifp->ip_dev->id_rname
-		    , ifp->port);
-	});
+		    , ifp->port)
+	);
 
     DBG(DBG_RAW,
 	DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));

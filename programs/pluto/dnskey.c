@@ -1990,13 +1990,13 @@ handle_adns_answer(void)
 		ugh = builddiag("failure processing %s record of DNS answer for %s: %s"
 		    , typename, name_buf, ugh);
 	}
-	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL | DBG_DNS,
+	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL | DBG_DNS, {
 	    if (ugh == NULL)
 		DBG_log("asynch DNS answer %lu for %s of %s"
 		    , cr->query.serial, typename, name_buf);
 	    else
 		DBG_log("asynch DNS answer %lu %s", cr->query.serial, ugh);
-	    );
+	});
 
 	passert(GLOBALS_ARE_RESET());
 	cr->cont_fn(cr, ugh);

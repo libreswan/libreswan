@@ -535,10 +535,10 @@ fetch_thread(void *arg UNUSED)
 
 	if (status == ETIMEDOUT)
 	{
-	    DBG(DBG_CONTROL,
+	    DBG(DBG_CONTROL, {
 		DBG_log(" ");
-		DBG_log("*time to check crls")
-	    );
+		DBG_log("*time to check crls");
+	    });
 	    check_crls();
 	}
 	else

@@ -1809,10 +1809,10 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 	said_next->text_said = text_said;
 	said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
-	DBG(DBG_CRYPT,
+	DBG(DBG_CRYPT, {
 	  DBG_dump("esp enckey:",  said_next->enckey,  said_next->enckeylen);
 	  DBG_dump("esp authkey:", said_next->authkey, said_next->authkeylen);
-	);
+	});
 
 	if(inbound) {
 	    /*
@@ -2333,10 +2333,11 @@ static void look_for_replacement_state(struct state *st)
     struct connection *c = st->st_connection;
     struct state *ost = state_with_serialno(c->newest_ipsec_sa);
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	DBG_log("checking if this is a replacement state");
 	DBG_log("  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu "
-		, st, ost, st->st_serialno, ost?ost->st_serialno : 0));
+		, st, ost, st->st_serialno, ost?ost->st_serialno : 0);
+    });
 
     if(ost && ost != st && ost->st_serialno != st->st_serialno) {
 	/*
@@ -2697,7 +2698,7 @@ route_and_eroute(struct connection *c USED_BY_KLIPS
         {
             sr->routing = RT_ROUTED_TUNNEL;
 
-            DBG(DBG_CONTROL,
+            DBG(DBG_CONTROL, {
                 char cib[CONN_INST_BUF];
                 DBG_log("route_and_eroute: instance \"%s\"%s, setting eroute_owner {spd=%p,sr=%p} to #%ld (was #%ld) (newest_ipsec_sa=#%ld)"
                         , st->st_connection->name
@@ -2705,7 +2706,8 @@ route_and_eroute(struct connection *c USED_BY_KLIPS
                         , &st->st_connection->spd, sr
                         , st->st_serialno
                         , sr->eroute_owner
-                        , st->st_connection->newest_ipsec_sa));
+                        , st->st_connection->newest_ipsec_sa);
+	    });
             sr->eroute_owner = st->st_serialno;
             /* clear host shunts that clash with freshly installed route */
             clear_narrow_holds(&sr->this.client, &sr->that.client, sr->this.protocol);

@@ -206,9 +206,10 @@ state_hash(const u_char *icookie, const u_char *rcookie)
 {
     u_int i = 0, j;
 
-    DBG(DBG_RAW | DBG_CONTROL,
+    DBG(DBG_RAW | DBG_CONTROL, {
 	DBG_dump("ICOOKIE:", icookie, COOKIE_SIZE);
-	DBG_dump("RCOOKIE:", rcookie, COOKIE_SIZE));
+	DBG_dump("RCOOKIE:", rcookie, COOKIE_SIZE);
+    });
 
     /* XXX the following hash is pretty pathetic */
 
@@ -1081,13 +1082,14 @@ find_state_ikev1(const u_char *icookie
 	st = st->st_hashchain_next;
     }
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	if (st == NULL)
 	    DBG_log("v1 state object not found");
 	else
 	    DBG_log("v1 state object #%lu found, in %s"
 		, st->st_serialno
-		, enum_show(&state_names, st->st_state)));
+		, enum_show(&state_names, st->st_state));
+    });
 
     return st;
 }
@@ -1118,13 +1120,14 @@ find_state_ikev1_loopback(const u_char *icookie
         st = st->st_hashchain_next;
     }
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
         if (st == NULL)
             DBG_log("loopback: v1 state object not found");
         else
             DBG_log("loopback: v1 state object #%lu found, in %s"
                 , st->st_serialno
-                , enum_show(&state_names, st->st_state)));
+                , enum_show(&state_names, st->st_state));
+    });
 
     return st;
 }
@@ -1155,13 +1158,14 @@ find_state_ikev2_parent(const u_char *icookie
 	st = st->st_hashchain_next;
     }
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	if (st == NULL)
 	    DBG_log("v2 state object not found");
 	else
 	    DBG_log("v2 state object #%lu found, in %s"
 		, st->st_serialno
-		, enum_show(&state_names, st->st_state)));
+		, enum_show(&state_names, st->st_state));
+    });
 
     return st;
 }
@@ -1189,13 +1193,14 @@ find_state_ikev2_parent_init(const u_char *icookie)
 	st = st->st_hashchain_next;
     }
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	if (st == NULL)
 	    DBG_log("v2 state object not found");
 	else
 	    DBG_log("v2 state object #%lu found, in %s"
 		, st->st_serialno
-		, enum_show(&state_names, st->st_state)));
+		, enum_show(&state_names, st->st_state));
+    });
 
     return st;
 }
@@ -1225,13 +1230,14 @@ find_state_ikev2_child(const u_char *icookie
 	st = st->st_hashchain_next;
     }
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	if (st == NULL)
 	    DBG_log("v2 state object not found");
 	else
 	    DBG_log("v2 state object #%lu found, in %s"
 		, st->st_serialno
-		, enum_show(&state_names, st->st_state)));
+		, enum_show(&state_names, st->st_state));
+    });
 
     return st;
 }
@@ -1269,13 +1275,14 @@ find_state_ikev2_child_to_delete(const u_char *icookie
 	st = st->st_hashchain_next;
     }
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	if (st == NULL)
 	    DBG_log("v2 child state object not found");
 	else
 	    DBG_log("v2 child state object #%lu found, in %s"
 		, st->st_serialno
-		, enum_show(&state_names, st->st_state)));
+		, enum_show(&state_names, st->st_state));
+    });
 
     return st;
 }
@@ -1309,13 +1316,14 @@ find_info_state(const u_char *icookie
 	st = st->st_hashchain_next;
     }
 
-    DBG(DBG_CONTROL,
+    DBG(DBG_CONTROL, {
 	if (st == NULL)
 	    DBG_log("p15 state object not found");
 	else
 	    DBG_log("p15 state object #%lu found, in %s"
 		, st->st_serialno
-		, enum_show(&state_names, st->st_state)));
+		, enum_show(&state_names, st->st_state));
+    });
 
     return st;
 }
