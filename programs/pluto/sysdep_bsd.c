@@ -39,7 +39,7 @@
 #include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
-#include "socketwrapper.h
+#include "socketwrapper.h"
 #include "constants.h"
 #include "lswlog.h"
 
