@@ -36,6 +36,7 @@ gcc
 make
 flex
 bison
+ccache
 gmp-devel
 nss-devel
 nspr-devel
