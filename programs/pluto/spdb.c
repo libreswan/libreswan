@@ -1075,6 +1075,7 @@ static void free_sa_v2_trans(struct db_v2_trans *tr)
 void free_sa_prop(struct db_prop *dp)
 {
 	unsigned int i;
+
 	for (i = 0; i < dp->trans_cnt; i++)
 		free_sa_trans(&dp->trans[i]);
 	if (dp->trans) {
@@ -1086,6 +1087,7 @@ void free_sa_prop(struct db_prop *dp)
 static void free_sa_v2_prop(struct db_v2_prop_conj *dp)
 {
 	unsigned int i;
+
 	for (i = 0; i < dp->trans_cnt; i++)
 		free_sa_v2_trans(&dp->trans[i]);
 	if (dp->trans) {
@@ -1097,6 +1099,7 @@ static void free_sa_v2_prop(struct db_v2_prop_conj *dp)
 void free_sa_prop_conj(struct db_prop_conj *pc)
 {
 	unsigned int i;
+
 	for (i = 0; i < pc->prop_cnt; i++)
 		free_sa_prop(&pc->props[i]);
 	if (pc->props)
@@ -1106,6 +1109,7 @@ void free_sa_prop_conj(struct db_prop_conj *pc)
 static void free_sa_v2_prop_disj(struct db_v2_prop *pc)
 {
 	unsigned int i;
+
 	for (i = 0; i < pc->prop_cnt; i++)
 		free_sa_v2_prop(&pc->props[i]);
 	if (pc->props)
@@ -1115,6 +1119,7 @@ static void free_sa_v2_prop_disj(struct db_v2_prop *pc)
 void free_sa(struct db_sa *f)
 {
 	unsigned int i;
+
 	if (f == NULL)
 		return;
 

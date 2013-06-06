@@ -39,6 +39,7 @@ static int __ip_route_output_key(struct rtable **rp, struct flowi *flp);
 static int destroy_route(void *r)
 {
 	struct ipv4_route *route = r;
+
 	list_del(&route->entry);
 	return 0;
 }

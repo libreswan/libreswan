@@ -18,6 +18,7 @@ static void sha256_hash_final(u_char *hash, sha256_context *ctx)
 {
 	unsigned int len;
 	SECStatus s;
+
 	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_256_DIGEST_SIZE);
 	PR_ASSERT(len == SHA2_256_DIGEST_SIZE);
 	PR_ASSERT(s == SECSuccess);
@@ -29,6 +30,7 @@ static void sha384_hash_final(u_char *hash, sha512_context *ctx)
 {
 	unsigned int len;
 	SECStatus s;
+
 	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_384_DIGEST_SIZE);
 	PR_ASSERT(len == SHA2_384_DIGEST_SIZE);
 	PR_ASSERT(s == SECSuccess);
@@ -40,6 +42,7 @@ static void sha512_hash_final(u_char *hash, sha512_context *ctx)
 {
 	unsigned int len;
 	SECStatus s;
+
 	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_512_DIGEST_SIZE);
 	PR_ASSERT(len == SHA2_512_DIGEST_SIZE);
 	PR_ASSERT(s == SECSuccess);
@@ -147,6 +150,7 @@ int ike_alg_sha2_init(void);
 int ike_alg_sha2_init(void)
 {
 	int ret;
+
 	ret = ike_alg_register_hash(&hash_desc_sha2_512);
 	if (ret)
 		goto out;

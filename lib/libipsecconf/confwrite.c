@@ -588,6 +588,7 @@ void confwrite_conn(FILE *out,
 void confwrite(struct starter_config *cfg, FILE *out)
 {
 	struct starter_conn *conn;
+
 /*	int i;
  */
 	/* output version number */

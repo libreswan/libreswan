@@ -117,12 +117,14 @@
 static inline const char *enc_name_id(unsigned id)
 {
 	static char buf[16];
+
 	snprintf(buf, sizeof(buf), "_ID%d", id);
 	return buf;
 }
 static inline const char *auth_name_id(unsigned id)
 {
 	static char buf[16];
+
 	snprintf(buf, sizeof(buf), "_ID%d", id);
 	return buf;
 }

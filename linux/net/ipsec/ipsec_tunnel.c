@@ -932,6 +932,7 @@ void ipsec_tunnel_xsm_complete(struct ipsec_xmit_state *ixs,
 {
 	unsigned char nexthdr;
 	int nexthdroff;
+
 	if (stat != IPSEC_XMIT_OK) {
 		if (stat == IPSEC_XMIT_PASS)
 			goto bypass;
@@ -1822,6 +1823,7 @@ DEBUG_NO_STATIC void ipsec_tunnel_upd_encap_cleanup(void)
 	list_for_each_entry_safe(ctx, tmp, &ipsec_tunnel_udp_encap_list,
 				 link) {
 		struct sock *sk = ctx->sk;
+
 		/* revert the socket back */
 		udp_sk(sk)->encap_type = 0;
 		udp_sk(sk)->encap_rcv  = NULL;

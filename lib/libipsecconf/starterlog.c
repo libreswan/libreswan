@@ -52,6 +52,7 @@ static void do_print_info(int level, const char *buff)
 static void log_info_multiline(int level, const char *buff)
 {
 	char *copy, *b, *ptr, *end;
+
 	if (!buff)
 		return;
 
@@ -79,6 +80,7 @@ void starter_log(int level, const char *fmt, ...)
 {
 	va_list args;
 	static char buff[BUFF_SIZE];
+
 	if ((!_debug) && (level == LOG_LEVEL_DEBUG))
 		return;
 

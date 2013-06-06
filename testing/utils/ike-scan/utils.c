@@ -234,6 +234,7 @@ char *make_message(const char *fmt, ...)
 	size_t size = 100;
 	char *p;
 	va_list ap;
+
 	p = Malloc(size);
 	while (1) {
 		/* Try to print in the allocated space. */
@@ -305,6 +306,7 @@ char *printable(unsigned char *string, size_t size)
 	unsigned char *cp;
 	size_t outlen;
 	unsigned i;
+
 /*
  *	If the input string is NULL, return an empty string.
  */
@@ -416,6 +418,7 @@ char *hexstring(unsigned char *data, size_t size)
 	char *r;
 	unsigned char *cp;
 	unsigned i;
+
 /*
  *	If the input data is NULL, return an empty string.
  */
@@ -585,6 +588,7 @@ unsigned char *hmac_md5(const unsigned char *text, size_t text_len,
 			size_t key_len, unsigned char *md)
 {
 	static unsigned char m[16];
+
 #ifdef HAVE_OPENSSL
 	MD5_CTX context;
 #else
@@ -700,6 +704,7 @@ unsigned char *hmac_sha1(const unsigned char *text, size_t text_len,
 			 size_t key_len, unsigned char *md)
 {
 	static unsigned char m[20];
+
 #ifdef HAVE_OPENSSL
 	SHA_CTX context;
 #else

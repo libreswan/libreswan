@@ -249,6 +249,7 @@ static inline void ipsec_rcv_redodebug(struct ipsec_rcv_state *irs)
 DEBUG_NO_STATIC char *ipsec_rcv_err(int err)
 {
 	static char tmp[32];
+
 	switch ((int) err) {
 	case IPSEC_RCV_PENDING:                 return "IPSEC_RCV_PENDING";
 
@@ -519,6 +520,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 	struct ipsec_sa* ipsnext = NULL;
 	struct sk_buff *skb;
 	struct iphdr *ipp = lsw_ip4_hdr(irs);
+
 #ifdef CONFIG_KLIPS_IPV6
 	struct ipv6hdr *ipp6 = lsw_ip6_hdr(irs);
 #endif  /* CONFIG_KLIPS_IPV6 */

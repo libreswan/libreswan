@@ -596,6 +596,7 @@ void whack_handle(int whackctlfd)
 			     &whackaddrlen);
 	/* Note: actual value in n should fit in int.  To print, cast to int. */
 	ssize_t n;
+
 	/* static int msgnum=0; */
 
 	if (whackfd < 0) {

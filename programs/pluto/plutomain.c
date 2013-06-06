@@ -332,6 +332,7 @@ static void set_cfg_string(char **target, char *value)
 static void pluto_init_nss(char *confddir)
 {
 	char buf[100];
+
 	snprintf(buf, sizeof(buf), "%s", confddir);
 	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", buf);
 	SECStatus nss_init_status = NSS_InitReadWrite(buf);

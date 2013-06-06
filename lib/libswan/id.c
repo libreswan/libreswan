@@ -161,6 +161,7 @@ err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
 static int keyidtoa(char *dst, size_t dstlen, chunk_t keyid)
 {
 	int n = datatot(keyid.ptr, keyid.len, 'x', dst, dstlen);
+
 	return ((n < (int)dstlen) ? n : (int)dstlen) - 1;
 }
 

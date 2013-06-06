@@ -105,6 +105,7 @@ static void dump_said(ip_said *s, int line)
 int pfkey_alloc_eroute(struct eroute** eroute)
 {
 	int error = 0;
+
 	if (*eroute) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_alloc_eroute: "
@@ -173,6 +174,7 @@ errlab:
 DEBUG_NO_STATIC int pfkey_ipsec_sa_init(struct ipsec_sa *ipsp)
 {
 	int rc;
+
 	KLIPS_PRINT(debug_pfkey, "Calling SA_INIT\n");
 	rc = ipsec_sa_init(ipsp);
 	return rc;
@@ -433,6 +435,7 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 	uint8_t satype =
 		((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED])->
 		sadb_msg_satype;
+
 #ifdef NAT_TRAVERSAL
 	struct ipsec_sa *nat_t_ips_saved = NULL;
 #endif

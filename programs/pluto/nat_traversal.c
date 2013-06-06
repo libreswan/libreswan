@@ -200,6 +200,7 @@ static void _natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, struct state *st)
 {
 	bool r = TRUE;
+
 	DBG(DBG_NATT,
 	    DBG_log("nat add vid. port: %d nonike: %d",
 		    nat_traversal_support_port_floating,
@@ -648,6 +649,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 void nat_traversal_show_result(u_int32_t nt, u_int16_t sport)
 {
 	const char *rslt = NULL;
+
 	switch (nt & NAT_T_DETECTED) {
 	case 0:
 		rslt = "no NAT detected";
@@ -798,6 +800,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 {
 	unsigned int *nat_kap_st = (unsigned int *)data;
 	const struct connection *c = st->st_connection;
+
 	if (!c)
 		return;
 

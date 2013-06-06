@@ -128,6 +128,7 @@ void hmac_final(u_char *output, struct hmac_ctx *ctx)
 	unsigned int outlen = 0;
 	SECStatus status = PK11_DigestFinal(ctx->ctx_nss, output, &outlen,
 					    ctx->hmac_digest_len);
+
 	PR_ASSERT(status == SECSuccess);
 	PR_ASSERT(outlen == ctx->hmac_digest_len);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);

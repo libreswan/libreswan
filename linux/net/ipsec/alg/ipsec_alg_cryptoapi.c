@@ -209,6 +209,7 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 static int setup_ipsec_alg_capi_cipher(struct ipsec_alg_capi_cipher *cptr)
 {
 	int ret;
+
 	cptr->alg.ixt_version = IPSEC_ALG_VERSION;
 	cptr->alg.ixt_module = THIS_MODULE;
 	atomic_set(&cptr->alg.ixt_refcnt, 0);
@@ -322,6 +323,7 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 		.offset = (unsigned long)(in) % PAGE_SIZE,
 		.length = ilen,
 	};
+
 	if (debug > 1)
 		printk(KERN_DEBUG "klips_debug:_capi_cbc_encrypt:"
 		       "key_e=%p "
@@ -347,6 +349,7 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 static int setup_cipher_list(struct ipsec_alg_capi_cipher* clist)
 {
 	struct ipsec_alg_capi_cipher *cptr;
+
 	/* foreach cipher in list ... */
 	for (cptr = clist; cptr->ciphername; cptr++) {
 		/*
@@ -397,6 +400,7 @@ static int setup_cipher_list(struct ipsec_alg_capi_cipher* clist)
 static int unsetup_cipher_list(struct ipsec_alg_capi_cipher* clist)
 {
 	struct ipsec_alg_capi_cipher *cptr;
+
 	/* foreach cipher in list ... */
 	for (cptr = clist; cptr->ciphername; cptr++) {
 		if (cptr->alg.ixt_state & IPSEC_ALG_ST_REGISTERED)
@@ -411,6 +415,7 @@ static int test_cipher_list(struct ipsec_alg_capi_cipher* clist)
 {
 	int test_ret;
 	struct ipsec_alg_capi_cipher *cptr;
+
 	/* foreach cipher in list ... */
 	for (cptr = clist; cptr->ciphername; cptr++) {
 		if (cptr->alg.ixt_state & IPSEC_ALG_ST_REGISTERED) {
@@ -430,6 +435,7 @@ static int test_cipher_list(struct ipsec_alg_capi_cipher* clist)
 
 IPSEC_ALG_MODULE_INIT( ipsec_cryptoapi_init ){
 	int ret, test_ret;
+
 	if ((ret = setup_cipher_list(alg_capi_carray)) < 0)
 		return -EPROTONOSUPPORT;
 

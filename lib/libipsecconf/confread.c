@@ -221,6 +221,7 @@ static
 void free_list(char **list)
 {
 	char **s;
+
 	for (s = list; *s; s++)
 		free(*s);
 	free(list);
@@ -1467,6 +1468,7 @@ struct starter_config *confread_load(const char *file,
 	struct section_list *sconn;
 	int err = 0;
 	int connerr;
+
 #ifdef DNSSEC
 	struct ub_ctx *dnsctx =  ub_ctx_create();
 	unbound_init(dnsctx);
@@ -1582,6 +1584,7 @@ struct starter_config *confread_load(const char *file,
 static void confread_free_conn(struct starter_conn *conn)
 {
 	int i;
+
 	FREE_STR(conn->left.iface);
 	FREE_STR(conn->left.id);
 	FREE_STR(conn->left.rsakey1);
@@ -1616,6 +1619,7 @@ void confread_free(struct starter_config *cfg)
 {
 	int i;
 	struct starter_conn *conn, *c;
+
 	FREE_LST(cfg->setup.interfaces);
 	FREE_STR(cfg->setup.virtual_private);
 	FREE_STR(cfg->setup.listen);

@@ -167,6 +167,7 @@ static size_t pgp_old_packet_length(chunk_t *blob)
 static u_char pgp_version(chunk_t *blob)
 {
 	u_char version = *blob->ptr++;
+
 	blob->len--;
 	DBG(DBG_PARSING,
 	    DBG_log("L3 - version:");

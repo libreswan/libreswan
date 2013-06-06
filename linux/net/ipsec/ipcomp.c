@@ -102,6 +102,7 @@ struct sk_buff *skb_compress(struct sk_buff *skb, struct ipsec_sa *ips,
 			     unsigned int *flags)
 {
 	struct iphdr *iph;
+
 #ifdef CONFIG_KLIPS_IPV6
 	struct ipv6hdr *iph6;
 #endif
@@ -363,6 +364,7 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips,
 	struct sk_buff *nskb = NULL;
 	/* original ip header */
 	struct iphdr *oiph, *iph;
+
 #ifdef CONFIG_KLIPS_IPV6
 	struct ipv6hdr *oiph6, *iph6;
 #endif

@@ -350,6 +350,7 @@ static __inline__ void __hlist_del(struct hlist_node *n)
 {
 	struct hlist_node *next = n->next;
 	struct hlist_node **pprev = n->pprev;
+
 	*pprev = next;
 	if (next)
 		next->pprev = pprev;
@@ -393,6 +394,7 @@ static __inline__ void hlist_add_head(struct hlist_node *n,
 				      struct hlist_head *h)
 {
 	struct hlist_node *first = h->first;
+
 	n->next = first;
 	if (first)
 		first->pprev = &n->next;
@@ -404,6 +406,7 @@ static __inline__ void hlist_add_head_rcu(struct hlist_node *n,
 					  struct hlist_head *h)
 {
 	struct hlist_node *first = h->first;
+
 	n->next = first;
 	n->pprev = &h->first;
 	if (first)

@@ -1243,6 +1243,7 @@ int pfkey_x_protocol_build(struct sadb_ext **pfkey_ext,
 {
 	int error = 0;
 	struct sadb_protocol * p = (struct sadb_protocol *)*pfkey_ext;
+
 	DEBUGGING(PF_KEY_DEBUG_BUILD, "pfkey_x_protocol_build: protocol=%u\n",
 		  protocol);
 	/* sanity checks... */
@@ -1350,6 +1351,7 @@ int pfkey_msg_build(struct sadb_msg **pfkey_msg, struct sadb_ext *extensions[],
 	unsigned total_size;
 	struct sadb_ext *pfkey_ext;
 	pfkey_ext_track extensions_seen = 0;
+
 #ifndef __KERNEL__
 	struct sadb_ext *extensions_check[K_SADB_EXT_MAX + 1];
 #endif

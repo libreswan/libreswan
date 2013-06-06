@@ -134,6 +134,7 @@ static int recalculate_mast_device_list(struct raw_iface *rifaces)
 static int allocate_mast_device(void)
 {
 	int next;
+
 	if (next_free_mast_device == -1)
 		find_next_free_mast();
 

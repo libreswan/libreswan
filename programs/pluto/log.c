@@ -568,6 +568,7 @@ static volatile sig_atomic_t dying_breath = FALSE;
 void whack_log(int mess_no, const char *message, ...)
 {
 	int wfd;
+
 	pthread_mutex_lock(&log_mutex);
 	wfd = whack_log_fd != NULL_FD ? whack_log_fd :
 	      cur_state != NULL ? cur_state->st_whack_sock :

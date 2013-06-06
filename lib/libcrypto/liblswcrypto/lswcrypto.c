@@ -43,6 +43,7 @@ static void lswcrypto_rsa_mod_exp_crt_sw(mpz_t dst, const mpz_t src,
 					 const mpz_t qInv)
 {
 	mpz_t t2, t3;
+
 	mpz_init(t2);
 	mpz_init(t3);
 

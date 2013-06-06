@@ -72,6 +72,7 @@ static PK11SymKey *pk11_extract_derive_wrapper_lsw(PK11SymKey *base,
 						   int keySize)
 {
 	SECItem param;
+
 	param.data = (unsigned char*)&bs;
 	param.len = sizeof(bs);
 
@@ -1158,6 +1159,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 {
 	struct v2prf_stuff vpss;
 	size_t total_keysize;
+
 	memset(&vpss, 0, sizeof(vpss));
 
 	chunk_t hmac_opad, hmac_ipad, hmac_pad_prf, counter; /*hmac_pad_integ, hmac_zerobyte, hmac_val1, hmac_val2;*/

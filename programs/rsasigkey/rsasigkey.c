@@ -163,6 +163,7 @@ void UpdateNSS_RNG(void)
 {
 	SECStatus rv;
 	unsigned char buf[RAND_BUF_SIZE];
+
 	getrandom(RAND_BUF_SIZE, buf);
 	rv = PK11_RandomUpdate(buf, sizeof buf);
 	assert(rv == SECSuccess);

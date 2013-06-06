@@ -84,6 +84,7 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 			       (role == INITIATOR) &&
 			       (st->st_connection->spd.that.ca.ptr != NULL);
 	}
+
 	DBG(DBG_CONTROL,
 	    DBG_log("Thinking about sending a certificate request (CERTREQ)");
 	    DBG_log("  my policy is : %s", prettypolicy(c->policy));

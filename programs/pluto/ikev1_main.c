@@ -1171,6 +1171,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 	pb_stream *keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
+
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi",
 				     st->st_oakley.group, keyex_pbs));

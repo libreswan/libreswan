@@ -1599,6 +1599,7 @@ stf_status xauth_inR0(struct msg_digest *md)
 stf_status xauth_inR1(struct msg_digest *md)
 {
 	struct state *const st = md->st;
+
 	libreswan_log("XAUTH: xauth_inR1(STF_OK)");
 	/* Back to where we were */
 	st->st_oakley.xauth = 0;

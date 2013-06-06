@@ -54,6 +54,7 @@
 void SHA1Transform(__u32 state[5], __u8 buffer[64])
 {
 	__u32 a, b, c, d, e;
+
 	typedef union {
 		unsigned char c[64];
 		__u32 l[16];

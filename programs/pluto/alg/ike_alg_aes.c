@@ -70,6 +70,7 @@ int ike_alg_aes_init(void);
 int ike_alg_aes_init(void)
 {
 	int ret = ike_alg_register_enc(&algo_aes);
+
 	return ret;
 }
 /*

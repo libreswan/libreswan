@@ -280,6 +280,7 @@ static char *connection_name(struct starter_conn *conn)
 	 * If connection name is '%auto', create a new name like conn_xxxxx
 	 */
 	static char buf[32];
+
 	if (strcmp(conn->name, "%auto") == 0) {
 		sprintf(buf, "conn_%ld", conn->id);
 		return buf;
@@ -822,6 +823,7 @@ int starter_whack_basic_del_conn(struct starter_config *cfg,
 				 struct starter_conn *conn)
 {
 	struct whack_message msg;
+
 	init_whack_msg(&msg);
 	msg.whack_delete = TRUE;
 	msg.name = connection_name(conn);
@@ -844,6 +846,7 @@ int starter_whack_basic_route_conn(struct starter_config *cfg,
 				   struct starter_conn *conn)
 {
 	struct whack_message msg;
+
 	init_whack_msg(&msg);
 	msg.whack_route = TRUE;
 	msg.name = connection_name(conn);
@@ -866,6 +869,7 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 				struct starter_conn *conn)
 {
 	struct whack_message msg;
+
 	init_whack_msg(&msg);
 	msg.whack_initiate = TRUE;
 	msg.whack_async = TRUE;
@@ -876,6 +880,7 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 int starter_whack_listen(struct starter_config *cfg)
 {
 	struct whack_message msg;
+
 	init_whack_msg(&msg);
 	msg.whack_listen = TRUE;
 	return send_whack_msg(&msg, cfg->ctlbase);
@@ -884,6 +889,7 @@ int starter_whack_listen(struct starter_config *cfg)
 int starter_whack_shutdown(struct starter_config *cfg)
 {
 	struct whack_message msg;
+
 	init_whack_msg(&msg);
 	msg.whack_shutdown = TRUE;
 	return send_whack_msg(&msg, cfg->ctlbase);

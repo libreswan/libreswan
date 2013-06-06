@@ -142,6 +142,7 @@ void ipsec_SAtest(void)
 {
 	IPsecSAref_t SAref = 258;
 	struct ipsec_sa ips;
+
 	ips.ips_ref = 772;
 
 	printk("klips_debug:ipsec_SAtest: "

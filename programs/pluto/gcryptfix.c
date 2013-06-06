@@ -161,6 +161,7 @@ void mpi_mulpowm( MPI res, MPI *basearray, MPI *exparray, MPI m)
 	int i, j, idx;
 	MPI *G; /* table with precomputed values of size 2^k */
 	MPI tmp;
+
   #ifdef USE_BARRETT
 	MPI barrett_y, barrett_r1, barrett_r2;
 	int barrett_k;

@@ -1258,6 +1258,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 	unsigned family;
 	unsigned transport_proto;
 	err_t ugh = NULL;
+
 #ifdef HAVE_LABELED_IPSEC
 	char *tmp;
 	struct rtattr *attr;
@@ -1456,6 +1457,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 static void netlink_policy_expire(struct nlmsghdr *n)
 {
 	struct xfrm_user_polexpire up1, *upe;
+
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_userpolicy_id id;
@@ -1915,6 +1917,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 {
 	struct raw_iface *ifp;
 	ip_address lip; /* --listen filter option */
+
 	if (pluto_listen) {
 		err_t e;
 		e = ttoaddr(pluto_listen, 0, 0, &lip);

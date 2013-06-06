@@ -346,6 +346,7 @@ bool build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np)
 {
 	pb_stream cr_pbs;
 	struct isakmp_cr cr_hd;
+
 	cr_hd.isacr_np = np;
 	cr_hd.isacr_type = type;
 
@@ -367,6 +368,7 @@ bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
 {
 	pb_stream cr_pbs;
 	struct ikev2_certreq cr_hd;
+
 	cr_hd.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL;
 	cr_hd.isacertreq_np = np;
 	cr_hd.isacertreq_enc = type;

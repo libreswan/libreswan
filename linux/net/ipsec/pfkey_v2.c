@@ -1140,6 +1140,7 @@ int pfkey_get_info(char *buffer, char **start, off_t offset, int length
 		   )
 {
 	const int max_content = length > 0 ? length - 1 : 0;       /* limit of useful snprintf output */
+
 #ifdef NET_26
 	struct hlist_node *node;
 #endif
@@ -1406,6 +1407,7 @@ int pfkey_init(void)
 {
 	int error = 0;
 	int i;
+
 #ifdef HAVE_PROC_DIR_ENTRY
 	struct proc_dir_entry* entry;
 #endif

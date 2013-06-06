@@ -126,6 +126,7 @@ enum ipsec_rcv_value ipsec_rcv_esp_decrypt_setup(struct ipsec_rcv_state *irs,
 						 unsigned char **authenticator)
 {
 	struct esphdr *espp = irs->protostuff.espstuff.espp;
+
 	/* unsigned char *idat = (unsigned char *)espp; */
 
 	KLIPS_PRINT(debug_rcv,
@@ -150,6 +151,7 @@ enum ipsec_rcv_value ipsec_rcv_esp_authcalc(struct ipsec_rcv_state *irs,
 {
 	struct auth_alg *aa;
 	struct esphdr *espp = irs->protostuff.espstuff.espp;
+
 	union {
 		MD5_CTX md5;
 		SHA1_CTX sha1;

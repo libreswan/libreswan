@@ -176,6 +176,7 @@ int main(int argc, char *argv[])
 	int quiet = 0;                  /* Only print the basic info if nonzero */
 	int multiline = 0;              /* Split decodes across lines if nonzero */
 	int hostno;
+
 /*
  *	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
@@ -931,6 +932,7 @@ void add_host_pattern(const char *pattern, unsigned timeout,
 	unsigned long hoststart;
 	unsigned long hostend;
 	unsigned i;
+
 /*
  *	Make a copy of pattern because we don't want to modify our argument.
  */
@@ -1174,6 +1176,7 @@ struct host_entry *find_host_by_cookie(struct host_entry **he,
 	struct host_entry **p;
 	int found = 0;
 	struct isakmp_hdr hdr_in;
+
 /*
  *	Check that the current list position is not null.  Return NULL if it
  *	is.  It's possible for "he" to be NULL if a packet is received just
@@ -1403,6 +1406,7 @@ void send_packet(int s, unsigned char *packet_out, size_t packet_out_len,
 	struct sockaddr_in sa_peer;
 	NET_SIZE_T sa_peer_len;
 	struct isakmp_hdr *hdr = (struct isakmp_hdr *) packet_out;
+
 /*
  *	Set up the sockaddr_in structure for the host.
  */
@@ -2027,6 +2031,7 @@ void dump_times(unsigned num_hosts)
 char *match_pattern(struct host_entry *he)
 {
 	struct pattern_list *pl;
+
 /*
  *	Return NULL immediately if there is no chance of matching.
  */
@@ -2096,6 +2101,7 @@ void add_recv_time(struct host_entry *he, struct timeval *last_recv_time)
 {
 	struct time_list *p;    /* Temp pointer */
 	struct time_list *te;   /* New timeentry pointer */
+
 /*
  *	Allocate and initialise new time structure
  */
@@ -2139,6 +2145,7 @@ void load_backoff_patterns(const char *patfile, unsigned pattern_fuzz)
 	char line[MAXLINE];
 	int line_no;
 	char *fn;
+
 #ifdef __CYGWIN__
 	char fnbuf[MAXLINE];
 	int fnbuf_siz;
@@ -2213,6 +2220,7 @@ void add_pattern(char *line, unsigned pattern_fuzz)
 	char back_usec_str[7];  /* Backoff microseconds as string */
 	int len;
 	unsigned fuzz;          /* Pattern matching fuzz in ms */
+
 /*
  *	Allocate new pattern list entry and add to tail of patlist.
  */
@@ -2341,6 +2349,7 @@ void load_vid_patterns(const char *vidfile)
 	char line[MAXLINE];
 	int line_no;
 	char *fn;
+
 #ifdef __CYGWIN__
 	char fnbuf[MAXLINE];
 	int fnbuf_siz;
@@ -2410,6 +2419,7 @@ void add_vid_pattern(char *line)
 	struct vid_pattern_list *pe;    /* Pattern entry */
 	struct vid_pattern_list *p;     /* Temp pointer */
 	int result;
+
 /*
  *	Separate line from VID patterns file into name and pattern.
  */

@@ -109,6 +109,7 @@ x509cert_t*get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 static void free_first_authcert(void)
 {
 	x509cert_t *first = x509authcerts;
+
 	x509authcerts = first->next;
 	free_x509cert(first);
 }

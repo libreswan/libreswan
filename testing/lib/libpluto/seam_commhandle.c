@@ -12,6 +12,7 @@ void recv_pcap_packet_gen(u_char *user,
 	const struct iface_port *ifp = &if1;
 	int packet_len;
 	err_t from_ugh;
+
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in sa_in4;

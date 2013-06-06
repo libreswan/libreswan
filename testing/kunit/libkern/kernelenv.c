@@ -78,6 +78,7 @@ struct sk_buff *nfsim_nonlinear_skb(const void *data1,
 				    unsigned int size2)
 {
 	struct sk_buff *skb;
+
 #ifdef WANT_SKB_SHINFO
 	struct skb_extra_info *extra;
 	struct skb_shared_info *sinfo;
@@ -125,6 +126,7 @@ struct sk_buff *nfsim_nonlinear_skb(const void *data1,
 /*static*/ struct sk_buff *nfsim_skb(unsigned int size)
 {
 	struct sk_buff *skb;
+
 #ifdef WANT_SKB_SHINFO
 	struct skb_shared_info *sinfo;
 #endif
@@ -217,6 +219,7 @@ void kfree_skb(struct sk_buff *skb)
 unsigned char *skb_put(struct sk_buff *skb, unsigned int len)
 {
 	unsigned char *tmp = skb->tail;
+
 	skb->tail += len;
 	skb->len += len;
 	if (skb->tail > skb->end)
@@ -346,6 +349,7 @@ int skb_copy_bits(const struct sk_buff *skb, int offset,
 		  void *vto, int len)
 {
 	unsigned char *to = (unsigned char *)vto;
+
 #ifdef WANT_SKB_SHINFO
 	struct skb_extra_info *extra = field_value(skb, "extra_data");
 #endif
@@ -644,6 +648,7 @@ u32 dst_path_metric(struct dst_entry *dst, int metric)
 u32 dst_pmtu(struct dst_entry *dst)
 {
 	u32 mtu = dst_path_metric(dst, RTAX_MTU);
+
 	/* Yes, _exactly_. This is paranoia. */
 	barrier();
 	return mtu;
@@ -811,6 +816,7 @@ void __init_timer(struct timer_list * timer, struct module *owner,
 void __add_timer(struct timer_list *timer, const char *location)
 {
 	struct timer_list *t;
+
 	list_for_each_entry(t, &__timers, entry) {
 		if (time_after(t->expires, timer->expires))
 			break;
@@ -841,6 +847,7 @@ int __del_timer(struct timer_list *timer, const char *location)
 static bool do_running_timers(const char *cmd)
 {
 	struct timer_list *t, *next;
+
 	list_for_each_entry_safe(t, next, &__running_timers, entry) {
 		list_del(&t->entry);
 		talloc_free(t->use);

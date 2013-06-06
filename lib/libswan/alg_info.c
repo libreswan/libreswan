@@ -121,6 +121,7 @@ int /* __attribute__ ((unused)) */
 alg_info_esp_sadb2aa(int sadb_aalg)
 {
 	int auth = 0;
+
 	switch (sadb_aalg) {
 	/* Paul: why is this using a mix of SADB_AALG_* and AUTH_ALGORITHM_* */
 	case SADB_AALG_MD5HMAC:
@@ -175,6 +176,7 @@ int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
 	char *ptr;
 	int ret;
 	int len = sizeof(buf) - 1;  /* reserve space for final \0 */
+
 	for (ptr = buf; len && *prefix; *ptr++ = *prefix++, len--) ;
 	while (str_len-- && len-- && *str)
 		*ptr++ = toupper(*str++);
@@ -195,6 +197,7 @@ int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
 static int ealg_getbyname_esp(const char *const str, int len)
 {
 	int ret = -1;
+
 	if (!str || !*str)
 		goto out;
 	/* leave special case for eg:  "id248" string */
@@ -214,6 +217,7 @@ static int aalg_getbyname_esp(const char *const str, int len)
 {
 	int ret = -1;
 	unsigned num;
+
 	if (!str || !*str)
 		goto out;
 	ret = alg_enum_search_prefix(&auth_alg_names, "AUTH_ALGORITHM_HMAC_",
@@ -239,6 +243,7 @@ out:
 static int modp_getbyname_esp(const char *const str, int len)
 {
 	int ret = -1;
+
 	if (!str || !*str)
 		goto out;
 	ret = alg_enum_search_prefix(&oakley_group_names, "OAKLEY_GROUP_", str,
@@ -265,6 +270,7 @@ static void __alg_info_esp_add(struct alg_info_esp *alg_info,
 {
 	struct esp_info *esp_info = alg_info->esp;
 	unsigned cnt = alg_info->alg_info_cnt, i;
+
 	/*      check for overflows     */
 	passert(cnt < elemsof(alg_info->esp));
 	/*	dont add duplicates	*/
@@ -380,6 +386,7 @@ static inline void parser_set_state(struct parser_context *p_ctx,
 static int parser_machine(struct parser_context *p_ctx)
 {
 	int ch = p_ctx->ch;
+
 	/* special 'absolute' cases */
 	p_ctx->err = "No error.";
 
@@ -714,6 +721,7 @@ int alg_info_parse_str(struct alg_info *alg_info,
 	int ret;
 	const char *ptr;
 	static char err_buf[256];
+
 	*err_buf = 0;
 
 	(*parser_init)(&ctx);

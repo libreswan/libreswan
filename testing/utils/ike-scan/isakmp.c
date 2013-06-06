@@ -281,6 +281,7 @@ unsigned char*add_trans(int finished, size_t *length,
 	static unsigned trans_no = 1;
 	unsigned char *trans;                           /* Transform payload */
 	size_t len;                                     /* Transform length */
+
 /*
  * Construct a transform if we are not finalising.
  * Set next to 3 (more transforms), and increment trans_no for next time round.
@@ -403,6 +404,7 @@ unsigned char *add_attr(int finished, size_t *outlen, int type, unsigned class,
 	static size_t cur_offset;                       /* Start of current attr */
 	static size_t end_offset;                       /* End of attr list */
 	size_t len;                                     /* Attr length */
+
 /*
  *	Construct a new attribute if we are not fianlising.
  */
@@ -494,6 +496,7 @@ unsigned char*add_vid(int finished, size_t *length, unsigned char *vid_data,
 	static size_t end_offset;               /* End of VIDs */
 	unsigned char *vid;                     /* VID payload */
 	size_t len;                             /* VID length */
+
 /*
  * Construct a VID if we are not finalising.
  */
@@ -699,6 +702,7 @@ unsigned char*make_udphdr(size_t *length, int sport, int dport,
 unsigned char *skip_payload(unsigned char *cp, size_t *len, unsigned *next)
 {
 	struct isakmp_generic *hdr = (struct isakmp_generic *) cp;
+
 /*
  *	Signal no more payloads by setting length to zero if:
  *
@@ -745,6 +749,7 @@ unsigned char *process_isakmp_hdr(unsigned char *cp, size_t *len,
 				  unsigned *type)
 {
 	struct isakmp_hdr *hdr = (struct isakmp_hdr *) cp;
+
 /*
  *	Signal no more payloads by setting length to zero if:
  *
@@ -1077,6 +1082,7 @@ char *process_vid(unsigned char *cp, size_t len,
 	char *p;
 	unsigned char *vid_data;
 	size_t data_len;
+
 #ifdef HAVE_REGEX_H
 	struct vid_pattern_list *ve;
 #endif

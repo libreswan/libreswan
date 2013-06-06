@@ -109,6 +109,7 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
 					struct db_ops_stats *st)
 {
 	void *ptr = alloc_bytes(size, str);
+
 	if (ptr) {
 		st->st_curr_cnt++;
 		st->st_total_cnt++;
@@ -262,6 +263,7 @@ out:
 struct db_context *db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
 {
 	struct db_context *ctx;
+
 	ctx = ALLOC_BYTES_ST( sizeof(struct db_context), "db_context",
 			      db_context_st);
 	if (!ctx)
@@ -334,6 +336,7 @@ int db_attr_add(struct db_context *ctx, const struct db_attr *a)
 int db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
 {
 	struct db_attr attr;
+
 	attr.type.oakley = type;
 	attr.val = val;
 	return db_attr_add(ctx, &attr);
@@ -437,6 +440,7 @@ void passert_fail(const char *pred_str, const char *file_str,
 int main(void)
 {
 	struct db_context *ctx = db_prop_new(PROTO_ISAKMP, 0, 0);
+
 	db_trans_add(ctx, KEY_IKE);
 	db_attr_add_values(ctx, OAKLEY_ENCRYPTION_ALGORITHM, OAKLEY_3DES_CBC);
 	db_attr_add_values(ctx, OAKLEY_HASH_ALGORITHM, OAKLEY_MD5);

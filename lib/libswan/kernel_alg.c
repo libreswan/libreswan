@@ -52,6 +52,7 @@ static struct sadb_alg *sadb_alg_ptr(int satype, int exttype, int alg_id,
 				     int rw)
 {
 	struct sadb_alg *alg_p = NULL;
+
 	switch (exttype) {
 	case SADB_EXT_SUPPORTED_AUTH:
 		if (alg_id <= SADB_AALG_MAX)
@@ -148,6 +149,7 @@ err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 	 * test #1: encrypt algo must be present
 	 */
 	int ret = ESP_EALG_PRESENT(alg_id);
+
 	if (!ret)
 		goto out;
 
@@ -221,6 +223,7 @@ int kernel_alg_proc_read(void)
 	int ret;
 	char buf[128];
 	FILE *fp = fopen("/proc/net/pf_key_supported", "r");
+
 	if (!fp)
 		return -1;
 
@@ -340,6 +343,7 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg_buf, int buflen)
 int kernel_alg_esp_enc_keylen(int alg_id)
 {
 	int keylen = 0;
+
 	if (!ESP_EALG_PRESENT(alg_id))
 		goto none;
 	keylen = esp_ealg[alg_id].sadb_alg_maxbits / BITS_PER_BYTE;
@@ -368,6 +372,7 @@ none:
 struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id)
 {
 	struct sadb_alg *sadb_alg = NULL;
+
 	if (!ESP_EALG_PRESENT(alg_id))
 		goto none;
 	sadb_alg = &esp_ealg[alg_id];
@@ -394,6 +399,7 @@ int kernel_alg_esp_auth_keylen(int auth)
 {
 	int sadb_aalg = alg_info_esp_aa2sadb(auth);
 	int a_keylen = 0;
+
 	if (sadb_aalg)
 		a_keylen = esp_aalg[sadb_aalg].sadb_alg_maxbits /
 			   BITS_PER_BYTE;
@@ -420,6 +426,7 @@ int kernel_alg_ah_auth_keylen(int auth)
 {
 	int sadb_aalg = alg_info_esp_aa2sadb(auth);
 	int a_keylen = 0;
+
 	if (sadb_aalg)
 		a_keylen = esp_aalg[sadb_aalg].sadb_alg_maxbits /
 			   BITS_PER_BYTE;
@@ -435,6 +442,7 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 {
 	int sadb_aalg, sadb_ealg;
 	static struct esp_info ei_buf;
+
 	sadb_ealg = transid;
 	sadb_aalg = alg_info_esp_aa2sadb(auth);
 

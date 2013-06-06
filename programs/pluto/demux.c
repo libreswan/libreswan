@@ -244,6 +244,7 @@ static bool read_packet(struct msg_digest *md)
 	int packet_len;
 	/* ??? this buffer seems *way* too big */
 	u_int8_t bigbuffer[MAX_INPUT_UDP_SIZE];
+
 #ifdef NAT_TRAVERSAL
 	u_int8_t *_buffer = bigbuffer;
 #endif

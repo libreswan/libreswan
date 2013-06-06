@@ -1935,6 +1935,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				    cthat));
 		}
 	}
+
 	passert(
 		(p1st->st_policy & POLICY_PFS) == 0 || p1st->st_pfs_group !=
 		NULL );

@@ -654,6 +654,7 @@ static void foreach_states_by_connection_func(struct connection *c,
 					      void *arg)
 {
 	int pass;
+
 	/* this kludge avoids an n^2 algorithm */
 
 	/* We take two passes so that we delete any ISAKMP SAs last.
@@ -1037,6 +1038,7 @@ void for_each_state(void *(f)(struct state *, void *data), void *data)
 {
 	struct state *st, *ocs = cur_state;
 	int i;
+
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		for (st = statetable[i]; st != NULL;
 		     st = st->st_hashchain_next) {
@@ -1450,6 +1452,7 @@ void fmt_state(struct state *st, const time_t n,
 	const char *eo = c->spd.eroute_owner == st->st_serialno ?
 			 "; eroute owner" : "";
 	const char *idlestr;
+
 #if defined(linux) && defined(NETKEY_SUPPORT)
 	time_t ago;
 #endif
@@ -1854,6 +1857,7 @@ void replace_states_by_peer(ip_address *peer)
 {
 	struct state *st = NULL;
 	int i;
+
 	/* struct event *ev;     currently unused */
 
 	for (i = 0; st == NULL && i < STATE_TABLE_SIZE; i++)

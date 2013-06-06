@@ -160,6 +160,7 @@ void molest_ike_params(u_char *user,
 	unsigned short chksum;
 
 	int i;
+
 	memcpy(newbytes, bytes, h->len);
 
 	for (i = 0; i < 256; i++) {

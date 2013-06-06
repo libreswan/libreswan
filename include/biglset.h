@@ -15,6 +15,7 @@ static inline biglset_t BLELEM(int opt)
 {
 	biglset_t b = BLEMPTY;
 	int which = opt >> BLSHIFT; /* 2^6 = 64bits/long long */
+
 	if (which < BLMULTI)
 		b.lsts[which] = LELEM(opt & BLMASK);
 	return b;
@@ -23,6 +24,7 @@ static inline biglset_t BLELEM(int opt)
 static inline biglset_t BLUNION(biglset_t set, biglset_t add)
 {
 	int i;
+
 	for (i = 0; i < BLMULTI; i++)
 		set.lsts[i] = set.lsts[i] | add.lsts[i];
 	return set;
@@ -31,6 +33,7 @@ static inline biglset_t BLUNION(biglset_t set, biglset_t add)
 static inline biglset_t BLINTERSECT(biglset_t set, biglset_t sub)
 {
 	int i;
+
 	for (i = 0; i < BLMULTI; i++)
 		set.lsts[i] = set.lsts[i] & sub.lsts[i];
 	return set;
@@ -41,6 +44,7 @@ static inline biglset_t BLRANGE(int lwb, int upb)
 {
 	biglset_t r = BLEMPTY;
 	int i;
+
 	for (i = lwb; i <= upb; i++)
 		BLUNION(r, BLELEM(i));
 	return r;
@@ -49,6 +53,7 @@ static inline biglset_t BLRANGE(int lwb, int upb)
 static inline bool BLCHECK(biglset_t b, int elem)
 {
 	int which = elem >> BLSHIFT;
+
 	return b.lsts[which] & LELEM(elem & BLMASK);
 }
 

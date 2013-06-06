@@ -153,6 +153,7 @@ static void ipsec_alg_hash_init(void)
 {
 	struct list_head *head = ipsec_alg_hash_table;
 	int i = IPSEC_ALG_HASHSZ;
+
 	do {
 		INIT_LIST_HEAD(head);
 		head++;
@@ -168,6 +169,7 @@ static struct ipsec_alg *__ipsec_alg_find(unsigned alg_type, unsigned alg_id,
 {
 	struct list_head *p;
 	struct ipsec_alg *ixt = NULL;
+
 	for (p = head->next; p != head; p = p->next) {
 		ixt = list_entry(p, struct ipsec_alg, ixt_list);
 		if (ixt->ixt_alg_type == alg_type && ixt->ixt_alg_id == alg_id)
@@ -510,6 +512,7 @@ int ipsec_alg_sa_esp_hash(const struct ipsec_sa *sa_p, const __u8 *espp,
 			  int len, __u8 *hash, int hashlen)
 {
 	struct ipsec_alg_auth *ixt_a = sa_p->ips_alg_auth;
+
 	if (!ixt_a) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:ipsec_sa_esp_hash: "
@@ -538,6 +541,7 @@ int ipsec_alg_sa_esp_hash(const struct ipsec_sa *sa_p, const __u8 *espp,
 static int check_enc(struct ipsec_alg_enc *ixt)
 {
 	int ret = -EINVAL;
+
 	if (ixt->ixt_common.ixt_blocksize == 0) /*  || ixt->ixt_common.ixt_blocksize%2) need for ESP_NULL */
 		barf_out(KERN_ERR "invalid blocksize=%d\n",
 			 ixt->ixt_common.ixt_blocksize);
@@ -574,6 +578,7 @@ out:
 static int check_auth(struct ipsec_alg_auth *ixt)
 {
 	int ret = -EINVAL;
+
 	if (ixt->ixt_common.ixt_support.ias_id == 0 ||
 	    ixt->ixt_common.ixt_support.ias_id > K_SADB_AALG_MAX)
 		barf_out("invalid alg_id=%d > %d (K_SADB_AALG_MAX)\n",
@@ -628,6 +633,7 @@ out:
 int register_ipsec_alg(struct ipsec_alg *ixt)
 {
 	int ret = -EINVAL;
+
 	/*	Validation      */
 	if (ixt == NULL)
 		barf_out("NULL ipsec_alg object passed\n");
@@ -693,6 +699,7 @@ out:
 int unregister_ipsec_alg(struct ipsec_alg *ixt)
 {
 	int ret = -EINVAL;
+
 	switch (ixt->ixt_alg_type) {
 	case IPSEC_ALG_TYPE_AUTH:
 	case IPSEC_ALG_TYPE_ENCRYPT:
@@ -730,6 +737,7 @@ static int ipsec_alg_test_encrypt(int enc_alg, int test)
 	int iv_size, keysize, key_e_size;
 	struct ipsec_alg_enc *ixt_e;
 	void *tmp_key_e = NULL;
+
 	#define BUFSZ   1024
 	#define MARGIN  0
 	#define test_enc   (buf + MARGIN)
@@ -859,6 +867,7 @@ static int ipsec_alg_test_auth(int auth_alg, int test)
 	caddr_t buf = NULL;
 	int blocksize, keysize, key_a_size;
 	struct ipsec_alg_auth *ixt_a;
+
 	#define BUFSZ   1024
 	#define MARGIN  0
 	#define test_auth  (buf + MARGIN)
@@ -1014,6 +1023,7 @@ int ipsec_alg_init(void)
 int ipsec_alg_sa_wipe(struct ipsec_sa *sa_p)
 {
 	struct ipsec_alg *ixt;
+
 	if ((ixt = (struct ipsec_alg *)sa_p->ips_alg_enc)) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug: ipsec_alg_sa_wipe() :"
 			    "unlinking for encalg=%d\n",

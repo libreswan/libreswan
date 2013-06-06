@@ -2131,6 +2131,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 * first one found.  It may or may not be the only one.
 	 */
 	struct connection *c = st->st_connection;
+
 	struct {
 		unsigned proto;
 		struct ipsec_proto_info *info;
@@ -2215,6 +2216,7 @@ char kversion[256];
 void init_kernel(void)
 {
 	struct utsname un;
+
 #if defined(NETKEY_SUPPORT) || defined(KLIPS) || defined(KLIPS_MAST)
 	struct stat buf;
 #endif
@@ -2493,6 +2495,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 	bool eroute_installed = FALSE,
 	     firewall_notified = FALSE,
 	     route_installed = FALSE;
+
 #ifdef IPSEC_CONNECTION_LIMIT
 	bool new_eroute = FALSE;
 #endif

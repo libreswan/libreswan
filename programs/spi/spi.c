@@ -524,6 +524,7 @@ int main(int argc, char *argv[])
 	struct sadb_msg *pfkey_msg;
 	char *edst_opt, *spi_opt, *proto_opt, *af_opt, *said_opt, *dst_opt,
 	*src_opt;
+
 #if 0
 	ip_address pfkey_address_p_ska;
 	ip_address pfkey_ident_s_ska;

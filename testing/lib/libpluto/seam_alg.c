@@ -4,6 +4,7 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 						  const char **err_p)
 {
 	struct alg_info_ike *alg_info_ike;
+
 	/*
 	 *      alg_info storage should be sized dynamically
 	 *      but this may require 2passes to know

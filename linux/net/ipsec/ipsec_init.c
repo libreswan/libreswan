@@ -147,6 +147,7 @@ static inline int libreswan_inet_add_protocol(struct inet_protocol *prot,
 					      unsigned protocol, char *protstr)
 {
 	int err = inet_add_protocol(prot, protocol);
+
 	if (err)
 		printk(
 			KERN_ERR "KLIPS: can not register %s protocol - recompile with CONFIG_INET_%s disabled or as module\n", protstr,
@@ -160,6 +161,7 @@ static inline int libreswan_inet6_add_protocol(struct inet6_protocol *prot,
 					       char *protstr)
 {
 	int err = inet6_add_protocol(prot, protocol);
+
 	if (err)
 		printk(
 			KERN_ERR "KLIPS: can not register %s protocol - recompile with CONFIG_INET_%s disabled or as module\n", protstr,
@@ -211,6 +213,7 @@ int ipsec_klips_init(void)
 {
 	int error = 0;
 	unsigned char seed[256];
+
 #ifdef CONFIG_KLIPS_ENC_3DES
 	extern int des_check_key;
 

@@ -1055,6 +1055,7 @@ static struct ipsec_proc_list proc_items[] = {
 int ipsec_proc_init()
 {
 	int error = 0;
+
 #ifdef IPSEC_PROC_SUBDIRS
 	struct proc_dir_entry *item;
 #endif

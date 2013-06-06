@@ -95,6 +95,7 @@ static bool unpack_str(struct whackpacker *wp, char **p)
 err_t pack_whack_msg(struct whackpacker *wp)
 {
 	err_t ugh = NULL;
+
 	/**
 	 * Pack strings
 	 */

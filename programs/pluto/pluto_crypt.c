@@ -766,6 +766,7 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 void *pluto_helper_thread(void *w)
 {
 	struct pluto_crypto_worker *helper;
+
 	helper = (struct pluto_crypto_worker *)w;
 	pluto_crypto_helper(helper->pcw_helper_pipe, helper->pcw_helpernum);
 	return NULL;

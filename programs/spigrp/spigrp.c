@@ -103,6 +103,7 @@ int main(int argc, char **argv)
 
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 	struct sadb_msg *pfkey_msg;
+
 #if 0
 	ip_address pfkey_address_s_ska;
 #endif

@@ -219,6 +219,7 @@ void delete_connection(struct connection *c, bool relations)
 	struct spd_route *sr;
 	struct connection *old_cur_connection =
 		cur_connection == c ? NULL : cur_connection;
+
 #ifdef DEBUG
 	lset_t old_cur_debugging = cur_debugging;
 #endif
@@ -366,6 +367,7 @@ static int delete_connection_wrap(struct connection *c, void *arg)
 void delete_connections_by_name(const char *name, bool strict)
 {
 	bool f = FALSE;
+
 	passert(name != NULL);
 	struct connection *c = con_by_name(name, strict);
 
@@ -724,6 +726,7 @@ size_t format_connection(char *buf, size_t buf_len,
 {
 	size_t w =
 		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY);
+
 	snprintf(buf + w, buf_len - w, "...");
 	w += strlen(buf + w);
 	return w + format_end(buf + w, buf_len - w, &sr->that, &sr->this,
@@ -2371,6 +2374,7 @@ struct connection *find_host_connection2(const char *func,
 					 u_int16_t his_port, lset_t policy)
 {
 	struct connection *c;
+
 	DBG(DBG_CONTROLMORE, {
 		    char mebuf[ADDRTOT_BUF];
 		    char himbuf[ADDRTOT_BUF];

@@ -74,6 +74,7 @@ int ipsec_snprintf(char *buf, ssize_t size, const char *fmt, ...)
 	va_list args;
 	int i;
 	size_t possize = size < 0 ? 0 : size;
+
 	va_start(args, fmt);
 	i = vsnprintf(buf, possize, fmt, args);
 	va_end(args);

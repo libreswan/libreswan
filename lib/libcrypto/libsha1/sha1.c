@@ -73,6 +73,7 @@
 void SHA1Transform(u_int32_t state[5], const unsigned char buffer[64])
 {
 	u_int32_t a, b, c, d, e;
+
 	typedef union {
 		unsigned char c[64];
 		u_int32_t l[16];
@@ -194,6 +195,7 @@ void SHA1Transform(u_int32_t state[5], const unsigned char buffer[64])
 void SHA1Init(SHA1_CTX* context)
 {
 	SECStatus status;
+
 	context->ctx_nss = NULL;
 	context->ctx_nss = PK11_CreateDigestContext(SEC_OID_SHA1);
 	PR_ASSERT(context->ctx_nss != NULL);
@@ -206,6 +208,7 @@ void SHA1Init(SHA1_CTX* context)
 void SHA1Update(SHA1_CTX* context, const unsigned char* data, u_int32_t len)
 {
 	SECStatus status = PK11_DigestOp(context->ctx_nss, data, len);
+
 	PR_ASSERT(status == SECSuccess);
 	/*loglog(RC_LOG_SERIOUS, "enter sha1 ctx update end");*/
 }
@@ -216,6 +219,7 @@ void SHA1Final(unsigned char digest[SHA1_DIGEST_SIZE], SHA1_CTX* context)
 {
 	unsigned int length;
 	SECStatus status;
+
 	status = PK11_DigestFinal(context->ctx_nss, digest, &length,
 				  SHA1_DIGEST_SIZE );
 	PR_ASSERT(length == SHA1_DIGEST_SIZE);

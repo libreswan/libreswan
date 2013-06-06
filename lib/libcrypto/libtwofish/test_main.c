@@ -12,6 +12,7 @@
 static int pretty_print(const unsigned char *buf, int count)
 {
 	int i = 0;
+
 	for (; i < count; i++)
 		printf("%02hhx ", buf[i]);
 	putchar('\n');
@@ -25,6 +26,7 @@ int main()
 	char buf0[SIZE + 1], buf1[SIZE + 1];
 	char IV[BLOCK_SIZE];
 	CONTEXT_T ac;
+
 	twofish_set_key(&ac, (void *)KEY, KEY_SIZE);
 	memset(buf0, 0, sizeof(buf0));
 	memset(buf1, 0, sizeof(buf1));

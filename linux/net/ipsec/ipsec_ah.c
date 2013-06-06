@@ -122,6 +122,7 @@ enum ipsec_rcv_value ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 {
 	struct auth_alg *aa;
 	struct ahhdr *ahp = irs->protostuff.ahstuff.ahp;
+
 	union {
 		MD5_CTX md5;
 		SHA1_CTX sha1;
@@ -222,6 +223,7 @@ enum ipsec_xmit_value ipsec_xmit_ah_setup(struct ipsec_xmit_state *ixs)
 {
 	struct iphdr ipo;
 	struct ahhdr *ahp;
+
 #if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1)
 	__u8 hash[AH_AMAX];
 	union {

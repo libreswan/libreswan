@@ -87,6 +87,7 @@ bool adns_reapchild(pid_t pid, int status UNUSED)
 void init_adns(void)
 {
 	const char *adns_path = pluto_adns_option;
+
 #ifndef USE_LWRES
 	static const char adns_name[] = "_pluto_adns";
 #else   /* USE_LWRES */
@@ -1838,6 +1839,7 @@ void handle_adns_answer(void)
 {
 	/* These are retained across calls to handle_adns_answer. */
 	static size_t buflen = 0; /* bytes in answer buffer */
+
 #ifndef USE_LWRES
 	static struct adns_answer buf;
 #else   /* USE_LWRES */

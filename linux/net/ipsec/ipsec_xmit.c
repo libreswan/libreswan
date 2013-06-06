@@ -394,6 +394,7 @@ DEBUG_NO_STATIC u_int16_t ipsec_fast_csum(u_int32_t oldvalinv,
 					  u_int32_t newval, u_int16_t oldcheck)
 {
 	u_int32_t diffs[] = { oldvalinv, newval };
+
 	return csum_fold(csum_partial((char *)diffs, sizeof(diffs),
 				      oldcheck ^ 0xFFFF));
 }
@@ -427,6 +428,7 @@ DEBUG_NO_STATIC u_int8_t ipsec_adjust_mss(struct sk_buff *skb,
 DEBUG_NO_STATIC const char *ipsec_xmit_err(int err)
 {
 	static char tmp[32];
+
 	switch ((int) err) {
 	case IPSEC_XMIT_STOLEN:                 return "IPSEC_XMIT_STOLEN";
 
@@ -640,6 +642,7 @@ enum ipsec_xmit_value ipsec_xmit_sanity_check_skb(struct ipsec_xmit_state *ixs)
 enum ipsec_xmit_value ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 {
 	int new_version = lsw_ip_hdr_version(ixs);
+
 	ixs->blocksize = 8;
 	ixs->headroom = 0;
 	ixs->tailroom = 0;
@@ -1070,6 +1073,7 @@ enum ipsec_xmit_value ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 {
 	struct iphdr ipo;
 	struct ahhdr *ahp;
+
 #if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1)
 	__u8 hash[AH_AMAX];
 #endif
@@ -1183,6 +1187,7 @@ enum ipsec_xmit_value ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 enum ipsec_xmit_value ipsec_xmit_ipip(struct ipsec_xmit_state *ixs)
 {
 	int error;
+
 #ifdef CONFIG_KLIPS_IPV6
 	if (ip_address_family(&ixs->ipsp->ips_said.dst) == AF_INET6) {
 		ixs->skb->ip_summed = CHECKSUM_NONE;
@@ -1385,6 +1390,7 @@ void ipsec_extract_ports(struct sk_buff *skb, unsigned char nexthdr,
 			 int nexthdroff, struct sockaddr_encap * er)
 {
 	struct udphdr _udp, *udp;
+
 	switch (nexthdr) {
 	case IPPROTO_UDP:
 	case IPPROTO_TCP:
@@ -2044,6 +2050,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 {
 	enum ipsec_xmit_value bundle_stat = IPSEC_XMIT_OK;
 	struct ipsec_sa *saved_ipsp;
+
 #ifdef CONFIG_KLIPS_ALG
 	ixs->blocksize = 8;
 	ixs->ixt_e = NULL;
@@ -2717,6 +2724,7 @@ static int ipsec_set_dst(struct ipsec_xmit_state *ixs)
 {
 	struct dst_entry *dst = NULL;
 	int error = 0;
+
 #ifdef NET_26
 	struct flowi fl;
 #endif

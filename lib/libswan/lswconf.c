@@ -74,6 +74,7 @@ void lsw_conf_setdefault(void)
 	char *ipsecd_dir = IPSEC_CONFDDIR;
 	char *conffile   = IPSEC_CONF;
 	char *var_dir    = IPSEC_VARDIR;
+
 #if 0
 	char *exec_dir   = IPSEC_EXECDIR;
 	char *lib_dir    = IPSEC_LIBDIR;

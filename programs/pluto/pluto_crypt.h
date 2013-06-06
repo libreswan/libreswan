@@ -247,6 +247,7 @@ static inline void clonetowirechunk(wire_chunk_t  *thespace,
 				    const size_t origlen)
 {
 	char *gip;
+
 	pluto_crypto_allocchunk(thespace, wiretarget, origlen);
 
 	gip = space_chunk_ptr(space, wiretarget);

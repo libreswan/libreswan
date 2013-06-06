@@ -347,6 +347,7 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 					struct ip_pool **head)
 {
 	struct ip_pool *h = *head;
+
 	if (h) {
 		while (h) {
 			int sflag, eflag;

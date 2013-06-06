@@ -324,6 +324,7 @@ struct ocf_thread {
 static inline int ocf_run_thread(void *arg)
 {
 	struct ocf_thread *t = (struct ocf_thread *) arg;
+
 	if (!t)
 		return -1; /* very bad */
 

@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
 	__u8 hash[16];
 	char *str = argv[1];
 	aes_context_mac ctx;
+
 	if (str == NULL) {
 		fprintf(stderr, "pasame el str\n");
 		return 255;

@@ -256,6 +256,7 @@ int resolve_defaultroute_one(struct starter_end *left,
 	/* What kind of result we want to parse? */
 	int parse_src = (left->addrtype == KH_DEFAULTROUTE);
 	int parse_gateway = (left->nexttype == KH_DEFAULTROUTE);
+
 	if (parse_src == 0 && parse_gateway == 0)
 		return 0;
 

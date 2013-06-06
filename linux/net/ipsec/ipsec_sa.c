@@ -844,6 +844,7 @@ int ipsec_sadb_cleanup(__u8 proto)
 	unsigned i;
 	int error = 0;
 	struct ipsec_sa *ips;
+
 	/* struct ipsec_sa *ipsnext, **ipsprev; */
 	/* char sa[SATOT_BUF]; */
 	/* size_t sa_len; */
@@ -1154,6 +1155,7 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 	int error = 0;
 	char sa[SATOT_BUF];
 	size_t sa_len;
+
 #ifdef CONFIG_KLIPS_DEBUG
 	char ipaddr_txt[ADDRTOA_BUF];
 	char ipaddr2_txt[ADDRTOA_BUF];

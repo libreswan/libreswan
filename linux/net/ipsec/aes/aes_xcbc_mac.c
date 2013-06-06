@@ -20,6 +20,7 @@ int AES_xcbc_mac_set_key(aes_context_mac *ctxm, const u_int8_t *key,
 		{ 0x02020202, 0x02020202, 0x02020202, 0x02020202 },
 		{ 0x03030303, 0x03030303, 0x03030303, 0x03030303 },
 	};
+
 	aes_set_key(&ctxm->ctx_k1, key, keylen, 0);
 	aes_encrypt(&ctxm->ctx_k1, (u_int8_t *) kn[0], (u_int8_t *) kn[0]);
 	aes_encrypt(&ctxm->ctx_k1, (u_int8_t *) kn[1], (u_int8_t *) ctxm->k2);
@@ -30,6 +31,7 @@ int AES_xcbc_mac_set_key(aes_context_mac *ctxm, const u_int8_t *key,
 static void do_pad_xor(u_int8_t *out, const u_int8_t *in, int len)
 {
 	int pos = 0;
+
 	for (pos = 1; pos <= 16; pos++, in++, out++) {
 		if (pos <= len)
 			*out ^= *in;
@@ -52,6 +54,7 @@ int AES_xcbc_mac_hash(const aes_context_mac *ctxm, const u_int8_t * in,
 {
 	int ret = ilen;
 	u_int32_t out[4] = { 0, 0, 0, 0 };
+
 	for (; ilen > 16; ilen -= 16) {
 		xor_block(out, (const u_int32_t*) &in[0]);
 		aes_encrypt(&ctxm->ctx_k1, in, (u_int8_t *)&out[0]);

@@ -79,6 +79,7 @@ void v2genbytes(chunk_t *need,
 		struct v2prf_stuff *vps)
 {
 	u_char *target;
+
 	need->ptr = alloc_bytes(needed, name);
 	need->len = needed;
 	target = need->ptr;

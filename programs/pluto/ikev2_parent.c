@@ -354,6 +354,7 @@ static bool ship_v2KE(struct state *st,
 		      pb_stream *outs, u_int8_t np)
 {
 	int oakley_group = unpack_v2KE(st, r, g);
+
 	return justship_v2KE(st, g, oakley_group, outs, np);
 }
 
@@ -374,6 +375,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 {
 	/* struct connection *c = st->st_connection; */
 	int numvidtosend = 0;
+
 #ifdef PLUTO_SENDS_VENDORID
 	numvidtosend++;  /* if we need to send Libreswan VID */
 #endif
@@ -844,6 +846,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct state *const st = md->st;
 	pb_stream *keyex_pbs;
 	int numvidtosend = 0;
+
 #ifdef PLUTO_SENDS_VENDORID
 	numvidtosend++; /* we send Libreswan VID */
 #endif
@@ -1713,6 +1716,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 {
 	struct state *st = md->st;
+
 	/* struct connection *c = st->st_connection; */
 
 	/*
@@ -2579,6 +2583,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	pb_stream reply;
 	pb_stream rbody;
 	chunk_t child_spi, notify_data;
+
 	/* this function is not generic enough yet just enough for 6msg
 	 * TBD accept HDR FLAGS as arg. default ISAKMP_FLAGS_R
 	 * TBD when there is a child SA use that SPI in the notify paylod.
@@ -2664,6 +2669,7 @@ bool ship_v2N(unsigned int np, u_int8_t critical,
 {
 	struct ikev2_notify n;
 	pb_stream n_pbs;
+
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("Adding a v2N Payload"));
 	n.isan_np =  np;

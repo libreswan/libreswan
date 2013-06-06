@@ -151,6 +151,7 @@ void foreach_supported_alg(void (*algregister)(int satype, int extype,
 	int algno;
 	int tlen, i;
 	int satype, supported_exttype;
+
 	;
 	caddr_t p;
 

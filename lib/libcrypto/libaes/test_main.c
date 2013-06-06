@@ -14,6 +14,7 @@
 int pretty_print(const unsigned char *buf, int count)
 {
 	int i = 0;
+
 	for (; i < count; i++) {
 		if (i % 8 == 0)
 			putchar(' ');
@@ -32,6 +33,7 @@ int main()
 	char buf0[SIZE + 1], buf1[SIZE + 1];
 	char IV[AES_BLOCK_SIZE] = "\0\0\0\0\0\0\0\0" "\0\0\0\0\0\0\0\0";
 	aes_context ac;
+
 	AES_set_key(&ac, KEY, KEY_SIZE);
 	//pretty_print((char *)&ac.aes_e_key, sizeof(ac.aes_e_key));
 	memset(buf0, 0, sizeof(buf0));

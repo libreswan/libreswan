@@ -120,6 +120,7 @@ static int _aes_set_key(struct ipsec_alg_enc *alg,
 {
 	int ret;
 	AES_CONTEXT_T *ctx = (AES_CONTEXT_T*)key_e;
+
 	ret = AES_set_key(ctx, key, keysize) != 0 ? 0 : -EINVAL;
 	if (debug_aes > 0) {
 		printk(KERN_DEBUG "klips_debug:_aes_set_key:"
@@ -134,6 +135,7 @@ static int _aes_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 			    int encrypt)
 {
 	AES_CONTEXT_T *ctx = (AES_CONTEXT_T*)key_e;
+
 	if (debug_aes > 0) {
 		printk(KERN_DEBUG "klips_debug:_aes_cbc_encrypt:"
 		       "key_e=%p in=%p ilen=%d iv=%p encrypt=%d\n",
@@ -146,6 +148,7 @@ static int _aes_mac_set_key(struct ipsec_alg_auth *alg, __u8 * key_a,
 			    const __u8 * key, int keylen)
 {
 	aes_context_mac *ctxm = (aes_context_mac *)key_a;
+
 	return AES_xcbc_mac_set_key(ctxm, key, keylen) ? 0 : -EINVAL;
 }
 static int _aes_mac_hash(struct ipsec_alg_auth *alg, __u8 * key_a,
@@ -154,6 +157,7 @@ static int _aes_mac_hash(struct ipsec_alg_auth *alg, __u8 * key_a,
 	int ret;
 	char hash_buf[16];
 	aes_context_mac *ctxm = (aes_context_mac *)key_a;
+
 	ret = AES_xcbc_mac_hash(ctxm, dat, len, hash_buf);
 	memcpy(hash, hash_buf, hashlen);
 	return ret;

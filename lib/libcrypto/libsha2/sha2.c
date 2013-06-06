@@ -124,6 +124,7 @@ void sha256_init(sha256_context *ctx)
 void sha256_write(sha256_context *ctx, const unsigned char *datap, int length)
 {
 	SECStatus status = PK11_DigestOp(ctx->ctx_nss, datap, length);
+
 	PR_ASSERT(status == SECSuccess);
 	DBG(DBG_CRYPT, DBG_log("NSS: sha256 write end"));
 }
@@ -179,6 +180,7 @@ void sha512_init(sha512_context *ctx)
 void sha512_write(sha512_context *ctx, const unsigned char *datap, int length)
 {
 	SECStatus status = PK11_DigestOp(ctx->ctx_nss, datap, length);
+
 	PR_ASSERT(status == SECSuccess);
 	DBG(DBG_CRYPT, DBG_log("NSS: sha512 write end"));
 }

@@ -505,6 +505,7 @@ static inline unsigned int netmask_bits(uint32_t netmask)
 {
 	int maskbits = 32;
 	int bit = 0;
+
 	while (!((netmask << (bit++)) & 0x80000000))
 		maskbits--;
 	return maskbits;
@@ -521,6 +522,7 @@ static inline int inet_atou32(const char *cp, uint32_t *addr)
 static inline const char *inet_u32toa(uint32_t addr)
 {
 	struct in_addr inaddr;
+
 	inaddr.s_addr = addr;
 	return inet_ntoa(inaddr);
 }

@@ -365,6 +365,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 {
 	char idstr1[IDTOA_BUF], idme[IDTOA_BUF],
 	     idhim[IDTOA_BUF], idhim2[IDTOA_BUF];
+
 	enum {  /* bits */
 		match_default = 01,
 		match_any = 02,

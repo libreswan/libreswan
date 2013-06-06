@@ -60,6 +60,7 @@ struct ike_alg *ike_alg_base[IKE_ALG_MAX + 1] = { NULL, NULL };
 bool ike_alg_enc_present(int ealg)
 {
 	struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
+
 	return enc_desc ? enc_desc->enc_blocksize : 0;
 }
 
@@ -67,6 +68,7 @@ bool ike_alg_enc_present(int ealg)
 bool ike_alg_hash_present(int halg)
 {
 	struct hash_desc *hash_desc = ike_alg_get_hasher(halg);
+
 	return hash_desc ? hash_desc->hash_digest_len : 0;
 }
 
@@ -171,6 +173,7 @@ struct ike_alg *ike_alg_find(unsigned algo_type, unsigned algo_id, unsigned keys
 				     (unused)))
 {
 	struct ike_alg *e = ike_alg_base[algo_type];
+
 	for (; e != NULL; e = e->algo_next) {
 		if (e->algo_id == algo_id)
 			break;
@@ -183,6 +186,7 @@ struct ike_alg *ike_alg_ikev2_find(unsigned algo_type,
 				   unsigned keysize __attribute__((unused)))
 {
 	struct ike_alg *e = ike_alg_base[algo_type];
+
 	for (; e != NULL; e = e->algo_next) {
 		if (e->algo_v2id == algo_v2id)
 			break;
@@ -197,6 +201,7 @@ int ike_alg_add(struct ike_alg* a)
 {
 	int ret = 0;
 	const char *ugh = "No error";
+
 	if (a->algo_type > IKE_ALG_MAX) {
 		ugh = "Invalid algo_type is larger then IKE_ALG_MAX";
 		return_on(ret, -EINVAL);
@@ -313,6 +318,7 @@ const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 						 lset_t policy)
 {
 	const struct oakley_group_desc * ret = NULL;
+
 	if ( (policy & POLICY_PFS) &&
 	     c->alg_info_esp && c->alg_info_esp->esp_pfsgroup)
 		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);

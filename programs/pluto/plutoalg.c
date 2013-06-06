@@ -52,6 +52,7 @@
 static int ealg_getbyname_ike(const char *const str, int len)
 {
 	int ret = -1;
+
 	if (!str || !*str)
 		goto out;
 	ret = alg_enum_search_prefix(&oakley_enc_names, "OAKLEY_", str, len);
@@ -73,6 +74,7 @@ static int aalg_getbyname_ike(const char *const str, int len)
 {
 	int ret = -1;
 	unsigned num;
+
 	if (!str || !*str)
 		goto out;
 	ret = alg_enum_search_prefix(&oakley_hash_names, "OAKLEY_", str, len);
@@ -94,6 +96,7 @@ out:
 static int modp_getbyname_ike(const char *const str, int len)
 {
 	int ret = -1;
+
 	if (!str || !*str)
 		goto out;
 	ret = alg_enum_search_prefix(&oakley_group_names, "OAKLEY_GROUP_", str,
@@ -112,6 +115,7 @@ static void __alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 {
 	struct ike_info *ike_info = alg_info->ike;
 	unsigned cnt = alg_info->alg_info_cnt, i;
+
 	/*      check for overflows     */
 	passert(cnt < elemsof(alg_info->ike));
 	/*	dont add duplicates	*/
@@ -154,6 +158,7 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 			     int modp_id, int permitmann UNUSED)
 {
 	int i = 0, n_groups;
+
 	n_groups = elemsof(default_ike_groups);
 	/* if specified modp_id avoid loop over default_ike_groups */
 	if (modp_id) {
@@ -424,6 +429,7 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 						  const char **err_p)
 {
 	struct alg_info_ike *alg_info_ike;
+
 	/*
 	 *      alg_info storage should be sized dynamically
 	 *      but this may require 2passes to know
@@ -449,6 +455,7 @@ out:
 static void kernel_alg_policy_algorithms(struct esp_info *esp_info)
 {
 	int ealg_i = esp_info->esp_ealg_id;
+
 	switch (ealg_i) {
 	case 0:
 	case ESP_DES:
@@ -600,6 +607,7 @@ struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	if (alg_info) {
 		ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
 			bool thistime;
+
 			tmp_esp_info = *esp_info;
 			thistime = kernel_alg_db_add(ctx_new,
 						     &tmp_esp_info,
@@ -659,6 +667,7 @@ bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 			     struct alg_info_esp *alg_info)
 {
 	int ealg_insecure;
+
 	/*
 	 * key_len passed comes from esp_attrs read from peer
 	 * For many older algoritms (eg 3DES) this key_len is fixed
@@ -710,6 +719,7 @@ void kernel_alg_show_status(void)
 {
 	unsigned sadb_id, id;
 	struct sadb_alg *alg_p;
+
 	ESP_EALG_FOR_EACH(sadb_id) {
 		id = sadb_id;
 		alg_p = &esp_ealg[sadb_id];

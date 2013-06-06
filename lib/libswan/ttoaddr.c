@@ -48,6 +48,7 @@ ttoaddr_base(const char *src,
 	     ip_address *dst)
 {
 	err_t oops;
+
 #       define  HEXLEN  10      /* strlen("0x11223344") */
 
 	switch (af) {
@@ -462,6 +463,7 @@ ttoaddr(const char *src,
 	int nultermd;
 	int numfailed = 0;
 	err_t err;
+
 	if (srclen == 0) {
 		srclen = strlen(src);
 		if (srclen == 0)

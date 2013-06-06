@@ -89,6 +89,7 @@ static struct talloc_chunk *talloc_chunk_from_ptr(const void *ptr)
 {
 	struct talloc_chunk *tc =
 		discard_const_p(struct talloc_chunk, ptr) - 1;
+
 	if (tc->magic != TALLOC_MAGIC) {
 		if (tc->magic == TALLOC_MAGIC_FREE)
 			TALLOC_ABORT("Bad talloc magic value - double free");
@@ -138,6 +139,7 @@ static struct talloc_chunk *talloc_chunk_from_ptr(const void *ptr)
 static struct talloc_chunk *talloc_parent_chunk(const void *ptr)
 {
 	struct talloc_chunk *tc = talloc_chunk_from_ptr(ptr);
+
 	while (tc->prev)
 		tc = tc->prev;
 	return tc->parent;
@@ -192,6 +194,7 @@ void *_talloc(const void *context, size_t size)
 void talloc_set_destructor(const void *ptr, int (*destructor)(void *))
 {
 	struct talloc_chunk *tc = talloc_chunk_from_ptr(ptr);
+
 	tc->destructor = destructor;
 }
 
@@ -211,6 +214,7 @@ static int talloc_reference_destructor(void *ptr)
 	struct talloc_reference_handle *handle = ptr;
 	struct talloc_chunk *tc1 = talloc_chunk_from_ptr(ptr);
 	struct talloc_chunk *tc2 = talloc_chunk_from_ptr(handle->ptr);
+
 	if (tc1->destructor != (talloc_destructor_t)-1)
 		tc1->destructor = NULL;
 	_TLIST_REMOVE(tc2->refs, handle);
@@ -231,6 +235,7 @@ void *talloc_reference(const void *context, const void *ptr)
 {
 	struct talloc_chunk *tc;
 	struct talloc_reference_handle *handle;
+
 	if (ptr == NULL)
 		return NULL;
 
@@ -331,6 +336,7 @@ static void talloc_set_name_v(const void *ptr, const char *fmt,
 static void talloc_set_name_v(const void *ptr, const char *fmt, va_list ap)
 {
 	struct talloc_chunk *tc = talloc_chunk_from_ptr(ptr);
+
 	tc->name = talloc_vasprintf(ptr, fmt, ap);
 	if (tc->name)
 		talloc_set_name_const(tc->name, ".name");
@@ -342,6 +348,7 @@ static void talloc_set_name_v(const void *ptr, const char *fmt, va_list ap)
 void talloc_set_name(const void *ptr, const char *fmt, ...)
 {
 	va_list ap;
+
 	va_start(ap, fmt);
 	talloc_set_name_v(ptr, fmt, ap);
 	va_end(ap);
@@ -354,6 +361,7 @@ void talloc_set_name(const void *ptr, const char *fmt, ...)
 void talloc_set_name_const(const void *ptr, const char *name)
 {
 	struct talloc_chunk *tc = talloc_chunk_from_ptr(ptr);
+
 	tc->name = name;
 }
 
@@ -402,6 +410,7 @@ void *talloc_named_const(const void *context, size_t size, const char *name)
 const char *talloc_get_name(const void *ptr)
 {
 	struct talloc_chunk *tc = talloc_chunk_from_ptr(ptr);
+
 	if (tc->name == TALLOC_MAGIC_REFERENCE)
 		return ".reference";
 
@@ -821,6 +830,7 @@ void *_talloc_memdup(const void *t, const void *p, size_t size,
 char *talloc_strdup(const void *t, const char *p)
 {
 	char *ret;
+
 	if (!p)
 		return NULL;
 

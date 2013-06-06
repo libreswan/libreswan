@@ -55,6 +55,7 @@ void ike_alg_show_status(void)
 {
 	unsigned alg, i;
 	struct ike_alg *algo;
+
 	IKE_EALG_FOR_EACH(algo) {
 		passert(algo != NULL);
 		alg = algo->algo_id;
@@ -78,6 +79,7 @@ void ike_alg_show_status(void)
 #define IKE_DH_ALG_FOR_EACH(idx) for (idx = 0; idx != oakley_group_size; idx++)
 	IKE_DH_ALG_FOR_EACH(i) {
 		const struct oakley_group_desc *gdesc = oakley_group + i;
+
 		whack_log(RC_COMMENT,
 			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
 			  gdesc->group,
@@ -94,6 +96,7 @@ void ike_alg_show_status(void)
 void ike_alg_show_connection(struct connection *c, const char *instance)
 {
 	struct state *st;
+
 	if (c->alg_info_ike) {
 		char buf[1024];
 

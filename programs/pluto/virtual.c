@@ -310,6 +310,7 @@ bool is_virtual_end(const struct end *that)
 bool is_virtual_connection(const struct connection *c)
 {
 	const struct spd_route *sr;
+
 	for (sr = &c->spd; sr != NULL; sr = sr->next)
 		if (sr->that.virt)
 			return TRUE;
@@ -349,6 +350,7 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
 			unsigned short len)
 {
 	unsigned short i;
+
 	if (!list || !len)
 		return FALSE;
 

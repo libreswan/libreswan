@@ -47,6 +47,7 @@ static char *dlvanchor =
 int unbound_init(struct ub_ctx *dnsctx)
 {
 	int ugh;
+
 	/* create unbound resolver context */
 	dnsctx = ub_ctx_create();
 	if (!dnsctx) {
