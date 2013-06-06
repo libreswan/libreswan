@@ -9,5 +9,5 @@ restorecon /usr/local/sbin -Rv
 restorecon /usr/local/libexec/ipsec -Rv
 # disable autostarting via systemd
 sed -i "s/Restart=always/Restart=no/" /lib/systemd/system/ipsec.service
+systemctl disable ipsec.service
 systemctl daemon-reload
-
