@@ -1,8 +1,9 @@
 
 See also https://libreswan.org/
 
-v3.4 (unreleased)
+v3.4 (June 6, 2013)
 * Change coding style to Linux kernel [Team]
+* IN MEMORIAM: June 3rd, 2013 Hugh Daniel
 
 v3.3 (May 13, 2013)
 * SECURITY: atodn() buffer overflow with oe=yes [Florian/Hugh/Paul]
