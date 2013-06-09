@@ -550,13 +550,18 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		 * Variable "that" should be remote, but here it's not.
 		 * We must check "dir" to find out remote address.
 		 */
+		int local_port;
+
 		if (dir == XFRM_POLICY_OUT) {
+			local_port = portof(&that_client->addr);
 			addrtosubnet(that_host, &local_client);
 			that_client = &local_client;
 		} else {
+			local_port = portof(&this_client->addr);
 			addrtosubnet(this_host, &local_client);
 			this_client = &local_client;
 		}
+		setportof(local_port, &local_client.addr);
 		DBG(DBG_NETKEY,
 		    DBG_log("%s: using host address instead of client subnet",
 			    __func__));
