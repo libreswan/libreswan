@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v3.5 (unreleased)
+* Bugtracker bugs fixed:
+   #101: restore port when ipsec policy is generated for nat-t [Kim/Tuomo]
 
 v3.4 (June 6, 2013)
 * Change coding style to Linux kernel [Team]
