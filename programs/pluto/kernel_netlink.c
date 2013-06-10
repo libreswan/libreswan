@@ -1304,7 +1304,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 	transport_proto = acquire->sel.proto;
 
 #ifdef HAVE_LABELED_IPSEC
-	tmp = (char*) acquire;
+	tmp = (char*) NLMSG_DATA(n);
 	tmp = tmp + NLMSG_ALIGN(sizeof(struct xfrm_user_acquire));
 	attr = (struct rtattr *)tmp;
 
