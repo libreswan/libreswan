@@ -40,6 +40,11 @@ return_initsystem() {
 	return
     fi
 
+    if [ -f /sbin/rc ]; then
+	echo "openrc"
+	return
+    fi
+
     # really, most have this, it is probably a backwards compatiblity or
     # really sysvinit
     if [ -d /etc/init.d ]; then
@@ -123,6 +128,12 @@ return_distro() {
     if [ -f /etc/arch-release ]; then
 	# Arch Linux has no version, rolling release only
 	echo "archlinux"
+	return
+    fi
+
+    if [ -f /etc/alpine-release ]; then
+	VER="$(cat /etc/alpine-release | sed 's/^\([0-9]\.[0-9]\).*$/\1/)"
+	echo "alpine/${VER}"
 	return
     fi
 
