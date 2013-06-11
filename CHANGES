@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v3.5 (unreleased)
 * lswan_detect: cleanup coding style and fix help for unknown options [Tuomo]
 * Bugtracker bugs fixed:
+   #96: lswan_detect: Alpine linux compatibility [Tuomo]
    #99: NETKEY: Segfault on acquire_netlink with labeled_ipsec [Kim/Tuomo]
    #101: restore port when ipsec policy is generated for nat-t [Kim/Tuomo]
 
