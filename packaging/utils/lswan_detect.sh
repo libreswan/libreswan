@@ -40,11 +40,6 @@ return_initsystem() {
 	return
     fi
 
-    if [ -f /sbin/rc ]; then
-	echo "openrc"
-	return
-    fi
-
     # really, most have this, it is probably a backwards compatiblity or
     # really sysvinit
     if [ -d /etc/init.d ]; then
