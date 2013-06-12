@@ -61,12 +61,12 @@ return_distro() {
     fi
 
     if [ -f /etc/redhat-release ]; then
-	VER="$(grep 'Fedora release'  /etc/redhat-release | awk '{ print $3;}')"
+	VER="$(grep 'Fedora release'  /etc/redhat-release | awk '{print $3;}')"
 	if [ -n "${VER}" ]; then
 	    echo "fedora/${VER}"
 	    return
 	fi
-	VER="$(grep 'Red Hat Enterprise'  /etc/redhat-release | awk '{ print $7;}')"
+	VER="$(grep 'Red Hat Enterprise'  /etc/redhat-release | awk '{print $7;}')"
 	if [ -n "${VER}" ]; then
 	    echo "rhel/${VER}"
 	    return
@@ -76,7 +76,7 @@ return_distro() {
 	    echo "centos/${VER}"
 	    return
 	fi
-	VER="$(grep 'Foobar Linux'  /etc/redhat-release | awk '{ print $4;}')"
+	VER="$(grep 'Foobar Linux'  /etc/redhat-release | awk '{print $4;}')"
 	if [ -n "${VER}" ]; then
 	    echo "foobar/${VER}"
 	    return
@@ -90,7 +90,7 @@ return_distro() {
     #  Test for OpenSuSE:
     if [ -f /etc/SuSE-brand ]; then
 	if [ "$(head -1 /etc/SuSE-brand | tr '[:upper:]' '[:lower:]')" = "opensuse" ]; then
-	    echo "opensuse/$(grep VERSION /etc/SuSE-brand | awk '{ print $3}')"
+	    echo "opensuse/$(grep VERSION /etc/SuSE-brand | awk '{print $3;}')"
 	    return
 	fi
     fi
@@ -98,8 +98,8 @@ return_distro() {
     #  Test for SuSE/SLES:
     if [ -f /etc/SuSE-release ]; then
 	if grep -i suse /etc/SuSE-release > /dev/null 2>&1; then
-	    VER="$(grep VERSION /etc/SuSE-release | awk '{ print $3}')"
-	    PAT="$(grep PATCHLEVEL /etc/SuSE-release | awk '{ print $3}')"
+	    VER="$(grep VERSION /etc/SuSE-release | awk '{print $3;}')"
+	    PAT="$(grep PATCHLEVEL /etc/SuSE-release | awk '{print $3;}')"
 	    echo "suse/${VER}.${PAT}"
 	fi
 	return
@@ -127,8 +127,14 @@ return_distro() {
     fi
 
     if [ -f /etc/alpine-release ]; then
-	VER="$(cat /etc/alpine-release | sed 's/^\([0-9]\.[0-9]\).*$/\1/)"
+	VER="$(cat /etc/alpine-release | sed 's/^\([0-9]\.[0-9]\).*$/\1/')"
 	echo "alpine/${VER}"
+	return
+    fi
+
+    if [ -f /etc/gentoo-release ]; then
+	VER="$(cat /etc/gentoo-release | awk '{print $NF;}')"
+	echo "gentoo/${VER}"
 	return
     fi
 
