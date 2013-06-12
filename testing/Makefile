@@ -16,10 +16,11 @@ include $(LIBRESWANSRCDIR)/Makefile.inc
 
 srcdir?=${LIBRESWANSRCDIR}/testing/
 
-SUBDIRS=lib utils 
-SUBDIRS+=klips 
-SUBDIRS+=pluto scripts packaging
-SUBDORS+=libvirt
+SUBDIRS+=pluto 
+#SUBDIRS=lib utils 
+#SUBDIRS+=klips 
+#SUBDIRS+=scripts packaging
+#SUBDORS+=libvirt
 #SUBDIRS+=kunit
 # FIXUP: pfkey should NOT be commented out, but it needs debuging:
 #SUBDIRS+=pfkey
@@ -30,7 +31,7 @@ def:
 
 # programs
 
-prerequisites cleanall distclean mostlyclean realclean install programs config man checkprograms check clean spotless install_file_list:
+prerequisites cleanall distclean mostlyclean realclean check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
 		 ${MAKE} -C $$d srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ;\
