@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v3.5 (unreleased)
 * lswan_detect: cleanup coding style and fix help for unknown options [Tuomo]
+* lswan_detect: add gentoo detection [Tuomo]
 * setup: add rhsysv, openrc, and real sysv init support [Tuomo]
 * Bugtracker bugs fixed:
    #96: lswan_detect: Alpine linux compatibility [Tuomo]
