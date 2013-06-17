@@ -2,7 +2,7 @@
  * @(#) RFC2367 PF_KEYv2 Key management API domain socket I/F
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs.
  * Copyright (C) 2010-12 David McCullough <david_mccullough@mcafee.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1141,12 +1141,12 @@ int pfkey_get_info(char *buffer, char **start, off_t offset, int length
 {
 	const int max_content = length > 0 ? length - 1 : 0;       /* limit of useful snprintf output */
 
-#ifdef NET_26
-	struct hlist_node *node;
-#endif
 	off_t begin = 0;
 	int len = 0;
 	struct sock *sk;
+#ifdef SK_FOR_EACH_NEED_NODE
+	struct hlist_node *node;
+#endif
 
 	if (!sysctl_ipsec_debug_verbose) {
 		len += ipsec_snprintf(buffer, length,
@@ -1156,7 +1156,7 @@ int pfkey_get_info(char *buffer, char **start, off_t offset, int length
 				      "    sock   pid d    sleep   socket     next     prev e r z n p sndbf    stamp    Flags     Type St\n");
 	}
 
-	sk_for_each(sk, node, &pfkey_sock_list) {
+	SK_FOR_EACH(sk, &pfkey_sock_list) {
 
 		if (!sysctl_ipsec_debug_verbose) {
 			len += ipsec_snprintf(buffer + len, length - len,
@@ -1408,10 +1408,6 @@ int pfkey_init(void)
 	int error = 0;
 	int i;
 
-#ifdef HAVE_PROC_DIR_ENTRY
-	struct proc_dir_entry* entry;
-#endif
-
 	static struct ipsec_alg_supported supported_init_ah[] = {
 #ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
 		{ K_SADB_EXT_SUPPORTED_AUTH, K_SADB_AALG_MD5HMAC, 0, 128,
@@ -1480,21 +1476,9 @@ int pfkey_init(void)
 	error |= sock_register(&pfkey_family_ops);
 
 #ifdef CONFIG_PROC_FS
-#    if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24)
-	proc_net_create("pf_key", 0, pfkey_get_info);
-	proc_net_create("pf_key_supported", 0, pfkey_supported_get_info);
-	proc_net_create("pf_key_registered", 0, pfkey_registered_get_info);
-#    else
-	entry = create_proc_entry("pf_key", 0, init_net.proc_net);
-	if (entry)
-		entry->read_proc = pfkey_get_info;
-	entry = create_proc_entry("pf_key_supported", 0, init_net.proc_net);
-	if (entry)
-		entry->read_proc = pfkey_supported_get_info;
-	entry = create_proc_entry("pf_key_registered", 0, init_net.proc_net);
-	if (entry)
-		entry->read_proc = pfkey_registered_get_info;
-#    endif
+	ipsec_proc_net_remove("pf_key");
+	ipsec_proc_net_remove("pf_key_supported");
+	ipsec_proc_net_remove("pf_key_registered");
 #endif  /* CONFIG_PROC_FS */
 	return error;
 }
@@ -1519,15 +1503,9 @@ int pfkey_cleanup(void)
 	error |= supported_remove_all(K_SADB_X_SATYPE_IPIP);
 
 #ifdef CONFIG_PROC_FS
-# if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24)
-	proc_net_remove("pf_key");
-	proc_net_remove("pf_key_supported");
-	proc_net_remove("pf_key_registered");
-# else
-	proc_net_remove(&init_net, "pf_key");
-	proc_net_remove(&init_net, "pf_key_supported");
-	proc_net_remove(&init_net, "pf_key_registered");
-# endif
+	ipsec_proc_net_remove("pf_key");
+	ipsec_proc_net_remove("pf_key_supported");
+	ipsec_proc_net_remove("pf_key_registered");
 #endif  /* CONFIG_PROC_FS */
 
 	/* other module unloading cleanup happens here */
