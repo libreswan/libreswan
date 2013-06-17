@@ -173,8 +173,8 @@ const char *const state_story[] = {
 	"got Informational Message in clear",                   /* STATE_INFO */
 	"got encrypted Informational Message",                  /* STATE_INFO_PROTECTED */
 
-	"XAUTH server - CFG_request sent, expecting CFG_reply",
-	"XAUTH status send, expecting Ack",
+	"XAUTH responder - optional CFG exchange",              /* STATE_XAUTH_R0 */
+	"XAUTH status sent, expecting Ack",                     /* STATE_XAUTH_R1 */
 	"ModeCfg Reply sent",                           /* STATE_MODE_CFG_R0 */
 	"ModeCfg Set sent, expecting Ack",              /* STATE_MODE_CFG_R1 */
 	"ModeCfg R2",                                   /* STATE_MODE_CFG_R2 */
