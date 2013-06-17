@@ -23,7 +23,7 @@ verbose=
 host=
 random="--random /dev/random"
 output=
-configdir=
+configdir="--configdir @FINALCONFDDIR@"
 password=
 for dummy
 do
@@ -44,11 +44,6 @@ do
 	esac
 	shift
 done
-
-if test " $configdir" = " "
-then
-    configdir="--configdir @FINALCONFDDIR@"
-fi
 
 if test " $output" = " " && test ! -f /etc/ipsec.secrets
 then
