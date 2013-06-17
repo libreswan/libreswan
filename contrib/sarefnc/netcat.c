@@ -1783,7 +1783,6 @@ char ** argv;
 				o_tos = IPTOS_MINCOST;
 			else
 				o_tos = atoi(optarg);
-			;
 			break;
 #endif
 		case 'z':               /* little or no data xfer */

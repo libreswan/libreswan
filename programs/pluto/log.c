@@ -953,7 +953,8 @@ static void connection_state(struct state *st, void *data)
 			    lc->phase1 < p1_auth)
 				lc->phase1 = p1_auth;
 		}
-	} else { lc->phase1 = p1_down;
+	} else {
+		lc->phase1 = p1_down;
 	}
 
 	/* only phase one shares across connections, so we can quit now */

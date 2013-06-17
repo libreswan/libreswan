@@ -681,13 +681,11 @@ int main(int argc, char **argv)
 
 		case 'D': /* --force_busy */
 			force_busy = TRUE;
-			continue
-			;
+			continue;
 
 		case 'r': /* --strictcrlpolicy */
 			strict_crl_policy = TRUE;
-			continue
-			;
+			continue;
 
 		case 'R':
 			no_retransmits = TRUE;
@@ -709,8 +707,7 @@ int main(int argc, char **argv)
 
 				crl_check_interval = interval;
 			}
-			continue
-			;
+			continue;
 
 		case 'u': /* --uniqueids */
 			uniqueIDs = TRUE;
@@ -838,10 +835,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'z': /* --config */
-			;
 			/* Config struct to variables mapper. This will overwrite */
 			/* all previously set options. Keep this in the same order than */
 			/* long_opts[] is. */
+		{
 			struct starter_config *cfg = read_cfg_file(optarg);
 
 			set_cfg_string(&pluto_log_file,
@@ -922,6 +919,7 @@ int main(int argc, char **argv)
 
 			confread_free(cfg);
 			continue;
+		}
 
 		default:
 #ifdef DEBUG

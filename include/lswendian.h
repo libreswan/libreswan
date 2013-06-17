@@ -49,13 +49,13 @@
 #endif
 
 #ifndef BIG_ENDIAN
- #error BIG_ENDIAN must be defined
+# error BIG_ENDIAN must be defined
 #endif
 
 #ifndef LITTLE_ENDIAN
- #error LITTLE_ENDIAN must be defined
+# error LITTLE_ENDIAN must be defined
 #endif
 
 #ifndef BYTE_ORDER
- #error BYTE_ORDER must be defined
+# error BYTE_ORDER must be defined
 #endif

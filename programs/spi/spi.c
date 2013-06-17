@@ -1153,7 +1153,6 @@ int main(int argc, char *argv[])
 					       life_opt,
 					       optarg) != 0)
 				exit(1);
-			;
 			break;
 		default:
 			fprintf(stderr,
