@@ -7,6 +7,7 @@ v3.5 (unreleased)
 * setup: add rhsysv, openrc, and real sysv init support [Tuomo]
 * KLIPS: Added support for kernel 3.9.x [Paul]
 * Bugtracker bugs fixed:
+   #82: Phase out DBG_KLIPS/DBG_NETKEY for DBG_KERNEL [Paul]
    #96: lswan_detect: Alpine linux compatibility [Tuomo]
    #99: NETKEY: Segfault on acquire_netlink with labeled_ipsec [Kim/Tuomo]
    #101: restore port when ipsec policy is generated for nat-t [Kim/Tuomo]
