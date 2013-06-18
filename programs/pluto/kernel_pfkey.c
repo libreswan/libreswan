@@ -196,7 +196,7 @@ void init_pfkey(void)
 	if (fcntl(pfkeyfd, F_SETFD, FD_CLOEXEC) != 0)
 		exit_log_errno((e, "fcntl(FD_CLOEXEC) in init_pfkeyfd()"));
 
-	DBG(DBG_KLIPS,
+	DBG(DBG_KERNEL,
 	    DBG_log("process %u listening for PF_KEY_V2 on file descriptor %d",
 		    (unsigned)pid, pfkeyfd));
 }
@@ -316,7 +316,7 @@ static bool pfkey_get(pfkey_buf *buf)
 #endif
 			     )) {
 			/* not for us: ignore */
-			DBG(DBG_KLIPS,
+			DBG(DBG_KERNEL,
 			    DBG_log(
 				    "pfkey_get: ignoring PF_KEY %s message %u for process %u",
 				    sparse_val_show(pfkey_type_names,
@@ -324,7 +324,7 @@ static bool pfkey_get(pfkey_buf *buf)
 				    buf->msg.sadb_msg_seq,
 				    buf->msg.sadb_msg_pid));
 		} else {
-			DBG(DBG_KLIPS,
+			DBG(DBG_KERNEL,
 			    DBG_log("pfkey_get: %s message %u",
 				    sparse_val_show(pfkey_type_names,
 						    buf->msg.sadb_msg_type),
@@ -481,7 +481,7 @@ static void pfkey_async(pfkey_buf *buf)
 		     buf->msg.sadb_msg_seq,
 		     buf->msg.sadb_msg_pid);
 	} else {
-		DBG(DBG_CONTROL | DBG_KLIPS, DBG_log("pfkey_async:"
+		DBG(DBG_CONTROL | DBG_KERNEL, DBG_log("pfkey_async:"
 						     " %s len=%u, errno=%u, satype=%u, seq=%u, pid=%u",
 						     sparse_val_show(
 							     pfkey_type_names,
@@ -644,7 +644,7 @@ static bool finish_pfkey_msg(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
 	} else {
 		size_t len = pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN;
 
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("finish_pfkey_msg: %s message %u for %s %s",
 			    sparse_val_show(pfkey_type_names,
 					    pfkey_msg->sadb_msg_type),
@@ -704,7 +704,7 @@ logerr:
 				 * dumped the KLIPS command, do so.
 				 */
 #ifdef DEBUG
-				if ((cur_debugging & DBG_KLIPS) == 0)
+				if ((cur_debugging & DBG_KERNEL) == 0)
 					DBG_dump(NULL, (void *) pfkey_msg,
 						 len);
 #endif
@@ -778,7 +778,7 @@ static void pfkey_register_proto(unsigned int sadb_register,
 		plog("no kernel support for %s", satypename);
 	} else {
 		kernel_ops->pfkey_register_response(&pfb.msg);
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("%s registered with kernel.", satypename));
 	}
 }
@@ -1066,7 +1066,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 					      sa->natt_type),
 				      "pfkey_nat_t_type Add ESP SA",
 				      sa->text_said, extensions);
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("setting natt_type to %d\n", sa->natt_type));
 		if (!success)
 			return FALSE;
@@ -1080,7 +1080,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 						      sa->natt_sport),
 					      "pfkey_nat_t_sport Add ESP SA",
 					      sa->text_said, extensions);
-			DBG(DBG_KLIPS,
+			DBG(DBG_KERNEL,
 			    DBG_log("setting natt_sport to %d\n",
 				    sa->natt_sport));
 			if (!success)
@@ -1096,7 +1096,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 						      sa->natt_dport),
 					      "pfkey_nat_t_dport Add ESP SA",
 					      sa->text_said, extensions);
-			DBG(DBG_KLIPS,
+			DBG(DBG_KERNEL,
 			    DBG_log("setting natt_dport to %d\n",
 				    sa->natt_dport));
 			if (!success)
@@ -1108,7 +1108,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 						   sa->natt_oa,
 						   "pfkey_nat_t_oa Add ESP SA",
 						   sa->text_said, extensions);
-			DBG(DBG_KLIPS,
+			DBG(DBG_KERNEL,
 			    DBG_log("setting nat_oa to %s\n",
 				    ip_str(sa->natt_oa)));
 			if (!success)
@@ -1853,7 +1853,7 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 					idle_time = idle_time_int;
 				}
 				if (idle_time > idle_max) {
-					DBG(DBG_KLIPS,
+					DBG(DBG_KERNEL,
 					    DBG_log(
 						    "SA %s found idle for more than %ld sec",
 						    text_said, idle_max));
