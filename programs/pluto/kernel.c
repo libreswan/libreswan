@@ -110,7 +110,7 @@ static void free_bare_shunt(struct bare_shunt **pp);
 #ifdef DEBUG
 void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs)
 {
-	DBG(DBG_KLIPS,
+	DBG(DBG_KERNEL,
 	    {
 		    int ourport = ntohs(portof(&(bs)->ours.addr));
 		    int hisport = ntohs(portof(&(bs)->his.addr));
@@ -909,7 +909,7 @@ static bool raw_eroute(const ip_address *this_host,
 
 	set_text_said(text_said, that_host, spi, proto);
 
-	DBG(DBG_CONTROL | DBG_KLIPS,
+	DBG(DBG_CONTROL | DBG_KERNEL,
 	    {
 		    int sport = ntohs(portof(&this_client->addr));
 		    int dport = ntohs(portof(&that_client->addr));
@@ -940,7 +940,7 @@ static bool raw_eroute(const ip_address *this_host,
 #endif
 					);
 
-	if (result == FALSE || DBGP(DBG_CONTROL | DBG_KLIPS))
+	if (result == FALSE || DBGP(DBG_CONTROL | DBG_KERNEL))
 		DBG_log("raw_eroute result=%u\n", result);
 
 	return result;
@@ -1050,7 +1050,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 
 			/* is there already a broad host-to-host bare shunt? */
 			if (bs_pp == NULL) {
-				DBG(DBG_KLIPS,
+				DBG(DBG_KERNEL,
 				    DBG_log(
 					    "replacing broad host-to-host bare shunt"));
 				if (raw_eroute(null_host, &this_broad_client,
@@ -1086,7 +1086,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			shunt_spi = SPI_HOLD;
 		}
 
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("adding specific host-to-host bare shunt"));
 		if (raw_eroute(null_host, &this_client, null_host,
 			       &that_client,
@@ -1113,7 +1113,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 	} else {
 		unsigned int op = repl ? ERO_REPLACE : ERO_DELETE;
 
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("%s specific host-to-host bare shunt",
 			    repl ? "replacing" : "removing"));
 		if (raw_eroute(null_host, &this_client, null_host,
@@ -1311,7 +1311,7 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 
 	set_text_said(text_said, dest, spi, proto);
 
-	DBG(DBG_KLIPS, DBG_log("delete %s", text_said));
+	DBG(DBG_KERNEL, DBG_log("delete %s", text_said));
 
 	memset(&sa, 0, sizeof(sa));
 	sa.spi = spi;
@@ -1466,14 +1466,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		if (!kernel_ops->add_sa(said_next, replace)) {
-			DBG(DBG_KLIPS, DBG_log("add_sa tunnel failed"));
+			DBG(DBG_KERNEL, DBG_log("add_sa tunnel failed"));
 			goto fail;
 		}
 
 		time(
 			(inbound) ? &st->st_esp.our_lastused : &st->st_esp.peer_lastused);
 
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("added tunnel with ref=%u", said_next->ref));
 
 		/*
@@ -1482,7 +1482,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * since we refer to it in the policy that we instantiate.
 		 */
 		if (new_refhim == IPSEC_SAREF_NULL && !inbound) {
-			DBG(DBG_KLIPS,
+			DBG(DBG_KERNEL,
 			    DBG_log("recorded ref=%u as refhim",
 				    said_next->ref));
 			new_refhim = said_next->ref;
@@ -2080,7 +2080,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			set_text_said(text_said1, s[1].dst, s[1].spi,
 				      s[1].proto);
 
-			DBG(DBG_KLIPS,
+			DBG(DBG_KERNEL,
 			    DBG_log("grouping %s (ref=%u) and %s (ref=%u)",
 				    text_said0, s[0].ref,
 				    text_said1, s[1].ref));
@@ -2851,7 +2851,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		if (!setup_half_ipsec_sa(st, FALSE))
 			return FALSE;
 
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("set up outoing SA, ref=%u/%u", st->st_ref,
 			    st->st_refhim));
 		st->st_outbound_done = TRUE;
@@ -2862,7 +2862,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		if (!setup_half_ipsec_sa(st, TRUE))
 			return FALSE;
 
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("set up incoming SA, ref=%u/%u", st->st_ref,
 			    st->st_refhim));
 	}
@@ -3154,7 +3154,7 @@ bool get_sa_info(struct state *st, bool inbound, time_t *ago)
 	sa.dst = dst;
 	sa.text_said = text_said;
 
-	DBG(DBG_KLIPS,
+	DBG(DBG_KERNEL,
 	    DBG_log("get %s", text_said)
 	    );
 	if (!kernel_ops->get_sa(&sa, &bytes))

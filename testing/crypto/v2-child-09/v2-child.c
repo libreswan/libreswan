@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	struct state st1;
 
 	progname = argv[0];
-	cur_debugging = DBG_CRYPT | DBG_KLIPS | DBG_PARSING;
+	cur_debugging = DBG_CRYPT | DBG_KERNEL | DBG_PARSING;
 
 	memset(&st1, 0, sizeof(st1));
 	pluto_shared_secrets_file = "../../baseconfigs/east/etc/ipsec.secrets";

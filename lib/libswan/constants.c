@@ -91,7 +91,7 @@ const char *const debug_bit_names[] = {
 	"emitting",
 	"control",
 	"lifecycle",
-	"klips",
+	"kernel",
 	"dns",
 	"oppo",
 	"controlmore",

@@ -98,7 +98,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 		ret = FALSE;
 	}
 
-	DBG(DBG_KLIPS,
+	DBG(DBG_KERNEL,
 	    if (ret) {
 		    DBG_log("ike_alg_enc_ok(ealg=%d,key_len=%d): "
 			    "blocksize=%d, keyminlen=%d, "

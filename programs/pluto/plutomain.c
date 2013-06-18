@@ -190,8 +190,7 @@ static void usage(const char *mess)
 		" \\\n\t"
 		"[--debug-control]"
 		"[--debug-lifecycle]"
-		" [--debug-klips]"
-		" [--debug-netkey]"
+		" [--debug-kernel]"
 		" [--debug-x509]"
 		" [--debug-dns]"
 		" [--debug-oppo]"
@@ -497,9 +496,7 @@ int main(int argc, char **argv)
 			  DBG_OFFSET },
 			{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE +
 			  DBG_OFFSET },
-			{ "debug-klips", no_argument, NULL, DBG_KLIPS +
-			  DBG_OFFSET },
-			{ "debug-netkey", no_argument, NULL, DBG_NETKEY +
+			{ "debug-kernel", no_argument, NULL, DBG_KERNEL +
 			  DBG_OFFSET },
 			{ "debug-dns", no_argument, NULL, DBG_DNS +
 			  DBG_OFFSET },
@@ -516,6 +513,12 @@ int main(int argc, char **argv)
 			{ "debug-private", no_argument, NULL, DBG_PRIVATE +
 			  DBG_OFFSET },
 			{ "debug-pfkey", no_argument, NULL, DBG_PFKEY +
+			  DBG_OFFSET },
+
+			/* for backwards compatibility */
+			{ "debug-klips", no_argument, NULL, DBG_KERNEL +
+			  DBG_OFFSET },
+			{ "debug-netkey", no_argument, NULL, DBG_KERNEL +
 			  DBG_OFFSET },
 
 			{ "impair-delay-adns-key-answer", no_argument, NULL,

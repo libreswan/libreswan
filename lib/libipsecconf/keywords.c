@@ -295,7 +295,7 @@ struct keyword_enum_value kw_plutodebug_values[] = {
 	{ "emitting", DBG_EMITTING },
 	{ "control",  DBG_CONTROL },
 	{ "lifecycle", DBG_LIFECYCLE },
-	{ "klips",    DBG_KLIPS },
+	{ "kernel",    DBG_KERNEL },
 	{ "dns",      DBG_DNS },
 	{ "oppo",     DBG_OPPO },
 	{ "oppoinfo",    DBG_OPPOINFO },
@@ -306,6 +306,9 @@ struct keyword_enum_value kw_plutodebug_values[] = {
 	{ "pfkey",    DBG_PFKEY },
 	{ "natt",     DBG_NATT },
 	{ "nattraversal", DBG_NATT },
+	/* backwards compatibility */
+	{ "klips",    DBG_KERNEL },
+	{ "netkey",    DBG_KERNEL },
 
 	{ "impair-delay-adns-key-answer", IMPAIR_DELAY_ADNS_KEY_ANSWER },
 	{ "impair-delay-adns-txt-answer", IMPAIR_DELAY_ADNS_TXT_ANSWER },

@@ -94,7 +94,7 @@ const struct sadb_alg *kernel_alg_sadb_alg_get(int satype, int exttype,
  */
 static void kernel_alg_init(void)
 {
-	DBG(DBG_KLIPS, DBG_log("alg_init():"
+	DBG(DBG_KERNEL, DBG_log("alg_init():"
 			       "memset(%p, 0, %d) "
 			       "memset(%p, 0, %d) ",
 			       &esp_aalg,  (int)sizeof(esp_aalg),
@@ -110,7 +110,7 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	struct sadb_alg *alg_p = NULL;
 	int alg_id = sadb_alg->sadb_alg_id;
 
-	DBG(DBG_KLIPS, DBG_log("kernel_alg_add():"
+	DBG(DBG_KERNEL, DBG_log("kernel_alg_add():"
 			       "satype=%d, exttype=%d, alg_id=%d",
 			       satype, exttype, sadb_alg->sadb_alg_id));
 	if (!(alg_p = sadb_alg_ptr(satype, exttype, alg_id, 1))) {
@@ -121,13 +121,13 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	}
 
 	/*
-	   DBG(DBG_KLIPS, DBG_log("kernel_alg_add(): assign *%p=*%p",
+	   DBG(DBG_KERNEL, DBG_log("kernel_alg_add(): assign *%p=*%p",
 	                alg_p, sadb_alg));
 	 */
 
 	/*      This logic "mimics" KLIPS: first algo implementation will be used */
 	if (alg_p->sadb_alg_id) {
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("kernel_alg_add(): discarding already setup "
 			    "satype=%d, exttype=%d, alg_id=%d",
 			    satype, exttype,
@@ -187,7 +187,7 @@ err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 
 out:
 	if (!ugh && alg_p != NULL) {
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("kernel_alg_esp_enc_ok(%d,%d): "
 			    "alg_id=%d, "
 			    "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
@@ -201,7 +201,7 @@ out:
 			    ret);
 		    );
 	} else {
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("kernel_alg_esp_enc_ok(%d,%d): NO",
 			    alg_id, key_len);
 		    );
@@ -303,7 +303,7 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg_buf, int buflen)
 		int supp_len;
 		supp_len = sadb.supported->sadb_supported_len *
 			   IPSEC_PFKEYv2_ALIGN;
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("kernel_alg_register_pfkey(): SADB_SATYPE_%s: "
 			    "sadb_msg_len=%d sadb_supported_len=%d",
 			    satype ==
@@ -319,7 +319,7 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg_buf, int buflen)
 		     supp_len -= sizeof(struct sadb_alg), sadb.alg++, i++) {
 			int ret;
 			ret = kernel_alg_add(satype, supp_exttype, sadb.alg);
-			DBG(DBG_KLIPS,
+			DBG(DBG_KERNEL,
 			    DBG_log(
 				    "kernel_alg_register_pfkey(): SADB_SATYPE_%s: "
 				    "alg[%d], exttype=%d, satype=%d, alg_id=%d, "
@@ -362,7 +362,7 @@ int kernel_alg_esp_enc_keylen(int alg_id)
 		break;
 	}
 none:
-	DBG(DBG_KLIPS, DBG_log("kernel_alg_esp_enc_keylen():"
+	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_keylen():"
 			       "alg_id=%d, keylen=%d",
 			       alg_id, keylen));
 
@@ -377,7 +377,7 @@ struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id)
 		goto none;
 	sadb_alg = &esp_ealg[alg_id];
 none:
-	DBG(DBG_KLIPS, DBG_log("kernel_alg_esp_sadb_alg():"
+	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_sadb_alg():"
 			       "alg_id=%d, sadb_alg=%p",
 			       alg_id, sadb_alg));
 	return sadb_alg;
