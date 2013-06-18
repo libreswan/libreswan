@@ -6,7 +6,7 @@
  * Copyright (C) 2003 - 2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 - 2011 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012 David McCullough <david_mccullough@mcafee.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -61,6 +61,20 @@
 #if !defined(RHEL_RELEASE_CODE)
 # define RHEL_RELEASE_CODE 0
 # define RHEL_RELEASE_VERSION(x, y) 10
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
+# define SK_FOR_EACH(a,c) sk_for_each(a,c)
+# define ipsec_proc_net_remove(a) remove_proc_entry(a, init_net.proc_net)
+#else
+# define SK_FOR_EACH_NEED_NODE
+# define SK_FOR_EACH(a,c) sk_for_each(a,node,c)
+# define remove_proc_subtree(a,b) remove_proc_entry(a,b)
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 24)
+#  define ipsec_proc_net_remove(a) proc_net_remove(&init_net, a)
+# else
+#  define ipsec_proc_net_remove(a) proc_net_remove(a)
+# endif
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)

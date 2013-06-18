@@ -1139,19 +1139,19 @@ void ipsec_proc_cleanup()
 		it--;
 
 		do {
-			remove_proc_entry(it->name, *it->parent);
+			remove_proc_subtree(it->name, *it->parent);
 			it--;
 		} while (it >= proc_items);
 	}
 
-	remove_proc_entry("ipsec_klipsdebug", PROC_NET);
-	remove_proc_entry("ipsec_eroute",     PROC_NET);
-	remove_proc_entry("ipsec_spi",        PROC_NET);
-	remove_proc_entry("ipsec_spigrp",     PROC_NET);
+	remove_proc_subtree("ipsec_klipsdebug", PROC_NET);
+	remove_proc_subtree("ipsec_eroute",     PROC_NET);
+	remove_proc_subtree("ipsec_spi",        PROC_NET);
+	remove_proc_subtree("ipsec_spigrp",     PROC_NET);
 #ifdef IPSEC_SA_RECOUNT_DEBUG
-	remove_proc_entry("ipsec_saraw",      PROC_NET);
+	remove_proc_subtree("ipsec_saraw",      PROC_NET);
 #endif
-	remove_proc_entry("ipsec_tncfg",      PROC_NET);
-	remove_proc_entry("ipsec_version",    PROC_NET);
-	remove_proc_entry("ipsec",            PROC_NET);
+	remove_proc_subtree("ipsec_tncfg",      PROC_NET);
+	remove_proc_subtree("ipsec_version",    PROC_NET);
+	remove_proc_subtree("ipsec",            PROC_NET);
 }
