@@ -1232,18 +1232,18 @@ void add_connection(const struct whack_message *wm)
 
 			if (c->policy & POLICY_ENCRYPT)
 				c->alg_info_esp = alg_info_esp_create_from_str(
-					wm->esp ? wm->esp : "", &ugh, FALSE);
+					wm->esp ? wm->esp : "", &ugh);
 
 			if (c->policy & POLICY_AUTHENTICATE)
 				c->alg_info_esp = alg_info_ah_create_from_str(
-					wm->esp ? wm->esp : "", &ugh, FALSE);
+					wm->esp ? wm->esp : "", &ugh);
 
 			DBG(DBG_CRYPT | DBG_CONTROL,
 			    static char buf[256] = "<NULL>";
 			    if (c->alg_info_esp)
 				    alg_info_snprint(buf, sizeof(buf),
 						     (struct alg_info *)c->
-						     alg_info_esp, TRUE);
+						     alg_info_esp);
 			    DBG_log("esp string values: %s", buf);
 			    );
 			if (c->alg_info_esp) {
@@ -1272,8 +1272,7 @@ void add_connection(const struct whack_message *wm)
 			DBG(DBG_CRYPT | DBG_CONTROL,
 			    char buf[256];
 			    alg_info_snprint(buf, sizeof(buf),
-					     (struct alg_info *)c->alg_info_ike,
-					     TRUE);
+					     (struct alg_info *)c->alg_info_ike);
 			    DBG_log("ike (phase1) algorihtm values: %s", buf);
 			    );
 			if (c->alg_info_ike) {

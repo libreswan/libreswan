@@ -155,7 +155,7 @@ static int default_ike_groups[] = {
 static void alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
 			     int aalg_id, int ak_bits,
-			     int modp_id, int permitmann UNUSED)
+			     int modp_id)
 {
 	int i = 0, n_groups;
 
@@ -443,8 +443,7 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 			       alg_str, err_p,
 			       parser_init_ike,
 			       alg_info_ike_add,
-			       lookup_group,
-			       TRUE) < 0) {
+			       lookup_group) < 0) {
 		pfreeany(alg_info_ike);
 		alg_info_ike = NULL;
 	}
@@ -775,7 +774,7 @@ void kernel_alg_show_connection(struct connection *c, const char *instance)
 	if (c->alg_info_esp != NULL) {
 
 		alg_info_snprint(buf, sizeof(buf),
-				 (struct alg_info *)c->alg_info_esp, TRUE);
+				 (struct alg_info *)c->alg_info_esp);
 		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   %s algorithms wanted: %s",
 			  c->name,
