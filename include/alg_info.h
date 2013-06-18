@@ -119,19 +119,17 @@ void alg_info_free(struct alg_info *alg_info);
 void alg_info_addref(struct alg_info *alg_info);
 void alg_info_delref(struct alg_info **alg_info);
 struct alg_info_esp * alg_info_esp_create_from_str(const char *alg_str,
-						   err_t *err_p,
-						   bool permitmann);
+						   err_t *err_p);
 
 struct alg_info_esp * alg_info_ah_create_from_str(const char *alg_str,
-						  err_t *err_p,
-						  bool permitmann);
+						  err_t *err_p);
 
 struct alg_info_ike * alg_info_ike_create_from_str(const char *alg_str,
 						   err_t *err_p);
 
 int alg_info_parse(const char *str);
 int alg_info_snprint(char *buf, int buflen,
-		     struct alg_info *alg_info, bool permitike);
+		     struct alg_info *alg_info);
 
 void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info);
@@ -156,10 +154,8 @@ extern int alg_info_parse_str(struct alg_info *alg_info,
 			      void (*alg_info_add)(struct alg_info *alg_info,
 						   int ealg_id, int ek_bits,
 						   int aalg_id, int ak_bits,
-						   int modp_id,
-						   bool permitmann),
+						   int modp_id),
 			      const struct oakley_group_desc *(*lookup_group_f)(
-				      u_int16_t group),
-			      bool permitmann);
+				      u_int16_t group));
 
 #endif /* ALG_INFO_H */

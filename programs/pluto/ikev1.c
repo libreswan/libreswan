@@ -650,6 +650,12 @@ static stf_status unexpected(struct msg_digest *md)
 	return STF_IGNORE;
 }
 
+/*
+ * RFC 2408 Section 4.6 
+ *
+ *  #   Initiator  Direction Responder  NOTE
+ * (1)  HDR*; N/D     =>                Error Notification or Deletion
+ */
 static stf_status informational(struct msg_digest *md)
 {
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
@@ -2245,14 +2251,13 @@ void process_packet_tail(struct msg_digest **mdp)
 		}
 	}
 
-	/* Ignore payloads that we don't handle:
-	 * Delete, Notification, VendorID (comment about what we don't handle outdated?)
+	/*
+	 * Ignore payloads that we don't handle:
 	 */
 	/* XXX Handle Notifications */
 	{
-		struct payload_digest *p;
+		struct payload_digest *p = md->chain[ISAKMP_NEXT_N];
 
-		p = md->chain[ISAKMP_NEXT_N];
 		while (p != NULL) {
 			switch (p->payload.notification.isan_type) {
 
@@ -2261,8 +2266,12 @@ void process_packet_tail(struct msg_digest **mdp)
 			case ISAKMP_N_CISCO_LOAD_BALANCE:
 			case PAYLOAD_MALFORMED:
 			case INVALID_MESSAGE_ID:
-				/* these are handled later on in informational() */
-				break;
+			case IPSEC_RESPONDER_LIFETIME:
+				if (md->hdr.isa_xchg == ISAKMP_XCHG_INFO) {
+					/* these are handled later on in informational() */
+					break;
+				}
+				/* fall through */
 			default:
 				if (st == NULL) {
 					loglog(RC_LOG_SERIOUS,
@@ -2274,12 +2283,12 @@ void process_packet_tail(struct msg_digest **mdp)
 				} else {
 					loglog(RC_LOG_SERIOUS,
 					       "ignoring informational payload %s, msgid=%08x, length=%d",
-					       enum_show(&
-							 ipsec_notification_names,
+					       enum_show(&ipsec_notification_names,
 							 p->payload.
 							 notification.isan_type),
 					       st->st_msgid,
 					       p->payload.notification.isan_length);
+					DBG_dump_pbs(&p->pbs);
 				}
 #ifdef DEBUG
 				if (st != NULL &&

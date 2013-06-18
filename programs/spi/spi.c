@@ -439,8 +439,7 @@ int decode_esp(char *algname)
 		esp_alg = XF_ESP3DES;
 #ifdef KERNEL_ALG
 	} else if ((alg_info =
-			    alg_info_esp_create_from_str(algname, &alg_err,
-							 FALSE))) {
+			    alg_info_esp_create_from_str(algname, &alg_err))) {
 		int esp_ealg_id, esp_aalg_id;
 
 		esp_alg = XF_OTHER_ALG;

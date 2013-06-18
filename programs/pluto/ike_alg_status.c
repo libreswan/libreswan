@@ -101,7 +101,7 @@ void ike_alg_show_connection(struct connection *c, const char *instance)
 		char buf[1024];
 
 		alg_info_snprint(buf, sizeof(buf) - 1,
-				 (struct alg_info *)c->alg_info_ike, TRUE);
+				 (struct alg_info *)c->alg_info_ike);
 		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKE algorithms wanted: %s",
 			  c->name,
