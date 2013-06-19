@@ -1,4 +1,4 @@
-Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+Basic pluto with IKEv2 using RSA on the initiator (west), and on the responder.
 
 West is configured as a road warrior, so we should see an instantiation.
 

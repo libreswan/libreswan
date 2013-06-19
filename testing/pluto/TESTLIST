@@ -495,15 +495,16 @@ kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	incomplete
 #################################################################
 umlplutotest	ikev2-01-fallback-ikev1			good
 umlplutotest	ikev2-02-responder-send-notify		good
-umlplutotest	ikev2-03-basic-rawrsa			good
+kvmlplutotest	ikev2-03-basic-rawrsa			good
 kvmplutotest	ikev2-04-basic-x509			good
 kvmplutotest	ikev2-05-basic-psk			good
 umlplutotest	ikev2-06-6msg				good
 umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good
-umlplutotest	ikev2-09-rw-rsa				good
+kvmplutotest	ikev2-09-rw-rsa				good
 umlplutotest	ikev2-10-basic-rawrsa-nss		good
 umlplutotest	ikev2-11-simple-psk			good
+kvmplutotest	ikev2-12-no-nhelpers			good
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
