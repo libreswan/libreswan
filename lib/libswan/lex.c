@@ -160,8 +160,7 @@ bool shift(void)
 					/* "ordinary" token: up to whitespace or end of line */
 					do
 						p++;
-					while (*p != '\0' && !isspace(*p))
-					;
+					while (*p != '\0' && !isspace(*p));
 
 					/* fudge to separate ':' from a preceding adjacent token */
 					if (p - 1 > flp->tok && p[-1] == ':')

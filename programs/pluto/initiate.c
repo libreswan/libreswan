@@ -1166,9 +1166,8 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 			cr->b.step = next_step;
 
 			for (sr = &c->spd
-			     ;
-			     sr != NULL &&
-			     !sameaddr(&sr->this.host_addr, &b->our_client)
+			     ; sr != NULL &&
+			      !sameaddr(&sr->this.host_addr, &b->our_client)
 			     ; sr = sr->next)
 				;
 

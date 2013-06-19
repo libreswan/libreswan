@@ -1684,12 +1684,10 @@ DEBUG_NO_STATIC int pfkey_register_parse(struct sock *sk,
 			    satype2name(satype),
 			    key_pid(sk));
 	}
-	;
 
 	/* send up register msg with supported SATYPE algos */
 
-	error =
-		pfkey_register_reply(satype,
+	error = pfkey_register_reply(satype,
 				     (struct sadb_msg*)extensions[
 					     K_SADB_EXT_RESERVED]);
 errlab:

@@ -292,7 +292,7 @@ static void encrypt(MPI a, MPI b, MPI input, ELG_public_key *pkey )
 	 */
 	mpi_powm( b, pkey->y, k, pkey->p );
 	mpi_mulm( b, b, input, pkey->p );
-  #if 0
+#if 0
 	if ( DBG_CIPHER ) {
 		log_mpidump("elg encrypted y= ", pkey->y);
 		log_mpidump("elg encrypted p= ", pkey->p);
@@ -301,7 +301,7 @@ static void encrypt(MPI a, MPI b, MPI input, ELG_public_key *pkey )
 		log_mpidump("elg encrypted a= ", a);
 		log_mpidump("elg encrypted b= ", b);
 	}
-  #endif
+#endif
 	mpi_free(k);
 }
 
@@ -314,7 +314,7 @@ static void decrypt(MPI output, MPI a, MPI b, ELG_secret_key *skey )
 	mpi_powm( t1, a, skey->x, skey->p );
 	mpi_invm( t1, t1, skey->p );
 	mpi_mulm( output, b, t1, skey->p );
-  #if 0
+#if 0
 	if ( DBG_CIPHER ) {
 		log_mpidump("elg decrypted x= ", skey->x);
 		log_mpidump("elg decrypted p= ", skey->p);
@@ -322,7 +322,7 @@ static void decrypt(MPI output, MPI a, MPI b, ELG_secret_key *skey )
 		log_mpidump("elg decrypted b= ", b);
 		log_mpidump("elg decrypted M= ", output);
 	}
-  #endif
+#endif
 	mpi_free(t1);
 }
 
@@ -353,7 +353,7 @@ static void sign(MPI a, MPI b, MPI input, ELG_secret_key *skey )
 	mpi_invm(inv, k, p_1 );
 	mpi_mulm(b, t, inv, p_1 );
 
-  #if 0
+#if 0
 	if ( DBG_CIPHER ) {
 		log_mpidump("elg sign p= ", skey->p);
 		log_mpidump("elg sign g= ", skey->g);
@@ -364,7 +364,7 @@ static void sign(MPI a, MPI b, MPI input, ELG_secret_key *skey )
 		log_mpidump("elg sign a= ", a);
 		log_mpidump("elg sign b= ", b);
 	}
-  #endif
+p#endif
 	mpi_free(k);
 	mpi_free(t);
 	mpi_free(inv);
@@ -412,7 +412,7 @@ static int verify(MPI a, MPI b, MPI input, ELG_public_key *pkey )
 	mpi_powm( t2, pkey->g, input, pkey->p );
 
 	rc = !mpi_cmp( t1, t2 );
-  #else
+#else
 	/* t1 = g ^ - input * y ^ a * a ^ b  mod p */
 	mpi_invm(t2, pkey->g, pkey->p );
 	base[0] = t2;
@@ -426,7 +426,7 @@ static int verify(MPI a, MPI b, MPI input, ELG_public_key *pkey )
 	mpi_mulpowm( t1, base, exp, pkey->p );
 	rc = !mpi_cmp_ui( t1, 1 );
 
-  #endif
+#endif
 
 	mpi_free(t1);
 	mpi_free(t2);

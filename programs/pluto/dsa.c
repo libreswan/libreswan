@@ -136,9 +136,10 @@ static void test_keys( DSA_secret_key *sk, unsigned qbits )
 	pk.g = sk->g;
 	pk.y = sk->y;
 	/*mpi_set_bytes( test, qbits, get_random_byte, 0 );*/
-	{   char *p = get_random_bits( qbits, 0, 0 );
-	    mpi_set_buffer( test, p, (qbits + 7) / 8, 0 );
-	    m_free(p);
+	{
+		char *p = get_random_bits( qbits, 0, 0 );
+		mpi_set_buffer( test, p, (qbits + 7) / 8, 0 );
+		m_free(p);
 	}
 
 	sign( out1_a, out1_b, test, sk );

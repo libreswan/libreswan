@@ -738,15 +738,15 @@ static int ipsec_alg_test_encrypt(int enc_alg, int test)
 	struct ipsec_alg_enc *ixt_e;
 	void *tmp_key_e = NULL;
 
-	#define BUFSZ   1024
-	#define MARGIN  0
-	#define test_enc   (buf + MARGIN)
-	#define test_dec   (test_enc + BUFSZ + MARGIN)
-	#define test_tmp   (test_dec + BUFSZ + MARGIN)
-	#define test_key_e (test_tmp + BUFSZ + MARGIN)
-	#define test_iv    (test_key_e + key_e_size + MARGIN)
-	#define test_key   (test_iv + iv_size + MARGIN)
-	#define test_size  (BUFSZ * 3 + key_e_size + iv_size + keysize + \
+#	define BUFSZ   1024
+#	define MARGIN  0
+#	define test_enc   (buf + MARGIN)
+#	define test_dec   (test_enc + BUFSZ + MARGIN)
+#	define test_tmp   (test_dec + BUFSZ + MARGIN)
+#	define test_key_e (test_tmp + BUFSZ + MARGIN)
+#	define test_iv    (test_key_e + key_e_size + MARGIN)
+#	define test_key   (test_iv + iv_size + MARGIN)
+#	define test_size  (BUFSZ * 3 + key_e_size + iv_size + keysize + \
 			    MARGIN * 7)
 	ixt_e = (struct ipsec_alg_enc *)ipsec_alg_get(IPSEC_ALG_TYPE_ENCRYPT,
 						      enc_alg);
@@ -848,13 +848,13 @@ out:
 		ipsec_alg_put((struct ipsec_alg *)ixt_e);
 	return ret;
 
-	#undef test_enc
-	#undef test_dec
-	#undef test_tmp
-	#undef test_key_e
-	#undef test_iv
-	#undef test_key
-	#undef test_size
+#	undef test_enc
+#	undef test_dec
+#	undef test_tmp
+#	undef test_key_e
+#	undef test_iv
+#	undef test_key
+#	undef test_size
 }
 
 /*
@@ -942,11 +942,11 @@ out:
 		ipsec_alg_put((struct ipsec_alg *)ixt_a);
 	return ret;
 
-	#undef test_auth
-	#undef test_key_a
-	#undef test_key
-	#undef test_hash
-	#undef test_size
+#	undef test_auth
+#	undef test_key_a
+#	undef test_key
+#	undef test_hash
+#	undef test_size
 }
 
 int ipsec_alg_test(unsigned alg_type, unsigned alg_id, int test)

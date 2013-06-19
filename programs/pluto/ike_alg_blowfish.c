@@ -26,17 +26,19 @@ static void do_blowfish(u_int8_t *buf, size_t buf_len, u_int8_t *key,
 
 struct encrypt_desc algo_blowfish =
 {
-	common: {    officname: "blowfish",
-		     algo_type:     IKE_ALG_ENCRYPT,
-		     algo_id:       OAKLEY_BLOWFISH_CBC,
-		     algo_v2id:     IKEv2_ENCR_BLOWFISH,
-		     algo_next:     NULL, },
-	enc_ctxsize: sizeof(BF_KEY),
-	enc_blocksize: BLOWFISH_CBC_BLOCK_SIZE,
-	keyminlen: BLOWFISH_KEY_MIN_LEN,
-	keydeflen: BLOWFISH_KEY_MIN_LEN,
-	keymaxlen: BLOWFISH_KEY_MAX_LEN,
-	do_crypt:    do_blowfish,
+	.common = {
+		.officname = "blowfish",
+		.algo_type = IKE_ALG_ENCRYPT,
+		.algo_id: = OAKLEY_BLOWFISH_CBC,
+		.algo_v2id = IKEv2_ENCR_BLOWFISH,
+		.algo_next = NULL,
+	},
+	.enc_ctxsize = sizeof(BF_KEY),
+	.enc_blocksize = BLOWFISH_CBC_BLOCK_SIZE,
+	.keyminlen = BLOWFISH_KEY_MIN_LEN,
+	.keydeflen = BLOWFISH_KEY_MIN_LEN,
+	.keymaxlen = BLOWFISH_KEY_MAX_LEN,
+	.do_crypt = do_blowfish,
 };
 
 int ike_alg_blowfish_init(void);

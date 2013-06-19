@@ -517,7 +517,7 @@ static void pfkey_async(pfkey_buf *buf)
 /* asynchronous messages from our queue */
 void pfkey_dequeue(void)
 {
-    #define ORPHAN_HOLD_PROCESSING_LIMIT        200
+#	define ORPHAN_HOLD_PROCESSING_LIMIT        200
 	int limit = ORPHAN_HOLD_PROCESSING_LIMIT;
 
 	while (pfkey_iq_head != NULL) {

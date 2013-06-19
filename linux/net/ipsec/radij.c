@@ -849,8 +849,7 @@ void *w;
 			       (u_int)ntohl(((struct sockaddr_encap *)rn->
 					     rj_key)->sen_ip_src.s_addr),
 			       (u_int)ntohl(((struct sockaddr_encap *)rn->
-					     rj_key)->sen_ip_dst.s_addr))
-			;
+					     rj_key)->sen_ip_dst.s_addr));
 		}
 		base = rn;
 		/* If at right child go back up, otherwise, go right */
@@ -873,8 +872,7 @@ void *w;
 			       (u_int)ntohl(((struct sockaddr_encap *)rn->
 					     rj_key)->sen_ip_src.s_addr),
 			       (u_int)ntohl(((struct sockaddr_encap *)rn->
-					     rj_key)->sen_ip_dst.s_addr))
-			;
+					     rj_key)->sen_ip_dst.s_addr));
 		}
 		/* Process leaves */
 		while ((rn = base)) {
@@ -895,8 +893,7 @@ void *w;
 						    s_addr),
 				       (u_int)ntohl(((struct sockaddr_encap *)
 						     rn->rj_key)->sen_ip_dst.
-						    s_addr))
-				;
+						    s_addr));
 			}
 			if (!(rn->rj_flags & RJF_ROOT) &&
 			    (error = (*f)(rn, w)))
