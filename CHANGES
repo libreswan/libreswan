@@ -6,6 +6,7 @@ v3.5 (unreleased)
 * lswan_detect: add gentoo detection [Tuomo]
 * setup: add rhsysv, openrc, and real sysv init support [Tuomo]
 * KLIPS: Added support for kernel 3.9.x [Paul]
+* pluto: Fix reading ipsec.secrets without trailing newline [Hugh]
 * Bugtracker bugs fixed:
    #82: Phase out DBG_KLIPS/DBG_NETKEY for DBG_KERNEL [Paul]
    #96: lswan_detect: Alpine linux compatibility [Tuomo]
