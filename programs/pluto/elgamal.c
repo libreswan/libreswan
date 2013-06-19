@@ -364,7 +364,7 @@ static void sign(MPI a, MPI b, MPI input, ELG_secret_key *skey )
 		log_mpidump("elg sign a= ", a);
 		log_mpidump("elg sign b= ", b);
 	}
-p#endif
+#endif
 	mpi_free(k);
 	mpi_free(t);
 	mpi_free(inv);

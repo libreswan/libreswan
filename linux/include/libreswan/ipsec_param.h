@@ -1,31 +1,31 @@
 /*
-* @(#) Libreswan tunable paramaters
-*
-* Copyright (C) 2001  Richard Guy Briggs  <rgb@freeswan.org>
-*                 and Michael Richardson  <mcr@freeswan.org>
-* Copyright (C) 2004  Michael Richardson  <mcr@xelerance.com>
-* Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the
-* Free Software Foundation; either version 2 of the License, or (at your
-* option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-*
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-* for more details.
-*
-*
-*/
+ * @(#) Libreswan tunable paramaters
+ *
+ * Copyright (C) 2001  Richard Guy Briggs  <rgb@freeswan.org>
+ *                 and Michael Richardson  <mcr@freeswan.org>
+ * Copyright (C) 2004  Michael Richardson  <mcr@xelerance.com>
+ * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ *
+ */
 
 /*
-* This file provides a set of #define's which may be tuned by various
-* people/configurations. It keeps all compile-time tunables in one place.
-*
-* This file should be included before all other IPsec kernel-only files.
-*
-*/
+ * This file provides a set of #define's which may be tuned by various
+ * people/configurations. It keeps all compile-time tunables in one place.
+ *
+ * This file should be included before all other IPsec kernel-only files.
+ *
+ */
 
 #ifndef _IPSEC_PARAM_H_
 
@@ -80,14 +80,14 @@
 #endif /* __KERNEL__ */
 
 /*
-* This is for the SA reference table. This number is related to the
-* maximum number of SAs that KLIPS can concurrently deal with, plus enough
-* space for keeping expired SAs around.
-*
-* TABLE_IDX_WIDTH is the number of bits that we will use.
-* MAIN_TABLE_WIDTH is the number of bits used for the primary index table.
-*
-*/
+ * This is for the SA reference table. This number is related to the
+ * maximum number of SAs that KLIPS can concurrently deal with, plus enough
+ * space for keeping expired SAs around.
+ *
+ * TABLE_IDX_WIDTH is the number of bits that we will use.
+ * MAIN_TABLE_WIDTH is the number of bits used for the primary index table.
+ *
+ */
 #ifndef IPSEC_SA_REF_MAINTABLE_IDX_WIDTH
 # define IPSEC_SA_REF_MAINTABLE_IDX_WIDTH 4
 #endif
@@ -112,8 +112,8 @@
 #endif
 
 /*
-* Worry about PROC_FS stuff
-*/
+ * Worry about PROC_FS stuff
+ */
 /* kernel 2.4 */
 # define IPSEC_PROC_LAST_ARG , int *eof, void *data
 # define IPSEC_PROCFS_DEBUG_NO_STATIC
@@ -142,9 +142,9 @@
 #ifdef CONFIG_KLIPS_REGRESS
 
 /*
-* should pfkey_acquire() become 100% lossy?
-*
-*/
+ * should pfkey_acquire() become 100% lossy?
+ *
+ */
 extern int sysctl_ipsec_regress_pfkey_lossage;
 #ifndef KLIPS_PFKEY_ACQUIRE_LOSSAGE
 # ifdef CONFIG_KLIPS_PFKEY_ACQUIRE_LOSSAGE
@@ -158,8 +158,8 @@ extern int sysctl_ipsec_regress_pfkey_lossage;
 #endif  /* CONFIG_KLIPS_REGRESS */
 
 /*
-* debugging routines.
-*/
+ * debugging routines.
+ */
 #define KLIPS_ERROR(flag, format, args ...) if (printk_ratelimit() || \
 						flag) \
 	printk(KERN_ERR "KLIPS " format, ## args)

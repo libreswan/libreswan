@@ -838,10 +838,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'z': /* --config */
-			/* Config struct to variables mapper. This will overwrite */
-			/* all previously set options. Keep this in the same order than */
-			/* long_opts[] is. */
 		{
+			/* Config struct to variables mapper. This will overwrite
+			 * all previously set options. Keep this in the same order as
+			 * long_opts[] is.
+			 */
 			struct starter_config *cfg = read_cfg_file(optarg);
 
 			set_cfg_string(&pluto_log_file,
