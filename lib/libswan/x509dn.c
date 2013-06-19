@@ -56,6 +56,7 @@
 # include "sha2.h"
 #endif
 
+#include <prerror.h>
 #include <nss.h>
 #include <pk11pub.h>
 #include <keyhi.h>

@@ -1813,11 +1813,9 @@ static bool netlink_shunt_eroute(struct connection *c,
 
 		case ERO_ADD_INBOUND:
 			break;
-			;
 
 		case ERO_DEL_INBOUND:
 			break;
-			;
 
 		default:
 			bad_case(op);

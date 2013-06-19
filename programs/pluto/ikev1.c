@@ -1699,7 +1699,6 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			i = &(*i)->next;
 		}
-		;
 
 		/* We have the last fragment, reassemble if complete */
 		if (last_frag_index) {

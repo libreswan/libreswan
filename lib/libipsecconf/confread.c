@@ -1257,7 +1257,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 			    conn->strings[KSF_MODECFGDNS2] );
 		conn->modecfg_dns2 = xstrdup(conn->strings[KSF_MODECFGDNS2]);
 	}
-    # endif
+#  endif
 #endif
 
 	if (conn->strings_set[KSF_CONNALIAS])
