@@ -213,7 +213,7 @@ int Pluto_IsFIPS(void)
 		libreswan_log("FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
 		return 2;
 	}
-	if (fips_flag[0] == '1') {
+	if (fips_flag[0] == '1')
 		return 1;
 	else
 		return 0;
