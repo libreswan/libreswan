@@ -164,6 +164,34 @@ secuPWData *lsw_return_nss_password_file_info(void)
 	return &NSSPassword;
 }
 
+/* 0 disabled
+ * 1 enabled
+ * 2 indeterminate
+ */
+int Pluto_IsSElinux(void)
+{
+	char selinux_flag[1];
+	int n;
+	FILE *fd = fopen("/sys/fs/selinux/enforce","r");
+
+	if (fd == NULL) {
+		libreswan_log("SElinux: could not open /sys/fs/selinux/enforce");
+		return 2;
+	}
+
+	n = fread((void *)selinux_flag, 1, 1, fd);
+	fclose(fd);
+	if (n != 1) {
+		libreswan_log("SElinux: could not read 1 byte from /sys/fs/selinux/enforce");
+		return 2;
+	}
+	if (selinux_flag[0] == '1')
+		return 1;
+	else 
+		return 0;
+
+}
+
 bool Pluto_IsFIPS(void)
 {
 	char fips_flag[1];
