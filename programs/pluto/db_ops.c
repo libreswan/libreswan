@@ -342,7 +342,7 @@ int db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
 	return db_attr_add(ctx, &attr);
 }
 #ifndef NO_DB_OPS_STATS
-int db_ops_show_status(void)
+void db_ops_show_status(void)
 {
 	whack_log(RC_COMMENT, "stats db_ops: "
 		  DB_OPS_STATS_DESC " :"
@@ -353,7 +353,7 @@ int db_ops_show_status(void)
 		  DB_OPS_STATS_F(db_trans_st),
 		  DB_OPS_STATS_F(db_attrs_st)
 		  );
-	return 0;
+	whack_log(RC_COMMENT, " "); /* spacer */
 }
 #endif /* NO_DB_OPS_STATS */
 /*
