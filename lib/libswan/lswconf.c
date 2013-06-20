@@ -164,32 +164,59 @@ secuPWData *lsw_return_nss_password_file_info(void)
 	return &NSSPassword;
 }
 
-bool Pluto_IsFIPS(void)
+/* 0 disabled
+ * 1 enabled
+ * 2 indeterminate
+ */
+int Pluto_IsSElinux(void)
+{
+	char selinux_flag[1];
+	int n;
+	FILE *fd = fopen("/sys/fs/selinux/enforce","r");
+
+	if (fd == NULL) {
+		libreswan_log("SElinux: could not open /sys/fs/selinux/enforce");
+		return 2;
+	}
+
+	n = fread((void *)selinux_flag, 1, 1, fd);
+	fclose(fd);
+	if (n != 1) {
+		libreswan_log("SElinux: could not read 1 byte from /sys/fs/selinux/enforce");
+		return 2;
+	}
+	if (selinux_flag[0] == '1')
+		return 1;
+	else 
+		return 0;
+
+}
+
+/* 0 disabled
+ * 1 enabled
+ * 2 indeterminate
+ */
+int Pluto_IsFIPS(void)
 {
 	char fips_flag[1];
 	int n;
 	FILE *fd = fopen("/proc/sys/crypto/fips_enabled", "r");
 
-	if (fd != NULL) {
-		n = fread((void *)fips_flag, 1, 1, fd);
-		if (n == 1) {
-			if (fips_flag[0] == '1') {
-				fclose(fd);
-				return TRUE;
-			} else {
-				libreswan_log(
-					"Non-fips mode set in /proc/sys/crypto/fips_enabled");
-			}
-		} else {
-			libreswan_log(
-				"error in reading /proc/sys/crypto/fips_enabled, returning non-fips mode");
-		}
-		fclose(fd);
-	} else {
-		libreswan_log(
-			"Not able to open /proc/sys/crypto/fips_enabled, returning non-fips mode");
+	if (fd == NULL) {
+		libreswan_log("FIPS: could not open /proc/sys/crypto/fips_enabled");
+		return 2;
 	}
-	return FALSE;
+
+	n = fread((void *)fips_flag, 1, 1, fd);
+	fclose(fd);
+	if (n != 1) {
+		libreswan_log("FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
+		return 2;
+	}
+	if (fips_flag[0] == '1') {
+		return 1;
+	else
+		return 0;
 }
 
 char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
