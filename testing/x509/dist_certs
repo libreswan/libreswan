@@ -9,13 +9,28 @@
 OUTDIR=`dirname $0`
 pushd $OUTDIR
 
+TOUCH=`which touch`
+EXPECT=`which expect`
+
+if [ -z $TOUCH ]
+then
+       echo "touch needed for dist_certs, not found in path"
+       exit 1
+fi
+
+if [ -z $EXPECT ]
+then
+       echo "expect needed for dist_certs, not found in path"
+       exit 1
+fi
+
 # Clean
 rm -f reqs/* certs/* keys/* newcerts/* cacerts/* crls/* pkcs12/mainca/* pkcs12/otherca/* index.txt* serial* nss-pw crlnumber
 
 echo -n "foobar" > nss-pw
 # Prep
 mkdir -p certs crls newcerts keys reqs pkcs12/mainca pkcs12/otherca cacerts
-/usr/bin/touch index.txt
+$TOUCH index.txt
 echo "01" > serial
 echo "01" > crlnumber
 export OPENSSL_CONF=./openssl.cnf
@@ -77,7 +92,7 @@ openssl genrsa -passout pass:foobar -des3 -out keys/$cauth.key 1024
 openssl rsa -in keys/$cauth.key -out keys/$cauth.key -passin pass:foobar
 # use defaults to ensure the same values for all certs based on openssl.cnf
 # req -x509 does not accept -startdate, this might invalidate certs?
-expect  <<EOF
+$EXPECT  <<EOF
 spawn openssl req -x509 -days 3650 -newkey rsa:1024 -keyout keys/$cauth.key -out cacerts/$cauth.crt -passin pass:foobar -passout pass:foobar
 expect "Country Name"
 send "\n"
@@ -98,10 +113,10 @@ EOF
 done
 
 # Generate machine keys/certs
-for machine in east west sunset sunrise north south road pole park beet carrot nic japan revoked notyetvalid notvalidanymore signedbyotherca
+for machine in east west sunset sunrise north south road pole park beet carrot nic japan revoked notyetvalid notvalidanymore signedbyotherca spaceincn bigkey wrongdnorg unwisechar hashsha2 wrongdnnum cnofca
 do
 # generate host key/cert
-expect  <<EOF
+$EXPECT  <<EOF
 spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/$machine.key -out reqs/$machine.req
 expect "Country Name"
 send "\n"
@@ -132,7 +147,7 @@ done
 # Special Cases follow
 
 # large rsa key
-expect  <<EOF
+$EXPECT  <<EOF
 spawn openssl req -newkey rsa:2048 -passin pass:foobar -passout pass:foobar -keyout keys/bigkey.key -out reqs/bigkey.req
 expect "Country Name"
 send "\n"
@@ -157,8 +172,8 @@ EOF
 openssl ca -batch -in reqs/bigkey.req -startdate $START -days 365 -out certs/bigkey.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 
 # cert that is not yet valid
-openssl ca -batch -in reqs/notvalidyet.req -startdate $FUTURE -enddate $FUTUREEND -out certs/notvalidyet.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
-openssl pkcs12 -export -inkey keys/notvalidyet.key -in certs/notvalidyet.crt -name "$machine" -certfile cacerts/mainca.crt -caname "otherca" -out pkcs12/otherca/notvalidyet.p12 -passin pass:foobar -passout pass:foobar
+openssl ca -batch -in reqs/notyetvalid.req -startdate $FUTURE -enddate $FUTUREEND -out certs/notyetvalid.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
+openssl pkcs12 -export -inkey keys/notyetvalid.key -in certs/notyetvalid.crt -name "$machine" -certfile cacerts/mainca.crt -caname "otherca" -out pkcs12/otherca/notyetvalid.p12 -passin pass:foobar -passout pass:foobar
 
 # cert not valid anymore
 openssl ca -batch -in reqs/notvalidanymore.req -startdate $START -enddate $END -out certs/notvalidanymore.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
@@ -170,7 +185,7 @@ openssl ca -batch -in reqs/signedbyotherca.req -startdate $START -days 365 -out 
 openssl pkcs12 -export -inkey keys/signedbyotherca.key -in certs/signedbyotherca.crt -name "$machine" -certfile cacerts/otherca.crt -caname "otherca" -out pkcs12/otherca/signedbyotherca.p12 -passin pass:foobar -passout pass:foobar
 
 # wrong DN (Organisation is different)
-expect  <<EOF
+$EXPECT  <<EOF
 spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/wrongdnorg.key -out reqs/wrongdnorg.req
 expect "Country Name"
 send "\n"
@@ -196,7 +211,7 @@ openssl ca -batch -in reqs/wrongdnorg.req -startdate $START -days 365 -out certs
 openssl pkcs12 -export -inkey keys/wrongdnorg.key -in certs/wrongdnorg.crt -name "wrongdnorg" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/wrongdnorg.p12 -passin pass:foobar -passout pass:foobar
 
 # wrong number of DN's
-expect  <<EOF
+$EXPECT  <<EOF
 spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/wrongdnnum.key -out reqs/wrongdnnum.req
 expect "Country Name"
 send "\n"
@@ -222,7 +237,7 @@ openssl ca -batch -in reqs/wrongdnnum.req -startdate $START -days 365 -out certs
 openssl pkcs12 -export -inkey keys/wrongdnorg.key -in certs/wrongdnorg.crt -name "wrongdnorg" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/wrongdnorg.p12 -passin pass:foobar -passout pass:foobar
 
 # Unwise charachters
-expect  <<EOF
+$EXPECT  <<EOF
 spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/unwisechar.key -out reqs/unwisechar.req
 expect "Country Name"
 send "\n"
@@ -248,7 +263,7 @@ openssl ca -batch -in reqs/unwisechar.req -startdate $START -days 365 -out certs
 openssl pkcs12 -export -inkey keys/unwisechar.key -in certs/unwisechar.crt -name "unwisechar" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/unwisechar.p12 -passin pass:foobar -passout pass:foobar
 
 # Using SHA2
-expect  <<EOF
+$EXPECT  <<EOF
 spawn openssl req -newkey rsa:1024  -nodes -sha256 -passin pass:foobar -passout pass:foobar -keyout keys/hashsha2.key -out reqs/hashsha2.req
 expect "Country Name"
 send "\n"
@@ -274,7 +289,7 @@ openssl ca -batch -in reqs/hashsha2.req -startdate $START -days 365 -out certs/h
 openssl pkcs12 -export -inkey keys/hashsha2.key -in certs/hashsha2.crt -name "hashsha2" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/hashsha2.p12 -passin pass:foobar -passout pass:foobar
 
 # Space in CN
-expect  <<EOF
+$EXPECT  <<EOF
 spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/spaceincn.key -out reqs/spaceincn.req
 expect "Country Name"
 send "\n"
@@ -296,11 +311,11 @@ expect "optional"
 send "\n"
 wait
 EOF
-openssl ca -batch -in reqs/spaceincn.req -startdate $START -days 365 -out certs/spaceincn.crt -notext -cert cacerts/ca.crt -keyfile keys/ca.key  -passin pass:foobar
+openssl ca -batch -in reqs/spaceincn.req -startdate $START -days 365 -out certs/spaceincn.crt -notext -cert cacerts/ca.crt -keyfile keys/mainca.key  -passin pass:foobar
 openssl pkcs12 -export -inkey keys/spaceincn.key -in certs/spaceincn.crt -name "spaceincn" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/spaceincn.p12 -passin pass:foobar -passout pass:foobar
 
 # CN of client cert is the same as the CA's CN
-expect  <<EOF
+$EXPECT  <<EOF
 spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/cnofca.key -out reqs/cnofca.req
 expect "Country Name"
 send "\n"
