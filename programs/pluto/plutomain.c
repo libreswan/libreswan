@@ -1086,7 +1086,7 @@ int main(int argc, char **argv)
 					IPSECSBINDIR "/ipsec",
 					NULL };
 
-	if (Pluto_IsFIPS() && !FIPSCHECK_verify_files(package_files)) {
+	if ( (Pluto_IsFIPS() == 1) && !FIPSCHECK_verify_files(package_files)) {
 		loglog(RC_LOG_SERIOUS,
 		       "FATAL: FIPS integrity verification test failed");
 		exit_pluto(10);
@@ -1146,10 +1146,13 @@ int main(int argc, char **argv)
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			      vc, compile_time_interop_options, getpid());
 #endif
-		if (Pluto_IsFIPS())
+		if (Pluto_IsFIPS() == 1) {
 			libreswan_log("Pluto is running in FIPS mode");
-		else
+		} else if (Pluto_IsFIPS() == 0) {
 			libreswan_log("Pluto is NOT running in FIPS mode");
+		} else {
+			libreswan_log("ERROR: FIPS detection failed, Pluto running in non-FIPS mode");
+		}
 
 		if ((vc[0] == 'c' && vc[1] == 'v' && vc[2] == 's') ||
 		    (vc[2] == 'g' && vc[3] == 'i' && vc[4] == 't')) {

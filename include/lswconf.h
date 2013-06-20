@@ -61,7 +61,7 @@ extern const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir);
 
 extern secuPWData *lsw_return_nss_password_file_info(void);
 extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
-extern bool Pluto_IsFIPS(void);
+extern int Pluto_IsFIPS(void);
 extern int Pluto_IsSElinux(void);
 
 #endif /* _LSW_ALLOC_H_ */
