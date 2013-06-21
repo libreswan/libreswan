@@ -77,6 +77,10 @@
 # endif
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0)
+# define NEED_UDP_ENCAP_ENABLE
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)
 # define ipsec_ipv6_skip_exthdr ipv6_skip_exthdr
 # define IPSEC_FRAG_OFF_DECL(x) __be16 x;
