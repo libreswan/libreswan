@@ -489,4 +489,6 @@ void show_virtual_private()
 		whack_log(RC_COMMENT,
 			  "         private address space in internal use, it should be excluded!");
 	}
+
+	whack_log(RC_COMMENT, " ");     /* spacer */
 }

@@ -719,6 +719,9 @@ void kernel_alg_show_status(void)
 	unsigned sadb_id, id;
 	struct sadb_alg *alg_p;
 
+	whack_log(RC_COMMENT, "ESP algorithms supported:");
+	whack_log(RC_COMMENT, " "); /* spacer */
+
 	ESP_EALG_FOR_EACH(sadb_id) {
 		id = sadb_id;
 		alg_p = &esp_ealg[sadb_id];
@@ -744,6 +747,8 @@ void kernel_alg_show_status(void)
 			  alg_p->sadb_alg_maxbits
 			  );
 	}
+
+	whack_log(RC_COMMENT, " "); /* spacer */
 }
 void kernel_alg_show_connection(struct connection *c, const char *instance)
 {

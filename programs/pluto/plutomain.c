@@ -121,6 +121,10 @@ const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 bool fork_desired = TRUE;
 
+/* used for 'ipsec status' */
+static char *ipsecconf = NULL;
+static char *ipsecdir = NULL;
+
 #ifdef DEBUG
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
 #endif
@@ -358,12 +362,14 @@ enum kernel_interface kern_interface = USE_NETKEY; /* new default */
 u_int16_t secctx_attr_value = SECCTX;
 #endif
 
+/* pulled from main for show_setup_plutomain() */
+static const struct lsw_conf_options *oco;
+static char *coredir;
+static int nhelpers = -1;
+
 int main(int argc, char **argv)
 {
 	int lockfd;
-	int nhelpers = -1;
-	char *coredir;
-	const struct lsw_conf_options *oco;
 
 	/*
 	 * We read the intentions for how to log from command line options
@@ -786,6 +792,9 @@ int main(int argc, char **argv)
 
 		case 'f': /* --ipsecdir <ipsec-dir> */
 			(void)lsw_init_ipsecdir(optarg);
+			/* Keep a copy of the filename so we can show it in ipsec status */
+                        ipsecdir = alloc_bytes(strlen(optarg)+1, "ipsecdir filename");
+                        strncpy(ipsecdir,optarg, strlen(optarg));
 			continue;
 
 		case 'a': /* --adns <pathname> */
@@ -836,6 +845,10 @@ int main(int argc, char **argv)
 
 		case 'z': /* --config */
 		{
+			/* Keep a copy of the filename so we can show it in ipsec status */
+			ipsecconf = alloc_bytes(strlen(optarg)+1, "ipsecconf filename");
+			strncpy(ipsecconf,optarg, strlen(optarg));
+
 			/* Config struct to variables mapper. This will overwrite
 			 * all previously set options. Keep this in the same order as
 			 * long_opts[] is.
@@ -867,15 +880,19 @@ int main(int argc, char **argv)
 			set_cfg_string(&pluto_shared_secrets_file,
 				       cfg->setup.strings[KSF_SECRETSFILE]);                 /* --secrets */
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
-			    *cfg->setup.strings[KSF_IPSECDIR] != 0)
-				lsw_init_ipsecdir(cfg->setup.strings[
-							  KSF_IPSECDIR]);       /* --ipsecdir */
+			    *cfg->setup.strings[KSF_IPSECDIR] != 0) {
+				lsw_init_ipsecdir(cfg->setup.strings[KSF_IPSECDIR]);       /* --ipsecdir */
+				/* Keep a copy of the filename so we can show it in ipsec status */
+				ipsecdir = alloc_bytes(strlen(cfg->setup.strings[KSF_IPSECDIR])+1,
+							"ipsecdir filename");
+				strncpy(ipsecdir,cfg->setup.strings[KSF_IPSECDIR],
+					strlen(cfg->setup.strings[KSF_IPSECDIR]));
+				}
 			set_cfg_string(&base_perpeer_logdir,
 				       cfg->setup.strings[KSF_PERPEERDIR]);     /* --perpeerlogbase */
 			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];    /* --perpeerlog */
 			no_retransmits = !cfg->setup.options[KBF_RETRANSMITS];  /* --noretransmits */
-			set_cfg_string(&coredir,
-				       cfg->setup.strings[KSF_DUMPDIR]);        /* --dumpdir */
+			set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
 			/* no config option: pluto_adns_option */
 #ifdef NAT_TRAVERSAL
 			pluto_natt_float_port =
@@ -887,6 +904,7 @@ int main(int argc, char **argv)
 #endif
 			set_cfg_string(&virtual_private,
 				       cfg->setup.strings[KSF_VIRTUALPRIVATE]);
+
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
 #ifdef HAVE_LABELED_IPSEC
 			secctx_attr_value = cfg->setup.options[KBF_SECCTX];
@@ -1367,4 +1385,40 @@ void exit_pluto(int status)
 #endif /* LEAK_DETECTIVE */
 	close_log();            /* close the logfiles */
 	exit(status);           /* exit, with our error code */
+}
+
+void show_setup_plutomain()
+{
+	whack_log(RC_COMMENT, "config setup options:");     /* spacer */
+	whack_log(RC_COMMENT, " ");     /* spacer */
+        whack_log(RC_COMMENT, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, "
+		  "dumpdir=%s",
+		oco->confdir,
+		oco->conffile,
+		pluto_shared_secrets_file,
+		oco->confddir,
+		coredir);
+
+	whack_log(RC_COMMENT, "sbindir=%s, libdir=%s, libexecdir=%s",
+		IPSEC_SBINDIR ,
+		IPSEC_LIBDIR ,
+		IPSEC_EXECDIR );
+
+        whack_log(RC_COMMENT, "nhelpers=%d, uniqueids=%s, retransmits=%s, force_busy=%s",
+		nhelpers,
+		uniqueIDs ? "yes" : "no",
+		no_retransmits ? "no" : "yes",
+		force_busy ? "yes" : "no");
+
+        whack_log(RC_COMMENT, "ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%d, listen=%s",
+		pluto_port,
+		strict_crl_policy ? "yes" : "no",
+		crl_check_interval,
+		pluto_listen ? pluto_listen : "<any>");
+
+#ifdef HAVE_LABELED_IPSEC
+        whack_log(RC_COMMENT, "secctx_attr_value=%d", secctx_attr_value);
+#else
+        whack_log(RC_COMMENT, "secctx_attr_value=<unsupported>");
+#endif
 }

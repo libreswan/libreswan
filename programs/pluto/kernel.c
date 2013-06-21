@@ -861,6 +861,8 @@ void show_shunt_status(void)
 {
 	struct bare_shunt *bs;
 
+	whack_log(RC_COMMENT, "Shunt list:"); /* spacer */
+	whack_log(RC_COMMENT, " "); /* spacer */
 	for (bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
 

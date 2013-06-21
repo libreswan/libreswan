@@ -353,7 +353,6 @@ void db_ops_show_status(void)
 		  DB_OPS_STATS_F(db_trans_st),
 		  DB_OPS_STATS_F(db_attrs_st)
 		  );
-	whack_log(RC_COMMENT, " "); /* spacer */
 }
 #endif /* NO_DB_OPS_STATS */
 /*
