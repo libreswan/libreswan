@@ -72,37 +72,37 @@ endif
 DESTDIR?=
 
 # "local" part of tree, used in building other pathnames
-INC_USRLOCAL=/usr/local
+INC_USRLOCAL?=/usr/local
 
 # PUBDIR is where the "ipsec" command goes; beware, many things define PATH
 # settings which are assumed to include it (or at least, to include *some*
 # copy of the "ipsec" command).
-PUBDIR=$(DESTDIR)$(INC_USRLOCAL)/sbin
+PUBDIR?=$(DESTDIR)$(INC_USRLOCAL)/sbin
 
 # BINDIR is where sub-commands get put, FINALBINDIR is where the "ipsec"
 # command will look for them when it is run. Also called LIBEXECDIR.
 FINALLIBEXECDIR?=$(INC_USRLOCAL)/libexec/ipsec
-LIBEXECDIR=$(DESTDIR)$(FINALBINDIR)
+LIBEXECDIR?=$(DESTDIR)$(FINALBINDIR)
 FINALLIBDIR?=$(INC_USRLOCAL)/libexec/ipsec
-LIBDIR=$(DESTDIR)$(FINALLIBDIR)
+LIBDIR?=$(DESTDIR)$(FINALLIBDIR)
 
-FINALBINDIR=$(FINALLIBEXECDIR)
-BINDIR=$(LIBEXECDIR)
+FINALBINDIR?=$(FINALLIBEXECDIR)
+BINDIR?=$(LIBEXECDIR)
 
 
 # SBINDIR is where the user interface command goes.
 FINALSBINDIR?=$(INC_USRLOCAL)/sbin
-SBINDIR=$(DESTDIR)$(FINALSBINDIR)
+SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 
 
 
 # where the appropriate manpage tree is located
 # location within INC_USRLOCAL
-INC_MANDIR=man
+INC_MANDIR?=man
 # the full pathname
-MANTREE=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
+MANTREE?=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
 # all relevant subdirectories of MANTREE
-MANPLACES=man3 man5 man8
+MANPLACES?=man3 man5 man8
 
 # where configuration files go
 FINALSYSCONFDIR?=/etc
@@ -125,7 +125,7 @@ FINALEXAMPLECONFDIR?=$(INC_USRLOCAL)/$(INC_DOCDIR)/libreswan
 EXAMPLECONFDIR?=$(DESTDIR)$(FINALEXAMPLECONFDIR)
 
 FINALDOCDIR?=$(INC_USRLOCAL)/$(INC_DOCDIR)/libreswan
-DOCDIR=$(DESTDIR)$(FINALDOCDIR)
+DOCDIR?=$(DESTDIR)$(FINALDOCDIR)
 
 # where per-conn pluto logs go
 FINALVARDIR?=/var
@@ -183,23 +183,23 @@ MODPROBE?=modprobe -q
 ### misc installation stuff
 
 # what program to use when installing things
-INSTALL=install
+INSTALL?=install
 
 # flags to the install program, for programs, manpages, and config files
 # -b has install make backups (n.b., unlinks original), --suffix controls
 # how backup names are composed.
 # Note that the install procedures will never overwrite an existing config
 # file, which is why -b is not specified for them.
-INSTBINFLAGS=-b --suffix=.old
-INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
-#INSTMANFLAGS="-m 644"
-INSTCONFFLAGS=
+INSTBINFLAGS?=-b --suffix=.old
+INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
+#INSTMANFLAGS?="-m 644"
+INSTCONFFLAGS?=
 # For OSX use
-#INSTBINFLAGS=-b -B .old
-#INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old
+#INSTBINFLAGS?=-b -B .old
+#INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old
 
 # flags for bison, overrode in packages/default/foo
-BISONOSFLAGS=
+BISONOSFLAGS?=
 
 NSSFLAGS?=$(shell pkg-config --cflags nss)
 NSSLIBS?=$(shell pkg-config --libs nss)
@@ -233,7 +233,7 @@ WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security #-pedantic
 # USERCOMPILE?=-g -O2 ${WERROR} $(GCC_LINT)
 USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} $(GCC_LINT) -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all --param=ssp-buffer-size=4  -mtune=generic -fno-strict-aliasing -fPIE -DPIE 
 
-KLIPSCOMPILE=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
+KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # Additional debugging for developers (warning: can crash libreswan!)
 #USERCOMPILE?=-g -DLEAK_DETECTIVE -lefence
 # You can also run this before starting libreswan on glibc systems:
@@ -247,21 +247,21 @@ PORTINCLUDE?=
 # command used to link/copy KLIPS into kernel source tree
 # There are good reasons why this is "ln -s"; only people like distribution
 # builders should ever change it.
-KLIPSLINK=ln -s -f
+KLIPSLINK?=ln -s -f
 
 # extra options for use in kernel build
-KERNMAKEOPTS=
+KERNMAKEOPTS?=
 
 # kernel Makefile targets to be done before build
 # Can be overridden if you are *sure* your kernel doesn't need them.  (2.2.xx
 # and later reportedly do not.)
-KERNDEP=dep
-KERNCLEAN=clean
+KERNDEP?=dep
+KERNCLEAN?=clean
 
 # kernel make name:  zImage for 2.0.xx, bzImage for 2.2.xx and later, and
 # boot on non-x86s (what ever happened to standards?)
-INC_B=$(shell test -d $(DIRIN22) && echo b)
-KERNEL=$(shell if expr " `uname -m`" : ' i.86' >/dev/null ; \
+INC_B?=$(shell test -d $(DIRIN22) && echo b)
+KERNEL?=$(shell if expr " `uname -m`" : ' i.86' >/dev/null ; \
 	then echo $(INC_B)zImage ; \
 	else echo boot ; \
 	fi)
@@ -277,37 +277,7 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 #
 RSAKEYBITS:=2192
 
-# temporary directory to be used when building RPMs, and where to put the
-# resulting RPM tree
-RPMKERNDIR := $(shell echo `pwd`/tmp.rpmkernel)
-RPMTMPDIR := $(shell echo `pwd`/tmp.rpmbuild)
-RPMDEST := $(shell echo `pwd`/rpms)
-
-# Newer versions of RPM do not permit building of packages with the "rpm" 
-# command. For RedHat systems with older version of RPM, use:
-# RPMBUILD=rpm
-# instead.
-RPMBUILD=rpmbuild
-
-### paths to resources on the host system
-#
-# Set this to a RedHat kernel-sources RPM. This normally extracts into
-# /usr/src/linux-2.4, but you might have extracted it elsewhere with
-# rpm2cpio.
-# Note: there is no kernel-source rpm anymore for Fedora. Either run
-# rpmbuild -bp on the kernel src.rpm and grab the tree from 
-# /usr/src/redhat/BUILD/ or use something like the example below using the
-# module directory.
-# note: there is now a kernel-devel rpm.
-#RH_KERNELSRC?=/usr/src/linux-2.4
-RH_KERNELSRC?=/lib/modules/2.6.9-1.681_FC3/build
-
-#RH_KERNELSRC=/c2/kernel/rh/linux-2.4.9-13
-
-
 ## build environment variations
-##
-
 #
 # USE_ variables determine if features are compiled into Libreswan.
 #       these let you turn on/off specific features
