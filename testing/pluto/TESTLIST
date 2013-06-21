@@ -503,7 +503,7 @@ umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-09-rw-rsa				good
 umlplutotest	ikev2-10-basic-rawrsa-nss		good
-umlplutotest	ikev2-11-simple-psk			good
+kvmplutotest	ikev2-11-simple-psk			good
 kvmplutotest	ikev2-12-no-nhelpers			good
 
 umlplutotest	ikev2-x509-01		good
