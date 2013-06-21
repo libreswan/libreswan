@@ -531,7 +531,7 @@ umlplutotest	ikev2-allow-narrow-06			good
 umlplutotest	ikev2-allow-narrow-07			good
 umlplutotest	ikev2-allow-narrow-08-nss		good
 
-umlplutotest	ikev2-no-nhelpers-01			good
+kvmplutotest	ikev2-no-nhelpers-01			good
 
 #################################################################
 # Interop tests

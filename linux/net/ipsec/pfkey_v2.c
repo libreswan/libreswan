@@ -1408,6 +1408,10 @@ int pfkey_init(void)
 	int error = 0;
 	int i;
 
+#ifdef HAVE_PROC_DIR_ENTRY
+	struct proc_dir_entry* entry;
+#endif
+
 	static struct ipsec_alg_supported supported_init_ah[] = {
 #ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
 		{ K_SADB_EXT_SUPPORTED_AUTH, K_SADB_AALG_MD5HMAC, 0, 128,
@@ -1476,9 +1480,21 @@ int pfkey_init(void)
 	error |= sock_register(&pfkey_family_ops);
 
 #ifdef CONFIG_PROC_FS
-	ipsec_proc_net_remove("pf_key");
-	ipsec_proc_net_remove("pf_key_supported");
-	ipsec_proc_net_remove("pf_key_registered");
+#    if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24)
+	proc_net_create("pf_key", 0, pfkey_get_info);
+	proc_net_create("pf_key_supported", 0, pfkey_supported_get_info);
+	proc_net_create("pf_key_registered", 0, pfkey_registered_get_info);
+#    else
+	entry = create_proc_entry("pf_key", 0, init_net.proc_net);
+	if (entry)
+		entry->read_proc = pfkey_get_info;
+	entry = create_proc_entry("pf_key_supported", 0, init_net.proc_net);
+	if (entry)
+		entry->read_proc = pfkey_supported_get_info;
+	entry = create_proc_entry("pf_key_registered", 0, init_net.proc_net);
+	if (entry)
+		entry->read_proc = pfkey_registered_get_info;
+#    endif
 #endif  /* CONFIG_PROC_FS */
 	return error;
 }
