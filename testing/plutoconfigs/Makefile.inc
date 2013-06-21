@@ -269,37 +269,7 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 #
 RSAKEYBITS:=2192
 
-# temporary directory to be used when building RPMs, and where to put the
-# resulting RPM tree
-RPMKERNDIR := $(shell echo `pwd`/tmp.rpmkernel)
-RPMTMPDIR := $(shell echo `pwd`/tmp.rpmbuild)
-RPMDEST := $(shell echo `pwd`/rpms)
-
-# Newer versions of RPM do not permit building of packages with the "rpm" 
-# command. For RedHat systems with older version of RPM, use:
-# RPMBUILD=rpm
-# instead.
-RPMBUILD=rpmbuild
-
-### paths to resources on the host system
-#
-# Set this to a RedHat kernel-sources RPM. This normally extracts into
-# /usr/src/linux-2.4, but you might have extracted it elsewhere with
-# rpm2cpio.
-# Note: there is no kernel-source rpm anymore for Fedora. Either run
-# rpmbuild -bp on the kernel src.rpm and grab the tree from 
-# /usr/src/redhat/BUILD/ or use something like the example below using the
-# module directory.
-# note: there is now a kernel-devel rpm.
-#RH_KERNELSRC?=/usr/src/linux-2.4
-RH_KERNELSRC?=/lib/modules/2.6.9-1.681_FC3/build
-
-#RH_KERNELSRC=/c2/kernel/rh/linux-2.4.9-13
-
-
 ## build environment variations
-##
-
 #
 # USE_ variables determine if features are compiled into Libreswan.
 #       these let you turn on/off specific features

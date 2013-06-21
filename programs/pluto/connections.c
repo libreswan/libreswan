@@ -3613,6 +3613,10 @@ void show_connections_status(void)
 	struct connection *c;
 	struct connection **array;
 
+	whack_log(RC_COMMENT, " "); /* spacer */
+	whack_log(RC_COMMENT, "Connection list:"); /* spacer */
+	whack_log(RC_COMMENT, " "); /* spacer */
+
 	/* make an array of connections, and sort it */
 	count = 0;
 	for (c = connections; c != NULL; c = c->ac_next)

@@ -188,21 +188,29 @@ def cmdchecks():
 	global retcode
 	printfun("Checking 'ip' command")
 	if not os.path.isfile("/sbin/ip") and not os.path.isfile("/usr/sbin/ip"):
-			print_result("FAIL","FAILED")
-			retcode += 1
+		print_result("FAIL","FAILED")
+		retcode += 1
 	p = subprocess.Popen(["ip", "xfrm"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 	output, err = p.communicate()
 	if not "XFRM" in err:
-			print_result("FAIL","IP XFRM BROKEN")
-			retcode += 1
+		print_result("FAIL","IP XFRM BROKEN")
+		retcode += 1
 	else:
-			print_result("OK","OK")
+		print_result("OK","OK")
 
 	printfun("Checking 'iptables' command")
 	if not os.path.isfile("/sbin/iptables") and not os.path.isfile("/usr/sbin/iptables"):
-			print_result("WARN","MISSING")
+		print_result("WARN","MISSING")
 	else:
-			print_result("OK","OK")
+		print_result("OK","OK")
+
+	printfun("Checking 'prelink' command does not interfere with FIPS")
+	if os.path.isfile("/sbin/prelink") or os.path.isfile("/usr/sbin/prelink"):
+		if os.path.isfile("/etc/prelink.cache"):
+			print_result("WARN","PRESENT")
+		else:
+			print_result("FAIL","IN USE")
+			retcode += 1
 
 def udp500check():
 	global retcode
@@ -216,8 +224,8 @@ def udp500check():
 			print_result("FAIL","FAILED")
 			retcode += 1
 	except:
-			print_result("FAIL","FAILED")
-			retcode += 1
+		print_result("FAIL","FAILED")
+		retcode += 1
 
 # not yet implemented in *swan
 def tcp500check():
@@ -225,9 +233,9 @@ def tcp500check():
 	global sscmd
 	printfun(" Pluto listening for IKE on tcp 500")
 	if not sscmd:
-			print_result("WARN","UNKNOWN")
-			print "(install the 'ss' command to activate this test)"
-			return
+		print_result("WARN","UNKNOWN")
+		print "(install the 'ss' command to activate this test)"
+		return
 	try:
 		p = subprocess.Popen([sscmd, "-n", "-l", "-t", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
@@ -236,16 +244,16 @@ def tcp500check():
 		else:
 			print_result("WARN","NOT IMPLEMENTED")
 	except:
-			print_result("WARN","NOT IMPLEMENTED")
+		print_result("WARN","NOT IMPLEMENTED")
 
 def udp4500check():
 	global retcode
 	global sscmd
 	printfun(" Pluto listening for IKE/NAT-T on udp 4500")
 	if not sscmd:
-			print_result("WARN","UNKNOWN")
-			print "(install the 'ss' command to activate this test)"
-			return
+		print_result("WARN","UNKNOWN")
+		print "(install the 'ss' command to activate this test)"
+		return
 	try:
 		p = subprocess.Popen([sscmd, "-n", "-a", "-u", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
@@ -254,8 +262,8 @@ def udp4500check():
 		else:
 			print_result("WARN","DISABLED")
 	except:
-			print_result("FAIL","DISABLED")
-			retcode += 1
+		print_result("FAIL","DISABLED")
+		retcode += 1
 
 # not yet implemented in *swan
 def tcp4500check():
@@ -263,9 +271,9 @@ def tcp4500check():
 	global sscmd
 	printfun(" Pluto listening for IKE/NAT-T on tcp 4500")
 	if not sscmd:
-			print_result("WARN","UNKNOWN")
-			print "(install the 'ss' command to activate this test)"
-			return
+		print_result("WARN","UNKNOWN")
+		print "(install the 'ss' command to activate this test)"
+		return
 	try:
 		p = subprocess.Popen([sscmd, "-n", "-l", "-t", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
@@ -274,7 +282,7 @@ def tcp4500check():
 		else:
 			print_result("WARN","NOT IMPLEMENTED")
 	except:
-			print_result("WARN","NOT IMPLEMENTED")
+		print_result("WARN","NOT IMPLEMENTED")
 
 # not yet implemented in *swan
 def tcp10000check():
@@ -282,9 +290,9 @@ def tcp10000check():
 	global sscmd
 	printfun(" Pluto listening for IKE on tcp 10000 (cisco)")
 	if not sscmd:
-			print_result("WARN","UNKNOWN")
-			print "(install the 'ss' command to activate this test)"
-			return
+		print_result("WARN","UNKNOWN")
+		print "(install the 'ss' command to activate this test)"
+		return
 	try:
 		p = subprocess.Popen([sscmd, "-n", "-l", "-t", "sport = :10000"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
@@ -293,7 +301,7 @@ def tcp10000check():
 		else:
 			print_result("WARN","NOT IMPLEMENTED")
 	except:
-			print_result("WARN","NOT IMPLEMENTED")
+		print_result("WARN","NOT IMPLEMENTED")
 
 def installstartcheck():
 	global retcode
@@ -308,7 +316,7 @@ def installstartcheck():
 		else:
 			print_result("FAIL","FAILED")
 	except:
-			print_result("FAIL","FAILED")
+		print_result("FAIL","FAILED")
 
 	printfun("Checking for IPsec support in kernel")
 	if not os.path.isfile("/proc/net/ipsec_eroute") and not os.path.isfile("/proc/net/pfkey"):
@@ -372,7 +380,6 @@ def installcheckklips():
 		print_result("OK","OK")
 	else:
 		print_result("WARN","N/A")
-			
 
 def installchecknetkey():
 	global retcode
@@ -388,7 +395,7 @@ def installchecknetkey():
 			print_result("OK","OK")
 		else:
 			print_result("FAIL","NOT DISABLED")
-			print("\n  Disable /proc/sys/net/ipv4/conf/*/%s or NETKEY will cause act on or cause sending of bogus ICMP redirects!\n"%option)
+			print("\n  Disable /proc/sys/net/ipv4/conf/*/%s or NETKEY will act on or cause sending of bogus ICMP redirects!\n"%option)
 
 	printfun("         XFRM larval drop")
 	try:
@@ -399,8 +406,7 @@ def installchecknetkey():
 	if larval == "1":
 		print_result("OK","OK")
 	else:
-			print_result("FAIL","NOT ENABLED")
-
+		print_result("FAIL","NOT ENABLED")
 	
 def randomdevcheck():
 	global retcode
@@ -418,7 +424,7 @@ def randomdevcheck():
 		else:
 			print_result("OK","RNGD")
 	else:
-			print_result("OK","N/A")
+		print_result("OK","N/A")
 
 def ipsecsecretcheck():
 	global retcode

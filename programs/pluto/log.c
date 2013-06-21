@@ -805,32 +805,44 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 
 #endif /* DEBUG */
 
+static void show_system_security(void)
+{
+	int selinux = Pluto_IsSElinux();
+	int fips = Pluto_IsFIPS();
+
+	whack_log(RC_COMMENT, " ");     /* spacer */
+	whack_log(RC_COMMENT, "FIPS=%s", 
+                fips == 0 ? "disabled" : fips == 1 ? "enabled" : "error(disabled)");
+	whack_log(RC_COMMENT, "SElinux=%s",
+                selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
+	whack_log(RC_COMMENT, " ");     /* spacer */
+
+}
+
 void show_status(void)
 {
 	show_kernel_interface();
 	show_ifaces_status();
+	show_system_security();
+	show_setup_plutomain();
 	show_myid_status();
 	show_debug_status();
-	whack_log(RC_COMMENT, " ");     /* spacer */
+#ifdef NAT_TRAVERSAL
+	show_setup_natt();
+#endif
 	show_virtual_private();
-	whack_log(RC_COMMENT, " ");     /* spacer */
 #ifdef KERNEL_ALG
 	kernel_alg_show_status();
-	whack_log(RC_COMMENT, " "); /* spacer */
 #endif
 #ifdef IKE_ALG
 	ike_alg_show_status();
-	whack_log(RC_COMMENT, " "); /* spacer */
 #endif
 #ifndef NO_DB_OPS_STATS
 	db_ops_show_status();
-	whack_log(RC_COMMENT, " "); /* spacer */
 #endif
 	show_connections_status();
-	whack_log(RC_COMMENT, " "); /* spacer */
 	show_states_status();
 #ifdef KLIPS
-	whack_log(RC_COMMENT, " "); /* spacer */
 	show_shunt_status();
 #endif
 }
