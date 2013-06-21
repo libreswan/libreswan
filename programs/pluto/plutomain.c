@@ -103,9 +103,6 @@
 #include <nspr.h>
 #ifdef FIPS_CHECK
 # include <fipscheck.h>
-/* hardcoded path needs fixing! */
-# define IPSECLIBDIR "/usr/libexec/ipsec"
-# define IPSECSBINDIR "/usr/sbin"
 #endif
 
 #ifdef HAVE_LIBCAP_NG
@@ -1053,37 +1050,37 @@ int main(int argc, char **argv)
 	pluto_init_nss(oco->confddir);
 
 #ifdef FIPS_CHECK
-	const char *package_files[] = { IPSECLIBDIR "/setup",
-					IPSECLIBDIR "/addconn",
-					IPSECLIBDIR "/auto",
-					IPSECLIBDIR "/barf",
-					IPSECLIBDIR "/eroute",
-					IPSECLIBDIR "/ikeping",
-					IPSECLIBDIR "/readwriteconf",
-					IPSECLIBDIR "/_keycensor",
-					IPSECLIBDIR "/klipsdebug",
-					IPSECLIBDIR "/look",
-					IPSECLIBDIR "/newhostkey",
-					IPSECLIBDIR "/pf_key",
-					IPSECLIBDIR "/_pluto_adns",
-					IPSECLIBDIR "/_plutorun",
-					IPSECLIBDIR "/_realsetup",
-					IPSECLIBDIR "/rsasigkey",
-					IPSECLIBDIR "/pluto",
-					IPSECLIBDIR "/_secretcensor",
-					IPSECLIBDIR "/secrets",
-					IPSECLIBDIR "/showhostkey",
-					IPSECLIBDIR "/spi",
-					IPSECLIBDIR "/spigrp",
-					IPSECLIBDIR "/_stackmanager",
-					IPSECLIBDIR "/tncfg",
-					IPSECLIBDIR "/_updown",
-					IPSECLIBDIR "/_updown.klips",
-					IPSECLIBDIR "/_updown.mast",
-					IPSECLIBDIR "/_updown.netkey",
-					IPSECLIBDIR "/verify",
-					IPSECLIBDIR "/whack",
-					IPSECSBINDIR "/ipsec",
+	const char *package_files[] = { IPSEC_EXECDIR "/setup",
+					IPSEC_EXECDIR "/addconn",
+					IPSEC_EXECDIR "/auto",
+					IPSEC_EXECDIR "/barf",
+					IPSEC_EXECDIR "/eroute",
+					IPSEC_EXECDIR "/ikeping",
+					IPSEC_EXECDIR "/readwriteconf",
+					IPSEC_EXECDIR "/_keycensor",
+					IPSEC_EXECDIR "/klipsdebug",
+					IPSEC_EXECDIR "/look",
+					IPSEC_EXECDIR "/newhostkey",
+					IPSEC_EXECDIR "/pf_key",
+					IPSEC_EXECDIR "/_pluto_adns",
+					IPSEC_EXECDIR "/_plutorun",
+					IPSEC_EXECDIR "/_realsetup",
+					IPSEC_EXECDIR "/rsasigkey",
+					IPSEC_EXECDIR "/pluto",
+					IPSEC_EXECDIR "/_secretcensor",
+					IPSEC_EXECDIR "/secrets",
+					IPSEC_EXECDIR "/showhostkey",
+					IPSEC_EXECDIR "/spi",
+					IPSEC_EXECDIR "/spigrp",
+					IPSEC_EXECDIR "/_stackmanager",
+					IPSEC_EXECDIR "/tncfg",
+					IPSEC_EXECDIR "/_updown",
+					IPSEC_EXECDIR "/_updown.klips",
+					IPSEC_EXECDIR "/_updown.mast",
+					IPSEC_EXECDIR "/_updown.netkey",
+					IPSEC_EXECDIR "/verify",
+					IPSEC_EXECDIR "/whack",
+					IPSEC_SBINDIR "/ipsec",
 					NULL };
 
 	if ( (Pluto_IsFIPS() == 1) && !FIPSCHECK_verify_files(package_files)) {
