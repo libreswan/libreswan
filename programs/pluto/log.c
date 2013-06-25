@@ -831,9 +831,7 @@ void show_status(void)
 	show_setup_natt();
 #endif
 	show_virtual_private();
-#ifdef KERNEL_ALG
 	kernel_alg_show_status();
-#endif
 	ike_alg_show_status();
 #ifndef NO_DB_OPS_STATS
 	db_ops_show_status();

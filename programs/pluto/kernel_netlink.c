@@ -1200,11 +1200,9 @@ static void linux_pfkey_register_response(const struct sadb_msg *msg)
 {
 	switch (msg->sadb_msg_satype) {
 	case SADB_SATYPE_ESP:
-#ifdef KERNEL_ALG
 		kernel_alg_register_pfkey(msg,
 					  msg->sadb_msg_len *
 					  IPSEC_PFKEYv2_ALIGN);
-#endif
 		/* XXX Need to grab list from the kernel. */
 		linux_pfkey_add_aead();
 		break;

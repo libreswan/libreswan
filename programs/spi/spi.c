@@ -84,7 +84,6 @@ int address_family = 0;
 unsigned char proto = 0;
 int alg = 0;
 
-#ifdef KERNEL_ALG
 /*
  *      Manual connection support for modular algos (ipsec_alg) --Juanjo.
  */
@@ -95,7 +94,6 @@ struct alg_info_esp *alg_info = NULL;   /* algorithm info got from string */
 struct esp_info *esp_info = NULL;       /* esp info from 1st (only) element */
 const char *alg_err;                    /* auxiliar for parsing errors */
 int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
-#endif /* KERNEL_ALG */
 
 int replay_window = 0;
 char sa[SATOT_BUF];

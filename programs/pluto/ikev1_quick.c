@@ -220,7 +220,6 @@ static void compute_proto_keymat(struct state *st,
 			break;
 
 		default:
-#ifdef KERNEL_ALG
 			if ((needed_len =
 				     kernel_alg_esp_enc_keylen(pi->attrs.
 							       transattrs.
@@ -240,7 +239,6 @@ static void compute_proto_keymat(struct state *st,
 				}
 				break;
 			}
-#endif
 			bad_case(pi->attrs.transattrs.encrypt);
 		}
 		DBG(DBG_PARSING, DBG_log("compute_proto_keymat:"
@@ -257,14 +255,12 @@ static void compute_proto_keymat(struct state *st,
 			needed_len += HMAC_SHA1_KEY_LEN;
 			break;
 		default:
-#ifdef KERNEL_ALG
 			if (kernel_alg_esp_auth_ok(pi->attrs.transattrs.
 						   integ_hash, NULL) == NULL) {
 				needed_len += kernel_alg_esp_auth_keylen(
 					pi->attrs.transattrs.integ_hash);
 				break;
 			}
-#endif
 		case AUTH_ALGORITHM_DES_MAC:
 			bad_case(pi->attrs.transattrs.integ_hash);
 			break;
@@ -284,14 +280,12 @@ static void compute_proto_keymat(struct state *st,
 			needed_len = HMAC_SHA1_KEY_LEN;
 			break;
 		default:
-#ifdef KERNEL_ALG
 			if (kernel_alg_ah_auth_ok(pi->attrs.transattrs.
 						  integ_hash, NULL)) {
 				needed_len += kernel_alg_ah_auth_keylen(
 					pi->attrs.transattrs.integ_hash);
 				break;
 			}
-#endif
 			bad_case(pi->attrs.transattrs.encrypt);
 		}
 		break;

@@ -2548,23 +2548,18 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				ugh = "no alg";
 
-#ifdef KERNEL_ALG
 				if (c->alg_info_esp) {
 					ugh = kernel_alg_esp_enc_ok(
 						esp_attrs.transattrs.encrypt,
 						esp_attrs.transattrs.enckeylen,
 						c->alg_info_esp);
 				}
-#endif
 
 				if (ugh != NULL) {
 					switch (esp_attrs.transattrs.encrypt) {
-#ifdef KERNEL_ALG                               /* strictly use runtime information */
 					case ESP_AES:
 					case ESP_3DES:
 						break;
-#endif
-
 #ifdef SUPPORT_ESP_NULL                         /* should be about as secure as AH-only */
 #warning "Building with ESP-Null"
 					case ESP_NULL:
@@ -2625,11 +2620,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					}
 				}
 
-#ifdef KERNEL_ALG
 				ugh = kernel_alg_esp_auth_ok(
 					esp_attrs.transattrs.integ_hash,
 					c->alg_info_esp);
-#endif
 
 				if (ugh != NULL) {
 					switch (esp_attrs.transattrs.integ_hash)
@@ -2652,11 +2645,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							continue; /* try another */
 						}
 						break;
-#ifdef KERNEL_ALG                               /* strictly use runtime information */
 					case AUTH_ALGORITHM_HMAC_MD5:
 					case AUTH_ALGORITHM_HMAC_SHA1:
 						break;
-#endif
 					default:
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP auth alg %s from %s",
@@ -2682,7 +2673,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
-#ifdef KERNEL_ALG
 			/*
 			 * ML: at last check for allowed transforms in alg_info_esp
 			 *
@@ -2696,7 +2686,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						     integ_hash,
 						     c->alg_info_esp))
 				continue;
-#endif
 			esp_attrs.spi = esp_spi;
 			inner_proto = IPPROTO_ESP;
 			if (esp_attrs.encapsulation ==
