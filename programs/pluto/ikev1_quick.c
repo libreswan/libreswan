@@ -254,6 +254,9 @@ static void compute_proto_keymat(struct state *st,
 		case AUTH_ALGORITHM_HMAC_SHA1:
 			needed_len += HMAC_SHA1_KEY_LEN;
 			break;
+		case AUTH_ALGORITHM_DES_MAC:
+			bad_case(pi->attrs.transattrs.integ_hash);
+			break;
 		default:
 			if (kernel_alg_esp_auth_ok(pi->attrs.transattrs.
 						   integ_hash, NULL) == NULL) {
@@ -261,11 +264,9 @@ static void compute_proto_keymat(struct state *st,
 					pi->attrs.transattrs.integ_hash);
 				break;
 			}
-		case AUTH_ALGORITHM_DES_MAC:
 			bad_case(pi->attrs.transattrs.integ_hash);
-			break;
-
 		}
+
 		DBG(DBG_PARSING, DBG_log("compute_proto_keymat:"
 					 "needed_len (after ESP auth)=%d",
 					 (int)needed_len));
