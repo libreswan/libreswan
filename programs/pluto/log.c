@@ -834,9 +834,7 @@ void show_status(void)
 #ifdef KERNEL_ALG
 	kernel_alg_show_status();
 #endif
-#ifdef IKE_ALG
 	ike_alg_show_status();
-#endif
 #ifndef NO_DB_OPS_STATS
 	db_ops_show_status();
 #endif

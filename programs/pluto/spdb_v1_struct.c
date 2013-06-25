@@ -769,10 +769,8 @@ bool out_sa(pb_stream *outs,
 
 return_out:
 
-#if defined(KERNEL_ALG) || defined(IKE_ALG)
 	if (revised_sadb)
 		free_sa(revised_sadb);
-#endif
 	return ret;
 }
 
@@ -1039,9 +1037,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 		u_int16_t life_type;
 		struct trans_attrs ta;
 		err_t ugh = NULL;       /* set to diagnostic when problem detected */
-#ifdef IKE_ALG
 		char ugh_buf[256];      /* room for building a diagnostic */
-#endif
 		zero(&ta);
 
 		life_type = 0;
@@ -1128,7 +1124,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 
 			switch (a.isaat_af_type) {
 			case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
-#ifdef IKE_ALG
 				if (ike_alg_enc_ok(val, 0, c->alg_info_ike,
 						   &ugh, ugh_buf,
 						   sizeof(ugh_buf))) {
@@ -1138,7 +1133,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 						crypto_get_encrypter(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
 				} else
-#endif
 				switch (val) {
 				case OAKLEY_3DES_CBC:
 					ta.encrypt = val;
@@ -1158,12 +1152,10 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 				break;
 
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-#ifdef IKE_ALG
 				if (ike_alg_hash_present(val)) {
 					ta.prf_hash = val;
 					ta.prf_hasher = crypto_get_hasher(val);
 				} else
-#endif
 /* #else */
 				switch (val) {
 				case OAKLEY_MD5:
@@ -1400,7 +1392,6 @@ rsasig:
 				}
 				break;
 
-#ifdef IKE_ALG
 			case OAKLEY_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
 				if ((seen_attrs &
 				     LELEM(OAKLEY_ENCRYPTION_ALGORITHM)) ==
@@ -1428,9 +1419,6 @@ rsasig:
 
 				ta.enckeylen = val;
 				break;
-#else
-			case OAKLEY_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
-#endif
 #if 0                           /* not yet supported */
 			case OAKLEY_GROUP_TYPE | ISAKMP_ATTR_AF_TV:
 			case OAKLEY_PRF | ISAKMP_ATTR_AF_TV:
@@ -1463,7 +1451,6 @@ rsasig:
 			}
 		}
 
-#ifdef IKE_ALG
 		/*
 		 * ML: at last check for allowed transforms in alg_info_ike
 		 */
@@ -1474,7 +1461,6 @@ rsasig:
 					      65535, c->alg_info_ike))
 				ugh = "OAKLEY proposal refused";
 		}
-#endif
 
 		if (ugh == NULL) {
 			/* a little more checking is in order */
