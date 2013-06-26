@@ -156,7 +156,8 @@ cryptomodules() {
     @MODPROBE@ amd-rng 2>/dev/null
     @MODPROBE@ intel-rng 2>/dev/null
     @MODPROBE@ geode-rng 2>/dev/null
-    # @MODPROBE@ timeriomem-rng 2>/dev/null
+    @MODPROBE@ timeriomem-rng 2>/dev/null
+    @MODPROBE@ tpm-rng 2>/dev/null
 
     # load any OCF and CryptoAPI modules we might need for acceleration
     # (OCF works for NETKEY and KLIPS/MAST)
