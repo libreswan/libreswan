@@ -225,12 +225,8 @@ void delete_connection(struct connection *c, bool relations)
 #endif
 	union {
 		struct alg_info**     ppai;
-#ifdef KERNEL_ALG
 		struct alg_info_esp** ppai_esp;
-#endif
-#ifdef IKE_ALG
 		struct alg_info_ike** ppai_ike;
-#endif
 	} palg_info;
 
 	set_cur_connection(c);
@@ -328,14 +324,10 @@ void delete_connection(struct connection *c, bool relations)
 	free_generalNames(c->requested_ca, TRUE);
 
 	gw_delref(&c->gw_info);
-#ifdef KERNEL_ALG
 	palg_info.ppai_esp = &c->alg_info_esp;
 	alg_info_delref(palg_info.ppai);
-#endif
-#ifdef IKE_ALG
 	palg_info.ppai_ike = &c->alg_info_ike;
 	alg_info_delref(palg_info.ppai);
-#endif
 	pfree(c);
 }
 
@@ -783,15 +775,11 @@ static void unshare_connection_strings(struct connection *c)
 
 	/* increment references to algo's, if any */
 	if (c->alg_info_ike) {
-#ifdef KERNEL_ALG
 		alg_info_addref(IKETOINFO(c->alg_info_ike));
-#endif
 	}
 
 	if (c->alg_info_esp) {
-#ifdef KERNEL_ALG
 		alg_info_addref(ESPTOINFO(c->alg_info_esp));
-#endif
 	}
 }
 
@@ -1209,7 +1197,6 @@ void add_connection(const struct whack_message *wm)
 		}
 
 		c->alg_info_esp = NULL;
-#ifdef KERNEL_ALG
 		if (wm->esp) {
 			DBG(DBG_CONTROL,
 			    DBG_log("from whack: got --esp=%s",
@@ -1262,10 +1249,8 @@ void add_connection(const struct whack_message *wm)
 				return;
 			}
 		}
-#endif
 
 		c->alg_info_ike = NULL;
-#ifdef IKE_ALG
 		if (wm->ike) {
 			c->alg_info_ike = alg_info_ike;
 
@@ -1291,7 +1276,6 @@ void add_connection(const struct whack_message *wm)
 				return;
 			}
 		}
-#endif
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
@@ -3599,12 +3583,8 @@ void show_one_connection(struct connection *c)
 			  c->connalias);
 	}
 
-#ifdef IKE_ALG
 	ike_alg_show_connection(c, instance);
-#endif
-#ifdef KERNEL_ALG
 	kernel_alg_show_connection(c, instance);
-#endif
 }
 
 void show_connections_status(void)

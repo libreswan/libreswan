@@ -11,6 +11,7 @@ v3.5 (unreleased)
 * pluto: Fix reading ipsec.secrets without trailing newline [Hugh]
 * pluto: Clarify 'ipsec status' output by adding headers [Paul]
 * pluto: Added config setup, compile paths, runtime info to ipsec status [Paul]
+* pluto: removed IKE_ALG and KERNEL_ALG defines [Paul]
 * building: cleanup old vars, and allow more env overrides [Paul]
 * FIPS: Remove hardcoded /usr/libexec/ipsec path, use IPSEC_EXECDIR [Paul]
 * Bugtracker bugs fixed:

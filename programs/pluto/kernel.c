@@ -1671,7 +1671,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			/* if it is the last key entry, then ask algo */
 			if (ei == &esp_info[elemsof(esp_info)]) {
 				/* Check for additional kernel alg */
-#ifdef KERNEL_ALG
 				if ((ei =
 					     kernel_alg_esp_info(st->st_esp.
 								 attrs.
@@ -1688,8 +1687,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				    !=
 				    NULL)
 					break;
-
-#endif
 
 				/* note: enum_show may use a static buffer, so two
 				 * calls in one printf would be a mistake.
