@@ -1,8 +1,7 @@
 ipsec auto --up  loopback-02-westleft
-
 ip xfrm state
 ip xfrm policy
-route -n
+ip route list
 ipsec auto --delete loopback-02-westleft
 ip xfrm state
 ip xfrm policy

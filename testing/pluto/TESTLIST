@@ -459,10 +459,10 @@ umlplutotest	netkey-psk-vhost-02		good
 umlplutotest	netkey-psk-vhost-03		good
 umlplutotest	netkey-psk-vhost-04		good
 # Selinux / secure labeling tests (require netkey and selinux)
-umlplutotest    loopback-pluto-01		good
-umlplutotest    loopback-pluto-02		good
-umlplutotest    loopback-pluto-03		good
-umlplutotest    loopback-pluto-04		good
+kvmplutotest    loopback-pluto-01		good
+kvmplutotest    loopback-pluto-02		good
+kvmplutotest    loopback-pluto-03		good
+kvmplutotest    loopback-pluto-04		good
 
 # compress tests, some use netkey
 umlplutotest    compress-pluto-01		good
