@@ -8,6 +8,8 @@ v3.5 (unreleased)
 * KLIPS: Added support for kernel 3.9.x [Paul/David]
 * KLIPS: NATT support for kernel 3.4+ needs udp_encap_enable() [David]
 * KLIPS: pointer can look valid during free process [Unknown/David]
+* NETKEY: _stackmanager: Clear disable_xfm/disable_policy /proc files
+          for labeled IPsec [Paul]
 * pluto: Fix reading ipsec.secrets without trailing newline [Hugh]
 * pluto: Clarify 'ipsec status' output by adding headers [Paul]
 * pluto: Added config setup, compile paths, runtime info to ipsec status [Paul]
