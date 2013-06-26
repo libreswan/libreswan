@@ -1228,9 +1228,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 		for (;; ) {
 			PK11SymKey *tkey11 = NULL, *tkey3 = NULL;
-			DBG_log("AA  inside %s : %d loop ", __func__,
-				__LINE__);
-
 			if (vpss.counter[0] == 0x01) {
 				PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(
 					tkey1, CKM_XOR_BASE_AND_DATA,
