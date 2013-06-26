@@ -126,15 +126,20 @@ stopklips() {
 	echo "FAILURE to unload KLIPS/MAST module" >&2
 	exit 1
     fi
-
-    # Flush policy out in case of mast - NEW_IPSEC_CONN and IPSEC
-    # tables are created in _updown.mast on demand
-    iptables -t mangle -F IPSEC >/dev/null 2>/dev/null
-    iptables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>/dev/null
 }
 
 stopmast() {
     stopklips
+    # Flush policy out in case of mast - NEW_IPSEC_CONN and IPSEC
+    # tables are created in _updown.mast on demand
+    grep ^mangle /proc/net/ip_tables_names > /dev/null 2> /dev/null &&
+	iptables -t mangle -F IPSEC >/dev/null 2>/dev/null
+    grep ^mangle /proc/net/ip_tables_names > /dev/null 2> /dev/null &&
+	iptables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>/dev/null
+    grep ^mangle /proc/net/ip6_tables_names > /dev/null 2> /dev/null &&
+	ip6tables -t mangle -F IPSEC >/dev/null 2>/dev/null
+    grep ^mangle /proc/net/ip6_tables_names > /dev/null 2> /dev/null &&
+	ip6tables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>/dev/null
 }
 
 stop() {
