@@ -305,9 +305,12 @@ else
 	then
 		iptables -L -v -n
 		_________________________ iptables-nat
-		iptables -t nat -L -v -n
+		
+		grep ^nat /proc/net/ip_tables_names > /dev/null 2>/dev/null &&
+			iptables -t nat -L -v -n
 		_________________________ iptables-mangle
-		iptables -t mangle -L -v -n
+		grep ^mangle /proc/net/ip_tables_names > /dev/null 2>/dev/null &&
+			iptables -t mangle -L -v -n
 	fi
 fi
 _________________________ ip6tables
@@ -318,8 +321,10 @@ else
 	if test -r /sbin/ip6tables -o -r /usr/sbin/ip6tables
 	then
 		ip6tables -L -v -n
+		# There is no IPv6 NAT yet (hopefully that will remain so)
 		_________________________ ip6tables-mangle
-		ip6tables -t mangle -L -v -n
+		grep ^mangle /proc/net/ip6_tables_names > /dev/null 2>/dev/null &&
+			ip6tables -t mangle -L -v -n
 	fi
 fi
 _________________________ ip6tables
