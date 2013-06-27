@@ -8,6 +8,7 @@ v3.5 (unreleased)
 * KLIPS: Added support for kernel 3.9.x [Paul/David]
 * KLIPS: NATT support for kernel 3.4+ needs udp_encap_enable() [David]
 * KLIPS: pointer can look valid during free process [Unknown/David]
+* KLIPS: change default for hidetos (quality of service) to yes [Paul]
 * MAST: _stackmanager: bring mast0 up even if module was loaded [neoXite]
 * NETKEY: _stackmanager: Clear disable_xfm/disable_policy /proc files
           for labeled IPsec [Paul]
@@ -15,6 +16,7 @@ v3.5 (unreleased)
 * pluto: Clarify 'ipsec status' output by adding headers [Paul]
 * pluto: Added config setup, compile paths, runtime info to ipsec status [Paul]
 * pluto: removed IKE_ALG and KERNEL_ALG defines [Paul]
+* _stackmanager: re-add support for hidetos=, overridemtu= and fragicmp= [Paul]
 * building: cleanup old vars, and allow more env overrides [Paul]
 * FIPS: Remove hardcoded /usr/libexec/ipsec path, use IPSEC_EXECDIR [Paul]
 * Bugtracker bugs fixed:
