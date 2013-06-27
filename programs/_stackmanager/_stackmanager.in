@@ -245,6 +245,9 @@ startklips() {
 	fi
     fi
 
+	# If present, need to change for all interfaces (ipsecX, mastX)
+	overridemtu=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep overridemtu |sed 's/ overridemtu=//'| sed "s/'//g" | sed "s/,/ /g")
+
     if [ $stack = "mast" ]; then
 	# we really just ignore the interfaces= line completely
 	# make sure this mast device exists, if not create it
@@ -268,13 +271,17 @@ startklips() {
 	# PAUL: We tell in the man page for ipsec.conf protostack= that
 	#	the user should do this
 
-	# Double check the mtu is not 0
-	# if it is set it to a saner default
-	ip link show dev $virt | grep -q 'mtu 0 '
-	RETVAL=$?
-	if [ "$RETVAL" -eq 0 ]; then
-		echo "Fixup of mtu on $virt to 16260" >&2
-		ip link set mtu 16260 dev $virt
+	if [ "$overridemtu" != "" ]; then
+		ip link set mtu $overridemtu dev $virt
+	else
+		# Double check the mtu is not 0
+		# if it is set it to a saner default
+		ip link show dev $virt | grep -q 'mtu 0 '
+		RETVAL=$?
+		if [ "$RETVAL" -eq 0 ]; then
+			echo "Fixup of mtu on $virt to 16260" >&2
+			ip link set mtu 16260 dev $virt
+		fi
 	fi
 
     elif [ $stack = "klips" ]; then
@@ -330,22 +337,28 @@ startklips() {
 			}' phys=$phys virt=$virt
 	    ip link set up dev $virt
 
-	    # Double check the mtu is not 0
-	    # if it is set it to a saner default
-	    ip link show dev $virt | grep -q 'mtu 0 '
-	    RETVAL=$?
-	    if [ "$RETVAL" -eq 0 ]; then
-		echo "Fixup of mtu on $virt to 16260" >&2
-		ip link set mtu 16260 dev $virt
+	    if [ "$overridemtu" != "" ]; then
+		ip link set mtu $overridemtu dev $virt
+	    else
+	    	# Double check the mtu is not 0
+	    	# if it is set it to a saner default
+	    	ip link show dev $virt | grep -q 'mtu 0 '
+	    	RETVAL=$?
+	    	if [ "$RETVAL" -eq 0 ]; then
+			echo "Fixup of mtu on $virt to 16260" >&2
+			ip link set mtu 16260 dev $virt
+	    	fi
 	    fi
 	done
-	fragicmp=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep fragicmp |sed 's/ fragicmp=//'| sed "s/'//g" | sed "s/,/ /g")
-	if [ "$fragicmp" == "yes" ]; then
-		echo 1 > /proc/sys/net/ipsec/icmp
-	fi
 
     elif [ $stack = "none" ]; then
 	echo "protostack=none selected - No IPsec SA's will be injected into the kernel" >&2
+    fi
+
+    # global module option for KLIPS
+    fragicmp=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep fragicmp |sed 's/ fragicmp=//'| sed "s/'//g" | sed "s/,/ /g")
+    if [ "$fragicmp" == "yes" ]; then
+	echo 1 > /proc/sys/net/ipsec/icmp
     fi
 }
 
