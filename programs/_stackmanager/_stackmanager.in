@@ -355,10 +355,14 @@ startklips() {
 	echo "protostack=none selected - No IPsec SA's will be injected into the kernel" >&2
     fi
 
-    # global module option for KLIPS
+    # global module options for KLIPS
     fragicmp=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep fragicmp |sed 's/ fragicmp=//'| sed "s/'//g" | sed "s/,/ /g")
     if [ "$fragicmp" == "yes" ]; then
 	echo 1 > /proc/sys/net/ipsec/icmp
+    fi
+    hidetos=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep hidetos |sed 's/ hidetos=//'| sed "s/'//g" | sed "s/,/ /g")
+    if [ "$hidetos" == "no" ]; then
+	echo 0 > /proc/sys/net/ipsec/tos
     fi
 }
 
