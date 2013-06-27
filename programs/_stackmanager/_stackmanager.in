@@ -339,6 +339,10 @@ startklips() {
 		ip link set mtu 16260 dev $virt
 	    fi
 	done
+	fragicmp=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep fragicmp |sed 's/ fragicmp=//'| sed "s/'//g" | sed "s/,/ /g")
+	if [ "$fragicmp" == "yes" ]; then
+		echo 1 > /proc/sys/net/ipsec/icmp
+	fi
 
     elif [ $stack = "none" ]; then
 	echo "protostack=none selected - No IPsec SA's will be injected into the kernel" >&2
