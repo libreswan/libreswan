@@ -252,8 +252,9 @@ startklips() {
 	if [ ! -d /sys/devices/virtual/net/$virt ]; then
 	    # in mast mode we just create the virtual interface
 	    ipsec tncfg --create $virt
-	    ip link set $virt up
 	fi
+	# ensure the link is up, even if module was already loaded
+	ip link set $virt up
 	# detach all ipsecX devices
 	ipsec tncfg --clear
 	# remove any ipsecX interfaces, as we are using mastX
