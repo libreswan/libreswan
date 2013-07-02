@@ -59,6 +59,20 @@ then
 	echo "$0: WARNING: file \`$output' exists, appending to it" >&2
 fi
 
+if test ! -d $nssdir
+then
+        echo "No such directory: $nssdir"
+        exit 255
+fi
+
+certutil -L -d $nssdir >/dev/null 2>/dev/null
+RETVAL=$?
+if [ $RETVAL -eq 255 ];
+then
+        echo "NSS database in $nssdir not initialized. Please run 'ipsec initnss $configdir'"
+        exit 255
+fi
+
 (
 	echo ': RSA	{'
 	ipsec rsasigkey $verbose $random $configdir $password $host $bits 

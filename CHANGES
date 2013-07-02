@@ -1,23 +1,23 @@
 
 See also https://libreswan.org/
 
-v3.5 (unreleased)
-* lswan_detect: cleanup coding style and fix help for unknown options [Tuomo]
-* lswan_detect: add gentoo detection [Tuomo]
-* setup: add rhsysv, openrc, and real sysv init support [Tuomo]
+v3.5 (June 6, 2013)
+* NETKEY: _stackmanager: Clear disable_xfm/disable_policy /proc files
+          for labeled IPsec [Paul]
 * KLIPS: Added support for kernel 3.9.x [Paul/David]
 * KLIPS: NATT support for kernel 3.4+ needs udp_encap_enable() [David]
 * KLIPS: pointer can look valid during free process [Unknown/David]
 * KLIPS: change default for hidetos (quality of service) to yes [Paul]
 * MAST: _stackmanager: bring mast0 up even if module was loaded [neoXite]
-* NETKEY: _stackmanager: Clear disable_xfm/disable_policy /proc files
-          for labeled IPsec [Paul]
 * pluto: Fix reading ipsec.secrets without trailing newline [Hugh]
 * pluto: Clarify 'ipsec status' output by adding headers [Paul]
 * pluto: Added config setup, compile paths, runtime info to ipsec status [Paul]
 * pluto: removed IKE_ALG and KERNEL_ALG defines [Paul]
 * _stackmanager: re-add support for hidetos=, overridemtu= and fragicmp= [Paul]
 * building: cleanup old vars, and allow more env overrides [Paul]
+* lswan_detect: cleanup coding style and fix help for unknown options [Tuomo]
+* lswan_detect: add gentoo detection [Tuomo]
+* setup: add rhsysv, openrc, and real sysv init support [Tuomo]
 * FIPS: Remove hardcoded /usr/libexec/ipsec path, use IPSEC_EXECDIR [Paul]
 * Bugtracker bugs fixed:
    #82: Phase out DBG_KLIPS/DBG_NETKEY for DBG_KERNEL [Paul]
