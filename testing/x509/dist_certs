@@ -349,5 +349,27 @@ openssl ca -gencrl -crldays 15 -out crls/othercacrl.pem  -keyfile keys/otherca.k
 openssl ca -revoke certs/revoked.crt -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
 openssl ca -gencrl -crldays 15 -out crls/cacrlvalid.pem -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
 
+# now we will attempt to create a CRL with a signature that happens to start with 00
+# As we need to change something to get a different signature, we change the validity time
+echo "Attempting to generate a CRL with leading zero byte - this can take a minute"
+days=1
+while true
+do
+        openssl ca -gencrl -crldays $days -out crls/crl-leading-zero-byte.pem -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar >/dev/null
+        openssl crl -text -in crls/crl-leading-zero-byte.pem -noout | grep -A1 "Signature Algorithm:"|tail -1| sed "s/ //g" |grep ^00 > /dev/null
+        RETVAL=$?
+        if [ $RETVAL -eq 0 ]
+        then
+                echo "Found leading zero CRL signature for days=$days"
+                break
+        else
+                days=$((days+1))
+        fi;
+done
 
+
+
+
+
+echo "X509 test material generation complete"
 popd
