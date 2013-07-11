@@ -72,18 +72,18 @@ if test -f /proc/net/pfkey ; then
 fi
 
 echo IPSEC mangle TABLES
-if test "$(grep ^mangle /proc/net/ip_tables_names 2> /dev/null)" ; then
+if test "$(grep ^mangle /proc/net/ip_tables_names > /dev/null 2> /dev/null)" ; then
 	iptables -n -t mangle -L IPSEC
 fi
-if test "$(grep ^mangle /proc/net/ip6_tables_names 2> /dev/null)" ; then
+if test "$(grep ^mangle /proc/net/ip6_tables_names > /dev/null 2> /dev/null)" ; then
 	ip6tables -n -t mangle -L IPSEC
 fi
 
 echo NEW_IPSEC_CONN mangle TABLES
-if test "$(grep ^mangle /proc/net/ip_tables_names 2> /dev/null)" ; then
+if test "$(grep ^mangle /proc/net/ip_tables_names > /dev/null 2> /dev/null)" ; then
 	iptables -n -t mangle -L NEW_IPSEC_CONN
 fi
-if test "$(grep ^mangle /proc/net/ip6_tables_names 2> /dev/null)" ; then
+if test "$(grep ^mangle /proc/net/ip6_tables_names > /dev/null 2> /dev/null)" ; then
 	ip6tables -n -t mangle -L NEW_IPSEC_CONN
 fi
 
