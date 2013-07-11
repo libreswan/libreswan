@@ -19,6 +19,7 @@ v3.5 (June 6, 2013)
 * lswan_detect: add gentoo detection [Tuomo]
 * setup: add rhsysv, openrc, and real sysv init support [Tuomo]
 * barf: do not cause any iptables modules to get loaded (rhbz#954249) [Paul]
+* look: Don't cause loading of iptables kernel modules (rhbz#954249) [Paul]
 * FIPS: Remove hardcoded /usr/libexec/ipsec path, use IPSEC_EXECDIR [Paul]
 * Bugtracker bugs fixed:
    #82: Phase out DBG_KLIPS/DBG_NETKEY for DBG_KERNEL [Paul]
