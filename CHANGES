@@ -13,6 +13,7 @@ v3.5 (June 6, 2013)
 * pluto: Clarify 'ipsec status' output by adding headers [Paul]
 * pluto: Added config setup, compile paths, runtime info to ipsec status [Paul]
 * pluto: removed IKE_ALG and KERNEL_ALG defines [Paul]
+* pluto: prevent libcurl sigalarm from crashing pluto (lsbz#128) [Paul]
 * _stackmanager: re-add support for hidetos=, overridemtu= and fragicmp= [Paul]
 * building: cleanup old vars, and allow more env overrides [Paul]
 * lswan_detect: cleanup coding style and fix help for unknown options [Tuomo]
