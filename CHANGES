@@ -1,6 +1,8 @@
 
 See also https://libreswan.org/
 
+v3.6 (unreleased)
+
 v3.5 (July 13, 2013)
 * NETKEY: _stackmanager: Clear disable_xfm/disable_policy /proc files
           for labeled IPsec [Paul]
