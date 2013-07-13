@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.5 (June 6, 2013)
+v3.5 (July 13, 2013)
 * NETKEY: _stackmanager: Clear disable_xfm/disable_policy /proc files
           for labeled IPsec [Paul]
 * KLIPS: Added support for kernel 3.9.x [Paul/David]
