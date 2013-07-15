@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v3.6 (unreleased)
 * pluto: work around for Cisco VPN clients sending extraneous bytes [Paul/Hugh]
+* sysvinit: status function used incorrect variable for pid file [Tuomo]
 
 v3.5 (July 13, 2013)
 * NETKEY: _stackmanager: Clear disable_xfm/disable_policy /proc files
