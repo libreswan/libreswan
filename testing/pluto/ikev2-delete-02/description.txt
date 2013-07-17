@@ -1,0 +1,9 @@
+This test is part of the ikev2-delete suite to track deletion commands between peers.
+
+02 - west initiates, west uses ipsec whack --deletestate 1 and 2.
+
+Right now east does not send a delete notification to west. When this is fixed
+we can change the pass result.
+
+[Regression since RHEL openswan-2.6.32-20]
+
