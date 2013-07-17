@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+# Copyright (C) 2012 - 2013 Paul Wouters <pwouters@redhat.com>
 #
 # Based on old perl and shell code:
 # Copyright (C) 2003 Sam Sgro <sam@freeswan.org> 
@@ -177,7 +177,7 @@ def natcheck():
 	printfun("Checking NAT and MASQUERADEing")
 	print_result("WARN","TEST INCOMPLETE")
 
-	# run iptables -t nat -L -n
+	# run grep ^nat /proc/net/ip_tables_names && iptables -t nat -L -n
 	# grep for NAT or MASQ
 	# for KLIPS
 	#   grep over /proc/net/ipsec_eroute check for 'tun0x' then find overlap

@@ -126,15 +126,20 @@ stopklips() {
 	echo "FAILURE to unload KLIPS/MAST module" >&2
 	exit 1
     fi
-
-    # Flush policy out in case of mast - NEW_IPSEC_CONN and IPSEC
-    # tables are created in _updown.mast on demand
-    iptables -t mangle -F IPSEC >/dev/null 2>/dev/null
-    iptables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>/dev/null
 }
 
 stopmast() {
     stopklips
+    # Flush policy out in case of mast - NEW_IPSEC_CONN and IPSEC
+    # tables are created in _updown.mast on demand
+    grep ^mangle /proc/net/ip_tables_names > /dev/null 2> /dev/null && \
+	iptables -t mangle -F IPSEC >/dev/null 2>/dev/null
+    grep ^mangle /proc/net/ip_tables_names > /dev/null 2> /dev/null && \
+	iptables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>/dev/null
+    grep ^mangle /proc/net/ip6_tables_names > /dev/null 2> /dev/null && \
+	ip6tables -t mangle -F IPSEC >/dev/null 2>/dev/null
+    grep ^mangle /proc/net/ip6_tables_names > /dev/null 2> /dev/null && \
+	ip6tables -t mangle -F NEW_IPSEC_CONN >/dev/null 2>/dev/null
 }
 
 stop() {
@@ -151,7 +156,8 @@ cryptomodules() {
     @MODPROBE@ amd-rng 2>/dev/null
     @MODPROBE@ intel-rng 2>/dev/null
     @MODPROBE@ geode-rng 2>/dev/null
-    # @MODPROBE@ timeriomem-rng 2>/dev/null
+    @MODPROBE@ timeriomem-rng 2>/dev/null
+    @MODPROBE@ tpm-rng 2>/dev/null
 
     # load any OCF and CryptoAPI modules we might need for acceleration
     # (OCF works for NETKEY and KLIPS/MAST)
@@ -239,6 +245,9 @@ startklips() {
 	fi
     fi
 
+	# If present, need to change for all interfaces (ipsecX, mastX)
+	overridemtu=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep overridemtu |sed 's/ overridemtu=//'| sed "s/'//g" | sed "s/,/ /g")
+
     if [ $stack = "mast" ]; then
 	# we really just ignore the interfaces= line completely
 	# make sure this mast device exists, if not create it
@@ -246,8 +255,9 @@ startklips() {
 	if [ ! -d /sys/devices/virtual/net/$virt ]; then
 	    # in mast mode we just create the virtual interface
 	    ipsec tncfg --create $virt
-	    ip link set $virt up
 	fi
+	# ensure the link is up, even if module was already loaded
+	ip link set $virt up
 	# detach all ipsecX devices
 	ipsec tncfg --clear
 	# remove any ipsecX interfaces, as we are using mastX
@@ -261,13 +271,17 @@ startklips() {
 	# PAUL: We tell in the man page for ipsec.conf protostack= that
 	#	the user should do this
 
-	# Double check the mtu is not 0
-	# if it is set it to a saner default
-	ip link show dev $virt | grep -q 'mtu 0 '
-	RETVAL=$?
-	if [ "$RETVAL" -eq 0 ]; then
-		echo "Fixup of mtu on $virt to 16260" >&2
-		ip link set mtu 16260 dev $virt
+	if [ "$overridemtu" != "" ]; then
+		ip link set mtu $overridemtu dev $virt
+	else
+		# Double check the mtu is not 0
+		# if it is set it to a saner default
+		ip link show dev $virt | grep -q 'mtu 0 '
+		RETVAL=$?
+		if [ "$RETVAL" -eq 0 ]; then
+			echo "Fixup of mtu on $virt to 16260" >&2
+			ip link set mtu 16260 dev $virt
+		fi
 	fi
 
     elif [ $stack = "klips" ]; then
@@ -323,18 +337,32 @@ startklips() {
 			}' phys=$phys virt=$virt
 	    ip link set up dev $virt
 
-	    # Double check the mtu is not 0
-	    # if it is set it to a saner default
-	    ip link show dev $virt | grep -q 'mtu 0 '
-	    RETVAL=$?
-	    if [ "$RETVAL" -eq 0 ]; then
-		echo "Fixup of mtu on $virt to 16260" >&2
-		ip link set mtu 16260 dev $virt
+	    if [ "$overridemtu" != "" ]; then
+		ip link set mtu $overridemtu dev $virt
+	    else
+	    	# Double check the mtu is not 0
+	    	# if it is set it to a saner default
+	    	ip link show dev $virt | grep -q 'mtu 0 '
+	    	RETVAL=$?
+	    	if [ "$RETVAL" -eq 0 ]; then
+			echo "Fixup of mtu on $virt to 16260" >&2
+			ip link set mtu 16260 dev $virt
+	    	fi
 	    fi
 	done
 
     elif [ $stack = "none" ]; then
 	echo "protostack=none selected - No IPsec SA's will be injected into the kernel" >&2
+    fi
+
+    # global module options for KLIPS
+    fragicmp=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep fragicmp |sed 's/ fragicmp=//'| sed "s/'//g" | sed "s/,/ /g")
+    if [ "$fragicmp" == "yes" ]; then
+	echo 1 > /proc/sys/net/ipsec/icmp
+    fi
+    hidetos=$(ipsec addconn --config $IPSEC_CONF  --configsetup --noexport |grep hidetos |sed 's/ hidetos=//'| sed "s/'//g" | sed "s/,/ /g")
+    if [ "$hidetos" == "no" ]; then
+	echo 0 > /proc/sys/net/ipsec/tos
     fi
 }
 

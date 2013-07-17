@@ -119,7 +119,7 @@ int debug_netlink = 0;
 int sysctl_ipsec_debug_verbose = 0;
 int sysctl_ipsec_debug_ipcomp = 0;
 int sysctl_ipsec_icmp = 0;
-int sysctl_ipsec_tos = 0;
+int sysctl_ipsec_tos = 1; /* hide per default, unless hidetos=no */
 
 #define DECREMENT_UNSIGNED(X, amount) ((amount < (X)) ? (X)-amount : 0)
 

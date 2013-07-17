@@ -297,33 +297,42 @@ else
 	fi
 fi
 _________________________ iptables
-if test -r /sbin/iptables-save -o -r /usr/sbin/iptables-save
+if test -e /proc/net/ip_tables_names
 then
-	iptables-save
-else
-	if test -r /sbin/iptables -o -r /usr/sbin/iptables
+	if test -r /sbin/iptables-save -o -r /usr/sbin/iptables-save
 	then
-		iptables -L -v -n
-		_________________________ iptables-nat
-		iptables -t nat -L -v -n
-		_________________________ iptables-mangle
-		iptables -t mangle -L -v -n
+		iptables-save --modprobe=/dev/null
+	else
+		if test -r /sbin/iptables -o -r /usr/sbin/iptables
+		then
+			iptables -L -v -n
+			_________________________ iptables-nat
+		
+			grep ^nat /proc/net/ip_tables_names > /dev/null 2>/dev/null &&
+				iptables -t nat -L -v -n
+			_________________________ iptables-mangle
+			grep ^mangle /proc/net/ip_tables_names > /dev/null 2>/dev/null &&
+				iptables -t mangle -L -v -n
+		fi
 	fi
 fi
 _________________________ ip6tables
-if test -r /sbin/ip6tables-save -o -r /usr/sbin/ip6tables-save
+if test -e ip6_tables_names
 then
-	ip6tables-save
-else
-	if test -r /sbin/ip6tables -o -r /usr/sbin/ip6tables
+	if test -r /sbin/ip6tables-save -o -r /usr/sbin/ip6tables-save
 	then
-		ip6tables -L -v -n
-		_________________________ ip6tables-mangle
-		ip6tables -t mangle -L -v -n
+		ip6tables-save --modprobe=/dev/null
+	else
+		if test -r /sbin/ip6tables -o -r /usr/sbin/ip6tables
+		then
+			test -e /proc/net/ip_tables_names && ip6tables -L -v -n
+			# There is no IPv6 NAT yet (hopefully that will remain so)
+			_________________________ ip6tables-mangle
+			grep ^mangle /proc/net/ip6_tables_names > /dev/null 2>/dev/null &&
+				ip6tables -t mangle -L -v -n
+		fi
 	fi
 fi
-_________________________ ip6tables
-
 _________________________ /proc/modules
 if test -f /proc/modules
 then

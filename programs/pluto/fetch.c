@@ -200,7 +200,8 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT,
 				 FETCH_CMD_TIMEOUT);
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2 * FETCH_CMD_TIMEOUT);
-
+		/* work around for libcurl signal bug */
+		curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
 		res = curl_easy_perform(curl);
 
 		if (res == CURLE_OK) {

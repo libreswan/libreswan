@@ -146,12 +146,29 @@ void process_packet(struct msg_digest **mdp)
 		}
 	}
 
-	if (md->packet_pbs.roof != md->message_pbs.roof) {
+	if (md->packet_pbs.roof < md->message_pbs.roof) {
 		libreswan_log(
-			"size (%u) differs from size specified in ISAKMP HDR (%u)",
-			(unsigned) pbs_room(
-				&md->packet_pbs), md->hdr.isa_length);
+			"received packet size (%u) is smaller than from "
+			"size specified in ISAKMP HDR (%u) - packet dropped",
+			(unsigned) pbs_room(&md->packet_pbs),
+			md->hdr.isa_length);
+		/* abort processing corrupt packet */
 		return;
+	} else if (md->packet_pbs.roof > md->message_pbs.roof) {
+		/*
+		 * Some (old?) versions of the Cisco VPN client send an additional
+		 * 16 bytes of zero bytes - Complain but accept it
+		 */
+		DBG(DBG_CONTROL, {
+			DBG_log(
+			"size (%u) in received packet is larger than the size "
+			"specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
+			(unsigned) pbs_room(&md->packet_pbs),
+			md->hdr.isa_length);
+			DBG_dump("extraneous bytes:", md->message_pbs.roof,
+				md->packet_pbs.roof - md->message_pbs.roof);
+		/* continue */
+		});
 	}
 
 	maj = (md->hdr.isa_version >> ISA_MAJ_SHIFT);

@@ -25,9 +25,9 @@ Source: https://download.libreswan.org/%{name}-%{version}%{?prever}.tar.gz
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
 BuildRequires: systemd systemd-units
-Requires(post): coreutils bash systemd
-Requires(preun): systemd
-Requires(postun): systemd
+Requires(post): coreutils bash systemd-units
+Requires(preun): systemd-units
+Requires(postun): systemd-units
 
 Conflicts: openswan < %{version}-%{release}
 Obsoletes: openswan < %{version}-%{release}
@@ -177,14 +177,26 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %endif
 
 %preun
-%systemd_preun ipsec.service
+if [ $1 -eq 0 ] ; then
+    # Package removal, not upgrade
+    /bin/systemctl --no-reload disable ipsec.service > /dev/null 2>&1 || :
+    /bin/systemctl stop ipsec.service > /dev/null 2>&1 || :
+fi
 
 %postun
-%systemd_postun_with_restart ipsec.service
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+if [ $1 -ge 1 ] ; then
+    # Package upgrade, not uninstall
+    /bin/systemctl try-restart ipsec.service >/dev/null 2>&1 || :
+fi
+
 
 %post 
-%systemd_post ipsec.service
+if [ $1 -eq 1 ] ; then 
+    # Initial installation 
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+fi
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSEBASEVERSION-1
 - Automated build from release tar ball
