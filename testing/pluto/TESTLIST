@@ -294,9 +294,8 @@ kvmplutotest	psk-pluto-01		good
 # a test case of PSK with aggressive mode, with missing PSKs
 umlXhost	psk-pluto-02		bad
 
-#
-# a test case of xauth/psk/aggressive/algo 
 kvmplutotest	xauth-pluto-04		good
+kvmplutotest	xauth-pluto-17		good
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg
