@@ -2,7 +2,7 @@
   <term><emphasis remap='B'>force_keepalive</emphasis></term>
   <listitem>
 <para>This option has been obsoleted since libreswan version 3.2. See the
-<emphasis remap='I'>force_keepalive</emphasis> option to enable/disable NAT-KA
+<emphasis remap='I'>nat_keepalive</emphasis> option to enable/disable NAT-KA
 packets on a per-connection basis. </para>
   </listitem>
   </varlistentry>
