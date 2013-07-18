@@ -296,7 +296,7 @@ umlXhost	psk-pluto-02		bad
 
 #
 # a test case of xauth/psk/aggressive/algo 
-umlXhost	xauth-pluto-04		good
+kvmplutotest	xauth-pluto-04		good
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg

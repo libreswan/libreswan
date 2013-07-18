@@ -1,19 +1,7 @@
-#!/bin/sh
-
-#ipsec setup stop
-#umount /var/tmp; mount /var/tmp
-#umount /usr/local; mount /usr/local
-: ==== start ====
-export TESTNAME=xauth-pluto-04
-source /testing/pluto/bin/eastlocal.sh
-
-ipsec setup start
+/testing/guestbin/swan-prep
+ipsec _stackmanager start 
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-
 ipsec auto --add xauth-road--eastnet-psk
-
-echo done.
-
-
-
-
+ipsec auto --status
+echo "initdone"
