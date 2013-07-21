@@ -92,16 +92,16 @@ if [ -n "$NIC" ] ; then
 	NIC_PID=$!
 fi
 
-echo "../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --reboot"
-../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --reboot  &
-INITIATOR_PID=$!  
-
 echo "../../utils/runkvm.py --host $RESPONDER --testname $TESTNAME --reboot"
 ../../utils/runkvm.py --host $RESPONDER --testname $TESTNAME --reboot &
 RESPONDER_PID=$!
-
-wait_till_pid_end "$INITIATOR" $INITIATOR_PID
 wait_till_pid_end "$RESPONDER" $RESPONDER_PID
+
+echo "../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --reboot"
+../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --reboot  &
+INITIATOR_PID=$!  
+wait_till_pid_end "$INITIATOR" $INITIATOR_PID
+
 echo "running any post scripts"
 if [ -f "$INITIATOR"post1.sh ] ; then
 	../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --post

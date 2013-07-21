@@ -5,5 +5,8 @@ Basic pluto test:
 the policy has been adjusted to permit only AES256 for phase 1 and twofish128 
 for phase 2.
 
-note: cryptoapi is not built in by default so this test will currently pass, 
-as we test for the error messages of the algs being unavailable.
+Depending on stack (klips vs netkey) and the availability of TWOFISH in the
+kernel, this test will succeed or fail.
+
+Paul: I believe cryptoapi and klips do not support twofish, but netkey does.
+
