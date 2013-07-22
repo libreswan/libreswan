@@ -15,4 +15,4 @@ iptables -I INPUT 1 --destination 192.0.2.0/24 -j LOGDROP
 # Display the table, so we know it's correct.
 iptables -t nat -L -n
 iptables -L -n
-echo done
+echo initdone

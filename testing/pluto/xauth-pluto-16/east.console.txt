@@ -23,8 +23,8 @@ east #
 east #
  ipsec auto --add modecfg-road-east
 east #
- echo done
-done
+ echo initdone
+initdone
 east #
  ipsec look
 east NOW
