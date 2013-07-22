@@ -19,8 +19,8 @@ road #
 road #
  ipsec auto --add modecfg-road-east
 road #
- echo done
-done
+ echo initdone
+initdone
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name modecfg-road-east --initiate
 002 "modecfg-road-east" #1: initiating Main Mode

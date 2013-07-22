@@ -5,4 +5,4 @@
 ipsec auto --add modecfg-east-21
 ipsec auto --add modecfg-east-20
 ipsec auto --add modecfg-road-east
-echo done
+echo initdone
