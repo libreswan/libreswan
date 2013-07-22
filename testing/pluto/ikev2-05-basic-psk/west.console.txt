@@ -50,12 +50,26 @@ west #
 000 interface ipsec0/eth1 2001:db8:1:2::45
 000 interface ipsec0/eth1 192.1.2.45
 000 interface ipsec0/eth1 192.1.2.45
-000 %myid = (none)
-000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
+000 FIPS=disabled
+000 SElinux=enabled
+000  
+000 config setup options:
+000  
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp
+000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
+000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
+000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
+000 secctx_attr_value=<unsupported>
+000 %myid = (none)
+000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
+000  
+000 nat_traversal=yes, keep_alive=20, nat_ikeport=4500, disable_port_floating=no
 000 virtual_private (%priv):
 000 - allowed 3 subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
 000 - disallowed 2 subnets: 192.0.1.0/24, 2001:db8:0:1::/64
+000  
+000 ESP algorithms supported:
 000  
 000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192
 000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=64, keysizemin=128, keysizemax=128
@@ -66,6 +80,8 @@ west #
 000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
 000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
 000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000  
+000 IKE algorithms supported:
 000  
 000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
@@ -87,10 +103,14 @@ west #
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
+000 Connection list:
+000  
 000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ipv4-psk-ikev2":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
+000 "westnet-eastnet-ipv4-psk-ikev2":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ipv4-psk-ikev2":    policy_label:unset; 
 000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
 000 "westnet-eastnet-ipv4-psk-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
 000 "westnet-eastnet-ipv4-psk-ikev2":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
@@ -99,6 +119,9 @@ west #
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
+000 State list:
+000  
+000 Shunt list:
 000  
 west #
  echo "initdone"
@@ -118,6 +141,12 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
+ ipsec eroute
+2          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23
+west #
+ echo done
+done
+west #
  ipsec look
 west NOW
 192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
@@ -126,57 +155,6 @@ tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45  natencap=none natsport=0 natd
 esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128  natencap=none natsport=0 natdport=0   refhim=0
 esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128  natencap=none natsport=0 natdport=0   refhim=1
 tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<>  natencap=none natsport=0 natdport=0   refhim=1
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
-192.0.2.0/24 dev ipsec0  scope link 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-unreachable ::/96 dev lo  metric 1024  error -101
-unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
-2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
-2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
-2001:db8:1:2::45 dev ipsec0  proto kernel  metric 256 
-2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
-2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
-unreachable 2002:a00::/24 dev lo  metric 1024  error -101
-unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
-unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
-unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
-unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
-unreachable 2002:e000::/19 dev lo  metric 1024  error -101
-unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
-fe80::1000:ff:fe64:6445 dev ipsec0  proto kernel  metric 256 
-fe80::/64 dev eth0  proto kernel  metric 256 
-fe80::/64 dev eth1  proto kernel  metric 256 
-fe80::/64 dev eth2  proto kernel  metric 256 
-fe80::/64 dev ipsec0  proto kernel  metric 256 
-default via 2001:db8:1:2::254 dev eth1  metric 1 
-default via 2001:db8:1:2::254 dev eth1  metric 1024 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-west #
- echo done
-done
-west #
- ipsec look
-west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0x45a08ee2@192.1.2.23  (2)
-ipsec0->eth1 mtu=16260(1500)->1500
-esp0x45a08ee2@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xd7cca588794fb2c3ecc6222f5d43b48b ooowin=64 seq=2 alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(304,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
-esp0x7902ea14@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0x2705aa203869331d05293b16627ccf4c ooowin=64 seq=2 bit=0x3 alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(168,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=4 refhim=1
-tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 life(c,s,h)=bytes(208,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> life(c,s,h)=bytes(168,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=3 refhim=1
-IPSEC mangle TABLES
-iptables: No chain/target/match by that name.
-ip6tables: No chain/target/match by that name.
-NEW_IPSEC_CONN mangle TABLES
-iptables: No chain/target/match by that name.
-ip6tables: No chain/target/match by that name.
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
