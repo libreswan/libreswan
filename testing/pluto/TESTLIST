@@ -14,11 +14,11 @@
 # expectation:
 #  good - output matches known output
 #  bad  - output should NOT match [only for unit tests, not pluto test]
-#  incomplete - 
+#  wip  - this test still need work. 
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01	good
-umlplutotest	basic-pluto-02	good
+kvmplutotest	basic-pluto-02	wip
 kvmplutotest	basic-pluto-03	good
 
 # fails due to refineconnection bug.
@@ -265,7 +265,7 @@ umlXhost	nat-aggr-01		good
 #
 # a test of using AES with pluto
 #
-umlplutotest	basic-pluto-04		good
+kvmplutotest	basic-pluto-04		good
 
 # 
 # a test of sending and validating an X.509 cert
@@ -295,7 +295,7 @@ kvmplutotest	psk-pluto-01		good
 umlXhost	psk-pluto-02		bad
 
 kvmplutotest	xauth-pluto-04		good
-kvmplutotest	xauth-pluto-17		good
+skip		xauth-pluto-17		wip
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg
@@ -323,7 +323,7 @@ kvmplutotest	xauth-pluto-16		good
 #
 # a test of using AES with pluto, with pfs=yes
 #
-umlplutotest	basic-pluto-05		good
+kvmplutotest	basic-pluto-05		wip
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
@@ -406,7 +406,7 @@ umlXhost	psk-pluto-04		good
 #
 # a test of using AES with pluto, twofish for phase2
 #
-umlplutotest	basic-pluto-07		good
+skip	basic-pluto-07		wip
 
 #
 # a test of using twofish with pluto, twofish for phase2
@@ -494,7 +494,7 @@ kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	incomplete
 #################################################################
 kvmplutotest	ikev2-01-fallback-ikev1			good
 umlplutotest	ikev2-02-responder-send-notify		good
-kvmlplutotest	ikev2-03-basic-rawrsa			good
+kvmplutotest	ikev2-03-basic-rawrsa			good
 kvmplutotest	ikev2-04-basic-x509			good
 kvmplutotest	ikev2-05-basic-psk			good
 umlplutotest	ikev2-06-6msg				good
