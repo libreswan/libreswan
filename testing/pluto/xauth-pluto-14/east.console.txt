@@ -1,19 +1,4 @@
-#!/bin/sh
-east #
- : ==== start ====
-east #
- TESTNAME=`basename $PWD`
-east #
- export TESTNAME
-east #
- /testing/guestbin/swan-prep --testname $TESTNAME  --hostname east
-east #
- ipsec setup stop
-Redirecting to: systemctl stop ipsec.service
-east #
- /usr/local/libexec/ipsec/_stackmanager stop
-east #
- rm -fr /var/run/pluto/pluto.pid
+/testing/guestbin/swan-prep
 east #
  /usr/local/libexec/ipsec/_stackmanager start
 [ 00.00] NET: Registered protocol family 15
@@ -33,21 +18,17 @@ east #
 east #
  ipsec auto --add modecfg-road-east
 east #
- echo done.
-done.
+ echo "initdone"
+initdone
 east #
- -> 192.0.2.100/32     => tun0x1001@192.1.2.254 esp0x23a9a836@192.1.2.254  (4)
-ipsec0->eth1 mtu=16260(1500)->1500
-esp0x21344d05@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.254 iv_bits=128bits iv=0x712b2c3cf0173786ef75c40a56917bcb ooowin=64 seq=4 bit=0xf alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(336,0,0)addtime(17,0,0)usetime(16,0,0)packets(4,0,0) idle=13 natencap=none natsport=0 natdport=0 refcount=3 ref=4 refhim=1
-esp0x23a9a836@192.1.2.254 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xa932671ebe46f82d5c79e33cbeb43eac ooowin=64 seq=4 alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(608,0,0)addtime(17,0,0)usetime(16,0,0)packets(4,0,0) idle=13 natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
-tun0x1001@192.1.2.254 IPIP: dir=out src=192.1.2.23 life(c,s,h)=bytes(416,0,0)addtime(17,0,0)usetime(16,0,0)packets(4,0,0) idle=13 natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.23 IPIP: dir=in  src=192.1.2.254 policy=192.0.2.100/32->0.0.0.0/0 flags=0x8<> life(c,s,h)=bytes(336,0,0)addtime(17,0,0)usetime(16,0,0)packets(4,0,0) idle=13 natencap=none natsport=0 natdport=0 refcount=3 ref=3 refhim=1
-IPSEC mangle TABLES
-iptables: No chain/target/match by that name.
-ip6tables: No chain/target/match by that name.
-NEW_IPSEC_CONN mangle TABLES
-iptables: No chain/target/match by that name.
-ip6tables: No chain/target/match by that name.
+ ipsec look
+east NOW
+0.0.0.0/0          -> 192.0.2.100/32     => tun0xIPIP@192.1.2.254 esp0xESPSPI@192.1.2.254
+ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.254 IPIP: dir=out src=192.1.2.23  natencap=none natsport=0 natdport=0   refhim=0
+esp0xKLIPSPIK@192.1.2.254 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128  natencap=nonesp natsport=4500 natdport=4500   refhim=0
+esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.254 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128  natencap=nonesp natsport=4500 natdport=4500   refhim=1
+tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.254 policy=192.0.2.100/32->0.0.0.0/0 flags=0x8<>  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -73,7 +54,6 @@ unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
 unreachable 2002:e000::/19 dev lo  metric 1024  error -101
 unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
 fe80::1000:ff:fe64:6423 dev ipsec0  proto kernel  metric 256 
-unreachable fe80::/64 dev lo  proto kernel  metric 256  error -101
 fe80::/64 dev eth0  proto kernel  metric 256 
 fe80::/64 dev eth1  proto kernel  metric 256 
 fe80::/64 dev eth2  proto kernel  metric 256 
@@ -81,8 +61,11 @@ fe80::/64 dev ipsec0  proto kernel  metric 256
 default via 2001:db8:1:2::254 dev eth1  metric 1 
 default via 2001:db8:1:2::254 dev eth1  metric 1024 
 NSS_CERTIFICATES
-
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 
