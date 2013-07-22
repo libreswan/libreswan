@@ -39,7 +39,11 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
             print "%s failed to send filename: %s"%(prompt,filename)
     return
 
-def connect_to_kvm(args):
+def connect_to_kvm(args, prompt = ''):
+
+    if not prompt :
+        prompt = "\[root@%s " % (args.hostname) 
+
     vmlist = commands.getoutput("sudo virsh list")
     running = 0
     for line in vmlist.split("\n")[2:]:
@@ -66,9 +70,8 @@ def connect_to_kvm(args):
     print "Taking %s console by force"%args.hostname
     cmd = "sudo virsh console --force %s"%args.hostname
     timer = 180
-    child = pexpect.spawn (cmd)
+    child = pexpect.spawn(cmd)
     # don't match full prompt, we want it to work regardless cwd
-    prompt = "\[root@%s " % (args.hostname) 
 
     done = 0
     tries = 30
@@ -233,7 +236,11 @@ def main():
     # unused parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
 
-    child = connect_to_kvm(args)
+    if args.final:
+        prompt = "\[root@%s %s\]# "%(args.hostname, args.testname)
+        child = connect_to_kvm(args, prompt)
+    else :
+        child = connect_to_kvm(args) 
     if not child:
 	sys.exit("Failed to launch/connect to %s - aborted"%args.hostname)
 
