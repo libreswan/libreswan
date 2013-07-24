@@ -1,0 +1,9 @@
+Basic pluto test using IPv6 (and NETKEY):
+
+This is a host-host connection using tunnel mode between road and east
+
+1) road ping6's from its public ip to the east public ip
+2) road adds an ip6table rule to block icmp
+3) road pings again, but pong should be dropped by rule
+4) road initiates connection "v6-tunnel"; east responds
+5) icmp packets flow from road to east and are not dropped when encrypted

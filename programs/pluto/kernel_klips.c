@@ -203,7 +203,7 @@ add_entry:
 #ifdef NAT_TRAVERSAL
 					DBG(DBG_NATT,
 					    DBG_log(
-						    "NAT-T KLIPS: checkng for nat_traversal_support_non_ike for IPv4"));
+						    "NAT-T KLIPS: checking for nat_traversal_support_non_ike for IPv4"));
 					if (nat_traversal_support_non_ike &&
 					    addrtypeof(&ifp->addr) ==
 					    AF_INET) {
