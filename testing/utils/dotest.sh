@@ -4,6 +4,15 @@
 . ../setup.sh
 . ../../utils/functions.sh
 
+function virsh_shutdown {
+	set +e
+	for host in $LIBRESWANHOSTS $REGULARHOSTS 
+	do
+		sudo virsh shutdown $host
+	done
+	set -e
+}
+
 TCPDUMP_FILTER="not stp and not port 22"
 
 TESTNAME=`basename $PWD`
@@ -23,6 +32,8 @@ if [ -n "`pidof tcpdump`" ] ; then
 	echo "Killing existing tcpdump controllers"
 	sudo killall tcpdump
 fi
+
+virsh_shutdown 
 
 if [ ! -f eastrun.sh ] ; then
 	RESPONDER=east
@@ -80,7 +91,7 @@ function wait_till_pid_end {
 		sleep 2
 	done
 	set -e
-}
+} 
 
 sudo /sbin/tcpdump -w ./OUTPUT/$SWAN_PCAP -n -i $TCPDUMP_DEV $TCPDUMP_FILTER &
 TCPDUMP_PID=$! 
@@ -88,7 +99,7 @@ echo $TCPDUMP_PID  > ./OUTPUT/$SWAN_PCAP.pid
 
 if [ -n "$NIC" ] ; then
 	echo "../../utils/runkvm.py --host $NIC --testname $TESTNAME --reboot"
-	../../utils/runkvm.py --host $NIC --testname $TESTNAME  &
+	../../utils/runkvm.py --host $NIC --testname $TESTNAME --reboot &
 	NIC_PID=$!
 fi
 
@@ -101,15 +112,6 @@ echo "../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --reboot"
 ../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --reboot  &
 INITIATOR_PID=$!  
 wait_till_pid_end "$INITIATOR" $INITIATOR_PID
-
-echo "running any post scripts"
-if [ -f "$INITIATOR"post1.sh ] ; then
-	../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --post
-	../../utils/runkvm.py --host $RESPONDER --testname $TESTNAME --post
-elif [ -f "$RESPONDER"post1.sh ] ; then
-	../../utils/runkvm.py --host $RESPONDER --testname $TESTNAME --post
-	../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --post
-fi
 
 echo "start final.sh on responder $RESPONDER for $TESTNAME"
 ../../utils/runkvm.py --final --hostname $RESPONDER --testname $TESTNAME &
