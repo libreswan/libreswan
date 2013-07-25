@@ -227,8 +227,5 @@ def main():
     if (args.testname and not args.final):
         run_test(args,child)
 
-    if args.final:
-        run_final(args,child)
-
 if __name__ == "__main__":
     main()
