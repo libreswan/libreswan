@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --46
 # confirm that the network is alive
 ping6 -n -c 4 2001:db8:1:2::23
 # make sure that clear text echo does not get through
