@@ -108,6 +108,8 @@ def connect_to_kvm(args, prompt = ''):
     child.setecho(False) ## this does not seems to work
     child.sendline("stty sane")
     res = child.expect (['login: ', prompt], timeout=3) 
+    child.sendline("stty -onlcr")
+    res = child.expect (['login: ', prompt], timeout=3) 
     child.sendline("stty -echo")
     res = child.expect (['login: ', prompt], timeout=3) 
     return child
