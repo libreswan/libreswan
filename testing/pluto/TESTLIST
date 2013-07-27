@@ -18,7 +18,7 @@
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01	good
-kvmplutotest	basic-pluto-02	wip
+kvmplutotest	basic-pluto-02	bad
 kvmplutotest	basic-pluto-03	good
 
 # fails due to refineconnection bug.
