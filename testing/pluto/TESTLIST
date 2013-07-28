@@ -22,7 +22,7 @@ kvmplutotest	basic-pluto-02	bad
 kvmplutotest	basic-pluto-03	good
 
 # fails due to refineconnection bug.
-umlplutotest	basic-pluto-06	bad
+# PAUL: old note
 umlplutotest	pluto-ipcmp-01	good
 umlplutotest	bad-updown-01	good
 
