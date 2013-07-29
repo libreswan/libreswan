@@ -644,6 +644,14 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 				 &md->sender,
 				 md->sender_port, LEMPTY);
 
+	if (c !=  NULL && (c->policy & POLICY_IKEV1_DISABLE)) {
+		loglog(RC_LOG_SERIOUS, "discard matching conn %s for I1 from "
+		       "%s:%u. has ikev2=insist", c->name, 
+		       ip_str(&md->iface->ip_addr), 
+		       ntohs(portof(&md->iface->ip_addr)));
+		c = NULL;
+	}
+
 	if (c == NULL) {
 		pb_stream pre_sa_pbs = sa_pd->pbs;
 		lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs);
@@ -680,6 +688,21 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 						 md->sender_port, policy);
 
 			for (; d != NULL; d = d->hp_next) {
+				if (d->policy & POLICY_IKEV1_DISABLE) {
+					loglog(RC_LOG_SERIOUS, 
+					       "discard matching conn %s for "
+					       "I1 from %s:%u. %s %s %s has "
+					       "ikev2=insist ", c->name, 
+					       ip_str(&md->iface->ip_addr),
+					       ntohs(portof(&md->iface->ip_addr)),
+					       d->name,
+					       (policy != LEMPTY) ? " with policy=" : "", 
+					       (policy != LEMPTY) ? 
+					       bitnamesof(sa_policy_bit_names, policy) : "");
+					d=NULL;
+					continue;
+				}
+
 				if (d->kind == CK_GROUP) {
 					/* ignore */
 				} else {
