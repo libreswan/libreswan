@@ -44,6 +44,8 @@
 #define F_VIRTUAL_ALL         16
 #define F_VIRTUAL_HOST        32
 
+extern bool nat_traversal_enabled;
+
 struct virtual_t {
 	unsigned short flags;
 	unsigned short n_net;

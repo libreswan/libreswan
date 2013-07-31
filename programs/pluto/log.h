@@ -159,6 +159,11 @@ extern void show_status(void);
 extern void daily_log_reset(void);
 extern void daily_log_event(void);
 
+extern int Pluto_IsSElinux(void);
+extern int Pluto_IsFIPS(void);
+extern void show_setup_plutomain(void);
+extern void show_setup_natt(void);
+
 /*
  * some events are to be logged only occasionally.
  */
@@ -167,3 +172,4 @@ extern bool logged_myid_ip_txt_warning;
 extern bool logged_myid_ip_key_warning;
 extern bool logged_myid_fqdn_txt_warning;
 extern bool logged_myid_fqdn_key_warning;
+
