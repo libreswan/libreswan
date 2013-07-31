@@ -504,7 +504,6 @@ umlplutotest	ikev2-06-6msg				good
 umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-09-rw-rsa				good
-umlplutotest	ikev2-10-basic-rawrsa-nss		good
 kvmplutotest	ikev2-11-simple-psk			good
 kvmplutotest	ikev2-12-no-nhelpers			good
 
@@ -512,10 +511,10 @@ umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
 
 # modp tests for checking if we deal with sending different KE's
-umlplutotest	ikev2-algo-01-modp2048-initiator	good
-umlplutotest	ikev2-algo-02-modp2048-responder	good
-umlplutotest	ikev2-algo-03-aes-ccm			good
-umlplutotest	ikev2-algo-04-aes-gcm			good
+kvmplutotest	ikev2-algo-01-modp2048-initiator	good
+kvmlplutotest	ikev2-algo-02-modp2048-responder	good
+kvmplutotest	ikev2-algo-03-aes-ccm			good
+kvmplutotest	ikev2-algo-04-aes-gcm			good
 
 # various SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good
