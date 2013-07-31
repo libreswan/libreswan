@@ -464,31 +464,33 @@ void show_virtual_private()
 		all_ko[0] = '\0';
 	}
 
-	whack_log(RC_COMMENT, "virtual_private (%%priv):");
-	whack_log(RC_COMMENT, "- allowed %d subnet%s: %s",
-		  private_net_ok_len,
-		  (private_net_ok_len == 1) ? "" : "s", all_ok );
+	if (nat_traversal_enabled) { 
+		whack_log(RC_COMMENT, "virtual_private (%%priv):");
+		whack_log(RC_COMMENT, "- allowed %d subnet%s: %s",
+			private_net_ok_len,
+			(private_net_ok_len == 1) ? "" : "s", all_ok
+		);
 
-	whack_log(RC_COMMENT, "- disallowed %d subnet%s: %s",
-		  private_net_ko_len,
-		  (private_net_ko_len == 1) ? "" : "s", all_ko );
-	if (truncok || truncko)
-		whack_log(RC_COMMENT,
-			  "WARNING: some virtual_private entries were not shown, do you really need that many?");
+		whack_log(RC_COMMENT, "- disallowed %d subnet%s: %s",
+			private_net_ko_len,
+			(private_net_ko_len == 1) ? "" : "s", all_ko
+		);
+		if (truncok || truncko)
+			whack_log(RC_COMMENT,
+				"WARNING: some virtual_private entries were not shown, do you really need that many?");
 
-
-	if (!truncok && !truncko && !strlen(all_ok)) {
-		whack_log(RC_COMMENT,
+		if (!truncok && !truncko && !strlen(all_ok)) {
+			whack_log(RC_COMMENT,
 			  "WARNING: Either virtual_private= is not specified, or there is a syntax\n");
-		whack_log(RC_COMMENT,
+			whack_log(RC_COMMENT,
 			  "         error in that line. 'left/rightsubnet=vhost:%%priv' will not work!");
-	}
-	if (!truncok && !truncko && !strlen(all_ko)) {
-		whack_log(RC_COMMENT,
+		}
+		if (!truncok && !truncko && !strlen(all_ko)) {
+			whack_log(RC_COMMENT,
 			  "WARNING: Disallowed subnets in virtual_private= is empty. If you have\n");
-		whack_log(RC_COMMENT,
+			whack_log(RC_COMMENT,
 			  "         private address space in internal use, it should be excluded!");
+		}
 	}
-
 	whack_log(RC_COMMENT, " ");     /* spacer */
 }
