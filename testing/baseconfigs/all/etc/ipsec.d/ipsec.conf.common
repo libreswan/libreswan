@@ -338,6 +338,7 @@ conn west-east-x509
         rightcert=east
         rightnexthop=192.1.2.45
 
+# we should split this conn so we can re-use it without hardcoded left/rightcert=
 conn north-east-x509
 	# Left security gateway, subnet behind it, next hop toward right.
 	left=192.1.3.33
@@ -371,3 +372,5 @@ conn north-east-x509-fail-base
         right=192.1.2.23
         rightrsasigkey=%cert
 
+conn northnet
+        leftsubnet=192.0.3.0/24
