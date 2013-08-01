@@ -820,8 +820,9 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		/* XXX should call unpend again on parent SA */
 		if (st->st_clonedfrom != 0) {
 			pst = state_with_serialno(st->st_clonedfrom); /* with failed child sa, we end up here with an orphan?? */
-			DBG_log("releasing whack for #%lu (sock=%d)",
+			DBG_log("releasing whack and unpending for #%lu (sock=%d)",
 				pst->st_serialno, pst->st_whack_sock);
+			unpend(pst);
 			release_whack(pst);
 		}
 	}

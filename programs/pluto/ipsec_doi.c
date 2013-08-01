@@ -291,7 +291,8 @@ static initiator_function *pick_initiator(struct connection *c UNUSED,
 					  lset_t policy)
 {
 	if ((policy & POLICY_IKEV1_DISABLE) == 0 &&
-	    (c->failed_ikev2 || (policy & POLICY_IKEV2_PROPOSE) == 0)) {
+	    (c->failed_ikev2 || (policy & POLICY_IKEV2_PROPOSE) == 0) &&
+	    (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)) == 0) {
 		if (policy & POLICY_AGGRESSIVE) {
 #if defined(AGGRESSIVE)
 			return aggr_outI1;
@@ -304,7 +305,8 @@ static initiator_function *pick_initiator(struct connection *c UNUSED,
 			return main_outI1;
 		}
 
-	} else if (policy & POLICY_IKEV2_PROPOSE) {
+	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
+		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
 		return ikev2parent_outI1;
 
 	} else {
@@ -445,6 +447,10 @@ void ipsecdoi_replace(struct state *st,
 			    ENCAPSULATION_MODE_TUNNEL)
 				policy |= POLICY_TUNNEL;
 		}
+		/* retain policy so child sa rekey attempt does not blow up */
+		if (st->st_state == STATE_PARENT_I3)
+			policy = st->st_connection->policy;
+
 		passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(whack_sock, st->st_connection, policy, try,
 				  st->st_serialno, st->st_import
