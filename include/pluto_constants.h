@@ -115,7 +115,7 @@ enum event_type {
 	EVENT_CRYPTO_FAILED,            /* after some time, give up on crypto helper */
 	EVENT_PENDING_PHASE2,           /* do not make pending phase2 wait forever */
 	EVENT_v2_RETRANSMIT,            /* Retransmit v2 packet */
-
+	EVENT_v2_LIVENESS,
 	EVENT_PENDING_DDNS,             /* try to start connections where DNS failed at init */
 };
 
@@ -394,6 +394,9 @@ enum phase1_role {
 #ifdef MODECFG
 #define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
 #endif
+
+/* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
+#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 
 #define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I2 || (s) == \
 				     STATE_PARENT_R1 || (s) == STATE_IKESA_DEL)

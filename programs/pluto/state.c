@@ -1480,8 +1480,26 @@ void fmt_state(struct state *st, const time_t n,
 				 st->st_last_dpd : (long)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
+		} else if (st->hidden_variables.st_liveness) {
+			struct state *pst;
+			time_t tn = time(NULL);
+
+			/* stats are on parent sa */
+			if (st->st_clonedfrom != SOS_NOBODY) {
+				pst = state_with_serialno(st->st_clonedfrom);
+				if (pst != NULL) {
+					snprintf(dpdbuf, sizeof(dpdbuf),
+						"; lastlive=%lds",
+						pst->st_last_liveness != 0 ? tn -
+						pst->st_last_liveness : 0);
+				}
+			}
 		} else {
-			snprintf(dpdbuf, sizeof(dpdbuf), "; nodpd");
+			if (!st->st_ikev2) {
+				snprintf(dpdbuf, sizeof(dpdbuf), "; nodpd");
+			} else {
+				snprintf(dpdbuf, sizeof(dpdbuf), "");
+			}
 		}
 	}
 

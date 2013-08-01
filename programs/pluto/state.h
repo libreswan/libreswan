@@ -155,6 +155,7 @@ struct hidden_variables {
 	bool st_got_certrequest;
 	bool st_modecfg_started;
 	bool st_skeyid_calculated;
+	bool st_liveness;			/* Liveness checks */
 	bool st_dpd;                            /* Peer supports DPD */
 	bool st_dpd_local;                      /* If we want DPD on this conn */
 	bool st_logged_p1algos;                 /* if we have logged algos */
@@ -392,6 +393,10 @@ struct state {
 
 	char st_xauth_username[XAUTH_USERNAME_LEN];
 	chunk_t st_xauth_password;
+
+	time_t st_last_liveness;		/* Time of last v2 informational */
+	bool st_pend_liveness;			/* Waiting on an informational response */
+	struct event *st_liveness_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	time_t st_last_dpd;                     /* Time of last DPD transmit */

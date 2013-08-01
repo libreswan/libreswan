@@ -715,17 +715,18 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	struct state *st = md->st;
 	enum rc_type w;
 
-	libreswan_log("transition from state %s to state %s",
-		      enum_name(&state_names, from_state),
-		      enum_name(&state_names, svm->next_state));
-
+	if (from_state != svm->next_state) {
+		libreswan_log("transition from state %s to state %s",
+			      enum_name(&state_names, from_state),
+			  enum_name(&state_names, svm->next_state));
+	}
 	change_state(st, svm->next_state);
 	w = RC_NEW_STATE + st->st_state;
 
 	ikev2_update_counters(md);
 
-	/* tell whack and log of progress */
-	{
+	/* tell whack and log of progress, if we are actually advancing */
+	if (from_state != svm->next_state) {
 		const char *story = enum_name(&state_stories, st->st_state);
 		char sadetails[512];
 
@@ -902,7 +903,22 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		default:
 			bad_case(kind);
 		}
+		/* start liveness checks if set, making sure we only schedule once when moving 
+		 * from I2->I3 or R1->R2 */
+		if ((c->dpd_action == DPD_ACTION_CLEAR || c->dpd_action == DPD_ACTION_RESTART
+		     || c->dpd_action == DPD_ACTION_RESTART_BY_PEER) && IS_V2_ESTABLISHED(st->st_state)
+							             && st->st_state != from_state) {
+
+			DBG_log("dpd_action set, indicating that we want to use liveness checks");
+			st->hidden_variables.st_liveness = TRUE;
+			event_schedule(EVENT_v2_LIVENESS,
+					c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
+					st);
+		}
+
 	}
+
+
 #ifdef TPM
 tpm_ignore:
 	return;

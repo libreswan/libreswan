@@ -87,6 +87,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_CRYPTO_FAILED",
 	"EVENT_PENDING_PHASE2",
 	"EVENT_v2_RETRANSMIT",
+	"EVENT_v2_LIVENESS",
 	"EVENT_PENDING_DDNS"
 };
 
