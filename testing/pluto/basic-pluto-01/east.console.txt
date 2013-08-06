@@ -36,13 +36,6 @@ east #
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
 000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
-000 virtual_private (%priv):
-000 - allowed 0 subnets: 
-000 - disallowed 0 subnets: 
-000 WARNING: Either virtual_private= is not specified, or there is a syntax 
-000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
-000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
-000          private address space in internal use, it should be excluded!
 000  
 000 ESP algorithms supported:
 000  
