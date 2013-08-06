@@ -520,6 +520,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_CONNMTU])
 		msg.connmtu   = conn->options[KBF_CONNMTU];
 
+	/* default to HOLD */
+	msg.dpd_action = DPD_ACTION_HOLD;
 	if (conn->options_set[KBF_DPDDELAY] &&
 	    conn->options_set[KBF_DPDTIMEOUT]) {
 		msg.dpd_delay   = conn->options[KBF_DPDDELAY];
@@ -546,9 +548,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 			starter_log(LOG_LEVEL_ERR,
 				    "conn: \"%s\" warning dpd settings are ignored unless both dpdtimeout= and dpddelay= are set",
 				    conn->name);
-		} else {
-			/* default to HOLD for v2's liveness schedule check */
-			msg.dpd_action = DPD_ACTION_HOLD;
 		}
 	}
 #ifdef NAT_TRAVERSAL
