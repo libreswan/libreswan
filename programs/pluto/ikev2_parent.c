@@ -2772,7 +2772,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				 sizeof(reply_buffer),
 				 "information exchange reply packet");
 
-			DBG(DBG_CONTROLMORE, DBG_log("Received an INFORMATIONAL request, "
+			DBG(DBG_CONTROLMORE|DBG_DPD, DBG_log("Received an INFORMATIONAL request, "
 					             "updating liveness, no longer pending"));
 			st->st_last_liveness = now();
 			st->st_pend_liveness = FALSE;
@@ -3334,7 +3334,7 @@ stf_status ikev2_send_informational(struct state *st)
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (!pst) {
 			DBG(DBG_CONTROL,
-			    DBG_log("IKE SA does not exist for this child SA"));
+			    DBG_log("IKE SA does not exist for this child SA - should not happen"));
 			DBG(DBG_CONTROL,
 			    DBG_log("INFORMATIONAL exchange can not be sent"));
 			return STF_IGNORE;
@@ -3415,7 +3415,7 @@ stf_status ikev2_send_informational(struct state *st)
 		e_pbs_cipher.cur = e_pbs.cur;
 		encstart = e_pbs_cipher.cur;
 
-		/* This is an empty informational exchange. */
+		/* This is an empty informational exchange (A.K.A liveness check) */
 		ikev2_padup_pre_encrypt(&md, &e_pbs_cipher);
 		close_output_pbs(&e_pbs_cipher);
 
@@ -3440,7 +3440,7 @@ stf_status ikev2_send_informational(struct state *st)
 		freeanychunk(pst->st_tpacket);
 		clonetochunk(pst->st_tpacket, request.start, pbs_offset(&request),
 					        "reply packet for informational exchange");
-		pst->st_pend_liveness = TRUE;
+		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 		send_ike_msg(pst, __FUNCTION__);
 		ikev2_update_counters(&md);
 

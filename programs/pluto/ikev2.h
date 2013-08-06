@@ -44,7 +44,12 @@ extern const struct state_v2_microcode *ikev2_parent_firststate(void);
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
-#define MIN_LIVENESS 15 
+/* 
+ * This should go either into pluto_constants.h or ietf_constants.h depending
+ * on whether the IKEv2 RFCs state a minimum. Also, 15 seems very high, people
+ * often want even 1s timeouts. 
+ */
+#define MIN_LIVENESS 15
 
 /* MAGIC: perform f, a function that returns v2_notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.

@@ -910,7 +910,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		     || c->dpd_action == DPD_ACTION_RESTART_BY_PEER) && IS_V2_ESTABLISHED(st->st_state)
 							             && st->st_state != from_state) {
 
-			DBG_log("dpd_action set, indicating that we want to use liveness checks");
+			DBG(DBG_DPD, DBG_log("dpd_action set, scheduling ikev2 liveness checks"));
 			st->hidden_variables.st_liveness = TRUE;
 			event_schedule(EVENT_v2_LIVENESS,
 					c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
