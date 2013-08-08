@@ -550,9 +550,12 @@ umlplutotest    interop-ikev2-racoon-03-psk-initiator		good
 umlplutotest    interop-ikev2-racoon-04-x509-responder		good
 umlplutotest    interop-ikev2-racoon-05-x509-initiator		good
 
+kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
+kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
+
 umlplutotest    interop-ikev2-strongswan-01-noconn		good
-umlplutotest    interop-ikev2-strongswan-02-psk-responder	good
-umlplutotest    interop-ikev2-strongswan-03-psk-initiator	good
+kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
+kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 umlplutotest    interop-ikev2-strongswan-04-x509-responder	good
 umlplutotest    interop-ikev2-strongswan-05-x509-initiator	good
 

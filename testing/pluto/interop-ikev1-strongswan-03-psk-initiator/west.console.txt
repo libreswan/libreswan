@@ -1,0 +1,151 @@
+/testing/guestbin/swan-prep --userland strongswan
+west #
+ # confirm that the network is alive
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # make sure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm with a ping
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ strongswan starter --debug-all
+Starting strongSwan 5.0.0 IPsec [starter]...
+Loading config setup
+Loading conn 'westnet-eastnet-ikev2'
+  left=192.1.2.45
+  leftid=@west
+  right=192.1.2.23
+  rightid=@east
+  rightsubnet=192.0.2.0/24
+  leftsubnet=192.0.1.0/24
+  authby=secret
+  keyexchange=ikev1
+  auto=add
+[ 00.00] NET: Registered protocol family 15
+found netkey IPsec stack
+west #
+ echo "initdone"
+initdone
+west #
+ strongswan up westnet-eastnet-ikev2
+initiating Main Mode IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+generating ID_PROT request 0 [ SA V V V ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+received packet: from 192.1.2.23[500] to 192.1.2.45[500]
+parsed ID_PROT response 0 [ SA V V V ]
+received unknown vendor ID: 4f:45:4e:71:47:53:6f:47:45:5b:52:51
+received DPD vendor ID
+received unknown vendor ID: 40:48:b7:d5:6e:bc:e8:85:25:e7:de:7f:00:d6:c2:d3
+generating ID_PROT request 0 [ KE No ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+received packet: from 192.1.2.23[500] to 192.1.2.45[500]
+parsed ID_PROT response 0 [ KE No ]
+generating ID_PROT request 0 [ ID HASH ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+received packet: from 192.1.2.23[500] to 192.1.2.45[500]
+parsed ID_PROT response 0 [ ID HASH ]
+IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
+scheduling reauthentication in 9756s
+maximum IKE_SA lifetime 10296s
+generating QUICK_MODE request 3570080976 [ HASH SA No KE ID ID ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+received packet: from 192.1.2.23[500] to 192.1.2.45[500]
+parsed QUICK_MODE response 3570080976 [ HASH SA No KE ID ID ]
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ echo done
+done
+west #
+ ipsec look
+west NOW
+XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0x01fd79ef reqid 1 mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xd9ed1638ca0d6293e8739f2d9480be77ac6b736b 96
+	enc cbc(aes) 0xb7f2442a6859f673d704febbabac83ab
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xcba716fb reqid 1 mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0x0f328662ef14301a10dcc84f8b8d103114d847f7 96
+	enc cbc(aes) 0x2eb0ad3fb353223adefde2c5673ceb6a
+XFRM policy:
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir fwd priority 1859 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 1 mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir in priority 1859 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 1 mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir out priority 1859 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 1 mode tunnel
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+169.254.0.0/16 dev eth2  scope link  metric 1004 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -1,0 +1,4 @@
+Basic pluto with IKEv1 using PSK on the responder (east), and Strongswan on
+the initiator (west).
+
+This is the reverse test of interop-ikev1-strongswan-02
