@@ -9,8 +9,8 @@ import pexpect, glob
 try:
 	import argparse
 except ImportError , e:
-        module = str(e)[16:]
-        sys.exit("we requires the python argparse module")
+	module = str(e)[16:]
+	sys.exit("we requires the python argparse module")
 
 ipv = 0
 ipv6 = 0
@@ -48,18 +48,28 @@ else:
 
 # Setup pluto.log softlink
 if hostname != "nic":
-    if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
-        os.unlink("/tmp/pluto.log")
+	if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
+		os.unlink("/tmp/pluto.log")
 
-    outputdir="/testing/pluto/%s/OUTPUT/"%testname
-    if  not os.path.isdir(outputdir):
-            os.mkdir(outputdir)
-            os.chmod(outputdir, 0777)
-    plutologfile="%s/%s.pluto.log"%(outputdir,hostname)
-    os.symlink(plutologfile,"/tmp/pluto.log")
-    f = open(plutologfile,'w')
-    f.close()
-    os.chmod(plutologfile, 0777)
+	outputdir="/testing/pluto/%s/OUTPUT/"%testname
+	if  not os.path.isdir(outputdir):
+		os.mkdir(outputdir)
+		os.chmod(outputdir, 0777)
+
+	if args.userland in ("libreswan", "openswan"):
+		dname = "pluto"
+	elif args.userland == "strongswan":
+		dname = "charon"
+	elif args.userland == "racoon":
+		dname = "racoon"
+	else:
+		dname = "iked"
+
+	daemonlogfile="%s/%s.%s.log"%(outputdir,hostname,dname)
+	os.symlink(daemonlogfile,"/tmp/%s.log"%dname)
+	f = open(daemonlogfile,'w')
+	f.close()
+	os.chmod(daemonlogfile, 0777)
 
 if args.userland:
 	if not args.userland in ( "libreswan","strongswan","racoon","shrew", "openswan"):
@@ -101,9 +111,17 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	if not os.path.isfile(ipsecsecrets):
 		ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
 
-	shutil.copy(ipsecconf, "/etc/ipsec.conf")
-	shutil.copy(ipsecsecrets,"/etc/ipsec.secrets")
-	os.chmod("/etc/ipsec.secrets",0600)
+	if args.userland == "strongswan":
+		dstconf = "/etc/strongswan/ipsec.conf"
+		dstsecrets = "/etc/strongswan/ipsec.secrets"
+		strongswanconf = "/testing/pluto/%s/%sstrongswan.conf"%(testname,hostname)
+		shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
+	else:
+		dstconf = "/etc/ipsec.conf"
+		dstsecrets = "/etc/ipsec.secrets"
+	shutil.copy(ipsecconf, dstconf)
+	shutil.copy(ipsecsecrets,dstsecrets);
+	os.chmod(dstsecrets, 0600)
     
 	if not args.ipv:
 		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
