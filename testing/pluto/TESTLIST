@@ -545,7 +545,7 @@ kvmplutotest	ikev2-no-nhelpers-01			good
 # Interop tests
 #################################################################
 umlplutotest    interop-ikev2-racoon-01-noconn			good
-umlplutotest    interop-ikev2-racoon-02-psk-responder		good
+kvmplutotest    interop-ikev2-racoon-02-psk-responder		good
 umlplutotest    interop-ikev2-racoon-03-psk-initiator		good
 umlplutotest    interop-ikev2-racoon-04-x509-responder		good
 umlplutotest    interop-ikev2-racoon-05-x509-initiator		good
