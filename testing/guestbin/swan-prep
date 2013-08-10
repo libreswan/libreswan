@@ -123,15 +123,6 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	shutil.copy(ipsecsecrets,dstsecrets);
 	os.chmod(dstsecrets, 0600)
     
-	if not args.ipv:
-		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
-		commands.getoutput("net.ipv6.conf.all.disable_ipv6=1")
-
-	if args.ipv6:
-		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
-		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
-		commands.getoutput("/etc/init.d/network restart")
-
 	if args.x509:
 		print "Preparing X.509 NSS files"
 		# clean out old db files and generate new ones from scratch, does not support -w for password
@@ -163,6 +154,15 @@ if userland == "racoon2" or userland == "racoon":
 
 if userland == "shrew":
 	print "shrew not yet tested/integrated"
+
+	if not args.ipv:
+		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
+		commands.getoutput("net.ipv6.conf.all.disable_ipv6=1")
+
+	if args.ipv6:
+		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
+		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
+		commands.getoutput("/etc/init.d/network restart")
 
 # final prep - this kills any running userland
 output = commands.getoutput("ipsec stop")
