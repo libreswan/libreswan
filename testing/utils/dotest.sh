@@ -134,7 +134,8 @@ fi
 initout=`consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.verbose.txt ${INITIATOR}.console.txt`
 respout=`consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.verbose.txt ${RESPONDER}.console.txt`
 echo "WARNING: tcpdump output is not yet compared to known good output!"
-if [  -s OUTPUT/$INITIATOR.console.diff -o -s OUTPUT/$RESPONDER.console.diff ] ; then
+if [  -s OUTPUT/$INITIATOR.console.diff -o -s OUTPUT/$RESPONDER.console.diff -o \
+      ! -s $INITIATOR.console.txt -o ! -s $RESPONDER.console.txt ] ; then
 	echo $TESTNAME FAILED
 	echo "FAILED" > OUTPUT/RESULT
 	echo $initout
