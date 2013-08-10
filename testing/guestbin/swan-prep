@@ -148,9 +148,20 @@ if userland == "strongswan":
 		os.mkdir(dir)
 
 if userland == "racoon2" or userland == "racoon":
-	# setup racoon
-	# note: tests do this manual - needs to be merged in
-	print "racoon setup needs to be pulled from individual tests into swan-prep"
+	# Racoon uses x509 files straight from /testing/x509/*
+	# shutil.copytree("/testing/pluto/%s/%s-racoon/"%(testname,hostname), "/etc/racoon2/")
+	distutils.dir_util.copy_tree("/testing/pluto/%s/%s-racoon"%(testname,hostname), "/etc/racoon2/")
+	os.chmod("/etc/racoon2/psk/test.psk", 0600)
+	os.chmod("/etc/racoon2/spmd.pwd", 0600)
+	if not os.path.isdir("/var/run/racoon2"):
+		os.mkdir("/var/run/racoon2")
+		os.chmod("/var/run/racoon2", 0600)
+	# craete stub ipsec.conf for stackmanager to load netkey
+	ipsecconf = open("/etc/ipsec.conf","w")
+	ipsecconf.write("version 2\n");
+	ipsecconf.write("config setup\n");
+	ipsecconf.write("\tprotostack=netkey\n");
+	ipsecconf.close()
 
 if userland == "shrew":
 	print "shrew not yet tested/integrated"
@@ -170,13 +181,15 @@ output = commands.getoutput("ipsec stop")
 pluto = commands.getoutput("pidof pluto")
 charon = commands.getoutput("pidof charon")
 shrew = commands.getoutput("pidof iked")
-racoon = commands.getoutput("pidof racoon")
+racoon1 = commands.getoutput("pidof racoon2-spmd")
+racoon2 = commands.getoutput("pidof racoon2-iked")
 
-for pid in ( pluto, charon, shrew, racoon ):
+for pid in ( pluto, charon, shrew, racoon1, racoon2 ):
 	if pid:
 		os.kill(int(pid),9)
 
-for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/racoon.pid"):
+# note shrew and racoon2 share a pid file name
+for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/spmd.pid"):
 	if os.path.isfile(pidfile):
 		os.unlink(pidfile)
 
