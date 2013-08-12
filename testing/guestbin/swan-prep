@@ -65,9 +65,12 @@ if hostname != "nic":
 	else:
 		dname = "iked"
 
-	daemonlogfile="%s/%s.%s.log"%(outputdir,hostname,dname)
-	os.symlink(daemonlogfile,"/tmp/%s.log"%dname)
-	f = open(daemonlogfile,'w')
+	daemonlogfile = "%s/%s.%s.log"%(outputdir,hostname,dname)
+	tmplink = "/tmp/%s.log"%dname
+	if os.path.islink(tmplink) or os.path.isfile(tmplink):
+		os.unlink(tmplink)
+	os.symlink(daemonlogfile, tmplink)
+	f = open(daemonlogfile, 'w')
 	f.close()
 	os.chmod(daemonlogfile, 0777)
 
@@ -99,9 +102,15 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname, "/etc/ipsec.d/")
 
 	# fill in any missing dirs
-	for dir in ( "/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
+	if userland == "strongswan":
+		prefix = "strongswan/"
+	else:
+		prefix = ""
+	for dir in ( "/etc/%sipsec.d"%prefix, "/etc/%sipsec.d/policies"%prefix, "/etc/%sipsec.d/cacerts"%prefix, "/etc/%sipsec.d/crls"%prefix , "/etc/%sipsec.d/certs"%prefix, "/etc/%sipsec.d/private"%prefix):
 		if not os.path.isdir(dir):
 			os.mkdir(dir)
+			if "private" in dir:
+				os.chmod(dir,0700)
 
 	# test specific files
 	ipsecconf = "/testing/pluto/%s/%s.conf"%(testname,hostname)
@@ -112,40 +121,42 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 		ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
 
 	if args.userland == "strongswan":
-		dstconf = "/etc/strongswan/ipsec.conf"
-		dstsecrets = "/etc/strongswan/ipsec.secrets"
 		strongswanconf = "/testing/pluto/%s/%sstrongswan.conf"%(testname,hostname)
 		shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
-	else:
-		dstconf = "/etc/ipsec.conf"
-		dstsecrets = "/etc/ipsec.secrets"
+		for dir in ( "/etc/strongswan/ipsec.d/aacerts", "/etc/strongswan/ipsec.d/ocspcerts"):
+			if not os.path.isdir(dir):
+				os.mkdir(dir)
+
+	dstconf = "/etc/%sipsec.conf"%(prefix)
+	dstsecrets = "/etc/%sipsec.secrets"%(prefix)
 	shutil.copy(ipsecconf, dstconf)
 	shutil.copy(ipsecsecrets,dstsecrets);
 	os.chmod(dstsecrets, 0600)
     
-	if args.x509:
-		print "Preparing X.509 NSS files"
-		# clean out old db files and generate new ones from scratch, does not support -w for password
-		oldfiles = glob.glob("/etc/ipsec.d/*db")
-		for oldfile in oldfiles:
-			os.unlink(oldfile)
-		cmd = "certutil -N -d /etc/ipsec.d"
-		timer = 10
-		child = pexpect.spawn(cmd)
-		child.sendline ('')
-		child.sendline ('')
+	if args.x509: 
+		if (userland == "libreswan" or userland == "openswan"):
+			print "Preparing X.509 files"
+			# clean out old db files and generate new ones from scratch, does not support -w for password
+			oldfiles = glob.glob("/etc/ipsec.d/*db")
+			for oldfile in oldfiles:
+				os.unlink(oldfile)
+			cmd = "certutil -N -d /etc/ipsec.d"
+			timer = 10
+			child = pexpect.spawn(cmd)
+			child.sendline ('')
+			child.sendline ('')
 
-		commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
-		# install all other public certs
-		# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
-		for certname in ( "west", "east", "road", "north"):
-			if certname is not hostname:
-				commands.getoutput("certutil -A -n %s -t 'P,u' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt"%(certname,certname))
-
-if userland == "strongswan":
-	#  strongswan specific
-	for dir in ( "/etc/ipsec.d/aacerts", "/etc/ipsec.d/ocspcerts"):
-		os.mkdir(dir)
+			commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
+			# install all other public certs
+			# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
+			for certname in ( "west", "east", "road", "north","hashsha2"):
+				if certname is not hostname:
+					commands.getoutput("certutil -A -n %s -t 'P,u' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt"%(certname,certname))
+		elif userland == "strongswan":
+			shutil.copy("/testing/x509/cacerts/mainca.crt","/etc/strongswan/ipsec.d/cacerts/")
+			shutil.copy("/testing/x509/keys/%s.key"%hostname,"/etc/strongswan/ipsec.d/private/")
+			for certname in ( "west", "east", "road", "north","hashsha2"):
+				shutil.copy("/testing/x509/certs/%s.crt"%hostname,"/etc/strongswan/ipsec.d/certs/")
 
 if userland == "racoon2" or userland == "racoon":
 	# Racoon uses x509 files straight from /testing/x509/*
