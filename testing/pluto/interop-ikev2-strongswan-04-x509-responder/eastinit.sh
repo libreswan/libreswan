@@ -1,8 +1,3 @@
-: ==== start ====
-TESTNAME=interop-ikev2-strongswan-04-x509-responder
-EAST_USERLAND=strongswan
-source /testing/pluto/bin/eastlocal.sh
-
-/usr/local/strongswan/sbin/ipsec start
-sleep 3
+/testing/guestbin/swan-prep --userland strongswan --x509
+strongswan starter --debug-all
 echo "initdone"
