@@ -9,5 +9,5 @@ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec _stackmanager start
 /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ikev2
+ipsec auto --add westnet-eastnet-ikev1
 echo "initdone"

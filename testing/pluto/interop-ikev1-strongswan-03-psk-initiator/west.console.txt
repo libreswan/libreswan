@@ -32,7 +32,7 @@ west #
  strongswan starter --debug-all
 Starting strongSwan 5.0.0 IPsec [starter]...
 Loading config setup
-Loading conn 'westnet-eastnet-ikev2'
+Loading conn 'westnet-eastnet-ikev1'
   left=192.1.2.45
   leftid=@west
   right=192.1.2.23
@@ -48,8 +48,8 @@ west #
  echo "initdone"
 initdone
 west #
- strongswan up westnet-eastnet-ikev2
-initiating Main Mode IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+ strongswan up westnet-eastnet-ikev1
+initiating Main Mode IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
 generating ID_PROT request 0 [ SA V V V ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
 received packet: from 192.1.2.23[500] to 192.1.2.45[500]
@@ -65,7 +65,7 @@ generating ID_PROT request 0 [ ID HASH ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
 received packet: from 192.1.2.23[500] to 192.1.2.45[500]
 parsed ID_PROT response 0 [ ID HASH ]
-IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
+IKE_SA westnet-eastnet-ikev1[1] established between 192.1.2.45[west]...192.1.2.23[east]
 scheduling reauthentication in 9756s
 maximum IKE_SA lifetime 10296s
 generating QUICK_MODE request 3570080976 [ HASH SA No KE ID ID ]

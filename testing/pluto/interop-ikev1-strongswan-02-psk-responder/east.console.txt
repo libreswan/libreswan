@@ -3,7 +3,7 @@ east #
  strongswan starter --debug-all
 Starting strongSwan 5.0.0 IPsec [starter]...
 Loading config setup
-Loading conn 'westnet-eastnet-ikev2'
+Loading conn 'westnet-eastnet-ikev1'
   left=192.1.2.45
   leftid=@west
   right=192.1.2.23
