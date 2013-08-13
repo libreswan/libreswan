@@ -516,12 +516,17 @@ kvmlplutotest	ikev2-algo-02-modp2048-responder	good
 kvmplutotest	ikev2-algo-03-aes-ccm			good
 kvmplutotest	ikev2-algo-04-aes-gcm			good
 
-# various SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
+# various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good
 kvmplutotest	ikev2-algo-sha2-02			good
 kvmplutotest	ikev2-algo-sha2-03			good
 kvmplutotest	ikev2-algo-sha2-04			good
 kvmplutotest	ikev2-algo-sha2-05			bad
+
+# various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
+kvmplutotest	ikev2-algo-ike-sha2-01			good
+kvmplutotest	ikev2-algo-ike-sha2-02			good
+kvmplutotest	ikev2-algo-ike-sha2-03			good
 
 # Various corner case tests for IKEv2
 umlplutotest	ikev2-major-version-initiator		good
