@@ -527,6 +527,8 @@ kvmplutotest	ikev2-algo-sha2-05			bad
 kvmplutotest	ikev2-algo-ike-sha2-01			good
 kvmplutotest	ikev2-algo-ike-sha2-02			good
 kvmplutotest	ikev2-algo-ike-sha2-03			good
+kvmplutotest	ikev1-algo-ike-sha2-01			good
+kvmplutotest	ikev1-algo-ike-sha2-02			good
 
 # Various corner case tests for IKEv2
 umlplutotest	ikev2-major-version-initiator		good
