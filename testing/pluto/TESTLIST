@@ -22,7 +22,6 @@ kvmplutotest	basic-pluto-02	bad
 kvmplutotest	basic-pluto-03	good
 
 kvmplutotest	pluto-ipcmp-01	good
-umlplutotest	bad-updown-01	good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
