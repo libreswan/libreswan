@@ -321,7 +321,7 @@ static void key_add_request(const struct whack_message *msg)
 /*
  * handle a whack message.
  */
-void whack_process(int whackfd, struct whack_message msg)
+void whack_process(int whackfd, const struct whack_message msg)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
 

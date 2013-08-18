@@ -488,8 +488,8 @@ extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st);
 extern void fmt_state(struct state *st, const time_t n,
 		      char *state_buf, const size_t state_buf_len,
 		      char *state_buf2, const size_t state_buf_len2);
-extern void delete_states_by_peer(ip_address *peer);
-extern void replace_states_by_peer(ip_address *peer);
+extern void delete_states_by_peer(const ip_address *peer);
+extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
 
 extern void set_state_ike_endpoints(struct state *st,
