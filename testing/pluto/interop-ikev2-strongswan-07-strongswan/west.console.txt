@@ -1,0 +1,46 @@
+/testing/guestbin/swan-prep --userland strongswan
+west #
+ strongswan starter --debug-all
+Starting strongSwan 5.0.0 IPsec [starter]...
+Loading config setup
+Loading conn 'westnet-eastnet-ikev2'
+  left=192.1.2.45
+  leftid=@west
+  right=192.1.2.23
+  rightid=@east
+  rightsubnet=192.0.2.0/24
+  leftsubnet=192.0.1.0/24
+  authby=secret
+  keyexchange=ikev2
+  auto=add
+[ 00.00] NET: Registered protocol family 15
+found netkey IPsec stack
+west #
+ echo "initdone"
+initdone
+west #
+ strongswan up westnet-eastnet-ikev2
+initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+received packet: from 192.1.2.23[500] to 192.1.2.45[500]
+parsed IKE_SA_INIT response 0 [ SA KE No V ]
+received unknown vendor ID: 4f:45:4e:71:47:53:6f:47:45:5b:52:51
+authentication of 'west' (myself) with pre-shared key
+establishing CHILD_SA westnet-eastnet-ikev2
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+
+BROKEN HERE
+
+retransmit 1 of request with message ID 1
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+retransmit 2 of request with message ID 1
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+retransmit 3 of request with message ID 1
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+retransmit 4 of request with message ID 1
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+retransmit 5 of request with message ID 1
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+

@@ -94,13 +94,6 @@ RMFLAGS = -f
 DISTMISC = CHANGES PLUTO-CONVENTIONS TODO ipsec.secrets Makefile routing.txt \
 	 pluto.8 ipsec.secrets.5 .cvsignore
 
-DISTGCRYPT = \
-	gcryptfix.c gcryptfix.h \
-	dsa.c dsa.h \
-	elgamal.c elgamal.h \
-	primegen.c \
-	smallprime.c
-
 DISTSRC = \
         connections.c initiate.c terminate.c connections.h \
 	pending.c pending.h \
@@ -137,7 +130,6 @@ DISTSRC = \
 	stubs.c \
 	${SYSDEP_SRC} \
 	timer.c timer.h \
-	$(DISTGCRYPT) \
 	$(X509_DIST_SRCS) \
 	$(THREADS_DIST_SRCS) \
 	vendor.c nat_traversal.c virtual.c \
@@ -148,11 +140,6 @@ DISTSRC = \
 	${LABELED_IPSEC_DIST_SRCS}
 
 DIST = $(DISTMISC) $(DISTSRC)
-
-
-# start of support for DSS/DSA.  Not currently used.
-# OBJSGCRYPT =  gcryptfix.o dsa.o elgamal.o primegen.o smallprime.o
-OBJSGCRYPT =
 
 OBJSPLUTO  = connections.o initiate.o terminate.o
 OBJSPLUTO += pending.o cookie.o crypto.o defs.o dpd.o

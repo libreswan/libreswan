@@ -9,15 +9,19 @@ import pexpect, glob
 try:
 	import argparse
 except ImportError , e:
-        module = str(e)[16:]
-        sys.exit("we requires the python argparse module")
+	module = str(e)[16:]
+	sys.exit("we requires the python argparse module")
 
+ipv = 0
+ipv6 = 0
 parser = argparse.ArgumentParser(description='swan-prep arguments')
 parser.add_argument('--testname', '-t', action='store', default='', help='The name of the test to prepapre')
 parser.add_argument('--hostname', '-H', action='store', default='', help='The name of the host to prepare as')
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
 parser.add_argument('--x509', '-x', action='store_true',  help='create X509 NSS file by importing test certs')
+parser.add_argument('--46', '--64', action='store_true', help='Do not disable IPv6. Default is disable IPv6 ', dest = 'ipv', default = False)
+parser.add_argument('--6', action='store_true', help='Enable IPv6 and run - /etc/init.d/network restart', dest = 'ipv6', default = False)
 args = parser.parse_args()
 
 if args.hostname:
@@ -44,18 +48,31 @@ else:
 
 # Setup pluto.log softlink
 if hostname != "nic":
-    if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
-        os.unlink("/tmp/pluto.log")
+	if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
+		os.unlink("/tmp/pluto.log")
 
-    outputdir="/testing/pluto/%s/OUTPUT/"%testname
-    if  not os.path.isdir(outputdir):
-            os.mkdir(outputdir)
-            os.chmod(outputdir, 0777)
-    plutologfile="%s/%s.pluto.log"%(outputdir,hostname)
-    os.symlink(plutologfile,"/tmp/pluto.log")
-    f = open(plutologfile,'w')
-    f.close()
-    os.chmod(plutologfile, 0777)
+	outputdir="/testing/pluto/%s/OUTPUT/"%testname
+	if  not os.path.isdir(outputdir):
+		os.mkdir(outputdir)
+		os.chmod(outputdir, 0777)
+
+	if args.userland in ("libreswan", "openswan"):
+		dname = "pluto"
+	elif args.userland == "strongswan":
+		dname = "charon"
+	elif args.userland == "racoon":
+		dname = "racoon"
+	else:
+		dname = "iked"
+
+	daemonlogfile = "%s/%s.%s.log"%(outputdir,hostname,dname)
+	tmplink = "/tmp/%s.log"%dname
+	if os.path.islink(tmplink) or os.path.isfile(tmplink):
+		os.unlink(tmplink)
+	os.symlink(daemonlogfile, tmplink)
+	f = open(daemonlogfile, 'w')
+	f.close()
+	os.chmod(daemonlogfile, 0777)
 
 if args.userland:
 	if not args.userland in ( "libreswan","strongswan","racoon","shrew", "openswan"):
@@ -85,9 +102,15 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname, "/etc/ipsec.d/")
 
 	# fill in any missing dirs
-	for dir in ( "/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
+	if userland == "strongswan":
+		prefix = "strongswan/"
+	else:
+		prefix = ""
+	for dir in ( "/etc/%sipsec.d"%prefix, "/etc/%sipsec.d/policies"%prefix, "/etc/%sipsec.d/cacerts"%prefix, "/etc/%sipsec.d/crls"%prefix , "/etc/%sipsec.d/certs"%prefix, "/etc/%sipsec.d/private"%prefix):
 		if not os.path.isdir(dir):
 			os.mkdir(dir)
+			if "private" in dir:
+				os.chmod(dir,0700)
 
 	# test specific files
 	ipsecconf = "/testing/pluto/%s/%s.conf"%(testname,hostname)
@@ -97,41 +120,71 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	if not os.path.isfile(ipsecsecrets):
 		ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
 
-	shutil.copy(ipsecconf, "/etc/ipsec.conf")
-	shutil.copy(ipsecsecrets,"/etc/ipsec.secrets")
-	os.chmod("/etc/ipsec.secrets",0600)
+	if args.userland == "strongswan":
+		strongswanconf = "/testing/pluto/%s/%sstrongswan.conf"%(testname,hostname)
+		shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
+		for dir in ( "/etc/strongswan/ipsec.d/aacerts", "/etc/strongswan/ipsec.d/ocspcerts"):
+			if not os.path.isdir(dir):
+				os.mkdir(dir)
 
-	if args.x509:
-		print "Preparing X.509 NSS files"
-		# clean out old db files and generate new ones from scratch, does not support -w for password
-		oldfiles = glob.glob("/etc/ipsec.d/*db")
-		for oldfile in oldfiles:
-			os.unlink(oldfile)
-		cmd = "certutil -N -d /etc/ipsec.d"
-		timer = 10
-		child = pexpect.spawn(cmd)
-		child.sendline ('')
-		child.sendline ('')
+	dstconf = "/etc/%sipsec.conf"%(prefix)
+	dstsecrets = "/etc/%sipsec.secrets"%(prefix)
+	shutil.copy(ipsecconf, dstconf)
+	shutil.copy(ipsecsecrets,dstsecrets);
+	os.chmod(dstsecrets, 0600)
+    
+	if args.x509: 
+		if (userland == "libreswan" or userland == "openswan"):
+			print "Preparing X.509 files"
+			# clean out old db files and generate new ones from scratch, does not support -w for password
+			oldfiles = glob.glob("/etc/ipsec.d/*db")
+			for oldfile in oldfiles:
+				os.unlink(oldfile)
+			cmd = "certutil -N -d /etc/ipsec.d"
+			timer = 10
+			child = pexpect.spawn(cmd)
+			child.sendline ('')
+			child.sendline ('')
 
-		commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
-		# install all other public certs
-		for certname in ( "west", "east", "road" ):
-			if certname is not hostname:
-				commands.getoutput("certutil -A -n %s -t 'P,u' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt"%(certname,certname))
-			
-
-if userland == "strongswan":
-	#  strongswan specific
-	for dir in ( "/etc/ipsec.d/aacerts", "/etc/ipsec.d/ocspcerts"):
-		os.mkdir(dir)
+			commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
+			# install all other public certs
+			# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
+			for certname in ( "west", "east", "road", "north","hashsha2"):
+				if certname is not hostname:
+					commands.getoutput("certutil -A -n %s -t 'P,u' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt"%(certname,certname))
+		elif userland == "strongswan":
+			shutil.copy("/testing/x509/cacerts/mainca.crt","/etc/strongswan/ipsec.d/cacerts/")
+			shutil.copy("/testing/x509/keys/%s.key"%hostname,"/etc/strongswan/ipsec.d/private/")
+			for certname in ( "west", "east", "road", "north","hashsha2"):
+				shutil.copy("/testing/x509/certs/%s.crt"%hostname,"/etc/strongswan/ipsec.d/certs/")
 
 if userland == "racoon2" or userland == "racoon":
-	# setup racoon
-	# note: tests do this manual - needs to be merged in
-	print "racoon setup needs to be pulled from individual tests into swan-prep"
+	# Racoon uses x509 files straight from /testing/x509/*
+	# shutil.copytree("/testing/pluto/%s/%s-racoon/"%(testname,hostname), "/etc/racoon2/")
+	distutils.dir_util.copy_tree("/testing/pluto/%s/%s-racoon"%(testname,hostname), "/etc/racoon2/")
+	os.chmod("/etc/racoon2/psk/test.psk", 0600)
+	os.chmod("/etc/racoon2/spmd.pwd", 0600)
+	if not os.path.isdir("/var/run/racoon2"):
+		os.mkdir("/var/run/racoon2")
+		os.chmod("/var/run/racoon2", 0600)
+	# craete stub ipsec.conf for stackmanager to load netkey
+	ipsecconf = open("/etc/ipsec.conf","w")
+	ipsecconf.write("version 2\n");
+	ipsecconf.write("config setup\n");
+	ipsecconf.write("\tprotostack=netkey\n");
+	ipsecconf.close()
 
 if userland == "shrew":
 	print "shrew not yet tested/integrated"
+
+	if not args.ipv:
+		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
+		commands.getoutput("net.ipv6.conf.all.disable_ipv6=1")
+
+	if args.ipv6:
+		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
+		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
+		commands.getoutput("/etc/init.d/network restart")
 
 # final prep - this kills any running userland
 output = commands.getoutput("ipsec stop")
@@ -139,14 +192,15 @@ output = commands.getoutput("ipsec stop")
 pluto = commands.getoutput("pidof pluto")
 charon = commands.getoutput("pidof charon")
 shrew = commands.getoutput("pidof iked")
-racoon = commands.getoutput("pidof racoon")
+racoon1 = commands.getoutput("pidof racoon2-spmd")
+racoon2 = commands.getoutput("pidof racoon2-iked")
 
-for daemon in ( pluto, charon, shrew, racoon ):
-	pids = commands.getoutput("pidof %s"%daemon)
-	if pids:
-		for pid in pids.split():
-			os.kill(int(pid),9)
-for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/racoon.pid"):
+for pid in ( pluto, charon, shrew, racoon1, racoon2 ):
+	if pid:
+		os.kill(int(pid),9)
+
+# note shrew and racoon2 share a pid file name
+for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/spmd.pid"):
 	if os.path.isfile(pidfile):
 		os.unlink(pidfile)
 

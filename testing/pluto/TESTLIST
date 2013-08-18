@@ -14,15 +14,15 @@
 # expectation:
 #  good - output matches known output
 #  bad  - output should NOT match [only for unit tests, not pluto test]
-#  incomplete - 
+#  wip  - this test still need work. 
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01	good
-umlplutotest	basic-pluto-02	good
+kvmplutotest	basic-pluto-02	bad
 kvmplutotest	basic-pluto-03	good
 
 # fails due to refineconnection bug.
-umlplutotest	basic-pluto-06	bad
+# PAUL: old note
 umlplutotest	pluto-ipcmp-01	good
 umlplutotest	bad-updown-01	good
 
@@ -265,7 +265,7 @@ umlXhost	nat-aggr-01		good
 #
 # a test of using AES with pluto
 #
-umlplutotest	basic-pluto-04		good
+kvmplutotest	basic-pluto-04		good
 
 # 
 # a test of sending and validating an X.509 cert
@@ -294,9 +294,8 @@ kvmplutotest	psk-pluto-01		good
 # a test case of PSK with aggressive mode, with missing PSKs
 umlXhost	psk-pluto-02		bad
 
-#
-# a test case of xauth/psk/aggressive/algo 
-umlXhost	xauth-pluto-04		good
+kvmplutotest	xauth-pluto-04		good
+skip		xauth-pluto-17		wip
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg
@@ -324,7 +323,7 @@ kvmplutotest	xauth-pluto-16		good
 #
 # a test of using AES with pluto, with pfs=yes
 #
-umlplutotest	basic-pluto-05		good
+kvmplutotest	basic-pluto-05		wip
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
@@ -407,7 +406,7 @@ umlXhost	psk-pluto-04		good
 #
 # a test of using AES with pluto, twofish for phase2
 #
-umlplutotest	basic-pluto-07		good
+skip	basic-pluto-07		wip
 
 #
 # a test of using twofish with pluto, twofish for phase2
@@ -489,20 +488,22 @@ kvmplutotest	ipv6-tunnel-mode-01-klips-klips		incomplete
 kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	incomplete
 kvmplutotest	ipv6-tunnel-mode-03-klips-netkey	incomplete
 kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	incomplete
+kvmplutotest	ipv6-tunnel-mode-03-rw			good
+kvmplutotest	ipv6-tunnel-mode-04-rw			good
+
 
 #################################################################
 # IKEv2 tests
 #################################################################
 kvmplutotest	ikev2-01-fallback-ikev1			good
-umlplutotest	ikev2-02-responder-send-notify		good
-kvmlplutotest	ikev2-03-basic-rawrsa			good
+kvmplutotest	ikev2-02-responder-send-notify		good
+kvmplutotest	ikev2-03-basic-rawrsa			good
 kvmplutotest	ikev2-04-basic-x509			good
 kvmplutotest	ikev2-05-basic-psk			good
 umlplutotest	ikev2-06-6msg				good
 umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-09-rw-rsa				good
-umlplutotest	ikev2-10-basic-rawrsa-nss		good
 kvmplutotest	ikev2-11-simple-psk			good
 kvmplutotest	ikev2-12-no-nhelpers			good
 
@@ -510,10 +511,17 @@ umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
 
 # modp tests for checking if we deal with sending different KE's
-umlplutotest	ikev2-algo-01-modp2048-initiator	good
-umlplutotest	ikev2-algo-02-modp2048-responder	good
-umlplutotest	ikev2-algo-03-aes-ccm			good
-umlplutotest	ikev2-algo-04-aes-gcm			good
+kvmplutotest	ikev2-algo-01-modp2048-initiator	good
+kvmlplutotest	ikev2-algo-02-modp2048-responder	good
+kvmplutotest	ikev2-algo-03-aes-ccm			good
+kvmplutotest	ikev2-algo-04-aes-gcm			good
+
+# various SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
+kvmplutotest	ikev2-algo-sha2-01			good
+kvmplutotest	ikev2-algo-sha2-02			good
+kvmplutotest	ikev2-algo-sha2-03			good
+kvmplutotest	ikev2-algo-sha2-04			good
+kvmplutotest	ikev2-algo-sha2-05			bad
 
 # Various corner case tests for IKEv2
 umlplutotest	ikev2-major-version-initiator		good
@@ -537,16 +545,21 @@ kvmplutotest	ikev2-no-nhelpers-01			good
 # Interop tests
 #################################################################
 umlplutotest    interop-ikev2-racoon-01-noconn			good
-umlplutotest    interop-ikev2-racoon-02-psk-responder		good
+kvmplutotest    interop-ikev2-racoon-02-psk-responder		good
 umlplutotest    interop-ikev2-racoon-03-psk-initiator		good
 umlplutotest    interop-ikev2-racoon-04-x509-responder		good
 umlplutotest    interop-ikev2-racoon-05-x509-initiator		good
 
+kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
+kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
+
 umlplutotest    interop-ikev2-strongswan-01-noconn		good
-umlplutotest    interop-ikev2-strongswan-02-psk-responder	good
-umlplutotest    interop-ikev2-strongswan-03-psk-initiator	good
+kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
+kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 umlplutotest    interop-ikev2-strongswan-04-x509-responder	good
 umlplutotest    interop-ikev2-strongswan-05-x509-initiator	good
+
+kvmplutotest	nterop-ikev2-strongswan-07-strongswan		good
 
 skip		interop-racoon-iphone4s-nonat		incomplete
 skip		interop-racoon-iphone5-nonat		incomplete

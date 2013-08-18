@@ -26,3 +26,4 @@ ExecReload=@FINALSBINDIR@/ipsec whack --listen
 [Install]
 WantedBy=multi-user.target
 Alias=libreswan.service
+Alias=pluto.service

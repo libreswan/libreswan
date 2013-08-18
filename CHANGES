@@ -1,6 +1,16 @@
 
 See also https://libreswan.org/
 
+v3.6 (unreleased)
+* pluto: work around for Cisco VPN clients sending extraneous bytes [Paul/Hugh]
+* sysvinit: status function used incorrect variable for pid file [Tuomo]
+* _stackmanager: coding style cleanup - fixes bashism [Tuomo]
+* pluto: remove dsa/elgamal stubs from gnupg that were unused [Paul]
+* testing: Various interop test case updates [Paul]
+* Bugtracker bugs fixed:
+  #130: debian debuild creates a deb with /usr/libexec contents
+        [Marc-Cristian Petersen]
+
 v3.5 (July 13, 2013)
 * NETKEY: _stackmanager: Clear disable_xfm/disable_policy /proc files
           for labeled IPsec [Paul]

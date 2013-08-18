@@ -34,8 +34,8 @@ OSMEDIA=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
 # Everything below should probably be left unchanged
 
 # note that "nic" and "sec" are the same host in different configurations
-REGULARHOSTS='sunrise sunset nic carrot beet sec pole'
-LIBRESWANHOSTS='east west japan road north'
+REGULARHOSTS='nic'
+LIBRESWANHOSTS='east west road north'
 
 # tell system location of special tcpdump, if any
 export TCPDUMP="/usr/sbin/tcpdump"
