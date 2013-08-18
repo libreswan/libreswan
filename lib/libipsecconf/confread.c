@@ -974,8 +974,7 @@ void move_comment_list(struct starter_comments_list *to,
 }
 
 static
-int load_conn_basic(struct ub_ctx *dnsctx,
-		    struct starter_conn *conn,
+int load_conn_basic(struct starter_conn *conn,
 		    struct section_list *sl,
 		    enum keyword_set assigned_value,
 		    err_t *perr)
@@ -989,7 +988,6 @@ int load_conn_basic(struct ub_ctx *dnsctx,
 }
 
 static int load_conn(struct ub_ctx *dnsctx,
-		     struct starter_config *cfg,
 		     struct starter_conn *conn,
 		     struct config_parsed *cfgp,
 		     struct section_list *sl,
@@ -1008,7 +1006,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 
 	err = 0;
 
-	err += load_conn_basic(dnsctx, conn, sl,
+	err += load_conn_basic(conn, sl,
 			       defaultconn ? k_default : k_set, perr);
 
 	move_comment_list(&conn->comments, &sl->comments);
@@ -1350,7 +1348,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 	return err;
 }
 
-void conn_default(char *n, struct starter_conn *conn,
+void conn_default(struct starter_conn *conn,
 		  struct starter_conn *def)
 {
 	int i;
@@ -1416,7 +1414,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name,
 	}
 
 	memset(conn, 0, sizeof(struct starter_conn));
-	conn_default(name, conn, &cfg->conn_default);
+	conn_default(conn, &cfg->conn_default);
 	conn->name = xstrdup(name);
 	conn->desired_state = STARTUP_IGNORE;
 	conn->state = STATE_FAILED;
@@ -1432,7 +1430,6 @@ int init_load_conn(struct ub_ctx *dnsctx,
 		   struct starter_config *cfg,
 		   struct config_parsed *cfgp,
 		   struct section_list *sconn,
-		   bool alsoprocessing,
 		   bool defaultconn,
 		   bool resolvip,
 		   err_t *perr)
@@ -1446,7 +1443,7 @@ int init_load_conn(struct ub_ctx *dnsctx,
 	if (conn == NULL)
 		return -1;
 
-	connerr = load_conn(dnsctx, cfg, conn, cfgp, sconn, TRUE,
+	connerr = load_conn(dnsctx, conn, cfgp, sconn, TRUE,
 			    defaultconn, resolvip, perr);
 
 	if (connerr != 0) {
@@ -1526,7 +1523,7 @@ struct starter_config *confread_load(const char *file,
 			if (strcmp(sconn->name, "%default") == 0) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
-				err += load_conn(dnsctx, cfg,
+				err += load_conn(dnsctx,
 						 &cfg->conn_default,
 						 cfgp, sconn, FALSE,
 				                 /*default conn*/ TRUE,
@@ -1536,7 +1533,7 @@ struct starter_config *confread_load(const char *file,
 			if (strcmp(sconn->name, "%oedefault") == 0) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading oedefault conn");
-				err += load_conn(dnsctx, cfg,
+				err += load_conn(dnsctx,
 						 &cfg->conn_oedefault,
 						 cfgp, sconn, FALSE,
 				                 /*default conn*/ TRUE,
@@ -1557,7 +1554,7 @@ struct starter_config *confread_load(const char *file,
 				continue;
 
 			connerr = init_load_conn(dnsctx, cfg, cfgp, sconn,
-						 TRUE, FALSE,
+						 FALSE,
 						 resolvip, perr);
 
 			if (connerr == -1) {
