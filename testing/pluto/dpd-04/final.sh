@@ -1,4 +1,4 @@
-ipsec setup stop
+ipsec look
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

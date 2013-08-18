@@ -95,14 +95,15 @@ ctltest	pluto-dontreky-expiry-01 good
 # umlplutotest	food-groups-orderly-transition-01	good
 
 # RFC 3706 DPD test
-umlplutotest	dpd-01	good
-umlplutotest	dpd-02	good
-umlplutotest	dpd-03	good
-umlplutotest	dpd-04	good
-umlplutotest	dpd-05	good
-umlplutotest	dpd-06	good
-umlplutotest	dpd-07	good
-umlplutotest	dpd-08	good
+kvmplutotest	dpd-01	good
+kvmplutotest	dpd-02	good
+kvmplutotest	dpd-02-reverse	good
+kvmplutotest	dpd-03	good
+kvmplutotest	dpd-04	good
+kvmplutotest	dpd-05	good
+kvmplutotest	dpd-06	good
+kvmplutotest	dpd-07	good
+kvmplutotest	dpd-08	good
 
 # Delete SA test.
 umlplutotest	delete-sa-01	good
