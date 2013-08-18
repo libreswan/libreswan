@@ -106,7 +106,7 @@ kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	good
 
 # Delete SA test.
-umlplutotest	delete-sa-01	good
+kvmplutotest	delete-sa-01	good
 
 #
 # oe-snat-01 - do Source address NAT and then OE

@@ -1,25 +1,6 @@
-This test will succeed if notify_delete-2.00.diff is applied to pluto. This
-patch worked without failed HUNKs as of 2003 February 6th.
+This tests the IKEv1 Notify/Delete message. If east receives the notification,
+it will delete the IPsec SA and traffic will flow cleartext. If not, it will
+block the cleartext and this test will fail.
 
-From the Design list:
-
-Expect the test to fail when formally running it; I haven't figured out how to
-suppress the variable elements from the ping test I employ (the summary line,
-which will almost always vary).
-
-The test uses whack commands to set up a roadwarrior config on east and a
-VPN config with an absurdly low keylife (20 seconds) and no rekeying on west.
-Once the IPSec SA expires, west shuts down IPSec.    
-
-Using Mathieu's Notify-Delete SA patch - thanks to Ken for porting it to 2.00
-- this prompts a Delete SA request for the ISAKMP SA, killing the conn
-instance, unrouting the conn, and allowing a clear traffic ping to succeed.
-
-Without Delete SA code, the ping fails, as the peer still has a %trap eroute
-in place.
-
-Why the requirement for the low IPSec SA lifetime? It appears that on "ipsec
-auto --delete connname", a Delete SA request for the ISAKMP SA gets issued...
-but never for the IPSec SA. As a result, the Delete SA is received, but the  
-Roadwarrior conn stays up.
-
+There is no real reason this test still uses "whack" directly - it was left as an
+example and test for direct whack usage.
