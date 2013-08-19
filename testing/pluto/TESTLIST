@@ -220,7 +220,7 @@ umlplutotest	nss-leftrsasigkey2-01	good
 
 #
 # Test of XAUTH client to XAUTH server
-umlXhost	xauth-pluto-03		good
+kvmplutotest	xauth-pluto-03		good
 
 #
 # Test of NAT traversal
