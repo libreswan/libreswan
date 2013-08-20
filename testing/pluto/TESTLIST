@@ -327,7 +327,7 @@ kvmplutotest	basic-pluto-05		wip
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
 # in client pull mode rather than server push.
 #
-umlplutotest	xauth-pluto-07		good
+kvmplutotest	xauth-pluto-07		good
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
