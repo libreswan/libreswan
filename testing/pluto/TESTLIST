@@ -333,7 +333,7 @@ kvmplutotest	xauth-pluto-07		good
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
 # in client pull mode, *WITH* DPD enabled.
 #
-umlXhost	xauth-pluto-08		good
+kvmplutotest	xauth-pluto-08		good
 
 #
 # Aggressive Mode Pluto Tests
