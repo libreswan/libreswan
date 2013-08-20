@@ -297,7 +297,7 @@ skip		xauth-pluto-17		wip
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg
-umlXhost	xauth-pluto-05		good
+kvmplutotest	xauth-pluto-05		good
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
