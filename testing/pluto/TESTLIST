@@ -301,7 +301,7 @@ kvmplutotest	xauth-pluto-05		good
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
-umlXhost	xauth-pluto-06		good
+kvmplutotest	xauth-pluto-06		good
 
 #
 # a test case of xauth using xauthname= in ipsec.conf 
