@@ -564,8 +564,8 @@ kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
 kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 umlplutotest    interop-ikev2-strongswan-04-x509-responder	good
 umlplutotest    interop-ikev2-strongswan-05-x509-initiator	good
-
-kvmplutotest	nterop-ikev2-strongswan-07-strongswan		good
+kvmplutotest	interop-ikev2-strongswan-05-psk-md5		good
+kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
 
 skip		interop-racoon-iphone4s-nonat		incomplete
 skip		interop-racoon-iphone5-nonat		incomplete
