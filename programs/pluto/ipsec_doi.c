@@ -630,7 +630,8 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
 	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer)) {
+		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
+		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
@@ -641,15 +642,25 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			       "we require peer to have ID '%s', but peer declares '%s'",
 			       expect, found);
 			return FALSE;
+		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
+			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+				loglog(RC_LOG_SERIOUS,
+				       "peer ID is not a certificate type");
+				return FALSE;
+			}
+			if (!duplicate_id(&st->st_connection->spd.that.id, &peer)) {
+				loglog(RC_LOG_SERIOUS, "failed to copy ID");
+				return FALSE;
+			}
 		}
 	} else {
 		struct connection *c = st->st_connection;
 		struct connection *r;
-
+		bool fc = 0;
 		/* check for certificate requests */
 		decode_cr(md, &c->requested_ca);
 
-		r = refine_host_connection(st, &peer, initiator, aggrmode);
+		r = refine_host_connection(st, &peer, initiator, aggrmode, &fc);
 
 		/* delete the collected certificate requests */
 		free_generalNames(c->requested_ca, TRUE);
@@ -698,6 +709,12 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			c->spd.that.id = peer;
 			c->spd.that.has_id_wildcards = FALSE;
 			unshare_id_content(&c->spd.that.id);
+		} else if (fc) {
+			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
+			if (!duplicate_id(&r->spd.that.id, &peer)) {
+				loglog(RC_LOG_SERIOUS, "failed to copy ID");
+				return FALSE;
+			}
 		}
 	}
 

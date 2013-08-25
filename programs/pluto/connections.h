@@ -375,7 +375,7 @@ extern struct connection
 		       const ip_address *him, u_int16_t his_port,
 		       lset_t policy),
 *refine_host_connection(const struct state *st, const struct id *id,
-			bool initiator, bool aggrmode),
+			bool initiator, bool aggrmode, bool *fromcert),
 *find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,
