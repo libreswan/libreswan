@@ -734,14 +734,13 @@ int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char* null_dn)
 }
 
 /*
- * function for use in atodn() that removes a single comma
- * when encountering ",," in the leftid/rightid string. It
- * will do this only once for the first ",," found.
+ * function for use in atodn() that escapes a character in 
+ * in the leftid/rightid string. Needed for '//' and ',,'
+ * escapes for OID fields
  */
 
-static void remove_comma(char *str)
+static void escape_char(char *str, char esc)
 {
-	char comma = ',';
 	char *src, *dst;
 	int once = 0;
 
@@ -749,7 +748,7 @@ static void remove_comma(char *str)
 	while (*src != '\0' && once == 0) {
 		*dst = *src;
 		src++;
-		if (*dst++ == comma && *src == comma) {
+		if (*dst++ == esc && *src == esc) {
 			src++;
 			once = 1;
 		}
@@ -858,7 +857,17 @@ err_t atodn(char *src, chunk_t *dn)
 					if (*++src == ',') {
 						src--;
 						name.len++;
-						remove_comma(src);
+						escape_char(src, ',');
+						break;
+					} else {
+						src--;
+					}
+				}
+				if (*src == '/') {
+					if (*++src == '/') {
+						src--;
+						name.len++;
+						escape_char(src, '/');
 						break;
 					} else {
 						src--;
