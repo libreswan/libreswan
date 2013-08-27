@@ -1214,10 +1214,10 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 			    DBG_log("Total keysize needed %d",
 				    (int)total_keysize);
 		    });
-		counter.ptr = &vpss.counter[0];
-		counter.len = 1;
+		setchunk(counter, &vpss.counter[0], sizeof(vpss.counter[0]));
 
 		PK11SymKey *finalkey = NULL;
+		PK11SymKey *tkey11 = NULL;
 		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(skeyseed_k,
 							    CKM_CONCATENATE_BASE_AND_DATA,
 							    hmac_pad_prf, CKM_XOR_BASE_AND_DATA, CKA_DERIVE,
@@ -1226,13 +1226,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 		for (;; ) {
 			PK11SymKey *tkey3 = NULL;
-			/* 
-			 * FIXME!
-			 * bad workaround to old status quo: do not
-			 * initialise to NULL or PK11_GetSymKeyHandle(tkey11)
-			 * wll fail. Using a pointer to itself also fails
-			 */
-			PK11SymKey *tkey11;
 
 			if (vpss.counter[0] == 0x01) {
 				PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(
