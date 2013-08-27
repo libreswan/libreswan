@@ -369,6 +369,11 @@ bool any_id(const struct id *a)
 	return FALSE;
 }
 
+int id_kind(const struct id *id)
+{
+	return id->kind;
+}
+
 /* compare two struct id values */
 bool same_id(const struct id *a, const struct id *b)
 {

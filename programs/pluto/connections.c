@@ -2485,7 +2485,8 @@ static chunk_t get_peer_ca(const struct id *peer_id)
  */
 struct connection *refine_host_connection(const struct state *st,
 					  const struct id *peer_id,
-					  bool initiator, bool aggrmode)
+					  bool initiator, bool aggrmode,
+					  bool *fromcert)
 {
 	struct connection *c = st->st_connection;
 	u_int16_t auth = st->st_oakley.auth;
@@ -2645,7 +2646,10 @@ struct connection *refine_host_connection(const struct state *st,
 				continue;
 
 			/* check if peer_id matches, exactly or after instantiation */
-			if (!match)
+			/* check for the match but also check to see if it's the
+			 * %fromcert + peer id match result. - matt */
+			if (!match && !(*fromcert = ((id_kind(&d->spd.that.id) == ID_FROMCERT) &&
+						    (!match1 && match2 && match3))))
 				continue;
 
 			/* if initiator, our ID must match exactly */

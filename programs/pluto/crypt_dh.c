@@ -1150,7 +1150,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	PK11SymKey *skeyseed_k, *SK_d_k, *SK_ai_k, *SK_ar_k, *SK_ei_k,
 	*SK_er_k, *SK_pi_k, *SK_pr_k;
-	PK11SymKey *shared_pk11;
 
 	/* this doesn't take any memory, it's just moving pointers around */
 	setchunk_fromwire(vpss.ni, &skq->ni, skq);
@@ -1164,7 +1163,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		    enum_name(&trans_type_integ_names, skq->integ_hash),
 		    (long unsigned)keysize));
 
-	memcpy(&shared_pk11, shared.ptr, shared.len);
 	const struct hash_desc *hasher =
 		(struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH,
 						       skq->prf_hash, 0);
@@ -1227,7 +1225,15 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		PR_ASSERT(tkey1 != NULL);
 
 		for (;; ) {
-			PK11SymKey *tkey11 = NULL, *tkey3 = NULL;
+			PK11SymKey *tkey3 = NULL;
+			/* 
+			 * FIXME!
+			 * bad workaround to old status quo: do not
+			 * initialise to NULL or PK11_GetSymKeyHandle(tkey11)
+			 * wll fail. Using a pointer to itself also fails
+			 */
+			PK11SymKey *tkey11;
+
 			if (vpss.counter[0] == 0x01) {
 				PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(
 					tkey1, CKM_XOR_BASE_AND_DATA,
@@ -1251,7 +1257,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 					0);
 				PR_ASSERT(tkey2 != NULL);
 
-				keyhandle = PK11_GetSymKeyHandle(shared_pk11);
+				keyhandle = PK11_GetSymKeyHandle(tkey11);
 				param.data = (unsigned char*)&keyhandle;
 				param.len = sizeof(keyhandle);
 
@@ -1266,6 +1272,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 								vpss.ni, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
 								0);
 				PK11_FreeSymKey(tkey2);
+				PK11_FreeSymKey(tkey11);
 				PK11_FreeSymKey(tkey12);
 			}
 
