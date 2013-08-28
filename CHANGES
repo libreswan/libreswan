@@ -2,7 +2,7 @@
 See also https://libreswan.org/
 
 v3.6 (unreleased)
-* IKEv2: Fix interoperability when using PSK [Paul/Hugh/Antony]
+* IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
 * pluto: work around for Cisco VPN clients sending extraneous bytes [Paul/Hugh]
 * sysvinit: status function used incorrect variable for pid file [Tuomo]
 * _stackmanager: coding style cleanup - fixes bashism [Tuomo]
