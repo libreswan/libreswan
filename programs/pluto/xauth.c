@@ -2717,12 +2717,13 @@ stf_status xauth_inI0(struct msg_digest *md)
 				break;
 
 			case XAUTH_MESSAGE:
+				/* XXX change to define, check RFC for max length? */
 				if (len > 80)
 					len = 80;
 				memcpy(msgbuf, dat, len);
 				msgbuf[len] = '\0';
 				loglog(RC_LOG_SERIOUS,
-				       "XAUTH: Bad Message: %s", msgbuf);
+				       "XAUTH Message: %s", msgbuf);
 				break;
 
 			case XAUTH_TYPE:
