@@ -5,6 +5,7 @@ v3.6 (unreleased)
 * pluto: fix kernel.c typo in word outgoing [Tuomo]
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
 * pluto: work around for Cisco VPN clients sending extraneous bytes [Paul/Hugh]
+* pluto: Support for google-authenticator OTP via pam [Paul]
 * sysvinit: status function used incorrect variable for pid file [Tuomo]
 * _stackmanager: coding style cleanup - fixes bashism [Tuomo]
 * pluto: remove dsa/elgamal stubs from gnupg that were unused [Paul]
