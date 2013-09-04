@@ -411,11 +411,11 @@ int main(int argc, char **argv)
 	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
 		      CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
 		      CAP_IPC_LOCK, CAP_AUDIT_WRITE,
+		      CAP_SETGID, CAP_SETUID, /* for google authenticator pam */
 		      -1);
 	/* our children must be able to CAP_NET_ADMIN to change routes.
 	 */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET,
-		      CAP_NET_ADMIN, -1);
+	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1); /* DAC needed for google authenticator pam */
 	capng_apply(CAPNG_SELECT_BOTH);
 #endif
 
