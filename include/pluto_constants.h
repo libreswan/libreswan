@@ -720,3 +720,4 @@ enum PrivateKeyKind {
 #define XAUTH_MAX_NAME_LENGTH 128
 #define XAUTH_MAX_PASS_LENGTH 128
 
+#define MIN_LIVENESS 1
