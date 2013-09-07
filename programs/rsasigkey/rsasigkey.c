@@ -4,7 +4,7 @@
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,6 +30,7 @@
 #include <assert.h>
 #include <getopt.h>
 #include <libreswan.h>
+
 #include <gmp.h>
 
 #include <prerror.h>
@@ -43,8 +44,10 @@
 #include <seccomon.h>
 #include <secerr.h>
 #include <secport.h>
+
 #include <time.h>
 
+#include <arpa/nameser.h> /* for NS_MAXDNAME */
 #include "constants.h"
 #include "lswalloc.h"
 #include "lswlog.h"
@@ -54,6 +57,12 @@
 #  include <fipscheck.h>
 #endif
 
+/* 
+ * We allow 2192 as a minimum, but default to a random value between 3072 and
+ * 4096. The range is used to avoid a mono-culture of key sizes.
+ */
+#define MIN_KEYBIT 2192
+
 #ifndef DEVICE
 /* To the openwrt people: Do not change /dev/random to /dev/urandom. The
  * /dev/random device is ONLY used for generating long term keys, which
@@ -62,23 +71,26 @@
  * 0 effect. It's better to fail or bail out of generating a key, then
  * generate a bad one.
  */
-#define DEVICE  "/dev/random"
+# define DEVICE  "/dev/random"
 #endif
 #ifndef MAXBITS
-#define MAXBITS 20000
+# define MAXBITS 20000
 #endif
 
 #define E       3               /* standard public exponent */
-/*#define F4	65537*/	/* preferred public exponent, Fermat's 4th number */
+/* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
+
+#define NSSDIR "/etc/ipsec.d"
 
 char usage[] =
-	"rsasigkey [--verbose] [--random device] [--configdir dir] [--password password] nbits [--hostname host] [--noopt] [--rounds num]";
+	"rsasigkey [--verbose] [--random <device>] [--configdir <dir>] [--password <password>] [--hostname host] [<nbits>]";
 struct option opts[] = {
+	{ "rounds",    1,      NULL,   'p', }, /* obsoleted */
+	{ "noopt",     0,      NULL,   'n', }, /* obsoleted */
+
 	{ "verbose",   0,      NULL,   'v', },
 	{ "random",    1,      NULL,   'r', },
-	{ "rounds",    1,      NULL,   'p', },
 	{ "hostname",  1,      NULL,   'H', },
-	{ "noopt",     0,      NULL,   'n', },
 	{ "help",              0,      NULL,   'h', },
 	{ "version",   0,      NULL,   'V', },
 	{ "configdir",        1,      NULL,   'c' },
@@ -88,24 +100,18 @@ struct option opts[] = {
 int verbose = 0;                /* narrate the action? */
 char *device = DEVICE;          /* where to get randomness */
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
-mpz_t prime1;                   /* old key's prime1 */
-mpz_t prime2;                   /* old key's prime2 */
-char outputhostname[1024];      /* hostname for output */
-int do_lcm = 1;                 /* use lcm(p-1, q-1), not (p-1)*(q-1) */
+char outputhostname[NS_MAXDNAME];  /* hostname for output */
 
 char me[] = "ipsec rsasigkey";  /* for messages */
 
 /* forwards */
 void rsasigkey(int nbits, char *configdir, char *password);
-void initprime(mpz_t var, int nbits, int eval);
-void initrandom(mpz_t var, int nbits);
 void getrandom(size_t nbytes, unsigned char *buf);
 unsigned char *bundle(int e, mpz_t n, size_t *sizep);
 char *conv(unsigned char *bits, size_t nbytes, int format);
 char *hexout(mpz_t var);
 void report(char *msg);
 
-/*#define NUM_KEYSTROKES 120*/
 #define RAND_BUF_SIZE 60
 
 #define GEN_BREAK(e) rv = e; break;
@@ -198,7 +204,7 @@ char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 
 	fd = PR_Open(pwFile, PR_RDONLY, 0);
 	if (!fd) {
-		fprintf(stderr, "No password file \"%s\" exists.\n", pwFile);
+		fprintf(stderr, "%s: No password file \"%s\" exists.\n", me, pwFile);
 		PORT_Free(phrases);
 		return NULL;
 	}
@@ -207,7 +213,7 @@ char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 	PR_Close(fd);
 
 	if (nb == 0) {
-		fprintf(stderr, "password file contains no data\n");
+		fprintf(stderr, "%s: password file contains no data\n", me);
 		PORT_Free(phrases);
 		return NULL;
 	}
@@ -282,7 +288,8 @@ char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 
 	default: /* cases PW_NONE and PW_EXTERNAL not supported */
 		fprintf(stderr,
-			"Unknown or unsupported case in GetModulePassword");
+			"%s: Unknown or unsupported case in GetModulePassword\n",
+			me);
 		break;
 	}
 
@@ -299,33 +306,25 @@ int main(int argc, char *argv[])
 	int opt;
 	extern int optind;
 	extern char *optarg;
-	int errflg = 0;
-	int i;
-	int nbits;
+	int nbits = 0;
 	char *configdir = NULL; /* where the NSS databases reside */
 	char *password = NULL;  /* password for token authentication */
 
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
 		switch (opt) {
+		case 'n':
+		case 'p':
+			fprintf(stderr, "%s: --noopt and --rounds options have been obsoleted - ignored\n",
+				me);
+			break;
 		case 'v':       /* verbose description */
 			verbose = 1;
 			break;
 		case 'r':       /* nonstandard /dev/random */
 			device = optarg;
 			break;
-		case 'p':       /* number of prime-check rounds */
-			nrounds = atoi(optarg);
-			if (nrounds <= 0) {
-				fprintf(stderr, "%s: rounds must be > 0\n",
-					me);
-				exit(2);
-			}
-			break;
 		case 'H':       /* set hostname for output */
 			strcpy(outputhostname, optarg);
-			break;
-		case 'n':       /* don't optimize the private key */
-			do_lcm = 0;
 			break;
 		case 'h':       /* help */
 			printf("Usage:\t%s\n", usage);
@@ -343,37 +342,42 @@ int main(int argc, char *argv[])
 			break;
 		case '?':
 		default:
-			errflg = 1;
-			break;
+			printf("Usage:\t%s\n", usage);
+			exit(2);
 		}
-	if (errflg || optind != argc - 1) {
-		printf("Usage:\t%s\n", usage);
-		exit(2);
-	}
 
 	if (outputhostname[0] == '\0') {
-		i = gethostname(outputhostname, sizeof(outputhostname));
-		if (i < 0) {
+		if (gethostname(outputhostname, sizeof(outputhostname)) < 0) {
 			fprintf(stderr, "%s: gethostname failed (%s)\n",
 				me,
 				strerror(errno));
 			exit(1);
 		}
+		fprintf(stdout,"hostname is '%s'\n",outputhostname);
 	}
 
-	assert(argv[optind] != NULL);
-	nbits = atoi(argv[optind]);
+	if (!configdir) {
+		configdir = NSSDIR;
+	}
 
-	if (nbits <= 0) {
-		fprintf(stderr, "%s: invalid bit count (%d)\n", me, nbits);
+	if (argv[optind] == NULL) {
+		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
+		nbits = 3072 + 16 * rand() % 64; 
+	} else {
+		nbits = atoi(argv[optind]);
+	}
+
+	if (nbits < MIN_KEYBIT ) {
+		fprintf(stderr, "%s: requested RSA key size of %d is too small - use %d or more\n",
+			me, nbits, MIN_KEYBIT);
 		exit(1);
 	} else if (nbits > MAXBITS) {
 		fprintf(stderr, "%s: overlarge bit count (max %d)\n", me,
 			MAXBITS);
 		exit(1);
-	} else if (nbits % (CHAR_BIT * 2) != 0) { /* *2 for nbits/2-bit primes */
+	} else if (nbits % (BITS_PER_BYTE * 2) != 0) { /* *2 for nbits/2-bit primes */
 		fprintf(stderr, "%s: bit count (%d) not multiple of %d\n", me,
-			nbits, (int)CHAR_BIT * 2);
+			nbits, (int)BITS_PER_BYTE * 2);
 		exit(1);
 	}
 
@@ -382,15 +386,12 @@ int main(int argc, char *argv[])
 }
 
 /*
-   - rsasigkey - generate an RSA signature key
+ * generate an RSA signature key
+ *
  * e is fixed at 3, without discussion.  That would not be wise if these
  * keys were to be used for encryption, but for signatures there are some
  * real speed advantages.
- */
-
-/* Generates an RSA signature key using nss.
- * Curretly e is fixed at 3, but we may change that.  We may
- * use F4 if preformance doesn't degrade much realative to 3.
+ * See also: https://www.imperialviolet.org/2012/03/16/rsae.html
  */
 void rsasigkey(int nbits, char *configdir, char *password)
 {

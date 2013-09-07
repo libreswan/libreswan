@@ -9,7 +9,7 @@
 <refmeta>
 <refentrytitle>IPSEC_RSASIGKEY</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>28 Oct 2006</refmiscinfo>
+<refmiscinfo class='date'>6 Sep 2013</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -24,12 +24,10 @@
     <arg choice='plain'><replaceable>rsasigkey</replaceable></arg>
     <arg choice='opt'>--verbose </arg>
     <arg choice='opt'>--random <replaceable>filename</replaceable></arg>
-    <arg choice='opt'>--rounds <replaceable>nr</replaceable></arg>
     <arg choice='opt'>--configdir <replaceable>nssdbdir</replaceable></arg>
     <arg choice='opt'>--password <replaceable>nsspassword</replaceable></arg>
     <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
-    <arg choice='opt'>--noopt </arg>
-    <arg choice='plain'>nbits </arg>
+    <arg choice='opt'>nbits </arg>
 </cmdsynopsis>
 <cmdsynopsis>
   <command>ipsec</command>    
@@ -38,8 +36,6 @@
     <arg choice='opt'>--configdir <replaceable>nssdbdir</replaceable></arg>
     <arg choice='opt'>--password <replaceable>nsspassword</replaceable></arg>
     <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
-    <arg choice='opt'>--noopt </arg>
-    <arg choice='opt'>--oldkey <replaceable>filename</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -56,28 +52,26 @@ generates an RSA public/private key pair, suitable for digital signatures, of (e
 speed advantages for signature checking. Beware that the resulting keys have known weaknesses as encryption keys
 <emphasis remap='B'>and should not be used for that purpose</emphasis>.</para>
 
-<para>The <option>--verbose</option> option makes<emphasis remap='I'>rsasigkey</emphasis>
-give a running commentary on standard error. By default, it works in silence until it is
-ready to generate output.</para>
-<para>The <option>--random</option> option specifies a source for random bits. The default is
-<filename>/dev/random</filename> (see
-<citerefentry><refentrytitle>random</refentrytitle><manvolnum>4</manvolnum></citerefentry>).
-Normally, <emphasis remap='I'>rsasigkey</emphasis> reads exactly <emphasis remap='I'>nbits</emphasis>
-random bits from the source; in extremely-rare circumstances it may need more. Under Linux with
-hardware random support, the special device <filename>/dev/hw_random</filename> is created. However,
-the driver does not guarantee FIPS compliant random, and some hardware is so broken that it return
-extremely non-random data. Therefor <filename>/dev/hw_random</filename> should <emphasis remap='B'>never</emphasis>
-be used with the <option>--random</option> option. Instead, one should run the 
-<citerefentry><refentrytitle>rngd</refentrytitle><manvolnum>8</manvolnum></citerefentry> daemon to
-funnel randomness from <filename>/dev/hw_random</filename> into <filename>/dev/random</filename>.
-</para>
+<para>The <option>--verbose</option> option makes<emphasis
+remap='I'>rsasigkey</emphasis> give a running commentary on standard
+error. By default, it works in silence until it is ready to generate
+output.</para>
 
-<para>The <option>--rounds</option> option specifies the number of rounds to
-be done by the pz_probab_prime_p probabilistic primality checker. The default,
-30, is fairly rigorous and should not normally have to be overridden.</para>
+<para>The <option>--random</option> option specifies a
+source for random bits used to seed the crypto library's
+RNG. The default is <filename>/dev/random</filename> (see
+<citerefentry><refentrytitle>random</refentrytitle><manvolnum>4</manvolnum></citerefentry>).
+FreeS/WAN and Openswan without NSS support used this option to specify
+the random source used to directly create keys. Libreswan only uses
+it to seed the crypto libraries RNG. Under Linux with hardware random
+support, special devices might show up as <filename>/dev/*rng*</filename>
+devices. However, these should never be access directly using this option,
+as hardware failures could lead to extremely non-random values (streams
+of zeroes have been observed in the wild) </para>
 
 <para>The <option>--configdir</option> option specifies the nss configuration directory to use.
-This is the directory where the NSS certificate, key and security modules databases reside.</para>
+This is the directory where the NSS certificate, key and security modules databases reside. The
+default value is <filename>/etc/ipsec.d</filename>.</para>
 
 <para>The <option>--password</option> option specifies the nss cryptographic module authentication
 password if the NSS module has been configured to require it.  A password is required by hardware
@@ -87,22 +81,6 @@ tokens and also by the internal softotken module when configured to run in FIPS 
 of the output (see below); the default is what
 <citerefentry><refentrytitle>gethostname</refentrytitle><manvolnum>2</manvolnum></citerefentry>
 returns.</para>
-
-<para>The <option>--noopt</option> option suppresses an optimization of the
-private key (to be precise, setting of the decryption exponent to
-<emphasis remap='B'>lcm(p-1,q-1)</emphasis> rather than
-<emphasis remap='B'>(p-1)*(q-1))</emphasis> which speeds up operations on it
-slightly but can cause it to flunk a validity check in old RSA implementations
-(notably, obsolete versions of 
-<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-</para>
-
-<para><option>--oldkey</option> option specifies that rather than generate a
-new key, <emphasis remap='I'>rsasigkey</emphasis> should read an old key from
-the <filename>file</filename> (the name '-' means 'standard input') and use
-that to generate its output. Input lines which do not look like
-<emphasis remap='I'>rsasigkey</emphasis> output are silently ignored. This
-permits updating old keys to the current format.</para>
 
 <para> The output format looks like this (with long numbers trimmed down for clarity):
 <literallayout remap='.nf'>
@@ -121,7 +99,6 @@ permits updating old keys to the current format.</para>
 	Coefficient: 0xafb761d001...0c13e98d98
 
 </literallayout> <!-- .fi -->
-
 The first (comment) line, indicating the nature and date of the key, and
 giving a host name, is used by
 <citerefentry><refentrytitle>ipsec_showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
@@ -143,9 +120,11 @@ lines give the private exponent mod <emphasis remap='I'>p-1</emphasis> and
 <emphasis remap='I'>q-1</emphasis> respectively. The <option>Coefficient</option>
 line gives the Chinese Remainder Theorem coefficient, which is the inverse of
 <emphasis remap='I'>q</emphasis>, mod <emphasis remap='I'>p</emphasis>. These
-additional numbers (which must all be kept as secret as the private exponent)
-are precomputed aids to rapid signature generation.</para>
-
+additional numbers (which must all be kept as secret as the private
+exponent) are precomputed aids to rapid signature generation.  When NSS
+is used, these values are not available outside the NSS security database
+(softtoken or hardware token) and are instead filled in with the CKA_ID.
+</para>
 <para>No attempt is made to break long lines.</para>
 
 <para> The US patent on the RSA algorithm expired 20 Sept 2000.</para>
@@ -155,22 +134,14 @@ are precomputed aids to rapid signature generation.</para>
 <refsect1 id='examples'><title>EXAMPLES</title>
 <variablelist remap='TP'>
  <varlistentry>
-  <term><emphasis remap='B'>ipsec rsasigkey --verbose 2192 >mykey.txt</emphasis></term>
+  <term><emphasis remap='B'>ipsec rsasigkey --verbose 4096 >mykey.txt</emphasis></term>
   <listitem>
-   <para>generates a 2192-bit signature key  and  puts  it  in  the  file <filename>mykey.txt</filename>,
+   <para>generates a 4096-bit signature key  and  puts  it  in  the  file <filename>mykey.txt</filename>,
     with running commentary on standard error.  The file contents can be inserted verbatim into  a  suitable  entry  in  the
     <filename>ipsec.secrets</filename> file (see
     <citerefentry><refentrytitle>ipsec_secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>),
     and the public key can then be extracted and edited into the <filename>ipsec.conf</filename> (see
     <citerefentry><refentrytitle>ipsec_showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
-   </para>
-  </listitem>
- </varlistentry>
- <varlistentry>
-  <term><emphasis remap='B'>ipsec rsasigkey --verbose --oldkey oldie >latest.txt</emphasis></term>
-  <listitem>
-   <para>takes  the  old signature key from file <filename>oldie</filename> and puts a version in the
-   current format into the file <filename>latest</filename>, with running commentary on standard error.
    </para>
   </listitem>
  </varlistentry>
@@ -193,9 +164,13 @@ are precomputed aids to rapid signature generation.</para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
-<para>Written for the Linux FreeS/WAN project
+<para>Originally written for the Linux FreeS/WAN project
 &lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
-by Henry Spencer.</para>
+by Henry Spencer. Updated for the Libreswan Project by Paul Wouters.</para>
+<para>The <emphasis remap='I'>--round</emphasis> and <emphasis remap='I'>--noopt</emphasis>
+options were obsoleted as these were only used with the old non-library crypto code</para>
+<para>The <emphasis remap='I'>--random</emphasis> device is only used for seeding the crypto library,
+not for direct random to generate keys</para>
 </refsect1>
 
 <refsect1 id='bugs'><title>BUGS</title>
@@ -206,16 +181,12 @@ currently 20000.</para>
 to predict, since <filename>/dev/random</filename> output can
 be arbitrarily delayed if the system's entropy pool is low on
 randomness, and  the time taken by the search for primes is also somewhat
-unpredictable.  A reasonably typical time for a 1024-bit key on a quiet
-100MHz  Pentium  MMX with plenty of randomness available is 20 seconds,
-almost all of it in the prime searches.  Generating a 2192-bit  key  on
-the  same system usually takes several minutes.  A 4096-bit key took an
-hour and a half of CPU time.
+unpredictable. Specifically, embedded systems and most virtual machines are low on
+entropy. In such a situation, consider generating the RSA key on another machine,
+and copying <filename>ipsec.secrets</filename> and the <filename>ipsec.d/*db</filename>
+files to the embedded platform. Note that NSS embeds the full path in the DB files, so
+the path on proxy machine must be identical to the path on the destination machine.
 </para>
-<para>
-The <option>--oldkey</option>  option does not check its input format as
-rigorously as it might. Corrupted <emphasis remap='I'>rsasigkey</emphasis>
-output may confuse it.</para>
 </refsect1>
 </refentry>
 
