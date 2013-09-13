@@ -8,7 +8,7 @@
 
 %global _hardened_build 1
 
-%global fipscheck_version 1.4.1
+%global fipscheck_version 1.3.0
 %global buildefence 0
 %global development 0
 
@@ -19,8 +19,6 @@ Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
 Version: IPSECBASEVERSION
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
-%define hmac_suffix .%{version}-%{release}.hmac
-
 License: GPLv2
 Url: https://www.libreswan.org/
 Source: https://download.libreswan.org/%{name}-%{version}%{?prever}.tar.gz
@@ -81,22 +79,6 @@ Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
 
 Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
-%if %{USE_FIPSCHECK}
-%package fips
-Summary: FIPS 140-2 HMAC files and prelink blacklist configuration
-Group: System Environment/Daemons
-Requires: %{name}%{_isa} = %{version}-%{release}
-Requires: fipscheck-lib%{_isa} >= %{fipscheck_version}
-# NSS: Technically, we need to Requires: nss-softokn-fips but nss-softokn
-#      already requires the -fips sub-package (to allow firefox to go into
-#      fips mode on non-fips machines with no -fips packages)
-
-%description fips
-FIPS 140-2 module for Openswan that contains HMAC files and the blacklist
-configuration for prelink.
-%endif
-
- 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
 
@@ -118,7 +100,6 @@ configuration for prelink.
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-  FIPSHMACSUFFIX=%{hmac_suffix} \
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{USE_CRL_FETCHING}
@@ -140,8 +121,8 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-  fipshmac -d %{buildroot}%{_libdir}/fipscheck -s %{hmac_suffix} %{buildroot}%{_sbindir}/ipsec \
-  fipshmac -d %{buildroot}%{_libdir}/fipscheck -s %{hmac_suffix} ` ls %{buildroot}%{_libexecdir}/ipsec/* ` \
+  fipshmac -d %{buildroot}%{_libdir}/fipscheck ` ls %{buildroot}%{_libexecdir}/ipsec/*|grep -v setup` \
+  fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
 %{nil}
 %endif
 
@@ -164,11 +145,6 @@ install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase 
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
-%if %{USE_FIPSCHECK}
-install -d -m 0700 %{buildroot}/%{_sysconfdir}/prelink.conf.d/
-install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}/%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
-%endif
-
 
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
@@ -197,12 +173,7 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %attr(0644,root,root) %doc %{_mandir}/*/*
 
 %if %{USE_FIPSCHECK}
-%files fips
-%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %{_libdir}/fipscheck/*.hmac
-
-%post fips
-prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %endif
 
 %preun

@@ -7,7 +7,7 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
  *
@@ -1068,7 +1068,21 @@ int main(int argc, char **argv)
 	pluto_init_nss(oco->confddir);
 
 #ifdef FIPS_CHECK
-	const char *package_files[] = { IPSEC_EXECDIR "/setup",
+	/*
+	 * In FIPS mode, any missing/bad hmac file means we abort.
+	 *
+	 * In non-FIPS mode, if pluto has an hmac file, everything should
+	 * have an hmac file, and all hmacs should validate. If pluto has
+	 * no hmac file, none of the hmac files are tested.
+	 *
+	 * This behaviour is keyed of the first file in the fipscheck
+	 * FIPSCHECK_verify_files_ev() function, which is why pluto
+	 * is at the top of this list.
+	 *
+	 * hmac files are versioned, See FIPSHMACSUFFIX in Makefile.inc
+	 */
+	const char *package_files[] = { IPSEC_EXECDIR "/pluto",
+					IPSEC_EXECDIR "/setup",
 					IPSEC_EXECDIR "/addconn",
 					IPSEC_EXECDIR "/auto",
 					IPSEC_EXECDIR "/barf",
@@ -1082,9 +1096,7 @@ int main(int argc, char **argv)
 					IPSEC_EXECDIR "/pf_key",
 					IPSEC_EXECDIR "/_pluto_adns",
 					IPSEC_EXECDIR "/_plutorun",
-					IPSEC_EXECDIR "/_realsetup",
 					IPSEC_EXECDIR "/rsasigkey",
-					IPSEC_EXECDIR "/pluto",
 					IPSEC_EXECDIR "/_secretcensor",
 					IPSEC_EXECDIR "/secrets",
 					IPSEC_EXECDIR "/showhostkey",
@@ -1101,13 +1113,22 @@ int main(int argc, char **argv)
 					IPSEC_SBINDIR "/ipsec",
 					NULL };
 
-	if ( (Pluto_IsFIPS() == 1) && !FIPSCHECK_verify_files(package_files)) {
-		loglog(RC_LOG_SERIOUS,
-		       "FATAL: FIPS integrity verification test failed");
+	if (!FIPSCHECK_verify_files_ex(FIPSHMACSUFFIX, Pluto_IsFIPS(),
+	    package_files)) {
+		loglog(RC_LOG_SERIOUS, "%s HMAC[%s] integrity verification test failed ",
+		       Pluto_IsFIPS() ? "FIPS" : "non-FIPS", FIPSHMACSUFFIX);
 		exit_pluto(10);
 	}
+
+	loglog(RC_LOG_SERIOUS, "%s HMAC[%s] integrity verification test %s",
+		Pluto_IsFIPS() ? "FIPS" : "non-FIPS", FIPSHMACSUFFIX,
+		/* Paul: I requested an API addition to get rid of these hardcoded names */
+		( access("/usr/lib64/fipscheck/pluto"FIPSHMACSUFFIX, F_OK) == -1 &&
+		  access("/usr/lib/fipscheck/pluto"FIPSHMACSUFFIX, F_OK) == -1)
+		? "skipped" : "passed");
+
 #else
-	libreswan_log("FIPS integrity support [disabled]");
+	libreswan_log("FIPS HMAC integrity support [disabled]");
 #endif
 
 #ifdef HAVE_LIBCAP_NG
