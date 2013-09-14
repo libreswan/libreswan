@@ -1854,7 +1854,7 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 				c->spd.this.has_client = TRUE;
 				subnettot(&c->spd.this.client, 0,
 					  caddr, sizeof(caddr));
-				libreswan_log("setting client address to %s",
+				loglog(RC_LOG_SERIOUS,"Received IP address %s",
 					      caddr);
 
 				if (addrbytesptr(&c->spd.this.host_srcip,
@@ -1939,7 +1939,7 @@ static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
 		}
 	}
 	(void)sanitize_string(strbuf, sizeof(strbuf));
-	DBG(DBG_CONTROL, DBG_log("Received Cisco %s: %s", attr_name, strbuf));
+	libreswan_log("Received Cisco %s: %s", attr_name, strbuf);
 	return clone_str(strbuf, attr_name);
 }
 
@@ -2076,8 +2076,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					c->spd.this.has_client = TRUE;
 					subnettot(&c->spd.this.client, 0,
 						  caddr, sizeof(caddr));
-					libreswan_log(
-						"setting client address to %s",
+					loglog(RC_LOG_SERIOUS,
+						"Received IPv4 address: %s",
 						caddr);
 
 					if (addrbytesptr(&c->spd.this.
@@ -2106,7 +2106,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					       sizeof(a.u.v4.sin_addr.s_addr));
 
 					addrtot(&a, 0, caddr, sizeof(caddr));
-					libreswan_log(
+					loglog(RC_LOG_SERIOUS,
 						"Received IP4 NETMASK %s",
 						caddr);
 				}
@@ -2125,10 +2125,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					       sizeof(a.u.v4.sin_addr.s_addr));
 
 					addrtot(&a, 0, caddr, sizeof(caddr));
-					libreswan_log(
-						"Received DNS %s, len=%zd",
-						caddr,
-						strlen(caddr));
+					loglog(RC_LOG_SERIOUS,"Received DNS %s",
+						      caddr);
 
 					{
 						struct connection *c =
@@ -2175,23 +2173,29 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					break;
 
 				case INTERNAL_IP4_SUBNET:
+					DBG_log("Received Cisco IPv4 subnet");
 					resp |= LELEM(attr.isaat_af_type);
 					break;
 				case INTERNAL_IP4_NBNS:
+					DBG_log("Received and ignored obsoleted Cisco NetBEUI NS info");
 					/* ignore */
 					break;
 
 				case CISCO_BANNER:
 					st->st_connection->cisco_banner =
 						cisco_stringify(&strattr,
-								"Cisco Banner");
+								"Banner");
+					loglog(RC_LOG_SERIOUS, "Banner: %s",
+					       st->st_connection->cisco_banner);
 					resp |= LELEM(attr.isaat_af_type);
 					break;
 
 				case CISCO_DEF_DOMAIN:
 					st->st_connection->cisco_domain_info =
 						cisco_stringify(&strattr,
-								"Cisco Domain");
+								"Domain");
+					loglog(RC_LOG_SERIOUS, "Domain: %s",
+					       st->st_connection->cisco_domain_info);
 					resp |= LELEM(attr.isaat_af_type);
 					break;
 
@@ -2205,6 +2209,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						st->st_connection;
 					struct spd_route *tmp_spd2 = &c->spd;
 
+					DBG_log("Received Cisco Split tunnel route(s)");
 					if ( FALSE ==
 					     tmp_spd2->that.has_client ) {
 						ttosubnet("0.0.0.0/0.0.0.0", 0,
@@ -2283,7 +2288,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 							caddr,
 							sizeof(caddr));
 
-						libreswan_log(
+						loglog(RC_LOG_SERIOUS,
 							"Received subnet %s, maskbits %d", caddr,
 							tmp_spd->that.client.maskbits);
 
@@ -2712,11 +2717,13 @@ stf_status xauth_inI0(struct msg_digest *md)
 
 			switch (attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK ) {
 			case XAUTH_STATUS:
+				DBG_log("Received Cisco XAUTH status");
 				got_status = TRUE;
 				status = attr.isaat_lv;
 				break;
 
 			case XAUTH_MESSAGE:
+				DBG_log("Received Cisco XAUTH message");
 				/* XXX change to define, check RFC for max length? */
 				if (len > 80)
 					len = 80;
@@ -2734,19 +2741,36 @@ stf_status xauth_inI0(struct msg_digest *md)
 						type);
 					return STF_IGNORE;
 				}
+				DBG_log("Received Cisco XAUTH type: Generic");
 				xauth_resp |= XAUTHLELEM(attr.isaat_af_type);
 				break;
 
 			case XAUTH_USER_NAME:
+				DBG_log("Received Cisco XAUTH username");
+				xauth_resp |= XAUTHLELEM(attr.isaat_af_type);
 			case XAUTH_USER_PASSWORD:
+				DBG_log("Received Cisco XAUTH password");
 				xauth_resp |= XAUTHLELEM(attr.isaat_af_type);
 				break;
 
 			case INTERNAL_IP4_ADDRESS:
+				DBG_log("Received Cisco Internal IPv4 address");
+				xauth_resp |= LELEM(attr.isaat_af_type);
+				break;
 			case INTERNAL_IP4_NETMASK:
+				DBG_log("Received Cisco Internal IPv4 netmask");
+				xauth_resp |= LELEM(attr.isaat_af_type);
+				break;
 			case INTERNAL_IP4_DNS:
+				DBG_log("Received Cisco IPv4 DNS info");
+				xauth_resp |= LELEM(attr.isaat_af_type);
+				break;
 			case INTERNAL_IP4_SUBNET:
+				DBG_log("Received Cisco IPv4 Subnet info");
+				xauth_resp |= LELEM(attr.isaat_af_type);
+				break;
 			case INTERNAL_IP4_NBNS:
+				DBG_log("Received Cisco NetBEUI NS info");
 				xauth_resp |= LELEM(attr.isaat_af_type);
 				break;
 
