@@ -624,9 +624,12 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			src = req.u.p.sel.prefixlen_d;
 			dst = req.u.p.sel.prefixlen_s;
 		}
-		req.u.p.priority = MIN_SPD_PRIORITY +
+		req.u.p.priority = MIN_SPD_PRIORITY -
+			((policy == IPSEC_POLICY_NONE) ? 512 : 0) +
 				   (((2 << shift) - src) << shift) +
-				   (2 << shift) - dst;
+				    (2 << shift) - dst - ((transport_proto) ? 64 : 0) 
+				 	- ((req.u.p.sel.sport) ? 32 : 0 )
+				 	- ((req.u.p.sel.sport) ? 32 : 0 );
 
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
