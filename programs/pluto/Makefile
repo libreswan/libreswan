@@ -46,7 +46,9 @@ CPPFLAGS = $(HDRDIRS) $(DEFINES) \
 	-DIPSEC_SBINDIR=\"${FINALSBINDIR}\" \
 	-DIPSEC_LIBDIR=\"${FINALLIBDIR}\" \
 	-DIPSEC_EXECDIR=\"${FINALLIBEXECDIR}\" \
-	-DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\" 
+	-DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\" \
+	-DFIPSHMACSUFFIX=\"${FIPSHMACSUFFIX}\" \
+
 
 ifeq ($(HAVE_BROKEN_POPEN),true)
 CFLAGS+=-DHAVE_BROKEN_POPEN
@@ -193,8 +195,11 @@ doinstall: all
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d/private
 	mkdir -p -m 755 $(VARDIR)/run/pluto
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
+	if $(USE_FIPSCHECK); then fipshmac -s $(FIPSHMACSUFFIX) $(LIBEXECDIR)/$(BINNAMEPLUTO) $(LIBEXECDIR)/$(BINNAMEWHACK); fi
+	#
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
 	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
+	if $(USE_FIPSCHECK); then fipshmac -s $(FIPSHMACSUFFIX) $(LIBEXECDIR)/$(BINNAMEADNS); fi
 	g=`if [ -r pluto.8 ]; then echo pluto.8; else echo ${srcdir}/pluto.8; fi`; \
 	$(INSTALL) $(INSTMANFLAGS) $$g $(PMANDIR)/ipsec_pluto.8 || exit 1; \
 	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \

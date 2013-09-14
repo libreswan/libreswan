@@ -373,6 +373,9 @@ endif
 
 # Build support for integrity check for libreswan on startup 
 USE_FIPSCHECK?=false
+# hmac suffix
+# FIPSHMACSUFFIX?=3.6-1.fc20.hmac
+FIPSHMACSUFFIX?=.hmac
 
 # Build support for the Linux Audit system
 ifeq ($(OSDEP),linux)

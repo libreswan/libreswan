@@ -9,7 +9,7 @@
 <refmeta>
 <refentrytitle>IPSEC_RANBITS</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>28 Oct 2006</refmiscinfo>
+<refmiscinfo class='date'>6 Sep 2013</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -23,7 +23,7 @@
   <command>ipsec</command>    
     <arg choice='plain'><replaceable>newhostkey</replaceable></arg>
     <group choice='opt'>
-     <arg choice='opt'>--configdira<replaceable>nssdbdir</replaceable></arg>
+     <arg choice='opt'>--configdir<replaceable>nssdbdir</replaceable></arg>
      <arg choice='opt'>--password <replaceable>password</replaceable></arg>
     </group>
     <group choice='opt'>
@@ -31,8 +31,9 @@
      <arg choice='opt'>--verbose </arg>
     </group>
     <arg choice='opt'>--bits <replaceable>bits</replaceable></arg>
+    <arg choice='opt'>--random <replaceable>device</replaceable></arg>
     <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
-    <arg choice='plain'>--output <replaceable>filename</replaceable></arg>
+    <arg choice='opt'>--output <replaceable>filename</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -40,8 +41,7 @@
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>newhostkey</emphasis>
 outputs (into <emphasis remap='I'>filename</emphasis>, which can be
-'-' for standard output) an RSA private
-key suitable for this host, in
+'-' for standard output) an RSA private key suitable for this host, in
 <emphasis remap='I'>/etc/ipsec.secrets</emphasis> format (see
 <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>)
 using the <option>--quiet</option> option per default.
@@ -55,17 +55,22 @@ and the output is appended to the file.</para>
 <emphasis remap='I'>rsasigkey</emphasis> narrative and the
 existing-file warning message.</para>
 
-<para> When compiled with NSS support, <option>--configdir</option>
+<para> When compiled with NSS support (the default), <option>--configdir</option>
 specifies the nss configuration directory where the certificate key, and
 modsec databases reside. There is no default value, though /etc/ipsec.d
 might be sensible choice.</para>
-<para> When compiled with NSS support, <option>--password</option>
+<para> When compiled with NSS support (the default), <option>--password</option>
 specifies a module authentication password that may be required if FIPS
 mode is enabled </para>
 
-<para>The <option>--bits</option> option specifies the number of bits in the
-key; the current default is 2192 and we do not recommend use of anything
-shorter unless unusual constraints demand it.</para>
+<para>The <option>--bits</option> option specifies the number of bits
+in the RSA key; the current default is a random (multiple of 16) value
+between 3072 and 4096. The minimum allowed is 2172.  </para>
+
+<para>
+The <option>--random</option> is used to specify the random device
+(default <filename>/dev/random</filename> used to seed the crypto
+library RNG. </para>
 
 <para>The <option>--hostname</option> option is passed through to
 <emphasis remap='I'>rsasigkey</emphasis> to tell it what host name to label
@@ -89,9 +94,9 @@ contains only the host’s own private key, the output of
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
-<para>Written for the Linux FreeS/WAN project
+<para>Originally written for the Linux FreeS/WAN project
 &lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
-by Henry Spencer.</para>
+by Henry Spencer. Updated by Paul Wouters</para>
 </refsect1>
 
 <refsect1 id='bugs'><title>BUGS</title>
@@ -100,14 +105,10 @@ difficult to predict, since depletion of the system’s randomness pool
 can cause arbitrarily long waits for random bits, and the prime-number searches
 can also take unpre dictable (and potentially large) amounts of CPU time.
 See <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-for some typical performance numbers.</para>
+.</para>
 
 <para>A higher-level tool which could handle the clerical details of changing
 to a new key would be helpful.</para>
-
-<para>The  requirement for <option>--output</option> is a blemish, but private
-keys are extremely sensitive information and unusual precautions seem justified.
-</para>
 
 </refsect1>
 </refentry>

@@ -8,19 +8,22 @@ then
 fi
 version=`git tag | tail -1| sed -e "s/v//"`
 
-if [ -n "`git diff | head -10`" ]
+if [ -z "$FORCE" ]
 then
-	echo >&2 "error: tree is not clean - changes would be lost. aborted"
-	exit 1
-fi
+	if [ -n "`git diff | head -10`" ]
+	then
+		echo >&2 "error: tree is not clean - changes would be lost. aborted"
+		exit 1
+	fi
 
-# will become branch 'release' instead of master
-TOPUSH=`git log master ^origin/master`
-if [ -n "$TOPUSH" ]
-then
-	echo >&2 "ERROR: unpushed changes - git push first"
-	git log master ^origin/master
-	exit 1
+	# will become branch 'release' instead of master
+	TOPUSH=`git log master ^origin/master`
+	if [ -n "$TOPUSH" ]
+	then
+		echo >&2 "ERROR: unpushed changes - git push first"
+		git log master ^origin/master
+		exit 1
+	fi
 fi
 
 if [ -f release/libreswan-$version.tar.gz  ]
