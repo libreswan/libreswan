@@ -139,6 +139,8 @@ struct whack_message {
 
 	/* Option to allow sending INITIAL-CONTACT payload - default is disabled */
 	bool initial_contact;
+	/* Option to just send the VID - the other end will behave differently (ModeCFG + RSA?) */
+	bool cisco_unity;
 
 	enum keyword_sha2_truncbug sha2_truncbug;
 

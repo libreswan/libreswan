@@ -208,6 +208,7 @@ struct connection {
 
 	bool nat_keepalive;             /* Suppress sending NAT-T Keep-Alives */
 	bool initial_contact;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
+	bool cisco_unity;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
 
 	/*Cisco interop: remote peer type*/
 	enum keyword_remotepeertype remotepeertype;

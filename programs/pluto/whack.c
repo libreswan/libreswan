@@ -139,7 +139,7 @@ static void help(void)
 		" \\\n   "
 		" [--dontrekey]"
 		" [--aggrmode]"
-		" [--initialcontact]"
+		" [--initialcontact] [--cisco_unity]"
 		" [--forceencaps] [--no-nat_keepalive]"
 		" \\\n   "
 		" [--dpddelay <seconds> --dpdtimeout <seconds>]"
@@ -483,6 +483,7 @@ enum option_enums {
 	CD_FORCEENCAPS,
 	CD_NO_NAT_KEEPALIVE,
 	CD_INITIAL_CONTACT,
+	CD_CISCO_UNITY,
 	CD_IKE,
 	CD_PFSGROUP,
 	CD_REMOTEPEERTYPE,
@@ -682,6 +683,7 @@ static const struct option long_opts[] = {
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL, CD_NO_NAT_KEEPALIVE + OO },
 	{ "initialcontact", no_argument, NULL, CD_INITIAL_CONTACT + OO },
+	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY + OO },
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO +
 	  NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO +
@@ -1550,6 +1552,10 @@ int main(int argc, char **argv)
 
 		case CD_INITIAL_CONTACT: /* --initialcontact */
 			msg.initial_contact = TRUE;
+			continue;
+
+		case CD_CISCO_UNITY: /* --cisco_unity */
+			msg.cisco_unity = TRUE;
 			continue;
 
 		case CD_DPDDELAY:

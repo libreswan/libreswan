@@ -506,6 +506,8 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 #endif
 	{ "initial_contact", kv_conn | kv_auto, kt_bool,   KBF_INITIAL_CONTACT,
 	  NOT_ENUM },
+	{ "cisco_unity", kv_conn | kv_auto, kt_bool,   KBF_CISCO_UNITY,
+	  NOT_ENUM },
 	{ "sha2_truncbug",  kv_conn | kv_auto, kt_enum,   KBF_SHA2_TRUNCBUG,
 	  &kw_sha2_truncbug },
 	{ "keylife",        kv_conn | kv_auto | kv_alias, kt_time,

@@ -1375,6 +1375,8 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 #endif
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
 		numvidtosend++;
+	if(c->cisco_unity)
+		numvidtosend++;
 
 	/* ALWAYS Announce our ability to do Dead Peer Detection to the peer */
 	{
@@ -1401,6 +1403,11 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 			return STF_INTERNAL_ERROR;
 	}
 #endif
+	if(c->cisco_unity) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_CISCO_UNITY))
+			return STF_INTERNAL_ERROR;
+	}
 
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;

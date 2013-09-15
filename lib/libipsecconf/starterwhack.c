@@ -557,10 +557,15 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.nat_keepalive = TRUE;
 #endif
 
+	/* Active Cisco quircky behaviour not replacing old IPsec SA's */
 	if (conn->options_set[KBF_INITIAL_CONTACT])
 		msg.initial_contact = conn->options[KBF_INITIAL_CONTACT];
 
-	/*Cisco interop : remote peer type*/
+	/* Active their quircky behaviour - rumored to be needed for ModeCfg and RSA */
+	if (conn->options_set[KBF_CISCO_UNITY])
+		msg.cisco_unity = conn->options[KBF_CISCO_UNITY];
+
+	/* Active our Cisco interop code if set */
 	if (conn->options_set[KBF_REMOTEPEERTYPE])
 		msg.remotepeertype = conn->options[KBF_REMOTEPEERTYPE];
 

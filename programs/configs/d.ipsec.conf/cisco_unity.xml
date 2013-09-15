@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>cisco_unity</emphasis></term>
+  <listitem>
+<para>whether to send a CISCO_UNITY payload to the peer we are initiating to.
+Acceptable values are: <emphasis remap='B'>no</emphasis> (the default) and
+<emphasis remap='B'>yes</emphasis>.
+
+It is recommended to leave this option unset, unless the remote peer
+(Cisco) requires it. This is an experimental option. It does not modify local
+behaviour. It is expected the remote peer might behave differently when it
+receives this vendor id. This option might be removed in a future release.
+</para>
+  </listitem>
+  </varlistentry>

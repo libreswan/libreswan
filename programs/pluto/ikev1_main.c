@@ -127,8 +127,13 @@ stf_status main_outI1(int whack_sock,
 #ifdef NAT_TRAVERSAL
 	if (nat_traversal_enabled)
 		numvidtosend++;
-
 #endif
+
+	/* add one for sending CISCO-UNITY */
+	if (c->cisco_unity) {
+		numvidtosend++;
+	}
+
 #if SEND_PLUTO_VID || defined(openpgp_peer)
 	numvidtosend++;
 #endif
@@ -227,6 +232,14 @@ stf_status main_outI1(int whack_sock,
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md.rbody, VID_MISC_DPD)) {
+			reset_cur_state();
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	if (c->cisco_unity) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md.rbody, VID_CISCO_UNITY)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1522,6 +1535,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	bool send_cert = FALSE;
 	bool send_cr = FALSE;
 	bool initial_contact = FALSE;
+	bool cisco_unity = FALSE;
 	generalName_t *requested_ca = NULL;
 	cert_t mycert = st->st_connection->spd.this.cert;
 
