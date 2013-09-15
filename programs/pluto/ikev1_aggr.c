@@ -1364,31 +1364,28 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		close_output_pbs(&id_pbs);
 	}
 
+	int numvidtosend = 1; /* Always announce DPD capablity */
+#ifdef XAUTH
+	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
+		numvidtosend++;
+#endif
+#ifdef NAT_TRAVERSAL
+	if (nat_traversal_enabled) 
+		numvidtosend++;
+#endif
+	if (c->policy & POLICY_IKE_FRAG_ALLOW)
+		numvidtosend++;
+
 	/* ALWAYS Announce our ability to do Dead Peer Detection to the peer */
 	{
-		int np = ISAKMP_NEXT_NONE;
-
-		if (c->spd.this.xauth_client ||
-		    c->spd.this.xauth_server) {
-
-			/* Add supported DPD VID */
-			np = ISAKMP_NEXT_VID;
-		}
-
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if ( !out_vid(np, &md->rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
 	}
 
 #ifdef NAT_TRAVERSAL
 	if (nat_traversal_enabled) {
-		/* Add supported NAT-Traversal VID */
-		int np = ISAKMP_NEXT_NONE;
-
-#ifdef XAUTH
-		if (c->spd.this.xauth_client || c->spd.this.xauth_server)
-			np = ISAKMP_NEXT_VID;
-
-#endif
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!nat_traversal_insert_vid(np, &md->rbody, st)) {
 			reset_cur_state();
@@ -1399,10 +1396,22 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 #ifdef XAUTH
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
-		if (!out_vid(ISAKMP_NEXT_NONE, &md->rbody, VID_MISC_XAUTH))
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
 #endif
+
+	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_IKE_FRAGMENTATION))
+			return STF_INTERNAL_ERROR;
+	}
+
+	/* INITIAL_CONTACT is an authenticated message, no VID here */
+
+	passert(numvidtosend == 0);
+
 
 	/* finish message */
 
