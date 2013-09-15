@@ -2,15 +2,16 @@
 See also https://libreswan.org/
 
 v3.6 (unreleased)
-* pluto: fix kernel.c typo in word outgoing [Tuomo]
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
 * IKEv1: Cleanup AGGR Mode VendorID - also send fragmentation vid [Paul]
 * IKEv1: Added cisco_unity (default no) option which sends VID [Paul]
 * pluto: work around for Cisco VPN clients sending extraneous bytes [Paul/Hugh]
 * pluto: Support for google-authenticator OTP via pam [Paul]
+* pluto: fix kernel.c typo in word outgoing [Tuomo]
+* pluto: remove dsa/elgamal stubs from gnupg that were unused [Paul]
+* NETKEY: Take protoport= into account when setting IPsec SA priority [Paul]
 * sysvinit: status function used incorrect variable for pid file [Tuomo]
 * _stackmanager: coding style cleanup - fixes bashism [Tuomo]
-* pluto: remove dsa/elgamal stubs from gnupg that were unused [Paul]
 * testing: Various interop test case updates [Paul]
 * FIPS: Support versioned hmac files, fips test in non-fips mode [Paul]
 * rsasigkey/newhostkey: Keysize for new RSA keys keysize increasd from 2192
