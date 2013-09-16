@@ -2870,7 +2870,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		return TRUE;
 
 	sr = &st->st_connection->spd;
-	if (st->st_connection->remotepeertype == CISCO)
+	if (st->st_connection->remotepeertype == CISCO && sr->next)
 		sr = sr->next;
 
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
