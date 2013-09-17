@@ -594,8 +594,7 @@ void dpd_timeout(struct state *st)
 		break;
 
 	case DPD_ACTION_RESTART:
-	case DPD_ACTION_RESTART_BY_PEER:
-		/* dpdaction=restart_by_peer - immediately renegotiate connections to the same peer. */
+		/* dpdaction=restart - immediately renegotiate connections to the same peer. */
 		libreswan_log(
 			"DPD: Restarting all connections that share this peer");
 		restart_connections_by_peer(c);

@@ -530,11 +530,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		if (conn->options_set[KBF_REKEY] && conn->options[KBF_REKEY] ==
 		    FALSE) {
 			if ( (conn->options[KBF_DPDACTION] ==
-			      DPD_ACTION_RESTART_BY_PEER ||
-			      conn->options[KBF_DPDACTION] ==
 			      DPD_ACTION_RESTART)) {
 				starter_log(LOG_LEVEL_ERR,
-					    "conn: \"%s\" warning dpdaction cannot be 'restart' or 'restart_by_peer' when rekey=no - defaulting to 'hold'",
+					    "conn: \"%s\" warning dpdaction cannot be 'restart'  when rekey=no - defaulting to 'hold'",
 					    conn->name);
 				msg.dpd_action = DPD_ACTION_HOLD;
 			}

@@ -38,8 +38,7 @@ enum kernel_interface {
 enum dpd_action {
 	DPD_ACTION_CLEAR = 0,
 	DPD_ACTION_HOLD  = 1,
-	DPD_ACTION_RESTART = 2,
-	DPD_ACTION_RESTART_BY_PEER = 3
+	DPD_ACTION_RESTART = 2
 };
 
 /* Cisco interop: values remote_peer_type= */

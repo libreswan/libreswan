@@ -109,7 +109,8 @@ struct keyword_enum_value kw_dpdaction_values[] = {
 	{ "hold",    DPD_ACTION_HOLD },
 	{ "clear",   DPD_ACTION_CLEAR },
 	{ "restart",   DPD_ACTION_RESTART },
-	{ "restart_by_peer",   DPD_ACTION_RESTART_BY_PEER },
+	/* obsoleted keyword - functionality moved into "restart" */
+	{ "restart_by_peer",   DPD_ACTION_RESTART },
 };
 
 struct keyword_enum_values kw_dpdaction_list =
