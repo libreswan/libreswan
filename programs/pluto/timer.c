@@ -487,10 +487,6 @@ void liveness_check(struct state *st)
 			break;
 
 		case DPD_ACTION_RESTART:
-			DBG(DBG_CONTROL, DBG_log("liveness_check - restart"));
-			/*tbd - just fall through to restart_by_peer for now */
-
-		case DPD_ACTION_RESTART_BY_PEER:
 			libreswan_log("IKEv2 peer liveness - restarting all connections "
 				      "that share this peer");
 			restart_connections_by_peer(c);
