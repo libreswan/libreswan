@@ -36,7 +36,6 @@
 #include "lswlog.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 
 /*  Note that there may be as many as six IDs that are temporary at

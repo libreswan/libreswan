@@ -219,48 +219,6 @@ struct keyword_enum_values kw_remote_peer_type =
 { kw_remote_peer_type_list, sizeof(kw_remote_peer_type_list) /
   sizeof(struct keyword_enum_value) };
 
-struct keyword_enum_value kw_sha2_truncbug_list[] = {
-	{ "yes",         SHA2_TRUNCBUG_YES },
-	{ "no",         SHA2_TRUNCBUG_NO },
-};
-
-struct keyword_enum_values kw_sha2_truncbug =
-{ kw_sha2_truncbug_list, sizeof(kw_sha2_truncbug_list) /
-  sizeof(struct keyword_enum_value) };
-
-/*
- *  Network Manager support
- */
-#ifdef HAVE_NM
-struct keyword_enum_value kw_nm_configured_list[] = {
-	{ "yes",         NM_YES },
-};
-
-struct keyword_enum_values kw_nm_configured =
-{ kw_nm_configured_list, sizeof(kw_nm_configured_list) /
-  sizeof(struct keyword_enum_value) };
-#endif
-
-#ifdef HAVE_LABELED_IPSEC
-struct keyword_enum_value kw_loopback_list[] = {
-	{ "yes",         LB_YES },
-	{ "no",         LB_NO },
-};
-
-struct keyword_enum_values kw_loopback =
-{ kw_loopback_list, sizeof(kw_loopback_list) /
-  sizeof(struct keyword_enum_value) };
-
-struct keyword_enum_value kw_labeled_ipsec_list[] = {
-	{ "yes",         LI_YES },
-	{ "no",         LI_NO },
-};
-
-struct keyword_enum_values kw_labeled_ipsec =
-{ kw_labeled_ipsec_list, sizeof(kw_labeled_ipsec_list) /
-  sizeof(struct keyword_enum_value) };
-#endif
-
 #ifdef XAUTH
 struct keyword_enum_value kw_xauthby_list[] = {
 	{ "file",         XAUTHBY_FILE },
@@ -379,6 +337,7 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "interfaces",     kv_config, kt_string,    KSF_INTERFACES,
 	  NOT_ENUM },
 	{ "myid",           kv_config, kt_string,    KSF_MYID, NOT_ENUM },
+	{ "myvendorid",     kv_config, kt_string,    KSF_MYVENDORID, NOT_ENUM },
 	{ "syslog",         kv_config, kt_string,    KSF_SYSLOG, NOT_ENUM },
 #ifdef DEBUG
 	{ "klipsdebug",     kv_config, kt_list,      KBF_KLIPSDEBUG,
@@ -509,8 +468,10 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "cisco_unity", kv_conn | kv_auto, kt_bool,   KBF_CISCO_UNITY,
 	  NOT_ENUM },
-	{ "sha2_truncbug",  kv_conn | kv_auto, kt_enum,   KBF_SHA2_TRUNCBUG,
-	  &kw_sha2_truncbug },
+	{ "send_vendorid", kv_conn | kv_auto, kt_bool,   KBF_SEND_VENDORID,
+	  NOT_ENUM },
+	{ "sha2_truncbug",  kv_conn | kv_auto, kt_bool,   KBF_SHA2_TRUNCBUG,
+	  NOT_ENUM },
 	{ "keylife",        kv_conn | kv_auto | kv_alias, kt_time,
 	  KBF_SALIFETIME, NOT_ENUM },
 	{ "lifetime",       kv_conn | kv_auto | kv_alias, kt_time,
@@ -518,10 +479,10 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "salifetime",     kv_conn | kv_auto, kt_time,   KBF_SALIFETIME,
 	  NOT_ENUM },
 #ifdef HAVE_LABELED_IPSEC
-	{ "loopback",       kv_conn | kv_auto, kt_enum, KBF_LOOPBACK,
-	  &kw_loopback },
-	{ "labeled_ipsec",   kv_conn | kv_auto, kt_enum, KBF_LABELED_IPSEC,
-	  &kw_labeled_ipsec },
+	{ "loopback",       kv_conn | kv_auto, kt_bool, KBF_LOOPBACK,
+	  NOT_ENUM },
+	{ "labeled_ipsec",   kv_conn | kv_auto, kt_bool, KBF_LABELED_IPSEC,
+	  NOT_ENUM },
 	{ "policy_label",    kv_conn | kv_auto,         kt_string,
 	  KSF_POLICY_LABEL, NOT_ENUM },
 #endif
@@ -532,8 +493,8 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 
 	/* Network Manager support*/
 #ifdef HAVE_NM
-	{ "nm_configured", kv_conn | kv_auto, kt_enum, KBF_NMCONFIGURED,
-	  &kw_nm_configured },
+	{ "nm_configured", kv_conn | kv_auto, kt_bool, KBF_NMCONFIGURED,
+	  NOT_ENUM },
 #endif
 
 #ifdef XAUTH

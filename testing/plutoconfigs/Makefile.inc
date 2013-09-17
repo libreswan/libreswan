@@ -335,9 +335,6 @@ USE_NETKEY=false
 USE_KLIPS=false
 endif
 
-# Build support for sending Libreswan Vendor IDs
-USE_VENDORID?=true
-
 # Build aggressive mode authentication system code - both Server and Client.
 # This was off by default, since aggressive mode leads to denial of service
 # attacks.

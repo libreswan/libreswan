@@ -50,7 +50,6 @@
 #include "mpzfuncs.h"
 #include "oid.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "keys.h"
 #include "packet.h"
@@ -62,18 +61,12 @@
 #include "whack.h"
 #include "fetch.h"
 #include "pkcs.h"
-#include "plutocerts.h"
 #include "x509more.h"
 
 /* chained lists of X.509 host/user and ca certificates and crls */
 
 static x509cert_t *x509certs   = NULL;
 static x509crl_t  *x509crls    = NULL;
-
-/*
- * chained list of OpenPGP end certificates
- */
-static pgpcert_t *pgpcerts   = NULL;
 
 /*
  *  add a X.509 user/host certificate to the chained list
@@ -161,24 +154,17 @@ void release_x509cert(x509cert_t *cert)
 	}
 }
 
-pgpcert_t*pluto_add_pgpcert(pgpcert_t *cert)
-{
-	return add_pgpcert(&pgpcerts, cert);
-}
-
 /*  release of a certificate decreases the count by one
    "  the certificate is freed when the counter reaches zero
  */
 void release_cert(cert_t cert)
 {
 	switch (cert.type) {
-	case CERT_PGP:
-		release_pgpcert(&pgpcerts, cert.u.pgp);
-		break;
 	case CERT_X509_SIGNATURE:
 		release_x509cert(cert.u.x509);
 		break;
 	default:
+		loglog(RC_LOG_SERIOUS,"Unknown certificate type");
 		break;
 	}
 }
@@ -401,7 +387,6 @@ void load_crls(void)
 
 		if (n > 0) {
 			while (n--) {
-				bool pgp = FALSE;
 				chunk_t blob = empty_chunk;
 				char *filename = filelist[n]->d_name;
 
@@ -411,7 +396,7 @@ void load_crls(void)
 #else
 						    TRUE,
 #endif
-						    "crl", &blob, &pgp)) {
+						    "crl", &blob)) {
 					chunk_t crl_uri;
 					crl_uri.len = 8 +
 						      strlen(oco->crls_dir) +
@@ -852,83 +837,10 @@ void list_crls(bool utc, bool strict)
 	unlock_crl_list("list_crls");
 }
 
-/* extract id and public key from OpenPGP certificate and
- * insert it into a pubkeyrec
- */
-void add_pgp_public_key(pgpcert_t *cert, time_t until,
-			enum dns_auth_level dns_auth_level)
-{
-	struct pubkey *pk;
-	cert_t c;
-
-	c.type = CERT_PGP;
-	c.u.pgp = cert;
-
-	/* we support RSA only */
-	if (cert->pubkeyAlg != PUBKEY_ALG_RSA) {
-		libreswan_log("  RSA public keys supported only");
-		return;
-	}
-
-	pk = allocate_RSA_public_key(c);
-	pk->id.kind = ID_KEY_ID;
-	pk->id.name.ptr = (unsigned char *)cert->fingerprint;
-	pk->id.name.len = PGP_FINGERPRINT_SIZE;
-	pk->dns_auth_level = dns_auth_level;
-	pk->until_time = until;
-	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-	install_public_key(pk, &pluto_pubkeys);
-}
-
 /*
- *  list all PGP end certificates in a chained list
- */
-void list_pgp_end_certs(bool utc)
-{
-	pgpcert_t *cert = pgpcerts;
-
-	/* determine the current time */
-
-	if (cert != NULL) {
-		whack_log(RC_COMMENT, " ");
-		whack_log(RC_COMMENT, "List of PGP End certificates:");
-		whack_log(RC_COMMENT, " ");
-	}
-
-	while (cert != NULL) {
-		unsigned keysize;
-		char buf[ASN1_BUF_LEN];
-		char tbuf[TIMETOA_BUF];
-		cert_t c;
-
-		c.type = CERT_PGP;
-		c.u.pgp = cert;
-
-		whack_log(RC_COMMENT, "%s, count: %d",
-			  timetoa(&cert->installed, utc, tbuf, sizeof(tbuf)),
-			  cert->count);
-		datatot((unsigned char *)cert->fingerprint,
-			PGP_FINGERPRINT_SIZE, 'x', buf, ASN1_BUF_LEN);
-		whack_log(RC_COMMENT, "       fingerprint:  %s", buf);
-		form_keyid(cert->publicExponent, cert->modulus, buf, &keysize);
-		whack_log(RC_COMMENT, "       pubkey:   %4d RSA Key %s%s",
-			  8 * keysize, buf,
-			  (has_private_key(c)) ? ", has private key" : "");
-		whack_log(RC_COMMENT, "       created:  %s",
-			  timetoa(&cert->created, utc, tbuf, sizeof(tbuf)));
-		whack_log(RC_COMMENT, "       until:    %s %s",
-			  timetoa(&cert->until, utc, tbuf, sizeof(tbuf)),
-			  check_expiry(cert->until, CA_CERT_WARNING_INTERVAL,
-				       TRUE));
-		cert = cert->next;
-	}
-}
-
-/*
- *  list all X.509 and OpenPGP end certificates
+ *  list all X.509 end certificates
  */
 void list_certs(bool utc)
 {
 	list_x509_end_certs(utc);
-	list_pgp_end_certs(utc);
 }

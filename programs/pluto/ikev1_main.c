@@ -48,7 +48,6 @@
 #include "state.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -134,9 +133,9 @@ stf_status main_outI1(int whack_sock,
 		numvidtosend++;
 	}
 
-#if SEND_PLUTO_VID || defined(openpgp_peer)
-	numvidtosend++;
-#endif
+	if (c->send_vendorid) {
+		numvidtosend++;
+	}
 #ifdef XAUTH
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
 		numvidtosend++;
@@ -216,14 +215,13 @@ stf_status main_outI1(int whack_sock,
 			     "sa in main_outI1");
 	}
 
-	if (SEND_PLUTO_VID || c->spd.this.cert.type == CERT_PGP) {
-		const char *vendorid = (c->spd.this.cert.type == CERT_PGP) ?
-				       pgp_vendorid : pluto_vendorid;
+	if (c->send_vendorid) {
+		char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
-				     vendorid, strlen(vendorid), "Vendor ID"))
+				     myvid, strlen(myvid), "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -615,42 +613,8 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	struct connection *c;
 	pb_stream r_sa_pbs;
 
-	/* we are looking for an OpenPGP Vendor ID sent by the peer */
-	bool openpgp_peer = FALSE;
-
 	/* Determin how many Vendor ID payloads we will be sending */
-	int next;
 	int numvidtosend = 1; /* we always send DPD VID */
-
-#ifdef NAT_TRAVERSAL
-	if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
-		DBG(DBG_NATT, DBG_log("nat-t detected, sending nat-t VID"));
-		numvidtosend++;
-	}
-#endif
-
-#if SEND_PLUTO_VID || defined(openpgp_peer)
-	numvidtosend++;
-#endif
-
-#if defined(openpgp_peer)
-	{
-		struct payload_digest *p;
-		for (p = md->chain[ISAKMP_NEXT_VID]; p != NULL; p = p->next) {
-			int vid_len = sizeof(pgp_vendorid) - 1 < pbs_left(
-				&p->pbs) ?
-				      sizeof(pgp_vendorid) - 1 : pbs_left(
-				&p->pbs);
-
-			if (memcmp(pgp_vendorid, p->pbs.cur, vid_len) == 0) {
-				openpgp_peer = TRUE;
-				DBG(DBG_PARSING,
-				    DBG_log("we have an OpenPGP peer")
-				    );
-			}
-		}
-	}
-#endif
 
 	/* random source ports are handled by find_host_connection */
 	c = find_host_connection(&md->iface->ip_addr, pluto_port,
@@ -845,35 +809,18 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* start of SA out */
-	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
-
-		/* if we to send any VID, then set the NEXT payload correctly */
-		r_sa.isasa_np =
-			numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
-			return STF_INTERNAL_ERROR;
+#ifdef NAT_TRAVERSAL
+	/* Increase VID counter for NAT-T VID */
+	if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
+		DBG(DBG_NATT, DBG_log("nat-t detected, sending nat-t VID"));
+		numvidtosend++;
 	}
+#endif
 
-	/* SA body in and out */
-	RETURN_STF_FAILURE(parse_isakmp_sa_body(&sa_pd->pbs,
-						&sa_pd->payload.sa,
-						&r_sa_pbs, FALSE, st));
-
-	if (SEND_PLUTO_VID || openpgp_peer) {
-		const char *vendorid = (openpgp_peer) ?
-				       pgp_vendorid : pluto_vendorid;
-
-		next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_generic_raw(next, &isakmp_vendor_id_desc, &md->rbody,
-				     vendorid, strlen(vendorid), "Vendor ID"))
-			return STF_INTERNAL_ERROR;
+	/* Increase VID counter for VID_CISCO_UNITY */
+	if (c->send_vendorid) {
+		numvidtosend++;
 	}
-
-	/*
-	 * NOW SEND VENDOR ID payloads
-	 */
 
 	/* Increase VID counter for VID_IKE_FRAGMENTATION */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
@@ -886,23 +833,53 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 #endif
 
-	/* Announce our ability to do RFC 3706 Dead Peer Detection */
-	next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-	if ( !out_vid(next, &md->rbody, VID_MISC_DPD))
-		return STF_INTERNAL_ERROR;
+	/* start of SA out */
+	{
+		struct isakmp_sa r_sa = sa_pd->payload.sa;
 
-	/* Announce our ability to do IKE Fragmentation */
+		/* Almost guaranteed to send a VID, set the NEXT payload correctly */
+		r_sa.isasa_np =
+			numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
+	/* SA body in and out */
+	RETURN_STF_FAILURE(parse_isakmp_sa_body(&sa_pd->pbs,
+						&sa_pd->payload.sa,
+						&r_sa_pbs, FALSE, st));
+
+	/*
+	 * NOW SEND VENDOR ID payloads
+	 */
+
+	if (c->send_vendorid) {
+		char *myvid = ipsec_version_vendorid();
+		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
+				     myvid, strlen(myvid), "Vendor ID"))
+			return STF_INTERNAL_ERROR;
+	}
+
+	{
+		/* always announce our ability to do RFC 3706 Dead Peer Detection */
+		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if ( !out_vid(np, &md->rbody, VID_MISC_DPD))
+			return STF_INTERNAL_ERROR;
+	}
+
+	/* Announce our ability to do (non-RFC) IKE Fragmentation */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		next = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(next, &md->rbody, VID_IKE_FRAGMENTATION))
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_IKE_FRAGMENTATION))
 			return STF_INTERNAL_ERROR;
 	}
 
 #ifdef XAUTH
-	/* If XAUTH is required, insert here Vendor ID */
+	/* If XAUTH is required, insert draft-ietf-ipsec-isakmp-xauth-06 Vendor ID */
 	if (c->spd.this.xauth_server || c->spd.this.xauth_client) {
-		next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vendorid(next, &md->rbody, VID_MISC_XAUTH))
+		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vendorid(np, &md->rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
 #endif
@@ -912,29 +889,22 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			      md->quirks.nat_traversal_vid));
 
 	if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
-
-		next = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		/* reply if NAT-Traversal draft is supported */
 		st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(
 								      md->
 								      quirks.
 								      nat_traversal_vid));
 		if ((st->hidden_variables.st_nat_traversal) &&
-		    (!out_vendorid(next,
+		    (!out_vendorid(np,
 				   &
 				   md->rbody, md->quirks.nat_traversal_vid)))
 			return STF_INTERNAL_ERROR;
 	}
 #endif
 
-#ifdef DEBUG
-	/* if we are not 0 then something went very wrong above */
-	if (numvidtosend != 0)
-		libreswan_log(
-			"payload alignment problem please check the code in main_inI1_outR1 (num=%d)",
-			numvidtosend);
-
-#endif
+	/* Ensure our 'next payload' types sync'ed up */
+	passert(numvidtosend == 0);
 
 	close_message(&md->rbody);
 
@@ -1535,7 +1505,6 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	bool send_cert = FALSE;
 	bool send_cr = FALSE;
 	bool initial_contact = FALSE;
-	bool cisco_unity = FALSE;
 	generalName_t *requested_ca = NULL;
 	cert_t mycert = st->st_connection->spd.this.cert;
 

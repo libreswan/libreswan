@@ -404,7 +404,7 @@ enum_names ident_names =
 static const char *const cert_type_name[] = {
 	"CERT_NONE",
 	"CERT_PKCS7_WRAPPED_X509",
-	"CERT_PGP",
+	"CERT_PGP (unsupported)",
 	"CERT_DNS_SIGNED_KEY",
 	"CERT_X509_SIGNATURE",
 	"CERT_X509_KEY_EXCHANGE",
@@ -424,7 +424,7 @@ enum_names cert_type_names =
 static const char *const ikev2_cert_type_name[] = {
 	"CERT_RESERVED",
 	"CERT_PKCS7_WRAPPED_X509",
-	"CERT_PGP",
+	"CERT_PGP (unsupported)",
 	"CERT_DNS_SIGNED_KEY",
 	"CERT_X509_SIGNATURE",
 	"CERT_UNUSED", /* 5 is missing did IETF drop it ? it was in IKEv1 RFC2408 */

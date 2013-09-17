@@ -102,19 +102,20 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_INITIAL_CONTACT] = FALSE;
 	cfg->conn_default.options[KBF_CISCO_UNITY] = FALSE;
+	cfg->conn_default.options[KBF_SEND_VENDORID] = FALSE;
 
 	cfg->conn_default.options[KBF_REMOTEPEERTYPE] = NON_CISCO;
 
-	cfg->conn_default.options[KBF_SHA2_TRUNCBUG] = SHA2_TRUNCBUG_NO;
+	cfg->conn_default.options[KBF_SHA2_TRUNCBUG] = FALSE;
 
 	/*Network Manager support*/
 #ifdef HAVE_NM
-	cfg->conn_default.options[KBF_NMCONFIGURED] = NM_NO;
+	cfg->conn_default.options[KBF_NMCONFIGURED] = FALSE;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	cfg->conn_default.options[KBF_LOOPBACK] = LB_NO;
-	cfg->conn_default.options[KBF_LABELED_IPSEC] = LI_NO;
+	cfg->conn_default.options[KBF_LOOPBACK] = FALSE;
+	cfg->conn_default.options[KBF_LABELED_IPSEC] = FALSE;
 #endif
 
 #ifdef XAUTH

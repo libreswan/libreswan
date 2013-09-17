@@ -1,6 +1,7 @@
 /* Libreswan ISAKMP VendorID Handling
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,7 +27,6 @@
 #include "md5.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #  include <security/pam_appl.h>
@@ -460,8 +460,6 @@ static struct vid_struct vid_tab[] = {
 
 static const char hexdig[] = "0123456789abcdef";
 
-static int vid_struct_init = 0;
-
 /*
  * Setup VendorID structs, and populate them
  * FIXME: This functions leaks a little bit, but these are one time leaks:
@@ -479,15 +477,13 @@ void init_vendorid(void)
 			char *d;
 
 			vid->vid = clone_str(
-				init_pluto_vendorid(), "init_pluto_vendorid");
+				ipsec_version_vendorid(), "init_pluto_vendorid");
+			/* cut terminating NULL which won't go over the wire */
 			vid->vid_len = strlen(vid->vid);
 			d = alloc_bytes(strlen(vid->descr) + 4 +
-					strlen(ipsec_version_code()) +
-					strlen(compile_time_interop_options),
+					strlen(ipsec_version_vendorid()),
 					"self-vendor ID");
-			sprintf(d, "%s %s %s",
-				vid->descr, ipsec_version_code(),
-				compile_time_interop_options);
+			sprintf(d, "%s %s", vid->descr, ipsec_version_code());
 			vid->descr = (const char *)d;
 		} else if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
@@ -544,8 +540,8 @@ void init_vendorid(void)
 			/** Find something to display **/
 			vid->descr = vid->data;
 		}
-#if 0
-		DBG_log("vendorid_init: %d [%s]",
+#if 1
+		DBG_log("init_vendorid: %d [%s]",
 			vid->id,
 			vid->descr ? vid->descr : ""
 			);
@@ -553,7 +549,6 @@ void init_vendorid(void)
 			DBG_dump("VID:", vid->vid, vid->vid_len);
 #endif
 	}
-	vid_struct_init = 1;
 }
 
 /**
@@ -726,9 +721,6 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 {
 	struct vid_struct *pvid;
 
-	if (!vid_struct_init)
-		init_vendorid();
-
 	/*
 	 * Find known VendorID in vid_tab
 	 */
@@ -782,9 +774,6 @@ bool out_vendorid(u_int8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
-	if (!vid_struct_init)
-		init_vendorid();
-
 	for (pvid = vid_tab; pvid->id != 0 && pvid->id != vid; pvid++)
 		;
 
@@ -814,9 +803,6 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
-	if (!vid_struct_init)
-		init_vendorid();
-
 	for (pvid = vid_tab; pvid->id != 0 && pvid->id != vid; pvid++)
 		;
 
@@ -830,10 +816,3 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 	return out_generic_raw(np, &isakmp_vendor_id_desc, outs,
 			       pvid->vid, pvid->vid_len, "V_ID");
 }
-
-/* OpenPGP Vendor ID needed for interoperability with PGPnet
- *
- * Note: it is a NUL-terminated ASCII string, but NUL won't go on the wire.
- */
-const char pgp_vendorid[] = "OpenPGP10171";
-const int pgp_vendorid_len = sizeof(pgp_vendorid);

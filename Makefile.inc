@@ -343,9 +343,6 @@ USE_NETKEY=false
 USE_KLIPS=false
 endif
 
-# Build support for sending Libreswan Vendor IDs
-USE_VENDORID?=true
-
 # Build aggressive mode authentication system code - both Server and Client.
 # This was off by default, since aggressive mode leads to denial of service
 # attacks.
@@ -472,6 +469,9 @@ endif
 ifndef IPSECVERSION
 IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
 export IPSECVERSION
+# VID is a somewhat shortened version, eg "3.5" or "3.5-xxx"
+IPSECVIDVERSION:=$(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
+export IPSECVIDVERSION
 endif
 
 # include OSDEP/ARCH specific makefiles, if any.

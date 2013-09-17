@@ -52,7 +52,6 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -626,8 +625,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	if (kind == PPK_RSA &&
 	    c->spd.this.sendcert != cert_forcedtype &&
 	    (c->spd.this.cert.type == CERT_X509_SIGNATURE ||
-	     c->spd.this.cert.type == CERT_PKCS7_WRAPPED_X509 ||
-	     c->spd.this.cert.type == CERT_PGP)) {
+	     c->spd.this.cert.type == CERT_PKCS7_WRAPPED_X509)) {
 		struct pubkey *my_public_key = allocate_RSA_public_key(
 			c->spd.this.cert);
 		passert(my_public_key != NULL);
@@ -748,7 +746,7 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 }
 
 /* check the existence of an RSA private key matching an RSA public
- * key contained in an X.509 or OpenPGP certificate
+ * key contained in an X.509
  */
 bool has_private_key(cert_t cert)
 {

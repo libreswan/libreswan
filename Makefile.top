@@ -90,7 +90,7 @@ endif
 # USE_ variables determine if features are compiled into Libreswan.
 # export them so that "make env" can get at them
 export USE_IKEPING
-export USE_KLIPS USE_NETKEY USE_VENDORID
+export USE_KLIPS USE_NETKEY 
 export USE_AGGRESSIVE USE_XAUTH USE_XAUTHPAM
 export USE_NAT_TRAVERSAL USE_NAT_TRAVERSAL_TRANSPORT_MODE USE_LDAP
 export USE_LIBCURL

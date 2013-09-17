@@ -122,13 +122,13 @@ struct whack_message {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 
-	/* For DPD 3706 - Dead Peer Detection */
+	/* For IKEv1 RFC 3706 - Dead Peer Detection */
 	time_t dpd_delay;
 	time_t dpd_timeout;
 	enum dpd_action dpd_action;
 	int dpd_count;
 
-	/*Cisco interop:  remote peer type*/
+	/* Cisco interop:  remote peer type*/
 	enum keyword_remotepeertype remotepeertype;
 
 	/* Force the use of NAT-T on a connection */
@@ -139,13 +139,20 @@ struct whack_message {
 
 	/* Option to allow sending INITIAL-CONTACT payload - default is disabled */
 	bool initial_contact;
-	/* Option to just send the VID - the other end will behave differently (ModeCFG + RSA?) */
+
+	/*
+	 * Option to just send the Cisco VID - the other end will behave
+	 * differently (ModeCFG + RSA?)
+	 */
 	bool cisco_unity;
 
-	enum keyword_sha2_truncbug sha2_truncbug;
+	/* send our own libreswan vendorid or not */
+	bool send_vendorid;
+
+	bool sha2_truncbug;
 
 	/* Checking if this connection is configured by Network Manager*/
-	enum keyword_nmconfigured nmconfigured;
+	bool nmconfigured;
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum keyword_xauthby xauthby;
@@ -156,8 +163,8 @@ struct whack_message {
 	/* Force the MTU for this connection */
 	int connmtu;
 
-	enum keyword_loopback loopback;
-	enum keyword_labeled_ipsec labeled_ipsec;
+	bool loopback;
+	bool labeled_ipsec;
 	char *policy_label;
 
 	/*  note that each end contains string 2/5.id, string 3/6 cert,

@@ -189,7 +189,7 @@ static bool fetchline(chunk_t *src, chunk_t *line)
  *
  *  We no longer support decrypting PEM files - those can only come in via NSS
  */
-err_t pemtobin(chunk_t *blob, bool *pgp)
+err_t pemtobin(chunk_t *blob)
 {
 	typedef enum {
 		PEM_PRE    = 0,
@@ -212,7 +212,6 @@ err_t pemtobin(chunk_t *blob, bool *pgp)
 	while (fetchline(&src, &line)) {
 		if (state == PEM_PRE) {
 			if (find_boundary("BEGIN", &line)) {
-				*pgp = FALSE;
 				state = PEM_MSG;
 			}
 			continue;
@@ -260,18 +259,6 @@ err_t pemtobin(chunk_t *blob, bool *pgp)
 				/* remove any trailing whitespace */
 				if (!extract_token(&data, ' ', &line))
 					data = line;
-
-				/* check for PGP armor checksum */
-				if (*data.ptr == '=') {
-					*pgp = TRUE;
-					data.ptr++;
-					data.len--;
-					DBG(DBG_PARSING,
-					    DBG_log("  Armor checksum: %.*s",
-						    (int)data.len, data.ptr);
-					    );
-					continue;
-				}
 
 				ugh = ttodata((char *)data.ptr, data.len, 64,
 					      (char *)dst.ptr,

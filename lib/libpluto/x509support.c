@@ -36,7 +36,6 @@
 #include "ac.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 
 void unshare_ietfAttrList(ietfAttrList_t **listp)
