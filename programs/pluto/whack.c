@@ -1575,7 +1575,7 @@ int main(int argc, char **argv)
 			if ( strcmp(optarg, "restart") == 0)
 				msg.dpd_action = DPD_ACTION_RESTART;
 			if ( strcmp(optarg, "restart_by_peer") == 0)
-				msg.dpd_action = DPD_ACTION_RESTART_BY_PEER;
+				msg.dpd_action = DPD_ACTION_RESTART;
 			continue;
 
 		case CD_IKE: /* --ike <ike_alg1,ike_alg2,...> */
@@ -2009,11 +2009,9 @@ int main(int argc, char **argv)
 
 
 	if (msg.dpd_action != DPD_ACTION_CLEAR && msg.dpd_action !=
-	    DPD_ACTION_HOLD &&
-	    msg.dpd_action != DPD_ACTION_RESTART && msg.dpd_action !=
-	    DPD_ACTION_RESTART_BY_PEER) {
+	    DPD_ACTION_HOLD && msg.dpd_action != DPD_ACTION_RESTART) {
 		diag(
-			"dpdaction can only be \"clear\", \"hold\", \"restart\" or \"restart_by_peer\", defaulting to \"hold\"");
+			"dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
 		msg.dpd_action = DPD_ACTION_HOLD;
 	}
 
