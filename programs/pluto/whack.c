@@ -143,7 +143,7 @@ static void help(void)
 		" [--forceencaps] [--no-nat_keepalive]"
 		" \\\n   "
 		" [--dpddelay <seconds> --dpdtimeout <seconds>]"
-		" [--dpdaction (clear|hold|restart|restart_by_peer)]"
+		" [--dpdaction (clear|hold|restart)]"
 		" \\\n   "
 
 #ifdef XAUTH
@@ -1574,6 +1574,7 @@ int main(int argc, char **argv)
 				msg.dpd_action = DPD_ACTION_HOLD;
 			if ( strcmp(optarg, "restart") == 0)
 				msg.dpd_action = DPD_ACTION_RESTART;
+			/* obsolete (not advertised) option for compatibility */
 			if ( strcmp(optarg, "restart_by_peer") == 0)
 				msg.dpd_action = DPD_ACTION_RESTART;
 			continue;
