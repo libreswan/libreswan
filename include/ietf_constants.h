@@ -416,6 +416,9 @@ enum next_payload_types {
 #define    INTERNAL_IP4_SUBNET        13
 #define    SUPPORTED_ATTRIBUTES       14
 #define    INTERNAL_IP6_SUBNET        15
+#define    MIP6_HOME_PREFIX           16
+#define    INTERNAL_IP6_LINK          17
+#define    INTERNAL_IP6_PREFIX        18
 
 /* 65001 - 65535 Private Use */
 
@@ -466,7 +469,7 @@ enum next_payload_types {
 #define XAUTH_TYPE_OTP     2
 #define XAUTH_TYPE_SKEY    3
 
-/* Mode Config attribute values: Cisco interop */
+/* Unity (Cisco) Mode Config attribute values */
 #define   CISCO_BANNER               28672
 #define   CISCO_SAVE_PW              28673
 #define   CISCO_DEF_DOMAIN           28674
@@ -478,6 +481,7 @@ enum next_payload_types {
 #define   CISCO_FW_TYPE              28680
 #define   CISCO_BACKUP_SERVER        28681
 #define   CISCO_DDNS_HOSTNAME        28682
+#define   CISCO_UNKNOWN_SEEN_ON_IPHONE        28683
 
 /* checkpoint extended authentication attributes */
 #define CHKPT_TYPE                   13
