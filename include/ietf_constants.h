@@ -361,7 +361,7 @@ enum next_payload_types {
 	ISAKMP_NEXT_N        =  11,     /* Notification */
 	ISAKMP_NEXT_D        =  12,     /* Delete */
 	ISAKMP_NEXT_VID      =  13,     /* Vendor ID */
-	ISAKMP_NEXT_ATTR     =  14,     /* Mode config Attribute */
+	ISAKMP_NEXT_MCFG_ATTR  =  14,     /* Mode config Attribute */
 	ISAKMP_NEXT_NATD_BADDRAFTS =15, /* NAT-Traversal: NAT-D (bad drafts) */
 	/* !!! Conflicts with RFC 3547 */
 	ISAKMP_NEXT_NATD_RFC  = 20,     /* NAT-Traversal: NAT-D (rfc) */
@@ -463,6 +463,11 @@ enum next_payload_types {
 #define    XAUTH_STATUS              16527
 #define    XAUTH_NEXT_PIN            16528
 #define    XAUTH_ANSWER              16529
+
+/* Values of XAUTH_STATUS attribute (draft-ietf-ipsec-isakmp-xauth-06 4.2) */
+#define    XAUTH_STATUS_FAIL	0
+#define    XAUTH_STATUS_OK	1
+
 
 #define XAUTH_TYPE_GENERIC 0
 #define XAUTH_TYPE_CHAP    1

@@ -551,24 +551,24 @@ static const struct state_microcode state_microcode_table[] = {
 #ifdef XAUTH
 	{ STATE_XAUTH_R0, STATE_XAUTH_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_NULL, xauth_inR0 }, /*Re-transmit may be done by previous state*/
 
 	{ STATE_XAUTH_R1, STATE_MAIN_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR1 },
 
 #if 0
 	/* for situation where there is XAUTH + ModeCFG */
 	{ STATE_XAUTH_R2, STATE_XAUTH_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR2 },
 
 	{ STATE_XAUTH_R3, STATE_MAIN_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR3 },
 #endif
 #endif
@@ -585,12 +585,12 @@ static const struct state_microcode state_microcode_table[] = {
 
 	{ STATE_MODE_CFG_R0, STATE_MODE_CFG_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR0 },
 
 	{ STATE_MODE_CFG_R1, STATE_MODE_CFG_R2,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR1 },
 
 	{ STATE_MODE_CFG_R2, STATE_UNDEFINED,
@@ -600,19 +600,19 @@ static const struct state_microcode state_microcode_table[] = {
 
 	{ STATE_MODE_CFG_I1, STATE_MAIN_I4,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR1 },
 #endif
 
 #ifdef XAUTH
 	{ STATE_XAUTH_I0, STATE_XAUTH_I1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, xauth_inI0 },
 
 	{ STATE_XAUTH_I1, STATE_MAIN_I4,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, xauth_inI1 },
 #endif
 
