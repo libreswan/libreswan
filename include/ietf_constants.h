@@ -488,6 +488,11 @@ enum next_payload_types {
 #define XAUTH_STATUS_OK	1
 
 
+/* Values of XAUTH_STATUS attribute (draft-ietf-ipsec-isakmp-xauth-06 4.2) */
+#define    XAUTH_STATUS_FAIL	0
+#define    XAUTH_STATUS_OK	1
+
+
 #define XAUTH_TYPE_GENERIC 0
 #define XAUTH_TYPE_CHAP 1
 #define XAUTH_TYPE_OTP 2
