@@ -845,7 +845,7 @@ stf_status quick_outI1(int whack_sock,
 
 		replacestr[0] = '\0';
 		if (replacing != SOS_NOBODY)
-			snprintf(replacestr, 32, " to replace #%lu",
+			snprintf(replacestr, sizeof(replacestr), " to replace #%lu",
 				 replacing);
 
 		libreswan_log(
