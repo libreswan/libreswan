@@ -1431,7 +1431,7 @@ void show_setup_plutomain()
 		no_retransmits ? "no" : "yes",
 		force_busy ? "yes" : "no");
 
-        whack_log(RC_COMMENT, "ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%d, listen=%s",
+        whack_log(RC_COMMENT, "ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%ld, listen=%s",
 		pluto_port,
 		strict_crl_policy ? "yes" : "no",
 		crl_check_interval,
