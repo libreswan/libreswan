@@ -2099,7 +2099,7 @@ void process_packet_tail(struct msg_digest **mdp)
 
 				DBG(DBG_PARSING,
 				    DBG_log(
-					    "got payload 0x%qx(%s) needed: 0x%qx opt: 0x%qx",
+					    "got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
 					    s, enum_show(&payload_names, np),
 					    needed, smc->opt_payloads));
 				needed &= ~s;

@@ -60,6 +60,8 @@ typedef int bool;
 #define close_any(fd) do { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; \
 			   } } while (0)
 
+#include <inttypes.h>
+
 #include <prcpucfg.h>
 
 #ifndef BITS_PER_BYTE
@@ -82,7 +84,9 @@ extern char *jam_str(char *dest, size_t size, const char *src);
  * (was 32 in stock FS)
  */
 
-typedef unsigned long long lset_t;
+typedef uint_fast64_t lset_t;
+#define PRIxLSET    PRIxFAST64
+#define LELEM_ROOF  64	/* all elements must be less than this */
 #define LEMPTY 0ULL
 #define LELEM(opt) (1ULL << (opt))
 #define LRANGE(lwb, upb) LRANGES(LELEM(lwb), LELEM(upb))

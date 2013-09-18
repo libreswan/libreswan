@@ -1577,7 +1577,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 				/* No name for this bit, so use hex.
 				 * if snprintf returns a different value from strlen, trunation happened
 				 */
-				(void)snprintf(p, (size_t)(roof - p), "0x%llx",
+				(void)snprintf(p, (size_t)(roof - p), "0x%" PRIxLSET,
 					       bit);
 				p += strlen(p);
 			} else {

@@ -1086,7 +1086,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 				return BAD_PROPOSAL_SYNTAX;
 
 			passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) <
-				32);
+				LELEM_ROOF);
 
 			if (LHAS(seen_attrs, a.isaat_af_type &
 				 ISAKMP_ATTR_RTYPE_MASK)) {
@@ -1749,7 +1749,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 #ifndef HAVE_LABELED_IPSEC
 		/*This check is no longer valid when using security labels as SECCTX attribute is in private range and has value of 32001*/
-		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < 32);
+		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF);
 #endif
 
 		if (LHAS(seen_attrs, a.isaat_af_type &
@@ -1769,10 +1769,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			ipsec_attr_val_descs[a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #ifdef HAVE_LABELED_IPSEC
-		                                /* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < 32, */
-		                                /* so for retaining the same behavior when this is < 32 and if more than >= 32 setting it to 0, */
+		                                /* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
+		                                /* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
 		                                /* which is NULL in ipsec_attr_val_desc*/
-					     >= 32 ? 0 : a.isaat_af_type &
+					     >= LELEM_ROOF ? 0 : a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #endif
 			];
