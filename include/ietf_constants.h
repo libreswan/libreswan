@@ -1,10 +1,12 @@
-/* manifest constants
+/*
+ * manifest constants
  *
- * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -64,7 +66,7 @@
 #endif
 
 #if 0 /* too weak - left only as reference */
-# define MODP768_MODULUS \
+#define MODP768_MODULUS \
 	"FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1 " \
 	"29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD " \
 	"EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245 " \
@@ -262,181 +264,192 @@
 
 #endif
 
-#define LOCALSECRETSIZE         BYTES_FOR_BITS(256)
+#define LOCALSECRETSIZE BYTES_FOR_BITS(256)
 
-/* limits on nonce sizes.  See RFC2409 "The internet key exchange (IKE)" 5 */
-#define MINIMUM_NONCE_SIZE      8       /* bytes */
-#define DEFAULT_NONCE_SIZE      16      /* bytes */
-#define MAXIMUM_NONCE_SIZE      256     /* bytes */
+/* limits on nonce sizes. See RFC2409 "The internet key exchange (IKE)" 5 */
+#define MINIMUM_NONCE_SIZE 8 /* bytes */
+#define DEFAULT_NONCE_SIZE 16 /* bytes */
+#define MAXIMUM_NONCE_SIZE 256 /* bytes */
 
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
 
-#define MD5_DIGEST_SIZE         BYTES_FOR_BITS(128)     /* ought to be supplied by md5.h */
-#define MD5_DIGEST_SIZE_96     BYTES_FOR_BITS(96)       /* IKEV2 integrity algorithms */
-#define SHA1_DIGEST_SIZE        BYTES_FOR_BITS(160)     /* ought to be supplied by sha1.h */
-#define SHA1_BLOCK_SIZE         BYTES_FOR_BITS(512)
-#define SHA1_DIGEST_SIZE_96     BYTES_FOR_BITS(96)      /* IKEV2 integrity algorithms */
+ /* ought to be supplied by md5.h */
+#define MD5_DIGEST_SIZE BYTES_FOR_BITS(128)
+/* IKEV2 integrity algorithms */
+#define MD5_DIGEST_SIZE_96 BYTES_FOR_BITS(96)
+/* ought to be supplied by sha1.h */
+#define SHA1_DIGEST_SIZE BYTES_FOR_BITS(160)
+#define SHA1_BLOCK_SIZE BYTES_FOR_BITS(512)
+/* IKEV2 integrity algorithms */
+#define SHA1_DIGEST_SIZE_96 BYTES_FOR_BITS(96)
 
-#define SHA2_256_DIGEST_SIZE    BYTES_FOR_BITS(256)     /* sha2.h */
-#define SHA2_384_DIGEST_SIZE    BYTES_FOR_BITS(384)
-#define SHA2_512_DIGEST_SIZE    BYTES_FOR_BITS(512)
+#define SHA2_256_DIGEST_SIZE BYTES_FOR_BITS(256) /* sha2.h */
+#define SHA2_384_DIGEST_SIZE BYTES_FOR_BITS(384)
+#define SHA2_512_DIGEST_SIZE BYTES_FOR_BITS(512)
 
-#define DES_CBC_BLOCK_SIZE      BYTES_FOR_BITS(64)
-#define AES_CBC_BLOCK_SIZE      BYTES_FOR_BITS(128)
+#define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
+#define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 
-#define DSS_QBITS       160     /* bits in DSS's "q" (FIPS 186-1) */
+#define DSS_QBITS 160 /* bits in DSS's "q" (FIPS 186-1) */
 
-/* to statically allocate IV, we need max of
+/*
+ * to statically allocate IV, we need max of
  * MD5_DIGEST_SIZE, SHA1_DIGEST_SIZE, and DES_CBC_BLOCK_SIZE.
  * To avoid combinatorial explosion, we leave out DES_CBC_BLOCK_SIZE.
  */
-#define MAX_DIGEST_LEN_OLD (MD5_DIGEST_SIZE > \
-			    SHA1_DIGEST_SIZE ? MD5_DIGEST_SIZE : \
-			    SHA1_DIGEST_SIZE)
+#define MAX_DIGEST_LEN_OLD \
+	(MD5_DIGEST_SIZE > SHA1_DIGEST_SIZE ? MD5_DIGEST_SIZE :	\
+	SHA1_DIGEST_SIZE)
 
 /* for max: SHA2_512 */
 #define MAX_DIGEST_LEN (512 / BITS_PER_BYTE)
 
 /* RFC 2404 "HMAC-SHA-1-96" section 3 */
-#define HMAC_SHA1_KEY_LEN    SHA1_DIGEST_SIZE
+#define HMAC_SHA1_KEY_LEN SHA1_DIGEST_SIZE
 
 /* RFC 2403 "HMAC-MD5-96" section 3 */
-#define HMAC_MD5_KEY_LEN    MD5_DIGEST_SIZE
+#define HMAC_MD5_KEY_LEN MD5_DIGEST_SIZE
 
-#define IKE_UDP_PORT    500
-#define NAT_T_IKE_FLOAT_PORT 4500       /* RFC-3947 */
-#define NON_ESP_MARKER_SIZE 4           /* RFC3948: bytes of zeros, same size as ESP SPI */
+#define IKE_UDP_PORT 500
+#define NAT_T_IKE_FLOAT_PORT 4500 /* RFC-3947 */
+/* RFC3948: bytes of zeros, same size as ESP SPI */
+#define NON_ESP_MARKER_SIZE 4
 
 /* Version numbers - IKEv1 */
-#define ISAKMP_MAJOR_VERSION   0x1
-#define ISAKMP_MINOR_VERSION   0x0
+#define ISAKMP_MAJOR_VERSION 0x1
+#define ISAKMP_MINOR_VERSION 0x0
 
 /* version numbers - IKEv2 */
-#define IKEv2_MAJOR_VERSION    0x2
-#define IKEv2_MINOR_VERSION    0x0
+#define IKEv2_MAJOR_VERSION 0x2
+#define IKEv2_MINOR_VERSION 0x0
 
-/* bumped versions for testing with --impair-major-version-bump and --impair-minor-version-bump */
-#define IKEv2_MAJOR_BUMP       0x3
-#define IKEv2_MINOR_BUMP       0x1
+/*
+ * bumped versions for testing with --impair-major-version-bump
+ * and --impair-minor-version-bump
+ */
+#define IKEv2_MAJOR_BUMP 0x3
+#define IKEv2_MINOR_BUMP 0x1
 
 /* Domain of Interpretation */
-#define ISAKMP_DOI_ISAKMP          0
-#define ISAKMP_DOI_IPSEC           1
+#define ISAKMP_DOI_ISAKMP 0
+#define ISAKMP_DOI_IPSEC 1
 
 /* IPsec DOI things */
 
 #define IPSEC_DOI_SITUATION_LENGTH 4
-#define IPSEC_DOI_LDI_LENGTH       4
-#define IPSEC_DOI_SPI_SIZE         4
+#define IPSEC_DOI_LDI_LENGTH 4
+#define IPSEC_DOI_SPI_SIZE 4
 
-/* SPI value 0 is invalid and values 1-255 are reserved to IANA.
+/*
+ * SPI value 0 is invalid and values 1-255 are reserved to IANA.
  * ESP: RFC 2402 2.4; AH: RFC 2406 2.1
  * IPComp RFC 2393 substitutes a CPI in the place of an SPI.
  * see also draft-shacham-ippcp-rfc2393bis-05.txt.
  * We (Libreswan) reserve 0x100 to 0xFFF for manual keying, so
  * Pluto won't generate these values.
  */
-#define IPSEC_DOI_SPI_MIN          0x100
-#define IPSEC_DOI_SPI_OUR_MIN      0x1000
+#define IPSEC_DOI_SPI_MIN 0x100
+#define IPSEC_DOI_SPI_OUR_MIN 0x1000
 
-/* Payload types
+/*
+ * Payload types
  * RFC2408 Internet Security Association and Key Management Protocol (ISAKMP)
  * section 3.1
  *
  * RESERVED 14-127
  * Private USE 128-255
  */
-
 enum next_payload_types {
-	ISAKMP_NEXT_NONE     =  0,      /* No other payload following */
-	ISAKMP_NEXT_SA       =  1,      /* Security Association */
-	ISAKMP_NEXT_P        =  2,      /* Proposal */
-	ISAKMP_NEXT_T        =  3,      /* Transform */
-	ISAKMP_NEXT_KE       =  4,      /* Key Exchange */
-	ISAKMP_NEXT_ID       =  5,      /* Identification */
-	ISAKMP_NEXT_CERT     =  6,      /* Certificate */
-	ISAKMP_NEXT_CR       =  7,      /* Certificate Request */
-	ISAKMP_NEXT_HASH     =  8,      /* Hash */
-	ISAKMP_NEXT_SIG      =  9,      /* Signature */
-	ISAKMP_NEXT_NONCE    =  10,     /* Nonce */
-	ISAKMP_NEXT_N        =  11,     /* Notification */
-	ISAKMP_NEXT_D        =  12,     /* Delete */
-	ISAKMP_NEXT_VID      =  13,     /* Vendor ID */
-	ISAKMP_NEXT_MCFG_ATTR  =  14,     /* Mode config Attribute */
-	ISAKMP_NEXT_NATD_BADDRAFTS =15, /* NAT-Traversal: NAT-D (bad drafts) */
-	/* !!! Conflicts with RFC 3547 */
-	ISAKMP_NEXT_NATD_RFC  = 20,     /* NAT-Traversal: NAT-D (rfc) */
-	ISAKMP_NEXT_NATOA_RFC = 21,     /* NAT-Traversal: NAT-OA (rfc) */
+	ISAKMP_NEXT_NONE = 0, /* No other payload following */
+	ISAKMP_NEXT_SA = 1, /* Security Association */
+	ISAKMP_NEXT_P = 2, /* Proposal */
+	ISAKMP_NEXT_T = 3, /* Transform */
+	ISAKMP_NEXT_KE = 4, /* Key Exchange */
+	ISAKMP_NEXT_ID = 5, /* Identification */
+	ISAKMP_NEXT_CERT = 6, /* Certificate */
+	ISAKMP_NEXT_CR = 7, /* Certificate Request */
+	ISAKMP_NEXT_HASH = 8, /* Hash */
+	ISAKMP_NEXT_SIG = 9, /* Signature */
+	ISAKMP_NEXT_NONCE = 10, /* Nonce */
+	ISAKMP_NEXT_N = 11, /* Notification */
+	ISAKMP_NEXT_D = 12, /* Delete */
+	ISAKMP_NEXT_VID = 13, /* Vendor ID */
+	ISAKMP_NEXT_MCFG_ATTR = 14, /* Mode config Attribute */
+	/* NAT-Traversal: NAT-D (bad drafts) Conflicts with RFC 3547 */
+	ISAKMP_NEXT_NATD_BADDRAFTS = 15,
+	ISAKMP_NEXT_NATD_RFC = 20, /* NAT-Traversal: NAT-D (rfc) */
+	ISAKMP_NEXT_NATOA_RFC = 21, /* NAT-Traversal: NAT-OA (rfc) */
 
-	ISAKMP_NEXT_v2SA  = 33,         /* security association */
-	ISAKMP_NEXT_v2KE  = 34,         /* key exchange payload */
-	ISAKMP_NEXT_v2IDi = 35,         /* Initiator ID payload */
-	ISAKMP_NEXT_v2IDr = 36,         /* Responder ID payload */
-	ISAKMP_NEXT_v2CERT= 37,         /* Certificate */
-	ISAKMP_NEXT_v2CERTREQ= 38,      /* Certificate Request */
-	ISAKMP_NEXT_v2AUTH= 39,         /* Authentication */
-	ISAKMP_NEXT_v2Ni  = 40,         /* Nonce - initiator */
-	ISAKMP_NEXT_v2Nr  = 40,         /* Nonce - responder */
-	ISAKMP_NEXT_v2N   = 41,         /* Notify */
-	ISAKMP_NEXT_v2D   = 42,         /* Delete */
-	ISAKMP_NEXT_v2V   = 43,         /* Vendor ID */
-	ISAKMP_NEXT_v2TSi = 44,         /* Traffic Selector, initiator */
-	ISAKMP_NEXT_v2TSr = 45,         /* Traffic Selector, responder */
-	ISAKMP_NEXT_v2E   = 46,         /* Encrypted payload */
-	ISAKMP_NEXT_v2CP  = 47,         /* Configuration payload (MODECFG) */
-	ISAKMP_NEXT_v2EAP = 48,         /* Extensible authentication*/
+	ISAKMP_NEXT_v2SA = 33, /* security association */
+	ISAKMP_NEXT_v2KE = 34, /* key exchange payload */
+	ISAKMP_NEXT_v2IDi = 35, /* Initiator ID payload */
+	ISAKMP_NEXT_v2IDr = 36, /* Responder ID payload */
+	ISAKMP_NEXT_v2CERT = 37, /* Certificate */
+	ISAKMP_NEXT_v2CERTREQ = 38, /* Certificate Request */
+	ISAKMP_NEXT_v2AUTH = 39, /* Authentication */
+	ISAKMP_NEXT_v2Ni = 40, /* Nonce - initiator */
+	ISAKMP_NEXT_v2Nr = 40, /* Nonce - responder */
+	ISAKMP_NEXT_v2N = 41, /* Notify */
+	ISAKMP_NEXT_v2D = 42, /* Delete */
+	ISAKMP_NEXT_v2V = 43, /* Vendor ID */
+	ISAKMP_NEXT_v2TSi = 44, /* Traffic Selector, initiator */
+	ISAKMP_NEXT_v2TSr = 45, /* Traffic Selector, responder */
+	ISAKMP_NEXT_v2E = 46, /* Encrypted payload */
+	ISAKMP_NEXT_v2CP = 47, /* Configuration payload (MODECFG) */
+	ISAKMP_NEXT_v2EAP = 48, /* Extensible authentication*/
 
-	ISAKMP_NEXT_ROOF  = 49,         /* roof on payload types */
+	ISAKMP_NEXT_ROOF = 49, /* roof on payload types */
 
 	/* SPECIAL CASES */
-	ISAKMP_NEXT_NATD_DRAFTS  = 130,         /* NAT-Traversal: NAT-D (drafts) */
-	ISAKMP_NEXT_NATOA_DRAFTS = 131,         /* NAT-Traversal: NAT-OA (drafts) */
-	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,    /* Cisco proprietary IKE fragmentation */
+	ISAKMP_NEXT_NATD_DRAFTS = 130, /* NAT-Traversal: NAT-D (drafts) */
+	ISAKMP_NEXT_NATOA_DRAFTS = 131, /* NAT-Traversal: NAT-OA (drafts) */
+	/* Cisco proprietary IKE fragmentation */
+	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
 };
 
-/* These values are to be used within the Type field of an Attribute (14)
- *    ISAKMP payload.  */
-#define ISAKMP_CFG_REQUEST         1
-#define ISAKMP_CFG_REPLY           2
-#define ISAKMP_CFG_SET             3
-#define ISAKMP_CFG_ACK             4
+/*
+ * These values are to be used within the Type field of an Attribute (14)
+ * ISAKMP payload.
+ */
+#define ISAKMP_CFG_REQUEST 1
+#define ISAKMP_CFG_REPLY 2
+#define ISAKMP_CFG_SET 3
+#define ISAKMP_CFG_ACK 4
 
 /* Mode Config attribute values */
-#define    INTERNAL_IP4_ADDRESS        1
-#define    INTERNAL_IP4_NETMASK        2
-#define    INTERNAL_IP4_DNS            3
-#define    INTERNAL_IP4_NBNS           4 /* unused by us, WINS is long dead */
-#define    INTERNAL_ADDRESS_EXPIRY     5
-#define    INTERNAL_IP4_DHCP           6
-#define    APPLICATION_VERSION         7
-#define    INTERNAL_IP6_ADDRESS        8
-#define    INTERNAL_IP6_NETMASK        9
-#define    INTERNAL_IP6_DNS           10
-#define    INTERNAL_IP6_NBNS          11
-#define    INTERNAL_IP6_DHCP          12
-#define    INTERNAL_IP4_SUBNET        13
-#define    SUPPORTED_ATTRIBUTES       14
-#define    INTERNAL_IP6_SUBNET        15
-#define    MIP6_HOME_PREFIX           16
-#define    INTERNAL_IP6_LINK          17
-#define    INTERNAL_IP6_PREFIX        18
+#define INTERNAL_IP4_ADDRESS 1
+#define INTERNAL_IP4_NETMASK 2
+#define INTERNAL_IP4_DNS 3
+#define INTERNAL_IP4_NBNS 4 /* unused by us, WINS is long dead */
+#define INTERNAL_ADDRESS_EXPIRY 5
+#define INTERNAL_IP4_DHCP 6
+#define APPLICATION_VERSION 7
+#define INTERNAL_IP6_ADDRESS 8
+#define INTERNAL_IP6_NETMASK 9
+#define INTERNAL_IP6_DNS 10
+#define INTERNAL_IP6_NBNS 11
+#define INTERNAL_IP6_DHCP 12
+#define INTERNAL_IP4_SUBNET 13
+#define SUPPORTED_ATTRIBUTES 14
+#define INTERNAL_IP6_SUBNET 15
+#define MIP6_HOME_PREFIX 16
+#define INTERNAL_IP6_LINK 17
+#define INTERNAL_IP6_PREFIX 18
 
 /* 65001 - 65535 Private Use */
-
-#define FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I       65500
-
+#define FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I 65500
 /* extended authentication modes */
-#define XAUTH_AUTH_INIT_PSK             65001
-#define XAUTH_AUTH_RESP_PSK             65002
-#define XAUTH_AUTH_INIT_DSS             65003
-#define XAUTH_AUTH_RESP_DSS             65004
-#define XAUTH_AUTH_INIT_RSA             65005
-#define XAUTH_AUTH_RESP_RSA             65006
-#define XAUTH_AUTH_INIT_RSA_ENC         65007
-#define XAUTH_AUTH_RESP_RSA_ENC         65008
-#define XAUTH_AUTH_INIT_RSA_REV         65009
-#define XAUTH_AUTH_RESP_RSA_REV         65010
+#define XAUTH_AUTH_INIT_PSK 65001
+#define XAUTH_AUTH_RESP_PSK 65002
+#define XAUTH_AUTH_INIT_DSS 65003
+#define XAUTH_AUTH_RESP_DSS 65004
+#define XAUTH_AUTH_INIT_RSA 65005
+#define XAUTH_AUTH_RESP_RSA 65006
+#define XAUTH_AUTH_INIT_RSA_ENC 65007
+#define XAUTH_AUTH_RESP_RSA_ENC 65008
+#define XAUTH_AUTH_INIT_RSA_REV 65009
+#define XAUTH_AUTH_RESP_RSA_REV 65010
 
 /*
  * GSS mode - should only be allowed after receiving vendorids:
@@ -444,147 +457,145 @@ enum next_payload_types {
  * MD5("GSSAPI") (recognized by Windows 2000)
  * MD5("MS NT5 ISAKMPOAKLEY") (sent by Windows 2000)
  */
-#define OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB      65001
-#define OAKLEY_ATTR_GSS_ID              16384
-#define MAXPADLWORD                     20
+/*
+ * Note: OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB conflicts
+ * with XAUTH_AUTH_INIT_PSK
+ */
+#define OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB 65001
+#define OAKLEY_ATTR_GSS_ID 16384
+#define MAXPADLWORD 20
 
 /* hybrid authentication modes */
-#define HYBRID_AUTH_INIT_RSA            64221
-#define HYBRID_AUTH_RESP_RSA            64222
-#define HYBRID_AUTH_INIT_DSS            64223
-#define HYBRID_AUTH_RESP_DSS            64224
+#define HYBRID_AUTH_INIT_RSA 64221
+#define HYBRID_AUTH_RESP_RSA 64222
+#define HYBRID_AUTH_INIT_DSS 64223
+#define HYBRID_AUTH_RESP_DSS 64224
 
 /* XAUTH attribute values */
-#define    XAUTH_TYPE                16520
-#define    XAUTH_USER_NAME           16521
-#define    XAUTH_USER_PASSWORD       16522
-#define    XAUTH_PASSCODE            16523
-#define    XAUTH_MESSAGE             16524
-#define    XAUTH_CHALLENGE           16525
-#define    XAUTH_DOMAIN              16526
-#define    XAUTH_STATUS              16527
-#define    XAUTH_NEXT_PIN            16528
-#define    XAUTH_ANSWER              16529
+#define XAUTH_TYPE 16520
+#define XAUTH_USER_NAME 16521
+#define XAUTH_USER_PASSWORD 16522
+#define XAUTH_PASSCODE 16523
+#define XAUTH_MESSAGE 16524
+#define XAUTH_CHALLENGE 16525
+#define XAUTH_DOMAIN 16526
+#define XAUTH_STATUS 16527
+#define XAUTH_NEXT_PIN 16528
+#define XAUTH_ANSWER 16529
 
 /* Values of XAUTH_STATUS attribute (draft-ietf-ipsec-isakmp-xauth-06 4.2) */
-#define    XAUTH_STATUS_FAIL	0
-#define    XAUTH_STATUS_OK	1
+#define XAUTH_STATUS_FAIL	0
+#define XAUTH_STATUS_OK	1
 
 
 #define XAUTH_TYPE_GENERIC 0
-#define XAUTH_TYPE_CHAP    1
-#define XAUTH_TYPE_OTP     2
-#define XAUTH_TYPE_SKEY    3
+#define XAUTH_TYPE_CHAP 1
+#define XAUTH_TYPE_OTP 2
+#define XAUTH_TYPE_SKEY 3
 
 /* Unity (Cisco) Mode Config attribute values */
-#define   CISCO_BANNER               28672
-#define   CISCO_SAVE_PW              28673
-#define   CISCO_DEF_DOMAIN           28674
-#define   CISCO_SPLIT_DNS            28675
-#define   CISCO_SPLIT_INC            28676
-#define   CISCO_UDP_ENCAP_PORT       28677
-#define   CISCO_SPLIT_EXCLUDE        28678
-#define   CISCO_DO_PFS               28679
-#define   CISCO_FW_TYPE              28680
-#define   CISCO_BACKUP_SERVER        28681
-#define   CISCO_DDNS_HOSTNAME        28682
-#define   CISCO_UNKNOWN_SEEN_ON_IPHONE        28683
+#define CISCO_BANNER 28672
+#define CISCO_SAVE_PW 28673
+#define CISCO_DEF_DOMAIN 28674
+#define CISCO_SPLIT_DNS 28675
+#define CISCO_SPLIT_INC 28676
+#define CISCO_UDP_ENCAP_PORT 28677
+#define CISCO_SPLIT_EXCLUDE 28678
+#define CISCO_DO_PFS 28679
+#define CISCO_FW_TYPE 28680
+#define CISCO_BACKUP_SERVER 28681
+#define CISCO_DDNS_HOSTNAME 28682
+#define CISCO_UNKNOWN_SEEN_ON_IPHONE 28683
 
 /* checkpoint extended authentication attributes */
-#define CHKPT_TYPE                   13
-#define CHKPT_USER_NAME              14
-#define CHKPT_USER_PASSWORD          15
-#define CHKPT_MESSAGE                17
-#define CHKPT_CHALLENGE              18
-#define CHKPT_STATUS                 20
+#define CHKPT_TYPE 13
+#define CHKPT_USER_NAME 14
+#define CHKPT_USER_PASSWORD 15
+#define CHKPT_MESSAGE 17
+#define CHKPT_CHALLENGE 18
+#define CHKPT_STATUS 20
 
 /* checkpoint configuration attributes */
-#define CHKPT_DEF_DOMAIN             16387
-#define CHKPT_MAC_ADDRESS            16388
-#define CHKPT_MARCIPAN_REASON_CODE   16389
-#define CHKPT_UNKNOWN1               16400
-#define CHKPT_UNKNOWN2               16401
-#define CHKPT_UNKNOWN3               16402
+#define CHKPT_DEF_DOMAIN 16387
+#define CHKPT_MAC_ADDRESS 16388
+#define CHKPT_MARCIPAN_REASON_CODE 16389
+#define CHKPT_UNKNOWN1 16400
+#define CHKPT_UNKNOWN2 16401
+#define CHKPT_UNKNOWN3 16402
 
 /*
-   extern enum_names modecfg_attr_names;
-   extern enum_names xauth_type_names;
- */
-
-/* Exchange types
+ * Exchange types
  * RFC2408 "Internet Security Association and Key Management Protocol (ISAKMP)"
  * section 3.1
  *
- * ISAKMP Future Use     6 - 31
- * DOI Specific Use     32 - 239
- * Private Use         240 - 255
+ * ISAKMP Future Use 6 - 31
+ * DOI Specific Use 32 - 239
+ * Private Use 240 - 255
  *
  * Note: draft-ietf-ipsec-dhless-enc-mode-00.txt Appendix A
  * defines "DHless RSA Encryption" as 6.
  */
 
-/*
-   extern enum_names exchange_names;
- */
-
 enum isakmp_xchg_types {
-	ISAKMP_XCHG_NONE=0,
-	ISAKMP_XCHG_BASE=1,
-	ISAKMP_XCHG_IDPROT=2,   /* ID Protection */
-	ISAKMP_XCHG_AO=3,       /* Authentication Only */
-	ISAKMP_XCHG_AGGR=4,     /* Aggressive */
-	ISAKMP_XCHG_INFO=5,     /* Informational */
-	ISAKMP_XCHG_MODE_CFG=6, /* Mode Config */
+	ISAKMP_XCHG_NONE = 0,
+	ISAKMP_XCHG_BASE = 1,
+	ISAKMP_XCHG_IDPROT = 2, /* ID Protection */
+	ISAKMP_XCHG_AO = 3, /* Authentication Only */
+	ISAKMP_XCHG_AGGR = 4, /* Aggressive */
+	ISAKMP_XCHG_INFO = 5, /* Informational */
+	ISAKMP_XCHG_MODE_CFG = 6, /* Mode Config */
 
 	/* Private exchanges to pluto -- tried to write an RFC */
-	ISAKMP_XCHG_ECHOREQUEST=30,     /* Echo Request */
-	ISAKMP_XCHG_ECHOREPLY=31,       /* Echo Reply   */
+	ISAKMP_XCHG_ECHOREQUEST = 30, /* Echo Request */
+	ISAKMP_XCHG_ECHOREPLY = 31, /* Echo Reply */
 
 	/* Extra exchange types, defined by Oakley
 	 * RFC2409 "The Internet Key Exchange (IKE)", near end of Appendix A
 	 */
-	ISAKMP_XCHG_QUICK=32,   /* Oakley Quick Mode */
-	ISAKMP_XCHG_NGRP=33,    /* Oakley New Group Mode */
+	ISAKMP_XCHG_QUICK = 32, /* Oakley Quick Mode */
+	ISAKMP_XCHG_NGRP = 33, /* Oakley New Group Mode */
 
 	/* IKEv2 things */
-	ISAKMP_v2_SA_INIT=34,
-	ISAKMP_v2_AUTH=35,
-	ISAKMP_v2_CHILD_SA=36,
-	ISAKMP_v2_INFORMATIONAL=37,
+	ISAKMP_v2_SA_INIT = 34,
+	ISAKMP_v2_AUTH = 35,
+	ISAKMP_v2_CHILD_SA = 36,
+	ISAKMP_v2_INFORMATIONAL = 37,
 
-	ISAKMP_XCHG_ECHOREQUEST_PRIVATE=244,    /* Private Echo Request */
-	ISAKMP_XCHG_ECHOREPLY_PRIVATE=245,      /* Private Echo Reply   */
+	ISAKMP_XCHG_ECHOREQUEST_PRIVATE = 244, /* Private Echo Request */
+	ISAKMP_XCHG_ECHOREPLY_PRIVATE = 245, /* Private Echo Reply */
 };
 
 /* Flag bits */
-#define ISAKMP_FLAGS_E         (1 << 0)         /* bit 0 of flags --- encrypt  */
-#define ISAKMP_FLAGS_C         (1 << 1)         /* bit 1 of flags --- commit   */
-#define ISAKMP_FLAGS_I         (1 << 3)         /* bit 3 of flags --- initiator */
-#define ISAKMP_FLAGS_V         (1 << 4)         /* bit 4 of flags --- version */
-#define ISAKMP_FLAGS_R         (1 << 5)         /* bit 5 of flags --- response */
+#define ISAKMP_FLAGS_E (1 << 0) /* bit 0 of flags --- encrypt */
+#define ISAKMP_FLAGS_C (1 << 1) /* bit 1 of flags --- commit */
+#define ISAKMP_FLAGS_I (1 << 3) /* bit 3 of flags --- initiator */
+#define ISAKMP_FLAGS_V (1 << 4) /* bit 4 of flags --- version */
+#define ISAKMP_FLAGS_R (1 << 5) /* bit 5 of flags --- response */
 extern const char *const flag_bit_names[];
 
-#define ISAKMP_FLAG_ENCRYPTION   0x1  /* repeat of above */
-#define ISAKMP_FLAG_COMMIT       0x2
+#define ISAKMP_FLAG_ENCRYPTION 0x1 /* repeat of above */
+#define ISAKMP_FLAG_COMMIT 0x2
 
 /* Situation definition for IPsec DOI */
 extern const char *const sit_bit_names[];
 
-#define SIT_IDENTITY_ONLY        0x01
-#define SIT_SECRECY              0x02
-#define SIT_INTEGRITY            0x04
+#define SIT_IDENTITY_ONLY 0x01
+#define SIT_SECRECY 0x02
+#define SIT_INTEGRITY 0x04
 
-/* See http://tools.ietf.org/html/rfc5996#section-3.2 */
-/* Critical bit in each payload */
-/* extern enum_names critical_names; */
+/*
+ * See http://tools.ietf.org/html/rfc5996#section-3.2
+ * Critical bit in each payload
+ */
 extern const char *const critical_names[];
-#define ISAKMP_PAYLOAD_NONCRITICAL  0x00
-#define ISAKMP_PAYLOAD_CRITICAL     0x80
+#define ISAKMP_PAYLOAD_NONCRITICAL 0x00
+#define ISAKMP_PAYLOAD_CRITICAL 0x80
 /* These are followed by 7 more bits, currently RESERVED */
 /* Note we use 1 of those bits for IMPAIR-SEND-BOGUS-ISAKMP-FLAG */
-#define ISAKMP_PAYLOAD_LIBRESWAN_BOGUS  0x01
+#define ISAKMP_PAYLOAD_LIBRESWAN_BOGUS 0x01
 
-/* Protocol IDs
+/*
+ * Protocol IDs
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.4.1
  */
 
@@ -592,11 +603,11 @@ extern const char *const critical_names[];
  * extern enum_names protocol_names;
  * same in IKEv1 and IKEv2.
  */
-#define PROTO_RESERVED           0  /* only in IKEv2 */
-#define PROTO_ISAKMP             1
-#define PROTO_IPSEC_AH           2
-#define PROTO_IPSEC_ESP          3
-#define PROTO_IPCOMP             4  /* only in IKEv1 */
+#define PROTO_RESERVED 0 /* only in IKEv2 */
+#define PROTO_ISAKMP 1
+#define PROTO_IPSEC_AH 2
+#define PROTO_IPSEC_ESP 3
+#define PROTO_IPCOMP 4 /* only in IKEv1 */
 
 /*
  * IKEv2 proposal
@@ -604,79 +615,79 @@ extern const char *const critical_names[];
  */
 enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_ENCR = 1,
-	IKEv2_TRANS_TYPE_PRF  = 2,
-	IKEv2_TRANS_TYPE_INTEG= 3,
-	IKEv2_TRANS_TYPE_DH   = 4,   /* same as in IKEv1 */
-	IKEv2_TRANS_TYPE_ESN  = 5,
+	IKEv2_TRANS_TYPE_PRF = 2,
+	IKEv2_TRANS_TYPE_INTEG = 3,
+	IKEv2_TRANS_TYPE_DH = 4, /* same as in IKEv1 */
+	IKEv2_TRANS_TYPE_ESN = 5,
 };
 
 enum ikev2_trans_type_encr {
 	IKEv2_ENCR_DES_IV64 = 1,
-	IKEv2_ENCR_DES      = 2,
-	IKEv2_ENCR_3DES     = 3,
-	IKEv2_ENCR_RC5      = 4,
-	IKEv2_ENCR_IDEA     = 5,
-	IKEv2_ENCR_CAST     = 6,
+	IKEv2_ENCR_DES = 2,
+	IKEv2_ENCR_3DES = 3,
+	IKEv2_ENCR_RC5 = 4,
+	IKEv2_ENCR_IDEA = 5,
+	IKEv2_ENCR_CAST = 6,
 	IKEv2_ENCR_BLOWFISH = 7,
-	IKEv2_ENCR_3IDEA    = 8,
+	IKEv2_ENCR_3IDEA = 8,
 	IKEv2_ENCR_DES_IV32 = 9,
-	IKEv2_ENCR_RES10    = 10,
-	IKEv2_ENCR_NULL     = 11,
-	IKEv2_ENCR_AES_CBC  = 12,
-	IKEv2_ENCR_AES_CTR  = 13,
-	IKEv2_ENCR_AES_CCM_8  = 14,
+	IKEv2_ENCR_RES10 = 10,
+	IKEv2_ENCR_NULL = 11,
+	IKEv2_ENCR_AES_CBC = 12,
+	IKEv2_ENCR_AES_CTR = 13,
+	IKEv2_ENCR_AES_CCM_8 = 14,
 	IKEv2_ENCR_AES_CCM_12 = 15,
 	IKEv2_ENCR_AES_CCM_16 = 16,
-	IKEv2_UNASSIGNED_17   = 17,
-	IKEv2_ENCR_AES_GCM_8  = 18,
+	IKEv2_UNASSIGNED_17 = 17,
+	IKEv2_ENCR_AES_GCM_8 = 18,
 	IKEv2_ENCR_AES_GCM_12 = 19,
 	IKEv2_ENCR_AES_GCM_16 = 20,
 	IKEv2_ENC_NULL_AUTH_AES_GMAC = 21,
 	IKEv2_RESERVED_IEEE_P1619_XTS_AES = 22,
 	/* 23 - 1023 Reserved to IANA */
 	/* 1024 - 65535 Private Use */
-	IKEv2_ENCR_INVALID  = 65536
+	IKEv2_ENCR_INVALID = 65536
 };
 
 enum ikev2_trans_type_prf {
-	IKEv2_PRF_HMAC_MD5      = 1,    /* RFC2104 */
-	IKEv2_PRF_HMAC_SHA1     = 2,    /* RFC2104 */
-	IKEv2_PRF_HMAC_TIGER    = 3,    /* RFC2104 */
-	IKEv2_PRF_AES128_XCBC   = 4,    /* RFC4434 */
-	IKEv2_PRF_HMAC_SHA2_256 = 5,    /* RFC4868 */
-	IKEv2_PRF_HMAC_SHA2_384 = 6,    /* RFC4868 */
-	IKEv2_PRF_HMAC_SHA2_512 = 7,    /* RFC4868 */
-	IKEv2_PRF_AES128_CMAC   = 8,    /* RFC4615 */
-	/* 9 - 1023 Reserved to IANA    RFC4306 */
-	/* 1024 - 65535 Private Use     RFC4306 */
-	IKEv2_PRF_INVALID       = 65536
+	IKEv2_PRF_HMAC_MD5 = 1, /* RFC2104 */
+	IKEv2_PRF_HMAC_SHA1 = 2, /* RFC2104 */
+	IKEv2_PRF_HMAC_TIGER = 3, /* RFC2104 */
+	IKEv2_PRF_AES128_XCBC = 4, /* RFC4434 */
+	IKEv2_PRF_HMAC_SHA2_256 = 5, /* RFC4868 */
+	IKEv2_PRF_HMAC_SHA2_384 = 6, /* RFC4868 */
+	IKEv2_PRF_HMAC_SHA2_512 = 7, /* RFC4868 */
+	IKEv2_PRF_AES128_CMAC = 8, /* RFC4615 */
+	/* 9 - 1023 Reserved to IANA RFC4306 */
+	/* 1024 - 65535 Private Use RFC4306 */
+	IKEv2_PRF_INVALID = 65536
 };
 
 enum ikev2_trans_type_integ {
-	IKEv2_AUTH_NONE              = 0,       /* RFC4306 */
-	IKEv2_AUTH_HMAC_MD5_96       = 1,       /* RFC2403 */
-	IKEv2_AUTH_HMAC_SHA1_96      = 2,       /* RFC2404 */
-	IKEv2_AUTH_DES_MAC           = 3,       /* RFC4306 */
-	IKEv2_AUTH_KPDK_MD5          = 4,       /* RFC1826 */
-	IKEv2_AUTH_AES_XCBC_96       = 5,       /* RFC3566 */
-	IKEv2_AUTH_HMAC_MD5_128      = 6,       /* RFC4595 */
-	IKEv2_AUTH_HMAC_SHA1_160     = 7,       /* RFC4595 */
-	IKEv2_AUTH_AES_CMAC_96       = 8,       /* RFC4494 */
-	IKEv2_AUTH_AES_128_GMAC      = 9,       /* RFC4543 */
-	IKEv2_AUTH_AES_192_GMAC      = 10,      /* RFC4543 */
-	IKEv2_AUTH_AES_256_GMAC      = 11,      /* RFC4543 */
-	IKEv2_AUTH_HMAC_SHA2_256_128 = 12,      /* RFC4595 */
-	IKEv2_AUTH_HMAC_SHA2_384_192 = 13,      /* RFC4306 */
-	IKEv2_AUTH_HMAC_SHA2_512_256 = 14,      /* RFC4306 */
-	/* 15 - 1023 Reserved to IANA         RFC4306 */
-	/* 1024 - 65535 Private Use           RFC4306 */
+	IKEv2_AUTH_NONE = 0, /* RFC4306 */
+	IKEv2_AUTH_HMAC_MD5_96 = 1, /* RFC2403 */
+	IKEv2_AUTH_HMAC_SHA1_96 = 2, /* RFC2404 */
+	IKEv2_AUTH_DES_MAC = 3, /* RFC4306 */
+	IKEv2_AUTH_KPDK_MD5 = 4, /* RFC1826 */
+	IKEv2_AUTH_AES_XCBC_96 = 5, /* RFC3566 */
+	IKEv2_AUTH_HMAC_MD5_128 = 6, /* RFC4595 */
+	IKEv2_AUTH_HMAC_SHA1_160 = 7, /* RFC4595 */
+	IKEv2_AUTH_AES_CMAC_96 = 8, /* RFC4494 */
+	IKEv2_AUTH_AES_128_GMAC = 9, /* RFC4543 */
+	IKEv2_AUTH_AES_192_GMAC = 10, /* RFC4543 */
+	IKEv2_AUTH_AES_256_GMAC = 11, /* RFC4543 */
+	IKEv2_AUTH_HMAC_SHA2_256_128 = 12, /* RFC4595 */
+	IKEv2_AUTH_HMAC_SHA2_384_192 = 13, /* RFC4306 */
+	IKEv2_AUTH_HMAC_SHA2_512_256 = 14, /* RFC4306 */
+	/* 15 - 1023 Reserved to IANA RFC4306 */
+	/* 1024 - 65535 Private Use RFC4306 */
 	IKEv2_AUTH_HMAC_SHA2_256_128_TRUNCBUG = 252, /* our own value */
-	IKEv2_AUTH_INVALID     =65536
+	IKEv2_AUTH_INVALID = 65536
 };
 
 enum ikev2_trans_type_esn {
 	IKEv2_ESN_DISABLED = 0,
-	IKEv2_ESN_ENABLED  = 1,
+	IKEv2_ESN_ENABLED = 1,
 };
 
 /* RFC 4306 Section 3.3.5 */
@@ -694,7 +705,8 @@ enum ikev2_ts_type {
 	/* 241-255 Private use */
 };
 
-/* many transform values are moved to libreswan/ipsec_policy.h
+/*
+ * many transform values are moved to libreswan/ipsec_policy.h
  * including all of the following, which are here so that
  * they will get caught by grep:
  */
@@ -713,258 +725,220 @@ struct ipsec_raw_key;
 struct ipsec_identity;
 struct ipsec_policy_cmd_query;
 
-/*
-   extern enum_names isakmp_transformid_names;
- */
-
-#define KEY_IKE               1
-
-/*
-   extern enum_names ah_transformid_names;
-   extern enum_names esp_transformid_names;
-   extern enum_names ipcomp_transformid_names;
- */
+#define KEY_IKE 1
 
 /* the following are from RFC 2393/draft-shacham-ippcp-rfc2393bis-05.txt 3.3 */
 typedef u_int16_t cpi_t;
-#define IPCOMP_CPI_SIZE          2
-#define IPCOMP_FIRST_NEGOTIATED  256
-#define IPCOMP_LAST_NEGOTIATED   61439
-
-/* Identification type values
- * RFC 2407 The Internet IP security Domain of Interpretation for ISAKMP 4.6.2.1
- */
+#define IPCOMP_CPI_SIZE 2
+#define IPCOMP_FIRST_NEGOTIATED 256
+#define IPCOMP_LAST_NEGOTIATED 61439
 
 /*
-   extern enum_names ident_names;
- */
-
-/* actual enum for ipsec_cert_type, e.g. CERT_NONE is in libreswan/ipsec_policy.h */
-/*
-   extern enum_names cert_type_names;
- */
-
-/* Oakley transform attributes
+ * Oakley transform attributes
  * draft-ietf-ipsec-ike-01.txt appendix A
  */
 
-/*
-   extern enum_names oakley_attr_names;
-   extern const char *const oakley_attr_bit_names[];
- */
-
 enum ikev1_oakley_attr {
-	OAKLEY_ENCRYPTION_ALGORITHM   =1,
-	OAKLEY_HASH_ALGORITHM         =2,
-	OAKLEY_AUTHENTICATION_METHOD  =3,
-	OAKLEY_GROUP_DESCRIPTION      =4,
-	OAKLEY_GROUP_TYPE             =5,
-	OAKLEY_GROUP_PRIME            =6,       /* B/V */
-	OAKLEY_GROUP_GENERATOR_ONE    =7,       /* B/V */
-	OAKLEY_GROUP_GENERATOR_TWO    =8,       /* B/V */
-	OAKLEY_GROUP_CURVE_A          =9,       /* B/V */
-	OAKLEY_GROUP_CURVE_B         =10,       /* B/V */
-	OAKLEY_LIFE_TYPE             =11,
-	OAKLEY_LIFE_DURATION         =12,       /* B/V */
-	OAKLEY_PRF                   =13,
-	OAKLEY_KEY_LENGTH            =14,
-	OAKLEY_FIELD_SIZE            =15,
-	OAKLEY_GROUP_ORDER           =16,       /* B/V */
-	OAKLEY_BLOCK_SIZE            =17,
+	OAKLEY_ENCRYPTION_ALGORITHM = 1,
+	OAKLEY_HASH_ALGORITHM = 2,
+	OAKLEY_AUTHENTICATION_METHOD = 3,
+	OAKLEY_GROUP_DESCRIPTION = 4,
+	OAKLEY_GROUP_TYPE = 5,
+	OAKLEY_GROUP_PRIME = 6, /* B/V */
+	OAKLEY_GROUP_GENERATOR_ONE = 7, /* B/V */
+	OAKLEY_GROUP_GENERATOR_TWO = 8, /* B/V */
+	OAKLEY_GROUP_CURVE_A = 9, /* B/V */
+	OAKLEY_GROUP_CURVE_B = 10, /* B/V */
+	OAKLEY_LIFE_TYPE = 11,
+	OAKLEY_LIFE_DURATION = 12, /* B/V */
+	OAKLEY_PRF = 13,
+	OAKLEY_KEY_LENGTH = 14,
+	OAKLEY_FIELD_SIZE = 15,
+	OAKLEY_GROUP_ORDER = 16, /* B/V */
+	OAKLEY_BLOCK_SIZE = 17,
 };
 
-/* for each Oakley attribute, which enum_names describes its values? */
-/* extern enum_names *oakley_attr_val_descs[]; */
-
-/* IPsec DOI attributes
+/*
+ * IPsec DOI attributes
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
  */
 
-/* extern enum_names ipsec_attr_names; */
-
 enum ikev1_ipsec_attr {
-	SA_LIFE_TYPE            =1,
-	SA_LIFE_DURATION        =2,     /* B/V */
-	GROUP_DESCRIPTION       =3,
-	ENCAPSULATION_MODE      =4,
-	AUTH_ALGORITHM          =5,
-	KEY_LENGTH              =6,
-	KEY_ROUNDS              =7,
-	COMPRESS_DICT_SIZE      =8,
-	COMPRESS_PRIVATE_ALG    =9,     /* B/V */
-	ECN_TUNNEL              =10,    /*B*/ /*RFC 3168*/  /* Originally mistakenly grabbed for SECCTX */
-	SECCTX                  =32001, /* B/V */ /*chosen from private range as in RFC 2407*/
+	SA_LIFE_TYPE = 1,
+	SA_LIFE_DURATION = 2, /* B/V */
+	GROUP_DESCRIPTION = 3,
+	ENCAPSULATION_MODE = 4,
+	AUTH_ALGORITHM = 5,
+	KEY_LENGTH = 6,
+	KEY_ROUNDS = 7,
+	COMPRESS_DICT_SIZE = 8,
+	COMPRESS_PRIVATE_ALG = 9, /* B/V */
+	ECN_TUNNEL = 10, /*B*/ /*RFC 3168*/ /* Originally mistakenly grabbed for SECCTX */
+	SECCTX = 32001, /* B/V */ /*chosen from private range as in RFC 2407*/
 };
 
-/* for each IPsec attribute, which enum_names describes its values? */
-/* extern enum_names *ipsec_attr_val_descs[]; */
-
-/* SA Lifetime Type attribute
+/*
+ * SA Lifetime Type attribute
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
  * Default time specified in 4.5
  *
  * There are two defaults for IPSEC SA lifetime, SA_LIFE_DURATION_DEFAULT,
  * and PLUTO_SA_LIFE_DURATION_DEFAULT.
  * SA_LIFE_DURATION_DEFAULT is specified in RFC2407 "The Internet IP
- * Security Domain of Interpretation for ISAKMP" 4.5.  It applies when
+ * Security Domain of Interpretation for ISAKMP" 4.5. It applies when
  * an ISAKMP negotiation does not explicitly specify a life duration.
- * PLUTO_SA_LIFE_DURATION_DEFAULT is specified in pluto(8).  It applies
+ * PLUTO_SA_LIFE_DURATION_DEFAULT is specified in pluto(8). It applies
  * when a connection description does not specify --ipseclifetime.
  * The value of SA_LIFE_DURATION_MAXIMUM is our local policy.
  */
 
-/* extern enum_names sa_lifetime_names; */
+#define SA_LIFE_TYPE_SECONDS 1
+#define SA_LIFE_TYPE_KBYTES 2
 
-#define SA_LIFE_TYPE_SECONDS   1
-#define SA_LIFE_TYPE_KBYTES    2
+#define SA_LIFE_DURATION_DEFAULT 28800 /* eight hours (RFC2407 4.5) */
+#define PLUTO_SA_LIFE_DURATION_DEFAULT 28800 /* eight hours (pluto(8)) */
+#define SA_LIFE_DURATION_MAXIMUM 86400 /* one day */
 
-#define SA_LIFE_DURATION_DEFAULT    28800       /* eight hours (RFC2407 4.5) */
-#define PLUTO_SA_LIFE_DURATION_DEFAULT    28800 /* eight hours (pluto(8)) */
-#define SA_LIFE_DURATION_MAXIMUM    86400       /* one day */
+#define SA_REPLACEMENT_MARGIN_DEFAULT 540 /* (IPSEC & IKE) nine minutes */
+#define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
+#define SA_REPLACEMENT_RETRIES_DEFAULT 0 /* (IPSEC & IKE) */
 
-#define SA_REPLACEMENT_MARGIN_DEFAULT       540 /* (IPSEC & IKE) nine minutes */
-#define SA_REPLACEMENT_FUZZ_DEFAULT         100 /* (IPSEC & IKE) 100% of MARGIN */
-#define SA_REPLACEMENT_RETRIES_DEFAULT      0   /*  (IPSEC & IKE) */
-
-#define SA_LIFE_DURATION_K_DEFAULT  0xFFFFFFFFlu
+#define SA_LIFE_DURATION_K_DEFAULT 0xFFFFFFFFlu
 
 /* Encapsulation Mode attribute */
 
-/* extern enum_names enc_mode_names; */
-
-#define ENCAPSULATION_MODE_UNSPECIFIED 0        /* not legal -- used internally */
-#define ENCAPSULATION_MODE_TUNNEL      1
-#define ENCAPSULATION_MODE_TRANSPORT   2
+#define ENCAPSULATION_MODE_UNSPECIFIED 0 /* not legal -- used internally */
+#define ENCAPSULATION_MODE_TUNNEL 1
+#define ENCAPSULATION_MODE_TRANSPORT 2
 #ifdef NAT_TRAVERSAL
-# define ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS       61443
-# define ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS    61444
-# define ENCAPSULATION_MODE_UDP_TUNNEL_RFC          3
-# define ENCAPSULATION_MODE_UDP_TRANSPORT_RFC       4
+#define ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS 61443
+#define ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS 61444
+#define ENCAPSULATION_MODE_UDP_TUNNEL_RFC 3
+#define ENCAPSULATION_MODE_UDP_TRANSPORT_RFC 4
 #endif
 
 /* Auth Algorithm attribute */
 
-/* extern enum_names auth_alg_names, extended_auth_alg_names; */
-
 enum ikev1_auth_attribute {
-	AUTH_ALGORITHM_NONE=0,  /* our private designation */
-	AUTH_ALGORITHM_HMAC_MD5   =1,
-	AUTH_ALGORITHM_HMAC_SHA1  =2,
-	AUTH_ALGORITHM_DES_MAC    =3,
-	AUTH_ALGORITHM_KPDK       =4,
-	AUTH_ALGORITHM_HMAC_SHA2_256=5,
-	AUTH_ALGORITHM_HMAC_SHA2_384=6,
-	AUTH_ALGORITHM_HMAC_SHA2_512=7,
-	AUTH_ALGORITHM_HMAC_RIPEMD=8,
-	AUTH_ALGORITHM_AES_CBC=9,
-	AUTH_ALGORITHM_NULL_KAME=251, /* why do we load this ? */
-	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG=252,
+	AUTH_ALGORITHM_NONE = 0, /* our private designation */
+	AUTH_ALGORITHM_HMAC_MD5 = 1,
+	AUTH_ALGORITHM_HMAC_SHA1 = 2,
+	AUTH_ALGORITHM_DES_MAC = 3,
+	AUTH_ALGORITHM_KPDK = 4,
+	AUTH_ALGORITHM_HMAC_SHA2_256 = 5,
+	AUTH_ALGORITHM_HMAC_SHA2_384 = 6,
+	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,
+	AUTH_ALGORITHM_HMAC_RIPEMD = 8,
+	AUTH_ALGORITHM_AES_CBC = 9,
+	AUTH_ALGORITHM_NULL_KAME = 251, /* why do we load this ? */
+	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG = 252,
 };
 
 typedef u_int16_t ipsec_auth_t;
 
-/* Oakley Lifetime Type attribute
+/*
+ * Oakley Lifetime Type attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
  * As far as I can see, there is not specification for
- * OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT.  This could lead to interop problems!
+ * OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT. This could lead to interop problems!
  * For no particular reason, we chose one hour.
  * The value of OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM is our local policy.
  */
-/* extern enum_names oakley_lifetime_names; */
 
-#define OAKLEY_LIFE_SECONDS   1
+#define OAKLEY_LIFE_SECONDS 1
 #define OAKLEY_LIFE_KILOBYTES 2
 
-#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT 3600          /* one hour */
-#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM 86400         /* 1 day */
+#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT 3600 /* one hour */
+#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM 86400 /* 1 day */
 
-/* Oakley PRF attribute (none defined)
+/*
+ * Oakley PRF attribute (none defined)
  * draft-ietf-ipsec-ike-01.txt appendix A
  */
-/* extern enum_names oakley_prf_names; */
 
 /* HMAC (see rfc2104.txt) */
 
-#define HMAC_IPAD            0x36
-#define HMAC_OPAD            0x5C
-#define HMAC_BUFSIZE         64
+#define HMAC_IPAD 0x36
+#define HMAC_OPAD 0x5C
+#define HMAC_BUFSIZE 64
 
-/* Oakley Encryption Algorithm attribute
+/*
+ * Oakley Encryption Algorithm attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
  * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
  */
 
-/* extern enum_names oakley_enc_names; (IKEv1 only) */
+#define OAKLEY_DES_CBC 1
+#define OAKLEY_IDEA_CBC 2
+#define OAKLEY_BLOWFISH_CBC 3
+#define OAKLEY_RC5_R16_B64_CBC 4
+#define OAKLEY_3DES_CBC 5
+#define OAKLEY_CAST_CBC 6
+#define OAKLEY_AES_CBC 7
+#define OAKLEY_CAMELLIA_CBC 8
+#define OAKLEY_SERPENT_CBC 65004
+#define OAKLEY_TWOFISH_CBC 65005
+#define OAKLEY_TWOFISH_CBC_SSH 65289
 
-#define OAKLEY_DES_CBC          1
-#define OAKLEY_IDEA_CBC         2
-#define OAKLEY_BLOWFISH_CBC     3
-#define OAKLEY_RC5_R16_B64_CBC  4
-#define OAKLEY_3DES_CBC         5
-#define OAKLEY_CAST_CBC         6
-#define OAKLEY_AES_CBC          7
-#define OAKLEY_CAMELLIA_CBC     8
-#define OAKLEY_SERPENT_CBC              65004
-#define OAKLEY_TWOFISH_CBC              65005
-#define OAKLEY_TWOFISH_CBC_SSH          65289
+#define OAKLEY_ENCRYPT_MAX 65535 /* pretty useless :) */
 
-#define OAKLEY_ENCRYPT_MAX      65535   /* pretty useless :) */
-
-/* Oakley Hash Algorithm attribute
+/*
+ * Oakley Hash Algorithm attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
  * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
  */
 
 typedef u_int16_t oakley_hash_t;
-/* extern enum_names oakley_hash_names; */
 
-#define OAKLEY_MD5      1
-#define OAKLEY_SHA1     2
-#define OAKLEY_SHA      OAKLEY_SHA1
-#define OAKLEY_TIGER    3
-#define OAKLEY_SHA2_256        4
-#define OAKLEY_SHA2_384        5
-#define OAKLEY_SHA2_512        6
+#define OAKLEY_MD5 1
+#define OAKLEY_SHA1 2
+#define OAKLEY_SHA OAKLEY_SHA1
+#define OAKLEY_TIGER 3
+#define OAKLEY_SHA2_256 4
+#define OAKLEY_SHA2_384 5
+#define OAKLEY_SHA2_512 6
 
-#define OAKLEY_HASH_MAX      7
+#define OAKLEY_HASH_MAX 7
 
-/* Oakley Authentication Method attribute
+/*
+ * Oakley Authentication Method attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
  * Goofy Hybrid extensions from draft-ietf-ipsec-isakmp-hybrid-auth-05.txt
  * Goofy XAUTH extensions from draft-ietf-ipsec-isakmp-xauth-06.txt
  */
 
-/* extern enum_names oakley_auth_names; */
+#define OAKLEY_PRESHARED_KEY 1
+#define OAKLEY_DSS_SIG 2
+#define OAKLEY_RSA_SIG 3
+#define OAKLEY_RSA_ENC 4
+#define OAKLEY_RSA_ENC_REV 5
+#define OAKLEY_ELGAMAL_ENC 6
+#define OAKLEY_ELGAMAL_ENC_REV 7
 
-#define OAKLEY_PRESHARED_KEY       1
-#define OAKLEY_DSS_SIG             2
-#define OAKLEY_RSA_SIG             3
-#define OAKLEY_RSA_ENC             4
-#define OAKLEY_RSA_ENC_REV         5
-#define OAKLEY_ELGAMAL_ENC         6
-#define OAKLEY_ELGAMAL_ENC_REV     7
+#define OAKLEY_AUTH_ROOF 8 /*roof on auth values THAT WE SUPPORT */
 
-#define OAKLEY_AUTH_ROOF           8  /*roof on auth values THAT WE SUPPORT */
-/* Note: the below xauth names are mapped via xauth_calcbaseauth() to the
+/*
+ * Note: the below xauth names are mapped via xauth_calcbaseauth() to the
  * base functions 1-7
- * Note2: we don't support all of the below, or all of the below, so ROOF comment is lying */
-
-#define HybridInitRSA                                     64221
-#define HybridRespRSA                                     64222
-#define HybridInitDSS                                     64223
-#define HybridRespDSS                                     64224
+ * Note2: we don't support all of the below, or all of the below, so ROOF
+ * comment is lying
+ */
+#define HybridInitRSA 64221
+#define HybridRespRSA 64222
+#define HybridInitDSS 64223
+#define HybridRespDSS 64224
 
 /* For XAUTH, store in st->xauth, and set equivalent in st->auth via */
-#define XAUTHInitPreShared                                65001
-#define XAUTHRespPreShared                                65002
-#define XAUTHInitDSS                                      65003
-#define XAUTHRespDSS                                      65004
-#define XAUTHInitRSA                                      65005
-#define XAUTHRespRSA                                      65006
-#define XAUTHInitRSAEncryption                            65007
-#define XAUTHRespRSAEncryption                            65008
-#define XAUTHInitRSARevisedEncryption                     65009
-#define XAUTHRespRSARevisedEncryption                     65010
+#define XAUTHInitPreShared 65001
+#define XAUTHRespPreShared 65002
+#define XAUTHInitDSS 65003
+#define XAUTHRespDSS 65004
+#define XAUTHInitRSA 65005
+#define XAUTHRespRSA 65006
+#define XAUTHInitRSAEncryption 65007
+#define XAUTHRespRSAEncryption 65008
+#define XAUTHInitRSARevisedEncryption 65009
+#define XAUTHRespRSARevisedEncryption 65010
 
 /* typedef to make our life easier */
 typedef u_int16_t oakley_auth_t;
@@ -972,47 +946,46 @@ typedef u_int16_t oakley_auth_t;
 /* extern enum_names ikev2_auth_names; */
 enum ikev2_auth_method {
 	v2_AUTH_RSA = 1,
-	v2_AUTH_SHARED=2,
+	v2_AUTH_SHARED = 2,
 	v2_AUTH_DSA = 3,
 };
 
-/* Oakley Group Description attribute
+/*
+ * Oakley Group Description attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
  */
-/* extern enum_names oakley_group_names; */
-
 typedef enum ike_trans_type_dh oakley_group_t;
 
 /*	you must also touch: constants.c, crypto.c */
 enum ike_trans_type_dh {
-	OAKLEY_GROUP_MODP768      = 1,
-	OAKLEY_GROUP_MODP1024     = 2,
-	OAKLEY_GROUP_GP155        = 3,
-	OAKLEY_GROUP_GP185        = 4,
-	OAKLEY_GROUP_MODP1536     = 5,
+	OAKLEY_GROUP_MODP768 = 1,
+	OAKLEY_GROUP_MODP1024 = 2,
+	OAKLEY_GROUP_GP155 = 3,
+	OAKLEY_GROUP_GP185 = 4,
+	OAKLEY_GROUP_MODP1536 = 5,
 
-	OAKLEY_GROUP_MODP2048     = 14,
-	OAKLEY_GROUP_MODP3072     = 15,
-	OAKLEY_GROUP_MODP4096     = 16,
-	OAKLEY_GROUP_MODP6144     = 17,
-	OAKLEY_GROUP_MODP8192     = 18,
+	OAKLEY_GROUP_MODP2048 = 14,
+	OAKLEY_GROUP_MODP3072 = 15,
+	OAKLEY_GROUP_MODP4096 = 16,
+	OAKLEY_GROUP_MODP6144 = 17,
+	OAKLEY_GROUP_MODP8192 = 18,
 #ifdef USE_MODP_RFC5114
-	OAKLEY_GROUP_DH22         = 22,
-	OAKLEY_GROUP_DH23         = 23,
-	OAKLEY_GROUP_DH24         = 24,
+	OAKLEY_GROUP_DH22 = 22,
+	OAKLEY_GROUP_DH23 = 23,
+	OAKLEY_GROUP_DH24 = 24,
 #endif
 };
 
-/* Oakley Group Type attribute
+/*
+ * Oakley Group Type attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
  */
-/* extern enum_names oakley_group_type_names; */
+#define OAKLEY_GROUP_TYPE_MODP 1
+#define OAKLEY_GROUP_TYPE_ECP 2
+#define OAKLEY_GROUP_TYPE_EC2N 3
 
-#define OAKLEY_GROUP_TYPE_MODP     1
-#define OAKLEY_GROUP_TYPE_ECP      2
-#define OAKLEY_GROUP_TYPE_EC2N     3
-
-/* Notify messages -- error types
+/*
+ * Notify messages -- error types
  * See RFC2408 ISAKMP 3.14.1
  */
 
@@ -1022,56 +995,57 @@ enum ike_trans_type_dh {
  * extern enum_names ipsec_notification_names;
  */
 typedef enum {
-	NOTHING_WRONG =             0, /* unofficial! */
+	NOTHING_WRONG = 0, /* unofficial! */
 
-	INVALID_PAYLOAD_TYPE =       1,
-	DOI_NOT_SUPPORTED =          2,
-	SITUATION_NOT_SUPPORTED =    3,
-	INVALID_COOKIE =             4,
-	INVALID_MAJOR_VERSION =      5,
-	INVALID_MINOR_VERSION =      6,
-	INVALID_EXCHANGE_TYPE =      7,
-	INVALID_FLAGS =              8,
-	INVALID_MESSAGE_ID =         9,
-	INVALID_PROTOCOL_ID =       10,
-	INVALID_SPI =               11,
-	INVALID_TRANSFORM_ID =      12,
-	ATTRIBUTES_NOT_SUPPORTED =  13,
-	NO_PROPOSAL_CHOSEN =        14,
-	BAD_PROPOSAL_SYNTAX =       15,
-	PAYLOAD_MALFORMED =         16,
-	INVALID_KEY_INFORMATION =   17,
-	INVALID_ID_INFORMATION =    18,
-	INVALID_CERT_ENCODING =     19,
-	INVALID_CERTIFICATE =       20,
-	CERT_TYPE_UNSUPPORTED =     21,
-	INVALID_CERT_AUTHORITY =    22,
-	INVALID_HASH_INFORMATION =  23,
-	AUTHENTICATION_FAILED =     24,
-	INVALID_SIGNATURE =         25,
-	ADDRESS_NOTIFICATION =      26,
-	NOTIFY_SA_LIFETIME =        27,
-	CERTIFICATE_UNAVAILABLE =   28,
+	INVALID_PAYLOAD_TYPE = 1,
+	DOI_NOT_SUPPORTED = 2,
+	SITUATION_NOT_SUPPORTED = 3,
+	INVALID_COOKIE = 4,
+	INVALID_MAJOR_VERSION = 5,
+	INVALID_MINOR_VERSION = 6,
+	INVALID_EXCHANGE_TYPE = 7,
+	INVALID_FLAGS = 8,
+	INVALID_MESSAGE_ID = 9,
+	INVALID_PROTOCOL_ID = 10,
+	INVALID_SPI = 11,
+	INVALID_TRANSFORM_ID = 12,
+	ATTRIBUTES_NOT_SUPPORTED = 13,
+	NO_PROPOSAL_CHOSEN = 14,
+	BAD_PROPOSAL_SYNTAX = 15,
+	PAYLOAD_MALFORMED = 16,
+	INVALID_KEY_INFORMATION = 17,
+	INVALID_ID_INFORMATION = 18,
+	INVALID_CERT_ENCODING = 19,
+	INVALID_CERTIFICATE = 20,
+	CERT_TYPE_UNSUPPORTED = 21,
+	INVALID_CERT_AUTHORITY = 22,
+	INVALID_HASH_INFORMATION = 23,
+	AUTHENTICATION_FAILED = 24,
+	INVALID_SIGNATURE = 25,
+	ADDRESS_NOTIFICATION = 26,
+	NOTIFY_SA_LIFETIME = 27,
+	CERTIFICATE_UNAVAILABLE = 28,
 	UNSUPPORTED_EXCHANGE_TYPE = 29,
-	UNEQUAL_PAYLOAD_LENGTHS =   30,
+	UNEQUAL_PAYLOAD_LENGTHS = 30,
 	/* 31-8191 RESERVED (Future Use) */
 
 	/*
 	 * Sub-Registry: Notify Messages - Status Types (16384-24575)
 	 */
-	CONNECTED                    = 16384, /* INITIAL_CONTACT */
+	CONNECTED = 16384, /* INITIAL_CONTACT */
 
-	/* IPSEC DOI additions; status types (RFC2407 IPSEC DOI 4.6.3)
+	/*
+	 * IPSEC DOI additions; status types (RFC2407 IPSEC DOI 4.6.3)
 	 * These must be sent under the protection of an ISAKMP SA.
 	 */
 	IPSEC_RESPONDER_LIFETIME = 24576,
-	IPSEC_REPLAY_STATUS =      24577,
-	IPSEC_INITIAL_CONTACT =    24578,
+	IPSEC_REPLAY_STATUS = 24577,
+	IPSEC_INITIAL_CONTACT = 24578,
 
 	/* Cisco specific messages */
-	ISAKMP_N_CISCO_HELLO =      30000,
-	ISAKMP_N_CISCO_WWTEBR =     30001,
-	ISAKMP_N_CISCO_SHUT_UP =    30002,
+	ISAKMP_N_CISCO_HELLO = 30000,
+	ISAKMP_N_CISCO_WWTEBR = 30001,
+	ISAKMP_N_CISCO_SHUT_UP = 30002,
 
 	ISAKMP_N_IOS_KEEP_ALIVE_REQ = 32768,
 	ISAKMP_N_IOS_KEEP_ALIVE_ACK = 32769,
@@ -1081,97 +1055,101 @@ typedef enum {
 	ISAKMP_N_CISCO_PRESHARED_KEY_HASH = 40503,
 
 	/* RFC 3706 DPD */
-	R_U_THERE =       36136,
-	R_U_THERE_ACK =   36137,
+	R_U_THERE = 36136,
+	R_U_THERE_ACK = 36137,
 
-	/* Netscreen / Juniper private use  - notification contains internal ip */
+	/*
+	 * Netscreen / Juniper private use - notification contains
+	 * internal ip
+	 */
 	NETSCREEN_NHTB_INFORM = 40001,
 
 } notification_t;
 
 /*
  * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13
- * IKEv2 is very similar, but different. Let's not re-use and confuse */
+ * IKEv2 is very similar, but different. Let's not re-use and confuse
+ **/
 typedef enum {
 	/* IKEv2 */
 	/* 0-8191 Reserved, ExpertReview */
-	v2N_NOTHING_WRONG                = 0, /* unofficial! */
+	v2N_NOTHING_WRONG = 0, /* unofficial! */
 	v2N_UNSUPPORTED_CRITICAL_PAYLOAD = 1,
-	/* Reserved                  = 2, */
-	/* Reserved                  = 3, */
-	v2N_INVALID_IKE_SPI              = 4,
-	v2N_INVALID_MAJOR_VERSION        = 5, /* same as ikev1 */
-	/* Reserved                  = 6, */
-	v2N_INVALID_SYNTAX               = 7,
-	/* Reserved                  = 8, */
-	v2N_INVALID_MESSAGE_ID           = 9,   /* same as ikev1 */
-	/* Reserved                  =10, */
-	V2_INVALID_SPI                  = 11,   /* same as ikev1 */
-	/* Reserved                  =12, */
-	/* Reserved                  =13, */
-	v2N_NO_PROPOSAL_CHOSEN           = 14, /* same as ikev1 */
-	/* Reserved                  =15, */
-	/* Reserved                  =16, */
-	v2N_INVALID_KE_PAYLOAD           = 17,
-	/* Reserved                  = 18 to 23, */
-	v2N_AUTHENTICATION_FAILED        = 24, /* same as ikev1 */
-	/* Reserved                  = 25 to 33, */
-	v2N_SINGLE_PAIR_REQUIRED         = 34,
-	v2N_NO_ADDITIONAL_SAS            = 35,
-	v2N_INTERNAL_ADDRESS_FAILURE     = 36,
-	v2N_FAILED_CP_REQUIRED           = 37,
-	v2N_TS_UNACCEPTABLE              = 38,
-	v2N_INVALID_SELECTORS            = 39,
-	v2N_UNACCEPTABLE_ADDRESSES       = 40,
-	v2N_UNEXPECTED_NAT_DETECTED      = 41,
-	v2N_USE_ASSIGNED_HoA             = 42, /* RFC 5026 */
-	v2N_TEMPORARY_FAILURE            = 43,
-	v2N_CHILD_SA_NOT_FOUND           = 44,
+	/* Reserved = 2, */
+	/* Reserved = 3, */
+	v2N_INVALID_IKE_SPI = 4,
+	v2N_INVALID_MAJOR_VERSION = 5, /* same as ikev1 */
+	/* Reserved = 6, */
+	v2N_INVALID_SYNTAX = 7,
+	/* Reserved = 8, */
+	v2N_INVALID_MESSAGE_ID = 9, /* same as ikev1 */
+	/* Reserved = 10, */
+	V2_INVALID_SPI = 11, /* same as ikev1 */
+	/* Reserved = 12, */
+	/* Reserved = 13, */
+	v2N_NO_PROPOSAL_CHOSEN = 14, /* same as ikev1 */
+	/* Reserved = 15, */
+	/* Reserved = 16, */
+	v2N_INVALID_KE_PAYLOAD = 17,
+	/* Reserved = 18 to 23, */
+	v2N_AUTHENTICATION_FAILED = 24, /* same as ikev1 */
+	/* Reserved = 25 to 33, */
+	v2N_SINGLE_PAIR_REQUIRED = 34,
+	v2N_NO_ADDITIONAL_SAS = 35,
+	v2N_INTERNAL_ADDRESS_FAILURE = 36,
+	v2N_FAILED_CP_REQUIRED = 37,
+	v2N_TS_UNACCEPTABLE = 38,
+	v2N_INVALID_SELECTORS = 39,
+	v2N_UNACCEPTABLE_ADDRESSES = 40,
+	v2N_UNEXPECTED_NAT_DETECTED = 41,
+	v2N_USE_ASSIGNED_HoA = 42, /* RFC 5026 */
+	v2N_TEMPORARY_FAILURE = 43,
+	v2N_CHILD_SA_NOT_FOUND = 44,
 
 	/* old IKEv1 entries - might be in private use for IKEv2N */
-	v2N_INITIAL_CONTACT              = 16384,
-	v2N_SET_WINDOW_SIZE              = 16385,
-	v2N_ADDITIONAL_TS_POSSIBLE       = 16386,
-	v2N_IPCOMP_SUPPORTED             = 16387,
-	v2N_NAT_DETECTION_SOURCE_IP      = 16388,
+	v2N_INITIAL_CONTACT = 16384,
+	v2N_SET_WINDOW_SIZE = 16385,
+	v2N_ADDITIONAL_TS_POSSIBLE = 16386,
+	v2N_IPCOMP_SUPPORTED = 16387,
+	v2N_NAT_DETECTION_SOURCE_IP = 16388,
 	v2N_NAT_DETECTION_DESTINATION_IP = 16389,
-	v2N_COOKIE                       = 16390,
-	v2N_USE_TRANSPORT_MODE           = 16391,
-	v2N_HTTP_CERT_LOOKUP_SUPPORTED   = 16392,
-	v2N_REKEY_SA                     = 16393,
+	v2N_COOKIE = 16390,
+	v2N_USE_TRANSPORT_MODE = 16391,
+	v2N_HTTP_CERT_LOOKUP_SUPPORTED = 16392,
+	v2N_REKEY_SA = 16393,
 	v2N_ESP_TFC_PADDING_NOT_SUPPORTED = 16394,
-	v2N_NON_FIRST_FRAGMENTS_ALSO     = 16395,
+	v2N_NON_FIRST_FRAGMENTS_ALSO = 16395,
 
 	/* IKEv2N extensions */
-	v2N_MOBIKE_SUPPORTED             = 16396,               /* RFC-4555 */
-	v2N_ADDITIONAL_IP4_ADDRESS       = 16397,               /* RFC-4555 */
-	v2N_ADDITIONAL_IP6_ADDRESS       = 16398,               /* RFC-4555 */
-	v2N_NO_ADDITIONAL_ADDRESSES      = 16399,               /* RFC-4555 */
-	v2N_UPDATE_SA_ADDRESSES          = 16400,               /* RFC-4555 */
-	v2N_COOKIE2                      = 16401,               /* RFC-4555 */
-	v2N_NO_NATS_ALLOWED              = 16402,               /* RFC-4555 */
-	v2N_AUTH_LIFETIME                = 16403,               /* RFC-4478 */
-	v2N_MULTIPLE_AUTH_SUPPORTED      = 16404,               /* RFC-4739 */
-	v2N_ANOTHER_AUTH_FOLLOWS         = 16405,               /* RFC-4739 */
-	v2N_REDIRECT_SUPPORTED           = 16406,               /* RFC-5685 */
-	v2N_REDIRECT                     = 16407,               /* RFC-5685 */
-	v2N_REDIRECTED_FROM              = 16408,               /* RFC-5685 */
-	v2N_TICKET_LT_OPAQUE             = 16409,               /* RFC-5723 */
-	v2N_TICKET_REQUEST               = 16410,               /* RFC-5723 */
-	v2N_TICKET_ACK                   = 16411,               /* RFC-5723 */
-	v2N_TICKET_NACK                  = 16412,               /* RFC-5723 */
-	v2N_TICKET_OPAQUE                = 16413,               /* RFC-5723 */
-	v2N_LINK_ID                      = 16414,               /* RFC-5739 */
-	v2N_USE_WESP_MODE                = 16415,               /* RFC-5840 */
-	v2N_ROHC_SUPPORTED               = 16416,               /* RFC-5857 */
-	v2N_EAP_ONLY_AUTHENTICATION      = 16417,               /* RFC-5998 */
-	v2N_CHILDLESS_IKEV2_SUPPORTED    = 16418,               /* RFC-6023 */
-	v2N_QUICK_CRASH_DETECTION               = 16419,        /* RFC-6290 */
-	v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED     = 16420,        /* RFC-6311 */
-	v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED = 16421,        /* RFC-6311 */
-	v2N_IKEV2_MESSAGE_ID_SYNC               = 16422,        /* RFC-6311 */
-	v2N_IPSEC_REPLAY_COUNTER_SYNC           = 16423,        /* RFC-6311 */
-	v2N_SECURE_PASSWORD_METHODS             = 16424,        /* RFC-6467 */
+	v2N_MOBIKE_SUPPORTED = 16396, /* RFC-4555 */
+	v2N_ADDITIONAL_IP4_ADDRESS = 16397, /* RFC-4555 */
+	v2N_ADDITIONAL_IP6_ADDRESS = 16398, /* RFC-4555 */
+	v2N_NO_ADDITIONAL_ADDRESSES = 16399, /* RFC-4555 */
+	v2N_UPDATE_SA_ADDRESSES = 16400, /* RFC-4555 */
+	v2N_COOKIE2 = 16401, /* RFC-4555 */
+	v2N_NO_NATS_ALLOWED = 16402, /* RFC-4555 */
+	v2N_AUTH_LIFETIME = 16403, /* RFC-4478 */
+	v2N_MULTIPLE_AUTH_SUPPORTED = 16404, /* RFC-4739 */
+	v2N_ANOTHER_AUTH_FOLLOWS = 16405, /* RFC-4739 */
+	v2N_REDIRECT_SUPPORTED = 16406, /* RFC-5685 */
+	v2N_REDIRECT = 16407, /* RFC-5685 */
+	v2N_REDIRECTED_FROM = 16408, /* RFC-5685 */
+	v2N_TICKET_LT_OPAQUE = 16409, /* RFC-5723 */
+	v2N_TICKET_REQUEST = 16410, /* RFC-5723 */
+	v2N_TICKET_ACK = 16411, /* RFC-5723 */
+	v2N_TICKET_NACK = 16412, /* RFC-5723 */
+	v2N_TICKET_OPAQUE = 16413, /* RFC-5723 */
+	v2N_LINK_ID = 16414, /* RFC-5739 */
+	v2N_USE_WESP_MODE = 16415, /* RFC-5840 */
+	v2N_ROHC_SUPPORTED = 16416, /* RFC-5857 */
+	v2N_EAP_ONLY_AUTHENTICATION = 16417, /* RFC-5998 */
+	v2N_CHILDLESS_IKEV2_SUPPORTED = 16418, /* RFC-6023 */
+	v2N_QUICK_CRASH_DETECTION = 16419, /* RFC-6290 */
+	v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED = 16420, /* RFC-6311 */
+	v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED = 16421, /* RFC-6311 */
+	v2N_IKEV2_MESSAGE_ID_SYNC = 16422, /* RFC-6311 */
+	v2N_IPSEC_REPLAY_COUNTER_SYNC = 16423, /* RFC-6311 */
+	v2N_SECURE_PASSWORD_METHODS = 16424, /* RFC-6467 */
 
 	/* 16425 - 40969 Unassigned */
 	/* 40960 - 65535 Private Use */
@@ -1192,34 +1170,34 @@ enum pubkey_alg {
  * The upper bound matches that of DNSsec (see RFC 2537).
  * The lower bound must be more than 11 octets for certain
  * the encoding to work, but it must be much larger for any
- * real security.  For now, we require 512 bits.
+ * real security. For now, we require 512 bits.
  */
 
-#define RSA_MIN_OCTETS_RFC      12
+#define RSA_MIN_OCTETS_RFC 12
 
-#define RSA_MIN_OCTETS  BYTES_FOR_BITS(512)
+#define RSA_MIN_OCTETS BYTES_FOR_BITS(512)
 #define RSA_MIN_OCTETS_UGH \
 	"RSA modulus too small for security: less than 512 bits"
 
-#define RSA_MAX_OCTETS  BYTES_FOR_BITS(8192)
-#define RSA_MAX_OCTETS_UGH      "RSA modulus too large: more than 8192 bits"
+#define RSA_MAX_OCTETS BYTES_FOR_BITS(8192)
+#define RSA_MAX_OCTETS_UGH "RSA modulus too large: more than 8192 bits"
 
-/* Note: RFC 2537 encoding adds a few bytes.  If you use a small
+/* Note: RFC 2537 encoding adds a few bytes. If you use a small
  * modulus like 3, the overhead is only 2 bytes
  */
-#define RSA_MAX_ENCODING_BYTES  (RSA_MAX_OCTETS + 2)
+#define RSA_MAX_ENCODING_BYTES (RSA_MAX_OCTETS + 2)
 
-#define ISA_MAJ_SHIFT   4
-#define ISA_MIN_MASK    (~((~0u) << ISA_MAJ_SHIFT))
+#define ISA_MAJ_SHIFT 4
+#define ISA_MIN_MASK (~((~0u) << ISA_MAJ_SHIFT))
 
 #define ISAKMP_ATTR_AF_MASK 0x8000
-#define ISAKMP_ATTR_AF_TV ISAKMP_ATTR_AF_MASK   /* value in lv */
-#define ISAKMP_ATTR_AF_TLV 0                    /* length in lv; value follows */
+#define ISAKMP_ATTR_AF_TV ISAKMP_ATTR_AF_MASK /* value in lv */
+#define ISAKMP_ATTR_AF_TLV 0 /* length in lv; value follows */
 
 #define ISAKMP_ATTR_RTYPE_MASK 0x7FFF
 
-/* NOTE:
+/*
+ * NOTE:
  * ID_IPV4_ADDR, ID_FQDN, etc. are defined in libreswan/ipsec_policy.h
  * AND: enum_names ident_names is in constants.c
  */
-
