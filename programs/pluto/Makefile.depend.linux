@@ -3,7 +3,6 @@ ac.o: ac.c ../../linux/include/libreswan.h \
  ../../include/sysqueue.h \
  ../../include/lswconf.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -29,7 +28,6 @@ addresspool.o: addresspool.c \
  ../../linux/include/libreswan.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -50,7 +48,6 @@ addresspool.o: addresspool.c \
 adns.o: adns.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -64,7 +61,6 @@ connections.o: connections.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -93,7 +89,6 @@ connections.o: connections.c \
 cookie.o: cookie.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -108,7 +103,6 @@ crypt_dh.o: crypt_dh.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -138,7 +132,6 @@ crypt_ke.o: crypt_ke.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -163,7 +156,6 @@ crypto.o: crypto.c \
  ../../linux/include/libreswan.h \
  ../../linux/include/klips-crypto/des.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -194,7 +186,6 @@ crypt_start_dh.o: crypt_start_dh.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -223,7 +214,6 @@ crypt_utils.o: crypt_utils.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -243,7 +233,6 @@ db_ops.o: db_ops.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -259,7 +248,6 @@ defs.o: defs.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -275,7 +263,6 @@ demux.o: demux.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -309,7 +296,6 @@ dnskey.o: dnskey.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -334,7 +320,6 @@ dpd.o: dpd.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -360,7 +345,6 @@ dpd.o: dpd.c \
 dsa.o: dsa.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -372,7 +356,6 @@ dsa.o: dsa.c \
 elgamal.o: elgamal.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -384,7 +367,6 @@ elgamal.o: elgamal.c \
 fetch.o: fetch.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -409,7 +391,6 @@ foodgroups.o: foodgroups.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -433,7 +414,6 @@ foodgroups.o: foodgroups.c \
 gcryptfix.o: gcryptfix.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -444,7 +424,6 @@ gcryptfix.o: gcryptfix.c \
 hmac.o: hmac.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -466,7 +445,6 @@ hostpair.o: hostpair.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -495,7 +473,6 @@ hostpair.o: hostpair.c \
 ike_alg_aes.o: ike_alg_aes.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -513,7 +490,6 @@ ike_alg.o: ike_alg.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -540,7 +516,6 @@ ike_alginit.o: ike_alginit.c
 ike_alg_sha2.o: ike_alg_sha2.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -556,7 +531,6 @@ ike_alg_status.o: ike_alg_status.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -584,7 +558,6 @@ ikeping.o: ikeping.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -603,7 +576,6 @@ ikev1_aggr.o: ikev1_aggr.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -640,7 +612,6 @@ ikev1.o: ikev1.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -677,7 +648,6 @@ ikev1_quick.o: ikev1_quick.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -716,7 +686,6 @@ ikev2.o: ikev2.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -748,7 +717,6 @@ ikev2_child.o: ikev2_child.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -781,7 +749,6 @@ ikev2_crypto.o: ikev2_crypto.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -815,7 +782,6 @@ ikev2_parent.o: ikev2_parent.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -850,7 +816,6 @@ ikev2_prfplus.o: ikev2_prfplus.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -878,7 +843,6 @@ ikev2_psk.o: ikev2_psk.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -907,7 +871,6 @@ ikev2_rsa.o: ikev2_rsa.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -941,7 +904,6 @@ ikev2_x509.o: ikev2_x509.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -973,7 +935,6 @@ initiate.o: initiate.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1007,7 +968,6 @@ ipsec_doi.o: ipsec_doi.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1045,7 +1005,6 @@ kernel.o: kernel.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1079,7 +1038,6 @@ kernel_klips.o: kernel_klips.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1111,7 +1069,6 @@ kernel_mast.o: kernel_mast.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1147,7 +1104,6 @@ kernel_netlink.o: kernel_netlink.c \
  ../../include/sysqueue.h \
  ../../include/socketwrapper.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1182,7 +1138,6 @@ kernel_noklips.o: kernel_noklips.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1207,7 +1162,6 @@ keys.o: keys.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1242,7 +1196,6 @@ log.o: log.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1269,7 +1222,6 @@ msgdigest.o: msgdigest.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1298,7 +1250,6 @@ myid.o: myid.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1328,7 +1279,6 @@ nat_traversal.o: nat_traversal.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1361,7 +1311,6 @@ pending.o: pending.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1390,7 +1339,6 @@ plutoalg.o: plutoalg.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
  ../../include/names_constant.h log.h \
@@ -1419,7 +1367,6 @@ pluto_crypt.o: pluto_crypt.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1449,7 +1396,6 @@ plutomain.o: plutomain.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1491,7 +1437,6 @@ plutomain.o: plutomain.c \
 primegen.o: primegen.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1507,7 +1452,6 @@ rcv_whack.o: rcv_whack.c \
  ../../include/sysqueue.h \
  ../../include/lswconf.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1535,7 +1479,6 @@ rnd.o: rnd.c \
  ../../linux/include/libreswan.h \
  ../../include/sha1.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1549,7 +1492,6 @@ security_selinux.o: security_selinux.c security_selinux.h \
  ../../linux/include/libreswan.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
  ../../include/names_constant.h
@@ -1559,7 +1501,6 @@ server.o: server.c \
  ../../include/sysqueue.h \
  ../../include/socketwrapper.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1594,7 +1535,6 @@ server.o: server.c \
 smallprime.o: smallprime.c \
  ../../linux/include/libreswan.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1609,7 +1549,6 @@ spdb.o: spdb.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1641,7 +1580,6 @@ spdb_print.o: spdb_print.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1677,7 +1615,6 @@ spdb_struct.o: spdb_struct.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1711,7 +1648,6 @@ spdb_v1_struct.o: spdb_v1_struct.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1745,7 +1681,6 @@ spdb_v2_struct.o: spdb_v2_struct.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1776,7 +1711,6 @@ state.o: state.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1811,7 +1745,6 @@ stubs.o: stubs.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1850,7 +1783,6 @@ sysdep_linux.o: sysdep_linux.c \
  ../../include/sysqueue.h \
  ../../include/socketwrapper.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1879,7 +1811,6 @@ terminate.o: terminate.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1910,7 +1841,6 @@ timer.o: timer.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1937,7 +1867,6 @@ vendor.o: vendor.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1963,7 +1892,6 @@ virtual.o: virtual.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -1987,7 +1915,6 @@ whack.o: whack.c \
  ../../include/sysqueue.h \
  ../../include/socketwrapper.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -2001,7 +1928,6 @@ whackinit.o: whackinit.c \
  ../../linux/include/libreswan.h \
  ../../include/socketwrapper.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -2018,7 +1944,6 @@ x509.o: x509.c \
  ../../include/sysqueue.h \
  ../../include/lswconf.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -2052,7 +1977,6 @@ x509keys.o: x509keys.c \
  ../../ports/linux/include/sysdep.h \
  ../../include/sysqueue.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
@@ -2082,7 +2006,6 @@ xauth.o: xauth.c \
  ../../linux/include/libreswan/ipsec_policy.h \
  ../../include/lswalloc.h \
  ../../include/constants.h \
- ../../include/biglset.h \
  ../../linux/include/libreswan/passert.h \
  ../../include/ietf_constants.h \
  ../../include/pluto_constants.h \
