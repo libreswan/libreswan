@@ -87,8 +87,8 @@ extern char *jam_str(char *dest, size_t size, const char *src);
 typedef uint_fast64_t lset_t;
 #define PRIxLSET    PRIxFAST64
 #define LELEM_ROOF  64	/* all elements must be less than this */
-#define LEMPTY 0ULL
-#define LELEM(opt) (1ULL << (opt))
+#define LEMPTY ((lset_t)0)
+#define LELEM(opt) ((lset_t)1 << (opt))
 #define LRANGE(lwb, upb) LRANGES(LELEM(lwb), LELEM(upb))
 #define LRANGES(first, last) (last - first + last)
 #define LHAS(set, elem)  ((LELEM(elem) & (set)) != LEMPTY)
