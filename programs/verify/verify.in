@@ -115,9 +115,7 @@ def plutocheck():
 
 	# only if pluto is running, do the listen tests and ipsec  secrets test
 	udp500check()
-	tcp500check()
 	udp4500check()
-	tcp4500check()
 	tcp10000check()
 	ipsecsecretcheck()
 
@@ -227,25 +225,6 @@ def udp500check():
 		print_result("FAIL","FAILED")
 		retcode += 1
 
-# not yet implemented in *swan
-def tcp500check():
-	global retcode
-	global sscmd
-	printfun(" Pluto listening for IKE on tcp 500")
-	if not sscmd:
-		print_result("WARN","UNKNOWN")
-		print "(install the 'ss' command to activate this test)"
-		return
-	try:
-		p = subprocess.Popen([sscmd, "-n", "-l", "-t", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
-		output, err = p.communicate()
-		if ":500" in output:
-			print_result("OK","OK")
-		else:
-			print_result("WARN","NOT IMPLEMENTED")
-	except:
-		print_result("WARN","NOT IMPLEMENTED")
-
 def udp4500check():
 	global retcode
 	global sscmd
@@ -264,44 +243,6 @@ def udp4500check():
 	except:
 		print_result("FAIL","DISABLED")
 		retcode += 1
-
-# not yet implemented in *swan
-def tcp4500check():
-	global retcode
-	global sscmd
-	printfun(" Pluto listening for IKE/NAT-T on tcp 4500")
-	if not sscmd:
-		print_result("WARN","UNKNOWN")
-		print "(install the 'ss' command to activate this test)"
-		return
-	try:
-		p = subprocess.Popen([sscmd, "-n", "-l", "-t", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
-		output, err = p.communicate()
-		if ":4500" in output:
-			print_result("OK","OK")
-		else:
-			print_result("WARN","NOT IMPLEMENTED")
-	except:
-		print_result("WARN","NOT IMPLEMENTED")
-
-# not yet implemented in *swan
-def tcp10000check():
-	global retcode
-	global sscmd
-	printfun(" Pluto listening for IKE on tcp 10000 (cisco)")
-	if not sscmd:
-		print_result("WARN","UNKNOWN")
-		print "(install the 'ss' command to activate this test)"
-		return
-	try:
-		p = subprocess.Popen([sscmd, "-n", "-l", "-t", "sport = :10000"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
-		output, err = p.communicate()
-		if ":10000" in output:
-			print_result("OK","OK")
-		else:
-			print_result("WARN","NOT IMPLEMENTED")
-	except:
-		print_result("WARN","NOT IMPLEMENTED")
 
 def installstartcheck():
 	global retcode
