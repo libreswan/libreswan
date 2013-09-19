@@ -122,9 +122,6 @@ constants.o: constants.c ../../linux/include/libreswan.h \
   ../../include/names_constant.h ../../include/enum_names.h \
   ../../include/lswlog.h ../../include/constants.h \
   ../../include/arpa/nameser.h
-copyright.o: copyright.c internal.h ../../linux/include/libreswan.h \
-  ../../linux/include/libreswan/ipsec_kversion.h \
-  ../../linux/include/libreswan/ipsec_param.h
 diag.o: diag.c ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
   ../../linux/include/libreswan/ipsec_param.h \

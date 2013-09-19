@@ -43,7 +43,6 @@ Files with different copyrights/licenses:
  * lib/libcrypto/libserpent/serpent.c, lib/libipsecpolicy/version.in.c,
    lib/liblibreswan/atoaddr.c, lib/liblibreswan/atoasr.c,
    lib/liblibreswan/atosubnet.c, lib/liblibreswan/atoul.c,
-   lib/liblibreswan/copyright.c,
    lib/liblibreswan/initsaid.c, lib/liblibreswan/initsubnet.c,
    lib/liblibreswan/internal.h, lib/liblibreswan/iprange.c,
    lib/liblibreswan/keyblobtoid.c, lib/liblibreswan/optionsfrom.c,
