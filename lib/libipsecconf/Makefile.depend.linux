@@ -2,7 +2,6 @@ alloc.o: alloc.c \
   ../../include/ipsecconf/starterlog.h
 confread.o: confread.c ../../include/lswalloc.h \
   ../../include/constants.h \
-  ../../include/biglset.h \
   ../../linux/include/libreswan/passert.h \
   ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
@@ -21,7 +20,6 @@ confread.o: confread.c ../../include/lswalloc.h \
 confwrite.o: confwrite.c \
   ../../include/ipsecconf/parser.h \
   ../../include/constants.h \
-  ../../include/biglset.h \
   ../../linux/include/libreswan/passert.h \
   ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
@@ -48,7 +46,6 @@ interfaces.o: interfaces.c \
 oeconns.o: oeconns.c \
   ../../include/ipsecconf/parser.h \
   ../../include/constants.h \
-  ../../include/biglset.h \
   ../../linux/include/libreswan/passert.h \
   ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
@@ -66,7 +63,6 @@ starterlog.o: starterlog.c \
   ../../linux/include/libreswan/ipsec_kversion.h \
   ../../linux/include/libreswan/ipsec_param.h \
   ../../include/constants.h \
-  ../../include/biglset.h \
   ../../linux/include/libreswan/passert.h \
   ../../linux/include/libreswan.h \
   ../../include/ietf_constants.h \
@@ -81,7 +77,6 @@ starterwhack.o: starterwhack.c \
   ../../linux/include/libreswan/ipsec_kversion.h \
   ../../linux/include/libreswan/ipsec_param.h \
   ../../include/constants.h \
-  ../../include/biglset.h \
   ../../linux/include/libreswan/passert.h \
   ../../linux/include/libreswan.h \
   ../../include/ietf_constants.h \

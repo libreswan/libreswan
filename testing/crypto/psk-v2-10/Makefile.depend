@@ -4,7 +4,7 @@ psk-v2.o: psk-v2.c ../../../include/sysqueue.h \
   ../../../linux/include/libreswan/ipsec_kversion.h \
   ../../../linux/include/libreswan/ipsec_param.h \
   ../../../linux/include/libreswan/passert.h \
-  ../../../include/constants.h ../../../include/biglset.h \
+  ../../../include/constants.h \
   ../../../linux/include/libreswan/passert.h \
   ../../../include/ietf_constants.h \
   ../../../include/pluto_constants.h \

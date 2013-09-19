@@ -28,7 +28,7 @@ X509LIB=x509dn.c certload.c pem.c pkcs.c asn1.c oid.c pgp.c x509chain.c
 
 SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
 	atoasr.c atosubnet.c atoul.c constants.c datatot.c \
-	alloc.c biglset.c diag.c \
+	alloc.c diag.c \
 	goodmask.c id.c initaddr.c initsaid.c initsubnet.c \
 	iprange.c \
         keyblobtoid.c \

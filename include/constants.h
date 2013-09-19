@@ -95,8 +95,6 @@ typedef uint_fast64_t lset_t;
 #define LIN(subset, set)  (((subset) & (set)) == (subset))
 #define LDISJOINT(a, b)  (((a) & (b)) == LEMPTY)
 
-#include "biglset.h"
-
 /* Routines to check and display values.
  *
  * An enum_names describes an enumeration.
