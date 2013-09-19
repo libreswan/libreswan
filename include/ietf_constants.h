@@ -18,6 +18,8 @@
  *
  */
 
+#include <sys/types.h>
+
 /* Group parameters from draft-ietf-ike-01.txt section 6 */
 
 #define MODP_GENERATOR "2"

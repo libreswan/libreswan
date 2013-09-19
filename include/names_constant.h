@@ -1,3 +1,9 @@
+/*
+ * names_constant.h
+ */
+#include <sys/types.h>
+#include <libreswan.h>
+
 extern enum kernel_interface kern_interface;
 extern enum_names kern_interface_names;
 extern enum_names timer_event_names;

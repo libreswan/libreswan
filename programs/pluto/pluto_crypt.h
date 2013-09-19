@@ -34,6 +34,7 @@
 
 #include "lsw_select.h"
 #include "crypto.h"
+#include "libreswan/passert.h"
 
 typedef unsigned int pcr_req_id;
 
