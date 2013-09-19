@@ -106,7 +106,6 @@ ifneq ($(NOINSTALL),true)
 doinstall:: $(PROGRAMLIST) $(LIBFILES)
 	@mkdir -p $(PROGRAMDIR) $(MANDIR8) $(MANDIR5) $(LIBDIR) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
 	@if [ -n "$(PROGRAM)" ]; then $(INSTALL) $(INSTBINFLAGS) $(PROGRAM) $(PROGRAMDIR); fi
-	@if $(USE_FIPSCHECK); then fipshmac -s $(FIPSHMACSUFFIX) $(PROGRAMDIR)/$(PROGRAM); fi
 	@$(foreach f, $(addsuffix .8, $(PROGRAM)), \
 		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
 		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR8)/$(MANPROGPREFIX)$f || exit 1; \
