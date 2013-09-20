@@ -47,27 +47,6 @@ enum keyword_remotepeertype {
 	CISCO  = 1,
 };
 
-enum keyword_sha2_truncbug {
-	SHA2_TRUNCBUG_NO = 0,
-	SHA2_TRUNCBUG_YES = 1,
-};
-
-/* Network Manager support */
-enum keyword_nmconfigured {
-	NM_NO = 0,
-	NM_YES = 1,
-};
-
-enum keyword_loopback {
-	LB_NO = 0,
-	LB_YES = 1,
-};
-
-enum keyword_labeled_ipsec {
-	LI_NO = 0,
-	LI_YES = 1,
-};
-
 enum keyword_xauthby {
 	XAUTHBY_FILE = 0,
 	XAUTHBY_PAM = 1,

@@ -107,9 +107,9 @@ certload.o: certload.c ../../linux/include/libreswan.h \
   ../../include/constants.h ../../include/lswalloc.h \
   ../../include/lswconf.h ../../include/lswtime.h \
   ../../include/asn1.h ../../include/id.h \
-  ../../include/x509.h ../../include/pgp.h \
+  ../../include/x509.h \
   ../../include/certs.h ../../include/secrets.h \
-  ../../include/pgp.h ../../include/pkcs.h \
+  ../../include/pkcs.h \
   ../../include/pem.h ../../include/certs.h
 constants.o: constants.c ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
@@ -143,9 +143,9 @@ id.o: id.c ../../linux/include/libreswan.h \
   ../../include/names_constant.h ../../include/lswalloc.h \
   ../../include/constants.h ../../include/lswlog.h \
   ../../include/id.h ../../include/x509.h \
-  ../../include/pgp.h ../../include/certs.h \
+  ../../include/certs.h \
   ../../include/secrets.h ../../include/id.h \
-  ../../include/x509.h ../../include/pgp.h \
+  ../../include/x509.h \
   ../../include/certs.h
 initsaid.o: initsaid.c internal.h ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
@@ -257,7 +257,7 @@ pem.o: pem.c ../../linux/include/libreswan.h \
   ../../include/pem.h ../../include/certs.h \
   ../../linux/include/libreswan/ipsec_policy.h \
   ../../include/secrets.h ../../include/id.h \
-  ../../include/x509.h ../../include/pgp.h
+  ../../include/x509.h
 pfkey_error.o: pfkey_error.c ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
   ../../linux/include/libreswan/ipsec_param.h \
@@ -274,25 +274,6 @@ pfkey_sock.o: pfkey_sock.c ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_param.h \
   ../../linux/include/libreswan/pfkeyv2.h \
   ../../include/linux/pfkeyv2.h
-pgp.o: pgp.c ../../linux/include/libreswan.h \
-  ../../linux/include/libreswan/ipsec_kversion.h \
-  ../../linux/include/libreswan/ipsec_param.h \
-  ../../linux/include/libreswan/ipsec_policy.h \
-  ../../linux/include/libreswan/pfkeyv2.h \
-  ../../linux/include/libreswan/pfkey.h \
-  ../../ports/linux/include/sysdep.h ../../include/sysqueue.h \
-  ../../include/constants.h \
-  ../../linux/include/libreswan/passert.h \
-  ../../include/ietf_constants.h \
-  ../../include/pluto_constants.h \
-  ../../include/names_constant.h ../../include/lswlog.h \
-  ../../include/constants.h ../../include/lswtime.h \
-  ../../include/lswalloc.h ../../include/id.h \
-  ../../include/pgp.h ../../include/x509.h \
-  ../../include/certs.h ../../include/secrets.h \
-  ../../include/id.h ../../include/x509.h \
-  ../../include/pgp.h ../../include/md5.h \
-  ../../include/secrets.h
 pkcs.o: pkcs.c ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
   ../../linux/include/libreswan/ipsec_param.h \
@@ -304,11 +285,11 @@ pkcs.o: pkcs.c ../../linux/include/libreswan.h \
   ../../include/constants.h ../../include/lswalloc.h \
   ../../include/lswconf.h ../../include/asn1.h \
   ../../include/oid.h ../../include/id.h \
-  ../../include/x509.h ../../include/pgp.h \
+  ../../include/x509.h \
   ../../include/certs.h \
   ../../linux/include/libreswan/ipsec_policy.h \
   ../../include/secrets.h ../../include/id.h \
-  ../../include/x509.h ../../include/pgp.h \
+  ../../include/x509.h \
   ../../include/pkcs.h
 portof.o: portof.c internal.h ../../linux/include/libreswan.h \
   ../../linux/include/libreswan/ipsec_kversion.h \
@@ -351,7 +332,7 @@ secrets.o: secrets.c ../../include/arpa/nameser.h \
   ../../include/id.h ../../include/x509.h \
   ../../include/secrets.h ../../include/id.h \
   ../../include/x509.h ../../include/certs.h \
-  ../../include/secrets.h ../../include/pgp.h \
+  ../../include/secrets.h \
   ../../include/certs.h \
   ../../include/lex.h ../../include/mpzfuncs.h
 subnettot.o: subnettot.c internal.h ../../linux/include/libreswan.h \
@@ -402,10 +383,10 @@ x509chain.o: x509chain.c ../../linux/include/libreswan.h \
   ../../include/lswtime.h ../../include/id.h \
   ../../include/mpzfuncs.h \
   ../../include/asn1.h ../../include/oid.h \
-  ../../include/x509.h ../../include/pgp.h \
+  ../../include/x509.h \
   ../../include/certs.h ../../include/secrets.h \
   ../../include/id.h ../../include/x509.h \
-  ../../include/pgp.h ../../include/packet.h \
+  ../../include/packet.h \
   ../../include/md5.h \
   ../../include/sha1.h ../../include/pkcs.h
 x509dn.o: x509dn.c ../../linux/include/libreswan.h \
@@ -422,9 +403,9 @@ x509dn.o: x509dn.c ../../linux/include/libreswan.h \
   ../../include/lswtime.h ../../include/mpzfuncs.h \
   ../../include/id.h ../../include/asn1.h \
   ../../include/oid.h ../../include/x509.h \
-  ../../include/pgp.h ../../include/certs.h \
+   ../../include/certs.h \
   ../../include/secrets.h ../../include/id.h \
-  ../../include/x509.h ../../include/pgp.h \
+  ../../include/x509.h \
   ../../include/secrets.h \
   ../../include/md5.h \
   ../../include/sha1.h ../../lib/libcrypto/libsha2/sha2.h

@@ -127,7 +127,6 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
  * structures to change lots.
  */
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
@@ -209,22 +208,22 @@ struct connection {
 	bool nat_keepalive;             /* Suppress sending NAT-T Keep-Alives */
 	bool initial_contact;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool cisco_unity;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
-
-	/*Cisco interop: remote peer type*/
-	enum keyword_remotepeertype remotepeertype;
-
-	enum keyword_sha2_truncbug sha2_truncbug;
+	bool send_vendorid;           /* Send our vendorid? Security vs Debugging help */
+	bool sha2_truncbug;
 
 	/*Network Manager support*/
 #ifdef HAVE_NM
-	enum keyword_nmconfigured nmconfigured;
+	bool nmconfigured;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	enum keyword_loopback loopback;
-	enum keyword_labeled_ipsec labeled_ipsec;
+	bool loopback;
+	bool labeled_ipsec;
 	char *policy_label;
 #endif
+
+	/*Cisco interop: remote peer type*/
+	enum keyword_remotepeertype remotepeertype;
 
 #ifdef XAUTH
 	enum keyword_xauthby xauthby;

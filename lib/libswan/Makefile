@@ -24,7 +24,7 @@ include ${LIBRESWANSRCDIR}/Makefile.ver
 
 MANDIR=$(MANTREE)/man3
 
-X509LIB=x509dn.c certload.c pem.c pkcs.c asn1.c oid.c pgp.c x509chain.c
+X509LIB=x509dn.c certload.c pem.c pkcs.c asn1.c oid.c x509chain.c
 
 SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
 	atoasr.c atosubnet.c atoul.c constants.c datatot.c \
@@ -133,7 +133,7 @@ EXTHDRS=des.h
 EXTLIBS=libdes.a
 MANS=anyaddr.3 atoaddr.3 atoasr.3 atoul.3 goodmask.3 \
 	initaddr.3 initsubnet.3 portof.3 rangetosubnet.3 \
-	sameaddr.3 subnetof.3 ttoaddr.3 ttodata.3 ttosa.3 ttoul.3 version.3
+	sameaddr.3 subnetof.3 ttoaddr.3 ttodata.3 ttosa.3 ttoul.3 
 
 .PHONY:	all install clean l t lt tar check depend checkprograms
 
@@ -187,7 +187,7 @@ $(LOGOBJS):	$(HDRS)
 
 # build version.c using version number from Makefile.ver
 version.c:	version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
-	sed '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' ${KLIPSSRCDIR}/version.in.c >$@
+	sed -e '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' -e '/"/s/@IPSECVIDVERSION@/$(IPSECVIDVERSION)/' ${KLIPSSRCDIR}/version.in.c >$@
 
 #libdes.a:	../libdes/libdes.a
 #	ln -f -s ../libdes/libdes.a

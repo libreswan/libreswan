@@ -36,7 +36,6 @@
 #include "state.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -1373,9 +1372,13 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	if (nat_traversal_enabled) 
 		numvidtosend++;
 #endif
-	if (c->policy & POLICY_IKE_FRAG_ALLOW)
-		numvidtosend++;
 	if(c->cisco_unity)
+		numvidtosend++;
+
+	if(c->send_vendorid)
+		numvidtosend++;
+
+	if (c->policy & POLICY_IKE_FRAG_ALLOW)
 		numvidtosend++;
 
 	/* ALWAYS Announce our ability to do Dead Peer Detection to the peer */
@@ -1406,6 +1409,12 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	if(c->cisco_unity) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_CISCO_UNITY))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if(c->send_vendorid) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_LIBRESWANSELF))
 			return STF_INTERNAL_ERROR;
 	}
 

@@ -52,7 +52,6 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "ac.h"
 #ifdef XAUTH_HAVE_PAM
@@ -143,6 +142,7 @@ static void usage(const char *mess)
 		" [--version]"
 		" \\\n\t"
 		"[--config <filename>]"
+		"[--vendorid <vendorid>]"
 		" [--nofork]"
 		" [--stderrlog]"
 		" [--logfile <filename>]"
@@ -365,6 +365,7 @@ u_int16_t secctx_attr_value = SECCTX;
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
+char *pluto_vendorid;
 static int nhelpers = -1;
 
 int main(int argc, char **argv)
@@ -893,6 +894,7 @@ int main(int argc, char **argv)
 			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];    /* --perpeerlog */
 			no_retransmits = !cfg->setup.options[KBF_RETRANSMITS];  /* --noretransmits */
 			set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
+			set_cfg_string(&pluto_vendorid, cfg->setup.strings[KSF_MYVENDORID]); /* --vendorid */
 			/* no config option: pluto_adns_option */
 #ifdef NAT_TRAVERSAL
 			pluto_natt_float_port =
@@ -1173,15 +1175,8 @@ int main(int argc, char **argv)
 	 */
 	{
 		const char *vc = ipsec_version_code();
-#ifdef PLUTO_SENDS_VENDORID
-		const char *v = init_pluto_vendorid();
-		libreswan_log(
-			"Starting Pluto (Libreswan Version %s%s; Vendor ID %s) pid:%u",
-			vc, compile_time_interop_options, v, getpid());
-#else
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			      vc, compile_time_interop_options, getpid());
-#endif
 		if (Pluto_IsFIPS() == 1) {
 			libreswan_log("Pluto is running in FIPS mode");
 		} else if (Pluto_IsFIPS() == 0) {
@@ -1311,6 +1306,7 @@ int main(int argc, char **argv)
 
 /** Initialize all of the various features */
 
+	init_vendorid(); /* to be phased out */
 #ifdef NAT_TRAVERSAL
 	init_nat_traversal(nat_traversal, keep_alive, nat_t_spf);
 #endif
@@ -1425,13 +1421,17 @@ void show_setup_plutomain()
 		IPSEC_LIBDIR ,
 		IPSEC_EXECDIR );
 
+	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s",
+		ipsec_version_code(),
+		ipsec_version_vendorid());
+
         whack_log(RC_COMMENT, "nhelpers=%d, uniqueids=%s, retransmits=%s, force_busy=%s",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
 		no_retransmits ? "no" : "yes",
 		force_busy ? "yes" : "no");
 
-        whack_log(RC_COMMENT, "ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%ld, listen=%s",
+        whack_log(RC_COMMENT, "ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s",
 		pluto_port,
 		strict_crl_policy ? "yes" : "no",
 		crl_check_interval,

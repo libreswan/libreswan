@@ -40,7 +40,6 @@
 #include "lswtime.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "secrets.h"
 
@@ -67,7 +66,6 @@
 #include "alg_info.h"
 #include "spdb.h"
 #include "ike_alg.h"
-#include "plutocerts.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "xauth.h"
@@ -817,15 +815,6 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	}
 
 	switch (cert.type) {
-	case CERT_PGP:
-		select_pgpcert_id(cert.u.pgp, &dst->id);
-
-		valid_until = cert.u.pgp->until;
-		add_pgp_public_key(cert.u.pgp, cert.u.pgp->until, DAL_LOCAL);
-		dst->cert.type = cert.type;
-		dst->cert.u.pgp = pluto_add_pgpcert(cert.u.pgp);
-		break;
-
 	case CERT_X509_SIGNATURE:
 		if (dst->id.kind == ID_FROMCERT || dst->id.kind == ID_NONE)
 			select_x509cert_id(cert.u.x509, &dst->id);
@@ -850,8 +839,12 @@ static void load_end_certificate(const char *filename, struct end *dst)
 				dst->ca = dst->cert.u.x509->issuer;
 		}
 		break;
+	case CERT_PGP:
+		whack_log(RC_FATAL,"PGP certificates not supported");
+		return;
 	default:
-		break;
+		whack_log(RC_FATAL,"Unknown certificate type (%d) not supported", cert.type);
+		return;
 	}
 
 }
@@ -1337,6 +1330,7 @@ void add_connection(const struct whack_message *wm)
 		c->nat_keepalive = wm->nat_keepalive;
 		c->initial_contact = wm->initial_contact;
 		c->cisco_unity = wm->cisco_unity;
+		c->send_vendorid = wm->send_vendorid;
 
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
@@ -3517,12 +3511,13 @@ void show_one_connection(struct connection *c)
 		  );
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; cisco_unity:%s;",
+		  "\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; cisco_unity:%s; send_vendorid:%s;",
 		  c->name,
 		  instance,
 		  (c->sha2_truncbug) ? "yes" : "no",
 		  (c->initial_contact) ? "yes" : "no",
-		  (c->cisco_unity) ? "yes" : "no"
+		  (c->cisco_unity) ? "yes" : "no",
+		  (c->send_vendorid) ? "yes" : "no"
 		  );
 
 	if (c->policy_next) {

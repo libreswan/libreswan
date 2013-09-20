@@ -958,16 +958,16 @@ int main(int argc, char **argv)
 
 	msg.remotepeertype = NON_CISCO;
 
-	msg.sha2_truncbug = SHA2_TRUNCBUG_NO;
+	msg.sha2_truncbug = FALSE;
 
 	/*Network Manager support*/
 #ifdef HAVE_NM
-	msg.nmconfigured = NM_NO;
+	msg.nmconfigured = FALSE;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	msg.loopback = LB_NO;
-	msg.labeled_ipsec = LI_NO;
+	msg.loopback = FALSE;
+	msg.labeled_ipsec = FALSE;
 	msg.policy_label = NULL;
 #endif
 
@@ -1599,22 +1599,22 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SHA2_TRUNCBUG: /* --sha2_truncbug */
-			msg.sha2_truncbug = SHA2_TRUNCBUG_YES;
+			msg.sha2_truncbug = TRUE;
 			continue;
 
 #ifdef HAVE_NM
 		case CD_NMCONFIGURED: /* --nm_configured */
-			msg.nmconfigured = NM_YES;
+			msg.nmconfigured = TRUE;
 			continue;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
 		case CD_LOOPBACK:
-			msg.loopback = LB_YES;
+			msg.loopback = TRUE;
 			continue;
 
 		case CD_LABELED_IPSEC:
-			msg.labeled_ipsec = LI_YES;
+			msg.labeled_ipsec = TRUE;
 			continue;
 
 		case CD_POLICY_LABEL:

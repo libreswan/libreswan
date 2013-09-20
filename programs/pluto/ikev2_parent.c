@@ -373,12 +373,8 @@ static stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st)
 {
-	/* struct connection *c = st->st_connection; */
+	struct connection *c = st->st_connection;
 	int numvidtosend = 0;
-
-#ifdef PLUTO_SENDS_VENDORID
-	numvidtosend++;  /* if we need to send Libreswan VID */
-#endif
 
 	/* set up reply */
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -433,9 +429,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
 		u_char *sa_start = md->rbody.cur;
 
-		/* if we  have an OpenPGP certificate we assume an
-		 * OpenPGP peer and have to send the Vendor ID
-		 */
 		if (st->st_sadb->prop_disj_cnt == 0 || st->st_sadb->prop_disj)
 			st->st_sadb = sa_v2_convert(st->st_sadb);
 
@@ -461,6 +454,15 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			   ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
+	/*
+	 * Check which Vendor ID's we need to send - there will be more soon
+	 * In IKEv2, DPD and NAT-T are no longer vendorid's
+	 */
+	if(c->send_vendorid) {
+		numvidtosend++;  /* if we need to send Libreswan VID */
+	}
+
+
 	/* send NONCE */
 	{
 		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
@@ -485,14 +487,18 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Send Vendor VID if needed */
 	{
+		char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
-				     pluto_vendorid, strlen(pluto_vendorid),
+				     myvid, strlen(myvid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
+
+	/* ensure or VID chain was valid */
+	passert(numvidtosend == 0);
 
 	close_message(&md->rbody);
 	close_output_pbs(&reply_stream);
@@ -947,11 +953,12 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* Send VendrID if needed VID */
 	{
+		char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
-				     pluto_vendorid, strlen(pluto_vendorid),
+				     myvid, strlen(myvid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}

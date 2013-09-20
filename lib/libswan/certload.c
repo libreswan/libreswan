@@ -32,7 +32,6 @@
 #include "asn1.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "pkcs.h"
 #include "pem.h"
@@ -63,23 +62,21 @@ const cert_t empty_cert = { FALSE, CERT_NONE, { NULL } };
 chunk_t get_mycert(cert_t cert)
 {
 	switch (cert.type) {
-	case CERT_PGP:
-		return cert.u.pgp->certificate;
-
 	case CERT_X509_SIGNATURE:
 		return cert.u.x509->certificate;
 
 	default:
+		loglog(RC_LOG_SERIOUS,"Unknown certificate type");
 		return empty_chunk;
 	}
 }
 
 /* load a coded key or certificate file with autodetection
- * of binary DER or base64 PEM ASN.1 formats and armored PGP format
+ * of binary DER or base64 PEM ASN.1 formats
  */
 bool load_coded_file(const char *filename,
 		     int verbose,
-		     const char *type, chunk_t *blob, bool *pgp)
+		     const char *type, chunk_t *blob)
 {
 	err_t ugh = NULL;
 	FILE *fd;
@@ -114,8 +111,6 @@ bool load_coded_file(const char *filename,
 			libreswan_log("  loaded %s file '%s' (%zu bytes)",
 				      type, filename, bytes);
 
-		*pgp = FALSE;
-
 		/* try DER format */
 		if (is_asn1(*blob)) {
 			DBG(DBG_PARSING,
@@ -125,16 +120,9 @@ bool load_coded_file(const char *filename,
 		}
 
 		/* try PEM format */
-		ugh = pemtobin(blob, pgp);
+		ugh = pemtobin(blob);
 
 		if (ugh == NULL) {
-			if (*pgp) {
-				DBG(DBG_PARSING,
-				    DBG_log(
-					    "  file coded in armored PGP format");
-				    );
-				return TRUE;
-			}
 			if (is_asn1(*blob)) {
 				DBG(DBG_PARSING,
 				    DBG_log("  file coded in PEM format");
@@ -156,13 +144,12 @@ bool load_coded_file(const char *filename,
 }
 
 /*
- *  Loads a X.509 or OpenPGP certificate
+ *  Loads a X.509 or certificate
  */
 bool load_cert(bool forcedtype, const char *filename,
 	       int verbose,
 	       const char *label, cert_t *cert)
 {
-	bool pgp = FALSE;
 	chunk_t blob = empty_chunk;
 
 	/* initialize cert struct */
@@ -170,42 +157,23 @@ bool load_cert(bool forcedtype, const char *filename,
 	cert->u.x509 = NULL;
 
 	if (!forcedtype) {
-		if (load_coded_file(filename, verbose, label, &blob, &pgp)) {
-			if (pgp) {
-				pgpcert_t *pgpcert = alloc_thing(pgpcert_t,
-								 "pgpcert");
-				*pgpcert = empty_pgpcert;
-				if (parse_pgp(blob, pgpcert, NULL)) {
-					cert->forced = FALSE;
-					cert->type = CERT_PGP;
-					cert->u.pgp = pgpcert;
-					return TRUE;
-				} else {
-					libreswan_log(
-						"  error in OpenPGP certificate");
-					free_pgpcert(pgpcert);
-					return FALSE;
-				}
+		if (load_coded_file(filename, verbose, label, &blob)) {
+
+			x509cert_t *x509cert = alloc_thing(x509cert_t,
+							   "x509cert");
+			*x509cert = empty_x509cert;
+
+			if (parse_x509cert(blob, 0, x509cert)) {
+				cert->forced = FALSE;
+				cert->type = CERT_X509_SIGNATURE;
+				cert->u.x509 = x509cert;
+				return TRUE;
 
 			} else {
-
-				x509cert_t *x509cert = alloc_thing(x509cert_t,
-								   "x509cert");
-				*x509cert = empty_x509cert;
-
-				if (parse_x509cert(blob, 0, x509cert)) {
-					cert->forced = FALSE;
-					cert->type = CERT_X509_SIGNATURE;
-					cert->u.x509 = x509cert;
-					return TRUE;
-
-				} else {
-					libreswan_log(
-						"  error in X.509 certificate %s",
-						filename);
-					free_x509cert(x509cert);
-					return FALSE;
-				}
+				libreswan_log(" error in X.509 certificate %s",
+					      filename);
+				free_x509cert(x509cert);
+				return FALSE;
 			}
 		}
 	} else {
@@ -253,13 +221,11 @@ bool same_cert(const cert_t *a, const cert_t *b)
 void share_cert(cert_t cert)
 {
 	switch (cert.type) {
-	case CERT_PGP:
-		share_pgpcert(cert.u.pgp);
-		break;
 	case CERT_X509_SIGNATURE:
 		share_x509cert(cert.u.x509);
 		break;
 	default:
+		loglog(RC_LOG_SERIOUS,"Unknown certificate type");
 		break;
 	}
 }

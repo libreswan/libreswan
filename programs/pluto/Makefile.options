@@ -70,9 +70,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 # -DDEBUG enables debugging code, allowing for debugging output
 #    (note that output must also be selected at runtime, so it is
 #    reasonable to always define this)
-# -DPLUTO_SENDS_VENDORID enables pluto to send out a VendorID payload.
-#    this can be used by remote nodes to work around faults (bugs),
-#    but is most useful to humans who are debugging things.
 # -DLEAK_DETECTIVE enables crude code to find memory allocation leaks.
 # -DOLD_RESOLVER.  At some point, the resolver interface changed.
 #    This macro enables Pluto support for the old interface.
@@ -95,10 +92,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 
 USE_ADNS=true
 BINNAMEADNSIFNEEDED=$(BINNAMEADNS)
-
-ifeq ($(USE_VENDORID),true)
-VENDORID=-DPLUTO_SENDS_VENDORID
-endif
 
 ifeq ($(USE_KEYRR),true)
 KEYRR_DEFINES=-DUSE_KEYRR

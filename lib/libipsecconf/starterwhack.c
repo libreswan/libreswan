@@ -554,12 +554,15 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	else
 		msg.nat_keepalive = TRUE;
 #endif
+	/* Activate sending out own vendorid */
+	if (conn->options_set[KBF_SEND_VENDORID])
+		msg.send_vendorid = conn->options[KBF_SEND_VENDORID];
 
-	/* Active Cisco quircky behaviour not replacing old IPsec SA's */
+	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
 	if (conn->options_set[KBF_INITIAL_CONTACT])
 		msg.initial_contact = conn->options[KBF_INITIAL_CONTACT];
 
-	/* Active their quircky behaviour - rumored to be needed for ModeCfg and RSA */
+	/* Activate their quircky behaviour - rumored to be needed for ModeCfg and RSA */
 	if (conn->options_set[KBF_CISCO_UNITY])
 		msg.cisco_unity = conn->options[KBF_CISCO_UNITY];
 

@@ -43,7 +43,6 @@
 #include "asn1.h"
 #include "oid.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "secrets.h"
 #ifdef USE_MD5
