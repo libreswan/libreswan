@@ -126,7 +126,7 @@ extern int nat_traversal_espinudp_socket(int sk,
  */
 #ifndef PB_STREAM_UNDEFINED
 bool nat_traversal_add_vid(u_int8_t np, pb_stream *outs);
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, struct state *st);
+bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs);
 #endif
 u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid);
 

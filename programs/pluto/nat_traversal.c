@@ -198,7 +198,7 @@ static void _natd_hash(const struct hash_desc *hasher, unsigned char *hash,
  *
  * Used when we're Initiator
  */
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, struct state *st)
+bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs)
 {
 	bool r = TRUE;
 
