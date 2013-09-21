@@ -74,7 +74,6 @@
 #include "lswcrypto.h"
 
 #ifdef NAT_TRAVERSAL
-#define PB_STREAM_UNDEFINED
 #include "nat_traversal.h"
 #endif
 
