@@ -485,7 +485,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Send Vendor VID if needed */
 	{
-		char *myvid = ipsec_version_vendorid();
+		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
 
@@ -941,7 +941,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* Send VendrID if needed VID */
 	{
-		char *myvid = ipsec_version_vendorid();
+		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
 
