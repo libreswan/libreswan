@@ -70,10 +70,6 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 
-#ifdef TPM
-#include "tpm/tpm.h"
-#endif
-
 /* bits loading keys from asynchronous DNS */
 
 enum key_add_attempt {
@@ -447,15 +443,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_reread & REREAD_CRLS)
 
 		load_crls();
-
-	if (msg.tpmeval) {
-#ifdef TPM
-		passert(msg.tpmeval != NULL);
-		tpm_eval(msg.tpmeval);
-#else
-		libreswan_log("Pluto not built with TAPROOM");
-#endif
-	}
 
 	if (msg.whack_list & LIST_PSKS)
 		list_psks();

@@ -80,7 +80,6 @@
 #include "virtual.h"
 #include "dpd.h"
 #include "x509more.h"
-#include "tpm/tpm.h"
 
 #if defined(AGGRESSIVE)
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
@@ -873,16 +872,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	}
 #endif
 
-#ifdef TPM
-	{
-		pb_stream *pbs = &md->rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-	}
-#endif
-
 	/* HASH_I or SIG_I out */
 	{
 		u_char buffer[1024];
@@ -1435,7 +1424,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	close_output_pbs(&reply_stream);
 
 	/* let TCL hack it before we mark the length and copy it */
-	TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
 
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
@@ -1448,13 +1436,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	send_ike_msg(st, "aggr_outI1");
 
-	/* Set up a retransmission event, half a minute henceforth */
-	TCLCALLOUT("adjustTimers", st, st->st_connection, md);
-
-#ifdef TPM
-tpm_stolen:
-tpm_ignore:
-#endif
 	/* Set up a retransmission event, half a minute henceforth */
 	delete_event(st);
 	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);

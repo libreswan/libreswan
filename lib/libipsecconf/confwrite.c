@@ -260,8 +260,7 @@ void confwrite_str(FILE *out,
 	}
 }
 
-void confwrite_side(FILE *out,
-		    struct starter_conn *conn,
+static void confwrite_side(FILE *out,
 		    struct starter_end *end,
 		    char   *side)
 {
@@ -410,8 +409,8 @@ void confwrite_conn(FILE *out,
 		}
 		fprintf(out, "\n");
 	}
-	confwrite_side(out, conn, &conn->left,  "left");
-	confwrite_side(out, conn, &conn->right, "right");
+	confwrite_side(out, &conn->left,  "left");
+	confwrite_side(out, &conn->right, "right");
 	confwrite_int(out, "", kv_conn, kv_auto,
 		      conn->options, conn->options_set, conn->strings);
 	confwrite_str(out, "", kv_conn, kv_auto,

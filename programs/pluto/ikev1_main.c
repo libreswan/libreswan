@@ -97,8 +97,6 @@
 #include "dpd.h"
 #include "x509more.h"
 
-#include "tpm/tpm.h"
-
 /* Initiate an Oakley Main Mode exchange.
  * --> HDR;SA
  * Note: this is not called from demux.c
@@ -291,8 +289,6 @@ stf_status main_outI1(int whack_sock,
 	close_message(&md.rbody);
 	close_output_pbs(&reply_stream);
 
-	/* let TCL hack it before we mark the length and copy it */
-	TCLCALLOUT("avoidEmitting", st, st->st_connection, &md);
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet for main_outI1");
@@ -300,13 +296,6 @@ stf_status main_outI1(int whack_sock,
 	/* Transmit */
 	send_ike_msg(st, "main_outI1");
 
-	/* Set up a retransmission event, half a minute henceforth */
-	TCLCALLOUT("adjustTimers", st, st->st_connection, &md);
-
-#ifdef TPM
-tpm_stolen:
-tpm_ignore:
-#endif
 	delete_event(st);
 	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
@@ -553,14 +542,8 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 		    (unsigned int)enc_len,
 		    enum_show(&oakley_enc_names, st->st_oakley.encrypt)));
 
-	TCLCALLOUT_crypt("preEncrypt", st, pbs, sizeof(struct isakmp_hdr),
-			 enc_len);
-
 	/* e->crypt(TRUE, enc_start, enc_len, st); */
 	crypto_cbc_encrypt(e, TRUE, enc_start, enc_len, st);
-
-	TCLCALLOUT_crypt("postEncrypt", st, pbs, sizeof(struct isakmp_hdr),
-			 enc_len);
 
 	update_iv(st);
 	DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);
@@ -1642,19 +1625,6 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef TPM
-	{
-		pb_stream *pbs = &md->rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-
-		/* find location of ID PBS */
-		tpm_findID(pbs, &id_pbs);
-	}
-#endif
-
 	/* HASH_I or SIG_I out */
 	{
 		u_char hash_val[MAX_DIGEST_LEN];
@@ -2148,18 +2118,6 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 		close_output_pbs(&cert_pbs);
 	}
 
-#ifdef TPM
-	{
-		pb_stream *pbs = &md->rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-
-		/* find location of ID PBS */
-		tpm_findID(pbs, &r_id_pbs);
-	}
-#endif
 
 	/* IKEv2 NOTIFY payload */
 	np = ISAKMP_NEXT_NONE;
@@ -2426,16 +2384,6 @@ stf_status send_isakmp_notification(struct state *st,
 		close_output_pbs(&notify_pbs);
 	}
 
-#ifdef TPM
-	{
-		pb_stream *pbs = &rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-		r_hashval = tpm_relocateHash(pbs);
-	}
-#endif
 
 	{
 		/* finish computing HASH */
@@ -2608,17 +2556,6 @@ static void send_notification(struct state *sndst, u_int16_t type,
 		close_output_pbs(&not_pbs);
 	}
 
-#ifdef TPM
-	{
-		pb_stream *pbs = &r_hdr_pbs;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", encst, pbs,
-				 sizeof(struct isakmp_hdr), enc_len);
-		r_hashval = tpm_relocateHash(pbs);
-	}
-#endif
-
 	/* calculate hash value and patch into Hash Payload */
 	if (encst) {
 		struct hmac_ctx ctx;
@@ -2666,13 +2603,7 @@ static void send_notification(struct state *sndst, u_int16_t type,
 		chunk_t saved_tpacket = sndst->st_tpacket;
 
 		setchunk(sndst->st_tpacket, pbs.start, pbs_offset(&pbs));
-		TCLCALLOUT_notify("avoidEmittingNotification", sndst, &pbs,
-				  &hdr);
 		send_ike_msg(sndst, "notification packet");
-#ifdef TPM
-tpm_stolen:
-tpm_ignore:
-#endif
 		sndst->st_tpacket = saved_tpacket;
 	}
 }
@@ -2912,13 +2843,7 @@ void ikev1_delete_out(struct state *st)
 
 		setchunk(p1st->st_tpacket, reply_pbs.start,
 			 pbs_offset(&reply_pbs));
-		TCLCALLOUT_notify("avoidEmittingDelete", p1st, &reply_pbs,
-				  &hdr);
 		send_ike_msg(p1st, "delete notify");
-#ifdef TPM
-tpm_stolen:
-tpm_ignore:
-#endif
 		p1st->st_tpacket = saved_tpacket;
 
 		/* get back old IV for this state */

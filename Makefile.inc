@@ -433,10 +433,6 @@ ifeq ($(HAVE_OCF),true)
 HAVE_OPENSSL=true
 endif
 
-# Whether or not to include TaProoM (TCL Pluto Mix) into pluto.
-# you need at least swig 1.3.24, as well as tcl libraries and includes
-USE_TAPROOM?=false
-
 # Whether to use LEAK_DETECTIVE to find memory leaks.
 # disabled for now as it causes some pfree()s due to bad code
 USE_LEAK_DETECTIVE?=false

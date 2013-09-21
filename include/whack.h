@@ -230,9 +230,6 @@ struct whack_message {
 	/* for WHACK_REREAD */
 	u_char whack_reread;
 
-	/* for WHACK_TCPEVAL */
-	char *tpmeval;
-
 	/* for connalias string */
 	char *connalias;
 
@@ -271,16 +268,16 @@ struct whack_message {
 	 * 15 myid
 	 * 16 ike
 	 * 17 esp
-	 * 18 tpmeval
-	 * 19 left.xauth_name
-	 * 20 right.xauth_name
-	 * 21 connalias
-	 * 22 left.host_addr_name
-	 * 23 right.host_addr_name
-	 * 24 genstring1  - used with opt_set
-	 * 25 genstring2
-	 * 26 genstring3
-	 * 27 dnshostname
+	 * 18 left.xauth_name
+	 * 19 right.xauth_name
+	 * 20 connalias
+	 * 21 left.host_addr_name
+	 * 22 right.host_addr_name
+	 * 23 genstring1  - used with opt_set
+	 * 24 genstring2
+	 * 25 genstring3
+	 * 26 dnshostname
+	 * 27 policy_label if compiled with with LABELED_IPSEC
 	 * plus keyval (limit: 8K bits + overhead), a chunk.
 	 */
 	size_t str_size;
@@ -315,7 +312,6 @@ struct whack_message {
 #define REREAD_ACERTS     0x08                                  /* reread certs in /etc/ipsec.d/acerts */
 #define REREAD_CRLS       0x10                                  /* reread crls in /etc/ipsec.d/crls */
 #define REREAD_ALL      LRANGES(REREAD_SECRETS, REREAD_CRLS)    /* all reread options */
-#define REREAD_TPMEVAL    0x20                                  /* evaluate in Tcl */
 
 struct whackpacker {
 	struct whack_message *msg;

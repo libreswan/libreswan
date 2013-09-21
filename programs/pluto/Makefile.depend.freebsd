@@ -202,7 +202,7 @@ crypto.o: crypto.c \
   ../../lib/libcrypto/libsha2/sha2.h \
   ../../include/mpzfuncs.h \
   ../../include/alg_info.h ike_alg.h \
-  tpm/tpm.h ../../include/constants.h \
+   ../../include/constants.h \
   modulus_reciprocals.c
 db_ops.o: db_ops.c \
   ../../linux/include/libreswan.h \
@@ -269,7 +269,7 @@ demux.o: demux.c \
   ../../include/whack.h \
   ../../linux/include/libreswan/ipsec_policy.h \
   xauth.h nat_traversal.h vendor.h dpd.h \
-  ../../include/udpfromto.h tpm/tpm.h \
+  ../../include/udpfromto.h  \
   ../../include/constants.h
 dnskey.o: dnskey.c \
   ../../include/arpa/nameser.h \
@@ -605,7 +605,7 @@ ikev1_aggr.o: ikev1_aggr.c \
   plutoalg.h pluto_crypt.h \
   ../../include/dev/hifn/vulcanpk_funcs.h \
   ikev1.h ikev1_continuations.h xauth.h vendor.h nat_traversal.h \
-  virtual.h dpd.h x509more.h tpm/tpm.h \
+  virtual.h dpd.h x509more.h  \
   ../../include/constants.h
 ikev1_quick.o: ikev1_quick.c \
   ../../include/arpa/nameser.h \
@@ -648,7 +648,7 @@ ikev1_quick.o: ikev1_quick.c \
   plutoalg.h pluto_crypt.h \
   ../../include/dev/hifn/vulcanpk_funcs.h \
   ikev1.h ikev1_continuations.h xauth.h vendor.h nat_traversal.h \
-  virtual.h dpd.h x509more.h tpm/tpm.h \
+  virtual.h dpd.h x509more.h  \
   ../../include/constants.h
 ipsec_doi.o: ipsec_doi.c \
   ../../include/arpa/nameser.h \
@@ -692,7 +692,7 @@ ipsec_doi.o: ipsec_doi.c \
   plutoalg.h pluto_crypt.h \
   ../../include/dev/hifn/vulcanpk_funcs.h \
   ikev1.h ikev1_continuations.h xauth.h vendor.h nat_traversal.h \
-  virtual.h dpd.h x509more.h tpm/tpm.h \
+  virtual.h dpd.h x509more.h  \
   ../../include/constants.h
 kernel.o: kernel.c \
   ../../linux/include/libreswan.h \

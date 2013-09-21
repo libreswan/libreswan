@@ -157,7 +157,6 @@
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
-#include "tpm/tpm.h"
 #include "hostpair.h"
 
 /* state_microcode is a tuple of information parameterizing certain
@@ -1955,16 +1954,8 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 			}
 
-			TCLCALLOUT_crypt("preDecrypt", st, &md->message_pbs,
-					 pbs_offset(&md->message_pbs),
-					 pbs_left(&md->message_pbs));
-
 			crypto_cbc_encrypt(e, FALSE, md->message_pbs.cur,
 					   pbs_left(&md->message_pbs), st);
-
-			TCLCALLOUT_crypt("postDecrypt", st, &md->message_pbs,
-					 pbs_offset(&md->message_pbs),
-					 pbs_left(&md->message_pbs));
 
 		}
 
@@ -1983,8 +1974,6 @@ void process_packet_tail(struct msg_digest **mdp)
 			return;
 		}
 	}
-
-	TCLCALLOUT("recvMessage", st, (st ? st->st_connection : NULL), md);
 
 	/* Digest the message.
 	 * Padding must be removed to make hashing work.
@@ -2347,19 +2336,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
 			 smc->first_out_payload);
 
-	TCLCALLOUT("changeState", st, (st ? st->st_connection : NULL), md);
-	/* XXX recheck md->smc, because it may have changed. */
-
 	complete_v1_state_transition(mdp, smc->processor(md));
-#ifdef TPM
-tpm_ignore:
-	return;
-
-tpm_stolen:
-	*mdp = NULL;
-	return;
-
-#endif
 }
 
 static void update_retransmit_history(struct state *st, struct msg_digest *md)
@@ -2394,7 +2371,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	cur_state = st = md->st; /* might have changed */
 
 	md->result = result;
-	TCLCALLOUT("adjustFailure", st, (st ? st->st_connection : NULL), md);
 	result = md->result;
 
 	/* If state has FRAGMENTATION support, import it */
@@ -2537,11 +2513,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 * send_ike_msg call depending on st->st_state.
 			 */
 
-			TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
 			send_ike_msg(st, enum_name(&state_names, from_state));
 		}
-
-		TCLCALLOUT("adjustTimers", st, st->st_connection, md);
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
@@ -2935,15 +2908,5 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			delete_state(st);
 		break;
 	}
-
-#ifdef TPM
-tpm_ignore:
-	return;
-
-tpm_stolen:
-	*mdp = NULL;
-	return;
-
-#endif
 
 }

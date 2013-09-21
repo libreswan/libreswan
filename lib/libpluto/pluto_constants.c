@@ -115,9 +115,6 @@ const char compile_time_interop_options[] = ""
 #ifdef KLIPS_MAST
 					    " KLIPS_MAST"
 #endif
-#ifdef TPM
-					    " TPM"
-#endif
 #ifdef LIBCURL
 					    " CURL(non-NSS)"
 #endif

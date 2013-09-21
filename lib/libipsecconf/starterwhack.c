@@ -634,7 +634,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 
 	}
-	msg.tpmeval = NULL;
 
 	r =  send_whack_msg(&msg, cfg->ctlbase);
 

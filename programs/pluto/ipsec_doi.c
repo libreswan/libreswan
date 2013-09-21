@@ -92,8 +92,6 @@
 #include "dpd.h"
 #include "x509more.h"
 
-#include "tpm/tpm.h"
-
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
  */

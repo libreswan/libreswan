@@ -59,7 +59,6 @@
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
-#include "tpm/tpm.h"
 #include "kernel.h"
 #include "virtual.h"
 #include "hostpair.h"

@@ -38,8 +38,6 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 
-#include "tpm/tpm.h"
-
 #include "lswcrypto.h"
 
 #include "pem.h"

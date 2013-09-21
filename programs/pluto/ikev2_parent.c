@@ -59,8 +59,6 @@
 #include "pending.h"
 #include "kernel.h"
 
-#include "tpm/tpm.h"
-
 #define SEND_NOTIFICATION_AA(t, d) \
 	if (st) \
 		send_v2_notification_from_state(st, st->st_state, t, d); \
@@ -503,11 +501,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	close_message(&md->rbody);
 	close_output_pbs(&reply_stream);
 
-#if 0
-	/* let TCL hack it before we mark the length and copy it */
-	TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
-#endif
-
 	freeanychunk(st->st_tpacket);
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
@@ -520,11 +513,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Transmit */
 	send_ike_msg(st, __FUNCTION__);
-
-#if 0
-	/* Set up a retransmission event, half a minute henceforth */
-	TCLCALLOUT("v2_adjustTimers", st, st->st_connection, md);
-#endif
 
 	delete_event(st);
 	event_schedule(EVENT_v2_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
@@ -965,11 +953,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	close_message(&md->rbody);
 	close_output_pbs(&reply_stream);
-
-#if 0
-	/* let TCL hack it before we mark the length. */
-	TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
-#endif
 
 	/* keep it for a retransmit if necessary */
 	freeanychunk(st->st_tpacket);
@@ -1681,11 +1664,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			return ret;
 	}
 
-#if 0
-	/* let TCL hack it before we mark the length. */
-	TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
-#endif
-
 	/* keep it for a retransmit if necessary, but on initiator
 	 * we never do that, but send_ike_msg() uses it.
 	 */
@@ -2142,11 +2120,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 				return ret;
 		}
 	}
-
-#if 0
-	/* let TCL hack it before we mark the length. */
-	TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
-#endif
 
 	/* keep it for a retransmit if necessary */
 	freeanychunk(st->st_tpacket);
@@ -3077,11 +3050,6 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					return ret;
 			}
 
-#if 0
-			/* let TCL hack it before we mark the length. */
-			TCLCALLOUT("v2_avoidEmitting", st, st->st_connection,
-				   md);
-#endif
 
 			/* keep it for a retransmit if necessary */
 			freeanychunk(st->st_tpacket);
@@ -3490,11 +3458,6 @@ void ikev2_delete_out(struct state *st)
 			if (ret != STF_OK)
 				goto end;
 		}
-
-#if 0
-		/* let TCL hack it before we mark the length. */
-		TCLCALLOUT("v2_avoidEmitting", pst, pst->st_connection, &md);
-#endif
 
 		/* keep it for a retransmit if necessary */
 		freeanychunk(pst->st_tpacket);

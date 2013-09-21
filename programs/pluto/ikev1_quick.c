@@ -86,7 +86,6 @@
 #include "virtual.h"
 #include "dpd.h"
 #include "x509more.h"
-#include "tpm/tpm.h"
 
 /* accept_PFS_KE
  *
@@ -1013,17 +1012,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
-	}
-#endif
-
-#ifdef TPM
-	{
-		pb_stream *pbs = &rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-		r_hashval = tpm_relocateHash(pbs);
 	}
 #endif
 
@@ -2350,16 +2338,6 @@ static stf_status quick_inI1_outR1_cryptotail(struct dh_continuation *dh,
 		p->isaiid_np = ISAKMP_NEXT_NONE;
 	}
 
-#ifdef TPM
-	{
-		pb_stream *pbs = &md->rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-		r_hashval = tpm_relocateHash(pbs);
-	}
-#endif
 
 	/* Compute reply HASH(2) and insert in output */
 	(void)quick_mode_hash12(r_hashval, r_hash_start, md->rbody.cur,
@@ -2630,17 +2608,6 @@ stf_status quick_inR1_outI2_cryptotail(struct dh_continuation *dh,
 						   ISAKMP_NEXT_NONE);
 #endif
 
-#ifdef TPM
-		{
-			pb_stream *pbs = &md->rbody;
-			size_t enc_len = pbs_offset(pbs) -
-					 sizeof(struct isakmp_hdr);
-
-			TCLCALLOUT_crypt("preHash", st, pbs,
-					 sizeof(struct isakmp_hdr), enc_len);
-			r_hashval = tpm_relocateHash(pbs);
-		}
-#endif
 
 		(void)quick_mode_hash3(r_hashval, st);
 	}

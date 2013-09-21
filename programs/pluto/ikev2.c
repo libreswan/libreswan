@@ -70,7 +70,6 @@
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
-#include "tpm/tpm.h"
 
 #define SEND_NOTIFICATION(t) { \
 		if (st) \
@@ -802,11 +801,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		 * send_ike_msg call depending on st->st_state.
 		 */
 
-		TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
 		send_ike_msg(st, enum_name(&state_names, from_state));
 	}
-
-	TCLCALLOUT("adjustTimers", st, st->st_connection, md);
 
 	if (w == RC_SUCCESS) {
 		struct state *pst;
@@ -902,16 +898,6 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			bad_case(kind);
 		}
 	}
-#ifdef TPM
-tpm_ignore:
-	return;
-
-tpm_stolen:
-	*mdp = NULL;
-	return;
-
-#endif
-
 }
 
 void complete_v2_state_transition(struct msg_digest **mdp,
@@ -948,7 +934,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	}
 
 	md->result = result;
-	TCLCALLOUT("v2AdjustFailure", st, (st ? st->st_connection : NULL), md);
 	result = md->result;
 
 	/* advance the state */
@@ -1045,15 +1030,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 						   md->note) :
 			    "<no reason given>" ));
 	}
-#ifdef TPM
-tpm_ignore:
-	return;
-
-tpm_stolen:
-	*mdp = NULL;
-	return;
-
-#endif
 }
 
 v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,

@@ -270,11 +270,6 @@ static void help(void)
 		"shutdown: whack"
 		" --shutdown"
 		"\n\n"
-#ifdef TPM
-		"taproom: whack"
-		" --tpmeval string"
-		"\n\n"
-#endif
 		"Libreswan %s\n",
 		ipsec_version_code());
 }
@@ -380,7 +375,6 @@ enum option_enums {
 	OPT_DELETECRASH,
 	OPT_XAUTHNAME,
 	OPT_XAUTHPASS,
-	OPT_TPMEVAL,
 	OPT_WHACKRECORD,
 	OPT_WHACKSTOPRECORD,
 
@@ -595,7 +589,6 @@ static const struct option long_opts[] = {
 	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthpass", required_argument, NULL, OPT_XAUTHPASS + OO },
-	{ "tpmeval",   required_argument, NULL, OPT_TPMEVAL   + OO },
 
 	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
 	{ "oppothere", required_argument, NULL, OPT_OPPO_THERE + OO },
@@ -1779,17 +1772,6 @@ int main(int argc, char **argv)
 
 		case CD_CONNMTU:
 			msg.connmtu = opt_whole;
-			continue;
-
-		case OPT_TPMEVAL:
-#ifdef TPM
-			msg.tpmeval = strdup(optarg);
-			msg.whack_reread |= REREAD_TPMEVAL;
-			printf("sending tpmeval: '%s'\n", msg.tpmeval);
-
-#else
-			diag("TaProoM is not enabled in this build");
-#endif
 			continue;
 
 #ifdef DEBUG

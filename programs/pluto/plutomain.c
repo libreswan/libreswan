@@ -87,11 +87,6 @@
 #include "nat_traversal.h"
 #endif
 
-#ifdef TPM
-#include <tcl.h>
-#include "tpm/tpm.h"
-#endif
-
 #include "lswcrypto.h"
 
 #ifndef IPSECDIR
@@ -1325,10 +1320,6 @@ int main(int argc, char **argv)
 	init_adns();
 	init_id();
 
-#ifdef TPM
-	init_tpm();
-#endif
-
 #if defined(LIBCURL) || defined(LDAP_VER)
 	init_fetch();
 #endif
@@ -1376,10 +1367,6 @@ void exit_pluto(int status)
 
 	/* free memory allocated by initialization routines.  Please don't
 	   forget to do this. */
-
-#ifdef TPM
-	free_tpm();
-#endif
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 	free_crl_fetch();       /* free chain of crl fetch requests */
