@@ -18,6 +18,7 @@ v3.6 (unreleased)
 * FIPS: Support versioned hmac files, fips test in non-fips mode [Paul]
 * rsasigkey/newhostkey: Keysize for new RSA keys keysize increasd from 2192
   to randomised 3072-4096 (in blocks of 16) to fight keysize monoculture [Paul]
+* Removed unused and unmaintained USE_TAPROOM functionality [Paul]
 * Bugtracker bugs fixed:
   #130: debian debuild creates a deb with /usr/libexec contents
         [Marc-Cristian Petersen]
