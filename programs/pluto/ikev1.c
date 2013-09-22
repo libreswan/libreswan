@@ -2390,6 +2390,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			DBG(DBG_DPD, DBG_log("enabling sending dpd"));
 		}
 	}
+	/* If state has VID_NORTEL, import it to activate workaround */
+	if (st && md->nortel) {
+		DBG(DBG_CONTROLMORE, DBG_log("peer requires nortel contivity workaround"));
+		st->st_seen_nortel_vid = TRUE;
+	}
 
 	/* advance the state */
 	DBG(DBG_CONTROL,
@@ -2757,7 +2762,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		   we need to initiate Quick mode */
 		if (!(smc->flags & SMF_INITIATOR) &&
 		    IS_MODE_CFG_ESTABLISHED(st->st_state) &&
-		    (st->st_seen_vendorid & LELEM(VID_NORTEL))) {
+		    (st->st_seen_nortel_vid)) {
+			libreswan_log("Nortel 'Contivity Mode' detected, starting Quick Mode");
 			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
 			set_cur_state(st);
 			quick_outI1(st->st_whack_sock, st, st->st_connection,

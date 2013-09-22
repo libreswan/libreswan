@@ -640,7 +640,10 @@ static void handle_known_vendorid(struct msg_digest *md,
 		md->ikev2 = TRUE;
 		break;
 
-/* We only need these when dealing with XAUTH */
+	case VID_NORTEL:
+		md->nortel = TRUE;
+		break;
+
 #ifdef XAUTH
 	case VID_SSH_SENTINEL_1_4_1:
 		loglog(RC_LOG_SERIOUS,
