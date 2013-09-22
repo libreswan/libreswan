@@ -458,6 +458,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			       enum eroute_type esatype,
 			       const struct pfkey_proto_info *proto_info,
 			       time_t use_lifetime UNUSED,
+			       unsigned long sa_priority,
 			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -624,12 +625,21 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			src = req.u.p.sel.prefixlen_d;
 			dst = req.u.p.sel.prefixlen_s;
 		}
-		req.u.p.priority = MIN_SPD_PRIORITY -
-			((policy == IPSEC_POLICY_NONE) ? 512 : 0) +
+
+		/* 
+		 * if the user did not specify a priority, calculate one based
+		 * on 'more specific' getting a higher priority
+		 */
+		if (sa_priority) {
+			req.u.p.priority = sa_priority;
+		} else {
+			req.u.p.priority = MIN_SPD_PRIORITY -
+				((policy == IPSEC_POLICY_NONE) ? 512 : 0) +
 				   (((2 << shift) - src) << shift) +
 				    (2 << shift) - dst - ((transport_proto) ? 64 : 0) 
 				 	- ((req.u.p.sel.sport) ? 32 : 0 )
 				 	- ((req.u.p.sel.sport) ? 32 : 0 );
+		}
 
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
@@ -1879,7 +1889,8 @@ static bool netlink_shunt_eroute(struct connection *c,
 					 SA_INT,
 					 sr->this.protocol,
 					 ET_INT,
-					 null_proto_info, 0, op, buf2
+					 null_proto_info, 0, c->sa_priority,
+					 op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					 , c->policy_label
 #endif
@@ -1909,7 +1920,8 @@ static bool netlink_shunt_eroute(struct connection *c,
 					  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : SA_INT,
 					  sr->this.protocol,
 					  ET_INT,
-					  null_proto_info, 0, op, buf2
+					  null_proto_info, 0, c->sa_priority,
+					  op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					  , c->policy_label
 #endif

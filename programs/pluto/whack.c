@@ -124,6 +124,10 @@ static void help(void)
 		" \\\n   "
 		" [--remote_peer_type <cisco>]"
 		" \\\n   "
+		" [--mtu <mtu>]"
+		" \\\n   "
+		" [--priority <prio>]"
+		" \\\n   "
 #ifdef HAVE_NM
 		"[--nm_configured]"
 		" \\\n   "
@@ -461,6 +465,7 @@ enum option_enums {
 	CD_MODECFGDNS2,
 	CD_METRIC,
 	CD_CONNMTU,
+	CD_PRIORITY,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -703,6 +708,7 @@ static const struct option long_opts[] = {
 #endif
 	{ "metric", required_argument, NULL, CD_METRIC + OO + NUMERIC_ARG },
 	{ "mtu", required_argument, NULL, CD_CONNMTU + OO + NUMERIC_ARG },
+	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "certtype", required_argument, NULL, END_CERTTYPE + OO +
 	  NUMERIC_ARG },
@@ -1772,6 +1778,10 @@ int main(int argc, char **argv)
 
 		case CD_CONNMTU:
 			msg.connmtu = opt_whole;
+			continue;
+
+		case CD_PRIORITY:
+			msg.sa_priority = opt_whole;
 			continue;
 
 #ifdef DEBUG

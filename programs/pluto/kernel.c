@@ -899,6 +899,7 @@ static bool raw_eroute(const ip_address *this_host,
 		       enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
 		       time_t use_lifetime,
+		       unsigned long sa_priority,
 		       enum pluto_sadb_operations op,
 		       const char *opname USED_BY_DEBUG
 #ifdef HAVE_LABELED_IPSEC
@@ -936,7 +937,7 @@ static bool raw_eroute(const ip_address *this_host,
 					spi, proto,
 					transport_proto,
 					esatype, proto_info,
-					use_lifetime, op, text_said
+					use_lifetime, sa_priority, op, text_said
 #ifdef HAVE_LABELED_IPSEC
 					, policy_label
 #endif
@@ -1060,7 +1061,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 					       htonl(shunt_spi), SA_INT,
 					       transport_proto,
 					       ET_INT, null_proto_info,
-					       SHUNT_PATIENCE, ERO_REPLACE, why
+					       SHUNT_PATIENCE, DEFAULT_IPSEC_SA_PRIORITY,
+					       ERO_REPLACE, why
 #ifdef HAVE_LABELED_IPSEC
 					       , NULL
 #endif
@@ -1096,7 +1098,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       SA_INT,
 			       transport_proto,
 			       ET_INT, null_proto_info,
-			       SHUNT_PATIENCE, ERO_ADD, why
+			       SHUNT_PATIENCE, ERO_ADD,
+			       DEFAULT_IPSEC_SA_PRIORITY, why
 #ifdef HAVE_LABELED_IPSEC
 			       , NULL
 #endif
@@ -1123,7 +1126,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       htonl(shunt_spi), SA_INT,
 			       0, /* transport_proto */
 			       ET_INT, null_proto_info,
-			       SHUNT_PATIENCE, op, why
+			       SHUNT_PATIENCE, DEFAULT_IPSEC_SA_PRIORITY,
+			       op, why
 #ifdef HAVE_LABELED_IPSEC
 			       , NULL
 #endif
@@ -1187,7 +1191,7 @@ bool eroute_connection(struct spd_route *sr,
 			  proto,
 			  sr->this.protocol,
 			  esatype,
-			  proto_info, 0, op, buf2
+			  proto_info, 0, DEFAULT_IPSEC_SA_PRIORITY, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 			  , policy_label
 #endif
@@ -2049,6 +2053,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 					  esatype,                      /* esatype */
 					  proto_info,                   /* " */
 					  0,                            /* lifetime */
+					  c->sa_priority,		/* IPsec SA prio */
 					  ERO_ADD_INBOUND,              /* op */
 					  "add inbound"                 /* opname */
 #ifdef HAVE_LABELED_IPSEC
@@ -2147,7 +2152,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY,
 				  c->spd.this.protocol,
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
-				  null_proto_info, 0,
+				  null_proto_info, 0, c->sa_priority, 
 				  ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
 				  , c->policy_label
@@ -2763,6 +2768,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 						  ET_INT,
 						  null_proto_info,
 						  SHUNT_PATIENCE,
+						  DEFAULT_IPSEC_SA_PRIORITY,
 						  ERO_REPLACE, "restore"
 #ifdef HAVE_LABELED_IPSEC
 						  , NULL /* bare shunt are not associated with any connection so no security label*/

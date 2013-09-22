@@ -163,6 +163,8 @@ struct whack_message {
 	/* Force the MTU for this connection */
 	int connmtu;
 
+	int sa_priority;
+
 	bool loopback;
 	bool labeled_ipsec;
 	char *policy_label;

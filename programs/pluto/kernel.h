@@ -110,6 +110,7 @@ struct kernel_sa {
 #endif
 
 	unsigned long sa_lifetime; /* number of seconds until SA expires */
+	unsigned long sa_priority;
 };
 
 struct raw_iface {
@@ -154,6 +155,7 @@ struct kernel_ops {
 			   enum eroute_type satype,
 			   const struct pfkey_proto_info *proto_info,
 			   time_t use_lifetime,
+			   unsigned long sa_priority,
 			   enum pluto_sadb_operations op,
 			   const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -398,6 +400,14 @@ extern const struct kernel_ops mast_kernel_ops;
 extern bool kernel_overlap_supported(void);
 extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
+
+/* 
+ * Used to pass default priority from kernel_ops-> functions.
+ * Our priority is based on an unsigned long int, with the
+ * lower number being the highest priority, but this
+ * might need to be translated depending on the IPsec stack.
+ */
+#define DEFAULT_IPSEC_SA_PRIORITY 0
 
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

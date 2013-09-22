@@ -520,6 +520,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_CONNMTU])
 		msg.connmtu   = conn->options[KBF_CONNMTU];
 
+	if (conn->options_set[KBF_PRIORITY])
+		msg.sa_priority   = conn->options[KBF_PRIORITY];
+
 	if (conn->options_set[KBF_DPDDELAY] &&
 	    conn->options_set[KBF_DPDTIMEOUT]) {
 		msg.dpd_delay   = conn->options[KBF_DPDDELAY];

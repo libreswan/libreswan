@@ -1325,6 +1325,7 @@ void add_connection(const struct whack_message *wm)
 
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
+		c->sa_priority = wm->sa_priority;
 
 		c->forceencaps = wm->forceencaps;
 		c->nat_keepalive = wm->nat_keepalive;
@@ -3465,6 +3466,7 @@ void show_one_connection(struct connection *c)
 	char instance[1 + 10 + 1];
 	char prio[POLICY_PRIO_BUF];
 	char mtustr[8];
+	char sapriostr[13];
 
 	ifn = oriented(*c) ? c->interface->ip_dev->id_rname : "";
 
@@ -3527,7 +3529,6 @@ void show_one_connection(struct connection *c)
 	}
 
 	/* Note: we _no longer_ display key_from_DNS_on_demand as if policy [lr]KOD */
-	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   policy: %s; %s%s%s",
 		  c->name,
@@ -3543,14 +3544,20 @@ void show_one_connection(struct connection *c)
 		snprintf(mtustr, 7, "%d", c->connmtu);
 	else
 		strcpy(mtustr, "unset");
+
+	if (c->sa_priority)
+		snprintf(sapriostr, 12, "%d", c->sa_priority);
+	else
+		strcpy(sapriostr, "auto");
+	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   prio: %s; interface: %s; metric: %lu, mtu: %s;",
+		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; mtu: %s; sa_prio:%s;",
 		  c->name,
 		  instance,
 		  prio,
 		  ifn,
 		  (unsigned long)c->metric,
-		  mtustr
+		  mtustr, sapriostr
 		  );
 
 	/* slightly complicated stuff to avoid extra crap */

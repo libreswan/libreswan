@@ -64,6 +64,7 @@ d.ipsec.conf/ikelifetime.xml
 d.ipsec.conf/compress.xml
 d.ipsec.conf/metric.xml
 d.ipsec.conf/mtu.xml
+d.ipsec.conf/priority.xml
 d.ipsec.conf/disablearrivalcheck.xml
 d.ipsec.conf/labeled_ipsec.xml
 d.ipsec.conf/policy_label.xml

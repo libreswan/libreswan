@@ -76,6 +76,7 @@ static bool noklips_raw_eroute(const ip_address *this_host UNUSED,
 			       unsigned int satype UNUSED,
 			       const struct pfkey_proto_info *proto_info UNUSED,
 			       time_t use_lifetime UNUSED,
+			       unsigned long sa_priority,
 			       unsigned int op UNUSED,
 			       const char *text_said UNUSED
 #ifdef HAVE_LABELED_IPSEC
