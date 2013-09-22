@@ -633,7 +633,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 
 	case VID_MISC_DPD:
 		/* Remote side would like to do DPD with us on this connection */
-		md->dpd = 1;
+		md->dpd = TRUE;
 		break;
 
 	case VID_MISC_IKEv2:
