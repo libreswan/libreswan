@@ -661,7 +661,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 #endif
 
 	case VID_LIBRESWANSELF:
-		vid_useful = TRUE; /* not really useful, but it changes the msg from "ignored" to "received" */
+		/* not really useful, but it changes the msg from "ignored" to "received" */
 		break;
 
 	case VID_CISCO_IKE_FRAGMENTATION:
