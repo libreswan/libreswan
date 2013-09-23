@@ -108,10 +108,6 @@ ifeq ($(USE_DMALLOC),true)
 CFLAGS+= -DDMALLOC
 endif
 
-ifeq ($(USE_MODP_RFC5114),true)
-CFLAGS+=-DUSE_MODP_RFC5114
-endif
-
 ifeq ($(USE_LABELED_IPSEC),true)
 CFLAGS+=-DHAVE_LABELED_IPSEC
 endif

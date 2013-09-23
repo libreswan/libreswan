@@ -291,11 +291,6 @@ DEFINES+=-DFIPS_CHECK
 LIBSPLUTO+= -lfipscheck
 endif
 
-# Use MODP group described in RFC 5114
-ifeq ($(USE_MODP_RFC5114),true)
-DEFINES+=-DUSE_MODP_RFC5114
-endif
-
 ifeq ($(USE_DMALLOC),true)
 DEFINES+=-DDMALLOC
 LIBSPLUTO+= -ldmalloc

@@ -45,7 +45,7 @@
 /* moduli and generator. */
 
 static MP_INT
-/* modp768_modulus no longer supported - it is too weak */
+	/* modp768_modulus no longer supported - it is too weak */
 	modp1024_modulus, /* migrate away from this if you are still using it */
 	modp1536_modulus,
 	modp2048_modulus,
@@ -54,20 +54,16 @@ static MP_INT
 	modp6144_modulus,
 	modp8192_modulus;
 
-#ifdef USE_MODP_RFC5114
 static MP_INT
 	dh22_modulus,
 	dh23_modulus,
 	dh24_modulus;
-#endif
 
 MP_INT groupgenerator;  /* MODP group generator (2) */
 
-#ifdef USE_MODP_RFC5114
 MP_INT generator_dh22,
        generator_dh23,
        generator_dh24;
-#endif
 
 #ifdef USE_3DES
 static void do_3des(u_int8_t *buf, size_t buf_len, u_int8_t *key,
@@ -168,12 +164,10 @@ static struct hash_desc crypto_integ_sha1 =
 void init_crypto(void)
 {
 	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0
-#ifdef USE_MODP_RFC5114
 	    ||  mpz_init_set_str(&generator_dh22, MODP_GENERATOR_DH22,
 				 16) != 0 ||
 	    mpz_init_set_str(&generator_dh23, MODP_GENERATOR_DH23, 16) != 0 ||
 	    mpz_init_set_str(&generator_dh24, MODP_GENERATOR_DH24, 16) != 0
-#endif
 	    /* modp768_modulus no longer supported */
 	    || mpz_init_set_str(&modp1024_modulus, MODP1024_MODULUS,
 				16) != 0 ||
@@ -183,12 +177,10 @@ void init_crypto(void)
 	    mpz_init_set_str(&modp4096_modulus, MODP4096_MODULUS, 16) != 0 ||
 	    mpz_init_set_str(&modp6144_modulus, MODP6144_MODULUS, 16) != 0 ||
 	    mpz_init_set_str(&modp8192_modulus, MODP8192_MODULUS, 16) != 0
-#ifdef USE_MODP_RFC5114
 	    || mpz_init_set_str(&dh22_modulus, MODP1024_MODULUS_DH22,
 				16) != 0 ||
 	    mpz_init_set_str(&dh23_modulus, MODP2048_MODULUS_DH23, 16) != 0 ||
 	    mpz_init_set_str(&dh24_modulus, MODP2048_MODULUS_DH24, 16) != 0
-#endif
 	    )
 		exit_log("mpz_init_set_str() failed in init_crypto()");
 
@@ -248,23 +240,11 @@ void init_crypto(void)
 
 /* Oakley group description
  *
- * See RFC2409 "The Internet key exchange (IKE)" 6.
+ * See:
+ * RFC-2409 "The Internet key exchange (IKE)" Section 6 
+ * RFC-3526 "More Modular Exponential (MODP) Diffie-Hellman groups"
  */
 
-#ifndef USE_MODP_RFC5114
-const struct oakley_group_desc unset_group = { 0, NULL, 0 };      /* magic signifier */
-
-const struct oakley_group_desc oakley_group[] = {
-	/* modp768_modulus no longer supported - too weak */
-	{ OAKLEY_GROUP_MODP1024, &modp1024_modulus, BYTES_FOR_BITS(1024) },
-	{ OAKLEY_GROUP_MODP1536, &modp1536_modulus, BYTES_FOR_BITS(1536) },
-	{ OAKLEY_GROUP_MODP2048, &modp2048_modulus, BYTES_FOR_BITS(2048) },
-	{ OAKLEY_GROUP_MODP3072, &modp3072_modulus, BYTES_FOR_BITS(3072) },
-	{ OAKLEY_GROUP_MODP4096, &modp4096_modulus, BYTES_FOR_BITS(4096) },
-	{ OAKLEY_GROUP_MODP6144, &modp6144_modulus, BYTES_FOR_BITS(6144) },
-	{ OAKLEY_GROUP_MODP8192, &modp8192_modulus, BYTES_FOR_BITS(8192) },
-};
-#else
 const struct oakley_group_desc unset_group = { 0, NULL, NULL, 0 };      /* magic signifier */
 
 const struct oakley_group_desc oakley_group[] = {
@@ -291,7 +271,6 @@ const struct oakley_group_desc oakley_group[] = {
 		  2048) },
 
 };
-#endif
 
 const unsigned int oakley_group_size = elemsof(oakley_group);
 

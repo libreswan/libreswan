@@ -377,9 +377,6 @@ USE_LIBCAP_NG?=true
 # Support for Network Manager
 USE_NM?=true
 
-# Support for MODP groups described in RFC 5114
-USE_MODP_RFC5114?=true
-
 # whether to support NAT Traversal (aka NAT-T)
 USE_NAT_TRAVERSAL?=true
 

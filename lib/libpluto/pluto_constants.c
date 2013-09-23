@@ -55,7 +55,6 @@
  * TEST_INDECENT_PROPOSAL 
  * USE_3DES USE_AES USE_BLOWFISH USE_MD5 USE_SERPENT USE_SHA1 USE_SHA2 USE_TWOFISH
  * USE_KEYRR
- * USE_MODP_RFC5114
  * VIRTUAL_IP
  */
 /* string naming compile-time options that have interop implications */

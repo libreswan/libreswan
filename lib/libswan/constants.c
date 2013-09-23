@@ -930,28 +930,20 @@ static const char *const oakley_group_name_rfc3526[] = {
 	"OAKLEY_GROUP_MODP8192"
 };
 
-#ifdef USE_MODP_RFC5114
 static const char *const oakley_group_name_rfc5114[] = {
 	"OAKLEY_GROUP_DH22",
 	"OAKLEY_GROUP_DH23",
 	"OAKLEY_GROUP_DH24"
 };
-#endif
 
-#ifdef USE_MODP_RFC5114
 enum_names oakley_group_names_rfc5114 =
 { OAKLEY_GROUP_DH22, OAKLEY_GROUP_DH24,
   oakley_group_name_rfc5114, NULL };
-#endif
 
 enum_names oakley_group_names_rfc3526 =
 { OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP8192,
   oakley_group_name_rfc3526,
-#ifdef USE_MODP_RFC5114
   &oakley_group_names_rfc5114 };
-#else
-  NULL };
-#endif
 
 enum_names oakley_group_names =
 { OAKLEY_GROUP_MODP768, OAKLEY_GROUP_MODP1536,
