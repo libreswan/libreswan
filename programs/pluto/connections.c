@@ -3546,7 +3546,7 @@ void show_one_connection(struct connection *c)
 		strcpy(mtustr, "unset");
 
 	if (c->sa_priority)
-		snprintf(sapriostr, 12, "%d", c->sa_priority);
+		snprintf(sapriostr, 12, "%lu", c->sa_priority);
 	else
 		strcpy(sapriostr, "auto");
 	fmt_policy_prio(c->prio, prio);
