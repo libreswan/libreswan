@@ -1547,7 +1547,8 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	 *
 	 */
 	initial_contact = st->st_connection->initial_contact;
-	libreswan_log("I will %ssend an initial contact payload",
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("I will %ssend an initial contact payload",
 		      initial_contact ? "" : "NOT ");
 
 	/* done parsing; initialize crypto  */
