@@ -5,7 +5,7 @@
 Each kernel (NETKEY, KLIPS, OSX, etc) has its own mechanism for setting the
 priority. Setting this option to non-zero passes the priority to the kernel stack
 unmodified. The maximum value depends on the stack. It is recommended not to exceed
-65536</par>
+65536</para>
 <para>
 KLIPS and NETKEY use a priority system based on "most specific match
 first". It uses an internal algorithm to calculate these based on network prefix length,
