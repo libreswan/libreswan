@@ -1313,8 +1313,15 @@ void add_connection(const struct whack_message *wm)
 			c->policy_label = clone_str(wm->policy_label,
 						    "security label");
 		DBG(DBG_CONTROL,
-		    DBG_log("loopback=%d labeled_ipsec=%d, policy_label=%s",
-			    c->loopback, c->labeled_ipsec, c->policy_label));
+		    DBG_log("loopback=%d, labeled_ipsec=%d;",
+			    c->loopback, c->labeled_ipsec));
+		DBG(DBG_CONTROL,
+		    DBG_log("policy_label=%s;", c->policy_label));
+#else
+		/* This makes our test results consistent */
+		DBG(DBG_CONTROL,
+		    DBG_log("loopback=no, labeled_ipsec=no;"));
+		    DBG(DBG_CONTROL, DBG_log("policy_label=unset;"));
 #endif
 
 #ifdef XAUTH
