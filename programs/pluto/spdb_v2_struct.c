@@ -261,9 +261,6 @@ enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	case OAKLEY_IDEA_CBC:
 		return IKEv2_ENCR_IDEA;
 
-	case OAKLEY_BLOWFISH_CBC:
-		return IKEv2_ENCR_BLOWFISH;
-
 	case OAKLEY_RC5_R16_B64_CBC:
 		return IKEv2_ENCR_RC5;
 

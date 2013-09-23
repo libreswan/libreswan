@@ -1604,7 +1604,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			{ FALSE, ESP_NULL, AUTH_ALGORITHM_HMAC_SHA1,
 			  0, HMAC_SHA1_KEY_LEN,
 			  SADB_EALG_NULL, SADB_AALG_SHA1HMAC },
-
+#if 0
 			{ FALSE, ESP_DES, AUTH_ALGORITHM_NONE,
 			  DES_CBC_BLOCK_SIZE, 0,
 			  SADB_EALG_DESCBC, SADB_AALG_NONE },
@@ -1615,7 +1615,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			  DES_CBC_BLOCK_SIZE,
 			  HMAC_SHA1_KEY_LEN, SADB_EALG_DESCBC,
 			  SADB_AALG_SHA1HMAC },
-
+#endif
 			{ FALSE, ESP_3DES, AUTH_ALGORITHM_NONE,
 			  DES_CBC_BLOCK_SIZE * 3, 0,
 			  SADB_EALG_3DESCBC, SADB_AALG_NONE },

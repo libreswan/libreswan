@@ -97,12 +97,12 @@ enum ipsec_authentication_algo {
 enum ipsec_cipher_algo {
 	ESP_reserved=0,
 	ESP_DES_IV64=1,
-	ESP_DES=2,
+	ESP_DES=2, /* obsoleted */
 	ESP_3DES=3,
 	ESP_RC5=4,
 	ESP_IDEA=5,
 	ESP_CAST=6,
-	ESP_BLOWFISH=7,
+	ESP_BLOWFISH=7, /* obsoleyed */
 	ESP_3IDEA=8,
 	ESP_DES_IV32=9,
 	ESP_RC4=10,

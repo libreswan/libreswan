@@ -212,13 +212,6 @@ void init_crypto(void)
 		}
 #endif
 
-#ifdef USE_BLOWFISH
-		{
-			extern int ike_alg_blowfish_init(void);
-			ike_alg_blowfish_init();
-		}
-#endif
-
 #ifdef USE_SHA2
 		{
 			extern int ike_alg_sha2_init(void);
@@ -290,6 +283,7 @@ const struct oakley_group_desc *lookup_group(u_int16_t group)
  * Each uses and updates the state object's st_new_iv.
  * This must already be initialized.
  * 1DES support removed - it is simply too weak
+ * BLOWFISH support removed - author suggests TWOFISH instead
  */
 
 /* encrypt or decrypt part of an IKE message using 3DES

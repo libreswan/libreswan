@@ -155,8 +155,6 @@ static int ipsec_ocf_encalg(int encalg)
 	case ESP_AES:       return CRYPTO_AES_CBC;
 
 	case ESP_CAST:      return CRYPTO_CAST_CBC;
-
-	case ESP_BLOWFISH:  return CRYPTO_BLF_CBC;
 	}
 	return 0;
 }

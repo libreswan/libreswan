@@ -338,12 +338,12 @@ enum_names esp_transformid_names_private_use =
 
 static const char *const esp_transform_name[] = {
 	"ESP_DES_IV64",              /* old DES */
-	"ESP_DES",
+	"ESP_DES", /* obsoleted */
 	"ESP_3DES",
 	"ESP_RC5",
 	"ESP_IDEA",
 	"ESP_CAST",
-	"ESP_BLOWFISH",
+	"ESP_BLOWFISH", /* obsoleted */
 	"ESP_3IDEA",
 	"ESP_DES_IV32",
 	"ESP_RC4",
@@ -808,7 +808,7 @@ enum_names oakley_prf_names =
 static const char *const oakley_enc_name[] = {
 	"OAKLEY_DES_CBC",
 	"OAKLEY_IDEA_CBC",
-	"OAKLEY_BLOWFISH_CBC",
+	"OAKLEY_BLOWFISH_CBC", /* obsoleted */
 	"OAKLEY_RC5_R16_B64_CBC",
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
@@ -1208,15 +1208,15 @@ const char *const critical_names[] = {
 
 /* Transform-type Encryption */
 const char *const trans_type_encr_name[] = {
-	"des-iv64",
-	"des",
+	"des-iv64(obsoleted)",
+	"des(obsoleted)",
 	"3des",
 	"rc5",
 	"idea",
 	"cast",
-	"blowfish",
+	"blowfish(obsoleted)",
 	"3idea",
-	"des-iv32",
+	"des-iv32(obsoleted)",
 	"res10",
 	"null",
 	"aes-cbc",

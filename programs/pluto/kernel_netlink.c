@@ -156,10 +156,10 @@ static sparse_names aalg_list = {
 /** Encryption algs */
 static sparse_names ealg_list = {
 	{ SADB_EALG_NULL, "cipher_null" },
-	{ SADB_EALG_DESCBC, "des" },
+	/* { SADB_EALG_DESCBC, "des" }, obsoleted */
 	{ SADB_EALG_3DESCBC, "des3_ede" },
 	{ SADB_X_EALG_CASTCBC, "cast128" },
-	{ SADB_X_EALG_BLOWFISHCBC, "blowfish" },
+	/* { SADB_X_EALG_BLOWFISHCBC, "blowfish" }, obsoleted */
 	{ SADB_X_EALG_AESCBC, "aes" },
 	{ SADB_X_EALG_AESCTR, "ctr(aes)" },
 	{ SADB_X_EALG_CAMELLIACBC, "cbc(camellia)" },
