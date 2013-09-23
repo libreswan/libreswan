@@ -197,9 +197,6 @@ stf_status main_outI1(int whack_sock,
 						 c->spd.this.xauth_server,
 						 c->spd.this.xauth_client);
 
-		/* if we  have an OpenPGP certificate we assume an
-		 * OpenPGP peer and have to send the Vendor ID
-		 */
 		int np = numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_sa(&md.rbody,
 			    &oakley_sadb[policy_index], st, TRUE, FALSE, np)) {
