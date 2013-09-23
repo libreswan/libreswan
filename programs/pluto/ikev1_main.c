@@ -1548,8 +1548,8 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	 */
 	initial_contact = st->st_connection->initial_contact;
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("I will %ssend an initial contact payload",
-		      initial_contact ? "" : "NOT ");
+		DBG_log("I will %ssend an initial contact payload",
+			initial_contact ? "" : "NOT "));
 
 	/* done parsing; initialize crypto  */
 
