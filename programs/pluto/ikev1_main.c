@@ -601,8 +601,8 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	if (c !=  NULL && (c->policy & POLICY_IKEV1_DISABLE)) {
 		loglog(RC_LOG_SERIOUS, "discard matching conn %s for I1 from "
-			"%s:%u. has ikev2=insist", c->name, 
-			ip_str(&md->iface->ip_addr), 
+			"%s:%u. has ikev2=insist", c->name,
+			ip_str(&md->iface->ip_addr),
 			ntohs(portof(&md->iface->ip_addr)));
 		c = NULL;
 	}
@@ -645,16 +645,16 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 			for (; d != NULL; d = d->hp_next) {
 				if (d->policy & POLICY_IKEV1_DISABLE) {
-					loglog(RC_LOG_SERIOUS, 
+					loglog(RC_LOG_SERIOUS,
 						"discard matching conn %s for "
 						"I1 from %s:%u. %s %s %s has "
-						"ikev2=insist ", c->name, 
+						"ikev2=insist ", c->name,
 						ip_str(&md->iface->ip_addr),
 						ntohs(portof(&md->iface->ip_addr)),
 						d->name,
 						(policy != LEMPTY) ?
-						" with policy=" : "", 
-						(policy != LEMPTY) ? 
+						" with policy=" : "",
+						(policy != LEMPTY) ?
 						bitnamesof(sa_policy_bit_names,
 							policy) : "");
 					d=NULL;
@@ -2455,7 +2455,7 @@ stf_status send_isakmp_notification(struct state *st,
 		if (!out_raw(st->st_icookie, COOKIE_SIZE, &notify_pbs,
 				"notify icookie"))
 			return STF_INTERNAL_ERROR;
-		
+
 		if (!out_raw(st->st_rcookie, COOKIE_SIZE, &notify_pbs,
 				"notify rcookie"))
 			return STF_INTERNAL_ERROR;
@@ -2887,7 +2887,7 @@ void ikev1_delete_out(struct state *st)
 				said ? ISAKMP_NEXT_NONE : ISAKMP_NEXT_D;
 			isad.isad_spisize = sizeof(ipsec_spi_t);
 			isad.isad_protoid = ns->proto;
-			
+	
 			isad.isad_nospi = 1;
 			if (!out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
 						&del_pbs) ||
