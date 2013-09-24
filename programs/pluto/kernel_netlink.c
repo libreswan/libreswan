@@ -1044,7 +1044,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			       "an existing IPsec SA - continuing as Add SA");
 		return netlink_add_sa(sa, 0);
 	}
-	return ret
+	return ret;
 }
 
 /** netlink_del_sa - Delete an SA from the Kernel
