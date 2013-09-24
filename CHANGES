@@ -15,6 +15,7 @@ v3.6 (unreleased)
 * building: Removed USE_MODP_RFC5114 flag. Support is always added [Paul]
 * building: Remove blowfish (use twofish instead) [Paul]
 * NETKEY: Take protoport= into account when setting IPsec SA priority [Paul]
+* NETKEY: Change Update SA to Add SA when existing SA is not found [Mattias]
 * sysvinit: status function used incorrect variable for pid file [Tuomo]
 * _stackmanager: coding style cleanup - fixes bashism [Tuomo]
 * testing: Various interop test case updates [Paul]
