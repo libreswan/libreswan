@@ -104,15 +104,15 @@
  * Note: this is not called from demux.c
  */
 stf_status main_outI1(int whack_sock,
-		      struct connection *c,
-		      struct state *predecessor,
-		      lset_t policy,
-		      unsigned long try,
-		      enum crypto_importance importance
+		struct connection *c,
+		struct state *predecessor,
+		lset_t policy,
+		unsigned long try,
+		enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		      , struct xfrm_user_sec_ctx_ike * uctx
+		, struct xfrm_user_sec_ctx_ike * uctx
 #endif
-		      )
+	)
 {
 	struct state *st = new_state();
 	struct msg_digest md; /* use reply/rbody found inside */
@@ -179,7 +179,7 @@ stf_status main_outI1(int whack_sock,
 
 		zero(&hdr); /* default to 0 */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION;
+			ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_SA;
 		hdr.isa_xchg = ISAKMP_XCHG_IDPROT;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
@@ -206,7 +206,7 @@ stf_status main_outI1(int whack_sock,
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
-		/* no leak!  (MUST be first time) */
+		/* no leak! (MUST be first time) */
 		passert(st->st_p1isa.ptr == NULL);
 		/* save initiator SA for later HASH */
 		clonetochunk(st->st_p1isa, sa_start, md.rbody.cur - sa_start,
@@ -292,8 +292,8 @@ stf_status main_outI1(int whack_sock,
 	close_output_pbs(&reply_stream);
 
 	clonetochunk(st->st_tpacket, reply_stream.start,
-		     pbs_offset(&reply_stream),
-		     "reply packet for main_outI1");
+		pbs_offset(&reply_stream),
+		"reply packet for main_outI1");
 
 	/* Transmit */
 	send_ike_msg(st, "main_outI1");
@@ -599,7 +599,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 				&md->sender,
 				md->sender_port, LEMPTY);
 
-	if (c !=  NULL && (c->policy & POLICY_IKEV1_DISABLE)) {
+	if (c != NULL && (c->policy & POLICY_IKEV1_DISABLE)) {
 		loglog(RC_LOG_SERIOUS, "discard matching conn %s for I1 from "
 			"%s:%u. has ikev2=insist", c->name,
 			ip_str(&md->iface->ip_addr),
@@ -748,9 +748,9 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	st->st_connection = c;
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
-	st->st_localaddr  = md->iface->ip_addr;
-	st->st_localport  = md->iface->port;
-	st->st_interface  = md->iface;
+	st->st_localaddr = md->iface->ip_addr;
+	st->st_localport = md->iface->port;
+	st->st_interface = md->iface;
 
 	set_cur_state(st); /* (caller will reset cur_state) */
 	st->st_try = 0; /* not our job to try again from start */
@@ -1195,8 +1195,8 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	pb_stream *keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
 
 	/* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi",
-				     st->st_oakley.group, keyex_pbs));
+	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
+						keyex_pbs));
 
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
@@ -1209,9 +1209,9 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 
 #ifdef NAT_TRAVERSAL
 	DBG(DBG_NATT,
-	    DBG_log("inI2: checking NAT-T: %d and %d",
-		    nat_traversal_enabled,
-		    st->hidden_variables.st_nat_traversal));
+		DBG_log("inI2: checking NAT-T: %d and %d",
+			nat_traversal_enabled,
+			st->hidden_variables.st_nat_traversal));
 
 	if (st->hidden_variables.st_nat_traversal) {
 		DBG(DBG_NATT, DBG_log(" NAT_T_WITH_NATD detected"));
@@ -1423,7 +1423,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		 * programs/pluto/pluto_crypt.h as external and implemented
 		 * nowhere.
 		 * Following code regarding dh_continuation allocation seems
-		 * useless  as it's never used. At least, we should free it.
+		 * useless as it's never used. At least, we should free it.
 		 */
 		struct dh_continuation *dh = alloc_thing(
 			struct dh_continuation,
@@ -1437,10 +1437,10 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		passert(st->st_suspended_md == NULL);
 
 		DBG(DBG_CONTROLMORE,
-		    DBG_log(
-			    "main inI2_outR2: starting async DH calculation "
-			    " (group=%d)",
-			    st->st_oakley.group->group));
+			DBG_log(
+				"main inI2_outR2: starting async DH "
+				"calculation (group=%d)",
+				st->st_oakley.group->group));
 
 		e = start_dh_secretiv(&dh->dh_pcrc, st,
 				st->st_import,
@@ -1601,7 +1601,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		DBG_log("I will %ssend an initial contact payload",
 			initial_contact ? "" : "NOT "));
 
-	/* done parsing; initialize crypto  */
+	/* done parsing; initialize crypto */
 
 #ifdef NAT_TRAVERSAL
 	if (st->hidden_variables.st_nat_traversal)
@@ -1857,8 +1857,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 			bool aggrmode, /* aggressive mode? */
 			cont_fn_t cont_fn, /* continuation function */
 			/* current state, can be NULL */
-			const struct key_continuation *kc
-			      )
+			const struct key_continuation *kc)
 {
 	struct state *st = md->st;
 	u_char hash_val[MAX_DIGEST_LEN];
@@ -1910,7 +1909,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 #ifdef USE_KEYRR
 					kc == NULL ? NULL :
 					kc->ac.keys_from_dns,
-#endif          /* USE_KEYRR */
+#endif /* USE_KEYRR */
 					kc == NULL ? NULL :
 					kc->ac.gateways_from_dns);
 
@@ -1958,7 +1957,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 					cont_fn,
 					&nkc->ac);
 				break;
-#endif                          /* USE_KEYRR */
+#endif /* USE_KEYRR */
 
 			default:
 				bad_case(step_done);
@@ -2037,7 +2036,7 @@ void key_continue(struct adns_continuation *cr,
 
 		if (!kc->failure_ok && ugh != NULL) {
 			report_key_dns_failure(&st->st_connection->spd.that.id,
-					       ugh);
+					ugh);
 			r = STF_FAIL + INVALID_KEY_INFORMATION;
 		} else {
 
@@ -2071,7 +2070,7 @@ void key_continue(struct adns_continuation *cr,
  * - main_inI3_outR3_tail to finish or suspend for DNS lookup
  * - main_inI3_outR3_continue to start main_inI3_outR3_tail again
  */
-static key_tail_fn main_inI3_outR3_tail;        /* forward */
+static key_tail_fn main_inI3_outR3_tail; /* forward */
 
 stf_status main_inI3_outR3(struct msg_digest *md)
 {
@@ -2511,7 +2510,7 @@ stf_status send_isakmp_notification(struct state *st,
 }
 
 /*
- * Send a notification to the peer.  We could decide
+ * Send a notification to the peer. We could decide
  * whether to send the notification, based on the type and the
  * destination, if we care to.
  */
@@ -2753,8 +2752,8 @@ void send_notification_from_md(struct msg_digest *md, u_int16_t type)
 	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;
-	st.st_localaddr  = md->iface->ip_addr;
-	st.st_localport  = md->iface->port;
+	st.st_localaddr = md->iface->ip_addr;
+	st.st_localport = md->iface->port;
 	cnx.interface = md->iface;
 	st.st_interface = md->iface;
 
@@ -2765,7 +2764,7 @@ void send_notification_from_md(struct msg_digest *md, u_int16_t type)
 
 /*
  * Send a Delete Notification to announce deletion of ISAKMP SA or
- * inbound IPSEC SAs.  Does nothing if no such SAs are being deleted.
+ * inbound IPSEC SAs. Does nothing if no such SAs are being deleted.
  * Delete Notifications cannot announce deletion of outbound IPSEC/ISAKMP SAs.
  *
  * @param st State struct (hopefully has some SA's related to it)
@@ -2916,7 +2915,7 @@ void ikev1_delete_out(struct state *st)
 
 	/*
 	 * Do a dance to avoid needing a new state object.
-	 * We use the Phase 1 State.  This is the one with right
+	 * We use the Phase 1 State. This is the one with right
 	 * IV, for one thing.
 	 * The tricky bits are:
 	 * - we need to preserve (save/restore) st_iv (but not st_iv_new)
@@ -3099,7 +3098,7 @@ void accept_delete(struct state *st, struct msg_digest *md,
 					 * Useful if the other peer is
 					 * rebooting.
 					 */
-#define DELETE_SA_DELAY  EVENT_RETRANSMIT_DELAY_0
+#define DELETE_SA_DELAY EVENT_RETRANSMIT_DELAY_0
 					if (dst->st_event != NULL &&
 						dst->st_event->ev_type ==
 						EVENT_SA_REPLACE &&
