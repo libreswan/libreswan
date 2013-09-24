@@ -389,6 +389,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 		       description, text_said,
 		       -rsp.e.error,
 		       strerror(-rsp.e.error));
+		errno = -rsp.e.error;
 		return FALSE;
 	}
 
@@ -767,6 +768,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	} req;
 	struct rtattr *attr;
 	struct aead_alg *aead;
+	int ret;
 
 	memset(&req, 0, sizeof(req));
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
@@ -1035,8 +1037,14 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 #endif
-
-	return send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
+	ret = send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
+	if (ret == FALSE && errno == ESRCH &&
+	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
+			loglog(RC_LOG_SERIOUS, "Warning: expected to find "
+			       "an existing IPsec SA - continuing as Add SA");
+		return netlink_add_sa(sa, 0);
+	}
+	return ret
 }
 
 /** netlink_del_sa - Delete an SA from the Kernel
