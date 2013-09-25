@@ -11,11 +11,11 @@ rsa-v2.o: rsa-v2.c ../../../include/sysqueue.h \
   ../../../include/names_constant.h ../../../include/lswconf.h \
   ../../../include/packet.h ../../../programs/pluto/defs.h \
   ../../../include/lswalloc.h ../../../programs/pluto/connections.h \
-  ../../../include/x509.h ../ \
+  ../../../include/x509.h \
   ../../../include/certs.h \
   ../../../linux/include/libreswan/ipsec_policy.h \
   ../../../include/secrets.h ../../../include/id.h \
-  ../../../include/x509.h ../ \
+  ../../../include/x509.h \
   ../../../include/certs.h \
   ../../../programs/pluto/state.h ../../../programs/pluto/quirks.h \
   ../../../programs/pluto/keys.h ../../../include/secrets.h \
