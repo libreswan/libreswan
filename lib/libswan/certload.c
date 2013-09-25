@@ -69,13 +69,9 @@ chunk_t get_mycert(cert_t cert)
 		return cert.u.x509->certificate;
 
 	default:
-<<<<<<< HEAD
-		loglog(RC_LOG_SERIOUS,"get_mycert: Unknown certificate type");
-=======
-		loglog(RC_LOG_SERIOUS,"get_mycert: Unknown certificate type:"
-		       " %s (%d)", enum_show(&cert_type_names, cert.type),
-		       cert.type);
->>>>>>> Improved certificate loading/sharing error messages
+		loglog(RC_LOG_SERIOUS,"get_mycert: Unknown certificate type: "
+			"%s (%d)", enum_show(&cert_type_names, cert.type),
+			cert.type);
 		return empty_chunk;
 	}
 }
