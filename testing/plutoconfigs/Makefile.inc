@@ -509,7 +509,6 @@ LIBLSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liblswcrypto/liblswcrypto.a
 LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
 LIBMD5=${OBJDIRTOP}/lib/libcrypto/libmd5/libmd5.a
 LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
-LIBBLOWFISH=${OBJDIRTOP}/lib/libcrypto/libblowfish/libblowfish.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a

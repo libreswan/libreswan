@@ -404,7 +404,7 @@ USE_LIBCURL?=true
 # amount of code space to pluto, and many of the algorithms have not had
 # the same scrutiny that AES and 3DES have received, but offers possibilities 
 # of switching away from AES/3DES quickly. 
-USE_EXTRACRYPTO?=false
+USE_EXTRACRYPTO?=true
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
@@ -519,14 +519,13 @@ LIBLSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liblswcrypto/liblswcrypto.a
 LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
 LIBMD5=${OBJDIRTOP}/lib/libcrypto/libmd5/libmd5.a
 LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
-LIBBLOWFISH=${OBJDIRTOP}/lib/libcrypto/libblowfish/libblowfish.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
 CRYPTOLIBS=${LIBAES} ${LIBSHA1} ${LIBMD5} ${LIBDESLITE} ${LIBSHA2}
 
 ifeq ($(USE_EXTRACRYPTO),true)
-CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH} ${LIBBLOWFISH}
+CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH}
 endif
 
 CRYPTOLIBS += ${LIBLSWCRYPTO}
@@ -544,7 +543,7 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
 export LIBRESWANLIB LSWLOGLIB PLUTOLIB 
 export LIBDESSRCDIR LIBDESLITE LIBAES
-export LIBMD5 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
+export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
 export LIBLSWCRYPTO NSSFLAGS NSSLIBS
 
