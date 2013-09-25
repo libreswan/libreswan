@@ -160,11 +160,15 @@ void release_x509cert(x509cert_t *cert)
 void release_cert(cert_t cert)
 {
 	switch (cert.type) {
+	case CERT_NONE:
+		/* quietly forget about it */
+		break;
 	case CERT_X509_SIGNATURE:
 		release_x509cert(cert.u.x509);
 		break;
 	default:
-		loglog(RC_LOG_SERIOUS,"Unknown certificate type");
+		loglog(RC_LOG_SERIOUS,"Unknown certificate type: %s (%d)",
+		       enum_show(&cert_type_names, cert.type), cert.type);
 		break;
 	}
 }

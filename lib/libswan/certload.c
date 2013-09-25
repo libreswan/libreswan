@@ -62,11 +62,20 @@ const cert_t empty_cert = { FALSE, CERT_NONE, { NULL } };
 chunk_t get_mycert(cert_t cert)
 {
 	switch (cert.type) {
+	case CERT_NONE:
+		return empty_chunk; /* quietly forget about it */
+
 	case CERT_X509_SIGNATURE:
 		return cert.u.x509->certificate;
 
 	default:
+<<<<<<< HEAD
 		loglog(RC_LOG_SERIOUS,"get_mycert: Unknown certificate type");
+=======
+		loglog(RC_LOG_SERIOUS,"get_mycert: Unknown certificate type:"
+		       " %s (%d)", enum_show(&cert_type_names, cert.type),
+		       cert.type);
+>>>>>>> Improved certificate loading/sharing error messages
 		return empty_chunk;
 	}
 }
@@ -215,17 +224,22 @@ bool same_cert(const cert_t *a, const cert_t *b)
 	return a->type == b->type && a->u.x509 == b->u.x509;
 }
 
-/*  for each link pointing to the certificate
-   "  increase the count by one
+/*
+ * For each link pointing to the certificate increase the count by one
+ * Currently, only one cert type is supported.
+ * This function is called even when no certificates are involved
  */
 void share_cert(cert_t cert)
 {
 	switch (cert.type) {
+	case CERT_NONE:
+		break; /* quietly forget about it */
 	case CERT_X509_SIGNATURE:
 		share_x509cert(cert.u.x509);
 		break;
 	default:
-		loglog(RC_LOG_SERIOUS,"share_cert: Unknown certificate type");
+		loglog(RC_LOG_SERIOUS,"share_cert: Unexpected certificate type: %s (%d)",
+		       enum_show(&cert_type_names, cert.type), cert.type);
 		break;
 	}
 }
