@@ -242,7 +242,6 @@ struct keyword_enum_values kw_xauthfail =
 /*
  * Values for right= and left=
  */
-extern struct keyword_enum_values kw_host_list;
 
 #ifdef DEBUG
 struct keyword_enum_value kw_plutodebug_values[] = {

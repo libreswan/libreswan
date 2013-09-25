@@ -651,6 +651,7 @@ int main(int argc, char **argv)
 		{
 			ip_address lip;
 			err_t e = ttoaddr(optarg, 0, 0, &lip);
+
 			if (e) {
 				libreswan_log(
 					"invalid listen argument ignored: %s\n",

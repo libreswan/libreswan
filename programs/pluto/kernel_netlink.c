@@ -79,10 +79,6 @@
 # define DEFAULT_UPDOWN "ipsec _updown"
 #endif
 
-extern char *pluto_listen;
-
-extern const struct pfkey_proto_info null_proto_info[2];
-
 static const struct pfkey_proto_info broad_proto_info[2] = {
 	{
 		.proto = IPPROTO_ESP,

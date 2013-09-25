@@ -58,8 +58,6 @@
 # define DEFAULT_UPDOWN "ipsec _updown"
 #endif
 
-extern char *pluto_listen;
-
 static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 {
 	struct raw_iface *ifp;

@@ -304,8 +304,6 @@ char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 int main(int argc, char *argv[])
 {
 	int opt;
-	extern int optind;
-	extern char *optarg;
 	int nbits = 0;
 	char *configdir = NULL; /* where the NSS databases reside */
 	char *password = NULL;  /* password for token authentication */
