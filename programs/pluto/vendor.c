@@ -143,7 +143,8 @@ static struct vid_struct vid_tab[] = {
 
 	{ VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP", NULL, 0 },
 
-	DEC_MD5_VID(KAME_RACOON, "KAME/racoon"){
+	DEC_MD5_VID(KAME_RACOON, "KAME/racoon")
+	{
 		VID_MS_NT5, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
 		"MS NT5 ISAKMPOAKLEY", NULL, NULL, 0
 	},
@@ -198,7 +199,8 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(SSH_IPSEC_4_1_0,
 		    "SSH Communications Security IPSEC Express version 4.1.0")
 	DEC_MD5_VID(SSH_IPSEC_4_2_0,
-		    "SSH Communications Security IPSEC Express version 4.2.0"){
+		    "SSH Communications Security IPSEC Express version 4.2.0")
+	{
 		VID_CISCO3K, VID_KEEP | VID_SUBSTRING_MATCH,
 		NULL, "Cisco VPN 3000 Series",
 		"\x1f\x07\xf7\x0e\xaa\x65\x14\xd3\xb0\xfa\x96\x54\x2a\x50", 14
@@ -233,7 +235,8 @@ static struct vid_struct vid_tab[] = {
 		      "FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)")
 	DEC_FSWAN_VID(LIBRESWAN2,
 		      "Libreswan 2.2.0",
-		      "Libreswan 2.2.0"){
+		      "Libreswan 2.2.0")
+	{
 		/* always make sure to include ourself! */
 		VID_LIBRESWANSELF, VID_SELF, "", "Libreswan (this version)",
 		NULL, 0
@@ -259,7 +262,8 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(NATT_IETF_08, "draft-ietf-ipsec-nat-t-ike-08")
 	DEC_MD5_VID(NATT_DRAFT_IETF_IPSEC_NAT_T_IKE,
 		    "draft-ietf-ipsec-nat-t-ike")
-	DEC_MD5_VID(NATT_RFC, "RFC 3947"){
+	DEC_MD5_VID(NATT_RFC, "RFC 3947")
+	{
 		/* SonicWall */
 		VID_SONICWALL_1, VID_KEEP, NULL,
 		"Sonicwall 1 (TZ 170 Standard?)",
@@ -363,7 +367,8 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(STRONGSWAN_2_3_0, "strongSwan 2.3.0")
 	DEC_MD5_VID(STRONGSWAN_2_2_2, "strongSwan 2.2.2")
 	DEC_MD5_VID(STRONGSWAN_2_2_1, "strongSwan 2.2.1")
-	DEC_MD5_VID(STRONGSWAN_2_2_0, "strongSwan 2.2.0"){
+	DEC_MD5_VID(STRONGSWAN_2_2_0, "strongSwan 2.2.0")
+	{
 		/**
 		 * Cisco VPN 3000
 		 */
@@ -509,6 +514,7 @@ void init_vendorid(void)
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
 			char *vidm =  alloc_bytes(FSWAN_VID_SIZE, "fswan VID");
+
 			vid->vid = vidm;
 			if (vidm) {
 				MD5_CTX ctx;
@@ -521,12 +527,12 @@ void init_vendorid(void)
 				osMD5Final(hash, &ctx);
 				vidm[0] = 'O';
 				vidm[1] = 'E';
-#if FSWAN_VID_SIZE - 2 <= MD5_DIGEST_SIZE
-				memcpy(vidm + 2, hash, FSWAN_VID_SIZE - 2);
+#if FSWAN_VID_SIZE <= 2 + MD5_DIGEST_SIZE
+				memcpy(vidm + 2, hash, FSWAN_VID_SIZE - 2);	/* truncate hash */
 #else
 				memcpy(vidm + 2, hash, MD5_DIGEST_SIZE);
 				memset(vidm + 2 + MD5_DIGEST_SIZE, '\0',
-				       FSWAN_VID_SIZE - 2 - MD5_DIGEST_SIZE);
+				       FSWAN_VID_SIZE - (2 + MD5_DIGEST_SIZE));	/* pad hash */
 #endif
 				for (i = 2; i < FSWAN_VID_SIZE; i++) {
 					vidm[i] &= 0x7f;
@@ -534,6 +540,7 @@ void init_vendorid(void)
 				}
 				vid->vid_len = FSWAN_VID_SIZE;
 			}
+#undef FSWAN_VID_SIZE
 		}
 
 		if (vid->descr == NULL) {
