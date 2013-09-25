@@ -66,7 +66,7 @@ chunk_t get_mycert(cert_t cert)
 		return cert.u.x509->certificate;
 
 	default:
-		loglog(RC_LOG_SERIOUS,"Unknown certificate type");
+		loglog(RC_LOG_SERIOUS,"get_mycert: Unknown certificate type");
 		return empty_chunk;
 	}
 }
@@ -225,7 +225,7 @@ void share_cert(cert_t cert)
 		share_x509cert(cert.u.x509);
 		break;
 	default:
-		loglog(RC_LOG_SERIOUS,"Unknown certificate type");
+		loglog(RC_LOG_SERIOUS,"share_cert: Unknown certificate type");
 		break;
 	}
 }
