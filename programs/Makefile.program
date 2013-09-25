@@ -223,9 +223,3 @@ endif
 checkprograms:
 
 LIBRESWANSRCDIRREL?=../..
-
-# Gather dependencies caused by explicit #includes within .c files
-Makefile.depend: ${DISTSRC}
-	@(ls $(wildcard $(addprefix $(srcdir)/,$(DISTSRC))) | grep '\.c' | xargs --no-run-if-empty ${CC} -MM ${PORTINCLUDE} ${INCLUDES} ${ALLFLAGS} ) >Makefile.depend
-
--include Makefile.depend
