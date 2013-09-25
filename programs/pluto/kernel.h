@@ -56,6 +56,9 @@ struct pfkey_proto_info {
 	int encapsulation;
 	unsigned reqid;
 };
+
+extern const struct pfkey_proto_info null_proto_info[2];
+
 struct sadb_msg;
 
 /* replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal SADB_SATYPE values */
@@ -121,6 +124,9 @@ struct raw_iface {
 
 LIST_HEAD(iface_list, iface_dev);
 extern struct iface_list interface_dev;
+
+extern char *pluto_listen;	/* from --listen flag */
+
 
 /* KAME has a different name for AES */
 #if !defined(SADB_X_EALG_AESCBC) && defined(SADB_X_EALG_AES)

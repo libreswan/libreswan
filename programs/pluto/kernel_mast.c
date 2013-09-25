@@ -56,7 +56,6 @@
 
 static int next_free_mast_device = -1;
 int useful_mastno = -1;
-extern char *pluto_listen;
 
 #ifndef DEFAULT_UPDOWN
 # define DEFAULT_UPDOWN "ipsec _updown"

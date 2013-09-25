@@ -54,8 +54,7 @@
 
 char *progname;
 char me[] = "ipsec eroute";
-extern char *optarg;
-extern int optind, opterr, optopt;
+
 char *eroute_af_opt, *said_af_opt, *edst_opt, *spi_opt, *proto_opt, *said_opt,
 *dst_opt, *src_opt;
 char *transport_proto_opt, *src_port_opt, *dst_port_opt;

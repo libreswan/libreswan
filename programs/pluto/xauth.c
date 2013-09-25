@@ -92,8 +92,6 @@ char pwdfile[PATH_MAX];
 /* We use a mutex lock because not all systems have crypt_r() */
 pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-extern bool encrypt_message(pb_stream *pbs, struct state *st); /* forward declaration */
-
 typedef struct {
 	int in_use;
 	struct state *st;

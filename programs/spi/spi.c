@@ -74,8 +74,6 @@ int dumpsaref = 0;
 int saref_him = 0;
 int saref_me  = 0;
 char *command;
-extern char *optarg;
-extern int optind, opterr, optopt;
 char scratch[2];
 unsigned char *iv = NULL, *enckey = NULL, *authkey = NULL;
 size_t ivlen = 0, enckeylen = 0, authkeylen = 0;
@@ -98,7 +96,6 @@ int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 int replay_window = 0;
 char sa[SATOT_BUF];
 
-extern unsigned int pfkey_lib_debug; /* used by libfreeswan/pfkey_v2_build */
 int pfkey_sock;
 lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;

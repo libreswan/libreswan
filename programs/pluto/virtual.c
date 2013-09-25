@@ -34,6 +34,7 @@
 #endif
 #include "connections.h"
 #include "whack.h"
+#include "nat_traversal.h"
 #include "virtual.h"
 
 #define F_VIRTUAL_NO          1
@@ -42,8 +43,6 @@
 #define F_VIRTUAL_PRIVATE     8
 #define F_VIRTUAL_ALL         16
 #define F_VIRTUAL_HOST        32
-
-extern bool nat_traversal_enabled;
 
 struct virtual_t {
 	unsigned short flags;

@@ -750,7 +750,9 @@ static void unshare_connection_end_strings(struct end *e)
 	unshare_id_content(&e->id);
 	e->updown = clone_str(e->updown, "updown");
 
-	share_cert(e->cert);
+	if(e->cert.type != CERT_NONE) {
+		share_cert(e->cert);
+	}
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 

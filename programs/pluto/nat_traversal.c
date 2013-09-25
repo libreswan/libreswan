@@ -76,8 +76,6 @@
 
 #define DEFAULT_KEEP_ALIVE_PERIOD  20
 
-extern u_int16_t pluto_natt_float_port; /* for show_setup_natt() */
-
 bool nat_traversal_enabled = FALSE;
 bool nat_traversal_support_non_ike = FALSE;
 bool nat_traversal_support_port_floating = FALSE;
