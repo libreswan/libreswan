@@ -465,6 +465,8 @@ static struct vid_struct vid_tab[] = {
 
 static const char hexdig[] = "0123456789abcdef";
 
+static int vid_struct_init = 0;
+
 /*
  * Setup VendorID structs, and populate them
  * FIXME: This functions leaks a little bit, but these are one time leaks:
@@ -556,6 +558,7 @@ void init_vendorid(void)
 			DBG_dump("VID:", vid->vid, vid->vid_len);
 #endif
 	}
+	vid_struct_init = 1;
 }
 
 /**
@@ -731,6 +734,9 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 {
 	struct vid_struct *pvid;
 
+	if (!vid_struct_init)
+		init_vendorid();
+
 	/*
 	 * Find known VendorID in vid_tab
 	 */
@@ -784,6 +790,9 @@ bool out_vendorid(u_int8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
+	if (!vid_struct_init)
+		init_vendorid();
+
 	for (pvid = vid_tab; pvid->id != 0 && pvid->id != vid; pvid++)
 		;
 
@@ -812,6 +821,9 @@ bool out_vendorid(u_int8_t np, pb_stream *outs, unsigned int vid)
 bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
+
+	if (!vid_struct_init)
+		init_vendorid();
 
 	for (pvid = vid_tab; pvid->id != 0 && pvid->id != vid; pvid++)
 		;
