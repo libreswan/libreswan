@@ -200,7 +200,7 @@ test-%: %.c
 	${CC} ${CFLAGS} -D`echo $* | tr 'a-z' 'A-Z'`_MAIN $*.c -o test-$*
 
 cleanall:
-	rm -f $(LIBA) $(LIBL) *.o try* core *.core $(EXTHDRS) $(EXTLIBS) version.c
+	rm -f $(LIBA) $(LIBL) *.o try* core *.core $(EXTHDRS) $(EXTLIBS) version.c Makefile.depend
 
 
 # developer-only stuff
@@ -239,8 +239,7 @@ check:
 
 checkprograms:
 
-# Gather dependencies caused by explicit #includes within .c files
-depend:
-	(ls $(wildcard $(SRCS)) $(wildcard $(addprefix ${KLIPSSRCDIR}/,$(SRCS))) $(wildcard $(LOGSRCS)) | grep '\.c' | xargs $(GCC) -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS} ) | sed -e 's,${LIBRESWANSRCDIR},../..,g' >Makefile.depend
+Makefile.depend: $(SRCS) $(LOGSRCS) ${LIBRESWANSRCDIR}/lib/libswan/Makefile
+	(ls $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(SRCS))) $(wildcard $(addprefix ${KLIPSSRCDIR}/,$(SRCS))) $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(LOGSRCS))) | grep '\.c' | xargs ${CC} -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}) >Makefile.depend
 
--include ${srcdir}Makefile.depend
+-include Makefile.depend

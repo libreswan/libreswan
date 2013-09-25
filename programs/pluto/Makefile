@@ -273,10 +273,9 @@ checkprograms:
 
 
 # Gather dependencies caused by explicit #includes within .c files
-depend:
-	@(ls $(DISTSRC) | grep '\.c' | xargs $(CC) -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ) | sed -e 's,${LIBRESWANSRCDIR},../..,g' >Makefile.depend.${OSDEP}
+Makefile.depend: $(DISTSRC) $(LIBRESWANSRCDIR)/programs/pluto/Makefile
+	@(ls $(wildcard $(addprefix $(LIBRESWANSRCDIR)/programs/pluto/,$(DISTSRC))) | grep '\.c' | xargs $(CC) -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ) >Makefile.depend
 
--include ${srcdir}Makefile.depend.${OSDEP}
+-include ${srcdir}Makefile.depend
 
 # DO NOT DELETE
-

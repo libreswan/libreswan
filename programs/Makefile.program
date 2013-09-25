@@ -225,10 +225,7 @@ checkprograms:
 LIBRESWANSRCDIRREL?=../..
 
 # Gather dependencies caused by explicit #includes within .c files
-depend: ${DISTSRC}
-	@(ls $(DISTSRC) | grep '\.c' | xargs $(GCC) -MM ${PORTINCLUDE} ${INCLUDES} ${ALLFLAGS} ) | sed -e 's,${LIBRESWANSRCDIR},../..,g' >Makefile.depend
+Makefile.depend: ${DISTSRC}
+	@(ls $(wildcard $(addprefix $(srcdir)/,$(DISTSRC))) | grep '\.c' | xargs --no-run-if-empty ${CC} -MM ${PORTINCLUDE} ${INCLUDES} ${ALLFLAGS} ) >Makefile.depend
 
--include ${srcdir}Makefile.depend
-
-
-
+-include Makefile.depend
