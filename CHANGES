@@ -14,6 +14,7 @@ v3.6 (unreleased)
 * pluto: Added per conn priority= to specify kernel IPsec SA priority [Paul]
 * building: Removed USE_MODP_RFC5114 flag. Support is always added [Paul]
 * building: Remove blowfish (use twofish instead) [Paul]
+* building: Generate Makefile depend files automatically [Tuomo]
 * NETKEY: Take protoport= into account when setting IPsec SA priority [Paul]
 * NETKEY: Change Update SA to Add SA when existing SA is not found [Mattias]
 * sysvinit: status function used incorrect variable for pid file [Tuomo]
