@@ -342,10 +342,10 @@ static void confwrite_side(FILE *out,
 	}
 
 	if (end->rsakey1)
-		fprintf(out, "\t%srsakey=%s\n", side, end->rsakey1);
+		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
 
 	if (end->rsakey2)
-		fprintf(out, "\t%srsakey2=%s\n", side, end->rsakey2);
+		fprintf(out, "\t%srsasigkey2=%s\n", side, end->rsakey2);
 
 	if (end->port || end->protocol) {
 		char b2[32];
