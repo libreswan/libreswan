@@ -82,13 +82,14 @@
 #include "virtual.h"
 #include "addresspool.h"
 
+/* forward declarations */
 static stf_status modecfg_inI2(struct msg_digest *md);
 static stf_status xauth_client_ackstatus(struct state *st,
 				  pb_stream *rbody,
 				  u_int16_t ap_id);
 
+static char pwdfile[PATH_MAX];
 
-char pwdfile[PATH_MAX];
 /* We use a mutex lock because not all systems have crypt_r() */
 pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -122,7 +123,7 @@ struct pam_conv conv = {
 
 static st_jbuf_t *st_jbuf_mem = NULL;
 
-pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static
 void dealloc_st_jbuf(st_jbuf_t *ptr)
@@ -197,7 +198,7 @@ end:
 	return ptr;
 }
 
-static __attribute__ ((noinline))
+static
 void sigIntHandler(int sig)
 {
 	st_jbuf_t *ptr;
