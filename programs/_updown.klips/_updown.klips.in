@@ -131,6 +131,8 @@ export LC_ALL
 #	PLUTO_NM_CONFIGURED
 #		is NetworkManager used for resolv.conf update
 #
+#       PLUTO_SA_REQID
+#               When using KAME or XFRM/NETKEY, the IPsec SA reqid value
 
 # Import default _updown configs from the
 # @FINALSYSCONFDIR@/[sysconfig|default]/pluto_updown file

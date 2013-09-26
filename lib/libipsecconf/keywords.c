@@ -559,6 +559,8 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "priority",       kv_conn | kv_auto, kt_number, KBF_PRIORITY,
 	  NOT_ENUM },
+	{ "reqid",          kv_conn | kv_auto, kt_number, KBF_REQID,
+	  NOT_ENUM },
 
 	/* aggr/xauth/modeconfig */
 	{ "aggrmode",    kv_conn | kv_auto, kt_invertbool,      KBF_AGGRMODE,

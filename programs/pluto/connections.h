@@ -199,6 +199,7 @@ struct connection {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	unsigned long sa_priority;
+	unsigned long sa_reqid;
 	int encapsulation;
 
 	/* RFC 3706 DPD */

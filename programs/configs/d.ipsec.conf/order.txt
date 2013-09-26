@@ -49,6 +49,7 @@ d.ipsec.conf/nat_keepalive.xml
 d.ipsec.conf/initial_contact.xml
 d.ipsec.conf/cisco_unity.xml
 d.ipsec.conf/overlapip.xml
+d.ipsec.conf/reqid.xml
 d.ipsec.conf/dpddelay.xml
 d.ipsec.conf/dpdtimeout.xml
 d.ipsec.conf/dpdaction.xml

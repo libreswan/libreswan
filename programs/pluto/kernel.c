@@ -439,6 +439,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "PLUTO_MY_CLIENT_MASK='%s' "
 			  "PLUTO_MY_PORT='%u' "
 			  "PLUTO_MY_PROTOCOL='%u' "
+			  "PLUTO_SA_REQID='%u' "
 			  "PLUTO_PEER='%s' "
 			  "PLUTO_PEER_ID='%s' "
 			  "PLUTO_PEER_CLIENT='%s' "
@@ -477,6 +478,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  myclientmask_str,
 			  sr->this.port,
 			  sr->this.protocol,
+			  sr->reqid,
 			  peer_str,
 			  secure_peerid_str,
 			  peerclient_str,
@@ -1540,7 +1542,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->esatype = ET_IPCOMP;
 		said_next->encalg = compalg;
 		said_next->encapsulation = encapsulation;
-		said_next->reqid = c->spd.reqid + 2;
+		said_next->reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid  :  c->spd.reqid + 2 ;
 		said_next->text_said = text_said;
 		said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
@@ -1808,6 +1810,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->enckey = esp_dst_keymat;
 		said_next->encapsulation = encapsulation;
 		said_next->reqid = c->spd.reqid + 1;
+		said_next->reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid  :  c->spd.reqid + 1 ;
 
 #ifdef HAVE_LABELED_IPSEC
 		said_next->sec_ctx = st->sec_ctx;
@@ -2011,7 +2014,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].proto = IPPROTO_COMP;
 				proto_info[i].encapsulation =
 					st->st_ipcomp.attrs.encapsulation;
-				proto_info[i].reqid = c->spd.reqid + 2;
+				proto_info[i].reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid : c->spd.reqid + 2;
 				i++;
 			}
 
@@ -2019,7 +2022,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].proto = IPPROTO_ESP;
 				proto_info[i].encapsulation =
 					st->st_esp.attrs.encapsulation;
-				proto_info[i].reqid = c->spd.reqid + 1;
+				proto_info[i].reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid : c->spd.reqid + 1;
 				i++;
 			}
 

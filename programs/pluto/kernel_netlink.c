@@ -1728,7 +1728,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 		proto_info[i].encapsulation = st->st_esp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 1;
+		proto_info[i].reqid = (sr->reqid < IPSEC_MANUAL_REQID_MAX) ?  sr->reqid : sr->reqid + 1;
 	}
 
 	if (st->st_ipcomp.present) {
@@ -1742,7 +1742,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 			st->st_ipcomp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 2;
+		proto_info[i].reqid = (sr->reqid < IPSEC_MANUAL_REQID_MAX) ?  sr->reqid : sr->reqid + 2;
 	}
 
 	/* check for no transform at all */

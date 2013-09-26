@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "sysdep.h"
+
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/files.h"
@@ -41,6 +43,7 @@
 #include "lswlog.h"
 #include "whack.h"
 #include "id.h"
+
 
 static void update_ports(struct whack_message * m)
 {
@@ -519,9 +522,18 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 	if (conn->options_set[KBF_CONNMTU])
 		msg.connmtu   = conn->options[KBF_CONNMTU];
-
 	if (conn->options_set[KBF_PRIORITY])
 		msg.sa_priority   = conn->options[KBF_PRIORITY];
+
+	if (conn->options_set[KBF_REQID]) {
+		if ((conn->options[KBF_REQID] >= IPSEC_MANUAL_REQID_MAX -3) || 
+		    (conn->options[KBF_REQID] == 0)) {
+			starter_log(LOG_LEVEL_ERR,
+				    "Ignoring reqid value - range must be 1-16379");
+		    } else {
+			msg.sa_reqid   = conn->options[KBF_REQID];
+		    }
+	}
 
 	if (conn->options_set[KBF_DPDDELAY] &&
 	    conn->options_set[KBF_DPDTIMEOUT]) {

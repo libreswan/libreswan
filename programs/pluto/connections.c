@@ -1119,7 +1119,10 @@ struct connection *find_connection_by_reqid(uint32_t reqid)
 {
 	struct connection *c;
 
-	reqid &= ~3;
+	if (reqid >= IPSEC_MANUAL_REQID_MAX -3 ) {
+		reqid &= ~3;
+	}
+
 	for (c = connections; c != NULL; c = c->ac_next) {
 		if (c->spd.reqid == reqid)
 			return c;
@@ -1452,7 +1455,12 @@ void add_connection(const struct whack_message *wm)
 		}
 
 		c->spd.next = NULL;
-		c->spd.reqid = gen_reqid();
+
+		if (wm->sa_reqid) {
+			c->spd.reqid = wm->sa_reqid;
+		} else {
+			c->spd.reqid = gen_reqid();
+		}
 
 		/* set internal fields */
 		c->instance_serial = 0;
@@ -1666,7 +1674,11 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		t->log_file = NULL;
 		t->log_file_err = FALSE;
 
-		t->spd.reqid = gen_reqid();
+		if (group->spd.reqid) {
+			t->spd.reqid = group->spd.reqid;
+		} else {
+			t->spd.reqid = gen_reqid();
+		}
 
 		if (t->spd.that.virt) {
 			DBG_log("virtual_ip not supported in group instance");
@@ -1745,7 +1757,12 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	 */
 	default_end(&d->spd.this, &d->spd.that.host_addr);
 	d->spd.next = NULL;
-	d->spd.reqid = gen_reqid();
+
+	if (c->spd.reqid) {
+		d->spd.reqid = c->spd.reqid;
+	} else {
+		d->spd.reqid = gen_reqid();
+	}
 
 	/* set internal fields */
 	d->ac_next = connections;
@@ -3747,6 +3764,7 @@ void show_one_connection(struct connection *c)
 		snprintf(sapriostr, 12, "%lu", c->sa_priority);
 	else
 		strcpy(sapriostr, "auto");
+
 	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; "
