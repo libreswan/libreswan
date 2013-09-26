@@ -575,6 +575,12 @@ skip		interop-racoon-iphone4s-nonat		incomplete
 skip		interop-racoon-iphone5-nonat		incomplete
 
 #################################################################
+# DNSSEC tests
+#################################################################
+
+kvmplutotest	dnssec-pluto-01					good
+
+#################################################################
 # Specific bug tests
 #################################################################
 # trying out bug #888
