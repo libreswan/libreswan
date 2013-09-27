@@ -1,0 +1,9 @@
+
+Using netkey and the looopback feature, pluto connects to itself for an SA.
+This is used for MLS type labeling of connections on the same host
+
+This tests whether priorities are honoured properly when multiple loopback
+connections are in use. We install a wide policy and check it is getting
+encrypted. Then we install a narrow passthrough policy on top and see if
+we properly send unencrypted
+

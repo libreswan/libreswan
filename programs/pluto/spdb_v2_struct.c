@@ -35,7 +35,6 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -261,9 +260,6 @@ enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 
 	case OAKLEY_IDEA_CBC:
 		return IKEv2_ENCR_IDEA;
-
-	case OAKLEY_BLOWFISH_CBC:
-		return IKEv2_ENCR_BLOWFISH;
 
 	case OAKLEY_RC5_R16_B64_CBC:
 		return IKEv2_ENCR_RC5;

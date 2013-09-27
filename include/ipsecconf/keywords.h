@@ -30,7 +30,7 @@
  * the "conn foo" stanzas
  */
 enum keyword_string_config_field {
-	KSF_INTERFACES    = 0, /* loose_enum evantually */
+	KSF_INTERFACES    = 0, /* loose_enum eventually */
 	/* KSF_PACKETDEFAULT = 5, */
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
@@ -39,6 +39,7 @@ enum keyword_string_config_field {
 	KSF_SECRETSFILE,
 	KSF_PERPEERDIR,
 	KSF_MYID,
+	KSF_MYVENDORID,
 	KSF_PLUTOSTDERRLOG,
 	KSF_PROTOSTACK,
 	KSF_IKE,
@@ -69,6 +70,8 @@ enum keyword_numeric_config_field {
 	KBF_PERPEERLOG,
 	KBF_OVERRIDEMTU,
 	KBF_CONNMTU,
+	KBF_PRIORITY,
+	KBF_REQID,
 	KBF_STRICTCRLPOLICY,
 	KBF_NATTRAVERSAL,
 	KBF_NATIKEPORT,
@@ -117,6 +120,8 @@ enum keyword_numeric_config_field {
 	KBF_IKE_FRAG,
 	KBF_NAT_KEEPALIVE,      /* per conn enabling/disabling of sending keep-alives - different from global force_keepalives */
 	KBF_INITIAL_CONTACT,
+	KBF_CISCO_UNITY,
+	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
 	KBF_MAX
 };
 

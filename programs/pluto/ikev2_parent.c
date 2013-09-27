@@ -59,8 +59,6 @@
 #include "pending.h"
 #include "kernel.h"
 
-#include "tpm/tpm.h"
-
 #define SEND_NOTIFICATION_AA(t, d) \
 	if (st) \
 		send_v2_notification_from_state(st, st->st_state, t, d); \
@@ -373,12 +371,8 @@ static stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st)
 {
-	/* struct connection *c = st->st_connection; */
+	struct connection *c = st->st_connection;
 	int numvidtosend = 0;
-
-#ifdef PLUTO_SENDS_VENDORID
-	numvidtosend++;  /* if we need to send Libreswan VID */
-#endif
 
 	/* set up reply */
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -433,9 +427,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
 		u_char *sa_start = md->rbody.cur;
 
-		/* if we  have an OpenPGP certificate we assume an
-		 * OpenPGP peer and have to send the Vendor ID
-		 */
 		if (st->st_sadb->prop_disj_cnt == 0 || st->st_sadb->prop_disj)
 			st->st_sadb = sa_v2_convert(st->st_sadb);
 
@@ -461,6 +452,15 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			   ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
+	/*
+	 * Check which Vendor ID's we need to send - there will be more soon
+	 * In IKEv2, DPD and NAT-T are no longer vendorid's
+	 */
+	if(c->send_vendorid) {
+		numvidtosend++;  /* if we need to send Libreswan VID */
+	}
+
+
 	/* send NONCE */
 	{
 		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
@@ -485,22 +485,21 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Send Vendor VID if needed */
 	{
+		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
-				     pluto_vendorid, strlen(pluto_vendorid),
+				     myvid, strlen(myvid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
 
+	/* ensure or VID chain was valid */
+	passert(numvidtosend == 0);
+
 	close_message(&md->rbody);
 	close_output_pbs(&reply_stream);
-
-#if 0
-	/* let TCL hack it before we mark the length and copy it */
-	TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
-#endif
 
 	freeanychunk(st->st_tpacket);
 	clonetochunk(st->st_tpacket, reply_stream.start,
@@ -514,11 +513,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Transmit */
 	send_ike_msg(st, __FUNCTION__);
-
-#if 0
-	/* Set up a retransmission event, half a minute henceforth */
-	TCLCALLOUT("v2_adjustTimers", st, st->st_connection, md);
-#endif
 
 	delete_event(st);
 	event_schedule(EVENT_v2_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
@@ -947,22 +941,18 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* Send VendrID if needed VID */
 	{
+		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
-				     pluto_vendorid, strlen(pluto_vendorid),
+				     myvid, strlen(myvid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
 
 	close_message(&md->rbody);
 	close_output_pbs(&reply_stream);
-
-#if 0
-	/* let TCL hack it before we mark the length. */
-	TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
-#endif
 
 	/* keep it for a retransmit if necessary */
 	freeanychunk(st->st_tpacket);
@@ -1676,11 +1666,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			return ret;
 	}
 
-#if 0
-	/* let TCL hack it before we mark the length. */
-	TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
-#endif
-
 	/* keep it for a retransmit if necessary, but on initiator
 	 * we never do that, but send_ike_msg() uses it.
 	 */
@@ -2137,11 +2122,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 				return ret;
 		}
 	}
-
-#if 0
-	/* let TCL hack it before we mark the length. */
-	TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
-#endif
 
 	/* keep it for a retransmit if necessary */
 	freeanychunk(st->st_tpacket);
@@ -3078,11 +3058,6 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					return ret;
 			}
 
-#if 0
-			/* let TCL hack it before we mark the length. */
-			TCLCALLOUT("v2_avoidEmitting", st, st->st_connection,
-				   md);
-#endif
 
 			/* keep it for a retransmit if necessary */
 			freeanychunk(st->st_tpacket);
@@ -3631,11 +3606,6 @@ void ikev2_delete_out(struct state *st)
 			if (ret != STF_OK)
 				goto end;
 		}
-
-#if 0
-		/* let TCL hack it before we mark the length. */
-		TCLCALLOUT("v2_avoidEmitting", pst, pst->st_connection, &md);
-#endif
 
 		/* keep it for a retransmit if necessary */
 		freeanychunk(pst->st_tpacket);

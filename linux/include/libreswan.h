@@ -389,6 +389,7 @@ void prng_final(struct prng *prng);
 
 /* odds and ends */
 const char *ipsec_version_code(void);
+const char *ipsec_version_vendorid(void);
 const char *ipsec_version_string(void);
 
 const char *dns_string_rr(int rr, char *buf, int bufsize);

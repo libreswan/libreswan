@@ -41,7 +41,6 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -60,7 +59,6 @@
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
-#include "tpm/tpm.h"
 #include "kernel.h"
 #include "virtual.h"
 #include "hostpair.h"

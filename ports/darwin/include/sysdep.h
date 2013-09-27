@@ -19,3 +19,8 @@
 
 /* Needed for proper handling of udpfromto */
 #define __APPLE_USE_RFC_3542
+
+/* Linux and KAME use this */
+#ifndef IPSEC_MANUAL_REQID_MAX
+# define IPSEC_MANUAL_REQID_MAX  0x3fff
+#endif

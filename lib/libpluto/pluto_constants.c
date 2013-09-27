@@ -30,20 +30,95 @@
 #include "constants.h"
 #include "enum_names.h"
 
+/* 
+ * To obsolete or convert to runtime options:
+ * ALG_PATCH
+ * ALLOW_MICROSOFT_BAD_PROPOSAL
+ * DMALLOC
+ * EMIT_ISAKMP_SPI
+ * HAVE_STATSD
+ * I_DONT_CARE_OF_SSH_SENTINEL
+ * I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
+ * IPSEC_CONNECTION_LIMIT
+ * MODECFG_DNSWINS
+ * NET_21
+ * NO_EXTRA_IKE
+ * NOTYET
+ * NOT_YET
+ * OLD_RESOLVER
+ * PFKEY
+ * PLUTO_SENDS_VENDORID
+ * PLUTO_GROUP_CTL
+ * SINGLE_CONF_DIR
+ * SOFTREMOTE_CLIENT_WORKAROUND
+ * SUPPORT_ESP_NULL
+ * TEST_INDECENT_PROPOSAL 
+ * USE_3DES USE_AES USE_MD5 USE_SERPENT USE_SHA1 USE_SHA2 USE_TWOFISH
+ * USE_KEYRR
+ * VIRTUAL_IP
+ */
 /* string naming compile-time options that have interop implications */
 const char compile_time_interop_options[] = ""
+#ifdef NETKEY_SUPPORT
+					    " XFRM(netkey)"
+#endif
+#ifdef KLIPS
+					    " KLIPS"
+#endif
+#ifdef KLIPSMAST
+					    " MAST"
+#endif
+
+#ifdef HAVE_NO_FORK
+					    " NO_FORK"
+#endif
+#ifdef HAVE_BROKEN_POPEN
+					    " BROKEN_POPEN"
+#endif
+#ifndef OPENSSL
+					    " NSS"
+#endif
+#ifdef DNSSEC
+					    " DNSSEC"
+#endif
+#ifdef NAT_TRAVERSAL
+					    " NAT-T"
+#endif
+#ifdef FIPS_CHECK
+					    " FIPS_CHECK"
+#endif
+#ifdef HAVE_LABELED_IPSEC
+					    " LABELED_IPSEC"
+#endif
+#ifdef HAVE_LIBCAP_NG
+					    " LIBCAP_NG"
+#endif
+#ifdef USE_LINUX_AUDIT
+					    " LINUX_AUDIT"
+#endif
+#ifdef XAUTH_HAVE_PAM
+					    " XAUTH_PAM"
+#endif
+#ifdef DYNAMICDNS
+					    " DYNAMICDNS"
+#endif
+#ifdef HAVE_NM
+					    " NETWORKMANAGER"
+#endif
+#ifdef LEAK_DETECTIVE
+					    " LEAK_DETECTIVE"
+#endif
+#ifdef HAVE_OCF
+					    " OCF"
+#endif
+#ifdef KLIPS_MAST
+					    " KLIPS_MAST"
+#endif
+#ifdef LIBCURL
+					    " CURL(non-NSS)"
+#endif
 #ifdef LDAP_VER
-#if LDAP_VER == 2
-					    " LDAP_V2"
-#else
-					    " LDAP_V3"
-#endif
-#endif
-#ifdef PLUTO_SENDS_VENDORID
-					    " PLUTO_SENDS_VENDORID"
-#endif
-#ifdef USE_KEYRR
-					    " PLUTO_USES_KEYRR"
+					    " LDAP(non-NSS)"
 #endif
 ;
 
@@ -64,11 +139,10 @@ static const char *const dpd_action_name[] = {
 	"action:clear",
 	"action:hold",
 	"action:restart",
-	"action:restart_by_peer",
 };
 
 enum_names dpd_action_names =
-{ EVENT_NULL, DPD_ACTION_RESTART_BY_PEER, dpd_action_name, NULL };
+{ EVENT_NULL, DPD_ACTION_RESTART, dpd_action_name, NULL };
 
 /* Timer events */
 static const char *const timer_event_name[] = {

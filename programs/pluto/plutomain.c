@@ -7,7 +7,7 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
  *
@@ -52,7 +52,6 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "ac.h"
 #ifdef XAUTH_HAVE_PAM
@@ -86,11 +85,6 @@
 
 #ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
-
-#ifdef TPM
-#include <tcl.h>
-#include "tpm/tpm.h"
 #endif
 
 #include "lswcrypto.h"
@@ -143,6 +137,7 @@ static void usage(const char *mess)
 		" [--version]"
 		" \\\n\t"
 		"[--config <filename>]"
+		"[--vendorid <vendorid>]"
 		" [--nofork]"
 		" [--stderrlog]"
 		" [--logfile <filename>]"
@@ -365,6 +360,7 @@ u_int16_t secctx_attr_value = SECCTX;
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
+char *pluto_vendorid;
 static int nhelpers = -1;
 
 int main(int argc, char **argv)
@@ -411,11 +407,11 @@ int main(int argc, char **argv)
 	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
 		      CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
 		      CAP_IPC_LOCK, CAP_AUDIT_WRITE,
+		      CAP_SETGID, CAP_SETUID, /* for google authenticator pam */
 		      -1);
 	/* our children must be able to CAP_NET_ADMIN to change routes.
 	 */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET,
-		      CAP_NET_ADMIN, -1);
+	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1); /* DAC needed for google authenticator pam */
 	capng_apply(CAPNG_SELECT_BOTH);
 #endif
 
@@ -655,6 +651,7 @@ int main(int argc, char **argv)
 		{
 			ip_address lip;
 			err_t e = ttoaddr(optarg, 0, 0, &lip);
+
 			if (e) {
 				libreswan_log(
 					"invalid listen argument ignored: %s\n",
@@ -893,6 +890,7 @@ int main(int argc, char **argv)
 			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];    /* --perpeerlog */
 			no_retransmits = !cfg->setup.options[KBF_RETRANSMITS];  /* --noretransmits */
 			set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
+			set_cfg_string(&pluto_vendorid, cfg->setup.strings[KSF_MYVENDORID]); /* --vendorid */
 			/* no config option: pluto_adns_option */
 #ifdef NAT_TRAVERSAL
 			pluto_natt_float_port =
@@ -1068,7 +1066,21 @@ int main(int argc, char **argv)
 	pluto_init_nss(oco->confddir);
 
 #ifdef FIPS_CHECK
-	const char *package_files[] = { IPSEC_EXECDIR "/setup",
+	/*
+	 * In FIPS mode, any missing/bad hmac file means we abort.
+	 *
+	 * In non-FIPS mode, if pluto has an hmac file, everything should
+	 * have an hmac file, and all hmacs should validate. If pluto has
+	 * no hmac file, none of the hmac files are tested.
+	 *
+	 * This behaviour is keyed of the first file in the fipscheck
+	 * FIPSCHECK_verify_files_ev() function, which is why pluto
+	 * is at the top of this list.
+	 *
+	 * hmac files are versioned, See FIPSHMACSUFFIX in Makefile.inc
+	 */
+	const char *package_files[] = { IPSEC_EXECDIR "/pluto",
+					IPSEC_EXECDIR "/setup",
 					IPSEC_EXECDIR "/addconn",
 					IPSEC_EXECDIR "/auto",
 					IPSEC_EXECDIR "/barf",
@@ -1082,9 +1094,7 @@ int main(int argc, char **argv)
 					IPSEC_EXECDIR "/pf_key",
 					IPSEC_EXECDIR "/_pluto_adns",
 					IPSEC_EXECDIR "/_plutorun",
-					IPSEC_EXECDIR "/_realsetup",
 					IPSEC_EXECDIR "/rsasigkey",
-					IPSEC_EXECDIR "/pluto",
 					IPSEC_EXECDIR "/_secretcensor",
 					IPSEC_EXECDIR "/secrets",
 					IPSEC_EXECDIR "/showhostkey",
@@ -1101,13 +1111,22 @@ int main(int argc, char **argv)
 					IPSEC_SBINDIR "/ipsec",
 					NULL };
 
-	if ( (Pluto_IsFIPS() == 1) && !FIPSCHECK_verify_files(package_files)) {
-		loglog(RC_LOG_SERIOUS,
-		       "FATAL: FIPS integrity verification test failed");
+	if (!FIPSCHECK_verify_files_ex(FIPSHMACSUFFIX, Pluto_IsFIPS(),
+	    package_files)) {
+		loglog(RC_LOG_SERIOUS, "%s HMAC[%s] integrity verification test failed ",
+		       Pluto_IsFIPS() ? "FIPS" : "non-FIPS", FIPSHMACSUFFIX);
 		exit_pluto(10);
 	}
+
+	loglog(RC_LOG_SERIOUS, "%s HMAC[%s] integrity verification test %s",
+		Pluto_IsFIPS() ? "FIPS" : "non-FIPS", FIPSHMACSUFFIX,
+		/* Paul: I requested an API addition to get rid of these hardcoded names */
+		( access("/usr/lib64/fipscheck/pluto"FIPSHMACSUFFIX, F_OK) == -1 &&
+		  access("/usr/lib/fipscheck/pluto"FIPSHMACSUFFIX, F_OK) == -1)
+		? "skipped" : "passed");
+
 #else
-	libreswan_log("FIPS integrity support [disabled]");
+	libreswan_log("FIPS HMAC integrity support [disabled]");
 #endif
 
 #ifdef HAVE_LIBCAP_NG
@@ -1152,15 +1171,8 @@ int main(int argc, char **argv)
 	 */
 	{
 		const char *vc = ipsec_version_code();
-#ifdef PLUTO_SENDS_VENDORID
-		const char *v = init_pluto_vendorid();
-		libreswan_log(
-			"Starting Pluto (Libreswan Version %s%s; Vendor ID %s) pid:%u",
-			vc, compile_time_interop_options, v, getpid());
-#else
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			      vc, compile_time_interop_options, getpid());
-#endif
 		if (Pluto_IsFIPS() == 1) {
 			libreswan_log("Pluto is running in FIPS mode");
 		} else if (Pluto_IsFIPS() == 0) {
@@ -1290,6 +1302,7 @@ int main(int argc, char **argv)
 
 /** Initialize all of the various features */
 
+	init_vendorid(); /* to be phased out */
 #ifdef NAT_TRAVERSAL
 	init_nat_traversal(nat_traversal, keep_alive, nat_t_spf);
 #endif
@@ -1307,10 +1320,6 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_adns();
 	init_id();
-
-#ifdef TPM
-	init_tpm();
-#endif
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 	init_fetch();
@@ -1360,10 +1369,6 @@ void exit_pluto(int status)
 	/* free memory allocated by initialization routines.  Please don't
 	   forget to do this. */
 
-#ifdef TPM
-	free_tpm();
-#endif
-
 #if defined(LIBCURL) || defined(LDAP_VER)
 	free_crl_fetch();       /* free chain of crl fetch requests */
 #endif
@@ -1404,13 +1409,17 @@ void show_setup_plutomain()
 		IPSEC_LIBDIR ,
 		IPSEC_EXECDIR );
 
+	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s",
+		ipsec_version_code(),
+		ipsec_version_vendorid());
+
         whack_log(RC_COMMENT, "nhelpers=%d, uniqueids=%s, retransmits=%s, force_busy=%s",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
 		no_retransmits ? "no" : "yes",
 		force_busy ? "yes" : "no");
 
-        whack_log(RC_COMMENT, "ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%d, listen=%s",
+        whack_log(RC_COMMENT, "ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s",
 		pluto_port,
 		strict_crl_policy ? "yes" : "no",
 		crl_check_interval,

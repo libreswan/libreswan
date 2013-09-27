@@ -46,7 +46,9 @@ CPPFLAGS = $(HDRDIRS) $(DEFINES) \
 	-DIPSEC_SBINDIR=\"${FINALSBINDIR}\" \
 	-DIPSEC_LIBDIR=\"${FINALLIBDIR}\" \
 	-DIPSEC_EXECDIR=\"${FINALLIBEXECDIR}\" \
-	-DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\" 
+	-DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\" \
+	-DFIPSHMACSUFFIX=\"${FIPSHMACSUFFIX}\" \
+
 
 ifeq ($(HAVE_BROKEN_POPEN),true)
 CFLAGS+=-DHAVE_BROKEN_POPEN
@@ -94,13 +96,6 @@ RMFLAGS = -f
 DISTMISC = CHANGES PLUTO-CONVENTIONS TODO ipsec.secrets Makefile routing.txt \
 	 pluto.8 ipsec.secrets.5 .cvsignore
 
-DISTGCRYPT = \
-	gcryptfix.c gcryptfix.h \
-	dsa.c dsa.h \
-	elgamal.c elgamal.h \
-	primegen.c \
-	smallprime.c
-
 DISTSRC = \
         connections.c initiate.c terminate.c connections.h \
 	pending.c pending.h \
@@ -137,7 +132,6 @@ DISTSRC = \
 	stubs.c \
 	${SYSDEP_SRC} \
 	timer.c timer.h \
-	$(DISTGCRYPT) \
 	$(X509_DIST_SRCS) \
 	$(THREADS_DIST_SRCS) \
 	vendor.c nat_traversal.c virtual.c \
@@ -148,11 +142,6 @@ DISTSRC = \
 	${LABELED_IPSEC_DIST_SRCS}
 
 DIST = $(DISTMISC) $(DISTSRC)
-
-
-# start of support for DSS/DSA.  Not currently used.
-# OBJSGCRYPT =  gcryptfix.o dsa.o elgamal.o primegen.o smallprime.o
-OBJSGCRYPT =
 
 OBJSPLUTO  = connections.o initiate.o terminate.o
 OBJSPLUTO += pending.o cookie.o crypto.o defs.o dpd.o
@@ -206,6 +195,7 @@ doinstall: all
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d/private
 	mkdir -p -m 755 $(VARDIR)/run/pluto
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
+	#
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
 	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
 	g=`if [ -r pluto.8 ]; then echo pluto.8; else echo ${srcdir}/pluto.8; fi`; \
@@ -243,10 +233,7 @@ install_file_list:
 alg_info_test: alg_info_test.o ike_alg.o constants.o defs.o log.o db_ops.o crypto.o $(LIBDESLITE) $(LIBRESWANLIB)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBSPLUTO)
 
-${LIBTPM}: $(wildcard ${srcdir}tpm/*.c) $(wildcard ${srcdir}tpm/*.h) $(wildcard ${srcdir}tpm/*.i)
-	@(cd tpm && ${MAKE} srcdir=${srcdir}tpm/ libtpm.a )
-
-$(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB) ${LIBTPM}
+$(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
 	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL} $(LIBDESLITE)
 
 $(BINNAMEADNS): $(OBJSADNS)
@@ -286,10 +273,9 @@ checkprograms:
 
 
 # Gather dependencies caused by explicit #includes within .c files
-depend:
-	@(ls $(DISTSRC) | grep '\.c' | xargs $(CC) -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ) | sed -e 's,${LIBRESWANSRCDIR},../..,g' >Makefile.depend.${OSDEP}
+Makefile.depend: $(DISTSRC) $(LIBRESWANSRCDIR)/programs/pluto/Makefile
+	@(ls $(wildcard $(addprefix $(LIBRESWANSRCDIR)/programs/pluto/,$(DISTSRC))) | grep '\.c' | xargs $(CC) -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ) >Makefile.depend
 
--include ${srcdir}Makefile.depend.${OSDEP}
+-include ${srcdir}Makefile.depend
 
 # DO NOT DELETE
-

@@ -36,7 +36,9 @@ enum {
 	IPSEC_LEVEL_UNIQUE      = 3
 };
 
-#define IPSEC_MANUAL_REQID_MAX  0x3fff
+#ifndef IPSEC_MANUAL_REQID_MAX
+# define IPSEC_MANUAL_REQID_MAX  0x3fff
+#endif
 
 #define IPSEC_REPLAYWSIZE  32
 

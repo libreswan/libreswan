@@ -31,7 +31,6 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -926,8 +925,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 			          * and we must decide if they proposed what we wanted.
 			          */
 			role = "initiator";
-			xauth_init = xauth_init | spd->this.xauth_client;
-			xauth_resp = xauth_resp | spd->this.xauth_server;
+			xauth_init |= spd->this.xauth_client;
+			xauth_resp |= spd->this.xauth_server;
 		} else { /* this is the responder, they have proposed to us, what
 			  * are we willing to be?
 			  */
@@ -1086,7 +1085,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 				return BAD_PROPOSAL_SYNTAX;
 
 			passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) <
-				32);
+				LELEM_ROOF);
 
 			if (LHAS(seen_attrs, a.isaat_af_type &
 				 ISAKMP_ATTR_RTYPE_MASK)) {
@@ -1187,9 +1186,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
-					ta.xauth = val;
-					val = OAKLEY_PRESHARED_KEY;
-					goto psk;
+					goto psk_common;
 
 				case XAUTHRespPreShared:
 					if (!xauth_resp) {
@@ -1198,26 +1195,24 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
-					ta.xauth = val;
-					val = OAKLEY_PRESHARED_KEY;
-					/* No break; */
+					goto psk_common;
 #endif
 
 				case OAKLEY_PRESHARED_KEY:
 #ifdef XAUTH
-psk:
-					if (xauth_init && ta.xauth == 0) {
+					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with PSK of initiator (we are %s)",
 							role);
 						break;
 					}
-					if (xauth_resp && ta.xauth == 0) {
+					if (xauth_resp) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with PSK of responder (we are %s)",
 							role);
 						break;
 					}
+psk_common:
 #endif
 
 					if ((iap & POLICY_PSK) == LEMPTY) {
@@ -1234,19 +1229,15 @@ psk:
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
 
-							idtoa(
-								&con->spd.this.id, mid,
-								sizeof(mid));
-							if (
-								his_id_was_instantiated(
+							idtoa(&con->spd.this.id, mid,
+							      sizeof(mid));
+							if (his_id_was_instantiated(
 									con)) {
 								strcpy(hid,
 								       "%any");
 							} else {
-								idtoa(
-									&con->spd.that.id, hid,
-									sizeof(
-										hid));
+								idtoa(&con->spd.that.id, hid,
+								      sizeof(hid));
 							}
 
 							ugh = builddiag(
@@ -1254,7 +1245,7 @@ psk:
 								mid,
 								hid);
 						}
-						ta.auth = val;
+						ta.auth = OAKLEY_PRESHARED_KEY;	/* note: might be different from val */
 					}
 					break;
 #ifdef XAUTH
@@ -1265,9 +1256,7 @@ psk:
 							role);
 						break;
 					}
-					ta.xauth = val;
-					val = OAKLEY_RSA_SIG;
-					goto rsasig;
+					goto rsasig_common;
 
 				case XAUTHRespRSA:
 					if (!xauth_resp) {
@@ -1276,26 +1265,24 @@ psk:
 							role);
 						break;
 					}
-					ta.xauth = val;
-					val = OAKLEY_RSA_SIG;
-					/* No break; */
+					goto rsasig_common;
 #endif
 
 				case OAKLEY_RSA_SIG:
 #ifdef XAUTH
-rsasig:
-					if (xauth_init && ta.xauth == 0) {
+					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with RSA of initiator (we are %s)",
 							role);
 						break;
 					}
-					if (xauth_resp && ta.xauth == 0) {
+					if (xauth_resp) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with RSA of responder (we are %s)",
 							role);
 						break;
 					}
+rsasig_common:
 #endif
 					/* Accept if policy specifies RSASIG or is default */
 					if ((iap & POLICY_RSASIG) == LEMPTY) {
@@ -1310,7 +1297,7 @@ rsasig:
 						 * thinks we've got it.  If we proposed it,
 						 * perhaps we know what we're doing.
 						 */
-						ta.auth = val;
+						ta.auth = OAKLEY_RSA_SIG;	/* note: might be different from val */
 					}
 					break;
 
@@ -1761,7 +1748,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 #ifndef HAVE_LABELED_IPSEC
 		/*This check is no longer valid when using security labels as SECCTX attribute is in private range and has value of 32001*/
-		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < 32);
+		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF);
 #endif
 
 		if (LHAS(seen_attrs, a.isaat_af_type &
@@ -1781,10 +1768,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			ipsec_attr_val_descs[a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #ifdef HAVE_LABELED_IPSEC
-		                                /* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < 32, */
-		                                /* so for retaining the same behavior when this is < 32 and if more than >= 32 setting it to 0, */
+		                                /* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
+		                                /* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
 		                                /* which is NULL in ipsec_attr_val_desc*/
-					     >= 32 ? 0 : a.isaat_af_type &
+					     >= LELEM_ROOF ? 0 : a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #endif
 			];

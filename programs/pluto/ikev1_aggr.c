@@ -36,7 +36,6 @@
 #include "state.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -81,7 +80,6 @@
 #include "virtual.h"
 #include "dpd.h"
 #include "x509more.h"
-#include "tpm/tpm.h"
 
 #if defined(AGGRESSIVE)
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
@@ -874,16 +872,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	}
 #endif
 
-#ifdef TPM
-	{
-		pb_stream *pbs = &md->rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-	}
-#endif
-
 	/* HASH_I or SIG_I out */
 	{
 		u_char buffer[1024];
@@ -1364,33 +1352,36 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		close_output_pbs(&id_pbs);
 	}
 
+	int numvidtosend = 1; /* Always announce DPD capablity */
+#ifdef XAUTH
+	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
+		numvidtosend++;
+#endif
+#ifdef NAT_TRAVERSAL
+	if (nat_traversal_enabled) 
+		numvidtosend++;
+#endif
+	if(c->cisco_unity)
+		numvidtosend++;
+
+	if(c->send_vendorid)
+		numvidtosend++;
+
+	if (c->policy & POLICY_IKE_FRAG_ALLOW)
+		numvidtosend++;
+
 	/* ALWAYS Announce our ability to do Dead Peer Detection to the peer */
 	{
-		int np = ISAKMP_NEXT_NONE;
-
-		if (c->spd.this.xauth_client ||
-		    c->spd.this.xauth_server) {
-
-			/* Add supported DPD VID */
-			np = ISAKMP_NEXT_VID;
-		}
-
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if ( !out_vid(np, &md->rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
 	}
 
 #ifdef NAT_TRAVERSAL
 	if (nat_traversal_enabled) {
-		/* Add supported NAT-Traversal VID */
-		int np = ISAKMP_NEXT_NONE;
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-#ifdef XAUTH
-		if (c->spd.this.xauth_client || c->spd.this.xauth_server)
-			np = ISAKMP_NEXT_VID;
-
-#endif
-
-		if (!nat_traversal_insert_vid(np, &md->rbody, st)) {
+		if (!nat_traversal_insert_vid(np, &md->rbody)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1399,10 +1390,33 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 #ifdef XAUTH
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
-		if (!out_vid(ISAKMP_NEXT_NONE, &md->rbody, VID_MISC_XAUTH))
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
 #endif
+	if(c->cisco_unity) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_CISCO_UNITY))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if(c->send_vendorid) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_LIBRESWANSELF))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_IKE_FRAGMENTATION))
+			return STF_INTERNAL_ERROR;
+	}
+
+	/* INITIAL_CONTACT is an authenticated message, no VID here */
+
+	passert(numvidtosend == 0);
+
 
 	/* finish message */
 
@@ -1410,7 +1424,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	close_output_pbs(&reply_stream);
 
 	/* let TCL hack it before we mark the length and copy it */
-	TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
 
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
@@ -1423,13 +1436,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	send_ike_msg(st, "aggr_outI1");
 
-	/* Set up a retransmission event, half a minute henceforth */
-	TCLCALLOUT("adjustTimers", st, st->st_connection, md);
-
-#ifdef TPM
-tpm_stolen:
-tpm_ignore:
-#endif
 	/* Set up a retransmission event, half a minute henceforth */
 	delete_event(st);
 	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);

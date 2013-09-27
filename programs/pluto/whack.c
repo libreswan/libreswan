@@ -124,6 +124,10 @@ static void help(void)
 		" \\\n   "
 		" [--remote_peer_type <cisco>]"
 		" \\\n   "
+		" [--mtu <mtu>]"
+		" \\\n   "
+		" [--priority <prio>] [--reqid <reqid>]"
+		" \\\n   "
 #ifdef HAVE_NM
 		"[--nm_configured]"
 		" \\\n   "
@@ -139,11 +143,11 @@ static void help(void)
 		" \\\n   "
 		" [--dontrekey]"
 		" [--aggrmode]"
-		" [--initialcontact]"
+		" [--initialcontact] [--cisco_unity]"
 		" [--forceencaps] [--no-nat_keepalive]"
 		" \\\n   "
 		" [--dpddelay <seconds> --dpdtimeout <seconds>]"
-		" [--dpdaction (clear|hold|restart|restart_by_peer)]"
+		" [--dpdaction (clear|hold|restart)]"
 		" \\\n   "
 
 #ifdef XAUTH
@@ -270,11 +274,6 @@ static void help(void)
 		"shutdown: whack"
 		" --shutdown"
 		"\n\n"
-#ifdef TPM
-		"taproom: whack"
-		" --tpmeval string"
-		"\n\n"
-#endif
 		"Libreswan %s\n",
 		ipsec_version_code());
 }
@@ -380,7 +379,6 @@ enum option_enums {
 	OPT_DELETECRASH,
 	OPT_XAUTHNAME,
 	OPT_XAUTHPASS,
-	OPT_TPMEVAL,
 	OPT_WHACKRECORD,
 	OPT_WHACKSTOPRECORD,
 
@@ -467,6 +465,8 @@ enum option_enums {
 	CD_MODECFGDNS2,
 	CD_METRIC,
 	CD_CONNMTU,
+	CD_PRIORITY,
+	CD_REQID,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -483,6 +483,7 @@ enum option_enums {
 	CD_FORCEENCAPS,
 	CD_NO_NAT_KEEPALIVE,
 	CD_INITIAL_CONTACT,
+	CD_CISCO_UNITY,
 	CD_IKE,
 	CD_PFSGROUP,
 	CD_REMOTEPEERTYPE,
@@ -594,7 +595,6 @@ static const struct option long_opts[] = {
 	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthpass", required_argument, NULL, OPT_XAUTHPASS + OO },
-	{ "tpmeval",   required_argument, NULL, OPT_TPMEVAL   + OO },
 
 	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
 	{ "oppothere", required_argument, NULL, OPT_OPPO_THERE + OO },
@@ -682,6 +682,7 @@ static const struct option long_opts[] = {
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL, CD_NO_NAT_KEEPALIVE + OO },
 	{ "initialcontact", no_argument, NULL, CD_INITIAL_CONTACT + OO },
+	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY + OO },
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO +
 	  NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO +
@@ -708,6 +709,8 @@ static const struct option long_opts[] = {
 #endif
 	{ "metric", required_argument, NULL, CD_METRIC + OO + NUMERIC_ARG },
 	{ "mtu", required_argument, NULL, CD_CONNMTU + OO + NUMERIC_ARG },
+	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
+	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "certtype", required_argument, NULL, END_CERTTYPE + OO +
 	  NUMERIC_ARG },
@@ -956,16 +959,16 @@ int main(int argc, char **argv)
 
 	msg.remotepeertype = NON_CISCO;
 
-	msg.sha2_truncbug = SHA2_TRUNCBUG_NO;
+	msg.sha2_truncbug = FALSE;
 
 	/*Network Manager support*/
 #ifdef HAVE_NM
-	msg.nmconfigured = NM_NO;
+	msg.nmconfigured = FALSE;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	msg.loopback = LB_NO;
-	msg.labeled_ipsec = LI_NO;
+	msg.loopback = FALSE;
+	msg.labeled_ipsec = FALSE;
 	msg.policy_label = NULL;
 #endif
 
@@ -1552,6 +1555,10 @@ int main(int argc, char **argv)
 			msg.initial_contact = TRUE;
 			continue;
 
+		case CD_CISCO_UNITY: /* --cisco_unity */
+			msg.cisco_unity = TRUE;
+			continue;
+
 		case CD_DPDDELAY:
 			msg.dpd_delay = opt_whole;
 			continue;
@@ -1568,8 +1575,9 @@ int main(int argc, char **argv)
 				msg.dpd_action = DPD_ACTION_HOLD;
 			if ( strcmp(optarg, "restart") == 0)
 				msg.dpd_action = DPD_ACTION_RESTART;
+			/* obsolete (not advertised) option for compatibility */
 			if ( strcmp(optarg, "restart_by_peer") == 0)
-				msg.dpd_action = DPD_ACTION_RESTART_BY_PEER;
+				msg.dpd_action = DPD_ACTION_RESTART;
 			continue;
 
 		case CD_IKE: /* --ike <ike_alg1,ike_alg2,...> */
@@ -1592,22 +1600,22 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SHA2_TRUNCBUG: /* --sha2_truncbug */
-			msg.sha2_truncbug = SHA2_TRUNCBUG_YES;
+			msg.sha2_truncbug = TRUE;
 			continue;
 
 #ifdef HAVE_NM
 		case CD_NMCONFIGURED: /* --nm_configured */
-			msg.nmconfigured = NM_YES;
+			msg.nmconfigured = TRUE;
 			continue;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
 		case CD_LOOPBACK:
-			msg.loopback = LB_YES;
+			msg.loopback = TRUE;
 			continue;
 
 		case CD_LABELED_IPSEC:
-			msg.labeled_ipsec = LI_YES;
+			msg.labeled_ipsec = TRUE;
 			continue;
 
 		case CD_POLICY_LABEL:
@@ -1774,15 +1782,12 @@ int main(int argc, char **argv)
 			msg.connmtu = opt_whole;
 			continue;
 
-		case OPT_TPMEVAL:
-#ifdef TPM
-			msg.tpmeval = strdup(optarg);
-			msg.whack_reread |= REREAD_TPMEVAL;
-			printf("sending tpmeval: '%s'\n", msg.tpmeval);
+		case CD_PRIORITY:
+			msg.sa_priority = opt_whole;
+			continue;
 
-#else
-			diag("TaProoM is not enabled in this build");
-#endif
+		case CD_REQID:
+			msg.sa_reqid = opt_whole;
 			continue;
 
 #ifdef DEBUG
@@ -2003,11 +2008,9 @@ int main(int argc, char **argv)
 
 
 	if (msg.dpd_action != DPD_ACTION_CLEAR && msg.dpd_action !=
-	    DPD_ACTION_HOLD &&
-	    msg.dpd_action != DPD_ACTION_RESTART && msg.dpd_action !=
-	    DPD_ACTION_RESTART_BY_PEER) {
+	    DPD_ACTION_HOLD && msg.dpd_action != DPD_ACTION_RESTART) {
 		diag(
-			"dpdaction can only be \"clear\", \"hold\", \"restart\" or \"restart_by_peer\", defaulting to \"hold\"");
+			"dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
 		msg.dpd_action = DPD_ACTION_HOLD;
 	}
 

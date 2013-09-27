@@ -1864,7 +1864,9 @@
             and SA with both be cleared. Clear is really only useful on the
             server of a Road Warrior config. The action <emphasis
             remap="B">restart</emphasis> is used on tunnels that need to be
-            permanently up, and have static IP addresses.</para>
+            permanently up, and have static IP addresses. The action <emphasis
+            remap="B">restart_by_peer</emphasis>has been obsoleted and its
+            functionality has been moved into the restart action.</para>
           </listitem>
         </varlistentry>
 

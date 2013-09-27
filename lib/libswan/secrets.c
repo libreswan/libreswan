@@ -245,10 +245,6 @@ struct pubkey*allocate_RSA_public_key(const cert_t cert)
 	chunk_t e, n;
 
 	switch (cert.type) {
-	case CERT_PGP:
-		e = cert.u.pgp->publicExponent;
-		n = cert.u.pgp->modulus;
-		break;
 	case CERT_X509_SIGNATURE:
 		e = cert.u.x509->publicExponent;
 		n = cert.u.x509->modulus;

@@ -1,6 +1,7 @@
 /* Libreswan ISAKMP VendorID Handling
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,7 +27,6 @@
 #include "md5.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #  include <security/pam_appl.h>
@@ -143,7 +143,8 @@ static struct vid_struct vid_tab[] = {
 
 	{ VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP", NULL, 0 },
 
-	DEC_MD5_VID(KAME_RACOON, "KAME/racoon"){
+	DEC_MD5_VID(KAME_RACOON, "KAME/racoon")
+	{
 		VID_MS_NT5, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
 		"MS NT5 ISAKMPOAKLEY", NULL, NULL, 0
 	},
@@ -198,7 +199,8 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(SSH_IPSEC_4_1_0,
 		    "SSH Communications Security IPSEC Express version 4.1.0")
 	DEC_MD5_VID(SSH_IPSEC_4_2_0,
-		    "SSH Communications Security IPSEC Express version 4.2.0"){
+		    "SSH Communications Security IPSEC Express version 4.2.0")
+	{
 		VID_CISCO3K, VID_KEEP | VID_SUBSTRING_MATCH,
 		NULL, "Cisco VPN 3000 Series",
 		"\x1f\x07\xf7\x0e\xaa\x65\x14\xd3\xb0\xfa\x96\x54\x2a\x50", 14
@@ -233,7 +235,8 @@ static struct vid_struct vid_tab[] = {
 		      "FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)")
 	DEC_FSWAN_VID(LIBRESWAN2,
 		      "Libreswan 2.2.0",
-		      "Libreswan 2.2.0"){
+		      "Libreswan 2.2.0")
+	{
 		/* always make sure to include ourself! */
 		VID_LIBRESWANSELF, VID_SELF, "", "Libreswan (this version)",
 		NULL, 0
@@ -259,7 +262,8 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(NATT_IETF_08, "draft-ietf-ipsec-nat-t-ike-08")
 	DEC_MD5_VID(NATT_DRAFT_IETF_IPSEC_NAT_T_IKE,
 		    "draft-ietf-ipsec-nat-t-ike")
-	DEC_MD5_VID(NATT_RFC, "RFC 3947"){
+	DEC_MD5_VID(NATT_RFC, "RFC 3947")
+	{
 		/* SonicWall */
 		VID_SONICWALL_1, VID_KEEP, NULL,
 		"Sonicwall 1 (TZ 170 Standard?)",
@@ -363,7 +367,8 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(STRONGSWAN_2_3_0, "strongSwan 2.3.0")
 	DEC_MD5_VID(STRONGSWAN_2_2_2, "strongSwan 2.2.2")
 	DEC_MD5_VID(STRONGSWAN_2_2_1, "strongSwan 2.2.1")
-	DEC_MD5_VID(STRONGSWAN_2_2_0, "strongSwan 2.2.0"){
+	DEC_MD5_VID(STRONGSWAN_2_2_0, "strongSwan 2.2.0")
+	{
 		/**
 		 * Cisco VPN 3000
 		 */
@@ -479,15 +484,13 @@ void init_vendorid(void)
 			char *d;
 
 			vid->vid = clone_str(
-				init_pluto_vendorid(), "init_pluto_vendorid");
+				ipsec_version_vendorid(), "init_pluto_vendorid");
+			/* cut terminating NULL which won't go over the wire */
 			vid->vid_len = strlen(vid->vid);
 			d = alloc_bytes(strlen(vid->descr) + 4 +
-					strlen(ipsec_version_code()) +
-					strlen(compile_time_interop_options),
+					strlen(ipsec_version_vendorid()),
 					"self-vendor ID");
-			sprintf(d, "%s %s %s",
-				vid->descr, ipsec_version_code(),
-				compile_time_interop_options);
+			sprintf(d, "%s %s", vid->descr, ipsec_version_code());
 			vid->descr = (const char *)d;
 		} else if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
@@ -513,6 +516,7 @@ void init_vendorid(void)
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
 			char *vidm =  alloc_bytes(FSWAN_VID_SIZE, "fswan VID");
+
 			vid->vid = vidm;
 			if (vidm) {
 				MD5_CTX ctx;
@@ -525,12 +529,12 @@ void init_vendorid(void)
 				osMD5Final(hash, &ctx);
 				vidm[0] = 'O';
 				vidm[1] = 'E';
-#if FSWAN_VID_SIZE - 2 <= MD5_DIGEST_SIZE
-				memcpy(vidm + 2, hash, FSWAN_VID_SIZE - 2);
+#if FSWAN_VID_SIZE <= 2 + MD5_DIGEST_SIZE
+				memcpy(vidm + 2, hash, FSWAN_VID_SIZE - 2);	/* truncate hash */
 #else
 				memcpy(vidm + 2, hash, MD5_DIGEST_SIZE);
 				memset(vidm + 2 + MD5_DIGEST_SIZE, '\0',
-				       FSWAN_VID_SIZE - 2 - MD5_DIGEST_SIZE);
+				       FSWAN_VID_SIZE - (2 + MD5_DIGEST_SIZE));	/* pad hash */
 #endif
 				for (i = 2; i < FSWAN_VID_SIZE; i++) {
 					vidm[i] &= 0x7f;
@@ -538,14 +542,15 @@ void init_vendorid(void)
 				}
 				vid->vid_len = FSWAN_VID_SIZE;
 			}
+#undef FSWAN_VID_SIZE
 		}
 
 		if (vid->descr == NULL) {
 			/** Find something to display **/
 			vid->descr = vid->data;
 		}
-#if 0
-		DBG_log("vendorid_init: %d [%s]",
+#if 1
+		DBG_log("init_vendorid: %d [%s]",
 			vid->id,
 			vid->descr ? vid->descr : ""
 			);
@@ -638,14 +643,17 @@ static void handle_known_vendorid(struct msg_digest *md,
 
 	case VID_MISC_DPD:
 		/* Remote side would like to do DPD with us on this connection */
-		md->dpd = 1;
+		md->dpd = TRUE;
 		break;
 
 	case VID_MISC_IKEv2:
 		md->ikev2 = TRUE;
 		break;
 
-/* We only need these when dealing with XAUTH */
+	case VID_NORTEL:
+		md->nortel = TRUE;
+		break;
+
 #ifdef XAUTH
 	case VID_SSH_SENTINEL_1_4_1:
 		loglog(RC_LOG_SERIOUS,
@@ -663,7 +671,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 #endif
 
 	case VID_LIBRESWANSELF:
-		vid_useful = TRUE; /* not really useful, but it changes the msg from "ignored" to "received" */
+		/* not really useful, but it changes the msg from "ignored" to "received" */
 		break;
 
 	case VID_CISCO_IKE_FRAGMENTATION:
@@ -830,10 +838,3 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 	return out_generic_raw(np, &isakmp_vendor_id_desc, outs,
 			       pvid->vid, pvid->vid_len, "V_ID");
 }
-
-/* OpenPGP Vendor ID needed for interoperability with PGPnet
- *
- * Note: it is a NUL-terminated ASCII string, but NUL won't go on the wire.
- */
-const char pgp_vendorid[] = "OpenPGP10171";
-const int pgp_vendorid_len = sizeof(pgp_vendorid);

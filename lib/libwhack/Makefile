@@ -62,7 +62,7 @@ endif
 ARFLAGS=crvs
 MANS=
 
-.PHONY:	all install clean l t lt tar check depend checkprograms
+.PHONY:	all install clean l t lt tar check checkprograms
 
 # we can't do tests with two conditions, but we can concatenate the strings
 SHOULDWERESTART=${USE_OBJDIR}$(wildcard whacklib.c)
@@ -107,13 +107,13 @@ $(LIB): $(OBJS)
 $(OBJS):	$(HDRS)
 
 cleanall:
-	rm -rf ${OBJS} $(LIB)
+	rm -rf ${OBJS} $(LIB) Makefile.depend
 
 # Gather dependencies caused by explicit #includes within .c files
-depend: ${DISTSRC}
-	@(ls $(DISTSRC) | grep '\.c' | xargs $(GCC) -MM ${PORTINCLUDE} ${INCLUDES} ${ALLFLAGS} ) | sed -e 's,${LIBRESWANSRCDIR},../..,g' >Makefile.depend
+Makefile.depend: $(SRCS) $(LIBRESWANSRCDIR)/lib/libwhack/Makefile
+	@(ls $(wildcard $(addprefix $(LIBRESWANSRCDIR)/lib/libwhack/,$(SRCS))) | grep '\.c' | xargs $(CC) -MM ${PORTINCLUDE} ${INCLUDES} ${ALLFLAGS} ) >Makefile.depend
 
--include ${srcdir}Makefile.depend
+-include Makefile.depend
 
 
 

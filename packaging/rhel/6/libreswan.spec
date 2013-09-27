@@ -140,6 +140,8 @@ install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase 
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
+# replace with rhel[56] specific version
+install -m 0755 initsystems/sysvinit/init.rhel %{buildroot}%{_initrddir}/ipsec
 
 echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}/etc/rc.d/rc*

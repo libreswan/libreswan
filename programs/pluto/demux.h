@@ -77,14 +77,15 @@ struct msg_digest {
 	bool dpd;                               /* Peer supports RFC 3706 DPD */
 	bool ikev2;                             /* Peer supports IKEv2 */
 	bool fragvid;                           /* Peer supports FRAGMENTATION */
+	bool nortel;                            /* Peer requires Nortel specific workaround */
 	bool event_already_set;                 /* (ikev1 only) */
 	stf_status result;                      /* temporary stored here for access by Tcl */
 
 #   define PAYLIMIT 30
 	struct payload_digest
 		digest[PAYLIMIT],
-	*digest_roof,
-	*chain[ISAKMP_NEXT_ROOF];
+		*digest_roof,
+		*chain[ISAKMP_NEXT_ROOF];
 	struct isakmp_quirks quirks;
 };
 

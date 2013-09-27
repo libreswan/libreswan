@@ -58,10 +58,10 @@ mostlyclean: clean
 
 realclean: clean
 
-depend:
-	(. ${UTILS}/functions.sh; ls *.c | (while read file; do echo 'Calculating depends for '$$file >&2; ECHO=':' MOREFLAGS=-MM complibtest .Makefile.depend.$$file.${OSDEP} $$file >&2; cat .Makefile.depend.$$file.${OSDEP}; done) | sed -e 's,${LIBRESWANSRCDIR},../..,g' >Makefile.depend.${OSDEP})
+Makefile.depend: *.c ${srcdir}Makefile
+	(ls $(wildcard $(addprefix $(srcdir),*.c)) | grep '\.c' | xargs ${CC} -MM) >Makefile.depend
 
--include ${srcdir}Makefile.depend.${OSDEP}
+-include Makefile.depend
 
 
 east.record: ${LIBRESWANSRCDIR}/programs/pluto/rcv_whack.c

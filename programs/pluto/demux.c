@@ -46,7 +46,6 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -76,7 +75,6 @@
 #include "dpd.h"
 #endif
 #include "udpfromto.h"
-#include "tpm/tpm.h"
 
 /* This file does basic header checking and demux of
  * incoming packets.
@@ -181,8 +179,6 @@ void process_packet(struct msg_digest **mdp)
 		    enum_name(&exchange_names, md->hdr.isa_xchg),
 		    md->hdr.isa_xchg));
 
-	TCLCALLOUT("processRawPacket", NULL, NULL, md);
-
 	switch (maj) {
 	case ISAKMP_MAJOR_VERSION:
 		process_v1_packet(mdp);
@@ -195,12 +191,6 @@ void process_packet(struct msg_digest **mdp)
 	default:
 		bad_case(maj);
 	}
-#ifdef TPM
-tpm_stolen:
-tpm_ignore:
-	return;
-
-#endif
 }
 
 /* wrapper for read_packet and process_packet

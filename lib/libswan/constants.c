@@ -338,12 +338,12 @@ enum_names esp_transformid_names_private_use =
 
 static const char *const esp_transform_name[] = {
 	"ESP_DES_IV64",              /* old DES */
-	"ESP_DES",
+	"ESP_DES", /* obsoleted */
 	"ESP_3DES",
 	"ESP_RC5",
 	"ESP_IDEA",
 	"ESP_CAST",
-	"ESP_BLOWFISH",
+	"ESP_BLOWFISH", /* obsoleted */
 	"ESP_3IDEA",
 	"ESP_DES_IV32",
 	"ESP_RC4",
@@ -404,7 +404,7 @@ enum_names ident_names =
 static const char *const cert_type_name[] = {
 	"CERT_NONE",
 	"CERT_PKCS7_WRAPPED_X509",
-	"CERT_PGP",
+	"CERT_PGP (unsupported)",
 	"CERT_DNS_SIGNED_KEY",
 	"CERT_X509_SIGNATURE",
 	"CERT_X509_KEY_EXCHANGE",
@@ -424,7 +424,7 @@ enum_names cert_type_names =
 static const char *const ikev2_cert_type_name[] = {
 	"CERT_RESERVED",
 	"CERT_PKCS7_WRAPPED_X509",
-	"CERT_PGP",
+	"CERT_PGP (unsupported)",
 	"CERT_DNS_SIGNED_KEY",
 	"CERT_X509_SIGNATURE",
 	"CERT_UNUSED", /* 5 is missing did IETF drop it ? it was in IKEv1 RFC2408 */
@@ -808,7 +808,7 @@ enum_names oakley_prf_names =
 static const char *const oakley_enc_name[] = {
 	"OAKLEY_DES_CBC",
 	"OAKLEY_IDEA_CBC",
-	"OAKLEY_BLOWFISH_CBC",
+	"OAKLEY_BLOWFISH_CBC", /* obsoleted */
 	"OAKLEY_RC5_R16_B64_CBC",
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
@@ -930,28 +930,20 @@ static const char *const oakley_group_name_rfc3526[] = {
 	"OAKLEY_GROUP_MODP8192"
 };
 
-#ifdef USE_MODP_RFC5114
 static const char *const oakley_group_name_rfc5114[] = {
 	"OAKLEY_GROUP_DH22",
 	"OAKLEY_GROUP_DH23",
 	"OAKLEY_GROUP_DH24"
 };
-#endif
 
-#ifdef USE_MODP_RFC5114
 enum_names oakley_group_names_rfc5114 =
 { OAKLEY_GROUP_DH22, OAKLEY_GROUP_DH24,
   oakley_group_name_rfc5114, NULL };
-#endif
 
 enum_names oakley_group_names_rfc3526 =
 { OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP8192,
   oakley_group_name_rfc3526,
-#ifdef USE_MODP_RFC5114
   &oakley_group_names_rfc5114 };
-#else
-  NULL };
-#endif
 
 enum_names oakley_group_names =
 { OAKLEY_GROUP_MODP768, OAKLEY_GROUP_MODP1536,
@@ -1216,15 +1208,15 @@ const char *const critical_names[] = {
 
 /* Transform-type Encryption */
 const char *const trans_type_encr_name[] = {
-	"des-iv64",
-	"des",
+	"des-iv64(obsoleted)",
+	"des(obsoleted)",
 	"3des",
 	"rc5",
 	"idea",
 	"cast",
-	"blowfish",
+	"blowfish(obsoleted)",
 	"3idea",
-	"des-iv32",
+	"des-iv32(obsoleted)",
 	"res10",
 	"null",
 	"aes-cbc",
@@ -1577,7 +1569,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 				/* No name for this bit, so use hex.
 				 * if snprintf returns a different value from strlen, trunation happened
 				 */
-				(void)snprintf(p, (size_t)(roof - p), "0x%llx",
+				(void)snprintf(p, (size_t)(roof - p), "0x%" PRIxLSET,
 					       bit);
 				p += strlen(p);
 			} else {

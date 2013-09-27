@@ -236,6 +236,7 @@ int pfkey_sa_builds(struct sadb_ext **pfkey_ext,
 		SENDERR(EINVAL);
 	}
 
+#if SADB_AALG_MAX < 255
 	if (sab.sa_base.sadb_sa_auth > SADB_AALG_MAX) {
 		DEBUGGING(PF_KEY_DEBUG_BUILD,
 			  "pfkey_sa_build: "
@@ -244,6 +245,7 @@ int pfkey_sa_builds(struct sadb_ext **pfkey_ext,
 			  SADB_AALG_MAX);
 		SENDERR(EINVAL);
 	}
+#endif
 
 #if K_SADB_EALG_MAX < 255
 	if (sab.sa_base.sadb_sa_encrypt > K_SADB_EALG_MAX) {

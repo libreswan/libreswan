@@ -46,7 +46,6 @@
 #include "state.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -92,58 +91,6 @@
 #include "virtual.h"
 #include "dpd.h"
 #include "x509more.h"
-
-#include "tpm/tpm.h"
-
-/* Pluto's Vendor ID
- *
- * Note: it is a NUL-terminated ASCII string, but NUL won't go on the wire.
- */
-#define PLUTO_VENDORID_SIZE 12
-static bool pluto_vendorid_built = FALSE;
-char pluto_vendorid[PLUTO_VENDORID_SIZE + 1];
-
-const char *init_pluto_vendorid(void)
-{
-	MD5_CTX hc;
-	unsigned char hash[MD5_DIGEST_SIZE];
-	const char *v = ipsec_version_string();
-	int i;
-
-	if (pluto_vendorid_built)
-		return pluto_vendorid;
-
-	osMD5Init(&hc);
-	osMD5Update(&hc, (const unsigned char *)v, strlen(v));
-	osMD5Update(&hc, (const unsigned char *)compile_time_interop_options,
-		    strlen(compile_time_interop_options));
-	osMD5Final(hash, &hc);
-
-	pluto_vendorid[0] = 'O'; /* Opportunistic Encryption Rules */
-	pluto_vendorid[1] = 'E';
-	pluto_vendorid[2] = 'N';
-
-#if PLUTO_VENDORID_SIZE - 3 <= MD5_DIGEST_SIZE
-	/* truncate hash to fit our vendor ID */
-	memcpy(pluto_vendorid + 3, hash, PLUTO_VENDORID_SIZE - 2);
-#else
-	/* pad to fill our vendor ID */
-	memcpy(pluto_vendorid + 3, hash, MD5_DIGEST_SIZE);
-	memset(pluto_vendorid + 3 + MD5_DIGEST_SIZE, '\0',
-	       PLUTO_VENDORID_SIZE - 3 - MD5_DIGEST_SIZE);
-#endif
-
-	/* Make it printable!  Hahaha - MCR */
-	for (i = 3; i < PLUTO_VENDORID_SIZE; i++) {
-		/* Reset bit 7, force bit 6.  Puts it into 64-127 range */
-		pluto_vendorid[i] &= 0x7f;
-		pluto_vendorid[i] |= 0x40;
-	}
-	pluto_vendorid[PLUTO_VENDORID_SIZE] = '\0';
-	pluto_vendorid_built = TRUE;
-
-	return pluto_vendorid;
-}
 
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
@@ -636,7 +583,8 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
 	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer)) {
+		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
+		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
@@ -647,15 +595,25 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			       "we require peer to have ID '%s', but peer declares '%s'",
 			       expect, found);
 			return FALSE;
+		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
+			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+				loglog(RC_LOG_SERIOUS,
+				       "peer ID is not a certificate type");
+				return FALSE;
+			}
+			if (!duplicate_id(&st->st_connection->spd.that.id, &peer)) {
+				loglog(RC_LOG_SERIOUS, "failed to copy ID");
+				return FALSE;
+			}
 		}
 	} else {
 		struct connection *c = st->st_connection;
 		struct connection *r;
-
+		bool fc = 0;
 		/* check for certificate requests */
 		decode_cr(md, &c->requested_ca);
 
-		r = refine_host_connection(st, &peer, initiator, aggrmode);
+		r = refine_host_connection(st, &peer, initiator, aggrmode, &fc);
 
 		/* delete the collected certificate requests */
 		free_generalNames(c->requested_ca, TRUE);
@@ -704,6 +662,12 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			c->spd.that.id = peer;
 			c->spd.that.has_id_wildcards = FALSE;
 			unshare_id_content(&c->spd.that.id);
+		} else if (fc) {
+			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
+			if (!duplicate_id(&r->spd.that.id, &peer)) {
+				loglog(RC_LOG_SERIOUS, "failed to copy ID");
+				return FALSE;
+			}
 		}
 	}
 

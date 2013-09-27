@@ -93,10 +93,8 @@ extern bool nat_traversal_support_port_floating;
  * NAT-D
  */
 void nat_traversal_natd_lookup(struct msg_digest *md);
-#ifndef PB_STREAM_UNDEFINED
 bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 			    struct msg_digest *md);
-#endif
 
 /**
  * NAT-OA
@@ -104,10 +102,8 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 struct hidden_variables;
 void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv);
-#ifndef PB_STREAM_UNDEFINED
 bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 			     struct state *st, bool initiator);
-#endif
 
 /**
  * NAT-keep_alive
@@ -124,10 +120,8 @@ extern int nat_traversal_espinudp_socket(int sk,
 /**
  * Vendor ID
  */
-#ifndef PB_STREAM_UNDEFINED
 bool nat_traversal_add_vid(u_int8_t np, pb_stream *outs);
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, struct state *st);
-#endif
+bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs);
 u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);

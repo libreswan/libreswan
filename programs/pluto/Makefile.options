@@ -70,9 +70,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 # -DDEBUG enables debugging code, allowing for debugging output
 #    (note that output must also be selected at runtime, so it is
 #    reasonable to always define this)
-# -DPLUTO_SENDS_VENDORID enables pluto to send out a VendorID payload.
-#    this can be used by remote nodes to work around faults (bugs),
-#    but is most useful to humans who are debugging things.
 # -DLEAK_DETECTIVE enables crude code to find memory allocation leaks.
 # -DOLD_RESOLVER.  At some point, the resolver interface changed.
 #    This macro enables Pluto support for the old interface.
@@ -95,10 +92,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 
 USE_ADNS=true
 BINNAMEADNSIFNEEDED=$(BINNAMEADNS)
-
-ifeq ($(USE_VENDORID),true)
-VENDORID=-DPLUTO_SENDS_VENDORID
-endif
 
 ifeq ($(USE_KEYRR),true)
 KEYRR_DEFINES=-DUSE_KEYRR
@@ -237,10 +230,10 @@ CURL_LLIBS=-lcurl
 endif
 
 ifeq ($(USE_EXTRACRYPTO),true)
-EXTRA_CRYPTO_DEFS=-DUSE_TWOFISH -DUSE_BLOWFISH -DUSE_SERPENT 
-EXTRA_CRYPTO_SRCS=ike_alg_blowfish.c ike_alg_twofish.c ike_alg_serpent.c 
-EXTRA_CRYPTO_OBJS=ike_alg_blowfish.o ike_alg_twofish.o ike_alg_serpent.o 
-EXTRA_CRYPTO_LIBS=$(LIBBLOWFISH) $(LIBTWOFISH) $(LIBSERPENT) 
+EXTRA_CRYPTO_DEFS=-DUSE_TWOFISH -DUSE_SERPENT 
+EXTRA_CRYPTO_SRCS=ike_alg_twofish.c ike_alg_serpent.c 
+EXTRA_CRYPTO_OBJS=ike_alg_twofish.o ike_alg_serpent.o 
+EXTRA_CRYPTO_LIBS=$(LIBTWOFISH) $(LIBSERPENT) 
 endif
 
 
@@ -250,12 +243,6 @@ endif
 
 ifeq ($(USE_LEAK_DETECTIVE),true)
 LEAK_CONF=-DLEAK_DETECTIVE
-endif
-
-ifeq ($(USE_TAPROOM),true)
-LIBTPM=tpm/libtpm.a
-TPM_LIBS=${LIBTPM} ${TCLLIB}
-TPM_DEFS=-DTPM ${TCLINC} 
 endif
 
 DEFINES = $(EXTRA_DEFINES) \
@@ -268,7 +255,7 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
 	-DPLUTO \
-	${KLIPS_DEFS} ${WIN2K_DEFS} ${TPM_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
+	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	-DBUILDER=\"${BUILDER}\" \
 	-DDEBUG \
 	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5\
@@ -284,16 +271,15 @@ DEFINES = $(EXTRA_DEFINES) \
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
-LIBSPLUTO =$(OBJSGCRYPT)
 LIBSPLUTO+=$(LIBLSWCRYPTO)
 LIBSPLUTO+=$(LIBDESLITE) $(LIBAES) $(LIBRESWANLIB) $(LIBPLUTO)
 LIBSPLUTO+=${LIBSHA1} ${LIBMD5}
 LIBSPLUTO+=$(X509_LIBS) 
 LIBSPLUTO+=$(THREADS_LIBS)
-LIBSPLUTO+=${CURL_LIBS} ${TPM_LIBS}
+LIBSPLUTO+=${CURL_LIBS}
 LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} $(LIBSHA2) ${LABELED_IPSEC_LIBS}
 LIBSPLUTO+=${WHACKLIB} ${PLUTOLIB} ${BSDKAME_LIBS} ${NSSLIBS}
-PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${TPM_LLIBS} ${THREADS_LLIBS} 
+PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS} 
 PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} ${NSSLIBS}
 PLUTOMINUSL+= ${OPENSSL_LIBS} ${LIBCRYPT} -lgmp #-lefence
 
@@ -303,11 +289,6 @@ ifeq ($(USE_FIPSCHECK),true)
 FIPS_CHECK=1
 DEFINES+=-DFIPS_CHECK
 LIBSPLUTO+= -lfipscheck
-endif
-
-# Use MODP group described in RFC 5114
-ifeq ($(USE_MODP_RFC5114),true)
-DEFINES+=-DUSE_MODP_RFC5114
 endif
 
 ifeq ($(USE_DMALLOC),true)

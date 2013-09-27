@@ -10,3 +10,5 @@ It then uses MODECFG to configure the phase 2.
 It then proceeds to phase 2.
 It has PFS=yes for phase 2. (and this is the only difference with xauth-pluto-05)
 
+
+Paul: Since not specifying pfs means pfs=yes, this test is identical to xauth-pluto-05

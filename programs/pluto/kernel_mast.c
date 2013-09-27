@@ -56,7 +56,6 @@
 
 static int next_free_mast_device = -1;
 int useful_mastno = -1;
-extern char *pluto_listen;
 
 #ifndef DEFAULT_UPDOWN
 # define DEFAULT_UPDOWN "ipsec _updown"
@@ -474,6 +473,7 @@ static bool mast_raw_eroute(const ip_address *this_host UNUSED,
 			    unsigned int satype UNUSED,
 			    const struct pfkey_proto_info *proto_info UNUSED,
 			    time_t use_lifetime UNUSED,
+			    unsigned long sa_priority UNUSED,
 			    enum pluto_sadb_operations op UNUSED,
 			    const char *text_said UNUSED
 #ifdef HAVE_LABELED_IPSEC
@@ -485,7 +485,7 @@ static bool mast_raw_eroute(const ip_address *this_host UNUSED,
 	DBG_log("mast_raw_eroute called op=%u said=%s", op, text_said);
 	return pfkey_raw_eroute(this_host, this_client, that_host, that_client,
 				spi, proto, transport_proto, satype,
-				proto_info, use_lifetime, op, text_said
+				proto_info, use_lifetime, sa_priority, op, text_said
 #ifdef HAVE_LABELED_IPSEC
 				, policy_label
 #endif

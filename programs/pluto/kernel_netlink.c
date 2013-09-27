@@ -79,10 +79,6 @@
 # define DEFAULT_UPDOWN "ipsec _updown"
 #endif
 
-extern char *pluto_listen;
-
-extern const struct pfkey_proto_info null_proto_info[2];
-
 static const struct pfkey_proto_info broad_proto_info[2] = {
 	{
 		.proto = IPPROTO_ESP,
@@ -156,10 +152,10 @@ static sparse_names aalg_list = {
 /** Encryption algs */
 static sparse_names ealg_list = {
 	{ SADB_EALG_NULL, "cipher_null" },
-	{ SADB_EALG_DESCBC, "des" },
+	/* { SADB_EALG_DESCBC, "des" }, obsoleted */
 	{ SADB_EALG_3DESCBC, "des3_ede" },
 	{ SADB_X_EALG_CASTCBC, "cast128" },
-	{ SADB_X_EALG_BLOWFISHCBC, "blowfish" },
+	/* { SADB_X_EALG_BLOWFISHCBC, "blowfish" }, obsoleted */
 	{ SADB_X_EALG_AESCBC, "aes" },
 	{ SADB_X_EALG_AESCTR, "ctr(aes)" },
 	{ SADB_X_EALG_CAMELLIACBC, "cbc(camellia)" },
@@ -389,6 +385,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 		       description, text_said,
 		       -rsp.e.error,
 		       strerror(-rsp.e.error));
+		errno = -rsp.e.error;
 		return FALSE;
 	}
 
@@ -458,6 +455,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			       enum eroute_type esatype,
 			       const struct pfkey_proto_info *proto_info,
 			       time_t use_lifetime UNUSED,
+			       unsigned long sa_priority,
 			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -624,9 +622,21 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			src = req.u.p.sel.prefixlen_d;
 			dst = req.u.p.sel.prefixlen_s;
 		}
-		req.u.p.priority = MIN_SPD_PRIORITY +
+
+		/* 
+		 * if the user did not specify a priority, calculate one based
+		 * on 'more specific' getting a higher priority
+		 */
+		if (sa_priority) {
+			req.u.p.priority = sa_priority;
+		} else {
+			req.u.p.priority = MIN_SPD_PRIORITY -
+				((policy == IPSEC_POLICY_NONE) ? 512 : 0) +
 				   (((2 << shift) - src) << shift) +
-				   (2 << shift) - dst;
+				    (2 << shift) - dst - ((transport_proto) ? 64 : 0) 
+				 	- ((req.u.p.sel.sport) ? 32 : 0 )
+				 	- ((req.u.p.sel.sport) ? 32 : 0 );
+		}
 
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
@@ -754,6 +764,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	} req;
 	struct rtattr *attr;
 	struct aead_alg *aead;
+	int ret;
 
 	memset(&req, 0, sizeof(req));
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
@@ -1022,8 +1033,14 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 #endif
-
-	return send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
+	ret = send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
+	if (ret == FALSE && errno == ESRCH &&
+	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
+			loglog(RC_LOG_SERIOUS, "Warning: expected to find "
+			       "an existing IPsec SA - continuing as Add SA");
+		return netlink_add_sa(sa, 0);
+	}
+	return ret;
 }
 
 /** netlink_del_sa - Delete an SA from the Kernel
@@ -1711,7 +1728,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 		proto_info[i].encapsulation = st->st_esp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 1;
+		proto_info[i].reqid = (sr->reqid < IPSEC_MANUAL_REQID_MAX) ?  sr->reqid : sr->reqid + 1;
 	}
 
 	if (st->st_ipcomp.present) {
@@ -1725,7 +1742,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 			st->st_ipcomp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 2;
+		proto_info[i].reqid = (sr->reqid < IPSEC_MANUAL_REQID_MAX) ?  sr->reqid : sr->reqid + 2;
 	}
 
 	/* check for no transform at all */
@@ -1876,7 +1893,8 @@ static bool netlink_shunt_eroute(struct connection *c,
 					 SA_INT,
 					 sr->this.protocol,
 					 ET_INT,
-					 null_proto_info, 0, op, buf2
+					 null_proto_info, 0, c->sa_priority,
+					 op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					 , c->policy_label
 #endif
@@ -1906,7 +1924,8 @@ static bool netlink_shunt_eroute(struct connection *c,
 					  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : SA_INT,
 					  sr->this.protocol,
 					  ET_INT,
-					  null_proto_info, 0, op, buf2
+					  null_proto_info, 0, c->sa_priority,
+					  op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					  , c->policy_label
 #endif

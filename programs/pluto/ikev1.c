@@ -130,7 +130,6 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -158,7 +157,6 @@
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
-#include "tpm/tpm.h"
 #include "hostpair.h"
 
 /* state_microcode is a tuple of information parameterizing certain
@@ -551,24 +549,24 @@ static const struct state_microcode state_microcode_table[] = {
 #ifdef XAUTH
 	{ STATE_XAUTH_R0, STATE_XAUTH_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_NULL, xauth_inR0 }, /*Re-transmit may be done by previous state*/
 
 	{ STATE_XAUTH_R1, STATE_MAIN_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR1 },
 
 #if 0
 	/* for situation where there is XAUTH + ModeCFG */
 	{ STATE_XAUTH_R2, STATE_XAUTH_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR2 },
 
 	{ STATE_XAUTH_R3, STATE_MAIN_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR3 },
 #endif
 #endif
@@ -585,12 +583,12 @@ static const struct state_microcode state_microcode_table[] = {
 
 	{ STATE_MODE_CFG_R0, STATE_MODE_CFG_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR0 },
 
 	{ STATE_MODE_CFG_R1, STATE_MODE_CFG_R2,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR1 },
 
 	{ STATE_MODE_CFG_R2, STATE_UNDEFINED,
@@ -600,19 +598,19 @@ static const struct state_microcode state_microcode_table[] = {
 
 	{ STATE_MODE_CFG_I1, STATE_MAIN_I4,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR1 },
 #endif
 
 #ifdef XAUTH
 	{ STATE_XAUTH_I0, STATE_XAUTH_I1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, xauth_inI0 },
 
 	{ STATE_XAUTH_I1, STATE_MAIN_I4,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, xauth_inI1 },
 #endif
 
@@ -1956,16 +1954,8 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 			}
 
-			TCLCALLOUT_crypt("preDecrypt", st, &md->message_pbs,
-					 pbs_offset(&md->message_pbs),
-					 pbs_left(&md->message_pbs));
-
 			crypto_cbc_encrypt(e, FALSE, md->message_pbs.cur,
 					   pbs_left(&md->message_pbs), st);
-
-			TCLCALLOUT_crypt("postDecrypt", st, &md->message_pbs,
-					 pbs_offset(&md->message_pbs),
-					 pbs_left(&md->message_pbs));
 
 		}
 
@@ -1984,8 +1974,6 @@ void process_packet_tail(struct msg_digest **mdp)
 			return;
 		}
 	}
-
-	TCLCALLOUT("recvMessage", st, (st ? st->st_connection : NULL), md);
 
 	/* Digest the message.
 	 * Padding must be removed to make hashing work.
@@ -2099,7 +2087,7 @@ void process_packet_tail(struct msg_digest **mdp)
 
 				DBG(DBG_PARSING,
 				    DBG_log(
-					    "got payload 0x%qx(%s) needed: 0x%qx opt: 0x%qx",
+					    "got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
 					    s, enum_show(&payload_names, np),
 					    needed, smc->opt_payloads));
 				needed &= ~s;
@@ -2348,19 +2336,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
 			 smc->first_out_payload);
 
-	TCLCALLOUT("changeState", st, (st ? st->st_connection : NULL), md);
-	/* XXX recheck md->smc, because it may have changed. */
-
 	complete_v1_state_transition(mdp, smc->processor(md));
-#ifdef TPM
-tpm_ignore:
-	return;
-
-tpm_stolen:
-	*mdp = NULL;
-	return;
-
-#endif
 }
 
 static void update_retransmit_history(struct state *st, struct msg_digest *md)
@@ -2395,7 +2371,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	cur_state = st = md->st; /* might have changed */
 
 	md->result = result;
-	TCLCALLOUT("adjustFailure", st, (st ? st->st_connection : NULL), md);
 	result = md->result;
 
 	/* If state has FRAGMENTATION support, import it */
@@ -2414,6 +2389,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			st->hidden_variables.st_dpd_local = 1;
 			DBG(DBG_DPD, DBG_log("enabling sending dpd"));
 		}
+	}
+	/* If state has VID_NORTEL, import it to activate workaround */
+	if (st && md->nortel) {
+		DBG(DBG_CONTROLMORE, DBG_log("peer requires nortel contivity workaround"));
+		st->st_seen_nortel_vid = TRUE;
 	}
 
 	/* advance the state */
@@ -2538,11 +2518,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 * send_ike_msg call depending on st->st_state.
 			 */
 
-			TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
 			send_ike_msg(st, enum_name(&state_names, from_state));
 		}
-
-		TCLCALLOUT("adjustTimers", st, st->st_connection, md);
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
@@ -2785,7 +2762,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		   we need to initiate Quick mode */
 		if (!(smc->flags & SMF_INITIATOR) &&
 		    IS_MODE_CFG_ESTABLISHED(st->st_state) &&
-		    (st->st_seen_vendorid & LELEM(VID_NORTEL))) {
+		    (st->st_seen_nortel_vid)) {
+			libreswan_log("Nortel 'Contivity Mode' detected, starting Quick Mode");
 			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
 			set_cur_state(st);
 			quick_outI1(st->st_whack_sock, st, st->st_connection,
@@ -2936,15 +2914,5 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			delete_state(st);
 		break;
 	}
-
-#ifdef TPM
-tpm_ignore:
-	return;
-
-tpm_stolen:
-	*mdp = NULL;
-	return;
-
-#endif
 
 }

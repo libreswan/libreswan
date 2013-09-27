@@ -21,10 +21,7 @@ kvmplutotest	basic-pluto-01	good
 kvmplutotest	basic-pluto-02	bad
 kvmplutotest	basic-pluto-03	good
 
-# fails due to refineconnection bug.
-# PAUL: old note
-umlplutotest	pluto-ipcmp-01	good
-umlplutotest	bad-updown-01	good
+kvmplutotest	pluto-ipcmp-01	good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
@@ -98,17 +95,18 @@ ctltest	pluto-dontreky-expiry-01 good
 # umlplutotest	food-groups-orderly-transition-01	good
 
 # RFC 3706 DPD test
-umlplutotest	dpd-01	good
-umlplutotest	dpd-02	good
-umlplutotest	dpd-03	good
-umlplutotest	dpd-04	good
-umlplutotest	dpd-05	good
-umlplutotest	dpd-06	good
-umlplutotest	dpd-07	good
-umlplutotest	dpd-08	good
+kvmplutotest	dpd-01	good
+kvmplutotest	dpd-02	good
+kvmplutotest	dpd-02-reverse	good
+kvmplutotest	dpd-03	good
+kvmplutotest	dpd-04	good
+kvmplutotest	dpd-05	good
+kvmplutotest	dpd-06	good
+kvmplutotest	dpd-07	good
+kvmplutotest	dpd-08	good
 
 # Delete SA test.
-umlplutotest	delete-sa-01	good
+kvmplutotest	delete-sa-01	good
 
 #
 # oe-snat-01 - do Source address NAT and then OE
@@ -222,7 +220,7 @@ umlplutotest	nss-leftrsasigkey2-01	good
 
 #
 # Test of XAUTH client to XAUTH server
-umlXhost	xauth-pluto-03		good
+kvmplutotest	xauth-pluto-03		good
 
 #
 # Test of NAT traversal
@@ -296,14 +294,15 @@ umlXhost	psk-pluto-02		bad
 
 kvmplutotest	xauth-pluto-04		good
 skip		xauth-pluto-17		wip
+kvmplutotest	xauth-pluto-18		good
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg
-umlXhost	xauth-pluto-05		good
+kvmplutotest	xauth-pluto-05		good
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
-umlXhost	xauth-pluto-06		good
+kvmplutotest	xauth-pluto-06		good
 
 #
 # a test case of xauth using xauthname= in ipsec.conf 
@@ -329,13 +328,13 @@ kvmplutotest	basic-pluto-05		wip
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
 # in client pull mode rather than server push.
 #
-umlplutotest	xauth-pluto-07		good
+kvmplutotest	xauth-pluto-07		good
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
 # in client pull mode, *WITH* DPD enabled.
 #
-umlXhost	xauth-pluto-08		good
+kvmplutotest	xauth-pluto-08		good
 
 #
 # Aggressive Mode Pluto Tests
@@ -462,6 +461,8 @@ kvmplutotest    loopback-pluto-01		good
 kvmplutotest    loopback-pluto-02		good
 kvmplutotest    loopback-pluto-03		good
 kvmplutotest    loopback-pluto-04		good
+kvmplutotest    loopback-pluto-05		good
+kvmplutotest    loopback-pluto-06		good
 
 # compress tests, some use netkey
 umlplutotest    compress-pluto-01		good
@@ -505,7 +506,7 @@ umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-09-rw-rsa				good
 kvmplutotest	ikev2-11-simple-psk			good
-kvmplutotest	ikev2-12-no-nhelpers			good
+kvmplutotest	ikev2-12-x509-ikev1			bad
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
@@ -516,12 +517,19 @@ kvmlplutotest	ikev2-algo-02-modp2048-responder	good
 kvmplutotest	ikev2-algo-03-aes-ccm			good
 kvmplutotest	ikev2-algo-04-aes-gcm			good
 
-# various SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
+# various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good
 kvmplutotest	ikev2-algo-sha2-02			good
 kvmplutotest	ikev2-algo-sha2-03			good
 kvmplutotest	ikev2-algo-sha2-04			good
 kvmplutotest	ikev2-algo-sha2-05			bad
+
+# various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
+kvmplutotest	ikev2-algo-ike-sha2-01			good
+kvmplutotest	ikev2-algo-ike-sha2-02			good
+kvmplutotest	ikev2-algo-ike-sha2-03			good
+kvmplutotest	ikev1-algo-ike-sha2-01			good
+kvmplutotest	ikev1-algo-ike-sha2-02			good
 
 # Various corner case tests for IKEv2
 umlplutotest	ikev2-major-version-initiator		good
@@ -545,19 +553,32 @@ kvmplutotest	ikev2-no-nhelpers-01			good
 # Interop tests
 #################################################################
 umlplutotest    interop-ikev2-racoon-01-noconn			good
-umlplutotest    interop-ikev2-racoon-02-psk-responder		good
+kvmplutotest    interop-ikev2-racoon-02-psk-responder		good
 umlplutotest    interop-ikev2-racoon-03-psk-initiator		good
 umlplutotest    interop-ikev2-racoon-04-x509-responder		good
 umlplutotest    interop-ikev2-racoon-05-x509-initiator		good
 
+kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
+kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
+
 umlplutotest    interop-ikev2-strongswan-01-noconn		good
-umlplutotest    interop-ikev2-strongswan-02-psk-responder	good
-umlplutotest    interop-ikev2-strongswan-03-psk-initiator	good
+kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
+kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 umlplutotest    interop-ikev2-strongswan-04-x509-responder	good
 umlplutotest    interop-ikev2-strongswan-05-x509-initiator	good
+kvmplutotest	interop-ikev2-strongswan-05-psk-md5		good
+kvmplutotest	interop-ikev2-strongswan-06-aes192		good
+kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
+kvmlutotest	interop-ikev2-strongswan-08-psk-aes		good
 
 skip		interop-racoon-iphone4s-nonat		incomplete
 skip		interop-racoon-iphone5-nonat		incomplete
+
+#################################################################
+# DNSSEC tests
+#################################################################
+
+kvmplutotest	dnssec-pluto-01					good
 
 #################################################################
 # Specific bug tests

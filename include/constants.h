@@ -60,6 +60,8 @@ typedef int bool;
 #define close_any(fd) do { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; \
 			   } } while (0)
 
+#include <inttypes.h>
+
 #include <prcpucfg.h>
 
 #ifndef BITS_PER_BYTE
@@ -82,16 +84,16 @@ extern char *jam_str(char *dest, size_t size, const char *src);
  * (was 32 in stock FS)
  */
 
-typedef unsigned long long lset_t;
-#define LEMPTY 0ULL
-#define LELEM(opt) (1ULL << (opt))
+typedef uint_fast64_t lset_t;
+#define PRIxLSET    PRIxFAST64
+#define LELEM_ROOF  64	/* all elements must be less than this */
+#define LEMPTY ((lset_t)0)
+#define LELEM(opt) ((lset_t)1 << (opt))
 #define LRANGE(lwb, upb) LRANGES(LELEM(lwb), LELEM(upb))
 #define LRANGES(first, last) (last - first + last)
 #define LHAS(set, elem)  ((LELEM(elem) & (set)) != LEMPTY)
 #define LIN(subset, set)  (((subset) & (set)) == (subset))
 #define LDISJOINT(a, b)  (((a) & (b)) == LEMPTY)
-
-#include "biglset.h"
 
 /* Routines to check and display values.
  *
@@ -133,6 +135,8 @@ struct keyword_enum_values {
 	struct keyword_enum_value *values;
 	size_t valuesize;
 };
+
+extern struct keyword_enum_values kw_host_list;
 
 extern const char *keyword_name(struct keyword_enum_values *kevs,
 				unsigned int value);
