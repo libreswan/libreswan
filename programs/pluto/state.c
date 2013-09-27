@@ -1489,17 +1489,16 @@ void fmt_state(struct state *st, const time_t n,
 				pst = state_with_serialno(st->st_clonedfrom);
 				if (pst != NULL) {
 					snprintf(dpdbuf, sizeof(dpdbuf),
-						"; lastlive=%lds",
-						pst->st_last_liveness != 0 ? tn -
-						pst->st_last_liveness : 0);
+						 "; lastlive=%lds",
+						 pst->st_last_liveness != 0 ? tn -
+						 pst->st_last_liveness : 0);
 				}
 			}
 		} else {
-			if (!st->st_ikev2) {
+			if (!st->st_ikev2)
 				snprintf(dpdbuf, sizeof(dpdbuf), "; nodpd");
-			} else {
+			else
 				snprintf(dpdbuf, sizeof(dpdbuf), "");
-			}
 		}
 	}
 
@@ -1730,9 +1729,9 @@ void show_states_status(void)
 	int count;
 	struct state **array;
 
-	whack_log(RC_COMMENT, " "); /* spacer */
-	whack_log(RC_COMMENT, "State list:"); /* spacer */
-	whack_log(RC_COMMENT, " "); /* spacer */
+	whack_log(RC_COMMENT, " ");             /* spacer */
+	whack_log(RC_COMMENT, "State list:");   /* spacer */
+	whack_log(RC_COMMENT, " ");             /* spacer */
 
 	/* make count of states */
 	count = 0;

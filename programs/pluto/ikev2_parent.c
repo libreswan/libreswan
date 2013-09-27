@@ -1379,7 +1379,9 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 
 	{
 		stf_status ret;
-		ret = ikev2_process_payloads(md, &md->clr_pbs, st->st_state, np);
+		ret =
+			ikev2_process_payloads(md, &md->clr_pbs, st->st_state,
+					       np);
 		if (ret != STF_OK)
 			return ret;
 	}
@@ -2772,8 +2774,9 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				 sizeof(reply_buffer),
 				 "information exchange reply packet");
 
-			DBG(DBG_CONTROLMORE|DBG_DPD, DBG_log("Received an INFORMATIONAL request, "
-					             "updating liveness, no longer pending"));
+			DBG(DBG_CONTROLMORE | DBG_DPD,
+			    DBG_log("Received an INFORMATIONAL request, "
+				    "updating liveness, no longer pending"));
 			st->st_last_liveness = now();
 			st->st_pend_liveness = FALSE;
 
@@ -3307,16 +3310,19 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 						delete_state(current_st);
 						current_st = next_st;
 					}
-				/* empty response to our empty INFORMATIONAL
-				 * We don't send anything back */
-				} else if ((md->hdr.isa_flags & ISAKMP_FLAGS_R) &&
-						st->st_state != STATE_IKESA_DEL) {
-		                        DBG(DBG_CONTROLMORE,
-			                            DBG_log("Received an INFORMATIONAL response, "
-							    "updating liveness, no longer pending."));
+					/* empty response to our empty INFORMATIONAL
+					 * We don't send anything back */
+				} else if ((md->hdr.isa_flags &
+					    ISAKMP_FLAGS_R) &&
+					   st->st_state != STATE_IKESA_DEL) {
+					DBG(DBG_CONTROLMORE,
+					    DBG_log(
+						    "Received an INFORMATIONAL response, "
+						    "updating liveness, no longer pending."));
 					st->st_last_liveness = now();
 					st->st_pend_liveness = FALSE;
-					st->st_msgid_lastrecv = md->msgid_received;
+					st->st_msgid_lastrecv =
+						md->msgid_received;
 				}
 			}
 		}
@@ -3334,7 +3340,8 @@ stf_status ikev2_send_informational(struct state *st)
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (!pst) {
 			DBG(DBG_CONTROL,
-			    DBG_log("IKE SA does not exist for this child SA - should not happen"));
+			    DBG_log(
+				    "IKE SA does not exist for this child SA - should not happen"));
 			DBG(DBG_CONTROL,
 			    DBG_log("INFORMATIONAL exchange can not be sent"));
 			return STF_IGNORE;
@@ -3360,7 +3367,7 @@ stf_status ikev2_send_informational(struct state *st)
 		md.pst = pst;
 		memset(buffer, 0, sizeof(buffer));
 		init_pbs(&request, buffer, sizeof(buffer),
-				"informational exchange request packet");
+			 "informational exchange request packet");
 		authstart = request.cur;
 
 		/* HDR out */
@@ -3371,9 +3378,9 @@ stf_status ikev2_send_informational(struct state *st)
 					    ISA_MAJ_SHIFT |
 					    IKEv2_MINOR_VERSION;
 			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
-					COOKIE_SIZE);
+			       COOKIE_SIZE);
 			memcpy(r_hdr.isa_icookie, pst->st_icookie,
-					COOKIE_SIZE);
+			       COOKIE_SIZE);
 			r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
 			r_hdr.isa_np = ISAKMP_NEXT_v2E;
 
@@ -3384,12 +3391,14 @@ stf_status ikev2_send_informational(struct state *st)
 				r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 			} else {
 				role = RESPONDER;
-				r_hdr.isa_msgid = htonl(pst->st_msgid_lastrecv + 1);
+				r_hdr.isa_msgid = htonl(
+					pst->st_msgid_lastrecv + 1);
 			}
 
 			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
-						&request, &rbody)) {
-				libreswan_log("error initializing hdr for informational message");
+					&request, &rbody)) {
+				libreswan_log(
+					"error initializing hdr for informational message");
 				return STF_FATAL;
 			}
 		} /* HDR done*/
@@ -3405,11 +3414,12 @@ stf_status ikev2_send_informational(struct state *st)
 		ivsize = pst->st_oakley.encrypter->iv_size;
 		if (!out_zero(ivsize, &e_pbs, "iv"))
 			return STF_FATAL;
+
 		get_rnd_bytes(iv, ivsize);
 
 		/* note where cleartext starts */
 		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
-				"cleartext");
+			 "cleartext");
 		e_pbs_cipher.container = &e_pbs;
 		e_pbs_cipher.desc = NULL;
 		e_pbs_cipher.cur = e_pbs.cur;
@@ -3425,6 +3435,7 @@ stf_status ikev2_send_informational(struct state *st)
 
 			if (!authloc)
 				return STF_FATAL;
+
 			close_output_pbs(&e_pbs);
 			close_output_pbs(&rbody);
 			close_output_pbs(&request);
@@ -3436,10 +3447,11 @@ stf_status ikev2_send_informational(struct state *st)
 			if (ret != STF_OK)
 				return STF_FATAL;
 		}
-                /* keep it for a retransmit if necessary */
+		/* keep it for a retransmit if necessary */
 		freeanychunk(pst->st_tpacket);
-		clonetochunk(pst->st_tpacket, request.start, pbs_offset(&request),
-					        "reply packet for informational exchange");
+		clonetochunk(pst->st_tpacket, request.start,
+			     pbs_offset(&request),
+			     "reply packet for informational exchange");
 		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 		send_ike_msg(pst, __FUNCTION__);
 		ikev2_update_counters(&md);

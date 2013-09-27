@@ -718,7 +718,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	if (from_state != svm->next_state) {
 		libreswan_log("transition from state %s to state %s",
 			      enum_name(&state_names, from_state),
-			  enum_name(&state_names, svm->next_state));
+			      enum_name(&state_names, svm->next_state));
 	}
 	change_state(st, svm->next_state);
 	w = RC_NEW_STATE + st->st_state;
@@ -820,7 +820,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		/* XXX should call unpend again on parent SA */
 		if (st->st_clonedfrom != 0) {
 			pst = state_with_serialno(st->st_clonedfrom); /* with failed child sa, we end up here with an orphan?? */
-			DBG_log("releasing whack and unpending for #%lu (sock=%d)",
+			DBG_log(
+				"releasing whack and unpending for #%lu (sock=%d)",
 				pst->st_serialno, pst->st_whack_sock);
 			unpend(pst);
 			release_whack(pst);
@@ -904,19 +905,22 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		default:
 			bad_case(kind);
 		}
-		/* start liveness checks if set, making sure we only schedule once when moving 
+		/* start liveness checks if set, making sure we only schedule once when moving
 		 * from I2->I3 or R1->R2 */
-		if ((c->dpd_action == DPD_ACTION_CLEAR || c->dpd_action == DPD_ACTION_RESTART)
-		    && IS_V2_ESTABLISHED(st->st_state) && st->st_state != from_state) {
-			DBG(DBG_DPD, DBG_log("dpd_action set, scheduling ikev2 liveness checks"));
+		if ((c->dpd_action == DPD_ACTION_CLEAR || c->dpd_action ==
+		     DPD_ACTION_RESTART) &&
+		    IS_V2_ESTABLISHED(st->st_state) && st->st_state !=
+		    from_state) {
+			DBG(DBG_DPD,
+			    DBG_log(
+				    "dpd_action set, scheduling ikev2 liveness checks"));
 			st->hidden_variables.st_liveness = TRUE;
 			event_schedule(EVENT_v2_LIVENESS,
-					c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
-					st);
+				       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
+				       st);
 		}
 
 	}
-
 
 #ifdef TPM
 tpm_ignore:

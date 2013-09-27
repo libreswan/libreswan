@@ -454,7 +454,8 @@ void liveness_check(struct state *st)
 	if (st->st_clonedfrom != SOS_NOBODY) {
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (!pst) {
-			DBG(DBG_CONTROL, DBG_log("liveness_check error, no parent state"));
+			DBG(DBG_CONTROL,
+			    DBG_log("liveness_check error, no parent state"));
 			return;
 		}
 	} else {
@@ -467,21 +468,27 @@ void liveness_check(struct state *st)
 	if (last_liveness == 0)
 		last_liveness = tm;
 
-	DBG(DBG_CONTROL, DBG_log("liveness_check - last_liveness: %lu, tm: %lu", last_liveness, tm));
-	if (c->dpd_timeout < c->dpd_delay * 3) {
+	DBG(DBG_CONTROL,
+	    DBG_log("liveness_check - last_liveness: %lu, tm: %lu",
+		    last_liveness,
+		    tm));
+	if (c->dpd_timeout < c->dpd_delay * 3)
 		timeout = c->dpd_delay * 3;
-	} else {
+	else
 		timeout = c->dpd_timeout;
-	}
 
 	if (pst->st_pend_liveness == TRUE && tm - last_liveness >= timeout) {
-		DBG(DBG_CONTROL, DBG_log("liveness_check - peer has not responded in %lu seconds,"
-					 " with a timeout of %d, taking action", tm - last_liveness,
-					  timeout));
+		DBG(DBG_CONTROL,
+		    DBG_log(
+			    "liveness_check - peer has not responded in %lu seconds,"
+			    " with a timeout of %d, taking action",
+			    tm - last_liveness,
+			    timeout));
 		switch (c->dpd_action) {
 
 		case DPD_ACTION_CLEAR:
-			libreswan_log("IKEv2 peer liveness - clearing connection");
+			libreswan_log(
+				"IKEv2 peer liveness - clearing connection");
 			delete_states_by_connection(c, TRUE);
 			unroute_connection(c);
 			break;
@@ -493,23 +500,25 @@ void liveness_check(struct state *st)
 			break;
 
 		default:
-			DBG(DBG_CONTROL, DBG_log("liveness_check - handling default by "
-						"rescheduling"));
+			DBG(DBG_CONTROL,
+			    DBG_log("liveness_check - handling default by "
+				    "rescheduling"));
 			goto live_ok;
 		}
 
 	} else {
 		ret = ikev2_send_informational(st);
 		if (ret != STF_OK) {
-			DBG(DBG_CONTROL, DBG_log("failed to send informational"));
+			DBG(DBG_CONTROL, DBG_log(
+				    "failed to send informational"));
 			return;
 		}
 live_ok:
-	DBG(DBG_CONTROL, DBG_log("liveness_check - peer is ok"));
-	delete_liveness_event(st);
-	event_schedule(EVENT_v2_LIVENESS,
-			c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
-		        st);
+		DBG(DBG_CONTROL, DBG_log("liveness_check - peer is ok"));
+		delete_liveness_event(st);
+		event_schedule(EVENT_v2_LIVENESS,
+			       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
+			       st);
 	}
 }
 
@@ -816,13 +825,13 @@ void delete_liveness_event(struct state *st)
 	if (st->st_liveness_event != NULL) {
 		struct event **ev;
 
-		DBG(DBG_CONTROL,DBG_log("state %ld deleting liveness event",
-					st->st_serialno));
+		DBG(DBG_CONTROL, DBG_log("state %ld deleting liveness event",
+					 st->st_serialno));
 
 		for (ev = &evlist;; ev = &(*ev)->ev_next) {
 			if (*ev == NULL) {
-				DBG(DBG_CONTROL,DBG_log("liveness event"
-							" not found"));
+				DBG(DBG_CONTROL, DBG_log("liveness event"
+							 " not found"));
 				break;
 			}
 			if ((*ev) == st->st_liveness_event) {
