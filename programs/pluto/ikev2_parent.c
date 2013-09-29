@@ -456,10 +456,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	 * Check which Vendor ID's we need to send - there will be more soon
 	 * In IKEv2, DPD and NAT-T are no longer vendorid's
 	 */
-	if(c->send_vendorid) {
+	if (c->send_vendorid) {
 		numvidtosend++;  /* if we need to send Libreswan VID */
 	}
-
 
 	/* send NONCE */
 	{
@@ -484,7 +483,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	}
 
 	/* Send Vendor VID if needed */
-	{
+	if (c->send_vendorid) {
 		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
@@ -493,10 +492,10 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 				     myvid, strlen(myvid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
-	}
 
-	/* ensure or VID chain was valid */
-	passert(numvidtosend == 0);
+		/* ensure our VID chain was valid */
+		passert(numvidtosend == 0);
+	}
 
 	close_message(&md->rbody);
 	close_output_pbs(&reply_stream);
@@ -838,13 +837,13 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct msg_digest *md = ke->md;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	struct state *const st = md->st;
+	struct connection *c = st->st_connection;
 	pb_stream *keyex_pbs;
 	int numvidtosend = 0;
 
-#ifdef PLUTO_SENDS_VENDORID
-	numvidtosend++; /* we send Libreswan VID */
-#endif
-
+	if (c->send_vendorid) {
+		numvidtosend++; /* we send Libreswan VID */
+	}
 	/* note that we don't update the state here yet */
 
 	/* record first packet for later checking of signature */
@@ -940,7 +939,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	}
 
 	/* Send VendrID if needed VID */
-	{
+	if (c->send_vendorid) {
 		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
 			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
