@@ -58,7 +58,8 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "plutoalg.h"
-#include "virtual.h" /* for show_virtual_private */
+/* for show_virtual_private: */
+#include "virtual.h"	/* needs connections.h */
 
 #ifndef NO_DB_OPS_STATS
 #define NO_DB_CONTEXT

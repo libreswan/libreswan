@@ -93,7 +93,7 @@
 #include "nat_traversal.h"
 #endif
 #ifdef VIRTUAL_IP
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 #endif
 #include "dpd.h"
 #include "x509more.h"

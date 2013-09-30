@@ -35,7 +35,7 @@
 #include "connections.h"
 #include "whack.h"
 #include "nat_traversal.h"
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
 #define F_VIRTUAL_NO          1
 #define F_VIRTUAL_DHCP        2

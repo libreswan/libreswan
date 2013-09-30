@@ -33,6 +33,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <limits.h>
+#include <signal.h>
+#include <setjmp.h>
 
 #if defined(linux)
 /* is supposed to be in unistd.h, but it isn't on linux */
@@ -57,21 +59,13 @@
 #ifdef XAUTH_HAVE_PAM
 # include <security/pam_appl.h>
 #endif
-#include <signal.h>
-#include <setjmp.h>
 #include "connections.h"        /* needs id.h */
 #include "packet.h"
 #include "demux.h"              /* needs packet.h */
-#include "kernel.h"
 #include "log.h"
-#include "cookie.h"
-#include "server.h"
-#include "spdb.h"
 #include "timer.h"
-#include "rnd.h"
 #include "keys.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
-#include "whack.h"
 
 #include "sha1.h"
 #include "md5.h"
@@ -79,7 +73,7 @@
 #include "ike_alg.h"
 
 #include "xauth.h"
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
 
 /* forward declarations */

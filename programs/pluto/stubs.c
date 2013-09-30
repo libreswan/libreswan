@@ -66,7 +66,7 @@
 #include "nat_traversal.h"
 #endif
 
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
 #include "pluto_crypt.h"
 #include "crypto.h"

@@ -81,7 +81,7 @@
 #include "vendor.h"
 #include "pluto_crypt.h"
 
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
 #ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"

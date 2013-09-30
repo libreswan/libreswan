@@ -60,7 +60,7 @@
 #include "dpd.h"
 #include "udpfromto.h"
 #include "kernel.h"
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
 
 void ikev2_print_ts(struct traffic_selector *ts)

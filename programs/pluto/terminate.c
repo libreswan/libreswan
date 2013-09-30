@@ -69,7 +69,7 @@
 #include "nat_traversal.h"
 #endif
 
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
 
