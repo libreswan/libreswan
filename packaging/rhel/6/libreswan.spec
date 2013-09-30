@@ -97,6 +97,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK=%{USE_FIPSCHECK} \
+  FIPSPRODUCTCHECK="/usr/share/dracut/modules.d/01fips" \
   USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
   USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
   USE_LDAP=%{USE_CRL_FETCHING} \

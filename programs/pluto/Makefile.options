@@ -286,7 +286,6 @@ PLUTOMINUSL+= ${OPENSSL_LIBS} ${LIBCRYPT} -lgmp #-lefence
 # For avoiding implicit DSO linking
 LIBSPLUTO+= -lpthread
 ifeq ($(USE_FIPSCHECK),true)
-FIPS_CHECK=1
 DEFINES+=-DFIPS_CHECK
 LIBSPLUTO+= -lfipscheck
 endif

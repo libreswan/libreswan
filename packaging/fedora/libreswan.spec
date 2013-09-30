@@ -8,7 +8,7 @@
 
 %global _hardened_build 1
 
-%global fipscheck_version 1.4.1
+%global fipscheck_version 1.3.1
 %global buildefence 0
 %global development 0
 
@@ -118,7 +118,7 @@ configuration for prelink.
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-  FIPSHMACSUFFIX=%{hmac_suffix} \
+  FIPSPRODUCTCHECK="/usr/lib/dracut/modules.d/01fips" \
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{USE_CRL_FETCHING}

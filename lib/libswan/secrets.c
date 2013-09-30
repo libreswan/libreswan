@@ -109,12 +109,12 @@ static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 	}
 }
 
-#if 0
-/* debugging info that compromises security! */
+#ifdef OPENSSL
+/* Not possible with NSS */
 static void RSA_show_private_key(struct RSA_private_key *k)
 {
 #ifdef FIPS_CHECK
-	if (!Pluto_IsFIPS())
+	if (!libreswan_fipsmode())
 #endif
 	RSA_show_key_fields(k, elemsof(RSA_private_field));
 }
@@ -135,9 +135,9 @@ static const char *RSA_public_key_sanity(struct RSA_private_key *k)
 	/* note that the *last* error found is reported */
 	err_t ugh = NULL;
 
-#ifdef DEBUG    /* debugging info that compromises security */
+#ifdef OPENSSL
 # ifdef FIPS_CHECK
-	if (!Pluto_IsFIPS())
+	if (!libreswan_fipsmode())
 # endif
 	DBG(DBG_PRIVATE, RSA_show_public_key(&k->pub));
 #endif

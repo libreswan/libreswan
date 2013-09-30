@@ -95,9 +95,9 @@
 
 #include <nss.h>
 #include <nspr.h>
-#ifdef FIPS_CHECK
-# include <fipscheck.h>
-#endif
+
+#include "fips.h"
+extern const char *fips_package_files[];
 
 #ifdef HAVE_LIBCAP_NG
 # include <cap-ng.h>
@@ -1121,6 +1121,7 @@ int main(int argc, char **argv)
 		if (dup2(0, 1) != 1)
 			lsw_abort();
 		if (!log_to_stderr && dup2(0, 2) != 2)
+
 			lsw_abort();
 	}
 
@@ -1130,64 +1131,42 @@ int main(int argc, char **argv)
 
 #ifdef FIPS_CHECK
 	/*
-	 * In FIPS mode, any missing/bad hmac file means we abort.
+	 * FIPS Kernel mode: fips=1 kernel boot parameter
+	 * FIPS Product mode: dracut-fips is installed
 	 *
-	 * In non-FIPS mode, if pluto has an hmac file, everything should
-	 * have an hmac file, and all hmacs should validate. If pluto has
-	 * no hmac file, none of the hmac files are tested.
+	 * When FIPS Product mode or FIPS Kernel mode, abort on hmac failure
+	 * When non-FIPS, skip test
 	 *
-	 * This behaviour is keyed of the first file in the fipscheck
-	 * FIPSCHECK_verify_files_ev() function, which is why pluto
-	 * is at the top of this list.
-	 *
-	 * hmac files are versioned, See FIPSHMACSUFFIX in Makefile.inc
+	 * Product Mode detected with FIPSPRODUCTCHECK in Makefile.inc
 	 */
-	const char *package_files[] = { IPSEC_EXECDIR "/pluto",
-					IPSEC_EXECDIR "/setup",
-					IPSEC_EXECDIR "/addconn",
-					IPSEC_EXECDIR "/auto",
-					IPSEC_EXECDIR "/barf",
-					IPSEC_EXECDIR "/eroute",
-					IPSEC_EXECDIR "/ikeping",
-					IPSEC_EXECDIR "/readwriteconf",
-					IPSEC_EXECDIR "/_keycensor",
-					IPSEC_EXECDIR "/klipsdebug",
-					IPSEC_EXECDIR "/look",
-					IPSEC_EXECDIR "/newhostkey",
-					IPSEC_EXECDIR "/pf_key",
-					IPSEC_EXECDIR "/_pluto_adns",
-					IPSEC_EXECDIR "/_plutorun",
-					IPSEC_EXECDIR "/rsasigkey",
-					IPSEC_EXECDIR "/_secretcensor",
-					IPSEC_EXECDIR "/secrets",
-					IPSEC_EXECDIR "/showhostkey",
-					IPSEC_EXECDIR "/spi",
-					IPSEC_EXECDIR "/spigrp",
-					IPSEC_EXECDIR "/_stackmanager",
-					IPSEC_EXECDIR "/tncfg",
-					IPSEC_EXECDIR "/_updown",
-					IPSEC_EXECDIR "/_updown.klips",
-					IPSEC_EXECDIR "/_updown.mast",
-					IPSEC_EXECDIR "/_updown.netkey",
-					IPSEC_EXECDIR "/verify",
-					IPSEC_EXECDIR "/whack",
-					IPSEC_SBINDIR "/ipsec",
-					NULL };
 
-	if (!FIPSCHECK_verify_files_ex(FIPSHMACSUFFIX, Pluto_IsFIPS(),
-	    package_files)) {
-		loglog(RC_LOG_SERIOUS, "%s HMAC[%s] integrity verification test failed ",
-		       Pluto_IsFIPS() ? "FIPS" : "non-FIPS", FIPSHMACSUFFIX);
-		exit_pluto(10);
+	{
+
+	int fips_mode = libreswan_fipsmode();
+	int fips_product = libreswan_fipsproduct();
+	int fips_files_check_ok = FIPSCHECK_verify_files(fips_package_files);
+
+	if (fips_product)
+		libreswan_log("FIPS Product detected");
+
+	if (fips_mode)
+		libreswan_log("FIPS Kernel mode detected");
+
+	if (!fips_files_check_ok) {
+		if (fips_mode || fips_product) {
+			if (fips_mode)
+				loglog(RC_LOG_SERIOUS, "FIPS Kernel Mode FAILURE");
+			if (fips_product)
+				loglog(RC_LOG_SERIOUS, "FIPS Product Mode FAILURE");
+			loglog(RC_LOG_SERIOUS, "ABORT: FIPS CHECK FAILURE");
+			exit_pluto(10);
+		}
+		libreswan_log("FIPS HMAC integrity verification failed - continuing");
+	} else {
+		libreswan_log("FIPS HMAC integrity verification test passed");
 	}
 
-	loglog(RC_LOG_SERIOUS, "%s HMAC[%s] integrity verification test %s",
-		Pluto_IsFIPS() ? "FIPS" : "non-FIPS", FIPSHMACSUFFIX,
-		/* Paul: I requested an API addition to get rid of these hardcoded names */
-		( access("/usr/lib64/fipscheck/pluto"FIPSHMACSUFFIX, F_OK) == -1 &&
-		  access("/usr/lib/fipscheck/pluto"FIPSHMACSUFFIX, F_OK) == -1)
-		? "skipped" : "passed");
-
+	}
 #else
 	libreswan_log("FIPS HMAC integrity support [disabled]");
 #endif
@@ -1229,29 +1208,16 @@ int main(int argc, char **argv)
 	libreswan_log("Linux audit support [disabled]");
 #endif
 
-	/* Note: some scripts may look for this exact message -- don't change
-	 * ipsec barf was one, but it no longer does.
-	 */
 	{
 		const char *vc = ipsec_version_code();
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			      vc, compile_time_interop_options, getpid());
-		if (Pluto_IsFIPS() == 1) {
-			libreswan_log("Pluto is running in FIPS mode");
-		} else if (Pluto_IsFIPS() == 0) {
-			libreswan_log("Pluto is NOT running in FIPS mode");
-		} else {
-			libreswan_log("ERROR: FIPS detection failed, Pluto running in non-FIPS mode");
-		}
 
-		if ((vc[0] == 'c' && vc[1] == 'v' && vc[2] == 's') ||
-		    (vc[2] == 'g' && vc[3] == 'i' && vc[4] == 't')) {
+		if (vc[2] == 'g' && vc[3] == 'i' && vc[4] == 't') {
 			/*
-			 * when people build RPMs from CVS or GIT, make sure they
-			 * get blamed appropriately, and that we get some way to
-			 * identify who did it, and when they did it. Use string concat,
-			 * so that strings the binary can or classic SCCS "what", will find
-			 * stuff too.
+			 * when people build RPMs from GIT, make sure they
+			 * get blamed appropriately, and that we get some way
+			 * to identify who did it, and when they did it.
 			 */
 			libreswan_log(
 				"@(#) built on "__DATE__
@@ -1493,4 +1459,27 @@ void show_setup_plutomain()
 #else
         whack_log(RC_COMMENT, "secctx_attr_value=<unsupported>");
 #endif
+}
+
+/*
+ * Return TRUE if we are a fips product.
+ * This is irrespective of whether we are running in FIPS mode
+ */
+bool
+libreswan_fipsproduct(void)
+{
+	if (access(FIPSPRODUCTCHECK, F_OK) != 0) {
+		if (errno == ENOENT || errno == ENOTDIR) {
+			libreswan_log("FIPS: not a FIPS product");
+			return FALSE;
+		} else {
+			libreswan_log("FIPS ABORT: FIPS product check failed to determine (%d or %d) status: %d: %s", ENOENT, ENOTDIR, errno, strerror(errno) );
+			exit_pluto(1);
+			return FALSE; /* make compiler happy - never reached */
+		}
+	}
+
+	libreswan_log("FIPS: FIPS product detected (%s)", FIPSPRODUCTCHECK);
+	return TRUE;
+	
 }
