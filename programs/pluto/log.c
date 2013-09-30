@@ -807,12 +807,14 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 
 static void show_system_security(void)
 {
-	int selinux = Pluto_IsSElinux();
-	int fips = Pluto_IsFIPS();
+	int selinux = libreswan_selinux();
+	int fipsmode = libreswan_fipsmode();
+	int fipsproduct = libreswan_fipsproduct();
 
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "FIPS=%s", 
-                fips == 0 ? "disabled" : fips == 1 ? "enabled" : "error(disabled)");
+	whack_log(RC_COMMENT, "fips product=%s, fips mode=%s;", 
+                fipsproduct == 0 ? "no" : fipsproduct == 1 ? "yes" : "error(cannothappen)",
+                fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
 	whack_log(RC_COMMENT, "SElinux=%s",
                 selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 	whack_log(RC_COMMENT, " ");     /* spacer */

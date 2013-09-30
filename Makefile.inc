@@ -370,9 +370,10 @@ endif
 
 # Build support for integrity check for libreswan on startup 
 USE_FIPSCHECK?=false
-# hmac suffix
-# FIPSHMACSUFFIX?=3.6-1.fc20.hmac
-FIPSHMACSUFFIX?=.hmac
+# RHEL
+#FIPSPRODUCTCHECK?=/usr/share/dracut/modules.d/01fips
+# Fedora
+FIPSPRODUCTCHECK?=/usr/share/dracut/modules.d/01fips
 
 # Build support for the Linux Audit system
 ifeq ($(OSDEP),linux)

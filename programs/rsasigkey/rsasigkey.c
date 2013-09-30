@@ -94,6 +94,7 @@ struct option opts[] = {
 	{ "help",              0,      NULL,   'h', },
 	{ "version",   0,      NULL,   'V', },
 	{ "configdir",        1,      NULL,   'c' },
+	{ "configdir2",        1,      NULL,   'd' }, /* nss tools use -d */
 	{ "password", 1,      NULL,   'P' },
 	{ 0,           0,      NULL,   0, }
 };
@@ -113,8 +114,6 @@ char *hexout(mpz_t var);
 void report(char *msg);
 
 #define RAND_BUF_SIZE 60
-
-#define GEN_BREAK(e) rv = e; break;
 
 /* getModulus - returns modulus of the RSA public key */
 SECItem *getModulus(SECKEYPublicKey *pk)
@@ -333,6 +332,7 @@ int main(int argc, char *argv[])
 			exit(0);
 			break;
 		case 'c':       /* nss configuration directory */
+		case 'd':       /* -d is used for configdir with nss tools */
 			configdir = optarg;
 			break;
 		case 'P':       /* token authentication password */
@@ -410,118 +410,111 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	mpz_init(n);
 	mpz_init(e);
 
-	do {
-		if (!configdir) {
-			fprintf(stderr, "%s: configdir is required\n", me);
-			return;
-		}
+	snprintf(buf, sizeof(buf), "%s/nsspassword", configdir);
+	pwdata.source =
+		password ? (strcmp(password,
+				   buf) ? PW_PLAINTEXT : PW_FROMFILE) :
+		PW_NONE;
+	pwdata.data = password ? password : NULL;
 
-		snprintf(buf, sizeof(buf), "%s/nsspassword", configdir);
-		pwdata.source =
-			password ? (strcmp(password,
-					   buf) ? PW_PLAINTEXT : PW_FROMFILE) :
-			PW_NONE;
-		pwdata.data = password ? password : NULL;
-
-		PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
-		snprintf(buf, sizeof(buf), "%s", configdir);
-		if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
-			fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
-				me, PR_GetError());
-			break;
-		}
+	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
+	snprintf(buf, sizeof(buf), "%s", configdir);
+	if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
+		fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
+			me, PR_GetError());
+		exit(1);
+	}
 #ifdef FIPS_CHECK
-		if (PK11_IsFIPS() && !FIPSCHECK_verify(NULL, NULL)) {
-			printf("FIPS integrity verification test failed.\n");
-			exit(1);
-		}
+	if (PK11_IsFIPS() && !FIPSCHECK_verify(NULL, NULL)) {
+		fprintf(stderr,
+			"FIPS HMAC integrity verification test failed.\n");
+		exit(1);
+	}
 #endif
 
-		if (PK11_IsFIPS() && !password) {
-			fprintf(stderr,
-				"%s: On FIPS mode a password is required\n",
-				me);
-			break;
-		}
-
-		PK11_SetPasswordFunc(GetModulePassword);
-
-		/* Good for now but someone may want to use a hardware token */
-		slot = PK11_GetInternalKeySlot();
-		/* In which case this may be better */
-		/* slot = PK11_GetBestSlot(CKM_RSA_PKCS_KEY_PAIR_GEN, password ? &pwdata : NULL); */
-		/* or the user may specify the name of a token. */
-
-		/*if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
-		        rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
-		        if (rv != SECSuccess) {
-		                fprintf(stderr, "%s: could not authenticate to token '%s'\n",
-		                        me, PK11_GetTokenName(slot));
-		                GEN_BREAK(SECFailure);
-		        }
-		   }*/
-
-		/* Do some random-number initialization. */
-		UpdateNSS_RNG();
-		/* Log in to the token */
-		if (password) {
-			rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
-			if (rv != SECSuccess) {
-				fprintf(stderr,
-					"%s: could not authenticate to token '%s'\n",
-					me, PK11_GetTokenName(slot));
-				GEN_BREAK(SECFailure);
-			}
-		}
-		privkey = PK11_GenerateKeyPair(slot,
-					       CKM_RSA_PKCS_KEY_PAIR_GEN,
-					       &rsaparams, &pubkey,
-					       PR_TRUE,
-					       password ? PR_TRUE : PR_FALSE,
-					       &pwdata);
-		/* inTheToken, isSensitive, passwordCallbackFunction */
-		if (!privkey) {
-			fprintf(stderr,
-				"%s: key pair generation failed: \"%d\"\n", me,
-				PORT_GetError());
-			GEN_BREAK(SECFailure);
-		}
-
-		/*privkey->wincx = &pwdata;*/
-		PORT_Assert(pubkey != NULL);
+	if (PK11_IsFIPS() && !password) {
 		fprintf(stderr,
-			"Generated RSA key pair using the NSS database\n");
+			"%s: On FIPS mode a password is required\n",
+			me);
+		exit(1);
+	}
 
-		SECItemToHex(getModulus(pubkey), n_str);
-		assert(!mpz_set_str(n, n_str, 16));
+	PK11_SetPasswordFunc(GetModulePassword);
 
-		/* and the output */
-		report("output...\n");  /* deliberate extra newline */
-		printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(
-			       &now));
-		/* ctime provides \n */
-		printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
-		bundp = bundle(E, n, &bs);
-		printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
-		printf("\tModulus: %s\n", hexOut(getModulus(pubkey)));
-		printf("\tPublicExponent: %s\n",
-		       hexOut(getPublicExponent(pubkey)));
+	/* Good for now but someone may want to use a hardware token */
+	slot = PK11_GetInternalKeySlot();
+	/* In which case this may be better */
+	/* slot = PK11_GetBestSlot(CKM_RSA_PKCS_KEY_PAIR_GEN, password ? &pwdata : NULL); */
+	/* or the user may specify the name of a token. */
 
-		SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
-		if (ckaID != NULL) {
-			printf(
-				"\t# everything after this point is CKA_ID in hex formati - not the real values \n");
-			printf("\tPrivateExponent: %s\n", hexOut(ckaID));
-			printf("\tPrime1: %s\n", hexOut(ckaID));
-			printf("\tPrime2: %s\n", hexOut(ckaID));
-			printf("\tExponent1: %s\n", hexOut(ckaID));
-			printf("\tExponent2: %s\n", hexOut(ckaID));
-			printf("\tCoefficient: %s\n", hexOut(ckaID));
-			printf("\tCKAIDNSS: %s\n", hexOut(ckaID));
-			SECITEM_FreeItem(ckaID, PR_TRUE);
+	/*if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
+	        rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
+	        if (rv != SECSuccess) {
+	                fprintf(stderr, "%s: could not authenticate to token '%s'\n",
+	                        me, PK11_GetTokenName(slot));
+	                return;
+	        }
+	   }*/
+
+	/* Do some random-number initialization. */
+	UpdateNSS_RNG();
+	/* Log in to the token */
+	if (password) {
+		rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
+		if (rv != SECSuccess) {
+			fprintf(stderr,
+				"%s: could not authenticate to token '%s'\n",
+				me, PK11_GetTokenName(slot));
+			return;
 		}
+	}
+	privkey = PK11_GenerateKeyPair(slot,
+				       CKM_RSA_PKCS_KEY_PAIR_GEN,
+				       &rsaparams, &pubkey,
+				       PR_TRUE,
+				       password ? PR_TRUE : PR_FALSE,
+				       &pwdata);
+	/* inTheToken, isSensitive, passwordCallbackFunction */
+	if (!privkey) {
+		fprintf(stderr,
+			"%s: key pair generation failed: \"%d\"\n", me,
+			PORT_GetError());
+		return;
+	}
 
-	} while (0);
+	/*privkey->wincx = &pwdata;*/
+	PORT_Assert(pubkey != NULL);
+	fprintf(stderr,
+		"Generated RSA key pair using the NSS database\n");
+
+	SECItemToHex(getModulus(pubkey), n_str);
+	assert(!mpz_set_str(n, n_str, 16));
+
+	/* and the output */
+	report("output...\n");  /* deliberate extra newline */
+	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(
+		       &now));
+	/* ctime provides \n */
+	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
+	bundp = bundle(E, n, &bs);
+	printf("\t#pubkey=%s\n", conv(bundp, bs, 's')); /* RFC2537ish format */
+	printf("\tModulus: %s\n", hexOut(getModulus(pubkey)));
+	printf("\tPublicExponent: %s\n",
+	       hexOut(getPublicExponent(pubkey)));
+
+	SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
+	if (ckaID != NULL) {
+		printf(
+			"\t# everything after this point is CKA_ID in hex formati - not the real values \n");
+		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
+		printf("\tPrime1: %s\n", hexOut(ckaID));
+		printf("\tPrime2: %s\n", hexOut(ckaID));
+		printf("\tExponent1: %s\n", hexOut(ckaID));
+		printf("\tExponent2: %s\n", hexOut(ckaID));
+		printf("\tCoefficient: %s\n", hexOut(ckaID));
+		printf("\tCKAIDNSS: %s\n", hexOut(ckaID));
+		SECITEM_FreeItem(ckaID, PR_TRUE);
+	}
 
 	if (privkey)
 		SECKEY_DestroyPrivateKey(privkey);

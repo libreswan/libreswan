@@ -168,7 +168,7 @@ secuPWData *lsw_return_nss_password_file_info(void)
  * 1 enabled
  * 2 indeterminate
  */
-int Pluto_IsSElinux(void)
+int libreswan_selinux(void)
 {
 	char selinux_flag[1];
 	int n;
@@ -196,11 +196,11 @@ int Pluto_IsSElinux(void)
 
 }
 
-/* 0 disabled
- * 1 enabled
- * 2 indeterminate
+/* 
+ * Is the machine running in FIPS mode (fips=1 kernel argument)
+ * yes (1), no (0), unknown(-1)
  */
-int Pluto_IsFIPS(void)
+int libreswan_fipsmode(void)
 {
 	char fips_flag[1];
 	int n;
@@ -208,14 +208,14 @@ int Pluto_IsFIPS(void)
 
 	if (fd == NULL) {
 		libreswan_log("FIPS: could not open /proc/sys/crypto/fips_enabled");
-		return 2;
+		return -1;
 	}
 
 	n = fread((void *)fips_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
 		libreswan_log("FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
-		return 2;
+		return -1;
 	}
 	if (fips_flag[0] == '1')
 		return 1;
