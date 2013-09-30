@@ -210,6 +210,71 @@ static void usage(const char *mess)
 	exit(mess == NULL ? 0 : 1); /* not exit_pluto because we are not initialized yet */
 }
 
+/* string naming compile-time options that have interop implications */
+static const char compile_time_interop_options[] = ""
+#ifdef NETKEY_SUPPORT
+					    " XFRM(netkey)"
+#endif
+#ifdef KLIPS
+					    " KLIPS"
+#endif
+#ifdef KLIPSMAST
+					    " MAST"
+#endif
+
+#ifdef HAVE_NO_FORK
+					    " NO_FORK"
+#endif
+#ifdef HAVE_BROKEN_POPEN
+					    " BROKEN_POPEN"
+#endif
+#ifndef OPENSSL
+					    " NSS"
+#endif
+#ifdef DNSSEC
+					    " DNSSEC"
+#endif
+#ifdef NAT_TRAVERSAL
+					    " NAT-T"
+#endif
+#ifdef FIPS_CHECK
+					    " FIPS_CHECK"
+#endif
+#ifdef HAVE_LABELED_IPSEC
+					    " LABELED_IPSEC"
+#endif
+#ifdef HAVE_LIBCAP_NG
+					    " LIBCAP_NG"
+#endif
+#ifdef USE_LINUX_AUDIT
+					    " LINUX_AUDIT"
+#endif
+#ifdef XAUTH_HAVE_PAM
+					    " XAUTH_PAM"
+#endif
+#ifdef DYNAMICDNS
+					    " DYNAMICDNS"
+#endif
+#ifdef HAVE_NM
+					    " NETWORKMANAGER"
+#endif
+#ifdef LEAK_DETECTIVE
+					    " LEAK_DETECTIVE"
+#endif
+#ifdef HAVE_OCF
+					    " OCF"
+#endif
+#ifdef KLIPS_MAST
+					    " KLIPS_MAST"
+#endif
+#ifdef LIBCURL
+					    " CURL(non-NSS)"
+#endif
+#ifdef LDAP_VER
+					    " LDAP(non-NSS)"
+#endif
+;
+
 /* lock file support
  * - provides convenient way for scripts to find Pluto's pid
  * - prevents multiple Plutos competing for the same port
@@ -573,10 +638,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'v': /* --version */
-		{
 			printf("%s%s\n", ipsec_version_string(),
 			       compile_time_interop_options);
-		}
 			exit(0);        /* not exit_pluto because we are not initialized yet */
 			break;          /* not actually reached */
 
