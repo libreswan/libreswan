@@ -12,6 +12,7 @@ v3.6 (unreleased)
 * pluto: fix kernel.c typo in word outgoing [Tuomo]
 * pluto: remove dsa/elgamal stubs from gnupg that were unused [Paul]
 * pluto: Added per conn priority= to specify kernel IPsec SA priority [Paul]
+* keyword: auto=route and ipsec auto --route renamed to "ondemand" [Paul]
 * NETKEY/BSD: Added per conn reqid= to specify kernel IPsec SA [Paul]
               (based on idea by Panagiotis Tamtamis)
 * pluto: %fromcert now works for local certs and those received via IKE [Matt]
