@@ -122,9 +122,11 @@
 			VID_SUBSTRING_MATCH)
 
 struct vid_struct {
-	enum known_vendorid id;
-	unsigned short flags;
-	const char *data;
+	const enum known_vendorid id;
+	const unsigned short flags;
+	const char *const data;
+
+	/* filled in at runtime: */
 	const char *descr;
 	const char *vid;
 	unsigned int vid_len;
