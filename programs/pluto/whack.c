@@ -159,10 +159,8 @@ static void help(void)
 		" [--modecfgclient]"
 		" [--modecfgpull]"
 		" [--addresspool <network range>]"
-#ifdef MODECFG_DNSWINS
 		" [--modecfgdns1]"
 		" [--modecfgdns2]"
-#endif
 #endif
 		" \\\n   "
 		" [--metric <metric>]"
@@ -700,12 +698,10 @@ static const struct option long_opts[] = {
 	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
-#ifdef MODECFG_DNSWINS
 	{ "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
 	{ "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
 	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
-#endif
 #endif
 	{ "metric", required_argument, NULL, CD_METRIC + OO + NUMERIC_ARG },
 	{ "mtu", required_argument, NULL, CD_CONNMTU + OO + NUMERIC_ARG },
@@ -1751,7 +1747,6 @@ int main(int argc, char **argv)
 			ttorange(optarg, 0, AF_INET, &msg.right.pool_range);
 			continue;
 
-#ifdef MODECFG_DNSWINS
 		case CD_MODECFGDNS1:
 			af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
@@ -1763,7 +1758,6 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.modecfg_dns2), optarg);
 			continue;
-#endif
 #endif                  /* MODECFG */
 
 #else

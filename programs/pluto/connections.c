@@ -1430,11 +1430,9 @@ void add_connection(const struct whack_message *wm)
 			c->spd.this.ca = c->spd.that.ca;
 
 #ifdef MODECFG
-#ifdef MODECFG_DNSWINS
 		/* type is ip_address, not a string */
 		c->modecfg_dns1 = wm->modecfg_dns1;
 		c->modecfg_dns2 = wm->modecfg_dns2;
-#endif
 #endif
 
 		default_end(&c->spd.this, &c->spd.that.host_addr);
