@@ -249,7 +249,7 @@ void delete_connection(struct connection *c, bool relations)
 			ip_str(&c->spd.that.host_addr),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
-#ifdef MODECFG
+#ifdef XAUTH
 		rel_lease_addr(c);
 #endif
 	} else {
@@ -944,13 +944,11 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->host_srcip.u.v4.sin_len = sizeof(struct sockaddr_in);
 #endif
 
-#ifdef MODECFG
+#ifdef XAUTH
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
 	dst->pool_range = src->pool_range;
 
-#endif
-#ifdef XAUTH
 	dst->xauth_server = src->xauth_server;
 	dst->xauth_client = src->xauth_client;
 	dst->xauth_name = src->xauth_name;
@@ -1405,6 +1403,12 @@ void add_connection(const struct whack_message *wm)
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
+		if (same_rightca)
+			c->spd.that.ca = c->spd.this.ca;
+		else if (same_leftca)
+			c->spd.this.ca = c->spd.that.ca;
+
+#ifdef XAUTH
 		/*
 		 * How to add addresspool only for responder?
 		 * It is not necessary on the initiator
@@ -1424,12 +1428,6 @@ void add_connection(const struct whack_message *wm)
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 			c->policy |= POLICY_XAUTH;
 
-		if (same_rightca)
-			c->spd.that.ca = c->spd.this.ca;
-		else if (same_leftca)
-			c->spd.this.ca = c->spd.that.ca;
-
-#ifdef MODECFG
 		/* type is ip_address, not a string */
 		c->modecfg_dns1 = wm->modecfg_dns1;
 		c->modecfg_dns2 = wm->modecfg_dns2;
@@ -3632,7 +3630,6 @@ static void show_one_sr(struct connection *c,
 			thatxauthsemi
 			);
 
-#ifdef MODECFG
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
 			"policy:%s, dns1:%s, dns2:%s;",
@@ -3655,7 +3652,6 @@ static void show_one_sr(struct connection *c,
 			dns1,
 			dns2
 			);
-#endif /* MODECFG */
 	}
 #endif
 #ifdef HAVE_LABELED_IPSEC

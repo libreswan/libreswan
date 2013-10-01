@@ -181,8 +181,7 @@ endif
 XAUTH_DIST_SRCS=xauth.c xauth.h addresspool.c addresspool.h
 XAUTH_DIST_OBJS=xauth.o addresspool.o
 ifeq ($(USE_XAUTH),true)
-# This compile option activates xauth code and modecfg needed by xauth
-XAUTH_DEFS=-DXAUTH -DMODECFG 
+XAUTH_DEFS=-DXAUTH
 XAUTH_OBJS=${XAUTH_DIST_OBJS}
 XAUTH_SRCS=${XAUTH_DIST_SRCS}
 ifneq ($(BUILDENV), darwin)

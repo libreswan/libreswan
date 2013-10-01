@@ -173,10 +173,8 @@ struct end {
 	char *xauth_name;
 	char *xauth_password;
 	ip_range pool_range;    /* store start of v4 addresspool */
-/*#ifdef MODECFG */
 	bool modecfg_server;    /* Give local addresses to tunnel's end */
 	bool modecfg_client;    /* request address for local end */
-/*#endif*/
 /*#endif*/
 };
 
@@ -282,11 +280,9 @@ struct connection {
 	char *dnshostname;
 #endif  /* DYNAMICDNS */
 #ifdef XAUTH
-#ifdef MODECFG
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
 	struct ip_pool *pool; /*v4 addresspool as a range, start end */
-#endif
 	char *cisco_dns_info;
 	char *cisco_domain_info;
 	char *cisco_banner;

@@ -153,8 +153,6 @@ static void help(void)
 #ifdef XAUTH
 		" [--xauthserver]"
 		" [--xauthclient]"
-#endif
-#ifdef MODECFG
 		" [--modecfgserver]"
 		" [--modecfgclient]"
 		" [--modecfgpull]"
@@ -692,8 +690,6 @@ static const struct option long_opts[] = {
 	{ "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
 	{ "xauthby", required_argument, NULL, CD_XAUTHBY + OO },
 	{ "xauthfail", required_argument, NULL, CD_XAUTHFAIL + OO },
-#endif
-#ifdef MODECFG
 	{ "modecfgpull",   no_argument, NULL, CD_MODECFGPULL + OO },
 	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
@@ -1735,7 +1731,6 @@ int main(int argc, char **argv)
 			xauthpasslen = strlen(xauthpass) + 1;
 			continue;
 
-#ifdef MODECFG
 		case END_MODECFGCLIENT:
 			msg.right.modecfg_client = TRUE;
 			continue;
@@ -1758,13 +1753,18 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.modecfg_dns2), optarg);
 			continue;
-#endif                  /* MODECFG */
 
 #else
 		case END_XAUTHSERVER:
 		case END_XAUTHCLIENT:
-		case END_XAUTHNAME:
-			diag("pluto is not built with XAUTH support");
+		case OPT_XAUTHNAME:
+		case OPT_XAUTHPASS:
+		case END_MODECFGCLIENT:
+		case END_MODECFGSERVER:
+		case END_ADDRESSPOOL:
+		case CD_MODECFGDNS1:
+		case CD_MODECFGDNS2:
+			diag("pluto is not built with XAUTH/MODECFG support");
 			continue;
 #endif                  /* XAUTH */
 

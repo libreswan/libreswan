@@ -569,9 +569,7 @@ static const struct state_microcode state_microcode_table[] = {
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR3 },
 #endif
-#endif
 
-#ifdef MODECFG
 /* MODE_CFG_x:
  * Case R0:  Responder	->	Initiator
  *			<-	Req(addr=0)
@@ -600,9 +598,7 @@ static const struct state_microcode state_microcode_table[] = {
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR1 },
-#endif
 
-#ifdef XAUTH
 	{ STATE_XAUTH_I0, STATE_XAUTH_I1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
@@ -1299,8 +1295,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					"Cannot do Quick Mode until XAUTH done.");
 				return;
 			}
-#endif
-#ifdef MODECFG
+
 			if (st->st_state ==
 			    STATE_MODE_CFG_R2)                          /* Have we just given an IP address to peer? */
 				change_state(st, STATE_MAIN_R3);        /* ISAKMP is up... */
@@ -1355,7 +1350,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		break;
 
-#ifdef MODECFG
+#ifdef XAUTH
 	case ISAKMP_XCHG_MODE_CFG:
 		DBG(DBG_CONTROLMORE,
 		    DBG_log(" in %s:%d case %s", __func__, __LINE__,
@@ -1568,24 +1563,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		break;
 #endif
 
-#if 0
-	/* this code is NOT tested yet */
-	case ISAKMP_XCHG_ECHOREQUEST_PRIVATE:
-	case ISAKMP_XCHG_ECHOREQUEST:
-		receive_ike_echo_request(md);
-		return;
-
-	case ISAKMP_XCHG_ECHOREPLY_PRIVATE:
-	case ISAKMP_XCHG_ECHOREPLY:
-		receive_ike_echo_reply(md);
-		return;
-
-#endif
-
-#ifdef NOTYET
 	case ISAKMP_XCHG_NGRP:
-#endif
-
 	default:
 		libreswan_log("unsupported exchange type %s in message",
 			      enum_show(&exchange_names, md->hdr.isa_xchg));
@@ -2716,9 +2694,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			break;
 		}
 
-#endif
-
-#ifdef MODECFG
 		/*
 		 * when talking to some vendors, we need to initiate a mode
 		 * cfg request to get challenged, but there is also an

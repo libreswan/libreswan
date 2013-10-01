@@ -944,7 +944,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
-#endif
 
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
@@ -963,6 +962,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
+#endif
 
 	c->newest_isakmp_sa = st->st_serialno;
 
@@ -1072,7 +1072,6 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
-#endif
 
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
@@ -1091,6 +1090,7 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
+#endif
 
 	c->newest_isakmp_sa = st->st_serialno;
 

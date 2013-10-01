@@ -393,13 +393,11 @@ static void set_whack_end(struct starter_config *cfg,
 	if (l->strings_set[KSCF_XAUTHUSERNAME])
 		w->xauth_name = l->strings[KSCF_XAUTHUSERNAME];
 
-# ifdef MODECFG
 	if (l->options_set[KNCF_MODECONFIGSERVER])
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];
 	if (l->options_set[KNCF_MODECONFIGCLIENT])
 		w->modecfg_client = l->options[KNCF_MODECONFIGCLIENT];
 	w->pool_range = l->pool_range;
-# endif
 #endif
 }
 
