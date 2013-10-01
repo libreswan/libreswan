@@ -283,37 +283,37 @@ static int get_internal_addresses(struct state *st, struct internal_addr *ia)
 	int retval;
 	char str[IDTOA_BUF + sizeof("ID=") + 2];
 #endif
-	struct connection *con = st->st_connection;
+	struct connection *c = st->st_connection;
 
 #ifdef NAT_TRAVERSAL /* only NAT-T code lets us do virtual ends */
-	if (!isanyaddr(&con->spd.that.client.addr)) {
+	if (!isanyaddr(&c->spd.that.client.addr)) {
 		/** assumes IPv4, and also that the mask is ignored */
 
-		if (con->pool)
-			get_addr_lease(con, ia);
+		if (c->pool)
+			get_addr_lease(c, ia);
 		else
-			ia->ipaddr = con->spd.that.client.addr;
+			ia->ipaddr = c->spd.that.client.addr;
 
-		if (!isanyaddr(&con->modecfg_dns1))
-			ia->dns[0] = con->modecfg_dns1;
-		if (!isanyaddr(&con->modecfg_dns2))
-			ia->dns[1] = con->modecfg_dns2;
+		if (!isanyaddr(&c->modecfg_dns1))
+			ia->dns[0] = c->modecfg_dns1;
+		if (!isanyaddr(&c->modecfg_dns2))
+			ia->dns[1] = c->modecfg_dns2;
 	} else
 #endif
 	{
 #ifdef XAUTH_HAVE_PAM
-		if (con->xauthby == XAUTHBY_PAM) {
-			if (con->pamh == NULL) {
+		if (c->xauthby == XAUTHBY_PAM) {
+			if (c->pamh == NULL) {
 				/** Start PAM session, using 'pluto' as our PAM name */
 				retval = pam_start("pluto", "user", &conv,
-						   &con->pamh);
+						   &c->pamh);
 				memset(ia, 0, sizeof(*ia));
 				if (retval == PAM_SUCCESS) {
 					char buf[IDTOA_BUF];
 
-					idtoa(&con->spd.that.id, buf,
+					idtoa(&c->spd.that.id, buf,
 					      sizeof(buf));
-					if (con->spd.that.id.kind ==
+					if (c->spd.that.id.kind ==
 					    ID_DER_ASN1_DN) {
 						/** Keep only the common name, if one exists */
 						char *c1, *c2;
@@ -329,17 +329,17 @@ static int get_internal_addresses(struct state *st, struct internal_addr *ia)
 					}
 					snprintf(str, sizeof(str), "ID=%s",
 						 buf);
-					pam_putenv(con->pamh, str);
-					pam_open_session(con->pamh, 0);
+					pam_putenv(c->pamh, str);
+					pam_open_session(c->pamh, 0);
 				}
 			}
-			if (con->pamh != NULL) {
+			if (c->pamh != NULL) {
 				/* Paul: Could pam give these to us? */
 				/** Put IP addresses from various variables into our
 				 *  internal address struct */
-				get_addr(con->pamh, "IPADDR", &ia->ipaddr);
-				get_addr(con->pamh, "DNS1", &ia->dns[0]);
-				get_addr(con->pamh, "DNS2", &ia->dns[1]);
+				get_addr(c->pamh, "IPADDR", &ia->ipaddr);
+				get_addr(c->pamh, "DNS1", &ia->dns[0]);
+				get_addr(c->pamh, "DNS2", &ia->dns[1]);
 			}
 		}
 #endif
@@ -1877,8 +1877,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			switch (attr.isaat_af_type) {
 			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			{
-				struct connection *c =
-					st->st_connection;
+				struct connection *c = st->st_connection;
 				ip_address a;
 				char caddr[SUBNETTOT_BUF];
 
@@ -1899,8 +1898,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					"Received IPv4 address: %s",
 					caddr);
 
-				if (addrbytesptr(&c->spd.this.
-						 host_srcip,
+				if (addrbytesptr(&c->spd.this.host_srcip,
 						 NULL) == 0 ||
 				    isanyaddr(&c->spd.this.host_srcip))
 				{
@@ -1958,7 +1956,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 								caddr,
 								"cisco_dns_info");
 					} else {
-						/* concatenate new IP address string on end of
+						/*
+						 * concatenate new IP address string on end of
 						 * existing string, separated by ' '.
 						 */
 						size_t sz_old = strlen(
