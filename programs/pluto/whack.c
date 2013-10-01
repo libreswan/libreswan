@@ -568,6 +568,7 @@ static const struct option long_opts[] = {
 	{ "myid", required_argument, NULL, OPT_MYID + OO },
 
 	{ "route", no_argument, NULL, OPT_ROUTE + OO },
+	{ "ondemand", no_argument, NULL, OPT_ROUTE + OO }, /* alias */
 	{ "unroute", no_argument, NULL, OPT_UNROUTE + OO },
 
 	{ "initiate", no_argument, NULL, OPT_INITIATE + OO },

@@ -123,7 +123,8 @@ struct keyword_enum_values kw_dpdaction_list =
 struct keyword_enum_value kw_auto_values[] = {
 	{ "ignore", STARTUP_IGNORE },
 	{ "add",    STARTUP_ADD },
-	{ "route",  STARTUP_ROUTE },
+	{ "ondemand",  STARTUP_ONDEMAND },
+	{ "route",  STARTUP_ONDEMAND }, /* backwards compatibility alias */
 	{ "start",  STARTUP_START },
 	{ "up",     STARTUP_START }, /* alias */
 };

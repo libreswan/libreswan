@@ -434,8 +434,8 @@ void confwrite_conn(FILE *out,
 			fprintf(out, "\tauto=add\n");
 			break;
 
-		case STARTUP_ROUTE:
-			fprintf(out, "\tauto=route\n");
+		case STARTUP_ONDEMAND:
+			fprintf(out, "\tauto=ondemand\n");
 			break;
 
 		case STARTUP_START:

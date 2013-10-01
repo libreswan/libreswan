@@ -51,7 +51,7 @@ static char _tmp_err[512];
  * refuse to negotiate it in any way, either incoming or outgoing.
  */
 #define POLICY_ONLY_CONN(conn) if (conn->options[KBF_AUTO] > \
-				   STARTUP_ROUTE) { conn->options[KBF_AUTO] = \
+				   STARTUP_ONDEMAND) { conn->options[KBF_AUTO] = \
 							    STARTUP_POLICY; }
 
 static void free_list(char **list);
