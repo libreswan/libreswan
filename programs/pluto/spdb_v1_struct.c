@@ -603,7 +603,7 @@ bool out_sa(pb_stream *outs,
 					if (p->protoid != PROTO_IPCOMP ||
 					    st->st_policy & POLICY_TUNNEL) {
 #ifdef NAT_TRAVERSAL
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
+#ifndef USE_NAT_TRAVERSAL_TRANSPORT_MODE
 						if ((st->hidden_variables.
 						     st_nat_traversal &
 						     NAT_T_DETECTED) &&
@@ -622,7 +622,7 @@ bool out_sa(pb_stream *outs,
 						if (!out_attr(
 							    ENCAPSULATION_MODE
 #ifdef NAT_TRAVERSAL
-#ifdef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
+#ifdef USE_NAT_TRAVERSAL_TRANSPORT_MODE
 							    ,
 							    NAT_T_ENCAPSULATION_MODE(
 								    st,
@@ -1903,7 +1903,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
+#ifndef USE_NAT_TRAVERSAL_TRANSPORT_MODE
 				loglog(RC_LOG_SERIOUS,
 				       "NAT-Traversal: Transport mode disabled due "
 				       "to security concerns");
@@ -1953,7 +1953,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
+#ifndef USE_NAT_TRAVERSAL_TRANSPORT_MODE
 				loglog(RC_LOG_SERIOUS,
 				       "NAT-Traversal: Transport mode disabled due "
 				       "to security concerns");

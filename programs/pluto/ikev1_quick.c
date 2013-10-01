@@ -1713,7 +1713,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 							      b->his.port);
 
 #ifdef NAT_TRAVERSAL
-#ifdef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
+#ifdef USE_NAT_TRAVERSAL_TRANSPORT_MODE
 		if ( (p1st->hidden_variables.st_nat_traversal &
 		      NAT_T_DETECTED) &&
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
