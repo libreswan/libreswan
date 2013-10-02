@@ -272,11 +272,6 @@ XMLTO?=$(shell which xmlto | grep / | head -n1)
 # look for POD2MAN command
 POD2MAN?=$(shell which pod2man | grep / | head -n1)
 
-#
-# default number of bits for ipsec newhostkey
-#
-RSAKEYBITS:=2192
-
 ## build environment variations
 #
 # USE_ variables determine if features are compiled into Libreswan.
@@ -576,7 +571,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@MODPROBE@:$(MODPROBE):g" \
-			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 
 # For KVM testing setup
