@@ -30,7 +30,7 @@ LIB=lib${LIBRARY}.a
 MANDIR=$(MANTREE)/man3
 
 ONEFILE=pluto_constants.c
-SRCS=pluto_constants.c x509support.c packet.c
+SRCS=pluto_constants.c packet.c
 SRCS+=readwhackmsg.c
 
 ifeq ($(USE_LIBCURL),true)
