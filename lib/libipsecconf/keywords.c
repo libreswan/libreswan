@@ -477,6 +477,8 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_SALIFETIME, NOT_ENUM },
 	{ "salifetime",     kv_conn | kv_auto, kt_time,   KBF_SALIFETIME,
 	  NOT_ENUM },
+	{"ikepad",          kv_conn | kv_auto, kt_bool,   KBF_IKEPAD,
+	  NOT_ENUM },
 #ifdef HAVE_LABELED_IPSEC
 	{ "loopback",       kv_conn | kv_auto, kt_bool, KBF_LOOPBACK,
 	  NOT_ENUM },

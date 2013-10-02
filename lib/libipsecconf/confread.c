@@ -108,6 +108,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_SHA2_TRUNCBUG] = FALSE;
 
+	cfg->conn_default.options[KBF_IKEPAD] = TRUE;
+
 	/*Network Manager support*/
 #ifdef HAVE_NM
 	cfg->conn_default.options[KBF_NMCONFIGURED] = FALSE;
@@ -1214,6 +1216,8 @@ static int load_conn(struct ub_ctx *dnsctx,
 			    conn->options[KBF_AUTHBY]);
 #endif
 	}
+
+	KW_POLICY_NEGATIVE_FLAG(KBF_IKEPAD, POLICY_NO_IKEPAD);
 
 	KW_POLICY_NEGATIVE_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
 

@@ -321,6 +321,7 @@ const char *const sa_policy_bit_names[] = {
 	"SAREFCONNTRACK",
 	"IKE_FRAG",
 	"IKE_FRAG_FORCE",
+	"NO_IKEPAD",
 	NULL
 };
 

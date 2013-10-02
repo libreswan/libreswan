@@ -1,0 +1,14 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ikepad</emphasis></term>
+  <listitem>
+<para>Whether or not to pad IKE messages to a multiple of 4 bytes. Valid values are are
+<emphasis remap='B'>yes</emphasis>, (the default) and <emphasis remap='B'>no</emphasis>.
+    </para><para>
+Normal RFC compliant behaviour is to use IKE padding. However some devices, for instance
+Checkpoint, can be configured to firewall Aggressive Mode IKE packets that have been padded.
+This option disables the required IKE padding for interop which such devices. This option
+should almost never be enabled.
+</para>
+  </listitem>
+  </varlistentry>
+

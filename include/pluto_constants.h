@@ -541,8 +541,9 @@ enum pluto_policy {
 	POLICY_IKE_FRAG_ALLOW = LELEM(30),
 	POLICY_IKE_FRAG_FORCE = LELEM(31),
 	POLICY_IKE_FRAG_MASK = POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE,
+	POLICY_NO_IKEPAD      = LELEM(32),      /* pad ike packets to 4 bytes or not */
 
-	/* policy used to be an int, but is not lset_t (unsigned long long type), so max is 63 */
+	/* policy used to be an int, but is now lset_t (unsigned long long type), so max is 63 */
 };
 
 /* Any IPsec policy?  If not, a connection description

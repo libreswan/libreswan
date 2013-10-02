@@ -63,8 +63,8 @@ extern notification_t accept_KE(chunk_t *dest, const char *val_name,
 /*
  * some additional functions are exported for xauth.c
  */
-extern void close_message(pb_stream *pbs);                      /* forward declaration */
-extern bool encrypt_message(pb_stream *pbs, struct state *st);  /* forward declaration */
+extern void close_message(pb_stream *pbs, struct state *st);
+extern bool encrypt_message(pb_stream *pbs, struct state *st);
 
 extern stf_status dpd_inI_outR(struct state *st,
 			       struct isakmp_notification *const n,

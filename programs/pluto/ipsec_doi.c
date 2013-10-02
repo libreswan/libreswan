@@ -225,12 +225,25 @@ notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
  *
  * @param pbs PB Stream
  */
-void close_message(pb_stream *pbs)
+void close_message(pb_stream *pbs, struct state *st)
 {
 	size_t padding =  pad_up(pbs_offset(pbs), 4);
 
-	if (padding != 0)
+	/* Workaround for overzealous Checkpoint firewal */
+	if (padding && st && st->st_connection &&
+	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
+		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %lu bytes skipped by policy",
+			padding));
+		padding = 0;
+	}
+
+	if (padding != 0) {
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %lu bytes", padding));
 		(void) out_zero(padding, pbs, "message padding");
+	} else {
+		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required"));
+	}
+
 	close_output_pbs(pbs);
 }
 

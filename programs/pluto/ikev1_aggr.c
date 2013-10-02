@@ -672,7 +672,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 #endif
 
 	/* finish message */
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 
 	return STF_OK;
 }
@@ -1420,7 +1420,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	/* finish message */
 
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 	close_output_pbs(&reply_stream);
 
 	/* let TCL hack it before we mark the length and copy it */

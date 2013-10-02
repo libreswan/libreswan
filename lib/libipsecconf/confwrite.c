@@ -470,6 +470,11 @@ void confwrite_conn(FILE *out,
 			else
 				fprintf(out, "\tpfs=no\n");
 
+			if (conn->policy & POLICY_NO_IKEPAD)
+				fprintf(out, "\tikepad=no\n");
+			else
+				fprintf(out, "\tikepad=yes\n");
+
 			if (conn->policy & POLICY_DONT_REKEY)
 				fprintf(out, "\trekey=no  #duplicate?\n");
 			else
