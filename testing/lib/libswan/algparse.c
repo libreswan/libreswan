@@ -2,7 +2,7 @@
 #define AGGRESSIVE 1
 #define XAUTH 1
 #define PRINT_SA_DEBUG 1
-#include "../../lib/liblibreswan/alg_info.c"
+#include "../../lib/libswan/alg_info.c"
 
 char *progname;
 
