@@ -47,7 +47,6 @@
 #include "state.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -59,7 +58,8 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "plutoalg.h"
-#include "virtual.h" /* for show_virtual_private */
+/* for show_virtual_private: */
+#include "virtual.h"	/* needs connections.h */
 
 #ifndef NO_DB_OPS_STATS
 #define NO_DB_CONTEXT
@@ -807,12 +807,14 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 
 static void show_system_security(void)
 {
-	int selinux = Pluto_IsSElinux();
-	int fips = Pluto_IsFIPS();
+	int selinux = libreswan_selinux();
+	int fipsmode = libreswan_fipsmode();
+	int fipsproduct = libreswan_fipsproduct();
 
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "FIPS=%s", 
-                fips == 0 ? "disabled" : fips == 1 ? "enabled" : "error(disabled)");
+	whack_log(RC_COMMENT, "fips product=%s, fips mode=%s;", 
+                fipsproduct == 0 ? "no" : fipsproduct == 1 ? "yes" : "error(cannothappen)",
+                fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
 	whack_log(RC_COMMENT, "SElinux=%s",
                 selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 	whack_log(RC_COMMENT, " ");     /* spacer */

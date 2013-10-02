@@ -55,7 +55,9 @@ parser.tab.h parser.tab.c: parser.l parser.y
 	$(BISON) ${BISONOSFLAGS} -v -d ${srcdir}parser.y
 
 cleanall::
-	$(RM) -f parser.tab.* lex.yy.*
+	$(RM) -f parser.tab.* lex.yy.* Makefile.depend
 
+Makefile.depend: $(SRCS) $(LIBRESWANSRCDIR)/lib/libipsecconf/Makefile
+	(ls $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libipsecconf/,$(SRCS))) | grep '\.c' | xargs ${CC} -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}) >Makefile.depend
 
-
+-include Makefile.depend

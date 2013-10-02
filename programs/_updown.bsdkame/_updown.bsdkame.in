@@ -114,6 +114,8 @@ LC_ALL=C export LC_ALL
 #
 #       PLUTO_CONNECTION_TYPE
 #
+#       PLUTO_SA_REQID
+#               When using KAME or XFRM/NETKEY, the IPsec SA reqid value
 
 # check interface version
 case "$PLUTO_VERSION" in

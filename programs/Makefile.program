@@ -223,12 +223,3 @@ endif
 checkprograms:
 
 LIBRESWANSRCDIRREL?=../..
-
-# Gather dependencies caused by explicit #includes within .c files
-depend: ${DISTSRC}
-	@(ls $(DISTSRC) | grep '\.c' | xargs $(GCC) -MM ${PORTINCLUDE} ${INCLUDES} ${ALLFLAGS} ) | sed -e 's,${LIBRESWANSRCDIR},../..,g' >Makefile.depend
-
--include ${srcdir}Makefile.depend
-
-
-

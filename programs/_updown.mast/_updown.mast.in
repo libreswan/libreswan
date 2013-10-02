@@ -134,6 +134,8 @@ export LC_ALL
 #	PLUTO_SAREF_TRACKING
 #		If we need to manipulate any iptables for SAref tracking
 #
+#       PLUTO_SA_REQID
+#               When using KAME or XFRM/NETKEY, the IPsec SA reqid value
 
 # for debugging of the script
 #exec >/tmp/_updown.m$$

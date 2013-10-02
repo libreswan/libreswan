@@ -101,20 +101,23 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 
 	cfg->conn_default.options[KBF_INITIAL_CONTACT] = FALSE;
+	cfg->conn_default.options[KBF_CISCO_UNITY] = FALSE;
+	cfg->conn_default.options[KBF_SEND_VENDORID] = FALSE;
 
-	/*Cisco interop: remote peer type*/
 	cfg->conn_default.options[KBF_REMOTEPEERTYPE] = NON_CISCO;
 
-	cfg->conn_default.options[KBF_SHA2_TRUNCBUG] = SHA2_TRUNCBUG_NO;
+	cfg->conn_default.options[KBF_SHA2_TRUNCBUG] = FALSE;
+
+	cfg->conn_default.options[KBF_IKEPAD] = TRUE;
 
 	/*Network Manager support*/
 #ifdef HAVE_NM
-	cfg->conn_default.options[KBF_NMCONFIGURED] = NM_NO;
+	cfg->conn_default.options[KBF_NMCONFIGURED] = FALSE;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	cfg->conn_default.options[KBF_LOOPBACK] = LB_NO;
-	cfg->conn_default.options[KBF_LABELED_IPSEC] = LI_NO;
+	cfg->conn_default.options[KBF_LOOPBACK] = FALSE;
+	cfg->conn_default.options[KBF_LABELED_IPSEC] = FALSE;
 #endif
 
 #ifdef XAUTH
@@ -974,8 +977,7 @@ void move_comment_list(struct starter_comments_list *to,
 }
 
 static
-int load_conn_basic(struct ub_ctx *dnsctx,
-		    struct starter_conn *conn,
+int load_conn_basic(struct starter_conn *conn,
 		    struct section_list *sl,
 		    enum keyword_set assigned_value,
 		    err_t *perr)
@@ -989,7 +991,6 @@ int load_conn_basic(struct ub_ctx *dnsctx,
 }
 
 static int load_conn(struct ub_ctx *dnsctx,
-		     struct starter_config *cfg,
 		     struct starter_conn *conn,
 		     struct config_parsed *cfgp,
 		     struct section_list *sl,
@@ -1008,7 +1009,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 
 	err = 0;
 
-	err += load_conn_basic(dnsctx, conn, sl,
+	err += load_conn_basic(conn, sl,
 			       defaultconn ? k_default : k_set, perr);
 
 	move_comment_list(&conn->comments, &sl->comments);
@@ -1216,14 +1217,14 @@ static int load_conn(struct ub_ctx *dnsctx,
 #endif
 	}
 
+	KW_POLICY_NEGATIVE_FLAG(KBF_IKEPAD, POLICY_NO_IKEPAD);
+
 	KW_POLICY_NEGATIVE_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
 
 	KW_POLICY_FLAG(KBF_AGGRMODE, POLICY_AGGRESSIVE);
 
 #ifdef XAUTH
-# ifdef MODECFG
 	KW_POLICY_FLAG(KBF_MODECONFIGPULL, POLICY_MODECFG_PULL);
-# endif
 #endif
 
 	KW_POLICY_FLAG(KBF_OVERLAPIP, POLICY_OVERLAPIP);
@@ -1245,7 +1246,6 @@ static int load_conn(struct ub_ctx *dnsctx,
 		conn->ike = xstrdup(conn->strings[KSF_IKE]);
 
 #ifdef XAUTH
-# ifdef MODECFG
 	if (conn->strings_set[KSF_MODECFGDNS1]) {
 		starter_log(LOG_LEVEL_DEBUG,
 			    "connection's  conn->modecfg_dns1 set to: %s",
@@ -1258,7 +1258,6 @@ static int load_conn(struct ub_ctx *dnsctx,
 			    conn->strings[KSF_MODECFGDNS2] );
 		conn->modecfg_dns2 = xstrdup(conn->strings[KSF_MODECFGDNS2]);
 	}
-#  endif
 #endif
 
 	if (conn->strings_set[KSF_CONNALIAS])
@@ -1350,7 +1349,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 	return err;
 }
 
-void conn_default(char *n, struct starter_conn *conn,
+void conn_default(struct starter_conn *conn,
 		  struct starter_conn *def)
 {
 	int i;
@@ -1416,7 +1415,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name,
 	}
 
 	memset(conn, 0, sizeof(struct starter_conn));
-	conn_default(name, conn, &cfg->conn_default);
+	conn_default(conn, &cfg->conn_default);
 	conn->name = xstrdup(name);
 	conn->desired_state = STARTUP_IGNORE;
 	conn->state = STATE_FAILED;
@@ -1432,7 +1431,6 @@ int init_load_conn(struct ub_ctx *dnsctx,
 		   struct starter_config *cfg,
 		   struct config_parsed *cfgp,
 		   struct section_list *sconn,
-		   bool alsoprocessing,
 		   bool defaultconn,
 		   bool resolvip,
 		   err_t *perr)
@@ -1446,7 +1444,7 @@ int init_load_conn(struct ub_ctx *dnsctx,
 	if (conn == NULL)
 		return -1;
 
-	connerr = load_conn(dnsctx, cfg, conn, cfgp, sconn, TRUE,
+	connerr = load_conn(dnsctx, conn, cfgp, sconn, TRUE,
 			    defaultconn, resolvip, perr);
 
 	if (connerr != 0) {
@@ -1526,7 +1524,7 @@ struct starter_config *confread_load(const char *file,
 			if (strcmp(sconn->name, "%default") == 0) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
-				err += load_conn(dnsctx, cfg,
+				err += load_conn(dnsctx,
 						 &cfg->conn_default,
 						 cfgp, sconn, FALSE,
 				                 /*default conn*/ TRUE,
@@ -1536,7 +1534,7 @@ struct starter_config *confread_load(const char *file,
 			if (strcmp(sconn->name, "%oedefault") == 0) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading oedefault conn");
-				err += load_conn(dnsctx, cfg,
+				err += load_conn(dnsctx,
 						 &cfg->conn_oedefault,
 						 cfgp, sconn, FALSE,
 				                 /*default conn*/ TRUE,
@@ -1557,7 +1555,7 @@ struct starter_config *confread_load(const char *file,
 				continue;
 
 			connerr = init_load_conn(dnsctx, cfg, cfgp, sconn,
-						 TRUE, FALSE,
+						 FALSE,
 						 resolvip, perr);
 
 			if (connerr == -1) {

@@ -8,7 +8,7 @@
 
 %global _hardened_build 1
 
-%global fipscheck_version 1.3.0
+%global fipscheck_version 1.3.1
 %global buildefence 0
 %global development 0
 
@@ -19,6 +19,8 @@ Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
 Version: IPSECBASEVERSION
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
+%define hmac_suffix .%{version}-%{release}.hmac
+
 License: GPLv2
 Url: https://www.libreswan.org/
 Source: https://download.libreswan.org/%{name}-%{version}%{?prever}.tar.gz
@@ -39,11 +41,12 @@ BuildRequires: pam-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
 %endif
+
 %if %{USE_FIPSCHECK}
 BuildRequires: fipscheck-devel >= %{fipscheck_version}
-# we need fipshmac
-Requires: fipscheck%{_isa} >= %{fipscheck_version}
+Requires: fipscheck-lib%{_isa} >= %{fipscheck_version}
 %endif
+
 %if %{USE_LINUX_AUDIT}
 Buildrequires: audit-libs-devel
 %endif
@@ -79,6 +82,7 @@ Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
 
 Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
+ 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
 
@@ -100,6 +104,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \
+  FIPSPRODUCTCHECK="/usr/lib/dracut/modules.d/01fips" \
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{USE_CRL_FETCHING}
@@ -121,8 +126,8 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-  fipshmac -d %{buildroot}%{_libdir}/fipscheck ` ls %{buildroot}%{_libexecdir}/ipsec/*|grep -v setup` \
   fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
+  fipshmac -d %{buildroot}%{_libdir}/fipscheck ` ls %{buildroot}%{_libexecdir}/ipsec/* ` \
 %{nil}
 %endif
 
@@ -145,6 +150,7 @@ install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase 
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
+
 
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
@@ -184,6 +190,10 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 
 %post 
 %systemd_post ipsec.service
+%if %{USE_FIPSCHECK}
+# better than nothing, Conflicts: will be worse
+prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
+%endif
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1

@@ -38,8 +38,8 @@ BuildRequires: pam-devel
 BuildRequires: unbound-devel
 %endif
 %if %{USE_FIPSCHECK}
-BuildRequires: fipscheck-devel >= %{fipscheck_version}
 # we need fipshmac
+BuildRequires: fipscheck-devel >= %{fipscheck_version}
 Requires: fipscheck%{_isa} >= %{fipscheck_version}
 %endif
 %if %{USE_LINUX_AUDIT}
@@ -97,6 +97,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK=%{USE_FIPSCHECK} \
+  FIPSPRODUCTCHECK="/usr/share/dracut/modules.d/01fips" \
   USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
   USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
   USE_LDAP=%{USE_CRL_FETCHING} \
@@ -140,6 +141,8 @@ install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase 
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
+# replace with rhel[56] specific version
+install -m 0755 initsystems/sysvinit/init.rhel %{buildroot}%{_initrddir}/ipsec
 
 echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}/etc/rc.d/rc*
@@ -180,6 +183,10 @@ fi
 
 %post 
 /sbin/chkconfig --add ipsec || :
+%if %{USE_FIPSCHECK}
+prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
+%endif
+
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1

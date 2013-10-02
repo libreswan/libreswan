@@ -30,22 +30,31 @@
 #include "constants.h"
 #include "enum_names.h"
 
-/* string naming compile-time options that have interop implications */
-const char compile_time_interop_options[] = ""
-#ifdef LDAP_VER
-#if LDAP_VER == 2
-					    " LDAP_V2"
-#else
-					    " LDAP_V3"
-#endif
-#endif
-#ifdef PLUTO_SENDS_VENDORID
-					    " PLUTO_SENDS_VENDORID"
-#endif
-#ifdef USE_KEYRR
-					    " PLUTO_USES_KEYRR"
-#endif
-;
+/* 
+ * To obsolete or convert to runtime options:
+ * ALG_PATCH
+ * ALLOW_MICROSOFT_BAD_PROPOSAL
+ * DMALLOC
+ * EMIT_ISAKMP_SPI
+ * HAVE_STATSD
+ * I_DONT_CARE_OF_SSH_SENTINEL
+ * IPSEC_CONNECTION_LIMIT
+ * NET_21
+ * NO_EXTRA_IKE
+ * NOTYET
+ * NOT_YET
+ * OLD_RESOLVER
+ * PFKEY
+ * PLUTO_SENDS_VENDORID
+ * PLUTO_GROUP_CTL
+ * SINGLE_CONF_DIR
+ * SOFTREMOTE_CLIENT_WORKAROUND
+ * SUPPORT_ESP_NULL
+ * TEST_INDECENT_PROPOSAL 
+ * USE_3DES USE_AES USE_MD5 USE_SERPENT USE_SHA1 USE_SHA2 USE_TWOFISH
+ * USE_KEYRR
+ * VIRTUAL_IP
+ */
 
 static const char *const kern_interface_name[] = {
 	"none",
@@ -64,11 +73,10 @@ static const char *const dpd_action_name[] = {
 	"action:clear",
 	"action:hold",
 	"action:restart",
-	"action:restart_by_peer",
 };
 
 enum_names dpd_action_names =
-{ EVENT_NULL, DPD_ACTION_RESTART_BY_PEER, dpd_action_name, NULL };
+{ EVENT_NULL, DPD_ACTION_RESTART, dpd_action_name, NULL };
 
 /* Timer events */
 static const char *const timer_event_name[] = {
@@ -313,6 +321,7 @@ const char *const sa_policy_bit_names[] = {
 	"SAREFCONNTRACK",
 	"IKE_FRAG",
 	"IKE_FRAG_FORCE",
+	"NO_IKEPAD",
 	NULL
 };
 

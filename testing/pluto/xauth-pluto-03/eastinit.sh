@@ -2,6 +2,5 @@
 ipsec _stackmanager start 
 /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add xauth-road--eastnet
-ipsec auto --status
+ipsec auto --add xauth-road-eastnet
 echo "initdone"

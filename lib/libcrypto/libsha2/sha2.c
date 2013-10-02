@@ -22,15 +22,6 @@
 #endif
 #include "sha2.h"
 
-/* Define one or more of these. If none is defined, you get all of them */
-#if !defined(SHA256_NEEDED) && !defined(SHA512_NEEDED) && \
-	!defined(SHA384_NEEDED)
-# define SHA256_NEEDED  1
-# define SHA512_NEEDED  1
-# define SHA384_NEEDED  1
-#endif
-
-#if defined(SHA256_NEEDED)
 static const u_int32_t sha256_hashInit[8] = {
 	0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c,
 	0x1f83d9ab, 0x5be0cd19
@@ -48,25 +39,19 @@ static const u_int32_t sha256_K[64] = {
 	0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
 	0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
-#endif
 
-#if defined(SHA512_NEEDED)
 static const u_int64_t sha512_hashInit[8] = {
 	0x6a09e667f3bcc908ULL, 0xbb67ae8584caa73bULL, 0x3c6ef372fe94f82bULL,
 	0xa54ff53a5f1d36f1ULL, 0x510e527fade682d1ULL, 0x9b05688c2b3e6c1fULL,
 	0x1f83d9abfb41bd6bULL, 0x5be0cd19137e2179ULL
 };
-#endif
 
-#if defined(SHA384_NEEDED)
 static const u_int64_t sha384_hashInit[8] = {
 	0xcbbb9d5dc1059ed8ULL, 0x629a292a367cd507ULL, 0x9159015a3070dd17ULL,
 	0x152fecd8f70e5939ULL, 0x67332667ffc00b31ULL, 0x8eb44a8768581511ULL,
 	0xdb0c2e0d64f98fa7ULL, 0x47b5481dbefa4fa4ULL
 };
-#endif
 
-#if defined(SHA512_NEEDED) || defined(SHA384_NEEDED)
 static const u_int64_t sha512_K[80] = {
 	0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL, 0xb5c0fbcfec4d3b2fULL,
 	0xe9b5dba58189dbbcULL, 0x3956c25bf348b538ULL, 0x59f111f1b605d019ULL,
@@ -96,13 +81,11 @@ static const u_int64_t sha512_K[80] = {
 	0x431d67c49c100d4cULL, 0x4cc5d4becb3e42b6ULL, 0x597f299cfc657e2aULL,
 	0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL
 };
-#endif
 
 #define Ch(x, y, z)   (((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x, y, z)  (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 #define R(x, y)      ((y) >> (x))
 
-#if defined(SHA256_NEEDED)
 void sha256_init(sha256_context *ctx)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS: sha256 init start"));
@@ -129,9 +112,10 @@ void sha256_write(sha256_context *ctx, const unsigned char *datap, int length)
 	DBG(DBG_CRYPT, DBG_log("NSS: sha256 write end"));
 }
 
-void sha256_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
+void sha256_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, unsigned int ole)
 {
 	sha256_context ctx;
+	unsigned int length;
 
 	if (ole < 1)
 		return;
@@ -141,7 +125,6 @@ void sha256_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
 		ole = 32;
 	sha256_init(&ctx);
 	sha256_write(&ctx, ib, ile);
-	unsigned int length;
 	SECStatus status = PK11_DigestFinal(ctx.ctx_nss, ob, &length, ole);
 	PR_ASSERT(length == ole);
 	PR_ASSERT(status == SECSuccess);
@@ -149,9 +132,6 @@ void sha256_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
 	DBG(DBG_CRYPT, DBG_log("NSS: sha256 final end"));
 }
 
-#endif
-
-#if defined(SHA512_NEEDED)
 void sha512_init(sha512_context *ctx)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS: sha512 init start"));
@@ -163,9 +143,7 @@ void sha512_init(sha512_context *ctx)
 	PR_ASSERT(status == SECSuccess);
 	DBG(DBG_CRYPT, DBG_log("NSS: sha512 init end"));
 }
-#endif
 
-#if defined(SHA512_NEEDED) || defined(SHA384_NEEDED)
 #undef S
 #undef uSig0
 #undef uSig1
@@ -185,9 +163,10 @@ void sha512_write(sha512_context *ctx, const unsigned char *datap, int length)
 	DBG(DBG_CRYPT, DBG_log("NSS: sha512 write end"));
 }
 
-void sha512_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
+void sha512_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, unsigned int ole)
 {
 	sha512_context ctx;
+	unsigned int length;
 
 	if (ole < 1)
 		return;
@@ -197,16 +176,13 @@ void sha512_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
 		ole = 64;
 	sha512_init(&ctx);
 	sha512_write(&ctx, ib, ile);
-	unsigned int length;
 	SECStatus status = PK11_DigestFinal(ctx.ctx_nss, ob, &length, ole);
 	PR_ASSERT(length == ole);
 	PR_ASSERT(status == SECSuccess);
 	PK11_DestroyContext(ctx.ctx_nss, PR_TRUE);
 	DBG(DBG_CRYPT, DBG_log("NSS: sha512 final end"));
 }
-#endif
 
-#if defined(SHA384_NEEDED)
 void sha384_init(sha512_context *ctx)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS: sha384 init start"));
@@ -219,9 +195,10 @@ void sha384_init(sha512_context *ctx)
 	DBG(DBG_CRYPT, DBG_log("NSS: sha384 init end"));
 }
 
-void sha384_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
+void sha384_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, unsigned int ole)
 {
 	sha512_context ctx;
+	unsigned int length;
 
 	if (ole < 1)
 		return;
@@ -230,7 +207,6 @@ void sha384_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
 	if (ole > 48)
 		ole = 48;
 	sha384_init(&ctx);
-	unsigned int length;
 	SECStatus status = PK11_DigestOp(ctx.ctx_nss, ib, ile);
 	PR_ASSERT(status == SECSuccess);
 	status = PK11_DigestFinal(ctx.ctx_nss, ob, &length, ole);
@@ -239,4 +215,3 @@ void sha384_hash_buffer(unsigned char *ib, int ile, unsigned char *ob, int ole)
 	PK11_DestroyContext(ctx.ctx_nss, PR_TRUE);
 	DBG(DBG_CRYPT, DBG_log("NSS: sha384 init end"));
 }
-#endif

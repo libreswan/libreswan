@@ -1,9 +1,0 @@
-
-# This is a broken version of _updown
-
-ip() {
-	echo I will not do ip "$@"
-	false
-}
-
-. /usr/local/lib/ipsec/_updown "$@"

@@ -194,7 +194,6 @@ struct hash_desc {
 #endif
 #define CIPHERNAME_AES          cbc(aes)
 #define CIPHERNAME_3DES         cbc(des3_ede)
-#define CIPHERNAME_BLOWFISH     cbc(blowfish)
 #define CIPHERNAME_CAST         cbc(cast5)
 #define CIPHERNAME_SERPENT      cbc(serpent)
 #define CIPHERNAME_TWOFISH      cbc(twofish)
@@ -225,7 +224,6 @@ static int cipher_null[] = { -1, -1 };
 #endif
 static int des_ede3[] = { -1, -1 };
 static int aes[] = { -1, -1 };
-static int blowfish[] = { -1, -1 };
 static int cast[] = { -1, -1 };
 static int serpent[] = { -1, -1 };
 static int twofish[] = { -1, -1 };
@@ -235,7 +233,6 @@ module_param_array(cipher_null, int, NULL, 0444);
 #endif
 module_param_array(des_ede3, int, NULL, 0444);
 module_param_array(aes, int, NULL, 0444);
-module_param_array(blowfish, int, NULL, 0444);
 module_param_array(cast, int, NULL, 0444);
 module_param_array(serpent, int, NULL, 0444);
 module_param_array(twofish, int, NULL, 0444);
@@ -246,8 +243,6 @@ MODULE_PARM_DESC(cipher_null,
 #endif
 MODULE_PARM_DESC(des_ede3, "0: disable | 1: force_enable | min,max: dontuse");
 MODULE_PARM_DESC(aes, "0: disable | 1: force_enable | min,max: keybitlens");
-MODULE_PARM_DESC(blowfish,
-		 "0: disable | 1: force_enable | min,max: keybitlens");
 MODULE_PARM_DESC(cast, "0: disable | 1: force_enable | min,max: keybitlens");
 MODULE_PARM_DESC(serpent,
 		 "0: disable | 1: force_enable | min,max: keybitlens");
@@ -272,8 +267,6 @@ static struct ipsec_alg_capi_cipher alg_capi_carray[] = {
 	  { ixt_common:{ ixt_support:{ ias_id: ESP_SERPENT, } } } },
 	{ CIPHERNAME_CAST,     8, 128, 128, cast,
 	  { ixt_common:{ ixt_support:{ ias_id: ESP_CAST, } } } },
-	{ CIPHERNAME_BLOWFISH, 8,  96, 448, blowfish,
-	  { ixt_common:{ ixt_support:{ ias_id: ESP_BLOWFISH, } } } },
 	{ CIPHERNAME_3DES,     8, 192, 192, des_ede3,
 	  { ixt_common:{ ixt_support:{ ias_id: ESP_3DES, } } } },
 #ifdef CONFIG_KLIPS_ENC_NULL

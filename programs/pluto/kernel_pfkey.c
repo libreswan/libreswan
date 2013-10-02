@@ -78,8 +78,6 @@ static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messag
  */
 struct eroute_info *orphaned_holds = NULL;
 
-extern const struct pfkey_proto_info null_proto_info[2];
-
 static pid_t pid;
 
 #define NE(x) { x, #x } /* Name Entry -- shorthand for sparse_names */
@@ -861,6 +859,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
 		      time_t use_lifetime UNUSED,
+		      unsigned long sa_priority UNUSED,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -1357,7 +1356,8 @@ bool pfkey_shunt_eroute(struct connection *c,
 					SA_INT,
 					sr->this.protocol,
 					ET_INT,
-					null_proto_info, 0, op, buf2
+					null_proto_info, 0,
+					c->sa_priority, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label
 #endif

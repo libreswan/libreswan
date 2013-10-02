@@ -109,6 +109,7 @@ static void help(void)
 		" [--overlapip]"
 		" [--tunnel]"
 		" [--pfs]"
+		" [--no_ikepad]"
 		" \\\n   "
 		" [--pfsgroup [modp1024] | [modp1536] | [modp2048] | [modp3072] | [modp4096] | [modp6144] | [modp8192]]"
 		" \\\n   "
@@ -123,6 +124,10 @@ static void help(void)
 		" [--esp <esp-algos>]"
 		" \\\n   "
 		" [--remote_peer_type <cisco>]"
+		" \\\n   "
+		" [--mtu <mtu>]"
+		" \\\n   "
+		" [--priority <prio>] [--reqid <reqid>]"
 		" \\\n   "
 #ifdef HAVE_NM
 		"[--nm_configured]"
@@ -139,26 +144,22 @@ static void help(void)
 		" \\\n   "
 		" [--dontrekey]"
 		" [--aggrmode]"
-		" [--initialcontact]"
+		" [--initialcontact] [--cisco_unity]"
 		" [--forceencaps] [--no-nat_keepalive]"
 		" \\\n   "
 		" [--dpddelay <seconds> --dpdtimeout <seconds>]"
-		" [--dpdaction (clear|hold|restart|restart_by_peer)]"
+		" [--dpdaction (clear|hold|restart)]"
 		" \\\n   "
 
 #ifdef XAUTH
 		" [--xauthserver]"
 		" [--xauthclient]"
-#endif
-#ifdef MODECFG
 		" [--modecfgserver]"
 		" [--modecfgclient]"
 		" [--modecfgpull]"
 		" [--addresspool <network range>]"
-#ifdef MODECFG_DNSWINS
 		" [--modecfgdns1]"
 		" [--modecfgdns2]"
-#endif
 #endif
 		" \\\n   "
 		" [--metric <metric>]"
@@ -270,11 +271,6 @@ static void help(void)
 		"shutdown: whack"
 		" --shutdown"
 		"\n\n"
-#ifdef TPM
-		"taproom: whack"
-		" --tpmeval string"
-		"\n\n"
-#endif
 		"Libreswan %s\n",
 		ipsec_version_code());
 }
@@ -380,7 +376,6 @@ enum option_enums {
 	OPT_DELETECRASH,
 	OPT_XAUTHNAME,
 	OPT_XAUTHPASS,
-	OPT_TPMEVAL,
 	OPT_WHACKRECORD,
 	OPT_WHACKSTOPRECORD,
 
@@ -467,6 +462,8 @@ enum option_enums {
 	CD_MODECFGDNS2,
 	CD_METRIC,
 	CD_CONNMTU,
+	CD_PRIORITY,
+	CD_REQID,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -483,6 +480,7 @@ enum option_enums {
 	CD_FORCEENCAPS,
 	CD_NO_NAT_KEEPALIVE,
 	CD_INITIAL_CONTACT,
+	CD_CISCO_UNITY,
 	CD_IKE,
 	CD_PFSGROUP,
 	CD_REMOTEPEERTYPE,
@@ -493,6 +491,7 @@ enum option_enums {
 	CD_POLICY_LABEL,
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
+	CD_NO_IKEPAD,
 	CD_ESP
 #   define CD_LAST CD_ESP       /* last connection description */
 
@@ -594,7 +593,6 @@ static const struct option long_opts[] = {
 	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthpass", required_argument, NULL, OPT_XAUTHPASS + OO },
-	{ "tpmeval",   required_argument, NULL, OPT_TPMEVAL   + OO },
 
 	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
 	{ "oppothere", required_argument, NULL, OPT_OPPO_THERE + OO },
@@ -682,6 +680,7 @@ static const struct option long_opts[] = {
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL, CD_NO_NAT_KEEPALIVE + OO },
 	{ "initialcontact", no_argument, NULL, CD_INITIAL_CONTACT + OO },
+	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY + OO },
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO +
 	  NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO +
@@ -693,21 +692,19 @@ static const struct option long_opts[] = {
 	{ "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
 	{ "xauthby", required_argument, NULL, CD_XAUTHBY + OO },
 	{ "xauthfail", required_argument, NULL, CD_XAUTHFAIL + OO },
-#endif
-#ifdef MODECFG
 	{ "modecfgpull",   no_argument, NULL, CD_MODECFGPULL + OO },
 	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
-#ifdef MODECFG_DNSWINS
 	{ "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
 	{ "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
 	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 #endif
-#endif
 	{ "metric", required_argument, NULL, CD_METRIC + OO + NUMERIC_ARG },
 	{ "mtu", required_argument, NULL, CD_CONNMTU + OO + NUMERIC_ARG },
+	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
+	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "certtype", required_argument, NULL, END_CERTTYPE + OO +
 	  NUMERIC_ARG },
@@ -729,6 +726,7 @@ static const struct option long_opts[] = {
 	{ "ikealg", required_argument, NULL, CD_IKE + OO },
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
 	{ "esp", required_argument, NULL, CD_ESP + OO },
+	{ "no_ikepad", no_argument, NULL, CD_NO_IKEPAD + OO },
 	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE +
 	  OO },
 #ifdef HAVE_NM
@@ -956,16 +954,16 @@ int main(int argc, char **argv)
 
 	msg.remotepeertype = NON_CISCO;
 
-	msg.sha2_truncbug = SHA2_TRUNCBUG_NO;
+	msg.sha2_truncbug = FALSE;
 
 	/*Network Manager support*/
 #ifdef HAVE_NM
-	msg.nmconfigured = NM_NO;
+	msg.nmconfigured = FALSE;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	msg.loopback = LB_NO;
-	msg.labeled_ipsec = LI_NO;
+	msg.loopback = FALSE;
+	msg.labeled_ipsec = FALSE;
 	msg.policy_label = NULL;
 #endif
 
@@ -1497,6 +1495,7 @@ int main(int argc, char **argv)
 		case CD_DISABLEARRIVALCHECK:    /* --disablearrivalcheck */
 		case CD_DONT_REKEY:             /* --donotrekey */
 		case CD_MODECFGPULL:            /* --modecfgpull */
+		case CD_NO_IKEPAD:		/* --no_ikepad */
 			msg.policy |= LELEM(c - CD_POLICY_FIRST);
 			continue;
 
@@ -1552,6 +1551,10 @@ int main(int argc, char **argv)
 			msg.initial_contact = TRUE;
 			continue;
 
+		case CD_CISCO_UNITY: /* --cisco_unity */
+			msg.cisco_unity = TRUE;
+			continue;
+
 		case CD_DPDDELAY:
 			msg.dpd_delay = opt_whole;
 			continue;
@@ -1568,8 +1571,9 @@ int main(int argc, char **argv)
 				msg.dpd_action = DPD_ACTION_HOLD;
 			if ( strcmp(optarg, "restart") == 0)
 				msg.dpd_action = DPD_ACTION_RESTART;
+			/* obsolete (not advertised) option for compatibility */
 			if ( strcmp(optarg, "restart_by_peer") == 0)
-				msg.dpd_action = DPD_ACTION_RESTART_BY_PEER;
+				msg.dpd_action = DPD_ACTION_RESTART;
 			continue;
 
 		case CD_IKE: /* --ike <ike_alg1,ike_alg2,...> */
@@ -1592,22 +1596,22 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SHA2_TRUNCBUG: /* --sha2_truncbug */
-			msg.sha2_truncbug = SHA2_TRUNCBUG_YES;
+			msg.sha2_truncbug = TRUE;
 			continue;
 
 #ifdef HAVE_NM
 		case CD_NMCONFIGURED: /* --nm_configured */
-			msg.nmconfigured = NM_YES;
+			msg.nmconfigured = TRUE;
 			continue;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
 		case CD_LOOPBACK:
-			msg.loopback = LB_YES;
+			msg.loopback = TRUE;
 			continue;
 
 		case CD_LABELED_IPSEC:
-			msg.labeled_ipsec = LI_YES;
+			msg.labeled_ipsec = TRUE;
 			continue;
 
 		case CD_POLICY_LABEL:
@@ -1731,7 +1735,6 @@ int main(int argc, char **argv)
 			xauthpasslen = strlen(xauthpass) + 1;
 			continue;
 
-#ifdef MODECFG
 		case END_MODECFGCLIENT:
 			msg.right.modecfg_client = TRUE;
 			continue;
@@ -1743,7 +1746,6 @@ int main(int argc, char **argv)
 			ttorange(optarg, 0, AF_INET, &msg.right.pool_range);
 			continue;
 
-#ifdef MODECFG_DNSWINS
 		case CD_MODECFGDNS1:
 			af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
@@ -1755,14 +1757,18 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.modecfg_dns2), optarg);
 			continue;
-#endif
-#endif                  /* MODECFG */
 
 #else
 		case END_XAUTHSERVER:
 		case END_XAUTHCLIENT:
-		case END_XAUTHNAME:
-			diag("pluto is not built with XAUTH support");
+		case OPT_XAUTHNAME:
+		case OPT_XAUTHPASS:
+		case END_MODECFGCLIENT:
+		case END_MODECFGSERVER:
+		case END_ADDRESSPOOL:
+		case CD_MODECFGDNS1:
+		case CD_MODECFGDNS2:
+			diag("pluto is not built with XAUTH/MODECFG support");
 			continue;
 #endif                  /* XAUTH */
 
@@ -1774,15 +1780,12 @@ int main(int argc, char **argv)
 			msg.connmtu = opt_whole;
 			continue;
 
-		case OPT_TPMEVAL:
-#ifdef TPM
-			msg.tpmeval = strdup(optarg);
-			msg.whack_reread |= REREAD_TPMEVAL;
-			printf("sending tpmeval: '%s'\n", msg.tpmeval);
+		case CD_PRIORITY:
+			msg.sa_priority = opt_whole;
+			continue;
 
-#else
-			diag("TaProoM is not enabled in this build");
-#endif
+		case CD_REQID:
+			msg.sa_reqid = opt_whole;
 			continue;
 
 #ifdef DEBUG
@@ -2003,11 +2006,9 @@ int main(int argc, char **argv)
 
 
 	if (msg.dpd_action != DPD_ACTION_CLEAR && msg.dpd_action !=
-	    DPD_ACTION_HOLD &&
-	    msg.dpd_action != DPD_ACTION_RESTART && msg.dpd_action !=
-	    DPD_ACTION_RESTART_BY_PEER) {
+	    DPD_ACTION_HOLD && msg.dpd_action != DPD_ACTION_RESTART) {
 		diag(
-			"dpdaction can only be \"clear\", \"hold\", \"restart\" or \"restart_by_peer\", defaulting to \"hold\"");
+			"dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
 		msg.dpd_action = DPD_ACTION_HOLD;
 	}
 

@@ -176,6 +176,8 @@ _________________________ ip-xfrm-state
 	ip xfrm state
 _________________________ ip-xfrm-policy
 	ip xfrm policy
+_________________________ ip-xfrm-stats
+	cat /proc/net/xfrm_stat
 _________________________ ip-l2tp-tunnel
 	ip l2tp tunnel
 _________________________ ip-l2tp-session

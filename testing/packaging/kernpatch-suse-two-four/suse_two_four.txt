@@ -79,7 +79,6 @@ patching file lib/libfreeswan/atosa.c
 patching file lib/libfreeswan/atosubnet.c
 patching file lib/libfreeswan/atoul.3
 patching file lib/libfreeswan/atoul.c
-patching file lib/libfreeswan/copyright.c
 patching file lib/libfreeswan/datatot.c
 patching file lib/libfreeswan/goodmask.3
 patching file lib/libfreeswan/goodmask.c

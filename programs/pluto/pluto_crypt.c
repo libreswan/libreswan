@@ -90,7 +90,6 @@ static int backlogqueue_len = 0;
 static void init_crypto_helper(struct pluto_crypto_worker *w, int n);
 static void cleanup_crypto_helper(struct pluto_crypto_worker *w, int status);
 static void handle_helper_comm(struct pluto_crypto_worker *w);
-extern void free_preshared_secrets(void);
 
 static void *pluto_helper_thread(void *w);
 

@@ -63,8 +63,8 @@ extern notification_t accept_KE(chunk_t *dest, const char *val_name,
 /*
  * some additional functions are exported for xauth.c
  */
-extern void close_message(pb_stream *pbs);                      /* forward declaration */
-extern bool encrypt_message(pb_stream *pbs, struct state *st);  /* forward declaration */
+extern void close_message(pb_stream *pbs, struct state *st);
+extern bool encrypt_message(pb_stream *pbs, struct state *st);
 
 extern stf_status dpd_inI_outR(struct state *st,
 			       struct isakmp_notification *const n,
@@ -136,15 +136,3 @@ extern stf_status send_isakmp_notification(struct state *st,
 extern bool has_preloaded_public_key(struct state *st);
 
 extern bool extract_peer_id(struct id *peer, const pb_stream *id_pbs);
-
-/*
- * tools for sending Pluto Vendor ID.
- */
-#ifdef PLUTO_SENDS_VENDORID
-#define SEND_PLUTO_VID  1
-#else /* !PLUTO_SENDS_VENDORID */
-#define SEND_PLUTO_VID  0
-#endif /* !PLUTO_SENDS_VENDORID */
-
-extern char pluto_vendorid[];
-

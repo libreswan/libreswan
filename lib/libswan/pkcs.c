@@ -26,7 +26,6 @@
 #include "oid.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "pkcs.h"
 

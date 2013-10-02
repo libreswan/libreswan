@@ -50,8 +50,9 @@ do
 		echo 'OSDEP='${OSDEP}                   >>${dirname}/Makefile
 		echo 'BUILDENV='${BUILDENV}             >>${dirname}/Makefile
 		echo 'VPATH+=${srcdir}' 		>>${dirname}/Makefile
-		echo 'LIBRESWANSRCDIR='${srcdir}         >>${dirname}/Makefile
-		echo 'include ${srcdir}Makefile'       >>${dirname}/Makefile
+		echo 'LIBRESWANSRCDIR='${srcdir}        >>${dirname}/Makefile
+		echo 'include ${srcdir}Makefile'        >>${dirname}/Makefile
+		echo '-include Makefile.depend'         >>${dirname}/Makefile
 	fi
 done
 )

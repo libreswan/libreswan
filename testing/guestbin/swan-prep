@@ -12,6 +12,14 @@ except ImportError , e:
 	module = str(e)[16:]
 	sys.exit("we requires the python argparse module")
 
+# prevent double installs from going unnoticed
+if os.path.isfile("/usr/sbin/ipsec") or os.path.isfile("/sbin/ipsec"):
+	if os.path.isfile("/usr/local/sbin/ipsec"):
+		sys.exit("ABORT: found a swan userland in the base system as well as /usr/local")
+
+
+
+
 ipv = 0
 ipv6 = 0
 parser = argparse.ArgumentParser(description='swan-prep arguments')
@@ -177,14 +185,14 @@ if userland == "racoon2" or userland == "racoon":
 if userland == "shrew":
 	print "shrew not yet tested/integrated"
 
-	if not args.ipv:
-		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
-		commands.getoutput("net.ipv6.conf.all.disable_ipv6=1")
+if not args.ipv:
+	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
+	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
 
-	if args.ipv6:
-		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
-		commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
-		commands.getoutput("/etc/init.d/network restart")
+if args.ipv6:
+	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
+	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
+	commands.getoutput("/etc/init.d/network restart")
 
 # final prep - this kills any running userland
 output = commands.getoutput("ipsec stop")

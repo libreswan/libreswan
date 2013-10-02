@@ -97,12 +97,12 @@ enum ipsec_authentication_algo {
 enum ipsec_cipher_algo {
 	ESP_reserved=0,
 	ESP_DES_IV64=1,
-	ESP_DES=2,
+	ESP_DES=2, /* obsoleted */
 	ESP_3DES=3,
 	ESP_RC5=4,
 	ESP_IDEA=5,
 	ESP_CAST=6,
-	ESP_BLOWFISH=7,
+	ESP_BLOWFISH=7, /* obsoleyed */
 	ESP_3IDEA=8,
 	ESP_DES_IV32=9,
 	ESP_RC4=10,
@@ -175,7 +175,7 @@ enum ipsec_id_type {
 enum ipsec_cert_type {
 	CERT_NONE=                    0,        /* none, or guess from file contents */
 	CERT_PKCS7_WRAPPED_X509=      1,        /* self-signed certificate from disk */
-	CERT_PGP=                     2,
+	CERT_PGP=                     2,	/* We no longer support PGP keys */
 	CERT_DNS_SIGNED_KEY=          3,        /* KEY RR from DNS */
 	CERT_X509_SIGNATURE=          4,
 	CERT_X509_KEY_EXCHANGE=       5,
@@ -203,7 +203,6 @@ struct ipsec_identity {
 	enum ipsec_cert_type ii_format;
 	union {
 		struct ipsec_dns_sig ipsec_dns_signed;
-		/* some thing for PGP */
 		/* some thing for PKIX */
 		struct ipsec_raw_key ipsec_raw_key;
 	} ii_credential;

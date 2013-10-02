@@ -148,15 +148,11 @@ static int ipsec_ocf_encalg(int encalg)
 	switch (encalg) {
 	case ESP_NULL:      return CRYPTO_NULL_CBC;
 
-	case ESP_DES:       return CRYPTO_DES_CBC;
-
 	case ESP_3DES:      return CRYPTO_3DES_CBC;
 
 	case ESP_AES:       return CRYPTO_AES_CBC;
 
 	case ESP_CAST:      return CRYPTO_CAST_CBC;
-
-	case ESP_BLOWFISH:  return CRYPTO_BLF_CBC;
 	}
 	return 0;
 }
@@ -306,7 +302,6 @@ int ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 	case CRYPTO_AES_CBC:
 		ipsp->ips_iv_size = 16;
 		break;
-	case CRYPTO_DES_CBC:
 	case CRYPTO_3DES_CBC:
 		ipsp->ips_iv_size = 8;
 		break;
@@ -1408,14 +1403,6 @@ static struct ipsec_alg_supported ocf_esp_algs[] = {
 		.ias_ivlen      = 8,
 		.ias_keyminbits = 192,
 		.ias_keymaxbits = 192,
-	},
-	{
-		.ias_name       = "ocf-des",
-		.ias_id         = ESP_DES,
-		.ias_exttype    = SADB_EXT_SUPPORTED_ENCRYPT,
-		.ias_ivlen      = 8,
-		.ias_keyminbits = 64,
-		.ias_keymaxbits = 64,
 	},
 	{
 		.ias_name       = NULL,

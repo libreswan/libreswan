@@ -24,6 +24,7 @@ d.ipsec.conf/sha2_truncbug.xml
 d.ipsec.conf/esp.xml
 d.ipsec.conf/ah.xml
 d.ipsec.conf/ike_frag.xml
+d.ipsec.conf/ikepad.xml
 d.ipsec.conf/ikev2.xml
 d.ipsec.conf/narrowing.xml
 d.ipsec.conf/sareftrack.xml
@@ -47,7 +48,9 @@ d.ipsec.conf/nm_configured.xml
 d.ipsec.conf/forceencaps.xml
 d.ipsec.conf/nat_keepalive.xml
 d.ipsec.conf/initial_contact.xml
+d.ipsec.conf/cisco_unity.xml
 d.ipsec.conf/overlapip.xml
+d.ipsec.conf/reqid.xml
 d.ipsec.conf/dpddelay.xml
 d.ipsec.conf/dpdtimeout.xml
 d.ipsec.conf/dpdaction.xml
@@ -63,6 +66,7 @@ d.ipsec.conf/ikelifetime.xml
 d.ipsec.conf/compress.xml
 d.ipsec.conf/metric.xml
 d.ipsec.conf/mtu.xml
+d.ipsec.conf/priority.xml
 d.ipsec.conf/disablearrivalcheck.xml
 d.ipsec.conf/labeled_ipsec.xml
 d.ipsec.conf/policy_label.xml

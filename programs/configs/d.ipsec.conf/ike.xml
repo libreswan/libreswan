@@ -27,12 +27,15 @@ The options must be suitable as a value of
                 pfsgroup (DHgroup):     modp1024 or modp1536
 </emphasis></literallayout></para>
 <para>
-If Libreswan was compiled with extra INSECURE and BROKEN options, then the des (1des) and null cipher, as
-well as modp768 are available. This turns your VPN into a joke. Do not enable these options.</para>
-<para>If libreswan was compiled with USE_MODP_RFC5114 support, then Diffie-Hellman
-groups 22, 23 and 24 are also implemented as per RFC-5114. Instead of the modp
+Weak algorithms are regularly removed from libreswan. Currently, 1DES and modp768 have been removed and modp1024
+will be removed in the near future. Additionally, md5 and sha1 will be removed within the next few years. Null
+encryption is available, and should only be used for testing or benchmarking purposes. Please do not request for
+insecure algorithms to be re-added to libreswan.
+</para>
+<para>Diffie-Hellman groups 22, 23 and 24 are also implemented as per RFC-5114. Instead of the modp
 key syntax, use the "dh" keyword, for example <emphasis>ike=3des-sha1;dh23</emphasis>
 </para>
+<para>The modp syntax will be removed in favour of the dh syntax.</para>
   </listitem>
   </varlistentry>
 

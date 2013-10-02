@@ -36,7 +36,6 @@
 #include "lswlog.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 
 /*  Note that there may be as many as six IDs that are temporary at
@@ -367,6 +366,11 @@ bool any_id(const struct id *a)
 	}
 	/* NOTREACHED */
 	return FALSE;
+}
+
+int id_kind(const struct id *id)
+{
+	return id->kind;
 }
 
 /* compare two struct id values */

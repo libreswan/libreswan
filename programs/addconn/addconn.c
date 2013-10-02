@@ -69,6 +69,7 @@ int warningsarefatal = 0;
 /*
  * Initialize netlink query message.
  */
+static
 void netlink_query_init(char *msgbuf, sa_family_t family)
 {
 	struct nlmsghdr *nlmsg;
@@ -98,6 +99,7 @@ void netlink_query_init(char *msgbuf, sa_family_t family)
 /*
  * Add RTA_SRC or RTA_DST attribute to netlink query message.
  */
+static
 void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 {
 	struct nlmsghdr *nlmsg;
@@ -133,12 +135,14 @@ void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 	nlmsg->nlmsg_len += rtattr->rta_len;
 }
 
-int netlink_read_reply(int sock, char *buf, int seqnum, pid_t pid)
+static 
+ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 {
 	struct nlmsghdr *nlhdr;
 	struct sockaddr_nl sa;
 	socklen_t salen = sizeof(sa);
-	int readlen = 0, msglen = 0;
+	ssize_t readlen = 0;
+	ssize_t msglen = 0;
 
 	/* TODO: use dynamic buf */
 	do {
@@ -167,13 +171,15 @@ int netlink_read_reply(int sock, char *buf, int seqnum, pid_t pid)
 		/* All done if it's not a multi part */
 		if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
 			break;
-	} while (nlhdr->nlmsg_seq != seqnum || nlhdr->nlmsg_pid != pid);
+	} while (nlhdr->nlmsg_seq != seqnum || 
+			nlhdr->nlmsg_pid != pid);
 	return msglen;
 }
 
 /*
  * Send netlink query message and read reply.
  */
+static
 int netlink_query(char *msgbuf)
 {
 	struct nlmsghdr *nlmsg;
@@ -210,6 +216,7 @@ int netlink_query(char *msgbuf)
  * Return: 0 = ok, fill peer
  *         -1 = not found
  */
+static
 int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 {
 	struct ifaddrs *ifap, *ifa;
@@ -246,6 +253,7 @@ int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 /*
  * See if left->addr or left->next is %defaultroute and change it to IP.
  */
+static
 int resolve_defaultroute_one(struct starter_end *left,
 			     struct starter_end *right)
 {
@@ -305,7 +313,7 @@ int resolve_defaultroute_one(struct starter_end *left,
 		       parse_src, parse_gateway, has_dst);
 
 	/* Send netlink get_route request */
-	int len = netlink_query(msgbuf);
+	ssize_t len = netlink_query(msgbuf);
 	if (len < 0)
 		return -1;
 
@@ -406,6 +414,7 @@ int resolve_defaultroute_one(struct starter_end *left,
 /*
  * See if conn's left or right is %defaultroute and resolve it.
  */
+static
 void resolve_defaultroute(struct starter_conn *conn)
 {
 	if (resolve_defaultroute_one(&conn->left, &conn->right) == 1)

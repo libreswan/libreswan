@@ -13,6 +13,5 @@
  * for more details.
  */
 
-extern void whack_process(int whackfd, struct whack_message msg);
 extern void whack_handle(int kernelfd);
 extern void do_whacklisten(void);

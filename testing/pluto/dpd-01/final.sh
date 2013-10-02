@@ -1,4 +1,4 @@
-# no tunnels left, Ma!
+ipsec look
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

@@ -127,7 +127,6 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
  * structures to change lots.
  */
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
@@ -174,10 +173,8 @@ struct end {
 	char *xauth_name;
 	char *xauth_password;
 	ip_range pool_range;    /* store start of v4 addresspool */
-/*#ifdef MODECFG */
 	bool modecfg_server;    /* Give local addresses to tunnel's end */
 	bool modecfg_client;    /* request address for local end */
-/*#endif*/
 /*#endif*/
 };
 
@@ -199,6 +196,8 @@ struct connection {
 	time_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
+	unsigned long sa_priority;
+	unsigned long sa_reqid;
 	int encapsulation;
 
 	/* RFC 3706 DPD */
@@ -208,22 +207,23 @@ struct connection {
 
 	bool nat_keepalive;             /* Suppress sending NAT-T Keep-Alives */
 	bool initial_contact;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
-
-	/*Cisco interop: remote peer type*/
-	enum keyword_remotepeertype remotepeertype;
-
-	enum keyword_sha2_truncbug sha2_truncbug;
+	bool cisco_unity;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
+	bool send_vendorid;           /* Send our vendorid? Security vs Debugging help */
+	bool sha2_truncbug;
 
 	/*Network Manager support*/
 #ifdef HAVE_NM
-	enum keyword_nmconfigured nmconfigured;
+	bool nmconfigured;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	enum keyword_loopback loopback;
-	enum keyword_labeled_ipsec labeled_ipsec;
+	bool loopback;
+	bool labeled_ipsec;
 	char *policy_label;
 #endif
+
+	/*Cisco interop: remote peer type*/
+	enum keyword_remotepeertype remotepeertype;
 
 #ifdef XAUTH
 	enum keyword_xauthby xauthby;
@@ -280,11 +280,9 @@ struct connection {
 	char *dnshostname;
 #endif  /* DYNAMICDNS */
 #ifdef XAUTH
-#ifdef MODECFG
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
 	struct ip_pool *pool; /*v4 addresspool as a range, start end */
-#endif
 	char *cisco_dns_info;
 	char *cisco_domain_info;
 	char *cisco_banner;
@@ -375,7 +373,7 @@ extern struct connection
 		       const ip_address *him, u_int16_t his_port,
 		       lset_t policy),
 *refine_host_connection(const struct state *st, const struct id *id,
-			bool initiator, bool aggrmode),
+			bool initiator, bool aggrmode, bool *fromcert),
 *find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,

@@ -335,9 +335,6 @@ USE_NETKEY=false
 USE_KLIPS=false
 endif
 
-# Build support for sending Libreswan Vendor IDs
-USE_VENDORID?=true
-
 # Build aggressive mode authentication system code - both Server and Client.
 # This was off by default, since aggressive mode leads to denial of service
 # attacks.
@@ -379,9 +376,6 @@ USE_LIBCAP_NG?=true
 
 # Support for Network Manager
 USE_NM?=true
-
-# Support for MODP groups described in RFC 5114
-USE_MODP_RFC5114?=true
 
 # whether to support NAT Traversal (aka NAT-T)
 USE_NAT_TRAVERSAL?=true
@@ -515,7 +509,6 @@ LIBLSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liblswcrypto/liblswcrypto.a
 LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
 LIBMD5=${OBJDIRTOP}/lib/libcrypto/libmd5/libmd5.a
 LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
-LIBBLOWFISH=${OBJDIRTOP}/lib/libcrypto/libblowfish/libblowfish.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a

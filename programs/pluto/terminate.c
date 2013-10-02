@@ -36,7 +36,6 @@
 #include "lswtime.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "secrets.h"
 
@@ -63,7 +62,6 @@
 #include "alg_info.h"
 #include "spdb.h"
 #include "ike_alg.h"
-#include "plutocerts.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "xauth.h"
@@ -71,7 +69,7 @@
 #include "nat_traversal.h"
 #endif
 
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
 

@@ -122,13 +122,13 @@ struct whack_message {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 
-	/* For DPD 3706 - Dead Peer Detection */
+	/* For IKEv1 RFC 3706 - Dead Peer Detection */
 	time_t dpd_delay;
 	time_t dpd_timeout;
 	enum dpd_action dpd_action;
 	int dpd_count;
 
-	/*Cisco interop:  remote peer type*/
+	/* Cisco interop:  remote peer type*/
 	enum keyword_remotepeertype remotepeertype;
 
 	/* Force the use of NAT-T on a connection */
@@ -140,10 +140,19 @@ struct whack_message {
 	/* Option to allow sending INITIAL-CONTACT payload - default is disabled */
 	bool initial_contact;
 
-	enum keyword_sha2_truncbug sha2_truncbug;
+	/*
+	 * Option to just send the Cisco VID - the other end will behave
+	 * differently (ModeCFG + RSA?)
+	 */
+	bool cisco_unity;
+
+	/* send our own libreswan vendorid or not */
+	bool send_vendorid;
+
+	bool sha2_truncbug;
 
 	/* Checking if this connection is configured by Network Manager*/
-	enum keyword_nmconfigured nmconfigured;
+	bool nmconfigured;
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum keyword_xauthby xauthby;
@@ -154,8 +163,11 @@ struct whack_message {
 	/* Force the MTU for this connection */
 	int connmtu;
 
-	enum keyword_loopback loopback;
-	enum keyword_labeled_ipsec labeled_ipsec;
+	int sa_priority;
+	int sa_reqid;
+
+	bool loopback;
+	bool labeled_ipsec;
 	char *policy_label;
 
 	/*  note that each end contains string 2/5.id, string 3/6 cert,
@@ -221,9 +233,6 @@ struct whack_message {
 	/* for WHACK_REREAD */
 	u_char whack_reread;
 
-	/* for WHACK_TCPEVAL */
-	char *tpmeval;
-
 	/* for connalias string */
 	char *connalias;
 
@@ -262,16 +271,16 @@ struct whack_message {
 	 * 15 myid
 	 * 16 ike
 	 * 17 esp
-	 * 18 tpmeval
-	 * 19 left.xauth_name
-	 * 20 right.xauth_name
-	 * 21 connalias
-	 * 22 left.host_addr_name
-	 * 23 right.host_addr_name
-	 * 24 genstring1  - used with opt_set
-	 * 25 genstring2
-	 * 26 genstring3
-	 * 27 dnshostname
+	 * 18 left.xauth_name
+	 * 19 right.xauth_name
+	 * 20 connalias
+	 * 21 left.host_addr_name
+	 * 22 right.host_addr_name
+	 * 23 genstring1  - used with opt_set
+	 * 24 genstring2
+	 * 25 genstring3
+	 * 26 dnshostname
+	 * 27 policy_label if compiled with with LABELED_IPSEC
 	 * plus keyval (limit: 8K bits + overhead), a chunk.
 	 */
 	size_t str_size;
@@ -306,7 +315,6 @@ struct whack_message {
 #define REREAD_ACERTS     0x08                                  /* reread certs in /etc/ipsec.d/acerts */
 #define REREAD_CRLS       0x10                                  /* reread crls in /etc/ipsec.d/crls */
 #define REREAD_ALL      LRANGES(REREAD_SECRETS, REREAD_CRLS)    /* all reread options */
-#define REREAD_TPMEVAL    0x20                                  /* evaluate in Tcl */
 
 struct whackpacker {
 	struct whack_message *msg;
@@ -323,6 +331,6 @@ extern size_t whack_get_secret(char *buf, size_t bufsize);
 extern int whack_get_value(char *buf, size_t bufsize);
 
 extern bool lsw_alias_cmp(const char *needle, const char *haystack);
-extern void whack_process(int whackfd, struct whack_message msg);
+extern void whack_process(int whackfd, const struct whack_message msg);
 
 #endif /* _WHACK_H */

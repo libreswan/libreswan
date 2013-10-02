@@ -283,10 +283,10 @@ struct sadb_x_nat_t_port {
 
 /* Encryption algorithms */
 #define SADB_EALG_NONE                  0
-#define SADB_EALG_DESCBC                2
+/* #define SADB_EALG_DESCBC                2 obsoleted */
 #define SADB_EALG_3DESCBC               3
 #define SADB_X_EALG_CASTCBC             6
-#define SADB_X_EALG_BLOWFISHCBC         7
+/* #define SADB_X_EALG_BLOWFISHCBC         7 obsoleted */
 #define SADB_EALG_NULL                  11
 #define SADB_X_EALG_AESCBC              12
 #define SADB_X_EALG_AESCTR              13

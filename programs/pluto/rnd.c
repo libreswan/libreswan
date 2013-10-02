@@ -20,7 +20,7 @@
 
 /* A true random number generator (we hope)
  *
- * Under LINUX ("linux" predefined), use /dev/urandom.
+ * Under LINUX ("linux" predefined), use /dev/urandom in non_FIPS, use /dev/random in FIPS
  * Under OpenBSD ("__OpenBSD__" predefined), use arc4random().
  * Otherwise use our own random number generator based on clock skew.
  *   I (ADK) first heard of the idea from John Ioannidis, who heard it
@@ -35,12 +35,14 @@
  *
  * - generating initiator cookies (8 bytes, once per Phase 1 initiation).
  *
- * - 32 bytes per DH local secret.  Once per Main Mode exchange and once
+ * - IKEv1: 32 bytes per DH local secret.  Once per Aggr/Main Mode exchange and once
  *   per Quick Mode Exchange with PFS.  (Size is our choice, with
  *   tradeoffs.)
+ * - IKEv2:
  *
- * - 16 bytes per nonce we generate.  Once per Main Mode exchange and
+ * - IKEv1: 16 bytes per nonce we generate.  Once per Aggr/Main Mode exchange and
  *   once per Quick Mode exchange.  (Again, we choose the size.)
+ * - IKEv2:
  *
  * - 4 bytes per SPI number that we generate.  We choose the SPIs for all
  *   inbound SPIs, one to three per IPSEC SA (one for AH (rare, probably)

@@ -37,7 +37,6 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
@@ -906,7 +905,7 @@ void rekey_p2states_by_connection(struct connection *c)
  * it currently does not work for IKEv2, since IS_PHASE1() only works on IKEv1
  * Filed as bug http://bugs.xelerance.com/view.php?id=971
  */
-void delete_states_by_peer(ip_address *peer)
+void delete_states_by_peer(const ip_address *peer)
 {
 	char peerstr[ADDRTOT_BUF];
 	int i, ph1;
@@ -1858,7 +1857,7 @@ startover:
 /*
  * Immediately schedule a replace event for all states for a peer.
  */
-void replace_states_by_peer(ip_address *peer)
+void replace_states_by_peer(const ip_address *peer)
 {
 	struct state *st = NULL;
 	int i;

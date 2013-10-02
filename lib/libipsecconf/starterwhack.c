@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "sysdep.h"
+
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/files.h"
@@ -41,6 +43,7 @@
 #include "lswlog.h"
 #include "whack.h"
 #include "id.h"
+
 
 static void update_ports(struct whack_message * m)
 {
@@ -390,13 +393,11 @@ static void set_whack_end(struct starter_config *cfg,
 	if (l->strings_set[KSCF_XAUTHUSERNAME])
 		w->xauth_name = l->strings[KSCF_XAUTHUSERNAME];
 
-# ifdef MODECFG
 	if (l->options_set[KNCF_MODECONFIGSERVER])
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];
 	if (l->options_set[KNCF_MODECONFIGCLIENT])
 		w->modecfg_client = l->options[KNCF_MODECONFIGCLIENT];
 	w->pool_range = l->pool_range;
-# endif
 #endif
 }
 
@@ -519,6 +520,18 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 	if (conn->options_set[KBF_CONNMTU])
 		msg.connmtu   = conn->options[KBF_CONNMTU];
+	if (conn->options_set[KBF_PRIORITY])
+		msg.sa_priority   = conn->options[KBF_PRIORITY];
+
+	if (conn->options_set[KBF_REQID]) {
+		if ((conn->options[KBF_REQID] >= IPSEC_MANUAL_REQID_MAX -3) || 
+		    (conn->options[KBF_REQID] == 0)) {
+			starter_log(LOG_LEVEL_ERR,
+				    "Ignoring reqid value - range must be 1-16379");
+		    } else {
+			msg.sa_reqid   = conn->options[KBF_REQID];
+		    }
+	}
 
 	if (conn->options_set[KBF_DPDDELAY] &&
 	    conn->options_set[KBF_DPDTIMEOUT]) {
@@ -530,11 +543,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		if (conn->options_set[KBF_REKEY] && conn->options[KBF_REKEY] ==
 		    FALSE) {
 			if ( (conn->options[KBF_DPDACTION] ==
-			      DPD_ACTION_RESTART_BY_PEER ||
-			      conn->options[KBF_DPDACTION] ==
 			      DPD_ACTION_RESTART)) {
 				starter_log(LOG_LEVEL_ERR,
-					    "conn: \"%s\" warning dpdaction cannot be 'restart' or 'restart_by_peer' when rekey=no - defaulting to 'hold'",
+					    "conn: \"%s\" warning dpdaction cannot be 'restart'  when rekey=no - defaulting to 'hold'",
 					    conn->name);
 				msg.dpd_action = DPD_ACTION_HOLD;
 			}
@@ -556,11 +567,19 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	else
 		msg.nat_keepalive = TRUE;
 #endif
+	/* Activate sending out own vendorid */
+	if (conn->options_set[KBF_SEND_VENDORID])
+		msg.send_vendorid = conn->options[KBF_SEND_VENDORID];
 
+	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
 	if (conn->options_set[KBF_INITIAL_CONTACT])
 		msg.initial_contact = conn->options[KBF_INITIAL_CONTACT];
 
-	/*Cisco interop : remote peer type*/
+	/* Activate their quircky behaviour - rumored to be needed for ModeCfg and RSA */
+	if (conn->options_set[KBF_CISCO_UNITY])
+		msg.cisco_unity = conn->options[KBF_CISCO_UNITY];
+
+	/* Active our Cisco interop code if set */
 	if (conn->options_set[KBF_REMOTEPEERTYPE])
 		msg.remotepeertype = conn->options[KBF_REMOTEPEERTYPE];
 
@@ -628,7 +647,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 
 	}
-	msg.tpmeval = NULL;
 
 	r =  send_whack_msg(&msg, cfg->ctlbase);
 

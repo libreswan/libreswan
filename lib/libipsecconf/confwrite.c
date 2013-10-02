@@ -260,8 +260,7 @@ void confwrite_str(FILE *out,
 	}
 }
 
-void confwrite_side(FILE *out,
-		    struct starter_conn *conn,
+static void confwrite_side(FILE *out,
 		    struct starter_end *end,
 		    char   *side)
 {
@@ -343,10 +342,10 @@ void confwrite_side(FILE *out,
 	}
 
 	if (end->rsakey1)
-		fprintf(out, "\t%srsakey=%s\n", side, end->rsakey1);
+		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
 
 	if (end->rsakey2)
-		fprintf(out, "\t%srsakey2=%s\n", side, end->rsakey2);
+		fprintf(out, "\t%srsasigkey2=%s\n", side, end->rsakey2);
 
 	if (end->port || end->protocol) {
 		char b2[32];
@@ -410,8 +409,8 @@ void confwrite_conn(FILE *out,
 		}
 		fprintf(out, "\n");
 	}
-	confwrite_side(out, conn, &conn->left,  "left");
-	confwrite_side(out, conn, &conn->right, "right");
+	confwrite_side(out, &conn->left,  "left");
+	confwrite_side(out, &conn->right, "right");
 	confwrite_int(out, "", kv_conn, kv_auto,
 		      conn->options, conn->options_set, conn->strings);
 	confwrite_str(out, "", kv_conn, kv_auto,
@@ -470,6 +469,11 @@ void confwrite_conn(FILE *out,
 				fprintf(out, "\tpfs=yes\n");
 			else
 				fprintf(out, "\tpfs=no\n");
+
+			if (conn->policy & POLICY_NO_IKEPAD)
+				fprintf(out, "\tikepad=no\n");
+			else
+				fprintf(out, "\tikepad=yes\n");
 
 			if (conn->policy & POLICY_DONT_REKEY)
 				fprintf(out, "\trekey=no  #duplicate?\n");
