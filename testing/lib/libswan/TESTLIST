@@ -1,3 +1,5 @@
+libtest algparse good
+#
 skiptest lib-addrtoa incomplete
 libtest addrtot good
 skiptest lib-addrtypeof incomplete
@@ -36,6 +38,5 @@ skiptest lib-ttoul incomplete
 skiptest lib-ultoa incomplete
 skiptest lib-ultot incomplete
 
-libtest algparse good
 libtest ikeparse good
 libtest iprange  good
