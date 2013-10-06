@@ -463,6 +463,7 @@ void delete_state(struct state *st)
 	/*
 	 * If there is still an authentication thread alive, kill it.
 	 */
+	/* ??? In POSIX pthreads, pthread_t is opaque and the following test is not legitimate  */
 	if (st->tid) {
 		pthread_kill(st->tid, SIGINT);
 		/* The pthread_mutex_lock ensures that the do_authentication

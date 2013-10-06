@@ -1749,7 +1749,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 	/* encrypt message, except for fixed part of header */
 
-	/* st_new_iv was computed by generate_skeyids_iv */
+	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
 	if (!encrypt_message(&md->rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 

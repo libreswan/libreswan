@@ -920,7 +920,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 
 	/* RFC2408 says we must encrypt at this point */
 
-	/* st_new_iv was computed by generate_skeyids_iv */
+	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
 	if (!encrypt_message(&md->rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
