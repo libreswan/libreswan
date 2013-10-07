@@ -276,9 +276,7 @@ struct connection {
 #ifdef XAUTH_HAVE_PAM
 	pam_handle_t  *pamh;            /*  PAM handle for that connection  */
 #endif
-#ifdef DYNAMICDNS
 	char *dnshostname;
-#endif  /* DYNAMICDNS */
 #ifdef XAUTH
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
@@ -472,9 +470,7 @@ extern void host_pair_enqueue_pending(const struct connection *c,
 				      struct pending **pnext);
 struct pending **host_pair_first_pending(const struct connection *c);
 
-#ifdef DYNAMICDNS
 void connection_check_ddns(void);
-#endif
 
 void connection_check_phase2(void);
 void init_connections(void);

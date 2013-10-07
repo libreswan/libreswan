@@ -14,7 +14,6 @@
 # These will override Makefile.inc values
 # This is run as part of a compile test run in the test harnass on Linux only
 
-USE_DYNAMICDNS=false
 USE_DNSSEC=false
 USE_IKEPING=false
 USE_KEYRR=false

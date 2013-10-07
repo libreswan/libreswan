@@ -151,7 +151,6 @@ void release_connection(struct connection *c, bool relations)
 	}
 }
 
-#ifdef DYNAMICDNS
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
@@ -209,7 +208,6 @@ void update_host_pairs(struct connection *c)
 		pfree(p);
 	}
 }
-#endif /* DYNAMICDNS */
 
 /* Delete a connection */
 
@@ -338,9 +336,7 @@ void delete_connection(struct connection *c, bool relations)
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(c->policy_label);
 #endif
-#ifdef DYNAMICDNS
 	pfreeany(c->dnshostname);
-#endif
 
 	sr = &c->spd;
 	while (sr) {
@@ -798,10 +794,7 @@ static void unshare_connection_strings(struct connection *c)
 	c->cisco_banner =
 		clone_str(c->cisco_banner, "connection cisco_banner");
 #endif
-
-#ifdef DYNAMICDNS
 	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
-#endif
 
 	/* duplicate any alias, adding spaces to the beginning and end */
 	c->connalias = clone_str(c->connalias, "connection alias");
@@ -1237,11 +1230,9 @@ void add_connection(const struct whack_message *wm)
 		c->cisco_domain_info = NULL;
 		c->cisco_banner = NULL;
 #endif
-#ifdef DYNAMICDNS
 		c->dnshostname = NULL;
 		if (wm->dnshostname)
 			c->dnshostname = wm->dnshostname;
-#endif
 
 		c->policy = wm->policy;
 

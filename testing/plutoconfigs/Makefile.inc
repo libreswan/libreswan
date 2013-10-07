@@ -271,11 +271,6 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
 
-# Do a new lookup every time a connection is (re)started. This works better
-# on hosts with some dyndns service, since DPD will cause a new dns lookup,
-# but it could be a potential security issue if receiving spoofed dns.
-USE_DYNAMICDNS?=true
-
 # Enable support for DNSSEC. This requires the unbound library
 USE_DNSSEC?=true
 

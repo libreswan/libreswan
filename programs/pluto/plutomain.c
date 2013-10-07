@@ -252,9 +252,6 @@ static const char compile_time_interop_options[] = ""
 #ifdef XAUTH_HAVE_PAM
 					    " XAUTH_PAM"
 #endif
-#ifdef DYNAMICDNS
-					    " DYNAMICDNS"
-#endif
 #ifdef HAVE_NM
 					    " NETWORKMANAGER"
 #endif

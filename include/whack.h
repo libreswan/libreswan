@@ -243,7 +243,6 @@ struct whack_message {
 	/* what metric to put on ipsec routes */
 	int metric;
 
-	/* for DYNAMICDNS */
 	char *dnshostname;
 
 	/* for use with general option adjustments */
