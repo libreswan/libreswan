@@ -209,8 +209,8 @@ struct state {
 	int st_usage;
 
 #ifdef XAUTH_HAVE_PAM
-	pthread_mutex_t mutex;                  /* per state mutex */
-	pthread_t tid;                          /* per state XAUTH_RO thread id */
+	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
+	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
 #endif
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
