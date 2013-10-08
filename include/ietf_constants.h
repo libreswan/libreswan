@@ -1192,6 +1192,12 @@ enum pubkey_alg {
 #define ISA_MAJ_SHIFT 4
 #define ISA_MIN_MASK (~((~0u) << ISA_MAJ_SHIFT))
 
+/* ISAKMP attributes are encoded with the Attribute Format field
+ * and the Attribute Type field encoded in one pair of octets.
+ * The AF is the high-order bit and the Type is the next 15 bits.
+ * See RFC 2408 "ISAKMP" section 3.3.
+ * The following definitions are used to pack and unpack these.
+ */
 #define ISAKMP_ATTR_AF_MASK 0x8000
 #define ISAKMP_ATTR_AF_TV ISAKMP_ATTR_AF_MASK /* value in lv */
 #define ISAKMP_ATTR_AF_TLV 0 /* length in lv; value follows */

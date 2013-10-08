@@ -2823,9 +2823,10 @@ stf_status xauth_inI1(struct msg_digest *md)
 
 			default:
 				libreswan_log(
-					"while waiting for XAUTH_STATUS, got %s instead.",
+					"while waiting for XAUTH_STATUS, got %s %s instead.",
+					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
 					enum_show(&modecfg_attr_names,
-						  attr.isaat_af_type));
+						  attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK));
 				break;
 			}
 		}
