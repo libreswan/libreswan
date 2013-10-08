@@ -66,10 +66,8 @@
 #include <security/pam_appl.h>
 #endif
 
-#ifdef NAT_TRAVERSAL
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
@@ -609,9 +607,7 @@ static enum routability could_route(struct connection *c)
 
 	/* if routing would affect IKE messages, reject */
 	if (kern_interface != NO_KERNEL
-#ifdef NAT_TRAVERSAL
 	    && c->spd.this.host_port != pluto_natt_float_port
-#endif
 	    && c->spd.this.host_port != IKE_UDP_PORT &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
 		loglog(RC_LOG_SERIOUS,
@@ -1641,7 +1637,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* static const int esp_max = elemsof(esp_info); */
 		/* int esp_count; */
 
-#ifdef NAT_TRAVERSAL
 		u_int8_t natt_type = 0;
 		u_int16_t natt_sport = 0, natt_dport = 0;
 		ip_address natt_oa;
@@ -1663,7 +1658,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 			natt_oa = st->hidden_variables.st_nat_oa;
 		}
-#endif
 
 		DBG(DBG_CRYPT,
 		    DBG_log(
@@ -1816,13 +1810,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->sec_ctx = st->sec_ctx;
 #endif
 
-#ifdef NAT_TRAVERSAL
 		said_next->natt_sport = natt_sport;
 		said_next->natt_dport = natt_dport;
 		said_next->transid = st->st_esp.attrs.transattrs.encrypt;
 		said_next->natt_type = natt_type;
 		said_next->natt_oa = &natt_oa;
-#endif
 		said_next->outif   = -1;
 #ifdef KLIPS_MAST
 		if (st->st_esp.attrs.encapsulation ==
@@ -3045,7 +3037,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 	} /* switch kern_interface */
 }
 
-#ifdef NAT_TRAVERSAL
 static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
 {
 	struct connection *c = st->st_connection;
@@ -3102,7 +3093,6 @@ bool update_ipsec_sa(struct state *st USED_BY_KLIPS)
 	}
 	return TRUE;
 }
-#endif
 
 bool was_eroute_idle(struct state *st, time_t since_when)
 {

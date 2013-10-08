@@ -411,9 +411,7 @@ struct state {
 /* global variables */
 
 extern u_int16_t pluto_port;            /* Pluto's port */
-#ifdef NAT_TRAVERSAL
 extern u_int16_t pluto_natt_float_port; /* Pluto's NATT floating port */
-#endif
 
 extern bool states_use_connection(struct connection *c);
 

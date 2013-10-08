@@ -327,7 +327,6 @@ static int get_internal_addresses(struct state *st, struct internal_addr *ia)
 #endif
 	struct connection *c = st->st_connection;
 
-#ifdef NAT_TRAVERSAL /* only NAT-T code lets us do virtual ends */
 	if (!isanyaddr(&c->spd.that.client.addr)) {
 		/** assumes IPv4, and also that the mask is ignored */
 
@@ -341,7 +340,7 @@ static int get_internal_addresses(struct state *st, struct internal_addr *ia)
 		if (!isanyaddr(&c->modecfg_dns2))
 			ia->dns[1] = c->modecfg_dns2;
 	} else
-#endif
+
 	{
 #ifdef XAUTH_HAVE_PAM
 		if (c->xauthby == XAUTHBY_PAM) {

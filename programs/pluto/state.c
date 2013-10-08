@@ -70,9 +70,7 @@
  */
 
 u_int16_t pluto_port = IKE_UDP_PORT;                    /* Pluto's port */
-#ifdef NAT_TRAVERSAL
 u_int16_t pluto_natt_float_port = NAT_T_IKE_FLOAT_PORT; /* Pluto's NAT-T port */
-#endif
 
 /*
  * This file has the functions that handle the

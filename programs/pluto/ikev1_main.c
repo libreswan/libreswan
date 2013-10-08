@@ -89,9 +89,7 @@
 #include "xauth.h"
 #endif
 #include "vendor.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 #ifdef VIRTUAL_IP
 #include "virtual.h"	/* needs connections.h */
 #endif
@@ -123,10 +121,8 @@ stf_status main_outI1(int whack_sock,
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
 		numvidtosend++;
 
-#ifdef NAT_TRAVERSAL
 	if (nat_traversal_enabled)
 		numvidtosend++;
-#endif
 
 	/* add one for sending CISCO-UNITY */
 	if (c->cisco_unity) {
@@ -252,7 +248,6 @@ stf_status main_outI1(int whack_sock,
 		}
 	}
 
-#ifdef NAT_TRAVERSAL
 	DBG(DBG_NATT, DBG_log("nat traversal enabled: %d",
 				nat_traversal_enabled));
 	if (nat_traversal_enabled) {
@@ -265,7 +260,6 @@ stf_status main_outI1(int whack_sock,
 			return STF_INTERNAL_ERROR;
 		}
 	}
-#endif
 
 #ifdef XAUTH
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
@@ -806,13 +800,11 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef NAT_TRAVERSAL
 	/* Increase VID counter for NAT-T VID */
 	if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
 		DBG(DBG_NATT, DBG_log("nat-t detected, sending nat-t VID"));
 		numvidtosend++;
 	}
-#endif
 
 	/* Increase VID counter for VID_CISCO_UNITY */
 	if (c->send_vendorid) {
@@ -890,7 +882,6 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 	}
 #endif
-#ifdef NAT_TRAVERSAL
 	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %d and %d",
 				nat_traversal_enabled,
 				md->quirks.nat_traversal_vid));
@@ -908,7 +899,6 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 				md->rbody, md->quirks.nat_traversal_vid)))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
 
 	/* Ensure our 'next payload' types sync'ed up */
 	passert(numvidtosend == 0);
@@ -991,7 +981,6 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 							NULL, TRUE, st));
 	}
 
-#ifdef NAT_TRAVERSAL
 	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %d and %d",
 				nat_traversal_enabled,
 				md->quirks.nat_traversal_vid));
@@ -1007,7 +996,6 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 				nat_traversal_vid_to_method(md->quirks.
 							nat_traversal_vid)));
 	}
-#endif
 
 	{
 		struct ke_continuation *ke = alloc_thing(
@@ -1111,7 +1099,6 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 
 #endif
 
-#ifdef NAT_TRAVERSAL
 	DBG(DBG_NATT, DBG_log("NAT-T checking st_nat_traversal"));
 	if (st->hidden_variables.st_nat_traversal) {
 		DBG(DBG_NATT,
@@ -1119,7 +1106,6 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
 
 	/* finish message */
 	close_message(&md->rbody, st);
@@ -1207,7 +1193,6 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	if (st->st_connection->requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
 
-#ifdef NAT_TRAVERSAL
 	DBG(DBG_NATT,
 		DBG_log("inI2: checking NAT-T: %d and %d",
 			nat_traversal_enabled,
@@ -1226,7 +1211,6 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 		DBG(DBG_NATT, DBG_log(" NAT_T_WITH_KA detected"));
 		nat_traversal_new_ka_event();
 	}
-#endif
 
 	{
 		struct ke_continuation *ke = alloc_thing(
@@ -1394,12 +1378,10 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		}
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (st->hidden_variables.st_nat_traversal) {
 		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
 
 	/* finish message */
 	close_message(&md->rbody, st);
@@ -1603,7 +1585,6 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 	/* done parsing; initialize crypto */
 
-#ifdef NAT_TRAVERSAL
 	if (st->hidden_variables.st_nat_traversal)
 		nat_traversal_natd_lookup(md);
 	if (st->hidden_variables.st_nat_traversal) {
@@ -1613,8 +1594,6 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	}
 	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA)
 		nat_traversal_new_ka_event();
-
-#endif
 
 	/*
 	 * Build output packet HDR*;IDii;HASH/SIG_I
@@ -3040,12 +3019,11 @@ void accept_delete(struct state *st, struct msg_digest *md,
 
 				oldc = cur_connection;
 				set_cur_connection(dst->st_connection);
-#ifdef NAT_TRAVERSAL
+
 				if (nat_traversal_enabled)
 					nat_traversal_change_port_lookup(md,
 									dst);
 
-#endif
 				loglog(RC_LOG_SERIOUS, "received Delete SA "
 					"payload: deleting ISAKMP State #%lu",
 					dst->st_serialno);
@@ -3082,12 +3060,10 @@ void accept_delete(struct state *st, struct msg_digest *md,
 				oldc = cur_connection;
 				set_cur_connection(rc);
 
-#ifdef NAT_TRAVERSAL
 				if (nat_traversal_enabled)
 					nat_traversal_change_port_lookup(md,
 									dst);
 
-#endif
 				if (rc->newest_ipsec_sa == dst->st_serialno &&
 					(rc->policy & POLICY_UP)) {
 					/*

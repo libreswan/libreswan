@@ -367,12 +367,6 @@ USE_LIBCAP_NG?=true
 # Support for Network Manager
 USE_NM?=true
 
-# whether to support NAT Traversal (aka NAT-T)
-USE_NAT_TRAVERSAL?=true
-
-# where to support NAT-T in transport mode (needed for Win2K NAT-T Interop)
-USE_NAT_TRAVERSAL_TRANSPORT_MODE?=true
-
 # Include LDAP support (currently used for fetching CRLs)
 USE_LDAP?=false
 

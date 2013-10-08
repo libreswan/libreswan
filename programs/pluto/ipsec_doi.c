@@ -85,9 +85,7 @@
 #include "xauth.h"
 #endif
 #include "vendor.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 #include "virtual.h"	/* needs connections.h */
 #include "dpd.h"
 #include "x509more.h"
@@ -534,7 +532,6 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-#ifdef NAT_TRAVERSAL
 	if ((st->hidden_variables.st_nat_traversal &
 	     NAT_T_WITH_PORT_FLOATING) &&
 	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
@@ -544,7 +541,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
 	} else
-#endif
+
 	if (!(id->isaid_doi_specific_a == 0 && id->isaid_doi_specific_b ==
 	      0) &&
 	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
@@ -802,7 +799,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 
 	/* advance b to end of string */
 	b = b + strlen(b);
-#ifdef NAT_TRAVERSAL
+
 	{
 		char oa[ADDRTOT_BUF];
 
@@ -836,7 +833,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		ini = " ";
 		fin = "}";
 	}
-#endif
 
 	/* advance b to end of string */
 	b = b + strlen(b);

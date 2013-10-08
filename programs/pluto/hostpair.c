@@ -69,9 +69,7 @@
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "xauth.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #include "virtual.h"	/* needs connections.h */
 
@@ -253,7 +251,6 @@ void connect_to_host_pair(struct connection *c)
 			hp = alloc_thing(struct host_pair, "host_pair");
 			hp->me.addr = c->spd.this.host_addr;
 			hp->him.addr = c->spd.that.host_addr;
-#ifdef NAT_TRAVERSAL
 			hp->me.host_port =
 				nat_traversal_enabled ? pluto_port : c->spd.
 				this.
@@ -262,10 +259,6 @@ void connect_to_host_pair(struct connection *c)
 				nat_traversal_enabled ? pluto_port : c->spd.
 				that.
 				host_port;
-#else
-			hp->me.host_port = c->spd.this.host_port;
-			hp->him.host_port = c->spd.that.host_port;
-#endif
 			hp->connections = NULL;
 			hp->pending = NULL;
 			hp->next = host_pairs;

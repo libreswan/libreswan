@@ -46,10 +46,8 @@
 #include "timer.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
-#ifdef NAT_TRAVERSAL
 #include "packet.h"     /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 
 #include "alg_info.h"
 #include "kernel_alg.h"
@@ -141,15 +139,11 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					if (fd < 0)
 						break;
 
-#ifdef NAT_TRAVERSAL
 					if (nat_traversal_support_non_ike &&
 					    addrtypeof(&ifp->addr) == AF_INET)
 						nat_traversal_espinudp_socket(
 							fd, "IPv4",
 							ESPINUDP_WITH_NON_IKE);
-
-
-#endif
 
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
@@ -182,7 +176,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						ip_str(&q->ip_addr),
 						q->port);
 
-#ifdef NAT_TRAVERSAL
 					/*
 					 * right now, we do not support NAT-T on IPv6, because
 					 * the kernel did not support it, and gave an error
@@ -224,7 +217,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 							       ip_addr),
 							q->port);
 					}
-#endif
 					break;
 				}
 
@@ -234,7 +226,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 				    sameaddr(&q->ip_addr, &ifp->addr)) {
 					/* matches -- rejuvinate old entry */
 					q->change = IFN_KEEP;
-#ifdef NAT_TRAVERSAL
+
 					/* look for other interfaces to keep (due to NAT-T) */
 					for (q = q->next; q; q = q->next) {
 						if (streq(q->ip_dev->id_rname,
@@ -245,7 +237,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 							     &ifp->addr))
 							q->change = IFN_KEEP;
 					}
-#endif
+
 					break;
 				}
 

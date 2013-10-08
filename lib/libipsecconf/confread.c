@@ -92,12 +92,12 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
 	cfg->setup.options[KBF_NHELPERS] = -1; /* see also plutomain.c */
-#ifdef NAT_TRAVERSAL
+
 	cfg->setup.options[KBF_DISABLEPORTFLOATING] = FALSE;
 	cfg->setup.options[KBF_KEEPALIVE] = 0;                  /* config setup */
 	cfg->setup.options[KBF_NATIKEPORT] = NAT_T_IKE_FLOAT_PORT;
 	cfg->conn_default.options[KBF_NAT_KEEPALIVE] = TRUE;    /* per conn */
-#endif
+
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 
 	cfg->conn_default.options[KBF_INITIAL_CONTACT] = FALSE;

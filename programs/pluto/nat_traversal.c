@@ -21,8 +21,6 @@
  *
  */
 
-#ifdef NAT_TRAVERSAL
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -1144,5 +1142,3 @@ void show_setup_natt()
 		pluto_natt_float_port,
 		nat_traversal_support_port_floating ? "no" : "yes");
 }
-
-#endif

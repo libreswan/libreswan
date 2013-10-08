@@ -73,9 +73,7 @@
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "xauth.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #include "virtual.h"	/* needs connections.h */
 
@@ -99,10 +97,8 @@ bool orient(struct connection *c)
 			 * it continues checking to catch any ambiguity.
 			 */
 			for (p = interfaces; p != NULL; p = p->next) {
-#ifdef NAT_TRAVERSAL
 				if (p->ike_float)
 					continue;
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 				if (c->loopback &&

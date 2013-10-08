@@ -72,9 +72,7 @@
 #include "plutoalg.h"
 #include "xauth.h"
 #include "addresspool.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #include "virtual.h"	/* needs connections.h */
 

@@ -559,14 +559,14 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 				    conn->name);
 		}
 	}
-#ifdef NAT_TRAVERSAL
+
 	if (conn->options_set[KBF_FORCEENCAP])
 		msg.forceencaps = conn->options[KBF_FORCEENCAP];
 	if (conn->options_set[KBF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
 	else
 		msg.nat_keepalive = TRUE;
-#endif
+
 	/* Activate sending out own vendorid */
 	if (conn->options_set[KBF_SEND_VENDORID])
 		msg.send_vendorid = conn->options[KBF_SEND_VENDORID];

@@ -74,9 +74,7 @@
 #include "xauth.h"
 #endif
 #include "vendor.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 #include "virtual.h"	/* needs connections.h */
 #include "dpd.h"
 #include "x509more.h"
@@ -227,13 +225,11 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 						    md->sender_port, LEMPTY);
 
 #if 0
-#ifdef NAT_TRAVERSAL
 	if (c == NULL && md->iface->ike_float) {
 		c = find_host_connection(&md->iface->addr,
 					 pluto_natt_float_port,
 					 &md->sender, md->sender_port, LEMPTY);
 	}
-#endif
 #endif
 
 	if (c == NULL) {
@@ -317,7 +313,6 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		      ip_str(
 			      &c->spd.that.host_addr));
 
-#ifdef NAT_TRAVERSAL
 	DBG(DBG_CONTROLMORE, DBG_log("sender checking NAT-t: %d and %d",
 				     nat_traversal_enabled,
 				     md->quirks.nat_traversal_vid));
@@ -332,7 +327,6 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 					nat_traversal_vid_to_method(md->quirks.
 								    nat_traversal_vid)));
 	}
-#endif
 
 	/* save initiator SA for HASH */
 	clonereplacechunk(st->st_p1isa, sa_pd->pbs.start, pbs_room(
@@ -649,17 +643,13 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	{
 		int np = ISAKMP_NEXT_NONE;
 
-#ifdef NAT_TRAVERSAL
 		if (st->hidden_variables.st_nat_traversal)
 			np = ISAKMP_NEXT_VID;
-
-#endif
 
 		if (!out_vid(np, &md->rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (st->hidden_variables.st_nat_traversal) {
 		if (!nat_traversal_add_natd(ISAKMP_NEXT_VID, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
@@ -669,7 +659,6 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 			     md->quirks.nat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
 
 	/* finish message */
 	close_message(&md->rbody, st);
@@ -722,15 +711,11 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	/* copy the quirks we might have accumulated */
 	copy_quirks(&st->quirks, &md->quirks);
 
-#ifdef NAT_TRAVERSAL
 	if (nat_traversal_enabled && md->quirks.nat_traversal_vid)
 		st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(
 								      md->
 								      quirks.
 								      nat_traversal_vid));
-
-
-#endif
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.group,
@@ -745,7 +730,6 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	memcpy(st->st_rcookie, md->hdr.isa_rcookie, COOKIE_SIZE);
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-#ifdef NAT_TRAVERSAL
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("inR1: checking NAT-t: %d and %d",
 		    nat_traversal_enabled,
@@ -758,8 +742,6 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	}
 	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA)
 		nat_traversal_new_ka_event();
-
-#endif
 
 	/* set up second calculation */
 	{
@@ -865,12 +847,10 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (st->hidden_variables.st_nat_traversal) {
 		if (!nat_traversal_add_natd(auth_payload, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
 
 	/* HASH_I or SIG_I out */
 	{
@@ -999,7 +979,6 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 	u_char buffer[1024];
 	struct payload_digest id_pd;
 
-#ifdef NAT_TRAVERSAL
 	if (st->hidden_variables.st_nat_traversal) {
 		nat_traversal_natd_lookup(md);
 		nat_traversal_show_result(
@@ -1008,8 +987,6 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 	}
 	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA)
 		nat_traversal_new_ka_event();
-
-#endif
 
 	/* Reconstruct the peer ID so the peer hash can be authenticated */
 	{
@@ -1357,10 +1334,8 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
 		numvidtosend++;
 #endif
-#ifdef NAT_TRAVERSAL
 	if (nat_traversal_enabled) 
 		numvidtosend++;
-#endif
 	if(c->cisco_unity)
 		numvidtosend++;
 
@@ -1377,7 +1352,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (nat_traversal_enabled) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
@@ -1386,7 +1360,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 			return STF_INTERNAL_ERROR;
 		}
 	}
-#endif
 
 #ifdef XAUTH
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {

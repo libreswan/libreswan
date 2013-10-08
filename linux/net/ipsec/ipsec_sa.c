@@ -1041,13 +1041,11 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 	}
 	ips->ips_addr_p = NULL;
 
-#ifdef NAT_TRAVERSAL
 	if (ips->ips_natt_oa) {
 		memset((caddr_t)(ips->ips_natt_oa), 0, ips->ips_natt_oa_size);
 		kfree(ips->ips_natt_oa);
 	}
 	ips->ips_natt_oa = NULL;
-#endif
 
 	if (ips->ips_key_a != NULL) {
 		memset((caddr_t)(ips->ips_key_a), 0, ips->ips_key_a_size);

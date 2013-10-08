@@ -64,9 +64,7 @@
 #ifdef XAUTH
 #include "xauth.h"
 #endif
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
@@ -774,12 +772,11 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		/* free previously transmitted packet */
 		freeanychunk(st->st_tpacket);
-#ifdef NAT_TRAVERSAL
 		if (nat_traversal_enabled) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
-#endif
+
 		DBG(DBG_CONTROL, {
 			    char buf[ADDRTOT_BUF];
 			    DBG_log(

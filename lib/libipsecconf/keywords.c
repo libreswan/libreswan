@@ -376,7 +376,7 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "force_busy",     kv_config, kt_bool,      KBF_FORCEBUSY, NOT_ENUM },
 	{ "ikeport",        kv_config, kt_number,     KBF_IKEPORT, NOT_ENUM },
-#ifdef NAT_TRAVERSAL
+
 	{ "virtual_private", kv_config, kt_string,     KSF_VIRTUALPRIVATE,
 	  NOT_ENUM },
 	{ "nat_traversal", kv_config, kt_bool,        KBF_NATTRAVERSAL,
@@ -388,7 +388,7 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "keep_alive", kv_config, kt_number,    KBF_KEEPALIVE, NOT_ENUM },
 	{ "force_keepalive", kv_config, kt_obsolete,    KBF_WARNIGNORE,
 	  NOT_ENUM },
-#endif
+
 	{ "listen",     kv_config, kt_string, KSF_LISTEN, NOT_ENUM },
 	{ "protostack",     kv_config, kt_string,    KSF_PROTOSTACK,
 	  &kw_proto_stack },
@@ -460,10 +460,10 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_SAREFTRACK, &kw_sareftrack_list },
 	{ "pfs",            kv_conn | kv_auto, kt_bool,   KBF_PFS,
 	  NOT_ENUM },
-#ifdef NAT_TRAVERSAL
+
 	{ "nat_keepalive",  kv_conn | kv_auto, kt_bool,   KBF_NAT_KEEPALIVE,
 	  NOT_ENUM },
-#endif
+
 	{ "initial_contact", kv_conn | kv_auto, kt_bool,   KBF_INITIAL_CONTACT,
 	  NOT_ENUM },
 	{ "cisco_unity", kv_conn | kv_auto, kt_bool,   KBF_CISCO_UNITY,
@@ -505,10 +505,9 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  &kw_xauthfail },
 #endif
 
-#ifdef NAT_TRAVERSAL
 	{ "forceencaps",    kv_conn | kv_auto, kt_bool,   KBF_FORCEENCAP,
 	  NOT_ENUM },
-#endif
+
 	{ "overlapip",      kv_conn | kv_auto, kt_bool,   KBF_OVERLAPIP,
 	  NOT_ENUM },
 	{ "rekey",          kv_conn | kv_auto, kt_bool,   KBF_REKEY,

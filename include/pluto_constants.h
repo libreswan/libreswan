@@ -58,7 +58,6 @@ enum keyword_xauthfail {
 	XAUTHFAIL_SOFT = 1,
 };
 
-#ifdef NAT_TRAVERSAL
 /*
  *  * NAT-Traversal defines for nat_traveral type from nat_traversal.h
  *   *
@@ -72,7 +71,6 @@ enum natt_method {
 	NAT_TRAVERSAL_NAT_BHND_ME           =30,
 	NAT_TRAVERSAL_NAT_BHND_PEER         =31
 };
-#endif
 
 /* Timer events */
 

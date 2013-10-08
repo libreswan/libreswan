@@ -210,7 +210,6 @@ struct ipsec_sa {
 	__u64 ips_comp_ratio_cbytes;            /* compressed bytes */
 	__u64 ips_comp_ratio_dbytes;            /* decompressed (or uncompressed) bytes */
 
-	/* these are included even if NAT_TRAVERSAL is off */
 	__u8 ips_natt_type;
 	__u8 ips_natt_reserved[3];
 	__u16 ips_natt_sport;

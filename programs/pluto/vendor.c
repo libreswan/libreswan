@@ -41,9 +41,7 @@
 #include "kernel.h"
 #include "state.h"
 
-#ifdef NAT_TRAVERSAL
-#  include "nat_traversal.h"
-#endif
+#include "nat_traversal.h"
 
 /**
  * Listing of interesting but details unknown Vendor IDs:
@@ -586,7 +584,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 	bool vid_useful = TRUE; /* tentatively TRUE */
 
 	switch (vid->id) {
-#ifdef NAT_TRAVERSAL
 	/**
 	 * Use most recent supported NAT-Traversal method and ignore
 	 * the other ones (implementations will send all supported
@@ -641,7 +638,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 			}
 		}
 		break;
-#endif
 
 	case VID_MISC_DPD:
 		/* Remote side would like to do DPD with us on this connection */

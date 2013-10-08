@@ -1280,7 +1280,6 @@ static enum ipsec_rcv_value ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 				    irs->sa_len ? irs->sa : " (error)");
 		}
 
-#ifdef NAT_TRAVERSAL
 		if (irs->proto == IPPROTO_ESP) {
 			KLIPS_PRINT(debug_rcv,
 				    "klips_debug:ipsec_rcv_auth_init: "
@@ -1299,7 +1298,6 @@ static enum ipsec_rcv_value ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 				return IPSEC_RCV_FAILEDINBOUND;
 			}
 		}
-#endif
 	}
 
 	if (newipsp != irs->ipsp) {
@@ -1400,7 +1398,6 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 	 *      if skb->sk is guaranteed to be valid here.
 	 *  2005-04-16: mcr@xelerance.com
 	 */
-#ifdef NAT_TRAVERSAL
 	/*
 	 *
 	 * XXX we should ONLY update pluto if the SA passes all checks,
@@ -1446,7 +1443,6 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 			return IPSEC_RCV_FAILEDINBOUND;
 		}
 	}
-#endif
 #endif
 
 	irs->authfuncs = NULL;
@@ -1875,7 +1871,6 @@ static enum ipsec_rcv_value ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
 	/* set up for cleanup */
 	skb = irs->skb;
 
-#ifdef NAT_TRAVERSAL
 	if ((irs->natt_type) && (irs->proto != IPPROTO_IPIP)) {
 		/*
 		 * NAT-Traversal and Transport Mode:
@@ -1912,7 +1907,6 @@ static enum ipsec_rcv_value ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
 		}
 #endif
 	}
-#endif
 
 	/* okay, acted on all SA's, so free the last SA, and move to the next */
 	if (irs->ipsp) {
@@ -2386,7 +2380,6 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 
 	irs->hard_header_len = skb->dev->hard_header_len;
 
-#ifdef NAT_TRAVERSAL
 	switch (encap_type) {
 	case UDP_ENCAP_ESPINUDP:
 		irs->natt_type = ESPINUDP_WITH_NON_ESP;
@@ -2404,7 +2397,6 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 		}
 		goto rcvleave;
 	}
-#endif  /* NAT_TRAVERSAL */
 
 	irs->skb = skb;
 
@@ -2513,10 +2505,8 @@ static struct ipsec_rcv_state *ipsec_rcv_state_new(void)
 	irs->said.proto = 0;
 
 	irs->hard_header_len = 0;
-#ifdef NAT_TRAVERSAL
 	irs->natt_type = 0;
 	irs->natt_len = 0;
-#endif
 
 	irs->lastipsp = NULL;
 	irs->ipsp = NULL;

@@ -209,14 +209,6 @@ LABELED_IPSEC_SRCS=${LABELED_IPSEC_DIST_SRCS}
 LABELED_IPSEC_LIBS=-lselinux
 endif
 
-ifeq ($(USE_NAT_TRAVERSAL),true)
-NAT_DEFS=-DNAT_TRAVERSAL
-endif
-
-ifeq ($(USE_NAT_TRAVERSAL_TRANSPORT_MODE),true)
-NAT_DEFS+=-DUSE_NAT_TRAVERSAL_TRANSPORT_MODE
-endif
-
 ifeq ($(USE_LIBCURL),true)
 # This compile option activates dynamic URL fetching
 # with libcurl in the source code
@@ -256,7 +248,7 @@ DEFINES = $(EXTRA_DEFINES) \
 	${AGGRESSIVE_DEFS} \
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
-	${NAT_DEFS} ${CURL_DEFS}\
+	${CURL_DEFS}\
 	${SINGLE_CONF_DIR} \
 	${HAVE_STATSD_DEFS} \
 	${IPSEC_CONNECTION_LIMIT_DEFS} \

@@ -55,9 +55,7 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 #include "security_selinux.h"
@@ -602,50 +600,12 @@ bool out_sa(pb_stream *outs,
 					 */
 					if (p->protoid != PROTO_IPCOMP ||
 					    st->st_policy & POLICY_TUNNEL) {
-#ifdef NAT_TRAVERSAL
-#ifndef USE_NAT_TRAVERSAL_TRANSPORT_MODE
-						if ((st->hidden_variables.
-						     st_nat_traversal &
-						     NAT_T_DETECTED) &&
-						    (!(st->st_policy &
-						       POLICY_TUNNEL))) {
-							/* Inform user that we will not respect policy and only
-							 * propose Tunnel Mode
-							 */
-							loglog(RC_LOG_SERIOUS, "NAT-Traversal: "
-							       "Transport Mode not allowed due to security concerns -- "
-							       "using Tunnel mode.  Rebuild Libreswan with USE_NAT_TRAVERSAL_TRANSPORT_MODE=true in Makefile.inc to support transport mode.");
-						}
-#endif
-#endif
-
 						if (!out_attr(
-							    ENCAPSULATION_MODE
-#ifdef NAT_TRAVERSAL
-#ifdef USE_NAT_TRAVERSAL_TRANSPORT_MODE
-							    ,
+							    ENCAPSULATION_MODE,
 							    NAT_T_ENCAPSULATION_MODE(
 								    st,
 								    st
 								    ->st_policy)
-#else
-						            /* If NAT-T is detected, use UDP_TUNNEL as long as Transport
-						             * Mode has security concerns.
-						             *
-						             * User has been informed of that
-						             */
-							    ,
-							    NAT_T_ENCAPSULATION_MODE(
-								    st,
-								    POLICY_TUNNEL)
-#endif
-#else                                           /* ! NAT_TRAVERSAL */
-							    , st->st_policy &
-							    POLICY_TUNNEL ?
-							    ENCAPSULATION_MODE_TUNNEL
-							    :
-							    ENCAPSULATION_MODE_TRANSPORT
-#endif
 							    , attr_desc,
 							    attr_val_descs,
 							    &trans_pbs))
@@ -1872,7 +1832,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
-#ifdef NAT_TRAVERSAL
 			switch (val) {
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
@@ -1903,15 +1862,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
-#ifndef USE_NAT_TRAVERSAL_TRANSPORT_MODE
-				loglog(RC_LOG_SERIOUS,
-				       "NAT-Traversal: Transport mode disabled due "
-				       "to security concerns");
-				return FALSE;
-
-				break;
-#endif
-
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
 				DBG(DBG_NATT,
 				    DBG_log(
@@ -1953,15 +1903,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
-#ifndef USE_NAT_TRAVERSAL_TRANSPORT_MODE
-				loglog(RC_LOG_SERIOUS,
-				       "NAT-Traversal: Transport mode disabled due "
-				       "to security concerns");
-				return FALSE;
-
-				break;
-#endif
-
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
 				DBG(DBG_NATT,
 				    DBG_log(
@@ -2000,9 +1941,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 				break;
 			}
-#else
-			attrs->encapsulation = val;
-#endif
 			break;
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 			attrs->transattrs.integ_hash = val;

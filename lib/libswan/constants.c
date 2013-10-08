@@ -617,9 +617,7 @@ enum_names *ipsec_attr_val_descs[] = {
 	&sa_lifetime_names,     /* SA_LIFE_TYPE */
 	NULL,                   /* SA_LIFE_DURATION */
 	&oakley_group_names,    /* GROUP_DESCRIPTION */
-#ifdef NAT_TRAVERSAL
 	&enc_mode_names,        /* ENCAPSULATION_MODE */
-#endif
 	&auth_alg_names,        /* AUTH_ALGORITHM */
 	NULL,                   /* KEY_LENGTH */
 	NULL,                   /* KEY_ROUNDS */
@@ -655,7 +653,6 @@ static const char *const enc_draft_mode_name[] = {
 	"ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS",
 };
 
-#ifdef NAT_TRAVERSAL
 static enum_names enc_rfc_mode_names =
 { ENCAPSULATION_MODE_TUNNEL, ENCAPSULATION_MODE_UDP_TRANSPORT_RFC,
   enc_rfc_mode_name, NULL };
@@ -664,7 +661,6 @@ enum_names enc_mode_names =
 { ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS,
   ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS, enc_draft_mode_name,
   &enc_rfc_mode_names };
-#endif
 
 /* Auth Algorithm attribute */
 
