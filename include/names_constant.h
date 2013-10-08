@@ -58,12 +58,10 @@ extern enum_names sa_lifetime_names;
 extern enum_names enc_mode_names;
 extern enum_names auth_alg_names, extended_auth_alg_names;
 extern enum_names oakley_lifetime_names;
-extern enum_names oakley_prf_names;
 extern enum_names oakley_enc_names;
 extern enum_names oakley_hash_names;
 extern enum_names oakley_auth_names;
 extern enum_names oakley_group_names;
-extern enum_names oakley_group_type_names;
 extern enum_names notification_names;
 extern enum_names ipsec_notification_names;
 
