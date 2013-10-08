@@ -1412,6 +1412,15 @@ static int xauth_launch_authent(struct state *st,
 	return 0;
 }
 
+/* log a nice desctiption of an unsupported attribute */
+static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
+{
+	libreswan_log("Unsupported %s %s attribute %s received.",
+		kind,
+		(val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
+		enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK));
+}
+
 /** STATE_XAUTH_R0:
  *  First REQUEST sent, expect for REPLY
  *  HDR*, HASH, ATTR(REPLY,PASSWORD) --> HDR*, HASH, ATTR(STATUS)
@@ -1494,10 +1503,7 @@ stf_status xauth_inR0(struct msg_digest *md)
 				break;
 
 			default:
-				libreswan_log(
-					"Unsupported XAUTH %s attribute %s received.",
-					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					enum_show(&xauth_attr_names, attr.isaat_af_type));
+				log_bad_attr("XAUTH", &xauth_attr_names, attr.isaat_af_type);
 				break;
 			}
 		}
@@ -1661,11 +1667,7 @@ stf_status modecfg_inR0(struct msg_digest *md)
 				break;
 
 			default:
-				libreswan_log(
-					"unsupported mode cfg %s attribute %s received.",
-					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					enum_show(&modecfg_attr_names,
-						  attr.isaat_af_type));
+				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
 				break;
 			}
 		}
@@ -1780,11 +1782,7 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 			/* ignore */
 			break;
 		default:
-			libreswan_log(
-				"unsupported mode cfg %s attribute %s received.",
-				(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-				enum_show(&modecfg_attr_names,
-					  attr.isaat_af_type));
+			log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
 			break;
 		}
 	}
@@ -1904,11 +1902,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				break;
 
 			default:
-				libreswan_log(
-					"unsupported mode cfg %s attribute %s received.",
-					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					enum_show(&modecfg_attr_names,
-						  attr.isaat_af_type));
+				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
 				break;
 			}
 		}
@@ -2198,11 +2192,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			}
 
 			default:
-				libreswan_log(
-					"unsupported mode cfg %s attribute %s received.",
-					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					enum_show(&modecfg_attr_names,
-						  attr.isaat_af_type));
+				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
 				break;
 			}
 		}
@@ -2634,11 +2624,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 			break;
 
 		default:
-			libreswan_log(
-				"XAUTH: Unsupported %s attribute: %s",
-				(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-				enum_show(&modecfg_attr_names,
-					  attr.isaat_af_type));
+			log_bad_attr("XAUTH", &modecfg_attr_names, attr.isaat_af_type);
 			break;
 		}
 	}
