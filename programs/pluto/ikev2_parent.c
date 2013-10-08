@@ -497,7 +497,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		passert(numvidtosend == 0);
 	}
 
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 	close_output_pbs(&reply_stream);
 
 	freeanychunk(st->st_tpacket);
@@ -950,7 +950,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			return STF_INTERNAL_ERROR;
 	}
 
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 	close_output_pbs(&reply_stream);
 
 	/* keep it for a retransmit if necessary */
@@ -2634,7 +2634,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		 &child_spi,
 		 type, n_data, &rbody);
 
-	close_message(&rbody);
+	close_message(&rbody, p1st);
 	close_output_pbs(&reply);
 
 	clonetochunk(p1st->st_tpacket, reply.start, pbs_offset(&reply),

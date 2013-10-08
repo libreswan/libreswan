@@ -272,11 +272,6 @@ XMLTO?=$(shell which xmlto | grep / | head -n1)
 # look for POD2MAN command
 POD2MAN?=$(shell which pod2man | grep / | head -n1)
 
-#
-# default number of bits for ipsec newhostkey
-#
-RSAKEYBITS:=2192
-
 ## build environment variations
 #
 # USE_ variables determine if features are compiled into Libreswan.
@@ -512,7 +507,6 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-PLUTOLIB=${OBJDIRTOP}/lib/libpluto/libpluto.a
 LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
@@ -543,7 +537,7 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
-export LIBRESWANLIB LSWLOGLIB PLUTOLIB 
+export LIBRESWANLIB LSWLOGLIB 
 export LIBDESSRCDIR LIBDESLITE LIBAES
 export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
@@ -576,7 +570,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@MODPROBE@:$(MODPROBE):g" \
-			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 
 # For KVM testing setup

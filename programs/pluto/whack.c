@@ -109,6 +109,7 @@ static void help(void)
 		" [--overlapip]"
 		" [--tunnel]"
 		" [--pfs]"
+		" [--no_ikepad]"
 		" \\\n   "
 		" [--pfsgroup [modp1024] | [modp1536] | [modp2048] | [modp3072] | [modp4096] | [modp6144] | [modp8192]]"
 		" \\\n   "
@@ -490,6 +491,7 @@ enum option_enums {
 	CD_POLICY_LABEL,
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
+	CD_NO_IKEPAD,
 	CD_ESP
 #   define CD_LAST CD_ESP       /* last connection description */
 
@@ -725,6 +727,7 @@ static const struct option long_opts[] = {
 	{ "ikealg", required_argument, NULL, CD_IKE + OO },
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
 	{ "esp", required_argument, NULL, CD_ESP + OO },
+	{ "no_ikepad", no_argument, NULL, CD_NO_IKEPAD + OO },
 	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE +
 	  OO },
 #ifdef HAVE_NM
@@ -1493,6 +1496,7 @@ int main(int argc, char **argv)
 		case CD_DISABLEARRIVALCHECK:    /* --disablearrivalcheck */
 		case CD_DONT_REKEY:             /* --donotrekey */
 		case CD_MODECFGPULL:            /* --modecfgpull */
+		case CD_NO_IKEPAD:		/* --no_ikepad */
 			msg.policy |= LELEM(c - CD_POLICY_FIRST);
 			continue;
 

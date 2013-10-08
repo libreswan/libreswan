@@ -1224,7 +1224,7 @@ void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
  * members have the same alignment and size!  This requires
  * that all padding be explicit.
  */
-void DBG_print_struct(const char *label, const void *struct_ptr,
+static void DBG_print_struct(const char *label, const void *struct_ptr,
 		      struct_desc *sd, bool len_meaningful)
 {
 	bool immediate = FALSE;

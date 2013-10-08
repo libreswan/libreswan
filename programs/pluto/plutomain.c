@@ -1331,7 +1331,6 @@ int main(int argc, char **argv)
 
 /** Initialize all of the various features */
 
-	init_vendorid(); /* to be phased out */
 #ifdef NAT_TRAVERSAL
 	init_nat_traversal(nat_traversal, keep_alive, nat_t_spf);
 #endif

@@ -122,6 +122,7 @@ enum keyword_numeric_config_field {
 	KBF_INITIAL_CONTACT,
 	KBF_CISCO_UNITY,
 	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
+	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
 	KBF_MAX
 };
 

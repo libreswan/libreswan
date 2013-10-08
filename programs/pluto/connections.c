@@ -84,6 +84,24 @@ struct connection *connections = NULL;
 
 struct connection *unoriented_connections = NULL;
 
+
+static void unshare_ietfAttrList(ietfAttrList_t **listp)
+{
+	ietfAttrList_t *list = *listp;
+
+	while (list != NULL) {
+		ietfAttrList_t *el =
+			alloc_thing(ietfAttrList_t, "ietfAttrList");
+
+		el->attr = list->attr;
+		el->attr->count++;
+		el->next = NULL;
+		*listp = el;
+		listp = &el->next;
+		list = list->next;
+	}
+}
+
 /*
  * Find a connection by name.
  *

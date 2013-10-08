@@ -288,7 +288,7 @@ stf_status main_outI1(int whack_sock,
 
 #endif
 
-	close_message(&md.rbody);
+	close_message(&md.rbody, st);
 	close_output_pbs(&reply_stream);
 
 	clonetochunk(st->st_tpacket, reply_stream.start,
@@ -537,7 +537,7 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 
 	update_iv(st);
 	DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);
-	close_message(pbs);
+	close_message(pbs, st);
 	return TRUE;
 }
 
@@ -913,7 +913,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	/* Ensure our 'next payload' types sync'ed up */
 	passert(numvidtosend == 0);
 
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 
 	/* save initiator SA for HASH */
 	clonereplacechunk(st->st_p1isa, sa_pd->pbs.start, pbs_room(
@@ -1122,7 +1122,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 #endif
 
 	/* finish message */
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 
 	/* Reinsert the state, using the responder cookie we just received */
 	unhash_state(st);
@@ -1402,7 +1402,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 #endif
 
 	/* finish message */
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 
 	/*
 	 * next message will be encrypted, so, we need to have
@@ -1749,7 +1749,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 	/* encrypt message, except for fixed part of header */
 
-	/* st_new_iv was computed by generate_skeyids_iv */
+	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
 	if (!encrypt_message(&md->rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 

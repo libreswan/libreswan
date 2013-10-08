@@ -239,7 +239,14 @@ check:
 
 checkprograms:
 
+# ??? does $(SRCS) work, given the files could be in different directories?
 Makefile.depend: $(SRCS) $(LOGSRCS) ${LIBRESWANSRCDIR}/lib/libswan/Makefile
-	(ls $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(SRCS))) $(wildcard $(addprefix ${KLIPSSRCDIR}/,$(SRCS))) $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(LOGSRCS))) | grep '\.c' | xargs ${CC} -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}) >Makefile.depend
+	# note: files listed in SRCS may be in ${LIBRESWANSRCDIR}/lib/libswan/ or ${KLIPSSRCDIR}/
+	# This construction looks in both.  The wildcard function weeds out the wrong choices.
+	# The grep could be replaced by the GNU Make "filter" function.
+	(ls $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(SRCS))) \
+	    $(wildcard $(addprefix ${KLIPSSRCDIR}/,$(SRCS))) \
+	    $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(LOGSRCS))) \
+	| grep '\.c' | xargs ${CC} -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}) >Makefile.depend
 
 -include Makefile.depend

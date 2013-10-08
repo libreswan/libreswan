@@ -7,6 +7,7 @@ v3.6 (unreleased)
 * IKEv1: Added cisco_unity (default no) option which sends VID [Paul]
 * IKEv1: Fix compatibility with NAT-T and remote_peer_type=cisco [Paul]
 * IKEv1: dpdaction=restart_by_peer is now called dpdaction=restart [Paul]
+* IKE: introduce ikepad=yes|no (default yes) for Checkpoint interop [David]
 * pluto: work around for Cisco VPN clients sending extraneous bytes [Paul/Hugh]
 * pluto: Support for google-authenticator OTP via pam [Paul]
 * pluto: fix kernel.c typo in word outgoing [Tuomo]

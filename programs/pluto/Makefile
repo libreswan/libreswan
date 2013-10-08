@@ -138,7 +138,8 @@ DISTSRC = \
 	whack.c whackinit.c \
 	${XAUTH_DIST_SRCS} \
 	${AGGRESSIVE_DIST_SRCS} \
-	${LABELED_IPSEC_DIST_SRCS}
+	${LABELED_IPSEC_DIST_SRCS} \
+	packet.c pluto_constants.c readwhackmsg.c
 
 DIST = $(DISTMISC) $(DISTSRC)
 
@@ -166,6 +167,7 @@ OBJSPLUTO += ${LABELED_IPSEC_OBJS}
 OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
 OBJSPLUTO += ${OBJSLIBPLUTO}
 OBJSPLUTO += ${SYSDEP_OBJ} stubs.o
+OBJSPLUTO += packet.o pluto_constants.o readwhackmsg.o
 
 OBJSADNS = adns.o
 
