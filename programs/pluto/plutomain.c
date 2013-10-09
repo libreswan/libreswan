@@ -385,9 +385,9 @@ static void pluto_init_nss(char *confddir)
 
 	snprintf(buf, sizeof(buf), "%s", confddir);
 	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", buf);
-	SECStatus nss_init_status = NSS_InitReadWrite(buf);
+	SECStatus nss_init_status = NSS_Init(buf);
 	if (nss_init_status != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS initialization failed (err %d)\n",
+		loglog(RC_LOG_SERIOUS, "NSS readonly initialization failed (err %d)\n",
 		       PR_GetError());
 		exit_pluto(10);
 	} else {
