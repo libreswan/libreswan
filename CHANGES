@@ -31,6 +31,7 @@ v3.6 (unreleased)
   to randomised 3072-4096 (in blocks of 16) to fight keysize monoculture [Paul]
 * Removed unused and unmaintained USE_TAPROOM functionality [Paul]
 * NAT-T: Added 100.64.0.0/10 from RFC 6598 to virtual_private [Paul]
+* NSS: pluto should now open NSS files in readwrite, just read [Paul]
 * Bugtracker bugs fixed:
   #130: debian debuild creates a deb with /usr/libexec contents
         [Marc-Cristian Petersen]
