@@ -54,7 +54,7 @@ config setup
 	# using 25/8 as "private" address space on their wireless networks.
 	# This range has not been announced via BGP (at least upto 2010-12-21)
 	nat_traversal=yes
-	virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v6:fd00::/8,%v6:fe80::/10,%v4:100.64.0.0/10
+	virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v4:100.64.0.0/10,%v6:fd00::/8,%v6:fe80::/10
 
 # Add connections here
 
