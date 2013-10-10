@@ -361,7 +361,7 @@
  * RESERVED 14-127
  * Private USE 128-255
  */
-enum next_payload_types {
+enum next_payload_types_ikev1 {
 	ISAKMP_NEXT_NONE = 0, /* No other payload following */
 	ISAKMP_NEXT_SA = 1, /* Security Association */
 	ISAKMP_NEXT_P = 2, /* Proposal */
@@ -377,11 +377,28 @@ enum next_payload_types {
 	ISAKMP_NEXT_D = 12, /* Delete */
 	ISAKMP_NEXT_VID = 13, /* Vendor ID */
 	ISAKMP_NEXT_MCFG_ATTR = 14, /* Mode config Attribute */
-	/* NAT-Traversal: NAT-D (bad drafts) Conflicts with RFC 3547 */
-	ISAKMP_NEXT_NATD_BADDRAFTS = 15,
-	ISAKMP_NEXT_NATD_RFC = 20, /* NAT-Traversal: NAT-D (rfc) */
-	ISAKMP_NEXT_NATOA_RFC = 21, /* NAT-Traversal: NAT-OA (rfc) */
+	/* NAT-Traversal: NAT-D (bad drafts) Conflicts with RFC 3547 (not 3947!) and RFC 6407 */
+	/* old value: ISAKMP_NEXT_NATD_BADDRAFTS = 15 */
+	ISAKMP_NEXT_SAK = 15, /* SA KEK Payload - RFC 6407 */
+	ISAKMP_NEXT_TEK = 16, /* SA TEK Payload - RFC 6407 */
+	ISAKMP_NEXT_KD = 17, /* Key Download - RFC 3547 */
+	ISAKMP_NEXT_SEQ = 18, /* Sequence Number - RFC 3547 */
+	ISAKMP_NEXT_POP = 19, /* Proof of Possession - RFC 3547 */
+	ISAKMP_NEXT_NATD_RFC = 20, /* NAT-Traversal: NAT-D RFC 3947 */
+	ISAKMP_NEXT_NATOA_RFC = 21, /* NAT-Traversal: NAT-OA RFC 3947 */
+	ISAKMP_NEXT_GAP = 22, /* Group Associated Policy = RFC 6407 */
+	/* 23-127 Unassigned */
+	/* 128 - 255 Private Use */
+	ISAKMP_NEXT_NATD_DRAFTS = 130, /* NAT-Traversal: NAT-D (drafts) */
+	ISAKMP_NEXT_NATOA_DRAFTS = 131, /* NAT-Traversal: NAT-OA (drafts) */
+	/* Cisco/Microsoft proprietary IKE fragmentation */
+	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
+	ISAKMP_NEXT_ROOF = 254, /* roof on payload types */
+};
 
+enum next_payload_types_ikev2 {
+	ISAKMP_NEXT_v2NONE = 0,
+	/* 1 - 32 Reserved for IKEv1 */
 	ISAKMP_NEXT_v2SA = 33, /* security association */
 	ISAKMP_NEXT_v2KE = 34, /* key exchange payload */
 	ISAKMP_NEXT_v2IDi = 35, /* Initiator ID payload */
@@ -399,14 +416,10 @@ enum next_payload_types {
 	ISAKMP_NEXT_v2E = 46, /* Encrypted payload */
 	ISAKMP_NEXT_v2CP = 47, /* Configuration payload (MODECFG) */
 	ISAKMP_NEXT_v2EAP = 48, /* Extensible authentication*/
-
-	ISAKMP_NEXT_ROOF = 49, /* roof on payload types */
-
-	/* SPECIAL CASES */
-	ISAKMP_NEXT_NATD_DRAFTS = 130, /* NAT-Traversal: NAT-D (drafts) */
-	ISAKMP_NEXT_NATOA_DRAFTS = 131, /* NAT-Traversal: NAT-OA (drafts) */
-	/* Cisco proprietary IKE fragmentation */
-	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
+	/* 128 - 255 Private Use */
+	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
+	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
+	ISAKMP_NEXT_v2ROOF = 255, /* roof on payload types */
 };
 
 /*
@@ -437,6 +450,8 @@ enum next_payload_types {
 #define MIP6_HOME_PREFIX 16
 #define INTERNAL_IP6_LINK 17
 #define INTERNAL_IP6_PREFIX 18
+#define HOME_AGENT_ADDRESS 19
+
 
 /* 65001 - 65535 Private Use */
 #define FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I 65500
@@ -488,21 +503,20 @@ enum next_payload_types {
 #define XAUTH_STATUS_FAIL	0
 #define XAUTH_STATUS_OK	1
 
-
-/* Values of XAUTH_STATUS attribute (draft-ietf-ipsec-isakmp-xauth-06 4.2) */
-#define    XAUTH_STATUS_FAIL	0
-#define    XAUTH_STATUS_OK	1
-
-
+/* Values of XAUTH_TYPE attributes */
 #define XAUTH_TYPE_GENERIC 0
 #define XAUTH_TYPE_CHAP 1
 #define XAUTH_TYPE_OTP 2
 #define XAUTH_TYPE_SKEY 3
 
+/* proprietary Microsoft attributes */
+#define INTERNAL_IP4_SERVER 23456
+#define INTERNAL_IP6_SERVER 23457
+
 /* Unity (Cisco) Mode Config attribute values */
-#define CISCO_BANNER 28672
+#define MODECFG_BANNER 28672
 #define CISCO_SAVE_PW 28673
-#define CISCO_DEF_DOMAIN 28674
+#define MODECFG_DOMAIN 28674
 #define CISCO_SPLIT_DNS 28675
 #define CISCO_SPLIT_INC 28676
 #define CISCO_UDP_ENCAP_PORT 28677
@@ -551,9 +565,9 @@ enum isakmp_xchg_types {
 	ISAKMP_XCHG_INFO = 5, /* Informational */
 	ISAKMP_XCHG_MODE_CFG = 6, /* Mode Config */
 
-	/* Private exchanges to pluto -- tried to write an RFC */
-	ISAKMP_XCHG_ECHOREQUEST = 30, /* Echo Request */
-	ISAKMP_XCHG_ECHOREPLY = 31, /* Echo Reply */
+	/* Private exchanges to pluto -- openswan mistakenly uses these */
+	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST = 30, /* Echo Request */
+	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY = 31, /* Echo Reply */
 
 	/* Extra exchange types, defined by Oakley
 	 * RFC2409 "The Internet Key Exchange (IKE)", near end of Appendix A
@@ -566,7 +580,9 @@ enum isakmp_xchg_types {
 	ISAKMP_v2_AUTH = 35,
 	ISAKMP_v2_CHILD_SA = 36,
 	ISAKMP_v2_INFORMATIONAL = 37,
+	ISAKMP_v2_IKE_SESSION_RESUME = 38, /* RFC 5723 */
 
+	/* libreswan private use */
 	ISAKMP_XCHG_ECHOREQUEST_PRIVATE = 244, /* Private Echo Request */
 	ISAKMP_XCHG_ECHOREPLY_PRIVATE = 245, /* Private Echo Reply */
 };
@@ -610,9 +626,11 @@ extern const char *const critical_names[];
  * same in IKEv1 and IKEv2.
  */
 #define PROTO_RESERVED 0 /* only in IKEv2 */
+#define PROTO_v2_RESERVED 0 /* only in IKEv2 */
 #define PROTO_ISAKMP 1
 #define PROTO_IPSEC_AH 2
 #define PROTO_IPSEC_ESP 3
+#define PROTO_v2_ESP 3
 #define PROTO_IPCOMP 4 /* only in IKEv1 */
 
 /*

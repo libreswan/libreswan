@@ -225,15 +225,15 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 
 	/* zero out the digest descriptors -- might nuke [v2E] digest! */
 
-	while (np != ISAKMP_NEXT_NONE) {
+	while (np != ISAKMP_NEXT_v2NONE) {
 		struct_desc *sd = np <
-				  ISAKMP_NEXT_ROOF ? payload_descs[np] : NULL;
+				  ISAKMP_NEXT_v2ROOF ? payload_descs[np] : NULL;
 		int thisp = np;
 		bool unknown_payload = FALSE;
 
 		DBG(DBG_CONTROL,
 		    DBG_log("Now lets proceed with payload (%s)",
-			    enum_show(&payload_names, thisp)));
+			    enum_show(&payload_names_ikev2, thisp)));
 		memset(pd, 0, sizeof(*pd));
 
 		if (pd == &md->digest[PAYLIMIT]) {
@@ -258,12 +258,12 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 				/* it was critical */
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",
-				       enum_show(&payload_names, thisp));
+				       enum_show(&payload_names_ikev2, thisp));
 				return STF_FATAL;
 			}
 			loglog(RC_COMMENT, "non-critical payload ignored because it contains an unknown or"
 			       " unexpected payload type (%s) at the outermost level",
-			       enum_show(&payload_names, thisp));
+			       enum_show(&payload_names_ikev2, thisp));
 		}
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
@@ -274,7 +274,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 
 		DBG(DBG_PARSING,
 		    DBG_log("processing payload: %s (len=%u)\n",
-			    enum_show(&payload_names, thisp),
+			    enum_show(&payload_names_ikev2, thisp),
 			    pd->payload.generic.isag_length));
 
 		/* place this payload at the end of the chain for this type */
@@ -293,7 +293,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		/* do payload-type specific things that need to be here. */
 		switch (thisp) {
 		case ISAKMP_NEXT_v2E:
-			np = ISAKMP_NEXT_NONE;
+			np = ISAKMP_NEXT_v2NONE;
 			break;
 		default: /* nothing special */
 			break;
@@ -507,7 +507,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	if (needed != 0) {
 		loglog(RC_LOG_SERIOUS, "message for %s is missing payloads %s",
 		       enum_show(&state_names, from_state),
-		       bitnamesof(payload_name, needed));
+		       bitnamesof(payload_name_ikev2, needed));
 		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 		return;
 	}
@@ -1032,5 +1032,14 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 				  const char *name)
 {
-	return accept_nonce(md, dest, name, ISAKMP_NEXT_v2Ni);
+	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
+	size_t len = pbs_left(nonce_pbs);
+
+	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
+		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
+			name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
+		return PAYLOAD_MALFORMED; /* ??? */
+	}
+	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
+	return NOTHING_WRONG;
 }

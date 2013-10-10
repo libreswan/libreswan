@@ -1334,11 +1334,6 @@ void process_v1_packet(struct msg_digest **mdp)
 
 #ifdef XAUTH
 	case ISAKMP_XCHG_MODE_CFG:
-		DBG(DBG_CONTROLMORE,
-		    DBG_log(" in %s:%d case %s", __func__, __LINE__,
-			    enum_show(&exchange_names,
-				      md->hdr.isa_xchg)));
-
 		if (is_zero_cookie(md->hdr.isa_icookie)) {
 			libreswan_log("Mode Config message is invalid because"
 				      " it has an Initiator Cookie of 0");
@@ -1388,7 +1383,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			DBG(DBG_CONTROLMORE, DBG_log(" processing received "
 						     "isakmp_xchg_type %s.",
-						     enum_show(&exchange_names,
+						     enum_show(&exchange_names_ikev1,
 							       md->hdr.isa_xchg)));
 			DBG(DBG_CONTROLMORE, DBG_log(" this is a%s%s%s%s",
 						     st->st_connection->spd.
@@ -1497,7 +1492,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    __func__,
 					    __LINE__,
 					    enum_show(&
-						      exchange_names,
+						      exchange_names_ikev1,
 						      md->hdr.isa_xchg)));
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("this is a%s%s%s%s in state %s. "
@@ -1524,7 +1519,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				   libreswan_log("in state %s isakmp_xchg_types %s not supported."
 				   "reply UNSUPPORTED_EXCHANGE_TYPE"
 				   , enum_name(&state_names, st->st_state)
-				   , enum_show(&exchange_names, md->hdr.isa_xchg));
+				   , enum_show(&exchange_names_ikev1, md->hdr.isa_xchg));
 				   SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 				 */
 				return;
@@ -1548,7 +1543,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	case ISAKMP_XCHG_NGRP:
 	default:
 		libreswan_log("unsupported exchange type %s in message",
-			      enum_show(&exchange_names, md->hdr.isa_xchg));
+			      enum_show(&exchange_names_ikev1, md->hdr.isa_xchg));
 		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
@@ -2018,7 +2013,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					loglog(RC_LOG_SERIOUS, "%smessage ignored because it contains an unknown or"
 					       " unexpected payload type (%s) at the outermost level",
 					       excuse,
-					       enum_show(&payload_names, np));
+					       enum_show(&payload_names_ikev1, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
@@ -2037,7 +2032,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					loglog(RC_LOG_SERIOUS, "%smessage ignored because it "
 					       "contains an unexpected payload type (%s)",
 					       excuse,
-					       enum_show(&payload_names, np));
+					       enum_show(&payload_names_ikev1, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
@@ -2045,7 +2040,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				DBG(DBG_PARSING,
 				    DBG_log(
 					    "got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
-					    s, enum_show(&payload_names, np),
+					    s, enum_show(&payload_names_ikev1, np),
 					    needed, smc->opt_payloads));
 				needed &= ~s;
 			}
@@ -2108,7 +2103,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			loglog(RC_LOG_SERIOUS,
 			       "message for %s is missing payloads %s",
 			       enum_show(&state_names, from_state),
-			       bitnamesof(payload_name, needed));
+			       bitnamesof(payload_name_ikev1, needed));
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
 		}

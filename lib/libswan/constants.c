@@ -105,9 +105,7 @@ const char *const debug_bit_names[] = {
 	"res17",
 	"res18",
 	"res19",
-
 	"private",                              /* 20 */
-
 	"impair-delay-adns-key-answer",         /* 21 */
 	"impair-delay-adns-txt-answer",         /* 22 */
 	"impair-bust-mi2",                      /* 23 */
@@ -137,7 +135,7 @@ enum_names connection_kind_names =
 
 /* Payload types (RFC 2408 "ISAKMP" section 3.1) */
 
-const char *const payload_name[] = {
+const char *const payload_name_ikev1[] = {
 	"ISAKMP_NEXT_NONE",
 	"ISAKMP_NEXT_SA",       /* 1 */
 	"ISAKMP_NEXT_P",
@@ -153,17 +151,37 @@ const char *const payload_name[] = {
 	"ISAKMP_NEXT_D",
 	"ISAKMP_NEXT_VID",
 	"ISAKMP_NEXT_MODECFG",  /* 14 */
-	"ISAKMP_NEXT_NAT-D",
-	"ISAKMP_NEXT_16",
-	"ISAKMP_NEXT_17",
-	"ISAKMP_NEXT_18",
-	"ISAKMP_NEXT_19",
-	"ISAKMP_NEXT_NAT-D",    /* 21 - Used to be ISAKMP_NEXT_NATOA_DRAFTS = 130 */
-	"ISAKMP_NEXT_NAT-OA",   /* 22 - used to be ISAKMP_NEXT_NAT-OA = 131 */
+	"ISAKMP_NEXT_SAK", /* 15 was ISAKMP_NEXT_NATD_BADDRAFTS */
+	"ISAKMP_NEXT_TEK",
+	"ISAKMP_NEXT_KD",
+	"ISAKMP_NEXT_SEQ",
+	"ISAKMP_NEXT_POP",
+	"ISAKMP_NEXT_NATD_RFC",
+	"ISAKMP_NEXT_NATOA_RFC",
+	"ISAKMP_NEXT_GAP",
 	NULL
 };
 
-static const char *const payload_names_ikev2[] = {
+static const char *const payload_name_ikev1_private_use[] = {
+	"ISAKMP_NEXT_NATD_DRAFTS",
+	"ISAKMP_NEXT_NATOA_DRAFTS",
+	"ISAKMP_NEXT_IKE_FRAGMENTATION",        /* proprietary Cisco/Microsoft IKE fragmented payload */
+	NULL
+};
+static enum_names payload_names_ikev1_private_use =
+{ ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_IKE_FRAGMENTATION,
+  payload_name_ikev1_private_use, NULL };
+
+enum_names payload_names_ikev1 =
+{ ISAKMP_NEXT_NONE, ISAKMP_NEXT_GAP, payload_name_ikev1,
+  &payload_names_ikev1_private_use };
+
+static const char *const payload_name_ikev2[] = {
+	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
+	NULL
+};
+
+static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",        /* 33 */
 	"ISAKMP_NEXT_v2KE",
 	"ISAKMP_NEXT_v2IDi",
@@ -183,55 +201,87 @@ static const char *const payload_names_ikev2[] = {
 	NULL
 };
 
-static const char *const payload_name_private_use[] = {
-/*
-    "ISAKMP_NEXT_UNUSED_128",
-    "ISAKMP_NEXT_UNUSED_129",
- */
-	"ISAKMP_NEXT_NATD_DRAFTS",              /* we convert this to RFC-3974 value of ISAKMP_NEXT_NAT-D */
-	"ISAKMP_NEXT_NATOA_DRAFTS",             /* we convert this to RFC-3974 value of ISAKMP_NEXT_NAT-OA */
-	"ISAKMP_NEXT_IKE_FRAGMENTATION",        /* proprietary Cisco IKE fragmented payload */
+static const char *const payload_name_ikev2_private_use[] = {
+	"ISAKMP_NEXT_v2IKE_FRAGMENTATION",        /* method same as IKEv1 - not current v2 draft */
 	NULL
 };
 
-static enum_names payload_names_private_use =
-{ ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_IKE_FRAGMENTATION,
-  payload_name_private_use, NULL };
+static enum_names payload_names_ikev2_private_use =
+{ ISAKMP_NEXT_v2IKE_FRAGMENTATION, ISAKMP_NEXT_v2IKE_FRAGMENTATION,
+  payload_name_ikev2_private_use, NULL };
 
-static enum_names payload_names_ikev2_d =
-{ ISAKMP_NEXT_v2SA, ISAKMP_NEXT_v2EAP, payload_names_ikev2,
-  &payload_names_private_use };
+static enum_names payload_names_ikev2_main =
+{ ISAKMP_NEXT_v2SA, ISAKMP_NEXT_v2EAP, payload_name_ikev2_main,
+  &payload_names_ikev2_private_use };
 
-enum_names payload_names =
-{ ISAKMP_NEXT_NONE, ISAKMP_NEXT_NATOA_RFC, payload_name,
-  &payload_names_ikev2_d };
+enum_names payload_names_ikev2 =
+{ ISAKMP_NEXT_v2NONE, ISAKMP_NEXT_v2NONE, payload_name_ikev2,
+  &payload_names_ikev2_main };
+
+/* either V1 or V2 payload kind */
+
+static enum_names payload_names_ikev2copy_main =
+{ ISAKMP_NEXT_v2SA, ISAKMP_NEXT_v2EAP, payload_name_ikev2_main,
+  &payload_names_ikev1_private_use };
+
+enum_names payload_names_ikev1orv2 =
+{ ISAKMP_NEXT_NONE, ISAKMP_NEXT_GAP, payload_name_ikev1,
+  &payload_names_ikev2copy_main };
 
 /* Exchange types (note: two discontinuous ranges) */
 
-static const char *const exchange_name[] = {
+static const char *const exchange_name_ikev1[] = {
 	"ISAKMP_XCHG_NONE",
 	"ISAKMP_XCHG_BASE",
 	"ISAKMP_XCHG_IDPROT",
 	"ISAKMP_XCHG_AO",
 	"ISAKMP_XCHG_AGGR",
 	"ISAKMP_XCHG_INFO",
-	"ISAKMP_XCHG_MODE_CFG",
+	"ISAKMP_XCHG_MODE_CFG", /* 6 - draft, not RFC */
+	NULL
 };
 
-static const char *const exchange_name2[] = {
+static const char *const exchange_name_doi[] = {
+	"ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST", /* 31 - Echo request */
+	"ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY", /* Echo reply */
 	"ISAKMP_XCHG_QUICK",
 	"ISAKMP_XCHG_NGRP",
+	NULL
+};
+
+static const char *const exchange_name_ikev2[] = {
 	"ISAKMP_v2_SA_INIT",
 	"ISAKMP_v2_AUTH",
 	"ISAKMP_v2_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
+	"ISAKMP_v2_IKE_SESSION_RESUME",
+	NULL
 };
 
-static enum_names exchange_desc2 =
-{ ISAKMP_XCHG_QUICK, ISAKMP_v2_INFORMATIONAL, exchange_name2, NULL };
+static const char *const exchange_name_private_use[] = {
+	"ISAKMP_XCHG_ECHOREQUEST_PRIVATE", /* 244 - Used by libreswan  */
+	"ISAKMP_XCHG_ECHOREPLY_PRIVATE", /* 245 - Used by libreswan  */
+	NULL
+};
+static enum_names exchange_names_private_use =
+{ ISAKMP_XCHG_ECHOREQUEST_PRIVATE, ISAKMP_XCHG_ECHOREPLY_PRIVATE, exchange_name_private_use, NULL };
 
-enum_names exchange_names =
-{ ISAKMP_XCHG_NONE, ISAKMP_XCHG_MODE_CFG, exchange_name, &exchange_desc2 };
+static enum_names exchange_names_doi =
+{ ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST, ISAKMP_XCHG_NGRP, exchange_name_doi, &exchange_names_private_use };
+
+enum_names exchange_names_ikev1 =
+{ ISAKMP_XCHG_NONE, ISAKMP_XCHG_MODE_CFG, exchange_name_ikev1, &exchange_names_doi };
+
+enum_names exchange_names_ikev2 =
+{ ISAKMP_v2_SA_INIT, ISAKMP_v2_IKE_SESSION_RESUME, exchange_name_ikev2, &exchange_names_private_use };
+
+static enum_names exchange_names_doi_and_v2 =
+{ ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST, ISAKMP_XCHG_NGRP, exchange_name_doi, &exchange_names_ikev2 };
+
+enum_names exchange_names_ikev1orv2 =
+{ ISAKMP_XCHG_NONE, ISAKMP_XCHG_MODE_CFG, exchange_name_ikev1, &exchange_names_doi_and_v2 };
+
+
 /* Flag BITS */
 const char *const flag_bit_names[] = {
 	"ISAKMP_FLAG_ENCRYPTION",       /* bit 0 */
@@ -265,17 +315,16 @@ static const char *const protocol_name[] = {
 enum_names protocol_names =
 { PROTO_RESERVED, PROTO_IPCOMP, protocol_name, NULL };
 
-#if 0	/* ??? never used */
+/* never used */
 static const char *const ikev2_protocol_name[] = {
-	"PROTO_v2_RESERVED"
+	"PROTO_v2_RESERVED",
 	"PROTO_v2_IKE",
 	"PROTO_v2_AH",
 	"PROTO_v2_ESP",
 };
 
 enum_names ikev2_protocol_names =
-{ 0, PROTO_IPSEC_ESP, ikev2_protocol_name, NULL };
-#endif
+{ PROTO_v2_RESERVED, PROTO_v2_ESP, ikev2_protocol_name, NULL };
 
 /* IPsec ISAKMP transform values */
 
@@ -446,7 +495,7 @@ static const char *const ikev2_cert_type_name[] = {
 };
 
 enum_names ikev2_cert_type_names =
-{ CERT_NONE, CERT_RAW_RSA, ikev2_cert_type_name, NULL };
+{ CERT_NONE, CERT_X509_BUNDLE_URL, ikev2_cert_type_name, NULL };
 
 /*
  * certificate request payload policy
@@ -700,54 +749,10 @@ enum_names auth_alg_names =
 { AUTH_ALGORITHM_NONE, AUTH_ALGORITHM_AES_CBC, auth_alg_name,
   &auth_alg_names_stolen_use };
 
-static const char *const modecfg_cisco_attr_name[] = {
-	"CISCO_BANNER",
-	"CISCO_SAVE_PW",
-	"CISCO_DEF_DOMAIN",
-	"CISCO_SPLIT_DNS",
-	"CISCO_SPLIT_INC",
-	"CISCO_UDP_ENCAP_PORT",
-	"CISCO_UNKNOWN",
-	"CISCO_DO_PFS",
-	"CISCO_FW_TYPE",
-	"CISCO_BACKUP_SERVER",
-	"CISCO_DDNS_HOSTNAME",
-	NULL
-};
-
-static enum_names modecfg_cisco_attr_names_tv =
-{ CISCO_BANNER + ISAKMP_ATTR_AF_TV, CISCO_DDNS_HOSTNAME + ISAKMP_ATTR_AF_TV,
-  modecfg_cisco_attr_name, NULL };
-
-static enum_names modecfg_cisco_attr_names =
-{ CISCO_BANNER, CISCO_DDNS_HOSTNAME, modecfg_cisco_attr_name,
-  &modecfg_cisco_attr_names_tv };
-
 /*
  * From https://tools.ietf.org/html/draft-ietf-ipsec-isakmp-xauth-06
  * The draft did not make it to an RFC
  */
-
-static const char *const xauth_attr_name[] = {
-	"XAUTH-TYPE",
-	"XAUTH-USER-NAME",
-	"XAUTH-USER-PASSWORD",
-	"XAUTH-PASSCODE",
-	"XAUTH-MESSAGE",
-	"XAUTH-CHALLENGE",
-	"XAUTH-DOMAIN",
-	"XAUTH-STATUS",
-	"XAUTH-NEXT-PIN",
-	"XAUTH-ANSWER",
-	NULL
-};
-
-static enum_names xauth_attr_names_tv =
-{ XAUTH_TYPE + ISAKMP_ATTR_AF_TV, XAUTH_ANSWER + ISAKMP_ATTR_AF_TV,
-  xauth_attr_name, &modecfg_cisco_attr_names };
-
-enum_names xauth_attr_names =
-{ XAUTH_TYPE, XAUTH_ANSWER, xauth_attr_name, &xauth_attr_names_tv };
 
 /* for XAUTH-TYPE attribute */
 const char *const xauth_type_name[] = {
@@ -760,8 +765,17 @@ const char *const xauth_type_name[] = {
 enum_names xauth_type_names =
 { XAUTH_TYPE_GENERIC, XAUTH_TYPE_SKEY, xauth_type_name, NULL };
 
-const char *const modecfg_attr_name[] = {
-	"INTERNAL_IP4_ADDRESS",
+/* XAUTH-STATUS attribute */
+static const char *const xauth_status_name[] = {
+	"XAUTH_FAIL",
+	"XAUTH_OK",
+	NULL
+};
+enum_names xauth_status_names =
+{ XAUTH_STATUS_FAIL, XAUTH_STATUS_OK, xauth_status_name, NULL };
+
+static const char *const modecfg_attr_name_draft[] = {
+	"INTERNAL_IP4_ADDRESS", /*1 */
 	"INTERNAL_IP4_NETMASK",
 	"INTERNAL_IP4_DNS",
 	"INTERNAL_IP4_NBNS",
@@ -773,19 +787,70 @@ const char *const modecfg_attr_name[] = {
 	"INTERNAL_IP6_DNS",
 	"INTERNAL_IP6_NBNS",
 	"INTERNAL_IP6_DHCP",
-	"INTERNAL_IP4_SUBNET",
+	"INTERNAL_IP4_SUBNET", /* 13 */
 	"SUPPORTED_ATTRIBUTES",
 	"INTERNAL_IP6_SUBNET",
+	"MIP6_HOME_PREFIX",
+	"INTERNAL_IP6_LINK",
+	"INTERNAL_IP6_PREFIX",
+	"HOME_AGENT_ADDRESS", /* 19 */
 	NULL
 };
+enum_names modecfg_attr_names_draft =
+{ INTERNAL_IP4_ADDRESS, HOME_AGENT_ADDRESS, modecfg_attr_name_draft,
+  NULL };
 
-static enum_names modecfg_attr_names_tv =
-{ INTERNAL_IP4_ADDRESS + ISAKMP_ATTR_AF_TV, INTERNAL_IP6_SUBNET +
-  ISAKMP_ATTR_AF_TV, modecfg_attr_name, &xauth_attr_names };
+static const char *const modecfg_cisco_attr_name[] = {
+	"MODECFG_BANNER", /* 28672 */
+	"CISCO_SAVE_PW",
+	"MODECFG_DOMAIN",
+	"CISCO_SPLIT_DNS",
+	"CISCO_SPLIT_INC",
+	"CISCO_UDP_ENCAP_PORT",
+	"CISCO_SPLIT_EXCLUDE",
+	"CISCO_DO_PFS",
+	"CISCO_FW_TYPE",
+	"CISCO_BACKUP_SERVER",
+	"CISCO_DDNS_HOSTNAME",
+	"CISCO_UNKNOWN_SEEN_ON_IPHONE", /* 28683 */
+	NULL
+};
+static enum_names modecfg_cisco_attr_names =
+{ MODECFG_BANNER, CISCO_UNKNOWN_SEEN_ON_IPHONE, modecfg_cisco_attr_name,
+  &modecfg_attr_names_draft };
+
+static const char *const modecfg_microsoft_attr_name[] = {
+	"INTERNAL_IP4_SERVER", /* 23456 */
+	"INTERNAL_IP6_SERVER",
+	NULL
+};
+static enum_names modecfg_microsoft_attr_names =
+{ INTERNAL_IP4_SERVER, INTERNAL_IP6_SERVER, modecfg_microsoft_attr_name,
+  &modecfg_cisco_attr_names };
 
 enum_names modecfg_attr_names =
-{ INTERNAL_IP4_ADDRESS, INTERNAL_IP6_SUBNET, modecfg_attr_name,
-  &modecfg_attr_names_tv };
+{ INTERNAL_IP4_ADDRESS, INTERNAL_IP6_SERVER, modecfg_attr_name_draft,
+  &modecfg_microsoft_attr_names };
+
+static const char *const xauth_attr_name[] = {
+	"XAUTH-TYPE", /* 16520 */
+	"XAUTH-USER-NAME",
+	"XAUTH-USER-PASSWORD",
+	"XAUTH-PASSCODE",
+	"XAUTH-MESSAGE",
+	"XAUTH-CHALLENGE",
+	"XAUTH-DOMAIN",
+	"XAUTH-STATUS",
+	"XAUTH-NEXT-PIN",
+	"XAUTH-ANSWER", /* 16529 */
+	NULL
+};
+/* 
+ * Note XAUTH and MODECFG are the same xauth attribute list in the registry
+ * but we treat these as two completely separate lists
+ */
+enum_names xauth_attr_names =
+{ XAUTH_TYPE, XAUTH_ANSWER, xauth_attr_name, NULL };
 
 /* Oakley Lifetime Type attribute */
 
@@ -814,13 +879,6 @@ static const char *const oakley_enc_name[] = {
 	"OAKLEY_AES_CBC",
 };
 
-#ifdef NO_EXTRA_IKE
-
-enum_names oakley_enc_names =
-{ OAKLEY_DES_CBC, OAKLEY_AES_CBC, oakley_enc_name, NULL };
-
-#else
-
 static const char *const oakley_enc_name_draft_aes_cbc_02[] = {
 	"OAKLEY_MARS_CBC" /*	65001	*/,
 	"OAKLEY_RC6_CBC" /*	65002	*/,
@@ -842,8 +900,6 @@ static enum_names oakley_enc_names_draft_aes_cbc_02 =
 enum_names oakley_enc_names =
 { OAKLEY_DES_CBC, OAKLEY_AES_CBC, oakley_enc_name,
   &oakley_enc_names_draft_aes_cbc_02 };
-
-#endif
 
 /* Oakley Hash Algorithm attribute */
 
@@ -1120,6 +1176,11 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_SECURE_PASSWORD_METHODS",    /* 16423 */
 };
 
+static enum_names ikev2_notify_names_16384 =
+{ v2N_INITIAL_CONTACT, v2N_SECURE_PASSWORD_METHODS, ikev2_notify_name_16384,
+  NULL };
+
+
 static const char *const ikev2_notify_name[] = {
 	"v2N_RESERVED",    /* unofficial "OK" */
 	"v2N_UNSUPPORTED_CRITICAL_PAYLOAD",
@@ -1167,10 +1228,6 @@ static const char *const ikev2_notify_name[] = {
 	"v2N_TEMPORARY_FAILURE",
 	"v2N_CHILD_SA_NOT_FOUND",    /* 45 */
 };
-
-static enum_names ikev2_notify_names_16384 =
-{ v2N_INITIAL_CONTACT, v2N_SECURE_PASSWORD_METHODS, ikev2_notify_name_16384,
-  NULL };
 
 enum_names ikev2_notify_names =
 { 0, v2N_CHILD_SA_NOT_FOUND, ikev2_notify_name, &ikev2_notify_names_16384 };
@@ -1335,10 +1392,9 @@ enum_names *ikev2_trans_attr_val_descs[] = {
 	&ikev2_trans_attr_descs,        /* KEY_LENGTH */
 };
 
-#if 0	/* ??? never used */
+/* never used */
 const unsigned int ikev2_trans_attr_val_descs_size = elemsof(
 	ikev2_trans_attr_val_descs);
-#endif
 
 /* socket address family info */
 
@@ -1350,11 +1406,10 @@ static const char *const af_inet6_name[] = {
 	"AF_INET6",
 };
 
-#if 0	/* ??? never used */
+/* never used */
 static enum_names af_names6 = { AF_INET6, AF_INET6, af_inet6_name, NULL };
 
 enum_names af_names = { AF_INET, AF_INET, af_inet_name, &af_names6 };
-#endif
 
 static ip_address ipv4_any, ipv6_any;
 static ip_subnet ipv4_wildcard, ipv6_wildcard;
@@ -1510,23 +1565,6 @@ const char *enum_name(enum_names *ed, unsigned long val)
 
 	return NULL;
 }
-
-#if 0	/* ??? never used */
-/* look up an enum in a starter friendly way */
-const char *keyword_name(struct keyword_enum_values *kevs, unsigned int value)
-{
-	int kevcount;
-	struct keyword_enum_value *kev;
-
-	for (kevcount = kevs->valuesize, kev = kevs->values;
-	     kevcount > 0 && kev->value != value;
-	     kev++, kevcount--) ;
-
-	passert(kevcount != 0); /* for now */
-
-	return kev->name;
-}
-#endif
 
 /* find or construct a string to describe an enum value
  * Result may be in STATIC buffer -- NOT RE-ENTRANT!

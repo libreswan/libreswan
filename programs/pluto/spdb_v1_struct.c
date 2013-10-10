@@ -927,7 +927,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 	if (proposal.isap_np != ISAKMP_NEXT_NONE) {
 		loglog(RC_LOG_SERIOUS,
 		       "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
-		       enum_show(&payload_names, proposal.isap_np));
+		       enum_show(&payload_names_ikev1, proposal.isap_np));
 		return PAYLOAD_MALFORMED;
 	}
 
@@ -1510,7 +1510,7 @@ rsasig_common:
 		if (trans.isat_np != ISAKMP_NEXT_T) {
 			loglog(RC_LOG_SERIOUS,
 			       "unexpected %s payload in Oakley Proposal",
-			       enum_show(&payload_names, proposal.isap_np));
+			       enum_show(&payload_names_ikev1, proposal.isap_np));
 			return BAD_PROPOSAL_SYNTAX;
 		}
 	}
@@ -1688,7 +1688,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	default:
 		loglog(RC_LOG_SERIOUS,
 		       "expecting Transform Payload, but found %s in Proposal",
-		       enum_show(&payload_names, trans->isat_np));
+		       enum_show(&payload_names_ikev1, trans->isat_np));
 		return FALSE;
 	}
 
@@ -2329,7 +2329,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			} else if (next_proposal.isap_np != ISAKMP_NEXT_P) {
 				loglog(RC_LOG_SERIOUS,
 				       "unexpected in Proposal: %s",
-				       enum_show(&payload_names,
+				       enum_show(&payload_names_ikev1,
 						 next_proposal.isap_np));
 				return BAD_PROPOSAL_SYNTAX;
 			}

@@ -174,7 +174,7 @@ void process_packet(struct msg_digest **mdp)
 	    DBG_log(
 		    " processing version=%u.%u packet with exchange type=%s (%d)",
 		    maj, min,
-		    enum_name(&exchange_names, md->hdr.isa_xchg),
+		    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
 		    md->hdr.isa_xchg));
 
 	switch (maj) {

@@ -484,7 +484,16 @@ static stf_status RSA_check_signature(struct state *st,
 notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 			const char *name)
 {
-	return accept_nonce(md, dest, name, ISAKMP_NEXT_NONCE);
+        pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
+        size_t len = pbs_left(nonce_pbs);
+
+        if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
+                loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
+                       name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
+                return PAYLOAD_MALFORMED; /* ??? */
+        }
+        clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
+        return NOTHING_WRONG;
 }
 
 /*

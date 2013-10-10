@@ -35,13 +35,17 @@ extern enum_names oakley_lifetime_names;
 
 extern enum_names version_names;
 extern enum_names doi_names;
-extern enum_names payload_names;
-extern const char *const payload_name[];
+extern enum_names payload_names_ikev1;
+extern enum_names payload_names_ikev2;
+extern enum_names payload_names_ikev1orv2;
+extern const char *const payload_name_ikev1[]; /* is using bitnamesof() directly (to avoid re-entrant enum_show? */
 extern enum_names attr_msg_type_names;
 extern enum_names modecfg_attr_names;
 extern enum_names xauth_type_names;
 extern enum_names xauth_attr_names;
-extern enum_names exchange_names;
+extern enum_names exchange_names_ikev1;
+extern enum_names exchange_names_ikev2;
+extern enum_names exchange_names_ikev1orv2;
 extern enum_names protocol_names;
 extern enum_names isakmp_transformid_names;
 extern enum_names ah_transformid_names;
