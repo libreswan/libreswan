@@ -281,9 +281,9 @@ struct connection {
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
 	struct ip_pool *pool; /*v4 addresspool as a range, start end */
-	char *cisco_dns_info;
-	char *cisco_domain_info;
-	char *cisco_banner;
+	char *cisco_dns_info; /* scratchpad for writing IP addresses */
+	char *modecfg_domain;
+	char *modecfg_banner;
 #endif  /* XAUTH */
 	u_int8_t metric;          /* metric for tunnel routes */
 	u_int16_t connmtu;          /* mtu for tunnel routes */

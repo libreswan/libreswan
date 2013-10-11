@@ -543,9 +543,7 @@ static stf_status modecfg_resp(struct state *st,
 				case INTERNAL_IP4_NETMASK:
 				{
 					int m =
-						st->st_connection->spd.this.
-						client
-						.maskbits;
+						st->st_connection->spd.this.client.maskbits;
 					u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
 
 
@@ -567,6 +565,68 @@ static stf_status modecfg_resp(struct state *st,
 						dont_advance = TRUE;
 					break;
 
+				case MODECFG_DOMAIN:
+				{
+					if(st->st_connection->modecfg_domain) {
+						DBG_log("We are sending '%s' as ModeCFG domain",
+							st->st_connection->modecfg_domain);
+						if (!out_raw(st->st_connection->modecfg_domain,
+					   	     	     strlen(st->st_connection->modecfg_domain),
+						     	     &attrval, "ModeCFG_domain")) {
+							return STF_INTERNAL_ERROR;
+						}
+					} else {
+						DBG_log("We are not sending a ModeCFG domain");
+					}
+
+				}
+
+				case MODECFG_BANNER:
+				{
+					if(st->st_connection->modecfg_banner) {
+						DBG_log("We are sending '%s' as ModeCFG banner",
+							st->st_connection->modecfg_banner);
+						if (!out_raw(st->st_connection->modecfg_banner,
+					   	     	     strlen(st->st_connection->modecfg_banner),
+						     	     &attrval, "ModeCFG_banner")) {
+							return STF_INTERNAL_ERROR;
+						}
+					} else {
+						DBG_log("We are not sending a ModeCFG banner");
+					}
+
+				}
+
+				/* XXX: not sending if our end is 0.0.0.0/0 equals previous  previous behaviour */
+				case CISCO_SPLIT_INC:
+				{
+				/* example payload
+				 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00 
+				 *   \/          \/        \ \  /  /   \ \  / /   \  \  \ /  /  /
+				 *  28676        14        10.0.0.0    255.0.0.0  
+				 *
+				 *  SPLIT_INC  Length       IP addr      mask     proto?,sport?,dport?,proto?,sport?,dport?
+				 */
+
+					/* If we don't need split tunneling, just omit the payload */
+					if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
+						DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
+						break;
+					}
+					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
+					chunk_t splitinc;
+					splitinc.ptr = alloc_bytes(14, "cisco split tunnel"); /* see above */
+					splitinc.len = 14;
+					memset(splitinc.ptr, 0, 14);
+					memcpy(splitinc.ptr, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);
+					struct in_addr splitmask;
+					splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
+					memcpy(splitinc.ptr + 4, &splitmask, 4);
+					if (!out_raw(splitinc.ptr, 14, &attrval, "CISCO_SPLIT_INC"))
+						return STF_INTERNAL_ERROR;
+					freeanychunk(splitinc);
+					break;
+				}
 				default:
 					libreswan_log(
 						"attempt to send unsupported mode cfg attribute %s.",
@@ -637,8 +697,10 @@ static stf_status modecfg_send_set(struct state *st)
 
 #define MODECFG_SET_ITEM ( LELEM(INTERNAL_IP4_ADDRESS) | \
 			   LELEM(INTERNAL_IP4_SUBNET) | \
-			   LELEM(INTERNAL_IP4_NBNS) | \
-			   LELEM(INTERNAL_IP4_DNS) )
+			   LELEM(INTERNAL_IP4_DNS) | \
+			   LELEM(INTERNAL_IP6_ADDRESS) | \
+			   LELEM(INTERNAL_IP6_SUBNET) | \
+			   LELEM(INTERNAL_IP6_DNS))
 
 	modecfg_resp(st,
 		     MODECFG_SET_ITEM,
@@ -840,35 +902,34 @@ stf_status modecfg_send_request(struct state *st)
 				NULL))
 			return STF_INTERNAL_ERROR;
 
-		if (st->st_connection->remotepeertype == CISCO) {
-			/* ISAKMP attr out (INTERNAL_IP4_DNS) */
-			attr.isaat_af_type = INTERNAL_IP4_DNS;
-			attr.isaat_lv = 0;
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
+		/* ISAKMP attr out (INTERNAL_IP4_DNS) */
+		attr.isaat_af_type = INTERNAL_IP4_DNS;
+		attr.isaat_lv = 0;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
 
-			/* ISAKMP attr out (CISCO_BANNER) */
-			attr.isaat_af_type = CISCO_BANNER;
-			attr.isaat_lv = 0;
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
+		/* ISAKMP attr out (MODECFG_BANNER) */
+		attr.isaat_af_type = MODECFG_BANNER;
+		attr.isaat_lv = 0;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
 
-			/* ISAKMP attr out (CISCO_DEF_DOMAIN) */
-			attr.isaat_af_type = CISCO_DEF_DOMAIN;
-			attr.isaat_lv = 0;
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
+		/* ISAKMP attr out (MODECFG_DOMAIN) */
+		attr.isaat_af_type = MODECFG_DOMAIN;
+		attr.isaat_lv = 0;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
 
-			/* ISAKMP attr out (CISCO_SPLIT_INC) */
-			attr.isaat_af_type = CISCO_SPLIT_INC;
-			attr.isaat_lv = 0;
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
-		}
+		/* ISAKMP attr out (CISCO_SPLIT_INC) */
+		attr.isaat_af_type = CISCO_SPLIT_INC;
+		attr.isaat_lv = 0;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
+
 		close_message(&strattr, st);
 	}
 
@@ -1411,7 +1472,7 @@ static int xauth_launch_authent(struct state *st,
 	return 0;
 }
 
-/* log a nice desctiption of an unsupported attribute */
+/* log a nice description of an unsupported attribute */
 static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
 {
 	libreswan_log("Unsupported %s %s attribute %s received.",
@@ -1920,6 +1981,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			}
 
 			switch (attr.isaat_af_type) {
+
 			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			{
 				struct connection *c = st->st_connection;
@@ -2027,41 +2089,35 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					}
 				}
 
-				DBG_log("Cisco DNS info: %s, len=%zd",
+				DBG_log("ModeCFG DNS info: %s, len=%zd",
 					st->st_connection->cisco_dns_info,
-					strlen(st->st_connection->
-					       cisco_dns_info));
+					strlen(st->st_connection->cisco_dns_info));
+
+				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				break;
 			}
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				break;
 
-			case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
-				DBG_log("Received Cisco IPv4 subnet");
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				break;
-
-			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
-				DBG_log("Received and ignored obsoleted Cisco NetBEUI NS info");
-				/* ignore */
-				break;
-
-			case CISCO_BANNER | ISAKMP_ATTR_AF_TLV:
-				st->st_connection->cisco_banner =
+			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
+			{
+				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
-							"Banner");
-				loglog(RC_LOG_SERIOUS, "Banner: %s",
-				       st->st_connection->cisco_banner);
+							"ModeCFG Domain");
+				loglog(RC_LOG_SERIOUS, "ModeCFG Domain: %s",
+				       st->st_connection->modecfg_domain);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
+			}
 
-			case CISCO_DEF_DOMAIN | ISAKMP_ATTR_AF_TLV:
-				st->st_connection->cisco_domain_info =
+			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
+			{
+				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
-							"Domain");
-				loglog(RC_LOG_SERIOUS, "Domain: %s",
-				       st->st_connection->cisco_domain_info);
+							"ModeCFG Banner");
+				loglog(RC_LOG_SERIOUS, "ModeCFG Banner: %s",
+				       st->st_connection->modecfg_banner);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
+			}
 
 			case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
 			{
@@ -2069,8 +2125,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				ip_address a;
 				char caddr[SUBNETTOT_BUF];
 				size_t len = pbs_left(&strattr);
-				struct connection *c =
-					st->st_connection;
+				struct connection *c = st->st_connection;
 				struct spd_route *tmp_spd2 = &c->spd;
 
 				DBG_log("Received Cisco Split tunnel route(s)");
@@ -2190,12 +2245,23 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				break;
 			}
 
-			default:
-				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
+			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
+			case INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
+			{
+				DBG_log("Received and ignored obsoleted Cisco NetBEUI NS info");
+				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
+
+			default:
+			{
+				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
+				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				break;
+			}
+
+			}
 		}
-		/* loglog(LOG_DEBUG,"ModeCfg ACK: 0x%" PRIxLSET, resp); */
 		break;
 	}
 

@@ -158,8 +158,10 @@ static void help(void)
 		" [--modecfgclient]"
 		" [--modecfgpull]"
 		" [--addresspool <network range>]"
-		" [--modecfgdns1]"
-		" [--modecfgdns2]"
+		" [--modecfgdns1 <ip-address>]"
+		" [--modecfgdns2 <ip-address>]"
+		" [--modecfgdomain <dns-domain>]"
+		" [--modecfgbanner <login banner>]"
 #endif
 		" \\\n   "
 		" [--metric <metric>]"
@@ -460,6 +462,8 @@ enum option_enums {
 	CD_OVERLAPIP,           /* can two conns that have subnet=vhost: declare the same IP? */
 	CD_MODECFGDNS1,
 	CD_MODECFGDNS2,
+	CD_MODECFGDOMAIN,
+	CD_MODECFGBANNER,
 	CD_METRIC,
 	CD_CONNMTU,
 	CD_PRIORITY,
@@ -699,6 +703,8 @@ static const struct option long_opts[] = {
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
 	{ "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
 	{ "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
+	{ "modecfgdomain", required_argument, NULL, CD_MODECFGDOMAIN + OO },
+	{ "modecfgbanner", required_argument, NULL, CD_MODECFGBANNER + OO },
 	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 #endif
@@ -966,6 +972,8 @@ int main(int argc, char **argv)
 #ifdef XAUTH
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
+	msg.modecfg_domain = NULL;
+	msg.modecfg_banner = NULL;
 #endif
 
 	msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
@@ -1612,37 +1620,6 @@ int main(int argc, char **argv)
 			msg.policy_label = optarg;
 			continue;
 #endif
-#ifdef XAUTH
-		case CD_XAUTHBY:
-			if ( strcmp(optarg, "pam" ) == 0) {
-				msg.xauthby = XAUTHBY_PAM;
-				continue;
-			} else if ( strcmp(optarg, "file" ) == 0) {
-				msg.xauthby = XAUTHBY_FILE;
-				continue;
-			} else if ( strcmp(optarg, "alwaysok" ) == 0) {
-				msg.xauthby = XAUTHBY_ALWAYSOK;
-				continue;
-			} else {
-				fprintf(stderr,
-					"whack: unknown xauthby method '%s' ignored",
-					optarg);
-			}
-			continue;
-		case CD_XAUTHFAIL:
-			if ( strcmp(optarg, "hard" ) == 0) {
-				msg.xauthfail = XAUTHFAIL_HARD;
-				continue;
-			} else if ( strcmp(optarg, "soft" ) == 0) {
-				msg.xauthfail = XAUTHFAIL_SOFT;
-				continue;
-			} else {
-				fprintf(stderr,
-					"whack: unknown xauthfail method '%s' ignored",
-					optarg);
-			}
-			continue;
-#endif
 
 		case CD_CONNIPV4:
 			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
@@ -1709,7 +1686,7 @@ int main(int argc, char **argv)
 			msg.right.xauth_client = TRUE;
 			continue;
 
-		case OPT_XAUTHNAME:
+		case OPT_XAUTHNAME: /* --xauthname */
 			/* we can't tell if this is going to be --initiate, or
 			 * if this is going to be an conn definition, so do
 			 * both actions */
@@ -1740,18 +1717,56 @@ int main(int argc, char **argv)
 			ttorange(optarg, 0, AF_INET, &msg.right.pool_range);
 			continue;
 
-		case CD_MODECFGDNS1:
+		case CD_MODECFGDNS1: /* --modecfgdns1 */
 			af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.modecfg_dns1), optarg);
 			continue;
 
-		case CD_MODECFGDNS2:
+		case CD_MODECFGDNS2: /* --modecfgdns2 */
 			af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.modecfg_dns2), optarg);
 			continue;
 
+		case CD_MODECFGDOMAIN: /* --modecfgdomain */
+			msg.modecfg_domain = strdup(optarg);
+			continue;
+
+		case CD_MODECFGBANNER: /* --modecfgbanner */
+			msg.modecfg_banner = strdup(optarg);
+			continue;
+
+		case CD_XAUTHBY:
+			if ( strcmp(optarg, "pam" ) == 0) {
+				msg.xauthby = XAUTHBY_PAM;
+				continue;
+			} else if ( strcmp(optarg, "file" ) == 0) {
+				msg.xauthby = XAUTHBY_FILE;
+				continue;
+			} else if ( strcmp(optarg, "alwaysok" ) == 0) {
+				msg.xauthby = XAUTHBY_ALWAYSOK;
+				continue;
+			} else {
+				fprintf(stderr,
+					"whack: unknown xauthby method '%s' ignored",
+					optarg);
+			}
+			continue;
+
+		case CD_XAUTHFAIL:
+			if ( strcmp(optarg, "hard" ) == 0) {
+				msg.xauthfail = XAUTHFAIL_HARD;
+				continue;
+			} else if ( strcmp(optarg, "soft" ) == 0) {
+				msg.xauthfail = XAUTHFAIL_SOFT;
+				continue;
+			} else {
+				fprintf(stderr,
+					"whack: unknown xauthfail method '%s' ignored",
+					optarg);
+			}
+			continue;
 #else
 		case END_XAUTHSERVER:
 		case END_XAUTHCLIENT:
@@ -1762,6 +1777,10 @@ int main(int argc, char **argv)
 		case END_ADDRESSPOOL:
 		case CD_MODECFGDNS1:
 		case CD_MODECFGDNS2:
+		case CD_MODECFGDOMAIN:
+		case CD_MODECFGBANNER:
+		case CD_XAUTHBY:
+		case CD_XAUTHFAIL:
 			diag("pluto is not built with XAUTH/MODECFG support");
 			continue;
 #endif                  /* XAUTH */

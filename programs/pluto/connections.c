@@ -327,8 +327,8 @@ void delete_connection(struct connection *c, bool relations)
 	pfreeany(c->name);
 #ifdef XAUTH
 	pfreeany(c->cisco_dns_info);
-	pfreeany(c->cisco_domain_info);
-	pfreeany(c->cisco_banner);
+	pfreeany(c->modecfg_domain);
+	pfreeany(c->modecfg_banner);
 
 #endif
 #ifdef HAVE_LABELED_IPSEC
@@ -787,10 +787,15 @@ static void unshare_connection_strings(struct connection *c)
 #ifdef XAUTH
 	c->cisco_dns_info = clone_str(c->cisco_dns_info,
 				"connection cisco_dns_info");
-	c->cisco_domain_info = clone_str(c->cisco_domain_info,
-					"connection cisco_domain_info");
-	c->cisco_banner =
-		clone_str(c->cisco_banner, "connection cisco_banner");
+	c->modecfg_domain = clone_str(c->modecfg_domain,
+				"connection modecfg_domain");
+	c->modecfg_banner = clone_str(c->modecfg_banner,
+				"connection modecfg_banner");
+#endif
+
+#ifdef HAVE_LABELED_IPSEC
+	c->policy_label = clone_str(c->policy_label,
+				    "connection policy_label");
 #endif
 	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
 
@@ -1225,8 +1230,8 @@ void add_connection(const struct whack_message *wm)
 
 #ifdef XAUTH
 		c->cisco_dns_info = NULL;
-		c->cisco_domain_info = NULL;
-		c->cisco_banner = NULL;
+		c->modecfg_domain = NULL;
+		c->modecfg_banner = NULL;
 #endif
 		c->dnshostname = NULL;
 		if (wm->dnshostname)
@@ -1386,11 +1391,6 @@ void add_connection(const struct whack_message *wm)
 		DBG(DBG_CONTROL, DBG_log("policy_label=unset;"));
 #endif
 
-#ifdef XAUTH
-		/* XAUTH pam or file */
-		c->xauthby = wm->xauthby;
-		c->xauthfail = wm->xauthfail;
-#endif
 
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
@@ -1435,9 +1435,23 @@ void add_connection(const struct whack_message *wm)
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 			c->policy |= POLICY_XAUTH;
 
-		/* type is ip_address, not a string */
+		c->xauthby = wm->xauthby;
+		c->xauthfail = wm->xauthfail;
+
 		c->modecfg_dns1 = wm->modecfg_dns1;
 		c->modecfg_dns2 = wm->modecfg_dns2;
+		c->modecfg_domain = NULL;
+		c->modecfg_banner = NULL;
+		if (wm->modecfg_domain)
+			c->modecfg_domain = clone_str(wm->modecfg_domain,
+						"modecfgdomain");
+		if (wm->modecfg_banner)
+			c->modecfg_domain = clone_str(wm->modecfg_banner,
+						"modecfgbanner");
+		DBG(DBG_CONTROL,
+			DBG_log("modecfgdomain=%s;", c->modecfg_domain));
+		DBG(DBG_CONTROL,
+			DBG_log("modecfgbanner=%s;", c->modecfg_banner));
 #endif
 
 		default_end(&c->spd.this, &c->spd.that.host_addr);
@@ -3602,15 +3616,6 @@ static void show_one_sr(struct connection *c,
 			"their_xauthuser=%s; ",
 			sr->that.xauth_name ? sr->that.xauth_name : "[any]");
 
-		if (isanyaddr(&c->modecfg_dns1))
-			strcpy(dns1, "unset");
-		else
-			addrtot(&c->modecfg_dns1, 0, dns1, sizeof(dns1));
-		if (isanyaddr(&c->modecfg_dns2))
-			strcpy(dns2, "unset");
-		else
-			addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
-
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   xauth info: us:%s, them:%s, %s %s%s;",
 			c->name, instance,
@@ -3637,9 +3642,18 @@ static void show_one_sr(struct connection *c,
 			thatxauthsemi
 			);
 
+		if (isanyaddr(&c->modecfg_dns1))
+			strcpy(dns1, "unset");
+		else
+			addrtot(&c->modecfg_dns1, 0, dns1, sizeof(dns1));
+		if (isanyaddr(&c->modecfg_dns2))
+			strcpy(dns2, "unset");
+		else
+			addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
+
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
-			"policy:%s, dns1:%s, dns2:%s;",
+			"policy:%s, dns1:%s, dns2:%s, domain:%s%s;",
 			c->name, instance,
 			/*
 			 * Both should not be set, but if they are, we want
@@ -3657,8 +3671,15 @@ static void show_one_sr(struct connection *c,
 			(sr->that.modecfg_server) ? "server" : "client",
 			(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
 			dns1,
-			dns2
+			dns2,
+			(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
+			(c->modecfg_banner == NULL) ? ", banner:unset" : ""
 			);
+		if (c->modecfg_banner != NULL) {
+			whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
+			c->name, instance, c->modecfg_banner);
+		}
+
 	}
 #endif
 #ifdef HAVE_LABELED_IPSEC

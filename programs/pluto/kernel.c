@@ -458,8 +458,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "%s "         /* PLUTO_MY_SRCIP - if any */
 #ifdef XAUTH
 			  "PLUTO_IS_PEER_CISCO='%u' "
-			  "PLUTO_CISCO_DNS_INFO='%s' "
-			  "PLUTO_CISCO_DOMAIN_INFO='%s' "
+			  "PLUTO_PEER_DNS_INFO='%s' "
+			  "PLUTO_PEER_DOMAIN_INFO='%s' "
 			  "PLUTO_PEER_BANNER='%s' "
 #endif  /* XAUTH */
 #ifdef HAVE_NM
@@ -498,8 +498,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 #ifdef XAUTH
 			  , c->remotepeertype,
 			  c->cisco_dns_info ? c->cisco_dns_info : "",
-			  c->cisco_domain_info ? c->cisco_domain_info : "",
-			  c->cisco_banner ? c->cisco_banner : ""
+			  c->modecfg_domain ? c->modecfg_domain : "",
+			  c->modecfg_banner ? c->modecfg_banner : ""
 #endif  /* XAUTH */
 #ifdef HAVE_NM
 			  , c->nmconfigured

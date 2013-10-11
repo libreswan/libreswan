@@ -606,16 +606,38 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		    conn->name, msg.labeled_ipsec);
 
 	msg.policy_label = conn->policy_label;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%d",
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%s",
 		    conn->name, msg.policy_label);
 #endif
 
 #ifdef XAUTH
+	msg.modecfg_domain = conn->modecfg_domain;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomain=%s",
+		    conn->name, msg.modecfg_domain);
+	msg.modecfg_banner = conn->modecfg_banner;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
+		    conn->name, msg.modecfg_banner);
 	if (conn->options_set[KBF_XAUTHBY])
 		msg.xauthby = conn->options[KBF_XAUTHBY];
 	if (conn->options_set[KBF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KBF_XAUTHFAIL];
 
+	if (conn->modecfg_dns1) {
+		if (!tnatoaddr(conn->modecfg_dns1, 0, AF_INET,
+			       &(msg.modecfg_dns1)) &&
+		    !tnatoaddr(conn->modecfg_dns1, 0, AF_INET6,
+			       &(msg.modecfg_dns1)))
+			starter_log(LOG_LEVEL_ERR,
+				    "Ignoring modecfgdns1= entry, it is not a valid IPv4 or IPv6 address");
+	}
+	if (conn->modecfg_dns2) {
+		if (!tnatoaddr(conn->modecfg_dns2, 0, AF_INET,
+			       &(msg.modecfg_dns2)) &&
+		    !tnatoaddr(conn->modecfg_dns2, 0, AF_INET6,
+			       &(msg.modecfg_dns2)))
+			starter_log(LOG_LEVEL_ERR,
+				    "Ignoring modecfgdns2= entry, it is not a valid IPv4 or IPv6 address");
+	}
 #endif
 
 	set_whack_end(cfg, "left",  &msg.left, &conn->left);
@@ -627,26 +649,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.esp = conn->esp;
 	msg.ike = conn->ike;
 
-	if (conn->modecfg_dns1) {
-		if (!tnatoaddr(conn->modecfg_dns1, 0, AF_INET,
-			       &(msg.modecfg_dns1)) &&
-		    !tnatoaddr(conn->modecfg_dns1, 0, AF_INET6,
-			       &(msg.modecfg_dns1)))
-			starter_log(LOG_LEVEL_ERR,
-				    "Ignoring modecfg_dns1 entry, it is not a valid IPv4 or IPv6 address");
-
-
-	}
-	if (conn->modecfg_dns2) {
-		if (!tnatoaddr(conn->modecfg_dns2, 0, AF_INET,
-			       &(msg.modecfg_dns2)) &&
-		    !tnatoaddr(conn->modecfg_dns2, 0, AF_INET6,
-			       &(msg.modecfg_dns2)))
-			starter_log(LOG_LEVEL_ERR,
-				    "Ignoring modecfg_dns2 entry, it is not a valid IPv4 or IPv6 address");
-
-
-	}
 
 	r =  send_whack_msg(&msg, cfg->ctlbase);
 

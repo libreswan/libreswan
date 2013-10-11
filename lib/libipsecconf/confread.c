@@ -1258,6 +1258,18 @@ static int load_conn(struct ub_ctx *dnsctx,
 			    conn->strings[KSF_MODECFGDNS2] );
 		conn->modecfg_dns2 = xstrdup(conn->strings[KSF_MODECFGDNS2]);
 	}
+	if (conn->strings_set[KSF_MODECFGDOMAIN]) {
+		conn->modecfg_domain = xstrdup(conn->strings[KSF_MODECFGDOMAIN]);
+		starter_log(LOG_LEVEL_DEBUG,
+			    "connection's  conn->modecfg_domain set to: %s",
+			    conn->strings[KSF_MODECFGDOMAIN] );
+	}
+	if (conn->strings_set[KSF_MODECFGBANNER]) {
+		conn->modecfg_banner = xstrdup(conn->strings[KSF_MODECFGBANNER]);
+		starter_log(LOG_LEVEL_DEBUG,
+			    "connection's  conn->modecfg_banner set to: %s",
+			    conn->strings[KSF_MODECFGBANNER] );
+	}
 #endif
 
 	if (conn->strings_set[KSF_CONNALIAS])
@@ -1391,6 +1403,8 @@ void conn_default(struct starter_conn *conn,
 #ifdef XAUTH
 	CONN_STR(conn->modecfg_dns1);
 	CONN_STR(conn->modecfg_dns2);
+	CONN_STR(conn->modecfg_domain);
+	CONN_STR(conn->modecfg_banner);
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	CONN_STR(conn->policy_label);

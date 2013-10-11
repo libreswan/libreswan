@@ -6,8 +6,8 @@ It uses PSK to authenticate for phase 1.
 It uses aggressive mode.
 It then uses XAUTH to authenticate the phase 1.5.
 It then uses MODECFG to configure the phase 2, in server push mode.
-It then sends DNS and WINS servers using modecfgdns1,modecfgdn2,modecfgwins1
-and modecfgwins2.
+It then sends DNS servers and domains using modecfgdns1,modecfgdn2
+and modecfg_domain.
 
 NOTE: Some clients require that for these messages IV from phase2, not phase1
 is used. We need to turn that into an option.
