@@ -201,7 +201,5 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 bool out_vendorid(u_int8_t np, pb_stream *outs, enum known_vendorid vid);
 bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid);
 
-extern const char compile_time_interop_options[];
-
 #endif /* _VENDOR_H_ */
 

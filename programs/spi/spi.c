@@ -405,7 +405,6 @@ static struct option const longopts[] =
 	{ 0, 0, 0, 0 }
 };
 
-#ifdef NAT_TRAVERSAL
 static bool pfkey_build(int error,
 			const char *description,
 			const char *text_said,
@@ -420,7 +419,6 @@ static bool pfkey_build(int error,
 		return FALSE;
 	}
 }
-#endif
 
 int decode_esp(char *algname)
 {
@@ -524,10 +522,8 @@ int main(int argc, char *argv[])
 	ip_address pfkey_ident_s_ska;
 	ip_address pfkey_ident_d_ska;
 #endif
-#ifdef NAT_TRAVERSAL
 	u_int32_t natt;
 	u_int16_t sport, dport;
-#endif
 	uint32_t life[life_maxsever][life_maxtype];
 	char *life_opt[life_maxsever][life_maxtype];
 	struct stat sts;
@@ -535,11 +531,9 @@ int main(int argc, char *argv[])
 
 	progname = argv[0];
 	mypid = getpid();
-#ifdef NAT_TRAVERSAL
 	natt = 0;
 	sport = 0;
 	dport = 0;
-#endif
 
 	tool_init_log();
 
@@ -1062,7 +1056,6 @@ int main(int argc, char *argv[])
 			}
 			break;
 
-#ifdef NAT_TRAVERSAL
 		case 'F':  /* src port */
 			sport = strtoul(optarg, &endptr, 0);
 			if (!(endptr == optarg + strlen(optarg))) {
@@ -1100,14 +1093,6 @@ int main(int argc, char *argv[])
 				}
 			}
 			break;
-#else
-		case 'F':
-		case 'G':
-		case 'N':
-			fprintf(stderr,
-				"NAT-Traversal is not enabled in build\n");
-			exit(50);
-#endif
 
 		case 'S':
 			if (src_opt) {
@@ -1703,7 +1688,6 @@ int main(int argc, char *argv[])
 #endif          /* PFKEY_IDENT */
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (natt != 0) {
 		bool success;
 
@@ -1769,7 +1753,6 @@ int main(int argc, char *argv[])
 		}
 #endif
 	}
-#endif  /* NAT_TRAVERSAL */
 
 	if (debug) {
 		fprintf(stdout, "%s: assembling pfkey msg....\n",

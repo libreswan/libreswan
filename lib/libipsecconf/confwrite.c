@@ -434,8 +434,8 @@ void confwrite_conn(FILE *out,
 			fprintf(out, "\tauto=add\n");
 			break;
 
-		case STARTUP_ROUTE:
-			fprintf(out, "\tauto=route\n");
+		case STARTUP_ONDEMAND:
+			fprintf(out, "\tauto=ondemand\n");
 			break;
 
 		case STARTUP_START:
@@ -469,6 +469,11 @@ void confwrite_conn(FILE *out,
 				fprintf(out, "\tpfs=yes\n");
 			else
 				fprintf(out, "\tpfs=no\n");
+
+			if (conn->policy & POLICY_NO_IKEPAD)
+				fprintf(out, "\tikepad=no\n");
+			else
+				fprintf(out, "\tikepad=yes\n");
 
 			if (conn->policy & POLICY_DONT_REKEY)
 				fprintf(out, "\trekey=no  #duplicate?\n");

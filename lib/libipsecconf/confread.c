@@ -51,7 +51,7 @@ static char _tmp_err[512];
  * refuse to negotiate it in any way, either incoming or outgoing.
  */
 #define POLICY_ONLY_CONN(conn) if (conn->options[KBF_AUTO] > \
-				   STARTUP_ROUTE) { conn->options[KBF_AUTO] = \
+				   STARTUP_ONDEMAND) { conn->options[KBF_AUTO] = \
 							    STARTUP_POLICY; }
 
 static void free_list(char **list);
@@ -92,12 +92,12 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
 	cfg->setup.options[KBF_NHELPERS] = -1; /* see also plutomain.c */
-#ifdef NAT_TRAVERSAL
+
 	cfg->setup.options[KBF_DISABLEPORTFLOATING] = FALSE;
 	cfg->setup.options[KBF_KEEPALIVE] = 0;                  /* config setup */
 	cfg->setup.options[KBF_NATIKEPORT] = NAT_T_IKE_FLOAT_PORT;
 	cfg->conn_default.options[KBF_NAT_KEEPALIVE] = TRUE;    /* per conn */
-#endif
+
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 
 	cfg->conn_default.options[KBF_INITIAL_CONTACT] = FALSE;
@@ -107,6 +107,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_REMOTEPEERTYPE] = NON_CISCO;
 
 	cfg->conn_default.options[KBF_SHA2_TRUNCBUG] = FALSE;
+
+	cfg->conn_default.options[KBF_IKEPAD] = TRUE;
 
 	/*Network Manager support*/
 #ifdef HAVE_NM
@@ -1215,14 +1217,14 @@ static int load_conn(struct ub_ctx *dnsctx,
 #endif
 	}
 
+	KW_POLICY_NEGATIVE_FLAG(KBF_IKEPAD, POLICY_NO_IKEPAD);
+
 	KW_POLICY_NEGATIVE_FLAG(KBF_REKEY, POLICY_DONT_REKEY);
 
 	KW_POLICY_FLAG(KBF_AGGRMODE, POLICY_AGGRESSIVE);
 
 #ifdef XAUTH
-# ifdef MODECFG
 	KW_POLICY_FLAG(KBF_MODECONFIGPULL, POLICY_MODECFG_PULL);
-# endif
 #endif
 
 	KW_POLICY_FLAG(KBF_OVERLAPIP, POLICY_OVERLAPIP);
@@ -1244,7 +1246,6 @@ static int load_conn(struct ub_ctx *dnsctx,
 		conn->ike = xstrdup(conn->strings[KSF_IKE]);
 
 #ifdef XAUTH
-# ifdef MODECFG
 	if (conn->strings_set[KSF_MODECFGDNS1]) {
 		starter_log(LOG_LEVEL_DEBUG,
 			    "connection's  conn->modecfg_dns1 set to: %s",
@@ -1257,7 +1258,18 @@ static int load_conn(struct ub_ctx *dnsctx,
 			    conn->strings[KSF_MODECFGDNS2] );
 		conn->modecfg_dns2 = xstrdup(conn->strings[KSF_MODECFGDNS2]);
 	}
-#  endif
+	if (conn->strings_set[KSF_MODECFGDOMAIN]) {
+		conn->modecfg_domain = xstrdup(conn->strings[KSF_MODECFGDOMAIN]);
+		starter_log(LOG_LEVEL_DEBUG,
+			    "connection's  conn->modecfg_domain set to: %s",
+			    conn->strings[KSF_MODECFGDOMAIN] );
+	}
+	if (conn->strings_set[KSF_MODECFGBANNER]) {
+		conn->modecfg_banner = xstrdup(conn->strings[KSF_MODECFGBANNER]);
+		starter_log(LOG_LEVEL_DEBUG,
+			    "connection's  conn->modecfg_banner set to: %s",
+			    conn->strings[KSF_MODECFGBANNER] );
+	}
 #endif
 
 	if (conn->strings_set[KSF_CONNALIAS])
@@ -1391,6 +1403,8 @@ void conn_default(struct starter_conn *conn,
 #ifdef XAUTH
 	CONN_STR(conn->modecfg_dns1);
 	CONN_STR(conn->modecfg_dns2);
+	CONN_STR(conn->modecfg_domain);
+	CONN_STR(conn->modecfg_banner);
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	CONN_STR(conn->policy_label);

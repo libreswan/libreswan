@@ -85,10 +85,8 @@
 #include "xauth.h"
 #endif
 #include "vendor.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 #include "dpd.h"
 #include "x509more.h"
 
@@ -203,21 +201,6 @@ bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 	return justship_nonce(n, outs, np, name);
 }
 
-notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
-			    const char *name, enum next_payload_types paynum)
-{
-	pb_stream *nonce_pbs = &md->chain[paynum]->pbs;
-	size_t len = pbs_left(nonce_pbs);
-
-	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
-		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
-		       name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
-		return PAYLOAD_MALFORMED; /* ??? */
-	}
-	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
-	return NOTHING_WRONG;
-}
-
 /** The whole message must be a multiple of 4 octets.
  * I'm not sure where this is spelled out, but look at
  * rfc2408 3.6 Transform Payload.
@@ -225,12 +208,25 @@ notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
  *
  * @param pbs PB Stream
  */
-void close_message(pb_stream *pbs)
+void close_message(pb_stream *pbs, struct state *st)
 {
 	size_t padding =  pad_up(pbs_offset(pbs), 4);
 
-	if (padding != 0)
+	/* Workaround for overzealous Checkpoint firewal */
+	if (padding && st && st->st_connection &&
+	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
+		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %lu bytes skipped by policy",
+			padding));
+		padding = 0;
+	}
+
+	if (padding != 0) {
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %lu bytes", padding));
 		(void) out_zero(padding, pbs, "message padding");
+	} else {
+		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required"));
+	}
+
 	close_output_pbs(pbs);
 }
 
@@ -527,7 +523,6 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-#ifdef NAT_TRAVERSAL
 	if ((st->hidden_variables.st_nat_traversal &
 	     NAT_T_WITH_PORT_FLOATING) &&
 	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
@@ -537,7 +532,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
 	} else
-#endif
+
 	if (!(id->isaid_doi_specific_a == 0 && id->isaid_doi_specific_b ==
 	      0) &&
 	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
@@ -795,7 +790,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 
 	/* advance b to end of string */
 	b = b + strlen(b);
-#ifdef NAT_TRAVERSAL
+
 	{
 		char oa[ADDRTOT_BUF];
 
@@ -829,7 +824,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		ini = " ";
 		fin = "}";
 	}
-#endif
 
 	/* advance b to end of string */
 	b = b + strlen(b);

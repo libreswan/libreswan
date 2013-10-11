@@ -991,7 +991,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (sa->natt_type) {
 		struct xfrm_encap_tmpl natt;
 
@@ -1008,7 +1007,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {
@@ -2069,15 +2067,11 @@ add_entry:
 					if (fd < 0)
 						break;
 
-#ifdef NAT_TRAVERSAL
 					if (nat_traversal_support_non_ike &&
 					    addrtypeof(&ifp->addr) == AF_INET)
 						nat_traversal_espinudp_socket(
 							fd, "IPv4",
 							ESPINUDP_WITH_NON_IKE);
-
-
-#endif
 
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
@@ -2110,7 +2104,6 @@ add_entry:
 						ip_str(&q->ip_addr),
 						q->port);
 
-#ifdef NAT_TRAVERSAL
 					/*
 					 * right now, we do not support NAT-T on IPv6, because
 					 * the kernel did not support it, and gave an error
@@ -2152,7 +2145,7 @@ add_entry:
 							       ip_addr),
 							q->port);
 					}
-#endif
+
 					break;
 				}
 
@@ -2162,7 +2155,7 @@ add_entry:
 				    sameaddr(&q->ip_addr, &ifp->addr)) {
 					/* matches -- rejuvinate old entry */
 					q->change = IFN_KEEP;
-#ifdef NAT_TRAVERSAL
+
 					/* look for other interfaces to keep (due to NAT-T) */
 					for (q = q->next; q; q = q->next) {
 						if (streq(q->ip_dev->id_rname,
@@ -2173,7 +2166,7 @@ add_entry:
 							     &ifp->addr))
 							q->change = IFN_KEEP;
 					}
-#endif
+
 					break;
 				}
 

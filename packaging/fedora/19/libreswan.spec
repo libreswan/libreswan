@@ -41,7 +41,6 @@ BuildRequires: unbound-devel
 %endif
 %if %{USE_FIPSCHECK}
 BuildRequires: fipscheck-devel >= %{fipscheck_version}
-# we need fipshmac
 Requires: fipscheck%{_isa} >= %{fipscheck_version}
 %endif
 %if %{USE_LINUX_AUDIT}
@@ -96,10 +95,12 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %endif
   USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
   INITSYSTEM=systemd \
-  USE_DYNAMICDNS="true" \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
+%if %{USE_FIPSCHECK}
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \
+  FIPSPRODUCTCHECK=/etc/system-fips \
+%endif
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{USE_CRL_FETCHING}
@@ -121,7 +122,7 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-  fipshmac -d %{buildroot}%{_libdir}/fipscheck ` ls %{buildroot}%{_libexecdir}/ipsec/*|grep -v setup` \
+  fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/* \
   fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
 %{nil}
 %endif
@@ -148,6 +149,8 @@ install -d %{buildroot}%{_sbindir}
 
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
+install -d -m 0700 %{buildroot}%{_sysconfdir}/prelink.conf.d/
+install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
 echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
@@ -174,6 +177,9 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 
 %if %{USE_FIPSCHECK}
 %{_libdir}/fipscheck/*.hmac
+# We own the directory so we don't have to require prelink
+%dir %{_sysconfdir}/prelink.conf.d/
+%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
 %preun

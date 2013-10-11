@@ -58,7 +58,6 @@ enum keyword_xauthfail {
 	XAUTHFAIL_SOFT = 1,
 };
 
-#ifdef NAT_TRAVERSAL
 /*
  *  * NAT-Traversal defines for nat_traveral type from nat_traversal.h
  *   *
@@ -72,7 +71,6 @@ enum natt_method {
 	NAT_TRAVERSAL_NAT_BHND_ME           =30,
 	NAT_TRAVERSAL_NAT_BHND_PEER         =31
 };
-#endif
 
 /* Timer events */
 
@@ -369,7 +367,7 @@ enum phase1_role {
 #define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || (s) == \
 				    STATE_QUICK_R2)
 #define IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_R1)
-#ifdef MODECFG
+#ifdef XAUTH
 #define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
 #endif
 
@@ -544,8 +542,9 @@ enum pluto_policy {
 	POLICY_IKE_FRAG_ALLOW = LELEM(30),
 	POLICY_IKE_FRAG_FORCE = LELEM(31),
 	POLICY_IKE_FRAG_MASK = POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE,
+	POLICY_NO_IKEPAD      = LELEM(32),      /* pad ike packets to 4 bytes or not */
 
-	/* policy used to be an int, but is not lset_t (unsigned long long type), so max is 63 */
+	/* policy used to be an int, but is now lset_t (unsigned long long type), so max is 63 */
 };
 
 /* Any IPsec policy?  If not, a connection description

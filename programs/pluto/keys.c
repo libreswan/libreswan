@@ -73,9 +73,7 @@
 
 #include "lswcrypto.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #include <prerror.h>
 #include <prinit.h>
@@ -650,7 +648,6 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		idtoa(his_id, idhim2, IDTOA_BUF);
 	}
 #endif
-#ifdef NAT_TRAVERSAL
 	else if ( (c->policy & POLICY_PSK) &&
 		  (kind == PPK_PSK) &&
 		  (((c->kind == CK_TEMPLATE) &&
@@ -671,7 +668,6 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		his_id = &rw_id;
 		idtoa(his_id, idhim2, IDTOA_BUF);
 	}
-#endif
 
 	DBG(DBG_CONTROL,
 	    DBG_log("actually looking for secret for %s->%s of kind %s",

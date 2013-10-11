@@ -109,6 +109,7 @@ static void help(void)
 		" [--overlapip]"
 		" [--tunnel]"
 		" [--pfs]"
+		" [--no_ikepad]"
 		" \\\n   "
 		" [--pfsgroup [modp1024] | [modp1536] | [modp2048] | [modp3072] | [modp4096] | [modp6144] | [modp8192]]"
 		" \\\n   "
@@ -153,16 +154,14 @@ static void help(void)
 #ifdef XAUTH
 		" [--xauthserver]"
 		" [--xauthclient]"
-#endif
-#ifdef MODECFG
 		" [--modecfgserver]"
 		" [--modecfgclient]"
 		" [--modecfgpull]"
 		" [--addresspool <network range>]"
-#ifdef MODECFG_DNSWINS
-		" [--modecfgdns1]"
-		" [--modecfgdns2]"
-#endif
+		" [--modecfgdns1 <ip-address>]"
+		" [--modecfgdns2 <ip-address>]"
+		" [--modecfgdomain <dns-domain>]"
+		" [--modecfgbanner <login banner>]"
 #endif
 		" \\\n   "
 		" [--metric <metric>]"
@@ -463,6 +462,8 @@ enum option_enums {
 	CD_OVERLAPIP,           /* can two conns that have subnet=vhost: declare the same IP? */
 	CD_MODECFGDNS1,
 	CD_MODECFGDNS2,
+	CD_MODECFGDOMAIN,
+	CD_MODECFGBANNER,
 	CD_METRIC,
 	CD_CONNMTU,
 	CD_PRIORITY,
@@ -494,6 +495,7 @@ enum option_enums {
 	CD_POLICY_LABEL,
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
+	CD_NO_IKEPAD,
 	CD_ESP
 #   define CD_LAST CD_ESP       /* last connection description */
 
@@ -572,6 +574,7 @@ static const struct option long_opts[] = {
 	{ "myid", required_argument, NULL, OPT_MYID + OO },
 
 	{ "route", no_argument, NULL, OPT_ROUTE + OO },
+	{ "ondemand", no_argument, NULL, OPT_ROUTE + OO }, /* alias */
 	{ "unroute", no_argument, NULL, OPT_UNROUTE + OO },
 
 	{ "initiate", no_argument, NULL, OPT_INITIATE + OO },
@@ -694,18 +697,16 @@ static const struct option long_opts[] = {
 	{ "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
 	{ "xauthby", required_argument, NULL, CD_XAUTHBY + OO },
 	{ "xauthfail", required_argument, NULL, CD_XAUTHFAIL + OO },
-#endif
-#ifdef MODECFG
 	{ "modecfgpull",   no_argument, NULL, CD_MODECFGPULL + OO },
 	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
-#ifdef MODECFG_DNSWINS
 	{ "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
 	{ "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
+	{ "modecfgdomain", required_argument, NULL, CD_MODECFGDOMAIN + OO },
+	{ "modecfgbanner", required_argument, NULL, CD_MODECFGBANNER + OO },
 	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
-#endif
 #endif
 	{ "metric", required_argument, NULL, CD_METRIC + OO + NUMERIC_ARG },
 	{ "mtu", required_argument, NULL, CD_CONNMTU + OO + NUMERIC_ARG },
@@ -732,6 +733,7 @@ static const struct option long_opts[] = {
 	{ "ikealg", required_argument, NULL, CD_IKE + OO },
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
 	{ "esp", required_argument, NULL, CD_ESP + OO },
+	{ "no_ikepad", no_argument, NULL, CD_NO_IKEPAD + OO },
 	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE +
 	  OO },
 #ifdef HAVE_NM
@@ -794,11 +796,8 @@ static const struct option long_opts[] = {
 	{ 0, 0, 0, 0 }
 };
 
-#ifdef DYNAMICDNS
 static const char namechars[] = "abcdefghijklmnopqrstuvwxyz"
 				"ABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
-#endif /* DYNAMICDNS */
-
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
 	.sun_path   = DEFAULT_CTLBASE CTL_SUFFIX,
@@ -947,9 +946,7 @@ int main(int argc, char **argv)
 	clear_end(&msg.right);  /* left set from this after --to */
 
 	msg.name = NULL;
-#ifdef DYNAMICDNS
 	msg.dnshostname = NULL;
-#endif  /* DYNAMICDNS */
 
 	msg.keyid = NULL;
 	msg.keyval.ptr = NULL;
@@ -975,6 +972,8 @@ int main(int argc, char **argv)
 #ifdef XAUTH
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
+	msg.modecfg_domain = NULL;
+	msg.modecfg_banner = NULL;
 #endif
 
 	msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
@@ -1301,7 +1300,6 @@ int main(int argc, char **argv)
 				new_policy |= POLICY_TUNNEL | POLICY_OPPO |
 					      POLICY_GROUP;
 			} else {
-#ifdef DYNAMICDNS
 				if (msg.left.id != NULL) {
 					int strlength = 0;
 					int n = 0;
@@ -1323,7 +1321,6 @@ int main(int argc, char **argv)
 						&msg.right.host_addr);
 					/* we don't fail here.  pluto will re-check the DNS later */
 				} else
-#endif                                  /* DYNAMICDNS */
 				diagq(ttoaddr(optarg, 0, msg.addr_family,
 					      &msg.right.host_addr), optarg);
 			}
@@ -1500,6 +1497,7 @@ int main(int argc, char **argv)
 		case CD_DISABLEARRIVALCHECK:    /* --disablearrivalcheck */
 		case CD_DONT_REKEY:             /* --donotrekey */
 		case CD_MODECFGPULL:            /* --modecfgpull */
+		case CD_NO_IKEPAD:		/* --no_ikepad */
 			msg.policy |= LELEM(c - CD_POLICY_FIRST);
 			continue;
 
@@ -1622,37 +1620,6 @@ int main(int argc, char **argv)
 			msg.policy_label = optarg;
 			continue;
 #endif
-#ifdef XAUTH
-		case CD_XAUTHBY:
-			if ( strcmp(optarg, "pam" ) == 0) {
-				msg.xauthby = XAUTHBY_PAM;
-				continue;
-			} else if ( strcmp(optarg, "file" ) == 0) {
-				msg.xauthby = XAUTHBY_FILE;
-				continue;
-			} else if ( strcmp(optarg, "alwaysok" ) == 0) {
-				msg.xauthby = XAUTHBY_ALWAYSOK;
-				continue;
-			} else {
-				fprintf(stderr,
-					"whack: unknown xauthby method '%s' ignored",
-					optarg);
-			}
-			continue;
-		case CD_XAUTHFAIL:
-			if ( strcmp(optarg, "hard" ) == 0) {
-				msg.xauthfail = XAUTHFAIL_HARD;
-				continue;
-			} else if ( strcmp(optarg, "soft" ) == 0) {
-				msg.xauthfail = XAUTHFAIL_SOFT;
-				continue;
-			} else {
-				fprintf(stderr,
-					"whack: unknown xauthfail method '%s' ignored",
-					optarg);
-			}
-			continue;
-#endif
 
 		case CD_CONNIPV4:
 			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
@@ -1719,7 +1686,7 @@ int main(int argc, char **argv)
 			msg.right.xauth_client = TRUE;
 			continue;
 
-		case OPT_XAUTHNAME:
+		case OPT_XAUTHNAME: /* --xauthname */
 			/* we can't tell if this is going to be --initiate, or
 			 * if this is going to be an conn definition, so do
 			 * both actions */
@@ -1739,7 +1706,6 @@ int main(int argc, char **argv)
 			xauthpasslen = strlen(xauthpass) + 1;
 			continue;
 
-#ifdef MODECFG
 		case END_MODECFGCLIENT:
 			msg.right.modecfg_client = TRUE;
 			continue;
@@ -1751,26 +1717,71 @@ int main(int argc, char **argv)
 			ttorange(optarg, 0, AF_INET, &msg.right.pool_range);
 			continue;
 
-#ifdef MODECFG_DNSWINS
-		case CD_MODECFGDNS1:
+		case CD_MODECFGDNS1: /* --modecfgdns1 */
 			af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.modecfg_dns1), optarg);
 			continue;
 
-		case CD_MODECFGDNS2:
+		case CD_MODECFGDNS2: /* --modecfgdns2 */
 			af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.addr_family,
 				      &msg.modecfg_dns2), optarg);
 			continue;
-#endif
-#endif                  /* MODECFG */
 
+		case CD_MODECFGDOMAIN: /* --modecfgdomain */
+			msg.modecfg_domain = strdup(optarg);
+			continue;
+
+		case CD_MODECFGBANNER: /* --modecfgbanner */
+			msg.modecfg_banner = strdup(optarg);
+			continue;
+
+		case CD_XAUTHBY:
+			if ( strcmp(optarg, "pam" ) == 0) {
+				msg.xauthby = XAUTHBY_PAM;
+				continue;
+			} else if ( strcmp(optarg, "file" ) == 0) {
+				msg.xauthby = XAUTHBY_FILE;
+				continue;
+			} else if ( strcmp(optarg, "alwaysok" ) == 0) {
+				msg.xauthby = XAUTHBY_ALWAYSOK;
+				continue;
+			} else {
+				fprintf(stderr,
+					"whack: unknown xauthby method '%s' ignored",
+					optarg);
+			}
+			continue;
+
+		case CD_XAUTHFAIL:
+			if ( strcmp(optarg, "hard" ) == 0) {
+				msg.xauthfail = XAUTHFAIL_HARD;
+				continue;
+			} else if ( strcmp(optarg, "soft" ) == 0) {
+				msg.xauthfail = XAUTHFAIL_SOFT;
+				continue;
+			} else {
+				fprintf(stderr,
+					"whack: unknown xauthfail method '%s' ignored",
+					optarg);
+			}
+			continue;
 #else
 		case END_XAUTHSERVER:
 		case END_XAUTHCLIENT:
-		case END_XAUTHNAME:
-			diag("pluto is not built with XAUTH support");
+		case OPT_XAUTHNAME:
+		case OPT_XAUTHPASS:
+		case END_MODECFGCLIENT:
+		case END_MODECFGSERVER:
+		case END_ADDRESSPOOL:
+		case CD_MODECFGDNS1:
+		case CD_MODECFGDNS2:
+		case CD_MODECFGDOMAIN:
+		case CD_MODECFGBANNER:
+		case CD_XAUTHBY:
+		case CD_XAUTHFAIL:
+			diag("pluto is not built with XAUTH/MODECFG support");
 			continue;
 #endif                  /* XAUTH */
 

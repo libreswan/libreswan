@@ -159,8 +159,9 @@ extern void show_status(void);
 extern void daily_log_reset(void);
 extern void daily_log_event(void);
 
-extern int Pluto_IsSElinux(void);
-extern int Pluto_IsFIPS(void);
+extern int libreswan_selinux(void);
+extern int libreswan_fipsmode(void);
+extern int libreswan_fipsproduct(void);
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
 

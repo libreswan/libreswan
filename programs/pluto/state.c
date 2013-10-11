@@ -40,6 +40,7 @@
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
+#include "xauth.h"	/* just for state_deletion_xauth_cleanup() */
 #endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -69,9 +70,7 @@
  */
 
 u_int16_t pluto_port = IKE_UDP_PORT;                    /* Pluto's port */
-#ifdef NAT_TRAVERSAL
 u_int16_t pluto_natt_float_port = NAT_T_IKE_FLOAT_PORT; /* Pluto's NAT-T port */
-#endif
 
 /*
  * This file has the functions that handle the
@@ -460,17 +459,7 @@ void delete_state(struct state *st)
 	}
 
 #ifdef XAUTH_HAVE_PAM
-	/*
-	 * If there is still an authentication thread alive, kill it.
-	 */
-	if (st->tid) {
-		pthread_kill(st->tid, SIGINT);
-		/* The pthread_mutex_lock ensures that the do_authentication
-		 * thread completes when pthread_kill'ed */
-		pthread_mutex_lock(&st->mutex);
-		pthread_mutex_unlock(&st->mutex);
-	}
-	pthread_mutex_destroy(&st->mutex);
+	state_deletion_xauth_cleanup(st);
 #endif
 
 	/* If DPD is enabled on this state object, clear any pending events */

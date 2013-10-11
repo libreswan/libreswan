@@ -52,9 +52,7 @@
 #include "lswtime.h"
 #include "ikev2.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 /* This file has the event handling routines. Events are
  * kept as a linked list of event structures. These structures
@@ -584,12 +582,10 @@ void handle_next_timer_event(void)
 		break;
 #endif
 
-#ifdef DYNAMICDNS
 	case EVENT_PENDING_DDNS:
 		passert(st == NULL);
 		connection_check_ddns();
 		break;
-#endif
 
 	case EVENT_PENDING_PHASE2:
 		passert(st == NULL);
@@ -727,11 +723,9 @@ void handle_next_timer_event(void)
 		dpd_timeout(st);
 		break;
 
-#ifdef NAT_TRAVERSAL
 	case EVENT_NAT_T_KEEPALIVE:
 		nat_traversal_ka_event();
 		break;
-#endif
 
 	case EVENT_CRYPTO_FAILED:
 		DBG(DBG_CONTROL,

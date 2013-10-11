@@ -38,8 +38,8 @@ BuildRequires: pam-devel
 BuildRequires: unbound-devel
 %endif
 %if %{USE_FIPSCHECK}
-BuildRequires: fipscheck-devel >= %{fipscheck_version}
 # we need fipshmac
+BuildRequires: fipscheck-devel >= %{fipscheck_version}
 Requires: fipscheck%{_isa} >= %{fipscheck_version}
 %endif
 %if %{USE_LINUX_AUDIT}
@@ -93,10 +93,10 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %endif
   INITSYSTEM=sysvinit \
   USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
-  USE_DYNAMICDNS=true \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK=%{USE_FIPSCHECK} \
+  FIPSPRODUCTCHECK="/etc/system-fips" \
   USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
   USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
   USE_LDAP=%{USE_CRL_FETCHING} \
@@ -182,6 +182,10 @@ fi
 
 %post 
 /sbin/chkconfig --add ipsec || :
+%if %{USE_FIPSCHECK}
+prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
+%endif
+
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1

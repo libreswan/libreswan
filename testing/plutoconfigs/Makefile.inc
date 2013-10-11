@@ -264,22 +264,12 @@ XMLTO?=$(shell which xmlto | grep / | head -n1)
 # look for POD2MAN command
 POD2MAN?=$(shell which pod2man | grep / | head -n1)
 
-#
-# default number of bits for ipsec newhostkey
-#
-RSAKEYBITS:=2192
-
 ## build environment variations
 #
 # USE_ variables determine if features are compiled into Libreswan.
 #       these let you turn on/off specific features
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
-
-# Do a new lookup every time a connection is (re)started. This works better
-# on hosts with some dyndns service, since DPD will cause a new dns lookup,
-# but it could be a potential security issue if receiving spoofed dns.
-USE_DYNAMICDNS?=true
 
 # Enable support for DNSSEC. This requires the unbound library
 USE_DNSSEC?=true
@@ -376,12 +366,6 @@ USE_LIBCAP_NG?=true
 
 # Support for Network Manager
 USE_NM?=true
-
-# whether to support NAT Traversal (aka NAT-T)
-USE_NAT_TRAVERSAL?=true
-
-# where to support NAT-T in transport mode (needed for Win2K NAT-T Interop)
-USE_NAT_TRAVERSAL_TRANSPORT_MODE?=true
 
 # Include LDAP support (currently used for fetching CRLs)
 USE_LDAP?=false
@@ -500,7 +484,6 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-PLUTOLIB=${OBJDIRTOP}/lib/libpluto/libpluto.a
 LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
@@ -531,7 +514,7 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
-export LIBRESWANLIB LSWLOGLIB PLUTOLIB 
+export LIBRESWANLIB LSWLOGLIB 
 export LIBDESSRCDIR LIBDESLITE LIBAES
 export LIBMD5 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
@@ -556,7 +539,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
-			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
                         -e "s:@MODPROBE@:$(MODPROBE):g" \

@@ -45,10 +45,8 @@
 #include "timer.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
-#ifdef NAT_TRAVERSAL
 #include "packet.h"     /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 #include "server.h"
 
 #include "alg_info.h"
@@ -237,7 +235,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 					/* matches -- rejuvinate old entry */
 					q->change = IFN_KEEP;
-#ifdef NAT_TRAVERSAL
+
 					/* look for other interfaces to keep (due to NAT-T) */
 					for (q = q->next; q; q = q->next) {
 						if (streq(q->ip_dev->id_rname,
@@ -261,7 +259,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 							}
 						}
 					}
-#endif
+
 					break;
 				}
 
@@ -309,15 +307,11 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				q->port = pluto_port;
 				q->ike_float = FALSE;
 
-#ifdef NAT_TRAVERSAL
 				if (nat_traversal_support_non_ike &&
 				    addrtypeof(&ifp->addr) == AF_INET)
 					nat_traversal_espinudp_socket(fd,
 								      "IPv4",
 								      ESPINUDP_WITH_NON_IKE);
-
-
-#endif
 
 				/* done with primary interface */
 				q->next = interfaces;
@@ -330,7 +324,6 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 					ip_str(&q->ip_addr),
 					q->port, q->fd);
 
-#ifdef NAT_TRAVERSAL
 				/*
 				 * right now, we do not support NAT-T on IPv6, because
 				 * the kernel did not support it, and gave an error
@@ -373,7 +366,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						ip_str(&q->ip_addr),
 						q->port, q->fd);
 				}
-#endif
+
 			}
 		} while (0);
 	}

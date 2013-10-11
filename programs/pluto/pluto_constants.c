@@ -38,9 +38,7 @@
  * EMIT_ISAKMP_SPI
  * HAVE_STATSD
  * I_DONT_CARE_OF_SSH_SENTINEL
- * I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
  * IPSEC_CONNECTION_LIMIT
- * MODECFG_DNSWINS
  * NET_21
  * NO_EXTRA_IKE
  * NOTYET
@@ -57,70 +55,6 @@
  * USE_KEYRR
  * VIRTUAL_IP
  */
-/* string naming compile-time options that have interop implications */
-const char compile_time_interop_options[] = ""
-#ifdef NETKEY_SUPPORT
-					    " XFRM(netkey)"
-#endif
-#ifdef KLIPS
-					    " KLIPS"
-#endif
-#ifdef KLIPSMAST
-					    " MAST"
-#endif
-
-#ifdef HAVE_NO_FORK
-					    " NO_FORK"
-#endif
-#ifdef HAVE_BROKEN_POPEN
-					    " BROKEN_POPEN"
-#endif
-#ifndef OPENSSL
-					    " NSS"
-#endif
-#ifdef DNSSEC
-					    " DNSSEC"
-#endif
-#ifdef NAT_TRAVERSAL
-					    " NAT-T"
-#endif
-#ifdef FIPS_CHECK
-					    " FIPS_CHECK"
-#endif
-#ifdef HAVE_LABELED_IPSEC
-					    " LABELED_IPSEC"
-#endif
-#ifdef HAVE_LIBCAP_NG
-					    " LIBCAP_NG"
-#endif
-#ifdef USE_LINUX_AUDIT
-					    " LINUX_AUDIT"
-#endif
-#ifdef XAUTH_HAVE_PAM
-					    " XAUTH_PAM"
-#endif
-#ifdef DYNAMICDNS
-					    " DYNAMICDNS"
-#endif
-#ifdef HAVE_NM
-					    " NETWORKMANAGER"
-#endif
-#ifdef LEAK_DETECTIVE
-					    " LEAK_DETECTIVE"
-#endif
-#ifdef HAVE_OCF
-					    " OCF"
-#endif
-#ifdef KLIPS_MAST
-					    " KLIPS_MAST"
-#endif
-#ifdef LIBCURL
-					    " CURL(non-NSS)"
-#endif
-#ifdef LDAP_VER
-					    " LDAP(non-NSS)"
-#endif
-;
 
 static const char *const kern_interface_name[] = {
 	"none",
@@ -271,7 +205,6 @@ const char *const state_story[] = {
 enum_names state_stories =
 { STATE_MAIN_R0, STATE_IKEv2_ROOF - 1, state_story, NULL };
 
-#ifdef NAT_TRAVERSAL
 static const char *const natt_method_result_name[] = {
 	"NAT behind me",        /* 30 */
 	"NAT behind peer"       /* 31 */
@@ -289,7 +222,6 @@ static const char *const natt_method_name[] = {
 enum_names natt_method_names =
 { NAT_TRAVERSAL_METHOD_IETF_00_01, NAT_TRAVERSAL_METHOD_IETF_RFC,
   natt_method_name, &natt_method_result_names };
-#endif
 
 /* pluto crypto operations */
 static const char *const pluto_cryptoop_strings[] = {
@@ -388,6 +320,7 @@ const char *const sa_policy_bit_names[] = {
 	"SAREFCONNTRACK",
 	"IKE_FRAG",
 	"IKE_FRAG_FORCE",
+	"NO_IKEPAD",
 	NULL
 };
 

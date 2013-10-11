@@ -456,14 +456,13 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	 * Check which Vendor ID's we need to send - there will be more soon
 	 * In IKEv2, DPD and NAT-T are no longer vendorid's
 	 */
-	if(c->send_vendorid) {
+	if (c->send_vendorid) {
 		numvidtosend++;  /* if we need to send Libreswan VID */
 	}
 
-
 	/* send NONCE */
 	{
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
+		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 		pb_stream pb;
 
@@ -484,21 +483,21 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	}
 
 	/* Send Vendor VID if needed */
-	{
+	if (c->send_vendorid) {
 		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
-			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
+			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
 				     myvid, strlen(myvid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
+
+		/* ensure our VID chain was valid */
+		passert(numvidtosend == 0);
 	}
 
-	/* ensure or VID chain was valid */
-	passert(numvidtosend == 0);
-
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 	close_output_pbs(&reply_stream);
 
 	freeanychunk(st->st_tpacket);
@@ -838,13 +837,13 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct msg_digest *md = ke->md;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	struct state *const st = md->st;
+	struct connection *c = st->st_connection;
 	pb_stream *keyex_pbs;
 	int numvidtosend = 0;
 
-#ifdef PLUTO_SENDS_VENDORID
-	numvidtosend++; /* we send Libreswan VID */
-#endif
-
+	if (c->send_vendorid) {
+		numvidtosend++; /* we send Libreswan VID */
+	}
 	/* note that we don't update the state here yet */
 
 	/* record first packet for later checking of signature */
@@ -919,7 +918,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* send NONCE */
 	unpack_nonce(&st->st_nr, r);
 	{
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
+		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 		pb_stream pb;
 
@@ -940,10 +939,10 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	}
 
 	/* Send VendrID if needed VID */
-	{
+	if (c->send_vendorid) {
 		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
-			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
+			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
 				     myvid, strlen(myvid),
@@ -951,7 +950,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			return STF_INTERNAL_ERROR;
 	}
 
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 	close_output_pbs(&reply_stream);
 
 	/* keep it for a retransmit if necessary */
@@ -1594,11 +1593,11 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		lset_t policy;
 		struct connection *c0 = first_pending(pst, &policy,
 						      &st->st_whack_sock);
-		unsigned int np = (c0 ? ISAKMP_NEXT_v2SA : ISAKMP_NEXT_NONE);
+		unsigned int np = (c0 ? ISAKMP_NEXT_v2SA : ISAKMP_NEXT_v2NONE);
 		DBG(DBG_CONTROL,
 		    DBG_log(" payload after AUTH will be %s",
 			    (c0) ? "ISAKMP_NEXT_v2SA" :
-			    "ISAKMP_NEXT_NONE/NOTIFY"));
+			    "ISAKMP_NEXT_v2NONE/NOTIFY"));
 
 		stf_status authstat = ikev2_send_auth(c, st,
 						      INITIATOR,
@@ -1629,7 +1628,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 					"Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
 				memset(&child_spi, 0, sizeof(child_spi));
 				memset(&notify_data, 0, sizeof(notify_data));
-				ship_v2N(ISAKMP_NEXT_NONE,
+				ship_v2N(ISAKMP_NEXT_v2NONE,
 					 ISAKMP_PAYLOAD_NONCRITICAL, 0,
 					 &child_spi,
 					 v2N_USE_TRANSPORT_MODE, &notify_data,
@@ -2059,7 +2058,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			/* initiator didn't propose anything. Weird. Try unpending out end. */
 			/* UNPEND XXX */
 			libreswan_log("No CHILD SA proposals received.");
-			np = ISAKMP_NEXT_NONE;
+			np = ISAKMP_NEXT_v2NONE;
 		} else {
 			DBG_log("CHILD SA proposals received");
 			libreswan_log(
@@ -2091,12 +2090,12 @@ static stf_status ikev2_parent_inI2outR2_tail(
 					    "ikev2_child_sa_respond returned STF_FAIL with %s",
 					    enum_name(&ikev2_notify_names,
 						      v2_notify_num)));
-				np = ISAKMP_NEXT_NONE;
+				np = ISAKMP_NEXT_v2NONE;
 			} else if (ret != STF_OK) {
 				DBG_log("ikev2_child_sa_respond returned %s", enum_name(
 						&stfstatus_name,
 						ret));
-				np = ISAKMP_NEXT_NONE;
+				np = ISAKMP_NEXT_v2NONE;
 			}
 		}
 
@@ -2630,14 +2629,14 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	/* build and add v2N payload to the packet */
 	memset(&child_spi, 0, sizeof(child_spi));
 	memset(&notify_data, 0, sizeof(notify_data));
-	ship_v2N(ISAKMP_NEXT_NONE, DBGP(
+	ship_v2N(ISAKMP_NEXT_v2NONE, DBGP(
 			 IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
 		 (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
 		 ISAKMP_PAYLOAD_NONCRITICAL, PROTO_ISAKMP,
 		 &child_spi,
 		 type, n_data, &rbody);
 
-	close_message(&rbody);
+	close_message(&rbody, p1st);
 	close_output_pbs(&reply);
 
 	clonetochunk(p1st->st_tpacket, reply.start, pbs_offset(&reply),
@@ -2798,7 +2797,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				     p = p->next) {
 					if (p->payload.v2delete.isad_protoid ==
 					    PROTO_ISAKMP) {
-						e.isag_np = ISAKMP_NEXT_NONE;
+						e.isag_np = ISAKMP_NEXT_v2NONE;
 						ikesa_flag = TRUE;
 						break;
 					}
@@ -2809,7 +2808,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					e.isag_np = ISAKMP_NEXT_v2D;
 
 			} else {
-				e.isag_np = ISAKMP_NEXT_NONE;
+				e.isag_np = ISAKMP_NEXT_v2NONE;
 			}
 
 			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -2982,7 +2981,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 						else
 							v2del_tmp.isad_np =
-								ISAKMP_NEXT_NONE;
+								ISAKMP_NEXT_v2NONE;
 
 
 						v2del_tmp.isad_protoid =
@@ -3552,7 +3551,7 @@ void ikev2_delete_out(struct state *st)
 			 */
 
 			zero(&v2del_tmp);
-			v2del_tmp.isad_np = ISAKMP_NEXT_NONE;
+			v2del_tmp.isad_np = ISAKMP_NEXT_v2NONE;
 
 			if (st->st_clonedfrom != 0 ) {
 				v2del_tmp.isad_protoid = PROTO_IPSEC_ESP;

@@ -52,10 +52,6 @@ extern void send_notification_from_state(struct state *st,
 					 u_int16_t type);
 extern void send_notification_from_md(struct msg_digest *md, u_int16_t type);
 
-extern notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
-				   const char *name,
-				   enum next_payload_types paynum);
-
 extern notification_t accept_KE(chunk_t *dest, const char *val_name,
 				const struct oakley_group_desc *gr,
 				pb_stream *pbs);
@@ -63,8 +59,8 @@ extern notification_t accept_KE(chunk_t *dest, const char *val_name,
 /*
  * some additional functions are exported for xauth.c
  */
-extern void close_message(pb_stream *pbs);                      /* forward declaration */
-extern bool encrypt_message(pb_stream *pbs, struct state *st);  /* forward declaration */
+extern void close_message(pb_stream *pbs, struct state *st);
+extern bool encrypt_message(pb_stream *pbs, struct state *st);
 
 extern stf_status dpd_inI_outR(struct state *st,
 			       struct isakmp_notification *const n,

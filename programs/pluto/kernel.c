@@ -66,10 +66,8 @@
 #include <security/pam_appl.h>
 #endif
 
-#ifdef NAT_TRAVERSAL
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
@@ -460,8 +458,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "%s "         /* PLUTO_MY_SRCIP - if any */
 #ifdef XAUTH
 			  "PLUTO_IS_PEER_CISCO='%u' "
-			  "PLUTO_CISCO_DNS_INFO='%s' "
-			  "PLUTO_CISCO_DOMAIN_INFO='%s' "
+			  "PLUTO_PEER_DNS_INFO='%s' "
+			  "PLUTO_PEER_DOMAIN_INFO='%s' "
 			  "PLUTO_PEER_BANNER='%s' "
 #endif  /* XAUTH */
 #ifdef HAVE_NM
@@ -500,8 +498,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 #ifdef XAUTH
 			  , c->remotepeertype,
 			  c->cisco_dns_info ? c->cisco_dns_info : "",
-			  c->cisco_domain_info ? c->cisco_domain_info : "",
-			  c->cisco_banner ? c->cisco_banner : ""
+			  c->modecfg_domain ? c->modecfg_domain : "",
+			  c->modecfg_banner ? c->modecfg_banner : ""
 #endif  /* XAUTH */
 #ifdef HAVE_NM
 			  , c->nmconfigured
@@ -609,9 +607,7 @@ static enum routability could_route(struct connection *c)
 
 	/* if routing would affect IKE messages, reject */
 	if (kern_interface != NO_KERNEL
-#ifdef NAT_TRAVERSAL
 	    && c->spd.this.host_port != pluto_natt_float_port
-#endif
 	    && c->spd.this.host_port != IKE_UDP_PORT &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
 		loglog(RC_LOG_SERIOUS,
@@ -1641,7 +1637,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* static const int esp_max = elemsof(esp_info); */
 		/* int esp_count; */
 
-#ifdef NAT_TRAVERSAL
 		u_int8_t natt_type = 0;
 		u_int16_t natt_sport = 0, natt_dport = 0;
 		ip_address natt_oa;
@@ -1663,7 +1658,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 			natt_oa = st->hidden_variables.st_nat_oa;
 		}
-#endif
 
 		DBG(DBG_CRYPT,
 		    DBG_log(
@@ -1816,13 +1810,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->sec_ctx = st->sec_ctx;
 #endif
 
-#ifdef NAT_TRAVERSAL
 		said_next->natt_sport = natt_sport;
 		said_next->natt_dport = natt_dport;
 		said_next->transid = st->st_esp.attrs.transattrs.encrypt;
 		said_next->natt_type = natt_type;
 		said_next->natt_oa = &natt_oa;
-#endif
 		said_next->outif   = -1;
 #ifdef KLIPS_MAST
 		if (st->st_esp.attrs.encapsulation ==
@@ -2909,21 +2901,9 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 	}
 
 	if (st->st_connection->remotepeertype == CISCO) {
-
 		sr = st->st_connection->spd.next;
 		st->st_connection->spd.eroute_owner = sr->eroute_owner;
 		st->st_connection->spd.routing = sr->routing;
-
-		if (!st->st_connection->newest_ipsec_sa &&
-		    st->st_connection->spd.this.xauth_client) {
-			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
-					"updateresolvconf", st)) {
-				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "Updating resolv.conf failed, you may need to update it manually"));
-			}
-		}
 	}
 
 	return TRUE;
@@ -3013,18 +2993,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 	}
 #endif
 
-		if (st->st_connection->remotepeertype == CISCO &&
-		    st->st_connection->spd.this.xauth_client &&
-		    st->st_serialno == st->st_connection->newest_ipsec_sa) {
-			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
-					"restoreresolvconf", st)) {
-				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "Restoring resolv.conf failed, you may need to do it manually"));
-			}
-		}
-
 		break;
 #if defined(WIN32) && defined(WIN32_NATIVE)
 	case USE_WIN32_NATIVE:
@@ -3045,7 +3013,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 	} /* switch kern_interface */
 }
 
-#ifdef NAT_TRAVERSAL
 static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
 {
 	struct connection *c = st->st_connection;
@@ -3102,7 +3069,6 @@ bool update_ipsec_sa(struct state *st USED_BY_KLIPS)
 	}
 	return TRUE;
 }
-#endif
 
 bool was_eroute_idle(struct state *st, time_t since_when)
 {

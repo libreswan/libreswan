@@ -72,17 +72,33 @@
 #include "plutoalg.h"
 #include "xauth.h"
 #include "addresspool.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
 
 struct connection *connections = NULL;
 
 struct connection *unoriented_connections = NULL;
+
+
+static void unshare_ietfAttrList(ietfAttrList_t **listp)
+{
+	ietfAttrList_t *list = *listp;
+
+	while (list != NULL) {
+		ietfAttrList_t *el =
+			alloc_thing(ietfAttrList_t, "ietfAttrList");
+
+		el->attr = list->attr;
+		el->attr->count++;
+		el->next = NULL;
+		*listp = el;
+		listp = &el->next;
+		list = list->next;
+	}
+}
 
 /*
  * Find a connection by name.
@@ -133,7 +149,6 @@ void release_connection(struct connection *c, bool relations)
 	}
 }
 
-#ifdef DYNAMICDNS
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
@@ -191,7 +206,6 @@ void update_host_pairs(struct connection *c)
 		pfree(p);
 	}
 }
-#endif /* DYNAMICDNS */
 
 /* Delete a connection */
 
@@ -249,7 +263,7 @@ void delete_connection(struct connection *c, bool relations)
 			ip_str(&c->spd.that.host_addr),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
-#ifdef MODECFG
+#ifdef XAUTH
 		rel_lease_addr(c);
 #endif
 	} else {
@@ -313,16 +327,14 @@ void delete_connection(struct connection *c, bool relations)
 	pfreeany(c->name);
 #ifdef XAUTH
 	pfreeany(c->cisco_dns_info);
-	pfreeany(c->cisco_domain_info);
-	pfreeany(c->cisco_banner);
+	pfreeany(c->modecfg_domain);
+	pfreeany(c->modecfg_banner);
 
 #endif
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(c->policy_label);
 #endif
-#ifdef DYNAMICDNS
 	pfreeany(c->dnshostname);
-#endif
 
 	sr = &c->spd;
 	while (sr) {
@@ -775,15 +787,17 @@ static void unshare_connection_strings(struct connection *c)
 #ifdef XAUTH
 	c->cisco_dns_info = clone_str(c->cisco_dns_info,
 				"connection cisco_dns_info");
-	c->cisco_domain_info = clone_str(c->cisco_domain_info,
-					"connection cisco_domain_info");
-	c->cisco_banner =
-		clone_str(c->cisco_banner, "connection cisco_banner");
+	c->modecfg_domain = clone_str(c->modecfg_domain,
+				"connection modecfg_domain");
+	c->modecfg_banner = clone_str(c->modecfg_banner,
+				"connection modecfg_banner");
 #endif
 
-#ifdef DYNAMICDNS
-	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
+#ifdef HAVE_LABELED_IPSEC
+	c->policy_label = clone_str(c->policy_label,
+				    "connection policy_label");
 #endif
+	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
 
 	/* duplicate any alias, adding spaces to the beginning and end */
 	c->connalias = clone_str(c->connalias, "connection alias");
@@ -944,13 +958,11 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->host_srcip.u.v4.sin_len = sizeof(struct sockaddr_in);
 #endif
 
-#ifdef MODECFG
+#ifdef XAUTH
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
 	dst->pool_range = src->pool_range;
 
-#endif
-#ifdef XAUTH
 	dst->xauth_server = src->xauth_server;
 	dst->xauth_client = src->xauth_client;
 	dst->xauth_name = src->xauth_name;
@@ -1218,14 +1230,12 @@ void add_connection(const struct whack_message *wm)
 
 #ifdef XAUTH
 		c->cisco_dns_info = NULL;
-		c->cisco_domain_info = NULL;
-		c->cisco_banner = NULL;
+		c->modecfg_domain = NULL;
+		c->modecfg_banner = NULL;
 #endif
-#ifdef DYNAMICDNS
 		c->dnshostname = NULL;
 		if (wm->dnshostname)
 			c->dnshostname = wm->dnshostname;
-#endif
 
 		c->policy = wm->policy;
 
@@ -1381,11 +1391,6 @@ void add_connection(const struct whack_message *wm)
 		DBG(DBG_CONTROL, DBG_log("policy_label=unset;"));
 #endif
 
-#ifdef XAUTH
-		/* XAUTH pam or file */
-		c->xauthby = wm->xauthby;
-		c->xauthfail = wm->xauthfail;
-#endif
 
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
@@ -1405,6 +1410,12 @@ void add_connection(const struct whack_message *wm)
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
+		if (same_rightca)
+			c->spd.that.ca = c->spd.this.ca;
+		else if (same_leftca)
+			c->spd.this.ca = c->spd.that.ca;
+
+#ifdef XAUTH
 		/*
 		 * How to add addresspool only for responder?
 		 * It is not necessary on the initiator
@@ -1424,17 +1435,23 @@ void add_connection(const struct whack_message *wm)
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 			c->policy |= POLICY_XAUTH;
 
-		if (same_rightca)
-			c->spd.that.ca = c->spd.this.ca;
-		else if (same_leftca)
-			c->spd.this.ca = c->spd.that.ca;
+		c->xauthby = wm->xauthby;
+		c->xauthfail = wm->xauthfail;
 
-#ifdef MODECFG
-#ifdef MODECFG_DNSWINS
-		/* type is ip_address, not a string */
 		c->modecfg_dns1 = wm->modecfg_dns1;
 		c->modecfg_dns2 = wm->modecfg_dns2;
-#endif
+		c->modecfg_domain = NULL;
+		c->modecfg_banner = NULL;
+		if (wm->modecfg_domain)
+			c->modecfg_domain = clone_str(wm->modecfg_domain,
+						"modecfgdomain");
+		if (wm->modecfg_banner)
+			c->modecfg_domain = clone_str(wm->modecfg_banner,
+						"modecfgbanner");
+		DBG(DBG_CONTROL,
+			DBG_log("modecfgdomain=%s;", c->modecfg_domain));
+		DBG(DBG_CONTROL,
+			DBG_log("modecfgbanner=%s;", c->modecfg_banner));
 #endif
 
 		default_end(&c->spd.this, &c->spd.that.host_addr);
@@ -3599,15 +3616,6 @@ static void show_one_sr(struct connection *c,
 			"their_xauthuser=%s; ",
 			sr->that.xauth_name ? sr->that.xauth_name : "[any]");
 
-		if (isanyaddr(&c->modecfg_dns1))
-			strcpy(dns1, "unset");
-		else
-			addrtot(&c->modecfg_dns1, 0, dns1, sizeof(dns1));
-		if (isanyaddr(&c->modecfg_dns2))
-			strcpy(dns2, "unset");
-		else
-			addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
-
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   xauth info: us:%s, them:%s, %s %s%s;",
 			c->name, instance,
@@ -3634,10 +3642,18 @@ static void show_one_sr(struct connection *c,
 			thatxauthsemi
 			);
 
-#ifdef MODECFG
+		if (isanyaddr(&c->modecfg_dns1))
+			strcpy(dns1, "unset");
+		else
+			addrtot(&c->modecfg_dns1, 0, dns1, sizeof(dns1));
+		if (isanyaddr(&c->modecfg_dns2))
+			strcpy(dns2, "unset");
+		else
+			addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
+
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
-			"policy:%s, dns1:%s, dns2:%s;",
+			"policy:%s, dns1:%s, dns2:%s, domain:%s%s;",
 			c->name, instance,
 			/*
 			 * Both should not be set, but if they are, we want
@@ -3655,9 +3671,15 @@ static void show_one_sr(struct connection *c,
 			(sr->that.modecfg_server) ? "server" : "client",
 			(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
 			dns1,
-			dns2
+			dns2,
+			(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
+			(c->modecfg_banner == NULL) ? ", banner:unset" : ""
 			);
-#endif /* MODECFG */
+		if (c->modecfg_banner != NULL) {
+			whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
+			c->name, instance, c->modecfg_banner);
+		}
+
 	}
 #endif
 #ifdef HAVE_LABELED_IPSEC

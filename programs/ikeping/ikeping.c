@@ -159,7 +159,7 @@ static void reply_packet(int afamily,
 
 	op->isa_np    = NOTHING_WRONG;
 	op->isa_version = (1 << ISA_MAJ_SHIFT) | 0;
-	op->isa_xchg  = ISAKMP_XCHG_ECHOREPLY;
+	op->isa_xchg  = ISAKMP_XCHG_ECHOREPLY_PRIVATE;
 	op->isa_flags = 0;
 	op->isa_msgid = rand();
 	op->isa_length = 0;
@@ -231,18 +231,16 @@ static void receive_ping(int afamily, int s, int reply, int natt)
 	/* translate from network byte order */
 	ntoh_ping(&ih);
 
-	if (ih.isa_xchg == ISAKMP_XCHG_ECHOREQUEST       ||
-	    ih.isa_xchg == ISAKMP_XCHG_ECHOREQUEST_PRIVATE  ||
+	if (ih.isa_xchg == ISAKMP_XCHG_ECHOREQUEST_PRIVATE  ||
 	    (exchange_number != 0 && ih.isa_xchg == exchange_number)) {
-		xchg_name = "echo-request";
-		xchg = ISAKMP_XCHG_ECHOREQUEST;
-	} else if (ih.isa_xchg == ISAKMP_XCHG_ECHOREPLY ||
-		   ih.isa_xchg == ISAKMP_XCHG_ECHOREPLY_PRIVATE ||
+		xchg_name = "echo-request-swan";
+		xchg = ISAKMP_XCHG_ECHOREQUEST_PRIVATE;
+	} else if (ih.isa_xchg == ISAKMP_XCHG_ECHOREPLY_PRIVATE ||
 		   (exchange_number != 0 && ih.isa_xchg == exchange_number +
 		    1)) {
-		xchg_name = "echo-reply";
+		xchg_name = "echo-reply-swan";
 	} else {
-		xchg_name = "";
+		xchg_name = "unknown";
 	}
 
 	printf("received %d(%s) packet from %s/%d of len: %d\n",
@@ -264,7 +262,7 @@ static void receive_ping(int afamily, int s, int reply, int natt)
 	       xchg_name,
 	       ih.isa_xchg);
 
-	if (reply && xchg == ISAKMP_XCHG_ECHOREQUEST)
+	if (reply && xchg == ISAKMP_XCHG_ECHOREQUEST_PRIVATE)
 		reply_packet(afamily, s, &sender, sendlen, &ih);
 }
 
@@ -280,7 +278,7 @@ static const struct option long_opts[] = {
 	{ "inet6",       no_argument, NULL, '6' },
 	{ "nat-t",       no_argument, NULL, 'T' },
 	{ "natt",        no_argument, NULL, 'T' },
-	{ "exchangenum", required_argument, NULL, 'n' },
+	{ "exchangenum", required_argument, NULL, 'E' },
 	{ "wait",        required_argument, NULL, 'w' },
 	{ 0, 0, 0, 0 }
 };
