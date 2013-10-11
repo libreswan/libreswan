@@ -487,7 +487,7 @@ void init_vendorid(void)
 				ipsec_version_vendorid(), "init_pluto_vendorid");
 			/* cut terminating NULL which won't go over the wire */
 			vid->vid_len = strlen(vid->vid);
-			d = alloc_bytes(strlen(vid->descr) + 4 +
+			d = alloc_bytes(strlen(vid->descr) + 256 +
 					strlen(ipsec_version_vendorid()),
 					"self-vendor ID");
 			sprintf(d, "%s %s", vid->descr, ipsec_version_code());
