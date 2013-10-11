@@ -467,18 +467,12 @@ case "${PLUTO_VERB}" in
     up-client)
 	# connection to my client subnet coming up
 	# If you are doing a custom version, firewall commands go here.
+	updateresolvconf
 	;;
     down-client)
 	# connection to my client subnet going down
 	downrule
 	# If you are doing a custom version, firewall commands go here.
-	;;
-    updateresolvconf-host|updateresolvconf-client)
-	# updating resolv.conf using DNS info obtained from the server
-	updateresolvconf
-	;;
-    restoreresolvconf-host|restoreresolvconf-client)
-	# restoring resolv.conf
 	restoreresolvconf
 	;;
     disconnectNM-host|disconnectNM-client)

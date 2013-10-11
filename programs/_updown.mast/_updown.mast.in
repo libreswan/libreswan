@@ -576,16 +576,10 @@ case "${PLUTO_VERB}:${1}" in
 
     up-client:)
 	# If you are doing a custom version, firewall commands go here.
+	updateresolvconf
 	;;
     down-client:)
 	# If you are doing a custom version, firewall commands go here.
-	;;
-    updateresolvconf-host|updateresolvconf-client)
-	# updating resolv.conf using DNS info obtained from the server
-	updateresolvconf
-	;;
-    restoreresolvconf-host|restoreresolvconf-client)
-	# restoring resolv.conf
 	restoreresolvconf
 	;;
     disconnectNM-host|disconnectNM-client)
