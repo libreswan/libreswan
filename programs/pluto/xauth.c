@@ -2102,7 +2102,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
 							"ModeCFG Domain");
-				loglog(RC_LOG_SERIOUS, "ModeCFG Domain: %s",
+				loglog(RC_LOG_SERIOUS, "Received Domain: %s",
 				       st->st_connection->modecfg_domain);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
@@ -2113,7 +2113,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
 							"ModeCFG Banner");
-				loglog(RC_LOG_SERIOUS, "ModeCFG Banner: %s",
+				loglog(RC_LOG_SERIOUS, "Received Banner: %s",
 				       st->st_connection->modecfg_banner);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
