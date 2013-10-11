@@ -41,9 +41,7 @@
 #include "kernel.h"
 #include "state.h"
 
-#ifdef NAT_TRAVERSAL
-#  include "nat_traversal.h"
-#endif
+#include "nat_traversal.h"
 
 /**
  * Listing of interesting but details unknown Vendor IDs:
@@ -489,7 +487,7 @@ void init_vendorid(void)
 				ipsec_version_vendorid(), "init_pluto_vendorid");
 			/* cut terminating NULL which won't go over the wire */
 			vid->vid_len = strlen(vid->vid);
-			d = alloc_bytes(strlen(vid->descr) + 4 +
+			d = alloc_bytes(strlen(vid->descr) + 256 +
 					strlen(ipsec_version_vendorid()),
 					"self-vendor ID");
 			sprintf(d, "%s %s", vid->descr, ipsec_version_code());
@@ -586,7 +584,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 	bool vid_useful = TRUE; /* tentatively TRUE */
 
 	switch (vid->id) {
-#ifdef NAT_TRAVERSAL
 	/**
 	 * Use most recent supported NAT-Traversal method and ignore
 	 * the other ones (implementations will send all supported
@@ -641,7 +638,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 			}
 		}
 		break;
-#endif
 
 	case VID_MISC_DPD:
 		/* Remote side would like to do DPD with us on this connection */

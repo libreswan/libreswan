@@ -279,11 +279,6 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
 
-# Do a new lookup every time a connection is (re)started. This works better
-# on hosts with some dyndns service, since DPD will cause a new dns lookup,
-# but it could be a potential security issue if receiving spoofed dns.
-USE_DYNAMICDNS?=true
-
 # Enable support for DNSSEC. This requires the unbound library
 USE_DNSSEC?=true
 
@@ -384,12 +379,6 @@ USE_LIBCAP_NG?=true
 
 # Support for Network Manager
 USE_NM?=true
-
-# whether to support NAT Traversal (aka NAT-T)
-USE_NAT_TRAVERSAL?=true
-
-# where to support NAT-T in transport mode (needed for Win2K NAT-T Interop)
-USE_NAT_TRAVERSAL_TRANSPORT_MODE?=true
 
 # Include LDAP support (currently used for fetching CRLs)
 USE_LDAP?=false
@@ -507,7 +496,6 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-PLUTOLIB=${OBJDIRTOP}/lib/libpluto/libpluto.a
 LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
@@ -538,7 +526,7 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
-export LIBRESWANLIB LSWLOGLIB PLUTOLIB 
+export LIBRESWANLIB LSWLOGLIB 
 export LIBDESSRCDIR LIBDESLITE LIBAES
 export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB

@@ -85,9 +85,7 @@
 #include "xauth.h"
 #endif
 #include "vendor.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 #include "virtual.h"	/* needs connections.h */
 #include "dpd.h"
 #include "x509more.h"
@@ -203,21 +201,6 @@ bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 	return justship_nonce(n, outs, np, name);
 }
 
-notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
-			    const char *name, enum next_payload_types paynum)
-{
-	pb_stream *nonce_pbs = &md->chain[paynum]->pbs;
-	size_t len = pbs_left(nonce_pbs);
-
-	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
-		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
-		       name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
-		return PAYLOAD_MALFORMED; /* ??? */
-	}
-	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
-	return NOTHING_WRONG;
-}
-
 /** The whole message must be a multiple of 4 octets.
  * I'm not sure where this is spelled out, but look at
  * rfc2408 3.6 Transform Payload.
@@ -251,7 +234,8 @@ static initiator_function *pick_initiator(struct connection *c UNUSED,
 					  lset_t policy)
 {
 	if ((policy & POLICY_IKEV1_DISABLE) == 0 &&
-	    (c->failed_ikev2 || (policy & POLICY_IKEV2_PROPOSE) == 0)) {
+	    (c->failed_ikev2 || (policy & POLICY_IKEV2_PROPOSE) == 0) &&
+	    (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)) == 0) {
 		if (policy & POLICY_AGGRESSIVE) {
 #if defined(AGGRESSIVE)
 			return aggr_outI1;
@@ -264,7 +248,8 @@ static initiator_function *pick_initiator(struct connection *c UNUSED,
 			return main_outI1;
 		}
 
-	} else if (policy & POLICY_IKEV2_PROPOSE) {
+	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
+		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
 		return ikev2parent_outI1;
 
 	} else {
@@ -405,6 +390,10 @@ void ipsecdoi_replace(struct state *st,
 			    ENCAPSULATION_MODE_TUNNEL)
 				policy |= POLICY_TUNNEL;
 		}
+		/* retain policy so child sa rekey attempt does not blow up */
+		if (st->st_state == STATE_PARENT_I3)
+			policy = st->st_connection->policy;
+
 		passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(whack_sock, st->st_connection, policy, try,
 				  st->st_serialno, st->st_import
@@ -534,7 +523,6 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-#ifdef NAT_TRAVERSAL
 	if ((st->hidden_variables.st_nat_traversal &
 	     NAT_T_WITH_PORT_FLOATING) &&
 	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
@@ -544,7 +532,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
 	} else
-#endif
+
 	if (!(id->isaid_doi_specific_a == 0 && id->isaid_doi_specific_b ==
 	      0) &&
 	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
@@ -802,7 +790,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 
 	/* advance b to end of string */
 	b = b + strlen(b);
-#ifdef NAT_TRAVERSAL
+
 	{
 		char oa[ADDRTOT_BUF];
 
@@ -836,7 +824,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		ini = " ";
 		fin = "}";
 	}
-#endif
 
 	/* advance b to end of string */
 	b = b + strlen(b);

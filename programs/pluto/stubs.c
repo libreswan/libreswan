@@ -62,9 +62,7 @@
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "xauth.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #include "virtual.h"	/* needs connections.h */
 

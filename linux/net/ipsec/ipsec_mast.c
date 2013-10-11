@@ -268,13 +268,10 @@ static void ipsec_mast_xsm_complete(struct ipsec_xmit_state *ixs,
 		goto cleanup;
 	}
 
-#ifdef NAT_TRAVERSAL
 	/* do any final NAT-encapsulation */
 	stat = ipsec_nat_encap(ixs);
 	if (stat != IPSEC_XMIT_OK)
 		goto cleanup;
-
-#endif
 
 	ipsec_xmit_send(ixs);
 

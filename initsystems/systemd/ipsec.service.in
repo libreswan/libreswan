@@ -15,13 +15,13 @@ EnvironmentFile=-@FINALSYSCONFDIR@/sysconfig/pluto
 #Environment=IPSEC_EXECDIR=@FINALLIBEXECDIR@/ipsec
 #PIDFile=@FINALVARDIR@/run/pluto/pluto.pid
 #
-ExecStartPre=@FINALSBINDIR@/ipsec addconn --config @FINALCONFFILE@ --checkconfig
-ExecStartPre=@FINALLIBDIR@/_stackmanager start
+ExecStartPre=@FINALLIBEXECDIR@/addconn --config @FINALCONFFILE@ --checkconfig
+ExecStartPre=@FINALLIBEXECDIR@/_stackmanager start
 ExecStart=@BINSH@ -c 'eval `@FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS`'
-ExecStop=@FINALSBINDIR@/ipsec whack --shutdown
+ExecStop=@FINALLIBEXECDIR@/whack --shutdown
 ExecStopPost=/sbin/ip xfrm policy flush
 ExecStopPost=/sbin/ip xfrm state flush
-ExecReload=@FINALSBINDIR@/ipsec whack --listen
+ExecReload=@FINALLIBEXECDIR@/whack --listen
 
 [Install]
 WantedBy=multi-user.target

@@ -462,7 +462,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* send NONCE */
 	{
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
+		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 		pb_stream pb;
 
@@ -486,7 +486,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	if (c->send_vendorid) {
 		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
-			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
+			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
 				     myvid, strlen(myvid),
@@ -918,7 +918,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* send NONCE */
 	unpack_nonce(&st->st_nr, r);
 	{
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
+		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 		pb_stream pb;
 
@@ -942,7 +942,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	if (c->send_vendorid) {
 		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >
-			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_NONE;
+			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
 				     myvid, strlen(myvid),
@@ -1286,11 +1286,11 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	if (init == INITIATOR) {
-		cipherkey = &st->st_skey_er;
-		authkey   = &st->st_skey_ar;
+		cipherkey = &pst->st_skey_er;
+		authkey   = &pst->st_skey_ar;
 	} else {
-		cipherkey = &st->st_skey_ei;
-		authkey   = &st->st_skey_ai;
+		cipherkey = &pst->st_skey_ei;
+		authkey   = &pst->st_skey_ai;
 	}
 
 	e_pbs = &md->chain[ISAKMP_NEXT_v2E]->pbs;
@@ -1368,7 +1368,9 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 
 	{
 		stf_status ret;
-		ret = ikev2_process_payloads(md, &md->clr_pbs, st->st_state, np);
+		ret =
+			ikev2_process_payloads(md, &md->clr_pbs, st->st_state,
+					       np);
 		if (ret != STF_OK)
 			return ret;
 	}
@@ -1591,11 +1593,11 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		lset_t policy;
 		struct connection *c0 = first_pending(pst, &policy,
 						      &st->st_whack_sock);
-		unsigned int np = (c0 ? ISAKMP_NEXT_v2SA : ISAKMP_NEXT_NONE);
+		unsigned int np = (c0 ? ISAKMP_NEXT_v2SA : ISAKMP_NEXT_v2NONE);
 		DBG(DBG_CONTROL,
 		    DBG_log(" payload after AUTH will be %s",
 			    (c0) ? "ISAKMP_NEXT_v2SA" :
-			    "ISAKMP_NEXT_NONE/NOTIFY"));
+			    "ISAKMP_NEXT_v2NONE/NOTIFY"));
 
 		stf_status authstat = ikev2_send_auth(c, st,
 						      INITIATOR,
@@ -1626,7 +1628,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 					"Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
 				memset(&child_spi, 0, sizeof(child_spi));
 				memset(&notify_data, 0, sizeof(notify_data));
-				ship_v2N(ISAKMP_NEXT_NONE,
+				ship_v2N(ISAKMP_NEXT_v2NONE,
 					 ISAKMP_PAYLOAD_NONCRITICAL, 0,
 					 &child_spi,
 					 v2N_USE_TRANSPORT_MODE, &notify_data,
@@ -2056,7 +2058,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			/* initiator didn't propose anything. Weird. Try unpending out end. */
 			/* UNPEND XXX */
 			libreswan_log("No CHILD SA proposals received.");
-			np = ISAKMP_NEXT_NONE;
+			np = ISAKMP_NEXT_v2NONE;
 		} else {
 			DBG_log("CHILD SA proposals received");
 			libreswan_log(
@@ -2088,12 +2090,12 @@ static stf_status ikev2_parent_inI2outR2_tail(
 					    "ikev2_child_sa_respond returned STF_FAIL with %s",
 					    enum_name(&ikev2_notify_names,
 						      v2_notify_num)));
-				np = ISAKMP_NEXT_NONE;
+				np = ISAKMP_NEXT_v2NONE;
 			} else if (ret != STF_OK) {
 				DBG_log("ikev2_child_sa_respond returned %s", enum_name(
 						&stfstatus_name,
 						ret));
-				np = ISAKMP_NEXT_NONE;
+				np = ISAKMP_NEXT_v2NONE;
 			}
 		}
 
@@ -2627,7 +2629,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	/* build and add v2N payload to the packet */
 	memset(&child_spi, 0, sizeof(child_spi));
 	memset(&notify_data, 0, sizeof(notify_data));
-	ship_v2N(ISAKMP_NEXT_NONE, DBGP(
+	ship_v2N(ISAKMP_NEXT_v2NONE, DBGP(
 			 IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
 		 (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
 		 ISAKMP_PAYLOAD_NONCRITICAL, PROTO_ISAKMP,
@@ -2751,6 +2753,12 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				 sizeof(reply_buffer),
 				 "information exchange reply packet");
 
+			DBG(DBG_CONTROLMORE | DBG_DPD,
+			    DBG_log("Received an INFORMATIONAL request, "
+				    "updating liveness, no longer pending"));
+			st->st_last_liveness = now();
+			st->st_pend_liveness = FALSE;
+
 			/* HDR out */
 			{
 				struct isakmp_hdr r_hdr;
@@ -2789,7 +2797,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				     p = p->next) {
 					if (p->payload.v2delete.isad_protoid ==
 					    PROTO_ISAKMP) {
-						e.isag_np = ISAKMP_NEXT_NONE;
+						e.isag_np = ISAKMP_NEXT_v2NONE;
 						ikesa_flag = TRUE;
 						break;
 					}
@@ -2800,7 +2808,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					e.isag_np = ISAKMP_NEXT_v2D;
 
 			} else {
-				e.isag_np = ISAKMP_NEXT_NONE;
+				e.isag_np = ISAKMP_NEXT_v2NONE;
 			}
 
 			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -2973,7 +2981,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 						else
 							v2del_tmp.isad_np =
-								ISAKMP_NEXT_NONE;
+								ISAKMP_NEXT_v2NONE;
 
 
 						v2del_tmp.isad_protoid =
@@ -3041,7 +3049,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				close_output_pbs(&md->rbody);
 				close_output_pbs(&reply_stream);
 
-				ret = ikev2_encrypt_msg(md, RESPONDER,
+				ret = ikev2_encrypt_msg(md, md->role,
 							authstart,
 							iv, encstart, authloc,
 							&e_pbs, &e_pbs_cipher);
@@ -3276,7 +3284,19 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 						delete_state(current_st);
 						current_st = next_st;
 					}
-
+					/* empty response to our empty INFORMATIONAL
+					 * We don't send anything back */
+				} else if ((md->hdr.isa_flags &
+					    ISAKMP_FLAGS_R) &&
+					   st->st_state != STATE_IKESA_DEL) {
+					DBG(DBG_CONTROLMORE,
+					    DBG_log(
+						    "Received an INFORMATIONAL response, "
+						    "updating liveness, no longer pending."));
+					st->st_last_liveness = now();
+					st->st_pend_liveness = FALSE;
+					st->st_msgid_lastrecv =
+						md->msgid_received;
 				}
 			}
 		}
@@ -3286,6 +3306,134 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 	return STF_OK;
 }
 
+stf_status ikev2_send_informational(struct state *st)
+{
+	struct state *pst = NULL;
+
+	if (st->st_clonedfrom != SOS_NOBODY) {
+		pst = state_with_serialno(st->st_clonedfrom);
+		if (!pst) {
+			DBG(DBG_CONTROL,
+			    DBG_log(
+				    "IKE SA does not exist for this child SA - should not happen"));
+			DBG(DBG_CONTROL,
+			    DBG_log("INFORMATIONAL exchange can not be sent"));
+			return STF_IGNORE;
+		}
+	} else {
+		pst = st;
+	}
+
+	{
+		unsigned char *authstart;
+		unsigned char *encstart;
+		unsigned char *iv;
+		int ivsize;
+		struct msg_digest md;
+		struct ikev2_generic e;
+		enum phase1_role role;
+		pb_stream e_pbs, e_pbs_cipher;
+		pb_stream rbody;
+		pb_stream request;
+		u_char buffer[1024];
+
+		md.st = st;
+		md.pst = pst;
+		memset(buffer, 0, sizeof(buffer));
+		init_pbs(&request, buffer, sizeof(buffer),
+			 "informational exchange request packet");
+		authstart = request.cur;
+
+		/* HDR out */
+		{
+			struct isakmp_hdr r_hdr;
+			zero(&r_hdr);
+			r_hdr.isa_version = IKEv2_MAJOR_VERSION <<
+					    ISA_MAJ_SHIFT |
+					    IKEv2_MINOR_VERSION;
+			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
+			       COOKIE_SIZE);
+			memcpy(r_hdr.isa_icookie, pst->st_icookie,
+			       COOKIE_SIZE);
+			r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
+			r_hdr.isa_np = ISAKMP_NEXT_v2E;
+
+			if (pst->st_state == STATE_PARENT_I2 ||
+			    pst->st_state == STATE_PARENT_I3) {
+				r_hdr.isa_flags |= ISAKMP_FLAGS_I;
+				role = INITIATOR;
+				r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
+			} else {
+				role = RESPONDER;
+				r_hdr.isa_msgid = htonl(
+					pst->st_msgid_lastrecv + 1);
+			}
+
+			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+					&request, &rbody)) {
+				libreswan_log(
+					"error initializing hdr for informational message");
+				return STF_FATAL;
+			}
+		} /* HDR done*/
+
+		/* insert an Encryption payload header */
+		e.isag_np = ISAKMP_NEXT_NONE;
+		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+		if (!out_struct(&e, &ikev2_e_desc, &rbody, &e_pbs))
+			return STF_FATAL;
+
+		/* IV */
+		iv = e_pbs.cur;
+		ivsize = pst->st_oakley.encrypter->iv_size;
+		if (!out_zero(ivsize, &e_pbs, "iv"))
+			return STF_FATAL;
+
+		get_rnd_bytes(iv, ivsize);
+
+		/* note where cleartext starts */
+		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
+			 "cleartext");
+		e_pbs_cipher.container = &e_pbs;
+		e_pbs_cipher.desc = NULL;
+		e_pbs_cipher.cur = e_pbs.cur;
+		encstart = e_pbs_cipher.cur;
+
+		/* This is an empty informational exchange (A.K.A liveness check) */
+		ikev2_padup_pre_encrypt(&md, &e_pbs_cipher);
+		close_output_pbs(&e_pbs_cipher);
+
+		{
+			stf_status ret;
+			unsigned char *authloc = ikev2_authloc(&md, &e_pbs);
+
+			if (!authloc)
+				return STF_FATAL;
+
+			close_output_pbs(&e_pbs);
+			close_output_pbs(&rbody);
+			close_output_pbs(&request);
+
+			ret = ikev2_encrypt_msg(&md, role,
+						authstart,
+						iv, encstart, authloc,
+						&e_pbs, &e_pbs_cipher);
+			if (ret != STF_OK)
+				return STF_FATAL;
+		}
+		/* keep it for a retransmit if necessary */
+		freeanychunk(pst->st_tpacket);
+		clonetochunk(pst->st_tpacket, request.start,
+			     pbs_offset(&request),
+			     "reply packet for informational exchange");
+		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
+		send_ike_msg(pst, __FUNCTION__);
+		ikev2_update_counters(&md);
+
+	}
+
+	return STF_OK;
+}
 /*
  *
  ***************************************************************
@@ -3403,7 +3551,7 @@ void ikev2_delete_out(struct state *st)
 			 */
 
 			zero(&v2del_tmp);
-			v2del_tmp.isad_np = ISAKMP_NEXT_NONE;
+			v2del_tmp.isad_np = ISAKMP_NEXT_v2NONE;
 
 			if (st->st_clonedfrom != 0 ) {
 				v2del_tmp.isad_protoid = PROTO_IPSEC_ESP;

@@ -50,10 +50,9 @@
 #include "whack.h"
 #include "dpd.h"
 #include "lswtime.h"
+#include "ikev2.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 /* This file has the event handling routines. Events are
  * kept as a linked list of event structures. These structures
@@ -90,6 +89,9 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
 		if (type == EVENT_DPD || type == EVENT_DPD_TIMEOUT) {
 			passert(st->st_dpd_event == NULL);
 			st->st_dpd_event = ev;
+		} else if (type == EVENT_v2_LIVENESS) {
+			passert(st->st_liveness_event == NULL);
+			st->st_liveness_event = ev;
 		} else {
 			passert(st->st_event == NULL);
 			st->st_event = ev;
@@ -111,8 +113,7 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
 		    }
 	    });
 
-	if (evlist == (struct event *) NULL ||
-	    evlist->ev_time >= ev->ev_time) {
+	if (evlist == NULL || evlist->ev_time >= ev->ev_time) {
 		DBG(DBG_CONTROLMORE, DBG_log("event added at head of queue"));
 		ev->ev_next = evlist;
 		evlist = ev;
@@ -435,6 +436,89 @@ void handle_timer_event(void)
 	}
 }
 
+void liveness_check(struct state *st)
+{
+	time_t tm, last_liveness;
+	struct state *pst;
+	stf_status ret;
+	struct connection *c;
+	int timeout;
+
+	passert(st != NULL);
+	c = st->st_connection;
+
+	/* this should be called on a child sa */
+	if (st->st_clonedfrom != SOS_NOBODY) {
+		pst = state_with_serialno(st->st_clonedfrom);
+		if (!pst) {
+			DBG(DBG_CONTROL,
+			    DBG_log("liveness_check error, no parent state"));
+			return;
+		}
+	} else {
+		pst = st;
+	}
+
+	last_liveness = pst->st_last_liveness;
+	tm = now();
+	/* ensure that the very first liveness_check works out */
+	if (last_liveness == 0)
+		last_liveness = tm;
+
+	DBG(DBG_CONTROL,
+	    DBG_log("liveness_check - last_liveness: %lu, tm: %lu",
+		    last_liveness,
+		    tm));
+	if (c->dpd_timeout < c->dpd_delay * 3)
+		timeout = c->dpd_delay * 3;
+	else
+		timeout = c->dpd_timeout;
+
+	if (pst->st_pend_liveness == TRUE && tm - last_liveness >= timeout) {
+		DBG(DBG_CONTROL,
+		    DBG_log(
+			    "liveness_check - peer has not responded in %lu seconds,"
+			    " with a timeout of %d, taking action",
+			    tm - last_liveness,
+			    timeout));
+		switch (c->dpd_action) {
+
+		case DPD_ACTION_CLEAR:
+			libreswan_log(
+				"IKEv2 peer liveness - clearing connection");
+			delete_states_by_connection(c, TRUE);
+			unroute_connection(c);
+			break;
+
+		case DPD_ACTION_RESTART:
+			libreswan_log("IKEv2 peer liveness - restarting all connections "
+				      "that share this peer");
+			restart_connections_by_peer(c);
+			break;
+
+		default:
+			DBG(DBG_CONTROL,
+			    DBG_log("liveness_check - handling default by "
+				    "rescheduling"));
+			goto live_ok;
+		}
+
+	} else {
+		ret = ikev2_send_informational(st);
+		if (ret != STF_OK) {
+			DBG(DBG_CONTROL, DBG_log(
+				    "failed to send informational"));
+			return;
+		}
+live_ok:
+		DBG(DBG_CONTROL, DBG_log("liveness_check - peer is ok"));
+		delete_liveness_event(st);
+		event_schedule(EVENT_v2_LIVENESS,
+			       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
+			       st);
+	}
+}
+
 void handle_next_timer_event(void)
 {
 	struct event *ev = evlist;
@@ -471,9 +555,12 @@ void handle_next_timer_event(void)
 	 */
 	passert(GLOBALS_ARE_RESET());
 	if (st != NULL) {
-		if ( type  == EVENT_DPD || type == EVENT_DPD_TIMEOUT) {
+		if (type == EVENT_DPD || type == EVENT_DPD_TIMEOUT) {
 			passert(st->st_dpd_event == ev);
 			st->st_dpd_event = NULL;
+		} else if (type == EVENT_v2_LIVENESS) {
+			passert(st->st_liveness_event == ev);
+			st->st_liveness_event = NULL;
 		} else {
 			passert(st->st_event == ev);
 			st->st_event = NULL;
@@ -495,12 +582,10 @@ void handle_next_timer_event(void)
 		break;
 #endif
 
-#ifdef DYNAMICDNS
 	case EVENT_PENDING_DDNS:
 		passert(st == NULL);
 		connection_check_ddns();
 		break;
-#endif
 
 	case EVENT_PENDING_PHASE2:
 		passert(st == NULL);
@@ -517,6 +602,10 @@ void handle_next_timer_event(void)
 
 	case EVENT_v2_RETRANSMIT:
 		retransmit_v2_msg(st);
+		break;
+
+	case EVENT_v2_LIVENESS:
+		liveness_check(st);
 		break;
 
 	case EVENT_SA_REPLACE:
@@ -578,6 +667,7 @@ void handle_next_timer_event(void)
 					  "IPsec"));
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
+		delete_liveness_event(st);
 		delete_dpd_event(st);
 		event_schedule(EVENT_SA_EXPIRE, st->st_margin, st);
 	}
@@ -633,11 +723,9 @@ void handle_next_timer_event(void)
 		dpd_timeout(st);
 		break;
 
-#ifdef NAT_TRAVERSAL
 	case EVENT_NAT_T_KEEPALIVE:
 		nat_traversal_ka_event();
 		break;
-#endif
 
 	case EVENT_CRYPTO_FAILED:
 		DBG(DBG_CONTROL,
@@ -719,6 +807,30 @@ void delete_event(struct state *st)
 				pfree(st->st_event);
 				st->st_event = (struct event *) NULL;
 
+				break;
+			}
+		}
+	}
+}
+
+void delete_liveness_event(struct state *st)
+{
+	if (st->st_liveness_event != NULL) {
+		struct event **ev;
+
+		DBG(DBG_CONTROL, DBG_log("state %ld deleting liveness event",
+					 st->st_serialno));
+
+		for (ev = &evlist;; ev = &(*ev)->ev_next) {
+			if (*ev == NULL) {
+				DBG(DBG_CONTROL, DBG_log("liveness event"
+							 " not found"));
+				break;
+			}
+			if ((*ev) == st->st_liveness_event) {
+				*ev = (*ev)->ev_next;
+				pfree(st->st_liveness_event);
+				st->st_liveness_event = NULL;
 				break;
 			}
 		}

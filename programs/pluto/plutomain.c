@@ -83,9 +83,7 @@
 
 #include "virtual.h"	/* needs connections.h */
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #include "lswcrypto.h"
 
@@ -195,13 +193,11 @@ static void usage(const char *mess)
 		" [ --debug-private]"
 		" [ --debug-pfkey]"
 #endif
-#ifdef NAT_TRAVERSAL
 		" [ --debug-nat-t]"
 		" \\\n\t"
 		"[--nat_traversal] [--keep_alive <delay_sec>]"
 		" \\\n\t"
 		"[--disable_port_floating]"
-#endif
 		" \\\n\t"
 		"[--virtual_private <network_list>]"
 		"\n"
@@ -234,9 +230,6 @@ static const char compile_time_interop_options[] = ""
 #ifdef DNSSEC
 					    " DNSSEC"
 #endif
-#ifdef NAT_TRAVERSAL
-					    " NAT-T"
-#endif
 #ifdef FIPS_CHECK
 					    " FIPS_CHECK"
 #endif
@@ -251,9 +244,6 @@ static const char compile_time_interop_options[] = ""
 #endif
 #ifdef XAUTH_HAVE_PAM
 					    " XAUTH_PAM"
-#endif
-#ifdef DYNAMICDNS
-					    " DYNAMICDNS"
 #endif
 #ifdef HAVE_NM
 					    " NETWORKMANAGER"
@@ -395,9 +385,9 @@ static void pluto_init_nss(char *confddir)
 
 	snprintf(buf, sizeof(buf), "%s", confddir);
 	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", buf);
-	SECStatus nss_init_status = NSS_InitReadWrite(buf);
+	SECStatus nss_init_status = NSS_Init(buf);
 	if (nss_init_status != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS initialization failed (err %d)\n",
+		loglog(RC_LOG_SERIOUS, "NSS readonly initialization failed (err %d)\n",
 		       PR_GetError());
 		exit_pluto(10);
 	} else {
@@ -448,12 +438,11 @@ int main(int argc, char **argv)
 	pluto_shared_secrets_file =
 		DISCARD_CONST(char *, SHARED_SECRETS_FILE);
 
-#ifdef NAT_TRAVERSAL
 	/** Overridden by nat_traversal= in ipsec.conf */
 	bool nat_traversal = FALSE;
 	bool nat_t_spf = TRUE; /* support port floating */
 	unsigned int keep_alive = 0;
-#endif
+
 	/** Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
 #ifdef LEAK_DETECTIVE
@@ -528,7 +517,6 @@ int main(int argc, char **argv)
 			{ "ipsec_dir", required_argument, NULL, 'f' },
 			{ "foodgroupsdir", required_argument, NULL, 'f' },
 			{ "adns", required_argument, NULL, 'a' },
-#ifdef NAT_TRAVERSAL
 			{ "nat_traversal", no_argument, NULL, '1' },
 			{ "keep_alive", required_argument, NULL, '2' },
 			{ "force_keepalive", no_argument, NULL, '3' }, /* obsolete, ignored */
@@ -536,7 +524,6 @@ int main(int argc, char **argv)
 			{ "debug-nat_t", no_argument, NULL, '5' },
 			{ "debug-nattraversal", no_argument, NULL, '5' },
 			{ "debug-nat-t", no_argument, NULL, '5' },
-#endif
 			{ "virtual_private", required_argument, NULL, '6' },
 			{ "nhelpers", required_argument, NULL, 'j' },
 #ifdef HAVE_LABELED_IPSEC
@@ -806,7 +793,6 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-#ifdef NAT_TRAVERSAL
 		case 'q': /* --natikeport <portnumber> */
 			if (optarg == NULL || !isdigit(optarg[0]))
 				usage("missing port number");
@@ -823,7 +809,6 @@ int main(int argc, char **argv)
 				pluto_natt_float_port = port;
 			}
 			continue;
-#endif
 
 		case 'b': /* --ctlbase <path> */
 			ctlbase = optarg;
@@ -879,7 +864,6 @@ int main(int argc, char **argv)
 			log_to_perpeer = TRUE;
 			continue;
 
-#ifdef NAT_TRAVERSAL
 		case '1': /* --nat_traversal */
 			nat_traversal = TRUE;
 			continue;
@@ -897,7 +881,6 @@ int main(int argc, char **argv)
 		case '5': /* --debug-nat_t */
 			base_debugging |= DBG_NATT;
 			continue;
-#endif
 #endif
 		case '6': /* --virtual_private */
 			virtual_private = optarg;
@@ -955,14 +938,14 @@ int main(int argc, char **argv)
 			set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
 			set_cfg_string(&pluto_vendorid, cfg->setup.strings[KSF_MYVENDORID]); /* --vendorid */
 			/* no config option: pluto_adns_option */
-#ifdef NAT_TRAVERSAL
+
 			pluto_natt_float_port =
 				cfg->setup.options[KBF_NATIKEPORT];
 			nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
 			keep_alive = cfg->setup.options[KBF_KEEPALIVE];
 			nat_t_spf =
 				!cfg->setup.options[KBF_DISABLEPORTFLOATING];
-#endif
+
 			set_cfg_string(&virtual_private,
 				       cfg->setup.strings[KSF_VIRTUALPRIVATE]);
 
@@ -1331,10 +1314,7 @@ int main(int argc, char **argv)
 
 /** Initialize all of the various features */
 
-	init_vendorid(); /* to be phased out */
-#ifdef NAT_TRAVERSAL
 	init_nat_traversal(nat_traversal, keep_alive, nat_t_spf);
-#endif
 
 	init_virtual_ip(virtual_private);
 	/* obsoletd by nss code init_rnd_pool(); */

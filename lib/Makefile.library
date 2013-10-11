@@ -26,10 +26,6 @@ CFLAGS+=-pthread
 CFLAGS+= $(USERCOMPILE)
 CFLAGS+= ${WERROR}
 
-ifeq ($(USE_NAT_TRAVERSAL),true)
-CFLAGS+= -DNAT_TRAVERSAL
-endif
-
 ifeq ($(USE_DNSSEC),true)
 CFLAGS+= -DDNSSEC
 endif

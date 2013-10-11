@@ -40,6 +40,7 @@
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
+#include "xauth.h"	/* just for state_deletion_xauth_cleanup() */
 #endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -69,9 +70,7 @@
  */
 
 u_int16_t pluto_port = IKE_UDP_PORT;                    /* Pluto's port */
-#ifdef NAT_TRAVERSAL
 u_int16_t pluto_natt_float_port = NAT_T_IKE_FLOAT_PORT; /* Pluto's NAT-T port */
-#endif
 
 /*
  * This file has the functions that handle the
@@ -460,17 +459,7 @@ void delete_state(struct state *st)
 	}
 
 #ifdef XAUTH_HAVE_PAM
-	/*
-	 * If there is still an authentication thread alive, kill it.
-	 */
-	if (st->tid) {
-		pthread_kill(st->tid, SIGINT);
-		/* The pthread_mutex_lock ensures that the do_authentication
-		 * thread completes when pthread_kill'ed */
-		pthread_mutex_lock(&st->mutex);
-		pthread_mutex_unlock(&st->mutex);
-	}
-	pthread_mutex_destroy(&st->mutex);
+	state_deletion_xauth_cleanup(st);
 #endif
 
 	/* If DPD is enabled on this state object, clear any pending events */
@@ -1479,8 +1468,25 @@ void fmt_state(struct state *st, const time_t n,
 				 st->st_last_dpd : (long)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
+		} else if (st->hidden_variables.st_liveness) {
+			struct state *pst;
+			time_t tn = time(NULL);
+
+			/* stats are on parent sa */
+			if (st->st_clonedfrom != SOS_NOBODY) {
+				pst = state_with_serialno(st->st_clonedfrom);
+				if (pst != NULL) {
+					snprintf(dpdbuf, sizeof(dpdbuf),
+						 "; lastlive=%lds",
+						 pst->st_last_liveness != 0 ? tn -
+						 pst->st_last_liveness : 0);
+				}
+			}
 		} else {
-			snprintf(dpdbuf, sizeof(dpdbuf), "; nodpd");
+			if (!st->st_ikev2)
+				snprintf(dpdbuf, sizeof(dpdbuf), "; nodpd");
+			else
+				snprintf(dpdbuf, sizeof(dpdbuf), "");
 		}
 	}
 
@@ -1711,9 +1717,9 @@ void show_states_status(void)
 	int count;
 	struct state **array;
 
-	whack_log(RC_COMMENT, " "); /* spacer */
-	whack_log(RC_COMMENT, "State list:"); /* spacer */
-	whack_log(RC_COMMENT, " "); /* spacer */
+	whack_log(RC_COMMENT, " ");             /* spacer */
+	whack_log(RC_COMMENT, "State list:");   /* spacer */
+	whack_log(RC_COMMENT, " ");             /* spacer */
 
 	/* make count of states */
 	count = 0;

@@ -95,6 +95,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_CRYPTO_FAILED",
 	"EVENT_PENDING_PHASE2",
 	"EVENT_v2_RETRANSMIT",
+	"EVENT_v2_LIVENESS",
 	"EVENT_PENDING_DDNS"
 };
 
@@ -204,7 +205,6 @@ const char *const state_story[] = {
 enum_names state_stories =
 { STATE_MAIN_R0, STATE_IKEv2_ROOF - 1, state_story, NULL };
 
-#ifdef NAT_TRAVERSAL
 static const char *const natt_method_result_name[] = {
 	"NAT behind me",        /* 30 */
 	"NAT behind peer"       /* 31 */
@@ -222,7 +222,6 @@ static const char *const natt_method_name[] = {
 enum_names natt_method_names =
 { NAT_TRAVERSAL_METHOD_IETF_00_01, NAT_TRAVERSAL_METHOD_IETF_RFC,
   natt_method_name, &natt_method_result_names };
-#endif
 
 /* pluto crypto operations */
 static const char *const pluto_cryptoop_strings[] = {

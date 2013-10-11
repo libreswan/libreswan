@@ -102,11 +102,9 @@ struct kernel_sa {
 	IPsecSAref_t refhim;
 
 	int encapsulation;
-#ifdef NAT_TRAVERSAL
 	u_int16_t natt_sport, natt_dport;
 	u_int8_t transid, natt_type;
 	ip_address *natt_oa;
-#endif
 	const char *text_said;
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
@@ -372,9 +370,7 @@ extern bool route_and_eroute(struct connection *c,
 extern bool was_eroute_idle(struct state *st, time_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, time_t *ago);
 
-#ifdef NAT_TRAVERSAL
 extern bool update_ipsec_sa(struct state *st);
-#endif
 
 extern bool eroute_connection(struct spd_route *sr,
 			      ipsec_spi_t spi, unsigned int proto,

@@ -87,9 +87,7 @@
 #include <libreswan/pfkey.h>
 #include "kameipsec.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #include "lsw_select.h"
 
@@ -1039,7 +1037,6 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					/* note dirty trick to suppress ~ at start of format
 					 * if we know what state to blame.
 					 */
-#ifdef NAT_TRAVERSAL
 					if ((packet_len == 1) &&
 					    (buffer[0] == 0xff)
 #ifdef DEBUG
@@ -1051,7 +1048,6 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 						 * enabled
 						 */
 					} else
-#endif
 					libreswan_log((sender != NULL) + "~"
 						      "ERROR: asynchronous network error report on %s (sport=%d)"
 						      "%s"

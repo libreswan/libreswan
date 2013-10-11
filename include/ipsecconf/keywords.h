@@ -51,6 +51,8 @@ enum keyword_string_config_field {
 	KSF_POLICY_LABEL,
 	KSF_MODECFGDNS1,
 	KSF_MODECFGDNS2,
+	KSF_MODECFGDOMAIN,
+	KSF_MODECFGBANNER,
 	KSF_MAX
 };
 
@@ -203,11 +205,11 @@ enum keyword_keyexchange {
 
 /* values for auto={add,start,route,ignore} */
 enum keyword_auto {
-	STARTUP_IGNORE  = 0,
-	STARTUP_POLICY  = 1,
-	STARTUP_ADD     = 2,
-	STARTUP_ROUTE   = 3,
-	STARTUP_START   = 4
+	STARTUP_IGNORE     = 0,
+	STARTUP_POLICY     = 1,
+	STARTUP_ADD        = 2,
+	STARTUP_ONDEMAND   = 3,
+	STARTUP_START      = 4
 };
 
 enum keyword_satype {

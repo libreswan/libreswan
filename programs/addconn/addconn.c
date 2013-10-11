@@ -653,14 +653,14 @@ int main(int argc, char *argv[])
 		     conn != NULL;
 		     conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_ADD ||
-			    conn->desired_state == STARTUP_ROUTE ||
+			    conn->desired_state == STARTUP_ONDEMAND ||
 			    conn->desired_state == STARTUP_START) {
 				if (verbose)
 					printf(" %s", conn->name);
 				resolve_defaultroute(conn);
 				starter_whack_add_conn(cfg, conn);
 			}
-			if (conn->desired_state == STARTUP_ROUTE)
+			if (conn->desired_state == STARTUP_ONDEMAND)
 				starter_whack_route_conn(cfg, conn);
 		}
 		if (verbose)
@@ -800,7 +800,7 @@ int main(int argc, char *argv[])
 			     conn != NULL;
 			     conn = conn->link.tqe_next) {
 				if (conn->desired_state == STARTUP_START ||
-				    conn->desired_state == STARTUP_ROUTE)
+				    conn->desired_state == STARTUP_ONDEMAND)
 					printf("%s ", conn->name);
 			}
 		}

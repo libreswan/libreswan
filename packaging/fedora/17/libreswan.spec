@@ -96,7 +96,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %endif
   USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
   INITSYSTEM=systemd \
-  USE_DYNAMICDNS="true" \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \

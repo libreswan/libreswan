@@ -207,20 +207,23 @@ void unpend(struct state *st)
 		if (p->isakmp_sa == st) {
 			DBG(DBG_CONTROL,
 			    DBG_log(
-				    "unqueuing pending Quick Mode with %s \"%s\" %s",
+				    "unqueuing pending %s with %s \"%s\" %s",
+				    st->st_ikev2 ? "Child SA" : "Quick Mode",
 				    ip_str(&p->connection->spd.that.host_addr),
 				    p->connection->name,
 				    enum_name(&pluto_cryptoimportance_names,
 					      st->st_import)));
 
 			p->pend_time = time(NULL);
-			(void) quick_outI1(p->whack_sock, st, p->connection,
-					   p->policy,
-					   p->try, p->replacing
+			if (!st->st_ikev2) {
+				(void) quick_outI1(p->whack_sock, st, p->connection,
+						   p->policy,
+						   p->try, p->replacing
 #ifdef HAVE_LABELED_IPSEC
-					   , p->uctx
+						   , p->uctx
 #endif
-					   );
+						   );
+			}
 			p->whack_sock = NULL_FD;        /* ownership transferred */
 			p->connection = NULL;           /* ownership transferred */
 			delete_pending(pp);

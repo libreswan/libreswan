@@ -829,9 +829,7 @@ void show_status(void)
 	show_setup_plutomain();
 	show_myid_status();
 	show_debug_status();
-#ifdef NAT_TRAVERSAL
 	show_setup_natt();
-#endif
 	show_virtual_private();
 	kernel_alg_show_status();
 	ike_alg_show_status();

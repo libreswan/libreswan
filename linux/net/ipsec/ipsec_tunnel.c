@@ -994,12 +994,9 @@ void ipsec_tunnel_xsm_complete(struct ipsec_xmit_state *ixs,
 		return;
 	}
 
-#ifdef NAT_TRAVERSAL
 	stat = ipsec_nat_encap(ixs);
 	if (stat != IPSEC_XMIT_OK)
 		goto cleanup;
-
-#endif
 
 	stat = ipsec_tunnel_restore_hard_header(ixs);
 	if (stat != IPSEC_XMIT_OK)
@@ -2352,10 +2349,8 @@ struct ipsec_xmit_state *ipsec_xmit_state_new(struct net_device *dev)
 	ixs->ips.ips_ident_s.data = NULL;
 	ixs->ips.ips_ident_d.data = NULL;
 	ixs->outgoing_said.proto = 0;
-#ifdef NAT_TRAVERSAL
 	ixs->natt_type = 0, ixs->natt_head = 0;
 	ixs->natt_sport = 0, ixs->natt_dport = 0;
-#endif
 	ixs->tot_headroom = 0;
 	ixs->tot_tailroom = 0;
 	ixs->eroute = NULL;

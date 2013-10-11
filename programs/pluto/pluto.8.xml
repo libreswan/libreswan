@@ -223,13 +223,12 @@
 
       <arg choice="opt">--modecfgclient</arg>
 
-      <arg choice="opt">--modecfgdns1</arg>
+      <arg choice="opt">--modecfgdns1 <replaceable>ip-address</replaceable></arg>
 
-      <arg choice="opt">--modecfgdns2</arg>
+      <arg choice="opt">--modecfgdns2 <replaceable>ip-address</replaceable></arg>
 
-      <arg choice="opt">--modecfgwins1</arg>
-
-      <arg choice="opt">--modecfgwins2</arg>
+      <arg choice="opt">--modecfgdomain <replaceable>DNS-domain</replaceable></arg>
+      <arg choice="opt">--modecfgbanner <replaceable>login-banner</replaceable></arg>
 
       <arg choice="opt">--dnskeyondemand</arg>
 
@@ -296,9 +295,7 @@
 
       <arg choice="opt">--modecfgdns2 <replaceable>ip-address</replaceable></arg>
 
-      <arg choice="opt">--modecfgwins1 <replaceable>ip-address</replaceable></arg>
-
-      <arg choice="opt">--modecfgwins2 <replaceable>ip-address</replaceable></arg>
+      <arg choice="opt">--modecfgdomain <replaceable>DNS-domain</replaceable></arg>
 
       <arg choice="opt">--dnskeyondemand</arg>
 

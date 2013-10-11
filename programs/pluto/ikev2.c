@@ -64,9 +64,7 @@
 #ifdef XAUTH
 #include "xauth.h"
 #endif
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
@@ -227,15 +225,15 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 
 	/* zero out the digest descriptors -- might nuke [v2E] digest! */
 
-	while (np != ISAKMP_NEXT_NONE) {
+	while (np != ISAKMP_NEXT_v2NONE) {
 		struct_desc *sd = np <
-				  ISAKMP_NEXT_ROOF ? payload_descs[np] : NULL;
+				  ISAKMP_NEXT_v2ROOF ? payload_descs[np] : NULL;
 		int thisp = np;
 		bool unknown_payload = FALSE;
 
 		DBG(DBG_CONTROL,
 		    DBG_log("Now lets proceed with payload (%s)",
-			    enum_show(&payload_names, thisp)));
+			    enum_show(&payload_names_ikev2, thisp)));
 		memset(pd, 0, sizeof(*pd));
 
 		if (pd == &md->digest[PAYLIMIT]) {
@@ -260,12 +258,12 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 				/* it was critical */
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",
-				       enum_show(&payload_names, thisp));
+				       enum_show(&payload_names_ikev2, thisp));
 				return STF_FATAL;
 			}
 			loglog(RC_COMMENT, "non-critical payload ignored because it contains an unknown or"
 			       " unexpected payload type (%s) at the outermost level",
-			       enum_show(&payload_names, thisp));
+			       enum_show(&payload_names_ikev2, thisp));
 		}
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
@@ -276,7 +274,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 
 		DBG(DBG_PARSING,
 		    DBG_log("processing payload: %s (len=%u)\n",
-			    enum_show(&payload_names, thisp),
+			    enum_show(&payload_names_ikev2, thisp),
 			    pd->payload.generic.isag_length));
 
 		/* place this payload at the end of the chain for this type */
@@ -295,7 +293,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		/* do payload-type specific things that need to be here. */
 		switch (thisp) {
 		case ISAKMP_NEXT_v2E:
-			np = ISAKMP_NEXT_NONE;
+			np = ISAKMP_NEXT_v2NONE;
 			break;
 		default: /* nothing special */
 			break;
@@ -509,7 +507,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	if (needed != 0) {
 		loglog(RC_LOG_SERIOUS, "message for %s is missing payloads %s",
 		       enum_show(&state_names, from_state),
-		       bitnamesof(payload_name, needed));
+		       bitnamesof(payload_name_ikev2, needed));
 		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 		return;
 	}
@@ -713,17 +711,18 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	struct state *st = md->st;
 	enum rc_type w;
 
-	libreswan_log("transition from state %s to state %s",
-		      enum_name(&state_names, from_state),
-		      enum_name(&state_names, svm->next_state));
-
+	if (from_state != svm->next_state) {
+		libreswan_log("transition from state %s to state %s",
+			      enum_name(&state_names, from_state),
+			      enum_name(&state_names, svm->next_state));
+	}
 	change_state(st, svm->next_state);
 	w = RC_NEW_STATE + st->st_state;
 
 	ikev2_update_counters(md);
 
-	/* tell whack and log of progress */
-	{
+	/* tell whack and log of progress, if we are actually advancing */
+	if (from_state != svm->next_state) {
 		const char *story = enum_name(&state_stories, st->st_state);
 		char sadetails[512];
 
@@ -774,12 +773,11 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		/* free previously transmitted packet */
 		freeanychunk(st->st_tpacket);
-#ifdef NAT_TRAVERSAL
 		if (nat_traversal_enabled) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
-#endif
+
 		DBG(DBG_CONTROL, {
 			    char buf[ADDRTOT_BUF];
 			    DBG_log(
@@ -814,8 +812,10 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		/* XXX should call unpend again on parent SA */
 		if (st->st_clonedfrom != 0) {
 			pst = state_with_serialno(st->st_clonedfrom); /* with failed child sa, we end up here with an orphan?? */
-			DBG_log("releasing whack for #%lu (sock=%d)",
+			DBG_log(
+				"releasing whack and unpending for #%lu (sock=%d)",
 				pst->st_serialno, pst->st_whack_sock);
+			unpend(pst);
 			release_whack(pst);
 		}
 	}
@@ -897,6 +897,21 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		default:
 			bad_case(kind);
 		}
+		/* start liveness checks if set, making sure we only schedule once when moving
+		 * from I2->I3 or R1->R2 */
+		if ((c->dpd_action == DPD_ACTION_CLEAR || c->dpd_action ==
+		     DPD_ACTION_RESTART) &&
+		    IS_V2_ESTABLISHED(st->st_state) && st->st_state !=
+		    from_state) {
+			DBG(DBG_DPD,
+			    DBG_log(
+				    "dpd_action set, scheduling ikev2 liveness checks"));
+			st->hidden_variables.st_liveness = TRUE;
+			event_schedule(EVENT_v2_LIVENESS,
+				       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
+				       st);
+		}
+
 	}
 }
 
@@ -1035,5 +1050,14 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 				  const char *name)
 {
-	return accept_nonce(md, dest, name, ISAKMP_NEXT_v2Ni);
+	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
+	size_t len = pbs_left(nonce_pbs);
+
+	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
+		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
+			name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
+		return PAYLOAD_MALFORMED; /* ??? */
+	}
+	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
+	return NOTHING_WRONG;
 }

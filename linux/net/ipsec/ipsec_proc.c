@@ -385,7 +385,6 @@ int ipsec_spi_format(struct ipsec_sa *sa_p,
 	}
 #endif  /* CONFIG_KLIPS_IPCOMP */
 
-#ifdef NAT_TRAVERSAL
 	{
 		char *natttype_name;
 
@@ -416,9 +415,6 @@ int ipsec_spi_format(struct ipsec_sa *sa_p,
 				      " natdport=%d",
 				      sa_p->ips_natt_dport);
 	}
-#else
-	len += ipsec_snprintf(buffer + len, length - len, " natencap=na");
-#endif  /* NAT_TRAVERSAL */
 
 	/* we decrement by one, because this SA has been referenced in order to dump this info */
 	len += ipsec_snprintf(buffer + len, length - len, " refcount=%d",

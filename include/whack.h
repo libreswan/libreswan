@@ -239,11 +239,12 @@ struct whack_message {
 	/* for MODECFG */
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
+	char *modecfg_domain;
+	char *modecfg_banner;
 
 	/* what metric to put on ipsec routes */
 	int metric;
 
-	/* for DYNAMICDNS */
 	char *dnshostname;
 
 	/* for use with general option adjustments */

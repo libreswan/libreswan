@@ -185,6 +185,7 @@ enum ipsec_cert_type {
 	CERT_SPKI=                    9,
 	CERT_X509_ATTRIBUTE=          10,
 	CERT_RAW_RSA=                 11, /* raw RSA from config file */
+	CERT_X509_BUNDLE_URL=         12,
 };
 
 /* a SIG record in ASCII */

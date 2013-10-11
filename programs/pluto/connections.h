@@ -276,16 +276,14 @@ struct connection {
 #ifdef XAUTH_HAVE_PAM
 	pam_handle_t  *pamh;            /*  PAM handle for that connection  */
 #endif
-#ifdef DYNAMICDNS
 	char *dnshostname;
-#endif  /* DYNAMICDNS */
 #ifdef XAUTH
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
 	struct ip_pool *pool; /*v4 addresspool as a range, start end */
-	char *cisco_dns_info;
-	char *cisco_domain_info;
-	char *cisco_banner;
+	char *cisco_dns_info; /* scratchpad for writing IP addresses */
+	char *modecfg_domain;
+	char *modecfg_banner;
 #endif  /* XAUTH */
 	u_int8_t metric;          /* metric for tunnel routes */
 	u_int16_t connmtu;          /* mtu for tunnel routes */
@@ -460,11 +458,9 @@ extern void show_one_connection(struct connection *c);
 extern void show_connections_status(void);
 extern int  connection_compare(const struct connection *ca,
 			       const struct connection *cb);
-#ifdef NAT_TRAVERSAL
 extern void update_host_pair(const char *why, struct connection *c,
 			     const ip_address *myaddr, u_int16_t myport,
 			     const ip_address *hisaddr, u_int16_t hisport);
-#endif /* NAT_TRAVERSAL */
 
 /* export to pending.c */
 extern void host_pair_enqueue_pending(const struct connection *c,
@@ -472,9 +468,7 @@ extern void host_pair_enqueue_pending(const struct connection *c,
 				      struct pending **pnext);
 struct pending **host_pair_first_pending(const struct connection *c);
 
-#ifdef DYNAMICDNS
 void connection_check_ddns(void);
-#endif
 
 void connection_check_phase2(void);
 void init_connections(void);

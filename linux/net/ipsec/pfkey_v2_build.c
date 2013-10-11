@@ -429,9 +429,7 @@ int pfkey_address_build(struct sadb_ext**   pfkey_ext,
 	case K_SADB_X_EXT_ADDRESS_DST_FLOW:
 	case K_SADB_X_EXT_ADDRESS_SRC_MASK:
 	case K_SADB_X_EXT_ADDRESS_DST_MASK:
-#ifdef NAT_TRAVERSAL
 	case K_SADB_X_EXT_NAT_T_OA:
-#endif
 		break;
 	default:
 		ERROR("pfkey_address_build: "

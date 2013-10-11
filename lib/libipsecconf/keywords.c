@@ -123,7 +123,8 @@ struct keyword_enum_values kw_dpdaction_list =
 struct keyword_enum_value kw_auto_values[] = {
 	{ "ignore", STARTUP_IGNORE },
 	{ "add",    STARTUP_ADD },
-	{ "route",  STARTUP_ROUTE },
+	{ "ondemand",  STARTUP_ONDEMAND },
+	{ "route",  STARTUP_ONDEMAND }, /* backwards compatibility alias */
 	{ "start",  STARTUP_START },
 	{ "up",     STARTUP_START }, /* alias */
 };
@@ -375,7 +376,7 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "force_busy",     kv_config, kt_bool,      KBF_FORCEBUSY, NOT_ENUM },
 	{ "ikeport",        kv_config, kt_number,     KBF_IKEPORT, NOT_ENUM },
-#ifdef NAT_TRAVERSAL
+
 	{ "virtual_private", kv_config, kt_string,     KSF_VIRTUALPRIVATE,
 	  NOT_ENUM },
 	{ "nat_traversal", kv_config, kt_bool,        KBF_NATTRAVERSAL,
@@ -387,7 +388,7 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "keep_alive", kv_config, kt_number,    KBF_KEEPALIVE, NOT_ENUM },
 	{ "force_keepalive", kv_config, kt_obsolete,    KBF_WARNIGNORE,
 	  NOT_ENUM },
-#endif
+
 	{ "listen",     kv_config, kt_string, KSF_LISTEN, NOT_ENUM },
 	{ "protostack",     kv_config, kt_string,    KSF_PROTOSTACK,
 	  &kw_proto_stack },
@@ -459,10 +460,10 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_SAREFTRACK, &kw_sareftrack_list },
 	{ "pfs",            kv_conn | kv_auto, kt_bool,   KBF_PFS,
 	  NOT_ENUM },
-#ifdef NAT_TRAVERSAL
+
 	{ "nat_keepalive",  kv_conn | kv_auto, kt_bool,   KBF_NAT_KEEPALIVE,
 	  NOT_ENUM },
-#endif
+
 	{ "initial_contact", kv_conn | kv_auto, kt_bool,   KBF_INITIAL_CONTACT,
 	  NOT_ENUM },
 	{ "cisco_unity", kv_conn | kv_auto, kt_bool,   KBF_CISCO_UNITY,
@@ -502,12 +503,41 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "xauthby", kv_conn | kv_auto, kt_enum, KBF_XAUTHBY, &kw_xauthby },
 	{ "xauthfail", kv_conn | kv_auto, kt_enum, KBF_XAUTHFAIL,
 	  &kw_xauthfail },
-#endif
+	{ "xauthserver", kv_conn | kv_auto | kv_leftright, kt_bool,
+	  KNCF_XAUTHSERVER,  NOT_ENUM },
+	{ "xauthclient", kv_conn | kv_auto | kv_leftright, kt_bool,
+	  KNCF_XAUTHCLIENT, NOT_ENUM },
+	{ "xauthname",   kv_conn | kv_auto | kv_leftright, kt_string,
+	  KSCF_XAUTHUSERNAME, NOT_ENUM },
+	{ "modecfgserver", kv_conn | kv_auto | kv_leftright, kt_bool,
+	  KNCF_MODECONFIGSERVER, NOT_ENUM },
+	{ "modecfgclient", kv_conn | kv_auto | kv_leftright, kt_bool,
+	  KNCF_MODECONFIGCLIENT, NOT_ENUM },
+	{ "xauthusername", kv_conn | kv_auto | kv_leftright, kt_string,
+	  KSCF_XAUTHUSERNAME, NOT_ENUM },
+	{ "modecfgpull", kv_conn | kv_auto, kt_invertbool, KBF_MODECONFIGPULL,
+	  NOT_ENUM },
+	/* these are really kt_ipaddr, but we handle them as string until we load them into a whack message */
+	{ "modecfgdns1", kv_conn | kv_auto, kt_string, KSF_MODECFGDNS1,
+	  NOT_ENUM },
+	{ "modecfgdns2", kv_conn | kv_auto, kt_string, KSF_MODECFGDNS2,
+	  NOT_ENUM },
 
-#ifdef NAT_TRAVERSAL
-	{ "forceencaps",    kv_conn | kv_auto, kt_bool,   KBF_FORCEENCAP,
+	{ "modecfgdomain", kv_conn | kv_auto, kt_string, KSF_MODECFGDOMAIN,
+	  NOT_ENUM },
+	{ "modecfgbanner", kv_conn | kv_auto, kt_string, KSF_MODECFGBANNER,
+	  NOT_ENUM },
+	{ "addresspool", kv_conn | kv_auto | kv_leftright, kt_range,
+	  KSCF_ADDRESSPOOL, NOT_ENUM },
+	{ "modecfgwins1", kv_conn | kv_auto, kt_obsolete, KBF_WARNIGNORE,
+	  NOT_ENUM },
+	{ "modecfgwins2", kv_conn | kv_auto, kt_obsolete, KBF_WARNIGNORE,
 	  NOT_ENUM },
 #endif
+
+	{ "forceencaps",    kv_conn | kv_auto, kt_bool,   KBF_FORCEENCAP,
+	  NOT_ENUM },
+
 	{ "overlapip",      kv_conn | kv_auto, kt_bool,   KBF_OVERLAPIP,
 	  NOT_ENUM },
 	{ "rekey",          kv_conn | kv_auto, kt_bool,   KBF_REKEY,
@@ -564,33 +594,7 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "reqid",          kv_conn | kv_auto, kt_number, KBF_REQID,
 	  NOT_ENUM },
 
-	/* aggr/xauth/modeconfig */
 	{ "aggrmode",    kv_conn | kv_auto, kt_invertbool,      KBF_AGGRMODE,
-	  NOT_ENUM },
-	{ "xauthserver", kv_conn | kv_auto | kv_leftright, kt_bool,
-	  KNCF_XAUTHSERVER,  NOT_ENUM },
-	{ "xauthclient", kv_conn | kv_auto | kv_leftright, kt_bool,
-	  KNCF_XAUTHCLIENT, NOT_ENUM },
-	{ "xauthname",   kv_conn | kv_auto | kv_leftright, kt_string,
-	  KSCF_XAUTHUSERNAME, NOT_ENUM },
-	{ "modecfgserver", kv_conn | kv_auto | kv_leftright, kt_bool,
-	  KNCF_MODECONFIGSERVER, NOT_ENUM },
-	{ "modecfgclient", kv_conn | kv_auto | kv_leftright, kt_bool,
-	  KNCF_MODECONFIGCLIENT, NOT_ENUM },
-	{ "xauthusername", kv_conn | kv_auto | kv_leftright, kt_string,
-	  KSCF_XAUTHUSERNAME, NOT_ENUM },
-	{ "modecfgpull", kv_conn | kv_auto, kt_invertbool, KBF_MODECONFIGPULL,
-	  NOT_ENUM },
-	/* these are really kt_ipaddr, but we handle them as string until we load them into a whack message */
-	{ "modecfgdns1", kv_conn | kv_auto, kt_string, KSF_MODECFGDNS1,
-	  NOT_ENUM },
-	{ "modecfgdns2", kv_conn | kv_auto, kt_string, KSF_MODECFGDNS2,
-	  NOT_ENUM },
-	{ "addresspool", kv_conn | kv_auto | kv_leftright, kt_range,
-	  KSCF_ADDRESSPOOL, NOT_ENUM },
-	{ "modecfgwins1", kv_conn | kv_auto, kt_obsolete, KBF_WARNIGNORE,
-	  NOT_ENUM },
-	{ "modecfgwins2", kv_conn | kv_auto, kt_obsolete, KBF_WARNIGNORE,
 	  NOT_ENUM },
 
 	{ NULL, 0, 0, 0, NOT_ENUM }

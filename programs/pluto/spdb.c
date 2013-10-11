@@ -56,9 +56,7 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 /**************** Oakley (main mode) SA database ****************/
 

@@ -3,20 +3,25 @@ See also https://libreswan.org/
 
 v3.6 (unreleased)
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
+* IKEv2: Add liveness checks (a.k.a DPD for IKEv2) [Mike Rogers]
+* IKEv2: ikev2=insist allowed ikev1 when acting as responder [Mike Rogers]
 * IKEv1: Cleanup AGGR Mode VendorID - also send fragmentation vid [Paul]
-* IKEv1: Added cisco_unity (default no) option which sends VID [Paul]
+* IKEv1: Added cisco_unity= (default no) option which sends VID [Paul]
 * IKEv1: Fix compatibility with NAT-T and remote_peer_type=cisco [Paul]
 * IKEv1: dpdaction=restart_by_peer is now called dpdaction=restart [Paul]
+* IKEv1: Added support for modecfgbanner= and modecfgdomain= [Paul]
 * IKE: introduce ikepad=yes|no (default yes) for Checkpoint interop [David]
 * pluto: work around for Cisco VPN clients sending extraneous bytes [Paul/Hugh]
 * pluto: Support for google-authenticator OTP via pam [Paul]
 * pluto: fix kernel.c typo in word outgoing [Tuomo]
 * pluto: remove dsa/elgamal stubs from gnupg that were unused [Paul]
 * pluto: Added per conn priority= to specify kernel IPsec SA priority [Paul]
+* keyword: auto=route and ipsec auto --route renamed to "ondemand" [Paul]
 * NETKEY/BSD: Added per conn reqid= to specify kernel IPsec SA [Paul]
               (based on idea by Panagiotis Tamtamis)
 * pluto: %fromcert now works for local certs and those received via IKE [Matt]
 * pluto: Allow \\ masking in RDNs similar to ,, [Matt Rogers]
+* pluto: merge updateresolvconf/restoreresolv.conf in client-up|down [Paul]
 * building: Removed USE_MODP_RFC5114 flag. Support is always added [Paul]
 * building: Remove blowfish (use twofish instead) [Paul]
 * building: Generate Makefile depend files automatically [Tuomo]
@@ -29,6 +34,8 @@ v3.6 (unreleased)
 * rsasigkey/newhostkey: Keysize for new RSA keys keysize increasd from 2192
   to randomised 3072-4096 (in blocks of 16) to fight keysize monoculture [Paul]
 * Removed unused and unmaintained USE_TAPROOM functionality [Paul]
+* NAT-T: Added 100.64.0.0/10 from RFC 6598 to virtual_private [Paul]
+* NSS: pluto should now open NSS files in readwrite, just read [Paul]
 * Bugtracker bugs fixed:
   #130: debian debuild creates a deb with /usr/libexec contents
         [Marc-Cristian Petersen]

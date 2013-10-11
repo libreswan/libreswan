@@ -31,6 +31,8 @@ extern bool ikev2_out_sa(pb_stream *outs,
 extern void complete_v2_state_transition(struct msg_digest **mdp,
 					 stf_status result);
 
+extern stf_status ikev2_send_informational(struct state *st);
+
 extern stf_status process_informational_ikev2(struct msg_digest *md);
 extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1(struct msg_digest *md);
@@ -41,7 +43,7 @@ extern stf_status ikev2parent_inR2(struct msg_digest *md);
 extern const struct state_v2_microcode *ikev2_parent_firststate(void);
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
-					 const char *name);
+		const char *name);
 
 /* MAGIC: perform f, a function that returns v2_notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.

@@ -155,6 +155,7 @@ struct hidden_variables {
 	bool st_got_certrequest;
 	bool st_modecfg_started;
 	bool st_skeyid_calculated;
+	bool st_liveness;			/* Liveness checks */
 	bool st_dpd;                            /* Peer supports DPD */
 	bool st_dpd_local;                      /* If we want DPD on this conn */
 	bool st_logged_p1algos;                 /* if we have logged algos */
@@ -209,8 +210,8 @@ struct state {
 	int st_usage;
 
 #ifdef XAUTH_HAVE_PAM
-	pthread_mutex_t mutex;                  /* per state mutex */
-	pthread_t tid;                          /* per state XAUTH_RO thread id */
+	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
+	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
 #endif
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
@@ -393,6 +394,10 @@ struct state {
 	char st_xauth_username[XAUTH_USERNAME_LEN];
 	chunk_t st_xauth_password;
 
+	time_t st_last_liveness;		/* Time of last v2 informational */
+	bool st_pend_liveness;			/* Waiting on an informational response */
+	struct event *st_liveness_event;
+
 	/* RFC 3706 Dead Peer Detection */
 	time_t st_last_dpd;                     /* Time of last DPD transmit */
 	u_int32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
@@ -411,9 +416,7 @@ struct state {
 /* global variables */
 
 extern u_int16_t pluto_port;            /* Pluto's port */
-#ifdef NAT_TRAVERSAL
 extern u_int16_t pluto_natt_float_port; /* Pluto's NATT floating port */
-#endif
 
 extern bool states_use_connection(struct connection *c);
 

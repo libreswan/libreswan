@@ -76,7 +76,7 @@ struct oe_conn oe_packet_default = {
 		.options[KBF_SALIFETIME] = 1800,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
-		.desired_state = STARTUP_ROUTE,
+		.desired_state = STARTUP_ONDEMAND,
 
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,
@@ -134,7 +134,7 @@ struct oe_conn oe_clear = {
 		.policy = POLICY_TUNNEL | POLICY_PFS | POLICY_GROUP |
 			  POLICY_GROUTED | POLICY_SHUNT_PASS,
 
-		.desired_state = STARTUP_ROUTE,
+		.desired_state = STARTUP_ONDEMAND,
 
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,
@@ -207,7 +207,7 @@ struct oe_conn oe_clear_or_private = {
 		.options[KBF_SALIFETIME] = 1800,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
-		.desired_state = STARTUP_ROUTE,
+		.desired_state = STARTUP_ONDEMAND,
 
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,
@@ -272,7 +272,7 @@ struct oe_conn oe_private_or_clear = {
 			  POLICY_GROUTED |
 			  POLICY_FAIL_PASS | POLICY_IKEV2_ALLOW,
 
-		.desired_state = STARTUP_ROUTE,
+		.desired_state = STARTUP_ONDEMAND,
 
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
@@ -349,7 +349,7 @@ struct oe_conn oe_private = {
 		.options[KBF_REKEY] = FALSE,    /* really want REKEY if used */
 		.options_set[KBF_REKEY] = TRUE,
 
-		.desired_state = STARTUP_ROUTE,
+		.desired_state = STARTUP_ONDEMAND,
 
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
@@ -420,7 +420,7 @@ struct oe_conn oe_block = {
 			  POLICY_GROUP | POLICY_GROUTED | POLICY_SHUNT_REJECT |
 			  POLICY_IKEV2_ALLOW,
 
-		.desired_state = STARTUP_ROUTE,
+		.desired_state = STARTUP_ONDEMAND,
 
 		.left.addrtype = KH_DEFAULTROUTE,
 		.left.addr_family = AF_INET,

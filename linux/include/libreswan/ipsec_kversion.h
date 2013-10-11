@@ -438,15 +438,6 @@
 
 #include <linux/in6.h>
 
-#if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && CONFIG_IPSEC_NAT_TRAVERSAL
-# define NAT_TRAVERSAL 1
-#else
-# undef CONFIG_IPSEC_NAT_TRAVERSAL
-# if defined(HAVE_UDP_ENCAP_CONVERT)
-#  define NAT_TRAVERSAL 1
-# endif
-#endif
-
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
 #include <linux/netfilter_ipv6.h>

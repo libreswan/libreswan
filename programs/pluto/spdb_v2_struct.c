@@ -61,9 +61,7 @@
 #include "demux.h"
 #include "ikev2.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #define return_on(var, val) do { var = val; goto return_out; } while (0);
 

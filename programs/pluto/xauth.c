@@ -84,11 +84,11 @@ static stf_status xauth_client_ackstatus(struct state *st,
 
 static char pwdfile[PATH_MAX];
 
-/* We use a mutex lock because not all systems have crypt_r() */
+/* We use crypt_mutex lock because not all systems have crypt_r() */
 pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct {
-	int in_use;
+	bool in_use;
 	struct state *st;
 	sigjmp_buf jbuf;
 } st_jbuf_t;
@@ -104,109 +104,152 @@ struct thread_arg {
 };
 
 #ifdef XAUTH_HAVE_PAM
-static
-int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
+static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 		   struct pam_response **response, void *appdata_ptr);
 
-static
-struct pam_conv conv = {
+static struct pam_conv conv = {
 	xauth_pam_conv,
 	NULL
 };
 #endif
 
+/* pointer to an array of st_jbuf_t elements.
+ * The last element has .st==NULL (and !.in_use).
+ * Unused ones (not the last) have some meaningless non-NULL value in .st.  Yuck!
+ * All manipulations must be protected via st_jbuf_mutex.
+ * If no entries are in use, the array must be freed:
+ * two tests in do_authentication depend on this.
+ */
 static st_jbuf_t *st_jbuf_mem = NULL;
 
 static pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static
-void dealloc_st_jbuf(st_jbuf_t *ptr)
+/* Note: caller must have locked st_jbuf_mutex */
+static void dealloc_st_jbuf(st_jbuf_t *ptr)
 {
-	if (st_jbuf_mem == NULL)
-		lsw_abort();
-	if (ptr == NULL)
-		lsw_abort();
-	ptr->in_use = 0;
-	ptr = st_jbuf_mem;
-	while (ptr->st != NULL) {
-		if (ptr->in_use)
-			return;
+	st_jbuf_t *p;
 
-		ptr++;
+	ptr->in_use = FALSE;
+
+	for (p = st_jbuf_mem; p->st != NULL; p++) {
+		if (p->in_use) {
+			/* there is still an entry in use: don't free array */
+			return;
+		}
 	}
-	if (st_jbuf_mem) {
-		free(st_jbuf_mem);
-		st_jbuf_mem = NULL;
-	}
+
+	/* no remaining entries in use: free array */
+	free(st_jbuf_mem);
+	st_jbuf_mem = NULL;
 }
 
-static
-st_jbuf_t *get_ptr_matching_tid(void)
+/* Note: caller must have locked st_jbuf_mutex */
+static st_jbuf_t *get_ptr_matching_tid(void)
 {
-	st_jbuf_t *ptr;
+	st_jbuf_t *p;
 
-	ptr = st_jbuf_mem;
-
-	while (ptr->st != NULL) {
-		if (ptr->in_use == 1 && ptr->st->tid == pthread_self())
-			return ptr;
-		else
-			ptr++;
+	for (p = st_jbuf_mem; p->st != NULL; p++) {
+		if (p->in_use && p->st->xauth_tid == pthread_self())
+			return p;
 	}
 	return NULL;
 }
 
-static
-st_jbuf_t *alloc_st_jbuf(void)
+/* Find or create a free slot in the st_jbuf_mem array.
+ * Note: after return, caller MUST set the .st field of the result to a
+ * non-NULL value or bad things happen. The only caller does this.
+ * The caller must not have locked st_jbuf_mutex: we will.
+ */
+static st_jbuf_t *alloc_st_jbuf(void)
 {
 	st_jbuf_t *ptr;
-	size_t offset;
 
 	pthread_mutex_lock(&st_jbuf_mutex);
-	if (!st_jbuf_mem) {
-		st_jbuf_mem = calloc(2, sizeof(st_jbuf_t) * 2);
-		ptr = st_jbuf_mem;
-		goto end;
-	}
-	ptr = st_jbuf_mem;
-	if (ptr == NULL)
-		lsw_abort();
+	if (st_jbuf_mem == NULL) {
+		/* no array: allocate one slot plus endmarker
+		 * calloc ensures that the endmarker has .st == NULL
+		 */
+		st_jbuf_mem = calloc(2, sizeof(st_jbuf_t));
+		if (st_jbuf_mem == NULL)
+			lsw_abort();
 
-	while (ptr->st != NULL) {
-		if (ptr->in_use == 0 && ptr->st != NULL)
-			goto end;
-		ptr++;
+		ptr = st_jbuf_mem;
+		/* new entry is going in first slot in our new array */
+	} else {
+		for (ptr = st_jbuf_mem; ptr->st != NULL; ptr++) {
+			if (ptr->st == NULL) {
+				/* ptr points at endmarker:
+				 * there is no room in the existing array.
+				 * Add another slot.
+				 */
+				ptrdiff_t n = ptr - st_jbuf_mem;	/* number of entries, excluding end marker */
+
+				/* allocate n entries, plus one new entry, plus new endmarker */
+				st_jbuf_mem = realloc(st_jbuf_mem, sizeof(st_jbuf_t) * (n + 2));
+				if (st_jbuf_mem == NULL)
+					lsw_abort();
+
+				ptr = st_jbuf_mem + n;
+
+				/* caller MUST ensure that ptr->st is non-NULL */
+
+				ptr[1].in_use = FALSE;	/* initialize new endmarker */
+				ptr[1].st = NULL;
+				/* new entry is the former endmarker slot */
+				break;
+			}
+			if (!ptr->in_use) {
+				/* we found a free slot in our existing array */
+				break;
+			}
+		}
 	}
-	offset = (size_t)((char *)ptr - (char *)st_jbuf_mem);
-	ptr = realloc(st_jbuf_mem, offset + sizeof(st_jbuf_t) * 2);
-	if (ptr == NULL)
-		lsw_abort();
-	st_jbuf_mem = ptr;
-	ptr = (st_jbuf_t *)((char *)st_jbuf_mem + offset);
-	memset(ptr, 0, 2 * sizeof(st_jbuf_t));
-	(ptr + 1)->in_use = 0;
-	(ptr + 1)->st = NULL;
-end:
-	ptr->in_use = 1;
+
+	ptr->in_use = TRUE;
 	pthread_mutex_unlock(&st_jbuf_mutex);
 	return ptr;
 }
 
-static
-void sigIntHandler(int sig)
+/* sigIntHandler.
+ * The only expected source of SIGINTs is state_deletion_xauth_cleanup
+ * so the meaning is: shut down this thread, the state is disappearing.
+ * ??? what if a SIGINT comes from somewhere else?
+ * Note: this function locks st_jbuf_mutex
+ * The longjump handler must unlock it.
+ */
+static void sigIntHandler(int sig)
 {
-	st_jbuf_t *ptr;
-
 	if (sig == SIGINT) {
+		st_jbuf_t *ptr;
+
 		pthread_mutex_lock(&st_jbuf_mutex);
 		ptr = get_ptr_matching_tid();
-		if (ptr) {
-			siglongjmp(ptr->jbuf, 1);
-		} else {
+		if (ptr == NULL) {
 			pthread_mutex_unlock(&st_jbuf_mutex);
 			lsw_abort();
 		}
+		/* note: st_jbuf_mutex is locked */
+		siglongjmp(ptr->jbuf, 1);
 	}
+}
+
+/* state_deletion_xauth_cleanup:
+ * If there is still an authentication thread alive, kill it.
+ * This is called by delete_state() to fix up any dangling xauth thread.
+ */
+void state_deletion_xauth_cleanup(struct state *st)
+{
+	/* ??? In POSIX pthreads, pthread_t is opaque and the following test is not legitimate  */
+	if (st->xauth_tid) {
+		pthread_kill(st->xauth_tid, SIGINT);
+		/* The pthread_mutex_lock ensures that the do_authentication
+		 * thread completes when pthread_kill'ed
+		 */
+		pthread_mutex_lock(&st->xauth_mutex);
+		pthread_mutex_unlock(&st->xauth_mutex);
+	}
+	/* ??? what if the mutex hasn't been created?  Is destroying OK? */
+	pthread_mutex_destroy(&st->xauth_mutex);
 }
 
 #ifdef XAUTH_HAVE_PAM
@@ -219,8 +262,7 @@ void sigIntHandler(int sig)
  * @param addr Pointer to var where you want IP address stored
  * @return int Return code
  */
-static
-int get_addr(pam_handle_t *pamh, const char *var, ip_address *addr)
+static int get_addr(pam_handle_t *pamh, const char *var, ip_address *addr)
 {
 	const char *c;
 	int retval;
@@ -285,7 +327,6 @@ static int get_internal_addresses(struct state *st, struct internal_addr *ia)
 #endif
 	struct connection *c = st->st_connection;
 
-#ifdef NAT_TRAVERSAL /* only NAT-T code lets us do virtual ends */
 	if (!isanyaddr(&c->spd.that.client.addr)) {
 		/** assumes IPv4, and also that the mask is ignored */
 
@@ -299,7 +340,7 @@ static int get_internal_addresses(struct state *st, struct internal_addr *ia)
 		if (!isanyaddr(&c->modecfg_dns2))
 			ia->dns[1] = c->modecfg_dns2;
 	} else
-#endif
+
 	{
 #ifdef XAUTH_HAVE_PAM
 		if (c->xauthby == XAUTHBY_PAM) {
@@ -502,9 +543,7 @@ static stf_status modecfg_resp(struct state *st,
 				case INTERNAL_IP4_NETMASK:
 				{
 					int m =
-						st->st_connection->spd.this.
-						client
-						.maskbits;
+						st->st_connection->spd.this.client.maskbits;
 					u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
 
 
@@ -526,6 +565,68 @@ static stf_status modecfg_resp(struct state *st,
 						dont_advance = TRUE;
 					break;
 
+				case MODECFG_DOMAIN:
+				{
+					if(st->st_connection->modecfg_domain) {
+						DBG_log("We are sending '%s' as ModeCFG domain",
+							st->st_connection->modecfg_domain);
+						if (!out_raw(st->st_connection->modecfg_domain,
+					   	     	     strlen(st->st_connection->modecfg_domain),
+						     	     &attrval, "ModeCFG_domain")) {
+							return STF_INTERNAL_ERROR;
+						}
+					} else {
+						DBG_log("We are not sending a ModeCFG domain");
+					}
+
+				}
+
+				case MODECFG_BANNER:
+				{
+					if(st->st_connection->modecfg_banner) {
+						DBG_log("We are sending '%s' as ModeCFG banner",
+							st->st_connection->modecfg_banner);
+						if (!out_raw(st->st_connection->modecfg_banner,
+					   	     	     strlen(st->st_connection->modecfg_banner),
+						     	     &attrval, "ModeCFG_banner")) {
+							return STF_INTERNAL_ERROR;
+						}
+					} else {
+						DBG_log("We are not sending a ModeCFG banner");
+					}
+
+				}
+
+				/* XXX: not sending if our end is 0.0.0.0/0 equals previous  previous behaviour */
+				case CISCO_SPLIT_INC:
+				{
+				/* example payload
+				 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00 
+				 *   \/          \/        \ \  /  /   \ \  / /   \  \  \ /  /  /
+				 *  28676        14        10.0.0.0    255.0.0.0  
+				 *
+				 *  SPLIT_INC  Length       IP addr      mask     proto?,sport?,dport?,proto?,sport?,dport?
+				 */
+
+					/* If we don't need split tunneling, just omit the payload */
+					if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
+						DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
+						break;
+					}
+					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
+					chunk_t splitinc;
+					splitinc.ptr = alloc_bytes(14, "cisco split tunnel"); /* see above */
+					splitinc.len = 14;
+					memset(splitinc.ptr, 0, 14);
+					memcpy(splitinc.ptr, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);
+					struct in_addr splitmask;
+					splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
+					memcpy(splitinc.ptr + 4, &splitmask, 4);
+					if (!out_raw(splitinc.ptr, 14, &attrval, "CISCO_SPLIT_INC"))
+						return STF_INTERNAL_ERROR;
+					freeanychunk(splitinc);
+					break;
+				}
 				default:
 					libreswan_log(
 						"attempt to send unsupported mode cfg attribute %s.",
@@ -596,8 +697,10 @@ static stf_status modecfg_send_set(struct state *st)
 
 #define MODECFG_SET_ITEM ( LELEM(INTERNAL_IP4_ADDRESS) | \
 			   LELEM(INTERNAL_IP4_SUBNET) | \
-			   LELEM(INTERNAL_IP4_NBNS) | \
-			   LELEM(INTERNAL_IP4_DNS) )
+			   LELEM(INTERNAL_IP4_DNS) | \
+			   LELEM(INTERNAL_IP6_ADDRESS) | \
+			   LELEM(INTERNAL_IP6_SUBNET) | \
+			   LELEM(INTERNAL_IP6_DNS))
 
 	modecfg_resp(st,
 		     MODECFG_SET_ITEM,
@@ -799,35 +902,34 @@ stf_status modecfg_send_request(struct state *st)
 				NULL))
 			return STF_INTERNAL_ERROR;
 
-		if (st->st_connection->remotepeertype == CISCO) {
-			/* ISAKMP attr out (INTERNAL_IP4_DNS) */
-			attr.isaat_af_type = INTERNAL_IP4_DNS;
-			attr.isaat_lv = 0;
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
+		/* ISAKMP attr out (INTERNAL_IP4_DNS) */
+		attr.isaat_af_type = INTERNAL_IP4_DNS;
+		attr.isaat_lv = 0;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
 
-			/* ISAKMP attr out (CISCO_BANNER) */
-			attr.isaat_af_type = CISCO_BANNER;
-			attr.isaat_lv = 0;
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
+		/* ISAKMP attr out (MODECFG_BANNER) */
+		attr.isaat_af_type = MODECFG_BANNER;
+		attr.isaat_lv = 0;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
 
-			/* ISAKMP attr out (CISCO_DEF_DOMAIN) */
-			attr.isaat_af_type = CISCO_DEF_DOMAIN;
-			attr.isaat_lv = 0;
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
+		/* ISAKMP attr out (MODECFG_DOMAIN) */
+		attr.isaat_af_type = MODECFG_DOMAIN;
+		attr.isaat_lv = 0;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
 
-			/* ISAKMP attr out (CISCO_SPLIT_INC) */
-			attr.isaat_af_type = CISCO_SPLIT_INC;
-			attr.isaat_lv = 0;
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
-		}
+		/* ISAKMP attr out (CISCO_SPLIT_INC) */
+		attr.isaat_af_type = CISCO_SPLIT_INC;
+		attr.isaat_lv = 0;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
+
 		close_message(&strattr, st);
 	}
 
@@ -955,8 +1057,7 @@ static stf_status xauth_send_status(struct state *st, int status)
  * @param appdata_ptr Pointer to data struct (as we are using threads)
  * @return int Return Code
  */
-static
-int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
+static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 		   struct pam_response **response, void *appdata_ptr)
 {
 	struct thread_arg *arg = appdata_ptr;
@@ -1005,8 +1106,7 @@ int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
  *
  * @return int Return Code
  */
-static
-int do_pam_authentication(void *varg)
+static int do_pam_authentication(void *varg)
 {
 	struct thread_arg   *arg = varg;
 	int retval;
@@ -1078,8 +1178,7 @@ int do_pam_authentication(void *varg)
  *
  * @return int Return Code
  */
-static
-int do_file_authentication(void *varg)
+static int do_file_authentication(void *varg)
 {
 	struct thread_arg   *arg = varg;
 	char szline[1024]; /* more than enough */
@@ -1185,10 +1284,10 @@ int do_file_authentication(void *varg)
 	return FALSE;
 }
 
-/** Main authentication routine will then call the actual compiled in
+/** Main authentication routine will then call the actual compiled-in
  *  method to verify the user/password
  */
-static void * do_authentication(void *varg)
+static void *do_authentication(void *varg)
 {
 	struct thread_arg   *arg = varg;
 	struct state *st = arg->st;
@@ -1198,20 +1297,30 @@ static void * do_authentication(void *varg)
 	struct sigaction oldsa;
 	st_jbuf_t *ptr = arg->ptr;
 
-	pthread_mutex_lock(&st_jbuf_mutex);
-	if (!ptr) {
-		pthread_mutex_unlock(&st_jbuf_mutex);
+	if (ptr == NULL) {
 		freeanychunk(arg->password);
 		freeanychunk(arg->name);
 		freeanychunk(arg->connname);
 		pfree(varg);
-		pthread_mutex_unlock(&st->mutex);
-		st->tid = 0;
+		pthread_mutex_unlock(&st->xauth_mutex);
+		st->xauth_tid = 0;	/* ??? Not well defined for POSIX threads!!! */
 		return NULL;
 	}
-	if (sigsetjmp(ptr->jbuf, 1) == 1) {
+	/* Note: this is the only sigsetjmp.
+	 * The only siglongjmp sets 1 as the return value.
+	 */
+	pthread_mutex_lock(&st_jbuf_mutex);
+	if (sigsetjmp(ptr->jbuf, 1) != 0) {
+		/* we got here via siglongjmp in sigIntHandler
+		 * st_jbuf_mutex is locked.
+		 */
+
 		dealloc_st_jbuf(ptr);
-		if (st_jbuf_mem) { /* Still one PAM thread ? */
+
+		/* Still one PAM thread? */
+		/* ??? how do we know that there is no more than one thread? */
+		/* ??? how do we know which thread was supposed to get this SIGINT if the signal handler setting is global? */
+		if (st_jbuf_mem != NULL) {
 			/* Yes, restart the one shot SIGINT handler */
 			sigprocmask(SIG_BLOCK, NULL, &sa.sa_mask);
 			sa.sa_handler = sigIntHandler;
@@ -1219,6 +1328,7 @@ static void * do_authentication(void *varg)
 			sigaddset(&sa.sa_mask, SIGINT);
 			sigaction(SIGINT, &sa, NULL);
 		} else {
+			/* no */
 			sigaction(SIGINT, &oldsa, NULL);
 		}
 		pthread_mutex_unlock(&st_jbuf_mutex);
@@ -1226,10 +1336,12 @@ static void * do_authentication(void *varg)
 		freeanychunk(arg->name);
 		freeanychunk(arg->connname);
 		pfree(varg);
-		pthread_mutex_unlock(&st->mutex);
-		st->tid = 0;
+		pthread_mutex_unlock(&st->xauth_mutex);
+		st->xauth_tid = 0;	/* ??? not valid for POSIX pthreads */
 		return NULL;
 	}
+
+	/* original flow (i.e. not due to siglongjmp) */
 	pthread_mutex_unlock(&st_jbuf_mutex);
 	sigprocmask(SIG_BLOCK, NULL, &sa.sa_mask);
 	pthread_sigmask(SIG_BLOCK, &sa.sa_mask, NULL);
@@ -1272,8 +1384,7 @@ static void * do_authentication(void *varg)
 	 * The soft fail mode is used to bring up the SA in a walled garden.
 	 * This can be detected in the updown script by the env variable XAUTH_FAILED=1
 	 */
-	if ((results == FALSE) &&
-	    (st->st_connection->xauthfail == XAUTHFAIL_SOFT)) {
+	if (!results && st->st_connection->xauthfail == XAUTHFAIL_SOFT) {
 		libreswan_log(
 			"XAUTH: authentication for %s failed, but policy is set to soft fail",
 			arg->name.ptr);
@@ -1289,6 +1400,7 @@ static void * do_authentication(void *varg)
 		if (st->quirks.xauth_ack_msgid)
 			st->st_msgid_phase15 = 0;
 
+		/* ??? is this strncpy correct? */
 		strncpy(st->st_xauth_username, (char *)arg->name.ptr,
 			sizeof(st->st_xauth_username));
 	} else {
@@ -1304,11 +1416,11 @@ static void * do_authentication(void *varg)
 
 	pthread_mutex_lock(&st_jbuf_mutex);
 	dealloc_st_jbuf(ptr);
-	if (!st_jbuf_mem)
+	if (st_jbuf_mem == NULL)
 		sigaction(SIGINT, &oldsa, NULL);
 	pthread_mutex_unlock(&st_jbuf_mutex);
-	pthread_mutex_unlock(&st->mutex);
-	st->tid = 0;
+	pthread_mutex_unlock(&st->xauth_mutex);
+	st->xauth_tid = 0;	/* ??? this is not valid in POSIX pthreads */
 
 	freeanychunk(arg->password);
 	freeanychunk(arg->name);
@@ -1335,7 +1447,7 @@ static int xauth_launch_authent(struct state *st,
 	st_jbuf_t *ptr;
 	struct thread_arg   *arg;
 
-	if (st->tid)
+	if (st->xauth_tid)	/* ??? this is not valid in POSIX pthreads */
 		return 0;
 
 	arg = alloc_thing(struct thread_arg, "ThreadArg");
@@ -1351,13 +1463,22 @@ static int xauth_launch_authent(struct state *st,
 	ptr = alloc_st_jbuf();
 	ptr->st = st;
 	arg->ptr = ptr;
-	pthread_mutex_init(&st->mutex, NULL);
-	pthread_mutex_lock(&st->mutex);
+	pthread_mutex_init(&st->xauth_mutex, NULL);
+	pthread_mutex_lock(&st->xauth_mutex);
 	pthread_attr_init(&pattr);
 	pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&st->tid, &pattr, do_authentication, (void*) arg);
+	pthread_create(&st->xauth_tid, &pattr, do_authentication, (void*) arg);
 	pthread_attr_destroy(&pattr);
 	return 0;
+}
+
+/* log a nice description of an unsupported attribute */
+static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
+{
+	libreswan_log("Unsupported %s %s attribute %s received.",
+		kind,
+		(val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
+		enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK));
 }
 
 /** STATE_XAUTH_R0:
@@ -1442,10 +1563,7 @@ stf_status xauth_inR0(struct msg_digest *md)
 				break;
 
 			default:
-				libreswan_log(
-					"Unsupported XAUTH %s attribute %s received.",
-					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					enum_show(&xauth_attr_names, attr.isaat_af_type));
+				log_bad_attr("XAUTH", &xauth_attr_names, attr.isaat_af_type);
 				break;
 			}
 		}
@@ -1609,11 +1727,7 @@ stf_status modecfg_inR0(struct msg_digest *md)
 				break;
 
 			default:
-				libreswan_log(
-					"unsupported mode cfg %s attribute %s received.",
-					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					enum_show(&modecfg_attr_names,
-						  attr.isaat_af_type));
+				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
 				break;
 			}
 		}
@@ -1728,11 +1842,7 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 			/* ignore */
 			break;
 		default:
-			libreswan_log(
-				"unsupported mode cfg %s attribute %s received.",
-				(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-				enum_show(&modecfg_attr_names,
-					  attr.isaat_af_type));
+			log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
 			break;
 		}
 	}
@@ -1852,11 +1962,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				break;
 
 			default:
-				libreswan_log(
-					"unsupported mode cfg %s attribute %s received.",
-					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					enum_show(&modecfg_attr_names,
-						  attr.isaat_af_type));
+				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
 				break;
 			}
 		}
@@ -1875,6 +1981,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			}
 
 			switch (attr.isaat_af_type) {
+
 			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			{
 				struct connection *c = st->st_connection;
@@ -1982,41 +2089,35 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					}
 				}
 
-				DBG_log("Cisco DNS info: %s, len=%zd",
+				DBG_log("ModeCFG DNS info: %s, len=%zd",
 					st->st_connection->cisco_dns_info,
-					strlen(st->st_connection->
-					       cisco_dns_info));
+					strlen(st->st_connection->cisco_dns_info));
+
+				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				break;
 			}
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				break;
 
-			case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
-				DBG_log("Received Cisco IPv4 subnet");
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				break;
-
-			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
-				DBG_log("Received and ignored obsoleted Cisco NetBEUI NS info");
-				/* ignore */
-				break;
-
-			case CISCO_BANNER | ISAKMP_ATTR_AF_TLV:
-				st->st_connection->cisco_banner =
+			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
+			{
+				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
-							"Banner");
-				loglog(RC_LOG_SERIOUS, "Banner: %s",
-				       st->st_connection->cisco_banner);
+							"ModeCFG Domain");
+				loglog(RC_LOG_SERIOUS, "Received Domain: %s",
+				       st->st_connection->modecfg_domain);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
+			}
 
-			case CISCO_DEF_DOMAIN | ISAKMP_ATTR_AF_TLV:
-				st->st_connection->cisco_domain_info =
+			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
+			{
+				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
-							"Domain");
-				loglog(RC_LOG_SERIOUS, "Domain: %s",
-				       st->st_connection->cisco_domain_info);
+							"ModeCFG Banner");
+				loglog(RC_LOG_SERIOUS, "Received Banner: %s",
+				       st->st_connection->modecfg_banner);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
+			}
 
 			case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
 			{
@@ -2024,8 +2125,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				ip_address a;
 				char caddr[SUBNETTOT_BUF];
 				size_t len = pbs_left(&strattr);
-				struct connection *c =
-					st->st_connection;
+				struct connection *c = st->st_connection;
 				struct spd_route *tmp_spd2 = &c->spd;
 
 				DBG_log("Received Cisco Split tunnel route(s)");
@@ -2145,16 +2245,23 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				break;
 			}
 
-			default:
-				libreswan_log(
-					"unsupported mode cfg %s attribute %s received.",
-					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					enum_show(&modecfg_attr_names,
-						  attr.isaat_af_type));
+			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
+			case INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
+			{
+				DBG_log("Received and ignored obsoleted Cisco NetBEUI NS info");
+				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
+
+			default:
+			{
+				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
+				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				break;
+			}
+
+			}
 		}
-		/* loglog(LOG_DEBUG,"ModeCfg ACK: 0x%" PRIxLSET, resp); */
 		break;
 	}
 
@@ -2582,11 +2689,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 			break;
 
 		default:
-			libreswan_log(
-				"XAUTH: Unsupported %s attribute: %s",
-				(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-				enum_show(&modecfg_attr_names,
-					  attr.isaat_af_type));
+			log_bad_attr("XAUTH", &modecfg_attr_names, attr.isaat_af_type);
 			break;
 		}
 	}
@@ -2786,9 +2889,10 @@ stf_status xauth_inI1(struct msg_digest *md)
 
 			default:
 				libreswan_log(
-					"while waiting for XAUTH_STATUS, got %s instead.",
+					"while waiting for XAUTH_STATUS, got %s %s instead.",
+					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
 					enum_show(&modecfg_attr_names,
-						  attr.isaat_af_type));
+						  attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK));
 				break;
 			}
 		}

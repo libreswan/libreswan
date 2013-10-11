@@ -68,9 +68,7 @@
 #ifdef XAUTH
 #include "xauth.h"
 #endif
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 #include "vendor.h"
 #include "dpd.h"
 #endif
@@ -176,7 +174,7 @@ void process_packet(struct msg_digest **mdp)
 	    DBG_log(
 		    " processing version=%u.%u packet with exchange type=%s (%d)",
 		    maj, min,
-		    enum_name(&exchange_names, md->hdr.isa_xchg),
+		    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
 		    md->hdr.isa_xchg));
 
 	switch (maj) {
@@ -252,9 +250,7 @@ static bool read_packet(struct msg_digest *md)
 	/* ??? this buffer seems *way* too big */
 	u_int8_t bigbuffer[MAX_INPUT_UDP_SIZE];
 
-#ifdef NAT_TRAVERSAL
 	u_int8_t *_buffer = bigbuffer;
-#endif
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in sa_in4;
@@ -360,7 +356,6 @@ static bool read_packet(struct msg_digest *md)
 	cur_from = &md->sender;
 	cur_from_port = md->sender_port;
 
-#ifdef NAT_TRAVERSAL
 	if (ifp->ike_float == TRUE) {
 		u_int32_t non_esp;
 		if (packet_len < (int)sizeof(u_int32_t)) {
@@ -381,19 +376,13 @@ static bool read_packet(struct msg_digest *md)
 		_buffer += sizeof(u_int32_t);
 		packet_len -= sizeof(u_int32_t);
 	}
-#endif
 
 	/* Clone actual message contents
 	 * and set up md->packet_pbs to describe it.
 	 */
 	init_pbs(&md->packet_pbs
-#ifdef NAT_TRAVERSAL
 		 , clone_bytes(_buffer, packet_len,
 			       "message buffer in comm_handle()")
-#else
-		 , clone_bytes(bigbuffer, packet_len,
-			       "message buffer in comm_handle()")
-#endif
 		 , packet_len, "packet");
 
 	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL,
@@ -406,8 +395,6 @@ static bool read_packet(struct msg_digest *md)
 
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
-
-#ifdef NAT_TRAVERSAL
 
 	/* We think that in 2013 Feb, Apple iOS Racoon
 	 * sometimes generates an extra useless buggy confusing
@@ -445,7 +432,6 @@ static bool read_packet(struct msg_digest *md)
 		    );
 		return FALSE;
 	}
-#endif
 
 	return TRUE;
 }
