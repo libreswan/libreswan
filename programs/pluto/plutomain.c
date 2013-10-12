@@ -1329,6 +1329,7 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_adns();
 	init_id();
+	init_vendorid();
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 	init_fetch();
