@@ -187,6 +187,10 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
+		/*
+		 * We should never get here - any other major is rejected
+		 * earlier
+		 */
 		bad_case(maj);
 	}
 }
