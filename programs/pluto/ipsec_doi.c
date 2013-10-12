@@ -237,13 +237,7 @@ static initiator_function *pick_initiator(struct connection *c UNUSED,
 	    (c->failed_ikev2 || (policy & POLICY_IKEV2_PROPOSE) == 0) &&
 	    (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)) == 0) {
 		if (policy & POLICY_AGGRESSIVE) {
-#if defined(AGGRESSIVE)
 			return aggr_outI1;
-
-#else
-			return aggr_not_present;
-
-#endif
 		} else {
 			return main_outI1;
 		}

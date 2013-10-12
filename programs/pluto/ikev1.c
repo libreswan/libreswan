@@ -379,7 +379,6 @@ static const struct state_microcode state_microcode_table[] = {
 
 	/* No state for aggr_outI1: -->HDR, SA, KE, Ni, IDii */
 
-#if defined(AGGRESSIVE)
 	/* STATE_AGGR_R0:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Ni, IDii
 	 *                -->  HDR, SA, KE, Nr, IDir, HASH_R
@@ -441,18 +440,6 @@ static const struct state_microcode state_microcode_table[] = {
 	{ STATE_AGGR_R2, STATE_UNDEFINED,
 	  SMF_ALL_AUTH,
 	  LEMPTY, LEMPTY, PT(NONE), EVENT_NULL, unexpected },
-#else
-	/*
-	 * put in dummy states so that the state numbering does not
-	 * change depending upon build options.
-	 */
-	PHONY_STATE(STATE_AGGR_I1),
-	PHONY_STATE(STATE_AGGR_I1),
-	PHONY_STATE(STATE_AGGR_R1),
-	PHONY_STATE(STATE_AGGR_R1),
-	PHONY_STATE(STATE_AGGR_I2),
-	PHONY_STATE(STATE_AGGR_R2),
-#endif
 
 	/***** Phase 2 Quick Mode *****/
 

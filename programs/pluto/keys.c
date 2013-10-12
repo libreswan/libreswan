@@ -633,7 +633,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		free_public_key(my_public_key);
 		return best;
 	}
-#if defined(AGGRESSIVE)
+
 	if (his_id_was_instantiated(c) && (!(c->policy & POLICY_AGGRESSIVE)) &&
 	    isanyaddr(&c->spd.that.host_addr) ) {
 		DBG(DBG_CONTROL,
@@ -647,7 +647,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		his_id = &rw_id;
 		idtoa(his_id, idhim2, IDTOA_BUF);
 	}
-#endif
+
 	else if ( (c->policy & POLICY_PSK) &&
 		  (kind == PPK_PSK) &&
 		  (((c->kind == CK_TEMPLATE) &&

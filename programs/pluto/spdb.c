@@ -764,7 +764,6 @@ struct db_sa oakley_sadb[] = {
 #endif /* XAUTH */
 };
 
-#if defined(AGGRESSIVE)
 /**************** Oakley (aggressive mode) SA database ****************/
 /*
  * the Aggressive mode attributes must be seperate, because there
@@ -893,8 +892,6 @@ struct db_sa oakley_am_sadb[] = {
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
 #endif
 };
-
-#endif /* AGGRESSIVE */
 
 /**************** IPsec (quick mode) SA database ****************/
 
