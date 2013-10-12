@@ -287,9 +287,6 @@ USE_DNSSEC?=true
 # FINALCONFDDIR?
 USE_SINGLE_CONF_DIR?=false
 
-# Build ikeping (a utility for testing IKE daemons) in the distribution
-USE_IKEPING?=true
-
 # Build support for KEY RR 
 # this will become false in the future, as all OE sites transition to
 # using IPSECKEY instead of KEY records.  See references to 'Flag Day'
@@ -332,11 +329,6 @@ ifeq ($(USE_BSDKAME),true)
 USE_NETKEY=false
 USE_KLIPS=false
 endif
-
-# Build aggressive mode authentication system code - both Server and Client.
-# This was off by default, since aggressive mode leads to denial of service
-# attacks.
-USE_AGGRESSIVE?=true
 
 # Build XAUTH authentication system code - both Server and Client.
 # XAUTH is tricky, and you can get into security trouble unless you

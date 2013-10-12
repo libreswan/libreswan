@@ -79,7 +79,6 @@
 #include "dpd.h"
 #include "x509more.h"
 
-#if defined(AGGRESSIVE)
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
  */
@@ -1418,4 +1417,3 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	cur_state = NULL;
 	return STF_IGNORE;
 }
-#endif /* AGGRESSIVE */

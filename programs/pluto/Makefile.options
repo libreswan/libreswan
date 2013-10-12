@@ -32,11 +32,6 @@ ifeq ($(USE_LDAP),true)
 LDAP_VERSION=3
 endif
 
-# whether or not to enable aggressive mode exchanges.
-ifeq ($(USE_AGGRESSIVE),true)
-AGGRESSIVE=1
-endif
-
 ifeq ($(USE_XAUTH),true)
 XAUTH=1
 # compile with PAM support will increase the size of the distribution
@@ -192,12 +187,8 @@ endif
 
 AGGRESSIVE_DIST_OBJS=ikev1_aggr.o
 AGGRESSIVE_DIST_SRCS=${AGGRESSIVE_DIST_OBJS:.o=.c}
-ifeq ($(USE_AGGRESSIVE),true)
-# This compile option activates xauth code and modecfg needed by xauth
-AGGRESSIVE_DEFS=-DAGGRESSIVE
 AGGRESSIVE_OBJS=${AGGRESSIVE_DIST_OBJS}
 AGGRESSIVE_SRCS=${AGGRESSIVE_DIST_SRCS}
-endif
 
 # LABELED IPSEC support - requires SElinux
 LABELED_IPSEC_DIST_OBJS=security_selinux.o
@@ -240,12 +231,10 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(NETKEY_DEFS) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
-	-DPLUTO \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	-DBUILDER=\"${BUILDER}\" \
 	-DDEBUG \
 	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5\
-	${AGGRESSIVE_DEFS} \
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${CURL_DEFS}\

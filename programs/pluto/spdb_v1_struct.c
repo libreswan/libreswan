@@ -1518,7 +1518,6 @@ rsasig_common:
 	return NO_PROPOSAL_CHOSEN;
 }
 
-#if defined(AGGRESSIVE)
 /* Initialize st_oakley field of state for use when initiating in
  * aggressive mode.
  *
@@ -1608,7 +1607,6 @@ bool init_am_st_oakley(struct state *st, lset_t policy)
 
 	return TRUE;
 }
-#endif
 
 /**
  * Parse the body of an IPsec SA Payload (i.e. Phase 2 / Quick Mode).
