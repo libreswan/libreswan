@@ -149,7 +149,7 @@ install -d %{buildroot}%{_sbindir}
 
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
-install -d -m 0700 %{buildroot}%{_sysconfdir}/prelink.conf.d/
+install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
 install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
@@ -178,7 +178,7 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %if %{USE_FIPSCHECK}
 %{_libdir}/fipscheck/*.hmac
 # We own the directory so we don't have to require prelink
-%dir %{_sysconfdir}/prelink.conf.d/
+%attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
