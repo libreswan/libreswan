@@ -3,8 +3,8 @@ See also https://libreswan.org/
 
 v3.6 (unreleased)
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
-* IKEv2: Add liveness checks (a.k.a DPD for IKEv2) [Mike Rogers]
-* IKEv2: ikev2=insist allowed ikev1 when acting as responder [Mike Rogers]
+* IKEv2: Add liveness checks (a.k.a DPD for IKEv2) [Matt Rogers]
+* IKEv2: ikev2=insist allowed ikev1 when acting as responder [Matt Rogers]
 * IKEv1: Cleanup AGGR Mode VendorID - also send fragmentation vid [Paul]
 * IKEv1: Added cisco_unity= (default no) option which sends VID [Paul]
 * IKEv1: Fix compatibility with NAT-T and remote_peer_type=cisco [Paul]
