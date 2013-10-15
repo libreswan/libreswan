@@ -1218,20 +1218,11 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_OCF
-	{
-		struct stat buf;
-		errno = 0;
-
-		if ( stat("/dev/crypto", &buf) != -1)
-			libreswan_log(
-				"OCF support for IKE via /dev/crypto [enabled]");
-
-
-		else
-			libreswan_log(
-				"OCF support for IKE via /dev/crypto [failed:%s]",
+	if (access("/dev/crypto", R_OK | W_OK) != -1)
+		libreswan_log("OCF support for IKE via /dev/crypto [enabled]");
+	else
+		libreswan_log("OCF support for IKE via /dev/crypto [failed:%s]",
 				strerror(errno));
-	}
 #else
 	libreswan_log("OCF support for IKE [disabled]");
 #endif
