@@ -590,8 +590,8 @@ void ikev2_log_parentSA(struct state *st)
 			 st->st_oakley.encrypter->common.officname,
 			 st->st_oakley.enckeylen);
 	} else {
-		strncpy(encalgo, st->st_oakley.encrypter->common.officname,
-			sizeof(encalgo));
+		snprintf(encalgo, sizeof(encalgo), "%s",
+			st->st_oakley.encrypter->common.officname);
 	}
 
 	if (DBGP(DBG_CRYPT)) {

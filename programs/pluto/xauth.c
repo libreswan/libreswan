@@ -2390,6 +2390,7 @@ static stf_status xauth_client_resp(struct state *st,
 							if (cptr)
 								*cptr = '\0';
 						}
+						/* ??? is this strncpy correct? */
 						strncpy(st->st_xauth_username,
 							xauth_username,
 							sizeof(st->

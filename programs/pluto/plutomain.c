@@ -838,8 +838,7 @@ int main(int argc, char **argv)
 		case 'f': /* --ipsecdir <ipsec-dir> */
 			(void)lsw_init_ipsecdir(optarg);
 			/* Keep a copy of the filename so we can show it in ipsec status */
-                        ipsecdir = alloc_bytes(strlen(optarg)+1, "ipsecdir filename");
-                        strncpy(ipsecdir,optarg, strlen(optarg));
+			ipsecdir = clone_str(optarg, "ipsecdir filename");
 			continue;
 
 		case 'a': /* --adns <pathname> */
@@ -889,8 +888,7 @@ int main(int argc, char **argv)
 		case 'z': /* --config */
 		{
 			/* Keep a copy of the filename so we can show it in ipsec status */
-			ipsecconf = alloc_bytes(strlen(optarg)+1, "ipsecconf filename");
-			strncpy(ipsecconf,optarg, strlen(optarg));
+			ipsecconf = clone_str(optarg, "ipsecconf filename");
 
 			/* Config struct to variables mapper. This will overwrite
 			 * all previously set options. Keep this in the same order as

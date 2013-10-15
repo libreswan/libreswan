@@ -2209,8 +2209,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 const struct kernel_ops *kernel_ops;
 
-/* keep track of kernel version */
-char kversion[256];
+/* keep track of kernel version  */
+static char kversion[256];
 
 void init_kernel(void)
 {
@@ -2222,7 +2222,7 @@ void init_kernel(void)
 
 	/* get kernel version */
 	uname(&un);
-	strncpy(kversion, un.release, sizeof(kversion));
+	jam_str(kversion, sizeof(kversion), un.release);
 
 	switch (kern_interface) {
 #if defined(NETKEY_SUPPORT)

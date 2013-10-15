@@ -255,6 +255,7 @@ int whack_get_value(char *buf, size_t bufsize)
 	return len;
 }
 
+/* ??? bufsize must be PASS_MAX + 1 (documented in getpass(3)) */
 size_t whack_get_secret(char *buf, size_t bufsize)
 {
 	const char *secret;
@@ -262,10 +263,12 @@ size_t whack_get_secret(char *buf, size_t bufsize)
 
 	fflush(stdout);
 	usleep(20000); /* give fflush time for flushing */
+	/* ??? the function getpass(3) is obsolete! */
 	secret = getpass("Enter passphrase: ");
 	secret = (secret == NULL) ? "" : secret;
 
-	strncpy(buf, secret, bufsize);
+	strncpy(buf, secret, bufsize-1);
+	buf[bufsize-1] = '\n';	/* ensure NUL termination */
 
 	len = strlen(buf) + 1;
 
