@@ -1247,8 +1247,8 @@ static int do_file_authentication(void *varg)
 			    szuser, arg->name.ptr,
 			    szpass, szconnid, arg->connname.ptr));
 
-		if ( strcmp(szconnid, (char *)arg->connname.ptr) == 0 &&
-		     strcmp( szuser, (char *)arg->name.ptr ) == 0 ) { /* user correct ?*/
+		if ( streq(szconnid, (char *)arg->connname.ptr) &&
+		     streq( szuser, (char *)arg->name.ptr ) ) { /* user correct ?*/
 			char *cp;
 
 			pthread_mutex_lock(&crypt_mutex);
@@ -1270,7 +1270,7 @@ static int do_file_authentication(void *varg)
 			}
 
 			/* Ok then now password check - note crypt() can return NULL */
-			if ( cp && strcmp(cp, szpass ) == 0 ) {
+			if ( cp && streq(cp, szpass ) ) {
 				/* we have a winner */
 				fclose( fp );
 				pthread_mutex_unlock(&crypt_mutex);

@@ -325,7 +325,7 @@ void restart_connections_by_peer(struct connection *c)
 	for (; d != NULL; d = d->hp_next) {
 		if (
 			(c->dnshostname && d->dnshostname &&
-			 (strcmp(c->dnshostname, d->dnshostname) == 0)) ||
+			 streq(c->dnshostname, d->dnshostname)) ||
 			(c->dnshostname == NULL && d->dnshostname == NULL &&
 			sameaddr(&d->spd.that.host_addr,
 				 &c->spd.that.host_addr)
@@ -343,7 +343,7 @@ void restart_connections_by_peer(struct connection *c)
 	for (; d != NULL; d = d->hp_next) {
 		if (
 			(c->dnshostname && d->dnshostname &&
-			 (strcmp(c->dnshostname, d->dnshostname) == 0)) ||
+			 streq(c->dnshostname, d->dnshostname)) ||
 			(c->dnshostname == NULL && d->dnshostname == NULL &&
 			sameaddr(&d->spd.that.host_addr,
 				 &c->spd.that.host_addr)
@@ -1304,8 +1304,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 					&d->spd.that.host_addr) ||
 			      (c->spd.that.host_port != d->spd.that.host_port))
 			     && !(c->dnshostname && d->dnshostname &&
-				  (strcmp(c->dnshostname,
-					  d->dnshostname) == 0))
+				  streq(c->dnshostname, d->dnshostname))
 			     ) {
 				/*  Paul and AA  tried to delete phase2 didn't really work.
 				 * delete_p2states_by_connection(d);
@@ -1425,7 +1424,7 @@ static void connection_check_ddns1(struct connection *c)
 		if (c == d)
 			continue;
 		if ((c->dnshostname && d->dnshostname &&
-		     (strcmp(c->dnshostname, d->dnshostname) == 0)) ||
+		     streq(c->dnshostname, d->dnshostname)) ||
 		    (c->dnshostname == NULL && d->dnshostname == NULL &&
 		     sameaddr(&d->spd.that.host_addr, &c->spd.that.host_addr)))
 			initiate_connection(d->name, NULL_FD, 0,

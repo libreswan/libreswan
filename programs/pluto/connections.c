@@ -173,7 +173,7 @@ void update_host_pairs(struct connection *c)
 	for (; d != NULL; d = conn_next_tmp) {
 		conn_next_tmp = d->hp_next;
 		if (d->dnshostname &&
-			strcmp(d->dnshostname, dnshostname) == 0) {
+			streq(d->dnshostname, dnshostname)) {
 			/*
 			 * If there is a dnshostname and it is the same as
 			 * the one that has changed, then change
@@ -3495,6 +3495,7 @@ struct connection *find_client_connection(struct connection *c,
 	return d;
 }
 
+/* signed result suitable for quicksort */
 int connection_compare(const struct connection *ca,
 		const struct connection *cb)
 {
