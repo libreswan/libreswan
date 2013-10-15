@@ -354,9 +354,9 @@ static void confwrite_side(FILE *out,
 		strcpy(databuf, "%any");
 
 		if (end->port)
-			sprintf(b2, "%u", end->port);
+			snprintf(b2, sizeof(b2), "%u", end->port);
 		if (end->protocol)
-			sprintf(databuf, "%u", end->protocol);
+			snprintf(databuf, sizeof(databuf), "%u", end->protocol);
 
 		fprintf(out, "\t%sprotoport=%s/%s\n", side,
 			databuf, b2);

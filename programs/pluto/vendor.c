@@ -479,17 +479,22 @@ void init_vendorid(void)
 
 	for (vid = vid_tab; vid->id; vid++) {
 		if (vid->flags & VID_SELF) {
+			static const char fmt[] = "%s %s";
+			const char *ivc = ipsec_version_code();
+			size_t len;
 			char *d;
 
+			/* ??? for some reason this code used to refer to ipsec_version_vendorid() in a useless way.
+			 * Was ipsec_version_code() meant?  Or should ipsec_version_vendorid be used where we use ipsec_version_code?
+			 */
 			vid->vid = clone_str(
 				ipsec_version_vendorid(), "init_pluto_vendorid");
 			/* cut terminating NULL which won't go over the wire */
 			vid->vid_len = strlen(vid->vid);
-			d = alloc_bytes(strlen(vid->descr) + 256 +
-					strlen(ipsec_version_vendorid()),
-					"self-vendor ID");
-			sprintf(d, "%s %s", vid->descr, ipsec_version_code());
-			vid->descr = (const char *)d;
+			len = sizeof(fmt) + strlen(vid->descr) + strlen(ivc);
+			d = alloc_bytes(len, "self-vendor ID");
+			snprintf(d, len, fmt, vid->descr, ivc);
+			vid->descr = d;
 		} else if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
 			vid->vid = clone_str(vid->data, "vid->data");

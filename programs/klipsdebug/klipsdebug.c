@@ -297,14 +297,19 @@ int main(int argc, char **argv)
 			fputs(copyright, stdout);
 			exit(0);
 		case 'l':
-			program_name = malloc(strlen(argv[0]) +
-					      10 + /* update this when changing the sprintf() */
-					      strlen(optarg));
-			sprintf(program_name, "%s --label %s",
+		{
+			static const char combine_fmt[] = "%s --label %s";
+			size_t room = strlen(argv[0]) +
+					  sizeof(combine_fmt) +
+					  strlen(optarg);
+
+			program_name = malloc(room);
+			snprintf(program_name, room, combine_fmt,
 				argv[0],
 				optarg);
 			argcount -= 2;
 			break;
+		}
 		default:
 			fprintf(stdout, "%s: unknown option '%s'\n",
 				program_name, argv[optind]);

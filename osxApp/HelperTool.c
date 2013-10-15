@@ -51,7 +51,10 @@ static OSStatus DoConnect(
 	char command[100];
 	char thisConnName[50];
 	CFStringGetCString(nameString, thisConnName, 50, CFStringGetSystemEncoding());
-	sprintf(command, "/usr/local/sbin/ipsec auto --up %s", thisConnName);
+	int n = snprintf(command, sizeof(command), "/usr/local/sbin/ipsec auto --up %s", thisConnName);
+	if (n >= sizeof(command) {
+		/* ??? what should we do when the string buffer was too short? */
+	}
 	
 	err2 = asl_log(asl, aslMsg, ASL_LEVEL_DEBUG, command);
 	

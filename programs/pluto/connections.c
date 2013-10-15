@@ -701,7 +701,7 @@ size_t format_end(char *buf,
 				send_cert = "S=C";
 				break;
 			case cert_forcedtype:
-				sprintf(s, "S%d", this->cert.type);
+				snprintf(s, sizeof(s), "S%d", this->cert.type);
 				send_cert = s;
 				break;
 			}
