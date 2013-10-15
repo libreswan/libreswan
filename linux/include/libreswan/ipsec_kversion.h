@@ -347,6 +347,10 @@
 # define __ipsec_dev_get(x) __dev_get_by_name(x)
 #endif
 
+#ifndef PDE_DATA
+#define PDE_DATA(inode)	PDE(inode)->data
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)
 # define ip_chk_addr(a) inet_addr_type(&init_net, a)
 # define l_inet_addr_type(a)    inet_addr_type(&init_net, a)

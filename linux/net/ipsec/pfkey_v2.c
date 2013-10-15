@@ -2,6 +2,7 @@
  * @(#) RFC2367 PF_KEYv2 Key management API domain socket I/F
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs.
  * Copyright (C) 2010-12 David McCullough <david_mccullough@mcafee.com>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1132,122 +1133,82 @@ pfkey_recvmsg(struct socket *sock,
 }
 
 #ifdef CONFIG_PROC_FS
-int pfkey_get_info(char *buffer, char **start, off_t offset, int length
-#ifdef  PROC_EOF_DATA
-		   , int *eof,
-		   void *data
-#endif
-		   )
-{
-	const int max_content = length > 0 ? length - 1 : 0;       /* limit of useful snprintf output */
 
-	off_t begin = 0;
-	int len = 0;
+int pfkey_show(struct seq_file *seq, void *offset)
+{
 	struct sock *sk;
 #ifdef SK_FOR_EACH_NEED_NODE
 	struct hlist_node *node;
 #endif
-
+	
 	if (!sysctl_ipsec_debug_verbose) {
-		len += ipsec_snprintf(buffer, length,
-				      "    sock   pid   socket     next     prev e n p sndbf    Flags     Type St\n");
+		seq_printf(seq, "    sock   pid   socket     next     prev e n p sndbf    Flags     Type St\n");
 	} else {
-		len += ipsec_snprintf(buffer, length,
-				      "    sock   pid d    sleep   socket     next     prev e r z n p sndbf    stamp    Flags     Type St\n");
+		seq_printf(seq, "    sock   pid d    sleep   socket     next     prev e r z n p sndbf    stamp    Flags     Type St\n");
 	}
 
 	SK_FOR_EACH(sk, &pfkey_sock_list) {
-
 		if (!sysctl_ipsec_debug_verbose) {
-			len += ipsec_snprintf(buffer + len, length - len,
-					      "%8p %5d %8p %d %d %5d %08lX %8X %2X\n",
-					      sk,
-					      key_pid(sk),
-					      sk->sk_socket,
-					      sk->sk_err,
-					      sk->sk_protocol,
-					      sk->sk_sndbuf,
-					      sk->sk_socket->flags,
-					      sk->sk_socket->type,
-					      sk->sk_socket->state);
+			seq_printf(seq,
+					"%8p %5d %8p %d %d %5d %08lX %8X %2X\n",
+					sk,
+					key_pid(sk),
+					sk->sk_socket,
+					sk->sk_err,
+					sk->sk_protocol,
+					sk->sk_sndbuf,
+					sk->sk_socket->flags,
+					sk->sk_socket->type,
+					sk->sk_socket->state);
 		} else {
 			struct timeval t;
 			grab_socket_timeval(t, *sk);
-			len += ipsec_snprintf(buffer + len, length - len,
-					      "%8p %5d %d %8p %8p %d %d %d %d %5d %d.%06d %08lX %8X %2X\n",
-					      sk,
-					      key_pid(sk),
-					      sock_flag(sk, SOCK_DEAD),
+			seq_printf(seq,
+					"%8p %5d %d %8p %8p %d %d %d %d %5d %d.%06d %08lX %8X %2X\n",
+					sk,
+					key_pid(sk),
+					sock_flag(sk, SOCK_DEAD),
 #ifdef HAVE_SOCKET_WQ
-					      sk->sk_wq,
+					sk->sk_wq,
 #else
-					      sk->sk_sleep,
+					sk->sk_sleep,
 #endif
-					      sk->sk_socket,
-					      sk->sk_err,
-					      sk->sk_reuse,
+					sk->sk_socket,
+					sk->sk_err,
+					sk->sk_reuse,
 #ifdef HAVE_SOCK_ZAPPED
-					      sock_flag(sk, SOCK_ZAPPED),
+					sock_flag(sk, SOCK_ZAPPED),
 #else
-					      sk->sk_zapped,
-#endif
-					      sk->sk_protocol,
-					      sk->sk_sndbuf,
-					      (unsigned int)t.tv_sec,
-					      (unsigned int)t.tv_usec,
-					      sk->sk_socket->flags,
-					      sk->sk_socket->type,
-					      sk->sk_socket->state);
-		}
-
-		if (len >= max_content) {
-			/* we've done all that can fit -- stop loop */
-			len = max_content;      /* truncate crap */
-			break;
-		} else {
-			const off_t pos = begin + len;  /* file position of end of what we've generated */
-
-			if (pos <= offset) {
-				/* all is before first interesting character:
-				 * discard, but note where we are.
-				 */
-				len = 0;
-				begin = pos;
-			}
+					sk->sk_zapped,
+#endif					
+					sk->sk_protocol,
+					sk->sk_sndbuf,
+					(unsigned int)t.tv_sec,
+					(unsigned int)t.tv_usec,
+					sk->sk_socket->flags,
+					sk->sk_socket->type,
+					sk->sk_socket->state);
 		}
 	}
 
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	return len - (offset - begin);
+	return 0;
 }
 
-int pfkey_supported_get_info(char *buffer, char **start, off_t offset, int length
-#ifdef  PROC_EOF_DATA
-			     , int *eof,
-			     void *data
-#endif
-			     )
+int pfkey_supported_show(struct seq_file *seq, void *offset)
 {
-	/* limit of useful snprintf output */
-	const int max_content = length > 0 ? length - 1 : 0;
-	off_t begin = 0;
-	int len = 0;
 	int satype;
 	struct supported_list *ps;
-
-	len += ipsec_snprintf(buffer, length,
-			      "satype exttype alg_id ivlen minbits maxbits name\n");
-
-	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX;
-	     satype++) {
+	
+	seq_printf(seq, "satype exttype alg_id ivlen minbits maxbits name\n");
+	
+	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		ps = pfkey_supported_list[satype];
 		while (ps) {
 			struct ipsec_alg_supported *alg = ps->supportedp;
 			const char *n = alg->ias_name;
-			if (n == NULL)
-				n = "unknown";
+			if (n == NULL) n = "unknown";
 
-			len += ipsec_snprintf(buffer + len, length - len,
+			seq_printf(seq,
 					      "    %2d      %2d     %2d   %3d     %3d     %3d %20s\n",
 					      satype,
 					      alg->ias_exttype,
@@ -1257,78 +1218,32 @@ int pfkey_supported_get_info(char *buffer, char **start, off_t offset, int lengt
 					      alg->ias_keymaxbits,
 					      n);
 
-			if (len >= max_content) {
-				/* we've done all that can fit -- stop loop */
-				len = max_content;      /* truncate crap */
-				break;
-			} else {
-				const off_t pos = begin + len;  /* file position of end of what we've generated */
-
-				if (pos <= offset) {
-					/* all is before first interesting character:
-					 * discard, but note where we are.
-					 */
-					len = 0;
-					begin = pos;
-				}
-			}
-
 			ps = ps->next;
 		}
 	}
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	return len - (offset - begin);
+	return 0;
 }
 
-int pfkey_registered_get_info(char *buffer, char **start, off_t offset, int length
-#ifdef  PROC_EOF_DATA
-			      , int *eof,
-			      void *data
-#endif
-			      )
+int pfkey_registered_show(struct seq_file *seq, void *offset)
 {
-	const int max_content = length > 0 ? length - 1 : 0;       /* limit of useful snprintf output */
-	off_t begin = 0;
-	int len = 0;
 	int satype;
 	struct socket_list *pfkey_sockets;
-
-	len += ipsec_snprintf(buffer, length,
-			      "satype   socket   pid       sk\n");
-
-	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX;
-	     satype++) {
+	
+	seq_printf(seq, "satype   socket   pid       sk\n");
+	
+	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		pfkey_sockets = pfkey_registered_sockets[satype];
 		while (pfkey_sockets) {
-			len += ipsec_snprintf(buffer + len, length - len,
-					      "    %2d %8p %5d %8p\n",
-					      satype,
-					      pfkey_sockets->socketp,
-					      key_pid(pfkey_sockets->socketp->
-						      sk),
-					      pfkey_sockets->socketp->sk);
-
-			if (len >= max_content) {
-				/* we've done all that can fit -- stop loop (could stop two) */
-				len = max_content;      /* truncate crap */
-				break;
-			} else {
-				const off_t pos = begin + len;  /* file position of end of what we've generated */
-
-				if (pos <= offset) {
-					/* all is before first interesting character:
-					 * discard, but note where we are.
-					 */
-					len = 0;
-					begin = pos;
-				}
-			}
-
+			seq_printf(seq,
+				     "    %2d %8p %5d %8p\n",
+				     satype,
+				     pfkey_sockets->socketp,
+				     key_pid(pfkey_sockets->socketp->sk),
+				     pfkey_sockets->socketp->sk);
 			pfkey_sockets = pfkey_sockets->next;
 		}
 	}
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	return len - (offset - begin);
+	return 0;
 }
 
 #endif /* CONFIG_PROC_FS */
@@ -1408,10 +1323,6 @@ int pfkey_init(void)
 	int error = 0;
 	int i;
 
-#ifdef HAVE_PROC_DIR_ENTRY
-	struct proc_dir_entry* entry;
-#endif
-
 	static struct ipsec_alg_supported supported_init_ah[] = {
 #ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
 		{ K_SADB_EXT_SUPPORTED_AUTH, K_SADB_AALG_MD5HMAC, 0, 128,
@@ -1479,23 +1390,6 @@ int pfkey_init(void)
 
 	error |= sock_register(&pfkey_family_ops);
 
-#ifdef CONFIG_PROC_FS
-#    if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24)
-	proc_net_create("pf_key", 0, pfkey_get_info);
-	proc_net_create("pf_key_supported", 0, pfkey_supported_get_info);
-	proc_net_create("pf_key_registered", 0, pfkey_registered_get_info);
-#    else
-	entry = create_proc_entry("pf_key", 0, init_net.proc_net);
-	if (entry)
-		entry->read_proc = pfkey_get_info;
-	entry = create_proc_entry("pf_key_supported", 0, init_net.proc_net);
-	if (entry)
-		entry->read_proc = pfkey_supported_get_info;
-	entry = create_proc_entry("pf_key_registered", 0, init_net.proc_net);
-	if (entry)
-		entry->read_proc = pfkey_registered_get_info;
-#    endif
-#endif  /* CONFIG_PROC_FS */
 	return error;
 }
 
@@ -1517,12 +1411,6 @@ int pfkey_cleanup(void)
 	error |= supported_remove_all(K_SADB_X_SATYPE_COMP);
 #endif  /* CONFIG_KLIPS_IPCOMP */
 	error |= supported_remove_all(K_SADB_X_SATYPE_IPIP);
-
-#ifdef CONFIG_PROC_FS
-	ipsec_proc_net_remove("pf_key");
-	ipsec_proc_net_remove("pf_key_supported");
-	ipsec_proc_net_remove("pf_key_registered");
-#endif  /* CONFIG_PROC_FS */
 
 	/* other module unloading cleanup happens here */
 	return error;
