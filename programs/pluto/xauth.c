@@ -695,12 +695,10 @@ static stf_status modecfg_send_set(struct state *st)
 	init_phase2_iv(st, &st->st_msgid_phase15);
 #endif
 
+/* XXX This does not include IPv6 at this point */
 #define MODECFG_SET_ITEM ( LELEM(INTERNAL_IP4_ADDRESS) | \
 			   LELEM(INTERNAL_IP4_SUBNET) | \
-			   LELEM(INTERNAL_IP4_DNS) | \
-			   LELEM(INTERNAL_IP6_ADDRESS) | \
-			   LELEM(INTERNAL_IP6_SUBNET) | \
-			   LELEM(INTERNAL_IP6_DNS))
+			   LELEM(INTERNAL_IP4_DNS))
 
 	modecfg_resp(st,
 		     MODECFG_SET_ITEM,
