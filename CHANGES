@@ -28,6 +28,7 @@ v3.6 (unreleased)
 * building: Generate Makefile depend files automatically [Tuomo]
 * NETKEY: Take protoport= into account when setting IPsec SA priority [Paul]
 * NETKEY: Change Update SA to Add SA when existing SA is not found [Mattias]
+* KLIPS: Support for 3.10+ kernels (/proc use via seq_* functions) [David]
 * sysvinit: status function used incorrect variable for pid file [Tuomo]
 * _stackmanager: coding style cleanup - fixes bashism [Tuomo]
 * testing: Various interop test case updates [Paul]
