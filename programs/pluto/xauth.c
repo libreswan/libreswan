@@ -614,17 +614,13 @@ static stf_status modecfg_resp(struct state *st,
 						break;
 					}
 					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
-					chunk_t splitinc;
-					splitinc.ptr = alloc_bytes(14, "cisco split tunnel"); /* see above */
-					splitinc.len = 14;
-					memset(splitinc.ptr, 0, 14);
-					memcpy(splitinc.ptr, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);
-					struct in_addr splitmask;
-					splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
-					memcpy(splitinc.ptr + 4, &splitmask, 4);
-					if (!out_raw(splitinc.ptr, 14, &attrval, "CISCO_SPLIT_INC"))
+					unsigned char si[14];	/* 14 is magic */
+					memset(si, 0, sizeof(si));
+					memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);
+					struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
+					memcpy(si + 4, &splitmask, 4);
+					if (!out_raw(si, sizeof(si), &attrval, "CISCO_SPLIT_INC"))
 						return STF_INTERNAL_ERROR;
-					freeanychunk(splitinc);
 					break;
 				}
 				default:
