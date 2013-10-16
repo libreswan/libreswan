@@ -2900,10 +2900,13 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		}
 	}
 
+	/* XXX why is this needed? Skip the bogus original conn? */
 	if (st->st_connection->remotepeertype == CISCO) {
 		sr = st->st_connection->spd.next;
-		st->st_connection->spd.eroute_owner = sr->eroute_owner;
-		st->st_connection->spd.routing = sr->routing;
+		if (sr != NULL) {
+			st->st_connection->spd.eroute_owner = sr->eroute_owner;
+			st->st_connection->spd.routing = sr->routing;
+		}
 	}
 
 	return TRUE;
