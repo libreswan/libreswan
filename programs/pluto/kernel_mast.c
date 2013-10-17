@@ -143,7 +143,7 @@ static int allocate_mast_device(void)
 	return -1;
 }
 
-static int init_useful_mast(ip_address addr UNUSED, char *vname)
+static int init_useful_mast(ip_address addr UNUSED, char *vname, size_t vnlen)
 {
 	int mastno;
 
@@ -153,7 +153,7 @@ static int init_useful_mast(ip_address addr UNUSED, char *vname)
 	 */
 	mastno = allocate_mast_device();
 	passert(mastno != -1);
-	sprintf(vname, "mast%d", mastno);
+	snprintf(vname, vnlen, "mast%d", mastno);
 	if (mastdevice[mastno] == MAST_OPEN) {
 		mastdevice[mastno] = MAST_INUSE;
 		pfkey_plumb_mast_device(mastno);
@@ -188,7 +188,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 	DBG_log("useful mast device %d\n", useful_mastno);
 	if (useful_mastno >= 0)
-		sprintf(useful_mast_name, "mast%d", useful_mastno);
+		snprintf(useful_mast_name, sizeof(useful_mast_name), "mast%d", useful_mastno);
 
 	/*
 	 * For each real interface...
@@ -241,19 +241,19 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						if (streq(q->ip_dev->id_rname,
 							  ifp->name) &&
 						    sameaddr(&q->ip_addr,
-							     &ifp->addr)) {
+							     &ifp->addr))
+						{
 							q->change = IFN_KEEP;
-							if (firstq == NULL) {
+							if (firstq == NULL)
+							{
 								firstq = q;
-								if (
+								if (useful_mastno
+									== -1)
 									useful_mastno
-									==
-									-1)
-									useful_mastno
-										=
-											init_useful_mast(
-												firstq->ip_addr,
-												useful_mast_name);
+										= init_useful_mast(
+											firstq->ip_addr,
+											useful_mast_name,
+											sizeof(useful_mast_name));
 
 
 							}
@@ -275,7 +275,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 				if (useful_mastno == -1)
 					useful_mastno = init_useful_mast(
-						ifp->addr, useful_mast_name);
+						ifp->addr, useful_mast_name, sizeof(useful_mast_name));
 
 				vname = clone_str(useful_mast_name,
 						  "virtual device name mast");
@@ -381,7 +381,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 	/* make one up for later */
 	if ((!found_mast && firstq != NULL) && useful_mastno == -1)
-		init_useful_mast(firstq->ip_addr, useful_mast_name);
+		init_useful_mast(firstq->ip_addr, useful_mast_name, sizeof(useful_mast_name));
 }
 
 static bool mast_do_command(struct connection *c, struct spd_route *sr,

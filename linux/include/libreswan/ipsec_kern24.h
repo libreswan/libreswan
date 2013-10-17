@@ -87,5 +87,15 @@ static inline struct ethhdr *eth_hdr(const struct sk_buff *skb)
 }
 #define _IPSEC_KERN24_H 1
 
+#define proc_create_data(n,m,p,o,a) \
+	({ \
+		struct proc_dir_entry *_p = create_proc_entry((n),(m),(p)); \
+		if (_p) { \
+			_p->proc_fops = (o); \
+			_p->data = (void *) (a); \
+		} \
+		(_p); \
+	 })
+
 #endif /* _IPSEC_KERN24_H */
 

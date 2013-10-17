@@ -1567,14 +1567,14 @@ int main(int argc, char **argv)
 
 		case CD_DPDACTION:
 			msg.dpd_action = 255;
-			if ( strcmp(optarg, "clear") == 0)
+			if ( streq(optarg, "clear"))
 				msg.dpd_action = DPD_ACTION_CLEAR;
-			if ( strcmp(optarg, "hold") == 0)
+			else if ( streq(optarg, "hold"))
 				msg.dpd_action = DPD_ACTION_HOLD;
-			if ( strcmp(optarg, "restart") == 0)
+			else if ( streq(optarg, "restart"))
 				msg.dpd_action = DPD_ACTION_RESTART;
-			/* obsolete (not advertised) option for compatibility */
-			if ( strcmp(optarg, "restart_by_peer") == 0)
+			else if ( streq(optarg, "restart_by_peer"))
+				/* obsolete (not advertised) option for compatibility */
 				msg.dpd_action = DPD_ACTION_RESTART;
 			continue;
 
@@ -1591,7 +1591,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REMOTEPEERTYPE: /* --remote_peer_type  <cisco> */
-			if ( strcmp(optarg, "cisco" ) == 0)
+			if ( streq(optarg, "cisco" ))
 				msg.remotepeertype = CISCO;
 			else
 				msg.remotepeertype = NON_CISCO;
@@ -1738,13 +1738,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHBY:
-			if ( strcmp(optarg, "pam" ) == 0) {
+			if ( streq(optarg, "pam" )) {
 				msg.xauthby = XAUTHBY_PAM;
 				continue;
-			} else if ( strcmp(optarg, "file" ) == 0) {
+			} else if ( streq(optarg, "file" )) {
 				msg.xauthby = XAUTHBY_FILE;
 				continue;
-			} else if ( strcmp(optarg, "alwaysok" ) == 0) {
+			} else if ( streq(optarg, "alwaysok" )) {
 				msg.xauthby = XAUTHBY_ALWAYSOK;
 				continue;
 			} else {
@@ -1755,10 +1755,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHFAIL:
-			if ( strcmp(optarg, "hard" ) == 0) {
+			if ( streq(optarg, "hard" )) {
 				msg.xauthfail = XAUTHFAIL_HARD;
 				continue;
-			} else if ( strcmp(optarg, "soft" ) == 0) {
+			} else if ( streq(optarg, "soft" )) {
 				msg.xauthfail = XAUTHFAIL_SOFT;
 				continue;
 			} else {

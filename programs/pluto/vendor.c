@@ -238,8 +238,8 @@ static struct vid_struct vid_tab[] = {
 		      "Libreswan 2.2.0"),
 	{
 		/* always make sure to include ourself! */
-		VID_LIBRESWANSELF, VID_SELF, "", "Libreswan (this version)",
-		NULL, 0
+		VID_LIBRESWANSELF, VID_SELF, libreswan_vendorid, "Libreswan (this version)",
+		libreswan_vendorid, 0
 	},
 
 	/* NAT-Traversal */
@@ -479,17 +479,7 @@ void init_vendorid(void)
 
 	for (vid = vid_tab; vid->id; vid++) {
 		if (vid->flags & VID_SELF) {
-			char *d;
-
-			vid->vid = clone_str(
-				ipsec_version_vendorid(), "init_pluto_vendorid");
-			/* cut terminating NULL which won't go over the wire */
 			vid->vid_len = strlen(vid->vid);
-			d = alloc_bytes(strlen(vid->descr) + 256 +
-					strlen(ipsec_version_vendorid()),
-					"self-vendor ID");
-			sprintf(d, "%s %s", vid->descr, ipsec_version_code());
-			vid->descr = (const char *)d;
 		} else if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
 			vid->vid = clone_str(vid->data, "vid->data");

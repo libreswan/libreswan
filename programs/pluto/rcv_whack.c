@@ -191,7 +191,8 @@ static bool openwhackrecordfile(char *file)
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));
 
-	strncpy(whackrecordname, file, sizeof(whackrecordname));
+	strncpy(whackrecordname, file, sizeof(whackrecordname)-1);
+	whackrecordname[sizeof(whackrecordname)-1] = '\0';	/* ensure NUL termination */
 	whackrecordfile = fopen(whackrecordname, "w");
 	if (whackrecordfile == NULL) {
 		libreswan_log("Failed to open whack record file: '%s'\n",

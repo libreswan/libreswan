@@ -38,14 +38,15 @@
 
 char *starter_find_physical_iface(int sock, char *iface)
 {
-	static char _if[IFNAMSIZ + 1];
+	static char ifs[IFNAMSIZ + 1];
 	struct ifreq req;
 
 	strncpy(req.ifr_name, iface, IFNAMSIZ);
 	if (ioctl(sock, SIOCGIFFLAGS, &req) == 0) {
 		if (req.ifr_flags & IFF_UP) {
-			strncpy(_if, iface, IFNAMSIZ);
-			return _if;
+			memcpy(ifs, iface, IFNAMSIZ);
+			ifs[IFNAMSIZ] = '\0';	/* ensure NUL termination */
+			return ifs;
 		}
 	}
 	return NULL;

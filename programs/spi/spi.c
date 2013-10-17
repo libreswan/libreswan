@@ -613,10 +613,14 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'l':
-			progname = malloc(strlen(argv[0]) +
-					  10 +     /* update this when changing the sprintf() */
-					  strlen(optarg));
-			sprintf(progname, "%s --label %s",
+		{
+			static const char combine_fmt[] = "%s --label %s";
+			size_t room = strlen(argv[0]) +
+					  sizeof(combine_fmt) +
+					  strlen(optarg);
+
+			progname = malloc(room);
+			snprintf(progname, room, combine_fmt,
 				argv[0],
 				optarg);
 			tool_close_log();
@@ -624,6 +628,7 @@ int main(int argc, char *argv[])
 
 			argcount -= 2;
 			break;
+		}
 		case 'H':
 			if (alg) {
 				fprintf(stderr,

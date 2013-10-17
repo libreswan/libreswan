@@ -838,8 +838,7 @@ int main(int argc, char **argv)
 		case 'f': /* --ipsecdir <ipsec-dir> */
 			(void)lsw_init_ipsecdir(optarg);
 			/* Keep a copy of the filename so we can show it in ipsec status */
-                        ipsecdir = alloc_bytes(strlen(optarg)+1, "ipsecdir filename");
-                        strncpy(ipsecdir,optarg, strlen(optarg));
+			ipsecdir = clone_str(optarg, "ipsecdir filename");
 			continue;
 
 		case 'a': /* --adns <pathname> */
@@ -889,8 +888,7 @@ int main(int argc, char **argv)
 		case 'z': /* --config */
 		{
 			/* Keep a copy of the filename so we can show it in ipsec status */
-			ipsecconf = alloc_bytes(strlen(optarg)+1, "ipsecconf filename");
-			strncpy(ipsecconf,optarg, strlen(optarg));
+			ipsecconf = clone_str(optarg, "ipsecconf filename");
 
 			/* Config struct to variables mapper. This will overwrite
 			 * all previously set options. Keep this in the same order as
@@ -959,24 +957,24 @@ int main(int argc, char **argv)
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 			if (protostack == NULL || *protostack == 0) {
 				kern_interface = USE_NETKEY;
-			} else if (strcmp(protostack, "none") == 0) {
+			} else if (streq(protostack, "none")) {
 				kern_interface = NO_KERNEL;
-			} else if (strcmp(protostack, "auto") == 0) {
+			} else if (streq(protostack, "auto")) {
 				libreswan_log(
 					"The option protostack=auto is obsoleted, falling back to protostack=netkey\n");
 				kern_interface = USE_NETKEY;
-			} else if (strcmp(protostack, "klips") == 0) {
+			} else if (streq(protostack, "klips")) {
 				kern_interface = USE_KLIPS;
-			} else if (strcmp(protostack, "mast") == 0) {
+			} else if (streq(protostack, "mast")) {
 				kern_interface = USE_MASTKLIPS;
-			} else if (strcmp(protostack, "netkey") == 0 ||
-				   strcmp(protostack, "native") == 0) {
+			} else if (streq(protostack, "netkey") ||
+				   streq(protostack, "native")) {
 				kern_interface = USE_NETKEY;
-			} else if (strcmp(protostack, "bsd") == 0 ||
-				   strcmp(protostack, "kame") == 0 ||
-				   strcmp(protostack, "bsdkame") == 0) {
+			} else if (streq(protostack, "bsd") ||
+				   streq(protostack, "kame") ||
+				   streq(protostack, "bsdkame")) {
 				kern_interface = USE_BSDKAME;
-			} else if (strcmp(protostack, "win2k") == 0) {
+			} else if (streq(protostack, "win2k")) {
 				kern_interface = USE_WIN2K;
 			}
 
@@ -1223,20 +1221,11 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_OCF
-	{
-		struct stat buf;
-		errno = 0;
-
-		if ( stat("/dev/crypto", &buf) != -1)
-			libreswan_log(
-				"OCF support for IKE via /dev/crypto [enabled]");
-
-
-		else
-			libreswan_log(
-				"OCF support for IKE via /dev/crypto [failed:%s]",
+	if (access("/dev/crypto", R_OK | W_OK) != -1)
+		libreswan_log("OCF support for IKE via /dev/crypto [enabled]");
+	else
+		libreswan_log("OCF support for IKE via /dev/crypto [failed:%s]",
 				strerror(errno));
-	}
 #else
 	libreswan_log("OCF support for IKE [disabled]");
 #endif

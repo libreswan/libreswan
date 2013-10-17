@@ -186,7 +186,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		DBG(DBG_PARSING,
 		    DBG_log(
 			    "Initiator state received security context from responder state, now verifying if both are same"));
-		if (!strcmp(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
+		if (streq(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
 			DBG_log(
 				"security contexts are verified in the initiator state");
 		} else {
