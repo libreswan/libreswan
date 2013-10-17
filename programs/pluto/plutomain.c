@@ -1136,15 +1136,18 @@ int main(int argc, char **argv)
 		libreswan_log("FIPS Kernel Mode detected");
 
 	if (!fips_files_check_ok) {
-		if (fips_mode || fips_product) {
-			if (fips_mode)
-				loglog(RC_LOG_SERIOUS, "FIPS: Kernel Mode FAILURE");
-			if (fips_product)
-				loglog(RC_LOG_SERIOUS, "FIPS: Product Mode FAILURE");
-			loglog(RC_LOG_SERIOUS, "ABORT: FIPS CHECK FAILURE");
-			exit_pluto(10);
-		}
-		libreswan_log("FIPS HMAC integrity verification failed - continuing");
+		loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification FAILURE");
+		/*
+		 * We ignore fips=1 kernel mode if we are not a 'fips product'
+		 */
+                if (fips_product && fips_mode) {
+                        loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
+                        exit_pluto(10);
+                } else if (fips_product) {
+                        openswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
+                } else {
+                        openswan_log("FIPS: not a FIPS product, kernel mode ignored - continuing");
+                }
 	} else {
 		libreswan_log("FIPS HMAC integrity verification test passed");
 	}
