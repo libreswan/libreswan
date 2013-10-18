@@ -190,6 +190,12 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 
 %post 
 %systemd_post ipsec.service
+if [ ! -f /etc/ipsec.d/cert8.db ] ; then
+echo > /var/tmp/libreswan-nss-pwd
+certutil -N -f /var/tmp/libreswan-nss-pwd -d /etc/ipsec.d
+restorecon /etc/ipsec.d/*db 2>/dev/null || :
+rm /var/tmp/libreswan-nss-pwd
+fi
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
