@@ -383,6 +383,10 @@ static struct vid_struct vid_tab[] = {
 
 	/*
 	 * NCP.de
+	 * Also seen from ncp client:
+	 * eb4c1b788afd4a9cb7730a68d56d088b
+	 * c61baca1f1a60cc10800000000000000
+	 * cbe79444a0870de4224a2c151fbfe099
 	 */
 	{ VID_NCP, VID_KEEP, "NCP client", NULL,
 	  "\x10\x1f\xb0\xb3\x5c\x5a\x4f\x4c\x08\xb9\x19\xf1\xcb\x97\x77\xb0",
