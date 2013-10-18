@@ -26,6 +26,7 @@ v3.6 (unreleased)
 * building: Removed USE_AGGRESSIVE flag. Support is always added [Paul]
 * building: Remove blowfish (use twofish instead) [Paul]
 * building: Generate Makefile depend files automatically [Tuomo]
+* packaging: spec files now initialise NSS DB when not found [Paul]
 * NETKEY: Take protoport= into account when setting IPsec SA priority [Paul]
 * NETKEY: Change Update SA to Add SA when existing SA is not found [Mattias]
 * KLIPS: Support for 3.10+ kernels (/proc use via seq_* functions) [David]
