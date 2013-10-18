@@ -1142,9 +1142,9 @@ int main(int argc, char **argv)
                         loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
                         exit_pluto(10);
                 } else if (fips_product) {
-                        openswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
+                        libreswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
                 } else {
-                        openswan_log("FIPS: not a FIPS product, kernel mode ignored - continuing");
+                        libreswan_log("FIPS: not a FIPS product, kernel mode ignored - continuing");
                 }
 	} else {
 		libreswan_log("FIPS HMAC integrity verification test passed");
