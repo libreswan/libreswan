@@ -887,7 +887,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	 */
 	if (c->spd.this.xauth_server || c->spd.this.xauth_client) {
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vendorid(np, &md->rbody, VID_MISC_XAUTH))
+		if (!out_vid(np, &md->rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
 #endif
@@ -904,7 +904,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 					quirks.
 					nat_traversal_vid));
 		if ((st->hidden_variables.st_nat_traversal) &&
-			(!out_vendorid(np, &
+			(!out_vid(np, &
 				md->rbody, md->quirks.nat_traversal_vid)))
 			return STF_INTERNAL_ERROR;
 	}

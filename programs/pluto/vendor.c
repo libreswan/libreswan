@@ -282,6 +282,11 @@ static struct vid_struct vid_tab[] = {
 	  "\xaf\xca\xd7\x13\x68\xa1\xf1\xc9\x6b\x86\x96\xfc\x77\x57\x01\x00",
 	  16 },
 
+	/* From Shrew Soft source code */
+	{ VID_DPD1_NG, VID_KEEP, "DPDv1_NG" , NULL,
+	  "\x3b\x90\x31\xdc\xe4\xfc\xf8\x8b\x48\x9a\x92\x39\x63\xdd\x0c\x49",
+	  16 },
+
 	{ VID_MISC_IKEv2, VID_STRING | VID_KEEP, "IKEv2", "CAN-IKEv2", NULL,
 	  0 },
 
@@ -627,6 +632,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 		break;
 
 	case VID_MISC_DPD:
+	case VID_DPD1_NG:
 		/* Remote side would like to do DPD with us on this connection */
 		md->dpd = TRUE;
 		break;
@@ -757,20 +763,6 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		       "ignoring unknown Vendor ID payload [%s%s]",
 		       log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");
 	}
-}
-
-/**
- * Add a vendor id payload to the msg, and modify previous payload
- * to say NEXT_VID.
- *
- * @param np
- * @param outs PB stream
- * @param vid Int of VendorID to be sent (see vendor.h for the list)
- * @return bool True if successful
- */
-bool out_vendorid(u_int8_t np, pb_stream *outs, unsigned int vid)
-{
-	return out_modify_previous_np(ISAKMP_NEXT_VID, outs) && out_vid(np, outs, vid);
 }
 
 /**
