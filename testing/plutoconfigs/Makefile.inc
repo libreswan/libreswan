@@ -378,10 +378,6 @@ USE_EXTRACRYPTO?=false
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
 
-# Do we have an external stats daemon we can push state changes to?
-# Currently hardcoded to /bin/libreswan-statsd
-HAVE_STATSD?=false
-
 # Do we have Openssl libraries available for BIGNUM support?
 # Required of HAVE_OCF support
 HAVE_OPENSSL?=false

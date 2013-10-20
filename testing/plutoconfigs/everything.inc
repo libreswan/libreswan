@@ -32,7 +32,6 @@ USE_LDAP=true
 USE_LIBCURL=true
 USE_EXTRACRYPTO=true
 USE_IPSEC_CONNECTION_LIMIT=true
-HAVE_STATSD=true
 #HAVE_OPENSSL=true
 HAVE_OCF=true
 # taproom is totally broken

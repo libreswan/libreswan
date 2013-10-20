@@ -102,6 +102,7 @@ d.ipsec.conf/plutostderrlog.xml
 d.ipsec.conf/plutostderrlogtime.xml
 d.ipsec.conf/force_busy.xml
 d.ipsec.conf/dumpdir.xml
+d.ipsec.conf/statsbin.xml
 d.ipsec.conf/ipsecdir.xml
 d.ipsec.conf/secretsfile.xml
 d.ipsec.conf/perpeerlog.xml

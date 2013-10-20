@@ -13,7 +13,7 @@ additionally, subsequent packets using this connection will be marked as
 well, reducing the lookups needed to find the proper SAref by using the
 ip_conntrack state. A value of no means no IPSEC mangle table is created,
 and SAref tracking is left to a third-party (kernel) module. In case of a third
-party module, the SArefs can be relayed using the HAVE_STATSD deamon.
+party module, the SArefs can be relayed using the <emphasis remap='I'>statsbin=</emphasis> notification helper.
 </para>
   </listitem>
   </varlistentry>
