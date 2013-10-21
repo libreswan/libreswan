@@ -1132,22 +1132,23 @@ int main(int argc, char **argv)
 	 * FIPS Kernel mode: fips=1 kernel boot parameter
 	 * FIPS Product mode: dracut-fips is installed
 	 *
-	 * When FIPS Product mode or FIPS Kernel mode, abort on hmac failure
-	 * When non-FIPS, skip test
+	 * When FIPS Product mode and FIPS Kernel mode, abort on hmac failure.
+	 * Otherwise, just complain about failures.
 	 *
 	 * Product Mode detected with FIPSPRODUCTCHECK in Makefile.inc
 	 */
 
 	{
 
-	int fips_mode = libreswan_fipsmode();
+	int fips_kernel = libreswan_fipskernel();
 	int fips_product = libreswan_fipsproduct();
+	int fips_mode = libreswan_fipsmode();
 	int fips_files_check_ok = FIPSCHECK_verify_files(fips_package_files);
 
 	if (fips_product)
 		libreswan_log("FIPS Product detected (%s)", FIPSPRODUCTCHECK);
 
-	if (fips_mode)
+	if (fips_kernel)
 		libreswan_log("FIPS Kernel Mode detected");
 
 	if (!fips_files_check_ok) {
@@ -1155,18 +1156,25 @@ int main(int argc, char **argv)
 		/*
 		 * We ignore fips=1 kernel mode if we are not a 'fips product'
 		 */
-                if (fips_product && fips_mode) {
+                if (fips_product && fips_kernel) {
                         loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
                         exit_pluto(10);
                 } else if (fips_product) {
                         libreswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
-                } else {
+                } else if (fips_kernel) {
                         libreswan_log("FIPS: not a FIPS product, kernel mode ignored - continuing");
-                }
+                } else {
+                        libreswan_log("FIPS: not a FIPS product and kernel not in FIPS mode - continuing");
+		}
 	} else {
 		libreswan_log("FIPS HMAC integrity verification test passed");
 	}
 
+	if (fips_mode) {
+		libreswan_log("FIPS: pluto daemon running in FIPS mode");
+	} else {
+		libreswan_log("FIPS: pluto daemon NOT running in FIPS mode");
+	}
 	}
 #else
 	libreswan_log("FIPS HMAC integrity support [disabled]");
@@ -1445,26 +1453,3 @@ void show_setup_plutomain()
 #endif
 }
 
-/*
- * Return TRUE if we are a fips product.
- * This is irrespective of whether we are running in FIPS mode
- */
-bool
-libreswan_fipsproduct(void)
-{
-	if (access(FIPSPRODUCTCHECK, F_OK) != 0) {
-		if (errno == ENOENT || errno == ENOTDIR) {
-			libreswan_log("FIPS: not a FIPS product");
-			return FALSE;
-		} else {
-			loglog(RC_LOG_SERIOUS, "FIPS ABORT: FIPS product check"
-			       " failed to determine status: %d: %s", errno,
-			       strerror(errno));
-			exit_pluto(1);
-			return FALSE; /* make compiler happy - never reached */
-		}
-	}
-
-	return TRUE;
-	
-}

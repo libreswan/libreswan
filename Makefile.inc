@@ -353,10 +353,7 @@ endif
 
 # Build support for integrity check for libreswan on startup 
 USE_FIPSCHECK?=false
-# RHEL
-#FIPSPRODUCTCHECK?=/usr/share/dracut/modules.d/01fips
-# Fedora
-FIPSPRODUCTCHECK?=/usr/share/dracut/modules.d/01fips
+FIPSPRODUCTCHECK?=/etc/system-fips
 
 # Build support for the Linux Audit system
 ifeq ($(OSDEP),linux)

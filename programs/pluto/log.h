@@ -160,6 +160,7 @@ extern void daily_log_event(void);
 
 extern int libreswan_selinux(void);
 extern int libreswan_fipsmode(void);
+extern int libreswan_fipskernel(void);
 extern int libreswan_fipsproduct(void);
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
