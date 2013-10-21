@@ -24,6 +24,8 @@ v3.6 (unreleased)
 * pluto: merge updateresolvconf/restoreresolv.conf in client-up|down [Paul]
 * building: Removed USE_MODP_RFC5114 flag. Support is always added [Paul]
 * building: Removed USE_AGGRESSIVE flag. Support is always added [Paul]
+* building: Removed USE_XAUTH flag, Support is always added [Paul]
+* building: Removed MODECFG* flags, Support is always added [Paul]
 * building: Remove blowfish (use twofish instead) [Paul]
 * building: Generate Makefile depend files automatically [Tuomo]
 * packaging: spec files now initialise NSS DB when not found [Paul]
