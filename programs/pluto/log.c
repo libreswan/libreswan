@@ -1105,7 +1105,9 @@ void log_state(struct state *st, enum state_kind new_state)
 		 st->st_refhim == IPSEC_SAREF_NULL ? 0u :
 		 IPsecSAref2NFmark(st->st_refhim) | IPSEC_NFMARK_IS_SAREF_BIT
 		 );
-	system(buf);
+	if (system(buf) == -1) {
+		loglog(RC_LOG_SERIOUS,"statsbin= failed to send status update notification");
+	}
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state for connection %s completed", conn->name));
 }
