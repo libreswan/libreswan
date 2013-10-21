@@ -161,6 +161,7 @@ static void usage(const char *mess)
 		"[--perpeerlogbase <path>] [--perpeerlog]"
 		" \\\n\t"
 		"[--coredir <dirname>] [--noretransmits]"
+		"[--statsbin <filename>]"
 		" \\\n\t"
 		"[--secretsfile <secrets-file>]"
 		" [--ipsecdir <ipsec-dir>]"
@@ -513,6 +514,8 @@ int main(int argc, char **argv)
 			{ "perpeerlog", no_argument, NULL, 'l' },
 			{ "noretransmits", no_argument, NULL, 'R' },
 			{ "coredir", required_argument, NULL, 'C' },
+			{ "dumpdir", required_argument, NULL, 'C' }, /* alias for coredir */
+			{ "statsbin", required_argument, NULL, 'S' },
 			{ "ipsecdir", required_argument, NULL, 'f' },
 			{ "ipsec_dir", required_argument, NULL, 'f' },
 			{ "foodgroupsdir", required_argument, NULL, 'f' },
@@ -620,8 +623,12 @@ int main(int argc, char **argv)
 			usage(NULL);
 			break;  /* not actually reached */
 
-		case 'C':
+		case 'C': /* --coredir */
 			coredir = clone_str(optarg, "coredir");
+			continue;
+
+		case 'S': /* --statsdir */
+			pluto_stats_binary = clone_str(optarg, "statsbin");
 			continue;
 
 		case 'v': /* --version */
@@ -936,6 +943,16 @@ int main(int argc, char **argv)
 			set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
 			set_cfg_string(&pluto_vendorid, cfg->setup.strings[KSF_MYVENDORID]); /* --vendorid */
 			/* no config option: pluto_adns_option */
+
+			set_cfg_string(&pluto_stats_binary, /* --statsbinary */
+				       cfg->setup.strings[KSF_STATSBINARY]);
+			if (access(pluto_stats_binary, X_OK) == 0) {
+				libreswan_log("statsbinary set to %s", pluto_stats_binary);
+			} else {
+				libreswan_log("statsbinary '%s' ignored - file does not exist or is not executable",
+					      pluto_stats_binary);
+					pluto_stats_binary = NULL;
+			}
 
 			pluto_natt_float_port =
 				cfg->setup.options[KBF_NATIKEPORT];
@@ -1267,13 +1284,6 @@ int main(int argc, char **argv)
 	libreswan_log("XAUTH PAM support [disabled]");
 #endif
 
-#ifdef HAVE_STATSD
-	libreswan_log(
-		"HAVE_STATSD notification via /bin/libreswan-statsd enabled");
-#else
-	libreswan_log("HAVE_STATSD notification support [disabled]");
-#endif
-
 /** Log various impair-* functions if they were enabled */
 
 	if (DBGP(IMPAIR_BUST_MI2))
@@ -1399,12 +1409,13 @@ void show_setup_plutomain()
 	whack_log(RC_COMMENT, "config setup options:");     /* spacer */
 	whack_log(RC_COMMENT, " ");     /* spacer */
         whack_log(RC_COMMENT, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, "
-		  "dumpdir=%s",
+		  "dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
 		pluto_shared_secrets_file,
 		oco->confddir,
-		coredir);
+		coredir,
+		pluto_stats_binary ? pluto_stats_binary : "unset");
 
 	whack_log(RC_COMMENT, "sbindir=%s, libdir=%s, libexecdir=%s",
 		IPSEC_SBINDIR ,

@@ -93,6 +93,7 @@ bool
 
 char *pluto_log_file = NULL;
 char *base_perpeer_logdir = NULL;
+char *pluto_stats_binary = NULL;
 static int perpeer_count = 0;
 
 /* what to put in front of debug output */
@@ -880,7 +881,6 @@ void daily_log_event(void)
 	daily_log_reset();
 }
 
-#ifdef HAVE_STATSD
 /*
  * we store runtime info for stats/status this way,
  * you may be able to do something similar using these hooks
@@ -996,6 +996,9 @@ void log_state(struct state *st, enum state_kind new_state)
 	const char *tun = NULL, *p1 = NULL, *p2 = NULL;
 	enum state_kind save_state;
 
+	if (!pluto_stats_binary)
+		return;
+
 	if (!st || !st->st_connection || !st->st_connection->name) {
 		DBG(DBG_CONTROLMORE, DBG_log(
 			    "log_state() called without state"));
@@ -1077,16 +1080,17 @@ void log_state(struct state *st, enum state_kind new_state)
 	}
 	DBG(DBG_CONTROLMORE,
 	    DBG_log(
-		    "log_state calling libreswan-statsd for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
-		    conn->name, tun, p1, p2));
+		    "log_state calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
+		    pluto_stats_binary, conn->name, tun, p1, p2));
 
-	snprintf(buf, sizeof(buf), "/bin/libreswan-statsd "
+	snprintf(buf, sizeof(buf), "%s "
 		 "%s ipsec-tunnel-%s if_stats /proc/net/dev/%s \\; "
 		 "%s ipsec-tunnel-%s tunnel %s \\; "
 		 "%s ipsec-tunnel-%s phase1 %s \\; "
 		 "%s ipsec-tunnel-%s phase2 %s \\; "
 		 "%s ipsec-tunnel-%s nfmark-me/him 0x%x/0x%x",
 
+		 pluto_stats_binary,
 		 conn->interface ? "push" : "drop", conn->name,
 		 conn->interface ? conn->interface->ip_dev->id_vname : "",
 		 tun ? "push" : "drop", conn->name, tun ? tun : "",
@@ -1105,5 +1109,3 @@ void log_state(struct state *st, enum state_kind new_state)
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state for connection %s completed", conn->name));
 }
-
-#endif

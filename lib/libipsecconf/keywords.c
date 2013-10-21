@@ -355,6 +355,7 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "ipsecdir",        kv_config, kt_dirname,   KSF_IPSECDIR, NOT_ENUM },
 	{ "secretsfile",        kv_config, kt_dirname,   KSF_SECRETSFILE,
 	  NOT_ENUM },
+	{ "statsbin",        kv_config, kt_dirname,   KSF_STATSBINARY, NOT_ENUM },
 	{ "plutofork",           kv_config, kt_bool,      KBF_PLUTOFORK,
 	  NOT_ENUM },
 	{ "perpeerlog",        kv_config, kt_bool,   KBF_PERPEERLOG,

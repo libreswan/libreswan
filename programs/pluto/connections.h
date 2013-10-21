@@ -287,9 +287,7 @@ struct connection {
 #endif  /* XAUTH */
 	u_int8_t metric;          /* metric for tunnel routes */
 	u_int16_t connmtu;          /* mtu for tunnel routes */
-#ifdef HAVE_STATSD
 	u_int32_t statsval;             /* track what we have told statsd */
-#endif
 };
 
 #define oriented(c) ((c).interface != NULL)
