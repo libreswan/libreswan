@@ -385,7 +385,6 @@ static void set_whack_end(struct starter_config *cfg,
 	w->virt = l->virt;
 	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;
 
-#ifdef XAUTH
 	if (l->options_set[KNCF_XAUTHSERVER])
 		w->xauth_server = l->options[KNCF_XAUTHSERVER];
 	if (l->options_set[KNCF_XAUTHCLIENT])
@@ -398,7 +397,6 @@ static void set_whack_end(struct starter_config *cfg,
 	if (l->options_set[KNCF_MODECONFIGCLIENT])
 		w->modecfg_client = l->options[KNCF_MODECONFIGCLIENT];
 	w->pool_range = l->pool_range;
-#endif
 }
 
 static int starter_whack_add_pubkey(struct starter_config *cfg,
@@ -612,7 +610,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		    conn->name, msg.policy_label);
 #endif
 
-#ifdef XAUTH
 	msg.modecfg_domain = conn->modecfg_domain;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomain=%s",
 		    conn->name, msg.modecfg_domain);
@@ -640,7 +637,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 			starter_log(LOG_LEVEL_ERR,
 				    "Ignoring modecfgdns2= entry, it is not a valid IPv4 or IPv6 address");
 	}
-#endif
 
 	set_whack_end(cfg, "left",  &msg.left, &conn->left);
 	set_whack_end(cfg, "right", &msg.right, &conn->right);

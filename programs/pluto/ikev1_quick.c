@@ -76,9 +76,8 @@
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
 
-#ifdef XAUTH
 #include "xauth.h"
-#endif
+
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */

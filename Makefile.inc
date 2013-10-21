@@ -330,13 +330,7 @@ USE_NETKEY=false
 USE_KLIPS=false
 endif
 
-# Build XAUTH authentication system code - both Server and Client.
-# XAUTH is tricky, and you can get into security trouble unless you
-# do additional configuration - but it is often needed for Cisco interop
-# XAUTH is required for addresspool support
-USE_XAUTH?=true
-
-# When doing XAUTH, include PAM support when available
+# include PAM support for XAUTH when available on the platform
 
 ifeq ($(OSDEP),linux)
 USE_XAUTHPAM?=true

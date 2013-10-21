@@ -1279,10 +1279,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {
 	c->newest_isakmp_sa = serial;
 
-	if (uniqueIDs
-#ifdef XAUTH
-	    && (!c->spd.this.xauth_server)
-#endif
+	if (uniqueIDs && (!c->spd.this.xauth_server)
 	    ) {
 		/*
 		 * for all connections: if the same Phase 1 IDs are used

@@ -167,7 +167,7 @@ struct end {
 	struct ietfAttrList *groups;    /* access control groups */
 
 	struct virtual_t *virt;
-/*#ifdef XAUTH*/
+
 	bool xauth_server;
 	bool xauth_client;
 	char *xauth_name;
@@ -175,7 +175,7 @@ struct end {
 	ip_range pool_range;    /* store start of v4 addresspool */
 	bool modecfg_server;    /* Give local addresses to tunnel's end */
 	bool modecfg_client;    /* request address for local end */
-/*#endif*/
+
 };
 
 struct spd_route {
@@ -225,10 +225,8 @@ struct connection {
 	/*Cisco interop: remote peer type*/
 	enum keyword_remotepeertype remotepeertype;
 
-#ifdef XAUTH
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;
-#endif
 
 	bool forceencaps;                       /* always use NAT-T encap */
 
@@ -277,14 +275,14 @@ struct connection {
 	pam_handle_t  *pamh;            /*  PAM handle for that connection  */
 #endif
 	char *dnshostname;
-#ifdef XAUTH
+
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
 	struct ip_pool *pool; /*v4 addresspool as a range, start end */
 	char *cisco_dns_info; /* scratchpad for writing IP addresses */
 	char *modecfg_domain;
 	char *modecfg_banner;
-#endif  /* XAUTH */
+
 	u_int8_t metric;          /* metric for tunnel routes */
 	u_int16_t connmtu;          /* mtu for tunnel routes */
 	u_int32_t statsval;             /* track what we have told statsd */

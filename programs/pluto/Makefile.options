@@ -32,14 +32,11 @@ ifeq ($(USE_LDAP),true)
 LDAP_VERSION=3
 endif
 
-ifeq ($(USE_XAUTH),true)
-XAUTH=1
 # compile with PAM support will increase the size of the distribution
 # and thus it may not be the best solution for embeded systems. XAUTH
 # will use the crypt() lib and a password file by default.
 ifeq ($(USE_XAUTHPAM),true)
 XAUTH_HAVE_PAM=1
-endif
 endif
 
 CFLAGS +=-g ${WERROR}
@@ -167,8 +164,6 @@ endif
 
 XAUTH_DIST_SRCS=xauth.c xauth.h addresspool.c addresspool.h
 XAUTH_DIST_OBJS=xauth.o addresspool.o
-ifeq ($(USE_XAUTH),true)
-XAUTH_DEFS=-DXAUTH
 XAUTH_OBJS=${XAUTH_DIST_OBJS}
 XAUTH_SRCS=${XAUTH_DIST_SRCS}
 ifneq ($(BUILDENV), darwin)
@@ -178,7 +173,6 @@ endif
 ifeq ($(USE_XAUTHPAM),true)
 XAUTHPAM_DEFS=-DXAUTH_HAVE_PAM
 XAUTHPAM_LIBS=-lpam -ldl
-endif
 endif
 
 AGGRESSIVE_DIST_OBJS=ikev1_aggr.o

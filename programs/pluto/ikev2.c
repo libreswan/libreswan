@@ -61,9 +61,9 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-#ifdef XAUTH
+
 #include "xauth.h"
-#endif
+
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "dpd.h"

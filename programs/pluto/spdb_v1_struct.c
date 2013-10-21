@@ -1138,7 +1138,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 
 				/* check that authentication method is acceptable */
 				switch (val) {
-#ifdef XAUTH
 				case XAUTHInitPreShared:
 					if (!xauth_init) {
 						ugh = builddiag(
@@ -1156,10 +1155,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 						break;
 					}
 					goto psk_common;
-#endif
 
 				case OAKLEY_PRESHARED_KEY:
-#ifdef XAUTH
 					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with PSK of initiator (we are %s)",
@@ -1173,7 +1170,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 						break;
 					}
 psk_common:
-#endif
 
 					if ((iap & POLICY_PSK) == LEMPTY) {
 						ugh =
@@ -1208,7 +1204,6 @@ psk_common:
 						ta.auth = OAKLEY_PRESHARED_KEY;	/* note: might be different from val */
 					}
 					break;
-#ifdef XAUTH
 				case XAUTHInitRSA:
 					if (!xauth_init) {
 						ugh = builddiag(
@@ -1226,10 +1221,8 @@ psk_common:
 						break;
 					}
 					goto rsasig_common;
-#endif
 
 				case OAKLEY_RSA_SIG:
-#ifdef XAUTH
 					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with RSA of initiator (we are %s)",
@@ -1243,7 +1236,6 @@ psk_common:
 						break;
 					}
 rsasig_common:
-#endif
 					/* Accept if policy specifies RSASIG or is default */
 					if ((iap & POLICY_RSASIG) == LEMPTY) {
 						ugh =

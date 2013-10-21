@@ -649,7 +649,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 		md->nortel = TRUE;
 		break;
 
-#ifdef XAUTH
 	case VID_SSH_SENTINEL_1_4_1:
 		loglog(RC_LOG_SERIOUS,
 		       "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
@@ -663,7 +662,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_MISC_XAUTH:
 		md->quirks.xauth_vid = TRUE;
 		break;
-#endif
 
 	case VID_LIBRESWANSELF:
 		/* not really useful, but it changes the msg from "ignored" to "received" */

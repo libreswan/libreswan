@@ -81,9 +81,8 @@
 #include "ikev1_continuations.h"
 #include "ikev2.h"
 
-#ifdef XAUTH
 #include "xauth.h"
-#endif
+
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
@@ -832,7 +831,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	ini = " ";
 	fin = "}";
 
-#ifdef XAUTH
 	if (st->st_xauth_username && st->st_xauth_username[0] != '\0') {
 		b = b + strlen(b);
 		snprintf(b, sad_len - (b - sadetails) - 1,
@@ -845,7 +843,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		fin = "}";
 
 	}
-#endif
 
 	strcat(b, fin);
 }

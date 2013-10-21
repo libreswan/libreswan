@@ -78,9 +78,7 @@ struct trans_attrs {
 	oakley_hash_t integ_hash;       /* Hash algorithm for integ */
 
 	oakley_auth_t auth;             /* Authentication method (RSA,PSK) */
-#ifdef XAUTH
 	u_int16_t xauth;                /* did we negotiate Extended Authentication? */
-#endif
 	u_int16_t groupnum;
 
 	time_t life_seconds;            /* When this SA expires (seconds) */

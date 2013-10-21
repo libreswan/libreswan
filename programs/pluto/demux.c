@@ -62,16 +62,6 @@
 #include "ikev1.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
-#if 0
-#include "whack.h"      /* requires connections.h */
-#include "server.h"
-#ifdef XAUTH
-#include "xauth.h"
-#endif
-#include "nat_traversal.h"
-#include "vendor.h"
-#include "dpd.h"
-#endif
 #include "udpfromto.h"
 
 /* This file does basic header checking and demux of

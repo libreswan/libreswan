@@ -131,10 +131,8 @@ err_t pack_whack_msg(struct whackpacker *wp)
 #ifdef HAVE_LABELED_IPSEC
 	    || !pack_str(wp, &wp->msg->policy_label)                            /* string 27 */
 #endif
-#ifdef XAUTH
 	    || !pack_str(wp, &wp->msg->modecfg_domain)				/* string 28 */
 	    || !pack_str(wp, &wp->msg->modecfg_banner)				/* string 29 */
-#endif
 	    || wp->str_roof - wp->str_next < (ptrdiff_t)wp->msg->keyval.len) {  /* chunk (sort of string 30) */
 		ugh = "too many bytes of strings to fit in message to pluto";
 		return ugh;
@@ -194,10 +192,8 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 #ifdef HAVE_LABELED_IPSEC
 	    || !unpack_str(wp, &wp->msg->policy_label)          /* string 27 */
 #endif
-#ifdef XAUTH
 	    || !unpack_str(wp, &wp->msg->modecfg_domain)	/* string 28 */
 	    || !unpack_str(wp, &wp->msg->modecfg_banner)	/* string 29 */
-#endif
 	    || wp->str_roof - wp->str_next !=
 	    (ptrdiff_t)wp->msg->keyval.len)                                     /* check chunk */
 		ugh = "message from whack contains bad string";

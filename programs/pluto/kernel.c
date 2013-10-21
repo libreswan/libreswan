@@ -451,17 +451,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "%s "         /* optional mtu */
 			  "PLUTO_CONN_POLICY='%s' "
 			  "PLUTO_CONN_ADDRFAMILY='ipv%d' "
-#ifdef XAUTH
 			  "XAUTH_FAILED=%d "
 			  "%s "         /* XAUTH username - if any */
-#endif
 			  "%s "         /* PLUTO_MY_SRCIP - if any */
-#ifdef XAUTH
 			  "PLUTO_IS_PEER_CISCO='%u' "
 			  "PLUTO_PEER_DNS_INFO='%s' "
 			  "PLUTO_PEER_DOMAIN_INFO='%s' "
 			  "PLUTO_PEER_BANNER='%s' "
-#endif  /* XAUTH */
 #ifdef HAVE_NM
 			  "PLUTO_NM_CONFIGURED='%u' "
 #endif
@@ -490,17 +486,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  connmtu_str,
 			  prettypolicy(c->policy),
 			  (c->addr_family == AF_INET) ? 4 : 6
-#ifdef XAUTH
 			  , (st && st->st_xauth_soft) ? 1 : 0,
 			  secure_xauth_username_str
-#endif
 			  , srcip_str
-#ifdef XAUTH
 			  , c->remotepeertype,
 			  c->cisco_dns_info ? c->cisco_dns_info : "",
 			  c->modecfg_domain ? c->modecfg_domain : "",
 			  c->modecfg_banner ? c->modecfg_banner : ""
-#endif  /* XAUTH */
 #ifdef HAVE_NM
 			  , c->nmconfigured
 #endif

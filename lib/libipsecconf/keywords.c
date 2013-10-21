@@ -220,7 +220,6 @@ struct keyword_enum_values kw_remote_peer_type =
 { kw_remote_peer_type_list, sizeof(kw_remote_peer_type_list) /
   sizeof(struct keyword_enum_value) };
 
-#ifdef XAUTH
 struct keyword_enum_value kw_xauthby_list[] = {
 	{ "file",         XAUTHBY_FILE },
 	{ "pam",         XAUTHBY_PAM },
@@ -238,7 +237,6 @@ struct keyword_enum_value kw_xauthfail_list[] = {
 struct keyword_enum_values kw_xauthfail =
 { kw_xauthfail_list, sizeof(kw_xauthfail_list) /
   sizeof(struct keyword_enum_value) };
-#endif
 
 /*
  * Values for right= and left=
@@ -500,7 +498,6 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 #endif
 
-#ifdef XAUTH
 	{ "xauthby", kv_conn | kv_auto, kt_enum, KBF_XAUTHBY, &kw_xauthby },
 	{ "xauthfail", kv_conn | kv_auto, kt_enum, KBF_XAUTHFAIL,
 	  &kw_xauthfail },
@@ -534,7 +531,6 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "modecfgwins2", kv_conn | kv_auto, kt_obsolete, KBF_WARNIGNORE,
 	  NOT_ENUM },
-#endif
 
 	{ "forceencaps",    kv_conn | kv_auto, kt_bool,   KBF_FORCEENCAP,
 	  NOT_ENUM },
