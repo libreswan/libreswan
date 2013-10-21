@@ -253,6 +253,8 @@ libreswan_fipsproduct(void)
 /*
  * Is the machine running in FIPS mode (fips product AND fips kernel mode)
  * yes (1), no (0), unknown(-1)
+ * Only pluto needs to know -1, so it can abort. Every other caller can
+ * just check for fips mode using: if (libreswan_fipsmode())
  */
 int
 libreswan_fipsmode(void)
