@@ -198,6 +198,7 @@ int libreswan_selinux(void)
 
 }
 
+#ifdef FIPS_CHECK
 /*
  * Is the machine running in FIPS kernel mode (fips=1 kernel argument)
  * yes (1), no (0), unknown(-1)
@@ -267,7 +268,7 @@ libreswan_fipsmode(void)
 
 	return 0;
 }
-
+#endif
 
 char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {

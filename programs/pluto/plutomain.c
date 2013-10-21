@@ -1145,10 +1145,15 @@ int main(int argc, char **argv)
 	int fips_mode = libreswan_fipsmode();
 	int fips_files_check_ok = FIPSCHECK_verify_files(fips_package_files);
 
-	if (fips_product)
+	if (fips_mode == -1) {
+                        loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
+                        exit_pluto(10);
+	}
+
+	if (fips_product == 1)
 		libreswan_log("FIPS Product detected (%s)", FIPSPRODUCTCHECK);
 
-	if (fips_kernel)
+	if (fips_kernel == 1)
 		libreswan_log("FIPS Kernel Mode detected");
 
 	if (!fips_files_check_ok) {
@@ -1175,6 +1180,7 @@ int main(int argc, char **argv)
 	} else {
 		libreswan_log("FIPS: pluto daemon NOT running in FIPS mode");
 	}
+
 	}
 #else
 	libreswan_log("FIPS HMAC integrity support [disabled]");
