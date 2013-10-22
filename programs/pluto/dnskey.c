@@ -38,9 +38,6 @@
 #include "log.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "keys.h"               /* needs connections.h */
 #include "dnskey.h"

@@ -62,10 +62,6 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
 
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
-
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
 

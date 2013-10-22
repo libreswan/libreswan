@@ -48,9 +48,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "kernel.h"             /* needs connections.h */
 #include "whack.h"              /* needs connections.h */
