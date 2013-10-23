@@ -437,6 +437,7 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 		       in, in, ilen, iv, encrypt);
 
 	memset(&sg, 0, sizeof(sg));
+	sg_init_table(&sg, 1);
 	sg_set_page(&sg, virt_to_page(in), ilen, offset_in_page(in));
 
 	memset(&desc, 0, sizeof(desc));
