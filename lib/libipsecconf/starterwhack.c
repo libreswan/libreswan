@@ -74,7 +74,7 @@ static int send_reply(int sock, char *buf, ssize_t len)
 	return 0;
 }
 
-int starter_whack_read_reply(int sock,
+static int starter_whack_read_reply(int sock,
 			     char xauthname[XAUTH_MAX_NAME_LENGTH],
 			     char xauthpass[XAUTH_MAX_PASS_LENGTH],
 			     int xauthnamelen,
@@ -660,7 +660,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	return r;
 }
 
-bool one_subnet_from_string(struct starter_conn *conn,
+static bool one_subnet_from_string(struct starter_conn *conn,
 			    char **psubnets,
 			    int af,
 			    ip_subnet *sn,
@@ -837,30 +837,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 				       cfg, conn);
 }
 
-int starter_whack_basic_del_conn(struct starter_config *cfg,
-				 struct starter_conn *conn)
-{
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_delete = TRUE;
-	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlbase);
-}
-
-int starter_whack_del_conn(struct starter_config *cfg,
-			   struct starter_conn *conn)
-{
-	/* basic case, nothing special to synthize! */
-	if (!conn->left.strings_set[KSCF_SUBNETS] &&
-	    !conn->right.strings_set[KSCF_SUBNETS])
-		return starter_whack_basic_del_conn(cfg, conn);
-
-	return starter_permutate_conns(starter_whack_basic_del_conn,
-				       cfg, conn);
-}
-
-int starter_whack_basic_route_conn(struct starter_config *cfg,
+static int starter_whack_basic_route_conn(struct starter_config *cfg,
 				   struct starter_conn *conn)
 {
 	struct whack_message msg;
@@ -894,22 +871,3 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 	msg.name = connection_name(conn);
 	return send_whack_msg(&msg, cfg->ctlbase);
 }
-
-int starter_whack_listen(struct starter_config *cfg)
-{
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_listen = TRUE;
-	return send_whack_msg(&msg, cfg->ctlbase);
-}
-
-int starter_whack_shutdown(struct starter_config *cfg)
-{
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_shutdown = TRUE;
-	return send_whack_msg(&msg, cfg->ctlbase);
-}
-

@@ -31,7 +31,7 @@ void *xmalloc(size_t s)
 	return m;
 }
 
-char *xstrdup(char *s)
+char *xstrdup(const char *s)
 {
 	char *m = strdup(s);
 

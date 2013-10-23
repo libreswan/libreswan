@@ -36,7 +36,7 @@
 # define MIN(a, b) ( ((a) > (b)) ? (b) : (a) )
 #endif
 
-char *starter_find_physical_iface(int sock, char *iface)
+static char *starter_find_physical_iface(int sock, char *iface)
 {
 	static char ifs[IFNAMSIZ + 1];
 	struct ifreq req;

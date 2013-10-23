@@ -26,7 +26,7 @@ extern void starter_use_log(int debug, int console, int mysyslog);
 extern int showonly;
 
 extern void *xmalloc(size_t s);
-extern char *xstrdup(char *s);
+extern char *xstrdup(const char *s);
 extern void *xrealloc(void *o, size_t s);
 
 #endif /* _STARTER_LOG_H_ */

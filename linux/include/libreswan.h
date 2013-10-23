@@ -370,7 +370,6 @@ extern int subnetishost(const ip_subnet *s);
 extern int samesaid(const ip_said *a, const ip_said *b);
 extern int sameaddrtype(const ip_address *a, const ip_address *b);
 extern int samesubnettype(const ip_subnet *a, const ip_subnet *b);
-extern int isvalidsubnet(const ip_subnet *a);
 extern int isanyaddr(const ip_address *src);
 extern int isunspecaddr(const ip_address *src);
 extern int isloopbackaddr(const ip_address *src);
