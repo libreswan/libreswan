@@ -700,8 +700,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				(struct rtattr *)((char *)&req +
 						  req.n.nlmsg_len);
 			attr->rta_type = XFRMA_SEC_CTX;
-			/*Passing null terminated sec label (strlen + '\0')*/
-			DBG_log("passing security label %s (len=%d) to kernel",
+			/* Passing null terminated sec label (strlen + '\0') */
+			DBG_log("passing security label %s (len=%zu +1) to kernel",
 				policy_label, strlen(policy_label));
 			attr->rta_len =
 				RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) +
@@ -1317,7 +1317,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 	tmp = tmp + NLMSG_ALIGN(sizeof(struct xfrm_user_acquire));
 	attr = (struct rtattr *)tmp;
 
-	DBG(DBG_KERNEL, DBG_log("rtattr len= %lu", attr->rta_len));
+	DBG(DBG_KERNEL, DBG_log("rtattr len= %d", attr->rta_len));
 
 	if ( attr->rta_type == XFRMA_TMPL ) {
 		DBG(DBG_KERNEL, DBG_log("xfrm: found XFRMA_TMPL"));
@@ -1333,14 +1333,14 @@ static void netlink_acquire(struct nlmsghdr *n)
 		DBG(DBG_KERNEL,
 		    DBG_log(
 			    "xfrm: did not found XFRMA_SEC_CTX, trying next one"));
-		DBG(DBG_KERNEL, DBG_log("xfrm: rta->len=%lu", attr->rta_len));
+		DBG(DBG_KERNEL, DBG_log("xfrm: rta->len=%d", attr->rta_len));
 
 		remaining = n->nlmsg_len -
 			    NLMSG_SPACE(sizeof(struct xfrm_user_acquire));
 		attr = RTA_NEXT(attr, remaining);
 
 		DBG(DBG_KERNEL,
-		    DBG_log("xfrm: remaining=%d , rta->len = %lu", remaining,
+		    DBG_log("xfrm: remaining=%d , rta->len = %d", remaining,
 			    attr->rta_len));
 		if (attr->rta_type == XFRMA_SEC_CTX ) {
 			DBG(DBG_KERNEL, DBG_log(
