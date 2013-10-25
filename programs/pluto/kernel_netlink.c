@@ -1264,7 +1264,7 @@ static err_t xfrm_to_ip_address(unsigned family, const xfrm_address_t *src,
 
 static void netlink_acquire(struct nlmsghdr *n)
 {
-	struct xfrm_user_acquire ac1, *acquire;
+	struct xfrm_user_acquire *acquire;
 	const xfrm_address_t *srcx, *dstx;
 	int src_proto, dst_proto;
 	ip_address src, dst;
@@ -1302,10 +1302,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 	DBG(DBG_KERNEL, DBG_log("xfrm:rtattr= %lu", sizeof(struct rtattr)));
 #endif
 
-	/* to get rid of complaints about strict alignment: */
-	/* structure copy it first */
-	memcpy(&ac1, NLMSG_DATA(n), sizeof(struct xfrm_user_acquire));
-	acquire = &ac1; /* then use it. */
+	acquire = NLMSG_DATA(n);
 
 	srcx = &acquire->sel.saddr;
 	dstx = &acquire->sel.daddr;
@@ -1470,7 +1467,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 
 static void netlink_policy_expire(struct nlmsghdr *n)
 {
-	struct xfrm_user_polexpire up1, *upe;
+	struct xfrm_user_polexpire *upe;
 
 	struct {
 		struct nlmsghdr n;
@@ -1490,8 +1487,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 		return;
 	}
 
-	memcpy(&up1, NLMSG_DATA(n), sizeof(up1));
-	upe = &up1;
+	upe = NLMSG_DATA(n);
 	req.id.dir = upe->pol.dir;
 	req.id.index = upe->pol.index;
 	req.n.nlmsg_flags = NLM_F_REQUEST;
