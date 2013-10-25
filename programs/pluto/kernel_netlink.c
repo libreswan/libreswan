@@ -1274,7 +1274,6 @@ static void netlink_acquire(struct nlmsghdr *n)
 	err_t ugh = NULL;
 
 #ifdef HAVE_LABELED_IPSEC
-	char *tmp;
 	struct rtattr *attr;
 	int remaining;
 	struct xfrm_user_sec_ctx *xuctx = NULL;
@@ -1302,7 +1301,22 @@ static void netlink_acquire(struct nlmsghdr *n)
 	DBG(DBG_KERNEL, DBG_log("xfrm:rtattr= %lu", sizeof(struct rtattr)));
 #endif
 
-	acquire = NLMSG_DATA(n);
+	/* WARNING: netlink only guarantees 32-bit alignment.
+	 * See NLMSG_ALIGNTO in the kernel's include/uapi/linux/netlink.h.
+	 * BUT some fields in struct xfrm_user_acquire are 64-bit and so access
+	 * may be improperly aligned.  This will fail on a few strict
+	 * architectures (it does break C rules).
+	 */
+	/* WARNING: this code's understanding to the XFRM netlink
+	 * messages is from programs/pluto/linux26/xfrm.h.
+	 * There is no guarantee that this matches the kernel's
+	 * understanding.
+	 *
+	 * Many things are defined to be int or unsigned int.
+	 * This isn't safe when the kernel and userland may
+	 * be compiled with different models.
+	 */
+	acquire = NLMSG_DATA(n);	/* insufficiently aligned */
 
 	srcx = &acquire->sel.saddr;
 	dstx = &acquire->sel.daddr;
@@ -1310,9 +1324,9 @@ static void netlink_acquire(struct nlmsghdr *n)
 	transport_proto = acquire->sel.proto;
 
 #ifdef HAVE_LABELED_IPSEC
-	tmp = (char*) NLMSG_DATA(n);
-	tmp = tmp + NLMSG_ALIGN(sizeof(struct xfrm_user_acquire));
-	attr = (struct rtattr *)tmp;
+	attr = (struct rtattr *)
+		((char*) NLMSG_DATA(n) +
+			NLMSG_ALIGN(sizeof(struct xfrm_user_acquire)));
 
 	DBG(DBG_KERNEL, DBG_log("rtattr len= %d", attr->rta_len));
 
