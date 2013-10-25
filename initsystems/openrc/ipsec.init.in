@@ -1,0 +1,61 @@
+#!/sbin/runscript
+
+PLUTO_OPTS=""
+
+name="ipsec pluto daemon"
+extra_commands="configtest"
+extra_started_commands="reload"
+description="pluto is an IKE daemon that is used to setup IPSEC VPN connections."
+description_configtest="Run syntax tests for configuration files only."
+description_reload="reloads the configuration - does not affect existing connections"
+
+PLUTO_BINARY=${PLUTO_BINARY:-@FINALLIBDIR@/pluto}
+PLUTO_CONFFILE=${PLUTO_CONFFILE:-@FINALCONFFILE@}
+IPSEC_BINARY=${IPSEC_BINARY:-@FINALSBINDIR@/ipsec}
+PLUTO_PID=${PLUTO_PID:-/var/run/pluto/pluto.pid}
+
+depend() {
+	need net
+	use logger dns
+	provide ipsec
+}
+
+checkconfig() {
+	checkpath --directory /var/run/pluto
+	${IPSEC_BINARY} addconn --checkconfig || return 1
+}
+
+configtest() {
+	ebegin "Checking ${SVCNAME} configuration"
+	checkconfig
+	eend $?
+}
+
+start() {
+	checkconfig || return 1
+
+	ebegin "Starting ${SVCNAME}"
+	${IPSEC_BINARY} _stackmanager start
+	start-stop-daemon --start --pidfile "${PLUTO_PIDFILE}" \
+		--exec "${PLUTO_BINARY}" -- --config "${PLUTO_CONFFILE}" \
+	    -- ${PLUTO_OPTS}
+	eend $?
+}
+
+stop() {
+	if [ "${RC_CMD}" = "restart" ] ; then
+		checkconfig || return 1
+	fi
+	ebegin "Stopping ${SVCNAME}"
+	start-stop-daemon --stop --pidfile "${PLUTO_PIDFILE}"
+	RETVAL=$?
+	${IPSEC_BINARY} _stackmanager stop
+	eend RETVAL
+}
+
+reload() {
+	checkconfig || return $?
+	ebegin "Reloading ${SVCNAME}"
+	${IPSEC_BINARY} auto --rereadall
+	eend $?
+}
