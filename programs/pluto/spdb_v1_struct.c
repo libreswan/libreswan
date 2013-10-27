@@ -1197,7 +1197,8 @@ psk_common:
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
 								mid, hid);
 						}
-						ta.auth = OAKLEY_PRESHARED_KEY;	/* note: might be different from val */
+						ta.xauth = val;
+						ta.auth = OAKLEY_PRESHARED_KEY;
 					}
 					break;
 
@@ -1245,7 +1246,8 @@ rsasig_common:
 						 * thinks we've got it.  If we proposed it,
 						 * perhaps we know what we're doing.
 						 */
-						ta.auth = OAKLEY_RSA_SIG;	/* note: might be different from val */
+						ta.xauth = val;
+						ta.auth = OAKLEY_RSA_SIG;
 					}
 					break;
 
