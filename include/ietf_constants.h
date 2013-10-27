@@ -937,7 +937,7 @@ typedef u_int16_t oakley_hash_t;
 #define OAKLEY_ELGAMAL_ENC 6
 #define OAKLEY_ELGAMAL_ENC_REV 7
 
-#define OAKLEY_AUTH_ROOF 8 /*roof on auth values THAT WE SUPPORT */
+#define OAKLEY_AUTH_ROOF 8 /* roof on auth values THAT WE SUPPORT */
 
 /*
  * Note: the below xauth names are mapped via xauth_calcbaseauth() to the

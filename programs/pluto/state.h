@@ -78,7 +78,14 @@ struct trans_attrs {
 	oakley_hash_t integ_hash;       /* Hash algorithm for integ */
 
 	oakley_auth_t auth;             /* Authentication method (RSA,PSK) */
+
+	/* The xauth field contains 0 if we are not doing xauth or have completed it.
+	 * It contains XAUTHInitPreShared, XAUTHRespPreShared,
+	 * XAUTHInitRSA, or XAUTHRespRSA if we are in middle of xauth.
+	 * The actual uses of the value treat it as a boolean.  Yuck.
+	 */
 	u_int16_t xauth;                /* did we negotiate Extended Authentication? */
+
 	u_int16_t groupnum;
 
 	time_t life_seconds;            /* When this SA expires (seconds) */

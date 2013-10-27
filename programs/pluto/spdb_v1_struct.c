@@ -1142,6 +1142,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
+					ta.xauth = val;
 					goto psk_common;
 
 				case XAUTHRespPreShared:
@@ -1151,6 +1152,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
+					ta.xauth = val;
 					goto psk_common;
 
 				case OAKLEY_PRESHARED_KEY:
@@ -1197,7 +1199,6 @@ psk_common:
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
 								mid, hid);
 						}
-						ta.xauth = val;
 						ta.auth = OAKLEY_PRESHARED_KEY;
 					}
 					break;
@@ -1209,6 +1210,7 @@ psk_common:
 							role);
 						break;
 					}
+					ta.xauth = val;
 					goto rsasig_common;
 
 				case XAUTHRespRSA:
@@ -1218,6 +1220,7 @@ psk_common:
 							role);
 						break;
 					}
+					ta.xauth = val;
 					goto rsasig_common;
 
 				case OAKLEY_RSA_SIG:
@@ -1246,7 +1249,6 @@ rsasig_common:
 						 * thinks we've got it.  If we proposed it,
 						 * perhaps we know what we're doing.
 						 */
-						ta.xauth = val;
 						ta.auth = OAKLEY_RSA_SIG;
 					}
 					break;
