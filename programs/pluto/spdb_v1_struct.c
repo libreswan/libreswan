@@ -1169,23 +1169,23 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 psk_common:
 
 					if ((iap & POLICY_PSK) == LEMPTY) {
-						ugh =
-							"policy does not allow OAKLEY_PRESHARED_KEY authentication";
+						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
 						/* check that we can find a preshared secret */
 						struct connection *con =
 							st->st_connection;
 
 						if (get_preshared_secret(con)
-						    ==
-						    NULL) {
+						    == NULL)
+						{
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
 
 							idtoa(&con->spd.this.id, mid,
 							      sizeof(mid));
 							if (his_id_was_instantiated(
-									con)) {
+									con))
+							{
 								strcpy(hid,
 								       "%any");
 							} else {
@@ -1195,12 +1195,12 @@ psk_common:
 
 							ugh = builddiag(
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
-								mid,
-								hid);
+								mid, hid);
 						}
 						ta.auth = OAKLEY_PRESHARED_KEY;	/* note: might be different from val */
 					}
 					break;
+
 				case XAUTHInitRSA:
 					if (!xauth_init) {
 						ugh = builddiag(
@@ -1235,8 +1235,7 @@ psk_common:
 rsasig_common:
 					/* Accept if policy specifies RSASIG or is default */
 					if ((iap & POLICY_RSASIG) == LEMPTY) {
-						ugh =
-							"policy does not allow OAKLEY_RSA_SIG authentication";
+						ugh = "policy does not allow OAKLEY_RSA_SIG authentication";
 					} else {
 						/* We'd like to check that we can find a public
 						 * key for him and a private key for us that is
