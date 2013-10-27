@@ -29,8 +29,8 @@ There are a few packages required for Libreswan to compile from source:
 
 For Debian/Ubuntu
 
-	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
-		libcap-ng-dev libcap-ng-utils libselinux-dev \
+	apt-get install libnss3-dev libnspr4-dev pkg-config libnss3-tools \
+		libpam-dev libcap-ng-dev libcap-ng-utils libselinux-dev \
 		libcurl4-nss-dev libgmp3-dev flex bison gcc make \
 		libunbound-dev
 
