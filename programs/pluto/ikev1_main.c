@@ -738,7 +738,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	/* Set up state */
 	md->st = st = new_state();
 
-	passert(st->st_oakley.xauth == 0);
+	passert(!st->st_oakley.doing_xauth);
 
 	st->st_connection = c;
 	st->st_remoteaddr = md->sender;
@@ -2239,7 +2239,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 				"Skipping XAUTH for rekey for Cisco Peer "
 				"compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -2317,7 +2317,7 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 				"Skipping XAUTH for rekey for Cisco Peer "
 				"compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,

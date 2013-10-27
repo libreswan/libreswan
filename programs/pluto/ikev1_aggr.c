@@ -908,7 +908,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -926,7 +926,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "This seems to be rekey, and XAUTH is not supposed to be done again"));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -1031,7 +1031,7 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -1049,7 +1049,7 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "This seems to be rekey, and XAUTH is not supposed to be done again"));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,

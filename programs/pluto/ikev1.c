@@ -1253,7 +1253,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-			if (st->st_oakley.xauth != 0) {
+			if (st->st_oakley.doing_xauth) {
 				libreswan_log(
 					"Cannot do Quick Mode until XAUTH done.");
 				return;
@@ -1299,7 +1299,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			from_state = STATE_QUICK_R0;
 		} else {
-			if (st->st_oakley.xauth != 0) {
+			if (st->st_oakley.doing_xauth) {
 				libreswan_log(
 					"Cannot do Quick Mode until XAUTH done.");
 				return;
@@ -2615,7 +2615,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* Special case for XAUTH server */
 		if (st->st_connection->spd.this.xauth_server) {
-			if ((st->st_oakley.xauth != 0) &&
+			if (st->st_oakley.doing_xauth &&
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				libreswan_log(
 					"XAUTH: Sending XAUTH Login/Password Request");

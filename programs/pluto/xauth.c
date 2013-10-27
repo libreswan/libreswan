@@ -1621,7 +1621,7 @@ stf_status xauth_inR1(struct msg_digest *md)
 
 	libreswan_log("XAUTH: xauth_inR1(STF_OK)");
 	/* Back to where we were */
-	st->st_oakley.xauth = 0;
+	st->st_oakley.doing_xauth = FALSE;
 
 	if (!st->st_connection->spd.this.modecfg_server) {
 		DBG(DBG_CONTROL,
@@ -2695,7 +2695,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 				TRUE;
 			libreswan_log(
 				"XAUTH: Successfully Authenticated");
-			st->st_oakley.xauth = 0;
+			st->st_oakley.doing_xauth = FALSE;
 
 			return STF_OK;
 		} else {
@@ -2905,7 +2905,7 @@ stf_status xauth_inI1(struct msg_digest *md)
 	if (status && stat == STF_OK) {
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		libreswan_log("successfully logged in");
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		return STF_OK;
 	}

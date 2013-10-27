@@ -1142,7 +1142,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
-					ta.xauth = val;
+					ta.doing_xauth = TRUE;
 					goto psk_common;
 
 				case XAUTHRespPreShared:
@@ -1152,7 +1152,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
-					ta.xauth = val;
+					ta.doing_xauth = TRUE;
 					goto psk_common;
 
 				case OAKLEY_PRESHARED_KEY:
@@ -1210,7 +1210,7 @@ psk_common:
 							role);
 						break;
 					}
-					ta.xauth = val;
+					ta.doing_xauth = TRUE;
 					goto rsasig_common;
 
 				case XAUTHRespRSA:
@@ -1220,7 +1220,7 @@ psk_common:
 							role);
 						break;
 					}
-					ta.xauth = val;
+					ta.doing_xauth = TRUE;
 					goto rsasig_common;
 
 				case OAKLEY_RSA_SIG:

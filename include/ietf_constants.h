@@ -950,7 +950,7 @@ typedef u_int16_t oakley_hash_t;
 #define HybridInitDSS 64223
 #define HybridRespDSS 64224
 
-/* For XAUTH, store in st->xauth, and set equivalent in st->auth via */
+/* For XAUTH.  Don't actually store in st->st_oakley.auth (???) */
 #define XAUTHInitPreShared 65001
 #define XAUTHRespPreShared 65002
 #define XAUTHInitDSS 65003
