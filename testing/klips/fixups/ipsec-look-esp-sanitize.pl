@@ -317,6 +317,8 @@ sub sanitize_sadata {
   $rest =~ s/iv=0x[0-9a-f]{32}/iv=0xIVISFORRANDOM000IVISFORRANDOM000/;
   $rest =~ s/iv=0x[0-9a-f]{16}/iv=0xIVISFORRANDOM000/;
 
+  $rest =~ s/jiffies=[0-9a-f]{10}/jiffies=0123456789/;
+
   $rest =~ s/addtime\(.*,.*,.*\)//;
   $rest =~ s/usetime\(.*,.*,.*\)//;
   $rest =~ s/bytes\(.*\)//;
