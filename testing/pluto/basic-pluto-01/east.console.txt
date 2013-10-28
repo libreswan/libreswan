@@ -21,12 +21,12 @@ east #
 000 using kernel interface: klips
 000 interface ipsec0/eth1 192.1.2.23
 000  
-000 fips product=no, fips mode=disabled;
+000 fips mode=disabled;
 000 SElinux=enabled
 000  
 000 config setup options:
 000  
-000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
@@ -77,12 +77,12 @@ east #
 000 "westnet-eastnet": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
+000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
 000 "westnet-eastnet":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "westnet-eastnet":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
 000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 1, active 0
