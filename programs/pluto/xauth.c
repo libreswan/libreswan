@@ -2693,8 +2693,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 		if (status && stat == STF_OK) {
 			st->hidden_variables.st_xauth_client_done =
 				TRUE;
-			libreswan_log(
-				"XAUTH: Successfully Authenticated");
+			loglog(RC_LOG_SERIOUS,"XAUTH: Successfully Authenticated");
 			st->st_oakley.doing_xauth = FALSE;
 
 			return STF_OK;
