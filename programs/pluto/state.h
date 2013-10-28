@@ -79,7 +79,7 @@ struct trans_attrs {
 
 	oakley_auth_t auth;             /* Authentication method (RSA,PSK) */
 
-	bool doing_xauth;                /* did we negotiate Extended Authenticatio and still doing itn? */
+	bool doing_xauth;                /* did we negotiate Extended Authentication and still doing it? */
 
 	u_int16_t groupnum;
 
