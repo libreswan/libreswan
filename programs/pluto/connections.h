@@ -360,25 +360,23 @@ extern struct connection
 							   his_port, \
 							   policy)
 extern struct connection
-*find_host_connection2(const char *func,
+	*find_host_connection2(const char *func,
 		       const ip_address *me, u_int16_t my_port,
 		       const ip_address *him, u_int16_t his_port,
 		       lset_t policy),
-*refine_host_connection(const struct state *st, const struct id *id,
+	*refine_host_connection(const struct state *st, const struct id *id,
 			bool initiator, bool aggrmode, bool *fromcert),
-*find_client_connection(struct connection *c,
+	*find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,
 			const u_int8_t our_protocol,
 			const u_int16_t out_port,
 			const u_int8_t peer_protocol,
 			const u_int16_t peer_port),
-*find_connection_by_reqid(uint32_t reqid);
-
-extern struct connection *find_connection_for_clients(struct spd_route **srp,
-						      const ip_address *our_client,
-						      const ip_address *peer_client,
-						      int transport_proto);
+	*find_connection_for_clients(struct spd_route **srp,
+				      const ip_address *our_client,
+				      const ip_address *peer_client,
+				      int transport_proto);
 
 /* instantiating routines
  * Note: connection_discard() is in state.h because all its work
@@ -466,11 +464,6 @@ void connection_check_ddns(void);
 
 void connection_check_phase2(void);
 void init_connections(void);
-
-#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
-extern size_t format_connection(char *buf, size_t buf_len,
-				const struct connection *c,
-				struct spd_route *sr);
 
 extern void setup_client_ports(struct spd_route *sr);
 
