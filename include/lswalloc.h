@@ -73,9 +73,6 @@ typedef struct chunk chunk_t;
 
 extern const chunk_t empty_chunk;
 
-/* compare two chunks */
-extern bool cmp_chunk(chunk_t a, chunk_t b);
-
 /* zero all bytes */
 #define zero(x) memset((x), '\0', sizeof(*(x)))
 
