@@ -34,7 +34,7 @@
  *  expiry. strict=TRUE declares a fatal error,
  *  strict=FALSE issues a warning upon expiry.
  */
-const char*check_expiry(time_t expiration_date, int warning_interval,
+const char *check_expiry(time_t expiration_date, int warning_interval,
 			bool strict)
 {
 	time_t tnow;
@@ -72,17 +72,3 @@ const char*check_expiry(time_t expiration_date, int warning_interval,
 		return buf;
 	}
 }
-
-/*  compare two chunks, returns zero if a equals b
- *  negative/positive if a is earlier/later in the alphabet than b
- */
-bool cmp_chunk(chunk_t a, chunk_t b)
-{
-	int cmp_len, len, cmp_value;
-
-	cmp_len = a.len - b.len;
-	len = (cmp_len < 0) ? a.len : b.len;
-	cmp_value = memcmp(a.ptr, b.ptr, len);
-
-	return (cmp_value == 0) ? cmp_len : cmp_value;
-};
