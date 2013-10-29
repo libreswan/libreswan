@@ -726,7 +726,8 @@ struct ikev2_sa {
 extern struct_desc ikev2_sa_desc;
 
 struct ikev2_prop {
-	u_int8_t isap_np;               /* Next payload */
+	u_int8_t isap_lp;               /* Last proposal or not */
+	                                /* Matches IKEv1 ISAKMP_NEXT_P by design */
 	u_int8_t isap_critical;
 	u_int16_t isap_length;          /* Payload length */
 	u_int8_t isap_propnum;

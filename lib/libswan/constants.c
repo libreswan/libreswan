@@ -228,6 +228,19 @@ enum_names payload_names_ikev1orv2 =
 { ISAKMP_NEXT_NONE, ISAKMP_NEXT_GAP, payload_name_ikev1,
   &payload_names_ikev2copy_main };
 
+
+static const char *const ikev2_last_proposal_names[] = {
+	"v2_PROPOSAL_LAST",
+	NULL,
+	"v2_PROPOSAL_NON_LAST",
+	NULL
+};
+enum_names ikev2_last_proposal_desc =
+{ v2_PROPOSAL_LAST, v2_PROPOSAL_NON_LAST, ikev2_last_proposal_names, NULL };
+
+
+
+
 /* Exchange types (note: two discontinuous ranges) */
 
 static const char *const exchange_name_ikev1[] = {
