@@ -124,6 +124,10 @@ extern void close_output_pbs(pb_stream *pbs);
 
 /* ISAKMP Header: for all messages
  * layout from RFC 2408 "ISAKMP" section 3.1
+ *
+ * NOTE: the IKEv2 header format is identical EXCEPT that the cookies are now
+ * called (IKE SA) SPIs.  See RFC 5996 Figure 4.
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
