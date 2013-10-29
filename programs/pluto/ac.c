@@ -238,7 +238,7 @@ static const asn1Object_t acObjects[] =
 #define AC_OBJ_SIGNATURE                54
 #define AC_OBJ_ROOF                     55
 
-const x509acert_t empty_ac = {
+static const x509acert_t empty_ac = {
 	NULL,           /* *next */
 	0,              /* installed */
 	{ NULL, 0 },    /* certificate */
