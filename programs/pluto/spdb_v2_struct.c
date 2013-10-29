@@ -348,7 +348,8 @@ static enum ikev2_trans_type_prf v1tov2_prf(int oakley)
 struct db_sa *sa_v2_convert(struct db_sa *f)
 {
 	unsigned int pcc, prc, tcc, pr_cnt, pc_cnt, propnum;
-	int tot_trans, i;
+	int tot_trans;
+	int i;
 	struct db_trans_flat   *dtfset;
 	struct db_trans_flat   *dtfone;
 	struct db_trans_flat   *dtflast;
@@ -357,7 +358,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	struct db_v2_prop_conj *pc;
 	struct db_v2_prop      *pr;
 
-	if (!f)
+	if (f == NULL)
 		return NULL;
 
 	if (!f->dynamic)
@@ -367,16 +368,8 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
 		struct db_prop_conj *dpc = &f->prop_conjs[pcc];
 
-		if (dpc->props == NULL)
-			continue;
-		for (prc = 0; prc < dpc->prop_cnt; prc++) {
-			struct db_prop *dp = &dpc->props[prc];
-
-			if (dp->trans == NULL)
-				continue;
-			for (tcc = 0; tcc < dp->trans_cnt; tcc++)
-				tot_trans++;
-		}
+		for (prc = 0; prc < dpc->prop_cnt; prc++)
+			tot_trans += dpc->props[prc].trans_cnt;
 	}
 
 	dtfset = alloc_bytes(sizeof(struct db_trans_flat) * tot_trans,
@@ -386,20 +379,16 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
 		struct db_prop_conj *dpc = &f->prop_conjs[pcc];
 
-		if (dpc->props == NULL)
-			continue;
 		for (prc = 0; prc < dpc->prop_cnt; prc++) {
 			struct db_prop *dp = &dpc->props[prc];
 
-			if (dp->trans == NULL)
-				continue;
 			for (tcc = 0; tcc < dp->trans_cnt; tcc++) {
 				struct db_trans *tr = &dp->trans[tcc];
 				struct db_trans_flat *dtfone =
 					&dtfset[tot_trans];
 				unsigned int attr_cnt;
 
-				dtfone->protoid      = dp->protoid;
+				dtfone->protoid = dp->protoid;
 				if (!f->parentSA)
 					dtfone->encr_transid = tr->transid;
 
@@ -411,16 +400,12 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 					if (f->parentSA) {
 						switch (attr->type.oakley) {
 
-						case
-							OAKLEY_AUTHENTICATION_METHOD
-							:
+						case OAKLEY_AUTHENTICATION_METHOD:
 							dtfone->auth_method =
 								attr->val;
 							break;
 
-						case
-							OAKLEY_ENCRYPTION_ALGORITHM
-							:
+						case OAKLEY_ENCRYPTION_ALGORITHM:
 							dtfone->encr_transid =
 								v1tov2_encr(
 									attr->val);
@@ -509,8 +494,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 				/* need to extend pr (list of disjunctions) by one */
 				struct db_v2_prop *pr1;
 				pr_cnt++;
-				pr1 =
-					alloc_bytes(sizeof(struct db_v2_prop) *
+				pr1 = alloc_bytes(sizeof(struct db_v2_prop) *
 						    (pr_cnt + 1),
 						    "db_v2_prop");
 				memcpy(pr1, pr,
@@ -543,7 +527,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 		}
 		dtflast = dtfone;
 
-		if (!pc) {
+		if (pc == NULL) {
 			pc = alloc_bytes(sizeof(struct db_v2_prop_conj),
 					 "db_v2_prop_conj");
 			pc_cnt = 0;
@@ -630,7 +614,6 @@ bool ikev2_acceptable_group(struct state *st, oakley_group_t group)
 			case IKEv2_TRANS_TYPE_DH:
 				if (tr->transid == group)
 					return TRUE;
-
 				break;
 			default:
 				break;
