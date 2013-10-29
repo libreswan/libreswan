@@ -476,7 +476,6 @@ static const char hexdig[] = "0123456789abcdef";
  * FIXME: This functions leaks a little bit, but these are one time leaks:
  * leak: 3 * vid->data, item size: 6
  * leak: self-vendor ID, item size: 37
- * leak: init_pluto_vendorid, item size: 13
  * leak: 2 * vid->data, item size: 13
  */
 void init_vendorid(void)
