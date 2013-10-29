@@ -870,7 +870,7 @@ void nat_traversal_ka_event(void)
 
 	nat_kap_event = 0;  /* ready to be reschedule */
 
-	for_each_state((void *)nat_traversal_ka_event_state, &nat_kap_st);
+	for_each_state(nat_traversal_ka_event_state, &nat_kap_st);
 
 	if (nat_kap_st) {
 		/**
@@ -952,7 +952,7 @@ static int nat_traversal_new_mapping(struct state *st,
 	nfo.addr  = *nsrc;
 	nfo.port  = nsrcport;
 
-	for_each_state((void *)nat_traversal_find_new_mapp_state, &nfo);
+	for_each_state(nat_traversal_find_new_mapp_state, &nfo);
 
 	return 0;
 }
@@ -1121,7 +1121,7 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 				    nfo.dport);
 		    });
 
-		for_each_state((void *)nat_t_new_klips_mapp, &nfo);
+		for_each_state(nat_t_new_klips_mapp, &nfo);
 	}
 
 	if (ugh != NULL)

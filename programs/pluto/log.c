@@ -1019,7 +1019,7 @@ void log_state(struct state *st, enum state_kind new_state)
 	lc.conn = conn;
 	save_state = st->st_state;
 	st->st_state = new_state;
-	for_each_state((void *)connection_state, &lc);
+	for_each_state(connection_state, &lc);
 	st->st_state = save_state;
 
 	if (conn->statsval ==
