@@ -63,7 +63,7 @@ struct fetch_req {
 	generalName_t *distributionPoints;
 };
 
-fetch_req_t empty_fetch_req = {
+static fetch_req_t empty_fetch_req = {
 	NULL,           /* next */
 	0,              /* installed */
 	0,              /* trials */
@@ -80,8 +80,8 @@ static pthread_mutex_t crl_fetch_list_mutex  = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex      = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t fetch_wake_cond       = PTHREAD_COND_INITIALIZER;
 
-/*
- * lock access to the chained crl list
+/* lock access to the chained crl list
+ * ??? declared in x509.h
  */
 void lock_crl_list(const char *who)
 {
@@ -91,8 +91,8 @@ void lock_crl_list(const char *who)
 	    );
 }
 
-/*
- * unlock access to the chained crl list
+/* unlock access to the chained crl list
+ * ??? declared in x509.h
  */
 void unlock_crl_list(const char *who)
 {

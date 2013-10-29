@@ -138,11 +138,6 @@ extern void delete_public_keys(struct pubkey_list **head,
 			       enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize);
 
-extern void form_keyid_from_nss(SECItem e, SECItem n, char* keyid,
-				unsigned *keysize);
-extern err_t extract_and_add_secret_from_nss_cert_file(
-	struct RSA_private_key *rsak, char *nssHostCertNickName);
-
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);
 
