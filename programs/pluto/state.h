@@ -72,25 +72,25 @@ extern msgid_t generate_msgid(struct state *isakmp_sa);
  * Names are chosen to match corresponding names in state.
  */
 struct trans_attrs {
-	u_int16_t encrypt;              /* Encryption algorithm */
-	u_int16_t enckeylen;            /* encryption key len (bits) */
-	oakley_hash_t prf_hash;         /* Hash algorithm for PRF */
-	oakley_hash_t integ_hash;       /* Hash algorithm for integ */
+	u_int16_t encrypt;		/* Encryption algorithm */
+	u_int16_t enckeylen;		/* encryption key len (bits) */
+	oakley_hash_t prf_hash;		/* Hash algorithm for PRF */
+	oakley_hash_t integ_hash;	/* Hash algorithm for integ */
 
-	oakley_auth_t auth;             /* Authentication method (RSA,PSK) */
+	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
 
-	bool doing_xauth;                /* did we negotiate Extended Authentication and still doing it? */
+	bool doing_xauth;		/* did we negotiate Extended Authentication and still doing it? */
 
-	u_int16_t groupnum;
+	u_int16_t groupnum;		/* for IKEv2 */
 
-	time_t life_seconds;            /* When this SA expires (seconds) */
-	u_int32_t life_kilobytes;       /* When this SA is exhausted (kilobytes) */
+	time_t life_seconds;		/* When this SA expires (seconds) */
+	u_int32_t life_kilobytes;	/* When this SA is exhausted (kilobytes) */
 
 	/* used in phase1/PARENT SA */
-	const struct encrypt_desc *encrypter;   /* package of encryption routines */
-	const struct hash_desc *prf_hasher;     /* package of hashing routines */
-	const struct hash_desc *integ_hasher;   /* package of hashing routines */
-	const struct oakley_group_desc *group;  /* Oakley group */
+	const struct encrypt_desc *encrypter;	/* package of encryption routines */
+	const struct hash_desc *prf_hasher;	/* package of hashing routines */
+	const struct hash_desc *integ_hasher;	/* package of hashing routines */
+	const struct oakley_group_desc *group;	/* Oakley group */
 
 	/* used in phase2/CHILD_SA */
 	struct esp_info *ei;
@@ -482,7 +482,7 @@ extern void initialize_new_state(struct state *st,
 extern void show_states_status(void);
 
 #if 1
-void for_each_state(void *(f)(struct state *, void *data), void *data);
+void for_each_state(void (*f)(struct state *, void *data), void *data);
 #endif
 
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
