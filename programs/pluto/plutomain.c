@@ -92,7 +92,6 @@
 #include <nspr.h>
 
 #include "fips.h"
-extern const char *fips_package_files[];
 
 #ifdef HAVE_LIBCAP_NG
 # include <cap-ng.h>

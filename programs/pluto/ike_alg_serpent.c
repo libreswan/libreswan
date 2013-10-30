@@ -43,7 +43,7 @@ static void do_serpent(u_int8_t *buf, size_t buf_size, u_int8_t *key,
 	memcpy(iv, new_iv, SERPENT_CBC_BLOCK_SIZE);
 }
 
-struct encrypt_desc encrypt_desc_serpent =
+static struct encrypt_desc encrypt_desc_serpent =
 {
 	common:{ officname: "serpent",
 		 algo_type:      IKE_ALG_ENCRYPT,
@@ -56,8 +56,6 @@ struct encrypt_desc encrypt_desc_serpent =
 	keymaxlen:      SERPENT_KEY_MAX_LEN,
 	do_crypt:       do_serpent,
 };
-
-int ike_alg_serpent_init(void);
 
 int ike_alg_serpent_init(void)
 {

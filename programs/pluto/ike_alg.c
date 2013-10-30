@@ -55,7 +55,9 @@
 *       - registration
 *       - lookup
 *=========================================================*/
+
 struct ike_alg *ike_alg_base[IKE_ALG_MAX + 1] = { NULL, NULL };
+
 /*	check if IKE encrypt algo is present */
 bool ike_alg_enc_present(int ealg)
 {
@@ -119,6 +121,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 		*errp = ugh_buf;
 	return ret;
 }
+
 /*
  * ML: make F_STRICT logic consider enc,hash/auth,modp algorithms
  */
@@ -165,6 +168,7 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 	}
 	return TRUE;
 }
+
 /*
  *      return ike_algo object by {type, id}
  */
@@ -172,9 +176,9 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 struct ike_alg *ike_alg_find(unsigned algo_type, unsigned algo_id, unsigned keysize __attribute__(
 				     (unused)))
 {
-	struct ike_alg *e = ike_alg_base[algo_type];
+	struct ike_alg *e;
 
-	for (; e != NULL; e = e->algo_next) {
+	for (e = ike_alg_base[algo_type]; e != NULL; e = e->algo_next) {
 		if (e->algo_id == algo_id)
 			break;
 	}
