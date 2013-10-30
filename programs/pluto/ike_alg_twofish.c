@@ -43,7 +43,7 @@ static void do_twofish(u_int8_t *buf, size_t buf_size, u_int8_t *key,
 	memcpy(iv, new_iv, TWOFISH_CBC_BLOCK_SIZE);
 }
 
-struct encrypt_desc encrypt_desc_twofish =
+static struct encrypt_desc encrypt_desc_twofish =
 {
 	.common = {
 		.officname = "twofish",
@@ -59,7 +59,7 @@ struct encrypt_desc encrypt_desc_twofish =
 	.do_crypt = do_twofish,
 };
 
-struct encrypt_desc encrypt_desc_twofish_ssh =
+static struct encrypt_desc encrypt_desc_twofish_ssh =
 {
 	.common = {
 		.algo_type = IKE_ALG_ENCRYPT,
@@ -74,8 +74,6 @@ struct encrypt_desc encrypt_desc_twofish_ssh =
 	.do_crypt = do_twofish,
 };
 
-int ike_alg_twofish_init(void);
-
 int ike_alg_twofish_init(void)
 {
 	int ret;
@@ -89,6 +87,7 @@ int ike_alg_twofish_init(void)
 
 	return ret;
 }
+
 /*
    IKE_ALG_INIT_NAME: ike_alg_twofish_init
  */
