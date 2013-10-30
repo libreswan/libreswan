@@ -196,7 +196,7 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 						       gn->name, outpbs,
 						       gn->next ==
 						       NULL ? np :
-						       ISAKMP_NEXT_CR))
+						       ISAKMP_NEXT_v2CERTREQ))
 					return STF_INTERNAL_ERROR;
 			}
 			free_generalNames(ca, FALSE);
