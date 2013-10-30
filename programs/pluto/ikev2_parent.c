@@ -3378,7 +3378,7 @@ stf_status ikev2_send_informational(struct state *st)
 		} /* HDR done*/
 
 		/* insert an Encryption payload header */
-		e.isag_np = ISAKMP_NEXT_NONE;
+		e.isag_np = ISAKMP_NEXT_v2NONE;
 		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (!out_struct(&e, &ikev2_e_desc, &rbody, &e_pbs))
 			return STF_FATAL;
