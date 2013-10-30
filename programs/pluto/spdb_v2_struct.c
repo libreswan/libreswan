@@ -200,9 +200,9 @@ bool ikev2_out_sa(pb_stream *outs,
 
 				memset(&t, 0, sizeof(t));
 				if (ts_cnt + 1 < vpc->trans_cnt)
-					t.isat_np      = ISAKMP_NEXT_T;
+					t.isat_lt      = v2_TRANSFORM_NON_LAST;
 				else
-					t.isat_np      = ISAKMP_NEXT_NONE;
+					t.isat_lt      = v2_TRANSFORM_LAST;
 
 				t.isat_length = 0;
 				t.isat_type   = tr->transform_type;
@@ -982,7 +982,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 	/* Transform - cipher */
 	r_trans.isat_type = IKEv2_TRANS_TYPE_ENCR;
 	r_trans.isat_transid = ta.encrypt;
-	r_trans.isat_np = ISAKMP_NEXT_T;
+	r_trans.isat_lt = v2_TRANSFORM_NON_LAST;
 	if (!out_struct(&r_trans, &ikev2_trans_desc,
 			&r_proposal_pbs, &r_trans_pbs))
 		impossible();
@@ -998,7 +998,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 	/* Transform - integrity check */
 	r_trans.isat_type = IKEv2_TRANS_TYPE_INTEG;
 	r_trans.isat_transid = ta.integ_hash;
-	r_trans.isat_np = ISAKMP_NEXT_T;
+	r_trans.isat_lt = v2_TRANSFORM_NON_LAST;
 	if (!out_struct(&r_trans, &ikev2_trans_desc,
 			&r_proposal_pbs, &r_trans_pbs))
 		impossible();
@@ -1008,7 +1008,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 		/* Transform - PRF hash */
 		r_trans.isat_type = IKEv2_TRANS_TYPE_PRF;
 		r_trans.isat_transid = ta.prf_hash;
-		r_trans.isat_np = ISAKMP_NEXT_T;
+		r_trans.isat_lt = v2_TRANSFORM_NON_LAST;
 		if (!out_struct(&r_trans, &ikev2_trans_desc,
 				&r_proposal_pbs, &r_trans_pbs))
 			impossible();
@@ -1017,7 +1017,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 		/* Transform - DH hash */
 		r_trans.isat_type = IKEv2_TRANS_TYPE_DH;
 		r_trans.isat_transid = ta.groupnum;
-		r_trans.isat_np = ISAKMP_NEXT_NONE;
+		r_trans.isat_lt = v2_TRANSFORM_LAST;
 		if (!out_struct(&r_trans, &ikev2_trans_desc,
 				&r_proposal_pbs, &r_trans_pbs))
 			impossible();
@@ -1027,7 +1027,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 		/* Transform - ESN sequence */
 		r_trans.isat_type = IKEv2_TRANS_TYPE_ESN;
 		r_trans.isat_transid = IKEv2_ESN_DISABLED;
-		r_trans.isat_np = ISAKMP_NEXT_NONE;
+		r_trans.isat_lt = v2_TRANSFORM_LAST;
 		if (!out_struct(&r_trans, &ikev2_trans_desc,
 				&r_proposal_pbs, &r_trans_pbs))
 			impossible();

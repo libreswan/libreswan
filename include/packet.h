@@ -740,7 +740,8 @@ extern struct_desc ikev2_prop_desc;
 
 /* rfc4306, section 3.3.2 */
 struct ikev2_trans {
-	u_int8_t isat_np;               /* Next payload */
+	u_int8_t isat_lt;               /* Last transform or not */
+					/* Matches IKEv1 ISAKMP_NEXT_T by design */
 	u_int8_t isat_critical;
 	u_int16_t isat_length;          /* Payload length */
 	u_int8_t isat_type;             /* transform type */
@@ -865,7 +866,7 @@ extern struct_desc ikev2_vendor_id_desc;
 
 /* rfc4306, section 3.13 */
 struct ikev2_ts {
-	u_int8_t isat_np;       /* Next payload */
+	u_int8_t isat_lt;       /* Last Transform */
 	u_int8_t isat_critical;
 	u_int16_t isat_length;  /* Payload length */
 	u_int8_t isat_num;      /* number of TSs */

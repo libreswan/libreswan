@@ -402,6 +402,12 @@ enum ikev2_last_proposal {
 	v2_PROPOSAL_NON_LAST = 2 /* matches IKEv1 ISAKMP_NEXT_P by design */
 };
 
+enum ikev2_last_transform {
+	/* if there is a next transform, then the lt needs to be set right*/
+	v2_TRANSFORM_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
+	v2_TRANSFORM_NON_LAST = 3 /* matches IKEv1 ISAKMP_NEXT_T by design */
+};
+
 enum next_payload_types_ikev2 {
 	ISAKMP_NEXT_v2NONE = 0,
 	/* 1 - 32 Reserved for IKEv1 */

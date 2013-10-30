@@ -238,6 +238,15 @@ static const char *const ikev2_last_proposal_names[] = {
 enum_names ikev2_last_proposal_desc =
 { v2_PROPOSAL_LAST, v2_PROPOSAL_NON_LAST, ikev2_last_proposal_names, NULL };
 
+static const char *const ikev2_last_transform_names[] = {
+	"v2_TRANSFORM_LAST",
+	NULL,
+	NULL,
+	"v2_TRANSFORM_NON_LAST",
+	NULL
+};
+enum_names ikev2_last_transform_desc =
+{ v2_TRANSFORM_LAST, v2_TRANSFORM_NON_LAST, ikev2_last_transform_names, NULL };
 
 
 

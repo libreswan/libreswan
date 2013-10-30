@@ -752,7 +752,7 @@ struct_desc ikev2_prop_desc = { "IKEv2 Proposal Substructure Payload",
  *
  */
 static field_desc ikev2trans_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev2 },
+	{ ft_enum, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "transform type", &trans_type_names },

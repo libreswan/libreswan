@@ -38,6 +38,7 @@ extern enum_names doi_names;
 extern enum_names payload_names_ikev1;
 extern enum_names payload_names_ikev2;
 extern enum_names ikev2_last_proposal_desc;
+extern enum_names ikev2_last_transform_desc;
 extern enum_names payload_names_ikev1orv2;
 extern const char *const payload_name_ikev1[]; /* is using bitnamesof() directly (to avoid re-entrant enum_show? */
 extern enum_names attr_msg_type_names;
