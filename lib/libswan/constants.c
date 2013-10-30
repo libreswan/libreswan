@@ -1568,6 +1568,11 @@ const char *enum_name(enum_names *ed, unsigned long val)
 
 /* find or construct a string to describe an enum value
  * Result may be in STATIC buffer -- NOT RE-ENTRANT!
+ *
+ * One consequence is that you cannot have two or more calls
+ * as arguments in a single logging call.  Use enum_name instead.
+ * (Of course that means that unnamed values will be shown
+ * badly.)
  */
 const char *enum_show(enum_names *ed, unsigned long val)
 {

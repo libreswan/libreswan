@@ -72,7 +72,7 @@ struct fg_targets {
 
 static struct fg_targets *targets = NULL;
 
-struct fg_targets *new_targets;
+static struct fg_targets *new_targets;
 
 /* ipcmp compares the two ip_address values a and b.
  * It returns -1, 0, or +1 if a is, respectively,
