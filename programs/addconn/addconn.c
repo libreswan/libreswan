@@ -612,7 +612,7 @@ int main(int argc, char *argv[])
 	if (verbose)
 		printf("opening file: %s\n", configfile);
 
-	starter_use_log(verbose, 1, verbose ? 0 : 1);
+	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
 	err = NULL;  /* reset to no error */
 

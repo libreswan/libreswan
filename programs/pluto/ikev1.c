@@ -212,10 +212,10 @@ static state_transition_fn      /* forward declaration */
 	unexpected,
 	informational;
 
-/* state_microcode_table is a table of all state_microcode tuples.
+/* v1_state_microcode_table is a table of all state_microcode tuples.
  * It must be in order of state (the first element).
  * After initialization, ike_microcode_index[s] points to the
- * first entry in state_microcode_table for state s.
+ * first entry in v1_state_microcode_table for state s.
  * Remember that each state name in Main or Quick Mode describes
  * what has happened in the past, not what this message is.
  */
@@ -229,7 +229,7 @@ static const struct state_microcode
 	  , 0, P(VID) | P(CR), PT(NONE) \
 	  , 0, NULL }
 
-static const struct state_microcode state_microcode_table[] = {
+static const struct state_microcode v1_state_microcode_table[] = {
 #define PT(n) ISAKMP_NEXT_ ## n
 #define P(n) LELEM(PT(n))
 
@@ -578,23 +578,22 @@ static const struct state_microcode state_microcode_table[] = {
 #undef PT
 };
 
-void init_demux(void)
+void init_ikev1(void)
 {
 	/* fill ike_microcode_index:
 	 * make ike_microcode_index[s] point to first entry in
-	 * state_microcode_table for state s (backward scan makes this easier).
+	 * v1_state_microcode_table for state s (backward scan makes this easier).
 	 * Check that table is in order -- catch coding errors.
 	 * For what it's worth, this routine is idempotent.
 	 */
 	const struct state_microcode *t;
 
-	for (t = &state_microcode_table[elemsof(state_microcode_table) - 1];;
-	     ) {
-		passert(
-			STATE_IKE_FLOOR <= t->state && t->state <
-			STATE_IKE_ROOF);
+	for (t = &v1_state_microcode_table[elemsof(v1_state_microcode_table) - 1];;)
+	{
+		passert(STATE_IKE_FLOOR <= t->state &&
+			t->state < STATE_IKE_ROOF);
 		ike_microcode_index[t->state - STATE_IKE_FLOOR] = t;
-		if (t == state_microcode_table)
+		if (t == v1_state_microcode_table)
 			break;
 		t--;
 		passert(t[0].state <= t[1].state);

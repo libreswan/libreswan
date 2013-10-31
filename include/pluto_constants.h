@@ -236,7 +236,8 @@ typedef enum {
  * retained between messages) representing the state that accepts the
  * first message of an exchange has been read but not processed.
  *
- * state_microcode state_microcode_table in demux.c describes
+ * v1_state_microcode_table in ikev1.c and
+ * v2_state_microcode_table in ikev2.c describe
  * other important details.
  */
 

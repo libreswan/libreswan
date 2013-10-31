@@ -6,6 +6,9 @@
 #include "dnskey.h"
 
 /* ikev1.c */
+
+extern void init_ikev1(void);
+
 extern void complete_v1_state_transition(struct msg_digest **mdp,
 					 stf_status result);
 extern void process_v1_packet(struct msg_digest **mdp);

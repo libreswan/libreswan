@@ -105,9 +105,8 @@ extern bool out_generic(u_int8_t np, struct_desc *sd,
 extern bool out_generic_raw(u_int8_t np, struct_desc *sd,
 			    pb_stream *outs, const void *bytes, size_t len,
 			    const char *name);
-#if 1
-extern bool out_modify_previous_np(u_int8_t np, pb_stream *outs);
-#endif
+extern void out_modify_previous_np(u_int8_t np, pb_stream *outs);
+
 #define out_generic_chunk(np, sd, outs, ch, name) \
 	out_generic_raw(np, sd, outs, (ch).ptr, (ch).len, name)
 extern bool out_zero(size_t len, pb_stream *outs, const char *name);
