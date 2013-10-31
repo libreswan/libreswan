@@ -57,7 +57,6 @@ west #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
-000 pluto_version=v3.5-412-ga07cb29-dirty-master, pluto_vendorid=OE-Libreswan-v3.5-412
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx_attr_value=<unsupported>
@@ -172,14 +171,14 @@ west #
  echo done
 done
 west #
- ipsec look
-west Wed Oct 30 12:10:50 EDT 2013
-192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0xa57211a8@192.1.2.23  (2)
+[THIS FILTER FAILED] ipsec look
+west NOW
+192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0xa1543f6e@192.1.2.23  (2)
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0x1d678105@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xfbb3fe5051f03e57fff6e11e760f5e1f ooowin=64 seq=2 bit=0x3 alen=160 aklen=160 eklen=128 jiffies=4294723183 life(c,s,h)=bytes(168,0,0)addtime(4,0,0)usetime(3,0,0)packets(2,0,0) idle=2 natencap=na refcount=3 ref=4 refhim=1
-esp0xa57211a8@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0x9dc4f3e74c7ef299a7dd2b153cf43ee2 ooowin=64 seq=2 alen=160 aklen=160 eklen=128 jiffies=4294723183 life(c,s,h)=bytes(304,0,0)addtime(4,0,0)usetime(3,0,0)packets(2,0,0) idle=2 natencap=na refcount=3 ref=2 refhim=0
-tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294723183 life(c,s,h)=bytes(208,0,0)addtime(4,0,0)usetime(3,0,0)packets(2,0,0) idle=2 natencap=na refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294723183 life(c,s,h)=bytes(168,0,0)addtime(4,0,0)usetime(3,0,0)packets(2,0,0) idle=2 natencap=na refcount=3 ref=3 refhim=1
+esp0xa1543f6e@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0x7cfe0ed86551ef77a59b7b0e54e2332b ooowin=64 seq=2 alen=160 aklen=160 eklen=128 jiffies=4294723199 life(c,s,h)=bytes(304,0,0) idle=2 natencap=na refcount=3 ref=2 refhim=0
+esp0xfc83c985@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0x3da767f87dc21449e71870d80b4b9de6 ooowin=64 seq=2 bit=0x3 alen=160 aklen=160 eklen=128 jiffies=4294723199 life(c,s,h)=bytes(168,0,0) idle=2 natencap=na refcount=3 ref=4 refhim=1
+tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294723199 life(c,s,h)=bytes(208,0,0) idle=2 natencap=na refcount=3 ref=1 refhim=0
+tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294723199 life(c,s,h)=bytes(168,0,0) idle=2 natencap=na refcount=3 ref=3 refhim=1
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
