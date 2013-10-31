@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
 	progname = argv[0];
 	tool_init_log();
-	starter_use_log(verbose, 1, verbose ? 0 : 1);
+	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
 	cfg = (struct starter_config *)malloc(sizeof(struct starter_config));
 	if (!cfg) {

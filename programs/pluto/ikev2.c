@@ -100,9 +100,9 @@ enum smf2_flags {
  * wants to do something, usually, that the initiator. (But, not always
  * the original initiator, of the responder decides it needs to rekey first)
  *
- * Each exchange has a bit that indicates if it's a Initiator message,
- * or if it's a response.  The responder never retransmits it's messages
- * except because the initiator has retransmitted.
+ * Each exchange has a bit that indicates if it is an Initiator message,
+ * or if it is a response.  The Responder never retransmits its messages
+ * except in response to an Initiator retransmission.
  *
  * The message ID is *NOT* used in the cryptographic state at all, but instead
  * serves the role of a sequence number.  This makes the state machine far
@@ -131,7 +131,7 @@ enum smf2_flags {
 
 /* it is not clear how the flags will be used yet, if at all */
 
-static const struct state_v2_microcode state_microcode_table[] = {
+static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_INITIATOR,
@@ -204,7 +204,7 @@ static const struct state_v2_microcode state_microcode_table[] = {
 
 const struct state_v2_microcode *ikev2_parent_firststate()
 {
-	return &state_microcode_table[0];
+	return &v2_state_microcode_table[0];
 }
 
 /*
@@ -437,7 +437,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			    enum_show(&state_names, from_state)));
 	}
 
-	for (svm = state_microcode_table; svm->state != STATE_IKEv2_ROOF;
+	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
 		if (svm->flags & SMF2_STATENEEDED)
 			if (st == NULL)

@@ -20,6 +20,7 @@
 /* you'd think this should be builtin to compiler... */
 #ifndef TRUE
 #define TRUE 1
+typedef int bool;
 #endif
 
 #ifndef FALSE

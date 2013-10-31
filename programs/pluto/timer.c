@@ -837,7 +837,7 @@ void delete_liveness_event(struct state *st)
 /*
  * Delete a DPD event.
  */
-void _delete_dpd_event(struct state *st, const char *file, int lineno)
+void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
 	    DBG_log("state: %ld requesting DPD event %s to be deleted by %s:%d",

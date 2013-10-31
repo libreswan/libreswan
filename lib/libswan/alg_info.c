@@ -264,7 +264,7 @@ void alg_info_free(struct alg_info *alg_info)
 /*
  *	Raw add routine: only checks for no duplicates
  */
-static void __alg_info_esp_add(struct alg_info_esp *alg_info,
+static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 			       int ealg_id, unsigned ek_bits,
 			       int aalg_id, unsigned ak_bits)
 {
@@ -289,7 +289,7 @@ static void __alg_info_esp_add(struct alg_info_esp *alg_info,
 	esp_info[cnt].encryptalg = ealg_id;
 	esp_info[cnt].authalg = alg_info_esp_aa2sadb(aalg_id);
 	alg_info->alg_info_cnt++;
-	DBG(DBG_CRYPT, DBG_log("__alg_info_esp_add() "
+	DBG(DBG_CRYPT, DBG_log("raw_alg_info_esp_add() "
 			       "ealg=%d aalg=%d cnt=%d",
 			       ealg_id, aalg_id, alg_info->alg_info_cnt));
 }
@@ -311,16 +311,16 @@ static void alg_info_esp_add(struct alg_info *alg_info,
 		if (aalg_id > 0) {
 			if (aalg_id == INT_MAX)
 				aalg_id = 0;
-			__alg_info_esp_add((struct alg_info_esp *)alg_info,
+			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 					   ealg_id, ek_bits,
 					   aalg_id, ak_bits);
 		} else {
 			/*	Policy: default to MD5 and SHA1 */
-			__alg_info_esp_add((struct alg_info_esp *)alg_info,
-					   ealg_id, ek_bits, \
+			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
+					   ealg_id, ek_bits,
 					   AUTH_ALGORITHM_HMAC_MD5, ak_bits);
-			__alg_info_esp_add((struct alg_info_esp *)alg_info,
-					   ealg_id, ek_bits, \
+			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
+					   ealg_id, ek_bits,
 					   AUTH_ALGORITHM_HMAC_SHA1, ak_bits);
 		}
 	}
@@ -335,16 +335,16 @@ static void alg_info_ah_add(struct alg_info *alg_info,
 			    int modp_id UNUSED)
 {
 	if (aalg_id > 0) {
-		__alg_info_esp_add((struct alg_info_esp *)alg_info,
+		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				   ealg_id, ek_bits,
 				   aalg_id, ak_bits);
 	} else {
 		/*	Policy: default to MD5 and SHA1 */
-		__alg_info_esp_add((struct alg_info_esp *)alg_info,
-				   ealg_id, ek_bits,                            \
+		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
+				   ealg_id, ek_bits,
 				   AUTH_ALGORITHM_HMAC_MD5, ak_bits);
-		__alg_info_esp_add((struct alg_info_esp *)alg_info,
-				   ealg_id, ek_bits,                            \
+		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
+				   ealg_id, ek_bits,
 				   AUTH_ALGORITHM_HMAC_SHA1, ak_bits);
 	}
 }
@@ -822,36 +822,33 @@ static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 						  const char **err_p)
 {
-	struct alg_info_esp *alg_info_esp;
-	char esp_buf[256];
-	int ret = 0;
-
 	/*
 	 *      alg_info storage should be sized dynamically
 	 *      but this may require 2passes to know
 	 *      transform count in advance.
 	 */
-	alg_info_esp = alloc_thing(struct alg_info_esp, "alg_info_esp");
+	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp, "alg_info_esp");
 
-	if (!alg_info_esp)
-		goto out;
+	if (alg_info_esp != NULL) {
+		char esp_buf[256];
+		int ret;
 
-	strcpy(esp_buf, alg_str);
-	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_p))
-		return NULL;
+		strcpy(esp_buf, alg_str);	/* ??? how do we know that it fits? */
+		if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_p))
+			return NULL;
 
-	alg_info_esp->alg_info_protoid = PROTO_IPSEC_ESP;
-	ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
-				 esp_buf, err_p,
-				 parser_init_esp,
-				 alg_info_esp_add,
-				 NULL);
-
-out:
-	if (ret < 0) {
-		pfreeany(alg_info_esp);
-		alg_info_esp = NULL;
+		alg_info_esp->alg_info_protoid = PROTO_IPSEC_ESP;
+		ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
+					 esp_buf, err_p,
+					 parser_init_esp,
+					 alg_info_esp_add,
+					 NULL);
+		if (ret < 0) {
+			pfreeany(alg_info_esp);
+			alg_info_esp = NULL;
+		}
 	}
+
 	return alg_info_esp;
 
 }

@@ -53,11 +53,6 @@ extern int kernel_alg_proc_read(void);
 extern const struct sadb_alg * kernel_alg_sadb_alg_get(int satype, int exttype,
 						       int alg_id);
 
-struct db_prop;
-extern struct db_context * kernel_alg_db_new(struct alg_info_esp *ai,
-					     lset_t policy,
-					     bool logit);
-
 /* returns pointer to static buffer -- NOT RE-ENTRANT */
 extern struct esp_info *kernel_alg_esp_info(u_int8_t transid,
 					    u_int16_t keylen,
