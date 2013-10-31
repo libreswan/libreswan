@@ -109,7 +109,7 @@ out:
 	return ret;
 }
 
-static void __alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
+static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 			       unsigned ek_bits, int aalg_id, unsigned ak_bits,
 			       unsigned int modp_id)
 {
@@ -134,7 +134,7 @@ static void __alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	ike_info[cnt].ike_hklen = ak_bits;
 	ike_info[cnt].ike_modp = modp_id;
 	alg_info->alg_info_cnt++;
-	DBG(DBG_CRYPT, DBG_log("__alg_info_ike_add() "
+	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() "
 			       "ealg=%d aalg=%d modp_id=%d, cnt=%d",
 			       ealg_id, aalg_id, modp_id,
 			       alg_info->alg_info_cnt));
@@ -144,7 +144,7 @@ static void __alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
  *      Proposals will be built by looping over default_ike_groups array and
  *      merging alg_info (ike_info) contents
  */
-static int default_ike_groups[] = {
+static const int default_ike_groups[] = {
 	OAKLEY_GROUP_MODP1536,
 	OAKLEY_GROUP_MODP1024
 };
@@ -152,47 +152,57 @@ static int default_ike_groups[] = {
 /*
  *	Add IKE alg info _with_ logic (policy):
  */
+static void per_group_alg_info_ike_add(struct alg_info *alg_info,
+			     int ealg_id, int ek_bits,
+			     int aalg_id, int ak_bits,
+			     int modp_id)
+{
+	/*	Policy: default to 3DES */
+	if (ealg_id == 0)
+		ealg_id = OAKLEY_3DES_CBC;
+	if (ealg_id > 0) {
+		if (aalg_id > 0) {
+			raw_alg_info_ike_add(
+				(struct alg_info_ike *)alg_info,
+				ealg_id, ek_bits,
+				aalg_id, ak_bits,
+				modp_id);
+		} else {
+			/*	Policy: default to MD5 and SHA */
+			raw_alg_info_ike_add(
+				(struct alg_info_ike *)alg_info,
+				ealg_id, ek_bits,
+				OAKLEY_MD5, ak_bits,
+				modp_id);
+			raw_alg_info_ike_add(
+				(struct alg_info_ike *)alg_info,
+				ealg_id, ek_bits,
+				OAKLEY_SHA, ak_bits,
+				modp_id);
+		}
+	}
+}
+
 static void alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
 			     int aalg_id, int ak_bits,
 			     int modp_id)
 {
-	int i = 0, n_groups;
+	if (modp_id == 0) {
+		/* try each default group */
+		int i;
 
-	n_groups = elemsof(default_ike_groups);
-	/* if specified modp_id avoid loop over default_ike_groups */
-	if (modp_id) {
-		n_groups = 0;
-		goto in_loop;
-	}
-
-	for (; n_groups--; i++) {
-		modp_id = default_ike_groups[i];
-in_loop:
-		/*	Policy: default to 3DES */
-		if (ealg_id == 0)
-			ealg_id = OAKLEY_3DES_CBC;
-		if (ealg_id > 0) {
-			if (aalg_id > 0) {
-				__alg_info_ike_add(
-					(struct alg_info_ike *)alg_info,
-					ealg_id, ek_bits,
-					aalg_id, ak_bits,
-					modp_id);
-			} else {
-				/*	Policy: default to MD5 and SHA */
-				__alg_info_ike_add(
-					(struct alg_info_ike *)alg_info,
-					ealg_id, ek_bits, \
-					OAKLEY_MD5, ak_bits,
-					modp_id);
-				__alg_info_ike_add(
-					(struct alg_info_ike *)alg_info,
-					ealg_id, ek_bits, \
-					OAKLEY_SHA, ak_bits,
-					modp_id);
-			}
-		}
+		for (i=0; i != elemsof(default_ike_groups); i++)
+			per_group_alg_info_ike_add(alg_info, 
+				     ealg_id, ek_bits,
+				     aalg_id, ak_bits,
+				     default_ike_groups[i]);
+	} else {
+		/* group determined by caller */
+		per_group_alg_info_ike_add(alg_info, 
+			     ealg_id, ek_bits,
+			     aalg_id, ak_bits,
+			     modp_id);
 	}
 }
 
@@ -332,24 +342,6 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 	}
 }
 
-char *alg_info_snprint_ike1(struct ike_info *ike_info,
-			    int eklen, int aklen,
-			    char *buf,
-			    int buflen)
-{
-	snprintf(buf, buflen - 1, "%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
-		 enum_name(&oakley_enc_names,
-			   ike_info->ike_ealg) + sizeof("OAKLEY"),
-		 ike_info->ike_ealg, eklen,
-		 enum_name(&oakley_hash_names,
-			   ike_info->ike_halg) + sizeof("OAKLEY"),
-		 ike_info->ike_halg, aklen,
-		 enum_name(&oakley_group_names,
-			   ike_info->ike_modp) + sizeof("OAKLEY_GROUP"),
-		 ike_info->ike_modp);
-	return buf;
-}
-
 void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info)
 {
@@ -428,26 +420,24 @@ static void parser_init_ike(struct parser_context *p_ctx)
 struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 						  const char **err_p)
 {
-	struct alg_info_ike *alg_info_ike;
-
 	/*
 	 *      alg_info storage should be sized dynamically
 	 *      but this may require 2passes to know
 	 *      transform count in advance.
 	 */
-	alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
-	if (!alg_info_ike)
-		goto out;
-	alg_info_ike->alg_info_protoid = PROTO_ISAKMP;
-	if (alg_info_parse_str((struct alg_info *)alg_info_ike,
-			       alg_str, err_p,
-			       parser_init_ike,
-			       alg_info_ike_add,
-			       lookup_group) < 0) {
-		pfreeany(alg_info_ike);
-		alg_info_ike = NULL;
+	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
+
+	if (alg_info_ike != NULL) {
+		alg_info_ike->alg_info_protoid = PROTO_ISAKMP;
+		if (alg_info_parse_str((struct alg_info *)alg_info_ike,
+				       alg_str, err_p,
+				       parser_init_ike,
+				       alg_info_ike_add,
+				       lookup_group) < 0) {
+			pfreeany(alg_info_ike);
+			alg_info_ike = NULL;
+		}
 	}
-out:
 	return alg_info_ike;
 }
 
@@ -564,7 +554,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
  *	for now this function does free() previous returned
  *	malloced pointer (this quirk allows easier spdb.c change)
  */
-struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
+static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 				     lset_t policy, bool logit)
 {
 	int ealg_i, aalg_i;

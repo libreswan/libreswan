@@ -430,7 +430,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		if (st->st_p1isa.ptr == NULL) { /* no leak!  (MUST be first time) */
 			clonetochunk(st->st_p1isa, sa_start,
 				     md->rbody.cur - sa_start,
-				     "sa in main_outI1");
+				     "SA in ikev2_parent_outI1_common");
 		}
 	}
 

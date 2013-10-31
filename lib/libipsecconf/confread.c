@@ -43,7 +43,7 @@
 # include "lswconf.h"
 #endif
 
-static char _tmp_err[512];
+static char tmp_err[512];
 
 /*
  * A policy only conn means that we load it, and do the appropriate firewalling
@@ -174,15 +174,15 @@ static int error_append(char **perr, const char *fmt, ...)
 		int len;
 
 		va_start(args, fmt);
-		vsnprintf(_tmp_err, sizeof(_tmp_err) - 1, fmt, args);
+		vsnprintf(tmp_err, sizeof(tmp_err) - 1, fmt, args);
 		va_end(args);
 
-		len = 1 + strlen(_tmp_err) + (*perr ? strlen(*perr) : 0);
+		len = 1 + strlen(tmp_err) + (*perr ? strlen(*perr) : 0);
 		nerr = xmalloc(len);
 		nerr[0] = '\0';
 		if (*perr)
 			strcpy(nerr, *perr);
-		strcat(nerr, _tmp_err);
+		strcat(nerr, tmp_err);
 
 		if (*perr)
 			free(*perr);
@@ -759,12 +759,12 @@ static bool translate_conn(struct starter_conn *conn,
 
 		if ((kw->keyword.keydef->validity & kv_conn) == 0) {
 			/* this isn't valid in a conn! */
-			*error = (const char *)_tmp_err;
+			*error = (const char *)tmp_err;
 
-			snprintf(_tmp_err, sizeof(_tmp_err),
+			snprintf(tmp_err, sizeof(tmp_err),
 				 "keyword '%s' is not valid in a conn (%s) (#%d)\n",
 				 kw->keyword.keydef->keyname, sl->name, i);
-			starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
+			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
 			continue;
 		}
 
@@ -803,15 +803,15 @@ static bool translate_conn(struct starter_conn *conn,
 			/* all treated as strings for now */
 			assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
 			if ((*set_strings)[field] == k_set) {
-				*error = _tmp_err;
+				*error = tmp_err;
 
-				snprintf(_tmp_err, sizeof(_tmp_err),
+				snprintf(tmp_err, sizeof(tmp_err),
 					 "duplicate key '%s' in conn %s while processing def %s",
 					 kw->keyword.keydef->keyname,
 					 conn->name,
 					 sl->name);
 
-				starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
+				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
 				if (kw->keyword.string == NULL ||
 				    (*the_strings)[field] == NULL ||
 				    strcmp(kw->keyword.string,
@@ -824,9 +824,9 @@ static bool translate_conn(struct starter_conn *conn,
 				free((*the_strings)[field]);
 
 			if (kw->string == NULL) {
-				*error = _tmp_err;
+				*error = tmp_err;
 
-				snprintf(_tmp_err, sizeof(_tmp_err),
+				snprintf(tmp_err, sizeof(tmp_err),
 					 "Invalid %s value",
 					 kw->keyword.keydef->keyname);
 				err++;
@@ -867,14 +867,14 @@ static bool translate_conn(struct starter_conn *conn,
 			assert(field < KEY_NUMERIC_MAX);
 
 			if ((*set_options)[field] == k_set) {
-				*error = _tmp_err;
-				snprintf(_tmp_err, sizeof(_tmp_err),
+				*error = tmp_err;
+				snprintf(tmp_err, sizeof(tmp_err),
 					 "duplicate key '%s' in conn %s while processing def %s",
 					 kw->keyword.keydef->keyname,
 					 conn->name,
 					 sl->name);
 
-				starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
+				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
 
 				/* only fatal if we try to change values */
 				if ((*the_options)[field] != (int)kw->number ||
@@ -912,13 +912,13 @@ static bool translate_conn(struct starter_conn *conn,
 			assert(field < KEY_NUMERIC_MAX);
 
 			if ((*set_options)[field] == k_set) {
-				*error = _tmp_err;
-				snprintf(_tmp_err, sizeof(_tmp_err),
+				*error = tmp_err;
+				snprintf(tmp_err, sizeof(tmp_err),
 					 "duplicate key '%s' in conn %s while processing def %s",
 					 kw->keyword.keydef->keyname,
 					 conn->name,
 					 sl->name);
-				starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
+				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
 				if ((*the_options)[field] != (int)kw->number) {
 					err++;
 					break;
