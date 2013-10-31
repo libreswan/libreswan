@@ -192,6 +192,15 @@ INSTALL?=install
 # file, which is why -b is not specified for them.
 INSTBINFLAGS?=-b --suffix=.old
 INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
+
+# busybox install is not emulating a real install command well enough
+SWANCHECKLINK=$(shell readlink /usr/bin/install)
+ifeq ($(SWANCHECKLINK /bin/busybox),)
+INSTBINFLAGS=
+INSTSUIDFLAGS=-m 0755 -g root -o root
+endif
+
+
 #INSTMANFLAGS?="-m 644"
 INSTCONFFLAGS?=
 # For OSX use
@@ -287,9 +296,6 @@ USE_DNSSEC?=true
 # FINALCONFDDIR?
 USE_SINGLE_CONF_DIR?=false
 
-# Build ikeping (a utility for testing IKE daemons) in the distribution
-USE_IKEPING?=true
-
 # Build support for KEY RR 
 # this will become false in the future, as all OE sites transition to
 # using IPSECKEY instead of KEY records.  See references to 'Flag Day'
@@ -333,18 +339,7 @@ USE_NETKEY=false
 USE_KLIPS=false
 endif
 
-# Build aggressive mode authentication system code - both Server and Client.
-# This was off by default, since aggressive mode leads to denial of service
-# attacks.
-USE_AGGRESSIVE?=true
-
-# Build XAUTH authentication system code - both Server and Client.
-# XAUTH is tricky, and you can get into security trouble unless you
-# do additional configuration - but it is often needed for Cisco interop
-# XAUTH is required for addresspool support
-USE_XAUTH?=true
-
-# When doing XAUTH, include PAM support when available
+# include PAM support for XAUTH when available on the platform
 
 ifeq ($(OSDEP),linux)
 USE_XAUTHPAM?=true
@@ -361,10 +356,7 @@ endif
 
 # Build support for integrity check for libreswan on startup 
 USE_FIPSCHECK?=false
-# RHEL
-#FIPSPRODUCTCHECK?=/usr/share/dracut/modules.d/01fips
-# Fedora
-FIPSPRODUCTCHECK?=/usr/share/dracut/modules.d/01fips
+FIPSPRODUCTCHECK?=/etc/system-fips
 
 # Build support for the Linux Audit system
 ifeq ($(OSDEP),linux)
@@ -395,10 +387,6 @@ USE_EXTRACRYPTO?=true
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
-
-# Do we have an external stats daemon we can push state changes to?
-# Currently hardcoded to /bin/libreswan-statsd
-HAVE_STATSD?=false
 
 # Do we have Openssl libraries available for BIGNUM support?
 # Required of HAVE_OCF support

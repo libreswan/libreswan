@@ -47,9 +47,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -62,16 +59,6 @@
 #include "ikev1.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
-#if 0
-#include "whack.h"      /* requires connections.h */
-#include "server.h"
-#ifdef XAUTH
-#include "xauth.h"
-#endif
-#include "nat_traversal.h"
-#include "vendor.h"
-#include "dpd.h"
-#endif
 #include "udpfromto.h"
 
 /* This file does basic header checking and demux of
@@ -187,6 +174,10 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
+		/*
+		 * We should never get here - any other major is rejected
+		 * earlier
+		 */
 		bad_case(maj);
 	}
 }

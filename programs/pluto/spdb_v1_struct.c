@@ -32,9 +32,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -186,7 +183,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		DBG(DBG_PARSING,
 		    DBG_log(
 			    "Initiator state received security context from responder state, now verifying if both are same"));
-		if (!strcmp(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
+		if (streq(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
 			DBG_log(
 				"security contexts are verified in the initiator state");
 		} else {
@@ -1138,7 +1135,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 
 				/* check that authentication method is acceptable */
 				switch (val) {
-#ifdef XAUTH
 				case XAUTHInitPreShared:
 					if (!xauth_init) {
 						ugh = builddiag(
@@ -1146,6 +1142,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
+					ta.doing_xauth = TRUE;
 					goto psk_common;
 
 				case XAUTHRespPreShared:
@@ -1155,11 +1152,10 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
+					ta.doing_xauth = TRUE;
 					goto psk_common;
-#endif
 
 				case OAKLEY_PRESHARED_KEY:
-#ifdef XAUTH
 					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with PSK of initiator (we are %s)",
@@ -1173,26 +1169,25 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 						break;
 					}
 psk_common:
-#endif
 
 					if ((iap & POLICY_PSK) == LEMPTY) {
-						ugh =
-							"policy does not allow OAKLEY_PRESHARED_KEY authentication";
+						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
 						/* check that we can find a preshared secret */
 						struct connection *con =
 							st->st_connection;
 
 						if (get_preshared_secret(con)
-						    ==
-						    NULL) {
+						    == NULL)
+						{
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
 
 							idtoa(&con->spd.this.id, mid,
 							      sizeof(mid));
 							if (his_id_was_instantiated(
-									con)) {
+									con))
+							{
 								strcpy(hid,
 								       "%any");
 							} else {
@@ -1202,13 +1197,12 @@ psk_common:
 
 							ugh = builddiag(
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
-								mid,
-								hid);
+								mid, hid);
 						}
-						ta.auth = OAKLEY_PRESHARED_KEY;	/* note: might be different from val */
+						ta.auth = OAKLEY_PRESHARED_KEY;
 					}
 					break;
-#ifdef XAUTH
+
 				case XAUTHInitRSA:
 					if (!xauth_init) {
 						ugh = builddiag(
@@ -1216,6 +1210,7 @@ psk_common:
 							role);
 						break;
 					}
+					ta.doing_xauth = TRUE;
 					goto rsasig_common;
 
 				case XAUTHRespRSA:
@@ -1225,11 +1220,10 @@ psk_common:
 							role);
 						break;
 					}
+					ta.doing_xauth = TRUE;
 					goto rsasig_common;
-#endif
 
 				case OAKLEY_RSA_SIG:
-#ifdef XAUTH
 					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with RSA of initiator (we are %s)",
@@ -1243,11 +1237,9 @@ psk_common:
 						break;
 					}
 rsasig_common:
-#endif
 					/* Accept if policy specifies RSASIG or is default */
 					if ((iap & POLICY_RSASIG) == LEMPTY) {
-						ugh =
-							"policy does not allow OAKLEY_RSA_SIG authentication";
+						ugh = "policy does not allow OAKLEY_RSA_SIG authentication";
 					} else {
 						/* We'd like to check that we can find a public
 						 * key for him and a private key for us that is
@@ -1257,7 +1249,7 @@ rsasig_common:
 						 * thinks we've got it.  If we proposed it,
 						 * perhaps we know what we're doing.
 						 */
-						ta.auth = OAKLEY_RSA_SIG;	/* note: might be different from val */
+						ta.auth = OAKLEY_RSA_SIG;
 					}
 					break;
 
@@ -1518,7 +1510,6 @@ rsasig_common:
 	return NO_PROPOSAL_CHOSEN;
 }
 
-#if defined(AGGRESSIVE)
 /* Initialize st_oakley field of state for use when initiating in
  * aggressive mode.
  *
@@ -1608,7 +1599,6 @@ bool init_am_st_oakley(struct state *st, lset_t policy)
 
 	return TRUE;
 }
-#endif
 
 /**
  * Parse the body of an IPsec SA Payload (i.e. Phase 2 / Quick Mode).

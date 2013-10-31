@@ -362,9 +362,9 @@
  * Private USE 128-255
  */
 enum next_payload_types_ikev1 {
-	ISAKMP_NEXT_NONE = 0, /* No other payload following */
+	ISAKMP_NEXT_NONE = 0, /* No other payload following - See also v2_PROPOSAL_LAST */
 	ISAKMP_NEXT_SA = 1, /* Security Association */
-	ISAKMP_NEXT_P = 2, /* Proposal */
+	ISAKMP_NEXT_P = 2, /* Proposal - See also v2_PROPOSAL_NON_LAST */
 	ISAKMP_NEXT_T = 3, /* Transform */
 	ISAKMP_NEXT_KE = 4, /* Key Exchange */
 	ISAKMP_NEXT_ID = 5, /* Identification */
@@ -394,6 +394,18 @@ enum next_payload_types_ikev1 {
 	/* Cisco/Microsoft proprietary IKE fragmentation */
 	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
 	ISAKMP_NEXT_ROOF = 254, /* roof on payload types */
+};
+
+enum ikev2_last_proposal {
+	/* if there is a next proposal, then the lp needs to be set right*/
+	v2_PROPOSAL_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
+	v2_PROPOSAL_NON_LAST = 2 /* matches IKEv1 ISAKMP_NEXT_P by design */
+};
+
+enum ikev2_last_transform {
+	/* if there is a next transform, then the lt needs to be set right*/
+	v2_TRANSFORM_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
+	v2_TRANSFORM_NON_LAST = 3 /* matches IKEv1 ISAKMP_NEXT_T by design */
 };
 
 enum next_payload_types_ikev2 {
@@ -937,7 +949,7 @@ typedef u_int16_t oakley_hash_t;
 #define OAKLEY_ELGAMAL_ENC 6
 #define OAKLEY_ELGAMAL_ENC_REV 7
 
-#define OAKLEY_AUTH_ROOF 8 /*roof on auth values THAT WE SUPPORT */
+#define OAKLEY_AUTH_ROOF 8 /* roof on auth values THAT WE SUPPORT */
 
 /*
  * Note: the below xauth names are mapped via xauth_calcbaseauth() to the
@@ -950,7 +962,7 @@ typedef u_int16_t oakley_hash_t;
 #define HybridInitDSS 64223
 #define HybridRespDSS 64224
 
-/* For XAUTH, store in st->xauth, and set equivalent in st->auth via */
+/* For XAUTH.  Don't actually store in st->st_oakley.auth (???) */
 #define XAUTHInitPreShared 65001
 #define XAUTHRespPreShared 65002
 #define XAUTHInitDSS 65003

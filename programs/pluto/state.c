@@ -1015,6 +1015,7 @@ struct state *duplicate_state(struct state *st)
 
 	nst->st_oakley = st->st_oakley;
 
+	/* ??? is this strncpy correct? */
 	strncpy(nst->st_xauth_username, st->st_xauth_username,
 		sizeof(nst->st_xauth_username));
 
@@ -1455,13 +1456,14 @@ void fmt_state(struct state *st, const time_t n,
 		delta = -1;
 	}
 
+	dpdbuf[0] = '\0';	/* default to empty string */
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
-		dpdbuf[0] = '\0';
 		snprintf(dpdbuf, sizeof(dpdbuf), "; isakmp#%lu",
 			 (unsigned long)st->st_clonedfrom);
 	} else {
 		if (st->hidden_variables.st_dpd) {
 			time_t tn = time(NULL);
+
 			snprintf(dpdbuf, sizeof(dpdbuf),
 				 "; lastdpd=%lds(seq in:%u out:%u)",
 				 st->st_last_dpd != 0 ? tn -
@@ -1478,15 +1480,13 @@ void fmt_state(struct state *st, const time_t n,
 				if (pst != NULL) {
 					snprintf(dpdbuf, sizeof(dpdbuf),
 						 "; lastlive=%lds",
-						 pst->st_last_liveness != 0 ? tn -
-						 pst->st_last_liveness : 0);
+						 pst->st_last_liveness != 0 ?
+						  tn - pst->st_last_liveness : 0);
 				}
 			}
 		} else {
 			if (!st->st_ikev2)
 				snprintf(dpdbuf, sizeof(dpdbuf), "; nodpd");
-			else
-				snprintf(dpdbuf, sizeof(dpdbuf), "");
 		}
 	}
 

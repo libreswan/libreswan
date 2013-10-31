@@ -23,6 +23,8 @@
 #include "lswconf.h"
 #include "lswalloc.h"
 
+#include <errno.h>
+
 #include <string.h>
 #include <nss.h>
 #include <nspr.h>
@@ -191,37 +193,84 @@ int libreswan_selinux(void)
 	}
 	if (selinux_flag[0] == '1')
 		return 1;
-	else 
+	else
 		return 0;
 
 }
 
-/* 
- * Is the machine running in FIPS mode (fips=1 kernel argument)
+#ifdef FIPS_CHECK
+/*
+ * Is the machine running in FIPS kernel mode (fips=1 kernel argument)
  * yes (1), no (0), unknown(-1)
  */
-int libreswan_fipsmode(void)
+int libreswan_fipskernel(void)
 {
 	char fips_flag[1];
 	int n;
 	FILE *fd = fopen("/proc/sys/crypto/fips_enabled", "r");
 
 	if (fd == NULL) {
-		libreswan_log("FIPS: could not open /proc/sys/crypto/fips_enabled");
-		return -1;
+		DBG(DBG_CONTROL, DBG_log("FIPS: could not open /proc/sys/crypto/fips_enabled"));
+		return 0;
 	}
 
 	n = fread((void *)fips_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		libreswan_log("FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
+		loglog(RC_LOG_SERIOUS, "FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
 		return -1;
 	}
+
 	if (fips_flag[0] == '1')
 		return 1;
-	else
-		return 0;
+
+	return 0;
 }
+
+/*
+ * Return TRUE if we are a fips product.
+ * This is irrespective of whether we are running in FIPS mode
+ * yes (1), no (0), unknown(-1)
+ */
+int
+libreswan_fipsproduct(void)
+{
+	if (access(FIPSPRODUCTCHECK, F_OK) != 0) {
+		if (errno == ENOENT || errno == ENOTDIR) {
+			return 0;
+		} else {
+			loglog(RC_LOG_SERIOUS, "FIPS ABORT: FIPS product check"
+			       " failed to determine status for %s: %d: %s",
+			       FIPSPRODUCTCHECK, errno, strerror(errno));
+			return -1;
+		}
+	}
+
+	return 1;
+
+}
+
+/*
+ * Is the machine running in FIPS mode (fips product AND fips kernel mode)
+ * yes (1), no (0), unknown(-1)
+ * Only pluto needs to know -1, so it can abort. Every other caller can
+ * just check for fips mode using: if (libreswan_fipsmode())
+ */
+int
+libreswan_fipsmode(void)
+{
+	int product = libreswan_fipsproduct();
+	int kernel = libreswan_fipskernel();
+
+	if (product == -1 || kernel == -1 )
+		return -1;
+
+	if (product && kernel)
+		return 1;
+
+	return 0;
+}
+#endif
 
 char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {

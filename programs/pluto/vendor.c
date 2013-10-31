@@ -28,9 +28,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#  include <security/pam_appl.h>
-#endif
 #include "connections.h"
 #include "packet.h"
 #include "demux.h"
@@ -238,8 +235,8 @@ static struct vid_struct vid_tab[] = {
 		      "Libreswan 2.2.0"),
 	{
 		/* always make sure to include ourself! */
-		VID_LIBRESWANSELF, VID_SELF, "", "Libreswan (this version)",
-		NULL, 0
+		VID_LIBRESWANSELF, VID_SELF, libreswan_vendorid, "Libreswan (this version)",
+		libreswan_vendorid, 0
 	},
 
 	/* NAT-Traversal */
@@ -280,6 +277,11 @@ static struct vid_struct vid_tab[] = {
 
 	{ VID_MISC_DPD, VID_KEEP, NULL, "Dead Peer Detection",
 	  "\xaf\xca\xd7\x13\x68\xa1\xf1\xc9\x6b\x86\x96\xfc\x77\x57\x01\x00",
+	  16 },
+
+	/* From Shrew Soft source code */
+	{ VID_DPD1_NG, VID_KEEP, "DPDv1_NG" , NULL,
+	  "\x3b\x90\x31\xdc\xe4\xfc\xf8\x8b\x48\x9a\x92\x39\x63\xdd\x0c\x49",
 	  16 },
 
 	{ VID_MISC_IKEv2, VID_STRING | VID_KEEP, "IKEv2", "CAN-IKEv2", NULL,
@@ -378,6 +380,10 @@ static struct vid_struct vid_tab[] = {
 
 	/*
 	 * NCP.de
+	 * Also seen from ncp client:
+	 * eb4c1b788afd4a9cb7730a68d56d088b
+	 * c61baca1f1a60cc10800000000000000
+	 * cbe79444a0870de4224a2c151fbfe099
 	 */
 	{ VID_NCP, VID_KEEP, "NCP client", NULL,
 	  "\x10\x1f\xb0\xb3\x5c\x5a\x4f\x4c\x08\xb9\x19\xf1\xcb\x97\x77\xb0",
@@ -465,8 +471,6 @@ static struct vid_struct vid_tab[] = {
 
 static const char hexdig[] = "0123456789abcdef";
 
-static int vid_struct_init = 0;
-
 /*
  * Setup VendorID structs, and populate them
  * FIXME: This functions leaks a little bit, but these are one time leaks:
@@ -481,17 +485,7 @@ void init_vendorid(void)
 
 	for (vid = vid_tab; vid->id; vid++) {
 		if (vid->flags & VID_SELF) {
-			char *d;
-
-			vid->vid = clone_str(
-				ipsec_version_vendorid(), "init_pluto_vendorid");
-			/* cut terminating NULL which won't go over the wire */
 			vid->vid_len = strlen(vid->vid);
-			d = alloc_bytes(strlen(vid->descr) + 256 +
-					strlen(ipsec_version_vendorid()),
-					"self-vendor ID");
-			sprintf(d, "%s %s", vid->descr, ipsec_version_code());
-			vid->descr = (const char *)d;
 		} else if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
 			vid->vid = clone_str(vid->data, "vid->data");
@@ -558,7 +552,6 @@ void init_vendorid(void)
 			DBG_dump("VID:", vid->vid, vid->vid_len);
 #endif
 	}
-	vid_struct_init = 1;
 }
 
 /**
@@ -640,6 +633,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 		break;
 
 	case VID_MISC_DPD:
+	case VID_DPD1_NG:
 		/* Remote side would like to do DPD with us on this connection */
 		md->dpd = TRUE;
 		break;
@@ -652,7 +646,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 		md->nortel = TRUE;
 		break;
 
-#ifdef XAUTH
 	case VID_SSH_SENTINEL_1_4_1:
 		loglog(RC_LOG_SERIOUS,
 		       "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
@@ -666,7 +659,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_MISC_XAUTH:
 		md->quirks.xauth_vid = TRUE;
 		break;
-#endif
 
 	case VID_LIBRESWANSELF:
 		/* not really useful, but it changes the msg from "ignored" to "received" */
@@ -732,9 +724,6 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 {
 	struct vid_struct *pvid;
 
-	if (!vid_struct_init)
-		init_vendorid();
-
 	/*
 	 * Find known VendorID in vid_tab
 	 */
@@ -776,20 +765,6 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 }
 
 /**
- * Add a vendor id payload to the msg, and modify previous payload
- * to say NEXT_VID.
- *
- * @param np
- * @param outs PB stream
- * @param vid Int of VendorID to be sent (see vendor.h for the list)
- * @return bool True if successful
- */
-bool out_vendorid(u_int8_t np, pb_stream *outs, unsigned int vid)
-{
-	return out_modify_previous_np(ISAKMP_NEXT_VID, outs) && out_vid(np, outs, vid);
-}
-
-/**
  * Add a vendor id payload to the msg
  *
  * @param np
@@ -800,9 +775,6 @@ bool out_vendorid(u_int8_t np, pb_stream *outs, unsigned int vid)
 bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
-
-	if (!vid_struct_init)
-		init_vendorid();
 
 	for (pvid = vid_tab; pvid->id != vid; pvid++)
 		if (pvid->id == 0)

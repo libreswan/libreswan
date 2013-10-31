@@ -46,9 +46,6 @@
 #include "x509.h"
 #include "certs.h"
 #include "ac.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "whack.h"              /* needs connections.h */
@@ -191,7 +188,8 @@ static bool openwhackrecordfile(char *file)
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));
 
-	strncpy(whackrecordname, file, sizeof(whackrecordname));
+	strncpy(whackrecordname, file, sizeof(whackrecordname)-1);
+	whackrecordname[sizeof(whackrecordname)-1] = '\0';	/* ensure NUL termination */
 	whackrecordfile = fopen(whackrecordname, "w");
 	if (whackrecordfile == NULL) {
 		libreswan_log("Failed to open whack record file: '%s'\n",

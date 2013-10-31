@@ -22,8 +22,6 @@
 
 #include <pthread.h>    /* Must be the first include file */
 
-/* #ifdef XAUTH */
-
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -42,7 +40,6 @@
 #endif
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "lswalloc.h"
 
@@ -56,9 +53,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-# include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "packet.h"
 #include "demux.h"              /* needs packet.h */
@@ -614,17 +608,13 @@ static stf_status modecfg_resp(struct state *st,
 						break;
 					}
 					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
-					chunk_t splitinc;
-					splitinc.ptr = alloc_bytes(14, "cisco split tunnel"); /* see above */
-					splitinc.len = 14;
-					memset(splitinc.ptr, 0, 14);
-					memcpy(splitinc.ptr, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);
-					struct in_addr splitmask;
-					splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
-					memcpy(splitinc.ptr + 4, &splitmask, 4);
-					if (!out_raw(splitinc.ptr, 14, &attrval, "CISCO_SPLIT_INC"))
+					unsigned char si[14];	/* 14 is magic */
+					memset(si, 0, sizeof(si));
+					memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);
+					struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
+					memcpy(si + 4, &splitmask, 4);
+					if (!out_raw(si, sizeof(si), &attrval, "CISCO_SPLIT_INC"))
 						return STF_INTERNAL_ERROR;
-					freeanychunk(splitinc);
 					break;
 				}
 				default:
@@ -695,12 +685,10 @@ static stf_status modecfg_send_set(struct state *st)
 	init_phase2_iv(st, &st->st_msgid_phase15);
 #endif
 
+/* XXX This does not include IPv6 at this point */
 #define MODECFG_SET_ITEM ( LELEM(INTERNAL_IP4_ADDRESS) | \
 			   LELEM(INTERNAL_IP4_SUBNET) | \
-			   LELEM(INTERNAL_IP4_DNS) | \
-			   LELEM(INTERNAL_IP6_ADDRESS) | \
-			   LELEM(INTERNAL_IP6_SUBNET) | \
-			   LELEM(INTERNAL_IP6_DNS))
+			   LELEM(INTERNAL_IP4_DNS))
 
 	modecfg_resp(st,
 		     MODECFG_SET_ITEM,
@@ -1247,8 +1235,8 @@ static int do_file_authentication(void *varg)
 			    szuser, arg->name.ptr,
 			    szpass, szconnid, arg->connname.ptr));
 
-		if ( strcmp(szconnid, (char *)arg->connname.ptr) == 0 &&
-		     strcmp( szuser, (char *)arg->name.ptr ) == 0 ) { /* user correct ?*/
+		if ( streq(szconnid, (char *)arg->connname.ptr) &&
+		     streq( szuser, (char *)arg->name.ptr ) ) { /* user correct ?*/
 			char *cp;
 
 			pthread_mutex_lock(&crypt_mutex);
@@ -1270,7 +1258,7 @@ static int do_file_authentication(void *varg)
 			}
 
 			/* Ok then now password check - note crypt() can return NULL */
-			if ( cp && strcmp(cp, szpass ) == 0 ) {
+			if ( cp && streq(cp, szpass ) ) {
 				/* we have a winner */
 				fclose( fp );
 				pthread_mutex_unlock(&crypt_mutex);
@@ -1633,7 +1621,7 @@ stf_status xauth_inR1(struct msg_digest *md)
 
 	libreswan_log("XAUTH: xauth_inR1(STF_OK)");
 	/* Back to where we were */
-	st->st_oakley.xauth = 0;
+	st->st_oakley.doing_xauth = FALSE;
 
 	if (!st->st_connection->spd.this.modecfg_server) {
 		DBG(DBG_CONTROL,
@@ -2390,6 +2378,7 @@ static stf_status xauth_client_resp(struct state *st,
 							if (cptr)
 								*cptr = '\0';
 						}
+						/* ??? is this strncpy correct? */
 						strncpy(st->st_xauth_username,
 							xauth_username,
 							sizeof(st->
@@ -2704,9 +2693,8 @@ stf_status xauth_inI0(struct msg_digest *md)
 		if (status && stat == STF_OK) {
 			st->hidden_variables.st_xauth_client_done =
 				TRUE;
-			libreswan_log(
-				"XAUTH: Successfully Authenticated");
-			st->st_oakley.xauth = 0;
+			loglog(RC_LOG_SERIOUS,"XAUTH: Successfully Authenticated");
+			st->st_oakley.doing_xauth = FALSE;
 
 			return STF_OK;
 		} else {
@@ -2916,7 +2904,7 @@ stf_status xauth_inI1(struct msg_digest *md)
 	if (status && stat == STF_OK) {
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		libreswan_log("successfully logged in");
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		return STF_OK;
 	}

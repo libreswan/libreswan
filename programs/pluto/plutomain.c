@@ -54,9 +54,6 @@
 #include "x509.h"
 #include "certs.h"
 #include "ac.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "packet.h"
@@ -161,6 +158,7 @@ static void usage(const char *mess)
 		"[--perpeerlogbase <path>] [--perpeerlog]"
 		" \\\n\t"
 		"[--coredir <dirname>] [--noretransmits]"
+		"[--statsbin <filename>]"
 		" \\\n\t"
 		"[--secretsfile <secrets-file>]"
 		" [--ipsecdir <ipsec-dir>]"
@@ -513,6 +511,8 @@ int main(int argc, char **argv)
 			{ "perpeerlog", no_argument, NULL, 'l' },
 			{ "noretransmits", no_argument, NULL, 'R' },
 			{ "coredir", required_argument, NULL, 'C' },
+			{ "dumpdir", required_argument, NULL, 'C' }, /* alias for coredir */
+			{ "statsbin", required_argument, NULL, 'S' },
 			{ "ipsecdir", required_argument, NULL, 'f' },
 			{ "ipsec_dir", required_argument, NULL, 'f' },
 			{ "foodgroupsdir", required_argument, NULL, 'f' },
@@ -620,8 +620,12 @@ int main(int argc, char **argv)
 			usage(NULL);
 			break;  /* not actually reached */
 
-		case 'C':
+		case 'C': /* --coredir */
 			coredir = clone_str(optarg, "coredir");
+			continue;
+
+		case 'S': /* --statsdir */
+			pluto_stats_binary = clone_str(optarg, "statsbin");
 			continue;
 
 		case 'v': /* --version */
@@ -838,8 +842,7 @@ int main(int argc, char **argv)
 		case 'f': /* --ipsecdir <ipsec-dir> */
 			(void)lsw_init_ipsecdir(optarg);
 			/* Keep a copy of the filename so we can show it in ipsec status */
-                        ipsecdir = alloc_bytes(strlen(optarg)+1, "ipsecdir filename");
-                        strncpy(ipsecdir,optarg, strlen(optarg));
+			ipsecdir = clone_str(optarg, "ipsecdir filename");
 			continue;
 
 		case 'a': /* --adns <pathname> */
@@ -889,8 +892,7 @@ int main(int argc, char **argv)
 		case 'z': /* --config */
 		{
 			/* Keep a copy of the filename so we can show it in ipsec status */
-			ipsecconf = alloc_bytes(strlen(optarg)+1, "ipsecconf filename");
-			strncpy(ipsecconf,optarg, strlen(optarg));
+			ipsecconf = clone_str(optarg, "ipsecconf filename");
 
 			/* Config struct to variables mapper. This will overwrite
 			 * all previously set options. Keep this in the same order as
@@ -939,6 +941,18 @@ int main(int argc, char **argv)
 			set_cfg_string(&pluto_vendorid, cfg->setup.strings[KSF_MYVENDORID]); /* --vendorid */
 			/* no config option: pluto_adns_option */
 
+			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
+				set_cfg_string(&pluto_stats_binary, /* --statsbinary */
+					       cfg->setup.strings[KSF_STATSBINARY]);
+				if (access(pluto_stats_binary, X_OK) == 0) {
+					libreswan_log("statsbinary set to %s", pluto_stats_binary);
+				} else {
+					libreswan_log("statsbinary '%s' ignored - file does not exist or is not executable",
+						      pluto_stats_binary);
+					pluto_stats_binary = NULL;
+				}
+			}
+
 			pluto_natt_float_port =
 				cfg->setup.options[KBF_NATIKEPORT];
 			nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
@@ -959,24 +973,24 @@ int main(int argc, char **argv)
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 			if (protostack == NULL || *protostack == 0) {
 				kern_interface = USE_NETKEY;
-			} else if (strcmp(protostack, "none") == 0) {
+			} else if (streq(protostack, "none")) {
 				kern_interface = NO_KERNEL;
-			} else if (strcmp(protostack, "auto") == 0) {
+			} else if (streq(protostack, "auto")) {
 				libreswan_log(
 					"The option protostack=auto is obsoleted, falling back to protostack=netkey\n");
 				kern_interface = USE_NETKEY;
-			} else if (strcmp(protostack, "klips") == 0) {
+			} else if (streq(protostack, "klips")) {
 				kern_interface = USE_KLIPS;
-			} else if (strcmp(protostack, "mast") == 0) {
+			} else if (streq(protostack, "mast")) {
 				kern_interface = USE_MASTKLIPS;
-			} else if (strcmp(protostack, "netkey") == 0 ||
-				   strcmp(protostack, "native") == 0) {
+			} else if (streq(protostack, "netkey") ||
+				   streq(protostack, "native")) {
 				kern_interface = USE_NETKEY;
-			} else if (strcmp(protostack, "bsd") == 0 ||
-				   strcmp(protostack, "kame") == 0 ||
-				   strcmp(protostack, "bsdkame") == 0) {
+			} else if (streq(protostack, "bsd") ||
+				   streq(protostack, "kame") ||
+				   streq(protostack, "bsdkame")) {
 				kern_interface = USE_BSDKAME;
-			} else if (strcmp(protostack, "win2k") == 0) {
+			} else if (streq(protostack, "win2k")) {
 				kern_interface = USE_WIN2K;
 			}
 
@@ -1117,36 +1131,53 @@ int main(int argc, char **argv)
 	 * FIPS Kernel mode: fips=1 kernel boot parameter
 	 * FIPS Product mode: dracut-fips is installed
 	 *
-	 * When FIPS Product mode or FIPS Kernel mode, abort on hmac failure
-	 * When non-FIPS, skip test
+	 * When FIPS Product mode and FIPS Kernel mode, abort on hmac failure.
+	 * Otherwise, just complain about failures.
 	 *
 	 * Product Mode detected with FIPSPRODUCTCHECK in Makefile.inc
 	 */
 
 	{
 
-	int fips_mode = libreswan_fipsmode();
+	int fips_kernel = libreswan_fipskernel();
 	int fips_product = libreswan_fipsproduct();
+	int fips_mode = libreswan_fipsmode();
 	int fips_files_check_ok = FIPSCHECK_verify_files(fips_package_files);
 
-	if (fips_product)
+	if (fips_mode == -1) {
+                        loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
+                        exit_pluto(10);
+	}
+
+	if (fips_product == 1)
 		libreswan_log("FIPS Product detected (%s)", FIPSPRODUCTCHECK);
 
-	if (fips_mode)
+	if (fips_kernel == 1)
 		libreswan_log("FIPS Kernel Mode detected");
 
 	if (!fips_files_check_ok) {
-		if (fips_mode || fips_product) {
-			if (fips_mode)
-				loglog(RC_LOG_SERIOUS, "FIPS: Kernel Mode FAILURE");
-			if (fips_product)
-				loglog(RC_LOG_SERIOUS, "FIPS: Product Mode FAILURE");
-			loglog(RC_LOG_SERIOUS, "ABORT: FIPS CHECK FAILURE");
-			exit_pluto(10);
+		loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification FAILURE");
+		/*
+		 * We ignore fips=1 kernel mode if we are not a 'fips product'
+		 */
+                if (fips_product && fips_kernel) {
+                        loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
+                        exit_pluto(10);
+                } else if (fips_product) {
+                        libreswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
+                } else if (fips_kernel) {
+                        libreswan_log("FIPS: not a FIPS product, kernel mode ignored - continuing");
+                } else {
+                        libreswan_log("FIPS: not a FIPS product and kernel not in FIPS mode - continuing");
 		}
-		libreswan_log("FIPS HMAC integrity verification failed - continuing");
 	} else {
 		libreswan_log("FIPS HMAC integrity verification test passed");
+	}
+
+	if (fips_mode) {
+		libreswan_log("FIPS: pluto daemon running in FIPS mode");
+	} else {
+		libreswan_log("FIPS: pluto daemon NOT running in FIPS mode");
 	}
 
 	}
@@ -1220,20 +1251,11 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_OCF
-	{
-		struct stat buf;
-		errno = 0;
-
-		if ( stat("/dev/crypto", &buf) != -1)
-			libreswan_log(
-				"OCF support for IKE via /dev/crypto [enabled]");
-
-
-		else
-			libreswan_log(
-				"OCF support for IKE via /dev/crypto [failed:%s]",
+	if (access("/dev/crypto", R_OK | W_OK) != -1)
+		libreswan_log("OCF support for IKE via /dev/crypto [enabled]");
+	else
+		libreswan_log("OCF support for IKE via /dev/crypto [failed:%s]",
 				strerror(errno));
-	}
 #else
 	libreswan_log("OCF support for IKE [disabled]");
 #endif
@@ -1273,13 +1295,6 @@ int main(int argc, char **argv)
 	libreswan_log("XAUTH PAM support [enabled]");
 #else
 	libreswan_log("XAUTH PAM support [disabled]");
-#endif
-
-#ifdef HAVE_STATSD
-	libreswan_log(
-		"HAVE_STATSD notification via /bin/libreswan-statsd enabled");
-#else
-	libreswan_log("HAVE_STATSD notification support [disabled]");
 #endif
 
 /** Log various impair-* functions if they were enabled */
@@ -1329,6 +1344,7 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_adns();
 	init_id();
+	init_vendorid();
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 	init_fetch();
@@ -1406,12 +1422,13 @@ void show_setup_plutomain()
 	whack_log(RC_COMMENT, "config setup options:");     /* spacer */
 	whack_log(RC_COMMENT, " ");     /* spacer */
         whack_log(RC_COMMENT, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, "
-		  "dumpdir=%s",
+		  "dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
 		pluto_shared_secrets_file,
 		oco->confddir,
-		coredir);
+		coredir,
+		pluto_stats_binary ? pluto_stats_binary : "unset");
 
 	whack_log(RC_COMMENT, "sbindir=%s, libdir=%s, libexecdir=%s",
 		IPSEC_SBINDIR ,
@@ -1441,26 +1458,3 @@ void show_setup_plutomain()
 #endif
 }
 
-/*
- * Return TRUE if we are a fips product.
- * This is irrespective of whether we are running in FIPS mode
- */
-bool
-libreswan_fipsproduct(void)
-{
-	if (access(FIPSPRODUCTCHECK, F_OK) != 0) {
-		if (errno == ENOENT || errno == ENOTDIR) {
-			libreswan_log("FIPS: not a FIPS product");
-			return FALSE;
-		} else {
-			loglog(RC_LOG_SERIOUS, "FIPS ABORT: FIPS product check"
-			       " failed to determine status: %d: %s", errno,
-			       strerror(errno));
-			exit_pluto(1);
-			return FALSE; /* make compiler happy - never reached */
-		}
-	}
-
-	return TRUE;
-	
-}

@@ -35,6 +35,7 @@ enum keyword_string_config_field {
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
 	KSF_DUMPDIR,
+	KSF_STATSBINARY,
 	KSF_IPSECDIR,
 	KSF_SECRETSFILE,
 	KSF_PERPEERDIR,
@@ -253,15 +254,16 @@ struct keyword_def {
 	unsigned int validity;          /* has bits kv_config or kv_conn set */
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
-	struct keyword_enum_values *validenum;
+	const struct keyword_enum_values *validenum;
 };
 
 struct keyword {
-	struct keyword_def *keydef;
+	const struct keyword_def *keydef;
 	bool keyleft;
 	char               *string;
 };
 
+/* note: these lists are dynamic */
 struct kw_list {
 	struct kw_list *next;
 	struct keyword keyword;
@@ -299,10 +301,9 @@ struct config_parsed {
 	bool got_default;
 };
 
-extern struct keyword_def ipsec_conf_keywords_v2[];
-extern const int ipsec_conf_keywords_v2_count;
+extern const struct keyword_def ipsec_conf_keywords_v2[];
 
-extern unsigned int parser_enum_list(struct keyword_def *kd, const char *s,
+extern unsigned int parser_enum_list(const struct keyword_def *kd, const char *s,
 				     bool list);
 extern unsigned int parser_loose_enum(struct keyword *k, const char *s);
 

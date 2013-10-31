@@ -43,9 +43,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "cookie.h"
 #include "state.h"
@@ -61,9 +58,9 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-#ifdef XAUTH
+
 #include "xauth.h"
-#endif
+
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "dpd.h"
@@ -590,8 +587,8 @@ void ikev2_log_parentSA(struct state *st)
 			 st->st_oakley.encrypter->common.officname,
 			 st->st_oakley.enckeylen);
 	} else {
-		strncpy(encalgo, st->st_oakley.encrypter->common.officname,
-			sizeof(encalgo));
+		snprintf(encalgo, sizeof(encalgo), "%s",
+			st->st_oakley.encrypter->common.officname);
 	}
 
 	if (DBGP(DBG_CRYPT)) {

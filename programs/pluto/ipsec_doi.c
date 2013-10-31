@@ -47,9 +47,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "packet.h"
 #include "keys.h"
@@ -81,9 +78,8 @@
 #include "ikev1_continuations.h"
 #include "ikev2.h"
 
-#ifdef XAUTH
 #include "xauth.h"
-#endif
+
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
@@ -234,16 +230,10 @@ static initiator_function *pick_initiator(struct connection *c UNUSED,
 					  lset_t policy)
 {
 	if ((policy & POLICY_IKEV1_DISABLE) == 0 &&
-	    (c->failed_ikev2 || (policy & POLICY_IKEV2_PROPOSE) == 0) &&
-	    (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)) == 0) {
+	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == 0))) {
+	    
 		if (policy & POLICY_AGGRESSIVE) {
-#if defined(AGGRESSIVE)
 			return aggr_outI1;
-
-#else
-			return aggr_not_present;
-
-#endif
 		} else {
 			return main_outI1;
 		}
@@ -692,6 +682,7 @@ void initialize_new_state(struct state *st,
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_name) {
+				/* ??? is this strncpy correct? */
 				strncpy(st->st_xauth_username,
 					sr->this.xauth_name,
 					sizeof(st->st_xauth_username));
@@ -837,7 +828,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	ini = " ";
 	fin = "}";
 
-#ifdef XAUTH
 	if (st->st_xauth_username && st->st_xauth_username[0] != '\0') {
 		b = b + strlen(b);
 		snprintf(b, sad_len - (b - sadetails) - 1,
@@ -850,7 +840,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		fin = "}";
 
 	}
-#endif
 
 	strcat(b, fin);
 }

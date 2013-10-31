@@ -32,19 +32,11 @@ ifeq ($(USE_LDAP),true)
 LDAP_VERSION=3
 endif
 
-# whether or not to enable aggressive mode exchanges.
-ifeq ($(USE_AGGRESSIVE),true)
-AGGRESSIVE=1
-endif
-
-ifeq ($(USE_XAUTH),true)
-XAUTH=1
 # compile with PAM support will increase the size of the distribution
 # and thus it may not be the best solution for embeded systems. XAUTH
 # will use the crypt() lib and a password file by default.
 ifeq ($(USE_XAUTHPAM),true)
 XAUTH_HAVE_PAM=1
-endif
 endif
 
 CFLAGS +=-g ${WERROR}
@@ -166,18 +158,12 @@ ifeq ($(HAVE_OPENSSL),true)
 OPENSSL_LIBS=-lcrypto
 endif
 
-ifeq ($(HAVE_STATSD),true)
-HAVE_STATSD_DEFS=-DHAVE_STATSD
-endif
-
 ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
 XAUTH_DIST_SRCS=xauth.c xauth.h addresspool.c addresspool.h
 XAUTH_DIST_OBJS=xauth.o addresspool.o
-ifeq ($(USE_XAUTH),true)
-XAUTH_DEFS=-DXAUTH
 XAUTH_OBJS=${XAUTH_DIST_OBJS}
 XAUTH_SRCS=${XAUTH_DIST_SRCS}
 ifneq ($(BUILDENV), darwin)
@@ -188,16 +174,11 @@ ifeq ($(USE_XAUTHPAM),true)
 XAUTHPAM_DEFS=-DXAUTH_HAVE_PAM
 XAUTHPAM_LIBS=-lpam -ldl
 endif
-endif
 
 AGGRESSIVE_DIST_OBJS=ikev1_aggr.o
 AGGRESSIVE_DIST_SRCS=${AGGRESSIVE_DIST_OBJS:.o=.c}
-ifeq ($(USE_AGGRESSIVE),true)
-# This compile option activates xauth code and modecfg needed by xauth
-AGGRESSIVE_DEFS=-DAGGRESSIVE
 AGGRESSIVE_OBJS=${AGGRESSIVE_DIST_OBJS}
 AGGRESSIVE_SRCS=${AGGRESSIVE_DIST_SRCS}
-endif
 
 # LABELED IPSEC support - requires SElinux
 LABELED_IPSEC_DIST_OBJS=security_selinux.o
@@ -240,17 +221,14 @@ DEFINES = $(EXTRA_DEFINES) \
 	$(NETKEY_DEFS) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
-	-DPLUTO \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	-DBUILDER=\"${BUILDER}\" \
 	-DDEBUG \
 	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5\
-	${AGGRESSIVE_DEFS} \
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${CURL_DEFS}\
 	${SINGLE_CONF_DIR} \
-	${HAVE_STATSD_DEFS} \
 	${IPSEC_CONNECTION_LIMIT_DEFS} \
         ${LEAK_CONF} # -DLEAK_DETECTIVE now handled via USE_LEAK_DETECTIVE in Makefile.inc
 

@@ -837,7 +837,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 		lset_t pm = POLICY_ENCRYPT | POLICY_AUTHENTICATE;
 
 #if 0
-		y       if (can_do_IPcomp)
+		if (can_do_IPcomp)
 			pm |= POLICY_COMPRESS;
 #endif
 

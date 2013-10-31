@@ -32,7 +32,7 @@ For Debian/Ubuntu
 	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
 		libcap-ng-dev libcap-ng-utils libselinux-dev \
 		libcurl4-nss-dev libgmp3-dev flex bison gcc make \
-		libunbound-dev
+		libunbound-dev libnss3-tools
 
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
 
@@ -67,16 +67,15 @@ native IPsec stack.  From the libreswan directory:
     make programs
     sudo make install
 
-Note: The ipsec-tools package is no longer needed. Instead iproute2 >= 2.6.8
-is required. For backported kernels, setkey and thus ipsec-tools might still
-be required. Run 'ipsec verify' to determine if your system has either one
+Note: The ipsec-tools package or setkey is not needed. Instead iproute2 >= 2.6.8
+is required. Run 'ipsec verify' to determine if your system misses anything.
 of the requirements.
 
 KLIPS/KLIPSNG (Libreswan IPsec stack)
 ------------------------------------
 
 To use the Libreswan KLIPS IPsec stack (ipsec0 devices) for Linux
-Kernels 2.6.23 and higher, the following steps should work.  From the
+Kernels 2.4 and higher, the following steps should work.  From the
 libreswan directory:
 
     make programs

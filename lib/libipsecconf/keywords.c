@@ -33,35 +33,33 @@
 #include "parser.tab.h"
 #include "ipsecconf/parserlast.h"
 
+#define VALUES_INITIALIZER(t)	{ t, sizeof(t)/ sizeof(t[0]) }
+
 /*
  * Values for failureshunt={passthrough, drop, reject, none}
  */
-struct keyword_enum_value kw_failureshunt_values[] = {
+static const struct keyword_enum_value kw_failureshunt_values[] = {
 	{ "none",        POLICY_FAIL_NONE },
 	{ "passthrough", POLICY_FAIL_PASS },
 	{ "drop",        POLICY_FAIL_DROP },
 	{ "reject",      POLICY_FAIL_REJECT },
 };
 
-struct keyword_enum_values kw_failureshunt_list =
-{ kw_failureshunt_values, sizeof(kw_failureshunt_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_failureshunt_list = VALUES_INITIALIZER(kw_failureshunt_values);
 
 /*
  * Values for keyexchange=
  */
-struct keyword_enum_value kw_keyexchange_values[] = {
+static const struct keyword_enum_value kw_keyexchange_values[] = {
 	{ "ike",  KE_IKE },
 };
 
-struct keyword_enum_values kw_keyexchange_list =
-{ kw_keyexchange_values, sizeof(kw_keyexchange_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_keyexchange_list = VALUES_INITIALIZER(kw_keyexchange_values);
 
 /*
  * Values for Four-State options, such as ikev2
  */
-struct keyword_enum_value kw_fourvalued_values[] = {
+static const struct keyword_enum_value kw_fourvalued_values[] = {
 	{ "never",     fo_never  },
 	{ "permit",    fo_permit },
 	{ "propose",   fo_propose },
@@ -71,14 +69,12 @@ struct keyword_enum_value kw_fourvalued_values[] = {
 	{ "no",        fo_never  }
 };
 
-struct keyword_enum_values kw_fourvalued_list =
-{ kw_fourvalued_values, sizeof(kw_fourvalued_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_fourvalued_list = VALUES_INITIALIZER(kw_fourvalued_values);
 
 /*
  * Values for yes/no/force, used by ike_frag
  */
-struct keyword_enum_value kw_ynf_values[] = {
+static const struct keyword_enum_value kw_ynf_values[] = {
 	{ "never",     ynf_no },
 	{ "no",        ynf_no },
 	{ "yes",       ynf_yes },
@@ -86,26 +82,23 @@ struct keyword_enum_value kw_ynf_values[] = {
 	{ "force",     ynf_force },
 };
 
-struct keyword_enum_values kw_ynf_list =
-{ kw_ynf_values, sizeof(kw_ynf_values) / sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_values);
 
 /*
  * Values for authby={rsasig, secret}
  */
-struct keyword_enum_value kw_authby_values[] = {
+static const struct keyword_enum_value kw_authby_values[] = {
 	{ "never",     0 },
 	{ "rsasig",    POLICY_RSASIG },
 	{ "secret",    POLICY_PSK },
 };
 
-struct keyword_enum_values kw_authby_list =
-{ kw_authby_values, sizeof(kw_authby_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_authby_list = VALUES_INITIALIZER(kw_authby_values);
 
 /*
  * Values for dpdaction={hold,clear,restart}
  */
-struct keyword_enum_value kw_dpdaction_values[] = {
+static const struct keyword_enum_value kw_dpdaction_values[] = {
 	{ "hold",    DPD_ACTION_HOLD },
 	{ "clear",   DPD_ACTION_CLEAR },
 	{ "restart",   DPD_ACTION_RESTART },
@@ -113,15 +106,14 @@ struct keyword_enum_value kw_dpdaction_values[] = {
 	{ "restart_by_peer",   DPD_ACTION_RESTART },
 };
 
-struct keyword_enum_values kw_dpdaction_list =
-{ kw_dpdaction_values, sizeof(kw_dpdaction_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_dpdaction_list = VALUES_INITIALIZER(kw_dpdaction_values);
 
 /*
  * Values for auto={add,start,route,ignore}
  */
-struct keyword_enum_value kw_auto_values[] = {
+static const struct keyword_enum_value kw_auto_values[] = {
 	{ "ignore", STARTUP_IGNORE },
+	/* no keyword for STARTUP_POLICY */
 	{ "add",    STARTUP_ADD },
 	{ "ondemand",  STARTUP_ONDEMAND },
 	{ "route",  STARTUP_ONDEMAND }, /* backwards compatibility alias */
@@ -129,25 +121,22 @@ struct keyword_enum_value kw_auto_values[] = {
 	{ "up",     STARTUP_START }, /* alias */
 };
 
-struct keyword_enum_values kw_auto_list =
-{ kw_auto_values, sizeof(kw_auto_values) / sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_auto_list = VALUES_INITIALIZER(kw_auto_values);
 
 /*
  * Values for connaddrfamily={ipv4,ipv6}
  */
-struct keyword_enum_value kw_connaddrfamily_values[] = {
+static const struct keyword_enum_value kw_connaddrfamily_values[] = {
 	{ "ipv4",   AF_INET },
 	{ "ipv6",   AF_INET6 },
 };
 
-struct keyword_enum_values kw_connaddrfamily_list =
-{ kw_connaddrfamily_values, sizeof(kw_connaddrfamily_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_connaddrfamily_list = VALUES_INITIALIZER(kw_connaddrfamily_values);
 
 /*
  * Values for type={tunnel,transport,udpencap}
  */
-struct keyword_enum_value kw_type_values[] = {
+static const struct keyword_enum_value kw_type_values[] = {
 	{ "tunnel",    KS_TUNNEL },
 	{ "transport", KS_TRANSPORT },
 	{ "udp",       KS_UDPENCAP },
@@ -158,27 +147,24 @@ struct keyword_enum_value kw_type_values[] = {
 	{ "drop",      KS_DROP },
 };
 
-struct keyword_enum_values kw_type_list =
-{ kw_type_values, sizeof(kw_type_values) / sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_type_list = VALUES_INITIALIZER(kw_type_values);
 
 /*
  * Values for rsasigkey={%dnsondemand, %dns, literal }
  */
-struct keyword_enum_value kw_rsasigkey_values[] = {
+static const struct keyword_enum_value kw_rsasigkey_values[] = {
 	{ "",             PUBKEY_PREEXCHANGED },
 	{ "%cert",        PUBKEY_CERTIFICATE },
 	{ "%dns",         PUBKEY_DNS },
 	{ "%dnsondemand", PUBKEY_DNSONDEMAND },
 };
 
-struct keyword_enum_values kw_rsasigkey_list =
-{ kw_rsasigkey_values, sizeof(kw_rsasigkey_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_rsasigkey_list = VALUES_INITIALIZER(kw_rsasigkey_values);
 
 /*
  * Values for protostack={netkey, klips, mast or none }
  */
-struct keyword_enum_value kw_proto_stack_list[] = {
+static const struct keyword_enum_value kw_proto_stack_list[] = {
 	{ "none",         NO_KERNEL },
 	{ "klips",        USE_KLIPS },
 	{ "mast",         USE_MASTKLIPS },
@@ -191,61 +177,50 @@ struct keyword_enum_value kw_proto_stack_list[] = {
 	{ "win2k",        USE_WIN2K },
 };
 
-struct keyword_enum_values kw_proto_stack =
-{ kw_proto_stack_list, sizeof(kw_proto_stack_list) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_proto_stack = VALUES_INITIALIZER(kw_proto_stack_list);
 
 /*
  * Values for sareftrack={yes, no, conntrack }
  */
-struct keyword_enum_value kw_sareftrack_values[] = {
+static const struct keyword_enum_value kw_sareftrack_values[] = {
 	{ "yes",          sat_yes },
 	{ "no",           sat_no },
 	{ "conntrack",    sat_conntrack },
 };
 
-struct keyword_enum_values kw_sareftrack_list =
-{ kw_sareftrack_values, sizeof(kw_sareftrack_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_sareftrack_list = VALUES_INITIALIZER(kw_sareftrack_values);
 
 /*
  *  Cisco interop: remote peer type
  */
 
-struct keyword_enum_value kw_remote_peer_type_list[] = {
+static const struct keyword_enum_value kw_remote_peer_type_list[] = {
 	{ "cisco",         CISCO },
 };
 
-struct keyword_enum_values kw_remote_peer_type =
-{ kw_remote_peer_type_list, sizeof(kw_remote_peer_type_list) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_remote_peer_type = VALUES_INITIALIZER(kw_remote_peer_type_list);
 
-#ifdef XAUTH
-struct keyword_enum_value kw_xauthby_list[] = {
+static const struct keyword_enum_value kw_xauthby_list[] = {
 	{ "file",         XAUTHBY_FILE },
 	{ "pam",         XAUTHBY_PAM },
 	{ "alwaysok",    XAUTHBY_ALWAYSOK },
 };
 
-struct keyword_enum_values kw_xauthby =
-{ kw_xauthby_list, sizeof(kw_xauthby_list) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_xauthby = VALUES_INITIALIZER(kw_xauthby_list);
 
-struct keyword_enum_value kw_xauthfail_list[] = {
+static const struct keyword_enum_value kw_xauthfail_list[] = {
 	{ "hard",         XAUTHFAIL_HARD },
 	{ "soft",         XAUTHFAIL_SOFT },
 };
-struct keyword_enum_values kw_xauthfail =
-{ kw_xauthfail_list, sizeof(kw_xauthfail_list) /
-  sizeof(struct keyword_enum_value) };
-#endif
+
+static const struct keyword_enum_values kw_xauthfail = VALUES_INITIALIZER(kw_xauthfail_list);
 
 /*
  * Values for right= and left=
  */
 
 #ifdef DEBUG
-struct keyword_enum_value kw_plutodebug_values[] = {
+static const struct keyword_enum_value kw_plutodebug_values[] = {
 	{ "none",     DBG_NONE },
 	{ "all",      DBG_ALL },
 	{ "raw",      DBG_RAW },
@@ -275,11 +250,9 @@ struct keyword_enum_value kw_plutodebug_values[] = {
 	{ "impair-bust-mr2", IMPAIR_BUST_MR2 },
 };
 
-struct keyword_enum_values kw_plutodebug_list =
-{ kw_plutodebug_values, sizeof(kw_plutodebug_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_plutodebug_list = VALUES_INITIALIZER(kw_plutodebug_values);
 
-struct keyword_enum_value kw_klipsdebug_values[] = {
+static const struct keyword_enum_value kw_klipsdebug_values[] = {
 	{ "all",      LRANGE(KDF_XMIT, KDF_COMP) },
 	{ "none",     0 },
 	{ "verbose",  LELEM(KDF_VERBOSE) },
@@ -301,26 +274,22 @@ struct keyword_enum_value kw_klipsdebug_values[] = {
 	{ "natt",     LELEM(KDF_NATT) },
 };
 
-struct keyword_enum_values kw_klipsdebug_list =
-{ kw_klipsdebug_values, sizeof(kw_klipsdebug_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_klipsdebug_list = VALUES_INITIALIZER(kw_klipsdebug_values);
 #endif
 
-struct keyword_enum_value kw_phase2types_values[] = {
+static const struct keyword_enum_value kw_phase2types_values[] = {
 	{ "ah+esp",   POLICY_ENCRYPT | POLICY_AUTHENTICATE },
 	{ "esp",      POLICY_ENCRYPT },
 	{ "ah",       POLICY_AUTHENTICATE },
 	{ "default",  POLICY_ENCRYPT }, /* alias, find it last */
 };
 
-struct keyword_enum_values kw_phase2types_list =
-{ kw_phase2types_values, sizeof(kw_phase2types_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_phase2types_list = VALUES_INITIALIZER(kw_phase2types_values);
 
 /*
  * Values for {left/right}sendcert={never,sendifasked,always,forcedtype}
  */
-struct keyword_enum_value kw_sendcert_values[] = {
+static const struct keyword_enum_value kw_sendcert_values[] = {
 	{ "never",        cert_neversend },
 	{ "sendifasked",  cert_sendifasked },
 	{ "alwayssend",   cert_alwayssend },
@@ -328,12 +297,12 @@ struct keyword_enum_value kw_sendcert_values[] = {
 	{ "forcedtype",   cert_forcedtype },
 };
 
-struct keyword_enum_values kw_sendcert_list =
-{ kw_sendcert_values, sizeof(kw_sendcert_values) /
-  sizeof(struct keyword_enum_value) };
+static const struct keyword_enum_values kw_sendcert_list = VALUES_INITIALIZER(kw_sendcert_values);
 
-/* MASTER KEYWORD LIST */
-struct keyword_def ipsec_conf_keywords_v2[] = {
+/* MASTER KEYWORD LIST
+ * Note: this table is terminated by an entry with keyname == NULL.
+ */
+const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "interfaces",     kv_config, kt_string,    KSF_INTERFACES,
 	  NOT_ENUM },
 	{ "myid",           kv_config, kt_string,    KSF_MYID, NOT_ENUM },
@@ -355,6 +324,7 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "ipsecdir",        kv_config, kt_dirname,   KSF_IPSECDIR, NOT_ENUM },
 	{ "secretsfile",        kv_config, kt_dirname,   KSF_SECRETSFILE,
 	  NOT_ENUM },
+	{ "statsbin",        kv_config, kt_dirname,   KSF_STATSBINARY, NOT_ENUM },
 	{ "plutofork",           kv_config, kt_bool,      KBF_PLUTOFORK,
 	  NOT_ENUM },
 	{ "perpeerlog",        kv_config, kt_bool,   KBF_PERPEERLOG,
@@ -499,7 +469,6 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 #endif
 
-#ifdef XAUTH
 	{ "xauthby", kv_conn | kv_auto, kt_enum, KBF_XAUTHBY, &kw_xauthby },
 	{ "xauthfail", kv_conn | kv_auto, kt_enum, KBF_XAUTHFAIL,
 	  &kw_xauthfail },
@@ -533,7 +502,6 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "modecfgwins2", kv_conn | kv_auto, kt_obsolete, KBF_WARNIGNORE,
 	  NOT_ENUM },
-#endif
 
 	{ "forceencaps",    kv_conn | kv_auto, kt_bool,   KBF_FORCEENCAP,
 	  NOT_ENUM },
@@ -601,11 +569,9 @@ struct keyword_def ipsec_conf_keywords_v2[] = {
 };
 
 /* distinguished keyword */
-struct keyword_def ipsec_conf_keyword_comment =
-{ "x-comment",      kv_conn,   kt_comment, 0, NOT_ENUM };
+static const struct keyword_def ipsec_conf_keyword_comment =
+	{ "x-comment",      kv_conn,   kt_comment, 0, NOT_ENUM };
 
-const int ipsec_conf_keywords_v2_count = sizeof(ipsec_conf_keywords_v2) /
-					 sizeof(struct keyword_def);
 
 /*
  * look for one of the above tokens, and set the value up right.
@@ -617,7 +583,7 @@ const int ipsec_conf_keywords_v2_count = sizeof(ipsec_conf_keywords_v2) /
 /* type is really "token" type, which is actually int */
 int parser_find_keyword(const char *s, YYSTYPE *lval)
 {
-	struct keyword_def *k;
+	const struct keyword_def *k;
 	bool keyleft;
 	int keywordtype;
 
@@ -682,12 +648,12 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	return keywordtype;
 }
 
-unsigned int parser_enum_list(struct keyword_def *kd, const char *s, bool list)
+unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool list)
 {
 	char *piece;
 	char *scopy;
 	int numfound, kevcount;
-	struct keyword_enum_value *kev;
+	const struct keyword_enum_value *kev;
 	unsigned int valresult;
 	char complaintbuf[80];
 
@@ -757,9 +723,9 @@ unsigned int parser_enum_list(struct keyword_def *kd, const char *s, bool list)
 
 unsigned int parser_loose_enum(struct keyword *k, const char *s)
 {
-	struct keyword_def *kd = k->keydef;
+	const struct keyword_def *kd = k->keydef;
 	int kevcount;
-	struct keyword_enum_value *kev;
+	const struct keyword_enum_value *kev;
 	unsigned int valresult;
 
 	assert(kd->type == kt_loose_enum || kd->type == kt_rsakey);
@@ -777,6 +743,6 @@ unsigned int parser_loose_enum(struct keyword *k, const char *s)
 		return valresult;
 	}
 
-	k->string = strdup(s);
+	k->string = strdup(s);	/* ??? why not xstrdup? */
 	return 255;
 }

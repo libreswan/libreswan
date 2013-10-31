@@ -47,9 +47,6 @@
 
 #include "defs.h"
 #include "ac.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h" /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -173,7 +170,7 @@ void update_host_pairs(struct connection *c)
 	for (; d != NULL; d = conn_next_tmp) {
 		conn_next_tmp = d->hp_next;
 		if (d->dnshostname &&
-			strcmp(d->dnshostname, dnshostname) == 0) {
+			streq(d->dnshostname, dnshostname)) {
 			/*
 			 * If there is a dnshostname and it is the same as
 			 * the one that has changed, then change
@@ -263,9 +260,7 @@ void delete_connection(struct connection *c, bool relations)
 			ip_str(&c->spd.that.host_addr),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
-#ifdef XAUTH
 		rel_lease_addr(c);
-#endif
 	} else {
 		libreswan_log("deleting connection");
 	}
@@ -325,12 +320,9 @@ void delete_connection(struct connection *c, bool relations)
 	set_debugging(old_cur_debugging);
 #endif
 	pfreeany(c->name);
-#ifdef XAUTH
 	pfreeany(c->cisco_dns_info);
 	pfreeany(c->modecfg_domain);
 	pfreeany(c->modecfg_banner);
-
-#endif
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(c->policy_label);
 #endif
@@ -645,7 +637,6 @@ size_t format_end(char *buf,
 		idtoa(&this->id, host_id, sizeof(host_id));
 	}
 
-#if defined(XAUTH)
 	if (this->modecfg_server || this->modecfg_client ||
 		this->xauth_server || this->xauth_client ||
 		this->sendcert != cert_defaultcertpolicy) {
@@ -701,7 +692,7 @@ size_t format_end(char *buf,
 				send_cert = "S=C";
 				break;
 			case cert_forcedtype:
-				sprintf(s, "S%d", this->cert.type);
+				snprintf(s, sizeof(s), "S%d", this->cert.type);
 				send_cert = s;
 				break;
 			}
@@ -711,7 +702,6 @@ size_t format_end(char *buf,
 				strlen(endopts) - 1);
 		}
 	}
-#endif
 
 	/* [---hop] */
 	hop[0] = '\0';
@@ -768,11 +758,8 @@ static void unshare_connection_end_strings(struct end *e)
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
-#if defined(XAUTH)
 	if (e->xauth_name)
 		e->xauth_name = clone_str(e->xauth_name, "xauth name");
-
-#endif
 
 	if (e->host_addr_name)
 		e->host_addr_name = clone_str(e->host_addr_name, "host ip");
@@ -784,15 +771,12 @@ static void unshare_connection_strings(struct connection *c)
 
 	c->name = clone_str(c->name, "connection name");
 
-#ifdef XAUTH
 	c->cisco_dns_info = clone_str(c->cisco_dns_info,
 				"connection cisco_dns_info");
 	c->modecfg_domain = clone_str(c->modecfg_domain,
 				"connection modecfg_domain");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
-#endif
-
 #ifdef HAVE_LABELED_IPSEC
 	c->policy_label = clone_str(c->policy_label,
 				    "connection policy_label");
@@ -958,7 +942,6 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->host_srcip.u.v4.sin_len = sizeof(struct sockaddr_in);
 #endif
 
-#ifdef XAUTH
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
 	dst->pool_range = src->pool_range;
@@ -966,7 +949,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->xauth_server = src->xauth_server;
 	dst->xauth_client = src->xauth_client;
 	dst->xauth_name = src->xauth_name;
-#endif
+
 	dst->protocol = src->protocol;
 	dst->port = src->port;
 	dst->has_port_wildcard = src->has_port_wildcard;
@@ -1228,11 +1211,9 @@ void add_connection(const struct whack_message *wm)
 		c->pamh = NULL;
 #endif
 
-#ifdef XAUTH
 		c->cisco_dns_info = NULL;
 		c->modecfg_domain = NULL;
 		c->modecfg_banner = NULL;
-#endif
 		c->dnshostname = NULL;
 		if (wm->dnshostname)
 			c->dnshostname = wm->dnshostname;
@@ -1415,7 +1396,6 @@ void add_connection(const struct whack_message *wm)
 		else if (same_leftca)
 			c->spd.this.ca = c->spd.that.ca;
 
-#ifdef XAUTH
 		/*
 		 * How to add addresspool only for responder?
 		 * It is not necessary on the initiator
@@ -1452,7 +1432,6 @@ void add_connection(const struct whack_message *wm)
 			DBG_log("modecfgdomain=%s;", c->modecfg_domain));
 		DBG(DBG_CONTROL,
 			DBG_log("modecfgbanner=%s;", c->modecfg_banner));
-#endif
 
 		default_end(&c->spd.this, &c->spd.that.host_addr);
 		default_end(&c->spd.that, &c->spd.this.host_addr);
@@ -2677,7 +2656,6 @@ struct connection *refine_host_connection(const struct state *st,
 		return c;
 	}
 
-#if defined(XAUTH)
 	/*
 	 * Philippe Vouters' comment:
 	 * I do not understand the added value of this xauth_calcbaseauth call.
@@ -2706,7 +2684,7 @@ struct connection *refine_host_connection(const struct state *st,
 	 * actual only possible context, xauth_calcbaseauth is NO-OP operation.
 	 */
 	auth = xauth_calcbaseauth(auth);
-#endif
+
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
 		auth_policy = POLICY_PSK;
@@ -2830,7 +2808,6 @@ struct connection *refine_host_connection(const struct state *st,
 				 */
 				continue;
 
-#ifdef XAUTH
 			if (d->spd.this.xauth_server !=
 				c->spd.this.xauth_server)
 				/* Disallow xauth/no xauth mismatch. */
@@ -2840,7 +2817,6 @@ struct connection *refine_host_connection(const struct state *st,
 				c->spd.this.xauth_client)
 				 /* Disallow xauth/no xauth mismatch. */
 				continue;
-#endif
 
 			DBG(DBG_CONTROLMORE,
 				DBG_log(
@@ -3495,6 +3471,7 @@ struct connection *find_client_connection(struct connection *c,
 	return d;
 }
 
+/* signed result suitable for quicksort */
 int connection_compare(const struct connection *ca,
 		const struct connection *cb)
 {
@@ -3598,7 +3575,6 @@ static void show_one_sr(struct connection *c,
 		thiscertsemi,
 		thatcertsemi);
 
-#ifdef XAUTH
 	{
 		char thisxauthsemi[XAUTH_USERNAME_LEN +
 				sizeof("my_xauthuser=")];
@@ -3681,7 +3657,7 @@ static void show_one_sr(struct connection *c,
 		}
 
 	}
-#endif
+
 #ifdef HAVE_LABELED_IPSEC
 	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s, loopback:%s; ",
 		c->name, instance,

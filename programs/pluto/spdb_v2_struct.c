@@ -36,9 +36,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -160,12 +157,12 @@ bool ikev2_out_sa(pb_stream *outs,
 
 			memset(&p, 0, sizeof(p));
 
-			/* if there is a next proposal, then the np needs to be set right*/
+			/* See RFC5996bis Section 3.3 */
 			if (pr_cnt + 1 < vp->prop_cnt || pc_cnt + 1 <
 			    sadb->prop_disj_cnt)
-				p.isap_np      = ISAKMP_NEXT_P;
+				p.isap_lp      = v2_PROPOSAL_NON_LAST;
 			else
-				p.isap_np      = ISAKMP_NEXT_NONE;
+				p.isap_lp      = v2_PROPOSAL_LAST;
 
 			p.isap_length  = 0;
 			p.isap_propnum = vpc->propnum;
@@ -203,9 +200,9 @@ bool ikev2_out_sa(pb_stream *outs,
 
 				memset(&t, 0, sizeof(t));
 				if (ts_cnt + 1 < vpc->trans_cnt)
-					t.isat_np      = ISAKMP_NEXT_T;
+					t.isat_lt      = v2_TRANSFORM_NON_LAST;
 				else
-					t.isat_np      = ISAKMP_NEXT_NONE;
+					t.isat_lt      = v2_TRANSFORM_LAST;
 
 				t.isat_length = 0;
 				t.isat_type   = tr->transform_type;
@@ -970,7 +967,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 		r_proposal.isap_numtrans = 4;
 	else
 		r_proposal.isap_numtrans = 3;
-	r_proposal.isap_np = ISAKMP_NEXT_NONE;
+	r_proposal.isap_lp = v2_PROPOSAL_LAST;
 
 	if (!out_struct(&r_proposal, &ikev2_prop_desc,
 			r_sa_pbs, &r_proposal_pbs))
@@ -985,7 +982,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 	/* Transform - cipher */
 	r_trans.isat_type = IKEv2_TRANS_TYPE_ENCR;
 	r_trans.isat_transid = ta.encrypt;
-	r_trans.isat_np = ISAKMP_NEXT_T;
+	r_trans.isat_lt = v2_TRANSFORM_NON_LAST;
 	if (!out_struct(&r_trans, &ikev2_trans_desc,
 			&r_proposal_pbs, &r_trans_pbs))
 		impossible();
@@ -1001,7 +998,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 	/* Transform - integrity check */
 	r_trans.isat_type = IKEv2_TRANS_TYPE_INTEG;
 	r_trans.isat_transid = ta.integ_hash;
-	r_trans.isat_np = ISAKMP_NEXT_T;
+	r_trans.isat_lt = v2_TRANSFORM_NON_LAST;
 	if (!out_struct(&r_trans, &ikev2_trans_desc,
 			&r_proposal_pbs, &r_trans_pbs))
 		impossible();
@@ -1011,7 +1008,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 		/* Transform - PRF hash */
 		r_trans.isat_type = IKEv2_TRANS_TYPE_PRF;
 		r_trans.isat_transid = ta.prf_hash;
-		r_trans.isat_np = ISAKMP_NEXT_T;
+		r_trans.isat_lt = v2_TRANSFORM_NON_LAST;
 		if (!out_struct(&r_trans, &ikev2_trans_desc,
 				&r_proposal_pbs, &r_trans_pbs))
 			impossible();
@@ -1020,7 +1017,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 		/* Transform - DH hash */
 		r_trans.isat_type = IKEv2_TRANS_TYPE_DH;
 		r_trans.isat_transid = ta.groupnum;
-		r_trans.isat_np = ISAKMP_NEXT_NONE;
+		r_trans.isat_lt = v2_TRANSFORM_LAST;
 		if (!out_struct(&r_trans, &ikev2_trans_desc,
 				&r_proposal_pbs, &r_trans_pbs))
 			impossible();
@@ -1030,7 +1027,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 		/* Transform - ESN sequence */
 		r_trans.isat_type = IKEv2_TRANS_TYPE_ESN;
 		r_trans.isat_transid = IKEv2_ESN_DISABLED;
-		r_trans.isat_np = ISAKMP_NEXT_NONE;
+		r_trans.isat_lt = v2_TRANSFORM_LAST;
 		if (!out_struct(&r_trans, &ikev2_trans_desc,
 				&r_proposal_pbs, &r_trans_pbs))
 			impossible();
@@ -1059,7 +1056,7 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 {
 	pb_stream proposal_pbs;
 	struct ikev2_prop proposal;
-	unsigned int np = ISAKMP_NEXT_P;
+	unsigned int lp = v2_PROPOSAL_NON_LAST;
 	/* we need to parse proposal structures until there are none */
 	unsigned int lastpropnum = -1;
 	bool conjunction, gotmatch;
@@ -1092,7 +1089,7 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 	conjunction = FALSE;
 	zero(&ta);
 
-	while (np == ISAKMP_NEXT_P) {
+	while (lp == v2_PROPOSAL_NON_LAST) {
 		/*
 		 * note: we don't support ESN,
 		 * so ignore any proposal that insists on it
@@ -1153,7 +1150,7 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 			  return ret;
 		}
 
-		np = proposal.isap_np;
+		lp = proposal.isap_lp;
 
 		if (ikev2_match_transform_list_parent(sadb,
 						      proposal.isap_propnum,
@@ -1162,7 +1159,7 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 			winning_prop = proposal;
 			gotmatch = TRUE;
 #warning gotmatch is always true - this code needs to be verified
-			if (selection && !gotmatch && np == ISAKMP_NEXT_P) {
+			if (selection && !gotmatch && lp == v2_PROPOSAL_NON_LAST) {
 				libreswan_log(
 					"More than 1 proposal received from responder, ignoring rest. First one did not match");
 				return NO_PROPOSAL_CHOSEN;
@@ -1386,7 +1383,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 {
 	pb_stream proposal_pbs;
 	struct ikev2_prop proposal;
-	unsigned int np = ISAKMP_NEXT_P;
+	unsigned int lp = v2_PROPOSAL_NON_LAST;
 	/* we need to parse proposal structures until there are none */
 	unsigned int lastpropnum = -1;
 	bool conjunction, gotmatch;
@@ -1411,7 +1408,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 	zero(&ta);
 	zero(&ta1);
 
-	while (np == ISAKMP_NEXT_P) {
+	while (lp == v2_PROPOSAL_NON_LAST) {
 		/*
 		 * note: we don't support ESN,
 		 * so ignore any proposal that insists on it
@@ -1487,7 +1484,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 			  return ret;
 		}
 
-		np = proposal.isap_np;
+		lp = proposal.isap_lp;
 
 		if (ikev2_match_transform_list_child(p2alg,
 						     proposal.isap_propnum,
@@ -1497,7 +1494,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 			winning_prop = proposal;
 
 #warning gotmatch is always true - this code needs to be verified
-			if (selection && !gotmatch && np == ISAKMP_NEXT_P) {
+			if (selection && !gotmatch && lp == v2_PROPOSAL_NON_LAST) {
 				libreswan_log(
 					"More than 1 proposal received from responder, ignoring rest. First one did not match");
 				return NO_PROPOSAL_CHOSEN;

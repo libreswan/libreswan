@@ -30,10 +30,6 @@ ifeq ($(USE_DNSSEC),true)
 CFLAGS+= -DDNSSEC
 endif
 
-ifeq ($(USE_XAUTH),true)
-CFLAGS+= -DXAUTH
-endif
-
 ifeq ($(USE_KLIPS),true)
 CFLAGS+= -DKLIPS
 endif

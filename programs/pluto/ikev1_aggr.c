@@ -37,9 +37,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "keys.h"
 #include "packet.h"
@@ -70,16 +67,14 @@
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 
-#ifdef XAUTH
 #include "xauth.h"
-#endif
+
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
 #include "dpd.h"
 #include "x509more.h"
 
-#if defined(AGGRESSIVE)
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
  */
@@ -904,7 +899,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	if (!encrypt_message(&md->rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
-#ifdef XAUTH
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey */
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
@@ -914,7 +908,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -932,7 +926,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "This seems to be rekey, and XAUTH is not supposed to be done again"));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -942,7 +936,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
-#endif
 
 	c->newest_isakmp_sa = st->st_serialno;
 
@@ -1029,7 +1022,6 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 
 	/**************** done input ****************/
 
-#ifdef XAUTH
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey */
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
@@ -1039,7 +1031,7 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -1057,7 +1049,7 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "This seems to be rekey, and XAUTH is not supposed to be done again"));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -1067,7 +1059,6 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
-#endif
 
 	c->newest_isakmp_sa = st->st_serialno;
 
@@ -1174,6 +1165,7 @@ stf_status aggr_outI1(int whack_sock,
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_name) {
+				/* ??? is this strncpy correct? */
 				strncpy(st->st_xauth_username,
 					sr->this.xauth_name,
 					sizeof(st->st_xauth_username));
@@ -1330,10 +1322,10 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	int numvidtosend = 1; /* Always announce DPD capablity */
-#ifdef XAUTH
+
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
 		numvidtosend++;
-#endif
+
 	if (nat_traversal_enabled) 
 		numvidtosend++;
 	if(c->cisco_unity)
@@ -1361,13 +1353,12 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		}
 	}
 
-#ifdef XAUTH
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
+
 	if(c->cisco_unity) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_vid(np, &md->rbody, VID_CISCO_UNITY))
@@ -1418,4 +1409,3 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	cur_state = NULL;
 	return STF_IGNORE;
 }
-#endif /* AGGRESSIVE */

@@ -18,15 +18,4 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 PROGRAM=ikeping
 LIBS=${LIBRESWANLIB}
 
-ifeq ($(USE_IKEPING),false)
-NOINSTALL=true
-install:
-	# do nothing
-
-install_file_list:
-	# do nothing
-
-endif
-
 include ${srcdir}../Makefile.program
-

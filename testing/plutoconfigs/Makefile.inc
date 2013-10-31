@@ -325,17 +325,7 @@ USE_NETKEY=false
 USE_KLIPS=false
 endif
 
-# Build aggressive mode authentication system code - both Server and Client.
-# This was off by default, since aggressive mode leads to denial of service
-# attacks.
-USE_AGGRESSIVE?=true
-
-# Build XAUTH authentication system code - both Server and Client.
-# XAUTH is tricky, and you can get into security trouble unless you
-# do additional configuration - but it is often needed for Cisco interop
-USE_XAUTH?=true
-
-# When doing XAUTH, include PAM support when available
+# include PAM support when XAUTH is available on the platform
 
 ifeq ($(OSDEP),linux)
 USE_XAUTHPAM?=true
@@ -382,10 +372,6 @@ USE_EXTRACRYPTO?=false
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
-
-# Do we have an external stats daemon we can push state changes to?
-# Currently hardcoded to /bin/libreswan-statsd
-HAVE_STATSD?=false
 
 # Do we have Openssl libraries available for BIGNUM support?
 # Required of HAVE_OCF support

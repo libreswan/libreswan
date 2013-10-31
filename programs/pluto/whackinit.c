@@ -207,6 +207,7 @@ static bool pack_str(char **p)
 	}
 }
 
+/* ??? bufsize must be PASS_MAX + 1 (documented in getpass(3)) */
 static size_t get_secret(char *buf, size_t bufsize)
 {
 	const char *secret;
@@ -214,10 +215,12 @@ static size_t get_secret(char *buf, size_t bufsize)
 
 	fflush(stdout);
 	usleep(20000); /* give fflush time for flushing */
+	/* ??? the function getpass(3) is obsolete! */
 	secret = getpass("Enter passphrase: ");
 	secret = (secret == NULL) ? "" : secret;
 
-	strncpy(buf, secret, bufsize);
+	strncpy(buf, secret, bufsize-1);
+	buf[bufsize-1] = '\0';	/* ensure NUL termination */
 
 	len = strlen(buf) + 1;
 
@@ -391,10 +394,8 @@ int main(int argc, char **argv)
 	msg.policy_label = NULL;
 #endif
 
-#ifdef XAUTH
 	msg.modecfg_domain = NULL;
 	msg.modecfg_banner = NULL;
-#endif
 
 	msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
 	msg.sa_ipsec_life_seconds = PLUTO_SA_LIFE_DURATION_DEFAULT;

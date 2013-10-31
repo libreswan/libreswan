@@ -40,6 +40,22 @@ struct oe_conn {
 	struct starter_conn oe_sc;
 };
 
+/* short form for initializer of 0.0.0.0 */
+#define IPv4_ZERO { \
+			.u = { \
+				.v4 = { \
+					.sin_family = AF_INET, \
+					.sin_addr.s_addr = 0 \
+				} \
+			}, \
+		}
+
+/* short form for initializer of 0.0.0.0/0 */
+#define IPv4_ALL { \
+			.addr = IPv4_ZERO, \
+			.maskbits = 0 \
+		}
+
 /*
  * This replaces the _confread.in awk script that did:
  *
@@ -56,7 +72,7 @@ struct oe_conn {
  *		}
  */
 
-struct oe_conn oe_packet_default = {
+static const struct oe_conn oe_packet_default = {
 	.oe_ct = OE_PACKETDEFAULT,
 	.oe_cn = "packetdefault",
 	.oe_sc = {
@@ -78,43 +94,27 @@ struct oe_conn oe_packet_default = {
 
 		.desired_state = STARTUP_ONDEMAND,
 
-		.left.addrtype = KH_DEFAULTROUTE,
-		.left.addr_family = AF_INET,
-		.left.has_client = TRUE,
-		.left.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.left = {
+			.addrtype = KH_DEFAULTROUTE,
+			.addr_family = AF_INET,
+			.has_client = TRUE,
+			.addr = IPv4_ZERO,
+			.nexttype = KH_DEFAULTROUTE,
+			.nexthop = IPv4_ZERO,
+			.subnet = IPv4_ALL,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.left.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.left.key_from_DNS_on_demand = TRUE,
 
-		.right.addr_family = AF_INET,
-		.right.addrtype = KH_OPPO,
-		.right.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.right = {
+			.addr_family = AF_INET,
+			.addrtype = KH_OPPO,
+			.addr = IPv4_ZERO,
+			.has_client = TRUE,
+			.subnet = IPv4_ALL,
+			.nexttype = KH_NOTSET,
+			.nexthop = IPv4_ZERO,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.right.has_client = TRUE,
-		.right.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.right.nexttype = KH_NOTSET,
-		.right.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
 
@@ -127,7 +127,7 @@ struct oe_conn oe_packet_default = {
  *		}
  */
 
-struct oe_conn oe_clear = {
+static const struct oe_conn oe_clear = {
 	.oe_ct = OE_CLEAR,
 	.oe_cn = "clear",
 	.oe_sc = {
@@ -136,40 +136,23 @@ struct oe_conn oe_clear = {
 
 		.desired_state = STARTUP_ONDEMAND,
 
-		.left.addrtype = KH_DEFAULTROUTE,
-		.left.addr_family = AF_INET,
-		.left.has_client = FALSE,
-		.left.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.left = {
+			.addrtype = KH_DEFAULTROUTE,
+			.addr_family = AF_INET,
+			.has_client = FALSE,
+			.addr = IPv4_ZERO,
+			.nexttype = KH_DEFAULTROUTE,
+			.nexthop = IPv4_ZERO,
+			.subnet = IPv4_ALL
 		},
-		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.left.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-
-		.right.addr_family = AF_INET,
-		.right.addrtype = KH_GROUP,
-		.right.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.has_client = TRUE,
-		.right.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.right.nexttype = KH_NOTSET,
-		.right.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.right = {
+			.addr_family = AF_INET,
+			.addrtype = KH_GROUP,
+			.addr = IPv4_ZERO,
+			.has_client = TRUE,
+			.subnet = IPv4_ALL,
+			.nexttype = KH_NOTSET,
+			.nexthop = IPv4_ZERO
 		},
 	},
 };
@@ -187,7 +170,7 @@ struct oe_conn oe_clear = {
  *		}
  */
 
-struct oe_conn oe_clear_or_private = {
+static const struct oe_conn oe_clear_or_private = {
 	.oe_ct = OE_CLEAR_OR_PRIVATE,
 	.oe_cn = "clear-or-private",
 	.oe_sc = {
@@ -209,43 +192,26 @@ struct oe_conn oe_clear_or_private = {
 
 		.desired_state = STARTUP_ONDEMAND,
 
-		.left.addrtype = KH_DEFAULTROUTE,
-		.left.addr_family = AF_INET,
-		.left.has_client = FALSE,
-		.left.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.left = {
+			.addrtype = KH_DEFAULTROUTE,
+			.addr_family = AF_INET,
+			.has_client = FALSE,
+			.addr = IPv4_ZERO,
+			.nexttype = KH_DEFAULTROUTE,
+			.nexthop = IPv4_ZERO,
+			.subnet = IPv4_ALL,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.right = {
+			.addr_family = AF_INET,
+			.addrtype = KH_OPPOGROUP,
+			.addr = IPv4_ZERO,
+			.has_client = TRUE,
+			.subnet = IPv4_ALL,
+			.nexttype = KH_NOTSET,
+			.nexthop = IPv4_ZERO,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.left.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.left.key_from_DNS_on_demand = TRUE,
-
-		.right.addr_family = AF_INET,
-		.right.addrtype = KH_OPPOGROUP,
-		.right.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.has_client = TRUE,
-		.right.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.right.nexttype = KH_NOTSET,
-		.right.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
 
@@ -262,7 +228,7 @@ struct oe_conn oe_clear_or_private = {
  *		}
  */
 
-struct oe_conn oe_private_or_clear = {
+static const struct oe_conn oe_private_or_clear = {
 	.oe_ct = OE_PRIVATE_OR_CLEAR,
 	.oe_cn = "private-or-clear",
 	.oe_sc = {
@@ -283,43 +249,26 @@ struct oe_conn oe_private_or_clear = {
 		.options[KBF_SALIFETIME] = 1800,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
-		.left.addrtype = KH_DEFAULTROUTE,
-		.left.addr_family = AF_INET,
-		.left.has_client = FALSE,
-		.left.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.left = {
+			.addrtype = KH_DEFAULTROUTE,
+			.addr_family = AF_INET,
+			.has_client = FALSE,
+			.addr = IPv4_ZERO,
+			.nexttype = KH_DEFAULTROUTE,
+			.nexthop = IPv4_ZERO,
+			.subnet = IPv4_ALL,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.right = {
+			.addr_family = AF_INET,
+			.addrtype = KH_OPPOGROUP,
+			.addr = IPv4_ZERO,
+			.has_client = TRUE,
+			.subnet = IPv4_ALL,
+			.nexttype = KH_NOTSET,
+			.nexthop = IPv4_ZERO,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.left.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.left.key_from_DNS_on_demand = TRUE,
-
-		.right.addr_family = AF_INET,
-		.right.addrtype = KH_OPPOGROUP,
-		.right.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.has_client = TRUE,
-		.right.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.right.nexttype = KH_NOTSET,
-		.right.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
 
@@ -337,7 +286,7 @@ struct oe_conn oe_private_or_clear = {
  *
  */
 
-struct oe_conn oe_private = {
+static const struct oe_conn oe_private = {
 	.oe_ct = OE_PRIVATE,
 	.oe_cn = "private",
 	.oe_sc = {
@@ -360,43 +309,26 @@ struct oe_conn oe_private = {
 		.options[KBF_SALIFETIME] = 1800,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
-		.left.addrtype = KH_DEFAULTROUTE,
-		.left.addr_family = AF_INET,
-		.left.has_client = FALSE,
-		.left.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.left = {
+			.addrtype = KH_DEFAULTROUTE,
+			.addr_family = AF_INET,
+			.has_client = FALSE,
+			.addr = IPv4_ZERO,
+			.nexttype = KH_DEFAULTROUTE,
+			.nexthop = IPv4_ZERO,
+			.subnet = IPv4_ALL,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.right = {
+			.addr_family = AF_INET,
+			.addrtype = KH_OPPOGROUP,
+			.addr = IPv4_ZERO,
+			.has_client = TRUE,
+			.subnet = IPv4_ALL,
+			.nexttype = KH_NOTSET,
+			.nexthop = IPv4_ZERO,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.left.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.left.key_from_DNS_on_demand = TRUE,
-
-		.right.addr_family = AF_INET,
-		.right.addrtype = KH_OPPOGROUP,
-		.right.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.has_client = TRUE,
-		.right.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.right.nexttype = KH_NOTSET,
-		.right.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
 
@@ -412,7 +344,7 @@ struct oe_conn oe_private = {
  *
  */
 
-struct oe_conn oe_block = {
+static const struct oe_conn oe_block = {
 	.oe_ct = OE_BLOCK,
 	.oe_cn = "block",
 	.oe_sc = {
@@ -422,47 +354,30 @@ struct oe_conn oe_block = {
 
 		.desired_state = STARTUP_ONDEMAND,
 
-		.left.addrtype = KH_DEFAULTROUTE,
-		.left.addr_family = AF_INET,
-		.left.has_client = FALSE,
-		.left.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.left = {
+			.addrtype = KH_DEFAULTROUTE,
+			.addr_family = AF_INET,
+			.has_client = FALSE,
+			.addr = IPv4_ZERO,
+			.nexttype = KH_DEFAULTROUTE,
+			.nexthop = IPv4_ZERO,
+			.subnet = IPv4_ALL,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.left.nexttype = KH_DEFAULTROUTE,
-		.left.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
+		.right = {
+			.addr_family = AF_INET,
+			.addrtype = KH_OPPOGROUP,
+			.addr = IPv4_ZERO,
+			.has_client = TRUE,
+			.subnet = IPv4_ALL,
+			.nexttype = KH_NOTSET,
+			.nexthop = IPv4_ZERO,
+			.key_from_DNS_on_demand = TRUE
 		},
-		.left.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.left.key_from_DNS_on_demand = TRUE,
-
-		.right.addr_family = AF_INET,
-		.right.addrtype = KH_OPPOGROUP,
-		.right.addr = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.has_client = TRUE,
-		.right.subnet = {
-			.addr = {
-				.u = { .v4 = { .sin_family = AF_INET,
-					       .sin_addr.s_addr = 0 } },
-			},
-			.maskbits = 0
-		},
-		.right.nexttype = KH_NOTSET,
-		.right.nexthop = {
-			.u = { .v4 = { .sin_family = AF_INET } },
-		},
-		.right.key_from_DNS_on_demand = TRUE,
 	},
 };
 
-struct oe_conn *implicit_conns[] = {
+static const struct oe_conn *const implicit_conns[] = {
 	&oe_packet_default,
 	&oe_clear,
 	&oe_clear_or_private,
@@ -477,7 +392,7 @@ void add_any_oeconns(struct starter_config *cfg,
 {
 	bool found_conns[OE_MAX];
 	struct section_list *sconn;
-	struct oe_conn **oc;
+	const struct oe_conn *const *oc;
 	err_t perr;
 	int i;
 
@@ -498,7 +413,7 @@ void add_any_oeconns(struct starter_config *cfg,
 	}
 
 	for (i = 0, oc = implicit_conns; *oc != NULL; oc++, i++) {
-		if (found_conns[i] == FALSE) {
+		if (!found_conns[i]) {
 			struct starter_conn *conn;
 			const struct starter_conn *tconn;
 
@@ -541,4 +456,3 @@ void add_any_oeconns(struct starter_config *cfg,
 		}
 	}
 }
-

@@ -32,10 +32,14 @@
 #include "libreswan.h"
 
 #define V       "@IPSECVERSION@"        /* substituted in by Makefile */
-#define VVID    "@IPSECVIDVERSION@"     /* substituted in by Makefile */
+#define VID    "@IPSECVIDVERSION@"     /* substituted in by Makefile */
+#define OUR_VENDOR_VID    "OE-Libreswan-@IPSECVIDVERSION@"     /* substituted in by Makefile */
 static const char libreswan_number[] = V;
-static const char libreswan_vendorid[] = "OE-Libreswan-" VVID;
 static const char libreswan_string[] = "Libreswan " V;
+#ifdef __KERNEL__
+static
+#endif
+const char libreswan_vendorid[] = OUR_VENDOR_VID;
 
 
 /*

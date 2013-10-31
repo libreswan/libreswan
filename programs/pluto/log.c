@@ -48,9 +48,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "kernel.h"             /* needs connections.h */
 #include "whack.h"              /* needs connections.h */
@@ -93,6 +90,7 @@ bool
 
 char *pluto_log_file = NULL;
 char *base_perpeer_logdir = NULL;
+char *pluto_stats_binary = NULL;
 static int perpeer_count = 0;
 
 /* what to put in front of debug output */
@@ -808,12 +806,14 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 static void show_system_security(void)
 {
 	int selinux = libreswan_selinux();
+#ifdef FIPS_CHECK
 	int fipsmode = libreswan_fipsmode();
-	int fipsproduct = libreswan_fipsproduct();
+#else
+	int fipsmode = 0;
+#endif
 
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "fips product=%s, fips mode=%s;", 
-                fipsproduct == 0 ? "no" : fipsproduct == 1 ? "yes" : "error(cannothappen)",
+	whack_log(RC_COMMENT, "fips mode=%s;", 
                 fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
 	whack_log(RC_COMMENT, "SElinux=%s",
                 selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
@@ -880,7 +880,6 @@ void daily_log_event(void)
 	daily_log_reset();
 }
 
-#ifdef HAVE_STATSD
 /*
  * we store runtime info for stats/status this way,
  * you may be able to do something similar using these hooks
@@ -996,6 +995,9 @@ void log_state(struct state *st, enum state_kind new_state)
 	const char *tun = NULL, *p1 = NULL, *p2 = NULL;
 	enum state_kind save_state;
 
+	if (!pluto_stats_binary)
+		return;
+
 	if (!st || !st->st_connection || !st->st_connection->name) {
 		DBG(DBG_CONTROLMORE, DBG_log(
 			    "log_state() called without state"));
@@ -1077,16 +1079,17 @@ void log_state(struct state *st, enum state_kind new_state)
 	}
 	DBG(DBG_CONTROLMORE,
 	    DBG_log(
-		    "log_state calling libreswan-statsd for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
-		    conn->name, tun, p1, p2));
+		    "log_state calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
+		    pluto_stats_binary, conn->name, tun, p1, p2));
 
-	snprintf(buf, sizeof(buf), "/bin/libreswan-statsd "
+	snprintf(buf, sizeof(buf), "%s "
 		 "%s ipsec-tunnel-%s if_stats /proc/net/dev/%s \\; "
 		 "%s ipsec-tunnel-%s tunnel %s \\; "
 		 "%s ipsec-tunnel-%s phase1 %s \\; "
 		 "%s ipsec-tunnel-%s phase2 %s \\; "
 		 "%s ipsec-tunnel-%s nfmark-me/him 0x%x/0x%x",
 
+		 pluto_stats_binary,
 		 conn->interface ? "push" : "drop", conn->name,
 		 conn->interface ? conn->interface->ip_dev->id_vname : "",
 		 tun ? "push" : "drop", conn->name, tun ? tun : "",
@@ -1101,9 +1104,9 @@ void log_state(struct state *st, enum state_kind new_state)
 		 st->st_refhim == IPSEC_SAREF_NULL ? 0u :
 		 IPsecSAref2NFmark(st->st_refhim) | IPSEC_NFMARK_IS_SAREF_BIT
 		 );
-	system(buf);
+	if (system(buf) == -1) {
+		loglog(RC_LOG_SERIOUS,"statsbin= failed to send status update notification");
+	}
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state for connection %s completed", conn->name));
 }
-
-#endif

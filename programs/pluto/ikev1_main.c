@@ -50,9 +50,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h" /* needs id.h */
 #include "keys.h"
 #include "packet.h"
@@ -85,9 +82,8 @@
 
 #include "lswcrypto.h"
 
-#ifdef XAUTH
 #include "xauth.h"
-#endif
+
 #include "vendor.h"
 #include "nat_traversal.h"
 #ifdef VIRTUAL_IP
@@ -132,11 +128,9 @@ stf_status main_outI1(int whack_sock,
 	if (c->send_vendorid) {
 		numvidtosend++;
 	}
-#ifdef XAUTH
+
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
 		numvidtosend++;
-
-#endif
 
 	/* set up new state */
 	get_cookie(TRUE, st->st_icookie, COOKIE_SIZE, &c->spd.that.host_addr);
@@ -261,7 +255,6 @@ stf_status main_outI1(int whack_sock,
 		}
 	}
 
-#ifdef XAUTH
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
 		int np = --numvidtosend >
 			0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
@@ -270,7 +263,6 @@ stf_status main_outI1(int whack_sock,
 			return STF_INTERNAL_ERROR;
 		}
 	}
-#endif
 
 #ifdef DEBUG
 	/* if we are not 0 then something went very wrong above */
@@ -745,9 +737,9 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	/* Set up state */
 	md->st = st = new_state();
-#ifdef XAUTH
-	passert(st->st_oakley.xauth == 0);
-#endif
+
+	passert(!st->st_oakley.doing_xauth);
+
 	st->st_connection = c;
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
@@ -824,12 +816,9 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
 		numvidtosend++;
 
-#ifdef XAUTH
 	/* Increase VID counter for VID_MISC_XAUTH */
 	if (c->spd.this.xauth_server || c->spd.this.xauth_client)
 		numvidtosend++;
-
-#endif
 
 	/* start of SA out */
 	{
@@ -880,17 +869,16 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef XAUTH
 	/*
 	 * If XAUTH is required, insert draft-ietf-ipsec-isakmp-xauth-06
 	 * Vendor ID
 	 */
 	if (c->spd.this.xauth_server || c->spd.this.xauth_client) {
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vendorid(np, &md->rbody, VID_MISC_XAUTH))
+		if (!out_vid(np, &md->rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
+
 	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %d and %d",
 				nat_traversal_enabled,
 				md->quirks.nat_traversal_vid));
@@ -904,7 +892,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 					quirks.
 					nat_traversal_vid));
 		if ((st->hidden_variables.st_nat_traversal) &&
-			(!out_vendorid(np, &
+			(!out_vid(np, &
 				md->rbody, md->quirks.nat_traversal_vid)))
 			return STF_INTERNAL_ERROR;
 	}
@@ -2238,7 +2226,6 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	st->st_ph1_iv_len = st->st_new_iv_len;
 	set_ph1_iv(st, st->st_new_iv);
 
-#ifdef XAUTH
 	/*
 	 * It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
@@ -2252,7 +2239,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 				"Skipping XAUTH for rekey for Cisco Peer "
 				"compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -2262,7 +2249,6 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
-#endif
 
 	ISAKMP_SA_established(st->st_connection, st->st_serialno);
 
@@ -2319,7 +2305,6 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 	memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
 	st->st_ph1_iv_len = st->st_new_iv_len;
 
-#ifdef XAUTH
 	/*
 	 * It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
@@ -2332,7 +2317,7 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 				"Skipping XAUTH for rekey for Cisco Peer "
 				"compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -2343,7 +2328,6 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
-#endif
 
 	ISAKMP_SA_established(st->st_connection, st->st_serialno);
 

@@ -131,9 +131,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -148,9 +145,9 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-#ifdef XAUTH
+
 #include "xauth.h"
-#endif
+
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "dpd.h"
@@ -379,7 +376,6 @@ static const struct state_microcode state_microcode_table[] = {
 
 	/* No state for aggr_outI1: -->HDR, SA, KE, Ni, IDii */
 
-#if defined(AGGRESSIVE)
 	/* STATE_AGGR_R0:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Ni, IDii
 	 *                -->  HDR, SA, KE, Nr, IDir, HASH_R
@@ -441,18 +437,6 @@ static const struct state_microcode state_microcode_table[] = {
 	{ STATE_AGGR_R2, STATE_UNDEFINED,
 	  SMF_ALL_AUTH,
 	  LEMPTY, LEMPTY, PT(NONE), EVENT_NULL, unexpected },
-#else
-	/*
-	 * put in dummy states so that the state numbering does not
-	 * change depending upon build options.
-	 */
-	PHONY_STATE(STATE_AGGR_I1),
-	PHONY_STATE(STATE_AGGR_I1),
-	PHONY_STATE(STATE_AGGR_R1),
-	PHONY_STATE(STATE_AGGR_R1),
-	PHONY_STATE(STATE_AGGR_I2),
-	PHONY_STATE(STATE_AGGR_R2),
-#endif
 
 	/***** Phase 2 Quick Mode *****/
 
@@ -528,7 +512,6 @@ static const struct state_microcode state_microcode_table[] = {
 	  P(HASH), LEMPTY, PT(NONE),
 	  EVENT_NULL, informational },
 
-#ifdef XAUTH
 	{ STATE_XAUTH_R0, STATE_XAUTH_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
@@ -590,7 +573,6 @@ static const struct state_microcode state_microcode_table[] = {
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, xauth_inI1 },
-#endif
 
 #undef P
 #undef PT
@@ -1271,8 +1253,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-#ifdef XAUTH
-			if (st->st_oakley.xauth != 0) {
+			if (st->st_oakley.doing_xauth) {
 				libreswan_log(
 					"Cannot do Quick Mode until XAUTH done.");
 				return;
@@ -1289,7 +1270,6 @@ void process_v1_packet(struct msg_digest **mdp)
 					"SoftRemote workaround: Cannot do Quick Mode until MODECFG done.");
 				return;
 			}
-#endif
 #endif
 
 			set_cur_state(st);
@@ -1319,20 +1299,17 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			from_state = STATE_QUICK_R0;
 		} else {
-#ifdef XAUTH
-			if (st->st_oakley.xauth != 0) {
+			if (st->st_oakley.doing_xauth) {
 				libreswan_log(
 					"Cannot do Quick Mode until XAUTH done.");
 				return;
 			}
-#endif
 			set_cur_state(st);
 			from_state = st->st_state;
 		}
 
 		break;
 
-#ifdef XAUTH
 	case ISAKMP_XCHG_MODE_CFG:
 		if (is_zero_cookie(md->hdr.isa_icookie)) {
 			libreswan_log("Mode Config message is invalid because"
@@ -1538,7 +1515,6 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 
 		break;
-#endif
 
 	case ISAKMP_XCHG_NGRP:
 	default:
@@ -1716,12 +1692,9 @@ void process_v1_packet(struct msg_digest **mdp)
 	smc = ike_microcode_index[from_state - STATE_IKE_FLOOR];
 
 	if (st != NULL) {
-#if defined(XAUTH)
 		oakley_auth_t baseauth =
 			xauth_calcbaseauth(st->st_oakley.auth);
-#else
-		oakley_auth_t baseauth = st->st_oakley.auth;
-#endif
+
 		while (!LHAS(smc->flags, baseauth)) {
 			smc++;
 			passert(smc->state == from_state);
@@ -2640,10 +2613,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			}
 		}
 
-#ifdef XAUTH
 		/* Special case for XAUTH server */
 		if (st->st_connection->spd.this.xauth_server) {
-			if ((st->st_oakley.xauth != 0) &&
+			if (st->st_oakley.doing_xauth &&
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				libreswan_log(
 					"XAUTH: Sending XAUTH Login/Password Request");
@@ -2728,7 +2700,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			    DBG_log("waiting for modecfg set from server"));
 			break;
 		}
-#endif
 
 		if (st->st_rekeytov2) {
 			DBG(DBG_CONTROL,

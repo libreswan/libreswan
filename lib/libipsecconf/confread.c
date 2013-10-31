@@ -120,10 +120,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_LABELED_IPSEC] = FALSE;
 #endif
 
-#ifdef XAUTH
 	cfg->conn_default.options[KBF_XAUTHBY] = XAUTHBY_FILE;
 	cfg->conn_default.options[KBF_XAUTHFAIL] = XAUTHFAIL_HARD;
-#endif
 
 	cfg->conn_default.policy = POLICY_RSASIG | POLICY_TUNNEL |
 				   POLICY_ENCRYPT | POLICY_PFS;
@@ -167,8 +165,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 }
 
 /* format error, and append to string of errors */
-static
-int error_append(char **perr, const char *fmt, ...)
+static int error_append(char **perr, const char *fmt, ...)
 {
 	va_list args;
 
@@ -196,8 +193,7 @@ int error_append(char **perr, const char *fmt, ...)
 	return 0;
 }
 
-#define ERR_FOUND(args ...) do { err += error_append(&err_str, ## args); \
-} while (0)
+#define ERR_FOUND(args ...) do err += error_append(&err_str, ## args); while (0)
 
 #define KW_POLICY_FLAG(val, fl) if (conn->options_set[val]) \
 	{ if (conn->options[val]) \
@@ -221,8 +217,7 @@ int error_append(char **perr, const char *fmt, ...)
  * @param list list of pointers
  * @return void
  */
-static
-void free_list(char **list)
+static void free_list(char **list)
 {
 	char **s;
 
@@ -237,8 +232,7 @@ void free_list(char **list)
  * @param value
  * @return new_list (pointer to list of pointers)
  */
-static
-char **new_list(char *value)
+static char **new_list(char *value)
 {
 	char *val, *b, *e, *end, **nlist;
 	int count;
@@ -699,7 +693,6 @@ static int validate_end(struct ub_ctx *dnsctx,
 				  ugh);
 	}
 
-#ifdef XAUTH
 	if (end->strings_set[KSCF_ADDRESSPOOL]) {
 		char *addresspool = end->strings[KSCF_ADDRESSPOOL];
 		if (end->strings_set[KSCF_SUBNET])
@@ -715,8 +708,6 @@ static int validate_end(struct ub_ctx *dnsctx,
 	if (end->options_set[KNCF_XAUTHSERVER] ||
 	    end->options_set[KNCF_XAUTHCLIENT])
 		conn_st->policy |= POLICY_XAUTH;
-
-#endif
 
 	/*
 	   KSCF_SUBNETWITHIN    --- not sure what to do with it.
@@ -743,8 +734,7 @@ static int validate_end(struct ub_ctx *dnsctx,
  *        value is considered acceptable.
  * @return bool 0 if successfull
  */
-static
-bool translate_conn(struct starter_conn *conn,
+static bool translate_conn(struct starter_conn *conn,
 		    struct section_list *sl,
 		    enum keyword_set assigned_value,
 		    err_t *error)
@@ -961,8 +951,7 @@ bool translate_conn(struct starter_conn *conn,
 	return err;
 }
 
-static
-void move_comment_list(struct starter_comments_list *to,
+static void move_comment_list(struct starter_comments_list *to,
 		       struct starter_comments_list *from)
 {
 	struct starter_comments *sc, *scnext;
@@ -976,8 +965,7 @@ void move_comment_list(struct starter_comments_list *to,
 	}
 }
 
-static
-int load_conn_basic(struct starter_conn *conn,
+static int load_conn_basic(struct starter_conn *conn,
 		    struct section_list *sl,
 		    enum keyword_set assigned_value,
 		    err_t *perr)
@@ -1223,9 +1211,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 
 	KW_POLICY_FLAG(KBF_AGGRMODE, POLICY_AGGRESSIVE);
 
-#ifdef XAUTH
 	KW_POLICY_FLAG(KBF_MODECONFIGPULL, POLICY_MODECFG_PULL);
-#endif
 
 	KW_POLICY_FLAG(KBF_OVERLAPIP, POLICY_OVERLAPIP);
 
@@ -1245,7 +1231,6 @@ static int load_conn(struct ub_ctx *dnsctx,
 	if (conn->strings_set[KSF_IKE])
 		conn->ike = xstrdup(conn->strings[KSF_IKE]);
 
-#ifdef XAUTH
 	if (conn->strings_set[KSF_MODECFGDNS1]) {
 		starter_log(LOG_LEVEL_DEBUG,
 			    "connection's  conn->modecfg_dns1 set to: %s",
@@ -1270,7 +1255,6 @@ static int load_conn(struct ub_ctx *dnsctx,
 			    "connection's  conn->modecfg_banner set to: %s",
 			    conn->strings[KSF_MODECFGBANNER] );
 	}
-#endif
 
 	if (conn->strings_set[KSF_CONNALIAS])
 		conn->connalias = xstrdup(conn->strings[KSF_CONNALIAS]);
@@ -1400,12 +1384,11 @@ void conn_default(struct starter_conn *conn,
 
 	CONN_STR(conn->esp);
 	CONN_STR(conn->ike);
-#ifdef XAUTH
+
 	CONN_STR(conn->modecfg_dns1);
 	CONN_STR(conn->modecfg_dns2);
 	CONN_STR(conn->modecfg_domain);
 	CONN_STR(conn->modecfg_banner);
-#endif
 #ifdef HAVE_LABELED_IPSEC
 	CONN_STR(conn->policy_label);
 #endif
@@ -1440,8 +1423,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name,
 	return conn;
 }
 
-static
-int init_load_conn(struct ub_ctx *dnsctx,
+static int init_load_conn(struct ub_ctx *dnsctx,
 		   struct starter_config *cfg,
 		   struct config_parsed *cfgp,
 		   struct section_list *sconn,
@@ -1620,10 +1602,9 @@ static void confread_free_conn(struct starter_conn *conn)
 	FREE_STR(conn->esp);
 	FREE_STR(conn->ike);
 #endif
-#ifdef XAUTH
 	FREE_STR(conn->modecfg_dns1);
 	FREE_STR(conn->modecfg_dns2);
-#endif
+
 	FREE_STR(conn->left.virt);
 	FREE_STR(conn->right.virt);
 }

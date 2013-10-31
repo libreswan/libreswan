@@ -132,7 +132,7 @@ struct keyword_enum_value {
 };
 
 struct keyword_enum_values {
-	struct keyword_enum_value *values;
+	const struct keyword_enum_value *values;
 	size_t valuesize;
 };
 

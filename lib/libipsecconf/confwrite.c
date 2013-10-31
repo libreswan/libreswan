@@ -25,25 +25,24 @@
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/keywords.h"
 
-void confwrite_list(FILE *out, char *prefix, int val, struct keyword_def *k)
+void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *k)
 {
-	struct keyword_enum_values *kevs = k->validenum;
-	struct keyword_enum_value  *kev  = kevs->values;
-	int i = 0;
-	unsigned int mask = 1;
+	const struct keyword_enum_values *kevs = k->validenum;
+	const struct keyword_enum_value  *kev  = kevs->values;
+	int i;
 	char *sep = "";
 
-	while (i < (int)kevs->valuesize) {
-		mask = kev[i].value;
+	for (i = 0; i < (int)kevs->valuesize; i++) {
+		unsigned int mask = kev[i].value;
+
 		if (mask != 0 && (val & mask) == mask) {
 			fprintf(out, "%s%s%s", sep, prefix, kev[i].name);
 			sep = " ";
 		}
-		i++;
 	}
 }
 
-void confwrite_int(FILE *out,
+static void confwrite_int(FILE *out,
 		   char   *side,
 		   unsigned int context,
 		   unsigned int keying_context,
@@ -51,7 +50,7 @@ void confwrite_int(FILE *out,
 		   int_set options_set,
 		   ksf strings)
 {
-	struct keyword_def *k;
+	const struct keyword_def *k;
 
 	for (k = ipsec_conf_keywords_v2; k->keyname != NULL; k++) {
 
@@ -123,9 +122,9 @@ void confwrite_int(FILE *out,
 					fprintf(out, "%s\n",
 						strings[k->field]);
 				} else {
-					struct keyword_enum_values *kevs =
+					const struct keyword_enum_values *kevs =
 						k->validenum;
-					struct keyword_enum_value  *kev  =
+					const struct keyword_enum_value  *kev  =
 						kevs->values;
 					int i = 0;
 
@@ -174,14 +173,14 @@ void confwrite_int(FILE *out,
 	}
 }
 
-void confwrite_str(FILE *out,
+static void confwrite_str(FILE *out,
 		   char   *side,
 		   unsigned int context,
 		   unsigned int keying_context,
 		   ksf strings,
 		   str_set strings_set)
 {
-	struct keyword_def *k;
+	const struct keyword_def *k;
 
 	for (k = ipsec_conf_keywords_v2; k->keyname != NULL; k++) {
 
@@ -264,8 +263,6 @@ static void confwrite_side(FILE *out,
 		    struct starter_end *end,
 		    char   *side)
 {
-	char databuf[2048]; /* good for a 12288 bit rsa key */
-
 	switch (end->addrtype) {
 	case KH_NOTSET:
 		/* nothing! */
@@ -282,8 +279,6 @@ static void confwrite_side(FILE *out,
 	case KH_IFACE:
 		if (end->strings_set[KSCF_IP])
 			fprintf(out, "\t%s=%s\n", side, end->strings[KSCF_IP]);
-
-
 		break;
 
 	case KH_OPPO:
@@ -301,13 +296,15 @@ static void confwrite_side(FILE *out,
 	case KH_IPHOSTNAME:
 		if (end->strings_set[KSCF_IP])
 			fprintf(out, "\t%s=%s\n", side, end->strings[KSCF_IP]);
-
-
 		break;
 
 	case KH_IPADDR:
-		addrtot(&end->addr, 0, databuf, ADDRTOT_BUF);
-		fprintf(out, "\t%s=%s\n", side, databuf);
+		{
+			char as[ADDRTOT_BUF];
+
+			addrtot(&end->addr, 0, as, sizeof(as));
+			fprintf(out, "\t%s=%s\n", side, as);
+		}
 		break;
 	}
 
@@ -324,8 +321,12 @@ static void confwrite_side(FILE *out,
 		break;
 
 	case KH_IPADDR:
-		addrtot(&end->nexthop, 0, databuf, ADDRTOT_BUF);
-		fprintf(out, "\t%snexthop=%s\n", side, databuf);
+		{
+			char as[ADDRTOT_BUF];
+
+			addrtot(&end->nexthop, 0, as, sizeof(as));
+			fprintf(out, "\t%snexthop=%s\n", side, as);
+		}
 		break;
 
 	default:
@@ -333,41 +334,44 @@ static void confwrite_side(FILE *out,
 	}
 
 	if (end->has_client) {
-		if (isvalidsubnet(&end->subnet) &&
-		    (!subnetishost(&end->subnet) ||
-		     !addrinsubnet(&end->addr, &end->subnet))) {
-			subnettot(&end->subnet, 0, databuf, SUBNETTOT_BUF);
-			fprintf(out, "\t%ssubnet=%s\n", side, databuf);
+		if (!subnetishost(&end->subnet) ||
+		     !addrinsubnet(&end->addr, &end->subnet))
+		{
+			char as[ADDRTOT_BUF];
+
+			subnettot(&end->subnet, 0, as, sizeof(as));
+			fprintf(out, "\t%ssubnet=%s\n", side, as);
 		}
 	}
 
-	if (end->rsakey1)
+	if (end->rsakey1 != NULL)
 		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
 
-	if (end->rsakey2)
+	if (end->rsakey2 != NULL)
 		fprintf(out, "\t%srsasigkey2=%s\n", side, end->rsakey2);
 
-	if (end->port || end->protocol) {
-		char b2[32];
+	if (end->port != 0 || end->protocol != 0) {
+		/* it is hoped that any number fits within 32 characters */
+		char portstr[32] = "%any";
+		char protostr[32] = "%any";
 
-		strcpy(b2, "%any");
-		strcpy(databuf, "%any");
-
-		if (end->port)
-			sprintf(b2, "%u", end->port);
-		if (end->protocol)
-			sprintf(databuf, "%u", end->protocol);
+		if (end->port != 0)
+			snprintf(portstr, sizeof(portstr), "%u", end->port);
+		if (end->protocol != 0)
+			snprintf(protostr, sizeof(protostr), "%u", end->protocol);
 
 		fprintf(out, "\t%sprotoport=%s/%s\n", side,
-			databuf, b2);
+			portstr, protostr);
 	}
 
 	if (end->cert)
 		fprintf(out, "\t%scert=%s\n", side, end->cert);
 
 	if (!isanyaddr(&end->sourceip)) {
-		addrtot(&end->sourceip, 0, databuf, ADDRTOT_BUF);
-		fprintf(out, "\t%ssourceip=%s\n", side, databuf);
+		char as[ADDRTOT_BUF];
+
+		addrtot(&end->sourceip, 0, as, sizeof(as));
+		fprintf(out, "\t%ssourceip=%s\n", side, as);
 	}
 
 	confwrite_int(out, side,
@@ -378,7 +382,7 @@ static void confwrite_side(FILE *out,
 
 }
 
-void confwrite_comments(FILE *out, struct starter_conn *conn)
+static void confwrite_comments(FILE *out, struct starter_conn *conn)
 {
 	struct starter_comments *sc, *scnext;
 
@@ -392,16 +396,21 @@ void confwrite_comments(FILE *out, struct starter_conn *conn)
 	}
 }
 
-void confwrite_conn(FILE *out,
+static void confwrite_conn(FILE *out,
 		    struct starter_conn *conn)
 {
+	/* short-cut for writing out a field (string-valued, indented, on its own line) */
+#	define cwf(name, value)	do fprintf(out, "\t" name "=%s\n", (value)); while (0)
+
 	fprintf(out, "# begin conn %s\n", conn->name);
 
 	fprintf(out, "conn %s\n", conn->name);
 
-	if (conn->alsos) { /* handle also= as a comment */
+	if (conn->alsos) {
+		/* handle also= as a comment */
 
 		int alsoplace = 0;
+
 		fprintf(out, "\t#also = ");
 		while (conn->alsos[alsoplace] != NULL) {
 			fprintf(out, "%s ", conn->alsos[alsoplace]);
@@ -418,30 +427,33 @@ void confwrite_conn(FILE *out,
 	confwrite_comments(out, conn);
 
 	if (conn->connalias)
-		fprintf(out, "\tconnalias=\"%s\"\n", conn->connalias);
+		cwf("connalias", conn->connalias);
 
 	{
+		const char *dsn = "UNKNOWN";
+
 		switch (conn->desired_state) {
 		case STARTUP_IGNORE:
-			fprintf(out, "\tauto=ignore\n");
+			dsn = "ignore";
 			break;
 
 		case STARTUP_POLICY:
-			fprintf(out, "\tauto=policy\n");
+			dsn = "policy";	/* ??? no keyword for this */
 			break;
 
 		case STARTUP_ADD:
-			fprintf(out, "\tauto=add\n");
+			dsn = "add";
 			break;
 
 		case STARTUP_ONDEMAND:
-			fprintf(out, "\tauto=ondemand\n");
+			dsn = "ondemand";
 			break;
 
 		case STARTUP_START:
-			fprintf(out, "\tauto=start\n");
+			dsn = "start";
 			break;
 		}
+		cwf("auto=", dsn);
 	}
 
 	if (conn->policy) {
@@ -452,149 +464,169 @@ void confwrite_conn(FILE *out,
 		lset_t shunt_policy = (conn->policy & POLICY_SHUNT_MASK);
 		lset_t ikev2_policy = (conn->policy & POLICY_IKEV2_MASK);
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
+		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
+		/* short-cuts for writing out a field that is a policy bit.
+		 * cwpbf flips the sense of teh bit.
+		 */
+#		define cwpb(name, p)  do cwf(name, noyes[(conn->policy & (p)) != LEMPTY]); while (0)
+#		define cwpbf(name, p)  do cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); while (0)
 
 		switch (shunt_policy) {
 		case POLICY_SHUNT_TRAP:
-			if (conn->policy & POLICY_TUNNEL)
-				fprintf(out, "\ttype=tunnel\n");
-			else
-				fprintf(out, "\ttype=transport\n");
+			cwf("type", conn->policy & POLICY_TUNNEL? "tunnel" : "transport");
 
-			if (conn->policy & POLICY_COMPRESS)
-				fprintf(out, "\tcompress=yes\n");
-			else
-				fprintf(out, "\tcompress=no\n");
+			cwpb("compress", POLICY_COMPRESS);
 
-			if (conn->policy & POLICY_PFS)
-				fprintf(out, "\tpfs=yes\n");
-			else
-				fprintf(out, "\tpfs=no\n");
+			cwpb("pfs", POLICY_PFS);
+			cwpbf("ikepad", POLICY_NO_IKEPAD);
+			/* ??? the following used to write out "rekey=no  #duplicate?" */
+			cwpbf("rekey", POLICY_DONT_REKEY);
+			cwpbf("overlapip", POLICY_OVERLAPIP);
 
-			if (conn->policy & POLICY_NO_IKEPAD)
-				fprintf(out, "\tikepad=no\n");
-			else
-				fprintf(out, "\tikepad=yes\n");
+			{
+				const char *abs = "UNKNOWN";
 
-			if (conn->policy & POLICY_DONT_REKEY)
-				fprintf(out, "\trekey=no  #duplicate?\n");
-			else
-				fprintf(out, "\trekey=yes\n");
+				switch (conn->policy & POLICY_ID_AUTH_MASK) {
+				case POLICY_PSK:
+					abs = "secret";
+					break;
 
-			if (conn->policy & POLICY_OVERLAPIP)
-				fprintf(out, "\toverlapip=yes\n");
-			else
-				fprintf(out, "\toverlapip=no\n");
+				case POLICY_RSASIG:
+					abs = "rsasig";
+					break;
 
-			switch (conn->policy & POLICY_ID_AUTH_MASK) {
-			case POLICY_PSK:
-				fprintf(out, "\tauthby=secret\n");
-				break;
-
-			case POLICY_RSASIG:
-				fprintf(out, "\tauthby=rsasig\n");
-				break;
-
-			default:
-				fprintf(out, "\tauthby=never\n");
-				break;
+				default:
+					abs = "never";
+					break;
+				}
+				cwf("authby", abs);
 			}
 
-			switch (phase2_policy) {
-			case POLICY_AUTHENTICATE:
-				fprintf(out, "\tphase2=ah\n");
-				break;
+			{
+				const char *p2ps = "UNKNOWN";
 
-			case POLICY_ENCRYPT:
-				fprintf(out, "\tphase2=esp\n");
-				break;
+				switch (phase2_policy) {
+				case POLICY_AUTHENTICATE:
+					p2ps = "ah";
+					break;
 
-			case (POLICY_ENCRYPT | POLICY_AUTHENTICATE):
-				fprintf(out, "\tphase2=ah+esp\n");
-				break;
+				case POLICY_ENCRYPT:
+					p2ps = "esp";
+					break;
 
-			default:
-				break;
+				case POLICY_ENCRYPT | POLICY_AUTHENTICATE:
+					p2ps = "ah+esp";
+					break;
+
+				default:
+					break;
+				}
+				cwf("phase2", p2ps);
 			}
 
-			switch (failure_policy) {
-			case POLICY_FAIL_NONE:
-				break;
+			{
+				const char *fps = "UNKNOWN";
 
-			case POLICY_FAIL_PASS:
-				fprintf(out, "\tfailureshunt=passthrough\n");
-				break;
+				switch (failure_policy) {
+				case POLICY_FAIL_NONE:
+					fps = NULL;	/* uninteresting */
+					break;
 
-			case POLICY_FAIL_DROP:
-				fprintf(out, "\tfailureshunt=drop\n");
-				break;
+				case POLICY_FAIL_PASS:
+					fps = "passthrough";
+					break;
 
-			case POLICY_FAIL_REJECT:
-				fprintf(out, "\tfailureshunt=reject\n");
-				break;
+				case POLICY_FAIL_DROP:
+					fps = "drop";
+					break;
+
+				case POLICY_FAIL_REJECT:
+					fps = "reject";
+					break;
+
+				default:
+					fps = "UNKNOWN";
+					break;
+				}
+				if (fps != NULL)
+					cwf("failureshunt", fps);
 			}
 
-			switch (ikev2_policy) {
-			case 0:
-				fprintf(out, "\tikev2=never\n");
-				break;
+			{
+				const char *v2ps = "UNKNOWN";
 
-			case POLICY_IKEV2_ALLOW:
-				/* it's the default, do not print anything */
-				/* fprintf(out, "\tikev2=permit\n"); */
-				break;
+				switch (ikev2_policy) {
+				case 0:
+					v2ps = "never";
+					break;
 
-			case POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
-				fprintf(out, "\tikev2=propose\n");
-				break;
+				case POLICY_IKEV2_ALLOW:
+					/* it's the default, do not print anything */
+					/* fprintf(out, "\tikev2=permit\n"); */
+					v2ps = NULL;
+					break;
 
-			case POLICY_IKEV1_DISABLE | POLICY_IKEV2_ALLOW |
-				POLICY_IKEV2_PROPOSE:
-				fprintf(out, "\tikev2=insist\n");
-				break;
+				case POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
+					v2ps = "never";
+					break;
+
+				case POLICY_IKEV1_DISABLE | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
+					v2ps = "insist";
+					break;
+				}
+				if (v2ps != NULL)
+					cwf("ikev2", v2ps);
 			}
 
-			switch (ike_frag_policy) {
-			case 0:
-				fprintf(out, "\tike_frag=never\n");
-				break;
+			{
+				const char *fps = "UNKNOWN";
 
-			case POLICY_IKE_FRAG_ALLOW:
-				/* it's the default, do not print anything */
-				/* fprintf(out, "\tike_frag=yes\n"); */
-				break;
+				switch (ike_frag_policy) {
+				case 0:
+					fps = "never";
+					break;
 
-			case POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE:
-				fprintf(out, "\tike_frag=force\n");
-				break;
+				case POLICY_IKE_FRAG_ALLOW:
+					/* it's the default, do not print anything */
+					fps = NULL;
+					break;
+
+				case POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE:
+					fps = "force";
+					break;
+				}
+				if (fps != NULL)
+					cwf("ike_frag", fps);
 			}
 
-			break; /* case POLICY_SHUNT_PASS trap */
+			break; /* end of case POLICY_SHUNT_TRAP */
 
 		case POLICY_SHUNT_PASS:
-			fprintf(out, "\ttype=passthrough\n");
+			cwf("type", "passthrough");
 			break;
 
 		case POLICY_SHUNT_DROP:
-			fprintf(out, "\ttype=drop\n");
+			cwf("type", "drop");
 			break;
 
 		case POLICY_SHUNT_REJECT:
-			fprintf(out, "\ttype=reject\n");
+			cwf("type", "reject");
 			break;
 
 		}
 
+#		undef cwpb
+#		undef cwpbf
 	}
 
 	fprintf(out, "# end conn %s\n\n", conn->name);
+#	undef cwf
 }
 
 void confwrite(struct starter_config *cfg, FILE *out)
 {
 	struct starter_conn *conn;
 
-/*	int i;
- */
 	/* output version number */
 	/* fprintf(out, "\nversion 2.0\n\n"); */
 

@@ -137,10 +137,8 @@ static void help(void)
 		"[--loopback] [--labeledipsec] [--policylabel <label>]"
 		" \\\n   "
 #endif
-#ifdef XAUTH
 		"[--xauthby file|pam|alwaysok]"
 		"[--xauthfail hard|soft]"
-#endif
 		" \\\n   "
 		" [--dontrekey]"
 		" [--aggrmode]"
@@ -151,7 +149,6 @@ static void help(void)
 		" [--dpdaction (clear|hold|restart)]"
 		" \\\n   "
 
-#ifdef XAUTH
 		" [--xauthserver]"
 		" [--xauthclient]"
 		" [--modecfgserver]"
@@ -162,7 +159,6 @@ static void help(void)
 		" [--modecfgdns2 <ip-address>]"
 		" [--modecfgdomain <dns-domain>]"
 		" [--modecfgbanner <login banner>]"
-#endif
 		" \\\n   "
 		" [--metric <metric>]"
 		" \\\n   "
@@ -691,7 +687,7 @@ static const struct option long_opts[] = {
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO +
 	  NUMERIC_ARG },
 	{ "dpdaction", required_argument, NULL, CD_DPDACTION + OO },
-#ifdef XAUTH
+
 	{ "xauth", no_argument, NULL, END_XAUTHSERVER + OO },
 	{ "xauthserver", no_argument, NULL, END_XAUTHSERVER + OO },
 	{ "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
@@ -707,7 +703,7 @@ static const struct option long_opts[] = {
 	{ "modecfgbanner", required_argument, NULL, CD_MODECFGBANNER + OO },
 	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
-#endif
+
 	{ "metric", required_argument, NULL, CD_METRIC + OO + NUMERIC_ARG },
 	{ "mtu", required_argument, NULL, CD_CONNMTU + OO + NUMERIC_ARG },
 	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
@@ -969,12 +965,10 @@ int main(int argc, char **argv)
 	msg.policy_label = NULL;
 #endif
 
-#ifdef XAUTH
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
 	msg.modecfg_domain = NULL;
 	msg.modecfg_banner = NULL;
-#endif
 
 	msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
 	msg.sa_ipsec_life_seconds = PLUTO_SA_LIFE_DURATION_DEFAULT;
@@ -1567,14 +1561,14 @@ int main(int argc, char **argv)
 
 		case CD_DPDACTION:
 			msg.dpd_action = 255;
-			if ( strcmp(optarg, "clear") == 0)
+			if ( streq(optarg, "clear"))
 				msg.dpd_action = DPD_ACTION_CLEAR;
-			if ( strcmp(optarg, "hold") == 0)
+			else if ( streq(optarg, "hold"))
 				msg.dpd_action = DPD_ACTION_HOLD;
-			if ( strcmp(optarg, "restart") == 0)
+			else if ( streq(optarg, "restart"))
 				msg.dpd_action = DPD_ACTION_RESTART;
-			/* obsolete (not advertised) option for compatibility */
-			if ( strcmp(optarg, "restart_by_peer") == 0)
+			else if ( streq(optarg, "restart_by_peer"))
+				/* obsolete (not advertised) option for compatibility */
 				msg.dpd_action = DPD_ACTION_RESTART;
 			continue;
 
@@ -1591,7 +1585,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REMOTEPEERTYPE: /* --remote_peer_type  <cisco> */
-			if ( strcmp(optarg, "cisco" ) == 0)
+			if ( streq(optarg, "cisco" ))
 				msg.remotepeertype = CISCO;
 			else
 				msg.remotepeertype = NON_CISCO;
@@ -1677,7 +1671,6 @@ int main(int argc, char **argv)
 			msg.tunnel_addr_family = AF_INET6;
 			continue;
 
-#ifdef XAUTH
 		case END_XAUTHSERVER: /* --xauthserver */
 			msg.right.xauth_server = TRUE;
 			continue;
@@ -1738,13 +1731,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHBY:
-			if ( strcmp(optarg, "pam" ) == 0) {
+			if ( streq(optarg, "pam" )) {
 				msg.xauthby = XAUTHBY_PAM;
 				continue;
-			} else if ( strcmp(optarg, "file" ) == 0) {
+			} else if ( streq(optarg, "file" )) {
 				msg.xauthby = XAUTHBY_FILE;
 				continue;
-			} else if ( strcmp(optarg, "alwaysok" ) == 0) {
+			} else if ( streq(optarg, "alwaysok" )) {
 				msg.xauthby = XAUTHBY_ALWAYSOK;
 				continue;
 			} else {
@@ -1755,10 +1748,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHFAIL:
-			if ( strcmp(optarg, "hard" ) == 0) {
+			if ( streq(optarg, "hard" )) {
 				msg.xauthfail = XAUTHFAIL_HARD;
 				continue;
-			} else if ( strcmp(optarg, "soft" ) == 0) {
+			} else if ( streq(optarg, "soft" )) {
 				msg.xauthfail = XAUTHFAIL_SOFT;
 				continue;
 			} else {
@@ -1767,23 +1760,6 @@ int main(int argc, char **argv)
 					optarg);
 			}
 			continue;
-#else
-		case END_XAUTHSERVER:
-		case END_XAUTHCLIENT:
-		case OPT_XAUTHNAME:
-		case OPT_XAUTHPASS:
-		case END_MODECFGCLIENT:
-		case END_MODECFGSERVER:
-		case END_ADDRESSPOOL:
-		case CD_MODECFGDNS1:
-		case CD_MODECFGDNS2:
-		case CD_MODECFGDOMAIN:
-		case CD_MODECFGBANNER:
-		case CD_XAUTHBY:
-		case CD_XAUTHFAIL:
-			diag("pluto is not built with XAUTH/MODECFG support");
-			continue;
-#endif                  /* XAUTH */
 
 		case CD_METRIC:
 			msg.metric = opt_whole;

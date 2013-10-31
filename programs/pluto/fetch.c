@@ -294,7 +294,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 
 	char *ldap_url = alloc_bytes(url.len + 1, "ldap query");
 
-	sprintf(ldap_url, "%.*s", (int)url.len, url.ptr);
+	snprintf(ldap_url, url.len + 1, "%.*s", (int)url.len, url.ptr);
 
 	DBG(DBG_CONTROL,
 	    DBG_log("Trying LDAP URL '%s'", ldap_url)

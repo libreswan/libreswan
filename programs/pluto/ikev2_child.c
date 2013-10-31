@@ -138,7 +138,7 @@ struct traffic_selector ikev2_end_to_ts(struct end *e)
 
 stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 			 pb_stream *outpbs,
-			 unsigned int np,
+			 unsigned int lt,
 			 struct traffic_selector *ts,
 			 enum phase1_role role UNUSED)
 {
@@ -147,7 +147,7 @@ stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 	pb_stream ts_pbs;
 	pb_stream ts_pbs2;
 
-	its.isat_np = np;
+	its.isat_lt = lt;
 	its.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	its.isat_num = 1;
 

@@ -62,10 +62,6 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
 
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
-
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
 
@@ -451,17 +447,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "%s "         /* optional mtu */
 			  "PLUTO_CONN_POLICY='%s' "
 			  "PLUTO_CONN_ADDRFAMILY='ipv%d' "
-#ifdef XAUTH
 			  "XAUTH_FAILED=%d "
 			  "%s "         /* XAUTH username - if any */
-#endif
 			  "%s "         /* PLUTO_MY_SRCIP - if any */
-#ifdef XAUTH
 			  "PLUTO_IS_PEER_CISCO='%u' "
 			  "PLUTO_PEER_DNS_INFO='%s' "
 			  "PLUTO_PEER_DOMAIN_INFO='%s' "
 			  "PLUTO_PEER_BANNER='%s' "
-#endif  /* XAUTH */
 #ifdef HAVE_NM
 			  "PLUTO_NM_CONFIGURED='%u' "
 #endif
@@ -490,17 +482,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  connmtu_str,
 			  prettypolicy(c->policy),
 			  (c->addr_family == AF_INET) ? 4 : 6
-#ifdef XAUTH
 			  , (st && st->st_xauth_soft) ? 1 : 0,
 			  secure_xauth_username_str
-#endif
 			  , srcip_str
-#ifdef XAUTH
 			  , c->remotepeertype,
 			  c->cisco_dns_info ? c->cisco_dns_info : "",
 			  c->modecfg_domain ? c->modecfg_domain : "",
 			  c->modecfg_banner ? c->modecfg_banner : ""
-#endif  /* XAUTH */
 #ifdef HAVE_NM
 			  , c->nmconfigured
 #endif
@@ -2209,8 +2197,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 const struct kernel_ops *kernel_ops;
 
-/* keep track of kernel version */
-char kversion[256];
+/* keep track of kernel version  */
+static char kversion[256];
 
 void init_kernel(void)
 {
@@ -2222,7 +2210,7 @@ void init_kernel(void)
 
 	/* get kernel version */
 	uname(&un);
-	strncpy(kversion, un.release, sizeof(kversion));
+	jam_str(kversion, sizeof(kversion), un.release);
 
 	switch (kern_interface) {
 #if defined(NETKEY_SUPPORT)
@@ -2900,10 +2888,13 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		}
 	}
 
+	/* XXX why is this needed? Skip the bogus original conn? */
 	if (st->st_connection->remotepeertype == CISCO) {
 		sr = st->st_connection->spd.next;
-		st->st_connection->spd.eroute_owner = sr->eroute_owner;
-		st->st_connection->spd.routing = sr->routing;
+		if (sr != NULL) {
+			st->st_connection->spd.eroute_owner = sr->eroute_owner;
+			st->st_connection->spd.routing = sr->routing;
+		}
 	}
 
 	return TRUE;
