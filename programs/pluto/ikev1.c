@@ -1467,8 +1467,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    "isakmp_xchg_type %s.",
 					    __func__,
 					    __LINE__,
-					    enum_show(&
-						      exchange_names_ikev1,
+					    enum_show(&exchange_names_ikev1,
 						      md->hdr.isa_xchg)));
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("this is a%s%s%s%s in state %s. "
@@ -2010,8 +2009,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 
 				DBG(DBG_PARSING,
-				    DBG_log(
-					    "got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
+				    DBG_log("got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
 					    s, enum_show(&payload_names_ikev1, np),
 					    needed, smc->opt_payloads));
 				needed &= ~s;
@@ -2187,8 +2185,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				if (st == NULL) {
 					loglog(RC_LOG_SERIOUS,
 					       "ignoring informational payload %s, no corresponding state",
-					       enum_show(&
-							 ipsec_notification_names,
+					       enum_show(&ipsec_notification_names,
 							 p->payload.
 							 notification.isan_type));
 				} else {

@@ -117,7 +117,7 @@ const char *const debug_bit_names[] = {
 	"impair-minor-version-bump",            /* 29 */
 	"impair-retransmits",                   /* 30 */
 	"impair-send-bogus-isakmp-flag",        /* 31 */
-	NULL
+	NULL	/* termination for bitnamesof() */
 };
 
 /* kind of struct connection */
@@ -159,14 +159,13 @@ const char *const payload_name_ikev1[] = {
 	"ISAKMP_NEXT_NATD_RFC",
 	"ISAKMP_NEXT_NATOA_RFC",
 	"ISAKMP_NEXT_GAP",
-	NULL
+	NULL	/* termination for bitnamesof() */
 };
 
 static const char *const payload_name_ikev1_private_use[] = {
 	"ISAKMP_NEXT_NATD_DRAFTS",
 	"ISAKMP_NEXT_NATOA_DRAFTS",
 	"ISAKMP_NEXT_IKE_FRAGMENTATION",        /* proprietary Cisco/Microsoft IKE fragmented payload */
-	NULL
 };
 static enum_names payload_names_ikev1_private_use =
 { ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_IKE_FRAGMENTATION,
@@ -178,7 +177,6 @@ enum_names payload_names_ikev1 =
 
 static const char *const payload_name_ikev2[] = {
 	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
-	NULL
 };
 
 static const char *const payload_name_ikev2_main[] = {
@@ -198,12 +196,10 @@ static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2E",
 	"ISAKMP_NEXT_v2CP",
 	"ISAKMP_NEXT_v2EAP",
-	NULL
 };
 
 static const char *const payload_name_ikev2_private_use[] = {
 	"ISAKMP_NEXT_v2IKE_FRAGMENTATION",        /* method same as IKEv1 - not current v2 draft */
-	NULL
 };
 
 static enum_names payload_names_ikev2_private_use =
@@ -233,7 +229,6 @@ static const char *const ikev2_last_proposal_names[] = {
 	"v2_PROPOSAL_LAST",
 	NULL,
 	"v2_PROPOSAL_NON_LAST",
-	NULL
 };
 enum_names ikev2_last_proposal_desc =
 { v2_PROPOSAL_LAST, v2_PROPOSAL_NON_LAST, ikev2_last_proposal_names, NULL };
@@ -243,7 +238,6 @@ static const char *const ikev2_last_transform_names[] = {
 	NULL,
 	NULL,
 	"v2_TRANSFORM_NON_LAST",
-	NULL
 };
 enum_names ikev2_last_transform_desc =
 { v2_TRANSFORM_LAST, v2_TRANSFORM_NON_LAST, ikev2_last_transform_names, NULL };
@@ -260,7 +254,6 @@ static const char *const exchange_name_ikev1[] = {
 	"ISAKMP_XCHG_AGGR",
 	"ISAKMP_XCHG_INFO",
 	"ISAKMP_XCHG_MODE_CFG", /* 6 - draft, not RFC */
-	NULL
 };
 
 static const char *const exchange_name_doi[] = {
@@ -268,7 +261,6 @@ static const char *const exchange_name_doi[] = {
 	"ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY", /* Echo reply */
 	"ISAKMP_XCHG_QUICK",
 	"ISAKMP_XCHG_NGRP",
-	NULL
 };
 
 static const char *const exchange_name_ikev2[] = {
@@ -277,13 +269,11 @@ static const char *const exchange_name_ikev2[] = {
 	"ISAKMP_v2_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
 	"ISAKMP_v2_IKE_SESSION_RESUME",
-	NULL
 };
 
 static const char *const exchange_name_private_use[] = {
 	"ISAKMP_XCHG_ECHOREQUEST_PRIVATE", /* 244 - Used by libreswan  */
 	"ISAKMP_XCHG_ECHOREPLY_PRIVATE", /* 245 - Used by libreswan  */
-	NULL
 };
 static enum_names exchange_names_private_use =
 { ISAKMP_XCHG_ECHOREQUEST_PRIVATE, ISAKMP_XCHG_ECHOREPLY_PRIVATE, exchange_name_private_use, NULL };
@@ -312,7 +302,7 @@ const char *const flag_bit_names[] = {
 	"ISAKMP_FLAG_INIT",             /* bit 3 */
 	"ISAKMP_FLAG_VERSION",          /* bit 4 */
 	"ISAKMP_FLAG_RESPONSE",         /* bit 5 */
-	NULL
+	NULL	/* termination for bitnamesof() */
 };
 
 /* Situation BITS definition for IPsec DOI */
@@ -321,7 +311,7 @@ const char *const sit_bit_names[] = {
 	"SIT_IDENTITY_ONLY",
 	"SIT_SECRECY",
 	"SIT_INTEGRITY",
-	NULL
+	NULL	/* termination for bitnamesof() */
 };
 
 /* Protocol IDs (RFC 2407 "IPsec DOI" section 4.4.1) */
@@ -555,7 +545,7 @@ const char *const oakley_attr_bit_names[] = {
 	"OAKLEY_FIELD_SIZE",
 	"OAKLEY_GROUP_ORDER",
 	"OAKLEY_BLOCK_SIZE",
-	NULL
+	NULL	/* termination for bitnamesof() */
 };
 
 static const char *const oakley_var_attr_name[] = {
@@ -782,7 +772,6 @@ const char *const xauth_type_name[] = {
 	"RADIUS-CHAP",
 	"OTP",
 	"S/KEY",
-	NULL
 };
 enum_names xauth_type_names =
 { XAUTH_TYPE_GENERIC, XAUTH_TYPE_SKEY, xauth_type_name, NULL };
@@ -791,7 +780,6 @@ enum_names xauth_type_names =
 static const char *const xauth_status_name[] = {
 	"XAUTH_FAIL",
 	"XAUTH_OK",
-	NULL
 };
 enum_names xauth_status_names =
 { XAUTH_STATUS_FAIL, XAUTH_STATUS_OK, xauth_status_name, NULL };
@@ -816,7 +804,6 @@ static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP6_LINK",
 	"INTERNAL_IP6_PREFIX",
 	"HOME_AGENT_ADDRESS", /* 19 */
-	NULL
 };
 enum_names modecfg_attr_names_draft =
 { INTERNAL_IP4_ADDRESS, HOME_AGENT_ADDRESS, modecfg_attr_name_draft,
@@ -835,7 +822,6 @@ static const char *const modecfg_cisco_attr_name[] = {
 	"CISCO_BACKUP_SERVER",
 	"CISCO_DDNS_HOSTNAME",
 	"CISCO_UNKNOWN_SEEN_ON_IPHONE", /* 28683 */
-	NULL
 };
 static enum_names modecfg_cisco_attr_names =
 { MODECFG_BANNER, CISCO_UNKNOWN_SEEN_ON_IPHONE, modecfg_cisco_attr_name,
@@ -844,7 +830,6 @@ static enum_names modecfg_cisco_attr_names =
 static const char *const modecfg_microsoft_attr_name[] = {
 	"INTERNAL_IP4_SERVER", /* 23456 */
 	"INTERNAL_IP6_SERVER",
-	NULL
 };
 static enum_names modecfg_microsoft_attr_names =
 { INTERNAL_IP4_SERVER, INTERNAL_IP6_SERVER, modecfg_microsoft_attr_name,
@@ -865,8 +850,8 @@ static const char *const xauth_attr_name[] = {
 	"XAUTH-STATUS",
 	"XAUTH-NEXT-PIN",
 	"XAUTH-ANSWER", /* 16529 */
-	NULL
 };
+
 /* 
  * Note XAUTH and MODECFG are the same xauth attribute list in the registry
  * but we treat these as two completely separate lists
@@ -902,11 +887,11 @@ static const char *const oakley_enc_name[] = {
 };
 
 static const char *const oakley_enc_name_draft_aes_cbc_02[] = {
-	"OAKLEY_MARS_CBC" /*	65001	*/,
-	"OAKLEY_RC6_CBC" /*	65002	*/,
-	"OAKLEY_ID_65003" /*	65003	*/,
-	"OAKLEY_SERPENT_CBC" /*	65004	*/,
-	"OAKLEY_TWOFISH_CBC" /*	65005	*/,
+	"OAKLEY_MARS_CBC"	/* 65001 */,
+	"OAKLEY_RC6_CBC"	/* 65002 */,
+	"OAKLEY_ID_65003"	/* 65003 */,
+	"OAKLEY_SERPENT_CBC"	/* 65004 */,
+	"OAKLEY_TWOFISH_CBC"	/* 65005 */,
 };
 
 static const char *const oakley_enc_name_ssh[] = {
@@ -1269,12 +1254,11 @@ enum_names ikev2_ts_type_names =
  * From draft-dukes-ike-mode-cfg
  */
 static const char *const attr_msg_type_name[] = {
-	"ISAKMP_CFG_RESERVED",
-	"ISAKMP_CFG_REQUEST",
+	"ISAKMP_CFG_RESERVED",	/* 0 ??? why is this here? */
+	"ISAKMP_CFG_REQUEST",	/* 1 */
 	"ISAKMP_CFG_REPLY",
 	"ISAKMP_CFG_SET",
 	"ISAKMP_CFG_ACK",
-	NULL
 };
 
 enum_names attr_msg_type_names =
@@ -1386,7 +1370,7 @@ const unsigned int ikev2_transid_val_descs_size = elemsof(
 
 /* Transform Attributes */
 static const char *const ikev2_trans_attr_name[] = {
-	"KEY_LENGTH",
+	"IKEv2_KEY_LENGTH",
 };
 
 enum_names ikev2_trans_attr_descs = {
@@ -1413,10 +1397,6 @@ enum_names *ikev2_trans_attr_val_descs[] = {
 	NULL,                           /* 13 */
 	&ikev2_trans_attr_descs,        /* KEY_LENGTH */
 };
-
-/* never used */
-const unsigned int ikev2_trans_attr_val_descs_size = elemsof(
-	ikev2_trans_attr_val_descs);
 
 /* socket address family info */
 
@@ -1596,34 +1576,53 @@ const char *enum_name(enum_names *ed, unsigned long val)
  * (Of course that means that unnamed values will be shown
  * badly.)
  */
-const char *enum_show(enum_names *ed, unsigned long val)
+const char *enum_showb(enum_names *ed, unsigned long val, char *buf, size_t blen)
 {
 	const char *p = enum_name(ed, val);
 
 	if (p == NULL) {
-		static char buf[12]; /* only one!  I hope that it is big enough */
-
-		snprintf(buf, sizeof(buf), "%lu??", val);
+		snprintf(buf, blen, "%lu??", val);
 		p = buf;
 	}
 	return p;
 }
 
+const char *enum_show(enum_names *ed, unsigned long val)
+{
+	static char buf[ENUM_SHOW_BUF_LEN]; /* only one! NON-RE-ENTRANT */
+
+	return enum_showb(ed, val, buf, sizeof(buf));
+}
+
+/* sometimes the prefix gets annoying */
+const char *strip_prefix(const char *s, const char *prefix)
+{
+	size_t pl = strlen(prefix);
+
+	return strncmp(s, prefix, pl) == 0 ? s + pl : s;
+}
+
+/* find the value for a name in an enum_names table.  If not found, returns -1
+ *
+ * ??? the table contains unsigned long values BUT the function returns an
+ * int so there is some potential for overflow.
+ */
 int enum_search(enum_names *ed, const char *str)
 {
 	enum_names  *p;
-	const char *ptr;
-	unsigned en;
 
-	for (p = ed; p != NULL; p = p->en_next_range)
+	for (p = ed; p != NULL; p = p->en_next_range) {
+		unsigned long en;
+
 		for (en = p->en_first; en <= p->en_last; en++) {
-			ptr = p->en_names[en - p->en_first];
-			if (ptr == 0)
-				continue;
-			/* if (strncmp(ptr, str, strlen(ptr))==0) */
-			if (strcmp(ptr, str) == 0)
+			const char *ptr = p->en_names[en - p->en_first];
+
+			if (ptr != NULL && streq(ptr, str)) {
+				passert(en <= INT_MAX);
 				return en;
+			}
 		}
+	}
 	return -1;
 }
 
@@ -1654,7 +1653,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 
 			if (n == NULL || *n == '\0') {
 				/* No name for this bit, so use hex.
-				 * if snprintf returns a different value from strlen, trunation happened
+				 * if snprintf returns a different value from strlen, truncation happened
 				 */
 				(void)snprintf(p, (size_t)(roof - p), "0x%" PRIxLSET,
 					       bit);

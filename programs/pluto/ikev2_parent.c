@@ -3055,9 +3055,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 							    enum_show(
 								    &protocol_names,
 								    v2del->isad_protoid),
-							    (
-								    unsigned
-								    long)
+							    (unsigned long)
 							    ntohl((unsigned long)
 								  *(ipsec_spi_t *)
 								  spi)));

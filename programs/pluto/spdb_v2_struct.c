@@ -714,29 +714,27 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 		if (DBGP(DBG_CONTROLMORE)) {
 			/* note: enum_show uses a static buffer so more than one call per
 			   statement is dangerous */
-			DBG_log(
-				"proposal %u %s encr= (policy:%s vs offered:%s)",
+			char esb[ENUM_SHOW_BUF_LEN];
+
+			DBG_log("proposal %u %s encr= (policy:%s vs offered:%s)",
 				propnum,
 				encr_matched ? "succeeded" : "failed",
-				enum_name(&trans_type_encr_names, encrid),
+				enum_showb(&trans_type_encr_names, encrid, esb, sizeof(esb)),
 				enum_show(&trans_type_encr_names,
 					  encr_transform));
-			DBG_log(
-				"            %s integ=(policy:%s vs offered:%s)",
+			DBG_log("            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "succeeded" : "failed",
-				enum_name(&trans_type_integ_names, integid),
+				enum_showb(&trans_type_integ_names, integid, esb, sizeof(esb)),
 				enum_show(&trans_type_integ_names,
 					  integ_transform));
-			DBG_log(
-				"            %s prf=  (policy:%s vs offered:%s)",
+			DBG_log("            %s prf=  (policy:%s vs offered:%s)",
 				prf_matched ? "succeeded" : "failed",
-				enum_name(&trans_type_prf_names, prfid),
+				enum_showb(&trans_type_prf_names, prfid, esb, sizeof(esb)),
 				enum_show(&trans_type_prf_names,
 					  prf_transform));
-			DBG_log(
-				"            %s dh=   (policy:%s vs offered:%s)",
+			DBG_log("            %s dh=   (policy:%s vs offered:%s)",
 				dh_matched ? "succeeded" : "failed",
-				enum_name(&oakley_group_names, dhid),
+				enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
 				enum_show(&oakley_group_names, dh_transform));
 		}
 

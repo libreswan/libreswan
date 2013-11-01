@@ -1464,10 +1464,13 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 	DBG(DBG_CONTROL,
 		DBG_log("thinking about whether to send my certificate:"));
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
+		char esb[ENUM_SHOW_BUF_LEN];
+
 		DBG_log("  I have RSA key: %s cert.type: %s ",
-			enum_show(&oakley_auth_names, auth),
-			enum_show(&cert_type_names, certtype)));
+			enum_showb(&oakley_auth_names, auth, esb, sizeof(esb)),
+			enum_show(&cert_type_names, certtype));
+	});
 
 	DBG(DBG_CONTROL,
 		DBG_log("  sendcert: %s and I did%s get a certificate request ",
@@ -3050,11 +3053,9 @@ void accept_delete(struct state *st, struct msg_digest *md,
 					"SA(0x%08lx) not found (%s)",
 					enum_show(&protocol_names,
 						d->isad_protoid),
-					(unsigned long)ntohl((unsigned long)*(
-								ipsec_spi_t
-								*)spi),
-					bogus ? "our SPI - bogus "
-					"implementation" : "maybe expired");
+					(unsigned long)ntohl((unsigned long)
+						*(ipsec_spi_t *)spi),
+					bogus ? "our SPI - bogus implementation" : "maybe expired");
 			} else {
 				struct connection *rc = dst->st_connection;
 				struct connection *oldc;

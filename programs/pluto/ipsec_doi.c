@@ -722,6 +722,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 
 	if (st->st_esp.present) {
 		const char *natinfo = "";
+		char esb[ENUM_SHOW_BUF_LEN];
 
 		if ((st->st_connection->spd.that.host_port != IKE_UDP_PORT &&
 		     st->st_connection->spd.that.host_port != 0) ||
@@ -744,13 +745,11 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 natinfo,
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
-			 enum_show(&esp_transformid_names,
-				   st->st_esp.attrs.transattrs.encrypt) +
-			 strlen("ESP_"),
+			 strip_prefix(enum_showb(&esp_transformid_names,
+				   st->st_esp.attrs.transattrs.encrypt, esb, sizeof(esb)), "ESP_"),
 			 st->st_esp.attrs.transattrs.enckeylen,
-			 enum_show(&auth_alg_names,
-				   st->st_esp.attrs.transattrs.integ_hash) +
-			 strlen("AUTH_ALGORITHM_"));
+			 strip_prefix(enum_show(&auth_alg_names,
+				   st->st_esp.attrs.transattrs.integ_hash), "AUTH_ALGORITHM_"));
 		ini = " ";
 		fin = "}";
 	}

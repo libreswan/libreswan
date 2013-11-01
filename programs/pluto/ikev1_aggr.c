@@ -373,10 +373,13 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 	DBG(DBG_CONTROL,
 	    DBG_log("thinking about whether to send my certificate:"));
 
-	DBG(DBG_CONTROL,
-	    DBG_log("  I have RSA key: %s cert.type: %s ",
-		    enum_show(&oakley_auth_names, auth),
-		    enum_show(&cert_type_names, certtype)));
+	DBG(DBG_CONTROL, {
+		char esb[ENUM_SHOW_BUF_LEN];
+
+		DBG_log("  I have RSA key: %s cert.type: %s ",
+		    enum_showb(&oakley_auth_names, auth, esb, sizeof(esb)),
+		    enum_show(&cert_type_names, certtype));
+	});
 
 	DBG(DBG_CONTROL,
 	    DBG_log("  sendcert: %s and I did%s get a certificate request ",

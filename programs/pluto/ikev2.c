@@ -218,6 +218,10 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 	struct payload_digest *pd = md->digest_roof;
 	struct state *st = md->st;
 
+	/* ??? is there any logic in v2 like "needed" in v1?
+	 * How are missing payloads discovered?  Reported?
+	 * How about unexpected payloads?
+	 */
 	/* lset_t needed = smc->req_payloads; */
 
 	/* zero out the digest descriptors -- might nuke [v2E] digest! */
@@ -229,7 +233,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		bool unknown_payload = FALSE;
 
 		DBG(DBG_CONTROL,
-		    DBG_log("Now lets proceed with payload (%s)",
+		    DBG_log("Now let's proceed with payload (%s)",
 			    enum_show(&payload_names_ikev2, thisp)));
 		memset(pd, 0, sizeof(*pd));
 

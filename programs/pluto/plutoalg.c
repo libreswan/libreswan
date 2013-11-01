@@ -253,19 +253,17 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 
 		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d",
 			       sep,
-			       enum_name(&esp_transformid_names,
-					 esp_info->esp_ealg_id) + sizeof("ESP"),
+			       strip_prefix(enum_name(&esp_transformid_names,
+					 esp_info->esp_ealg_id), "ESP"),
 			       esp_info->esp_ealg_id, eklen,
-			       enum_name(&auth_alg_names,
-					 esp_info->esp_aalg_id) +
-			       (esp_info->esp_aalg_id ? sizeof(
-					"AUTH_ALGORITHM_HMAC") : sizeof(
-					"AUTH_ALGORITHM")),
-			       esp_info->esp_aalg_id, aklen);
+			       strip_prefix(enum_name(&auth_alg_names,
+					 esp_info->esp_aalg_id),
+					esp_info->esp_aalg_id ? "AUTH_ALGORITHM_HMAC" : "AUTH_ALGORITHM"),
+			       esp_info->esp_aalg_id,
+			       aklen);
 
 		if ( ret < 0 || (size_t)ret >= buflen) {
-			DBG_log(
-				"alg_info_snprint_esp: buffer too short for snprintf");
+			DBG_log("alg_info_snprint_esp: buffer too short for snprintf");
 			break;
 		}
 		ptr += ret;
@@ -309,9 +307,9 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 
 		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d",
 			       sep,
-			       enum_name(&auth_alg_names,
-					 esp_info->esp_aalg_id) +
-			       sizeof("AUTH_ALGORITHM_HMAC"),
+			       strip_prefix(enum_name(&auth_alg_names,
+					 esp_info->esp_aalg_id),
+					"AUTH_ALGORITHM_HMAC"),
 			       esp_info->esp_aalg_id, aklen);
 
 		if ( ret < 0 || (size_t)ret >= buflen) {
@@ -374,17 +372,17 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 			ret = snprintf(ptr, buflen,
 				       "%s%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
 				       sep,
-				       enum_name(&oakley_enc_names,
-						 ike_info->ike_ealg) +
-				       sizeof("OAKLEY"),
+				       strip_prefix(enum_name(&oakley_enc_names,
+						 ike_info->ike_ealg),
+						"OAKLEY"),
 				       ike_info->ike_ealg, eklen,
-				       enum_name(&oakley_hash_names,
-						 ike_info->ike_halg) +
-				       sizeof("OAKLEY"),
+				       strip_prefix(enum_name(&oakley_hash_names,
+						 ike_info->ike_halg),
+						"OAKLEY"),
 				       ike_info->ike_halg, aklen,
-				       enum_name(&oakley_group_names,
-						 ike_info->ike_modp) +
-				       sizeof("OAKLEY_GROUP"),
+				       strip_prefix(enum_name(&oakley_group_names,
+						 ike_info->ike_modp),
+						"OAKLEY_GROUP"),
 				       ike_info->ike_modp);
 			if ( ret < 0 || (size_t)ret >= buflen) {
 				DBG_log(
@@ -684,8 +682,7 @@ bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 					if (ealg_insecure) {
 						loglog(RC_LOG_SERIOUS,
 						       "You should NOT use insecure/broken ESP algorithms [%s (%d)]!",
-						       enum_name(&
-								 esp_transformid_names,
+						       enum_name(&esp_transformid_names,
 								 ealg),
 						       key_len);
 					}
@@ -695,9 +692,9 @@ bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 		}
 		libreswan_log(
 			"IPsec Transform [%s (%d), %s] refused due to %s",
-			enum_name(&esp_transformid_names, ealg), key_len,
-			enum_name(&auth_alg_names,
-				  aalg),
+			enum_name(&esp_transformid_names, ealg),
+			key_len,
+			enum_name(&auth_alg_names, aalg),
 			ealg_insecure ? "insecure key_len and enc. alg. not listed in \"esp\" string" : "strict flag");
 		return FALSE;
 	}
@@ -756,9 +753,9 @@ void kernel_alg_show_connection(struct connection *c, const char *instance)
 
 	if (c->policy & POLICY_PFS) {
 		if (c->alg_info_esp && c->alg_info_esp->esp_pfsgroup) {
-			pfsbuf = enum_show(&oakley_group_names,
-					   c->alg_info_esp->esp_pfsgroup) +
-				 strlen("OAKLEY_GROUP_");
+			pfsbuf = strip_prefix(enum_show(&oakley_group_names,
+					   c->alg_info_esp->esp_pfsgroup),
+				"OAKLEY_GROUP_");
 		} else {
 			pfsbuf = "<Phase1>";
 		}
@@ -790,13 +787,13 @@ void kernel_alg_show_connection(struct connection *c, const char *instance)
 			  "\"%s\"%s:   %s algorithm newest: %s_%03d-%s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
-			  enum_show(&esp_transformid_names,
-				    st->st_esp.attrs.transattrs.encrypt) +
-			  strlen("ESP_"),
+			  strip_prefix(enum_name(&esp_transformid_names,
+				    st->st_esp.attrs.transattrs.encrypt),
+				"ESP_"),
 			  st->st_esp.attrs.transattrs.enckeylen,
-			  enum_show(&auth_alg_names,
-				    st->st_esp.attrs.transattrs.integ_hash) +
-			  strlen("AUTH_ALGORITHM_"),
+			  strip_prefix(enum_name(&auth_alg_names,
+				    st->st_esp.attrs.transattrs.integ_hash),
+				"AUTH_ALGORITHM_"),
 			  pfsbuf);
 	}
 
@@ -805,9 +802,9 @@ void kernel_alg_show_connection(struct connection *c, const char *instance)
 			  "\"%s\"%s:   %s algorithm newest: %s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
-			  enum_show(&auth_alg_names,
-				    st->st_esp.attrs.transattrs.integ_hash) +
-			  +strlen("AUTH_ALGORITHM_"),
+			  strip_prefix(enum_name(&auth_alg_names,
+				    st->st_esp.attrs.transattrs.integ_hash),
+				"AUTH_ALGORITHM_"),
 			  pfsbuf);
 	}
 }
