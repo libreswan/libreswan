@@ -1305,7 +1305,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
 		numvidtosend++;
 
-	if (nat_traversal_enabled) 
+	if (nat_traversal_enabled)
 		numvidtosend++;
 	if(c->cisco_unity)
 		numvidtosend++;

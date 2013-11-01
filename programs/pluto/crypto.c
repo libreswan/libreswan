@@ -218,7 +218,7 @@ void init_crypto(void)
 /* Oakley group description
  *
  * See:
- * RFC-2409 "The Internet key exchange (IKE)" Section 6 
+ * RFC-2409 "The Internet key exchange (IKE)" Section 6
  * RFC-3526 "More Modular Exponential (MODP) Diffie-Hellman groups"
  */
 

@@ -57,7 +57,7 @@
 #  include <fipscheck.h>
 #endif
 
-/* 
+/*
  * We allow 2192 as a minimum, but default to a random value between 3072 and
  * 4096. The range is used to avoid a mono-culture of key sizes.
  */
@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
 
 	if (argv[optind] == NULL) {
 		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
-		nbits = 3072 + 16 * rand() % 64; 
+		nbits = 3072 + 16 * rand() % 64;
 	} else {
 		nbits = atoi(argv[optind]);
 	}

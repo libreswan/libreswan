@@ -99,7 +99,7 @@ extern enum ipsec_life_alive ipsec_lifetime_check(
 	enum ipsec_direction idir,
 	struct ipsec_sa *ips);
 
-extern int ipsec_lifetime_format(struct seq_file *seq, 
+extern int ipsec_lifetime_format(struct seq_file *seq,
 				 char *lifename,
 				 enum ipsec_life_type timebaselife,
 				 struct ipsec_lifetime64 *lifetime);

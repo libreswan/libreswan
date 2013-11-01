@@ -608,7 +608,7 @@ static stf_status unexpected(struct msg_digest *md)
 }
 
 /*
- * RFC 2408 Section 4.6 
+ * RFC 2408 Section 4.6
  *
  *  #   Initiator  Direction Responder  NOTE
  * (1)  HDR*; N/D     =>                Error Notification or Deletion

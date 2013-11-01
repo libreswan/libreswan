@@ -461,7 +461,7 @@ void show_virtual_private()
 		all_ko[0] = '\0';
 	}
 
-	if (nat_traversal_enabled) { 
+	if (nat_traversal_enabled) {
 		whack_log(RC_COMMENT, "virtual_private (%%priv):");
 		whack_log(RC_COMMENT, "- allowed %d subnet%s: %s",
 			private_net_ok_len,

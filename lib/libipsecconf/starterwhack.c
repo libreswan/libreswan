@@ -522,7 +522,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.sa_priority   = conn->options[KBF_PRIORITY];
 
 	if (conn->options_set[KBF_REQID]) {
-		if ((conn->options[KBF_REQID] >= IPSEC_MANUAL_REQID_MAX -3) || 
+		if ((conn->options[KBF_REQID] >= IPSEC_MANUAL_REQID_MAX -3) ||
 		    (conn->options[KBF_REQID] == 0)) {
 			starter_log(LOG_LEVEL_ERR,
 				    "Ignoring reqid value - range must be 1-16379");
