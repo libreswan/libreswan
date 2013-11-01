@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.6 (unreleased)
+v3.6 (October 30, 2013)
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
 * IKEv2: Add liveness checks (a.k.a DPD for IKEv2) [Matt Rogers]
 * IKEv2: ikev2=insist allowed ikev1 when acting as responder [Matt Rogers]
