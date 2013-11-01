@@ -144,7 +144,7 @@ return_distro() {
 	return
     fi
 
-	if [ -f /etc/slackware-version ]; then
+    if [ -f /etc/slackware-version ]; then
 	VER="`cat /etc/slackware-version | awk '{print $2}'`"
 	echo "slackware/$VER"
 	return
