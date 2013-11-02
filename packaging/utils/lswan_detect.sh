@@ -48,7 +48,7 @@ return_initsystem() {
 
     # really, most have this, it is probably a backwards compatiblity or
     # really sysvinit - we have no other known targets at this point anyway
-    if [ -d /etc/init.d ]; then
+    if [ -d /etc/init.d -o -d /etc/rc.d ]; then
 	echo "sysvinit"
 	return
     fi
@@ -141,6 +141,12 @@ return_distro() {
     if [ -f /etc/gentoo-release ]; then
 	VER="$(cat /etc/gentoo-release | awk '{print $NF;}')"
 	echo "gentoo/${VER}"
+	return
+    fi
+
+	if [ -f /etc/slackware-version ]; then
+	VER="`cat /etc/slackware-version | awk '{print $2}'`"
+	echo "slackware/$VER"
 	return
     fi
 

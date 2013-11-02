@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010-2012 Paul Wouters <paul@redhat.com>
  *

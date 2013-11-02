@@ -813,7 +813,7 @@ static void show_system_security(void)
 #endif
 
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "fips mode=%s;", 
+	whack_log(RC_COMMENT, "fips mode=%s;",
                 fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
 	whack_log(RC_COMMENT, "SElinux=%s",
                 selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");

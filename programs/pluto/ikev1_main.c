@@ -2870,7 +2870,7 @@ void ikev1_delete_out(struct state *st)
 				said ? ISAKMP_NEXT_NONE : ISAKMP_NEXT_D;
 			isad.isad_spisize = sizeof(ipsec_spi_t);
 			isad.isad_protoid = ns->proto;
-	
+
 			isad.isad_nospi = 1;
 			if (!out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
 						&del_pbs) ||

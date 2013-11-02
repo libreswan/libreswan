@@ -30,7 +30,7 @@
 #include "constants.h"
 #include "enum_names.h"
 
-/* 
+/*
  * To obsolete or convert to runtime options:
  * ALG_PATCH
  * ALLOW_MICROSOFT_BAD_PROPOSAL
@@ -49,7 +49,7 @@
  * SINGLE_CONF_DIR
  * SOFTREMOTE_CLIENT_WORKAROUND
  * SUPPORT_ESP_NULL
- * TEST_INDECENT_PROPOSAL 
+ * TEST_INDECENT_PROPOSAL
  * USE_3DES USE_AES USE_MD5 USE_SERPENT USE_SHA1 USE_SHA2 USE_TWOFISH
  * USE_KEYRR
  * VIRTUAL_IP

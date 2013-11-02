@@ -852,7 +852,7 @@ static const char *const xauth_attr_name[] = {
 	"XAUTH-ANSWER", /* 16529 */
 };
 
-/* 
+/*
  * Note XAUTH and MODECFG are the same xauth attribute list in the registry
  * but we treat these as two completely separate lists
  */

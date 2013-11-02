@@ -595,9 +595,9 @@ static stf_status modecfg_resp(struct state *st,
 				case CISCO_SPLIT_INC:
 				{
 				/* example payload
-				 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00 
+				 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00
 				 *   \/          \/        \ \  /  /   \ \  / /   \  \  \ /  /  /
-				 *  28676        14        10.0.0.0    255.0.0.0  
+				 *  28676        14        10.0.0.0    255.0.0.0
 				 *
 				 *  SPLIT_INC  Length       IP addr      mask     proto?,sport?,dport?,proto?,sport?,dport?
 				 */
@@ -2718,7 +2718,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 				libreswan_log(
 					"XAUTH: No username or password request was received.");
 				return STF_IGNORE;
-			}			    
+			}
 		} else {
 			if (!st->st_connection->spd.this.xauth_client) {
 				libreswan_log(

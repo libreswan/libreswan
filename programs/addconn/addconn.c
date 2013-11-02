@@ -135,7 +135,7 @@ void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 	nlmsg->nlmsg_len += rtattr->rta_len;
 }
 
-static 
+static
 ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 {
 	struct nlmsghdr *nlhdr;
@@ -171,7 +171,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		/* All done if it's not a multi part */
 		if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
 			break;
-	} while (nlhdr->nlmsg_seq != seqnum || 
+	} while (nlhdr->nlmsg_seq != seqnum ||
 			nlhdr->nlmsg_pid != pid);
 	return msglen;
 }

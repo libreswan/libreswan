@@ -733,7 +733,7 @@ int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char* null_dn)
 }
 
 /*
- * function for use in atodn() that escapes a character in 
+ * function for use in atodn() that escapes a character in
  * in the leftid/rightid string. Needed for '//' and ',,'
  * escapes for OID fields
  */
