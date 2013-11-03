@@ -79,7 +79,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 static char pwdfile[PATH_MAX];
 
 /* We use crypt_mutex lock because not all systems have crypt_r() */
-pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct {
 	bool in_use;
