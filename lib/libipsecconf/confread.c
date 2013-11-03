@@ -1196,7 +1196,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 
 		conn->policy |= conn->options[KBF_AUTHBY];
 
-#if STARTER_POLICY_DEBUG
+#ifdef STARTER_POLICY_DEBUG
 		starter_log(LOG_LEVEL_DEBUG,
 			    "%s: setting conn->policy=%08x (%08x)\n",
 			    conn->name,

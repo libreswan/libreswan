@@ -1566,7 +1566,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-#if PFKEY_PROXY
+#ifdef PFKEY_PROXY
 		anyaddr(address_family, &pfkey_address_p_ska);
 		if ((error =
 			     pfkey_address_build(&extensions[
