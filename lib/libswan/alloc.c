@@ -84,7 +84,7 @@ union mhdr {
 
 static union mhdr *allocs = NULL;
 
-void *alloc_bytes1(size_t size, const char *name, int leak_detective)
+static void *alloc_bytes1(size_t size, const char *name, int ld)
 {
 	union mhdr *p;
 
@@ -93,7 +93,7 @@ void *alloc_bytes1(size_t size, const char *name, int leak_detective)
 		size = 1;
 	}
 
-	if (leak_detective) {
+	if (ld) {
 		if (sizeof(union mhdr) + size < size)
 			return NULL;
 
@@ -113,7 +113,7 @@ void *alloc_bytes1(size_t size, const char *name, int leak_detective)
 		}
 	}
 
-	if (leak_detective) {
+	if (ld) {
 		p->i.name = name;
 		p->i.size = size;
 		p->i.older = allocs;
@@ -195,9 +195,9 @@ void report_leaks(void)
 
 #endif /* !LEAK_DETECTIVE */
 
-void *alloc_bytes2(size_t size, const char *name, int leak_detective)
+void *alloc_bytes2(size_t size, const char *name, int ld)
 {
-	void *p = alloc_bytes1(size, name, leak_detective);
+	void *p = alloc_bytes1(size, name, ld);
 
 	if (p == NULL) {
 		if (exit_log_func) {
@@ -210,9 +210,9 @@ void *alloc_bytes2(size_t size, const char *name, int leak_detective)
 }
 
 void *clone_bytes2(const void *orig, size_t size, const char *name,
-		   int leak_detective)
+		   int ld)
 {
-	void *p = alloc_bytes1(size, name, leak_detective);
+	void *p = alloc_bytes1(size, name, ld);
 
 	if (p == NULL) {
 		if (exit_log_func) {

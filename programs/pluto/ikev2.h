@@ -48,16 +48,18 @@ extern const struct state_v2_microcode *ikev2_parent_firststate(void);
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
 
-/* MAGIC: perform f, a function that returns v2_notification_t
+/* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
  */
-#define RETURN_STF_FAILURE2(f, xf)                                      \
-	{ int r = (f); if (r != NOTHING_WRONG) { \
-		  if ((xf) != NULL) \
-			  pfree(xf);          \
-		  return STF_FAIL + r; } }
-
-#define RETURN_STF_FAILURE(f) RETURN_STF_FAILURE2(f, NULL)
+/* ??? why are there so many copies of this routine (ikev2.h, ikev1_continuations.h, ipsec_doi.c).
+ * Sometimes more than one copy is defined!
+ */
+#define RETURN_STF_FAILURE(f) { \
+	notification_t res = (f); \
+	if (res != NOTHING_WRONG) { \
+		  return STF_FAIL + res; \
+	} \
+}
 
 extern v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                          /* body of input SA Payload */
 						    const struct ikev2_sa *sa_prop UNUSED,      /* header of input SA Payload */

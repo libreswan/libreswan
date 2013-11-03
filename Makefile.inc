@@ -223,7 +223,8 @@ endif
 GCC_LINT ?= -DGCC_LINT
 
 # some defaults that cause most if not all warnings
-WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security #-pedantic
+# eventually: -Wshadow
+WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef #-pedantic
 
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
