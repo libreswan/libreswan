@@ -237,7 +237,6 @@ extern void calc_dh_v2(struct pluto_crypto_req *r);
 extern void unpack_KE(struct state *st,
 		      struct pluto_crypto_req *r,
 		      chunk_t *g);
-extern void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r);
 
 static inline void clonetowirechunk(wire_chunk_t  *thespace,
 				    unsigned char *space,

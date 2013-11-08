@@ -44,7 +44,6 @@
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
-#include "cookie.h"
 #include "state.h"
 #include "packet.h"
 #include "md5.h"

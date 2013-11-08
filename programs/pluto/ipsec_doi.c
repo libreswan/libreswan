@@ -61,6 +61,7 @@
 #include "timer.h"
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
+#include "ikev1_quick.h"
 #include "whack.h"
 #include "fetch.h"
 #include "pkcs.h"

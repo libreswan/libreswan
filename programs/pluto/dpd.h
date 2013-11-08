@@ -1,4 +1,5 @@
 /* IPsec IKE Dead Peer Detection code.
+ *
  * Copyright (C) 2003 Ken Bantoft        <ken@xelerance.com>
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
@@ -17,6 +18,7 @@
 extern stf_status dpd_init(struct state *st);
 extern void dpd_event(struct state *st);
 extern void p2_dpd_outI1(struct state *p2st);
+
 extern stf_status dpd_inI_outR(struct state *st,
 			       struct isakmp_notification *const n,
 			       pb_stream *pbs);

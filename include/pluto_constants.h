@@ -173,7 +173,7 @@ typedef enum {
  * NOTE: changes here must be done in concert with changes to DBGOPT_*
  * in whack.c.  A change to WHACK_MAGIC in whack.h will be required too.
  */
-#if !defined(NO_DEBUG)
+#ifdef DEBUG
 
 #define DBG_RAW         LELEM(0)                                /* raw packet I/O */
 #define DBG_CRYPT       LELEM(1)                                /* encryption/decryption of messages */

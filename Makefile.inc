@@ -224,7 +224,7 @@ GCC_LINT ?= -DGCC_LINT
 
 # some defaults that cause most if not all warnings
 # eventually: -Wshadow
-WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef #-pedantic
+WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs #-pedantic
 
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.

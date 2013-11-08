@@ -1,4 +1,6 @@
-/* misc. universal things
+/* Memory allocation routines
+ * Header: "lswalloc.h"
+ *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,6 +30,7 @@
 
 /* leave enabled so support functions are always in libswan, and
  * pluto can be recompiled with just the leak detective changes
+ * ??? this seems dangerous and stupid
  */
 #define LEAK_DETECTIVE
 #include "lswalloc.h"
@@ -41,17 +44,6 @@ exit_log_func_t exit_log_func;
 void set_exit_log_func(exit_log_func_t func)
 {
 	exit_log_func = func;
-}
-
-bool all_zero(const unsigned char *m, size_t len)
-{
-	size_t i;
-
-	for (i = 0; i != len; i++)
-		if (m[i] != '\0')
-			return FALSE;
-
-	return TRUE;
 }
 
 /* memory allocation

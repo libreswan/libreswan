@@ -185,7 +185,7 @@ void libreswan_log_abort(const char *file_str, int line_no)
 
 /* Debugging message support */
 
-#if !defined(NO_DEBUG)
+#ifdef DEBUG
 
 void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 {
@@ -202,14 +202,6 @@ void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
 	libreswan_loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",
 			 file_str, line_no, pred_str);
 	abort(); /* exiting correctly doesn't always work */
-}
-
-void libreswan_pexpect_log(const char *pred_str, const char *file_str,
-			   unsigned long line_no)
-{
-	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "EXPECTATION FAILED at %s:%lu: %s", file_str,
-	       line_no, pred_str);
 }
 
 lset_t

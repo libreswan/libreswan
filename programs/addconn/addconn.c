@@ -56,6 +56,7 @@
 
 char *progname;
 int verbose = 0;
+extern int yydebug;	/* from parser.tab.h but that's too much to include */
 int warningsarefatal = 0;
 
 /* Buffer size for netlink query (~100 bytes) and replies.
@@ -590,7 +591,6 @@ int main(int argc, char *argv[])
 		usage();
 
 	if (verbose > 3) {
-		extern int yydebug;
 		yydebug = 1;
 	}
 
@@ -913,7 +913,11 @@ int main(int argc, char *argv[])
 	exit(exit_status);
 }
 
-void exit_tool(int x)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
 	exit(x);
 }

@@ -29,8 +29,6 @@ extern void ipsecdoi_replace(struct state *st,
 
 extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
 
-#include "ikev1_quick.h"
-
 extern state_transition_fn
 	main_inI1_outR1,
 	main_inR1_outI2,
@@ -61,14 +59,6 @@ extern notification_t accept_KE(chunk_t *dest, const char *val_name,
  */
 extern void close_message(pb_stream *pbs, struct state *st);
 extern bool encrypt_message(pb_stream *pbs, struct state *st);
-
-extern stf_status dpd_inI_outR(struct state *st,
-			       struct isakmp_notification *const n,
-			       pb_stream *n_pbs);
-extern stf_status dpd_inR(struct state *st,
-			  struct isakmp_notification *const n,
-			  pb_stream *n_pbs);
-extern void dpd_timeout(struct state *st);
 
 /* START_HASH_PAYLOAD_NO_HASH_START
  *
@@ -132,3 +122,6 @@ extern stf_status send_isakmp_notification(struct state *st,
 extern bool has_preloaded_public_key(struct state *st);
 
 extern bool extract_peer_id(struct id *peer, const pb_stream *id_pbs);
+
+struct pluto_crypto_req;	/* prevent struct type being local to function protocol */
+extern void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r);

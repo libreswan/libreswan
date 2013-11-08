@@ -142,6 +142,7 @@
 #include "demux.h"      /* needs packet.h */
 #include "ikev1.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
+#include "ikev1_quick.h"
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
@@ -153,6 +154,10 @@
 #include "dpd.h"
 #include "udpfromto.h"
 #include "hostpair.h"
+
+#ifdef HAVE_NM
+#include "kernel.h"
+#endif
 
 /* state_microcode is a tuple of information parameterizing certain
  * centralized processing of a packet.  For example, it roughly

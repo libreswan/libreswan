@@ -1,4 +1,5 @@
 /* misc functions to get compile time and runtime options
+ *
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
@@ -69,7 +70,7 @@ static void lsw_conf_calculate(struct lsw_conf_options *oco)
 	oco->policies_dir = clone_str(buf, "policies path");
 }
 
-void lsw_conf_setdefault(void)
+static void lsw_conf_setdefault(void)
 {
 	char buf[PATH_MAX];
 	char *ipsec_conf_dir = IPSEC_CONFDIR;

@@ -66,10 +66,6 @@ extern char *pluto_shared_secrets_file;
 extern void load_preshared_secrets(int whackfd);
 extern void free_preshared_secrets(void);
 
-extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
-						    struct pubkey *my_public_key,
-						    enum PrivateKeyKind kind);
-
 extern struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 					  char *xauthname);
 

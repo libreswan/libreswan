@@ -133,6 +133,7 @@ extern void ikev2_derive_child_keys(struct state *st,
 				    enum phase1_role role);
 
 extern struct traffic_selector ikev2_end_to_ts(struct end *e);
+
 extern int ikev2_evaluate_connection_fit(struct connection *d,
 					 struct spd_route *sr,
 					 enum phase1_role role,
@@ -181,7 +182,6 @@ extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					 enum phase1_role role,
 					 pb_stream *outpbs);
 
-extern struct traffic_selector ikev2_end_to_ts(struct end *e);
 extern void ikev2_update_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);
 
