@@ -77,7 +77,7 @@
 # endif
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
 # define NEED_UDP_ENCAP_ENABLE
 #endif
 
