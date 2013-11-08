@@ -47,7 +47,7 @@ v3.6 (unreleased)
 * NSS: pluto should now open NSS files in readwrite, just read [Paul]
 * Bugtracker bugs fixed:
   #130: debian debuild creates a deb with /usr/libexec contents
-        [Marc-Cristian Petersen]
+        [Marc-Christian Petersen]
   #145: support old location of /selinux/enforce still in use by CentOS6 [Paul]
 
 v3.5 (July 13, 2013)
