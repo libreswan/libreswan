@@ -149,8 +149,8 @@ install -d %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 %endif
 
-echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
-rm -fr %{buildroot}/etc/rc.d/rc*
+echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %files 
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
@@ -195,11 +195,13 @@ if [ $1 -eq 1 ] ; then
     # Initial installation 
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
-if [ ! -f /etc/ipsec.d/cert8.db ] ; then
-echo > /var/tmp/libreswan-nss-pwd
-certutil -N -f /var/tmp/libreswan-nss-pwd -d /etc/ipsec.d
-restorecon /etc/ipsec.d/*db 2>/dev/null || :
-rm /var/tmp/libreswan-nss-pwd
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
+    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
+    echo > ${TEMPFILE}
+    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
+    rm -f ${TEMPFILE}
 fi
 
 
