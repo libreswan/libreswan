@@ -1,6 +1,9 @@
 
 See also https://libreswan.org/
 
+v3.7 (unreleased)
+* KLIPS: Fix for crashes ipsec_xmit_ipip() [Thomas/Roel/David]
+
 v3.6 (October 30, 2013)
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
 * IKEv2: Add liveness checks (a.k.a DPD for IKEv2) [Matt Rogers]
@@ -47,7 +50,7 @@ v3.6 (October 30, 2013)
 * NSS: pluto should now open NSS files in readwrite, just read [Paul]
 * Bugtracker bugs fixed:
   #130: debian debuild creates a deb with /usr/libexec contents
-        [Marc-Cristian Petersen]
+        [Marc-Christian Petersen]
   #145: support old location of /selinux/enforce still in use by CentOS6 [Paul]
 
 v3.5 (July 13, 2013)
