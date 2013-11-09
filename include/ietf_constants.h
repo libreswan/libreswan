@@ -431,7 +431,7 @@ enum next_payload_types_ikev2 {
 	/* 128 - 255 Private Use */
 	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
 	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
-	ISAKMP_NEXT_v2ROOF = 255, /* roof on payload types */
+	ISAKMP_NEXT_v2ROOF = 254, /* roof on payload types - keep same as v1 */
 };
 
 /*
