@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (verbose > 3) {
-		extern int yydebug;
+		extern int yydebug;	/* from parser.tab.h but that's too much to include */
 		yydebug = 1;
 	}
 
@@ -174,7 +174,11 @@ int main(int argc, char *argv[])
 	exit(0);
 }
 
-void exit_tool(int x)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
 	exit(x);
 }

@@ -347,14 +347,11 @@ static enum ikev2_trans_type_prf v1tov2_prf(int oakley)
 
 struct db_sa *sa_v2_convert(struct db_sa *f)
 {
-	unsigned int pcc, prc, tcc, pr_cnt, pc_cnt, propnum;
+	unsigned int pcc, pr_cnt, pc_cnt, propnum;
 	int tot_trans;
 	int i;
 	struct db_trans_flat   *dtfset;
-	struct db_trans_flat   *dtfone;
 	struct db_trans_flat   *dtflast;
-	struct db_attr         *attrs;
-	struct db_v2_trans     *tr;
 	struct db_v2_prop_conj *pc;
 	struct db_v2_prop      *pr;
 
@@ -364,23 +361,31 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	if (!f->dynamic)
 		f = sa_copy_sa(f, 0);
 
-	tot_trans = 0;
-	for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
-		struct db_prop_conj *dpc = &f->prop_conjs[pcc];
+	/* count transforms and allocate space for result */
+	{
+		unsigned int pcc;
+		int tot_trans = 0;
 
-		for (prc = 0; prc < dpc->prop_cnt; prc++)
-			tot_trans += dpc->props[prc].trans_cnt;
+		for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
+			struct db_prop_conj *dpc = &f->prop_conjs[pcc];
+			unsigned int prc;
+
+			for (prc = 0; prc < dpc->prop_cnt; prc++)
+				tot_trans += dpc->props[prc].trans_cnt;
+		}
+
+		dtfset = alloc_bytes(sizeof(struct db_trans_flat) * tot_trans,
+			     "spdb_v2_dtfset");
 	}
 
-	dtfset = alloc_bytes(sizeof(struct db_trans_flat) * tot_trans,
-			     "spdb_v2_dtfset");
-
 	tot_trans = 0;
 	for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
 		struct db_prop_conj *dpc = &f->prop_conjs[pcc];
+		unsigned int prc;
 
 		for (prc = 0; prc < dpc->prop_cnt; prc++) {
 			struct db_prop *dp = &dpc->props[prc];
+			unsigned int tcc;
 
 			for (tcc = 0; tcc < dp->trans_cnt; tcc++) {
 				struct db_trans *tr = &dp->trans[tcc];
@@ -399,7 +404,6 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 
 					if (f->parentSA) {
 						switch (attr->type.oakley) {
-
 						case OAKLEY_AUTHENTICATION_METHOD:
 							dtfone->auth_method =
 								attr->val;
@@ -468,16 +472,15 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	if (tot_trans >= 1)
 		pr = alloc_bytes(sizeof(struct db_v2_prop), "db_v2_prop");
 	dtflast = NULL;
-	tr = NULL;
 	pc = NULL;
 	pc_cnt = 0;
 	propnum = 1;
 
 	for (i = 0; i < tot_trans; i++) {
+		struct db_v2_trans *tr;
 		int tr_cnt;
 		int tr_pos;
-
-		dtfone = &dtfset[i];
+		struct db_trans_flat   *dtfone = &dtfset[i];
 
 		if (dtfone->protoid == PROTO_ISAKMP)
 			tr_cnt = 4;
@@ -547,9 +550,10 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 		tr[tr_pos].transform_type = IKEv2_TRANS_TYPE_ENCR;
 		tr[tr_pos].transid        = dtfone->encr_transid;
 		if (dtfone->encr_keylen > 0 ) {
-			attrs =
+			struct db_attr *attrs =
 				alloc_bytes(sizeof(struct db_attr),
 					    "db_attrs");
+
 			tr[tr_pos].attrs = attrs;
 			tr[tr_pos].attr_cnt = 1;
 			attrs->type.ikev2 = IKEv2_KEY_LENGTH;

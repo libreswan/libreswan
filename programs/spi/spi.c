@@ -155,7 +155,7 @@ static void usage(char *s, FILE *f)
 	exit(-1);
 }
 
-int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
+static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		       char *life_opt[life_maxsever][life_maxtype],
 		       char *myoptarg)
 {
@@ -308,62 +308,6 @@ int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 	return 0;
 }
 
-int pfkey_register(uint8_t satype)
-{
-	/* for registering SA types that can be negotiated */
-	int error;
-	ssize_t wlen;
-	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
-	struct sadb_msg *pfkey_msg;
-
-	pfkey_extensions_init(extensions);
-	error = pfkey_msg_hdr_build(&extensions[0],
-				    SADB_REGISTER,
-				    satype,
-				    0,
-				    ++pfkey_seq,
-				    getpid());
-	if (error != 0) {
-		fprintf(stderr,
-			"%s: Trouble building message header, error=%d.\n",
-			progname, error);
-		pfkey_extensions_free(extensions);
-		return 1;
-	}
-
-	error = pfkey_msg_build(&pfkey_msg, extensions, EXT_BITS_IN);
-	if (error != 0) {
-		fprintf(stderr,
-			"%s: Trouble building pfkey message, error=%d.\n",
-			progname, error);
-		pfkey_extensions_free(extensions);
-		pfkey_msg_free(&pfkey_msg);
-		return 1;
-	}
-	wlen = write(pfkey_sock, pfkey_msg,
-		     pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN);
-	if (wlen != (ssize_t)(pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN)) {
-		/* cleanup code here */
-		if (wlen < 0) {
-			fprintf(stderr,
-				"%s: Trouble writing to channel PF_KEY: %s\n",
-				progname,
-				strerror(errno));
-		} else {
-			fprintf(stderr,
-				"%s: write to channel PF_KEY truncated.\n",
-				progname);
-		}
-		pfkey_extensions_free(extensions);
-		pfkey_msg_free(&pfkey_msg);
-		return 1;
-	}
-	pfkey_extensions_free(extensions);
-	pfkey_msg_free(&pfkey_msg);
-
-	return 0;
-}
-
 static struct option const longopts[] =
 {
 	{ "ah", 1, 0, 'H' },
@@ -420,7 +364,7 @@ static bool pfkey_build(int error,
 	}
 }
 
-int decode_esp(char *algname)
+static int decode_esp(char *algname)
 {
 	int esp_alg;
 
@@ -1978,7 +1922,11 @@ int main(int argc, char *argv[])
 	exit(0);
 }
 
-void exit_tool(int x)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
 	exit(x);
 }

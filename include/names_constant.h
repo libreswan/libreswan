@@ -15,7 +15,6 @@ extern enum_names stfstatus_name;
 extern const char *const debug_bit_names[];
 extern enum_names state_names;
 extern const char *const state_story[];
-extern enum_names state_names;
 extern enum_names state_stories;
 extern enum_names connection_kind_names;
 extern enum_names routing_story;
@@ -55,15 +54,6 @@ extern enum_names esp_transformid_names;
 extern enum_names ipcomp_transformid_names;
 extern enum_names ident_names;
 extern enum_names cert_type_names;
-extern enum_names oakley_attr_names;
-extern const char *const oakley_attr_bit_names[];
-extern enum_names *oakley_attr_val_descs[];
-extern enum_names ipsec_attr_names;
-extern enum_names *ipsec_attr_val_descs[];
-extern enum_names sa_lifetime_names;
-extern enum_names enc_mode_names;
-extern enum_names auth_alg_names, extended_auth_alg_names;
-extern enum_names oakley_lifetime_names;
 extern enum_names oakley_enc_names;
 extern enum_names oakley_hash_names;
 extern enum_names oakley_auth_names;
@@ -90,7 +80,6 @@ extern enum_names ikev2_ts_type_names;
 extern u_int16_t secctx_attr_value;
 #endif
 
-extern enum_names natt_method_names;
 extern enum_names natt_method_names;
 
 /* socket address family info */

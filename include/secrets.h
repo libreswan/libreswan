@@ -1,4 +1,6 @@
 /* mechanisms for preshared keys (public, private, and preshared secrets)
+ * definitions: lib/libswan/secrets.c
+ *
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
@@ -160,6 +162,10 @@ extern void lsw_load_preshared_secrets(struct secret **psecrets,
 extern void lsw_free_preshared_secrets(struct secret **psecrets);
 
 extern bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk);
+
+extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
+						    struct pubkey *my_public_key,
+						    enum PrivateKeyKind kind);
 
 extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    enum PrivateKeyKind kind,

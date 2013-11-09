@@ -40,6 +40,7 @@
 #include <libreswan.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
+#include <libreswan/pfkey_debug.h>
 
 #include "sysdep.h"
 #include "socketwrapper.h"

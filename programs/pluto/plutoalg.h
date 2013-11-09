@@ -2,7 +2,7 @@ struct connection;
 
 /* status info */
 extern void kernel_alg_show_status(void);
-void kernel_alg_show_connection(struct connection *c, const char *instance);
+extern void kernel_alg_show_connection(struct connection *c, const char *instance);
 
 struct ike_info;
 #define IKEALGBUF_LEN strlen("00000_000-00000_000-00000")

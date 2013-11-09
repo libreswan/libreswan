@@ -142,6 +142,7 @@
 #include "demux.h"      /* needs packet.h */
 #include "ikev1.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
+#include "ikev1_quick.h"
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
@@ -153,6 +154,10 @@
 #include "dpd.h"
 #include "udpfromto.h"
 #include "hostpair.h"
+
+#ifdef HAVE_NM
+#include "kernel.h"
+#endif
 
 /* state_microcode is a tuple of information parameterizing certain
  * centralized processing of a packet.  For example, it roughly
@@ -1632,19 +1637,20 @@ void process_v1_packet(struct msg_digest **mdp)
 			size_t size = 0;
 			int prev_index = 0;
 			struct ike_frag *frag;
+
 			for (frag = st->ike_frags; frag; frag = frag->next) {
 				size += frag->size;
 				if (frag->index != ++prev_index) {
 					break; /* fragment list incomplete */
 				} else if (frag->index == last_frag_index) {
-					struct msg_digest *md = alloc_md();
+					struct msg_digest *whole_md = alloc_md();
 					u_int8_t *buffer = alloc_bytes(size,
 								       "IKE fragments buffer");
 					size_t offset = 0;
 
-					md->iface = frag->md->iface;
-					md->sender = frag->md->sender;
-					md->sender_port =
+					whole_md->iface = frag->md->iface;
+					whole_md->sender = frag->md->sender;
+					whole_md->sender_port =
 						frag->md->sender_port;
 
 					/* Reassemble fragments in buffer */
@@ -1660,12 +1666,12 @@ void process_v1_packet(struct msg_digest **mdp)
 						frag = frag->next;
 					}
 
-					init_pbs(&md->packet_pbs, buffer, size,
+					init_pbs(&whole_md->packet_pbs, buffer, size,
 						 "packet");
 
-					process_packet(&md);
-					if (md != NULL)
-						release_md(md);
+					process_packet(&whole_md);
+					if (whole_md != NULL)
+						release_md(whole_md);
 					release_fragments(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_seen_fragments = TRUE;
@@ -1678,6 +1684,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 
 		/* Don't release the md, taken care of by the ike_frag code */
+		/* ??? I'm not sure -- DHR */
 		*mdp = NULL;
 		return;
 	}

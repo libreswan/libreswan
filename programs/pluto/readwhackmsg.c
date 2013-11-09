@@ -1,9 +1,15 @@
+/* Read Whack Message
+ * Header: readwhackmsg.h
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "constants.h"
 #include "lswalloc.h"
 #include "whack.h"
 #include "lswlog.h"
+
+#include "readwhackmsg.h"
 
 void readwhackmsg(char *infile)
 {

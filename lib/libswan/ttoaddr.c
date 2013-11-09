@@ -40,7 +40,7 @@ static err_t getpiece(const char **, const char *, unsigned *);
 /*
    - ttoaddr - convert text name or dotted-decimal address to binary address
  */
-err_t                           /* NULL for success, else string literal */
+static err_t                           /* NULL for success, else string literal */
 ttoaddr_base(const char *src,
 	     size_t srclen,     /* 0 means "apply strlen" */
 	     int af,            /* address family */

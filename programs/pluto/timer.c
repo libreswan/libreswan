@@ -432,7 +432,7 @@ void handle_timer_event(void)
 	}
 }
 
-void liveness_check(struct state *st)
+static void liveness_check(struct state *st)
 {
 	time_t tm, last_liveness;
 	struct state *pst;

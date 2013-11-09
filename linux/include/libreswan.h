@@ -546,18 +546,6 @@ enum klips_debug_flags {
 };
 
 /*
- * Debugging levels for pfkey_lib_debug
- */
-#define PF_KEY_DEBUG_PARSE_NONE    0
-#define PF_KEY_DEBUG_PARSE_PROBLEM 1
-#define PF_KEY_DEBUG_PARSE_STRUCT  2
-#define PF_KEY_DEBUG_PARSE_FLOW    4
-#define PF_KEY_DEBUG_BUILD         8
-#define PF_KEY_DEBUG_PARSE_MAX    15
-
-extern unsigned int pfkey_lib_debug;  /* bits selecting what to report */
-
-/*
  * pluto and lwdnsq need to know the maximum size of the commands to,
  * and replies from lwdnsq.
  */
