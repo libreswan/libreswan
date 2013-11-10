@@ -20,7 +20,7 @@ void (exit_tool)(int x)
 }
 
 char* progname = "libreswan\0";
-int verbose=0;
+
 int warningsarefatal = 0;
 #import "ipsecconf/confwrite.h"
 

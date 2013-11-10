@@ -27,6 +27,7 @@
 
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser.h"
+#include "ipsecconf/parser-flex.h"
 #include "ipsecconf/confread.h"
 
 #include "parser.tab.h"

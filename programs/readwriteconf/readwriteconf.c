@@ -52,9 +52,10 @@
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/files.h"
 #include "ipsecconf/starterwhack.h"
+#include "ipsecconf/parser-controls.h"
 
 char *progname;
-int verbose = 0;
+static int verbose = 0;
 int warningsarefatal = 0;
 
 static const char *usage_string = ""
@@ -67,8 +68,6 @@ static void usage(void)
 	exit(10);
 }
 
-extern char rootdir[PATH_MAX];          /* when evaluating paths, prefix this to them */
-extern char rootdir2[PATH_MAX];         /* when evaluating paths, prefix this to them */
 
 static struct option const longopts[] =
 {
@@ -105,6 +104,7 @@ int main(int argc, char *argv[])
 
 		case 'D':
 			verbose++;
+			lex_verbosity++;
 			break;
 
 		case 'W':
@@ -146,7 +146,6 @@ int main(int argc, char *argv[])
 	}
 
 	if (verbose > 3) {
-		extern int yydebug;	/* from parser.tab.h but that's too much to include */
 		yydebug = 1;
 	}
 
