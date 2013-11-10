@@ -52,7 +52,7 @@
 #include "ipsecconf/starterwhack.h"
 
 char *progname;
-int verbose = 0;
+static int verbose = 0;
 int warningsarefatal = 0;
 
 static const char *usage_string = ""

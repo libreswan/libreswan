@@ -40,6 +40,8 @@
 %{ 
 #define MAX_INCLUDE_DEPTH  10
 
+int lex_verbosity = 0;	/* how much tracing output to show */
+
 char rootdir[PATH_MAX];      /* when evaluating paths, prefix this to them */
 char rootdir2[PATH_MAX];     /* or... try this one too */
 
@@ -226,7 +228,7 @@ int parser_y_include (const char *filename)
 		return 1;
 	}
 
-	if(verbose)
+	if (lex_verbosity > 0)
 	{
 		starter_log(LOG_LEVEL_DEBUG, "including file '%s'(%s) from line %s:%d\n"
 			    , filename, try
@@ -254,7 +256,7 @@ int parser_y_eof(void)
 	if(parser_y_nextglobfile(stacktop) == -1) {
 		/* no more glob'ed files to process */
 		
-		if(verbose)
+		if (lex_verbosity > 0)
 		{
 			int stackp = ic_private.stack_ptr;
 			starter_log(LOG_LEVEL_DEBUG,
