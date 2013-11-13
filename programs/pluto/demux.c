@@ -110,20 +110,19 @@ void process_packet(struct msg_digest **mdp)
 
 			if ( maj != ISAKMP_MAJOR_VERSION &&
 			     maj != IKEv2_MAJOR_VERSION) {
+				/* We don't know IKEv3+ */
 				SEND_NOTIFICATION(INVALID_MAJOR_VERSION);
 				return;
 			} else if (maj == ISAKMP_MAJOR_VERSION && min !=
 				   ISAKMP_MINOR_VERSION) {
-				/* all IKEv2 minor version are acceptable */
-				SEND_NOTIFICATION(INVALID_MINOR_VERSION);
-				return;
+					/* We only know IKEv1 1.0 */
+					SEND_NOTIFICATION(INVALID_MINOR_VERSION);
+					return;
 			}
+			/* As per RFC 4306/5996, accept unknown IKEv2 minor */
 		} else {
-			/* Although the comments above says that all IKEv2 minor version are acceptable */
-			/* but it does not take of it, and in case a peer sends a different minor version */
-			/* other than 0, it still sends PAYLOAD_MALFORMED packet, so fixing it here */
-			/* it checks if the in_struct failure is due to minor version with ikev2 */
-			/* As per RFC 4306/5996, ignore minor version numbers */
+			libreswan_log("received packet size (%lu) is smaller than "
+				"an IKE header - packet dropped", md->packet_pbs.roof - md->packet_pbs.cur);
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
 		}
@@ -175,10 +174,11 @@ void process_packet(struct msg_digest **mdp)
 
 	default:
 		/*
-		 * We should never get here - any other major is rejected
-		 * earlier
+		 * We should never get here? - above we only accept v1 or v2
 		 */
-		bad_case(maj);
+		libreswan_log("Unexpected IKE major '%d'",maj);
+		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+		return;
 	}
 }
 
