@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v3.7 (unreleased)
 * KLIPS: Fix for crashes ipsec_xmit_ipip() [Thomas/Roel/David]
+* SECURITY: insecure temp file creation on rpm install [Tuomo]
 
 v3.6 (October 30, 2013)
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
