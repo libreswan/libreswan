@@ -6,6 +6,7 @@ v3.7 (unreleased)
 * KLIPS: Fix NAT-T (NEED_UDP_ENCAP_ENABLE) for 3.4 kernel [Roel]
 * SECURITY: insecure temp file creation on rpm install [Tuomo]
 * IKEv2: Check for inbound traffic before sending liveness exchange [Matt]
+* IKEv2: Fix some error codes that mistakenly used IKEv1 versions [Paul]
 * building: support for slackware version/init system detection [Roel]
 
 v3.6 (October 30, 2013)
