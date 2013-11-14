@@ -1263,23 +1263,22 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 				loglog(RC_LOG_SERIOUS,
 				       "out of space processing secrets filename \"%s\"",
 				       file_pat);
-				break;
+				globfree(&globbuf);
+				return;
 			case GLOB_ABORTED:
 				break; /* already logged */
-#if defined(GLOB_NOMATCH)
+
 			case GLOB_NOMATCH:
-				loglog(RC_LOG_SERIOUS,
-				       "no secrets filename matched \"%s\"",
+				libreswan_log("no secrets filename matched \"%s\"",
 				       file_pat);
 				break;
-#endif
+
 			default:
 				loglog(RC_LOG_SERIOUS, "unknown glob error %d",
 				       r);
-				break;
+				globfree(&globbuf);
+				return;
 			}
-			globfree(&globbuf);
-			return;
 		}
 	}
 
