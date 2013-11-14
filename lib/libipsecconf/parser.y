@@ -26,11 +26,9 @@
 #define YYDEBUG 1
 
 #include "ipsecconf/keywords.h"
-#include "ipsecconf/parser.h"
+#include "ipsecconf/parser.h"	/* includes parser.tab.h" */
 #include "ipsecconf/parser-flex.h"
 #include "ipsecconf/confread.h"
-
-#include "parser.tab.h"
 
 #define YYERROR_VERBOSE
 #define ERRSTRING_LEN	256
