@@ -48,12 +48,17 @@
  * <libreswan.h> defines err_t for this return type.
  */
 
-#ifndef LIBRESWAN_COCOA_APP
+/* you'd think this should be builtin to compiler... */
+#ifndef TRUE
+#  define TRUE 1
+#  ifndef LIBRESWAN_COCOA_APP
 typedef int bool;
+#  endif
 #endif
 
-#define FALSE   0
-#define TRUE    1
+#ifndef FALSE
+#  define FALSE 0
+#endif
 
 #define NULL_FD (-1)    /* NULL file descriptor */
 #define dup_any(fd) ((fd) == NULL_FD ? NULL_FD : dup(fd))
