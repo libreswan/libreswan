@@ -543,7 +543,7 @@ void init_vendorid(void)
 			/** Find something to display **/
 			vid->descr = vid->data;
 		}
-#if 1
+#if 0
 		DBG_log("init_vendorid: %d [%s]",
 			vid->id,
 			vid->descr ? vid->descr : ""
