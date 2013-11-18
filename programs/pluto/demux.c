@@ -137,7 +137,7 @@ void process_packet(struct msg_digest **mdp)
 	vmin = md->hdr.isa_version & ISA_MIN_MASK;
 
 	switch (vmaj) {
-	case ISAKMP_MAJOR_VERSION:
+	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 		if (vmin > ISAKMP_MINOR_VERSION) {
 			/* RFC2408 3.1 ISAKMP Header Format:
 			 *
@@ -165,13 +165,13 @@ void process_packet(struct msg_digest **mdp)
 		process_v1_packet(mdp);
 		break;
 
-	case IKEv2_MAJOR_VERSION:
+	case IKEv2_MAJOR_VERSION: /* IKEv2 */
 		if (vmin != IKEv2_MINOR_VERSION) {
 			/*
 			 * Unlike IKEv1, for IKEv2 we are supposed to try and
 			 * continue on unknown minors
 			 */
-			libreswan_log("ignoring unknown IKEv2 minor version number %d", vmin);
+			libreswan_log("Ignoring unknown IKEv2 minor version number %d", vmin);
 		}
 		DBG(DBG_CONTROL,
 		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
