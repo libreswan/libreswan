@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>secctx_attr_value</emphasis></term>
+  <listitem>
+<para>
+The secctx attribute number to use for Labeled IPsec. Defaults to 32001 which is a private use value. Old openswan
+versions might still be using the value 10. Other values are not recommended. See also labeled_ipsec=, loopback=
+and policy_label=
+</para>
+  </listitem>
+  </varlistentry>
+
