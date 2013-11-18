@@ -9,6 +9,7 @@ v3.7 (unreleased)
 * IKEv2: Fix some error codes that mistakenly used IKEv1 versions [Paul]
 * building: support for slackware version/init system detection [Roel]
 * secrets: Log glob failing for secrets parser as warning, not error [Paul]
+* labeled ipsec: Set default value of secctx_attr_value to 32001 [Paul]
 
 v3.6 (October 30, 2013)
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
