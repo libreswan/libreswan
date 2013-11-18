@@ -2,7 +2,7 @@
   <term><emphasis remap='B'>loopback</emphasis></term>
   <listitem>
 <para>
-Avesh needs to write a man page entry for this.
+Allow use of loopback device. This is required for labeled_ipsec on MLS SElinux policy machines.
 </para>
   </listitem>
   </varlistentry>
