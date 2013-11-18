@@ -1,4 +1,4 @@
- /testing/guestbin/swan-prep
+/testing/guestbin/swan-prep
 east #
  ipsec _stackmanager start
 [ 00.00] NET: Registered protocol family 15
@@ -15,7 +15,7 @@ east #
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+ ipsec auto --add westnet-eastnet
 east #
  ipsec auto --status
 000 using kernel interface: klips
@@ -28,7 +28,6 @@ east #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
-000 pluto_version=v3.6-22-g42d7605-dirty-master, pluto_vendorid=OE-Libreswan-v3.6-22
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx_attr_value=<unsupported>
@@ -75,18 +74,16 @@ east #
 000  
 000 Connection list:
 000  
-000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ipv4-psk-ikev2":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet-ipv4-psk-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ipv4-psk-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
-000 "westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
-000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA2_256(4)_000-MODP1536(5), 3DES_CBC(5)_000-SHA2_256(4)_000-MODP1024(2)
-000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms found:  3DES_CBC(5)_192-SHA2_256(4)_256-MODP1536(5)3DES_CBC(5)_192-SHA2_256(4)_256-MODP1024(2)
+000 "westnet-eastnet": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "westnet-eastnet":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -100,12 +97,8 @@ initdone
 east #
  ipsec look
 east NOW
-192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
+192.0.2.0/24       -> 192.0.1.0/24       => %trap
 ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=1
-tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=na   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -120,6 +113,11 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
 east #
+ ipsec whack --shutdown
+002 shutting down
+east #
+east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

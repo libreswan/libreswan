@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 10/19/2013
+.\"      Date: 11/18/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "10/19/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "11/18/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -767,7 +767,7 @@ or
 \fIusername:password:conname\fR
 .sp
 For supported password hashing methods, see
-\fBcrypt\fR(3)\&. If pluto is running in FIPS mode, some hash methods, such as MD5, might not be available\&. The pam option is only available if compiled with USE_XAUTHPAM\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
+\fBcrypt\fR(3)\&. If pluto is running in FIPS mode, some hash methods, such as MD5, might not be available\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
 .sp
 The
 \fIalwaysok\fR
@@ -1069,17 +1069,27 @@ and
 .PP
 \fBlabeled_ipsec\fR
 .RS 4
-Avesh needs to write a man page entry for this\&.
+Whether labeled IPsec should be enabled or not; acceptable values are
+\fBno\fR
+(the default) and
+\fByes\fR\&. See also loopback=, policy_label= and secctx_attr_value=
 .RE
 .PP
 \fBpolicy_label\fR
 .RS 4
-Avesh needs to write a man page entry for this\&.
+The string representation of an access control security label that is interpreted by the LSM (e\&.g\&. SELinux) for use with Labeled IPsec\&. See alo loopback=, labeled_ipsec= and secctx_attr_value=\&. For example,
+\fIpolicy_label=system_u:object_r:ipsec_spd_t:s0\-s15:c0\&.c1023\fR
 .RE
 .PP
 \fBloopback\fR
 .RS 4
-Avesh needs to write a man page entry for this\&.
+Whether labeled IPsec loopback should be enabled or not; acceptable values are
+\fBno\fR
+(the default) or yes\&. Note that some Linux kernels disable some XFRM/NETKEY functions required for loopback that can prevent Labeled IPsec from working correctly\&. Ensure that both
+\fI/proc/sys/net/ipv4/conf/lo/disable_xfrm\fR
+and
+\fI/proc/sys/net/ipv4/conf/lo/disable_policy\fR
+are set to 0\&.
 .RE
 .PP
 \fBfailureshunt\fR
@@ -1252,6 +1262,11 @@ are started to help with cryptographic operations\&. Pluto will start
 of them, where
 \fIn\fR
 is the number of CPU\*(Aqs you have (including hypherthreaded CPU\*(Aqs)\&. A value of 0 forces pluto to do all operations in the main process\&. A value of \-1 tells pluto to perform the above calculation\&. Any other value forces the number to that amount\&.
+.RE
+.PP
+\fBsecctx_attr_value\fR
+.RS 4
+The value for the IPsec SA security context attribute identifier which is used for Labeled IPsec\&. Defaults to the private use IANA value 32001 from the IPsec SA attributes registry\&. Old openswan versions might still be using the (stolen) value 10, which has since been assigned by IANA for something else\&. Other values are not recommended unless IANA assigns an actual value for this\&. See also labeled_ipsec=, loopback= and policy_label=
 .RE
 .PP
 \fBplutofork\fR

@@ -99,7 +99,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
   USE_XAUTHPAM=true \
 %if %{USE_FIPSCHECK}
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-  FIPSPRODUCTCHECK=/etc/system-fips \
+  FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
 %endif
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
@@ -153,8 +153,8 @@ install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
 install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
-echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
-rm -fr %{buildroot}/etc/rc.d/rc*
+echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %files 
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
@@ -190,11 +190,13 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 
 %post 
 %systemd_post ipsec.service
-if [ ! -f /etc/ipsec.d/cert8.db ] ; then
-echo > /var/tmp/libreswan-nss-pwd
-certutil -N -f /var/tmp/libreswan-nss-pwd -d /etc/ipsec.d
-restorecon /etc/ipsec.d/*db 2>/dev/null || :
-rm /var/tmp/libreswan-nss-pwd
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
+    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
+    echo > ${TEMPFILE}
+    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
+    rm -f ${TEMPFILE}
 fi
 
 %changelog

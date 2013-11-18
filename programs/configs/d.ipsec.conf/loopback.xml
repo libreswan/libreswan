@@ -2,7 +2,13 @@
   <term><emphasis remap='B'>loopback</emphasis></term>
   <listitem>
 <para>
-Avesh needs to write a man page entry for this.
+Whether labeled IPsec loopback should be enabled or not; acceptable values are
+<emphasis remap='B'>no</emphasis> (the default) or yes.
+Note that some Linux kernels disable some XFRM/NETKEY functions required
+for loopback that can prevent Labeled IPsec from working correctly. Ensure
+that both <emphasis remap='I'>/proc/sys/net/ipv4/conf/lo/disable_xfrm</emphasis>
+and <emphasis remap='I'>/proc/sys/net/ipv4/conf/lo/disable_policy</emphasis>
+are set to 0.
 </para>
   </listitem>
   </varlistentry>

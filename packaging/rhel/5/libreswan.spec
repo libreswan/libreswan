@@ -191,11 +191,13 @@ fi
 
 %post 
 /sbin/chkconfig --add ipsec || :
-if [ ! -f /etc/ipsec.d/cert8.db ] ; then
-echo > /var/tmp/libreswan-nss-pwd
-certutil -N -f /var/tmp/libreswan-nss-pwd -d /etc/ipsec.d
-restorecon /etc/ipsec.d/*db 2>/dev/null || :
-rm /var/tmp/libreswan-nss-pwd
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
+    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
+    echo > ${TEMPFILE}
+    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
+    rm -f ${TEMPFILE}
 fi
 
 %changelog

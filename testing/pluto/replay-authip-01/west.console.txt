@@ -1,4 +1,4 @@
- /testing/guestbin/swan-prep
+/testing/guestbin/swan-prep
 west #
  # confirm that the network is alive
 west #
@@ -42,7 +42,7 @@ west #
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+ ipsec auto --add westnet-eastnet
 west #
  ipsec auto --status
 000 using kernel interface: klips
@@ -55,7 +55,6 @@ west #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
-000 pluto_version=v3.6-22-g42d7605-dirty-master, pluto_vendorid=OE-Libreswan-v3.6-22
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx_attr_value=<unsupported>
@@ -102,18 +101,16 @@ west #
 000  
 000 Connection list:
 000  
-000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ipv4-psk-ikev2":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet-ipv4-psk-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ipv4-psk-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
-000 "westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
-000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA2_256(4)_000-MODP1536(5), 3DES_CBC(5)_000-SHA2_256(4)_000-MODP1024(2)
-000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms found:  3DES_CBC(5)_192-SHA2_256(4)_256-MODP1536(5)3DES_CBC(5)_192-SHA2_256(4)_256-MODP1024(2)
+000 "westnet-eastnet": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "westnet-eastnet":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -125,19 +122,29 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
-133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: initiate
-133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=oakley_3des_cbc_192 integ=sha256_128 prf=OAKLEY_SHA2_256 group=modp1536}
-004 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode
+ ipsec auto --up  westnet-eastnet
+104 "westnet-eastnet" #1: STATE_MAIN_I1: initiate
+003 "westnet-eastnet" #1: received Vendor ID payload [Dead Peer Detection]
+003 "westnet-eastnet" #1: received Vendor ID payload [FRAGMENTATION]
+106 "westnet-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+108 "westnet-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+003 "westnet-eastnet" #1: received Vendor ID payload [CAN-IKEv2]
+004 "westnet-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
+117 "westnet-eastnet" #2: STATE_QUICK_I1: initiate
+004 "westnet-eastnet" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
 west #
- ping -n -c 2 -I 192.0.1.254 192.0.2.254
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ echo done
+done
 west #
  ipsec look
 west NOW
@@ -160,33 +167,12 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- echo done
-done
 west #
- ipsec look
-west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0x1d655ce0@192.1.2.23  (2)
-ipsec0->eth1 mtu=16260(1500)->1500
-esp0x1d655ce0@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xc1309d1bb78c7b72c91740ca00a36a73 ooowin=64 seq=2 alen=160 aklen=160 eklen=128 jiffies=4294723792 life(c,s,h)=bytes(304,0,0) idle=2 natencap=na refcount=3 ref=2 refhim=0
-esp0xca5bd0e0@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xdf7b0f414fed64780d610144d1c3e578 ooowin=64 seq=2 bit=0x3 alen=160 aklen=160 eklen=128 jiffies=4294723792 life(c,s,h)=bytes(168,0,0) idle=2 natencap=na refcount=3 ref=4 refhim=1
-tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294723792 life(c,s,h)=bytes(208,0,0) idle=2 natencap=na refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294723792 life(c,s,h)=bytes(168,0,0) idle=2 natencap=na refcount=3 ref=3 refhim=1
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
-192.0.2.0/24 dev ipsec0  scope link 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ ipsec whack --shutdown
+002 shutting down
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

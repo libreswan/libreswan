@@ -1,7 +1,19 @@
 
 See also https://libreswan.org/
 
-v3.6 (unreleased)
+v3.7 (unreleased)
+* KLIPS: Fix for crashes ipsec_xmit_ipip() [Thomas/Roel/David]
+* KLIPS: Fix NAT-T (NEED_UDP_ENCAP_ENABLE) for 3.4 kernel [Roel]
+* SECURITY: fix insecure tmp file in rpm %post - introduced in 3.6 [Tuomo]
+* IKEv2: Check for inbound traffic before sending liveness exchange [Matt]
+* IKEv2: Fix some error codes that mistakenly used IKEv1 versions [Paul]
+* IKEv2: in R1 don't copy their IKEv2 minor for our reply packet [Paul]
+* building: support for slackware version/init system detection [Roel]
+* secrets: Log glob failing for secrets parser as warning, not error [Paul]
+* labeled ipsec: Set default value of secctx_attr_value to 32001 [Paul]
+  (rhbz#923250)
+
+v3.6 (October 30, 2013)
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
 * IKEv2: Add liveness checks (a.k.a DPD for IKEv2) [Matt Rogers]
 * IKEv2: ikev2=insist allowed ikev1 when acting as responder [Matt Rogers]
@@ -47,7 +59,7 @@ v3.6 (unreleased)
 * NSS: pluto should now open NSS files in readwrite, just read [Paul]
 * Bugtracker bugs fixed:
   #130: debian debuild creates a deb with /usr/libexec contents
-        [Marc-Cristian Petersen]
+        [Marc-Christian Petersen]
   #145: support old location of /selinux/enforce still in use by CentOS6 [Paul]
 
 v3.5 (July 13, 2013)

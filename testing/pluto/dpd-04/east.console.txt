@@ -15,19 +15,31 @@ east #
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec auto --add west-east
+east #
+ ipsec auto --add west-eastnet
+east #
+ ipsec auto --add westnet-east
+east #
+ /testing/pluto/bin/wait-until-policy-loaded
 east #
  echo "initdone"
 initdone
 east #
  ipsec look
 east NOW
-192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
+192.0.2.0/24       -> 192.1.2.45/32      => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
+192.1.2.23/32      -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
+192.1.2.23/32      -> 192.1.2.45/32      => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=na   refhim=0
 esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=1
-tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=na   refhim=1
+tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=na   refhim=0
+esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=0
+tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=na   refhim=0
+esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=0
+esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=25
+tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.1.2.45/32->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=na   refhim=25
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -36,6 +48,7 @@ default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev ipsec0  scope link 
 192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.1.2.45 dev ipsec0  scope link 
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
@@ -45,4 +58,7 @@ east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+east #
+ : ==== end ===
+east #
+ 

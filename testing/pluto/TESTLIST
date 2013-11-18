@@ -593,3 +593,4 @@ umlplutotest	x509-pluto-frag-02			good
 umlplutotest	x509-pluto-frag-03			good
 umlplutotest	x509-pluto-frag-04			good
 
+kvmplutotest	replay-authip-01			good
