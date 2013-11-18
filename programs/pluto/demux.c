@@ -87,9 +87,8 @@ void process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
 	struct state *st = NULL;
-	int maj, min;
+	int vmaj, vmin;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
-	struct isakmp_hdr *hdr;
 
 #define SEND_NOTIFICATION(t) { \
 		if (st) \
@@ -99,36 +98,18 @@ void process_packet(struct msg_digest **mdp)
 
 	if (!in_struct(&md->hdr, &isakmp_hdr_desc, &md->packet_pbs,
 		       &md->message_pbs)) {
-		/* Identify specific failures:
-		 * - bad ISAKMP major/minor version numbers
+		/*
+		 * The packet was very badly mangled. We can't be sure of any
+		 * content - not even to look for major version number!
+		 * So we'll just silently drop it
 		 */
-		if (md->packet_pbs.roof - md->packet_pbs.cur >=
-		    (ptrdiff_t)isakmp_hdr_desc.size) {
-			hdr = (struct isakmp_hdr *)md->packet_pbs.cur;
-			maj = (hdr->isa_version >> ISA_MAJ_SHIFT);
-			min = (hdr->isa_version & ISA_MIN_MASK);
-
-			if ( maj != ISAKMP_MAJOR_VERSION &&
-			     maj != IKEv2_MAJOR_VERSION) {
-				/* We don't know IKEv3+ */
-				SEND_NOTIFICATION(INVALID_MAJOR_VERSION);
-				return;
-			} else if (maj == ISAKMP_MAJOR_VERSION && min !=
-				   ISAKMP_MINOR_VERSION) {
-					/* We only know IKEv1 1.0 */
-					SEND_NOTIFICATION(INVALID_MINOR_VERSION);
-					return;
-			}
-			/* As per RFC 4306/5996, accept unknown IKEv2 minor */
-		} else {
-			libreswan_log("received packet size (%lu) is smaller than "
-				"an IKE header - packet dropped", md->packet_pbs.roof - md->packet_pbs.cur);
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
-			return;
-		}
+		libreswan_log("Received packet with mangled IKE header - dropped");
+		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+		return;
 	}
 
 	if (md->packet_pbs.roof < md->message_pbs.roof) {
+		/* I don't think this can happen if in_struct() did not fail */
 		libreswan_log(
 			"received packet size (%u) is smaller than from "
 			"size specified in ISAKMP HDR (%u) - packet dropped",
@@ -149,37 +130,63 @@ void process_packet(struct msg_digest **mdp)
 			md->hdr.isa_length);
 			DBG_dump("extraneous bytes:", md->message_pbs.roof,
 				md->packet_pbs.roof - md->message_pbs.roof);
-		/* continue */
 		});
 	}
 
-	maj = (md->hdr.isa_version >> ISA_MAJ_SHIFT);
-	min = (md->hdr.isa_version & ISA_MIN_MASK);
+	vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
+	vmin = md->hdr.isa_version & ISA_MIN_MASK;
 
-	DBG(DBG_CONTROL,
-	    DBG_log(
-		    " processing version=%u.%u packet with exchange type=%s (%d)",
-		    maj, min,
-		    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
-		    md->hdr.isa_xchg));
-
-	switch (maj) {
+	switch (vmaj) {
 	case ISAKMP_MAJOR_VERSION:
+		if (vmin > ISAKMP_MINOR_VERSION) {
+			/* RFC2408 3.1 ISAKMP Header Format:
+			 *
+			 * Minor Version (4 bits) - indicates the minor
+			 * version of the ISAKMP protocol in use.
+			 * Implementations based on this version of the
+			 * ISAKMP Internet-Draft MUST set the Minor
+			 * Version to 0.  Implementations based on
+			 * previous versions of ISAKMP Internet- Drafts
+			 * MUST set the Minor Version to 1.
+			 * Implementations SHOULD never accept packets
+			 * with a minor version number larger than its
+			 * own, given the major version numbers are
+			 * identical.
+			 */
+			libreswan_log("ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			SEND_NOTIFICATION(INVALID_MINOR_VERSION);
+			return;
+		}
+		DBG(DBG_CONTROL,
+		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
+			    vmaj, vmin,
+			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+			    md->hdr.isa_xchg));
 		process_v1_packet(mdp);
 		break;
 
 	case IKEv2_MAJOR_VERSION:
+		if (vmin != IKEv2_MINOR_VERSION) {
+			/*
+			 * Unlike IKEv1, for IKEv2 we are supposed to try and
+			 * continue on unknown minors
+			 */
+			libreswan_log("ignoring unknown IKEv2 minor version number %d", vmin);
+		}
+		DBG(DBG_CONTROL,
+		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
+			    vmaj, vmin,
+			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+			    md->hdr.isa_xchg));
 		process_v2_packet(mdp);
 		break;
 
 	default:
-		/*
-		 * We should never get here? - above we only accept v1 or v2
-		 */
-		libreswan_log("Unexpected IKE major '%d'",maj);
-		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+		libreswan_log("Unexpected IKE major '%d'",vmaj);
+		SEND_NOTIFICATION(INVALID_MAJOR_VERSION);
 		return;
 	}
+#undef SEND_NOTIFICATION
 }
 
 /* wrapper for read_packet and process_packet
