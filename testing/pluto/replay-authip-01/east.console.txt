@@ -97,14 +97,13 @@ initdone
 east #
  ipsec look
 east NOW
-192.0.2.0/24       -> 192.0.1.0/24       => %trap
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
 169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev ipsec0  scope link 
+192.0.1.0/24 via 192.1.2.45 dev eth1 
 192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
