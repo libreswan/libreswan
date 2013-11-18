@@ -383,15 +383,11 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		struct isakmp_hdr hdr;
 
 		zero(&hdr);                             /* default to 0 */
-		if (DBGP(IMPAIR_MAJOR_VERSION_BUMP))    /* testing fake major new IKE version, should fail */
-			hdr.isa_version = IKEv2_MAJOR_BUMP << ISA_MAJ_SHIFT |
-					  IKEv2_MINOR_VERSION;
-		else if (DBGP(IMPAIR_MINOR_VERSION_BUMP)) /* testing fake minor new IKE version, should success */
-			hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					  ISA_MAJ_SHIFT | IKEv2_MINOR_BUMP;
-		else    /* normal production case with real version */
-			hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					  ISA_MAJ_SHIFT | IKEv2_MINOR_VERSION;
+		/* Impair function will raise major/minor by 1 for testing */
+		hdr.isa_version = (IKEv2_MAJOR_VERSION +
+				  DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0) <<
+				  ISA_MAJ_SHIFT | (IKEv2_MINOR_VERSION +
+				  DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0);
 
 		if (st->st_dcookie.ptr)
 			hdr.isa_np   = ISAKMP_NEXT_v2N;
@@ -2600,17 +2596,12 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	{
 		struct isakmp_hdr n_hdr;
 		zero(&n_hdr);                           /* default to 0 */  /* AAA should we copy from MD? */
-		if (DBGP(IMPAIR_MAJOR_VERSION_BUMP)) {  /* testing fake major new IKE version, should fail */
-			n_hdr.isa_version = IKEv2_MAJOR_BUMP << ISA_MAJ_SHIFT |
-					    IKEv2_MINOR_VERSION;
-		} else if (DBGP(IMPAIR_MINOR_VERSION_BUMP)) { /* testing fake minor new IKE version, should success */
-			n_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					    ISA_MAJ_SHIFT | IKEv2_MINOR_BUMP;
-		} else { /* normal production case with real version */
-			n_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					    ISA_MAJ_SHIFT |
-					    IKEv2_MINOR_VERSION;
-		}
+		/* Impair function will raise major/minor by 1 for testing */
+		n_hdr.isa_version = (IKEv2_MAJOR_VERSION +
+				  DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0) <<
+				  ISA_MAJ_SHIFT | (IKEv2_MINOR_VERSION +
+				  DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0);
+
 		memcpy(n_hdr.isa_rcookie, rcookie, COOKIE_SIZE);
 		memcpy(n_hdr.isa_icookie, icookie, COOKIE_SIZE);
 		n_hdr.isa_xchg = ISAKMP_v2_SA_INIT;

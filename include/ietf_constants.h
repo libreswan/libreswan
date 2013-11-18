@@ -325,13 +325,6 @@
 #define IKEv2_MAJOR_VERSION 0x2
 #define IKEv2_MINOR_VERSION 0x0
 
-/*
- * bumped versions for testing with --impair-major-version-bump
- * and --impair-minor-version-bump
- */
-#define IKEv2_MAJOR_BUMP 0x3
-#define IKEv2_MINOR_BUMP 0x1
-
 /* Domain of Interpretation */
 #define ISAKMP_DOI_ISAKMP 0
 #define ISAKMP_DOI_IPSEC 1
