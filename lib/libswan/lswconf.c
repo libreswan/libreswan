@@ -177,18 +177,23 @@ int libreswan_selinux(void)
 	FILE *fd = fopen("/sys/fs/selinux/enforce","r");
 
 	if (fd == NULL) {
-		/* try old location, which is still in use by CentOS6 (not RHEL6) */
+		/* try new location first, then old location */
 		fd = fopen("/selinux/enforce","r");
 		if (fd == NULL) {
-			libreswan_log("SElinux: could not open /sys/fs/selinux/enforce or /selinux/enforce");
-			return 2;
+			DBG(DBG_CONTROL,
+				DBG_log("SElinux: disabled, could not open "
+					"/sys/fs/selinux/enforce or "
+					"/selinux/enforce")
+				);
+			return 0;
 		}
 	}
 
 	n = fread((void *)selinux_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		libreswan_log("SElinux: could not read 1 byte from the selinux enforce file");
+		libreswan_log("SElinux: could not read 1 byte from "
+			"the selinux enforce file");
 		return 2;
 	}
 	if (selinux_flag[0] == '1')
