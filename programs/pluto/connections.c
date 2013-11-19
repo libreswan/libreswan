@@ -3668,6 +3668,12 @@ static void show_one_sr(struct connection *c,
 		c->name, instance,
 		(c->policy_label == NULL) ? "unset" : c->policy_label
 		);
+#else
+/* this makes output consistent for testing regardless of support */
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no, loopback:no; ",
+		  c->name, instance);
+	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:unset; ",
+		  c->name, instance);
 #endif
 
 }
