@@ -11,6 +11,7 @@ v3.7 (unreleased)
 * building: support for slackware version/init system detection [Roel]
 * initsystems: fix typo in openrc script [Natanael Copa]
 * secrets: Log glob failing for secrets parser as warning, not error [Paul]
+* setup: fix systemd init detection [Tuomo]
 * labeled ipsec: Set default value of secctx_attr_value to 32001 [Paul]
   (rhbz#923250)
 
