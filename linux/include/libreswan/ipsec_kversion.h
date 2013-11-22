@@ -347,7 +347,7 @@
 # define __ipsec_dev_get(x) __dev_get_by_name(x)
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
 # define PDE_DATA(inode)	PDE(inode)->data
 #endif
 
