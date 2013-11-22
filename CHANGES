@@ -6,6 +6,7 @@ v3.7 (unreleased)
 * SECURITY: fix insecure tmp file in rpm %post - introduced in 3.6 [Tuomo]
 * KLIPS: Fix for crashes ipsec_xmit_ipip() [Thomas/Roel/David]
 * KLIPS: Fix NAT-T (NEED_UDP_ENCAP_ENABLE) for 3.4 kernel [Roel]
+* KLIPS: Fix compiling for 3.9 kernels [Paul]
 * NETKEY: Added twofish and serpent as valid ESP algorithms [Paul]
 * IKEv2: Check for inbound traffic before sending liveness exchange [Matt]
 * IKEv2: Fix some error codes that mistakenly used IKEv1 versions [Paul]
