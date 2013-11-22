@@ -5,8 +5,8 @@ Maintainer: Paul Wouters <paul@libreswan.org>
 Vcs-Browser: http://git.libreswan.org/libreswan.git/.git;a=summary
 Vcs-Git: git://git.libreswan.org//libreswan.git
 Standards-Version: 3.8.4
-Build-Depends: debhelper (>= 7.1), libgmp3-dev, libssl-dev (>= 0.9.8), htmldoc, man2html, libcurl4-openssl-dev, libldap2-dev, libpam0g-dev, libkrb5-dev, bison, flex, dpatch, bzip2, po-debconf, libunbound-dev, libnspr4-dev, libnss3-dev
-Homepage: http://www.libreswan.org/
+Build-Depends: debhelper (>= 7.1), libgmp3-dev, libssl-dev (>= 0.9.8), htmldoc, man2html, libcurl4-openssl-dev, libldap2-dev, libpam0g-dev, libkrb5-dev, bison, flex, dpatch, bzip2, po-debconf, libunbound-dev, libnspr4-dev, libnss3-dev libnss3-tools
+Homepage: https://www.libreswan.org/
 
 Package: libreswan
 Architecture: any
