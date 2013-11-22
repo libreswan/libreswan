@@ -155,6 +155,8 @@ static sparse_names ealg_list = {
 	{ SADB_X_EALG_AESCBC, "aes" },
 	{ SADB_X_EALG_AESCTR, "ctr(aes)" },
 	{ SADB_X_EALG_CAMELLIACBC, "cbc(camellia)" },
+	{ SADB_X_EALG_SERPENTCBC, "serpent" }, /* 252 draft-ietf-ipsec-ciph-aes-cbc-00 */
+	{ SADB_X_EALG_TWOFISHCBC, "twofish" }, /* 253 draft-ietf-ipsec-ciph-aes-cbc-00 */
 	{ 0, sparse_end }
 };
 
