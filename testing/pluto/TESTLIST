@@ -319,10 +319,6 @@ kvmplutotest	xauth-pluto-15		good
 kvmplutotest	xauth-pluto-16		good
 
 
-#
-# a test of using AES with pluto, with pfs=yes
-#
-kvmplutotest	basic-pluto-05		wip
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
@@ -403,9 +399,10 @@ umlXhost	psk-pluto-03		good
 umlXhost	psk-pluto-04		good
 
 #
-# a test of using AES with pluto, twofish for phase2
+# tests using alternative ESP algorithms such as twofish and serpent
 #
-skip	basic-pluto-07		wip
+kvmplutotest	basic-pluto-06		good
+kvmplutotest	basic-pluto-07		good
 
 #
 # a test of using twofish with pluto, twofish for phase2
