@@ -349,6 +349,13 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
 # define PDE_DATA(inode)	PDE(inode)->data
+#else
+/*
+ * We do not use CONFIG_NAMSPACES due to a kernel bug
+ * that checks for namespaces in inet_add_protocol()
+ * even when compiled without CONFIG_NAMSPACES
+ */
+# define HAVE_NAMESPACES
 #endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)
