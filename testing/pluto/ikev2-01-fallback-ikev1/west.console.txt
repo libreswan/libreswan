@@ -60,7 +60,7 @@ west #
 000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx_attr_value=<unsupported>
+000 secctx_attr_value=32001
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
@@ -111,6 +111,8 @@ west #
 000 "westnet-eastnet-ikev2-fallback":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ikev2-fallback":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "westnet-eastnet-ikev2-fallback":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet-ikev2-fallback":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ikev2-fallback":    policy_label:unset; 
 000 "westnet-eastnet-ikev2-fallback":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 12;
 000 "westnet-eastnet-ikev2-fallback":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ikev2-fallback":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
