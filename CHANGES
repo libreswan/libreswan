@@ -4,10 +4,11 @@ See also https://libreswan.org/
 v3.7 (unreleased)
 * SECURITY: CVE-2013-4564 Denial of service via unauth packet [Paul/Hugh]
 * SECURITY: fix insecure tmp file in rpm %post - introduced in 3.6 [Tuomo]
+* NETKEY: Added twofish and serpent as valid ESP algorithms [Paul]
 * KLIPS: Fix for crashes ipsec_xmit_ipip() [Thomas/Roel/David]
 * KLIPS: Fix NAT-T (NEED_UDP_ENCAP_ENABLE) for 3.4 kernel [Roel]
-* KLIPS: Fix compiling for 3.9 kernels [Paul]
-* NETKEY: Added twofish and serpent as valid ESP algorithms [Paul]
+* KLIPS: Fix compiling for 3.9 kernels (PDE_DATA fix) [Paul]
+* KLIPS: Claim we do namespaces - makes it work on simple host case [Paul]
 * IKEv2: Check for inbound traffic before sending liveness exchange [Matt]
 * IKEv2: Fix some error codes that mistakenly used IKEv1 versions [Paul]
 * IKEv2: in R1 don't copy their IKEv2 minor for our reply packet [Paul]
