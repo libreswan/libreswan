@@ -16,6 +16,7 @@ v3.7 (unreleased)
 * setup: fix systemd init detection [Tuomo]
 * labeled ipsec: Set default value of secctx_attr_value to 32001 [Paul]
   (rhbz#923250)
+* barf: don't load l2tp kernel modules and use new syntax (rhbz#1033191) [Paul]
 
 v3.6 (October 30, 2013)
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
