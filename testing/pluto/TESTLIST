@@ -404,6 +404,7 @@ umlXhost	psk-pluto-04		good
 kvmplutotest	basic-pluto-06		good
 kvmplutotest	basic-pluto-07		good
 kvmplutotest	basic-pluto-12		good
+kvmplutotest	basic-pluto-13		good
 
 #
 # a test of using twofish with pluto, twofish for phase2
