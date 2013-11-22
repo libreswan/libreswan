@@ -84,6 +84,8 @@ static bool ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
+static int build_ike_version();
+
 /*
  *
  ***************************************************************
@@ -384,11 +386,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 		zero(&hdr);                             /* default to 0 */
 		/* Impair function will raise major/minor by 1 for testing */
-		hdr.isa_version = (IKEv2_MAJOR_VERSION +
-				  DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0) <<
-				  ISA_MAJ_SHIFT | (IKEv2_MINOR_VERSION +
-				  DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0);
-
+		hdr.isa_version = build_ike_version();
 		if (st->st_dcookie.ptr)
 			hdr.isa_np   = ISAKMP_NEXT_v2N;
 		else
@@ -859,8 +857,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		r_hdr.isa_np = ISAKMP_NEXT_v2SA;
 		/* major will be same, but their minor might be higher */
-		 r_hdr.isa_version = IKEv2_MAJOR_VERSION << ISA_MAJ_SHIFT |
-                        	      IKEv2_MINOR_VERSION;
+		r_hdr.isa_version = build_ike_version();
 		r_hdr.isa_flags &= ~ISAKMP_FLAGS_I;
 		r_hdr.isa_flags |=  ISAKMP_FLAGS_R;
 		/* PAUL shouldn't we set r_hdr.isa_msgid = [htonl](st->st_msgid);  here? */
@@ -2597,11 +2594,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		struct isakmp_hdr n_hdr;
 		zero(&n_hdr);                           /* default to 0 */  /* AAA should we copy from MD? */
 		/* Impair function will raise major/minor by 1 for testing */
-		n_hdr.isa_version = (IKEv2_MAJOR_VERSION +
-				  DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0) <<
-				  ISA_MAJ_SHIFT | (IKEv2_MINOR_VERSION +
-				  DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0);
-
+		n_hdr.isa_version = build_ike_version();
 		memcpy(n_hdr.isa_rcookie, rcookie, COOKIE_SIZE);
 		memcpy(n_hdr.isa_icookie, icookie, COOKIE_SIZE);
 		n_hdr.isa_xchg = ISAKMP_v2_SA_INIT;
@@ -2757,9 +2750,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 			{
 				struct isakmp_hdr r_hdr;
 				zero(&r_hdr); /* default to 0 */  /* AAA should we copy from MD? */
-				r_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-						    ISA_MAJ_SHIFT |
-						    IKEv2_MINOR_VERSION;
+				r_hdr.isa_version = build_ike_version();
 				memcpy(r_hdr.isa_rcookie, st->st_rcookie,
 				       COOKIE_SIZE);
 				memcpy(r_hdr.isa_icookie, st->st_icookie,
@@ -3342,9 +3333,7 @@ stf_status ikev2_send_informational(struct state *st)
 		{
 			struct isakmp_hdr r_hdr;
 			zero(&r_hdr);
-			r_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					    ISA_MAJ_SHIFT |
-					    IKEv2_MINOR_VERSION;
+			r_hdr.isa_version = build_ike_version();
 			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
 			       COOKIE_SIZE);
 			memcpy(r_hdr.isa_icookie, pst->st_icookie,
@@ -3482,9 +3471,7 @@ void ikev2_delete_out(struct state *st)
 		{
 			struct isakmp_hdr r_hdr;
 			zero(&r_hdr); /* default to 0 */  /* AAA should we copy from MD? */
-			r_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					    ISA_MAJ_SHIFT |
-					    IKEv2_MINOR_VERSION;
+			r_hdr.isa_version = build_ike_version();
 			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
 			       COOKIE_SIZE);
 			memcpy(r_hdr.isa_icookie, pst->st_icookie,
@@ -3648,4 +3635,24 @@ end:
 	}
 
 real_end:;
+}
+
+/*
+ * Determine the IKE version we will use for the IKE packet
+ * Normally, this is "2.0", but in the future we might need to
+ * change that. Version used is the minimum 2.x version both
+ * sides support. So if we support 2.1, and they support 2.0,
+ * we should sent 2.0 (not implemented until we hit 2.1 ourselves)
+ * We also have some impair functions that modify the major/minor
+ * version on purpose - for testing
+ *
+ * rcv_version: the received IKE version, 0 if we don't know
+ *
+ * top 4 bits are major version, lower 4 bits are minor version
+ */
+static int build_ike_version()
+{
+return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))
+	<< ISA_MAJ_SHIFT) | (IKEv2_MINOR_VERSION +
+	(DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
 }
