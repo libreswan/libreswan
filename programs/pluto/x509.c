@@ -71,7 +71,7 @@ static x509crl_t  *x509crls    = NULL;
 /*
  *  add a X.509 user/host certificate to the chained list
  */
-x509cert_t*add_x509cert(x509cert_t *cert)
+x509cert_t *add_x509cert(x509cert_t *cert)
 {
 	x509cert_t *c = x509certs;
 
@@ -94,8 +94,8 @@ x509cert_t*add_x509cert(x509cert_t *cert)
 /*
  *  get a X.509 certificate with a given issuer found at a certain position
  */
-x509cert_t*get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
-			x509cert_t *chain)
+x509cert_t *get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
+			 x509cert_t *chain)
 {
 	x509cert_t *cert = (chain != NULL) ? chain->next : x509certs;
 
@@ -113,7 +113,7 @@ x509cert_t*get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
 /*
  *  get the X.509 CRL with a given issuer
  */
-static x509crl_t*get_x509crl(chunk_t issuer, chunk_t serial, chunk_t keyid)
+static x509crl_t *get_x509crl(chunk_t issuer, chunk_t serial, chunk_t keyid)
 {
 	x509crl_t *crl = x509crls;
 	x509crl_t *prev_crl = NULL;

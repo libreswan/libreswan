@@ -77,8 +77,8 @@ static x509cert_t *x509authcerts = NULL;
 /*
  *  get a X.509 authority certificate with a given subject or keyid
  */
-x509cert_t*get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
-			u_char auth_flags)
+x509cert_t *get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
+			 u_char auth_flags)
 {
 	x509cert_t *cert = x509authcerts;
 	x509cert_t *prev_cert = NULL;
@@ -325,9 +325,9 @@ bool x509_check_revocation(const x509crl_t *crl, chunk_t serial)
 /*
  * get a cacert with a given subject or keyid from an alternative list
  */
-static const x509cert_t*get_alt_cacert(chunk_t subject, chunk_t serial,
-				       chunk_t keyid,
-				       const x509cert_t *cert)
+static const x509cert_t *get_alt_cacert(chunk_t subject, chunk_t serial,
+				        chunk_t keyid,
+				        const x509cert_t *cert)
 {
 	while (cert != NULL) {
 		if ((keyid.ptr != NULL) ? same_keyid(keyid,
