@@ -31,8 +31,7 @@
 
 #include "ipsecconf/keywords.h"
 #define YYDEBUG 1	/* HACK! for ipsecconf/parser.h AND parser.tab.h */
-#include "ipsecconf/parser.h"
-#include "parser.tab.h"
+#include "ipsecconf/parser.h"	/* includes parser.tab.h */
 #include "ipsecconf/parserlast.h"
 #include "ipsecconf/starterlog.h"
 }

@@ -25,6 +25,13 @@ extern char rootdir2[PATH_MAX];	/* when evaluating paths, alternatively prefix t
 
 extern void yyerror(const char *);	/* defined in parser.y */
 
-#ifndef _IPSEC_PARSER_H_	/* ??? dirty trick to prevent redeclaration */
-extern int yydebug;	/* declared in parser.tab.h but too hard to include */
+/* Dirty trick to dodge bison version differences.
+ * Old bison (2.5) produces parser.tab.h without yydebug decl and no
+ * multiple-inclusion protection.
+ * New bison (2.6) is the opposite.
+ * So: if the wrapper symbol is missing, do the declarations here.
+ * Note: this header is sometimes included without parser.tab.h.
+ */
+#ifndef YY_YY_PARSER_TAB_H_INCLUDED
+extern int yydebug;	/* declared in bison 2.6 parser.tab.h but not 2.5 */
 #endif
