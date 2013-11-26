@@ -343,6 +343,9 @@ struct xform_functions ah_xform_funcs[] = {
 struct inet_protocol ah_protocol = {
 	.handler = ipsec_rcv,
 	.no_policy = 1,
+#ifdef HAVE_NAMESPACES
+	.netns_ok = 1,
+#endif
 };
 #else
 struct inet_protocol ah_protocol =

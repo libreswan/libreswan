@@ -240,7 +240,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 			loglog(RC_LOG_SERIOUS,
 			       "more than %d payloads in message; ignored",
 			       PAYLIMIT);
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			SEND_NOTIFICATION(v2N_INVALID_SYNTAX);
 			return STF_FAIL;
 		}
 
@@ -268,7 +268,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
 			loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			SEND_NOTIFICATION(v2N_INVALID_SYNTAX);
 			return STF_FAIL;
 		}
 
@@ -474,7 +474,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			/* must be an initiator message, so we are the responder */
 
 			/* XXX need to be more specific */
-			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
+			SEND_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
 		return;
 	}
@@ -508,7 +508,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		loglog(RC_LOG_SERIOUS, "message for %s is missing payloads %s",
 		       enum_show(&state_names, from_state),
 		       bitnamesof(payload_name_ikev2, needed));
-		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+		SEND_NOTIFICATION(v2N_INVALID_SYNTAX);
 		return;
 	}
 #endif
@@ -1056,7 +1056,7 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
 		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
 			name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
-		return PAYLOAD_MALFORMED; /* ??? */
+		return v2N_INVALID_SYNTAX; /* ??? */
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
 	return NOTHING_WRONG;

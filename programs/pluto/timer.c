@@ -434,7 +434,7 @@ void handle_timer_event(void)
 
 static void liveness_check(struct state *st)
 {
-	time_t tm, last_liveness;
+	time_t tm, last_liveness, last_msg;
 	struct state *pst;
 	stf_status ret;
 	struct connection *c;
@@ -455,8 +455,18 @@ static void liveness_check(struct state *st)
 		pst = st;
 	}
 
-	last_liveness = pst->st_last_liveness;
+	/* don't bother sending the check and reset
+	 * liveness stats if there has been incoming traffic */
+	if (get_sa_info(st, TRUE, &last_msg)) {
+		if (last_msg < c->dpd_timeout) {
+			pst->st_pend_liveness = FALSE;
+			pst->st_last_liveness = 0;
+			goto live_ok;
+		}
+	}
+
 	tm = now();
+	last_liveness = pst->st_last_liveness;
 	/* ensure that the very first liveness_check works out */
 	if (last_liveness == 0)
 		last_liveness = tm;

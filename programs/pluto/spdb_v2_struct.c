@@ -858,13 +858,13 @@ static stf_status ikev2_process_transforms(struct ikev2_prop *prop,
 
 		if (!in_struct(&trans, &ikev2_trans_desc,
 			       prop_pbs, &trans_pbs))
-			return BAD_PROPOSAL_SYNTAX;
+			return v2N_INVALID_SYNTAX;
 
 		while (pbs_left(&trans_pbs) != 0) {
 			if (!in_struct(&attr, &ikev2_trans_attr_desc,
 				       &trans_pbs,
 				       &attr_pbs))
-				return BAD_PROPOSAL_SYNTAX;
+				return v2N_INVALID_SYNTAX;
 
 			switch (attr.isatr_type) {
 			case IKEv2_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
@@ -1028,7 +1028,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 	 * length pbs_room(&proposal_pbs)
 	 */
 
-	return NOTHING_WRONG;
+	return v2N_NOTHING_WRONG;
 }
 
 v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                         /* body of input SA Payload */
@@ -1082,12 +1082,12 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 
 		if (!in_struct(&proposal, &ikev2_prop_desc, sa_pbs,
 			       &proposal_pbs))
-			return PAYLOAD_MALFORMED;
+			return v2N_INVALID_SYNTAX;
 
 		if (proposal.isap_protoid != PROTO_ISAKMP) {
 			loglog(RC_LOG_SERIOUS,
 			       "unexpected PARENT_SA, expected child");
-			return PAYLOAD_MALFORMED;
+			return v2N_INVALID_SYNTAX;
 		}
 
 		if (proposal.isap_spisize == 0) {
@@ -1097,12 +1097,12 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 			if (!in_raw(junk_spi, proposal.isap_spisize,
 				    &proposal_pbs,
 				    "PARENT SA SPI"))
-				return PAYLOAD_MALFORMED;
+				return v2N_INVALID_SYNTAX;
 		} else {
 			loglog(RC_LOG_SERIOUS,
 			       "invalid SPI size (%u) in PARENT_SA Proposal",
 			       (unsigned)proposal.isap_spisize);
-			return INVALID_SPI;
+			return v2N_INVALID_SPI;
 		}
 
 		if (proposal.isap_propnum == lastpropnum) {
@@ -1147,7 +1147,7 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 			if (selection && !gotmatch && lp == v2_PROPOSAL_NON_LAST) {
 				libreswan_log(
 					"More than 1 proposal received from responder, ignoring rest. First one did not match");
-				return NO_PROPOSAL_CHOSEN;
+				return v2N_NO_PROPOSAL_CHOSEN;
 			}
 		}
 	}
@@ -1157,7 +1157,7 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 	 * out: gotmatch == FALSE, means nothing selected.
 	 */
 	if (!gotmatch)
-		return NO_PROPOSAL_CHOSEN;
+		return v2N_NO_PROPOSAL_CHOSEN;
 
 	/* there might be some work to do here if there was a conjunction,
 	 * not sure yet about that case.
@@ -1201,7 +1201,7 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 		                             /*parentSA*/ TRUE,
 					     winning_prop);
 	}
-	return NOTHING_WRONG;
+	return v2N_NOTHING_WRONG;
 }
 
 static bool spdb_v2_match_child(struct db_sa *sadb,
@@ -1401,13 +1401,13 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 
 		if (!in_struct(&proposal, &ikev2_prop_desc, sa_pbs,
 			       &proposal_pbs))
-			return PAYLOAD_MALFORMED;
+			return v2N_INVALID_SYNTAX;
 
 		switch (proposal.isap_protoid) {
 		case PROTO_ISAKMP:
 			loglog(RC_LOG_SERIOUS,
 			       "unexpected PARENT_SA, expected child");
-			return PAYLOAD_MALFORMED;
+			return v2N_INVALID_SYNTAX;
 
 			break;
 
@@ -1416,7 +1416,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 				unsigned int spival;
 				if (!in_raw(&spival, proposal.isap_spisize,
 					    &proposal_pbs, "CHILD SA SPI"))
-					return PAYLOAD_MALFORMED;
+					return v2N_INVALID_SYNTAX;
 
 				DBG(DBG_PARSING,
 				    DBG_log("SPI received: %08x", ntohl(
@@ -1427,7 +1427,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 				loglog(RC_LOG_SERIOUS,
 				       "invalid SPI size (%u) in CHILD_SA Proposal",
 				       (unsigned)proposal.isap_spisize);
-				return INVALID_SPI;
+				return v2N_INVALID_SPI;
 			}
 			break;
 
@@ -1436,7 +1436,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 			       "unexpected Protocol ID (%s) found in PARENT_SA Proposal",
 			       enum_show(&protocol_names,
 					 proposal.isap_protoid));
-			return INVALID_PROTOCOL_ID;
+			return v2N_INVALID_SYNTAX;
 		}
 
 		if (proposal.isap_propnum == lastpropnum) {
@@ -1482,7 +1482,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 			if (selection && !gotmatch && lp == v2_PROPOSAL_NON_LAST) {
 				libreswan_log(
 					"More than 1 proposal received from responder, ignoring rest. First one did not match");
-				return NO_PROPOSAL_CHOSEN;
+				return v2N_NO_PROPOSAL_CHOSEN;
 			}
 		}
 	}
@@ -1492,7 +1492,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 	 * out: gotmatch == FALSE, means nothing selected.
 	 */
 	if (!gotmatch)
-		return NO_PROPOSAL_CHOSEN;
+		return v2N_NO_PROPOSAL_CHOSEN;
 
 	/* there might be some work to do here if there was a conjunction,
 	 * not sure yet about that case.
@@ -1547,7 +1547,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 					     winning_prop);
 	}
 
-	return NOTHING_WRONG;
+	return v2N_NOTHING_WRONG;
 }
 
 stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,

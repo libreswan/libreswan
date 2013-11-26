@@ -84,6 +84,8 @@ static bool ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
+static int build_ike_version();
+
 /*
  *
  ***************************************************************
@@ -370,16 +372,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		struct isakmp_hdr hdr;
 
 		zero(&hdr);                             /* default to 0 */
-		if (DBGP(IMPAIR_MAJOR_VERSION_BUMP))    /* testing fake major new IKE version, should fail */
-			hdr.isa_version = IKEv2_MAJOR_BUMP << ISA_MAJ_SHIFT |
-					  IKEv2_MINOR_VERSION;
-		else if (DBGP(IMPAIR_MINOR_VERSION_BUMP)) /* testing fake minor new IKE version, should success */
-			hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					  ISA_MAJ_SHIFT | IKEv2_MINOR_BUMP;
-		else    /* normal production case with real version */
-			hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					  ISA_MAJ_SHIFT | IKEv2_MINOR_VERSION;
-
+		/* Impair function will raise major/minor by 1 for testing */
+		hdr.isa_version = build_ike_version();
 		if (st->st_dcookie.ptr)
 			hdr.isa_np   = ISAKMP_NEXT_v2N;
 		else
@@ -605,7 +599,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			       (policy !=
 				LEMPTY) ? bitnamesof(sa_policy_bit_names,
 						     policy) : "");
-			return STF_FAIL + NO_PROPOSAL_CHOSEN;
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		if (c->kind != CK_TEMPLATE) {
 			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
@@ -613,7 +607,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			       ip_str(
 				       &md->iface->ip_addr), pluto_port,
 			       c->name);
-			return STF_FAIL + NO_PROPOSAL_CHOSEN;
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		c = rw_instantiate(c, &md->sender, NULL, NULL);
 
@@ -848,6 +842,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 		memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		r_hdr.isa_np = ISAKMP_NEXT_v2SA;
+		/* major will be same, but their minor might be higher */
+		r_hdr.isa_version = build_ike_version();
 		r_hdr.isa_flags &= ~ISAKMP_FLAGS_I;
 		r_hdr.isa_flags |=  ISAKMP_FLAGS_R;
 		/* PAUL shouldn't we set r_hdr.isa_msgid = [htonl](st->st_msgid);  here? */
@@ -1048,7 +1044,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 	if (md->chain[ISAKMP_NEXT_v2SA] == NULL) {
 		libreswan_log("No responder SA proposal found");
-		return PAYLOAD_MALFORMED;
+		return v2N_INVALID_SYNTAX;
 	}
 
 	/* process and confirm the SA selected */
@@ -1404,11 +1400,11 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	if (c->policy & POLICY_RSASIG) {
 		if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs))
-			return STF_FATAL + AUTHENTICATION_FAILED;
+			return STF_FATAL + v2N_AUTHENTICATION_FAILED;
 
 	} else if (c->policy & POLICY_PSK) {
 		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs))
-			return STF_FAIL + AUTHENTICATION_FAILED;
+			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
 	close_output_pbs(&a_pbs);
@@ -1822,7 +1818,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	}
 
 	if (!ikev2_decode_peer_id(md, RESPONDER))
-		return STF_FAIL + INVALID_ID_INFORMATION;
+		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	{
 		struct hmac_ctx id_ctx;
@@ -1876,7 +1872,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 								    ISAKMP_NEXT_v2AUTH]->pbs);
 		if (authstat != STF_OK) {
 			libreswan_log("RSA authentication failed");
-			SEND_NOTIFICATION(AUTHENTICATION_FAILED);
+			SEND_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 			return STF_FATAL;
 		}
 		break;
@@ -2165,7 +2161,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	}
 
 	if (!ikev2_decode_peer_id(md, INITIATOR))
-		return STF_FAIL + INVALID_ID_INFORMATION;
+		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	{
 		struct hmac_ctx id_ctx;
@@ -2215,7 +2211,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		if (authstat != STF_OK) {
 			libreswan_log("authentication failed");
-			SEND_NOTIFICATION(AUTHENTICATION_FAILED);
+			SEND_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 			return STF_FAIL;
 		}
 		break;
@@ -2230,7 +2226,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		if (authstat != STF_OK) {
 			libreswan_log("PSK authentication failed");
-			SEND_NOTIFICATION(AUTHENTICATION_FAILED);
+			SEND_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 			return STF_FAIL;
 		}
 		break;
@@ -2560,17 +2556,8 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	{
 		struct isakmp_hdr n_hdr;
 		zero(&n_hdr);                           /* default to 0 */  /* AAA should we copy from MD? */
-		if (DBGP(IMPAIR_MAJOR_VERSION_BUMP)) {  /* testing fake major new IKE version, should fail */
-			n_hdr.isa_version = IKEv2_MAJOR_BUMP << ISA_MAJ_SHIFT |
-					    IKEv2_MINOR_VERSION;
-		} else if (DBGP(IMPAIR_MINOR_VERSION_BUMP)) { /* testing fake minor new IKE version, should success */
-			n_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					    ISA_MAJ_SHIFT | IKEv2_MINOR_BUMP;
-		} else { /* normal production case with real version */
-			n_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					    ISA_MAJ_SHIFT |
-					    IKEv2_MINOR_VERSION;
-		}
+		/* Impair function will raise major/minor by 1 for testing */
+		n_hdr.isa_version = build_ike_version();
 		memcpy(n_hdr.isa_rcookie, rcookie, COOKIE_SIZE);
 		memcpy(n_hdr.isa_icookie, icookie, COOKIE_SIZE);
 		n_hdr.isa_xchg = ISAKMP_v2_SA_INIT;
@@ -2759,9 +2746,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 			{
 				struct isakmp_hdr r_hdr;
 				zero(&r_hdr); /* default to 0 */  /* AAA should we copy from MD? */
-				r_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-						    ISA_MAJ_SHIFT |
-						    IKEv2_MINOR_VERSION;
+				r_hdr.isa_version = build_ike_version();
 				memcpy(r_hdr.isa_rcookie, st->st_rcookie,
 				       COOKIE_SIZE);
 				memcpy(r_hdr.isa_icookie, st->st_icookie,
@@ -3184,9 +3169,7 @@ stf_status ikev2_send_informational(struct state *st)
 		{
 			struct isakmp_hdr r_hdr;
 			zero(&r_hdr);
-			r_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					    ISA_MAJ_SHIFT |
-					    IKEv2_MINOR_VERSION;
+			r_hdr.isa_version = build_ike_version();
 			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
 			       COOKIE_SIZE);
 			memcpy(r_hdr.isa_icookie, pst->st_icookie,
@@ -3322,9 +3305,7 @@ void ikev2_delete_out(struct state *st)
 		{
 			struct isakmp_hdr r_hdr;
 			zero(&r_hdr); /* default to 0 */  /* AAA should we copy from MD? */
-			r_hdr.isa_version = IKEv2_MAJOR_VERSION <<
-					    ISA_MAJ_SHIFT |
-					    IKEv2_MINOR_VERSION;
+			r_hdr.isa_version = build_ike_version();
 			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
 			       COOKIE_SIZE);
 			memcpy(r_hdr.isa_icookie, pst->st_icookie,
@@ -3471,4 +3452,24 @@ unhappy_ending:
 		 */
 		v2_delete_my_family(st);
 	}
+}
+
+/*
+ * Determine the IKE version we will use for the IKE packet
+ * Normally, this is "2.0", but in the future we might need to
+ * change that. Version used is the minimum 2.x version both
+ * sides support. So if we support 2.1, and they support 2.0,
+ * we should sent 2.0 (not implemented until we hit 2.1 ourselves)
+ * We also have some impair functions that modify the major/minor
+ * version on purpose - for testing
+ *
+ * rcv_version: the received IKE version, 0 if we don't know
+ *
+ * top 4 bits are major version, lower 4 bits are minor version
+ */
+static int build_ike_version()
+{
+return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))
+	<< ISA_MAJ_SHIFT) | (IKEv2_MINOR_VERSION +
+	(DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
 }

@@ -1,8 +1,8 @@
 /* misc functions to get compile time and runtime options
- *
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,7 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <unistd.h>
@@ -112,14 +111,17 @@ void lsw_conf_free_oco(void)
 	/* Must be a nicer way to loop over this? */
 	pfree(global_oco.crls_dir);
 	/* pfree(global_oco.rootdir); */
-	pfree(global_oco.confdir); /* there is one more alloc that did not get freed? */
+	pfree(global_oco.confdir); /*
+				    * there is one more alloc that did not
+				    * get freed?
+				    */
 	pfree(global_oco.conffile);
 	pfree(global_oco.confddir);
 	pfree(global_oco.vardir);
 	pfree(global_oco.policies_dir);
 	pfree(global_oco.acerts_dir);
 	pfree(global_oco.cacerts_dir);
-	// wrong leak magic? pfree(global_oco.crls_dir);
+	/* wrong leak magic? pfree(global_oco.crls_dir); */
 	pfree(global_oco.private_dir);
 	pfree(global_oco.certs_dir);
 	pfree(global_oco.aacerts_dir);
@@ -167,7 +169,8 @@ secuPWData *lsw_return_nss_password_file_info(void)
 	return &NSSPassword;
 }
 
-/* 0 disabled
+/*
+ * 0 disabled
  * 1 enabled
  * 2 indeterminate
  */
@@ -178,18 +181,23 @@ int libreswan_selinux(void)
 	FILE *fd = fopen("/sys/fs/selinux/enforce","r");
 
 	if (fd == NULL) {
-		/* try old location, which is still in use by CentOS6 (not RHEL6) */
+		/* try new location first, then old location */
 		fd = fopen("/selinux/enforce","r");
 		if (fd == NULL) {
-			libreswan_log("SElinux: could not open /sys/fs/selinux/enforce or /selinux/enforce");
-			return 2;
+			DBG(DBG_CONTROL,
+				DBG_log("SElinux: disabled, could not open "
+					"/sys/fs/selinux/enforce or "
+					"/selinux/enforce")
+				);
+			return 0;
 		}
 	}
 
 	n = fread((void *)selinux_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		libreswan_log("SElinux: could not read 1 byte from the selinux enforce file");
+		libreswan_log("SElinux: could not read 1 byte from "
+			"the selinux enforce file");
 		return 2;
 	}
 	if (selinux_flag[0] == '1')
@@ -211,14 +219,17 @@ int libreswan_fipskernel(void)
 	FILE *fd = fopen("/proc/sys/crypto/fips_enabled", "r");
 
 	if (fd == NULL) {
-		DBG(DBG_CONTROL, DBG_log("FIPS: could not open /proc/sys/crypto/fips_enabled"));
+		DBG(DBG_CONTROL,
+			DBG_log("FIPS: could not open /proc/sys/crypto/fips_"
+				"enabled"));
 		return 0;
 	}
 
 	n = fread((void *)fips_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		loglog(RC_LOG_SERIOUS, "FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
+		loglog(RC_LOG_SERIOUS, "FIPS: could not read 1 byte from "
+			"/proc/sys/crypto/fips_enabled");
 		return -1;
 	}
 
@@ -288,7 +299,10 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 		token = PK11_GetTokenName(slot);
 		if (token) {
 			tlen = PORT_Strlen(token);
-			/* libreswan_log("authentication needed for token name %s with length %d",token,tlen); */
+			/*
+			 * libreswan_log("authentication needed for "
+			 *	"token name %s with length %d", token, tlen);
+			 */
 		} else {
 			return 0;
 		}
@@ -301,8 +315,8 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 
 	strings = PORT_ZAlloc(maxPwdFileSize);
 	if (!strings) {
-		libreswan_log(
-			"Not able to allocate memory for reading NSS password file");
+		libreswan_log("Not able to allocate memory for reading "
+			"NSS password file");
 		return 0;
 	}
 
@@ -321,7 +335,8 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 			PR_Close(fd);
 
 			if (nb == 0) {
-				libreswan_log("password file contains no data");
+				libreswan_log("password file contains "
+					"no data");
 				PORT_Free(strings);
 				return 0;
 			}
@@ -359,11 +374,14 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 			password = PORT_Strdup((char*)password);
 			PORT_Free(strings);
 
-			/* libreswan_log("Password passed to NSS is %s with length %d", password, PORT_Strlen(password)); */
+			/*
+			 * libreswan_log("Password passed to NSS is %s with "
+			 *	"length %d", password, PORT_Strlen(password));
+			 */
 			return password;
 		} else {
-			libreswan_log(
-				"File with Password to NSS DB is not provided");
+			libreswan_log("File with Password to NSS DB is "
+				"not provided");
 			return 0;
 		}
 	}

@@ -178,10 +178,13 @@ _________________________ ip-xfrm-policy
 	ip xfrm policy
 _________________________ ip-xfrm-stats
 	cat /proc/net/xfrm_stat
+fi
 _________________________ ip-l2tp-tunnel
-	ip l2tp tunnel
+if test -d /sys/module/l2tp_core
+then
+	ip l2tp show tunnel
 _________________________ ip-l2tp-session
-	ip l2tp session
+	ip l2tp show session
 fi
 _________________________ /proc/crypto
 if test -r /proc/crypto
