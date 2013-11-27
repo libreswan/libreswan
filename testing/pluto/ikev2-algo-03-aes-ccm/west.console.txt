@@ -47,31 +47,24 @@ west #
  ipsec auto --status
 000 using kernel interface: netkey
 000 interface lo/lo 127.0.0.1
-000 interface lo/lo 127.0.0.1
-000 interface eth0/eth0 192.0.1.254
 000 interface eth0/eth0 192.0.1.254
 000 interface eth1/eth1 192.1.2.45
-000 interface eth1/eth1 192.1.2.45
-000 interface eth2/eth2 192.9.4.45
 000 interface eth2/eth2 192.9.4.45
 000  
-000 FIPS=disabled
+000 fips mode=disabled;
 000 SElinux=enabled
 000  
 000 config setup options:
 000  
-000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx_attr_value=<unsupported>
-000 %myid = (none)
+000 secctx_attr_value=XXXX
+000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=yes, keep_alive=20, nat_ikeport=4500, disable_port_floating=no
-000 virtual_private (%priv):
-000 - allowed 3 subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
-000 - disallowed 2 subnets: 192.0.1.0/24, 2001:db8:0:1::/64
+000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
 000  
 000 ESP algorithms supported:
 000  
@@ -105,6 +98,9 @@ west #
 000 algorithm IKE encrypt: id=0, name=(null), blocksize=16, keydeflen=131
 000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: id=65004, name=OAKLEY_SERPENT_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: id=65005, name=OAKLEY_TWOFISH_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: id=65289, name=OAKLEY_TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -128,11 +124,14 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":    policy_label:unset; 
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms wanted: AES_CCM_A(14)_152-NONE(0)_000
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms loaded: AES_CCM_A(14)_152-NONE(0)_000
@@ -165,13 +164,13 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0x6afef858 reqid 16385 mode tunnel
+	proto esp spi 0x79c69047 reqid 16385 mode tunnel
 	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0x414e8c6195aa82a40ee5b2259783470166b211 64
+	aead rfc4309(ccm(aes)) 0x988fa1592343ec94704d88537db2f995f16d1c 64
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x96ff1bd5 reqid 16385 mode tunnel
+	proto esp spi 0x366c7cef reqid 16385 mode tunnel
 	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0xe094a509f1d39ec689407f9b59faa224367b1a 64
+	aead rfc4309(ccm(aes)) 0x45e31946389fd47c7f554504bf4c7ee93394e1 64
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 
@@ -185,22 +184,6 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid 16385 mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -240,13 +223,13 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0x6afef858 reqid 16385 mode tunnel
+	proto esp spi 0x79c69047 reqid 16385 mode tunnel
 	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0x414e8c6195aa82a40ee5b2259783470166b211 64
+	aead rfc4309(ccm(aes)) 0x988fa1592343ec94704d88537db2f995f16d1c 64
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x96ff1bd5 reqid 16385 mode tunnel
+	proto esp spi 0x366c7cef reqid 16385 mode tunnel
 	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0xe094a509f1d39ec689407f9b59faa224367b1a 64
+	aead rfc4309(ccm(aes)) 0x45e31946389fd47c7f554504bf4c7ee93394e1 64
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 
@@ -260,22 +243,6 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid 16385 mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 

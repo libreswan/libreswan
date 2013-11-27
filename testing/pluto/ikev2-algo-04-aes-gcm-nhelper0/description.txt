@@ -1,0 +1,9 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+
+This test uses AES-GCM, using esp=aes_gcm_c-256-null, where a/b/c means
+ICV lengths 8, 12 and 16, and 256 is the AES key length (and the null
+needs to be there to prevent Libreswan from sticking in an additional
+auth algorithm).
+
+same as ikev2-algo-04-aes-gcm but with nhelpers=0. This behaves differently
+and needs investigation.
