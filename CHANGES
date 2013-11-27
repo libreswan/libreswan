@@ -12,6 +12,8 @@ v3.7 (unreleased)
 * IKEv2: Check for inbound traffic before sending liveness exchange [Matt]
 * IKEv2: Fix some error codes that mistakenly used IKEv1 versions [Paul]
 * IKEv2: in R1 don't copy their IKEv2 minor for our reply packet [Paul]
+* IKEv2: Don't kill unrelated states on same hash chain in IKE DEL [Hugh]
+* pluto: Various cleanup and reducing scope of variables [Hugh]
 * building: support for slackware version/init system detection [Roel]
 * initsystems: fix typo in openrc script [Natanael Copa]
 * secrets: Log glob failing for secrets parser as warning, not error [Paul]
