@@ -190,14 +190,17 @@ stf_status main_outI1(int whack_sock,
 						c->spd.this.xauth_client);
 
 		int np = numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		if (!out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,
 				FALSE, np)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
+
 		/* no leak! (MUST be first time) */
 		passert(st->st_p1isa.ptr == NULL);
+
 		/* save initiator SA for later HASH */
 		clonetochunk(st->st_p1isa, sa_start, md.rbody.cur - sa_start,
 			"sa in main_outI1");
@@ -205,18 +208,21 @@ stf_status main_outI1(int whack_sock,
 
 	if (c->send_vendorid) {
 		const char *myvid = ipsec_version_vendorid();
-		int np = --numvidtosend >
-			0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		int np = --numvidtosend >0 ?
+			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
-					myvid, strlen(myvid), "Vendor ID"))
+					myvid, strlen(myvid), "Vendor ID")) {
+			reset_cur_state();	/* ??? was missing */
 			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* Send DPD VID */
 	{
-		int np = --numvidtosend >
-			0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		int np = --numvidtosend > 0 ?
+			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		if (!out_vid(np, &md.rbody, VID_MISC_DPD)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
@@ -224,8 +230,9 @@ stf_status main_outI1(int whack_sock,
 	}
 
 	if (c->cisco_unity) {
-		int np = --numvidtosend >
-			0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		int np = --numvidtosend > 0 ?
+			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		if (!out_vid(np, &md.rbody, VID_CISCO_UNITY)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
@@ -234,8 +241,9 @@ stf_status main_outI1(int whack_sock,
 
 	/* Announce our ability to do IKE Fragmentation */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		int np = --numvidtosend >
-			0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		int np = --numvidtosend > 0 ?
+			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		if (!out_vid(np, &md.rbody, VID_IKE_FRAGMENTATION)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
@@ -245,8 +253,8 @@ stf_status main_outI1(int whack_sock,
 	DBG(DBG_NATT, DBG_log("nat traversal enabled: %d",
 				nat_traversal_enabled));
 	if (nat_traversal_enabled) {
-		int np = --numvidtosend >
-			0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		int np = --numvidtosend > 0 ?
+			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		/* Add supported NAT-Traversal VID */
 		if (!nat_traversal_insert_vid(np, &md.rbody)) {
@@ -256,8 +264,9 @@ stf_status main_outI1(int whack_sock,
 	}
 
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
-		int np = --numvidtosend >
-			0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		int np = --numvidtosend > 0 ?
+			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		if (!out_vid(np, &md.rbody, VID_MISC_XAUTH)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
@@ -389,9 +398,9 @@ size_t RSA_sign_hash(struct connection *c,
 		return 0; /* failure: no key to use */
 
 	sz = k->pub.k;
-	passert(
-		RSA_MIN_OCTETS <= sz && 4 + hash_len < sz && sz <=
-		RSA_MAX_OCTETS);
+	passert(RSA_MIN_OCTETS <= sz &&
+		4 + hash_len < sz &&
+		sz <= RSA_MAX_OCTETS);
 	sign_hash(k, hash_val, hash_len, sig_val, sz);
 	return sz;
 }
@@ -539,7 +548,7 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 /*
  * State Transition Functions.
  *
- * The definition of state_microcode_table in demux.c is a good
+ * The definition of v1_state_microcode_table in ikev1.c is a good
  * overview of these routines.
  *
  * - Called from process_packet; result handled by complete_v1_state_transition
@@ -562,23 +571,23 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
  */
 
 #ifdef DMALLOC
-static unsigned long _dm_mark = 0;
-static unsigned long _dm_initialized = 0;
+static unsigned long dm_mark = 0;
+static unsigned long dm_initialized = 0;
 #endif
 
 stf_status main_inI1_outR1(struct msg_digest *md)
 {
 #ifdef DMALLOC
-	if (_dm_initialized != 0) {
+	if (dm_initialized != 0) {
 		/*
 		 * log unfreed pointers that have been added to the heap
 		 * since mark
 		 */
-		dmalloc_log_changed(_dm_mark, 1, 0, 1);
+		dmalloc_log_changed(dm_mark, 1, 0, 1);
 		dmalloc_log_stats();
 	}
-	_dm_mark = dmalloc_mark();
-	_dm_initialized = 1;
+	dm_mark = dmalloc_mark();
+	dm_initialized = 1;
 #endif
 
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
@@ -586,7 +595,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	struct connection *c;
 	pb_stream r_sa_pbs;
 
-	/* Determin how many Vendor ID payloads we will be sending */
+	/* Determine how many Vendor ID payloads we will be sending */
 	int numvidtosend = 1; /* we always send DPD VID */
 
 	/* random source ports are handled by find_host_connection */
@@ -1455,10 +1464,13 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 	DBG(DBG_CONTROL,
 		DBG_log("thinking about whether to send my certificate:"));
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
+		char esb[ENUM_SHOW_BUF_LEN];
+
 		DBG_log("  I have RSA key: %s cert.type: %s ",
-			enum_show(&oakley_auth_names, auth),
-			enum_show(&cert_type_names, certtype)));
+			enum_showb(&oakley_auth_names, auth, esb, sizeof(esb)),
+			enum_show(&cert_type_names, certtype));
+	});
 
 	DBG(DBG_CONTROL,
 		DBG_log("  sendcert: %s and I did%s get a certificate request ",
@@ -2858,7 +2870,7 @@ void ikev1_delete_out(struct state *st)
 				said ? ISAKMP_NEXT_NONE : ISAKMP_NEXT_D;
 			isad.isad_spisize = sizeof(ipsec_spi_t);
 			isad.isad_protoid = ns->proto;
-	
+
 			isad.isad_nospi = 1;
 			if (!out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs,
 						&del_pbs) ||
@@ -3041,11 +3053,9 @@ void accept_delete(struct state *st, struct msg_digest *md,
 					"SA(0x%08lx) not found (%s)",
 					enum_show(&protocol_names,
 						d->isad_protoid),
-					(unsigned long)ntohl((unsigned long)*(
-								ipsec_spi_t
-								*)spi),
-					bogus ? "our SPI - bogus "
-					"implementation" : "maybe expired");
+					(unsigned long)ntohl((unsigned long)
+						*(ipsec_spi_t *)spi),
+					bogus ? "our SPI - bogus implementation" : "maybe expired");
 			} else {
 				struct connection *rc = dst->st_connection;
 				struct connection *oldc;

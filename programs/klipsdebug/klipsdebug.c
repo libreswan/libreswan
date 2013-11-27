@@ -41,6 +41,7 @@
 #include <signal.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
+#include "libreswan/pfkey_debug.h"
 
 #include "socketwrapper.h"
 #include "lswlog.h"

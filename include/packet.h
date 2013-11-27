@@ -105,9 +105,8 @@ extern bool out_generic(u_int8_t np, struct_desc *sd,
 extern bool out_generic_raw(u_int8_t np, struct_desc *sd,
 			    pb_stream *outs, const void *bytes, size_t len,
 			    const char *name);
-#if 1
-extern bool out_modify_previous_np(u_int8_t np, pb_stream *outs);
-#endif
+extern void out_modify_previous_np(u_int8_t np, pb_stream *outs);
+
 #define out_generic_chunk(np, sd, outs, ch, name) \
 	out_generic_raw(np, sd, outs, (ch).ptr, (ch).len, name)
 extern bool out_zero(size_t len, pb_stream *outs, const char *name);
@@ -124,6 +123,10 @@ extern void close_output_pbs(pb_stream *pbs);
 
 /* ISAKMP Header: for all messages
  * layout from RFC 2408 "ISAKMP" section 3.1
+ *
+ * NOTE: the IKEv2 header format is identical EXCEPT that the cookies are now
+ * called (IKE SA) SPIs.  See RFC 5996 Figure 4.
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -527,8 +530,6 @@ extern struct_desc isakmp_nonce_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-extern struct_desc isakmp_attr_desc;
-
 /* From draft-dukes-ike-mode-cfg
    3.2. Attribute Payload
                            1                   2                   3
@@ -756,7 +757,6 @@ struct ikev2_trans_attr {
 	u_int16_t isatr_lv;             /* Length (AF=0) or Value (AF=1) */
 	/* u_intXX_t isatr_value;      Value if AF=0, absent if AF=1 */
 };
-extern struct_desc ikev2_trans_attr_desc;
 
 /* rfc4306, section 3.4 */
 struct ikev2_ke {

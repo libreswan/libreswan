@@ -62,12 +62,6 @@ void show_myid_status(void)
 	whack_log(RC_COMMENT, "myid = %s", idstr);
 }
 
-extern char *pluto_vendorid;
-void show_myvendorid_status(void)
-{
-	whack_log(RC_COMMENT, "vendorid = %s", pluto_vendorid);
-}
-
 /* Fills in myid from environment variable IPSECmyid or defaultrouteaddr
  */
 void init_id(void)

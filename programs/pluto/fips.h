@@ -1,6 +1,6 @@
-/* 
+/*
  * FIPS header
- * 
+ *
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  *

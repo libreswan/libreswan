@@ -92,7 +92,6 @@
 #include <nspr.h>
 
 #include "fips.h"
-extern const char *fips_package_files[];
 
 #ifdef HAVE_LIBCAP_NG
 # include <cap-ng.h>
@@ -413,7 +412,7 @@ u_int16_t secctx_attr_value = SECCTX;
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
-char *pluto_vendorid;
+static char *pluto_vendorid;
 static int nhelpers = -1;
 
 int main(int argc, char **argv)

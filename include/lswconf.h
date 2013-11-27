@@ -61,8 +61,9 @@ extern const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir);
 
 extern secuPWData *lsw_return_nss_password_file_info(void);
 extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
-extern int liberswan_fipsmode(void);
-extern int liberswan_fipsproduct(void);
+extern int libreswan_fipsmode(void);
+extern int libreswan_fipsproduct(void);
+extern int libreswan_fipskernel(void);
 extern int libreswan_selinux(void);
 
 #endif /* _LSW_ALLOC_H_ */

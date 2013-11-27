@@ -44,7 +44,6 @@
 #include "x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
-#include "cookie.h"
 #include "state.h"
 #include "packet.h"
 #include "md5.h"
@@ -100,9 +99,9 @@ enum smf2_flags {
  * wants to do something, usually, that the initiator. (But, not always
  * the original initiator, of the responder decides it needs to rekey first)
  *
- * Each exchange has a bit that indicates if it's a Initiator message,
- * or if it's a response.  The responder never retransmits it's messages
- * except because the initiator has retransmitted.
+ * Each exchange has a bit that indicates if it is an Initiator message,
+ * or if it is a response.  The Responder never retransmits its messages
+ * except in response to an Initiator retransmission.
  *
  * The message ID is *NOT* used in the cryptographic state at all, but instead
  * serves the role of a sequence number.  This makes the state machine far
@@ -131,7 +130,7 @@ enum smf2_flags {
 
 /* it is not clear how the flags will be used yet, if at all */
 
-static const struct state_v2_microcode state_microcode_table[] = {
+static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_INITIATOR,
@@ -204,7 +203,7 @@ static const struct state_v2_microcode state_microcode_table[] = {
 
 const struct state_v2_microcode *ikev2_parent_firststate()
 {
-	return &state_microcode_table[0];
+	return &v2_state_microcode_table[0];
 }
 
 /*
@@ -218,6 +217,10 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 	struct payload_digest *pd = md->digest_roof;
 	struct state *st = md->st;
 
+	/* ??? is there any logic in v2 like "needed" in v1?
+	 * How are missing payloads discovered?  Reported?
+	 * How about unexpected payloads?
+	 */
 	/* lset_t needed = smc->req_payloads; */
 
 	/* zero out the digest descriptors -- might nuke [v2E] digest! */
@@ -229,7 +232,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		bool unknown_payload = FALSE;
 
 		DBG(DBG_CONTROL,
-		    DBG_log("Now lets proceed with payload (%s)",
+		    DBG_log("Now let's proceed with payload (%s)",
 			    enum_show(&payload_names_ikev2, thisp)));
 		memset(pd, 0, sizeof(*pd));
 
@@ -436,7 +439,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			    enum_show(&state_names, from_state)));
 	}
 
-	for (svm = state_microcode_table; svm->state != STATE_IKEv2_ROOF;
+	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
 		if (svm->flags & SMF2_STATENEEDED)
 			if (st == NULL)

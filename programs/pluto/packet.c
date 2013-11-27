@@ -1185,23 +1185,33 @@ struct_desc *const payload_descs[ISAKMP_NEXT_ROOF] = {
 	NULL,                           /* 17 */
 	NULL,                           /* 18 */
 	NULL,                           /* 19 */
-	&isakmp_nat_d,                  /* 20=130 ISAKMP_NEXT_NATD (NAT-D) */
-	&isakmp_nat_oa,                 /* 21=131 ISAKMP_NEXT_NATOA (NAT-OA) */
-	NULL, NULL, NULL, NULL,         /* 22,23,24,25 */
-	NULL, NULL, NULL, NULL,         /* 26,27,28,29 */
-	NULL, NULL, NULL,               /* 30,31,32 */
-	&ikev2_sa_desc,                 /* 33 */
-	&ikev2_ke_desc,                 /* 34 */
-	&ikev2_id_desc, &ikev2_id_desc, /* 35,36 */
-	&ikev2_certificate_desc,        /* 37 */
-	&ikev2_certificate_req_desc,    /* 38*/
-	&ikev2_a_desc,                  /* 39 */
-	&ikev2_nonce_desc,              /* 40 */
-	&ikev2_notify_desc,             /* 41 */
-	&ikev2_delete_desc,             /* 42 */
-	&ikev2_vendor_id_desc,          /* 43 */
-	&ikev2_ts_desc, &ikev2_ts_desc, /* 44, 45 */
-	&ikev2_e_desc,                  /* 46 */
+	&isakmp_nat_d,                  /* 20=130 ISAKMP_NEXT_NATD_RFC=ISAKMP_NEXT_NATD_DRAFT (NAT-D) */
+	&isakmp_nat_oa,                 /* 21=131 ISAKMP_NEXT_NATOA_RFC=ISAKMP_NEXT_NATOA_DRAFTS (NAT-OA) */
+	NULL,				/* 22 */
+	NULL,				/* 23 */
+	NULL,				/* 24 */
+	NULL,				/* 25 */
+	NULL,				/* 26 */
+	NULL,				/* 27 */
+	NULL,				/* 28 */
+	NULL,				/* 29 */
+	NULL,				/* 30 */
+	NULL,				/* 31 */
+	NULL,				/* 32 */
+	&ikev2_sa_desc,                 /* 33 ISAKMP_NEXT_v2SA */
+	&ikev2_ke_desc,                 /* 34 ISAKMP_NEXT_v2KE */
+	&ikev2_id_desc,			/* 35 ISAKMP_NEXT_v2IDi */
+	&ikev2_id_desc,			/* 36 ISAKMP_NEXT_v2IDr */
+	&ikev2_certificate_desc,        /* 37 ISAKMP_NEXT_v2CERT */
+	&ikev2_certificate_req_desc,    /* 38 ISAKMP_NEXT_v2CERTREQ */
+	&ikev2_a_desc,                  /* 39 ISAKMP_NEXT_v2AUTH */
+	&ikev2_nonce_desc,              /* 40 ISAKMP_NEXT_v2Ni / ISAKMP_NEXT_v2Nr */
+	&ikev2_notify_desc,             /* 41 ISAKMP_NEXT_v2N */
+	&ikev2_delete_desc,             /* 42 ISAKMP_NEXT_v2D */
+	&ikev2_vendor_id_desc,          /* 43 ISAKMP_NEXT_v2V */
+	&ikev2_ts_desc,			/* 44 ISAKMP_NEXT_v2TSi */
+	&ikev2_ts_desc,			/* 45 ISAKMP_NEXT_v2TSr */
+	&ikev2_e_desc,                  /* 46 ISAKMP_NEXT_v2E */
 };
 
 void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
@@ -1733,10 +1743,10 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 }
 
 /* Find last complete top-level payload and change its np
- *  * Note: we must deal with payloads already formatted for the network.
- *  _*_Note:_we_don't_think_a_FALSE_return_should_happen_but_old_routine_did.
- *   */
-bool out_modify_previous_np(u_int8_t np, pb_stream *outs)
+ *
+ * Note: we must deal with payloads already formatted for the network.
+ */
+void out_modify_previous_np(u_int8_t np, pb_stream *outs)
 {
 	u_int8_t *pl = outs->start;
 	size_t left = outs->cur - outs->start;
@@ -1751,7 +1761,7 @@ bool out_modify_previous_np(u_int8_t np, pb_stream *outs)
 	} else {
 		pl += NSIZEOF_isakmp_hdr; /* skip over isakmp_hdr */
 		left -= NSIZEOF_isakmp_hdr;
-		for (;; ) {
+		for (;;) {
 			size_t pllen;
 
 			passert(left >= NSIZEOF_isakmp_generic);
@@ -1769,7 +1779,6 @@ bool out_modify_previous_np(u_int8_t np, pb_stream *outs)
 			}
 		}
 	}
-	return TRUE;
 }
 
 bool out_generic(u_int8_t np, struct_desc *sd,

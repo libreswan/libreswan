@@ -179,8 +179,6 @@ stf_status dpd_init(struct state *st)
 	return STF_OK;
 }
 
-bool was_eroute_idle(struct state *st, time_t since_when);
-
 /*
  * Only schedule a new timeout if there isn't one currently,
  * or if it would be sooner than the current timeout.
@@ -330,7 +328,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 
 }
 
-void p1_dpd_outI1(struct state *p1st)
+static void p1_dpd_outI1(struct state *p1st)
 {
 	time_t delay = p1st->st_connection->dpd_delay;
 	time_t timeout = p1st->st_connection->dpd_timeout;

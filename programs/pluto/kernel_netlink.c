@@ -621,7 +621,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			dst = req.u.p.sel.prefixlen_s;
 		}
 
-		/* 
+		/*
 		 * if the user did not specify a priority, calculate one based
 		 * on 'more specific' getting a higher priority
 		 */
@@ -631,7 +631,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			req.u.p.priority = MIN_SPD_PRIORITY -
 				((policy == IPSEC_POLICY_NONE) ? 512 : 0) +
 				   (((2 << shift) - src) << shift) +
-				    (2 << shift) - dst - ((transport_proto) ? 64 : 0) 
+				    (2 << shift) - dst - ((transport_proto) ? 64 : 0)
 				 	- ((req.u.p.sel.sport) ? 32 : 0 )
 				 	- ((req.u.p.sel.sport) ? 32 : 0 );
 		}

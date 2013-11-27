@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010-2012 Paul Wouters <paul@redhat.com>
  *
@@ -65,7 +65,7 @@ static void sha512_hash_final(u_char *hash, sha512_context *ctx)
 	DBG(DBG_CRYPT, DBG_log("NSS SHA 512 hash final : end"));
 }
 
-struct hash_desc hash_desc_sha2_256 = {
+static struct hash_desc hash_desc_sha2_256 = {
 	.common = { .officname =  "sha256",
 		    .algo_type = IKE_ALG_HASH,
 		    .algo_id =   OAKLEY_SHA2_256,
@@ -81,7 +81,7 @@ struct hash_desc hash_desc_sha2_256 = {
 	.hash_final = (void (*)(u_char *, void *))sha256_hash_final,
 };
 
-struct hash_desc integ_desc_sha2_256 = {
+static struct hash_desc integ_desc_sha2_256 = {
 	.common = { .officname =  "sha256",
 		    .algo_type = IKE_ALG_INTEG,
 		    .algo_id =   OAKLEY_SHA2_256,
@@ -97,7 +97,7 @@ struct hash_desc integ_desc_sha2_256 = {
 	.hash_final = (void (*)(u_char *, void *))sha256_hash_final,
 };
 
-struct hash_desc hash_desc_sha2_384 = {
+static struct hash_desc hash_desc_sha2_384 = {
 	.common = { .officname =  "sha384",
 		    .algo_type = IKE_ALG_HASH,
 		    .algo_id =   OAKLEY_SHA2_384,
@@ -113,7 +113,7 @@ struct hash_desc hash_desc_sha2_384 = {
 	.hash_final = (void (*)(u_char *, void *))sha384_hash_final,
 };
 
-struct hash_desc integ_desc_sha2_384 = {
+static struct hash_desc integ_desc_sha2_384 = {
 	.common = { .officname =  "sha384",
 		    .algo_type = IKE_ALG_INTEG,
 		    .algo_id =   OAKLEY_SHA2_384,
@@ -129,7 +129,7 @@ struct hash_desc integ_desc_sha2_384 = {
 	.hash_final = (void (*)(u_char *, void *))sha384_hash_final,
 };
 
-struct hash_desc hash_desc_sha2_512 = {
+static struct hash_desc hash_desc_sha2_512 = {
 	.common = { .officname = "sha512",
 		    .algo_type = IKE_ALG_HASH,
 		    .algo_id =   OAKLEY_SHA2_512,
@@ -145,7 +145,7 @@ struct hash_desc hash_desc_sha2_512 = {
 	.hash_final = (void (*)(u_char *, void *))sha512_hash_final,
 };
 
-struct hash_desc integ_desc_sha2_512 = {
+static struct hash_desc integ_desc_sha2_512 = {
 	.common = { .officname =  "sha512",
 		    .algo_type = IKE_ALG_INTEG,
 		    .algo_id =   OAKLEY_SHA2_512,
@@ -161,25 +161,24 @@ struct hash_desc integ_desc_sha2_512 = {
 	.hash_final = (void (*)(u_char *, void *))sha512_hash_final,
 };
 
-int ike_alg_sha2_init(void);
 int ike_alg_sha2_init(void)
 {
 	int ret;
 
 	ret = ike_alg_register_hash(&hash_desc_sha2_512);
-	if (ret)
-		goto out;
-	ret = ike_alg_register_hash(&hash_desc_sha2_384);
-	if (ret)
-		goto out;
-	ret = ike_alg_register_hash(&hash_desc_sha2_256);
+	if (ret == 0) {
+		ret = ike_alg_register_hash(&hash_desc_sha2_384);
+		if (ret == 0) {
+			ret = ike_alg_register_hash(&hash_desc_sha2_256);
 
-	ike_alg_add((struct ike_alg *) &integ_desc_sha2_256);
-	ike_alg_add((struct ike_alg *) &integ_desc_sha2_384);
-	ike_alg_add((struct ike_alg *) &integ_desc_sha2_512);
-out:
+			ike_alg_add((struct ike_alg *) &integ_desc_sha2_256);
+			ike_alg_add((struct ike_alg *) &integ_desc_sha2_384);
+			ike_alg_add((struct ike_alg *) &integ_desc_sha2_512);
+		}
+	}
 	return ret;
 }
+
 /*
    IKE_ALG_INIT_NAME: ike_alg_sha2_init
  */

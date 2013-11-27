@@ -93,6 +93,7 @@ void ike_alg_show_status(void)
 
 	whack_log(RC_COMMENT, " "); /* spacer */
 }
+
 /*
  *      Show IKE algorithms for
  *      - this connection (result from ike= string)
@@ -121,21 +122,15 @@ void ike_alg_show_connection(struct connection *c, const char *instance)
 			  buf);
 	}
 	st = state_with_serialno(c->newest_isakmp_sa);
-	if (st) {
+	if (st != NULL) {
 		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKE algorithm newest: %s_%03d-%s-%s",
 			  c->name,
 			  instance,
-			  enum_show(&oakley_enc_names, st->st_oakley.encrypt) +
-			  7     /* strlen("OAKLEY_") */
-		                /* , st->st_oakley.encrypter->keydeflen */
-			  , st->st_oakley.enckeylen,
-			  enum_show(&oakley_hash_names,
-				    st->st_oakley.prf_hash) +
-			  7, /* strlen("OAKLEY_") */
-			  enum_show(&oakley_group_names,
-				    st->st_oakley.group->group) +
-			  13 /* strlen("OAKLEY_GROUP_") */
-			  );
+			  strip_prefix(enum_name(&oakley_enc_names, st->st_oakley.encrypt), "OAKLEY_"),
+		          /* st->st_oakley.encrypter->keydeflen, */
+			  st->st_oakley.enckeylen,
+			  strip_prefix(enum_name(&oakley_hash_names, st->st_oakley.prf_hash), "OAKLEY_"),
+			  strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
 	}
 }

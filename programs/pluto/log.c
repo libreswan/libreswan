@@ -39,6 +39,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
+#include "lswconf.h"
 #include "lswlog.h"
 
 #include "defs.h"
@@ -813,7 +814,7 @@ static void show_system_security(void)
 #endif
 
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "fips mode=%s;", 
+	whack_log(RC_COMMENT, "fips mode=%s;",
                 fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
 	whack_log(RC_COMMENT, "SElinux=%s",
                 selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
@@ -1019,7 +1020,7 @@ void log_state(struct state *st, enum state_kind new_state)
 	lc.conn = conn;
 	save_state = st->st_state;
 	st->st_state = new_state;
-	for_each_state((void *)connection_state, &lc);
+	for_each_state(connection_state, &lc);
 	st->st_state = save_state;
 
 	if (conn->statsval ==

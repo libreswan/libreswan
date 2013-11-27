@@ -347,59 +347,53 @@ static enum ikev2_trans_type_prf v1tov2_prf(int oakley)
 
 struct db_sa *sa_v2_convert(struct db_sa *f)
 {
-	unsigned int pcc, prc, tcc, pr_cnt, pc_cnt, propnum;
-	int tot_trans, i;
+	unsigned int pcc, pr_cnt, pc_cnt, propnum;
+	int tot_trans;
+	int i;
 	struct db_trans_flat   *dtfset;
-	struct db_trans_flat   *dtfone;
 	struct db_trans_flat   *dtflast;
-	struct db_attr         *attrs;
-	struct db_v2_trans     *tr;
 	struct db_v2_prop_conj *pc;
 	struct db_v2_prop      *pr;
 
-	if (!f)
+	if (f == NULL)
 		return NULL;
 
 	if (!f->dynamic)
 		f = sa_copy_sa(f, 0);
 
-	tot_trans = 0;
-	for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
-		struct db_prop_conj *dpc = &f->prop_conjs[pcc];
+	/* count transforms and allocate space for result */
+	{
+		unsigned int pcc;
+		int tot_trans = 0;
 
-		if (dpc->props == NULL)
-			continue;
-		for (prc = 0; prc < dpc->prop_cnt; prc++) {
-			struct db_prop *dp = &dpc->props[prc];
+		for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
+			struct db_prop_conj *dpc = &f->prop_conjs[pcc];
+			unsigned int prc;
 
-			if (dp->trans == NULL)
-				continue;
-			for (tcc = 0; tcc < dp->trans_cnt; tcc++)
-				tot_trans++;
+			for (prc = 0; prc < dpc->prop_cnt; prc++)
+				tot_trans += dpc->props[prc].trans_cnt;
 		}
+
+		dtfset = alloc_bytes(sizeof(struct db_trans_flat) * tot_trans,
+			     "spdb_v2_dtfset");
 	}
 
-	dtfset = alloc_bytes(sizeof(struct db_trans_flat) * tot_trans,
-			     "spdb_v2_dtfset");
-
 	tot_trans = 0;
 	for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
 		struct db_prop_conj *dpc = &f->prop_conjs[pcc];
+		unsigned int prc;
 
-		if (dpc->props == NULL)
-			continue;
 		for (prc = 0; prc < dpc->prop_cnt; prc++) {
 			struct db_prop *dp = &dpc->props[prc];
+			unsigned int tcc;
 
-			if (dp->trans == NULL)
-				continue;
 			for (tcc = 0; tcc < dp->trans_cnt; tcc++) {
 				struct db_trans *tr = &dp->trans[tcc];
 				struct db_trans_flat *dtfone =
 					&dtfset[tot_trans];
 				unsigned int attr_cnt;
 
-				dtfone->protoid      = dp->protoid;
+				dtfone->protoid = dp->protoid;
 				if (!f->parentSA)
 					dtfone->encr_transid = tr->transid;
 
@@ -410,17 +404,12 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 
 					if (f->parentSA) {
 						switch (attr->type.oakley) {
-
-						case
-							OAKLEY_AUTHENTICATION_METHOD
-							:
+						case OAKLEY_AUTHENTICATION_METHOD:
 							dtfone->auth_method =
 								attr->val;
 							break;
 
-						case
-							OAKLEY_ENCRYPTION_ALGORITHM
-							:
+						case OAKLEY_ENCRYPTION_ALGORITHM:
 							dtfone->encr_transid =
 								v1tov2_encr(
 									attr->val);
@@ -483,16 +472,15 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	if (tot_trans >= 1)
 		pr = alloc_bytes(sizeof(struct db_v2_prop), "db_v2_prop");
 	dtflast = NULL;
-	tr = NULL;
 	pc = NULL;
 	pc_cnt = 0;
 	propnum = 1;
 
 	for (i = 0; i < tot_trans; i++) {
+		struct db_v2_trans *tr;
 		int tr_cnt;
 		int tr_pos;
-
-		dtfone = &dtfset[i];
+		struct db_trans_flat   *dtfone = &dtfset[i];
 
 		if (dtfone->protoid == PROTO_ISAKMP)
 			tr_cnt = 4;
@@ -509,8 +497,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 				/* need to extend pr (list of disjunctions) by one */
 				struct db_v2_prop *pr1;
 				pr_cnt++;
-				pr1 =
-					alloc_bytes(sizeof(struct db_v2_prop) *
+				pr1 = alloc_bytes(sizeof(struct db_v2_prop) *
 						    (pr_cnt + 1),
 						    "db_v2_prop");
 				memcpy(pr1, pr,
@@ -543,7 +530,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 		}
 		dtflast = dtfone;
 
-		if (!pc) {
+		if (pc == NULL) {
 			pc = alloc_bytes(sizeof(struct db_v2_prop_conj),
 					 "db_v2_prop_conj");
 			pc_cnt = 0;
@@ -563,9 +550,10 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 		tr[tr_pos].transform_type = IKEv2_TRANS_TYPE_ENCR;
 		tr[tr_pos].transid        = dtfone->encr_transid;
 		if (dtfone->encr_keylen > 0 ) {
-			attrs =
+			struct db_attr *attrs =
 				alloc_bytes(sizeof(struct db_attr),
 					    "db_attrs");
+
 			tr[tr_pos].attrs = attrs;
 			tr[tr_pos].attr_cnt = 1;
 			attrs->type.ikev2 = IKEv2_KEY_LENGTH;
@@ -630,7 +618,6 @@ bool ikev2_acceptable_group(struct state *st, oakley_group_t group)
 			case IKEv2_TRANS_TYPE_DH:
 				if (tr->transid == group)
 					return TRUE;
-
 				break;
 			default:
 				break;
@@ -731,29 +718,27 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 		if (DBGP(DBG_CONTROLMORE)) {
 			/* note: enum_show uses a static buffer so more than one call per
 			   statement is dangerous */
-			DBG_log(
-				"proposal %u %s encr= (policy:%s vs offered:%s)",
+			char esb[ENUM_SHOW_BUF_LEN];
+
+			DBG_log("proposal %u %s encr= (policy:%s vs offered:%s)",
 				propnum,
 				encr_matched ? "succeeded" : "failed",
-				enum_name(&trans_type_encr_names, encrid),
+				enum_showb(&trans_type_encr_names, encrid, esb, sizeof(esb)),
 				enum_show(&trans_type_encr_names,
 					  encr_transform));
-			DBG_log(
-				"            %s integ=(policy:%s vs offered:%s)",
+			DBG_log("            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "succeeded" : "failed",
-				enum_name(&trans_type_integ_names, integid),
+				enum_showb(&trans_type_integ_names, integid, esb, sizeof(esb)),
 				enum_show(&trans_type_integ_names,
 					  integ_transform));
-			DBG_log(
-				"            %s prf=  (policy:%s vs offered:%s)",
+			DBG_log("            %s prf=  (policy:%s vs offered:%s)",
 				prf_matched ? "succeeded" : "failed",
-				enum_name(&trans_type_prf_names, prfid),
+				enum_showb(&trans_type_prf_names, prfid, esb, sizeof(esb)),
 				enum_show(&trans_type_prf_names,
 					  prf_transform));
-			DBG_log(
-				"            %s dh=   (policy:%s vs offered:%s)",
+			DBG_log("            %s dh=   (policy:%s vs offered:%s)",
 				dh_matched ? "succeeded" : "failed",
-				enum_name(&oakley_group_names, dhid),
+				enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
 				enum_show(&oakley_group_names, dh_transform));
 		}
 

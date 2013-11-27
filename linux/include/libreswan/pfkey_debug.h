@@ -1,6 +1,6 @@
-/*
- * sanitize a string into a printable format.
- *
+/* pf_key debugging facility
+ * definitions: linux/net/ipsec/pfkey_v2_parse.c, lib/libbsdpfkey/pfkey.c
+ * 
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003  Michael Richardson <mcr@freeswan.org>
  *
@@ -28,7 +28,17 @@
 
 #else
 
-extern unsigned int pfkey_lib_debug;
+/*
+ * Debugging levels for pfkey_lib_debug
+ */
+#define PF_KEY_DEBUG_PARSE_NONE    0
+#define PF_KEY_DEBUG_PARSE_PROBLEM 1
+#define PF_KEY_DEBUG_PARSE_STRUCT  2
+#define PF_KEY_DEBUG_PARSE_FLOW    4
+#define PF_KEY_DEBUG_BUILD         8
+#define PF_KEY_DEBUG_PARSE_MAX    15
+
+extern unsigned int pfkey_lib_debug;  /* bits selecting what to report */
 
 extern int (*pfkey_debug_func)(const char *message, ...) PRINTF_LIKE(1);
 extern int (*pfkey_error_func)(const char *message, ...) PRINTF_LIKE(1);

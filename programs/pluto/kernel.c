@@ -1659,27 +1659,18 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			/* if it is the last key entry, then ask algo */
 			if (ei == &esp_info[elemsof(esp_info)]) {
 				/* Check for additional kernel alg */
-				if ((ei =
-					     kernel_alg_esp_info(st->st_esp.
-								 attrs.
-								 transattrs
-								 .encrypt,
-								 st->st_esp.
-								 attrs.
-								 transattrs.
-								 enckeylen,
-								 st->st_esp.
-								 attrs.
-								 transattrs.
-								 integ_hash))
-				    !=
-				    NULL)
+				ei = kernel_alg_esp_info(st->st_esp.
+							attrs.transattrs.encrypt,
+							st->st_esp.attrs.transattrs.enckeylen,
+							st->st_esp.attrs.transattrs.integ_hash);
+				if (ei != NULL)
 					break;
 
-				/* note: enum_show may use a static buffer, so two
+				/* Note: enum_show may use a static buffer, so two
 				 * calls in one printf would be a mistake.
 				 * enum_name does the same job, without a static buffer,
 				 * assuming the name will be found.
+				 * Also consider enum_showb.
 				 */
 				loglog(RC_LOG_SERIOUS,
 				       "ESP transform %s(%d) / auth %s not implemented yet",

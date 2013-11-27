@@ -733,7 +733,9 @@ size_t format_end(char *buf,
  * format topology of a connection.
  * Two symmetric ends separated by ...
  */
-size_t format_connection(char *buf, size_t buf_len,
+#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
+
+static size_t format_connection(char *buf, size_t buf_len,
 			const struct connection *c,
 			struct spd_route *sr)
 {
@@ -1110,7 +1112,7 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-struct connection *find_connection_by_reqid(uint32_t reqid)
+static struct connection *find_connection_by_reqid(uint32_t reqid)
 {
 	struct connection *c;
 

@@ -1,4 +1,5 @@
-/* logging definitions
+/* logging declaratons
+ *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2004       Michael Richardson <mcr@xelerance.com>
  *
@@ -20,7 +21,7 @@
 #include <libreswan.h>
 #include <stdarg.h>
 #include <stdio.h>
-#if defined(NO_DEBUG)
+#ifndef DEBUG
 # include <stdlib.h> /* for abort() */
 #endif
 
@@ -30,18 +31,23 @@
 #define loglog  libreswan_loglog
 #define plog    libreswan_log
 extern int libreswan_log(const char *message, ...) PRINTF_LIKE(1);
+
+/* Log to both main log and whack log
+ * Much like log, actually, except for specifying mess_no.
+ */
 extern void libreswan_loglog(int mess_no, const char *message,
 			     ...) PRINTF_LIKE(2);
 extern void libreswan_exit_log(const char *message, ...) PRINTF_LIKE(1);
 extern void libreswan_log_abort(const char *file_str,
 				int line_no) NEVER_RETURNS;
 
-#if !defined(NO_DEBUG)
+#ifdef DEBUG
 
 #include "constants.h"
 
 extern lset_t base_debugging;   /* bits selecting what to report */
 extern lset_t cur_debugging;    /* current debugging level */
+extern void set_debugging(lset_t deb);
 
 #define DBGP(cond)         (cur_debugging & (cond))
 #define DBG(cond, action)   do { if (DBGP(cond)) { action; } } while (0)
@@ -56,7 +62,6 @@ extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
 extern void exit_tool(int) NEVER_RETURNS;
 extern void tool_init_log(void);
 extern void tool_close_log(void);
-extern void set_debugging(lset_t deb);
 
 #define lsw_abort()     libreswan_log_abort(__FILE__, __LINE__)
 
@@ -64,7 +69,8 @@ extern void set_debugging(lset_t deb);
 
 #define DBG(cond, action)       do { } while (0)        /* do nothing */
 #define DBGP(...) (0)
-#define exit_tool exit
+#define exit_tool(r) exit(r)
+extern void (exit_tool)(int) NEVER_RETURNS;	/* if library is compiled with DEBUG but caller isn't, this is needed */
 #define libreswan_DBG_dump(...) do { } while (0)
 #define DBG_log(...) do { } while (0)
 extern void tool_init_log(void);

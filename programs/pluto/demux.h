@@ -101,13 +101,7 @@ extern void fmt_isakmp_sa_established(struct state *st,
 
 extern void free_md_pool(void);
 
-/* deal with echo request/reply */
-extern void receive_ike_echo_request(struct msg_digest *md);
-extern void receive_ike_echo_reply(struct msg_digest *md);
-
 extern void process_packet(struct msg_digest **mdp);
-extern void process_v1_packet(struct msg_digest **mdp);
-extern void process_v2_packet(struct msg_digest **mdp);
 extern bool check_msg_errqueue(const struct iface_port *ifp, short interest);
 
 #endif /* _DEMUX_H */
