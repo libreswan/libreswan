@@ -984,7 +984,11 @@ static const char *const ikev2_auth_strings[] = {
 enum_names ikev2_auth_names =
 { v2_AUTH_RSA, v2_AUTH_DSA, ikev2_auth_strings, NULL };
 
-/* Oakley Group Description attribute */
+/*
+ * Oakley Group Description attribute
+ * XXX: Shared for IKEv1 and IKEv2 (although technically there could
+ * be differences we need to care about)
+ */
 
 static const char *const oakley_group_name[] = {
 	"OAKLEY_GROUP_MODP768",
@@ -1280,46 +1284,62 @@ const char *const critical_names[] = {
 };
 
 /* Transform-type Encryption */
-static const char *const trans_type_encr_name[] = {
-	"des-iv64(obsoleted)",
-	"des(obsoleted)",
-	"3des",
-	"rc5",
-	"idea",
-	"cast",
-	"blowfish(obsoleted)",
-	"3idea",
-	"des-iv32(obsoleted)",
-	"res10",
-	"null",
-	"aes-cbc",
-	"aes-ctr",
+static const char *const ikev2_trans_type_encr_name[] = {
+	"DES-IV64(obsoleted)",
+	"DES(obsoleted)",
+	"3DES",
+	"RC5",
+	"IDEA",
+	"CAST",
+	"BLOWFISH(obsoleted)",
+	"3IDEA",
+	"DES-IV32(obsoleted)",
+	"RES10",
+	"NULL",
+	"AES_CBC",
+	"AES_CTR",
+	"AES_CCM_A", /* AES-CCM_8 RFC 4309 */
+	"AES_CCM_B", /* AES-CCM_12 */
+	"AES_CCM_C", /* AES-CCM_16 */
+	"UNASSIGNED",
+	"AES_GCM_A", /* AES-GCM_8 RFC 4106 */
+	"AES_GCM_B", /* AES-GCM_12 */
+	"AES_GCM_C", /* AES-GCM_16 */
+	"NULL_AUTH_AES_GMAC", /* RFC 4543 */
+	"RESERVED_FOR_IEEE_P1619_XTS_AES",
+	"CAMELLIA_CBC", /* RFC 5529 */
+	"CAMELLIA_CTR", /* RFC 5529 */
+	"CAMELLIA_CCM_A", /* CAMELLIA_CCM_8 RFC 5529 */
+	"CAMELLIA_CCM_B", /* CAMELLIA_CCM_12 RFC 5529 */
+	"CAMELLIA_CCM_C", /* CAMELLIA_CCM_16 RFC 5529 */
+	/* 28 - 1023 Unassigned */
+	/* 1024 - 65535 Private use */
 };
-enum_names trans_type_encr_names =
-{ IKEv2_ENCR_DES_IV64, IKEv2_ENCR_AES_CTR, trans_type_encr_name, NULL };
+enum_names ikev2_trans_type_encr_names =
+{ IKEv2_ENCR_DES_IV64, IKEv2_ENCR_AES_CTR, ikev2_trans_type_encr_name, NULL };
 
 /* Transform-type PRF */
-static const char *const trans_type_prf_name[] = {
-	"prf-hmac-md5",
-	"prf-hmac-sha1",
-	"prf-hmac-tiger",
-	"prf-hmac-aes128-xcbc",
+static const char *const ikev2_trans_type_prf_name[] = {
+	"PRF_HMAC_MD5",
+	"PRF_HMAC_SHA1",
+	"PRF_HMAC_TIGER",
+	"PRF_HMAC_AES128-XCBC",
 	/* RFC 4868 Section 4 */
-	"prf-hmac-sha2-256",
-	"prf-hmac-sha2-384",
-	"prf-hmac-sha2-512",
+	"PRF_HMAC_SHA2-256",
+	"PRF_HMAC_SHA2-384",
+	"PRF_HMAC_SHA2-512",
 };
-enum_names trans_type_prf_names =
-{ IKEv2_PRF_HMAC_MD5, IKEv2_PRF_HMAC_SHA2_512, trans_type_prf_name, NULL };
+enum_names ikev2_trans_type_prf_names =
+{ IKEv2_PRF_HMAC_MD5, IKEv2_PRF_HMAC_SHA2_512, ikev2_trans_type_prf_name, NULL };
 
 /* Transform-type Integrity */
-static const char *const trans_type_integ_name[] = {
-	"auth-none",
-	"auth-hmac-md5-96",
-	"auth-hmac-sha1-96",
-	"auth-des-mac",
-	"auth-kpdk-md5",
-	"auth-aes-xcbc-96",
+static const char *const ikev2_trans_type_integ_name[] = {
+	"AUTH_NONE",
+	"AUTH_HMAC_MD5_96",
+	"AUTH_HMAC_SHA1_96",
+	"AUTH_DES_MAC",
+	"AUTH_KPDK_MD5",
+	"AUTH_AES_XCBC_96",
 	"AUTH_HMAC_MD5_128",
 	"AUTH_HMAC_SHA1_160",
 	"AUTH_AES_CMAC_96",
@@ -1331,39 +1351,39 @@ static const char *const trans_type_integ_name[] = {
 	"AUTH_HMAC_SHA2_512_256",
 };
 
-enum_names trans_type_integ_names =
-{ IKEv2_AUTH_NONE, IKEv2_AUTH_HMAC_SHA2_512_256, trans_type_integ_name, NULL };
+enum_names ikev2_trans_type_integ_names =
+{ IKEv2_AUTH_NONE, IKEv2_AUTH_HMAC_SHA2_512_256, ikev2_trans_type_integ_name, NULL };
 
 /* Transform-type Integrity */
-static const char *const trans_type_esn_name[] = {
-	"esn-disabled",
-	"esn-enabled",
+static const char *const ikev2_trans_type_esn_name[] = {
+	"ESN_DISABLED",
+	"ESN_ENABLED",
 };
 
-enum_names trans_type_esn_names =
-{ IKEv2_ESN_DISABLED, IKEv2_ESN_ENABLED, trans_type_esn_name, NULL };
+enum_names ikev2_trans_type_esn_names =
+{ IKEv2_ESN_DISABLED, IKEv2_ESN_ENABLED, ikev2_trans_type_esn_name, NULL };
 
 /* Transform Type */
-static const char *const trans_type_name[] = {
-	"trans-type-encr",
-	"trans-type-prf",
-	"trans-type-integ",
-	"trans-type-dh",
-	"trans-type-esn"
+static const char *const ikev2_trans_type_name[] = {
+	"TRANS_TYPE_ENCR",
+	"TRANS_TYPE_PRF",
+	"TRANS_TYPE_INTEG",
+	"TRANS_TYPE_DH",
+	"TRANS_TYPE_ESN"
 };
 
-enum_names trans_type_names =
-{ IKEv2_TRANS_TYPE_ENCR, IKEv2_TRANS_TYPE_ESN, trans_type_name, NULL };
+enum_names ikev2_trans_type_names =
+{ IKEv2_TRANS_TYPE_ENCR, IKEv2_TRANS_TYPE_ESN, ikev2_trans_type_name, NULL };
 
 /* for each IKEv2 transform attribute,which enum_names describes its values? */
 
 enum_names *ikev2_transid_val_descs[] = {
 	NULL,
-	&trans_type_encr_names,         /* 1 */
-	&trans_type_prf_names,          /* 2 */
-	&trans_type_integ_names,        /* 3 */
-	&oakley_group_names,            /* 4 */
-	&trans_type_esn_names,          /* 5 */
+	&ikev2_trans_type_encr_names,         /* 1 */
+	&ikev2_trans_type_prf_names,          /* 2 */
+	&ikev2_trans_type_integ_names,        /* 3 */
+	&oakley_group_names,                  /* 4 */
+	&ikev2_trans_type_esn_names,          /* 5 */
 };
 
 const unsigned int ikev2_transid_val_descs_size = elemsof(
@@ -1600,7 +1620,7 @@ const char *strip_prefix(const char *s, const char *prefix)
 {
 	size_t pl = strlen(prefix);
 
-	return strncmp(s, prefix, pl) == 0 ? s + pl : s;
+	return (s != NULL && strncmp(s, prefix, pl) == 0) ? s + pl : s;
 }
 
 /* find the value for a name in an enum_names table.  If not found, returns -1

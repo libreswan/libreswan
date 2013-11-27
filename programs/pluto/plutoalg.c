@@ -87,7 +87,7 @@ out:
 	return ret;
 }
 /**
- *      Search ikev2_oakley_group_names for a match, eg:
+ *      Search oakley_group_names for a match, eg:
  *              "modp1024" <=> "OAKLEY_GROUP_MODP1024"
  * @param str String MODP Name (eg: MODP)
  * @param len Length of Hash (eg: 1024,1536,2048)
