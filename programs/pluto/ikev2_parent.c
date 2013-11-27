@@ -2659,7 +2659,7 @@ static void v2_delete_my_family(struct state *st)
 	 */
 	struct state *cst;
 
-	passert(st->st_clonedfrom != SOS_NOBODY);	/* we had better be a parent */
+	passert(st->st_clonedfrom == SOS_NOBODY);	/* we had better be a parent */
 
 	/* find first in chain */
 	for (cst = st; cst->st_hashchain_prev != NULL; )
