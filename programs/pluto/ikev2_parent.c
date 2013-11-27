@@ -3011,7 +3011,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					&p->payload.v2delete;
 
 				switch (v2del->isad_protoid) {
-				case PROTO_ISAKMP:
+				case PROTO_ISAKMP: /* Parent SA */
 				{
 					/* My understanding is that delete payload for IKE SA
 					 * should be the only payload in the informational.
@@ -3021,8 +3021,8 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				}
 				break;
 
-				case PROTO_IPSEC_AH:
-				case PROTO_IPSEC_ESP:
+				case PROTO_IPSEC_AH: /* Child SAs */
+				case PROTO_IPSEC_ESP: /* Child SAs */
 				{
 					/* pb_stream del_pbs; */
 					struct ikev2_delete;
@@ -3097,7 +3097,10 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					return STF_IGNORE;
 				}
 
-				/* this will break from for loop*/
+				/*
+				 * If we just deleted the Parent SA, the Child SAs are being torn down as well,
+				 * so no point checking the other delete SA payloads here
+				 */
 				if (v2del->isad_protoid ==
 				    PROTO_ISAKMP)
 					break;
