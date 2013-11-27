@@ -631,7 +631,7 @@ static stf_status informational(struct msg_digest *md)
 		 * and that the handler is expected to treat them suspiciously.
 		 */
 		DBG(DBG_CONTROL, DBG_log("processing informational %s (%d)",
-					 enum_name(&ipsec_notification_names,
+					 enum_name(&ikev1_notify_names,
 						   n->isan_type),
 					 n->isan_type));
 
@@ -987,7 +987,7 @@ static stf_status informational(struct msg_digest *md)
 				loglog(RC_LOG_SERIOUS,
 				       "received unhandled informational notification payload %d: '%s'",
 				       n->isan_type,
-				       enum_name(&notification_names,
+				       enum_name(&ikev1_notify_names,
 						 n->isan_type));
 				return STF_FATAL;
 			}
@@ -2189,13 +2189,13 @@ void process_packet_tail(struct msg_digest **mdp)
 					loglog(RC_LOG_SERIOUS,
 					       "ignoring informational payload %s, no corresponding state",
 					       enum_show(&
-							 ipsec_notification_names,
+							 ikev1_notify_names,
 							 p->payload.
 							 notification.isan_type));
 				} else {
 					loglog(RC_LOG_SERIOUS,
 					       "ignoring informational payload %s, msgid=%08x, length=%d",
-					       enum_show(&ipsec_notification_names,
+					       enum_show(&ikev1_notify_names,
 							 p->payload.
 							 notification.isan_type),
 					       st->st_msgid,
@@ -2800,7 +2800,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 */
 		whack_log(RC_NOTIFICATION + md->note,
 			  "%s: %s", enum_name(&state_names, st->st_state),
-			  enum_name(&ipsec_notification_names, md->note));
+			  enum_name(&ikev1_notify_names, md->note));
 
 		if (md->note > 0)
 			SEND_NOTIFICATION(md->note);
@@ -2808,7 +2808,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s failed: %s",
 			    enum_name(&state_names, from_state),
-			    enum_name(&ipsec_notification_names, md->note)));
+			    enum_name(&ikev1_notify_names, md->note)));
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
 		    st->st_connection->nmconfigured) {

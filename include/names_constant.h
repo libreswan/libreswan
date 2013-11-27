@@ -68,8 +68,7 @@ extern enum_names oakley_enc_names;
 extern enum_names oakley_hash_names;
 extern enum_names oakley_auth_names;
 extern enum_names oakley_group_names;
-extern enum_names notification_names;
-extern enum_names ipsec_notification_names;
+extern enum_names ikev1_notify_names;
 
 /* IKEv2 */
 extern enum_names ikev2_auth_names;

@@ -496,8 +496,7 @@ static field_desc isan_fields[] = {
 	{ ft_enum, 32 / BITS_PER_BYTE, "DOI", &doi_names },
 	{ ft_nat, 8 / BITS_PER_BYTE, "protocol ID", NULL }, /* ??? really enum: ISAKMP, IPSEC, ESP, ... */
 	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
-	{ ft_enum, 16 / BITS_PER_BYTE, "Notify Message Type",
-	  &ipsec_notification_names },
+	{ ft_enum, 16 / BITS_PER_BYTE, "Notify Message Type", &ikev1_notify_names },
 	{ ft_end, 0, NULL, NULL }
 };
 

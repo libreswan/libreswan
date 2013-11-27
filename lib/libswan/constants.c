@@ -1048,11 +1048,10 @@ static enum_names oakley_group_type_names =
 { OAKLEY_GROUP_TYPE_MODP, OAKLEY_GROUP_TYPE_EC2N, oakley_group_type_name,
   NULL };
 
-/* Notify messages -- error types */
+/* Notify message type -- RFC2408 3.14.1 */
 
-static const char *const notification_name[] = {
-	"INVALID_PAYLOAD_TYPE",
-
+static const char *const ikev1_notify_name[] = {
+	"INVALID_PAYLOAD_TYPE", /* 1 */
 	"DOI_NOT_SUPPORTED",
 	"SITUATION_NOT_SUPPORTED",
 	"INVALID_COOKIE",
@@ -1084,74 +1083,76 @@ static const char *const notification_name[] = {
 	"UNEQUAL_PAYLOAD_LENGTHS",
 };
 
-static const char *const notification_status_name[] = {
-	"CONNECTED",
+static const char *const ikev1_notify_status_name[] = {
+	"CONNECTED", /* 16384 */
 };
 
-static const char *const ipsec_notification_name[] = {
-	"IPSEC_RESPONDER_LIFETIME",
+static const char *const ikev1_ipsec_notify_name[] = {
+	"IPSEC_RESPONDER_LIFETIME", /* 24576 */
 	"IPSEC_REPLAY_STATUS",
 	"IPSEC_INITIAL_CONTACT",
 };
 
-static const char *const notification_dpd_name[] = {
-	"R_U_THERE",
-	"R_U_THERE_ACK",
-};
-
-static const char *const notification_cisco_chatter_name[] = {
+static const char *const ikev1_notify_cisco_chatter_name[] = {
 	"ISAKMP_N_CISCO_HELLO", /* 30000 */
 	"ISAKMP_N_CISCO_WWTEBR",
 	"ISAKMP_N_CISCO_SHUT_UP",
 };
 
-static const char *const notification_ios_alives_name[] = {
+static const char *const ikev1_notify_ios_alives_name[] = {
 	"ISAKMP_N_IOS_KEEP_ALIVE_REQ", /* 32768*/
 	"ISAKMP_N_IOS_KEEP_ALIVE_ACK",
 };
 
-static const char *const notification_juniper_name[] = {
+static const char *const ikev1_notify_dpd_name[] = {
+	"R_U_THERE", /* 36136 */
+	"R_U_THERE_ACK",
+};
+
+static const char *const ikev1_notify_juniper_name[] = {
 	/* Next Hop Tunnel Binding */
 	"NETSCREEN_NHTB_INFORM", /* 40001 */
 };
 
-static const char *const notification_cisco_more_name[] = {
+static const char *const ikev1_notify_cisco_more_name[] = {
 	"ISAKMP_N_CISCO_LOAD_BALANCE", /* 40501 */
 	"ISAKMP_N_CISCO_UNKNOWN_40502",
 	"ISAKMP_N_CISCO_PRESHARED_KEY_HASH",
 };
 
-static enum_names notification_juniper_names =
-{ NETSCREEN_NHTB_INFORM, NETSCREEN_NHTB_INFORM,
-  notification_juniper_name, NULL };
-
-static enum_names notification_cisco_more_names =
+static enum_names ikev1_notify_cisco_more_names =
 {  ISAKMP_N_CISCO_LOAD_BALANCE, ISAKMP_N_CISCO_PRESHARED_KEY_HASH,
-   notification_cisco_more_name, &notification_juniper_names };
+   ikev1_notify_cisco_more_name, NULL };
 
-static enum_names notification_ios_alives_names =
-{ ISAKMP_N_IOS_KEEP_ALIVE_REQ, ISAKMP_N_IOS_KEEP_ALIVE_ACK,
-  notification_ios_alives_name, &notification_cisco_more_names };
+static enum_names ikev1_notify_juniper_names =
+{ NETSCREEN_NHTB_INFORM, NETSCREEN_NHTB_INFORM,
+  ikev1_notify_juniper_name, &ikev1_notify_cisco_more_names };
 
-static enum_names notification_cisco_chatter_names =
-{ ISAKMP_N_CISCO_HELLO, ISAKMP_N_CISCO_SHUT_UP,
-  notification_cisco_chatter_name, &notification_ios_alives_names };
-
-static enum_names notification_dpd_names =
+static enum_names ikev1_notify_dpd_names =
 { R_U_THERE, R_U_THERE_ACK,
-  notification_dpd_name, &notification_cisco_chatter_names };
+  ikev1_notify_dpd_name, &ikev1_notify_juniper_names };
 
-enum_names notification_names =
-{ INVALID_PAYLOAD_TYPE, UNEQUAL_PAYLOAD_LENGTHS,
-  notification_name, &notification_dpd_names };
+static enum_names ikev1_notify_ios_alives_names =
+{ ISAKMP_N_IOS_KEEP_ALIVE_REQ, ISAKMP_N_IOS_KEEP_ALIVE_ACK,
+  ikev1_notify_ios_alives_name, &ikev1_notify_dpd_names };
 
-static enum_names notification_status_names =
-{ CONNECTED, CONNECTED,
-  notification_status_name, &notification_names };
+static enum_names ikev1_notify_cisco_chatter_names =
+{ ISAKMP_N_CISCO_HELLO, ISAKMP_N_CISCO_SHUT_UP,
+  ikev1_notify_cisco_chatter_name, &ikev1_notify_ios_alives_names };
 
-enum_names ipsec_notification_names =
+static enum_names ikev1_ipsec_notify_names =
 { IPSEC_RESPONDER_LIFETIME, IPSEC_INITIAL_CONTACT,
-  ipsec_notification_name, &notification_status_names };
+  ikev1_ipsec_notify_name, &ikev1_notify_cisco_chatter_names };
+
+static enum_names ikev1_notify_status_names =
+{ CONNECTED, CONNECTED,
+  ikev1_notify_status_name, &ikev1_ipsec_notify_names };
+
+enum_names ikev1_notify_names =
+{ INVALID_PAYLOAD_TYPE, UNEQUAL_PAYLOAD_LENGTHS,
+  ikev1_notify_name, &ikev1_notify_status_names };
+
+
 
 /* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
 static const char *const ikev2_notify_name_16384[] = {

@@ -154,12 +154,12 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 			}
 		}
 		libreswan_log(
-			"Oakley Transform [%s (%d), %s, %s] refused due to %s",
+			"Oakley Transform [%s (%d), %s, %s] refused %s",
 			enum_name(&oakley_enc_names, ealg), key_len,
 			enum_name(&oakley_hash_names, aalg),
 			enum_name(&oakley_group_names,
 				  group),
-			ealg_insecure ? "insecure key_len and enc. alg. not listed in \"ike\" string" : "strict flag"
+			ealg_insecure ? "due to insecure key_len and enc. alg. not listed in \"ike\" string" : ""
 			);
 		return FALSE;
 	}
@@ -206,6 +206,12 @@ int ike_alg_add(struct ike_alg* a)
 		ugh = "Invalid algo_type is larger then IKE_ALG_MAX";
 		return_on(ret, -EINVAL);
 	}
+#if 0
+	if (enum_name(&trans_type_encr_names, a->algo_v2id) == NULL) {
+		ugh = "Invalid algo_v2id";
+		return_on(ret, -EINVAL);
+	}
+#endif
 	if (ike_alg_find(a->algo_type, a->algo_id, 0)) {
 		ugh = "Algorithm type already exists";
 		return_on(ret, -EEXIST);
@@ -289,7 +295,7 @@ int ike_alg_register_enc(struct encrypt_desc *enc_desc)
 #endif
 
 	/* XXX struct algo_aes_ccm_8 up to algo_aes_gcm_16, where
-	 * "commin.algo_id" is not defined need this officename fallback.
+	 * "common.algo_id" is not defined need this officename fallback.
 	 * These are defined in kernel_netlink.c and need to move to
 	 * the proper place - even if klips does not support these
 	 */

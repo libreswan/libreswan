@@ -237,8 +237,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 			loglog(RC_LOG_SERIOUS,
 			       "more than %d payloads in message; ignored",
 			       PAYLIMIT);
-			SEND_NOTIFICATION(v2N_INVALID_SYNTAX);
-			return STF_FAIL;
+			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 
 		if (sd == NULL) {
@@ -1027,7 +1026,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		whack_log(RC_NOTIFICATION + md->note,
 			  "%s: %s",
 			  from_state_name,
-			  enum_name(&ipsec_notification_names, md->note));
+			  enum_name(&ikev2_notify_names, md->note));
 
 		if (md->note > 0) {
 			/* only send a notify is this packet was a question, not if it was an answer */
@@ -1038,7 +1037,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s failed: %s",
 			    from_state_name,
-			    (md->note) ? enum_name(&ipsec_notification_names,
+			    (md->note) ? enum_name(&ikev2_notify_names,
 						   md->note) :
 			    "<no reason given>" ));
 	}

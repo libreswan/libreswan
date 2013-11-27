@@ -2545,7 +2545,7 @@ static void send_notification(struct state *sndst, u_int16_t type,
 
 	libreswan_log("sending %snotification %s to %s:%u",
 		encst ? "encrypted " : "",
-		enum_name(&ipsec_notification_names, type),
+		enum_name(&ikev1_notify_names, type),
 		ip_str(&sndst->st_remoteaddr),
 		sndst->st_remoteport);
 
