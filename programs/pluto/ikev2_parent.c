@@ -306,8 +306,6 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	}
 	reset_cur_state();
 	reset_globals();
-
-	passert(GLOBALS_ARE_RESET());
 }
 
 /*
@@ -729,18 +727,31 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 */
 	{
 		struct ikev2_ke *ke;
+		char fromname[ADDRTOT_BUF];
+		addrtot(&md->sender, 0, fromname, ADDRTOT_BUF);
+
+		if (!md->chain[ISAKMP_NEXT_v2KE]) {
+			/* is this a notify? If so, log it */
+			if(md->chain[ISAKMP_NEXT_v2N]) {
+				libreswan_log("Received Notify(%d): %s",
+					md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type,
+					enum_name(&ikev2_notify_names,
+						md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type));
+			}
+			libreswan_log(
+				"rejecting I1 from %s:%u, no KE payload present",
+				fromname, md->sender_port);
+			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
+		}
 		ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
 
 		st->st_oakley.group = lookup_group(ke->isak_group);
 		if (st->st_oakley.group == NULL) {
-			char fromname[ADDRTOT_BUF];
-
-			addrtot(&md->sender, 0, fromname, ADDRTOT_BUF);
 			libreswan_log(
 				"rejecting I1 from %s:%u, invalid DH group=%u",
 				fromname, md->sender_port,
 				ke->isak_group);
-			return v2N_INVALID_KE_PAYLOAD;
+			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		}
 	}
 
@@ -819,8 +830,6 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 			release_md(ke->md);
 	}
 	reset_globals();
-
-	passert(GLOBALS_ARE_RESET());
 }
 
 static stf_status ikev2_parent_inI1outR1_tail(
@@ -1145,8 +1154,6 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 			release_md(dh->md);
 	}
 	reset_globals();
-
-	passert(GLOBALS_ARE_RESET());
 }
 
 static void ikev2_padup_pre_encrypt(struct msg_digest *md,
@@ -1714,7 +1721,7 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 	/* verify that there is in fact an encrypted payload */
 	if (!md->chain[ISAKMP_NEXT_v2E]) {
 		libreswan_log("R2 state should receive an encrypted payload");
-		reset_globals();
+		reset_globals(); /* XXX suspicious - why was this deemed neccessary? */
 		return STF_FATAL;
 	}
 
@@ -1794,8 +1801,6 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 			release_md(dh->md);
 	}
 	reset_globals();
-
-	passert(GLOBALS_ARE_RESET());
 }
 
 static stf_status ikev2_parent_inI2outR2_tail(
