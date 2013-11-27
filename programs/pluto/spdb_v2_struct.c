@@ -723,18 +723,18 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 			DBG_log("proposal %u %s encr= (policy:%s vs offered:%s)",
 				propnum,
 				encr_matched ? "succeeded" : "failed",
-				enum_showb(&trans_type_encr_names, encrid, esb, sizeof(esb)),
-				enum_show(&trans_type_encr_names,
+				enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
+				enum_show(&ikev2_trans_type_encr_names,
 					  encr_transform));
 			DBG_log("            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "succeeded" : "failed",
-				enum_showb(&trans_type_integ_names, integid, esb, sizeof(esb)),
-				enum_show(&trans_type_integ_names,
+				enum_showb(&ikev2_trans_type_integ_names, integid, esb, sizeof(esb)),
+				enum_show(&ikev2_trans_type_integ_names,
 					  integ_transform));
 			DBG_log("            %s prf=  (policy:%s vs offered:%s)",
 				prf_matched ? "succeeded" : "failed",
-				enum_showb(&trans_type_prf_names, prfid, esb, sizeof(esb)),
-				enum_show(&trans_type_prf_names,
+				enum_showb(&ikev2_trans_type_prf_names, prfid, esb, sizeof(esb)),
+				enum_show(&ikev2_trans_type_prf_names,
 					  prf_transform));
 			DBG_log("            %s dh=   (policy:%s vs offered:%s)",
 				dh_matched ? "succeeded" : "failed",
@@ -1283,20 +1283,20 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 				"proposal %u %s encr= (policy:%s vs offered:%s)",
 				propnum,
 				encr_matched ? "failed" : "     ",
-				enum_name(&trans_type_encr_names, encrid),
-				enum_name(&trans_type_encr_names,
+				enum_name(&ikev2_trans_type_encr_names, encrid),
+				enum_name(&ikev2_trans_type_encr_names,
 					  encr_transform));
 			DBG_log(
 				"            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "failed" : "     ",
-				enum_name(&trans_type_integ_names, integid),
-				enum_name(&trans_type_integ_names,
+				enum_name(&ikev2_trans_type_integ_names, integid),
+				enum_name(&ikev2_trans_type_integ_names,
 					  integ_transform));
 			DBG_log(
 				"            %s esn=  (policy:%s vs offered:%s)",
 				esn_matched ? "failed" : "     ",
-				enum_name(&trans_type_esn_names, esnid),
-				enum_name(&trans_type_esn_names,
+				enum_name(&ikev2_trans_type_esn_names, esnid),
+				enum_name(&ikev2_trans_type_esn_names,
 					  esn_transform));
 		}
 

@@ -754,7 +754,7 @@ static field_desc ikev2trans_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat,  8 / BITS_PER_BYTE, "transform type", &trans_type_names },
+	{ ft_nat,  8 / BITS_PER_BYTE, "transform type", &ikev2_trans_type_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "transform ID", NULL },
 	{ ft_end,  0, NULL, NULL }
@@ -815,7 +815,7 @@ static field_desc ikev2ke_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev2 },
 	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "transform type", &oakley_group_names },
+	{ ft_nat, 16 / BITS_PER_BYTE, "DH group", &oakley_group_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
 };

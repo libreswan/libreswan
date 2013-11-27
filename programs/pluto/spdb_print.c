@@ -149,7 +149,7 @@ void print_sa_v2_trans(struct db_v2_trans *tr)
 
 	printf("      type: %u(%s) value: %u(%s) attr_cnt: %u\n",
 	       tr->transform_type,
-	       enum_name(&trans_type_names, tr->transform_type),
+	       enum_name(&ikev2_trans_type_names, tr->transform_type),
 	       tr->transid, en ? enum_name(en, tr->transid) : "unknown",
 	       tr->attr_cnt);
 	for (i = 0; i < tr->attr_cnt; i++)

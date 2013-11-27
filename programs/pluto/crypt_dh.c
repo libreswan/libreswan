@@ -1159,8 +1159,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%lu",
-		    enum_name(&trans_type_prf_names, skq->prf_hash),
-		    enum_name(&trans_type_integ_names, skq->integ_hash),
+		    enum_name(&ikev2_trans_type_prf_names, skq->prf_hash),
+		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
 		    (long unsigned)keysize));
 
 	const struct hash_desc *hasher =
