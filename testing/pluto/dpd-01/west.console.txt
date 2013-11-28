@@ -93,19 +93,19 @@ west #
 west #
  sleep 10
 west #
+ # Tunnel should be back up now even without triggering traffic
+west #
+ echo "Tunnel should be up even without trigger traffic"
+Tunnel should be up even without trigger traffic
+west #
+ ipsec eroute
+0          192.1.2.45/32      -> 192.1.2.23/32      => tun0x1003@192.1.2.23
+west #
  ping -q -c 8 -n 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 8 packets transmitted, 8 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- # Tunnel should be back up now
-west #
- echo "Tunnel should be up"
-Tunnel should be up
-west #
- ipsec eroute
-16         192.1.2.45/32      -> 192.1.2.23/32      => tun0x1003@192.1.2.23
 west #
  echo end
 end
