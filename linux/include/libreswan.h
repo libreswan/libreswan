@@ -19,12 +19,14 @@
 
 /* you'd think this should be builtin to compiler... */
 #ifndef TRUE
-#define TRUE 1
+# define TRUE 1
+# ifndef __KERNEL__
 typedef int bool;
+# endif
 #endif
 
 #ifndef FALSE
-#define FALSE 0
+# define FALSE 0
 #endif
 
 #include <stddef.h>
