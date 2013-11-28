@@ -2655,38 +2655,38 @@ bool ship_v2N(unsigned int np, u_int8_t critical,
  *
  *
  */
-static void v2_delete_my_family(struct state *st)
+static void v2_delete_my_family(struct state *pst)
 {
 	/* We are a parent: delete our children and
 	 * then prepare to delete ourself.
 	 * Our children will be on the same hash chain
 	 * because we share IKE SPIs.
 	 */
-	struct state *cst;
+	struct state *st;
 
-	passert(st->st_clonedfrom == SOS_NOBODY);	/* we had better be a parent */
+	passert(pst->st_clonedfrom == SOS_NOBODY);	/* we had better be a parent */
 
 	/* find first in chain */
-	for (cst = st; cst->st_hashchain_prev != NULL; )
-		cst = cst->st_hashchain_prev;
+	for (st = pst; st->st_hashchain_prev != NULL; )
+		st = st->st_hashchain_prev;
 
 	/* delete each of our children */
-	while (cst != NULL) {
-		/* since we might be deleting cst, we need to
+	while (st != NULL) {
+		/* since we might be deleting st, we need to
 		 * grab onto its successor first
 		 */
-		struct state *next_st = cst->st_hashchain_next;
+		struct state *next_st = st->st_hashchain_next;
 
-		if (cst->st_clonedfrom == st->st_serialno) {
-			change_state(cst, STATE_CHILDSA_DEL);
-			delete_state(cst);
+		if (st->st_clonedfrom == pst->st_serialno) {
+			change_state(st, STATE_CHILDSA_DEL);
+			delete_state(st);
 		}
-		cst = next_st;
+		st = next_st;
 	}
 
 	/* delete self */
-	change_state(st, STATE_IKESA_DEL);
-	delete_state(st);
+	change_state(pst, STATE_IKESA_DEL);
+	delete_state(pst);
 }
 
 stf_status process_informational_ikev2(struct msg_digest *md)
