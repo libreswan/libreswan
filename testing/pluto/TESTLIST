@@ -96,6 +96,7 @@ ctltest	pluto-dontreky-expiry-01 good
 
 # RFC 3706 DPD test
 kvmplutotest	dpd-01	good
+kvmplutotest	dpd-01-netkey	good
 kvmplutotest	dpd-02	good
 kvmplutotest	dpd-02-reverse	good
 kvmplutotest	dpd-03	good
