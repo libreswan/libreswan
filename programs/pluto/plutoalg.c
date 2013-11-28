@@ -177,7 +177,7 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 			raw_alg_info_ike_add(
 				(struct alg_info_ike *)alg_info,
 				ealg_id, ek_bits,
-				OAKLEY_SHA, ak_bits,
+				OAKLEY_SHA1, ak_bits,
 				modp_id);
 		}
 	}

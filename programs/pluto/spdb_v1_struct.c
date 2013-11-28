@@ -1114,7 +1114,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 /* #else */
 				switch (val) {
 				case OAKLEY_MD5:
-				case OAKLEY_SHA:
+				case OAKLEY_SHA1:
 					ta.prf_hash = val;
 					ta.prf_hasher = crypto_get_hasher(val);
 					break;

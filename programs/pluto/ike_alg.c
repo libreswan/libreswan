@@ -210,12 +210,16 @@ int ike_alg_add(struct ike_alg* a)
 		ugh = "Invalid algo_type is larger then IKE_ALG_MAX";
 		return_on(ret, -EINVAL);
 	}
-#if 0
-	if (enum_name(&trans_type_encr_names, a->algo_v2id) == NULL) {
+
+	/* Don't add anything we do not know the name for */
+	if (enum_name(&ikev2_trans_type_encr_names, a->algo_v2id) == NULL) {
+		plog("ike_alg_add: ERROR: alg=%d not found in "
+		     "constants.c:trans_type_encr_names  ",
+		     a->algo_v2id);
 		ugh = "Invalid algo_v2id";
 		return_on(ret, -EINVAL);
 	}
-#endif
+
 	if (ike_alg_find(a->algo_type, a->algo_id, 0)) {
 		ugh = "Algorithm type already exists";
 		return_on(ret, -EEXIST);
@@ -264,11 +268,13 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 
 	alg_name = enum_name(&oakley_hash_names, hash_desc->common.algo_id);
 
+	/* Don't add anything we do not know the name for */
 	if (!alg_name) {
-		plog("ike_alg_register_hash(): WARNING: hash alg=%d not found in "
+		plog("ike_alg_register_hash(): ERROR: hash alg=%d not found in "
 		     "constants.c:oakley_hash_names  ",
 		     hash_desc->common.algo_id);
-		alg_name = "<NULL>";
+		     alg_name = "<NULL>";
+		     return_on(ret, -EINVAL);
 	}
 
 	if (hash_desc->common.name == NULL)
@@ -290,14 +296,6 @@ int ike_alg_register_enc(struct encrypt_desc *enc_desc)
 	const char *alg_name;
 	int ret = 0;
 
-#if OAKLEY_ENCRYPT_MAX < 255
-	if (enc_desc->common.algo_id > OAKLEY_ENCRYPT_MAX) {
-		plog("ike_alg_register_enc(): enc alg=%d < max=%d\n",
-		     enc_desc->common.algo_id, OAKLEY_ENCRYPT_MAX);
-		return_on(ret, -EINVAL);
-	}
-#endif
-
 	/* XXX struct algo_aes_ccm_8 up to algo_aes_gcm_16, where
 	 * "common.algo_id" is not defined need this officename fallback.
 	 * These are defined in kernel_netlink.c and need to move to
@@ -307,15 +305,14 @@ int ike_alg_register_enc(struct encrypt_desc *enc_desc)
 	if (!alg_name) {
 		alg_name = enc_desc->common.officname;
 		if (!alg_name) {
-			plog("ike_alg_register_enc(): WARNING: enc alg=%d not found in "
+			plog("ike_alg_register_enc(): ERROR: enc alg=%d not found in "
 			     "constants.c:oakley_enc_names  ",
 			     enc_desc->common.algo_id);
 			alg_name = "<NULL>";
+			return_on(ret, -EINVAL);
 		}
 	}
-#if OAKLEY_ENCRYPT_MAX < 255
 return_out:
-#endif
 
 	if (ret == 0)
 		ret = ike_alg_add((struct ike_alg *)enc_desc);

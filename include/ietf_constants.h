@@ -19,7 +19,6 @@
  * for more details.
  *
  */
-
 #include <sys/types.h>
 
 /* Group parameters from draft-ietf-ike-01.txt section 6 */
@@ -921,10 +920,9 @@ typedef u_int16_t ipsec_auth_t;
  */
 
 typedef u_int16_t oakley_hash_t;
-
+/* 0 reserved */
 #define OAKLEY_MD5 1
 #define OAKLEY_SHA1 2
-#define OAKLEY_SHA OAKLEY_SHA1
 #define OAKLEY_TIGER 3
 #define OAKLEY_SHA2_256 4
 #define OAKLEY_SHA2_384 5

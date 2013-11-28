@@ -437,11 +437,14 @@ static const char *const ipcomp_transform_name[] = {
 	"IPCOMP_OUI",
 	"IPCOMP_DEFLAT",
 	"IPCOMP_LZS",
-	"IPCOMP_V42BIS",
+	"IPCOMP_LZJH",
+	/* 5-47 Reserved for approved algorithms */
+	/* 48-63 Reserved for private use */
+	/* 64-255 Unassigned */
 };
 
 enum_names ipcomp_transformid_names =
-{ IPCOMP_OUI, IPCOMP_V42BIS, ipcomp_transform_name, NULL };
+{ IPCOMP_OUI, IPCOMP_LZJH, ipcomp_transform_name, NULL };
 
 /* Identification type values */
 
@@ -457,10 +460,11 @@ static const char *const ident_name[] = {
 	"ID_DER_ASN1_DN",
 	"ID_DER_ASN1_GN",
 	"ID_KEY_ID",
+	"ID_LIST", /* RFC 3554 */
 };
 
 enum_names ident_names =
-{ ID_IPV4_ADDR, ID_KEY_ID, ident_name, NULL };
+{ ID_IPV4_ADDR, ID_LIST, ident_name, NULL };
 
 /* Certificate type values */
 
@@ -874,16 +878,21 @@ enum_names oakley_lifetime_names =
 static enum_names oakley_prf_names =
 { 1, 0, NULL, NULL };
 
-/* Oakley Encryption Algorithm attribute */
+/* IKEv1 Oakley Encryption Algorithm attribute
+ * www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-4
+ */
 
 static const char *const oakley_enc_name[] = {
-	"OAKLEY_DES_CBC",
+	"OAKLEY_DES_CBC", /* obsoleted */
 	"OAKLEY_IDEA_CBC",
 	"OAKLEY_BLOWFISH_CBC", /* obsoleted */
 	"OAKLEY_RC5_R16_B64_CBC",
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
 	"OAKLEY_AES_CBC",
+	"OAKLEY_CAMELLIA_CBC", /* 8 */
+	/* 9-65000 	Unassigned */
+	/* 65001-65535 	Reserved for private use */
 };
 
 static const char *const oakley_enc_name_draft_aes_cbc_02[] = {
@@ -895,7 +904,7 @@ static const char *const oakley_enc_name_draft_aes_cbc_02[] = {
 };
 
 static const char *const oakley_enc_name_ssh[] = {
-	"OAKLEY_TWOFISH_CBC_SSH",
+	"OAKLEY_TWOFISH_CBC_SSH", /* 65289 */
 };
 
 static enum_names oakley_enc_names_ssh =
@@ -909,25 +918,22 @@ enum_names oakley_enc_names =
   &oakley_enc_names_draft_aes_cbc_02 };
 
 /* Oakley Hash Algorithm attribute */
-
-static const char *const oakley_hash_name2[] = {
-	"OAKLEY_SHA",
-};
-
-static enum_names oakley_hash_names2 =
-{ OAKLEY_SHA, OAKLEY_SHA, oakley_hash_name2, NULL };
+/* http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6 */
 
 static const char *const oakley_hash_name[] = {
+	/* 0 - RESERVED */
 	"OAKLEY_MD5",
 	"OAKLEY_SHA1",
 	"OAKLEY_TIGER",
-	"OAKLEY_SHA2_256",
-	"OAKLEY_SHA2_384",
-	"OAKLEY_SHA2_512",
+	"OAKLEY_SHA2_256", /* RFC 4878 */
+	"OAKLEY_SHA2_384", /* RFC 4878 */
+	"OAKLEY_SHA2_512", /* RFC 4878 */
+	/* 7-65000 	Unassigned */
+	/* 65001-65535 	Reserved for private use */
 };
 
 enum_names oakley_hash_names =
-{ OAKLEY_MD5, OAKLEY_SHA2_512, oakley_hash_name, &oakley_hash_names2 };
+{ OAKLEY_MD5, OAKLEY_SHA2_512, oakley_hash_name, NULL };
 
 /* Oakley Authentication Method attribute */
 
