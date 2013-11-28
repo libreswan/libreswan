@@ -18,16 +18,6 @@
 #ifndef _FREESWAN_PFKEY_DEBUG_H
 #define _FREESWAN_PFKEY_DEBUG_H
 
-#ifdef __KERNEL__
-
-/* note, kernel version ignores pfkey levels */
-# define DEBUGGING(level, args ...) \
-	KLIPS_PRINT(debug_pfkey, "klips_debug:" args)
-
-# define ERROR(args ...) printk(KERN_ERR "klips:" args)
-
-#else
-
 /*
  * Debugging levels for pfkey_lib_debug
  */
@@ -39,6 +29,16 @@
 #define PF_KEY_DEBUG_PARSE_MAX    15
 
 extern unsigned int pfkey_lib_debug;  /* bits selecting what to report */
+
+#ifdef __KERNEL__
+
+/* note, kernel version ignores pfkey levels */
+# define DEBUGGING(level, args ...) \
+	KLIPS_PRINT(debug_pfkey, "klips_debug:" args)
+
+# define ERROR(args ...) printk(KERN_ERR "klips:" args)
+
+#else
 
 extern int (*pfkey_debug_func)(const char *message, ...) PRINTF_LIKE(1);
 extern int (*pfkey_error_func)(const char *message, ...) PRINTF_LIKE(1);
