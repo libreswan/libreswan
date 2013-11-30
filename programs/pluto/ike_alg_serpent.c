@@ -45,16 +45,20 @@ static void do_serpent(u_int8_t *buf, size_t buf_size, u_int8_t *key,
 
 static struct encrypt_desc encrypt_desc_serpent =
 {
-	common:{ officname: "serpent",
-		 algo_type:      IKE_ALG_ENCRYPT,
-		 algo_id:        OAKLEY_SERPENT_CBC,
-		 algo_next:      NULL, },
-	enc_ctxsize:    sizeof(struct serpent_context),
-	enc_blocksize:  SERPENT_CBC_BLOCK_SIZE,
-	keyminlen:      SERPENT_KEY_MIN_LEN,
-	keydeflen:      SERPENT_KEY_DEF_LEN,
-	keymaxlen:      SERPENT_KEY_MAX_LEN,
-	do_crypt:       do_serpent,
+	.common = {
+		.name = "serpent",
+		.officname = "serpent",
+		.algo_type = IKE_ALG_ENCRYPT,
+		.algo_id = OAKLEY_SERPENT_CBC,
+		.algo_v2id = IKEv2_ENCR_SERPENT_CBC,
+		.algo_next = NULL,
+	},
+	.enc_ctxsize = sizeof(struct serpent_context),
+	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
+	.keyminlen = SERPENT_KEY_MIN_LEN,
+	.keydeflen = SERPENT_KEY_DEF_LEN,
+	.keymaxlen = SERPENT_KEY_MAX_LEN,
+	.do_crypt = do_serpent,
 };
 
 int ike_alg_serpent_init(void)

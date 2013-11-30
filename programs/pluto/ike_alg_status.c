@@ -53,7 +53,7 @@
  */
 void ike_alg_show_status(void)
 {
-	unsigned alg, i;
+	unsigned i;
 	struct ike_alg *algo;
 
 	whack_log(RC_COMMENT, "IKE algorithms supported:");
@@ -61,11 +61,12 @@ void ike_alg_show_status(void)
 
 	IKE_EALG_FOR_EACH(algo) {
 		passert(algo != NULL);
-		alg = algo->algo_id;
 		whack_log(RC_COMMENT,
-			  "algorithm IKE encrypt: id=%d, name=%s, blocksize=%d, keydeflen=%d",
-			  alg,
-			  enum_name(&oakley_enc_names, alg),
+			  "algorithm IKE encrypt: id=%d, name=%s, v2id=%d, name=%s, blocksize=%d, keydeflen=%d",
+			  algo->algo_id,
+			  enum_name(&oakley_enc_names, algo->algo_id), /* should be enum_showb */
+			  algo->algo_v2id,
+			  enum_name(&ikev2_trans_type_encr_names, algo->algo_v2id), /* should be enum_showb */
 			  (int)((struct encrypt_desc *)algo)->enc_blocksize,
 			  ((struct encrypt_desc *)algo)->keydeflen
 			  );

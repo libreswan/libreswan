@@ -46,9 +46,11 @@ static void do_twofish(u_int8_t *buf, size_t buf_size, u_int8_t *key,
 static struct encrypt_desc encrypt_desc_twofish =
 {
 	.common = {
+		.name = "twofish",
 		.officname = "twofish",
 		.algo_type = IKE_ALG_ENCRYPT,
 		.algo_id = OAKLEY_TWOFISH_CBC,
+		.algo_v2id = IKEv2_ENCR_TWOFISH_CBC,
 		.algo_next = NULL,
 	},
 	.enc_ctxsize = sizeof(twofish_context),
@@ -62,8 +64,11 @@ static struct encrypt_desc encrypt_desc_twofish =
 static struct encrypt_desc encrypt_desc_twofish_ssh =
 {
 	.common = {
+		.name = "twofish_ssh", /* We don't know if this is right */
+		.officname = "twofish_ssh", /* We don't know if this is right */
 		.algo_type = IKE_ALG_ENCRYPT,
 		.algo_id = OAKLEY_TWOFISH_CBC_SSH,
+		.algo_v2id = IKEv2_ENCR_TWOFISH_CBC_SSH,
 		.algo_next = NULL,
 	},
 	.enc_ctxsize = sizeof(twofish_context),
