@@ -290,12 +290,12 @@ static void do_3des(u_int8_t *buf, size_t buf_len,
  */
 struct hash_desc *crypto_get_hasher(oakley_hash_t alg)
 {
-	return (struct hash_desc *) ike_alg_find(IKE_ALG_HASH, alg);
+	return (struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
 }
 
 struct encrypt_desc *crypto_get_encrypter(int alg)
 {
-	return (struct encrypt_desc *) ike_alg_find(IKE_ALG_ENCRYPT, alg);
+	return (struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
 }
 
 void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,

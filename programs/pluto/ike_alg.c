@@ -173,7 +173,7 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
  *      return ike_algo object by {type, id}
  */
 /* XXX:jjo use keysize */
-struct ike_alg *ike_alg_find(unsigned algo_type, unsigned algo_id)
+struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
 {
 	struct ike_alg *e;
 
@@ -184,7 +184,7 @@ struct ike_alg *ike_alg_find(unsigned algo_type, unsigned algo_id)
 	return e;
 }
 
-struct ike_alg *ike_alg_ikev2_find(unsigned algo_type,
+struct ike_alg *ikev2_alg_find(unsigned algo_type,
 				   enum ikev2_trans_type_encr algo_v2id)
 {
 	struct ike_alg *e = ike_alg_base[algo_type];
@@ -205,8 +205,8 @@ void ike_alg_add(struct ike_alg* a)
 	passert(a->algo_id != 0 || a->algo_v2id != 0);	/* must be useful for v1 or v2 */
 
 	/* must not duplicate what has already been added */
-	passert(a->algo_id == 0 || ike_alg_find(a->algo_type, a->algo_id) == NULL);
-	passert(a->algo_v2id == 0 || ike_alg_ikev2_find(a->algo_type, a->algo_v2id) == NULL);
+	passert(a->algo_id == 0 || ikev1_alg_find(a->algo_type, a->algo_id) == NULL);
+	passert(a->algo_v2id == 0 || ikev2_alg_find(a->algo_type, a->algo_v2id) == NULL);
 
 	a->algo_next = ike_alg_base[a->algo_type];
 	ike_alg_base[a->algo_type] = a;
