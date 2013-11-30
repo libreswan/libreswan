@@ -84,7 +84,7 @@ int ike_alg_twofish_init(void)
 	int ret;
 
 	if (ike_alg_register_enc(&encrypt_desc_twofish_ssh) < 0)
-		plog(
+		libreswan_log(
 			"ike_alg_twofish_init(): Experimental OAKLEY_TWOFISH_CBC_SSH activation failed");
 
 

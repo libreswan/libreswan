@@ -733,7 +733,7 @@ static bool verify_x509acert(x509acert_t *ac, bool strict)
 	ugh = check_ac_validity(ac);
 
 	if (ugh != NULL) {
-		plog("%s", ugh);
+		libreswan_log("%s", ugh);
 		return FALSE;
 	}
 	DBG(DBG_CONTROL,
@@ -746,7 +746,7 @@ static bool verify_x509acert(x509acert_t *ac, bool strict)
 	unlock_authcert_list("verify_x509acert");
 
 	if (aacert == NULL) {
-		plog("issuer aacert not found");
+		libreswan_log("issuer aacert not found");
 		return FALSE;
 	}
 	DBG(DBG_CONTROL,
@@ -755,7 +755,7 @@ static bool verify_x509acert(x509acert_t *ac, bool strict)
 
 	if (!check_signature(ac->certificateInfo, ac->signature,
 			     ac->algorithm, aacert)) {
-		plog("attribute certificate signature is invalid");
+		libreswan_log("attribute certificate signature is invalid");
 		return FALSE;
 	}
 	DBG(DBG_CONTROL,

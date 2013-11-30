@@ -231,7 +231,7 @@ void store_x509certs(x509cert_t **firstcert, bool strict)
 		if (trust_authcert_candidate(cert, cacerts)) {
 			add_authcert(cert, AUTH_CA);
 		} else {
-			plog("intermediate cacert rejected");
+			libreswan_log("intermediate cacert rejected");
 			free_x509cert(cert);
 		}
 	}

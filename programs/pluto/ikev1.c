@@ -1553,7 +1553,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		pb_stream frag_pbs;
 
 		if (st == NULL) {
-			plog(
+			libreswan_log(
 				"received IKE fragment, but have no state. Ignoring packet.");
 			return;
 		}

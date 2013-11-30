@@ -287,12 +287,12 @@ static bool pfkey_get(pfkey_buf *buf)
 			log_errno((e, "read() failed in pfkey_get()"));
 			return FALSE;
 		} else if ((size_t) len < sizeof(buf->msg)) {
-			plog(
+			libreswan_log(
 				"pfkey_get read truncated PF_KEY message: %d bytes; ignoring message",
 				(int) len);
 		} else if ((size_t) len != buf->msg.sadb_msg_len *
 			   IPSEC_PFKEYv2_ALIGN) {
-			plog(
+			libreswan_log(
 				"pfkey_get read PF_KEY message with length %d that doesn't equal sadb_msg_len %u * %u; ignoring message",
 				(int) len,
 				(unsigned) buf->msg.sadb_msg_len,
@@ -450,7 +450,7 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 						  "%acquire-pfkey");
 
 	if (ugh != NULL)
-		plog("K_SADB_ACQUIRE message from KLIPS malformed: %s", ugh);
+		libreswan_log("K_SADB_ACQUIRE message from KLIPS malformed: %s", ugh);
 
 }
 
@@ -463,7 +463,7 @@ static void pfkey_async(pfkey_buf *buf)
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 
 	if (pfkey_msg_parse(&buf->msg, NULL, extensions, EXT_BITS_OUT)) {
-		plog("pfkey_async:"
+		libreswan_log("pfkey_async:"
 		     " unparseable PF_KEY message:"
 		     " %s len=%d, errno=%d, seq=%d, pid=%d; message ignored",
 		     sparse_val_show(pfkey_type_names, buf->msg.sadb_msg_type),
@@ -764,7 +764,7 @@ static void pfkey_register_proto(unsigned int sadb_register,
 			      satypename, NULL, extensions) &&
 	      finish_pfkey_msg(extensions, satypename, "", &pfb))) {
 		/* ??? should this be loglog */
-		plog("no kernel support for %s", satypename);
+		libreswan_log("no kernel support for %s", satypename);
 	} else {
 		kernel_ops->pfkey_register_response(&pfb.msg);
 		DBG(DBG_KERNEL,
@@ -1114,7 +1114,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 
 		error = pfkey_msg_parse(&pfb.msg, NULL, replies, EXT_BITS_IN);
 		if (error)
-			plog("success on unparsable message - cannot happen");
+			libreswan_log("success on unparsable message - cannot happen");
 
 #ifdef KLIPS_MAST
 		if (replies[K_SADB_X_EXT_SAREF]) {

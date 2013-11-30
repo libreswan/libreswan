@@ -108,7 +108,7 @@ void init_nat_traversal(bool activate, unsigned int keep_alive_period,
 	nat_kap =
 		keep_alive_period ? keep_alive_period :
 		DEFAULT_KEEP_ALIVE_PERIOD;
-	plog("   NAT-Traversal support %s%s",
+	libreswan_log("   NAT-Traversal support %s%s",
 	     activate ? " [enabled]" : " [disabled]",
 	     activate & !spf ? " [Port Floating disabled]" : "");
 
