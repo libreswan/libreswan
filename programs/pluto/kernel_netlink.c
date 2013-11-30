@@ -1072,7 +1072,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 #define  AES_KEY_DEF_LEN       128
 #define  AES_KEY_MAX_LEN       256
 
-struct encrypt_desc algo_aes_ccm_8 =
+static struct encrypt_desc algo_aes_ccm_8 =
 {
 	.common = {
 		.name = "aes_ccm_8",
@@ -1087,7 +1087,7 @@ struct encrypt_desc algo_aes_ccm_8 =
 	.keymaxlen =      AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_ccm_12 =
+static struct encrypt_desc algo_aes_ccm_12 =
 {
 	.common = {
 		.name = "aes_ccm_12",
@@ -1102,7 +1102,7 @@ struct encrypt_desc algo_aes_ccm_12 =
 	.keymaxlen =      AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_ccm_16 =
+static struct encrypt_desc algo_aes_ccm_16 =
 {
 	.common = {
 		.name = "aes_ccm_16",
@@ -1117,7 +1117,7 @@ struct encrypt_desc algo_aes_ccm_16 =
 	.keymaxlen =     AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_gcm_8 =
+static struct encrypt_desc algo_aes_gcm_8 =
 {
 	.common = {
 		.name = "aes_gcm_8",
@@ -1132,7 +1132,7 @@ struct encrypt_desc algo_aes_gcm_8 =
 	.keymaxlen =     AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_gcm_12 =
+static struct encrypt_desc algo_aes_gcm_12 =
 {
 	.common = {
 		.name = "aes_gcm_12",
@@ -1147,7 +1147,7 @@ struct encrypt_desc algo_aes_gcm_12 =
 	.keymaxlen =     AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_gcm_16 =
+static struct encrypt_desc algo_aes_gcm_16 =
 {
 	.common = {
 		.name = "aes_gcm_16",
