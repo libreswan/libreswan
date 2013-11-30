@@ -16,7 +16,7 @@
  *      ML:	Mathieu Lafon <mlafon@arkoon.net>
  *
  * Fixes:
- *      ML:	ike_alg_ok_final() funcion (make F_STRICT consider hash/auth and modp).
+ *      ML:	ike_alg_ok_final() function (make F_STRICT consider hash/auth and modp).
  */
 #include <stdio.h>
 #include <string.h>
