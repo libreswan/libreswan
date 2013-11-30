@@ -164,26 +164,26 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0x79c69047 reqid 16385 mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0x988fa1592343ec94704d88537db2f995f16d1c 64
+	aead rfc4309(ccm(aes)) 0xENCAUTHKEY 64
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x366c7cef reqid 16385 mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0x45e31946389fd47c7f554504bf4c7ee93394e1 64
+	aead rfc4309(ccm(aes)) 0xENCAUTHKEY 64
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid 16385 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir fwd priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16385 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16385 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -223,26 +223,26 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0x79c69047 reqid 16385 mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0x988fa1592343ec94704d88537db2f995f16d1c 64
+	aead rfc4309(ccm(aes)) 0xENCAUTHKEY 64
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x366c7cef reqid 16385 mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0x45e31946389fd47c7f554504bf4c7ee93394e1 64
+	aead rfc4309(ccm(aes)) 0xENCAUTHKEY 64
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid 16385 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir fwd priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16385 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16385 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
