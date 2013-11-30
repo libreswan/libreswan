@@ -20,8 +20,8 @@ static void do_serpent(u_int8_t *buf, size_t buf_size, u_int8_t *key,
 		       size_t key_size, u_int8_t *iv, bool enc)
 {
 	serpent_context serpent_ctx;
-	char iv_bak[SERPENT_CBC_BLOCK_SIZE];
-	char *new_iv = NULL;    /* logic will avoid copy to NULL */
+	u_int8_t iv_bak[SERPENT_CBC_BLOCK_SIZE];
+	u_int8_t *new_iv = buf + buf_size - SERPENT_CBC_BLOCK_SIZE;
 
 	serpent_set_key(&serpent_ctx, key, key_size);
 	/*
@@ -30,15 +30,11 @@ static void do_serpent(u_int8_t *buf, size_t buf_size, u_int8_t *key,
 	 *	crunching
 	 */
 	if (!enc) {
-		memcpy(new_iv = iv_bak,
-		       (char*) buf + buf_size - SERPENT_CBC_BLOCK_SIZE,
-		       SERPENT_CBC_BLOCK_SIZE);
+		memcpy(iv_bak, new_iv, SERPENT_CBC_BLOCK_SIZE);
+		new_iv = iv_bak;
 	}
 
 	serpent_cbc_encrypt(&serpent_ctx, buf, buf, buf_size, iv, enc);
-
-	if (enc)
-		new_iv = (char*) buf + buf_size - SERPENT_CBC_BLOCK_SIZE;
 
 	memcpy(iv, new_iv, SERPENT_CBC_BLOCK_SIZE);
 }
