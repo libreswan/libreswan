@@ -168,7 +168,7 @@ static sparse_names calg_list = {
 	{ 0, sparse_end }
 };
 
-static struct aead_alg aead_algs[] =
+static const struct aead_alg aead_algs[] =
 {
 	{ .id = SADB_X_EALG_AES_CCM_ICV8, .icvlen = 8, .name =
 		  "rfc4309(ccm(aes))" },
@@ -184,7 +184,7 @@ static struct aead_alg aead_algs[] =
 		  "rfc4106(gcm(aes))" },
 };
 
-static struct aead_alg *get_aead_alg(int algid)
+static const struct aead_alg *get_aead_alg(int algid)
 {
 	unsigned int i;
 
@@ -761,7 +761,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		char data[1024];
 	} req;
 	struct rtattr *attr;
-	struct aead_alg *aead;
+	const struct aead_alg *aead;
 	int ret;
 
 	memset(&req, 0, sizeof(req));
