@@ -208,9 +208,16 @@ int ike_alg_add(struct ike_alg* a)
 	passert(a->algo_type < IKE_ALG_ROOF);
 	passert(a->algo_id != 0 || a->algo_v2id != 0);
 
-	if (ike_alg_find(a->algo_type, a->algo_id, 0)) {
+	if (a->algo_id !=0 && ike_alg_find(a->algo_type, a->algo_id, 0) != NULL) {
 		libreswan_log(
-			"ike_alg_add(): ERROR: %s algorithm, algo_id %d, algorithm type already registered",
+			"ike_alg_add(): ERROR: IKEv1 %s algorithm, algo_id %d, algorithm type already registered",
+			ike_alg_type_name[a->algo_type],
+			a->algo_id);
+		return -EEXIST;
+	}
+	if (a->algo_v2id !=0 && ike_alg_ikev2_find(a->algo_type, a->algo_v2id, 0) != NULL) {
+		libreswan_log(
+			"ike_alg_add(): ERROR: IKEv2 %s algorithm, algo_v2id %d, algorithm type already registered",
 			ike_alg_type_name[a->algo_type],
 			a->algo_id);
 		return -EEXIST;
