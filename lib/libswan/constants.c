@@ -1289,9 +1289,18 @@ const char *const critical_names[] = {
 	"PAYLOAD_CRITICAL",     /* bit 7*/
 };
 
+
 /* Transform-type Encryption */
+static const char *const ikev2_trans_type_encr_name_private_use2[] = {
+	"TWOFISH_CBC_SSH", /* 65289 */
+};
+static const char *const ikev2_trans_type_encr_name_private_use1[] = {
+	"SERPENT_CBC", /* 65004 */
+	"TWOFISH_CBC",
+};
+
 static const char *const ikev2_trans_type_encr_name[] = {
-	"DES-IV64(obsoleted)",
+	"DES-IV64(obsoleted)", /* 1*/
 	"DES(obsoleted)",
 	"3DES",
 	"RC5",
@@ -1321,8 +1330,15 @@ static const char *const ikev2_trans_type_encr_name[] = {
 	/* 28 - 1023 Unassigned */
 	/* 1024 - 65535 Private use */
 };
+
+enum_names ikev2_trans_type_encr_names_private_use2 =
+{ OAKLEY_TWOFISH_CBC_SSH, OAKLEY_TWOFISH_CBC_SSH, ikev2_trans_type_encr_name_private_use2, NULL };
+
+enum_names ikev2_trans_type_encr_names_private_use1 =
+{ OAKLEY_SERPENT_CBC, OAKLEY_TWOFISH_CBC, ikev2_trans_type_encr_name_private_use1, &ikev2_trans_type_encr_names_private_use2 };
+
 enum_names ikev2_trans_type_encr_names =
-{ IKEv2_ENCR_DES_IV64, IKEv2_ENCR_AES_CTR, ikev2_trans_type_encr_name, NULL };
+{ IKEv2_ENCR_DES_IV64, IKEv2_ENCR_AES_CTR, ikev2_trans_type_encr_name, &ikev2_trans_type_encr_names_private_use1 };
 
 /* Transform-type PRF */
 static const char *const ikev2_trans_type_prf_name[] = {

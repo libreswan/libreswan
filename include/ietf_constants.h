@@ -679,7 +679,10 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_CAMELLIA_CCM_C = 27, /* AMELLIA_CCM_16 RFC 5529 */
 	/* 28 - 1023 Reserved to IANA */
 	/* 1024 - 65535 Private Use */
-	IKEv2_ENCR_INVALID = 65536
+	IKEv2_ENCR_SERPENT_CBC = 65004,
+	IKEv2_ENCR_TWOFISH_CBC = 65005,
+	IKEv2_ENCR_TWOFISH_CBC_SSH = 65289,
+	IKEv2_ENCR_INVALID = 65536,
 };
 
 enum ikev2_trans_type_prf {
@@ -894,7 +897,7 @@ typedef u_int16_t ipsec_auth_t;
 #define HMAC_BUFSIZE 64
 
 /*
- * Oakley Encryption Algorithm attribute
+ * IKEv1 Oakley Encryption Algorithm attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
  * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
  */
@@ -1024,7 +1027,6 @@ enum ike_trans_type_dh {
  */
 typedef enum {
 	NOTHING_WRONG = 0, /* unofficial! */
-
 	INVALID_PAYLOAD_TYPE = 1,
 	DOI_NOT_SUPPORTED = 2,
 	SITUATION_NOT_SUPPORTED = 3,
