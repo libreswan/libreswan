@@ -56,7 +56,9 @@
 *       - lookup
 *=========================================================*/
 
-struct ike_alg *ike_alg_base[IKE_ALG_MAX + 1] = { NULL, NULL };
+struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
+
+static const char *ike_alg_type_name[] = { "encryption", "hashing", "integrity" };
 
 /*	check if IKE encrypt algo is present */
 bool ike_alg_enc_present(int ealg)
@@ -96,7 +98,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 			 enc_desc->keyminlen,
 			 enc_desc->keymaxlen
 			 );
-		plog("ike_alg_enc_ok(): %.*s", (int)ugh_buf_len,  ugh_buf);
+		libreswan_log("ike_alg_enc_ok(): %.*s", (int)ugh_buf_len,  ugh_buf);
 		ret = FALSE;
 	}
 
@@ -203,42 +205,26 @@ struct ike_alg *ike_alg_ikev2_find(unsigned algo_type,
  */
 int ike_alg_add(struct ike_alg* a)
 {
-	int ret = 0;
-	const char *ugh = "No error";
-
-	if (a->algo_type > IKE_ALG_MAX) {
-		ugh = "Invalid algo_type is larger then IKE_ALG_MAX";
-		return_on(ret, -EINVAL);
-	}
-
-	/* Don't add anything we do not know the name for */
-	if (enum_name(&ikev2_trans_type_encr_names, a->algo_v2id) == NULL) {
-		plog("ike_alg_add: ERROR: alg=%d not found in "
-		     "constants.c:trans_type_encr_names  ",
-		     a->algo_v2id);
-		ugh = "Invalid algo_v2id";
-		return_on(ret, -EINVAL);
-	}
+	passert(a->algo_type < IKE_ALG_ROOF);
+	passert(a->algo_id != 0 || a->algo_v2id != 0);
 
 	if (ike_alg_find(a->algo_type, a->algo_id, 0)) {
-		ugh = "Algorithm type already exists";
-		return_on(ret, -EEXIST);
-	}
-	if (ret == 0) {
-		a->algo_next = ike_alg_base[a->algo_type];
-		ike_alg_base[a->algo_type] = a;
-	}
-return_out:
-	if (ret) {
 		libreswan_log(
-			"ike_alg_add(): ERROR: algo_type '%d', algo_id '%d', %s", a->algo_type, a->algo_id,
-			ugh);
+			"ike_alg_add(): ERROR: %s algorithm, algo_id %d, algorithm type already registered",
+			ike_alg_type_name[a->algo_type],
+			a->algo_id);
+		return -EEXIST;
 	}
-	return ret;
+
+	a->algo_next = ike_alg_base[a->algo_type];
+	ike_alg_base[a->algo_type] = a;
+	return 0;
 }
 
 /*
  *      Validate and register IKE hash algorithm object
+ *      XXX: BUG: This uses IKEv1 oakley_hash_names, but for
+ *           IKEv2 we have more entries, see ikev2_trans_type_integ_names
  */
 int ike_alg_register_hash(struct hash_desc *hash_desc)
 {
@@ -246,12 +232,12 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 	int ret = 0;
 
 	if (hash_desc->common.algo_id > OAKLEY_HASH_MAX) {
-		plog("ike_alg_register_hash(): hash alg=%d < max=%d",
+		libreswan_log("ike_alg_register_hash(): hash alg=%d < max=%d",
 		     hash_desc->common.algo_id, OAKLEY_HASH_MAX);
 		return_on(ret, -EINVAL);
 	}
 	if (hash_desc->hash_ctx_size > sizeof(union hash_ctx)) {
-		plog("ike_alg_register_hash(): hash alg=%d has "
+		libreswan_log("ike_alg_register_hash(): hash alg=%d has "
 		     "ctx_size=%d > hash_ctx=%d",
 		     hash_desc->common.algo_id,
 		     (int)hash_desc->hash_ctx_size,
@@ -260,7 +246,7 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 	}
 	if (!(hash_desc->hash_init && hash_desc->hash_update &&
 	      hash_desc->hash_final)) {
-		plog("ike_alg_register_hash(): hash alg=%d needs  "
+		libreswan_log("ike_alg_register_hash(): hash alg=%d needs  "
 		     "hash_init(), hash_update() and hash_final()",
 		     hash_desc->common.algo_id);
 		return_on(ret, -EINVAL);
@@ -270,11 +256,11 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 
 	/* Don't add anything we do not know the name for */
 	if (!alg_name) {
-		plog("ike_alg_register_hash(): ERROR: hash alg=%d not found in "
+		libreswan_log("ike_alg_register_hash(): ERROR: hash alg=%d not found in "
 		     "constants.c:oakley_hash_names  ",
 		     hash_desc->common.algo_id);
-		     alg_name = "<NULL>";
-		     return_on(ret, -EINVAL);
+		alg_name = "<NULL>";
+		return_on(ret, -EINVAL);
 	}
 
 	if (hash_desc->common.name == NULL)
@@ -284,7 +270,9 @@ return_out:
 	if (ret == 0)
 		ret = ike_alg_add((struct ike_alg *)hash_desc);
 	libreswan_log("ike_alg_register_hash(): Activating %s: %s (ret=%d)",
-		      alg_name, ret == 0 ? "Ok" : "FAILED", ret);
+		      alg_name,
+		      ret == 0 ? "Ok" : "FAILED",
+		      ret);
 	return ret;
 }
 
@@ -305,7 +293,7 @@ int ike_alg_register_enc(struct encrypt_desc *enc_desc)
 	if (!alg_name) {
 		alg_name = enc_desc->common.officname;
 		if (!alg_name) {
-			plog("ike_alg_register_enc(): ERROR: enc alg=%d not found in "
+			libreswan_log("ike_alg_register_enc(): ERROR: enc alg=%d not found in "
 			     "constants.c:oakley_enc_names  ",
 			     enc_desc->common.algo_id);
 			alg_name = "<NULL>";

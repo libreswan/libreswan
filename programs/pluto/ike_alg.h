@@ -8,8 +8,8 @@ struct ike_alg {
 	const char *name;
 	const char *officname;
 	u_int16_t algo_type;
-	u_int16_t algo_id;
-	enum ikev2_trans_type_encr algo_v2id;
+	u_int16_t algo_id; /* either hash or enc algo id */
+	u_int16_t algo_v2id; /* either hash or enc algo id */
 	struct ike_alg *algo_next;
 };
 
@@ -74,8 +74,8 @@ extern bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int 
 #define IKE_ALG_ENCRYPT 0
 #define IKE_ALG_HASH    1
 #define IKE_ALG_INTEG   2
-#define IKE_ALG_MAX     3
-extern struct ike_alg *ike_alg_base[IKE_ALG_MAX + 1];
+#define IKE_ALG_ROOF	3
+extern struct ike_alg *ike_alg_base[IKE_ALG_ROOF];
 extern int ike_alg_add(struct ike_alg *);
 extern int ike_alg_register_enc(struct encrypt_desc *e);
 extern int ike_alg_register_hash(struct hash_desc *a);
