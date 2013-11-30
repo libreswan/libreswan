@@ -223,7 +223,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	passert(buflen >= sizeof("none"));
 
 	ptr = buf;
-	buf[0] = 0;
+	buf[0] = '\0';
 	strncat(buf, "none", buflen - 1);
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
@@ -254,11 +254,11 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d",
 			       sep,
 			       strip_prefix(enum_name(&esp_transformid_names,
-					 esp_info->esp_ealg_id), "ESP"),
+					 esp_info->esp_ealg_id), "ESP_"),
 			       esp_info->esp_ealg_id, eklen,
 			       strip_prefix(enum_name(&auth_alg_names,
 					 esp_info->esp_aalg_id),
-					esp_info->esp_aalg_id ? "AUTH_ALGORITHM_HMAC" : "AUTH_ALGORITHM"),
+					esp_info->esp_aalg_id ? "AUTH_ALGORITHM_HMAC_" : "AUTH_ALGORITHM_"),
 			       esp_info->esp_aalg_id,
 			       aklen);
 
@@ -309,7 +309,7 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 			       sep,
 			       strip_prefix(enum_name(&auth_alg_names,
 					 esp_info->esp_aalg_id),
-					"AUTH_ALGORITHM_HMAC"),
+					"AUTH_ALGORITHM_HMAC_"),
 			       esp_info->esp_aalg_id, aklen);
 
 		if ( ret < 0 || (size_t)ret >= buflen) {
@@ -374,15 +374,15 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 				       sep,
 				       strip_prefix(enum_name(&oakley_enc_names,
 						 ike_info->ike_ealg),
-						"OAKLEY"),
+						"OAKLEY_"),
 				       ike_info->ike_ealg, eklen,
 				       strip_prefix(enum_name(&oakley_hash_names,
 						 ike_info->ike_halg),
-						"OAKLEY"),
+						"OAKLEY_"),
 				       ike_info->ike_halg, aklen,
 				       strip_prefix(enum_name(&oakley_group_names,
 						 ike_info->ike_modp),
-						"OAKLEY_GROUP"),
+						"OAKLEY_GROUP_"),
 				       ike_info->ike_modp);
 			if ( ret < 0 || (size_t)ret >= buflen) {
 				DBG_log(
