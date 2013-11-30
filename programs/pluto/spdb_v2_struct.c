@@ -247,7 +247,7 @@ struct db_trans_flat {
 	u_int16_t encr_keylen;                  /* Key length in bits */
 };
 
-enum ikev2_trans_type_encr v1tov2_encr(int oakley)
+static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 {
 	switch (oakley) {
 	case OAKLEY_DES_CBC:
@@ -268,11 +268,20 @@ enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	case OAKLEY_AES_CBC:
 		return IKEv2_ENCR_AES_CBC;
 
+	case OAKLEY_CAMELLIA_CBC:
+		return IKEv2_ENCR_CAMELLIA_CBC;
+
 	case OAKLEY_TWOFISH_CBC_SSH:
+		return IKEv2_ENCR_TWOFISH_CBC_SSH;
+
 	case OAKLEY_TWOFISH_CBC:
+		return IKEv2_ENCR_TWOFISH_CBC;
+
 	case OAKLEY_SERPENT_CBC:
+		return IKEv2_ENCR_SERPENT_CBC;
+
 	default:
-		return IKEv2_ENCR_INVALID;
+		return IKEv2_ENCR_INVALID; /* this cannot go over the wire! It's 65536 */
 	}
 }
 
