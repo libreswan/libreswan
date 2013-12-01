@@ -221,8 +221,8 @@ static field_desc isat_fields_isakmp[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "transform ID",
+	{ ft_nat, 8 / BITS_PER_BYTE, "ISAKMP transform number", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "ISAKMP transform ID",
 	  &isakmp_transformid_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end, 0, NULL, NULL }
@@ -238,8 +238,8 @@ static field_desc isat_fields_ah[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "transform ID", &ah_transformid_names },
+	{ ft_nat, 8 / BITS_PER_BYTE, "AH transform number", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "AH transform ID", &ah_transformid_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end, 0, NULL, NULL }
 };
@@ -254,8 +254,8 @@ static field_desc isat_fields_esp[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "transform ID", &esp_transformid_names },
+	{ ft_nat, 8 / BITS_PER_BYTE, "ESP transform number", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "ESP transform ID", &esp_transformid_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end, 0, NULL, NULL }
 };
@@ -270,8 +270,8 @@ static field_desc isat_fields_ipcomp[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "transform ID",
+	{ ft_nat, 8 / BITS_PER_BYTE, "IPCOMP transform number", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "IPCOMP transform ID",
 	  &ipcomp_transformid_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end, 0, NULL, NULL }
@@ -754,9 +754,9 @@ static field_desc ikev2trans_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat,  8 / BITS_PER_BYTE, "transform type", &ikev2_trans_type_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "transform ID", NULL },
+	{ ft_nat, 16 / BITS_PER_BYTE, "IKEv2 transform ID", NULL }, /* can't enum, depends on value in transform type */
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -812,10 +812,10 @@ struct_desc ikev2_trans_attr_desc = {
  *
  */
 static field_desc ikev2ke_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev2 },
+	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 next payload type", &payload_names_ikev2 },
 	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "DH group", &oakley_group_names },
+	{ ft_enum, 16 / BITS_PER_BYTE, "DH group", &oakley_group_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
 };
