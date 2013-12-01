@@ -60,8 +60,6 @@
 
 #include "nat_traversal.h"
 
-#define return_on(var, val) do { var = val; goto return_out; } while (0);
-
 /* Taken from spdb_v1_struct.c, as the format is similar */
 bool ikev2_out_attr(int type,
 		    unsigned long val,
@@ -130,7 +128,7 @@ bool ikev2_out_sa(pb_stream *outs,
 		/* no ipsec_doi on IKEv2 */
 
 		if (!out_struct(&sa, &ikev2_sa_desc, outs, &sa_pbs))
-			return_on(ret, FALSE);
+			return FALSE;
 	}
 
 	passert(sadb != NULL);
@@ -174,7 +172,7 @@ bool ikev2_out_sa(pb_stream *outs,
 			p.isap_numtrans = vpc->trans_cnt;
 
 			if (!out_struct(&p, &ikev2_prop_desc, &sa_pbs, &t_pbs))
-				return_on(ret, FALSE);
+				return FALSE;
 
 			if (p.isap_spisize > 0) {
 				if (parentSA) {
@@ -182,7 +180,7 @@ bool ikev2_out_sa(pb_stream *outs,
 				} else {
 					if (!out_raw(&st->st_esp.our_spi, 4,
 						     &t_pbs, "our spi"))
-						return STF_INTERNAL_ERROR;
+						return FALSE;
 				}
 			}
 
@@ -191,12 +189,6 @@ bool ikev2_out_sa(pb_stream *outs,
 				struct ikev2_trans t;
 				pb_stream at_pbs;
 				unsigned int attr_cnt;
-
-#if 0
-				XXX;
-				if () {
-				}
-#endif
 
 				memset(&t, 0, sizeof(t));
 				if (ts_cnt + 1 < vpc->trans_cnt)
@@ -210,18 +202,21 @@ bool ikev2_out_sa(pb_stream *outs,
 
 				if (!out_struct(&t, &ikev2_trans_desc, &t_pbs,
 						&at_pbs))
-					return_on(ret, FALSE);
+					return FALSE;
 
 				for (attr_cnt = 0; attr_cnt < tr->attr_cnt;
 				     attr_cnt++) {
 					struct db_attr *attr =
 						&tr->attrs[attr_cnt];
 
-					ikev2_out_attr(attr->type.ikev2,
+					if(!ikev2_out_attr(attr->type.ikev2,
 						       attr->val,
 						       &ikev2_trans_attr_desc,
 						       ikev2_trans_attr_val_descs,
-						       &at_pbs);
+						       &at_pbs)) {
+						libreswan_log("ikev2_out_attr() failed");
+						return FALSE;
+					}
 				}
 
 				close_output_pbs(&at_pbs);
@@ -231,10 +226,7 @@ bool ikev2_out_sa(pb_stream *outs,
 	}
 
 	close_output_pbs(&sa_pbs);
-	ret = TRUE;
-
-return_out:
-	return ret;
+	return TRUE;
 }
 
 struct db_trans_flat {
@@ -279,6 +271,11 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 
 	case OAKLEY_SERPENT_CBC:
 		return IKEv2_ENCR_SERPENT_CBC;
+
+	/* 
+	 * We have some encryption algorithms in IKEv2 that do not exist in
+	 * IKEv1. This is a bad hack and the caller should be aware
+	 */
 
 	default:
 		return IKEv2_ENCR_INVALID; /* this cannot go over the wire! It's 65536 */
@@ -419,6 +416,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 							break;
 
 						case OAKLEY_ENCRYPTION_ALGORITHM:
+							/* XXX fails on IKEv2-only enc algos like CCM/GCM */
 							dtfone->encr_transid =
 								v1tov2_encr(
 									attr->val);
@@ -982,10 +980,13 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 		impossible();
 	if (ta.encrypter && ta.encrypter->keyminlen !=
 	    ta.encrypter->keymaxlen) {
-		ikev2_out_attr(IKEv2_KEY_LENGTH, ta.enckeylen,
+		if(!ikev2_out_attr(IKEv2_KEY_LENGTH, ta.enckeylen,
 			       &ikev2_trans_attr_desc,
 			       ikev2_trans_attr_val_descs,
-			       &r_trans_pbs);
+			       &r_trans_pbs)) {
+			libreswan_log("ikev2_out_attr() failed");
+			return FALSE;
+		}
 	}
 	close_output_pbs(&r_trans_pbs);
 
@@ -1581,11 +1582,10 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 
 	p2alg = sa_v2_convert(p2alg);
 
-	ikev2_out_sa(outpbs,
-		     proto,
-		     p2alg,
-		     md->st,
-		     FALSE, np);
+	if(!ikev2_out_sa(outpbs, proto, p2alg, md->st, FALSE, np)) {
+		libreswan_log("ikev2_emit_ipsec_sa: ikev2_out_sa() failed");
+		return STF_INTERNAL_ERROR;
+	}
 
 	return STF_OK;
 }
