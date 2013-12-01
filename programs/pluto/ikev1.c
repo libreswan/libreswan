@@ -2750,8 +2750,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			  enum_name(&state_names, st->st_state));
 
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "state transition function for %s had internal error",
+		    DBG_log("state transition function for %s had internal error",
 			    enum_name(&state_names, from_state)));
 		break;
 
