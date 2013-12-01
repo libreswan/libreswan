@@ -649,6 +649,11 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_ESN = 5,
 };
 
+/*
+ * IKE and ESP encryption algorithms
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
+ * (TODO: rename this to ikev2_encr_esp_ike)
+ */
 enum ikev2_trans_type_encr {
 	IKEv2_ENCR_DES_IV64 = 1,
 	IKEv2_ENCR_DES = 2,
