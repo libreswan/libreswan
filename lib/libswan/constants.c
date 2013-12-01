@@ -1338,7 +1338,7 @@ enum_names ikev2_trans_type_encr_names_private_use1 =
 { OAKLEY_SERPENT_CBC, OAKLEY_TWOFISH_CBC, ikev2_trans_type_encr_name_private_use1, &ikev2_trans_type_encr_names_private_use2 };
 
 enum_names ikev2_trans_type_encr_names =
-{ IKEv2_ENCR_DES_IV64, IKEv2_ENCR_AES_CTR, ikev2_trans_type_encr_name, &ikev2_trans_type_encr_names_private_use1 };
+{ IKEv2_ENCR_DES_IV64, IKEv2_ENCR_CAMELLIA_CCM_C, ikev2_trans_type_encr_name, &ikev2_trans_type_encr_names_private_use1 };
 
 /* Transform-type PRF */
 static const char *const ikev2_trans_type_prf_name[] = {
