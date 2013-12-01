@@ -16,7 +16,7 @@
  *      ML:	Mathieu Lafon <mlafon@arkoon.net>
  *
  * Fixes:
- *      ML:	ike_alg_ok_final() funcion (make F_STRICT consider hash/auth and modp).
+ *      ML:	ike_alg_ok_final() function (make F_STRICT consider hash/auth and modp).
  */
 #include <stdio.h>
 #include <string.h>
@@ -57,8 +57,6 @@
 *=========================================================*/
 
 struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
-
-static const char *ike_alg_type_name[] = { "encryption", "hashing", "integrity" };
 
 /*	check if IKE encrypt algo is present */
 bool ike_alg_enc_present(int ealg)
@@ -175,8 +173,7 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
  *      return ike_algo object by {type, id}
  */
 /* XXX:jjo use keysize */
-struct ike_alg *ike_alg_find(unsigned algo_type, unsigned algo_id, unsigned keysize __attribute__(
-				     (unused)))
+struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
 {
 	struct ike_alg *e;
 
@@ -187,9 +184,8 @@ struct ike_alg *ike_alg_find(unsigned algo_type, unsigned algo_id, unsigned keys
 	return e;
 }
 
-struct ike_alg *ike_alg_ikev2_find(unsigned algo_type,
-				   enum ikev2_trans_type_encr algo_v2id,
-				   unsigned keysize __attribute__((unused)))
+struct ike_alg *ikev2_alg_find(unsigned algo_type,
+				   enum ikev2_trans_type_encr algo_v2id)
 {
 	struct ike_alg *e = ike_alg_base[algo_type];
 
@@ -203,29 +199,17 @@ struct ike_alg *ike_alg_ikev2_find(unsigned algo_type,
 /*
  *      Main "raw" ike_alg list adding function
  */
-int ike_alg_add(struct ike_alg* a)
+void ike_alg_add(struct ike_alg* a)
 {
 	passert(a->algo_type < IKE_ALG_ROOF);
-	passert(a->algo_id != 0 || a->algo_v2id != 0);
+	passert(a->algo_id != 0 || a->algo_v2id != 0);	/* must be useful for v1 or v2 */
 
-	if (a->algo_id !=0 && ike_alg_find(a->algo_type, a->algo_id, 0) != NULL) {
-		libreswan_log(
-			"ike_alg_add(): ERROR: IKEv1 %s algorithm, algo_id %d, algorithm type already registered",
-			ike_alg_type_name[a->algo_type],
-			a->algo_id);
-		return -EEXIST;
-	}
-	if (a->algo_v2id !=0 && ike_alg_ikev2_find(a->algo_type, a->algo_v2id, 0) != NULL) {
-		libreswan_log(
-			"ike_alg_add(): ERROR: IKEv2 %s algorithm, algo_v2id %d, algorithm type already registered",
-			ike_alg_type_name[a->algo_type],
-			a->algo_id);
-		return -EEXIST;
-	}
+	/* must not duplicate what has already been added */
+	passert(a->algo_id == 0 || ikev1_alg_find(a->algo_type, a->algo_id) == NULL);
+	passert(a->algo_v2id == 0 || ikev2_alg_find(a->algo_type, a->algo_v2id) == NULL);
 
 	a->algo_next = ike_alg_base[a->algo_type];
 	ike_alg_base[a->algo_type] = a;
-	return 0;
 }
 
 /*
@@ -275,7 +259,7 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 
 return_out:
 	if (ret == 0)
-		ret = ike_alg_add((struct ike_alg *)hash_desc);
+		ike_alg_add((struct ike_alg *)hash_desc);
 	libreswan_log("ike_alg_register_hash(): Activating %s: %s (ret=%d)",
 		      alg_name,
 		      ret == 0 ? "Ok" : "FAILED",
@@ -310,7 +294,7 @@ int ike_alg_register_enc(struct encrypt_desc *enc_desc)
 return_out:
 
 	if (ret == 0)
-		ret = ike_alg_add((struct ike_alg *)enc_desc);
+		ike_alg_add((struct ike_alg *)enc_desc);
 	libreswan_log("ike_alg_register_enc(): Activating %s: %s (ret=%d)",
 		      alg_name, ret == 0 ? "Ok" : "FAILED", ret);
 	return 0;

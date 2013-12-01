@@ -1180,24 +1180,21 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 	ta.encrypt   = itl->encr_transforms[itl->encr_i];
 	ta.enckeylen = itl->encr_keylens[itl->encr_i] > 0 ?
 		       itl->encr_keylens[itl->encr_i] : 0;
-	ta.encrypter = (struct encrypt_desc *)ike_alg_ikev2_find(
+	ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(
 		IKE_ALG_ENCRYPT,
-		ta.encrypt,
-		ta.enckeylen);
+		ta.encrypt);
 	passert(ta.encrypter != NULL);
 	if (ta.enckeylen <= 0)
 		ta.enckeylen = ta.encrypter->keydeflen;
 
 	ta.integ_hash  = itl->integ_transforms[itl->integ_i];
-	ta.integ_hasher = (struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_INTEG,
-								 ta.integ_hash,
-								 0);
+	ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
+								 ta.integ_hash);
 	passert(ta.integ_hasher != NULL);
 
 	ta.prf_hash    = itl->prf_transforms[itl->prf_i];
-	ta.prf_hasher  = (struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH,
-								ta.prf_hash,
-								0);
+	ta.prf_hasher  = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
+								ta.prf_hash);
 	passert(ta.prf_hasher != NULL);
 
 	ta.groupnum    = itl->dh_transforms[itl->dh_i];
@@ -1518,10 +1515,9 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 
 	/* this is REALLY not correct, because this is not an IKE algorithm */
 	/* XXX maybe we can leave this to ikev2 child key derivation */
-	ta.encrypter = (struct encrypt_desc *)ike_alg_ikev2_find(
+	ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(
 		IKE_ALG_ENCRYPT,
-		ta.encrypt,
-		ta.enckeylen);
+		ta.encrypt);
 	if (ta.encrypter) {
 		if (!ta.enckeylen)
 			ta.enckeylen = ta.encrypter->keydeflen;
