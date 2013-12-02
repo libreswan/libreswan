@@ -66,7 +66,7 @@
 #include "udpfromto.h"
 
 #define SEND_NOTIFICATION(t) { \
-		if (st) \
+		if (st != NULL) \
 			send_v2_notification_from_state(st, from_state, t, \
 							NULL); \
 		else \
@@ -345,7 +345,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			st = find_state_ikev2_parent_init(md->hdr.isa_icookie);
 		}
 
-		if (st) {
+		if (st != NULL) {
 			if (st->st_msgid_lastrecv >  md->msgid_received) {
 				/* this is an OLD retransmit. we can't do anything */
 				libreswan_log(
@@ -375,7 +375,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			if (st == NULL) {
 				st = find_state_ikev2_parent(
 					md->hdr.isa_icookie, zero_cookie);
-				if (st) {
+				if (st != NULL) {
 					/* responder inserted its cookie, record it */
 					unhash_state(st);
 					memcpy(st->st_rcookie,
@@ -389,7 +389,7 @@ void process_v2_packet(struct msg_digest **mdp)
 						    md->hdr.isa_rcookie,
 						    md->hdr.isa_msgid); /* PAUL: really? not md->msgid_received */
 
-			if (st) {
+			if (st != NULL) {
 				/* found this child state, so we'll use it */
 				/* note we update the st->st_msgid_lastack *AFTER* decryption*/
 			} else {
@@ -403,7 +403,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 		}
 
-		if (st) {
+		if (st != NULL) {
 			/*
 			 * then there is something wrong with the msgid, so
 			 * maybe they retransmitted for some reason.
@@ -415,8 +415,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			    md->msgid_received <= st->st_msgid_lastack) {
 				/* it's fine, it's just a retransmit */
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "responding peer retransmitted msgid %u",
+				    DBG_log("responding peer retransmitted msgid %u",
 					    md->msgid_received));
 				return;
 			}
@@ -431,7 +430,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	}
 
 	ix = md->hdr.isa_xchg;
-	if (st) {
+	if (st != NULL) {
 
 		from_state = st->st_state;
 		DBG(DBG_CONTROL,
@@ -441,18 +440,19 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
-		if (svm->flags & SMF2_STATENEEDED)
+		if (svm->flags & SMF2_STATENEEDED) {
 			if (st == NULL)
 				continue;
-		if ((svm->flags & SMF2_STATENEEDED) == 0)
+		} else {
 			if (st != NULL)
 				continue;
+		}
 		if (svm->state != from_state)
 			continue;
 		if (svm->recv_type != ix)
 			continue;
 
-		/* I1 receiving NO_PROPOSAL ened up picking the wrong STATE_UNDEFINED state
+		/* I1 receiving NO_PROPOSAL ended up picking the wrong STATE_UNDEFINED state
 		   Since the wrong state is a responder, we just add a check for initiator,
 		   so we hit STATE_IKEv2_ROOF
 		 */
@@ -479,9 +479,9 @@ void process_v2_packet(struct msg_digest **mdp)
 	}
 
 	{
-		stf_status stf;
-		stf = ikev2_process_payloads(md, &md->message_pbs,
+		stf_status stf = ikev2_process_payloads(md, &md->message_pbs,
 					     from_state, md->hdr.isa_np);
+
 		DBG(DBG_CONTROL,
 		    DBG_log("Finished processing ikev2_process_payloads"));
 
@@ -493,6 +493,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	DBG(DBG_CONTROL,
 	    DBG_log("Now lets proceed with state specific processing"));
+
 	DBG(DBG_PARSING, {
 		    if (pbs_left(&md->message_pbs) != 0)
 			    DBG_log("removing %d bytes of padding",
@@ -514,13 +515,9 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->svm = svm;
 	md->from_state = from_state;
-	md->st  = st;
+	md->st = st;
 
-	{
-		stf_status stf;
-		stf = (svm->processor)(md);
-		complete_v2_state_transition(mdp, stf);
-	}
+	complete_v2_state_transition(mdp, (svm->processor)(md));
 }
 
 bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role init)
@@ -637,7 +634,7 @@ void ikev2_log_parentSA(struct state *st)
 void send_v2_notification_from_state(struct state *st, enum state_kind state,
 				     u_int16_t type, chunk_t *data)
 {
-	passert(st);
+	passert(st != NULL);
 
 	if (state == STATE_UNDEFINED)
 		state = st->st_state;
@@ -925,7 +922,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	cur_state = st = md->st; /* might have changed */
 
-	/* passert(st);   apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
+	/* passert(st != NULL);   apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases if state is
 	 * null, so moved this precondition to where it's needed.  Some previous
@@ -940,7 +937,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 * particular case, and similar failure cases, we want SEND_NOTIFICATION
 	 * (below) to let the peer know why we've rejected the request.
 	 */
-	if (st) {
+	if (st != NULL) {
 		from_state_name = enum_name(&state_names, st->st_state);
 		from_state   = st->st_state;
 	} else {
@@ -977,7 +974,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	case STF_OK:
 		/* advance the state */
-		passert(st);
+		passert(st != NULL);
 		success_v2_state_transition(mdp);
 		break;
 
@@ -989,7 +986,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
                           "%s: internal error",
                           enum_name(&state_names, st->st_state));
 
-                DBG(DBG_CONTROL, 
+                DBG(DBG_CONTROL,
                     DBG_log("state transition function for %s had internal error",
                             enum_name(&state_names, from_state)));
                 break;
@@ -998,7 +995,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		/* well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
-		passert(st);
+		passert(st != NULL);
 		set_suspended(st, NULL);
 		pexpect(st->st_calculating == FALSE);
 		libreswan_log("message in state %s ignored due to "
@@ -1010,18 +1007,16 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		/* update the previous packet history */
 		/* update_retransmit_history(st, md); */
 
-		passert(st);
+		passert(st != NULL);
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
 			  from_state_name);
 		delete_event(st);
-		{
-			struct state *pst;
-			release_whack(st);
-			if (st->st_clonedfrom != 0) {
-				pst = state_with_serialno(st->st_clonedfrom);
-				release_whack(pst);
-			}
+		release_whack(st);
+		if (st->st_clonedfrom != 0) {
+			struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+			release_whack(pst);
 		}
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);

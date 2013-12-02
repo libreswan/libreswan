@@ -109,7 +109,6 @@ bool ikev2_out_sa(pb_stream *outs,
 		  u_int8_t np)
 {
 	pb_stream sa_pbs;
-	bool ret = FALSE;
 	unsigned int pc_cnt;
 
 	/* SA header out */
@@ -272,7 +271,7 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	case OAKLEY_SERPENT_CBC:
 		return IKEv2_ENCR_SERPENT_CBC;
 
-	/* 
+	/*
 	 * We have some encryption algorithms in IKEv2 that do not exist in
 	 * IKEv1. This is a bad hack and the caller should be aware
 	 */
