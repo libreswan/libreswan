@@ -76,7 +76,7 @@ extern struct pubkey* allocate_RSA_public_key(const cert_t cert);
 extern bool load_coded_file(const char *filename,
 			    int verbose,
 			    const char *type, chunk_t *blob);
-
+extern bool cert_exists_in_nss(const char *nickname);
 extern bool load_cert_from_nss(bool forcedtype,
 			       const char *nssHostCertNickName,
 			       int verbose, const char *label, cert_t *cert);

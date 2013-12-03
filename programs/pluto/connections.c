@@ -1146,6 +1146,32 @@ static uint32_t gen_reqid(void)
 	return 0; /* never reached, here to make compiler happy */
 }
 
+static bool have_local_nss_certs(const struct whack_message *wm)
+{
+	if (wm->left.cert != NULL) {
+		if (!cert_exists_in_nss(wm->left.cert)) {
+			loglog(RC_COMMENT, "leftcert with the "
+					   "nickname \"%s\" does "
+					   "not exist in NSS db",
+					   wm->left.cert);
+			return FALSE;
+		}
+	}
+
+	if (wm->right.cert != NULL) {
+		if (!cert_exists_in_nss(wm->right.cert)) {
+			loglog(RC_COMMENT, "rightcert with the "
+					   "nickname \"%s\" does "
+					   "not exist in NSS db",
+					   wm->right.cert);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+
 void add_connection(const struct whack_message *wm)
 {
 	struct alg_info_ike *alg_info_ike;
@@ -1389,6 +1415,10 @@ void add_connection(const struct whack_message *wm)
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
 		c->requested_ca = NULL;
+
+		/* pre-check for leftcert/rightcert availablility */
+		if (!have_local_nss_certs(wm))
+			return;
 
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
