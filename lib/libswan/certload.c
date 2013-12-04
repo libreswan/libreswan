@@ -265,13 +265,8 @@ bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 	cert->forced = forcedtype;
 	cert->u.x509 = NULL;
 
-	nssCert = CERT_FindCertByNicknameOrEmailAddr(
-		CERT_GetDefaultCertDB(), nssHostCertNickName);
-
-	if (nssCert == NULL)
-		nssCert = PK11_FindCertFromNickname(nssHostCertNickName,
-						    lsw_return_nss_password_file_info());
-
+	nssCert = PK11_FindCertFromNickname(nssHostCertNickName,
+					    lsw_return_nss_password_file_info());
 
 	if (nssCert == NULL) {
 		libreswan_log(
