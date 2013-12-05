@@ -57,6 +57,7 @@
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
 #include "ikev1.h"
+#include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
 #include "udpfromto.h"
@@ -64,6 +65,11 @@
 /* This file does basic header checking and demux of
  * incoming packets.
  */
+
+void init_demux(void)
+{
+	init_ikev1();
+}
 
 /* forward declarations */
 static bool read_packet(struct msg_digest *md);

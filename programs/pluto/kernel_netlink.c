@@ -168,7 +168,7 @@ static sparse_names calg_list = {
 	{ 0, sparse_end }
 };
 
-static struct aead_alg aead_algs[] =
+static const struct aead_alg aead_algs[] =
 {
 	{ .id = SADB_X_EALG_AES_CCM_ICV8, .icvlen = 8, .name =
 		  "rfc4309(ccm(aes))" },
@@ -184,7 +184,7 @@ static struct aead_alg aead_algs[] =
 		  "rfc4106(gcm(aes))" },
 };
 
-static struct aead_alg *get_aead_alg(int algid)
+static const struct aead_alg *get_aead_alg(int algid)
 {
 	unsigned int i;
 
@@ -621,7 +621,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			dst = req.u.p.sel.prefixlen_s;
 		}
 
-		/* 
+		/*
 		 * if the user did not specify a priority, calculate one based
 		 * on 'more specific' getting a higher priority
 		 */
@@ -631,7 +631,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			req.u.p.priority = MIN_SPD_PRIORITY -
 				((policy == IPSEC_POLICY_NONE) ? 512 : 0) +
 				   (((2 << shift) - src) << shift) +
-				    (2 << shift) - dst - ((transport_proto) ? 64 : 0) 
+				    (2 << shift) - dst - ((transport_proto) ? 64 : 0)
 				 	- ((req.u.p.sel.sport) ? 32 : 0 )
 				 	- ((req.u.p.sel.sport) ? 32 : 0 );
 		}
@@ -761,7 +761,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		char data[1024];
 	} req;
 	struct rtattr *attr;
-	struct aead_alg *aead;
+	const struct aead_alg *aead;
 	int ret;
 
 	memset(&req, 0, sizeof(req));
@@ -1072,7 +1072,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 #define  AES_KEY_DEF_LEN       128
 #define  AES_KEY_MAX_LEN       256
 
-struct encrypt_desc algo_aes_ccm_8 =
+static struct encrypt_desc algo_aes_ccm_8 =
 {
 	.common = {
 		.name = "aes_ccm_8",
@@ -1087,7 +1087,7 @@ struct encrypt_desc algo_aes_ccm_8 =
 	.keymaxlen =      AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_ccm_12 =
+static struct encrypt_desc algo_aes_ccm_12 =
 {
 	.common = {
 		.name = "aes_ccm_12",
@@ -1102,7 +1102,7 @@ struct encrypt_desc algo_aes_ccm_12 =
 	.keymaxlen =      AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_ccm_16 =
+static struct encrypt_desc algo_aes_ccm_16 =
 {
 	.common = {
 		.name = "aes_ccm_16",
@@ -1117,7 +1117,7 @@ struct encrypt_desc algo_aes_ccm_16 =
 	.keymaxlen =     AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_gcm_8 =
+static struct encrypt_desc algo_aes_gcm_8 =
 {
 	.common = {
 		.name = "aes_gcm_8",
@@ -1132,7 +1132,7 @@ struct encrypt_desc algo_aes_gcm_8 =
 	.keymaxlen =     AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_gcm_12 =
+static struct encrypt_desc algo_aes_gcm_12 =
 {
 	.common = {
 		.name = "aes_gcm_12",
@@ -1147,7 +1147,7 @@ struct encrypt_desc algo_aes_gcm_12 =
 	.keymaxlen =     AES_KEY_MAX_LEN + 3,
 };
 
-struct encrypt_desc algo_aes_gcm_16 =
+static struct encrypt_desc algo_aes_gcm_16 =
 {
 	.common = {
 		.name = "aes_gcm_16",

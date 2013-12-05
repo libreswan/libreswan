@@ -240,6 +240,20 @@ void share_cert(cert_t cert)
 	}
 }
 
+bool cert_exists_in_nss(const char *nickname)
+{
+	CERTCertificate *cert;
+
+	cert = PK11_FindCertFromNickname(nickname,
+					 lsw_return_nss_password_file_info());
+	if (cert == NULL)
+		return FALSE;
+
+	CERT_DestroyCertificate(cert);
+
+	return TRUE;
+}
+
 bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 			int verbose,
 			const char *label, cert_t *cert)
@@ -251,13 +265,8 @@ bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 	cert->forced = forcedtype;
 	cert->u.x509 = NULL;
 
-	nssCert = CERT_FindCertByNicknameOrEmailAddr(
-		CERT_GetDefaultCertDB(), nssHostCertNickName);
-
-	if (nssCert == NULL)
-		nssCert = PK11_FindCertFromNickname(nssHostCertNickName,
-						    lsw_return_nss_password_file_info());
-
+	nssCert = PK11_FindCertFromNickname(nssHostCertNickName,
+					    lsw_return_nss_password_file_info());
 
 	if (nssCert == NULL) {
 		libreswan_log(

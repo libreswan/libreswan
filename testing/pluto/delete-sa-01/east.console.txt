@@ -8,7 +8,6 @@ east #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=7 name=cbc(blowfish) keyminbits=96 keymaxbits=448, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] 
 east #
@@ -37,27 +36,6 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
-unreachable ::/96 dev lo  metric 1024  error -101
-unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
-2001:db8:0:2::/64 dev eth0  proto kernel  metric 256 
-2001:db8::/48 via 2001:db8:1:2::45 dev eth1  metric 1024 
-2001:db8:1:2::23 dev ipsec0  proto kernel  metric 256 
-2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
-2001:db8:9:2::/64 dev eth2  proto kernel  metric 256 
-unreachable 2002:a00::/24 dev lo  metric 1024  error -101
-unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
-unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
-unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
-unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
-unreachable 2002:e000::/19 dev lo  metric 1024  error -101
-unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
-fe80::1000:ff:fe64:6423 dev ipsec0  proto kernel  metric 256 
-fe80::/64 dev eth0  proto kernel  metric 256 
-fe80::/64 dev eth1  proto kernel  metric 256 
-fe80::/64 dev eth2  proto kernel  metric 256 
-fe80::/64 dev ipsec0  proto kernel  metric 256 
-default via 2001:db8:1:2::254 dev eth1  metric 1 
-default via 2001:db8:1:2::254 dev eth1  metric 1024 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

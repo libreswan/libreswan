@@ -1159,13 +1159,13 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%lu",
-		    enum_name(&trans_type_prf_names, skq->prf_hash),
-		    enum_name(&trans_type_integ_names, skq->integ_hash),
+		    enum_name(&ikev2_trans_type_prf_names, skq->prf_hash),
+		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
 		    (long unsigned)keysize));
 
 	const struct hash_desc *hasher =
-		(struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH,
-						       skq->prf_hash, 0);
+		(struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
+						       skq->prf_hash);
 	passert(hasher);
 
 	const struct encrypt_desc *encrypter = skq->encrypter;
@@ -1192,9 +1192,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		/* SK_e needs keysize*2 key bits */
 		/* SK_a needs hash's key bits size */
 		const struct hash_desc *integ_hasher =
-			(struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_INTEG,
-							       skq->integ_hash,
-							       0);
+			(struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
+							       skq->integ_hash);
 		int skd_bytes = hasher->hash_key_size;
 		int skp_bytes = hasher->hash_key_size;
 		int ska_bytes = integ_hasher->hash_key_size;

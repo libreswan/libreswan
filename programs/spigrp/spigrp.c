@@ -38,10 +38,12 @@
 #endif
 
 #include "constants.h"
+#include "lswlog.h"
 
 #include <signal.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
+#include "libreswan/pfkey_debug.h"
 #include "pfkey_help.h"
 
 #include "libreswan/radij.h"
@@ -489,7 +491,11 @@ int main(int argc, char **argv)
 	exit(0);
 }
 
-void exit_tool(int x)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
 	exit(x);
 }

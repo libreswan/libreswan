@@ -1101,8 +1101,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 				/* FALL THROUGH */
 				default:
 					ugh = builddiag("%s is not supported",
-							enum_show(&
-								  oakley_enc_names,
+							enum_show(&oakley_enc_names,
 								  val));
 				}
 				break;
@@ -1115,14 +1114,13 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 /* #else */
 				switch (val) {
 				case OAKLEY_MD5:
-				case OAKLEY_SHA:
+				case OAKLEY_SHA1:
 					ta.prf_hash = val;
 					ta.prf_hasher = crypto_get_hasher(val);
 					break;
 				default:
 					ugh = builddiag("%s is not supported",
-							enum_show(&
-								  oakley_hash_names,
+							enum_show(&oakley_hash_names,
 								  val));
 				}
 /* #endif */
@@ -1256,8 +1254,7 @@ rsasig_common:
 				default:
 					ugh = builddiag(
 						"Pluto does not support %s authentication",
-						enum_show(&
-							  oakley_auth_names,
+						enum_show(&oakley_auth_names,
 							  val));
 					break;
 				}
@@ -1281,8 +1278,7 @@ rsasig_common:
 					if (LHAS(seen_durations, val)) {
 						loglog(RC_LOG_SERIOUS,
 						       "attribute OAKLEY_LIFE_TYPE value %s repeated",
-						       enum_show(&
-								 oakley_lifetime_names,
+						       enum_show(&oakley_lifetime_names,
 								 val));
 						return BAD_PROPOSAL_SYNTAX;
 					}
@@ -1291,8 +1287,7 @@ rsasig_common:
 					break;
 				default:
 					ugh = builddiag("unknown value %s",
-							enum_show(&
-								  oakley_lifetime_names,
+							enum_show(&oakley_lifetime_names,
 								  val));
 					break;
 				}
@@ -2400,26 +2395,31 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				}
 				if (ah_attrs.transattrs.encrypt !=
 				    ok_transid) {
+					char esb[ENUM_SHOW_BUF_LEN];
+
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
-					       enum_name(&auth_alg_names,
+					       enum_showb(&auth_alg_names,
 							 ah_attrs.transattrs.
-							 integ_hash),
+							 integ_hash,
+							 esb, sizeof(esb)),
 					       enum_show(&ah_transformid_names,
 							 ah_attrs.transattrs.
 							 encrypt));
 					return BAD_PROPOSAL_SYNTAX;
 				}
 				if (!ok_auth) {
+					char esb[ENUM_SHOW_BUF_LEN];
+
 					DBG(DBG_CONTROL | DBG_CRYPT,
 					    DBG_log("%s attribute unsupported"
 						    " in %s Transform from %s",
-						    enum_name(&auth_alg_names,
+						    enum_showb(&auth_alg_names,
 							      ah_attrs.
 							      transattrs.
-							      integ_hash),
-						    enum_show(&
-							      ah_transformid_names,
+							      integ_hash,
+							      esb, sizeof(esb)),
+						    enum_show(&ah_transformid_names,
 							      ah_attrs.
 							      transattrs.
 							      encrypt),
@@ -2524,8 +2524,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						       ugh);
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP Transform %s from %s",
-						       enum_show(&
-								 esp_transformid_names,
+						       enum_show(&esp_transformid_names,
 								 esp_attrs.
 								 transattrs.
 								 encrypt),
@@ -2566,8 +2565,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					default:
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP auth alg %s from %s",
-						       enum_show(&
-								 auth_alg_names,
+						       enum_show(&auth_alg_names,
 								 esp_attrs.
 								 transattrs.
 								 integ_hash),
@@ -2681,8 +2679,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					DBG(DBG_CONTROL | DBG_CRYPT,
 					    DBG_log(
 						    "unsupported IPCOMP Transform %s from %s",
-						    enum_show(&
-							      ipcomp_transformid_names,
+						    enum_show(&ipcomp_transformid_names,
 							      ipcomp_attrs.
 							      transattrs.
 							      encrypt),

@@ -110,7 +110,7 @@ bool shift(void)
 			} else {
 				/* strip trailing whitespace, including \n */
 
-				for (p = flp->buffer + strlen(flp->buffer) 
+				for (p = flp->buffer + strlen(flp->buffer)
 				     ; p > flp->buffer && isspace(p[-1]); p--)
 					;
 				*p = '\0';

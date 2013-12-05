@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v3.7 (unreleased)
 * SECURITY: CVE-2013-4564 Denial of service via unauth packet [Paul/Hugh]
 * SECURITY: fix insecure tmp file in rpm %post - introduced in 3.6 [Tuomo]
+* SECURITY: Properly handle IKEv2 I1 notification without KE payload [Paul]
 * NETKEY: Added twofish and serpent as valid ESP algorithms [Paul]
 * KLIPS: Fix for crashes ipsec_xmit_ipip() [Thomas/Roel/David]
 * KLIPS: Fix NAT-T (NEED_UDP_ENCAP_ENABLE) for 3.4 kernel [Roel]
@@ -12,6 +13,9 @@ v3.7 (unreleased)
 * IKEv2: Check for inbound traffic before sending liveness exchange [Matt]
 * IKEv2: Fix some error codes that mistakenly used IKEv1 versions [Paul]
 * IKEv2: in R1 don't copy their IKEv2 minor for our reply packet [Paul]
+* IKEv2: Don't kill unrelated states on same hash chain in IKE DEL [Hugh]
+* pluto: change ipsec_notification_names to ikev[12]_notify_names [Paul]
+* pluto: Various cleanup and reducing scope of variables [Hugh]
 * building: support for slackware version/init system detection [Roel]
 * initsystems: fix typo in openrc script [Natanael Copa]
 * secrets: Log glob failing for secrets parser as warning, not error [Paul]

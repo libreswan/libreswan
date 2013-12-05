@@ -403,7 +403,7 @@ extern bool kernel_overlap_supported(void);
 extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
 
-/* 
+/*
  * Used to pass default priority from kernel_ops-> functions.
  * Our priority is based on an unsigned long int, with the
  * lower number being the highest priority, but this

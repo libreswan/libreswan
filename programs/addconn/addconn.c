@@ -53,9 +53,10 @@
 #include "ipsecconf/files.h"
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/keywords.h"
+#include "ipsecconf/parser-controls.h"
 
 char *progname;
-int verbose = 0;
+static int verbose = 0;
 int warningsarefatal = 0;
 
 /* Buffer size for netlink query (~100 bytes) and replies.
@@ -135,7 +136,7 @@ void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 	nlmsg->nlmsg_len += rtattr->rta_len;
 }
 
-static 
+static
 ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 {
 	struct nlmsghdr *nlhdr;
@@ -171,7 +172,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		/* All done if it's not a multi part */
 		if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
 			break;
-	} while (nlhdr->nlmsg_seq != seqnum || 
+	} while (nlhdr->nlmsg_seq != seqnum ||
 			nlhdr->nlmsg_pid != pid);
 	return msglen;
 }
@@ -442,8 +443,6 @@ static void usage(void)
 	exit(10);
 }
 
-extern char rootdir[PATH_MAX];       /* when evaluating paths, prefix this to them */
-
 static struct option const longopts[] =
 {
 	{ "config",              required_argument, NULL, 'C' },
@@ -514,6 +513,7 @@ int main(int argc, char *argv[])
 
 		case 'D':
 			verbose++;
+			lex_verbosity++;
 			break;
 
 		case 'W':
@@ -590,7 +590,6 @@ int main(int argc, char *argv[])
 		usage();
 
 	if (verbose > 3) {
-		extern int yydebug;
 		yydebug = 1;
 	}
 
@@ -612,7 +611,7 @@ int main(int argc, char *argv[])
 	if (verbose)
 		printf("opening file: %s\n", configfile);
 
-	starter_use_log(verbose, 1, verbose ? 0 : 1);
+	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
 	err = NULL;  /* reset to no error */
 
@@ -913,7 +912,11 @@ int main(int argc, char *argv[])
 	exit(exit_status);
 }
 
-void exit_tool(int x)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
 	exit(x);
 }

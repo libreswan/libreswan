@@ -273,10 +273,10 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",
-		    enum_name(&trans_type_prf_names,   st->st_oakley.prf_hash),
-		    enum_name(&trans_type_integ_names,
+		    enum_name(&ikev2_trans_type_prf_names,   st->st_oakley.prf_hash),
+		    enum_name(&ikev2_trans_type_integ_names,
 			      st->st_oakley.integ_hash),
-		    enum_name(&trans_type_encr_names,
+		    enum_name(&ikev2_trans_type_encr_names,
 			      st->st_oakley.encrypt)));
 
 	/* convert appropriate data to dhq */

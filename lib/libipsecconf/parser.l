@@ -1,7 +1,8 @@
 /* -*- flex-mode -*- */
 %option nounput
 %option noinput
-%{ 
+
+%top{
 /* Libreswan config file parser (parser.l)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
@@ -29,12 +30,16 @@
 #include <ctype.h>
 
 #include "ipsecconf/keywords.h"
-#include "ipsecconf/parser.h"
-#include "parser.tab.h"
+#define YYDEBUG 1	/* HACK! for ipsecconf/parser.h AND parser.tab.h */
+#include "ipsecconf/parser.h"	/* includes parser.tab.h */
 #include "ipsecconf/parserlast.h"
 #include "ipsecconf/starterlog.h"
+}
 
+%{ 
 #define MAX_INCLUDE_DEPTH  10
+
+int lex_verbosity = 0;	/* how much tracing output to show */
 
 char rootdir[PATH_MAX];      /* when evaluating paths, prefix this to them */
 char rootdir2[PATH_MAX];     /* or... try this one too */
@@ -49,12 +54,6 @@ int parser_y_eof(void);
 #define YY_NO_INPUT
 #endif
 
-extern void yyerror(const char *);
-
-extern int yylex (void);
-extern int yydebug;
-extern int verbose;
-    
 struct ic_inputsource {
 	YY_BUFFER_STATE state;
 	FILE  *file;
@@ -104,7 +103,7 @@ void parser_y_init (const char *name, FILE *f)
 	ic_private.stack_ptr = 0;
 }
 
-void parser_y_close(struct ic_inputsource *iis)
+static void parser_y_close(struct ic_inputsource *iis)
 {
 	if (iis->filename) {
 		free(iis->filename);
@@ -131,7 +130,7 @@ void parser_y_fini (void)
 	memset(&ic_private, 0, sizeof(ic_private));
 }
 
-int parser_y_nextglobfile(struct ic_inputsource *iis)
+static int parser_y_nextglobfile(struct ic_inputsource *iis)
 {
 	FILE *f;
 	int  fcnt;
@@ -228,7 +227,7 @@ int parser_y_include (const char *filename)
 		return 1;
 	}
 
-	if(verbose)
+	if (lex_verbosity > 0)
 	{
 		starter_log(LOG_LEVEL_DEBUG, "including file '%s'(%s) from line %s:%d\n"
 			    , filename, try
@@ -256,7 +255,7 @@ int parser_y_eof(void)
 	if(parser_y_nextglobfile(stacktop) == -1) {
 		/* no more glob'ed files to process */
 		
-		if(verbose)
+		if (lex_verbosity > 0)
 		{
 			int stackp = ic_private.stack_ptr;
 			starter_log(LOG_LEVEL_DEBUG,

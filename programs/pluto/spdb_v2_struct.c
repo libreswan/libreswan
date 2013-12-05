@@ -60,8 +60,6 @@
 
 #include "nat_traversal.h"
 
-#define return_on(var, val) do { var = val; goto return_out; } while (0);
-
 /* Taken from spdb_v1_struct.c, as the format is similar */
 bool ikev2_out_attr(int type,
 		    unsigned long val,
@@ -111,7 +109,6 @@ bool ikev2_out_sa(pb_stream *outs,
 		  u_int8_t np)
 {
 	pb_stream sa_pbs;
-	bool ret = FALSE;
 	unsigned int pc_cnt;
 
 	/* SA header out */
@@ -130,7 +127,7 @@ bool ikev2_out_sa(pb_stream *outs,
 		/* no ipsec_doi on IKEv2 */
 
 		if (!out_struct(&sa, &ikev2_sa_desc, outs, &sa_pbs))
-			return_on(ret, FALSE);
+			return FALSE;
 	}
 
 	passert(sadb != NULL);
@@ -174,7 +171,7 @@ bool ikev2_out_sa(pb_stream *outs,
 			p.isap_numtrans = vpc->trans_cnt;
 
 			if (!out_struct(&p, &ikev2_prop_desc, &sa_pbs, &t_pbs))
-				return_on(ret, FALSE);
+				return FALSE;
 
 			if (p.isap_spisize > 0) {
 				if (parentSA) {
@@ -182,7 +179,7 @@ bool ikev2_out_sa(pb_stream *outs,
 				} else {
 					if (!out_raw(&st->st_esp.our_spi, 4,
 						     &t_pbs, "our spi"))
-						return STF_INTERNAL_ERROR;
+						return FALSE;
 				}
 			}
 
@@ -191,12 +188,6 @@ bool ikev2_out_sa(pb_stream *outs,
 				struct ikev2_trans t;
 				pb_stream at_pbs;
 				unsigned int attr_cnt;
-
-#if 0
-				XXX;
-				if () {
-				}
-#endif
 
 				memset(&t, 0, sizeof(t));
 				if (ts_cnt + 1 < vpc->trans_cnt)
@@ -210,18 +201,21 @@ bool ikev2_out_sa(pb_stream *outs,
 
 				if (!out_struct(&t, &ikev2_trans_desc, &t_pbs,
 						&at_pbs))
-					return_on(ret, FALSE);
+					return FALSE;
 
 				for (attr_cnt = 0; attr_cnt < tr->attr_cnt;
 				     attr_cnt++) {
 					struct db_attr *attr =
 						&tr->attrs[attr_cnt];
 
-					ikev2_out_attr(attr->type.ikev2,
+					if(!ikev2_out_attr(attr->type.ikev2,
 						       attr->val,
 						       &ikev2_trans_attr_desc,
 						       ikev2_trans_attr_val_descs,
-						       &at_pbs);
+						       &at_pbs)) {
+						libreswan_log("ikev2_out_attr() failed");
+						return FALSE;
+					}
 				}
 
 				close_output_pbs(&at_pbs);
@@ -231,10 +225,7 @@ bool ikev2_out_sa(pb_stream *outs,
 	}
 
 	close_output_pbs(&sa_pbs);
-	ret = TRUE;
-
-return_out:
-	return ret;
+	return TRUE;
 }
 
 struct db_trans_flat {
@@ -247,7 +238,7 @@ struct db_trans_flat {
 	u_int16_t encr_keylen;                  /* Key length in bits */
 };
 
-enum ikev2_trans_type_encr v1tov2_encr(int oakley)
+static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 {
 	switch (oakley) {
 	case OAKLEY_DES_CBC:
@@ -268,11 +259,25 @@ enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	case OAKLEY_AES_CBC:
 		return IKEv2_ENCR_AES_CBC;
 
+	case OAKLEY_CAMELLIA_CBC:
+		return IKEv2_ENCR_CAMELLIA_CBC;
+
 	case OAKLEY_TWOFISH_CBC_SSH:
+		return IKEv2_ENCR_TWOFISH_CBC_SSH;
+
 	case OAKLEY_TWOFISH_CBC:
+		return IKEv2_ENCR_TWOFISH_CBC;
+
 	case OAKLEY_SERPENT_CBC:
+		return IKEv2_ENCR_SERPENT_CBC;
+
+	/*
+	 * We have some encryption algorithms in IKEv2 that do not exist in
+	 * IKEv1. This is a bad hack and the caller should be aware
+	 */
+
 	default:
-		return IKEv2_ENCR_INVALID;
+		return IKEv2_ENCR_INVALID; /* this cannot go over the wire! It's 65536 */
 	}
 }
 
@@ -347,59 +352,53 @@ static enum ikev2_trans_type_prf v1tov2_prf(int oakley)
 
 struct db_sa *sa_v2_convert(struct db_sa *f)
 {
-	unsigned int pcc, prc, tcc, pr_cnt, pc_cnt, propnum;
-	int tot_trans, i;
+	unsigned int pcc, pr_cnt, pc_cnt, propnum;
+	int tot_trans;
+	int i;
 	struct db_trans_flat   *dtfset;
-	struct db_trans_flat   *dtfone;
 	struct db_trans_flat   *dtflast;
-	struct db_attr         *attrs;
-	struct db_v2_trans     *tr;
 	struct db_v2_prop_conj *pc;
 	struct db_v2_prop      *pr;
 
-	if (!f)
+	if (f == NULL)
 		return NULL;
 
 	if (!f->dynamic)
 		f = sa_copy_sa(f, 0);
 
-	tot_trans = 0;
-	for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
-		struct db_prop_conj *dpc = &f->prop_conjs[pcc];
+	/* count transforms and allocate space for result */
+	{
+		unsigned int pcc;
+		int tot_trans = 0;
 
-		if (dpc->props == NULL)
-			continue;
-		for (prc = 0; prc < dpc->prop_cnt; prc++) {
-			struct db_prop *dp = &dpc->props[prc];
+		for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
+			struct db_prop_conj *dpc = &f->prop_conjs[pcc];
+			unsigned int prc;
 
-			if (dp->trans == NULL)
-				continue;
-			for (tcc = 0; tcc < dp->trans_cnt; tcc++)
-				tot_trans++;
+			for (prc = 0; prc < dpc->prop_cnt; prc++)
+				tot_trans += dpc->props[prc].trans_cnt;
 		}
+
+		dtfset = alloc_bytes(sizeof(struct db_trans_flat) * tot_trans,
+			     "spdb_v2_dtfset");
 	}
 
-	dtfset = alloc_bytes(sizeof(struct db_trans_flat) * tot_trans,
-			     "spdb_v2_dtfset");
-
 	tot_trans = 0;
 	for (pcc = 0; pcc < f->prop_conj_cnt; pcc++) {
 		struct db_prop_conj *dpc = &f->prop_conjs[pcc];
+		unsigned int prc;
 
-		if (dpc->props == NULL)
-			continue;
 		for (prc = 0; prc < dpc->prop_cnt; prc++) {
 			struct db_prop *dp = &dpc->props[prc];
+			unsigned int tcc;
 
-			if (dp->trans == NULL)
-				continue;
 			for (tcc = 0; tcc < dp->trans_cnt; tcc++) {
 				struct db_trans *tr = &dp->trans[tcc];
 				struct db_trans_flat *dtfone =
 					&dtfset[tot_trans];
 				unsigned int attr_cnt;
 
-				dtfone->protoid      = dp->protoid;
+				dtfone->protoid = dp->protoid;
 				if (!f->parentSA)
 					dtfone->encr_transid = tr->transid;
 
@@ -410,17 +409,13 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 
 					if (f->parentSA) {
 						switch (attr->type.oakley) {
-
-						case
-							OAKLEY_AUTHENTICATION_METHOD
-							:
+						case OAKLEY_AUTHENTICATION_METHOD:
 							dtfone->auth_method =
 								attr->val;
 							break;
 
-						case
-							OAKLEY_ENCRYPTION_ALGORITHM
-							:
+						case OAKLEY_ENCRYPTION_ALGORITHM:
+							/* XXX fails on IKEv2-only enc algos like CCM/GCM */
 							dtfone->encr_transid =
 								v1tov2_encr(
 									attr->val);
@@ -483,16 +478,15 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	if (tot_trans >= 1)
 		pr = alloc_bytes(sizeof(struct db_v2_prop), "db_v2_prop");
 	dtflast = NULL;
-	tr = NULL;
 	pc = NULL;
 	pc_cnt = 0;
 	propnum = 1;
 
 	for (i = 0; i < tot_trans; i++) {
+		struct db_v2_trans *tr;
 		int tr_cnt;
 		int tr_pos;
-
-		dtfone = &dtfset[i];
+		struct db_trans_flat   *dtfone = &dtfset[i];
 
 		if (dtfone->protoid == PROTO_ISAKMP)
 			tr_cnt = 4;
@@ -509,8 +503,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 				/* need to extend pr (list of disjunctions) by one */
 				struct db_v2_prop *pr1;
 				pr_cnt++;
-				pr1 =
-					alloc_bytes(sizeof(struct db_v2_prop) *
+				pr1 = alloc_bytes(sizeof(struct db_v2_prop) *
 						    (pr_cnt + 1),
 						    "db_v2_prop");
 				memcpy(pr1, pr,
@@ -543,7 +536,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 		}
 		dtflast = dtfone;
 
-		if (!pc) {
+		if (pc == NULL) {
 			pc = alloc_bytes(sizeof(struct db_v2_prop_conj),
 					 "db_v2_prop_conj");
 			pc_cnt = 0;
@@ -563,9 +556,10 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 		tr[tr_pos].transform_type = IKEv2_TRANS_TYPE_ENCR;
 		tr[tr_pos].transid        = dtfone->encr_transid;
 		if (dtfone->encr_keylen > 0 ) {
-			attrs =
+			struct db_attr *attrs =
 				alloc_bytes(sizeof(struct db_attr),
 					    "db_attrs");
+
 			tr[tr_pos].attrs = attrs;
 			tr[tr_pos].attr_cnt = 1;
 			attrs->type.ikev2 = IKEv2_KEY_LENGTH;
@@ -630,7 +624,6 @@ bool ikev2_acceptable_group(struct state *st, oakley_group_t group)
 			case IKEv2_TRANS_TYPE_DH:
 				if (tr->transid == group)
 					return TRUE;
-
 				break;
 			default:
 				break;
@@ -731,29 +724,27 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 		if (DBGP(DBG_CONTROLMORE)) {
 			/* note: enum_show uses a static buffer so more than one call per
 			   statement is dangerous */
-			DBG_log(
-				"proposal %u %s encr= (policy:%s vs offered:%s)",
+			char esb[ENUM_SHOW_BUF_LEN];
+
+			DBG_log("proposal %u %s encr= (policy:%s vs offered:%s)",
 				propnum,
 				encr_matched ? "succeeded" : "failed",
-				enum_name(&trans_type_encr_names, encrid),
-				enum_show(&trans_type_encr_names,
+				enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
+				enum_show(&ikev2_trans_type_encr_names,
 					  encr_transform));
-			DBG_log(
-				"            %s integ=(policy:%s vs offered:%s)",
+			DBG_log("            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "succeeded" : "failed",
-				enum_name(&trans_type_integ_names, integid),
-				enum_show(&trans_type_integ_names,
+				enum_showb(&ikev2_trans_type_integ_names, integid, esb, sizeof(esb)),
+				enum_show(&ikev2_trans_type_integ_names,
 					  integ_transform));
-			DBG_log(
-				"            %s prf=  (policy:%s vs offered:%s)",
+			DBG_log("            %s prf=  (policy:%s vs offered:%s)",
 				prf_matched ? "succeeded" : "failed",
-				enum_name(&trans_type_prf_names, prfid),
-				enum_show(&trans_type_prf_names,
+				enum_showb(&ikev2_trans_type_prf_names, prfid, esb, sizeof(esb)),
+				enum_show(&ikev2_trans_type_prf_names,
 					  prf_transform));
-			DBG_log(
-				"            %s dh=   (policy:%s vs offered:%s)",
+			DBG_log("            %s dh=   (policy:%s vs offered:%s)",
 				dh_matched ? "succeeded" : "failed",
-				enum_name(&oakley_group_names, dhid),
+				enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
 				enum_show(&oakley_group_names, dh_transform));
 		}
 
@@ -988,10 +979,13 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 		impossible();
 	if (ta.encrypter && ta.encrypter->keyminlen !=
 	    ta.encrypter->keymaxlen) {
-		ikev2_out_attr(IKEv2_KEY_LENGTH, ta.enckeylen,
+		if(!ikev2_out_attr(IKEv2_KEY_LENGTH, ta.enckeylen,
 			       &ikev2_trans_attr_desc,
 			       ikev2_trans_attr_val_descs,
-			       &r_trans_pbs);
+			       &r_trans_pbs)) {
+			libreswan_log("ikev2_out_attr() failed");
+			return FALSE;
+		}
 	}
 	close_output_pbs(&r_trans_pbs);
 
@@ -1185,24 +1179,21 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 	ta.encrypt   = itl->encr_transforms[itl->encr_i];
 	ta.enckeylen = itl->encr_keylens[itl->encr_i] > 0 ?
 		       itl->encr_keylens[itl->encr_i] : 0;
-	ta.encrypter = (struct encrypt_desc *)ike_alg_ikev2_find(
+	ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(
 		IKE_ALG_ENCRYPT,
-		ta.encrypt,
-		ta.enckeylen);
+		ta.encrypt);
 	passert(ta.encrypter != NULL);
 	if (ta.enckeylen <= 0)
 		ta.enckeylen = ta.encrypter->keydeflen;
 
 	ta.integ_hash  = itl->integ_transforms[itl->integ_i];
-	ta.integ_hasher = (struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_INTEG,
-								 ta.integ_hash,
-								 0);
+	ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
+								 ta.integ_hash);
 	passert(ta.integ_hasher != NULL);
 
 	ta.prf_hash    = itl->prf_transforms[itl->prf_i];
-	ta.prf_hasher  = (struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH,
-								ta.prf_hash,
-								0);
+	ta.prf_hasher  = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
+								ta.prf_hash);
 	passert(ta.prf_hasher != NULL);
 
 	ta.groupnum    = itl->dh_transforms[itl->dh_i];
@@ -1298,20 +1289,20 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 				"proposal %u %s encr= (policy:%s vs offered:%s)",
 				propnum,
 				encr_matched ? "failed" : "     ",
-				enum_name(&trans_type_encr_names, encrid),
-				enum_name(&trans_type_encr_names,
+				enum_name(&ikev2_trans_type_encr_names, encrid),
+				enum_name(&ikev2_trans_type_encr_names,
 					  encr_transform));
 			DBG_log(
 				"            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "failed" : "     ",
-				enum_name(&trans_type_integ_names, integid),
-				enum_name(&trans_type_integ_names,
+				enum_name(&ikev2_trans_type_integ_names, integid),
+				enum_name(&ikev2_trans_type_integ_names,
 					  integ_transform));
 			DBG_log(
 				"            %s esn=  (policy:%s vs offered:%s)",
 				esn_matched ? "failed" : "     ",
-				enum_name(&trans_type_esn_names, esnid),
-				enum_name(&trans_type_esn_names,
+				enum_name(&ikev2_trans_type_esn_names, esnid),
+				enum_name(&ikev2_trans_type_esn_names,
 					  esn_transform));
 		}
 
@@ -1523,10 +1514,9 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 
 	/* this is REALLY not correct, because this is not an IKE algorithm */
 	/* XXX maybe we can leave this to ikev2 child key derivation */
-	ta.encrypter = (struct encrypt_desc *)ike_alg_ikev2_find(
+	ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(
 		IKE_ALG_ENCRYPT,
-		ta.encrypt,
-		ta.enckeylen);
+		ta.encrypt);
 	if (ta.encrypter) {
 		if (!ta.enckeylen)
 			ta.enckeylen = ta.encrypter->keydeflen;
@@ -1587,11 +1577,10 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 
 	p2alg = sa_v2_convert(p2alg);
 
-	ikev2_out_sa(outpbs,
-		     proto,
-		     p2alg,
-		     md->st,
-		     FALSE, np);
+	if(!ikev2_out_sa(outpbs, proto, p2alg, md->st, FALSE, np)) {
+		libreswan_log("ikev2_emit_ipsec_sa: ikev2_out_sa() failed");
+		return STF_INTERNAL_ERROR;
+	}
 
 	return STF_OK;
 }

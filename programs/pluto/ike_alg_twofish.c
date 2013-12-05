@@ -43,12 +43,14 @@ static void do_twofish(u_int8_t *buf, size_t buf_size, u_int8_t *key,
 	memcpy(iv, new_iv, TWOFISH_CBC_BLOCK_SIZE);
 }
 
-struct encrypt_desc encrypt_desc_twofish =
+static struct encrypt_desc encrypt_desc_twofish =
 {
 	.common = {
+		.name = "twofish",
 		.officname = "twofish",
 		.algo_type = IKE_ALG_ENCRYPT,
 		.algo_id = OAKLEY_TWOFISH_CBC,
+		.algo_v2id = IKEv2_ENCR_TWOFISH_CBC,
 		.algo_next = NULL,
 	},
 	.enc_ctxsize = sizeof(twofish_context),
@@ -59,11 +61,14 @@ struct encrypt_desc encrypt_desc_twofish =
 	.do_crypt = do_twofish,
 };
 
-struct encrypt_desc encrypt_desc_twofish_ssh =
+static struct encrypt_desc encrypt_desc_twofish_ssh =
 {
 	.common = {
+		.name = "twofish_ssh", /* We don't know if this is right */
+		.officname = "twofish_ssh", /* We don't know if this is right */
 		.algo_type = IKE_ALG_ENCRYPT,
 		.algo_id = OAKLEY_TWOFISH_CBC_SSH,
+		.algo_v2id = IKEv2_ENCR_TWOFISH_CBC_SSH,
 		.algo_next = NULL,
 	},
 	.enc_ctxsize = sizeof(twofish_context),
@@ -73,15 +78,13 @@ struct encrypt_desc encrypt_desc_twofish_ssh =
 	.keymaxlen = TWOFISH_KEY_MAX_LEN,
 	.do_crypt = do_twofish,
 };
-
-int ike_alg_twofish_init(void);
 
 int ike_alg_twofish_init(void)
 {
 	int ret;
 
 	if (ike_alg_register_enc(&encrypt_desc_twofish_ssh) < 0)
-		plog(
+		libreswan_log(
 			"ike_alg_twofish_init(): Experimental OAKLEY_TWOFISH_CBC_SSH activation failed");
 
 
@@ -89,6 +92,7 @@ int ike_alg_twofish_init(void)
 
 	return ret;
 }
+
 /*
    IKE_ALG_INIT_NAME: ike_alg_twofish_init
  */

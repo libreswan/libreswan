@@ -104,15 +104,16 @@ static void kernel_alg_init(void)
 	esp_ealg_num = esp_aalg_num = 0;
 }
 
-/* used by test skaffolding */
+/* used by kernel_netlink.c and kernel_bsdkame.c */
 int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 {
 	struct sadb_alg *alg_p = NULL;
 	int alg_id = sadb_alg->sadb_alg_id;
 
 	DBG(DBG_KERNEL, DBG_log("kernel_alg_add():"
-			       "satype=%d, exttype=%d, alg_id=%d",
-			       satype, exttype, sadb_alg->sadb_alg_id));
+			       "satype=%d, exttype=%d, alg_id=%d(%s)",
+			       satype, exttype, sadb_alg->sadb_alg_id,
+				enum_name(&esp_transformid_names, sadb_alg->sadb_alg_id)));
 	if (!(alg_p = sadb_alg_ptr(satype, exttype, alg_id, 1))) {
 		DBG_log(
 			"kernel_alg_add(%d,%d,%d) fails because alg combo is invalid\n",

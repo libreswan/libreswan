@@ -20,8 +20,8 @@ static void do_serpent(u_int8_t *buf, size_t buf_size, u_int8_t *key,
 		       size_t key_size, u_int8_t *iv, bool enc)
 {
 	serpent_context serpent_ctx;
-	char iv_bak[SERPENT_CBC_BLOCK_SIZE];
-	char *new_iv = NULL;    /* logic will avoid copy to NULL */
+	u_int8_t iv_bak[SERPENT_CBC_BLOCK_SIZE];
+	u_int8_t *new_iv = buf + buf_size - SERPENT_CBC_BLOCK_SIZE;
 
 	serpent_set_key(&serpent_ctx, key, key_size);
 	/*
@@ -30,34 +30,32 @@ static void do_serpent(u_int8_t *buf, size_t buf_size, u_int8_t *key,
 	 *	crunching
 	 */
 	if (!enc) {
-		memcpy(new_iv = iv_bak,
-		       (char*) buf + buf_size - SERPENT_CBC_BLOCK_SIZE,
-		       SERPENT_CBC_BLOCK_SIZE);
+		memcpy(iv_bak, new_iv, SERPENT_CBC_BLOCK_SIZE);
+		new_iv = iv_bak;
 	}
 
 	serpent_cbc_encrypt(&serpent_ctx, buf, buf, buf_size, iv, enc);
 
-	if (enc)
-		new_iv = (char*) buf + buf_size - SERPENT_CBC_BLOCK_SIZE;
-
 	memcpy(iv, new_iv, SERPENT_CBC_BLOCK_SIZE);
 }
 
-struct encrypt_desc encrypt_desc_serpent =
+static struct encrypt_desc encrypt_desc_serpent =
 {
-	common:{ officname: "serpent",
-		 algo_type:      IKE_ALG_ENCRYPT,
-		 algo_id:        OAKLEY_SERPENT_CBC,
-		 algo_next:      NULL, },
-	enc_ctxsize:    sizeof(struct serpent_context),
-	enc_blocksize:  SERPENT_CBC_BLOCK_SIZE,
-	keyminlen:      SERPENT_KEY_MIN_LEN,
-	keydeflen:      SERPENT_KEY_DEF_LEN,
-	keymaxlen:      SERPENT_KEY_MAX_LEN,
-	do_crypt:       do_serpent,
+	.common = {
+		.name = "serpent",
+		.officname = "serpent",
+		.algo_type = IKE_ALG_ENCRYPT,
+		.algo_id = OAKLEY_SERPENT_CBC,
+		.algo_v2id = IKEv2_ENCR_SERPENT_CBC,
+		.algo_next = NULL,
+	},
+	.enc_ctxsize = sizeof(struct serpent_context),
+	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
+	.keyminlen = SERPENT_KEY_MIN_LEN,
+	.keydeflen = SERPENT_KEY_DEF_LEN,
+	.keymaxlen = SERPENT_KEY_MAX_LEN,
+	.do_crypt = do_serpent,
 };
-
-int ike_alg_serpent_init(void);
 
 int ike_alg_serpent_init(void)
 {

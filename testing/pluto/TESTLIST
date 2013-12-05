@@ -96,6 +96,7 @@ ctltest	pluto-dontreky-expiry-01 good
 
 # RFC 3706 DPD test
 kvmplutotest	dpd-01	good
+kvmplutotest	dpd-01-netkey	good
 kvmplutotest	dpd-02	good
 kvmplutotest	dpd-02-reverse	good
 kvmplutotest	dpd-03	good
@@ -403,6 +404,8 @@ umlXhost	psk-pluto-04		good
 #
 kvmplutotest	basic-pluto-06		good
 kvmplutotest	basic-pluto-07		good
+kvmplutotest	basic-pluto-12		good
+kvmplutotest	basic-pluto-13		good
 
 #
 # a test of using twofish with pluto, twofish for phase2

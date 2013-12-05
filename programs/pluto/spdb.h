@@ -32,26 +32,53 @@ struct db_attr {
 	u_int16_t val;
 };
 
+/* The logic of IKEv1 proposals is described in
+ * RFC2408 "Internet Security Association and Key Management Protocol (ISAKMP)"
+ * especially in Section 4.2 "Security Association Establishment"
+ * and Section 3.5 "Proposal Payload"
+ * and Section 3.6 "Transform Payload"
+ *
+ * On the wire:
+ *
+ *     An SA has one or more Proposals.
+ *
+ *     Each Proposal has a Protocol ID (serial number).
+ *     They must be monotonically non-decreasing.
+ *     If there are multiple protocols with the same Protocol ID,
+ *     all of them must apply on not together (conjunction).
+ *     Protocols with different IDs are alternatives (disjunction).
+ *
+ *     Each proposal has one or more Transforms.
+ *     Each Transform has a Transform ID (serial number).
+ *     These are monotonically increasing (no duplicates).
+ *     As such, each is an alternative.
+ *
+ *     Each Transform has one or more Attributes.
+ *
+ * Our in-program representation:
+ */
+
 /* transform */
 struct db_trans {
 	u_int16_t transid;      /* Transform-Id */
-	struct db_attr *attrs;  /* array */
+	struct db_attr *attrs;  /* array of attributes */
 	unsigned int attr_cnt;  /* number of elements */
 };
 
 /* proposal - IKEv1 */
 struct db_prop {
 	u_int8_t protoid;       /* Protocol-Id */
-	struct db_trans *trans; /* array (disjunction-OR) */
+	struct db_trans *trans; /* array (disjunction of elements) */
 	unsigned int trans_cnt; /* number of elements */
 	/* SPI size and value isn't part of DB */
 };
 
 /* conjunction (AND) of proposals - IKEv1 */
 struct db_prop_conj {
-	struct db_prop *props;  /* array */
+	struct db_prop *props;  /* array (conjunction of elements) */
 	unsigned int prop_cnt;  /* number of elements */
 };
+
 
 /* transform - IKEv2 */
 struct db_v2_trans {
@@ -80,13 +107,13 @@ struct db_v2_prop {
 
 /* security association */
 struct db_sa {
-	bool dynamic;                           /* set if these items were allocated */
+	bool dynamic;                           /* set if these items were unshared on heap */
 	bool parentSA;                          /* set if this is a parent/oakley */
-	struct db_prop_conj    *prop_conjs;     /* array */
-	unsigned int prop_conj_cnt;             /* number of elements */
+	struct db_prop_conj    *prop_conjs;     /* v1: array (disjunction of elements) */
+	unsigned int prop_conj_cnt;             /* v1: number of elements */
 
-	struct db_v2_prop      *prop_disj;      /* array */
-	unsigned int prop_disj_cnt;             /* number of elements... OR */
+	struct db_v2_prop      *prop_disj;      /* v2: array */
+	unsigned int prop_disj_cnt;             /* v2: number of elements... OR */
 };
 
 /* The oakley sadb is subscripted by a bitset with members
@@ -151,13 +178,7 @@ extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body 
 					  struct state *st);            /* current state object */
 
 extern void free_sa_attr(struct db_attr *attr);
-extern void free_sa_trans(struct db_trans *tr);
-extern void free_sa_prop(struct db_prop *dp);
-extern void free_sa_prop_conj(struct db_prop_conj *pc);
 extern void free_sa(struct db_sa *f);
-extern void clone_trans(struct db_trans *tr);
-extern void clone_prop(struct db_prop *p, int extra);
-extern void clone_propconj(struct db_prop_conj *pc, int extra);
 extern struct db_sa *sa_copy_sa(struct db_sa *sa, int extra);
 extern struct db_sa *sa_copy_sa_first(struct db_sa *sa);
 extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
@@ -182,7 +203,6 @@ extern void sa_v2_print(struct db_sa *f);
 
 /* IKEv1 <-> IKEv2 things */
 extern struct db_sa *sa_v2_convert(struct db_sa *f);
-extern enum ikev2_trans_type_encr v1tov2_encr(int oakley);
 extern enum ikev2_trans_type_integ v1tov2_integ(int oakley);
 extern enum ikev2_trans_type_integ v1phase2tov2child_integ(
 	int ikev1_phase2_auth);

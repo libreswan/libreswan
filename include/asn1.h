@@ -13,12 +13,13 @@
  *
  */
 
-/* asn1_init() takes a debug argument which does not work when -DNO_DEBUG
+/* asn1_init() takes a debug argument which does not work without DEBUG
  * is specified. It does this to prevent logging private key info using
  * DBG_RAW. We define the two use cases here, it should not cause any
- * logging when -DNO_DEBUG is defined.
+ * logging when DEBUG is undefined.
  */
-#ifdef NO_DEBUG
+#ifndef DEBUG
+/* substitute parts */
 # define DBG_RAW         LELEM(0)
 # define DBG_PRIVATE       LELEM(20)
 #endif

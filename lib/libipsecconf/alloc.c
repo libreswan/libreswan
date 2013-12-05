@@ -1,4 +1,6 @@
-/* FreeS/WAN allocation functions for starter
+/* allocation functions for starter
+ * header: starterlog.h
+ *
  * Copyright (C) 2004 Michael Richardson <mcr@sandelman.ottawa.on.ca>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -18,10 +20,12 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "libreswan.h"
 #include "ipsecconf/starterlog.h"
 
 /*
  * die if allocations fail
+ * ??? these things do not die.  What's the point?
  */
 
 void *xmalloc(size_t s)

@@ -21,6 +21,8 @@ extern int
 	adns_qfd,                       /* file descriptor for sending queries to adns */
 	adns_afd;                       /* file descriptor for receiving answers from adns */
 extern const char *pluto_adns_option;   /* path from --pluto_adns */
+
+extern bool adns_reapchild(pid_t pid, int status);
 extern void init_adns(void);
 extern void stop_adns(void);
 extern void handle_adns_answer(void);
@@ -79,4 +81,3 @@ extern void reset_adns_restart_count(void);
 
 #define _DNSKEY_H_
 #endif /* _DNSKEY_H_ */
-

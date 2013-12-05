@@ -1140,7 +1140,7 @@ int pfkey_show(struct seq_file *seq, void *offset)
 #ifdef SK_FOR_EACH_NEED_NODE
 	struct hlist_node *node;
 #endif
-	
+
 	if (!sysctl_ipsec_debug_verbose) {
 		seq_printf(seq, "    sock   pid   socket     next     prev e n p sndbf    Flags     Type St\n");
 	} else {
@@ -1180,7 +1180,7 @@ int pfkey_show(struct seq_file *seq, void *offset)
 					sock_flag(sk, SOCK_ZAPPED),
 #else
 					sk->sk_zapped,
-#endif					
+#endif
 					sk->sk_protocol,
 					sk->sk_sndbuf,
 					(unsigned int)t.tv_sec,
@@ -1198,9 +1198,9 @@ int pfkey_supported_show(struct seq_file *seq, void *offset)
 {
 	int satype;
 	struct supported_list *ps;
-	
+
 	seq_printf(seq, "satype exttype alg_id ivlen minbits maxbits name\n");
-	
+
 	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		ps = pfkey_supported_list[satype];
 		while (ps) {
@@ -1228,9 +1228,9 @@ int pfkey_registered_show(struct seq_file *seq, void *offset)
 {
 	int satype;
 	struct socket_list *pfkey_sockets;
-	
+
 	seq_printf(seq, "satype   socket   pid       sk\n");
-	
+
 	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		pfkey_sockets = pfkey_registered_sockets[satype];
 		while (pfkey_sockets) {

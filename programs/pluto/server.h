@@ -69,12 +69,4 @@ extern void free_ifaces(void);
 extern void show_debug_status(void);
 extern void call_server(void);
 
-/* in rcv_info.c */
-extern err_t init_info_socket(void);
-extern void delete_info_socket(void);
-
-extern bool adns_reapchild(pid_t pid, int status);
-
-extern const char *init_pluto_vendorid(void);
-
 #endif /* _SERVER_H */

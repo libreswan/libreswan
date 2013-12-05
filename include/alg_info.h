@@ -1,5 +1,5 @@
-/*
- * Algorithm info parsing and creation functions
+/* Algorithm info parsing and creation functions
+ *
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * alg_info.h,v 1.1.2.1 2003/11/21 18:12:23 jjo Exp
@@ -112,26 +112,24 @@ struct alg_info_ike {
 
 extern enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	enum ikev1_auth_attribute auth);
-int alg_info_esp_sadb2aa(int sadb_aalg);
-enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti);
+extern int alg_info_esp_sadb2aa(int sadb_aalg);
+extern enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti);
 
-void alg_info_free(struct alg_info *alg_info);
-void alg_info_addref(struct alg_info *alg_info);
-void alg_info_delref(struct alg_info **alg_info);
-struct alg_info_esp * alg_info_esp_create_from_str(const char *alg_str,
+extern void alg_info_free(struct alg_info *alg_info);
+extern void alg_info_addref(struct alg_info *alg_info);
+extern void alg_info_delref(struct alg_info **alg_info);
+
+extern struct alg_info_esp * alg_info_esp_create_from_str(const char *alg_str,
 						   err_t *err_p);
 
-struct alg_info_esp * alg_info_ah_create_from_str(const char *alg_str,
+extern struct alg_info_esp * alg_info_ah_create_from_str(const char *alg_str,
 						  err_t *err_p);
 
-struct alg_info_ike * alg_info_ike_create_from_str(const char *alg_str,
-						   err_t *err_p);
-
-int alg_info_parse(const char *str);
-int alg_info_snprint(char *buf, int buflen,
+extern int alg_info_parse(const char *str);
+extern int alg_info_snprint(char *buf, int buflen,
 		     struct alg_info *alg_info);
 
-void alg_info_snprint_ike(char *buf, size_t buflen,
+extern void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info);
 #define ALG_INFO_ESP_FOREACH(ai, ai_esp, i) \
 	for (i = (ai)->alg_info_cnt, ai_esp = (ai)->esp; i--; ai_esp++)
@@ -144,8 +142,9 @@ extern int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
 				 const char *postfix, const char *str,
 				 int str_len);
 
-struct parser_context;
-struct oakley_group_desc;
+struct parser_context;	/* so it isn't local to the function prototype */
+struct oakley_group_desc;	/* so it isn't local to the function prototype */
+
 extern int alg_info_parse_str(struct alg_info *alg_info,
 			      const char *alg_str,
 			      const char **err_p,
