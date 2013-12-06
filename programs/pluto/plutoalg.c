@@ -242,7 +242,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 		eklen = esp_info->esp_ealg_keylen;
 		if (!eklen) {
 			eklen =
-				kernel_alg_esp_enc_keylen(esp_info->esp_ealg_id)
+				kernel_alg_esp_enc_max_keylen(esp_info->esp_ealg_id)
 				*
 				BITS_PER_BYTE;
 		}
@@ -515,21 +515,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 
 		/*	add keylegth if specified in esp= string */
-		if (esp_info->esp_ealg_keylen) {
-
-			if (esp_info->esp_ealg_id == ESP_AES_GCM_8 ||
-			    esp_info->esp_ealg_id == ESP_AES_GCM_12 ||
-			    esp_info->esp_ealg_id == ESP_AES_GCM_16 ) {
-
-				db_attr_add_values(db_ctx,
-						   KEY_LENGTH,
-						   esp_info->esp_ealg_keylen - 4 *
-						   BITS_PER_BYTE);
-			} else {
+		if (esp_info->esp_ealg_keylen) {  
 				db_attr_add_values(db_ctx,
 						   KEY_LENGTH,
 						   esp_info->esp_ealg_keylen );
-			}
 		}
 
 	} else if (policy & POLICY_AUTHENTICATE) {
@@ -659,10 +648,10 @@ bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 	 * key_len passed comes from esp_attrs read from peer
 	 * For many older algoritms (eg 3DES) this key_len is fixed
 	 * and get passed as 0.
-	 * ... then get default key_len
+	 * ... then get default (really max!) key_len
 	 */
 	if (key_len == 0)
-		key_len = kernel_alg_esp_enc_keylen(ealg) * BITS_PER_BYTE;
+		key_len = kernel_alg_esp_enc_max_keylen(ealg) * BITS_PER_BYTE;
 
 	/*
 	 * simple test to toss low key_len, will accept it only

@@ -207,22 +207,37 @@ static void compute_proto_keymat(struct state *st,
 			if (st->st_esp.attrs.transattrs.enckeylen) {
 				needed_len =
 					st->st_esp.attrs.transattrs.enckeylen /
-					8;
+					BITS_PER_BYTE;
+				/* XXX: obtained from peer - was it verified for validity yet? */
 			}
+			break;
+		case ESP_AES_GCM_8:
+		case ESP_AES_GCM_12:
+		case ESP_AES_GCM_16:
+			/* valid keysize enforced before we get here */
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
+					st->st_esp.attrs.transattrs.enckeylen == 192 ||
+					st->st_esp.attrs.transattrs.enckeylen == 256);
+				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
+			} else {
+				/* if no keylength set, pick strongest allowed */
+				needed_len = AEAD_AES_KEY_MAX_LEN / BITS_PER_BYTE;
+			}
+			/* AES_GCM requires an extra AES_GCM_SALT_BYTES (4) bytes of salt */
+			needed_len += AES_GCM_SALT_BYTES;
 			break;
 
 		default:
 			if ((needed_len =
-				     kernel_alg_esp_enc_keylen(pi->attrs.
+				     kernel_alg_esp_enc_max_keylen(pi->attrs.
 							       transattrs.
-							       encrypt)) >
-			    0) {
+							       encrypt)) > 0) {
 				/* XXX: check key_len "coupling with kernel.c's */
 				if (pi->attrs.transattrs.enckeylen) {
 					needed_len =
 						pi->attrs.transattrs.enckeylen
-						/
-						8;
+						/ BITS_PER_BYTE;
 					DBG(DBG_PARSING,
 					    DBG_log("compute_proto_keymat:"
 						    "key_len=%d from peer",
