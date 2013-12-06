@@ -716,10 +716,38 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				continue; /* could be clearer as a break */
 			}
 
-			/* esn_matched not tested! */
-			if (dh_matched && prf_matched && integ_matched &&
-			    encr_matched)
+			/* TODO: esn_matched not tested! */
+			/* TODO: This does not support AES GCM with no integ */
+			if (dh_matched && prf_matched && integ_matched && encr_matched) {
+				if (DBGP(DBG_CONTROLMORE)) {
+					/* note: enum_show uses a static buffer so more than one call per
+					   statement is dangerous */
+					char esb[ENUM_SHOW_BUF_LEN];
+		
+					DBG_log("proposal %u %s encr= (policy:%s vs offered:%s)",
+						propnum,
+						encr_matched ? "succeeded" : "failed",
+						enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
+						enum_show(&ikev2_trans_type_encr_names,
+							  encr_transform));
+					/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
+					DBG_log("            %s integ=(policy:%s vs offered:%s)",
+						integ_matched ? "succeeded" : "failed",
+						enum_showb(&ikev2_trans_type_integ_names, integid, esb, sizeof(esb)),
+						enum_show(&ikev2_trans_type_integ_names,
+							  integ_transform));
+					DBG_log("            %s prf=  (policy:%s vs offered:%s)",
+						prf_matched ? "succeeded" : "failed",
+						enum_showb(&ikev2_trans_type_prf_names, prfid, esb, sizeof(esb)),
+						enum_show(&ikev2_trans_type_prf_names,
+							  prf_transform));
+					DBG_log("            %s dh=   (policy:%s vs offered:%s)",
+						dh_matched ? "succeeded" : "failed",
+						enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
+						enum_show(&oakley_group_names, dh_transform));
+				}
 				return TRUE;
+			}
 		}
 		if (DBGP(DBG_CONTROLMORE)) {
 			/* note: enum_show uses a static buffer so more than one call per
@@ -732,6 +760,7 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
 				enum_show(&ikev2_trans_type_encr_names,
 					  encr_transform));
+			/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
 			DBG_log("            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "succeeded" : "failed",
 				enum_showb(&ikev2_trans_type_integ_names, integid, esb, sizeof(esb)),
@@ -755,46 +784,91 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 #define MAX_TRANS_LIST 32         /* 32 is an arbitrary limit */
 
 struct ikev2_transform_list {
-	unsigned int encr_transforms[MAX_TRANS_LIST];
 	int encr_keylens[MAX_TRANS_LIST];
-	unsigned int encr_trans_next, encr_i;
-	unsigned int integ_transforms[MAX_TRANS_LIST];
+	unsigned int encr_transforms[MAX_TRANS_LIST];
+	unsigned int encr_trans_next;
+	unsigned int encr_i;
+
 	int integ_keylens[MAX_TRANS_LIST];
-	unsigned int integ_trans_next, integ_i;
-	unsigned int prf_transforms[MAX_TRANS_LIST];
+	unsigned int integ_transforms[MAX_TRANS_LIST];
+	unsigned int integ_trans_next;
+	unsigned int integ_i;
+
 	int prf_keylens[MAX_TRANS_LIST];
-	unsigned int prf_trans_next, prf_i;
+	unsigned int prf_transforms[MAX_TRANS_LIST];
+	unsigned int prf_trans_next;
+	unsigned int prf_i;
+
 	unsigned int dh_transforms[MAX_TRANS_LIST];
-	unsigned int dh_trans_next, dh_i;
+	unsigned int dh_trans_next;
+	unsigned int dh_i;
+
 	unsigned int esn_transforms[MAX_TRANS_LIST];
-	unsigned int esn_trans_next, esn_i;
+	unsigned int esn_trans_next;
+	unsigned int esn_i;
+
 	u_int32_t spi_values[MAX_TRANS_LIST];
 	unsigned int spi_values_next;
 };
+
+/* should be generalised and put somewhere universal */
+/* we should really have an enum for ESP_* which is shares between IKEv1 and IKEv2 */
+static bool ikev2_enc_requires_integ(enum ikev2_trans_type_encr t)
+{
+	switch (t) {
+        case IKEv2_ENCR_AES_GCM_8:
+        case IKEv2_ENCR_AES_GCM_12:
+        case IKEv2_ENCR_AES_GCM_16:
+		return FALSE;
+	default:
+		return TRUE;
+	}
+}
 
 static bool ikev2_match_transform_list_parent(struct db_sa *sadb,
 					      unsigned int propnum,
 					      struct ikev2_transform_list *itl)
 {
+	bool need_integ;
+	unsigned int i;
+
 	if (itl->encr_trans_next < 1) {
 		libreswan_log("ignored proposal %u with no cipher transforms",
 			      propnum);
 		return FALSE;
 	}
-	if (itl->integ_trans_next < 1) {
-		libreswan_log(
-			"ignored proposal %u with no integrity transforms",
-			propnum);
-		return FALSE;
+	need_integ = ikev2_enc_requires_integ(itl->encr_transforms[0]);
+	for (i = 1; i < itl->encr_trans_next; i++) {
+		if (ikev2_enc_requires_integ(itl->encr_transforms[i]) != need_integ) {
+			libreswan_log("rejecting proposal %u: encryption transforms mix GCM and non-GCM",
+				propnum);
+			return FALSE;
+		}
 	}
+
+	/* AES GCM (RFC 4106) does not have a separate integ */
+	if (need_integ) {
+		if (itl->integ_trans_next == 0) {
+			libreswan_log("rejecting proposal %u: encryption transform requires an integ transform",
+				propnum);
+			return FALSE;
+		}
+	} else {
+		if (itl->integ_trans_next != 0) {
+			libreswan_log("rejecting proposal %u: GCM encryption transform forbids an integ transform",
+				propnum);
+			return FALSE;
+		}
+	}
+
 	if (itl->prf_trans_next < 1) {
-		libreswan_log("ignored proposal %u with no prf transforms",
+		libreswan_log("ignored proposal %u with no prf transform",
 			      propnum);
 		return FALSE;
 	}
 	if (itl->dh_trans_next < 1) {
 		libreswan_log(
-			"ignored proposal %u with no diffie-hellman transforms",
+			"ignored proposal %u with no diffie-hellman transform",
 			propnum);
 		return FALSE;
 	}
@@ -864,13 +938,13 @@ static stf_status ikev2_process_transforms(struct ikev2_prop *prop,
 
 		if (!in_struct(&trans, &ikev2_trans_desc,
 			       prop_pbs, &trans_pbs))
-			return v2N_INVALID_SYNTAX;
+			return STF_FAIL + v2N_INVALID_SYNTAX;
 
 		while (pbs_left(&trans_pbs) != 0) {
 			if (!in_struct(&attr, &ikev2_trans_attr_desc,
 				       &trans_pbs,
 				       &attr_pbs))
-				return v2N_INVALID_SYNTAX;
+				return STF_FAIL + v2N_INVALID_SYNTAX;
 
 			switch (attr.isatr_type) {
 			case IKEv2_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
@@ -900,8 +974,7 @@ static stf_status ikev2_process_transforms(struct ikev2_prop *prop,
 				itl->integ_keylens[itl->integ_trans_next] =
 					keylen;
 				itl->integ_transforms[itl->integ_trans_next++]
-					=
-						trans.isat_transid;
+					= trans.isat_transid;
 			}
 			break;
 
@@ -924,6 +997,20 @@ static stf_status ikev2_process_transforms(struct ikev2_prop *prop,
 				itl->esn_transforms[itl->esn_trans_next++] =
 					trans.isat_transid;
 			break;
+		}
+	}
+	if (itl->integ_trans_next == 0) {
+		itl->integ_transforms[0] = IKEv2_AUTH_NONE;
+		itl->integ_keylens[0] = 0;
+		itl->integ_trans_next = 1;
+	} else if (itl->integ_trans_next > 1) {
+		int i;
+		for (i=0; i < itl->integ_trans_next; i++) {
+			if (itl->integ_transforms[i] == IKEv2_AUTH_NONE) {
+				/* NONE cannot be part of a set of integ algos */
+				libreswan_log("IKEv2_AUTH_NONE integ transform cannot be part of a set - rejecting proposal");
+				return STF_FAIL + v2N_INVALID_SYNTAX;
+			}
 		}
 	}
 	return STF_OK;
@@ -1137,11 +1224,14 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 
 		gotmatch = FALSE;
 
-		{ stf_status ret = ikev2_process_transforms(&proposal,
+		{
+			stf_status ret = ikev2_process_transforms(&proposal,
 							    &proposal_pbs,
 							    itl);
-		  if (ret != STF_OK)
-			  return ret;
+			if (ret != STF_OK) {
+				DBG(DBG_CONTROLMORE, DBG_log("ikev2_process_transforms() failed"));
+				return ret;
+			}
 		}
 
 		lp = proposal.isap_lp;
@@ -1165,8 +1255,10 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 	 * we are out of the loop. There are two situations in which we break
 	 * out: gotmatch == FALSE, means nothing selected.
 	 */
-	if (!gotmatch)
+	if (!gotmatch) {
+		libreswan_log("No proposal selected");
 		return v2N_NO_PROPOSAL_CHOSEN;
+	}
 
 	/* there might be some work to do here if there was a conjunction,
 	 * not sure yet about that case.
@@ -1216,23 +1308,25 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 				int encr_keylen,
 				unsigned integ_transform,
 				int integ_keylen,
-				unsigned esn_transform)
+				unsigned esn_transform,
+				bool gcm_without_integ)
 {
 	struct db_v2_prop *pd;
 	unsigned int pd_cnt;
-	bool encr_matched, integ_matched, esn_matched;
-
-	encr_matched = integ_matched = esn_matched = FALSE;
 
 	for (pd_cnt = 0; pd_cnt < sadb->prop_disj_cnt; pd_cnt++) {
 		struct db_v2_prop_conj  *pj;
 		struct db_v2_trans      *tr;
 		unsigned int tr_cnt;
 		int encrid, integid, prfid, dhid, esnid;
+		bool integ_matched = gcm_without_integ;
+		bool encr_matched = FALSE;
+		bool esn_matched = FALSE;
+		int observed_encr_keylen = 0;
+		int observed_integ_keylen = 0;
 
 		pd = &sadb->prop_disj[pd_cnt];
 		encrid = integid = prfid = dhid = esnid = 0;
-		encr_matched = integ_matched = esn_matched = FALSE;
 
 		/* XXX need to fix this */
 		if (pd->prop_cnt != 1)
@@ -1256,18 +1350,21 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 					keylen = attr->val;
 			}
 
+			DBG(DBG_CONTROLMORE,DBG_log("Starting at transform type %s",
+				enum_show(&ikev2_trans_type_names, tr->transform_type)));
 			switch (tr->transform_type) {
 			case IKEv2_TRANS_TYPE_ENCR:
 				encrid = tr->transid;
-				if (tr->transid == encr_transform && keylen ==
-				    encr_keylen)
+				observed_encr_keylen = keylen;
+				if (tr->transid == encr_transform &&
+				    keylen == encr_keylen)
 					encr_matched = TRUE;
 				break;
 
 			case IKEv2_TRANS_TYPE_INTEG:
 				integid = tr->transid;
-				if (tr->transid == integ_transform && keylen ==
-				    integ_keylen)
+				observed_integ_keylen = keylen;
+				if (tr->transid == integ_transform && keylen == integ_keylen)
 					integ_matched = TRUE;
 				break;
 
@@ -1278,33 +1375,51 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 				break;
 
 			default:
+				DBG(DBG_CONTROLMORE,DBG_log("Not comparing %s transform type",
+					enum_show(&ikev2_trans_type_names, tr->transform_type)));
 				continue;
 			}
 
-			if (esn_matched && integ_matched && encr_matched)
+			if (esn_matched && integ_matched && encr_matched) {
+				DBG(DBG_CONTROLMORE, {
+					DBG_log("proposal %u %s encr= (policy:%s(%d) vs offered:%s(%d))",
+						propnum,
+						encr_matched ? "      " : "failed",
+						enum_name(&ikev2_trans_type_encr_names, encrid), observed_encr_keylen,
+						enum_name(&ikev2_trans_type_encr_names,
+							  encr_transform), encr_keylen);
+					DBG_log("            %s integ=(policy:%s(%d) vs offered:%s(%d))",
+						integ_matched ? "      " : "failed",
+						enum_name(&ikev2_trans_type_integ_names, integid), observed_integ_keylen,
+						enum_name(&ikev2_trans_type_integ_names,
+						  	  integ_transform), integ_keylen);
+					DBG_log("            %s esn=  (policy:%s vs offered:%s)",
+						esn_matched ? "      " : "failed",
+						enum_name(&ikev2_trans_type_esn_names, esnid),
+						enum_name(&ikev2_trans_type_esn_names,
+							  esn_transform));
+				});
 				return TRUE;
+			}
 		}
-		if (DBGP(DBG_CONTROLMORE)) {
-			DBG_log(
-				"proposal %u %s encr= (policy:%s vs offered:%s)",
+		DBG(DBG_CONTROLMORE, {
+			DBG_log("proposal %u %s encr= (policy:%s(%d) vs offered:%s(%d))",
 				propnum,
-				encr_matched ? "failed" : "     ",
-				enum_name(&ikev2_trans_type_encr_names, encrid),
+				encr_matched ? "      " : "failed",
+				enum_name(&ikev2_trans_type_encr_names, encrid), observed_encr_keylen,
 				enum_name(&ikev2_trans_type_encr_names,
-					  encr_transform));
-			DBG_log(
-				"            %s integ=(policy:%s vs offered:%s)",
-				integ_matched ? "failed" : "     ",
-				enum_name(&ikev2_trans_type_integ_names, integid),
+					  encr_transform), encr_keylen);
+			DBG_log("            %s integ=(policy:%s(%d) vs offered:%s(%d))",
+				integ_matched ? "      " : "failed",
+				enum_name(&ikev2_trans_type_integ_names, integid), observed_integ_keylen,
 				enum_name(&ikev2_trans_type_integ_names,
-					  integ_transform));
-			DBG_log(
-				"            %s esn=  (policy:%s vs offered:%s)",
-				esn_matched ? "failed" : "     ",
+				  	  integ_transform), integ_keylen);
+			DBG_log("            %s esn=  (policy:%s vs offered:%s)",
+				esn_matched ? "      " : "failed",
 				enum_name(&ikev2_trans_type_esn_names, esnid),
 				enum_name(&ikev2_trans_type_esn_names,
 					  esn_transform));
-		}
+		});
 
 	}
 	return FALSE;
@@ -1314,19 +1429,41 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 					     unsigned int propnum,
 					     struct ikev2_transform_list *itl)
 {
+	bool gcm_without_integ = FALSE;
+
 	if (itl->encr_trans_next < 1) {
 		libreswan_log("ignored proposal %u with no cipher transforms",
 			      propnum);
 		return FALSE;
+	} 
+	if (itl->encr_trans_next > 1) 
+		libreswan_log("Hugh is surprised there is more than one encryption transform, namely '%u'", itl->encr_trans_next);
+
+	switch(itl->encr_transforms[0]) {
+	case IKEv2_ENCR_AES_GCM_8:
+	case IKEv2_ENCR_AES_GCM_12:
+	case IKEv2_ENCR_AES_GCM_16:
+		gcm_without_integ = TRUE;
+		if (itl->integ_trans_next != 1 || itl->integ_transforms[0] != IKEv2_AUTH_NONE) {
+			libreswan_log(
+				"ignored GCM proposal %u: integrity transform must be IKEv2_AUTH_NONE or absent",
+				propnum);
+			return FALSE;
+		}
+		break;
+	default:
+		passert(itl->integ_trans_next > 0);
+		if (itl->integ_transforms[0] == IKEv2_AUTH_NONE) {
+			libreswan_log(
+				"ignored proposal %u with no integrity transforms (not GCM)",
+				propnum);
+			return FALSE;
+		}
+		break;
 	}
-	if (itl->integ_trans_next < 1) {
-		libreswan_log(
-			"ignored proposal %u with no integrity transforms",
-			propnum);
-		return FALSE;
-	}
+
 	if (itl->esn_trans_next == 0) {
-		/* what is the default for IKEv2? */
+		/* ESN can be enabled for GCM */
 		itl->esn_transforms[itl->esn_trans_next++] =
 			IKEv2_ESN_DISABLED;
 	}
@@ -1335,32 +1472,22 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 	 * now that we have a list of all the possibilities, see if any
 	 * of them fit.
 	 */
-	for (itl->encr_i = 0; itl->encr_i < itl->encr_trans_next;
-	     itl->encr_i++) {
-		for (itl->integ_i = 0; itl->integ_i < itl->integ_trans_next;
-		     itl->integ_i++) {
-			for (itl->esn_i = 0; itl->esn_i < itl->esn_trans_next;
-			     itl->esn_i++) {
+	for (itl->encr_i = 0; itl->encr_i < itl->encr_trans_next; itl->encr_i++) {
+		for (itl->integ_i = 0; itl->integ_i < itl->integ_trans_next; itl->integ_i++) {
+			for (itl->esn_i = 0; itl->esn_i < itl->esn_trans_next; itl->esn_i++) {
 				if (spdb_v2_match_child(sadb, propnum,
-							itl->encr_transforms[
-								itl->encr_i],
-							itl->encr_keylens[itl->
-									  encr_i
-							],
-							itl->integ_transforms[
-								itl->integ_i],
-							itl->integ_keylens[itl
-									   ->
-									   integ_i
-							],
-							itl->esn_transforms[itl
-									    ->
-									    esn_i
-							]))
-					return TRUE;
+					itl->encr_transforms[itl->encr_i],
+					itl->encr_keylens[itl->encr_i],
+					itl->integ_transforms[itl->integ_i],
+					itl->integ_keylens[itl->integ_i],
+					itl->esn_transforms[itl->esn_i], gcm_without_integ))
+						return TRUE;
 			}
 		}
 	}
+	DBG(DBG_CONTROLMORE,
+		DBG_log("proposal %u was not usable - but were we not our best?",
+			propnum));
 	return FALSE;
 }
 
@@ -1387,6 +1514,8 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 	memset(&itl0, 0, sizeof(struct ikev2_transform_list));
 	itl = &itl0;
 
+	DBG(DBG_CONTROLMORE, DBG_log("entered ikev2_parse_child_sa_body()"));
+
 	/* find the policy structures */
 	p2alg = kernel_alg_makedb(c->policy,
 				  c->alg_info_esp,
@@ -1406,8 +1535,10 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 		 */
 
 		if (!in_struct(&proposal, &ikev2_prop_desc, sa_pbs,
-			       &proposal_pbs))
-			return v2N_INVALID_SYNTAX;
+			       &proposal_pbs)) {
+				loglog(RC_LOG_SERIOUS, "corrupted proposal");
+				return v2N_INVALID_SYNTAX;
+		}
 
 		switch (proposal.isap_protoid) {
 		case PROTO_ISAKMP:
@@ -1421,8 +1552,11 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 			if (proposal.isap_spisize == 4) {
 				unsigned int spival;
 				if (!in_raw(&spival, proposal.isap_spisize,
-					    &proposal_pbs, "CHILD SA SPI"))
+					    &proposal_pbs, "CHILD SA SPI")) {
+					loglog(RC_LOG_SERIOUS,
+			       			"Failed to read CHILD SA SPI");
 					return v2N_INVALID_SYNTAX;
+				}
 
 				DBG(DBG_PARSING,
 				    DBG_log("SPI received: %08x", ntohl(
@@ -1468,11 +1602,14 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 
 		gotmatch = FALSE;
 
-		{ stf_status ret = ikev2_process_transforms(&proposal,
-							    &proposal_pbs,
+		{
+			stf_status ret = ikev2_process_transforms(&proposal,
+						    	&proposal_pbs,
 							    itl);
-		  if (ret != STF_OK)
-			  return ret;
+			if (ret != STF_OK) {
+				DBG(DBG_CONTROL, DBG_log("processing transforms() failed"));
+				return ret;
+			}
 		}
 
 		lp = proposal.isap_lp;
@@ -1480,7 +1617,6 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 		if (ikev2_match_transform_list_child(p2alg,
 						     proposal.isap_propnum,
 						     itl)) {
-
 			gotmatch = TRUE;
 			winning_prop = proposal;
 
@@ -1490,6 +1626,8 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 					"More than 1 proposal received from responder, ignoring rest. First one did not match");
 				return v2N_NO_PROPOSAL_CHOSEN;
 			}
+		} else {
+			libreswan_log("ikev2_match_transform_list_child() failed, we should have aborted???");
 		}
 	}
 
@@ -1497,8 +1635,10 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 	 * we are out of the loop. There are two situations in which we break
 	 * out: gotmatch == FALSE, means nothing selected.
 	 */
-	if (!gotmatch)
+	if (!gotmatch) {
+		DBG(DBG_CONTROL, DBG_log("ikev2_parse_child_sa_body() failed to find a match"));
 		return v2N_NO_PROPOSAL_CHOSEN;
+	}
 
 	/* there might be some work to do here if there was a conjunction,
 	 * not sure yet about that case.
@@ -1552,6 +1692,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 					     winning_prop);
 	}
 
+	DBG(DBG_CONTROLMORE,DBG_log("no winning proposal - parent ok but child is a problem"));
 	return v2N_NOTHING_WRONG;
 }
 
