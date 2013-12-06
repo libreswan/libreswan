@@ -628,7 +628,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 		}
 		if (ealg_id < 0) {
 			p_ctx->err = "enc_alg not found";
-			goto out;
+			return -1;
 		}
 
 		/* AES_GCM_128, AES_GCM_192, AES_GCM_256 */
@@ -641,12 +641,8 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			     p_ctx->eklen != 192 &&
 			     p_ctx->eklen != 256 ) {
 				p_ctx->err =
-					"wrong encryption key length with AES-GCM";
-				goto out;
-			} else {
-				/* increase key length by 4 bytes, RFC 4106 */
-				p_ctx->eklen = p_ctx->eklen + 4 *
-					       BITS_PER_BYTE;
+					"wrong encryption key length - AES-GCM only uses 128, 192 or 256";
+				return -1;
 			}
 
 		}
@@ -662,7 +658,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 					      strlen(p_ctx->aalg_buf));
 		if (aalg_id < 0) {
 			p_ctx->err = "hash_alg not found";
-			goto out;
+			return -1;
 		}
 
 		DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
@@ -676,7 +672,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 					      strlen(p_ctx->modp_buf));
 		if (modp_id < 0) {
 			p_ctx->err = "modp group not found";
-			goto out;
+			return -1;
 		}
 
 		DBG(DBG_CRYPT, DBG_log("parser_alg_info_add() "
@@ -686,7 +682,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 
 		if (modp_id && !lookup_group(modp_id)) {
 			p_ctx->err = "found modp group id, but not supported";
-			goto out;
+			return -1;
 		}
 	}
 
@@ -695,9 +691,6 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			aalg_id, p_ctx->aklen,
 			modp_id);
 	return 0;
-
-out:
-	return -1;
 }
 
 int alg_info_parse_str(struct alg_info *alg_info,

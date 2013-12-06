@@ -876,8 +876,10 @@ static stf_status ikev2_parent_inI1outR1_tail(
 						&sa_pd->payload.v2sa,
 						&r_sa_pbs, st, FALSE);
 
-		if (rn != v2N_NOTHING_WRONG)
+		if (rn != v2N_NOTHING_WRONG) {
+			DBG(DBG_CONTROLMORE,DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
 			return STF_FAIL + rn;
+		}
 	}
 
 	{
@@ -1067,8 +1069,10 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 						&sa_pd->payload.v2sa,
 						NULL, st, FALSE);
 
-		if (rn != v2N_NOTHING_WRONG)
+		if (rn != v2N_NOTHING_WRONG) {
+			DBG(DBG_CONTROLMORE,DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
 			return STF_FAIL + rn;
+		}
 	}
 
 	/* update state */
@@ -2047,8 +2051,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			np = ISAKMP_NEXT_v2NONE;
 		} else {
 			DBG_log("CHILD SA proposals received");
-			libreswan_log(
-				"PAUL: this is where we have to check the TSi/TSr");
 			np = ISAKMP_NEXT_v2SA;
 		}
 
@@ -2076,13 +2078,16 @@ static stf_status ikev2_parent_inI2outR2_tail(
 					    "ikev2_child_sa_respond returned STF_FAIL with %s",
 					    enum_name(&ikev2_notify_names,
 						      v2_notify_num)));
-				np = ISAKMP_NEXT_v2NONE;
+				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
+				return ret; /* we should continue building a valid reply packet */
 			} else if (ret != STF_OK) {
 				DBG_log("ikev2_child_sa_respond returned %s", enum_name(
 						&stfstatus_name,
 						ret));
-				np = ISAKMP_NEXT_v2NONE;
+				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
+				return ret; /* we should continue building a valid reply packet */
 			}
+			
 		}
 
 		ikev2_padup_pre_encrypt(md, &e_pbs_cipher);
@@ -2252,20 +2257,23 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	change_state(pst, STATE_PARENT_I3);
 	c->newest_isakmp_sa = pst->st_serialno;
 
-	/* authentication good, see if there is a child SA available */
+	/* authentication good */
+
+	/* TODO: see if there are any notifications */
+
+
+
+	/* See if there is a child SA available */
 	if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
 	    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
 	    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
 		/* not really anything to here... but it would be worth unpending again */
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("no v2SA, v2TSi or v2TSr received, not attempting to setup child SA"));
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("  Should we check for some notify?"));
+		    libreswan_log("no v2SA, v2TSi or v2TSr received, not attempting to setup child SA");
 		/*
 		 * Delete previous retransmission event.
 		 */
 		delete_event(st);
-		return STF_OK;
+		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
 	{
@@ -2293,8 +2301,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		tsi_n = ikev2_parse_ts(tsi_pd, tsi, 16);
 		tsr_n = ikev2_parse_ts(tsr_pd, tsr, 16);
 
-		DBG_log("Checking TSi(%d)/TSr(%d) selectors, looking for exact match",
-			tsi_n, tsr_n);
+		DBG(DBG_CONTROLMORE, DBG_log("Checking TSi(%d)/TSr(%d) selectors, looking for exact match",
+			tsi_n, tsr_n));
 
 		{
 			struct spd_route *sra;
@@ -2406,8 +2414,9 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 					       &sa_pd->payload.v2sa,
 					       NULL, st, FALSE);
 
-		if (rn != v2N_NOTHING_WRONG)
+		if (rn != v2N_NOTHING_WRONG) {
 			return STF_FAIL + rn;
+		}
 	}
 
 	{

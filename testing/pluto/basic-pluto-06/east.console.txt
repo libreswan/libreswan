@@ -8,8 +8,8 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 [ 00.00] alg: No test for cipher_null (cipher_null-generic)
 [ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for compress_null (compress_null-generic)
 [ 00.00] alg: No test for digest_null (digest_null-generic)
+[ 00.00] alg: No test for compress_null (compress_null-generic)
 east #
  ipsec auto --add westnet-eastnet-serpent
 east #
@@ -47,9 +47,9 @@ east #
 000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=160, keysizemax=288
-000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=160, keysizemax=288
-000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
@@ -64,12 +64,17 @@ east #
 000  
 000 IKE algorithms supported:
 000  
-000 algorithm IKE encrypt: id=0, name=(null), blocksize=16, keydeflen=131
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65004, name=OAKLEY_SERPENT_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65005, name=OAKLEY_TWOFISH_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65289, name=OAKLEY_TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=131
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=131
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=131
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=16, v2name=AES_CCM_C, blocksize=16, keydeflen=131
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=15, v2name=AES_CCM_B, blocksize=16, keydeflen=131
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=14, v2name=AES_CCM_A, blocksize=16, keydeflen=131
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -102,8 +107,6 @@ east #
 000 "westnet-eastnet-serpent":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-serpent":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
 000 "westnet-eastnet-serpent":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-serpent":   IKE algorithms wanted: AES_CBC(7)_256-MD5(1)_000-MODP1536(5), AES_CBC(7)_256-SHA1(2)_000-MODP1536(5), AES_CBC(7)_256-MD5(1)_000-MODP1024(2), AES_CBC(7)_256-SHA1(2)_000-MODP1024(2)
-000 "westnet-eastnet-serpent":   IKE algorithms found:  AES_CBC(7)_256-MD5(1)_128-MODP1536(5)AES_CBC(7)_256-SHA1(2)_160-MODP1536(5)AES_CBC(7)_256-MD5(1)_128-MODP1024(2)AES_CBC(7)_256-SHA1(2)_160-MODP1024(2)
 000 "westnet-eastnet-serpent":   ESP algorithms wanted: SERPENT(252)_000-SHA1(2)_000
 000 "westnet-eastnet-serpent":   ESP algorithms loaded: SERPENT(252)_256-SHA1(2)_160
 000  
@@ -121,28 +124,28 @@ east #
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x3e793170 reqid 16385 mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0x05938d93eb2f898495674e218ec9da375a20ff31 96
-	enc cbc(serpent) 0x1ec75821ec6d95bd97e02903a2936b40fcbd9afb4ab137d06de716d983b95732
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(serpent) 0xENCKEY
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0x20692927 reqid 16385 mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xa17410fbedd4e1576e2576a52267df1d9cef43d0 96
-	enc cbc(serpent) 0x2508e2f608ee0f3720f212f1f826cc33a6d1cf0056d687f2bb7c4e7e3d70b7c7
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(serpent) 0xENCKEY
 XFRM policy:
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir out priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16385 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir fwd priority 2344 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid 16385 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid 16385 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 

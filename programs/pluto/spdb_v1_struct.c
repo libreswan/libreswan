@@ -2346,13 +2346,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							   &ah_attrs,
 							   &ah_prop_pbs,
 							   &ah_trans_pbs,
-							   &
-							   isakmp_ah_transform_desc,
+							   &isakmp_ah_transform_desc,
 							   previous_transnum,
 							   selection,
-							   tn ==
-							   ah_proposal.
-							   isap_notrans - 1,
+							   tn == ah_proposal.isap_notrans - 1,
 							   FALSE,
 							   st))
 					return BAD_PROPOSAL_SYNTAX;
@@ -2507,17 +2504,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						}
 						break;
 #endif
-					case ESP_AES_GCM_8:
-					case ESP_AES_GCM_12:
-					case ESP_AES_GCM_16:
-						loglog(RC_LOG_SERIOUS,
-						       "kernel algorithm (AES-GCM) does not like: %s",
-						       ugh);
-						continue;
 
 					case ESP_DES: /* NOT safe */
 						loglog(RC_LOG_SERIOUS,
 						       "1DES was proposed, it is insecure and was rejected");
+						/* Fall through */
 					default:
 						loglog(RC_LOG_SERIOUS,
 						       "kernel algorithm does not like: %s",
@@ -2777,17 +2768,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 		st->st_esp.present = esp_seen;
 		if (esp_seen) {
-			if (esp_attrs.transattrs.encrypt ==  ESP_AES_GCM_8 ||
-			    esp_attrs.transattrs.encrypt == ESP_AES_GCM_12 ||
-			    esp_attrs.transattrs.encrypt == ESP_AES_GCM_16 ) {
-				esp_attrs.transattrs.enckeylen =
-					esp_attrs.transattrs.enckeylen + 4 *
-					BITS_PER_BYTE;
-			}
-
 			st->st_esp.attrs = esp_attrs;
 		}
-
 		st->st_ipcomp.present = ipcomp_seen;
 		if (ipcomp_seen)
 			st->st_ipcomp.attrs = ipcomp_attrs;

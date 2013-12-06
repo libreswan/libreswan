@@ -21,10 +21,6 @@
 #include "lswconf.h"
 #include "lswlog.h"
 
-#define  AES_KEY_MIN_LEN        128
-#define  AES_KEY_DEF_LEN        128
-#define  AES_KEY_MAX_LEN        256
-
 static void do_aes(u_int8_t *buf, size_t buf_len, u_int8_t *key,
 		   size_t key_size, u_int8_t *iv, bool enc)
 {

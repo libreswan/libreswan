@@ -37,7 +37,7 @@ extern err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 extern bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 				    struct alg_info_esp *alg_info);
 /* returns encrypt keylen in BYTES for esp enc alg passed */
-extern int kernel_alg_esp_enc_keylen(int alg_id);
+extern int kernel_alg_esp_enc_max_keylen(int alg_id);
 /* returns bool success if esp auth alg is present  */
 extern err_t kernel_alg_esp_auth_ok(int auth, struct alg_info_esp *nfo);
 

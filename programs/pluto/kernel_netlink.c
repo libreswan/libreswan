@@ -854,6 +854,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window;
 	req.p.reqid = sa->reqid;
+	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
 	req.p.lft.soft_packet_limit = XFRM_INF;
 	req.p.lft.hard_byte_limit = XFRM_INF;
@@ -883,8 +884,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		if ( (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256) ||
 		     (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) ) {
 			struct xfrm_algo_auth algo;
-			DBG(DBG_KERNEL,
-			    DBG_log(
+			    DBG(DBG_KERNEL, DBG_log(
 				    "  using new struct xfrm_algo_auth for XFRM message with explicit truncation for sha2_256"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			algo.alg_trunc_len =
@@ -906,8 +906,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 		} else {
 			struct xfrm_algo algo;
-			DBG(DBG_KERNEL,
-			    DBG_log(
+			    DBG(DBG_KERNEL, DBG_log(
 				    "  using old struct xfrm_algo for XFRM message"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			attr->rta_type = XFRMA_ALG_AUTH;
@@ -1067,11 +1066,6 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	return send_netlink_msg(&req.n, NULL, 0, "Del SA", sa->text_said);
 }
 
-/* XXX Move these elsewhere */
-#define  AES_KEY_MIN_LEN       128
-#define  AES_KEY_DEF_LEN       128
-#define  AES_KEY_MAX_LEN       256
-
 static struct encrypt_desc algo_aes_ccm_8 =
 {
 	.common = {
@@ -1082,9 +1076,10 @@ static struct encrypt_desc algo_aes_ccm_8 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
-	.keyminlen =      AES_KEY_MIN_LEN + 3,
-	.keydeflen =      AES_KEY_DEF_LEN + 3,
-	.keymaxlen =      AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
+	.keyminlen =      AEAD_AES_KEY_MIN_LEN + 3, /* What's 3? */
+	.keydeflen =      AEAD_AES_KEY_DEF_LEN + 3,
+	.keymaxlen =      AEAD_AES_KEY_MAX_LEN + 3,
 };
 
 static struct encrypt_desc algo_aes_ccm_12 =
@@ -1097,9 +1092,10 @@ static struct encrypt_desc algo_aes_ccm_12 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
-	.keyminlen =      AES_KEY_MIN_LEN + 3,
-	.keydeflen =      AES_KEY_DEF_LEN + 3,
-	.keymaxlen =      AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
+	.keyminlen =      AEAD_AES_KEY_MIN_LEN + 3, /* What's 3? */
+	.keydeflen =      AEAD_AES_KEY_DEF_LEN + 3,
+	.keymaxlen =      AEAD_AES_KEY_MAX_LEN + 3,
 };
 
 static struct encrypt_desc algo_aes_ccm_16 =
@@ -1112,9 +1108,10 @@ static struct encrypt_desc algo_aes_ccm_16 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	.keyminlen =     AES_KEY_MIN_LEN + 3,
-	.keydeflen =     AES_KEY_DEF_LEN + 3,
-	.keymaxlen =     AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
+	.keyminlen =     AEAD_AES_KEY_MIN_LEN + 3,
+	.keydeflen =     AEAD_AES_KEY_DEF_LEN + 3,
+	.keymaxlen =     AEAD_AES_KEY_MAX_LEN + 3,
 };
 
 static struct encrypt_desc algo_aes_gcm_8 =
@@ -1127,9 +1124,10 @@ static struct encrypt_desc algo_aes_gcm_8 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	.keyminlen =     AES_KEY_MIN_LEN + 3,
-	.keydeflen =     AES_KEY_DEF_LEN + 3,
-	.keymaxlen =     AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
+	.keyminlen =     AEAD_AES_KEY_MIN_LEN + 3,
+	.keydeflen =     AEAD_AES_KEY_DEF_LEN + 3,
+	.keymaxlen =     AEAD_AES_KEY_MAX_LEN + 3,
 };
 
 static struct encrypt_desc algo_aes_gcm_12 =
@@ -1142,9 +1140,10 @@ static struct encrypt_desc algo_aes_gcm_12 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	.keyminlen =     AES_KEY_MIN_LEN + 3,
-	.keydeflen =     AES_KEY_DEF_LEN + 3,
-	.keymaxlen =     AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
+	.keyminlen =     AEAD_AES_KEY_MIN_LEN + 3,
+	.keydeflen =     AEAD_AES_KEY_DEF_LEN + 3,
+	.keymaxlen =     AEAD_AES_KEY_MAX_LEN + 3,
 };
 
 static struct encrypt_desc algo_aes_gcm_16 =
@@ -1157,9 +1156,10 @@ static struct encrypt_desc algo_aes_gcm_16 =
 		.algo_next =  NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	.keyminlen =    AES_KEY_MIN_LEN + 3,
-	.keydeflen =    AES_KEY_DEF_LEN + 3,
-	.keymaxlen =    AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
+	.keyminlen =    AEAD_AES_KEY_MIN_LEN + 3,
+	.keydeflen =    AEAD_AES_KEY_DEF_LEN + 3,
+	.keymaxlen =    AEAD_AES_KEY_MAX_LEN + 3,
 };
 
 static void linux_pfkey_add_aead(void)
@@ -1169,25 +1169,28 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_reserved = 0;
 
 	alg.sadb_alg_ivlen = 8;
-	alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
-	alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
+	alg.sadb_alg_minbits = 128;
+	alg.sadb_alg_maxbits = 256;
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV8;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for ESP");
 
 	alg.sadb_alg_ivlen = 12;
-	alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
-	alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
+	alg.sadb_alg_minbits = 128;
+	alg.sadb_alg_maxbits = 256;
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV12;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for ESP");
 
 	alg.sadb_alg_ivlen = 16;
-	alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
-	alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
+	alg.sadb_alg_minbits = 128;
+	alg.sadb_alg_maxbits = 256;
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV16;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for ESP");
 
 	/* keeping aes-ccm behaviour intact as before */
 	alg.sadb_alg_ivlen = 8;
@@ -1195,18 +1198,29 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_maxbits = 256;
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV8;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for ESP");
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV12;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for ESP");
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV16;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for ESP");
 
-	ike_alg_register_enc(&algo_aes_ccm_8);
-	ike_alg_register_enc(&algo_aes_ccm_12);
-	ike_alg_register_enc(&algo_aes_ccm_16);
-	ike_alg_register_enc(&algo_aes_gcm_8);
-	ike_alg_register_enc(&algo_aes_gcm_12);
-	ike_alg_register_enc(&algo_aes_gcm_16);
+	if(!ike_alg_register_enc(&algo_aes_ccm_8))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_ccm_12))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_ccm_16))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_gcm_8))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_gcm_12))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_gcm_16))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for IKE");
+
+	DBG(DBG_CONTROLMORE, DBG_log("Registered AEAD AES CCM/GCM algorithms"));
 }
 
 static void linux_pfkey_register_response(const struct sadb_msg *msg)
@@ -1236,6 +1250,7 @@ static void linux_pfkey_register(void)
 	netlink_register_proto(SADB_SATYPE_ESP, "ESP");
 	netlink_register_proto(SADB_X_SATYPE_IPCOMP, "IPCOMP");
 	pfkey_close();
+	DBG(DBG_CONTROLMORE, DBG_log("Registered AH, ESP and IPCOMP"));
 }
 
 /** Create ip_address out of xfrm_address_t.

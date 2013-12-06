@@ -167,9 +167,6 @@ err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 					alg_p->sadb_alg_minbits,
 					alg_p->sadb_alg_maxbits);
 			goto out;
-		} else {
-			/* increase key length by 4 bytes (RFC 4106)*/
-			key_len = key_len + 4 * BITS_PER_BYTE;
 		}
 	}
 
@@ -341,32 +338,20 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg_buf, int buflen)
 	}
 }
 
-int kernel_alg_esp_enc_keylen(int alg_id)
+int kernel_alg_esp_enc_max_keylen(int alg_id)
 {
 	int keylen = 0;
 
-	if (!ESP_EALG_PRESENT(alg_id))
-		goto none;
-	keylen = esp_ealg[alg_id].sadb_alg_maxbits / BITS_PER_BYTE;
-	switch (alg_id) {
-	/*
-	 * this is veryUgly[TM]
-	 * Peer should have sent KEY_LENGTH attribute for ESP_AES
-	 * but if not do force it to 128 instead of using sadb_alg_maxbits
-	 * from kernel.
-	 * That's the case for alg-0.7.x and earlier versions.
-	 *
-	 * --jjo 01-Oct-02
-	 */
-	case ESP_AES:
-		keylen = 128 / BITS_PER_BYTE;
-		break;
+	if (!ESP_EALG_PRESENT(alg_id)) {
+        	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_max_keylen():"
+                     "alg_id=%d not found",alg_id));
+		return 0;
 	}
-none:
-	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_keylen():"
+
+	keylen = esp_ealg[alg_id].sadb_alg_maxbits / BITS_PER_BYTE;
+	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_max_keylen():"
 			       "alg_id=%d, keylen=%d",
 			       alg_id, keylen));
-
 	return keylen;
 }
 

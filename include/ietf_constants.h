@@ -274,6 +274,20 @@
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
 
+/*
+ * RFC 4106 AES GCM
+ * http://tools.ietf.org/html/rfc4106#section-8.1
+ */
+#define AES_GCM_SALT_BYTES 4
+/* Actually, the only valid values are 128, 192 and 256 bits */
+#define  AEAD_AES_KEY_MIN_LEN       128
+#define  AEAD_AES_KEY_DEF_LEN       128
+#define  AEAD_AES_KEY_MAX_LEN       256
+
+#define  AES_KEY_MIN_LEN        128
+#define  AES_KEY_DEF_LEN        128
+#define  AES_KEY_MAX_LEN        256
+
  /* ought to be supplied by md5.h */
 #define MD5_DIGEST_SIZE BYTES_FOR_BITS(128)
 /* IKEV2 integrity algorithms */
@@ -344,6 +358,7 @@
  */
 #define IPSEC_DOI_SPI_MIN 0x100
 #define IPSEC_DOI_SPI_OUR_MIN 0x1000
+
 
 /*
  * Payload types
@@ -627,7 +642,6 @@ extern const char *const critical_names[];
 
 /*
  * extern enum_names protocol_names;
- * same in IKEv1 and IKEv2.
  */
 #define PROTO_RESERVED 0 /* only in IKEv2 */
 #define PROTO_v2_RESERVED 0 /* only in IKEv2 */
@@ -636,6 +650,21 @@ extern const char *const critical_names[];
 #define PROTO_IPSEC_ESP 3
 #define PROTO_v2_ESP 3
 #define PROTO_IPCOMP 4 /* only in IKEv1 */
+
+/*
+ * IKEv2 Security Protocol Identifiers - RFC 5996
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-18
+ */
+enum ikev2_sec_proto_id {
+	/* 0 - Reserved */
+	IKEv2_SEC_PROTO_IKE = 1,
+	IKEv2_SEC_PROTO_AH = 2,
+	IKEv2_SEC_PROTO_ESP = 3,
+	IKEv2_SEC_FC_ESP_HEADER = 4, /* RFC 4595 */
+	IKEv2_SEC_FC_CT_AUTHENTICATION = 5, /* RFC 4595 */
+	/* 6 - 200 Unassigned */
+	/* 201 - 255 Private use */
+};
 
 /*
  * IKEv2 proposal
@@ -1236,6 +1265,10 @@ enum pubkey_alg {
 #define ISAKMP_ATTR_AF_TLV 0 /* length in lv; value follows */
 
 #define ISAKMP_ATTR_RTYPE_MASK 0x7FFF
+
+/* 
+ * ESP algorithms come in via ipsec_cipher_algo in libreswan/ipsec_policy.h
+ */
 
 /*
  * NOTE:

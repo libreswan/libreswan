@@ -62,6 +62,7 @@ extern enum_names ikev1_notify_names;
 
 /* IKEv2 */
 extern enum_names ikev2_auth_names;
+extern enum_names ikev2_sec_proto_id_names;
 extern enum_names ikev2_trans_type_names;
 extern enum_names ikev2_trans_type_encr_names;
 extern enum_names ikev2_trans_type_prf_names;
