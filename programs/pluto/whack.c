@@ -216,7 +216,6 @@ static void help(void)
 		" \\\n   "
 		" [--debug-control]"
 		" [--debug-controlmore]"
-		" [--debug-klips]"
 		" [--debug-dns]"
 		" [--debug-pfkey]"
 		" [--debug-dpd]"
@@ -508,7 +507,7 @@ enum option_enums {
 	DBGOPT_EMITTING,        /* same order as DBG_* */
 	DBGOPT_CONTROL,         /* same order as DBG_* */
 	DBGOPT_LIFECYCLE,       /* same order as DBG_* */
-	DBGOPT_KLIPS,           /* same order as DBG_* */
+	DBGOPT_KERNEL,          /* same order as DBG_* */
 	DBGOPT_DNS,             /* same order as DBG_* */
 	DBGOPT_OPPO,            /* same order as DBG_* */
 	DBGOPT_CONTROLMORE,     /* same order as DBG_* */
@@ -749,7 +748,7 @@ static const struct option long_opts[] = {
 	{ "debug-emitting", no_argument, NULL, DBGOPT_EMITTING + OO },
 	{ "debug-control", no_argument, NULL, DBGOPT_CONTROL + OO },
 	{ "debug-lifecycle", no_argument, NULL, DBGOPT_LIFECYCLE + OO },
-	{ "debug-klips", no_argument, NULL, DBGOPT_KLIPS + OO },
+	{ "debug-kernel", no_argument, NULL, DBGOPT_KERNEL + OO },
 	{ "debug-dns", no_argument, NULL, DBGOPT_DNS + OO },
 	{ "debug-oppo", no_argument, NULL, DBGOPT_OPPO + OO },
 	{ "debug-oppoinfo", no_argument, NULL, DBGOPT_OPPOINFO + OO },
@@ -1805,12 +1804,12 @@ int main(int argc, char **argv)
 		case DBGOPT_EMITTING:                           /* --debug-emitting */
 		case DBGOPT_CONTROL:                            /* --debug-control */
 		case DBGOPT_LIFECYCLE:                          /* --debug-lifecycle */
-		case DBGOPT_KLIPS:                              /* --debug-klips */
+		case DBGOPT_KERNEL:                             /* --debug-kernel */
 		case DBGOPT_DNS:                                /* --debug-dns */
 		case DBGOPT_OPPO:                               /* --debug-oppo */
 		case DBGOPT_CONTROLMORE:                        /* --debug-controlmore */
 		case DBGOPT_PFKEY:                              /* --debug-pfkey */
-		case DBGOPT_NATT:                               /* --debug-pfkey */
+		case DBGOPT_NATT:                               /* --debug-natt */
 		case DBGOPT_X509:                               /* --debug-pfkey */
 		case DBGOPT_DPD:                                /* --debug-dpd */
 		case DBGOPT_OPPOINFO:                           /* --debug-oppoinfo */
