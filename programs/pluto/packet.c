@@ -725,7 +725,7 @@ static field_desc ikev2prop_fields[] = {
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "prop #", NULL },
-	{ ft_nat,  8 / BITS_PER_BYTE, "proto ID", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "proto ID", &ikev2_sec_proto_id_names },
 	{ ft_nat,  8 / BITS_PER_BYTE, "spi size", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "# transforms", NULL },
 	{ ft_end,  0, NULL, NULL }
