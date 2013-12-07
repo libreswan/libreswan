@@ -353,7 +353,7 @@ ctltest	aggr-unit-02			good
 # 
 # a testcase with pfs=yes connecting to pfs=no
 #
-umlplutotest	basic-pluto-09		good
+kvmplutotest	basic-pluto-09		good
 
 # 
 # a testcase with esp=null-md5
