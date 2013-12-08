@@ -632,16 +632,18 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 		}
 
 		/* AES_GCM_128, AES_GCM_192, AES_GCM_256 */
-		if (ealg_id == ESP_AES_GCM_8 ||
-		    ealg_id == ESP_AES_GCM_12 ||
-		    ealg_id == ESP_AES_GCM_16) {
-
-			/* AES-GCM length key length + 4 bytes (32 bits) */
+		switch(ealg_id) {
+		case ESP_AES_GCM_8:
+		case ESP_AES_GCM_12:
+		case ESP_AES_GCM_16:
+		case ESP_AES_CCM_8:
+		case ESP_AES_CCM_12:
+		case ESP_AES_CCM_16:
 			if ( p_ctx->eklen != 128 &&
 			     p_ctx->eklen != 192 &&
 			     p_ctx->eklen != 256 ) {
 				p_ctx->err =
-					"wrong encryption key length - AES-GCM only uses 128, 192 or 256";
+					"wrong encryption key length - AES CCM/GCM only uses 128, 192 or 256";
 				return -1;
 			}
 
