@@ -355,14 +355,6 @@ ctltest	aggr-unit-02			good
 #
 kvmplutotest	basic-pluto-09		good
 
-# 
-# a testcase with esp=null-md5
-# will normally fail, do not run it.
-#
-umlplutotest	basic-pluto-10		skip
-
-kvmplutotest	basic-pluto-11		good
-
 #
 # test cases of what happens to X.509 based authorization system
 # when certain error conditions are met or parts of the CA are
@@ -400,12 +392,16 @@ umlXhost	psk-pluto-03		good
 umlXhost	psk-pluto-04		good
 
 #
-# tests using alternative ESP algorithms such as twofish and serpent
+# tests using alternative ESP algorithms
 #
-kvmplutotest	basic-pluto-06		good
-kvmplutotest	basic-pluto-07		good
-kvmplutotest	basic-pluto-12		good
-kvmplutotest	basic-pluto-13		good
+kvmplutotest	netkey-algo-twofish-01	good
+kvmplutotest	klips-algo-twofish-01	good
+kvmplutotest	netkey-algo-serpent-01	good
+kvmplutotest	klips-algo-serpent-01	good
+kvmplutotest	netkey-algo-camellia-01	good
+kvmplutotest	netkey-algo-cast-01	good
+kvmplutotest	netkey-algo-null-01	good
+kvmplutotest	netkey-algo-null-02	good
 
 #
 # a test of using twofish with pluto, twofish for phase2
@@ -445,13 +441,11 @@ umlplutotest	ike-algo-02		good
 
 # Tests below require testing infrastructure with netkey support
 kvmplutotest    algo-pluto-07			good
-kvmplutotest    algo-pluto-08			good
 umlplutotest    netkey-pluto-01			good
 umlplutotest    netkey-pluto-02			good
 umlplutotest    netkey-pluto-03-sourceip        good
 umlplutotest    netkey-pluto-04			good
 umlplutotest    netkey-pluto-05			good
-kvmplutotest    netkey-pluto-06			good
 umlplutotest    netkey-psk-pluto-06		good
 umlplutotest	netkey-psk-vhost-01		good
 umlplutotest	netkey-psk-vhost-02		good

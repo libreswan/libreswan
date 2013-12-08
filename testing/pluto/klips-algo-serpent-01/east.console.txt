@@ -15,11 +15,10 @@ east #
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+ ipsec auto --add westnet-eastnet-serpent
 east #
  ipsec auto --status
 000 using kernel interface: klips
-000 interface ipsec0/eth1 192.1.2.23
 000 interface ipsec0/eth1 192.1.2.23
 000  
 000 fips mode=disabled;
@@ -35,10 +34,7 @@ east #
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=yes, keep_alive=20, nat_ikeport=4500, disable_port_floating=no
-000 virtual_private (%priv):
-000 - allowed 3 subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
-000 - disallowed 2 subnets: 192.0.2.0/24, 2001:db8:0:2::/64
+000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
 000  
 000 ESP algorithms supported:
 000  
@@ -78,18 +74,20 @@ east #
 000  
 000 Connection list:
 000  
-000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ipv4-psk-ikev2":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   labeled_ipsec:no, loopback:no; 
-000 "westnet-eastnet-ipv4-psk-ikev2":    policy_label:unset; 
-000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet-ipv4-psk-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ipv4-psk-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+IKEv2ALLOW_NARROWING+SAREFTRACK+IKE_FRAG; 
-000 "westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
-000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-serpent": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-serpent":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-serpent":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-serpent":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet-serpent":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-serpent":    policy_label:unset; 
+000 "westnet-eastnet-serpent":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-serpent":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "westnet-eastnet-serpent":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "westnet-eastnet-serpent":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-serpent":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet-serpent":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-serpent":   ESP algorithms wanted: SERPENT(252)_000-SHA1(2)_000
+000 "westnet-eastnet-serpent":   ESP algorithms loaded: SERPENT(252)_256-SHA1(2)_160
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -106,8 +104,8 @@ east NOW
 192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=1
+esp0xKLIPSPIK@192.1.2.45 ESP_SERPENT_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=256 jiffies=0123456789  natencap=na   refhim=0
+esp0xKLIPSPIK@192.1.2.23 ESP_SERPENT_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=256 jiffies=0123456789  natencap=na   refhim=1
 tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=na   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 

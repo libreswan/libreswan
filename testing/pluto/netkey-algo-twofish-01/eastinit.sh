@@ -2,6 +2,6 @@
 ipsec _stackmanager start 
 /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-null
+ipsec auto --add westnet-eastnet-twofish
 ipsec auto --status
 echo "initdone"
