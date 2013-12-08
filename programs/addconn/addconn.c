@@ -57,7 +57,6 @@
 
 char *progname;
 static int verbose = 0;
-int warningsarefatal = 0;
 
 /* Buffer size for netlink query (~100 bytes) and replies.
  * If DST is specified, reply will be ~100 bytes.
@@ -427,7 +426,7 @@ void resolve_defaultroute(struct starter_conn *conn)
 static const char *usage_string = ""
 				  "Usage: addconn [--config file] [--rootdir dir] [--ctlbase socketfile] \n"
 				  "               [--varprefix prefix] [--noexport] \n"
-				  "               [--verbose] [--warningsfatal] \n"
+				  "               [--verbose] \n"
 				  "               [--configsetup] \n"
 				  "               [--liststack] \n"
 				  "               [--checkconfig] \n"
@@ -448,7 +447,6 @@ static struct option const longopts[] =
 	{ "config",              required_argument, NULL, 'C' },
 	{ "debug",               no_argument, NULL, 'D' },
 	{ "verbose",             no_argument, NULL, 'D' },
-	{ "warningsfatal",       no_argument, NULL, 'W' },
 	{ "addall",              no_argument, NULL, 'a' },
 	{ "autoall",             no_argument, NULL, 'a' },
 	{ "listall",             no_argument, NULL, 'A' },
@@ -514,10 +512,6 @@ int main(int argc, char *argv[])
 		case 'D':
 			verbose++;
 			lex_verbosity++;
-			break;
-
-		case 'W':
-			warningsarefatal++;
 			break;
 
 		case 'T':

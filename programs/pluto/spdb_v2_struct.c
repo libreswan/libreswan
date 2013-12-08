@@ -819,6 +819,9 @@ static bool ikev2_enc_requires_integ(enum ikev2_trans_type_encr t)
         case IKEv2_ENCR_AES_GCM_8:
         case IKEv2_ENCR_AES_GCM_12:
         case IKEv2_ENCR_AES_GCM_16:
+	case IKEv2_ENCR_AES_CCM_8:
+	case IKEv2_ENCR_AES_CCM_12:
+	case IKEv2_ENCR_AES_CCM_16:
 		return FALSE;
 	default:
 		return TRUE;
@@ -840,13 +843,13 @@ static bool ikev2_match_transform_list_parent(struct db_sa *sadb,
 	need_integ = ikev2_enc_requires_integ(itl->encr_transforms[0]);
 	for (i = 1; i < itl->encr_trans_next; i++) {
 		if (ikev2_enc_requires_integ(itl->encr_transforms[i]) != need_integ) {
-			libreswan_log("rejecting proposal %u: encryption transforms mix GCM and non-GCM",
+			libreswan_log("rejecting proposal %u: encryption transforms mix CCM/GCM and non-CCM/GCM",
 				propnum);
 			return FALSE;
 		}
 	}
 
-	/* AES GCM (RFC 4106) does not have a separate integ */
+	/* AES CCM (4309) and GCM (RFC 4106) do not have a separate integ */
 	if (need_integ) {
 		if (itl->integ_trans_next == 0) {
 			libreswan_log("rejecting proposal %u: encryption transform requires an integ transform",
@@ -855,7 +858,7 @@ static bool ikev2_match_transform_list_parent(struct db_sa *sadb,
 		}
 	} else {
 		if (itl->integ_trans_next != 0) {
-			libreswan_log("rejecting proposal %u: GCM encryption transform forbids an integ transform",
+			libreswan_log("rejecting proposal %u: CCM/GCM encryption transform forbids an integ transform",
 				propnum);
 			return FALSE;
 		}
@@ -1443,10 +1446,13 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 	case IKEv2_ENCR_AES_GCM_8:
 	case IKEv2_ENCR_AES_GCM_12:
 	case IKEv2_ENCR_AES_GCM_16:
+	case IKEv2_ENCR_AES_CCM_8:
+	case IKEv2_ENCR_AES_CCM_12:
+	case IKEv2_ENCR_AES_CCM_16:
 		gcm_without_integ = TRUE;
 		if (itl->integ_trans_next != 1 || itl->integ_transforms[0] != IKEv2_AUTH_NONE) {
 			libreswan_log(
-				"ignored GCM proposal %u: integrity transform must be IKEv2_AUTH_NONE or absent",
+				"ignored CCM/GCM proposal %u: integrity transform must be IKEv2_AUTH_NONE or absent",
 				propnum);
 			return FALSE;
 		}
@@ -1455,7 +1461,7 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 		passert(itl->integ_trans_next > 0);
 		if (itl->integ_transforms[0] == IKEv2_AUTH_NONE) {
 			libreswan_log(
-				"ignored proposal %u with no integrity transforms (not GCM)",
+				"ignored proposal %u with no integrity transforms (not CCM/GCM)",
 				propnum);
 			return FALSE;
 		}
