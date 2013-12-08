@@ -56,7 +56,6 @@
 
 char *progname;
 static int verbose = 0;
-int warningsarefatal = 0;
 
 static const char *usage_string = ""
 				  "Usage: readwriteconn [--config <file>] [--debug] [--rootdir <dir>] [--rootdir2 <dir2>] \n";
@@ -105,10 +104,6 @@ int main(int argc, char *argv[])
 		case 'D':
 			verbose++;
 			lex_verbosity++;
-			break;
-
-		case 'W':
-			warningsarefatal++;
 			break;
 
 		case 'C':
