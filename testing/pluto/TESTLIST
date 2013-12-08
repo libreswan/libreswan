@@ -508,9 +508,11 @@ umlplutotest	ikev2-x509-02		good
 
 # modp tests for checking if we deal with sending different KE's
 kvmplutotest	ikev2-algo-01-modp2048-initiator	good
-kvmlplutotest	ikev2-algo-02-modp2048-responder	good
+kvmplutotest	ikev2-algo-02-modp2048-responder	good
 kvmplutotest	ikev2-algo-03-aes-ccm			good
 kvmplutotest	ikev2-algo-04-aes-gcm			good
+kvmplutotest	netkey-algo-aes_gcm-01			good
+kvmplutotest	netkey-algo-aes_ccm-01			good
 
 # various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good

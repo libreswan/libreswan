@@ -8,8 +8,8 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 [ 00.00] alg: No test for cipher_null (cipher_null-generic)
 [ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
 [ 00.00] alg: No test for compress_null (compress_null-generic)
+[ 00.00] alg: No test for digest_null (digest_null-generic)
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-ccm-a
 east #
@@ -47,9 +47,9 @@ east #
 000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=160, keysizemax=288
-000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=160, keysizemax=288
-000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
@@ -64,12 +64,17 @@ east #
 000  
 000 IKE algorithms supported:
 000  
-000 algorithm IKE encrypt: id=0, name=(null), blocksize=16, keydeflen=131
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65004, name=OAKLEY_SERPENT_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65005, name=OAKLEY_TWOFISH_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65289, name=OAKLEY_TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=16, v2name=AES_CCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=15, v2name=AES_CCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=14, v2name=AES_CCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -102,8 +107,8 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms wanted: AES_CCM_A(14)_152-NONE(0)_000
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms loaded: AES_CCM_A(14)_152-NONE(0)_000
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms wanted: AES_CCM_A(14)_128-NONE(0)_000
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms loaded: AES_CCM_A(14)_128-NONE(0)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -116,61 +121,114 @@ east #
 initdone
 east #
  ipsec look
-east NOW
-XFRM state:
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0xENCAUTHKEY 64
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4309(ccm(aes)) 0xENCAUTHKEY 64
-XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir fwd priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir in priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-XFRM done
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
-192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 east #
+000 using kernel interface: netkey
+000 interface lo/lo 127.0.0.1
+000 interface eth0/eth0 192.0.2.254
+000 interface eth1/eth1 192.1.2.23
+000 interface eth2/eth2 192.9.2.23
+000  
+000 fips mode=disabled;
+000 SElinux=enabled
+000  
+000 config setup options:
+000  
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
+000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
+000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
+000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
+000 secctx_attr_value=XXXX
+000 myid = (none)
+000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
+000  
+000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
+000  
+000 ESP algorithms supported:
+000  
+000 algorithm ESP encrypt: id=2, name=ESP_DES, ivlen=8, keysizemin=64, keysizemax=64
+000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=8, keysizemin=40, keysizemax=128
+000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=8, keysizemin=40, keysizemax=448
+000 algorithm ESP encrypt: id=11, name=ESP_NULL, ivlen=0, keysizemin=0, keysizemax=0
+000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=13, name=ESP_AES_CTR, ivlen=8, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm ESP auth attr: id=5, name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
+000 algorithm ESP auth attr: id=6, name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
+000 algorithm ESP auth attr: id=7, name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
+000 algorithm ESP auth attr: id=8, name=AUTH_ALGORITHM_HMAC_RIPEMD, keysizemin=160, keysizemax=160
+000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm ESP auth attr: id=251, name=AUTH_ALGORITHM_NULL_KAME, keysizemin=0, keysizemax=0
+000  
+000 IKE algorithms supported:
+000  
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=16, v2name=AES_CCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=15, v2name=AES_CCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=14, v2name=AES_CCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
+000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
+000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashsize=48
+000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashsize=64
+000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
+000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
+000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
+000 algorithm IKE dh group: id=15, name=OAKLEY_GROUP_MODP3072, bits=3072
+000 algorithm IKE dh group: id=16, name=OAKLEY_GROUP_MODP4096, bits=4096
+000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
+000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
+000 algorithm IKE dh group: id=22, name=OAKLEY_GROUP_DH22, bits=1024
+000 algorithm IKE dh group: id=23, name=OAKLEY_GROUP_DH23, bits=2048
+000 algorithm IKE dh group: id=24, name=OAKLEY_GROUP_DH24, bits=2048
+000  
+000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,1,64} trans={0,1,3072} attrs={0,1,2048} 
+000  
+000 Connection list:
+000  
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; erouted; eroute owner: #2
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":    policy_label:unset; 
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   IKEv2 algorithm newest: AES_CBC_128-AUTH_HMAC_SHA1_96-PRF_HMAC_SHA1-MODP2048
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms wanted: AES_CCM_A(14)_128-NONE(0)_000
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms loaded: AES_CCM_A(14)_128-NONE(0)_000
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithm newest: AES_CCM_A_128-NONE; pfsgroup=<Phase1>
+000  
+000 Total IPsec connections: loaded 1, active 1
+000  
+000 State list:
+000  
+000 #2: "westnet-eastnet-ipv4-psk-ikev2-ccm-a":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; idle; import:respond to stranger
+000 #1: "westnet-eastnet-ipv4-psk-ikev2-ccm-a":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; idle; import:respond to stranger
+000  
+000 Shunt list:
+000  
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 east #
