@@ -1076,10 +1076,10 @@ static struct encrypt_desc algo_aes_ccm_8 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
-	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN + 3, /* What's 3? */
-	.keydeflen =      AEAD_AES_KEY_DEF_LEN + 3,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
 };
 
 static struct encrypt_desc algo_aes_ccm_12 =
@@ -1092,10 +1092,10 @@ static struct encrypt_desc algo_aes_ccm_12 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
-	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
-	.keyminlen =      AEAD_AES_KEY_MIN_LEN + 3, /* What's 3? */
-	.keydeflen =      AEAD_AES_KEY_DEF_LEN + 3,
-	.keymaxlen =      AEAD_AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
 };
 
 static struct encrypt_desc algo_aes_ccm_16 =
@@ -1108,10 +1108,10 @@ static struct encrypt_desc algo_aes_ccm_16 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN + 3,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN + 3,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
 
 static struct encrypt_desc algo_aes_gcm_8 =
@@ -1124,10 +1124,10 @@ static struct encrypt_desc algo_aes_gcm_8 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN + 3,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN + 3,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
+	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
 
 static struct encrypt_desc algo_aes_gcm_12 =
@@ -1140,10 +1140,10 @@ static struct encrypt_desc algo_aes_gcm_12 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN + 3,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN + 3,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
+	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
 
 static struct encrypt_desc algo_aes_gcm_16 =
@@ -1156,10 +1156,10 @@ static struct encrypt_desc algo_aes_gcm_16 =
 		.algo_next =  NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	/* Only 128, 192 and 256 are supported (plus 32 bits for salt) */
-	.keyminlen =    AEAD_AES_KEY_MIN_LEN + 3,
-	.keydeflen =    AEAD_AES_KEY_DEF_LEN + 3,
-	.keymaxlen =    AEAD_AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
+	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =    AEAD_AES_KEY_MAX_LEN,
 };
 
 static void linux_pfkey_add_aead(void)
