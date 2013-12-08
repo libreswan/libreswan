@@ -1747,6 +1747,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			/* keymat contains 4 bytes of salt */
 			key_len += AES_GCM_SALT_BYTES;
 			break;
+		case IKEv2_ENCR_AES_CCM_8:
+		case IKEv2_ENCR_AES_CCM_12:
+		case IKEv2_ENCR_AES_CCM_16:
+			/* keymat contains 4 bytes of salt */
+			key_len += AES_CCM_SALT_BYTES;
+			break;
 		}
 
 		passert(st->st_esp.keymat_len == key_len + ei->authkeylen);
