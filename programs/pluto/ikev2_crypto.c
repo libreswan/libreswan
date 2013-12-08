@@ -85,6 +85,13 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 		st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
 			AES_GCM_SALT_BYTES;
 		break;
+	case IKEv2_ENCR_AES_CCM_8:
+	case IKEv2_ENCR_AES_CCM_12:
+	case IKEv2_ENCR_AES_CCM_16:
+		/* aes_ccm does not use an integ (auth) algo - see RFC 4309 */
+		st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
+			AES_CCM_SALT_BYTES;
+		break;
 
 	default:
 		st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
