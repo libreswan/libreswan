@@ -3,3 +3,4 @@ Basic pluto with IKEv2 on the initiator (west), and on the responder.
 This is followed by west deleting the SA, which should send a delete
 notify message to the other side, which should then also delete its SA.
 
+NOTE: running deletestate does not cause a notify to be sent.....
