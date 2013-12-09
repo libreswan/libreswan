@@ -17,6 +17,8 @@ v3.7 (unreleased)
 * pluto: change ipsec_notification_names to ikev[12]_notify_names [Paul]
 * pluto: Various cleanup and reducing scope of variables [Hugh]
 * building: support for slackware version/init system detection [Roel]
+* rsasigkey: Remove spurious debug line confusing ipsec showhostkey [Paul]
+  (rhbz#1039655)
 * initsystems: fix typo in openrc script [Natanael Copa]
 * secrets: Log glob failing for secrets parser as warning, not error [Paul]
 * setup: fix systemd init detection [Tuomo]
