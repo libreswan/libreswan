@@ -16,8 +16,17 @@ instance, "3des-md5" or "aes256-sha1;modp2048" or  "aes-sha1,aes-md5".
 <para> The format for AH is AUTH followed by an optional PFSgroup. For
 instance, "md5" or "sha1;modp1536".
 </para>
-<para>A special case is AES CCM, which uses the syntax of "phase2alg=aes_ccm_a-152-null"</para>
-<para>A special case is phase2=sha2_256-96 which does not mean 96 bits, but means truncating the
-sha2_256 hash to 96 bit. This is the same as specifying sha2_truncbug=yes (only supported on NETKEY).</para>
+<para>AES-GCM and AES-CCM use the syntax like
+"phase2alg=aes_ccm_c-256-null". The only supported key sizes are 128,
+192 and 256. The subscript (_a, _b and _c) stand for the ICV versions
+(8,12,16). It is recommended to migrate to the _c versions, as support
+for smaller ICV's will be removed in the future.</para>
+<para>Note that openswan and versions of libreswan up to 3.6 require
+adding the salt size to the key size. Therefor, to interop with an older
+version of openswan or libreswan, use: "phase2alg=aes_ccm_c-280-null". For
+CCM, the 'keysize' needs to be increased by 24, resulted in valid keysizes
+of 152, 215 and 280. For GCM the 'keysize' needs to be increased by 32,
+resulting valid 'keysizes' of 160, 224 and 288.
+</para>
   </listitem>
   </varlistentry>
