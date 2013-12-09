@@ -351,7 +351,6 @@ int main(int argc, char *argv[])
 				strerror(errno));
 			exit(1);
 		}
-		fprintf(stdout,"hostname is '%s'\n",outputhostname);
 	}
 
 	if (!configdir) {
