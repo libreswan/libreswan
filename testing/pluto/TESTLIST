@@ -353,15 +353,7 @@ ctltest	aggr-unit-02			good
 # 
 # a testcase with pfs=yes connecting to pfs=no
 #
-umlplutotest	basic-pluto-09		good
-
-# 
-# a testcase with esp=null-md5
-# will normally fail, do not run it.
-#
-umlplutotest	basic-pluto-10		skip
-
-kvmplutotest	basic-pluto-11		good
+kvmplutotest	basic-pluto-09		good
 
 #
 # test cases of what happens to X.509 based authorization system
@@ -400,12 +392,16 @@ umlXhost	psk-pluto-03		good
 umlXhost	psk-pluto-04		good
 
 #
-# tests using alternative ESP algorithms such as twofish and serpent
+# tests using alternative ESP algorithms
 #
-kvmplutotest	basic-pluto-06		good
-kvmplutotest	basic-pluto-07		good
-kvmplutotest	basic-pluto-12		good
-kvmplutotest	basic-pluto-13		good
+kvmplutotest	netkey-algo-twofish-01	good
+kvmplutotest	klips-algo-twofish-01	good
+kvmplutotest	netkey-algo-serpent-01	good
+kvmplutotest	klips-algo-serpent-01	good
+kvmplutotest	netkey-algo-camellia-01	good
+kvmplutotest	netkey-algo-cast-01	good
+kvmplutotest	netkey-algo-null-01	good
+kvmplutotest	netkey-algo-null-02	good
 
 #
 # a test of using twofish with pluto, twofish for phase2
@@ -445,7 +441,6 @@ umlplutotest	ike-algo-02		good
 
 # Tests below require testing infrastructure with netkey support
 kvmplutotest    algo-pluto-07			good
-kvmplutotest    algo-pluto-08			good
 umlplutotest    netkey-pluto-01			good
 umlplutotest    netkey-pluto-02			good
 umlplutotest    netkey-pluto-03-sourceip        good
@@ -513,9 +508,11 @@ umlplutotest	ikev2-x509-02		good
 
 # modp tests for checking if we deal with sending different KE's
 kvmplutotest	ikev2-algo-01-modp2048-initiator	good
-kvmlplutotest	ikev2-algo-02-modp2048-responder	good
+kvmplutotest	ikev2-algo-02-modp2048-responder	good
 kvmplutotest	ikev2-algo-03-aes-ccm			good
 kvmplutotest	ikev2-algo-04-aes-gcm			good
+kvmplutotest	netkey-algo-aes_gcm-01			good
+kvmplutotest	netkey-algo-aes_ccm-01			good
 
 # various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good
@@ -532,20 +529,19 @@ kvmplutotest	ikev1-algo-ike-sha2-01			good
 kvmplutotest	ikev1-algo-ike-sha2-02			good
 
 # Various corner case tests for IKEv2
-umlplutotest	ikev2-major-version-initiator		good
-umlplutotest	ikev2-major-version-responder		good
-umlplutotest	ikev2-minor-version-initiator		good
-umlplutotest	ikev2-minor-version-responder		good
-umlplutotest	ikev2-isakmp-reserved-flags-01		good
-umlplutotest	ikev2-isakmp-reserved-flags-02		good
-umlplutotest	ikev2-allow-narrow-01			good
-umlplutotest	ikev2-allow-narrow-02			good
-umlplutotest	ikev2-allow-narrow-03			good
-umlplutotest	ikev2-allow-narrow-04			good
-umlplutotest	ikev2-allow-narrow-05			good
-umlplutotest	ikev2-allow-narrow-06			good
-umlplutotest	ikev2-allow-narrow-07			good
-umlplutotest	ikev2-allow-narrow-08-nss		good
+kvmplutotest	ikev2-major-version-initiator		good
+kvmplutotest	ikev2-major-version-responder		good
+kvmplutotest	ikev2-minor-version-initiator		good
+kvmplutotest	ikev2-minor-version-responder		good
+kvmplutotest	ikev2-isakmp-reserved-flags-01		good
+kvmplutotest	ikev2-isakmp-reserved-flags-02		good
+kvmplutotest	ikev2-allow-narrow-01			good
+kvmplutotest	ikev2-allow-narrow-02			good
+kvmplutotest	ikev2-allow-narrow-03			good
+kvmplutotest	ikev2-allow-narrow-04			good
+kvmplutotest	ikev2-allow-narrow-05			good
+kvmplutotest	ikev2-allow-narrow-06			good
+kvmplutotest	ikev2-allow-narrow-07			good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 

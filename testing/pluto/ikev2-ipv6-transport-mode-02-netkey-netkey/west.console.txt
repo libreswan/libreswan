@@ -1,0 +1,349 @@
+THIS STILL NEEDS SANTIZING
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # make sure that clear text does not get through
+west #
+ ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::45 -p icmp -j DROP
+west #
+ # confirm with a ping to east-in
+west #
+ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=255 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec _stackmanager start
+[ 00.00] NET: Registered protocol family 15
+west #
+ /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+[ 00.00] alg: No test for cipher_null (cipher_null-generic)
+[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
+[ 00.00] alg: No test for digest_null (digest_null-generic)
+[ 00.00] alg: No test for compress_null (compress_null-generic)
+west #
+ ipsec auto --add v6-transport
+west #
+ ipsec auto --status
+000 using kernel interface: netkey
+000 interface eth2/eth2 2001:db8:9:4::45
+000 interface eth1/eth1 2001:db8:1:2::45
+000 interface eth0/eth0 2001:db8:0:1::254
+000 interface lo/lo ::1
+000 interface lo/lo 127.0.0.1
+000 interface eth0/eth0 192.0.1.254
+000 interface eth1/eth1 192.1.2.45
+000 interface eth2/eth2 192.9.4.45
+000 %myid = (none)
+000 debug none
+000  
+000 virtual_private (%priv):
+000 - allowed 0 subnets: 
+000 - disallowed 0 subnets: 
+000 WARNING: Either virtual_private= is not specified, or there is a syntax 
+000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
+000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
+000          private address space in internal use, it should be excluded!
+000  
+000 algorithm ESP encrypt: id=2, name=ESP_DES, ivlen=8, keysizemin=64, keysizemax=64
+000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=8, keysizemin=40, keysizemax=128
+000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=8, keysizemin=40, keysizemax=448
+000 algorithm ESP encrypt: id=11, name=ESP_NULL, ivlen=0, keysizemin=0, keysizemax=0
+000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=13, name=ESP_AES_CTR, ivlen=8, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm ESP auth attr: id=5, name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
+000 algorithm ESP auth attr: id=6, name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
+000 algorithm ESP auth attr: id=7, name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
+000 algorithm ESP auth attr: id=8, name=AUTH_ALGORITHM_HMAC_RIPEMD, keysizemin=160, keysizemax=160
+000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm ESP auth attr: id=251, name=AUTH_ALGORITHM_NULL_KAME, keysizemin=0, keysizemax=0
+000  
+000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
+000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
+000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashsize=48
+000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashsize=64
+000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
+000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
+000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
+000 algorithm IKE dh group: id=15, name=OAKLEY_GROUP_MODP3072, bits=3072
+000 algorithm IKE dh group: id=16, name=OAKLEY_GROUP_MODP4096, bits=4096
+000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
+000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
+000 algorithm IKE dh group: id=22, name=OAKLEY_GROUP_DH22, bits=1024
+000 algorithm IKE dh group: id=23, name=OAKLEY_GROUP_DH23, bits=2048
+000 algorithm IKE dh group: id=24, name=OAKLEY_GROUP_DH24, bits=2048
+000  
+000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
+000  
+000 "v6-transport": 2001:db8:1:2::45<2001:db8:1:2::45>[@west]...2001:db8:1:2::23<2001:db8:1:2::23>[@east]; unrouted; eroute owner: #0
+000 "v6-transport":     oriented; my_ip=unset; their_ip=unset;
+000 "v6-transport":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
+000 "v6-transport":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
+000 "v6-transport":   policy: RSASIG+ENCRYPT+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "v6-transport":   prio: 128,128; interface: eth1; metric: 0, mtu: unset;
+000 "v6-transport":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000  
+000 Total IPsec connections: loaded 1, active 0
+000  
+000  
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up  v6-transport
+104 "v6-transport" #1: STATE_MAIN_I1: initiate
+003 "v6-transport" #1: received Vendor ID payload [Libreswan 
+003 "v6-transport" #1: received Vendor ID payload [Dead Peer Detection]
+003 "v6-transport" #1: received Vendor ID payload [FRAGMENTATION]
+106 "v6-transport" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+108 "v6-transport" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+003 "v6-transport" #1: received Vendor ID payload [CAN-IKEv2]
+004 "v6-transport" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
+117 "v6-transport" #2: STATE_QUICK_I1: initiate
+[ 00.00] alg: No test for authenc(hmac(sha1),cbc(aes)) (authenc(hmac(sha1-generic),cbc(aes-asm)))
+004 "v6-transport" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode
+west #
+ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=255 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=255 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec look
+west NOW
+XFRM state:
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xfd33ee92 reqid 16385 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0x74f3f053be0047d8536e50140c64af7f66cd74c6 96
+	enc cbc(aes) 0x942627a375d169ecafb1c9f570331fce
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0x04715a60 reqid 16385 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xd7d42e2595ddafca0e67a7adc68d97b55a2ef07d 96
+	enc cbc(aes) 0xc5fa92dbd495d7a7085ac1e621c3e53e
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+XFRM policy:
+src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+	dir out priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid 16385 mode transport
+src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+	dir in priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid 16385 mode transport
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+iptables: No chain/target/match by that name.
+ip6tables: No chain/target/match by that name.
+NEW_IPSEC_CONN mangle TABLES
+iptables: No chain/target/match by that name.
+ip6tables: No chain/target/match by that name.
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+169.254.0.0/16 dev eth2  scope link  metric 1004 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+unreachable ::/96 dev lo  metric 1024  error -101
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
+2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
+2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
+2001:db8:1:2::23 via 2001:db8:1:2::23 dev eth1  metric 0 
+    cache 
+2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
+2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -101
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
+unreachable 2002:e000::/19 dev lo  metric 1024  error -101
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
+fe80::/64 dev eth0  proto kernel  metric 256 
+fe80::/64 dev eth1  proto kernel  metric 256 
+fe80::/64 dev eth2  proto kernel  metric 256 
+default via 2001:db8:1:2::254 dev eth1  metric 1 
+default via 2001:db8:1:2::254 dev eth1  metric 1024 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ echo done
+done
+west #
+ ipsec look
+west NOW
+XFRM state:
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xfd33ee92 reqid 16385 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0x74f3f053be0047d8536e50140c64af7f66cd74c6 96
+	enc cbc(aes) 0x942627a375d169ecafb1c9f570331fce
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0x04715a60 reqid 16385 mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xd7d42e2595ddafca0e67a7adc68d97b55a2ef07d 96
+	enc cbc(aes) 0xc5fa92dbd495d7a7085ac1e621c3e53e
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+XFRM policy:
+src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+	dir out priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid 16385 mode transport
+src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+	dir in priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid 16385 mode transport
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+iptables: No chain/target/match by that name.
+ip6tables: No chain/target/match by that name.
+NEW_IPSEC_CONN mangle TABLES
+iptables: No chain/target/match by that name.
+ip6tables: No chain/target/match by that name.
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+169.254.0.0/16 dev eth2  scope link  metric 1004 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+unreachable ::/96 dev lo  metric 1024  error -101
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
+2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
+2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
+2001:db8:1:2::23 via 2001:db8:1:2::23 dev eth1  metric 0 
+    cache 
+2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
+2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -101
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
+unreachable 2002:e000::/19 dev lo  metric 1024  error -101
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
+fe80::/64 dev eth0  proto kernel  metric 256 
+fe80::/64 dev eth1  proto kernel  metric 256 
+fe80::/64 dev eth2  proto kernel  metric 256 
+default via 2001:db8:1:2::254 dev eth1  metric 1 
+default via 2001:db8:1:2::254 dev eth1  metric 1024 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

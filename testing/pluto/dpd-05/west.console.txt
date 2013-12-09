@@ -37,7 +37,7 @@ west #
 003 "west-east" #1: received Vendor ID payload [Dead Peer Detection]
 004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=oakley_3des_cbc_192 prf=oakley_sha group=modp1536}
 117 "west-east" #2: STATE_QUICK_I1: initiate
-004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
+004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=enabled}
 west #
  # use the tunnel
 west #
@@ -127,6 +127,10 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+west #
+west #
+ ipsec whack --shutdown
+002 shutting down
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi

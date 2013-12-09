@@ -39,8 +39,12 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 [ 00.00] alg: No test for cipher_null (cipher_null-generic)
 [ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
 [ 00.00] alg: No test for compress_null (compress_null-generic)
+[ 00.00] alg: No test for digest_null (digest_null-generic)
+west #
+ # first should fail to load
+west #
+ ipsec auto --add badkeysize-shouldnotload
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-ccm-a
 west #
@@ -78,9 +82,9 @@ west #
 000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=160, keysizemax=288
-000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=160, keysizemax=288
-000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
@@ -95,12 +99,17 @@ west #
 000  
 000 IKE algorithms supported:
 000  
-000 algorithm IKE encrypt: id=0, name=(null), blocksize=16, keydeflen=131
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65004, name=OAKLEY_SERPENT_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65005, name=OAKLEY_TWOFISH_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65289, name=OAKLEY_TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=16, v2name=AES_CCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=15, v2name=AES_CCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=14, v2name=AES_CCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -133,8 +142,8 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms wanted: AES_CCM_A(14)_152-NONE(0)_000
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms loaded: AES_CCM_A(14)_152-NONE(0)_000
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms wanted: AES_CCM_A(14)_128-NONE(0)_000
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms loaded: AES_CCM_A(14)_128-NONE(0)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -150,7 +159,7 @@ west #
 133 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #1: STATE_PARENT_I1: initiate
 133 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=oakley_sha group=modp2048}
-004 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #2: STATE_PARENT_I3: PARENT SA established tunnel mode
+004 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_CCM_A_128-NONE NATOA=none NATD=none DPD=none}
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -220,7 +229,7 @@ west #
 done
 west #
  ipsec look
-west NOW
+west Sun Dec  8 02:42:56 EST 2013
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
@@ -279,4 +288,6 @@ west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+type=AVC msg=audit(1386488389.956:108): avc:  denied  { write } for  pid=3598 comm="ip" path="/testing/pluto/ikev2-algo-03-aes-ccm/OUTPUT/west.pluto.log" dev="9p" ino=135468 scontext=system_u:system_r:ifconfig_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
+type=SYSCALL msg=audit(1386488389.956:108): arch=c000003e syscall=59 success=yes exit=0 a0=26591b0 a1=265bd90 a2=266de10 a3=7fff27e1e2b0 items=0 ppid=3596 pid=3598 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=4294967295 tty=(none) comm="ip" exe="/usr/sbin/ip" subj=system_u:system_r:ifconfig_t:s0 key=(null)
 

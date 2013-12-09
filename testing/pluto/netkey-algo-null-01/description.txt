@@ -1,0 +1,1 @@
+basic test with esp=null-md5 using NETKEY

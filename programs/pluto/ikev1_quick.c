@@ -227,6 +227,22 @@ static void compute_proto_keymat(struct state *st,
 			/* AES_GCM requires an extra AES_GCM_SALT_BYTES (4) bytes of salt */
 			needed_len += AES_GCM_SALT_BYTES;
 			break;
+		case ESP_AES_CCM_8:
+		case ESP_AES_CCM_12:
+		case ESP_AES_CCM_16:
+			/* valid keysize enforced before we get here */
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
+					st->st_esp.attrs.transattrs.enckeylen == 192 ||
+					st->st_esp.attrs.transattrs.enckeylen == 256);
+				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
+			} else {
+				/* if no keylength set, pick strongest allowed */
+				needed_len = AEAD_AES_KEY_MAX_LEN / BITS_PER_BYTE;
+			}
+			/* AES_CCM requires an extra AES_CCM_SALT_BYTES (3) bytes of salt */
+			needed_len += AES_CCM_SALT_BYTES;
+			break;
 
 		default:
 			if ((needed_len =

@@ -694,12 +694,8 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 				 parser_cur_filename(), parser_cur_lineno(),
 				 kd->keyname, piece);
 
-			if (warningsarefatal) {
 				fprintf(stderr, "ERROR: %s\n", complaintbuf);
 				exit(1);
-			} else {
-				fprintf(stderr, "WARNING: %s\n", complaintbuf);
-			}
 		}
 	}
 
@@ -709,14 +705,9 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 			 parser_cur_filename(), parser_cur_lineno(),
 			 kd->keyname, scopy);
 
-		if (warningsarefatal) {
 			fprintf(stderr, "ERROR: %s\n", complaintbuf);
 			free(scopy);
 			exit(1);
-		} else {
-			fprintf(stderr, "WARNING: %s\n", complaintbuf);
-			valresult = 0;
-		}
 	}
 
 	free(scopy);

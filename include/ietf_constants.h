@@ -279,6 +279,13 @@
  * http://tools.ietf.org/html/rfc4106#section-8.1
  */
 #define AES_GCM_SALT_BYTES 4
+
+/*
+ * RFC 4309 AES CCM
+ * http://tools.ietf.org/search/rfc4309#section-7.1
+ */
+#define AES_CCM_SALT_BYTES 3
+
 /* Actually, the only valid values are 128, 192 and 256 bits */
 #define  AEAD_AES_KEY_MIN_LEN       128
 #define  AEAD_AES_KEY_DEF_LEN       128
