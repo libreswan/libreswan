@@ -1007,7 +1007,7 @@ static stf_status ikev2_process_transforms(struct ikev2_prop *prop,
 		itl->integ_keylens[0] = 0;
 		itl->integ_trans_next = 1;
 	} else if (itl->integ_trans_next > 1) {
-		int i;
+		unsigned int i;
 		for (i=0; i < itl->integ_trans_next; i++) {
 			if (itl->integ_transforms[i] == IKEv2_AUTH_NONE) {
 				/* NONE cannot be part of a set of integ algos */
