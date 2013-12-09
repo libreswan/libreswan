@@ -5,11 +5,13 @@ v3.7 (unreleased)
 * SECURITY: CVE-2013-4564 Denial of service via unauth packet [Paul/Hugh]
 * SECURITY: fix insecure tmp file in rpm %post - introduced in 3.6 [Tuomo]
 * SECURITY: Properly handle IKEv2 I1 notification without KE payload [Paul]
+* IKE: aes_gcm and aes_ccm now specify key size without salt [Paul/Hugh]
 * NETKEY: Added twofish and serpent as valid ESP algorithms [Paul]
 * KLIPS: Fix for crashes ipsec_xmit_ipip() [Thomas/Roel/David]
 * KLIPS: Fix NAT-T (NEED_UDP_ENCAP_ENABLE) for 3.4 kernel [Roel]
 * KLIPS: Fix compiling for 3.9 kernels (PDE_DATA fix) [Paul]
 * KLIPS: Claim we do namespaces - makes it work on simple host case [Paul]
+* IKEv2: Add support got AES-GCM, AES-CCM [Paul/Hugh]
 * IKEv2: Check for inbound traffic before sending liveness exchange [Matt]
 * IKEv2: Fix some error codes that mistakenly used IKEv1 versions [Paul]
 * IKEv2: in R1 don't copy their IKEv2 minor for our reply packet [Paul]
@@ -18,11 +20,14 @@ v3.7 (unreleased)
 * pluto: Various cleanup and reducing scope of variables [Hugh]
 * building: support for slackware version/init system detection [Roel]
 * initsystems: fix typo in openrc script [Natanael Copa]
+* testing: KVM test system updates [Paul]
 * secrets: Log glob failing for secrets parser as warning, not error [Paul]
 * setup: fix systemd init detection [Tuomo]
 * labeled ipsec: Set default value of secctx_attr_value to 32001 [Paul]
   (rhbz#923250)
 * barf: don't load l2tp kernel modules and use new syntax (rhbz#1033191) [Paul]
+* Bugtracker bugs fixed:
+  #116: Don't load connections when leftcert= cert not found in NSS DB [Matt]
 
 v3.6 (October 30, 2013)
 * IKEv2: Fix interoperability bug in SKEYSEED generation [Paul/Hugh/Antony]
