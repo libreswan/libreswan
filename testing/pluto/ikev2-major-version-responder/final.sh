@@ -1,4 +1,5 @@
 ipsec look
+grep INVALID_MAJOR_VERSION /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

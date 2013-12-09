@@ -1,5 +1,5 @@
 ipsec look
-grep "ignoring unknown IKEv2 minor version" /tmp/pluto.log
+grep "minor version" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

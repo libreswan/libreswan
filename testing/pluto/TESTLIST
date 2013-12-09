@@ -529,20 +529,19 @@ kvmplutotest	ikev1-algo-ike-sha2-01			good
 kvmplutotest	ikev1-algo-ike-sha2-02			good
 
 # Various corner case tests for IKEv2
-umlplutotest	ikev2-major-version-initiator		good
-umlplutotest	ikev2-major-version-responder		good
-umlplutotest	ikev2-minor-version-initiator		good
-umlplutotest	ikev2-minor-version-responder		good
-umlplutotest	ikev2-isakmp-reserved-flags-01		good
-umlplutotest	ikev2-isakmp-reserved-flags-02		good
-umlplutotest	ikev2-allow-narrow-01			good
-umlplutotest	ikev2-allow-narrow-02			good
-umlplutotest	ikev2-allow-narrow-03			good
-umlplutotest	ikev2-allow-narrow-04			good
-umlplutotest	ikev2-allow-narrow-05			good
-umlplutotest	ikev2-allow-narrow-06			good
-umlplutotest	ikev2-allow-narrow-07			good
-umlplutotest	ikev2-allow-narrow-08-nss		good
+kvmplutotest	ikev2-major-version-initiator		good
+kvmplutotest	ikev2-major-version-responder		good
+kvmplutotest	ikev2-minor-version-initiator		good
+kvmplutotest	ikev2-minor-version-responder		good
+kvmplutotest	ikev2-isakmp-reserved-flags-01		good
+kvmplutotest	ikev2-isakmp-reserved-flags-02		good
+kvmplutotest	ikev2-allow-narrow-01			good
+kvmplutotest	ikev2-allow-narrow-02			good
+kvmplutotest	ikev2-allow-narrow-03			good
+kvmplutotest	ikev2-allow-narrow-04			good
+kvmplutotest	ikev2-allow-narrow-05			good
+kvmplutotest	ikev2-allow-narrow-06			good
+kvmplutotest	ikev2-allow-narrow-07			good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 

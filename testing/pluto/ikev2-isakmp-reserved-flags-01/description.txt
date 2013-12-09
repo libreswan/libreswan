@@ -7,3 +7,5 @@ RFC 5996 Section 2.5:
    Also, for forward compatibility, all fields marked RESERVED MUST be
    set to zero by an implementation running version 2.0, and their
    content MUST be ignored by an implementation running version 2.0
+
+The connection should establish

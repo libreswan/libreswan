@@ -1,7 +1,4 @@
 ipsec auto --up  westnet-eastnet-ikev2
-
-ipsec look
-
-# confirm ICMP no longer flows (silly but RFC tickbox item)
-ping -c 1 -I 192.1.2.45 192.1.2.23
+ping -n -c 4 -I 192.0.1.254 192.0.2.254
+ipsec eroute
 echo done
