@@ -147,7 +147,7 @@ install -d %{buildroot}%{_sbindir}
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
-install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
+install -m644 packaging/rhel/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
 echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
