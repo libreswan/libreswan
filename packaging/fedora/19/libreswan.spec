@@ -99,7 +99,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
   USE_XAUTHPAM=true \
 %if %{USE_FIPSCHECK}
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-  FIPSPRODUCTCHECK=%{_syconfdir}/system-fips \
+  FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
 %endif
   USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
   USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
@@ -153,8 +153,8 @@ install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
 install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
-echo "include %{_syconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
-rm -fr %{buildroot}%{_syconfdir}/rc.d/rc*
+echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %files 
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
