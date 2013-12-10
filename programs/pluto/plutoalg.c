@@ -1,7 +1,7 @@
 /*
  * Kernel runtime algorithm handling interface definitions
  * Originally by: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
- * Reworked into libreswan 2.x by Michael Richardson <mcr@xelerance.com>
+ * Reworked into openswan 2.x by Michael Richardson <mcr@xelerance.com>
  * (C)opyright 2012 Paul Wouters <pwouters@redhat.com>
  * (C)opyright 2012 Paul Wouters <paul@libreswan.org>
  *
