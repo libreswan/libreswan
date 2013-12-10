@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
  strongswan starter --debug-all
-Starting strongSwan 5.0.0 IPsec [starter]...
+Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev2'
   left=192.1.2.45
@@ -13,47 +13,21 @@ Loading conn 'westnet-eastnet-ikev2'
   authby=secret
   keyexchange=ikev2
   auto=add
+  ike=aes128-sha1
+  esp=aes128-sha1
 [ 00.00] NET: Registered protocol family 15
 found netkey IPsec stack
 east #
  echo "initdone"
 initdone
 east #
- ipsec look
-east NOW
-XFRM state:
-XFRM policy:
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-XFRM done
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
-192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.2.45[west]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24 
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
