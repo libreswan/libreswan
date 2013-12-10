@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.7 (December 9, 2013)
+v3.7 (December 10, 2013)
 * SECURITY: CVE-2013-4564 Denial of service via unauth packet [Paul/Hugh]
 * SECURITY: fix insecure tmp file in rpm %post - introduced in 3.6 [Tuomo]
 * SECURITY: Properly handle IKEv2 I1 notification without KE payload [Paul]
