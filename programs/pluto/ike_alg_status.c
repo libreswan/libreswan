@@ -1,8 +1,12 @@
 /*
  * IKE modular algorithm handling interface
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
- *
- * ike_alg.c,v 1.1.2.18 2002/05/29 04:13:04 jjo Exp
+ * Copyright (C) 2003 Mathieu Lafon <mlafon@arkoon.net>
+ * Copyright (C) 2006-2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2010 Martin Schiller
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

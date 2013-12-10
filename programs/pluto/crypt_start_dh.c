@@ -1,9 +1,11 @@
 /*
  * Cryptographic helper function - calculate DH
+ *
  * Copyright (C) 2006-2008 Michael C. Richardson <mcr@xelerance.com>
+ * Copyright (C) 2007-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

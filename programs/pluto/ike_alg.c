@@ -1,6 +1,13 @@
 /*
  * IKE modular algorithm handling interface
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
+ * Copyright (C) 2003 Mathieu Lafon <mlafon@arkoon.net>
+ * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
+ * Copyright (C) 2011-2012 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -11,13 +18,8 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
- * Fixes by:
- *      ML:	Mathieu Lafon <mlafon@arkoon.net>
- *
- * Fixes:
- *      ML:	ike_alg_ok_final() function (make F_STRICT consider hash/auth and modp).
  */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

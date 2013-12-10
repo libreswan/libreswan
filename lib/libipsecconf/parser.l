@@ -6,7 +6,10 @@
 /* Libreswan config file parser (parser.l)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2008 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2008,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 Philippe Vouters <Philippe.Vouters@laposte.net>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

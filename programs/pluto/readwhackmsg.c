@@ -1,5 +1,7 @@
 /* Read Whack Message
  * Header: readwhackmsg.h
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  */
 
 #include <stdio.h>

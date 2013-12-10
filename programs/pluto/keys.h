@@ -2,11 +2,12 @@
  * mechanisms for managing keys (public, private, and preshared secrets)
  * inside of pluto. Common code is in ../../include/secrets.h and libswan.
  *
- * Copyright (C) 1998-2005  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2005,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2007  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

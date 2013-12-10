@@ -1,9 +1,10 @@
 /* State machine for IKEv1
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2010  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2011 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2008 Hiren Joshi <joshihirenn@gmail.com>
  * Copyright (C) 2009 Anthony Tong <atong@TrustedCS.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>

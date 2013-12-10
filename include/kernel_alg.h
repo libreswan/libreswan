@@ -1,8 +1,8 @@
 /*
  * Kernel runtime algorithm handling interface definitions
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
- *
- * kernel_alg.h,v 1.1.2.1 2003/11/21 18:12:23 jjo Exp
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

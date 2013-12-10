@@ -3,7 +3,8 @@
  * Originally by: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  * Reworked into openswan 2.x by Michael Richardson <mcr@xelerance.com>
  * (C)opyright 2012 Paul Wouters <pwouters@redhat.com>
- * (C)opyright 2012 Paul Wouters <paul@libreswan.org>
+ * (C)opyright 2012-2013 Paul Wouters <paul@libreswan.org>
+ * (C)opyright 2012-2013 D. Hugh Redelmeier
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

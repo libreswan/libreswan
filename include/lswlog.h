@@ -1,7 +1,8 @@
 /* logging declaratons
  *
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
- * Copyright (C) 2004       Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

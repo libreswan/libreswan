@@ -1,8 +1,9 @@
 /* logging declarations
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
- * Copyright (C) 2004       Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2012       Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
