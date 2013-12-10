@@ -3,7 +3,7 @@ east #
  strongswan starter --debug-all
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
-Loading conn 'westnet-eastnet-ikev2'
+Loading conn 'westnet-eastnet-ikev1'
   left=192.1.2.45
   leftid=@west
   right=192.1.2.23
@@ -11,10 +11,9 @@ Loading conn 'westnet-eastnet-ikev2'
   rightsubnet=192.0.2.0/24
   leftsubnet=192.0.1.0/24
   authby=secret
-  keyexchange=ikev2
   auto=add
   ike=3des-sha1
-  esp=aes256gcm16-modp1536
+  esp=aes256ccm16-modp1536
 [ 00.00] NET: Registered protocol family 15
 found netkey IPsec stack
 east #
@@ -34,17 +33,17 @@ Listening IP addresses:
   192.1.2.23
   192.9.2.23
 Connections:
-westnet-eastnet-ikev2:  192.1.2.23...192.1.2.45  IKEv2
-westnet-eastnet-ikev2:   local:  [east] uses pre-shared key authentication
-westnet-eastnet-ikev2:   remote: [west] uses pre-shared key authentication
-westnet-eastnet-ikev2:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
+westnet-eastnet-ikev1:  192.1.2.23...192.1.2.45  IKEv1/2
+westnet-eastnet-ikev1:   local:  [east] uses pre-shared key authentication
+westnet-eastnet-ikev1:   remote: [west] uses pre-shared key authentication
+westnet-eastnet-ikev1:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.2.45[west]
-westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r, pre-shared key reauthentication in 2 hours
-westnet-eastnet-ikev2[1]: IKE proposal: 3DES_CBC/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_1536
-westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{1}:  AES_GCM_16_256, XXX bytes_i (xxs ago), XX bytes_o (XXs ago), rekeying in XX minutes
-westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24 
+westnet-eastnet-ikev1[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.2.45[west]
+westnet-eastnet-ikev1[1]: IKEv1 SPIs: SPISPI_i SPISPI_r, pre-shared key reauthentication in 2 hours
+westnet-eastnet-ikev1[1]: IKE proposal: 3DES_CBC/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_1536
+westnet-eastnet-ikev1{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev1{1}:  AES_CCM_16_256, XXX bytes_i (xxs ago), XX bytes_o (XXs ago), rekeying in XX minutes
+westnet-eastnet-ikev1{1}:   192.0.2.0/24 === 192.0.1.0/24 
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi

@@ -557,6 +557,7 @@ umlplutotest    interop-ikev2-racoon-05-x509-initiator		good
 kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
 kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
 kvmplutotest	interop-ikev1-strongswan-04-psk-aes-gcm		good
+kvmplutotest	interop-ikev1-strongswan-04-psk-aes-ccm		good
 
 umlplutotest    interop-ikev2-strongswan-01-noconn		good
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good

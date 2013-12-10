@@ -1,6 +1,6 @@
 Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
 the responder.
 
-This tests for the prf vs integ mixup fixed in libreswan 2.6.14 causing
+This tests for the prf vs integ mixup fixed in openswan 2.6.14 causing
 interop to fail with aes192.
 
