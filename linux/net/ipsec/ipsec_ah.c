@@ -20,7 +20,6 @@
 #include <linux/config.h>
 #endif
 
-#define HAVE_NAMESPACES 1
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/kernel.h> /* printk() */
