@@ -2,7 +2,7 @@
 %option nounput
 %option noinput
 
-%top{
+%{
 /* Libreswan config file parser (parser.l)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
@@ -37,9 +37,7 @@
 #include "ipsecconf/parser.h"	/* includes parser.tab.h */
 #include "ipsecconf/parserlast.h"
 #include "ipsecconf/starterlog.h"
-}
 
-%{ 
 #define MAX_INCLUDE_DEPTH  10
 
 int lex_verbosity = 0;	/* how much tracing output to show */
