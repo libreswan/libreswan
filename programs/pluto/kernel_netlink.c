@@ -1819,12 +1819,6 @@ static bool netlink_shunt_eroute(struct connection *c,
 {
 	ipsec_spi_t spi;
 
-	DBG(DBG_CONTROL,
-	    DBG_log(
-		    "request to %s a %s policy with netkey kernel --- experimental",
-		    opname,
-		    enum_name(&routing_story, rt_kind)));
-
 	/* We are constructing a special SAID for the eroute.
 	 * The destination doesn't seem to matter, but the family does.
 	 * The protocol is SA_INT -- mark this as shunt.
