@@ -104,15 +104,16 @@ static void kernel_alg_init(void)
 	esp_ealg_num = esp_aalg_num = 0;
 }
 
-/* used by test skaffolding */
+/* used by kernel_netlink.c and kernel_bsdkame.c */
 int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 {
 	struct sadb_alg *alg_p = NULL;
 	int alg_id = sadb_alg->sadb_alg_id;
 
 	DBG(DBG_KERNEL, DBG_log("kernel_alg_add():"
-			       "satype=%d, exttype=%d, alg_id=%d",
-			       satype, exttype, sadb_alg->sadb_alg_id));
+			       "satype=%d, exttype=%d, alg_id=%d(%s)",
+			       satype, exttype, sadb_alg->sadb_alg_id,
+				enum_name(&esp_transformid_names, sadb_alg->sadb_alg_id)));
 	if (!(alg_p = sadb_alg_ptr(satype, exttype, alg_id, 1))) {
 		DBG_log(
 			"kernel_alg_add(%d,%d,%d) fails because alg combo is invalid\n",
@@ -166,9 +167,6 @@ err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 					alg_p->sadb_alg_minbits,
 					alg_p->sadb_alg_maxbits);
 			goto out;
-		} else {
-			/* increase key length by 4 bytes (RFC 4106)*/
-			key_len = key_len + 4 * BITS_PER_BYTE;
 		}
 	}
 
@@ -340,32 +338,20 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg_buf, int buflen)
 	}
 }
 
-int kernel_alg_esp_enc_keylen(int alg_id)
+int kernel_alg_esp_enc_max_keylen(int alg_id)
 {
 	int keylen = 0;
 
-	if (!ESP_EALG_PRESENT(alg_id))
-		goto none;
-	keylen = esp_ealg[alg_id].sadb_alg_maxbits / BITS_PER_BYTE;
-	switch (alg_id) {
-	/*
-	 * this is veryUgly[TM]
-	 * Peer should have sent KEY_LENGTH attribute for ESP_AES
-	 * but if not do force it to 128 instead of using sadb_alg_maxbits
-	 * from kernel.
-	 * That's the case for alg-0.7.x and earlier versions.
-	 *
-	 * --jjo 01-Oct-02
-	 */
-	case ESP_AES:
-		keylen = 128 / BITS_PER_BYTE;
-		break;
+	if (!ESP_EALG_PRESENT(alg_id)) {
+        	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_max_keylen():"
+                     "alg_id=%d not found",alg_id));
+		return 0;
 	}
-none:
-	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_keylen():"
+
+	keylen = esp_ealg[alg_id].sadb_alg_maxbits / BITS_PER_BYTE;
+	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_max_keylen():"
 			       "alg_id=%d, keylen=%d",
 			       alg_id, keylen));
-
 	return keylen;
 }
 

@@ -1,7 +1,10 @@
 /* manifest constants
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,7 +61,6 @@ enum keyword_xauthfail {
 	XAUTHFAIL_SOFT = 1,
 };
 
-#ifdef NAT_TRAVERSAL
 /*
  *  * NAT-Traversal defines for nat_traveral type from nat_traversal.h
  *   *
@@ -72,7 +74,6 @@ enum natt_method {
 	NAT_TRAVERSAL_NAT_BHND_ME           =30,
 	NAT_TRAVERSAL_NAT_BHND_PEER         =31
 };
-#endif
 
 /* Timer events */
 
@@ -93,7 +94,7 @@ enum event_type {
 	EVENT_CRYPTO_FAILED,            /* after some time, give up on crypto helper */
 	EVENT_PENDING_PHASE2,           /* do not make pending phase2 wait forever */
 	EVENT_v2_RETRANSMIT,            /* Retransmit v2 packet */
-
+	EVENT_v2_LIVENESS,
 	EVENT_PENDING_DDNS,             /* try to start connections where DNS failed at init */
 };
 
@@ -175,7 +176,7 @@ typedef enum {
  * NOTE: changes here must be done in concert with changes to DBGOPT_*
  * in whack.c.  A change to WHACK_MAGIC in whack.h will be required too.
  */
-#if !defined(NO_DEBUG)
+#ifdef DEBUG
 
 #define DBG_RAW         LELEM(0)                                /* raw packet I/O */
 #define DBG_CRYPT       LELEM(1)                                /* encryption/decryption of messages */
@@ -238,7 +239,8 @@ typedef enum {
  * retained between messages) representing the state that accepts the
  * first message of an exchange has been read but not processed.
  *
- * state_microcode state_microcode_table in demux.c describes
+ * v1_state_microcode_table in ikev1.c and
+ * v2_state_microcode_table in ikev2.c describe
  * other important details.
  */
 
@@ -369,9 +371,10 @@ enum phase1_role {
 #define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || (s) == \
 				    STATE_QUICK_R2)
 #define IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_R1)
-#ifdef MODECFG
 #define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
-#endif
+
+/* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
+#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 
 #define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I2 || (s) == \
 				     STATE_PARENT_R1 || (s) == STATE_IKESA_DEL)
@@ -541,8 +544,9 @@ enum pluto_policy {
 	POLICY_IKE_FRAG_ALLOW = LELEM(30),
 	POLICY_IKE_FRAG_FORCE = LELEM(31),
 	POLICY_IKE_FRAG_MASK = POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE,
+	POLICY_NO_IKEPAD      = LELEM(32),      /* pad ike packets to 4 bytes or not */
 
-	/* policy used to be an int, but is not lset_t (unsigned long long type), so max is 63 */
+	/* policy used to be an int, but is now lset_t (unsigned long long type), so max is 63 */
 };
 
 /* Any IPsec policy?  If not, a connection description
@@ -695,3 +699,4 @@ enum PrivateKeyKind {
 #define XAUTH_MAX_NAME_LENGTH 128
 #define XAUTH_MAX_PASS_LENGTH 128
 
+#define MIN_LIVENESS 1

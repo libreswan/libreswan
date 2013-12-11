@@ -26,6 +26,10 @@ extern int debug_pfkey;
 extern /* void */ int pfkey_init(void);
 extern /* void */ int pfkey_cleanup(void);
 
+extern int pfkey_registered_show(struct seq_file *seq, void *offset);
+extern int pfkey_supported_show(struct seq_file *seq, void *offset);
+extern int pfkey_show(struct seq_file *seq, void *offset);
+
 struct socket_list {
 	struct socket *socketp;
 	struct socket_list *next;
@@ -121,8 +125,6 @@ extern int pfkey_expire(struct ipsec_sa *, int);
 extern int pfkey_acquire(struct ipsec_sa *);
 #else /* ! __KERNEL__ */
 
-extern libreswan_keying_debug_func_t pfkey_debug_func;
-extern libreswan_keying_debug_func_t pfkey_error_func;
 extern void pfkey_print(struct sadb_msg *msg, FILE *out);
 
 #endif /* __KERNEL__ */

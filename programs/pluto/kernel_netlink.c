@@ -10,12 +10,14 @@
  * Copyright (C) 2008 Neil Horman <nhorman@redhat.com>
  * Copyright (C) 2008-2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2006-2010 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2010,2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2010 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2010 Roman Hoog Antink <rha@open.ch>
  * Copyright (C) 2010 D. Hugh Redelmeier
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -71,17 +73,9 @@
 #define XFRM_STATE_AF_UNSPEC    32
 #endif
 
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
-
 #ifndef DEFAULT_UPDOWN
 # define DEFAULT_UPDOWN "ipsec _updown"
 #endif
-
-extern char *pluto_listen;
-
-extern const struct pfkey_proto_info null_proto_info[2];
 
 static const struct pfkey_proto_info broad_proto_info[2] = {
 	{
@@ -163,6 +157,8 @@ static sparse_names ealg_list = {
 	{ SADB_X_EALG_AESCBC, "aes" },
 	{ SADB_X_EALG_AESCTR, "ctr(aes)" },
 	{ SADB_X_EALG_CAMELLIACBC, "cbc(camellia)" },
+	{ SADB_X_EALG_SERPENTCBC, "serpent" }, /* 252 draft-ietf-ipsec-ciph-aes-cbc-00 */
+	{ SADB_X_EALG_TWOFISHCBC, "twofish" }, /* 253 draft-ietf-ipsec-ciph-aes-cbc-00 */
 	{ 0, sparse_end }
 };
 
@@ -174,7 +170,7 @@ static sparse_names calg_list = {
 	{ 0, sparse_end }
 };
 
-static struct aead_alg aead_algs[] =
+static const struct aead_alg aead_algs[] =
 {
 	{ .id = SADB_X_EALG_AES_CCM_ICV8, .icvlen = 8, .name =
 		  "rfc4309(ccm(aes))" },
@@ -190,7 +186,7 @@ static struct aead_alg aead_algs[] =
 		  "rfc4106(gcm(aes))" },
 };
 
-static struct aead_alg *get_aead_alg(int algid)
+static const struct aead_alg *get_aead_alg(int algid)
 {
 	unsigned int i;
 
@@ -389,6 +385,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 		       description, text_said,
 		       -rsp.e.error,
 		       strerror(-rsp.e.error));
+		errno = -rsp.e.error;
 		return FALSE;
 	}
 
@@ -626,7 +623,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			dst = req.u.p.sel.prefixlen_s;
 		}
 
-		/* 
+		/*
 		 * if the user did not specify a priority, calculate one based
 		 * on 'more specific' getting a higher priority
 		 */
@@ -636,7 +633,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			req.u.p.priority = MIN_SPD_PRIORITY -
 				((policy == IPSEC_POLICY_NONE) ? 512 : 0) +
 				   (((2 << shift) - src) << shift) +
-				    (2 << shift) - dst - ((transport_proto) ? 64 : 0) 
+				    (2 << shift) - dst - ((transport_proto) ? 64 : 0)
 				 	- ((req.u.p.sel.sport) ? 32 : 0 )
 				 	- ((req.u.p.sel.sport) ? 32 : 0 );
 		}
@@ -707,8 +704,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				(struct rtattr *)((char *)&req +
 						  req.n.nlmsg_len);
 			attr->rta_type = XFRMA_SEC_CTX;
-			/*Passing null terminated sec label (strlen + '\0')*/
-			DBG_log("passing security label %s (len=%d) to kernel",
+			/* Passing null terminated sec label (strlen + '\0') */
+			DBG_log("passing security label %s (len=%zu +1) to kernel",
 				policy_label, strlen(policy_label));
 			attr->rta_len =
 				RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) +
@@ -766,7 +763,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		char data[1024];
 	} req;
 	struct rtattr *attr;
-	struct aead_alg *aead;
+	const struct aead_alg *aead;
+	int ret;
 
 	memset(&req, 0, sizeof(req));
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
@@ -858,6 +856,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window;
 	req.p.reqid = sa->reqid;
+	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
 	req.p.lft.soft_packet_limit = XFRM_INF;
 	req.p.lft.hard_byte_limit = XFRM_INF;
@@ -887,8 +886,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		if ( (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256) ||
 		     (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) ) {
 			struct xfrm_algo_auth algo;
-			DBG(DBG_KERNEL,
-			    DBG_log(
+			    DBG(DBG_KERNEL, DBG_log(
 				    "  using new struct xfrm_algo_auth for XFRM message with explicit truncation for sha2_256"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			algo.alg_trunc_len =
@@ -910,8 +908,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 		} else {
 			struct xfrm_algo algo;
-			DBG(DBG_KERNEL,
-			    DBG_log(
+			    DBG(DBG_KERNEL, DBG_log(
 				    "  using old struct xfrm_algo for XFRM message"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			attr->rta_type = XFRMA_ALG_AUTH;
@@ -993,7 +990,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (sa->natt_type) {
 		struct xfrm_encap_tmpl natt;
 
@@ -1010,7 +1006,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {
@@ -1035,8 +1030,14 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 #endif
-
-	return send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
+	ret = send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
+	if (ret == FALSE && errno == ESRCH &&
+	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
+			loglog(RC_LOG_SERIOUS, "Warning: expected to find "
+			       "an existing IPsec SA - continuing as Add SA");
+		return netlink_add_sa(sa, 0);
+	}
+	return ret;
 }
 
 /** netlink_del_sa - Delete an SA from the Kernel
@@ -1067,12 +1068,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	return send_netlink_msg(&req.n, NULL, 0, "Del SA", sa->text_said);
 }
 
-/* XXX Move these elsewhere */
-#define  AES_KEY_MIN_LEN       128
-#define  AES_KEY_DEF_LEN       128
-#define  AES_KEY_MAX_LEN       256
-
-struct encrypt_desc algo_aes_ccm_8 =
+static struct encrypt_desc algo_aes_ccm_8 =
 {
 	.common = {
 		.name = "aes_ccm_8",
@@ -1082,12 +1078,13 @@ struct encrypt_desc algo_aes_ccm_8 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
-	.keyminlen =      AES_KEY_MIN_LEN + 3,
-	.keydeflen =      AES_KEY_DEF_LEN + 3,
-	.keymaxlen =      AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
 };
 
-struct encrypt_desc algo_aes_ccm_12 =
+static struct encrypt_desc algo_aes_ccm_12 =
 {
 	.common = {
 		.name = "aes_ccm_12",
@@ -1097,12 +1094,13 @@ struct encrypt_desc algo_aes_ccm_12 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
-	.keyminlen =      AES_KEY_MIN_LEN + 3,
-	.keydeflen =      AES_KEY_DEF_LEN + 3,
-	.keymaxlen =      AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
 };
 
-struct encrypt_desc algo_aes_ccm_16 =
+static struct encrypt_desc algo_aes_ccm_16 =
 {
 	.common = {
 		.name = "aes_ccm_16",
@@ -1112,12 +1110,13 @@ struct encrypt_desc algo_aes_ccm_16 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	.keyminlen =     AES_KEY_MIN_LEN + 3,
-	.keydeflen =     AES_KEY_DEF_LEN + 3,
-	.keymaxlen =     AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
 
-struct encrypt_desc algo_aes_gcm_8 =
+static struct encrypt_desc algo_aes_gcm_8 =
 {
 	.common = {
 		.name = "aes_gcm_8",
@@ -1127,12 +1126,13 @@ struct encrypt_desc algo_aes_gcm_8 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	.keyminlen =     AES_KEY_MIN_LEN + 3,
-	.keydeflen =     AES_KEY_DEF_LEN + 3,
-	.keymaxlen =     AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
+	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
 
-struct encrypt_desc algo_aes_gcm_12 =
+static struct encrypt_desc algo_aes_gcm_12 =
 {
 	.common = {
 		.name = "aes_gcm_12",
@@ -1142,12 +1142,13 @@ struct encrypt_desc algo_aes_gcm_12 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	.keyminlen =     AES_KEY_MIN_LEN + 3,
-	.keydeflen =     AES_KEY_DEF_LEN + 3,
-	.keymaxlen =     AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
+	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
 
-struct encrypt_desc algo_aes_gcm_16 =
+static struct encrypt_desc algo_aes_gcm_16 =
 {
 	.common = {
 		.name = "aes_gcm_16",
@@ -1157,9 +1158,10 @@ struct encrypt_desc algo_aes_gcm_16 =
 		.algo_next =  NULL,
 	},
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	.keyminlen =    AES_KEY_MIN_LEN + 3,
-	.keydeflen =    AES_KEY_DEF_LEN + 3,
-	.keymaxlen =    AES_KEY_MAX_LEN + 3,
+	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
+	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
+	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
+	.keymaxlen =    AEAD_AES_KEY_MAX_LEN,
 };
 
 static void linux_pfkey_add_aead(void)
@@ -1169,25 +1171,28 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_reserved = 0;
 
 	alg.sadb_alg_ivlen = 8;
-	alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
-	alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
+	alg.sadb_alg_minbits = 128;
+	alg.sadb_alg_maxbits = 256;
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV8;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for ESP");
 
 	alg.sadb_alg_ivlen = 12;
-	alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
-	alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
+	alg.sadb_alg_minbits = 128;
+	alg.sadb_alg_maxbits = 256;
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV12;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for ESP");
 
 	alg.sadb_alg_ivlen = 16;
-	alg.sadb_alg_minbits = 128 + 4 * BITS_PER_BYTE;
-	alg.sadb_alg_maxbits = 256 + 4 * BITS_PER_BYTE;
+	alg.sadb_alg_minbits = 128;
+	alg.sadb_alg_maxbits = 256;
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV16;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for ESP");
 
 	/* keeping aes-ccm behaviour intact as before */
 	alg.sadb_alg_ivlen = 8;
@@ -1195,18 +1200,29 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_maxbits = 256;
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV8;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for ESP");
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV12;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for ESP");
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV16;
-	kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg);
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for ESP");
 
-	ike_alg_register_enc(&algo_aes_ccm_8);
-	ike_alg_register_enc(&algo_aes_ccm_12);
-	ike_alg_register_enc(&algo_aes_ccm_16);
-	ike_alg_register_enc(&algo_aes_gcm_8);
-	ike_alg_register_enc(&algo_aes_gcm_12);
-	ike_alg_register_enc(&algo_aes_gcm_16);
+	if(!ike_alg_register_enc(&algo_aes_ccm_8))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_ccm_12))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_ccm_16))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_gcm_8))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_gcm_12))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for IKE");
+	if(!ike_alg_register_enc(&algo_aes_gcm_16))
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for IKE");
+
+	DBG(DBG_CONTROLMORE, DBG_log("Registered AEAD AES CCM/GCM algorithms"));
 }
 
 static void linux_pfkey_register_response(const struct sadb_msg *msg)
@@ -1236,6 +1252,7 @@ static void linux_pfkey_register(void)
 	netlink_register_proto(SADB_SATYPE_ESP, "ESP");
 	netlink_register_proto(SADB_X_SATYPE_IPCOMP, "IPCOMP");
 	pfkey_close();
+	DBG(DBG_CONTROLMORE, DBG_log("Registered AH, ESP and IPCOMP"));
 }
 
 /** Create ip_address out of xfrm_address_t.
@@ -1266,7 +1283,7 @@ static err_t xfrm_to_ip_address(unsigned family, const xfrm_address_t *src,
 
 static void netlink_acquire(struct nlmsghdr *n)
 {
-	struct xfrm_user_acquire ac1, *acquire;
+	struct xfrm_user_acquire *acquire;
 	const xfrm_address_t *srcx, *dstx;
 	int src_proto, dst_proto;
 	ip_address src, dst;
@@ -1276,7 +1293,6 @@ static void netlink_acquire(struct nlmsghdr *n)
 	err_t ugh = NULL;
 
 #ifdef HAVE_LABELED_IPSEC
-	char *tmp;
 	struct rtattr *attr;
 	int remaining;
 	struct xfrm_user_sec_ctx *xuctx = NULL;
@@ -1304,10 +1320,22 @@ static void netlink_acquire(struct nlmsghdr *n)
 	DBG(DBG_KERNEL, DBG_log("xfrm:rtattr= %lu", sizeof(struct rtattr)));
 #endif
 
-	/* to get rid of complaints about strict alignment: */
-	/* structure copy it first */
-	memcpy(&ac1, NLMSG_DATA(n), sizeof(struct xfrm_user_acquire));
-	acquire = &ac1; /* then use it. */
+	/* WARNING: netlink only guarantees 32-bit alignment.
+	 * See NLMSG_ALIGNTO in the kernel's include/uapi/linux/netlink.h.
+	 * BUT some fields in struct xfrm_user_acquire are 64-bit and so access
+	 * may be improperly aligned.  This will fail on a few strict
+	 * architectures (it does break C rules).
+	 */
+	/* WARNING: this code's understanding to the XFRM netlink
+	 * messages is from programs/pluto/linux26/xfrm.h.
+	 * There is no guarantee that this matches the kernel's
+	 * understanding.
+	 *
+	 * Many things are defined to be int or unsigned int.
+	 * This isn't safe when the kernel and userland may
+	 * be compiled with different models.
+	 */
+	acquire = NLMSG_DATA(n);	/* insufficiently aligned */
 
 	srcx = &acquire->sel.saddr;
 	dstx = &acquire->sel.daddr;
@@ -1315,11 +1343,11 @@ static void netlink_acquire(struct nlmsghdr *n)
 	transport_proto = acquire->sel.proto;
 
 #ifdef HAVE_LABELED_IPSEC
-	tmp = (char*) NLMSG_DATA(n);
-	tmp = tmp + NLMSG_ALIGN(sizeof(struct xfrm_user_acquire));
-	attr = (struct rtattr *)tmp;
+	attr = (struct rtattr *)
+		((char*) NLMSG_DATA(n) +
+			NLMSG_ALIGN(sizeof(struct xfrm_user_acquire)));
 
-	DBG(DBG_KERNEL, DBG_log("rtattr len= %lu", attr->rta_len));
+	DBG(DBG_KERNEL, DBG_log("rtattr len= %d", attr->rta_len));
 
 	if ( attr->rta_type == XFRMA_TMPL ) {
 		DBG(DBG_KERNEL, DBG_log("xfrm: found XFRMA_TMPL"));
@@ -1335,14 +1363,14 @@ static void netlink_acquire(struct nlmsghdr *n)
 		DBG(DBG_KERNEL,
 		    DBG_log(
 			    "xfrm: did not found XFRMA_SEC_CTX, trying next one"));
-		DBG(DBG_KERNEL, DBG_log("xfrm: rta->len=%lu", attr->rta_len));
+		DBG(DBG_KERNEL, DBG_log("xfrm: rta->len=%d", attr->rta_len));
 
 		remaining = n->nlmsg_len -
 			    NLMSG_SPACE(sizeof(struct xfrm_user_acquire));
 		attr = RTA_NEXT(attr, remaining);
 
 		DBG(DBG_KERNEL,
-		    DBG_log("xfrm: remaining=%d , rta->len = %lu", remaining,
+		    DBG_log("xfrm: remaining=%d , rta->len = %d", remaining,
 			    attr->rta_len));
 		if (attr->rta_type == XFRMA_SEC_CTX ) {
 			DBG(DBG_KERNEL, DBG_log(
@@ -1472,7 +1500,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 
 static void netlink_policy_expire(struct nlmsghdr *n)
 {
-	struct xfrm_user_polexpire up1, *upe;
+	struct xfrm_user_polexpire *upe;
 
 	struct {
 		struct nlmsghdr n;
@@ -1492,8 +1520,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 		return;
 	}
 
-	memcpy(&up1, NLMSG_DATA(n), sizeof(up1));
-	upe = &up1;
+	upe = NLMSG_DATA(n);
 	req.id.dir = upe->pol.dir;
 	req.id.index = upe->pol.index;
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -1724,7 +1751,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 		proto_info[i].encapsulation = st->st_esp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 1;
+		proto_info[i].reqid = (sr->reqid < IPSEC_MANUAL_REQID_MAX) ?  sr->reqid : sr->reqid + 1;
 	}
 
 	if (st->st_ipcomp.present) {
@@ -1738,7 +1765,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 			st->st_ipcomp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 2;
+		proto_info[i].reqid = (sr->reqid < IPSEC_MANUAL_REQID_MAX) ?  sr->reqid : sr->reqid + 2;
 	}
 
 	/* check for no transform at all */
@@ -2065,15 +2092,11 @@ add_entry:
 					if (fd < 0)
 						break;
 
-#ifdef NAT_TRAVERSAL
 					if (nat_traversal_support_non_ike &&
 					    addrtypeof(&ifp->addr) == AF_INET)
 						nat_traversal_espinudp_socket(
 							fd, "IPv4",
 							ESPINUDP_WITH_NON_IKE);
-
-
-#endif
 
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
@@ -2106,7 +2129,6 @@ add_entry:
 						ip_str(&q->ip_addr),
 						q->port);
 
-#ifdef NAT_TRAVERSAL
 					/*
 					 * right now, we do not support NAT-T on IPv6, because
 					 * the kernel did not support it, and gave an error
@@ -2148,7 +2170,7 @@ add_entry:
 							       ip_addr),
 							q->port);
 					}
-#endif
+
 					break;
 				}
 
@@ -2158,7 +2180,7 @@ add_entry:
 				    sameaddr(&q->ip_addr, &ifp->addr)) {
 					/* matches -- rejuvinate old entry */
 					q->change = IFN_KEEP;
-#ifdef NAT_TRAVERSAL
+
 					/* look for other interfaces to keep (due to NAT-T) */
 					for (q = q->next; q; q = q->next) {
 						if (streq(q->ip_dev->id_rname,
@@ -2169,7 +2191,7 @@ add_entry:
 							     &ifp->addr))
 							q->change = IFN_KEEP;
 					}
-#endif
+
 					break;
 				}
 

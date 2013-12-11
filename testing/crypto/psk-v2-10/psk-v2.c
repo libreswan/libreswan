@@ -17,9 +17,6 @@
  */
 
 #define LEAK_DETECTIVE
-#define AGGRESSIVE 1
-#define XAUTH
-#define MODECFG
 #define DEBUG 1
 #define PRINT_SA_DEBUG 1
 #define USE_KEYRR 1
@@ -151,11 +148,8 @@ int main(int argc, char *argv[])
 	st1.st_connection = c1;
 	st1.st_oakley.prf_hash = IKEv2_PRF_HMAC_SHA1;
 	st1.st_oakley.prf_hasher =
-		(struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH
-
-						       ,
-						       st1.st_oakley.prf_hash,
-						       0);
+		(struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
+						       st1.st_oakley.prf_hash);
 
 	ikev2_calculate_psk_auth(&st1,
 				 INITIATOR,

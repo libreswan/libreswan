@@ -1,12 +1,13 @@
 /* manifest constants
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2004-2008  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2004-2009  Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -48,12 +49,17 @@
  * <libreswan.h> defines err_t for this return type.
  */
 
-#ifndef LIBRESWAN_COCOA_APP
+/* you'd think this should be builtin to compiler... */
+#ifndef TRUE
+#  define TRUE 1
+#  ifndef LIBRESWAN_COCOA_APP
 typedef int bool;
+#  endif
 #endif
 
-#define FALSE   0
-#define TRUE    1
+#ifndef FALSE
+#  define FALSE 0
+#endif
 
 #define NULL_FD (-1)    /* NULL file descriptor */
 #define dup_any(fd) ((fd) == NULL_FD ? NULL_FD : dup(fd))
@@ -97,20 +103,55 @@ typedef uint_fast64_t lset_t;
 
 /* Routines to check and display values.
  *
- * An enum_names describes an enumeration.
- * enum_name() returns the name of an enum value, or NULL if invalid.
- * enum_show() is like enum_name, except it formats a numeric representation
- *    for any invalid value (in a static area -- NOT RE-ENTRANT)
+ * WARNING: Some of these routines are not re-entrant because
+ * they use a static buffer.
+ * When a non-re-entrant version is called, the buffer holding the result
+ * may be overwritten by the next call.  Among other things, this means that
+ * at most one call should appear in the argument list to a function call
+ * (e.g. a call to a log function).
+ */
+
+/* Printing Enums:
  *
- * bitnames() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
+ * An enum_names table describes an enumeration (a correspondence
+ * between integer values and names).
+ *
+ * enum_name() returns the name of an enum value, or NULL if unnamed.
+ * enum_show() is like enum_name, except it formats a numeric representation
+ *    for any unnamed value (in a static area -- NOT RE-ENTRANT)
+ * enum_showb() is like enum_show() but uses a caller-supplied buffer
+ *    for any unnamed value and thus is re-entrant.
+ */
+
+/* Printing lset_t values:
+ *
+ * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
+ * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
  */
 
 typedef const struct enum_names enum_names;
 
 extern const char *enum_name(enum_names *ed, unsigned long val);
+
+#define ENUM_SHOW_BUF_LEN	14	/* enough space for any unsigned 32-bit + "??" */
+extern const char *enum_showb(enum_names *ed, unsigned long val, char *buf, size_t blen);
+
+/* sometimes the prefix gets annoying */
+extern const char *strip_prefix(const char *s, const char *prefix);
+
 extern const char *enum_show(enum_names *ed, unsigned long val);        /* NOT RE-ENTRANT */
+
 extern int enum_search(enum_names *ed, const char *string);
 
+/* Printing lset_t values:
+ *
+ * These routines require a name table which is a NULL-terminated
+ * sequence of strings.  That means that each bit in the set must
+ * have a name.
+ *
+ * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
+ * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
+ */
 extern bool testset(const char *const table[], lset_t val);
 extern const char *bitnamesof(const char *const table[], lset_t val);   /* NOT RE-ENTRANT */
 extern const char *bitnamesofb(const char *const table[],
@@ -132,9 +173,11 @@ struct keyword_enum_value {
 };
 
 struct keyword_enum_values {
-	struct keyword_enum_value *values;
+	const struct keyword_enum_value *values;
 	size_t valuesize;
 };
+
+extern struct keyword_enum_values kw_host_list;
 
 extern const char *keyword_name(struct keyword_enum_values *kevs,
 				unsigned int value);

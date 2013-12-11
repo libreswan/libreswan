@@ -77,7 +77,7 @@
 # endif
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
 # define NEED_UDP_ENCAP_ENABLE
 #endif
 
@@ -347,6 +347,17 @@
 # define __ipsec_dev_get(x) __dev_get_by_name(x)
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
+# define PDE_DATA(inode)	PDE(inode)->data
+#else
+/*
+ * We do not use CONFIG_NAMSPACES due to a kernel bug
+ * that checks for namespaces in inet_add_protocol()
+ * even when compiled without CONFIG_NAMSPACES
+ */
+# define HAVE_NAMESPACES
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)
 # define ip_chk_addr(a) inet_addr_type(&init_net, a)
 # define l_inet_addr_type(a)    inet_addr_type(&init_net, a)
@@ -437,15 +448,6 @@
 #endif
 
 #include <linux/in6.h>
-
-#if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && CONFIG_IPSEC_NAT_TRAVERSAL
-# define NAT_TRAVERSAL 1
-#else
-# undef CONFIG_IPSEC_NAT_TRAVERSAL
-# if defined(HAVE_UDP_ENCAP_CONVERT)
-#  define NAT_TRAVERSAL 1
-# endif
-#endif
 
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>

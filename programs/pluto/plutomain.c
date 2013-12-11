@@ -1,6 +1,6 @@
 /* Pluto main program
  * Copyright (C) 1997      Angelos D. Keromytis.
- * Copyright (C) 1998-2001 D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
@@ -8,8 +8,11 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -54,9 +57,6 @@
 #include "x509.h"
 #include "certs.h"
 #include "ac.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "packet.h"
@@ -81,11 +81,9 @@
 #include "vendor.h"
 #include "pluto_crypt.h"
 
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #include "lswcrypto.h"
 
@@ -95,9 +93,8 @@
 
 #include <nss.h>
 #include <nspr.h>
-#ifdef FIPS_CHECK
-# include <fipscheck.h>
-#endif
+
+#include "fips.h"
 
 #ifdef HAVE_LIBCAP_NG
 # include <cap-ng.h>
@@ -163,6 +160,7 @@ static void usage(const char *mess)
 		"[--perpeerlogbase <path>] [--perpeerlog]"
 		" \\\n\t"
 		"[--coredir <dirname>] [--noretransmits]"
+		"[--statsbin <filename>]"
 		" \\\n\t"
 		"[--secretsfile <secrets-file>]"
 		" [--ipsecdir <ipsec-dir>]"
@@ -195,13 +193,11 @@ static void usage(const char *mess)
 		" [ --debug-private]"
 		" [ --debug-pfkey]"
 #endif
-#ifdef NAT_TRAVERSAL
 		" [ --debug-nat-t]"
 		" \\\n\t"
 		"[--nat_traversal] [--keep_alive <delay_sec>]"
 		" \\\n\t"
 		"[--disable_port_floating]"
-#endif
 		" \\\n\t"
 		"[--virtual_private <network_list>]"
 		"\n"
@@ -209,6 +205,65 @@ static void usage(const char *mess)
 		ipsec_version_code());
 	exit(mess == NULL ? 0 : 1); /* not exit_pluto because we are not initialized yet */
 }
+
+/* string naming compile-time options that have interop implications */
+static const char compile_time_interop_options[] = ""
+#ifdef NETKEY_SUPPORT
+					    " XFRM(netkey)"
+#endif
+#ifdef KLIPS
+					    " KLIPS"
+#endif
+#ifdef KLIPSMAST
+					    " MAST"
+#endif
+
+#ifdef HAVE_NO_FORK
+					    " NO_FORK"
+#endif
+#ifdef HAVE_BROKEN_POPEN
+					    " BROKEN_POPEN"
+#endif
+#ifndef OPENSSL
+					    " NSS"
+#endif
+#ifdef DNSSEC
+					    " DNSSEC"
+#endif
+#ifdef FIPS_CHECK
+					    " FIPS_CHECK"
+#endif
+#ifdef HAVE_LABELED_IPSEC
+					    " LABELED_IPSEC"
+#endif
+#ifdef HAVE_LIBCAP_NG
+					    " LIBCAP_NG"
+#endif
+#ifdef USE_LINUX_AUDIT
+					    " LINUX_AUDIT"
+#endif
+#ifdef XAUTH_HAVE_PAM
+					    " XAUTH_PAM"
+#endif
+#ifdef HAVE_NM
+					    " NETWORKMANAGER"
+#endif
+#ifdef LEAK_DETECTIVE
+					    " LEAK_DETECTIVE"
+#endif
+#ifdef HAVE_OCF
+					    " OCF"
+#endif
+#ifdef KLIPS_MAST
+					    " KLIPS_MAST"
+#endif
+#ifdef LIBCURL
+					    " CURL(non-NSS)"
+#endif
+#ifdef LDAP_VER
+					    " LDAP(non-NSS)"
+#endif
+;
 
 /* lock file support
  * - provides convenient way for scripts to find Pluto's pid
@@ -330,9 +385,9 @@ static void pluto_init_nss(char *confddir)
 
 	snprintf(buf, sizeof(buf), "%s", confddir);
 	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", buf);
-	SECStatus nss_init_status = NSS_InitReadWrite(buf);
+	SECStatus nss_init_status = NSS_Init(buf);
 	if (nss_init_status != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS initialization failed (err %d)\n",
+		loglog(RC_LOG_SERIOUS, "NSS readonly initialization failed (err %d)\n",
 		       PR_GetError());
 		exit_pluto(10);
 	} else {
@@ -360,7 +415,7 @@ u_int16_t secctx_attr_value = SECCTX;
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
-char *pluto_vendorid;
+static char *pluto_vendorid;
 static int nhelpers = -1;
 
 int main(int argc, char **argv)
@@ -383,12 +438,11 @@ int main(int argc, char **argv)
 	pluto_shared_secrets_file =
 		DISCARD_CONST(char *, SHARED_SECRETS_FILE);
 
-#ifdef NAT_TRAVERSAL
 	/** Overridden by nat_traversal= in ipsec.conf */
 	bool nat_traversal = FALSE;
 	bool nat_t_spf = TRUE; /* support port floating */
 	unsigned int keep_alive = 0;
-#endif
+
 	/** Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
 #ifdef LEAK_DETECTIVE
@@ -459,11 +513,12 @@ int main(int argc, char **argv)
 			{ "perpeerlog", no_argument, NULL, 'l' },
 			{ "noretransmits", no_argument, NULL, 'R' },
 			{ "coredir", required_argument, NULL, 'C' },
+			{ "dumpdir", required_argument, NULL, 'C' }, /* alias for coredir */
+			{ "statsbin", required_argument, NULL, 'S' },
 			{ "ipsecdir", required_argument, NULL, 'f' },
 			{ "ipsec_dir", required_argument, NULL, 'f' },
 			{ "foodgroupsdir", required_argument, NULL, 'f' },
 			{ "adns", required_argument, NULL, 'a' },
-#ifdef NAT_TRAVERSAL
 			{ "nat_traversal", no_argument, NULL, '1' },
 			{ "keep_alive", required_argument, NULL, '2' },
 			{ "force_keepalive", no_argument, NULL, '3' }, /* obsolete, ignored */
@@ -471,7 +526,6 @@ int main(int argc, char **argv)
 			{ "debug-nat_t", no_argument, NULL, '5' },
 			{ "debug-nattraversal", no_argument, NULL, '5' },
 			{ "debug-nat-t", no_argument, NULL, '5' },
-#endif
 			{ "virtual_private", required_argument, NULL, '6' },
 			{ "nhelpers", required_argument, NULL, 'j' },
 #ifdef HAVE_LABELED_IPSEC
@@ -568,15 +622,17 @@ int main(int argc, char **argv)
 			usage(NULL);
 			break;  /* not actually reached */
 
-		case 'C':
+		case 'C': /* --coredir */
 			coredir = clone_str(optarg, "coredir");
 			continue;
 
+		case 'S': /* --statsdir */
+			pluto_stats_binary = clone_str(optarg, "statsbin");
+			continue;
+
 		case 'v': /* --version */
-		{
 			printf("%s%s\n", ipsec_version_string(),
 			       compile_time_interop_options);
-		}
 			exit(0);        /* not exit_pluto because we are not initialized yet */
 			break;          /* not actually reached */
 
@@ -651,6 +707,7 @@ int main(int argc, char **argv)
 		{
 			ip_address lip;
 			err_t e = ttoaddr(optarg, 0, 0, &lip);
+
 			if (e) {
 				libreswan_log(
 					"invalid listen argument ignored: %s\n",
@@ -742,7 +799,6 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-#ifdef NAT_TRAVERSAL
 		case 'q': /* --natikeport <portnumber> */
 			if (optarg == NULL || !isdigit(optarg[0]))
 				usage("missing port number");
@@ -759,7 +815,6 @@ int main(int argc, char **argv)
 				pluto_natt_float_port = port;
 			}
 			continue;
-#endif
 
 		case 'b': /* --ctlbase <path> */
 			ctlbase = optarg;
@@ -789,8 +844,7 @@ int main(int argc, char **argv)
 		case 'f': /* --ipsecdir <ipsec-dir> */
 			(void)lsw_init_ipsecdir(optarg);
 			/* Keep a copy of the filename so we can show it in ipsec status */
-                        ipsecdir = alloc_bytes(strlen(optarg)+1, "ipsecdir filename");
-                        strncpy(ipsecdir,optarg, strlen(optarg));
+			ipsecdir = clone_str(optarg, "ipsecdir filename");
 			continue;
 
 		case 'a': /* --adns <pathname> */
@@ -815,7 +869,6 @@ int main(int argc, char **argv)
 			log_to_perpeer = TRUE;
 			continue;
 
-#ifdef NAT_TRAVERSAL
 		case '1': /* --nat_traversal */
 			nat_traversal = TRUE;
 			continue;
@@ -834,7 +887,6 @@ int main(int argc, char **argv)
 			base_debugging |= DBG_NATT;
 			continue;
 #endif
-#endif
 		case '6': /* --virtual_private */
 			virtual_private = optarg;
 			continue;
@@ -842,8 +894,7 @@ int main(int argc, char **argv)
 		case 'z': /* --config */
 		{
 			/* Keep a copy of the filename so we can show it in ipsec status */
-			ipsecconf = alloc_bytes(strlen(optarg)+1, "ipsecconf filename");
-			strncpy(ipsecconf,optarg, strlen(optarg));
+			ipsecconf = clone_str(optarg, "ipsecconf filename");
 
 			/* Config struct to variables mapper. This will overwrite
 			 * all previously set options. Keep this in the same order as
@@ -891,14 +942,26 @@ int main(int argc, char **argv)
 			set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
 			set_cfg_string(&pluto_vendorid, cfg->setup.strings[KSF_MYVENDORID]); /* --vendorid */
 			/* no config option: pluto_adns_option */
-#ifdef NAT_TRAVERSAL
+
+			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
+				set_cfg_string(&pluto_stats_binary, /* --statsbinary */
+					       cfg->setup.strings[KSF_STATSBINARY]);
+				if (access(pluto_stats_binary, X_OK) == 0) {
+					libreswan_log("statsbinary set to %s", pluto_stats_binary);
+				} else {
+					libreswan_log("statsbinary '%s' ignored - file does not exist or is not executable",
+						      pluto_stats_binary);
+					pluto_stats_binary = NULL;
+				}
+			}
+
 			pluto_natt_float_port =
 				cfg->setup.options[KBF_NATIKEPORT];
 			nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
 			keep_alive = cfg->setup.options[KBF_KEEPALIVE];
 			nat_t_spf =
 				!cfg->setup.options[KBF_DISABLEPORTFLOATING];
-#endif
+
 			set_cfg_string(&virtual_private,
 				       cfg->setup.strings[KSF_VIRTUALPRIVATE]);
 
@@ -912,24 +975,24 @@ int main(int argc, char **argv)
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 			if (protostack == NULL || *protostack == 0) {
 				kern_interface = USE_NETKEY;
-			} else if (strcmp(protostack, "none") == 0) {
+			} else if (streq(protostack, "none")) {
 				kern_interface = NO_KERNEL;
-			} else if (strcmp(protostack, "auto") == 0) {
+			} else if (streq(protostack, "auto")) {
 				libreswan_log(
 					"The option protostack=auto is obsoleted, falling back to protostack=netkey\n");
 				kern_interface = USE_NETKEY;
-			} else if (strcmp(protostack, "klips") == 0) {
+			} else if (streq(protostack, "klips")) {
 				kern_interface = USE_KLIPS;
-			} else if (strcmp(protostack, "mast") == 0) {
+			} else if (streq(protostack, "mast")) {
 				kern_interface = USE_MASTKLIPS;
-			} else if (strcmp(protostack, "netkey") == 0 ||
-				   strcmp(protostack, "native") == 0) {
+			} else if (streq(protostack, "netkey") ||
+				   streq(protostack, "native")) {
 				kern_interface = USE_NETKEY;
-			} else if (strcmp(protostack, "bsd") == 0 ||
-				   strcmp(protostack, "kame") == 0 ||
-				   strcmp(protostack, "bsdkame") == 0) {
+			} else if (streq(protostack, "bsd") ||
+				   streq(protostack, "kame") ||
+				   streq(protostack, "bsdkame")) {
 				kern_interface = USE_BSDKAME;
-			} else if (strcmp(protostack, "win2k") == 0) {
+			} else if (streq(protostack, "win2k")) {
 				kern_interface = USE_WIN2K;
 			}
 
@@ -1057,6 +1120,7 @@ int main(int argc, char **argv)
 		if (dup2(0, 1) != 1)
 			lsw_abort();
 		if (!log_to_stderr && dup2(0, 2) != 2)
+
 			lsw_abort();
 	}
 
@@ -1066,64 +1130,59 @@ int main(int argc, char **argv)
 
 #ifdef FIPS_CHECK
 	/*
-	 * In FIPS mode, any missing/bad hmac file means we abort.
+	 * FIPS Kernel mode: fips=1 kernel boot parameter
+	 * FIPS Product mode: dracut-fips is installed
 	 *
-	 * In non-FIPS mode, if pluto has an hmac file, everything should
-	 * have an hmac file, and all hmacs should validate. If pluto has
-	 * no hmac file, none of the hmac files are tested.
+	 * When FIPS Product mode and FIPS Kernel mode, abort on hmac failure.
+	 * Otherwise, just complain about failures.
 	 *
-	 * This behaviour is keyed of the first file in the fipscheck
-	 * FIPSCHECK_verify_files_ev() function, which is why pluto
-	 * is at the top of this list.
-	 *
-	 * hmac files are versioned, See FIPSHMACSUFFIX in Makefile.inc
+	 * Product Mode detected with FIPSPRODUCTCHECK in Makefile.inc
 	 */
-	const char *package_files[] = { IPSEC_EXECDIR "/pluto",
-					IPSEC_EXECDIR "/setup",
-					IPSEC_EXECDIR "/addconn",
-					IPSEC_EXECDIR "/auto",
-					IPSEC_EXECDIR "/barf",
-					IPSEC_EXECDIR "/eroute",
-					IPSEC_EXECDIR "/ikeping",
-					IPSEC_EXECDIR "/readwriteconf",
-					IPSEC_EXECDIR "/_keycensor",
-					IPSEC_EXECDIR "/klipsdebug",
-					IPSEC_EXECDIR "/look",
-					IPSEC_EXECDIR "/newhostkey",
-					IPSEC_EXECDIR "/pf_key",
-					IPSEC_EXECDIR "/_pluto_adns",
-					IPSEC_EXECDIR "/_plutorun",
-					IPSEC_EXECDIR "/rsasigkey",
-					IPSEC_EXECDIR "/_secretcensor",
-					IPSEC_EXECDIR "/secrets",
-					IPSEC_EXECDIR "/showhostkey",
-					IPSEC_EXECDIR "/spi",
-					IPSEC_EXECDIR "/spigrp",
-					IPSEC_EXECDIR "/_stackmanager",
-					IPSEC_EXECDIR "/tncfg",
-					IPSEC_EXECDIR "/_updown",
-					IPSEC_EXECDIR "/_updown.klips",
-					IPSEC_EXECDIR "/_updown.mast",
-					IPSEC_EXECDIR "/_updown.netkey",
-					IPSEC_EXECDIR "/verify",
-					IPSEC_EXECDIR "/whack",
-					IPSEC_SBINDIR "/ipsec",
-					NULL };
 
-	if (!FIPSCHECK_verify_files_ex(FIPSHMACSUFFIX, Pluto_IsFIPS(),
-	    package_files)) {
-		loglog(RC_LOG_SERIOUS, "%s HMAC[%s] integrity verification test failed ",
-		       Pluto_IsFIPS() ? "FIPS" : "non-FIPS", FIPSHMACSUFFIX);
-		exit_pluto(10);
+	{
+
+	int fips_kernel = libreswan_fipskernel();
+	int fips_product = libreswan_fipsproduct();
+	int fips_mode = libreswan_fipsmode();
+	int fips_files_check_ok = FIPSCHECK_verify_files(fips_package_files);
+
+	if (fips_mode == -1) {
+                        loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
+                        exit_pluto(10);
 	}
 
-	loglog(RC_LOG_SERIOUS, "%s HMAC[%s] integrity verification test %s",
-		Pluto_IsFIPS() ? "FIPS" : "non-FIPS", FIPSHMACSUFFIX,
-		/* Paul: I requested an API addition to get rid of these hardcoded names */
-		( access("/usr/lib64/fipscheck/pluto"FIPSHMACSUFFIX, F_OK) == -1 &&
-		  access("/usr/lib/fipscheck/pluto"FIPSHMACSUFFIX, F_OK) == -1)
-		? "skipped" : "passed");
+	if (fips_product == 1)
+		libreswan_log("FIPS Product detected (%s)", FIPSPRODUCTCHECK);
 
+	if (fips_kernel == 1)
+		libreswan_log("FIPS Kernel Mode detected");
+
+	if (!fips_files_check_ok) {
+		loglog(RC_LOG_SERIOUS, "FIPS HMAC integrity verification FAILURE");
+		/*
+		 * We ignore fips=1 kernel mode if we are not a 'fips product'
+		 */
+                if (fips_product && fips_kernel) {
+                        loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
+                        exit_pluto(10);
+                } else if (fips_product) {
+                        libreswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
+                } else if (fips_kernel) {
+                        libreswan_log("FIPS: not a FIPS product, kernel mode ignored - continuing");
+                } else {
+                        libreswan_log("FIPS: not a FIPS product and kernel not in FIPS mode - continuing");
+		}
+	} else {
+		libreswan_log("FIPS HMAC integrity verification test passed");
+	}
+
+	if (fips_mode) {
+		libreswan_log("FIPS: pluto daemon running in FIPS mode");
+	} else {
+		libreswan_log("FIPS: pluto daemon NOT running in FIPS mode");
+	}
+
+	}
 #else
 	libreswan_log("FIPS HMAC integrity support [disabled]");
 #endif
@@ -1165,29 +1224,16 @@ int main(int argc, char **argv)
 	libreswan_log("Linux audit support [disabled]");
 #endif
 
-	/* Note: some scripts may look for this exact message -- don't change
-	 * ipsec barf was one, but it no longer does.
-	 */
 	{
 		const char *vc = ipsec_version_code();
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			      vc, compile_time_interop_options, getpid());
-		if (Pluto_IsFIPS() == 1) {
-			libreswan_log("Pluto is running in FIPS mode");
-		} else if (Pluto_IsFIPS() == 0) {
-			libreswan_log("Pluto is NOT running in FIPS mode");
-		} else {
-			libreswan_log("ERROR: FIPS detection failed, Pluto running in non-FIPS mode");
-		}
 
-		if ((vc[0] == 'c' && vc[1] == 'v' && vc[2] == 's') ||
-		    (vc[2] == 'g' && vc[3] == 'i' && vc[4] == 't')) {
+		if (vc[2] == 'g' && vc[3] == 'i' && vc[4] == 't') {
 			/*
-			 * when people build RPMs from CVS or GIT, make sure they
-			 * get blamed appropriately, and that we get some way to
-			 * identify who did it, and when they did it. Use string concat,
-			 * so that strings the binary can or classic SCCS "what", will find
-			 * stuff too.
+			 * when people build RPMs from GIT, make sure they
+			 * get blamed appropriately, and that we get some way
+			 * to identify who did it, and when they did it.
 			 */
 			libreswan_log(
 				"@(#) built on "__DATE__
@@ -1207,20 +1253,11 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_OCF
-	{
-		struct stat buf;
-		errno = 0;
-
-		if ( stat("/dev/crypto", &buf) != -1)
-			libreswan_log(
-				"OCF support for IKE via /dev/crypto [enabled]");
-
-
-		else
-			libreswan_log(
-				"OCF support for IKE via /dev/crypto [failed:%s]",
+	if (access("/dev/crypto", R_OK | W_OK) != -1)
+		libreswan_log("OCF support for IKE via /dev/crypto [enabled]");
+	else
+		libreswan_log("OCF support for IKE via /dev/crypto [failed:%s]",
 				strerror(errno));
-	}
 #else
 	libreswan_log("OCF support for IKE [disabled]");
 #endif
@@ -1262,13 +1299,6 @@ int main(int argc, char **argv)
 	libreswan_log("XAUTH PAM support [disabled]");
 #endif
 
-#ifdef HAVE_STATSD
-	libreswan_log(
-		"HAVE_STATSD notification via /bin/libreswan-statsd enabled");
-#else
-	libreswan_log("HAVE_STATSD notification support [disabled]");
-#endif
-
 /** Log various impair-* functions if they were enabled */
 
 	if (DBGP(IMPAIR_BUST_MI2))
@@ -1301,10 +1331,7 @@ int main(int argc, char **argv)
 
 /** Initialize all of the various features */
 
-	init_vendorid(); /* to be phased out */
-#ifdef NAT_TRAVERSAL
 	init_nat_traversal(nat_traversal, keep_alive, nat_t_spf);
-#endif
 
 	init_virtual_ip(virtual_private);
 	/* obsoletd by nss code init_rnd_pool(); */
@@ -1319,6 +1346,7 @@ int main(int argc, char **argv)
 	init_kernel();
 	init_adns();
 	init_id();
+	init_vendorid();
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 	init_fetch();
@@ -1396,12 +1424,13 @@ void show_setup_plutomain()
 	whack_log(RC_COMMENT, "config setup options:");     /* spacer */
 	whack_log(RC_COMMENT, " ");     /* spacer */
         whack_log(RC_COMMENT, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, "
-		  "dumpdir=%s",
+		  "dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
 		pluto_shared_secrets_file,
 		oco->confddir,
-		coredir);
+		coredir,
+		pluto_stats_binary ? pluto_stats_binary : "unset");
 
 	whack_log(RC_COMMENT, "sbindir=%s, libdir=%s, libexecdir=%s",
 		IPSEC_SBINDIR ,
@@ -1430,3 +1459,4 @@ void show_setup_plutomain()
         whack_log(RC_COMMENT, "secctx_attr_value=<unsupported>");
 #endif
 }
+

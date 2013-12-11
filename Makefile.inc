@@ -192,6 +192,15 @@ INSTALL?=install
 # file, which is why -b is not specified for them.
 INSTBINFLAGS?=-b --suffix=.old
 INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
+
+# busybox install is not emulating a real install command well enough
+SWANCHECKLINK=$(shell readlink /usr/bin/install)
+ifeq ($(SWANCHECKLINK /bin/busybox),)
+INSTBINFLAGS=
+INSTSUIDFLAGS=-m 0755 -g root -o root
+endif
+
+
 #INSTMANFLAGS?="-m 644"
 INSTCONFFLAGS?=
 # For OSX use
@@ -214,7 +223,8 @@ endif
 GCC_LINT ?= -DGCC_LINT
 
 # some defaults that cause most if not all warnings
-WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security #-pedantic
+# eventually: -Wshadow
+WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs #-pedantic
 
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
@@ -272,22 +282,12 @@ XMLTO?=$(shell which xmlto | grep / | head -n1)
 # look for POD2MAN command
 POD2MAN?=$(shell which pod2man | grep / | head -n1)
 
-#
-# default number of bits for ipsec newhostkey
-#
-RSAKEYBITS:=2192
-
 ## build environment variations
 #
 # USE_ variables determine if features are compiled into Libreswan.
 #       these let you turn on/off specific features
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
-
-# Do a new lookup every time a connection is (re)started. This works better
-# on hosts with some dyndns service, since DPD will cause a new dns lookup,
-# but it could be a potential security issue if receiving spoofed dns.
-USE_DYNAMICDNS?=true
 
 # Enable support for DNSSEC. This requires the unbound library
 USE_DNSSEC?=true
@@ -296,9 +296,6 @@ USE_DNSSEC?=true
 # and any certificates to be in a single directory defined by 
 # FINALCONFDDIR?
 USE_SINGLE_CONF_DIR?=false
-
-# Build ikeping (a utility for testing IKE daemons) in the distribution
-USE_IKEPING?=true
 
 # Build support for KEY RR 
 # this will become false in the future, as all OE sites transition to
@@ -343,17 +340,7 @@ USE_NETKEY=false
 USE_KLIPS=false
 endif
 
-# Build aggressive mode authentication system code - both Server and Client.
-# This was off by default, since aggressive mode leads to denial of service
-# attacks.
-USE_AGGRESSIVE?=true
-
-# Build XAUTH authentication system code - both Server and Client.
-# XAUTH is tricky, and you can get into security trouble unless you
-# do additional configuration - but it is often needed for Cisco interop
-USE_XAUTH?=true
-
-# When doing XAUTH, include PAM support when available
+# include PAM support for XAUTH when available on the platform
 
 ifeq ($(OSDEP),linux)
 USE_XAUTHPAM?=true
@@ -370,9 +357,7 @@ endif
 
 # Build support for integrity check for libreswan on startup 
 USE_FIPSCHECK?=false
-# hmac suffix
-# FIPSHMACSUFFIX?=3.6-1.fc20.hmac
-FIPSHMACSUFFIX?=.hmac
+FIPSPRODUCTCHECK?=/etc/system-fips
 
 # Build support for the Linux Audit system
 ifeq ($(OSDEP),linux)
@@ -388,12 +373,6 @@ USE_LIBCAP_NG?=true
 # Support for Network Manager
 USE_NM?=true
 
-# whether to support NAT Traversal (aka NAT-T)
-USE_NAT_TRAVERSAL?=true
-
-# where to support NAT-T in transport mode (needed for Win2K NAT-T Interop)
-USE_NAT_TRAVERSAL_TRANSPORT_MODE?=true
-
 # Include LDAP support (currently used for fetching CRLs)
 USE_LDAP?=false
 
@@ -404,15 +383,11 @@ USE_LIBCURL?=true
 # amount of code space to pluto, and many of the algorithms have not had
 # the same scrutiny that AES and 3DES have received, but offers possibilities 
 # of switching away from AES/3DES quickly. 
-USE_EXTRACRYPTO?=false
+USE_EXTRACRYPTO?=true
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
-
-# Do we have an external stats daemon we can push state changes to?
-# Currently hardcoded to /bin/libreswan-statsd
-HAVE_STATSD?=false
 
 # Do we have Openssl libraries available for BIGNUM support?
 # Required of HAVE_OCF support
@@ -510,7 +485,6 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-PLUTOLIB=${OBJDIRTOP}/lib/libpluto/libpluto.a
 LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
@@ -519,14 +493,13 @@ LIBLSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liblswcrypto/liblswcrypto.a
 LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
 LIBMD5=${OBJDIRTOP}/lib/libcrypto/libmd5/libmd5.a
 LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
-LIBBLOWFISH=${OBJDIRTOP}/lib/libcrypto/libblowfish/libblowfish.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
 CRYPTOLIBS=${LIBAES} ${LIBSHA1} ${LIBMD5} ${LIBDESLITE} ${LIBSHA2}
 
 ifeq ($(USE_EXTRACRYPTO),true)
-CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH} ${LIBBLOWFISH}
+CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH}
 endif
 
 CRYPTOLIBS += ${LIBLSWCRYPTO}
@@ -542,9 +515,9 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
-export LIBRESWANLIB LSWLOGLIB PLUTOLIB 
+export LIBRESWANLIB LSWLOGLIB 
 export LIBDESSRCDIR LIBDESLITE LIBAES
-export LIBMD5 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
+export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
 export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
 export LIBLSWCRYPTO NSSFLAGS NSSLIBS
 
@@ -575,7 +548,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_LIBDIR@:$(FINALLIBDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@MODPROBE@:$(MODPROBE):g" \
-			-e "s:@RSAKEYBITS@:$(RSAKEYBITS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 
 # For KVM testing setup

@@ -33,9 +33,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -56,9 +53,7 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 /*
  * empty structure, for clone use.

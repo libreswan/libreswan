@@ -354,9 +354,7 @@ DEBUG_NO_STATIC int pfkey_address_parse(struct sadb_ext *pfkey_ext)
 	case K_SADB_X_EXT_ADDRESS_DST_FLOW:
 	case K_SADB_X_EXT_ADDRESS_SRC_MASK:
 	case K_SADB_X_EXT_ADDRESS_DST_MASK:
-#ifdef NAT_TRAVERSAL
 	case K_SADB_X_EXT_NAT_T_OA:
-#endif
 		break;
 	default:
 		ERROR(
@@ -642,6 +640,7 @@ DEBUG_NO_STATIC int pfkey_prop_parse(struct sadb_ext *pfkey_ext)
 	for (i = 0; i < num_comb; i++) {
 		struct sadb_comb *pfkey_comb =
 			(struct sadb_comb *)k_pfkey_comb;
+#if K_SADB_AALG_MAX < 255
 		if (pfkey_comb->sadb_comb_auth > K_SADB_AALG_MAX) {
 			DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
 				  "pfkey_prop_parse: "
@@ -651,7 +650,7 @@ DEBUG_NO_STATIC int pfkey_prop_parse(struct sadb_ext *pfkey_ext)
 				  K_SADB_AALG_MAX);
 			SENDERR(EINVAL);
 		}
-
+#endif
 		if (pfkey_comb->sadb_comb_auth) {
 			if (!pfkey_comb->sadb_comb_auth_minbits) {
 				DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
@@ -882,6 +881,7 @@ DEBUG_NO_STATIC int pfkey_supported_parse(struct sadb_ext *pfkey_ext)
 
 		switch (pfkey_supported->sadb_supported_exttype) {
 		case K_SADB_EXT_SUPPORTED_AUTH:
+#if K_SADB_AALG_MAX < 255
 			if (pfkey_alg->sadb_alg_id > K_SADB_AALG_MAX) {
 				DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
 					  "pfkey_supported_parse: "
@@ -891,6 +891,7 @@ DEBUG_NO_STATIC int pfkey_supported_parse(struct sadb_ext *pfkey_ext)
 					  K_SADB_AALG_MAX);
 				SENDERR(EINVAL);
 			}
+#endif
 			break;
 		case SADB_EXT_SUPPORTED_ENCRYPT:
 #if K_SADB_EALG_MAX < 255
@@ -1143,7 +1144,6 @@ errlab:
 	return error;
 }
 
-#ifdef NAT_TRAVERSAL
 DEBUG_NO_STATIC int pfkey_x_ext_nat_t_type_parse(
 	struct sadb_ext *pfkey_ext UNUSED)
 {
@@ -1154,7 +1154,6 @@ DEBUG_NO_STATIC int pfkey_x_ext_nat_t_port_parse(
 {
 	return 0;
 }
-#endif
 
 DEBUG_NO_STATIC int pfkey_x_ext_outif_parse(struct sadb_ext *pfkey_ext)
 {
@@ -1210,10 +1209,8 @@ DEFINEPARSER(pfkey_x_kmprivate_parse);
 DEFINEPARSER(pfkey_x_satype_parse);
 DEFINEPARSER(pfkey_x_ext_debug_parse);
 DEFINEPARSER(pfkey_x_ext_protocol_parse);
-#ifdef NAT_TRAVERSAL
 DEFINEPARSER(pfkey_x_ext_nat_t_type_parse);
 DEFINEPARSER(pfkey_x_ext_nat_t_port_parse);
-#endif
 DEFINEPARSER(pfkey_x_ext_outif_parse);
 DEFINEPARSER(pfkey_x_ext_saref_parse);
 
@@ -1246,14 +1243,10 @@ struct pf_key_ext_parsers_def *ext_default_parsers[] =
 	&pfkey_address_parse_def,
 	&pfkey_x_ext_debug_parse_def,
 	&pfkey_x_ext_protocol_parse_def,
-#ifdef NAT_TRAVERSAL
 	&pfkey_x_ext_nat_t_type_parse_def,
 	&pfkey_x_ext_nat_t_port_parse_def,
 	&pfkey_x_ext_nat_t_port_parse_def,
 	&pfkey_address_parse_def,
-#else
-	NULL, NULL, NULL, NULL,
-#endif
 	&pfkey_x_ext_outif_parse_def,
 	&pfkey_x_ext_saref_parse_def,
 };

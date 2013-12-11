@@ -102,7 +102,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %endif
   INITSYSTEM=sysvinit \
   USERLINK="-g -pie %{?efence}" \
-  USE_DYNAMICDNS=true \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK=%{USE_FIPSCHECK} \
@@ -192,6 +191,14 @@ fi
 
 %post 
 /sbin/chkconfig --add ipsec || :
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
+    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
+    echo > ${TEMPFILE}
+    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
+    rm -f ${TEMPFILE}
+fi
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.1-1

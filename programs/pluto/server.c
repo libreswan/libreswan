@@ -1,6 +1,7 @@
 /* get-next-event loop
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002, 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
@@ -8,7 +9,6 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
- * Copyright (C) 2013  D. Hugh Redelmeier.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,9 +65,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "kernel.h"             /* for no_klips; needs connections.h */
 #include "log.h"
@@ -87,9 +84,7 @@
 #include <libreswan/pfkey.h>
 #include "kameipsec.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #include "lsw_select.h"
 
@@ -1039,7 +1034,6 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					/* note dirty trick to suppress ~ at start of format
 					 * if we know what state to blame.
 					 */
-#ifdef NAT_TRAVERSAL
 					if ((packet_len == 1) &&
 					    (buffer[0] == 0xff)
 #ifdef DEBUG
@@ -1051,7 +1045,6 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 						 * enabled
 						 */
 					} else
-#endif
 					libreswan_log((sender != NULL) + "~"
 						      "ERROR: asynchronous network error report on %s (sport=%d)"
 						      "%s"

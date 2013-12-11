@@ -45,10 +45,8 @@
 #include "timer.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
-#ifdef NAT_TRAVERSAL
 #include "packet.h"     /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 #include "server.h"
 
 #include "alg_info.h"
@@ -57,8 +55,6 @@
 #ifndef DEFAULT_UPDOWN
 # define DEFAULT_UPDOWN "ipsec _updown"
 #endif
-
-extern char *pluto_listen;
 
 static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 {
@@ -200,7 +196,6 @@ add_entry:
 					if (fd < 0)
 						break;
 
-#ifdef NAT_TRAVERSAL
 					DBG(DBG_NATT,
 					    DBG_log(
 						    "NAT-T KLIPS: checking for nat_traversal_support_non_ike for IPv4"));
@@ -221,7 +216,6 @@ add_entry:
 							    ?
 							    "TRUE" : "FALSE"));
 					}
-#endif
 
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
@@ -254,7 +248,6 @@ add_entry:
 						ip_str(&q->ip_addr),
 						q->port);
 
-#ifdef NAT_TRAVERSAL
 					/*
 					 * right now, we do not support NAT-T on IPv6, because
 					 * the kernel did not support it, and gave an error
@@ -299,7 +292,6 @@ add_entry:
 							       ip_addr),
 							q->port);
 					}
-#endif
 					break;
 				}
 
@@ -309,7 +301,7 @@ add_entry:
 				    sameaddr(&q->ip_addr, &ifp->addr)) {
 					/* matches -- rejuvinate old entry */
 					q->change = IFN_KEEP;
-#ifdef NAT_TRAVERSAL
+
 					/* look for other interfaces to keep (due to NAT-T) */
 					for (q = q->next; q; q = q->next) {
 						if (streq(q->ip_dev->id_rname,
@@ -320,7 +312,7 @@ add_entry:
 							     &ifp->addr))
 							q->change = IFN_KEEP;
 					}
-#endif
+
 					break;
 				}
 

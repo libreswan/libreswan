@@ -6,7 +6,7 @@ Date: Mon, 28 Feb 2011 10:55:09 -0500
 From: Yannick Koehler <yannick@koehler.name>
 Cc: Paul Wouters <paul@xelerance.com>, users@libreswan.org
 To: David McCullough <david_mccullough@mcafee.com>
-Subject: Re: [Libreswan Users] libreswan 2.6.33 w/ kernel 2.4.37.9 error about in6_addr inside addrconf.h
+Subject: Re: [Libreswan Users] openswan 2.6.33 w/ kernel 2.4.37.9 error about in6_addr inside addrconf.h
 
-I did successfully compile libreswan 2.6.33 with kernel 2.4.37.9, in order to achieve that I had to create this patch:
+I did successfully compile openswan 2.6.33 with kernel 2.4.37.9, in order to achieve that I had to create this patch:
 

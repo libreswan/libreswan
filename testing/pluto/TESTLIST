@@ -96,6 +96,7 @@ ctltest	pluto-dontreky-expiry-01 good
 
 # RFC 3706 DPD test
 kvmplutotest	dpd-01	good
+kvmplutotest	dpd-01-netkey	good
 kvmplutotest	dpd-02	good
 kvmplutotest	dpd-02-reverse	good
 kvmplutotest	dpd-03	good
@@ -319,10 +320,6 @@ kvmplutotest	xauth-pluto-15		good
 kvmplutotest	xauth-pluto-16		good
 
 
-#
-# a test of using AES with pluto, with pfs=yes
-#
-kvmplutotest	basic-pluto-05		wip
 
 #
 # a test case of xauth/psk/aggressive/algo/modecfg/pfs
@@ -356,15 +353,7 @@ ctltest	aggr-unit-02			good
 # 
 # a testcase with pfs=yes connecting to pfs=no
 #
-umlplutotest	basic-pluto-09		good
-
-# 
-# a testcase with esp=null-md5
-# will normally fail, do not run it.
-#
-umlplutotest	basic-pluto-10		skip
-
-kvmplutotest	basic-pluto-11		good
+kvmplutotest	basic-pluto-09		good
 
 #
 # test cases of what happens to X.509 based authorization system
@@ -403,9 +392,16 @@ umlXhost	psk-pluto-03		good
 umlXhost	psk-pluto-04		good
 
 #
-# a test of using AES with pluto, twofish for phase2
+# tests using alternative ESP algorithms
 #
-skip	basic-pluto-07		wip
+kvmplutotest	netkey-algo-twofish-01	good
+kvmplutotest	klips-algo-twofish-01	good
+kvmplutotest	netkey-algo-serpent-01	good
+kvmplutotest	klips-algo-serpent-01	good
+kvmplutotest	netkey-algo-camellia-01	good
+kvmplutotest	netkey-algo-cast-01	good
+kvmplutotest	netkey-algo-null-01	good
+kvmplutotest	netkey-algo-null-02	good
 
 #
 # a test of using twofish with pluto, twofish for phase2
@@ -445,7 +441,6 @@ umlplutotest	ike-algo-02		good
 
 # Tests below require testing infrastructure with netkey support
 kvmplutotest    algo-pluto-07			good
-kvmplutotest    algo-pluto-08			good
 umlplutotest    netkey-pluto-01			good
 umlplutotest    netkey-pluto-02			good
 umlplutotest    netkey-pluto-03-sourceip        good
@@ -513,9 +508,11 @@ umlplutotest	ikev2-x509-02		good
 
 # modp tests for checking if we deal with sending different KE's
 kvmplutotest	ikev2-algo-01-modp2048-initiator	good
-kvmlplutotest	ikev2-algo-02-modp2048-responder	good
+kvmplutotest	ikev2-algo-02-modp2048-responder	good
 kvmplutotest	ikev2-algo-03-aes-ccm			good
 kvmplutotest	ikev2-algo-04-aes-gcm			good
+kvmplutotest	netkey-algo-aes_gcm-01			good
+kvmplutotest	netkey-algo-aes_ccm-01			good
 
 # various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good
@@ -532,20 +529,19 @@ kvmplutotest	ikev1-algo-ike-sha2-01			good
 kvmplutotest	ikev1-algo-ike-sha2-02			good
 
 # Various corner case tests for IKEv2
-umlplutotest	ikev2-major-version-initiator		good
-umlplutotest	ikev2-major-version-responder		good
-umlplutotest	ikev2-minor-version-initiator		good
-umlplutotest	ikev2-minor-version-responder		good
-umlplutotest	ikev2-isakmp-reserved-flags-01		good
-umlplutotest	ikev2-isakmp-reserved-flags-02		good
-umlplutotest	ikev2-allow-narrow-01			good
-umlplutotest	ikev2-allow-narrow-02			good
-umlplutotest	ikev2-allow-narrow-03			good
-umlplutotest	ikev2-allow-narrow-04			good
-umlplutotest	ikev2-allow-narrow-05			good
-umlplutotest	ikev2-allow-narrow-06			good
-umlplutotest	ikev2-allow-narrow-07			good
-umlplutotest	ikev2-allow-narrow-08-nss		good
+kvmplutotest	ikev2-major-version-initiator		good
+kvmplutotest	ikev2-major-version-responder		good
+kvmplutotest	ikev2-minor-version-initiator		good
+kvmplutotest	ikev2-minor-version-responder		good
+kvmplutotest	ikev2-isakmp-reserved-flags-01		good
+kvmplutotest	ikev2-isakmp-reserved-flags-02		good
+kvmplutotest	ikev2-allow-narrow-01			good
+kvmplutotest	ikev2-allow-narrow-02			good
+kvmplutotest	ikev2-allow-narrow-03			good
+kvmplutotest	ikev2-allow-narrow-04			good
+kvmplutotest	ikev2-allow-narrow-05			good
+kvmplutotest	ikev2-allow-narrow-06			good
+kvmplutotest	ikev2-allow-narrow-07			good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 
@@ -560,6 +556,8 @@ umlplutotest    interop-ikev2-racoon-05-x509-initiator		good
 
 kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
 kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
+kvmplutotest	interop-ikev1-strongswan-04-psk-aes-gcm		good
+kvmplutotest	interop-ikev1-strongswan-04-psk-aes-ccm		good
 
 umlplutotest    interop-ikev2-strongswan-01-noconn		good
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
@@ -575,6 +573,12 @@ skip		interop-racoon-iphone4s-nonat		incomplete
 skip		interop-racoon-iphone5-nonat		incomplete
 
 #################################################################
+# DNSSEC tests
+#################################################################
+
+kvmplutotest	dnssec-pluto-01					good
+
+#################################################################
 # Specific bug tests
 #################################################################
 # trying out bug #888
@@ -587,3 +591,4 @@ umlplutotest	x509-pluto-frag-02			good
 umlplutotest	x509-pluto-frag-03			good
 umlplutotest	x509-pluto-frag-04			good
 
+kvmplutotest	replay-authip-01			good

@@ -109,12 +109,12 @@ static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 	}
 }
 
-#if 0
-/* debugging info that compromises security! */
+#ifdef OPENSSL
+/* Not possible with NSS */
 static void RSA_show_private_key(struct RSA_private_key *k)
 {
 #ifdef FIPS_CHECK
-	if (!Pluto_IsFIPS())
+	if (!libreswan_fipsmode())
 #endif
 	RSA_show_key_fields(k, elemsof(RSA_private_field));
 }
@@ -135,9 +135,9 @@ static const char *RSA_public_key_sanity(struct RSA_private_key *k)
 	/* note that the *last* error found is reported */
 	err_t ugh = NULL;
 
-#ifdef DEBUG    /* debugging info that compromises security */
+#ifdef OPENSSL
 # ifdef FIPS_CHECK
-	if (!Pluto_IsFIPS())
+	if (!libreswan_fipsmode())
 # endif
 	DBG(DBG_PRIVATE, RSA_show_public_key(&k->pub));
 #endif
@@ -223,7 +223,7 @@ void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize)
 	*keysize = n.len;
 }
 
-void form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize)
+static void form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize)
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.data == 0x00) {
@@ -239,7 +239,7 @@ void form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize)
 	*keysize = n.len;
 }
 
-struct pubkey*allocate_RSA_public_key(const cert_t cert)
+struct pubkey *allocate_RSA_public_key(const cert_t cert)
 {
 	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
 	chunk_t e, n;
@@ -341,6 +341,7 @@ static int lsw_check_secret_byid(struct secret *secret UNUSED,
 	return 1;
 }
 
+/* ??? declared in keys.h */
 struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
 					     struct pubkey *my_public_key,
 					     enum PrivateKeyKind kind)
@@ -526,6 +527,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	return best;
 }
 
+#if 0	/* ??? not used */
 /* check the existence of an RSA private key matching an RSA public
  * key contained in an X.509 or OpenPGP certificate
  */
@@ -551,8 +553,9 @@ bool lsw_has_private_key(struct secret *secrets, cert_t cert)
 	free_public_key(pubkey);
 	return has_key;
 }
+#endif
 
-err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *rsak,
+static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *rsak,
 						char *nssHostCertNickName)
 {
 	err_t ugh = NULL;
@@ -925,7 +928,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 /*
  * get the matching RSA private key belonging to a given X.509 certificate
  */
-const struct RSA_private_key*lsw_get_x509_private_key(struct secret *secrets,
+const struct RSA_private_key *lsw_get_x509_private_key(struct secret *secrets,
 						      x509cert_t *cert)
 {
 	struct secret *s;
@@ -955,7 +958,9 @@ const struct RSA_private_key*lsw_get_x509_private_key(struct secret *secrets,
 }
 
 static pthread_mutex_t certs_and_keys_mutex  = PTHREAD_MUTEX_INITIALIZER;
+
 static pthread_mutex_t authcert_list_mutex   = PTHREAD_MUTEX_INITIALIZER;
+
 /*
  * lock access to my certs and keys
  */
@@ -979,8 +984,9 @@ void unlock_certs_and_keys(const char *who)
 }
 
 #if defined(LIBCURL) || defined(LDAP_VER)
-/*
- * lock access to the chained authcert list
+
+/* lock access to the chained authcert list
+ * ??? declared in x509.h
  */
 void lock_authcert_list(const char *who)
 {
@@ -990,8 +996,8 @@ void lock_authcert_list(const char *who)
 	    );
 }
 
-/*
- * unlock access to the chained authcert list
+/* unlock access to the chained authcert list
+ * ??? declared in x509.h
  */
 void unlock_authcert_list(const char *who)
 {
@@ -1000,6 +1006,7 @@ void unlock_authcert_list(const char *who)
 	    );
 	pthread_mutex_unlock(&authcert_list_mutex);
 }
+
 #endif
 
 static void process_secret(struct secret **psecrets, int verbose,
@@ -1263,23 +1270,22 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 				loglog(RC_LOG_SERIOUS,
 				       "out of space processing secrets filename \"%s\"",
 				       file_pat);
-				break;
+				globfree(&globbuf);
+				return;
 			case GLOB_ABORTED:
 				break; /* already logged */
-#if defined(GLOB_NOMATCH)
+
 			case GLOB_NOMATCH:
-				loglog(RC_LOG_SERIOUS,
-				       "no secrets filename matched \"%s\"",
+				libreswan_log("no secrets filename matched \"%s\"",
 				       file_pat);
 				break;
-#endif
+
 			default:
 				loglog(RC_LOG_SERIOUS, "unknown glob error %d",
 				       r);
-				break;
+				globfree(&globbuf);
+				return;
 			}
-			globfree(&globbuf);
-			return;
 		}
 	}
 

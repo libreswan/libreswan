@@ -1,8 +1,12 @@
 /* demultiplex incoming IKE messages
  *
- * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,9 +51,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -60,25 +61,19 @@
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
 #include "ikev1.h"
+#include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
-#if 0
-#include "whack.h"      /* requires connections.h */
-#include "server.h"
-#ifdef XAUTH
-#include "xauth.h"
-#endif
-#ifdef NAT_TRAVERSAL
-#include "nat_traversal.h"
-#endif
-#include "vendor.h"
-#include "dpd.h"
-#endif
 #include "udpfromto.h"
 
 /* This file does basic header checking and demux of
  * incoming packets.
  */
+
+void init_demux(void)
+{
+	init_ikev1();
+}
 
 /* forward declarations */
 static bool read_packet(struct msg_digest *md);
@@ -102,9 +97,8 @@ void process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
 	struct state *st = NULL;
-	int maj, min;
+	int vmaj, vmin;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
-	struct isakmp_hdr *hdr;
 
 #define SEND_NOTIFICATION(t) { \
 		if (st) \
@@ -114,37 +108,18 @@ void process_packet(struct msg_digest **mdp)
 
 	if (!in_struct(&md->hdr, &isakmp_hdr_desc, &md->packet_pbs,
 		       &md->message_pbs)) {
-		/* Identify specific failures:
-		 * - bad ISAKMP major/minor version numbers
+		/*
+		 * The packet was very badly mangled. We can't be sure of any
+		 * content - not even to look for major version number!
+		 * So we'll just silently drop it
 		 */
-		if (md->packet_pbs.roof - md->packet_pbs.cur >=
-		    (ptrdiff_t)isakmp_hdr_desc.size) {
-			hdr = (struct isakmp_hdr *)md->packet_pbs.cur;
-			maj = (hdr->isa_version >> ISA_MAJ_SHIFT);
-			min = (hdr->isa_version & ISA_MIN_MASK);
-
-			if ( maj != ISAKMP_MAJOR_VERSION &&
-			     maj != IKEv2_MAJOR_VERSION) {
-				SEND_NOTIFICATION(INVALID_MAJOR_VERSION);
-				return;
-			} else if (maj == ISAKMP_MAJOR_VERSION && min !=
-				   ISAKMP_MINOR_VERSION) {
-				/* all IKEv2 minor version are acceptable */
-				SEND_NOTIFICATION(INVALID_MINOR_VERSION);
-				return;
-			}
-		} else {
-			/* Although the comments above says that all IKEv2 minor version are acceptable */
-			/* but it does not take of it, and in case a peer sends a different minor version */
-			/* other than 0, it still sends PAYLOAD_MALFORMED packet, so fixing it here */
-			/* it checks if the in_struct failure is due to minor version with ikev2 */
-			/* As per RFC 4306/5996, ignore minor version numbers */
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
-			return;
-		}
+		libreswan_log("Received packet with mangled IKE header - dropped");
+		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+		return;
 	}
 
 	if (md->packet_pbs.roof < md->message_pbs.roof) {
+		/* I don't think this can happen if in_struct() did not fail */
 		libreswan_log(
 			"received packet size (%u) is smaller than from "
 			"size specified in ISAKMP HDR (%u) - packet dropped",
@@ -165,32 +140,63 @@ void process_packet(struct msg_digest **mdp)
 			md->hdr.isa_length);
 			DBG_dump("extraneous bytes:", md->message_pbs.roof,
 				md->packet_pbs.roof - md->message_pbs.roof);
-		/* continue */
 		});
 	}
 
-	maj = (md->hdr.isa_version >> ISA_MAJ_SHIFT);
-	min = (md->hdr.isa_version & ISA_MIN_MASK);
+	vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
+	vmin = md->hdr.isa_version & ISA_MIN_MASK;
 
-	DBG(DBG_CONTROL,
-	    DBG_log(
-		    " processing version=%u.%u packet with exchange type=%s (%d)",
-		    maj, min,
-		    enum_name(&exchange_names, md->hdr.isa_xchg),
-		    md->hdr.isa_xchg));
-
-	switch (maj) {
-	case ISAKMP_MAJOR_VERSION:
+	switch (vmaj) {
+	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
+		if (vmin > ISAKMP_MINOR_VERSION) {
+			/* RFC2408 3.1 ISAKMP Header Format:
+			 *
+			 * Minor Version (4 bits) - indicates the minor
+			 * version of the ISAKMP protocol in use.
+			 * Implementations based on this version of the
+			 * ISAKMP Internet-Draft MUST set the Minor
+			 * Version to 0.  Implementations based on
+			 * previous versions of ISAKMP Internet- Drafts
+			 * MUST set the Minor Version to 1.
+			 * Implementations SHOULD never accept packets
+			 * with a minor version number larger than its
+			 * own, given the major version numbers are
+			 * identical.
+			 */
+			libreswan_log("ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			SEND_NOTIFICATION(INVALID_MINOR_VERSION);
+			return;
+		}
+		DBG(DBG_CONTROL,
+		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
+			    vmaj, vmin,
+			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+			    md->hdr.isa_xchg));
 		process_v1_packet(mdp);
 		break;
 
-	case IKEv2_MAJOR_VERSION:
+	case IKEv2_MAJOR_VERSION: /* IKEv2 */
+		if (vmin != IKEv2_MINOR_VERSION) {
+			/*
+			 * Unlike IKEv1, for IKEv2 we are supposed to try and
+			 * continue on unknown minors
+			 */
+			libreswan_log("Ignoring unknown IKEv2 minor version number %d", vmin);
+		}
+		DBG(DBG_CONTROL,
+		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
+			    vmaj, vmin,
+			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+			    md->hdr.isa_xchg));
 		process_v2_packet(mdp);
 		break;
 
 	default:
-		bad_case(maj);
+		libreswan_log("Unexpected IKE major '%d'",vmaj);
+		SEND_NOTIFICATION(INVALID_MAJOR_VERSION);
+		return;
 	}
+#undef SEND_NOTIFICATION
 }
 
 /* wrapper for read_packet and process_packet
@@ -252,9 +258,7 @@ static bool read_packet(struct msg_digest *md)
 	/* ??? this buffer seems *way* too big */
 	u_int8_t bigbuffer[MAX_INPUT_UDP_SIZE];
 
-#ifdef NAT_TRAVERSAL
 	u_int8_t *_buffer = bigbuffer;
-#endif
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in sa_in4;
@@ -360,7 +364,6 @@ static bool read_packet(struct msg_digest *md)
 	cur_from = &md->sender;
 	cur_from_port = md->sender_port;
 
-#ifdef NAT_TRAVERSAL
 	if (ifp->ike_float == TRUE) {
 		u_int32_t non_esp;
 		if (packet_len < (int)sizeof(u_int32_t)) {
@@ -381,19 +384,13 @@ static bool read_packet(struct msg_digest *md)
 		_buffer += sizeof(u_int32_t);
 		packet_len -= sizeof(u_int32_t);
 	}
-#endif
 
 	/* Clone actual message contents
 	 * and set up md->packet_pbs to describe it.
 	 */
 	init_pbs(&md->packet_pbs
-#ifdef NAT_TRAVERSAL
 		 , clone_bytes(_buffer, packet_len,
 			       "message buffer in comm_handle()")
-#else
-		 , clone_bytes(bigbuffer, packet_len,
-			       "message buffer in comm_handle()")
-#endif
 		 , packet_len, "packet");
 
 	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL,
@@ -406,8 +403,6 @@ static bool read_packet(struct msg_digest *md)
 
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
-
-#ifdef NAT_TRAVERSAL
 
 	/* We think that in 2013 Feb, Apple iOS Racoon
 	 * sometimes generates an extra useless buggy confusing
@@ -445,7 +440,6 @@ static bool read_packet(struct msg_digest *md)
 		    );
 		return FALSE;
 	}
-#endif
 
 	return TRUE;
 }

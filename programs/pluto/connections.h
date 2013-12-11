@@ -1,6 +1,17 @@
 /* information about connections between hosts and clients
- * Copyright (C) 1998-2001  D. Hugh Redelmeier
+ *
+ * Copyright (C) 1998-2001,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2006-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2007 Ken Bantoft <ken@cyclops.xelerance.com>
+ * Copyright (C) 2008-2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
+ * Copyright (C) 2013 Kim Heino <b@bbbs.net>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -118,9 +129,7 @@ typedef unsigned long policy_prio_t;
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
 #ifdef XAUTH_HAVE_PAM
-# include <pthread.h>   /* Must be the first include file */
-# include <security/pam_appl.h>
-# include <signal.h>
+# include <security/pam_appl.h>	/* needed for pam_handle_t */
 #endif
 
 /* Note that we include this even if not X509, because we do not want the
@@ -167,17 +176,15 @@ struct end {
 	struct ietfAttrList *groups;    /* access control groups */
 
 	struct virtual_t *virt;
-/*#ifdef XAUTH*/
+
 	bool xauth_server;
 	bool xauth_client;
 	char *xauth_name;
 	char *xauth_password;
 	ip_range pool_range;    /* store start of v4 addresspool */
-/*#ifdef MODECFG */
 	bool modecfg_server;    /* Give local addresses to tunnel's end */
 	bool modecfg_client;    /* request address for local end */
-/*#endif*/
-/*#endif*/
+
 };
 
 struct spd_route {
@@ -199,6 +206,7 @@ struct connection {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	unsigned long sa_priority;
+	unsigned long sa_reqid;
 	int encapsulation;
 
 	/* RFC 3706 DPD */
@@ -226,10 +234,8 @@ struct connection {
 	/*Cisco interop: remote peer type*/
 	enum keyword_remotepeertype remotepeertype;
 
-#ifdef XAUTH
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;
-#endif
 
 	bool forceencaps;                       /* always use NAT-T encap */
 
@@ -277,24 +283,18 @@ struct connection {
 #ifdef XAUTH_HAVE_PAM
 	pam_handle_t  *pamh;            /*  PAM handle for that connection  */
 #endif
-#ifdef DYNAMICDNS
 	char *dnshostname;
-#endif  /* DYNAMICDNS */
-#ifdef XAUTH
-#ifdef MODECFG
+
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
 	struct ip_pool *pool; /*v4 addresspool as a range, start end */
-#endif
-	char *cisco_dns_info;
-	char *cisco_domain_info;
-	char *cisco_banner;
-#endif  /* XAUTH */
+	char *cisco_dns_info; /* scratchpad for writing IP addresses */
+	char *modecfg_domain;
+	char *modecfg_banner;
+
 	u_int8_t metric;          /* metric for tunnel routes */
 	u_int16_t connmtu;          /* mtu for tunnel routes */
-#ifdef HAVE_STATSD
 	u_int32_t statsval;             /* track what we have told statsd */
-#endif
 };
 
 #define oriented(c) ((c).interface != NULL)
@@ -371,25 +371,23 @@ extern struct connection
 							   his_port, \
 							   policy)
 extern struct connection
-*find_host_connection2(const char *func,
+	*find_host_connection2(const char *func,
 		       const ip_address *me, u_int16_t my_port,
 		       const ip_address *him, u_int16_t his_port,
 		       lset_t policy),
-*refine_host_connection(const struct state *st, const struct id *id,
+	*refine_host_connection(const struct state *st, const struct id *id,
 			bool initiator, bool aggrmode, bool *fromcert),
-*find_client_connection(struct connection *c,
+	*find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,
 			const u_int8_t our_protocol,
 			const u_int16_t out_port,
 			const u_int8_t peer_protocol,
 			const u_int16_t peer_port),
-*find_connection_by_reqid(uint32_t reqid);
-
-extern struct connection *find_connection_for_clients(struct spd_route **srp,
-						      const ip_address *our_client,
-						      const ip_address *peer_client,
-						      int transport_proto);
+	*find_connection_for_clients(struct spd_route **srp,
+				      const ip_address *our_client,
+				      const ip_address *peer_client,
+				      int transport_proto);
 
 /* instantiating routines
  * Note: connection_discard() is in state.h because all its work
@@ -463,11 +461,9 @@ extern void show_one_connection(struct connection *c);
 extern void show_connections_status(void);
 extern int  connection_compare(const struct connection *ca,
 			       const struct connection *cb);
-#ifdef NAT_TRAVERSAL
 extern void update_host_pair(const char *why, struct connection *c,
 			     const ip_address *myaddr, u_int16_t myport,
 			     const ip_address *hisaddr, u_int16_t hisport);
-#endif /* NAT_TRAVERSAL */
 
 /* export to pending.c */
 extern void host_pair_enqueue_pending(const struct connection *c,
@@ -475,17 +471,10 @@ extern void host_pair_enqueue_pending(const struct connection *c,
 				      struct pending **pnext);
 struct pending **host_pair_first_pending(const struct connection *c);
 
-#ifdef DYNAMICDNS
 void connection_check_ddns(void);
-#endif
 
 void connection_check_phase2(void);
 void init_connections(void);
-
-#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
-extern size_t format_connection(char *buf, size_t buf_len,
-				const struct connection *c,
-				struct spd_route *sr);
 
 extern void setup_client_ports(struct spd_route *sr);
 
@@ -497,5 +486,3 @@ extern int foreach_connection_by_alias(const char *alias,
 extern struct connection *unoriented_connections;
 
 extern void update_host_pairs(struct connection *c);
-
-extern void load_authcerts_from_nss(const char *type, u_char auth_flags);

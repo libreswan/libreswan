@@ -1,12 +1,14 @@
 /* IPsec DOI and Oakley resolution routines
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2006  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010-2011 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,9 +49,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "packet.h"
 #include "keys.h"
@@ -64,6 +63,7 @@
 #include "timer.h"
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
+#include "ikev1_quick.h"
 #include "whack.h"
 #include "fetch.h"
 #include "pkcs.h"
@@ -81,27 +81,26 @@
 #include "ikev1_continuations.h"
 #include "ikev2.h"
 
-#ifdef XAUTH
 #include "xauth.h"
-#endif
+
 #include "vendor.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 #include "dpd.h"
 #include "x509more.h"
 
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
  */
-#define RETURN_STF_FAILURE2(f, xf)                                      \
-	{ int r = (f); if (r != NOTHING_WRONG) { \
-		  if ((xf) != NULL) \
-			  pfree(xf);          \
-		  return STF_FAIL + r; } }
-
-#define RETURN_STF_FAILURE(f) RETURN_STF_FAILURE2(f, NULL)
+/* ??? why are there so many copies of this routine (ikev2.h, ikev1_continuations.h, ipsec_doi.c).
+ * Sometimes more than one copy is defined!
+ */
+#define RETURN_STF_FAILURE(f) { \
+	notification_t res = (f); \
+	if (res != NOTHING_WRONG) { \
+		  return STF_FAIL + res; \
+	} \
+}
 
 /* create output HDR as replica of input HDR */
 void echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
@@ -203,21 +202,6 @@ bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 	return justship_nonce(n, outs, np, name);
 }
 
-notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
-			    const char *name, enum next_payload_types paynum)
-{
-	pb_stream *nonce_pbs = &md->chain[paynum]->pbs;
-	size_t len = pbs_left(nonce_pbs);
-
-	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
-		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
-		       name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
-		return PAYLOAD_MALFORMED; /* ??? */
-	}
-	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
-	return NOTHING_WRONG;
-}
-
 /** The whole message must be a multiple of 4 octets.
  * I'm not sure where this is spelled out, but look at
  * rfc2408 3.6 Transform Payload.
@@ -225,12 +209,25 @@ notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
  *
  * @param pbs PB Stream
  */
-void close_message(pb_stream *pbs)
+void close_message(pb_stream *pbs, struct state *st)
 {
 	size_t padding =  pad_up(pbs_offset(pbs), 4);
 
-	if (padding != 0)
+	/* Workaround for overzealous Checkpoint firewal */
+	if (padding && st && st->st_connection &&
+	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
+		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %lu bytes skipped by policy",
+			padding));
+		padding = 0;
+	}
+
+	if (padding != 0) {
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %lu bytes", padding));
 		(void) out_zero(padding, pbs, "message padding");
+	} else {
+		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required"));
+	}
+
 	close_output_pbs(pbs);
 }
 
@@ -238,20 +235,15 @@ static initiator_function *pick_initiator(struct connection *c UNUSED,
 					  lset_t policy)
 {
 	if ((policy & POLICY_IKEV1_DISABLE) == 0 &&
-	    (c->failed_ikev2 || (policy & POLICY_IKEV2_PROPOSE) == 0)) {
+	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == 0))) {
 		if (policy & POLICY_AGGRESSIVE) {
-#if defined(AGGRESSIVE)
 			return aggr_outI1;
-
-#else
-			return aggr_not_present;
-
-#endif
 		} else {
 			return main_outI1;
 		}
 
-	} else if (policy & POLICY_IKEV2_PROPOSE) {
+	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
+		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
 		return ikev2parent_outI1;
 
 	} else {
@@ -392,6 +384,10 @@ void ipsecdoi_replace(struct state *st,
 			    ENCAPSULATION_MODE_TUNNEL)
 				policy |= POLICY_TUNNEL;
 		}
+		/* retain policy so child sa rekey attempt does not blow up */
+		if (st->st_state == STATE_PARENT_I3)
+			policy = st->st_connection->policy;
+
 		passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(whack_sock, st->st_connection, policy, try,
 				  st->st_serialno, st->st_import
@@ -521,7 +517,6 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-#ifdef NAT_TRAVERSAL
 	if ((st->hidden_variables.st_nat_traversal &
 	     NAT_T_WITH_PORT_FLOATING) &&
 	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
@@ -531,7 +526,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
 	} else
-#endif
+
 	if (!(id->isaid_doi_specific_a == 0 && id->isaid_doi_specific_b ==
 	      0) &&
 	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
@@ -691,6 +686,7 @@ void initialize_new_state(struct state *st,
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_name) {
+				/* ??? is this strncpy correct? */
 				strncpy(st->st_xauth_username,
 					sr->this.xauth_name,
 					sizeof(st->st_xauth_username));
@@ -730,6 +726,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 
 	if (st->st_esp.present) {
 		const char *natinfo = "";
+		char esb[ENUM_SHOW_BUF_LEN];
 
 		if ((st->st_connection->spd.that.host_port != IKE_UDP_PORT &&
 		     st->st_connection->spd.that.host_port != 0) ||
@@ -752,13 +749,11 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 natinfo,
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
-			 enum_show(&esp_transformid_names,
-				   st->st_esp.attrs.transattrs.encrypt) +
-			 strlen("ESP_"),
+			 strip_prefix(enum_showb(&esp_transformid_names,
+				   st->st_esp.attrs.transattrs.encrypt, esb, sizeof(esb)), "ESP_"),
 			 st->st_esp.attrs.transattrs.enckeylen,
-			 enum_show(&auth_alg_names,
-				   st->st_esp.attrs.transattrs.integ_hash) +
-			 strlen("AUTH_ALGORITHM_"));
+			 strip_prefix(enum_show(&auth_alg_names,
+				   st->st_esp.attrs.transattrs.integ_hash), "AUTH_ALGORITHM_"));
 		ini = " ";
 		fin = "}";
 	}
@@ -789,7 +784,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 
 	/* advance b to end of string */
 	b = b + strlen(b);
-#ifdef NAT_TRAVERSAL
+
 	{
 		char oa[ADDRTOT_BUF];
 
@@ -823,7 +818,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		ini = " ";
 		fin = "}";
 	}
-#endif
 
 	/* advance b to end of string */
 	b = b + strlen(b);
@@ -837,7 +831,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	ini = " ";
 	fin = "}";
 
-#ifdef XAUTH
 	if (st->st_xauth_username && st->st_xauth_username[0] != '\0') {
 		b = b + strlen(b);
 		snprintf(b, sad_len - (b - sadetails) - 1,
@@ -850,7 +843,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		fin = "}";
 
 	}
-#endif
 
 	strcat(b, fin);
 }

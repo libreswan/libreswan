@@ -90,7 +90,7 @@ static struct option const longopts[] =
 	{ 0, 0, 0, 0 }
 };
 
-void check_conflict(uint32_t cf_cmd, int createdelete)
+static void check_conflict(uint32_t cf_cmd, int createdelete)
 {
 	if (cf_cmd || createdelete) {
 		fprintf(stderr,
@@ -102,7 +102,7 @@ void check_conflict(uint32_t cf_cmd, int createdelete)
 
 uint32_t pfkey_seq = 0;
 
-int createdelete_virtual(int createdelete, char *virtname)
+static int createdelete_virtual(int createdelete, char *virtname)
 {
 	int vifnum;
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
@@ -168,9 +168,13 @@ int createdelete_virtual(int createdelete, char *virtname)
 	return 0;
 }
 
-void exit_tool(int code)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
-	exit(code);
+	exit(x);
 }
 
 int debug = 0;
@@ -246,14 +250,19 @@ int main(int argc, char *argv[])
 			strncpy(shc.cf_name, optarg, sizeof(shc.cf_name));
 			break;
 		case 'l':
-			progname = malloc(strlen(argv[0]) +
-					  10 +     /* update this when changing the sprintf() */
-					  strlen(optarg));
-			sprintf(progname, "%s --label %s",
+		{
+			static const char combine_fmt[] = "%s --label %s";
+			size_t room = strlen(argv[0]) +
+					  sizeof(combine_fmt) +
+					  strlen(optarg);
+
+			progname = malloc(room);
+			snprintf(progname, room, combine_fmt,
 				argv[0],
 				optarg);
 			argcount -= 2;
 			break;
+		}
 		default:
 			usage(progname);
 			break;

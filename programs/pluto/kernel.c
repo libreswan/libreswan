@@ -7,7 +7,8 @@
  * Copyright (C) 2010 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2010 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -62,14 +63,8 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
 
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
-
-#ifdef NAT_TRAVERSAL
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
@@ -439,6 +434,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "PLUTO_MY_CLIENT_MASK='%s' "
 			  "PLUTO_MY_PORT='%u' "
 			  "PLUTO_MY_PROTOCOL='%u' "
+			  "PLUTO_SA_REQID='%u' "
 			  "PLUTO_PEER='%s' "
 			  "PLUTO_PEER_ID='%s' "
 			  "PLUTO_PEER_CLIENT='%s' "
@@ -452,17 +448,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "%s "         /* optional mtu */
 			  "PLUTO_CONN_POLICY='%s' "
 			  "PLUTO_CONN_ADDRFAMILY='ipv%d' "
-#ifdef XAUTH
 			  "XAUTH_FAILED=%d "
 			  "%s "         /* XAUTH username - if any */
-#endif
 			  "%s "         /* PLUTO_MY_SRCIP - if any */
-#ifdef XAUTH
 			  "PLUTO_IS_PEER_CISCO='%u' "
-			  "PLUTO_CISCO_DNS_INFO='%s' "
-			  "PLUTO_CISCO_DOMAIN_INFO='%s' "
+			  "PLUTO_PEER_DNS_INFO='%s' "
+			  "PLUTO_PEER_DOMAIN_INFO='%s' "
 			  "PLUTO_PEER_BANNER='%s' "
-#endif  /* XAUTH */
 #ifdef HAVE_NM
 			  "PLUTO_NM_CONFIGURED='%u' "
 #endif
@@ -477,6 +469,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  myclientmask_str,
 			  sr->this.port,
 			  sr->this.protocol,
+			  sr->reqid,
 			  peer_str,
 			  secure_peerid_str,
 			  peerclient_str,
@@ -490,17 +483,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  connmtu_str,
 			  prettypolicy(c->policy),
 			  (c->addr_family == AF_INET) ? 4 : 6
-#ifdef XAUTH
 			  , (st && st->st_xauth_soft) ? 1 : 0,
 			  secure_xauth_username_str
-#endif
 			  , srcip_str
-#ifdef XAUTH
 			  , c->remotepeertype,
 			  c->cisco_dns_info ? c->cisco_dns_info : "",
-			  c->cisco_domain_info ? c->cisco_domain_info : "",
-			  c->cisco_banner ? c->cisco_banner : ""
-#endif  /* XAUTH */
+			  c->modecfg_domain ? c->modecfg_domain : "",
+			  c->modecfg_banner ? c->modecfg_banner : ""
 #ifdef HAVE_NM
 			  , c->nmconfigured
 #endif
@@ -607,9 +596,7 @@ static enum routability could_route(struct connection *c)
 
 	/* if routing would affect IKE messages, reject */
 	if (kern_interface != NO_KERNEL
-#ifdef NAT_TRAVERSAL
 	    && c->spd.this.host_port != pluto_natt_float_port
-#endif
 	    && c->spd.this.host_port != IKE_UDP_PORT &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
 		loglog(RC_LOG_SERIOUS,
@@ -1540,7 +1527,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->esatype = ET_IPCOMP;
 		said_next->encalg = compalg;
 		said_next->encapsulation = encapsulation;
-		said_next->reqid = c->spd.reqid + 2;
+		said_next->reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid  :  c->spd.reqid + 2 ;
 		said_next->text_said = text_said;
 		said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
@@ -1639,7 +1626,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* static const int esp_max = elemsof(esp_info); */
 		/* int esp_count; */
 
-#ifdef NAT_TRAVERSAL
 		u_int8_t natt_type = 0;
 		u_int16_t natt_sport = 0, natt_dport = 0;
 		ip_address natt_oa;
@@ -1661,7 +1647,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 			natt_oa = st->hidden_variables.st_nat_oa;
 		}
-#endif
 
 		DBG(DBG_CRYPT,
 		    DBG_log(
@@ -1675,27 +1660,18 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			/* if it is the last key entry, then ask algo */
 			if (ei == &esp_info[elemsof(esp_info)]) {
 				/* Check for additional kernel alg */
-				if ((ei =
-					     kernel_alg_esp_info(st->st_esp.
-								 attrs.
-								 transattrs
-								 .encrypt,
-								 st->st_esp.
-								 attrs.
-								 transattrs.
-								 enckeylen,
-								 st->st_esp.
-								 attrs.
-								 transattrs.
-								 integ_hash))
-				    !=
-				    NULL)
+				ei = kernel_alg_esp_info(st->st_esp.
+							attrs.transattrs.encrypt,
+							st->st_esp.attrs.transattrs.enckeylen,
+							st->st_esp.attrs.transattrs.integ_hash);
+				if (ei != NULL)
 					break;
 
-				/* note: enum_show may use a static buffer, so two
+				/* Note: enum_show may use a static buffer, so two
 				 * calls in one printf would be a mistake.
 				 * enum_name does the same job, without a static buffer,
 				 * assuming the name will be found.
+				 * Also consider enum_showb.
 				 */
 				loglog(RC_LOG_SERIOUS,
 				       "ESP transform %s(%d) / auth %s not implemented yet",
@@ -1738,7 +1714,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		key_len = st->st_esp.attrs.transattrs.enckeylen /
 			  BITS_PER_BYTE;
-		if (key_len) {
+		if (key_len != 0) {
 			/* XXX: must change to check valid _range_ key_len */
 			if (key_len > ei->enckeylen) {
 				loglog(RC_LOG_SERIOUS,
@@ -1752,24 +1728,36 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		} else {
 			key_len = ei->enckeylen;
 		}
-		/* Grrrrr.... f*cking 7 bits jurassic algos  */
 
-		/* 168 bits in kernel, need 192 bits for keymat_len */
-		if (ei->transid == ESP_3DES && key_len == 21)
-			key_len = 24;
-
-		/* 56 bits in kernel, need 64 bits for keymat_len */
-		if (ei->transid == ESP_DES && key_len == 7)
-			key_len = 8;
-
-		/* divide up keying material */
-		/* passert(st->st_esp.keymat_len == ei->enckeylen + ei->authkeylen); */
-		if (st->st_esp.keymat_len != key_len + ei->authkeylen) {
-			DBG_log("keymat_len=%d key_len=%d authkeylen=%d",
-				st->st_esp.keymat_len, (int)key_len,
-				(int)ei->authkeylen);
+		switch (ei->transid) {
+		case ESP_3DES:
+			/* Grrrrr.... f*cking 7 bits jurassic algos  */
+			/* 168 bits in kernel, need 192 bits for keymat_len */
+			if (key_len == 21)
+				key_len = 24;
+			break;
+		case ESP_DES:
+			/* Grrrrr.... f*cking 7 bits jurassic algos  */
+			/* 56 bits in kernel, need 64 bits for keymat_len */
+			if (key_len == 7)
+				key_len = 8;
+			break;
+		case IKEv2_ENCR_AES_GCM_8:
+		case IKEv2_ENCR_AES_GCM_12:
+		case IKEv2_ENCR_AES_GCM_16:
+			/* keymat contains 4 bytes of salt */
+			key_len += AES_GCM_SALT_BYTES;
+			break;
+		case IKEv2_ENCR_AES_CCM_8:
+		case IKEv2_ENCR_AES_CCM_12:
+		case IKEv2_ENCR_AES_CCM_16:
+			/* keymat contains 4 bytes of salt */
+			key_len += AES_CCM_SALT_BYTES;
+			break;
 		}
-		passert(st->st_esp.keymat_len == (key_len + ei->authkeylen));
+
+		passert(st->st_esp.keymat_len == key_len + ei->authkeylen);
+
 
 		set_text_said(text_said, &dst.addr, esp_spi, SA_ESP);
 
@@ -1799,27 +1787,30 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				goto fail;
 			}
 		}
+
+		/* divide up keying material */
+		said_next->enckey = esp_dst_keymat;
+		said_next->enckeylen = key_len;
+		said_next->encalg = ei->encryptalg;
+
+		said_next->authkey = esp_dst_keymat + key_len;
 		said_next->authkeylen = ei->authkeylen;
 		/* said_next->authkey = esp_dst_keymat + ei->enckeylen; */
-		said_next->authkey = esp_dst_keymat + key_len;
-		said_next->encalg = ei->encryptalg;
 		/* said_next->enckeylen = ei->enckeylen; */
-		said_next->enckeylen = key_len;
-		said_next->enckey = esp_dst_keymat;
+
 		said_next->encapsulation = encapsulation;
 		said_next->reqid = c->spd.reqid + 1;
+		said_next->reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid  :  c->spd.reqid + 1 ;
 
 #ifdef HAVE_LABELED_IPSEC
 		said_next->sec_ctx = st->sec_ctx;
 #endif
 
-#ifdef NAT_TRAVERSAL
 		said_next->natt_sport = natt_sport;
 		said_next->natt_dport = natt_dport;
 		said_next->transid = st->st_esp.attrs.transattrs.encrypt;
 		said_next->natt_type = natt_type;
 		said_next->natt_oa = &natt_oa;
-#endif
 		said_next->outif   = -1;
 #ifdef KLIPS_MAST
 		if (st->st_esp.attrs.encapsulation ==
@@ -2011,7 +2002,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].proto = IPPROTO_COMP;
 				proto_info[i].encapsulation =
 					st->st_ipcomp.attrs.encapsulation;
-				proto_info[i].reqid = c->spd.reqid + 2;
+				proto_info[i].reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid : c->spd.reqid + 2;
 				i++;
 			}
 
@@ -2019,7 +2010,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].proto = IPPROTO_ESP;
 				proto_info[i].encapsulation =
 					st->st_esp.attrs.encapsulation;
-				proto_info[i].reqid = c->spd.reqid + 1;
+				proto_info[i].reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid : c->spd.reqid + 1;
 				i++;
 			}
 
@@ -2092,8 +2083,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			s[0].text_said = text_said0;
 			s[1].text_said = text_said1;
 
-			if (!kernel_ops->grp_sa(s + 1, s))
+			if (!kernel_ops->grp_sa(s + 1, s)) {
+				DBG_log("grp_sa failed");
 				goto fail;
+			}
 		}
 		/* could update said, but it will not be used */
 	}
@@ -2214,8 +2207,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 const struct kernel_ops *kernel_ops;
 
-/* keep track of kernel version */
-char kversion[256];
+/* keep track of kernel version  */
+static char kversion[256];
 
 void init_kernel(void)
 {
@@ -2227,7 +2220,7 @@ void init_kernel(void)
 
 	/* get kernel version */
 	uname(&un);
-	strncpy(kversion, un.release, sizeof(kversion));
+	jam_str(kversion, sizeof(kversion), un.release);
 
 	switch (kern_interface) {
 #if defined(NETKEY_SUPPORT)
@@ -2905,21 +2898,12 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		}
 	}
 
+	/* XXX why is this needed? Skip the bogus original conn? */
 	if (st->st_connection->remotepeertype == CISCO) {
-
 		sr = st->st_connection->spd.next;
-		st->st_connection->spd.eroute_owner = sr->eroute_owner;
-		st->st_connection->spd.routing = sr->routing;
-
-		if (!st->st_connection->newest_ipsec_sa &&
-		    st->st_connection->spd.this.xauth_client) {
-			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
-					"updateresolvconf", st)) {
-				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "Updating resolv.conf failed, you may need to update it manually"));
-			}
+		if (sr != NULL) {
+			st->st_connection->spd.eroute_owner = sr->eroute_owner;
+			st->st_connection->spd.routing = sr->routing;
 		}
 	}
 
@@ -3010,18 +2994,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 	}
 #endif
 
-		if (st->st_connection->remotepeertype == CISCO &&
-		    st->st_connection->spd.this.xauth_client &&
-		    st->st_serialno == st->st_connection->newest_ipsec_sa) {
-			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
-					"restoreresolvconf", st)) {
-				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "Restoring resolv.conf failed, you may need to do it manually"));
-			}
-		}
-
 		break;
 #if defined(WIN32) && defined(WIN32_NATIVE)
 	case USE_WIN32_NATIVE:
@@ -3042,7 +3014,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 	} /* switch kern_interface */
 }
 
-#ifdef NAT_TRAVERSAL
 static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
 {
 	struct connection *c = st->st_connection;
@@ -3099,7 +3070,6 @@ bool update_ipsec_sa(struct state *st USED_BY_KLIPS)
 	}
 	return TRUE;
 }
-#endif
 
 bool was_eroute_idle(struct state *st, time_t since_when)
 {

@@ -1,8 +1,5 @@
-This is a test of the NORTH-EAST connection.
+basic test with esp=null-md5
 
-It does so with esp=null-md5 on both ends. 
+Testcase for Mantis #428 "KLIPS NULL encryption patch (through cryptoapi)"
 
-This is testcase for Mantis #428
-
-NOTE that this likely fails on stock option builds.
-
+(klips seems broken for null encryption via cryptoapi)

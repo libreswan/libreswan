@@ -4,8 +4,9 @@
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Antony Antony <appu@phenome.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,7 +61,7 @@
 #include "dpd.h"
 #include "udpfromto.h"
 #include "kernel.h"
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
 
 void ikev2_print_ts(struct traffic_selector *ts)
@@ -138,7 +139,7 @@ struct traffic_selector ikev2_end_to_ts(struct end *e)
 
 stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 			 pb_stream *outpbs,
-			 unsigned int np,
+			 unsigned int lt,
 			 struct traffic_selector *ts,
 			 enum phase1_role role UNUSED)
 {
@@ -147,7 +148,7 @@ stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 	pb_stream ts_pbs;
 	pb_stream ts_pbs2;
 
-	its.isat_np = np;
+	its.isat_lt = lt;
 	its.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	its.isat_num = 1;
 
@@ -243,7 +244,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 
 		if (role == INITIATOR) {
 			ret = ikev2_emit_ts(md, outpbs,
-					    st->st_connection->policy & POLICY_TUNNEL ? ISAKMP_NEXT_NONE : ISAKMP_NEXT_v2N,
+					    st->st_connection->policy & POLICY_TUNNEL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N,
 					    ts_r, RESPONDER);
 		} else {
 			struct payload_digest *p;
@@ -261,7 +262,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 			}
 			if (!p) {
 				ret = ikev2_emit_ts(md, outpbs,
-						    ISAKMP_NEXT_NONE,
+						    ISAKMP_NEXT_v2NONE,
 						    ts_r, RESPONDER);
 			}
 		}
@@ -1175,7 +1176,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 				memset(&child_spi, 0, sizeof(child_spi));
 				memset(&notifiy_data, 0, sizeof(notifiy_data));
-				ship_v2N(ISAKMP_NEXT_NONE,
+				ship_v2N(ISAKMP_NEXT_v2NONE,
 					 ISAKMP_PAYLOAD_NONCRITICAL,
 				         /*PROTO_ISAKMP*/ 0,
 					 &child_spi,

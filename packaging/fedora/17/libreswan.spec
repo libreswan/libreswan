@@ -34,7 +34,7 @@ Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
 
 BuildRequires: pkgconfig hostname
-BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
+BuildRequires: nss-devel >= 3.14.2-2, nspr-devel
 BuildRequires: pam-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
@@ -96,7 +96,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %endif
   USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
   INITSYSTEM=systemd \
-  USE_DYNAMICDNS="true" \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK="%{USE_FIPSCHECK}" \
@@ -150,8 +149,8 @@ install -d %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 %endif
 
-echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
-rm -fr %{buildroot}/etc/rc.d/rc*
+echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %files 
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
@@ -196,6 +195,15 @@ if [ $1 -eq 1 ] ; then
     # Initial installation 
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
+    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
+    echo > ${TEMPFILE}
+    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
+    rm -f ${TEMPFILE}
+fi
+
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSEBASEVERSION-1

@@ -1,13 +1,15 @@
 /* demultiplex incoming IKE messages
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2010  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Simon Deziel <simon@xelerance.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,11 +45,7 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
-#include "cookie.h"
 #include "state.h"
 #include "packet.h"
 #include "md5.h"
@@ -61,18 +59,16 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-#ifdef XAUTH
+
 #include "xauth.h"
-#endif
-#ifdef NAT_TRAVERSAL
+
 #include "nat_traversal.h"
-#endif
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
 
 #define SEND_NOTIFICATION(t) { \
-		if (st) \
+		if (st != NULL) \
 			send_v2_notification_from_state(st, from_state, t, \
 							NULL); \
 		else \
@@ -105,9 +101,9 @@ enum smf2_flags {
  * wants to do something, usually, that the initiator. (But, not always
  * the original initiator, of the responder decides it needs to rekey first)
  *
- * Each exchange has a bit that indicates if it's a Initiator message,
- * or if it's a response.  The responder never retransmits it's messages
- * except because the initiator has retransmitted.
+ * Each exchange has a bit that indicates if it is an Initiator message,
+ * or if it is a response.  The Responder never retransmits its messages
+ * except in response to an Initiator retransmission.
  *
  * The message ID is *NOT* used in the cryptographic state at all, but instead
  * serves the role of a sequence number.  This makes the state machine far
@@ -136,7 +132,7 @@ enum smf2_flags {
 
 /* it is not clear how the flags will be used yet, if at all */
 
-static const struct state_v2_microcode state_microcode_table[] = {
+static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_INITIATOR,
@@ -209,7 +205,7 @@ static const struct state_v2_microcode state_microcode_table[] = {
 
 const struct state_v2_microcode *ikev2_parent_firststate()
 {
-	return &state_microcode_table[0];
+	return &v2_state_microcode_table[0];
 }
 
 /*
@@ -223,27 +219,30 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 	struct payload_digest *pd = md->digest_roof;
 	struct state *st = md->st;
 
+	/* ??? is there any logic in v2 like "needed" in v1?
+	 * How are missing payloads discovered?  Reported?
+	 * How about unexpected payloads?
+	 */
 	/* lset_t needed = smc->req_payloads; */
 
 	/* zero out the digest descriptors -- might nuke [v2E] digest! */
 
-	while (np != ISAKMP_NEXT_NONE) {
+	while (np != ISAKMP_NEXT_v2NONE) {
 		struct_desc *sd = np <
-				  ISAKMP_NEXT_ROOF ? payload_descs[np] : NULL;
+				  ISAKMP_NEXT_v2ROOF ? payload_descs[np] : NULL;
 		int thisp = np;
 		bool unknown_payload = FALSE;
 
 		DBG(DBG_CONTROL,
-		    DBG_log("Now lets proceed with payload (%s)",
-			    enum_show(&payload_names, thisp)));
+		    DBG_log("Now let's proceed with payload (%s)",
+			    enum_show(&payload_names_ikev2, thisp)));
 		memset(pd, 0, sizeof(*pd));
 
 		if (pd == &md->digest[PAYLIMIT]) {
 			loglog(RC_LOG_SERIOUS,
 			       "more than %d payloads in message; ignored",
 			       PAYLIMIT);
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
-			return STF_FAIL;
+			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 
 		if (sd == NULL) {
@@ -260,23 +259,23 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 				/* it was critical */
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",
-				       enum_show(&payload_names, thisp));
+				       enum_show(&payload_names_ikev2, thisp));
 				return STF_FATAL;
 			}
 			loglog(RC_COMMENT, "non-critical payload ignored because it contains an unknown or"
 			       " unexpected payload type (%s) at the outermost level",
-			       enum_show(&payload_names, thisp));
+			       enum_show(&payload_names_ikev2, thisp));
 		}
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
 			loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			SEND_NOTIFICATION(v2N_INVALID_SYNTAX);
 			return STF_FAIL;
 		}
 
 		DBG(DBG_PARSING,
 		    DBG_log("processing payload: %s (len=%u)\n",
-			    enum_show(&payload_names, thisp),
+			    enum_show(&payload_names_ikev2, thisp),
 			    pd->payload.generic.isag_length));
 
 		/* place this payload at the end of the chain for this type */
@@ -295,7 +294,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		/* do payload-type specific things that need to be here. */
 		switch (thisp) {
 		case ISAKMP_NEXT_v2E:
-			np = ISAKMP_NEXT_NONE;
+			np = ISAKMP_NEXT_v2NONE;
 			break;
 		default: /* nothing special */
 			break;
@@ -348,7 +347,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			st = find_state_ikev2_parent_init(md->hdr.isa_icookie);
 		}
 
-		if (st) {
+		if (st != NULL) {
 			if (st->st_msgid_lastrecv >  md->msgid_received) {
 				/* this is an OLD retransmit. we can't do anything */
 				libreswan_log(
@@ -378,7 +377,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			if (st == NULL) {
 				st = find_state_ikev2_parent(
 					md->hdr.isa_icookie, zero_cookie);
-				if (st) {
+				if (st != NULL) {
 					/* responder inserted its cookie, record it */
 					unhash_state(st);
 					memcpy(st->st_rcookie,
@@ -392,7 +391,7 @@ void process_v2_packet(struct msg_digest **mdp)
 						    md->hdr.isa_rcookie,
 						    md->hdr.isa_msgid); /* PAUL: really? not md->msgid_received */
 
-			if (st) {
+			if (st != NULL) {
 				/* found this child state, so we'll use it */
 				/* note we update the st->st_msgid_lastack *AFTER* decryption*/
 			} else {
@@ -406,7 +405,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 		}
 
-		if (st) {
+		if (st != NULL) {
 			/*
 			 * then there is something wrong with the msgid, so
 			 * maybe they retransmitted for some reason.
@@ -418,8 +417,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			    md->msgid_received <= st->st_msgid_lastack) {
 				/* it's fine, it's just a retransmit */
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "responding peer retransmitted msgid %u",
+				    DBG_log("responding peer retransmitted msgid %u",
 					    md->msgid_received));
 				return;
 			}
@@ -434,7 +432,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	}
 
 	ix = md->hdr.isa_xchg;
-	if (st) {
+	if (st != NULL) {
 
 		from_state = st->st_state;
 		DBG(DBG_CONTROL,
@@ -442,20 +440,21 @@ void process_v2_packet(struct msg_digest **mdp)
 			    enum_show(&state_names, from_state)));
 	}
 
-	for (svm = state_microcode_table; svm->state != STATE_IKEv2_ROOF;
+	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
-		if (svm->flags & SMF2_STATENEEDED)
+		if (svm->flags & SMF2_STATENEEDED) {
 			if (st == NULL)
 				continue;
-		if ((svm->flags & SMF2_STATENEEDED) == 0)
+		} else {
 			if (st != NULL)
 				continue;
+		}
 		if (svm->state != from_state)
 			continue;
 		if (svm->recv_type != ix)
 			continue;
 
-		/* I1 receiving NO_PROPOSAL ened up picking the wrong STATE_UNDEFINED state
+		/* I1 receiving NO_PROPOSAL ended up picking the wrong STATE_UNDEFINED state
 		   Since the wrong state is a responder, we just add a check for initiator,
 		   so we hit STATE_IKEv2_ROOF
 		 */
@@ -476,15 +475,15 @@ void process_v2_packet(struct msg_digest **mdp)
 			/* must be an initiator message, so we are the responder */
 
 			/* XXX need to be more specific */
-			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
+			SEND_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
 		return;
 	}
 
 	{
-		stf_status stf;
-		stf = ikev2_process_payloads(md, &md->message_pbs,
+		stf_status stf = ikev2_process_payloads(md, &md->message_pbs,
 					     from_state, md->hdr.isa_np);
+
 		DBG(DBG_CONTROL,
 		    DBG_log("Finished processing ikev2_process_payloads"));
 
@@ -496,6 +495,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	DBG(DBG_CONTROL,
 	    DBG_log("Now lets proceed with state specific processing"));
+
 	DBG(DBG_PARSING, {
 		    if (pbs_left(&md->message_pbs) != 0)
 			    DBG_log("removing %d bytes of padding",
@@ -509,21 +509,17 @@ void process_v2_packet(struct msg_digest **mdp)
 	if (needed != 0) {
 		loglog(RC_LOG_SERIOUS, "message for %s is missing payloads %s",
 		       enum_show(&state_names, from_state),
-		       bitnamesof(payload_name, needed));
-		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+		       bitnamesof(payload_name_ikev2, needed));
+		SEND_NOTIFICATION(v2N_INVALID_SYNTAX);
 		return;
 	}
 #endif
 
 	md->svm = svm;
 	md->from_state = from_state;
-	md->st  = st;
+	md->st = st;
 
-	{
-		stf_status stf;
-		stf = (svm->processor)(md);
-		complete_v2_state_transition(mdp, stf);
-	}
+	complete_v2_state_transition(mdp, (svm->processor)(md));
 }
 
 bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role init)
@@ -592,8 +588,8 @@ void ikev2_log_parentSA(struct state *st)
 			 st->st_oakley.encrypter->common.officname,
 			 st->st_oakley.enckeylen);
 	} else {
-		strncpy(encalgo, st->st_oakley.encrypter->common.officname,
-			sizeof(encalgo));
+		snprintf(encalgo, sizeof(encalgo), "%s",
+			st->st_oakley.encrypter->common.officname);
 	}
 
 	if (DBGP(DBG_CRYPT)) {
@@ -640,7 +636,7 @@ void ikev2_log_parentSA(struct state *st)
 void send_v2_notification_from_state(struct state *st, enum state_kind state,
 				     u_int16_t type, chunk_t *data)
 {
-	passert(st);
+	passert(st != NULL);
 
 	if (state == STATE_UNDEFINED)
 		state = st->st_state;
@@ -713,17 +709,18 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	struct state *st = md->st;
 	enum rc_type w;
 
-	libreswan_log("transition from state %s to state %s",
-		      enum_name(&state_names, from_state),
-		      enum_name(&state_names, svm->next_state));
-
+	if (from_state != svm->next_state) {
+		libreswan_log("transition from state %s to state %s",
+			      enum_name(&state_names, from_state),
+			      enum_name(&state_names, svm->next_state));
+	}
 	change_state(st, svm->next_state);
 	w = RC_NEW_STATE + st->st_state;
 
 	ikev2_update_counters(md);
 
-	/* tell whack and log of progress */
-	{
+	/* tell whack and log of progress, if we are actually advancing */
+	if (from_state != svm->next_state) {
 		const char *story = enum_name(&state_stories, st->st_state);
 		char sadetails[512];
 
@@ -774,12 +771,11 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		/* free previously transmitted packet */
 		freeanychunk(st->st_tpacket);
-#ifdef NAT_TRAVERSAL
 		if (nat_traversal_enabled) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
-#endif
+
 		DBG(DBG_CONTROL, {
 			    char buf[ADDRTOT_BUF];
 			    DBG_log(
@@ -814,8 +810,10 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		/* XXX should call unpend again on parent SA */
 		if (st->st_clonedfrom != 0) {
 			pst = state_with_serialno(st->st_clonedfrom); /* with failed child sa, we end up here with an orphan?? */
-			DBG_log("releasing whack for #%lu (sock=%d)",
+			DBG_log(
+				"releasing whack and unpending for #%lu (sock=%d)",
 				pst->st_serialno, pst->st_whack_sock);
+			unpend(pst);
 			release_whack(pst);
 		}
 	}
@@ -897,6 +895,21 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		default:
 			bad_case(kind);
 		}
+		/* start liveness checks if set, making sure we only schedule once when moving
+		 * from I2->I3 or R1->R2 */
+		if ((c->dpd_action == DPD_ACTION_CLEAR || c->dpd_action ==
+		     DPD_ACTION_RESTART) &&
+		    IS_V2_ESTABLISHED(st->st_state) && st->st_state !=
+		    from_state) {
+			DBG(DBG_DPD,
+			    DBG_log(
+				    "dpd_action set, scheduling ikev2 liveness checks"));
+			st->hidden_variables.st_liveness = TRUE;
+			event_schedule(EVENT_v2_LIVENESS,
+				       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
+				       st);
+		}
+
 	}
 }
 
@@ -911,7 +924,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	cur_state = st = md->st; /* might have changed */
 
-	/* passert(st);   apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
+	/* passert(st != NULL);   apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases if state is
 	 * null, so moved this precondition to where it's needed.  Some previous
@@ -926,7 +939,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 * particular case, and similar failure cases, we want SEND_NOTIFICATION
 	 * (below) to let the peer know why we've rejected the request.
 	 */
-	if (st) {
+	if (st != NULL) {
 		from_state_name = enum_name(&state_names, st->st_state);
 		from_state   = st->st_state;
 	} else {
@@ -963,19 +976,28 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	case STF_OK:
 		/* advance the state */
-		passert(st);
+		passert(st != NULL);
 		success_v2_state_transition(mdp);
 		break;
 
 	case STF_INTERNAL_ERROR:
-		lsw_abort();
-		break;
+                /* update the previous packet history */
+                /* TODO: fix: update_retransmit_history(st, md); */
+
+                whack_log(RC_INTERNALERR + md->note,
+                          "%s: internal error",
+                          enum_name(&state_names, st->st_state));
+
+                DBG(DBG_CONTROL,
+                    DBG_log("state transition function for %s had internal error",
+                            enum_name(&state_names, from_state)));
+                break;
 
 	case STF_TOOMUCHCRYPTO:
 		/* well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
-		passert(st);
+		passert(st != NULL);
 		set_suspended(st, NULL);
 		pexpect(st->st_calculating == FALSE);
 		libreswan_log("message in state %s ignored due to "
@@ -987,18 +1009,16 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		/* update the previous packet history */
 		/* update_retransmit_history(st, md); */
 
-		passert(st);
+		passert(st != NULL);
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
 			  from_state_name);
 		delete_event(st);
-		{
-			struct state *pst;
-			release_whack(st);
-			if (st->st_clonedfrom != 0) {
-				pst = state_with_serialno(st->st_clonedfrom);
-				release_whack(pst);
-			}
+		release_whack(st);
+		if (st->st_clonedfrom != 0) {
+			struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+			release_whack(pst);
 		}
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
@@ -1015,7 +1035,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		whack_log(RC_NOTIFICATION + md->note,
 			  "%s: %s",
 			  from_state_name,
-			  enum_name(&ipsec_notification_names, md->note));
+			  enum_name(&ikev2_notify_names, md->note));
 
 		if (md->note > 0) {
 			/* only send a notify is this packet was a question, not if it was an answer */
@@ -1026,7 +1046,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s failed: %s",
 			    from_state_name,
-			    (md->note) ? enum_name(&ipsec_notification_names,
+			    (md->note) ? enum_name(&ikev2_notify_names,
 						   md->note) :
 			    "<no reason given>" ));
 	}
@@ -1035,5 +1055,14 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 				  const char *name)
 {
-	return accept_nonce(md, dest, name, ISAKMP_NEXT_v2Ni);
+	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
+	size_t len = pbs_left(nonce_pbs);
+
+	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
+		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
+			name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
+		return v2N_INVALID_SYNTAX; /* ??? */
+	}
+	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
+	return NOTHING_WRONG;
 }

@@ -1,0 +1,8 @@
+Basic pluto test, except the policy has been adjusted to permit only
+cast128 for for phase 2. This uses NETKEY, not KLIPS as KLIPS does not
+support cast128.
+
+However, it seems NETKEY does not support cast128 either:
+
+"westnet-eastnet-cast128" #2: ERROR: netlink response for Add SA esp.fe470ce2@192.1.2.45 included errno 38: Function not implemented
+

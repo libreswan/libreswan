@@ -2,10 +2,11 @@
  * manifest constants
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,7 +20,6 @@
  * for more details.
  *
  */
-
 #include <sys/types.h>
 
 /* Group parameters from draft-ietf-ike-01.txt section 6 */
@@ -275,6 +275,27 @@
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
 
+/*
+ * RFC 4106 AES GCM
+ * http://tools.ietf.org/html/rfc4106#section-8.1
+ */
+#define AES_GCM_SALT_BYTES 4
+
+/*
+ * RFC 4309 AES CCM
+ * http://tools.ietf.org/search/rfc4309#section-7.1
+ */
+#define AES_CCM_SALT_BYTES 3
+
+/* Actually, the only valid values are 128, 192 and 256 bits */
+#define  AEAD_AES_KEY_MIN_LEN       128
+#define  AEAD_AES_KEY_DEF_LEN       128
+#define  AEAD_AES_KEY_MAX_LEN       256
+
+#define  AES_KEY_MIN_LEN        128
+#define  AES_KEY_DEF_LEN        128
+#define  AES_KEY_MAX_LEN        256
+
  /* ought to be supplied by md5.h */
 #define MD5_DIGEST_SIZE BYTES_FOR_BITS(128)
 /* IKEV2 integrity algorithms */
@@ -325,13 +346,6 @@
 #define IKEv2_MAJOR_VERSION 0x2
 #define IKEv2_MINOR_VERSION 0x0
 
-/*
- * bumped versions for testing with --impair-major-version-bump
- * and --impair-minor-version-bump
- */
-#define IKEv2_MAJOR_BUMP 0x3
-#define IKEv2_MINOR_BUMP 0x1
-
 /* Domain of Interpretation */
 #define ISAKMP_DOI_ISAKMP 0
 #define ISAKMP_DOI_IPSEC 1
@@ -353,6 +367,7 @@
 #define IPSEC_DOI_SPI_MIN 0x100
 #define IPSEC_DOI_SPI_OUR_MIN 0x1000
 
+
 /*
  * Payload types
  * RFC2408 Internet Security Association and Key Management Protocol (ISAKMP)
@@ -361,10 +376,10 @@
  * RESERVED 14-127
  * Private USE 128-255
  */
-enum next_payload_types {
-	ISAKMP_NEXT_NONE = 0, /* No other payload following */
+enum next_payload_types_ikev1 {
+	ISAKMP_NEXT_NONE = 0, /* No other payload following - See also v2_PROPOSAL_LAST */
 	ISAKMP_NEXT_SA = 1, /* Security Association */
-	ISAKMP_NEXT_P = 2, /* Proposal */
+	ISAKMP_NEXT_P = 2, /* Proposal - See also v2_PROPOSAL_NON_LAST */
 	ISAKMP_NEXT_T = 3, /* Transform */
 	ISAKMP_NEXT_KE = 4, /* Key Exchange */
 	ISAKMP_NEXT_ID = 5, /* Identification */
@@ -377,11 +392,40 @@ enum next_payload_types {
 	ISAKMP_NEXT_D = 12, /* Delete */
 	ISAKMP_NEXT_VID = 13, /* Vendor ID */
 	ISAKMP_NEXT_MCFG_ATTR = 14, /* Mode config Attribute */
-	/* NAT-Traversal: NAT-D (bad drafts) Conflicts with RFC 3547 */
-	ISAKMP_NEXT_NATD_BADDRAFTS = 15,
-	ISAKMP_NEXT_NATD_RFC = 20, /* NAT-Traversal: NAT-D (rfc) */
-	ISAKMP_NEXT_NATOA_RFC = 21, /* NAT-Traversal: NAT-OA (rfc) */
+	/* NAT-Traversal: NAT-D (bad drafts) Conflicts with RFC 3547 (not 3947!) and RFC 6407 */
+	/* old value: ISAKMP_NEXT_NATD_BADDRAFTS = 15 */
+	ISAKMP_NEXT_SAK = 15, /* SA KEK Payload - RFC 6407 */
+	ISAKMP_NEXT_TEK = 16, /* SA TEK Payload - RFC 6407 */
+	ISAKMP_NEXT_KD = 17, /* Key Download - RFC 3547 */
+	ISAKMP_NEXT_SEQ = 18, /* Sequence Number - RFC 3547 */
+	ISAKMP_NEXT_POP = 19, /* Proof of Possession - RFC 3547 */
+	ISAKMP_NEXT_NATD_RFC = 20, /* NAT-Traversal: NAT-D RFC 3947 */
+	ISAKMP_NEXT_NATOA_RFC = 21, /* NAT-Traversal: NAT-OA RFC 3947 */
+	ISAKMP_NEXT_GAP = 22, /* Group Associated Policy = RFC 6407 */
+	/* 23-127 Unassigned */
+	/* 128 - 255 Private Use */
+	ISAKMP_NEXT_NATD_DRAFTS = 130, /* NAT-Traversal: NAT-D (drafts) */
+	ISAKMP_NEXT_NATOA_DRAFTS = 131, /* NAT-Traversal: NAT-OA (drafts) */
+	/* Cisco/Microsoft proprietary IKE fragmentation */
+	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
+	ISAKMP_NEXT_ROOF = 254, /* roof on payload types */
+};
 
+enum ikev2_last_proposal {
+	/* if there is a next proposal, then the lp needs to be set right*/
+	v2_PROPOSAL_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
+	v2_PROPOSAL_NON_LAST = 2 /* matches IKEv1 ISAKMP_NEXT_P by design */
+};
+
+enum ikev2_last_transform {
+	/* if there is a next transform, then the lt needs to be set right*/
+	v2_TRANSFORM_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
+	v2_TRANSFORM_NON_LAST = 3 /* matches IKEv1 ISAKMP_NEXT_T by design */
+};
+
+enum next_payload_types_ikev2 {
+	ISAKMP_NEXT_v2NONE = 0,
+	/* 1 - 32 Reserved for IKEv1 */
 	ISAKMP_NEXT_v2SA = 33, /* security association */
 	ISAKMP_NEXT_v2KE = 34, /* key exchange payload */
 	ISAKMP_NEXT_v2IDi = 35, /* Initiator ID payload */
@@ -399,14 +443,10 @@ enum next_payload_types {
 	ISAKMP_NEXT_v2E = 46, /* Encrypted payload */
 	ISAKMP_NEXT_v2CP = 47, /* Configuration payload (MODECFG) */
 	ISAKMP_NEXT_v2EAP = 48, /* Extensible authentication*/
-
-	ISAKMP_NEXT_ROOF = 49, /* roof on payload types */
-
-	/* SPECIAL CASES */
-	ISAKMP_NEXT_NATD_DRAFTS = 130, /* NAT-Traversal: NAT-D (drafts) */
-	ISAKMP_NEXT_NATOA_DRAFTS = 131, /* NAT-Traversal: NAT-OA (drafts) */
-	/* Cisco proprietary IKE fragmentation */
-	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
+	/* 128 - 255 Private Use */
+	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
+	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
+	ISAKMP_NEXT_v2ROOF = 254, /* roof on payload types - keep same as v1 */
 };
 
 /*
@@ -437,6 +477,8 @@ enum next_payload_types {
 #define MIP6_HOME_PREFIX 16
 #define INTERNAL_IP6_LINK 17
 #define INTERNAL_IP6_PREFIX 18
+#define HOME_AGENT_ADDRESS 19
+
 
 /* 65001 - 65535 Private Use */
 #define FICTIVE_AUTH_METHOD_XAUTH_PSKEY_I 65500
@@ -488,21 +530,20 @@ enum next_payload_types {
 #define XAUTH_STATUS_FAIL	0
 #define XAUTH_STATUS_OK	1
 
-
-/* Values of XAUTH_STATUS attribute (draft-ietf-ipsec-isakmp-xauth-06 4.2) */
-#define    XAUTH_STATUS_FAIL	0
-#define    XAUTH_STATUS_OK	1
-
-
+/* Values of XAUTH_TYPE attributes */
 #define XAUTH_TYPE_GENERIC 0
 #define XAUTH_TYPE_CHAP 1
 #define XAUTH_TYPE_OTP 2
 #define XAUTH_TYPE_SKEY 3
 
+/* proprietary Microsoft attributes */
+#define INTERNAL_IP4_SERVER 23456
+#define INTERNAL_IP6_SERVER 23457
+
 /* Unity (Cisco) Mode Config attribute values */
-#define CISCO_BANNER 28672
+#define MODECFG_BANNER 28672
 #define CISCO_SAVE_PW 28673
-#define CISCO_DEF_DOMAIN 28674
+#define MODECFG_DOMAIN 28674
 #define CISCO_SPLIT_DNS 28675
 #define CISCO_SPLIT_INC 28676
 #define CISCO_UDP_ENCAP_PORT 28677
@@ -551,9 +592,9 @@ enum isakmp_xchg_types {
 	ISAKMP_XCHG_INFO = 5, /* Informational */
 	ISAKMP_XCHG_MODE_CFG = 6, /* Mode Config */
 
-	/* Private exchanges to pluto -- tried to write an RFC */
-	ISAKMP_XCHG_ECHOREQUEST = 30, /* Echo Request */
-	ISAKMP_XCHG_ECHOREPLY = 31, /* Echo Reply */
+	/* Private exchanges to pluto -- openswan mistakenly uses these */
+	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST = 30, /* Echo Request */
+	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY = 31, /* Echo Reply */
 
 	/* Extra exchange types, defined by Oakley
 	 * RFC2409 "The Internet Key Exchange (IKE)", near end of Appendix A
@@ -566,7 +607,9 @@ enum isakmp_xchg_types {
 	ISAKMP_v2_AUTH = 35,
 	ISAKMP_v2_CHILD_SA = 36,
 	ISAKMP_v2_INFORMATIONAL = 37,
+	ISAKMP_v2_IKE_SESSION_RESUME = 38, /* RFC 5723 */
 
+	/* libreswan private use */
 	ISAKMP_XCHG_ECHOREQUEST_PRIVATE = 244, /* Private Echo Request */
 	ISAKMP_XCHG_ECHOREPLY_PRIVATE = 245, /* Private Echo Reply */
 };
@@ -607,13 +650,29 @@ extern const char *const critical_names[];
 
 /*
  * extern enum_names protocol_names;
- * same in IKEv1 and IKEv2.
  */
 #define PROTO_RESERVED 0 /* only in IKEv2 */
+#define PROTO_v2_RESERVED 0 /* only in IKEv2 */
 #define PROTO_ISAKMP 1
 #define PROTO_IPSEC_AH 2
 #define PROTO_IPSEC_ESP 3
+#define PROTO_v2_ESP 3
 #define PROTO_IPCOMP 4 /* only in IKEv1 */
+
+/*
+ * IKEv2 Security Protocol Identifiers - RFC 5996
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-18
+ */
+enum ikev2_sec_proto_id {
+	/* 0 - Reserved */
+	IKEv2_SEC_PROTO_IKE = 1,
+	IKEv2_SEC_PROTO_AH = 2,
+	IKEv2_SEC_PROTO_ESP = 3,
+	IKEv2_SEC_FC_ESP_HEADER = 4, /* RFC 4595 */
+	IKEv2_SEC_FC_CT_AUTHENTICATION = 5, /* RFC 4595 */
+	/* 6 - 200 Unassigned */
+	/* 201 - 255 Private use */
+};
 
 /*
  * IKEv2 proposal
@@ -627,6 +686,11 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_ESN = 5,
 };
 
+/*
+ * IKE and ESP encryption algorithms
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
+ * (TODO: rename this to ikev2_encr_esp_ike)
+ */
 enum ikev2_trans_type_encr {
 	IKEv2_ENCR_DES_IV64 = 1,
 	IKEv2_ENCR_DES = 2,
@@ -648,11 +712,19 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_AES_GCM_8 = 18,
 	IKEv2_ENCR_AES_GCM_12 = 19,
 	IKEv2_ENCR_AES_GCM_16 = 20,
-	IKEv2_ENC_NULL_AUTH_AES_GMAC = 21,
+	IKEv2_ENCR_NULL_AUTH_AES_GMAC = 21,
 	IKEv2_RESERVED_IEEE_P1619_XTS_AES = 22,
-	/* 23 - 1023 Reserved to IANA */
+	IKEv2_ENCR_CAMELLIA_CBC = 23,
+	IKEv2_ENCR_CAMELLIA_CTR = 24,
+	IKEv2_ENCR_CAMELLIA_CCM_A = 25, /* AMELLIA_CCM_8 RFC 5529 */
+	IKEv2_ENCR_CAMELLIA_CCM_B = 26, /* AMELLIA_CCM_12 RFC 5529 */
+	IKEv2_ENCR_CAMELLIA_CCM_C = 27, /* AMELLIA_CCM_16 RFC 5529 */
+	/* 28 - 1023 Reserved to IANA */
 	/* 1024 - 65535 Private Use */
-	IKEv2_ENCR_INVALID = 65536
+	IKEv2_ENCR_SERPENT_CBC = 65004,
+	IKEv2_ENCR_TWOFISH_CBC = 65005,
+	IKEv2_ENCR_TWOFISH_CBC_SSH = 65289,
+	IKEv2_ENCR_INVALID = 65536,
 };
 
 enum ikev2_trans_type_prf {
@@ -816,12 +888,10 @@ enum ikev1_ipsec_attr {
 #define ENCAPSULATION_MODE_UNSPECIFIED 0 /* not legal -- used internally */
 #define ENCAPSULATION_MODE_TUNNEL 1
 #define ENCAPSULATION_MODE_TRANSPORT 2
-#ifdef NAT_TRAVERSAL
-#define ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS 61443
-#define ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS 61444
 #define ENCAPSULATION_MODE_UDP_TUNNEL_RFC 3
 #define ENCAPSULATION_MODE_UDP_TRANSPORT_RFC 4
-#endif
+#define ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS 61443
+#define ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS 61444
 
 /* Auth Algorithm attribute */
 
@@ -869,7 +939,7 @@ typedef u_int16_t ipsec_auth_t;
 #define HMAC_BUFSIZE 64
 
 /*
- * Oakley Encryption Algorithm attribute
+ * IKEv1 Oakley Encryption Algorithm attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
  * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
  */
@@ -895,10 +965,9 @@ typedef u_int16_t ipsec_auth_t;
  */
 
 typedef u_int16_t oakley_hash_t;
-
+/* 0 reserved */
 #define OAKLEY_MD5 1
 #define OAKLEY_SHA1 2
-#define OAKLEY_SHA OAKLEY_SHA1
 #define OAKLEY_TIGER 3
 #define OAKLEY_SHA2_256 4
 #define OAKLEY_SHA2_384 5
@@ -921,7 +990,7 @@ typedef u_int16_t oakley_hash_t;
 #define OAKLEY_ELGAMAL_ENC 6
 #define OAKLEY_ELGAMAL_ENC_REV 7
 
-#define OAKLEY_AUTH_ROOF 8 /*roof on auth values THAT WE SUPPORT */
+#define OAKLEY_AUTH_ROOF 8 /* roof on auth values THAT WE SUPPORT */
 
 /*
  * Note: the below xauth names are mapped via xauth_calcbaseauth() to the
@@ -934,7 +1003,7 @@ typedef u_int16_t oakley_hash_t;
 #define HybridInitDSS 64223
 #define HybridRespDSS 64224
 
-/* For XAUTH, store in st->xauth, and set equivalent in st->auth via */
+/* For XAUTH.  Don't actually store in st->st_oakley.auth (???) */
 #define XAUTHInitPreShared 65001
 #define XAUTHRespPreShared 65002
 #define XAUTHInitDSS 65003
@@ -1000,7 +1069,6 @@ enum ike_trans_type_dh {
  */
 typedef enum {
 	NOTHING_WRONG = 0, /* unofficial! */
-
 	INVALID_PAYLOAD_TYPE = 1,
 	DOI_NOT_SUPPORTED = 2,
 	SITUATION_NOT_SUPPORTED = 3,
@@ -1088,7 +1156,7 @@ typedef enum {
 	/* Reserved = 8, */
 	v2N_INVALID_MESSAGE_ID = 9, /* same as ikev1 */
 	/* Reserved = 10, */
-	V2_INVALID_SPI = 11, /* same as ikev1 */
+	v2N_INVALID_SPI = 11, /* same as ikev1 */
 	/* Reserved = 12, */
 	/* Reserved = 13, */
 	v2N_NO_PROPOSAL_CHOSEN = 14, /* same as ikev1 */
@@ -1194,11 +1262,21 @@ enum pubkey_alg {
 #define ISA_MAJ_SHIFT 4
 #define ISA_MIN_MASK (~((~0u) << ISA_MAJ_SHIFT))
 
+/* ISAKMP attributes are encoded with the Attribute Format field
+ * and the Attribute Type field encoded in one pair of octets.
+ * The AF is the high-order bit and the Type is the next 15 bits.
+ * See RFC 2408 "ISAKMP" section 3.3.
+ * The following definitions are used to pack and unpack these.
+ */
 #define ISAKMP_ATTR_AF_MASK 0x8000
 #define ISAKMP_ATTR_AF_TV ISAKMP_ATTR_AF_MASK /* value in lv */
 #define ISAKMP_ATTR_AF_TLV 0 /* length in lv; value follows */
 
 #define ISAKMP_ATTR_RTYPE_MASK 0x7FFF
+
+/* 
+ * ESP algorithms come in via ipsec_cipher_algo in libreswan/ipsec_policy.h
+ */
 
 /*
  * NOTE:

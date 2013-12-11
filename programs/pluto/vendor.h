@@ -1,5 +1,13 @@
-/* FreeS/WAN ISAKMP VendorID
+/* Libreswan ISAKMP VendorID
+ *
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
+ * Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
+ * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -188,8 +196,8 @@ enum known_vendorid {
 	VID_MISC_HEARTBEAT_NOTIFY  =203,
 	VID_IKE_FRAGMENTATION      =204,
 	VID_INITIAL_CONTACT        =205,
-	VID_MISC_IKEv2             =206
-
+	VID_MISC_IKEv2             =206,
+	VID_DPD1_NG                =207,
 };
 
 void init_vendorid(void);
@@ -198,10 +206,7 @@ struct msg_digest;
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		     struct state *st);
 
-bool out_vendorid(u_int8_t np, pb_stream *outs, enum known_vendorid vid);
 bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid);
-
-extern const char compile_time_interop_options[];
 
 #endif /* _VENDOR_H_ */
 

@@ -2,6 +2,7 @@
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,7 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <unistd.h>
@@ -22,6 +22,8 @@
 #include "lswlog.h"
 #include "lswconf.h"
 #include "lswalloc.h"
+
+#include <errno.h>
 
 #include <string.h>
 #include <nss.h>
@@ -67,7 +69,7 @@ static void lsw_conf_calculate(struct lsw_conf_options *oco)
 	oco->policies_dir = clone_str(buf, "policies path");
 }
 
-void lsw_conf_setdefault(void)
+static void lsw_conf_setdefault(void)
 {
 	char buf[PATH_MAX];
 	char *ipsec_conf_dir = IPSEC_CONFDIR;
@@ -109,14 +111,17 @@ void lsw_conf_free_oco(void)
 	/* Must be a nicer way to loop over this? */
 	pfree(global_oco.crls_dir);
 	/* pfree(global_oco.rootdir); */
-	pfree(global_oco.confdir); /* there is one more alloc that did not get freed? */
+	pfree(global_oco.confdir); /*
+				    * there is one more alloc that did not
+				    * get freed?
+				    */
 	pfree(global_oco.conffile);
 	pfree(global_oco.confddir);
 	pfree(global_oco.vardir);
 	pfree(global_oco.policies_dir);
 	pfree(global_oco.acerts_dir);
 	pfree(global_oco.cacerts_dir);
-	// wrong leak magic? pfree(global_oco.crls_dir);
+	/* wrong leak magic? pfree(global_oco.crls_dir); */
 	pfree(global_oco.private_dir);
 	pfree(global_oco.certs_dir);
 	pfree(global_oco.aacerts_dir);
@@ -164,64 +169,120 @@ secuPWData *lsw_return_nss_password_file_info(void)
 	return &NSSPassword;
 }
 
-/* 0 disabled
+/*
+ * 0 disabled
  * 1 enabled
  * 2 indeterminate
  */
-int Pluto_IsSElinux(void)
+int libreswan_selinux(void)
 {
 	char selinux_flag[1];
 	int n;
 	FILE *fd = fopen("/sys/fs/selinux/enforce","r");
 
 	if (fd == NULL) {
-		/* try old location, which is still in use by CentOS6 (not RHEL6) */
+		/* try new location first, then old location */
 		fd = fopen("/selinux/enforce","r");
 		if (fd == NULL) {
-			libreswan_log("SElinux: could not open /sys/fs/selinux/enforce or /selinux/enforce");
-			return 2;
+			DBG(DBG_CONTROL,
+				DBG_log("SElinux: disabled, could not open "
+					"/sys/fs/selinux/enforce or "
+					"/selinux/enforce")
+				);
+			return 0;
 		}
 	}
 
 	n = fread((void *)selinux_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		libreswan_log("SElinux: could not read 1 byte from the selinux enforce file");
+		libreswan_log("SElinux: could not read 1 byte from "
+			"the selinux enforce file");
 		return 2;
 	}
 	if (selinux_flag[0] == '1')
 		return 1;
-	else 
+	else
 		return 0;
 
 }
 
-/* 0 disabled
- * 1 enabled
- * 2 indeterminate
+#ifdef FIPS_CHECK
+/*
+ * Is the machine running in FIPS kernel mode (fips=1 kernel argument)
+ * yes (1), no (0), unknown(-1)
  */
-int Pluto_IsFIPS(void)
+int libreswan_fipskernel(void)
 {
 	char fips_flag[1];
 	int n;
 	FILE *fd = fopen("/proc/sys/crypto/fips_enabled", "r");
 
 	if (fd == NULL) {
-		libreswan_log("FIPS: could not open /proc/sys/crypto/fips_enabled");
-		return 2;
+		DBG(DBG_CONTROL,
+			DBG_log("FIPS: could not open /proc/sys/crypto/fips_"
+				"enabled"));
+		return 0;
 	}
 
 	n = fread((void *)fips_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		libreswan_log("FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
-		return 2;
+		loglog(RC_LOG_SERIOUS, "FIPS: could not read 1 byte from "
+			"/proc/sys/crypto/fips_enabled");
+		return -1;
 	}
+
 	if (fips_flag[0] == '1')
 		return 1;
-	else
-		return 0;
+
+	return 0;
 }
+
+/*
+ * Return TRUE if we are a fips product.
+ * This is irrespective of whether we are running in FIPS mode
+ * yes (1), no (0), unknown(-1)
+ */
+int
+libreswan_fipsproduct(void)
+{
+	if (access(FIPSPRODUCTCHECK, F_OK) != 0) {
+		if (errno == ENOENT || errno == ENOTDIR) {
+			return 0;
+		} else {
+			loglog(RC_LOG_SERIOUS, "FIPS ABORT: FIPS product check"
+			       " failed to determine status for %s: %d: %s",
+			       FIPSPRODUCTCHECK, errno, strerror(errno));
+			return -1;
+		}
+	}
+
+	return 1;
+
+}
+
+/*
+ * Is the machine running in FIPS mode (fips product AND fips kernel mode)
+ * yes (1), no (0), unknown(-1)
+ * Only pluto needs to know -1, so it can abort. Every other caller can
+ * just check for fips mode using: if (libreswan_fipsmode())
+ */
+int
+libreswan_fipsmode(void)
+{
+	int product = libreswan_fipsproduct();
+	int kernel = libreswan_fipskernel();
+
+	if (product == -1 || kernel == -1 )
+		return -1;
+
+	if (product && kernel)
+		return 1;
+
+	return 0;
+}
+#endif
 
 char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
@@ -238,7 +299,10 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 		token = PK11_GetTokenName(slot);
 		if (token) {
 			tlen = PORT_Strlen(token);
-			/* libreswan_log("authentication needed for token name %s with length %d",token,tlen); */
+			/*
+			 * libreswan_log("authentication needed for "
+			 *	"token name %s with length %d", token, tlen);
+			 */
 		} else {
 			return 0;
 		}
@@ -251,8 +315,8 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 
 	strings = PORT_ZAlloc(maxPwdFileSize);
 	if (!strings) {
-		libreswan_log(
-			"Not able to allocate memory for reading NSS password file");
+		libreswan_log("Not able to allocate memory for reading "
+			"NSS password file");
 		return 0;
 	}
 
@@ -271,7 +335,8 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 			PR_Close(fd);
 
 			if (nb == 0) {
-				libreswan_log("password file contains no data");
+				libreswan_log("password file contains "
+					"no data");
 				PORT_Free(strings);
 				return 0;
 			}
@@ -309,11 +374,14 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 			password = PORT_Strdup((char*)password);
 			PORT_Free(strings);
 
-			/* libreswan_log("Password passed to NSS is %s with length %d", password, PORT_Strlen(password)); */
+			/*
+			 * libreswan_log("Password passed to NSS is %s with "
+			 *	"length %d", password, PORT_Strlen(password));
+			 */
 			return password;
 		} else {
-			libreswan_log(
-				"File with Password to NSS DB is not provided");
+			libreswan_log("File with Password to NSS DB is "
+				"not provided");
 			return 0;
 		}
 	}

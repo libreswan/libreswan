@@ -1,6 +1,10 @@
 /* Structure of messages from whack to Pluto proper.
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -164,6 +168,7 @@ struct whack_message {
 	int connmtu;
 
 	int sa_priority;
+	int sa_reqid;
 
 	bool loopback;
 	bool labeled_ipsec;
@@ -238,11 +243,12 @@ struct whack_message {
 	/* for MODECFG */
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
+	char *modecfg_domain;
+	char *modecfg_banner;
 
 	/* what metric to put on ipsec routes */
 	int metric;
 
-	/* for DYNAMICDNS */
 	char *dnshostname;
 
 	/* for use with general option adjustments */

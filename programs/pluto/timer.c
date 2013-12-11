@@ -4,6 +4,9 @@
  * Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -34,9 +37,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -50,10 +50,9 @@
 #include "whack.h"
 #include "dpd.h"
 #include "lswtime.h"
+#include "ikev2.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 /* This file has the event handling routines. Events are
  * kept as a linked list of event structures. These structures
@@ -90,6 +89,9 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
 		if (type == EVENT_DPD || type == EVENT_DPD_TIMEOUT) {
 			passert(st->st_dpd_event == NULL);
 			st->st_dpd_event = ev;
+		} else if (type == EVENT_v2_LIVENESS) {
+			passert(st->st_liveness_event == NULL);
+			st->st_liveness_event = ev;
 		} else {
 			passert(st->st_event == NULL);
 			st->st_event = ev;
@@ -98,21 +100,18 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
-			    DBG_log(
-				    "inserting event %s, timeout in %lu seconds",
+			    DBG_log("inserting event %s, timeout in %lu seconds",
 				    enum_show(&timer_event_names,
 					      type), (unsigned long)tm);
 		    } else {
-			    DBG_log(
-				    "inserting event %s, timeout in %lu seconds for #%lu",
+			    DBG_log("inserting event %s, timeout in %lu seconds for #%lu",
 				    enum_show(&timer_event_names,
 					      type), (unsigned long)tm,
 				    ev->ev_state->st_serialno);
 		    }
 	    });
 
-	if (evlist == (struct event *) NULL ||
-	    evlist->ev_time >= ev->ev_time) {
+	if (evlist == NULL || evlist->ev_time >= ev->ev_time) {
 		DBG(DBG_CONTROLMORE, DBG_log("event added at head of queue"));
 		ev->ev_next = evlist;
 		evlist = ev;
@@ -129,8 +128,7 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
 					    enum_show(&timer_event_names,
 						      evt->ev_type));
 			    } else {
-				    DBG_log(
-					    "event added after event %s for #%lu",
+				    DBG_log("event added after event %s for #%lu",
 					    enum_show(&timer_event_names,
 						      evt->ev_type),
 					    evt->ev_state->st_serialno);
@@ -233,7 +231,8 @@ static void retransmit_v1_msg(struct state *st)
 		loglog(RC_NORETRANSMISSION,
 		       "max number of retransmissions (%d) reached %s%s",
 		       st->st_retransmit,
-		       enum_show(&state_names, st->st_state), details);
+		       enum_show(&state_names, st->st_state),
+		       details);
 		if (try != 0 && try != try_limit) {
 			/* A lot like EVENT_SA_REPLACE, but over again.
 			 * Since we know that st cannot be in use,
@@ -348,7 +347,8 @@ static void retransmit_v2_msg(struct state *st)
 	loglog(RC_NORETRANSMISSION,
 	       "max number of retransmissions (%d) reached %s%s",
 	       st->st_retransmit,
-	       enum_show(&state_names, st->st_state), details);
+	       enum_show(&state_names, st->st_state),
+	       details);
 
 	if (try != 0 && try != try_limit) {
 		/* A lot like EVENT_SA_REPLACE, but over again.
@@ -435,6 +435,99 @@ void handle_timer_event(void)
 	}
 }
 
+static void liveness_check(struct state *st)
+{
+	time_t tm, last_liveness, last_msg;
+	struct state *pst;
+	stf_status ret;
+	struct connection *c;
+	int timeout;
+
+	passert(st != NULL);
+	c = st->st_connection;
+
+	/* this should be called on a child sa */
+	if (st->st_clonedfrom != SOS_NOBODY) {
+		pst = state_with_serialno(st->st_clonedfrom);
+		if (!pst) {
+			DBG(DBG_CONTROL,
+			    DBG_log("liveness_check error, no parent state"));
+			return;
+		}
+	} else {
+		pst = st;
+	}
+
+	/* don't bother sending the check and reset
+	 * liveness stats if there has been incoming traffic */
+	if (get_sa_info(st, TRUE, &last_msg)) {
+		if (last_msg < c->dpd_timeout) {
+			pst->st_pend_liveness = FALSE;
+			pst->st_last_liveness = 0;
+			goto live_ok;
+		}
+	}
+
+	tm = now();
+	last_liveness = pst->st_last_liveness;
+	/* ensure that the very first liveness_check works out */
+	if (last_liveness == 0)
+		last_liveness = tm;
+
+	DBG(DBG_CONTROL,
+	    DBG_log("liveness_check - last_liveness: %lu, tm: %lu",
+		    last_liveness,
+		    tm));
+	if (c->dpd_timeout < c->dpd_delay * 3)
+		timeout = c->dpd_delay * 3;
+	else
+		timeout = c->dpd_timeout;
+
+	if (pst->st_pend_liveness == TRUE && tm - last_liveness >= timeout) {
+		DBG(DBG_CONTROL,
+		    DBG_log(
+			    "liveness_check - peer has not responded in %lu seconds,"
+			    " with a timeout of %d, taking action",
+			    tm - last_liveness,
+			    timeout));
+		switch (c->dpd_action) {
+
+		case DPD_ACTION_CLEAR:
+			libreswan_log(
+				"IKEv2 peer liveness - clearing connection");
+			delete_states_by_connection(c, TRUE);
+			unroute_connection(c);
+			break;
+
+		case DPD_ACTION_RESTART:
+			libreswan_log("IKEv2 peer liveness - restarting all connections "
+				      "that share this peer");
+			restart_connections_by_peer(c);
+			break;
+
+		default:
+			DBG(DBG_CONTROL,
+			    DBG_log("liveness_check - handling default by "
+				    "rescheduling"));
+			goto live_ok;
+		}
+
+	} else {
+		ret = ikev2_send_informational(st);
+		if (ret != STF_OK) {
+			DBG(DBG_CONTROL, DBG_log(
+				    "failed to send informational"));
+			return;
+		}
+live_ok:
+		DBG(DBG_CONTROL, DBG_log("liveness_check - peer is ok"));
+		delete_liveness_event(st);
+		event_schedule(EVENT_v2_LIVENESS,
+			       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
+			       st);
+	}
+}
+
 void handle_next_timer_event(void)
 {
 	struct event *ev = evlist;
@@ -471,9 +564,12 @@ void handle_next_timer_event(void)
 	 */
 	passert(GLOBALS_ARE_RESET());
 	if (st != NULL) {
-		if ( type  == EVENT_DPD || type == EVENT_DPD_TIMEOUT) {
+		if (type == EVENT_DPD || type == EVENT_DPD_TIMEOUT) {
 			passert(st->st_dpd_event == ev);
 			st->st_dpd_event = NULL;
+		} else if (type == EVENT_v2_LIVENESS) {
+			passert(st->st_liveness_event == ev);
+			st->st_liveness_event = NULL;
 		} else {
 			passert(st->st_event == ev);
 			st->st_event = NULL;
@@ -495,12 +591,10 @@ void handle_next_timer_event(void)
 		break;
 #endif
 
-#ifdef DYNAMICDNS
 	case EVENT_PENDING_DDNS:
 		passert(st == NULL);
 		connection_check_ddns();
 		break;
-#endif
 
 	case EVENT_PENDING_PHASE2:
 		passert(st == NULL);
@@ -517,6 +611,10 @@ void handle_next_timer_event(void)
 
 	case EVENT_v2_RETRANSMIT:
 		retransmit_v2_msg(st);
+		break;
+
+	case EVENT_v2_LIVENESS:
+		liveness_check(st);
 		break;
 
 	case EVENT_SA_REPLACE:
@@ -578,6 +676,7 @@ void handle_next_timer_event(void)
 					  "IPsec"));
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
+		delete_liveness_event(st);
 		delete_dpd_event(st);
 		event_schedule(EVENT_SA_EXPIRE, st->st_margin, st);
 	}
@@ -633,11 +732,9 @@ void handle_next_timer_event(void)
 		dpd_timeout(st);
 		break;
 
-#ifdef NAT_TRAVERSAL
 	case EVENT_NAT_T_KEEPALIVE:
 		nat_traversal_ka_event();
 		break;
-#endif
 
 	case EVENT_CRYPTO_FAILED:
 		DBG(DBG_CONTROL,
@@ -706,8 +803,7 @@ void delete_event(struct state *st)
 			if (*ev == NULL) {
 				DBG(DBG_CONTROL,
 				    DBG_log("event %s to be deleted not found",
-					    enum_show(&
-						      timer_event_names,
+					    enum_show(&timer_event_names,
 						      st->st_event->ev_type)));
 				break;
 			}
@@ -725,10 +821,34 @@ void delete_event(struct state *st)
 	}
 }
 
+void delete_liveness_event(struct state *st)
+{
+	if (st->st_liveness_event != NULL) {
+		struct event **ev;
+
+		DBG(DBG_CONTROL, DBG_log("state %ld deleting liveness event",
+					 st->st_serialno));
+
+		for (ev = &evlist;; ev = &(*ev)->ev_next) {
+			if (*ev == NULL) {
+				DBG(DBG_CONTROL, DBG_log("liveness event"
+							 " not found"));
+				break;
+			}
+			if ((*ev) == st->st_liveness_event) {
+				*ev = (*ev)->ev_next;
+				pfree(st->st_liveness_event);
+				st->st_liveness_event = NULL;
+				break;
+			}
+		}
+	}
+}
+
 /*
  * Delete a DPD event.
  */
-void _delete_dpd_event(struct state *st, const char *file, int lineno)
+void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
 	    DBG_log("state: %ld requesting DPD event %s to be deleted by %s:%d",

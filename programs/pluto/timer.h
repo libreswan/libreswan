@@ -1,5 +1,8 @@
 /* timing machinery
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013  D. Hugh Redelmeier.
+ * Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,17 +28,18 @@ struct event {
 	struct event   *ev_next;        /* Pointer to next event */
 };
 
+
 extern void event_schedule(enum event_type type, time_t tm, struct state *st);
 extern void handle_timer_event(void);
 extern long next_event(void);
 extern void delete_event(struct state *st);
-extern void daily_log_event(void);
+extern void delete_liveness_event(struct state *st);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);
 
 /* extra debugging of dpd event removal */
-extern void _delete_dpd_event(struct state *st, const char *file, int lineno);
-#define delete_dpd_event(st) _delete_dpd_event(st, __FILE__, __LINE__)
+extern void attributed_delete_dpd_event(struct state *st, const char *file, int lineno);
+#define delete_dpd_event(st) attributed_delete_dpd_event(st, __FILE__, __LINE__)
 
 extern void timer_list(void);
 

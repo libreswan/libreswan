@@ -1,11 +1,14 @@
 /* state and event objects
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009,2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -72,25 +75,25 @@ extern msgid_t generate_msgid(struct state *isakmp_sa);
  * Names are chosen to match corresponding names in state.
  */
 struct trans_attrs {
-	u_int16_t encrypt;              /* Encryption algorithm */
-	u_int16_t enckeylen;            /* encryption key len (bits) */
-	oakley_hash_t prf_hash;         /* Hash algorithm for PRF */
-	oakley_hash_t integ_hash;       /* Hash algorithm for integ */
+	u_int16_t encrypt;		/* Encryption algorithm */
+	u_int16_t enckeylen;		/* encryption key len (bits) */
+	oakley_hash_t prf_hash;		/* Hash algorithm for PRF */
+	oakley_hash_t integ_hash;	/* Hash algorithm for integ */
 
-	oakley_auth_t auth;             /* Authentication method (RSA,PSK) */
-#ifdef XAUTH
-	u_int16_t xauth;                /* did we negotiate Extended Authentication? */
-#endif
-	u_int16_t groupnum;
+	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
 
-	time_t life_seconds;            /* When this SA expires (seconds) */
-	u_int32_t life_kilobytes;       /* When this SA is exhausted (kilobytes) */
+	bool doing_xauth;		/* did we negotiate Extended Authentication and still doing it? */
+
+	u_int16_t groupnum;		/* for IKEv2 */
+
+	time_t life_seconds;		/* When this SA expires (seconds) */
+	u_int32_t life_kilobytes;	/* When this SA is exhausted (kilobytes) */
 
 	/* used in phase1/PARENT SA */
-	const struct encrypt_desc *encrypter;   /* package of encryption routines */
-	const struct hash_desc *prf_hasher;     /* package of hashing routines */
-	const struct hash_desc *integ_hasher;   /* package of hashing routines */
-	const struct oakley_group_desc *group;  /* Oakley group */
+	const struct encrypt_desc *encrypter;	/* package of encryption routines */
+	const struct hash_desc *prf_hasher;	/* package of hashing routines */
+	const struct hash_desc *integ_hasher;	/* package of hashing routines */
+	const struct oakley_group_desc *group;	/* Oakley group */
 
 	/* used in phase2/CHILD_SA */
 	struct esp_info *ei;
@@ -155,6 +158,7 @@ struct hidden_variables {
 	bool st_got_certrequest;
 	bool st_modecfg_started;
 	bool st_skeyid_calculated;
+	bool st_liveness;			/* Liveness checks */
 	bool st_dpd;                            /* Peer supports DPD */
 	bool st_dpd_local;                      /* If we want DPD on this conn */
 	bool st_logged_p1algos;                 /* if we have logged algos */
@@ -209,8 +213,8 @@ struct state {
 	int st_usage;
 
 #ifdef XAUTH_HAVE_PAM
-	pthread_mutex_t mutex;                  /* per state mutex */
-	pthread_t tid;                          /* per state XAUTH_RO thread id */
+	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
+	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
 #endif
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
@@ -393,6 +397,10 @@ struct state {
 	char st_xauth_username[XAUTH_USERNAME_LEN];
 	chunk_t st_xauth_password;
 
+	time_t st_last_liveness;		/* Time of last v2 informational */
+	bool st_pend_liveness;			/* Waiting on an informational response */
+	struct event *st_liveness_event;
+
 	/* RFC 3706 Dead Peer Detection */
 	time_t st_last_dpd;                     /* Time of last DPD transmit */
 	u_int32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
@@ -411,9 +419,7 @@ struct state {
 /* global variables */
 
 extern u_int16_t pluto_port;            /* Pluto's port */
-#ifdef NAT_TRAVERSAL
 extern u_int16_t pluto_natt_float_port; /* Pluto's NATT floating port */
-#endif
 
 extern bool states_use_connection(struct connection *c);
 
@@ -479,7 +485,7 @@ extern void initialize_new_state(struct state *st,
 extern void show_states_status(void);
 
 #if 1
-void for_each_state(void *(f)(struct state *, void *data), void *data);
+void for_each_state(void (*f)(struct state *, void *data), void *data);
 #endif
 
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
@@ -498,10 +504,9 @@ extern void delete_cryptographic_continuation(struct state *st);
 extern void delete_states_dead_interfaces(void);
 
 /*
- * use this guy to change state, this gives us a handle on all state changes
+ * use these to change state, this gives us a handle on all state changes
  * which is good for tracking bugs, logging and anything else you might like
  */
-#ifdef HAVE_STATSD
 #define refresh_state(st) log_state(st, st->st_state)
 #define fake_state(st, new_state) log_state(st, new_state)
 #define change_state(st, new_state) \
@@ -511,11 +516,5 @@ extern void delete_states_dead_interfaces(void);
 			(st)->st_state = (new_state); \
 		} \
 	} while (0)
-#else
-#define refresh_state(st)               /* do nothing */
-#define fake_state(st, new_state)       /* do nothing */
-#define change_state(st, new_state) do { (st)->st_state = (new_state); \
-} while (0)
-#endif
 
 #endif /* _STATE_H */

@@ -2,6 +2,10 @@
  * Copyright (C) 2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2011 Wolfgang Nothdurft <wolfgang@linogate.de>
+ * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,12 +33,10 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"
 #include "whack.h"
-#include "virtual.h"
+#include "nat_traversal.h"
+#include "virtual.h"	/* needs connections.h */
 
 #define F_VIRTUAL_NO          1
 #define F_VIRTUAL_DHCP        2
@@ -42,8 +44,6 @@
 #define F_VIRTUAL_PRIVATE     8
 #define F_VIRTUAL_ALL         16
 #define F_VIRTUAL_HOST        32
-
-extern bool nat_traversal_enabled;
 
 struct virtual_t {
 	unsigned short flags;
@@ -71,7 +71,7 @@ static bool _read_subnet(const char *src, size_t len, ip_subnet *dst,
 {
 	bool ok;
 	int af;
-	/* workaround for typo "%4:" instead of "%v4:" introduced in old libreswan release*/
+	/* workaround for typo "%4:" instead of "%v4:" introduced in old openswan release*/
 	int offset = 0;
 
 	if ((len > 4) && (strncmp(src, "%v4:", 4) == 0)) {
@@ -465,7 +465,7 @@ void show_virtual_private()
 		all_ko[0] = '\0';
 	}
 
-	if (nat_traversal_enabled) { 
+	if (nat_traversal_enabled) {
 		whack_log(RC_COMMENT, "virtual_private (%%priv):");
 		whack_log(RC_COMMENT, "- allowed %d subnet%s: %s",
 			private_net_ok_len,

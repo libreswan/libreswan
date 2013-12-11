@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 04/12/2013
+.\"      Date: 12/08/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "04/12/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "12/08/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -407,9 +407,9 @@ what operation, if any, should be done automatically at IPsec startup; currently
 \fBadd\fR
 (signifying an
 \fBipsec auto\fR\fB\-\-add\fR),
-\fBroute\fR
+\fBondemand\fR
 (signifying that plus an
-\fBipsec auto\fR\fB\-\-route\fR),
+\fBipsec auto\fR\fB\-\-ondemand\fR),
 \fBstart\fR
 (signifying that plus an
 \fBipsec auto\fR\fB\-\-up\fR), and
@@ -419,6 +419,11 @@ what operation, if any, should be done automatically at IPsec startup; currently
 discussion below\&. Relevant only locally, other end need not agree on it (but in general, for an intended\-to\-be\-permanent connection, both ends should use
 \fBauto=start\fR
 to ensure that any reboot causes immediate renegotiation)\&.
+.sp
+The option
+\fBondemand\fR
+used to be called
+\fBroute\fR
 .RE
 .PP
 \fBauthby\fR
@@ -470,10 +475,12 @@ option\&. The default is to use IKE, and to allow all combinations of:
 .RE
 .\}
 .sp
-If Libreswan was compiled with extra INSECURE and BROKEN options, then the des (1des) and null cipher, as well as modp768 are available\&. This turns your VPN into a joke\&. Do not enable these options\&.
+Weak algorithms are regularly removed from libreswan\&. Currently, 1DES and modp768 have been removed and modp1024 will be removed in the near future\&. Additionally, md5 and sha1 will be removed within the next few years\&. Null encryption is available, and should only be used for testing or benchmarking purposes\&. Please do not request for insecure algorithms to be re\-added to libreswan\&.
 .sp
-If libreswan was compiled with USE_MODP_RFC5114 support, then Diffie\-Hellman groups 22, 23 and 24 are also implemented as per RFC\-5114\&. Instead of the modp key syntax, use the "dh" keyword, for example
+Diffie\-Hellman groups 22, 23 and 24 are also implemented as per RFC\-5114\&. Instead of the modp key syntax, use the "dh" keyword, for example
 \fIike=3des\-sha1;dh23\fR
+.sp
+The modp syntax will be removed in favour of the dh syntax\&.
 .RE
 .PP
 \fBphase2\fR
@@ -541,6 +548,15 @@ IKE fragmentation capablities are negotiated via
 \fByes\fR, IKE fragmentation will be attempted on the first re\-transmit of an IKE packet of a size larger then 576 bytes for IPv4 and 1280 bytes for IPv6\&. If ike_frag is set to force, IKE fragmentation is used on initial transmits of such sized packets as well\&. When we have received IKE fragments for a connection, pluto behaves as if in force mode\&.
 .RE
 .PP
+\fBikepad\fR
+.RS 4
+Whether or not to pad IKE messages to a multiple of 4 bytes\&. Valid values are are
+\fByes\fR, (the default) and
+\fBno\fR\&.
+.sp
+Normal RFC compliant behaviour is to use IKE padding\&. However some devices, for instance Checkpoint, can be configured to firewall Aggressive Mode IKE packets that have been padded\&. This option disables the required IKE padding for interop which such devices\&. This option should almost never be enabled\&.
+.RE
+.PP
 \fBikev2\fR
 .RS 4
 IKEv2 (RFC4309) settings to be used\&. Currently the accepted values are
@@ -582,7 +598,9 @@ stack supports this\&. Acceptable values are
 or
 \fBconntrack\fR\&. This option is ignored when SArefs are not supported\&. This option is passed as PLUTO_SAREF_TRACKING to the
 \fIupdown\fR
-script which makes the actual decisions whether to perform any iptables/ip_conntrack manipulation\&. A value of yes means that an IPSEC mangle table will be created\&. This table will be used to match reply packets\&. A value of conntrack means that additionally, subsequent packets using this connection will be marked as well, reducing the lookups needed to find the proper SAref by using the ip_conntrack state\&. A value of no means no IPSEC mangle table is created, and SAref tracking is left to a third\-party (kernel) module\&. In case of a third party module, the SArefs can be relayed using the HAVE_STATSD deamon\&.
+script which makes the actual decisions whether to perform any iptables/ip_conntrack manipulation\&. A value of yes means that an IPSEC mangle table will be created\&. This table will be used to match reply packets\&. A value of conntrack means that additionally, subsequent packets using this connection will be marked as well, reducing the lookups needed to find the proper SAref by using the ip_conntrack state\&. A value of no means no IPSEC mangle table is created, and SAref tracking is left to a third\-party (kernel) module\&. In case of a third party module, the SArefs can be relayed using the
+\fIstatsbin=\fR
+notification helper\&.
 .RE
 .PP
 \fBleftid\fR
@@ -749,7 +767,7 @@ or
 \fIusername:password:conname\fR
 .sp
 For supported password hashing methods, see
-\fBcrypt\fR(3)\&. If pluto is running in FIPS mode, some hash methods, such as MD5, might not be available\&. The pam option is only available if compiled with USE_XAUTHPAM\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
+\fBcrypt\fR(3)\&. If pluto is running in FIPS mode, some hash methods, such as MD5, might not be available\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
 .sp
 The
 \fIalwaysok\fR
@@ -773,9 +791,13 @@ or
 (the default)\&.
 .RE
 .PP
-\fBmodecfgdns1\fR, \fBmodecfgdns2\fR
+\fBmodecfgdns1\fR, \fBmodecfgdns2\fR, \fBmodecfgdomain\fR, \fBmodecfgbanner\fR
 .RS 4
-Specify the IP address for DNS servers for the client to use\&. These will be send when using XAUTH with ModeConfig when we are an xauthserver\&.
+When configured as modecfg server, specifying any of these options will cause those options and values to be sent to the modecfg client during the XAUTH+ModeCFG phase (phase 1\&.5)\&.
+.sp
+When we are an XAUTH client, these options will be treated as defaults\&. If the remote XAUTH server did not pass us one of these options, the configured defaults are used to reconfigure the local DNS setup\&.
+.sp
+The split tunneling directive will be sent automatically if the xauth server side has configured a network other than 0\&.0\&.0\&.0/0
 .RE
 .PP
 \fBremote_peer_type\fR
@@ -829,6 +851,14 @@ whether to send an INITIAL_CONTACT payload to the peer we are initiating to, if 
 setting, which should be left enabled unless libreswan acts as an XAUTH server using PSK ("group secret")\&. This option can cause a few seconds of downtime on the IPsec tunnel between the time the remote clears the old IPsec SA in response to our INITIAL_CONTACT message, and the time we finish setting up the new IPsec SA\&. If there is an XAUTH step in between, and especially when XAUTH requires the use of some two\-factor token, this downtime could be even longer\&.
 .RE
 .PP
+\fBcisco_unity\fR
+.RS 4
+whether to send a CISCO_UNITY payload to the peer we are initiating to\&. Acceptable values are:
+\fBno\fR
+(the default) and
+\fByes\fR\&. It is recommended to leave this option unset, unless the remote peer (Cisco) requires it\&. This is an experimental option\&. It does not modify local behaviour\&. It is expected the remote peer might behave differently when it receives this vendor id\&. This option might be removed in a future release\&.
+.RE
+.PP
 \fBoverlapip\fR
 .RS 4
 a boolean (yes/no) that determines, when *subnet=vhost: is used, if the virtual IP claimed by this states created from this connection can with states created from other connections\&.
@@ -838,6 +868,15 @@ Note that connection instances created by the Opportunistic Encryption or PKIX (
 The default is no\&.
 .sp
 This feature is only available with kernel drivers that support SAs to overlapping conns\&. At present only the (klips)mast protocol stack supports this feature\&.
+.RE
+.PP
+\fBreqid\fR
+.RS 4
+a unique identifier used to match IPsec SA\*(Aqs using iptables with NETKEY/XFRM\&. This identifier is normally automatically allocated in groups of 4\&. It is exported to the _updown script as REQID\&. On Linux, reqids are supported with IP Connection Tracking and NAT (iptables)\&. Automaticly generated values use the range 16380 and higher\&. Manually specified reqid values therefor must be between 1 and 16379\&.
+.sp
+Automatically generated reqids use a range of 0\-3 (eg 16380\-16383 for the first reqid)\&. These are used depending on the exact policy (AH, AH+ESP, IPCOMP, etc)\&. Manually assigned reqids are all identical\&. Instantiations of connections (those using %any wildcards) will all use the same reqid\&.
+.sp
+For KLIPS, when using the MAST variant, a different mechanism called SAref is in use\&. See overlapip and sareftrack\&.
 .RE
 .PP
 \fBdpddelay\fR
@@ -862,14 +901,16 @@ When a DPD enabled peer is declared dead, what action should be taken\&.
 \fBclear\fR
 means the eroute and SA with both be cleared\&.
 \fBrestart\fR
-means the the SA will immediately be renegotiated, and
-\fBrestart_by_peer\fR
 means that
 \fIALL\fR
 SA\*(Aqs to the dead peer will renegotiated\&.
 .sp
 \fIdpdaction=clear\fR
 is really only useful on the server of a Road Warrior config\&.
+.sp
+The value
+\fBrestart_by_peer\fR
+has been obsoleted and its functionality moved into the regular restart action\&.
 .RE
 .PP
 \fBpfs\fR
@@ -1006,6 +1047,17 @@ Set the metric for the routes to the ipsecX or mastX interface\&. This makes it 
 Set the mtu for the route(s) to the remote endpoint and/or subnets\&. This is sometimes required when the overhead of the IPsec encapsultion would cause the packet the become too big for a router on the path\&. Since IPsec cannot trust any unauthenticated ICMP messages, PATH MTU discovery does not work\&. This can also be needed when using "6to4" IPV6 deployments, which adds another header on the packet size\&. Acceptable values are positive numbers\&. There is no default\&.
 .RE
 .PP
+\fBpriority\fR
+.RS 4
+The priority in the kernel SPD/SAD database, when matching up packets\&. Each kernel (NETKEY, KLIPS, OSX, etc) has its own mechanism for setting the priority\&. Setting this option to non\-zero passes the priority to the kernel stack unmodified\&. The maximum value depends on the stack\&. It is recommended not to exceed 65536
+.sp
+KLIPS and NETKEY use a priority system based on "most specific match first"\&. It uses an internal algorithm to calculate these based on network prefix length, protocol and port selectors\&. A lower value means a higher priority\&.
+.sp
+Typical values are about the 2000 range\&. These can be seen on the NETKEY stack using
+\fBip xfrm policy\fR
+when the connection is up\&. For "anonymous IPsec" or Opoprtunistic Encryption based connections, a much lower priority (65535) is used to ensure administrator configured IPsec always takes precedence over opportunistic IPsec\&.
+.RE
+.PP
 \fBdisablearrivalcheck\fR
 .RS 4
 whether KLIPS\*(Aqs normal tunnel\-exit check (that a packet emerging from a tunnel has plausible addresses in its header) should be disabled; acceptable values are
@@ -1017,17 +1069,27 @@ and
 .PP
 \fBlabeled_ipsec\fR
 .RS 4
-Avesh needs to write a man page entry for this\&.
+Whether labeled IPsec should be enabled or not; acceptable values are
+\fBno\fR
+(the default) and
+\fByes\fR\&. See also loopback=, policy_label= and secctx_attr_value=
 .RE
 .PP
 \fBpolicy_label\fR
 .RS 4
-Avesh needs to write a man page entry for this\&.
+The string representation of an access control security label that is interpreted by the LSM (e\&.g\&. SELinux) for use with Labeled IPsec\&. See alo loopback=, labeled_ipsec= and secctx_attr_value=\&. For example,
+\fIpolicy_label=system_u:object_r:ipsec_spd_t:s0\-s15:c0\&.c1023\fR
 .RE
 .PP
 \fBloopback\fR
 .RS 4
-Avesh needs to write a man page entry for this\&.
+Whether labeled IPsec loopback should be enabled or not; acceptable values are
+\fBno\fR
+(the default) or yes\&. Note that some Linux kernels disable some XFRM/NETKEY functions required for loopback that can prevent Labeled IPsec from working correctly\&. Ensure that both
+\fI/proc/sys/net/ipv4/conf/lo/disable_xfrm\fR
+and
+\fI/proc/sys/net/ipv4/conf/lo/disable_policy\fR
+are set to 0\&.
 .RE
 .PP
 \fBfailureshunt\fR
@@ -1142,7 +1204,7 @@ whether to enable the newer NAT\-T standards for port floating\&. Acceptable val
 \fBforce_keepalive\fR
 .RS 4
 This option has been obsoleted since libreswan version 3\&.2\&. See the
-\fIforce_keepalive\fR
+\fInat_keepalive\fR
 option to enable/disable NAT\-KA packets on a per\-connection basis\&.
 .RE
 .PP
@@ -1200,6 +1262,11 @@ are started to help with cryptographic operations\&. Pluto will start
 of them, where
 \fIn\fR
 is the number of CPU\*(Aqs you have (including hypherthreaded CPU\*(Aqs)\&. A value of 0 forces pluto to do all operations in the main process\&. A value of \-1 tells pluto to perform the above calculation\&. Any other value forces the number to that amount\&.
+.RE
+.PP
+\fBsecctx_attr_value\fR
+.RS 4
+The value for the IPsec SA security context attribute identifier which is used for Labeled IPsec\&. Defaults to the private use IANA value 32001 from the IPsec SA attributes registry\&. Old openswan versions might still be using the (stolen) value 10, which has since been assigned by IANA for something else\&. Other values are not recommended unless IANA assigns an actual value for this\&. See also labeled_ipsec=, loopback= and policy_label=
 .RE
 .PP
 \fBplutofork\fR
@@ -1341,6 +1408,11 @@ in what directory should things started by
 \fI/var/run/pluto\fR\&. When SElinux runs in enforced mode, changing this requires a similar change in the SElinux policy for the pluto daemon\&.
 .RE
 .PP
+\fBstatsbin\fR
+.RS 4
+This option specifies an optional external program to report tunnel state changes too\&. The default is not to report tunnel state changes\&. This program can be used to notify the user\*(Aqs desktop or to report tunnel changes to a central logging server\&.
+.RE
+.PP
 \fBipsecdir\fR
 .RS 4
 in what directory the X509, NSS and OE related files should be stored\&. The default value is
@@ -1376,9 +1448,9 @@ option\&. This will result in sub directories in the structure /192/0/2\&. The d
 \fBfragicmp\fR
 .RS 4
 whether a tunnel\*(Aqs need to fragment a packet should be reported back with an ICMP message, in an attempt to make the sender lower his PMTU estimate; acceptable values are
-\fByes\fR
+\fBno\fR
 (the default) and
-\fBno\fR\&. This KLIPS option has no effect on NETKEY, Windows or BSD stacks\&.
+\fByes\fR\&. This KLIPS option has no effect on NETKEY, Windows or BSD stacks\&.
 .RE
 .PP
 \fBhidetos\fR

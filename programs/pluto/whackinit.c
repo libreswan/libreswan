@@ -2,6 +2,12 @@
  * suitable for setuid use.
  *
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2010 Simon Deziel <simon@xelerance.com>
+ * Copyright (C) 2010 Harald Jenny <harald@a-little-linux-box.at>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -207,6 +213,7 @@ static bool pack_str(char **p)
 	}
 }
 
+/* ??? bufsize must be PASS_MAX + 1 (documented in getpass(3)) */
 static size_t get_secret(char *buf, size_t bufsize)
 {
 	const char *secret;
@@ -214,10 +221,12 @@ static size_t get_secret(char *buf, size_t bufsize)
 
 	fflush(stdout);
 	usleep(20000); /* give fflush time for flushing */
+	/* ??? the function getpass(3) is obsolete! */
 	secret = getpass("Enter passphrase: ");
 	secret = (secret == NULL) ? "" : secret;
 
-	strncpy(buf, secret, bufsize);
+	strncpy(buf, secret, bufsize-1);
+	buf[bufsize-1] = '\0';	/* ensure NUL termination */
 
 	len = strlen(buf) + 1;
 
@@ -390,6 +399,9 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 	msg.policy_label = NULL;
 #endif
+
+	msg.modecfg_domain = NULL;
+	msg.modecfg_banner = NULL;
 
 	msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
 	msg.sa_ipsec_life_seconds = PLUTO_SA_LIFE_DURATION_DEFAULT;

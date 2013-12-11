@@ -71,6 +71,10 @@ ifeq ($(USE_LDAP),true)
 CFLAGS+=-DLDAP_VER=3
 endif
 
+ifeq ($(USE_FIPSCHECK),true)
+CFLAGS+=-DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\" -DFIPS_CHECK
+endif
+
 CFLAGS+=-DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 
@@ -95,10 +99,6 @@ CFLAGS+=-I${LIBRESWANSRCDIR} -DDEBUG
 CFLAGS+=${PFKEYV2_DEFS} ${KLIPS_DEFS} $(NSSFLAGS)
 CFLAGS+= -I${LIBRESWANSRCDIR}/include ${PORTINCLUDE} $(USERCOMPILE) ${CROSSFLAGS}
 CFLAGS+= ${WERROR}
-
-ifeq ($(USE_NAT_TRAVERSAL),true)
-CFLAGS+= -DNAT_TRAVERSAL
-endif
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 CFLAGS+= -DSINGLE_CONF_DIR=1
@@ -200,7 +200,7 @@ test-%: %.c
 	${CC} ${CFLAGS} -D`echo $* | tr 'a-z' 'A-Z'`_MAIN $*.c -o test-$*
 
 cleanall:
-	rm -f $(LIBA) $(LIBL) *.o try* core *.core $(EXTHDRS) $(EXTLIBS) version.c
+	rm -f $(LIBA) $(LIBL) *.o try* core *.core $(EXTHDRS) $(EXTLIBS) version.c Makefile.depend
 
 
 # developer-only stuff
@@ -239,8 +239,14 @@ check:
 
 checkprograms:
 
-# Gather dependencies caused by explicit #includes within .c files
-depend:
-	(ls $(wildcard $(SRCS)) $(wildcard $(addprefix ${KLIPSSRCDIR}/,$(SRCS))) $(wildcard $(LOGSRCS)) | grep '\.c' | xargs $(GCC) -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS} ) | sed -e 's,${LIBRESWANSRCDIR},../..,g' >Makefile.depend
+# ??? does $(SRCS) work, given the files could be in different directories?
+Makefile.depend: $(SRCS) $(LOGSRCS) ${LIBRESWANSRCDIR}/lib/libswan/Makefile
+	# note: files listed in SRCS may be in ${LIBRESWANSRCDIR}/lib/libswan/ or ${KLIPSSRCDIR}/
+	# This construction looks in both.  The wildcard function weeds out the wrong choices.
+	# The grep could be replaced by the GNU Make "filter" function.
+	(ls $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(SRCS))) \
+	    $(wildcard $(addprefix ${KLIPSSRCDIR}/,$(SRCS))) \
+	    $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(LOGSRCS))) \
+	| grep '\.c' | xargs ${CC} -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}) >Makefile.depend
 
--include ${srcdir}Makefile.depend
+-include Makefile.depend

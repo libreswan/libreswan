@@ -1,6 +1,11 @@
 /* information about connections between hosts and clients
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ *
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2011 Anthony Tong <atong@TrustedCS.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,9 +41,6 @@
 #include "x509.h"
 #include "certs.h"
 #include "ac.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "log.h"
@@ -207,20 +209,23 @@ void unpend(struct state *st)
 		if (p->isakmp_sa == st) {
 			DBG(DBG_CONTROL,
 			    DBG_log(
-				    "unqueuing pending Quick Mode with %s \"%s\" %s",
+				    "unqueuing pending %s with %s \"%s\" %s",
+				    st->st_ikev2 ? "Child SA" : "Quick Mode",
 				    ip_str(&p->connection->spd.that.host_addr),
 				    p->connection->name,
 				    enum_name(&pluto_cryptoimportance_names,
 					      st->st_import)));
 
 			p->pend_time = time(NULL);
-			(void) quick_outI1(p->whack_sock, st, p->connection,
-					   p->policy,
-					   p->try, p->replacing
+			if (!st->st_ikev2) {
+				(void) quick_outI1(p->whack_sock, st, p->connection,
+						   p->policy,
+						   p->try, p->replacing
 #ifdef HAVE_LABELED_IPSEC
-					   , p->uctx
+						   , p->uctx
 #endif
-					   );
+						   );
+			}
 			p->whack_sock = NULL_FD;        /* ownership transferred */
 			p->connection = NULL;           /* ownership transferred */
 			delete_pending(pp);

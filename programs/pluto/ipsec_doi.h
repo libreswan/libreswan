@@ -1,5 +1,9 @@
 /* IPsec DOI and Oakley resolution routines
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2007,2008 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,8 +33,6 @@ extern void ipsecdoi_replace(struct state *st,
 
 extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
 
-#include "ikev1_quick.h"
-
 extern state_transition_fn
 	main_inI1_outR1,
 	main_inR1_outI2,
@@ -52,10 +54,6 @@ extern void send_notification_from_state(struct state *st,
 					 u_int16_t type);
 extern void send_notification_from_md(struct msg_digest *md, u_int16_t type);
 
-extern notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
-				   const char *name,
-				   enum next_payload_types paynum);
-
 extern notification_t accept_KE(chunk_t *dest, const char *val_name,
 				const struct oakley_group_desc *gr,
 				pb_stream *pbs);
@@ -63,16 +61,8 @@ extern notification_t accept_KE(chunk_t *dest, const char *val_name,
 /*
  * some additional functions are exported for xauth.c
  */
-extern void close_message(pb_stream *pbs);                      /* forward declaration */
-extern bool encrypt_message(pb_stream *pbs, struct state *st);  /* forward declaration */
-
-extern stf_status dpd_inI_outR(struct state *st,
-			       struct isakmp_notification *const n,
-			       pb_stream *n_pbs);
-extern stf_status dpd_inR(struct state *st,
-			  struct isakmp_notification *const n,
-			  pb_stream *n_pbs);
-extern void dpd_timeout(struct state *st);
+extern void close_message(pb_stream *pbs, struct state *st);
+extern bool encrypt_message(pb_stream *pbs, struct state *st);
 
 /* START_HASH_PAYLOAD_NO_HASH_START
  *
@@ -136,3 +126,6 @@ extern stf_status send_isakmp_notification(struct state *st,
 extern bool has_preloaded_public_key(struct state *st);
 
 extern bool extract_peer_id(struct id *peer, const pb_stream *id_pbs);
+
+struct pluto_crypto_req;	/* prevent struct type being local to function protocol */
+extern void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r);

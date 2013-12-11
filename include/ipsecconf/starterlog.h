@@ -1,4 +1,6 @@
-/* FreeS/WAN log functions (log.h)
+/* libipsecconf log and memory allocation functions
+ * definitions: lib/libipsecconf/starterlog.c, lib/libipsecconf/alloc.c
+ *
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,14 +21,12 @@
 #define LOG_LEVEL_ERR    2
 #define LOG_LEVEL_DEBUG  3
 
-extern void starter_log(int level, const char *fmt, ...)
-__attribute__((format(printf, 2, 3)));
-extern void starter_use_log(int debug, int console, int mysyslog);
+extern void starter_log(int level, const char *fmt, ...) __attribute__ ((format(printf, 2, 3)));
 
-extern int showonly;
+extern void starter_use_log(bool debug, bool console, bool mysyslog);
 
 extern void *xmalloc(size_t s);
-extern char *xstrdup(char *s);
+extern char *xstrdup(const char *s);
 extern void *xrealloc(void *o, size_t s);
 
 #endif /* _STARTER_LOG_H_ */

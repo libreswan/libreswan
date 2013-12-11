@@ -1,0 +1,40 @@
+/testing/guestbin/swan-prep
+west #
+ # not starting pluto on west
+west #
+ echo "initdone"
+initdone
+west #
+ cat authip-rogue.raw | nc -w 5 -u -s 192.1.2.45 -p 500 192.1.2.23 500 >/dev/null 2>/dev/null
+west #
+ sleep 2
+west #
+ echo done
+done
+west #
+ ipsec look
+west NOW
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+169.254.0.0/16 dev eth2  scope link  metric 1004 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+west #
+ ipsec whack --shutdown
+whack: Pluto is not running (no "/var/run/pluto/pluto.ctl")
+west #
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -1,5 +1,10 @@
 /* declarations of routines that interface with the kernel's IPsec mechanism
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2011 Michael Richardson <mcr@sandelman.ca>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2013 Kim Heino <b@bbbs.net>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -56,6 +61,9 @@ struct pfkey_proto_info {
 	int encapsulation;
 	unsigned reqid;
 };
+
+extern const struct pfkey_proto_info null_proto_info[2];
+
 struct sadb_msg;
 
 /* replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal SADB_SATYPE values */
@@ -99,11 +107,9 @@ struct kernel_sa {
 	IPsecSAref_t refhim;
 
 	int encapsulation;
-#ifdef NAT_TRAVERSAL
 	u_int16_t natt_sport, natt_dport;
 	u_int8_t transid, natt_type;
 	ip_address *natt_oa;
-#endif
 	const char *text_said;
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
@@ -121,6 +127,9 @@ struct raw_iface {
 
 LIST_HEAD(iface_list, iface_dev);
 extern struct iface_list interface_dev;
+
+extern char *pluto_listen;	/* from --listen flag */
+
 
 /* KAME has a different name for AES */
 #if !defined(SADB_X_EALG_AESCBC) && defined(SADB_X_EALG_AES)
@@ -366,9 +375,7 @@ extern bool route_and_eroute(struct connection *c,
 extern bool was_eroute_idle(struct state *st, time_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, time_t *ago);
 
-#ifdef NAT_TRAVERSAL
 extern bool update_ipsec_sa(struct state *st);
-#endif
 
 extern bool eroute_connection(struct spd_route *sr,
 			      ipsec_spi_t spi, unsigned int proto,
@@ -401,7 +408,7 @@ extern bool kernel_overlap_supported(void);
 extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
 
-/* 
+/*
  * Used to pass default priority from kernel_ops-> functions.
  * Our priority is based on an unsigned long int, with the
  * lower number being the highest priority, but this

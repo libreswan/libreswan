@@ -88,22 +88,21 @@
 #define IPSEC_PROC_SHOW_SAREF_INFO
 #endif
 
-#ifdef CONFIG_PROC_FS
+#ifndef CONFIG_PROC_FS
+/*
+ * just complain because pluto won't run without /proc!
+ */
+#error You must have PROC_FS built in to use KLIPS
+#endif
 
-#ifdef IPSEC_PROC_SUBDIRS
 static struct proc_dir_entry *proc_net_ipsec_dir = NULL;
 static struct proc_dir_entry *proc_eroute_dir    = NULL;
 static struct proc_dir_entry *proc_spi_dir       = NULL;
 static struct proc_dir_entry *proc_spigrp_dir    = NULL;
+static struct proc_dir_entry *proc_stats_dir     = NULL;
 #ifdef IPSEC_SA_RECOUNT_DEBUG
 static struct proc_dir_entry *proc_saraw_dir     = NULL;
 #endif
-static struct proc_dir_entry *proc_birth_dir     = NULL;
-static struct proc_dir_entry *proc_stats_dir     = NULL;
-#endif
-
-struct ipsec_birth_reply ipsec_ipv4_birth_packet;
-struct ipsec_birth_reply ipsec_ipv6_birth_packet;
 
 int debug_esp = 0;
 int debug_ah = 0;
@@ -124,45 +123,29 @@ int sysctl_ipsec_tos = 1; /* hide per default, unless hidetos=no */
 #define DECREMENT_UNSIGNED(X, amount) ((amount < (X)) ? (X)-amount : 0)
 
 #ifdef CONFIG_KLIPS_ALG
-extern int ipsec_xform_get_info(char *buffer, char **start,
-				off_t offset, int length IPSEC_PROC_LAST_ARG);
+extern int ipsec_xform_show(struct seq_file *seq, void *offset);
 #endif
 
-IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_eroute_get_info(char *buffer,
-			  char **start,
-			  off_t offset,
-			  int length IPSEC_PROC_LAST_ARG)
-{
-	struct wsbuf w = { buffer, length, offset, 0, 0 };
 
+IPSEC_PROCFS_DEBUG_NO_STATIC
+int ipsec_eroute_show(struct seq_file *seq, void *offset)
+{
 	if (debug_radij & DB_RJ_DUMPTREES)
-		rj_dumptrees();                 /* XXXXXXXXX */
+		rj_dumptrees();			/* XXXXXXXXX */
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_eroute_get_info: "
-		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
-		    buffer,
-		    *start,
-		    (int)offset,
-		    length);
+		    "klips_debug:ipsec_eroute_show: seq=%p offset=%p\n",
+		    seq, offset);
 
 	spin_lock_bh(&eroute_lock);
-
-	rj_walktree(rnh, ipsec_rj_walker_procprint, &w);
-/*	rj_walktree(mask_rjhead, ipsec_rj_walker_procprint, &w); */
-
+	rj_walktree(rnh, ipsec_rj_walker_show, seq);
 	spin_unlock_bh(&eroute_lock);
-
-	*start = buffer + (offset - w.begin);   /* Start of wanted data */
-	return w.len - (offset - w.begin);
+	return 0;
 }
 
+
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_spi_format(struct ipsec_sa *sa_p,
-		     char *buffer,
-		     int len,
-		     int length)
+int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 {
 	char sa[SATOT_BUF];
 	char buf_s[SUBNETTOA_BUF];
@@ -171,32 +154,24 @@ int ipsec_spi_format(struct ipsec_sa *sa_p,
 
 	ipsec_sa_get(sa_p, IPSEC_REFPROC);
 	sa_len = satot(&sa_p->ips_said, 'x', sa, sizeof(sa));
-	len += ipsec_snprintf(buffer + len, length - len, "%s ",
-			      sa_len ? sa : " (error)");
-
-	len += ipsec_snprintf(buffer + len, length - len, "%s%s%s",
-			      IPS_XFORM_NAME(sa_p));
-
-	len += ipsec_snprintf(buffer + len, length - len, ": dir=%s",
-			      (sa_p->ips_flags & EMT_INBOUND) ?
-			      "in " : "out");
+	seq_printf(seq, "%s ", sa_len ? sa : " (error)");
+	seq_printf(seq, "%s%s%s", IPS_XFORM_NAME(sa_p));
+	seq_printf(seq, ": dir=%s", (sa_p->ips_flags & EMT_INBOUND) ? "in " : "out");
 
 	if (sa_p->ips_addr_s) {
 		sin_addrtot(sa_p->ips_addr_s, 0, buf_s, sizeof(buf_s));
-		len += ipsec_snprintf(buffer + len, length - len, " src=%s",
-				      buf_s);
+		seq_printf(seq, " src=%s", buf_s);
 	}
 
-	if ((sa_p->ips_said.proto == IPPROTO_IPIP) &&
-	    (sa_p->ips_flags & (SADB_X_SAFLAGS_INFLOW |
-				SADB_X_SAFLAGS_POLICYONLY))) {
+	if ((sa_p->ips_said.proto == IPPROTO_IPIP)
+	   && (sa_p->ips_flags & (SADB_X_SAFLAGS_INFLOW
+			   |SADB_X_SAFLAGS_POLICYONLY))) {
 		if (sa_p->ips_flow_s.u.v4.sin_family == AF_INET) {
 			subnettoa(sa_p->ips_flow_s.u.v4.sin_addr,
 				  sa_p->ips_mask_s.u.v4.sin_addr,
 				  0,
 				  buf_s,
 				  sizeof(buf_s));
-
 			subnettoa(sa_p->ips_flow_d.u.v4.sin_addr,
 				  sa_p->ips_mask_d.u.v4.sin_addr,
 				  0,
@@ -208,7 +183,6 @@ int ipsec_spi_format(struct ipsec_sa *sa_p,
 				   0,
 				   buf_s,
 				   sizeof(buf_s));
-
 			subnet6toa(&sa_p->ips_flow_d.u.v6.sin6_addr,
 				   &sa_p->ips_mask_d.u.v6.sin6_addr,
 				   0,
@@ -216,602 +190,303 @@ int ipsec_spi_format(struct ipsec_sa *sa_p,
 				   sizeof(buf_d));
 		}
 
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " policy=%s->%s",
-				      buf_s, buf_d);
+		seq_printf(seq, " policy=%s->%s", buf_s, buf_d);
 	}
 
 	if (sa_p->ips_iv_bits) {
 		int j;
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " iv_bits=%dbits iv=0x",
-				      sa_p->ips_iv_bits);
+		seq_printf(seq, " iv_bits=%dbits iv=0x", sa_p->ips_iv_bits);
 
 #ifdef CONFIG_KLIPS_OCF
 		if (!sa_p->ips_iv) {
 			/* ocf doesn't set the IV, fake it for the UML tests */
-			len += ipsec_snprintf(buffer + len, length - len,
-					      "0cf0");
-			for (j = 0; j < (sa_p->ips_iv_bits / 8) - 2; j++) {
-				len += ipsec_snprintf(buffer + len,
-						      length - len, "%02x",
-						      (int) ((((long)sa_p) >>
-							      j) & 0xff));
-			}
+			seq_printf(seq, "0cf0");
+			for (j = 0; j < (sa_p->ips_iv_bits / 8) - 2; j++)
+				seq_printf(seq, "%02x", (int) ((((long)sa_p) >> j) & 0xff));
 		} else
 #endif
-		for (j = 0; j < sa_p->ips_iv_bits / 8; j++) {
-			len += ipsec_snprintf(buffer + len, length - len,
-					      "%02x",
-					      (__u32)((__u8*)(sa_p->ips_iv))[j]);
-		}
+		for (j = 0; j < sa_p->ips_iv_bits / 8; j++)
+			seq_printf(seq, "%02x", (__u32)((__u8*)(sa_p->ips_iv))[j]);
 	}
 
 	if (sa_p->ips_encalg || sa_p->ips_authalg) {
-		if (sa_p->ips_replaywin) {
-			len += ipsec_snprintf(buffer + len, length - len,
-					      " ooowin=%d",
-					      sa_p->ips_replaywin);
-		}
-		if (sa_p->ips_errs.ips_replaywin_errs) {
-			len += ipsec_snprintf(buffer + len, length - len,
-					      " ooo_errs=%d",
-					      sa_p->ips_errs.ips_replaywin_errs);
-		}
-		if (sa_p->ips_replaywin_lastseq) {
-			len += ipsec_snprintf(buffer + len, length - len,
-					      " seq=%d",
-					      sa_p->ips_replaywin_lastseq);
-		}
-		if (sa_p->ips_replaywin_bitmap) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 3, 0)
-			len += ipsec_snprintf(buffer + len, length - len,
-					      " bit=0x%Lx",
-					      sa_p->ips_replaywin_bitmap);
-#else
-			len += ipsec_snprintf(buffer + len, length - len,
-					      " bit=0x%x%08x",
-					      (__u32)(sa_p->
-						      ips_replaywin_bitmap >>
-						      32),
-					      (__u32)sa_p->ips_replaywin_bitmap);
-#endif
-		}
-		if (sa_p->ips_replaywin_maxdiff) {
-			len += ipsec_snprintf(buffer + len, length - len,
-					      " max_seq_diff=%d",
-					      sa_p->ips_replaywin_maxdiff);
-		}
+		if (sa_p->ips_replaywin)
+			seq_printf(seq, " ooowin=%d", sa_p->ips_replaywin);
+		if (sa_p->ips_errs.ips_replaywin_errs)
+			seq_printf(seq, " ooo_errs=%d", sa_p->ips_errs.ips_replaywin_errs);
+		if (sa_p->ips_replaywin_lastseq)
+		       seq_printf(seq, " seq=%d", sa_p->ips_replaywin_lastseq);
+		if (sa_p->ips_replaywin_bitmap)
+			seq_printf(seq, " bit=0x%Lx", sa_p->ips_replaywin_bitmap);
+		if (sa_p->ips_replaywin_maxdiff)
+			seq_printf(seq, " max_seq_diff=%d", sa_p->ips_replaywin_maxdiff);
 	}
+
 	if (sa_p->ips_flags & ~EMT_INBOUND) {
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " flags=0x%x",
-				      sa_p->ips_flags & ~EMT_INBOUND);
-		len += ipsec_snprintf(buffer + len, length - len, "<");
+		seq_printf(seq, " flags=0x%x", sa_p->ips_flags & ~EMT_INBOUND);
+		seq_printf(seq, "<");
 		/* flag printing goes here */
-		len += ipsec_snprintf(buffer + len, length - len, ">");
-	}
-	if (sa_p->ips_auth_bits) {
-		len += ipsec_snprintf(buffer + len, length - len, " alen=%d",
-				      sa_p->ips_auth_bits);
-	}
-	if (sa_p->ips_key_bits_a) {
-		len += ipsec_snprintf(buffer + len, length - len, " aklen=%d",
-				      sa_p->ips_key_bits_a);
-	}
-	if (sa_p->ips_errs.ips_auth_errs) {
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " auth_errs=%d",
-				      sa_p->ips_errs.ips_auth_errs);
-	}
-	if (sa_p->ips_key_bits_e) {
-		len += ipsec_snprintf(buffer + len, length - len, " eklen=%d",
-				      sa_p->ips_key_bits_e);
-	}
-	if (sa_p->ips_errs.ips_encsize_errs) {
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " encr_size_errs=%d",
-				      sa_p->ips_errs.ips_encsize_errs);
-	}
-	if (sa_p->ips_errs.ips_encpad_errs) {
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " encr_pad_errs=%d",
-				      sa_p->ips_errs.ips_encpad_errs);
+		seq_printf(seq, ">");
 	}
 
-	len += ipsec_snprintf(buffer + len, length - len, " life(c,s,h)=");
+	if (sa_p->ips_auth_bits)
+		seq_printf(seq, " alen=%d", sa_p->ips_auth_bits);
+	if (sa_p->ips_key_bits_a)
+		seq_printf(seq, " aklen=%d", sa_p->ips_key_bits_a);
+	if (sa_p->ips_errs.ips_auth_errs)
+		seq_printf(seq, " auth_errs=%d", sa_p->ips_errs.ips_auth_errs);
+	if (sa_p->ips_key_bits_e)
+		seq_printf(seq, " eklen=%d", sa_p->ips_key_bits_e);
+	if (sa_p->ips_errs.ips_encsize_errs)
+		seq_printf(seq, " encr_size_errs=%d", sa_p->ips_errs.ips_encsize_errs);
+	if (sa_p->ips_errs.ips_encpad_errs)
+		seq_printf(seq, " encr_pad_errs=%d", sa_p->ips_errs.ips_encpad_errs);
 
-	len += ipsec_lifetime_format(buffer + len,
-				     length - len,
-				     "alloc",
-				     ipsec_life_countbased,
-				     &sa_p->ips_life.ipl_allocations);
+	seq_printf(seq, " jiffies=%lu", jiffies);
 
-	len += ipsec_lifetime_format(buffer + len,
-				     length - len,
-				     "bytes",
-				     ipsec_life_countbased,
-				     &sa_p->ips_life.ipl_bytes);
+	seq_printf(seq, " life(c,s,h)=");
 
-	len += ipsec_lifetime_format(buffer + len,
-				     length - len,
-				     "addtime",
-				     ipsec_life_timebased,
-				     &sa_p->ips_life.ipl_addtime);
+	ipsec_lifetime_format(seq, "alloc",
+			      ipsec_life_countbased, &sa_p->ips_life.ipl_allocations);
 
-	len += ipsec_lifetime_format(buffer + len,
-				     length - len,
-				     "usetime",
-				     ipsec_life_timebased,
-				     &sa_p->ips_life.ipl_usetime);
+	ipsec_lifetime_format(seq, "bytes",
+			      ipsec_life_countbased, &sa_p->ips_life.ipl_bytes);
 
-	len += ipsec_lifetime_format(buffer + len,
-				     length - len,
-				     "packets",
-				     ipsec_life_countbased,
-				     &sa_p->ips_life.ipl_packets);
+	ipsec_lifetime_format(seq, "addtime",
+			      ipsec_life_timebased, &sa_p->ips_life.ipl_addtime);
+
+	ipsec_lifetime_format(seq, "usetime",
+			      ipsec_life_timebased, &sa_p->ips_life.ipl_usetime);
+
+	ipsec_lifetime_format(seq, "packets",
+			      ipsec_life_countbased, &sa_p->ips_life.ipl_packets);
 
 	if (sa_p->ips_life.ipl_usetime.ipl_last) { /* XXX-MCR should be last? */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 3, 0)
-		len += ipsec_snprintf(buffer + len, length - len, " idle=%Ld",
-				      ipsec_jiffieshz_elapsed(jiffies / HZ,
-							      sa_p->ips_life.
-							      ipl_usetime.
-							      ipl_last));
-#else
-		len += ipsec_snprintf(buffer + len, length - len, " idle=%lu", ipsec_jiffieshz_elapsed(
-					      jiffies / HZ,
-					      (unsigned long)sa_p->ips_life.
-					      ipl_usetime
-					      .ipl_last));
-#endif
+		seq_printf(seq, " idle=%Ld",
+			   ipsec_jiffieshz_elapsed(jiffies/HZ, sa_p->ips_life.ipl_usetime.ipl_last));
 	}
 
 #ifdef CONFIG_KLIPS_IPCOMP
 	if (sa_p->ips_said.proto == IPPROTO_COMP &&
-	    (sa_p->ips_comp_ratio_dbytes ||
-	     sa_p->ips_comp_ratio_cbytes)) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 3, 0)
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " ratio=%Ld:%Ld",
-				      sa_p->ips_comp_ratio_dbytes,
-				      sa_p->ips_comp_ratio_cbytes);
-#else
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " ratio=%lu:%lu",
-				      (unsigned long)sa_p->ips_comp_ratio_dbytes,
-				      (unsigned long)sa_p->ips_comp_ratio_cbytes);
-#endif
+	   (sa_p->ips_comp_ratio_dbytes ||
+	    sa_p->ips_comp_ratio_cbytes)) {
+		seq_printf(seq, " ratio=%Ld:%Ld",
+			   sa_p->ips_comp_ratio_dbytes,
+			   sa_p->ips_comp_ratio_cbytes);
 	}
-#endif  /* CONFIG_KLIPS_IPCOMP */
+#endif /* CONFIG_KLIPS_IPCOMP */
 
 #ifdef NAT_TRAVERSAL
-	{
-		char *natttype_name;
-
-		switch (sa_p->ips_natt_type) {
-		case 0:
-			natttype_name = "none";
-			break;
-		case ESPINUDP_WITH_NON_IKE:
-			natttype_name = "nonike";
-			break;
-		case ESPINUDP_WITH_NON_ESP:
-			natttype_name = "nonesp";
-			break;
-		default:
-			natttype_name = "unknown";
-			break;
-		}
-
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " natencap=%s",
-				      natttype_name);
-
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " natsport=%d",
-				      sa_p->ips_natt_sport);
-
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " natdport=%d",
-				      sa_p->ips_natt_dport);
+	seq_printf(seq, " natencap=");
+	switch(sa_p->ips_natt_type) {
+	case 0:
+		seq_printf(seq, "none");
+		break;
+	case ESPINUDP_WITH_NON_IKE:
+		seq_printf(seq, "nonike");
+		break;
+	case ESPINUDP_WITH_NON_ESP:
+		seq_printf(seq, "nonesp");
+		break;
+	default:
+		seq_printf(seq, "unknown");
+		break;
 	}
+
+	seq_printf(seq, " natsport=%d", sa_p->ips_natt_sport);
+	seq_printf(seq, " natdport=%d", sa_p->ips_natt_dport);
 #else
-	len += ipsec_snprintf(buffer + len, length - len, " natencap=na");
-#endif  /* NAT_TRAVERSAL */
+	seq_printf(seq, " natencap=na");
+#endif /* NAT_TRAVERSAL */
 
 	/* we decrement by one, because this SA has been referenced in order to dump this info */
-	len += ipsec_snprintf(buffer + len, length - len, " refcount=%d",
-			      atomic_read(&sa_p->ips_refcount) - 1);
+	seq_printf(seq, " refcount=%d", atomic_read(&sa_p->ips_refcount)-1);
 #ifdef IPSEC_SA_RECOUNT_DEBUG
 	{
 		int f;
-		len += ipsec_snprintf(buffer + len, length - len, "[");
+		seq_printf(seq, "[");
 		for (f = 0; f < sizeof(sa_p->ips_track); f++)
-			len += ipsec_snprintf(buffer + len, length - len,
-					      "%s%d",
-					      f == 0 ? "" : ",",
-					      sa_p->ips_track[f]);
-		len += ipsec_snprintf(buffer + len, length - len, "]");
+			seq_printf(seq, "%s%d", f == 0 ? "" : ",", sa_p->ips_track[f]);
+		seq_printf(seq, "]");
 	}
 #endif
 
-	len += ipsec_snprintf(buffer + len, length - len, " ref=%d",
-			      sa_p->ips_ref);
-	len += ipsec_snprintf(buffer + len, length - len, " refhim=%d",
-			      sa_p->ips_refhim);
+	seq_printf(seq, " ref=%d", sa_p->ips_ref);
+	seq_printf(seq, " refhim=%d", sa_p->ips_refhim);
 
 	if (sa_p->ips_out) {
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " outif=%s:%d",
-				      sa_p->ips_out->name,
-				      sa_p->ips_transport_direct);
-	}
-	if (debug_xform) {
-		len += ipsec_snprintf(buffer + len, length - len,
-				      " reftable=%lu refentry=%lu",
-				      (unsigned long)IPsecSAref2table(sa_p->
-								      ips_ref),
-				      (unsigned long)IPsecSAref2entry(sa_p->
-								      ips_ref));
+		seq_printf(seq, " outif=%s:%d",
+			   sa_p->ips_out->name,
+			   sa_p->ips_transport_direct);
 	}
 
-	len += ipsec_snprintf(buffer + len, length - len, "\n");
+	if (debug_xform) {
+		seq_printf(seq, " reftable=%lu refentry=%lu",
+			   (unsigned long)IPsecSAref2table(sa_p->ips_ref),
+			   (unsigned long)IPsecSAref2entry(sa_p->ips_ref));
+	}
+
+	seq_printf(seq, "\n");
 
 	ipsec_sa_put(sa_p, IPSEC_REFPROC);
-	return len;
+	return 0;
 }
 
+
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_spi_get_info(char *buffer,
-		       char **start,
-		       off_t offset,
-		       int length IPSEC_PROC_LAST_ARG)
+int ipsec_spi_show(struct seq_file *seq, void *offset)
 {
-	const int max_content = length > 0 ? length - 1 : 0;
-	int len = 0;
-	off_t begin = 0;
 	int i;
 	struct ipsec_sa *sa_p;
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_spi_get_info: "
-		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
-		    buffer,
-		    *start,
-		    (int)offset,
-		    length);
+		    "klips_debug:ipsec_spi_show: seq=%p offset=%p\n",
+		    seq, offset);
 
 	spin_lock_bh(&tdb_lock);
 
-	for (i = 0; i < SADB_HASHMOD; i++) {
-		for (sa_p = ipsec_sadb_hash[i];
-		     sa_p;
-		     sa_p = sa_p->ips_hnext) {
+	for (i = 0; i < SADB_HASHMOD; i++)
+		for (sa_p = ipsec_sadb_hash[i]; sa_p; sa_p = sa_p->ips_hnext)
+			ipsec_spi_format(sa_p, seq);
 
-			len = ipsec_spi_format(sa_p, buffer, len, length);
-
-			if (len >= max_content) {
-				/* we've done all that can fit -- stop loops */
-				len = max_content;     /* truncate crap */
-				goto done_spi_i;
-			} else {
-				const off_t pos = begin + len; /* file position of end of what we've generated */
-
-				if (pos <= offset) {
-					/* all is before first interesting character:
-					 * discard, but note where we are.
-					 */
-					len = 0;
-					begin = pos;
-				}
-			}
-		}
-	}
-
-done_spi_i:
 	spin_unlock_bh(&tdb_lock);
 
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	return len - (offset - begin);
+	return 0;
 }
 
-IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_spigrp_get_info(char *buffer,
-			  char **start,
-			  off_t offset,
-			  int length IPSEC_PROC_LAST_ARG)
-{
-	/* Limit of useful snprintf output */
-	const int max_content = length > 0 ? length - 1 : 0;
 
-	int len = 0;
-	off_t begin = 0;
+IPSEC_PROCFS_DEBUG_NO_STATIC
+int ipsec_spigrp_show(struct seq_file *seq, void *offset)
+{
 	int i;
 	struct ipsec_sa *sa_p, *sa_p2;
 	char sa[SATOT_BUF];
 	size_t sa_len;
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_spigrp_get_info: "
-		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
-		    buffer,
-		    *start,
-		    (int)offset,
-		    length);
+		    "klips_debug:ipsec_spigrp_show: seq=%p offset=%p\n",
+		    seq, offset);
 
 	spin_lock_bh(&tdb_lock);
 
 	for (i = 0; i < SADB_HASHMOD; i++) {
-		for (sa_p = ipsec_sadb_hash[i];
-		     sa_p != NULL;
-		     sa_p = sa_p->ips_hnext) {
+		for (sa_p = ipsec_sadb_hash[i]; sa_p != NULL; sa_p = sa_p->ips_hnext) {
 			sa_p2 = sa_p;
 			while (sa_p2 != NULL) {
 				struct ipsec_sa *sa2n;
 				sa_len = satot(&sa_p2->ips_said,
 					       'x', sa, sizeof(sa));
-
-				len += ipsec_snprintf(buffer + len,
-						      length - len, "%s ",
-						      sa_len ? sa : " (error)");
-
+				seq_printf(seq, "%s ", sa_len ? sa : " (error)");
 				sa2n = sa_p2->ips_next;
 				sa_p2 = sa2n;
 			}
-			len +=
-				ipsec_snprintf(buffer + len, length - len,
-					       "\n");
-
-			if (len >= max_content) {
-				/* we've done all that can fit -- stop loops */
-				len = max_content;      /* truncate crap */
-				goto done_spigrp_i;
-			} else {
-				const off_t pos = begin + len;
-
-				if (pos <= offset) {
-					/* all is before first interesting character:
-					 * discard, but note where we are.
-					 */
-					len = 0;
-					begin = pos;
-				}
-			}
+			seq_printf(seq, "\n");
 		}
 	}
 
-done_spigrp_i:
 	spin_unlock_bh(&tdb_lock);
 
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	return len - (offset - begin);
+	return 0;
 }
+
 
 #ifdef IPSEC_SA_RECOUNT_DEBUG
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_saraw_get_info(char *buffer,
-			 char **start,
-			 off_t offset,
-			 int length IPSEC_PROC_LAST_ARG)
+int ipsec_saraw_show(struct seq_file *seq, void *offset)
 {
-	const int max_content = length > 0 ? length - 1 : 0;
-	int len = 0;
-	off_t begin = 0;
 	struct ipsec_sa *sa_p;
 	extern struct ipsec_sa *ipsec_sa_raw;
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_saraw_get_info: "
-		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
-		    buffer,
-		    *start,
-		    (int)offset,
-		    length);
+		    "klips_debug:ipsec_saraw_show: seq=%p offset=%p\n",
+		    seq, offset);
 
 	spin_lock_bh(&tdb_lock);
 
-	for (sa_p = ipsec_sa_raw; sa_p; sa_p = sa_p->ips_raw) {
+	for (sa_p = ipsec_sa_raw; sa_p; sa_p = sa_p->ips_raw)
+		ipsec_spi_format(sa_p, seq);
 
-		len = ipsec_spi_format(sa_p, buffer, len, length);
-
-		if (len >= max_content) {
-			/* we've done all that can fit -- stop loops */
-			len = max_content;     /* truncate crap */
-			goto done_spi_i;
-		} else {
-			const off_t pos = begin + len; /* file position of end of what we've generated */
-
-			if (pos <= offset) {
-				/* all is before first interesting character:
-				 * discard, but note where we are.
-				 */
-				len = 0;
-				begin = pos;
-			}
-		}
-	}
-
-done_spi_i:
 	spin_unlock_bh(&tdb_lock);
 
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	return len - (offset - begin);
+	return 0;
 }
 #endif /* IPSEC_SA_RECOUNT_DEBUG */
 
+
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_tncfg_get_info(char *buffer,
-			 char **start,
-			 off_t offset,
-			 int length IPSEC_PROC_LAST_ARG)
+int ipsec_tncfg_show(struct seq_file *seq, void *offset)
 {
-	/* limit of useful snprintf output */
-	const int max_content = length > 0 ? length - 1 : 0;
-	int len = 0;
-	off_t begin = 0;
 	int i;
 	char name[9];
 	struct net_device *dev, *privdev;
 	struct ipsecpriv *priv;
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_tncfg_get_info: "
-		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
-		    buffer,
-		    *start,
-		    (int)offset,
-		    length);
+		    "klips_debug:ipsec_tncfg_show: seq=%p offset=%p\n",
+		    seq, offset);
 
 	for (i = 0; i < IPSEC_NUM_IFMAX; i++) {
-		ipsec_snprintf(name, (ssize_t) sizeof(name), IPSEC_DEV_FORMAT,
-			       i);
+		ipsec_snprintf(name, (ssize_t) sizeof(name), IPSEC_DEV_FORMAT, i);
 		dev = __ipsec_dev_get(name);
 		if (dev) {
 			priv = netdev_to_ipsecpriv(dev);
-			len += ipsec_snprintf(buffer + len, length - len, "%s",
-					      dev->name);
+			seq_printf(seq, "%s", dev->name);
 			if (priv) {
 				privdev = (struct net_device *)(priv->dev);
-				len += ipsec_snprintf(buffer + len,
-						      length - len, " -> %s",
-						      privdev ? privdev->name : "NULL");
-				len += ipsec_snprintf(buffer + len,
-						      length - len,
-						      " mtu=%d(%d) -> %d",
-						      dev->mtu,
-						      priv->mtu,
-						      privdev ? privdev->mtu : 0);
+				seq_printf(seq, " -> %s", privdev ? privdev->name : "NULL");
+				seq_printf(seq, " mtu=%d(%d) -> %d",
+					       dev->mtu, priv->mtu, privdev ? privdev->mtu : 0);
 			} else {
 				KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-					    "klips_debug:ipsec_tncfg_get_info: device '%s' has no private data space!\n",
+					    "klips_debug:ipsec_tncfg_show: "
+					    "device '%s' has no private data space!\n",
 					    dev->name);
 			}
-			len +=
-				ipsec_snprintf(buffer + len, length - len,
-					       "\n");
-
-			if (len >= max_content) {
-				/* we've done all that can fit -- stop loop */
-				len = max_content;      /* truncate crap */
-				break;
-			} else {
-				const off_t pos = begin + len;
-				if (pos <= offset) {
-					len = 0;
-					begin = pos;
-				}
-			}
+			seq_printf(seq, "\n");
 		}
 	}
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	len -= (offset - begin);                /* Start slop */
-	if (len > length)
-		len = length;
-	return len;
+
+	return 0;
 }
+
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_version_get_info(char *buffer,
-			   char **start,
-			   off_t offset,
-			   int length IPSEC_PROC_LAST_ARG)
+int ipsec_version_show(struct seq_file *seq, void *offset)
 {
-	int len = 0;
-	off_t begin = 0;
-
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_version_get_info: "
-		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
-		    buffer,
-		    *start,
-		    (int)offset,
-		    length);
-
-	len += ipsec_snprintf(buffer + len, length - len,
-			      "Libreswan version: %s\n",
-			      ipsec_version_code());
-#if 0
-	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_version_get_info: "
-		    "ipsec_init version: %s\n",
-		    ipsec_init_c_version);
-	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_version_get_info: "
-		    "ipsec_tunnel version: %s\n",
-		    ipsec_tunnel_c_version);
-	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_version_get_info: "
-		    "ipsec_netlink version: %s\n",
-		    ipsec_netlink_c_version);
-	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_version_get_info: "
-		    "radij_c_version: %s\n",
-		    radij_c_version);
-#endif
-
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	len -= (offset - begin);                /* Start slop */
-	if (len > length)
-		len = length;
-	return len;
+		    "klips_debug:ipsec_version_show: seq=%p offset=%p\n",
+		    seq, offset);
+	seq_printf(seq, "Openswan version: %s\n", ipsec_version_code());
+	return 0;
 }
+
 
 #ifdef IPSEC_PROC_SHOW_SAREF_INFO
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_saref_get_info(char *buffer,
-			 char **start,
-			 off_t offset,
-			 int length IPSEC_PROC_LAST_ARG)
+int ipsec_saref_show(struct seq_file *seq, void *offset)
 {
-	int rc, len = 0;
-	off_t begin = 0;
-
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_saref_get_info: "
-		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
-		    buffer,
-		    *start,
-		    (int)offset,
-		    length);
+		    "klips_debug:ipsec_saref_show: seq=%p offset=%p\n",
+		    seq, offset);
 
 #ifdef IP_IPSEC_REFINFO
-	len += rc = ipsec_snprintf(buffer + len, length - len,
-				   "refinfo patch applied\n",
-				   ipsec_version_code());
-	if (rc < 0)
-		return 0;
-
+	seq_printf(seq, "refinfo patch applied\n", ipsec_version_code());
 #endif
 
 #ifdef IP_IPSEC_BINDREF
-	len += rc = ipsec_snprintf(buffer + len, length - len,
-				   "bindref patch applied\n",
-				   ipsec_version_code());
-	if (rc < 0)
-		return 0;
-
+	seq_printf(seq, "bindref patch applied\n", ipsec_version_code());
 #endif
 
 #ifdef CONFIG_INET_IPSEC_SAREF
-	len += rc = ipsec_snprintf(buffer + len, length - len,
-				   "saref enabled\n",
-				   ipsec_version_code());
+	seq_printf(seq, "saref enabled\n", ipsec_version_code());
 #else
-	len += rc = ipsec_snprintf(buffer + len, length - len,
-				   "saref disabled\n",
-				   ipsec_version_code());
+	seq_printf(seq, "saref disabled\n", ipsec_version_code());
 #endif
-	if (rc < 0)
-		return 0;
 
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	len -= (offset - begin);                /* Start slop */
-	if (len > length)
-		len = length;
-	return len;
+	return 0;
 }
 #endif
+
 
 #ifdef CONFIG_KLIPS_OCF
 unsigned int ocf_available = 1;
@@ -821,23 +496,15 @@ unsigned int ocf_available = 0;
 module_param(ocf_available, int, 0644);
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_ocf_get_info(char *buffer,
-		       char **start,
-		       off_t offset,
-		       int length IPSEC_PROC_LAST_ARG)
+int ipsec_ocf_show(struct seq_file *seq, void *offset)
 {
-	int len = 0;
-	off_t begin = 0;
-
-	len += ipsec_snprintf(buffer + len,
-			      length - len, "%d\n", ocf_available);
-
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	len -= (offset - begin);                /* Start slop */
-	if (len > length)
-		len = length;
-	return len;
+	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
+		    "klips_debug:ipsec_ocf_show: seq=%p offset=%p\n",
+		    seq, offset);
+	seq_printf(seq, "%d\n", ocf_available);
+	return 0;
 }
+
 
 #ifdef CONFIG_IPSEC_NAT_TRAVERSAL
 unsigned int natt_available = 1;
@@ -849,268 +516,148 @@ unsigned int natt_available = 0;
 module_param(natt_available, int, 0644);
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_natt_get_info(char *buffer,
-			char **start,
-			off_t offset,
-			int length IPSEC_PROC_LAST_ARG)
+int ipsec_natt_show(struct seq_file *seq, void *offset)
 {
-	int len = 0;
-	off_t begin = 0;
-
-	len += ipsec_snprintf(buffer + len,
-			      length - len, "%d\n", natt_available);
-
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	len -= (offset - begin);                /* Start slop */
-	if (len > length)
-		len = length;
-	return len;
-}
-
-IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_birth_info(char *page,
-		     char **start,
-		     off_t offset,
-		     int count,
-		     int *eof,
-		     void *data)
-{
-	struct ipsec_birth_reply *ibr = (struct ipsec_birth_reply *)data;
-	int len;
-
-	if (offset >= ibr->packet_template_len) {
-		if (eof)
-			*eof = 1;
-		return 0;
-	}
-
-	len = ibr->packet_template_len;
-	len -= offset;
-	if (len > count)
-		len = count;
-
-	memcpy(page + offset, ibr->packet_template + offset, len);
-
-	return len;
-}
-
-IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_birth_set(struct file *file, const char *buffer,
-		    unsigned long count, void *data)
-{
-	struct ipsec_birth_reply *ibr = (struct ipsec_birth_reply *)data;
-	int len;
-
-	KLIPS_INC_USE;
-	if (count > IPSEC_BIRTH_TEMPLATE_MAXLEN)
-		len = IPSEC_BIRTH_TEMPLATE_MAXLEN;
-	else
-		len = count;
-
-	if (copy_from_user(ibr->packet_template, buffer, len)) {
-		KLIPS_DEC_USE;
-		return -EFAULT;
-	}
-	ibr->packet_template_len = len;
-
-	KLIPS_DEC_USE;
-
-	return len;
-}
-
-IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_klipsdebug_get_info(char *buffer,
-			      char **start,
-			      off_t offset,
-			      int length IPSEC_PROC_LAST_ARG)
-{
-	int len = 0;
-	off_t begin = 0;
-
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_klipsdebug_get_info: "
-		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
-		    buffer,
-		    *start,
-		    (int)offset,
-		    length);
-
-	len += ipsec_snprintf(buffer + len, length - len,
-			      "debug_tunnel=%08x.\n", debug_tunnel);
-	len += ipsec_snprintf(buffer + len, length - len,
-			      "debug_xform=%08x.\n", debug_xform);
-	len += ipsec_snprintf(buffer + len, length - len,
-			      "debug_eroute=%08x.\n", debug_eroute);
-	len += ipsec_snprintf(buffer + len, length - len, "debug_spi=%08x.\n",
-			      debug_spi);
-	len += ipsec_snprintf(buffer + len, length - len,
-			      "debug_radij=%08x.\n", debug_radij);
-	len += ipsec_snprintf(buffer + len, length - len, "debug_esp=%08x.\n",
-			      debug_esp);
-	len += ipsec_snprintf(buffer + len, length - len, "debug_ah=%08x.\n",
-			      debug_ah);
-	len += ipsec_snprintf(buffer + len, length - len, "debug_rcv=%08x.\n",
-			      debug_rcv);
-	len += ipsec_snprintf(buffer + len, length - len,
-			      "debug_pfkey=%08x.\n", debug_pfkey);
-
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	len -= (offset - begin);                /* Start slop */
-	if (len > length)
-		len = length;
-	return len;
+		    "klips_debug:ipsec_natt_show: seq=%p offset=%p\n",
+		    seq, offset);
+	seq_printf(seq, "%d\n", natt_available);
+	return 0;
 }
+
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_stats_get_int_info(char *buffer,
-			     char **start,
-			     off_t offset,
-			     int length,
-			     int   *eof,
-			     void  *data)
+int ipsec_klipsdebug_show(struct seq_file *seq, void *offset)
 {
+	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
+		    "klips_debug:ipsec_klipsdebug_show: seq=%p, offset=%p\n",
+		    seq, offset);
 
-	const int max_content = length > 0 ? length - 1 : 0;
-	int len = 0;
-	int *thing;
-
-	thing = (int *)data;
-
-	len = ipsec_snprintf(buffer + len, length - len, "%08x\n", *thing);
-
-	if (len >= max_content)
-		len = max_content;      /* truncate crap */
-
-	*start = buffer + offset;       /* Start of wanted data */
-	return len > offset ? len - offset : 0;
-
+	seq_printf(seq, "debug_tunnel=%08x.\n", debug_tunnel);
+	seq_printf(seq, "debug_xform=%08x.\n", debug_xform);
+	seq_printf(seq, "debug_eroute=%08x.\n", debug_eroute);
+	seq_printf(seq, "debug_spi=%08x.\n", debug_spi);
+	seq_printf(seq, "debug_radij=%08x.\n", debug_radij);
+	seq_printf(seq, "debug_esp=%08x.\n", debug_esp);
+	seq_printf(seq, "debug_ah=%08x.\n", debug_ah);
+	seq_printf(seq, "debug_rcv=%08x.\n", debug_rcv);
+	seq_printf(seq, "debug_pfkey=%08x.\n", debug_pfkey);
+	return 0;
 }
 
-#endif /* CONFIG_PROC_FS */
+
+IPSEC_PROCFS_DEBUG_NO_STATIC
+int ipsec_trap_count_show(struct seq_file *seq, void *offset)
+{
+	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
+		    "klips_debug:ipsec_trap_count_show: seq=%p offset=%p\n",
+		    seq, offset);
+	seq_printf(seq, "%08x\n", ipsec_xmit_trap_count);
+	return 0;
+}
+
+
+IPSEC_PROCFS_DEBUG_NO_STATIC
+int ipsec_trap_sendcount_show(struct seq_file *seq, void *offset)
+{
+	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
+		    "klips_debug:ipsec_trap_sendcount_show: seq=%p offset=%p\n",
+		    seq, offset);
+	seq_printf(seq, "%08x\n", ipsec_xmit_trap_sendcount);
+	return 0;
+}
+
 
 struct ipsec_proc_list {
 	char                   *name;
+	umode_t                 mode;
 	struct proc_dir_entry **parent;
 	struct proc_dir_entry **dir;
-	read_proc_t            *readthing;
-	write_proc_t           *writething;
-	void                   *data;
+	int                   (*proc_open)(struct seq_file *seq, void *offset);
+	void                   *data; /* not currently used but implemented */
 };
-static struct ipsec_proc_list proc_items[] = {
-	{ "klipsdebug", &proc_net_ipsec_dir, NULL,
-	  ipsec_klipsdebug_get_info, NULL, NULL },
-	{ "eroute",     &proc_net_ipsec_dir, &proc_eroute_dir, NULL, NULL,
-	  NULL },
-	{ "all",        &proc_eroute_dir,    NULL,
-	  ipsec_eroute_get_info,     NULL, NULL },
-	{ "spi",        &proc_net_ipsec_dir, &proc_spi_dir,    NULL, NULL,
-	  NULL },
-	{ "all",        &proc_spi_dir,       NULL,
-	  ipsec_spi_get_info,        NULL, NULL },
-	{ "spigrp",     &proc_net_ipsec_dir, &proc_spigrp_dir, NULL, NULL,
-	  NULL },
-	{ "all",        &proc_spigrp_dir,    NULL,
-	  ipsec_spigrp_get_info,     NULL, NULL },
-#ifdef IPSEC_SA_RECOUNT_DEBUG
-	{ "saraw",      &proc_net_ipsec_dir, &proc_saraw_dir,  NULL, NULL,
-	  NULL },
-	{ "all",        &proc_saraw_dir,     NULL,
-	  ipsec_saraw_get_info,      NULL, NULL },
-#endif
-	{ "birth",      &proc_net_ipsec_dir, &proc_birth_dir,  NULL,      NULL,
-	  NULL },
-	{ "ipv4",       &proc_birth_dir,     NULL,
-	  ipsec_birth_info, ipsec_birth_set,
-	  (void *)&ipsec_ipv4_birth_packet },
-	{ "ipv6",       &proc_birth_dir,     NULL,
-	  ipsec_birth_info, ipsec_birth_set,
-	  (void *)&ipsec_ipv6_birth_packet },
-	{ "tncfg",      &proc_net_ipsec_dir, NULL,
-	  ipsec_tncfg_get_info,      NULL, NULL },
-#ifdef CONFIG_KLIPS_ALG
 
-	{ "xforms",     &proc_net_ipsec_dir, NULL,
-	  ipsec_xform_get_info,      NULL, NULL },
+#define DIRE(n,p,d) \
+	{ .name = (n), .parent = (p), .dir = (d) }
+
+#define NODE(n,p,o,m) \
+	{ .name = (n), .mode = (m), .parent = (p), .proc_open = (o), .data = NULL }
+
+static int ipsec_proc_open(struct inode *inode, struct file *file)
+{
+	struct ipsec_proc_list *it = PDE_DATA(inode);
+    return single_open(file, it->proc_open, it->data);
+}
+
+static const struct file_operations ipsec_proc_fops = {
+    .open       = ipsec_proc_open,
+    .read       = seq_read,
+    .llseek     = seq_lseek,
+    .release    = single_release,
+};
+
+static struct ipsec_proc_list proc_items[]={
+    NODE("klipsdebug",     &proc_net_ipsec_dir, ipsec_klipsdebug_show,     0),
+
+    DIRE("eroute",         &proc_net_ipsec_dir, &proc_eroute_dir),
+    NODE("all",            &proc_eroute_dir,    ipsec_eroute_show,         0),
+
+    DIRE("spi",            &proc_net_ipsec_dir, &proc_spi_dir),
+    NODE("all",            &proc_spi_dir,       ipsec_spi_show,            0),
+
+    DIRE("spigrp",         &proc_net_ipsec_dir, &proc_spigrp_dir),
+    NODE("all",            &proc_spigrp_dir,    ipsec_spigrp_show,         0),
+
+#ifdef IPSEC_SA_RECOUNT_DEBUG
+    DIRE("saraw",          &proc_net_ipsec_dir, &proc_saraw_dir),
+    NODE("all",            &proc_saraw_dir,     ipsec_saraw_show,          0),
 #endif
-	{ "stats",      &proc_net_ipsec_dir, &proc_stats_dir,  NULL,      NULL,
-	  NULL },
-	{ "trap_count", &proc_stats_dir,     NULL,
-	  ipsec_stats_get_int_info, NULL, &ipsec_xmit_trap_count },
-	{ "trap_sendcount", &proc_stats_dir, NULL,
-	  ipsec_stats_get_int_info, NULL, &ipsec_xmit_trap_sendcount },
-	{ "natt",       &proc_net_ipsec_dir, NULL,
-	  ipsec_natt_get_info,    NULL, NULL },
-	{ "ocf",       &proc_net_ipsec_dir, NULL,
-	  ipsec_ocf_get_info,    NULL, NULL },
-	{ "version",    &proc_net_ipsec_dir, NULL,
-	  ipsec_version_get_info,    NULL, NULL },
+
+    NODE("tncfg",          &proc_net_ipsec_dir, ipsec_tncfg_show,          0),
+
+#ifdef CONFIG_KLIPS_ALG
+    NODE("xforms",         &proc_net_ipsec_dir, ipsec_xform_show,          0),
+#endif
+
+    DIRE("stats",          &proc_net_ipsec_dir, &proc_stats_dir),
+    NODE("trap_count",     &proc_stats_dir,     ipsec_trap_count_show,     0),
+    NODE("trap_sendcount", &proc_stats_dir,     ipsec_trap_sendcount_show, 0),
+    NODE("natt",           &proc_net_ipsec_dir, ipsec_natt_show,           0),
+    NODE("ocf",            &proc_net_ipsec_dir, ipsec_ocf_show,            0),
+    NODE("version",        &proc_net_ipsec_dir, ipsec_version_show,     0444),
 #ifdef IPSEC_PROC_SHOW_SAREF_INFO
-	{ "saref",      &proc_net_ipsec_dir, NULL,
-	  ipsec_saref_get_info,    NULL, NULL },
+    NODE("saref",          &proc_net_ipsec_dir, ipsec_saref_show,          0),
 #endif
-	{ NULL,         NULL,                NULL,             NULL,      NULL,
-	  NULL }
+
+    NODE("pf_key",           &PROC_NET,         pfkey_show,                0),
+    NODE("pf_key_supported", &PROC_NET,         pfkey_supported_show,      0),
+    NODE("pf_key_registered",&PROC_NET,         pfkey_registered_show,     0),
+
+    {}
 };
 
 int ipsec_proc_init()
 {
 	int error = 0;
-
-#ifdef IPSEC_PROC_SUBDIRS
 	struct proc_dir_entry *item;
-#endif
+	struct ipsec_proc_list *it;
 
-	/*
-	 * just complain because pluto won't run without /proc!
-	 */
-#ifndef CONFIG_PROC_FS
-#error You must have PROC_FS built in to use KLIPS
-#endif
-
-	/* for 2.4 kernels */
 	/* create /proc/net/ipsec */
-
-	/* zero these out before we initialize /proc/net/ipsec/birth/stuff */
-	memset(&ipsec_ipv4_birth_packet, 0, sizeof(struct ipsec_birth_reply));
-	memset(&ipsec_ipv6_birth_packet, 0, sizeof(struct ipsec_birth_reply));
-
 	proc_net_ipsec_dir = proc_mkdir("ipsec", PROC_NET);
-	if (proc_net_ipsec_dir == NULL) {
+	if(proc_net_ipsec_dir == NULL) {
 		/* no point in continuing */
 		return 1;
 	}
 
-	{
-		struct ipsec_proc_list *it;
-
-		it = proc_items;
-		while (it->name != NULL) {
-			if (it->dir) {
-				/* make a dir instead */
-				item = proc_mkdir(it->name, *it->parent);
-				*it->dir = item;
-			} else {
-				/* FIXME: we put the mode in the struct proc_dir_entry, but it is not used here?? */
-				item =
-					create_proc_entry(it->name,
-							  strcmp(it->name,
-								 "version") == 0 ? 0444 : 0400,
-							  *it->parent);
-			}
-			if (item) {
-				item->read_proc  = it->readthing;
-				item->write_proc = it->writething;
-				item->data       = it->data;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 30)
-# ifdef MODULE
-				item->owner = THIS_MODULE;
-# endif
-#endif
-			} else {
-				error |= 1;
-			}
-			it++;
-		}
+	for (it = proc_items; it->name; it++) {
+		if (it->dir) {
+			item = proc_mkdir(it->name, *it->parent);
+			*it->dir = item;
+		} else
+			item = proc_create_data(it->name, it->mode, *it->parent,
+						&ipsec_proc_fops, it);
+		if (!item)
+			error |= 1;
 	}
 
 	/* now create some symlinks to provide compatibility */
@@ -1129,20 +676,13 @@ int ipsec_proc_init()
 
 void ipsec_proc_cleanup()
 {
-	{
-		struct ipsec_proc_list *it;
+	struct ipsec_proc_list *it;
 
-		/* find end of list */
-		it = proc_items;
-		while (it->name != NULL)
-			it++;
-		it--;
-
-		do {
-			remove_proc_subtree(it->name, *it->parent);
-			it--;
-		} while (it >= proc_items);
-	}
+	/* remove entries in reverse */
+	for (it = proc_items; it->name; it++)
+		;
+	for (it--; it >= proc_items && it->name; it--)
+		remove_proc_subtree(it->name, *it->parent);
 
 	remove_proc_subtree("ipsec_klipsdebug", PROC_NET);
 	remove_proc_subtree("ipsec_eroute",     PROC_NET);

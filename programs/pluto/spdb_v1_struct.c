@@ -1,5 +1,8 @@
 /* Security Policy Data Base (such as it is)
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -32,9 +35,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -55,9 +55,7 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 #include "security_selinux.h"
@@ -188,7 +186,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		DBG(DBG_PARSING,
 		    DBG_log(
 			    "Initiator state received security context from responder state, now verifying if both are same"));
-		if (!strcmp(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
+		if (streq(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
 			DBG_log(
 				"security contexts are verified in the initiator state");
 		} else {
@@ -602,50 +600,12 @@ bool out_sa(pb_stream *outs,
 					 */
 					if (p->protoid != PROTO_IPCOMP ||
 					    st->st_policy & POLICY_TUNNEL) {
-#ifdef NAT_TRAVERSAL
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-						if ((st->hidden_variables.
-						     st_nat_traversal &
-						     NAT_T_DETECTED) &&
-						    (!(st->st_policy &
-						       POLICY_TUNNEL))) {
-							/* Inform user that we will not respect policy and only
-							 * propose Tunnel Mode
-							 */
-							loglog(RC_LOG_SERIOUS, "NAT-Traversal: "
-							       "Transport Mode not allowed due to security concerns -- "
-							       "using Tunnel mode.  Rebuild Libreswan with USE_NAT_TRAVERSAL_TRANSPORT_MODE=true in Makefile.inc to support transport mode.");
-						}
-#endif
-#endif
-
 						if (!out_attr(
-							    ENCAPSULATION_MODE
-#ifdef NAT_TRAVERSAL
-#ifdef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-							    ,
+							    ENCAPSULATION_MODE,
 							    NAT_T_ENCAPSULATION_MODE(
 								    st,
 								    st
 								    ->st_policy)
-#else
-						            /* If NAT-T is detected, use UDP_TUNNEL as long as Transport
-						             * Mode has security concerns.
-						             *
-						             * User has been informed of that
-						             */
-							    ,
-							    NAT_T_ENCAPSULATION_MODE(
-								    st,
-								    POLICY_TUNNEL)
-#endif
-#else                                           /* ! NAT_TRAVERSAL */
-							    , st->st_policy &
-							    POLICY_TUNNEL ?
-							    ENCAPSULATION_MODE_TUNNEL
-							    :
-							    ENCAPSULATION_MODE_TRANSPORT
-#endif
 							    , attr_desc,
 							    attr_val_descs,
 							    &trans_pbs))
@@ -967,7 +927,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 	if (proposal.isap_np != ISAKMP_NEXT_NONE) {
 		loglog(RC_LOG_SERIOUS,
 		       "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
-		       enum_show(&payload_names, proposal.isap_np));
+		       enum_show(&payload_names_ikev1, proposal.isap_np));
 		return PAYLOAD_MALFORMED;
 	}
 
@@ -1144,8 +1104,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 				/* FALL THROUGH */
 				default:
 					ugh = builddiag("%s is not supported",
-							enum_show(&
-								  oakley_enc_names,
+							enum_show(&oakley_enc_names,
 								  val));
 				}
 				break;
@@ -1158,14 +1117,13 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 /* #else */
 				switch (val) {
 				case OAKLEY_MD5:
-				case OAKLEY_SHA:
+				case OAKLEY_SHA1:
 					ta.prf_hash = val;
 					ta.prf_hasher = crypto_get_hasher(val);
 					break;
 				default:
 					ugh = builddiag("%s is not supported",
-							enum_show(&
-								  oakley_hash_names,
+							enum_show(&oakley_hash_names,
 								  val));
 				}
 /* #endif */
@@ -1178,7 +1136,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 
 				/* check that authentication method is acceptable */
 				switch (val) {
-#ifdef XAUTH
 				case XAUTHInitPreShared:
 					if (!xauth_init) {
 						ugh = builddiag(
@@ -1186,6 +1143,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
+					ta.doing_xauth = TRUE;
 					goto psk_common;
 
 				case XAUTHRespPreShared:
@@ -1195,11 +1153,10 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
+					ta.doing_xauth = TRUE;
 					goto psk_common;
-#endif
 
 				case OAKLEY_PRESHARED_KEY:
-#ifdef XAUTH
 					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with PSK of initiator (we are %s)",
@@ -1213,26 +1170,25 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 						break;
 					}
 psk_common:
-#endif
 
 					if ((iap & POLICY_PSK) == LEMPTY) {
-						ugh =
-							"policy does not allow OAKLEY_PRESHARED_KEY authentication";
+						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
 						/* check that we can find a preshared secret */
 						struct connection *con =
 							st->st_connection;
 
 						if (get_preshared_secret(con)
-						    ==
-						    NULL) {
+						    == NULL)
+						{
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
 
 							idtoa(&con->spd.this.id, mid,
 							      sizeof(mid));
 							if (his_id_was_instantiated(
-									con)) {
+									con))
+							{
 								strcpy(hid,
 								       "%any");
 							} else {
@@ -1242,13 +1198,12 @@ psk_common:
 
 							ugh = builddiag(
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
-								mid,
-								hid);
+								mid, hid);
 						}
-						ta.auth = OAKLEY_PRESHARED_KEY;	/* note: might be different from val */
+						ta.auth = OAKLEY_PRESHARED_KEY;
 					}
 					break;
-#ifdef XAUTH
+
 				case XAUTHInitRSA:
 					if (!xauth_init) {
 						ugh = builddiag(
@@ -1256,6 +1211,7 @@ psk_common:
 							role);
 						break;
 					}
+					ta.doing_xauth = TRUE;
 					goto rsasig_common;
 
 				case XAUTHRespRSA:
@@ -1265,11 +1221,10 @@ psk_common:
 							role);
 						break;
 					}
+					ta.doing_xauth = TRUE;
 					goto rsasig_common;
-#endif
 
 				case OAKLEY_RSA_SIG:
-#ifdef XAUTH
 					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with RSA of initiator (we are %s)",
@@ -1283,11 +1238,9 @@ psk_common:
 						break;
 					}
 rsasig_common:
-#endif
 					/* Accept if policy specifies RSASIG or is default */
 					if ((iap & POLICY_RSASIG) == LEMPTY) {
-						ugh =
-							"policy does not allow OAKLEY_RSA_SIG authentication";
+						ugh = "policy does not allow OAKLEY_RSA_SIG authentication";
 					} else {
 						/* We'd like to check that we can find a public
 						 * key for him and a private key for us that is
@@ -1297,15 +1250,14 @@ rsasig_common:
 						 * thinks we've got it.  If we proposed it,
 						 * perhaps we know what we're doing.
 						 */
-						ta.auth = OAKLEY_RSA_SIG;	/* note: might be different from val */
+						ta.auth = OAKLEY_RSA_SIG;
 					}
 					break;
 
 				default:
 					ugh = builddiag(
 						"Pluto does not support %s authentication",
-						enum_show(&
-							  oakley_auth_names,
+						enum_show(&oakley_auth_names,
 							  val));
 					break;
 				}
@@ -1329,8 +1281,7 @@ rsasig_common:
 					if (LHAS(seen_durations, val)) {
 						loglog(RC_LOG_SERIOUS,
 						       "attribute OAKLEY_LIFE_TYPE value %s repeated",
-						       enum_show(&
-								 oakley_lifetime_names,
+						       enum_show(&oakley_lifetime_names,
 								 val));
 						return BAD_PROPOSAL_SYNTAX;
 					}
@@ -1339,8 +1290,7 @@ rsasig_common:
 					break;
 				default:
 					ugh = builddiag("unknown value %s",
-							enum_show(&
-								  oakley_lifetime_names,
+							enum_show(&oakley_lifetime_names,
 								  val));
 					break;
 				}
@@ -1550,7 +1500,7 @@ rsasig_common:
 		if (trans.isat_np != ISAKMP_NEXT_T) {
 			loglog(RC_LOG_SERIOUS,
 			       "unexpected %s payload in Oakley Proposal",
-			       enum_show(&payload_names, proposal.isap_np));
+			       enum_show(&payload_names_ikev1, proposal.isap_np));
 			return BAD_PROPOSAL_SYNTAX;
 		}
 	}
@@ -1558,7 +1508,6 @@ rsasig_common:
 	return NO_PROPOSAL_CHOSEN;
 }
 
-#if defined(AGGRESSIVE)
 /* Initialize st_oakley field of state for use when initiating in
  * aggressive mode.
  *
@@ -1648,7 +1597,6 @@ bool init_am_st_oakley(struct state *st, lset_t policy)
 
 	return TRUE;
 }
-#endif
 
 /**
  * Parse the body of an IPsec SA Payload (i.e. Phase 2 / Quick Mode).
@@ -1728,7 +1676,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	default:
 		loglog(RC_LOG_SERIOUS,
 		       "expecting Transform Payload, but found %s in Proposal",
-		       enum_show(&payload_names, trans->isat_np));
+		       enum_show(&payload_names_ikev1, trans->isat_np));
 		return FALSE;
 	}
 
@@ -1872,7 +1820,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
-#ifdef NAT_TRAVERSAL
 			switch (val) {
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
@@ -1903,15 +1850,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-				loglog(RC_LOG_SERIOUS,
-				       "NAT-Traversal: Transport mode disabled due "
-				       "to security concerns");
-				return FALSE;
-
-				break;
-#endif
-
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
 				DBG(DBG_NATT,
 				    DBG_log(
@@ -1953,15 +1891,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-				loglog(RC_LOG_SERIOUS,
-				       "NAT-Traversal: Transport mode disabled due "
-				       "to security concerns");
-				return FALSE;
-
-				break;
-#endif
-
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
 				DBG(DBG_NATT,
 				    DBG_log(
@@ -2000,9 +1929,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 				break;
 			}
-#else
-			attrs->encapsulation = val;
-#endif
 			break;
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 			attrs->transattrs.integ_hash = val;
@@ -2391,7 +2317,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			} else if (next_proposal.isap_np != ISAKMP_NEXT_P) {
 				loglog(RC_LOG_SERIOUS,
 				       "unexpected in Proposal: %s",
-				       enum_show(&payload_names,
+				       enum_show(&payload_names_ikev1,
 						 next_proposal.isap_np));
 				return BAD_PROPOSAL_SYNTAX;
 			}
@@ -2423,13 +2349,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							   &ah_attrs,
 							   &ah_prop_pbs,
 							   &ah_trans_pbs,
-							   &
-							   isakmp_ah_transform_desc,
+							   &isakmp_ah_transform_desc,
 							   previous_transnum,
 							   selection,
-							   tn ==
-							   ah_proposal.
-							   isap_notrans - 1,
+							   tn == ah_proposal.isap_notrans - 1,
 							   FALSE,
 							   st))
 					return BAD_PROPOSAL_SYNTAX;
@@ -2472,26 +2395,31 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				}
 				if (ah_attrs.transattrs.encrypt !=
 				    ok_transid) {
+					char esb[ENUM_SHOW_BUF_LEN];
+
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
-					       enum_name(&auth_alg_names,
+					       enum_showb(&auth_alg_names,
 							 ah_attrs.transattrs.
-							 integ_hash),
+							 integ_hash,
+							 esb, sizeof(esb)),
 					       enum_show(&ah_transformid_names,
 							 ah_attrs.transattrs.
 							 encrypt));
 					return BAD_PROPOSAL_SYNTAX;
 				}
 				if (!ok_auth) {
+					char esb[ENUM_SHOW_BUF_LEN];
+
 					DBG(DBG_CONTROL | DBG_CRYPT,
 					    DBG_log("%s attribute unsupported"
 						    " in %s Transform from %s",
-						    enum_name(&auth_alg_names,
+						    enum_showb(&auth_alg_names,
 							      ah_attrs.
 							      transattrs.
-							      integ_hash),
-						    enum_show(&
-							      ah_transformid_names,
+							      integ_hash,
+							      esb, sizeof(esb)),
+						    enum_show(&ah_transformid_names,
 							      ah_attrs.
 							      transattrs.
 							      encrypt),
@@ -2579,25 +2507,18 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						}
 						break;
 #endif
-					case ESP_AES_GCM_8:
-					case ESP_AES_GCM_12:
-					case ESP_AES_GCM_16:
-						loglog(RC_LOG_SERIOUS,
-						       "kernel algorithm (AES-GCM) does not like: %s",
-						       ugh);
-						continue;
 
 					case ESP_DES: /* NOT safe */
 						loglog(RC_LOG_SERIOUS,
 						       "1DES was proposed, it is insecure and was rejected");
+						/* Fall through */
 					default:
 						loglog(RC_LOG_SERIOUS,
 						       "kernel algorithm does not like: %s",
 						       ugh);
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP Transform %s from %s",
-						       enum_show(&
-								 esp_transformid_names,
+						       enum_show(&esp_transformid_names,
 								 esp_attrs.
 								 transattrs.
 								 encrypt),
@@ -2638,8 +2559,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					default:
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP auth alg %s from %s",
-						       enum_show(&
-								 auth_alg_names,
+						       enum_show(&auth_alg_names,
 								 esp_attrs.
 								 transattrs.
 								 integ_hash),
@@ -2753,8 +2673,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					DBG(DBG_CONTROL | DBG_CRYPT,
 					    DBG_log(
 						    "unsupported IPCOMP Transform %s from %s",
-						    enum_show(&
-							      ipcomp_transformid_names,
+						    enum_show(&ipcomp_transformid_names,
 							      ipcomp_attrs.
 							      transattrs.
 							      encrypt),
@@ -2852,17 +2771,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 		st->st_esp.present = esp_seen;
 		if (esp_seen) {
-			if (esp_attrs.transattrs.encrypt ==  ESP_AES_GCM_8 ||
-			    esp_attrs.transattrs.encrypt == ESP_AES_GCM_12 ||
-			    esp_attrs.transattrs.encrypt == ESP_AES_GCM_16 ) {
-				esp_attrs.transattrs.enckeylen =
-					esp_attrs.transattrs.enckeylen + 4 *
-					BITS_PER_BYTE;
-			}
-
 			st->st_esp.attrs = esp_attrs;
 		}
-
 		st->st_ipcomp.present = ipcomp_seen;
 		if (ipcomp_seen)
 			st->st_ipcomp.attrs = ipcomp_attrs;

@@ -1,11 +1,11 @@
 /* parsing packets: formats and tools
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -105,9 +105,8 @@ extern bool out_generic(u_int8_t np, struct_desc *sd,
 extern bool out_generic_raw(u_int8_t np, struct_desc *sd,
 			    pb_stream *outs, const void *bytes, size_t len,
 			    const char *name);
-#if 1
-extern bool out_modify_previous_np(u_int8_t np, pb_stream *outs);
-#endif
+extern void out_modify_previous_np(u_int8_t np, pb_stream *outs);
+
 #define out_generic_chunk(np, sd, outs, ch, name) \
 	out_generic_raw(np, sd, outs, (ch).ptr, (ch).len, name)
 extern bool out_zero(size_t len, pb_stream *outs, const char *name);
@@ -118,14 +117,16 @@ extern void close_output_pbs(pb_stream *pbs);
 
 #ifdef DEBUG
 #define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
-extern void DBG_print_struct(const char *label, const void *struct_ptr,
-			     struct_desc *sd, bool len_meaningful);
 #else
 #define DBG_dump_pbs(pbs) do {} while (0)
 #endif
 
 /* ISAKMP Header: for all messages
  * layout from RFC 2408 "ISAKMP" section 3.1
+ *
+ * NOTE: the IKEv2 header format is identical EXCEPT that the cookies are now
+ * called (IKE SA) SPIs.  See RFC 5996 Figure 4.
+ *
  *                      1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -529,8 +530,6 @@ extern struct_desc isakmp_nonce_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-extern struct_desc isakmp_attr_desc;
-
 /* From draft-dukes-ike-mode-cfg
    3.2. Attribute Payload
                            1                   2                   3
@@ -728,7 +727,8 @@ struct ikev2_sa {
 extern struct_desc ikev2_sa_desc;
 
 struct ikev2_prop {
-	u_int8_t isap_np;               /* Next payload */
+	u_int8_t isap_lp;               /* Last proposal or not */
+	                                /* Matches IKEv1 ISAKMP_NEXT_P by design */
 	u_int8_t isap_critical;
 	u_int16_t isap_length;          /* Payload length */
 	u_int8_t isap_propnum;
@@ -741,7 +741,8 @@ extern struct_desc ikev2_prop_desc;
 
 /* rfc4306, section 3.3.2 */
 struct ikev2_trans {
-	u_int8_t isat_np;               /* Next payload */
+	u_int8_t isat_lt;               /* Last transform or not */
+					/* Matches IKEv1 ISAKMP_NEXT_T by design */
 	u_int8_t isat_critical;
 	u_int16_t isat_length;          /* Payload length */
 	u_int8_t isat_type;             /* transform type */
@@ -756,7 +757,6 @@ struct ikev2_trans_attr {
 	u_int16_t isatr_lv;             /* Length (AF=0) or Value (AF=1) */
 	/* u_intXX_t isatr_value;      Value if AF=0, absent if AF=1 */
 };
-extern struct_desc ikev2_trans_attr_desc;
 
 /* rfc4306, section 3.4 */
 struct ikev2_ke {
@@ -866,7 +866,7 @@ extern struct_desc ikev2_vendor_id_desc;
 
 /* rfc4306, section 3.13 */
 struct ikev2_ts {
-	u_int8_t isat_np;       /* Next payload */
+	u_int8_t isat_lt;       /* Last Transform */
 	u_int8_t isat_critical;
 	u_int16_t isat_length;  /* Payload length */
 	u_int8_t isat_num;      /* number of TSs */

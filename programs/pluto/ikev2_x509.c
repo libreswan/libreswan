@@ -1,9 +1,10 @@
 /* do X.509 operations for IKEv2
  *
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
- * Copyright (C) 2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,7 +15,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdio.h>
@@ -40,9 +40,6 @@
 #include "x509.h"
 #include "x509more.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -199,7 +196,7 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 						       gn->name, outpbs,
 						       gn->next ==
 						       NULL ? np :
-						       ISAKMP_NEXT_CR))
+						       ISAKMP_NEXT_v2CERTREQ))
 					return STF_INTERNAL_ERROR;
 			}
 			free_generalNames(ca, FALSE);

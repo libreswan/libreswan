@@ -74,8 +74,6 @@ int dumpsaref = 0;
 int saref_him = 0;
 int saref_me  = 0;
 char *command;
-extern char *optarg;
-extern int optind, opterr, optopt;
 char scratch[2];
 unsigned char *iv = NULL, *enckey = NULL, *authkey = NULL;
 size_t ivlen = 0, enckeylen = 0, authkeylen = 0;
@@ -98,7 +96,6 @@ int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 int replay_window = 0;
 char sa[SATOT_BUF];
 
-extern unsigned int pfkey_lib_debug; /* used by libfreeswan/pfkey_v2_build */
 int pfkey_sock;
 lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
@@ -158,7 +155,7 @@ static void usage(char *s, FILE *f)
 	exit(-1);
 }
 
-int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
+static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		       char *life_opt[life_maxsever][life_maxtype],
 		       char *myoptarg)
 {
@@ -311,62 +308,6 @@ int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 	return 0;
 }
 
-int pfkey_register(uint8_t satype)
-{
-	/* for registering SA types that can be negotiated */
-	int error;
-	ssize_t wlen;
-	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
-	struct sadb_msg *pfkey_msg;
-
-	pfkey_extensions_init(extensions);
-	error = pfkey_msg_hdr_build(&extensions[0],
-				    SADB_REGISTER,
-				    satype,
-				    0,
-				    ++pfkey_seq,
-				    getpid());
-	if (error != 0) {
-		fprintf(stderr,
-			"%s: Trouble building message header, error=%d.\n",
-			progname, error);
-		pfkey_extensions_free(extensions);
-		return 1;
-	}
-
-	error = pfkey_msg_build(&pfkey_msg, extensions, EXT_BITS_IN);
-	if (error != 0) {
-		fprintf(stderr,
-			"%s: Trouble building pfkey message, error=%d.\n",
-			progname, error);
-		pfkey_extensions_free(extensions);
-		pfkey_msg_free(&pfkey_msg);
-		return 1;
-	}
-	wlen = write(pfkey_sock, pfkey_msg,
-		     pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN);
-	if (wlen != (ssize_t)(pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN)) {
-		/* cleanup code here */
-		if (wlen < 0) {
-			fprintf(stderr,
-				"%s: Trouble writing to channel PF_KEY: %s\n",
-				progname,
-				strerror(errno));
-		} else {
-			fprintf(stderr,
-				"%s: write to channel PF_KEY truncated.\n",
-				progname);
-		}
-		pfkey_extensions_free(extensions);
-		pfkey_msg_free(&pfkey_msg);
-		return 1;
-	}
-	pfkey_extensions_free(extensions);
-	pfkey_msg_free(&pfkey_msg);
-
-	return 0;
-}
-
 static struct option const longopts[] =
 {
 	{ "ah", 1, 0, 'H' },
@@ -408,7 +349,6 @@ static struct option const longopts[] =
 	{ 0, 0, 0, 0 }
 };
 
-#ifdef NAT_TRAVERSAL
 static bool pfkey_build(int error,
 			const char *description,
 			const char *text_said,
@@ -423,9 +363,8 @@ static bool pfkey_build(int error,
 		return FALSE;
 	}
 }
-#endif
 
-int decode_esp(char *algname)
+static int decode_esp(char *algname)
 {
 	int esp_alg;
 
@@ -527,10 +466,8 @@ int main(int argc, char *argv[])
 	ip_address pfkey_ident_s_ska;
 	ip_address pfkey_ident_d_ska;
 #endif
-#ifdef NAT_TRAVERSAL
 	u_int32_t natt;
 	u_int16_t sport, dport;
-#endif
 	uint32_t life[life_maxsever][life_maxtype];
 	char *life_opt[life_maxsever][life_maxtype];
 	struct stat sts;
@@ -538,11 +475,9 @@ int main(int argc, char *argv[])
 
 	progname = argv[0];
 	mypid = getpid();
-#ifdef NAT_TRAVERSAL
 	natt = 0;
 	sport = 0;
 	dport = 0;
-#endif
 
 	tool_init_log();
 
@@ -622,10 +557,14 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'l':
-			progname = malloc(strlen(argv[0]) +
-					  10 +     /* update this when changing the sprintf() */
-					  strlen(optarg));
-			sprintf(progname, "%s --label %s",
+		{
+			static const char combine_fmt[] = "%s --label %s";
+			size_t room = strlen(argv[0]) +
+					  sizeof(combine_fmt) +
+					  strlen(optarg);
+
+			progname = malloc(room);
+			snprintf(progname, room, combine_fmt,
 				argv[0],
 				optarg);
 			tool_close_log();
@@ -633,6 +572,7 @@ int main(int argc, char *argv[])
 
 			argcount -= 2;
 			break;
+		}
 		case 'H':
 			if (alg) {
 				fprintf(stderr,
@@ -1065,7 +1005,6 @@ int main(int argc, char *argv[])
 			}
 			break;
 
-#ifdef NAT_TRAVERSAL
 		case 'F':  /* src port */
 			sport = strtoul(optarg, &endptr, 0);
 			if (!(endptr == optarg + strlen(optarg))) {
@@ -1103,14 +1042,6 @@ int main(int argc, char *argv[])
 				}
 			}
 			break;
-#else
-		case 'F':
-		case 'G':
-		case 'N':
-			fprintf(stderr,
-				"NAT-Traversal is not enabled in build\n");
-			exit(50);
-#endif
 
 		case 'S':
 			if (src_opt) {
@@ -1579,7 +1510,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-#if PFKEY_PROXY
+#ifdef PFKEY_PROXY
 		anyaddr(address_family, &pfkey_address_p_ska);
 		if ((error =
 			     pfkey_address_build(&extensions[
@@ -1706,7 +1637,6 @@ int main(int argc, char *argv[])
 #endif          /* PFKEY_IDENT */
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (natt != 0) {
 		bool success;
 
@@ -1772,7 +1702,6 @@ int main(int argc, char *argv[])
 		}
 #endif
 	}
-#endif  /* NAT_TRAVERSAL */
 
 	if (debug) {
 		fprintf(stdout, "%s: assembling pfkey msg....\n",
@@ -1993,7 +1922,11 @@ int main(int argc, char *argv[])
 	exit(0);
 }
 
-void exit_tool(int x)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
 	exit(x);
 }

@@ -1040,46 +1040,35 @@ int ipsec_alg_sa_wipe(struct ipsec_sa *sa_p)
 }
 
 IPSEC_PROCFS_DEBUG_NO_STATIC
-int ipsec_xform_get_info(char *buffer,
-			 char **start,
-			 off_t offset,
-			 int length IPSEC_PROC_LAST_ARG)
+int ipsec_xform_show(struct seq_file *seq, void *offset)
 {
-	int len = 0;
-	off_t begin = 0;
 	int i;
 	struct list_head *head;
 	struct ipsec_alg *ixt;
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
-		    "klips_debug:ipsec_tncfg_get_info: "
-		    "buffer=0p%p, *start=0p%p, offset=%d, length=%d\n",
-		    buffer,
-		    *start,
-		    (int)offset,
-		    length);
+		    "klips_debug:ipsec_tncfg_show: seq=%p offset=%p\n", seq, offset);
 
-	for (i = 0, head = ipsec_alg_hash_table;
-	     i < IPSEC_ALG_HASHSZ;
-	     i++, head++) {
+	for (i=0, head = ipsec_alg_hash_table; i < IPSEC_ALG_HASHSZ; i++, head++) {
 		struct list_head *p;
 		for (p = head->next; p != head; p = p->next) {
 			ixt = list_entry(p, struct ipsec_alg, ixt_list);
-			len += ipsec_snprintf(buffer + len, length - len,
-					      "VERSION=%d TYPE=%d ID=%d NAME=%s REFCNT=%d ",
-					      ixt->ixt_version, ixt->ixt_alg_type, ixt->ixt_support.ias_id,
-					      ixt->ixt_name, ixt->ixt_refcnt);
-
-			len += ipsec_snprintf(buffer + len, length - len,
-					      "STATE=%08x BLOCKSIZE=%d IVLEN=%d KEYMINBITS=%d KEYMAXBITS=%d ",
-					      ixt->ixt_state, ixt->ixt_blocksize,
-					      ixt->ixt_support.ias_ivlen, ixt->ixt_support.ias_keyminbits,
-					      ixt->ixt_support.ias_keymaxbits);
-
-			len += ipsec_snprintf(buffer + len, length - len,
-					      "IVLEN=%d KEYMINBITS=%d KEYMAXBITS=%d ",
-					      ixt->ixt_support.ias_ivlen, ixt->ixt_support.ias_keyminbits,
-					      ixt->ixt_support.ias_keymaxbits);
+			seq_printf(seq, "VERSION=%d TYPE=%d ID=%d NAME=%s REFCNT=%d ",
+				   ixt->ixt_version, ixt->ixt_alg_type,
+				   ixt->ixt_support.ias_id, ixt->ixt_name,
+				   atomic_read(&ixt->ixt_refcnt));
+			seq_printf(seq,
+				   "STATE=%08x BLOCKSIZE=%d IVLEN=%d "
+				   "KEYMINBITS=%d KEYMAXBITS=%d ",
+				   ixt->ixt_state, ixt->ixt_blocksize,
+				   ixt->ixt_support.ias_ivlen,
+				   ixt->ixt_support.ias_keyminbits,
+				   ixt->ixt_support.ias_keymaxbits);
+			seq_printf(seq,
+				   "IVLEN=%d KEYMINBITS=%d KEYMAXBITS=%d ",
+				   ixt->ixt_support.ias_ivlen,
+				   ixt->ixt_support.ias_keyminbits,
+				   ixt->ixt_support.ias_keymaxbits);
 
 			switch (ixt->ixt_alg_type) {
 			case IPSEC_ALG_TYPE_AUTH:
@@ -1087,38 +1076,31 @@ int ipsec_xform_get_info(char *buffer,
 				struct ipsec_alg_auth *auth =
 					(struct ipsec_alg_auth *)ixt;
 
-				len += ipsec_snprintf(buffer + len,
-						      length - len,
-						      "KEYLEN=%d CTXSIZE=%d AUTHLEN=%d ",
-						      auth->ixt_a_keylen, auth->ixt_a_ctx_size,
-						      auth->ixt_a_authlen);
+				seq_printf(seq,
+					   "KEYLEN=%d CTXSIZE=%d AUTHLEN=%d ",
+					   auth->ixt_a_keylen,
+					   auth->ixt_a_ctx_size,
+					   auth->ixt_a_authlen);
 				break;
 			}
 			case IPSEC_ALG_TYPE_ENCRYPT:
 			{
 				struct ipsec_alg_enc *enc =
 					(struct ipsec_alg_enc *)ixt;
-				len += ipsec_snprintf(buffer + len,
-						      length - len,
-						      "KEYLEN=%d CTXSIZE=%d ",
-						      enc->ixt_e_keylen,
-						      enc->ixt_e_ctx_size);
 
+				seq_printf(seq,
+					   "KEYLEN=%d CTXSIZE=%d ",
+					   enc->ixt_e_keylen,
+					   enc->ixt_e_ctx_size);
 				break;
 			}
 			}
 
-			len +=
-				ipsec_snprintf(buffer + len, length - len,
-					       "\n");
+			seq_printf(seq, "\n");
 		}
 	}
 
-	*start = buffer + (offset - begin);     /* Start of wanted data */
-	len -= (offset - begin);                /* Start slop */
-	if (len > length)
-		len = length;
-	return len;
+	return 0;
 }
 
 /*

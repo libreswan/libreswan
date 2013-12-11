@@ -19,7 +19,7 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 SUBDIRS=libaes libdes libmd5 libsha1 libsha2 
 
 ifeq ($(USE_EXTRACRYPTO),true)
-SUBDIRS+=libblowfish libtwofish libserpent
+SUBDIRS+=libtwofish libserpent
 endif
 
 SUBDIRS+=liblswcrypto

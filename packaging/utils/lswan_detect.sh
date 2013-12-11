@@ -40,9 +40,15 @@ return_initsystem() {
 	return
     fi
 
+    if [ -f /sbin/rc-service -o -f /usr/sbin/rc-service ]; then
+	echo "openrc"
+	return
+    fi
+
+
     # really, most have this, it is probably a backwards compatiblity or
-    # really sysvinit
-    if [ -d /etc/init.d ]; then
+    # really sysvinit - we have no other known targets at this point anyway
+    if [ -d /etc/init.d -o -d /etc/rc.d ]; then
 	echo "sysvinit"
 	return
     fi
@@ -135,6 +141,12 @@ return_distro() {
     if [ -f /etc/gentoo-release ]; then
 	VER="$(cat /etc/gentoo-release | awk '{print $NF;}')"
 	echo "gentoo/${VER}"
+	return
+    fi
+
+    if [ -f /etc/slackware-version ]; then
+	VER="`cat /etc/slackware-version | awk '{print $2}'`"
+	echo "slackware/$VER"
 	return
     fi
 

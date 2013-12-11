@@ -116,12 +116,10 @@ struct ipsec_xmit_state {
 	int pass;
 	uint32_t eroute_pid;
 	struct ipsec_sa ips;
-#ifdef NAT_TRAVERSAL
 	uint8_t natt_type;
 	uint8_t natt_head;
 	uint16_t natt_sport;
 	uint16_t natt_dport;
-#endif
 
 	/*
 	 * xmit flags

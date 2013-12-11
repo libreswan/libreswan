@@ -116,7 +116,6 @@ def plutocheck():
 	# only if pluto is running, do the listen tests and ipsec  secrets test
 	udp500check()
 	udp4500check()
-	tcp10000check()
 	ipsecsecretcheck()
 
 # This is pretty broken, as you can enable forwarding specificaly via iptables as well

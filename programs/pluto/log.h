@@ -1,7 +1,9 @@
-/* logging definitions
+/* logging declarations
+ *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
- * Copyright (C) 2004       Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2012       Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,6 +15,9 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
+
+#ifndef _PLUTO_LOG_H
+#define _PLUTO_LOG_H
 
 #include <libreswan.h>
 
@@ -36,6 +41,7 @@ extern bool log_did_something;  /* set if we should log time again to debug*/
 
 extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
+extern char *pluto_stats_binary;
 
 extern const char debug_prefix;
 
@@ -72,15 +78,12 @@ extern void passert_fail(const char *pred_str,
 			 const char *file_str,
 			 unsigned long line_no) NEVER_RETURNS;
 
-#ifdef HAVE_STATSD
 /* for pushing state to other subsystems */
 extern void log_state(struct state *st, enum state_kind state);
-#endif
 
 #ifdef DEBUG
 
 extern void extra_debugging(const struct connection *c);
-extern void set_debugging(lset_t debugging);
 
 # define reset_debugging() { set_debugging(base_debugging); }
 
@@ -132,7 +135,6 @@ extern void set_debugging(lset_t debugging);
 
 extern void pluto_init_log(void);
 extern void close_log(void);
-extern int plog(const char *message, ...) PRINTF_LIKE(1);
 extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
 /* close of all per-peer logging */
@@ -142,11 +144,6 @@ extern void close_peerlog(void);
 extern void perpeer_logfree(struct connection *c);
 
 extern void whack_log(int mess_no, const char *message, ...) PRINTF_LIKE(2);
-
-/* Log to both main log and whack log
- * Much like log, actually, except for specifying mess_no.
- */
-extern void loglog(int mess_no, const char *message, ...) PRINTF_LIKE(2);
 
 /* show status, usually on whack log */
 extern void show_status(void);
@@ -159,8 +156,6 @@ extern void show_status(void);
 extern void daily_log_reset(void);
 extern void daily_log_event(void);
 
-extern int Pluto_IsSElinux(void);
-extern int Pluto_IsFIPS(void);
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
 
@@ -173,3 +168,4 @@ extern bool logged_myid_ip_key_warning;
 extern bool logged_myid_fqdn_txt_warning;
 extern bool logged_myid_fqdn_key_warning;
 
+#endif /* _PLUTO_LOG_H */

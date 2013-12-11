@@ -38,10 +38,12 @@
 #endif
 
 #include "constants.h"
+#include "lswlog.h"
 
 #include <signal.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
+#include "libreswan/pfkey_debug.h"
 #include "pfkey_help.h"
 
 #include "libreswan/radij.h"
@@ -129,10 +131,13 @@ int main(int argc, char **argv)
 
 	if (argc > 1 && strcmp(argv[1], "--label") == 0) {
 		if (argc > 2) {
-			progname = malloc(strlen(argv[0]) +
-					  10 +     /* update this when changing the sprintf() */
-					  strlen(argv[2]));
-			sprintf(progname, "%s --label %s",
+			static const char combine_fmt[] = "%s --label %s";
+			size_t room = strlen(argv[0]) +
+					  sizeof(combine_fmt) +
+					  strlen(optarg);
+
+			progname = malloc(room);
+			snprintf(progname, room, combine_fmt,
 				argv[0],
 				argv[2]);
 			if (debug)
@@ -486,7 +491,11 @@ int main(int argc, char **argv)
 	exit(0);
 }
 
-void exit_tool(int x)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
 	exit(x);
 }

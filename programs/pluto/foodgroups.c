@@ -30,9 +30,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "kernel.h"             /* needs connections.h */
@@ -75,7 +72,7 @@ struct fg_targets {
 
 static struct fg_targets *targets = NULL;
 
-struct fg_targets *new_targets;
+static struct fg_targets *new_targets;
 
 /* ipcmp compares the two ip_address values a and b.
  * It returns -1, 0, or +1 if a is, respectively,

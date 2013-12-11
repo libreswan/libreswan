@@ -9,6 +9,6 @@ option in the near future for proper auto-detection. For now, set connaddrfamily
 to the family of the *subnet= options, and if those are not defined, to the family
 of the left=/right= options.
 </para>
-<para>IPv6 is supported with NETKEY since libreswan 2.4 and with KLIPS since Libreswan 2.6.33</para>
+<para>IPv6 is supported with NETKEY and with KLIPS in all Libreswan versions</para>
   </listitem>
   </varlistentry>

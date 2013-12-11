@@ -1,13 +1,18 @@
 /* information about connections between hosts and clients
- * Copyright (C) 1998-2010  D. Hugh Redelmeier.
+ *
+ * Copyright (C) 1998-2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
  * Copyright (C) 2009 Stefan Arentz <stefan@arentz.ca>
  * Copyright (C) 2009-2010 David McCullough <david_mccullough@securecomputing.com>
- * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2010 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2007-2011 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2010,2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Panagiotis Tamtamis <tamtamis@gmail.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ *
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,9 +54,6 @@
 
 #include "defs.h"
 #include "ac.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -73,11 +75,9 @@
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "xauth.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
 
@@ -99,10 +99,8 @@ bool orient(struct connection *c)
 			 * it continues checking to catch any ambiguity.
 			 */
 			for (p = interfaces; p != NULL; p = p->next) {
-#ifdef NAT_TRAVERSAL
 				if (p->ike_float)
 					continue;
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 				if (c->loopback &&
@@ -203,7 +201,6 @@ static int initiate_a_connection(struct connection *c,
 	} else if ( (c->kind != CK_PERMANENT) &&
 		    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (isanyaddr(&c->spd.that.host_addr)) {
-#ifdef DYNAMICDNS
 			if (c->dnshostname != NULL) {
 
 				loglog(RC_NOPEERIP,
@@ -213,7 +210,6 @@ static int initiate_a_connection(struct connection *c,
 				success = 1;
 				c->policy |= POLICY_UP;
 			} else
-#endif
 			loglog(RC_NOPEERIP,
 			       "cannot initiate connection without knowing peer IP address (kind=%s)",
 			       enum_show(&connection_kind_names, c->kind));
@@ -229,7 +225,6 @@ static int initiate_a_connection(struct connection *c,
 	} else {
 		if (isanyaddr(&c->spd.that.host_addr) &&
 		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
-#ifdef DYNAMICDNS
 			if (c->dnshostname != NULL) {
 				loglog(RC_NOPEERIP,
 				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
@@ -240,7 +235,6 @@ static int initiate_a_connection(struct connection *c,
 				success = 1;
 				c->policy |= POLICY_UP;
 			} else
-#endif
 			loglog(RC_NOPEERIP,
 			       "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
 			       enum_show(&connection_kind_names,
@@ -332,23 +326,17 @@ void restart_connections_by_peer(struct connection *c)
 	d = c->host_pair->connections;
 	for (; d != NULL; d = d->hp_next) {
 		if (
-#ifdef DYNAMICDNS
 			(c->dnshostname && d->dnshostname &&
-			 (strcmp(c->dnshostname, d->dnshostname) == 0)) ||
+			 streq(c->dnshostname, d->dnshostname)) ||
 			(c->dnshostname == NULL && d->dnshostname == NULL &&
-#endif          /* DYNAMICDNS */
 			sameaddr(&d->spd.that.host_addr,
 				 &c->spd.that.host_addr)
-#ifdef DYNAMICDNS
 			)
-#endif          /* DYNAMICDNS */
 			)
 			terminate_connection(d->name);
 	}
 
-#ifdef DYNAMICDNS
 	update_host_pairs(c);
-#endif  /* DYNAMICDNS */
 
 	if (c->host_pair == NULL)
 		return;
@@ -356,16 +344,12 @@ void restart_connections_by_peer(struct connection *c)
 	d = c->host_pair->connections;
 	for (; d != NULL; d = d->hp_next) {
 		if (
-#ifdef DYNAMICDNS
 			(c->dnshostname && d->dnshostname &&
-			 (strcmp(c->dnshostname, d->dnshostname) == 0)) ||
+			 streq(c->dnshostname, d->dnshostname)) ||
 			(c->dnshostname == NULL && d->dnshostname == NULL &&
-#endif          /* DYNAMICDNS */
 			sameaddr(&d->spd.that.host_addr,
 				 &c->spd.that.host_addr)
-#ifdef DYNAMICDNS
 			)
-#endif          /* DYNAMICDNS */
 			)
 			initiate_connection(d->name, NULL_FD, 0,
 					    pcim_demand_crypto);
@@ -1297,10 +1281,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {
 	c->newest_isakmp_sa = serial;
 
-	if (uniqueIDs
-#ifdef XAUTH
-	    && (!c->spd.this.xauth_server)
-#endif
+	if (uniqueIDs && (!c->spd.this.xauth_server)
 	    ) {
 		/*
 		 * for all connections: if the same Phase 1 IDs are used
@@ -1321,11 +1302,8 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 			     (!sameaddr(&c->spd.that.host_addr,
 					&d->spd.that.host_addr) ||
 			      (c->spd.that.host_port != d->spd.that.host_port))
-#ifdef DYNAMICDNS
 			     && !(c->dnshostname && d->dnshostname &&
-				  (strcmp(c->dnshostname,
-					  d->dnshostname) == 0))
-#endif                  /* DYNAMICDNS */
+				  streq(c->dnshostname, d->dnshostname))
 			     ) {
 				/*  Paul and AA  tried to delete phase2 didn't really work.
 				 * delete_p2states_by_connection(d);
@@ -1357,7 +1335,6 @@ struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 	return NULL;
 }
 
-#ifdef DYNAMICDNS
 
 #define PENDING_DDNS_INTERVAL (60) /* time before retrying DDNS host lookup
 	                              for phase 1*/
@@ -1446,7 +1423,7 @@ static void connection_check_ddns1(struct connection *c)
 		if (c == d)
 			continue;
 		if ((c->dnshostname && d->dnshostname &&
-		     (strcmp(c->dnshostname, d->dnshostname) == 0)) ||
+		     streq(c->dnshostname, d->dnshostname)) ||
 		    (c->dnshostname == NULL && d->dnshostname == NULL &&
 		     sameaddr(&d->spd.that.host_addr, &c->spd.that.host_addr)))
 			initiate_connection(d->name, NULL_FD, 0,
@@ -1471,7 +1448,6 @@ void connection_check_ddns(void)
 	}
 	check_orientations();
 }
-#endif /* DYNAMICDNS */
 
 #define PENDING_PHASE2_INTERVAL (60 * 2) /*time between scans of pending phase2*/
 
@@ -1522,16 +1498,12 @@ void connection_check_phase2(void)
 
 			if (p1st) {
 				/* arrange to rekey the phase 1, if there was one. */
-#ifdef DYNAMICDNS
 				if (c->dnshostname != NULL) {
 					restart_connections_by_peer(c);
 				} else {
-#endif                          /* DYNAMICDNS */
 				delete_event(p1st);
 				event_schedule(EVENT_SA_REPLACE, 0, p1st);
-#ifdef DYNAMICDNS
 			}
-#endif                          /* DYNAMICDNS */
 
 			} else {
 				/* start a new connection. Something wanted it up */
@@ -1549,8 +1521,6 @@ void connection_check_phase2(void)
 
 void init_connections(void)
 {
-#ifdef DYNAMICDNS
 	event_schedule(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
-#endif
 	event_schedule(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
 }

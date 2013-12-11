@@ -16,6 +16,9 @@
  *
  */
 
+#include <time.h>
+#include <pthread.h>	/* needed for pthread_self */
+
 #include "libreswan.h"
 #include "lswalloc.h"
 #include "lswlog.h"

@@ -38,9 +38,6 @@
 #include "log.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "keys.h"               /* needs connections.h */
 #include "dnskey.h"
@@ -1312,11 +1309,12 @@ static err_t build_dns_name(char name_buf[NS_MAXDNAME + 2],
 		static const char suffix[] = "IP6.INT.";
 
 		for (bl = addrbytesptr(&id->ip_addr, &b); bl-- != 0; ) {
-			if (op + 4 + sizeof(suffix) >= name_buf + NS_MAXDNAME +
-			    1)
-				return "IPv6 reverse name too long";
+			/* sp is room left for our contribution */
+			size_t sp = name_buf + NS_MAXDNAME + 1 - sizeof(suffix) - op;
+			int n = snprintf(op, sp, "%x.%x.", b[bl] & 0xF, b[bl] >> 4);
 
-			op += sprintf(op, "%x.%x.", b[bl] & 0xF, b[bl] >> 4);
+			if ((size_t)n >= sp)
+				return "IPv6 reverse name too long";
 		}
 		strcpy(op, suffix);
 		break;

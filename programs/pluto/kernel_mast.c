@@ -45,10 +45,8 @@
 #include "timer.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
-#ifdef NAT_TRAVERSAL
 #include "packet.h"     /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 #include "server.h"
 
 #include "alg_info.h"
@@ -56,7 +54,6 @@
 
 static int next_free_mast_device = -1;
 int useful_mastno = -1;
-extern char *pluto_listen;
 
 #ifndef DEFAULT_UPDOWN
 # define DEFAULT_UPDOWN "ipsec _updown"
@@ -146,7 +143,7 @@ static int allocate_mast_device(void)
 	return -1;
 }
 
-static int init_useful_mast(ip_address addr UNUSED, char *vname)
+static int init_useful_mast(ip_address addr UNUSED, char *vname, size_t vnlen)
 {
 	int mastno;
 
@@ -156,7 +153,7 @@ static int init_useful_mast(ip_address addr UNUSED, char *vname)
 	 */
 	mastno = allocate_mast_device();
 	passert(mastno != -1);
-	sprintf(vname, "mast%d", mastno);
+	snprintf(vname, vnlen, "mast%d", mastno);
 	if (mastdevice[mastno] == MAST_OPEN) {
 		mastdevice[mastno] = MAST_INUSE;
 		pfkey_plumb_mast_device(mastno);
@@ -191,7 +188,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 	DBG_log("useful mast device %d\n", useful_mastno);
 	if (useful_mastno >= 0)
-		sprintf(useful_mast_name, "mast%d", useful_mastno);
+		snprintf(useful_mast_name, sizeof(useful_mast_name), "mast%d", useful_mastno);
 
 	/*
 	 * For each real interface...
@@ -238,31 +235,31 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 					/* matches -- rejuvinate old entry */
 					q->change = IFN_KEEP;
-#ifdef NAT_TRAVERSAL
+
 					/* look for other interfaces to keep (due to NAT-T) */
 					for (q = q->next; q; q = q->next) {
 						if (streq(q->ip_dev->id_rname,
 							  ifp->name) &&
 						    sameaddr(&q->ip_addr,
-							     &ifp->addr)) {
+							     &ifp->addr))
+						{
 							q->change = IFN_KEEP;
-							if (firstq == NULL) {
+							if (firstq == NULL)
+							{
 								firstq = q;
-								if (
+								if (useful_mastno
+									== -1)
 									useful_mastno
-									==
-									-1)
-									useful_mastno
-										=
-											init_useful_mast(
-												firstq->ip_addr,
-												useful_mast_name);
+										= init_useful_mast(
+											firstq->ip_addr,
+											useful_mast_name,
+											sizeof(useful_mast_name));
 
 
 							}
 						}
 					}
-#endif
+
 					break;
 				}
 
@@ -278,7 +275,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 				if (useful_mastno == -1)
 					useful_mastno = init_useful_mast(
-						ifp->addr, useful_mast_name);
+						ifp->addr, useful_mast_name, sizeof(useful_mast_name));
 
 				vname = clone_str(useful_mast_name,
 						  "virtual device name mast");
@@ -310,15 +307,11 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				q->port = pluto_port;
 				q->ike_float = FALSE;
 
-#ifdef NAT_TRAVERSAL
 				if (nat_traversal_support_non_ike &&
 				    addrtypeof(&ifp->addr) == AF_INET)
 					nat_traversal_espinudp_socket(fd,
 								      "IPv4",
 								      ESPINUDP_WITH_NON_IKE);
-
-
-#endif
 
 				/* done with primary interface */
 				q->next = interfaces;
@@ -331,7 +324,6 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 					ip_str(&q->ip_addr),
 					q->port, q->fd);
 
-#ifdef NAT_TRAVERSAL
 				/*
 				 * right now, we do not support NAT-T on IPv6, because
 				 * the kernel did not support it, and gave an error
@@ -374,7 +366,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						ip_str(&q->ip_addr),
 						q->port, q->fd);
 				}
-#endif
+
 			}
 		} while (0);
 	}
@@ -389,7 +381,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 	/* make one up for later */
 	if ((!found_mast && firstq != NULL) && useful_mastno == -1)
-		init_useful_mast(firstq->ip_addr, useful_mast_name);
+		init_useful_mast(firstq->ip_addr, useful_mast_name, sizeof(useful_mast_name));
 }
 
 static bool mast_do_command(struct connection *c, struct spd_route *sr,

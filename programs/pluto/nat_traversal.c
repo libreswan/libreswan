@@ -8,6 +8,10 @@
  * Copyright (C) 2009 Gilles Espinasse <g.esp@free.fr>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2011 Shinichi Furuso <Shinichi.Furuso@jp.sony.com>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,8 +24,6 @@
  * for more details.
  *
  */
-
-#ifdef NAT_TRAVERSAL
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,9 +56,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"
 #include "packet.h"
 #include "demux.h"
@@ -75,8 +74,6 @@
 #include "nat_traversal.h"
 
 #define DEFAULT_KEEP_ALIVE_PERIOD  20
-
-extern u_int16_t pluto_natt_float_port; /* for show_setup_natt() */
 
 bool nat_traversal_enabled = FALSE;
 bool nat_traversal_support_non_ike = FALSE;
@@ -115,7 +112,7 @@ void init_nat_traversal(bool activate, unsigned int keep_alive_period,
 	nat_kap =
 		keep_alive_period ? keep_alive_period :
 		DEFAULT_KEEP_ALIVE_PERIOD;
-	plog("   NAT-Traversal support %s%s",
+	libreswan_log("   NAT-Traversal support %s%s",
 	     activate ? " [enabled]" : " [disabled]",
 	     activate & !spf ? " [Port Floating disabled]" : "");
 
@@ -140,16 +137,16 @@ static void disable_nat_traversal(int type)
 	}
 }
 
-static void _natd_hash(const struct hash_desc *hasher, unsigned char *hash,
+static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 		       u_int8_t *icookie, u_int8_t *rcookie,
 		       const ip_address *ip, u_int16_t port)
 {
 	union hash_ctx ctx;
 
 	if (is_zero_cookie(icookie))
-		DBG_log("_natd_hash: Warning, icookie is zero !!");
+		DBG_log("natd_hash: Warning, icookie is zero !!");
 	if (is_zero_cookie(rcookie))
-		DBG_log("_natd_hash: Warning, rcookie is zero !!");
+		DBG_log("natd_hash: Warning, rcookie is zero !!");
 
 	/**
 	 * draft-ietf-ipsec-nat-t-ike-01.txt
@@ -176,19 +173,19 @@ static void _natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	hasher->hash_update(&ctx, (const u_char *)&port, sizeof(u_int16_t));
 	hasher->hash_final(hash, &ctx);
 	DBG(DBG_NATT, {
-		    DBG_log("_natd_hash: hasher=%p(%d)", hasher,
+		    DBG_log("natd_hash: hasher=%p(%d)", hasher,
 			    (int)hasher->hash_digest_len);
-		    DBG_dump("_natd_hash: icookie=", icookie, COOKIE_SIZE);
-		    DBG_dump("_natd_hash: rcookie=", rcookie, COOKIE_SIZE);
+		    DBG_dump("natd_hash: icookie=", icookie, COOKIE_SIZE);
+		    DBG_dump("natd_hash: rcookie=", rcookie, COOKIE_SIZE);
 		    switch (addrtypeof(ip)) {
 		    case AF_INET:
-			    DBG_dump("_natd_hash: ip=",
+			    DBG_dump("natd_hash: ip=",
 				     &ip->u.v4.sin_addr.s_addr,
 				     sizeof(ip->u.v4.sin_addr.s_addr));
 			    break;
 		    }
-		    DBG_log("_natd_hash: port=%d", ntohs(port));
-		    DBG_dump("_natd_hash: hash=", hash,
+		    DBG_log("natd_hash: port=%d", ntohs(port));
+		    DBG_dump("natd_hash: hash=", hash,
 			     hasher->hash_digest_len);
 	    });
 }
@@ -298,7 +295,7 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 	/**
 	 * First one with my IP & port
 	 */
-	_natd_hash(st->st_oakley.prf_hasher, hash_me,
+	natd_hash(st->st_oakley.prf_hasher, hash_me,
 		   st->st_icookie, st->st_rcookie,
 		   &(md->iface->ip_addr),
 		   ntohs(md->iface->port));
@@ -306,7 +303,7 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 	/**
 	 * The others with sender IP & port
 	 */
-	_natd_hash(st->st_oakley.prf_hasher, hash_him,
+	natd_hash(st->st_oakley.prf_hasher, hash_him,
 		   st->st_icookie, st->st_rcookie,
 		   &(md->sender), ntohs(md->sender_port));
 
@@ -389,12 +386,11 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
-	nat_np =
-		(st->hidden_variables.st_nat_traversal &
+	nat_np = st->hidden_variables.st_nat_traversal &
 		 NAT_T_WITH_RFC_VALUES ?
-		 ISAKMP_NEXT_NATD_RFC : ISAKMP_NEXT_NATD_DRAFTS);
-	if (!out_modify_previous_np(nat_np, outs))
-		return FALSE;
+		 ISAKMP_NEXT_NATD_RFC : ISAKMP_NEXT_NATD_DRAFTS;
+
+	out_modify_previous_np(nat_np, outs);
 
 	first      = &(md->sender);
 	firstport  = ntohs(st->st_remoteport);
@@ -424,7 +420,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	/**
 	 * First one with sender IP & port
 	 */
-	_natd_hash(st->st_oakley.prf_hasher, hash, st->st_icookie,
+	natd_hash(st->st_oakley.prf_hasher, hash, st->st_icookie,
 		   is_zero_cookie(
 			   st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie,
 		   first, firstport);
@@ -438,7 +434,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	/**
 	 * Second one with my IP & port
 	 */
-	_natd_hash(st->st_oakley.prf_hasher, hash,
+	natd_hash(st->st_oakley.prf_hasher, hash,
 		   st->st_icookie,
 		   is_zero_cookie(
 			   st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie,
@@ -563,12 +559,11 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 	passert(st->st_connection);
 
-	nat_np =
-		(st->hidden_variables.st_nat_traversal &
+	nat_np = st->hidden_variables.st_nat_traversal &
 		 NAT_T_WITH_RFC_VALUES ?
-		 ISAKMP_NEXT_NATOA_RFC : ISAKMP_NEXT_NATOA_DRAFTS);
-	if (!out_modify_previous_np(nat_np, outs))
-		return FALSE;
+		 ISAKMP_NEXT_NATOA_RFC : ISAKMP_NEXT_NATOA_DRAFTS;
+
+	out_modify_previous_np(nat_np, outs);
 
 	memset(&natoa, 0, sizeof(natoa));
 	natoa.isanoa_np = nat_np;
@@ -877,7 +872,7 @@ void nat_traversal_ka_event(void)
 
 	nat_kap_event = 0;  /* ready to be reschedule */
 
-	for_each_state((void *)nat_traversal_ka_event_state, &nat_kap_st);
+	for_each_state(nat_traversal_ka_event_state, &nat_kap_st);
 
 	if (nat_kap_st) {
 		/**
@@ -887,7 +882,7 @@ void nat_traversal_ka_event(void)
 	}
 }
 
-struct _new_mapp_nfo {
+struct new_mapp_nfo {
 	struct state *st;
 	ip_address addr;
 	u_int16_t port;
@@ -895,7 +890,7 @@ struct _new_mapp_nfo {
 
 static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
 {
-	struct _new_mapp_nfo *nfo = (struct _new_mapp_nfo *)data;
+	struct new_mapp_nfo *nfo = (struct new_mapp_nfo *)data;
 
 	if ((nfo->st->st_clonedfrom &&
 	     (st->st_serialno == nfo->st->st_clonedfrom ||
@@ -927,7 +922,7 @@ static int nat_traversal_new_mapping(struct state *st,
 				     const ip_address *nsrc,
 				     u_int16_t nsrcport)
 {
-	struct _new_mapp_nfo nfo;
+	struct new_mapp_nfo nfo;
 	char ba[ADDRTOT_BUF];
 
 	addrtot(nsrc, 0, ba, ADDRTOT_BUF);
@@ -959,7 +954,7 @@ static int nat_traversal_new_mapping(struct state *st,
 	nfo.addr  = *nsrc;
 	nfo.port  = nsrcport;
 
-	for_each_state((void *)nat_traversal_find_new_mapp_state, &nfo);
+	for_each_state(nat_traversal_find_new_mapp_state, &nfo);
 
 	return 0;
 }
@@ -1054,7 +1049,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	}
 }
 
-struct _new_klips_mapp_nfo {
+struct new_klips_mapp_nfo {
 	struct k_sadb_sa *sa;
 	ip_address src, dst;
 	u_int16_t sport, dport;
@@ -1063,7 +1058,7 @@ struct _new_klips_mapp_nfo {
 static void nat_t_new_klips_mapp(struct state *st, void *data)
 {
 	struct connection *c = st->st_connection;
-	struct _new_klips_mapp_nfo *nfo = (struct _new_klips_mapp_nfo *)data;
+	struct new_klips_mapp_nfo *nfo = (struct new_klips_mapp_nfo *)data;
 
 	if ((c) &&
 	    (st->st_esp.present) &&
@@ -1077,7 +1072,7 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 				     struct sadb_ext *extensions[K_SADB_EXT_MAX +
 								 1])
 {
-	struct _new_klips_mapp_nfo nfo;
+	struct new_klips_mapp_nfo nfo;
 	struct sadb_address *srcx =
 		(void *) extensions[K_SADB_EXT_ADDRESS_SRC];
 	struct sadb_address *dstx =
@@ -1114,21 +1109,21 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 
 		DBG(DBG_NATT, {
 			    char text_said[SATOT_BUF];
-			    char _srca[ADDRTOT_BUF];
-			    char _dsta[ADDRTOT_BUF];
+			    char b_srca[ADDRTOT_BUF];
+			    char b_dsta[ADDRTOT_BUF];
 			    ip_said said;
 
 			    initsaid(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP,
 				     &said);
 			    satot(&said, 0, text_said, SATOT_BUF);
-			    addrtot(&nfo.src, 0, _srca, ADDRTOT_BUF);
-			    addrtot(&nfo.dst, 0, _dsta, ADDRTOT_BUF);
+			    addrtot(&nfo.src, 0, b_srca, ADDRTOT_BUF);
+			    addrtot(&nfo.dst, 0, b_dsta, ADDRTOT_BUF);
 			    DBG_log("new klips mapping %s %s:%d %s:%d",
-				    text_said, _srca, nfo.sport, _dsta,
+				    text_said, b_srca, nfo.sport, b_dsta,
 				    nfo.dport);
 		    });
 
-		for_each_state((void *)nat_t_new_klips_mapp, &nfo);
+		for_each_state(nat_t_new_klips_mapp, &nfo);
 	}
 
 	if (ugh != NULL)
@@ -1146,5 +1141,3 @@ void show_setup_natt()
 		pluto_natt_float_port,
 		nat_traversal_support_port_floating ? "no" : "yes");
 }
-
-#endif

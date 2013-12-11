@@ -189,9 +189,7 @@ struct hash_desc {
 	#define hmac(X) "hmac(" #X ")"
 #endif /* if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) */
 
-#ifdef CONFIG_KLIPS_ENC_NULL
-# define CIPHERNAME_NULL                cbc(null)
-#endif
+#define CIPHERNAME_NULL         "cipher_null"
 #define CIPHERNAME_AES          cbc(aes)
 #define CIPHERNAME_3DES         cbc(des3_ede)
 #define CIPHERNAME_CAST         cbc(cast5)
@@ -219,28 +217,22 @@ module_param(noauto, int, 0644);
 
 MODULE_PARM_DESC(noauto, "Dont try all known algos, just setup enabled ones");
 
-#ifdef CONFIG_KLIPS_ENC_NULL
 static int cipher_null[] = { -1, -1 };
-#endif
 static int des_ede3[] = { -1, -1 };
 static int aes[] = { -1, -1 };
 static int cast[] = { -1, -1 };
 static int serpent[] = { -1, -1 };
 static int twofish[] = { -1, -1 };
 
-#ifdef CONFIG_KLIPS_ENC_NULL
 module_param_array(cipher_null, int, NULL, 0444);
-#endif
 module_param_array(des_ede3, int, NULL, 0444);
 module_param_array(aes, int, NULL, 0444);
 module_param_array(cast, int, NULL, 0444);
 module_param_array(serpent, int, NULL, 0444);
 module_param_array(twofish, int, NULL, 0444);
 
-#ifdef CONFIG_KLIPS_ENC_NULL
 MODULE_PARM_DESC(cipher_null,
 		 "0: disable | 1: force_enable | min,max: dontuse");
-#endif
 MODULE_PARM_DESC(des_ede3, "0: disable | 1: force_enable | min,max: dontuse");
 MODULE_PARM_DESC(aes, "0: disable | 1: force_enable | min,max: keybitlens");
 MODULE_PARM_DESC(cast, "0: disable | 1: force_enable | min,max: keybitlens");
@@ -269,9 +261,8 @@ static struct ipsec_alg_capi_cipher alg_capi_carray[] = {
 	  { ixt_common:{ ixt_support:{ ias_id: ESP_CAST, } } } },
 	{ CIPHERNAME_3DES,     8, 192, 192, des_ede3,
 	  { ixt_common:{ ixt_support:{ ias_id: ESP_3DES, } } } },
-#ifdef CONFIG_KLIPS_ENC_NULL
-	{ CIPHERNAME_NULL,     1,  0,  0, cipher_null, { ias_id: ESP_NULL, } },
-#endif
+	{ CIPHERNAME_NULL,     1,  0,  0, cipher_null,
+	  { ixt_common:{ ixt_support:{ ias_id: ESP_NULL, } } } },
 	{ NULL, 0, 0, 0, NULL, {} }
 };
 
@@ -437,6 +428,7 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
 		       in, in, ilen, iv, encrypt);
 
 	memset(&sg, 0, sizeof(sg));
+	sg_init_table(&sg, 1);
 	sg_set_page(&sg, virt_to_page(in), ilen, offset_in_page(in));
 
 	memset(&desc, 0, sizeof(desc));

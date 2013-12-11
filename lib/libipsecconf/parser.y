@@ -2,6 +2,10 @@
 /* FreeS/WAN config file parser (parser.y)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Michael Richardson <mcr@sandelman.ottawa.on.ca>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Philippe Vouters <Philippe.Vouters@laposte.net>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,11 +27,13 @@
 #include <limits.h>
 #include <unistd.h>
 
+#define YYDEBUG 1
+
 #include "ipsecconf/keywords.h"
-#include "ipsecconf/parser.h"
+#include "ipsecconf/parser.h"	/* includes parser.tab.h" */
+#include "ipsecconf/parser-flex.h"
 #include "ipsecconf/confread.h"
 
-#define YYDEBUG 1
 #define YYERROR_VERBOSE
 #define ERRSTRING_LEN	256
 
@@ -35,8 +41,6 @@
  * Bison
  */
 static char parser_errstring[ERRSTRING_LEN+1];
-void yyerror(const char *s);
-extern int yylex (void);
 static struct kw_list *alloc_kwlist(void);
 static struct starter_comments *alloc_comment(void);
 
@@ -446,7 +450,6 @@ statement_kw:
 
 void yyerror(const char *s)
 {
-	extern void parser_y_error(char *b, int size, const char *sp);
 	if (_save_errors_)
 		parser_y_error(parser_errstring, ERRSTRING_LEN, s);
 }
@@ -456,8 +459,6 @@ struct config_parsed *parser_load_conf (const char *file, err_t *perr)
 	struct config_parsed *cfg=NULL;
 	int err = 0;
 	FILE *f;
-
-	extern FILE *yyin;
 
 	memset(parser_errstring, 0, ERRSTRING_LEN+1);
 	if (perr) *perr = NULL;
@@ -520,11 +521,12 @@ end:
 
 static void parser_free_kwlist (struct kw_list *list)
 {
-	struct kw_list *elt;
-	while (list) {
-		elt = list;
+	while (list != NULL) {
+		struct kw_list *elt = list;
+
 		list = list->next;
-		if (elt->string) free(elt->string);
+		if (elt->string)
+			free(elt->string);
 		free(elt);
 	}
 }

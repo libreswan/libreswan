@@ -1,7 +1,9 @@
 /*
  * Cryptographic helper function - calculate prf+() for ikev2
+ *
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,7 +67,7 @@ void v2prfplus(struct v2prf_stuff *vps)
 	hmac_final_chunk(vps->t, "skeyseed_t1", &ctx);
 	DBG(DBG_CRYPT, {
 		    char b[20];
-		    sprintf(b, "prf+[%u]:", vps->counter[0]);
+		    snprintf(b, sizeof(b), "prf+[%u]:", vps->counter[0]);
 		    DBG_dump_chunk(b, vps->t);
 	    });
 

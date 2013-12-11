@@ -1,8 +1,14 @@
-/* Libreswan config file parser (parser.h)
+/* Libreswan config file parser keywords processor
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -35,6 +41,7 @@ enum keyword_string_config_field {
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
 	KSF_DUMPDIR,
+	KSF_STATSBINARY,
 	KSF_IPSECDIR,
 	KSF_SECRETSFILE,
 	KSF_PERPEERDIR,
@@ -51,6 +58,8 @@ enum keyword_string_config_field {
 	KSF_POLICY_LABEL,
 	KSF_MODECFGDNS1,
 	KSF_MODECFGDNS2,
+	KSF_MODECFGDOMAIN,
+	KSF_MODECFGBANNER,
 	KSF_MAX
 };
 
@@ -71,6 +80,7 @@ enum keyword_numeric_config_field {
 	KBF_OVERRIDEMTU,
 	KBF_CONNMTU,
 	KBF_PRIORITY,
+	KBF_REQID,
 	KBF_STRICTCRLPOLICY,
 	KBF_NATTRAVERSAL,
 	KBF_NATIKEPORT,
@@ -121,6 +131,7 @@ enum keyword_numeric_config_field {
 	KBF_INITIAL_CONTACT,
 	KBF_CISCO_UNITY,
 	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
+	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
 	KBF_MAX
 };
 
@@ -201,11 +212,11 @@ enum keyword_keyexchange {
 
 /* values for auto={add,start,route,ignore} */
 enum keyword_auto {
-	STARTUP_IGNORE  = 0,
-	STARTUP_POLICY  = 1,
-	STARTUP_ADD     = 2,
-	STARTUP_ROUTE   = 3,
-	STARTUP_START   = 4
+	STARTUP_IGNORE     = 0,
+	STARTUP_POLICY     = 1,
+	STARTUP_ADD        = 2,
+	STARTUP_ONDEMAND   = 3,
+	STARTUP_START      = 4
 };
 
 enum keyword_satype {
@@ -249,15 +260,16 @@ struct keyword_def {
 	unsigned int validity;          /* has bits kv_config or kv_conn set */
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
-	struct keyword_enum_values *validenum;
+	const struct keyword_enum_values *validenum;
 };
 
 struct keyword {
-	struct keyword_def *keydef;
+	const struct keyword_def *keydef;
 	bool keyleft;
 	char               *string;
 };
 
+/* note: these lists are dynamic */
 struct kw_list {
 	struct kw_list *next;
 	struct keyword keyword;
@@ -295,10 +307,9 @@ struct config_parsed {
 	bool got_default;
 };
 
-extern struct keyword_def ipsec_conf_keywords_v2[];
-extern const int ipsec_conf_keywords_v2_count;
+extern const struct keyword_def ipsec_conf_keywords_v2[];
 
-extern unsigned int parser_enum_list(struct keyword_def *kd, const char *s,
+extern unsigned int parser_enum_list(const struct keyword_def *kd, const char *s,
 				     bool list);
 extern unsigned int parser_loose_enum(struct keyword *k, const char *s);
 

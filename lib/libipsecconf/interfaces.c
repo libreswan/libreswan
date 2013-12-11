@@ -1,5 +1,7 @@
 /* FreeS/WAN interfaces management (interfaces.c)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,16 +38,17 @@
 # define MIN(a, b) ( ((a) > (b)) ? (b) : (a) )
 #endif
 
-char *starter_find_physical_iface(int sock, char *iface)
+static char *starter_find_physical_iface(int sock, char *iface)
 {
-	static char _if[IFNAMSIZ + 1];
+	static char ifs[IFNAMSIZ + 1];
 	struct ifreq req;
 
 	strncpy(req.ifr_name, iface, IFNAMSIZ);
 	if (ioctl(sock, SIOCGIFFLAGS, &req) == 0) {
 		if (req.ifr_flags & IFF_UP) {
-			strncpy(_if, iface, IFNAMSIZ);
-			return _if;
+			memcpy(ifs, iface, IFNAMSIZ);
+			ifs[IFNAMSIZ] = '\0';	/* ensure NUL termination */
+			return ifs;
 		}
 	}
 	return NULL;

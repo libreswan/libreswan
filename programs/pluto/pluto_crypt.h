@@ -1,10 +1,14 @@
 /*
  * Cryptographic helper process.
  * Copyright (C) 2004-2007 Michael C. Richardson <mcr@xelerance.com>
- * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2008,2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ *
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -174,8 +178,6 @@ extern err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 extern void pluto_crypto_helper_sockets(lsw_fd_set *readfds);
 extern int  pluto_crypto_helper_ready(lsw_fd_set *readfds);
 
-extern void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum);
-extern void pluto_crypto_helper(int fd, int helpernum);
 extern void pluto_crypto_allocchunk(wire_chunk_t *space,
 				    wire_chunk_t *new,
 				    size_t howbig);
@@ -201,9 +203,9 @@ extern void compute_dh_shared(struct state *st, const chunk_t g,
 
 /* no longer exists?
    extern stf_status perform_dh(struct pluto_crypto_req_cont *cn, struct state *st);
+   extern bool generate_skeyids_iv(struct state *st);
  */
 
-extern bool generate_skeyids_iv(struct state *st);
 
 extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 				    struct state *st,
@@ -239,7 +241,6 @@ extern void calc_dh_v2(struct pluto_crypto_req *r);
 extern void unpack_KE(struct state *st,
 		      struct pluto_crypto_req *r,
 		      chunk_t *g);
-extern void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r);
 
 static inline void clonetowirechunk(wire_chunk_t  *thespace,
 				    unsigned char *space,

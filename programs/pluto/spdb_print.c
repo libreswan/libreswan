@@ -1,6 +1,8 @@
 /* Security Policy Data Base debugging routines
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,9 +33,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -152,7 +151,7 @@ void print_sa_v2_trans(struct db_v2_trans *tr)
 
 	printf("      type: %u(%s) value: %u(%s) attr_cnt: %u\n",
 	       tr->transform_type,
-	       enum_name(&trans_type_names, tr->transform_type),
+	       enum_name(&ikev2_trans_type_names, tr->transform_type),
 	       tr->transid, en ? enum_name(en, tr->transid) : "unknown",
 	       tr->attr_cnt);
 	for (i = 0; i < tr->attr_cnt; i++)

@@ -10,6 +10,9 @@
  * Copyright (C) 2009-2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2010 Henry N <henrynmail-lswan@yahoo.de>
  * Copyright (C) 2010 Ajay.V.Sarraju
+ * Copyright (C) 2012 Roel van Meer <roel.vanmeer@bokxing.nl>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -40,6 +43,7 @@
 #include <libreswan.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
+#include <libreswan/pfkey_debug.h>
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -55,10 +59,8 @@
 #include "timer.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
-#ifdef NAT_TRAVERSAL
 #include "packet.h"     /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 
 #include "lsw_select.h"
 #include "alg_info.h"
@@ -77,8 +79,6 @@ static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messag
  * The corresponding ACQUIRE message might have been lost.
  */
 struct eroute_info *orphaned_holds = NULL;
-
-extern const struct pfkey_proto_info null_proto_info[2];
 
 static pid_t pid;
 
@@ -290,12 +290,12 @@ static bool pfkey_get(pfkey_buf *buf)
 			log_errno((e, "read() failed in pfkey_get()"));
 			return FALSE;
 		} else if ((size_t) len < sizeof(buf->msg)) {
-			plog(
+			libreswan_log(
 				"pfkey_get read truncated PF_KEY message: %d bytes; ignoring message",
 				(int) len);
 		} else if ((size_t) len != buf->msg.sadb_msg_len *
 			   IPSEC_PFKEYv2_ALIGN) {
-			plog(
+			libreswan_log(
 				"pfkey_get read PF_KEY message with length %d that doesn't equal sadb_msg_len %u * %u; ignoring message",
 				(int) len,
 				(unsigned) buf->msg.sadb_msg_len,
@@ -307,11 +307,9 @@ static bool pfkey_get(pfkey_buf *buf)
 			     || (buf->msg.sadb_msg_pid == 0 &&
 				 buf->msg.sadb_msg_type == SADB_ACQUIRE)
 			     || (buf->msg.sadb_msg_type == SADB_REGISTER)
-#ifdef NAT_TRAVERSAL
 			     || (buf->msg.sadb_msg_pid == 0 &&
 				 buf->msg.sadb_msg_type ==
 				 K_SADB_X_NAT_T_NEW_MAPPING)
-#endif
 			     )) {
 			/* not for us: ignore */
 			DBG(DBG_KERNEL,
@@ -455,7 +453,7 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 						  "%acquire-pfkey");
 
 	if (ugh != NULL)
-		plog("K_SADB_ACQUIRE message from KLIPS malformed: %s", ugh);
+		libreswan_log("K_SADB_ACQUIRE message from KLIPS malformed: %s", ugh);
 
 }
 
@@ -468,7 +466,7 @@ static void pfkey_async(pfkey_buf *buf)
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 
 	if (pfkey_msg_parse(&buf->msg, NULL, extensions, EXT_BITS_OUT)) {
-		plog("pfkey_async:"
+		libreswan_log("pfkey_async:"
 		     " unparseable PF_KEY message:"
 		     " %s len=%d, errno=%d, seq=%d, pid=%d; message ignored",
 		     sparse_val_show(pfkey_type_names, buf->msg.sadb_msg_type),
@@ -497,12 +495,10 @@ static void pfkey_async(pfkey_buf *buf)
 			/* to simulate loss of ACQUIRE, delete this call */
 			process_pfkey_acquire(buf, extensions);
 			break;
-#ifdef NAT_TRAVERSAL
 		case K_SADB_X_NAT_T_NEW_MAPPING:
 			process_pfkey_nat_t_new_mapping(&(buf->msg),
 							extensions);
 			break;
-#endif
 		default:
 			/* ignored */
 			break;
@@ -771,7 +767,7 @@ static void pfkey_register_proto(unsigned int sadb_register,
 			      satypename, NULL, extensions) &&
 	      finish_pfkey_msg(extensions, satypename, "", &pfb))) {
 		/* ??? should this be loglog */
-		plog("no kernel support for %s", satypename);
+		libreswan_log("no kernel support for %s", satypename);
 	} else {
 		kernel_ops->pfkey_register_response(&pfb.msg);
 		DBG(DBG_KERNEL,
@@ -861,7 +857,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
 		      time_t use_lifetime UNUSED,
-		      unsigned long sa_priority,
+		      unsigned long sa_priority UNUSED,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -1055,7 +1051,6 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 			return FALSE;
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (sa->natt_type != 0) {
 		success = pfkey_build(pfkey_x_nat_t_type_build(
 					      &extensions[
@@ -1112,7 +1107,6 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 				return FALSE;
 		}
 	}
-#endif
 
 	success = finish_pfkey_msg(extensions, "Add SA", sa->text_said, &pfb);
 
@@ -1123,7 +1117,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 
 		error = pfkey_msg_parse(&pfb.msg, NULL, replies, EXT_BITS_IN);
 		if (error)
-			plog("success on unparsable message - cannot happen");
+			libreswan_log("success on unparsable message - cannot happen");
 
 #ifdef KLIPS_MAST
 		if (replies[K_SADB_X_EXT_SAREF]) {

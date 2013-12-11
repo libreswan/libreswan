@@ -32,14 +32,14 @@ Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
 
 BuildRequires: pkgconfig net-tools
-BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
+BuildRequires: nss-devel >= 3.14.3, nspr-devel
 BuildRequires: pam-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
 %endif
 %if %{USE_FIPSCHECK}
-BuildRequires: fipscheck-devel >= %{fipscheck_version}
 # we need fipshmac
+BuildRequires: fipscheck-devel >= %{fipscheck_version}
 Requires: fipscheck%{_isa} >= %{fipscheck_version}
 %endif
 %if %{USE_LINUX_AUDIT}
@@ -93,10 +93,10 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %endif
   INITSYSTEM=sysvinit \
   USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
-  USE_DYNAMICDNS=true \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK=%{USE_FIPSCHECK} \
+  FIPSPRODUCTCHECK="%{_sysconfdir}/system-fips" \
   USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
   USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
   USE_LDAP=%{USE_CRL_FETCHING} \
@@ -143,8 +143,8 @@ install -d %{buildroot}%{_sbindir}
 # replace with rhel[56] specific version
 install -m 0755 initsystems/sysvinit/init.rhel %{buildroot}%{_initrddir}/ipsec
 
-echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
-rm -fr %{buildroot}/etc/rc.d/rc*
+echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %files 
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
@@ -182,6 +182,17 @@ fi
 
 %post 
 /sbin/chkconfig --add ipsec || :
+%if %{USE_FIPSCHECK}
+prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
+%endif
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
+    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
+    echo > ${TEMPFILE}
+    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
+    rm -f ${TEMPFILE}
+fi
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
