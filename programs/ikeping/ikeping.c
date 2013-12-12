@@ -68,26 +68,28 @@ static void help(void)
 
 static void hton_ping(struct isakmp_hdr *ih)
 {
-	u_int32_t *ihp;
-
+#if 0
+	u_int32_t *ihp; 
 	ihp = (u_int32_t *)ih;
 
 	/* put it in network byte order. */
 	/* cookies are byte viewed anyway */
-	// ihp[4] = htonl(ihp[4]);
+	ihp[4] = htonl(ihp[4]);
+#endif
 	ih->isa_msgid  = htonl(ih->isa_msgid);
 	ih->isa_length = htonl(ih->isa_length);
 }
 
 static void ntoh_ping(struct isakmp_hdr *ih)
 {
+#if 0
 	u_int32_t *ihp;
-
 	ihp = (u_int32_t *)ih;
 
 	/* put it in network byte order. */
 	/* cookies are byte viewed anyway */
-	// ihp[4] = ntohl(ihp[4]);
+	ihp[4] = ntohl(ihp[4]);
+#endif
 	ih->isa_msgid  = ntohl(ih->isa_msgid);
 	ih->isa_length = ntohl(ih->isa_length);
 }

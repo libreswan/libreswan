@@ -1,0 +1,4 @@
+Testing modp3072 (group 15) from RFC 3526
+
+Confirms that group 15-18 work
+
