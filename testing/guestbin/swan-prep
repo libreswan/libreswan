@@ -100,7 +100,13 @@ if os.path.isdir("/etc/ipsec.d"):
 	shutil.rmtree("/etc/ipsec.d")
 	os.mkdir("/etc/ipsec.d")
 
-
+# if using systemd, ensure we don't restart pluto on crash
+if os.path.isfile("/lib/systemd/system/ipsec.service"):
+	service = "".join(open("/lib/systemd/system/ipsec.service").readlines())
+	if "Restart=always" in service:
+		fp = open("/lib/systemd/system/ipsec.service","w")
+		fp.write("".join(service).replace("Restart=always","Restart=never"))
+		commands.getoutput("/usr/bin/systemctl daemon-reload")
 
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
