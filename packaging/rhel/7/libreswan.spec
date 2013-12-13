@@ -31,6 +31,7 @@ Requires: iproute
 Conflicts: openswan < %{version}-%{release}
 Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
+Provides: openswan-doc = %{version}-%{release}
 
 BuildRequires: pkgconfig hostname
 BuildRequires: nss-devel >= 3.14.3, nspr-devel
