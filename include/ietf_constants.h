@@ -1020,9 +1020,13 @@ typedef u_int16_t oakley_auth_t;
 
 /* extern enum_names ikev2_auth_names; */
 enum ikev2_auth_method {
-	v2_AUTH_RSA = 1,
-	v2_AUTH_SHARED = 2,
-	v2_AUTH_DSA = 3,
+	IKEv2_AUTH_RSA = 1,
+	IKEv2_AUTH_PSK = 2,
+	IKEv2_AUTH_DSA = 3,
+	IKEv2_AUTH_P256 = 9,
+	IKEv2_AUTH_P384 = 10,
+	IKEv2_AUTH_P521 = 11,
+	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
 };
 
 /*

@@ -8,7 +8,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
@@ -689,18 +689,14 @@ static void foreach_states_by_connection_func(struct connection *c,
 					struct state *old_cur_state =
 						cur_state ==
 						this ? NULL : cur_state;
-#ifdef DEBUG
 					lset_t old_cur_debugging =
 						cur_debugging;
-#endif
 
 					set_cur_state(this);
 					(*successfunc)(this, c, arg);
 
 					cur_state = old_cur_state;
-#ifdef DEBUG
 					set_debugging(old_cur_debugging);
-#endif
 				}
 			}
 		}

@@ -288,98 +288,97 @@ int main(int argc, char **argv)
 	memset(&from, 0, sizeof(from));
 	memset(&to,   0, sizeof(to));
 
-	switch (pid = fork()) {
+	pid = fork();
+	switch (pid) {
 	case -1:
 		perror("fork");
 		return 0;
 
 	case 0:
-		/* child */
-		usleep(100000);
-		goto client;
-	}
+		/* child: client */
+		usleep(100000);	/* ??? why? */
+		close(server_socket);
+		client_socket = safe_socket(PF_INET, SOCK_DGRAM, 0);
+		if (udpfromto_init(client_socket) != 0) {
+			perror("udpfromto_init");
+			_exit(0);
+		}
+		/* bind client on different port */
+		in.sin_port = htons(port + 1);
+		if (bind(client_socket, (struct sockaddr *)&in, sizeof(in)) < 0) {
+			perror("client: bind");
+			_exit(0);
+		}
 
-	/* parent: server */
-	server_socket = safe_socket(PF_INET, SOCK_DGRAM, 0);
-	if (udpfromto_init(server_socket) != 0) {
-		perror("udpfromto_init\n");
-		waitpid(pid, NULL, WNOHANG);
+		in.sin_port = htons(port);
+		in.sin_addr.s_addr = inet_addr(destip);
+
+		printf("client: sending packet to %s:%d\n", destip, port);
+		if (sendto(client_socket, TESTSTRING, TESTLEN, 0,
+			   (struct sockaddr *)&in, sizeof(in)) < 0) {
+			perror("client: sendto");
+			_exit(0);
+		}
+
+		printf("client: waiting for reply from server on INADDR_ANY:%d\n",
+		       port + 1);
+
+		if ((n = recvfromto(client_socket, buf, sizeof(buf), 0,
+				    (struct sockaddr *)&from, &fl,
+				    (struct sockaddr *)&to, &tl)) < 0) {
+			perror("client: recvfromto");
+			_exit(0);
+		}
+
+		printf("client: received a packet of %d bytes [%s] ", n, buf);
+		printf("(src ip:port %s:%d",
+		       inet_ntoa(from.sin_addr), ntohs(from.sin_port));
+		printf(" dst ip:port %s:%d)\n",
+		       inet_ntoa(to.sin_addr), ntohs(to.sin_port));
+
+		_exit(0);
+
+	default:
+		/* parent: server */
+		server_socket = safe_socket(PF_INET, SOCK_DGRAM, 0);
+		if (udpfromto_init(server_socket) != 0) {
+			perror("udpfromto_init\n");
+			waitpid(pid, NULL, WNOHANG);
+			return 0;
+		}
+
+		if (bind(server_socket, (struct sockaddr *)&in, sizeof(in)) < 0) {
+			perror("server: bind");
+			waitpid(pid, NULL, WNOHANG);
+			return 0;
+		}
+
+		printf("server: waiting for packets on INADDR_ANY:%d\n", port);
+		if ((n = recvfromto(server_socket, buf, sizeof(buf), 0,
+				    (struct sockaddr *)&from, &fl,
+				    (struct sockaddr *)&to, &tl)) < 0) {
+			perror("server: recvfromto");
+			waitpid(pid, NULL, WNOHANG);
+			return 0;
+		}
+
+		printf("server: received a packet of %d bytes [%s] ", n, buf);
+		printf("(src ip:port %s:%d ",
+		       inet_ntoa(from.sin_addr), ntohs(from.sin_port));
+		printf(" dst ip:port %s:%d)\n",
+		       inet_ntoa(to.sin_addr), ntohs(to.sin_port));
+
+		printf(
+			"server: replying from address packet was received on to source address\n");
+
+		if ((n = sendfromto(server_socket, buf, n, 0,
+				    (struct sockaddr *)&to
+					    (struct sockaddr *) & from, fl)) < 0)
+			perror("server: sendfromto");
+
+		waitpid(pid, NULL, 0);
 		return 0;
 	}
-
-	if (bind(server_socket, (struct sockaddr *)&in, sizeof(in)) < 0) {
-		perror("server: bind");
-		waitpid(pid, NULL, WNOHANG);
-		return 0;
-	}
-
-	printf("server: waiting for packets on INADDR_ANY:%d\n", port);
-	if ((n = recvfromto(server_socket, buf, sizeof(buf), 0,
-			    (struct sockaddr *)&from, &fl,
-			    (struct sockaddr *)&to, &tl)) < 0) {
-		perror("server: recvfromto");
-		waitpid(pid, NULL, WNOHANG);
-		return 0;
-	}
-
-	printf("server: received a packet of %d bytes [%s] ", n, buf);
-	printf("(src ip:port %s:%d ",
-	       inet_ntoa(from.sin_addr), ntohs(from.sin_port));
-	printf(" dst ip:port %s:%d)\n",
-	       inet_ntoa(to.sin_addr), ntohs(to.sin_port));
-
-	printf(
-		"server: replying from address packet was received on to source address\n");
-
-	if ((n = sendfromto(server_socket, buf, n, 0,
-			    (struct sockaddr *)&to
-				    (struct sockaddr *) & from, fl)) < 0)
-		perror("server: sendfromto");
-
-	waitpid(pid, NULL, 0);
-	return 0;
-
-client:
-	close(server_socket);
-	client_socket = safe_socket(PF_INET, SOCK_DGRAM, 0);
-	if (udpfromto_init(client_socket) != 0) {
-		perror("udpfromto_init");
-		_exit(0);
-	}
-	/* bind client on different port */
-	in.sin_port = htons(port + 1);
-	if (bind(client_socket, (struct sockaddr *)&in, sizeof(in)) < 0) {
-		perror("client: bind");
-		_exit(0);
-	}
-
-	in.sin_port = htons(port);
-	in.sin_addr.s_addr = inet_addr(destip);
-
-	printf("client: sending packet to %s:%d\n", destip, port);
-	if (sendto(client_socket, TESTSTRING, TESTLEN, 0,
-		   (struct sockaddr *)&in, sizeof(in)) < 0) {
-		perror("client: sendto");
-		_exit(0);
-	}
-
-	printf("client: waiting for reply from server on INADDR_ANY:%d\n",
-	       port + 1);
-
-	if ((n = recvfromto(client_socket, buf, sizeof(buf), 0,
-			    (struct sockaddr *)&from, &fl,
-			    (struct sockaddr *)&to, &tl)) < 0) {
-		perror("client: recvfromto");
-		_exit(0);
-	}
-
-	printf("client: received a packet of %d bytes [%s] ", n, buf);
-	printf("(src ip:port %s:%d",
-	       inet_ntoa(from.sin_addr), ntohs(from.sin_port));
-	printf(" dst ip:port %s:%d)\n",
-	       inet_ntoa(to.sin_addr), ntohs(to.sin_port));
-
-	_exit(0);
 }
 
 #endif /* TESTING */

@@ -244,9 +244,7 @@ void delete_connection(struct connection *c, bool relations)
 	struct connection *old_cur_connection =
 		cur_connection == c ? NULL : cur_connection;
 
-#ifdef DEBUG
 	lset_t old_cur_debugging = cur_debugging;
-#endif
 	union {
 		struct alg_info** ppai;
 		struct alg_info_esp** ppai_esp;
@@ -324,9 +322,7 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind != CK_GOING_AWAY)
 		pfreeany(c->spd.that.virt);
 
-#ifdef DEBUG
 	set_debugging(old_cur_debugging);
-#endif
 	pfreeany(c->name);
 	pfreeany(c->cisco_dns_info);
 	pfreeany(c->modecfg_domain);
@@ -1554,9 +1550,7 @@ void add_connection(const struct whack_message *wm)
 
 		set_policy_prio(c); /* must be after kind is set */
 
-#ifdef DEBUG
 		c->extra_debugging = wm->debugging;
-#endif
 
 		c->gw_info = NULL;
 
@@ -1738,7 +1732,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 }
 
 /* An old target has disappeared for a group: delete instance. */
-void remove_group_instance(const struct connection *group USED_BY_DEBUG,
+void remove_group_instance(const struct connection *group,
 			const char *name)
 {
 	passert(group->kind == CK_GROUP);
@@ -1933,7 +1927,7 @@ struct connection *oppo_instantiate(struct connection *c,
 				const ip_address *him,
 				const struct id *his_id,
 				struct gw_info *gw,
-				const ip_address *our_client USED_BY_DEBUG,
+				const ip_address *our_client,
 				const ip_address *peer_client)
 {
 	struct connection *d = instantiate(c, him, his_id);
@@ -2226,7 +2220,6 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	if (srp != NULL && best != NULL)
 		*srp = best_sr;
 
-#ifdef DEBUG
 	if (DBGP(DBG_CONTROL)) {
 		if (best) {
 			char cib[CONN_INST_BUF];
@@ -2242,7 +2235,6 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			DBG_log("find_connection: concluding with empty");
 		}
 	}
-#endif /* DEBUG */
 
 	return best;
 }
@@ -3149,7 +3141,6 @@ static struct connection *fc_try(const struct connection *c,
 
 		for (sr = &d->spd; best != d && sr != NULL; sr = sr->next) {
 			policy_prio_t prio;
-#ifdef DEBUG
 			char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
 
 			if (DBGP(DBG_CONTROLMORE)) {
@@ -3169,7 +3160,6 @@ static struct connection *fc_try(const struct connection *c,
 					d3, sr->that.protocol, sr->that.port,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
-#endif /* DEBUG */
 
 			if (!samesubnet(&sr->this.client, our_net)) {
 				DBG(DBG_CONTROLMORE,
@@ -3317,7 +3307,6 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		 * be marked as opportunistic.
 		 */
 		for (sr = &d->spd; sr != NULL; sr = sr->next) {
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
 				char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
@@ -3333,7 +3322,6 @@ static struct connection *fc_try_oppo(const struct connection *c,
 					"%s vs %s:%s -> %s",
 					c->name, s1, d1, d->name, s3, d3);
 			}
-#endif /* DEBUG */
 
 			if (!subnetinsubnet(our_net, &sr->this.client) ||
 				!subnetinsubnet(peer_net, &sr->that.client))
@@ -3387,7 +3375,6 @@ struct connection *find_client_connection(struct connection *c,
 	struct connection *d;
 	struct spd_route *sr;
 
-#ifdef DEBUG
 	if (DBGP(DBG_CONTROLMORE)) {
 		char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
 
@@ -3400,7 +3387,6 @@ struct connection *find_client_connection(struct connection *c,
 			s1, our_protocol, our_port,
 			d1, peer_protocol, peer_port);
 	}
-#endif /* DEBUG */
 
 	/*
 	 * Give priority to current connection
@@ -3414,7 +3400,6 @@ struct connection *find_client_connection(struct connection *c,
 			sr = sr->next) {
 			srnum++;
 
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
 
@@ -3423,7 +3408,6 @@ struct connection *find_client_connection(struct connection *c,
 				DBG_log("  concrete checking against sr#%d "
 					"%s -> %s", srnum, s2, d2);
 		}
-#endif /* DEBUG */
 
 			if (samesubnet(&sr->this.client, our_net) &&
 				samesubnet(&sr->that.client, peer_net) &&
@@ -3466,7 +3450,6 @@ struct connection *find_client_connection(struct connection *c,
 					sra->this.host_port,
 					NULL,
 					sra->that.host_port);
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
 
@@ -3479,7 +3462,6 @@ struct connection *find_client_connection(struct connection *c,
 					s2, d2,
 					(hp ? "found" : "not found"));
 			}
-#endif /* DEBUG */
 		}
 
 		if (hp != NULL) {

@@ -563,9 +563,7 @@ void libreswan_log_abort(const char *file_str, int line_no)
  * - ddd is a decimal status code (RC_*) as described in whack.h
  * - text is a human-readable annotation
  */
-#ifdef DEBUG
 static volatile sig_atomic_t dying_breath = FALSE;
-#endif
 
 void whack_log(int mess_no, const char *message, ...)
 {
@@ -577,9 +575,7 @@ void whack_log(int mess_no, const char *message, ...)
 	      NULL_FD;
 
 	if (wfd != NULL_FD
-#ifdef DEBUG
 	    || dying_breath
-#endif
 	    ) {
 		va_list args;
 		char m[LOG_WIDTH]; /* longer messages will be truncated */
@@ -634,7 +630,6 @@ void whack_log(int mess_no, const char *message, ...)
 
 /* Debugging message support */
 
-#ifdef DEBUG
 void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 {
 	char buf[30];
@@ -754,8 +749,8 @@ int DBG_log(const char *message, ...)
 
 void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 {
-#   define DUMP_LABEL_WIDTH 20  /* arbitrary modest boundary */
-#   define DUMP_WIDTH   (4 * (1 + 4 * 3) + 1)
+#define DUMP_LABEL_WIDTH 20  /* arbitrary modest boundary */
+#define DUMP_WIDTH   (4 * (1 + 4 * 3) + 1)
 	char buf[DUMP_LABEL_WIDTH + DUMP_WIDTH];
 	char *bp, *bufstart;
 	const unsigned char *cp = p;
@@ -801,11 +796,9 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 		DBG_log("%s", buf);
 		bp = bufstart;
 	} while (len != 0);
-#   undef DUMP_LABEL_WIDTH
-#   undef DUMP_WIDTH
+#undef DUMP_LABEL_WIDTH
+#undef DUMP_WIDTH
 }
-
-#endif /* DEBUG */
 
 static void show_system_security(void)
 {

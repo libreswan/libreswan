@@ -222,7 +222,6 @@ static const struct keyword_enum_values kw_xauthfail = VALUES_INITIALIZER(kw_xau
  * Values for right= and left=
  */
 
-#ifdef DEBUG
 static const struct keyword_enum_value kw_plutodebug_values[] = {
 	{ "none",     DBG_NONE },
 	{ "all",      DBG_ALL },
@@ -278,7 +277,6 @@ static const struct keyword_enum_value kw_klipsdebug_values[] = {
 };
 
 static const struct keyword_enum_values kw_klipsdebug_list = VALUES_INITIALIZER(kw_klipsdebug_values);
-#endif
 
 static const struct keyword_enum_value kw_phase2types_values[] = {
 	{ "ah+esp",   POLICY_ENCRYPT | POLICY_AUTHENTICATE },
@@ -311,12 +309,10 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "myid",           kv_config, kt_string,    KSF_MYID, NOT_ENUM },
 	{ "myvendorid",     kv_config, kt_string,    KSF_MYVENDORID, NOT_ENUM },
 	{ "syslog",         kv_config, kt_string,    KSF_SYSLOG, NOT_ENUM },
-#ifdef DEBUG
 	{ "klipsdebug",     kv_config, kt_list,      KBF_KLIPSDEBUG,
 	  &kw_klipsdebug_list },
 	{ "plutodebug",     kv_config, kt_list,      KBF_PLUTODEBUG,
 	  &kw_plutodebug_list },
-#endif
 	{ "plutostderrlog", kv_config, kt_filename,  KSF_PLUTOSTDERRLOG,
 	  NOT_ENUM },
 	{ "plutostderrlogtime",        kv_config, kt_bool,

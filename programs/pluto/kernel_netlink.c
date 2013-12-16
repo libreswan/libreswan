@@ -886,8 +886,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		if ( (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256) ||
 		     (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) ) {
 			struct xfrm_algo_auth algo;
-			    DBG(DBG_KERNEL, DBG_log(
-				    "  using new struct xfrm_algo_auth for XFRM message with explicit truncation for sha2_256"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			algo.alg_trunc_len =
 				(sa->authalg ==
@@ -908,8 +906,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 		} else {
 			struct xfrm_algo algo;
-			    DBG(DBG_KERNEL, DBG_log(
-				    "  using old struct xfrm_algo for XFRM message"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			attr->rta_type = XFRMA_ALG_AUTH;
 			attr->rta_len = RTA_LENGTH(

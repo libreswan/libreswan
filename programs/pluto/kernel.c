@@ -102,7 +102,6 @@ static int num_ipsec_eroute = 0;
 
 static void free_bare_shunt(struct bare_shunt **pp);
 
-#ifdef DEBUG
 void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs)
 {
 	DBG(DBG_KERNEL,
@@ -125,7 +124,6 @@ void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs)
 			    sat, prio, (bs)->why);
 	    });
 }
-#endif
 
 void record_and_initiate_opportunistic(const ip_subnet *ours,
 				       const ip_subnet *his,
@@ -888,7 +886,7 @@ static bool raw_eroute(const ip_address *this_host,
 		       time_t use_lifetime,
 		       unsigned long sa_priority,
 		       enum pluto_sadb_operations op,
-		       const char *opname USED_BY_DEBUG
+		       const char *opname
 #ifdef HAVE_LABELED_IPSEC
 		       , char *policy_label
 #endif
@@ -1041,8 +1039,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			/* is there already a broad host-to-host bare shunt? */
 			if (bs_pp == NULL) {
 				DBG(DBG_KERNEL,
-				    DBG_log(
-					    "replacing broad host-to-host bare shunt"));
+				    DBG_log("replacing broad host-to-host bare shunt"));
 				if (raw_eroute(null_host, &this_broad_client,
 					       null_host, &that_broad_client,
 					       htonl(shunt_spi), SA_INT,
@@ -1187,7 +1184,7 @@ bool eroute_connection(struct spd_route *sr,
 
 /* assign a bare hold to a connection */
 
-bool assign_hold(struct connection *c USED_BY_DEBUG,
+bool assign_hold(struct connection *c,
 		 struct spd_route *sr,
 		 int transport_proto,
 		 const ip_address *src, const ip_address *dst)
@@ -2094,13 +2091,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (new_refhim != IPSEC_SAREF_NULL)
 		st->st_refhim = new_refhim;
 
-#ifdef DEBUG
 	/* if the impaired is set, pretend this fails */
 	if (st->st_connection->extra_debugging & IMPAIR_SA_CREATION) {
 		DBG_log("Impair SA creation is set, pretending to fail");
 		goto fail;
 	}
-#endif
 	return TRUE;
 
 fail:
@@ -2145,7 +2140,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY,
 				  c->spd.this.protocol,
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
-				  null_proto_info, 0, c->sa_priority, 
+				  null_proto_info, 0, c->sa_priority,
 				  ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
 				  , c->policy_label

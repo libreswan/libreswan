@@ -3,7 +3,7 @@
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,11 +43,9 @@ bool
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
 
-#ifdef DEBUG
 void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
 			       unsigned long line_no) NEVER_RETURNS;
 libreswan_passert_fail_t libreswan_passert_fail = libreswanlib_passert_fail;
-#endif
 
 void tool_init_log(void)
 {
@@ -185,8 +183,6 @@ void libreswan_log_abort(const char *file_str, int line_no)
 
 /* Debugging message support */
 
-#ifdef DEBUG
-
 void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 {
 	char buf[30];
@@ -293,5 +289,3 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 #   undef DUMP_LABEL_WIDTH
 #   undef DUMP_WIDTH
 }
-
-#endif /* DEBUG */

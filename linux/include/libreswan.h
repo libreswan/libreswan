@@ -1,4 +1,3 @@
-#ifndef _LIBRESWAN_H
 /*
  * header file for FreeS/WAN library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
@@ -15,7 +14,11 @@
  * License for more details.
  *
  */
+#ifndef _LIBRESWAN_H
 #define _LIBRESWAN_H    /* seen it, no need to see it again */
+
+/* Needed for NSS PR_ASSERT() */
+#define DEBUG 1
 
 /* you'd think this should be builtin to compiler... */
 #ifndef TRUE

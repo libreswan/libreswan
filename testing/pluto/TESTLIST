@@ -382,7 +382,7 @@ umlplutotest	fail-x509-12		good
 # may cancel things that the --down/--up may not. This also
 # tests that the responder is happy with us doing that.
 #
-umlplutotest	pluto-rekey-02		good
+kvmplutotest	pluto-rekey-02		good
 
 #
 # this tests psk with main mode.

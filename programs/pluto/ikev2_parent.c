@@ -1399,9 +1399,9 @@ static stf_status ikev2_send_auth(struct connection *c,
 	a.isaa_np = np;
 
 	if (c->policy & POLICY_RSASIG) {
-		a.isaa_type = v2_AUTH_RSA;
+		a.isaa_type = IKEv2_AUTH_RSA;
 	} else if (c->policy & POLICY_PSK) {
-		a.isaa_type = v2_AUTH_SHARED;
+		a.isaa_type = IKEv2_AUTH_PSK;
 	} else {
 		/* what else is there?... DSS not implemented. */
 		return STF_FAIL;
@@ -1874,7 +1874,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	/* process AUTH payload now */
 	/* now check signature from RSA key */
 	switch (md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type) {
-	case v2_AUTH_RSA:
+	case IKEv2_AUTH_RSA:
 	{
 		stf_status authstat = ikev2_verify_rsa_sha1(st,
 							    RESPONDER,
@@ -1890,7 +1890,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		}
 		break;
 	}
-	case v2_AUTH_SHARED:
+	case IKEv2_AUTH_PSK:
 	{
 		stf_status authstat = ikev2_verify_psk_auth(st,
 							    RESPONDER,
@@ -2213,7 +2213,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* now check signature from RSA key */
 	switch (md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type) {
-	case v2_AUTH_RSA:
+	case IKEv2_AUTH_RSA:
 	{
 		stf_status authstat = ikev2_verify_rsa_sha1(pst,
 							    INITIATOR,
@@ -2230,7 +2230,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		}
 		break;
 	}
-	case v2_AUTH_SHARED:
+	case IKEv2_AUTH_PSK:
 	{
 		stf_status authstat = ikev2_verify_psk_auth(pst,
 							    INITIATOR,

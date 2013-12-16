@@ -981,14 +981,22 @@ enum_names oakley_auth_names =
 
 /* ikev2 auth methods */
 
-static const char *const ikev2_auth_strings[] = {
-	"v2_AUTH_RSA",
-	"v2_AUTH_SHARED",
-	"v2_AUTH_DSA",
+static const char *const ikev2_auth_name[] = {
+	"IKEv2_AUTH_RSA", /* 1 */
+	"IKEv2_AUTH_SHARED",
+	"IKEv2_AUTH_DSA",
+	"IKEv2_AUTH_UNASSIGNED_4",
+	"IKEv2_AUTH_UNASSIGNED_5",
+	"IKEv2_AUTH_UNASSIGNED_6",
+	"IKEv2_AUTH_UNASSIGNED_7",
+	"IKEv2_AUTH_UNASSIGNED_8",
+	"IKEv2_AUTH_ECDSA_P256",
+	"IKEv2_AUTH_ECDSA_P384",
+	"IKEv2_AUTH_ECDSA_P521",
+	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
 };
-
 enum_names ikev2_auth_names =
-{ v2_AUTH_RSA, v2_AUTH_DSA, ikev2_auth_strings, NULL };
+{ IKEv2_AUTH_RSA, IKEv2_AUTH_GSPM, ikev2_auth_name, NULL };
 
 /*
  * Oakley Group Description attribute
