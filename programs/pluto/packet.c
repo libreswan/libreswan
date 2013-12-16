@@ -1225,8 +1225,6 @@ void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 	pbs->lenfld_desc = NULL;
 }
 
-#ifdef DEBUG
-
 /* print a host struct
  *
  * This code assumes that the network and host structure
@@ -1348,8 +1346,6 @@ static void DBG_prefix_print_struct(const pb_stream *pbs,
 		DBG_print_struct(pre, struct_ptr, sd, len_meaningful);
 	}
 }
-
-#endif
 
 /* "parse" a network struct into a host struct.
  *

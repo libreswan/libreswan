@@ -323,7 +323,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_options) {
 		switch (msg.opt_set) {
 		case WHACK_ADJUSTOPTIONS:
-#ifdef DEBUG
 			if (msg.name == NULL) {
 				/* we do a two-step so that if either old or new would
 				 * cause the message to print, it will be printed.
@@ -350,7 +349,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 							       extra_debugging)));
 				}
 			}
-#endif
 			break;
 
 		case WHACK_SETDUMPDIR:

@@ -35,10 +35,6 @@
 
 #include "deflate.h"
 
-#ifdef DEBUG
-#  include <ctype.h>
-#endif
-
 /* ===========================================================================
  * Constants
  */

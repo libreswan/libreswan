@@ -112,7 +112,7 @@ struct whack_message {
 
 	bool whack_options;
 
-	lset_t debugging; /* only used #ifdef DEBUG, but don't want layout to change */
+	lset_t debugging;
 
 	/* for WHACK_CONNECTION */
 

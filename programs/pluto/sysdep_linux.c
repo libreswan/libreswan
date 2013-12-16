@@ -17,6 +17,9 @@
  * for more details.
  */
 
+/* needed for nss PR_ASSERT() */
+#define DEBUG 1
+
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>

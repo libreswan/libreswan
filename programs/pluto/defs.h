@@ -25,12 +25,6 @@
 # define USED_BY_KLIPS  UNUSED
 #endif
 
-#ifdef DEBUG
-# define USED_BY_DEBUG  /* ignore */
-#else
-# define USED_BY_DEBUG  UNUSED
-#endif
-
 /* type of serial number of a state object
  * Needed in connections.h and state.h; here to simplify dependencies.
  */

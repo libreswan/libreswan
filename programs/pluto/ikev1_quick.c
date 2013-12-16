@@ -1871,7 +1871,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 							   &c->spd.that.id);
 				}
 			}
-#ifdef DEBUG
 			/* temporarily bump up cur_debugging to get "using..." message
 			 * printed if we'd want it with new connection.
 			 */
@@ -1885,7 +1884,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 					    p->name));
 				set_debugging(old_cur_debugging);
 			}
-#endif
 			c = p;
 		}
 

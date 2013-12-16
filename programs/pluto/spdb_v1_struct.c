@@ -206,7 +206,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 bool out_attr(int type,
 	      unsigned long val,
 	      struct_desc *attr_desc,
-	      enum_names **attr_val_descs USED_BY_DEBUG,
+	      enum_names **attr_val_descs,
 	      pb_stream *pbs)
 {
 	struct isakmp_attribute attr;
@@ -1712,13 +1712,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		val = a.isaat_lv;
 
-		vdesc  =
-			ipsec_attr_val_descs[a.isaat_af_type &
-					     ISAKMP_ATTR_RTYPE_MASK
+		vdesc = ipsec_attr_val_descs[a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK
 #ifdef HAVE_LABELED_IPSEC
-		                                /* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
-		                                /* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
-		                                /* which is NULL in ipsec_attr_val_desc*/
+		/* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
+		/* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
+		/* which is NULL in ipsec_attr_val_desc*/
 					     >= LELEM_ROOF ? 0 : a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #endif

@@ -8,7 +8,7 @@
  * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -379,7 +379,7 @@ struct tac_state {
 
 static bool take_a_crack(struct tac_state *s,
 			 struct pubkey *kr,
-			 const char *story USED_BY_DEBUG)
+			 const char *story)
 {
 	err_t ugh =
 		(s->try_RSA_signature)(s->hash_val, s->hash_len, s->sig_pbs,
@@ -725,7 +725,6 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	if (s != NULL)
 		pks = lsw_get_pks(s);
 
-#ifdef DEBUG
 	DBG(DBG_PRIVATE, {
 		    if (s == NULL)
 			    DBG_log("no Preshared Key Found");
@@ -733,7 +732,6 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 			    DBG_dump_chunk("Preshared Key",
 					   pks->u.preshared_secret);
 	    });
-#endif
 	return s == NULL ? NULL : &pks->u.preshared_secret;
 }
 
@@ -768,7 +766,6 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 	if (s != NULL)
 		pks = lsw_get_pks(s);
 
-#ifdef DEBUG
 	DBG(DBG_PRIVATE, {
 		    if (s == NULL)
 			    DBG_log("no RSA key Found");
@@ -776,7 +773,6 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 			    DBG_log("rsa key %s found",
 				    pks->u.RSA_private_key.pub.keyid);
 	    });
-#endif
 	return s == NULL ? NULL : &pks->u.RSA_private_key;
 }
 

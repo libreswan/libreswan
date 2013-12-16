@@ -2,7 +2,7 @@
  *
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,9 +22,6 @@
 #include <libreswan.h>
 #include <stdarg.h>
 #include <stdio.h>
-#ifndef DEBUG
-# include <stdlib.h> /* for abort() */
-#endif
 
 /* moved common code to library file */
 #include "libreswan/passert.h"
@@ -41,9 +38,6 @@ extern void libreswan_loglog(int mess_no, const char *message,
 extern void libreswan_exit_log(const char *message, ...) PRINTF_LIKE(1);
 extern void libreswan_log_abort(const char *file_str,
 				int line_no) NEVER_RETURNS;
-
-#ifdef DEBUG
-
 #include "constants.h"
 
 extern lset_t base_debugging;   /* bits selecting what to report */
@@ -65,21 +59,6 @@ extern void tool_init_log(void);
 extern void tool_close_log(void);
 
 #define lsw_abort()     libreswan_log_abort(__FILE__, __LINE__)
-
-#else /*!DEBUG*/
-
-#define DBG(cond, action)       do { } while (0)        /* do nothing */
-#define DBGP(...) (0)
-#define exit_tool(r) exit(r)
-extern void (exit_tool)(int) NEVER_RETURNS;	/* if library is compiled with DEBUG but caller isn't, this is needed */
-#define libreswan_DBG_dump(...) do { } while (0)
-#define DBG_log(...) do { } while (0)
-extern void tool_init_log(void);
-extern void tool_close_log(void);
-
-#define lsw_abort()     abort()
-
-#endif /*!DEBUG*/
 
 #define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
 #define DBG_cond_dump_chunk(cond, label, ch) DBG(cond, DBG_dump_chunk(label, \

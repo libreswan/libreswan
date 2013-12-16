@@ -4,7 +4,7 @@
 # Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
 # Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
 # Copyright (C) 2009  Avesh Agarwal <avagarwa@redhat.com>
-# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -55,9 +55,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 
 # -DKLIPS enables interface to Kernel LINUX IPsec code
 # -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code
-# -DDEBUG enables debugging code, allowing for debugging output
-#    (note that output must also be selected at runtime, so it is
-#    reasonable to always define this)
 # -DLEAK_DETECTIVE enables crude code to find memory allocation leaks.
 # -DOLD_RESOLVER.  At some point, the resolver interface changed.
 #    This macro enables Pluto support for the old interface.
@@ -223,7 +220,6 @@ DEFINES = $(EXTRA_DEFINES) \
 	${EXTRA_CRYPTO_DEFS} \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	-DBUILDER=\"${BUILDER}\" \
-	-DDEBUG \
 	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5\
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \

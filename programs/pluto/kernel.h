@@ -305,12 +305,8 @@ struct bare_shunt {
 };
 extern void show_shunt_status(void);
 
-#ifdef DEBUG
 extern void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs);
 #define DBG_bare_shunt(op, bs) DBG_bare_shunt_log(op, bs)
-#else /* !DEBUG */
-#define DBG_bare_shunt(op, bs) {}
-#endif /* !DEBUG */
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 				   const ip_subnet *his,

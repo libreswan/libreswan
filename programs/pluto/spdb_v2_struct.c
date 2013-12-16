@@ -66,7 +66,7 @@
 bool ikev2_out_attr(int type,
 		    unsigned long val,
 		    struct_desc *attr_desc,
-		    enum_names **attr_val_descs USED_BY_DEBUG,
+		    enum_names **attr_val_descs,
 		    pb_stream *pbs)
 {
 	struct ikev2_trans_attr attr;

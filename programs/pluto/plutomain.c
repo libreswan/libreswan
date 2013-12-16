@@ -116,9 +116,7 @@ bool fork_desired = TRUE;
 static char *ipsecconf = NULL;
 static char *ipsecdir = NULL;
 
-#ifdef DEBUG
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
-#endif
 
 /** usage - print help messages
  *
@@ -171,7 +169,6 @@ static void usage(const char *mess)
 		" \\\n\t"
 		"[--secctx_attr_value <number>]"
 #endif
-#ifdef DEBUG
 		" \\\n\t"
 		"[--debug-none]"
 		" [--debug-all]"
@@ -192,7 +189,6 @@ static void usage(const char *mess)
 		" [--debug-dpd]"
 		" [ --debug-private]"
 		" [ --debug-pfkey]"
-#endif
 		" [ --debug-nat-t]"
 		" \\\n\t"
 		"[--nat_traversal] [--keep_alive <delay_sec>]"
@@ -469,9 +465,7 @@ int main(int argc, char **argv)
 	capng_apply(CAPNG_SELECT_BOTH);
 #endif
 
-#ifdef DEBUG
 	libreswan_passert_fail = passert_fail;
-#endif
 
 	if (getenv("PLUTO_WAIT_FOR_GDB"))
 		sleep(120);
@@ -531,7 +525,6 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 			{ "secctx_attr_value", required_argument, NULL, 'w' },
 #endif
-#ifdef DEBUG
 			{ "debug-none", no_argument, NULL, 'N' },
 			{ "debug-all", no_argument, NULL, 'A' },
 
@@ -596,7 +589,6 @@ int main(int argc, char **argv)
 			  IMPAIR_RETRANSMITS + DBG_OFFSET },
 			{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
 			  IMPAIR_SEND_BOGUS_ISAKMP_FLAG + DBG_OFFSET },
-#endif
 			{ 0, 0, 0, 0 }
 		};
 		/* Note: we don't like the way short options get parsed
@@ -851,7 +843,6 @@ int main(int argc, char **argv)
 			pluto_adns_option = optarg;
 			continue;
 
-#ifdef DEBUG
 		case 'N': /* --debug-none */
 			base_debugging = DBG_NONE;
 			continue;
@@ -859,7 +850,6 @@ int main(int argc, char **argv)
 		case 'A': /* --debug-all */
 			base_debugging = DBG_ALL;
 			continue;
-#endif
 
 		case 'P': /* --perpeerlogbase */
 			base_perpeer_logdir = optarg;
@@ -882,11 +872,9 @@ int main(int argc, char **argv)
 		case '4': /* --disable_port_floating */
 			nat_t_spf = FALSE;
 			continue;
-#ifdef DEBUG
 		case '5': /* --debug-nat_t */
 			base_debugging |= DBG_NATT;
 			continue;
-#endif
 		case '6': /* --virtual_private */
 			virtual_private = optarg;
 			continue;
@@ -969,9 +957,7 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 			secctx_attr_value = cfg->setup.options[KBF_SECCTX];
 #endif
-#ifdef DEBUG
 			base_debugging = cfg->setup.options[KBF_PLUTODEBUG];
-#endif
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 			if (protostack == NULL || *protostack == 0) {
 				kern_interface = USE_NETKEY;
@@ -1001,13 +987,11 @@ int main(int argc, char **argv)
 		}
 
 		default:
-#ifdef DEBUG
 			if (c >= DBG_OFFSET) {
 				base_debugging |= c - DBG_OFFSET;
 				continue;
 			}
 #       undef DBG_OFFSET
-#endif
 			bad_case(c);
 		}
 		break;
@@ -1040,12 +1024,10 @@ int main(int argc, char **argv)
 	if (!log_to_stderr_desired)
 		log_to_stderr = FALSE;
 
-#ifdef DEBUG
 #if 0
 	if (kernel_ops->set_debug)
 		(*kernel_ops->set_debug)(cur_debugging, DBG_log, DBG_log);
 
-#endif
 #endif
 
 	/** create control socket.

@@ -2,6 +2,7 @@
  * Copyright (C) 2000-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1277,10 +1278,10 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 /****************************************************************/
 
 static err_t build_dns_name(char name_buf[NS_MAXDNAME + 2],
-			    unsigned long serial USED_BY_DEBUG,
+			    unsigned long serial,
 			    const struct id *id,
-			    const char *typename USED_BY_DEBUG,
-			    const char *gwname USED_BY_DEBUG)
+			    const char *typename,
+			    const char *gwname)
 {
 	/* note: all end in "." to suppress relative searches */
 	id = resolve_myid(id);
@@ -1291,7 +1292,7 @@ static err_t build_dns_name(char name_buf[NS_MAXDNAME + 2],
 		 *      generate the correct format
 		 */
 		unsigned char *b;
-		size_t bl USED_BY_DEBUG = addrbytesptr(&id->ip_addr, &b);
+		size_t bl = addrbytesptr(&id->ip_addr, &b);
 
 		passert(bl == 4);
 		snprintf(name_buf, NS_MAXDNAME + 2,
@@ -1522,11 +1523,7 @@ err_t start_adns_query(const struct id *id,     /* domain to query */
 	cr->keys_from_dns = NULL;
 #endif  /* USE_KEYRR */
 
-#ifdef DEBUG
 	cr->debugging = cur_debugging;
-#else
-	cr->debugging = LEMPTY;
-#endif
 
 	idtoa(&cr->sgw_id, gwidb, sizeof(gwidb));
 

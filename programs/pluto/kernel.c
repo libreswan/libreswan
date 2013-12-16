@@ -102,7 +102,6 @@ static int num_ipsec_eroute = 0;
 
 static void free_bare_shunt(struct bare_shunt **pp);
 
-#ifdef DEBUG
 void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs)
 {
 	DBG(DBG_KERNEL,
@@ -125,7 +124,6 @@ void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs)
 			    sat, prio, (bs)->why);
 	    });
 }
-#endif
 
 void record_and_initiate_opportunistic(const ip_subnet *ours,
 				       const ip_subnet *his,
@@ -888,9 +886,9 @@ static bool raw_eroute(const ip_address *this_host,
 		       time_t use_lifetime,
 		       unsigned long sa_priority,
 		       enum pluto_sadb_operations op,
-		       const char *opname USED_BY_DEBUG
+		       const char *opname, 
 #ifdef HAVE_LABELED_IPSEC
-		       , char *policy_label
+		       char *policy_label
 #endif
 		       )
 {
@@ -1187,7 +1185,7 @@ bool eroute_connection(struct spd_route *sr,
 
 /* assign a bare hold to a connection */
 
-bool assign_hold(struct connection *c USED_BY_DEBUG,
+bool assign_hold(struct connection *c,
 		 struct spd_route *sr,
 		 int transport_proto,
 		 const ip_address *src, const ip_address *dst)
@@ -2094,13 +2092,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (new_refhim != IPSEC_SAREF_NULL)
 		st->st_refhim = new_refhim;
 
-#ifdef DEBUG
 	/* if the impaired is set, pretend this fails */
 	if (st->st_connection->extra_debugging & IMPAIR_SA_CREATION) {
 		DBG_log("Impair SA creation is set, pretending to fail");
 		goto fail;
 	}
-#endif
 	return TRUE;
 
 fail:

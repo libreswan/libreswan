@@ -695,11 +695,9 @@ logerr:
 				/* if we were compiled with debugging, but we haven't already
 				 * dumped the KLIPS command, do so.
 				 */
-#ifdef DEBUG
 				if ((cur_debugging & DBG_KERNEL) == 0)
 					DBG_dump(NULL, (void *) pfkey_msg,
 						 len);
-#endif
 			} else {
 				/* Check response from KLIPS.
 				 * It ought to be an echo, perhaps with additional info.
@@ -1868,13 +1866,11 @@ void pfkey_set_debug(int cur_debug,
 		     libreswan_keying_debug_func_t debug_func,
 		     libreswan_keying_debug_func_t error_func)
 {
-#ifdef DEBUG
 	pfkey_lib_debug = (cur_debug & DBG_PFKEY ?
 			   PF_KEY_DEBUG_PARSE_MAX : PF_KEY_DEBUG_PARSE_NONE);
 
 	pfkey_debug_func = debug_func;
 	pfkey_error_func = error_func;
-#endif
 }
 
 void pfkey_remove_orphaned_holds(int transport_proto,

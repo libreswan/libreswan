@@ -191,30 +191,12 @@ extern void zmemzero OF((Bytef * dest, uInt len));
 #endif
 
 /* Diagnostic functions */
-#ifdef DEBUG
-#  include <stdio.h>
-extern int z_verbose;
-extern void z_error    OF((char *m));
-#  define Assert(cond, msg) { if (!(cond)) \
-				      z_error(msg); }
-#  define Trace(x) { if (z_verbose >= 0) \
-			     fprintf x; }
-#  define Tracev(x) { if (z_verbose > 0) \
-			      fprintf x; }
-#  define Tracevv(x) { if (z_verbose > 1) \
-			       fprintf x; }
-#  define Tracec(c, x) { if (z_verbose > 0 && (c)) \
-				 fprintf x; }
-#  define Tracecv(c, x) { if (z_verbose > 1 && (c)) \
-				  fprintf x; }
-#else
-#  define Assert(cond, msg)
-#  define Trace(x)
-#  define Tracev(x)
-#  define Tracevv(x)
-#  define Tracec(c, x)
-#  define Tracecv(c, x)
-#endif
+#define Assert(cond, msg)
+#define Trace(x)
+#define Tracev(x)
+#define Tracevv(x)
+#define Tracec(c, x)
+#define Tracecv(c, x)
 
 typedef uLong (ZEXPORT * check_func) OF ((uLong check, const Bytef * buf,
 					  uInt len));

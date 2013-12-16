@@ -6,7 +6,7 @@
  * Copyright (C) 1998-2004  D. Hugh Redelmeier.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -90,7 +90,6 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
 static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak,
 				     prompt_pass_t *pass);
 
-#ifdef DEBUG
 static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 {
 	const struct fld *p;
@@ -128,7 +127,6 @@ static void RSA_show_public_key(struct RSA_public_key *k)
 	passert(offsetof(struct RSA_private_key, pub) == 0);
 	RSA_show_key_fields((struct RSA_private_key *)k, 2);
 }
-#endif
 
 static const char *RSA_public_key_sanity(struct RSA_private_key *k)
 {
@@ -260,9 +258,7 @@ struct pubkey *allocate_RSA_public_key(const cert_t cert)
 
 	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
 
-#ifdef DEBUG
 	DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
-#endif
 
 	pk->alg = PUBKEY_ALG_RSA;
 	pk->id  = empty_id;
@@ -1466,9 +1462,7 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 
 	keyblobtoid(pubkey->ptr, pubkey->len, rsa->keyid, sizeof(rsa->keyid));
 
-#ifdef DEBUG
 	DBG(DBG_PRIVATE, RSA_show_public_key(rsa));
-#endif
 
 	rsa->k = mpz_sizeinbase(&rsa->n, 2);                    /* size in bits, for a start */
 	rsa->k = (rsa->k + BITS_PER_BYTE - 1) / BITS_PER_BYTE;  /* now octets */

@@ -491,7 +491,6 @@ static void cannot_oppo(struct connection *c,
 				      nc->newest_ipsec_sa,
 				      ocb, pcb));
 
-#ifdef DEBUG
 		if (DBGP(DBG_OPPO | DBG_CONTROLMORE)) {
 			char state_buf[LOG_WIDTH];
 			char state_buf2[LOG_WIDTH];
@@ -502,7 +501,6 @@ static void cannot_oppo(struct connection *c,
 			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
 			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
 		}
-#endif          /* DEBUG */
 
 		if (!route_and_eroute(c, shunt_spd, st)) {
 			whack_log(RC_OPPOFAILURE,
@@ -592,7 +590,6 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 					   cr->b.transport_proto);
 	}
 
-#ifdef DEBUG
 	/* if we're going to ignore the error, at least note it in debugging log */
 	if (cr->b.failure_ok && ugh != NULL) {
 		DBG(DBG_CONTROL | DBG_DNS,
@@ -607,7 +604,6 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 				    cr->b.want, ocb, pcb, ugh);
 		    });
 	}
-#endif
 
 	if (!cr->b.failure_ok && ugh != NULL) {
 		c = find_connection_for_clients(NULL, &cr->b.our_client,

@@ -209,7 +209,6 @@ static void help(void)
 		"myid: whack"
 		" --myid <id>"
 		"\n\n"
-#ifdef DEBUG
 		"debug: whack [--name <connection_name>]"
 		" \\\n   "
 		" [--debug-none]"
@@ -234,7 +233,6 @@ static void help(void)
 		" [--debug-private]"
 		"\n\n"
 		"testcases: [--whackrecord file] [--whackstoprecord]\n"
-#endif
 		"listen: whack"
 		" (--listen | --unlisten)"
 		"\n\n"
@@ -500,7 +498,6 @@ enum option_enums {
 	CD_ESP
 #   define CD_LAST CD_ESP       /* last connection description */
 
-#ifdef DEBUG                    /* must be last so others are less than 32 to fit in lset_t */
 #   define DBGOPT_FIRST DBGOPT_NONE
 	,
 	/* NOTE: these definitions must match DBG_* and IMPAIR_* in constants.h */
@@ -543,7 +540,6 @@ enum option_enums {
 	DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG,   /* cause pluto to never retransmit packets */
 
 #   define DBGOPT_LAST DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG
-#endif
 
 };
 
@@ -745,7 +741,6 @@ static const struct option long_opts[] = {
 	{ "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO },
 	{ "policylabel", required_argument, NULL, CD_POLICY_LABEL + OO },
 #endif
-#ifdef DEBUG
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
 	{ "debug-raw", no_argument, NULL, DBGOPT_RAW + OO },
@@ -792,7 +787,6 @@ static const struct option long_opts[] = {
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +
 	  OO },
-#endif
 #   undef OO
 	{ 0, 0, 0, 0 }
 };
@@ -925,20 +919,14 @@ int main(int argc, char **argv)
 	const char *ugh;
 
 	/* check division of numbering space */
-#ifdef DEBUG
 	assert(OPTION_OFFSET + DBGOPT_LAST < NUMERIC_ARG);
-#else
-	assert(OPTION_OFFSET + CD_LAST < NUMERIC_ARG);
-#endif
 	assert(OPT_LAST1 - OPT_FIRST < (sizeof opts_seen * BITS_PER_BYTE) - 1);
 	assert(OPT_LAST2 - OPT_FIRST2 <
 	       (sizeof opts2_seen * BITS_PER_BYTE) - 1);
 	assert(LST_LAST - LST_FIRST < (sizeof lst_seen * BITS_PER_BYTE) - 1);
 	assert(END_LAST - END_FIRST < (sizeof end_seen * BITS_PER_BYTE) - 1);
 	assert(CD_LAST - CD_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
-#ifdef DEBUG    /* must be last so others are less than (sizeof cd_seen * BITS_PER_BYTE) to fit in lset_t */
 	assert(DBGOPT_LAST - DBGOPT_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
-#endif
 	/* check that POLICY bit assignment matches with CD_ */
 	assert(LELEM(CD_DONT_REKEY - CD_POLICY_FIRST) == POLICY_DONT_REKEY);
 
@@ -1046,14 +1034,12 @@ int main(int argc, char **argv)
 				      long_opts[long_index].name);
 			lst_seen |= f;
 		}
-#ifdef DEBUG
 		else if (DBGOPT_FIRST <= c && c <= DBGOPT_LAST) {
 			/* DBGOPT_* options are treated separately to reduce
 			 * potential members of opts_seen.
 			 */
 			msg.whack_options = TRUE;
 		}
-#endif
 		else if (END_FIRST <= c && c <= END_LAST) {
 			/* END_* options are added to end_seen.
 			 * Reject repeated options (unless later code intervenes).
@@ -1782,7 +1768,6 @@ int main(int argc, char **argv)
 			msg.sa_reqid = opt_whole;
 			continue;
 
-#ifdef DEBUG
 		case OPT_WHACKRECORD:
 			msg.string1 = strdup(optarg);
 			msg.whack_options = TRUE;
@@ -1793,9 +1778,7 @@ int main(int argc, char **argv)
 			msg.whack_options = TRUE;
 			msg.opt_set = WHACK_STOPWHACKRECORD;
 			break;
-#endif
 
-#ifdef DEBUG
 		case DBGOPT_NONE: /* --debug-none */
 			msg.debugging = DBG_NONE;
 			continue;
@@ -1834,7 +1817,6 @@ int main(int argc, char **argv)
 		case DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG:      /* --impair-send-bogus-isakmp-flag */
 			msg.debugging |= LELEM(c - DBGOPT_RAW);
 			continue;
-#endif
 		default:
 			assert(FALSE); /* unknown return value */
 		}

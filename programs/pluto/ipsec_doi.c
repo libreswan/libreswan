@@ -697,9 +697,7 @@ void initialize_new_state(struct state *st,
 
 	insert_state(st); /* needs cookies, connection */
 
-#ifdef DEBUG
 	extra_debugging(c);
-#endif
 }
 
 void send_delete(struct state *st)

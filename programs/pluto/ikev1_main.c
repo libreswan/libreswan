@@ -276,15 +276,12 @@ stf_status main_outI1(int whack_sock,
 		}
 	}
 
-#ifdef DEBUG
 	/* if we are not 0 then something went very wrong above */
 	if (numvidtosend != 0)
 		libreswan_log(
 			"payload alignment problem please check the code in "
 			"main_inR1_outR2 (num=%d)",
 			numvidtosend);
-
-#endif
 
 	close_message(&md.rbody, st);
 	close_output_pbs(&reply_stream);
@@ -1075,7 +1072,6 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 			&md->rbody, ISAKMP_NEXT_NONCE))
 		return STF_INTERNAL_ERROR;
 
-#ifdef DEBUG
 	/* Ni out */
 	if (!ship_nonce(&st->st_ni, r, &md->rbody,
 				(cur_debugging &
@@ -1101,12 +1097,6 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 
 		close_output_pbs(&vid_pbs);
 	}
-#else
-	/* Ni out */
-	if (!ship_nonce(&st->st_ni, r, &md->rbody, ISAKMP_NEXT_NONE, "Ni"))
-		return STF_INTERNAL_ERROR;
-
-#endif
 
 	DBG(DBG_NATT, DBG_log("NAT-T checking st_nat_traversal"));
 	if (st->hidden_variables.st_nat_traversal) {
@@ -1307,7 +1297,6 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		return STF_INTERNAL_ERROR;
 	}
 
-#ifdef DEBUG
 	{
 		/* Nr out */
 		int next_payload;
@@ -1342,15 +1331,6 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 			close_output_pbs(&vid_pbs);
 		}
 	}
-#else
-	/* Nr out */
-	if (!ship_nonce(&st->st_nr, r,
-				&md->rbody,
-				(send_cr) ? ISAKMP_NEXT_CR : ISAKMP_NEXT_NONE,
-				"Nr"))
-		return STF_INTERNAL_ERROR;
-
-#endif
 
 	/* CR out */
 	if (send_cr) {
