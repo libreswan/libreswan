@@ -48,22 +48,25 @@ struct sadb_alg esp_ealg[K_SADB_EALG_MAX + 1];
 int esp_ealg_num = 0;
 int esp_aalg_num = 0;
 
-static struct sadb_alg *sadb_alg_ptr(int satype, int exttype, int alg_id,
-				     int rw)
+static struct sadb_alg *sadb_alg_ptr(unsigned satype, unsigned exttype, unsigned alg_id,
+				     bool rw)
 {
 	struct sadb_alg *alg_p = NULL;
 
 	switch (exttype) {
 	case SADB_EXT_SUPPORTED_AUTH:
-		if (alg_id <= SADB_AALG_MAX)
-			break;
-		goto fail;
+		/* ??? should this be a passert? */
+		if (alg_id > SADB_AALG_MAX)
+			return NULL;	/* fail */
+		break;
 	case SADB_EXT_SUPPORTED_ENCRYPT:
-		if (alg_id <= K_SADB_EALG_MAX)
-			break;
-		goto fail;
+		/* ??? should this be a passert? */
+		if (alg_id > K_SADB_EALG_MAX)
+			return NULL;	/* fail */
+		break;
 	default:
-		goto fail;
+		/* ??? should this be a passert? */
+		return NULL;	/* fail */
 	}
 
 	switch (satype) {
@@ -71,23 +74,26 @@ static struct sadb_alg *sadb_alg_ptr(int satype, int exttype, int alg_id,
 	case SADB_SATYPE_ESP:
 		alg_p = (exttype == SADB_EXT_SUPPORTED_ENCRYPT) ?
 			&esp_ealg[alg_id] : &esp_aalg[alg_id];
+
 		/* get for write: increment elem count */
 		if (rw) {
-			(exttype == SADB_EXT_SUPPORTED_ENCRYPT) ?
-			esp_ealg_num++ : esp_aalg_num++;
+			if (exttype == SADB_EXT_SUPPORTED_ENCRYPT)
+				esp_ealg_num++;
+			else
+				esp_aalg_num++;
 		}
-		break;
+		return alg_p;
+
 	default:
-		goto fail;
+		/* ??? should this be a passert? */
+		return NULL;	/* fail */
 	}
-fail:
-	return alg_p;
 }
 
-const struct sadb_alg *kernel_alg_sadb_alg_get(int satype, int exttype,
-					       int alg_id)
+const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
+					       unsigned alg_id)
 {
-	return sadb_alg_ptr(satype, exttype, alg_id, 0);
+	return sadb_alg_ptr(satype, exttype, alg_id, FALSE);
 }
 /*
  *      Forget previous registration
@@ -107,17 +113,18 @@ static void kernel_alg_init(void)
 /* used by kernel_netlink.c and kernel_bsdkame.c */
 int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 {
-	struct sadb_alg *alg_p = NULL;
-	int alg_id = sadb_alg->sadb_alg_id;
+	struct sadb_alg *alg_p;
+	uint8_t alg_id = sadb_alg->sadb_alg_id;
 
 	DBG(DBG_KERNEL, DBG_log("kernel_alg_add():"
 			       "satype=%d, exttype=%d, alg_id=%d(%s)",
-			       satype, exttype, sadb_alg->sadb_alg_id,
-				enum_name(&esp_transformid_names, sadb_alg->sadb_alg_id)));
-	if (!(alg_p = sadb_alg_ptr(satype, exttype, alg_id, 1))) {
-		DBG_log(
-			"kernel_alg_add(%d,%d,%d) fails because alg combo is invalid\n",
-			satype, exttype, sadb_alg->sadb_alg_id);
+			       satype, exttype, alg_id,
+				enum_name(&esp_transformid_names, alg_id)));
+	
+	alg_p = sadb_alg_ptr(satype, exttype, alg_id, TRUE);
+	if (alg_p == NULL) {
+		DBG_log("kernel_alg_add(%d,%d,%d) fails because alg combo is invalid",
+			satype, exttype, alg_id);
 		return -1;
 	}
 
@@ -127,12 +134,12 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	 */
 
 	/*      This logic "mimics" KLIPS: first algo implementation will be used */
-	if (alg_p->sadb_alg_id) {
+	if (alg_p->sadb_alg_id != 0) {
 		DBG(DBG_KERNEL,
 		    DBG_log("kernel_alg_add(): discarding already setup "
 			    "satype=%d, exttype=%d, alg_id=%d",
 			    satype, exttype,
-			    sadb_alg->sadb_alg_id));
+			    alg_id));
 		return 0;
 	}
 	*alg_p = *sadb_alg;
