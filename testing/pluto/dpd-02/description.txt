@@ -7,7 +7,7 @@ not send out R_U_THERE requests.
 Order of Operations:
 
 1) East sets up for tunnel with DPD support.
-2) West initiates tunnel to east, but west does not have DPD support.
+2) West initiates tunnel to east, but west does not have DPD enabled.
 3) West sends icmp packets to east, which should work.
 
 

@@ -28,6 +28,9 @@ initdone
 east #
  ipsec look
 east NOW
+192.0.2.0/24       -> 192.1.2.45/32      => %trap
+192.1.2.23/32      -> 192.0.1.0/24       => %trap
+192.1.2.23/32      -> 192.1.2.45/32      => %trap
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 

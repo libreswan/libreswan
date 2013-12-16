@@ -443,9 +443,9 @@ umlplutotest	ike-algo-02		good
 
 # Tests below require testing infrastructure with netkey support
 kvmplutotest    algo-pluto-07			good
-umlplutotest    netkey-pluto-01			good
-umlplutotest    netkey-pluto-02			good
-umlplutotest    netkey-pluto-03-sourceip        good
+kvmplutotest    netkey-pluto-01			good
+kvmplutotest    netkey-pluto-02			good
+kvmplutotest    netkey-pluto-02			good
 umlplutotest    netkey-pluto-04			good
 umlplutotest    netkey-pluto-05			good
 umlplutotest    netkey-psk-pluto-06		good
