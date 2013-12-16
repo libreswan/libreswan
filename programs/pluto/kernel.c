@@ -886,9 +886,9 @@ static bool raw_eroute(const ip_address *this_host,
 		       time_t use_lifetime,
 		       unsigned long sa_priority,
 		       enum pluto_sadb_operations op,
-		       const char *opname, 
+		       const char *opname
 #ifdef HAVE_LABELED_IPSEC
-		       char *policy_label
+		       , char *policy_label
 #endif
 		       )
 {
@@ -1039,8 +1039,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			/* is there already a broad host-to-host bare shunt? */
 			if (bs_pp == NULL) {
 				DBG(DBG_KERNEL,
-				    DBG_log(
-					    "replacing broad host-to-host bare shunt"));
+				    DBG_log("replacing broad host-to-host bare shunt"));
 				if (raw_eroute(null_host, &this_broad_client,
 					       null_host, &that_broad_client,
 					       htonl(shunt_spi), SA_INT,
@@ -2141,7 +2140,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY,
 				  c->spd.this.protocol,
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
-				  null_proto_info, 0, c->sa_priority, 
+				  null_proto_info, 0, c->sa_priority,
 				  ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
 				  , c->policy_label
