@@ -417,6 +417,8 @@ kvmplutotest    algo-pluto-03          good
 kvmplutotest    algo-pluto-04          good
 umlplutotest    algo-pluto-05          good
 umlplutotest    algo-pluto-06          good
+umlplutotest    algo-pluto-07          good
+kvmplutotest    algo-pluto-08          good
 
 kvmplutotest    algo-pluto-09          good
 #
