@@ -484,6 +484,7 @@ static void confwrite_conn(FILE *out,
 			cwpb("compress", POLICY_COMPRESS);
 
 			cwpb("pfs", POLICY_PFS);
+			cwpb("anonymous", POLICY_PFS);
 			cwpbf("ikepad", POLICY_NO_IKEPAD);
 			/* ??? the following used to write out "rekey=no  #duplicate?" */
 			cwpbf("rekey", POLICY_DONT_REKEY);

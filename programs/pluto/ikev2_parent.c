@@ -1398,7 +1398,9 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	a.isaa_np = np;
 
-	if (c->policy & POLICY_RSASIG) {
+	if (c->policy & POLICY_ANONYMOUS) {
+		a.isaa_type = IKEv2_AUTH_ANONYMOUS;
+	} else if (c->policy & POLICY_RSASIG) {
 		a.isaa_type = IKEv2_AUTH_RSA;
 	} else if (c->policy & POLICY_PSK) {
 		a.isaa_type = IKEv2_AUTH_PSK;
@@ -1420,6 +1422,9 @@ static stf_status ikev2_send_auth(struct connection *c,
 	} else if (c->policy & POLICY_PSK) {
 		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs))
 			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+
+	} else if (c->policy & POLICY_ANONYMOUS) {
+		libreswan_log("Anonymous connection do we need to do work?");
 	}
 
 	close_output_pbs(&a_pbs);
@@ -2245,6 +2250,10 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		}
 		break;
 	}
+
+	case IKEv2_AUTH_ANONYMOUS:
+		libreswan_log("Anonymous authentication method succeeded per definition - do we need to do work?");
+		return STF_OK;
 
 	default:
 		libreswan_log("authentication method: %s not supported",
