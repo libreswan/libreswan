@@ -1027,6 +1027,8 @@ enum ikev2_auth_method {
 	IKEv2_AUTH_P384 = 10,
 	IKEv2_AUTH_P521 = 11,
 	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
+	/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-12 */
+	IKEv2_AUTH_ANONYMOUS = 201, /* private use for now */
 };
 
 /*
