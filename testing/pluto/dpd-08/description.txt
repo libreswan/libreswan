@@ -1,6 +1,10 @@
 This tests the RFC3706 DPD implementation when east crashes.
 
-It is like dpd-01, except west sends a ipsec whack --crash
+It is like dpd-01, except west ssh'es into east to crash pluto.
+The IPsec SA still survives, because it detects traffic flows
+through the host-host tunnel (the DPD probe and ICMP back are
+encrypted). Then we ssh into east again to clear the eroute,
+breaking phase2, and DPD should declare the peer dead.
 
 dpd should hit, and we should see an infinite amount of keying
 attempts - confirming rhbz#848132 is fixed.
