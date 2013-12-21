@@ -701,7 +701,6 @@ static stf_status informational(struct msg_digest *md)
 					      "redirected remote end info:", n_pbs->cur + pbs_left(
 						      n_pbs) - 4, 4);
 
-#ifdef DEBUG
 				/*Current remote peer info*/
 				{
 
@@ -865,7 +864,7 @@ static stf_status informational(struct msg_digest *md)
 					}
 
 				}
-#endif
+
 				/*storing old address for comparison purposes*/
 				old_addr = tmp_c->spd.that.host_addr;
 
@@ -985,7 +984,6 @@ static stf_status informational(struct msg_digest *md)
 			}
 
 		default:
-#ifdef DEBUG
 			if (st != NULL &&
 			    st->st_connection->extra_debugging &
 			    IMPAIR_DIE_ONINFO) {
@@ -996,7 +994,6 @@ static stf_status informational(struct msg_digest *md)
 						 n->isan_type));
 				return STF_FATAL;
 			}
-#endif
 			loglog(RC_LOG_SERIOUS,
 			       "received and ignored informational message for unknown state");
 			return STF_IGNORE;
@@ -2206,7 +2203,6 @@ void process_packet_tail(struct msg_digest **mdp)
 					       p->payload.notification.isan_length);
 					DBG_dump_pbs(&p->pbs);
 				}
-#ifdef DEBUG
 				if (st != NULL &&
 				    st->st_connection->extra_debugging &
 				    IMPAIR_DIE_ONINFO) {
@@ -2216,7 +2212,6 @@ void process_packet_tail(struct msg_digest **mdp)
 								     STF_FATAL);
 					return;
 				}
-#endif
 			}
 			DBG_cond_dump(DBG_PARSING, "info:", p->pbs.cur, pbs_left(
 					      &p->pbs));

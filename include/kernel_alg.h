@@ -50,8 +50,8 @@ extern int kernel_alg_esp_auth_keylen(int auth);
 extern int kernel_alg_proc_read(void);
 
 /* get sadb_alg for passed args */
-extern const struct sadb_alg * kernel_alg_sadb_alg_get(int satype, int exttype,
-						       int alg_id);
+extern const struct sadb_alg * kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
+						       unsigned alg_id);
 
 /* returns pointer to static buffer -- NOT RE-ENTRANT */
 extern struct esp_info *kernel_alg_esp_info(u_int8_t transid,

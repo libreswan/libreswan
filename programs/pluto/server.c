@@ -430,10 +430,8 @@ void show_ifaces_status(void)
 
 void show_debug_status(void)
 {
-#ifdef DEBUG
 	whack_log(RC_COMMENT, "debug %s",
 		  bitnamesof(debug_bit_names, cur_debugging));
-#endif
 }
 
 static volatile sig_atomic_t sighupflag = FALSE;
@@ -1036,10 +1034,8 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					 */
 					if ((packet_len == 1) &&
 					    (buffer[0] == 0xff)
-#ifdef DEBUG
 					    && ((cur_debugging & DBG_NATT) ==
 						0)
-#endif
 					    ) {
 						/* don't log NAT-T keepalive related errors unless NATT debug is
 						 * enabled
@@ -1183,7 +1179,6 @@ static bool send_packet(struct state *st, const char *where,
 		return FALSE;
 	}
 
-#ifdef DEBUG
 	/* Send a duplicate packet when this impair is enabled - used for testing */
 	if (DBGP(IMPAIR_JACOB_TWO_TWO)) {
 		/* sleep for half a second, and second another packet */
@@ -1215,7 +1210,6 @@ static bool send_packet(struct state *st, const char *where,
 			return FALSE;
 		}
 	}
-#endif
 	return TRUE;
 }
 

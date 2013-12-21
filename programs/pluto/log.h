@@ -81,30 +81,15 @@ extern void passert_fail(const char *pred_str,
 /* for pushing state to other subsystems */
 extern void log_state(struct state *st, enum state_kind state);
 
-#ifdef DEBUG
-
 extern void extra_debugging(const struct connection *c);
 
-# define reset_debugging() { set_debugging(base_debugging); }
+#define reset_debugging() { set_debugging(base_debugging); }
 
-# define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
+#define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
 			      && cur_state == NULL \
 			      && cur_connection == NULL \
 			      && cur_from == NULL \
 			      && cur_debugging == base_debugging)
-
-#else /*!DEBUG*/
-
-# define extra_debugging(c)  { }
-
-# define reset_debugging() { }
-
-# define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
-			      && cur_state == NULL \
-			      && cur_connection == NULL \
-			      && cur_from == NULL)
-
-#endif /*!DEBUG*/
 
 #define reset_globals() { \
 		whack_log_fd = NULL_FD; \

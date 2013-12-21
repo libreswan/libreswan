@@ -320,10 +320,13 @@ static void show_confkey(struct secret *s,
 		switch (pks->kind) {
 		case PPK_PSK:
 			enumstr = "PPK_PSK";
+			break;
 		case PPK_PIN:
 			enumstr = "PPK_PIN";
+			break;
 		case PPK_XAUTH:
 			enumstr = "PPK_XAUTH";
+			break;
 		default:
 			sscanf(enumstr, "UNKNOWN (%d)", (int *)pks->kind);
 		}

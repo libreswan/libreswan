@@ -1,7 +1,7 @@
 # Libreswan library
 # Copyright (C) 1998-2001  Henry Spencer.
 # Copyright (C) 2003, 2004 Xelerance Corporation
-# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -39,7 +39,6 @@ INCLUDES=-I. -I${KLIPSSRCDIR} -I${KLIPSD} -I${LIBRESWANSRCDIR}
 INCLUDES+=-I${LIBRESWANSRCDIR}/include 
 
 CFLAGS+=${PORTINCLUDE} ${INCLUDES} 
-CFLAGS+=-DDEBUG
 CFLAGS+= $(USERCOMPILE) $(NSSFLAGS)
 CFLAGS+= ${WERROR}
 

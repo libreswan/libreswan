@@ -457,19 +457,18 @@ static int validate_end(struct ub_ctx *dnsctx,
 			if (end->iface)
 				free(end->iface);
 			end->iface = xstrdup(end->strings[KSCF_IP] + 1);
-			if (starter_iface_find(end->iface, family,
-					       &(end->addr),
-					       &(end->nexthop)) == -1)
+			if (!starter_iface_find(end->iface, family,
+					       &end->addr,
+					       &end->nexthop))
 				conn_st->state = STATE_INVALID;
 			/* not numeric, so set the type to the iface type */
 			end->addrtype = KH_IFACE;
 			break;
 		}
 
-		er =
-			ttoaddr_num(end->strings[KNCF_IP], 0, family,
+		er = ttoaddr_num(end->strings[KNCF_IP], 0, family,
 				    &(end->addr));
-		if (er) {
+		if (er != NULL) {
 			/* not numeric, so set the type to the string type */
 			end->addrtype = KH_IPHOSTNAME;
 		}
@@ -1186,6 +1185,8 @@ static int load_conn(struct ub_ctx *dnsctx,
 
 	KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KBF_PFS,  POLICY_PFS);
+
+	KW_POLICY_FLAG(KBF_ANONYMOUS,  POLICY_ANONYMOUS);
 
 	/* reset authby flags */
 	if (conn->options_set[KBF_AUTHBY]) {

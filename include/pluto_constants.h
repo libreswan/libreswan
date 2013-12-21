@@ -176,7 +176,6 @@ typedef enum {
  * NOTE: changes here must be done in concert with changes to DBGOPT_*
  * in whack.c.  A change to WHACK_MAGIC in whack.h will be required too.
  */
-#ifdef DEBUG
 
 #define DBG_RAW         LELEM(0)                                /* raw packet I/O */
 #define DBG_CRYPT       LELEM(1)                                /* encryption/decryption of messages */
@@ -214,7 +213,6 @@ typedef enum {
 
 #define DBG_NONE        0                                       /* no options on, including impairments */
 #define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all logging options on EXCEPT DBG_PRIVATE and DBG_WHACKWATCH */
-#endif
 
 /* State of exchanges
  *
@@ -545,6 +543,7 @@ enum pluto_policy {
 	POLICY_IKE_FRAG_FORCE = LELEM(31),
 	POLICY_IKE_FRAG_MASK = POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE,
 	POLICY_NO_IKEPAD      = LELEM(32),      /* pad ike packets to 4 bytes or not */
+	POLICY_ANONYMOUS      = LELEM(33),      /* Allow anonymous unauthenticated - draft-swan-oe-00 */
 
 	/* policy used to be an int, but is now lset_t (unsigned long long type), so max is 63 */
 };

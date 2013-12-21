@@ -219,9 +219,6 @@ ctltest	 	vpn-dns-01		good
 
 umlplutotest	nss-leftrsasigkey2-01	good
 
-#
-# Test of XAUTH client to XAUTH server
-kvmplutotest	xauth-pluto-03		good
 
 #
 # Test of NAT traversal
@@ -289,49 +286,28 @@ umlXhost	x509-pluto-06		good
 # a test case of PSK with aggressive mode
 kvmplutotest	psk-pluto-01		good
 
-#
-# a test case of PSK with aggressive mode, with missing PSKs
 umlXhost	psk-pluto-02		bad
 
+kvmplutotest	xauth-pluto-03		good
 kvmplutotest	xauth-pluto-04		good
-skip		xauth-pluto-17		wip
-kvmplutotest	xauth-pluto-18		good
-
-#
-# a test case of xauth/psk/aggressive/algo/modecfg
 kvmplutotest	xauth-pluto-05		good
-
-#
-# a test case of xauth/psk/aggressive/algo/modecfg/pfs
 kvmplutotest	xauth-pluto-06		good
-
-#
-# a test case of xauth using xauthname= in ipsec.conf 
+kvmplutotest	xauth-pluto-07		good
+kvmplutotest	xauth-pluto-08		good
+kvmplutotest	xauth-pluto-09		good
 umlXhost	xauth-pluto-10		good
-
-#
-# a test case of xauth using xauthname= in ipsec.conf and XAUTH password in ipsec.secrets
 umlXhost	xauth-pluto-11		good
-
 kvmplutotest	xauth-pluto-12		good
 kvmplutotest	xauth-pluto-13		good
 kvmplutotest	xauth-pluto-14		good
 kvmplutotest	xauth-pluto-15		good
 kvmplutotest	xauth-pluto-16		good
+skip		xauth-pluto-17		wip
+kvmplutotest	xauth-pluto-18		good
+kvmplutotest	xauth-pluto-19		good
 
 
 
-#
-# a test case of xauth/psk/aggressive/algo/modecfg/pfs
-# in client pull mode rather than server push.
-#
-kvmplutotest	xauth-pluto-07		good
-
-#
-# a test case of xauth/psk/aggressive/algo/modecfg/pfs
-# in client pull mode, *WITH* DPD enabled.
-#
-kvmplutotest	xauth-pluto-08		good
 
 #
 # Aggressive Mode Pluto Tests
@@ -382,7 +358,7 @@ umlplutotest	fail-x509-12		good
 # may cancel things that the --down/--up may not. This also
 # tests that the responder is happy with us doing that.
 #
-umlplutotest	pluto-rekey-02		good
+kvmplutotest	pluto-rekey-02		good
 
 #
 # this tests psk with main mode.
@@ -417,8 +393,10 @@ kvmplutotest    algo-pluto-03          good
 kvmplutotest    algo-pluto-04          good
 umlplutotest    algo-pluto-05          good
 umlplutotest    algo-pluto-06          good
-
+umlplutotest    algo-pluto-07          good
+kvmplutotest    algo-pluto-08          good
 kvmplutotest    algo-pluto-09          good
+kvmplutotest    algo-pluto-10          good
 #
 # tests for usnig multiple subnets using conn aliases
 #
@@ -441,9 +419,9 @@ umlplutotest	ike-algo-02		good
 
 # Tests below require testing infrastructure with netkey support
 kvmplutotest    algo-pluto-07			good
-umlplutotest    netkey-pluto-01			good
-umlplutotest    netkey-pluto-02			good
-umlplutotest    netkey-pluto-03-sourceip        good
+kvmplutotest    netkey-pluto-01			good
+kvmplutotest    netkey-pluto-02			good
+kvmplutotest    netkey-pluto-02			good
 umlplutotest    netkey-pluto-04			good
 umlplutotest    netkey-pluto-05			good
 umlplutotest    netkey-psk-pluto-06		good

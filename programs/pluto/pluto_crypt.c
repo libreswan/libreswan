@@ -8,7 +8,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Stefan Arentz <stefan@arentz.ca>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -111,7 +111,6 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		    helpernum,
 		    enum_show(&pluto_cryptoop_names, r->pcr_type),
 		    r->pcr_id));
-#ifdef DEBUG
 	{
 		char *d = getenv("PLUTO_CRYPTO_HELPER_DELAY");
 		if (d != NULL) {
@@ -121,7 +120,6 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 			sleep(delay);
 		}
 	}
-#endif
 
 	/* now we have the entire request in the buffer, process it */
 	switch (r->pcr_type) {

@@ -223,12 +223,18 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		    st->st_connection->name));
 
 	/* If no DPD, then get out of here */
-	if (!st->hidden_variables.st_dpd)
+	if (!st->hidden_variables.st_dpd) {
+		DBG(DBG_DPD,
+		    DBG_log("DPD: no DPD active"));
 		return;
+	}
 
 	/* If there is no state, there can be no DPD */
-	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state))
+	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
+		DBG(DBG_DPD,
+		    DBG_log("DPD: no phase1 state, so no DPD"));
 		return;
+	}
 
 	/* find out when now is */
 	tm = now();
@@ -285,8 +291,11 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			 * more DPD packets are sent to cancel the outstanding DPD timer.
 			 */
 			if (p1st->st_dpd_event != NULL &&
-			    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT)
+			    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT) {
+				DBG(DBG_DPD,
+			    	    DBG_log("DPD: deleting p1st DPD event"));
 				delete_dpd_event(p1st);
+			}
 
 			event_schedule(EVENT_DPD, nextdelay, st);
 			return;

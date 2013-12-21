@@ -989,7 +989,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					    &sra->that.host_addr,
 					    sra->that.host_port);
 
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
 
@@ -1002,7 +1001,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					s2, d2,
 					(hp ? "found" : "not found"));
 			}
-#endif                  /* DEBUG */
 
 			if (!hp)
 				continue;

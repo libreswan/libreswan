@@ -1,9 +1,3 @@
 ipsec auto --up  westnet-eastnet
-
-ip xfrm state
-ip xfrm policy
-route -n
-ipsec auto --delete westnet-eastnet
-ip xfrm state
-ip xfrm policy
+ping -n -c 4 -I 192.0.1.254 192.0.2.254
 echo done

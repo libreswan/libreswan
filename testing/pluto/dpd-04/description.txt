@@ -1,6 +1,8 @@
 This tests the RFC3706 DPD implementation, with dpdaction=hold on east,
 and dpdaction=hold on west.
 
+Paul: there is a mystery of two packets not getting counted?
+
 This is a variation of dpd-03, except it uses multiple tunnels.
 
 This means both sides with %trap the eroute awaiting a new packet to
