@@ -173,10 +173,8 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    const struct id *his_id,
 					    bool asym);
 
-#if defined(LIBCURL) || defined(LDAP_VER)
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
-#endif
 
 #include "x509.h"
 extern const struct RSA_private_key*lsw_get_x509_private_key(

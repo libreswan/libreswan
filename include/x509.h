@@ -230,8 +230,9 @@ extern void unlock_authcert_list(const char *who);	/* in secrets.c */
 #else
 /* WARNING empty x509 locking functions defined bypassing real locking */
 /* not fixing this hack, see issues #1390, #1391, #1392 */
+#define check_crls(who)                 /* nothing */
+#define lock_crl_list(who)              /* nothing */
 #define unlock_crl_list(who)            /* nothing */
-#define lock_cacert_list(who)           /* nothing */
 #define lock_authcert_list(who)         /* nothing */
 #define unlock_authcert_list(who)       /* nothing */
 #endif
