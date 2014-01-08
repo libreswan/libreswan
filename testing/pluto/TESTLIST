@@ -436,6 +436,7 @@ kvmplutotest    loopback-pluto-03		good
 kvmplutotest    loopback-pluto-04		good
 kvmplutotest    loopback-pluto-05		good
 kvmplutotest    loopback-pluto-06		good
+kvmplutotest    labeled-ipsec-01		good
 
 # compress tests, some use netkey
 umlplutotest    compress-pluto-01		good
