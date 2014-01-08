@@ -57,7 +57,7 @@ static pid_t adns_pid = 0;
 const char *pluto_adns_option = NULL;   /* path from --pluto_adns */
 
 static int adns_in_flight = 0;          /* queries outstanding */
-int adns_restart_count;
+static int adns_restart_count;
 #define ADNS_RESTART_MAX 20
 
 static void release_all_continuations(void);

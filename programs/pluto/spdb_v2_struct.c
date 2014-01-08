@@ -63,7 +63,7 @@
 #include "nat_traversal.h"
 
 /* Taken from spdb_v1_struct.c, as the format is similar */
-bool ikev2_out_attr(int type,
+static bool ikev2_out_attr(int type,
 		    unsigned long val,
 		    struct_desc *attr_desc,
 		    enum_names **attr_val_descs,
@@ -283,7 +283,7 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	}
 }
 
-enum ikev2_trans_type_integ v1tov2_integ(int oakley)
+static enum ikev2_trans_type_integ v1tov2_integ(int oakley)
 {
 	switch (oakley) {
 	case OAKLEY_MD5:
@@ -306,7 +306,7 @@ enum ikev2_trans_type_integ v1tov2_integ(int oakley)
 	}
 }
 
-enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth)
+static enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth)
 {
 	switch (ikev1_phase2_auth) {
 	case AUTH_ALGORITHM_HMAC_MD5:

@@ -110,7 +110,7 @@
 
 const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
-bool fork_desired = TRUE;
+static bool fork_desired = TRUE;
 
 /* used for 'ipsec status' */
 static char *ipsecconf = NULL;

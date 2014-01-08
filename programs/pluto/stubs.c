@@ -67,16 +67,3 @@
 #include "crypto.h"
 #include "ikev1.h"
 
-stf_status aggr_not_present(int whack_sock UNUSED,
-			    struct connection *c UNUSED,
-			    struct state *predecessor UNUSED,
-			    lset_t policy UNUSED,
-			    unsigned long try UNUSED,
-			    enum crypto_importance importance UNUSED)
-{
-	libreswan_log("An attempt to use aggressive mode was made.");
-	libreswan_log(
-		"This pluto does not have aggressive mode (congradulations on your wisdom)");
-
-	return STF_FATAL;
-}

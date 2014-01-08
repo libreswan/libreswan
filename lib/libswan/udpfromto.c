@@ -183,7 +183,7 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 #endif  /* defined(HAVE_IP_PKTINFO) || defined(HAVE_IP_RECVDSTADDR) */
 }
 
-int sendfromto(int s, void *buf, size_t len, int flags,
+static int sendfromto(int s, void *buf, size_t len, int flags,
 	       struct sockaddr *from,
 	       struct sockaddr *to, socklen_t tolen)
 {

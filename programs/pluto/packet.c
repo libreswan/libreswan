@@ -80,7 +80,7 @@ static field_desc isag_fields[] = {
 	{ ft_end, 0, NULL, NULL }
 };
 
-struct_desc isakmp_generic_desc =
+static struct_desc isakmp_generic_desc =
 { "ISAKMP Generic Payload", isag_fields, sizeof(struct isakmp_generic) };
 
 /* ISAKMP Data Attribute (generic representation within payloads)
@@ -1061,7 +1061,7 @@ struct_desc ikev2_notify_desc = { "IKEv2 Notify Payload",
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
+static struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
 				     ikev2generic_fields,
 				     sizeof(struct ikev2_generic) };
 

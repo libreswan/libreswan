@@ -78,7 +78,7 @@ static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messag
  * scan_proc_shunts found no representation of in any connection.
  * The corresponding ACQUIRE message might have been lost.
  */
-struct eroute_info *orphaned_holds = NULL;
+static struct eroute_info *orphaned_holds = NULL;
 
 static pid_t pid;
 

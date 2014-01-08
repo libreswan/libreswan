@@ -142,10 +142,10 @@ static x509crl_t *get_x509crl(chunk_t issuer, chunk_t serial, chunk_t keyid)
 	return NULL;
 }
 
-/*  release of a certificate decreases the count by one
-   "  the certificate is freed when the counter reaches zero
+/* release a certificate: decrease the count by one
+ * and free the certificate when the counter reaches zero
  */
-void release_x509cert(x509cert_t *cert)
+static void release_x509cert(x509cert_t *cert)
 {
 	if (cert != NULL && --cert->count == 0) {
 		x509cert_t **pp = &x509certs;
@@ -770,7 +770,7 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 /*
  *  list all X.509 end certificates in a chained list
  */
-void list_x509_end_certs(bool utc)
+static void list_x509_end_certs(bool utc)
 {
 	list_x509cert_chain("End", x509certs, AUTH_NONE, utc);
 }

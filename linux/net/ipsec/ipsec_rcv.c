@@ -330,7 +330,7 @@ static enum ipsec_rcv_value ipsec_rcv_complete(struct ipsec_rcv_state *irs);
  * the state table and each action
  */
 
-struct {
+static struct {
 	enum ipsec_rcv_value (*action)(struct ipsec_rcv_state *irs);
 	int next_state;
 } rcv_state_table[] = {

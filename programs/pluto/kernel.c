@@ -102,7 +102,7 @@ static int num_ipsec_eroute = 0;
 
 static void free_bare_shunt(struct bare_shunt **pp);
 
-void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs)
+static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
 	DBG(DBG_KERNEL,
 	    {

@@ -284,7 +284,7 @@ static enum_names exchange_names_doi =
 enum_names exchange_names_ikev1 =
 { ISAKMP_XCHG_NONE, ISAKMP_XCHG_MODE_CFG, exchange_name_ikev1, &exchange_names_doi };
 
-enum_names exchange_names_ikev2 =
+static enum_names exchange_names_ikev2 =
 { ISAKMP_v2_SA_INIT, ISAKMP_v2_IKE_SESSION_RESUME, exchange_name_ikev2, &exchange_names_private_use };
 
 static enum_names exchange_names_doi_and_v2 =
@@ -771,7 +771,7 @@ enum_names auth_alg_names =
  */
 
 /* for XAUTH-TYPE attribute */
-const char *const xauth_type_name[] = {
+static const char *const xauth_type_name[] = {
 	"Generic",
 	"RADIUS-CHAP",
 	"OTP",
@@ -781,12 +781,6 @@ enum_names xauth_type_names =
 { XAUTH_TYPE_GENERIC, XAUTH_TYPE_SKEY, xauth_type_name, NULL };
 
 /* XAUTH-STATUS attribute */
-static const char *const xauth_status_name[] = {
-	"XAUTH_FAIL",
-	"XAUTH_OK",
-};
-enum_names xauth_status_names =
-{ XAUTH_STATUS_FAIL, XAUTH_STATUS_OK, xauth_status_name, NULL };
 
 static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP4_ADDRESS", /*1 */
@@ -809,7 +803,7 @@ static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP6_PREFIX",
 	"HOME_AGENT_ADDRESS", /* 19 */
 };
-enum_names modecfg_attr_names_draft =
+static enum_names modecfg_attr_names_draft =
 { INTERNAL_IP4_ADDRESS, HOME_AGENT_ADDRESS, modecfg_attr_name_draft,
   NULL };
 
@@ -984,7 +978,8 @@ enum_names oakley_auth_names =
 static const char *const ikev2_auth_name_private_use[] = {
 	"IKEv2_AUTH_ANONYMOUS",
 };
-enum_names ikev2_auth_names_private_use =
+
+static enum_names ikev2_auth_names_private_use =
 { IKEv2_AUTH_ANONYMOUS, IKEv2_AUTH_ANONYMOUS, ikev2_auth_name_private_use, NULL };
 
 static const char *const ikev2_auth_name[] = {
@@ -1360,10 +1355,10 @@ static const char *const ikev2_trans_type_encr_name[] = {
 	/* 1024 - 65535 Private use */
 };
 
-enum_names ikev2_trans_type_encr_names_private_use2 =
+static enum_names ikev2_trans_type_encr_names_private_use2 =
 { OAKLEY_TWOFISH_CBC_SSH, OAKLEY_TWOFISH_CBC_SSH, ikev2_trans_type_encr_name_private_use2, NULL };
 
-enum_names ikev2_trans_type_encr_names_private_use1 =
+static enum_names ikev2_trans_type_encr_names_private_use1 =
 { OAKLEY_SERPENT_CBC, OAKLEY_TWOFISH_CBC, ikev2_trans_type_encr_name_private_use1, &ikev2_trans_type_encr_names_private_use2 };
 
 enum_names ikev2_trans_type_encr_names =
@@ -1480,10 +1475,6 @@ static const char *const af_inet6_name[] = {
 	"AF_INET6",
 };
 
-/* never used */
-static enum_names af_names6 = { AF_INET6, AF_INET6, af_inet6_name, NULL };
-
-enum_names af_names = { AF_INET, AF_INET, af_inet_name, &af_names6 };
 
 static ip_address ipv4_any, ipv6_any;
 static ip_subnet ipv4_wildcard, ipv6_wildcard;

@@ -43,7 +43,7 @@
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 
-void init_noklips(void)
+static void init_noklips(void)
 {
 	return;
 }

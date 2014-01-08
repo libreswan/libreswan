@@ -104,8 +104,8 @@ typedef struct {
 extern int known_oid(chunk_t object);
 extern size_t asn1_length(chunk_t *blob);
 extern void code_asn1_length(size_t length, chunk_t *code);
-extern u_char* build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
-extern u_char* build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
+extern u_char *build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
+extern u_char *build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
 					  asn1_t inner_type, size_t datalen);
 extern bool is_printablestring(chunk_t str);
 extern time_t asn1totime(const chunk_t *utctime, asn1_t type);

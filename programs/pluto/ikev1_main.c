@@ -324,7 +324,7 @@ stf_status main_outI1(int whack_sock,
  * See draft-ietf-ipsec-ike-01.txt 4.1 and 6.1.1.2
  */
 
-void main_mode_hash_body(struct state *st,
+static void main_mode_hash_body(struct state *st,
 			bool hashi, /* Initiator? */
 			const pb_stream *idpl, /* ID payload, as PBS */
 			struct hmac_ctx *ctx,

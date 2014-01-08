@@ -96,7 +96,7 @@ static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 bool no_retransmits = FALSE;
 
-pid_t addconn_child_pid = 0;
+static pid_t addconn_child_pid = 0;
 
 /* list of interface devices */
 struct iface_list interface_dev;
@@ -111,9 +111,6 @@ struct sockaddr_un ctl_addr = {
 #endif
 	.sun_path  = DEFAULT_CTLBASE CTL_SUFFIX
 };
-
-/* info (showpolicy) socket */
-int policy_fd = NULL_FD;
 
 struct sockaddr_un info_addr = {
 	.sun_family = AF_UNIX,

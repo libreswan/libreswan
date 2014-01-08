@@ -209,7 +209,7 @@ static const char *const natt_method_result_name[] = {
 	"NAT behind me",        /* 30 */
 	"NAT behind peer"       /* 31 */
 };
-enum_names natt_method_result_names =
+static enum_names natt_method_result_names =
 { NAT_TRAVERSAL_NAT_BHND_ME, NAT_TRAVERSAL_NAT_BHND_PEER,
   natt_method_result_name, NULL };
 
@@ -325,14 +325,14 @@ const char *const sa_policy_bit_names[] = {
 	NULL
 };
 
-const char *const policy_shunt_names[4] = {
+static const char *const policy_shunt_names[4] = {
 	"TRAP",
 	"PASS",
 	"DROP",
 	"REJECT",
 };
 
-const char *const policy_fail_names[4] = {
+static const char *const policy_fail_names[4] = {
 	"NONE",
 	"PASS",
 	"DROP",

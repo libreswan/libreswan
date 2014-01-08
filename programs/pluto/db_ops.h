@@ -23,17 +23,12 @@ struct db_context {
 struct db_context * db_prop_new(u_int8_t protoid, int max_trans,
 				int max_attrs);
 
-/*	Initialize object for proposal building  */
-int db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
-		 int max_attrs);
-
 /*	Free all resourses for this db */
 void db_destroy(struct db_context *ctx);
 
 /*	Start a new transform */
 int db_trans_add(struct db_context *ctx, u_int8_t transid);
-/*	Add a new attribute by copying db_attr content */
-int db_attr_add(struct db_context *db_ctx, const struct db_attr *attr);
+
 /*	Add a new attribute by value */
 int db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val);
 

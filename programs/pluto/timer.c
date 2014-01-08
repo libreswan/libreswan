@@ -59,13 +59,14 @@
  * have information like event type, expiration time and a pointer
  * to event specific data (for example, to a state structure).
  */
+static void delete_liveness_event(struct state *st);	/* forward */
 
 static struct event *evlist = (struct event *) NULL;
 
-unsigned int event_retransmit_delay_0 = EVENT_RETRANSMIT_DELAY_0;
-unsigned int maximum_retransmissions  = MAXIMUM_RETRANSMISSIONS;
+static unsigned int event_retransmit_delay_0 = EVENT_RETRANSMIT_DELAY_0;
+static unsigned int maximum_retransmissions  = MAXIMUM_RETRANSMISSIONS;
 unsigned int maximum_retransmissions_initial = MAXIMUM_RETRANSMISSIONS_INITIAL;
-unsigned int maximum_retransmissions_quick_r1 =
+static unsigned int maximum_retransmissions_quick_r1 =
 	MAXIMUM_RETRANSMISSIONS_QUICK_R1;
 
 /*
@@ -821,7 +822,7 @@ void delete_event(struct state *st)
 	}
 }
 
-void delete_liveness_event(struct state *st)
+static void delete_liveness_event(struct state *st)
 {
 	if (st->st_liveness_event != NULL) {
 		struct event **ev;
