@@ -1,0 +1,5 @@
+Interop testcase for strongswan initiator behind NO nat using
+a subnet on the road/strongswan side. This is identical to
+interop-ikev2-strongswan-10-nat-initiator except this test case does
+not perform NAT between the endpoints
+
