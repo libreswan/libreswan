@@ -22,12 +22,6 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 
 extern void ikev2_delete_out(struct state *st);
 
-bool ikev2_out_attr(int type,
-		    unsigned long val,
-		    struct_desc *attr_desc,
-		    enum_names **attr_val_descs,
-		    pb_stream *pbs);
-
 extern bool ikev2_out_sa(pb_stream *outs,
 			 unsigned int protoid,
 			 struct db_sa *sadb,
@@ -155,12 +149,6 @@ extern int ikev2_evaluate_connection_port_fit(struct connection *d,
 					      unsigned int tsr_n,
 					      unsigned int *best_tsi_i,
 					      unsigned int *best_tsr_i);
-
-extern stf_status ikev2_emit_ts(struct msg_digest *md,
-				pb_stream *outpbs,
-				unsigned int np,
-				struct traffic_selector *ts,
-				enum phase1_role role);
 
 extern stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 				     pb_stream *outpbs,

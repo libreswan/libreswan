@@ -85,8 +85,12 @@
 #include <time.h>
 #include "lswconf.h"
 
+static int sign_hash_nss(const struct RSA_private_key *k,
+			 const u_char *hash_val,
+			 size_t hash_len, u_char *sig_val, size_t sig_len);
+
 char *pluto_shared_secrets_file;
-struct secret *pluto_secrets = NULL;
+static struct secret *pluto_secrets = NULL;
 
 void load_preshared_secrets(int whackfd)
 {
@@ -170,7 +174,7 @@ void sign_hash(const struct RSA_private_key *k,
 	sign_hash_nss(k, hash_val, hash_len, sig_val, sig_len);
 }
 
-int sign_hash_nss(const struct RSA_private_key *k,
+static int sign_hash_nss(const struct RSA_private_key *k,
 		  const u_char *hash_val, size_t hash_len,
 		  u_char *sig_val, size_t sig_len)
 {
@@ -705,7 +709,7 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 
 /* check the existence of an RSA private key matching an RSA public
  */
-bool has_private_rawkey(struct pubkey *pk)
+static bool has_private_rawkey(struct pubkey *pk)
 {
 	return lsw_has_private_rawkey(pluto_secrets, pk);
 }

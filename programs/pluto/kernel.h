@@ -270,8 +270,6 @@ struct eroute_info {
 	struct eroute_info *next;
 };
 
-extern struct eroute_info *orphaned_holds;
-
 /* bare (connectionless) shunt (eroute) table
  *
  * Bare shunts are those that don't "belong" to a connection.
@@ -304,9 +302,6 @@ struct bare_shunt {
 	struct bare_shunt *next;
 };
 extern void show_shunt_status(void);
-
-extern void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs);
-#define DBG_bare_shunt(op, bs) DBG_bare_shunt_log(op, bs)
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 				   const ip_subnet *his,

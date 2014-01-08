@@ -203,7 +203,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 #endif
 
 /** output an attribute (within an SA) */
-bool out_attr(int type,
+static bool out_attr(int type,
 	      unsigned long val,
 	      struct_desc *attr_desc,
 	      enum_names **attr_val_descs,

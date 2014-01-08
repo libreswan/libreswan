@@ -436,6 +436,7 @@ kvmplutotest    loopback-pluto-03		good
 kvmplutotest    loopback-pluto-04		good
 kvmplutotest    loopback-pluto-05		good
 kvmplutotest    loopback-pluto-06		good
+kvmplutotest    labeled-ipsec-01		good
 
 # compress tests, some use netkey
 umlplutotest    compress-pluto-01		good
@@ -545,7 +546,11 @@ umlplutotest    interop-ikev2-strongswan-05-x509-initiator	good
 kvmplutotest	interop-ikev2-strongswan-05-psk-md5		good
 kvmplutotest	interop-ikev2-strongswan-06-aes192		good
 kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
-kvmlutotest	interop-ikev2-strongswan-08-psk-aes		good
+kvmplutotest	interop-ikev2-strongswan-08-nonat		good
+kvmplutotest	interop-ikev2-strongswan-09-psk-aes-ccm		good
+kvmplutotest	interop-ikev2-strongswan-09-psk-aes-gcm		good
+kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	good
+kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
 
 skip		interop-racoon-iphone4s-nonat		incomplete
 skip		interop-racoon-iphone5-nonat		incomplete

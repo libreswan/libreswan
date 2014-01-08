@@ -2968,7 +2968,7 @@ enum ipsec_xmit_value ipsec_tunnel_send(struct ipsec_xmit_state *ixs)
  * prototypes for state action
  */
 
-struct {
+static struct {
 	enum ipsec_xmit_value (*action)(struct ipsec_xmit_state *ixs);
 	int next_state;
 } xmit_state_table[] = {

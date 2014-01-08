@@ -33,7 +33,6 @@ extern void event_schedule(enum event_type type, time_t tm, struct state *st);
 extern void handle_timer_event(void);
 extern long next_event(void);
 extern void delete_event(struct state *st);
-extern void delete_liveness_event(struct state *st);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);
 

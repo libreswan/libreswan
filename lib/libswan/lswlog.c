@@ -43,7 +43,7 @@ bool
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
 
-void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
+static void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
 			       unsigned long line_no) NEVER_RETURNS;
 libreswan_passert_fail_t libreswan_passert_fail = libreswanlib_passert_fail;
 
@@ -139,23 +139,6 @@ void libreswan_log_errno_routine(int e, const char *message, ...)
 		syslog(LOG_ERR, "ERROR: %s. Errno %d: %s", m, e, strerror(e));
 }
 
-void libreswan_exit_log(const char *message, ...)
-{
-	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
-
-	va_start(args, message);
-	fmt_log(m, sizeof(m), message, args);
-	va_end(args);
-
-	if (log_to_stderr)
-		fprintf(stderr, "FATAL ERROR: %s\n", m);
-	if (log_to_syslog)
-		syslog(LOG_ERR, "FATAL ERROR: %s", m);
-
-	exit_tool(1);
-}
-
 void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 {
 	va_list args;
@@ -191,7 +174,7 @@ void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 	libreswan_passert_fail(buf, file_str, line_no);
 }
 
-void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
+static void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
 			       unsigned long line_no)
 {
 	/* we will get a possibly unplanned prefix.  Hope it works */

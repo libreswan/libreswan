@@ -1,0 +1,75 @@
+ip addr add 192.0.4.254/32 dev eth0
+road #
+ # make sure that clear text does not get through
+road #
+ iptables -A INPUT -i eth1 -s 192.0.4.0/24 -j LOGDROP
+road #
+ ping -n -c 2 -I 192.0.4.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.4.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time XXXX
+road #
+ /testing/guestbin/swan-prep --userland strongswan
+road #
+ strongswan starter --debug-all
+Starting strongSwan X.X.X IPsec [starter]...
+Loading config setup
+Loading conn 'road-eastnet-ikev2'
+  left=%defaultroute
+  leftid=@road
+  leftsubnet=192.0.4.0/24
+  right=192.1.2.23
+  rightid=@east
+  rightsubnet=192.0.2.0/24
+  authby=secret
+  keyexchange=ikev2
+  auto=add
+[ 00.00] NET: Registered protocol family 15
+found netkey IPsec stack
+road #
+ echo "initdone"
+initdone
+road #
+ strongswan up road-eastnet-ikev2
+initiating IKE_SA road-eastnet-ikev2[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
+sending packet: from 192.1.3.209[500] to 192.1.2.23[500]
+received packet: from 192.1.2.23[500] to 192.1.3.209[500]
+parsed IKE_SA_INIT response 0 [ SA KE No ]
+authentication of 'road' (myself) with pre-shared key
+establishing CHILD_SA road-eastnet-ikev2
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) ]
+sending packet: from 192.1.3.209[500] to 192.1.2.23[500]
+received packet: from 192.1.2.23[500] to 192.1.3.209[500]
+parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
+authentication of 'east' with pre-shared key successful
+IKE_SA road-eastnet-ikev2[1] established between 192.1.3.209[road]...192.1.2.23[east]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+road #
+ ping -n -c 4 -I 192.0.4.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.4.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ echo done
+done
+road #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+road #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+road-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.3.209[road]...192.1.2.23[east]
+road-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
+road-eastnet-ikev2{1}:   192.0.4.0/24 === 192.0.2.0/24 
+road #
+road #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -205,8 +205,6 @@ struct isakmp_generic {
 	u_int16_t isag_length;
 };
 
-extern struct_desc isakmp_generic_desc;
-
 /* ISAKMP Data Attribute (generic representation within payloads)
  * layout from RFC 2408 "ISAKMP" section 3.3
  * This is not a payload type.
@@ -856,9 +854,6 @@ struct ikev2_delete {
 };
 
 extern struct_desc ikev2_delete_desc;
-
-/* rfc4306, section 3.12, vendor ID, uses generic header */
-extern struct_desc ikev2_vendor_id_desc;
 
 /* rfc4306, section 3.13 */
 struct ikev2_ts {

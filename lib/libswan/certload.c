@@ -41,22 +41,6 @@
 #include <cert.h>
 
 /*
- * used for initialization of private keys
- */
-const rsa_privkey_t empty_rsa_privkey = {
-	{ NULL, 0 }, /* keyobject */
-	{
-		{ NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },
-		{ NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 }
-	}        /* field[0..7] */
-};
-
-/*
- * used for initializatin of certs
- */
-const cert_t empty_cert = { FALSE, CERT_NONE, { NULL } };
-
-/*
  * extracts the certificate to be sent to the peer
  */
 chunk_t get_mycert(cert_t cert)

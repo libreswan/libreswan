@@ -351,7 +351,7 @@ static void p1_dpd_outI1(struct state *p1st)
 	dpd_outI(p1st, p1st, FALSE, delay, timeout);
 }
 
-void p2_dpd_outI1(struct state *p2st)
+static void p2_dpd_outI1(struct state *p2st)
 {
 	struct state *st;
 	time_t delay = p2st->st_connection->dpd_delay;

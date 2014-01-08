@@ -45,7 +45,7 @@ int lex_verbosity = 0;	/* how much tracing output to show */
 char rootdir[PATH_MAX];      /* when evaluating paths, prefix this to them */
 char rootdir2[PATH_MAX];     /* or... try this one too */
 
-int parser_y_eof(void);
+static int parser_y_eof(void);
 
 /* we want no actual output! */
 #define ECHO 
@@ -120,7 +120,7 @@ static void parser_y_close(struct ic_inputsource *iis)
 	}
 }
 
-void parser_y_fini (void)
+static void parser_y_fini(void)
 {
 	unsigned int i;
 

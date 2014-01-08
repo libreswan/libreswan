@@ -115,20 +115,11 @@ uint8_t proto2satype(uint8_t proto)
 	return satype_tbl[i].satype;
 }
 
-char*satype2name(uint8_t satype)
+char *satype2name(uint8_t satype)
 {
 	int i = 0;
 
 	while (satype_tbl[i].satype != satype && satype_tbl[i].satype != 0)
-		i++;
-	return satype_tbl[i].name;
-}
-
-char*proto2name(uint8_t proto)
-{
-	int i = 0;
-
-	while (satype_tbl[i].proto != proto && satype_tbl[i].proto != 0)
 		i++;
 	return satype_tbl[i].name;
 }
@@ -1214,7 +1205,7 @@ DEFINEPARSER(pfkey_x_ext_nat_t_port_parse);
 DEFINEPARSER(pfkey_x_ext_outif_parse);
 DEFINEPARSER(pfkey_x_ext_saref_parse);
 
-struct pf_key_ext_parsers_def *ext_default_parsers[] =
+static struct pf_key_ext_parsers_def *ext_default_parsers[] =
 {
 	NULL,                 /* pfkey_msg_parse, */
 	&pfkey_sa_parse_def,

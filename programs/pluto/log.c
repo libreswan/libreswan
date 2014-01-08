@@ -80,7 +80,7 @@ bool
 	log_did_something = TRUE,       /* set if we wrote something recently */
 	log_with_timestamp = FALSE;     /* some people want timestamps, but we
                                             don't want those in our test output */
-FILE *pluto_log_fd;
+static FILE *pluto_log_fd;
 
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
@@ -88,9 +88,7 @@ bool
 /* should we complain when we find no local id */
 bool
 	logged_myid_fqdn_txt_warning = FALSE,
-	logged_myid_ip_txt_warning   = FALSE,
-	logged_myid_fqdn_key_warning = FALSE,
-	logged_myid_ip_key_warning   = FALSE;
+	logged_myid_ip_txt_warning   = FALSE;
 
 char *pluto_log_file = NULL;
 char *base_perpeer_logdir = NULL;
@@ -98,7 +96,7 @@ char *pluto_stats_binary = NULL;
 static int perpeer_count = 0;
 
 /* what to put in front of debug output */
-const char debug_prefix = '|';
+static const char debug_prefix = '|';
 
 /*
  * used in some messages to distiguish
@@ -852,8 +850,6 @@ void daily_log_reset(void)
 
 	logged_myid_fqdn_txt_warning = FALSE;
 	logged_myid_ip_txt_warning   = FALSE;
-	logged_myid_fqdn_key_warning = FALSE;
-	logged_myid_ip_key_warning   = FALSE;
 }
 
 void daily_log_event(void)

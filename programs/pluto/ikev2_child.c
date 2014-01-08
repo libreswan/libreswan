@@ -137,7 +137,7 @@ struct traffic_selector ikev2_end_to_ts(struct end *e)
 	return ts;
 }
 
-stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
+static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 			 pb_stream *outpbs,
 			 unsigned int lt,
 			 struct traffic_selector *ts,

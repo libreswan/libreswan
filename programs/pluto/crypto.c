@@ -60,9 +60,9 @@ static MP_INT
 	dh23_modulus,
 	dh24_modulus;
 
-MP_INT groupgenerator;  /* MODP group generator (2) */
+static MP_INT groupgenerator;  /* MODP group generator (2) */
 
-MP_INT generator_dh22,
+static MP_INT generator_dh22,
        generator_dh23,
        generator_dh24;
 

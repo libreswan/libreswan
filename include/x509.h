@@ -169,7 +169,6 @@ extern bool trusted_ca(chunk_t a, chunk_t b, int *pathlen);
 extern bool match_requested_ca(generalName_t *requested_ca,
 			       chunk_t our_ca, int *our_pathlen);
 extern bool match_dn(chunk_t a, chunk_t b, int *wildcards);
-extern void hex_str(chunk_t bin, chunk_t *str);
 extern int dn_count_wildcards(chunk_t dn);
 extern int dntoa(char *dst, size_t dstlen, chunk_t dn);
 extern int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
@@ -185,7 +184,6 @@ extern void parse_authorityKeyIdentifier(chunk_t blob, int level0,
 					 chunk_t *authKeySerialNumber);
 extern chunk_t get_directoryName(chunk_t blob, int level, bool implicit);
 extern err_t check_validity(const x509cert_t *cert, time_t *until);
-extern bool compute_digest(chunk_t tbs, int alg, chunk_t *digest);
 extern bool check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 			    const x509cert_t *issuer_cert);
 extern bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict,
@@ -196,7 +194,6 @@ extern x509cert_t* get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
 extern x509cert_t* get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 				u_char auth_flags);
 extern void share_x509cert(x509cert_t *cert);
-extern void release_x509cert(x509cert_t *cert);
 extern void free_x509cert(x509cert_t *cert);
 extern void store_x509certs(x509cert_t **firstcert, bool strict);
 extern void add_authcert(x509cert_t *cert, u_char auth_flags);
@@ -206,7 +203,6 @@ extern void load_authcerts(const char *type, const char *path,
 			   u_char auth_flags);
 extern void load_crls(void);
 extern bool insert_crl(chunk_t blob, chunk_t crl_uri);
-extern void list_x509_end_certs(bool utc);
 extern void list_authcerts(const char *caption, u_char auth_flags, bool utc);
 extern void list_crls(bool utc, bool strict);
 extern void free_authcerts(void);
