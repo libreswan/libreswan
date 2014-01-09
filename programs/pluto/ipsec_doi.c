@@ -1,12 +1,14 @@
 /* IPsec DOI and Oakley resolution routines
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2006  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010-2011 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,6 +63,7 @@
 #include "timer.h"
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
+#include "ikev1_quick.h"
 #include "whack.h"
 #include "fetch.h"
 #include "pkcs.h"
@@ -89,13 +92,15 @@
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
  */
-#define RETURN_STF_FAILURE2(f, xf)                                      \
-	{ int r = (f); if (r != NOTHING_WRONG) { \
-		  if ((xf) != NULL) \
-			  pfree(xf);          \
-		  return STF_FAIL + r; } }
-
-#define RETURN_STF_FAILURE(f) RETURN_STF_FAILURE2(f, NULL)
+/* ??? why are there so many copies of this routine (ikev2.h, ikev1_continuations.h, ipsec_doi.c).
+ * Sometimes more than one copy is defined!
+ */
+#define RETURN_STF_FAILURE(f) { \
+	notification_t res = (f); \
+	if (res != NOTHING_WRONG) { \
+		  return STF_FAIL + res; \
+	} \
+}
 
 /* create output HDR as replica of input HDR */
 void echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
@@ -231,7 +236,6 @@ static initiator_function *pick_initiator(struct connection *c UNUSED,
 {
 	if ((policy & POLICY_IKEV1_DISABLE) == 0 &&
 	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == 0))) {
-	    
 		if (policy & POLICY_AGGRESSIVE) {
 			return aggr_outI1;
 		} else {
@@ -693,9 +697,7 @@ void initialize_new_state(struct state *st,
 
 	insert_state(st); /* needs cookies, connection */
 
-#ifdef DEBUG
 	extra_debugging(c);
-#endif
 }
 
 void send_delete(struct state *st)
@@ -722,6 +724,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 
 	if (st->st_esp.present) {
 		const char *natinfo = "";
+		char esb[ENUM_SHOW_BUF_LEN];
 
 		if ((st->st_connection->spd.that.host_port != IKE_UDP_PORT &&
 		     st->st_connection->spd.that.host_port != 0) ||
@@ -744,13 +747,11 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 natinfo,
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
-			 enum_show(&esp_transformid_names,
-				   st->st_esp.attrs.transattrs.encrypt) +
-			 strlen("ESP_"),
+			 strip_prefix(enum_showb(&esp_transformid_names,
+				   st->st_esp.attrs.transattrs.encrypt, esb, sizeof(esb)), "ESP_"),
 			 st->st_esp.attrs.transattrs.enckeylen,
-			 enum_show(&auth_alg_names,
-				   st->st_esp.attrs.transattrs.integ_hash) +
-			 strlen("AUTH_ALGORITHM_"));
+			 strip_prefix(enum_show(&auth_alg_names,
+				   st->st_esp.attrs.transattrs.integ_hash), "AUTH_ALGORITHM_"));
 		ini = " ";
 		fin = "}";
 	}

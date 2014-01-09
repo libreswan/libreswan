@@ -1,0 +1,11 @@
+This test has a road warrior, ("road") connecting to VPN host east.
+
+It shows up from a random IP.
+
+It uses PSK to authenticate for phase 1.
+It uses aggressive mode.
+It then uses XAUTH to authenticate the phase 1.5.
+It then uses MODECFG to configure the phase 2, in server push mode.
+
+It then proceeds to phase 2.
+

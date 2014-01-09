@@ -6,5 +6,7 @@ BUILT_MODULE_LOCATION[0]="modobj"
 DEST_MODULE_LOCATION[0]="/kernel/net/ipsec"
 AUTOINSTALL=yes
 
-MAKE[0]="make KERNELSRC=$kernel_source_dir MODULE_DEF_INCLUDE=${dkms_tree}/libreswan/#VERSION#/build/packaging/ocf/config-all.hmodules -C ${dkms_tree}/libreswan/#VERSION#/build module"
+# For OCF kernel use:
+# MAKE[0]="make KERNELSRC=$kernel_source_dir MODULE_DEF_INCLUDE=${dkms_tree}/libreswan/#VERSION#/build/packaging/ocf/config-all.hmodules -C ${dkms_tree}/libreswan/#VERSION#/build module"
+MAKE[0]="make KERNELSRC=$kernel_source_dir MODULE_DEF_INCLUDE=${dkms_tree}/libreswan/#VERSION#/build/packaging/linus/config-all.hmodules -C ${dkms_tree}/libreswan/#VERSION#/build module"
 CLEAN="make -C ${dkms_tree}/libreswan/#VERSION#/build moduleclean; rm -rf ${dkms_tree}/libreswan/#VERSION#/build/{Module.*,modules.order,OBJ.*}"

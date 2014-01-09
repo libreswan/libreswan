@@ -1,5 +1,10 @@
 /* declarations of routines that interface with the kernel's IPsec mechanism
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2011 Michael Richardson <mcr@sandelman.ca>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2013 Kim Heino <b@bbbs.net>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -265,8 +270,6 @@ struct eroute_info {
 	struct eroute_info *next;
 };
 
-extern struct eroute_info *orphaned_holds;
-
 /* bare (connectionless) shunt (eroute) table
  *
  * Bare shunts are those that don't "belong" to a connection.
@@ -299,13 +302,6 @@ struct bare_shunt {
 	struct bare_shunt *next;
 };
 extern void show_shunt_status(void);
-
-#ifdef DEBUG
-extern void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs);
-#define DBG_bare_shunt(op, bs) DBG_bare_shunt_log(op, bs)
-#else /* !DEBUG */
-#define DBG_bare_shunt(op, bs) {}
-#endif /* !DEBUG */
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 				   const ip_subnet *his,
@@ -403,7 +399,7 @@ extern bool kernel_overlap_supported(void);
 extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
 
-/* 
+/*
  * Used to pass default priority from kernel_ops-> functions.
  * Our priority is based on an unsigned long int, with the
  * lower number being the highest priority, but this

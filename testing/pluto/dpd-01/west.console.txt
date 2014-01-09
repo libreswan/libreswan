@@ -9,6 +9,11 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] alg: No test for cipher_null (cipher_null-generic)
+[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
+[ 00.00] alg: No test for digest_null (digest_null-generic)
+[ 00.00] alg: No test for compress_null (compress_null-generic)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
 west #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
@@ -41,7 +46,7 @@ west #
 003 "west-east" #1: received Vendor ID payload [CAN-IKEv2]
 004 "west-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
 117 "west-east" #2: STATE_QUICK_I1: initiate
-004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
+004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=enabled}
 west #
  # use the tunnel
 west #
@@ -93,19 +98,19 @@ west #
 west #
  sleep 10
 west #
+ # Tunnel should be back up now even without triggering traffic
+west #
+ echo "Tunnel should be up even without trigger traffic"
+Tunnel should be up even without trigger traffic
+west #
+ ipsec eroute
+0          192.1.2.45/32      -> 192.1.2.23/32      => tun0x1003@192.1.2.23
+west #
  ping -q -c 8 -n 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 8 packets transmitted, 8 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- # Tunnel should be back up now
-west #
- echo "Tunnel should be up"
-Tunnel should be up
-west #
- ipsec eroute
-16         192.1.2.45/32      -> 192.1.2.23/32      => tun0x1003@192.1.2.23
 west #
  echo end
 end

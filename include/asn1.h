@@ -1,5 +1,9 @@
 /* Simple ASN.1 parser
  * Copyright (C) 2000-2004 Andreas Steffen, Zuercher Hochschule Winterthur
+ * Copyright (C) 2005 Michael Richardson <mcr@marajade.sandelman.ca>
+ * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,16 +16,6 @@
  * for more details.
  *
  */
-
-/* asn1_init() takes a debug argument which does not work when -DNO_DEBUG
- * is specified. It does this to prevent logging private key info using
- * DBG_RAW. We define the two use cases here, it should not cause any
- * logging when -DNO_DEBUG is defined.
- */
-#ifdef NO_DEBUG
-# define DBG_RAW         LELEM(0)
-# define DBG_PRIVATE       LELEM(20)
-#endif
 
 /* Defines some primitive ASN1 types */
 
@@ -110,8 +104,8 @@ typedef struct {
 extern int known_oid(chunk_t object);
 extern size_t asn1_length(chunk_t *blob);
 extern void code_asn1_length(size_t length, chunk_t *code);
-extern u_char* build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
-extern u_char* build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
+extern u_char *build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
+extern u_char *build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
 					  asn1_t inner_type, size_t datalen);
 extern bool is_printablestring(chunk_t str);
 extern time_t asn1totime(const chunk_t *utctime, asn1_t type);

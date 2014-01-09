@@ -16,7 +16,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 Version: IPSECBASEVERSION
-Release: %{?prever:0.}2%{?prever:.%{prever}}%{?dist}
+Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
 Source: https://download.libreswan.org/%{name}-%{version}%{?prever}.tar.gz
@@ -31,9 +31,10 @@ Requires: iproute
 Conflicts: openswan < %{version}-%{release}
 Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
+Provides: openswan-doc = %{version}-%{release}
 
 BuildRequires: pkgconfig hostname
-BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
+BuildRequires: nss-devel >= 3.14.3, nspr-devel
 BuildRequires: pam-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
@@ -147,7 +148,7 @@ install -d %{buildroot}%{_sbindir}
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
-install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
+install -m644 packaging/rhel/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
 echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets

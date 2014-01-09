@@ -21,6 +21,8 @@ extern int
 	adns_qfd,                       /* file descriptor for sending queries to adns */
 	adns_afd;                       /* file descriptor for receiving answers from adns */
 extern const char *pluto_adns_option;   /* path from --pluto_adns */
+
+extern bool adns_reapchild(pid_t pid, int status);
 extern void init_adns(void);
 extern void stop_adns(void);
 extern void handle_adns_answer(void);
@@ -44,7 +46,7 @@ struct adns_continuation {
 	struct id id;                           /* subject of query */
 	bool sgw_specified;
 	struct id sgw_id;                       /* peer, if constrained */
-	lset_t debugging;                       /* only used #ifdef DEBUG, but don't want layout to change */
+	lset_t debugging;
 	struct gw_info *gateways_from_dns;      /* answer, if looking for our TXT rrs */
 #ifdef USE_KEYRR
 	struct pubkey_list *keys_from_dns;      /* answer, if looking for KEY rrs */
@@ -79,4 +81,3 @@ extern void reset_adns_restart_count(void);
 
 #define _DNSKEY_H_
 #endif /* _DNSKEY_H_ */
-

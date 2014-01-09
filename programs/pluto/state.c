@@ -1,12 +1,17 @@
 /* routines for state objects
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001, 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009,2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -187,7 +192,22 @@ msgid_t generate_msgid(struct state *isakmp_sa)
 	return msgid;
 }
 
-/* state table functions */
+/* State Table Functions
+ *
+ * The statetable is organized as a hash table.
+ * The hash is purely based on the icookie and rcookie.
+ * Each has chain is a doubly linked list.
+ *
+ * The phase 1 initiator does does not at first know the
+ * responder's cookie, so the state will have to be rehashed
+ * when that becomes known.
+ *
+ * In IKEv2, cookies are renamed IKE SA SPIs.
+ *
+ * In IKEv2, all children have the same cookies as their parent.
+ * This means that you can look along that single chain for
+ * your relatives.
+ */
 
 #define STATE_TABLE_SIZE 32
 
@@ -286,6 +306,7 @@ void insert_state(struct state *st)
 		    st->st_serialno));
 
 	if (*p != NULL) {
+		/* hash chain is not empty; stick st at front */
 		passert((*p)->st_hashchain_prev == NULL);
 		(*p)->st_hashchain_prev = st;
 	}
@@ -303,22 +324,25 @@ void insert_state(struct state *st)
 	refresh_state(st);
 }
 
-/*
- * unlink a state object from the hash table that had a zero
- * rcookie before, and rehash it into the right place
+/* common code to unhash a state: shared by rehash_state and unhash_state
+ * The difference is in the rcookie.
  */
-void rehash_state(struct state *st)
+static void unhash_state_common(struct state *st, bool rcookie_may_be_previously_known)
 {
-	/* unlink from forward chain */
-	struct state **p = st->st_hashchain_prev == NULL ?
-			   state_hash(st->st_icookie, zero_cookie) :
-			   &st->st_hashchain_prev->st_hashchain_next;
+	struct state **p;
 
-	DBG(DBG_CONTROL,
-	    DBG_log("rehashing state object #%lu",
-		    st->st_serialno));
+	/* unlink from forward chain (might change bucket head) */
 
-	/* unlink from forward chain */
+	if (st->st_hashchain_prev != NULL) {
+		p = &st->st_hashchain_prev->st_hashchain_next;
+	} else if (rcookie_may_be_previously_known) {
+		p = state_hash(st->st_icookie, st->st_rcookie);
+		if (*p != st)
+			p = state_hash(st->st_icookie, zero_cookie);
+	} else {
+		p = state_hash(st->st_icookie, zero_cookie);
+	}
+
 	passert(*p == st);
 	*p = st->st_hashchain_next;
 
@@ -330,6 +354,21 @@ void rehash_state(struct state *st)
 	}
 
 	st->st_hashchain_next = st->st_hashchain_prev = NULL;
+}
+
+/*
+ * unlink a state object from the hash table that had a zero
+ * rcookie before, and rehash it into the right place
+ */
+void rehash_state(struct state *st)
+{
+	/* unlink from forward chain */
+
+	DBG(DBG_CONTROL,
+	    DBG_log("rehashing state object #%lu",
+		    st->st_serialno));
+
+	unhash_state_common(st, FALSE);
 
 	/* now, re-insert */
 	insert_state(st);
@@ -339,29 +378,7 @@ void rehash_state(struct state *st)
  */
 void unhash_state(struct state *st)
 {
-	/* unlink from forward chain */
-	struct state **p;
-
-	if (st->st_hashchain_prev == NULL) {
-		p = state_hash(st->st_icookie, st->st_rcookie);
-		if (*p != st)
-			p = state_hash(st->st_icookie, zero_cookie);
-	} else {
-		p = &st->st_hashchain_prev->st_hashchain_next;
-	}
-
-	/* unlink from forward chain */
-	passert(*p == st);
-	*p = st->st_hashchain_next;
-
-	/* unlink from backward chain */
-	if (st->st_hashchain_next != NULL) {
-		passert(st->st_hashchain_next->st_hashchain_prev == st);
-		st->st_hashchain_next->st_hashchain_prev =
-			st->st_hashchain_prev;
-	}
-
-	st->st_hashchain_next = st->st_hashchain_prev = NULL;
+	unhash_state_common(st, TRUE);
 }
 
 /* Free the Whack socket file descriptor.
@@ -625,8 +642,7 @@ bool states_use_connection(struct connection *c)
 	return FALSE;
 }
 
-/*
- * delete all states that were created for a given connection,
+/* delete all states that were created for a given connection,
  * additionally delete any states for which func(st, arg)
  * returns true.
  */
@@ -673,18 +689,14 @@ static void foreach_states_by_connection_func(struct connection *c,
 					struct state *old_cur_state =
 						cur_state ==
 						this ? NULL : cur_state;
-#ifdef DEBUG
 					lset_t old_cur_debugging =
 						cur_debugging;
-#endif
 
 					set_cur_state(this);
 					(*successfunc)(this, c, arg);
 
 					cur_state = old_cur_state;
-#ifdef DEBUG
 					set_debugging(old_cur_debugging);
-#endif
 				}
 			}
 		}
@@ -887,8 +899,7 @@ void rekey_p2states_by_connection(struct connection *c)
 	}
 }
 
-/*
- * Walk through the state table, and delete each state whose phase 1 (IKE)
+/* Walk through the state table, and delete each state whose phase 1 (IKE)
  * peer is among those given.
  * TODO: This function is only called for ipsec whack --crash peer, but
  * it currently does not work for IKEv2, since IS_PHASE1() only works on IKEv1
@@ -1023,12 +1034,14 @@ struct state *duplicate_state(struct state *st)
 }
 
 #if 1
-void for_each_state(void *(f)(struct state *, void *data), void *data)
+void for_each_state(void (*f)(struct state *, void *data), void *data)
 {
-	struct state *st, *ocs = cur_state;
+	struct state *ocs = cur_state;
 	int i;
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+
 		for (st = statetable[i]; st != NULL;
 		     st = st->st_hashchain_next) {
 			set_cur_state(st);

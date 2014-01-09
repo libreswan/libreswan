@@ -30,9 +30,10 @@ Requires(preun): /sbin/service
 Conflicts: openswan < %{version}-%{release}
 Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
+Provides: openswan-doc = %{version}-%{release}
 
 BuildRequires: pkgconfig net-tools
-BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
+BuildRequires: nss-devel >= 3.14.3, nspr-devel
 BuildRequires: pam-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel

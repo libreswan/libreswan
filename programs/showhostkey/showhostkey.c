@@ -46,6 +46,7 @@
 #endif
 
 #include "constants.h"
+#include "lswlog.h"
 #include "lswalloc.h"
 #include "lswcrypto.h"
 #include "lswconf.h"
@@ -85,9 +86,13 @@ struct option opts[] = {
 
 char *progname = "ipsec showhostkey";   /* for messages */
 
-void exit_tool(int code)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
-	exit(code);
+	exit(x);
 }
 
 static void phasemeout_loglog(int mess_no UNUSED, const char *message, ...)
@@ -178,29 +183,22 @@ static int pickbyid(struct secret *secret UNUSED,
 	return 1;
 }
 
-struct secret *get_key_byid(struct secret *host_secrets, char *rsakeyid)
+static struct secret *get_key_byid(struct secret *host_secrets, char *rsakeyid)
 {
 	return lsw_foreach_secret(host_secrets, pickbyid, rsakeyid);
 }
 
-void list_keys(struct secret *host_secrets)
+static void list_keys(struct secret *host_secrets)
 {
 	(void)lsw_foreach_secret(host_secrets, list_key, NULL);
 }
 
-char *get_default_keyid(struct secret *host_secrets)
-{
-	struct private_key_stuff *pks = lsw_get_pks(host_secrets);
-
-	return pks->u.RSA_private_key.pub.keyid;
-}
-
-void dump_keys(struct secret *host_secrets)
+static void dump_keys(struct secret *host_secrets)
 {
 	(void)lsw_foreach_secret(host_secrets, dump_key, NULL);
 }
 
-struct secret *pick_key(struct secret *host_secrets,
+static struct secret *pick_key(struct secret *host_secrets,
 			char *idname)
 {
 	struct id id;
@@ -227,7 +225,7 @@ struct secret *pick_key(struct secret *host_secrets,
 	return s;
 }
 
-unsigned char *pubkey_to_rfc3110(const struct RSA_public_key *pub,
+static unsigned char *pubkey_to_rfc3110(const struct RSA_public_key *pub,
 				 unsigned int *keybuflen)
 {
 	unsigned char *buf;
@@ -322,10 +320,13 @@ static void show_confkey(struct secret *s,
 		switch (pks->kind) {
 		case PPK_PSK:
 			enumstr = "PPK_PSK";
+			break;
 		case PPK_PIN:
 			enumstr = "PPK_PIN";
+			break;
 		case PPK_XAUTH:
 			enumstr = "PPK_XAUTH";
+			break;
 		default:
 			sscanf(enumstr, "UNKNOWN (%d)", (int *)pks->kind);
 		}
@@ -466,12 +467,8 @@ usage:
 	}
 
 	if (verbose > 2) {
-#ifdef DEBUG
-		set_debugging(DBG_ALL);
-#else
 		fprintf(stderr,
-			"verbosity cannot be set - compiled without DEBUG\n");
-#endif
+			"verbosity cannot be set this high\n");
 	}
 
 	/* now load file from indicated location */

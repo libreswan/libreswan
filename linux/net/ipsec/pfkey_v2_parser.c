@@ -86,7 +86,7 @@ struct sklist_t {
 	struct sklist_t* next;
 } pfkey_sklist_head, *pfkey_sklist, *pfkey_sklist_prev;
 
-__u32 pfkey_msg_seq = 0;
+static __u32 pfkey_msg_seq = 0;
 
 #if 0
 #define DUMP_SAID dump_said(&extr->ips->ips_said, __LINE__)
@@ -180,7 +180,7 @@ DEBUG_NO_STATIC int pfkey_ipsec_sa_init(struct ipsec_sa *ipsp)
 	return rc;
 }
 
-int pfkey_safe_build(int error, struct sadb_ext *extensions[K_SADB_MAX + 1])
+static int pfkey_safe_build(int error, struct sadb_ext *extensions[K_SADB_MAX + 1])
 {
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_safe_build: "
 		    "error=%d\n",

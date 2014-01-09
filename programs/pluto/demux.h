@@ -1,5 +1,8 @@
 /* demultiplex incoming IKE messages
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -101,13 +104,7 @@ extern void fmt_isakmp_sa_established(struct state *st,
 
 extern void free_md_pool(void);
 
-/* deal with echo request/reply */
-extern void receive_ike_echo_request(struct msg_digest *md);
-extern void receive_ike_echo_reply(struct msg_digest *md);
-
 extern void process_packet(struct msg_digest **mdp);
-extern void process_v1_packet(struct msg_digest **mdp);
-extern void process_v2_packet(struct msg_digest **mdp);
 extern bool check_msg_errqueue(const struct iface_port *ifp, short interest);
 
 #endif /* _DEMUX_H */

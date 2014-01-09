@@ -6,7 +6,11 @@
  * Copyright (C) 2006-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Gilles Espinasse <g.esp@free.fr>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -71,7 +75,7 @@ static x509crl_t  *x509crls    = NULL;
 /*
  *  add a X.509 user/host certificate to the chained list
  */
-x509cert_t*add_x509cert(x509cert_t *cert)
+x509cert_t *add_x509cert(x509cert_t *cert)
 {
 	x509cert_t *c = x509certs;
 
@@ -94,8 +98,8 @@ x509cert_t*add_x509cert(x509cert_t *cert)
 /*
  *  get a X.509 certificate with a given issuer found at a certain position
  */
-x509cert_t*get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
-			x509cert_t *chain)
+x509cert_t *get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
+			 x509cert_t *chain)
 {
 	x509cert_t *cert = (chain != NULL) ? chain->next : x509certs;
 
@@ -113,7 +117,7 @@ x509cert_t*get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
 /*
  *  get the X.509 CRL with a given issuer
  */
-static x509crl_t*get_x509crl(chunk_t issuer, chunk_t serial, chunk_t keyid)
+static x509crl_t *get_x509crl(chunk_t issuer, chunk_t serial, chunk_t keyid)
 {
 	x509crl_t *crl = x509crls;
 	x509crl_t *prev_crl = NULL;
@@ -138,10 +142,10 @@ static x509crl_t*get_x509crl(chunk_t issuer, chunk_t serial, chunk_t keyid)
 	return NULL;
 }
 
-/*  release of a certificate decreases the count by one
-   "  the certificate is freed when the counter reaches zero
+/* release a certificate: decrease the count by one
+ * and free the certificate when the counter reaches zero
  */
-void release_x509cert(x509cert_t *cert)
+static void release_x509cert(x509cert_t *cert)
 {
 	if (cert != NULL && --cert->count == 0) {
 		x509cert_t **pp = &x509certs;
@@ -231,7 +235,7 @@ void store_x509certs(x509cert_t **firstcert, bool strict)
 		if (trust_authcert_candidate(cert, cacerts)) {
 			add_authcert(cert, AUTH_CA);
 		} else {
-			plog("intermediate cacert rejected");
+			libreswan_log("intermediate cacert rejected");
 			free_x509cert(cert);
 		}
 	}
@@ -766,7 +770,7 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 /*
  *  list all X.509 end certificates in a chained list
  */
-void list_x509_end_certs(bool utc)
+static void list_x509_end_certs(bool utc)
 {
 	list_x509cert_chain("End", x509certs, AUTH_NONE, utc);
 }

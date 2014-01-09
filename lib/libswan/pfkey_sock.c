@@ -21,6 +21,8 @@
 #include "libreswan.h"
 #include <libreswan/pfkeyv2.h>
 #include "socketwrapper.h"
+#include "pfkey_help.h"
+
 extern char *progname;
 
 int pfkey_open_sock_with_error(void)

@@ -2,7 +2,8 @@
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,8 +62,9 @@ extern const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir);
 
 extern secuPWData *lsw_return_nss_password_file_info(void);
 extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
-extern int liberswan_fipsmode(void);
-extern int liberswan_fipsproduct(void);
+extern int libreswan_fipsmode(void);
+extern int libreswan_fipsproduct(void);
+extern int libreswan_fipskernel(void);
 extern int libreswan_selinux(void);
 
 #endif /* _LSW_ALLOC_H_ */

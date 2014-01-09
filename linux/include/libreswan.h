@@ -1,4 +1,3 @@
-#ifndef _LIBRESWAN_H
 /*
  * header file for FreeS/WAN library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
@@ -15,15 +14,22 @@
  * License for more details.
  *
  */
+#ifndef _LIBRESWAN_H
 #define _LIBRESWAN_H    /* seen it, no need to see it again */
+
+/* Needed for NSS PR_ASSERT() */
+#define DEBUG 1
 
 /* you'd think this should be builtin to compiler... */
 #ifndef TRUE
-#define TRUE 1
+# define TRUE 1
+# ifndef __KERNEL__
+typedef int bool;
+# endif
 #endif
 
 #ifndef FALSE
-#define FALSE 0
+# define FALSE 0
 #endif
 
 #include <stddef.h>
@@ -543,18 +549,6 @@ enum klips_debug_flags {
 	KDF_COMP        = 12,
 	KDF_NATT        = 13,
 };
-
-/*
- * Debugging levels for pfkey_lib_debug
- */
-#define PF_KEY_DEBUG_PARSE_NONE    0
-#define PF_KEY_DEBUG_PARSE_PROBLEM 1
-#define PF_KEY_DEBUG_PARSE_STRUCT  2
-#define PF_KEY_DEBUG_PARSE_FLOW    4
-#define PF_KEY_DEBUG_BUILD         8
-#define PF_KEY_DEBUG_PARSE_MAX    15
-
-extern unsigned int pfkey_lib_debug;  /* bits selecting what to report */
 
 /*
  * pluto and lwdnsq need to know the maximum size of the commands to,

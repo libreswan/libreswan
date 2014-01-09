@@ -1,8 +1,8 @@
 /*
  * Kernel runtime algorithm handling interface definitions
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
- *
- * kernel_alg.h,v 1.1.2.1 2003/11/21 18:12:23 jjo Exp
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,7 +37,7 @@ extern err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 extern bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 				    struct alg_info_esp *alg_info);
 /* returns encrypt keylen in BYTES for esp enc alg passed */
-extern int kernel_alg_esp_enc_keylen(int alg_id);
+extern int kernel_alg_esp_enc_max_keylen(int alg_id);
 /* returns bool success if esp auth alg is present  */
 extern err_t kernel_alg_esp_auth_ok(int auth, struct alg_info_esp *nfo);
 
@@ -50,13 +50,8 @@ extern int kernel_alg_esp_auth_keylen(int auth);
 extern int kernel_alg_proc_read(void);
 
 /* get sadb_alg for passed args */
-extern const struct sadb_alg * kernel_alg_sadb_alg_get(int satype, int exttype,
-						       int alg_id);
-
-struct db_prop;
-extern struct db_context * kernel_alg_db_new(struct alg_info_esp *ai,
-					     lset_t policy,
-					     bool logit);
+extern const struct sadb_alg * kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
+						       unsigned alg_id);
 
 /* returns pointer to static buffer -- NOT RE-ENTRANT */
 extern struct esp_info *kernel_alg_esp_info(u_int8_t transid,
@@ -76,6 +71,7 @@ extern int esp_aalg_num;
 #define ESP_EALG_FOR_EACH_UPDOWN(algo) \
 	for (algo = K_SADB_EALG_MAX; algo > 0; algo--) \
 		if (ESP_EALG_PRESENT(algo))
+
 #define ESP_AALG_PRESENT(algo) ((algo <= SADB_AALG_MAX) && \
 				(esp_aalg[(algo)].sadb_alg_id == (algo)))
 #define ESP_AALG_FOR_EACH(algo) \

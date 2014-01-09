@@ -62,6 +62,8 @@
 #include <secerr.h>
 #include "lswconf.h"
 
+static void hex_str(chunk_t bin, chunk_t *str);	/* forward */
+
 /* ASN.1 definition of a basicConstraints extension */
 
 static const asn1Object_t basicConstraintsObjects[] = {
@@ -691,7 +693,7 @@ int dn_count_wildcards(chunk_t dn)
 /*
  * Prints a binary string in hexadecimal form
  */
-void hex_str(chunk_t bin, chunk_t *str)
+static void hex_str(chunk_t bin, chunk_t *str)
 {
 	u_int i;
 
@@ -733,7 +735,7 @@ int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char* null_dn)
 }
 
 /*
- * function for use in atodn() that escapes a character in 
+ * function for use in atodn() that escapes a character in
  * in the leftid/rightid string. Needed for '//' and ',,'
  * escapes for OID fields
  */
@@ -1219,7 +1221,7 @@ void free_crl(x509crl_t *crl)
 /*
  *  compute a digest over a binary blob
  */
-bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
+static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 {
 	switch (alg) {
 #ifdef USE_MD5

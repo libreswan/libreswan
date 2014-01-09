@@ -48,22 +48,25 @@ struct sadb_alg esp_ealg[K_SADB_EALG_MAX + 1];
 int esp_ealg_num = 0;
 int esp_aalg_num = 0;
 
-static struct sadb_alg *sadb_alg_ptr(int satype, int exttype, int alg_id,
-				     int rw)
+static struct sadb_alg *sadb_alg_ptr(unsigned satype, unsigned exttype, unsigned alg_id,
+				     bool rw)
 {
 	struct sadb_alg *alg_p = NULL;
 
 	switch (exttype) {
 	case SADB_EXT_SUPPORTED_AUTH:
-		if (alg_id <= SADB_AALG_MAX)
-			break;
-		goto fail;
+		/* ??? should this be a passert? */
+		if (alg_id > SADB_AALG_MAX)
+			return NULL;	/* fail */
+		break;
 	case SADB_EXT_SUPPORTED_ENCRYPT:
-		if (alg_id <= K_SADB_EALG_MAX)
-			break;
-		goto fail;
+		/* ??? should this be a passert? */
+		if (alg_id > K_SADB_EALG_MAX)
+			return NULL;	/* fail */
+		break;
 	default:
-		goto fail;
+		/* ??? should this be a passert? */
+		return NULL;	/* fail */
 	}
 
 	switch (satype) {
@@ -71,23 +74,26 @@ static struct sadb_alg *sadb_alg_ptr(int satype, int exttype, int alg_id,
 	case SADB_SATYPE_ESP:
 		alg_p = (exttype == SADB_EXT_SUPPORTED_ENCRYPT) ?
 			&esp_ealg[alg_id] : &esp_aalg[alg_id];
+
 		/* get for write: increment elem count */
 		if (rw) {
-			(exttype == SADB_EXT_SUPPORTED_ENCRYPT) ?
-			esp_ealg_num++ : esp_aalg_num++;
+			if (exttype == SADB_EXT_SUPPORTED_ENCRYPT)
+				esp_ealg_num++;
+			else
+				esp_aalg_num++;
 		}
-		break;
+		return alg_p;
+
 	default:
-		goto fail;
+		/* ??? should this be a passert? */
+		return NULL;	/* fail */
 	}
-fail:
-	return alg_p;
 }
 
-const struct sadb_alg *kernel_alg_sadb_alg_get(int satype, int exttype,
-					       int alg_id)
+const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
+					       unsigned alg_id)
 {
-	return sadb_alg_ptr(satype, exttype, alg_id, 0);
+	return sadb_alg_ptr(satype, exttype, alg_id, FALSE);
 }
 /*
  *      Forget previous registration
@@ -104,19 +110,21 @@ static void kernel_alg_init(void)
 	esp_ealg_num = esp_aalg_num = 0;
 }
 
-/* used by test skaffolding */
+/* used by kernel_netlink.c and kernel_bsdkame.c */
 int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 {
-	struct sadb_alg *alg_p = NULL;
-	int alg_id = sadb_alg->sadb_alg_id;
+	struct sadb_alg *alg_p;
+	uint8_t alg_id = sadb_alg->sadb_alg_id;
 
 	DBG(DBG_KERNEL, DBG_log("kernel_alg_add():"
-			       "satype=%d, exttype=%d, alg_id=%d",
-			       satype, exttype, sadb_alg->sadb_alg_id));
-	if (!(alg_p = sadb_alg_ptr(satype, exttype, alg_id, 1))) {
-		DBG_log(
-			"kernel_alg_add(%d,%d,%d) fails because alg combo is invalid\n",
-			satype, exttype, sadb_alg->sadb_alg_id);
+			       "satype=%d, exttype=%d, alg_id=%d(%s)",
+			       satype, exttype, alg_id,
+				enum_name(&esp_transformid_names, alg_id)));
+	
+	alg_p = sadb_alg_ptr(satype, exttype, alg_id, TRUE);
+	if (alg_p == NULL) {
+		DBG_log("kernel_alg_add(%d,%d,%d) fails because alg combo is invalid",
+			satype, exttype, alg_id);
 		return -1;
 	}
 
@@ -126,12 +134,12 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	 */
 
 	/*      This logic "mimics" KLIPS: first algo implementation will be used */
-	if (alg_p->sadb_alg_id) {
+	if (alg_p->sadb_alg_id != 0) {
 		DBG(DBG_KERNEL,
 		    DBG_log("kernel_alg_add(): discarding already setup "
 			    "satype=%d, exttype=%d, alg_id=%d",
 			    satype, exttype,
-			    sadb_alg->sadb_alg_id));
+			    alg_id));
 		return 0;
 	}
 	*alg_p = *sadb_alg;
@@ -142,70 +150,70 @@ err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
 			    struct alg_info_esp *alg_info __attribute__(
 				    (unused)))
 {
-	struct sadb_alg *alg_p = NULL;
 	err_t ugh = NULL;
 
 	/*
 	 * test #1: encrypt algo must be present
 	 */
-	int ret = ESP_EALG_PRESENT(alg_id);
 
-	if (!ret)
-		goto out;
+	if (!ESP_EALG_PRESENT(alg_id)) {
+		/* ??? why is this OK?  Perhaps: ugh = "alg not present in system"; */
+		DBG(DBG_KERNEL,
+		    DBG_log("kernel_alg_esp_enc_ok(%d,%d): alg not present in system",
+			    alg_id, key_len);
+		    );
+	} else {
+		struct sadb_alg *alg_p = &esp_ealg[alg_id];
 
-	alg_p = &esp_ealg[alg_id];
+		passert(alg_p != NULL);
+		if (alg_id == ESP_AES_GCM_8 ||
+		    alg_id == ESP_AES_GCM_12 ||
+		    alg_id == ESP_AES_GCM_16) {
+			if (key_len != 128 && key_len != 192 && key_len != 256 ) {
 
-	if (alg_id == ESP_AES_GCM_8 ||
-	    alg_id == ESP_AES_GCM_12 ||
-	    alg_id == ESP_AES_GCM_16) {
-		if (key_len != 128 && key_len != 192 && key_len != 256 ) {
+				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, "
+						"key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+						alg_id, key_len,
+						alg_p->sadb_alg_minbits,
+						alg_p->sadb_alg_maxbits);
+			}
+		}
 
-			ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, "
+		/*
+		 * test #2: if key_len specified, it must be in range
+		 */
+		if (ugh == NULL && key_len != 0 &&
+		    (key_len < alg_p->sadb_alg_minbits ||
+		     key_len > alg_p->sadb_alg_maxbits)) {
+
+			ugh = builddiag("kernel_alg_db_add() key_len not in range: alg_id=%d, "
 					"key_len=%d, alg_minbits=%d, alg_maxbits=%d",
 					alg_id, key_len,
 					alg_p->sadb_alg_minbits,
 					alg_p->sadb_alg_maxbits);
-			goto out;
+		}
+		if (ugh != NULL) {
+			DBG(DBG_KERNEL,
+			    DBG_log("kernel_alg_esp_enc_ok(%d,%d): %s"
+				    "alg_id=%d, "
+				    "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
+				    "res=%d",
+				    alg_id, key_len,
+				    ugh,
+				    alg_p->sadb_alg_id,
+				    alg_p->sadb_alg_ivlen,
+				    alg_p->sadb_alg_minbits,
+				    alg_p->sadb_alg_maxbits,
+				    alg_p->sadb_alg_reserved);
+			    );
 		} else {
-			/* increase key length by 4 bytes (RFC 4106)*/
-			key_len = key_len + 4 * BITS_PER_BYTE;
+			DBG(DBG_KERNEL,
+			    DBG_log("kernel_alg_esp_enc_ok(%d,%d): OK",
+				    alg_id, key_len);
+			    );
 		}
 	}
 
-	/*
-	 * test #2: if key_len specified, it must be in range
-	 */
-	if ((key_len) && ((key_len < alg_p->sadb_alg_minbits) ||
-			  (key_len > alg_p->sadb_alg_maxbits))) {
-
-		ugh = builddiag("kernel_alg_db_add() key_len not in range: alg_id=%d, "
-				"key_len=%d, alg_minbits=%d, alg_maxbits=%d",
-				alg_id, key_len,
-				alg_p->sadb_alg_minbits,
-				alg_p->sadb_alg_maxbits);
-	}
-
-out:
-	if (!ugh && alg_p != NULL) {
-		DBG(DBG_KERNEL,
-		    DBG_log("kernel_alg_esp_enc_ok(%d,%d): "
-			    "alg_id=%d, "
-			    "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
-			    "res=%d, ret=%d",
-			    alg_id, key_len,
-			    alg_p->sadb_alg_id,
-			    alg_p->sadb_alg_ivlen,
-			    alg_p->sadb_alg_minbits,
-			    alg_p->sadb_alg_maxbits,
-			    alg_p->sadb_alg_reserved,
-			    ret);
-		    );
-	} else {
-		DBG(DBG_KERNEL,
-		    DBG_log("kernel_alg_esp_enc_ok(%d,%d): NO",
-			    alg_id, key_len);
-		    );
-	}
 	return ugh;
 }
 
@@ -340,32 +348,20 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg_buf, int buflen)
 	}
 }
 
-int kernel_alg_esp_enc_keylen(int alg_id)
+int kernel_alg_esp_enc_max_keylen(int alg_id)
 {
 	int keylen = 0;
 
-	if (!ESP_EALG_PRESENT(alg_id))
-		goto none;
-	keylen = esp_ealg[alg_id].sadb_alg_maxbits / BITS_PER_BYTE;
-	switch (alg_id) {
-	/*
-	 * this is veryUgly[TM]
-	 * Peer should have sent KEY_LENGTH attribute for ESP_AES
-	 * but if not do force it to 128 instead of using sadb_alg_maxbits
-	 * from kernel.
-	 * That's the case for alg-0.7.x and earlier versions.
-	 *
-	 * --jjo 01-Oct-02
-	 */
-	case ESP_AES:
-		keylen = 128 / BITS_PER_BYTE;
-		break;
+	if (!ESP_EALG_PRESENT(alg_id)) {
+        	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_max_keylen():"
+                     "alg_id=%d not found",alg_id));
+		return 0;
 	}
-none:
-	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_keylen():"
+
+	keylen = esp_ealg[alg_id].sadb_alg_maxbits / BITS_PER_BYTE;
+	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_max_keylen():"
 			       "alg_id=%d, keylen=%d",
 			       alg_id, keylen));
-
 	return keylen;
 }
 
@@ -373,10 +369,9 @@ struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id)
 {
 	struct sadb_alg *sadb_alg = NULL;
 
-	if (!ESP_EALG_PRESENT(alg_id))
-		goto none;
-	sadb_alg = &esp_ealg[alg_id];
-none:
+	if (ESP_EALG_PRESENT(alg_id))
+		sadb_alg = &esp_ealg[alg_id];
+
 	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_sadb_alg():"
 			       "alg_id=%d, sadb_alg=%p",
 			       alg_id, sadb_alg));
@@ -446,10 +441,13 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 	sadb_ealg = transid;
 	sadb_aalg = alg_info_esp_aa2sadb(auth);
 
-	if (!ESP_EALG_PRESENT(sadb_ealg))
-		goto none;
-	if (!ESP_AALG_PRESENT(sadb_aalg))
-		goto none;
+	if (!ESP_EALG_PRESENT(sadb_ealg) || 
+	    !ESP_AALG_PRESENT(sadb_aalg)) {
+		DBG(DBG_PARSING, DBG_log("kernel_alg_esp_info():"
+					 "transid=%d, auth=%d, ei=NULL",
+					 transid, auth));
+		return NULL;
+	}
 	memset(&ei_buf, 0, sizeof(ei_buf));
 	ei_buf.transid = transid;
 	ei_buf.auth = auth;
@@ -488,10 +486,4 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 				 ei_buf.encryptalg, ei_buf.authalg
 				 ));
 	return &ei_buf;
-
-none:
-	DBG(DBG_PARSING, DBG_log("kernel_alg_esp_info():"
-				 "transid=%d, auth=%d, ei=NULL",
-				 transid, auth));
-	return NULL;
 }

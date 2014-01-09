@@ -1,4 +1,6 @@
-/* misc. universal things
+/* Memory allocation routines
+ * Header: "lswalloc.h"
+ *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,6 +30,7 @@
 
 /* leave enabled so support functions are always in libswan, and
  * pluto can be recompiled with just the leak detective changes
+ * ??? this seems dangerous and stupid
  */
 #define LEAK_DETECTIVE
 #include "lswalloc.h"
@@ -36,22 +39,11 @@ int leak_detective = 0;
 
 const chunk_t empty_chunk = { NULL, 0 };
 
-exit_log_func_t exit_log_func;
+static exit_log_func_t exit_log_func;
 
 void set_exit_log_func(exit_log_func_t func)
 {
 	exit_log_func = func;
-}
-
-bool all_zero(const unsigned char *m, size_t len)
-{
-	size_t i;
-
-	for (i = 0; i != len; i++)
-		if (m[i] != '\0')
-			return FALSE;
-
-	return TRUE;
 }
 
 /* memory allocation
@@ -84,7 +76,7 @@ union mhdr {
 
 static union mhdr *allocs = NULL;
 
-void *alloc_bytes1(size_t size, const char *name, int leak_detective)
+static void *alloc_bytes1(size_t size, const char *name, int ld)
 {
 	union mhdr *p;
 
@@ -93,7 +85,7 @@ void *alloc_bytes1(size_t size, const char *name, int leak_detective)
 		size = 1;
 	}
 
-	if (leak_detective) {
+	if (ld) {
 		if (sizeof(union mhdr) + size < size)
 			return NULL;
 
@@ -113,7 +105,7 @@ void *alloc_bytes1(size_t size, const char *name, int leak_detective)
 		}
 	}
 
-	if (leak_detective) {
+	if (ld) {
 		p->i.name = name;
 		p->i.size = size;
 		p->i.older = allocs;
@@ -195,9 +187,9 @@ void report_leaks(void)
 
 #endif /* !LEAK_DETECTIVE */
 
-void *alloc_bytes2(size_t size, const char *name, int leak_detective)
+void *alloc_bytes2(size_t size, const char *name, int ld)
 {
-	void *p = alloc_bytes1(size, name, leak_detective);
+	void *p = alloc_bytes1(size, name, ld);
 
 	if (p == NULL) {
 		if (exit_log_func) {
@@ -210,9 +202,9 @@ void *alloc_bytes2(size_t size, const char *name, int leak_detective)
 }
 
 void *clone_bytes2(const void *orig, size_t size, const char *name,
-		   int leak_detective)
+		   int ld)
 {
-	void *p = alloc_bytes1(size, name, leak_detective);
+	void *p = alloc_bytes1(size, name, ld);
 
 	if (p == NULL) {
 		if (exit_log_func) {

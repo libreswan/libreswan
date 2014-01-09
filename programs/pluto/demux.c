@@ -1,8 +1,12 @@
 /* demultiplex incoming IKE messages
  *
- * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -57,6 +61,7 @@
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
 #include "ikev1.h"
+#include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
 #include "udpfromto.h"
@@ -64,6 +69,11 @@
 /* This file does basic header checking and demux of
  * incoming packets.
  */
+
+void init_demux(void)
+{
+	init_ikev1();
+}
 
 /* forward declarations */
 static bool read_packet(struct msg_digest *md);
@@ -86,40 +96,21 @@ u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 void process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	struct state *st = NULL;
 	int vmaj, vmin;
-	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
-
-#define SEND_NOTIFICATION(t) { \
-		if (st) \
-			send_notification_from_state(st, from_state, t); \
-		else \
-			send_notification_from_md(md, t); }
 
 	if (!in_struct(&md->hdr, &isakmp_hdr_desc, &md->packet_pbs,
 		       &md->message_pbs)) {
-		/*
-		 * The packet was very badly mangled. We can't be sure of any
+		/* The packet was very badly mangled. We can't be sure of any
 		 * content - not even to look for major version number!
-		 * So we'll just silently drop it
+		 * So we'll just drop it.
 		 */
 		libreswan_log("Received packet with mangled IKE header - dropped");
-		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+		send_notification_from_md(md, PAYLOAD_MALFORMED);
 		return;
 	}
 
-	if (md->packet_pbs.roof < md->message_pbs.roof) {
-		/* I don't think this can happen if in_struct() did not fail */
-		libreswan_log(
-			"received packet size (%u) is smaller than from "
-			"size specified in ISAKMP HDR (%u) - packet dropped",
-			(unsigned) pbs_room(&md->packet_pbs),
-			md->hdr.isa_length);
-		/* abort processing corrupt packet */
-		return;
-	} else if (md->packet_pbs.roof > md->message_pbs.roof) {
-		/*
-		 * Some (old?) versions of the Cisco VPN client send an additional
+	if (md->packet_pbs.roof > md->message_pbs.roof) {
+		/* Some (old?) versions of the Cisco VPN client send an additional
 		 * 16 bytes of zero bytes - Complain but accept it
 		 */
 		DBG(DBG_CONTROL, {
@@ -154,7 +145,7 @@ void process_packet(struct msg_digest **mdp)
 			 * identical.
 			 */
 			libreswan_log("ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
-			SEND_NOTIFICATION(INVALID_MINOR_VERSION);
+			send_notification_from_md(md, INVALID_MINOR_VERSION);
 			return;
 		}
 		DBG(DBG_CONTROL,
@@ -167,8 +158,7 @@ void process_packet(struct msg_digest **mdp)
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
 		if (vmin != IKEv2_MINOR_VERSION) {
-			/*
-			 * Unlike IKEv1, for IKEv2 we are supposed to try and
+			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
 			libreswan_log("Ignoring unknown IKEv2 minor version number %d", vmin);
@@ -182,11 +172,10 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
-		libreswan_log("Unexpected IKE major '%d'",vmaj);
-		SEND_NOTIFICATION(INVALID_MAJOR_VERSION);
+		libreswan_log("Unexpected IKE major '%d'", vmaj);
+		send_notification_from_md(md, INVALID_MAJOR_VERSION);
 		return;
 	}
-#undef SEND_NOTIFICATION
 }
 
 /* wrapper for read_packet and process_packet

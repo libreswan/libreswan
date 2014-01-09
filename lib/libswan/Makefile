@@ -2,7 +2,7 @@
 # Copyright (C) 1998-2001  Henry Spencer.
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
-# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -95,7 +95,7 @@ LIBA=libswan.a
 LIBL=liblswlog.a
 # Original flags
 CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
-CFLAGS+=-I${LIBRESWANSRCDIR} -DDEBUG
+CFLAGS+=-I${LIBRESWANSRCDIR}
 CFLAGS+=${PFKEYV2_DEFS} ${KLIPS_DEFS} $(NSSFLAGS)
 CFLAGS+= -I${LIBRESWANSRCDIR}/include ${PORTINCLUDE} $(USERCOMPILE) ${CROSSFLAGS}
 CFLAGS+= ${WERROR}

@@ -229,13 +229,11 @@ static int worker(int qfd, int afd)
 			offsetof(struct adns_answer,
 				 ans) + (a.result < 0 ? 0 : a.result);
 
-#ifdef DEBUG
 		if (((q.debugging & IMPAIR_DELAY_ADNS_KEY_ANSWER) && q.type ==
 		     ns_t_key) ||
 		    ((q.debugging & IMPAIR_DELAY_ADNS_TXT_ANSWER) && q.type ==
 		     ns_t_txt))
 			sleep(30); /* delay the answer */
-#endif
 
 		/* write answer, possibly a bit at a time */
 		r = write_pipe(afd, (const unsigned char *)&a);
@@ -247,7 +245,7 @@ static int worker(int qfd, int afd)
 
 /**************** master process ****************/
 
-bool eof_from_pluto = FALSE;
+static bool eof_from_pluto = FALSE;
 #define PLUTO_QFD       0       /* queries come on stdin */
 #define PLUTO_AFD       1       /* answers go out on stdout */
 

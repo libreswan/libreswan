@@ -69,9 +69,10 @@ enum ipsec_bandwidth_quality {
 /* moved from programs/pluto/constants.h */
 /* IPsec AH transform values
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.4.3
- * and in http://www.iana.org/assignments/isakmp-registry
+ * http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-9
  */
 enum ipsec_authentication_algo {
+	/* 0-1 RESERVED */
 	AH_NONE=0,
 	AH_MD5=2,
 	AH_SHA=3,
@@ -85,6 +86,8 @@ enum ipsec_authentication_algo {
 	AH_AES_128_GMAC=11,     /* RFC4543 [Errata1821] */
 	AH_AES_192_GMAC=12,     /* RFC4543 [Errata1821] */
 	AH_AES_256_GMAC=13,     /* RFC4543 [Errata1821] */
+	/* 14-248 Unassigned */
+	/* 249 - 255 Reserved for private use */
 	AH_NULL=251,            /* comes from kame? */
 	AH_SHA2_256_TRUNC=252,  /* our own stolen value */
 };
@@ -107,7 +110,7 @@ enum ipsec_cipher_algo {
 	ESP_DES_IV32=9,
 	ESP_RC4=10,
 	ESP_NULL=11,
-	ESP_AES=12,   /* 128 bit AES */
+	ESP_AES=12,   /* CBC 128 bit AES */
 	ESP_AES_CTR=13,
 	ESP_AES_CCM_8=14,
 	ESP_AES_CCM_12=15,
@@ -134,11 +137,14 @@ enum ipsec_cipher_algo {
  */
 
 enum ipsec_comp_algo {
-	IPCOMP_NONE=              0,
-	IPCOMP_OUI=               1,
-	IPCOMP_DEFLATE=           2,
-	IPCOMP_LZS=               3,
-	IPCOMP_V42BIS=            4
+	IPCOMP_NONE=0,
+	IPCOMP_OUI=1,
+	IPCOMP_DEFLATE=2,
+	IPCOMP_LZS=3,
+	IPCOMP_LZJH=4, /* RFC 3051 */
+	/* 5-47 Reserved for approved algorithms */
+	/* 48-63 Reserved for private use */
+	/* 64-255 Unassigned */
 };
 
 /* Identification type values
@@ -166,7 +172,10 @@ enum ipsec_id_type {
 	ID_IPV6_ADDR_RANGE=          8,
 	ID_DER_ASN1_DN=              9,
 	ID_DER_ASN1_GN=              10,
-	ID_KEY_ID=                   11
+	ID_KEY_ID=                   11,
+	ID_LIST=                     12, /* RFC 3554 */
+	/* 13-248 Unassigned */
+	/* 249-255 Reserved for private use */
 };
 
 /* Certificate type values

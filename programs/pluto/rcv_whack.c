@@ -1,11 +1,13 @@
 
 /* whack communicating routines
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2010 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -321,7 +323,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_options) {
 		switch (msg.opt_set) {
 		case WHACK_ADJUSTOPTIONS:
-#ifdef DEBUG
 			if (msg.name == NULL) {
 				/* we do a two-step so that if either old or new would
 				 * cause the message to print, it will be printed.
@@ -348,7 +349,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 							       extra_debugging)));
 				}
 			}
-#endif
 			break;
 
 		case WHACK_SETDUMPDIR:

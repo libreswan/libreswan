@@ -1,6 +1,13 @@
 /*
  * IKE modular algorithm handling interface
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
+ * Copyright (C) 2003 Mathieu Lafon <mlafon@arkoon.net>
+ * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
+ * Copyright (C) 2011-2012 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -11,13 +18,8 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
- * Fixes by:
- *      ML:	Mathieu Lafon <mlafon@arkoon.net>
- *
- * Fixes:
- *      ML:	ike_alg_ok_final() funcion (make F_STRICT consider hash/auth and modp).
  */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -55,7 +57,9 @@
 *       - registration
 *       - lookup
 *=========================================================*/
-struct ike_alg *ike_alg_base[IKE_ALG_MAX + 1] = { NULL, NULL };
+
+struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
+
 /*	check if IKE encrypt algo is present */
 bool ike_alg_enc_present(int ealg)
 {
@@ -94,7 +98,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 			 enc_desc->keyminlen,
 			 enc_desc->keymaxlen
 			 );
-		plog("ike_alg_enc_ok(): %.*s", (int)ugh_buf_len,  ugh_buf);
+		libreswan_log("ike_alg_enc_ok(): %.*s", (int)ugh_buf_len,  ugh_buf);
 		ret = FALSE;
 	}
 
@@ -119,6 +123,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 		*errp = ugh_buf;
 	return ret;
 }
+
 /*
  * ML: make F_STRICT logic consider enc,hash/auth,modp algorithms
  */
@@ -154,36 +159,35 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 			}
 		}
 		libreswan_log(
-			"Oakley Transform [%s (%d), %s, %s] refused due to %s",
+			"Oakley Transform [%s (%d), %s, %s] refused %s",
 			enum_name(&oakley_enc_names, ealg), key_len,
 			enum_name(&oakley_hash_names, aalg),
 			enum_name(&oakley_group_names,
 				  group),
-			ealg_insecure ? "insecure key_len and enc. alg. not listed in \"ike\" string" : "strict flag"
+			ealg_insecure ? "due to insecure key_len and enc. alg. not listed in \"ike\" string" : ""
 			);
 		return FALSE;
 	}
 	return TRUE;
 }
+
 /*
  *      return ike_algo object by {type, id}
  */
 /* XXX:jjo use keysize */
-struct ike_alg *ike_alg_find(unsigned algo_type, unsigned algo_id, unsigned keysize __attribute__(
-				     (unused)))
+struct ike_alg *ikev1_alg_find(unsigned algo_type, unsigned algo_id)
 {
-	struct ike_alg *e = ike_alg_base[algo_type];
+	struct ike_alg *e;
 
-	for (; e != NULL; e = e->algo_next) {
+	for (e = ike_alg_base[algo_type]; e != NULL; e = e->algo_next) {
 		if (e->algo_id == algo_id)
 			break;
 	}
 	return e;
 }
 
-struct ike_alg *ike_alg_ikev2_find(unsigned algo_type,
-				   enum ikev2_trans_type_encr algo_v2id,
-				   unsigned keysize __attribute__((unused)))
+struct ike_alg *ikev2_alg_find(unsigned algo_type,
+				   enum ikev2_trans_type_encr algo_v2id)
 {
 	struct ike_alg *e = ike_alg_base[algo_type];
 
@@ -197,34 +201,23 @@ struct ike_alg *ike_alg_ikev2_find(unsigned algo_type,
 /*
  *      Main "raw" ike_alg list adding function
  */
-int ike_alg_add(struct ike_alg* a)
+void ike_alg_add(struct ike_alg* a)
 {
-	int ret = 0;
-	const char *ugh = "No error";
+	passert(a->algo_type < IKE_ALG_ROOF);
+	passert(a->algo_id != 0 || a->algo_v2id != 0);	/* must be useful for v1 or v2 */
 
-	if (a->algo_type > IKE_ALG_MAX) {
-		ugh = "Invalid algo_type is larger then IKE_ALG_MAX";
-		return_on(ret, -EINVAL);
-	}
-	if (ike_alg_find(a->algo_type, a->algo_id, 0)) {
-		ugh = "Algorithm type already exists";
-		return_on(ret, -EEXIST);
-	}
-	if (ret == 0) {
-		a->algo_next = ike_alg_base[a->algo_type];
-		ike_alg_base[a->algo_type] = a;
-	}
-return_out:
-	if (ret) {
-		libreswan_log(
-			"ike_alg_add(): ERROR: algo_type '%d', algo_id '%d', %s", a->algo_type, a->algo_id,
-			ugh);
-	}
-	return ret;
+	/* must not duplicate what has already been added */
+	passert(a->algo_id == 0 || ikev1_alg_find(a->algo_type, a->algo_id) == NULL);
+	passert(a->algo_v2id == 0 || ikev2_alg_find(a->algo_type, a->algo_v2id) == NULL);
+
+	a->algo_next = ike_alg_base[a->algo_type];
+	ike_alg_base[a->algo_type] = a;
 }
 
 /*
  *      Validate and register IKE hash algorithm object
+ *      XXX: BUG: This uses IKEv1 oakley_hash_names, but for
+ *           IKEv2 we have more entries, see ikev2_trans_type_integ_names
  */
 int ike_alg_register_hash(struct hash_desc *hash_desc)
 {
@@ -232,12 +225,12 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 	int ret = 0;
 
 	if (hash_desc->common.algo_id > OAKLEY_HASH_MAX) {
-		plog("ike_alg_register_hash(): hash alg=%d < max=%d",
+		libreswan_log("ike_alg_register_hash(): hash alg=%d < max=%d",
 		     hash_desc->common.algo_id, OAKLEY_HASH_MAX);
 		return_on(ret, -EINVAL);
 	}
 	if (hash_desc->hash_ctx_size > sizeof(union hash_ctx)) {
-		plog("ike_alg_register_hash(): hash alg=%d has "
+		libreswan_log("ike_alg_register_hash(): hash alg=%d has "
 		     "ctx_size=%d > hash_ctx=%d",
 		     hash_desc->common.algo_id,
 		     (int)hash_desc->hash_ctx_size,
@@ -246,7 +239,7 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 	}
 	if (!(hash_desc->hash_init && hash_desc->hash_update &&
 	      hash_desc->hash_final)) {
-		plog("ike_alg_register_hash(): hash alg=%d needs  "
+		libreswan_log("ike_alg_register_hash(): hash alg=%d needs  "
 		     "hash_init(), hash_update() and hash_final()",
 		     hash_desc->common.algo_id);
 		return_on(ret, -EINVAL);
@@ -254,11 +247,13 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 
 	alg_name = enum_name(&oakley_hash_names, hash_desc->common.algo_id);
 
+	/* Don't add anything we do not know the name for */
 	if (!alg_name) {
-		plog("ike_alg_register_hash(): WARNING: hash alg=%d not found in "
+		libreswan_log("ike_alg_register_hash(): ERROR: hash alg=%d not found in "
 		     "constants.c:oakley_hash_names  ",
 		     hash_desc->common.algo_id);
 		alg_name = "<NULL>";
+		return_on(ret, -EINVAL);
 	}
 
 	if (hash_desc->common.name == NULL)
@@ -266,9 +261,11 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 
 return_out:
 	if (ret == 0)
-		ret = ike_alg_add((struct ike_alg *)hash_desc);
+		ike_alg_add((struct ike_alg *)hash_desc);
 	libreswan_log("ike_alg_register_hash(): Activating %s: %s (ret=%d)",
-		      alg_name, ret == 0 ? "Ok" : "FAILED", ret);
+		      alg_name,
+		      ret == 0 ? "Ok" : "FAILED",
+		      ret);
 	return ret;
 }
 
@@ -280,16 +277,8 @@ int ike_alg_register_enc(struct encrypt_desc *enc_desc)
 	const char *alg_name;
 	int ret = 0;
 
-#if OAKLEY_ENCRYPT_MAX < 255
-	if (enc_desc->common.algo_id > OAKLEY_ENCRYPT_MAX) {
-		plog("ike_alg_register_enc(): enc alg=%d < max=%d\n",
-		     enc_desc->common.algo_id, OAKLEY_ENCRYPT_MAX);
-		return_on(ret, -EINVAL);
-	}
-#endif
-
 	/* XXX struct algo_aes_ccm_8 up to algo_aes_gcm_16, where
-	 * "commin.algo_id" is not defined need this officename fallback.
+	 * "common.algo_id" is not defined need this officename fallback.
 	 * These are defined in kernel_netlink.c and need to move to
 	 * the proper place - even if klips does not support these
 	 */
@@ -297,18 +286,17 @@ int ike_alg_register_enc(struct encrypt_desc *enc_desc)
 	if (!alg_name) {
 		alg_name = enc_desc->common.officname;
 		if (!alg_name) {
-			plog("ike_alg_register_enc(): WARNING: enc alg=%d not found in "
+			libreswan_log("ike_alg_register_enc(): ERROR: enc alg=%d not found in "
 			     "constants.c:oakley_enc_names  ",
 			     enc_desc->common.algo_id);
 			alg_name = "<NULL>";
+			return_on(ret, -EINVAL);
 		}
 	}
-#if OAKLEY_ENCRYPT_MAX < 255
 return_out:
-#endif
 
 	if (ret == 0)
-		ret = ike_alg_add((struct ike_alg *)enc_desc);
+		ike_alg_add((struct ike_alg *)enc_desc);
 	libreswan_log("ike_alg_register_enc(): Activating %s: %s (ret=%d)",
 		      alg_name, ret == 0 ? "Ok" : "FAILED", ret);
 	return 0;

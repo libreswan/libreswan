@@ -2,6 +2,10 @@
  * Copyright (C) 2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2011 Wolfgang Nothdurft <wolfgang@linogate.de>
+ * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -461,7 +465,7 @@ void show_virtual_private()
 		all_ko[0] = '\0';
 	}
 
-	if (nat_traversal_enabled) { 
+	if (nat_traversal_enabled) {
 		whack_log(RC_COMMENT, "virtual_private (%%priv):");
 		whack_log(RC_COMMENT, "- allowed %d subnet%s: %s",
 			private_net_ok_len,

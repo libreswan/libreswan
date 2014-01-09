@@ -1,12 +1,21 @@
 /*
  * information about connections between hosts and clients
  *
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
- * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 1998-2002,2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2009-2010 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2009-2011 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2010 Bart Trojanowski <bart@jukie.net>
+ * Copyright (C) 2010 Shinichi Furuso <Shinichi.Furuso@jp.sony.com>
+ * Copyright (C) 2010,2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
+ * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
+ * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,7 +26,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <string.h>
@@ -236,9 +244,7 @@ void delete_connection(struct connection *c, bool relations)
 	struct connection *old_cur_connection =
 		cur_connection == c ? NULL : cur_connection;
 
-#ifdef DEBUG
 	lset_t old_cur_debugging = cur_debugging;
-#endif
 	union {
 		struct alg_info** ppai;
 		struct alg_info_esp** ppai_esp;
@@ -316,9 +322,7 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind != CK_GOING_AWAY)
 		pfreeany(c->spd.that.virt);
 
-#ifdef DEBUG
 	set_debugging(old_cur_debugging);
-#endif
 	pfreeany(c->name);
 	pfreeany(c->cisco_dns_info);
 	pfreeany(c->modecfg_domain);
@@ -733,7 +737,9 @@ size_t format_end(char *buf,
  * format topology of a connection.
  * Two symmetric ends separated by ...
  */
-size_t format_connection(char *buf, size_t buf_len,
+#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
+
+static size_t format_connection(char *buf, size_t buf_len,
 			const struct connection *c,
 			struct spd_route *sr)
 {
@@ -1110,7 +1116,7 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-struct connection *find_connection_by_reqid(uint32_t reqid)
+static struct connection *find_connection_by_reqid(uint32_t reqid)
 {
 	struct connection *c;
 
@@ -1143,6 +1149,32 @@ static uint32_t gen_reqid(void)
 	exit_log("unable to allocate reqid");
 	return 0; /* never reached, here to make compiler happy */
 }
+
+static bool have_local_nss_certs(const struct whack_message *wm)
+{
+	if (wm->left.cert != NULL) {
+		if (!cert_exists_in_nss(wm->left.cert)) {
+			loglog(RC_COMMENT, "leftcert with the "
+					   "nickname \"%s\" does "
+					   "not exist in NSS db",
+					   wm->left.cert);
+			return FALSE;
+		}
+	}
+
+	if (wm->right.cert != NULL) {
+		if (!cert_exists_in_nss(wm->right.cert)) {
+			loglog(RC_COMMENT, "rightcert with the "
+					   "nickname \"%s\" does "
+					   "not exist in NSS db",
+					   wm->right.cert);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 
 void add_connection(const struct whack_message *wm)
 {
@@ -1388,6 +1420,10 @@ void add_connection(const struct whack_message *wm)
 
 		c->requested_ca = NULL;
 
+		/* pre-check for leftcert/rightcert availablility */
+		if (!have_local_nss_certs(wm))
+			return;
+
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
@@ -1514,9 +1550,7 @@ void add_connection(const struct whack_message *wm)
 
 		set_policy_prio(c); /* must be after kind is set */
 
-#ifdef DEBUG
 		c->extra_debugging = wm->debugging;
-#endif
 
 		c->gw_info = NULL;
 
@@ -1698,7 +1732,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 }
 
 /* An old target has disappeared for a group: delete instance. */
-void remove_group_instance(const struct connection *group USED_BY_DEBUG,
+void remove_group_instance(const struct connection *group,
 			const char *name)
 {
 	passert(group->kind == CK_GROUP);
@@ -1893,7 +1927,7 @@ struct connection *oppo_instantiate(struct connection *c,
 				const ip_address *him,
 				const struct id *his_id,
 				struct gw_info *gw,
-				const ip_address *our_client USED_BY_DEBUG,
+				const ip_address *our_client,
 				const ip_address *peer_client)
 {
 	struct connection *d = instantiate(c, him, his_id);
@@ -2186,7 +2220,6 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	if (srp != NULL && best != NULL)
 		*srp = best_sr;
 
-#ifdef DEBUG
 	if (DBGP(DBG_CONTROL)) {
 		if (best) {
 			char cib[CONN_INST_BUF];
@@ -2202,7 +2235,6 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			DBG_log("find_connection: concluding with empty");
 		}
 	}
-#endif /* DEBUG */
 
 	return best;
 }
@@ -3109,7 +3141,6 @@ static struct connection *fc_try(const struct connection *c,
 
 		for (sr = &d->spd; best != d && sr != NULL; sr = sr->next) {
 			policy_prio_t prio;
-#ifdef DEBUG
 			char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
 
 			if (DBGP(DBG_CONTROLMORE)) {
@@ -3129,7 +3160,6 @@ static struct connection *fc_try(const struct connection *c,
 					d3, sr->that.protocol, sr->that.port,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
-#endif /* DEBUG */
 
 			if (!samesubnet(&sr->this.client, our_net)) {
 				DBG(DBG_CONTROLMORE,
@@ -3277,7 +3307,6 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		 * be marked as opportunistic.
 		 */
 		for (sr = &d->spd; sr != NULL; sr = sr->next) {
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
 				char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
@@ -3293,7 +3322,6 @@ static struct connection *fc_try_oppo(const struct connection *c,
 					"%s vs %s:%s -> %s",
 					c->name, s1, d1, d->name, s3, d3);
 			}
-#endif /* DEBUG */
 
 			if (!subnetinsubnet(our_net, &sr->this.client) ||
 				!subnetinsubnet(peer_net, &sr->that.client))
@@ -3347,7 +3375,6 @@ struct connection *find_client_connection(struct connection *c,
 	struct connection *d;
 	struct spd_route *sr;
 
-#ifdef DEBUG
 	if (DBGP(DBG_CONTROLMORE)) {
 		char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
 
@@ -3360,7 +3387,6 @@ struct connection *find_client_connection(struct connection *c,
 			s1, our_protocol, our_port,
 			d1, peer_protocol, peer_port);
 	}
-#endif /* DEBUG */
 
 	/*
 	 * Give priority to current connection
@@ -3374,7 +3400,6 @@ struct connection *find_client_connection(struct connection *c,
 			sr = sr->next) {
 			srnum++;
 
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
 
@@ -3383,7 +3408,6 @@ struct connection *find_client_connection(struct connection *c,
 				DBG_log("  concrete checking against sr#%d "
 					"%s -> %s", srnum, s2, d2);
 		}
-#endif /* DEBUG */
 
 			if (samesubnet(&sr->this.client, our_net) &&
 				samesubnet(&sr->that.client, peer_net) &&
@@ -3426,7 +3450,6 @@ struct connection *find_client_connection(struct connection *c,
 					sra->this.host_port,
 					NULL,
 					sra->that.host_port);
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
 
@@ -3439,7 +3462,6 @@ struct connection *find_client_connection(struct connection *c,
 					s2, d2,
 					(hp ? "found" : "not found"));
 			}
-#endif /* DEBUG */
 		}
 
 		if (hp != NULL) {
@@ -3668,6 +3690,12 @@ static void show_one_sr(struct connection *c,
 		c->name, instance,
 		(c->policy_label == NULL) ? "unset" : c->policy_label
 		);
+#else
+/* this makes output consistent for testing regardless of support */
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no, loopback:no; ",
+		  c->name, instance);
+	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:unset; ",
+		  c->name, instance);
 #endif
 
 }

@@ -1,11 +1,14 @@
 /* state and event objects
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009,2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -72,25 +75,25 @@ extern msgid_t generate_msgid(struct state *isakmp_sa);
  * Names are chosen to match corresponding names in state.
  */
 struct trans_attrs {
-	u_int16_t encrypt;              /* Encryption algorithm */
-	u_int16_t enckeylen;            /* encryption key len (bits) */
-	oakley_hash_t prf_hash;         /* Hash algorithm for PRF */
-	oakley_hash_t integ_hash;       /* Hash algorithm for integ */
+	u_int16_t encrypt;		/* Encryption algorithm */
+	u_int16_t enckeylen;		/* encryption key len (bits) */
+	oakley_hash_t prf_hash;		/* Hash algorithm for PRF */
+	oakley_hash_t integ_hash;	/* Hash algorithm for integ */
 
-	oakley_auth_t auth;             /* Authentication method (RSA,PSK) */
+	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
 
-	bool doing_xauth;                /* did we negotiate Extended Authentication and still doing it? */
+	bool doing_xauth;		/* did we negotiate Extended Authentication and still doing it? */
 
-	u_int16_t groupnum;
+	u_int16_t groupnum;		/* for IKEv2 */
 
-	time_t life_seconds;            /* When this SA expires (seconds) */
-	u_int32_t life_kilobytes;       /* When this SA is exhausted (kilobytes) */
+	time_t life_seconds;		/* When this SA expires (seconds) */
+	u_int32_t life_kilobytes;	/* When this SA is exhausted (kilobytes) */
 
 	/* used in phase1/PARENT SA */
-	const struct encrypt_desc *encrypter;   /* package of encryption routines */
-	const struct hash_desc *prf_hasher;     /* package of hashing routines */
-	const struct hash_desc *integ_hasher;   /* package of hashing routines */
-	const struct oakley_group_desc *group;  /* Oakley group */
+	const struct encrypt_desc *encrypter;	/* package of encryption routines */
+	const struct hash_desc *prf_hasher;	/* package of hashing routines */
+	const struct hash_desc *integ_hasher;	/* package of hashing routines */
+	const struct oakley_group_desc *group;	/* Oakley group */
 
 	/* used in phase2/CHILD_SA */
 	struct esp_info *ei;
@@ -482,7 +485,7 @@ extern void initialize_new_state(struct state *st,
 extern void show_states_status(void);
 
 #if 1
-void for_each_state(void *(f)(struct state *, void *data), void *data);
+void for_each_state(void (*f)(struct state *, void *data), void *data);
 #endif
 
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);

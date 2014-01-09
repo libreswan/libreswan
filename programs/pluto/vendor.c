@@ -2,6 +2,8 @@
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -476,7 +478,6 @@ static const char hexdig[] = "0123456789abcdef";
  * FIXME: This functions leaks a little bit, but these are one time leaks:
  * leak: 3 * vid->data, item size: 6
  * leak: self-vendor ID, item size: 37
- * leak: init_pluto_vendorid, item size: 13
  * leak: 2 * vid->data, item size: 13
  */
 void init_vendorid(void)

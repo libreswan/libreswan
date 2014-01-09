@@ -1,6 +1,8 @@
 /* Libreswan NAT-Traversal
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,9 +21,8 @@
 #include "demux.h"
 
 /*
- *  * NAT-Traversal defines for nat_traveral type from nat_traversal.h
- *   *
- *    */
+ *  NAT-Traversal defines for nat_traversal type from nat_traversal.h
+ */
 
 #define NAT_TRAVERSAL_METHOD  (0xffffffff - LELEM(NAT_TRAVERSAL_NAT_BHND_ME) - \
 			       LELEM(NAT_TRAVERSAL_NAT_BHND_PEER))

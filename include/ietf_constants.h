@@ -2,10 +2,11 @@
  * manifest constants
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,7 +20,6 @@
  * for more details.
  *
  */
-
 #include <sys/types.h>
 
 /* Group parameters from draft-ietf-ike-01.txt section 6 */
@@ -275,6 +275,27 @@
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
 
+/*
+ * RFC 4106 AES GCM
+ * http://tools.ietf.org/html/rfc4106#section-8.1
+ */
+#define AES_GCM_SALT_BYTES 4
+
+/*
+ * RFC 4309 AES CCM
+ * http://tools.ietf.org/search/rfc4309#section-7.1
+ */
+#define AES_CCM_SALT_BYTES 3
+
+/* Actually, the only valid values are 128, 192 and 256 bits */
+#define  AEAD_AES_KEY_MIN_LEN       128
+#define  AEAD_AES_KEY_DEF_LEN       128
+#define  AEAD_AES_KEY_MAX_LEN       256
+
+#define  AES_KEY_MIN_LEN        128
+#define  AES_KEY_DEF_LEN        128
+#define  AES_KEY_MAX_LEN        256
+
  /* ought to be supplied by md5.h */
 #define MD5_DIGEST_SIZE BYTES_FOR_BITS(128)
 /* IKEV2 integrity algorithms */
@@ -345,6 +366,7 @@
  */
 #define IPSEC_DOI_SPI_MIN 0x100
 #define IPSEC_DOI_SPI_OUR_MIN 0x1000
+
 
 /*
  * Payload types
@@ -628,7 +650,6 @@ extern const char *const critical_names[];
 
 /*
  * extern enum_names protocol_names;
- * same in IKEv1 and IKEv2.
  */
 #define PROTO_RESERVED 0 /* only in IKEv2 */
 #define PROTO_v2_RESERVED 0 /* only in IKEv2 */
@@ -637,6 +658,21 @@ extern const char *const critical_names[];
 #define PROTO_IPSEC_ESP 3
 #define PROTO_v2_ESP 3
 #define PROTO_IPCOMP 4 /* only in IKEv1 */
+
+/*
+ * IKEv2 Security Protocol Identifiers - RFC 5996
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-18
+ */
+enum ikev2_sec_proto_id {
+	/* 0 - Reserved */
+	IKEv2_SEC_PROTO_IKE = 1,
+	IKEv2_SEC_PROTO_AH = 2,
+	IKEv2_SEC_PROTO_ESP = 3,
+	IKEv2_SEC_FC_ESP_HEADER = 4, /* RFC 4595 */
+	IKEv2_SEC_FC_CT_AUTHENTICATION = 5, /* RFC 4595 */
+	/* 6 - 200 Unassigned */
+	/* 201 - 255 Private use */
+};
 
 /*
  * IKEv2 proposal
@@ -650,6 +686,11 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_ESN = 5,
 };
 
+/*
+ * IKE and ESP encryption algorithms
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
+ * (TODO: rename this to ikev2_encr_esp_ike)
+ */
 enum ikev2_trans_type_encr {
 	IKEv2_ENCR_DES_IV64 = 1,
 	IKEv2_ENCR_DES = 2,
@@ -671,11 +712,19 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_AES_GCM_8 = 18,
 	IKEv2_ENCR_AES_GCM_12 = 19,
 	IKEv2_ENCR_AES_GCM_16 = 20,
-	IKEv2_ENC_NULL_AUTH_AES_GMAC = 21,
+	IKEv2_ENCR_NULL_AUTH_AES_GMAC = 21,
 	IKEv2_RESERVED_IEEE_P1619_XTS_AES = 22,
-	/* 23 - 1023 Reserved to IANA */
+	IKEv2_ENCR_CAMELLIA_CBC = 23,
+	IKEv2_ENCR_CAMELLIA_CTR = 24,
+	IKEv2_ENCR_CAMELLIA_CCM_A = 25, /* AMELLIA_CCM_8 RFC 5529 */
+	IKEv2_ENCR_CAMELLIA_CCM_B = 26, /* AMELLIA_CCM_12 RFC 5529 */
+	IKEv2_ENCR_CAMELLIA_CCM_C = 27, /* AMELLIA_CCM_16 RFC 5529 */
+	/* 28 - 1023 Reserved to IANA */
 	/* 1024 - 65535 Private Use */
-	IKEv2_ENCR_INVALID = 65536
+	IKEv2_ENCR_SERPENT_CBC = 65004,
+	IKEv2_ENCR_TWOFISH_CBC = 65005,
+	IKEv2_ENCR_TWOFISH_CBC_SSH = 65289,
+	IKEv2_ENCR_INVALID = 65536,
 };
 
 enum ikev2_trans_type_prf {
@@ -890,7 +939,7 @@ typedef u_int16_t ipsec_auth_t;
 #define HMAC_BUFSIZE 64
 
 /*
- * Oakley Encryption Algorithm attribute
+ * IKEv1 Oakley Encryption Algorithm attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
  * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
  */
@@ -916,10 +965,9 @@ typedef u_int16_t ipsec_auth_t;
  */
 
 typedef u_int16_t oakley_hash_t;
-
+/* 0 reserved */
 #define OAKLEY_MD5 1
 #define OAKLEY_SHA1 2
-#define OAKLEY_SHA OAKLEY_SHA1
 #define OAKLEY_TIGER 3
 #define OAKLEY_SHA2_256 4
 #define OAKLEY_SHA2_384 5
@@ -972,9 +1020,15 @@ typedef u_int16_t oakley_auth_t;
 
 /* extern enum_names ikev2_auth_names; */
 enum ikev2_auth_method {
-	v2_AUTH_RSA = 1,
-	v2_AUTH_SHARED = 2,
-	v2_AUTH_DSA = 3,
+	IKEv2_AUTH_RSA = 1,
+	IKEv2_AUTH_PSK = 2,
+	IKEv2_AUTH_DSA = 3,
+	IKEv2_AUTH_P256 = 9,
+	IKEv2_AUTH_P384 = 10,
+	IKEv2_AUTH_P521 = 11,
+	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
+	/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-12 */
+	IKEv2_AUTH_ANONYMOUS = 201, /* private use for now */
 };
 
 /*
@@ -1021,7 +1075,6 @@ enum ike_trans_type_dh {
  */
 typedef enum {
 	NOTHING_WRONG = 0, /* unofficial! */
-
 	INVALID_PAYLOAD_TYPE = 1,
 	DOI_NOT_SUPPORTED = 2,
 	SITUATION_NOT_SUPPORTED = 3,
@@ -1226,6 +1279,10 @@ enum pubkey_alg {
 #define ISAKMP_ATTR_AF_TLV 0 /* length in lv; value follows */
 
 #define ISAKMP_ATTR_RTYPE_MASK 0x7FFF
+
+/* 
+ * ESP algorithms come in via ipsec_cipher_algo in libreswan/ipsec_policy.h
+ */
 
 /*
  * NOTE:

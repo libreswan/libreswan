@@ -1,6 +1,10 @@
 #!/bin/bash
 . ../../../kvmsetup.sh
-. ./testparams.sh 
+if [ -f ./testparams.sh ] ; then
+	. ./testparams.sh 
+else
+	. ../../default-testparams.sh
+fi
 . ../setup.sh
 . $LIBRESWANDIR/testing/utils/functions.sh 
 

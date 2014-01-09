@@ -88,7 +88,7 @@
 #define IPSEC_PROC_SHOW_SAREF_INFO
 #endif
 
-#ifndef CONFIG_PROC_FS 
+#ifndef CONFIG_PROC_FS
 /*
  * just complain because pluto won't run without /proc!
  */
@@ -192,7 +192,7 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 
 		seq_printf(seq, " policy=%s->%s", buf_s, buf_d);
 	}
-	
+
 	if (sa_p->ips_iv_bits) {
 		int j;
 		seq_printf(seq, " iv_bits=%dbits iv=0x", sa_p->ips_iv_bits);
@@ -241,12 +241,12 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 		seq_printf(seq, " encr_size_errs=%d", sa_p->ips_errs.ips_encsize_errs);
 	if (sa_p->ips_errs.ips_encpad_errs)
 		seq_printf(seq, " encr_pad_errs=%d", sa_p->ips_errs.ips_encpad_errs);
-	
+
 	seq_printf(seq, " jiffies=%lu", jiffies);
 
 	seq_printf(seq, " life(c,s,h)=");
 
-	ipsec_lifetime_format(seq, "alloc", 
+	ipsec_lifetime_format(seq, "alloc",
 			      ipsec_life_countbased, &sa_p->ips_life.ipl_allocations);
 
 	ipsec_lifetime_format(seq, "bytes",
@@ -257,10 +257,10 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 
 	ipsec_lifetime_format(seq, "usetime",
 			      ipsec_life_timebased, &sa_p->ips_life.ipl_usetime);
-	
+
 	ipsec_lifetime_format(seq, "packets",
 			      ipsec_life_countbased, &sa_p->ips_life.ipl_packets);
-	
+
 	if (sa_p->ips_life.ipl_usetime.ipl_last) { /* XXX-MCR should be last? */
 		seq_printf(seq, " idle=%Ld",
 			   ipsec_jiffieshz_elapsed(jiffies/HZ, sa_p->ips_life.ipl_usetime.ipl_last));
@@ -276,7 +276,6 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 	}
 #endif /* CONFIG_KLIPS_IPCOMP */
 
-#ifdef NAT_TRAVERSAL
 	seq_printf(seq, " natencap=");
 	switch(sa_p->ips_natt_type) {
 	case 0:
@@ -295,10 +294,7 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 
 	seq_printf(seq, " natsport=%d", sa_p->ips_natt_sport);
 	seq_printf(seq, " natdport=%d", sa_p->ips_natt_dport);
-#else
-	seq_printf(seq, " natencap=na");
-#endif /* NAT_TRAVERSAL */
-		
+
 	/* we decrement by one, because this SA has been referenced in order to dump this info */
 	seq_printf(seq, " refcount=%d", atomic_read(&sa_p->ips_refcount)-1);
 #ifdef IPSEC_SA_RECOUNT_DEBUG
@@ -328,7 +324,7 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 
 	seq_printf(seq, "\n");
 
-	ipsec_sa_put(sa_p, IPSEC_REFPROC);   
+	ipsec_sa_put(sa_p, IPSEC_REFPROC);
 	return 0;
 }
 
@@ -342,7 +338,7 @@ int ipsec_spi_show(struct seq_file *seq, void *offset)
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
 		    "klips_debug:ipsec_spi_show: seq=%p offset=%p\n",
 		    seq, offset);
-	
+
 	spin_lock_bh(&tdb_lock);
 
 	for (i = 0; i < SADB_HASHMOD; i++)
@@ -368,7 +364,7 @@ int ipsec_spigrp_show(struct seq_file *seq, void *offset)
 		    seq, offset);
 
 	spin_lock_bh(&tdb_lock);
-	
+
 	for (i = 0; i < SADB_HASHMOD; i++) {
 		for (sa_p = ipsec_sadb_hash[i]; sa_p != NULL; sa_p = sa_p->ips_hnext) {
 			sa_p2 = sa_p;
@@ -400,7 +396,7 @@ int ipsec_saraw_show(struct seq_file *seq, void *offset)
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
 		    "klips_debug:ipsec_saraw_show: seq=%p offset=%p\n",
 		    seq, offset);
-	
+
 	spin_lock_bh(&tdb_lock);
 
 	for (sa_p = ipsec_sa_raw; sa_p; sa_p = sa_p->ips_raw)
@@ -635,7 +631,7 @@ static struct ipsec_proc_list proc_items[]={
 
     {}
 };
-		
+
 int ipsec_proc_init()
 {
 	int error = 0;
@@ -659,7 +655,7 @@ int ipsec_proc_init()
 		if (!item)
 			error |= 1;
 	}
-	
+
 	/* now create some symlinks to provide compatibility */
 	proc_symlink("ipsec_eroute", PROC_NET, "ipsec/eroute/all");
 	proc_symlink("ipsec_spi",    PROC_NET, "ipsec/spi/all");

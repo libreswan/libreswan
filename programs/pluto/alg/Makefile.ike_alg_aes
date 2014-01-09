@@ -1,7 +1,0 @@
-ALG:=aes
-
-ALG_SRCS-y  := $(ALG_SRCS-y) ike_alg_$(ALG).c
-ALG_OBJS-y  := $(ALG_OBJS-y) ike_alg_$(ALG).o
-
-ike_alg_$(ALG).o: ike_alg_$(ALG).c
-	$(CC) $(COPTS) $(ALLFLAGS) -c $<

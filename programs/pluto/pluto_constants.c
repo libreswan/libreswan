@@ -1,5 +1,6 @@
 /* tables of names for values defined in constants.h
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,7 +31,7 @@
 #include "constants.h"
 #include "enum_names.h"
 
-/* 
+/*
  * To obsolete or convert to runtime options:
  * ALG_PATCH
  * ALLOW_MICROSOFT_BAD_PROPOSAL
@@ -49,7 +50,7 @@
  * SINGLE_CONF_DIR
  * SOFTREMOTE_CLIENT_WORKAROUND
  * SUPPORT_ESP_NULL
- * TEST_INDECENT_PROPOSAL 
+ * TEST_INDECENT_PROPOSAL
  * USE_3DES USE_AES USE_MD5 USE_SERPENT USE_SHA1 USE_SHA2 USE_TWOFISH
  * USE_KEYRR
  * VIRTUAL_IP
@@ -208,7 +209,7 @@ static const char *const natt_method_result_name[] = {
 	"NAT behind me",        /* 30 */
 	"NAT behind peer"       /* 31 */
 };
-enum_names natt_method_result_names =
+static enum_names natt_method_result_names =
 { NAT_TRAVERSAL_NAT_BHND_ME, NAT_TRAVERSAL_NAT_BHND_PEER,
   natt_method_result_name, NULL };
 
@@ -320,17 +321,18 @@ const char *const sa_policy_bit_names[] = {
 	"IKE_FRAG",
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",
+	"ANONYMOUS", 
 	NULL
 };
 
-const char *const policy_shunt_names[4] = {
+static const char *const policy_shunt_names[4] = {
 	"TRAP",
 	"PASS",
 	"DROP",
 	"REJECT",
 };
 
-const char *const policy_fail_names[4] = {
+static const char *const policy_fail_names[4] = {
 	"NONE",
 	"PASS",
 	"DROP",

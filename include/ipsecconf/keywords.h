@@ -1,8 +1,14 @@
-/* Libreswan config file parser (parser.h)
+/* Libreswan config file parser keywords processor
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -94,6 +100,7 @@ enum keyword_numeric_config_field {
 	KBF_KEYEXCHANGE,
 	KBF_AUTO,
 	KBF_PFS,
+	KBF_ANONYMOUS,
 	KBF_SHA2_TRUNCBUG,
 	KBF_SALIFETIME,
 	KBF_REKEY,

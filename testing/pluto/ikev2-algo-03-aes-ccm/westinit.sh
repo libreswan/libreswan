@@ -10,6 +10,8 @@ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec _stackmanager start
 /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
+# first should fail to load
+ipsec auto --add badkeysize-shouldnotload
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-ccm-a
 ipsec auto --status
 echo "initdone"

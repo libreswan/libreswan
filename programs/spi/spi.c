@@ -4,6 +4,7 @@
  * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002  Richard Guy Briggs.
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,6 +59,7 @@
 #include "libreswan/ipsec_ah.h"
 #include "libreswan/ipsec_esp.h"
 #include "libreswan/ipsec_sa.h"  /* IPSEC_SAREF_NULL */
+#include <libreswan/pfkey_debug.h> /* PF_KEY_DEBUG_PARSE_MAX */
 
 #include "lswlog.h"
 #include "alg_info.h"
@@ -155,7 +157,7 @@ static void usage(char *s, FILE *f)
 	exit(-1);
 }
 
-int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
+static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		       char *life_opt[life_maxsever][life_maxtype],
 		       char *myoptarg)
 {
@@ -308,62 +310,6 @@ int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 	return 0;
 }
 
-int pfkey_register(uint8_t satype)
-{
-	/* for registering SA types that can be negotiated */
-	int error;
-	ssize_t wlen;
-	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
-	struct sadb_msg *pfkey_msg;
-
-	pfkey_extensions_init(extensions);
-	error = pfkey_msg_hdr_build(&extensions[0],
-				    SADB_REGISTER,
-				    satype,
-				    0,
-				    ++pfkey_seq,
-				    getpid());
-	if (error != 0) {
-		fprintf(stderr,
-			"%s: Trouble building message header, error=%d.\n",
-			progname, error);
-		pfkey_extensions_free(extensions);
-		return 1;
-	}
-
-	error = pfkey_msg_build(&pfkey_msg, extensions, EXT_BITS_IN);
-	if (error != 0) {
-		fprintf(stderr,
-			"%s: Trouble building pfkey message, error=%d.\n",
-			progname, error);
-		pfkey_extensions_free(extensions);
-		pfkey_msg_free(&pfkey_msg);
-		return 1;
-	}
-	wlen = write(pfkey_sock, pfkey_msg,
-		     pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN);
-	if (wlen != (ssize_t)(pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN)) {
-		/* cleanup code here */
-		if (wlen < 0) {
-			fprintf(stderr,
-				"%s: Trouble writing to channel PF_KEY: %s\n",
-				progname,
-				strerror(errno));
-		} else {
-			fprintf(stderr,
-				"%s: write to channel PF_KEY truncated.\n",
-				progname);
-		}
-		pfkey_extensions_free(extensions);
-		pfkey_msg_free(&pfkey_msg);
-		return 1;
-	}
-	pfkey_extensions_free(extensions);
-	pfkey_msg_free(&pfkey_msg);
-
-	return 0;
-}
-
 static struct option const longopts[] =
 {
 	{ "ah", 1, 0, 'H' },
@@ -420,7 +366,7 @@ static bool pfkey_build(int error,
 	}
 }
 
-int decode_esp(char *algname)
+static int decode_esp(char *algname)
 {
 	int esp_alg;
 
@@ -557,16 +503,10 @@ int main(int argc, char *argv[])
 				    longopts, 0)) != EOF) {
 		switch (c) {
 		case 'g':
-#ifdef DEBUG
 			debug = 1;
 			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
 			/* paul: this is a plutoism? cur_debugging = 0xffffffff; */
 			argcount--;
-#else
-			fprintf(stderr,
-				"%s: Cannot set debug - compiled without DEBUG\n",
-				progname);
-#endif
 			break;
 
 		case 'R':
@@ -1566,7 +1506,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-#if PFKEY_PROXY
+#ifdef PFKEY_PROXY
 		anyaddr(address_family, &pfkey_address_p_ska);
 		if ((error =
 			     pfkey_address_build(&extensions[
@@ -1978,7 +1918,11 @@ int main(int argc, char *argv[])
 	exit(0);
 }
 
-void exit_tool(int x)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
 	exit(x);
 }

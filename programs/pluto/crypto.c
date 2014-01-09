@@ -1,9 +1,10 @@
 /* crypto interfaces
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C. Richardson <mcr@xelerance.com>
- * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -59,9 +60,9 @@ static MP_INT
 	dh23_modulus,
 	dh24_modulus;
 
-MP_INT groupgenerator;  /* MODP group generator (2) */
+static MP_INT groupgenerator;  /* MODP group generator (2) */
 
-MP_INT generator_dh22,
+static MP_INT generator_dh22,
        generator_dh23,
        generator_dh24;
 
@@ -129,7 +130,7 @@ static struct hash_desc crypto_hasher_sha1 =
 	.common = { .name = "oakley_sha",
 		    .officname = "sha1",
 		    .algo_type = IKE_ALG_HASH,
-		    .algo_id =   OAKLEY_SHA,
+		    .algo_id =   OAKLEY_SHA1,
 		    .algo_v2id = IKEv2_PRF_HMAC_SHA1,
 		    .algo_next = NULL, },
 	.hash_ctx_size = sizeof(SHA1_CTX),
@@ -147,7 +148,7 @@ static struct hash_desc crypto_integ_sha1 =
 	.common = { .name = "oakley_sha",
 		    .officname = "sha1",
 		    .algo_type = IKE_ALG_INTEG,
-		    .algo_id =   OAKLEY_SHA,
+		    .algo_id =   OAKLEY_SHA1,
 		    .algo_v2id = IKEv2_AUTH_HMAC_SHA1_96,
 		    .algo_next = NULL, },
 	.hash_ctx_size = sizeof(SHA1_CTX),
@@ -184,57 +185,41 @@ void init_crypto(void)
 	    )
 		exit_log("mpz_init_set_str() failed in init_crypto()");
 
-	{
 #ifdef USE_TWOFISH
-		{
-			extern int ike_alg_twofish_init(void);
-			ike_alg_twofish_init();
-		}
+	ike_alg_twofish_init();
 #endif
 
 #ifdef USE_SERPENT
-		{
-			extern int ike_alg_serpent_init(void);
-			ike_alg_serpent_init();
-		}
+	ike_alg_serpent_init();
 #endif
 
 #ifdef USE_AES
-		{
-			extern int ike_alg_aes_init(void);
-			ike_alg_aes_init();
-		}
+	ike_alg_aes_init();
 #endif
 
 #ifdef USE_3DES
-		{
-			ike_alg_add((struct ike_alg *) &crypto_encrypter_3des);
-		}
+	ike_alg_add((struct ike_alg *) &crypto_encrypter_3des);
 #endif
 
 #ifdef USE_SHA2
-		{
-			extern int ike_alg_sha2_init(void);
-			ike_alg_sha2_init();
-		}
+	ike_alg_sha2_init();
 #endif
 
 #ifdef USE_SHA1
-		ike_alg_add((struct ike_alg *) &crypto_hasher_sha1);
-		ike_alg_add((struct ike_alg *) &crypto_integ_sha1);
+	ike_alg_add((struct ike_alg *) &crypto_hasher_sha1);
+	ike_alg_add((struct ike_alg *) &crypto_integ_sha1);
 #endif
 
 #ifdef USE_MD5
-		ike_alg_add((struct ike_alg *) &crypto_hasher_md5);
-		ike_alg_add((struct ike_alg *) &crypto_integ_md5);
+	ike_alg_add((struct ike_alg *) &crypto_hasher_md5);
+	ike_alg_add((struct ike_alg *) &crypto_integ_md5);
 #endif
-	}
 }
 
 /* Oakley group description
  *
  * See:
- * RFC-2409 "The Internet key exchange (IKE)" Section 6 
+ * RFC-2409 "The Internet key exchange (IKE)" Section 6
  * RFC-3526 "More Modular Exponential (MODP) Diffie-Hellman groups"
  */
 
@@ -306,11 +291,12 @@ static void do_3des(u_int8_t *buf, size_t buf_len,
  */
 struct hash_desc *crypto_get_hasher(oakley_hash_t alg)
 {
-	return (struct hash_desc *) ike_alg_find(IKE_ALG_HASH, alg, 0);
+	return (struct hash_desc *) ikev1_alg_find(IKE_ALG_HASH, alg);
 }
+
 struct encrypt_desc *crypto_get_encrypter(int alg)
 {
-	return (struct encrypt_desc *) ike_alg_find(IKE_ALG_ENCRYPT, alg, 0);
+	return (struct encrypt_desc *) ikev1_alg_find(IKE_ALG_ENCRYPT, alg);
 }
 
 void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,

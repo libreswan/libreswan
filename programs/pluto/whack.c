@@ -5,7 +5,13 @@
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Shingo Yamawaki
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2010 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -203,7 +209,6 @@ static void help(void)
 		"myid: whack"
 		" --myid <id>"
 		"\n\n"
-#ifdef DEBUG
 		"debug: whack [--name <connection_name>]"
 		" \\\n   "
 		" [--debug-none]"
@@ -216,7 +221,6 @@ static void help(void)
 		" \\\n   "
 		" [--debug-control]"
 		" [--debug-controlmore]"
-		" [--debug-klips]"
 		" [--debug-dns]"
 		" [--debug-pfkey]"
 		" [--debug-dpd]"
@@ -229,7 +233,6 @@ static void help(void)
 		" [--debug-private]"
 		"\n\n"
 		"testcases: [--whackrecord file] [--whackstoprecord]\n"
-#endif
 		"listen: whack"
 		" (--listen | --unlisten)"
 		"\n\n"
@@ -495,7 +498,6 @@ enum option_enums {
 	CD_ESP
 #   define CD_LAST CD_ESP       /* last connection description */
 
-#ifdef DEBUG                    /* must be last so others are less than 32 to fit in lset_t */
 #   define DBGOPT_FIRST DBGOPT_NONE
 	,
 	/* NOTE: these definitions must match DBG_* and IMPAIR_* in constants.h */
@@ -508,7 +510,7 @@ enum option_enums {
 	DBGOPT_EMITTING,        /* same order as DBG_* */
 	DBGOPT_CONTROL,         /* same order as DBG_* */
 	DBGOPT_LIFECYCLE,       /* same order as DBG_* */
-	DBGOPT_KLIPS,           /* same order as DBG_* */
+	DBGOPT_KERNEL,          /* same order as DBG_* */
 	DBGOPT_DNS,             /* same order as DBG_* */
 	DBGOPT_OPPO,            /* same order as DBG_* */
 	DBGOPT_CONTROLMORE,     /* same order as DBG_* */
@@ -538,7 +540,6 @@ enum option_enums {
 	DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG,   /* cause pluto to never retransmit packets */
 
 #   define DBGOPT_LAST DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG
-#endif
 
 };
 
@@ -740,7 +741,6 @@ static const struct option long_opts[] = {
 	{ "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO },
 	{ "policylabel", required_argument, NULL, CD_POLICY_LABEL + OO },
 #endif
-#ifdef DEBUG
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
 	{ "debug-raw", no_argument, NULL, DBGOPT_RAW + OO },
@@ -749,7 +749,7 @@ static const struct option long_opts[] = {
 	{ "debug-emitting", no_argument, NULL, DBGOPT_EMITTING + OO },
 	{ "debug-control", no_argument, NULL, DBGOPT_CONTROL + OO },
 	{ "debug-lifecycle", no_argument, NULL, DBGOPT_LIFECYCLE + OO },
-	{ "debug-klips", no_argument, NULL, DBGOPT_KLIPS + OO },
+	{ "debug-kernel", no_argument, NULL, DBGOPT_KERNEL + OO },
 	{ "debug-dns", no_argument, NULL, DBGOPT_DNS + OO },
 	{ "debug-oppo", no_argument, NULL, DBGOPT_OPPO + OO },
 	{ "debug-oppoinfo", no_argument, NULL, DBGOPT_OPPOINFO + OO },
@@ -787,7 +787,6 @@ static const struct option long_opts[] = {
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +
 	  OO },
-#endif
 #   undef OO
 	{ 0, 0, 0, 0 }
 };
@@ -920,20 +919,14 @@ int main(int argc, char **argv)
 	const char *ugh;
 
 	/* check division of numbering space */
-#ifdef DEBUG
 	assert(OPTION_OFFSET + DBGOPT_LAST < NUMERIC_ARG);
-#else
-	assert(OPTION_OFFSET + CD_LAST < NUMERIC_ARG);
-#endif
 	assert(OPT_LAST1 - OPT_FIRST < (sizeof opts_seen * BITS_PER_BYTE) - 1);
 	assert(OPT_LAST2 - OPT_FIRST2 <
 	       (sizeof opts2_seen * BITS_PER_BYTE) - 1);
 	assert(LST_LAST - LST_FIRST < (sizeof lst_seen * BITS_PER_BYTE) - 1);
 	assert(END_LAST - END_FIRST < (sizeof end_seen * BITS_PER_BYTE) - 1);
 	assert(CD_LAST - CD_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
-#ifdef DEBUG    /* must be last so others are less than (sizeof cd_seen * BITS_PER_BYTE) to fit in lset_t */
 	assert(DBGOPT_LAST - DBGOPT_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
-#endif
 	/* check that POLICY bit assignment matches with CD_ */
 	assert(LELEM(CD_DONT_REKEY - CD_POLICY_FIRST) == POLICY_DONT_REKEY);
 
@@ -1041,14 +1034,12 @@ int main(int argc, char **argv)
 				      long_opts[long_index].name);
 			lst_seen |= f;
 		}
-#ifdef DEBUG
 		else if (DBGOPT_FIRST <= c && c <= DBGOPT_LAST) {
 			/* DBGOPT_* options are treated separately to reduce
 			 * potential members of opts_seen.
 			 */
 			msg.whack_options = TRUE;
 		}
-#endif
 		else if (END_FIRST <= c && c <= END_LAST) {
 			/* END_* options are added to end_seen.
 			 * Reject repeated options (unless later code intervenes).
@@ -1777,7 +1768,6 @@ int main(int argc, char **argv)
 			msg.sa_reqid = opt_whole;
 			continue;
 
-#ifdef DEBUG
 		case OPT_WHACKRECORD:
 			msg.string1 = strdup(optarg);
 			msg.whack_options = TRUE;
@@ -1788,9 +1778,7 @@ int main(int argc, char **argv)
 			msg.whack_options = TRUE;
 			msg.opt_set = WHACK_STOPWHACKRECORD;
 			break;
-#endif
 
-#ifdef DEBUG
 		case DBGOPT_NONE: /* --debug-none */
 			msg.debugging = DBG_NONE;
 			continue;
@@ -1805,12 +1793,12 @@ int main(int argc, char **argv)
 		case DBGOPT_EMITTING:                           /* --debug-emitting */
 		case DBGOPT_CONTROL:                            /* --debug-control */
 		case DBGOPT_LIFECYCLE:                          /* --debug-lifecycle */
-		case DBGOPT_KLIPS:                              /* --debug-klips */
+		case DBGOPT_KERNEL:                             /* --debug-kernel */
 		case DBGOPT_DNS:                                /* --debug-dns */
 		case DBGOPT_OPPO:                               /* --debug-oppo */
 		case DBGOPT_CONTROLMORE:                        /* --debug-controlmore */
 		case DBGOPT_PFKEY:                              /* --debug-pfkey */
-		case DBGOPT_NATT:                               /* --debug-pfkey */
+		case DBGOPT_NATT:                               /* --debug-natt */
 		case DBGOPT_X509:                               /* --debug-pfkey */
 		case DBGOPT_DPD:                                /* --debug-dpd */
 		case DBGOPT_OPPOINFO:                           /* --debug-oppoinfo */
@@ -1829,7 +1817,6 @@ int main(int argc, char **argv)
 		case DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG:      /* --impair-send-bogus-isakmp-flag */
 			msg.debugging |= LELEM(c - DBGOPT_RAW);
 			continue;
-#endif
 		default:
 			assert(FALSE); /* unknown return value */
 		}

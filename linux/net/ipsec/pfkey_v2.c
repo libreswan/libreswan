@@ -95,11 +95,11 @@ extern struct proto_ops SOCKOPS_WRAPPED(pfkey_ops);
 
 #ifdef NET_26
 static DEFINE_RWLOCK(pfkey_sock_lock);
-HLIST_HEAD(pfkey_sock_list);
+static HLIST_HEAD(pfkey_sock_list);
 static DECLARE_WAIT_QUEUE_HEAD(pfkey_sock_wait);
 static atomic_t pfkey_sock_users = ATOMIC_INIT(0);
 #else
-struct sock *pfkey_sock_list = NULL;
+static struct sock *pfkey_sock_list = NULL;
 #endif
 
 struct supported_list *pfkey_supported_list[K_SADB_SATYPE_MAX + 1];
@@ -136,7 +136,7 @@ DEBUG_NO_STATIC int pfkey_recvmsg(struct socket *sock, struct msghdr *msg,
 				  int size, int flags, struct scm_cookie *scm);
 #endif
 
-struct net_proto_family pfkey_family_ops = {
+static struct net_proto_family pfkey_family_ops = {
 #ifdef NET_26
 	.owner  = THIS_MODULE,
 #endif
@@ -217,7 +217,7 @@ static __inline__ void pfkey_unlock_sock_list(void)
 }
 #endif
 
-int pfkey_list_remove_socket(struct socket *socketp,
+static int pfkey_list_remove_socket(struct socket *socketp,
 			     struct socket_list **sockets)
 {
 	struct socket_list *socket_listp, *prev;
@@ -1140,7 +1140,7 @@ int pfkey_show(struct seq_file *seq, void *offset)
 #ifdef SK_FOR_EACH_NEED_NODE
 	struct hlist_node *node;
 #endif
-	
+
 	if (!sysctl_ipsec_debug_verbose) {
 		seq_printf(seq, "    sock   pid   socket     next     prev e n p sndbf    Flags     Type St\n");
 	} else {
@@ -1180,7 +1180,7 @@ int pfkey_show(struct seq_file *seq, void *offset)
 					sock_flag(sk, SOCK_ZAPPED),
 #else
 					sk->sk_zapped,
-#endif					
+#endif
 					sk->sk_protocol,
 					sk->sk_sndbuf,
 					(unsigned int)t.tv_sec,
@@ -1198,9 +1198,9 @@ int pfkey_supported_show(struct seq_file *seq, void *offset)
 {
 	int satype;
 	struct supported_list *ps;
-	
+
 	seq_printf(seq, "satype exttype alg_id ivlen minbits maxbits name\n");
-	
+
 	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		ps = pfkey_supported_list[satype];
 		while (ps) {
@@ -1228,9 +1228,9 @@ int pfkey_registered_show(struct seq_file *seq, void *offset)
 {
 	int satype;
 	struct socket_list *pfkey_sockets;
-	
+
 	seq_printf(seq, "satype   socket   pid       sk\n");
-	
+
 	for (satype = K_SADB_SATYPE_UNSPEC; satype <= K_SADB_SATYPE_MAX; satype++) {
 		pfkey_sockets = pfkey_registered_sockets[satype];
 		while (pfkey_sockets) {

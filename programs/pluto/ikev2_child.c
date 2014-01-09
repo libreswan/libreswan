@@ -4,8 +4,9 @@
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Antony Antony <appu@phenome.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -136,7 +137,7 @@ struct traffic_selector ikev2_end_to_ts(struct end *e)
 	return ts;
 }
 
-stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
+static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 			 pb_stream *outpbs,
 			 unsigned int lt,
 			 struct traffic_selector *ts,
@@ -988,7 +989,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					    &sra->that.host_addr,
 					    sra->that.host_port);
 
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
 
@@ -1001,7 +1001,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					s2, d2,
 					(hp ? "found" : "not found"));
 			}
-#endif                  /* DEBUG */
 
 			if (!hp)
 				continue;

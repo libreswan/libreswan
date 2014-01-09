@@ -146,7 +146,7 @@ void code_asn1_length(size_t length, chunk_t *code)
 /*
  * build an empty asn.1 object with tag and length fields already filled in
  */
-u_char*build_asn1_object(chunk_t *object, asn1_t type, size_t datalen)
+u_char *build_asn1_object(chunk_t *object, asn1_t type, size_t datalen)
 {
 	u_char length_buf[4];
 	chunk_t length = { length_buf, 0 };
@@ -174,7 +174,7 @@ u_char*build_asn1_object(chunk_t *object, asn1_t type, size_t datalen)
 /*
  * build an empty asn.1 object with explicit tags and length fields already filled in
  */
-u_char*build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
+u_char *build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
 				  asn1_t inner_type,
 				  size_t datalen)
 {

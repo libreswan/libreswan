@@ -1,13 +1,18 @@
 /* information about connections between hosts and clients
- * Copyright (C) 1998-2010  D. Hugh Redelmeier.
+ *
+ * Copyright (C) 1998-2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
  * Copyright (C) 2009 Stefan Arentz <stefan@arentz.ca>
  * Copyright (C) 2009-2010 David McCullough <david_mccullough@securecomputing.com>
- * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2010 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2007-2011 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2010,2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Panagiotis Tamtamis <tamtamis@gmail.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ *
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -486,7 +491,6 @@ static void cannot_oppo(struct connection *c,
 				      nc->newest_ipsec_sa,
 				      ocb, pcb));
 
-#ifdef DEBUG
 		if (DBGP(DBG_OPPO | DBG_CONTROLMORE)) {
 			char state_buf[LOG_WIDTH];
 			char state_buf2[LOG_WIDTH];
@@ -497,7 +501,6 @@ static void cannot_oppo(struct connection *c,
 			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
 			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
 		}
-#endif          /* DEBUG */
 
 		if (!route_and_eroute(c, shunt_spd, st)) {
 			whack_log(RC_OPPOFAILURE,
@@ -587,7 +590,6 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 					   cr->b.transport_proto);
 	}
 
-#ifdef DEBUG
 	/* if we're going to ignore the error, at least note it in debugging log */
 	if (cr->b.failure_ok && ugh != NULL) {
 		DBG(DBG_CONTROL | DBG_DNS,
@@ -602,7 +604,6 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 				    cr->b.want, ocb, pcb, ugh);
 		    });
 	}
-#endif
 
 	if (!cr->b.failure_ok && ugh != NULL) {
 		c = find_connection_for_clients(NULL, &cr->b.our_client,

@@ -6,7 +6,7 @@
  * Copyright (C) 1998-2004  D. Hugh Redelmeier.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -90,7 +90,6 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
 static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak,
 				     prompt_pass_t *pass);
 
-#ifdef DEBUG
 static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 {
 	const struct fld *p;
@@ -128,7 +127,6 @@ static void RSA_show_public_key(struct RSA_public_key *k)
 	passert(offsetof(struct RSA_private_key, pub) == 0);
 	RSA_show_key_fields((struct RSA_private_key *)k, 2);
 }
-#endif
 
 static const char *RSA_public_key_sanity(struct RSA_private_key *k)
 {
@@ -223,7 +221,7 @@ void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize)
 	*keysize = n.len;
 }
 
-void form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize)
+static void form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize)
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.data == 0x00) {
@@ -239,7 +237,7 @@ void form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize)
 	*keysize = n.len;
 }
 
-struct pubkey*allocate_RSA_public_key(const cert_t cert)
+struct pubkey *allocate_RSA_public_key(const cert_t cert)
 {
 	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
 	chunk_t e, n;
@@ -260,9 +258,7 @@ struct pubkey*allocate_RSA_public_key(const cert_t cert)
 
 	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
 
-#ifdef DEBUG
 	DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
-#endif
 
 	pk->alg = PUBKEY_ALG_RSA;
 	pk->id  = empty_id;
@@ -341,6 +337,7 @@ static int lsw_check_secret_byid(struct secret *secret UNUSED,
 	return 1;
 }
 
+/* ??? declared in keys.h */
 struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
 					     struct pubkey *my_public_key,
 					     enum PrivateKeyKind kind)
@@ -526,6 +523,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	return best;
 }
 
+#if 0	/* ??? not used */
 /* check the existence of an RSA private key matching an RSA public
  * key contained in an X.509 or OpenPGP certificate
  */
@@ -551,8 +549,9 @@ bool lsw_has_private_key(struct secret *secrets, cert_t cert)
 	free_public_key(pubkey);
 	return has_key;
 }
+#endif
 
-err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *rsak,
+static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *rsak,
 						char *nssHostCertNickName)
 {
 	err_t ugh = NULL;
@@ -925,7 +924,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 /*
  * get the matching RSA private key belonging to a given X.509 certificate
  */
-const struct RSA_private_key*lsw_get_x509_private_key(struct secret *secrets,
+const struct RSA_private_key *lsw_get_x509_private_key(struct secret *secrets,
 						      x509cert_t *cert)
 {
 	struct secret *s;
@@ -955,7 +954,9 @@ const struct RSA_private_key*lsw_get_x509_private_key(struct secret *secrets,
 }
 
 static pthread_mutex_t certs_and_keys_mutex  = PTHREAD_MUTEX_INITIALIZER;
+
 static pthread_mutex_t authcert_list_mutex   = PTHREAD_MUTEX_INITIALIZER;
+
 /*
  * lock access to my certs and keys
  */
@@ -979,8 +980,9 @@ void unlock_certs_and_keys(const char *who)
 }
 
 #if defined(LIBCURL) || defined(LDAP_VER)
-/*
- * lock access to the chained authcert list
+
+/* lock access to the chained authcert list
+ * ??? declared in x509.h
  */
 void lock_authcert_list(const char *who)
 {
@@ -990,8 +992,8 @@ void lock_authcert_list(const char *who)
 	    );
 }
 
-/*
- * unlock access to the chained authcert list
+/* unlock access to the chained authcert list
+ * ??? declared in x509.h
  */
 void unlock_authcert_list(const char *who)
 {
@@ -1000,6 +1002,7 @@ void unlock_authcert_list(const char *who)
 	    );
 	pthread_mutex_unlock(&authcert_list_mutex);
 }
+
 #endif
 
 static void process_secret(struct secret **psecrets, int verbose,
@@ -1459,9 +1462,7 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 
 	keyblobtoid(pubkey->ptr, pubkey->len, rsa->keyid, sizeof(rsa->keyid));
 
-#ifdef DEBUG
 	DBG(DBG_PRIVATE, RSA_show_public_key(rsa));
-#endif
 
 	rsa->k = mpz_sizeinbase(&rsa->n, 2);                    /* size in bits, for a start */
 	rsa->k = (rsa->k + BITS_PER_BYTE - 1) / BITS_PER_BYTE;  /* now octets */

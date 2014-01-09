@@ -1,5 +1,8 @@
 /* Security Policy Data Base (such as it is)
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -200,10 +203,10 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 #endif
 
 /** output an attribute (within an SA) */
-bool out_attr(int type,
+static bool out_attr(int type,
 	      unsigned long val,
 	      struct_desc *attr_desc,
-	      enum_names **attr_val_descs USED_BY_DEBUG,
+	      enum_names **attr_val_descs,
 	      pb_stream *pbs)
 {
 	struct isakmp_attribute attr;
@@ -1101,8 +1104,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 				/* FALL THROUGH */
 				default:
 					ugh = builddiag("%s is not supported",
-							enum_show(&
-								  oakley_enc_names,
+							enum_show(&oakley_enc_names,
 								  val));
 				}
 				break;
@@ -1115,14 +1117,13 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 /* #else */
 				switch (val) {
 				case OAKLEY_MD5:
-				case OAKLEY_SHA:
+				case OAKLEY_SHA1:
 					ta.prf_hash = val;
 					ta.prf_hasher = crypto_get_hasher(val);
 					break;
 				default:
 					ugh = builddiag("%s is not supported",
-							enum_show(&
-								  oakley_hash_names,
+							enum_show(&oakley_hash_names,
 								  val));
 				}
 /* #endif */
@@ -1256,8 +1257,7 @@ rsasig_common:
 				default:
 					ugh = builddiag(
 						"Pluto does not support %s authentication",
-						enum_show(&
-							  oakley_auth_names,
+						enum_show(&oakley_auth_names,
 							  val));
 					break;
 				}
@@ -1281,8 +1281,7 @@ rsasig_common:
 					if (LHAS(seen_durations, val)) {
 						loglog(RC_LOG_SERIOUS,
 						       "attribute OAKLEY_LIFE_TYPE value %s repeated",
-						       enum_show(&
-								 oakley_lifetime_names,
+						       enum_show(&oakley_lifetime_names,
 								 val));
 						return BAD_PROPOSAL_SYNTAX;
 					}
@@ -1291,8 +1290,7 @@ rsasig_common:
 					break;
 				default:
 					ugh = builddiag("unknown value %s",
-							enum_show(&
-								  oakley_lifetime_names,
+							enum_show(&oakley_lifetime_names,
 								  val));
 					break;
 				}
@@ -1714,13 +1712,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		val = a.isaat_lv;
 
-		vdesc  =
-			ipsec_attr_val_descs[a.isaat_af_type &
-					     ISAKMP_ATTR_RTYPE_MASK
+		vdesc = ipsec_attr_val_descs[a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK
 #ifdef HAVE_LABELED_IPSEC
-		                                /* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
-		                                /* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
-		                                /* which is NULL in ipsec_attr_val_desc*/
+		/* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
+		/* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
+		/* which is NULL in ipsec_attr_val_desc*/
 					     >= LELEM_ROOF ? 0 : a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #endif
@@ -2351,13 +2347,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							   &ah_attrs,
 							   &ah_prop_pbs,
 							   &ah_trans_pbs,
-							   &
-							   isakmp_ah_transform_desc,
+							   &isakmp_ah_transform_desc,
 							   previous_transnum,
 							   selection,
-							   tn ==
-							   ah_proposal.
-							   isap_notrans - 1,
+							   tn == ah_proposal.isap_notrans - 1,
 							   FALSE,
 							   st))
 					return BAD_PROPOSAL_SYNTAX;
@@ -2400,26 +2393,31 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				}
 				if (ah_attrs.transattrs.encrypt !=
 				    ok_transid) {
+					char esb[ENUM_SHOW_BUF_LEN];
+
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
-					       enum_name(&auth_alg_names,
+					       enum_showb(&auth_alg_names,
 							 ah_attrs.transattrs.
-							 integ_hash),
+							 integ_hash,
+							 esb, sizeof(esb)),
 					       enum_show(&ah_transformid_names,
 							 ah_attrs.transattrs.
 							 encrypt));
 					return BAD_PROPOSAL_SYNTAX;
 				}
 				if (!ok_auth) {
+					char esb[ENUM_SHOW_BUF_LEN];
+
 					DBG(DBG_CONTROL | DBG_CRYPT,
 					    DBG_log("%s attribute unsupported"
 						    " in %s Transform from %s",
-						    enum_name(&auth_alg_names,
+						    enum_showb(&auth_alg_names,
 							      ah_attrs.
 							      transattrs.
-							      integ_hash),
-						    enum_show(&
-							      ah_transformid_names,
+							      integ_hash,
+							      esb, sizeof(esb)),
+						    enum_show(&ah_transformid_names,
 							      ah_attrs.
 							      transattrs.
 							      encrypt),
@@ -2507,25 +2505,18 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						}
 						break;
 #endif
-					case ESP_AES_GCM_8:
-					case ESP_AES_GCM_12:
-					case ESP_AES_GCM_16:
-						loglog(RC_LOG_SERIOUS,
-						       "kernel algorithm (AES-GCM) does not like: %s",
-						       ugh);
-						continue;
 
 					case ESP_DES: /* NOT safe */
 						loglog(RC_LOG_SERIOUS,
 						       "1DES was proposed, it is insecure and was rejected");
+						/* Fall through */
 					default:
 						loglog(RC_LOG_SERIOUS,
 						       "kernel algorithm does not like: %s",
 						       ugh);
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP Transform %s from %s",
-						       enum_show(&
-								 esp_transformid_names,
+						       enum_show(&esp_transformid_names,
 								 esp_attrs.
 								 transattrs.
 								 encrypt),
@@ -2566,8 +2557,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					default:
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP auth alg %s from %s",
-						       enum_show(&
-								 auth_alg_names,
+						       enum_show(&auth_alg_names,
 								 esp_attrs.
 								 transattrs.
 								 integ_hash),
@@ -2681,8 +2671,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					DBG(DBG_CONTROL | DBG_CRYPT,
 					    DBG_log(
 						    "unsupported IPCOMP Transform %s from %s",
-						    enum_show(&
-							      ipcomp_transformid_names,
+						    enum_show(&ipcomp_transformid_names,
 							      ipcomp_attrs.
 							      transattrs.
 							      encrypt),
@@ -2780,17 +2769,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 		st->st_esp.present = esp_seen;
 		if (esp_seen) {
-			if (esp_attrs.transattrs.encrypt ==  ESP_AES_GCM_8 ||
-			    esp_attrs.transattrs.encrypt == ESP_AES_GCM_12 ||
-			    esp_attrs.transattrs.encrypt == ESP_AES_GCM_16 ) {
-				esp_attrs.transattrs.enckeylen =
-					esp_attrs.transattrs.enckeylen + 4 *
-					BITS_PER_BYTE;
-			}
-
 			st->st_esp.attrs = esp_attrs;
 		}
-
 		st->st_ipcomp.present = ipcomp_seen;
 		if (ipcomp_seen)
 			st->st_ipcomp.attrs = ipcomp_attrs;

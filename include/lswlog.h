@@ -1,6 +1,8 @@
-/* logging definitions
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
- * Copyright (C) 2004       Michael Richardson <mcr@xelerance.com>
+/* logging declaratons
+ *
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,9 +22,6 @@
 #include <libreswan.h>
 #include <stdarg.h>
 #include <stdio.h>
-#if defined(NO_DEBUG)
-# include <stdlib.h> /* for abort() */
-#endif
 
 /* moved common code to library file */
 #include "libreswan/passert.h"
@@ -30,18 +29,19 @@
 #define loglog  libreswan_loglog
 #define plog    libreswan_log
 extern int libreswan_log(const char *message, ...) PRINTF_LIKE(1);
+
+/* Log to both main log and whack log
+ * Much like log, actually, except for specifying mess_no.
+ */
 extern void libreswan_loglog(int mess_no, const char *message,
 			     ...) PRINTF_LIKE(2);
-extern void libreswan_exit_log(const char *message, ...) PRINTF_LIKE(1);
 extern void libreswan_log_abort(const char *file_str,
 				int line_no) NEVER_RETURNS;
-
-#if !defined(NO_DEBUG)
-
 #include "constants.h"
 
 extern lset_t base_debugging;   /* bits selecting what to report */
 extern lset_t cur_debugging;    /* current debugging level */
+extern void set_debugging(lset_t deb);
 
 #define DBGP(cond)         (cur_debugging & (cond))
 #define DBG(cond, action)   do { if (DBGP(cond)) { action; } } while (0)
@@ -56,23 +56,8 @@ extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
 extern void exit_tool(int) NEVER_RETURNS;
 extern void tool_init_log(void);
 extern void tool_close_log(void);
-extern void set_debugging(lset_t deb);
 
 #define lsw_abort()     libreswan_log_abort(__FILE__, __LINE__)
-
-#else /*!DEBUG*/
-
-#define DBG(cond, action)       do { } while (0)        /* do nothing */
-#define DBGP(...) (0)
-#define exit_tool exit
-#define libreswan_DBG_dump(...) do { } while (0)
-#define DBG_log(...) do { } while (0)
-extern void tool_init_log(void);
-extern void tool_close_log(void);
-
-#define lsw_abort()     abort()
-
-#endif /*!DEBUG*/
 
 #define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
 #define DBG_cond_dump_chunk(cond, label, ch) DBG(cond, DBG_dump_chunk(label, \

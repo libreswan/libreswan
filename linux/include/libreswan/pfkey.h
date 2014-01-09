@@ -35,7 +35,6 @@ struct socket_list {
 	struct socket_list *next;
 };
 extern int pfkey_list_insert_socket(struct socket*, struct socket_list**);
-extern int pfkey_list_remove_socket(struct socket*, struct socket_list**);
 extern struct socket_list *pfkey_open_sockets;
 extern struct socket_list *pfkey_registered_sockets[];
 
@@ -125,8 +124,6 @@ extern int pfkey_expire(struct ipsec_sa *, int);
 extern int pfkey_acquire(struct ipsec_sa *);
 #else /* ! __KERNEL__ */
 
-extern libreswan_keying_debug_func_t pfkey_debug_func;
-extern libreswan_keying_debug_func_t pfkey_error_func;
 extern void pfkey_print(struct sadb_msg *msg, FILE *out);
 
 #endif /* __KERNEL__ */
@@ -134,7 +131,6 @@ extern void pfkey_print(struct sadb_msg *msg, FILE *out);
 extern uint8_t satype2proto(uint8_t satype);
 extern uint8_t proto2satype(uint8_t proto);
 extern char* satype2name(uint8_t satype);
-extern char* proto2name(uint8_t proto);
 
 struct key_opt {
 	uint32_t key_pid;               /* process ID */
@@ -297,13 +293,6 @@ int pfkey_supported_build(struct sadb_ext** pfkey_ext,
 			  uint16_t exttype,
 			  unsigned int alg_num,
 			  struct sadb_alg*  alg);
-
-int pfkey_spirange_build(struct sadb_ext**  pfkey_ext,
-			 uint16_t exttype,
-			 uint32_t min,
-			 uint32_t max);
-
-int pfkey_x_kmprivate_build(struct sadb_ext**       pfkey_ext);
 
 int pfkey_x_satype_build(struct sadb_ext**  pfkey_ext,
 			 uint8_t satype);

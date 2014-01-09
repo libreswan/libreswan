@@ -1,6 +1,6 @@
 DEVICE="eth3"
 BOOTPROTO="dhcp"
-ONBOOT="yes"
+ONBOOT="no"
 NM_CONTROLLED="no"
 IPV6INIT="no"
 IPV6_AUTOCONF="no"

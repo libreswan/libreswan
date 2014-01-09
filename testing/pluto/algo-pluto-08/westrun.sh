@@ -1,3 +1,3 @@
-ipsec auto --up  westnet-eastnet-esp-null-alg
+ipsec auto --up  westnet-eastnet-dh15
 ipsec look
 echo done

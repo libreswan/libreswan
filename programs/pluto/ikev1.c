@@ -1,9 +1,10 @@
 /* State machine for IKEv1
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2010  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2011 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2008 Hiren Joshi <joshihirenn@gmail.com>
  * Copyright (C) 2009 Anthony Tong <atong@TrustedCS.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
@@ -142,6 +143,7 @@
 #include "demux.h"      /* needs packet.h */
 #include "ikev1.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
+#include "ikev1_quick.h"
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
@@ -153,6 +155,10 @@
 #include "dpd.h"
 #include "udpfromto.h"
 #include "hostpair.h"
+
+#ifdef HAVE_NM
+#include "kernel.h"
+#endif
 
 /* state_microcode is a tuple of information parameterizing certain
  * centralized processing of a packet.  For example, it roughly
@@ -212,10 +218,10 @@ static state_transition_fn      /* forward declaration */
 	unexpected,
 	informational;
 
-/* state_microcode_table is a table of all state_microcode tuples.
+/* v1_state_microcode_table is a table of all state_microcode tuples.
  * It must be in order of state (the first element).
  * After initialization, ike_microcode_index[s] points to the
- * first entry in state_microcode_table for state s.
+ * first entry in v1_state_microcode_table for state s.
  * Remember that each state name in Main or Quick Mode describes
  * what has happened in the past, not what this message is.
  */
@@ -229,7 +235,7 @@ static const struct state_microcode
 	  , 0, P(VID) | P(CR), PT(NONE) \
 	  , 0, NULL }
 
-static const struct state_microcode state_microcode_table[] = {
+static const struct state_microcode v1_state_microcode_table[] = {
 #define PT(n) ISAKMP_NEXT_ ## n
 #define P(n) LELEM(PT(n))
 
@@ -578,23 +584,22 @@ static const struct state_microcode state_microcode_table[] = {
 #undef PT
 };
 
-void init_demux(void)
+void init_ikev1(void)
 {
 	/* fill ike_microcode_index:
 	 * make ike_microcode_index[s] point to first entry in
-	 * state_microcode_table for state s (backward scan makes this easier).
+	 * v1_state_microcode_table for state s (backward scan makes this easier).
 	 * Check that table is in order -- catch coding errors.
 	 * For what it's worth, this routine is idempotent.
 	 */
 	const struct state_microcode *t;
 
-	for (t = &state_microcode_table[elemsof(state_microcode_table) - 1];;
-	     ) {
-		passert(
-			STATE_IKE_FLOOR <= t->state && t->state <
-			STATE_IKE_ROOF);
+	for (t = &v1_state_microcode_table[elemsof(v1_state_microcode_table) - 1];;)
+	{
+		passert(STATE_IKE_FLOOR <= t->state &&
+			t->state < STATE_IKE_ROOF);
 		ike_microcode_index[t->state - STATE_IKE_FLOOR] = t;
-		if (t == state_microcode_table)
+		if (t == v1_state_microcode_table)
 			break;
 		t--;
 		passert(t[0].state <= t[1].state);
@@ -609,7 +614,7 @@ static stf_status unexpected(struct msg_digest *md)
 }
 
 /*
- * RFC 2408 Section 4.6 
+ * RFC 2408 Section 4.6
  *
  *  #   Initiator  Direction Responder  NOTE
  * (1)  HDR*; N/D     =>                Error Notification or Deletion
@@ -631,7 +636,7 @@ static stf_status informational(struct msg_digest *md)
 		 * and that the handler is expected to treat them suspiciously.
 		 */
 		DBG(DBG_CONTROL, DBG_log("processing informational %s (%d)",
-					 enum_name(&ipsec_notification_names,
+					 enum_name(&ikev1_notify_names,
 						   n->isan_type),
 					 n->isan_type));
 
@@ -696,7 +701,6 @@ static stf_status informational(struct msg_digest *md)
 					      "redirected remote end info:", n_pbs->cur + pbs_left(
 						      n_pbs) - 4, 4);
 
-#ifdef DEBUG
 				/*Current remote peer info*/
 				{
 
@@ -860,7 +864,7 @@ static stf_status informational(struct msg_digest *md)
 					}
 
 				}
-#endif
+
 				/*storing old address for comparison purposes*/
 				old_addr = tmp_c->spd.that.host_addr;
 
@@ -980,18 +984,16 @@ static stf_status informational(struct msg_digest *md)
 			}
 
 		default:
-#ifdef DEBUG
 			if (st != NULL &&
 			    st->st_connection->extra_debugging &
 			    IMPAIR_DIE_ONINFO) {
 				loglog(RC_LOG_SERIOUS,
 				       "received unhandled informational notification payload %d: '%s'",
 				       n->isan_type,
-				       enum_name(&notification_names,
+				       enum_name(&ikev1_notify_names,
 						 n->isan_type));
 				return STF_FATAL;
 			}
-#endif
 			loglog(RC_LOG_SERIOUS,
 			       "received and ignored informational message for unknown state");
 			return STF_IGNORE;
@@ -1133,7 +1135,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				libreswan_log(
 					"Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08lx",
 					(unsigned long)md->hdr.isa_msgid);
-				/* Let's try and log some info about these to track them down */
+				/* Let's try to log some info about these to track them down */
 				DBG(DBG_PARSING, {
 					    DBG_dump(
 						    "- unknown SA's md->hdr.isa_icookie:",
@@ -1468,8 +1470,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    "isakmp_xchg_type %s.",
 					    __func__,
 					    __LINE__,
-					    enum_show(&
-						      exchange_names_ikev1,
+					    enum_show(&exchange_names_ikev1,
 						      md->hdr.isa_xchg)));
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("this is a%s%s%s%s in state %s. "
@@ -1550,7 +1551,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		pb_stream frag_pbs;
 
 		if (st == NULL) {
-			plog(
+			libreswan_log(
 				"received IKE fragment, but have no state. Ignoring packet.");
 			return;
 		}
@@ -1634,19 +1635,20 @@ void process_v1_packet(struct msg_digest **mdp)
 			size_t size = 0;
 			int prev_index = 0;
 			struct ike_frag *frag;
+
 			for (frag = st->ike_frags; frag; frag = frag->next) {
 				size += frag->size;
 				if (frag->index != ++prev_index) {
 					break; /* fragment list incomplete */
 				} else if (frag->index == last_frag_index) {
-					struct msg_digest *md = alloc_md();
+					struct msg_digest *whole_md = alloc_md();
 					u_int8_t *buffer = alloc_bytes(size,
 								       "IKE fragments buffer");
 					size_t offset = 0;
 
-					md->iface = frag->md->iface;
-					md->sender = frag->md->sender;
-					md->sender_port =
+					whole_md->iface = frag->md->iface;
+					whole_md->sender = frag->md->sender;
+					whole_md->sender_port =
 						frag->md->sender_port;
 
 					/* Reassemble fragments in buffer */
@@ -1662,12 +1664,12 @@ void process_v1_packet(struct msg_digest **mdp)
 						frag = frag->next;
 					}
 
-					init_pbs(&md->packet_pbs, buffer, size,
+					init_pbs(&whole_md->packet_pbs, buffer, size,
 						 "packet");
 
-					process_packet(&md);
-					if (md != NULL)
-						release_md(md);
+					process_packet(&whole_md);
+					if (whole_md != NULL)
+						release_md(whole_md);
 					release_fragments(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_seen_fragments = TRUE;
@@ -1680,6 +1682,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 
 		/* Don't release the md, taken care of by the ike_frag code */
+		/* ??? I'm not sure -- DHR */
 		*mdp = NULL;
 		return;
 	}
@@ -2011,8 +2014,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 
 				DBG(DBG_PARSING,
-				    DBG_log(
-					    "got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
+				    DBG_log("got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
 					    s, enum_show(&payload_names_ikev1, np),
 					    needed, smc->opt_payloads));
 				needed &= ~s;
@@ -2188,21 +2190,19 @@ void process_packet_tail(struct msg_digest **mdp)
 				if (st == NULL) {
 					loglog(RC_LOG_SERIOUS,
 					       "ignoring informational payload %s, no corresponding state",
-					       enum_show(&
-							 ipsec_notification_names,
+					       enum_show(& ikev1_notify_names,
 							 p->payload.
 							 notification.isan_type));
 				} else {
 					loglog(RC_LOG_SERIOUS,
 					       "ignoring informational payload %s, msgid=%08x, length=%d",
-					       enum_show(&ipsec_notification_names,
+					       enum_show(&ikev1_notify_names,
 							 p->payload.
 							 notification.isan_type),
 					       st->st_msgid,
 					       p->payload.notification.isan_length);
 					DBG_dump_pbs(&p->pbs);
 				}
-#ifdef DEBUG
 				if (st != NULL &&
 				    st->st_connection->extra_debugging &
 				    IMPAIR_DIE_ONINFO) {
@@ -2212,7 +2212,6 @@ void process_packet_tail(struct msg_digest **mdp)
 								     STF_FATAL);
 					return;
 				}
-#endif
 			}
 			DBG_cond_dump(DBG_PARSING, "info:", p->pbs.cur, pbs_left(
 					      &p->pbs));
@@ -2747,8 +2746,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			  enum_name(&state_names, st->st_state));
 
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "state transition function for %s had internal error",
+		    DBG_log("state transition function for %s had internal error",
 			    enum_name(&state_names, from_state)));
 		break;
 
@@ -2800,7 +2798,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 */
 		whack_log(RC_NOTIFICATION + md->note,
 			  "%s: %s", enum_name(&state_names, st->st_state),
-			  enum_name(&ipsec_notification_names, md->note));
+			  enum_name(&ikev1_notify_names, md->note));
 
 		if (md->note > 0)
 			SEND_NOTIFICATION(md->note);
@@ -2808,7 +2806,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s failed: %s",
 			    enum_name(&state_names, from_state),
-			    enum_name(&ipsec_notification_names, md->note)));
+			    enum_name(&ikev1_notify_names, md->note)));
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
 		    st->st_connection->nmconfigured) {

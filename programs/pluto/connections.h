@@ -1,6 +1,17 @@
 /* information about connections between hosts and clients
- * Copyright (C) 1998-2001  D. Hugh Redelmeier
+ *
+ * Copyright (C) 1998-2001,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2006-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2007 Ken Bantoft <ken@cyclops.xelerance.com>
+ * Copyright (C) 2008-2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
+ * Copyright (C) 2013 Kim Heino <b@bbbs.net>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -360,25 +371,23 @@ extern struct connection
 							   his_port, \
 							   policy)
 extern struct connection
-*find_host_connection2(const char *func,
+	*find_host_connection2(const char *func,
 		       const ip_address *me, u_int16_t my_port,
 		       const ip_address *him, u_int16_t his_port,
 		       lset_t policy),
-*refine_host_connection(const struct state *st, const struct id *id,
+	*refine_host_connection(const struct state *st, const struct id *id,
 			bool initiator, bool aggrmode, bool *fromcert),
-*find_client_connection(struct connection *c,
+	*find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,
 			const u_int8_t our_protocol,
 			const u_int16_t out_port,
 			const u_int8_t peer_protocol,
 			const u_int16_t peer_port),
-*find_connection_by_reqid(uint32_t reqid);
-
-extern struct connection *find_connection_for_clients(struct spd_route **srp,
-						      const ip_address *our_client,
-						      const ip_address *peer_client,
-						      int transport_proto);
+	*find_connection_for_clients(struct spd_route **srp,
+				      const ip_address *our_client,
+				      const ip_address *peer_client,
+				      int transport_proto);
 
 /* instantiating routines
  * Note: connection_discard() is in state.h because all its work
@@ -467,11 +476,6 @@ void connection_check_ddns(void);
 void connection_check_phase2(void);
 void init_connections(void);
 
-#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
-extern size_t format_connection(char *buf, size_t buf_len,
-				const struct connection *c,
-				struct spd_route *sr);
-
 extern void setup_client_ports(struct spd_route *sr);
 
 extern int foreach_connection_by_alias(const char *alias,
@@ -482,5 +486,3 @@ extern int foreach_connection_by_alias(const char *alias,
 extern struct connection *unoriented_connections;
 
 extern void update_host_pairs(struct connection *c);
-
-extern void load_authcerts_from_nss(const char *type, u_char auth_flags);

@@ -3,6 +3,11 @@
  * Copyright (C) 2001 Marco Bertossa, Andreas Schleiss
  * Copyright (C) 2002 Mario Strasser
  * Copyright (C) 2000-2004 Andreas Steffen, Zuercher Hochschule Winterthur
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -164,7 +169,6 @@ extern bool trusted_ca(chunk_t a, chunk_t b, int *pathlen);
 extern bool match_requested_ca(generalName_t *requested_ca,
 			       chunk_t our_ca, int *our_pathlen);
 extern bool match_dn(chunk_t a, chunk_t b, int *wildcards);
-extern void hex_str(chunk_t bin, chunk_t *str);
 extern int dn_count_wildcards(chunk_t dn);
 extern int dntoa(char *dst, size_t dstlen, chunk_t dn);
 extern int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
@@ -180,7 +184,6 @@ extern void parse_authorityKeyIdentifier(chunk_t blob, int level0,
 					 chunk_t *authKeySerialNumber);
 extern chunk_t get_directoryName(chunk_t blob, int level, bool implicit);
 extern err_t check_validity(const x509cert_t *cert, time_t *until);
-extern bool compute_digest(chunk_t tbs, int alg, chunk_t *digest);
 extern bool check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 			    const x509cert_t *issuer_cert);
 extern bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict,
@@ -191,7 +194,6 @@ extern x509cert_t* get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
 extern x509cert_t* get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 				u_char auth_flags);
 extern void share_x509cert(x509cert_t *cert);
-extern void release_x509cert(x509cert_t *cert);
 extern void free_x509cert(x509cert_t *cert);
 extern void store_x509certs(x509cert_t **firstcert, bool strict);
 extern void add_authcert(x509cert_t *cert, u_char auth_flags);
@@ -201,7 +203,6 @@ extern void load_authcerts(const char *type, const char *path,
 			   u_char auth_flags);
 extern void load_crls(void);
 extern bool insert_crl(chunk_t blob, chunk_t crl_uri);
-extern void list_x509_end_certs(bool utc);
 extern void list_authcerts(const char *caption, u_char auth_flags, bool utc);
 extern void list_crls(bool utc, bool strict);
 extern void free_authcerts(void);
@@ -218,19 +219,16 @@ extern x509cert_t *x509_get_authcerts_chain(void);
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 extern void check_crls(void);
-extern void lock_crl_list(const char *who);
-extern void unlock_crl_list(const char *who);
-extern void lock_cacert_list(const char *who);
-extern void unlock_cacert_list(const char *who);
-extern void lock_authcert_list(const char *who);
-extern void unlock_authcert_list(const char *who);
+extern void lock_crl_list(const char *who);	/* in fetch.c */
+extern void unlock_crl_list(const char *who);	/* in fetch.c */
+extern void lock_authcert_list(const char *who);	/* in secrets.c */
+extern void unlock_authcert_list(const char *who);	/* in secrets.c */
 #else
 /* WARNING empty x509 locking functions defined bypassing real locking */
 /* not fixing this hack, see issues #1390, #1391, #1392 */
+#define check_crls(who)                 /* nothing */
 #define lock_crl_list(who)              /* nothing */
 #define unlock_crl_list(who)            /* nothing */
-#define lock_cacert_list(who)           /* nothing */
-#define unlock_cacert_list(who)         /* nothing */
 #define lock_authcert_list(who)         /* nothing */
 #define unlock_authcert_list(who)       /* nothing */
 #endif

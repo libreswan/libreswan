@@ -8,7 +8,7 @@
  * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -85,8 +85,12 @@
 #include <time.h>
 #include "lswconf.h"
 
+static int sign_hash_nss(const struct RSA_private_key *k,
+			 const u_char *hash_val,
+			 size_t hash_len, u_char *sig_val, size_t sig_len);
+
 char *pluto_shared_secrets_file;
-struct secret *pluto_secrets = NULL;
+static struct secret *pluto_secrets = NULL;
 
 void load_preshared_secrets(int whackfd)
 {
@@ -170,7 +174,7 @@ void sign_hash(const struct RSA_private_key *k,
 	sign_hash_nss(k, hash_val, hash_len, sig_val, sig_len);
 }
 
-int sign_hash_nss(const struct RSA_private_key *k,
+static int sign_hash_nss(const struct RSA_private_key *k,
 		  const u_char *hash_val, size_t hash_len,
 		  u_char *sig_val, size_t sig_len)
 {
@@ -379,7 +383,7 @@ struct tac_state {
 
 static bool take_a_crack(struct tac_state *s,
 			 struct pubkey *kr,
-			 const char *story USED_BY_DEBUG)
+			 const char *story)
 {
 	err_t ugh =
 		(s->try_RSA_signature)(s->hash_val, s->hash_len, s->sig_pbs,
@@ -705,7 +709,7 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 
 /* check the existence of an RSA private key matching an RSA public
  */
-bool has_private_rawkey(struct pubkey *pk)
+static bool has_private_rawkey(struct pubkey *pk)
 {
 	return lsw_has_private_rawkey(pluto_secrets, pk);
 }
@@ -725,7 +729,6 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	if (s != NULL)
 		pks = lsw_get_pks(s);
 
-#ifdef DEBUG
 	DBG(DBG_PRIVATE, {
 		    if (s == NULL)
 			    DBG_log("no Preshared Key Found");
@@ -733,7 +736,6 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 			    DBG_dump_chunk("Preshared Key",
 					   pks->u.preshared_secret);
 	    });
-#endif
 	return s == NULL ? NULL : &pks->u.preshared_secret;
 }
 
@@ -768,7 +770,6 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 	if (s != NULL)
 		pks = lsw_get_pks(s);
 
-#ifdef DEBUG
 	DBG(DBG_PRIVATE, {
 		    if (s == NULL)
 			    DBG_log("no RSA key Found");
@@ -776,7 +777,6 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 			    DBG_log("rsa key %s found",
 				    pks->u.RSA_private_key.pub.keyid);
 	    });
-#endif
 	return s == NULL ? NULL : &pks->u.RSA_private_key;
 }
 

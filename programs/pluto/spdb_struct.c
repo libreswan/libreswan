@@ -76,7 +76,7 @@ static struct db_prop oakley_pc_empty[] =
 static struct db_prop_conj oakley_props_empty[] =
 { { AD_PC(oakley_pc_empty) } };
 
-struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
+static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
 
 /*
  *      Create an OAKLEY proposal based on alg_info and policy

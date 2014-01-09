@@ -1,12 +1,16 @@
 /*
  * Cryptographic helper function - calculate DH
+ *
  * Copyright (C) 2007-2008 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1159,13 +1163,13 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%lu",
-		    enum_name(&trans_type_prf_names, skq->prf_hash),
-		    enum_name(&trans_type_integ_names, skq->integ_hash),
+		    enum_name(&ikev2_trans_type_prf_names, skq->prf_hash),
+		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
 		    (long unsigned)keysize));
 
 	const struct hash_desc *hasher =
-		(struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH,
-						       skq->prf_hash, 0);
+		(struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
+						       skq->prf_hash);
 	passert(hasher);
 
 	const struct encrypt_desc *encrypter = skq->encrypter;
@@ -1192,9 +1196,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		/* SK_e needs keysize*2 key bits */
 		/* SK_a needs hash's key bits size */
 		const struct hash_desc *integ_hasher =
-			(struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_INTEG,
-							       skq->integ_hash,
-							       0);
+			(struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
+							       skq->integ_hash);
 		int skd_bytes = hasher->hash_key_size;
 		int skp_bytes = hasher->hash_key_size;
 		int ska_bytes = integ_hasher->hash_key_size;

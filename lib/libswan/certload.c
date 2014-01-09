@@ -41,22 +41,6 @@
 #include <cert.h>
 
 /*
- * used for initialization of private keys
- */
-const rsa_privkey_t empty_rsa_privkey = {
-	{ NULL, 0 }, /* keyobject */
-	{
-		{ NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 },
-		{ NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 }
-	}        /* field[0..7] */
-};
-
-/*
- * used for initializatin of certs
- */
-const cert_t empty_cert = { FALSE, CERT_NONE, { NULL } };
-
-/*
  * extracts the certificate to be sent to the peer
  */
 chunk_t get_mycert(cert_t cert)
@@ -240,6 +224,20 @@ void share_cert(cert_t cert)
 	}
 }
 
+bool cert_exists_in_nss(const char *nickname)
+{
+	CERTCertificate *cert;
+
+	cert = PK11_FindCertFromNickname(nickname,
+					 lsw_return_nss_password_file_info());
+	if (cert == NULL)
+		return FALSE;
+
+	CERT_DestroyCertificate(cert);
+
+	return TRUE;
+}
+
 bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 			int verbose,
 			const char *label, cert_t *cert)
@@ -251,13 +249,8 @@ bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 	cert->forced = forcedtype;
 	cert->u.x509 = NULL;
 
-	nssCert = CERT_FindCertByNicknameOrEmailAddr(
-		CERT_GetDefaultCertDB(), nssHostCertNickName);
-
-	if (nssCert == NULL)
-		nssCert = PK11_FindCertFromNickname(nssHostCertNickName,
-						    lsw_return_nss_password_file_info());
-
+	nssCert = PK11_FindCertFromNickname(nssHostCertNickName,
+					    lsw_return_nss_password_file_info());
 
 	if (nssCert == NULL) {
 		libreswan_log(

@@ -1,10 +1,14 @@
 /*
  * Cryptographic helper process.
  * Copyright (C) 2004-2007 Michael C. Richardson <mcr@xelerance.com>
- * Copyright (C) 2008 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2008,2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ *
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -237,7 +241,6 @@ extern void calc_dh_v2(struct pluto_crypto_req *r);
 extern void unpack_KE(struct state *st,
 		      struct pluto_crypto_req *r,
 		      chunk_t *g);
-extern void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r);
 
 static inline void clonetowirechunk(wire_chunk_t  *thespace,
 				    unsigned char *space,

@@ -1,10 +1,13 @@
 /* error logging functions
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2005-2007 Michael Richardson
  * Copyright (C) 2006-2010 Bart Trojanowski
  * Copyright (C) 2008-2012 Paul Wouters
  * Copyright (C) 2008-2010 David McCullough.
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,6 +42,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
+#include "lswconf.h"
 #include "lswlog.h"
 
 #include "defs.h"
@@ -76,7 +80,7 @@ bool
 	log_did_something = TRUE,       /* set if we wrote something recently */
 	log_with_timestamp = FALSE;     /* some people want timestamps, but we
                                             don't want those in our test output */
-FILE *pluto_log_fd;
+static FILE *pluto_log_fd;
 
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
@@ -84,9 +88,7 @@ bool
 /* should we complain when we find no local id */
 bool
 	logged_myid_fqdn_txt_warning = FALSE,
-	logged_myid_ip_txt_warning   = FALSE,
-	logged_myid_fqdn_key_warning = FALSE,
-	logged_myid_ip_key_warning   = FALSE;
+	logged_myid_ip_txt_warning   = FALSE;
 
 char *pluto_log_file = NULL;
 char *base_perpeer_logdir = NULL;
@@ -94,7 +96,7 @@ char *pluto_stats_binary = NULL;
 static int perpeer_count = 0;
 
 /* what to put in front of debug output */
-const char debug_prefix = '|';
+static const char debug_prefix = '|';
 
 /*
  * used in some messages to distiguish
@@ -559,9 +561,7 @@ void libreswan_log_abort(const char *file_str, int line_no)
  * - ddd is a decimal status code (RC_*) as described in whack.h
  * - text is a human-readable annotation
  */
-#ifdef DEBUG
 static volatile sig_atomic_t dying_breath = FALSE;
-#endif
 
 void whack_log(int mess_no, const char *message, ...)
 {
@@ -573,9 +573,7 @@ void whack_log(int mess_no, const char *message, ...)
 	      NULL_FD;
 
 	if (wfd != NULL_FD
-#ifdef DEBUG
 	    || dying_breath
-#endif
 	    ) {
 		va_list args;
 		char m[LOG_WIDTH]; /* longer messages will be truncated */
@@ -630,7 +628,6 @@ void whack_log(int mess_no, const char *message, ...)
 
 /* Debugging message support */
 
-#ifdef DEBUG
 void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 {
 	char buf[30];
@@ -750,8 +747,8 @@ int DBG_log(const char *message, ...)
 
 void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 {
-#   define DUMP_LABEL_WIDTH 20  /* arbitrary modest boundary */
-#   define DUMP_WIDTH   (4 * (1 + 4 * 3) + 1)
+#define DUMP_LABEL_WIDTH 20  /* arbitrary modest boundary */
+#define DUMP_WIDTH   (4 * (1 + 4 * 3) + 1)
 	char buf[DUMP_LABEL_WIDTH + DUMP_WIDTH];
 	char *bp, *bufstart;
 	const unsigned char *cp = p;
@@ -797,11 +794,9 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 		DBG_log("%s", buf);
 		bp = bufstart;
 	} while (len != 0);
-#   undef DUMP_LABEL_WIDTH
-#   undef DUMP_WIDTH
+#undef DUMP_LABEL_WIDTH
+#undef DUMP_WIDTH
 }
-
-#endif /* DEBUG */
 
 static void show_system_security(void)
 {
@@ -813,7 +808,7 @@ static void show_system_security(void)
 #endif
 
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "fips mode=%s;", 
+	whack_log(RC_COMMENT, "fips mode=%s;",
                 fipsmode == 0 ? "disabled" : fipsmode == 1 ? "enabled" : "error(disabled)");
 	whack_log(RC_COMMENT, "SElinux=%s",
                 selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
@@ -855,8 +850,6 @@ void daily_log_reset(void)
 
 	logged_myid_fqdn_txt_warning = FALSE;
 	logged_myid_ip_txt_warning   = FALSE;
-	logged_myid_fqdn_key_warning = FALSE;
-	logged_myid_ip_key_warning   = FALSE;
 }
 
 void daily_log_event(void)
@@ -1019,7 +1012,7 @@ void log_state(struct state *st, enum state_kind new_state)
 	lc.conn = conn;
 	save_state = st->st_state;
 	st->st_state = new_state;
-	for_each_state((void *)connection_state, &lc);
+	for_each_state(connection_state, &lc);
 	st->st_state = save_state;
 
 	if (conn->statsval ==

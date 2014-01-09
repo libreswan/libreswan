@@ -6,6 +6,9 @@
 #include "dnskey.h"
 
 /* ikev1.c */
+
+extern void init_ikev1(void);
+
 extern void complete_v1_state_transition(struct msg_digest **mdp,
 					 stf_status result);
 extern void process_v1_packet(struct msg_digest **mdp);
@@ -18,7 +21,6 @@ extern void process_v1_packet(struct msg_digest **mdp);
 /* continue with encrypted packet */
 extern void process_packet_tail(struct msg_digest **mdp);
 
-extern void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r);
 extern bool justship_nonce(chunk_t *n,
 			   pb_stream *outs, u_int8_t np,
 			   const char *name);
@@ -63,23 +65,10 @@ extern stf_status aggr_outI1(int whack_sock,
 #endif
 			     );
 
-extern stf_status aggr_not_present(int whack_sock,
-				   struct connection *c,
-				   struct state *predecessor,
-				   lset_t policy,
-				   unsigned long try,
-				   enum crypto_importance importance);
-
 extern void ikev1_delete_out(struct state *st);
 
 extern bool decode_peer_id(struct msg_digest *md, bool initiator,
 			   bool aggrmode);
-
-extern void main_mode_hash_body(struct state *st,
-				bool hashi,             /* Initiator? */
-				const pb_stream *idpl,  /* ID payload, as PBS */
-				struct hmac_ctx *ctx,
-				hash_update_t hash_update_void);
 
 extern size_t RSA_sign_hash(struct connection *c,
 			    u_char sig_val[RSA_MAX_OCTETS],
@@ -129,6 +118,4 @@ static inline stf_status aggr_id_and_auth(struct msg_digest *md,
 	return oakley_id_and_auth(md, initiator, TRUE, cont_fn, kc);
 }
 
-extern bool do_command(struct connection *c, struct spd_route *sr,
-		       const char *verb, struct state *st);
 #endif

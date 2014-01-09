@@ -1,5 +1,7 @@
 /* mechanisms for preshared keys (public, private, and preshared secrets)
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * definitions: lib/libswan/secrets.c
+ *
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
@@ -138,11 +140,6 @@ extern void delete_public_keys(struct pubkey_list **head,
 			       enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize);
 
-extern void form_keyid_from_nss(SECItem e, SECItem n, char* keyid,
-				unsigned *keysize);
-extern err_t extract_and_add_secret_from_nss_cert_file(
-	struct RSA_private_key *rsak, char *nssHostCertNickName);
-
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);
 
@@ -166,16 +163,18 @@ extern void lsw_free_preshared_secrets(struct secret **psecrets);
 
 extern bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk);
 
+extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
+						    struct pubkey *my_public_key,
+						    enum PrivateKeyKind kind);
+
 extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    enum PrivateKeyKind kind,
 					    const struct id *my_id,
 					    const struct id *his_id,
 					    bool asym);
 
-#if defined(LIBCURL) || defined(LDAP_VER)
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
-#endif
 
 #include "x509.h"
 extern const struct RSA_private_key*lsw_get_x509_private_key(

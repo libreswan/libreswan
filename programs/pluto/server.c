@@ -1,6 +1,7 @@
 /* get-next-event loop
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002, 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
@@ -8,7 +9,6 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
- * Copyright (C) 2013  D. Hugh Redelmeier.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -96,7 +96,7 @@ static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 bool no_retransmits = FALSE;
 
-pid_t addconn_child_pid = 0;
+static pid_t addconn_child_pid = 0;
 
 /* list of interface devices */
 struct iface_list interface_dev;
@@ -111,9 +111,6 @@ struct sockaddr_un ctl_addr = {
 #endif
 	.sun_path  = DEFAULT_CTLBASE CTL_SUFFIX
 };
-
-/* info (showpolicy) socket */
-int policy_fd = NULL_FD;
 
 struct sockaddr_un info_addr = {
 	.sun_family = AF_UNIX,
@@ -430,10 +427,8 @@ void show_ifaces_status(void)
 
 void show_debug_status(void)
 {
-#ifdef DEBUG
 	whack_log(RC_COMMENT, "debug %s",
 		  bitnamesof(debug_bit_names, cur_debugging));
-#endif
 }
 
 static volatile sig_atomic_t sighupflag = FALSE;
@@ -1036,10 +1031,8 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					 */
 					if ((packet_len == 1) &&
 					    (buffer[0] == 0xff)
-#ifdef DEBUG
 					    && ((cur_debugging & DBG_NATT) ==
 						0)
-#endif
 					    ) {
 						/* don't log NAT-T keepalive related errors unless NATT debug is
 						 * enabled
@@ -1183,7 +1176,6 @@ static bool send_packet(struct state *st, const char *where,
 		return FALSE;
 	}
 
-#ifdef DEBUG
 	/* Send a duplicate packet when this impair is enabled - used for testing */
 	if (DBGP(IMPAIR_JACOB_TWO_TWO)) {
 		/* sleep for half a second, and second another packet */
@@ -1215,7 +1207,6 @@ static bool send_packet(struct state *st, const char *where,
 			return FALSE;
 		}
 	}
-#endif
 	return TRUE;
 }
 
