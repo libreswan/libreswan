@@ -51,8 +51,8 @@ extern void accept_delete(struct state *st, struct msg_digest *md,
 
 extern void send_notification_from_state(struct state *st,
 					 enum state_kind from_state,
-					 u_int16_t type);
-extern void send_notification_from_md(struct msg_digest *md, u_int16_t type);
+					 notification_t type);
+extern void send_notification_from_md(struct msg_digest *md, notification_t type);
 
 extern notification_t accept_KE(chunk_t *dest, const char *val_name,
 				const struct oakley_group_desc *gr,

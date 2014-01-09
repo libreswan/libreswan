@@ -2481,7 +2481,7 @@ stf_status send_isakmp_notification(struct state *st,
  * whether to send the notification, based on the type and the
  * destination, if we care to.
  */
-static void send_notification(struct state *sndst, u_int16_t type,
+static void send_notification(struct state *sndst, notification_t type,
 			struct state *encst,
 			msgid_t msgid, u_char *icookie, u_char *rcookie,
 			u_char *spi, size_t spisize, u_char protoid)
@@ -2663,7 +2663,7 @@ static void send_notification(struct state *sndst, u_int16_t type,
 }
 
 void send_notification_from_state(struct state *st, enum state_kind from_state,
-				u_int16_t type)
+				notification_t type)
 {
 	struct state *p1st;
 
@@ -2698,7 +2698,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 	}
 }
 
-void send_notification_from_md(struct msg_digest *md, u_int16_t type)
+void send_notification_from_md(struct msg_digest *md, notification_t type)
 {
 	/*
 	 * Create a dummy state to be able to use send_ike_msg in
