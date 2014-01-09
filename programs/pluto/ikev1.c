@@ -1135,7 +1135,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				libreswan_log(
 					"Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08lx",
 					(unsigned long)md->hdr.isa_msgid);
-				/* Let's try and log some info about these to track them down */
+				/* Let's try to log some info about these to track them down */
 				DBG(DBG_PARSING, {
 					    DBG_dump(
 						    "- unknown SA's md->hdr.isa_icookie:",
