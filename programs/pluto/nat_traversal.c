@@ -795,7 +795,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 	if (!c)
 		return;
 
-	if (c->nat_keepalive == FALSE) {
+	if (!c->nat_keepalive) {
 		DBG(DBG_NATT,
 		    DBG_log(
 			    "Suppressing sending of NAT-T KEEP-ALIVE by per-conn configuration (nat_keepalive=no)"));
@@ -819,9 +819,9 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 			 * if newest is also valid, ignore this one, we will only use
 			 * newest.
 			 */
-			struct state *st_newest;
-			st_newest = state_with_serialno(c->newest_isakmp_sa);
-			if ((st_newest) &&
+			struct state *st_newest = state_with_serialno(c->newest_isakmp_sa);
+
+			if (st_newest != NULL &&
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 			    (st_newest->hidden_variables.st_nat_traversal &
 			     NAT_T_DETECTED) &&
@@ -849,9 +849,9 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 			 * if newest is also valid, ignore this one, we will only use
 			 * newest.
 			 */
-			struct state *st_newest;
-			st_newest = state_with_serialno(c->newest_ipsec_sa);
-			if ((st_newest) &&
+			struct state *st_newest = state_with_serialno(c->newest_ipsec_sa);
+
+			if (st_newest != NULL &&
 			    ((st_newest->st_state == STATE_QUICK_R2) ||
 			     (st_newest->st_state == STATE_QUICK_I2)) &&
 			    (st_newest->hidden_variables.st_nat_traversal &
@@ -892,7 +892,7 @@ static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
 {
 	struct new_mapp_nfo *nfo = (struct new_mapp_nfo *)data;
 
-	if ((nfo->st->st_clonedfrom &&
+	if ((IS_CHILD_SA(nfo->st) &&
 	     (st->st_serialno == nfo->st->st_clonedfrom ||
 	      st->st_clonedfrom == nfo->st->st_clonedfrom)) ||
 	    st->st_serialno == nfo->st->st_serialno) {

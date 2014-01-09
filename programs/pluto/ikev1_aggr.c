@@ -1160,7 +1160,7 @@ stf_status aggr_outI1(int whack_sock,
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-	if (init_am_st_oakley(st, policy) == FALSE) {
+	if (!init_am_st_oakley(st, policy)) {
 		/*
 		 * This is only the case if NO IKE proposal was specified in the
 		 * configuration file.  It's not the case if there were multiple

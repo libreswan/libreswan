@@ -343,7 +343,7 @@ static bool read_packet(struct msg_digest *md)
 	cur_from = &md->sender;
 	cur_from_port = md->sender_port;
 
-	if (ifp->ike_float == TRUE) {
+	if (ifp->ike_float) {
 		u_int32_t non_esp;
 		if (packet_len < (int)sizeof(u_int32_t)) {
 			libreswan_log("recvfrom %s:%u too small packet (%d)",

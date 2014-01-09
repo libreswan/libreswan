@@ -324,8 +324,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 			    pc_worker_num, w->pcw_dead, w->pcw_work, cnt));
 
 		/* see if there is something to clean up after */
-		if (w->pcw_dead      == TRUE &&
-		    w->pcw_reaped == TRUE) {
+		if (w->pcw_dead && w->pcw_reaped) {
 			cleanup_crypto_helper(w, 0);
 			DBG(DBG_CONTROL,
 			    DBG_log(
@@ -348,8 +347,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 
 			w = &pc_workers[pc_worker_num];
 			/* see if there is something to clean up after */
-			if (w->pcw_dead      == TRUE &&
-			    w->pcw_reaped == TRUE)
+			if (w->pcw_dead && w->pcw_reaped)
 				cleanup_crypto_helper(w, 0);
 		}
 		DBG(DBG_CONTROL,
