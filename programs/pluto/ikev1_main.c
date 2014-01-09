@@ -2662,17 +2662,17 @@ static void send_notification(struct state *sndst, u_int16_t type,
 	}
 }
 
-void send_notification_from_state(struct state *st, enum state_kind state,
+void send_notification_from_state(struct state *st, enum state_kind from_state,
 				u_int16_t type)
 {
 	struct state *p1st;
 
 	passert(st);
 
-	if (state == STATE_UNDEFINED)
-		state = st->st_state;
+	if (from_state == STATE_UNDEFINED)
+		from_state = st->st_state;
 
-	if (IS_QUICK(state)) {
+	if (IS_QUICK(from_state)) {
 		p1st = find_phase1_state(st->st_connection,
 					ISAKMP_SA_ESTABLISHED_STATES);
 		if ((p1st == NULL) ||
@@ -2685,7 +2685,7 @@ void send_notification_from_state(struct state *st, enum state_kind state,
 					p1st),
 				st->st_icookie, st->st_rcookie, NULL, 0,
 				PROTO_ISAKMP);
-	} else if (IS_ISAKMP_ENCRYPTED(state)) {
+	} else if (IS_ISAKMP_ENCRYPTED(from_state)) {
 		send_notification(st, type, st, generate_msgid(
 					st),
 				st->st_icookie, st->st_rcookie, NULL, 0,

@@ -50,7 +50,7 @@ extern void accept_delete(struct state *st, struct msg_digest *md,
 			  struct payload_digest *p);
 
 extern void send_notification_from_state(struct state *st,
-					 enum state_kind state,
+					 enum state_kind from_state,
 					 u_int16_t type);
 extern void send_notification_from_md(struct msg_digest *md, u_int16_t type);
 
