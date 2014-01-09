@@ -2516,7 +2516,7 @@ static void send_notification(struct state *sndst, u_int16_t type,
 			return;
 		}
 
-		libreswan_DBG_dump("payload malformed after IV", sndst->st_iv,
+		libreswan_DBG_dump("payload malformed after possible IV", sndst->st_iv,
 				sndst->st_iv_len);
 
 		/*
