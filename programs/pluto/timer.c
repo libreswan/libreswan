@@ -425,7 +425,7 @@ void handle_timer_event(void)
 	}
 
 	/*
-	 * we can get behind, try and catch up all expired events
+	 * we can get behind, try to catch up all expired events
 	 */
 	while (ev && tm >= ev->ev_time) {
 
