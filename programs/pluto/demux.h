@@ -87,8 +87,15 @@ struct msg_digest {
 #   define PAYLIMIT 30
 	struct payload_digest
 		digest[PAYLIMIT],
-		*digest_roof,
-		*chain[ISAKMP_NEXT_ROOF];
+		*digest_roof;
+	/* ??? It seems unlikely that chain will need to store payloads numbered as high as these.
+	 * ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_NATOA_DRAFTS and
+	 * ISAKMP_NEXT_IKE_FRAGMENTATION/ISAKMP_NEXT_v2IKE_FRAGMENTATION
+	 * probably make no sense here.
+	 * Also a v1 and a v2 version might make sense and be smaller.
+	 */
+	struct payload_digest
+		*chain[(unsigned)ISAKMP_NEXT_ROOF>(unsigned)ISAKMP_NEXT_v2ROOF ? ISAKMP_NEXT_ROOF : ISAKMP_NEXT_v2ROOF];
 	struct isakmp_quirks quirks;
 };
 

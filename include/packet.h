@@ -695,9 +695,10 @@ extern struct_desc isakmp_ikefrag_desc;
  * on the mode.  Since this is table only used for top-level payloads,
  * Proposal and Transform payloads need not be handled.
  * That leaves only Identification payloads as a problem.
- * We make all these entries NULL
+ * We make all these entries NULL.
+ * ??? is there a good reason for these two things to be in one table?
  */
-extern struct_desc *const payload_descs[ISAKMP_NEXT_ROOF];
+extern const struct_desc *payload_desc(unsigned p);
 
 /*
  * IKEv2 structures

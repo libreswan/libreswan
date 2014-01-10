@@ -227,7 +227,7 @@ static state_transition_fn      /* forward declaration */
  */
 
 static const struct state_microcode
-*ike_microcode_index[STATE_IKE_ROOF - STATE_IKE_FLOOR];
+	*ike_microcode_index[STATE_IKE_ROOF - STATE_IKE_FLOOR];
 
 #define PHONY_STATE(X) \
 	{ X, X \
@@ -1870,10 +1870,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			"";
 
 		while (np != ISAKMP_NEXT_NONE) {
-			struct_desc *sd = np <
-					  ISAKMP_NEXT_ROOF ? payload_descs[np]
-					  :
-					  NULL;
+			struct_desc *sd = payload_desc(np);
 
 			if (pd == &md->digest[PAYLIMIT]) {
 				loglog(RC_LOG_SERIOUS,
@@ -1893,10 +1890,8 @@ void process_packet_tail(struct msg_digest **mdp)
 				switch (np) {
 				case ISAKMP_NEXT_NATD_RFC:
 				case ISAKMP_NEXT_NATOA_RFC:
-					if ((!st) ||
-					    (!(st->hidden_variables.
-					       st_nat_traversal &
-					       NAT_T_WITH_RFC_VALUES))) {
+					if (st == NULL ||
+					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
 						/*
 						 * don't accept NAT-D/NAT-OA reloc directly in message,
 						 * unless we're using NAT-T RFC
@@ -1913,21 +1908,20 @@ void process_packet_tail(struct msg_digest **mdp)
 				/* payload type is out of range or requires special handling */
 				switch (np) {
 				case ISAKMP_NEXT_ID:
-					sd =
-						(IS_PHASE1(from_state) ||
-						 IS_PHASE15(from_state)) ?
-						&isakmp_identification_desc : &
-						isakmp_ipsec_identification_desc;
+					sd = (IS_PHASE1(from_state) ||
+					      IS_PHASE15(from_state)) ?
+						&isakmp_identification_desc :
+						&isakmp_ipsec_identification_desc;
 					break;
 
 				case ISAKMP_NEXT_NATD_DRAFTS:
 					np = ISAKMP_NEXT_NATD_RFC; /* NAT-D was a private use type before RFC-3947 */
-					sd = payload_descs[np];
+					sd = payload_desc(np);
 					break;
 
 				case ISAKMP_NEXT_NATOA_DRAFTS:
 					np = ISAKMP_NEXT_NATOA_RFC; /* NAT-OA was a private use type before RFC-3947 */
-					sd = payload_descs[np];
+					sd = payload_desc(np);
 					break;
 
 				default:
@@ -1938,6 +1932,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
+				passert(sd != NULL);
 			}
 
 			{
@@ -2187,7 +2182,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	/* VERIFY that we only accept NAT-D/NAT-OE when they sent us the VID */
 	if ((md->chain[ISAKMP_NEXT_NATD_RFC] != NULL ||
 	     md->chain[ISAKMP_NEXT_NATOA_RFC] != NULL) &&
-	    !(st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES)) {
+	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
 		/*
 		 * don't accept NAT-D/NAT-OA reloc directly in message,
 		 * unless we're using NAT-T RFC

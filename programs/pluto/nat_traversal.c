@@ -382,8 +382,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
-	nat_np = st->hidden_variables.st_nat_traversal &
-		 NAT_T_WITH_RFC_VALUES ?
+	nat_np = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) != 0 ?
 		 ISAKMP_NEXT_NATD_RFC : ISAKMP_NEXT_NATD_DRAFTS;
 
 	out_modify_previous_np(nat_np, outs);
@@ -554,8 +553,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 	passert(st->st_connection);
 
-	nat_np = st->hidden_variables.st_nat_traversal &
-		 NAT_T_WITH_RFC_VALUES ?
+	nat_np = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) != 0 ?
 		 ISAKMP_NEXT_NATOA_RFC : ISAKMP_NEXT_NATOA_DRAFTS;
 
 	out_modify_previous_np(nat_np, outs);

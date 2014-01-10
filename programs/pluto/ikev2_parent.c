@@ -227,7 +227,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 
 		ke->md = alloc_md();
 		ke->md->from_state = STATE_IKEv2_BASE;
-		ke->md->svm = ikev2_parent_firststate();
+		ke->md->svm = &ikev2_parent_firststate_microcode;
 		ke->md->st = st;
 		set_suspended(st, ke->md);
 
@@ -411,17 +411,20 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
 		u_char *sa_start = md->rbody.cur;
 
+
 		if (st->st_sadb->prop_disj_cnt == 0 || st->st_sadb->prop_disj)
 			st->st_sadb = sa_v2_convert(st->st_sadb);
 
-		if (!ikev2_out_sa(&md->rbody,
-				  PROTO_ISAKMP,
-				  st->st_sadb,
-				  st, TRUE, /* parentSA */
+		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
+			if (!ikev2_out_sa(&md->rbody, PROTO_ISAKMP, st->st_sadb, st,
+				  TRUE, /* parentSA */
 				  ISAKMP_NEXT_v2KE)) {
-			libreswan_log("outsa fail");
-			reset_cur_state();
-			return STF_INTERNAL_ERROR;
+				libreswan_log("outsa fail");
+				reset_cur_state();
+				return STF_INTERNAL_ERROR;
+			}
+		} else {
+			libreswan_log("SKIPPED sending KE payload because impair-send-ikev2-ke was set");
 		}
 		/* save initiator SA for later HASH */
 		if (st->st_p1isa.ptr == NULL) { /* no leak!  (MUST be first time) */
@@ -513,6 +516,12 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
  *
  *
  */
+
+/* no state: none I1 --> R1
+ *                <-- HDR, SAi1, KEi, Ni
+ * HDR, SAr1, KEr, Nr, [CERTREQ] -->
+ */
+
 static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 					    struct pluto_crypto_req *r,
 					    err_t ugh);
@@ -865,7 +874,14 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		v2_notification_t rn;
 		pb_stream r_sa_pbs;
 
-		r_sa.isasa_np = ISAKMP_NEXT_v2KE; /* XXX */
+		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
+			/* normal case */
+			r_sa.isasa_np = ISAKMP_NEXT_v2KE;
+		} else {
+			/* We are faking not sending a KE, we'll just call it a Notify */
+			r_sa.isasa_np = ISAKMP_NEXT_v2N;
+		}
+
 		if (!out_struct(&r_sa, &ikev2_sa_desc, &md->rbody, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 
@@ -969,6 +985,14 @@ static stf_status ikev2_parent_inI1outR1_tail(
  *
  *
  */
+
+/* STATE_PARENT_I1: R1 --> I2
+ *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ] 
+ * HDR, SK {IDi, [CERT,] [CERTREQ,]
+ *      [IDr,] AUTH, SAi2,
+ *      TSi, TSr}      -->
+ */
+
 static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 					    struct pluto_crypto_req *r,
 					    err_t ugh);
@@ -989,6 +1013,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	     v2N_COOKIE) {
 		u_int8_t spisize;
 		const pb_stream *dc_pbs;
+
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("inR1OutI2 received a DOS v2N_COOKIE from the responder");
 		    DBG_log("resend the I1 with a cookie payload"));
@@ -1003,7 +1028,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 				   st->st_dcookie);
 		    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
 
-		md->svm = ikev2_parent_firststate();
+		md->svm = &ikev2_parent_firststate_microcode;
 
 		change_state(st, STATE_PARENT_I1);
 		st->st_msgid_lastack = INVALID_MSGID;
@@ -1013,23 +1038,19 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		return ikev2_parent_outI1_common(md, st);
 	}
 
-	/*
-	 * If we did not get a KE payload, we cannot continue. There * should be
-	 * a Notify telling us why. We inform the user, but continue to try this
-	 * connection via regular retransmit intervals.
-	 */
-	if ( md->chain[ISAKMP_NEXT_v2N]  &&
-	     (md->chain[ISAKMP_NEXT_v2KE] == NULL)) {
-		const char *from_state_name = enum_name(&state_names,
-							st->st_state);
-		const u_int16_t isan_type =
-			md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type;
-		libreswan_log("%s: received %s",
-			      from_state_name,
-			      enum_name(&ikev2_notify_names, isan_type));
-		return STF_FAIL + isan_type;
-	} else if ( md->chain[ISAKMP_NEXT_v2N]) {
-		DBG(DBG_CONTROL, DBG_log("received a notify.."));
+	{
+		/*
+		 * Check for a Notify - can this happen here? XXX
+		 */
+		const char *from_state_name = enum_name(&state_names, st->st_state);
+		u_int16_t isan_type = 0; /* no notify payload */
+		
+		if (md->chain[ISAKMP_NEXT_v2N]) {
+			isan_type = md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type;
+			libreswan_log("%s: received %s", from_state_name,
+			      		enum_name(&ikev2_notify_names, isan_type));
+		}
+
 	}
 
 	/*
@@ -1354,16 +1375,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 			 "cleartext");
 	}
 
-	{
-		stf_status ret;
-		ret =
-			ikev2_process_payloads(md, &md->clr_pbs, st->st_state,
-					       np);
-		if (ret != STF_OK)
-			return ret;
-	}
-
-	return STF_OK;
+	return ikev2_process_encrypted_payloads(md, &md->clr_pbs, np);
 }
 
 static stf_status ikev2_send_auth(struct connection *c,
@@ -1683,6 +1695,17 @@ static stf_status ikev2_parent_inR1outI2_tail(
  *
  *
  */
+
+/* STATE_PARENT_R1: I2 --> R2
+ *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
+ *                             [IDr,] AUTH, SAi2,
+ *                             TSi, TSr}
+ * HDR, SK {IDr, [CERT,] AUTH,
+ *      SAr2, TSi, TSr} -->
+ *
+ * [Parent SA established]
+ */
+
 static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 					    struct pluto_crypto_req *r,
 					    err_t ugh);
@@ -1796,7 +1819,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md  = dh->md;
 	struct state *const st = md->st;
-	struct connection *c   = st->st_connection;
+	struct connection *c = st->st_connection;
 	unsigned char *idhash_in, *idhash_out;
 	unsigned char *authstart;
 	unsigned int np;
@@ -1810,8 +1833,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 	/* decrypt things. */
 	{
-		stf_status ret;
-		ret = ikev2_decrypt_msg(md, RESPONDER);
+		stf_status ret = ikev2_decrypt_msg(md, RESPONDER);
+
 		if (ret != STF_OK)
 			return ret;
 	}
@@ -2130,6 +2153,13 @@ static stf_status ikev2_parent_inI2outR2_tail(
  *    just aren't implemented yet.
  *
  */
+
+/* STATE_PARENT_I2: R2 --> I3
+ *                     <--  HDR, SK {IDr, [CERT,] AUTH,
+ *                               SAr2, TSi, TSr}
+ * [Parent SA established]
+ */
+
 stf_status ikev2parent_inR2(struct msg_digest *md)
 {
 	struct state *st = md->st;
@@ -2149,15 +2179,15 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	    DBG_log("ikev2 parent inR2: calculating g^{xy} in order to decrypt I2"));
 
 	/* verify that there is in fact an encrypted payload */
-	if (!md->chain[ISAKMP_NEXT_v2E]) {
+	if (md->chain[ISAKMP_NEXT_v2E] == NULL) {
 		libreswan_log("R2 state should receive an encrypted payload");
 		return STF_FATAL;
 	}
 
 	/* decrypt things. */
 	{
-		stf_status ret;
-		ret = ikev2_decrypt_msg(md, INITIATOR);
+		stf_status ret = ikev2_decrypt_msg(md, INITIATOR);
+
 		if (ret != STF_OK)
 			return ret;
 	}
@@ -2604,6 +2634,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 
 	send_ike_msg(p1st, __FUNCTION__);
 }
+
 /* add notify payload to the rbody */
 bool ship_v2N(unsigned int np, u_int8_t critical,
 	      u_int8_t protoid, chunk_t *spi,
@@ -2660,6 +2691,13 @@ bool ship_v2N(unsigned int np, u_int8_t critical,
  *
  *
  */
+
+/* RFC 5996 1.4 "The INFORMATIONAL Exchange"
+ *
+ * HDR, SK {[N,] [D,] [CP,] ...}  -->
+ *   <--  HDR, SK {[N,] [D,] [CP], ...}
+ */
+
 static void v2_delete_my_family(struct state *pst)
 {
 	/* We are a parent: delete our children and
@@ -2697,7 +2735,7 @@ static void v2_delete_my_family(struct state *pst)
 stf_status process_informational_ikev2(struct msg_digest *md)
 {
 	/* verify that there is in fact an encrypted payload */
-	if (!md->chain[ISAKMP_NEXT_v2E]) {
+	if (md->chain[ISAKMP_NEXT_v2E] == NULL) {
 		libreswan_log(
 			"Ignoring informational exchange outside encrypted payload (rfc5996 section 1.4)");
 		return STF_IGNORE;

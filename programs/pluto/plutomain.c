@@ -589,6 +589,8 @@ int main(int argc, char **argv)
 			  IMPAIR_RETRANSMITS + DBG_OFFSET },
 			{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
 			  IMPAIR_SEND_BOGUS_ISAKMP_FLAG + DBG_OFFSET },
+			{ "impair-send-ikev2-ke", no_argument, NULL,
+			  IMPAIR_SEND_IKEv2_KE + DBG_OFFSET },
 			{ 0, 0, 0, 0 }
 		};
 		/* Note: we don't like the way short options get parsed
@@ -1293,6 +1295,8 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_RETRANSMITS enabled");
 	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
 		libreswan_log("Warning: IMPAIR_SEND_BOGUS_ISAKMP_FLAG enabled");
+	if (DBGP(IMPAIR_SEND_IKEv2_KE))
+		libreswan_log("Warning: IMPAIR_SEND_IKEv2_KE enabled");
 
 
 	if (DBGP(IMPAIR_DELAY_ADNS_KEY_ANSWER))

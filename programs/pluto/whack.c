@@ -538,8 +538,9 @@ enum option_enums {
 	DBGOPT_IMPAIR_MINOR_VERSION_BUMP,       /* cause pluto to send IKE minor version higher then we support */
 	DBGOPT_IMPAIR_RETRANSMITS,              /* cause pluto to never retransmit packets */
 	DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG,   /* cause pluto to never retransmit packets */
+	DBGOPT_IMPAIR_SEND_IKEv2_KE,            /* cause pluto to skip emitting the KE payload */
 
-#   define DBGOPT_LAST DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG
+#   define DBGOPT_LAST DBGOPT_IMPAIR_SEND_IKEv2_KE
 
 };
 
@@ -784,6 +785,8 @@ static const struct option long_opts[] = {
 	  OO },
 	{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
 	  DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG + OO },
+	{ "impair-send-ikev2-ke", no_argument, NULL,
+	  DBGOPT_IMPAIR_SEND_IKEv2_KE + OO },
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +
 	  OO },
@@ -1807,6 +1810,7 @@ int main(int argc, char **argv)
 		case DBGOPT_IMPAIR_MINOR_VERSION_BUMP:          /* --impair-minor-version-bump */
 		case DBGOPT_IMPAIR_RETRANSMITS:                 /* --impair-retransmits */
 		case DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG:      /* --impair-send-bogus-isakmp-flag */
+		case DBGOPT_IMPAIR_SEND_IKEv2_KE:               /* --impair-send-ikev2-ke */
 			msg.debugging |= LELEM(c - DBGOPT_RAW);
 			continue;
 		default:
