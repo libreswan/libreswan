@@ -446,8 +446,7 @@ bool do_command_freebsd(struct connection *c, struct spd_route *sr,
 						      key->issuer, "");
 					escape_metachar(peerca_str,
 							secure_peerca_str,
-							sizeof(
-								secure_peerca_str));
+							sizeof(secure_peerca_str));
 					break;
 				}
 			}

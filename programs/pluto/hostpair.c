@@ -165,8 +165,7 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 		DBG(DBG_CONTROLMORE, {
 			    char b1[ADDRTOT_BUF];
 			    char b2[ADDRTOT_BUF];
-			    DBG_log(
-				    "find_host_pair: comparing to %s:%d %s:%d\n",
+			    DBG_log("find_host_pair: comparing to %s:%d %s:%d\n",
 				    (addrtot(&p->me.addr, 0, b1,
 					     sizeof(b1)), b1),
 				    p->me.host_port,
@@ -234,8 +233,7 @@ void connect_to_host_pair(struct connection *c)
 		DBG(DBG_CONTROLMORE, {
 			    char b1[ADDRTOT_BUF];
 			    char b2[ADDRTOT_BUF];
-			    DBG_log(
-				    "connect_to_host_pair: %s:%d %s:%d -> hp:%s\n",
+			    DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp:%s\n",
 				    (addrtot(&c->spd.this.host_addr, 0, b1,
 					     sizeof(b1)), b1),
 				    c->spd.this.host_port,

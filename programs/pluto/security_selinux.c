@@ -52,15 +52,13 @@ int within_range(security_context_t sl, security_context_t range)
 	 * */
 	rtn = avc_context_to_sid(sl, &slsid);
 	if (rtn != 0) {
-		DBG_log(
-			"within_range: Unable to retrieve sid for sl context (%s)",
+		DBG_log("within_range: Unable to retrieve sid for sl context (%s)",
 			sl);
 		return 0;
 	}
 	rtn = avc_context_to_sid(range, &rangesid);
 	if (rtn != 0) {
-		DBG_log(
-			"within_range: Unable to retrieve sid for range context (%s)",
+		DBG_log("within_range: Unable to retrieve sid for range context (%s)",
 			range);
 		sidput(slsid);
 		return 0;
@@ -73,8 +71,7 @@ int within_range(security_context_t sl, security_context_t range)
 	av = ASSOCIATION__POLMATCH;
 	rtn = avc_has_perm(slsid, rangesid, tclass, av, NULL, &avd);
 	if (rtn != 0) {
-		DBG_log(
-			"within_range: The sl (%s) is not within range of (%s)", sl,
+		DBG_log("within_range: The sl (%s) is not within range of (%s)", sl,
 			range);
 		sidput(slsid);
 		sidput(rangesid);

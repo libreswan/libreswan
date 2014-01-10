@@ -420,8 +420,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					}
 
 					DBG(DBG_CONTROL,
-					    DBG_log(
-						    "%d: compared key %s to %s / %s -> %d",
+					    DBG_log("%d: compared key %s to %s / %s -> %d",
 						    idnum, idstr1, idme, idhim,
 						    match));
 
@@ -463,18 +462,12 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 					switch (kind) {
 					case PPK_PSK:
-						same =
-							s->pks.u.
-							preshared_secret.len ==
-							best->pks.u.
-							preshared_secret
-							.len &&
-							memcmp(
-								s->pks.u.preshared_secret.ptr,
+						same = s->pks.u.preshared_secret.len ==
+							best->pks.u.preshared_secret.len &&
+							memcmp(s->pks.u.preshared_secret.ptr,
 								best->pks.u.preshared_secret.ptr,
 								s->pks.u.preshared_secret.len)
-							==
-							0;
+							== 0;
 						break;
 					case PPK_RSA:
 						/* Dirty trick: since we have code to compare
@@ -499,8 +492,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					}
 				} else if (match > best_match) {
 					DBG(DBG_CONTROL,
-					    DBG_log(
-						    "best_match %d>%d best=%p (line=%d)",
+					    DBG_log("best_match %d>%d best=%p (line=%d)",
 						    best_match, match,
 						    s, s->secretlineno));
 
@@ -509,8 +501,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					best = s;
 				} else {
 					DBG(DBG_CONTROL,
-					    DBG_log(
-						    "match(%d) was not best_match(%d)",
+					    DBG_log("match(%d) was not best_match(%d)",
 						    match, best_match));
 				}
 			}
@@ -578,8 +569,7 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *r
 		goto error;
 	}
 	DBG(DBG_CRYPT,
-	    DBG_log(
-		    "NSS: extract_and_add_secret_from_nss_cert_file: NSS Cert found"));
+	    DBG_log("NSS: extract_and_add_secret_from_nss_cert_file: NSS Cert found"));
 
 	pubk = CERT_ExtractPublicKey(nssCert);
 	if (pubk == NULL) {
@@ -590,8 +580,7 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *r
 		goto error;
 	}
 	DBG(DBG_CRYPT,
-	    DBG_log(
-		    "NSS: extract_and_add_secret_from_nss_cert_file: public key found"));
+	    DBG_log("NSS: extract_and_add_secret_from_nss_cert_file: public key found"));
 
 	/*certCKAID=PK11_GetLowLevelKeyIDForCert(nssCert->slot,nssCert,  lsw_return_nss_password_file_info());*/ /*does not return any lowkeyid*/
 	certCKAID = PK11_GetLowLevelKeyIDForCert(NULL, nssCert,
@@ -604,8 +593,7 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *r
 		goto error2;
 	}
 	DBG(DBG_CRYPT,
-	    DBG_log(
-		    "NSS: extract_and_add_secret_from_nss_cert_file: ckaid found"));
+	    DBG_log("NSS: extract_and_add_secret_from_nss_cert_file: ckaid found"));
 
 	rsak->pub.nssCert = nssCert;
 
@@ -1031,8 +1019,7 @@ static void process_secret(struct secret **psecrets, int verbose,
 		if (!shift()) {
 			ugh = "bad RSA key syntax";
 		} else if (tokeq("{")) {
-			ugh =
-				lsw_process_rsa_secret(
+			ugh = lsw_process_rsa_secret(
 					&s->pks.u.RSA_private_key);
 		} else {
 			ugh = lsw_process_rsa_keyfile(
@@ -1210,8 +1197,7 @@ static void lsw_process_secret_records(struct secret **psecrets, int verbose,
 					s->ids = i;
 					idtoa(&id, idb, IDTOA_BUF);
 					DBG(DBG_CONTROL,
-					    DBG_log(
-						    "id type added to secret(%p) %s: %s",
+					    DBG_log("id type added to secret(%p) %s: %s",
 						    s,
 						    enum_name(&ppk_names,
 							      s->pks.kind),

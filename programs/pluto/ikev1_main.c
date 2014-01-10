@@ -708,8 +708,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
 				"received on %s:%u "
 				"but \"%s\" forbids connection",
-				ip_str(
-					&md->iface->ip_addr), pluto_port,
+				ip_str(&md->iface->ip_addr), pluto_port,
 				c->name);
 			/* XXX notification is in order! */
 			return STF_IGNORE;
@@ -720,8 +719,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			 * His ID isn't declared yet.
 			 */
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"instantiating \"%s\" for initial "
+				DBG_log("instantiating \"%s\" for initial "
 					"Main Mode message received on %s:%u",
 					c->name,
 					ip_str(&md->iface->ip_addr),
@@ -736,8 +734,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 */
 		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"local endpoint has virt (vnet/vhost) "
+				DBG_log("local endpoint has virt (vnet/vhost) "
 					"set without wildcards - needs "
 					"instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
@@ -1408,8 +1405,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		passert(st->st_suspended_md == NULL);
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log(
-				"main inI2_outR2: starting async DH "
+			DBG_log("main inI2_outR2: starting async DH "
 				"calculation (group=%d)",
 				st->st_oakley.group->group));
 
@@ -1466,19 +1462,16 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 	if (!send_cert) {
 		if (auth == OAKLEY_PRESHARED_KEY) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"I did not send a certificate "
+				DBG_log("I did not send a certificate "
 					"because digital signatures are not "
 					"being used. (PSK)"));
 		} else if (certtype == CERT_NONE) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"I did not send a certificate because "
+				DBG_log("I did not send a certificate because "
 					"I do not have one."));
 		} else if (policy == cert_sendifasked) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"I did not send my certificate "
+				DBG_log("I did not send my certificate "
 					"because I was not asked to."));
 		}
 	}
@@ -2012,8 +2005,7 @@ void key_continue(struct adns_continuation *cr,
 		} else {
 
 #ifdef USE_KEYRR
-			passert(
-				kc->step == kos_his_txt || kc->step ==
+			passert(kc->step == kos_his_txt || kc->step ==
 				kos_his_key);
 #else
 			passert(kc->step == kos_his_txt);
@@ -2230,8 +2222,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
-			DBG_log(
-				"Skipping XAUTH for rekey for Cisco Peer "
+			DBG_log("Skipping XAUTH for rekey for Cisco Peer "
 				"compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
@@ -2308,16 +2299,14 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
-			DBG_log(
-				"Skipping XAUTH for rekey for Cisco Peer "
+			DBG_log("Skipping XAUTH for rekey for Cisco Peer "
 				"compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"Skipping ModeCFG for rekey for Cisco "
+				DBG_log("Skipping ModeCFG for rekey for Cisco "
 					"Peer compatibility."));
 			st->hidden_variables.st_modecfg_vars_set = TRUE;
 			st->hidden_variables.st_modecfg_started = TRUE;
@@ -2573,8 +2562,7 @@ static void send_notification(struct state *sndst, notification_t type,
 					&hash_pbs))
 			impossible();
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(
-				encst->st_oakley.prf_hasher->hash_digest_len,
+		if (!out_zero(encst->st_oakley.prf_hasher->hash_digest_len,
 				&hash_pbs, "HASH(1)"))
 			impossible();
 		close_output_pbs(&hash_pbs);
@@ -3016,9 +3004,8 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			bool bogus;
 			struct state *dst = find_phase2_state_to_delete(st,
 							d->isad_protoid,
-							*(
-							ipsec_spi_t
-							*)spi, /* network order */
+							*(ipsec_spi_t*)
+							spi, /* network order */
 							&bogus);
 
 			if (dst == NULL) {

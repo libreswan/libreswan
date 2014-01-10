@@ -510,8 +510,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo_my_client), optarg);
 			if (isanyaddr(&msg.oppo_my_client))
-				diagq(
-					"0.0.0.0 or 0::0 isn't a valid client address",
+				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			continue;
 
@@ -520,8 +519,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo_peer_client), optarg);
 			if (isanyaddr(&msg.oppo_peer_client))
-				diagq(
-					"0.0.0.0 or 0::0 isn't a valid client address",
+				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			continue;
 #endif
@@ -687,10 +685,8 @@ int main(int argc, char **argv)
 						case RC_ENTERSECRET:
 							if (!gotxauthpass) {
 								xauthpasslen =
-									get_secret(
-										xauthpass,
-										sizeof(
-											xauthpass));
+									get_secret(xauthpass,
+										sizeof(xauthpass));
 							}
 							send_reply(sock,
 								   xauthpass,
@@ -700,10 +696,8 @@ int main(int argc, char **argv)
 						case RC_XAUTHPROMPT:
 							if (!gotxauthname) {
 								xauthnamelen =
-									get_value(
-										xauthname,
-										sizeof(
-											xauthname));
+									get_value(xauthname,
+										sizeof(xauthname));
 							}
 							send_reply(sock,
 								   xauthname,

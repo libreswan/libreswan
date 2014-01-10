@@ -238,8 +238,7 @@ int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 					peer, NI_MAXHOST, NULL, 0,
 					NI_NUMERICHOST) == 0) {
 				if (verbose) {
-					printf(
-						"found peer %s to interface %s\n", peer,
+					printf("found peer %s to interface %s\n", peer,
 						interface);
 				}
 				freeifaddrs(ifap);
@@ -342,8 +341,8 @@ int resolve_defaultroute_one(struct starter_end *left,
 		     RTA_OK(rtattr, rtlen); rtattr = RTA_NEXT(rtattr, rtlen)) {
 			switch (rtattr->rta_type) {
 			case RTA_OIF:
-				if_indextoname(*(int *)RTA_DATA(
-						       rtattr), r_interface);
+				if_indextoname(*(int *)RTA_DATA(rtattr),
+					       r_interface);
 				break;
 
 			case RTA_PREFSRC:
@@ -379,8 +378,7 @@ int resolve_defaultroute_one(struct starter_end *left,
 				if (verbose)
 					printf("set addr: %s\n", r_source);
 			} else if (verbose) {
-				printf(
-					"unknown source results from kernel: %s\n",
+				printf("unknown source results from kernel: %s\n",
 					err);
 			}
 		}
@@ -402,8 +400,7 @@ int resolve_defaultroute_one(struct starter_end *left,
 
 
 			} else if (verbose) {
-				printf(
-					"unknown gateway results from kernel: %s\n",
+				printf("unknown gateway results from kernel: %s\n",
 					err);
 			}
 		}
@@ -636,8 +633,7 @@ int main(int argc, char *argv[])
 
 	if (autoall) {
 		if (verbose)
-			printf(
-				"loading all conns according to their auto= settings\n");
+			printf("loading all conns according to their auto= settings\n");
 
 
 		/*
@@ -647,8 +643,7 @@ int main(int argc, char *argv[])
 		 * of the old _plutoload
 		 */
 		if (verbose)
-			printf(
-				"  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
+			printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
 
 
 		for (conn = cfg->conns.tqh_first;
@@ -698,13 +693,11 @@ int main(int argc, char *argv[])
 			     conn = conn->link.tqe_next) {
 				if (strcmp(conn->name, connname) == 0) {
 					if (conn->state == STATE_ADDED) {
-						printf(
-							"\nconn %s already added\n",
+						printf("\nconn %s already added\n",
 							conn->name);
 					} else if (conn->state ==
 						   STATE_FAILED) {
-						printf(
-							"\nconn %s did not load properly\n",
+						printf("\nconn %s did not load properly\n",
 							conn->name);
 					} else {
 						resolve_defaultroute(conn);
@@ -732,17 +725,14 @@ int main(int argc, char *argv[])
 
 						if (conn->state ==
 						    STATE_ADDED) {
-							printf(
-								"\nalias: %s conn %s already added\n", connname,
+							printf("\nalias: %s conn %s already added\n", connname,
 								conn->name);
 						} else if (conn->state ==
 							   STATE_FAILED) {
-							printf(
-								"\nalias: %s conn %s did not load properly\n", connname,
+							printf("\nalias: %s conn %s did not load properly\n", connname,
 								conn->name);
 						} else {
-							resolve_defaultroute(
-								conn);
+							resolve_defaultroute(conn);
 							exit_status =
 								starter_whack_add_conn(
 									cfg,
@@ -758,8 +748,7 @@ int main(int argc, char *argv[])
 			if (conn == NULL) {
 				exit_status++;
 				if (!verbose) {
-					printf(
-						"conn '%s': not found (tried aliases)\n",
+					printf("conn '%s': not found (tried aliases)\n",
 						connname);
 				} else {
 					printf(" (notfound)\n");
@@ -793,8 +782,7 @@ int main(int argc, char *argv[])
 		}
 		if (listroute) {
 			if (verbose)
-				printf(
-					"listing all conns marked as auto=route and auto=start\n");
+				printf("listing all conns marked as auto=route and auto=start\n");
 
 
 			/* list all conns marked as auto=route or start or better */
@@ -809,8 +797,7 @@ int main(int argc, char *argv[])
 
 		if (liststart && !listroute) {
 			if (verbose)
-				printf(
-					"listing all conns marked as auto=start\n");
+				printf("listing all conns marked as auto=start\n");
 
 
 			/* list all conns marked as auto=start */
@@ -824,8 +811,7 @@ int main(int argc, char *argv[])
 
 		if (listignore) {
 			if (verbose)
-				printf(
-					"listing all conns marked as auto=ignore\n");
+				printf("listing all conns marked as auto=ignore\n");
 
 
 			/* list all conns marked as auto=start */

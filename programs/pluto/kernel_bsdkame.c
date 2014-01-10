@@ -200,8 +200,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						id->id_count++;
 
 						q->ip_addr = ifp->addr;
-						setportof(htons(
-								  pluto_natt_float_port),
+						setportof(htons(pluto_natt_float_port),
 							  &q->ip_addr);
 						q->port =
 							pluto_natt_float_port;
@@ -553,8 +552,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 		break;
 
 	default:
-		DBG_log(
-			"bsdkame_raw_eroute not installing eroute to proto=%d\n",
+		DBG_log("bsdkame_raw_eroute not installing eroute to proto=%d\n",
 			proto);
 		return TRUE;
 	}
@@ -609,8 +607,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	if (ret < 0) {
 		extern int __ipsec_errcode;
-		DBG_log(
-			"ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=eroute\n", ret,
+		DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=eroute\n", ret,
 			__ipsec_errcode, ipsec_strerror(),
 			saddr, daddr, pfkey_seq);
 		return FALSE;
@@ -812,8 +809,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 
 		if (ret < 0) {
 			extern int __ipsec_errcode;
-			DBG_log(
-				"ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s\n", ret,
+			DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s\n", ret,
 				__ipsec_errcode, ipsec_strerror(),
 				saddr, daddr, pfkey_seq, opname);
 			return FALSE;
@@ -869,8 +865,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 
 		if (ret < 0) {
 			extern int __ipsec_errcode;
-			DBG_log(
-				"ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s\n", ret,
+			DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s\n", ret,
 				__ipsec_errcode, ipsec_strerror(),
 				saddr, daddr, pfkey_seq, opname);
 			return FALSE;
@@ -983,8 +978,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	memcpy(keymat + sa->enckeylen, sa->authkey, sa->authkeylen);
 
 	DBG(DBG_KERNEL,
-	    DBG_log(
-		    "calling pfkey_send_x1 for pfkeyseq=%d encalg=%d/%d authalg=%d/%d spi=%08x, reqid=%u, satype=%d\n",
+	    DBG_log("calling pfkey_send_x1 for pfkeyseq=%d encalg=%d/%d authalg=%d/%d spi=%08x, reqid=%u, satype=%d\n",
 		    pfkey_seq,
 		    sa->encalg, sa->enckeylen,
 		    sa->authalg, sa->authkeylen,

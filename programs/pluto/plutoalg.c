@@ -314,8 +314,7 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 			       esp_info->esp_aalg_id, aklen);
 
 		if ( ret < 0 || (size_t)ret >= buflen) {
-			DBG_log(
-				"alg_info_snprint_ah: buffer too short for snprintf");
+			DBG_log("alg_info_snprint_ah: buffer too short for snprintf");
 			break;
 		}
 		ptr += ret;
@@ -386,8 +385,7 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 						"OAKLEY_GROUP_"),
 				       ike_info->ike_modp);
 			if ( ret < 0 || (size_t)ret >= buflen) {
-				DBG_log(
-					"alg_info_snprint_ike: buffer too short for snprintf");
+				DBG_log("alg_info_snprint_ike: buffer too short for snprintf");
 				break;
 			}
 			ptr += ret;
@@ -484,8 +482,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				       "requested kernel enc ealg_id=%d not present",
 				       ealg_i);
 			} else {
-				DBG_log(
-					"requested kernel enc ealg_id=%d not present",
+				DBG_log("requested kernel enc ealg_id=%d not present",
 					ealg_i);
 			}
 			return FALSE;
@@ -833,8 +830,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 
 	if (!dbnew) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "failed to translate esp_info to proposal, returning empty"));
+		    DBG_log("failed to translate esp_info to proposal, returning empty"));
 		return NULL;
 	}
 
@@ -842,8 +838,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 
 	if (!p) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "failed to get proposal from context, returning empty"));
+		    DBG_log("failed to get proposal from context, returning empty"));
 		db_destroy(dbnew);
 		return NULL;
 	}

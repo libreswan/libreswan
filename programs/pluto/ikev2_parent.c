@@ -398,11 +398,12 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	if (st->st_dcookie.ptr) {
 		chunk_t child_spi;
 		memset(&child_spi, 0, sizeof(child_spi));
-		ship_v2N(ISAKMP_NEXT_v2SA, DBGP(
-				 IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
-			 (ISAKMP_PAYLOAD_NONCRITICAL |
-			  ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
-			 ISAKMP_PAYLOAD_NONCRITICAL, PROTO_ISAKMP,
+		ship_v2N(ISAKMP_NEXT_v2SA,
+			 DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
+			   (ISAKMP_PAYLOAD_NONCRITICAL |
+			    ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
+			   ISAKMP_PAYLOAD_NONCRITICAL,
+			 PROTO_ISAKMP,
 			 &child_spi,
 			 v2N_COOKIE, &st->st_dcookie, &md->rbody);
 	}
@@ -594,21 +595,17 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		if (c == NULL) {
 			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
 			       " but no connection has been authorized%s%s",
-			       ip_str(
-				       &md->iface->ip_addr),
+			       ip_str(&md->iface->ip_addr),
 			       ntohs(portof(&md->iface->ip_addr)),
 			       (policy != LEMPTY) ? " with policy=" : "",
-			       (policy !=
-				LEMPTY) ? bitnamesof(sa_policy_bit_names,
-						     policy) : "");
+			       (policy !=LEMPTY) ?
+			         bitnamesof(sa_policy_bit_names, policy) : "");
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		if (c->kind != CK_TEMPLATE) {
 			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
 			       " but \"%s\" forbids connection",
-			       ip_str(
-				       &md->iface->ip_addr), pluto_port,
-			       c->name);
+			       ip_str(&md->iface->ip_addr), pluto_port, c->name);
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		c = rw_instantiate(c, &md->sender, NULL, NULL);
@@ -618,14 +615,12 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		/* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
 		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
+			    DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
 		} else if ((c->kind == CK_TEMPLATE) &&
 			   (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "local endpoint has narrowing=yes - needs instantiation"));
+			    DBG_log("local endpoint has narrowing=yes - needs instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
 		}
 	}
@@ -696,8 +691,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		} else {
 			/* we are under DOS attack I1 contains no DOS COOKIE */
 			DBG(DBG_CONTROLMORE,
-			    DBG_log(
-				    "busy mode on. receieved I1 without a valid dcookie");
+			    DBG_log("busy mode on. receieved I1 without a valid dcookie");
 			    DBG_log("send a dcookie and forget this state"));
 			SEND_NOTIFICATION_AA(v2N_COOKIE, &dc);
 			return STF_FAIL;
@@ -996,14 +990,12 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		u_int8_t spisize;
 		const pb_stream *dc_pbs;
 		DBG(DBG_CONTROLMORE,
-		    DBG_log(
-			    "inR1OutI2 received a DOS v2N_COOKIE from the responder");
+		    DBG_log("inR1OutI2 received a DOS v2N_COOKIE from the responder");
 		    DBG_log("resend the I1 with a cookie payload"));
 		spisize = md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_spisize;
 		dc_pbs = &md->chain[ISAKMP_NEXT_v2N]->pbs;
 		clonetochunk(st->st_dcookie,  (dc_pbs->cur + spisize),
-			     (pbs_left(
-				      dc_pbs) - spisize),
+			     (pbs_left(dc_pbs) - spisize),
 			     "saved received dcookie");
 
 		DBG(DBG_CONTROLMORE,
@@ -1046,8 +1038,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	 */
 
 	DBG(DBG_CONTROLMORE,
-	    DBG_log(
-		    "ikev2 parent inR1: calculating g^{xy} in order to send I2"));
+	    DBG_log("ikev2 parent inR1: calculating g^{xy} in order to send I2"));
 
 	/* KE in */
 	keyex_pbs = &md->chain[ISAKMP_NEXT_v2KE]->pbs;
@@ -1625,8 +1616,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 					   policy);
 
 			if ( !(st->st_connection->policy & POLICY_TUNNEL) ) {
-				DBG_log(
-					"Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
+				DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
 				memset(&child_spi, 0, sizeof(child_spi));
 				memset(&notify_data, 0, sizeof(notify_data));
 				ship_v2N(ISAKMP_NEXT_v2NONE,
@@ -1713,8 +1703,7 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 	 */
 
 	DBG(DBG_CONTROLMORE,
-	    DBG_log(
-		    "ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2"));
+	    DBG_log("ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2"));
 
 	/* verify that there is in fact an encrypted payload */
 	if (!md->chain[ISAKMP_NEXT_v2E]) {
@@ -1785,8 +1774,7 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	if ( e > STF_FAIL) {
 		/* we do not send a notify because we are the initiator that could be responding to an error notification */
 		int v2_notify_num = e - STF_FAIL;
-		DBG_log(
-			"ikev2_parent_inI2outR2_tail returned STF_FAIL with %s",
+		DBG_log("ikev2_parent_inI2outR2_tail returned STF_FAIL with %s",
 			enum_name(&ikev2_notify_names, v2_notify_num));
 	} else if ( e != STF_OK) {
 		DBG_log("ikev2_parent_inI2outR2_tail returned %s",
@@ -1863,8 +1851,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			 *  has_preloaded_public_key(st)
 			 */
 			DBG(DBG_CONTROLMORE,
-			    DBG_log(
-				    "has a v2_CERT payload going to process it "));
+			    DBG_log("has a v2_CERT payload going to process it "));
 			ikev2_decode_cert(md);
 		}
 	}
@@ -1921,8 +1908,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	/* Is there a notify about an error ? */
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    " notify payload detected, should be processed...."));
+		    DBG_log(" notify payload detected, should be processed...."));
 	}
 
 	/* good. now create child state */
@@ -2083,16 +2069,14 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			if (ret > STF_FAIL) {
 				v2_notify_num = ret - STF_FAIL;
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "ikev2_child_sa_respond returned STF_FAIL with %s",
+				    DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s",
 					    enum_name(&ikev2_notify_names,
 						      v2_notify_num)));
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			} else if (ret != STF_OK) {
-				DBG_log("ikev2_child_sa_respond returned %s", enum_name(
-						&stfstatus_name,
-						ret));
+				DBG_log("ikev2_child_sa_respond returned %s",
+					enum_name(&stfstatus_name, ret));
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			}
@@ -2162,8 +2146,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	 */
 
 	DBG(DBG_CONTROLMORE,
-	    DBG_log(
-		    "ikev2 parent inR2: calculating g^{xy} in order to decrypt I2"));
+	    DBG_log("ikev2 parent inR2: calculating g^{xy} in order to decrypt I2"));
 
 	/* verify that there is in fact an encrypted payload */
 	if (!md->chain[ISAKMP_NEXT_v2E]) {
@@ -2726,13 +2709,11 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_I) {
 			DBG(DBG_CONTROLMORE,
-			    DBG_log(
-				    "received informational exchange request from INITIATOR"));
+			    DBG_log("received informational exchange request from INITIATOR"));
 			ret = ikev2_decrypt_msg(md, RESPONDER);
 		} else {
 			DBG(DBG_CONTROLMORE,
-			    DBG_log(
-				    "received informational exchange request from RESPONDER"));
+			    DBG_log("received informational exchange request from RESPONDER"));
 			ret = ikev2_decrypt_msg(md, INITIATOR);
 		}
 
@@ -3018,8 +2999,8 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 			/* keep it for a retransmit if necessary */
 			freeanychunk(st->st_tpacket);
-			clonetochunk(st->st_tpacket, reply_stream.start, pbs_offset(
-					     &reply_stream),
+			clonetochunk(st->st_tpacket, reply_stream.start,
+				     pbs_offset(&reply_stream),
 				     "reply packet for informational exchange");
 
 			send_ike_msg(st, __FUNCTION__);
@@ -3064,8 +3045,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 						       v2del->isad_spisize);
 						DBG(DBG_CONTROLMORE, DBG_log(
 							    "Now doing actual deletion for request: %s SA(0x%08lx)",
-							    enum_show(
-								    &protocol_names,
+							    enum_show(&protocol_names,
 								    v2del->isad_protoid),
 							    (unsigned long)
 							    ntohl((unsigned long)
@@ -3090,30 +3070,20 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 								&dst->st_esp;
 							DBG(DBG_CONTROLMORE,
 								DBG_log("our side spi that needs to be deleted: %s SA(0x%08lx)",
-									enum_show(
-										&protocol_names,
+									enum_show(&protocol_names,
 										v2del->isad_protoid),
 									(unsigned long)
 									ntohl(pr->our_spi)));
 
 							/* now delete the state*/
-							change_state(
-								dst,
+							change_state(dst,
 								STATE_CHILDSA_DEL);
-							delete_state(
-								dst);
+							delete_state(dst);
 						} else {
-							DBG(
-								DBG_CONTROLMORE,
-								DBG_log(
-									"received delete request for %s SA(0x%08lx) but local state is not found",
-									enum_show(
-										&protocol_names,
-										v2del->isad_protoid),
-									(unsigned long)
-									ntohl((unsigned long)
-									      *(ipsec_spi_t *)
-									      spi)));
+							DBG(DBG_CONTROLMORE,
+							    DBG_log("received delete request for %s SA(0x%08lx) but local state is not found",
+								    enum_show(&protocol_names, v2del->isad_protoid),
+									(unsigned long)ntohl((unsigned long)*(ipsec_spi_t *)spi)));
 						}
 					}
 				}

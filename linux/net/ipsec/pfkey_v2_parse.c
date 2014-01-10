@@ -142,8 +142,7 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 	    IPSEC_PFKEYv2_ALIGN &&
 	    pfkey_sa->sadb_sa_len != sizeof(struct sadb_sa) /
 	    IPSEC_PFKEYv2_ALIGN) {
-		ERROR(
-			"pfkey_sa_parse: "
+		ERROR("pfkey_sa_parse: "
 			"length wrong pfkey_sa->sadb_sa_len=%d sizeof(struct sadb_sa)=%d.\n",
 			pfkey_sa->sadb_sa_len,
 			(int)sizeof(struct k_sadb_sa));
@@ -152,8 +151,7 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 
 #if K_SADB_EALG_MAX < 255       /* probably to silence a gcc warning */
 	if (pfkey_sa->sadb_sa_encrypt > K_SADB_EALG_MAX) {
-		ERROR(
-			"pfkey_sa_parse: "
+		ERROR("pfkey_sa_parse: "
 			"pfkey_sa->sadb_sa_encrypt=%d > K_SADB_EALG_MAX=%d.\n",
 			pfkey_sa->sadb_sa_encrypt,
 			K_SADB_EALG_MAX);
@@ -163,8 +161,7 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 
 #if K_SADB_AALG_MAX < 255
 	if (pfkey_sa->sadb_sa_auth > K_SADB_AALG_MAX) {
-		ERROR(
-			"pfkey_sa_parse: "
+		ERROR("pfkey_sa_parse: "
 			"pfkey_sa->sadb_sa_auth=%d > K_SADB_AALG_MAX=%d.\n",
 			pfkey_sa->sadb_sa_auth,
 			K_SADB_AALG_MAX);
@@ -174,8 +171,7 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 
 #if K_SADB_SASTATE_MAX < 255
 	if (pfkey_sa->sadb_sa_state > K_SADB_SASTATE_MAX) {
-		ERROR(
-			"pfkey_sa_parse: "
+		ERROR("pfkey_sa_parse: "
 			"state=%d exceeds MAX=%d.\n",
 			pfkey_sa->sadb_sa_state,
 			K_SADB_SASTATE_MAX);
@@ -184,8 +180,7 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 #endif
 
 	if (pfkey_sa->sadb_sa_state == K_SADB_SASTATE_DEAD) {
-		ERROR(
-			"pfkey_sa_parse: "
+		ERROR("pfkey_sa_parse: "
 			"state=%d is DEAD=%d.\n",
 			pfkey_sa->sadb_sa_state,
 			K_SADB_SASTATE_DEAD);
@@ -193,8 +188,7 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 	}
 
 	if (pfkey_sa->sadb_sa_replay > 64) {
-		ERROR(
-			"pfkey_sa_parse: "
+		ERROR("pfkey_sa_parse: "
 			"replay window size: %d -- must be 0 <= size <= 64\n",
 			pfkey_sa->sadb_sa_replay);
 		SENDERR(EINVAL);
@@ -202,8 +196,7 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 
 	if (!((pfkey_sa->sadb_sa_exttype ==  K_SADB_EXT_SA) ||
 	      (pfkey_sa->sadb_sa_exttype ==  K_SADB_X_EXT_SA2))) {
-		ERROR(
-			"pfkey_sa_parse: "
+		ERROR("pfkey_sa_parse: "
 			"unknown exttype=%d, expecting K_SADB_EXT_SA=%d or K_SADB_X_EXT_SA2=%d.\n",
 			pfkey_sa->sadb_sa_exttype,
 			K_SADB_EXT_SA,
@@ -220,8 +213,7 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 
 	if ((IPSEC_SAREF_NULL != pfkey_sa->sadb_x_sa_ref) &&
 	    (pfkey_sa->sadb_x_sa_ref >= (1 << IPSEC_SA_REF_TABLE_IDX_WIDTH))) {
-		ERROR(
-			"pfkey_sa_parse: "
+		ERROR("pfkey_sa_parse: "
 			"SAref=%d must be (SAref == IPSEC_SAREF_NULL(%d) || SAref < IPSEC_SA_REF_TABLE_NUM_ENTRIES(%d)).\n",
 			pfkey_sa->sadb_x_sa_ref,
 			IPSEC_SAREF_NULL,
@@ -312,8 +304,7 @@ DEBUG_NO_STATIC int pfkey_address_parse(struct sadb_ext *pfkey_ext)
 
 	/* sanity checks... */
 	if (!pfkey_address) {
-		ERROR(
-			"pfkey_address_parse: "
+		ERROR("pfkey_address_parse: "
 			"NULL pointer passed in.\n");
 		SENDERR(EINVAL);
 	}
@@ -348,8 +339,7 @@ DEBUG_NO_STATIC int pfkey_address_parse(struct sadb_ext *pfkey_ext)
 	case K_SADB_X_EXT_NAT_T_OA:
 		break;
 	default:
-		ERROR(
-			"pfkey_address_parse: "
+		ERROR("pfkey_address_parse: "
 			"unexpected ext_type=%d.\n",
 			pfkey_address->sadb_address_exttype);
 		SENDERR(ENODEV);
@@ -385,8 +375,7 @@ DEBUG_NO_STATIC int pfkey_address_parse(struct sadb_ext *pfkey_ext)
 			  ((struct sockaddr_in6*)s)->sin6_port);
 		break;
 	default:
-		ERROR(
-			"pfkey_address_parse: "
+		ERROR("pfkey_address_parse: "
 			"s->sa_family=%d not supported.\n",
 			s->sa_family);
 		SENDERR(EPFNOSUPPORT);
@@ -395,8 +384,7 @@ DEBUG_NO_STATIC int pfkey_address_parse(struct sadb_ext *pfkey_ext)
 	if (pfkey_address->sadb_address_len !=
 	    DIVUP(sizeof(struct sadb_address) + saddr_len,
 		  IPSEC_PFKEYv2_ALIGN)) {
-		ERROR(
-			"pfkey_address_parse: "
+		ERROR("pfkey_address_parse: "
 			"size wrong 2 ext_len=%d, adr_ext_len=%d, saddr_len=%d.\n",
 			pfkey_address->sadb_address_len,
 			(int)sizeof(struct sadb_address),
@@ -405,8 +393,7 @@ DEBUG_NO_STATIC int pfkey_address_parse(struct sadb_ext *pfkey_ext)
 	}
 
 	if (pfkey_address->sadb_address_prefixlen != 0) {
-		ERROR(
-			"pfkey_address_parse: "
+		ERROR("pfkey_address_parse: "
 			"address prefixes not supported yet.\n");
 		SENDERR(EAFNOSUPPORT); /* not supported yet */
 	}
@@ -427,16 +414,14 @@ DEBUG_NO_STATIC int pfkey_key_parse(struct sadb_ext *pfkey_ext)
 	/* sanity checks... */
 
 	if (!pfkey_key) {
-		ERROR(
-			"pfkey_key_parse: "
+		ERROR("pfkey_key_parse: "
 			"NULL pointer passed in.\n");
 		SENDERR(EINVAL);
 	}
 
 	if (pfkey_key->sadb_key_len < sizeof(struct sadb_key) /
 	    IPSEC_PFKEYv2_ALIGN) {
-		ERROR(
-			"pfkey_key_parse: "
+		ERROR("pfkey_key_parse: "
 			"size wrong ext_len=%d, key_ext_len=%d.\n",
 			pfkey_key->sadb_key_len,
 			(int)sizeof(struct sadb_key));
@@ -444,8 +429,7 @@ DEBUG_NO_STATIC int pfkey_key_parse(struct sadb_ext *pfkey_ext)
 	}
 
 	if (!pfkey_key->sadb_key_bits) {
-		ERROR(
-			"pfkey_key_parse: "
+		ERROR("pfkey_key_parse: "
 			"key length set to zero, must be non-zero.\n");
 		SENDERR(EINVAL);
 	}
@@ -454,8 +438,7 @@ DEBUG_NO_STATIC int pfkey_key_parse(struct sadb_ext *pfkey_ext)
 	    DIVUP(sizeof(struct sadb_key) * OCTETBITS +
 		  pfkey_key->sadb_key_bits,
 		  PFKEYBITS)) {
-		ERROR(
-			"pfkey_key_parse: "
+		ERROR("pfkey_key_parse: "
 			"key length=%d does not agree with extension length=%d.\n",
 			pfkey_key->sadb_key_bits,
 			pfkey_key->sadb_key_len);
@@ -463,8 +446,7 @@ DEBUG_NO_STATIC int pfkey_key_parse(struct sadb_ext *pfkey_ext)
 	}
 
 	if (pfkey_key->sadb_key_reserved) {
-		ERROR(
-			"pfkey_key_parse: "
+		ERROR("pfkey_key_parse: "
 			"res=%d, must be zero.\n",
 			pfkey_key->sadb_key_reserved);
 		SENDERR(EINVAL);
@@ -472,8 +454,7 @@ DEBUG_NO_STATIC int pfkey_key_parse(struct sadb_ext *pfkey_ext)
 
 	if (!( (pfkey_key->sadb_key_exttype == K_SADB_EXT_KEY_AUTH) ||
 	       (pfkey_key->sadb_key_exttype == K_SADB_EXT_KEY_ENCRYPT))) {
-		ERROR(
-			"pfkey_key_parse: "
+		ERROR("pfkey_key_parse: "
 			"expecting extension type AUTH or ENCRYPT, got %d.\n",
 			pfkey_key->sadb_key_exttype);
 		SENDERR(EINVAL);
@@ -500,8 +481,7 @@ DEBUG_NO_STATIC int pfkey_ident_parse(struct sadb_ext *pfkey_ext)
 	/* sanity checks... */
 	if (pfkey_ident->sadb_ident_len < sizeof(struct sadb_ident) /
 	    IPSEC_PFKEYv2_ALIGN) {
-		ERROR(
-			"pfkey_ident_parse: "
+		ERROR("pfkey_ident_parse: "
 			"size wrong ext_len=%d, key_ext_len=%d.\n",
 			pfkey_ident->sadb_ident_len,
 			(int)sizeof(struct sadb_ident));
@@ -509,8 +489,7 @@ DEBUG_NO_STATIC int pfkey_ident_parse(struct sadb_ext *pfkey_ext)
 	}
 
 	if (pfkey_ident->sadb_ident_type > K_SADB_IDENTTYPE_MAX) {
-		ERROR(
-			"pfkey_ident_parse: "
+		ERROR("pfkey_ident_parse: "
 			"ident_type=%d out of range, must be less than %d.\n",
 			pfkey_ident->sadb_ident_type,
 			K_SADB_IDENTTYPE_MAX);
@@ -518,8 +497,7 @@ DEBUG_NO_STATIC int pfkey_ident_parse(struct sadb_ext *pfkey_ext)
 	}
 
 	if (pfkey_ident->sadb_ident_reserved) {
-		ERROR(
-			"pfkey_ident_parse: "
+		ERROR("pfkey_ident_parse: "
 			"res=%d, must be zero.\n",
 			pfkey_ident->sadb_ident_reserved);
 		SENDERR(EINVAL);
@@ -530,8 +508,7 @@ DEBUG_NO_STATIC int pfkey_ident_parse(struct sadb_ext *pfkey_ext)
 	    IPSEC_PFKEYv2_ALIGN) {
 		if (*((char*)pfkey_ident + pfkey_ident->sadb_ident_len *
 		      IPSEC_PFKEYv2_ALIGN - 1)) {
-			ERROR(
-				"pfkey_ident_parse: "
+			ERROR("pfkey_ident_parse: "
 				"string padding must be zero, last is 0x%02x.\n",
 				*((char*)pfkey_ident +
 				  pfkey_ident->sadb_ident_len *
@@ -542,8 +519,7 @@ DEBUG_NO_STATIC int pfkey_ident_parse(struct sadb_ext *pfkey_ext)
 
 	if ( !((pfkey_ident->sadb_ident_exttype == K_SADB_EXT_IDENTITY_SRC) ||
 	       (pfkey_ident->sadb_ident_exttype == K_SADB_EXT_IDENTITY_DST))) {
-		ERROR(
-			"pfkey_key_parse: "
+		ERROR("pfkey_key_parse: "
 			"expecting extension type IDENTITY_SRC or IDENTITY_DST, got %d.\n",
 			pfkey_ident->sadb_ident_exttype);
 		SENDERR(EINVAL);
@@ -1434,8 +1410,7 @@ int pfkey_msg_parse(struct sadb_msg *pfkey_msg,
 			  ext_parsers[pfkey_ext->sadb_ext_type]->parser_name);
 
 		/* Parse the extension */
-		if ((error =
-			     (*ext_parsers[pfkey_ext->sadb_ext_type]->parser)(
+		if ((error = (*ext_parsers[pfkey_ext->sadb_ext_type]->parser)(
 				     pfkey_ext))) {
 			ERROR("pfkey_msg_parse: "
 			      "extension parsing for type %d(%s) failed with error %d.\n",

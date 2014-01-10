@@ -341,8 +341,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 				if (c != NULL) {
 					c->extra_debugging = msg.debugging;
 					DBG(DBG_CONTROL,
-					    DBG_log(
-						    "\"%s\" extra_debugging = %s",
+					    DBG_log("\"%s\" extra_debugging = %s",
 						    c->name,
 						    bitnamesof(debug_bit_names,
 							       c->
@@ -359,8 +358,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			/* close old filename */
 			if (whackrecordfile) {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "stopped recording whack messages to %s\n",
+				    DBG_log("stopped recording whack messages to %s\n",
 					    whackrecordname));
 				fclose(whackrecordfile);
 			}
@@ -374,8 +372,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 		case WHACK_STOPWHACKRECORD:
 			if (whackrecordfile) {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "stopped recording whack messages to %s\n",
+				    DBG_log("stopped recording whack messages to %s\n",
 					    whackrecordname));
 				fclose(whackrecordfile);
 			}
@@ -528,8 +525,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 			whack_log(RC_DEAF, "need --listen before --initiate");
 		} else {
 			initiate_connection(msg.name,
-					    msg.whack_async ? NULL_FD : dup_any(
-						    whackfd),
+					    msg.whack_async ?
+					      NULL_FD :
+					      dup_any(whackfd),
 					    msg.debugging,
 					    pcim_demand_crypto);
 		}
@@ -543,12 +541,13 @@ void whack_process(int whackfd, const struct whack_message msg)
 			(void)initiate_ondemand(&msg.oppo_my_client,
 						&msg.oppo_peer_client, 0,
 						FALSE,
-						msg.whack_async ? NULL_FD : dup_any(
-							whackfd)
+						msg.whack_async ?
+						  NULL_FD :
+						  dup_any(whackfd),
 #ifdef HAVE_LABELED_IPSEC
-						, NULL
+						NULL,
 #endif
-						, "whack");
+						"whack");
 		}
 	}
 
