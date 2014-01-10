@@ -73,8 +73,7 @@ size_t asn1_length(chunk_t *blob)
 	if ((n & 0x80) == 0) { /* single length octet */
 		if (n > blob->len) {
 			DBG(DBG_PARSING,
-			    DBG_log(
-				    "number of length octets is larger than ASN.1 object")
+			    DBG_log("number of length octets is larger than ASN.1 object")
 			    );
 			return ASN1_INVALID_LENGTH;
 		}
@@ -86,16 +85,14 @@ size_t asn1_length(chunk_t *blob)
 
 	if (n > blob->len) {
 		DBG(DBG_PARSING,
-		    DBG_log(
-			    "number of length octets is larger than ASN.1 object")
+		    DBG_log("number of length octets is larger than ASN.1 object")
 		    );
 		return ASN1_INVALID_LENGTH;
 	}
 
 	if (n > sizeof(len)) {
 		DBG(DBG_PARSING,
-		    DBG_log(
-			    "number of length octets is larger than limit of %d octets",
+		    DBG_log("number of length octets is larger than limit of %d octets",
 			    (int) sizeof(len))
 		    );
 		return ASN1_INVALID_LENGTH;
@@ -365,8 +362,7 @@ bool extract_object(asn1Object_t const *objects,
 
 	if (blob1->len == ASN1_INVALID_LENGTH) {
 		DBG(DBG_PARSING,
-		    DBG_log(
-			    "L%d - %s:  length of ASN1 object invalid or too large",
+		    DBG_log("L%d - %s:  length of ASN1 object invalid or too large",
 			    *level, obj.name);
 		    );
 		return FALSE;

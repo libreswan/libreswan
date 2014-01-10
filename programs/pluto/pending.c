@@ -90,8 +90,7 @@ void add_pending(int whack_sock,
 	for ( p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->isakmp_sa == isakmp_sa) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "Ignored already queued up pending Quick Mode with %s \"%s\"",
+			    DBG_log("Ignored already queued up pending Quick Mode with %s \"%s\"",
 				    ip_str(&c->spd.that.host_addr),
 				    c->name));
 			return;
@@ -208,8 +207,7 @@ void unpend(struct state *st)
 	     ) {
 		if (p->isakmp_sa == st) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "unqueuing pending %s with %s \"%s\" %s",
+			    DBG_log("unqueuing pending %s with %s \"%s\" %s",
 				    st->st_ikev2 ? "Child SA" : "Quick Mode",
 				    ip_str(&p->connection->spd.that.host_addr),
 				    p->connection->name,
@@ -272,8 +270,7 @@ bool pending_check_timeout(struct connection *c)
 
 	for (pp = host_pair_first_pending(c); (p = *pp) != NULL; ) {
 		DBG(DBG_DPD,
-		    DBG_log(
-			    "checking connection \"%s\" for stuck phase 2s (%lu+ 3*%lu) <= %lu",
+		    DBG_log("checking connection \"%s\" for stuck phase 2s (%lu+ 3*%lu) <= %lu",
 			    c->name,
 			    (unsigned long)p->pend_time,
 			    (unsigned long)c->dpd_timeout,
@@ -282,8 +279,7 @@ bool pending_check_timeout(struct connection *c)
 		if (c->dpd_timeout > 0) {
 			if ((p->pend_time + c->dpd_timeout * 3) <= n) {
 				DBG(DBG_DPD,
-				    DBG_log(
-					    "connection \"%s\" stuck, restarting",
+				    DBG_log("connection \"%s\" stuck, restarting",
 					    c->name));
 				return TRUE;
 			}

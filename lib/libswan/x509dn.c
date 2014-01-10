@@ -1339,14 +1339,12 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 
 		publicKey =
 			(SECKEYPublicKey *) PORT_ArenaZAlloc(arena,
-							     sizeof(
-								     SECKEYPublicKey));
+							     sizeof(SECKEYPublicKey));
 		if (!publicKey) {
 			PORT_FreeArena(arena, PR_FALSE);
 			PORT_SetError(SEC_ERROR_NO_MEMORY);
 			DBG(DBG_X509 | DBG_CONTROL,
-			    DBG_log(
-				    "NSS: error in allocating memory to public key"));
+			    DBG_log("NSS: error in allocating memory to public key"));
 			return FALSE;
 		}
 
@@ -1376,8 +1374,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 			 issuer_cert->modulus.ptr[0] == 0x00) ? 1 : 0;
 		if (skip != 1) {
 			DBG(DBG_X509 | DBG_CONTROL,
-			    DBG_log(
-				    "NSS: RSA Modulus has no leading 0x00 byte, modules < 2^511 ?"));
+			    DBG_log("NSS: RSA Modulus has no leading 0x00 byte, modules < 2^511 ?"));
 		}
 		nss_n.data = issuer_cert->modulus.ptr + skip;
 		nss_n.len =  issuer_cert->modulus.len - skip;
@@ -1407,8 +1404,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 
 		if (skip != 1) {
 			DBG(DBG_X509 | DBG_CONTROL,
-			    DBG_log(
-				    "NSS: RSA Signature has no leading 0x00 byte?"));
+			    DBG_log("NSS: RSA Signature has no leading 0x00 byte?"));
 		}
 
 		signature.data = sig.ptr + skip;
@@ -1450,8 +1446,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 			   digest->len) == 0) {
 			pfree(dsig.data);
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "NSS: RSA Signature verified, hash values matched"));
+			    DBG_log("NSS: RSA Signature verified, hash values matched"));
 			return TRUE;
 		}
 		pfree(dsig.data);

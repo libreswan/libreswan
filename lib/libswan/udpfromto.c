@@ -368,8 +368,7 @@ int main(int argc, char **argv)
 		printf(" dst ip:port %s:%d)\n",
 		       inet_ntoa(to.sin_addr), ntohs(to.sin_port));
 
-		printf(
-			"server: replying from address packet was received on to source address\n");
+		printf("server: replying from address packet was received on to source address\n");
 
 		if ((n = sendfromto(server_socket, buf, n, 0,
 				    (struct sockaddr *)&to

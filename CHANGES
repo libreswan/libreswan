@@ -2,9 +2,12 @@
 See also https://libreswan.org/
 
 v3.8 (unreleased)
+* SECURITY: CVE-2013-6467 missing IKEv2 payloads causes restart [Iustina/Hugh]
 * building: Remove #ifdef DEBUG - always compile into userland [Paul]
 * IKEv2: Updated AUTH names to latest IANA registry entries [Paul]
+* pluto/whack: Added --impair-send-ikev2-ke test option [Paul]
 * pluto: allow shutdown command even with bad WHACK_BASIC_MAGIC [Paul]
+* addconn: ignore obsoleted --defaultroute and --defaultroutenexthop [Paul]
 
 v3.7 (December 10, 2013)
 * SECURITY: CVE-2013-4564 Denial of service via unauth packet [Paul/Hugh]

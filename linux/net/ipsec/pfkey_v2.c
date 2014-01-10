@@ -621,9 +621,9 @@ int pfkey_upmsgsk(struct sock *sk, struct sadb_msg *pfkey_msg)
 							  pfkey_msg->
 							  sadb_msg_len *
 							  IPSEC_PFKEYv2_ALIGN)));
-	memcpy(skb_transport_header(
-		       skb), pfkey_msg, pfkey_msg->sadb_msg_len *
-	       IPSEC_PFKEYv2_ALIGN);
+	memcpy(skb_transport_header(skb),
+		pfkey_msg,
+		pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN);
 
 	if ((error = sock_queue_rcv_skb(sk, skb)) < 0) {
 		skb->sk = NULL;

@@ -36,6 +36,11 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] alg: No test for cipher_null (cipher_null-generic)
+[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
+[ 00.00] alg: No test for digest_null (digest_null-generic)
+[ 00.00] alg: No test for compress_null (compress_null-generic)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
 west #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf

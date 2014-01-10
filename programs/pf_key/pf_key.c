@@ -270,8 +270,7 @@ int main(int argc, char *argv[])
 		}
 
 		/* okay, we got enough for a message, print it out */
-		printf(
-			"\npfkey v%d msg. type=%d(%s) seq=%d len=%d pid=%d errno=%d satype=%d(%s)\n",
+		printf("\npfkey v%d msg. type=%d(%s) seq=%d len=%d pid=%d errno=%d satype=%d(%s)\n",
 			msg->sadb_msg_version,
 			msg->sadb_msg_type,
 			pfkey_v2_sadb_type_string(msg->sadb_msg_type),
@@ -284,8 +283,7 @@ int main(int argc, char *argv[])
 
 		if ((size_t)readlen != msg->sadb_msg_len *
 		    IPSEC_PFKEYv2_ALIGN) {
-			printf(
-				"%s: packet size read from socket=%d doesn't equal sadb_msg_len %d * %u; message not decoded\n",
+			printf("%s: packet size read from socket=%d doesn't equal sadb_msg_len %d * %u; message not decoded\n",
 				progname,
 				(int) readlen,
 				msg->sadb_msg_len,

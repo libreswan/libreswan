@@ -481,6 +481,8 @@ umlplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-09-rw-rsa				good
 kvmplutotest	ikev2-11-simple-psk			good
 kvmplutotest	ikev2-12-x509-ikev1			bad
+kvmplutotest	ikev2-13-ah				good
+kvmplutotest	ikev2-14-missing-ke			good
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good

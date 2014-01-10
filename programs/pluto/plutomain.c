@@ -589,6 +589,8 @@ int main(int argc, char **argv)
 			  IMPAIR_RETRANSMITS + DBG_OFFSET },
 			{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
 			  IMPAIR_SEND_BOGUS_ISAKMP_FLAG + DBG_OFFSET },
+			{ "impair-send-ikev2-ke", no_argument, NULL,
+			  IMPAIR_SEND_IKEv2_KE + DBG_OFFSET },
 			{ 0, 0, 0, 0 }
 		};
 		/* Note: we don't like the way short options get parsed
@@ -638,8 +640,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    count < -1)
-					usage(
-						"<nhelpers> must be a positive number, 0 or -1");
+					usage("<nhelpers> must be a positive number, 0 or -1");
 
 
 				nhelpers = count;
@@ -649,8 +650,7 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 		case 'w': /* --secctx_attr_value*/
 			if (optarg == NULL || !isdigit(optarg[0]))
-				usage(
-					"missing (positive integer) value of secctx_attr_value (needed only if using labeled ipsec)");
+				usage("missing (positive integer) value of secctx_attr_value (needed only if using labeled ipsec)");
 
 
 			{
@@ -659,8 +659,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    (value != SECCTX && value != 10) )
-					usage(
-						"<secctx_attr_value> must be a positive number (32001 by default, 10 for backward compatibility, or any other future number assigned by IANA)");
+					usage("<secctx_attr_value> must be a positive number (32001 by default, 10 for backward compatibility, or any other future number assigned by IANA)");
 
 
 				secctx_attr_value = (u_int16_t)value;
@@ -752,8 +751,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    interval <= 0)
-					usage(
-						"<interval-time> must be a positive number");
+					usage("<interval-time> must be a positive number");
 
 
 				crl_check_interval = interval;
@@ -783,8 +781,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    port <= 0 || port > 0x10000)
-					usage(
-						"<port-number> must be a number between 1 and 65535");
+					usage("<port-number> must be a number between 1 and 65535");
 
 
 				pluto_port = port;
@@ -800,8 +797,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    port <= 0 || port > 0x10000)
-					usage(
-						"<port-number> must be a number between 1 and 65535");
+					usage("<port-number> must be a number between 1 and 65535");
 
 
 				pluto_natt_float_port = port;
@@ -813,15 +809,13 @@ int main(int argc, char **argv)
 			if (snprintf(ctl_addr.sun_path,
 				     sizeof(ctl_addr.sun_path),
 				     "%s%s", ctlbase, CTL_SUFFIX) == -1)
-				usage(
-					"<path>" CTL_SUFFIX " too long for sun_path");
+				usage("<path>" CTL_SUFFIX " too long for sun_path");
 
 
 			if (snprintf(info_addr.sun_path,
 				     sizeof(info_addr.sun_path),
 				     "%s%s", ctlbase, INFO_SUFFIX) == -1)
-				usage(
-					"<path>" INFO_SUFFIX " too long for sun_path");
+				usage("<path>" INFO_SUFFIX " too long for sun_path");
 
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
@@ -1301,6 +1295,8 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_RETRANSMITS enabled");
 	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
 		libreswan_log("Warning: IMPAIR_SEND_BOGUS_ISAKMP_FLAG enabled");
+	if (DBGP(IMPAIR_SEND_IKEv2_KE))
+		libreswan_log("Warning: IMPAIR_SEND_IKEv2_KE enabled");
 
 
 	if (DBGP(IMPAIR_DELAY_ADNS_KEY_ANSWER))

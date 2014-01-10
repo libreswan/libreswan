@@ -1413,8 +1413,7 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		    subnettot(&c->spd.this.client, 0, ours, sizeof(ours));
 		    subnettot(&c->spd.that.client, 0, his, sizeof(his));
 
-		    DBG_log(
-			    "responding with DNS query - from %s to %s new state: %s",
+		    DBG_log("responding with DNS query - from %s to %s new state: %s",
 			    ours, his, verify_step_name[b->step]);
 	    });
 
@@ -1742,8 +1741,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		     (p == NULL) ) {
 			p = c;
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "using (something - hopefully the IP we or they are"
+			    DBG_log("using (something - hopefully the IP we or they are"
 				    " NAT'ed to) for transport mode connection \"%s\"",
 				    p->name));
 		}
@@ -1834,8 +1832,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 							      client, 0, his,
 							      sizeof(his));
 
-						    DBG_log(
-							    "responding on demand from %s to %s new state: %s",
+						    DBG_log("responding on demand from %s to %s new state: %s",
 							    ours, his,
 							    verify_step_name[
 								    next_step]);
@@ -1890,8 +1887,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		/* XXX Though c == p, they are used intermixed in the below section */
 		/* fill in the client's true ip address/subnet */
 		DBG(DBG_CONTROLMORE,
-		    DBG_log(
-			    "client wildcard: %s  port wildcard: %s  virtual: %s",
+		    DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s",
 			    c->spd.that.has_client_wildcard ? "yes" : "no",
 			    c->spd.that.has_port_wildcard  ? "yes" : "no",
 			    is_virtual_connection(c) ? "yes" : "no"));
@@ -1933,8 +1929,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		}
 	}
 
-	passert(
-		(p1st->st_policy & POLICY_PFS) == 0 || p1st->st_pfs_group !=
+	passert((p1st->st_policy & POLICY_PFS) == 0 || p1st->st_pfs_group !=
 		NULL );
 
 	/* now that we are sure of our connection, create our new state, and
@@ -2637,8 +2632,7 @@ stf_status quick_inR1_outI2_cryptotail(struct dh_continuation *dh,
 
 	{
 		DBG(DBG_CONTROLMORE,
-		    DBG_log(
-			    "inR1_outI2: instance %s[%ld], setting newest_ipsec_sa to #%ld (was #%ld) (spd.eroute=#%ld)",
+		    DBG_log("inR1_outI2: instance %s[%ld], setting newest_ipsec_sa to #%ld (was #%ld) (spd.eroute=#%ld)",
 			    st->st_connection->name,
 			    st->st_connection->instance_serial,
 			    st->st_serialno,
@@ -2689,8 +2683,7 @@ stf_status quick_inI2(struct msg_digest *md)
 
 	{
 		DBG(DBG_CONTROLMORE,
-		    DBG_log(
-			    "inI2: instance %s[%ld], setting newest_ipsec_sa to #%ld (was #%ld) (spd.eroute=#%ld)",
+		    DBG_log("inI2: instance %s[%ld], setting newest_ipsec_sa to #%ld (was #%ld) (spd.eroute=#%ld)",
 			    st->st_connection->name,
 			    st->st_connection->instance_serial,
 			    st->st_serialno,

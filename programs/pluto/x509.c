@@ -340,14 +340,12 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 				/* now delete the old CRL */
 				free_first_crl();
 				DBG(DBG_X509,
-				    DBG_log(
-					    "thisUpdate is newer - existing crl deleted")
+				    DBG_log("thisUpdate is newer - existing crl deleted")
 				    );
 			} else {
 				unlock_crl_list("insert_crls");
 				DBG(DBG_X509,
-				    DBG_log(
-					    "thisUpdate is not newer - existing crl not replaced");
+				    DBG_log("thisUpdate is not newer - existing crl not replaced");
 				    );
 				free_crl(crl);
 				return oldcrl->nextUpdate - time(NULL) > 2 *

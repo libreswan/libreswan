@@ -259,8 +259,7 @@ bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 		return FALSE;
 	} else {
 		DBG(DBG_CRYPT,
-		    DBG_log(
-			    "Found pointer to cert %s now giving it to further processing",
+		    DBG_log("Found pointer to cert %s now giving it to further processing",
 			    nssHostCertNickName));
 	}
 

@@ -68,7 +68,7 @@
  * NAT-Traversal methods which use officials values (RFC)
  */
 #define NAT_T_WITH_RFC_VALUES \
-	( LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
+	LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC)
 
 /**
  * NAT-Traversal methods which use officials values (RFC) for encapsulation

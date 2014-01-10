@@ -117,6 +117,7 @@ const char *const debug_bit_names[] = {
 	"impair-minor-version-bump",            /* 29 */
 	"impair-retransmits",                   /* 30 */
 	"impair-send-bogus-isakmp-flag",        /* 31 */
+	"impair-send-ikev2-ke",                 /* 32 */
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -179,7 +180,8 @@ static const char *const payload_name_ikev2[] = {
 	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
 };
 
-static const char *const payload_name_ikev2_main[] = {
+/* dual-use: for enum_name and for bitnamesof */
+const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",        /* 33 */
 	"ISAKMP_NEXT_v2KE",
 	"ISAKMP_NEXT_v2IDi",
@@ -196,6 +198,7 @@ static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2E",
 	"ISAKMP_NEXT_v2CP",
 	"ISAKMP_NEXT_v2EAP",
+	NULL	/* termination for bitnamesof() */
 };
 
 static const char *const payload_name_ikev2_private_use[] = {
@@ -1432,8 +1435,8 @@ enum_names *ikev2_transid_val_descs[] = {
 	&ikev2_trans_type_esn_names,          /* 5 */
 };
 
-const unsigned int ikev2_transid_val_descs_size = elemsof(
-	ikev2_transid_val_descs);
+const unsigned int ikev2_transid_val_descs_size =
+	elemsof(ikev2_transid_val_descs);
 
 /* Transform Attributes */
 static const char *const ikev2_trans_attr_name[] = {

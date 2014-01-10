@@ -35,6 +35,7 @@ extern enum_names oakley_lifetime_names;
 extern enum_names version_names;
 extern enum_names doi_names;
 extern enum_names payload_names_ikev1;
+extern const char *const payload_name_ikev2_main[];
 extern enum_names payload_names_ikev2;
 extern enum_names ikev2_last_proposal_desc;
 extern enum_names ikev2_last_transform_desc;

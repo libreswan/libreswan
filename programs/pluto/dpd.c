@@ -438,8 +438,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	}
 
 	DBG(DBG_DPD,
-	    DBG_log(
-		    "DPD: received R_U_THERE seq:%u time:%lu (state=#%lu name=\"%s\")",
+	    DBG_log("DPD: received R_U_THERE seq:%u time:%lu (state=#%lu name=\"%s\")",
 		    seqno,
 		    (unsigned long)tm,
 		    p1st->st_serialno, p1st->st_connection->name));
@@ -520,8 +519,7 @@ stf_status dpd_inR(struct state *p1st,
 
 	seqno = ntohl(*(u_int32_t *)pbs->cur);
 	DBG(DBG_DPD,
-	    DBG_log(
-		    "DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
+	    DBG_log("DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
 		    seqno, p1st->st_dpd_expectseqno, p1st->st_serialno));
 
 	if (seqno == p1st->st_dpd_expectseqno) {
@@ -574,8 +572,7 @@ void dpd_timeout(struct state *st)
 		libreswan_log("DPD: Putting connection into %%trap");
 		if (c->kind == CK_INSTANCE) {
 			DBG(DBG_DPD,
-			    DBG_log(
-				    "DPD: warning dpdaction=hold on instance futile - will be deleted"));
+			    DBG_log("DPD: warning dpdaction=hold on instance futile - will be deleted"));
 		}
 		delete_states_by_connection(c, TRUE);
 		break;

@@ -347,16 +347,14 @@ static bool read_packet(struct msg_digest *md)
 		u_int32_t non_esp;
 		if (packet_len < (int)sizeof(u_int32_t)) {
 			libreswan_log("recvfrom %s:%u too small packet (%d)",
-				      ip_str(
-					      cur_from), (unsigned) cur_from_port,
+				      ip_str(cur_from), (unsigned) cur_from_port,
 				      packet_len);
 			return FALSE;
 		}
 		memcpy(&non_esp, _buffer, sizeof(u_int32_t));
 		if (non_esp != 0) {
 			libreswan_log("recvfrom %s:%u has no Non-ESP marker",
-				      ip_str(
-					      cur_from),
+				      ip_str(cur_from),
 				      (unsigned) cur_from_port);
 			return FALSE;
 		}
@@ -412,8 +410,7 @@ static bool read_packet(struct msg_digest *md)
 		 * can reach this point. Complain and discard them.
 		 */
 		DBG(DBG_NATT,
-		    DBG_log(
-			    "NAT-T keep-alive (boggus ?) should not reach this point. "
+		    DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. "
 			    "Ignored. Sender: %s:%u", ip_str(cur_from),
 			    (unsigned) cur_from_port);
 		    );

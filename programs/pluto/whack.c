@@ -538,8 +538,9 @@ enum option_enums {
 	DBGOPT_IMPAIR_MINOR_VERSION_BUMP,       /* cause pluto to send IKE minor version higher then we support */
 	DBGOPT_IMPAIR_RETRANSMITS,              /* cause pluto to never retransmit packets */
 	DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG,   /* cause pluto to never retransmit packets */
+	DBGOPT_IMPAIR_SEND_IKEv2_KE,            /* cause pluto to skip emitting the KE payload */
 
-#   define DBGOPT_LAST DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG
+#   define DBGOPT_LAST DBGOPT_IMPAIR_SEND_IKEv2_KE
 
 };
 
@@ -784,6 +785,8 @@ static const struct option long_opts[] = {
 	  OO },
 	{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
 	  DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG + OO },
+	{ "impair-send-ikev2-ke", no_argument, NULL,
+	  DBGOPT_IMPAIR_SEND_IKEv2_KE + OO },
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +
 	  OO },
@@ -853,8 +856,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 
 	if (default_nexthop) {
 		if (isanyaddr(&that->host_addr))
-			diag(
-				"our nexthop must be specified when other host is a %any or %opportunistic");
+			diag("our nexthop must be specified when other host is a %any or %opportunistic");
 
 
 		this->host_nexthop = that->host_addr;
@@ -876,8 +878,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 
 	/* check protocol */
 	if (this->protocol != that->protocol) {
-		diagq(
-			"the protocol for leftprotoport and rightprotoport must be the same",
+		diagq("the protocol for leftprotoport and rightprotoport must be the same",
 			NULL);
 	}
 }
@@ -1099,8 +1100,7 @@ int main(int argc, char **argv)
 			if (snprintf(ctl_addr.sun_path,
 				     sizeof(ctl_addr.sun_path),
 				     "%s%s", optarg, CTL_SUFFIX) == -1)
-				diag(
-					"<ctlbase>" CTL_SUFFIX " must be fit in a sun_addr");
+				diag("<ctlbase>" CTL_SUFFIX " must be fit in a sun_addr");
 
 
 			continue;
@@ -1177,8 +1177,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.whack_crash_peer), optarg);
 			if (isanyaddr(&msg.whack_crash_peer)) {
-				diagq(
-					"0.0.0.0 or 0::0 isn't a valid client address",
+				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			}
 			continue;
@@ -1216,8 +1215,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo_my_client), optarg);
 			if (isanyaddr(&msg.oppo_my_client)) {
-				diagq(
-					"0.0.0.0 or 0::0 isn't a valid client address",
+				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			}
 			continue;
@@ -1227,8 +1225,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo_peer_client), optarg);
 			if (isanyaddr(&msg.oppo_peer_client)) {
-				diagq(
-					"0.0.0.0 or 0::0 isn't a valid client address",
+				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			}
 			continue;
@@ -1333,8 +1330,7 @@ int main(int argc, char **argv)
 				 * it will come from the group's file.
 				 */
 				if (LHAS(end_seen, END_CLIENT - END_FIRST))
-					diag(
-						"--host %group clashes with --client");
+					diag("--host %group clashes with --client");
 
 
 				end_seen |= LELEM(END_CLIENT - END_FIRST);
@@ -1383,8 +1379,7 @@ int main(int argc, char **argv)
 
 		case END_IKEPORT: /* --ikeport <port-number> */
 			if (opt_whole <= 0 || opt_whole >= 0x10000) {
-				diagq(
-					"<port-number> must be a number between 1 and 65535",
+				diagq("<port-number> must be a number between 1 and 65535",
 					optarg);
 			}
 			msg.right.host_port = opt_whole;
@@ -1815,6 +1810,7 @@ int main(int argc, char **argv)
 		case DBGOPT_IMPAIR_MINOR_VERSION_BUMP:          /* --impair-minor-version-bump */
 		case DBGOPT_IMPAIR_RETRANSMITS:                 /* --impair-retransmits */
 		case DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG:      /* --impair-send-bogus-isakmp-flag */
+		case DBGOPT_IMPAIR_SEND_IKEv2_KE:               /* --impair-send-ikev2-ke */
 			msg.debugging |= LELEM(c - DBGOPT_RAW);
 			continue;
 		default:
@@ -1885,8 +1881,7 @@ int main(int argc, char **argv)
 
 		if (subnettypeof(&msg.left.client) !=
 		    subnettypeof(&msg.right.client))
-			diag(
-				"endpoints clash: one is IPv4 and the other is IPv6");
+			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
 
 		if (NEVER_NEGOTIATE(msg.policy)) {
@@ -1896,21 +1891,18 @@ int main(int argc, char **argv)
 			 */
 			if ((msg.policy & POLICY_SHUNT_MASK) ==
 			    POLICY_SHUNT_TRAP)
-				diag(
-					"non-shunt connection must have --psk or --rsasig or both");
+				diag("non-shunt connection must have --psk or --rsasig or both");
 
 
 		} else {
 			/* not just a shunt: a real ipsec connection */
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY)
-				diag(
-					"must specify --rsasig or --psk for a connection");
+				diag("must specify --rsasig or --psk for a connection");
 
 
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
 			    (msg.left.has_client || msg.right.has_client))
-				diag(
-					"must not specify clients for ISAKMP-only connection");
+				diag("must not specify clients for ISAKMP-only connection");
 
 
 		}
@@ -1947,8 +1939,7 @@ int main(int argc, char **argv)
 
 	if (msg.policy & POLICY_AGGRESSIVE) {
 		if (msg.ike == NULL)
-			diag(
-				"can not specify aggressive mode without ike= to set algorithm");
+			diag("can not specify aggressive mode without ike= to set algorithm");
 
 
 	}
@@ -1960,8 +1951,7 @@ int main(int argc, char **argv)
 	    msg.sa_rekey_fuzz * msg.sa_rekey_margin * 4 / msg.sa_rekey_margin /
 	    4 !=
 	    msg.sa_rekey_fuzz)
-		diag(
-			"rekeymargin or rekeyfuzz values are so large that they cause oveflow");
+		diag("rekeymargin or rekeyfuzz values are so large that they cause oveflow");
 
 
 	check_life_time(msg.sa_ike_life_seconds,
@@ -1972,25 +1962,21 @@ int main(int argc, char **argv)
 			"ipseclifetime", &msg);
 
 	if (msg.dpd_delay && !msg.dpd_timeout)
-		diag(
-			"dpddelay specified, but dpdtimeout is zero, both should be specified");
+		diag("dpddelay specified, but dpdtimeout is zero, both should be specified");
 
 
 	if (!msg.dpd_delay && msg.dpd_timeout)
-		diag(
-			"dpdtimeout specified, but dpddelay is zero, both should be specified");
+		diag("dpdtimeout specified, but dpddelay is zero, both should be specified");
 
 
 	if (msg.dpd_action != DPD_ACTION_CLEAR && msg.dpd_action !=
 	    DPD_ACTION_HOLD && msg.dpd_action != DPD_ACTION_RESTART) {
-		diag(
-			"dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
+		diag("dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
 		msg.dpd_action = DPD_ACTION_HOLD;
 	}
 
 	if (msg.remotepeertype != CISCO && msg.remotepeertype != NON_CISCO) {
-		diag(
-			"remote_peer_type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
+		diag("remote_peer_type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
 		msg.remotepeertype = NON_CISCO; /*NON_CISCO=0*/
 	}
 
@@ -2143,8 +2129,7 @@ int main(int argc, char **argv)
 								xauthpasslen =
 									whack_get_secret(
 										xauthpass,
-										sizeof(
-											xauthpass));
+										sizeof(xauthpass));
 							}
 							send_reply(sock,
 								   xauthpass,
@@ -2156,8 +2141,7 @@ int main(int argc, char **argv)
 								xauthnamelen =
 									whack_get_value(
 										xauthname,
-										sizeof(
-											xauthname));
+										sizeof(xauthname));
 							}
 							send_reply(sock,
 								   xauthname,

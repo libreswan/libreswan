@@ -221,8 +221,7 @@ void user_ipv4_handler(u8 *packet, option_data *opt)
 		printf("\n");
 
 		if (memcmp(espH->iv, opt->last_iv, 8) == 0) {
-			printf(
-				"iv prediction ok, comparing first ciphertext block\n");
+			printf("iv prediction ok, comparing first ciphertext block\n");
 
 			/* iv prediction ok, compare first ciphertext block */
 			memcpy(last_block, espH->payloaddata, 8);
@@ -254,8 +253,7 @@ void user_ipv4_handler(u8 *packet, option_data *opt)
 	}
 
 	if (memcmp(espH->iv, opt->last_iv, 8) != 0 && opt->last_iv[0] != 0) {
-		printf(
-			"IPsec is not chaining IV's between packets\n --> exiting\n\n");
+		printf("IPsec is not chaining IV's between packets\n --> exiting\n\n");
 		exit(0);
 	}
 

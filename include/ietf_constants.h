@@ -408,17 +408,17 @@ enum next_payload_types_ikev1 {
 	ISAKMP_NEXT_NATOA_DRAFTS = 131, /* NAT-Traversal: NAT-OA (drafts) */
 	/* Cisco/Microsoft proprietary IKE fragmentation */
 	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
-	ISAKMP_NEXT_ROOF = 254, /* roof on payload types */
+	ISAKMP_NEXT_ROOF, /* roof on payload types */
 };
 
 enum ikev2_last_proposal {
-	/* if there is a next proposal, then the lp needs to be set right*/
+	/* if there is a next proposal, then the lp needs to be set right */
 	v2_PROPOSAL_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
 	v2_PROPOSAL_NON_LAST = 2 /* matches IKEv1 ISAKMP_NEXT_P by design */
 };
 
 enum ikev2_last_transform {
-	/* if there is a next transform, then the lt needs to be set right*/
+	/* if there is a next transform, then the lt needs to be set right */
 	v2_TRANSFORM_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
 	v2_TRANSFORM_NON_LAST = 3 /* matches IKEv1 ISAKMP_NEXT_T by design */
 };
@@ -446,8 +446,10 @@ enum next_payload_types_ikev2 {
 	/* 128 - 255 Private Use */
 	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
 	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
-	ISAKMP_NEXT_v2ROOF = 254, /* roof on payload types - keep same as v1 */
+	ISAKMP_NEXT_v2ROOF, /* roof on payload types */
 };
+
+#define ISAKMP_v2PAYLOAD_TYPE_BASE	ISAKMP_NEXT_v2SA	/* lowest value of a v2 payload type */
 
 /*
  * These values are to be used within the Type field of an Attribute (14)

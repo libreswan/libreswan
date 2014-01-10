@@ -1257,8 +1257,7 @@ static int do_file_authentication(void *varg)
 #endif
 
 			if (DBGP(DBG_CRYPT)) {
-				DBG_log(
-					"XAUTH: checking user(%s:%s) pass %s vs %s", szuser, szconnid, cp,
+				DBG_log("XAUTH: checking user(%s:%s) pass %s vs %s", szuser, szconnid, cp,
 					szpass);
 			} else {
 				libreswan_log("XAUTH: checking user(%s:%s) ",
@@ -1640,16 +1639,14 @@ stf_status xauth_inR1(struct msg_digest *md)
 	if (st->st_connection->spd.this.modecfg_server &&
 	    st->hidden_variables.st_modecfg_vars_set) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "modecfg server, vars are set. Starting new exchange."));
+		    DBG_log("modecfg server, vars are set. Starting new exchange."));
 		st->st_msgid_phase15 = 0;
 	}
 
 	if (st->st_connection->spd.this.modecfg_server &&
 	    st->st_connection->policy & POLICY_MODECFG_PULL) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "modecfg server, pull mode. Starting new exchange."));
+		    DBG_log("modecfg server, pull mode. Starting new exchange."));
 		st->st_msgid_phase15 = 0;
 	}
 	return STF_OK;
@@ -2076,8 +2073,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						memcpy(new, old,
 						       sz_old);
 						*(new + sz_old) = ' ';
-						memcpy(
-							new + sz_old + 1, caddr,
+						memcpy(new + sz_old + 1, caddr,
 							sz_added);
 						c->cisco_dns_info =
 							new;
@@ -2369,8 +2365,7 @@ static stf_status xauth_client_resp(struct state *st,
 								      "Username",
 								      TRUE,
 								      xauth_username,
-								      sizeof(
-									      xauth_username)))
+								      sizeof(xauth_username)))
 						{
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH username prompt failed.");
@@ -2381,8 +2376,7 @@ static stf_status xauth_client_resp(struct state *st,
 							char* cptr = memchr(
 								xauth_username,
 								'\n',
-								sizeof(
-									xauth_username));
+								sizeof(xauth_username));
 							if (cptr)
 								*cptr = '\0';
 						}
@@ -2422,17 +2416,14 @@ static stf_status xauth_client_resp(struct state *st,
 							st->st_connection,
 							st->st_xauth_username);
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "looked up username=%s, got=%p",
+						    DBG_log("looked up username=%s, got=%p",
 							    st->
 							    st_xauth_username,
 							    s));
 						if (s) {
 							struct
 							private_key_stuff *pks
-								=
-									lsw_get_pks(
-										s);
+								= lsw_get_pks(s);
 
 							clonetochunk(
 								st->st_xauth_password,
@@ -2458,8 +2449,7 @@ static stf_status xauth_client_resp(struct state *st,
 								      "Password",
 								      FALSE,
 								      xauth_password,
-								      sizeof(
-									      xauth_password)))
+								      sizeof(xauth_password)))
 						{
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH password prompt failed.");
@@ -2468,19 +2458,16 @@ static stf_status xauth_client_resp(struct state *st,
 
 						/* replace the first newline character with a string-terminating \0. */
 						{
-							char* cptr = memchr(
-								xauth_password,
+							char* cptr = memchr(xauth_password,
 								'\n',
-								sizeof(
-									xauth_password));
+								sizeof(xauth_password));
 							if (cptr)
 								cptr = '\0';
 						}
 						clonereplacechunk(
 							st->st_xauth_password,
 							xauth_password,
-							strlen(
-								xauth_password),
+							strlen(xauth_password),
 							"XAUTH password");
 						password_read_from_prompt =
 							TRUE;

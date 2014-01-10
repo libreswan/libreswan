@@ -77,8 +77,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	if (pbs_left(pbs) <
 	    (sizeof(ctx_doi) + sizeof(ctx_alg) + sizeof(ctx_len) + 1) ) {
 		DBG(DBG_PARSING,
-		    DBG_log(
-			    "received perhaps corrupted security ctx (should not happen really)"));
+		    DBG_log("received perhaps corrupted security ctx (should not happen really)"));
 		return FALSE;
 	}
 
@@ -102,8 +101,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	/* verifying remaining buffer length and ctx length matches or not (checking for any corruption)*/
 	if (ctx_len != pbs_left(pbs) ) {
 		DBG(DBG_PARSING,
-		    DBG_log(
-			    "received ctx length seems to be different than the length of string present in the buffer"));
+		    DBG_log("received ctx length seems to be different than the length of string present in the buffer"));
 		DBG(DBG_PARSING,
 		    DBG_log("received ctx_len = %d, buffer left = %lu",
 			    ctx_len,
@@ -114,8 +112,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	/* do not process security labels longer than MAX_SECCTX_LEN */
 	if (pbs_left(pbs) > MAX_SECCTX_LEN) {
 		DBG(DBG_PARSING,
-		    DBG_log(
-			    "received security ctx longer than MAX_SECCTX_LEN which is not supported"));
+		    DBG_log("received security ctx longer than MAX_SECCTX_LEN which is not supported"));
 		return FALSE;
 	}
 
@@ -138,8 +135,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		} else {
 			/*there is no space left*/
 			DBG(DBG_PARSING,
-			    DBG_log(
-				    "received security label > MAX_SECCTX_LEN (should not happen really)"));
+			    DBG_log("received security label > MAX_SECCTX_LEN (should not happen really)"));
 			return FALSE;
 		}
 	}
@@ -169,34 +165,29 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 		/* lets verify if the received security label is within range of this connection's policy's security label*/
 		if (!st->st_connection->labeled_ipsec) {
-			DBG_log(
-				"This state (connection) is not labeled ipsec enabled, so can not proceed");
+			DBG_log("This state (connection) is not labeled ipsec enabled, so can not proceed");
 			return FALSE;
 		} else if ( st->st_connection->policy_label != NULL &&
 			    within_range(st->sec_ctx->sec_ctx_value,
 					 st->st_connection->policy_label)) {
 			DBG_log("security context verification succedded");
 		} else {
-			DBG_log(
-				"security context verification failed (perhaps policy_label is not confgured for this connection)");
+			DBG_log("security context verification failed (perhaps policy_label is not confgured for this connection)");
 			return FALSE;
 		}
 
 	} else if (st->st_state == STATE_QUICK_I1 ) {
 		DBG(DBG_PARSING,
-		    DBG_log(
-			    "Initiator state received security context from responder state, now verifying if both are same"));
+		    DBG_log("Initiator state received security context from responder state, now verifying if both are same"));
 		if (streq(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
-			DBG_log(
-				"security contexts are verified in the initiator state");
+			DBG_log("security contexts are verified in the initiator state");
 		} else {
 			DBG_log("security context verification failed in the initiator state"
 				"(shouldnt reach here unless responder (or something in between) is modifying the security context");
 			return FALSE;
 		}
 	} else if (st->st_state == STATE_QUICK_R0) {
-		DBG_log(
-			"Receievd sec ctx in responder state again, already stored it so doing nothing now");
+		DBG_log("Receievd sec ctx in responder state again, already stored it so doing nothing now");
 	}
 	return TRUE;
 }
@@ -405,8 +396,7 @@ bool out_sa(pb_stream *outs,
 						IPSEC_DOI_SPI_SIZE;
 
 			DBG(DBG_EMITTING,
-			    DBG_log(
-				    "out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
+			    DBG_log("out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
 				    pcn, pn, pc->prop_cnt, valid_prop_cnt,
 				    p->trans_cnt));
 
@@ -561,8 +551,7 @@ bool out_sa(pb_stream *outs,
 				if (p->protoid != PROTO_IPCOMP &&
 				    st->st_pfs_group != NULL) {
 					passert(!oakley_mode);
-					passert(
-						st->st_pfs_group !=
+					passert(st->st_pfs_group !=
 						&unset_group);
 					if (!out_attr(GROUP_DESCRIPTION,
 						      st->st_pfs_group->group,
@@ -634,8 +623,7 @@ bool out_sa(pb_stream *outs,
 							secctx_attr_value |
 							ISAKMP_ATTR_AF_TLV;
 						DBG(DBG_EMITTING,
-						    DBG_log(
-							    "secctx_attr_value=%d, type=%d",
+						    DBG_log("secctx_attr_value=%d, type=%d",
 							    secctx_attr_value,
 							    attr.isaat_af_type));
 						if (!out_struct(&attr,
@@ -644,8 +632,7 @@ bool out_sa(pb_stream *outs,
 								&val_pbs))
 							return_on(ret, FALSE);
 						DBG(DBG_EMITTING,
-						    DBG_log(
-							    "placing security context attribute in the out going structure"));
+						    DBG_log("placing security context attribute in the out going structure"));
 						DBG(DBG_EMITTING,
 						    DBG_log("sending ctx_doi"));
 						if (!out_raw(&st->sec_ctx->
@@ -665,10 +652,8 @@ bool out_sa(pb_stream *outs,
 							     " variable length sec ctx: ctx_alg"))
 							return_on(ret, FALSE);
 						DBG(DBG_EMITTING,
-						    DBG_log(
-							    "sending ctx_len after conversion to network byte order"));
-						u_int16_t net_ctx_len = htons(
-							st->sec_ctx->ctx_len);
+						    DBG_log("sending ctx_len after conversion to network byte order"));
+						u_int16_t net_ctx_len = htons(st->sec_ctx->ctx_len);
 						if (!out_raw(&net_ctx_len,
 							     sizeof(st->sec_ctx
 								    ->ctx_len),
@@ -683,12 +668,10 @@ bool out_sa(pb_stream *outs,
 							     " variable length sec ctx"))
 							return_on(ret, FALSE);
 						DBG(DBG_EMITTING,
-						    DBG_log(
-							    "placed security context attribute in the out going structure"));
+						    DBG_log("placed security context attribute in the out going structure"));
 						close_output_pbs(&val_pbs);
 						DBG(DBG_EMITTING,
-						    DBG_log(
-							    "end of security context attribute in the out going structure"));
+						    DBG_log("end of security context attribute in the out going structure"));
 					}
 #endif
 
@@ -1822,8 +1805,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
 				DBG(DBG_NATT,
-				    DBG_log(
-					    "NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
+				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
 					    st->hidden_variables.
 					    st_nat_traversal));
 				if (st->hidden_variables.st_nat_traversal &
@@ -1850,8 +1832,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
 				DBG(DBG_NATT,
-				    DBG_log(
-					    "NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
+				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
 					    st->hidden_variables.
 					    st_nat_traversal));
 				if (st->hidden_variables.st_nat_traversal &
@@ -1863,8 +1844,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					if (st->st_connection->remotepeertype
 					    ==
 					    CISCO) {
-						DBG_log(
-							"Allowing, as this may be due to remote_peer Cisco rekey");
+						DBG_log("Allowing, as this may be due to remote_peer Cisco rekey");
 						attrs->encapsulation = val -
 								       ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS
 								       +
@@ -1891,8 +1871,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
 				DBG(DBG_NATT,
-				    DBG_log(
-					    "NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
+				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
 					    st->hidden_variables.
 					    st_nat_traversal));
 				if ((st->hidden_variables.st_nat_traversal &
@@ -2100,9 +2079,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
-		loglog(RC_LOG_SERIOUS, "Unknown or unsupported DOI %s", enum_show(
-			       &doi_names,
-			       sa->isasa_doi));
+		loglog(RC_LOG_SERIOUS, "Unknown or unsupported DOI %s",
+		       enum_show(&doi_names, sa->isasa_doi));
 		/* XXX Could send notification back */
 		return DOI_NOT_SUPPORTED;
 	}
@@ -2224,8 +2202,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					    IPCOMP_LAST_NEGOTIATED) {
 						loglog(RC_LOG_SERIOUS,
 						       "IPsec Proposal contains CPI from non-negotiated range (0x%lx)",
-						       (unsigned long) ntohl(
-							       next_spi));
+						       (unsigned long) ntohl(next_spi));
 						return INVALID_SPI;
 					}
 					break;
@@ -2487,20 +2464,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 						if (st->st_policy &
 						    POLICY_ENCRYPT) {
-							DBG(
-								DBG_CONTROL | DBG_CRYPT,
-								DBG_log(
-									"ESP_NULL Transform Proposal from %s"
+							DBG(DBG_CONTROL | DBG_CRYPT,
+							    DBG_log("ESP_NULL Transform Proposal from %s"
 									" does not satisfy POLICY_ENCRYPT",
-									ip_str(
-										&
-										c
-										->
-										spd
-										.
-										that
-										.
-										host_addr)));
+								    ip_str(&c->spd.that.host_addr)));
 							continue; /* try another */
 						}
 						break;
@@ -2535,19 +2502,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					{
 					case AUTH_ALGORITHM_NONE:
 						if (!ah_seen) {
-							DBG(
-								DBG_CONTROL | DBG_CRYPT,
-								DBG_log(
-									"ESP from %s must either have AUTH or be combined with AH",
-									ip_str(
-										&
-										c
-										->
-										spd
-										.
-										that
-										.
-										host_addr)));
+							DBG(DBG_CONTROL | DBG_CRYPT,
+							    DBG_log("ESP from %s must either have AUTH or be combined with AH",
+								    ip_str(&c->spd.that.host_addr)));
 							continue; /* try another */
 						}
 						break;
@@ -2598,8 +2555,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				tunnel_mode = TRUE;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
 			DBG(DBG_CONTROL | DBG_CRYPT,
-			    DBG_log(
-				    "policy for \"%s\" requires encryption but ESP not in Proposal from %s",
+			    DBG_log("policy for \"%s\" requires encryption but ESP not in Proposal from %s",
 				    c->name, ip_str(&c->spd.that.host_addr)));
 			continue; /* we needed encryption, but didn't find ESP */
 		} else if ((st->st_policy & POLICY_AUTHENTICATE) && !ah_seen) {
@@ -2617,8 +2573,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			if (!(st->st_policy & POLICY_COMPRESS)) {
 				libreswan_log(
 					"compression proposed by %s, but policy for \"%s\" forbids it",
-					ip_str(
-						&c->spd.that.host_addr),
+					ip_str(&c->spd.that.host_addr),
 					c->name);
 				return BAD_PROPOSAL_SYNTAX;
 			}
@@ -2669,8 +2624,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				default:
 					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log(
-						    "unsupported IPCOMP Transform %s from %s",
+					    DBG_log("unsupported IPCOMP Transform %s from %s",
 						    enum_show(&ipcomp_transformid_names,
 							      ipcomp_attrs.
 							      transattrs.
@@ -2684,15 +2638,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				    ipcomp_attrs.encapsulation) {
 					/* ??? This should be an error, but is it? */
 					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log(
-						    "AH and IPCOMP transforms disagree about encapsulation; TUNNEL presumed"));
+					    DBG_log("AH and IPCOMP transforms disagree about encapsulation; TUNNEL presumed"));
 				} else if (esp_seen &&
 					   esp_attrs.encapsulation !=
 					   ipcomp_attrs.encapsulation) {
 					/* ??? This should be an error, but is it? */
 					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log(
-						    "ESP and IPCOMP transforms disagree about encapsulation; TUNNEL presumed"));
+					    DBG_log("ESP and IPCOMP transforms disagree about encapsulation; TUNNEL presumed"));
 				}
 
 				break; /* we seem to be happy */

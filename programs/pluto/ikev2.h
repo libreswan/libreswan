@@ -41,7 +41,7 @@ extern stf_status ikev2parent_inR1outI2(struct msg_digest *md);
 extern stf_status ikev2parent_inI2outR2(struct msg_digest *md);
 extern stf_status ikev2parent_inR2(struct msg_digest *md);
 
-extern const struct state_v2_microcode *ikev2_parent_firststate(void);
+extern const struct state_v2_microcode ikev2_parent_firststate_microcode;
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
@@ -90,13 +90,14 @@ extern void send_v2_notification_from_state(struct state *st,
 
 extern void send_v2_notification_from_md(struct msg_digest *md, u_int16_t type,
 					 chunk_t *data);
-extern stf_status ikev2_process_payloads(struct msg_digest *md,
+
+extern stf_status ikev2_process_encrypted_payloads(struct msg_digest *md,
 					 pb_stream   *in_pbs,
-					 unsigned int from_state,
 					 unsigned int np);
 
 extern bool ikev2_decode_peer_id(struct msg_digest *md,
 				 enum phase1_role initiator);
+
 extern void ikev2_log_parentSA(struct state *st);
 
 extern bool ikev2_calculate_rsa_sha1(struct state *st,

@@ -945,9 +945,9 @@ int alg_info_snprint(char *buf, int buflen,
 				 (int)esp_info->esp_ealg_keylen,
 				 enum_name(&auth_alg_names,
 					   esp_info->esp_aalg_id) +
-				 (esp_info->esp_aalg_id ? sizeof(
-					  "AUTH_ALGORITHM_HMAC") : sizeof(
-					  "AUTH_ALGORITHM")),
+				 (esp_info->esp_aalg_id ?
+					sizeof("AUTH_ALGORITHM_HMAC") :
+					sizeof("AUTH_ALGORITHM")),
 				 esp_info->esp_aalg_id,
 				 (int)esp_info->esp_aalg_keylen);
 			size_t np = strlen(ptr);

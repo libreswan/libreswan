@@ -430,8 +430,7 @@ USHORT numeric;
 			hostent = gethostbyaddr((char *)&poop->iaddrs[x],
 						sizeof(IA), AF_INET);
 			if ((!hostent) || (!hostent->h_name)) {
-				holler(
-					"Warning: inverse host lookup failed for %s: ",
+				holler("Warning: inverse host lookup failed for %s: ",
 					poop->addrs[x]);
 			} else {
 				(void) comparehosts(poop, hostent);
@@ -456,8 +455,7 @@ USHORT numeric;
 				2);
 			hostent = gethostbyname(poop->name);
 			if ((!hostent) || (!hostent->h_addr_list[0])) {
-				holler(
-					"Warning: forward host lookup failed for %s: ",
+				holler("Warning: forward host lookup failed for %s: ",
 					poop->name);
 			} else {
 				(void) comparehosts(poop, hostent);
@@ -507,8 +505,7 @@ unsigned int pnum;
 		if (servent) {
 			y = ntohs(servent->s_port);
 			if (x != y) {   /* "never happen" */
-				holler(
-					"Warning: port-bynum mismatch, %d != %d", x,
+				holler("Warning: port-bynum mismatch, %d != %d", x,
 					y);
 			}
 			strncpy(portpoop->name, servent->s_name,
@@ -846,8 +843,7 @@ newskt:
 		if (rr == -1)
 			bail("srcrt setsockopt fuxored");
 #else           /* IP_OPTIONS */
-		holler(
-			"Warning: source routing unavailable on this machine, ignoring");
+		holler("Warning: source routing unavailable on this machine, ignoring");
 #endif          /* IP_OPTIONS*/
 	} /* if gatesidx */
 
@@ -1676,8 +1672,7 @@ char ** argv;
 			if ((x) && (x == (x & 0x1c))) { /* mask off bits of fukt values */
 				gatesptr = x;
 			} else {
-				bail(
-					"invalid hop pointer %d, must be multiple of 4 <= 28",
+				bail("invalid hop pointer %d, must be multiple of 4 <= 28",
 					x);
 			}
 			break;
@@ -1970,8 +1965,7 @@ char ** argv;
    the obvious */
 helpme(){
 	o_verbose = 1;
-	holler(
-		"[v" DEBIAN_VERSION "]\n\
+	holler("[v" DEBIAN_VERSION "]\n\
 connect to somewhere:	nc [-options] hostname port[s] [ports] ... \n\
 listen for inbound:	nc -l -p port [-options] [hostname] [port]\n\
 options:");
@@ -1979,14 +1973,12 @@ options:");
    interpreted oddly by some compilers, generating or not generating extra
    newlines as they bloody please.  u-fix... */
 #ifdef GAPING_SECURITY_HOLE     /* needs to be separate holler() */
-	holler(
-		"\
+	holler("\
 	-c shell commands	as `-e'; use /bin/sh to exec [dangerous!!]"      );
 	holler("\
 	-e filename		program to exec after connect [dangerous!!]");
 #endif
-	holler(
-		"\
+	holler("\
 	-b			allow broadcasts\n\
 	-g gateway		source-routing hop point[s], up to 8\n\
 	-G num			source-routing pointer: 4, 8, 12, ...\n\
@@ -2009,14 +2001,12 @@ options:");
 	holler("\
 	-t			answer TELNET negotiation");
 #endif
-	holler(
-		"\
+	holler("\
 	-u			UDP mode\n\
 	-v			verbose [use twice to be more verbose]\n\
 	-w secs			timeout for connects and final net reads\n\
 	-z			zero-I/O mode [used for scanning]"                                                                                                                  );
-	holler(
-		"port numbers can be individual or ranges: lo-hi [inclusive];\n\
+	holler("port numbers can be individual or ranges: lo-hi [inclusive];\n\
 hyphens in port names must be backslash escaped (e.g. 'ftp\\-data')."                                                                                 );
 	quit();
 } /* helpme */
