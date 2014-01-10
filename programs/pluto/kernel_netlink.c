@@ -1027,7 +1027,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	}
 #endif
 	ret = send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
-	if (ret == FALSE && errno == ESRCH &&
+	if (!ret && errno == ESRCH &&
 	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 			loglog(RC_LOG_SERIOUS, "Warning: expected to find "
 			       "an existing IPsec SA - continuing as Add SA");

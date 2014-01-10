@@ -448,7 +448,7 @@ static void liveness_check(struct state *st)
 	c = st->st_connection;
 
 	/* this should be called on a child sa */
-	if (st->st_clonedfrom != SOS_NOBODY) {
+	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (!pst) {
 			DBG(DBG_CONTROL,
@@ -484,7 +484,7 @@ static void liveness_check(struct state *st)
 	else
 		timeout = c->dpd_timeout;
 
-	if (pst->st_pend_liveness == TRUE && tm - last_liveness >= timeout) {
+	if (pst->st_pend_liveness && tm - last_liveness >= timeout) {
 		DBG(DBG_CONTROL,
 		    DBG_log(
 			    "liveness_check - peer has not responded in %lu seconds,"

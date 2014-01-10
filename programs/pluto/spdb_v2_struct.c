@@ -1213,13 +1213,13 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 			conjunction = FALSE;
 		}
 
-		if (gotmatch && conjunction == FALSE) {
+		if (gotmatch && !conjunction) {
 			/* we already got a winner, and it was an OR with this one,
 			   so do no more work. */
 			break;
 		}
 
-		if (!gotmatch && conjunction == TRUE) {
+		if (!gotmatch && conjunction) {
 			/*
 			 * last one failed, and this next one is an AND, so this
 			 * one can not succeed either, so don't bother.
@@ -1258,7 +1258,7 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 
 	/*
 	 * we are out of the loop. There are two situations in which we break
-	 * out: gotmatch == FALSE, means nothing selected.
+	 * out: !gotmatch means nothing selected.
 	 */
 	if (!gotmatch) {
 		libreswan_log("No proposal selected");
@@ -1594,13 +1594,13 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 			conjunction = FALSE;
 		}
 
-		if (gotmatch && conjunction == FALSE) {
+		if (gotmatch && !conjunction) {
 			/* we already got a winner, and it was an OR with this one,
 			   so do no more work. */
 			break;
 		}
 
-		if (!gotmatch && conjunction == TRUE) {
+		if (!gotmatch && conjunction) {
 			/*
 			 * last one failed, and this next one is an AND, so this
 			 * one can not succeed either, so don't bother.
@@ -1641,7 +1641,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 
 	/*
 	 * we are out of the loop. There are two situations in which we break
-	 * out: gotmatch == FALSE, means nothing selected.
+	 * out: !gotmatch means nothing selected.
 	 */
 	if (!gotmatch) {
 		DBG(DBG_CONTROL, DBG_log("ikev2_parse_child_sa_body() failed to find a match"));

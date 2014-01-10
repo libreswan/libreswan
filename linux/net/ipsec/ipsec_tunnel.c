@@ -803,7 +803,7 @@ enum ipsec_xmit_value ipsec_tunnel_SAlookup(struct ipsec_xmit_state *ixs)
 		}
 	}
 
-	if (bypass == FALSE && ixs->eroute) {
+	if (!bypass && ixs->eroute != NULL) {
 		ixs->eroute->er_count++;
 		ixs->eroute->er_lasttime = jiffies / HZ;
 		if (ixs->eroute->er_said.proto == IPPROTO_INT &&

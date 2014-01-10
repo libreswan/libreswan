@@ -682,7 +682,7 @@ void ikev2_update_counters(struct msg_digest *md)
 	struct state *st = md->st;
 
 	if (pst == NULL) {
-		if (st->st_clonedfrom != 0)
+		if (IS_CHILD_SA(st))
 			pst = state_with_serialno(st->st_clonedfrom);
 		if (pst == NULL)
 			pst = st;
@@ -808,7 +808,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		release_whack(st);
 
 		/* XXX should call unpend again on parent SA */
-		if (st->st_clonedfrom != 0) {
+		if (IS_CHILD_SA(st)) {
 			pst = state_with_serialno(st->st_clonedfrom); /* with failed child sa, we end up here with an orphan?? */
 			DBG_log(
 				"releasing whack and unpending for #%lu (sock=%d)",
@@ -999,7 +999,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		 */
 		passert(st != NULL);
 		set_suspended(st, NULL);
-		pexpect(st->st_calculating == FALSE);
+		pexpect(!st->st_calculating);
 		libreswan_log("message in state %s ignored due to "
 			      "cryptographic overload",
 			      from_state_name);
@@ -1015,7 +1015,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			  from_state_name);
 		delete_event(st);
 		release_whack(st);
-		if (st->st_clonedfrom != 0) {
+		if (IS_CHILD_SA(st)) {
 			struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 			release_whack(pst);

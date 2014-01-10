@@ -654,7 +654,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * TBD set force_busy dynamically
 	 * Paul: Can we check for STF_TOOMUCHCRYPTO ?
 	 */
-	if (force_busy == TRUE) {
+	if (force_busy) {
 		u_char dcookie[SHA1_DIGEST_SIZE];
 		chunk_t dc;
 		ikev2_get_dcookie( dcookie, st->st_ni, &md->sender,
@@ -1156,7 +1156,7 @@ static void ikev2_padup_pre_encrypt(struct msg_digest *md,
 	struct state *st = md->st;
 	struct state *pst = st;
 
-	if (st->st_clonedfrom != 0)
+	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	/* pads things up to message size boundary */
@@ -1181,9 +1181,9 @@ static unsigned char *ikev2_authloc(struct msg_digest *md,
 	struct state *st = md->st;
 	struct state *pst = st;
 
-	if (st->st_clonedfrom != 0) {
+	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
-		if ( pst == NULL)
+		if (pst == NULL)
 			return NULL;
 	}
 
@@ -1208,7 +1208,7 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 	struct state *pst = st;
 	chunk_t *cipherkey, *authkey;
 
-	if (st->st_clonedfrom != 0)
+	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	if (init == INITIATOR) {
@@ -1279,7 +1279,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	unsigned char *authstart;
 	struct state *pst = st;
 
-	if (st->st_clonedfrom != 0)
+	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	if (init == INITIATOR) {
@@ -1386,7 +1386,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	pb_stream a_pbs;
 	struct state *pst = st;
 
-	if (st->st_clonedfrom != 0)
+	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	a.isaa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -2153,7 +2153,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	unsigned char *idhash_in;
 	struct state *pst = st;
 
-	if (st->st_clonedfrom != 0)
+	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	/*
@@ -2462,7 +2462,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				} else {
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("Initiator policy is transport, responder sends v2N_USE_TRANSPORT_MODE, setting CHILD SA to transport mode"));
-					if (st->st_esp.present == TRUE) {
+					if (st->st_esp.present) {
 						/* libreswan supports only "esp" with ikev2 it seems, look at ikev2_parse_child_sa_body handling */
 						st->st_esp.attrs.encapsulation
 							= ENCAPSULATION_MODE_TRANSPORT;
@@ -2686,7 +2686,7 @@ static void v2_delete_my_family(struct state *pst)
 	 */
 	struct state *st;
 
-	passert(pst->st_clonedfrom == SOS_NOBODY);	/* we had better be a parent */
+	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
 
 	/* find first in chain */
 	for (st = pst; st->st_hashchain_prev != NULL; )
@@ -3162,7 +3162,7 @@ stf_status ikev2_send_informational(struct state *st)
 {
 	struct state *pst = NULL;
 
-	if (st->st_clonedfrom != SOS_NOBODY) {
+	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
 			DBG(DBG_CONTROL,
@@ -3294,7 +3294,7 @@ void ikev2_delete_out(struct state *st)
 {
 	struct state *pst = NULL;
 
-	if (st->st_clonedfrom != 0) {
+	if (IS_CHILD_SA(st)) {
 		/* child SA */
 		pst = state_with_serialno(st->st_clonedfrom);
 
@@ -3398,7 +3398,7 @@ void ikev2_delete_out(struct state *st)
 			zero(&v2del_tmp);
 			v2del_tmp.isad_np = ISAKMP_NEXT_v2NONE;
 
-			if (st->st_clonedfrom != 0 ) {
+			if (IS_CHILD_SA(st)) {
 				v2del_tmp.isad_protoid = PROTO_IPSEC_ESP;
 				v2del_tmp.isad_spisize = sizeof(ipsec_spi_t);
 				v2del_tmp.isad_nrspi = 1;
@@ -3417,7 +3417,7 @@ void ikev2_delete_out(struct state *st)
 			}
 
 			/* Emit values of spi to be sent to the peer*/
-			if (st->st_clonedfrom != 0) {
+			if (IS_CHILD_SA(st)) {
 				if (!out_raw( (u_char *)&st->st_esp.our_spi,
 					      sizeof(ipsec_spi_t), &del_pbs,
 					      "local spis")) {
@@ -3470,7 +3470,7 @@ unhappy_ending:
 	/* If some error occurs above that prevents us sending a request packet
 	 * delete the states right now
 	 */
-	if (st->st_clonedfrom != SOS_NOBODY) {
+	if (IS_CHILD_SA(st)) {
 		/* we are a child: prepare to delete ourself */
 		change_state(st, STATE_CHILDSA_DEL);
 		delete_state(st);
