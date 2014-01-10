@@ -589,7 +589,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 			thistime = kernel_alg_db_add(ctx_new,
 						     &tmp_esp_info,
 						     policy, logit);
-			if (thistime == FALSE)
+			if (!thistime)
 				success = FALSE;
 		}
 	} else {
@@ -606,7 +606,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 		}
 	}
 
-	if (success == FALSE) {
+	if (!success) {
 		/* NO algorithms were found. oops */
 		db_destroy(ctx_new);
 		return NULL;

@@ -1135,7 +1135,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				libreswan_log(
 					"Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08lx",
 					(unsigned long)md->hdr.isa_msgid);
-				/* Let's try and log some info about these to track them down */
+				/* Let's try to log some info about these to track them down */
 				DBG(DBG_PARSING, {
 					    DBG_dump(
 						    "- unknown SA's md->hdr.isa_icookie:",
@@ -1416,7 +1416,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				from_state = STATE_XAUTH_R1;
 				DBG(DBG_CONTROLMORE,
 				    DBG_log(" set from_state to %s "
-					    "state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid==TRUE",
+					    "state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
 					    enum_name(&state_names,
 						      st->st_state
 						      )));
@@ -1426,7 +1426,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				from_state = STATE_XAUTH_I0;
 				DBG(DBG_CONTROLMORE,
 				    DBG_log(" set from_state to %s "
-					    "this is xauthclient and IS_PHASE1() == TRUE",
+					    "this is xauthclient and IS_PHASE1() is TRUE",
 					    enum_name(&state_names,
 						      st->st_state
 						      )));
@@ -1450,7 +1450,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				from_state = STATE_MODE_CFG_R0;
 				DBG(DBG_CONTROLMORE,
 				    DBG_log(" set from_state to %s "
-					    "this is modecfgserver and IS_PHASE1() == TRUE",
+					    "this is modecfgserver and IS_PHASE1() is TRUE",
 					    enum_name(&state_names,
 						      st->st_state
 						      )));
@@ -1460,7 +1460,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				from_state = STATE_MODE_CFG_R1;
 				DBG(DBG_CONTROLMORE,
 				    DBG_log(" set from_state to %s "
-					    "this is modecfgclient and IS_PHASE1() == TRUE",
+					    "this is modecfgclient and IS_PHASE1() is TRUE",
 					    enum_name(&state_names,
 						      st->st_state
 						      )));
@@ -2357,8 +2357,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			      enum_name(&state_names, from_state),
 			      enum_name(&state_names, smc->next_state));
 
-		if (st->st_reserve_msgid == FALSE && st->st_clonedfrom !=
-		    SOS_NOBODY && st->st_msgid != 0) {
+		if (!st->st_reserve_msgid &&
+		    IS_CHILD_SA(st) &&
+		    st->st_msgid != MAINMODE_MSGID) {
 			struct state *p1st = state_with_serialno(
 				st->st_clonedfrom);
 
@@ -2755,7 +2756,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * a whack will always force crypto.
 		 */
 		set_suspended(st, NULL);
-		pexpect(st->st_calculating == FALSE);
+		pexpect(!st->st_calculating);
 		libreswan_log(
 			"message in state %s ignored due to cryptographic overload",
 			enum_name(&state_names, from_state));

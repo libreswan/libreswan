@@ -1323,13 +1323,13 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 	if (!st->st_ikev2 &&
 	    st->st_state != STATE_MAIN_I1 &&
 	    len + natt_bonus >=
-	    ((st->st_connection->addr_family ==
-	      AF_INET) ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
+	    (st->st_connection->addr_family == AF_INET ?
+	     ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
 	    ((resending &&
 	      (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
 	      st->st_seen_fragvid) ||
 	     ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-	      st->st_seen_fragments == TRUE)))
+	      st->st_seen_fragments)))
 		return send_frags(st, where);
 	else
 		return send_packet(st, where, FALSE, st->st_tpacket.ptr,

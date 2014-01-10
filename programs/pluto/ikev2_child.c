@@ -1181,7 +1181,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					 v2N_USE_TRANSPORT_MODE, &notifiy_data,
 					 outpbs);
 
-				if (st1->st_esp.present == TRUE) {
+				if (st1->st_esp.present) {
 					/*libreswan supports only "esp" with ikev2 it seems, look at ikev2_parse_child_sa_body handling*/
 					st1->st_esp.attrs.encapsulation =
 						ENCAPSULATION_MODE_TRANSPORT;

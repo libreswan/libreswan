@@ -96,40 +96,21 @@ u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 void process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	struct state *st = NULL;
 	int vmaj, vmin;
-	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
-
-#define SEND_NOTIFICATION(t) { \
-		if (st) \
-			send_notification_from_state(st, from_state, t); \
-		else \
-			send_notification_from_md(md, t); }
 
 	if (!in_struct(&md->hdr, &isakmp_hdr_desc, &md->packet_pbs,
 		       &md->message_pbs)) {
-		/*
-		 * The packet was very badly mangled. We can't be sure of any
+		/* The packet was very badly mangled. We can't be sure of any
 		 * content - not even to look for major version number!
-		 * So we'll just silently drop it
+		 * So we'll just drop it.
 		 */
 		libreswan_log("Received packet with mangled IKE header - dropped");
-		SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+		send_notification_from_md(md, PAYLOAD_MALFORMED);
 		return;
 	}
 
-	if (md->packet_pbs.roof < md->message_pbs.roof) {
-		/* I don't think this can happen if in_struct() did not fail */
-		libreswan_log(
-			"received packet size (%u) is smaller than from "
-			"size specified in ISAKMP HDR (%u) - packet dropped",
-			(unsigned) pbs_room(&md->packet_pbs),
-			md->hdr.isa_length);
-		/* abort processing corrupt packet */
-		return;
-	} else if (md->packet_pbs.roof > md->message_pbs.roof) {
-		/*
-		 * Some (old?) versions of the Cisco VPN client send an additional
+	if (md->packet_pbs.roof > md->message_pbs.roof) {
+		/* Some (old?) versions of the Cisco VPN client send an additional
 		 * 16 bytes of zero bytes - Complain but accept it
 		 */
 		DBG(DBG_CONTROL, {
@@ -164,7 +145,7 @@ void process_packet(struct msg_digest **mdp)
 			 * identical.
 			 */
 			libreswan_log("ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
-			SEND_NOTIFICATION(INVALID_MINOR_VERSION);
+			send_notification_from_md(md, INVALID_MINOR_VERSION);
 			return;
 		}
 		DBG(DBG_CONTROL,
@@ -177,8 +158,7 @@ void process_packet(struct msg_digest **mdp)
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
 		if (vmin != IKEv2_MINOR_VERSION) {
-			/*
-			 * Unlike IKEv1, for IKEv2 we are supposed to try and
+			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
 			libreswan_log("Ignoring unknown IKEv2 minor version number %d", vmin);
@@ -192,11 +172,10 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
-		libreswan_log("Unexpected IKE major '%d'",vmaj);
-		SEND_NOTIFICATION(INVALID_MAJOR_VERSION);
+		libreswan_log("Unexpected IKE major '%d'", vmaj);
+		send_notification_from_md(md, INVALID_MAJOR_VERSION);
 		return;
 	}
-#undef SEND_NOTIFICATION
 }
 
 /* wrapper for read_packet and process_packet
@@ -364,7 +343,7 @@ static bool read_packet(struct msg_digest *md)
 	cur_from = &md->sender;
 	cur_from_port = md->sender_port;
 
-	if (ifp->ike_float == TRUE) {
+	if (ifp->ike_float) {
 		u_int32_t non_esp;
 		if (packet_len < (int)sizeof(u_int32_t)) {
 			libreswan_log("recvfrom %s:%u too small packet (%d)",

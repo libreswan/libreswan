@@ -623,15 +623,15 @@ void whack_handle(int whackctlfd)
 				"ignoring runt message from whack: got %d bytes",
 				(int)n);
 		} else if (msg.magic != WHACK_MAGIC) {
+			if (msg.whack_shutdown) {
+				libreswan_log("shutting down despite whacky magic");
+				exit_pluto(0);  /* delete lock and leave, with 0 status */
+			}
 			if (msg.magic == WHACK_BASIC_MAGIC) {
 				/* Only basic commands.  Simpler inter-version compatibility. */
 				if (msg.whack_status)
 					show_status();
 
-				if (msg.whack_shutdown) {
-					libreswan_log("shutting down");
-					exit_pluto(0);  /* delete lock and leave, with 0 status */
-				}
 				ugh = "";               /* bail early, but without complaint */
 			} else {
 				ugh = builddiag(

@@ -625,7 +625,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		/*
 		 * If there is XAUTH VID, copy it to policies.
 		 */
-		if (md->quirks.xauth_vid == TRUE)
+		if (md->quirks.xauth_vid)
 			policy |= POLICY_XAUTH;
 
 #endif
@@ -1009,7 +1009,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 			"outI2 KE");
 		ke->md = md;
 
-		passert(st->st_sec_in_use == FALSE);
+		passert(!st->st_sec_in_use);
 		pcrc_init(&ke->ke_pcrc);
 		ke->ke_pcrc.pcrc_func = main_inR1_outI2_continue;
 		set_suspended(st, md);
@@ -1219,7 +1219,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 		ke->md = md;
 		set_suspended(st, md);
 
-		passert(st->st_sec_in_use == FALSE);
+		passert(!st->st_sec_in_use);
 		pcrc_init(&ke->ke_pcrc);
 		ke->ke_pcrc.pcrc_func = main_inI2_outR2_continue;
 		return build_ke(&ke->ke_pcrc, st,
@@ -2484,7 +2484,7 @@ stf_status send_isakmp_notification(struct state *st,
 static void send_notification(struct state *sndst, notification_t type,
 			struct state *encst,
 			msgid_t msgid, u_char *icookie, u_char *rcookie,
-			u_char *spi, size_t spisize, u_char protoid)
+			u_char protoid)
 {
 	u_char buffer[1024];
 	pb_stream pbs, r_hdr_pbs;
@@ -2497,8 +2497,8 @@ static void send_notification(struct state *sndst, notification_t type,
 	r_hash_start = NULL;
 
 	passert((sndst) && (sndst->st_connection));
-	switch (type) {
 
+	switch (type) {
 	case PAYLOAD_MALFORMED:
 		/* only send one per second. */
 		if (n == last_malformed)
@@ -2532,6 +2532,9 @@ static void send_notification(struct state *sndst, notification_t type,
 		 * send encrypted.
 		 */
 		encst = NULL;
+		break;
+	default:
+		/* quiet GCC warning */
 		break;
 	}
 
@@ -2586,7 +2589,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		isan.isan_doi = ISAKMP_DOI_IPSEC;
 		isan.isan_np = ISAKMP_NEXT_NONE;
 		isan.isan_type = type;
-		isan.isan_spisize = spisize;
+		isan.isan_spisize = 0;
 		isan.isan_protoid = protoid;
 
 		if (!out_struct(&isan, &isakmp_notification_desc,
@@ -2595,16 +2598,6 @@ static void send_notification(struct state *sndst, notification_t type,
 				"failed to build notification in send_"
 				"notification\n");
 			return;
-		}
-
-		if (spisize > 0) {
-			if (!out_raw(spi, spisize, &not_pbs, "spi")) {
-				libreswan_log(
-					"failed to build notification for "
-					"spisize=%d\n",
-					(int)spisize);
-				return;
-			}
 		}
 
 		close_output_pbs(&not_pbs);
@@ -2681,19 +2674,17 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 				"no Phase1 state for Quick mode notification");
 			return;
 		}
-		send_notification(st, type, p1st, generate_msgid(
-					p1st),
-				st->st_icookie, st->st_rcookie, NULL, 0,
+		send_notification(st, type, p1st, generate_msgid(p1st),
+				st->st_icookie, st->st_rcookie,
 				PROTO_ISAKMP);
 	} else if (IS_ISAKMP_ENCRYPTED(from_state)) {
-		send_notification(st, type, st, generate_msgid(
-					st),
-				st->st_icookie, st->st_rcookie, NULL, 0,
+		send_notification(st, type, st, generate_msgid(st),
+				st->st_icookie, st->st_rcookie, 
 				PROTO_ISAKMP);
 	} else {
 		/* no ISAKMP SA established - don't encrypt notification */
-		send_notification(st, type, NULL, 0,
-				st->st_icookie, st->st_rcookie, NULL, 0,
+		send_notification(st, type, NULL, MAINMODE_MSGID,
+				st->st_icookie, st->st_rcookie,
 				PROTO_ISAKMP);
 	}
 }
@@ -2725,7 +2716,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	st.st_interface = md->iface;
 
 	send_notification(&st, type, NULL, 0,
-			md->hdr.isa_icookie, md->hdr.isa_rcookie, NULL, 0,
+			md->hdr.isa_icookie, md->hdr.isa_rcookie,
 			PROTO_ISAKMP);
 }
 

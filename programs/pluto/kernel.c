@@ -928,7 +928,7 @@ static bool raw_eroute(const ip_address *this_host,
 #endif
 					);
 
-	if (result == FALSE || DBGP(DBG_CONTROL | DBG_KERNEL))
+	if (!result || DBGP(DBG_CONTROL | DBG_KERNEL))
 		DBG_log("raw_eroute result=%u\n", result);
 
 	return result;
