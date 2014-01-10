@@ -462,6 +462,10 @@ static struct option const longopts[] =
 	{ "checkconfig",         no_argument, NULL, 'K' },
 	{ "noexport",            no_argument, NULL, 'N' },
 	{ "help",                no_argument, NULL, 'h' },
+	/* obsoleted, eat and ignore for compatibility */
+        {"defaultroute",        required_argument, NULL, 'd'},
+        {"defaultroutenexthop", required_argument, NULL, 'n'},
+
 	{ 0, 0, 0, 0 }
 };
 
@@ -571,6 +575,11 @@ int main(int argc, char *argv[])
 		case 'R':
 			printf("setting rootdir=%s\n", optarg);
 			strncat(rootdir, optarg, sizeof(rootdir) - 1);
+			break;
+
+		case 'd':
+		case 'n':
+			printf("Warning: options --defaultroute and --defaultroutenexthop are obsolete and were ignored\n");
 			break;
 
 		default:
