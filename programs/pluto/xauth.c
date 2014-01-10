@@ -1161,15 +1161,16 @@ static int do_pam_authentication(void *varg)
  * as first char for comments just because I hate conf
  * files like .htaccess that don't support it
  *
- * /etc/ipsec.d/passwd
- * username:md5sum:connectioname\n
+ * cat /etc/ipsec.d/passwd
+ * username1:md5sum:connectioname
+ * username2:md5sum:connectioname
  *
  * can be made with, htpasswd:
  *
  * htpasswd -c -m -b /etc/ipsec.d/passwd road roadpass (for crypt)
  * htpasswd -c -d -b /etc/ipsec.d/passwd road roadpass (for des)
  *                   (des is the old format used in /etc/passwd)
- * you can optionally add ":<connection name>\n" to the file.
+ * you can add ":<connection name>" to the user entries.
  *
  * @return int Return Code
  */
