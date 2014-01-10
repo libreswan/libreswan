@@ -597,8 +597,7 @@ void ikev2_log_parentSA(struct state *st)
 			256);
 		datatot(st->st_skey_ai.ptr, st->st_skey_ai.len, 'x',
 			authkeybuf, 256);
-		DBG_log(
-			"ikev2 I 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s:%s %s:%s",
+		DBG_log("ikev2 I 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s:%s %s:%s",
 			st->st_icookie[0], st->st_icookie[1],
 			st->st_icookie[2], st->st_icookie[3],
 			st->st_icookie[4], st->st_icookie[5],
@@ -616,8 +615,7 @@ void ikev2_log_parentSA(struct state *st)
 			256);
 		datatot(st->st_skey_ar.ptr, st->st_skey_ar.len, 'x',
 			authkeybuf, 256);
-		DBG_log(
-			"ikev2 R 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s:%s %s:%s",
+		DBG_log("ikev2 R 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s:%s %s:%s",
 			st->st_icookie[0], st->st_icookie[1],
 			st->st_icookie[2], st->st_icookie[3],
 			st->st_icookie[4], st->st_icookie[5],
@@ -778,8 +776,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		DBG(DBG_CONTROL, {
 			    char buf[ADDRTOT_BUF];
-			    DBG_log(
-				    "sending reply packet to %s:%u (from port %u)",
+			    DBG_log("sending reply packet to %s:%u (from port %u)",
 				    (addrtot(&st->st_remoteaddr,
 					     0, buf, sizeof(buf)), buf),
 				    st->st_remoteport,
@@ -810,8 +807,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		/* XXX should call unpend again on parent SA */
 		if (IS_CHILD_SA(st)) {
 			pst = state_with_serialno(st->st_clonedfrom); /* with failed child sa, we end up here with an orphan?? */
-			DBG_log(
-				"releasing whack and unpending for #%lu (sock=%d)",
+			DBG_log("releasing whack and unpending for #%lu (sock=%d)",
 				pst->st_serialno, pst->st_whack_sock);
 			unpend(pst);
 			release_whack(pst);
@@ -902,8 +898,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		    IS_V2_ESTABLISHED(st->st_state) && st->st_state !=
 		    from_state) {
 			DBG(DBG_DPD,
-			    DBG_log(
-				    "dpd_action set, scheduling ikev2 liveness checks"));
+			    DBG_log("dpd_action set, scheduling ikev2 liveness checks"));
 			st->hidden_variables.st_liveness = TRUE;
 			event_schedule(EVENT_v2_LIVENESS,
 				       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,

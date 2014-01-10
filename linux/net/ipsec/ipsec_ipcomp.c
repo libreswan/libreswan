@@ -119,9 +119,7 @@ enum ipsec_rcv_value ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 			    "Incoming packet with SA(IPCA):%s does not match policy SA(IPCA):%s cpi=%04x cpi->spi=%08x spi=%08x, spi->cpi=%04x for SA grouping, dropped.\n",
 			    irs->sa_len ? irs->sa : " (error)",
 			    sa_len2 ? sa2 : " (error)",
-			    ntohs(
-				    irs->protostuff.ipcompstuff.compp->
-				    ipcomp_cpi),
+			    ntohs(irs->protostuff.ipcompstuff.compp->ipcomp_cpi),
 			    (__u32)ntohl(irs->said.spi),
 			    (__u32)ntohl((ipsp->ips_said.spi)),
 			    (__u16)(ntohl(ipsp->ips_said.spi) & 0x0000ffff));
@@ -131,10 +129,9 @@ enum ipsec_rcv_value ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 	}
 
 	if (lsw_ip_hdr_version(irs) == 6)
-		ipsp->ips_comp_ratio_cbytes += ntohs(lsw_ip6_hdr(
-							     irs)->payload_len)
-					       +
-					       sizeof(struct ipv6hdr);
+		ipsp->ips_comp_ratio_cbytes +=
+			ntohs(lsw_ip6_hdr(irs)->payload_len) +
+			sizeof(struct ipv6hdr);
 	else
 		ipsp->ips_comp_ratio_cbytes +=
 			ntohs(lsw_ip4_hdr(irs)->tot_len);
@@ -167,10 +164,9 @@ enum ipsec_rcv_value ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 	irs->iph = (void *) ip_hdr(skb);
 
 	if (lsw_ip_hdr_version(irs) == 6)
-		ipsp->ips_comp_ratio_dbytes += ntohs(lsw_ip6_hdr(
-							     irs)->payload_len)
-					       +
-					       sizeof(struct ipv6hdr);
+		ipsp->ips_comp_ratio_dbytes +=
+			ntohs(lsw_ip6_hdr(irs)->payload_len) +
+			sizeof(struct ipv6hdr);
 	else
 		ipsp->ips_comp_ratio_dbytes +=
 			ntohs(lsw_ip4_hdr(irs)->tot_len);
@@ -214,9 +210,8 @@ enum ipsec_xmit_value ipsec_xmit_ipcomp_setup(struct ipsec_xmit_state *ixs)
 		int nexthdroff;
 		unsigned char nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 		nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-						    ((void *)(lsw_ip6_hdr(
-								      ixs) +
-							      1)) - (void*)ixs->skb->data,
+				    ((void *)(lsw_ip6_hdr(ixs) + 1)) -
+				    (void*)ixs->skb->data,
 						    &nexthdr, &frag_off);
 		ixs->iphlen = nexthdroff - (ixs->iph - (void*)ixs->skb->data);
 		tot_len = ntohs(lsw_ip6_hdr(ixs)->payload_len) +
@@ -235,12 +230,9 @@ enum ipsec_xmit_value ipsec_xmit_ipcomp_setup(struct ipsec_xmit_state *ixs)
 				    "klips_debug:ipsec_xmit_ipcomp_setup: "
 				    "packet shrunk from %d to %d bytes after compression, cpi=%04x (should be from spi=%08x, spi&0xffff=%04x.\n",
 				    old_tot_len, tot_len,
-				    ntohs(((struct ipcomphdr*)(((char*)ixs->iph)
-							       +
-							       ((lsw_ip4_hdr(
-									 ixs)
-								 ->ihl) <<
-								2)))->
+				    ntohs(((struct ipcomphdr *)
+					(((char*)ixs->iph) +
+					 (lsw_ip4_hdr(ixs)->ihl << 2)))->
 					  ipcomp_cpi),
 				    ntohl(ixs->ipsp->ips_said.spi),
 				    (__u16)(ntohl(ixs->ipsp->ips_said.spi) &

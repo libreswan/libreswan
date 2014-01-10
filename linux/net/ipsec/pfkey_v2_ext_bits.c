@@ -791,8 +791,7 @@ int pfkey_extensions_missing(enum pfkey_ext_required inout,
 		extensions_bitmaps[inout][EXT_BITS_REQ][sadb_operation];
 
 	if ((extensions_seen & req) != req) {
-		ERROR(
-			"extensions for op: %d seen: %08llx required %08llx, missing: %08llx\n",
+		ERROR("extensions for op: %d seen: %08llx required %08llx, missing: %08llx\n",
 			sadb_operation,
 			(unsigned long long)extensions_seen,
 			(unsigned long long)req,

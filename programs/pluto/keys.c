@@ -205,8 +205,7 @@ static int sign_hash_nss(const struct RSA_private_key *k,
 		    DBG_log("NSS: Authentication to NSS successful\n"));
 	} else {
 		DBG(DBG_CRYPT,
-		    DBG_log(
-			    "NSS: Authentication to NSS either failed or not required,if NSS DB without password\n"));
+		    DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password\n"));
 	}
 
 	privateKey = PK11_FindKeyByKeyID(slot, &ckaId,
@@ -216,8 +215,7 @@ static int sign_hash_nss(const struct RSA_private_key *k,
 			privateKey = PK11_FindKeyByAnyCert(k->pub.nssCert,
 							   lsw_return_nss_password_file_info());
 			DBG(DBG_CRYPT,
-			    DBG_log(
-				    "Can't find the private key from the NSS CKA_ID\n"));
+			    DBG_log("Can't find the private key from the NSS CKA_ID\n"));
 		}
 	}
 

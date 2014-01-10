@@ -125,15 +125,12 @@ size_t dstlen;
 		len = strlen(buf);
 		if (showversion) {
 			*(buf +
-			  len) = (addrtypeof(&sa->dst) == AF_INET) ? '.' :
-				 ':';
+			  len) = (addrtypeof(&sa->dst) == AF_INET) ?
+				'.' : ':';
 			len++;
 			*(buf + len) = '\0';
 		}
-		len +=
-			ultot(ntohl(
-				      sa->spi), base, buf + len, sizeof(buf) -
-			      len);
+		len += ultot(ntohl(sa->spi), base, buf + len, sizeof(buf) - len);
 		*(buf + len - 1) = '@';
 		len += addrtot(&sa->dst, 0, buf + len, sizeof(buf) - len);
 		*(buf + len) = '\0';

@@ -232,16 +232,14 @@ u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
 	switch (nat_t_vid) {
 	case VID_NATT_IETF_00:
 		DBG(DBG_NATT,
-		    DBG_log(
-			    "returning NATT method NAT_TRAVERSAL_METHOD_IETF_00_01"));
+		    DBG_log("returning NATT method NAT_TRAVERSAL_METHOD_IETF_00_01"));
 		return NAT_TRAVERSAL_METHOD_IETF_00_01;
 
 	case VID_NATT_IETF_02:
 	case VID_NATT_IETF_02_N:
 	case VID_NATT_IETF_03:
 		DBG(DBG_NATT,
-		    DBG_log(
-			    "returning NATT method NAT_TRAVERSAL_METHOD_IETF_02_03"));
+		    DBG_log("returning NATT method NAT_TRAVERSAL_METHOD_IETF_02_03"));
 		return NAT_TRAVERSAL_METHOD_IETF_02_03;
 
 	case VID_NATT_IETF_04:
@@ -251,12 +249,10 @@ u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 		DBG(DBG_NATT,
-		    DBG_log(
-			    "VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE assumed as VID_NATT_RFC"));
+		    DBG_log("VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE assumed as VID_NATT_RFC"));
 	case VID_NATT_RFC:
 		DBG(DBG_NATT,
-		    DBG_log(
-			    "returning NATT method NAT_TRAVERSAL_METHOD_IETF_RFC"));
+		    DBG_log("returning NATT method NAT_TRAVERSAL_METHOD_IETF_RFC"));
 		return NAT_TRAVERSAL_METHOD_IETF_RFC;
 	}
 	return 0;
@@ -412,8 +408,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	if (st->st_connection->forceencaps) {
 		DBG(DBG_NATT,
-		    DBG_log(
-			    "NAT-T: forceencaps=yes, so mangling hash to force NAT-T detection"));
+		    DBG_log("NAT-T: forceencaps=yes, so mangling hash to force NAT-T detection"));
 		firstport = secondport = 0;
 	}
 
@@ -748,8 +743,7 @@ int nat_traversal_espinudp_socket(int sk, const char *fam, u_int32_t type)
 	}
 # else
 	DBG(DBG_NATT,
-	    DBG_log(
-		    "NAT-Traversal: ESPINUDP() setup for old style NAT-T family not available - KLIPS support not compiled in"));
+	    DBG_log("NAT-Traversal: ESPINUDP() setup for old style NAT-T family not available - KLIPS support not compiled in"));
 # endif
 
 	loglog(RC_LOG_SERIOUS,
@@ -797,13 +791,11 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 
 	if (!c->nat_keepalive) {
 		DBG(DBG_NATT,
-		    DBG_log(
-			    "Suppressing sending of NAT-T KEEP-ALIVE by per-conn configuration (nat_keepalive=no)"));
+		    DBG_log("Suppressing sending of NAT-T KEEP-ALIVE by per-conn configuration (nat_keepalive=no)"));
 		return;
 	}
 	DBG(DBG_NATT,
-	    DBG_log(
-		    "Sending of NAT-T KEEP-ALIVE enabled by per-conn configuration (nat_keepalive=yes)"));
+	    DBG_log("Sending of NAT-T KEEP-ALIVE enabled by per-conn configuration (nat_keepalive=yes)"));
 
 	if ( IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 	     (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
@@ -1025,8 +1017,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		DBG(DBG_NATT, {
 			    char b1[ADDRTOT_BUF];
 			    char b2[ADDRTOT_BUF];
-			    DBG_log(
-				    "NAT-T connection has wrong interface definition %s:%u vs %s:%u",
+			    DBG_log("NAT-T connection has wrong interface definition %s:%u vs %s:%u",
 				    (addrtot(&st->st_localaddr, 0, b1,
 					     sizeof(b1)), b1),
 				    st->st_localport,

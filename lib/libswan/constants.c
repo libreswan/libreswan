@@ -1432,8 +1432,8 @@ enum_names *ikev2_transid_val_descs[] = {
 	&ikev2_trans_type_esn_names,          /* 5 */
 };
 
-const unsigned int ikev2_transid_val_descs_size = elemsof(
-	ikev2_transid_val_descs);
+const unsigned int ikev2_transid_val_descs_size =
+	elemsof(ikev2_transid_val_descs);
 
 /* Transform Attributes */
 static const char *const ikev2_trans_attr_name[] = {

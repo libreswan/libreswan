@@ -216,8 +216,7 @@ static void receive_ping(int afamily, int s, int reply, int natt)
 		/* need to skip 4 bytes! */
 		if (rbuf[0] != 0x0 || rbuf[1] != 0x0 ||
 		    rbuf[2] != 0x0 || rbuf[3] != 0x0) {
-			printf(
-				"kernel failed to steal ESP packet (SPI=0x%02x%02x%02x%02x) of length %d\n",
+			printf("kernel failed to steal ESP packet (SPI=0x%02x%02x%02x%02x) of length %d\n",
 				rbuf[0], rbuf[1], rbuf[2], rbuf[3],
 				n);
 			return;
@@ -424,8 +423,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'b':
-			errstr = ttoaddr(optarg, strlen(
-						 optarg), afamily, &laddr);
+			errstr = ttoaddr(optarg, strlen(optarg),
+				         afamily, &laddr);
 			if (errstr != NULL) {
 				fprintf(stderr,
 					"Invalid local address '%s': %s\n",

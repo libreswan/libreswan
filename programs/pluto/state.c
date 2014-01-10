@@ -1102,8 +1102,7 @@ struct state *find_state_ikev1_loopback(const u_char *icookie,
 		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
 		    !st->st_ikev2) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "loopback: v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
+			    DBG_log("loopback: v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
 				    st->st_serialno,
 				    (long unsigned)ntohl(msgid),
 				    (long unsigned)ntohl(st->st_msgid)));
@@ -1120,8 +1119,7 @@ struct state *find_state_ikev1_loopback(const u_char *icookie,
 		    if (st == NULL)
 			    DBG_log("loopback: v1 state object not found");
 		    else
-			    DBG_log(
-				    "loopback: v1 state object #%lu found, in %s",
+			    DBG_log("loopback: v1 state object #%lu found, in %s",
 				    st->st_serialno,
 				    enum_show(&state_names, st->st_state));
 	    });
@@ -1290,8 +1288,7 @@ struct state *find_info_state(const u_char *icookie,
 		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
 		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "peer and cookies match on #%ld, provided msgid %08lx vs %08lx/%08lx",
+			    DBG_log("peer and cookies match on #%ld, provided msgid %08lx vs %08lx/%08lx",
 				    st->st_serialno,
 				    (long unsigned)ntohl(msgid),
 				    (long unsigned)ntohl(st->st_msgid),

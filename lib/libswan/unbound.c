@@ -81,8 +81,8 @@ int unbound_init(struct ub_ctx *dnsctx)
 	DBG(DBG_DNS, DBG_log("Loading root key:%s\n", rootanchor));
 	ugh = ub_ctx_add_ta(dnsctx, rootanchor);
 	if (ugh != 0) {
-		libreswan_log("error adding the DNSSEC root key: %s: %s\n", ub_strerror(
-				      ugh), strerror(errno));
+		libreswan_log("error adding the DNSSEC root key: %s: %s\n",
+			ub_strerror(ugh), strerror(errno));
 		return 0;
 	}
 
@@ -90,8 +90,8 @@ int unbound_init(struct ub_ctx *dnsctx)
 	DBG(DBG_DNS, DBG_log("Loading dlv key:%s\n", dlvanchor));
 	ugh = ub_ctx_set_option(dnsctx, "dlv-anchor:", dlvanchor);
 	if (ugh != 0) {
-		libreswan_log("error adding the DLV key: %s: %s\n", ub_strerror(
-				      ugh), strerror(errno));
+		libreswan_log("error adding the DLV key: %s: %s\n",
+			ub_strerror(ugh), strerror(errno));
 		return 0;
 	}
 
@@ -138,8 +138,7 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	if (!result->havedata) {
 		if (result->secure) {
 			DBG(DBG_DNS,
-			    DBG_log(
-				    "Validated reply proves '%s' does not exist\n",
+			    DBG_log("Validated reply proves '%s' does not exist\n",
 				    src));
 		} else {
 			DBG(DBG_DNS,
@@ -152,8 +151,7 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	} else if (!result->bogus) {
 		if (!result->secure) {
 			DBG(DBG_DNS,
-			    DBG_log(
-				    "warning: %s lookup was not protected by DNSSEC!\n",
+			    DBG_log("warning: %s lookup was not protected by DNSSEC!\n",
 				    result->qname));
 		}
 	}

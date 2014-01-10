@@ -721,34 +721,30 @@ static stf_status informational(struct msg_digest *md)
 							    tmp_spd->that.id.
 							    kind));
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "that id ipaddr: %s",
+						    DBG_log("that id ipaddr: %s",
 							    (addrtot(&tmp_spd->
 								     that.id.
 								     ip_addr,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest)));
 						if (tmp_spd->that.id.name.ptr
-						    !=
-						    NULL)
-							DBG(DBG_CONTROLMORE, DBG_dump_chunk(
+						    != NULL)
+							DBG(DBG_CONTROLMORE,
+							    DBG_dump_chunk(
 								    "that id name",
 								    tmp_spd->
 								    that.id.
 								    name));
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "that host_addr: %s",
+						    DBG_log("that host_addr: %s",
 							    (addrtot(&tmp_spd->
 								     that.
 								     host_addr,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest)));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that nexthop: %s",
@@ -757,8 +753,7 @@ static stf_status informational(struct msg_digest *md)
 								     host_nexthop,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest)));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that srcip: %s",
@@ -767,46 +762,31 @@ static stf_status informational(struct msg_digest *md)
 								     host_srcip,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest)));
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "that client_addr: %s, maskbits:%d",
-							    (
-								    addrtot(&
-									    tmp_spd
-									    ->
-									    that
-									    .
-									    client
-									    .
-									    addr,
+						    DBG_log("that client_addr: %s, maskbits:%d",
+							    (addrtot(&tmp_spd->that.client.addr,
 									    0,
 									    buftest,
-									    sizeof(
-										    buftest)),
+									    sizeof(buftest)),
 								    buftest),
 							    tmp_spd->that.
 							    client.maskbits));
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "that has_client: %d",
+						    DBG_log("that has_client: %d",
 							    tmp_spd->that.
 							    has_client));
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "that has_client_wildcard: %d",
+						    DBG_log("that has_client_wildcard: %d",
 							    tmp_spd->that.
 							    has_client_wildcard));
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "that has_port_wildcard: %d",
+						    DBG_log("that has_port_wildcard: %d",
 							    tmp_spd->that.
 							    has_port_wildcard));
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "that has_id_wildcards: %d",
+						    DBG_log("that has_id_wildcards: %d",
 							    tmp_spd->that.
 							    has_id_wildcards));
 
@@ -815,23 +795,20 @@ static stf_status informational(struct msg_digest *md)
 
 					if (tmp_c->interface != NULL) {
 						DBG(DBG_CONTROLMORE,
-						    DBG_log(
-							    "Current interface_addr: %s",
+						    DBG_log("Current interface_addr: %s",
 							    (addrtot(&tmp_c->
 								     interface
 								     ->
 								     ip_addr,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest)));
 					}
 
 					if (tmp_c->gw_info != NULL) {
 						DBG(DBG_CONTROLMORE, {
-							    DBG_log(
-								    "Current gw_client_addr: %s",
+							    DBG_log("Current gw_client_addr: %s",
 								    (addrtot(&
 									     tmp_c
 									     ->
@@ -842,11 +819,9 @@ static stf_status informational(struct msg_digest *md)
 									     ip_addr,
 									     0,
 									     buftest,
-									     sizeof(
-										     buftest)),
+									     sizeof(buftest)),
 								     buftest));
-							    DBG_log(
-								    "Current gw_gw_addr: %s",
+							    DBG_log("Current gw_gw_addr: %s",
 								    (addrtot(&
 									     tmp_c
 									     ->
@@ -857,8 +832,7 @@ static stf_status informational(struct msg_digest *md)
 									     ip_addr,
 									     0,
 									     buftest,
-									     sizeof(
-										     buftest)),
+									     sizeof(buftest)),
 								     buftest));
 						    });
 					}
@@ -869,8 +843,7 @@ static stf_status informational(struct msg_digest *md)
 				old_addr = tmp_c->spd.that.host_addr;
 
 				/*Decoding remote peer address info where connection has to be redirected to*/
-				memcpy(
-					&tmp_c->spd.that.host_addr.u.v4.sin_addr.s_addr,
+				memcpy(&tmp_c->spd.that.host_addr.u.v4.sin_addr.s_addr,
 					(u_int32_t *)(n_pbs->cur +
 						      pbs_left(n_pbs) - 4),
 					sizeof(tmp_c->spd.that.host_addr.u.v4.
@@ -890,86 +863,72 @@ static stf_status informational(struct msg_digest *md)
 					    if (sameaddr(&tmp_c->spd.this.
 							 host_nexthop,
 							 &old_addr)) {
-						    DBG_log(
-							    "Old remote addr %s",
+						    DBG_log("Old remote addr %s",
 							    (addrtot(&old_addr,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest));
-						    DBG_log(
-							    "Old this host next hop %s",
+						    DBG_log("Old this host next hop %s",
 							    (addrtot(&tmp_c->
 								     spd.this.
 								     host_nexthop,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest));
 						    tmp_c->spd.this.host_nexthop = tmp_c->spd.that.host_addr;
-						    DBG_log(
-							    "New this host next hop %s",
+						    DBG_log("New this host next hop %s",
 							    (addrtot(&tmp_c->
 								     spd.this.
 								     host_nexthop,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest));
 					    }
 
 					    if (sameaddr(&tmp_c->spd.that.
 							 host_srcip,
 							 &old_addr)) {
-						    DBG_log(
-							    "Old that host srcip %s",
+						    DBG_log("Old that host srcip %s",
 							    (addrtot(&tmp_c->
 								     spd.that.
 								     host_srcip,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest));
 						    tmp_c->spd.that.host_srcip = tmp_c->spd.that.host_addr;
-						    DBG_log(
-							    "New that host srcip %s",
+						    DBG_log("New that host srcip %s",
 							    (addrtot(&tmp_c->
 								     spd.that.
 								     host_srcip,
 								     0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest));
 					    }
 
 					    if (sameaddr(&tmp_c->spd.that.
 							 client.addr,
 							 &old_addr)) {
-						    DBG_log(
-							    "Old that client ip %s",
+						    DBG_log("Old that client ip %s",
 							    (addrtot(&tmp_c->
 								     spd.that.
 								     client.
 								     addr, 0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest));
 						    tmp_c->spd.that.client.addr = tmp_c->spd.that.host_addr;
-						    DBG_log(
-							    "New that client ip %s",
+						    DBG_log("New that client ip %s",
 							    (addrtot(&tmp_c->
 								     spd.that.
 								     client.
 								     addr, 0,
 								     buftest,
-								     sizeof(
-									     buftest)),
+								     sizeof(buftest)),
 							     buftest));
 					    }
 				    });
@@ -1072,8 +1031,7 @@ void process_v1_packet(struct msg_digest **mdp)
 #ifdef HAVE_LABELED_IPSEC
 			if (st != NULL && st->st_connection->loopback) {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
+				    DBG_log("loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
 
 				st = find_state_ikev1_loopback(
 					md->hdr.isa_icookie,
@@ -1081,14 +1039,12 @@ void process_v1_packet(struct msg_digest **mdp)
 					md);
 				if (st != NULL)
 					DBG(DBG_CONTROL,
-					    DBG_log(
-						    "loopback scenario: found a correct state for the received message"));
+					    DBG_log("loopback scenario: found a correct state for the received message"));
 
 
 				else
 					DBG(DBG_CONTROL,
-					    DBG_log(
-						    "loopback scenario: did not found any state, perhaps a first message from the responder"));
+					    DBG_log("loopback scenario: did not found any state, perhaps a first message from the responder"));
 
 
 			}
@@ -1137,12 +1093,10 @@ void process_v1_packet(struct msg_digest **mdp)
 					(unsigned long)md->hdr.isa_msgid);
 				/* Let's try to log some info about these to track them down */
 				DBG(DBG_PARSING, {
-					    DBG_dump(
-						    "- unknown SA's md->hdr.isa_icookie:",
+					    DBG_dump("- unknown SA's md->hdr.isa_icookie:",
 						    md->hdr.isa_icookie,
 						    COOKIE_SIZE);
-					    DBG_dump(
-						    "- unknown SA's md->hdr.isa_rcookie:",
+					    DBG_dump("- unknown SA's md->hdr.isa_rcookie:",
 						    md->hdr.isa_rcookie,
 						    COOKIE_SIZE);
 				    });
@@ -1218,8 +1172,7 @@ void process_v1_packet(struct msg_digest **mdp)
 #ifdef HAVE_LABELED_IPSEC
 		if (st != NULL && st->st_connection->loopback) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
+			    DBG_log("loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
 
 			st = find_state_ikev1_loopback(md->hdr.isa_icookie,
 						       md->hdr.isa_rcookie,
@@ -1227,14 +1180,12 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			if (st != NULL)
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "loopback scenario: found a correct state for the received message"));
+				    DBG_log("loopback scenario: found a correct state for the received message"));
 
 
 			else
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "loopback scenario: did not found any state, perhaps a first message from the responder"));
+				    DBG_log("loopback scenario: did not found any state, perhaps a first message from the responder"));
 
 
 		}
@@ -1339,8 +1290,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		if (st == NULL) {
 			DBG(DBG_CONTROLMORE,
-			    DBG_log(
-				    " in %s:%d No appropriate Mode Config state yet."
+			    DBG_log(" in %s:%d No appropriate Mode Config state yet."
 				    "See if we have a Main Mode state",
 				    __func__, __LINE__));
 			/* No appropriate Mode Config state.
@@ -1655,8 +1605,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					frag = st->ike_frags;
 					while (frag && frag->index <=
 					       last_frag_index) {
-						passert(
-							offset + frag->size <=
+						passert(offset + frag->size <=
 							size);
 						memcpy(buffer + offset,
 						       frag->data, frag->size);
@@ -1674,8 +1623,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_seen_fragments = TRUE;
 					DBG(DBG_CONTROL,
-					    DBG_log(
-						    " updated IKE fragment state to respond using fragments without waiting for re-transmits"));
+					    DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
 					break;
 				}
 			}
@@ -1782,8 +1730,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	if ((md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION) &&
 	    st != NULL && !st->hidden_variables.st_skeyid_calculated ) {
 		DBG(DBG_CRYPT | DBG_CONTROL,
-		    DBG_log(
-			    "received encrypted packet from %s:%u but exponentiation still in progress",
+		    DBG_log("received encrypted packet from %s:%u but exponentiation still in progress",
 			    ip_str(&md->sender), (unsigned)md->sender_port));
 
 		/* if there was a previous packet, let it go, and go with most
@@ -1791,8 +1738,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		 */
 		if (st->st_suspended_md) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "releasing suspended operation before completion: %p",
+			    DBG_log("releasing suspended operation before completion: %p",
 				    st->st_suspended_md));
 			release_md(st->st_suspended_md);
 		}
@@ -1955,8 +1901,7 @@ void process_packet_tail(struct msg_digest **mdp)
 						 * don't accept NAT-D/NAT-OA reloc directly in message,
 						 * unless we're using NAT-T RFC
 						 */
-						DBG_log(
-							"st_nat_traversal was: %u\n",
+						DBG_log("st_nat_traversal was: %u\n",
 							st->hidden_variables.st_nat_traversal);
 						sd = NULL;
 					}
@@ -2327,8 +2272,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	 * we can only be in calculating state if state is ignore,
 	 * or suspended.
 	 */
-	passert(
-		result == STF_INLINE || result == STF_IGNORE || result == STF_SUSPEND || st->st_calculating ==
+	passert(result == STF_INLINE || result == STF_IGNORE || result == STF_SUSPEND || st->st_calculating ==
 		FALSE);
 
 	switch (result) {
@@ -2418,8 +2362,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			DBG(DBG_CONTROL, {
 				    char buf[ADDRTOT_BUF];
-				    DBG_log(
-					    "sending reply packet to %s:%u (from port %u)",
+				    DBG_log("sending reply packet to %s:%u (from port %u)",
 					    (addrtot(&st->st_remoteaddr,
 						     0, buf,
 						     sizeof(buf)), buf),
@@ -2776,8 +2719,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					&st->st_connection->spd,
 					"disconnectNM", st))
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "sending disconnect to NM failed, you may need to do it manually"));
+				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
 
 
 		}
@@ -2815,8 +2757,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					&st->st_connection->spd,
 					"disconnectNM", st))
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "sending disconnect to NM failed, you may need to do it manually"));
+				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
 
 
 		}

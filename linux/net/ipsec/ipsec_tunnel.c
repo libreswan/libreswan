@@ -1778,8 +1778,7 @@ DEBUG_NO_STATIC void ipsec_tunnel_udp_encap_destruct(struct sock *sk)
 	}
 
 	if (ctx->sk != sk) {
-		printk(
-			"ipsec: called to destroy ctx with sk(%p) != ctx->sk(%p)\n",
+		printk("ipsec: called to destroy ctx with sk(%p) != ctx->sk(%p)\n",
 			sk, ctx->sk);
 		return;
 	}
@@ -1885,8 +1884,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    dev->flags);
 			if (strncmp(dev->name, "ipsec",
 				    strlen("ipsec")) == 0) {
-				printk(
-					KERN_CRIT "IPSEC EVENT: KLIPS device %s shut down.\n",
+				printk(KERN_CRIT "IPSEC EVENT: KLIPS device %s shut down.\n",
 					dev->name);
 			}
 			break;
@@ -2311,8 +2309,7 @@ struct ipsec_xmit_state *ipsec_xmit_state_new(struct net_device *dev)
 		/* check for something that should never happen */
 		if (!netif_queue_stopped(dev)) {
 			netif_stop_queue(dev);
-			printk(
-				"ipsec_tunnel_start_xmit: cannot TX while awake\n");
+			printk("ipsec_tunnel_start_xmit: cannot TX while awake\n");
 		}
 		spin_unlock_bh(&ixs_cache_lock);
 		KLIPS_PRINT(debug_tunnel,

@@ -256,8 +256,7 @@ int kernel_alg_proc_read(void)
 				ret = kernel_alg_add(satype, supp_exttype,
 						     &sadb_alg);
 				DBG(DBG_CRYPT,
-				    DBG_log(
-					    "kernel_alg_proc_read() alg_id=%d, "
+				    DBG_log("kernel_alg_proc_read() alg_id=%d, "
 					    "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
 					    "ret=%d",
 					    sadb_alg.sadb_alg_id,
@@ -328,8 +327,7 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg_buf, int buflen)
 			int ret;
 			ret = kernel_alg_add(satype, supp_exttype, sadb.alg);
 			DBG(DBG_KERNEL,
-			    DBG_log(
-				    "kernel_alg_register_pfkey(): SADB_SATYPE_%s: "
+			    DBG_log("kernel_alg_register_pfkey(): SADB_SATYPE_%s: "
 				    "alg[%d], exttype=%d, satype=%d, alg_id=%d, "
 				    "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
 				    "res=%d, ret=%d",

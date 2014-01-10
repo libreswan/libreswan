@@ -177,7 +177,7 @@ extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
 
 #include "x509.h"
-extern const struct RSA_private_key*lsw_get_x509_private_key(
+extern const struct RSA_private_key *lsw_get_x509_private_key(
 	struct secret *secrets, x509cert_t *cert);
 
 #endif /* _SECRETS_H */
