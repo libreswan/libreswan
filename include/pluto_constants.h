@@ -544,7 +544,6 @@ enum pluto_policy {
 	POLICY_IKE_FRAG_FORCE = LELEM(31),
 	POLICY_IKE_FRAG_MASK = POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE,
 	POLICY_NO_IKEPAD      = LELEM(32),      /* pad ike packets to 4 bytes or not */
-	POLICY_ANONYMOUS      = LELEM(33),      /* Allow anonymous unauthenticated - draft-swan-oe-00 */
 
 	/* policy used to be an int, but is now lset_t (unsigned long long type), so max is 63 */
 };

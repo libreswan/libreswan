@@ -1177,8 +1177,6 @@ static int load_conn(struct ub_ctx *dnsctx,
 	KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KBF_PFS,  POLICY_PFS);
 
-	KW_POLICY_FLAG(KBF_ANONYMOUS,  POLICY_ANONYMOUS);
-
 	/* reset authby flags */
 	if (conn->options_set[KBF_AUTHBY]) {
 		conn->policy &= ~(POLICY_ID_AUTH_MASK);
