@@ -77,14 +77,13 @@ static int aalg_getbyname_ike(const char *const str, int len)
 	unsigned num;
 
 	if (!str || !*str)
-		goto out;
+		return ret;
 	ret = alg_enum_search_prefix(&oakley_hash_names, "OAKLEY_", str, len);
 	if (ret >= 0)
-		goto out;
+		return ret;
 	sscanf(str, "id%d%n", &ret, &num);
 	if (ret >= 0 && num != strlen(str))
 		ret = -1;
-out:
 	return ret;
 }
 /**
