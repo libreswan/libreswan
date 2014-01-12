@@ -745,6 +745,7 @@ static enum_names auth_alg_names_stolen_use =
 { AUTH_ALGORITHM_NULL_KAME, AUTH_ALGORITHM_NULL_KAME, auth_alg_name_stolen_use,
   NULL };
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const auth_alg_name[] = {
 	"AUTH_ALGORITHM_NONE", /* our own value, not standard */
 	"AUTH_ALGORITHM_HMAC_MD5",
@@ -917,6 +918,7 @@ enum_names oakley_enc_names =
 /* Oakley Hash Algorithm attribute */
 /* http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6 */
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_hash_name[] = {
 	/* 0 - RESERVED */
 	"OAKLEY_MD5",
@@ -1001,6 +1003,7 @@ enum_names ikev2_auth_names =
  * be differences we need to care about)
  */
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_group_name[] = {
 	"OAKLEY_GROUP_MODP768",
 	"OAKLEY_GROUP_MODP1024",
