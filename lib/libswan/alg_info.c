@@ -193,19 +193,22 @@ int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
  *      Search esp_transformid_names for a match, eg:
  *              "3des" <=> "ESP_3DES"
  */
-#define ESP_MAGIC_ID 0x00ffff01
 static int ealg_getbyname_esp(const char *const str, int len)
 {
 	int ret = -1;
 
 	if (!str || !*str)
-		goto out;
-	/* leave special case for eg:  "id248" string */
-	if (strcmp("id", str) == 0)
-		return ESP_MAGIC_ID;
+		return ret
 
 	ret = alg_enum_search_prefix(&esp_transformid_names, "ESP_", str, len);
-out:
+	if (ret >= 0)
+		return ret
+
+	/* support idXXX as syntax, matching iana numbers directly */
+	sscanf(str, "id%d%n", &ret, &num);
+	if (ret >= 0 && num != strlen(str))
+		ret = -1;
+
 	return ret;
 }
 
