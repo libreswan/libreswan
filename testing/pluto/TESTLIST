@@ -285,8 +285,7 @@ umlXhost	x509-pluto-06		good
 #
 # a test case of PSK with aggressive mode
 kvmplutotest	psk-pluto-01		good
-
-umlXhost	psk-pluto-02		bad
+kvmplutotest	psk-pluto-02		bad
 
 kvmplutotest	xauth-pluto-03		good
 kvmplutotest	xauth-pluto-04		good
@@ -360,12 +359,10 @@ umlplutotest	fail-x509-12		good
 #
 kvmplutotest	pluto-rekey-02		good
 
-#
-# this tests psk with main mode.
-umlXhost	psk-pluto-03		good
-
-# this tests psk with main mode.
-umlXhost	psk-pluto-04		good
+kvmplutotest	psk-pluto-03		good
+kvmplutotest	psk-pluto-04		good
+kvmplutotest	psk-pluto-05		good
+kvmplutotest	psk-pluto-06		good
 
 #
 # tests using alternative ESP algorithms
@@ -508,6 +505,7 @@ kvmplutotest	ikev2-algo-ike-sha2-02			good
 kvmplutotest	ikev2-algo-ike-sha2-03			good
 kvmplutotest	ikev1-algo-ike-sha2-01			good
 kvmplutotest	ikev1-algo-ike-sha2-02			good
+kvmplutotest	ikev1-algo-ike-sha2-03			good
 
 # Various corner case tests for IKEv2
 kvmplutotest	ikev2-major-version-initiator		good
