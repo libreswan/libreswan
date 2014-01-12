@@ -13,6 +13,7 @@ v3.8 (unreleased)
 * gentoo: fixes to build and init system on Gentoo [Mike Gilbert]
 * KLIPS: fix NAT-T status in eroute output [Paul]
 * pluto: updated ietf_constants.h with IANA entries [Paul]
+* IKE: Make sure sha2 is an alias for sha2_256 [Hugh/Paul]
 * Bugtracker bugs fixed:
   #171: showhostkey.c:322: bad switch statement
 
