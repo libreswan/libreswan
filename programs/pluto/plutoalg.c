@@ -71,19 +71,35 @@ out:
  * @param len Length of Hash (eg: 256,512)
  * @return int Registered # of Hash ALG if loaded.
  */
-static int aalg_getbyname_ike(const char *const str, int len)
+static int aalg_getbyname_ike(const char *str, int len)
 {
 	int ret = -1;
 	unsigned num;
+	static const char sha2_256_aka[] = "sha2";
 
 	if (!str || !*str)
 		return ret;
+
+	/* handle "sha2" as "sha2_256" */
+	if (len == sizeof(sha2_256_aka)-1 && strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
+		DBG_log("PAUL: interpretating sha2 as sha2_256");
+		str = "sha2_256";
+		len = strlen(str);
+	}
+
 	ret = alg_enum_search_prefix(&oakley_hash_names, "OAKLEY_", str, len);
 	if (ret >= 0)
 		return ret;
-	sscanf(str, "id%d%n", &ret, &num);
-	if (ret >= 0 && num != strlen(str))
-		ret = -1;
+
+	/* Special value for no authentication since zero is already used. */
+        ret = INT_MAX;
+	if (strncasecmp(str, "null", len) == NULL)
+		return ret;
+
+	/* support idXXX as syntax, matching iana numbers directly */
+	if (sscanf(str, "id%d%n", &ret, &num) <= 0 || num != len)
+		return -1;	
+
 	return ret;
 }
 /**
