@@ -196,13 +196,14 @@ int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
 static int ealg_getbyname_esp(const char *const str, int len)
 {
 	int ret = -1;
+	unsigned num;
 
 	if (!str || !*str)
-		return ret
+		return ret;
 
 	ret = alg_enum_search_prefix(&esp_transformid_names, "ESP_", str, len);
 	if (ret >= 0)
-		return ret
+		return ret;
 
 	/* support idXXX as syntax, matching iana numbers directly */
 	sscanf(str, "id%d%n", &ret, &num);
@@ -625,10 +626,12 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 		ealg_id =
 			p_ctx->ealg_getbyname(p_ctx->ealg_buf,
 					      strlen(p_ctx->ealg_buf));
+#if 0
 		if (ealg_id == ESP_MAGIC_ID) {
 			ealg_id = p_ctx->eklen;
 			p_ctx->eklen = 0;
 		}
+#endif
 		if (ealg_id < 0) {
 			p_ctx->err = "enc_alg not found";
 			return -1;
