@@ -24,28 +24,11 @@ east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
-east #
-Status of IKE charon daemon (strongSwan VERSION):
-  uptime: XXX seconds, since YYY
-  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
-  worker threads: 8 of 16 idle, 7/1/0/0 working, job queue: 0/0/0/0, scheduled: 3
-  loaded plugins: charon aes des sha1 sha2 md5 random nonce x509 revocation constraints pubkey pkcs1 pkcs8 pgp dnskey pem openssl fips-prf gmp xcbc cmac hmac attr kernel-netlink resolve socket-default stroke updown xauth-generic
-Listening IP addresses:
-  192.0.2.254
-  192.1.2.23
-  192.9.2.23
-Connections:
-westnet-eastnet-ikev2:  192.1.2.23...192.1.2.45  IKEv2
-westnet-eastnet-ikev2:   local:  [east] uses pre-shared key authentication
-westnet-eastnet-ikev2:   remote: [west] uses pre-shared key authentication
-westnet-eastnet-ikev2:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.2.45[west]
-westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r, pre-shared key reauthentication in 2 hours
-westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_192/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_1536
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{1}:  AES_CBC_192/HMAC_SHA1_96, XXX bytes_i (xxs ago), XX bytes_o (XXs ago), rekeying in XX minutes
 westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24 
+east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 east #
