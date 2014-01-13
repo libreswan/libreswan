@@ -901,6 +901,7 @@ errlab:
 	return error;
 }
 
+#if 0
 static int pfkey_spirange_build(struct sadb_ext**  pfkey_ext,
 			 uint16_t exttype UNUSED,
 			 uint32_t min,          /* in network order */
@@ -1006,6 +1007,7 @@ static int pfkey_x_kmprivate_build(struct sadb_ext **pfkey_ext)
 errlab:
 	return error;
 }
+#endif
 
 int pfkey_x_satype_build(struct sadb_ext**  pfkey_ext,
 			 uint8_t satype)
