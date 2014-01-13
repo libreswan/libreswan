@@ -13,7 +13,11 @@ make module_install 2>&1 >> compile-log.txt
 # ensure selinux bits
 restorecon /usr/local/sbin -Rv
 restorecon /usr/local/libexec/ipsec -Rv
-# disable autostarting via systemd
-sed -i "s/Restart=always/Restart=no/" /lib/systemd/system/ipsec.service
-systemctl disable ipsec.service
-systemctl daemon-reload
+# disable autostarting via service or systemd
+if [ -x /usr/bin/systemctl -o -x /usr/sbin/systemctl -o -x /sbin/systemctl ]
+	sed -i "s/Restart=always/Restart=no/" /lib/systemd/system/ipsec.service
+	systemctl disable ipsec.service
+	systemctl daemon-reload
+else
+	service ipsec disable
+fi
