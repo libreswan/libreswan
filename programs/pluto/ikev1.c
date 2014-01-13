@@ -1544,8 +1544,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		/* Strip non-ESP marker from first fragment */
 		if (md->iface->ike_float && ike_frag->index == 1 &&
 		    (ike_frag->size >= NON_ESP_MARKER_SIZE &&
-		     memcmp(non_ESP_marker, ike_frag->data,
-			    NON_ESP_MARKER_SIZE) == 0)) {
+		     memeq(non_ESP_marker, ike_frag->data,
+			    NON_ESP_MARKER_SIZE))) {
 			ike_frag->data += NON_ESP_MARKER_SIZE;
 			ike_frag->size -= NON_ESP_MARKER_SIZE;
 		}
@@ -1687,8 +1687,8 @@ void process_v1_packet(struct msg_digest **mdp)
 	if (st != NULL &&
 	    st->st_rpacket.ptr != NULL &&
 	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
-	    memcmp(st->st_rpacket.ptr, md->packet_pbs.start,
-		   st->st_rpacket.len) == 0) {
+	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
+		   st->st_rpacket.len)) {
 		if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE) {
 			if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS) {
 				st->st_retransmit++;

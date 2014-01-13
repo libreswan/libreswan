@@ -259,10 +259,10 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 	    DBG_dump("Received PSK auth octets", sig_pbs->cur, sig_len);
 	    DBG_dump("Calculated PSK auth octets", calc_hash, hash_len));
 
-	if (memcmp(sig_pbs->cur, calc_hash, hash_len) ) {
+	if (memeq(sig_pbs->cur, calc_hash, hash_len) ) {
+		return STF_OK;
+	} else {
 		libreswan_log("AUTH mismatch: Received AUTH != computed AUTH");
 		return STF_FAIL;
-	} else {
-		return STF_OK;
 	}
 }

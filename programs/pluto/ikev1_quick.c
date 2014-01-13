@@ -1236,7 +1236,7 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			loglog(RC_LOG_SERIOUS,
 			       "Applying workaround for MS-818043 NAT-T bug");
-			memset(&b.his.net, 0, sizeof(ip_subnet));
+			zero(&b.his.net);
 			happy(addrtosubnet(&c->spd.that.host_addr,
 					   &b.his.net));
 		}

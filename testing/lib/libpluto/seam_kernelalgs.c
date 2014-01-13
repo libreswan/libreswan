@@ -5,7 +5,7 @@ static void init_seam_kernelalgs(void)
 	int ret;
 	struct sadb_alg sa;
 
-	memset(&sa, 0, sizeof(sa));
+	zero(&sa);
 	sa.sadb_alg_id = ESP_AES;
 	sa.sadb_alg_ivlen = 16;
 	sa.sadb_alg_minbits = 128;

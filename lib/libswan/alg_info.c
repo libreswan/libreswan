@@ -573,7 +573,7 @@ err:
  */
 static void parser_init_esp(struct parser_context *p_ctx)
 {
-	memset(p_ctx, 0, sizeof(*p_ctx));
+	zero(p_ctx);
 
 	p_ctx->protoid = PROTO_IPSEC_ESP;
 	p_ctx->ealg_str = p_ctx->ealg_buf;
@@ -594,7 +594,7 @@ static void parser_init_esp(struct parser_context *p_ctx)
  */
 static void parser_init_ah(struct parser_context *p_ctx)
 {
-	memset(p_ctx, 0, sizeof(*p_ctx));
+	zero(p_ctx);
 
 	p_ctx->protoid = PROTO_IPSEC_AH;
 	p_ctx->ealg_str = NULL;

@@ -77,7 +77,10 @@ typedef int bool;
 
 #define streq(a, b) (strcmp((a), (b)) == 0)             /* clearer shorthand */
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)     /* clearer shorthand */
-#define memeq(a, b, n) (memcmp(a, b, n) == 0)     /* clearer shorthand */
+#define memeq(a, b, n) (memcmp(a, b, n) == 0)	/* clearer shorthand */
+
+#define zero(x) memset((x), '\0', sizeof(*(x)))	/* zero all bytes */
+
 
 /* Jam a string into a buffer of limited size (truncation is silent).
  * This is somewhat like what people mistakenly think strncpy does

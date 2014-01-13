@@ -1242,7 +1242,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	{
 		struct isakmp_hdr hdr;
 
-		memset(&hdr, '\0', sizeof(hdr)); /* default to 0 */
+		zero(&hdr); /* default to 0 */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_SA;

@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
 						hash_type);
 				}
 				iterations++;
-				if (!memcmp(hash_r, expected_hash_r,
+				if (memeq(hash_r, expected_hash_r,
 					    expected_hash_r_len)) {
 					found = 1;
 					break;
@@ -382,7 +382,7 @@ int main(int argc, char *argv[])
 						hash_type);
 				}
 				iterations++;
-				if (!memcmp(hash_r, expected_hash_r,
+				if (memeq(hash_r, expected_hash_r,
 					    expected_hash_r_len)) {
 					found = 1;
 					break;

@@ -190,8 +190,8 @@ int main(int argc, char *argv[])
 	char virtname[64];
 	struct stat sts;
 
-	memset(&ifr, 0, sizeof(ifr));
-	memset(&shc, 0, sizeof(shc));
+	zero(&ifr);
+	zero(&shc);
 	virtname[0] = '\0';
 	progname = argv[0];
 

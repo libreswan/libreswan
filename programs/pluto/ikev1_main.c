@@ -1855,7 +1855,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 		pb_stream *const hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
 
 		if (pbs_left(hash_pbs) != hash_len ||
-			memcmp(hash_pbs->cur, hash_val, hash_len) != 0) {
+			!memeq(hash_pbs->cur, hash_val, hash_len)) {
 			DBG_cond_dump(DBG_CRYPT, "received HASH:",
 				hash_pbs->cur, pbs_left(hash_pbs));
 			loglog(RC_LOG_SERIOUS,
@@ -2693,8 +2693,8 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 
 	passert(md);
 
-	memset(&st, 0, sizeof(st));
-	memset(&cnx, 0, sizeof(cnx));
+	zero(&st);
+	zero(&cnx);
 	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;

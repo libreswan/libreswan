@@ -14,7 +14,7 @@ stf_status build_ke(struct pluto_crypto_req_cont *cn,
 		    enum crypto_importance importance)
 {
 	continuation = cn;
-	memset(&rd, 0, sizeof(rd));
+	zero(&rd);
 
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_build_kenonce;
@@ -33,7 +33,7 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 		       u_int16_t oakley_group2)
 {
 	continuation = cn;
-	memset(&rd, 0, sizeof(rd));
+	zero(&rd);
 
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_compute_dh_v2;

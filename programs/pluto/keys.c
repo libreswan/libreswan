@@ -330,7 +330,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		return "13" "NSS error: Not able to decrypt";
 	}
 
-	if (memcmp(data.data + data.len - hash_len, hash_val, hash_len) != 0) {
+	if (!memeq(data.data + data.len - hash_len, hash_val, hash_len)) {
 		pfree(data.data);
 		loglog(RC_LOG_SERIOUS, "RSA Signature NOT verified");
 		return "14" "NSS error: Not able to verify";
@@ -693,7 +693,7 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 	    DBG_log("started looking for xauth secret for %s",
 		    xauthname));
 
-	memset(&xa_id, 0, sizeof(xa_id));
+	zero(&xa_id);
 	xa_id.kind = ID_FQDN;
 	xa_id.name.ptr = (unsigned char *)xauthname;
 	xa_id.name.len = strlen(xauthname);

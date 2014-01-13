@@ -530,7 +530,7 @@ size_t format_end(char *buf,
 	const char *id_cbrackets = "";
 	const char *id_comma = "";
 
-	memset(endopts, 0, sizeof(endopts));
+	zero(&endopts);
 
 	if (isanyaddr(&this->host_addr)) {
 		if (this->host_type == KH_IPHOSTNAME) {
@@ -814,7 +814,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	cert_t cert;
 	err_t ugh = NULL;
 
-	memset(&dst->cert, 0, sizeof(dst->cert));
+	zero(&dst->cert);
 
 	/* initialize end certificate */
 	dst->cert.type = CERT_NONE;
@@ -2864,8 +2864,8 @@ struct connection *refine_host_connection(const struct state *st,
 
 				if (initiator && psk != dpsk) {
 					if (psk->len != dpsk->len ||
-						memcmp(psk->ptr, dpsk->ptr,
-							psk->len) != 0)
+						!memeq(psk->ptr, dpsk->ptr,
+							psk->len))
 						continue; /* different secret */
 				}
 			}

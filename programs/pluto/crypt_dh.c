@@ -269,7 +269,7 @@ static void skeyid_preshared(const chunk_t pss,
 	memcpy(nir.ptr, ni.ptr, ni.len);
 	memcpy(nir.ptr + ni.len, nr.ptr, nr.len);
 
-	memset(buf1, '\0', HMAC_BUFSIZE * 2);
+	zero(&buf1);
 
 	if (pss.len <= hasher->hash_block_size) {
 		memcpy(buf1, pss.ptr, pss.len);
@@ -372,7 +372,7 @@ static void skeyid_digisig(const chunk_t ni,
 	nir.ptr = alloc_bytes(nir.len, "Ni + Nr in skeyid_digisig");
 	memcpy(nir.ptr, ni.ptr, ni.len);
 	memcpy(nir.ptr + ni.len, nr.ptr, nr.len);
-	memset(buf1, '\0', HMAC_BUFSIZE * 2);
+	zero(&buf1);
 	if (nir.len <= hasher->hash_block_size) {
 		memcpy(buf1, nir.ptr, nir.len);
 	} else {
@@ -1024,7 +1024,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	memcpy(&dhq, skq, sizeof(struct pcr_skeyid_q));
 
 	/* clear out the reply */
-	memset(skr, 0, sizeof(*skr));
+	zero(skr);
 	skr->thespace.start = 0;
 	skr->thespace.len   = sizeof(skr->space);
 
@@ -1047,12 +1047,12 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 
 	calc_dh_shared(&shared, g, ltsecret, group, pubk);
 
-	memset(&skeyid, 0, sizeof(skeyid));
-	memset(&skeyid_d, 0, sizeof(skeyid_d));
-	memset(&skeyid_a, 0, sizeof(skeyid_a));
-	memset(&skeyid_e, 0, sizeof(skeyid_e));
-	memset(&new_iv,   0, sizeof(new_iv));
-	memset(&enc_key,  0, sizeof(enc_key));
+	zero(&skeyid);
+	zero(&skeyid_d);
+	zero(&skeyid_a);
+	zero(&skeyid_e);
+	zero(&new_iv);
+	zero(&enc_key);
 
 	/* okay, so now calculate IV */
 	calc_skeyids_iv(&dhq,
@@ -1098,7 +1098,7 @@ void calc_dh(struct pluto_crypto_req *r)
 	memcpy(&dhq, skq, sizeof(struct pcr_skeyid_q));
 
 	/* clear out the reply */
-	memset(skr, 0, sizeof(*skr));
+	zero(skr);
 	skr->thespace.start = 0;
 	skr->thespace.len   = sizeof(skr->space);
 
@@ -1145,7 +1145,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	struct v2prf_stuff vpss;
 	size_t total_keysize;
 
-	memset(&vpss, 0, sizeof(vpss));
+	zero(&vpss);
 
 	chunk_t hmac_opad, hmac_ipad, hmac_pad_prf, counter; /*hmac_pad_integ, hmac_zerobyte, hmac_val1, hmac_val2;*/
 	CK_OBJECT_HANDLE keyhandle;
@@ -1494,7 +1494,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 	memcpy(&dhq, skq, sizeof(struct pcr_skeyid_q));
 
 	/* clear out the reply */
-	memset(skr, 0, sizeof(*skr));
+	zero(skr);
 	skr->thespace.start = 0;
 	skr->thespace.len   = sizeof(skr->space);
 
@@ -1514,14 +1514,14 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 
 	calc_dh_shared(&shared, g, ltsecret, group, pubk);
 
-	memset(&skeyseed,  0, sizeof(skeyseed));
-	memset(&SK_d,      0, sizeof(SK_d));
-	memset(&SK_ai,     0, sizeof(SK_ai));
-	memset(&SK_ar,     0, sizeof(SK_ar));
-	memset(&SK_ei,     0, sizeof(SK_ei));
-	memset(&SK_er,     0, sizeof(SK_er));
-	memset(&SK_pi,     0, sizeof(SK_pi));
-	memset(&SK_pr,     0, sizeof(SK_pr));
+	zero(&skeyseed);
+	zero(&SK_d);
+	zero(&SK_ai);
+	zero(&SK_ar);
+	zero(&SK_ei);
+	zero(&SK_er);
+	zero(&SK_pi);
+	zero(&SK_pr);
 
 	/* okay, so now calculate IV */
 	calc_skeyseed_v2(&dhq,

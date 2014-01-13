@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 		exit(10);
 	}
 
-	memset(cfg, 0, sizeof(*cfg));
+	zero(cfg);
 
 	/**
 	 * Set default values

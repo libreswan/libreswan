@@ -86,7 +86,7 @@ struct traffic_selector ikev2_end_to_ts(struct end *e)
 	struct traffic_selector ts;
 	struct in6_addr v6mask;
 
-	memset(&ts, 0, sizeof(ts));
+	zero(&ts);
 
 	switch (e->client.addr.u.v4.sin_family) {
 	case AF_INET:
@@ -285,7 +285,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 			return -1;
 
 		if (i < array_max) {
-			memset(&array[i], 0, sizeof(*array));
+			zero(&array[i]);
 			switch (ts1.isat1_type) {
 			case IKEv2_TS_IPV4_ADDR_RANGE:
 				array[i].ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
@@ -1110,8 +1110,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					DBG_log("Now responding with USE_TRANSPORT_MODE notify");
 				}
 
-				memset(&child_spi, 0, sizeof(child_spi));
-				memset(&notifiy_data, 0, sizeof(notifiy_data));
+				zero(&child_spi);
+				zero(&notifiy_data);
 				ship_v2N(ISAKMP_NEXT_v2NONE,
 					 ISAKMP_PAYLOAD_NONCRITICAL,
 				         /*PROTO_ISAKMP*/ 0,

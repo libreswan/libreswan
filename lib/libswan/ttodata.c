@@ -649,7 +649,7 @@ int *status;
 		hexout(r->data, strlen(r->data), stdout);
 		printf("'\n");
 		*status = 1;
-	} else if (memcmp(buf, r->data, n) != 0) {
+	} else if (!memeq(buf, r->data, n)) {
 		printf("`%s' gave %d `", r->ascii, n);
 		hexout(buf, n, stdout);
 		printf("', expecting %d `", strlen(r->data));

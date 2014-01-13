@@ -354,39 +354,34 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 {
 	struct ip_pool *h = *head;
 
-	if (h) {
-		while (h) {
-			int sflag, eflag;
-			sflag = memcmp(&h->start.u.v4.sin_addr.s_addr,
-				       &pool_range->start.u.v4.sin_addr.s_addr,
-				       sizeof(h->start.u.v4.sin_addr.s_addr));
-			eflag = memcmp(&h->end.u.v4.sin_addr.s_addr,
-				       &pool_range->end.u.v4.sin_addr.s_addr,
-				       sizeof(h->end.u.v4.sin_addr.s_addr));
+	while (h != NULL) {
+		bool isstart = memeq(&h->start.u.v4.sin_addr.s_addr,
+			       &pool_range->start.u.v4.sin_addr.s_addr,
+			       sizeof(h->start.u.v4.sin_addr.s_addr));
+		bool isend = memeq(&h->end.u.v4.sin_addr.s_addr,
+			       &pool_range->end.u.v4.sin_addr.s_addr,
+			       sizeof(h->end.u.v4.sin_addr.s_addr));
 
-			DBG(DBG_CONTROLMORE, {
-				    char abuf2[ADDRTOT_BUF];
-				    char abuf1[ADDRTOT_BUF];
-				    addrtot(&pool_range->start, 0, abuf1,
-					    sizeof(abuf1));
-				    addrtot(&pool_range->end, 0, abuf2,
-					    sizeof(abuf2));
-				    DBG_log("%s addresspool %s-%s %s %s ",
-					    ((sflag ==
-					      0) &
-					     (eflag ==
-					      0)) ? "existing " : "new ",
-					    abuf1, abuf2,
-					    (sflag == 0) ? "same start " : " ",
-					    (eflag == 0) ? "same end" : "");
-			    });
+		DBG(DBG_CONTROLMORE, {
+			    char abuf2[ADDRTOT_BUF];
+			    char abuf1[ADDRTOT_BUF];
+			    addrtot(&pool_range->start, 0, abuf1,
+				    sizeof(abuf1));
+			    addrtot(&pool_range->end, 0, abuf2,
+				    sizeof(abuf2));
+			    DBG_log("%s addresspool %s-%s %s %s ",
+				    isstart && isend
+				    ? "existing " : "new ",
+				    abuf1, abuf2,
+				    isstart ? "same start " : " ",
+				    isend ? "same end" : "");
+		    });
 
-			if ((sflag ==  0 ) & ( eflag == 0)) {
-				reference_addresspool(h);
-				return h;
-			}
-			h = h->next;
+		if (isstart && isend) {
+			reference_addresspool(h);
+			return h;
 		}
+		h = h->next;
 	}
 	return NULL;
 }

@@ -391,8 +391,8 @@ static bool read_packet(struct msg_digest *md)
 
 		if (md->iface->ike_float &&
 		    pbs_left(&md->packet_pbs) >= NON_ESP_MARKER_SIZE &&
-		    memcmp(md->packet_pbs.cur, non_ESP_marker,
-			   NON_ESP_MARKER_SIZE) == 0) {
+		    memeq(md->packet_pbs.cur, non_ESP_marker,
+			   NON_ESP_MARKER_SIZE)) {
 			bool happy = in_raw(NULL, NON_ESP_MARKER_SIZE,
 					    &md->packet_pbs,
 					    "spurious extra Non ESP Marker");

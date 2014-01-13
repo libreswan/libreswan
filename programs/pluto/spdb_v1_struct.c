@@ -1515,7 +1515,7 @@ bool init_am_st_oakley(struct state *st, lset_t policy)
 						  c->spd.this.xauth_server,
 						  c->spd.this.xauth_client);
 
-	memset(&ta, 0, sizeof(ta));
+	zero(&ta);
 
 	/* When this SA expires (seconds) */
 	ta.life_seconds = st->st_connection->sa_ike_life_seconds;
@@ -2133,9 +2133,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 		esp_spi = 0;
 		ah_spi = 0;
 
-		memset(&ah_proposal, 0, sizeof(ah_proposal));
-		memset(&esp_proposal, 0, sizeof(esp_proposal));
-		memset(&ipcomp_proposal, 0, sizeof(ipcomp_proposal));
+		zero(&ah_proposal);
+		zero(&esp_proposal);
+		zero(&ipcomp_proposal);
 
 		/* for each proposal in the conjunction */
 		do {

@@ -84,7 +84,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	if (!cfg)
 		return;
 
-	memset(cfg, 0, sizeof(struct starter_config));
+	zero(cfg);
 
 	TAILQ_INIT(&cfg->conns);
 
@@ -1353,7 +1353,7 @@ static void conn_default(struct starter_conn *conn,
 	*conn = *def;
 
 	/* unlink it */
-	memset(&conn->link, 0, sizeof(conn->link));
+	zero(&conn->link);
 
 #define CONN_STR2(v, T) if (v) \
 		v = (T)xstrdup((char *)v)
@@ -1410,7 +1410,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name,
 		return NULL;
 	}
 
-	memset(conn, 0, sizeof(struct starter_conn));
+	zero(conn);
 	conn_default(conn, &cfg->conn_default);
 	conn->name = xstrdup(name);
 	conn->desired_state = STARTUP_IGNORE;
@@ -1486,7 +1486,7 @@ struct starter_config *confread_load(const char *file,
 		parser_free_conf(cfgp);
 		return NULL;
 	}
-	memset(cfg, 0, sizeof(*cfg));
+	zero(cfg);
 
 	/**
 	 * Set default values

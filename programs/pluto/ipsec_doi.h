@@ -108,7 +108,7 @@ extern bool encrypt_message(pb_stream *pbs, struct state *st);
 		u_char hash_val[MAX_DIGEST_LEN]; \
 		size_t hash_len = do_hash; \
 		if (pbs_left(hash_pbs) != hash_len \
-		    || memcmp(hash_pbs->cur, hash_val, hash_len) != 0) \
+		    || !memeq(hash_pbs->cur, hash_val, hash_len)) \
 		{ \
 			DBG_cond_dump(DBG_CRYPT, "received " hash_name ":", \
 				      hash_pbs->cur, pbs_left(hash_pbs)); \

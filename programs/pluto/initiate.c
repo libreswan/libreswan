@@ -711,7 +711,8 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 
 #ifdef HAVE_LABELED_IPSEC
 	char sec_ctx_value[MAX_SECCTX_LEN];
-	memset(sec_ctx_value, 0, sizeof(sec_ctx_value));
+
+	zero(&sec_ctx_value);
 	if (uctx != NULL)
 		memcpy(sec_ctx_value, uctx->sec_ctx_value, uctx->ctx_len);
 	DBG(DBG_CONTROLMORE,

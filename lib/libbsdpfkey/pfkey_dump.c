@@ -531,7 +531,7 @@ u_int family, pref, port, ulp;
 		snprintf(prefbuf, sizeof(prefbuf), "/%u", pref);
 
 	if (ulp == IPPROTO_ICMPV6) {
-		memset(portbuf, 0, sizeof(portbuf));
+		zero(&portbuf);
 	} else {
 		if (port == IPSEC_PORT_ANY)
 			snprintf(portbuf, sizeof(portbuf), "[%s]", "any");

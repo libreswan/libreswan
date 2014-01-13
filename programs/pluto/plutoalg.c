@@ -415,7 +415,7 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
  */
 static void parser_init_ike(struct parser_context *p_ctx)
 {
-	memset(p_ctx, 0, sizeof(*p_ctx));
+	zero(p_ctx);
 	p_ctx->protoid = PROTO_ISAKMP;
 
 	p_ctx->ealg_str = p_ctx->ealg_buf;
@@ -819,7 +819,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	struct db_prop_conj pc;
 	struct db_sa t, *n;
 
-	memset(&t, 0, sizeof(t));
+	zero(&t);
 
 	if (ei == NULL) {
 		struct db_sa *sadb;

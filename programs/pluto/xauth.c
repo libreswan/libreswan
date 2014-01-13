@@ -503,9 +503,9 @@ static stf_status modecfg_resp(struct state *st,
 			resp &= ~LELEM(INTERNAL_IP4_DNS);
 
 		if (use_modecfg_addr_as_client_addr) {
-			if (memcmp(&st->st_connection->spd.that.client.addr,
+			if (!memeq(&st->st_connection->spd.that.client.addr,
 				   &ia.ipaddr,
-				   sizeof(ia.ipaddr)) != 0) {
+				   sizeof(ia.ipaddr))) {
 				/* Make the Internal IP address and Netmask as
 				 * that client address
 				 */

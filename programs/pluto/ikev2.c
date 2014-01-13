@@ -340,7 +340,7 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 
-		memset(pd, 0, sizeof(*pd));	/* ??? is this needed? */
+		zero(pd);	/* ??? is this needed? */
 
 		if (sd == NULL || np < ISAKMP_v2PAYLOAD_TYPE_BASE) {
 			/* This payload is unknown to us.
@@ -797,8 +797,8 @@ void send_v2_notification_from_md(struct msg_digest *md UNUSED, u_int16_t type,
 	 */
 	passert(md);
 
-	memset(&st, 0, sizeof(st));
-	memset(&cnx, 0, sizeof(cnx));
+	zero(&st);
+	zero(&cnx);
 	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;

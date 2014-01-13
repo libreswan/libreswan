@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 	printf("expected: \n");
 	hexdump(aModExpExpectedRes_l, 0, 192);
 
-	if (memcmp(gtothex, aModExpExpectedRes_l, 192) == 0)
+	if (memeq(gtothex, aModExpExpectedRes_l, 192))
 		printf("SUCCESS\n");
 
 	exit(0);

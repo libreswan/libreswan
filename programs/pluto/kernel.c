@@ -1302,7 +1302,7 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 
 	DBG(DBG_KERNEL, DBG_log("delete %s", text_said));
 
-	memset(&sa, 0, sizeof(sa));
+	zero(&sa);
 	sa.spi = spi;
 	sa.proto = proto;
 	sa.src = src;
@@ -1372,7 +1372,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	}
 	c->encapsulation = encapsulation;
 
-	memset(said, 0, sizeof(said));
+	zero(&said);
 
 	if (kernel_ops->inbound_eroute) {
 		inner_spi = 256;
@@ -3014,7 +3014,7 @@ static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
 
 	set_text_said(text_said, &dst, esp_spi, SA_ESP);
 
-	memset(&sa, 0, sizeof(sa));
+	zero(&sa);
 	sa.spi = esp_spi;
 	sa.src = &src;
 	sa.dst = &dst;
@@ -3102,7 +3102,7 @@ bool get_sa_info(struct state *st, bool inbound, time_t *ago)
 	}
 	set_text_said(text_said, dst, spi, proto);
 
-	memset(&sa, 0, sizeof(sa));
+	zero(&sa);
 	sa.spi = spi;
 	sa.proto = proto;
 	sa.src = src;

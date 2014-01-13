@@ -487,7 +487,7 @@ u_int32_t min, max, reqid, seq;
 			return -1;
 		}
 
-		memset(&spirange, 0, sizeof(spirange));
+		zero(&spirange);
 		spirange.sadb_spirange_len = PFKEY_UNIT64(sizeof(spirange));
 		spirange.sadb_spirange_exttype = SADB_EXT_SPIRANGE;
 		spirange.sadb_spirange_min = min;
@@ -1602,7 +1602,7 @@ u_int32_t spid;
 		free(newmsg);
 		return -1;
 	}
-	memset(&xpl, 0, sizeof(xpl));
+	zero(&xpl);
 	xpl.sadb_x_policy_len = PFKEY_UNIT64(sizeof(xpl));
 	xpl.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	xpl.sadb_x_policy_id = spid;
@@ -1975,18 +1975,15 @@ u_int tlen;
 u_int32_t seq;
 pid_t pid;
 {
-	struct sadb_msg *p;
-	u_int len;
-
-	p = (struct sadb_msg *)buf;
-	len = sizeof(struct sadb_msg);
+	struct sadb_msg *p = (struct sadb_msg *)buf;
+	u_int len = sizeof(struct sadb_msg);
 
 	if (buf + len > lim) {
 		PFKEY_DEBUG( "sadbmsg: %p+%d>%p fails\n", buf, len, lim);
 		return NULL;
 	}
 
-	memset(p, 0, len);
+	zero(p);
 	p->sadb_msg_version = PF_KEY_V2;
 	p->sadb_msg_type = type;
 	p->sadb_msg_errno = 0;
@@ -2009,18 +2006,15 @@ caddr_t lim;
 u_int32_t spi, flags;
 u_int wsize, auth, enc;
 {
-	struct sadb_sa *p;
-	u_int len;
-
-	p = (struct sadb_sa *)buf;
-	len = sizeof(struct sadb_sa);
+	struct sadb_sa *p = (struct sadb_sa *)buf;
+	u_int len = sizeof(struct sadb_sa);
 
 	if (buf + len > lim) {
 		PFKEY_DEBUG( "sadbsa: %p+%d>%p fails\n", buf, len, lim);
 		return NULL;
 	}
 
-	memset(p, 0, len);
+	zero(p);
 	p->sadb_sa_len = PFKEY_UNIT64(len);
 	p->sadb_sa_exttype = SADB_EXT_SA;
 	p->sadb_sa_spi = spi;
@@ -2046,11 +2040,8 @@ const struct sockaddr *saddr;
 u_int prefixlen;
 u_int ul_proto;
 {
-	struct sadb_address *p;
-	u_int len;
-
-	p = (struct sadb_address *)buf;
-	len = sizeof(struct sadb_address) + PFKEY_ALIGN8(saddr->sa_len);
+	struct sadb_address *p = (struct sadb_address *)buf;
+	u_int len = sizeof(struct sadb_address) + PFKEY_ALIGN8(saddr->sa_len);
 
 	if (buf + len > lim) {
 		PFKEY_DEBUG( "sadbaddr: %p+%d>%p fails\n", buf, len, lim);
@@ -2079,11 +2070,8 @@ caddr_t lim;
 caddr_t key;
 u_int type, keylen;
 {
-	struct sadb_key *p;
-	u_int len;
-
-	p = (struct sadb_key *)buf;
-	len = sizeof(struct sadb_key) + PFKEY_ALIGN8(keylen);
+	struct sadb_key *p = (struct sadb_key *)buf;
+	u_int len = sizeof(struct sadb_key) + PFKEY_ALIGN8(keylen);
 
 	if (buf + len > lim) {
 		PFKEY_DEBUG( "sadbkey: %p+%d>%p fails\n", buf, len, lim);
@@ -2112,18 +2100,15 @@ caddr_t lim;
 u_int type;
 u_int32_t l_alloc, l_bytes, l_addtime, l_usetime;
 {
-	struct sadb_lifetime *p;
-	u_int len;
-
-	p = (struct sadb_lifetime *)buf;
-	len = sizeof(struct sadb_lifetime);
+	struct sadb_lifetime *p = (struct sadb_lifetime *)buf;
+	u_int len = sizeof(struct sadb_lifetime);
 
 	if (buf + len > lim) {
 		PFKEY_DEBUG( "sadblifetime: %p+%d>%p fails\n", buf, len, lim);
 		return NULL;
 	}
 
-	memset(p, 0, len);
+	zero(p);
 	p->sadb_lifetime_len = PFKEY_UNIT64(len);
 	p->sadb_lifetime_exttype = type;
 
@@ -2159,19 +2144,16 @@ caddr_t lim;
 u_int32_t mode0;
 u_int32_t reqid;
 {
-	struct sadb_x_sa2 *p;
 	u_int8_t mode = mode0 & 0xff;
-	u_int len;
-
-	p = (struct sadb_x_sa2 *)buf;
-	len = sizeof(struct sadb_x_sa2);
+	struct sadb_x_sa2 *p = (struct sadb_x_sa2 *)buf;
+	u_int len = sizeof(struct sadb_x_sa2);
 
 	if (buf + len > lim) {
 		PFKEY_DEBUG( "sadbxsa2: %p+%d>%p fails\n", buf, len, lim);
 		return NULL;
 	}
 
-	memset(p, 0, len);
+	zero(p);
 	p->sadb_x_sa2_len = PFKEY_UNIT64(len);
 	p->sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	p->sadb_x_sa2_mode = mode;

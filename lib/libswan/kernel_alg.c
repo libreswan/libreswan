@@ -105,8 +105,8 @@ static void kernel_alg_init(void)
 			       "memset(%p, 0, %d) ",
 			       &esp_aalg,  (int)sizeof(esp_aalg),
 			       &esp_ealg,  (int)sizeof(esp_ealg)));
-	memset(&esp_aalg, 0, sizeof(esp_aalg));
-	memset(&esp_ealg, 0, sizeof(esp_ealg));
+	zero(&esp_aalg);
+	zero(&esp_ealg);
 	esp_ealg_num = esp_aalg_num = 0;
 }
 
@@ -446,7 +446,7 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 					 transid, auth));
 		return NULL;
 	}
-	memset(&ei_buf, 0, sizeof(ei_buf));
+	zero(&ei_buf);
 	ei_buf.transid = transid;
 	ei_buf.auth = auth;
 
