@@ -197,11 +197,11 @@ if userland == "shrew":
 
 if not args.ipv:
 	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
-	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
+	commands.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=1")
 
 if args.ipv6:
 	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
-	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
+	commands.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=0")
 	commands.getoutput("/etc/init.d/network restart")
 
 # final prep - this kills any running userland
