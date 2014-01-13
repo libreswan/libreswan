@@ -1,24 +1,9 @@
-#!/bin/sh
-: ==== start ====
-
-/testing/guestbin/swan-prep --x509 
-
-certutil -d /etc/ipsec.d -D east -n east
-certutil -L -d /etc/ipsec.d
-
-# this tests non-esp marker with fragments using libreswan. Next test
-# uses racoon
-#iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j LOGDROP
-
-ipsec setup stop
-/usr/local/libexec/ipsec/_stackmanager stop
-rm -fr /var/run/pluto/pluto.pid
-/usr/local/libexec/ipsec/_stackmanager start
-/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+/testing/guestbin/swan-prep --x509
+# make sure that clear text does not get through
+iptables -A INPUT -i eth1 -s 192.0.2.254/32 -j LOGDROP
+# confirm with a ping
+ping -c 4 -n -I 192.0.3.254 192.0.2.254
+ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec auto --add northnet--eastnet-nat
-
-echo done.
-
-echo done
+ipsec auto --add northnet-eastnet-nat
+echo "initdone"
