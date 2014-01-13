@@ -106,8 +106,11 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 	service = "".join(open("/lib/systemd/system/ipsec.service").readlines())
 	if "Restart=always" in service:
 		fp = open("/lib/systemd/system/ipsec.service","w")
-		fp.write("".join(service).replace("Restart=always","Restart=never"))
+		fp.write("".join(service).replace("Restart=always","Restart=no"))
 		commands.getoutput("/usr/bin/systemctl daemon-reload")
+
+# easy way to ensure we have the LOGDROP table for those OSes where we don't start a firewall with config
+commands.getoutput("iptables -N LOGDROP > /dev/null 2>/dev/null")
 
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
