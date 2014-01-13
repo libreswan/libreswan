@@ -1,4 +1,4 @@
-# Minimal Kickstart file
+# Minimal Kickstart file - updated for fedora 19
 install
 text
 reboot
@@ -67,9 +67,7 @@ ifconfig eth0 mtu 1400
 # TODO: if rhel/centos, we should install epel-release too
 yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools pexpect
 yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace unbound
-# at least for f17 it is a separate package
-yum install -y pexpect 
-yum install -y strongswan
+yum install -y pexpect strongswan net-tools bind-utils
 
 mkdir /testing /source
 
@@ -121,6 +119,7 @@ cat << EOD > /etc/modules-load.d/virtio-rng.conf
 virtio-rng
 EOD
 
+systemctl disable firewalld.service
 systemctl enable network.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
