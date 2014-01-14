@@ -78,7 +78,6 @@
 #include "addresspool.h"
 
 /* forward declarations */
-static stf_status modecfg_inI2(struct msg_digest *md);
 static stf_status xauth_client_ackstatus(struct state *st,
 				  pb_stream *rbody,
 				  u_int16_t ap_id);
@@ -1338,8 +1337,9 @@ static void *do_authentication(void *varg)
 	 */
 	pthread_mutex_lock(&st_jbuf_mutex);
 	if (sigsetjmp(ptr->jbuf, 1) != 0) {
-		/* we got here via siglongjmp in sigIntHandler
+		/* We got here via siglongjmp in sigIntHandler.
 		 * st_jbuf_mutex is locked.
+		 * The idea is to shut down the PAM dialogue.
 		 */
 
 		dealloc_st_jbuf(ptr);
@@ -1348,10 +1348,10 @@ static void *do_authentication(void *varg)
 		/* ??? how do we know that there is no more than one thread? */
 		/* ??? how do we know which thread was supposed to get this SIGINT if the signal handler setting is global? */
 		if (st_jbuf_mem != NULL) {
-			/* Yes, restart the one shot SIGINT handler */
+			/* Yes, restart the one-shot SIGINT handler */
 			sigprocmask(SIG_BLOCK, NULL, &sa.sa_mask);
 			sa.sa_handler = sigIntHandler;
-			sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
+			sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One-shot handler */
 			sigaddset(&sa.sa_mask, SIGINT);
 			sigaction(SIGINT, &sa, NULL);
 		} else {
