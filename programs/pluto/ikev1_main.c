@@ -2667,7 +2667,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 				PROTO_ISAKMP);
 	} else if (IS_ISAKMP_ENCRYPTED(from_state)) {
 		send_notification(st, type, st, generate_msgid(st),
-				st->st_icookie, st->st_rcookie, 
+				st->st_icookie, st->st_rcookie,
 				PROTO_ISAKMP);
 	} else {
 		/* no ISAKMP SA established - don't encrypt notification */

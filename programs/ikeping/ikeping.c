@@ -69,7 +69,7 @@ static void help(void)
 static void hton_ping(struct isakmp_hdr *ih)
 {
 #if 0
-	u_int32_t *ihp; 
+	u_int32_t *ihp;
 	ihp = (u_int32_t *)ih;
 
 	/* put it in network byte order. */
@@ -124,7 +124,6 @@ static void send_ping(int afamily,
 
 	fprintf(stderr, "IKE version octet:%d; exchange type:%d\n", ih.isa_version, ih.isa_xchg);
 
-	
 	switch (afamily) {
 	case AF_INET:
 		raddr->u.v4.sin_port = htons(rport);
@@ -147,7 +146,7 @@ static void send_ping(int afamily,
 }
 
 /*
- * send an IKE ping reply 
+ * send an IKE ping reply
  *
  */
 static void reply_packet(int afamily,
@@ -174,14 +173,14 @@ static void reply_packet(int afamily,
 	op->isa_length = ilen ? ilen : 0;
 
 	hton_ping(op);
-	
+
 	len = sizeof(*op);
 	if (plen) {
 		if (plen > len) {
 			plen = len;
 			fprintf(stderr, "Packet length capped at %d - no more data", plen);
 		}
-	} 
+	}
 	if (sendto(s, op, plen, 0, (struct sockaddr *)dst_addr,
 		   dst_len) < 0) {
 		perror("sendto");
@@ -395,7 +394,6 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 			continue;
-			
 
 		case 's':
 			listen_only++;

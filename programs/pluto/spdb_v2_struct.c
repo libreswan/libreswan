@@ -725,7 +725,7 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 					/* note: enum_show uses a static buffer so more than one call per
 					   statement is dangerous */
 					char esb[ENUM_SHOW_BUF_LEN];
-		
+
 					DBG_log("proposal %u %s encr= (policy:%s vs offered:%s)",
 						propnum,
 						encr_matched ? "succeeded" : "failed",
@@ -1440,8 +1440,8 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 		libreswan_log("ignored proposal %u with no cipher transforms",
 			      propnum);
 		return FALSE;
-	} 
-	if (itl->encr_trans_next > 1) 
+	}
+	if (itl->encr_trans_next > 1)
 		libreswan_log("Hugh is surprised there is more than one encryption transform, namely '%u'", itl->encr_trans_next);
 
 	switch(itl->encr_transforms[0]) {

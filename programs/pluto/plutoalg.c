@@ -74,7 +74,7 @@ out:
 static int aalg_getbyname_ike(const char *str, int len)
 {
 	int ret = -1;
-	unsigned num;
+	int num_read;
 	static const char sha2_256_aka[] = "sha2";
 
 	if (!str || !*str)
@@ -92,15 +92,15 @@ static int aalg_getbyname_ike(const char *str, int len)
 		return ret;
 
 	/* Special value for no authentication since zero is already used. */
-        ret = INT_MAX;
-	if (strncasecmp(str, "null", len) == NULL)
+	ret = INT_MAX;
+	if (strncasecmp(str, "null", len) == 0)
 		return ret;
 
 	/* support idXXX as syntax, matching iana numbers directly */
-	if (sscanf(str, "id%d%n", &ret, &num) <= 0 || num != len)
-		return -1;	
+	if (sscanf(str, "id%d%n", &ret, &num_read) >= 1 && num_read == len)
+		return ret;
 
-	return ret;
+	return -1;
 }
 /**
  *      Search oakley_group_names for a match, eg:
@@ -209,13 +209,13 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 		int i;
 
 		for (i=0; i != elemsof(default_ike_groups); i++)
-			per_group_alg_info_ike_add(alg_info, 
+			per_group_alg_info_ike_add(alg_info,
 				     ealg_id, ek_bits,
 				     aalg_id, ak_bits,
 				     default_ike_groups[i]);
 	} else {
 		/* group determined by caller */
-		per_group_alg_info_ike_add(alg_info, 
+		per_group_alg_info_ike_add(alg_info,
 			     ealg_id, ek_bits,
 			     aalg_id, ak_bits,
 			     modp_id);
@@ -528,7 +528,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 
 		/*	add keylegth if specified in esp= string */
-		if (esp_info->esp_ealg_keylen) {  
+		if (esp_info->esp_ealg_keylen) {
 				db_attr_add_values(db_ctx,
 						   KEY_LENGTH,
 						   esp_info->esp_ealg_keylen );

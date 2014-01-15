@@ -120,7 +120,7 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 			       "satype=%d, exttype=%d, alg_id=%d(%s)",
 			       satype, exttype, alg_id,
 				enum_name(&esp_transformid_names, alg_id)));
-	
+
 	alg_p = sadb_alg_ptr(satype, exttype, alg_id, TRUE);
 	if (alg_p == NULL) {
 		DBG_log("kernel_alg_add(%d,%d,%d) fails because alg combo is invalid",
@@ -351,8 +351,9 @@ int kernel_alg_esp_enc_max_keylen(int alg_id)
 	int keylen = 0;
 
 	if (!ESP_EALG_PRESENT(alg_id)) {
-        	DBG(DBG_KERNEL, DBG_log("kernel_alg_esp_enc_max_keylen():"
-                     "alg_id=%d not found",alg_id));
+		DBG(DBG_KERNEL,
+		    DBG_log("kernel_alg_esp_enc_max_keylen():"
+			    "alg_id=%d not found",alg_id));
 		return 0;
 	}
 
@@ -439,7 +440,7 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 	sadb_ealg = transid;
 	sadb_aalg = alg_info_esp_aa2sadb(auth);
 
-	if (!ESP_EALG_PRESENT(sadb_ealg) || 
+	if (!ESP_EALG_PRESENT(sadb_ealg) ||
 	    !ESP_AALG_PRESENT(sadb_aalg)) {
 		DBG(DBG_PARSING, DBG_log("kernel_alg_esp_info():"
 					 "transid=%d, auth=%d, ei=NULL",

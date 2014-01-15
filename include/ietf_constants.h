@@ -1280,7 +1280,7 @@ enum pubkey_alg {
 
 #define ISAKMP_ATTR_RTYPE_MASK 0x7FFF
 
-/* 
+/*
  * ESP algorithms come in via ipsec_cipher_algo in libreswan/ipsec_policy.h
  */
 
