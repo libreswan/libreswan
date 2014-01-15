@@ -167,6 +167,7 @@ typedef enum {
 
 #define MAX_IKE_FRAGMENTS       16
 
+
 /* debugging settings: a set of selections for reporting
  * These would be more naturally situated in log.h,
  * but they are shared with whack.
@@ -177,43 +178,89 @@ typedef enum {
  * in whack.c.  A change to WHACK_MAGIC in whack.h will be required too.
  */
 
-#define DBG_RAW         LELEM(0)                                /* raw packet I/O */
-#define DBG_CRYPT       LELEM(1)                                /* encryption/decryption of messages */
-#define DBG_PARSING     LELEM(2)                                /* show decoding of messages */
-#define DBG_EMITTING    LELEM(3)                                /* show encoding of messages */
-#define DBG_CONTROL     LELEM(4)                                /* control flow within Pluto */
-#define DBG_LIFECYCLE   LELEM(5)                                /* SA lifecycle */
-#define DBG_KERNEL      LELEM(6)                                /* messages with the kernel */
-#define DBG_DNS         LELEM(7)                                /* DNS activity */
-#define DBG_OPPO        LELEM(8)                                /* opportunism */
-#define DBG_CONTROLMORE LELEM(9)                                /* more detailed debugging */
+/* Index of DBG/IMPAIR set elements.
+ * Note: these are NOT sets: use LELEM to turn these into singletons.
+ * Used by whack and pluto.
+ * NOTE: when updating/adding x_IX, do so to x in the next table too!
+ */
+enum {
+	DBG_RAW_IX,		/* raw packet I/O */
+	DBG_CRYPT_IX,		/* encryption/decryption of messages */
+	DBG_PARSING_IX,		/* show decoding of messages */
+	DBG_EMITTING_IX,	/* show encoding of messages */
+	DBG_CONTROL_IX,		/* control flow within Pluto */
+	DBG_LIFECYCLE_IX,	/* SA lifecycle */
+	DBG_KERNEL_IX,		/* messages with the kernel */
+	DBG_DNS_IX,		/* DNS activity */
+	DBG_OPPO_IX,		/* opportunism */
+	DBG_CONTROLMORE_IX,	/* more detailed debugging */
 
-#define DBG_PFKEY       LELEM(10)                               /*turn on the pfkey library debugging*/
-#define DBG_NATT        LELEM(11)                               /* debugging of NAT-traversal */
-#define DBG_X509        LELEM(12)                               /* X.509/pkix verify, cert retrival */
-#define DBG_DPD         LELEM(13)                               /* DPD items */
-#define DBG_OPPOINFO    LELEM(14)                               /* log various informational things about oppo/%trap-keying */
-#define DBG_WHACKWATCH  LELEM(15)                               /* never let WHACK go */
-#define DBG_PRIVATE     LELEM(20)                               /* private information: DANGER! */
+	DBG_PFKEY_IX,		/*turn on the pfkey library debugging*/
+	DBG_NATT_IX,		/* debugging of NAT-traversal */
+	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
+	DBG_DPD_IX,		/* DPD items */
+	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
+	DBG_WHACKWATCH_IX,	/* never let WHACK go */
+	DBG_unused1_IX,
+	DBG_unused2_IX,
+	DBG_unused3_IX,
+	DBG_unused4_IX,
+	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
 
-#define IMPAIR0 21                                              /* first bit for IMPAIR_* */
+	IMPAIR_DELAY_ADNS_KEY_ANSWER_IX,	/* sleep before answering */
+	IMPAIR_DELAY_ADNS_TXT_ANSWER_IX,	/* sleep before answering */
+	IMPAIR_BUST_MI2_IX,			/* make MI2 really large */
+	IMPAIR_BUST_MR2_IX,			/* make MR2 really large */
+	IMPAIR_SA_CREATION_IX,			/* fail all SA creation */
+	IMPAIR_DIE_ONINFO_IX,			/* cause state to be deleted upon receipt of information payload */
+	IMPAIR_JACOB_TWO_TWO_IX,		/* cause pluto to send all messages twice. */
+						/* cause pluto to send all messages twice. */
+	IMPAIR_MAJOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE major version that's higher then we support. */
+	IMPAIR_MINOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE minor version that's higher then we support. */
+	IMPAIR_RETRANSMITS_IX,			/* cause pluto to never retransmit */
+	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,	/* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
+	IMPAIR_SEND_IKEv2_KE_IX,		/* causes pluto to omit sending the KE payload in IKEv2 */
+	IMPAIR_roof_IX	/* first unasigned IMPAIR */
+};
 
-#define IMPAIR_DELAY_ADNS_KEY_ANSWER    LELEM(IMPAIR0 + 0)      /* sleep before answering */
-#define IMPAIR_DELAY_ADNS_TXT_ANSWER    LELEM(IMPAIR0 + 1)      /* sleep before answering */
-#define IMPAIR_BUST_MI2 LELEM(IMPAIR0 + 2)                      /* make MI2 really large */
-#define IMPAIR_BUST_MR2 LELEM(IMPAIR0 + 3)                      /* make MR2 really large */
-#define IMPAIR_SA_CREATION LELEM(IMPAIR0 + 4)                   /* fail all SA creation */
-#define IMPAIR_DIE_ONINFO  LELEM(IMPAIR0 + 5)                   /* cause state to be deleted upon receipt of information payload */
-#define IMPAIR_JACOB_TWO_TWO LELEM(IMPAIR0 + 6)                 /* cause pluto to send all messages twice. */
-                                                                /* cause pluto to send all messages twice. */
-#define IMPAIR_MAJOR_VERSION_BUMP LELEM(IMPAIR0 + 7)            /* cause pluto to send an IKE major version that's higher then we support. */
-#define IMPAIR_MINOR_VERSION_BUMP LELEM(IMPAIR0 + 8)            /* cause pluto to send an IKE minor version that's higher then we support. */
-#define IMPAIR_RETRANSMITS LELEM(IMPAIR0 + 9)                   /* cause pluto to never retransmit */
-#define IMPAIR_SEND_BOGUS_ISAKMP_FLAG LELEM(IMPAIR0 + 10)       /* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
-#define IMPAIR_SEND_IKEv2_KE LELEM(IMPAIR0 + 11)                /* causes pluto to omit sending the KE payload in IKEv2 */
-
+/* Sets of Debug / Impair items */
 #define DBG_NONE        0                                       /* no options on, including impairments */
 #define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all logging options on EXCEPT DBG_PRIVATE and DBG_WHACKWATCH */
+
+/* singleton sets: must be kept in sync with the items! */
+
+#define DBG_RAW	LELEM(DBG_RAW_IX)
+#define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
+#define DBG_PARSING	LELEM(DBG_PARSING_IX)
+#define DBG_EMITTING	LELEM(DBG_EMITTING_IX)
+#define DBG_CONTROL	LELEM(DBG_CONTROL_IX)
+#define DBG_LIFECYCLE	LELEM(DBG_LIFECYCLE_IX)
+#define DBG_KERNEL	LELEM(DBG_KERNEL_IX)
+#define DBG_DNS	LELEM(DBG_DNS_IX)
+#define DBG_OPPO	LELEM(DBG_OPPO_IX)
+#define DBG_CONTROLMORE	LELEM(DBG_CONTROLMORE_IX)
+
+#define DBG_PFKEY	LELEM(DBG_PFKEY_IX)
+#define DBG_NATT	LELEM(DBG_NATT_IX)
+#define DBG_X509	LELEM(DBG_X509_IX)
+#define DBG_DPD	LELEM(DBG_DPD_IX)
+#define DBG_OPPOINFO	LELEM(DBG_OPPOINFO_IX)
+#define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
+#define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
+
+#define IMPAIR_DELAY_ADNS_KEY_ANSWER	LELEM(IMPAIR_DELAY_ADNS_KEY_ANSWER_IX)
+#define IMPAIR_DELAY_ADNS_TXT_ANSWER	LELEM(IMPAIR_DELAY_ADNS_TXT_ANSWER_IX)
+#define IMPAIR_BUST_MI2	LELEM(IMPAIR_BUST_MI2_IX)
+#define IMPAIR_BUST_MR2	LELEM(IMPAIR_BUST_MR2_IX)
+#define IMPAIR_SA_CREATION	LELEM(IMPAIR_SA_CREATION_IX)
+#define IMPAIR_DIE_ONINFO	LELEM(IMPAIR_DIE_ONINFO_IX)
+#define IMPAIR_JACOB_TWO_TWO	LELEM(IMPAIR_JACOB_TWO_TWO_IX)
+
+#define IMPAIR_MAJOR_VERSION_BUMP	LELEM(IMPAIR_MAJOR_VERSION_BUMP_IX)
+#define IMPAIR_MINOR_VERSION_BUMP	LELEM(IMPAIR_MINOR_VERSION_BUMP_IX)
+#define IMPAIR_RETRANSMITS	LELEM(IMPAIR_RETRANSMITS_IX)
+#define IMPAIR_SEND_BOGUS_ISAKMP_FLAG	LELEM(IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX)
+#define IMPAIR_SEND_IKEv2_KE	LELEM(IMPAIR_SEND_IKEv2_KE_IX)
 
 /* State of exchanges
  *
