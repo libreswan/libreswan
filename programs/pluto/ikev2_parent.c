@@ -987,7 +987,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
  */
 
 /* STATE_PARENT_I1: R1 --> I2
- *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ] 
+ *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
  * HDR, SK {IDi, [CERT,] [CERTREQ,]
  *      [IDr,] AUTH, SAi2,
  *      TSi, TSr}      -->
@@ -1044,7 +1044,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		 */
 		const char *from_state_name = enum_name(&state_names, st->st_state);
 		u_int16_t isan_type = 0; /* no notify payload */
-		
+
 		if (md->chain[ISAKMP_NEXT_v2N]) {
 			isan_type = md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type;
 			libreswan_log("%s: received %s", from_state_name,
@@ -2098,7 +2098,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			}
-			
 		}
 
 		ikev2_padup_pre_encrypt(md, &e_pbs_cipher);

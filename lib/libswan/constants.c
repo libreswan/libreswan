@@ -1301,14 +1301,14 @@ const char *const critical_names[] = {
  * IKEv2 Security Protocol Identifiers
  */
 static const char *const ikev2_sec_proto_id_name[] = {
-        /* 0 - Reserved */
-        "IKEv2_SEC_PROTO_IKE",
-        "IKEv2_SEC_PROTO_AH",
-        "IKEv2_SEC_PROTO_ESP",
-        "IKEv2_SEC_FC_ESP_HEADER", /* RFC 4595 */
-        "IKEv2_SEC_FC_CT_AUTHENTICATION", /* RFC 4595 */
-        /* 6 - 200 Unassigned */
-        /* 201 - 255 Private use */
+	/* 0 - Reserved */
+	"IKEv2_SEC_PROTO_IKE",
+	"IKEv2_SEC_PROTO_AH",
+	"IKEv2_SEC_PROTO_ESP",
+	"IKEv2_SEC_FC_ESP_HEADER", /* RFC 4595 */
+	"IKEv2_SEC_FC_CT_AUTHENTICATION", /* RFC 4595 */
+	/* 6 - 200 Unassigned */
+	/* 201 - 255 Private use */
 };
 enum_names ikev2_sec_proto_id_names =
 { IKEv2_SEC_PROTO_IKE, IKEv2_SEC_FC_CT_AUTHENTICATION, ikev2_sec_proto_id_name, NULL };
