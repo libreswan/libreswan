@@ -528,69 +528,69 @@ int main(int argc, char **argv)
 			{ "debug-none", no_argument, NULL, 'N' },
 			{ "debug-all", no_argument, NULL, 'A' },
 
-			{ "debug-raw", no_argument, NULL, DBG_RAW +
+			{ "debug-raw", no_argument, NULL, DBG_RAW_IX +
 			  DBG_OFFSET },
-			{ "debug-crypt", no_argument, NULL, DBG_CRYPT +
+			{ "debug-crypt", no_argument, NULL, DBG_CRYPT_IX +
 			  DBG_OFFSET },
-			{ "debug-crypto", no_argument, NULL, DBG_CRYPT +
+			{ "debug-crypto", no_argument, NULL, DBG_CRYPT_IX +
 			  DBG_OFFSET },
-			{ "debug-parsing", no_argument, NULL, DBG_PARSING +
+			{ "debug-parsing", no_argument, NULL, DBG_PARSING_IX +
 			  DBG_OFFSET },
-			{ "debug-emitting", no_argument, NULL, DBG_EMITTING +
+			{ "debug-emitting", no_argument, NULL, DBG_EMITTING_IX +
 			  DBG_OFFSET },
-			{ "debug-control", no_argument, NULL, DBG_CONTROL +
+			{ "debug-control", no_argument, NULL, DBG_CONTROL_IX +
 			  DBG_OFFSET },
-			{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE +
+			{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE_IX +
 			  DBG_OFFSET },
-			{ "debug-kernel", no_argument, NULL, DBG_KERNEL +
+			{ "debug-kernel", no_argument, NULL, DBG_KERNEL_IX +
 			  DBG_OFFSET },
-			{ "debug-dns", no_argument, NULL, DBG_DNS +
+			{ "debug-dns", no_argument, NULL, DBG_DNS_IX +
 			  DBG_OFFSET },
-			{ "debug-oppo", no_argument, NULL, DBG_OPPO +
+			{ "debug-oppo", no_argument, NULL, DBG_OPPO_IX +
 			  DBG_OFFSET },
-			{ "debug-oppoinfo", no_argument, NULL, DBG_OPPOINFO +
+			{ "debug-oppoinfo", no_argument, NULL, DBG_OPPOINFO_IX +
 			  DBG_OFFSET },
 			{ "debug-controlmore", no_argument, NULL,
-			  DBG_CONTROLMORE + DBG_OFFSET },
-			{ "debug-dpd", no_argument, NULL, DBG_DPD +
+			  DBG_CONTROLMORE_IX + DBG_OFFSET },
+			{ "debug-dpd", no_argument, NULL, DBG_DPD_IX +
 			  DBG_OFFSET },
-			{ "debug-x509", no_argument, NULL, DBG_X509 +
+			{ "debug-x509", no_argument, NULL, DBG_X509_IX +
 			  DBG_OFFSET },
-			{ "debug-private", no_argument, NULL, DBG_PRIVATE +
+			{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX +
 			  DBG_OFFSET },
-			{ "debug-pfkey", no_argument, NULL, DBG_PFKEY +
+			{ "debug-pfkey", no_argument, NULL, DBG_PFKEY_IX +
 			  DBG_OFFSET },
 
 			/* for backwards compatibility */
-			{ "debug-klips", no_argument, NULL, DBG_KERNEL +
+			{ "debug-klips", no_argument, NULL, DBG_KERNEL_IX +
 			  DBG_OFFSET },
-			{ "debug-netkey", no_argument, NULL, DBG_KERNEL +
+			{ "debug-netkey", no_argument, NULL, DBG_KERNEL_IX +
 			  DBG_OFFSET },
 
 			{ "impair-delay-adns-key-answer", no_argument, NULL,
-			  IMPAIR_DELAY_ADNS_KEY_ANSWER + DBG_OFFSET },
+			  IMPAIR_DELAY_ADNS_KEY_ANSWER_IX + DBG_OFFSET },
 			{ "impair-delay-adns-txt-answer", no_argument, NULL,
-			  IMPAIR_DELAY_ADNS_TXT_ANSWER + DBG_OFFSET },
+			  IMPAIR_DELAY_ADNS_TXT_ANSWER_IX + DBG_OFFSET },
 			{ "impair-bust-mi2", no_argument, NULL,
-			  IMPAIR_BUST_MI2 + DBG_OFFSET },
+			  IMPAIR_BUST_MI2_IX + DBG_OFFSET },
 			{ "impair-bust-mr2", no_argument, NULL,
-			  IMPAIR_BUST_MR2 + DBG_OFFSET },
+			  IMPAIR_BUST_MR2_IX + DBG_OFFSET },
 			{ "impair-sa-creation", no_argument, NULL,
-			  IMPAIR_SA_CREATION + DBG_OFFSET },
+			  IMPAIR_SA_CREATION_IX + DBG_OFFSET },
 			{ "impair-die-oninfo", no_argument, NULL,
-			  IMPAIR_DIE_ONINFO + DBG_OFFSET },
+			  IMPAIR_DIE_ONINFO_IX + DBG_OFFSET },
 			{ "impair-jacob-two-two", no_argument, NULL,
-			  IMPAIR_JACOB_TWO_TWO + DBG_OFFSET },
+			  IMPAIR_JACOB_TWO_TWO_IX + DBG_OFFSET },
 			{ "impair-major-version-bump", no_argument, NULL,
-			  IMPAIR_MAJOR_VERSION_BUMP + DBG_OFFSET },
+			  IMPAIR_MAJOR_VERSION_BUMP_IX + DBG_OFFSET },
 			{ "impair-minor-version-bump", no_argument, NULL,
-			  IMPAIR_MINOR_VERSION_BUMP + DBG_OFFSET },
+			  IMPAIR_MINOR_VERSION_BUMP_IX + DBG_OFFSET },
 			{ "impair-retransmits", no_argument, NULL,
-			  IMPAIR_RETRANSMITS + DBG_OFFSET },
+			  IMPAIR_RETRANSMITS_IX + DBG_OFFSET },
 			{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
-			  IMPAIR_SEND_BOGUS_ISAKMP_FLAG + DBG_OFFSET },
+			  IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DBG_OFFSET },
 			{ "impair-send-ikev2-ke", no_argument, NULL,
-			  IMPAIR_SEND_IKEv2_KE + DBG_OFFSET },
+			  IMPAIR_SEND_IKEv2_KE_IX + DBG_OFFSET },
 			{ 0, 0, 0, 0 }
 		};
 		/* Note: we don't like the way short options get parsed
@@ -981,8 +981,8 @@ int main(int argc, char **argv)
 		}
 
 		default:
-			if (c >= DBG_OFFSET) {
-				base_debugging |= c - DBG_OFFSET;
+			if (DBG_OFFSET <= c && c < DBG_OFFSET + IMPAIR_roof_IX) {
+				base_debugging |= LELEM(c - DBG_OFFSET);
 				continue;
 			}
 #       undef DBG_OFFSET
