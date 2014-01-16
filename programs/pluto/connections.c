@@ -1293,15 +1293,16 @@ void add_connection(const struct whack_message *wm)
 				c->alg_info_esp = alg_info_ah_create_from_str(
 					wm->esp ? wm->esp : "", &ugh);
 
-			DBG(DBG_CRYPT | DBG_CONTROL,
-				static char buf[256] = "<NULL>";
-				if (c->alg_info_esp)
+			DBG(DBG_CONTROL,
+				{static char buf[256] = "<NULL>";
+
+				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf);
-				);
-			if (c->alg_info_esp) {
+				DBG_log("esp string values: %s", buf); }
+			);
+			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->alg_info_cnt == 0) {
 					loglog(RC_NOALGO,
 						"got 0 transforms for "
