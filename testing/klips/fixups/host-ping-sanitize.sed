@@ -1,4 +1,4 @@
-s,\(64 bytes from .*: icmp_[rs]eq=. ttl=[0-9]*\) time=\([0-9]*.[0-9]*\) ms,\1 time=0.XXX ms,
+s,\(64 bytes from .*: icmp_\)\([rs]\)\(eq=. ttl=[0-9]*\) time=\([0-9]*.[0-9]*\) ms,\1s\3 time=0.XXX ms,
 s,\([0-9]* packets transmitted\, [0-9]* received\, [0-9]*% packet loss\, time \)\([0-9]*\)ms,\1XXXX,
 s,\(+[0-9]* packets transmitted\, [0-9]* received\, +[0-9]* errors\, [0-9]*% packet loss\, time \)\([0-9]*\)ms,\1XXXX,
 s,\([0-9]* packets transmitted\, [0-9]* received\, +[0-9]* errors\, [0-9]*% packet loss\, time \)\([0-9]*\)ms,\1XXXX,
