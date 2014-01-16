@@ -8,7 +8,7 @@
 # test-kind:
 #  umlplutotest - not yet converted, will not be run with 'make check'
 #  kvmplutotest - coverted to use KVM, will be run with 'make check'
-#  skip - skip this test
+#  skiptest - skip this test
 #  hwtest - connect to physical test machines, not KVM [FUTURE]
 
 # expectation:
@@ -293,7 +293,9 @@ kvmplutotest	xauth-pluto-05		good
 kvmplutotest	xauth-pluto-06		good
 kvmplutotest	xauth-pluto-07		good
 kvmplutotest	xauth-pluto-08		good
-kvmplutotest	xauth-pluto-09		good
+
+umlplutotest	xauth-pluto-09		good
+
 umlXhost	xauth-pluto-10		good
 umlXhost	xauth-pluto-11		good
 kvmplutotest	xauth-pluto-12		good
@@ -301,7 +303,7 @@ kvmplutotest	xauth-pluto-13		good
 kvmplutotest	xauth-pluto-14		good
 kvmplutotest	xauth-pluto-15		good
 kvmplutotest	xauth-pluto-16		good
-skip		xauth-pluto-17		wip
+skiptest	xauth-pluto-17		wip
 kvmplutotest	xauth-pluto-18		good
 kvmplutotest	xauth-pluto-19		good
 
@@ -553,8 +555,8 @@ kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-12-ah-initiator	good
 
-skip		interop-racoon-iphone4s-nonat		incomplete
-skip		interop-racoon-iphone5-nonat		incomplete
+skiptest	interop-racoon-iphone4s-nonat		incomplete
+skiptest	interop-racoon-iphone5-nonat		incomplete
 
 #################################################################
 # DNSSEC tests
