@@ -4,10 +4,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -33,10 +33,6 @@ west #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
 west #
  /testing/pluto/bin/wait-until-pluto-started
-[ 00.00] alg: No test for cipher_null (cipher_null-generic)
-[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
-[ 00.00] alg: No test for compress_null (compress_null-generic)
 west #
  ipsec auto --add westnet-eastnet-ikev2
 west #
