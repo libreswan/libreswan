@@ -159,7 +159,7 @@ int alg_enum_search_prefix(enum_names *ed, const char *prefix, const char *str,
 		*ptr++ = toupper(*str++);
 	*ptr = 0;
 
-	DBG(DBG_CRYPT, DBG_log("enum_search_prefix () "
+	DBG(DBG_CONTROL, DBG_log("alg_enum_search_prefix() "
 			       "calling enum_search(%p, \"%s\")", ed, buf));
 
 	ret = enum_search(ed, buf);
@@ -217,33 +217,44 @@ static int ealg_getbyname_esp(const char *const str, int len)
  *      Search auth_alg_names for a match, eg:
  *              "md5" <=> "AUTH_ALGORITHM_HMAC_MD5"
  */
-static int aalg_getbyname_esp(const char *const str, int len)
+static int aalg_getbyname_esp(const char *str, int len)
 {
 	int ret = -1;
 	unsigned num;
+	static const char sha2_256_aka[] = "sha2";
 
-	if (!str || !*str)
-		goto out;
+	DBG_log("entering aalg_getbyname_esp()");
+        if (!str || !*str)
+                return ret;
+
+	/* handle "sha2" as "sha2_256" */
+	if (len == sizeof(sha2_256_aka)-1 && strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
+		DBG_log("interpreting ESP sha2 as sha2_256");
+		str = "sha2_256";
+		len = strlen(str);
+       }
+
 	ret = alg_enum_search_prefix(&auth_alg_names, "AUTH_ALGORITHM_HMAC_",
 				     str, len);
 	if (ret >= 0)
-		goto out;
+		return ret;
 	ret = alg_enum_search_prefix(&auth_alg_names, "AUTH_ALGORITHM_", str,
 				     len);
 	if (ret >= 0)
-		goto out;
+		return ret;
 
 	/* Special value for no authentication since zero is already used. */
 	ret = INT_MAX;
 	if (!strncasecmp(str, "null", len))
-		goto out;
+		return ret;
 
 	sscanf(str, "id%d%n", &ret, &num);
 	if (ret >= 0 && num != strlen(str))
 		ret = -1;
-out:
+
 	return ret;
 }
+
 static int modp_getbyname_esp(const char *const str, int len)
 {
 	int ret = -1;
@@ -927,7 +938,7 @@ void alg_info_delref(struct alg_info **alg_info_p)
 
 /*	snprint already parsed transform list (alg_info)	*/
 int alg_info_snprint(char *buf, int buflen,
-		     struct alg_info *alg_info)
+		     const struct alg_info *alg_info)
 {
 	char *ptr = buf;
 	struct esp_info *esp_info;
