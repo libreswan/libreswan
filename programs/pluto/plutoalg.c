@@ -77,12 +77,13 @@ static int aalg_getbyname_ike(const char *str, int len)
 	int num_read;
 	static const char sha2_256_aka[] = "sha2";
 
+	DBG_log("entering aalg_getbyname_ike()");
 	if (!str || !*str)
 		return ret;
 
 	/* handle "sha2" as "sha2_256" */
 	if (len == sizeof(sha2_256_aka)-1 && strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
-		DBG_log("PAUL: interpretating sha2 as sha2_256");
+		DBG_log("interpreting sha2 as sha2_256");
 		str = "sha2_256";
 		len = strlen(str);
 	}
