@@ -1,7 +1,4 @@
 /testing/guestbin/swan-prep
-[ 00.00] IPSEC EVENT: KLIPS device ipsec0 shut down.
-[ 00.00] 
-[ 00.00] NET: Unregistered protocol family 15
 east #
  ipsec _stackmanager start
 [ 00.00] NET: Registered protocol family 15
@@ -26,7 +23,7 @@ east #
 000 interface ipsec0/eth1 192.1.2.23
 000  
 000 fips mode=disabled;
-000 SElinux=enabled
+000 SElinux=disabled
 000  
 000 config setup options:
 000  

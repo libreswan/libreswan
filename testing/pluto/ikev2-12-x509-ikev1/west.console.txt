@@ -5,10 +5,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -37,10 +37,6 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] alg: No test for cipher_null (cipher_null-generic)
-[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
-[ 00.00] alg: No test for compress_null (compress_null-generic)
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
 west #
@@ -56,7 +52,7 @@ west #
 000 interface ipsec0/eth1 192.1.2.45
 000  
 000 fips mode=disabled;
-000 SElinux=enabled
+000 SElinux=disabled
 000  
 000 config setup options:
 000  
