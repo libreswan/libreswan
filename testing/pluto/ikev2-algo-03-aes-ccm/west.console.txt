@@ -4,10 +4,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -37,10 +37,6 @@ west #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
 west #
  /testing/pluto/bin/wait-until-pluto-started
-[ 00.00] alg: No test for cipher_null (cipher_null-generic)
-[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for compress_null (compress_null-generic)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
 west #
  # first should fail to load
 west #
@@ -56,7 +52,7 @@ west #
 000 interface eth2/eth2 192.9.4.45
 000  
 000 fips mode=disabled;
-000 SElinux=enabled
+000 SElinux=disabled
 000  
 000 config setup options:
 000  
@@ -163,8 +159,8 @@ west #
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -229,7 +225,7 @@ west #
 done
 west #
  ipsec look
-west Sun Dec  8 02:42:56 EST 2013
+west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
@@ -288,6 +284,4 @@ west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-type=AVC msg=audit(1386488389.956:108): avc:  denied  { write } for  pid=3598 comm="ip" path="/testing/pluto/ikev2-algo-03-aes-ccm/OUTPUT/west.pluto.log" dev="9p" ino=135468 scontext=system_u:system_r:ifconfig_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
-type=SYSCALL msg=audit(1386488389.956:108): arch=c000003e syscall=59 success=yes exit=0 a0=26591b0 a1=265bd90 a2=266de10 a3=7fff27e1e2b0 items=0 ppid=3596 pid=3598 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=4294967295 tty=(none) comm="ip" exe="/usr/sbin/ip" subj=system_u:system_r:ifconfig_t:s0 key=(null)
 
