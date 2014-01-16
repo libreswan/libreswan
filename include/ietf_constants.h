@@ -653,13 +653,16 @@ extern const char *const critical_names[];
 /*
  * extern enum_names protocol_names;
  */
-#define PROTO_RESERVED 0 /* only in IKEv2 */
-#define PROTO_v2_RESERVED 0 /* only in IKEv2 */
+#define PROTO_RESERVED 0
 #define PROTO_ISAKMP 1
 #define PROTO_IPSEC_AH 2
 #define PROTO_IPSEC_ESP 3
-#define PROTO_v2_ESP 3
 #define PROTO_IPCOMP 4 /* only in IKEv1 */
+
+#define PROTO_v2_RESERVED 0
+#define PROTO_v2_ISAKMP 1
+#define PROTO_v2_AH 2
+#define PROTO_v2_ESP 3
 
 /*
  * IKEv2 Security Protocol Identifiers - RFC 5996
@@ -1280,7 +1283,7 @@ enum pubkey_alg {
 
 #define ISAKMP_ATTR_RTYPE_MASK 0x7FFF
 
-/* 
+/*
  * ESP algorithms come in via ipsec_cipher_algo in libreswan/ipsec_policy.h
  */
 

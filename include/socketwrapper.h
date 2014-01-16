@@ -14,7 +14,7 @@
 static inline int safe_socket(int domain, int type, int protocol)
 {
 	int fd = socket(domain, type, protocol);
-	
+
 	if (fd >= 0) {
 		int arg = fcntl(fd, F_GETFD);
 
