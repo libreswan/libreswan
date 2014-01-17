@@ -143,32 +143,9 @@ alg_info_esp_sadb2aa(int sadb_aalg)
 }
 
 /*
- *      Search enum_name array with in prefixed uppercase
+ *      Search enum_name array with string, uppercased, prefixed, and postfixed
  */
-int alg_enum_search_prefix(enum_names *ed, const char *prefix, const char *str,
-			   int str_len)
-{
-	char buf[64];
-	char *ptr;
-	int ret;
-	int len = sizeof(buf) - 1;  /* reserve space for final \0 */
-
-	for (ptr = buf; len && *prefix; *ptr++ = *prefix++, len--) ;
-
-	while (str_len-- && len-- && *str)
-		*ptr++ = toupper(*str++);
-	*ptr = 0;
-
-	DBG(DBG_CONTROL, DBG_log("alg_enum_search_prefix() "
-			       "calling enum_search(%p, \"%s\")", ed, buf));
-
-	ret = enum_search(ed, buf);
-	return ret;
-}
-/*
- *      Search enum_name array with in prefixed and postfixed uppercase
- */
-int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
+int alg_enum_search(enum_names *ed, const char *prefix,
 			  const char *postfix, const char *str,
 			  int str_len)
 {
@@ -177,13 +154,16 @@ int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
 	int ret;
 	int len = sizeof(buf) - 1;  /* reserve space for final \0 */
 
-	for (ptr = buf; len && *prefix; *ptr++ = *prefix++, len--) ;
+	for (ptr = buf; len && *prefix; len--)
+	    *ptr++ = *prefix++;
+
 	while (str_len-- && len-- && *str)
 		*ptr++ = toupper(*str++);
+
 	while (len-- && *postfix)
 		*ptr++ = *postfix++;
-	*ptr = 0;
-	DBG(DBG_CRYPT, DBG_log("enum_search_ppfixi () "
+	*ptr = '\0';
+	DBG(DBG_CRYPT, DBG_log("enum_search_ppfix() "
 			       "calling enum_search(%p, \"%s\")", ed, buf));
 	ret = enum_search(ed, buf);
 	return ret;
@@ -201,7 +181,7 @@ static int ealg_getbyname_esp(const char *const str, int len)
 	if (!str || !*str)
 		return ret;
 
-	ret = alg_enum_search_prefix(&esp_transformid_names, "ESP_", str, len);
+	ret = alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
 	if (ret >= 0)
 		return ret;
 
@@ -234,12 +214,12 @@ static int aalg_getbyname_esp(const char *str, int len)
 		len = strlen(str);
        }
 
-	ret = alg_enum_search_prefix(&auth_alg_names, "AUTH_ALGORITHM_HMAC_",
+	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "",
 				     str, len);
 	if (ret >= 0)
 		return ret;
-	ret = alg_enum_search_prefix(&auth_alg_names, "AUTH_ALGORITHM_", str,
-				     len);
+	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_", "",
+				     str, len);
 	if (ret >= 0)
 		return ret;
 
@@ -261,11 +241,11 @@ static int modp_getbyname_esp(const char *const str, int len)
 
 	if (!str || !*str)
 		goto out;
-	ret = alg_enum_search_prefix(&oakley_group_names, "OAKLEY_GROUP_", str,
-				     len);
+	ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "",
+				     str, len);
 	if (ret >= 0)
 		goto out;
-	ret = alg_enum_search_ppfix(&oakley_group_names, "OAKLEY_GROUP_",
+	ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
 				    " (extension)", str, len);
 out:
 	return ret;
