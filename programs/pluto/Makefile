@@ -128,7 +128,6 @@ DISTSRC = \
 	server.c server.h \
 	spdb.c spdb_struct.c spdb_v1_struct.c spdb_print.c spdb.h \
 	state.c state.h \
-	stubs.c \
 	${SYSDEP_SRC} \
 	timer.c timer.h \
 	$(X509_DIST_SRCS) \
@@ -166,7 +165,7 @@ OBJSPLUTO += ${AGGRESSIVE_OBJS}
 OBJSPLUTO += ${LABELED_IPSEC_OBJS}
 OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
 OBJSPLUTO += ${OBJSLIBPLUTO}
-OBJSPLUTO += ${SYSDEP_OBJ} stubs.o
+OBJSPLUTO += ${SYSDEP_OBJ}
 OBJSPLUTO += packet.o pluto_constants.o readwhackmsg.o
 
 OBJSADNS = adns.o

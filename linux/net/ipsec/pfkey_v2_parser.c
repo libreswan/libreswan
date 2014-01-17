@@ -86,7 +86,7 @@ struct sklist_t {
 	struct sklist_t* next;
 } pfkey_sklist_head, *pfkey_sklist, *pfkey_sklist_prev;
 
-__u32 pfkey_msg_seq = 0;
+static __u32 pfkey_msg_seq = 0;
 
 #if 0
 #define DUMP_SAID dump_said(&extr->ips->ips_said, __LINE__)
@@ -180,7 +180,7 @@ DEBUG_NO_STATIC int pfkey_ipsec_sa_init(struct ipsec_sa *ipsp)
 	return rc;
 }
 
-int pfkey_safe_build(int error, struct sadb_ext *extensions[K_SADB_MAX + 1])
+static int pfkey_safe_build(int error, struct sadb_ext *extensions[K_SADB_MAX + 1])
 {
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_safe_build: "
 		    "error=%d\n",
@@ -2795,8 +2795,7 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 	if (!(extr->ips->ips_flags &
 	      (SADB_X_SAFLAGS_CLEARFLOW | SADB_X_SAFLAGS_POLICYONLY))) {
 		if (pfkey_safe_build(error, extensions_reply)) {
-			error =
-				pfkey_address_build(
+			error = pfkey_address_build(
 					&extensions_reply[
 						K_SADB_X_EXT_ADDRESS_SRC_FLOW],
 					K_SADB_X_EXT_ADDRESS_SRC_FLOW,
@@ -2806,8 +2805,7 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 		}
 
 		if (pfkey_safe_build(error, extensions_reply)) {
-			error =
-				pfkey_address_build(
+			error = pfkey_address_build(
 					&extensions_reply[
 						K_SADB_X_EXT_ADDRESS_DST_FLOW],
 					K_SADB_X_EXT_ADDRESS_DST_FLOW,
@@ -2817,8 +2815,7 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 		}
 
 		if (pfkey_safe_build(error, extensions_reply)) {
-			error =
-				pfkey_address_build(
+			error = pfkey_address_build(
 					&extensions_reply[
 						K_SADB_X_EXT_ADDRESS_SRC_MASK],
 					K_SADB_X_EXT_ADDRESS_SRC_MASK,
@@ -2828,8 +2825,7 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 		}
 
 		if (pfkey_safe_build(error, extensions_reply)) {
-			error =
-				pfkey_address_build(
+			error = pfkey_address_build(
 					&extensions_reply[
 						K_SADB_X_EXT_ADDRESS_DST_MASK],
 					K_SADB_X_EXT_ADDRESS_DST_MASK,
@@ -3281,8 +3277,7 @@ int pfkey_nat_t_new_mapping(struct ipsec_sa *ipsp, struct sockaddr *ipaddr,
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_nat_t_new_mapping: "
 			    "no sockets registered for SAtype=%d(%s).\n",
 			    satype,
-			    satype2name(
-				    satype));
+			    satype2name(satype));
 		SENDERR(EPROTONOSUPPORT);
 	}
 

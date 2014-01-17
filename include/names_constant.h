@@ -35,6 +35,7 @@ extern enum_names oakley_lifetime_names;
 extern enum_names version_names;
 extern enum_names doi_names;
 extern enum_names payload_names_ikev1;
+extern const char *const payload_name_ikev2_main[];
 extern enum_names payload_names_ikev2;
 extern enum_names ikev2_last_proposal_desc;
 extern enum_names ikev2_last_transform_desc;
@@ -45,7 +46,6 @@ extern enum_names modecfg_attr_names;
 extern enum_names xauth_type_names;
 extern enum_names xauth_attr_names;
 extern enum_names exchange_names_ikev1;
-extern enum_names exchange_names_ikev2;
 extern enum_names exchange_names_ikev1orv2;
 extern enum_names protocol_names;
 extern enum_names isakmp_transformid_names;
@@ -105,7 +105,6 @@ extern const struct af_info
 
 extern const struct af_info *aftoinfo(int af);
 
-extern enum_names af_names;
 extern enum_names
 	rr_qtype_names,
 	rr_type_names,

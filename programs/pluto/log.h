@@ -43,8 +43,6 @@ extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
 
-extern const char debug_prefix;
-
 /* used in some messages to distiguish
  * which pluto is which, when doing
  * unit testing
@@ -149,8 +147,6 @@ extern void show_setup_natt(void);
  */
 extern bool logged_txt_warning;
 extern bool logged_myid_ip_txt_warning;
-extern bool logged_myid_ip_key_warning;
 extern bool logged_myid_fqdn_txt_warning;
-extern bool logged_myid_fqdn_key_warning;
 
 #endif /* _PLUTO_LOG_H */

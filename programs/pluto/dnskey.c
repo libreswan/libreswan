@@ -57,7 +57,7 @@ static pid_t adns_pid = 0;
 const char *pluto_adns_option = NULL;   /* path from --pluto_adns */
 
 static int adns_in_flight = 0;          /* queries outstanding */
-int adns_restart_count;
+static int adns_restart_count;
 #define ADNS_RESTART_MAX 20
 
 static void release_all_continuations(void);
@@ -373,8 +373,7 @@ static err_t process_txt_rr_body(char *str,
 
 				    idtoa(client_id, cidb, sizeof(cidb));
 				    idtoa(&gi.gw_id, gwidb, sizeof(gwidb));
-				    DBG_log(
-					    "TXT %s record for %s: security gateway %s;"
+				    DBG_log("TXT %s record for %s: security gateway %s;"
 					    " ignored because gateway's IP is unspecified",
 					    our_TXT_attr, cidb, gwidb);
 			    });
@@ -396,8 +395,7 @@ static err_t process_txt_rr_body(char *str,
 				    idtoa(client_id, cidb, sizeof(cidb));
 				    idtoa(&gi.gw_id, gwidb, sizeof(gwidb));
 				    idtoa(peer_id, pidb, sizeof(pidb));
-				    DBG_log(
-					    "TXT %s record for %s: security gateway %s;"
+				    DBG_log("TXT %s record for %s: security gateway %s;"
 					    " ignored -- looking to confirm %s as gateway",
 					    our_TXT_attr, cidb, gwidb, pidb);
 			    });
@@ -475,8 +473,7 @@ static err_t process_txt_rr_body(char *str,
 				    DBG_log("gateway for %s is %s with key %s",
 					    cidb, gwidb, gi.key->u.rsa.keyid);
 			    } else {
-				    DBG_log(
-					    "gateway for %s is %s; no key specified",
+				    DBG_log("gateway for %s is %s; no key specified",
 					    cidb, gwidb);
 			    }
 		    });
@@ -1751,8 +1748,7 @@ static err_t process_lwdnsq_answer(char *ts)
 
 		if (txt_ugh != NULL) {
 			DBG(DBG_DNS,
-			    DBG_log(
-				    "error processing TXT resource record (%s) while processing: %s",
+			    DBG_log("error processing TXT resource record (%s) while processing: %s",
 				    txt_ugh, rest));
 			cr->cont_fn(cr, txt_ugh);
 			cr->used = TRUE;
@@ -1782,8 +1778,7 @@ static err_t process_lwdnsq_answer(char *ts)
 
 		if (key_ugh != NULL) {
 			DBG(DBG_DNS,
-			    DBG_log(
-				    "error processing KEY resource record (%s) while processing: %s",
+			    DBG_log("error processing KEY resource record (%s) while processing: %s",
 				    key_ugh, rest));
 			cr->cont_fn(cr, key_ugh);
 			cr->used = TRUE;
@@ -1927,8 +1922,7 @@ void handle_adns_answer(void)
 		}
 		DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL | DBG_DNS, {
 			    if (ugh == NULL)
-				    DBG_log(
-					    "asynch DNS answer %lu for %s of %s",
+				    DBG_log("asynch DNS answer %lu for %s of %s",
 					    cr->query.serial, typename,
 					    name_buf);
 			    else

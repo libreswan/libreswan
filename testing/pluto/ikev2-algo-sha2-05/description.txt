@@ -1,3 +1,5 @@
 Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
 
 This is to verify we don't setup an ESP with SHA2 with incompatible sha2 hash sizes
+This test uses netkey because klips does not support SHA2
+

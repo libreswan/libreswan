@@ -231,8 +231,7 @@ void regress()
 			       r->high, r->low);
 			status = 1;
 		} else if (r->range == -1) {
-			printf(
-				"`%s'-`%s' iprangediff succeeded unexpectedly\n",
+			printf("`%s'-`%s' iprangediff succeeded unexpectedly\n",
 				r->high, r->low);
 			status = 1;
 		} else if (r->range != n) {

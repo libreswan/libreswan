@@ -78,7 +78,7 @@ static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messag
  * scan_proc_shunts found no representation of in any connection.
  * The corresponding ACQUIRE message might have been lost.
  */
-struct eroute_info *orphaned_holds = NULL;
+static struct eroute_info *orphaned_holds = NULL;
 
 static pid_t pid;
 
@@ -313,8 +313,7 @@ static bool pfkey_get(pfkey_buf *buf)
 			     )) {
 			/* not for us: ignore */
 			DBG(DBG_KERNEL,
-			    DBG_log(
-				    "pfkey_get: ignoring PF_KEY %s message %u for process %u",
+			    DBG_log("pfkey_get: ignoring PF_KEY %s message %u for process %u",
 				    sparse_val_show(pfkey_type_names,
 						    buf->msg.sadb_msg_type),
 				    buf->msg.sadb_msg_seq,
@@ -1694,8 +1693,7 @@ void scan_proc_shunts(void)
 							    ntohs(portof(&eri.
 									 his.
 									 addr));
-						    DBG_log(
-							    "add orphaned shunt %s:%d -> %s:%d => %s:%d",
+						    DBG_log("add orphaned shunt %s:%d -> %s:%d => %s:%d",
 							    ourst, ourport,
 							    hist, hisport, sat,
 							    eri.transport_proto);
@@ -1844,8 +1842,7 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 				}
 				if (idle_time > idle_max) {
 					DBG(DBG_KERNEL,
-					    DBG_log(
-						    "SA %s found idle for more than %ld sec",
+					    DBG_log("SA %s found idle for more than %ld sec",
 						    text_said, idle_max));
 					ret = TRUE;
 					break;

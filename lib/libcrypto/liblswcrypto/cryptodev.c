@@ -96,6 +96,11 @@ static int soft_meth_loaded = 0;
 /****************************************************************************/
 /*
  * Convert a BIGNUM to the representation that /dev/crypto needs.
+ *
+ * See BN_internal(3) of openssl.
+ * BIGNUMs are stored as an array of BN_ULONG chunks, in little-endian order.
+ * /dev/crypto needs bytes in little-endian order.
+ * Unfortunately BN_bn2bin and BN_bin2bn deal with bytes in big-endian order.
  */
 static int bn2crparam(const BIGNUM *a, struct crparam *crp)
 {
@@ -119,9 +124,11 @@ static int bn2crparam(const BIGNUM *a, struct crparam *crp)
 	crp->crp_nbits = bits;
 
 	for (i = 0, j = 0; i < a->top; i++) {
+		/* handle one BN_ULONG chunk of the BIGNUM */
 		for (k = 0; k < BN_BITS2 / 8; k++) {
+			/* handle one byte of the chunk */
 			if ((j + k) >= bytes)
-				return 0;
+				return 0;	/* finished all the bytes */
 
 			b[j + k] = a->d[i] >> (k * 8);
 		}

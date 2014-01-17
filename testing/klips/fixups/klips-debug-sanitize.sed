@@ -21,3 +21,4 @@ s/ekp=......../ekp=ABCDABCD/
 /ipsec_alg_sa_init/d
 /experimental ipsec_alg_AES_MAC not registered/d
 s/^\[\s\+[0-9]\+.[0-9]\+\] /\[ 00.00] /g
+/ipsec: module verification failed.*$/d

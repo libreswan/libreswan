@@ -408,17 +408,17 @@ enum next_payload_types_ikev1 {
 	ISAKMP_NEXT_NATOA_DRAFTS = 131, /* NAT-Traversal: NAT-OA (drafts) */
 	/* Cisco/Microsoft proprietary IKE fragmentation */
 	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
-	ISAKMP_NEXT_ROOF = 254, /* roof on payload types */
+	ISAKMP_NEXT_ROOF, /* roof on payload types */
 };
 
 enum ikev2_last_proposal {
-	/* if there is a next proposal, then the lp needs to be set right*/
+	/* if there is a next proposal, then the lp needs to be set right */
 	v2_PROPOSAL_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
 	v2_PROPOSAL_NON_LAST = 2 /* matches IKEv1 ISAKMP_NEXT_P by design */
 };
 
 enum ikev2_last_transform {
-	/* if there is a next transform, then the lt needs to be set right*/
+	/* if there is a next transform, then the lt needs to be set right */
 	v2_TRANSFORM_LAST = 0, /* matches IKEv1 ISAKMP_NEXT_NONE by design */
 	v2_TRANSFORM_NON_LAST = 3 /* matches IKEv1 ISAKMP_NEXT_T by design */
 };
@@ -446,8 +446,10 @@ enum next_payload_types_ikev2 {
 	/* 128 - 255 Private Use */
 	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
 	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
-	ISAKMP_NEXT_v2ROOF = 254, /* roof on payload types - keep same as v1 */
+	ISAKMP_NEXT_v2ROOF, /* roof on payload types */
 };
+
+#define ISAKMP_v2PAYLOAD_TYPE_BASE	ISAKMP_NEXT_v2SA	/* lowest value of a v2 payload type */
 
 /*
  * These values are to be used within the Type field of an Attribute (14)
@@ -651,13 +653,16 @@ extern const char *const critical_names[];
 /*
  * extern enum_names protocol_names;
  */
-#define PROTO_RESERVED 0 /* only in IKEv2 */
-#define PROTO_v2_RESERVED 0 /* only in IKEv2 */
+#define PROTO_RESERVED 0
 #define PROTO_ISAKMP 1
 #define PROTO_IPSEC_AH 2
 #define PROTO_IPSEC_ESP 3
-#define PROTO_v2_ESP 3
 #define PROTO_IPCOMP 4 /* only in IKEv1 */
+
+#define PROTO_v2_RESERVED 0
+#define PROTO_v2_ISAKMP 1
+#define PROTO_v2_AH 2
+#define PROTO_v2_ESP 3
 
 /*
  * IKEv2 Security Protocol Identifiers - RFC 5996
@@ -1027,8 +1032,6 @@ enum ikev2_auth_method {
 	IKEv2_AUTH_P384 = 10,
 	IKEv2_AUTH_P521 = 11,
 	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
-	/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-12 */
-	IKEv2_AUTH_ANONYMOUS = 201, /* private use for now */
 };
 
 /*
@@ -1280,7 +1283,7 @@ enum pubkey_alg {
 
 #define ISAKMP_ATTR_RTYPE_MASK 0x7FFF
 
-/* 
+/*
  * ESP algorithms come in via ipsec_cipher_algo in libreswan/ipsec_policy.h
  */
 

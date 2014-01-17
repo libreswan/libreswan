@@ -1,14 +1,9 @@
-#!/bin/sh
-
-# make sure that NAT is working
-#ping -c 4 -n sunrise
-: ==== start ====
-TESTNAME=nat-aggr-01 
-source /testing/pluto/bin/northlocal.sh
-
+/testing/guestbin/swan-prep
+ping -n -c 4 -I 192.0.3.254 192.0.2.254
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec auto --add northnet--eastnet-nat
-
-echo done
+ipsec auto --add northnet-eastnet-nat
+: ==== cut ====
+ipsec auto --status
+: ==== tuc ====
+echo "initdone"

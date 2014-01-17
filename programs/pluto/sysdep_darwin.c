@@ -169,8 +169,7 @@ bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
 				if (WEXITSTATUS(r) != 0) {
 					loglog(RC_LOG_SERIOUS,
 					       "%s%s command exited with status %d",
-					       verb, verb_suffix, WEXITSTATUS(
-						       r));
+					       verb, verb_suffix, WEXITSTATUS(r));
 					return FALSE;
 				}
 			} else if (WIFSIGNALED(r)) {
@@ -454,8 +453,7 @@ bool do_command_darwin(struct connection *c, struct spd_route *sr,
 						      key->issuer, "");
 					escape_metachar(peerca_str,
 							secure_peerca_str,
-							sizeof(
-								secure_peerca_str));
+							sizeof(secure_peerca_str));
 					break;
 				}
 			}

@@ -129,10 +129,10 @@ void ike_alg_show_connection(struct connection *c, const char *instance)
 	}
 	st = state_with_serialno(c->newest_isakmp_sa);
 	if (st != NULL) {
-		static char encbuf[ENUM_SHOW_BUF_LEN]; 
-		static char prfbuf[ENUM_SHOW_BUF_LEN]; 
-		static char integbuf[ENUM_SHOW_BUF_LEN]; 
-		static char groupbuf[ENUM_SHOW_BUF_LEN]; 
+		static char encbuf[ENUM_SHOW_BUF_LEN];
+		static char prfbuf[ENUM_SHOW_BUF_LEN];
+		static char integbuf[ENUM_SHOW_BUF_LEN];
+		static char groupbuf[ENUM_SHOW_BUF_LEN];
 
 		if (!st->st_ikev2) { /* IKEv1 */
 			whack_log(RC_COMMENT,

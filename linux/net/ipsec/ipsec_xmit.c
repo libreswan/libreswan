@@ -659,9 +659,7 @@ enum ipsec_xmit_value ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 		int nexthdroff;
 		unsigned char nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 		nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-						    ((void *)(lsw_ip6_hdr(
-								      ixs) +
-							      1)) - (void*)ixs->skb->data,
+			((void *)(lsw_ip6_hdr(ixs) +1)) - (void*)ixs->skb->data,
 						    &nexthdr, &frag_off);
 		ixs->iphlen = nexthdroff - (ixs->iph - (void*)ixs->skb->data);
 		ixs->pyldsz = ntohs(lsw_ip6_hdr(ixs)->payload_len) +
@@ -917,9 +915,7 @@ enum ipsec_xmit_value ipsec_xmit_esp(struct ipsec_xmit_state *ixs)
 		IPSEC_FRAG_OFF_DECL(frag_off)
 		nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 		i = ipsec_ipv6_skip_exthdr(ixs->skb,
-					   ((void *)(lsw_ip6_hdr(
-							     ixs) +
-						     1)) - (void*)ixs->skb->data,
+			   ((void *)(lsw_ip6_hdr(ixs) +1)) - (void*)ixs->skb->data,
 					   &nexthdr, &frag_off);
 	} else
 #endif  /* CONFIG_KLIPS_IPV6 */
@@ -1285,9 +1281,7 @@ enum ipsec_xmit_value ipsec_xmit_ipcomp(struct ipsec_xmit_state *ixs)
 		int nexthdroff;
 		unsigned char nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 		nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-						    ((void *)(lsw_ip6_hdr(
-								      ixs) +
-							      1)) - (void*)ixs->skb->data,
+			    ((void *)(lsw_ip6_hdr(ixs) +1)) - (void*)ixs->skb->data,
 						    &nexthdr, &frag_off);
 		tot_len = ntohs(lsw_ip6_hdr(ixs)->payload_len) +
 			  sizeof(struct ipv6hdr);
@@ -1751,8 +1745,7 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 				}
 
 				if (ixs->eroute->er_eaddr.sen_type != SENT_IP6)
-					printk(
-						"KLIPS: IPv6 on non IPv6 eroute\n");
+					printk("KLIPS: IPv6 on non IPv6 eroute\n");
 
 
 				if (ixs->eroute->er_eaddr.sen_proto != 0) {
@@ -1768,9 +1761,7 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 								skb_header_pointer(
 									ixs->skb,
 									nexthdroff,
-									sizeof(
-										*
-										udphdr),
+									sizeof(*udphdr),
 									&_udphdr);
 
 
@@ -1780,9 +1771,7 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 								skb_header_pointer(
 									ixs->skb,
 									nexthdroff,
-									sizeof(
-										*
-										tcphdr),
+									sizeof(*tcphdr),
 									&_tcphdr);
 
 
@@ -1888,80 +1877,30 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 					if (ixs->eroute->er_eaddr.sen_sport !=
 					    0) {
 						src.sin_port =
-							(lsw_ip4_hdr(ixs)->
-							 protocol ==
-							 IPPROTO_UDP ?
-							 ((struct udphdr*) (((
-										     caddr_t)
-									     ixs
-									     ->
-									     iph)
-									    +
-									    (
-										    lsw_ip4_hdr(
-											    ixs)
-										    ->
-										    ihl
-										    <<
-										    2)))
-							 ->source :
-							 (lsw_ip4_hdr(ixs)->
-							  protocol ==
-							  IPPROTO_TCP ?
-							  ((struct tcphdr*)((
-										    caddr_t)
-									    ixs
-									    ->
-									    iph
-									    +
-									    (
-										    lsw_ip4_hdr(
-											    ixs)
-										    ->
-										    ihl
-										    <<
-										    2)))
-							  ->source :
-							  0));
+							lsw_ip4_hdr(ixs)->protocol == IPPROTO_UDP ?
+							 ((struct udphdr*) (((caddr_t)ixs->iph) +
+									    (lsw_ip4_hdr(ixs)->ihl
+										    << 2)))
+								->source :
+							 lsw_ip4_hdr(ixs)->protocol ==IPPROTO_TCP ?
+							  ((struct tcphdr*)((caddr_t)ixs->iph +
+									    (lsw_ip4_hdr(ixs)->ihl
+										    <<2)))
+								->source :
+							  0;
 					}
-					if (ixs->eroute->er_eaddr.sen_dport !=
-					    0) {
+					if (ixs->eroute->er_eaddr.sen_dport != 0)
+					{
 						dst.sin_port =
-							(lsw_ip4_hdr(ixs)->
-							 protocol ==
-							 IPPROTO_UDP ?
-							 ((struct udphdr*) (((
-										     caddr_t)
-									     ixs
-									     ->
-									     iph)
-									    +
-									    (
-										    lsw_ip4_hdr(
-											    ixs)
-										    ->
-										    ihl
-										    <<
-										    2)))
-							 ->dest :
-							 (lsw_ip4_hdr(ixs)->
-							  protocol ==
-							  IPPROTO_TCP ?
-							  ((struct tcphdr*)((
-										    caddr_t)
-									    ixs
-									    ->
-									    iph
-									    +
-									    (
-										    lsw_ip4_hdr(
-											    ixs)
-										    ->
-										    ihl
-										    <<
-										    2)))
-							  ->dest :
-							  0));
+							lsw_ip4_hdr(ixs)->protocol == IPPROTO_UDP ?
+							 ((struct udphdr*) (((caddr_t)ixs->iph) +
+									    (lsw_ip4_hdr(ixs)->ihl << 2)))
+								->dest :
+							 lsw_ip4_hdr(ixs)->protocol ==IPPROTO_TCP ?
+							  ((struct tcphdr*)((caddr_t)ixs->iph +
+									    (lsw_ip4_hdr(ixs)->ihl << 2)))
+								->dest :
+							  0;
 					}
 				}
 
@@ -2431,14 +2370,9 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 			int nexthdroff;
 			unsigned char nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
 			nexthdroff = ipsec_ipv6_skip_exthdr(ixs->skb,
-							    ((void *)(
-								     lsw_ip6_hdr(
-									     ixs)
-								     +
-								     1)) -
-							    (void*)ixs->skb->data,
-							    &nexthdr,
-							    &frag_off);
+				    ((void *)(lsw_ip6_hdr(ixs) + 1)) -
+				    (void*)ixs->skb->data,
+				    &nexthdr, &frag_off);
 			ixs->iphlen = nexthdroff -
 				      (ixs->iph - (void*)ixs->skb->data);
 			ixs->pyldsz = ntohs(lsw_ip6_hdr(ixs)->payload_len) +
@@ -2682,8 +2616,7 @@ enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs)
 			       "tried to skb_put %d, %d available. Returning IPSEC_XMIT_ESPUDP. "
 			       "This should never happen, please report.\n",
 			       ixs->natt_head,
-			       skb_tailroom(
-				       ixs->skb));
+			       skb_tailroom(ixs->skb));
 			if (ixs->stats)
 				ixs->stats->tx_errors++;
 			return IPSEC_XMIT_ESPUDP;
@@ -2912,16 +2845,16 @@ enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 		} else if (ip_hdr(ixs->skb)->version == 6) {
 			err = NF_HOOK(PF_INET6, LSW_NF_INET_LOCAL_OUT,
 				      ixs->skb, NULL,
-				      ixs->route ? ipsec_route_dst(
-					      ixs->route).dev : skb_dst(ixs->
-									skb)->dev,
+				      ixs->route ?
+					 ipsec_route_dst(ixs->route).dev :
+					 skb_dst(ixs->skb)->dev,
 				      ipsec_xmit_send2);
 		} else {
 			err = NF_HOOK(PF_INET, LSW_NF_INET_LOCAL_OUT, ixs->skb,
 				      NULL,
-				      ixs->route ? ipsec_route_dst(
-					      ixs->route).dev : skb_dst(ixs->
-									skb)->dev,
+				      ixs->route ?
+				        ipsec_route_dst(ixs->route).dev :
+					skb_dst(ixs->skb)->dev,
 				      ipsec_xmit_send2);
 		}
 
@@ -2968,7 +2901,7 @@ enum ipsec_xmit_value ipsec_tunnel_send(struct ipsec_xmit_state *ixs)
  * prototypes for state action
  */
 
-struct {
+static struct {
 	enum ipsec_xmit_value (*action)(struct ipsec_xmit_state *ixs);
 	int next_state;
 } xmit_state_table[] = {

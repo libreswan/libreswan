@@ -117,6 +117,7 @@ const char *const debug_bit_names[] = {
 	"impair-minor-version-bump",            /* 29 */
 	"impair-retransmits",                   /* 30 */
 	"impair-send-bogus-isakmp-flag",        /* 31 */
+	"impair-send-ikev2-ke",                 /* 32 */
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -179,7 +180,8 @@ static const char *const payload_name_ikev2[] = {
 	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
 };
 
-static const char *const payload_name_ikev2_main[] = {
+/* dual-use: for enum_name and for bitnamesof */
+const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",        /* 33 */
 	"ISAKMP_NEXT_v2KE",
 	"ISAKMP_NEXT_v2IDi",
@@ -196,6 +198,7 @@ static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2E",
 	"ISAKMP_NEXT_v2CP",
 	"ISAKMP_NEXT_v2EAP",
+	NULL	/* termination for bitnamesof() */
 };
 
 static const char *const payload_name_ikev2_private_use[] = {
@@ -284,7 +287,7 @@ static enum_names exchange_names_doi =
 enum_names exchange_names_ikev1 =
 { ISAKMP_XCHG_NONE, ISAKMP_XCHG_MODE_CFG, exchange_name_ikev1, &exchange_names_doi };
 
-enum_names exchange_names_ikev2 =
+static enum_names exchange_names_ikev2 =
 { ISAKMP_v2_SA_INIT, ISAKMP_v2_IKE_SESSION_RESUME, exchange_name_ikev2, &exchange_names_private_use };
 
 static enum_names exchange_names_doi_and_v2 =
@@ -742,6 +745,7 @@ static enum_names auth_alg_names_stolen_use =
 { AUTH_ALGORITHM_NULL_KAME, AUTH_ALGORITHM_NULL_KAME, auth_alg_name_stolen_use,
   NULL };
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const auth_alg_name[] = {
 	"AUTH_ALGORITHM_NONE", /* our own value, not standard */
 	"AUTH_ALGORITHM_HMAC_MD5",
@@ -771,7 +775,7 @@ enum_names auth_alg_names =
  */
 
 /* for XAUTH-TYPE attribute */
-const char *const xauth_type_name[] = {
+static const char *const xauth_type_name[] = {
 	"Generic",
 	"RADIUS-CHAP",
 	"OTP",
@@ -781,12 +785,6 @@ enum_names xauth_type_names =
 { XAUTH_TYPE_GENERIC, XAUTH_TYPE_SKEY, xauth_type_name, NULL };
 
 /* XAUTH-STATUS attribute */
-static const char *const xauth_status_name[] = {
-	"XAUTH_FAIL",
-	"XAUTH_OK",
-};
-enum_names xauth_status_names =
-{ XAUTH_STATUS_FAIL, XAUTH_STATUS_OK, xauth_status_name, NULL };
 
 static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP4_ADDRESS", /*1 */
@@ -809,7 +807,7 @@ static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP6_PREFIX",
 	"HOME_AGENT_ADDRESS", /* 19 */
 };
-enum_names modecfg_attr_names_draft =
+static enum_names modecfg_attr_names_draft =
 { INTERNAL_IP4_ADDRESS, HOME_AGENT_ADDRESS, modecfg_attr_name_draft,
   NULL };
 
@@ -920,6 +918,7 @@ enum_names oakley_enc_names =
 /* Oakley Hash Algorithm attribute */
 /* http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6 */
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_hash_name[] = {
 	/* 0 - RESERVED */
 	"OAKLEY_MD5",
@@ -981,12 +980,6 @@ enum_names oakley_auth_names =
 
 /* ikev2 auth methods */
 
-static const char *const ikev2_auth_name_private_use[] = {
-	"IKEv2_AUTH_ANONYMOUS",
-};
-enum_names ikev2_auth_names_private_use =
-{ IKEv2_AUTH_ANONYMOUS, IKEv2_AUTH_ANONYMOUS, ikev2_auth_name_private_use, NULL };
-
 static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_RSA", /* 1 */
 	"IKEv2_AUTH_SHARED",
@@ -1002,7 +995,7 @@ static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
 };
 enum_names ikev2_auth_names =
-{ IKEv2_AUTH_RSA, IKEv2_AUTH_GSPM, ikev2_auth_name, &ikev2_auth_names_private_use };
+{ IKEv2_AUTH_RSA, IKEv2_AUTH_GSPM, ikev2_auth_name, NULL };
 
 /*
  * Oakley Group Description attribute
@@ -1010,6 +1003,7 @@ enum_names ikev2_auth_names =
  * be differences we need to care about)
  */
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_group_name[] = {
 	"OAKLEY_GROUP_MODP768",
 	"OAKLEY_GROUP_MODP1024",
@@ -1307,14 +1301,14 @@ const char *const critical_names[] = {
  * IKEv2 Security Protocol Identifiers
  */
 static const char *const ikev2_sec_proto_id_name[] = {
-        /* 0 - Reserved */
-        "IKEv2_SEC_PROTO_IKE",
-        "IKEv2_SEC_PROTO_AH",
-        "IKEv2_SEC_PROTO_ESP",
-        "IKEv2_SEC_FC_ESP_HEADER", /* RFC 4595 */
-        "IKEv2_SEC_FC_CT_AUTHENTICATION", /* RFC 4595 */
-        /* 6 - 200 Unassigned */
-        /* 201 - 255 Private use */
+	/* 0 - Reserved */
+	"IKEv2_SEC_PROTO_IKE",
+	"IKEv2_SEC_PROTO_AH",
+	"IKEv2_SEC_PROTO_ESP",
+	"IKEv2_SEC_FC_ESP_HEADER", /* RFC 4595 */
+	"IKEv2_SEC_FC_CT_AUTHENTICATION", /* RFC 4595 */
+	/* 6 - 200 Unassigned */
+	/* 201 - 255 Private use */
 };
 enum_names ikev2_sec_proto_id_names =
 { IKEv2_SEC_PROTO_IKE, IKEv2_SEC_FC_CT_AUTHENTICATION, ikev2_sec_proto_id_name, NULL };
@@ -1360,10 +1354,10 @@ static const char *const ikev2_trans_type_encr_name[] = {
 	/* 1024 - 65535 Private use */
 };
 
-enum_names ikev2_trans_type_encr_names_private_use2 =
+static enum_names ikev2_trans_type_encr_names_private_use2 =
 { OAKLEY_TWOFISH_CBC_SSH, OAKLEY_TWOFISH_CBC_SSH, ikev2_trans_type_encr_name_private_use2, NULL };
 
-enum_names ikev2_trans_type_encr_names_private_use1 =
+static enum_names ikev2_trans_type_encr_names_private_use1 =
 { OAKLEY_SERPENT_CBC, OAKLEY_TWOFISH_CBC, ikev2_trans_type_encr_name_private_use1, &ikev2_trans_type_encr_names_private_use2 };
 
 enum_names ikev2_trans_type_encr_names =
@@ -1437,8 +1431,8 @@ enum_names *ikev2_transid_val_descs[] = {
 	&ikev2_trans_type_esn_names,          /* 5 */
 };
 
-const unsigned int ikev2_transid_val_descs_size = elemsof(
-	ikev2_transid_val_descs);
+const unsigned int ikev2_transid_val_descs_size =
+	elemsof(ikev2_transid_val_descs);
 
 /* Transform Attributes */
 static const char *const ikev2_trans_attr_name[] = {
@@ -1480,10 +1474,6 @@ static const char *const af_inet6_name[] = {
 	"AF_INET6",
 };
 
-/* never used */
-static enum_names af_names6 = { AF_INET6, AF_INET6, af_inet6_name, NULL };
-
-enum_names af_names = { AF_INET, AF_INET, af_inet_name, &af_names6 };
 
 static ip_address ipv4_any, ipv6_any;
 static ip_subnet ipv4_wildcard, ipv6_wildcard;

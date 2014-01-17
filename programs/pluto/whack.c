@@ -495,52 +495,18 @@ enum option_enums {
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
 	CD_NO_IKEPAD,
-	CD_ESP
+	CD_ESP,
 #   define CD_LAST CD_ESP       /* last connection description */
 
-#   define DBGOPT_FIRST DBGOPT_NONE
-	,
 	/* NOTE: these definitions must match DBG_* and IMPAIR_* in constants.h */
+
+#   define DBGOPT_FIRST DBGOPT_NONE
 	DBGOPT_NONE,
 	DBGOPT_ALL,
 
-	DBGOPT_RAW,             /* same order as DBG_* */
-	DBGOPT_CRYPT,           /* same order as DBG_* */
-	DBGOPT_PARSING,         /* same order as DBG_* */
-	DBGOPT_EMITTING,        /* same order as DBG_* */
-	DBGOPT_CONTROL,         /* same order as DBG_* */
-	DBGOPT_LIFECYCLE,       /* same order as DBG_* */
-	DBGOPT_KERNEL,          /* same order as DBG_* */
-	DBGOPT_DNS,             /* same order as DBG_* */
-	DBGOPT_OPPO,            /* same order as DBG_* */
-	DBGOPT_CONTROLMORE,     /* same order as DBG_* */
-	DBGOPT_PFKEY,           /* same order as DBG_* */
-	DBGOPT_NATT,            /* same order as DBG_* */
-	DBGOPT_X509,            /* same order as DBG_* */
-	DBGOPT_DPD,             /* same order as DBG_* */
-	DBGOPT_OPPOINFO,
-	DBGOPT_WHACKWATCH,
-	DBGOPT_RES16,
-	DBGOPT_RES17,
-	DBGOPT_RES18,
-	DBGOPT_RES19,
+	DBGOPT_elems,
 
-	DBGOPT_PRIVATE,                         /* same order as DBG_* */
-
-	DBGOPT_IMPAIR_DELAY_ADNS_KEY_ANSWER,    /* same order as IMPAIR_* */
-	DBGOPT_IMPAIR_DELAY_ADNS_TXT_ANSWER,    /* same order as IMPAIR_* */
-	DBGOPT_IMPAIR_BUST_MI2,                 /* same order as IMPAIR_* */
-	DBGOPT_IMPAIR_BUST_MR2,                 /* same order as IMPAIR_* */
-	DBGOPT_IMPAIR_SA_CREATION,              /* make all SA creation fail */
-	DBGOPT_IMPAIR_DIE_ONINFO,               /* cause state to be deleted upon receipt of information payload */
-	DBGOPT_IMPAIR_JACOB_TWO_TWO,            /* cause pluto to send all messages twice */
-	DBGOPT_IMPAIR_MAJOR_VERSION_BUMP,       /* cause pluto to send IKE major version higher then we support */
-	DBGOPT_IMPAIR_MINOR_VERSION_BUMP,       /* cause pluto to send IKE minor version higher then we support */
-	DBGOPT_IMPAIR_RETRANSMITS,              /* cause pluto to never retransmit packets */
-	DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG,   /* cause pluto to never retransmit packets */
-
-#   define DBGOPT_LAST DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG
-
+#   define DBGOPT_ROOF (DBGOPT_elems + IMPAIR_roof_IX)
 };
 
 /* Carve up space for result from getop_long.
@@ -741,49 +707,56 @@ static const struct option long_opts[] = {
 	{ "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO },
 	{ "policylabel", required_argument, NULL, CD_POLICY_LABEL + OO },
 #endif
+
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
-	{ "debug-raw", no_argument, NULL, DBGOPT_RAW + OO },
-	{ "debug-crypt", no_argument, NULL, DBGOPT_CRYPT + OO },
-	{ "debug-parsing", no_argument, NULL, DBGOPT_PARSING + OO },
-	{ "debug-emitting", no_argument, NULL, DBGOPT_EMITTING + OO },
-	{ "debug-control", no_argument, NULL, DBGOPT_CONTROL + OO },
-	{ "debug-lifecycle", no_argument, NULL, DBGOPT_LIFECYCLE + OO },
-	{ "debug-kernel", no_argument, NULL, DBGOPT_KERNEL + OO },
-	{ "debug-dns", no_argument, NULL, DBGOPT_DNS + OO },
-	{ "debug-oppo", no_argument, NULL, DBGOPT_OPPO + OO },
-	{ "debug-oppoinfo", no_argument, NULL, DBGOPT_OPPOINFO + OO },
-	{ "debug-whackwatch",  no_argument, NULL, DBGOPT_WHACKWATCH + OO },
-	{ "debug-controlmore", no_argument, NULL, DBGOPT_CONTROLMORE + OO },
-	{ "debug-pfkey",   no_argument, NULL, DBGOPT_PFKEY + OO },
-	{ "debug-nattraversal", no_argument, NULL, DBGOPT_NATT + OO },
-	{ "debug-natt",    no_argument, NULL, DBGOPT_NATT + OO },
-	{ "debug-nat_t",   no_argument, NULL, DBGOPT_NATT + OO },
-	{ "debug-nat-t",   no_argument, NULL, DBGOPT_NATT + OO },
-	{ "debug-x509",    no_argument, NULL, DBGOPT_X509 + OO },
-	{ "debug-dpd",     no_argument, NULL, DBGOPT_DPD + OO },
-	{ "debug-private", no_argument, NULL, DBGOPT_PRIVATE + OO },
+
+#    define DO (DBGOPT_ALL + OO + 1)
+
+	{ "debug-raw", no_argument, NULL, DBG_RAW_IX + DO },
+	{ "debug-crypt", no_argument, NULL, DBG_CRYPT_IX + DO },
+	{ "debug-parsing", no_argument, NULL, DBG_PARSING_IX + DO },
+	{ "debug-emitting", no_argument, NULL, DBG_EMITTING_IX + DO },
+	{ "debug-control", no_argument, NULL, DBG_CONTROL_IX + DO },
+	{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE_IX + DO },
+	{ "debug-kernel", no_argument, NULL, DBG_KERNEL_IX + DO },
+	{ "debug-dns", no_argument, NULL, DBG_DNS_IX + DO },
+	{ "debug-oppo", no_argument, NULL, DBG_OPPO_IX + DO },
+	{ "debug-oppoinfo", no_argument, NULL, DBG_OPPOINFO_IX + DO },
+	{ "debug-whackwatch",  no_argument, NULL, DBG_WHACKWATCH_IX + DO },
+	{ "debug-controlmore", no_argument, NULL, DBG_CONTROLMORE_IX + DO },
+	{ "debug-pfkey",   no_argument, NULL, DBG_PFKEY_IX + DO },
+	{ "debug-nattraversal", no_argument, NULL, DBG_NATT_IX + DO },
+	{ "debug-natt",    no_argument, NULL, DBG_NATT_IX + DO },
+	{ "debug-nat_t",   no_argument, NULL, DBG_NATT_IX + DO },
+	{ "debug-nat-t",   no_argument, NULL, DBG_NATT_IX + DO },
+	{ "debug-x509",    no_argument, NULL, DBG_X509_IX + DO },
+	{ "debug-dpd",     no_argument, NULL, DBG_DPD_IX + DO },
+	{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX + DO },
 
 	{ "impair-delay-adns-key-answer", no_argument, NULL,
-	  DBGOPT_IMPAIR_DELAY_ADNS_KEY_ANSWER + OO },
+	  IMPAIR_DELAY_ADNS_KEY_ANSWER_IX + DO },
 	{ "impair-delay-adns-txt-answer", no_argument, NULL,
-	  DBGOPT_IMPAIR_DELAY_ADNS_TXT_ANSWER + OO },
-	{ "impair-bust-mi2", no_argument, NULL, DBGOPT_IMPAIR_BUST_MI2 + OO },
-	{ "impair-bust-mr2", no_argument, NULL, DBGOPT_IMPAIR_BUST_MR2 + OO },
-	{ "impair-sa-fail",    no_argument, NULL, DBGOPT_IMPAIR_SA_CREATION +
-	  OO },
-	{ "impair-die-oninfo", no_argument, NULL, DBGOPT_IMPAIR_DIE_ONINFO  +
-	  OO },
+	  IMPAIR_DELAY_ADNS_TXT_ANSWER_IX + DO },
+	{ "impair-bust-mi2", no_argument, NULL, IMPAIR_BUST_MI2_IX + DO },
+	{ "impair-bust-mr2", no_argument, NULL, IMPAIR_BUST_MR2_IX + DO },
+	{ "impair-sa-fail",    no_argument, NULL, IMPAIR_SA_CREATION_IX +
+	  DO },
+	{ "impair-die-oninfo", no_argument, NULL, IMPAIR_DIE_ONINFO_IX  +
+	  DO },
 	{ "impair-jacob-two-two", no_argument, NULL,
-	  DBGOPT_IMPAIR_JACOB_TWO_TWO + OO },
+	  IMPAIR_JACOB_TWO_TWO_IX + DO },
 	{ "impair-major-version-bump", no_argument, NULL,
-	  DBGOPT_IMPAIR_MAJOR_VERSION_BUMP + OO },
+	  IMPAIR_MAJOR_VERSION_BUMP_IX + DO },
 	{ "impair-minor-version-bump", no_argument, NULL,
-	  DBGOPT_IMPAIR_MINOR_VERSION_BUMP + OO },
-	{ "impair-retransmits", no_argument, NULL, DBGOPT_IMPAIR_RETRANSMITS +
-	  OO },
+	  IMPAIR_MINOR_VERSION_BUMP_IX + DO },
+	{ "impair-retransmits", no_argument, NULL, IMPAIR_RETRANSMITS_IX +
+	  DO },
 	{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
-	  DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG + OO },
+	  IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
+	{ "impair-send-ikev2-ke", no_argument, NULL,
+	  IMPAIR_SEND_IKEv2_KE_IX + DO },
+#    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +
 	  OO },
@@ -853,8 +826,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 
 	if (default_nexthop) {
 		if (isanyaddr(&that->host_addr))
-			diag(
-				"our nexthop must be specified when other host is a %any or %opportunistic");
+			diag("our nexthop must be specified when other host is a %any or %opportunistic");
 
 
 		this->host_nexthop = that->host_addr;
@@ -876,8 +848,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 
 	/* check protocol */
 	if (this->protocol != that->protocol) {
-		diagq(
-			"the protocol for leftprotoport and rightprotoport must be the same",
+		diagq("the protocol for leftprotoport and rightprotoport must be the same",
 			NULL);
 	}
 }
@@ -919,14 +890,14 @@ int main(int argc, char **argv)
 	const char *ugh;
 
 	/* check division of numbering space */
-	assert(OPTION_OFFSET + DBGOPT_LAST < NUMERIC_ARG);
+	assert(OPTION_OFFSET + IMPAIR_roof_IX <= NUMERIC_ARG);
 	assert(OPT_LAST1 - OPT_FIRST < (sizeof opts_seen * BITS_PER_BYTE) - 1);
 	assert(OPT_LAST2 - OPT_FIRST2 <
 	       (sizeof opts2_seen * BITS_PER_BYTE) - 1);
 	assert(LST_LAST - LST_FIRST < (sizeof lst_seen * BITS_PER_BYTE) - 1);
 	assert(END_LAST - END_FIRST < (sizeof end_seen * BITS_PER_BYTE) - 1);
 	assert(CD_LAST - CD_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
-	assert(DBGOPT_LAST - DBGOPT_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
+	assert(IMPAIR_roof_IX <= (sizeof cd_seen * BITS_PER_BYTE));
 	/* check that POLICY bit assignment matches with CD_ */
 	assert(LELEM(CD_DONT_REKEY - CD_POLICY_FIRST) == POLICY_DONT_REKEY);
 
@@ -1034,7 +1005,7 @@ int main(int argc, char **argv)
 				      long_opts[long_index].name);
 			lst_seen |= f;
 		}
-		else if (DBGOPT_FIRST <= c && c <= DBGOPT_LAST) {
+		else if (DBGOPT_FIRST <= c && c < DBGOPT_ROOF) {
 			/* DBGOPT_* options are treated separately to reduce
 			 * potential members of opts_seen.
 			 */
@@ -1099,8 +1070,7 @@ int main(int argc, char **argv)
 			if (snprintf(ctl_addr.sun_path,
 				     sizeof(ctl_addr.sun_path),
 				     "%s%s", optarg, CTL_SUFFIX) == -1)
-				diag(
-					"<ctlbase>" CTL_SUFFIX " must be fit in a sun_addr");
+				diag("<ctlbase>" CTL_SUFFIX " must be fit in a sun_addr");
 
 
 			continue;
@@ -1177,8 +1147,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.whack_crash_peer), optarg);
 			if (isanyaddr(&msg.whack_crash_peer)) {
-				diagq(
-					"0.0.0.0 or 0::0 isn't a valid client address",
+				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			}
 			continue;
@@ -1216,8 +1185,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo_my_client), optarg);
 			if (isanyaddr(&msg.oppo_my_client)) {
-				diagq(
-					"0.0.0.0 or 0::0 isn't a valid client address",
+				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			}
 			continue;
@@ -1227,8 +1195,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo_peer_client), optarg);
 			if (isanyaddr(&msg.oppo_peer_client)) {
-				diagq(
-					"0.0.0.0 or 0::0 isn't a valid client address",
+				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			}
 			continue;
@@ -1333,8 +1300,7 @@ int main(int argc, char **argv)
 				 * it will come from the group's file.
 				 */
 				if (LHAS(end_seen, END_CLIENT - END_FIRST))
-					diag(
-						"--host %group clashes with --client");
+					diag("--host %group clashes with --client");
 
 
 				end_seen |= LELEM(END_CLIENT - END_FIRST);
@@ -1383,8 +1349,7 @@ int main(int argc, char **argv)
 
 		case END_IKEPORT: /* --ikeport <port-number> */
 			if (opt_whole <= 0 || opt_whole >= 0x10000) {
-				diagq(
-					"<port-number> must be a number between 1 and 65535",
+				diagq("<port-number> must be a number between 1 and 65535",
 					optarg);
 			}
 			msg.right.host_port = opt_whole;
@@ -1787,38 +1752,11 @@ int main(int argc, char **argv)
 			msg.debugging |= DBG_ALL;       /* note: does not include PRIVATE */
 			continue;
 
-		case DBGOPT_RAW:                                /* --debug-raw */
-		case DBGOPT_CRYPT:                              /* --debug-crypt */
-		case DBGOPT_PARSING:                            /* --debug-parsing */
-		case DBGOPT_EMITTING:                           /* --debug-emitting */
-		case DBGOPT_CONTROL:                            /* --debug-control */
-		case DBGOPT_LIFECYCLE:                          /* --debug-lifecycle */
-		case DBGOPT_KERNEL:                             /* --debug-kernel */
-		case DBGOPT_DNS:                                /* --debug-dns */
-		case DBGOPT_OPPO:                               /* --debug-oppo */
-		case DBGOPT_CONTROLMORE:                        /* --debug-controlmore */
-		case DBGOPT_PFKEY:                              /* --debug-pfkey */
-		case DBGOPT_NATT:                               /* --debug-natt */
-		case DBGOPT_X509:                               /* --debug-pfkey */
-		case DBGOPT_DPD:                                /* --debug-dpd */
-		case DBGOPT_OPPOINFO:                           /* --debug-oppoinfo */
-		case DBGOPT_WHACKWATCH:                         /* --debug-whackwatch */
-		case DBGOPT_PRIVATE:                            /* --debug-private */
-		case DBGOPT_IMPAIR_DELAY_ADNS_KEY_ANSWER:       /* --impair-delay-adns-key-answer */
-		case DBGOPT_IMPAIR_DELAY_ADNS_TXT_ANSWER:       /* --impair-delay-adns-txt-answer */
-		case DBGOPT_IMPAIR_BUST_MI2:                    /* --impair_bust_mi2 */
-		case DBGOPT_IMPAIR_BUST_MR2:                    /* --impair_bust_mr2 */
-		case DBGOPT_IMPAIR_SA_CREATION:                 /* --impair-sa-creation */
-		case DBGOPT_IMPAIR_DIE_ONINFO:                  /* --impair-die-oninfo */
-		case DBGOPT_IMPAIR_JACOB_TWO_TWO:               /* --impair-jacob-two-two */
-		case DBGOPT_IMPAIR_MAJOR_VERSION_BUMP:          /* --impair-major-version-bump */
-		case DBGOPT_IMPAIR_MINOR_VERSION_BUMP:          /* --impair-minor-version-bump */
-		case DBGOPT_IMPAIR_RETRANSMITS:                 /* --impair-retransmits */
-		case DBGOPT_IMPAIR_SEND_BOGUS_ISAKMP_FLAG:      /* --impair-send-bogus-isakmp-flag */
-			msg.debugging |= LELEM(c - DBGOPT_RAW);
-			continue;
 		default:
-			assert(FALSE); /* unknown return value */
+			/* DBG_* or IMPAIR_* flags */
+			assert(DBGOPT_elems <= c && c < DBGOPT_elems + IMPAIR_roof_IX);
+			msg.debugging |= LELEM(c - DBGOPT_elems);
+			continue;
 		}
 		break;
 	}
@@ -1885,8 +1823,7 @@ int main(int argc, char **argv)
 
 		if (subnettypeof(&msg.left.client) !=
 		    subnettypeof(&msg.right.client))
-			diag(
-				"endpoints clash: one is IPv4 and the other is IPv6");
+			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
 
 		if (NEVER_NEGOTIATE(msg.policy)) {
@@ -1896,21 +1833,18 @@ int main(int argc, char **argv)
 			 */
 			if ((msg.policy & POLICY_SHUNT_MASK) ==
 			    POLICY_SHUNT_TRAP)
-				diag(
-					"non-shunt connection must have --psk or --rsasig or both");
+				diag("non-shunt connection must have --psk or --rsasig or both");
 
 
 		} else {
 			/* not just a shunt: a real ipsec connection */
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY)
-				diag(
-					"must specify --rsasig or --psk for a connection");
+				diag("must specify --rsasig or --psk for a connection");
 
 
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
 			    (msg.left.has_client || msg.right.has_client))
-				diag(
-					"must not specify clients for ISAKMP-only connection");
+				diag("must not specify clients for ISAKMP-only connection");
 
 
 		}
@@ -1947,8 +1881,7 @@ int main(int argc, char **argv)
 
 	if (msg.policy & POLICY_AGGRESSIVE) {
 		if (msg.ike == NULL)
-			diag(
-				"can not specify aggressive mode without ike= to set algorithm");
+			diag("can not specify aggressive mode without ike= to set algorithm");
 
 
 	}
@@ -1960,8 +1893,7 @@ int main(int argc, char **argv)
 	    msg.sa_rekey_fuzz * msg.sa_rekey_margin * 4 / msg.sa_rekey_margin /
 	    4 !=
 	    msg.sa_rekey_fuzz)
-		diag(
-			"rekeymargin or rekeyfuzz values are so large that they cause oveflow");
+		diag("rekeymargin or rekeyfuzz values are so large that they cause oveflow");
 
 
 	check_life_time(msg.sa_ike_life_seconds,
@@ -1972,25 +1904,21 @@ int main(int argc, char **argv)
 			"ipseclifetime", &msg);
 
 	if (msg.dpd_delay && !msg.dpd_timeout)
-		diag(
-			"dpddelay specified, but dpdtimeout is zero, both should be specified");
+		diag("dpddelay specified, but dpdtimeout is zero, both should be specified");
 
 
 	if (!msg.dpd_delay && msg.dpd_timeout)
-		diag(
-			"dpdtimeout specified, but dpddelay is zero, both should be specified");
+		diag("dpdtimeout specified, but dpddelay is zero, both should be specified");
 
 
 	if (msg.dpd_action != DPD_ACTION_CLEAR && msg.dpd_action !=
 	    DPD_ACTION_HOLD && msg.dpd_action != DPD_ACTION_RESTART) {
-		diag(
-			"dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
+		diag("dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
 		msg.dpd_action = DPD_ACTION_HOLD;
 	}
 
 	if (msg.remotepeertype != CISCO && msg.remotepeertype != NON_CISCO) {
-		diag(
-			"remote_peer_type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
+		diag("remote_peer_type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
 		msg.remotepeertype = NON_CISCO; /*NON_CISCO=0*/
 	}
 
@@ -2143,8 +2071,7 @@ int main(int argc, char **argv)
 								xauthpasslen =
 									whack_get_secret(
 										xauthpass,
-										sizeof(
-											xauthpass));
+										sizeof(xauthpass));
 							}
 							send_reply(sock,
 								   xauthpass,
@@ -2156,8 +2083,7 @@ int main(int argc, char **argv)
 								xauthnamelen =
 									whack_get_value(
 										xauthname,
-										sizeof(
-											xauthname));
+										sizeof(xauthname));
 							}
 							send_reply(sock,
 								   xauthname,

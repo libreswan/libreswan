@@ -80,7 +80,7 @@ static field_desc isag_fields[] = {
 	{ ft_end, 0, NULL, NULL }
 };
 
-struct_desc isakmp_generic_desc =
+static struct_desc isakmp_generic_desc =
 { "ISAKMP Generic Payload", isag_fields, sizeof(struct isakmp_generic) };
 
 /* ISAKMP Data Attribute (generic representation within payloads)
@@ -1061,7 +1061,7 @@ struct_desc ikev2_notify_desc = { "IKEv2 Notify Payload",
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
+static struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
 				     ikev2generic_fields,
 				     sizeof(struct ikev2_generic) };
 
@@ -1164,7 +1164,7 @@ struct_desc ikev2_e_desc = { "IKEv2 Encryption Payload",
  * That leaves only Identification payloads as a problem.
  * We make all these entries NULL
  */
-struct_desc *const payload_descs[ISAKMP_NEXT_ROOF] = {
+static struct_desc *const payload_descs[] = {
 	NULL,                           /* 0 ISAKMP_NEXT_NONE (No other payload following) */
 	&isakmp_sa_desc,                /* 1 ISAKMP_NEXT_SA (Security Association) */
 	NULL,                           /* 2 ISAKMP_NEXT_P (Proposal) */
@@ -1185,7 +1185,7 @@ struct_desc *const payload_descs[ISAKMP_NEXT_ROOF] = {
 	NULL,                           /* 17 */
 	NULL,                           /* 18 */
 	NULL,                           /* 19 */
-	&isakmp_nat_d,                  /* 20=130 ISAKMP_NEXT_NATD_RFC=ISAKMP_NEXT_NATD_DRAFT (NAT-D) */
+	&isakmp_nat_d,                  /* 20=130 ISAKMP_NEXT_NATD_RFC=ISAKMP_NEXT_NATD_DRAFTS (NAT-D) */
 	&isakmp_nat_oa,                 /* 21=131 ISAKMP_NEXT_NATOA_RFC=ISAKMP_NEXT_NATOA_DRAFTS (NAT-OA) */
 	NULL,				/* 22 */
 	NULL,				/* 23 */
@@ -1213,6 +1213,11 @@ struct_desc *const payload_descs[ISAKMP_NEXT_ROOF] = {
 	&ikev2_ts_desc,			/* 45 ISAKMP_NEXT_v2TSr */
 	&ikev2_e_desc,                  /* 46 ISAKMP_NEXT_v2E */
 };
+
+const struct_desc *payload_desc(unsigned p)
+{
+	return p < elemsof(payload_descs) ? payload_descs[p] : NULL;
+}
 
 void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 {

@@ -22,12 +22,6 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 
 extern void ikev2_delete_out(struct state *st);
 
-bool ikev2_out_attr(int type,
-		    unsigned long val,
-		    struct_desc *attr_desc,
-		    enum_names **attr_val_descs,
-		    pb_stream *pbs);
-
 extern bool ikev2_out_sa(pb_stream *outs,
 			 unsigned int protoid,
 			 struct db_sa *sadb,
@@ -47,7 +41,7 @@ extern stf_status ikev2parent_inR1outI2(struct msg_digest *md);
 extern stf_status ikev2parent_inI2outR2(struct msg_digest *md);
 extern stf_status ikev2parent_inR2(struct msg_digest *md);
 
-extern const struct state_v2_microcode *ikev2_parent_firststate(void);
+extern const struct state_v2_microcode ikev2_parent_firststate_microcode;
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
@@ -96,13 +90,14 @@ extern void send_v2_notification_from_state(struct state *st,
 
 extern void send_v2_notification_from_md(struct msg_digest *md, u_int16_t type,
 					 chunk_t *data);
-extern stf_status ikev2_process_payloads(struct msg_digest *md,
+
+extern stf_status ikev2_process_encrypted_payloads(struct msg_digest *md,
 					 pb_stream   *in_pbs,
-					 unsigned int from_state,
 					 unsigned int np);
 
 extern bool ikev2_decode_peer_id(struct msg_digest *md,
 				 enum phase1_role initiator);
+
 extern void ikev2_log_parentSA(struct state *st);
 
 extern bool ikev2_calculate_rsa_sha1(struct state *st,
@@ -155,12 +150,6 @@ extern int ikev2_evaluate_connection_port_fit(struct connection *d,
 					      unsigned int tsr_n,
 					      unsigned int *best_tsi_i,
 					      unsigned int *best_tsr_i);
-
-extern stf_status ikev2_emit_ts(struct msg_digest *md,
-				pb_stream *outpbs,
-				unsigned int np,
-				struct traffic_selector *ts,
-				enum phase1_role role);
 
 extern stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 				     pb_stream *outpbs,

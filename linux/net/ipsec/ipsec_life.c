@@ -103,8 +103,7 @@ enum ipsec_life_alive ipsec_lifetime_check(struct ipsec_lifetime64 *il64,
 			    "hard %s lifetime of SA:<%s%s%s> %s has been reached, SA expired, "
 			    "%s packet dropped.\n",
 			    lifename,
-			    IPS_XFORM_NAME(
-				    ips),
+			    IPS_XFORM_NAME(ips),
 			    saname,
 			    dir);
 

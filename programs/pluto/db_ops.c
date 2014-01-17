@@ -125,11 +125,12 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
 #define PFREE_ST(p, n)         pfree(p);
 
 #endif /* NO_DB_OPS_STATS */
+
 /*	Initialize db object
  *	max_trans and max_attrs can be 0, will be dynamically expanded
  *	as a result of "add" operations
  */
-int db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
+static int db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
 		 int max_attrs)
 {
 	int ret = -1;
@@ -313,7 +314,7 @@ int db_trans_add(struct db_context *ctx, u_int8_t transid)
 }
 
 /*	Add attr copy to current transform, expanding attrs0 if needed */
-int db_attr_add(struct db_context *ctx, const struct db_attr *a)
+static int db_attr_add(struct db_context *ctx, const struct db_attr *a)
 {
 	/*
 	 *	Strategy: if more space is needed, expand by

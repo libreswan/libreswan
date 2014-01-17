@@ -96,7 +96,7 @@ static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 bool no_retransmits = FALSE;
 
-pid_t addconn_child_pid = 0;
+static pid_t addconn_child_pid = 0;
 
 /* list of interface devices */
 struct iface_list interface_dev;
@@ -111,9 +111,6 @@ struct sockaddr_un ctl_addr = {
 #endif
 	.sun_path  = DEFAULT_CTLBASE CTL_SUFFIX
 };
-
-/* info (showpolicy) socket */
-int policy_fd = NULL_FD;
 
 struct sockaddr_un info_addr = {
 	.sun_family = AF_UNIX,
@@ -774,8 +771,7 @@ void call_server(void)
 				int helpers = pluto_crypto_helper_ready(
 					&readfds);
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "* processed %d messages from cryptographic helpers\n",
+				    DBG_log("* processed %d messages from cryptographic helpers\n",
 					    helpers));
 
 				ndes -= helpers;
@@ -1054,8 +1050,7 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 						      ifp->port,
 						      fromstr,
 						      offstr,
-						      strerror(
-							      ee->ee_errno),
+						      strerror(ee->ee_errno),
 						      (unsigned long) ee->ee_errno,
 						      orname
 					                /* , ee->ee_pad, (unsigned long)ee->ee_info */
@@ -1145,8 +1140,7 @@ static bool send_packet(struct state *st, const char *where,
 	}
 
 	DBG(DBG_CONTROL | DBG_RAW,
-	    DBG_log(
-		    "sending %lu bytes for %s through %s:%d to %s:%u (using #%lu)",
+	    DBG_log("sending %lu bytes for %s through %s:%d to %s:%u (using #%lu)",
 		    (unsigned long) len,
 		    where,
 		    st->st_interface->ip_dev->id_rname,
@@ -1184,8 +1178,7 @@ static bool send_packet(struct state *st, const char *where,
 		/* sleep for half a second, and second another packet */
 		usleep(500000);
 
-		DBG_log(
-			"JACOB 2-2: resending %lu bytes for %s through %s:%d to %s:%u:",
+		DBG_log("JACOB 2-2: resending %lu bytes for %s through %s:%d to %s:%u:",
 			(unsigned long) len,
 			where,
 			st->st_interface->ip_dev->id_rname,
@@ -1326,13 +1319,13 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 	if (!st->st_ikev2 &&
 	    st->st_state != STATE_MAIN_I1 &&
 	    len + natt_bonus >=
-	    ((st->st_connection->addr_family ==
-	      AF_INET) ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
+	    (st->st_connection->addr_family == AF_INET ?
+	     ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
 	    ((resending &&
 	      (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
 	      st->st_seen_fragvid) ||
 	     ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-	      st->st_seen_fragments == TRUE)))
+	      st->st_seen_fragments)))
 		return send_frags(st, where);
 	else
 		return send_packet(st, where, FALSE, st->st_tpacket.ptr,

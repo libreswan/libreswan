@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec setup start
+[ 00.00] NET: Registered protocol family 15
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add northnet-eastnet-nat
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ grep 'Result using RFC 3947' /tmp/pluto.log
+"northnet-eastnet-nat"[1] 192.1.2.254 #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): peer is NATed
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
