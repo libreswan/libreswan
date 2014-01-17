@@ -237,17 +237,15 @@ static int aalg_getbyname_esp(const char *str, int len)
 
 static int modp_getbyname_esp(const char *const str, int len)
 {
-	int ret = -1;
+	int ret;
 
-	if (!str || !*str)
-		goto out;
+	if (str == NULL || *str == '\0')
+		return -1;
 	ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "",
 				     str, len);
-	if (ret >= 0)
-		goto out;
-	ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
-				    " (extension)", str, len);
-out:
+	if (ret < 0)
+		ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
+				      " (extension)", str, len);
 	return ret;
 }
 
@@ -270,7 +268,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	passert(cnt < elemsof(alg_info->esp));
 	/*	dont add duplicates	*/
 	for (i = 0; i < cnt; i++)
-		if (    esp_info[i].esp_ealg_id == ealg_id &&
+		if (esp_info[i].esp_ealg_id == ealg_id &&
 			(!ek_bits || esp_info[i].esp_ealg_keylen == ek_bits) &&
 			esp_info[i].esp_aalg_id == aalg_id &&
 			(!ak_bits || esp_info[i].esp_aalg_keylen == ak_bits))
@@ -393,9 +391,9 @@ static int parser_machine(struct parser_context *p_ctx)
 		case ST_AA:
 		case ST_AK:
 		case ST_MODP:
-		default:
 		{
 			enum parser_state_esp next_state = 0;
+
 			switch (ch) {
 			case 0:   next_state = ST_EOF;
 				break;
@@ -406,10 +404,12 @@ static int parser_machine(struct parser_context *p_ctx)
 			parser_set_state(p_ctx, next_state);
 			goto out;
 		}
+		default:
 			p_ctx->err = "String ended with invalid char";
 			goto err;
 		}
 	}
+
 re_eval:
 	switch (p_ctx->state) {
 	case ST_INI:
@@ -636,9 +636,9 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 		case ESP_AES_CCM_8:
 		case ESP_AES_CCM_12:
 		case ESP_AES_CCM_16:
-			if ( p_ctx->eklen != 128 &&
-			     p_ctx->eklen != 192 &&
-			     p_ctx->eklen != 256 ) {
+			if (p_ctx->eklen != 128 &&
+			    p_ctx->eklen != 192 &&
+			    p_ctx->eklen != 256) {
 				p_ctx->err =
 					"wrong encryption key length -"
 					" AES CCM/GCM only uses 128, 192 or 256";
@@ -950,7 +950,7 @@ int alg_info_snprint(char *buf, int buflen,
 			size_t np = strlen(ptr);
 			ptr += np;
 			buflen -= np;
-			if ( cnt > 0) {
+			if (cnt > 0) {
 				snprintf(ptr, buflen, ", ");
 				np = strlen(ptr);
 				ptr += np;
@@ -968,8 +968,6 @@ int alg_info_snprint(char *buf, int buflen,
 			size_t np = strlen(ptr);
 			ptr += np;
 			buflen -= np;
-			if (buflen <= 0)
-				goto out;
 		}
 		break;
 	}
@@ -988,7 +986,7 @@ int alg_info_snprint(char *buf, int buflen,
 			size_t np = strlen(ptr);
 			ptr += np;
 			buflen -= np;
-			if ( cnt > 0) {
+			if (cnt > 0) {
 				snprintf(ptr, buflen, ", ");
 				np = strlen(ptr);
 				ptr += np;
@@ -1006,8 +1004,6 @@ int alg_info_snprint(char *buf, int buflen,
 			size_t np = strlen(ptr);
 			ptr += np;
 			buflen -= np;
-			if (buflen <= 0)
-				goto out;
 		}
 		break;
 	}
@@ -1035,18 +1031,17 @@ int alg_info_snprint(char *buf, int buflen,
 				size_t np = strlen(ptr);
 				ptr += np;
 				buflen -= np;
-				if ( cnt > 0) {
+				if (cnt > 0) {
 					snprintf(ptr, buflen, ", ");
 					np = strlen(ptr);
 					ptr += np;
 					buflen -= np;
 				}
 				if (buflen <= 0)
-					goto out;
+					break;
 			}
 			break;
 		}
-	/* FALLTHROUGH */
 
 	default:
 		snprintf(buf, buflen, "INVALID protoid=%d\n",
@@ -1054,7 +1049,7 @@ int alg_info_snprint(char *buf, int buflen,
 		size_t np = strlen(ptr);
 		ptr += np;
 		buflen -= np;
-		goto out;
+		break;
 	}
 
 out:
