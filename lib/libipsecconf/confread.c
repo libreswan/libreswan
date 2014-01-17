@@ -333,27 +333,17 @@ static int load_setup(struct starter_config *cfg,
 				cfg->setup.strings_set[kw->keyword.keydef->
 						       field] = TRUE;
 			} else {
-				int len;
-				char *s;
-
-				len =
-					strlen(cfg->setup.strings[kw->keyword.
-								  keydef->
-								  field]) + 1;
-				len += strlen(kw->string) + 1;
+				unsigned int kf = kw->keyword.keydef->field;
+				char *s = cfg->setup.strings[kf];
+				size_t old_len = strlen(s);
+				size_t add_len = strlen(kw->string) + 1;
 
 				/* allocate the string */
-				s =
-					cfg->setup.strings[kw->keyword.keydef->
-							   field];
-				s = xrealloc(s, len);
-				strncat(s, " ", len);
-				strncat(s, kw->string, len);
-
-				cfg->setup.strings[kw->keyword.keydef->field] =
-					s;
-				cfg->setup.strings_set[kw->keyword.keydef->
-						       field] = TRUE;
+				s = xrealloc(s, old_len + 1 + add_len);
+				s[old_len++] = ' ';
+				memcpy(&s[old_len], kw->string, add_len);
+				cfg->setup.strings[kf] = s;
+				cfg->setup.strings_set[kf] = TRUE;
 			}
 			break;
 
