@@ -416,8 +416,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'f': /* --file arg */
-			secrets_file[0] = '\0';
-			strncat(secrets_file, optarg, PATH_MAX - 1);
+			jam_str(secrets_file, sizeof(secrets_file), optarg);
 			break;
 
 		case 'i':

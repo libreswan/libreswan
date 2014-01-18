@@ -1427,9 +1427,7 @@ static void *do_authentication(void *varg)
 		if (st->quirks.xauth_ack_msgid)
 			st->st_msgid_phase15 = 0;
 
-		/* ??? is this strncpy correct? */
-		strncpy(st->st_xauth_username, (char *)arg->name.ptr,
-			sizeof(st->st_xauth_username));
+		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), (char *)arg->name.ptr);
 	} else {
 		/*
 		 * Login attempt failed, display error, send XAUTH status to client
@@ -2412,11 +2410,9 @@ static stf_status xauth_client_resp(struct state *st,
 							if (cptr)
 								*cptr = '\0';
 						}
-						/* ??? is this strncpy correct? */
-						strncpy(st->st_xauth_username,
-							xauth_username,
-							sizeof(st->
-							       st_xauth_username));
+						jam_str(st->st_xauth_username,
+							sizeof(st->st_xauth_username),
+							xauth_username);
 					}
 
 					if (!out_raw(st->st_xauth_username,
@@ -2449,8 +2445,7 @@ static stf_status xauth_client_resp(struct state *st,
 							st->st_xauth_username);
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("looked up username=%s, got=%p",
-							    st->
-							    st_xauth_username,
+							    st->st_xauth_username,
 							    s));
 						if (s) {
 							struct

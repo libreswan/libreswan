@@ -109,7 +109,6 @@ int main(int argc, char *argv[])
 	const char *short_options =
 		"f:hs:d:r:t:i:b:w:vl:z:m:Ve:a:o::u:n:y:g:p:AG:I:qMRT::P::O:NX:";
 	int arg;
-	char arg_str[MAXLINE];  /* Args as string for syslog */
 	int options_index = 0;
 	char filename[MAXLINE];
 	int filename_flag = 0;
@@ -150,7 +149,6 @@ int main(int argc, char *argv[])
 	struct timeval last_packet_time;        /* Time last packet was sent */
 	struct timeval elapsed_time;            /* Elapsed time as timeval */
 	double elapsed_seconds;                 /* Elapsed time in seconds */
-	int arg_str_space;                      /* Used to avoid buffer overruns when copying */
 	char patfile[MAXLINE];                  /* IKE Backoff pattern file name */
 	char vidfile[MAXLINE];                  /* IKE Vendor ID pattern file name */
 	char psk_crack_file[MAXLINE];           /* PSK crack data output file name */
@@ -177,27 +175,26 @@ int main(int argc, char *argv[])
 	int multiline = 0;              /* Split decodes across lines if nonzero */
 	int hostno;
 
-/*
- *	Open syslog channel and log arguments if required.
+#ifdef SYSLOG
+/*	Open syslog channel and log arguments if required.
  *	We must be careful here to avoid overflowing the arg_str buffer
  *	which could result in a buffer overflow vulnerability.
  */
-#ifdef SYSLOG
-	openlog("ike-scan", LOG_PID, SYSLOG_FACILITY);
-	arg_str[0] = '\0';
-	arg_str_space = MAXLINE; /* Amount of space left in the arg_str buffer */
-	for (arg = 0; arg < argc; arg++) {
-		arg_str_space -= strlen(argv[arg]);
-		if (arg_str_space > 0) {
-			strncat(arg_str, argv[arg], (size_t) arg_str_space);
-			if (arg < (argc - 1)) {
-				if (--arg_str_space > 0)
-					strcat(arg_str, " ");
-			}
+	{
+		char arg_str[MAXLINE];
+		chr *p = arg_str;
+
+		openlog("ike-scan", LOG_PID, SYSLOG_FACILITY);
+		arg_str[0] = '\0';
+		for (arg = 0; arg < argc; arg++) {
+			if (p != arg_str)
+				add_str(arg_str, sizeof(arg_str), p, " ");
+			add_str(arg_str, sizeof(arg_str), p, argv[arg]);
 		}
+		info_syslog("Starting: %s", arg_str);
 	}
-	info_syslog("Starting: %s", arg_str);
 #endif
+
 /*
  *      Get program start time for statistics displayed on completion.
  */
@@ -214,8 +211,7 @@ int main(int argc, char *argv[])
 /*
  *	Process options and arguments.
  */
-	while ((arg =
-			getopt_long_only(argc, argv, short_options,
+	while ((arg = getopt_long_only(argc, argv, short_options,
 					 long_options,
 					 &options_index)) != -1) {
 		switch (arg) {

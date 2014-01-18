@@ -642,9 +642,10 @@ size_t format_end(char *buf,
 	}
 
 	if (this->modecfg_server || this->modecfg_client ||
-		this->xauth_server || this->xauth_client ||
-		this->sendcert != cert_defaultcertpolicy) {
-		const char *plus = "+";
+	    this->xauth_server || this->xauth_client ||
+	    this->sendcert != cert_defaultcertpolicy) {
+		char *p = endopts;
+
 		endopts[0] = '\0';
 
 		if (id_obrackets[0] == '[') {
@@ -655,55 +656,36 @@ size_t format_end(char *buf,
 		}
 
 		if (this->modecfg_server)
-			strncat(endopts, "MS", sizeof(endopts) - strlen(
-					endopts) - 1);
+			p = jam_str(endopts, sizeof(endopts), "MS");
 
-		if (this->modecfg_client) {
-			strncat(endopts, plus, sizeof(endopts) - strlen(
-					endopts) - 1);
-			strncat(endopts, "MC", sizeof(endopts) - strlen(
-					endopts) - 1);
-		}
+		if (this->modecfg_client)
+			p = add_str(endopts, sizeof(endopts), p, "+MC");
 
-		if (this->xauth_server) {
-			strncat(endopts, plus, sizeof(endopts) - strlen(
-					endopts) - 1);
-			strncat(endopts, "XS", sizeof(endopts) - strlen(
-					endopts) - 1);
-		}
+		if (this->xauth_server)
+			p = add_str(endopts, sizeof(endopts), p, "+XS");
 
-		if (this->xauth_client) {
-			strncat(endopts, plus, sizeof(endopts) - strlen(
-					endopts) - 1);
-			strncat(endopts, "XC", sizeof(endopts) - strlen(
-					endopts) - 1);
-		}
-
+		if (this->xauth_client)
+			p = add_str(endopts, sizeof(endopts), p, "+XC");
 		{
-			const char *send_cert = "";
+			const char *send_cert;
 			char s[32];
-
-			send_cert = ""; /* Length 3 because cert.type is 1-11 */
 
 			switch (this->sendcert) {
 			case cert_neversend:
-				send_cert = "S-C";
+				send_cert = "+S-C";
 				break;
 			case cert_sendifasked:
-				send_cert = "S?C";
+				send_cert = "+S?C";
 				break;
 			case cert_alwayssend:
-				send_cert = "S=C";
+				send_cert = "+S=C";
 				break;
 			case cert_forcedtype:
-				snprintf(s, sizeof(s), "S%d", this->cert.type);
+				snprintf(s, sizeof(s), "+S%d", this->cert.type);
 				send_cert = s;
 				break;
 			}
-			strncat(endopts, plus, sizeof(endopts) -
-				strlen(endopts) - 1);
-			strncat(endopts, send_cert, sizeof(endopts) -
-				strlen(endopts) - 1);
+			p = add_str(endopts, sizeof(endopts), p, send_cert);
 		}
 	}
 
@@ -764,7 +746,7 @@ static void unshare_connection_end_strings(struct end *e)
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
-	if (e->xauth_name)
+	if (e->xauth_name != NULL)
 		e->xauth_name = clone_str(e->xauth_name, "xauth name");
 
 	if (e->host_addr_name)
@@ -3592,12 +3574,12 @@ static void show_one_sr(struct connection *c,
 		thisxauthsemi[0] = '\0';
 		snprintf(thisxauthsemi, sizeof(thisxauthsemi) - 1,
 			"my_xauthuser=%s; ",
-			sr->this.xauth_name ? sr->this.xauth_name : "[any]");
+			sr->this.xauth_name != NULL ? sr->this.xauth_name : "[any]");
 
 		thatxauthsemi[0] = '\0';
 		snprintf(thatxauthsemi, sizeof(thatxauthsemi) - 1,
 			"their_xauthuser=%s; ",
-			sr->that.xauth_name ? sr->that.xauth_name : "[any]");
+			sr->that.xauth_name != NULL ? sr->that.xauth_name : "[any]");
 
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   xauth info: us:%s, them:%s, %s %s%s;",
