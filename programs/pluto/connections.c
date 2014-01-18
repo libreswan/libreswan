@@ -808,10 +808,8 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	dst->cert_filename = clone_str(filename, "certificate filename");
 
 	{
-		bool valid_cert = FALSE;
-
 		/* load cert from file */
-		valid_cert = load_cert_from_nss(FALSE, filename, TRUE,
+		bool valid_cert = load_cert_from_nss(FALSE, filename, TRUE,
 						"host cert", &cert);
 		if (!valid_cert) {
 			whack_log(RC_FATAL,
@@ -903,9 +901,11 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 		dst->cert.type = src->certtype;
 		load_cert_from_nss(TRUE, src->cert, TRUE, "forced cert",
 				&dst->cert);
+		/* ??? what should we do on load_cert_from_nss failure? */
 	} else {
 		/* load local end certificate and extract ID, if any */
 		load_end_certificate(src->cert, dst);
+		/* ??? what should we do on load_end_certificate failure? */
 	}
 
 	/* does id has wildcards? */

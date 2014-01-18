@@ -232,57 +232,56 @@ bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 			    nssHostCertNickName));
 	}
 
-	if (forcedtype) {
-		cert->u.blob.len = nssCert->derCert.len;
-		cert->u.blob.ptr = alloc_bytes(cert->u.blob.len, label);
-		memcpy(cert->u.blob.ptr, nssCert->derCert.data,
-		       cert->u.blob.len);
-		/*I think it should return TRUE, however as in load_cert, FALSE is returned when forcedtype is TRUE so returning FALSE*/
-		return FALSE;
-	}
 
 	blob.len = nssCert->derCert.len;
 	blob.ptr = alloc_bytes(blob.len, label);
 	memcpy(blob.ptr, nssCert->derCert.data, blob.len);
 
-	if (is_asn1(blob)) {
+	if (forcedtype) {
+		cert->u.blob = blob;
+		memcpy(blob.ptr, nssCert->derCert.data, blob.len);
+		return TRUE;	/* success! */
+	}
+
+	if (!is_asn1(blob)) {
+		if (verbose)
+			libreswan_log("  cert read from NSS db is not in DER format");
+	} else {
 		DBG(DBG_PARSING, DBG_log("file coded in DER format"));
 
 		x509cert_t *x509cert = alloc_thing(x509cert_t, "x509cert");
+
 		*x509cert = empty_x509cert;
 
-		if (parse_x509cert(blob, 0, x509cert)) {
+		if (!parse_x509cert(blob, 0, x509cert)) {
+			libreswan_log("  error in X.509 certificate");
+			free_x509cert(x509cert);
+		} else {
 			cert->forced = FALSE;
 			cert->type = CERT_X509_SIGNATURE;
 			cert->u.x509 = x509cert;
-			return TRUE;
-		} else {
-			libreswan_log("  error in X.509 certificate");
-			pfree(blob.ptr);
-			free_x509cert(x509cert);
-			return FALSE;
+			return TRUE;	/* success! */
 		}
 	}
 
-	if (verbose)
-		libreswan_log("  cert read from NSS db is not in DER format");
+	/* failure */
 	pfree(blob.ptr);
 	return FALSE;
 }
 
 void load_authcerts_from_nss(const char *type, u_char auth_flags)
 {
-	CERTCertList *list = NULL;
 	CERTCertListNode *node;
-
-	list = PK11_ListCerts(PK11CertListCA,
+	CERTCertList *list = PK11_ListCerts(PK11CertListCA,
 			      lsw_return_nss_password_file_info());
-	if (list) {
+
+	if (list != NULL) {
 		for (node = CERT_LIST_HEAD(list); !CERT_LIST_END(node, list);
 		     node = CERT_LIST_NEXT(node)) {
 
 			cert_t cert;
-			if (load_cert_from_nss(CERT_NONE, node->cert->nickname,
+
+			if (load_cert_from_nss(FALSE, node->cert->nickname,
 #ifdef SINGLE_CONF_DIR
 					       FALSE, /* too verbose in single conf dir */
 #else
