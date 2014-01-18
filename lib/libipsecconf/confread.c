@@ -733,14 +733,11 @@ static bool translate_conn(struct starter_conn *conn,
 	knf    *the_options;
 	str_set *set_strings;
 	int_set *set_options;
-	volatile int i;          /* just to keep it around for debugging */
 	struct kw_list *kw = sl->kw;
 
 	err = 0;
-	i = 0;
 
 	for (; kw; kw = kw->next) {
-		i++;
 		the_strings = &conn->strings;
 		set_strings = &conn->strings_set;
 		the_options = &conn->options;
@@ -751,8 +748,8 @@ static bool translate_conn(struct starter_conn *conn,
 			*error = (const char *)tmp_err;
 
 			snprintf(tmp_err, sizeof(tmp_err),
-				 "keyword '%s' is not valid in a conn (%s) (#%d)\n",
-				 kw->keyword.keydef->keyname, sl->name, i);
+				 "keyword '%s' is not valid in a conn (%s)\n",
+				 kw->keyword.keydef->keyname, sl->name);
 			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
 			continue;
 		}
