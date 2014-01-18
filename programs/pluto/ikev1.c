@@ -1860,7 +1860,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	 */
 	{
 		struct payload_digest *pd = md->digest;
-		volatile int np = md->hdr.isa_np;
+		enum next_payload_types_ikev1 np = md->hdr.isa_np;
 		lset_t needed = smc->req_payloads;
 		const char *excuse =
 			LIN(SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT,
@@ -1900,6 +1900,8 @@ void process_packet_tail(struct msg_digest **mdp)
 							st->hidden_variables.st_nat_traversal);
 						sd = NULL;
 					}
+					break;
+				default:
 					break;
 				}
 			}
@@ -1977,6 +1979,8 @@ void process_packet_tail(struct msg_digest **mdp)
 				DBG(DBG_PARSING,
 				    DBG_dump("     obj: ", pd->pbs.cur,
 					     pbs_left(&pd->pbs)));
+				break;
+			default:
 				break;
 			}
 
