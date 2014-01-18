@@ -55,7 +55,7 @@ static void free_lease_list(struct lease_addr **head)
 		*head =  free_lease_entry(*head);
 }
 
-struct lease_addr *free_lease_entry(struct lease_addr *h)
+static struct lease_addr *free_lease_entry(struct lease_addr *h)
 {
 	struct lease_addr *next = h->next;
 
@@ -83,7 +83,7 @@ static int rel_lease_entry(struct lease_addr **head, u_int32_t lease)
 	return TRUE;
 }
 
-int free_lease(struct lease_addr **head, u_int32_t lease)
+static int free_lease(struct lease_addr **head, u_int32_t lease)
 {
 	struct lease_addr **pp = head;
 	struct lease_addr *p_prev = *head;
@@ -336,14 +336,14 @@ void unreference_addrespool(struct ip_pool *pool)
 	}
 }
 
-void free_addresspool( struct ip_pool *pool)
+static void free_addresspool( struct ip_pool *pool)
 {
 	/* free the the addressess ? or the list */
 	free_lease_list(&pool->lease);
 	pfreeany(pool);
 }
 
-struct ip_pool *reference_addresspool(struct  ip_pool *pool)
+static struct ip_pool *reference_addresspool(struct  ip_pool *pool)
 {
 	pool->refcnt++;
 	return pool;
