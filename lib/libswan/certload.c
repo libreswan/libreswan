@@ -135,90 +135,31 @@ bool load_coded_file(const char *filename,
 /*
  *  Loads a X.509 or certificate
  */
-bool load_cert(bool forcedtype, const char *filename,
+bool load_cert(const char *filename,
 	       int verbose,
 	       const char *label, cert_t *cert)
 {
 	chunk_t blob = empty_chunk;
 
 	/* initialize cert struct */
-	cert->forced = forcedtype;
+	cert->forced = FALSE;
 	cert->u.x509 = NULL;
 
-	if (!forcedtype) {
-		if (load_coded_file(filename, verbose, label, &blob)) {
+	if (load_coded_file(filename, verbose, label, &blob)) {
 
-			x509cert_t *x509cert = alloc_thing(x509cert_t,
-							   "x509cert");
-			*x509cert = empty_x509cert;
+		x509cert_t *x509cert = alloc_thing(x509cert_t,
+						   "x509cert");
+		*x509cert = empty_x509cert;
 
-			if (parse_x509cert(blob, 0, x509cert)) {
-				cert->forced = FALSE;
-				cert->type = CERT_X509_SIGNATURE;
-				cert->u.x509 = x509cert;
-				return TRUE;
-
-			} else {
-				libreswan_log(" error in X.509 certificate %s",
-					      filename);
-				free_x509cert(x509cert);
-				return FALSE;
-			}
-		}
-	} else {
-		/*
-		 * If the certificate type was forced, then load the certificate
-		 * as a blob, don't interpret or validate it at all.
-		 * The whole file is a single certificate.
-		 *
-		 */
-		FILE *fd = fopen(filename, "r");
-
-		if (fd == NULL) {
-			libreswan_log(
-				"  can not open certificate-blob filename '%s': %s\n",
-				filename, strerror(errno));
-			return FALSE;
+		if (!parse_x509cert(blob, 0, x509cert)) {
+			libreswan_log(" error in X.509 certificate %s",
+				      filename);
+			free_x509cert(x509cert);
 		} else {
-			int sr = fseek(fd, 0, SEEK_END );
-
-			if (sr < 0 ) {
-				libreswan_log(
-					"  can not fseek certificate-blob filename '%s': %s\n",
-					filename, strerror(errno));
-			} else {
-				long tr = ftell(fd);
-
-				if (tr < 0) {
-					libreswan_log(
-						"  can not ftell certificate-blob filename '%s': %s\n",
-						filename, strerror(errno));
-				} else {
-					size_t rr;
-					void *blob = alloc_bytes(cert->u.blob.len, " cert blob");
-
-					rewind(fd);
-					rr = fread(blob, 1, tr, fd);
-					if (ferror(fd)) {
-						libreswan_log(
-							"  can not fread certificate-blob filename '%s': %s\n",
-							filename, strerror(errno));
-						pfree(blob);
-					} else if (rr != cert->u.blob.len) {
-						libreswan_log(
-							"  could not fully read certificate-blob filename '%s'\n",
-							filename);
-						pfree(blob);
-					} else {
-						/* happy! */
-						cert->forced = TRUE;
-						cert->u.blob.len = tr;
-						cert->u.blob.ptr = blob;
-						/* ??? should we not arrange to return TRUE for success? */
-					}
-				}
-			}
-			fclose(fd);
+			cert->forced = FALSE;
+			cert->type = CERT_X509_SIGNATURE;
+			cert->u.x509 = x509cert;
+			return TRUE;
 		}
 	}
 	return FALSE;
