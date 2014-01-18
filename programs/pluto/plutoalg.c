@@ -236,8 +236,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	passert(buflen >= sizeof("none"));
 
 	ptr = buf;
-	buf[0] = '\0';
-	strncat(buf, "none", buflen - 1);
+	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
 		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL) != NULL) {
@@ -302,8 +301,8 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 	passert(buflen >= sizeof("none"));
 	ptr = buf;
 
-	buf[0] = 0;
-	strncat(buf, "none", buflen - 1);
+
+	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
 

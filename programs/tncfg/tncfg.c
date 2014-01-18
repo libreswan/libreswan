@@ -235,12 +235,12 @@ int main(int argc, char *argv[])
 		case 'C':
 			check_conflict(shc.cf_cmd, createdelete);
 			createdelete = SADB_X_PLUMBIF;
-			strncat(virtname, optarg, sizeof(virtname) - 1);
+			jam_str(virtname, sizeof(virtname), optarg);
 			break;
 		case 'D':
 			check_conflict(shc.cf_cmd, createdelete);
 			createdelete = SADB_X_UNPLUMBIF;
-			strncat(virtname, optarg, sizeof(virtname) - 1);
+			jam_str(virtname, sizeof(virtname), optarg);
 			break;
 
 		case 'V':

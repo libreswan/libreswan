@@ -335,13 +335,12 @@ static int load_setup(struct starter_config *cfg,
 			} else {
 				unsigned int kf = kw->keyword.keydef->field;
 				char *s = cfg->setup.strings[kf];
-				size_t old_len = strlen(s);
-				size_t add_len = strlen(kw->string) + 1;
+				size_t old_len = strlen(s) + 1;	/* includes '\0' */
+				size_t add_len = 1 + strlen(kw->string);	/* includes ' ' */
 
-				/* allocate the string */
-				s = xrealloc(s, old_len + 1 + add_len);
-				s[old_len++] = ' ';
-				memcpy(&s[old_len], kw->string, add_len);
+				s = xrealloc(s, old_len + add_len);
+				s[old_len - 1] = ' ';	/* overwrite '\0' */
+				memcpy(&s[old_len], kw->string, add_len - 1 + 1);	/* includes '\0' */
 				cfg->setup.strings[kf] = s;
 				cfg->setup.strings_set[kf] = TRUE;
 			}
@@ -834,18 +833,13 @@ static bool translate_conn(struct starter_conn *conn,
 			if (!(*the_strings)[field]) {
 				(*the_strings)[field] = xstrdup(kw->string);
 			} else {
-				int len;
-				char *s;
+				char *s = (*the_strings)[field];
+				size_t old_len = strlen(s) + 1;	/* includes '\0' */
+				size_t add_len = 1 + strlen(kw->string);	/* includes ' ' */
 
-				len = strlen((*the_strings)[field]) + 1;
-				len += strlen(kw->string) + 1;
-
-				/* allocate the string */
-				s = (*the_strings)[field];
-				s = xrealloc(s, len);
-				strncat(s, " ", len);
-				strncat(s, kw->string, len);
-
+				s = xrealloc(s, old_len + add_len);
+				s[old_len - 1] = ' ';	/* overwrite '\0' */
+				memcpy(&s[old_len], kw->string, add_len - 1 + 1);	/* includes '\0' */
 				(*the_strings)[field] = s;
 			}
 			(*set_strings)[field] = TRUE;

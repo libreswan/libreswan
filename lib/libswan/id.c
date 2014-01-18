@@ -278,7 +278,7 @@ void escape_metachar(const char *src, char *dst, size_t dstlen)
 /*
  * Remove all shell metacharacters ', \, ", `, and $ in a character string
  */
-void remove_metachar(const unsigned char *src, char *dst, size_t dstlen)
+void remove_metachar(const char *src, char *dst, size_t dstlen)
 {
 	bool changed = FALSE;
 

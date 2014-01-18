@@ -428,8 +428,7 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username &&
-			    st->st_xauth_username[0] != '\0')
+			if (st->st_xauth_username[0] != '\0')
 				libreswan_log("%s XAUTHuser=%s", statebuf,
 					      st->st_xauth_username);
 			else
@@ -447,8 +446,7 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username &&
-			    st->st_xauth_username[0] != '\0')
+			if (st->st_xauth_username[0] != '\0')
 				libreswan_log("%s XAUTHuser=%s", statebuf,
 					      st->st_xauth_username);
 			else
@@ -466,8 +464,7 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username &&
-			    st->st_xauth_username[0] != '\0')
+			if (st->st_xauth_username[0] != '\0')
 				libreswan_log("%s XAUTHuser=%s", statebuf,
 					      st->st_xauth_username);
 			else
@@ -1026,9 +1023,8 @@ struct state *duplicate_state(struct state *st)
 
 	nst->st_oakley = st->st_oakley;
 
-	/* ??? is this strncpy correct? */
-	strncpy(nst->st_xauth_username, st->st_xauth_username,
-		sizeof(nst->st_xauth_username));
+	jam_str(nst->st_xauth_username, sizeof(nst->st_xauth_username),
+		st->st_xauth_username);
 
 	return nst;
 }
@@ -1686,10 +1682,8 @@ void fmt_state(struct state *st, const time_t n,
 			 (unsigned long)st->st_ref,
 			 (unsigned long)st->st_refhim,
 			 traffic_buf,
-			 (st->st_xauth_username && st->st_xauth_username[0] !=
-			  '\0')  ? "XAUTHuser=" : "",
-			 (st->st_xauth_username && st->st_xauth_username[0] !=
-			  '\0')  ? st->st_xauth_username : ""
+			 (st->st_xauth_username[0] != '\0') ? "XAUTHuser=" : "",
+			 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : ""
 			 );
 
 #       undef add_said

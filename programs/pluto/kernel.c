@@ -332,12 +332,11 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	nexthop_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_nexthop, NULL) &&
 	    !isanyaddr(&sr->this.host_nexthop)) {
-		char *n;
-		strcpy(nexthop_str, "PLUTO_NEXT_HOP='");
-		n = nexthop_str + strlen(nexthop_str);
+		char *n = jam_str(nexthop_str, sizeof(nexthop_str), "PLUTO_NEXT_HOP='");
+
 		addrtot(&sr->this.host_nexthop, 0,
-			n, sizeof(nexthop_str) - strlen(nexthop_str));
-		strncat(nexthop_str, "' ", sizeof(nexthop_str));
+			n, sizeof(nexthop_str) - (n - nexthop_str));
+		add_str(nexthop_str, sizeof(nexthop_str), n, "' ");
 	}
 
 	addrtot(&sr->this.host_addr, 0, me_str, sizeof(me_str));
@@ -371,32 +370,23 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			 c->connmtu);
 
 	secure_xauth_username_str[0] = '\0';
-	if (st != NULL && st->st_xauth_username) {
-		size_t len;
-		strcpy(secure_xauth_username_str, "PLUTO_XAUTH_USERNAME='");
 
-		len = strlen(secure_xauth_username_str);
-		remove_metachar((unsigned char *)st->st_xauth_username,
-				secure_xauth_username_str + len,
-				sizeof(secure_xauth_username_str) - (len + 2));
-		strncat(secure_xauth_username_str, "'",
-			sizeof(secure_xauth_username_str) - 1);
+	if (st != NULL && st->st_xauth_username[0] != '\0') {
+		char *p = jam_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), "PLUTO_XAUTH_USERNAME='");
+
+		remove_metachar(st->st_xauth_username,
+				p,
+				sizeof(secure_xauth_username_str) - (p - secure_xauth_username_str) - 2);
+		add_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), p, "'");
 	}
 
 	srcip_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
 	    !isanyaddr(&sr->this.host_srcip)) {
-		char *p;
-		int l;
-		strncat(srcip_str, "PLUTO_MY_SOURCEIP=", sizeof(srcip_str));
-		strncat(srcip_str, "'", sizeof(srcip_str) - strlen(
-				srcip_str) - 1);
-		l = strlen(srcip_str);
-		p = srcip_str + l;
+		char *p = jam_str(srcip_str, sizeof(srcip_str), "PLUTO_MY_SOURCEIP='");
 
-		addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str));
-		strncat(srcip_str, "'", sizeof(srcip_str) - strlen(
-				srcip_str) - 1);
+		addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str) - (p - srcip_str));
+		add_str(srcip_str, sizeof(srcip_str), p, "'");
 	}
 
 	{
