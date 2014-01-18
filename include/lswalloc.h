@@ -25,17 +25,13 @@
 
 /* memory allocation */
 
-extern void leak_pfree(void *ptr, int leak);
-extern void *alloc_bytes2(size_t size, const char *name, int leak_detective);
-extern void *clone_bytes2(const void *orig, size_t size,
-			  const char *name, int leak_detective);
+extern void pfree(void *ptr);
+extern void *alloc_bytes(size_t size, const char *name);
+extern void *clone_bytes(const void *orig, size_t size,
+			  const char *name);
 
-extern int leak_detective;
+extern bool leak_detective;
 extern void report_leaks(void);
-# define pfree(ptr) leak_pfree(ptr, leak_detective)
-# define alloc_bytes(size, name) (alloc_bytes2(size, name, leak_detective))
-# define clone_bytes(orig, size, \
-		     name) (clone_bytes2(orig, size, name, leak_detective))
 
 #define alloc_thing(thing, name) (alloc_bytes(sizeof(thing), (name)))
 

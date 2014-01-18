@@ -441,10 +441,12 @@ int main(int argc, char **argv)
 
 	/** Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
+
+	/* MUST BE BEFORE ANY allocs */
 #ifdef LEAK_DETECTIVE
-	leak_detective = 1;
+	leak_detective = TRUE;
 #else
-	leak_detective = 0;
+	leak_detective = FALSE;
 #endif
 
 #ifdef HAVE_LIBCAP_NG
