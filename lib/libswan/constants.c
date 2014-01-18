@@ -33,37 +33,61 @@
 #include "enum_names.h"
 #include "lswlog.h"
 
-/* Jam a string into a buffer of limited size (truncation is silent).
+/* Jam a string into a buffer of limited size.
  *
  * This does something like what people mistakenly think strncpy does
  * but the parameter order is like snprintf.
- * The result is a pointer to the NUL at the end of the string in dest.
+ * OpenBSD's strlcpy serves the same purpose.
+ *
+ * The buffer bound (size) must be greater than 0.
+ * That allows a guarantee that the result is NUL-terminated.
+ *
+ * The result is a pointer:
+ *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string was truncated, to the roof of dest.
  *
  * Warning: Is it really wise to silently truncate?  Only the caller knows.
+ * The caller SHOULD check by seeing if the result equals dest's roof.
  */
 char *jam_str(char *dest, size_t size, const char *src)
 {
-	size_t full_len = strlen(src);
-	size_t copy_len = size - 1 < full_len ? size - 1 : full_len;
+	passert(size > 0);	/* need space for at least NUL */
 
-	passert(size > 0); /* need space for at least NUL */
-	memcpy(dest, src, copy_len);
-	dest[copy_len] = '\0';
-	return dest + copy_len;
+	{
+		size_t full_len = strlen(src);
+		bool oflow = size - 1 < full_len;
+		size_t copy_len = oflow ? size - 1 : full_len;
+
+		memcpy(dest, src, copy_len);
+		dest[copy_len] = '\0';
+		return dest + copy_len + (oflow ? 1 : 0);
+	}
 }
 
-/* Add a string to a partially filled buffer of limited size (truncation is silent)
+/* Add a string to a partially filled buffer of limited size
  *
  * This is similar to what people mistakenly thing strncat does
  * but add_str matches jam_str so the arguments are quite different.
+ * OpenBSD's strlcat serves the same purpose.
+ *
+ * The buffer bound (size) must be greater than 0.
+ * That allows a guarantee that the result is NUL-terminated.
  *
  * The hint argument allows code that knows the end of the
  * The string in dest to be more efficient.  If it is unknown,
  * just pass a pointer to a character within the string such as
  * the first one.
- * The result is a pointer to the NUL at the end of the string in dest.
- * The results of jam_str and add_str
- * provide suitable values for hint for subsequent calls.
+ *
+ * The result is a pointer:
+ *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string was truncated, to the roof of dest.
+ *
+ * The results of jam_str and add_str provide suitable values for hint
+ * for subsequent calls.
+ *
+ * If the hint points at the roof of dest, add_str does nothing and
+ * returns that as the result (thus overflow will be sticky).
+ *
  * For example
  *	(void)add_str(buf, sizeof(buf), jam_str(buf, sizeof(buf), "first"), " second");
  * That is slightly more efficient than
@@ -77,10 +101,16 @@ char *jam_str(char *dest, size_t size, const char *src)
  * (void)add_str(dest, n, dest, src).
  *
  * Warning: Is it really wise to silently truncate?  Only the caller knows.
+ * The caller SHOULD check by seeing if the result equals dest's roof.
  */
 char *add_str(char *buf, size_t size, char *hint, const char *src)
 {
+	passert(size > 0 && buf <= hint && hint <= buf + size);
+	if (hint == buf + size)
+		return hint;	/* already full */
+
 	hint += strlen(hint);	/* skip to end of existing string (if we're not already there) */
+	passert(hint < buf + size);	/* must be within buffer */
 	return jam_str(hint, size - (hint-buf), src);
 }
 
