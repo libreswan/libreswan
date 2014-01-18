@@ -79,42 +79,8 @@ typedef int bool;
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)     /* clearer shorthand */
 #define memeq(a, b, n) (memcmp(a, b, n) == 0)     /* clearer shorthand */
 
-/* Jam a string into a buffer of limited size (truncation is silent).
- *
- * This does something like what people mistakenly think strncpy does
- * but the parameter order is like snprintf.
- * The result is a pointer to the NUL at the end of the string in dest.
- *
- * Warning: Is it really wise to silently truncate?  Only the caller knows.
- */
+/* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
-
-/* Add a string to a partially filled buffer of limited size (truncation is silent)
- *
- * This is similar to what people mistakenly thing strncat does
- * but add_str matches jam_str so the arguments are quite different.
- *
- * The hint argument allows code that knows the end of the
- * The string in dest to be more efficient.  If it is unknown,
- * just pass a pointer to a character within the string such as
- * the first one.
- * The result is a pointer to the NUL at the end of the string in dest.
- * The results of jam_str and add_str
- * provide suitable values for hint for subsequent calls.
- * For example
- *	(void)add_str(buf, sizeof(buf), jam_str(buf, sizeof(buf), "first"), " second");
- * That is slightly more efficient than
- *	(void)jam_str(buf, sizeof(buf), "first");
- *	(void)add_str(buf, sizeof(buf), buf, " second");
- *
- * Warning: strncat's bound is NOT on the whole buffer!
- * strncat(dest, src, n) adds at most n+1 bytes after the contents of dest.
- * People think it does strncat(dest, src, n - strlen(dest) - 1).
- * A falacious strncat(dest, src, n) should be written as
- * (void)add_str(dest, n, dest, src).
- *
- * Warning: Is it really wise to silently truncate?  Only the caller knows.
- */
 extern char *add_str(char *buf, size_t size, char *hint, const char *src);
 
 /* set type with room for at least 64 elements for ALG opts
