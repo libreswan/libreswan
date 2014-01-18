@@ -167,11 +167,11 @@ bool load_cert(bool forcedtype, const char *filename,
 		}
 	} else {
 		/*
-		 * if the certificate type was forced, then load the certificate
-		 * as a blob, don't interpret or validate it at all
+		 * If the certificate type was forced, then load the certificate
+		 * as a blob, don't interpret or validate it at all.
+		 * The whole file is a single certificate.
 		 *
 		 */
-		size_t bytes;
 		FILE *fd = fopen(filename, "r");
 
 		if (fd == NULL) {
@@ -179,19 +179,47 @@ bool load_cert(bool forcedtype, const char *filename,
 				"  can not open certificate-blob filename '%s': %s\n",
 				filename, strerror(errno));
 			return FALSE;
+		} else {
+			int sr = fseek(fd, 0, SEEK_END );
+
+			if (sr < 0 ) {
+				libreswan_log(
+					"  can not fseek certificate-blob filename '%s': %s\n",
+					filename, strerror(errno));
+			} else {
+				long tr = ftell(fd);
+
+				if (tr < 0) {
+					libreswan_log(
+						"  can not ftell certificate-blob filename '%s': %s\n",
+						filename, strerror(errno));
+				} else {
+					size_t rr;
+					void *blob = alloc_bytes(cert->u.blob.len, " cert blob");
+
+					rewind(fd);
+					rr = fread(blob, 1, tr, fd);
+					if (ferror(fd)) {
+						libreswan_log(
+							"  can not fread certificate-blob filename '%s': %s\n",
+							filename, strerror(errno));
+						pfree(blob);
+					} else if (rr != cert->u.blob.len) {
+						libreswan_log(
+							"  could not fully read certificate-blob filename '%s'\n",
+							filename);
+						pfree(blob);
+					} else {
+						/* happy! */
+						cert->forced = TRUE;
+						cert->u.blob.len = tr;
+						cert->u.blob.ptr = blob;
+						/* ??? should we not arrange to return TRUE for success? */
+					}
+				}
+			}
+			fclose(fd);
 		}
-		fseek(fd, 0, SEEK_END );
-		cert->forced = TRUE;
-		cert->u.blob.len = ftell(fd);
-		rewind(fd);
-		cert->u.blob.ptr = alloc_bytes(cert->u.blob.len, " cert blob");
-		bytes = fread(cert->u.blob.ptr, 1, cert->u.blob.len, fd);
-		if (bytes != cert->u.blob.len) {
-			libreswan_log(
-				"  WARNING: could not fully read certificate-blob filename '%s'\n",
-				filename);
-		}
-		fclose(fd);
 	}
 	return FALSE;
 }
