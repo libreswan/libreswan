@@ -860,8 +860,10 @@ struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
 	alg_info_esp = alloc_thing(struct alg_info_esp, "alg_info_esp");
 
 	strcpy(esp_buf, alg_str);
-	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_p))
+	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_p)) {
+		pfree(alg_info_esp);
 		return NULL;
+	}
 
 	alg_info_esp->alg_info_protoid = PROTO_IPSEC_AH;
 	ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
