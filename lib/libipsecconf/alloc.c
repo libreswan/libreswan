@@ -20,19 +20,21 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "libreswan.h"
 #include "ipsecconf/starterlog.h"
 
+
 /*
  * die if allocations fail
- * ??? these things do not die.  What's the point?
  */
 
 void *xmalloc(size_t s)
 {
 	void *m = malloc(s);
 
+	assert(m != NULL);
 	return m;
 }
 
@@ -40,6 +42,7 @@ char *xstrdup(const char *s)
 {
 	char *m = strdup(s);
 
+	assert(m != NULL);
 	return m;
 }
 
@@ -47,5 +50,6 @@ void *xrealloc(void *o, size_t s)
 {
 	void *m = realloc(o, s);
 
+	assert(m != NULL);
 	return m;
 }
