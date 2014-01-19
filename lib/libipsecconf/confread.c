@@ -174,35 +174,30 @@ void ipsecconf_default_values(struct starter_config *cfg)
 }
 
 /* format error, and append to string of errors */
-static int error_append(char **perr, const char *fmt, ...)
+static bool error_append(char **perr, const char *fmt, ...)
 {
 	va_list args;
 
-	if (perr) {
-		char *nerr;
-		int len;
+	char *nerr;
+	int len;
 
-		va_start(args, fmt);
-		vsnprintf(tmp_err, sizeof(tmp_err) - 1, fmt, args);
-		va_end(args);
+	va_start(args, fmt);
+	vsnprintf(tmp_err, sizeof(tmp_err) - 1, fmt, args);
+	va_end(args);
 
-		len = 1 + strlen(tmp_err) + (*perr ? strlen(*perr) : 0);
-		nerr = xmalloc(len);
-		nerr[0] = '\0';
-		if (*perr)
-			strcpy(nerr, *perr);
-		strcat(nerr, tmp_err);
+	len = 1 + strlen(tmp_err) + (*perr ? strlen(*perr) : 0);
+	nerr = xmalloc(len);
+	nerr[0] = '\0';
+	if (*perr)
+		strcpy(nerr, *perr);
+	strcat(nerr, tmp_err);
 
-		if (*perr)
-			free(*perr);
-		*perr = nerr;
+	if (*perr)
+		free(*perr);
+	*perr = nerr;
 
-		return 1;
-	}
-	return 0;
+	return TRUE;
 }
-
-#define ERR_FOUND(args ...) do err += error_append(&err_str, ## args); while (0)
 
 #define KW_POLICY_FLAG(val, fl) if (conn->options_set[val]) \
 	{ if (conn->options[val]) \
@@ -236,10 +231,10 @@ static void free_list(char **list)
 }
 
 /**
- * Create a new list of pointers
+ * Create a new list (array) of pointers to strings, NULL-terminated
  *
- * @param value
- * @return new_list (pointer to list of pointers)
+ * @param value string to be broken up at spaces, creating strings for list
+ * @return new_list (pointer to NULL-terminated array of pointers to strings)
  */
 static char **new_list(char *value)
 {
@@ -258,7 +253,8 @@ static char **new_list(char *value)
 
 	/* count number of items in string */
 	for (b = val, count = 0; b < end; ) {
-		for (e = b; ((*e != ' ') && (*e != '\0')); e++) ;
+		for (e = b; *e != ' ' && *e != '\0'; e++)
+			;
 		*e = '\0';
 		if (e != b)
 			count++;
@@ -275,7 +271,8 @@ static char **new_list(char *value)
 		return NULL;
 	}
 	for (b = val, count = 0; b < end; ) {
-		for (e = b; (*e != '\0'); e++) ;
+		for (e = b; (*e != '\0'); e++)
+			;
 		if (e != b)
 			nlist[count++] = xstrdup(b);
 		b = e + 1;
@@ -291,12 +288,12 @@ static char **new_list(char *value)
  * @param cfg starter_config structure
  * @param cfgp config_parsed (ie: valid) struct
  * @param perr pointer to store errors in
- * @return int 0 if successfull
+ * @return bool TRUE if unsuccessfull
  */
-static int load_setup(struct starter_config *cfg,
+static bool load_setup(struct starter_config *cfg,
 		      struct config_parsed *cfgp)
 {
-	unsigned int err = 0;
+	bool err = FALSE;
 	struct kw_list *kw;
 
 	for (kw = cfgp->config_setup; kw; kw = kw->next) {
@@ -368,7 +365,7 @@ static int load_setup(struct starter_config *cfg,
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
-			err++;
+			err = TRUE;
 			break;
 
 		case kt_comment:
@@ -407,9 +404,9 @@ static int load_setup(struct starter_config *cfg,
  * @param end a connection end
  * @param left boolean (are we 'left'? 1 = yes, 0 = no)
  * @param perr pointer to char containing error value
- * @return int 0 if successfull
+ * @return bool TRUE if failed
  */
-static int validate_end(struct ub_ctx *dnsctx,
+static bool validate_end(struct ub_ctx *dnsctx,
 			struct starter_conn *conn_st,
 			struct starter_end *end,
 			bool left,
@@ -420,7 +417,9 @@ static int validate_end(struct ub_ctx *dnsctx,
 	char *err_str = NULL;
 	const char *leftright = (left ? "left" : "right");
 	int family = conn_st->options[KBF_CONNADDRFAMILY];
-	int err = 0;
+	bool err = FALSE;
+#  define ERR_FOUND(args ...) do err |= error_append(&err_str, ## args); while (0)
+
 
 	if (!end->options_set[KNCF_IP])
 		conn_st->state = STATE_INCOMPLETE;
@@ -709,6 +708,7 @@ static int validate_end(struct ub_ctx *dnsctx,
 	if (err)
 		*perr = err_str;
 	return err;
+#  undef ERR_FOUND
 }
 
 /**
@@ -721,27 +721,22 @@ static int validate_end(struct ub_ctx *dnsctx,
  *        k_default is used when we are loading a conn that should be
  *        considered to be a "default" value, and that replacing this
  *        value is considered acceptable.
- * @return bool 0 if successfull
+ * @return bool TRUE if unsuccessfull
  */
 static bool translate_conn(struct starter_conn *conn,
 		    struct section_list *sl,
 		    enum keyword_set assigned_value,
 		    err_t *error)
 {
-	unsigned int err, field;
-	ksf    *the_strings;
-	knf    *the_options;
-	str_set *set_strings;
-	int_set *set_options;
-	struct kw_list *kw = sl->kw;
+	bool err = FALSE;
+	struct kw_list *kw;
 
-	err = 0;
-
-	for (; kw; kw = kw->next) {
-		the_strings = &conn->strings;
-		set_strings = &conn->strings_set;
-		the_options = &conn->options;
-		set_options = &conn->options_set;
+	for (kw = sl->kw; kw; kw = kw->next) {
+		ksf *the_strings = &conn->strings;
+		str_set *set_strings = &conn->strings_set;
+		knf *the_options = &conn->options;
+		int_set *set_options = &conn->options_set;
+		unsigned int field;
 
 		if ((kw->keyword.keydef->validity & kv_conn) == 0) {
 			/* this isn't valid in a conn! */
@@ -802,7 +797,7 @@ static bool translate_conn(struct starter_conn *conn,
 				    (*the_strings)[field] == NULL ||
 				    strcmp(kw->keyword.string,
 					   (*the_strings)[field]) != 0) {
-					err++;
+					err = TRUE;
 					break;
 				}
 			}
@@ -815,7 +810,7 @@ static bool translate_conn(struct starter_conn *conn,
 				snprintf(tmp_err, sizeof(tmp_err),
 					 "Invalid %s value",
 					 kw->keyword.keydef->keyname);
-				err++;
+				err = TRUE;
 				break;
 			}
 
@@ -866,7 +861,7 @@ static bool translate_conn(struct starter_conn *conn,
 				      (*the_strings)[field] != NULL &&
 				      strcmp(kw->keyword.string,
 					     (*the_strings)[field]) == 0)) {
-					err++;
+					err = TRUE;
 					break;
 				}
 			}
@@ -901,7 +896,7 @@ static bool translate_conn(struct starter_conn *conn,
 					 sl->name);
 				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
 				if ((*the_options)[field] != (int)kw->number) {
-					err++;
+					err = TRUE;
 					break;
 				}
 			}
@@ -946,20 +941,17 @@ static void move_comment_list(struct starter_comments_list *to,
 	}
 }
 
-static int load_conn_basic(struct starter_conn *conn,
+static bool load_conn_basic(struct starter_conn *conn,
 		    struct section_list *sl,
 		    enum keyword_set assigned_value,
 		    err_t *perr)
 {
-	int err;
+	/* turn all of the keyword/value pairs into options/strings in left/right */
 
-	/*turn all of the keyword/value pairs into options/strings in left/right */
-	err = translate_conn(conn, sl, assigned_value, perr);
-
-	return err;
+	return translate_conn(conn, sl, assigned_value, perr);
 }
 
-static int load_conn(struct ub_ctx *dnsctx,
+static bool load_conn(struct ub_ctx *dnsctx,
 		     struct starter_conn *conn,
 		     struct config_parsed *cfgp,
 		     struct section_list *sl,
@@ -968,17 +960,9 @@ static int load_conn(struct ub_ctx *dnsctx,
 		     bool resolvip,
 		     err_t *perr)
 {
-	unsigned int err;
-	char **alsos;
-	char **newalsos;
-	int newalsoplace;
-	int alsoplace;
-	int alsosize;
-	struct section_list *sl1;
+	bool err = FALSE;
 
-	err = 0;
-
-	err += load_conn_basic(conn, sl,
+	err |= load_conn_basic(conn, sl,
 			       defaultconn ? k_default : k_set, perr);
 
 	move_comment_list(&conn->comments, &sl->comments);
@@ -991,7 +975,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 		starter_log(LOG_LEVEL_INFO,
 			    "also= is not valid in section '%s'",
 			    sl->name);
-		return 1;
+		return TRUE;	/* error */
 	}
 
 	/* now, process the also's */
@@ -999,7 +983,17 @@ static int load_conn(struct ub_ctx *dnsctx,
 		free_list(conn->alsos);
 	conn->alsos = new_list(conn->strings[KSF_ALSO]);
 
-	if (alsoprocessing && conn->alsos) {
+	if (alsoprocessing && conn->alsos != NULL) {
+		int alsoplace;
+		int alsosize;
+		struct section_list *sl1;
+		/* note: for the duration of this loop body
+		 * conn->alsos is migrated to local variable alsos.
+		 */
+		char **alsos = conn->alsos;
+
+		conn->alsos = NULL;
+
 		/* reset all of the "beenhere" flags */
 		for (sl1 = cfgp->sections.tqh_first; sl1 != NULL;
 		     sl1 = sl1->link.tqe_next)
@@ -1007,9 +1001,8 @@ static int load_conn(struct ub_ctx *dnsctx,
 		sl->beenhere = TRUE;
 
 		/* count them */
-		alsos = conn->alsos;
-		conn->alsos = NULL;
-		for (alsosize = 0; alsos[alsosize] != NULL; alsosize++) ;
+		for (alsosize = 0; alsos[alsosize] != NULL; alsosize++)
+			;
 
 		alsoplace = 0;
 		while (alsoplace < alsosize && alsos[alsoplace] != NULL &&
@@ -1023,7 +1016,8 @@ static int load_conn(struct ub_ctx *dnsctx,
 			for (sl1 = cfgp->sections.tqh_first;
 			     sl1 != NULL &&
 			     strcmp(alsos[alsoplace], sl1->name) != 0;
-			     sl1 = sl1->link.tqe_next) ;
+			     sl1 = sl1->link.tqe_next)
+				;
 
 			starter_log(LOG_LEVEL_DEBUG,
 				    "\twhile loading conn '%s' also including '%s'",
@@ -1041,28 +1035,28 @@ static int load_conn(struct ub_ctx *dnsctx,
 				sl1->beenhere = TRUE;
 
 				/* translate things, but do not replace earlier settings!*/
-				err += translate_conn(conn, sl1, k_set, perr);
+				err |= translate_conn(conn, sl1, k_set, perr);
 
 				if (conn->strings[KSF_ALSO]) {
 					/* now, check out the KSF_ALSO, and extend list if we need to */
-					newalsos =
-						new_list(
-							conn->strings[KSF_ALSO]);
+					char **newalsos = new_list(
+						conn->strings[KSF_ALSO]);
 
 					if (newalsos && newalsos[0] != NULL) {
+						int newalsoplace;
+
 						/* count them */
 						for (newalsoplace = 0;
 						     newalsos[newalsoplace] !=
 						     NULL;
-						     newalsoplace++) ;
+						     newalsoplace++)
+							;
 
 						/* extend conn->alsos */
-						alsos =
-							xrealloc(alsos,
+						alsos = xrealloc(alsos,
 								 (alsosize +
 								  newalsoplace
-								  +
-								  1) *
+								  + 1) *
 								 sizeof(char *));
 						for (newalsoplace = 0;
 						     newalsos[newalsoplace] !=
@@ -1091,18 +1085,18 @@ static int load_conn(struct ub_ctx *dnsctx,
 			alsoplace++;
 		}
 
+		/* migrate alsos back to conn->alsos */
+		passert(conn->alsos == NULL);
+		conn->alsos = alsos;
+
 		if (alsoplace >= ALSO_LIMIT) {
 			starter_log(LOG_LEVEL_INFO,
 				    "while loading conn '%s', too many also= used at section %s. Limit is %d",
 				    conn->name,
-				    conn->alsos[alsoplace],
+				    alsos[alsoplace],
 				    ALSO_LIMIT);
-			return 1;
+			return TRUE;	/* error */
 		}
-
-		if (conn->alsos != alsos && conn->alsos != NULL)
-			free_list(conn->alsos);
-		conn->alsos = alsos;
 	}
 
 #ifdef PARSER_TYPE_DEBUG
@@ -1169,7 +1163,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 				starter_log(LOG_LEVEL_INFO,
 					    "while loading conn '%s', PSK not allowed in FIPS mode with NSS",
 					    conn->name);
-				return 1;
+				return TRUE;	/* error */
 			}
 		}
 #endif
@@ -1306,8 +1300,8 @@ static int load_conn(struct ub_ctx *dnsctx,
 		}
 	}
 
-	err += validate_end(dnsctx, conn, &conn->left,  TRUE,  resolvip, perr);
-	err += validate_end(dnsctx, conn, &conn->right, FALSE, resolvip, perr);
+	err |= validate_end(dnsctx, conn, &conn->left,  TRUE,  resolvip, perr);
+	err |= validate_end(dnsctx, conn, &conn->right, FALSE, resolvip, perr);
 	/*
 	 * TODO:
 	 * verify both ends are using the same inet family, if one end
@@ -1403,7 +1397,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name,
 	return conn;
 }
 
-static int init_load_conn(struct ub_ctx *dnsctx,
+static bool init_load_conn(struct ub_ctx *dnsctx,
 		   struct starter_config *cfg,
 		   struct config_parsed *cfgp,
 		   struct section_list *sconn,
@@ -1411,7 +1405,7 @@ static int init_load_conn(struct ub_ctx *dnsctx,
 		   bool resolvip,
 		   err_t *perr)
 {
-	int connerr;
+	bool connerr;
 	struct starter_conn *conn;
 
 	starter_log(LOG_LEVEL_DEBUG, "Loading conn %s", sconn->name);
@@ -1423,12 +1417,12 @@ static int init_load_conn(struct ub_ctx *dnsctx,
 	connerr = load_conn(dnsctx, conn, cfgp, sconn, TRUE,
 			    defaultconn, resolvip, perr);
 
-	if (connerr != 0) {
+	if (connerr) {
 		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s\n",
 			    sconn->name, *perr);
-	}
-	if (connerr == 0)
+	} else {
 		conn->state = STATE_LOADED;
+	}
 	return connerr;
 }
 
@@ -1441,8 +1435,8 @@ struct starter_config *confread_load(const char *file,
 	struct starter_config *cfg = NULL;
 	struct config_parsed *cfgp;
 	struct section_list *sconn;
-	int err = 0;
-	int connerr;
+	bool err = FALSE;
+	bool connerr;
 
 #ifdef DNSSEC
 	struct ub_ctx *dnsctx =  ub_ctx_create();
@@ -1482,7 +1476,7 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load setup
 	 */
-	err += load_setup(cfg, cfgp);
+	err |= load_setup(cfg, cfgp);
 
 	if (err) {
 		parser_free_conf(cfgp);
@@ -1500,7 +1494,7 @@ struct starter_config *confread_load(const char *file,
 			if (strcmp(sconn->name, "%default") == 0) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
-				err += load_conn(dnsctx,
+				err |= load_conn(dnsctx,
 						 &cfg->conn_default,
 						 cfgp, sconn, FALSE,
 				                 /*default conn*/ TRUE,
@@ -1510,12 +1504,12 @@ struct starter_config *confread_load(const char *file,
 			if (strcmp(sconn->name, "%oedefault") == 0) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading oedefault conn");
-				err += load_conn(dnsctx,
+				err |= load_conn(dnsctx,
 						 &cfg->conn_oedefault,
 						 cfgp, sconn, FALSE,
 				                 /*default conn*/ TRUE,
 						 resolvip, perr);
-				if (err == 0)
+				if (!err)
 					cfg->got_oedefault = TRUE;
 			}
 		}
@@ -1534,12 +1528,14 @@ struct starter_config *confread_load(const char *file,
 						 FALSE,
 						 resolvip, perr);
 
+#if 0	/* ??? the following condition can never be true */
 			if (connerr == -1) {
 				parser_free_conf(cfgp);
 				confread_free(cfg);
 				return NULL;
 			}
-			err += connerr;
+#endif
+			err |= connerr;
 		}
 
 		/* if we have OE on, then create any missing OE conns! */
