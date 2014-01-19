@@ -81,7 +81,6 @@ typedef int bool;
 
 #define zero(x) memset((x), '\0', sizeof(*(x)))	/* zero all bytes */
 
-
 /* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
 extern char *add_str(char *buf, size_t size, char *hint, const char *src);
