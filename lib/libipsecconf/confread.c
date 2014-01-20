@@ -1086,7 +1086,6 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		}
 
 		/* migrate alsos back to conn->alsos */
-		passert(conn->alsos == NULL);
 		conn->alsos = alsos;
 
 		if (alsoplace >= ALSO_LIMIT) {
