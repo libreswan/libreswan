@@ -115,7 +115,7 @@ static void help(void)
 		" [--overlapip]"
 		" [--tunnel]"
 		" [--pfs]"
-		" [--no_ikepad]"
+		" [--no-ikepad]"
 		" \\\n   "
 		" [--pfsgroup [modp1024] | [modp1536] | [modp2048] | [modp3072] | [modp4096] | [modp6144] | [modp8192]]"
 		" \\\n   "
@@ -134,6 +134,19 @@ static void help(void)
 		" [--mtu <mtu>]"
 		" \\\n   "
 		" [--priority <prio>] [--reqid <reqid>]"
+		" \\\n   "
+
+		" [--ikev1-disable]"
+		" [--ikev2-allow]"
+		" [--ikev2-propose]"
+		" \\\n   "
+		" [--allow-narrowing]"
+		" [--sareftrack]"
+		" [--sarefconntrack]"
+		" \\\n   "
+		" [--ikefrag-allow]"
+		" [--ikefrag-force]"
+		" [--no-ikepad]"
 		" \\\n   "
 #ifdef HAVE_NM
 		"[--nm_configured]"
@@ -434,31 +447,42 @@ enum option_enums {
 #   define CD_FIRST CD_TO       /* first connection description */
 	CD_TO,
 
+	/* === The next range must match corresponding POLICY_* symbols === */
+
 #   define CD_POLICY_FIRST  CD_PSK
-	CD_PSK,                 /* same order as POLICY_* 0 */
-	CD_RSASIG,              /* same order as POLICY_* 1 */
-	CD_ENCRYPT,             /* same order as POLICY_* 2 */
-	CD_AUTHENTICATE,        /* same order as POLICY_* 3 */
-	CD_COMPRESS,            /* same order as POLICY_* 4 */
-	CD_TUNNEL,              /* same order as POLICY_* 5 */
-	CD_PFS,                 /* same order as POLICY_* 6 */
-	CD_DISABLEARRIVALCHECK, /* same order as POLICY_* 7 */
-	CD_SHUNT0,              /* same order as POLICY_* 8 */
-	CD_SHUNT1,              /* same order as POLICY_* 9 */
-	CD_FAIL0,               /* same order as POLICY_* 10 */
-	CD_FAIL1,               /* same order as POLICY_* 11 */
-	CD_DONT_REKEY,          /* same order as POLICY_* 12 */
-	CD_OPP0,                /* same order as POLICY_* 13 */
-	CD_GROUP,               /* same order as POLICY_* 14 */
-	CD_GROUPED,             /* same order as POLICY_* 15 */
-	CD_UP,                  /* same order as POLICY_* 16 */
-	CD_DUMMY,               /* same order as POLICY_* 17 -- was XAUTH */
-	CD_MODECFGPULL,         /* same order as POLICY_* 18 */
-	CD_AGGRESSIVE,          /* same order as POLICY_* 19 */
-	CD_PERHOST,             /* should we specialize the policy to the host? */
-	CD_SUBHOST,             /* if the policy applies below the host level (TCP/UDP/SCTP ports) */
-	CD_PERPROTO,            /* should we specialize the policy to the protocol? */
-	CD_OVERLAPIP,           /* can two conns that have subnet=vhost: declare the same IP? */
+	CD_PSK,                 /* 0 */
+	CD_RSASIG,              /* 1 */
+	CD_ENCRYPT,             /* 2 */
+	CD_AUTHENTICATE,        /* 3 */
+	CD_COMPRESS,            /* 4 */
+	CD_TUNNEL,              /* 5 */
+	CD_PFS,                 /* 6 */
+	CD_DISABLEARRIVALCHECK, /* 7 */
+	CD_SHUNT0,              /* 8 */
+	CD_SHUNT1,              /* 9 */
+	CD_FAIL0,               /* 10 */
+	CD_FAIL1,               /* 11 */
+	CD_DONT_REKEY,          /* 12 */
+	CD_OPP0,                /* 13 (not used by whack) */
+	CD_GROUP,               /* 14 (not used by whack) */
+	CD_GROUPED,             /* 15 (not used by whack) */
+	CD_UP,                  /* 16 (not used by whack) */
+	CD_XAUTH,               /* 17 (not used by whack) */
+	CD_MODECFGPULL,         /* 18 */
+	CD_AGGRESSIVE,          /* 19 */
+	CD_OVERLAPIP,           /* 20 can two conns that have subnet=vhost: declare the same IP? */
+	CD_IKEV1_DISABLE,	/* 21 */
+	CD_IKEV2_ALLOW,		/* 22 */
+	CD_IKEV2_PROPOSE,	/* 23 */
+	CD_ALLOW_NARROWING,	/* 24 Allow RFC-5669 section 2.9? 0x0800 0000 */
+	CD_SAREF_TRACK,		/* 25 Saref tracking via _updown */
+	CD_SAREF_TRACK_CONNTRACK,	/* 26 use conntrack optimization */
+	CD_IKE_FRAG_ALLOW,	/* 27 */
+	CD_IKE_FRAG_FORCE,	/* 28 */
+	CD_NO_IKEPAD,		/* 29 pad ike packets to 4 bytes or not */
+
+	/* === end of correspondence with POLICY_* === */
+
 	CD_MODECFGDNS1,
 	CD_MODECFGDNS2,
 	CD_MODECFGDOMAIN,
@@ -494,7 +518,6 @@ enum option_enums {
 	CD_POLICY_LABEL,
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
-	CD_NO_IKEPAD,
 	CD_ESP,
 #   define CD_LAST CD_ESP       /* last connection description */
 
@@ -617,42 +640,31 @@ static const struct option long_opts[] = {
 	{ "pfs", no_argument, NULL, CD_PFS + OO },
 	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
 	{ "aggrmode", no_argument, NULL, CD_AGGRESSIVE + OO },
-	{ "disablearrivalcheck", no_argument, NULL, CD_DISABLEARRIVALCHECK +
-	  OO },
+
+	{ "disablearrivalcheck", no_argument, NULL, CD_DISABLEARRIVALCHECK + OO },
 	{ "initiateontraffic", no_argument, NULL,
-	  CD_SHUNT0 +
-	  (POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
+		CD_SHUNT0 +(POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
 	{ "pass", no_argument, NULL,
-	  CD_SHUNT0 +
-	  (POLICY_SHUNT_PASS >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
+		CD_SHUNT0 + (POLICY_SHUNT_PASS >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
 	{ "drop", no_argument, NULL,
-	  CD_SHUNT0 +
-	  (POLICY_SHUNT_DROP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
+		CD_SHUNT0 + (POLICY_SHUNT_DROP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
 	{ "reject", no_argument, NULL,
-	  CD_SHUNT0 +
-	  (POLICY_SHUNT_REJECT >> POLICY_SHUNT_SHIFT <<
-			AUX_SHIFT) + OO },
+		CD_SHUNT0 + (POLICY_SHUNT_REJECT >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
 	{ "failnone", no_argument, NULL,
-	  CD_FAIL0 +
-	  (POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
+		CD_FAIL0 + (POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
 	{ "failpass", no_argument, NULL,
-	  CD_FAIL0 +
-	  (POLICY_FAIL_PASS >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
+		CD_FAIL0 + (POLICY_FAIL_PASS >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
 	{ "faildrop", no_argument, NULL,
-	  CD_FAIL0 +
-	  (POLICY_FAIL_DROP >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
+		CD_FAIL0 + (POLICY_FAIL_DROP >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
 	{ "failreject", no_argument, NULL,
-	  CD_FAIL0 +
-	  (POLICY_FAIL_REJECT >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
+		CD_FAIL0 + (POLICY_FAIL_REJECT >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
 	{ "dontrekey", no_argument, NULL, CD_DONT_REKEY + OO },
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL, CD_NO_NAT_KEEPALIVE + OO },
 	{ "initialcontact", no_argument, NULL, CD_INITIAL_CONTACT + OO },
 	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY + OO },
-	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO +
-	  NUMERIC_ARG },
-	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO +
-	  NUMERIC_ARG },
+	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
+	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
 	{ "dpdaction", required_argument, NULL, CD_DPDACTION + OO },
 
 	{ "xauth", no_argument, NULL, END_XAUTHSERVER + OO },
@@ -681,24 +693,33 @@ static const struct option long_opts[] = {
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
 
-	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO +
-	  NUMERIC_ARG },
-	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO +
-	  NUMERIC_ARG },
-	{ "rekeymargin", required_argument, NULL, CD_RKMARGIN + OO +
-	  NUMERIC_ARG },
-	{ "rekeywindow", required_argument, NULL, CD_RKMARGIN + OO +
-	  NUMERIC_ARG },                                                        /* OBSOLETE */
+	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO + NUMERIC_ARG },
+	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO + NUMERIC_ARG },
+	{ "rekeymargin", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
+	{ "rekeywindow", required_argument, NULL, CD_RKMARGIN + OO +NUMERIC_ARG },                                                        /* OBSOLETE */
 	{ "rekeyfuzz", required_argument, NULL, CD_RKFUZZ + OO + NUMERIC_ARG },
-	{ "keyingtries", required_argument, NULL, CD_KTRIES + OO +
-	  NUMERIC_ARG },
+	{ "keyingtries", required_argument, NULL, CD_KTRIES + OO + NUMERIC_ARG },
 	{ "ike",    required_argument, NULL, CD_IKE + OO },
 	{ "ikealg", required_argument, NULL, CD_IKE + OO },
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
 	{ "esp", required_argument, NULL, CD_ESP + OO },
-	{ "no_ikepad", no_argument, NULL, CD_NO_IKEPAD + OO },
-	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE +
-	  OO },
+	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
+
+
+	{ "ikev1-disable", no_argument, NULL, CD_IKEV1_DISABLE + OO },
+	{ "ikev2-allow", no_argument, NULL, CD_IKEV2_ALLOW + OO },
+	{ "ikev2-propose", no_argument, NULL, CD_IKEV2_PROPOSE + OO },
+
+	{ "allow-narrowing", no_argument, NULL, CD_ALLOW_NARROWING + OO },
+
+	{ "sareftrack", no_argument, NULL, CD_SAREF_TRACK + OO },
+	{ "sarefconntrack", no_argument, NULL, CD_SAREF_TRACK_CONNTRACK + OO },
+
+	{ "ikefrag-allow", no_argument, NULL, CD_IKE_FRAG_ALLOW + OO },
+	{ "ikefrag-force", no_argument, NULL, CD_IKE_FRAG_FORCE + OO },
+	{ "no-ikepad", no_argument, NULL, CD_NO_IKEPAD + OO },
+
+
 #ifdef HAVE_NM
 	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED + OO },
 #endif
@@ -735,27 +756,24 @@ static const struct option long_opts[] = {
 	{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX + DO },
 
 	{ "impair-delay-adns-key-answer", no_argument, NULL,
-	  IMPAIR_DELAY_ADNS_KEY_ANSWER_IX + DO },
+		IMPAIR_DELAY_ADNS_KEY_ANSWER_IX + DO },
 	{ "impair-delay-adns-txt-answer", no_argument, NULL,
-	  IMPAIR_DELAY_ADNS_TXT_ANSWER_IX + DO },
+		IMPAIR_DELAY_ADNS_TXT_ANSWER_IX + DO },
 	{ "impair-bust-mi2", no_argument, NULL, IMPAIR_BUST_MI2_IX + DO },
 	{ "impair-bust-mr2", no_argument, NULL, IMPAIR_BUST_MR2_IX + DO },
-	{ "impair-sa-fail",    no_argument, NULL, IMPAIR_SA_CREATION_IX +
-	  DO },
-	{ "impair-die-oninfo", no_argument, NULL, IMPAIR_DIE_ONINFO_IX  +
-	  DO },
+	{ "impair-sa-fail",    no_argument, NULL, IMPAIR_SA_CREATION_IX + DO },
+	{ "impair-die-oninfo", no_argument, NULL, IMPAIR_DIE_ONINFO_IX  + DO },
 	{ "impair-jacob-two-two", no_argument, NULL,
-	  IMPAIR_JACOB_TWO_TWO_IX + DO },
+		IMPAIR_JACOB_TWO_TWO_IX + DO },
 	{ "impair-major-version-bump", no_argument, NULL,
-	  IMPAIR_MAJOR_VERSION_BUMP_IX + DO },
+		IMPAIR_MAJOR_VERSION_BUMP_IX + DO },
 	{ "impair-minor-version-bump", no_argument, NULL,
-	  IMPAIR_MINOR_VERSION_BUMP_IX + DO },
-	{ "impair-retransmits", no_argument, NULL, IMPAIR_RETRANSMITS_IX +
-	  DO },
+		IMPAIR_MINOR_VERSION_BUMP_IX + DO },
+	{ "impair-retransmits", no_argument, NULL, IMPAIR_RETRANSMITS_IX + DO },
 	{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
-	  IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
+		IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
 	{ "impair-send-ikev2-ke", no_argument, NULL,
-	  IMPAIR_SEND_IKEv2_KE_IX + DO },
+		IMPAIR_SEND_IKEv2_KE_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +
@@ -899,7 +917,7 @@ int main(int argc, char **argv)
 	assert(CD_LAST - CD_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
 	assert(IMPAIR_roof_IX <= (sizeof cd_seen * BITS_PER_BYTE));
 	/* check that POLICY bit assignment matches with CD_ */
-	assert(LELEM(CD_DONT_REKEY - CD_POLICY_FIRST) == POLICY_DONT_REKEY);
+	assert(LELEM(CD_NO_IKEPAD - CD_POLICY_FIRST) == POLICY_NO_IKEPAD);
 
 	zero(&msg);
 
@@ -1440,14 +1458,28 @@ int main(int argc, char **argv)
 		case CD_ENCRYPT:                /* --encrypt */
 		case CD_AUTHENTICATE:           /* --authenticate */
 		case CD_COMPRESS:               /* --compress */
-		case CD_OVERLAPIP:              /* --overlapip */
 		case CD_TUNNEL:                 /* --tunnel */
 		case CD_PFS:                    /* --pfs */
-		case CD_AGGRESSIVE:             /* --aggrmode */
 		case CD_DISABLEARRIVALCHECK:    /* --disablearrivalcheck */
+
 		case CD_DONT_REKEY:             /* --donotrekey */
+
 		case CD_MODECFGPULL:            /* --modecfgpull */
-		case CD_NO_IKEPAD:		/* --no_ikepad */
+		case CD_AGGRESSIVE:             /* --aggrmode */
+		case CD_OVERLAPIP:              /* --overlapip */
+
+		case CD_IKEV1_DISABLE:		/* --ikev1-disable */
+		case CD_IKEV2_ALLOW:		/* --ikev2-allow */
+		case CD_IKEV2_PROPOSE:		/* --ikev2-propose */
+
+		case CD_ALLOW_NARROWING:	/* --allow-narrowing */
+
+		case CD_SAREF_TRACK:		/* --sareftrack */
+		case CD_SAREF_TRACK_CONNTRACK:	/* --sarefconntrack */
+
+		case CD_IKE_FRAG_ALLOW:		/* --ikefrag-allow */
+		case CD_IKE_FRAG_FORCE:		/* --ikefrag-force */
+		case CD_NO_IKEPAD:		/* --no-ikepad */
 			msg.policy |= LELEM(c - CD_POLICY_FIRST);
 			continue;
 

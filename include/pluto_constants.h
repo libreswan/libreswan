@@ -567,30 +567,27 @@ enum pluto_policy {
 	POLICY_XAUTH        = LELEM(17),        /* do we offer XAUTH? */
 	POLICY_MODECFG_PULL = LELEM(18),        /* is modecfg pulled by client? */
 	POLICY_AGGRESSIVE   = LELEM(19),        /* do we do aggressive mode? */
-	POLICY_PERHOST      = LELEM(20),        /* should we specialize the policy to the host? */
-	POLICY_SUBHOST      = LELEM(21),        /* if the policy applies below the host level (TCP/UDP/SCTP ports), */
-	POLICY_PERPROTO     = LELEM(22),        /* should we specialize the policy to the protocol? */
-	POLICY_OVERLAPIP    = LELEM(23),        /* can two conns that have subnet=vhost: declare the same IP? */
+	POLICY_OVERLAPIP    = LELEM(20),        /* can two conns that have subnet=vhost: declare the same IP? */
 
 	/*
 	 * this is mapped by parser's ikev2={four_state}. It is a bit richer
 	 * in that we can actually turn off everything, but it expands more
 	 * sensibly to an IKEv3 and other methods.
 	 */
-	POLICY_IKEV1_DISABLE = LELEM(24),       /* !accept IKEv1?  0x0100 0000 */
-	POLICY_IKEV2_ALLOW   = LELEM(25),       /* accept IKEv2?   0x0200 0000 */
-	POLICY_IKEV2_PROPOSE = LELEM(26),       /* propose IKEv2?  0x0400 0000 */
+	POLICY_IKEV1_DISABLE = LELEM(21),       /* !accept IKEv1?  0x0100 0000 */
+	POLICY_IKEV2_ALLOW   = LELEM(22),       /* accept IKEv2?   0x0200 0000 */
+	POLICY_IKEV2_PROPOSE = LELEM(23),       /* propose IKEv2?  0x0400 0000 */
 	POLICY_IKEV2_MASK = POLICY_IKEV1_DISABLE | POLICY_IKEV2_ALLOW |
 			    POLICY_IKEV2_PROPOSE,
-	POLICY_IKEV2_ALLOW_NARROWING = LELEM(27),       /* Allow RFC-5669 section 2.9? 0x0800 0000 */
+	POLICY_IKEV2_ALLOW_NARROWING = LELEM(24),       /* Allow RFC-5669 section 2.9? 0x0800 0000 */
 
-	POLICY_SAREF_TRACK    = LELEM(28),              /* Saref tracking via _updown */
-	POLICY_SAREF_TRACK_CONNTRACK    = LELEM(29),    /* use conntrack optimization */
+	POLICY_SAREF_TRACK    = LELEM(25),              /* Saref tracking via _updown */
+	POLICY_SAREF_TRACK_CONNTRACK    = LELEM(26),    /* use conntrack optimization */
 
-	POLICY_IKE_FRAG_ALLOW = LELEM(30),
-	POLICY_IKE_FRAG_FORCE = LELEM(31),
+	POLICY_IKE_FRAG_ALLOW = LELEM(27),
+	POLICY_IKE_FRAG_FORCE = LELEM(28),
 	POLICY_IKE_FRAG_MASK = POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE,
-	POLICY_NO_IKEPAD      = LELEM(32),      /* pad ike packets to 4 bytes or not */
+	POLICY_NO_IKEPAD      = LELEM(29),      /* pad ike packets to 4 bytes or not */
 
 	/* policy used to be an int, but is now lset_t (unsigned long long type), so max is 63 */
 };
