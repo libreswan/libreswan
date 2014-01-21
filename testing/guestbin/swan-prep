@@ -111,6 +111,7 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 
 # easy way to ensure we have the LOGDROP table for those OSes where we don't start a firewall with config
 commands.getoutput("iptables-restore /etc/sysconfig/iptables")
+commands.getoutput("ip6tables-restore /etc/sysconfig/ip6tables")
 
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
