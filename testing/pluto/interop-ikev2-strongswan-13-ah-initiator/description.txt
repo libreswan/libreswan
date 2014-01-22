@@ -1,0 +1,3 @@
+An interop test of Authenticated Header (AH) using sha1
+
+This test requires strongswan 5.1.1 or newer for AH support.
