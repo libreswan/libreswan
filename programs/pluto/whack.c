@@ -435,7 +435,6 @@ enum option_enums {
 	END_MODECFGSERVER,
 	END_ADDRESSPOOL,
 	END_SENDCERT,
-	END_CERTTYPE,
 	END_SRCIP,
 	END_UPDOWN,
 	END_TUNDEV,
@@ -681,8 +680,6 @@ static const struct option long_opts[] = {
 	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
 	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
-	{ "certtype", required_argument, NULL, END_CERTTYPE + OO +
-	  NUMERIC_ARG },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
 
@@ -1353,10 +1350,6 @@ int main(int argc, char **argv)
 				      optarg);
 				continue;
 			}
-			continue;
-
-		case END_CERTTYPE:
-			msg.right.certtype = opt_whole;
 			continue;
 
 		case END_CERT:                          /* --cert <path> */
