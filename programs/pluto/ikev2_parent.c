@@ -164,9 +164,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * number needs to be initialized.
 	 */
 	{
-		int policy_index = POLICY_ISAKMP(policy,
-					 c->spd.this.xauth_server,
-					 c->spd.this.xauth_client);
+		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		int groupnum = 0;	/* 0 is distinguished invalid value */
 		struct db_sa *sadb;
 		unsigned int pc_cnt;

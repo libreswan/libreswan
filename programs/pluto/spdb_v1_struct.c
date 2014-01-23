@@ -1511,9 +1511,7 @@ bool init_am_st_oakley(struct state *st, lset_t policy)
 	struct db_sa    *sa;
 	struct db_sa    *revised_sadb;
 	struct connection *c = st->st_connection;
-	unsigned int policy_index = POLICY_ISAKMP(policy,
-						  c->spd.this.xauth_server,
-						  c->spd.this.xauth_client);
+	unsigned policy_index = POLICY_ISAKMP(policy, c);
 
 	zero(&ta);
 

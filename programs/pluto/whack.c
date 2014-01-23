@@ -345,7 +345,7 @@ static void diagq(err_t ugh, const char *this)
  * - CD_* options (Connection Description options)
  */
 enum option_enums {
-#   define OPT_FIRST    OPT_CTLBASE
+#   define OPT_FIRST1    OPT_CTLBASE	/* first normal option, range 1 */
 	OPT_CTLBASE,
 	OPT_NAME,
 	OPT_CONNALIAS,
@@ -381,9 +381,9 @@ enum option_enums {
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
 
-#   define OPT_LAST1 OPT_OPPO_THERE  /* last "normal" option */
+#   define OPT_LAST1 OPT_OPPO_THERE  /* last "normal" option, range 1 */
 
-#define OPT_FIRST2  OPT_ASYNC
+#define OPT_FIRST2  OPT_ASYNC	/* first normal option, range 2 */
 
 	OPT_ASYNC,
 
@@ -393,7 +393,7 @@ enum option_enums {
 	OPT_WHACKRECORD,
 	OPT_WHACKSTOPRECORD,
 
-#define OPT_LAST2 OPT_WHACKSTOPRECORD /* last "normal" option */
+#define OPT_LAST2 OPT_WHACKSTOPRECORD /* last "normal" option, range 2 */
 
 /* List options */
 
@@ -447,42 +447,6 @@ enum option_enums {
 #   define CD_FIRST CD_TO       /* first connection description */
 	CD_TO,
 
-	/* === The next range must match corresponding POLICY_* symbols === */
-
-#   define CD_POLICY_FIRST  CD_PSK
-	CD_PSK,                 /* 0 */
-	CD_RSASIG,              /* 1 */
-	CD_ENCRYPT,             /* 2 */
-	CD_AUTHENTICATE,        /* 3 */
-	CD_COMPRESS,            /* 4 */
-	CD_TUNNEL,              /* 5 */
-	CD_PFS,                 /* 6 */
-	CD_DISABLEARRIVALCHECK, /* 7 */
-	CD_SHUNT0,              /* 8 */
-	CD_SHUNT1,              /* 9 */
-	CD_FAIL0,               /* 10 */
-	CD_FAIL1,               /* 11 */
-	CD_DONT_REKEY,          /* 12 */
-	CD_OPP0,                /* 13 (not used by whack) */
-	CD_GROUP,               /* 14 (not used by whack) */
-	CD_GROUPED,             /* 15 (not used by whack) */
-	CD_UP,                  /* 16 (not used by whack) */
-	CD_XAUTH,               /* 17 (not used by whack) */
-	CD_MODECFGPULL,         /* 18 */
-	CD_AGGRESSIVE,          /* 19 */
-	CD_OVERLAPIP,           /* 20 can two conns that have subnet=vhost: declare the same IP? */
-	CD_IKEV1_DISABLE,	/* 21 */
-	CD_IKEV2_ALLOW,		/* 22 */
-	CD_IKEV2_PROPOSE,	/* 23 */
-	CD_ALLOW_NARROWING,	/* 24 Allow RFC-5669 section 2.9? 0x0800 0000 */
-	CD_SAREF_TRACK,		/* 25 Saref tracking via _updown */
-	CD_SAREF_TRACK_CONNTRACK,	/* 26 use conntrack optimization */
-	CD_IKE_FRAG_ALLOW,	/* 27 */
-	CD_IKE_FRAG_FORCE,	/* 28 */
-	CD_NO_IKEPAD,		/* 29 pad ike packets to 4 bytes or not */
-
-	/* === end of correspondence with POLICY_* === */
-
 	CD_MODECFGDNS1,
 	CD_MODECFGDNS2,
 	CD_MODECFGDOMAIN,
@@ -521,15 +485,39 @@ enum option_enums {
 	CD_ESP,
 #   define CD_LAST CD_ESP       /* last connection description */
 
+/* Policy options
+ *
+ * Really part of Connection Description but too many bits
+ * for cd_seen.
+ */
+#define CDP_FIRST	CDP_SHUNT
+
+	/* multi-element policy flags */
+	CDP_SHUNT,
+	CDP_FAIL,
+
+	/* The next range is for single-element policy options.
+	 * It covers enum pluto_policy_ix values.
+	 */
+	CDP_SINGLETON,
+	/* large gap of unnamed values... */
+	CDP_SINGLETON_LAST = CDP_SINGLETON + POLICY_IX_LAST,
+
+#define CDP_LAST	CDP_SINGLETON_LAST
+
+/* === end of correspondence with POLICY_* === */
+
 	/* NOTE: these definitions must match DBG_* and IMPAIR_* in constants.h */
 
 #   define DBGOPT_FIRST DBGOPT_NONE
 	DBGOPT_NONE,
 	DBGOPT_ALL,
 
-	DBGOPT_elems,
+	DBGOPT_elems,	/* this point on: DBGOPT single elements */
 
-#   define DBGOPT_ROOF (DBGOPT_elems + IMPAIR_roof_IX)
+	DBGOPT_LAST = DBGOPT_elems + IMPAIR_roof_IX - 1,
+
+#define	OPTION_ENUMS_LAST	DBGOPT_LAST
 };
 
 /* Carve up space for result from getop_long.
@@ -627,42 +615,47 @@ static const struct option long_opts[] = {
 
 	{ "to", no_argument, NULL, CD_TO + OO },
 
-	{ "psk", no_argument, NULL, CD_PSK + OO },
-	{ "rsasig", no_argument, NULL, CD_RSASIG + OO },
+#define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
+	PS("psk", PSK),
+	PS("rsasig", RSASIG),
 
-	{ "encrypt", no_argument, NULL, CD_ENCRYPT + OO },
-	{ "authenticate", no_argument, NULL, CD_AUTHENTICATE + OO },
-	{ "compress",  no_argument, NULL, CD_COMPRESS + OO },
-	{ "overlapip", no_argument, NULL, CD_OVERLAPIP + OO },
-	{ "tunnel", no_argument, NULL, CD_TUNNEL + OO },
+	PS("encrypt", ENCRYPT),
+	PS("authenticate", AUTHENTICATE),
+	PS("compress", COMPRESS),
+	PS("overlapip", OVERLAPIP),
+	PS("tunnel", TUNNEL),
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 + OO },
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 + OO },
-	{ "pfs", no_argument, NULL, CD_PFS + OO },
+	PS("pfs", PFS),
 	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
-	{ "aggrmode", no_argument, NULL, CD_AGGRESSIVE + OO },
+	PS("aggrmode", AGGRESSIVE),
 
-	{ "disablearrivalcheck", no_argument, NULL, CD_DISABLEARRIVALCHECK + OO },
+	PS("disablearrivalcheck", DISABLEARRIVALCHECK),
+
 	{ "initiateontraffic", no_argument, NULL,
-		CD_SHUNT0 +(POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
+		CDP_SHUNT +(POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
 	{ "pass", no_argument, NULL,
-		CD_SHUNT0 + (POLICY_SHUNT_PASS >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
+		CDP_SHUNT + (POLICY_SHUNT_PASS >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
 	{ "drop", no_argument, NULL,
-		CD_SHUNT0 + (POLICY_SHUNT_DROP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
+		CDP_SHUNT + (POLICY_SHUNT_DROP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
 	{ "reject", no_argument, NULL,
-		CD_SHUNT0 + (POLICY_SHUNT_REJECT >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
+		CDP_SHUNT + (POLICY_SHUNT_REJECT >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
+
 	{ "failnone", no_argument, NULL,
-		CD_FAIL0 + (POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
+		CDP_FAIL + (POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
 	{ "failpass", no_argument, NULL,
-		CD_FAIL0 + (POLICY_FAIL_PASS >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
+		CDP_FAIL + (POLICY_FAIL_PASS >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
 	{ "faildrop", no_argument, NULL,
-		CD_FAIL0 + (POLICY_FAIL_DROP >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
+		CDP_FAIL + (POLICY_FAIL_DROP >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
 	{ "failreject", no_argument, NULL,
-		CD_FAIL0 + (POLICY_FAIL_REJECT >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
-	{ "dontrekey", no_argument, NULL, CD_DONT_REKEY + OO },
+		CDP_FAIL + (POLICY_FAIL_REJECT >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
+
+	PS("dontrekey", DONT_REKEY),
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO },
-	{ "no-nat_keepalive", no_argument, NULL, CD_NO_NAT_KEEPALIVE + OO },
-	{ "initialcontact", no_argument, NULL, CD_INITIAL_CONTACT + OO },
-	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY + OO },
+	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT },
+	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },
+
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
 	{ "dpdaction", required_argument, NULL, CD_DPDACTION + OO },
@@ -672,7 +665,7 @@ static const struct option long_opts[] = {
 	{ "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
 	{ "xauthby", required_argument, NULL, CD_XAUTHBY + OO },
 	{ "xauthfail", required_argument, NULL, CD_XAUTHFAIL + OO },
-	{ "modecfgpull",   no_argument, NULL, CD_MODECFGPULL + OO },
+	PS("modecfgpull", MODECFG_PULL),
 	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
@@ -706,18 +699,19 @@ static const struct option long_opts[] = {
 	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
 
 
-	{ "ikev1-disable", no_argument, NULL, CD_IKEV1_DISABLE + OO },
-	{ "ikev2-allow", no_argument, NULL, CD_IKEV2_ALLOW + OO },
-	{ "ikev2-propose", no_argument, NULL, CD_IKEV2_PROPOSE + OO },
+	PS("ikev1-disable", IKEV1_DISABLE),
+	PS("ikev2-allow", IKEV2_ALLOW),
+	PS("ikev2-propose", IKEV2_PROPOSE),
 
-	{ "allow-narrowing", no_argument, NULL, CD_ALLOW_NARROWING + OO },
+	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
 
-	{ "sareftrack", no_argument, NULL, CD_SAREF_TRACK + OO },
-	{ "sarefconntrack", no_argument, NULL, CD_SAREF_TRACK_CONNTRACK + OO },
+	PS("sareftrack", SAREF_TRACK),
+	PS("sarefconntrack", SAREF_TRACK_CONNTRACK),
 
-	{ "ikefrag-allow", no_argument, NULL, CD_IKE_FRAG_ALLOW + OO },
-	{ "ikefrag-force", no_argument, NULL, CD_IKE_FRAG_FORCE + OO },
-	{ "no-ikepad", no_argument, NULL, CD_NO_IKEPAD + OO },
+	PS("ikefrag-allow", IKE_FRAG_ALLOW),
+	PS("ikefrag-force", IKE_FRAG_FORCE),
+	PS("no-ikepad", NO_IKEPAD),
+#undef PS
 
 
 #ifdef HAVE_NM
@@ -891,10 +885,11 @@ int main(int argc, char **argv)
 	struct whackpacker wp;
 	char esp_buf[256]; /* uses snprintf */
 	lset_t
-		opts_seen = LEMPTY,
+		opts1_seen = LEMPTY,
 		opts2_seen = LEMPTY,
 		lst_seen = LEMPTY,
 		cd_seen = LEMPTY,
+		cdp_seen = LEMPTY,
 		end_seen = LEMPTY,
 		end_seen_before_to = LEMPTY;
 	const char
@@ -908,16 +903,13 @@ int main(int argc, char **argv)
 	const char *ugh;
 
 	/* check division of numbering space */
-	assert(OPTION_OFFSET + IMPAIR_roof_IX <= NUMERIC_ARG);
-	assert(OPT_LAST1 - OPT_FIRST < (sizeof opts_seen * BITS_PER_BYTE) - 1);
-	assert(OPT_LAST2 - OPT_FIRST2 <
-	       (sizeof opts2_seen * BITS_PER_BYTE) - 1);
-	assert(LST_LAST - LST_FIRST < (sizeof lst_seen * BITS_PER_BYTE) - 1);
-	assert(END_LAST - END_FIRST < (sizeof end_seen * BITS_PER_BYTE) - 1);
-	assert(CD_LAST - CD_FIRST < (sizeof cd_seen * BITS_PER_BYTE));
-	assert(IMPAIR_roof_IX <= (sizeof cd_seen * BITS_PER_BYTE));
-	/* check that POLICY bit assignment matches with CD_ */
-	assert(LELEM(CD_NO_IKEPAD - CD_POLICY_FIRST) == POLICY_NO_IKEPAD);
+	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
+	assert(OPT_LAST1 - OPT_FIRST1 < LELEM_ROOF);
+	assert(OPT_LAST2 - OPT_FIRST2 < LELEM_ROOF);
+	assert(LST_LAST - LST_FIRST < LELEM_ROOF);
+	assert(END_LAST - END_FIRST < LELEM_ROOF);
+	assert(CD_LAST - CD_FIRST < LELEM_ROOF);
+	assert(IMPAIR_roof_IX <= LELEM_ROOF);
 
 	zero(&msg);
 
@@ -991,17 +983,20 @@ int main(int argc, char **argv)
 			}
 		}
 
-		/* per-class option processing */
-		if (0 <= c && c <= OPT_LAST1) {
-			/* OPT_* options get added opts_seen.
+		/* per-class option processing
+		 *
+		 * Mostly detection of repeated flags.
+		 */
+		if (OPT_FIRST1 <= c && c <= OPT_LAST1) {
+			/* OPT_* options get added opts1_seen.
 			 * Reject repeated options (unless later code intervenes).
 			 */
 			lset_t f = LELEM(c);
 
-			if (opts_seen & f)
+			if (opts1_seen & f)
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
-			opts_seen |= f;
+			opts1_seen |= f;
 		} else if (OPT_FIRST2 <= c && c <= OPT_LAST2) {
 			/* OPT_* options get added opts_seen2.
 			 * Reject repeated options (unless later code intervenes).
@@ -1023,9 +1018,9 @@ int main(int argc, char **argv)
 				      long_opts[long_index].name);
 			lst_seen |= f;
 		}
-		else if (DBGOPT_FIRST <= c && c < DBGOPT_ROOF) {
+		else if (DBGOPT_FIRST <= c && c <= DBGOPT_LAST) {
 			/* DBGOPT_* options are treated separately to reduce
-			 * potential members of opts_seen.
+			 * potential members of opts1_seen.
 			 */
 			msg.whack_options = TRUE;
 		}
@@ -1039,7 +1034,7 @@ int main(int argc, char **argv)
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			end_seen |= f;
-			opts_seen |= LELEM(OPT_CD);
+			opts1_seen |= LELEM(OPT_CD);
 		} else if (CD_FIRST <= c && c <= CD_LAST) {
 			/* CD_* options are added to cd_seen.
 			 * Reject repeated options (unless later code intervenes).
@@ -1050,7 +1045,18 @@ int main(int argc, char **argv)
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			cd_seen |= f;
-			opts_seen |= LELEM(OPT_CD);
+			opts1_seen |= LELEM(OPT_CD);
+		} else if (CDP_FIRST <= c && c <= CDP_LAST) {
+			/* CDP_* options are added to cdp_seen.
+			 * Reject repeated options (unless later code intervenes).
+			 */
+			lset_t f = LELEM(c - CDP_FIRST);
+
+			if (cdp_seen & f)
+				diagq("duplicated flag",
+				      long_opts[long_index].name);
+			cdp_seen |= f;
+			opts1_seen |= LELEM(OPT_CD);
 		}
 
 		/* Note: "break"ing from switch terminates loop.
@@ -1453,34 +1459,34 @@ int main(int argc, char **argv)
 			end_seen = LEMPTY;
 			continue;
 
-		case CD_PSK:                    /* --psk */
-		case CD_RSASIG:                 /* --rsasig */
-		case CD_ENCRYPT:                /* --encrypt */
-		case CD_AUTHENTICATE:           /* --authenticate */
-		case CD_COMPRESS:               /* --compress */
-		case CD_TUNNEL:                 /* --tunnel */
-		case CD_PFS:                    /* --pfs */
-		case CD_DISABLEARRIVALCHECK:    /* --disablearrivalcheck */
+		case CDP_SINGLETON + POLICY_PSK_IX:                    /* --psk */
+		case CDP_SINGLETON + POLICY_RSASIG_IX:                 /* --rsasig */
+		case CDP_SINGLETON + POLICY_ENCRYPT_IX:                /* --encrypt */
+		case CDP_SINGLETON + POLICY_AUTHENTICATE_IX:           /* --authenticate */
+		case CDP_SINGLETON + POLICY_COMPRESS_IX:               /* --compress */
+		case CDP_SINGLETON + POLICY_TUNNEL_IX:                 /* --tunnel */
+		case CDP_SINGLETON + POLICY_PFS_IX:                    /* --pfs */
+		case CDP_SINGLETON + POLICY_DISABLEARRIVALCHECK_IX:    /* --disablearrivalcheck */
 
-		case CD_DONT_REKEY:             /* --donotrekey */
+		case CDP_SINGLETON + POLICY_DONT_REKEY_IX:             /* --donotrekey */
 
-		case CD_MODECFGPULL:            /* --modecfgpull */
-		case CD_AGGRESSIVE:             /* --aggrmode */
-		case CD_OVERLAPIP:              /* --overlapip */
+		case CDP_SINGLETON + POLICY_MODECFG_PULL_IX:            /* --modecfgpull */
+		case CDP_SINGLETON + POLICY_AGGRESSIVE_IX:             /* --aggrmode */
+		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:              /* --overlapip */
 
-		case CD_IKEV1_DISABLE:		/* --ikev1-disable */
-		case CD_IKEV2_ALLOW:		/* --ikev2-allow */
-		case CD_IKEV2_PROPOSE:		/* --ikev2-propose */
+		case CDP_SINGLETON + POLICY_IKEV1_DISABLE_IX:		/* --ikev1-disable */
+		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_IX:		/* --ikev2-allow */
+		case CDP_SINGLETON + POLICY_IKEV2_PROPOSE_IX:		/* --ikev2-propose */
 
-		case CD_ALLOW_NARROWING:	/* --allow-narrowing */
+		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_NARROWING_IX:	/* --allow-narrowing */
 
-		case CD_SAREF_TRACK:		/* --sareftrack */
-		case CD_SAREF_TRACK_CONNTRACK:	/* --sarefconntrack */
+		case CDP_SINGLETON + POLICY_SAREF_TRACK_IX:		/* --sareftrack */
+		case CDP_SINGLETON + POLICY_SAREF_TRACK_CONNTRACK_IX:	/* --sarefconntrack */
 
-		case CD_IKE_FRAG_ALLOW:		/* --ikefrag-allow */
-		case CD_IKE_FRAG_FORCE:		/* --ikefrag-force */
-		case CD_NO_IKEPAD:		/* --no-ikepad */
-			msg.policy |= LELEM(c - CD_POLICY_FIRST);
+		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:		/* --ikefrag-allow */
+		case CDP_SINGLETON + POLICY_IKE_FRAG_FORCE_IX:		/* --ikefrag-force */
+		case CDP_SINGLETON + POLICY_NO_IKEPAD_IX:		/* --no-ikepad */
+			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
 
 		/* --initiateontraffic
@@ -1488,7 +1494,7 @@ int main(int argc, char **argv)
 		 * --drop
 		 * --reject
 		 */
-		case CD_SHUNT0:
+		case CDP_SHUNT:
 			msg.policy = (msg.policy & ~POLICY_SHUNT_MASK) |
 				     ((lset_t)aux << POLICY_SHUNT_SHIFT);
 			continue;
@@ -1498,7 +1504,7 @@ int main(int argc, char **argv)
 		 * --faildrop
 		 * --failreject
 		 */
-		case CD_FAIL0:
+		case CDP_FAIL:
 			msg.policy = (msg.policy & ~POLICY_FAIL_MASK) |
 				     ((lset_t)aux << POLICY_FAIL_SHIFT);
 			continue;
@@ -1807,22 +1813,22 @@ int main(int argc, char **argv)
 	 */
 
 	/* check opportunistic initiation simulation request */
-	switch (opts_seen & (LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE))) {
+	switch (opts1_seen & (LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE))) {
 	case LELEM(OPT_OPPO_HERE):
 	case LELEM(OPT_OPPO_THERE):
 		diag("--oppohere and --oppothere must be used together");
-	/*NOTREACHED*/
+		/*NOTREACHED*/
 	case LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE):
 		msg.whack_oppo_initiate = TRUE;
 		if (LIN(cd_seen,
 			LELEM(CD_TUNNELIPV4 -
 			      CD_FIRST) | LELEM(CD_TUNNELIPV6 - CD_FIRST)))
-			opts_seen &= ~LELEM(OPT_CD);
+			opts1_seen &= ~LELEM(OPT_CD);
 		break;
 	}
 
 	/* check connection description */
-	if (LHAS(opts_seen, OPT_CD)) {
+	if (LHAS(opts1_seen, OPT_CD)) {
 		if (!LHAS(cd_seen, CD_TO - CD_FIRST))
 			diag("connection description option, but no --to");
 
@@ -1885,19 +1891,19 @@ int main(int argc, char **argv)
 	}
 
 	/* decide whether --name is mandatory or forbidden */
-	if (!LDISJOINT(opts_seen,
+	if (!LDISJOINT(opts1_seen,
 		       LELEM(OPT_ROUTE) | LELEM(OPT_UNROUTE) |
 		       LELEM(OPT_INITIATE) | LELEM(OPT_TERMINATE) |
 		       LELEM(OPT_DELETE) | LELEM(OPT_CD))) {
-		if (!LHAS(opts_seen, OPT_NAME))
+		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
 	} else if (!msg.whack_options) {
-		if (LHAS(opts_seen, OPT_NAME))
+		if (LHAS(opts1_seen, OPT_NAME))
 			diag("no reason for --name");
 	}
 
-	if (!LDISJOINT(opts_seen, LELEM(OPT_PUBKEYRSA) | LELEM(OPT_ADDKEY))) {
-		if (!LHAS(opts_seen, OPT_KEYID))
+	if (!LDISJOINT(opts1_seen, LELEM(OPT_PUBKEYRSA) | LELEM(OPT_ADDKEY))) {
+		if (!LHAS(opts1_seen, OPT_KEYID))
 			diag("--addkey and --pubkeyrsa require --keyid");
 	}
 
@@ -1968,7 +1974,7 @@ int main(int argc, char **argv)
 	if (ugh)
 		diag(ugh);
 
-	msg.magic = ((opts_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) |
+	msg.magic = ((opts1_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) |
 		     opts2_seen | lst_seen | cd_seen) != LEMPTY ||
 		    msg.whack_options ?
 		    WHACK_MAGIC : WHACK_BASIC_MAGIC;

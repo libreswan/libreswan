@@ -1259,9 +1259,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	/* SA out */
 	{
 		u_char *sa_start = md->rbody.cur;
-		int policy_index = POLICY_ISAKMP(st->st_policy,
-						 c->spd.this.xauth_server,
-						 c->spd.this.xauth_client);
+		unsigned policy_index = POLICY_ISAKMP(st->st_policy, c);
 
 		if (!out_sa(&md->rbody,
 			    &oakley_am_sadb[policy_index], st,

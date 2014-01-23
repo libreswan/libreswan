@@ -513,84 +513,131 @@ extern const char *prettypolicy(lset_t policy);
  * ISAKMP auth techniques (none means never negotiate)
  * a pluto policy is stored in a lset_t which is an unsigned long long,
  * so we should have 64 bits to play with
+ *
+ * We need both the bit number (*_IX) and the singleton set for each.
+ * The bit numbers are assigned automatically in enum pluto_policy_ix.
+ *
+ * The singleton set version is potentially too big for an enum
+ * so these are exhausively defined as macros.  As are derived values.
  */
-enum pluto_policy {
-	POLICY_PSK     = LELEM(0),
-	POLICY_RSASIG  = LELEM(1),
-#define POLICY_ISAKMP_SHIFT     0       /* log2(POLICY_PSK) */
+enum pluto_policy_ix {
+	POLICY_PSK_IX,
+	POLICY_RSASIG_IX,
+#define POLICY_ISAKMP_SHIFT	POLICY_PSK_IX
 
-/* policies that affect ID types that are acceptable - RSA, PSK, XAUTH */
-	POLICY_ID_AUTH_MASK=LRANGES(POLICY_PSK, POLICY_RSASIG),
+	/* policies that affect ID types that are acceptable - RSA, PSK, XAUTH
+	* ??? This set constant certainly doesn't include XAUTH.
+	*/
+#define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_RSASIG_IX)
 
-/* policies that affect choices of proposal, note, does not include XAUTH */
-#define POLICY_ISAKMP(x, xs, xc)  (((x) & LRANGES(POLICY_PSK, POLICY_RSASIG)) + \
-				   ((xs) * 4) + ((xc) * 8))
+	/* Policies that affect choices of proposal.
+	 * Includes xauth policy from connection c.
+	 * The result is a small set and it will fit in "unsigned".
+	 */
+#define POLICY_ISAKMP(x, c)	(((x) & LRANGES(POLICY_PSK, POLICY_RSASIG)) | \
+					(((c)->spd.this.xauth_server) << 2) | \
+					(((c)->spd.this.xauth_client) << 3))
 
-/* Quick Mode (IPSEC) attributes */
-	POLICY_ENCRYPT = LELEM(2),      /* must be first of IPSEC policies */
-	POLICY_AUTHENTICATE=LELEM(3),   /* must be second */
-	POLICY_COMPRESS=LELEM(4),       /* must be third */
-	POLICY_TUNNEL  = LELEM(5),
-	POLICY_PFS     = LELEM(6),
-	POLICY_DISABLEARRIVALCHECK = LELEM(7),  /* supress tunnel egress address checking */
+	/* Quick Mode (IPSEC) attributes */
+	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
+	POLICY_AUTHENTICATE_IX,	/* must be second */
+	POLICY_COMPRESS_IX,	/* must be third */
+	POLICY_TUNNEL_IX,
+	POLICY_PFS_IX,
+	POLICY_DISABLEARRIVALCHECK_IX,	/* supress tunnel egress address checking */
 
-#define POLICY_IPSEC_SHIFT      2               /* log2(POLICY_ENCRYPT) */
-	POLICY_IPSEC_MASK =
-		LRANGES(POLICY_ENCRYPT, POLICY_DISABLEARRIVALCHECK),
+#define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
+#define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_DISABLEARRIVALCHECK_IX)
 
-/* shunt attributes: what to do when routed without tunnel (2 bits) */
-	POLICY_SHUNT_SHIFT = 8,                                 /* log2(POLICY_SHUNT_PASS) */
-	POLICY_SHUNT_MASK  = (03ul << POLICY_SHUNT_SHIFT),
-	POLICY_SHUNT_TRAP  = (0ul << POLICY_SHUNT_SHIFT),       /* default: negotiate */
-	POLICY_SHUNT_PASS  = (1ul << POLICY_SHUNT_SHIFT),
-	POLICY_SHUNT_DROP  = (2ul << POLICY_SHUNT_SHIFT),
-	POLICY_SHUNT_REJECT=(3ul << POLICY_SHUNT_SHIFT),
+	/* shunt attributes: what to do when routed without tunnel (2 bits) */
+	POLICY_SHUNT0_IX,
+	POLICY_SHUNT1_IX,
 
-/* fail attributes: what to do with failed negotiation (2 bits) */
+#define POLICY_SHUNT_SHIFT	POLICY_SHUNT0_IX
+#define POLICY_SHUNT_MASK	LRANGE(POLICY_SHUNT0_IX, POLICY_SHUNT1_IX)
 
-	POLICY_FAIL_SHIFT  = 10,        /* log2(POLICY_FAIL_PASS) */
-	POLICY_FAIL_MASK   = (03ul << POLICY_FAIL_SHIFT),
+#define POLICY_SHUNT_TRAP	(0 * LELEM(POLICY_SHUNT0_IX))	/* default: negotiate */
+#define POLICY_SHUNT_PASS	(1 * LELEM(POLICY_SHUNT0_IX))
+#define POLICY_SHUNT_DROP	(2 * LELEM(POLICY_SHUNT0_IX))
+#define POLICY_SHUNT_REJECT	(3 * LELEM(POLICY_SHUNT0_IX))
 
-	POLICY_FAIL_NONE   = (0ul << POLICY_FAIL_SHIFT), /* default */
-	POLICY_FAIL_PASS   = (1ul << POLICY_FAIL_SHIFT),
-	POLICY_FAIL_DROP   = (2ul << POLICY_FAIL_SHIFT),
-	POLICY_FAIL_REJECT = (3ul << POLICY_FAIL_SHIFT),
+	/* fail attributes: what to do with failed negotiation (2 bits) */
+	POLICY_FAIL0_IX,
+	POLICY_FAIL1_IX,
 
-/* connection policy
- * Other policies could vary per state object.  These live in connection.
- */
-	POLICY_DONT_REKEY   = LELEM(12),        /* don't rekey state either Phase */
-	POLICY_OPPO         = LELEM(13),        /* is this opportunistic? */
-	POLICY_GROUP        = LELEM(14),        /* is this a group template? */
-	POLICY_GROUTED      = LELEM(15),        /* do we want this group routed? */
-	POLICY_UP           = LELEM(16),        /* do we want this up? */
-	POLICY_XAUTH        = LELEM(17),        /* do we offer XAUTH? */
-	POLICY_MODECFG_PULL = LELEM(18),        /* is modecfg pulled by client? */
-	POLICY_AGGRESSIVE   = LELEM(19),        /* do we do aggressive mode? */
-	POLICY_OVERLAPIP    = LELEM(20),        /* can two conns that have subnet=vhost: declare the same IP? */
+#define POLICY_FAIL_SHIFT	POLICY_FAIL0_IX
+#define POLICY_FAIL_MASK	LRANGE(POLICY_FAIL0_IX, POLICY_FAIL1_IX)
+
+#define POLICY_FAIL_NONE	(0 * LELEM(POLICY_FAIL0_IX)) /* default */
+#define POLICY_FAIL_PASS	(1 * LELEM(POLICY_FAIL0_IX))
+#define POLICY_FAIL_DROP	(2 * LELEM(POLICY_FAIL0_IX))
+#define POLICY_FAIL_REJECT	(3 * LELEM(POLICY_FAIL0_IX))
+
+	/* connection policy
+	 * Other policies could vary per state object.  These live in connection.
+	 */
+	POLICY_DONT_REKEY_IX,	/* don't rekey state either Phase */
+	POLICY_OPPO_IX,	/* is this opportunistic? */
+	POLICY_GROUP_IX,	/* is this a group template? */
+	POLICY_GROUTED_IX,	/* do we want this group routed? */
+	POLICY_UP_IX,	/* do we want this up? */
+	POLICY_XAUTH_IX,	/* do we offer XAUTH? */
+	POLICY_MODECFG_PULL_IX,	/* is modecfg pulled by client? */
+	POLICY_AGGRESSIVE_IX,	/* do we do aggressive mode? */
+	POLICY_OVERLAPIP_IX,	/* can two conns that have subnet=vhost: declare the same IP? */
 
 	/*
 	 * this is mapped by parser's ikev2={four_state}. It is a bit richer
 	 * in that we can actually turn off everything, but it expands more
 	 * sensibly to an IKEv3 and other methods.
 	 */
-	POLICY_IKEV1_DISABLE = LELEM(21),       /* !accept IKEv1?  0x0100 0000 */
-	POLICY_IKEV2_ALLOW   = LELEM(22),       /* accept IKEv2?   0x0200 0000 */
-	POLICY_IKEV2_PROPOSE = LELEM(23),       /* propose IKEv2?  0x0400 0000 */
-	POLICY_IKEV2_MASK = POLICY_IKEV1_DISABLE | POLICY_IKEV2_ALLOW |
-			    POLICY_IKEV2_PROPOSE,
-	POLICY_IKEV2_ALLOW_NARROWING = LELEM(24),       /* Allow RFC-5669 section 2.9? 0x0800 0000 */
+	POLICY_IKEV1_DISABLE_IX,	/* !accept IKEv1?  0x0100 0000 */
+	POLICY_IKEV2_ALLOW_IX,	/* accept IKEv2?   0x0200 0000 */
+	POLICY_IKEV2_PROPOSE_IX,	/* propose IKEv2?  0x0400 0000 */
+#define POLICY_IKEV2_MASK	LRANGE(POLICY_IKEV1_DISABLE_IX, POLICY_IKEV2_PROPOSE_IX)
 
-	POLICY_SAREF_TRACK    = LELEM(25),              /* Saref tracking via _updown */
-	POLICY_SAREF_TRACK_CONNTRACK    = LELEM(26),    /* use conntrack optimization */
+	POLICY_IKEV2_ALLOW_NARROWING_IX,	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 
-	POLICY_IKE_FRAG_ALLOW = LELEM(27),
-	POLICY_IKE_FRAG_FORCE = LELEM(28),
-	POLICY_IKE_FRAG_MASK = POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE,
-	POLICY_NO_IKEPAD      = LELEM(29),      /* pad ike packets to 4 bytes or not */
+	POLICY_SAREF_TRACK_IX,	/* Saref tracking via _updown */
+	POLICY_SAREF_TRACK_CONNTRACK_IX,	/* use conntrack optimization */
 
-	/* policy used to be an int, but is now lset_t (unsigned long long type), so max is 63 */
+	POLICY_IKE_FRAG_ALLOW_IX,
+	POLICY_IKE_FRAG_FORCE_IX,
+#define POLICY_IKE_FRAG_MASK	LRANGE(POLICY_IKE_FRAG_ALLOW_IX,POLICY_IKE_FRAG_FORCE_IX)
+	POLICY_NO_IKEPAD_IX	/* pad ike packets to 4 bytes or not */
+#define POLICY_IX_LAST	POLICY_NO_IKEPAD_IX
 };
+
+#define POLICY_PSK	LELEM(POLICY_PSK_IX)
+#define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
+#define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
+#define POLICY_AUTHENTICATE	LELEM(POLICY_AUTHENTICATE_IX)	/* must be second */
+#define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
+#define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
+#define POLICY_PFS	LELEM(POLICY_PFS_IX)
+#define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* supress tunnel egress address checking */
+#define POLICY_SHUNT0	LELEM(POLICY_SHUNT0_IX)
+#define POLICY_SHUNT1	LELEM(POLICY_SHUNT1_IX)
+#define POLICY_FAIL0	LELEM(POLICY_FAIL0_IX)
+#define POLICY_FAIL1	LELEM(POLICY_FAIL1_IX)
+#define POLICY_DONT_REKEY	LELEM(POLICY_DONT_REKEY_IX)	/* don't rekey state either Phase */
+#define POLICY_OPPO	LELEM(POLICY_OPPO_IX)	/* is this opportunistic? */
+#define POLICY_GROUP	LELEM(POLICY_GROUP_IX)	/* is this a group template? */
+#define POLICY_GROUTED	LELEM(POLICY_GROUTED_IX)	/* do we want this group routed? */
+#define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want this up? */
+#define POLICY_XAUTH	LELEM(POLICY_XAUTH_IX)	/* do we offer XAUTH? */
+#define POLICY_MODECFG_PULL	LELEM(POLICY_MODECFG_PULL_IX)	/* is modecfg pulled by client? */
+#define POLICY_AGGRESSIVE	LELEM(POLICY_AGGRESSIVE_IX)	/* do we do aggressive mode? */
+#define POLICY_OVERLAPIP	LELEM(POLICY_OVERLAPIP_IX)	/* can two conns that have subnet=vhost: declare the same IP? */
+#define POLICY_IKEV1_DISABLE	LELEM(POLICY_IKEV1_DISABLE_IX)	/* !accept IKEv1?  0x0100 0000 */
+#define POLICY_IKEV2_ALLOW	LELEM(POLICY_IKEV2_ALLOW_IX)	/* accept IKEv2?   0x0200 0000 */
+#define POLICY_IKEV2_PROPOSE	LELEM(POLICY_IKEV2_PROPOSE_IX)	/* propose IKEv2?  0x0400 0000 */
+#define POLICY_IKEV2_ALLOW_NARROWING	LELEM(POLICY_IKEV2_ALLOW_NARROWING_IX)	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
+#define POLICY_SAREF_TRACK	LELEM(POLICY_SAREF_TRACK_IX)	/* Saref tracking via _updown */
+#define POLICY_SAREF_TRACK_CONNTRACK	LELEM(POLICY_SAREF_TRACK_CONNTRACK_IX)	/* use conntrack optimization */
+#define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)
+#define POLICY_IKE_FRAG_FORCE	LELEM(POLICY_IKE_FRAG_FORCE_IX)
+#define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
 
 /* Any IPsec policy?  If not, a connection description
  * is only for ISAKMP SA, not IPSEC SA.  (A pun, I admit.)

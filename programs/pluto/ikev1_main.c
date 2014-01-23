@@ -188,10 +188,7 @@ stf_status main_outI1(int whack_sock,
 	/* SA out */
 	{
 		u_char *sa_start = md.rbody.cur;
-		int policy_index = POLICY_ISAKMP(policy,
-						c->spd.this.xauth_server,
-						c->spd.this.xauth_client);
-
+		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		int np = numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,

@@ -1145,10 +1145,7 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 	struct db_sa *sadb;
 	struct trans_attrs ta;
 	struct connection *c = st->st_connection;
-	int policy_index = POLICY_ISAKMP(c->policy,
-					 c->spd.this.xauth_server,
-					 c->spd.this.xauth_client);
-
+	unsigned policy_index = POLICY_ISAKMP(c->policy, c);
 	struct ikev2_transform_list itl0, *itl;
 
 	zero(&itl0);
