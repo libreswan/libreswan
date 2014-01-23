@@ -537,14 +537,14 @@ size_t format_end(char *buf,
 			host = strcpy(host_space, "%dns");
 			dohost_name = TRUE;
 		} else {
-			switch (policy & (POLICY_GROUP | POLICY_OPPO)) {
+			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
 			case POLICY_GROUP:
 				host = "%group";
 				break;
-			case POLICY_OPPO:
+			case POLICY_OPPORTUNISTIC:
 				host = "%opportunistic";
 				break;
-			case POLICY_GROUP | POLICY_OPPO:
+			case POLICY_GROUP | POLICY_OPPORTUNISTIC:
 				host = "%opportunisticgroup";
 				break;
 			default:
@@ -574,7 +574,7 @@ size_t format_end(char *buf,
 		}
 
 		if (isanyaddr(&client_net) && isanyaddr(&client_mask) &&
-			(policy & (POLICY_GROUP | POLICY_OPPO))) {
+			(policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC))) {
 			client_sep = ""; /* boring case */
 		} else if (is_virtual_end(this)) {
 			if (is_virtual_vhost(this))
@@ -667,7 +667,7 @@ size_t format_end(char *buf,
 		if (this->xauth_client)
 			p = add_str(endopts, sizeof(endopts), p, "+XC");
 		{
-			const char *send_cert;
+			const char *send_cert = "+UNKNOWN";
 			char s[32];
 
 			switch (this->sendcert) {
@@ -1488,7 +1488,7 @@ void add_connection(const struct whack_message *wm)
 		c->spd.eroute_owner = SOS_NOBODY;
 
 		/* force all oppo connections to have a client */
-		if (c->policy & POLICY_OPPO) {
+		if (c->policy & POLICY_OPPORTUNISTIC) {
 			c->spd.that.has_client = TRUE;
 			c->spd.that.client.maskbits = 0;
 		}
@@ -1805,7 +1805,7 @@ struct connection *rw_instantiate(struct connection *c,
 			d->spd.that.has_client = FALSE;
 	}
 
-	if (d->policy & POLICY_OPPO) {
+	if (d->policy & POLICY_OPPORTUNISTIC) {
 		/*
 		 * This must be before we know the client addresses.
 		 * Fill in one that is impossible. This prevents anyone else
@@ -1948,7 +1948,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * Fill in peer's client side.
 	 * If the client is the peer, excise the client from the connection.
 	 */
-	passert(d->policy & POLICY_OPPO);
+	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(addrinsubnet(peer_client, &d->spd.that.client));
 	happy(addrtosubnet(peer_client, &d->spd.that.client));
 
@@ -2035,7 +2035,7 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 			p += strlen(p);
 		}
 
-		if (c->policy & POLICY_OPPO) {
+		if (c->policy & POLICY_OPPORTUNISTIC) {
 			size_t w = fmt_client(&c->spd.this.client,
 					&c->spd.this.host_addr, " ", p);
 
@@ -2317,7 +2317,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 
 	if (best == NULL ||
 		NEVER_NEGOTIATE(best->policy) ||
-		(best->policy & POLICY_OPPO) == LEMPTY ||
+		(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
 		best->kind != CK_TEMPLATE)
 		return NULL;
 	else
@@ -3320,7 +3320,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 	/* if the best wasn't opportunistic, we fail: it must be a shunt */
 	if (best != NULL &&
 		(NEVER_NEGOTIATE(best->policy) ||
-			(best->policy & POLICY_OPPO) == LEMPTY))
+			(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
 		best = NULL;
 
 	DBG(DBG_CONTROLMORE,

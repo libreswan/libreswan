@@ -497,7 +497,7 @@ enum option_enums {
 	CDP_FAIL,
 
 	/* The next range is for single-element policy options.
-	 * It covers enum pluto_policy_ix values.
+	 * It covers enum sa_policy_bits values.
 	 */
 	CDP_SINGLETON,
 	/* large gap of unnamed values... */
@@ -1267,13 +1267,13 @@ int main(int argc, char **argv)
 			if (streq(optarg, "%any")) {
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy |= POLICY_TUNNEL | POLICY_OPPO;
+				new_policy |= POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
 				new_policy |= POLICY_TUNNEL | POLICY_GROUP;
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy |= POLICY_TUNNEL | POLICY_OPPO |
+				new_policy |= POLICY_TUNNEL | POLICY_OPPORTUNISTIC |
 					      POLICY_GROUP;
 			} else {
 				if (msg.left.id != NULL) {
@@ -1303,7 +1303,7 @@ int main(int argc, char **argv)
 
 			msg.policy |= new_policy;
 
-			if (new_policy & (POLICY_OPPO | POLICY_GROUP)) {
+			if (new_policy & (POLICY_OPPORTUNISTIC | POLICY_GROUP)) {
 				if (!LHAS(end_seen, END_CLIENT - END_FIRST)) {
 					/* set host to 0.0.0 and --client to 0.0.0.0/0
 					 * or IPV6 equivalent
@@ -1329,7 +1329,7 @@ int main(int argc, char **argv)
 
 				end_seen |= LELEM(END_CLIENT - END_FIRST);
 			}
-			if (new_policy & POLICY_OPPO)
+			if (new_policy & POLICY_OPPORTUNISTIC)
 				msg.right.key_from_DNS_on_demand = TRUE;
 			continue;
 		}
@@ -1839,7 +1839,7 @@ int main(int argc, char **argv)
 		    isanyaddr(&msg.right.host_addr))
 			diag("hosts cannot both be 0.0.0.0 or 0::0");
 
-		if (msg.policy & POLICY_OPPO) {
+		if (msg.policy & POLICY_OPPORTUNISTIC) {
 			if ((msg.policy & (POLICY_PSK | POLICY_RSASIG)) !=
 			    POLICY_RSASIG)
 				diag("only RSASIG is supported for opportunism");

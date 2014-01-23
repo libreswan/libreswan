@@ -566,7 +566,7 @@ static enum routability could_route(struct connection *c)
 	 */
 	if (!c->spd.that.has_client &&
 	    c->kind == CK_TEMPLATE &&
-	    !(c->policy & POLICY_OPPO)) {
+	    !(c->policy & POLICY_OPPORTUNISTIC)) {
 		loglog(RC_ROUTE, "cannot route template policy of %s",
 		       prettypolicy(c->policy));
 		return route_impossible;

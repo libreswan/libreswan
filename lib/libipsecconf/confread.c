@@ -470,11 +470,11 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		break;
 
 	case KH_OPPO:
-		conn_st->policy |= POLICY_OPPO;
+		conn_st->policy |= POLICY_OPPORTUNISTIC;
 		break;
 
 	case KH_OPPOGROUP:
-		conn_st->policy |= POLICY_OPPO | POLICY_GROUP;
+		conn_st->policy |= POLICY_OPPORTUNISTIC | POLICY_GROUP;
 		break;
 
 	case KH_GROUP:
@@ -565,7 +565,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		}
 	} else {
 #if 0
-		if (conn_st->policy & POLICY_OPPO)
+		if (conn_st->policy & POLICY_OPPORTUNISTIC)
 			end->nexttype = KH_DEFAULTROUTE;
 
 #endif

@@ -510,17 +510,21 @@ enum saref_tracking {
 extern const char *prettypolicy(lset_t policy);
 
 /*
- * ISAKMP auth techniques (none means never negotiate)
- * a pluto policy is stored in a lset_t which is an unsigned long long,
- * so we should have 64 bits to play with
+ * ISAKMP policy elements.
+ *
+ * A pluto policy is stored in a lset_t so we could have up to 64 elements.
+ * Certain policies are more than present/absent and take more than one bit.
  *
  * We need both the bit number (*_IX) and the singleton set for each.
- * The bit numbers are assigned automatically in enum pluto_policy_ix.
+ * The bit numbers are assigned automatically in enum sa_policy_bits.
  *
  * The singleton set version is potentially too big for an enum
  * so these are exhausively defined as macros.  As are derived values.
+ *
+ * Changes to sa_policy_bits must be reflected in #defines below it and
+ * in sa_policy_bit_names.
  */
-enum pluto_policy_ix {
+enum sa_policy_bits {
 	POLICY_PSK_IX,
 	POLICY_RSASIG_IX,
 #define POLICY_ISAKMP_SHIFT	POLICY_PSK_IX
@@ -577,7 +581,7 @@ enum pluto_policy_ix {
 	 * Other policies could vary per state object.  These live in connection.
 	 */
 	POLICY_DONT_REKEY_IX,	/* don't rekey state either Phase */
-	POLICY_OPPO_IX,	/* is this opportunistic? */
+	POLICY_OPPORTUNISTIC_IX,	/* is this opportunistic? */
 	POLICY_GROUP_IX,	/* is this a group template? */
 	POLICY_GROUTED_IX,	/* do we want this group routed? */
 	POLICY_UP_IX,	/* do we want this up? */
@@ -621,7 +625,7 @@ enum pluto_policy_ix {
 #define POLICY_FAIL0	LELEM(POLICY_FAIL0_IX)
 #define POLICY_FAIL1	LELEM(POLICY_FAIL1_IX)
 #define POLICY_DONT_REKEY	LELEM(POLICY_DONT_REKEY_IX)	/* don't rekey state either Phase */
-#define POLICY_OPPO	LELEM(POLICY_OPPO_IX)	/* is this opportunistic? */
+#define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
 #define POLICY_GROUP	LELEM(POLICY_GROUP_IX)	/* is this a group template? */
 #define POLICY_GROUTED	LELEM(POLICY_GROUTED_IX)	/* do we want this group routed? */
 #define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want this up? */

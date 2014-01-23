@@ -441,7 +441,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 	s.tn = s.tried;
 
 	/* try all gateway records hung off c */
-	if ((c->policy & POLICY_OPPO)) {
+	if ((c->policy & POLICY_OPPORTUNISTIC)) {
 		struct gw_info *gw;
 
 		for (gw = c->gw_info; gw != NULL; gw = gw->next) {

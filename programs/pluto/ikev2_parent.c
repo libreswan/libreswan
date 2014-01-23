@@ -580,7 +580,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 					/* ignore */
 				} else {
 					if (d->kind == CK_TEMPLATE &&
-					    !(d->policy & POLICY_OPPO)) {
+					    !(d->policy & POLICY_OPPORTUNISTIC)) {
 						/* must be Road Warrior: we have a winner */
 						c = d;
 						break;

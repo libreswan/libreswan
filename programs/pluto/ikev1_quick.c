@@ -1790,7 +1790,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				 * Is it a Road Warrior connection (simple)
 				 * or is it an Opportunistic connection (needing gw validation)?
 				 */
-				if (p->policy & POLICY_OPPO) {
+				if (p->policy & POLICY_OPPORTUNISTIC) {
 					/* Opportunistic case: delegation must be verified.
 					 * Here be dragons.
 					 */
