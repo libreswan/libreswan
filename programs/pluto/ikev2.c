@@ -499,7 +499,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		}
 
 		if (st != NULL) {
-			if (st->st_msgid_lastrecv >  md->msgid_received) {
+			if (st->st_msgid_lastrecv > md->msgid_received) {
 				/* this is an OLD retransmit. we can't do anything */
 				libreswan_log(
 					"received too old retransmit: %u < %u",
@@ -607,7 +607,10 @@ void process_v2_packet(struct msg_digest **mdp)
 			continue;
 
 		/* ??? not sure that this is necessary, but it ought to be correct */
-		if ( ((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0) )
+		/* This check cannot apply for an informational exchange since one
+		 * can be initiated by the initial responder. */
+		if (ix != ISAKMP_v2_INFORMATIONAL &&
+		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0)))
 			continue;
 
 		/* must be the right state */
@@ -832,6 +835,9 @@ void ikev2_update_counters(struct msg_digest *md)
 
 	case RESPONDER:
 		pst->st_msgid_lastrecv = md->msgid_received;
+		/* the responder requires msgid_nextuse if it ever needs to
+		 * initiate an informational exchange */
+		pst->st_msgid_nextuse = md->msgid_received + 1;
 		break;
 	}
 }

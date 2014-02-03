@@ -375,8 +375,14 @@ enum phase1_role {
 /* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
 #define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 
-#define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I2 || (s) == \
-				     STATE_PARENT_R1 || (s) == STATE_IKESA_DEL)
+#define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I2 || \
+				     (s) == STATE_PARENT_R1 || \
+				     (s) == STATE_IKESA_DEL)
+
+#define IS_V2_INITIATOR(s) ((s) == STATE_PARENT_I1 || \
+		            (s) == STATE_PARENT_I2 || \
+			    (s) == STATE_PARENT_I3)
+
 /*
  * Issue here is that our child sa appears as a STATE_PARENT_I3/STATE_PARENT_R2 state which it should not
  * So we fall back to checking if it is cloned, and therefor really a child

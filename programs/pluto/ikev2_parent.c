@@ -2734,6 +2734,8 @@ static void v2_delete_my_family(struct state *pst)
 
 stf_status process_informational_ikev2(struct msg_digest *md)
 {
+	enum phase1_role prole;
+
 	/* verify that there is in fact an encrypted payload */
 	if (md->chain[ISAKMP_NEXT_v2E] == NULL) {
 		libreswan_log(
@@ -2744,15 +2746,21 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 	/* decrypt things. */
 	{
 		stf_status ret;
+		struct state *ost = md->st;
 
-		if (md->hdr.isa_flags & ISAKMP_FLAGS_I) {
+		/* Since an informational exchange can be started by the original responder,
+		 * things such as encryption, decryption should be done based on the original
+		 * role and not the md->role */
+		if (IS_V2_INITIATOR(ost->st_state)) {
+			prole = INITIATOR;
 			DBG(DBG_CONTROLMORE,
-			    DBG_log("received informational exchange request from INITIATOR"));
-			ret = ikev2_decrypt_msg(md, RESPONDER);
-		} else {
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("received informational exchange request from RESPONDER"));
+			    DBG_log("received informational exchange request from the original responder"));
 			ret = ikev2_decrypt_msg(md, INITIATOR);
+		} else {
+			prole = RESPONDER;
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("received informational exchange request from the original initiator"));
+			ret = ikev2_decrypt_msg(md, RESPONDER);
 		}
 
 		if (ret != STF_OK)
@@ -2783,8 +2791,8 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				 "information exchange reply packet");
 
 			DBG(DBG_CONTROLMORE | DBG_DPD,
-			    DBG_log("Received an INFORMATIONAL request, "
-				    "updating liveness, no longer pending"));
+			    DBG_log("updating st_last_liveness, no pending_liveness"));
+
 			st->st_last_liveness = now();
 			st->st_pend_liveness = FALSE;
 
@@ -2800,11 +2808,6 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
 				r_hdr.isa_np = ISAKMP_NEXT_v2E;
 				r_hdr.isa_msgid = htonl(md->msgid_received);
-
-				/*set initiator bit if we are initiator*/
-				if (md->role == INITIATOR)
-					r_hdr.isa_flags |= ISAKMP_FLAGS_I;
-
 				r_hdr.isa_flags  |=  ISAKMP_FLAGS_R;
 
 				if (!out_struct(&r_hdr, &isakmp_hdr_desc,
@@ -3026,7 +3029,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				close_output_pbs(&md->rbody);
 				close_output_pbs(&reply_stream);
 
-				ret = ikev2_encrypt_msg(md, md->role,
+				ret = ikev2_encrypt_msg(md, prole,
 							authstart,
 							iv, encstart, authloc,
 							&e_pbs, &e_pbs_cipher);
@@ -3168,7 +3171,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 stf_status ikev2_send_informational(struct state *st)
 {
-	struct state *pst = NULL;
+	struct state *pst = st;
 
 	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
@@ -3179,8 +3182,6 @@ stf_status ikev2_send_informational(struct state *st)
 			    DBG_log("INFORMATIONAL exchange can not be sent"));
 			return STF_IGNORE;
 		}
-	} else {
-		pst = st;
 	}
 
 	{
@@ -3190,7 +3191,6 @@ stf_status ikev2_send_informational(struct state *st)
 		int ivsize;
 		struct msg_digest md;
 		struct ikev2_generic e;
-		enum phase1_role role;
 		pb_stream e_pbs, e_pbs_cipher;
 		pb_stream rbody;
 		pb_stream request;
@@ -3214,17 +3214,14 @@ stf_status ikev2_send_informational(struct state *st)
 			       COOKIE_SIZE);
 			r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
 			r_hdr.isa_np = ISAKMP_NEXT_v2E;
+			r_hdr.isa_flags |= ISAKMP_FLAGS_I;
+			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
-			if (pst->st_state == STATE_PARENT_I2 ||
-			    pst->st_state == STATE_PARENT_I3) {
-				r_hdr.isa_flags |= ISAKMP_FLAGS_I;
-				role = INITIATOR;
-				r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
-			} else {
-				role = RESPONDER;
-				r_hdr.isa_msgid = htonl(
-					pst->st_msgid_lastrecv + 1);
-			}
+			/* encryption role based on original state not md state */
+			if (IS_V2_INITIATOR(pst->st_state))
+				md.role = INITIATOR;
+			else
+				md.role = RESPONDER;
 
 			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
 					&request, &rbody)) {
@@ -3271,7 +3268,7 @@ stf_status ikev2_send_informational(struct state *st)
 			close_output_pbs(&rbody);
 			close_output_pbs(&request);
 
-			ret = ikev2_encrypt_msg(&md, role,
+			ret = ikev2_encrypt_msg(&md, md.role,
 						authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
@@ -3286,7 +3283,6 @@ stf_status ikev2_send_informational(struct state *st)
 			     "reply packet for informational exchange");
 		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 		send_ike_msg(pst, __FUNCTION__);
-		ikev2_update_counters(&md);
 	}
 
 	return STF_OK;
