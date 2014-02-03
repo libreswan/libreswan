@@ -164,9 +164,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * number needs to be initialized.
 	 */
 	{
-		int policy_index = POLICY_ISAKMP(policy,
-					 c->spd.this.xauth_server,
-					 c->spd.this.xauth_client);
+		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		int groupnum = 0;	/* 0 is distinguished invalid value */
 		struct db_sa *sadb;
 		unsigned int pc_cnt;
@@ -324,7 +322,7 @@ static bool justship_v2KE(struct state *st UNUSED,
 	struct ikev2_ke v2ke;
 	pb_stream kepbs;
 
-	memset(&v2ke, 0, sizeof(v2ke));
+	zero(&v2ke);
 	v2ke.isak_np      = np;
 	v2ke.isak_group   = oakley_group;
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
@@ -397,7 +395,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	if (st->st_dcookie.ptr) {
 		chunk_t child_spi;
-		memset(&child_spi, 0, sizeof(child_spi));
+		zero(&child_spi);
 		ship_v2N(ISAKMP_NEXT_v2SA,
 			 DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
 			   (ISAKMP_PAYLOAD_NONCRITICAL |
@@ -453,7 +451,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		struct ikev2_generic in;
 		pb_stream pb;
 
-		memset(&in, 0, sizeof(in));
+		zero(&in);
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
@@ -582,7 +580,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 					/* ignore */
 				} else {
 					if (d->kind == CK_TEMPLATE &&
-					    !(d->policy & POLICY_OPPO)) {
+					    !(d->policy & POLICY_OPPORTUNISTIC)) {
 						/* must be Road Warrior: we have a winner */
 						c = d;
 						break;
@@ -689,7 +687,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			    DBG_dump("dcookie computed", dcookie,
 				     SHA1_DIGEST_SIZE));
 
-			if (memcmp(blob.ptr, dcookie, SHA1_DIGEST_SIZE) != 0) {
+			if (!memeq(blob.ptr, dcookie, SHA1_DIGEST_SIZE)) {
 				libreswan_log(
 					"mismatch in DOS v2N_COOKIE,send a new one");
 				SEND_NOTIFICATION_AA(v2N_COOKIE, &dc);
@@ -929,7 +927,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		struct ikev2_generic in;
 		pb_stream pb;
 
-		memset(&in, 0, sizeof(in));
+		zero(&in);
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
@@ -987,7 +985,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
  */
 
 /* STATE_PARENT_I1: R1 --> I2
- *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ] 
+ *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
  * HDR, SK {IDi, [CERT,] [CERTREQ,]
  *      [IDr,] AUTH, SAi2,
  *      TSi, TSr}      -->
@@ -1044,7 +1042,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		 */
 		const char *from_state_name = enum_name(&state_names, st->st_state);
 		u_int16_t isan_type = 0; /* no notify payload */
-		
+
 		if (md->chain[ISAKMP_NEXT_v2N]) {
 			isan_type = md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type;
 			libreswan_log("%s: received %s", from_state_name,
@@ -1332,8 +1330,8 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 
 		/* compare first 96 bits == 12 bytes */
 		/* It is not always 96 bytes, it depends upon which integ algo is used*/
-		if (memcmp(b12, encend,
-			   pst->st_oakley.integ_hasher->hash_integ_len) != 0) {
+		if (!memeq(b12, encend,
+			   pst->st_oakley.integ_hasher->hash_integ_len)) {
 			libreswan_log("R2 failed to match authenticator");
 			return STF_FAIL;
 		}
@@ -1401,9 +1399,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	a.isaa_np = np;
 
-	if (c->policy & POLICY_ANONYMOUS) {
-		a.isaa_type = IKEv2_AUTH_ANONYMOUS;
-	} else if (c->policy & POLICY_RSASIG) {
+	if (c->policy & POLICY_RSASIG) {
 		a.isaa_type = IKEv2_AUTH_RSA;
 	} else if (c->policy & POLICY_PSK) {
 		a.isaa_type = IKEv2_AUTH_PSK;
@@ -1425,9 +1421,6 @@ static stf_status ikev2_send_auth(struct connection *c,
 	} else if (c->policy & POLICY_PSK) {
 		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs))
 			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
-
-	} else if (c->policy & POLICY_ANONYMOUS) {
-		libreswan_log("Anonymous connection do we need to do work?");
 	}
 
 	close_output_pbs(&a_pbs);
@@ -1629,8 +1622,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 			if ( !(st->st_connection->policy & POLICY_TUNNEL) ) {
 				DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
-				memset(&child_spi, 0, sizeof(child_spi));
-				memset(&notify_data, 0, sizeof(notify_data));
+				zero(&child_spi);
+				zero(&notify_data);
 				ship_v2N(ISAKMP_NEXT_v2NONE,
 					 ISAKMP_PAYLOAD_NONCRITICAL, 0,
 					 &child_spi,
@@ -2103,7 +2096,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			}
-			
 		}
 
 		ikev2_padup_pre_encrypt(md, &e_pbs_cipher);
@@ -2263,10 +2255,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		}
 		break;
 	}
-
-	case IKEv2_AUTH_ANONYMOUS:
-		libreswan_log("Anonymous authentication method succeeded per definition - do we need to do work?");
-		return STF_OK;
 
 	default:
 		libreswan_log("authentication method: %s not supported",
@@ -2589,7 +2577,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	}
 #endif
 
-	memset(buffer, 0, sizeof(buffer));
+	zero(&buffer);
 	init_pbs(&reply, buffer, sizeof(buffer), "notification msg");
 
 	/* HDR out */
@@ -2617,8 +2605,8 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	child_spi.len = 0;
 
 	/* build and add v2N payload to the packet */
-	memset(&child_spi, 0, sizeof(child_spi));
-	memset(&notify_data, 0, sizeof(notify_data));
+	zero(&child_spi);
+	zero(&notify_data);
 	ship_v2N(ISAKMP_NEXT_v2NONE, DBGP(
 			 IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
 		 (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
@@ -3198,7 +3186,7 @@ stf_status ikev2_send_informational(struct state *st)
 
 		md.st = st;
 		md.pst = pst;
-		memset(buffer, 0, sizeof(buffer));
+		zero(&buffer);
 		init_pbs(&request, buffer, sizeof(buffer),
 			 "informational exchange request packet");
 		authstart = request.cur;

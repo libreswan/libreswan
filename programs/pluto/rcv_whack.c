@@ -591,7 +591,7 @@ void whack_handle(int whackctlfd)
 		close(whackfd);
 		return;
 	}
-	memset(&msg, 0, sizeof(msg));
+	zero(&msg);
 	n = read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
 		log_errno((e, "read() failed in whack_handle()"));
@@ -623,7 +623,7 @@ void whack_handle(int whackctlfd)
 				(int)n);
 		} else if (msg.magic != WHACK_MAGIC) {
 			if (msg.whack_shutdown) {
-				libreswan_log("shutting down%s", 
+				libreswan_log("shutting down%s",
 				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
 				exit_pluto(0);  /* delete lock and leave, with 0 status */
 			}

@@ -1148,11 +1148,10 @@ stf_status aggr_outI1(int whack_sock,
 
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.xauth_name) {
-				/* ??? is this strncpy correct? */
-				strncpy(st->st_xauth_username,
-					sr->this.xauth_name,
-					sizeof(st->st_xauth_username));
+			if (sr->this.xauth_name != NULL) {
+				jam_str(st->st_xauth_username,
+					sizeof(st->st_xauth_username),
+					sr->this.xauth_name);
 				break;
 			}
 		}
@@ -1242,7 +1241,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	{
 		struct isakmp_hdr hdr;
 
-		memset(&hdr, '\0', sizeof(hdr)); /* default to 0 */
+		zero(&hdr); /* default to 0 */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_SA;
@@ -1260,9 +1259,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	/* SA out */
 	{
 		u_char *sa_start = md->rbody.cur;
-		int policy_index = POLICY_ISAKMP(st->st_policy,
-						 c->spd.this.xauth_server,
-						 c->spd.this.xauth_client);
+		unsigned policy_index = POLICY_ISAKMP(st->st_policy, c);
 
 		if (!out_sa(&md->rbody,
 			    &oakley_am_sadb[policy_index], st,

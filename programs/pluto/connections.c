@@ -530,21 +530,21 @@ size_t format_end(char *buf,
 	const char *id_cbrackets = "";
 	const char *id_comma = "";
 
-	memset(endopts, 0, sizeof(endopts));
+	zero(&endopts);
 
 	if (isanyaddr(&this->host_addr)) {
 		if (this->host_type == KH_IPHOSTNAME) {
 			host = strcpy(host_space, "%dns");
 			dohost_name = TRUE;
 		} else {
-			switch (policy & (POLICY_GROUP | POLICY_OPPO)) {
+			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
 			case POLICY_GROUP:
 				host = "%group";
 				break;
-			case POLICY_OPPO:
+			case POLICY_OPPORTUNISTIC:
 				host = "%opportunistic";
 				break;
-			case POLICY_GROUP | POLICY_OPPO:
+			case POLICY_GROUP | POLICY_OPPORTUNISTIC:
 				host = "%opportunisticgroup";
 				break;
 			default:
@@ -574,7 +574,7 @@ size_t format_end(char *buf,
 		}
 
 		if (isanyaddr(&client_net) && isanyaddr(&client_mask) &&
-			(policy & (POLICY_GROUP | POLICY_OPPO))) {
+			(policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC))) {
 			client_sep = ""; /* boring case */
 		} else if (is_virtual_end(this)) {
 			if (is_virtual_vhost(this))
@@ -642,9 +642,10 @@ size_t format_end(char *buf,
 	}
 
 	if (this->modecfg_server || this->modecfg_client ||
-		this->xauth_server || this->xauth_client ||
-		this->sendcert != cert_defaultcertpolicy) {
-		const char *plus = "+";
+	    this->xauth_server || this->xauth_client ||
+	    this->sendcert != cert_defaultcertpolicy) {
+		char *p = endopts;
+
 		endopts[0] = '\0';
 
 		if (id_obrackets[0] == '[') {
@@ -655,55 +656,36 @@ size_t format_end(char *buf,
 		}
 
 		if (this->modecfg_server)
-			strncat(endopts, "MS", sizeof(endopts) - strlen(
-					endopts) - 1);
+			p = jam_str(endopts, sizeof(endopts), "MS");
 
-		if (this->modecfg_client) {
-			strncat(endopts, plus, sizeof(endopts) - strlen(
-					endopts) - 1);
-			strncat(endopts, "MC", sizeof(endopts) - strlen(
-					endopts) - 1);
-		}
+		if (this->modecfg_client)
+			p = add_str(endopts, sizeof(endopts), p, "+MC");
 
-		if (this->xauth_server) {
-			strncat(endopts, plus, sizeof(endopts) - strlen(
-					endopts) - 1);
-			strncat(endopts, "XS", sizeof(endopts) - strlen(
-					endopts) - 1);
-		}
+		if (this->xauth_server)
+			p = add_str(endopts, sizeof(endopts), p, "+XS");
 
-		if (this->xauth_client) {
-			strncat(endopts, plus, sizeof(endopts) - strlen(
-					endopts) - 1);
-			strncat(endopts, "XC", sizeof(endopts) - strlen(
-					endopts) - 1);
-		}
-
+		if (this->xauth_client)
+			p = add_str(endopts, sizeof(endopts), p, "+XC");
 		{
-			const char *send_cert = "";
+			const char *send_cert = "+UNKNOWN";
 			char s[32];
-
-			send_cert = ""; /* Length 3 because cert.type is 1-11 */
 
 			switch (this->sendcert) {
 			case cert_neversend:
-				send_cert = "S-C";
+				send_cert = "+S-C";
 				break;
 			case cert_sendifasked:
-				send_cert = "S?C";
+				send_cert = "+S?C";
 				break;
 			case cert_alwayssend:
-				send_cert = "S=C";
+				send_cert = "+S=C";
 				break;
 			case cert_forcedtype:
-				snprintf(s, sizeof(s), "S%d", this->cert.type);
+				snprintf(s, sizeof(s), "+S%d", this->cert.type);
 				send_cert = s;
 				break;
 			}
-			strncat(endopts, plus, sizeof(endopts) -
-				strlen(endopts) - 1);
-			strncat(endopts, send_cert, sizeof(endopts) -
-				strlen(endopts) - 1);
+			p = add_str(endopts, sizeof(endopts), p, send_cert);
 		}
 	}
 
@@ -764,7 +746,7 @@ static void unshare_connection_end_strings(struct end *e)
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
-	if (e->xauth_name)
+	if (e->xauth_name != NULL)
 		e->xauth_name = clone_str(e->xauth_name, "xauth name");
 
 	if (e->host_addr_name)
@@ -814,7 +796,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	cert_t cert;
 	err_t ugh = NULL;
 
-	memset(&dst->cert, 0, sizeof(dst->cert));
+	zero(&dst->cert);
 
 	/* initialize end certificate */
 	dst->cert.type = CERT_NONE;
@@ -826,10 +808,8 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	dst->cert_filename = clone_str(filename, "certificate filename");
 
 	{
-		bool valid_cert = FALSE;
-
 		/* load cert from file */
-		valid_cert = load_cert_from_nss(FALSE, filename, TRUE,
+		bool valid_cert = load_cert_from_nss(FALSE, filename, TRUE,
 						"host cert", &cert);
 		if (!valid_cert) {
 			whack_log(RC_FATAL,
@@ -921,9 +901,11 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 		dst->cert.type = src->certtype;
 		load_cert_from_nss(TRUE, src->cert, TRUE, "forced cert",
 				&dst->cert);
+		/* ??? what should we do on load_cert_from_nss failure? */
 	} else {
 		/* load local end certificate and extract ID, if any */
 		load_end_certificate(src->cert, dst);
+		/* ??? what should we do on load_end_certificate failure? */
 	}
 
 	/* does id has wildcards? */
@@ -1293,15 +1275,16 @@ void add_connection(const struct whack_message *wm)
 				c->alg_info_esp = alg_info_ah_create_from_str(
 					wm->esp ? wm->esp : "", &ugh);
 
-			DBG(DBG_CRYPT | DBG_CONTROL,
-				static char buf[256] = "<NULL>";
-				if (c->alg_info_esp)
+			DBG(DBG_CONTROL,
+				{static char buf[256] = "<NULL>";
+
+				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf);
-				);
-			if (c->alg_info_esp) {
+				DBG_log("esp string values: %s", buf); }
+			);
+			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->alg_info_cnt == 0) {
 					loglog(RC_NOALGO,
 						"got 0 transforms for "
@@ -1505,7 +1488,7 @@ void add_connection(const struct whack_message *wm)
 		c->spd.eroute_owner = SOS_NOBODY;
 
 		/* force all oppo connections to have a client */
-		if (c->policy & POLICY_OPPO) {
+		if (c->policy & POLICY_OPPORTUNISTIC) {
 			c->spd.that.has_client = TRUE;
 			c->spd.that.client.maskbits = 0;
 		}
@@ -1822,7 +1805,7 @@ struct connection *rw_instantiate(struct connection *c,
 			d->spd.that.has_client = FALSE;
 	}
 
-	if (d->policy & POLICY_OPPO) {
+	if (d->policy & POLICY_OPPORTUNISTIC) {
 		/*
 		 * This must be before we know the client addresses.
 		 * Fill in one that is impossible. This prevents anyone else
@@ -1965,7 +1948,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * Fill in peer's client side.
 	 * If the client is the peer, excise the client from the connection.
 	 */
-	passert(d->policy & POLICY_OPPO);
+	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(addrinsubnet(peer_client, &d->spd.that.client));
 	happy(addrtosubnet(peer_client, &d->spd.that.client));
 
@@ -2052,7 +2035,7 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 			p += strlen(p);
 		}
 
-		if (c->policy & POLICY_OPPO) {
+		if (c->policy & POLICY_OPPORTUNISTIC) {
 			size_t w = fmt_client(&c->spd.this.client,
 					&c->spd.this.host_addr, " ", p);
 
@@ -2334,7 +2317,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 
 	if (best == NULL ||
 		NEVER_NEGOTIATE(best->policy) ||
-		(best->policy & POLICY_OPPO) == LEMPTY ||
+		(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
 		best->kind != CK_TEMPLATE)
 		return NULL;
 	else
@@ -2864,8 +2847,8 @@ struct connection *refine_host_connection(const struct state *st,
 
 				if (initiator && psk != dpsk) {
 					if (psk->len != dpsk->len ||
-						memcmp(psk->ptr, dpsk->ptr,
-							psk->len) != 0)
+						!memeq(psk->ptr, dpsk->ptr,
+							psk->len))
 						continue; /* different secret */
 				}
 			}
@@ -3337,7 +3320,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 	/* if the best wasn't opportunistic, we fail: it must be a shunt */
 	if (best != NULL &&
 		(NEVER_NEGOTIATE(best->policy) ||
-			(best->policy & POLICY_OPPO) == LEMPTY))
+			(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
 		best = NULL;
 
 	DBG(DBG_CONTROLMORE,
@@ -3591,12 +3574,12 @@ static void show_one_sr(struct connection *c,
 		thisxauthsemi[0] = '\0';
 		snprintf(thisxauthsemi, sizeof(thisxauthsemi) - 1,
 			"my_xauthuser=%s; ",
-			sr->this.xauth_name ? sr->this.xauth_name : "[any]");
+			sr->this.xauth_name != NULL ? sr->this.xauth_name : "[any]");
 
 		thatxauthsemi[0] = '\0';
 		snprintf(thatxauthsemi, sizeof(thatxauthsemi) - 1,
 			"their_xauthuser=%s; ",
-			sr->that.xauth_name ? sr->that.xauth_name : "[any]");
+			sr->that.xauth_name != NULL ? sr->that.xauth_name : "[any]");
 
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   xauth info: us:%s, them:%s, %s %s%s;",

@@ -335,7 +335,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 		struct sadb_x_policy policy;
 		int level, opt;
 
-		memset(&policy, 0, sizeof(struct sadb_x_policy));
+		zero(&policy);
 		policy.sadb_x_policy_len = sizeof(policy) /
 					   IPSEC_PFKEYv2_ALIGN;
 		policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;

@@ -129,7 +129,7 @@ extern struct alg_info_esp * alg_info_ah_create_from_str(const char *alg_str,
 
 extern int alg_info_parse(const char *str);
 extern int alg_info_snprint(char *buf, int buflen,
-		     struct alg_info *alg_info);
+		     const struct alg_info *alg_info);
 
 extern void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info);
@@ -138,11 +138,9 @@ extern void alg_info_snprint_ike(char *buf, size_t buflen,
 #define ALG_INFO_IKE_FOREACH(ai, ai_ike, i) \
 	for (i = (ai)->alg_info_cnt, ai_ike = (ai)->ike; i--; ai_ike++)
 
-extern int alg_enum_search_prefix(enum_names *ed, const char *prefix,
-				  const char *str, int str_len);
-extern int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
-				 const char *postfix, const char *str,
-				 int str_len);
+extern int alg_enum_search(enum_names *ed, const char *prefix,
+			   const char *postfix, const char *str,
+			   int str_len);
 
 struct parser_context;	/* so it isn't local to the function prototype */
 struct oakley_group_desc;	/* so it isn't local to the function prototype */

@@ -711,7 +711,8 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 
 #ifdef HAVE_LABELED_IPSEC
 	char sec_ctx_value[MAX_SECCTX_LEN];
-	memset(sec_ctx_value, 0, sizeof(sec_ctx_value));
+
+	zero(&sec_ctx_value);
 	if (uctx != NULL)
 		memcpy(sec_ctx_value, uctx->sec_ctx_value, uctx->ctx_len);
 	DBG(DBG_CONTROLMORE,
@@ -748,7 +749,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 		cannot_oppo(NULL, b, "no routed template covers this pair");
 		work = 0;
-	} else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPO) == 0) {
+	} else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
 			loggedit = TRUE;
@@ -827,7 +828,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		idtoa(&sr->this.id, mycredentialstr, sizeof(mycredentialstr));
 
-		passert(c->policy & POLICY_OPPO); /* can't initiate Road Warrior connections */
+		passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
 		/* handle any DNS answer; select next step */
 

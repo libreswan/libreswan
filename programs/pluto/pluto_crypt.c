@@ -170,7 +170,7 @@ static void pluto_crypto_helper(int fd, int helpernum)
 	DBG(DBG_CONTROL, DBG_log("helper %d waiting on fd: %d",
 				 helpernum, fileno(in)));
 
-	memset(reqbuf, 0, sizeof(reqbuf));
+	zero(&reqbuf);
 	while (fread((char*)reqbuf, sizeof(r->pcr_len), 1, in) == 1) {
 		int restlen;
 		int actnum;
@@ -214,7 +214,7 @@ static void pluto_crypto_helper(int fd, int helpernum)
 			       actnum);
 			goto error;
 		}
-		memset(reqbuf, 0, sizeof(reqbuf));
+		zero(&reqbuf);
 	}
 
 	if (!feof(in)) {
@@ -578,7 +578,7 @@ static void handle_helper_comm(struct pluto_crypto_worker *w)
 		    w->pcw_work));
 
 	/* read from the pipe */
-	memset(reqbuf, 0, sizeof(reqbuf));
+	zero(&reqbuf);
 	actlen = read(w->pcw_pipe, (char *)reqbuf, sizeof(r->pcr_len));
 
 	if (actlen != sizeof(r->pcr_len)) {

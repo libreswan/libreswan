@@ -1,4 +1,5 @@
-This is a test of NAT-traversal.
+This is a test of NAT-traversal without use of a virtual IP.  It
+uses X.509 certificates for authentication
 
 The network is configured as follows:
 

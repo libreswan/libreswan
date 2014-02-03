@@ -67,7 +67,7 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 		ipi->attrs.transattrs.integ_hash);
 
 	passert(ipi->attrs.transattrs.ei != NULL);
-	memset(&childsacalc, 0, sizeof(childsacalc));
+	zero(&childsacalc);
 	childsacalc.prf_hasher = st->st_oakley.prf_hasher;
 
 	setchunk(childsacalc.ni, st->st_ni.ptr, st->st_ni.len);
@@ -117,7 +117,7 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
  *    the encryption key is taken from the first octets of KEYMAT and
  *    the authentication key is taken from the next octets.
  *
- *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for 
+ *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
  *    salt (AES_GCM_SALT_BYTES)
  */
 

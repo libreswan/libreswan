@@ -83,7 +83,7 @@ static void lsw_conf_setdefault(void)
 	char *sbin_dir   = IPSEC_SBINDIR;
 #endif
 
-	memset(&global_oco, 0, sizeof(global_oco));
+	zero(&global_oco);
 
 	/* allocate them all to make it consistent */
 	ipsec_conf_dir = clone_str(ipsec_conf_dir,

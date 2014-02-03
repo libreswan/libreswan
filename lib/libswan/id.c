@@ -278,7 +278,7 @@ void escape_metachar(const char *src, char *dst, size_t dstlen)
 /*
  * Remove all shell metacharacters ', \, ", `, and $ in a character string
  */
-void remove_metachar(const unsigned char *src, char *dst, size_t dstlen)
+void remove_metachar(const char *src, char *dst, size_t dstlen)
 {
 	bool changed = FALSE;
 
@@ -423,7 +423,7 @@ bool same_id(const struct id *a, const struct id *b)
 
 	case ID_KEY_ID:
 		return a->name.len == b->name.len &&
-		       memcmp(a->name.ptr, b->name.ptr, a->name.len) == 0;
+		       memeq(a->name.ptr, b->name.ptr, a->name.len);
 
 	default:
 		bad_case(a->kind);

@@ -611,8 +611,8 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 static bool same_x509acert(x509acert_t *a, x509acert_t *b)
 {
 	return a->signature.len == b->signature.len &&
-	       memcmp(a->signature.ptr, b->signature.ptr,
-		      b->signature.len) == 0;
+	       memeq(a->signature.ptr, b->signature.ptr,
+		      b->signature.len);
 }
 
 /*

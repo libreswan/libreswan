@@ -428,8 +428,7 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username &&
-			    st->st_xauth_username[0] != '\0')
+			if (st->st_xauth_username[0] != '\0')
 				libreswan_log("%s XAUTHuser=%s", statebuf,
 					      st->st_xauth_username);
 			else
@@ -447,8 +446,7 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username &&
-			    st->st_xauth_username[0] != '\0')
+			if (st->st_xauth_username[0] != '\0')
 				libreswan_log("%s XAUTHuser=%s", statebuf,
 					      st->st_xauth_username);
 			else
@@ -466,8 +464,7 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username &&
-			    st->st_xauth_username[0] != '\0')
+			if (st->st_xauth_username[0] != '\0')
 				libreswan_log("%s XAUTHuser=%s", statebuf,
 					      st->st_xauth_username);
 			else
@@ -1026,9 +1023,8 @@ struct state *duplicate_state(struct state *st)
 
 	nst->st_oakley = st->st_oakley;
 
-	/* ??? is this strncpy correct? */
-	strncpy(nst->st_xauth_username, st->st_xauth_username,
-		sizeof(nst->st_xauth_username));
+	jam_str(nst->st_xauth_username, sizeof(nst->st_xauth_username),
+		st->st_xauth_username);
 
 	return nst;
 }
@@ -1062,8 +1058,8 @@ struct state *find_state_ikev1(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    !st->st_ikev2) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
@@ -1098,8 +1094,8 @@ struct state *find_state_ikev1_loopback(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    !st->st_ikev2) {
 			DBG(DBG_CONTROL,
 			    DBG_log("loopback: v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
@@ -1108,8 +1104,8 @@ struct state *find_state_ikev1_loopback(const u_char *icookie,
 				    (long unsigned)ntohl(st->st_msgid)));
 			if (msgid == st->st_msgid &&
 			    !(st->st_tpacket.ptr &&
-			      memcmp(st->st_tpacket.ptr, md->packet_pbs.start,
-				     pbs_room(&md->packet_pbs)) == 0))
+			      memeq(st->st_tpacket.ptr, md->packet_pbs.start,
+				     pbs_room(&md->packet_pbs))))
 				break;
 		}
 		st = st->st_hashchain_next;
@@ -1138,8 +1134,8 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
@@ -1172,7 +1168,7 @@ struct state *find_state_ikev2_parent_init(const u_char *icookie)
 	struct state *st = *state_hash(icookie, zero_cookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
@@ -1206,8 +1202,8 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2 &&
 		    st->st_msgid == msgid) {
 			DBG(DBG_CONTROL,
@@ -1243,8 +1239,8 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2) {
 			struct ipsec_proto_info *pr = protoid ==
 						      PROTO_IPSEC_AH ?
@@ -1285,8 +1281,8 @@ struct state *find_info_state(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0) {
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("peer and cookies match on #%ld, provided msgid %08lx vs %08lx/%08lx",
 				    st->st_serialno,
@@ -1328,8 +1324,8 @@ struct state *find_sender(size_t packet_len, u_char *packet)
 			     st = st->st_hashchain_next)
 				if (st->st_tpacket.ptr != NULL &&
 				    st->st_tpacket.len == packet_len &&
-				    memcmp(st->st_tpacket.ptr, packet,
-					   packet_len) == 0)
+				    memeq(st->st_tpacket.ptr, packet,
+					   packet_len))
 					return st;
 	}
 
@@ -1686,10 +1682,8 @@ void fmt_state(struct state *st, const time_t n,
 			 (unsigned long)st->st_ref,
 			 (unsigned long)st->st_refhim,
 			 traffic_buf,
-			 (st->st_xauth_username && st->st_xauth_username[0] !=
-			  '\0')  ? "XAUTHuser=" : "",
-			 (st->st_xauth_username && st->st_xauth_username[0] !=
-			  '\0')  ? st->st_xauth_username : ""
+			 (st->st_xauth_username[0] != '\0') ? "XAUTHuser=" : "",
+			 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : ""
 			 );
 
 #       undef add_said

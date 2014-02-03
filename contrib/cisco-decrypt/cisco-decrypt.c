@@ -108,7 +108,7 @@ int deobfuscate(char *ct, int len, const char **resp, char *reslenp)
 
 	gcry_md_hash_buffer(GCRY_MD_SHA1, ht, enc, len);
 
-	if (memcmp(h4, ht, 20) != 0)
+	if (!memeq(h4, ht, 20))
 		return -1;
 
 	res = malloc(len);

@@ -464,10 +464,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					case PPK_PSK:
 						same = s->pks.u.preshared_secret.len ==
 							best->pks.u.preshared_secret.len &&
-							memcmp(s->pks.u.preshared_secret.ptr,
+							memeq(s->pks.u.preshared_secret.ptr,
 								best->pks.u.preshared_secret.ptr,
-								s->pks.u.preshared_secret.len)
-							== 0;
+								s->pks.u.preshared_secret.len);
 						break;
 					case PPK_RSA:
 						/* Dirty trick: since we have code to compare
@@ -691,8 +690,8 @@ static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak,
 	char filename[PATH_MAX];
 	err_t ugh = NULL;
 
-	memset(filename, '\0', PATH_MAX);
-	memset(pass->secret, '\0', sizeof(pass->secret));
+	zero(&filename);
+	zero(&pass->secret);
 
 	/* we expect the filename of a PKCS#1 private key file */
 
@@ -1232,7 +1231,7 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 	char **fnp;
 	glob_t globbuf;
 
-	memset(&globbuf, 0, sizeof(glob_t));
+	zero(&globbuf);
 	pos.depth = flp == NULL ? 0 : flp->depth + 1;
 
 	if (pos.depth > 10) {

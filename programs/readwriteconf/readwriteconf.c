@@ -112,12 +112,12 @@ int main(int argc, char *argv[])
 
 		case 'R':
 			printf("#setting rootdir=%s\n", optarg);
-			strncat(rootdir, optarg, sizeof(rootdir) - 1);
+			jam_str(rootdir, sizeof(rootdir), optarg);
 			break;
 
 		case 'S':
 			printf("#setting rootdir2=%s\n", optarg);
-			strncat(rootdir2, optarg, sizeof(rootdir2) - 1);
+			jam_str(rootdir2, sizeof(rootdir2), optarg);
 			break;
 		}
 	}

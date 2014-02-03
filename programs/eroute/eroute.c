@@ -30,10 +30,6 @@
 
 #include <unistd.h>
 #include <libreswan.h>
-#if 0
-#include <linux/autoconf.h>     /* CONFIG_IPSEC_PFKEYv2 */
-#endif
-/* permanently turn it on since netlink support has been disabled */
 
 #include <stdio.h>
 #include <getopt.h>
@@ -42,6 +38,7 @@
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 
+#include "constants.h"
 #include "libreswan/radij.h"
 #include "libreswan/ipsec_encap.h"
 #include "lswlog.h"
@@ -50,20 +47,16 @@
 
 #include "lsw_select.h"
 
-#include <stdio.h>
-#include <getopt.h>
-
 char *progname;
-char me[] = "ipsec eroute";
+static char me[] = "ipsec eroute";
 
-char *eroute_af_opt, *said_af_opt, *edst_opt, *spi_opt, *proto_opt, *said_opt,
+static char *eroute_af_opt, *said_af_opt, *edst_opt, *spi_opt, *proto_opt, *said_opt,
 *dst_opt, *src_opt;
-char *transport_proto_opt, *src_port_opt, *dst_port_opt;
-int action_type = 0;
+static char *transport_proto_opt, *src_port_opt, *dst_port_opt;
+static int action_type = 0;
 
-int pfkey_sock;
-lsw_fd_set pfkey_socks;
-uint32_t pfkey_seq = 0;
+static int pfkey_sock;
+static uint32_t pfkey_seq = 0;
 
 #define EMT_IFADDR      1               /* set enc if addr */
 #define EMT_SETSPI      2               /* Set SPI properties */
@@ -177,14 +170,14 @@ int main(int argc, char **argv)
 
 	progname = argv[0];
 
-	memset(&pfkey_address_s_ska, 0, sizeof(ip_address));
-	memset(&pfkey_address_sflow_ska, 0, sizeof(ip_address));
-	memset(&pfkey_address_dflow_ska, 0, sizeof(ip_address));
-	memset(&pfkey_address_smask_ska, 0, sizeof(ip_address));
-	memset(&pfkey_address_dmask_ska, 0, sizeof(ip_address));
-	memset(&said, 0, sizeof(ip_said));
-	memset(&s_subnet, 0, sizeof(ip_subnet));
-	memset(&d_subnet, 0, sizeof(ip_subnet));
+	zero(&pfkey_address_s_ska);
+	zero(&pfkey_address_sflow_ska);
+	zero(&pfkey_address_dflow_ska);
+	zero(&pfkey_address_smask_ska);
+	zero(&pfkey_address_dmask_ska);
+	zero(&said);
+	zero(&s_subnet);
+	zero(&d_subnet);
 
 	eroute_af_opt = said_af_opt = edst_opt = spi_opt = proto_opt =
 								   said_opt =

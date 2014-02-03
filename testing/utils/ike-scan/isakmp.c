@@ -61,7 +61,7 @@ struct isakmp_hdr*make_isakmp_hdr(unsigned xchg, unsigned next,
 	struct isakmp_hdr* hdr;
 
 	hdr = Malloc(sizeof(struct isakmp_hdr));
-	memset(hdr, '\0', sizeof(struct isakmp_hdr));
+	zero(hdr);
 
 	hdr->isa_icookie[0] = 0xdeadbeef;       /* Initiator cookie */
 	hdr->isa_icookie[1] = 0xdeadbeef;
@@ -91,12 +91,12 @@ struct isakmp_hdr*make_isakmp_hdr(unsigned xchg, unsigned next,
  *
  *	This constructs an SA header.  It fills in the static values.
  */
-struct isakmp_sa*make_sa_hdr(unsigned next, unsigned length)
+struct isakmp_sa *make_sa_hdr(unsigned next, unsigned length)
 {
-	struct isakmp_sa* hdr;
+	struct isakmp_sa *hdr;
 
 	hdr = Malloc(sizeof(struct isakmp_sa));
-	memset(hdr, '\0', sizeof(struct isakmp_sa));
+	zero(hdr);
 
 	hdr->isasa_np = next;                                   /* Next Payload Type */
 	hdr->isasa_length = htons(length);                      /* SA Payload length */
@@ -122,12 +122,12 @@ struct isakmp_sa*make_sa_hdr(unsigned next, unsigned length)
  *	We assume only one proposal will be created.  I think that ISAKMP SAs
  *	are only allowed to have one proposal anyway.
  */
-struct isakmp_proposal*make_prop(unsigned length, unsigned notrans)
+struct isakmp_proposal *make_prop(unsigned length, unsigned notrans)
 {
-	struct isakmp_proposal* hdr;
+	struct isakmp_proposal *hdr;
 
 	hdr = Malloc(sizeof(struct isakmp_proposal));
-	memset(hdr, '\0', sizeof(struct isakmp_proposal));
+	zero(hdr);
 
 	hdr->isap_np = 0;                       /* No more proposals */
 	hdr->isap_length = htons(length);       /* Proposal payload length */
@@ -180,7 +180,7 @@ unsigned char*make_trans(size_t *length, unsigned next, unsigned number,
 /* Allocate and initialise the transform header */
 
 	hdr = Malloc(sizeof(struct isakmp_transform));
-	memset(hdr, '\0', sizeof(struct isakmp_transform));
+	zero(hdr);
 
 	hdr->isat_np = next;            /* Next payload type */
 	hdr->isat_transnum = number;    /* Transform Number */
@@ -455,7 +455,7 @@ unsigned char*make_vid(size_t *length, unsigned next, unsigned char *vid_data,
 
 	payload = Malloc(sizeof(struct isakmp_vid) + vid_data_len);
 	hdr = (struct isakmp_vid*) payload; /* Overlay vid struct on payload */
-	memset(hdr, '\0', sizeof(struct isakmp_vid));
+	zero(hdr);
 
 	hdr->isavid_np = next;          /* Next payload type */
 	hdr->isavid_length = htons(sizeof(struct isakmp_vid) + vid_data_len);
@@ -554,7 +554,7 @@ unsigned char*make_ke(size_t *length, unsigned next, size_t kx_data_len)
 
 	payload = Malloc(sizeof(struct isakmp_kx) + kx_data_len);
 	hdr = (struct isakmp_kx*) payload; /* Overlay kx struct on payload */
-	memset(hdr, '\0', sizeof(struct isakmp_kx));
+	zero(hdr);
 
 	kx_data = payload + sizeof(struct isakmp_kx);
 	for (i = 0; i < kx_data_len; i++)
@@ -598,7 +598,7 @@ unsigned char*make_nonce(size_t *length, unsigned next, size_t nonce_len)
 
 	payload = Malloc(sizeof(struct isakmp_nonce) + nonce_len);
 	hdr = (struct isakmp_nonce*) payload; /* Overlay nonce struct on payload */
-	memset(hdr, '\0', sizeof(struct isakmp_nonce));
+	zero(hdr);
 
 	hdr->isanonce_np = next;        /* Next payload type */
 	hdr->isanonce_length = htons(sizeof(struct isakmp_nonce) + nonce_len);
@@ -632,7 +632,7 @@ unsigned char*make_id(size_t *length, unsigned next, unsigned idtype,
 
 	payload = Malloc(sizeof(struct isakmp_id) + id_data_len);
 	hdr = (struct isakmp_id*) payload; /* Overlay ID struct on payload */
-	memset(hdr, '\0', sizeof(struct isakmp_id));
+	zero(hdr);
 
 	hdr->isaid_np = next;           /* Next payload type */
 	hdr->isaid_length = htons(sizeof(struct isakmp_id) + id_data_len);

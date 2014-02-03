@@ -684,11 +684,8 @@ void initialize_new_state(struct state *st,
 
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.xauth_name) {
-				/* ??? is this strncpy correct? */
-				strncpy(st->st_xauth_username,
-					sr->this.xauth_name,
-					sizeof(st->st_xauth_username));
+			if (sr->this.xauth_name != NULL) {
+				jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), sr->this.xauth_name);
 				break;
 			}
 		}
@@ -828,7 +825,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	ini = " ";
 	fin = "}";
 
-	if (st->st_xauth_username && st->st_xauth_username[0] != '\0') {
+	if (st->st_xauth_username[0] != '\0') {
 		b = b + strlen(b);
 		snprintf(b, sad_len - (b - sadetails) - 1,
 			 "%sXAUTHuser=%s",

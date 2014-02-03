@@ -188,10 +188,7 @@ stf_status main_outI1(int whack_sock,
 	/* SA out */
 	{
 		u_char *sa_start = md.rbody.cur;
-		int policy_index = POLICY_ISAKMP(policy,
-						c->spd.this.xauth_server,
-						c->spd.this.xauth_client);
-
+		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		int np = numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,
@@ -669,7 +666,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 					/* ignore */
 				} else {
 					if (d->kind == CK_TEMPLATE &&
-						!(d->policy & POLICY_OPPO)) {
+						!(d->policy & POLICY_OPPORTUNISTIC)) {
 						/*
 						 * must be Road Warrior:
 						 * we have a winner
@@ -1855,7 +1852,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 		pb_stream *const hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
 
 		if (pbs_left(hash_pbs) != hash_len ||
-			memcmp(hash_pbs->cur, hash_val, hash_len) != 0) {
+			!memeq(hash_pbs->cur, hash_val, hash_len)) {
 			DBG_cond_dump(DBG_CRYPT, "received HASH:",
 				hash_pbs->cur, pbs_left(hash_pbs));
 			loglog(RC_LOG_SERIOUS,
@@ -2667,7 +2664,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 				PROTO_ISAKMP);
 	} else if (IS_ISAKMP_ENCRYPTED(from_state)) {
 		send_notification(st, type, st, generate_msgid(st),
-				st->st_icookie, st->st_rcookie, 
+				st->st_icookie, st->st_rcookie,
 				PROTO_ISAKMP);
 	} else {
 		/* no ISAKMP SA established - don't encrypt notification */
@@ -2693,8 +2690,8 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 
 	passert(md);
 
-	memset(&st, 0, sizeof(st));
-	memset(&cnx, 0, sizeof(cnx));
+	zero(&st);
+	zero(&cnx);
 	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;

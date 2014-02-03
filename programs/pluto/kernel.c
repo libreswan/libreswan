@@ -332,12 +332,11 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	nexthop_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_nexthop, NULL) &&
 	    !isanyaddr(&sr->this.host_nexthop)) {
-		char *n;
-		strcpy(nexthop_str, "PLUTO_NEXT_HOP='");
-		n = nexthop_str + strlen(nexthop_str);
+		char *n = jam_str(nexthop_str, sizeof(nexthop_str), "PLUTO_NEXT_HOP='");
+
 		addrtot(&sr->this.host_nexthop, 0,
-			n, sizeof(nexthop_str) - strlen(nexthop_str));
-		strncat(nexthop_str, "' ", sizeof(nexthop_str));
+			n, sizeof(nexthop_str) - (n - nexthop_str));
+		add_str(nexthop_str, sizeof(nexthop_str), n, "' ");
 	}
 
 	addrtot(&sr->this.host_addr, 0, me_str, sizeof(me_str));
@@ -371,32 +370,23 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			 c->connmtu);
 
 	secure_xauth_username_str[0] = '\0';
-	if (st != NULL && st->st_xauth_username) {
-		size_t len;
-		strcpy(secure_xauth_username_str, "PLUTO_XAUTH_USERNAME='");
 
-		len = strlen(secure_xauth_username_str);
-		remove_metachar((unsigned char *)st->st_xauth_username,
-				secure_xauth_username_str + len,
-				sizeof(secure_xauth_username_str) - (len + 2));
-		strncat(secure_xauth_username_str, "'",
-			sizeof(secure_xauth_username_str) - 1);
+	if (st != NULL && st->st_xauth_username[0] != '\0') {
+		char *p = jam_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), "PLUTO_XAUTH_USERNAME='");
+
+		remove_metachar(st->st_xauth_username,
+				p,
+				sizeof(secure_xauth_username_str) - (p - secure_xauth_username_str) - 2);
+		add_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), p, "'");
 	}
 
 	srcip_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
 	    !isanyaddr(&sr->this.host_srcip)) {
-		char *p;
-		int l;
-		strncat(srcip_str, "PLUTO_MY_SOURCEIP=", sizeof(srcip_str));
-		strncat(srcip_str, "'", sizeof(srcip_str) - strlen(
-				srcip_str) - 1);
-		l = strlen(srcip_str);
-		p = srcip_str + l;
+		char *p = jam_str(srcip_str, sizeof(srcip_str), "PLUTO_MY_SOURCEIP='");
 
-		addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str));
-		strncat(srcip_str, "'", sizeof(srcip_str) - strlen(
-				srcip_str) - 1);
+		addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str) - (p - srcip_str));
+		add_str(srcip_str, sizeof(srcip_str), p, "'");
 	}
 
 	{
@@ -576,7 +566,7 @@ static enum routability could_route(struct connection *c)
 	 */
 	if (!c->spd.that.has_client &&
 	    c->kind == CK_TEMPLATE &&
-	    !(c->policy & POLICY_OPPO)) {
+	    !(c->policy & POLICY_OPPORTUNISTIC)) {
 		loglog(RC_ROUTE, "cannot route template policy of %s",
 		       prettypolicy(c->policy));
 		return route_impossible;
@@ -1302,7 +1292,7 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 
 	DBG(DBG_KERNEL, DBG_log("delete %s", text_said));
 
-	memset(&sa, 0, sizeof(sa));
+	zero(&sa);
 	sa.spi = spi;
 	sa.proto = proto;
 	sa.src = src;
@@ -1372,7 +1362,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	}
 	c->encapsulation = encapsulation;
 
-	memset(said, 0, sizeof(said));
+	zero(&said);
 
 	if (kernel_ops->inbound_eroute) {
 		inner_spi = 256;
@@ -3014,7 +3004,7 @@ static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
 
 	set_text_said(text_said, &dst, esp_spi, SA_ESP);
 
-	memset(&sa, 0, sizeof(sa));
+	zero(&sa);
 	sa.spi = esp_spi;
 	sa.src = &src;
 	sa.dst = &dst;
@@ -3102,7 +3092,7 @@ bool get_sa_info(struct state *st, bool inbound, time_t *ago)
 	}
 	set_text_said(text_said, dst, spi, proto);
 
-	memset(&sa, 0, sizeof(sa));
+	zero(&sa);
 	sa.spi = spi;
 	sa.proto = proto;
 	sa.src = src;

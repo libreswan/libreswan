@@ -4,10 +4,10 @@ west #
 west #
  ping -n -c 4 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_req=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_req=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_req=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_req=4 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -36,6 +36,7 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
 west #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
@@ -136,45 +137,23 @@ west #
 west #
  ping -n -c 4 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_req=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_req=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_req=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_req=4 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- ipsec look
-west NOW
-192.1.2.45/32      -> 192.1.2.23/32      => esp0xESPSPI@192.1.2.23
-ipsec0->eth1 mtu=16260(9999)->1500
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=1
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.1.2.23 dev ipsec0  scope link 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 west #
  echo done
 done
 west #
  ipsec look
-west Sun Dec  8 00:28:36 EST 2013
-192.1.2.45/32      -> 192.1.2.23/32      => esp0xf935f91a@192.1.2.23  (16)
-ipsec0->eth1 mtu=16260(1500)->1500
-esp0xeeaebdf4@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0x2b2ea12135a6906860660eb64a66ad89 ooowin=64 seq=8 bit=0xff alen=160 aklen=160 eklen=128 jiffies=4294727862 life(c,s,h)=bytes(512,0,0) idle=2 natencap=na refcount=3 ref=2 refhim=1
-esp0xf935f91a@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xd2c2c95e7427120cd0dd7afe70590c2c ooowin=64 seq=8 alen=160 aklen=160 eklen=128 jiffies=4294727862 life(c,s,h)=bytes(1088,0,0) idle=2 natencap=na refcount=3 ref=1 refhim=0
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
+west NOW
+192.1.2.45/32      -> 192.1.2.23/32      => esp0xESPSPI@192.1.2.23
+ipsec0->eth1 mtu=16260(9999)->1500
+esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 

@@ -55,7 +55,7 @@ static void free_lease_list(struct lease_addr **head)
 		*head =  free_lease_entry(*head);
 }
 
-struct lease_addr *free_lease_entry(struct lease_addr *h)
+static struct lease_addr *free_lease_entry(struct lease_addr *h)
 {
 	struct lease_addr *next = h->next;
 
@@ -83,7 +83,7 @@ static int rel_lease_entry(struct lease_addr **head, u_int32_t lease)
 	return TRUE;
 }
 
-int free_lease(struct lease_addr **head, u_int32_t lease)
+static int free_lease(struct lease_addr **head, u_int32_t lease)
 {
 	struct lease_addr **pp = head;
 	struct lease_addr *p_prev = *head;
@@ -336,14 +336,14 @@ void unreference_addrespool(struct ip_pool *pool)
 	}
 }
 
-void free_addresspool( struct ip_pool *pool)
+static void free_addresspool( struct ip_pool *pool)
 {
 	/* free the the addressess ? or the list */
 	free_lease_list(&pool->lease);
 	pfreeany(pool);
 }
 
-struct ip_pool *reference_addresspool(struct  ip_pool *pool)
+static struct ip_pool *reference_addresspool(struct  ip_pool *pool)
 {
 	pool->refcnt++;
 	return pool;
@@ -354,39 +354,34 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 {
 	struct ip_pool *h = *head;
 
-	if (h) {
-		while (h) {
-			int sflag, eflag;
-			sflag = memcmp(&h->start.u.v4.sin_addr.s_addr,
-				       &pool_range->start.u.v4.sin_addr.s_addr,
-				       sizeof(h->start.u.v4.sin_addr.s_addr));
-			eflag = memcmp(&h->end.u.v4.sin_addr.s_addr,
-				       &pool_range->end.u.v4.sin_addr.s_addr,
-				       sizeof(h->end.u.v4.sin_addr.s_addr));
+	while (h != NULL) {
+		bool isstart = memeq(&h->start.u.v4.sin_addr.s_addr,
+			       &pool_range->start.u.v4.sin_addr.s_addr,
+			       sizeof(h->start.u.v4.sin_addr.s_addr));
+		bool isend = memeq(&h->end.u.v4.sin_addr.s_addr,
+			       &pool_range->end.u.v4.sin_addr.s_addr,
+			       sizeof(h->end.u.v4.sin_addr.s_addr));
 
-			DBG(DBG_CONTROLMORE, {
-				    char abuf2[ADDRTOT_BUF];
-				    char abuf1[ADDRTOT_BUF];
-				    addrtot(&pool_range->start, 0, abuf1,
-					    sizeof(abuf1));
-				    addrtot(&pool_range->end, 0, abuf2,
-					    sizeof(abuf2));
-				    DBG_log("%s addresspool %s-%s %s %s ",
-					    ((sflag ==
-					      0) &
-					     (eflag ==
-					      0)) ? "existing " : "new ",
-					    abuf1, abuf2,
-					    (sflag == 0) ? "same start " : " ",
-					    (eflag == 0) ? "same end" : "");
-			    });
+		DBG(DBG_CONTROLMORE, {
+			    char abuf2[ADDRTOT_BUF];
+			    char abuf1[ADDRTOT_BUF];
+			    addrtot(&pool_range->start, 0, abuf1,
+				    sizeof(abuf1));
+			    addrtot(&pool_range->end, 0, abuf2,
+				    sizeof(abuf2));
+			    DBG_log("%s addresspool %s-%s %s %s ",
+				    isstart && isend
+				    ? "existing " : "new ",
+				    abuf1, abuf2,
+				    isstart ? "same start " : " ",
+				    isend ? "same end" : "");
+		    });
 
-			if ((sflag ==  0 ) & ( eflag == 0)) {
-				reference_addresspool(h);
-				return h;
-			}
-			h = h->next;
+		if (isstart && isend) {
+			reference_addresspool(h);
+			return h;
 		}
+		h = h->next;
 	}
 	return NULL;
 }

@@ -563,7 +563,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			    __func__));
 	}
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
 	family = that_client->addr.u.v4.sin_family;
@@ -665,7 +665,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		struct xfrm_user_tmpl tmpl[4];
 		int i;
 
-		memset(tmpl, 0, sizeof(tmpl));
+		zero(&tmpl);
 		for (i = 0; proto_info[i].proto; i++) {
 			tmpl[i].reqid = proto_info[i].reqid;
 			tmpl[i].id.proto = proto_info[i].proto;
@@ -764,7 +764,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	const struct aead_alg *aead;
 	int ret;
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = replace ? XFRM_MSG_UPDSA : XFRM_MSG_NEWSA;
 
@@ -990,7 +990,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		natt.encap_type = sa->natt_type;
 		natt.encap_sport = ntohs(sa->natt_sport);
 		natt.encap_dport = ntohs(sa->natt_dport);
-		memset(&natt.encap_oa, 0, sizeof(natt.encap_oa));
+		zero(&natt.encap_oa);
 
 		attr->rta_type = XFRMA_ENCAP;
 		attr->rta_len = RTA_LENGTH(sizeof(natt));
@@ -1047,7 +1047,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 		char data[1024];
 	} req;
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = XFRM_MSG_DELSA;
 
@@ -1641,7 +1641,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	} rsp;
 	static int get_cpi_bug;
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
 	req.n.nlmsg_type = XFRM_MSG_ALLOCSPI;
 
@@ -2207,7 +2207,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes)
 		char data[1024];
 	} rsp;
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
 	req.n.nlmsg_type = XFRM_MSG_GETSA;
 

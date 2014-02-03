@@ -289,7 +289,7 @@ void asn1_init(asn1_ctx_t *ctx, chunk_t blob, u_int level0,
 	ctx->level0   = level0;
 	ctx->implicit = implicit;
 	ctx->cond     = cond;
-	memset(ctx->loopAddr, '\0', sizeof(ctx->loopAddr));
+	zero(&ctx->loopAddr);
 }
 
 /*

@@ -283,10 +283,9 @@ static const char *const stfstatus_names[] = {
 enum_names stfstatus_name =
 { STF_IGNORE, STF_FAIL, stfstatus_names, NULL };
 
-/* Goal BITs for establishing an SA
+/* Names for sa_policy_bits.
  * Note: we drop the POLICY_ prefix so that logs are more concise.
  */
-
 const char *const sa_policy_bit_names[] = {
 	"PSK",
 	"RSASIG",
@@ -298,30 +297,26 @@ const char *const sa_policy_bit_names[] = {
 	"DISABLEARRIVALCHECK",
 	"SHUNT0",
 	"SHUNT1",
-	"FAILSHUNT0",
-	"FAILSHUNT1",
-	"DONTREKEY",
+	"FAIL0",
+	"FAIL1",
+	"DONT_REKEY",
 	"OPPORTUNISTIC",
 	"GROUP",
 	"GROUTED",
 	"UP",
 	"XAUTH",
-	"MODECFGPULL",
+	"MODECFG_PULL",
 	"AGGRESSIVE",
-	"PERHOST",
-	"SUBHOST",
-	"PERPROTO",
 	"OVERLAPIP",
-	"!IKEv1",
-	"IKEv2ALLOW",
-	"IKEv2Init",
-	"IKEv2ALLOW_NARROWING",
-	"SAREFTRACK",
-	"SAREFCONNTRACK",
-	"IKE_FRAG",
+	"IKEV1_DISABLE",
+	"IKEV2_ALLOW",
+	"IKEV2_PROPOSE",
+	"IKEV2_ALLOW_NARROWING",
+	"SAREF_TRACK",
+	"SAREF_TRACK_CONNTRACK",
+	"IKE_FRAG_ALLOW",
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",
-	"ANONYMOUS", 
 	NULL
 };
 

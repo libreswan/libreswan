@@ -128,29 +128,29 @@ enum smf2_flags {
  *
  */
 
-/* 
+/*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
  * Initiator                         Responder
  * -------------------------------------------------------------------
  * HDR, SAi1, KEi, Ni            -->
  *                                 <--  HDR, SAr1, KEr, Nr, [CERTREQ]
- * 
+ *
  * HDR, SK {IDi, [CERT,] [CERTREQ,]
  *        [IDr,] AUTH, SAi2,
  *        TSi, TSr}              -->
  *                                 <--  HDR, SK {IDr, [CERT,] AUTH,
  *                                           SAr2, TSi, TSr}
  * [Parent SA established]
- * 
+ *
  * HDR, SK {SA, Ni, [KEi],
  *               TSi, TSr}      -->
- * 
+ *
  *                                <--  HDR, SK {SA, Nr, [KEr],
  *                                          TSi, TSr}
  * [Child SA established]
- * 
- */ 
+ *
+ */
 
 /* Short forms for building payload type sets */
 
@@ -168,7 +168,7 @@ enum smf2_flags {
  * 3.12 "Vendor ID Payload": (multiple) may appear in any message
  *	??? should encryption be required?
  *
- * 3.15 "Configuration Payload": 
+ * 3.15 "Configuration Payload":
  * 1.4 "The INFORMATIONAL Exchange": (multiple) Configuration Payloads
  *	may appear in an Informational exchange
  * 2.19 "Requesting an Internal Address on a Remote Network":
@@ -195,7 +195,7 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 static const struct state_v2_microcode v2_state_microcode_table[] = {
 
 	/* STATE_PARENT_I1: R1 --> I2
-	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ] 
+	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
 	 * HDR, SK {IDi, [CERT,] [CERTREQ,]
 	 *      [IDr,] AUTH, SAi2,
 	 *      TSi, TSr}      -->
@@ -340,7 +340,7 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 
-		memset(pd, 0, sizeof(*pd));	/* ??? is this needed? */
+		zero(pd);	/* ??? is this needed? */
 
 		if (sd == NULL || np < ISAKMP_v2PAYLOAD_TYPE_BASE) {
 			/* This payload is unknown to us.
@@ -800,8 +800,8 @@ void send_v2_notification_from_md(struct msg_digest *md UNUSED, u_int16_t type,
 	 */
 	passert(md);
 
-	memset(&st, 0, sizeof(st));
-	memset(&cnx, 0, sizeof(cnx));
+	zero(&st);
+	zero(&cnx);
 	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;

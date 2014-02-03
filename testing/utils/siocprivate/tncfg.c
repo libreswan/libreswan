@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 {
 	struct ifreq ifr;
 
-	memset(&ifr, 0, sizeof(ifr));
+	zero(&ifr);
 	program_name = argv[0];
 
 	s = safe_socket(AF_INET, SOCK_DGRAM, 0);

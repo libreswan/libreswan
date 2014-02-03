@@ -319,8 +319,8 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 
 		if ( (pbs_left(&p->pbs) ==
 		      st->st_oakley.prf_hasher->hash_digest_len) &&
-		     (memcmp(p->pbs.cur, hash_me,
-			     st->st_oakley.prf_hasher->hash_digest_len) == 0))
+		     (memeq(p->pbs.cur, hash_me,
+			     st->st_oakley.prf_hasher->hash_digest_len)))
 			found_me = TRUE;
 
 		if ( (pbs_left(&p->pbs) ==
@@ -342,8 +342,7 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 		st->hidden_variables.st_natd = md->sender;
 	}
 
-	memset(&st->hidden_variables.st_natd, 0,
-	       sizeof(st->hidden_variables.st_natd));
+	zero(&st->hidden_variables.st_natd);
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
 	if (!found_him) {
@@ -558,7 +557,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 	out_modify_previous_np(nat_np, outs);
 
-	memset(&natoa, 0, sizeof(natoa));
+	zero(&natoa);
 	natoa.isanoa_np = nat_np;
 
 	switch (addrtypeof(ipinit)) {
@@ -593,7 +592,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 	}
 
 	/* output second NAT-OA */
-	memset(&natoa, 0, sizeof(natoa));
+	zero(&natoa);
 	natoa.isanoa_np = np;
 
 	switch (addrtypeof(ipresp)) {
@@ -689,7 +688,7 @@ int nat_traversal_espinudp_socket(int sk, const char *fam, u_int32_t type)
 	int *fdp = (int *) &ifr.ifr_data;
 
 	DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying new style NAT-T"));
-	memset(&ifr, 0, sizeof(ifr));
+	zero(&ifr);
 	switch (kern_interface) {
 	case USE_MASTKLIPS:
 		strcpy(ifr.ifr_name, "ipsec0");         /* using mast0 will break it! */

@@ -33,21 +33,85 @@
 #include "enum_names.h"
 #include "lswlog.h"
 
-/* Jam a string into a buffer of limited size (truncation is silent).
- * This is somewhat like what people mistakenly think strncpy does
+/* Jam a string into a buffer of limited size.
+ *
+ * This does something like what people mistakenly think strncpy does
  * but the parameter order is like snprintf.
- * The result is a pointer to the NUL at the end.  This is unconventional but useful.
- * NOTE: Is it really wise to silently truncate?  Only the caller knows.
+ * OpenBSD's strlcpy serves the same purpose.
+ *
+ * The buffer bound (size) must be greater than 0.
+ * That allows a guarantee that the result is NUL-terminated.
+ *
+ * The result is a pointer:
+ *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string was truncated, to the roof of dest.
+ *
+ * Warning: Is it really wise to silently truncate?  Only the caller knows.
+ * The caller SHOULD check by seeing if the result equals dest's roof.
  */
 char *jam_str(char *dest, size_t size, const char *src)
 {
-	size_t full_len = strlen(src);
-	size_t copy_len = size - 1 < full_len ? size - 1 : full_len;
+	passert(size > 0);	/* need space for at least NUL */
 
-	passert(size > 0); /* need space for at least NUL */
-	memcpy(dest, src, copy_len);
-	dest[copy_len] = '\0';
-	return dest + copy_len;
+	{
+		size_t full_len = strlen(src);
+		bool oflow = size - 1 < full_len;
+		size_t copy_len = oflow ? size - 1 : full_len;
+
+		memcpy(dest, src, copy_len);
+		dest[copy_len] = '\0';
+		return dest + copy_len + (oflow ? 1 : 0);
+	}
+}
+
+/* Add a string to a partially filled buffer of limited size
+ *
+ * This is similar to what people mistakenly thing strncat does
+ * but add_str matches jam_str so the arguments are quite different.
+ * OpenBSD's strlcat serves the same purpose.
+ *
+ * The buffer bound (size) must be greater than 0.
+ * That allows a guarantee that the result is NUL-terminated.
+ *
+ * The hint argument allows code that knows the end of the
+ * The string in dest to be more efficient.  If it is unknown,
+ * just pass a pointer to a character within the string such as
+ * the first one.
+ *
+ * The result is a pointer:
+ *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string was truncated, to the roof of dest.
+ *
+ * The results of jam_str and add_str provide suitable values for hint
+ * for subsequent calls.
+ *
+ * If the hint points at the roof of dest, add_str does nothing and
+ * returns that as the result (thus overflow will be sticky).
+ *
+ * For example
+ *	(void)add_str(buf, sizeof(buf), jam_str(buf, sizeof(buf), "first"), " second");
+ * That is slightly more efficient than
+ *	(void)jam_str(buf, sizeof(buf), "first");
+ *	(void)add_str(buf, sizeof(buf), buf, " second");
+ *
+ * Warning: strncat's bound is NOT on the whole buffer!
+ * strncat(dest, src, n) adds at most n+1 bytes after the contents of dest.
+ * People think it does strncat(dest, src, n - strlen(dest) - 1).
+ * A falacious strncat(dest, src, n) should be written as
+ * (void)add_str(dest, n, dest, src).
+ *
+ * Warning: Is it really wise to silently truncate?  Only the caller knows.
+ * The caller SHOULD check by seeing if the result equals dest's roof.
+ */
+char *add_str(char *buf, size_t size, char *hint, const char *src)
+{
+	passert(size > 0 && buf <= hint && hint <= buf + size);
+	if (hint == buf + size)
+		return hint;	/* already full */
+
+	hint += strlen(hint);	/* skip to end of existing string (if we're not already there) */
+	passert(hint < buf + size);	/* must be within buffer */
+	return jam_str(hint, size - (hint-buf), src);
 }
 
 /* version */
@@ -745,6 +809,7 @@ static enum_names auth_alg_names_stolen_use =
 { AUTH_ALGORITHM_NULL_KAME, AUTH_ALGORITHM_NULL_KAME, auth_alg_name_stolen_use,
   NULL };
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const auth_alg_name[] = {
 	"AUTH_ALGORITHM_NONE", /* our own value, not standard */
 	"AUTH_ALGORITHM_HMAC_MD5",
@@ -917,6 +982,7 @@ enum_names oakley_enc_names =
 /* Oakley Hash Algorithm attribute */
 /* http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6 */
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_hash_name[] = {
 	/* 0 - RESERVED */
 	"OAKLEY_MD5",
@@ -978,13 +1044,6 @@ enum_names oakley_auth_names =
 
 /* ikev2 auth methods */
 
-static const char *const ikev2_auth_name_private_use[] = {
-	"IKEv2_AUTH_ANONYMOUS",
-};
-
-static enum_names ikev2_auth_names_private_use =
-{ IKEv2_AUTH_ANONYMOUS, IKEv2_AUTH_ANONYMOUS, ikev2_auth_name_private_use, NULL };
-
 static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_RSA", /* 1 */
 	"IKEv2_AUTH_SHARED",
@@ -1000,7 +1059,7 @@ static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
 };
 enum_names ikev2_auth_names =
-{ IKEv2_AUTH_RSA, IKEv2_AUTH_GSPM, ikev2_auth_name, &ikev2_auth_names_private_use };
+{ IKEv2_AUTH_RSA, IKEv2_AUTH_GSPM, ikev2_auth_name, NULL };
 
 /*
  * Oakley Group Description attribute
@@ -1008,6 +1067,7 @@ enum_names ikev2_auth_names =
  * be differences we need to care about)
  */
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_group_name[] = {
 	"OAKLEY_GROUP_MODP768",
 	"OAKLEY_GROUP_MODP1024",
@@ -1305,14 +1365,14 @@ const char *const critical_names[] = {
  * IKEv2 Security Protocol Identifiers
  */
 static const char *const ikev2_sec_proto_id_name[] = {
-        /* 0 - Reserved */
-        "IKEv2_SEC_PROTO_IKE",
-        "IKEv2_SEC_PROTO_AH",
-        "IKEv2_SEC_PROTO_ESP",
-        "IKEv2_SEC_FC_ESP_HEADER", /* RFC 4595 */
-        "IKEv2_SEC_FC_CT_AUTHENTICATION", /* RFC 4595 */
-        /* 6 - 200 Unassigned */
-        /* 201 - 255 Private use */
+	/* 0 - Reserved */
+	"IKEv2_SEC_PROTO_IKE",
+	"IKEv2_SEC_PROTO_AH",
+	"IKEv2_SEC_PROTO_ESP",
+	"IKEv2_SEC_FC_ESP_HEADER", /* RFC 4595 */
+	"IKEv2_SEC_FC_CT_AUTHENTICATION", /* RFC 4595 */
+	/* 6 - 200 Unassigned */
+	/* 201 - 255 Private use */
 };
 enum_names ikev2_sec_proto_id_names =
 { IKEv2_SEC_PROTO_IKE, IKEv2_SEC_FC_CT_AUTHENTICATION, ikev2_sec_proto_id_name, NULL };

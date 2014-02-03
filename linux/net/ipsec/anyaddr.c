@@ -105,8 +105,7 @@ const ip_address * src;
 
 	switch (src->u.v4.sin_family) {
 	case AF_INET:
-		cmp =
-			memcmp(&src->u.v4.sin_addr.s_addr, &v4any,
+		cmp = memcmp(&src->u.v4.sin_addr.s_addr, &v4any,
 			       sizeof(v4any));
 		break;
 	case AF_INET6:

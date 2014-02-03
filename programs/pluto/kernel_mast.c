@@ -288,8 +288,8 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						"struct iface_port");
 				id = alloc_thing(struct iface_dev,
 						 "struct iface_dev");
-				memset(q, 0, sizeof(*q));
-				memset(id, 0, sizeof(*id));
+				zero(q);
+				zero(id);
 				if (firstq == NULL)
 					firstq = q;
 

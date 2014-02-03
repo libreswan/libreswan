@@ -278,7 +278,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 
 static void init_whack_msg(struct whack_message *msg)
 {
-	memset(msg, 0, sizeof(struct whack_message));
+	zero(msg);
 	msg->magic = WHACK_MAGIC;
 }
 

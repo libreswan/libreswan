@@ -962,7 +962,7 @@ bool same_dn(chunk_t a, chunk_t b)
 		return FALSE;
 
 	/* try a binary comparison first */
-	if (memcmp(a.ptr, b.ptr, b.len) == 0)
+	if (memeq(a.ptr, b.ptr, b.len))
 		return TRUE;
 
 	/* initialize DN parsing */
@@ -981,7 +981,7 @@ bool same_dn(chunk_t a, chunk_t b)
 
 		/* OIDs must agree */
 		if (oid_a.len != oid_b.len ||
-		    memcmp(oid_a.ptr, oid_b.ptr, oid_b.len) != 0)
+		    !memeq(oid_a.ptr, oid_b.ptr, oid_b.len))
 			return FALSE;
 
 		/* same lengths for values */
@@ -1039,7 +1039,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 
 		/* OIDs must agree */
 		if (oid_a.len != oid_b.len ||
-		    memcmp(oid_a.ptr, oid_b.ptr, oid_b.len) != 0)
+		    !memeq(oid_a.ptr, oid_b.ptr, oid_b.len))
 			return FALSE;
 
 		/* does rdn_b contain a wildcard? */
@@ -1442,8 +1442,8 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 		    DBG_dump_chunk("NSS expected digest sig: ", *digest);
 		    );
 
-		if (memcmp(dsig.data + dsig.len - digest->len, digest->ptr,
-			   digest->len) == 0) {
+		if (memeq(dsig.data + dsig.len - digest->len, digest->ptr,
+			   digest->len)) {
 			pfree(dsig.data);
 			DBG(DBG_CONTROL,
 			    DBG_log("NSS: RSA Signature verified, hash values matched"));

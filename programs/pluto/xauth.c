@@ -78,15 +78,26 @@
 #include "addresspool.h"
 
 /* forward declarations */
-static stf_status modecfg_inI2(struct msg_digest *md);
 static stf_status xauth_client_ackstatus(struct state *st,
 				  pb_stream *rbody,
 				  u_int16_t ap_id);
 
-static char pwdfile[PATH_MAX];
-
-/* We use crypt_mutex lock because not all systems have crypt_r() */
-static pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
+/* BEWARE:This code is multi-threaded.
+ *
+ * Any static object is likely shared and probably has to be protected by
+ * a lock.
+ * Any other shared object needs to be protected.
+ * Beware of calling functions that are not thread-safe.
+ *
+ * Static or shared objects:
+ * - locks (duh)
+ * - st_jbuf_mem and the structure it points to
+ * - ??? field pamh in struct connection.
+ *
+ * Non-thread-safe functions:
+ * - crypt(3) used by do_file_authentication()
+ * - ??? pam_*?
+ */
 
 typedef struct {
 	bool in_use;
@@ -107,11 +118,6 @@ struct thread_arg {
 #ifdef XAUTH_HAVE_PAM
 static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 		   struct pam_response **response, void *appdata_ptr);
-
-static struct pam_conv conv = {
-	xauth_pam_conv,
-	NULL
-};
 #endif
 
 /* pointer to an array of st_jbuf_t elements.
@@ -318,14 +324,10 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
  *
  * @param con A currently active connection struct
  * @param ia internal_addr struct
- * @return int Return Code
+ * ??? no way of signalling a failure to the caller: *ia won't be set!
  */
-static int get_internal_addresses(struct state *st, struct internal_addr *ia)
+static void get_internal_addresses(struct state *st, struct internal_addr *ia)
 {
-#ifdef XAUTH_HAVE_PAM
-	int retval;
-	char str[IDTOA_BUF + sizeof("ID=") + 2];
-#endif
 	struct connection *c = st->st_connection;
 
 	if (!isanyaddr(&c->spd.that.client.addr)) {
@@ -342,51 +344,65 @@ static int get_internal_addresses(struct state *st, struct internal_addr *ia)
 			ia->dns[1] = c->modecfg_dns2;
 	} else
 
-	{
 #ifdef XAUTH_HAVE_PAM
-		if (c->xauthby == XAUTHBY_PAM) {
-			if (c->pamh == NULL) {
-				/** Start PAM session, using 'pluto' as our PAM name */
-				retval = pam_start("pluto", "user", &conv,
-						   &c->pamh);
-				memset(ia, 0, sizeof(*ia));
-				if (retval == PAM_SUCCESS) {
-					char buf[IDTOA_BUF];
+	if (c->xauthby == XAUTHBY_PAM) {
+		if (c->pamh == NULL) {
+			/* Start PAM session, using 'pluto' as our PAM name */
 
-					idtoa(&c->spd.that.id, buf,
-					      sizeof(buf));
-					if (c->spd.that.id.kind ==
-					    ID_DER_ASN1_DN) {
-						/** Keep only the common name, if one exists */
-						char *c1, *c2;
-						c1 = strstr(buf, "CN=");
-						if (c1) {
-							c2 = strstr(c1, ", ");
-							if (c2)
-								*c2 = '\0';
-							memmove(buf, c1 + 3, strlen(
-									c1) + 1 -
-								3);
-						}
+			static const struct pam_conv conv = {
+				xauth_pam_conv,
+				NULL
+			};
+			int retval = pam_start("pluto", "user", &conv, &c->pamh);
+
+			zero(ia);
+			if (retval == PAM_SUCCESS) {
+				static const char idpre[] = "ID=";
+				char buf[sizeof(idpre) - 1 + IDTOA_BUF];
+
+				strcpy(buf, idpre);
+				idtoa(&c->spd.that.id, buf + sizeof(idpre) - 1,
+					sizeof(buf) - (sizeof(idpre) - 1));
+				if (c->spd.that.id.kind == ID_DER_ASN1_DN) {
+					/* Keep only the common name, if one exists
+					 * ??? Let's hope no data contains the
+					 * string CN=!
+					 */
+					static const char cnpre[] = "CN=";
+					char *av = strstr(buf, cnpre);
+
+					if (av != NULL) {
+						char *ae;
+
+						av += sizeof(cnpre) - 1;
+						ae = strstr(av, ", ");
+
+						if (ae != NULL)
+							*ae = '\0';
+						else
+							ae = av + strlen(av);
+
+						/* because of possible overlap
+						 * we must use memmove.
+						 */
+						memmove(buf, av, ae-av + 1);
 					}
-					snprintf(str, sizeof(str), "ID=%s",
-						 buf);
-					pam_putenv(c->pamh, str);
-					pam_open_session(c->pamh, 0);
 				}
-			}
-			if (c->pamh != NULL) {
-				/* Paul: Could pam give these to us? */
-				/** Put IP addresses from various variables into our
-				 *  internal address struct */
-				get_addr(c->pamh, "IPADDR", &ia->ipaddr);
-				get_addr(c->pamh, "DNS1", &ia->dns[0]);
-				get_addr(c->pamh, "DNS2", &ia->dns[1]);
+				pam_putenv(c->pamh, buf);
+				pam_open_session(c->pamh, 0);
 			}
 		}
-#endif
+		if (c->pamh != NULL) {
+			/* Paul: Could pam give these to us? */
+			/** Put IP addresses from various variables into our
+			 *  internal address struct
+			 */
+			get_addr(c->pamh, "IPADDR", &ia->ipaddr);
+			get_addr(c->pamh, "DNS1", &ia->dns[0]);
+			get_addr(c->pamh, "DNS2", &ia->dns[1]);
+		}
 	}
-	return 0;
+#endif
 }
 
 /**
@@ -486,9 +502,9 @@ static stf_status modecfg_resp(struct state *st,
 			resp &= ~LELEM(INTERNAL_IP4_DNS);
 
 		if (use_modecfg_addr_as_client_addr) {
-			if (memcmp(&st->st_connection->spd.that.client.addr,
+			if (!memeq(&st->st_connection->spd.that.client.addr,
 				   &ia.ipaddr,
-				   sizeof(ia.ipaddr)) != 0) {
+				   sizeof(ia.ipaddr))) {
 				/* Make the Internal IP address and Netmask as
 				 * that client address
 				 */
@@ -616,8 +632,8 @@ static stf_status modecfg_resp(struct state *st,
 					}
 					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
 					unsigned char si[14];	/* 14 is magic */
-					memset(si, 0, sizeof(si));
-					memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);
+					zero(si);
+					memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);	/* 4 is magic */
 					struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
 					memcpy(si + 4, &splitmask, 4);
 					if (!out_raw(si, sizeof(si), &attrval, "CISCO_SPLIT_INC"))
@@ -1050,7 +1066,7 @@ static stf_status xauth_send_status(struct state *st, int status)
  * @param msgm Pam Message Struct
  * @param response Where PAM will put the results
  * @param appdata_ptr Pointer to data struct (as we are using threads)
- * @return int Return Code
+ * @return int PAM Return Code (possibly fudged)
  */
 static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 		   struct pam_response **response, void *appdata_ptr)
@@ -1062,8 +1078,7 @@ static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 	if (num_msg <= 0)
 		return PAM_CONV_ERR;
 
-	reply =
-		(struct pam_response *) alloc_bytes(
+	reply = (struct pam_response *) alloc_bytes(
 			num_msg * sizeof(struct pam_response), "pam_response");
 	if (reply == NULL)
 		return PAM_CONV_ERR;
@@ -1097,99 +1112,106 @@ static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 
 /** Do authentication via PAM (Plugable Authentication Modules)
  *
- * We open a PAM session via pam_start, and try to authenticate the user
+ * We  try to authenticate the user in our own PAM session.
  *
- * @return int Return Code
+ * @return bool success
  */
-static int do_pam_authentication(void *varg)
+static bool do_pam_authentication(void *varg)
 {
-	struct thread_arg   *arg = varg;
+	struct thread_arg *arg = varg;
 	int retval;
 	pam_handle_t *pamh = NULL;
 	struct pam_conv conv;
+	const char *what;
 
-	conv.conv = xauth_pam_conv;
-	conv.appdata_ptr = varg;
+	/* This do-while structure is designed to allow a logical cascade
+	 * without excessive indentation.  No actual looping happens.
+	 * Failure is handled by "break".
+	 */
+	do {
+		conv.conv = xauth_pam_conv;
+		conv.appdata_ptr = varg;
 
-	retval = pam_start("pluto", (const char *)arg->name.ptr, &conv, &pamh);
+		what = "pam_start";
+		retval = pam_start("pluto", (const char *)arg->name.ptr, &conv, &pamh);
+		if (retval != PAM_SUCCESS)
+			break;
 
-	/* Send the remote host address to PAM */
-	if (retval == PAM_SUCCESS) {
 		DBG(DBG_CONTROL, DBG_log("pam_start SUCCESS"));
-		retval =
-			pam_set_item(pamh, PAM_RHOST, pluto_ip_str(
-					     &arg->st->st_remoteaddr));
-	} else {
-		DBG(DBG_CONTROL,
-		    DBG_log("pam_start failed with '%d'", retval));
-	}
-	/*  Two factor authentication - Check that the user is valid,
-	    and then check if they are permitted access */
-	if (retval == PAM_SUCCESS) {
+
+		/* Send the remote host address to PAM */
+		what = "pam_set_item";
+		retval = pam_set_item(pamh, PAM_RHOST,
+				      pluto_ip_str(&arg->st->st_remoteaddr));
+		if (retval != PAM_SUCCESS)
+			break;
+
 		DBG(DBG_CONTROL, DBG_log("pam_set_item SUCCESS"));
+
+		/* Two factor authentication - Check that the user is valid,
+		 * and then check if they are permitted access
+		 */
+		what = "pam_authenticate";
 		retval = pam_authenticate(pamh, PAM_SILENT); /* is user really user? */
-	} else {
-		DBG(DBG_CONTROL,
-		    DBG_log("pam_set_item failed with '%d'", retval));
-	}
-	if (retval == PAM_SUCCESS) {
+
+		if (retval != PAM_SUCCESS)
+			break;
+
 		DBG(DBG_CONTROL, DBG_log("pam_authenticate SUCCESS"));
+
+		what = "pam_acct_mgmt";
 		retval = pam_acct_mgmt(pamh, 0); /* permitted access? */
-	} else {
-		DBG(DBG_CONTROL,
-		    DBG_log("pam_authenticate failed with '%d'", retval));
-	}
+		if (retval != PAM_SUCCESS)
+			break;
 
-	pam_end(pamh, PAM_SUCCESS);
-
-	if (retval == PAM_SUCCESS) {
+		/* success! */
 		libreswan_log("XAUTH: PAM_SUCCESS");
+		pam_end(pamh, PAM_SUCCESS);
 		return TRUE;
-	} else {
-		libreswan_log("XAUTH: PAM auth chain failed with '%d'",
-			      retval);
-		return FALSE;
-	}
+	} while (FALSE);
 
+	/* common failure code */
+
+	DBG(DBG_CONTROL,
+	    DBG_log("%s failed with '%s", what, pam_strerror(pamh, retval)));
+	libreswan_log("XAUTH: %s failed with '%s'", what, pam_strerror(pamh, retval));
+	pam_end(pamh, retval);
+	return FALSE;
 }
 #endif /* XAUTH_HAVE_PAM */
 
 /** Do authentication via /etc/ipsec.d/passwd file using MD5 passwords
  *
- * password file structure does not compensate for
- * extra garbage so don't leave any! we do allows for #'s
- * as first char for comments just because I hate conf
- * files like .htaccess that don't support it
+ * Structure is one entry per line.
+ * Each line has fields separated by colons.
+ * Empty lines and lines starting with # are ignored.
  *
- * cat /etc/ipsec.d/passwd
- * username1:md5sum:connectioname
- * username2:md5sum:connectioname
+ * There are two forms:
+ *	username:passwdhash
+ *	username:passwdhash:connectioname
  *
- * can be made with, htpasswd:
+ * The first form (as produced by htpasswd) authorizes any connection.
+ * The second is is restricted to the named connection.
  *
- * htpasswd -c -m -b /etc/ipsec.d/passwd road roadpass (for crypt)
- * htpasswd -c -d -b /etc/ipsec.d/passwd road roadpass (for des)
- *                   (des is the old format used in /etc/passwd)
- * you can add ":<connection name>" to the user entries.
+ * Example creation of file with two entries (without connectionname):
+ *	htpasswd -c -b /etc/ipsec.d/passwd road roadpass
+ *	htpasswd -b /etc/ipsec.d/passwd home homepass
  *
- * @return int Return Code
+ * @return bool success
  */
-static int do_file_authentication(void *varg)
+static bool do_file_authentication(void *varg)
 {
-	struct thread_arg   *arg = varg;
-	char szline[1024]; /* more than enough */
+	struct thread_arg *arg = varg;
+	char pwdfile[PATH_MAX];
+	char line[1024]; /* we hope that this is more than enough */
+	int lineno = 0;
 	FILE *fp;
-	char *szuser;
-	char *szpass;
-	char *szconnid;
-	char *sztemp;
-	int loc = 0;
-	const struct lsw_conf_options *oco = lsw_init_options();
+	bool win = FALSE;
 
-	snprintf(pwdfile, sizeof(pwdfile), "%s/passwd", oco->confddir);
+	snprintf(pwdfile, sizeof(pwdfile), "%s/passwd", lsw_init_options()->confddir);
 
 	fp = fopen(pwdfile, "r");
-	if ( fp == (FILE *)0) {
+	if (fp == NULL) {
 		/* unable to open the password file */
 		libreswan_log(
 			"XAUTH: unable to open password file (%s) for verification",
@@ -1198,54 +1220,65 @@ static int do_file_authentication(void *varg)
 	}
 
 	libreswan_log("XAUTH: password file (%s) open.", pwdfile);
+
 	/** simple stuff read in a line then go through positioning
-	 * szuser ,szpass and szconnid at the begining of each of the
+	 * userid, passwd and conniectionname at the begining of each of the
 	 * memory locations of our real data and replace the ':' with '\0'
 	 */
 
-	while (fgets(szline, sizeof(szline), fp) != NULL) {
-		loc = 0;                /* reset our index */
-		if (szline[0] == '#')   /* comment line move on */
+	while (fgets(line, sizeof(line), fp) != NULL) {
+		char *p;	/* current position */
+		char *userid;
+		char *passwdhash;
+		char *connectionname = NULL;
+
+		lineno++;
+
+		/* strip final \n (optional: we accept a partial last line) */
+		p = strchr(line, '\n');
+		if (p != NULL)
+			*p = '\0';
+
+		/* ignore empty or comment line */
+		if (*line == '\0' || *line == '#')
 			continue;
 
 		/* get userid */
-		sztemp = strchr(szline, ':');
-		if (sztemp == (char *)0 )
-			continue;               /* we found no tokens bad line so just skip it */
+		userid = line;
+		p = strchr(p, ':');	/* find end */
+		if (p != NULL) {
+			/* no end: skip line */
+			libreswan_log("XAUTH: %s:%d missing password hash field", pwdfile, lineno);
+			continue;
+		}
 
-		*sztemp++ = '\0';               /* put a null where the ':' was */
-		szuser = &szline[loc];          /* szline now contains our null terminated data */
-		loc += strlen(szuser) + 1;      /* move past null into next section */
+		*p++ ='\0';	/* terminate string by overwriting : */
 
-		/* get password */
-		sztemp = strchr(&szline[loc], ':');
-		if (sztemp == (char *)0 )
-			continue;               /* we found no tokens bad line so just skip it */
+		/* get password hash */
+		passwdhash = p;
+		p = strchr(p, ':');	/* find end */
+		if (p != NULL) {
+			/* optional connectionname */
+			*p++ ='\0';	/* terminate password string by overwriting : */
+			connectionname = p;
+		}
 
-		*sztemp++ = '\0';               /* put a null where the ':' was */
-		szpass = &szline[loc];          /* szline now contains our null terminated data */
-		loc += strlen(szpass) + 1;      /* move past null into next section */
-
-		/* get connection id */
-		sztemp = strchr(&szline[loc], '\n');    /* last \n */
-		if (sztemp == (char *)0 )
-			continue;                       /* we found no tokens bad line so just skip it */
-
-		*sztemp++ = '\0';                       /* put a null where the ':' was */
-		szconnid = &szline[loc];                /* szline now contains our null terminated data */
-
-		/* it is possible that szconnid will be null so don't bother
-		 * checking it. If it is null then this is to say it applies
-		 * to all connection classes
+		/* If connectionname is null, it applies
+		 * to all connections
 		 */
 		DBG(DBG_CONTROL,
 		    DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s)",
-			    szuser, arg->name.ptr,
-			    szpass, szconnid, arg->connname.ptr));
+			    userid, arg->name.ptr,
+			    passwdhash,
+			    connectionname == NULL? "" : connectionname, arg->connname.ptr));
 
-		if ( streq(szconnid, (char *)arg->connname.ptr) &&
-		     streq( szuser, (char *)arg->name.ptr ) ) { /* user correct ?*/
+		if (streq(userid, (char *)arg->name.ptr) &&
+		    (connectionname == NULL || streq(connectionname, (char *)arg->connname.ptr)))
+		{
 			char *cp;
+
+			/* We use crypt_mutex lock because not all systems have crypt_r() */
+			static pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 			pthread_mutex_lock(&crypt_mutex);
 #if defined(__CYGWIN32__)
@@ -1253,30 +1286,28 @@ static int do_file_authentication(void *varg)
 			cp = (char *)arg->password.ptr;
 #else
 			/* keep the passwords using whatever utilities we have */
-			cp = crypt( (char *)arg->password.ptr, szpass);
+			cp = crypt((char *)arg->password.ptr, passwdhash);
 #endif
+			win = cp != NULL && streq(cp, passwdhash);
+			pthread_mutex_unlock(&crypt_mutex);
 
 			if (DBGP(DBG_CRYPT)) {
-				DBG_log("XAUTH: checking user(%s:%s) pass %s vs %s", szuser, szconnid, cp,
-					szpass);
+				DBG_log("XAUTH: checking user(%s:%s) pass %s vs %s", userid, connectionname, cp,
+					passwdhash);
 			} else {
 				libreswan_log("XAUTH: checking user(%s:%s) ",
-					      szuser, szconnid);
+					      userid, connectionname);
 			}
 
-			/* Ok then now password check - note crypt() can return NULL */
-			if ( cp && streq(cp, szpass ) ) {
-				/* we have a winner */
-				fclose( fp );
-				pthread_mutex_unlock(&crypt_mutex);
-				return TRUE;
-			}
+			if (win)
+				break;
+
 			libreswan_log("XAUTH: nope");
 		}
 	}
-	fclose( fp );
-	pthread_mutex_unlock(&crypt_mutex);
-	return FALSE;
+
+	fclose(fp);
+	return win;
 }
 
 /** Main authentication routine will then call the actual compiled-in
@@ -1284,9 +1315,9 @@ static int do_file_authentication(void *varg)
  */
 static void *do_authentication(void *varg)
 {
-	struct thread_arg   *arg = varg;
+	struct thread_arg *arg = varg;
 	struct state *st = arg->st;
-	int results = FALSE;
+	bool results = FALSE;
 
 	struct sigaction sa;
 	struct sigaction oldsa;
@@ -1306,8 +1337,9 @@ static void *do_authentication(void *varg)
 	 */
 	pthread_mutex_lock(&st_jbuf_mutex);
 	if (sigsetjmp(ptr->jbuf, 1) != 0) {
-		/* we got here via siglongjmp in sigIntHandler
+		/* We got here via siglongjmp in sigIntHandler.
 		 * st_jbuf_mutex is locked.
+		 * The idea is to shut down the PAM dialogue.
 		 */
 
 		dealloc_st_jbuf(ptr);
@@ -1316,10 +1348,10 @@ static void *do_authentication(void *varg)
 		/* ??? how do we know that there is no more than one thread? */
 		/* ??? how do we know which thread was supposed to get this SIGINT if the signal handler setting is global? */
 		if (st_jbuf_mem != NULL) {
-			/* Yes, restart the one shot SIGINT handler */
+			/* Yes, restart the one-shot SIGINT handler */
 			sigprocmask(SIG_BLOCK, NULL, &sa.sa_mask);
 			sa.sa_handler = sigIntHandler;
-			sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
+			sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One-shot handler */
 			sigaddset(&sa.sa_mask, SIGINT);
 			sigaction(SIGINT, &sa, NULL);
 		} else {
@@ -1395,9 +1427,7 @@ static void *do_authentication(void *varg)
 		if (st->quirks.xauth_ack_msgid)
 			st->st_msgid_phase15 = 0;
 
-		/* ??? is this strncpy correct? */
-		strncpy(st->st_xauth_username, (char *)arg->name.ptr,
-			sizeof(st->st_xauth_username));
+		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), (char *)arg->name.ptr);
 	} else {
 		/*
 		 * Login attempt failed, display error, send XAUTH status to client
@@ -1440,7 +1470,7 @@ static int xauth_launch_authent(struct state *st,
 {
 	pthread_attr_t pattr;
 	st_jbuf_t *ptr;
-	struct thread_arg   *arg;
+	struct thread_arg *arg;
 
 	if (st->xauth_tid)	/* ??? this is not valid in POSIX pthreads */
 		return 0;
@@ -2380,11 +2410,9 @@ static stf_status xauth_client_resp(struct state *st,
 							if (cptr)
 								*cptr = '\0';
 						}
-						/* ??? is this strncpy correct? */
-						strncpy(st->st_xauth_username,
-							xauth_username,
-							sizeof(st->
-							       st_xauth_username));
+						jam_str(st->st_xauth_username,
+							sizeof(st->st_xauth_username),
+							xauth_username);
 					}
 
 					if (!out_raw(st->st_xauth_username,
@@ -2417,8 +2445,7 @@ static stf_status xauth_client_resp(struct state *st,
 							st->st_xauth_username);
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("looked up username=%s, got=%p",
-							    st->
-							    st_xauth_username,
+							    st->st_xauth_username,
 							    s));
 						if (s) {
 							struct

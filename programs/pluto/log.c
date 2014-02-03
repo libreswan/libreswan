@@ -1007,7 +1007,7 @@ void log_state(struct state *st, enum state_kind new_state)
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state called for state update for connection %s ",
 		    conn->name));
-	memset(&lc, 0, sizeof(lc));
+	zero(&lc);
 	lc.conn = conn;
 	save_state = st->st_state;
 	st->st_state = new_state;

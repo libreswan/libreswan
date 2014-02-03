@@ -74,19 +74,17 @@ static void fmt_log(char *buf, size_t buf_len,
 		    const char *fmt, va_list ap)
 {
 	bool reproc = *fmt == '~';
-	size_t ps;
+	char *p;
 
 	buf[0] = '\0';
 	if (reproc) {
 		fmt++; /* ~ at start of format suppresses this prefix */
+		p = buf;
 	} else if (progname != NULL && (strlen(progname) + 1 + 1) < buf_len) {
 		/* start with name of connection */
-		strncat(buf, progname, buf_len - 1);
-		strncat(buf, " ", buf_len - 1);
+		p = add_str(buf, buf_len, jam_str(buf, buf_len, progname), " ");
 	}
-
-	ps = strlen(buf);
-	vsnprintf(buf + ps, buf_len - ps, fmt, ap);
+	vsnprintf(p, buf_len - (p - buf), fmt, ap);
 	if (!reproc)
 		(void)sanitize_string(buf, buf_len);
 }

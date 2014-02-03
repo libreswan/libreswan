@@ -1,13 +1,21 @@
 
 See also https://libreswan.org/
 
-v3.8 (unreleased)
+v3.8 (January 15, 2014)
 * SECURITY: CVE-2013-6467 missing IKEv2 payloads causes restart [Iustina/Hugh]
 * building: Remove #ifdef DEBUG - always compile into userland [Paul]
 * IKEv2: Updated AUTH names to latest IANA registry entries [Paul]
 * pluto/whack: Added --impair-send-ikev2-ke test option [Paul]
 * pluto: allow shutdown command even with bad WHACK_BASIC_MAGIC [Paul]
 * addconn: ignore obsoleted --defaultroute and --defaultroutenexthop [Paul]
+* Various code cleanup [Hugh]
+* initscripts: sysv should try harder to kill pluto without ctl file [Tuomo]
+* gentoo: fixes to build and init system on Gentoo [Mike Gilbert]
+* KLIPS: fix NAT-T status in eroute output [Paul]
+* pluto: updated ietf_constants.h with IANA entries [Paul]
+* IKE: Make sure sha2 is an alias for sha2_256 for ike= and esp= [Hugh/Paul]
+* Bugtracker bugs fixed:
+  #171: showhostkey.c:322: bad switch statement
 
 v3.7 (December 10, 2013)
 * SECURITY: CVE-2013-4564 Denial of service via unauth packet [Paul/Hugh]

@@ -191,14 +191,14 @@ static int sendfromto(int s, void *buf, size_t len, int flags,
 	struct msghdr msgh;
 	struct cmsghdr *cmsg;
 	struct iovec iov;
+# ifdef HAVE_IP_SENDSRCADDR
+	char cmsgbuf[CMSG_SPACE(sizeof(struct in_addr))];
+# endif
 # ifdef HAVE_IP_PKTINFO
 	char cmsgbuf[CMSG_SPACE(sizeof(struct in_pktinfo))];
 	struct in_pktinfo pktinfo, *pktinfo_ptr;
-	memset(&pktinfo, 0, sizeof(struct in_pktinfo));
-# endif
 
-# ifdef HAVE_IP_SENDSRCADDR
-	char cmsgbuf[CMSG_SPACE(sizeof(struct in_addr))];
+	memset(&pktinfo, 0, sizeof(struct in_pktinfo));
 # endif
 
 	passert(to != NULL);

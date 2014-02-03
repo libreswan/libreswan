@@ -200,7 +200,7 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 			while (n--) {
 				cert_t cert;
 
-				if (load_cert(CERT_NONE, filelist[n]->d_name,
+				if (load_cert(filelist[n]->d_name,
 #ifdef SINGLE_CONF_DIR
 					      FALSE, /* too verbose in single conf dir */
 #else
@@ -306,8 +306,8 @@ bool x509_check_revocation(const x509crl_t *crl, chunk_t serial)
 	while (revokedCert != NULL) {
 		/* compare serial numbers */
 		if (revokedCert->userCertificate.len == serial.len &&
-		    memcmp(revokedCert->userCertificate.ptr, serial.ptr,
-			   serial.len) == 0) {
+		    memeq(revokedCert->userCertificate.ptr, serial.ptr,
+			   serial.len)) {
 			libreswan_log("certificate was revoked on %s",
 				      timetoa(&revokedCert->revocationDate,
 					      TRUE, tbuf, sizeof(tbuf)));

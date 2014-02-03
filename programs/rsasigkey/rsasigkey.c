@@ -151,7 +151,7 @@ static char *hexOut(SECItem *data)
 	static char hexbuf[3 + MAXBITS / 4 + 1];
 	char *hexp;
 
-	memset(hexbuf, 0, 3 + MAXBITS / 4 + 1);
+	zero(&hexbuf);
 	for (i = 0, hexp = hexbuf + 3; i < data->len; i++, hexp += 2)
 		sprintf(hexp, "%02x", data->data[i]);
 	*hexp = '\0';
@@ -172,7 +172,7 @@ static void UpdateNSS_RNG(void)
 	getrandom(RAND_BUF_SIZE, buf);
 	rv = PK11_RandomUpdate(buf, sizeof buf);
 	assert(rv == SECSuccess);
-	memset(buf, 0, sizeof buf);
+	zero(&buf);
 }
 
 /*  Returns the password passed in in the text file.

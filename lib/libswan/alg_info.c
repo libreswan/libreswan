@@ -143,32 +143,9 @@ alg_info_esp_sadb2aa(int sadb_aalg)
 }
 
 /*
- *      Search enum_name array with in prefixed uppercase
+ *      Search enum_name array with string, uppercased, prefixed, and postfixed
  */
-int alg_enum_search_prefix(enum_names *ed, const char *prefix, const char *str,
-			   int str_len)
-{
-	char buf[64];
-	char *ptr;
-	int ret;
-	int len = sizeof(buf) - 1;  /* reserve space for final \0 */
-
-	for (ptr = buf; len && *prefix; *ptr++ = *prefix++, len--) ;
-
-	while (str_len-- && len-- && *str)
-		*ptr++ = toupper(*str++);
-	*ptr = 0;
-
-	DBG(DBG_CRYPT, DBG_log("enum_search_prefix () "
-			       "calling enum_search(%p, \"%s\")", ed, buf));
-
-	ret = enum_search(ed, buf);
-	return ret;
-}
-/*
- *      Search enum_name array with in prefixed and postfixed uppercase
- */
-int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
+int alg_enum_search(enum_names *ed, const char *prefix,
 			  const char *postfix, const char *str,
 			  int str_len)
 {
@@ -177,13 +154,16 @@ int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
 	int ret;
 	int len = sizeof(buf) - 1;  /* reserve space for final \0 */
 
-	for (ptr = buf; len && *prefix; *ptr++ = *prefix++, len--) ;
+	for (ptr = buf; len && *prefix; len--)
+	    *ptr++ = *prefix++;
+
 	while (str_len-- && len-- && *str)
 		*ptr++ = toupper(*str++);
+
 	while (len-- && *postfix)
 		*ptr++ = *postfix++;
-	*ptr = 0;
-	DBG(DBG_CRYPT, DBG_log("enum_search_ppfixi () "
+	*ptr = '\0';
+	DBG(DBG_CRYPT, DBG_log("enum_search_ppfix() "
 			       "calling enum_search(%p, \"%s\")", ed, buf));
 	ret = enum_search(ed, buf);
 	return ret;
@@ -193,19 +173,23 @@ int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
  *      Search esp_transformid_names for a match, eg:
  *              "3des" <=> "ESP_3DES"
  */
-#define ESP_MAGIC_ID 0x00ffff01
 static int ealg_getbyname_esp(const char *const str, int len)
 {
 	int ret = -1;
+	unsigned num;
 
 	if (!str || !*str)
-		goto out;
-	/* leave special case for eg:  "id248" string */
-	if (strcmp("id", str) == 0)
-		return ESP_MAGIC_ID;
+		return ret;
 
-	ret = alg_enum_search_prefix(&esp_transformid_names, "ESP_", str, len);
-out:
+	ret = alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
+	if (ret >= 0)
+		return ret;
+
+	/* support idXXX as syntax, matching iana numbers directly */
+	sscanf(str, "id%d%n", &ret, &num);
+	if (ret >= 0 && num != strlen(str))
+		ret = -1;
+
 	return ret;
 }
 
@@ -213,46 +197,55 @@ out:
  *      Search auth_alg_names for a match, eg:
  *              "md5" <=> "AUTH_ALGORITHM_HMAC_MD5"
  */
-static int aalg_getbyname_esp(const char *const str, int len)
+static int aalg_getbyname_esp(const char *str, int len)
 {
 	int ret = -1;
 	unsigned num;
+	static const char sha2_256_aka[] = "sha2";
 
-	if (!str || !*str)
-		goto out;
-	ret = alg_enum_search_prefix(&auth_alg_names, "AUTH_ALGORITHM_HMAC_",
+	DBG_log("entering aalg_getbyname_esp()");
+        if (!str || !*str)
+                return ret;
+
+	/* handle "sha2" as "sha2_256" */
+	if (len == sizeof(sha2_256_aka)-1 && strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
+		DBG_log("interpreting ESP sha2 as sha2_256");
+		str = "sha2_256";
+		len = strlen(str);
+       }
+
+	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "",
 				     str, len);
 	if (ret >= 0)
-		goto out;
-	ret = alg_enum_search_prefix(&auth_alg_names, "AUTH_ALGORITHM_", str,
-				     len);
+		return ret;
+	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_", "",
+				     str, len);
 	if (ret >= 0)
-		goto out;
+		return ret;
 
 	/* Special value for no authentication since zero is already used. */
 	ret = INT_MAX;
 	if (!strncasecmp(str, "null", len))
-		goto out;
+		return ret;
 
 	sscanf(str, "id%d%n", &ret, &num);
 	if (ret >= 0 && num != strlen(str))
 		ret = -1;
-out:
+
 	return ret;
 }
+
 static int modp_getbyname_esp(const char *const str, int len)
 {
-	int ret = -1;
+	int ret;
 
-	if (!str || !*str)
-		goto out;
-	ret = alg_enum_search_prefix(&oakley_group_names, "OAKLEY_GROUP_", str,
-				     len);
-	if (ret >= 0)
-		goto out;
-	ret = alg_enum_search_ppfix(&oakley_group_names, "OAKLEY_GROUP_",
-				    " (extension)", str, len);
-out:
+	if (str == NULL || *str == '\0')
+		return -1;
+	ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "",
+				     str, len);
+	if (ret < 0)
+		ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
+				      " (extension)", str, len);
 	return ret;
 }
 
@@ -275,7 +268,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	passert(cnt < elemsof(alg_info->esp));
 	/*	dont add duplicates	*/
 	for (i = 0; i < cnt; i++)
-		if (    esp_info[i].esp_ealg_id == ealg_id &&
+		if (esp_info[i].esp_ealg_id == ealg_id &&
 			(!ek_bits || esp_info[i].esp_ealg_keylen == ek_bits) &&
 			esp_info[i].esp_aalg_id == aalg_id &&
 			(!ak_bits || esp_info[i].esp_aalg_keylen == ak_bits))
@@ -398,9 +391,9 @@ static int parser_machine(struct parser_context *p_ctx)
 		case ST_AA:
 		case ST_AK:
 		case ST_MODP:
-		default:
 		{
 			enum parser_state_esp next_state = 0;
+
 			switch (ch) {
 			case 0:   next_state = ST_EOF;
 				break;
@@ -411,10 +404,12 @@ static int parser_machine(struct parser_context *p_ctx)
 			parser_set_state(p_ctx, next_state);
 			goto out;
 		}
+		default:
 			p_ctx->err = "String ended with invalid char";
 			goto err;
 		}
 	}
+
 re_eval:
 	switch (p_ctx->state) {
 	case ST_INI:
@@ -569,7 +564,7 @@ err:
  */
 static void parser_init_esp(struct parser_context *p_ctx)
 {
-	memset(p_ctx, 0, sizeof(*p_ctx));
+	zero(p_ctx);
 
 	p_ctx->protoid = PROTO_IPSEC_ESP;
 	p_ctx->ealg_str = p_ctx->ealg_buf;
@@ -590,7 +585,7 @@ static void parser_init_esp(struct parser_context *p_ctx)
  */
 static void parser_init_ah(struct parser_context *p_ctx)
 {
-	memset(p_ctx, 0, sizeof(*p_ctx));
+	zero(p_ctx);
 
 	p_ctx->protoid = PROTO_IPSEC_AH;
 	p_ctx->ealg_str = NULL;
@@ -622,10 +617,12 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 		ealg_id =
 			p_ctx->ealg_getbyname(p_ctx->ealg_buf,
 					      strlen(p_ctx->ealg_buf));
+#if 0
 		if (ealg_id == ESP_MAGIC_ID) {
 			ealg_id = p_ctx->eklen;
 			p_ctx->eklen = 0;
 		}
+#endif
 		if (ealg_id < 0) {
 			p_ctx->err = "enc_alg not found";
 			return -1;
@@ -639,9 +636,9 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 		case ESP_AES_CCM_8:
 		case ESP_AES_CCM_12:
 		case ESP_AES_CCM_16:
-			if ( p_ctx->eklen != 128 &&
-			     p_ctx->eklen != 192 &&
-			     p_ctx->eklen != 256 ) {
+			if (p_ctx->eklen != 128 &&
+			    p_ctx->eklen != 192 &&
+			    p_ctx->eklen != 256) {
 				p_ctx->err =
 					"wrong encryption key length -"
 					" AES CCM/GCM only uses 128, 192 or 256";
@@ -863,8 +860,10 @@ struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
 	alg_info_esp = alloc_thing(struct alg_info_esp, "alg_info_esp");
 
 	strcpy(esp_buf, alg_str);
-	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_p))
+	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_p)) {
+		pfree(alg_info_esp);
 		return NULL;
+	}
 
 	alg_info_esp->alg_info_protoid = PROTO_IPSEC_AH;
 	ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
@@ -921,7 +920,7 @@ void alg_info_delref(struct alg_info **alg_info_p)
 
 /*	snprint already parsed transform list (alg_info)	*/
 int alg_info_snprint(char *buf, int buflen,
-		     struct alg_info *alg_info)
+		     const struct alg_info *alg_info)
 {
 	char *ptr = buf;
 	struct esp_info *esp_info;
@@ -953,7 +952,7 @@ int alg_info_snprint(char *buf, int buflen,
 			size_t np = strlen(ptr);
 			ptr += np;
 			buflen -= np;
-			if ( cnt > 0) {
+			if (cnt > 0) {
 				snprintf(ptr, buflen, ", ");
 				np = strlen(ptr);
 				ptr += np;
@@ -971,8 +970,6 @@ int alg_info_snprint(char *buf, int buflen,
 			size_t np = strlen(ptr);
 			ptr += np;
 			buflen -= np;
-			if (buflen <= 0)
-				goto out;
 		}
 		break;
 	}
@@ -991,7 +988,7 @@ int alg_info_snprint(char *buf, int buflen,
 			size_t np = strlen(ptr);
 			ptr += np;
 			buflen -= np;
-			if ( cnt > 0) {
+			if (cnt > 0) {
 				snprintf(ptr, buflen, ", ");
 				np = strlen(ptr);
 				ptr += np;
@@ -1009,8 +1006,6 @@ int alg_info_snprint(char *buf, int buflen,
 			size_t np = strlen(ptr);
 			ptr += np;
 			buflen -= np;
-			if (buflen <= 0)
-				goto out;
 		}
 		break;
 	}
@@ -1038,18 +1033,17 @@ int alg_info_snprint(char *buf, int buflen,
 				size_t np = strlen(ptr);
 				ptr += np;
 				buflen -= np;
-				if ( cnt > 0) {
+				if (cnt > 0) {
 					snprintf(ptr, buflen, ", ");
 					np = strlen(ptr);
 					ptr += np;
 					buflen -= np;
 				}
 				if (buflen <= 0)
-					goto out;
+					break;
 			}
 			break;
 		}
-	/* FALLTHROUGH */
 
 	default:
 		snprintf(buf, buflen, "INVALID protoid=%d\n",
@@ -1057,7 +1051,7 @@ int alg_info_snprint(char *buf, int buflen,
 		size_t np = strlen(ptr);
 		ptr += np;
 		buflen -= np;
-		goto out;
+		break;
 	}
 
 out:

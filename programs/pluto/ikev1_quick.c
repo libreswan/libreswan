@@ -1236,7 +1236,7 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			loglog(RC_LOG_SERIOUS,
 			       "Applying workaround for MS-818043 NAT-T bug");
-			memset(&b.his.net, 0, sizeof(ip_subnet));
+			zero(&b.his.net);
 			happy(addrtosubnet(&c->spd.that.host_addr,
 					   &b.his.net));
 		}
@@ -1790,7 +1790,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				 * Is it a Road Warrior connection (simple)
 				 * or is it an Opportunistic connection (needing gw validation)?
 				 */
-				if (p->policy & POLICY_OPPO) {
+				if (p->policy & POLICY_OPPORTUNISTIC) {
 					/* Opportunistic case: delegation must be verified.
 					 * Here be dragons.
 					 */

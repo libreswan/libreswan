@@ -429,8 +429,6 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_SAREFTRACK, &kw_sareftrack_list },
 	{ "pfs",            kv_conn | kv_auto, kt_bool,   KBF_PFS,
 	  NOT_ENUM },
-	{ "anonymous",            kv_conn | kv_auto, kt_bool,   KBF_ANONYMOUS,
-	  NOT_ENUM },
 
 	{ "nat_keepalive",  kv_conn | kv_auto, kt_bool,   KBF_NAT_KEEPALIVE,
 	  NOT_ENUM },

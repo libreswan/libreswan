@@ -222,12 +222,12 @@ main(int argc, char *argv[]){
 		pluto_crypto_copychunk(&dhq->thespace, dhq->space,
 				       &dhq->rcookie, rsasc[i].rcookie);
 
-		memset(&skeyid, 0, sizeof(skeyid));
-		memset(&skeyid_d, 0, sizeof(skeyid_d));
-		memset(&skeyid_a, 0, sizeof(skeyid_a));
-		memset(&skeyid_e, 0, sizeof(skeyid_e));
-		memset(&new_iv,   0, sizeof(new_iv));
-		memset(&enc_key,  0, sizeof(enc_key));
+		zero(&skeyid);
+		zero(&skeyid_d);
+		zero(&skeyid_a);
+		zero(&skeyid_e);
+		zero(&new_iv);
+		zero(&enc_key);
 
 		calc_skeyids_iv(&skq,
 				rsasc[i].shared,
