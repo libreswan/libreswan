@@ -581,8 +581,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 * as left/rightprotoport=icmp/2048. Now with NETKEY, icmp type and code
 	 * need to be passed as source and destination ports, respectively.
 	 * therefore, this code extracts upper 8 bits and lower 8 bits and puts
-	 * into source and destination ports before passing to NETKEY. */
-
+	 * into source and destination ports before passing to NETKEY.
+	 */
 	if ( transport_proto == IPPROTO_ICMP || transport_proto ==
 	     IPPROTO_ICMPV6) {
 		u_int16_t icmp_type;
@@ -789,7 +789,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	 * Tunnel mode ipsec with ipcomp is layered so that ipcomp tunnel is
 	 * protected with transport mode ipsec but in this case we shouldn't any
 	 * more add traffic selectors. Caller function will inform us if we
-	 * need or don't need selectors. */
+	 * need or don't need selectors.
+	 */
 	if (sa->add_selector) {
 		ip_subnet src_tmp;
 		ip_subnet dst_tmp;
@@ -798,7 +799,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 		/* With XFRM/NETKEY and transport mode with nat-traversal we need
 		 * to change outbound IPsec SA to point to exteral ip of the peer.
-		 * Here we substitute real client ip with NATD ip. */
+		 * Here we substitute real client ip with NATD ip.
+		 */
 		if (sa->inbound == 0) {
 			addrtosubnet(sa->dst, &dst_tmp);
 			dst = &dst_tmp;
@@ -825,8 +827,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * as left/rightprotoport=icmp/2048. Now with NETKEY, icmp type and code
 		 * need to be passed as source and destination ports, respectively.
 		 * therefore, this code extracts upper 8 bits and lower 8 bits and puts
-		 * into source and destination ports before passing to NETKEY. */
-
+		 * into source and destination ports before passing to NETKEY.
+		 */
 		if ( 1 == sa->transport_proto /*icmp*/ || 58 ==
 		     sa->transport_proto /*ipv6-icmp*/) {
 

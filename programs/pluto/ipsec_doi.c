@@ -536,7 +536,8 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		       id->isaid_doi_specific_a,
 		       id->isaid_doi_specific_b);
 		/* we have turned this into a warning because of bugs in other vendors
-		 * products. Specifically CISCO VPN3000. */
+		 * products. Specifically CISCO VPN3000.
+		 */
 		/* return FALSE; */
 	}
 
@@ -640,7 +641,8 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			st->st_connection = r; /* kill reference to c */
 
 			/* this ensures we don't move cur_connection from NULL to
-			 * something, requiring a reset_cur_connection() */
+			 * something, requiring a reset_cur_connection()
+			 */
 			if (cur_connection == c)
 				set_cur_connection(r);
 

@@ -267,7 +267,8 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 	change_state(st, STATE_AGGR_R1);
 
 	/* until we have clue who this is, then be conservative about allocating
-	 * them any crypto bandwidth */
+	 * them any crypto bandwidth
+	 */
 	st->st_import = pcim_stranger_crypto;
 
 	st->st_policy |= POLICY_AGGRESSIVE;
@@ -1013,7 +1014,8 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 	/**************** done input ****************/
 
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
-	 * are not supposed to be performed again during rekey */
+	 * are not supposed to be performed again during rekey
+	 */
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
 	    st->st_connection->remotepeertype == CISCO) {

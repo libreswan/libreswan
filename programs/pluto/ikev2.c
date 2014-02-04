@@ -474,11 +474,10 @@ void process_v2_packet(struct msg_digest **mdp)
 	const struct state_v2_microcode *svm;
 	enum isakmp_xchg_types ix;
 
-	/* Look for an state which matches the various things we know */
-	/*
+	/* Look for an state which matches the various things we know:
+	 *
 	 * 1) exchange type received?
 	 * 2) is it initiator or not?
-	 *
 	 */
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
@@ -608,7 +607,8 @@ void process_v2_packet(struct msg_digest **mdp)
 
 		/* ??? not sure that this is necessary, but it ought to be correct */
 		/* This check cannot apply for an informational exchange since one
-		 * can be initiated by the initial responder. */
+		 * can be initiated by the initial responder.
+		 */
 		if (ix != ISAKMP_v2_INFORMATIONAL &&
 		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0)))
 			continue;
@@ -836,7 +836,8 @@ void ikev2_update_counters(struct msg_digest *md)
 	case RESPONDER:
 		pst->st_msgid_lastrecv = md->msgid_received;
 		/* the responder requires msgid_nextuse if it ever needs to
-		 * initiate an informational exchange */
+		 * initiate an informational exchange
+		 */
 		pst->st_msgid_nextuse = md->msgid_received + 1;
 		break;
 	}
@@ -1035,7 +1036,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			bad_case(kind);
 		}
 		/* start liveness checks if set, making sure we only schedule once when moving
-		 * from I2->I3 or R1->R2 */
+		 * from I2->I3 or R1->R2
+		 */
 		if ((c->dpd_action == DPD_ACTION_CLEAR || c->dpd_action ==
 		     DPD_ACTION_RESTART) &&
 		    IS_V2_ESTABLISHED(st->st_state) && st->st_state !=

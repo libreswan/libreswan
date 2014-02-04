@@ -709,7 +709,8 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		/* Oakley Keying Material
 		 * Derived from Skeyid_e: if it is not big enough, generate more
 		 * using the PRF.
-		 * See RFC 2409 "IKE" Appendix B*/
+		 * See RFC 2409 "IKE" Appendix B
+		 */
 
 		CK_EXTRACT_PARAMS bitstart = 0;
 		param1.data = (unsigned char*)&bitstart;
