@@ -1669,7 +1669,8 @@ int main(int argc, char **argv)
 		case OPT_XAUTHNAME: /* --xauthname */
 			/* we can't tell if this is going to be --initiate, or
 			 * if this is going to be an conn definition, so do
-			 * both actions */
+			 * both actions
+			 */
 			msg.right.xauth_name = optarg;
 			gotxauthname = TRUE;
 			xauthname[0] = '\0';

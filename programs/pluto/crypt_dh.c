@@ -180,7 +180,7 @@ static void calc_dh_shared(chunk_t *shared, const chunk_t g,
 	PR_ASSERT(dhshared != NULL);
 
 	dhshared_len = PK11_GetKeyLength(dhshared);
-	if ( group->bytes > dhshared_len ) {
+	if (group->bytes > dhshared_len) {
 		DBG(DBG_CRYPT,
 		    DBG_log("Dropped %lu leading zeros", group->bytes -
 			    dhshared_len));
@@ -216,9 +216,8 @@ static void calc_dh_shared(chunk_t *shared, const chunk_t g,
 	memcpy(shared->ptr, &dhshared, shared->len);
 
 	gettimeofday(&tv1, NULL);
-	tv_diff =
-		(tv1.tv_sec  -
-		 tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
+	tv_diff = (tv1.tv_sec  - tv0.tv_sec) * 1000000 +
+		  (tv1.tv_usec - tv0.tv_usec);
 	DBG(DBG_CRYPT, DBG_log("calc_dh_shared(): time elapsed (%s): %ld usec",
 			       enum_show(&oakley_group_names, group->group),
 			       tv_diff);
@@ -709,7 +708,8 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		/* Oakley Keying Material
 		 * Derived from Skeyid_e: if it is not big enough, generate more
 		 * using the PRF.
-		 * See RFC 2409 "IKE" Appendix B*/
+		 * See RFC 2409 "IKE" Appendix B
+		 */
 
 		CK_EXTRACT_PARAMS bitstart = 0;
 		param1.data = (unsigned char*)&bitstart;

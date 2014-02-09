@@ -403,24 +403,34 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	mpz_t e;
 	size_t bs;
 	char n_str[3 + MAXBITS / 4 + 1];
-	char buf[100];
 	time_t now = time((time_t *)NULL);
 
 	mpz_init(n);
 	mpz_init(e);
 
-	snprintf(buf, sizeof(buf), "%s/nsspassword", configdir);
-	pwdata.source =
-		password ? (strcmp(password,
-				   buf) ? PW_PLAINTEXT : PW_FROMFILE) :
-		PW_NONE;
-	pwdata.data = password ? password : NULL;
+	if (password == NULL) {
+		pwdata.source = PW_NONE;
+	} else 	{
+		/* check if passwd == configdir/nsspassword */
+		size_t cdl = strlen(configdir);
+		size_t pwl = strlen(password);
+		static const char suf[] = "/nsspassword";
+
+		if (pwl == cdl + sizeof(suf) - 1 &&
+		    memcmp(password, configdir, cdl) == 0 &&
+		    memcmp(password + cdl, suf, sizeof(suf)) == 0)
+			pwdata.source = PW_FROMFILE;
+		else
+			pwdata.source = PW_PLAINTEXT;
+	}
+	pwdata.data = password;
 
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
-	snprintf(buf, sizeof(buf), "%s", configdir);
-	if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
-		fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
-			me, PR_GetError());
+
+	rv = NSS_InitReadWrite(configdir);
+	if (rv != SECSuccess) {
+		fprintf(stderr, "%s: NSS_InitReadWrite(%s) returned %d\n",
+			me, configdir, PR_GetError());
 		exit(1);
 	}
 #ifdef FIPS_CHECK

@@ -786,8 +786,8 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 
 		/* otherwise, there is some kind of static conn that can handle
-		 * this connection, so we initiate it */
-
+		 * this connection, so we initiate it
+		 */
 		if (b->held) {
 			/* what should we do on failure? */
 			(void) assign_hold(c, sr, b->transport_proto,

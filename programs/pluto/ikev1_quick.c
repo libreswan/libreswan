@@ -349,14 +349,14 @@ static void compute_proto_keymat(struct state *st,
 			if (st->st_shared.ptr != NULL) {
 				/* PFS: include the g^xy */
 				PK11SymKey *st_shared;
+				SECStatus s;
+
 				memcpy(&st_shared, st->st_shared.ptr,
 				       st->st_shared.len);
 
-				SECStatus s = PK11_DigestKey(ctx_me.ctx_nss,
-							     st_shared);
+				s = PK11_DigestKey(ctx_me.ctx_nss, st_shared);
 				PR_ASSERT(s == SECSuccess);
-				s =
-					PK11_DigestKey(ctx_peer.ctx_nss,
+				s = PK11_DigestKey(ctx_peer.ctx_nss,
 						       st_shared);
 				PR_ASSERT(s == SECSuccess);
 			}

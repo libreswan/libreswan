@@ -1253,15 +1253,16 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA256:
 	case OID_SHA256_WITH_RSA:
 	{
-		sha256_context context;
-		sha256_init(&context);
-		sha256_write(&context, tbs.ptr, tbs.len);
 		unsigned int len;
 		SECStatus s;
+		sha256_context context;
+
+		sha256_init(&context);
+		sha256_write(&context, tbs.ptr, tbs.len);
 		s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len,
 				     SHA2_256_DIGEST_SIZE);
-		passert(len == SHA2_256_DIGEST_SIZE);
 		passert(s == SECSuccess);
+		passert(len == SHA2_256_DIGEST_SIZE);
 		PK11_DestroyContext(context.ctx_nss, PR_TRUE);
 		digest->len = SHA2_256_DIGEST_SIZE;
 		return TRUE;
@@ -1270,15 +1271,16 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA384_WITH_RSA:
 	{
 		sha512_context context;
-		sha384_init(&context);
 		unsigned int len;
 		SECStatus s;
+
+		sha384_init(&context);
 		s = PK11_DigestOp(context.ctx_nss, tbs.ptr, tbs.len);
 		passert(s == SECSuccess);
 		s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len,
 				     SHA2_384_DIGEST_SIZE);
-		passert(len == SHA2_384_DIGEST_SIZE);
 		passert(s == SECSuccess);
+		passert(len == SHA2_384_DIGEST_SIZE);
 		PK11_DestroyContext(context.ctx_nss, PR_TRUE);
 		digest->len = SHA2_384_DIGEST_SIZE;
 		return TRUE;
@@ -1287,15 +1289,16 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA512_WITH_RSA:
 	{
 		sha512_context context;
+		unsigned int len;
+		SECStatus s;
+
 		sha512_init(&context);
 		sha512_write(&context, tbs.ptr, tbs.len);
 
-		unsigned int len;
-		SECStatus s;
 		s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len,
 				     SHA2_512_DIGEST_SIZE);
-		passert(len == SHA2_512_DIGEST_SIZE);
 		passert(s == SECSuccess);
+		passert(len == SHA2_512_DIGEST_SIZE);
 		PK11_DestroyContext(context.ctx_nss, PR_TRUE);
 		digest->len = SHA2_512_DIGEST_SIZE;
 		return TRUE;
@@ -1340,7 +1343,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 		publicKey =
 			(SECKEYPublicKey *) PORT_ArenaZAlloc(arena,
 							     sizeof(SECKEYPublicKey));
-		if (!publicKey) {
+		if (publicKey == NULL) {
 			PORT_FreeArena(arena, PR_FALSE);
 			PORT_SetError(SEC_ERROR_NO_MEMORY);
 			DBG(DBG_X509 | DBG_CONTROL,
@@ -1368,10 +1371,10 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 		    DBG_dump("NSS: input signature : ", sig.ptr, sig.len);
 		    );
 
-		/*Converting n and e to nss_n and nss_e*/
-		skip =
-			(issuer_cert->modulus.len > 0 &&
-			 issuer_cert->modulus.ptr[0] == 0x00) ? 1 : 0;
+		/* Converting n and e to nss_n and nss_e */
+
+		skip = (issuer_cert->modulus.len > 0 &&
+			issuer_cert->modulus.ptr[0] == 0x00) ? 1 : 0;
 		if (skip != 1) {
 			DBG(DBG_X509 | DBG_CONTROL,
 			    DBG_log("NSS: RSA Modulus has no leading 0x00 byte, modules < 2^511 ?"));
@@ -1417,7 +1420,8 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 		dsig.data = alloc_bytes(dsig.len, "NSS decrypted signature");
 		dsig.type = siBuffer;
 
-		/*Verifying RSA signature*/
+		/* Verifying RSA signature */
+
 		if (PK11_VerifyRecover(publicKey, &signature, &dsig /*output*/,
 				       lsw_return_nss_password_file_info()) ==
 		    SECSuccess) {

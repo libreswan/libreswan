@@ -774,7 +774,8 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	struct spd_route *sr;
 
 	/* save this connection's isakmp SA,
-	 * since it will get set to later SOS_NOBODY */
+	 * since it will get set to later SOS_NOBODY
+	 */
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
@@ -838,7 +839,8 @@ void delete_p2states_by_connection(struct connection *c)
 	enum connection_kind ck = c->kind;
 
 	/* save this connection's isakmp SA,
-	 * since it will get set to later SOS_NOBODY */
+	 * since it will get set to later SOS_NOBODY
+	 */
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
@@ -883,7 +885,8 @@ void rekey_p2states_by_connection(struct connection *c)
 	enum connection_kind ck = c->kind;
 
 	/* save this connection's isakmp SA,
-	 * since it will get set to later SOS_NOBODY */
+	 * since it will get set to later SOS_NOBODY
+	 */
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 

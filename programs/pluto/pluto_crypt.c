@@ -549,7 +549,7 @@ void delete_cryptographic_continuation(struct state *st)
 			pfree(cn);
 		}
 	}
-	DBG(DBG_CRYPT, DBG_log("no suspended cryptographic state for %lu\n",
+	DBG(DBG_CRYPT, DBG_log("no suspended cryptographic state remains for #%lu\n",
 			       st->st_serialno));
 }
 

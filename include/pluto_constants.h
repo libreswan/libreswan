@@ -431,8 +431,8 @@ enum phase1_role {
 			    (s) == STATE_PARENT_I3)
 
 /*
- * Issue here is that our child sa appears as a STATE_PARENT_I3/STATE_PARENT_R2 state which it should not
- * So we fall back to checking if it is cloned, and therefor really a child
+ * ??? Issue here is that our child sa appears as a STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
+ * So we fall back to checking if it is cloned, and therefore really a child.
  */
 #define IS_CHILD_SA_ESTABLISHED(st) ( (((st->st_state == STATE_PARENT_I3) || \
 					(st->st_state == STATE_PARENT_R2)) && \

@@ -275,7 +275,8 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			if (maxtrans == 2 && transcnt > 0 &&
 			    ike_info->ike_modp != last_modp ) {
 				/* Not good.
-				 * Already got a DH group and this one doesn't match */
+				 * Already got a DH group and this one doesn't match
+				 */
 				if (wrong_modp == 0) {
 					loglog(RC_LOG_SERIOUS,
 					       "multiple DH groups were set in aggressive mode. Only first one used.");

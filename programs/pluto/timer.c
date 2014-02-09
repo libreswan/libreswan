@@ -460,7 +460,8 @@ static void liveness_check(struct state *st)
 	}
 
 	/* don't bother sending the check and reset
-	 * liveness stats if there has been incoming traffic */
+	 * liveness stats if there has been incoming traffic
+	 */
 	if (get_sa_info(st, TRUE, &last_msg)) {
 		if (last_msg < c->dpd_timeout) {
 			pst->st_pend_liveness = FALSE;

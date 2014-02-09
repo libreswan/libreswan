@@ -377,11 +377,10 @@ static void set_cfg_string(char **target, char *value)
 
 static void pluto_init_nss(char *confddir)
 {
-	char buf[100];
+	SECStatus nss_init_status;
 
-	snprintf(buf, sizeof(buf), "%s", confddir);
-	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", buf);
-	SECStatus nss_init_status = NSS_Init(buf);
+	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", confddir);
+	nss_init_status = NSS_Init(confddir);
 	if (nss_init_status != SECSuccess) {
 		loglog(RC_LOG_SERIOUS, "NSS readonly initialization failed (err %d)\n",
 		       PR_GetError());

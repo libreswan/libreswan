@@ -603,7 +603,8 @@ static enum routability could_route(struct connection *c)
 		       ro->name);
 		/* We ignore this if the stack supports overlapping, and this
 		 * connection was marked that overlapping is OK.  Below we will
-		 * check the other eroute, ero. */
+		 * check the other eroute, ero.
+		 */
 		if (!compatible_overlapping_connections(c, ero))
 			return route_impossible; /* another connection already using the
 		                                    eroute. TODO: NETKEY can do this? */
@@ -1357,7 +1358,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	} else {
 		encapsulation = ENCAPSULATION_MODE_TRANSPORT;
 		/* RFC 4301, Section 5.2 Requires traffic selectors to be set on
-		 * transport mode */
+		 * transport mode
+		 */
 		add_selector = 1;
 	}
 	c->encapsulation = encapsulation;
@@ -2367,7 +2369,8 @@ bool install_inbound_ipsec_sa(struct state *st)
 			if (kernel_ops->overlap_supported) {
 				/* Both are transport mode, allow overlapping.
 				 * [bart] not sure if this is actually intended, but am
-				 *        leaving it in to make it behave like before */
+				 *        leaving it in to make it behave like before
+				 */
 				if (!LIN(POLICY_TUNNEL, c->policy) &&
 				    !LIN(POLICY_TUNNEL, o->policy))
 					break;
@@ -2491,7 +2494,8 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 
 #if 0
 	/* XXX - mcr this made sense before, and likely will make sense
-	 * again, so I'l leaving this to remind me what is up */
+	 * again, so I'l leaving this to remind me what is up
+	 */
 	if (ero != NULL && ero->routing == RT_UNROUTED_KEYED)
 		ero = NULL;
 

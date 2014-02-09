@@ -78,14 +78,12 @@
 
 void get_rnd_bytes(u_char *buffer, int length)
 {
-	SECStatus rv;
+	SECStatus rv = PK11_GenerateRandom(buffer, length);
 
-	rv = PK11_GenerateRandom(buffer, length);
 	if (rv != SECSuccess) {
 		loglog(RC_LOG_SERIOUS, "NSS RNG failed");
 		abort();
 	}
-	passert(rv == SECSuccess);
 }
 
 u_char secret_of_the_day[SHA1_DIGEST_SIZE];

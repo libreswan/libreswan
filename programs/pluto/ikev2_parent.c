@@ -1929,7 +1929,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 	/* good. now create child state */
 	/* note: as we will switch to child state, we force the parent to the
-	 * new state now */
+	 * new state now
+	 */
 	change_state(st, STATE_PARENT_R2);
 	c->newest_isakmp_sa = st->st_serialno;
 
@@ -2438,13 +2439,13 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 			/* RFC 5996 */
-			/*Types in the range 0 - 16383 are intended for reporting errors.  An
+			/* Types in the range 0 - 16383 are intended for reporting errors.  An
 			 * implementation receiving a Notify payload with one of these types
 			 * that it does not recognize in a response MUST assume that the
 			 * corresponding request has failed entirely.  Unrecognized error types
 			 * in a request and status types in a request or response MUST be
-			 * ignored, and they should be logged.*/
-
+			 * ignored, and they should be logged.
+			 */
 			if (enum_name(&ikev2_notify_names,
 				      p->payload.v2n.isan_type) == NULL) {
 				if (p->payload.v2n.isan_type <
@@ -2738,7 +2739,8 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 		/* Since an informational exchange can be started by the original responder,
 		 * things such as encryption, decryption should be done based on the original
-		 * role and not the md->role */
+		 * role and not the md->role
+		 */
 		if (IS_V2_INITIATOR(ost->st_state)) {
 			prole = INITIATOR;
 			DBG(DBG_CONTROLMORE,
