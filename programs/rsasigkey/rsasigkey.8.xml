@@ -52,7 +52,7 @@ generates an RSA public/private key pair, suitable for digital signatures, of (e
 speed advantages for signature checking. Beware that the resulting keys have known weaknesses as encryption keys
 <emphasis remap='B'>and should not be used for that purpose</emphasis>.</para>
 
-<para>The <option>--verbose</option> option makes<emphasis
+<para>The <option>--verbose</option> option makes <emphasis
 remap='I'>rsasigkey</emphasis> give a running commentary on standard
 error. By default, it works in silence until it is ready to generate
 output.</para>
@@ -75,7 +75,10 @@ default value is <filename>/etc/ipsec.d</filename>.</para>
 
 <para>The <option>--password</option> option specifies the nss cryptographic module authentication
 password if the NSS module has been configured to require it.  A password is required by hardware
-tokens and also by the internal softotken module when configured to run in FIPS mode.</para>
+tokens and also by the internal software token module when configured to run in FIPS mode.
+If the argument is <emphasis remap='I'>configdirr</emphasis><filename>/nsspassword<filename>, the password comes from that file;
+otherwise argument is the password.
+</para>
 
 <para>The <option>--hostname</option> option specifies what host name to use in the first line
 of the output (see below); the default is what
@@ -123,7 +126,7 @@ line gives the Chinese Remainder Theorem coefficient, which is the inverse of
 additional numbers (which must all be kept as secret as the private
 exponent) are precomputed aids to rapid signature generation.  When NSS
 is used, these values are not available outside the NSS security database
-(softtoken or hardware token) and are instead filled in with the CKA_ID.
+(software token or hardware token) and are instead filled in with the CKA_ID.
 </para>
 <para>No attempt is made to break long lines.</para>
 
