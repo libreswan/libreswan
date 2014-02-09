@@ -820,7 +820,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		 "%sDPD=%s",
 		 ini,
 		 st->hidden_variables.st_dpd_local ?
-		 "enabled" : "none");
+		 "active" : "passive");
 
 	ini = " ";
 	fin = "}";

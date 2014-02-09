@@ -58,7 +58,6 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 #include "vendor.h"
-#include "dpd.h"
 #include "udpfromto.h"
 #include "kernel.h"
 #include "virtual.h"	/* needs connections.h */

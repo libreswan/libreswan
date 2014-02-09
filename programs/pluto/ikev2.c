@@ -64,7 +64,6 @@
 
 #include "nat_traversal.h"
 #include "vendor.h"
-#include "dpd.h"
 #include "udpfromto.h"
 
 #define SEND_NOTIFICATION(t) { \
