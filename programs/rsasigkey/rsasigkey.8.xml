@@ -76,7 +76,7 @@ default value is <filename>/etc/ipsec.d</filename>.</para>
 <para>The <option>--password</option> option specifies the nss cryptographic module authentication
 password if the NSS module has been configured to require it.  A password is required by hardware
 tokens and also by the internal software token module when configured to run in FIPS mode.
-If the argument is <emphasis remap='I'>configdirr</emphasis><filename>/nsspassword<filename>, the password comes from that file;
+If the argument is <emphasis remap='I'>configdir</emphasis><filename>/nsspassword</filename>, the password comes from that file;
 otherwise argument is the password.
 </para>
 
