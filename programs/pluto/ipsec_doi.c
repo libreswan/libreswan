@@ -711,10 +711,11 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	char *b = sadetails;
 	const char *ini = " {";
 	const char *fin = "";
+	struct connection *c = st->st_connection;
 
-	passert(st->st_connection != NULL);
+	passert(c != NULL);
 	strcpy(sadetails,
-	       (st->st_connection->policy & POLICY_TUNNEL ?
+	       (c->policy & POLICY_TUNNEL ?
 		" tunnel mode" : " transport mode"));
 	b += strlen(sadetails);
 
@@ -724,17 +725,17 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		const char *natinfo = "";
 		char esb[ENUM_SHOW_BUF_LEN];
 
-		if ((st->st_connection->spd.that.host_port != IKE_UDP_PORT &&
-		     st->st_connection->spd.that.host_port != 0) ||
-		    st->st_connection->forceencaps) {
+		if ((c->spd.that.host_port != IKE_UDP_PORT &&
+		     c->spd.that.host_port != 0) ||
+		    c->forceencaps) {
 			natinfo = "/NAT";
 		} else {
 			DBG(DBG_NATT,
 			    DBG_log("NAT-T: their IKE port is '%d'",
-				    st->st_connection->spd.that.host_port));
+				    c->spd.that.host_port));
 			DBG(DBG_NATT,
 			    DBG_log("NAT-T: forceencaps is '%s'",
-				    st->st_connection->forceencaps ? "enabled"
+				    c->forceencaps ? "enabled"
 				    :
 				    "disabled"));
 		}
@@ -821,7 +822,8 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	snprintf(b, sad_len - (b - sadetails) - 1,
 		 "%sDPD=%s",
 		 ini,
-		 st->hidden_variables.st_dpd_local ?
+		 (st->hidden_variables.st_dpd_local ||
+		  st->hidden_variables.st_liveness) ? /* note: confusing name */
 		 "active" : "passive");
 
 	ini = " ";
