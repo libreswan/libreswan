@@ -234,16 +234,19 @@ static int sign_hash_nss(const struct RSA_private_key *k,
 	data.len = hash_len;
 	data.data = DISCARD_CONST(u_char *, hash_val);
 
-	/*signature.len=PK11_SignatureLen(privateKey);*/
+	/* signature.len=PK11_SignatureLen(privateKey); */
 	signature.len = sig_len;
 	signature.data = sig_val;
 
-	SECStatus s = PK11_Sign(privateKey, &signature, &data);
-	if (s != SECSuccess) {
-		loglog(RC_LOG_SERIOUS,
-		       "RSA_sign_hash: sign function failed (%d)\n",
-		       PR_GetError());
-		return 0;
+	{
+		SECStatus s = PK11_Sign(privateKey, &signature, &data);
+
+		if (s != SECSuccess) {
+			loglog(RC_LOG_SERIOUS,
+			       "RSA_sign_hash: sign function failed (%d)\n",
+			       PR_GetError());
+			return 0;
+		}
 	}
 
 	DBG(DBG_CRYPT, DBG_log("RSA_sign_hash: Ended using NSS"));
@@ -256,12 +259,12 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 {
 	SECKEYPublicKey *publicKey;
 	PRArenaPool *arena;
-	SECStatus retVal = SECSuccess;
+	SECStatus retVal;
 	SECItem nss_n, nss_e;
 	SECItem signature, data;
 	chunk_t n, e;
 
-	/*Converting n and e to form public key in SECKEYPublicKey data structure*/
+	/* Converting n and e to form public key in SECKEYPublicKey data structure */
 
 	arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	if (arena == NULL) {
@@ -283,11 +286,11 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	publicKey->pkcs11Slot = NULL;
 	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
-	/*Converting n(modulus) and e(exponent) from mpz_t form to chunk_t*/
+	/* Converting n(modulus) and e(exponent) from mpz_t form to chunk_t */
 	n = mpz_to_n_autosize(&k->n);
 	e = mpz_to_n_autosize(&k->e);
 
-	/*Converting n and e to nss_n and nss_e*/
+	/* Converting n and e to nss_n and nss_e */
 	nss_n.data = n.ptr;
 	nss_n.len = (unsigned int)n.len;
 	nss_n.type = siBuffer;

@@ -2,6 +2,7 @@
  * The rest of the code is derived from MD5C.C by RSADSI. Minor cosmetic
  * changes to accomodate it in the kernel by ji.
  * Minor changes to make 64 bit clean by Peter Onion (i.e. using u_int*_t).
+ * Changes by Avesh Agarwal to use NSS.
  */
 
 /* MD5C.C - RSA Data Security, Inc., MD5 message-digest algorithm
@@ -145,7 +146,7 @@ void osMD5Init(context)
 MD5_CTX * context;                                        /* context */
 {
 	SECStatus status;
-	context->ctx_nss = NULL;
+
 	context->ctx_nss = PK11_CreateDigestContext(SEC_OID_MD5);
 	PR_ASSERT(context->ctx_nss != NULL);
 	status = PK11_DigestBegin(context->ctx_nss);
@@ -162,6 +163,7 @@ const unsigned char *input;                     /* input block */
 UINT4 inputLen;                                 /* length of input block */
 {
 	SECStatus status = PK11_DigestOp(context->ctx_nss, input, inputLen);
+
 	PR_ASSERT(status == SECSuccess);
 }
 
@@ -173,11 +175,11 @@ unsigned char digest[16];                               /* message digest */
 MD5_CTX *context;                                       /* context */
 {
 	unsigned int length;
-	SECStatus status;
-	status = PK11_DigestFinal(context->ctx_nss, digest, &length,
+	SECStatus status = PK11_DigestFinal(context->ctx_nss, digest, &length,
 				  MD5_DIGEST_SIZE);
-	PR_ASSERT(length == MD5_DIGEST_SIZE);
+
 	PR_ASSERT(status == SECSuccess);
+	PR_ASSERT(length == MD5_DIGEST_SIZE);
 	PK11_DestroyContext(context->ctx_nss, PR_TRUE);
 }
 
@@ -254,4 +256,3 @@ unsigned int len;
 }
 #endif
 #endif
-

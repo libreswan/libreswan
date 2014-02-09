@@ -471,28 +471,28 @@ usage:
 	pass.prompt = phasemeout_loglog;
 	pass.fd = 2; /* stderr */
 
-	PRBool nss_initialized = PR_FALSE;
-	SECStatus rv;
-	char buf[100];
-	snprintf(buf, sizeof(buf), "%s", oco->confddir);
 	if (verbose)
 		fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",
-			buf);
+			oco->confddir);
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
-	if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
-		fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
-			progname, PR_GetError());
-		exit(1);
+
+	{
+		SECStatus rv = NSS_InitReadWrite(oco->confddir);
+
+		if (rv != SECSuccess) {
+			fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
+				progname, PR_GetError());
+			exit(1);
+		}
 	}
-	nss_initialized = PR_TRUE;
+
 	PK11_SetPasswordFunc(getNSSPassword);
 
 	load_lswcrypto();
 	lsw_load_preshared_secrets(&host_secrets, verbose > 0 ? TRUE : FALSE,
 				   secrets_file, &pass);
 
-	if (nss_initialized)
-		NSS_Shutdown();
+	NSS_Shutdown();
 	PR_Cleanup();
 
 	/* options that apply to entire files */
