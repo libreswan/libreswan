@@ -1087,6 +1087,10 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	md->result = result;
 	result = md->result;
 
+	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
+		DBG(DBG_DPD, DBG_log("enabling sending dpd/liveness"));
+	}
+
 	/* advance the state */
 	DBG(DBG_CONTROL,
 	    DBG_log("complete v2 state transition with %s",
