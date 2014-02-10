@@ -185,7 +185,7 @@ static void calc_dh_shared(chunk_t *shared, const chunk_t g,
 		    DBG_log("Dropped %lu leading zeros", group->bytes -
 			    dhshared_len));
 		chunk_t zeros;
-		PK11SymKey *newdhshared = NULL;
+		PK11SymKey *newdhshared;
 		CK_KEY_DERIVATION_STRING_DATA string_params;
 		SECItem params;
 
