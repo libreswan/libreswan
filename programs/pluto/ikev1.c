@@ -1824,10 +1824,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					init_phase2_iv(st, &md->hdr.isa_msgid);
 				} else {
 					/* use old IV */
-					passert(st->st_iv_len <=
-						sizeof(st->st_new_iv));
-					st->st_new_iv_len = st->st_iv_len;
-					init_new_iv(st);
+					restore_new_iv(st, st->st_iv, st->st_iv_len);
 				}
 			}
 

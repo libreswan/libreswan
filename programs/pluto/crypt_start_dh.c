@@ -160,8 +160,8 @@ void finish_dh_secretiv(struct state *st,
 
 	passert(dhr->new_iv.len <= MAX_DIGEST_LEN);
 	passert(dhr->new_iv.len > 0);
-	memcpy(st->st_new_iv, wire_chunk_ptr(dhr,
-					     &(dhr->new_iv)), dhr->new_iv.len);
+	memcpy(st->st_new_iv, wire_chunk_ptr(dhr, &dhr->new_iv),
+	       dhr->new_iv.len);
 	st->st_new_iv_len = dhr->new_iv.len;
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;

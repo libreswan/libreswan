@@ -189,8 +189,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 			"aggr outR1 DH");
 		dh->md = md;
 		set_suspended(st, md);
-		pcrc_init(&dh->dh_pcrc);
-		dh->dh_pcrc.pcrc_func = aggr_inI1_outR1_continue2;
+		pcrc_init(&dh->dh_pcrc, aggr_inI1_outR1_continue2);
 		e = start_dh_secretiv(&dh->dh_pcrc, st,
 				      st->st_import,
 				      RESPONDER,
@@ -356,13 +355,11 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		set_suspended(st, md);
 
 		if (!st->st_sec_in_use) {
-			pcrc_init(&ke->ke_pcrc);
-			ke->ke_pcrc.pcrc_func = aggr_inI1_outR1_continue1;
+			pcrc_init(&ke->ke_pcrc, aggr_inI1_outR1_continue1);
 			return build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 					st->st_import);
 		} else {
-			return aggr_inI1_outR1_tail(
-				(struct pluto_crypto_req_cont *)ke, NULL);
+			return aggr_inI1_outR1_tail(&ke->ke_pcrc, NULL);
 		}
 	}
 }
@@ -736,8 +733,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 		dh->md = md;
 
 		set_suspended(st, md);
-		pcrc_init(&dh->dh_pcrc);
-		dh->dh_pcrc.pcrc_func = aggr_inR1_outI2_crypto_continue;
+		pcrc_init(&dh->dh_pcrc, aggr_inR1_outI2_crypto_continue);
 		return start_dh_secretiv(&dh->dh_pcrc, st,
 					 st->st_import,
 					 INITIATOR,
@@ -928,11 +924,10 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	c->newest_isakmp_sa = st->st_serialno;
 
 	/* save last IV from phase 1 so it can be restored later so anything
-	 * between the end of phase 1 and the start of phase 2 ie mode config
-	 * payloads etc will not loose our IV
+	 * between the end of phase 1 and the start of phase 2 i.e. mode config
+	 * payloads etc. will not lose our IV
 	 */
-	memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
-	st->st_ph1_iv_len = st->st_new_iv_len;
+	set_ph1_iv_from_new(st);
 
 	return STF_OK;
 }
@@ -1051,11 +1046,10 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 	update_iv(st);  /* Finalize our Phase 1 IV */
 
 	/* save last IV from phase 1 so it can be restored later so anything
-	 * between the end of phase 1 and the start of phase 2 ie mode config
-	 * payloads etc will not loose our IV
+	 * between the end of phase 1 and the start of phase 2 i.e. mode config
+	 * payloads etc. will not lose our IV
 	 */
-	memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
-	st->st_ph1_iv_len = st->st_new_iv_len;
+	set_ph1_iv_from_new(st);
 
 	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
 
@@ -1203,8 +1197,7 @@ stf_status aggr_outI1(int whack_sock,
 		set_suspended(st, ke->md);
 
 		if (!st->st_sec_in_use) {
-			pcrc_init(&ke->ke_pcrc);
-			ke->ke_pcrc.pcrc_func = aggr_outI1_continue;
+			pcrc_init(&ke->ke_pcrc, aggr_outI1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     importance);
 			if (e != STF_SUSPEND && e != STF_INLINE) {
@@ -1212,8 +1205,7 @@ stf_status aggr_outI1(int whack_sock,
 				delete_state(st);
 			}
 		} else {
-			e = aggr_outI1_tail((struct pluto_crypto_req_cont *)ke,
-					    NULL);
+			e = aggr_outI1_tail(&ke->ke_pcrc, NULL);
 		}
 
 		reset_globals();

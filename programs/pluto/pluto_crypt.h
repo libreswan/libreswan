@@ -153,13 +153,34 @@ typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
 				struct pluto_crypto_req *,
 				err_t ugh);
 
+/* The crypto continuation structure
+ *
+ * Pluto is an event-driven transaction system.
+ * Each transaction must take a very small slice of time.
+ * Those that cannot, must be broken into multiple
+ * transactions and the state carried between them
+ * cannot be on the stack or in simple global variables.
+ * A continuation is used to hold such state.
+ *
+ * NOTE: this struct is the used in an twisted way to implement
+ * something like specialization in object-oriented languages.
+ *
+ * In particular, struct pluto_crypto_req_cont
+ * appears as the first field in struct ke_continuation
+ * and struct dh_continuation.  Thus a pointer to one of
+ * those structs is also a pointer to a struct pluto_crypto_req_cont
+ * (of course the types must be finessed).
+ *
+ * The routines that appear to deal with struct pluto_crypto_req_cont
+ * objects are in fact dealing generically with either of those
+ * two specializations of it.
+ */
 struct pluto_crypto_req_cont {
 	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
-	struct pluto_crypto_req      *pcrc_pcr;
+	struct pluto_crypto_req *pcrc_pcr;
 	so_serial_t pcrc_serialno;
 	pcr_req_id pcrc_id;
 	crypto_req_func pcrc_func;
-	crypto_req_func pcrc_free;
 	pb_stream pcrc_reply_stream;
 	u_int8_t                     *pcrc_reply_buffer;
 #ifdef IPSEC_PLUTO_PCRC_DEBUG
@@ -167,6 +188,20 @@ struct pluto_crypto_req_cont {
 	char                         *pcrc_file;
 	int pcrc_line;
 #endif
+};
+
+/* these two structs are specializations of struct pluto_crypto_req_cont */
+
+struct ke_continuation {
+	struct pluto_crypto_req_cont ke_pcrc;	/* MUST BE THE FIRST FIELD */
+	struct msg_digest           *md;
+};
+
+struct dh_continuation {
+	struct pluto_crypto_req_cont dh_pcrc;	/* MUST BE THE FIRST FIELD */
+	struct msg_digest           *md;
+	so_serial_t serialno;                   /* used for inter state
+	                                         * calculations on responder */
 };
 
 #define PCR_REQ_SIZE sizeof(struct pluto_crypto_req) + 10
@@ -202,8 +237,8 @@ extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);
 
 /* no longer exists?
-   extern stf_status perform_dh(struct pluto_crypto_req_cont *cn, struct state *st);
-   extern bool generate_skeyids_iv(struct state *st);
+ *  extern stf_status perform_dh(struct pluto_crypto_req_cont *cn, struct state *st);
+ *  extern bool generate_skeyids_iv(struct state *st);
  */
 
 
@@ -287,13 +322,14 @@ static inline void pcr_init(struct pluto_crypto_req *r,
 }
 
 #ifdef IPSEC_PLUTO_PCRC_DEBUG
-#define pcrc_init(pcrc) ({ \
-				 (pcrc)->pcrc_file = __FILE__; \
-				 (pcrc)->pcrc_function = __FUNCTION__; \
-				 (pcrc)->pcrc_line = __LINE__; \
-			 })
+#define pcrc_init(pcrc, func) { \
+		(pcrc)->pcrc_func = (func); \
+		(pcrc)->pcrc_file = __FILE__; \
+		(pcrc)->pcrc_function = __FUNCTION__; \
+		(pcrc)->pcrc_line = __LINE__; \
+	}
 #else
-#define pcrc_init(pcrc) do { /* nothing yet */ } while (0)
+#define pcrc_init(pcrc, func) { (pcrc)->pcrc_func = (func); }
 #endif
 
 #endif /* _PLUTO_CRYPT_H */

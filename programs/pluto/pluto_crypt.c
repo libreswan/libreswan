@@ -539,15 +539,7 @@ void delete_cryptographic_continuation(struct state *st)
 			pfree(cn->pcrc_reply_buffer);
 		cn->pcrc_reply_buffer = NULL;
 
-		if (cn->pcrc_free) {
-			/*
-			 * use special free function which can deal with other
-			 * saved structures.
-			 */
-			(*cn->pcrc_free)(cn, cn->pcrc_pcr, "state removed");
-		} else {
-			pfree(cn);
-		}
+		pfree(cn);
 	}
 	DBG(DBG_CRYPT, DBG_log("no suspended cryptographic state remains for #%lu\n",
 			       st->st_serialno));

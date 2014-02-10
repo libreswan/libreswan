@@ -1004,8 +1004,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 		ke->md = md;
 
 		passert(!st->st_sec_in_use);
-		pcrc_init(&ke->ke_pcrc);
-		ke->ke_pcrc.pcrc_func = main_inR1_outI2_continue;
+		pcrc_init(&ke->ke_pcrc, main_inR1_outI2_continue);
 		set_suspended(st, md);
 		return build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				st->st_import);
@@ -1214,8 +1213,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 		set_suspended(st, md);
 
 		passert(!st->st_sec_in_use);
-		pcrc_init(&ke->ke_pcrc);
-		ke->ke_pcrc.pcrc_func = main_inI2_outR2_continue;
+		pcrc_init(&ke->ke_pcrc, main_inI2_outR2_continue);
 		return build_ke(&ke->ke_pcrc, st,
 				st->st_oakley.group, st->st_import);
 	}
@@ -1397,8 +1395,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 
 		dh->md = NULL;
 		dh->serialno = st->st_serialno;
-		pcrc_init(&dh->dh_pcrc);
-		dh->dh_pcrc.pcrc_func = main_inI2_outR2_calcdone;
+		pcrc_init(&dh->dh_pcrc, main_inI2_outR2_calcdone);
 		passert(st->st_suspended_md == NULL);
 
 		DBG(DBG_CONTROLMORE,
@@ -1782,8 +1779,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 
 	dh->md = md;
 	set_suspended(st, md);
-	pcrc_init(&dh->dh_pcrc);
-	dh->dh_pcrc.pcrc_func = main_inR2_outI3_cryptotail;
+	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);
 	return start_dh_secretiv(&dh->dh_pcrc, st,
 				st->st_import,
 				INITIATOR,
@@ -2207,8 +2203,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	DBG_cond_dump(DBG_CRYPT, "last encrypted block of Phase 1:",
 		st->st_new_iv, st->st_new_iv_len);
 
-	st->st_ph1_iv_len = st->st_new_iv_len;
-	set_ph1_iv(st, st->st_new_iv);
+	set_ph1_iv_from_new(st);
 
 	/*
 	 * It seems as per Cisco implementation, XAUTH and MODECFG
@@ -2278,15 +2273,7 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 			return r;
 	}
 
-	/*
-	 * Done input
-	 *
-	 * save last IV from phase 1 so it can be restored later so anything
-	 * between the end of phase 1 and the start of phase 2 ie mode config
-	 * payloads etc will not loose our IV
-	 */
-	memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
-	st->st_ph1_iv_len = st->st_new_iv_len;
+	/* Done input */
 
 	/*
 	 * It seems as per Cisco implementation, XAUTH and MODECFG
@@ -2315,16 +2302,12 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 	passert((st->st_policy & POLICY_PFS) == 0 || st->st_pfs_group !=
 		NULL );
 
-	st->st_ph1_iv_len = st->st_new_iv_len;
-	set_ph1_iv(st, st->st_new_iv);
-
 	/*
 	 * save last IV from phase 1 so it can be restored later so anything
-	 * between the end of phase 1 and the start of phase 2 ie mode config
-	 * payloads etc will not loose our IV
+	 * between the end of phase 1 and the start of phase 2 i.e. mode config
+	 * payloads etc. will not lose our IV
 	 */
-	memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
-	st->st_ph1_iv_len = st->st_new_iv_len;
+	set_ph1_iv_from_new(st);
 
 	update_iv(st); /* finalize our Phase 1 IV */
 
@@ -2361,8 +2344,6 @@ stf_status send_isakmp_notification(struct state *st,
 {
 	msgid_t msgid;
 	pb_stream rbody;
-	u_char old_new_iv[MAX_DIGEST_LEN];
-	u_char old_iv[MAX_DIGEST_LEN];
 	u_char
 	*r_hashval, /* where in reply to jam hash value */
 	*r_hash_start; /* start of what is to be hashed */
@@ -2439,25 +2420,31 @@ stf_status send_isakmp_notification(struct state *st,
 	 * for NOTIFICATION / DELETE messages we don't need to maintain a state
 	 * because there are no retransmissions...
 	 */
-
-	save_iv(st, old_iv);
-	save_new_iv(st, old_new_iv);
-
-	init_phase2_iv(st, &msgid);
-	if (!encrypt_message(&rbody, st))
-		return STF_INTERNAL_ERROR;
-
 	{
-		chunk_t saved_tpacket = st->st_tpacket;
+		u_char old_new_iv[MAX_DIGEST_LEN];
+		unsigned int old_new_iv_len;
+		u_char old_iv[MAX_DIGEST_LEN];
+		unsigned int old_iv_len;
 
-		setchunk(st->st_tpacket, reply_stream.start,
-			pbs_offset(&reply_stream));
-		send_ike_msg(st, "ISAKMP notify");
-		st->st_tpacket = saved_tpacket;
+		save_iv(st, old_iv, old_iv_len);
+		save_new_iv(st, old_new_iv, old_new_iv_len);
+
+		init_phase2_iv(st, &msgid);
+		if (!encrypt_message(&rbody, st))
+			return STF_INTERNAL_ERROR;
+
+		{
+			chunk_t saved_tpacket = st->st_tpacket;
+
+			setchunk(st->st_tpacket, reply_stream.start,
+				pbs_offset(&reply_stream));
+			send_ike_msg(st, "ISAKMP notify");
+			st->st_tpacket = saved_tpacket;
+		}
+		/* get back old IV for this state */
+		restore_iv(st, old_iv, old_iv_len);
+		restore_new_iv(st, old_new_iv, old_new_iv_len);
 	}
-	/* get back old IV for this state */
-	set_iv(st, old_iv);
-	set_new_iv(st, old_new_iv);
 
 	return STF_IGNORE;
 }
@@ -2603,29 +2590,22 @@ static void send_notification(struct state *sndst, notification_t type,
 			});
 	}
 
-	/* Encrypt message (preserve st_iv) */
-	if (encst) {
+	if (encst != NULL) {
+		/* Encrypt message (preserve st_iv) */
+		/* ??? why not preserve st_new_iv? */
 		u_char old_iv[MAX_DIGEST_LEN];
-		u_int old_iv_len = encst->st_iv_len;
+		u_int old_iv_len;
 
-		if (old_iv_len > MAX_DIGEST_LEN)
-			impossible();
-		memcpy(old_iv, encst->st_iv, old_iv_len);
+		save_iv(encst, old_iv, old_iv_len);
 
 		if (!IS_ISAKMP_SA_ESTABLISHED(encst->st_state)) {
-			if (encst->st_new_iv_len > MAX_DIGEST_LEN)
-				impossible();
-			memcpy(encst->st_iv, encst->st_new_iv,
-				encst->st_new_iv_len);
-			encst->st_iv_len = encst->st_new_iv_len;
+			update_iv(encst);
 		}
 		init_phase2_iv(encst, &msgid);
 		if (!encrypt_message(&r_hdr_pbs, encst))
 			impossible();
 
-		/* restore preserved st_iv*/
-		memcpy(encst->st_iv, old_iv, old_iv_len);
-		encst->st_iv_len = old_iv_len;
+		restore_iv(encst, old_iv, old_iv_len);
 	} else {
 		close_output_pbs(&r_hdr_pbs);
 	}
@@ -2866,9 +2846,10 @@ void ikev1_delete_out(struct state *st)
 	 */
 	{
 		u_char old_iv[MAX_DIGEST_LEN];
+		unsigned int old_iv_len;
 		chunk_t saved_tpacket = p1st->st_tpacket;
 
-		save_iv(p1st, old_iv);
+		save_iv(p1st, old_iv, old_iv_len);
 		init_phase2_iv(p1st, &msgid);
 
 		if (!encrypt_message(&r_hdr_pbs, p1st))
@@ -2880,7 +2861,7 @@ void ikev1_delete_out(struct state *st)
 		p1st->st_tpacket = saved_tpacket;
 
 		/* get back old IV for this state */
-		set_iv(p1st, old_iv);
+		restore_iv(p1st, old_iv, old_iv_len);
 	}
 }
 

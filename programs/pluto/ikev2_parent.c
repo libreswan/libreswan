@@ -57,7 +57,6 @@
 #include "ipsec_doi.h"
 #include "vendor.h"
 #include "timer.h"
-#include "ike_continuations.h"
 #include "cookie.h"
 #include "rnd.h"
 #include "pending.h"
@@ -230,8 +229,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 		set_suspended(st, ke->md);
 
 		if (!st->st_sec_in_use) {
-			pcrc_init(&ke->ke_pcrc);
-			ke->ke_pcrc.pcrc_func = ikev2_parent_outI1_continue;
+			pcrc_init(&ke->ke_pcrc, ikev2_parent_outI1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     importance);
 			if ((e != STF_SUSPEND && e != STF_INLINE) ||
@@ -242,9 +240,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 				delete_state(st);
 			}
 		} else {
-			e =ikev2_parent_outI1_tail(
-					(struct pluto_crypto_req_cont *)ke,
-					NULL);
+			e =ikev2_parent_outI1_tail(&ke->ke_pcrc, NULL);
 		}
 
 		reset_globals();
@@ -757,9 +753,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		set_suspended(st, ke->md);
 
 		if (!st->st_sec_in_use) {
-			pcrc_init(&ke->ke_pcrc);
-			ke->ke_pcrc.pcrc_func =
-				ikev2_parent_inI1outR1_continue;
+			pcrc_init(&ke->ke_pcrc, ikev2_parent_inI1outR1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     pcim_stranger_crypto);
 			if (e != STF_SUSPEND && e != STF_INLINE) {
@@ -1102,8 +1096,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		dh->md = md;
 		set_suspended(st, dh->md);
 
-		pcrc_init(&dh->dh_pcrc);
-		dh->dh_pcrc.pcrc_func = ikev2_parent_inR1outI2_continue;
+		pcrc_init(&dh->dh_pcrc, ikev2_parent_inR1outI2_continue);
 		e = start_dh_v2(&dh->dh_pcrc, st, st->st_import, INITIATOR,
 				st->st_oakley.groupnum);
 		if (e != STF_SUSPEND && e != STF_INLINE) {
@@ -1738,8 +1731,7 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 		dh->md = md;
 		set_suspended(st, dh->md);
 
-		pcrc_init(&dh->dh_pcrc);
-		dh->dh_pcrc.pcrc_func = ikev2_parent_inI2outR2_continue;
+		pcrc_init(&dh->dh_pcrc, ikev2_parent_inI2outR2_continue);
 		e = start_dh_v2(&dh->dh_pcrc, st, st->st_import, RESPONDER,
 				st->st_oakley.groupnum);
 		if (e != STF_SUSPEND && e != STF_INLINE) {
