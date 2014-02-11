@@ -61,21 +61,17 @@
 #include <keyhi.h>
 #include "lswconf.h"
 
+/* MUST BE THREAD-SAFE */
 void calc_ke(struct pluto_crypto_req *r)
 {
-	chunk_t prime;
-	chunk_t base;
 	SECKEYDHParams dhp;
 	PK11SlotInfo *slot = NULL;
-	SECKEYPrivateKey *privk;
-	SECKEYPublicKey   *pubk;
+	SECKEYPrivateKey *privk = NULL;
+	SECKEYPublicKey   *pubk = NULL;
 	struct pcr_kenonce *kn = &r->pcr_d.kn;
-	const struct oakley_group_desc *group;
-
-	group = lookup_group(kn->oakley_group);
-
-	base  = mpz_to_n_autosize(group->generator);
-	prime = mpz_to_n_autosize(group->modulus);
+	const struct oakley_group_desc *group = lookup_group(kn->oakley_group);
+	chunk_t base  = mpz_to_n_autosize(group->generator);
+	chunk_t prime = mpz_to_n_autosize(group->modulus);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of Prime:\n", prime));
 	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of base:\n", base));
@@ -87,22 +83,22 @@ void calc_ke(struct pluto_crypto_req *r)
 
 	slot = PK11_GetBestSlot(CKM_DH_PKCS_KEY_PAIR_GEN,
 				lsw_return_nss_password_file_info());
-	if (!slot)
+	if (slot == NULL)
 		loglog(RC_LOG_SERIOUS, "NSS: slot for DH key gen is NULL");
 	PR_ASSERT(slot != NULL);
 
-	while (1) {
+	for (;;) {
 		privk = PK11_GenerateKeyPair(slot, CKM_DH_PKCS_KEY_PAIR_GEN,
 					     &dhp, &pubk, PR_FALSE, PR_TRUE,
 					     lsw_return_nss_password_file_info());
-		if (!privk) {
+		if (privk == NULL) {
 			loglog(RC_LOG_SERIOUS,
 			       "NSS: DH private key creation failed (err %d)",
 			       PR_GetError());
 		}
 		PR_ASSERT(privk != NULL);
 
-		if ( group->bytes == pubk->u.dh.publicValue.len ) {
+		if (group->bytes == pubk->u.dh.publicValue.len) {
 			DBG(DBG_CRYPT,
 			    DBG_log("NSS: generated dh priv and pub keys: %d\n",
 				    pubk->u.dh.publicValue.len));
@@ -110,10 +106,16 @@ void calc_ke(struct pluto_crypto_req *r)
 		} else {
 			DBG(DBG_CRYPT,
 			    DBG_log("NSS: generating dh priv and pub keys"));
-			if (privk)
+
+			if (privk != NULL) {
 				SECKEY_DestroyPrivateKey(privk);
-			if (pubk)
+				privk = NULL;
+			}
+
+			if (pubk != NULL) {
 				SECKEY_DestroyPublicKey(pubk);
+				pubk = NULL;
+			}
 		}
 	}
 
@@ -121,6 +123,7 @@ void calc_ke(struct pluto_crypto_req *r)
 				sizeof(SECKEYPrivateKey*));
 	{
 		char *gip = wire_chunk_ptr(kn, &(kn->secret));
+
 		memcpy(gip, &privk, sizeof(SECKEYPrivateKey *));
 	}
 
@@ -128,6 +131,7 @@ void calc_ke(struct pluto_crypto_req *r)
 				pubk->u.dh.publicValue.len);
 	{
 		char *gip = wire_chunk_ptr(kn, &(kn->gi));
+
 		memcpy(gip, pubk->u.dh.publicValue.data,
 		       pubk->u.dh.publicValue.len);
 	}
@@ -136,6 +140,7 @@ void calc_ke(struct pluto_crypto_req *r)
 				sizeof(SECKEYPublicKey*));
 	{
 		char *gip = wire_chunk_ptr(kn, &(kn->pubk));
+
 		memcpy(gip, &pubk, sizeof(SECKEYPublicKey*));
 	}
 
@@ -155,14 +160,21 @@ void calc_ke(struct pluto_crypto_req *r)
 		     sizeof(SECKEYPublicKey*)));
 
 	/* clean up after ourselves */
-	if (slot)
+
+	if (slot != NULL)
 		PK11_FreeSlot(slot);
-	/* if (privk){SECKEY_DestroyPrivateKey(privk);} */
-	/* if (pubk){SECKEY_DestroyPublicKey(pubk);} */
+
+	if (privk != NULL)
+		SECKEY_DestroyPrivateKey(privk);
+
+	if (pubk != NULL)
+		SECKEY_DestroyPublicKey(pubk);
+
 	freeanychunk(prime);
 	freeanychunk(base);
 }
 
+/* MUST BE THREAD-SAFE */
 void calc_nonce(struct pluto_crypto_req *r)
 {
 	struct pcr_kenonce *kn = &r->pcr_d.kn;

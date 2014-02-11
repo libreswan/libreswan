@@ -118,19 +118,17 @@ struct pcr_skeycalc_v2 {
 };
 
 #define space_chunk_ptr(SPACE, wire) ((void *)&((SPACE)[(wire)->start]))
-#define wire_chunk_ptr(k, wire) space_chunk_ptr((k)->space, wire)
+#define wire_chunk_ptr(k, wire) space_chunk_ptr((k)->space, (wire))
 
-#define setchunk_fromwire(chunk, wire, ctner) setchunk(chunk, \
-						       wire_chunk_ptr(ctner, \
-								      wire), \
-						       (wire)->len)
+#define setchunk_fromwire(chunk, wire, ctner) \
+	setchunk(chunk, wire_chunk_ptr(ctner, wire), (wire)->len)
 
-#define setwirechunk_fromchunk(wire, chunk, ctner) do { \
+#define setwirechunk_fromchunk(wire, chunk, ctner) { \
 		wire_chunk_t *w = &(wire);                          \
 		chunk_t      *c = &(chunk);                         \
 		pluto_crypto_allocchunk(&((ctner)->thespace), w, c->len);   \
 		memcpy(wire_chunk_ptr(ctner, w), c->ptr, c->len);   \
-} while (0)
+    }
 
 struct pluto_crypto_req {
 	size_t pcr_len;
@@ -210,10 +208,10 @@ extern void init_crypto_helpers(int nhelpers);
 extern err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 					struct pluto_crypto_req_cont *cn,
 					bool *toomuch);
-extern void pluto_crypto_helper_sockets(lsw_fd_set *readfds);
-extern int  pluto_crypto_helper_ready(lsw_fd_set *readfds);
+extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
+extern int  pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 
-extern void pluto_crypto_allocchunk(wire_chunk_t *space,
+extern void pluto_crypto_allocchunk(wire_chunk_t *spacetrack,
 				    wire_chunk_t *new,
 				    size_t howbig);
 extern void pluto_crypto_copychunk(wire_chunk_t *spacetrack,

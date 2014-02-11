@@ -43,7 +43,7 @@
 #include "rnd.h"
 #include "pluto_crypt.h"
 
-void pluto_crypto_allocchunk(wire_chunk_t *space,
+void pluto_crypto_allocchunk(wire_chunk_t *spacetrack,
 			     wire_chunk_t *new,
 			     size_t howbig)
 {
@@ -51,12 +51,12 @@ void pluto_crypto_allocchunk(wire_chunk_t *space,
 	 * passert for now, since we should be able to figure out what
 	 * the maximum is.
 	 */
-	passert(howbig < space->len - space->start);
+	passert(howbig < spacetrack->len - spacetrack->start);
 
-	new->start = space->start;
+	new->start = spacetrack->start;
 	new->len   = howbig;
 
-	space->start += howbig;
+	spacetrack->start += howbig;
 }
 
 void pluto_crypto_copychunk(wire_chunk_t *spacetrack,
