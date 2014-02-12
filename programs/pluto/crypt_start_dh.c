@@ -64,14 +64,12 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 			     u_int16_t oakley_group2)
 {
 	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *dhq;
+	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(&r, pcr_compute_dh_iv, importance);
-
-	dhq = &r.pcr_d.dhq;
+	pcr_dh_init(&r, pcr_compute_dh_iv, importance);
 
 	passert(st->st_sec_in_use);
 
@@ -87,7 +85,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	    DBG_log("parent1 type: %d group: %d len: %d\n", r.pcr_type,
 		    r.pcr_d.dhq.oakley_group, (int)r.pcr_len));
 
-	if (pss)
+	if (pss != NULL)
 		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->pss,
 				       *pss);
 	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->ni,
@@ -174,14 +172,12 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 			   u_int16_t oakley_group2)
 {
 	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *dhq;
+	struct pcr_skeyid_q *const dhq= &r.pcr_d.dhq;
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(&r, pcr_compute_dh, importance);
-
-	dhq = &r.pcr_d.dhq;
+	pcr_dh_init(&r, pcr_compute_dh, importance);
 
 	passert(st->st_sec_in_use);
 
@@ -192,7 +188,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	dhq->init = init;
 	dhq->keysize = st->st_oakley.enckeylen / BITS_PER_BYTE;
 
-	if (pss)
+	if (pss != NULL)
 		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->pss,
 				       *pss);
 	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->ni,
@@ -263,13 +259,11 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 		       u_int16_t oakley_group2)
 {
 	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *dhq;
+	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(&r, pcr_compute_dh_v2, importance);
-
-	dhq = &r.pcr_d.dhq;
+	pcr_dh_init(&r, pcr_compute_dh_v2, importance);
 
 	passert(st->st_sec_in_use);
 

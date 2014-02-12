@@ -52,6 +52,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
+#include "enum_names.h"
 #include "defs.h"
 #include "packet.h"
 #include "demux.h"
@@ -113,6 +114,53 @@ static pcr_req_id pcw_id;	/* counter for generating unique request IDs */
  */
 static int pc_helper_num = -1;
 
+/* pluto crypto operations */
+static const char *const pluto_cryptoop_strings[] = {
+	"build_kenonce",	/* calculate g^i and nonce */
+	"build_nonce",	/* just fetch a new nonce */
+	"compute dh+iv",	/* (g^x)(g^y) and skeyids for Phase 1 DH + prf */
+	"compute dh(p2)",	/* perform (g^x)(g^y) for Phase 2 PFS */
+	"compute dh(v2)",	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
+};
+
+static enum_names pluto_cryptoop_names =
+	{ pcr_build_kenonce, pcr_compute_dh_v2, pluto_cryptoop_strings, NULL };
+
+/* initializers for pluto_crypto_request continuations */
+
+static void pcr_init(struct pluto_crypto_req *r,
+			    enum pluto_crypto_requests pcr_type,
+			    enum crypto_importance pcr_pcim)
+{
+	zero(r);
+	r->pcr_len  = sizeof(struct pluto_crypto_req);
+	r->pcr_type = pcr_type;
+	r->pcr_pcim = pcr_pcim;
+}
+
+
+void pcr_nonce_init(struct pluto_crypto_req *r,
+			    enum pluto_crypto_requests pcr_type,
+			    enum crypto_importance pcr_pcim)
+{
+	pcr_init(r, pcr_type, pcr_pcim);
+
+	/* note: this might be the wrong union member; they have the same prefix */
+	r->pcr_d.kn.thespace.start = 0;
+	r->pcr_d.kn.thespace.len = sizeof(r->pcr_d.kn.space);
+}
+
+void pcr_dh_init(struct pluto_crypto_req *r,
+			enum pluto_crypto_requests pcr_type,
+			enum crypto_importance pcr_pcim)
+{
+	pcr_init(r, pcr_type, pcr_pcim);
+
+	/* note: this might be the wrong union member; they have the same prefix */
+	r->pcr_d.dhq.thespace.start = 0;
+	r->pcr_d.dhq.thespace.len = sizeof(r->pcr_d.dhq.space);
+}
+
 /* If there are any helper threads, this code is always executed IN A HELPER THREAD.
  * Otherwise it is executed in the main (only) thread.
  */
@@ -154,12 +202,6 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 
 	case pcr_compute_dh_v2:
 		calc_dh_v2(r);
-		break;
-
-	case pcr_rsa_sign:
-	case pcr_rsa_check:
-	case pcr_x509cert_fetch:
-	case pcr_x509crl_fetch:
 		break;
 	}
 }

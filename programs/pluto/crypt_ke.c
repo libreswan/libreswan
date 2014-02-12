@@ -196,15 +196,14 @@ stf_status build_ke(struct pluto_crypto_req_cont *cn,
 		    enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
-	struct pluto_crypto_req *r = &rd;
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(r, pcr_build_kenonce, importance);
-	r->pcr_d.kn.oakley_group   = group->group;
+	pcr_nonce_init(&rd, pcr_build_kenonce, importance);
+	rd.pcr_d.kn.oakley_group = group->group;
 
 	cn->pcrc_serialno = st->st_serialno;
-	e = send_crypto_helper_request(r, cn, &toomuch);
+	e = send_crypto_helper_request(&rd, cn, &toomuch);
 
 	if (e != NULL) {
 		loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
@@ -231,14 +230,13 @@ stf_status build_nonce(struct pluto_crypto_req_cont *cn,
 		       enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
-	struct pluto_crypto_req *r = &rd;
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(r, pcr_build_nonce, importance);
+	pcr_nonce_init(&rd, pcr_build_nonce, importance);
 
 	cn->pcrc_serialno = st->st_serialno;
-	e = send_crypto_helper_request(r, cn, &toomuch);
+	e = send_crypto_helper_request(&rd, cn, &toomuch);
 
 	if (e != NULL) {
 		loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);

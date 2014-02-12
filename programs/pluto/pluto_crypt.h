@@ -40,6 +40,18 @@
 #include "crypto.h"
 #include "libreswan/passert.h"
 
+/*
+ * cryptographic helper operations.
+ */
+enum pluto_crypto_requests {
+	pcr_build_kenonce,	/* calculate g^i and nonce */
+	pcr_build_nonce,	/* just fetch a new nonce */
+	pcr_compute_dh_iv,	/* (g^x)(g^y) and skeyids for Phase 1 DH + prf */
+	pcr_compute_dh,	/* perform (g^x)(g^y) for Phase 2 PFS */
+	pcr_compute_dh_v2,	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
+};
+
+
 typedef unsigned int pcr_req_id;
 
 typedef struct wire_chunk {
@@ -63,6 +75,7 @@ struct pcr_kenonce {
 };
 
 #define DHCALC_SIZE 2560
+
 struct pcr_skeyid_q {
 	wire_chunk_t thespace;
 	unsigned char space[DHCALC_SIZE];
@@ -289,35 +302,13 @@ static inline void clonetowirechunk(wire_chunk_t  *thespace,
 	memcpy(gip, origdat, origlen);
 }
 
-static inline void pcr_init(struct pluto_crypto_req *r,
+extern void pcr_nonce_init(struct pluto_crypto_req *r,
 			    enum pluto_crypto_requests pcr_type,
-			    enum crypto_importance pcr_pcim)
-{
-	zero(r);
-	r->pcr_len  = sizeof(struct pluto_crypto_req);
-	r->pcr_type = pcr_type;
-	r->pcr_pcim = pcr_pcim;
+			    enum crypto_importance pcr_pcim);
 
-	switch (r->pcr_type) {
-	case pcr_build_kenonce:
-	case pcr_build_nonce:
-		r->pcr_d.kn.thespace.start = 0;
-		r->pcr_d.kn.thespace.len   = sizeof(r->pcr_d.kn.space);
-		break;
-	case pcr_compute_dh_iv:
-	case pcr_compute_dh:
-	case pcr_compute_dh_v2:
-		r->pcr_d.dhq.thespace.start = 0;
-		r->pcr_d.dhq.thespace.len   = sizeof(r->pcr_d.dhq.space);
-		break;
-	case pcr_rsa_sign:
-	case pcr_rsa_check:
-	case pcr_x509cert_fetch:
-	case pcr_x509crl_fetch:
-		passert(0);
-		break;
-	}
-}
+extern void pcr_dh_init(struct pluto_crypto_req *r,
+			enum pluto_crypto_requests pcr_type,
+			enum crypto_importance pcr_pcim);
 
 #ifdef IPSEC_PLUTO_PCRC_DEBUG
 #define pcrc_init(pcrc, func) { \
