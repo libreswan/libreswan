@@ -164,11 +164,13 @@ void calc_ke(struct pluto_crypto_req *r)
 	if (slot != NULL)
 		PK11_FreeSlot(slot);
 
+#if 0	/* ??? currently broken.  Why?  A leak is better than a crash. */
 	if (privk != NULL)
 		SECKEY_DestroyPrivateKey(privk);
 
 	if (pubk != NULL)
 		SECKEY_DestroyPublicKey(pubk);
+#endif
 
 	freeanychunk(prime);
 	freeanychunk(base);
