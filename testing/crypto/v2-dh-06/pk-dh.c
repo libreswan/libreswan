@@ -51,7 +51,7 @@ struct encrypt_desc *tc2_encrypter = &crypto_encrypter_3des;
 int main(int argc, char *argv[])
 {
 	struct pluto_crypto_req r;
-	struct pcr_skeycalc_v2 *skr = &r.pcr_d.dhv2;
+	struct pcr_skeycalc_v2_r *skr = &r.pcr_d.dhv2;
 	struct pcr_skeyid_q    *skq = &r.pcr_d.dhq;
 
 	progname = argv[0];
@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
 	/* initialize list of moduli */
 	init_crypto();
 
-	skq->thespace.start = 0;
-	skq->thespace.len   = sizeof(skq->space);
+	INIT_WIRE_ARENA(*skq);
+
 	skq->auth = tc2_auth;
 	skq->prf_hash = tc2_hash;
 	skq->integ_hash = tc2_hash;
@@ -69,12 +69,11 @@ int main(int argc, char *argv[])
 	skq->init = tc2_init;
 	skq->keysize = tc2_encrypter->keydeflen / BITS_PER_BYTE;
 
-#define copydatlen(field, data, len) do { \
+#define copydatlen(field, data, len) { \
 		chunk_t tchunk;           \
 		setchunk(tchunk, data, len); \
-		pluto_crypto_copychunk(&skq->thespace, skq->space \
-				       , &skq->field, tchunk); }   \
-	while (0)
+		WIRE_CLONE_CHUNK(*skq, field, tchunk); \
+	}
 
 	copydatlen(ni, tc2_ni, tc2_ni_len);
 	copydatlen(nr, tc2_nr, tc2_nr_len);

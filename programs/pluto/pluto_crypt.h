@@ -54,15 +54,79 @@ enum pluto_crypto_requests {
 
 typedef unsigned int pcr_req_id;
 
+/* wire_chunk: a chunk-like representation that is relocatable.
+ *
+ * This is suitable for chunks that must go over a wire and hence
+ * may land at different addresses.
+ * The key idea is that the start is relative to the start-of-space
+ * within the struct.  This is managed within an arena.
+ *
+ * Because of two limitations of C typing, the actual space must
+ * be created as an array of unsigned char of the required size
+ * (reduced by 1) right after the arena.
+ *
+ * The macros with uppercase names are magic: they know
+ * the field names "arena" and "space" in a way that a function
+ * could not.
+ */
+typedef struct wire_arena {
+	unsigned int next;	/* index of next byte to be allocated */
+	size_t roof;	/* bound of available space */
+	unsigned char space[1];	/* actual space follows */
+} wire_arena_t;
+
+#define DECLARE_WIRE_ARENA(size) \
+	wire_arena_t arena; \
+	unsigned char space[(size) - 1]
+
+#define INIT_WIRE_ARENA(parent) \
+	{ (parent).arena.next = 0; (parent).arena.roof = sizeof((parent).space) + 1; }
+
 typedef struct wire_chunk {
 	unsigned int start;
 	size_t len;
 } wire_chunk_t;
 
+
+extern void alloc_wire_chunk(wire_arena_t *arena,
+				    wire_chunk_t *new,
+				    size_t size);
+
+#define ALLOC_WIRE_CHUNK(parent, field, size) \
+	alloc_wire_chunk(&(parent).arena, &(parent).field, (size))
+
+/* create a wire_chunk that is a clone of a chunk
+ * The space is allocated from the arena.
+ */
+extern void wire_clone_chunk(wire_arena_t *arena,
+				   wire_chunk_t *new,
+				   const chunk_t *chunk);
+
+#define WIRE_CLONE_CHUNK(parent, field, chunk) \
+	wire_clone_chunk(&(parent).arena, &(parent).field, &(chunk))
+
+#define WIRE_CLONE_DATA(parent, field, ptr, len) { \
+	chunk_t t; \
+	setchunk(t, (ptr), (len)); \
+	WIRE_CLONE_CHUNK(parent, field, t); \
+    }
+
+/* pointer to first byte of wire within arena */
+#define wire_chunk_ptr(arena, wire) (&(arena)->space[(wire)->start])
+
+#define WIRE_CHUNK_PTR(parent, field) wire_chunk_ptr(&(parent).arena, &(parent).field)
+
+#define setchunk_from_wire(chunk, parent, wire) \
+	setchunk(chunk, wire_chunk_ptr(&(parent)->arena, (wire)), (wire)->len)
+
+/* end of wire_chunk definitions */
+
 #define KENONCE_SIZE 1280
+
+/* query and response */
 struct pcr_kenonce {
-	wire_chunk_t thespace;
-	unsigned char space[KENONCE_SIZE];
+	/* input, then output */
+	DECLARE_WIRE_ARENA(KENONCE_SIZE);
 
 	/* inputs */
 	u_int16_t oakley_group;
@@ -76,11 +140,10 @@ struct pcr_kenonce {
 
 #define DHCALC_SIZE 2560
 
+/* query */
 struct pcr_skeyid_q {
-	wire_chunk_t thespace;
-	unsigned char space[DHCALC_SIZE];
+	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
-	/* inputs */
 	u_int16_t oakley_group;
 	oakley_auth_t auth;
 	oakley_hash_t integ_hash;
@@ -100,11 +163,10 @@ struct pcr_skeyid_q {
 	wire_chunk_t pubk;
 };
 
+/* response */
 struct pcr_skeyid_r {
-	wire_chunk_t thespace;
-	unsigned char space[DHCALC_SIZE];
+	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
-	/* outputs */
 	wire_chunk_t shared;
 	wire_chunk_t skeyid;    /* output */
 	wire_chunk_t skeyid_d;  /* output */
@@ -114,11 +176,10 @@ struct pcr_skeyid_r {
 	wire_chunk_t enc_key;
 };
 
-struct pcr_skeycalc_v2 {
-	wire_chunk_t thespace;
-	unsigned char space[DHCALC_SIZE];
+/* response */
+struct pcr_skeycalc_v2_r {
+	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
-	/* outputs */
 	wire_chunk_t shared;
 	wire_chunk_t skeyseed;  /* output */
 	wire_chunk_t skeyid_d;  /* output */
@@ -130,31 +191,18 @@ struct pcr_skeycalc_v2 {
 	wire_chunk_t skeyid_pr; /* output */
 };
 
-#define space_chunk_ptr(SPACE, wire) ((void *)&((SPACE)[(wire)->start]))
-#define wire_chunk_ptr(k, wire) space_chunk_ptr((k)->space, (wire))
-
-#define setchunk_fromwire(chunk, wire, ctner) \
-	setchunk(chunk, wire_chunk_ptr(ctner, wire), (wire)->len)
-
-#define setwirechunk_fromchunk(wire, chunk, ctner) { \
-		wire_chunk_t *w = &(wire);                          \
-		chunk_t      *c = &(chunk);                         \
-		pluto_crypto_allocchunk(&((ctner)->thespace), w, c->len);   \
-		memcpy(wire_chunk_ptr(ctner, w), c->ptr, c->len);   \
-    }
-
 struct pluto_crypto_req {
 	size_t pcr_len;
-
 	enum pluto_crypto_requests pcr_type;
 	pcr_req_id pcr_id;
 	enum crypto_importance pcr_pcim;
-	int pcr_slot;
+
 	union {
-		struct pcr_kenonce kn;
-		struct pcr_skeyid_q dhq;
-		struct pcr_skeyid_r dhr;
-		struct pcr_skeycalc_v2 dhv2;
+		struct pcr_kenonce kn;	/* query and result */
+
+		struct pcr_skeyid_q dhq;	/* query v1 and v2 */
+		struct pcr_skeyid_r dhr;	/* response v1 */
+		struct pcr_skeycalc_v2_r dhv2;	/* response v2 */
 	} pcr_d;
 };
 
@@ -218,19 +266,14 @@ struct dh_continuation {
 #define PCR_REQ_SIZE sizeof(struct pluto_crypto_req) + 10
 
 extern void init_crypto_helpers(int nhelpers);
+
 extern err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 					struct pluto_crypto_req_cont *cn,
 					bool *toomuch);
-extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
-extern int  pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 
-extern void pluto_crypto_allocchunk(wire_chunk_t *spacetrack,
-				    wire_chunk_t *new,
-				    size_t howbig);
-extern void pluto_crypto_copychunk(wire_chunk_t *spacetrack,
-				   unsigned char *space,
-				   wire_chunk_t *new,
-				   chunk_t data);
+extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
+
+extern int  pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 
 /* actual helper functions */
 extern stf_status build_ke(struct pluto_crypto_req_cont *cn,
@@ -278,29 +321,15 @@ extern stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 			      u_int16_t oakley_group2);
 
 extern void finish_dh_v2(struct state *st,
-			 struct pluto_crypto_req *r);
+			 const struct pluto_crypto_req *r);
 
 extern void calc_dh_iv(struct pluto_crypto_req *r);
 extern void calc_dh(struct pluto_crypto_req *r);
 extern void calc_dh_v2(struct pluto_crypto_req *r);
 
 extern void unpack_KE(struct state *st,
-		      struct pluto_crypto_req *r,
+		      const struct pluto_crypto_req *r,
 		      chunk_t *g);
-
-static inline void clonetowirechunk(wire_chunk_t  *thespace,
-				    unsigned char *space,
-				    wire_chunk_t *wiretarget,
-				    const void   *origdat,
-				    const size_t origlen)
-{
-	char *gip;
-
-	pluto_crypto_allocchunk(thespace, wiretarget, origlen);
-
-	gip = space_chunk_ptr(space, wiretarget);
-	memcpy(gip, origdat, origlen);
-}
 
 extern void pcr_nonce_init(struct pluto_crypto_req *r,
 			    enum pluto_crypto_requests pcr_type,

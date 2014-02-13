@@ -454,19 +454,19 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 	const struct encrypt_desc *encrypter = skq->encrypter;
 
 	/* this doesn't take any memory */
-	setchunk_fromwire(gi, &skq->gi, skq);
-	setchunk_fromwire(gr, &skq->gr, skq);
-	setchunk_fromwire(ni, &skq->ni, skq);
-	setchunk_fromwire(nr, &skq->nr, skq);
-	setchunk_fromwire(icookie, &skq->icookie, skq);
-	setchunk_fromwire(rcookie, &skq->rcookie, skq);
+	setchunk_from_wire(gi, skq, &skq->gi);
+	setchunk_from_wire(gr, skq, &skq->gr);
+	setchunk_from_wire(ni, skq, &skq->ni);
+	setchunk_from_wire(nr, skq, &skq->nr);
+	setchunk_from_wire(icookie, skq, &skq->icookie);
+	setchunk_from_wire(rcookie, skq, &skq->rcookie);
 
 	memcpy(&shared, shared_chunk.ptr, shared_chunk.len);
 
 	/* Generate the SKEYID */
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
-		setchunk_fromwire(pss,    &skq->pss, skq);
+		setchunk_from_wire(pss, skq, &skq->pss);
 		skeyid_preshared(pss, ni, nr, shared_chunk, hasher,
 				 skeyid_chunk);
 		break;
@@ -1017,7 +1017,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 /* MUST BE THREAD-SAFE */
 void calc_dh_iv(struct pluto_crypto_req *r)
 {
-	struct pcr_skeyid_q *skq = &r->pcr_d.dhq;
+	const struct pcr_skeyid_q *skq = &r->pcr_d.dhq;
 	struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
 	struct pcr_skeyid_q dhq;
 	const struct oakley_group_desc *group;
@@ -1031,19 +1031,18 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 
 	/* clear out the reply */
 	zero(skr);
-	skr->thespace.start = 0;
-	skr->thespace.len   = sizeof(skr->space);
+	INIT_WIRE_ARENA(*skr);
 
 	group = lookup_group(dhq.oakley_group);
 	passert(group != NULL);
 
-	setchunk_fromwire(ltsecret, &dhq.secret, &dhq);
-	setchunk_fromwire(pubk, &dhq.pubk, &dhq);
+	setchunk_from_wire(ltsecret, &dhq, &dhq.secret);
+	setchunk_from_wire(pubk, &dhq, &dhq.pubk);
 
 	/* now calculate the (g^x)(g^y) ---
 	   need gi on responder, gr on initiator */
 
-	setchunk_fromwire(g, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr, &dhq);
+	setchunk_from_wire(g, &dhq, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT,
 	    DBG_dump_chunk("peer's g: ", g));
@@ -1069,13 +1068,13 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 			&enc_key);
 
 	/* now translate it back to wire chunks, freeing the chunks */
-	setwirechunk_fromchunk(skr->shared,   shared,   skr);
-	setwirechunk_fromchunk(skr->skeyid,   skeyid,   skr);
-	setwirechunk_fromchunk(skr->skeyid_d, skeyid_d, skr);
-	setwirechunk_fromchunk(skr->skeyid_a, skeyid_a, skr);
-	setwirechunk_fromchunk(skr->skeyid_e, skeyid_e, skr);
-	setwirechunk_fromchunk(skr->new_iv,   new_iv,   skr);
-	setwirechunk_fromchunk(skr->enc_key,  enc_key,  skr);
+	WIRE_CLONE_CHUNK(*skr, shared, shared);
+	WIRE_CLONE_CHUNK(*skr, skeyid, skeyid);
+	WIRE_CLONE_CHUNK(*skr, skeyid_d, skeyid_d);
+	WIRE_CLONE_CHUNK(*skr, skeyid_a, skeyid_a);
+	WIRE_CLONE_CHUNK(*skr, skeyid_e, skeyid_e);
+	WIRE_CLONE_CHUNK(*skr, new_iv, new_iv);
+	WIRE_CLONE_CHUNK(*skr, enc_key, enc_key);
 
 	freeanychunk(shared);
 	freeanychunk(skeyid);
@@ -1103,25 +1102,24 @@ void calc_dh(struct pluto_crypto_req *r)
 
 	/* clear out the reply */
 	zero(skr);
-	skr->thespace.start = 0;
-	skr->thespace.len   = sizeof(skr->space);
+	INIT_WIRE_ARENA(*skr);
 
 	group = lookup_group(dhq.oakley_group);
 	passert(group != NULL);
 
-	setchunk_fromwire(ltsecret, &dhq.secret, &dhq);
-	setchunk_fromwire(pubk, &dhq.pubk, &dhq);
+	setchunk_from_wire(ltsecret, &dhq, &dhq.secret);
+	setchunk_from_wire(pubk, &dhq, &dhq.pubk);
 
 	/* now calculate the (g^x)(g^y) */
 
-	setchunk_fromwire(g, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr, &dhq);
+	setchunk_from_wire(g, &dhq, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
 	calc_dh_shared(&shared, g, ltsecret, group, pubk);
 
 	/* now translate it back to wire chunks, freeing the chunks */
-	setwirechunk_fromchunk(skr->shared,   shared,   skr);
+	WIRE_CLONE_CHUNK(*skr, shared, shared);
 	freeanychunk(shared);
 
 	return;
@@ -1159,10 +1157,10 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	zero(&vpss);
 
 	/* this doesn't take any memory, it's just moving pointers around */
-	setchunk_fromwire(vpss.ni, &skq->ni, skq);
-	setchunk_fromwire(vpss.nr, &skq->nr, skq);
-	setchunk_fromwire(vpss.spii, &skq->icookie, skq);
-	setchunk_fromwire(vpss.spir, &skq->rcookie, skq);
+	setchunk_from_wire(vpss.ni, skq, &skq->ni);
+	setchunk_from_wire(vpss.nr, skq, &skq->nr);
+	setchunk_from_wire(vpss.spii, skq, &skq->icookie);
+	setchunk_from_wire(vpss.spir, skq, &skq->rcookie);
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%lu",
@@ -1485,8 +1483,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 /* MUST BE THREAD-SAFE */
 void calc_dh_v2(struct pluto_crypto_req *r)
 {
-	struct pcr_skeyid_q    *skq = &r->pcr_d.dhq;
-	struct pcr_skeycalc_v2 *skr = &r->pcr_d.dhv2;
+	const struct pcr_skeyid_q *skq = &r->pcr_d.dhq;
+	struct pcr_skeycalc_v2_r *skr = &r->pcr_d.dhv2;
 	struct pcr_skeyid_q dhq;
 	const struct oakley_group_desc *group;
 	chunk_t shared, g, ltsecret;
@@ -1499,18 +1497,17 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 
 	/* clear out the reply */
 	zero(skr);
-	skr->thespace.start = 0;
-	skr->thespace.len   = sizeof(skr->space);
+	INIT_WIRE_ARENA(*skr);
 
 	group = lookup_group(dhq.oakley_group);
 	passert(group != NULL);
 
-	setchunk_fromwire(ltsecret, &dhq.secret, &dhq);
-	setchunk_fromwire(pubk, &dhq.pubk, &dhq);
+	setchunk_from_wire(ltsecret, &dhq, &dhq.secret);
+	setchunk_from_wire(pubk, &dhq, &dhq.pubk);
 
 	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
 
-	setchunk_fromwire(g, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr, &dhq);
+	setchunk_from_wire(g, &dhq, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
@@ -1539,15 +1536,15 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 			 &SK_pr);
 
 	/* now translate it back to wire chunks, freeing the chunks */
-	setwirechunk_fromchunk(skr->shared,   shared,   skr);
-	setwirechunk_fromchunk(skr->skeyseed, skeyseed, skr);
-	setwirechunk_fromchunk(skr->skeyid_d, SK_d, skr);
-	setwirechunk_fromchunk(skr->skeyid_ai, SK_ai, skr);
-	setwirechunk_fromchunk(skr->skeyid_ar, SK_ar, skr);
-	setwirechunk_fromchunk(skr->skeyid_ei, SK_ei, skr);
-	setwirechunk_fromchunk(skr->skeyid_er, SK_er, skr);
-	setwirechunk_fromchunk(skr->skeyid_pi, SK_pi, skr);
-	setwirechunk_fromchunk(skr->skeyid_pr, SK_pr, skr);
+	WIRE_CLONE_CHUNK(*skr, shared, shared);
+	WIRE_CLONE_CHUNK(*skr, skeyseed, skeyseed);
+	WIRE_CLONE_CHUNK(*skr, skeyid_d, SK_d);
+	WIRE_CLONE_CHUNK(*skr, skeyid_ai, SK_ai);
+	WIRE_CLONE_CHUNK(*skr, skeyid_ar, SK_ar);
+	WIRE_CLONE_CHUNK(*skr, skeyid_ei, SK_ei);
+	WIRE_CLONE_CHUNK(*skr, skeyid_er, SK_er);
+	WIRE_CLONE_CHUNK(*skr, skeyid_pi, SK_pi);
+	WIRE_CLONE_CHUNK(*skr, skeyid_pr, SK_pr);
 
 	freeanychunk(shared);
 	freeanychunk(skeyseed);
