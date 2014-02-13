@@ -145,9 +145,7 @@ void pcr_nonce_init(struct pluto_crypto_req *r,
 {
 	pcr_init(r, pcr_type, pcr_pcim);
 
-	/* note: this might be the wrong union member; they have the same prefix */
-	r->pcr_d.kn.thespace.start = 0;
-	r->pcr_d.kn.thespace.len = sizeof(r->pcr_d.kn.space);
+	INIT_WIRE_ARENA(r->pcr_d.kn);
 }
 
 void pcr_dh_init(struct pluto_crypto_req *r,
@@ -156,9 +154,7 @@ void pcr_dh_init(struct pluto_crypto_req *r,
 {
 	pcr_init(r, pcr_type, pcr_pcim);
 
-	/* note: this might be the wrong union member; they have the same prefix */
-	r->pcr_d.dhq.thespace.start = 0;
-	r->pcr_d.dhq.thespace.len = sizeof(r->pcr_d.dhq.space);
+	INIT_WIRE_ARENA(r->pcr_d.dhq);
 }
 
 /* If there are any helper threads, this code is always executed IN A HELPER THREAD.

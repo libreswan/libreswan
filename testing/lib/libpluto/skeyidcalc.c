@@ -209,18 +209,12 @@ main(int argc, char *argv[]){
 		skq.prf_hash = rsasc[i].prf_hash;
 		skq.oakley_group = rsasc[i].oakley_group;
 		skq.keysize = rsasc[i].keysize;
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->ni,
-				       rsasc[i].ni);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->nr,
-				       rsasc[i].nr);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gi,
-				       rsasc[i].gi);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gr,
-				       rsasc[i].gr);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space,
-				       &dhq->icookie, rsasc[i].icookie);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space,
-				       &dhq->rcookie, rsasc[i].rcookie);
+		WIRE_CLONE_CHUNK(*dhq, ni, rsasc[i].ni);
+		WIRE_CLONE_CHUNK(*dhq, nr, rsasc[i].nr);
+		WIRE_CLONE_CHUNK(*dhq, gi, rsasc[i].gi);
+		WIRE_CLONE_CHUNK(*dhq, gr, rsasc[i].gr);
+		WIRE_CLONE_CHUNK(*dhq, icookie, rsasc[i].icookie);
+		WIRE_CLONE_CHUNK(*dhq, rcookie, rsasc[i].rcookie);
 
 		zero(&skeyid);
 		zero(&skeyid_d);

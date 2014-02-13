@@ -294,14 +294,14 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 }
 
 /*
- * unpack the calculate KE value, store it in state.
+ * unpack the calculated KE value, store it in state.
  * used by IKEv2: parent, child (PFS)
  */
 static int unpack_v2KE(struct state *st,
-		       struct pluto_crypto_req *r,
+		       const struct pluto_crypto_req *r,
 		       chunk_t *g)
 {
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
+	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	unpack_KE(st, r, g);
 	return kn->oakley_group;
