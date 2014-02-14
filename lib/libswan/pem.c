@@ -1,4 +1,6 @@
-/* Loading of PEM encoded files with optional encryption
+/*
+ * Loading of PEM encoded files with optional encryption
+ *
  * Copyright (C) 2001-2004 Andreas Steffen, Zuercher Hochschule Winterthur
  * Copyright (C) 2003-2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
@@ -18,7 +20,8 @@
  * (if we do an openssl port, it needs to use native openssl functions for this)
  */
 
-/* decrypt a PEM encoded data block using DES-EDE3-CBC
+/*
+ * decrypt a PEM encoded data block using DES-EDE3-CBC
  * see RFC 1423 PEM: Algorithms, Modes and Identifiers
  */
 
@@ -31,7 +34,10 @@
 #include <sys/types.h>
 
 #include <libreswan.h>
-#define HEADER_DES_LOCL_H   /* stupid trick to force prototype decl in <des.h> */
+#define HEADER_DES_LOCL_H	/*
+				 * stupid trick to force prototype decl in
+				 * <des.h>
+				 */
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
@@ -55,7 +61,7 @@ static bool present(const char* pattern, chunk_t* ch)
 	u_int pattern_len = strlen(pattern);
 
 	if (ch->len >= pattern_len &&
-	    strncmp((char *)ch->ptr, pattern, pattern_len) == 0) {
+		strncmp((char *)ch->ptr, pattern, pattern_len) == 0) {
 		ch->ptr += pattern_len;
 		ch->len -= pattern_len;
 		return TRUE;
@@ -69,7 +75,7 @@ static bool present(const char* pattern, chunk_t* ch)
 static bool match(const char *pattern, const chunk_t *ch)
 {
 	return ch->len == strlen(pattern) &&
-	       strncmp(pattern, (char *)ch->ptr, ch->len) == 0;
+		strncmp(pattern, (char *)ch->ptr, ch->len) == 0;
 }
 
 /*
@@ -96,9 +102,9 @@ static bool find_boundary(const char* tag, chunk_t *line)
 	while (line->len > 0) {
 		if (present("-----", line)) {
 			DBG(DBG_PARSING,
-			    DBG_log("  -----%s %.*s-----",
-				    tag, (int)name.len, name.ptr);
-			    );
+				DBG_log("  -----%s %.*s-----",
+					tag, (int)name.len, name.ptr)
+				);
 			return TRUE;
 		}
 		line->ptr++;
@@ -129,7 +135,7 @@ static bool extract_token(chunk_t *token, char termination, chunk_t *src)
 	/* initialize empty token */
 	*token = empty_chunk;
 
-	if (eot == NULL) /* termination symbol not found */
+	if (eot == NULL)	/* termination symbol not found */
 		return FALSE;
 
 	/* extract token */
@@ -149,8 +155,8 @@ static bool extract_token(chunk_t *token, char termination, chunk_t *src)
 static bool extract_parameter(chunk_t *name, chunk_t *value, chunk_t *line)
 {
 	DBG(DBG_PARSING,
-	    DBG_log("  %.*s", (int)line->len, line->ptr);
-	    );
+		DBG_log("  %.*s", (int)line->len, line->ptr);
+		);
 
 	/* extract name */
 	if (!extract_token(name, ':', line))
@@ -168,13 +174,13 @@ static bool extract_parameter(chunk_t *name, chunk_t *value, chunk_t *line)
  */
 static bool fetchline(chunk_t *src, chunk_t *line)
 {
-	if (src->len == 0) /* end of src reached */
+	if (src->len == 0)	/* end of src reached */
 		return FALSE;
 
 	if (extract_token(line, '\n', src)) {
 		if (line->len > 0 && *(line->ptr + line->len - 1) == '\r')
-			line->len--;    /* remove optional \r */
-	} else {                        /*last line ends without newline */
+			line->len--;	/* remove optional \r */
+	} else {	/*last line ends without newline */
 		*line = *src;
 		src->ptr += src->len;
 		src->len = 0;
@@ -182,12 +188,13 @@ static bool fetchline(chunk_t *src, chunk_t *line)
 	return TRUE;
 }
 
-/*  Converts a PEM encoded file into its binary form
+/*
+ * Converts a PEM encoded file into its binary form
  *
- *  RFC 1421 Privacy Enhancement for Electronic Mail, February 1993
- *  RFC 934 Message Encapsulation, January 1985
+ * RFC 1421 Privacy Enhancement for Electronic Mail, February 1993
+ * RFC 934 Message Encapsulation, January 1985
  *
- *  We no longer support decrypting PEM files - those can only come in via NSS
+ * We no longer support decrypting PEM files - those can only come in via NSS
  */
 err_t pemtobin(chunk_t *blob)
 {
@@ -241,15 +248,11 @@ err_t pemtobin(chunk_t *blob)
 					continue;
 
 				if (match("Proc-Type",
-					  &name) && *value.ptr == '4')
-					return
-						"Proc-Type: encrypted files no longer supported outside of the NSS database, please import these into NSS";
-
+						&name) && *value.ptr == '4')
+					return "Proc-Type: encrypted files no longer supported outside of the NSS database, please import these into NSS";
 
 				else if (match("DEK-Info", &name))
-					return
-						"DEK-Info: encrypted files no longer supported outside of the NSS database, please import these into NSS";
-
+					return "DEK-Info: encrypted files no longer supported outside of the NSS database, please import these into NSS";
 
 			} else { /* state is PEM_BODY */
 				const char *ugh = NULL;
@@ -261,12 +264,12 @@ err_t pemtobin(chunk_t *blob)
 					data = line;
 
 				ugh = ttodata((char *)data.ptr, data.len, 64,
-					      (char *)dst.ptr,
-					      blob->len - dst.len, &len);
+					(char *)dst.ptr,
+					blob->len - dst.len, &len);
 				if (ugh) {
 					DBG(DBG_PARSING,
-					    DBG_log("  %s", ugh);
-					    );
+						DBG_log("  %s", ugh);
+						);
 					state = PEM_ABORT;
 					break;
 				} else {
@@ -286,7 +289,7 @@ err_t pemtobin(chunk_t *blob)
 }
 
 void do_3des_nss(u_int8_t *buf, size_t buf_len,
-		 u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc)
+		u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc)
 {
 	u_int8_t *tmp_buf;
 	u_int8_t *new_iv;
@@ -299,16 +302,17 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 	SECStatus rv;
 	int outlen;
 
-	DBG(DBG_CRYPT, DBG_log("NSS: do_3des init start"));
+	DBG(DBG_CRYPT,
+		DBG_log("NSS: do_3des init start");
+		);
 	passert(key != NULL);
-	/*passert(key_size==(DES_CBC_BLOCK_SIZE * 3));*/
 
-	ciphermech = CKM_DES3_CBC; /*libreswan provides padding*/
+	ciphermech = CKM_DES3_CBC;	/* libreswan provides padding */
 
 	memcpy(&symkey, key, key_size);
 	if (symkey == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_3des: NSS derived enc key is NULL \n");
+			"do_3des: NSS derived enc key is NULL\n");
 		abort();
 	}
 
@@ -319,8 +323,8 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 	secparam = PK11_ParamFromIV(ciphermech, &ivitem);
 	if (secparam == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_3des: Failure to set up PKCS11 param (err %d)\n",
-		       PR_GetError());
+			"do_3des: Failure to set up PKCS11 param (err %d)\n",
+			PR_GetError());
 		abort();
 	}
 
@@ -330,29 +334,30 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 
 	if (!enc)
 		memcpy(new_iv, (char*) buf + buf_len - DES_CBC_BLOCK_SIZE,
-		       DES_CBC_BLOCK_SIZE);
+			DES_CBC_BLOCK_SIZE);
 
 	enccontext = PK11_CreateContextBySymKey(ciphermech,
-						enc ? CKA_ENCRYPT : CKA_DECRYPT, symkey,
+						enc ? CKA_ENCRYPT :
+						CKA_DECRYPT, symkey,
 						secparam);
 	if (enccontext == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_3des: PKCS11 context creation failure (err %d)\n",
-		       PR_GetError());
+			"do_3des: PKCS11 context creation failure (err %d)\n",
+			PR_GetError());
 		abort();
 	}
 	rv = PK11_CipherOp(enccontext, tmp_buf, &outlen, buf_len, buf,
-			      buf_len);
+			buf_len);
 	if (rv != SECSuccess) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_3des: PKCS11 operation failure (err %d)\n",
-		       PR_GetError());
+			"do_3des: PKCS11 operation failure (err %d)\n",
+			PR_GetError());
 		abort();
 	}
 
 	if (enc)
 		memcpy(new_iv, (char*) tmp_buf + buf_len - DES_CBC_BLOCK_SIZE,
-		       DES_CBC_BLOCK_SIZE);
+			DES_CBC_BLOCK_SIZE);
 
 	memcpy(buf, tmp_buf, buf_len);
 	memcpy(iv, new_iv, DES_CBC_BLOCK_SIZE);
@@ -363,5 +368,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 	if (secparam != NULL)
 		SECITEM_FreeItem(secparam, PR_TRUE);
 
-	DBG(DBG_CRYPT, DBG_log("NSS: do_3des init end"));
+	DBG(DBG_CRYPT,
+		DBG_log("NSS: do_3des init end");
+		);
 }

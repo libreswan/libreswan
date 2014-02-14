@@ -1,4 +1,6 @@
-/* misc functions to get compile time and runtime options
+/*
+ * misc functions to get compile time and runtime options
+ *
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
@@ -87,7 +89,7 @@ static void lsw_conf_setdefault(void)
 
 	/* allocate them all to make it consistent */
 	ipsec_conf_dir = clone_str(ipsec_conf_dir,
-				   "default conf ipsec_conf_dir");
+				"default conf ipsec_conf_dir");
 	ipsecd_dir = clone_str(ipsecd_dir, "default conf ipsecd_dir");
 	conffile   = clone_str(conffile, "default conf conffile");
 	var_dir    = clone_str(var_dir, "default conf var_dir");
@@ -111,10 +113,10 @@ void lsw_conf_free_oco(void)
 	/* Must be a nicer way to loop over this? */
 	pfree(global_oco.crls_dir);
 	/* pfree(global_oco.rootdir); */
-	pfree(global_oco.confdir); /*
-				    * there is one more alloc that did not
-				    * get freed?
-				    */
+	pfree(global_oco.confdir);	/*
+					 * there is one more alloc that did not
+					 * get freed?
+					 */
 	pfree(global_oco.conffile);
 	pfree(global_oco.confddir);
 	pfree(global_oco.vardir);
@@ -185,9 +187,7 @@ int libreswan_selinux(void)
 		fd = fopen("/selinux/enforce","r");
 		if (fd == NULL) {
 			DBG(DBG_CONTROL,
-				DBG_log("SElinux: disabled, could not open "
-					"/sys/fs/selinux/enforce or "
-					"/selinux/enforce")
+				DBG_log("SElinux: disabled, could not open /sys/fs/selinux/enforce or /selinux/enforce");
 				);
 			return 0;
 		}
@@ -196,8 +196,7 @@ int libreswan_selinux(void)
 	n = fread((void *)selinux_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		libreswan_log("SElinux: could not read 1 byte from "
-			"the selinux enforce file");
+		libreswan_log("SElinux: could not read 1 byte from the selinux enforce file");
 		return 2;
 	}
 	if (selinux_flag[0] == '1')
@@ -220,16 +219,16 @@ int libreswan_fipskernel(void)
 
 	if (fd == NULL) {
 		DBG(DBG_CONTROL,
-			DBG_log("FIPS: could not open /proc/sys/crypto/fips_"
-				"enabled"));
+			DBG_log("FIPS: could not open /proc/sys/crypto/fips_enabled");
+			);
 		return 0;
 	}
 
 	n = fread((void *)fips_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		loglog(RC_LOG_SERIOUS, "FIPS: could not read 1 byte from "
-			"/proc/sys/crypto/fips_enabled");
+		loglog(RC_LOG_SERIOUS,
+			"FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
 		return -1;
 	}
 
@@ -251,9 +250,9 @@ libreswan_fipsproduct(void)
 		if (errno == ENOENT || errno == ENOTDIR) {
 			return 0;
 		} else {
-			loglog(RC_LOG_SERIOUS, "FIPS ABORT: FIPS product check"
-			       " failed to determine status for %s: %d: %s",
-			       FIPSPRODUCTCHECK, errno, strerror(errno));
+			loglog(RC_LOG_SERIOUS,
+				"FIPS ABORT: FIPS product check failed to determine status for %s: %d: %s",
+				FIPSPRODUCTCHECK, errno, strerror(errno));
 			return -1;
 		}
 	}
@@ -274,7 +273,7 @@ libreswan_fipsmode(void)
 	int product = libreswan_fipsproduct();
 	int kernel = libreswan_fipskernel();
 
-	if (product == -1 || kernel == -1 )
+	if (product == -1 || kernel == -1)
 		return -1;
 
 	if (product && kernel)
@@ -288,7 +287,7 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
 	secuPWData *pwdInfo = (secuPWData *)arg;
 	PRFileDesc *fd;
-	PRInt32 nb; /*number of bytes*/
+	PRInt32 nb;	/*number of bytes*/
 	char* password;
 	char* strings;
 	char* token = NULL;
@@ -346,15 +345,14 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 				int start = i;
 				int slen;
 
-				while (strings[i] != '\r' && strings[i] !=
-				       '\n' && i < nb)
+				while (strings[i] != '\r' &&
+				       strings[i] != '\n' && i < nb)
 					i++;
 				strings[i++] = '\0';
 
-				while ( (i < nb) &&
-					(strings[i] == '\r' || strings[i] ==
-					 '\n'))
-					strings[i++] = '\0';
+				while ((i < nb) && (strings[i] == '\r' ||
+					strings[i] == '\n'))
+					 strings[i++] = '\0';
 
 				password = &strings[start];
 

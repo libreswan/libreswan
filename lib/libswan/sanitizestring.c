@@ -14,7 +14,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-
 #include <ctype.h>
 #include <string.h>
 #include "libreswan.h"
@@ -22,28 +21,33 @@
 #include "constants.h"
 #include "lswlog.h"
 
-/* Sanitize character string in situ: turns dangerous characters into \OOO.
+/*
+ * Sanitize character string in situ: turns dangerous characters into \OOO.
  * With a bit of work, we could use simpler reps for \\, \r, etc.,
  * but this is only to protect against something that shouldn't be used.
  * Truncate resulting string to what fits in buffer.
  */
 size_t sanitize_string(char *buf, size_t size)
 {
-#   define UGLY_WIDTH   4       /* width for ugly character: \OOO */
+#define UGLY_WIDTH 4	/* width for ugly character: \OOO */
 	size_t len;
 	size_t added = 0;
 	char *p;
 
-	passert(size >= UGLY_WIDTH);    /* need room to swing cat */
+	passert(size >= UGLY_WIDTH);	/* need room to swing cat */
 
-	/* find right side of string to be sanitized and count
+	/*
+	 * find right side of string to be sanitized and count
 	 * number of columns to be added.  Stop on end of string
 	 * or lack of room for more result.
 	 */
 	for (p = buf; *p != '\0' && &p[added] < &buf[size - UGLY_WIDTH]; p++) {
 		unsigned char c = *p;
 
-		/* exception is that all veritical space just becomes white space */
+		/*
+		 * exception is that all veritical space just becomes
+		 * white space
+		 */
 		if (c == '\n' || c == '\r') {
 			*p = ' ';
 			continue;
@@ -53,7 +57,8 @@ size_t sanitize_string(char *buf, size_t size)
 			added += UGLY_WIDTH - 1;
 	}
 
-	/* at this point, p points after last original character to be
+	/*
+	 * at this point, p points after last original character to be
 	 * included.  added is how many characters are added to sanitize.
 	 * so p[added] will point after last sanitized character.
 	 */
@@ -61,7 +66,8 @@ size_t sanitize_string(char *buf, size_t size)
 	p[added] = '\0';
 	len = &p[added] - buf;
 
-	/* scan backwards, copying characters to their new home
+	/*
+	 * scan backwards, copying characters to their new home
 	 * and inserting the expansions for ugly characters.
 	 *
 	 * vertical space is changed to horizontal.
@@ -82,7 +88,7 @@ size_t sanitize_string(char *buf, size_t size)
 	}
 	return len;
 
-#   undef UGLY_WIDTH
+#undef UGLY_WIDTH
 }
 
 #ifdef SANITIZESTRING_MAIN
@@ -95,8 +101,8 @@ size_t sanitize_string(char *buf, size_t size)
 void regress(void);
 
 void libreswan_passert_fail(const char *pred_str,
-			    const char *file_str,
-			    unsigned long line_no)
+			const char *file_str,
+			unsigned long line_no)
 {
 	fprintf(stderr, "Passert failed: %s: %d, %s\n",
 		file_str, line_no, pred_str);
@@ -104,14 +110,14 @@ void libreswan_passert_fail(const char *pred_str,
 }
 
 void pexpect_log(const char *pred_str,
-		 const char *file_str, unsigned long line_no)
+		const char *file_str, unsigned long line_no)
 {
 	fprintf(stderr, "Pexpect dismayed: %s: %d, %s\n",
 		file_str, line_no, pred_str);
 }
 
 void switch_fail(int n,
-		 const char *file_str, unsigned long line_no)
+		const char *file_str, unsigned long line_no)
 {
 	fprintf(stderr, "switch failed: %s: %d, %s\n",
 		file_str, line_no, pred_str);
@@ -135,12 +141,12 @@ int main(int argc, char *argv[])
 
 struct rtab {
 	char *input;
-	char *output;                   /* NULL means error expected */
+	char *output;	/* NULL means error expected */
 } rtab[] = {
-	{ "there\001 \002 \003\n\rhi",   "1.2.3.0" },
-	{ "there\231\t\n\177\\\n\rhi",   "1.2.3.0" },
-	{ "there\001 \002 \003\n\rhi",   "1.2.3.0" },
-	{ NULL,                          NULL }
+	{ "there\001 \002 \003\n\rhi", "1.2.3.0" },
+	{ "there\231\t\n\177\\\n\rhi", "1.2.3.0" },
+	{ "there\001 \002 \003\n\rhi", "1.2.3.0" },
+	{ NULL, NULL }
 };
 
 void regress()
@@ -160,7 +166,7 @@ void regress()
 
 		if (strcmp(in, r->output) != 0) {
 			printf("Item %d failed; %s vs %s\n",
-			       count, in, r->output);
+				count, in, r->output);
 			status = 1;
 		}
 	}

@@ -1,5 +1,6 @@
 /*
  * Use libunbound to use DNSSEC supported resolving.
+ *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -12,7 +13,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
-
 #ifndef DNSSEC
 #error this file should only be compiled when using USE_DNSSEC
 #endif
@@ -23,17 +23,12 @@
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
-
 #include <libreswan.h>
-
 #include <arpa/inet.h>
-
 #include "constants.h"
 #include "lswlog.h"
-
 #include <unbound.h>
 #include "dnssec.h"
-
 #include <errno.h>
 
 /* DNSSEC root key */
@@ -55,30 +50,41 @@ int unbound_init(struct ub_ctx *dnsctx)
 		return 0;
 	}
 	DBG(DBG_DNS,
-	    ub_ctx_debuglevel(dnsctx, 5);
-	    DBG_log("unbound context created - setting debug level to 5\n"));
+		ub_ctx_debuglevel(dnsctx, 5);
+		DBG_log("unbound context created - setting debug level to 5\n");
+		);
 
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
 	if ( (ugh = ub_ctx_hosts(dnsctx, "/etc/hosts")) != 0) {
 		libreswan_log("error reading hosts: %s: %s\n",
-			      ub_strerror(ugh), strerror(errno));
+			ub_strerror(ugh), strerror(errno));
 		return 0;
 	}
-	DBG(DBG_DNS, DBG_log("/etc/hosts lookups activated\n"));
+	DBG(DBG_DNS,
+		DBG_log("/etc/hosts lookups activated\n");
+		);
 
 	/*
-	 * Use /etc/resolv.conf as forwarding cache - we expect people to reconfigure this
-	 * file if they need to work around DHCP DNS obtained servers
+	 * Use /etc/resolv.conf as forwarding cache - we expect people to
+	 * reconfigure this file if they need to work around DHCP DNS obtained
+	 * servers
 	 */
 	if ( (ugh = ub_ctx_resolvconf(dnsctx, "/etc/resolv.conf")) != 0) {
 		libreswan_log("error reading resolv.conf: %s: %s\n",
-			      ub_strerror(ugh), strerror(errno));
+			ub_strerror(ugh), strerror(errno));
 		return 0;
 	}
-	DBG(DBG_DNS, DBG_log("/etc/resolv.conf usage activated\n"));
+	DBG(DBG_DNS,
+		DBG_log("/etc/resolv.conf usage activated\n");
+		);
 
-	/* add trust anchors to libunbound context - make this configurable later */
-	DBG(DBG_DNS, DBG_log("Loading root key:%s\n", rootanchor));
+	/*
+	 * add trust anchors to libunbound context - make this configurable
+	 * later
+	 */
+	DBG(DBG_DNS,
+		DBG_log("Loading root key:%s\n", rootanchor);
+		);
 	ugh = ub_ctx_add_ta(dnsctx, rootanchor);
 	if (ugh != 0) {
 		libreswan_log("error adding the DNSSEC root key: %s: %s\n",
@@ -87,7 +93,9 @@ int unbound_init(struct ub_ctx *dnsctx)
 	}
 
 	/* Enable DLV */
-	DBG(DBG_DNS, DBG_log("Loading dlv key:%s\n", dlvanchor));
+	DBG(DBG_DNS,
+		DBG_log("Loading dlv key:%s\n", dlvanchor);
+		);
 	ugh = ub_ctx_set_option(dnsctx, "dlv-anchor:", dlvanchor);
 	if (ugh != 0) {
 		libreswan_log("error adding the DLV key: %s: %s\n",
@@ -98,14 +106,16 @@ int unbound_init(struct ub_ctx *dnsctx)
 	return 1;
 }
 
-/* synchronous blocking resolving - simple replacement of ttoaddr()
+/*
+ * synchronous blocking resolving - simple replacement of ttoaddr()
  * src_len 0 means "apply strlen"
  * af 0 means "try both families
  */
 int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
-		    ip_address *ipaddr)
+		ip_address *ipaddr)
 {
-	const int qtype = (af == AF_INET6) ? 28 : 1; /* 28 = AAAA record, 1 = A record */
+	/* 28 = AAAA record, 1 = A record */
+	const int qtype = (af == AF_INET6) ? 28 : 1;
 	struct ub_result *result;
 
 	passert(dnsctx != NULL);
@@ -121,7 +131,7 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 
 	{
 		int ugh = ub_resolve(dnsctx, src, qtype, 1 /* CLASS IN */,
-				     &result);
+				&result);
 		if (ugh != 0) {
 			libreswan_log("unbound error: %s", ub_strerror(ugh));
 			ub_resolve_free(result);
@@ -131,19 +141,21 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 
 	if (result->bogus) {
 		libreswan_log("ERROR: %s failed DNSSEC valdation!\n",
-			      result->qname);
+			result->qname);
 		ub_resolve_free(result);
 		return 0;
 	}
 	if (!result->havedata) {
 		if (result->secure) {
 			DBG(DBG_DNS,
-			    DBG_log("Validated reply proves '%s' does not exist\n",
-				    src));
+				DBG_log("Validated reply proves '%s' does not exist\n",
+					src);
+				);
 		} else {
 			DBG(DBG_DNS,
-			    DBG_log("Failed to resolve '%s' (%s)\n", src,
-				    (result->bogus) ? "BOGUS" : "insecure"));
+				DBG_log("Failed to resolve '%s' (%s)\n", src,
+					result->bogus ? "BOGUS" : "insecure");
+				);
 		}
 		ub_resolve_free(result);
 		return 0;
@@ -151,8 +163,9 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	} else if (!result->bogus) {
 		if (!result->secure) {
 			DBG(DBG_DNS,
-			    DBG_log("warning: %s lookup was not protected by DNSSEC!\n",
-				    result->qname));
+				DBG_log("warning: %s lookup was not protected by DNSSEC!\n",
+					result->qname);
+				);
 		}
 	}
 
@@ -179,16 +192,17 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	passert(result->data[0] != NULL);
 	{
 		char dst[INET6_ADDRSTRLEN];
-		err_t err = tnatoaddr(inet_ntop(af, result->data[0], dst,
-						(af ==
-						 AF_INET) ? INET_ADDRSTRLEN :
-						INET6_ADDRSTRLEN),
-				      0, af, ipaddr);
+		err_t err = tnatoaddr(
+			inet_ntop(af, result->data[0], dst,
+				(af == AF_INET) ? INET_ADDRSTRLEN :
+				INET6_ADDRSTRLEN),
+			0, af, ipaddr);
 		ub_resolve_free(result);
 		if (err == NULL) {
 			DBG(DBG_DNS,
-			    DBG_log("success for %s lookup",
-				    (af == AF_INET) ? "IPv4" : "IPv6"));
+				DBG_log("success for %s lookup",
+					(af == AF_INET) ? "IPv4" : "IPv6");
+				);
 			return 1;
 		} else {
 			libreswan_log("tnatoaddr failed in unbound_resolve()");

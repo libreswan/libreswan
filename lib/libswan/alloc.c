@@ -1,4 +1,5 @@
-/* Memory allocation routines
+/*
+ * Memory allocation routines
  * Header: "lswalloc.h"
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
@@ -12,7 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdlib.h>
@@ -28,7 +28,8 @@
 #include "constants.h"
 #include "lswlog.h"
 
-/* leave enabled so support functions are always in libswan, and
+/*
+ * leave enabled so support functions are always in libswan, and
  * pluto can be recompiled with just the leak detective changes
  * ??? this seems dangerous and stupid
  */
@@ -46,7 +47,8 @@ void set_exit_log_func(exit_log_func_t func)
 	exit_log_func = func;
 }
 
-/* memory allocation
+/*
+ * memory allocation
  *
  * LEAK_DETECTIVE puts a wrapper around each allocation and maintains
  * a list of live ones.  If a dead one is freed, an assertion MIGHT fail.
@@ -70,8 +72,8 @@ union mhdr {
 		union mhdr *older, *newer;
 		unsigned long magic;
 		unsigned long size;
-	} i;                    /* info */
-	unsigned long junk;     /* force maximal alignment */
+	} i;	/* info */
+	unsigned long junk;	/* force maximal alignment */
 };
 
 static union mhdr *allocs = NULL;
@@ -97,12 +99,12 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 
 	if (p == NULL) {
 		if (getenv("LIBRESWAN_SNAPSHOT_MALLOC_FAIL")) {
-			if (fork() == 0) /* in child */
+			if (fork() == 0)	/* in child */
 				lsw_abort();
 		}
 		if (exit_log_func != NULL) {
 			(*exit_log_func)("unable to malloc %lu bytes for %s",
-					 (unsigned long) size, name);
+					(unsigned long) size, name);
 		}
 		abort();
 	}
@@ -168,10 +170,10 @@ void report_leaks(void)
 		if (p == NULL || pprev->i.name != p->i.name) {
 			if (n != 1)
 				libreswan_log("leak: %lu * %s, item size: %lu",
-					      n, pprev->i.name, pprev->i.size);
+					n, pprev->i.name, pprev->i.size);
 			else
 				libreswan_log("leak: %s, item size: %lu",
-					      pprev->i.name, pprev->i.size);
+					pprev->i.name, pprev->i.size);
 			numleaks += n;
 			total += pprev->i.size;
 			n = 0;
@@ -179,12 +181,12 @@ void report_leaks(void)
 	}
 	if (numleaks != 0)
 		libreswan_log("leak detective found %lu leaks, total size %lu",
-			      numleaks, total);
+			numleaks, total);
 	else
 		libreswan_log("leak detective found no leaks");
 
 }
-#endif /* !LEAK_DETECTIVE */
+#endif	/* !LEAK_DETECTIVE */
 
 void *alloc_bytes(size_t size, const char *name)
 {
