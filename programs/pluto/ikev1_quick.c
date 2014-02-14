@@ -1794,8 +1794,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 					enum verify_oppo_step next_step;
 					ip_address our_client, his_client;
 
-					passert(subnetishost(
-							our_net) &&
+					passert(subnetishost(our_net) &&
 						subnetishost(his_net));
 					networkof(our_net, &our_client);
 					networkof(his_net, &his_client);
@@ -1837,8 +1836,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 
 					/* start next DNS query and suspend (if necessary) */
 					if (next_step != vos_done) {
-						return
-							quick_inI1_outR1_start_query(
+						return quick_inI1_outR1_start_query(
 							b,
 							next_step);
 					}

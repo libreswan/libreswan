@@ -124,6 +124,21 @@ systemctl enable network.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
 
+cat << EOD > /etc/systemd/system/sshd-shutdown.service
+# work around for broken systemd/sshd interaction in fedora 20 causes VM hangs
+[Unit]
+Description=kill all sshd sessions
+Requires=mutil-user.target
+
+[Service]
+ExecStart=/usr/bin/killall sshd
+Type=oneshot
+
+[Install]
+WantedBy=shutdown.target reboot.target poweroff.target
+EOD
+systemctl enable sshd-shutdown.service
+
 # Needed for newer nss
 yum update -y 
 

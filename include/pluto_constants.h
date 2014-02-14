@@ -104,21 +104,6 @@ enum event_type {
 #define EVENT_GIVEUP_ON_DNS_DELAY               300     /* 5 minutes for DNS */
 
 /*
- * cryptographic helper operations.
- */
-enum pluto_crypto_requests {
-	pcr_build_kenonce  = 1,
-	pcr_rsa_sign       = 2,
-	pcr_rsa_check      = 3,
-	pcr_x509cert_fetch = 4,
-	pcr_x509crl_fetch  = 5,
-	pcr_build_nonce    = 6,
-	pcr_compute_dh_iv  = 7, /* perform phase 1 calculation: DH + prf */
-	pcr_compute_dh     = 8, /* perform phase 2 PFS DH */
-	pcr_compute_dh_v2  = 9, /* perform IKEv2 PARENT SA calculation, create SKEYSEED */
-};
-
-/*
  * operational importance of this cryptographic operation.
  * this determines if the operation will be dropped (because the other
  * end will retransmit, if they are legit), if it pertains to an on-going
@@ -126,12 +111,12 @@ enum pluto_crypto_requests {
  * we should do it all costs.
  */
 enum crypto_importance {
-	pcim_notset_crypto=0,
-	pcim_stranger_crypto = 1,
-	pcim_known_crypto    = 2,
-	pcim_ongoing_crypto  = 3,
-	pcim_local_crypto    = 4,
-	pcim_demand_crypto   = 5
+	pcim_notset_crypto,
+	pcim_stranger_crypto,
+	pcim_known_crypto,
+	pcim_ongoing_crypto,
+	pcim_local_crypto,
+	pcim_demand_crypto
 };
 
 /* status for state-transition-function

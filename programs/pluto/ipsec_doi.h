@@ -128,4 +128,4 @@ extern bool has_preloaded_public_key(struct state *st);
 extern bool extract_peer_id(struct id *peer, const pb_stream *id_pbs);
 
 struct pluto_crypto_req;	/* prevent struct type being local to function protocol */
-extern void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r);
+extern void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r);

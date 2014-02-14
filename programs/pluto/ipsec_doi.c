@@ -125,22 +125,21 @@ void echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
  * Processing FOR KE values.
  */
 void unpack_KE(struct state *st,
-	       struct pluto_crypto_req *r,
+	       const struct pluto_crypto_req *r,
 	       chunk_t *g)
 {
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
+	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	if (!st->st_sec_in_use) {
 		st->st_sec_in_use = TRUE;
 		freeanychunk(*g); /* happens in odd error cases */
 
-		clonetochunk(*g, wire_chunk_ptr(kn, &(kn->gi)),
+		clonetochunk(*g, wire_chunk_ptr(kn, &kn->gi),
 			     kn->gi.len, "saved gi value");
 		DBG(DBG_CRYPT,
 		    DBG_log("saving DH priv (local secret) and pub key into state struc"));
 		clonetochunk(st->st_sec_chunk,
-			     wire_chunk_ptr(kn,
-					    &(kn->secret)),
+			     wire_chunk_ptr(kn, &kn->secret),
 			     kn->secret.len,
 			     "pointer to DH private key (secret)");
 
@@ -178,9 +177,9 @@ notification_t accept_KE(chunk_t *dest, const char *val_name,
 	return NOTHING_WRONG;
 }
 
-void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r)
+void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 {
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
+	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	freeanychunk(*n);
 	clonetochunk(*n, wire_chunk_ptr(kn, &(kn->n)),

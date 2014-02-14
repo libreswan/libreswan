@@ -52,6 +52,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
+#include "enum_names.h"
 #include "defs.h"
 #include "packet.h"
 #include "demux.h"
@@ -70,6 +71,7 @@
 
 TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 
+/* Note: this per-helper struct is never modified in a helper thread */
 struct pluto_crypto_worker {
 	int pcw_helpernum;
 	/* pthread_t pcw_pid; */
@@ -77,8 +79,13 @@ struct pluto_crypto_worker {
 	 * pthread_t is an opaque type with few legitimate operations on it.
 	 */
 	long int pcw_pid;
-	int pcw_pipe;
-	int pcw_helper_pipe;
+
+	/* socket pair's file descriptors
+	 * Each socket is bidirectional and they are cross-connected.
+	 */
+	int pcw_master_fd;	/* master's fd */
+	int pcw_helper_fd;	/* helper's fd */
+
 	int pcw_work;           /* how many items outstanding */
 	int pcw_maxbasicwork;   /* how many basic things can be queued */
 	int pcw_maxcritwork;    /* how many critical things can be queued */
@@ -93,17 +100,66 @@ static int backlogqueue_len = 0;
 static void init_crypto_helper(struct pluto_crypto_worker *w, int n);
 static void cleanup_crypto_helper(struct pluto_crypto_worker *w, int status);
 
-static void *pluto_helper_thread(void *w);
+static void *pluto_helper_thread(void *w);	/* forward */
 
 /* may be NULL if we are to do all the work ourselves */
 static struct pluto_crypto_worker *pc_workers = NULL;
-static int pc_workers_cnt = 0;
-static int pc_worker_num;
-static pcr_req_id pcw_id;
 
-/* local in child */
+static int pc_workers_cnt = 0;	/* number of workers threads */
+static int pc_worker_num;	/* index of last worker assigned work */
+static pcr_req_id pcw_id;	/* counter for generating unique request IDs */
+
+/* local in child
+ * ??? in what way?  Looks global to all threads to me.
+ */
 static int pc_helper_num = -1;
 
+/* pluto crypto operations */
+static const char *const pluto_cryptoop_strings[] = {
+	"build_kenonce",	/* calculate g^i and nonce */
+	"build_nonce",	/* just fetch a new nonce */
+	"compute dh+iv",	/* (g^x)(g^y) and skeyids for Phase 1 DH + prf */
+	"compute dh(p2)",	/* perform (g^x)(g^y) for Phase 2 PFS */
+	"compute dh(v2)",	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
+};
+
+static enum_names pluto_cryptoop_names =
+	{ pcr_build_kenonce, pcr_compute_dh_v2, pluto_cryptoop_strings, NULL };
+
+/* initializers for pluto_crypto_request continuations */
+
+static void pcr_init(struct pluto_crypto_req *r,
+			    enum pluto_crypto_requests pcr_type,
+			    enum crypto_importance pcr_pcim)
+{
+	zero(r);
+	r->pcr_len  = sizeof(struct pluto_crypto_req);
+	r->pcr_type = pcr_type;
+	r->pcr_pcim = pcr_pcim;
+}
+
+
+void pcr_nonce_init(struct pluto_crypto_req *r,
+			    enum pluto_crypto_requests pcr_type,
+			    enum crypto_importance pcr_pcim)
+{
+	pcr_init(r, pcr_type, pcr_pcim);
+
+	INIT_WIRE_ARENA(r->pcr_d.kn);
+}
+
+void pcr_dh_init(struct pluto_crypto_req *r,
+			enum pluto_crypto_requests pcr_type,
+			enum crypto_importance pcr_pcim)
+{
+	pcr_init(r, pcr_type, pcr_pcim);
+
+	INIT_WIRE_ARENA(r->pcr_d.dhq);
+}
+
+/* If there are any helper threads, this code is always executed IN A HELPER THREAD.
+ * Otherwise it is executed in the main (only) thread.
+ */
 static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 {
 	DBG(DBG_CONTROL,
@@ -143,25 +199,21 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 	case pcr_compute_dh_v2:
 		calc_dh_v2(r);
 		break;
-
-	case pcr_rsa_sign:
-	case pcr_rsa_check:
-	case pcr_x509cert_fetch:
-	case pcr_x509crl_fetch:
-		break;
 	}
 }
 
-static void pluto_crypto_helper(int fd, int helpernum)
+/* IN A HELPER THREAD */
+static void pluto_crypto_helper(int helper_fd, int helpernum)
 {
-	FILE *in  = fdopen(fd, "rb");
-	FILE *out = fdopen(fd, "wb");
+	FILE *in  = fdopen(helper_fd, "rb");
+	FILE *out = fdopen(helper_fd, "wb");
 	long reqbuf[PCR_REQ_SIZE / sizeof(long)];
 	struct pluto_crypto_req *r;
 
 	/* OS X does not have pthread_setschedprio */
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 	int status = pthread_setschedprio(pthread_self(), 10);
+
 	DBG(DBG_CONTROL,
 	    DBG_log("status value returned by setting the priority of this thread (id=%d) %d",
 		    helpernum, status));
@@ -229,6 +281,8 @@ static void pluto_crypto_helper(int fd, int helpernum)
 	       helpernum);
 
 error:
+	/* ??? we have no way to report this thread's problems. */
+
 	fclose(in);
 	fclose(out);
 	/*pthread_exit();*/
@@ -249,8 +303,7 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
 		    r->pcr_id, (unsigned int)r->pcr_len, w->pcw_work + 1));
 
 	do {
-		errno = 0;
-		cnt = write(w->pcw_pipe, wdat, wlen);
+		cnt = write(w->pcw_master_fd, wdat, wlen);
 
 		if (cnt <= 0) {
 			libreswan_log(
@@ -258,6 +311,7 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
 				cnt, strerror(errno));
 			return FALSE;
 		}
+		/* ??? DBG_log should only be use conditionally on DBG_* */
 		if (DBGP(DBG_CONTROL) || cnt != wlen) {
 			DBG_log("crypto helper write of request: cnt=%d<wlen=%d. \n", cnt,
 				wlen);
@@ -401,7 +455,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 	TAILQ_INSERT_TAIL(&w->pcw_active, cn, pcrc_list);
 
 	passert(w->pcw_pid != -1);
-	passert(w->pcw_pipe != -1);
+	passert(w->pcw_master_fd != -1);
 	passert(w->pcw_work < w->pcw_maxcritwork);
 
 	cn->pcrc_reply_stream = reply_stream;
@@ -413,6 +467,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 	}
 
 	if (!crypto_write_request(w, r)) {
+		/* ??? there is no reason that errno is appropriately set! */
 		libreswan_log("failed to write crypto request: %s\n",
 			      strerror(errno));
 		if (pbs_offset(&cn->pcrc_reply_stream))
@@ -467,7 +522,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 		TAILQ_INSERT_TAIL(&w->pcw_active, cn, pcrc_list);
 
 		passert(w->pcw_pid != -1);
-		passert(w->pcw_pipe != -1);
+		passert(w->pcw_master_fd != -1);
 		passert(w->pcw_work > 0);
 
 		/* send the request, and then mark the worker as having more work */
@@ -545,17 +600,24 @@ void delete_cryptographic_continuation(struct state *st)
 			       st->st_serialno));
 }
 
+static void kill_helper(struct pluto_crypto_worker *w)
+{
+	pthread_cancel((pthread_t)w->pcw_pid);
+	w->pcw_dead = TRUE;
+}
+
 /*
- * this function is called when there is a helper pipe that is ready.
- * we read the request from the pipe, and find the associated continuation,
+ * This function is called when there is socket input from a helper.
+ * This is the answer from the helper.
+ * We read the request from the socket, and find the associated continuation,
  * and dispatch to that continuation.
  *
- * this function should process only a single answer, and then go back
+ * This function should process only a single answer, and then go back
  * to the select call to get called again. This is not most efficient,
  * but is is most fair.
  *
  */
-static void handle_helper_comm(struct pluto_crypto_worker *w)
+static void handle_helper_answer(struct pluto_crypto_worker *w)
 {
 	struct pluto_crypto_req reqbuf[2];
 	unsigned char *inloc;
@@ -571,7 +633,7 @@ static void handle_helper_comm(struct pluto_crypto_worker *w)
 
 	/* read from the pipe */
 	zero(&reqbuf);
-	actlen = read(w->pcw_pipe, (char *)reqbuf, sizeof(r->pcr_len));
+	actlen = read(w->pcw_master_fd, (char *)reqbuf, sizeof(r->pcr_len));
 
 	if (actlen != sizeof(r->pcr_len)) {
 		if (actlen != 0) {
@@ -598,9 +660,7 @@ static void handle_helper_comm(struct pluto_crypto_worker *w)
 		       w->pcw_helpernum,
 		       w->pcw_pid, (unsigned long)r->pcr_len,
 		       (unsigned long)sizeof(reqbuf));
-killit:
-		pthread_cancel((pthread_t)w->pcw_pid);
-		w->pcw_dead = TRUE;
+		kill_helper(w);
 		return;
 	}
 
@@ -609,7 +669,7 @@ killit:
 
 	while (restlen > 0) {
 		/* okay, got a basic size, read the rest of it */
-		actlen = read(w->pcw_pipe, inloc, restlen);
+		actlen = read(w->pcw_master_fd, inloc, restlen);
 
 		if (actlen <= 0) {
 			/* faulty read. note this fact, and close pipe. */
@@ -618,8 +678,9 @@ killit:
 			 */
 			loglog(RC_LOG_SERIOUS,
 			       "cryptographic handler(%d) read(%d)=%d failed: %s\n",
-			       w->pcw_pipe, restlen, actlen, strerror(errno));
-			goto killit;
+			       w->pcw_master_fd, restlen, actlen, strerror(errno));
+			kill_helper(w);
+			return;
 		}
 
 		restlen -= actlen;
@@ -679,6 +740,7 @@ killit:
 static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 {
 	int fds[2];
+	int thread_status;
 
 	/* reset this */
 	w->pcw_pid = -1;
@@ -691,8 +753,8 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	}
 
 	w->pcw_helpernum = n;
-	w->pcw_pipe = fds[0];
-	w->pcw_helper_pipe = fds[1];
+	w->pcw_master_fd = fds[0];
+	w->pcw_helper_fd = fds[1];
 	w->pcw_maxbasicwork  = 2;
 	w->pcw_maxcritwork   = 4;
 	w->pcw_work     = 0;
@@ -704,6 +766,7 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	 * times sizeof(pluto_crypto_req) in size
 	 */
 	{
+#warning what the heck is 10?
 		int qlen = w->pcw_maxcritwork *
 			   sizeof(struct pluto_crypto_req) + 10;
 
@@ -724,8 +787,6 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	/* set local so that child inheirits it */
 	pc_helper_num = n;
 
-	int thread_status;
-
 	thread_status = pthread_create((pthread_t*)&w->pcw_pid, NULL,
 				       pluto_helper_thread, (void*)w);
 	if (thread_status != 0) {
@@ -738,16 +799,17 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 		return;
 	} else {
 		libreswan_log("started helper (thread) pid=%ld (fd:%d)",
-			      w->pcw_pid,  w->pcw_pipe);
+			      w->pcw_pid,  w->pcw_master_fd);
 	}
 }
 
+/* IN A HELPER THREAD */
 static void *pluto_helper_thread(void *w)
 {
-	struct pluto_crypto_worker *helper;
+	const struct pluto_crypto_worker *helper;
 
 	helper = (struct pluto_crypto_worker *)w;
-	pluto_crypto_helper(helper->pcw_helper_pipe, helper->pcw_helpernum);
+	pluto_crypto_helper(helper->pcw_helper_fd, helper->pcw_helpernum);
 	return NULL;
 }
 
@@ -757,11 +819,12 @@ static void *pluto_helper_thread(void *w)
 static void cleanup_crypto_helper(struct pluto_crypto_worker *w,
 				  int status)
 {
-	if (w->pcw_pipe) {
+	if (w->pcw_master_fd != 0) {
 		loglog(RC_LOG_SERIOUS,
 		       "closing helper(%u) pid=%lu fd=%d exit=%d",
-		       w->pcw_helpernum, w->pcw_pid, w->pcw_pipe, status);
-		close(w->pcw_pipe);
+		       w->pcw_helpernum, w->pcw_pid, w->pcw_master_fd, status);
+		close(w->pcw_master_fd);
+		/* ??? should we set w->pcw_master_fd to 0? */
 	}
 
 	w->pcw_pid = -1;
@@ -830,24 +893,23 @@ void init_crypto_helpers(int nhelpers)
 	}
 
 	pc_worker_num = 0;
-
 }
 
-void pluto_crypto_helper_sockets(lsw_fd_set *readfds)
+void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds)
 {
 	int cnt;
 	struct pluto_crypto_worker *w = pc_workers;
 
 	for (cnt = 0; cnt < pc_workers_cnt; cnt++, w++) {
 		if (w->pcw_pid != -1 && !w->pcw_dead) {
-			passert(w->pcw_pipe > 0);
+			passert(w->pcw_master_fd > 0);
 
-			LSW_FD_SET(w->pcw_pipe, readfds);
+			LSW_FD_SET(w->pcw_master_fd, readfds);
 		}
 	}
 }
 
-int pluto_crypto_helper_ready(lsw_fd_set *readfds)
+int pluto_crypto_helper_response_ready(lsw_fd_set *readfds)
 {
 	int cnt;
 	struct pluto_crypto_worker *w = pc_workers;
@@ -857,10 +919,10 @@ int pluto_crypto_helper_ready(lsw_fd_set *readfds)
 
 	for (cnt = 0; cnt < pc_workers_cnt; cnt++, w++) {
 		if (w->pcw_pid != -1 && !w->pcw_dead) {
-			passert(w->pcw_pipe > 0);
+			passert(w->pcw_master_fd > 0);
 
-			if (LSW_FD_ISSET(w->pcw_pipe, readfds)) {
-				handle_helper_comm(w);
+			if (LSW_FD_ISSET(w->pcw_master_fd, readfds)) {
+				handle_helper_answer(w);
 				ndes++;
 			}
 		}

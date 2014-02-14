@@ -64,14 +64,12 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 			     u_int16_t oakley_group2)
 {
 	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *dhq;
+	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(&r, pcr_compute_dh_iv, importance);
-
-	dhq = &r.pcr_d.dhq;
+	pcr_dh_init(&r, pcr_compute_dh_iv, importance);
 
 	passert(st->st_sec_in_use);
 
@@ -87,33 +85,26 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	    DBG_log("parent1 type: %d group: %d len: %d\n", r.pcr_type,
 		    r.pcr_d.dhq.oakley_group, (int)r.pcr_len));
 
-	if (pss)
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->pss,
-				       *pss);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->ni,
-			       st->st_ni);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->nr,
-			       st->st_nr);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gi,
-			       st->st_gi);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gr,
-			       st->st_gr);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space,
-			       &dhq->secret, st->st_sec_chunk);
+	if (pss != NULL)
+		WIRE_CLONE_CHUNK(*dhq, pss, *pss);
+	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
+	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
+	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
+	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
+	WIRE_CLONE_CHUNK(*dhq, secret, st->st_sec_chunk);
 
 	/*copying required encryption algo*/
 	/*dhq->encrypt_algo = st->st_oakley.encrypt;*/
 	dhq->encrypter = st->st_oakley.encrypter;
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->pubk,
-			       st->pubk);
+	WIRE_CLONE_CHUNK(*dhq, pubk, st->pubk);
 
-	pluto_crypto_allocchunk(&dhq->thespace, &dhq->icookie, COOKIE_SIZE);
+	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(wire_chunk_ptr(dhq, &dhq->icookie),
 	       st->st_icookie, COOKIE_SIZE);
 
-	pluto_crypto_allocchunk(&dhq->thespace, &dhq->rcookie, COOKIE_SIZE);
+	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
 	memcpy(wire_chunk_ptr(dhq, &dhq->rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
@@ -174,14 +165,12 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 			   u_int16_t oakley_group2)
 {
 	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *dhq;
+	struct pcr_skeyid_q *const dhq= &r.pcr_d.dhq;
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(&r, pcr_compute_dh, importance);
-
-	dhq = &r.pcr_d.dhq;
+	pcr_dh_init(&r, pcr_compute_dh, importance);
 
 	passert(st->st_sec_in_use);
 
@@ -192,33 +181,26 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	dhq->init = init;
 	dhq->keysize = st->st_oakley.enckeylen / BITS_PER_BYTE;
 
-	if (pss)
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->pss,
-				       *pss);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->ni,
-			       st->st_ni);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->nr,
-			       st->st_nr);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gi,
-			       st->st_gi);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gr,
-			       st->st_gr);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space,
-			       &dhq->secret, st->st_sec_chunk);
+	if (pss != NULL)
+		WIRE_CLONE_CHUNK(*dhq, pss, *pss);
+	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
+	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
+	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
+	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
+	WIRE_CLONE_CHUNK(*dhq, secret, st->st_sec_chunk);
 
 	/*copying required encryption algo*/
 	/* XXX Avesh: you commented this out on purpose or by accident ?? */
 	/*dhq->encrypter = st->st_oakley.encrypter;*/
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space,
-			       &dhq->pubk, st->pubk);
+	WIRE_CLONE_CHUNK(*dhq, pubk, st->pubk);
 
-	pluto_crypto_allocchunk(&dhq->thespace, &dhq->icookie, COOKIE_SIZE);
+	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(wire_chunk_ptr(&r.pcr_d.dhq, &dhq->icookie),
 	       st->st_icookie, COOKIE_SIZE);
 
-	pluto_crypto_allocchunk(&dhq->thespace, &dhq->rcookie, COOKIE_SIZE);
+	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
 	memcpy(wire_chunk_ptr(&r.pcr_d.dhq, &dhq->rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
@@ -263,13 +245,11 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 		       u_int16_t oakley_group2)
 {
 	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *dhq;
+	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(&r, pcr_compute_dh_v2, importance);
-
-	dhq = &r.pcr_d.dhq;
+	pcr_dh_init(&r, pcr_compute_dh_v2, importance);
 
 	passert(st->st_sec_in_use);
 
@@ -291,30 +271,24 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 
 	passert(r.pcr_d.dhq.oakley_group != 0);
 
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->ni,
-			       st->st_ni);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->nr,
-			       st->st_nr);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gi,
-			       st->st_gi);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gr,
-			       st->st_gr);
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space,
-			       &dhq->secret, st->st_sec_chunk);
+	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
+	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
+	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
+	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
+	WIRE_CLONE_CHUNK(*dhq, secret, st->st_sec_chunk);
 
 	/*copying required encryption algo*/
 	/*dhq->encrypt_algo = st->st_oakley.encrypter->common.algo_v2id;*/
 	dhq->encrypter = st->st_oakley.encrypter;
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
-	pluto_crypto_copychunk(&dhq->thespace, dhq->space,
-			       &dhq->pubk, st->pubk);
+	WIRE_CLONE_CHUNK(*dhq, pubk, st->pubk);
 
-	pluto_crypto_allocchunk(&dhq->thespace, &dhq->icookie, COOKIE_SIZE);
+	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(wire_chunk_ptr(dhq, &dhq->icookie),
 	       st->st_icookie, COOKIE_SIZE);
 
-	pluto_crypto_allocchunk(&dhq->thespace, &dhq->rcookie, COOKIE_SIZE);
+	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
 	memcpy(wire_chunk_ptr(dhq, &dhq->rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
@@ -342,9 +316,9 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 }
 
 void finish_dh_v2(struct state *st,
-		  struct pluto_crypto_req *r)
+		  const struct pluto_crypto_req *r)
 {
-	struct pcr_skeycalc_v2 *dhv2 = &r->pcr_d.dhv2;
+	const struct pcr_skeycalc_v2_r *dhv2 = &r->pcr_d.dhv2;
 
 	clonetochunk(st->st_shared,   wire_chunk_ptr(dhv2, &(dhv2->shared)),
 		     dhv2->shared.len,   "calculated shared secret");

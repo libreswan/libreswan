@@ -240,6 +240,7 @@ PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
 			   keySize);
 }
 
+/* MUST BE THREAD-SAFE */
 PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 			     SECItem *param, CK_MECHANISM_TYPE target,
 			     CK_ATTRIBUTE_TYPE operation, int keysize)

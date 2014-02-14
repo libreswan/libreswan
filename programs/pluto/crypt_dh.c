@@ -69,6 +69,7 @@
  *	PK11_Derive_lsw(base, mechanism, param, target, operation, keysize)
  */
 
+/* MUST BE THREAD-SAFE */
 static PK11SymKey *pk11_extract_derive_wrapper_lsw(PK11SymKey *base,
 						   CK_EXTRACT_PARAMS bs,
 						   CK_MECHANISM_TYPE target,
@@ -83,6 +84,7 @@ static PK11SymKey *pk11_extract_derive_wrapper_lsw(PK11SymKey *base,
 	return PK11_Derive_lsw(base, CKM_EXTRACT_KEY_FROM_KEY, &param, target,
 			       operation, keySize);
 }
+
 /*
    static CK_MECHANISM_TYPE nss_hmac_mech(const struct hash_desc *hasher)
    {
@@ -121,6 +123,7 @@ static CK_MECHANISM_TYPE nss_encryption_mech(
  * We make the leap that the length should be that of the group
  * (see quoted passage at start of ACCEPT_KE).
  */
+/* MUST BE THREAD-SAFE */
 static void calc_dh_shared(chunk_t *shared, const chunk_t g,
 			   chunk_t secret,
 			   const struct oakley_group_desc *group,
@@ -340,6 +343,7 @@ static void skeyid_preshared(const chunk_t pss,
 			   *skeyid_chunk));
 }
 
+/* MUST BE THREAD-SAFE */
 static void skeyid_digisig(const chunk_t ni,
 			   const chunk_t nr,
 			   const chunk_t shared_chunk,
@@ -423,6 +427,7 @@ static void skeyid_digisig(const chunk_t ni,
 /* Generate the SKEYID_* and new IV
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
+/* MUST BE THREAD-SAFE */
 static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 			    chunk_t shared_chunk,
 			    const size_t keysize,       /* = st->st_oakley.enckeylen/BITS_PER_BYTE; */
@@ -449,19 +454,19 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 	const struct encrypt_desc *encrypter = skq->encrypter;
 
 	/* this doesn't take any memory */
-	setchunk_fromwire(gi, &skq->gi, skq);
-	setchunk_fromwire(gr, &skq->gr, skq);
-	setchunk_fromwire(ni, &skq->ni, skq);
-	setchunk_fromwire(nr, &skq->nr, skq);
-	setchunk_fromwire(icookie, &skq->icookie, skq);
-	setchunk_fromwire(rcookie, &skq->rcookie, skq);
+	setchunk_from_wire(gi, skq, &skq->gi);
+	setchunk_from_wire(gr, skq, &skq->gr);
+	setchunk_from_wire(ni, skq, &skq->ni);
+	setchunk_from_wire(nr, skq, &skq->nr);
+	setchunk_from_wire(icookie, skq, &skq->icookie);
+	setchunk_from_wire(rcookie, skq, &skq->rcookie);
 
 	memcpy(&shared, shared_chunk.ptr, shared_chunk.len);
 
 	/* Generate the SKEYID */
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
-		setchunk_fromwire(pss,    &skq->pss, skq);
+		setchunk_from_wire(pss, skq, &skq->pss);
 		skeyid_preshared(pss, ni, nr, shared_chunk, hasher,
 				 skeyid_chunk);
 		break;
@@ -1009,9 +1014,10 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 }
 
+/* MUST BE THREAD-SAFE */
 void calc_dh_iv(struct pluto_crypto_req *r)
 {
-	struct pcr_skeyid_q *skq = &r->pcr_d.dhq;
+	const struct pcr_skeyid_q *skq = &r->pcr_d.dhq;
 	struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
 	struct pcr_skeyid_q dhq;
 	const struct oakley_group_desc *group;
@@ -1025,22 +1031,18 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 
 	/* clear out the reply */
 	zero(skr);
-	skr->thespace.start = 0;
-	skr->thespace.len   = sizeof(skr->space);
+	INIT_WIRE_ARENA(*skr);
 
 	group = lookup_group(dhq.oakley_group);
 	passert(group != NULL);
 
-	setchunk_fromwire(ltsecret, &dhq.secret, &dhq);
-	setchunk_fromwire(pubk, &dhq.pubk, &dhq);
+	setchunk_from_wire(ltsecret, &dhq, &dhq.secret);
+	setchunk_from_wire(pubk, &dhq, &dhq.pubk);
 
 	/* now calculate the (g^x)(g^y) ---
 	   need gi on responder, gr on initiator */
 
-	if (dhq.init == RESPONDER)
-		setchunk_fromwire(g, &dhq.gi, &dhq);
-	else
-		setchunk_fromwire(g, &dhq.gr, &dhq);
+	setchunk_from_wire(g, &dhq, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT,
 	    DBG_dump_chunk("peer's g: ", g));
@@ -1066,13 +1068,13 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 			&enc_key);
 
 	/* now translate it back to wire chunks, freeing the chunks */
-	setwirechunk_fromchunk(skr->shared,   shared,   skr);
-	setwirechunk_fromchunk(skr->skeyid,   skeyid,   skr);
-	setwirechunk_fromchunk(skr->skeyid_d, skeyid_d, skr);
-	setwirechunk_fromchunk(skr->skeyid_a, skeyid_a, skr);
-	setwirechunk_fromchunk(skr->skeyid_e, skeyid_e, skr);
-	setwirechunk_fromchunk(skr->new_iv,   new_iv,   skr);
-	setwirechunk_fromchunk(skr->enc_key,  enc_key,  skr);
+	WIRE_CLONE_CHUNK(*skr, shared, shared);
+	WIRE_CLONE_CHUNK(*skr, skeyid, skeyid);
+	WIRE_CLONE_CHUNK(*skr, skeyid_d, skeyid_d);
+	WIRE_CLONE_CHUNK(*skr, skeyid_a, skeyid_a);
+	WIRE_CLONE_CHUNK(*skr, skeyid_e, skeyid_e);
+	WIRE_CLONE_CHUNK(*skr, new_iv, new_iv);
+	WIRE_CLONE_CHUNK(*skr, enc_key, enc_key);
 
 	freeanychunk(shared);
 	freeanychunk(skeyid);
@@ -1085,6 +1087,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	return;
 }
 
+/* MUST BE THREAD-SAFE */
 void calc_dh(struct pluto_crypto_req *r)
 {
 	struct pcr_skeyid_q *skq = &r->pcr_d.dhq;
@@ -1099,27 +1102,24 @@ void calc_dh(struct pluto_crypto_req *r)
 
 	/* clear out the reply */
 	zero(skr);
-	skr->thespace.start = 0;
-	skr->thespace.len   = sizeof(skr->space);
+	INIT_WIRE_ARENA(*skr);
 
 	group = lookup_group(dhq.oakley_group);
 	passert(group != NULL);
 
-	setchunk_fromwire(ltsecret, &dhq.secret, &dhq);
-	setchunk_fromwire(pubk, &dhq.pubk, &dhq);
+	setchunk_from_wire(ltsecret, &dhq, &dhq.secret);
+	setchunk_from_wire(pubk, &dhq, &dhq.pubk);
 
 	/* now calculate the (g^x)(g^y) */
 
-	if (dhq.init == RESPONDER)
-		setchunk_fromwire(g, &dhq.gi, &dhq);
-	else
-		setchunk_fromwire(g, &dhq.gr, &dhq);
+	setchunk_from_wire(g, &dhq, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr);
+
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
 	calc_dh_shared(&shared, g, ltsecret, group, pubk);
 
 	/* now translate it back to wire chunks, freeing the chunks */
-	setwirechunk_fromchunk(skr->shared,   shared,   skr);
+	WIRE_CLONE_CHUNK(*skr, shared, shared);
 	freeanychunk(shared);
 
 	return;
@@ -1129,6 +1129,7 @@ void calc_dh(struct pluto_crypto_req *r)
  * IKEv2 - RFC4306 SKEYSEED - calculation.
  */
 
+/* MUST BE THREAD-SAFE */
 static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 			     chunk_t shared,
 			     const size_t keysize,
@@ -1145,8 +1146,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	struct v2prf_stuff vpss;
 	size_t total_keysize;
 
-	zero(&vpss);
-
 	chunk_t hmac_opad, hmac_ipad, hmac_pad_prf, counter; /*hmac_pad_integ, hmac_zerobyte, hmac_val1, hmac_val2;*/
 	CK_OBJECT_HANDLE keyhandle;
 	SECItem param, param1;
@@ -1155,11 +1154,13 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	PK11SymKey *skeyseed_k, *SK_d_k, *SK_ai_k, *SK_ar_k, *SK_ei_k,
 	*SK_er_k, *SK_pi_k, *SK_pr_k;
 
+	zero(&vpss);
+
 	/* this doesn't take any memory, it's just moving pointers around */
-	setchunk_fromwire(vpss.ni, &skq->ni, skq);
-	setchunk_fromwire(vpss.nr, &skq->nr, skq);
-	setchunk_fromwire(vpss.spii, &skq->icookie, skq);
-	setchunk_fromwire(vpss.spir, &skq->rcookie, skq);
+	setchunk_from_wire(vpss.ni, skq, &skq->ni);
+	setchunk_from_wire(vpss.nr, skq, &skq->nr);
+	setchunk_from_wire(vpss.spii, skq, &skq->icookie);
+	setchunk_from_wire(vpss.spir, skq, &skq->rcookie);
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%lu",
@@ -1170,23 +1171,23 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	const struct hash_desc *hasher =
 		(struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
 						       skq->prf_hash);
-	passert(hasher);
+	passert(hasher != NULL);
 
 	const struct encrypt_desc *encrypter = skq->encrypter;
-	passert(encrypter);
+	passert(encrypter != NULL);
 
 	hmac_opad = hmac_pads(HMAC_OPAD, hasher->hash_block_size);
 	hmac_ipad = hmac_pads(HMAC_IPAD, hasher->hash_block_size);
-	hmac_pad_prf  = hmac_pads(0x00,
-				  hasher->hash_block_size -
-				  hasher->hash_digest_len);
+	hmac_pad_prf = hmac_pads(0x00,
+				 hasher->hash_block_size -
+				 hasher->hash_digest_len);
 
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
 	{
 		skeyid_digisig(vpss.ni, vpss.nr, shared, hasher, skeyseed);
 		memcpy(&skeyseed_k, skeyseed->ptr, skeyseed->len);
 	}
-	passert(skeyseed_k);
+	passert(skeyseed_k != NULL);
 
 	/* now we have to generate the keys for everything */
 	{
@@ -1479,10 +1480,11 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	    });
 }
 
+/* MUST BE THREAD-SAFE */
 void calc_dh_v2(struct pluto_crypto_req *r)
 {
-	struct pcr_skeyid_q    *skq = &r->pcr_d.dhq;
-	struct pcr_skeycalc_v2 *skr = &r->pcr_d.dhv2;
+	const struct pcr_skeyid_q *skq = &r->pcr_d.dhq;
+	struct pcr_skeycalc_v2_r *skr = &r->pcr_d.dhv2;
 	struct pcr_skeyid_q dhq;
 	const struct oakley_group_desc *group;
 	chunk_t shared, g, ltsecret;
@@ -1495,21 +1497,18 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 
 	/* clear out the reply */
 	zero(skr);
-	skr->thespace.start = 0;
-	skr->thespace.len   = sizeof(skr->space);
+	INIT_WIRE_ARENA(*skr);
 
 	group = lookup_group(dhq.oakley_group);
 	passert(group != NULL);
 
-	setchunk_fromwire(ltsecret, &dhq.secret, &dhq);
-	setchunk_fromwire(pubk, &dhq.pubk, &dhq);
+	setchunk_from_wire(ltsecret, &dhq, &dhq.secret);
+	setchunk_from_wire(pubk, &dhq, &dhq.pubk);
 
 	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
 
-	if (dhq.init == RESPONDER)
-		setchunk_fromwire(g, &dhq.gi, &dhq);
-	else
-		setchunk_fromwire(g, &dhq.gr, &dhq);
+	setchunk_from_wire(g, &dhq, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr);
+
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
 	calc_dh_shared(&shared, g, ltsecret, group, pubk);
@@ -1537,15 +1536,15 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 			 &SK_pr);
 
 	/* now translate it back to wire chunks, freeing the chunks */
-	setwirechunk_fromchunk(skr->shared,   shared,   skr);
-	setwirechunk_fromchunk(skr->skeyseed, skeyseed, skr);
-	setwirechunk_fromchunk(skr->skeyid_d, SK_d, skr);
-	setwirechunk_fromchunk(skr->skeyid_ai, SK_ai, skr);
-	setwirechunk_fromchunk(skr->skeyid_ar, SK_ar, skr);
-	setwirechunk_fromchunk(skr->skeyid_ei, SK_ei, skr);
-	setwirechunk_fromchunk(skr->skeyid_er, SK_er, skr);
-	setwirechunk_fromchunk(skr->skeyid_pi, SK_pi, skr);
-	setwirechunk_fromchunk(skr->skeyid_pr, SK_pr, skr);
+	WIRE_CLONE_CHUNK(*skr, shared, shared);
+	WIRE_CLONE_CHUNK(*skr, skeyseed, skeyseed);
+	WIRE_CLONE_CHUNK(*skr, skeyid_d, SK_d);
+	WIRE_CLONE_CHUNK(*skr, skeyid_ai, SK_ai);
+	WIRE_CLONE_CHUNK(*skr, skeyid_ar, SK_ar);
+	WIRE_CLONE_CHUNK(*skr, skeyid_ei, SK_ei);
+	WIRE_CLONE_CHUNK(*skr, skeyid_er, SK_er);
+	WIRE_CLONE_CHUNK(*skr, skeyid_pi, SK_pi);
+	WIRE_CLONE_CHUNK(*skr, skeyid_pr, SK_pr);
 
 	freeanychunk(shared);
 	freeanychunk(skeyseed);

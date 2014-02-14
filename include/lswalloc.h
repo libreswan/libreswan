@@ -50,20 +50,23 @@ struct chunk {
 	u_char *ptr;
 	size_t len;
 };
+
 typedef struct chunk chunk_t;
 
-#define setchunk(ch, addr, size) do { (ch).ptr = (addr); (ch).len = (size); \
-} while (0)
+#define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
+
 /* NOTE: freeanychunk, unlike pfreeany, NULLs .ptr */
-#define freeanychunk(ch) do { pfreeany((ch).ptr); (ch).ptr = NULL; } while (0)
+#define freeanychunk(ch) { pfreeany((ch).ptr); (ch).ptr = NULL; }
+
 #define clonetochunk(ch, addr, size, name) \
-	do { (ch).ptr = clone_bytes((addr), (ch).len = (size), name); \
-	} while (0)
+	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
+
 #define clonereplacechunk(ch, addr, size, name) \
-	do { pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); \
-	} while (0)
+	{ pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); }
+
 #define chunkcpy(dst, chunk) \
-	do { memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len; } while (0)
+	{ memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len; }
+
 #define same_chunk(a, b) \
 	((a).len == (b).len && memeq((a).ptr, (b).ptr, (b).len))
 
