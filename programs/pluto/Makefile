@@ -110,7 +110,7 @@ DISTSRC = \
 	hostpair.c \
 	ipsec_doi.c ipsec_doi.h ikev1.c ikev1_quick.c ikev1_continuations.h \
         ikev2.c ikev2_parent.c ikev2_child.c ikev2_crypto.c \
-	ikev2_prfplus.c spdb_v2_struct.c \
+	ikev2_prfplus.c ikev2_spdb_struct.c \
 	kernel.c kernel.h \
 	${NETKEY_SRCS} \
 	${KLIPS_SRCS} ${MAST_SRCS} ${WIN2K_SRCS} \
@@ -126,7 +126,7 @@ DISTSRC = \
 	keys.c keys.h \
 	rnd.c rnd.h \
 	server.c server.h \
-	spdb.c spdb_struct.c spdb_v1_struct.c spdb_print.c spdb.h \
+	spdb.c spdb_struct.c ikev1_spdb_struct.c spdb_print.c spdb.h \
 	state.c state.h \
 	${SYSDEP_SRC} \
 	timer.c timer.h \
@@ -147,15 +147,15 @@ OBJSPLUTO += pending.o cookie.o crypto.o defs.o
 OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
-OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o
-OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o spdb_v2_struct.o
+OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o
+OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o 
 OBJSPLUTO += kernel.o
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
 OBJSPLUTO += kernel_noklips.o rcv_whack.o
 OBJSPLUTO += demux.o msgdigest.o keys.o dnskey.o
 OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
 OBJSPLUTO += ikev2_crypto.o ikev2_prfplus.o
-OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_v1_struct.o spdb_print.o
+OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_print.o
 OBJSPLUTO += vendor.o nat_traversal.o virtual.o
 OBJSPLUTO += ike_alg_aes.o ikev2_rsa.o ikev2_psk.o ikev2_x509.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o

@@ -62,7 +62,7 @@
 
 #include "nat_traversal.h"
 
-/* Taken from spdb_v1_struct.c, as the format is similar */
+/* Taken from ikev1_spdb_struct.c, as the format is similar */
 static bool ikev2_out_attr(int type,
 		    unsigned long val,
 		    struct_desc *attr_desc,
@@ -80,7 +80,7 @@ static bool ikev2_out_attr(int type,
 	} else {
 		/*
 		 * We really only support KEY_LENGTH, with does not use this long
-		 * attribute style. See comments in out_attr() in spdb_v1_struct.c
+		 * attribute style. See comments in out_attr() in ikev1_spdb_struct.c
 		 */
 		pb_stream val_pbs;
 		u_int32_t nval = htonl(val);
