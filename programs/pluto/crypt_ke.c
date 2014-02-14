@@ -119,7 +119,7 @@ void calc_ke(struct pluto_crypto_req *r)
 		}
 	}
 
-	ALLOC_WIRE_CHUNK(*kn, secret, sizeof(SECKEYPrivateKey*));
+	ALLOC_WIRE_CHUNK(*kn, secret, sizeof(SECKEYPrivateKey *));
 	{
 		unsigned char *gip = wire_chunk_ptr(kn, &kn->secret);
 
@@ -134,11 +134,11 @@ void calc_ke(struct pluto_crypto_req *r)
 		       pubk->u.dh.publicValue.len);
 	}
 
-	ALLOC_WIRE_CHUNK(*kn, pubk, sizeof(SECKEYPublicKey*));
+	ALLOC_WIRE_CHUNK(*kn, pubk, sizeof(SECKEYPublicKey *));
 	{
 		unsigned char *gip = wire_chunk_ptr(kn, &kn->pubk);
 
-		memcpy(gip, &pubk, sizeof(SECKEYPublicKey*));
+		memcpy(gip, &pubk, sizeof(SECKEYPublicKey *));
 	}
 
 	DBG(DBG_CRYPT, {

@@ -51,7 +51,7 @@ void alloc_wire_chunk(wire_arena_t *arena,
 	 * passert for now, since we should be able to figure out what
 	 * the maximum is.
 	 */
-	passert(size < arena->roof - arena->next);
+	passert(size <= arena->roof - arena->next);
 
 	new->start = arena->next;
 	new->len = size;

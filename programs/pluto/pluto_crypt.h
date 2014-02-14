@@ -89,8 +89,8 @@ typedef struct wire_chunk {
 
 
 extern void alloc_wire_chunk(wire_arena_t *arena,
-				    wire_chunk_t *new,
-				    size_t size);
+			     wire_chunk_t *new,
+			     size_t size);
 
 #define ALLOC_WIRE_CHUNK(parent, field, size) \
 	alloc_wire_chunk(&(parent).arena, &(parent).field, (size))
@@ -99,8 +99,8 @@ extern void alloc_wire_chunk(wire_arena_t *arena,
  * The space is allocated from the arena.
  */
 extern void wire_clone_chunk(wire_arena_t *arena,
-				   wire_chunk_t *new,
-				   const chunk_t *chunk);
+			     wire_chunk_t *new,
+			     const chunk_t *chunk);
 
 #define WIRE_CLONE_CHUNK(parent, field, chunk) \
 	wire_clone_chunk(&(parent).arena, &(parent).field, &(chunk))
@@ -149,7 +149,7 @@ struct pcr_skeyid_q {
 	oakley_hash_t integ_hash;
 	oakley_hash_t prf_hash;
 	enum phase1_role init;
-	size_t keysize;      /* of encryptor */
+	size_t keysize;	/* of encryptor */
 	wire_chunk_t gi;
 	wire_chunk_t gr;
 	wire_chunk_t pss;
@@ -168,10 +168,10 @@ struct pcr_skeyid_r {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
 	wire_chunk_t shared;
-	wire_chunk_t skeyid;    /* output */
-	wire_chunk_t skeyid_d;  /* output */
-	wire_chunk_t skeyid_a;  /* output */
-	wire_chunk_t skeyid_e;  /* output */
+	wire_chunk_t skeyid;	/* output */
+	wire_chunk_t skeyid_d;	/* output */
+	wire_chunk_t skeyid_a;	/* output */
+	wire_chunk_t skeyid_e;	/* output */
 	wire_chunk_t new_iv;
 	wire_chunk_t enc_key;
 };
@@ -181,14 +181,14 @@ struct pcr_skeycalc_v2_r {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
 	wire_chunk_t shared;
-	wire_chunk_t skeyseed;  /* output */
-	wire_chunk_t skeyid_d;  /* output */
-	wire_chunk_t skeyid_ai; /* output */
-	wire_chunk_t skeyid_ar; /* output */
-	wire_chunk_t skeyid_ei; /* output */
-	wire_chunk_t skeyid_er; /* output */
-	wire_chunk_t skeyid_pi; /* output */
-	wire_chunk_t skeyid_pr; /* output */
+	wire_chunk_t skeyseed;	/* output */
+	wire_chunk_t skeyid_d;	/* output */
+	wire_chunk_t skeyid_ai;	/* output */
+	wire_chunk_t skeyid_ar;	/* output */
+	wire_chunk_t skeyid_ei;	/* output */
+	wire_chunk_t skeyid_er;	/* output */
+	wire_chunk_t skeyid_pi;	/* output */
+	wire_chunk_t skeyid_pr;	/* output */
 };
 
 struct pluto_crypto_req {
@@ -206,7 +206,7 @@ struct pluto_crypto_req {
 	} pcr_d;
 };
 
-struct pluto_crypto_req_cont;  /* forward reference */
+struct pluto_crypto_req_cont;	/* forward reference */
 
 typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
 				struct pluto_crypto_req *,
@@ -241,10 +241,10 @@ struct pluto_crypto_req_cont {
 	pcr_req_id pcrc_id;
 	crypto_req_func pcrc_func;
 	pb_stream pcrc_reply_stream;
-	u_int8_t                     *pcrc_reply_buffer;
+	u_int8_t *pcrc_reply_buffer;
 #ifdef IPSEC_PLUTO_PCRC_DEBUG
-	char                         *pcrc_function;
-	char                         *pcrc_file;
+	char *pcrc_function;
+	char *pcrc_file;
 	int pcrc_line;
 #endif
 };
@@ -253,14 +253,14 @@ struct pluto_crypto_req_cont {
 
 struct ke_continuation {
 	struct pluto_crypto_req_cont ke_pcrc;	/* MUST BE THE FIRST FIELD */
-	struct msg_digest           *md;
+	struct msg_digest *md;
 };
 
 struct dh_continuation {
 	struct pluto_crypto_req_cont dh_pcrc;	/* MUST BE THE FIRST FIELD */
-	struct msg_digest           *md;
-	so_serial_t serialno;                   /* used for inter state
-	                                         * calculations on responder */
+	struct msg_digest *md;
+	so_serial_t serialno;			/* used for inter state
+						 * calculations on responder */
 };
 
 #define PCR_REQ_SIZE sizeof(struct pluto_crypto_req) + 10
@@ -273,7 +273,7 @@ extern err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 
 extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
 
-extern int  pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
+extern int pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 
 /* actual helper functions */
 extern stf_status build_ke(struct pluto_crypto_req_cont *cn,
@@ -317,7 +317,7 @@ extern void finish_dh_secret(struct state *st,
 extern stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 			      struct state *st,
 			      enum crypto_importance importance,
-			      enum phase1_role init,        /* TRUE=g_init,FALSE=g_r */
+			      enum phase1_role init,	/* TRUE=g_init,FALSE=g_r */
 			      u_int16_t oakley_group2);
 
 extern void finish_dh_v2(struct state *st,

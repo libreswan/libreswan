@@ -136,17 +136,17 @@ void finish_dh_secretiv(struct state *st,
 {
 	struct pcr_skeyid_r *dhr = &r->pcr_d.dhr;
 
-	clonetochunk(st->st_shared,   wire_chunk_ptr(dhr, &(dhr->shared)),
-		     dhr->shared.len,   "calculated shared secret");
-	clonetochunk(st->st_skeyid,   wire_chunk_ptr(dhr, &(dhr->skeyid)),
-		     dhr->skeyid.len,   "calculated skeyid secret");
-	clonetochunk(st->st_skeyid_d, wire_chunk_ptr(dhr, &(dhr->skeyid_d)),
+	clonetochunk(st->st_shared, wire_chunk_ptr(dhr, &dhr->shared),
+		     dhr->shared.len, "calculated shared secret");
+	clonetochunk(st->st_skeyid, wire_chunk_ptr(dhr, &dhr->skeyid),
+		     dhr->skeyid.len, "calculated skeyid secret");
+	clonetochunk(st->st_skeyid_d, wire_chunk_ptr(dhr, &dhr->skeyid_d),
 		     dhr->skeyid_d.len, "calculated skeyid_d secret");
-	clonetochunk(st->st_skeyid_a, wire_chunk_ptr(dhr, &(dhr->skeyid_a)),
+	clonetochunk(st->st_skeyid_a, wire_chunk_ptr(dhr, &dhr->skeyid_a),
 		     dhr->skeyid_a.len, "calculated skeyid_a secret");
-	clonetochunk(st->st_skeyid_e, wire_chunk_ptr(dhr, &(dhr->skeyid_e)),
+	clonetochunk(st->st_skeyid_e, wire_chunk_ptr(dhr, &dhr->skeyid_e),
 		     dhr->skeyid_e.len, "calculated skeyid_a secret");
-	clonetochunk(st->st_enc_key, wire_chunk_ptr(dhr, &(dhr->enc_key)),
+	clonetochunk(st->st_enc_key, wire_chunk_ptr(dhr, &dhr->enc_key),
 		     dhr->enc_key.len, "calculated key for phase 1");
 
 	passert(dhr->new_iv.len <= MAX_DIGEST_LEN);

@@ -729,9 +729,9 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 			enc_key = PK11_DeriveWithFlags(skeyid_e,
 						       CKM_EXTRACT_KEY_FROM_KEY, &param1,
-						       nss_encryption_mech(
-							       encrypter), CKA_FLAGS_ONLY, keysize, CKF_ENCRYPT |
-						       CKF_DECRYPT);
+						       nss_encryption_mech(encrypter),
+						       CKA_FLAGS_ONLY, keysize,
+						       CKF_ENCRYPT | CKF_DECRYPT);
 			PR_ASSERT(enc_key != NULL);
 
 			/* nss_symkey_log(enc_key, "enc_key"); */
@@ -872,9 +872,9 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 					enc_key = PK11_DeriveWithFlags(tkey39,
 								       CKM_EXTRACT_KEY_FROM_KEY, &param1,
-								       nss_encryption_mech(
-									       encrypter), CKA_FLAGS_ONLY, /*0*/ keysize, CKF_ENCRYPT |
-								       CKF_DECRYPT);
+								       nss_encryption_mech(encrypter),
+								       CKA_FLAGS_ONLY, /*0*/ keysize,
+								       CKF_ENCRYPT | CKF_DECRYPT);
 
 					/* nss_symkey_log(enc_key, "enc_key"); */
 					PR_ASSERT(enc_key != NULL);

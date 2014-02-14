@@ -115,7 +115,6 @@ static void do_aes(u_int8_t *buf, size_t buf_len, u_int8_t *key,
 	if (secparam != NULL)
 		SECITEM_FreeItem(secparam, PR_TRUE);
 	DBG(DBG_CRYPT, DBG_log("NSS do_aes: exit"));
-
 }
 
 struct encrypt_desc algo_aes =
