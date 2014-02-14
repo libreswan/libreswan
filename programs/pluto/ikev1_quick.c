@@ -79,7 +79,7 @@
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "x509more.h"
 
 /* accept_PFS_KE

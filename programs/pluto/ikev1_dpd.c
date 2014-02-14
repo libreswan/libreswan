@@ -61,7 +61,7 @@
 
 #include "pending.h" /* for flush_pending_by_connection */
 
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "x509more.h"
 
 /**

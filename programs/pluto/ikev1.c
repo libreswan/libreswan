@@ -152,7 +152,7 @@
 
 #include "nat_traversal.h"
 #include "vendor.h"
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "udpfromto.h"
 #include "hostpair.h"
 

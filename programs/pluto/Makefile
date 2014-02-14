@@ -105,7 +105,7 @@ DISTSRC = \
 	defs.h defs.c \
 	demux.c demux.h msgdigest.c \
 	dnskey.c dnskey.h \
-	dpd.c dpd.h \
+	ikev1_dpd.c ikev1_dpd.h \
 	myid.c hmac.c \
 	hostpair.c \
 	ipsec_doi.c ipsec_doi.h ikev1.c ikev1_quick.c ikev1_continuations.h \
@@ -143,11 +143,11 @@ DISTSRC = \
 DIST = $(DISTMISC) $(DISTSRC)
 
 OBJSPLUTO  = connections.o initiate.o terminate.o
-OBJSPLUTO += pending.o cookie.o crypto.o defs.o dpd.o
+OBJSPLUTO += pending.o cookie.o crypto.o defs.o
 OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
-OBJSPLUTO += ikev1.o ikev1_main.o   ikev1_quick.o
+OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o
 OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o spdb_v2_struct.o
 OBJSPLUTO += kernel.o
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}

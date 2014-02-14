@@ -48,7 +48,7 @@
 #include "rnd.h"
 #include "timer.h"
 #include "whack.h"
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "lswtime.h"
 #include "ikev2.h"
 
