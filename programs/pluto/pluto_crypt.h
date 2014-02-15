@@ -67,7 +67,8 @@ typedef unsigned int pcr_req_id;
  *
  * The macros with uppercase names are magic: they know
  * the field names "arena" and "space" in a way that a function
- * could not.
+ * could not.  They may also take a bare field name as an argument
+ * as a reference to that field within the parent struct.
  */
 typedef struct wire_arena {
 	unsigned int next;	/* index of next byte to be allocated */
@@ -116,6 +117,10 @@ extern void wire_clone_chunk(wire_arena_t *arena,
 
 #define WIRE_CHUNK_PTR(parent, field) wire_chunk_ptr(&(parent).arena, &(parent).field)
 
+/* NOTE: setchunk_from_wire does not allocate any space for the content!
+ * It is assumed that the memory for the wired_chunk will persist unchanged
+ * during the life of the chunk.
+ */
 #define setchunk_from_wire(chunk, parent, wire) \
 	setchunk(chunk, wire_chunk_ptr(&(parent)->arena, (wire)), (wire)->len)
 
