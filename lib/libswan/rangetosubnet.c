@@ -1,23 +1,23 @@
 /*
  * express an address range as a subnet (if possible)
+ *
  * Copyright (C) 2000  Henry Spencer.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
+ * option) any later version. See <http://www.fsf.org/copyleft/lgpl.txt>.
  *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Library General Public
  * License for more details.
  */
-
 #include "internal.h"
 #include "libreswan.h"
 
 /*
-   - rangetosubnet - turn an address range into a subnet, if possible
+ * rangetosubnet - turn an address range into a subnet, if possible
  *
  * A range which is a valid subnet will have a network part which is the
  * same in the from value and the to value, followed by a host part which
@@ -56,7 +56,7 @@ ip_subnet *dst;
 	nnet = 0;
 	for (i = n; i > 0 && *f == *t; i--, f++, t++)
 		nnet += 8;
-	if (i > 0 && !(*f == 0x00 && *t == 0xff)) {     /* mid-byte bdry. */
+	if (i > 0 && !(*f == 0x00 && *t == 0xff)) {	/* mid-byte bdry. */
 		fb = *f++;
 		tb = *t++;
 		i--;
@@ -149,29 +149,26 @@ struct rtab {
 	int family;
 	char *start;
 	char *stop;
-	char *output;                   /* NULL means error expected */
+	char *output;	/* NULL means error expected */
 } rtab[] = {
-	{ 4, "1.2.3.0",          "1.2.3.255",            "1.2.3.0/24" },
-	{ 4, "1.2.3.0",          "1.2.3.7",              "1.2.3.0/29" },
-	{ 4, "1.2.3.240",        "1.2.3.255",            "1.2.3.240/28" },
-	{ 4, "0.0.0.0",          "255.255.255.255",      "0.0.0.0/0" },
-	{ 4, "1.2.3.4",          "1.2.3.4",              "1.2.3.4/32" },
-	{ 4, "1.2.3.0",          "1.2.3.254",            NULL },
-	{ 4, "1.2.3.0",          "1.2.3.126",            NULL },
-	{ 4, "1.2.3.0",          "1.2.3.125",            NULL },
-	{ 4, "1.2.0.0",          "1.2.255.255",          "1.2.0.0/16" },
-	{ 4, "1.2.0.0",          "1.2.0.255",            "1.2.0.0/24" },
-	{ 4, "1.2.255.0",                "1.2.255.255",  "1.2.255.0/24" },
-	{ 4, "1.2.255.0",                "1.2.254.255",  NULL },
-	{ 4, "1.2.255.1",                "1.2.255.255",  NULL },
-	{ 4, "1.2.0.1",          "1.2.255.255",          NULL },
-	{ 6, "1:2:3:4:5:6:7:0",  "1:2:3:4:5:6:7:ffff",
-	  "1:2:3:4:5:6:7:0/112" },
-	{ 6, "1:2:3:4:5:6:7:0",  "1:2:3:4:5:6:7:fff",
-	  "1:2:3:4:5:6:7:0/116" },
-	{ 6, "1:2:3:4:5:6:7:f0", "1:2:3:4:5:6:7:ff",
-	  "1:2:3:4:5:6:7:f0/124" },
-	{ 4, NULL,               NULL,                   NULL },
+	{ 4, "1.2.3.0", "1.2.3.255", "1.2.3.0/24" },
+	{ 4, "1.2.3.0", "1.2.3.7", "1.2.3.0/29" },
+	{ 4, "1.2.3.240", "1.2.3.255", "1.2.3.240/28" },
+	{ 4, "0.0.0.0", "255.255.255.255", "0.0.0.0/0" },
+	{ 4, "1.2.3.4", "1.2.3.4", "1.2.3.4/32" },
+	{ 4, "1.2.3.0", "1.2.3.254", NULL },
+	{ 4, "1.2.3.0", "1.2.3.126", NULL },
+	{ 4, "1.2.3.0", "1.2.3.125", NULL },
+	{ 4, "1.2.0.0", "1.2.255.255", "1.2.0.0/16" },
+	{ 4, "1.2.0.0", "1.2.0.255", "1.2.0.0/24" },
+	{ 4, "1.2.255.0", "1.2.255.255", "1.2.255.0/24" },
+	{ 4, "1.2.255.0", "1.2.254.255", NULL },
+	{ 4, "1.2.255.1", "1.2.255.255", NULL },
+	{ 4, "1.2.0.1", "1.2.255.255", NULL },
+	{ 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:ffff", "1:2:3:4:5:6:7:0/112" },
+	{ 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:fff", "1:2:3:4:5:6:7:0/116" },
+	{ 6, "1:2:3:4:5:6:7:f0", "1:2:3:4:5:6:7:ff", "1:2:3:4:5:6:7:f0/124" },
+	{ 4, NULL, NULL, NULL },
 };
 
 void regress()
@@ -200,10 +197,10 @@ void regress()
 		}
 		oops = rangetosubnet(&start, &stop, &sub);
 		if (oops != NULL && r->output == NULL) {
-		}                       /* okay, error expected */
-		else if (oops != NULL) {
+			/* okay, error expected */
+		} else if (oops != NULL) {
 			printf("`%s'-`%s' rangetosubnet failed: %s\n",
-			       r->start, r->stop, oops);
+				r->start, r->stop, oops);
 			status = 1;
 		} else if (r->output == NULL) {
 			printf("`%s'-`%s' rangetosubnet succeeded unexpectedly\n",
@@ -212,12 +209,12 @@ void regress()
 		} else {
 			n = subnettot(&sub, 0, buf, sizeof(buf));
 			if (n > sizeof(buf)) {
-				printf("`%s'-`%s' subnettot failed:  need %ld\n",
+				printf("`%s'-`%s' subnettot failed: need %ld\n",
 					r->start, r->stop, (long)n);
 				status = 1;
 			} else if (strcmp(r->output, buf) != 0) {
 				printf("`%s'-`%s' gave `%s', expected `%s'\n",
-				       r->start, r->stop, buf, r->output);
+					r->start, r->stop, buf, r->output);
 				status = 1;
 			}
 		}

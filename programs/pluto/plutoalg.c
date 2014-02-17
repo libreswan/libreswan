@@ -47,28 +47,26 @@
  *              "3des_cbc" <=> "OAKLEY_3DES_CBC"
  *
  * @param str String containing ALG name (eg: AES, 3DES)
- * @param len Length of ALG (eg: 256,512)
+ * @param len Length of str (note: not NUL-terminated)
  * @return int Registered # of ALG if loaded.
  */
 static int ealg_getbyname_ike(const char *const str, int len)
 {
-	int ret = -1;
+	int ret;
 
-	if (!str || !*str)
-		goto out;
-	ret = alg_enum_search_prefix(&oakley_enc_names, "OAKLEY_", str, len);
+	if (str == NULL || *str == '\0')
+		return -1;
+	ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "", str, len);
 	if (ret >= 0)
-		goto out;
-	ret = alg_enum_search_ppfix(&oakley_enc_names, "OAKLEY_", "_CBC", str,
+		return ret;
+	return alg_enum_search(&oakley_enc_names, "OAKLEY_", "_CBC", str,
 				    len);
-out:
-	return ret;
 }
 /**
  *      Search  oakley_hash_names for a match, eg:
  *              "md5" <=> "OAKLEY_MD5"
  * @param str String containing Hash name (eg: MD5, SHA1)
- * @param len Length of Hash (eg: 256,512)
+ * @param len Length of str (note: not NUL-terminated)
  * @return int Registered # of Hash ALG if loaded.
  */
 static int aalg_getbyname_ike(const char *str, int len)
@@ -78,7 +76,7 @@ static int aalg_getbyname_ike(const char *str, int len)
 	static const char sha2_256_aka[] = "sha2";
 
 	DBG_log("entering aalg_getbyname_ike()");
-	if (!str || !*str)
+	if (str == NULL || str == '\0')
 		return ret;
 
 	/* handle "sha2" as "sha2_256" */
@@ -88,7 +86,7 @@ static int aalg_getbyname_ike(const char *str, int len)
 		len = strlen(str);
 	}
 
-	ret = alg_enum_search_prefix(&oakley_hash_names, "OAKLEY_", str, len);
+	ret = alg_enum_search(&oakley_hash_names, "OAKLEY_", "",  str, len);
 	if (ret >= 0)
 		return ret;
 
@@ -107,23 +105,21 @@ static int aalg_getbyname_ike(const char *str, int len)
  *      Search oakley_group_names for a match, eg:
  *              "modp1024" <=> "OAKLEY_GROUP_MODP1024"
  * @param str String MODP Name (eg: MODP)
- * @param len Length of Hash (eg: 1024,1536,2048)
+ * @param len Length of str (note: not NUL-terminated)
  * @return int Registered # of MODP Group, if supported.
  */
 static int modp_getbyname_ike(const char *const str, int len)
 {
 	int ret = -1;
 
-	if (!str || !*str)
-		goto out;
-	ret = alg_enum_search_prefix(&oakley_group_names, "OAKLEY_GROUP_", str,
-				     len);
+	if (str == NULL || *str == '\0')
+		return -1;
+	ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "",
+				     str, len);
 	if (ret >= 0)
-		goto out;
-	ret = alg_enum_search_ppfix(&oakley_group_names, "OAKLEY_GROUP_",
+		return ret;
+	return alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
 				    " (extension)", str, len);
-out:
-	return ret;
 }
 
 static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
@@ -240,8 +236,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	passert(buflen >= sizeof("none"));
 
 	ptr = buf;
-	buf[0] = '\0';
-	strncat(buf, "none", buflen - 1);
+	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
 		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL) != NULL) {
@@ -306,8 +301,8 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 	passert(buflen >= sizeof("none"));
 	ptr = buf;
 
-	buf[0] = 0;
-	strncat(buf, "none", buflen - 1);
+
+	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
 
@@ -416,7 +411,7 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
  */
 static void parser_init_ike(struct parser_context *p_ctx)
 {
-	memset(p_ctx, 0, sizeof(*p_ctx));
+	zero(p_ctx);
 	p_ctx->protoid = PROTO_ISAKMP;
 
 	p_ctx->ealg_str = p_ctx->ealg_buf;
@@ -820,7 +815,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	struct db_prop_conj pc;
 	struct db_sa t, *n;
 
-	memset(&t, 0, sizeof(t));
+	zero(&t);
 
 	if (ei == NULL) {
 		struct db_sa *sadb;

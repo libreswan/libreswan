@@ -773,7 +773,6 @@ failed:
 	memset(dst, 0, len);
 	if (fixed_src != src)
 		free(fixed_src);
-	return;
 }
 
 /****************************************************************************/

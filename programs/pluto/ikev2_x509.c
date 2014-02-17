@@ -52,7 +52,6 @@
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"
-#include "dpd.h"
 #include "keys.h"
 #include "ipsec_doi.h"
 

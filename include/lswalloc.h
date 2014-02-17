@@ -25,17 +25,13 @@
 
 /* memory allocation */
 
-extern void leak_pfree(void *ptr, int leak);
-extern void *alloc_bytes2(size_t size, const char *name, int leak_detective);
-extern void *clone_bytes2(const void *orig, size_t size,
-			  const char *name, int leak_detective);
+extern void pfree(void *ptr);
+extern void *alloc_bytes(size_t size, const char *name);
+extern void *clone_bytes(const void *orig, size_t size,
+			  const char *name);
 
-extern int leak_detective;
+extern bool leak_detective;
 extern void report_leaks(void);
-# define pfree(ptr) leak_pfree(ptr, leak_detective)
-# define alloc_bytes(size, name) (alloc_bytes2(size, name, leak_detective))
-# define clone_bytes(orig, size, \
-		     name) (clone_bytes2(orig, size, name, leak_detective))
 
 #define alloc_thing(thing, name) (alloc_bytes(sizeof(thing), (name)))
 
@@ -54,27 +50,27 @@ struct chunk {
 	u_char *ptr;
 	size_t len;
 };
+
 typedef struct chunk chunk_t;
 
-#define setchunk(ch, addr, size) do { (ch).ptr = (addr); (ch).len = (size); \
-} while (0)
+#define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
+
 /* NOTE: freeanychunk, unlike pfreeany, NULLs .ptr */
-#define freeanychunk(ch) do { pfreeany((ch).ptr); (ch).ptr = NULL; } while (0)
+#define freeanychunk(ch) { pfreeany((ch).ptr); (ch).ptr = NULL; }
+
 #define clonetochunk(ch, addr, size, name) \
-	do { (ch).ptr = clone_bytes((addr), (ch).len = (size), name); \
-	} while (0)
+	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
+
 #define clonereplacechunk(ch, addr, size, name) \
-	do { pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); \
-	} while (0)
+	{ pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); }
+
 #define chunkcpy(dst, chunk) \
-	do { memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len; } while (0)
+	{ memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len; }
+
 #define same_chunk(a, b) \
 	((a).len == (b).len && memeq((a).ptr, (b).ptr, (b).len))
 
 extern const chunk_t empty_chunk;
-
-/* zero all bytes */
-#define zero(x) memset((x), '\0', sizeof(*(x)))
 
 typedef void (*exit_log_func_t)(const char *message, ...);
 extern void set_exit_log_func(exit_log_func_t func);

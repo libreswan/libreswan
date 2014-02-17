@@ -152,7 +152,7 @@
 
 #include "nat_traversal.h"
 #include "vendor.h"
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "udpfromto.h"
 #include "hostpair.h"
 
@@ -1544,8 +1544,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		/* Strip non-ESP marker from first fragment */
 		if (md->iface->ike_float && ike_frag->index == 1 &&
 		    (ike_frag->size >= NON_ESP_MARKER_SIZE &&
-		     memcmp(non_ESP_marker, ike_frag->data,
-			    NON_ESP_MARKER_SIZE) == 0)) {
+		     memeq(non_ESP_marker, ike_frag->data,
+			    NON_ESP_MARKER_SIZE))) {
 			ike_frag->data += NON_ESP_MARKER_SIZE;
 			ike_frag->size -= NON_ESP_MARKER_SIZE;
 		}
@@ -1687,8 +1687,8 @@ void process_v1_packet(struct msg_digest **mdp)
 	if (st != NULL &&
 	    st->st_rpacket.ptr != NULL &&
 	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
-	    memcmp(st->st_rpacket.ptr, md->packet_pbs.start,
-		   st->st_rpacket.len) == 0) {
+	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
+		   st->st_rpacket.len)) {
 		if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE) {
 			if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS) {
 				st->st_retransmit++;
@@ -1824,10 +1824,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					init_phase2_iv(st, &md->hdr.isa_msgid);
 				} else {
 					/* use old IV */
-					passert(st->st_iv_len <=
-						sizeof(st->st_new_iv));
-					st->st_new_iv_len = st->st_iv_len;
-					init_new_iv(st);
+					restore_new_iv(st, st->st_iv, st->st_iv_len);
 				}
 			}
 
@@ -1860,7 +1857,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	 */
 	{
 		struct payload_digest *pd = md->digest;
-		volatile int np = md->hdr.isa_np;
+		enum next_payload_types_ikev1 np = md->hdr.isa_np;
 		lset_t needed = smc->req_payloads;
 		const char *excuse =
 			LIN(SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT,
@@ -1900,6 +1897,8 @@ void process_packet_tail(struct msg_digest **mdp)
 							st->hidden_variables.st_nat_traversal);
 						sd = NULL;
 					}
+					break;
+				default:
 					break;
 				}
 			}
@@ -1977,6 +1976,8 @@ void process_packet_tail(struct msg_digest **mdp)
 				DBG(DBG_PARSING,
 				    DBG_dump("     obj: ", pd->pbs.cur,
 					     pbs_left(&pd->pbs)));
+				break;
+			default:
 				break;
 			}
 
@@ -2346,7 +2347,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		freeanychunk(st->st_tpacket);
 
 		/* in aggressive mode, there will be no reply packet in transition
-		 * from STATE_AGGR_R1 to STATE_AGGR_R2 */
+		 * from STATE_AGGR_R1 to STATE_AGGR_R2
+		 */
 		if (nat_traversal_enabled) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);

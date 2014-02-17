@@ -376,13 +376,14 @@ struct state {
 	struct connection *st_childsa;          /* connection included in AUTH */
 	struct traffic_selector st_ts_this, st_ts_that;
 
-	u_char st_iv[MAX_DIGEST_LEN];           /* IV for encryption */
-	u_char st_old_iv[MAX_DIGEST_LEN];       /* IV for encryption */
-	u_char st_new_iv[MAX_DIGEST_LEN];
-	u_char st_ph1_iv[MAX_DIGEST_LEN];       /* IV at end if phase 1 */
-	unsigned int st_iv_len;
-	unsigned int st_old_iv_len;
+	/* Initialization Vectors for IKE encryption */
+
+	u_char st_new_iv[MAX_DIGEST_LEN];	/* tentative IV (calculated from current packet) */
+	u_char st_iv[MAX_DIGEST_LEN];           /* accepted IV (after packet passes muster) */
+	u_char st_ph1_iv[MAX_DIGEST_LEN];       /* IV at end of phase 1 */
+
 	unsigned int st_new_iv_len;
+	unsigned int st_iv_len;
 	unsigned int st_ph1_iv_len;
 
 	chunk_t st_enc_key;                     /* Oakley Encryption key */

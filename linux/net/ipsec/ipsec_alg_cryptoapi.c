@@ -553,6 +553,7 @@ IPSEC_ALG_MODULE_INIT_STATIC( ipsec_cryptoapi_init ){
 		test_ret = test_cipher_list(alg_capi_carray);
 	return ret;
 }
+
 IPSEC_ALG_MODULE_EXIT_STATIC( ipsec_cryptoapi_fini ){
 	unsetup_cipher_list(alg_capi_carray);
 	return;

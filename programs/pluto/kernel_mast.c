@@ -288,8 +288,8 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						"struct iface_port");
 				id = alloc_thing(struct iface_dev,
 						 "struct iface_dev");
-				memset(q, 0, sizeof(*q));
-				memset(id, 0, sizeof(*id));
+				zero(q);
+				zero(id);
 				if (firstq == NULL)
 					firstq = q;
 
@@ -515,7 +515,8 @@ static bool mast_sag_eroute_replace(struct state *st, struct spd_route *sr)
 
 	/* The state, st, has the new SAref values, but we need to remove
 	 * the rule based on the previous state with the old SAref values.
-	 * So we have to find it the hard way (it's a cpu hog). */
+	 * So we have to find it the hard way (it's a cpu hog).
+	 */
 	old_st = state_with_serialno(sr->eroute_owner);
 	if (!old_st)
 		old_st = st;
@@ -574,7 +575,8 @@ static bool mast_sag_eroute(struct state *st, struct spd_route *sr,
 			op);
 		if (addop)
 			/* If the pfkey op failed, and we were adding a new SA,
-			 * then it's OK to fail early. */
+			 * then it's OK to fail early.
+			 */
 			return FALSE;
 	}
 

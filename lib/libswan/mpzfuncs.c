@@ -1,5 +1,6 @@
 /*
  * mechanisms for preshared keys (public, private, and preshared secrets)
+ *
  * this is the library for reading (and later, writing!) the ipsec.secrets
  * files.
  *
@@ -34,7 +35,8 @@
 #include "lswalloc.h"
 #include "mpzfuncs.h"
 
-/* Convert MP_INT to network form (binary octets, big-endian).
+/*
+ * Convert MP_INT to network form (binary octets, big-endian).
  * We do the malloc; caller must eventually do free.
  */
 static chunk_t mpz_to_n(const MP_INT *mp, size_t bytes)
@@ -53,11 +55,11 @@ static chunk_t mpz_to_n(const MP_INT *mp, size_t bytes)
 
 	for (i = r.len - 1; i >= 0; i--) {
 		r.ptr[i] = mpz_mdivmod_ui(&temp2, NULL, &temp1,
-					  1 << BITS_PER_BYTE);
+					1 << BITS_PER_BYTE);
 		mpz_set(&temp1, &temp2);
 	}
 
-	passert(mpz_sgn(&temp1) == 0);  /* we must have done all the bits */
+	passert(mpz_sgn(&temp1) == 0);	/* we must have done all the bits */
 	mpz_clear(&temp1);
 	mpz_clear(&temp2);
 
@@ -71,7 +73,8 @@ chunk_t mpz_to_n_autosize(const MP_INT *mp)
 	return mpz_to_n(mp, bytes);
 }
 
-/* Convert network form (binary bytes, big-endian) to MP_INT.
+/*
+ * Convert network form (binary bytes, big-endian) to MP_INT.
  * The *mp must not be previously mpz_inited.
  */
 void n_to_mpz(MP_INT *mp, const u_char *nbytes, size_t nlen)
@@ -85,4 +88,3 @@ void n_to_mpz(MP_INT *mp, const u_char *nbytes, size_t nlen)
 		mpz_add_ui(mp, mp, nbytes[i]);
 	}
 }
-

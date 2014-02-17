@@ -591,7 +591,7 @@ void whack_handle(int whackctlfd)
 		close(whackfd);
 		return;
 	}
-	memset(&msg, 0, sizeof(msg));
+	zero(&msg);
 	n = read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
 		log_errno((e, "read() failed in whack_handle()"));

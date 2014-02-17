@@ -335,7 +335,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 		struct sadb_x_policy policy;
 		int level, opt;
 
-		memset(&policy, 0, sizeof(struct sadb_x_policy));
+		zero(&policy);
 		policy.sadb_x_policy_len = sizeof(policy) /
 					   IPSEC_PFKEYv2_ALIGN;
 		policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
@@ -650,7 +650,7 @@ void call_server(void)
 			}
 
 			/* see if helpers need attention */
-			pluto_crypto_helper_sockets(&readfds);
+			enumerate_crypto_helper_response_sockets(&readfds);
 
 			if (no_retransmits || next_time < 0) {
 				/* select without timer */
@@ -768,7 +768,7 @@ void call_server(void)
 
 			/* note we process helper things last on purpose */
 			{
-				int helpers = pluto_crypto_helper_ready(
+				int helpers = pluto_crypto_helper_response_ready(
 					&readfds);
 				DBG(DBG_CONTROL,
 				    DBG_log("* processed %d messages from cryptographic helpers\n",

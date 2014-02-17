@@ -1,5 +1,6 @@
 /*
  * convert from text form of IP address range specification to binary
+ *
  * Copyright (C) 2000  Henry Spencer.
  * Copyright (C) 2013  Antony Antony <antony@phenome.org>
  *
@@ -14,18 +15,17 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-
 #include "internal.h"
 #include "libreswan.h"
-#       define  RANGE_MIN_LEN   15 /* 1.2.3.4-5.6.7.8 */
+#define  RANGE_MIN_LEN 15 /* 1.2.3.4-5.6.7.8 */
 
 /*
-   - ttorange - convert text "addr1-addr2" to address start address_end
+ * ttorange - convert text "addr1-addr2" to address start address_end
  */
 err_t ttorange(src, srclen, af, dst)
 const char *src;
-size_t srclen;                  /* 0 means "apply strlen" */
-int af;                         /* AF_INET.  AF_INET6 not supported yet. */
+size_t srclen;	/* 0 means "apply strlen" */
+int af;	/* AF_INET.  AF_INET6 not supported yet. */
 ip_range *dst;
 {
 	const char *dash;
@@ -48,11 +48,8 @@ ip_range *dst;
 	if (af != AF_INET)
 		return "support only AF_INET v4.";
 
-	if (srclen < RANGE_MIN_LEN )
-		return
-			"range is too short min RANGE_MIN_LEN e.g 1.2.3.4-5.6.7.8";
-
-
+	if (srclen < RANGE_MIN_LEN)
+		return "range is too short min RANGE_MIN_LEN e.g 1.2.3.4-5.6.7.8";
 
 	dash = memchr(src, '-', srclen);
 	if (dash == NULL)
@@ -71,8 +68,7 @@ ip_range *dst;
 	case AF_INET:
 		break;
 	case AF_INET6:
-		return
-			"address family (AF_INET6) is not supported in ttorange start";
+		return "address family (AF_INET6) is not supported in ttorange start";
 
 	default:
 		return "unknown address family in ttorange start";
@@ -92,8 +88,7 @@ ip_range *dst;
 	case AF_INET:
 		break;
 	case AF_INET6:
-		return
-			"address family (AF_INET6) is not supported in ttiporange end";
+		return "address family (AF_INET6) is not supported in ttiporange end";
 
 	default:
 		return "unknown address family in ttorange end";
@@ -101,7 +96,7 @@ ip_range *dst;
 		break;
 	}
 	if (ntohl(addr_end_tmp.u.v4.sin_addr.s_addr) <
-	    ntohl(addr_start_tmp.u.v4.sin_addr.s_addr))
+		ntohl(addr_start_tmp.u.v4.sin_addr.s_addr))
 		return "range size is -ve. start is grater than the end";
 
 	/* we validated the range. no put them in dst */
@@ -150,7 +145,7 @@ int main(int argc, char *argv[])
 	}
 
 	pool_size = (u_int32_t)ntohl(r.end.u.v4.sin_addr.s_addr) -
-		    (u_int32_t)ntohl(r.start.u.v4.sin_addr.s_addr);
+		(u_int32_t)ntohl(r.start.u.v4.sin_addr.s_addr);
 	pool_size++;
 
 	addrtot(&r.start, 0, buf1, sizeof(buf1));
@@ -164,9 +159,9 @@ int main(int argc, char *argv[])
 	}
 
 	pool_size1 = (u_int32_t)ntohl(r1.end.u.v4.sin_addr.s_addr) -
-		     (u_int32_t)ntohl(r1.start.u.v4.sin_addr.s_addr);
+		(u_int32_t)ntohl(r1.start.u.v4.sin_addr.s_addr);
 	pool_size1++;
-	if (pool_size != pool_size1 ) {
+	if (pool_size != pool_size1) {
 		fprintf(stderr,
 			"%s: reverse conversion of sizes mismatch %u : %u ",
 			argv[0], pool_size, pool_size1);
@@ -180,19 +175,19 @@ int main(int argc, char *argv[])
 struct rtab {
 	int family;
 	char *input;
-	char *output;                   /* NULL means error expected */
+	char *output;	/* NULL means error expected */
 } rtab[] = {
-	{ 4, "1.2.3.0-1.2.3.9",          "10" },
-	{ 4, "1.2.3.0-1.2.3.9",          "9" },
-	{ 4, "1.2.3.0-nonenone",         NULL },
+	{ 4, "1.2.3.0-1.2.3.9", "10" },
+	{ 4, "1.2.3.0-1.2.3.9", "9" },
+	{ 4, "1.2.3.0-nonenone", NULL },
 	{ 4, "1.2.3.0/255.255.255.0", NULL },
-	{ 4, "_",                                NULL },
-	{ 4, "_/_",                      NULL },
-	{ 6, "1:0:3:0:0:0:0:2/128",      "1:0:3::2/128" },
+	{ 4, "_", NULL },
+	{ 4, "_/_", NULL },
+	{ 6, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128" },
 	{ 6, "abcd:ef01:2345:6789:0:00a:000:20/128",
-	  "abcd:ef01:2345:6789:0:a:0:20/128" },
-	{ 6, "%default",                 "NULL" },
-	{ 4, NULL,                   NULL }
+		"abcd:ef01:2345:6789:0:a:0:20/128" },
+	{ 6, "%default", "NULL" },
+	{ 4, NULL, NULL }
 };
 
 void regress(void)
@@ -213,34 +208,38 @@ void regress(void)
 		strcpy(in, r->input);
 		printf("Testing `%s' ... ", in);
 		oops = ttorange(in, 0, af, &s);
-		if (oops != NULL && r->output == NULL )         /* Error was expected, do nothing */
+		if (oops != NULL && r->output == NULL)
+			/* Error was expected, do nothing */
 			printf("OK (%s)\n", oops);
-		if (oops != NULL && r->output != NULL ) {       /* Error occurred, but we didn't expect one  */
+		if (oops != NULL && r->output != NULL) {
+			/* Error occurred, but we didn't expect one  */
 			printf("`%s' ttorange failed: %s\n", r->input, oops);
 			status = 1;
 		}
 
 		pool_size = (u_int32_t)ntohl(s.end.u.v4.sin_addr.s_addr) -
-			    (u_int32_t)ntohl(s.start.u.v4.sin_addr.s_addr);
+			(u_int32_t)ntohl(s.start.u.v4.sin_addr.s_addr);
 		pool_size++;
 		snprintf(buf1, sizeof(buf1), "%u", pool_size);
 
-		if (oops == NULL && r->output != NULL ) { /* No error, no error expected */
+		if (oops == NULL && r->output != NULL) {
+			/* No error, no error expected */
 			if (strcmp(r->output, buf1) == 0) {
 				printf(" %s OK\n", r->output);
 			} else {
 				status = 1;
 				printf("FAIL expecting %s and got %s\n",
-				       r->output, buf1 );
+					r->output, buf1);
 			}
 		}
-		if (oops == NULL && r->output == NULL ) { /* If no errors, but we expected one */
+		if (oops == NULL && r->output == NULL) {
+			/* If no errors, but we expected one */
 			printf("`%s %s' ttosubnet succeeded unexpectedly\n",
-			       r->input, buf1);
+				r->input, buf1);
 			status = 1;
 		}
 	}
 	exit(status);
 }
 
-#endif /* TTORANGE_MAIN */
+#endif	/* TTORANGE_MAIN */

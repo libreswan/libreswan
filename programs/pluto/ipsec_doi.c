@@ -86,7 +86,7 @@
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "x509more.h"
 
 /* MAGIC: perform f, a function that returns notification_t
@@ -125,27 +125,26 @@ void echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
  * Processing FOR KE values.
  */
 void unpack_KE(struct state *st,
-	       struct pluto_crypto_req *r,
+	       const struct pluto_crypto_req *r,
 	       chunk_t *g)
 {
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
+	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	if (!st->st_sec_in_use) {
 		st->st_sec_in_use = TRUE;
 		freeanychunk(*g); /* happens in odd error cases */
 
-		clonetochunk(*g, wire_chunk_ptr(kn, &(kn->gi)),
+		clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
 			     kn->gi.len, "saved gi value");
 		DBG(DBG_CRYPT,
 		    DBG_log("saving DH priv (local secret) and pub key into state struc"));
 		clonetochunk(st->st_sec_chunk,
-			     wire_chunk_ptr(kn,
-					    &(kn->secret)),
+			     WIRE_CHUNK_PTR(*kn, secret),
 			     kn->secret.len,
 			     "pointer to DH private key (secret)");
 
 		clonetochunk(st->pubk,
-			     wire_chunk_ptr(kn, &(kn->pubk)),
+			     WIRE_CHUNK_PTR(*kn, pubk),
 			     kn->pubk.len, "pointer to DH public key");
 	}
 }
@@ -178,12 +177,12 @@ notification_t accept_KE(chunk_t *dest, const char *val_name,
 	return NOTHING_WRONG;
 }
 
-void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r)
+void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 {
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
+	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	freeanychunk(*n);
-	clonetochunk(*n, wire_chunk_ptr(kn, &(kn->n)),
+	clonetochunk(*n, WIRE_CHUNK_PTR(*kn, n),
 		     DEFAULT_NONCE_SIZE, "initiator nonce");
 }
 
@@ -536,7 +535,8 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		       id->isaid_doi_specific_a,
 		       id->isaid_doi_specific_b);
 		/* we have turned this into a warning because of bugs in other vendors
-		 * products. Specifically CISCO VPN3000. */
+		 * products. Specifically CISCO VPN3000.
+		 */
 		/* return FALSE; */
 	}
 
@@ -640,7 +640,8 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			st->st_connection = r; /* kill reference to c */
 
 			/* this ensures we don't move cur_connection from NULL to
-			 * something, requiring a reset_cur_connection() */
+			 * something, requiring a reset_cur_connection()
+			 */
 			if (cur_connection == c)
 				set_cur_connection(r);
 
@@ -684,11 +685,8 @@ void initialize_new_state(struct state *st,
 
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.xauth_name) {
-				/* ??? is this strncpy correct? */
-				strncpy(st->st_xauth_username,
-					sr->this.xauth_name,
-					sizeof(st->st_xauth_username));
+			if (sr->this.xauth_name != NULL) {
+				jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), sr->this.xauth_name);
 				break;
 			}
 		}
@@ -712,10 +710,11 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	char *b = sadetails;
 	const char *ini = " {";
 	const char *fin = "";
+	struct connection *c = st->st_connection;
 
-	passert(st->st_connection != NULL);
+	passert(c != NULL);
 	strcpy(sadetails,
-	       (st->st_connection->policy & POLICY_TUNNEL ?
+	       (c->policy & POLICY_TUNNEL ?
 		" tunnel mode" : " transport mode"));
 	b += strlen(sadetails);
 
@@ -725,17 +724,17 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		const char *natinfo = "";
 		char esb[ENUM_SHOW_BUF_LEN];
 
-		if ((st->st_connection->spd.that.host_port != IKE_UDP_PORT &&
-		     st->st_connection->spd.that.host_port != 0) ||
-		    st->st_connection->forceencaps) {
+		if ((c->spd.that.host_port != IKE_UDP_PORT &&
+		     c->spd.that.host_port != 0) ||
+		    c->forceencaps) {
 			natinfo = "/NAT";
 		} else {
 			DBG(DBG_NATT,
 			    DBG_log("NAT-T: their IKE port is '%d'",
-				    st->st_connection->spd.that.host_port));
+				    c->spd.that.host_port));
 			DBG(DBG_NATT,
 			    DBG_log("NAT-T: forceencaps is '%s'",
-				    st->st_connection->forceencaps ? "enabled"
+				    c->forceencaps ? "enabled"
 				    :
 				    "disabled"));
 		}
@@ -822,13 +821,14 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	snprintf(b, sad_len - (b - sadetails) - 1,
 		 "%sDPD=%s",
 		 ini,
-		 st->hidden_variables.st_dpd_local ?
-		 "enabled" : "none");
+		 (st->hidden_variables.st_dpd_local ||
+		  st->hidden_variables.st_liveness) ? /* note: confusing name */
+		 "active" : "passive");
 
 	ini = " ";
 	fin = "}";
 
-	if (st->st_xauth_username && st->st_xauth_username[0] != '\0') {
+	if (st->st_xauth_username[0] != '\0') {
 		b = b + strlen(b);
 		snprintf(b, sad_len - (b - sadetails) - 1,
 			 "%sXAUTHuser=%s",

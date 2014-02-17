@@ -410,6 +410,7 @@ umlXhost	multinet-04		good
 umlplutotest	transport-01		good
 umlplutotest	transport-02		good
 umlplutotest	transport-03		bad
+kvmplutotest	nat-transport-02	wip
 
 #
 umlplutotest	protoport-01		good
@@ -555,9 +556,10 @@ kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
 kvmplutotest	interop-ikev2-strongswan-08-nonat		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-ccm		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-gcm		good
-kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	good
-kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
-kvmplutotest	interop-ikev2-strongswan-12-ah-initiator	good
+kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	wip
+kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	wip
+kvmplutotest	interop-ikev2-strongswan-12-nat-responder	wip
+kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	wip
 
 skiptest	interop-racoon-iphone4s-nonat		incomplete
 skiptest	interop-racoon-iphone5-nonat		incomplete

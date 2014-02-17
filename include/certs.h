@@ -59,8 +59,7 @@ typedef struct {
 
 
 extern chunk_t get_mycert(cert_t cert);
-extern bool load_cert(bool forcedtype,
-		      const char *filename,
+extern bool load_cert(const char *filename,
 		      int verbose,
 		      const char *label, cert_t *cert);
 

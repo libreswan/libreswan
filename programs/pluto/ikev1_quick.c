@@ -79,7 +79,7 @@
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "x509more.h"
 
 /* accept_PFS_KE
@@ -349,14 +349,14 @@ static void compute_proto_keymat(struct state *st,
 			if (st->st_shared.ptr != NULL) {
 				/* PFS: include the g^xy */
 				PK11SymKey *st_shared;
+				SECStatus s;
+
 				memcpy(&st_shared, st->st_shared.ptr,
 				       st->st_shared.len);
 
-				SECStatus s = PK11_DigestKey(ctx_me.ctx_nss,
-							     st_shared);
+				s = PK11_DigestKey(ctx_me.ctx_nss, st_shared);
 				PR_ASSERT(s == SECSuccess);
-				s =
-					PK11_DigestKey(ctx_peer.ctx_nss,
+				s = PK11_DigestKey(ctx_peer.ctx_nss,
 						       st_shared);
 				PR_ASSERT(s == SECSuccess);
 			}
@@ -883,8 +883,7 @@ stf_status quick_outI1(int whack_sock,
 
 	qke = alloc_thing(struct qke_continuation, "quick_outI1 KE");
 	qke->replacing = replacing;
-	pcrc_init(&qke->qke_pcrc);
-	qke->qke_pcrc.pcrc_func = quick_outI1_continue;
+	pcrc_init(&qke->qke_pcrc, quick_outI1_continue);
 
 	if (policy & POLICY_PFS)
 		e = build_ke(&qke->qke_pcrc, st, st->st_pfs_group,
@@ -1044,8 +1043,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	/* encrypt message, except for fixed part of header */
 
 	init_phase2_iv(isakmp_sa, &st->st_msgid);
-	st->st_new_iv_len = isakmp_sa->st_new_iv_len;
-	set_new_iv(st, isakmp_sa->st_new_iv);
+	restore_new_iv(st, isakmp_sa->st_new_iv, isakmp_sa->st_new_iv_len);
 
 	if (!encrypt_message(&rbody, st)) {
 		reset_cur_state();
@@ -1236,7 +1234,7 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			loglog(RC_LOG_SERIOUS,
 			       "Applying workaround for MS-818043 NAT-T bug");
-			memset(&b.his.net, 0, sizeof(ip_subnet));
+			zero(&b.his.net);
 			happy(addrtosubnet(&c->spd.that.host_addr,
 					   &b.his.net));
 		}
@@ -1306,8 +1304,7 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 	}
 	b.step = vos_start;
 	b.md = md;
-	b.new_iv_len = p1st->st_new_iv_len;
-	save_new_iv(p1st, b.new_iv);
+	save_new_iv(p1st, b.new_iv, b.new_iv_len);
 
 	/*
 	 * FIXME - DAVIDM
@@ -1790,15 +1787,14 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				 * Is it a Road Warrior connection (simple)
 				 * or is it an Opportunistic connection (needing gw validation)?
 				 */
-				if (p->policy & POLICY_OPPO) {
+				if (p->policy & POLICY_OPPORTUNISTIC) {
 					/* Opportunistic case: delegation must be verified.
 					 * Here be dragons.
 					 */
 					enum verify_oppo_step next_step;
 					ip_address our_client, his_client;
 
-					passert(subnetishost(
-							our_net) &&
+					passert(subnetishost(our_net) &&
 						subnetishost(his_net));
 					networkof(our_net, &our_client);
 					networkof(his_net, &his_client);
@@ -1840,8 +1836,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 
 					/* start next DNS query and suspend (if necessary) */
 					if (next_step != vos_done) {
-						return
-							quick_inI1_outR1_start_query(
+						return quick_inI1_outR1_start_query(
 							b,
 							next_step);
 					}
@@ -1963,8 +1958,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 
 		st->st_msgid = md->hdr.isa_msgid;
 
-		st->st_new_iv_len = b->new_iv_len;
-		set_new_iv(st, b->new_iv);
+		restore_new_iv(st, b->new_iv, b->new_iv_len);
 
 		set_cur_state(st);      /* (caller will reset) */
 		md->st = st;            /* feed back new state */
@@ -2044,9 +2038,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				ci = st->st_import;
 
 			qke->md = md;
-			pcrc_init(&qke->qke_pcrc);
-			qke->qke_pcrc.pcrc_func =
-				quick_inI1_outR1_cryptocontinue1;
+			pcrc_init(&qke->qke_pcrc, quick_inI1_outR1_cryptocontinue1);
 
 			if (st->st_pfs_group != NULL)
 				e = build_ke(&qke->qke_pcrc, st,
@@ -2108,8 +2100,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 		/* set up second calculation */
 		dh->md = md;
 		set_suspended(st, md);
-		pcrc_init(&dh->dh_pcrc);
-		dh->dh_pcrc.pcrc_func = quick_inI1_outR1_cryptocontinue2;
+		pcrc_init(&dh->dh_pcrc, quick_inI1_outR1_cryptocontinue2);
 		e = start_dh_secret(&dh->dh_pcrc, st,
 				    st->st_import,
 				    RESPONDER,
@@ -2418,8 +2409,7 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 		dh->md = md;
 		passert(st != NULL);
 		set_suspended(st, md);
-		pcrc_init(&dh->dh_pcrc);
-		dh->dh_pcrc.pcrc_func = quick_inR1_outI2_continue;
+		pcrc_init(&dh->dh_pcrc, quick_inR1_outI2_continue);
 		return start_dh_secret(&dh->dh_pcrc, st,
 				       st->st_import,
 				       INITIATOR,

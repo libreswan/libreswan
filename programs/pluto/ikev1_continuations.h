@@ -3,7 +3,6 @@
 /*
  * continuations used
  */
-#include "ike_continuations.h"
 
 struct qke_continuation {
 	struct pluto_crypto_req_cont qke_pcrc;

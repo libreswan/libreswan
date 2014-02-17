@@ -16,13 +16,13 @@
 #include "libreswan.h"
 
 /*
-   - atoasr - convert ASCII to address, subnet, or range
+ * atoasr - convert ASCII to address, subnet, or range
  */
-const char *                    /* NULL for success, else string literal */
+const char *	/* NULL for success, else string literal */
 atoasr(src, srclen, typep, addrsp)
 const char *src;
-size_t srclen;                  /* 0 means "apply strlen" */
-char *typep;                    /* return type code:  'a', 's', 'r' */
+size_t srclen;	/* 0 means "apply strlen" */
+char *typep;	/* return type code:  'a', 's', 'r' */
 struct in_addr addrsp[2];
 {
 	const char *punct;
@@ -44,10 +44,10 @@ struct in_addr addrsp[2];
 	/* try for a range */
 	stop = src + srclen;
 	for (punct = src; (punct = memchr(punct, '.', stop - punct)) != NULL;
-	     punct++)
+		punct++)
 		if (stop - punct > 3 && *(punct + 1) == '.' && *(punct + 2) ==
-		    '.')
-			break;                  /* NOTE BREAK OUT */
+			'.')
+			break;	/* NOTE BREAK OUT */
 	if (punct == NULL) {
 		/* didn't find the range delimiter, must be plain address */
 		*typep = 'a';
@@ -57,7 +57,7 @@ struct in_addr addrsp[2];
 	/* looks like a range */
 	*typep = 'r';
 	if (stop - punct > 4 && *(punct + 3) == '.')
-		punct++;                /* first dot is trailing dot of name */
+		punct++;	/* first dot is trailing dot of name */
 	oops = atoaddr(src, punct - src, &addrsp[0]);
 	if (oops != NULL)
 		return oops;
@@ -136,20 +136,20 @@ int main(int argc, char *argv[])
 
 struct rtab {
 	char *input;
-	char *output;                   /* NULL means error expected */
+	char *output;	/* NULL means error expected */
 } rtab[] = {
-	{ "1.2.3.0",                     "1.2.3.0" },
-	{ "1.2.3.0/255.255.255.0",       "1.2.3.0/24" },
-	{ "1.2.3.0...1.2.3.5",           "1.2.3.0...1.2.3.5" },
-	{ "1.2.3.4.5",                   NULL },
-	{ "1.2.3.4/",                    NULL },
-	{ "1.2.3.4...",                  NULL },
-	{ "1.2.3.4....",                 NULL },
-	{ "localhost/32",                        "127.0.0.1/32" },
-	{ "localhost...127.0.0.3",       "127.0.0.1...127.0.0.3" },
-	{ "127.0.0.0...localhost",       "127.0.0.0...127.0.0.1" },
-	{ "127.0.0.3...localhost",       NULL },
-	{ NULL,                          NULL }
+	{ "1.2.3.0", "1.2.3.0" },
+	{ "1.2.3.0/255.255.255.0", "1.2.3.0/24" },
+	{ "1.2.3.0...1.2.3.5", "1.2.3.0...1.2.3.5" },
+	{ "1.2.3.4.5", NULL },
+	{ "1.2.3.4/", NULL },
+	{ "1.2.3.4...", NULL },
+	{ "1.2.3.4....", NULL },
+	{ "localhost/32", "127.0.0.1/32" },
+	{ "localhost...127.0.0.3", "127.0.0.1...127.0.0.3" },
+	{ "127.0.0.0...localhost", "127.0.0.0...127.0.0.1" },
+	{ "127.0.0.3...localhost", NULL },
+	{ NULL, NULL }
 };
 
 void regress(void)
@@ -167,13 +167,13 @@ void regress(void)
 		strcpy(in, r->input);
 		oops = atoasr(in, 0, &type, a);
 		if (oops != NULL && r->output == NULL) {
-		}                       /* okay, error expected */
-		else if (oops != NULL) {
+			/* okay, error expected */
+		} else if (oops != NULL) {
 			printf("`%s' atoasr failed: %s\n", r->input, oops);
 			status = 1;
 		} else if (r->output == NULL) {
 			printf("`%s' atoasr succeeded unexpectedly '%c'\n",
-			       r->input, type);
+				r->input, type);
 			status = 1;
 		} else {
 			switch (type) {
@@ -195,11 +195,11 @@ void regress(void)
 			}
 			if (n > sizeof(buf)) {
 				printf("`%s' '%c' reverse failed:  need %ld\n",
-				       r->input, type, (long)n);
+					r->input, type, (long)n);
 				status = 1;
 			} else if (n > 0 && strcmp(r->output, buf) != 0) {
 				printf("`%s' '%c' gave `%s', expected `%s'\n",
-				       r->input, type, buf, r->output);
+					r->input, type, buf, r->output);
 				status = 1;
 			}
 		}
@@ -207,4 +207,4 @@ void regress(void)
 	exit(status);
 }
 
-#endif /* ATOASR_MAIN */
+#endif	/* ATOASR_MAIN */

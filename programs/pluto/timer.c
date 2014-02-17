@@ -48,7 +48,7 @@
 #include "rnd.h"
 #include "timer.h"
 #include "whack.h"
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "lswtime.h"
 #include "ikev2.h"
 
@@ -460,7 +460,8 @@ static void liveness_check(struct state *st)
 	}
 
 	/* don't bother sending the check and reset
-	 * liveness stats if there has been incoming traffic */
+	 * liveness stats if there has been incoming traffic
+	 */
 	if (get_sa_info(st, TRUE, &last_msg)) {
 		if (last_msg < c->dpd_timeout) {
 			pst->st_pend_liveness = FALSE;

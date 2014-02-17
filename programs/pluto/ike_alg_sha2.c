@@ -37,8 +37,8 @@ static void sha256_hash_final(u_char *hash, sha256_context *ctx)
 	SECStatus s;
 
 	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_256_DIGEST_SIZE);
-	PR_ASSERT(len == SHA2_256_DIGEST_SIZE);
 	PR_ASSERT(s == SECSuccess);
+	PR_ASSERT(len == SHA2_256_DIGEST_SIZE);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
 	DBG(DBG_CRYPT, DBG_log("NSS SHA 256 hash final : end"));
 }
@@ -49,8 +49,8 @@ static void sha384_hash_final(u_char *hash, sha512_context *ctx)
 	SECStatus s;
 
 	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_384_DIGEST_SIZE);
-	PR_ASSERT(len == SHA2_384_DIGEST_SIZE);
 	PR_ASSERT(s == SECSuccess);
+	PR_ASSERT(len == SHA2_384_DIGEST_SIZE);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
 	DBG(DBG_CRYPT, DBG_log("NSS SHA 384 hash final : end"));
 }
@@ -61,8 +61,8 @@ static void sha512_hash_final(u_char *hash, sha512_context *ctx)
 	SECStatus s;
 
 	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_512_DIGEST_SIZE);
-	PR_ASSERT(len == SHA2_512_DIGEST_SIZE);
 	PR_ASSERT(s == SECSuccess);
+	PR_ASSERT(len == SHA2_512_DIGEST_SIZE);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
 	DBG(DBG_CRYPT, DBG_log("NSS SHA 512 hash final : end"));
 }

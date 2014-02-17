@@ -61,7 +61,7 @@
 
 #include "pending.h" /* for flush_pending_by_connection */
 
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "x509more.h"
 
 /**
@@ -409,7 +409,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
-	if (memcmp(pbs->cur, p1st->st_icookie, COOKIE_SIZE) != 0) {
+	if (!memeq(pbs->cur, p1st->st_icookie, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
 		DBG(DBG_DPD,
@@ -417,7 +417,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	}
 	pbs->cur += COOKIE_SIZE;
 
-	if (memcmp(pbs->cur, p1st->st_rcookie, COOKIE_SIZE) != 0) {
+	if (!memeq(pbs->cur, p1st->st_rcookie, COOKIE_SIZE)) {
 		DBG(DBG_DPD,
 		    DBG_log("DPD: R_U_THERE has invalid rcookie (tolerated)"));
 	}
@@ -494,7 +494,7 @@ stf_status dpd_inR(struct state *p1st,
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
-	if (memcmp(pbs->cur, p1st->st_icookie, COOKIE_SIZE) != 0) {
+	if (!memeq(pbs->cur, p1st->st_icookie, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
 		DBG(DBG_DPD,
@@ -502,7 +502,7 @@ stf_status dpd_inR(struct state *p1st,
 	}
 	pbs->cur += COOKIE_SIZE;
 
-	if (memcmp(pbs->cur, p1st->st_rcookie, COOKIE_SIZE) != 0) {
+	if (!memeq(pbs->cur, p1st->st_rcookie, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
 		DBG(DBG_DPD,

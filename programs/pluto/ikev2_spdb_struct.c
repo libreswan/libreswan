@@ -62,7 +62,7 @@
 
 #include "nat_traversal.h"
 
-/* Taken from spdb_v1_struct.c, as the format is similar */
+/* Taken from ikev1_spdb_struct.c, as the format is similar */
 static bool ikev2_out_attr(int type,
 		    unsigned long val,
 		    struct_desc *attr_desc,
@@ -80,7 +80,7 @@ static bool ikev2_out_attr(int type,
 	} else {
 		/*
 		 * We really only support KEY_LENGTH, with does not use this long
-		 * attribute style. See comments in out_attr() in spdb_v1_struct.c
+		 * attribute style. See comments in out_attr() in ikev1_spdb_struct.c
 		 */
 		pb_stream val_pbs;
 		u_int32_t nval = htonl(val);
@@ -117,7 +117,7 @@ bool ikev2_out_sa(pb_stream *outs,
 	{
 		struct ikev2_sa sa;
 
-		memset(&sa, 0, sizeof(sa));
+		zero(&sa);
 		sa.isasa_np       = np;
 		sa.isasa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
@@ -154,7 +154,7 @@ bool ikev2_out_sa(pb_stream *outs,
 			struct ikev2_prop p;
 			pb_stream t_pbs;
 
-			memset(&p, 0, sizeof(p));
+			zero(&p);
 
 			/* See RFC5996bis Section 3.3 */
 			if (pr_cnt + 1 < vp->prop_cnt || pc_cnt + 1 <
@@ -191,7 +191,7 @@ bool ikev2_out_sa(pb_stream *outs,
 				pb_stream at_pbs;
 				unsigned int attr_cnt;
 
-				memset(&t, 0, sizeof(t));
+				zero(&t);
 				if (ts_cnt + 1 < vpc->trans_cnt)
 					t.isat_lt      = v2_TRANSFORM_NON_LAST;
 				else
@@ -1027,7 +1027,7 @@ static v2_notification_t ikev2_emit_winning_sa(struct state *st,
 	struct ikev2_trans r_trans;
 	pb_stream r_trans_pbs;
 
-	memset(&r_trans, 0, sizeof(r_trans));
+	zero(&r_trans);
 
 	if (parentSA) {
 		/* Proposal - XXX */
@@ -1145,13 +1145,10 @@ v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                 
 	struct db_sa *sadb;
 	struct trans_attrs ta;
 	struct connection *c = st->st_connection;
-	int policy_index = POLICY_ISAKMP(c->policy,
-					 c->spd.this.xauth_server,
-					 c->spd.this.xauth_client);
-
+	unsigned policy_index = POLICY_ISAKMP(c->policy, c);
 	struct ikev2_transform_list itl0, *itl;
 
-	memset(&itl0, 0, sizeof(struct ikev2_transform_list));
+	zero(&itl0);
 	itl = &itl0;
 
 	/* find the policy structures */
@@ -1550,7 +1547,7 @@ v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                  
 	struct connection *c = st->st_connection;
 	struct ikev2_transform_list itl0, *itl;
 
-	memset(&itl0, 0, sizeof(struct ikev2_transform_list));
+	zero(&itl0);
 	itl = &itl0;
 
 	DBG(DBG_CONTROLMORE, DBG_log("entered ikev2_parse_child_sa_body()"));

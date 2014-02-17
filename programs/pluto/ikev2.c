@@ -64,7 +64,6 @@
 
 #include "nat_traversal.h"
 #include "vendor.h"
-#include "dpd.h"
 #include "udpfromto.h"
 
 #define SEND_NOTIFICATION(t) { \
@@ -340,7 +339,7 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 
-		memset(pd, 0, sizeof(*pd));	/* ??? is this needed? */
+		zero(pd);	/* ??? is this needed? */
 
 		if (sd == NULL || np < ISAKMP_v2PAYLOAD_TYPE_BASE) {
 			/* This payload is unknown to us.
@@ -474,11 +473,10 @@ void process_v2_packet(struct msg_digest **mdp)
 	const struct state_v2_microcode *svm;
 	enum isakmp_xchg_types ix;
 
-	/* Look for an state which matches the various things we know */
-	/*
+	/* Look for an state which matches the various things we know:
+	 *
 	 * 1) exchange type received?
 	 * 2) is it initiator or not?
-	 *
 	 */
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
@@ -499,7 +497,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		}
 
 		if (st != NULL) {
-			if (st->st_msgid_lastrecv >  md->msgid_received) {
+			if (st->st_msgid_lastrecv > md->msgid_received) {
 				/* this is an OLD retransmit. we can't do anything */
 				libreswan_log(
 					"received too old retransmit: %u < %u",
@@ -607,7 +605,11 @@ void process_v2_packet(struct msg_digest **mdp)
 			continue;
 
 		/* ??? not sure that this is necessary, but it ought to be correct */
-		if ( ((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0) )
+		/* This check cannot apply for an informational exchange since one
+		 * can be initiated by the initial responder.
+		 */
+		if (ix != ISAKMP_v2_INFORMATIONAL &&
+		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0)))
 			continue;
 
 		/* must be the right state */
@@ -797,8 +799,8 @@ void send_v2_notification_from_md(struct msg_digest *md UNUSED, u_int16_t type,
 	 */
 	passert(md);
 
-	memset(&st, 0, sizeof(st));
-	memset(&cnx, 0, sizeof(cnx));
+	zero(&st);
+	zero(&cnx);
 	st.st_connection = &cnx;
 	st.st_remoteaddr = md->sender;
 	st.st_remoteport = md->sender_port;
@@ -832,6 +834,10 @@ void ikev2_update_counters(struct msg_digest *md)
 
 	case RESPONDER:
 		pst->st_msgid_lastrecv = md->msgid_received;
+		/* the responder requires msgid_nextuse if it ever needs to
+		 * initiate an informational exchange
+		 */
+		pst->st_msgid_nextuse = md->msgid_received + 1;
 		break;
 	}
 }
@@ -1029,7 +1035,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			bad_case(kind);
 		}
 		/* start liveness checks if set, making sure we only schedule once when moving
-		 * from I2->I3 or R1->R2 */
+		 * from I2->I3 or R1->R2
+		 */
 		if ((c->dpd_action == DPD_ACTION_CLEAR || c->dpd_action ==
 		     DPD_ACTION_RESTART) &&
 		    IS_V2_ESTABLISHED(st->st_state) && st->st_state !=
@@ -1080,6 +1087,10 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	md->result = result;
 	result = md->result;
+
+	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
+		DBG(DBG_DPD, DBG_log("enabling sending dpd/liveness"));
+	}
 
 	/* advance the state */
 	DBG(DBG_CONTROL,

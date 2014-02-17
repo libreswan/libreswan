@@ -61,21 +61,17 @@
 #include <keyhi.h>
 #include "lswconf.h"
 
+/* MUST BE THREAD-SAFE */
 void calc_ke(struct pluto_crypto_req *r)
 {
-	chunk_t prime;
-	chunk_t base;
 	SECKEYDHParams dhp;
 	PK11SlotInfo *slot = NULL;
-	SECKEYPrivateKey *privk;
-	SECKEYPublicKey   *pubk;
+	SECKEYPrivateKey *privk = NULL;
+	SECKEYPublicKey   *pubk = NULL;
 	struct pcr_kenonce *kn = &r->pcr_d.kn;
-	const struct oakley_group_desc *group;
-
-	group = lookup_group(kn->oakley_group);
-
-	base  = mpz_to_n_autosize(group->generator);
-	prime = mpz_to_n_autosize(group->modulus);
+	const struct oakley_group_desc *group = lookup_group(kn->oakley_group);
+	chunk_t base  = mpz_to_n_autosize(group->generator);
+	chunk_t prime = mpz_to_n_autosize(group->modulus);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of Prime:\n", prime));
 	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of base:\n", base));
@@ -87,22 +83,22 @@ void calc_ke(struct pluto_crypto_req *r)
 
 	slot = PK11_GetBestSlot(CKM_DH_PKCS_KEY_PAIR_GEN,
 				lsw_return_nss_password_file_info());
-	if (!slot)
+	if (slot == NULL)
 		loglog(RC_LOG_SERIOUS, "NSS: slot for DH key gen is NULL");
 	PR_ASSERT(slot != NULL);
 
-	while (1) {
+	for (;;) {
 		privk = PK11_GenerateKeyPair(slot, CKM_DH_PKCS_KEY_PAIR_GEN,
 					     &dhp, &pubk, PR_FALSE, PR_TRUE,
 					     lsw_return_nss_password_file_info());
-		if (!privk) {
+		if (privk == NULL) {
 			loglog(RC_LOG_SERIOUS,
 			       "NSS: DH private key creation failed (err %d)",
 			       PR_GetError());
 		}
 		PR_ASSERT(privk != NULL);
 
-		if ( group->bytes == pubk->u.dh.publicValue.len ) {
+		if (group->bytes == pubk->u.dh.publicValue.len) {
 			DBG(DBG_CRYPT,
 			    DBG_log("NSS: generated dh priv and pub keys: %d\n",
 				    pubk->u.dh.publicValue.len));
@@ -110,69 +106,83 @@ void calc_ke(struct pluto_crypto_req *r)
 		} else {
 			DBG(DBG_CRYPT,
 			    DBG_log("NSS: generating dh priv and pub keys"));
-			if (privk)
+
+			if (privk != NULL) {
 				SECKEY_DestroyPrivateKey(privk);
-			if (pubk)
+				privk = NULL;
+			}
+
+			if (pubk != NULL) {
 				SECKEY_DestroyPublicKey(pubk);
+				pubk = NULL;
+			}
 		}
 	}
 
-	pluto_crypto_allocchunk(&kn->thespace, &kn->secret,
-				sizeof(SECKEYPrivateKey*));
+	ALLOC_WIRE_CHUNK(*kn, secret, sizeof(SECKEYPrivateKey *));
 	{
-		char *gip = wire_chunk_ptr(kn, &(kn->secret));
+		unsigned char *gip = WIRE_CHUNK_PTR(*kn, secret);
+
 		memcpy(gip, &privk, sizeof(SECKEYPrivateKey *));
 	}
 
-	pluto_crypto_allocchunk(&kn->thespace, &kn->gi,
-				pubk->u.dh.publicValue.len);
+	ALLOC_WIRE_CHUNK(*kn, gi, pubk->u.dh.publicValue.len);
 	{
-		char *gip = wire_chunk_ptr(kn, &(kn->gi));
+		unsigned char *gip = WIRE_CHUNK_PTR(*kn, gi);
+
 		memcpy(gip, pubk->u.dh.publicValue.data,
 		       pubk->u.dh.publicValue.len);
 	}
 
-	pluto_crypto_allocchunk(&kn->thespace, &kn->pubk,
-				sizeof(SECKEYPublicKey*));
+	ALLOC_WIRE_CHUNK(*kn, pubk, sizeof(SECKEYPublicKey *));
 	{
-		char *gip = wire_chunk_ptr(kn, &(kn->pubk));
-		memcpy(gip, &pubk, sizeof(SECKEYPublicKey*));
+		unsigned char *gip = WIRE_CHUNK_PTR(*kn, pubk);
+
+		memcpy(gip, &pubk, sizeof(SECKEYPublicKey *));
 	}
 
 	DBG(DBG_CRYPT, {
 		    DBG_dump("NSS: Local DH secret (pointer):\n",
-			     wire_chunk_ptr(kn, &(kn->secret)),
+			     WIRE_CHUNK_PTR(*kn, secret),
 			     sizeof(SECKEYPrivateKey*));
 		    DBG_dump("NSS: Public DH value sent(computed in NSS):\n",
-			     wire_chunk_ptr(kn,
-					    &(kn->gi)),
+			     WIRE_CHUNK_PTR(*kn, gi),
 			     pubk->u.dh.publicValue.len);
 	    });
 
 	DBG(DBG_CRYPT,
 	    DBG_dump("NSS: Local DH public value (pointer):\n",
-		     wire_chunk_ptr(kn, &(kn->pubk)),
+		     WIRE_CHUNK_PTR(*kn, pubk),
 		     sizeof(SECKEYPublicKey*)));
 
 	/* clean up after ourselves */
-	if (slot)
+
+	if (slot != NULL)
 		PK11_FreeSlot(slot);
-	/* if (privk){SECKEY_DestroyPrivateKey(privk);} */
-	/* if (pubk){SECKEY_DestroyPublicKey(pubk);} */
+
+#if 0	/* ??? currently broken.  Why?  A leak is better than a crash. */
+	if (privk != NULL)
+		SECKEY_DestroyPrivateKey(privk);
+
+	if (pubk != NULL)
+		SECKEY_DestroyPublicKey(pubk);
+#endif
+
 	freeanychunk(prime);
 	freeanychunk(base);
 }
 
+/* MUST BE THREAD-SAFE */
 void calc_nonce(struct pluto_crypto_req *r)
 {
 	struct pcr_kenonce *kn = &r->pcr_d.kn;
 
-	pluto_crypto_allocchunk(&kn->thespace, &kn->n, DEFAULT_NONCE_SIZE);
-	get_rnd_bytes(wire_chunk_ptr(kn, &(kn->n)), DEFAULT_NONCE_SIZE);
+	ALLOC_WIRE_CHUNK(*kn, n, DEFAULT_NONCE_SIZE);
+	get_rnd_bytes(WIRE_CHUNK_PTR(*kn, n), DEFAULT_NONCE_SIZE);
 
 	DBG(DBG_CRYPT,
 	    DBG_dump("Generated nonce:\n",
-		     wire_chunk_ptr(kn, &(kn->n)),
+		     WIRE_CHUNK_PTR(*kn, n),
 		     DEFAULT_NONCE_SIZE));
 }
 
@@ -182,15 +192,14 @@ stf_status build_ke(struct pluto_crypto_req_cont *cn,
 		    enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
-	struct pluto_crypto_req *r = &rd;
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(r, pcr_build_kenonce, importance);
-	r->pcr_d.kn.oakley_group   = group->group;
+	pcr_nonce_init(&rd, pcr_build_kenonce, importance);
+	rd.pcr_d.kn.oakley_group = group->group;
 
 	cn->pcrc_serialno = st->st_serialno;
-	e = send_crypto_helper_request(r, cn, &toomuch);
+	e = send_crypto_helper_request(&rd, cn, &toomuch);
 
 	if (e != NULL) {
 		loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
@@ -217,14 +226,13 @@ stf_status build_nonce(struct pluto_crypto_req_cont *cn,
 		       enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
-	struct pluto_crypto_req *r = &rd;
 	err_t e;
 	bool toomuch = FALSE;
 
-	pcr_init(r, pcr_build_nonce, importance);
+	pcr_nonce_init(&rd, pcr_build_nonce, importance);
 
 	cn->pcrc_serialno = st->st_serialno;
-	e = send_crypto_helper_request(r, cn, &toomuch);
+	e = send_crypto_helper_request(&rd, cn, &toomuch);
 
 	if (e != NULL) {
 		loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);

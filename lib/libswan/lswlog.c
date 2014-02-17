@@ -1,5 +1,6 @@
 /*
  * error logging functions
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
@@ -15,7 +16,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>     /* used only if MSG_NOSIGNAL not defined */
+#include <signal.h>	/* used only if MSG_NOSIGNAL not defined */
 #include <sys/queue.h>
 #include <libgen.h>
 #include <sys/stat.h>
@@ -37,14 +37,19 @@
 #include "libreswan/pfkey_debug.h"
 
 bool
-	log_to_stderr = TRUE,   /* should log go to stderr? */
-	log_to_syslog = FALSE;  /* should log go to syslog? */
+	log_to_stderr = TRUE,	/* should log go to stderr? */
+	log_to_syslog = FALSE;	/* should log go to syslog? */
 
 bool
-	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
+	logged_txt_warning = FALSE;	/*
+					 * should we complain about finding
+					 * KEY?
+					 */
 
-static void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
-			       unsigned long line_no) NEVER_RETURNS;
+static void libreswanlib_passert_fail(const char *pred_str,
+				const char *file_str,
+				unsigned long line_no) NEVER_RETURNS;
+
 libreswan_passert_fail_t libreswan_passert_fail = libreswanlib_passert_fail;
 
 void tool_init_log(void)
@@ -71,22 +76,20 @@ void tool_close_log(void)
  * of the message, so prefixing and quoting is suppressed.
  */
 static void fmt_log(char *buf, size_t buf_len,
-		    const char *fmt, va_list ap)
+		const char *fmt, va_list ap)
 {
 	bool reproc = *fmt == '~';
-	size_t ps;
+	char *p;
 
 	buf[0] = '\0';
 	if (reproc) {
-		fmt++; /* ~ at start of format suppresses this prefix */
+		fmt++;	/* ~ at start of format suppresses this prefix */
+		p = buf;
 	} else if (progname != NULL && (strlen(progname) + 1 + 1) < buf_len) {
 		/* start with name of connection */
-		strncat(buf, progname, buf_len - 1);
-		strncat(buf, " ", buf_len - 1);
+		p = add_str(buf, buf_len, jam_str(buf, buf_len, progname), " ");
 	}
-
-	ps = strlen(buf);
-	vsnprintf(buf + ps, buf_len - ps, fmt, ap);
+	vsnprintf(p, buf_len - (p - buf), fmt, ap);
 	if (!reproc)
 		(void)sanitize_string(buf, buf_len);
 }
@@ -94,7 +97,7 @@ static void fmt_log(char *buf, size_t buf_len,
 int libreswan_log(const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
+	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
@@ -111,7 +114,7 @@ int libreswan_log(const char *message, ...)
 void libreswan_loglog(int mess_no UNUSED, const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
+	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
@@ -126,7 +129,7 @@ void libreswan_loglog(int mess_no UNUSED, const char *message, ...)
 void libreswan_log_errno_routine(int e, const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
+	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
@@ -142,7 +145,7 @@ void libreswan_log_errno_routine(int e, const char *message, ...)
 void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
+	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
@@ -165,7 +168,6 @@ void libreswan_log_abort(const char *file_str, int line_no)
 }
 
 /* Debugging message support */
-
 void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 {
 	char buf[30];
@@ -174,17 +176,17 @@ void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 	libreswan_passert_fail(buf, file_str, line_no);
 }
 
-static void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
-			       unsigned long line_no)
+static void libreswanlib_passert_fail(const char *pred_str,
+				const char *file_str, unsigned long line_no)
 {
 	/* we will get a possibly unplanned prefix.  Hope it works */
 	libreswan_loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",
-			 file_str, line_no, pred_str);
-	abort(); /* exiting correctly doesn't always work */
+			file_str, line_no, pred_str);
+	abort();	/* exiting correctly doesn't always work */
 }
 
 lset_t
-	base_debugging = DBG_NONE, /* default to reporting nothing */
+	base_debugging = DBG_NONE,	/* default to reporting nothing */
 	cur_debugging =  DBG_NONE;
 
 void set_debugging(lset_t deb)
@@ -192,7 +194,7 @@ void set_debugging(lset_t deb)
 	cur_debugging = deb;
 
 	pfkey_lib_debug = (cur_debugging & DBG_PFKEY ?
-			   PF_KEY_DEBUG_PARSE_MAX : PF_KEY_DEBUG_PARSE_NONE);
+			PF_KEY_DEBUG_PARSE_MAX : PF_KEY_DEBUG_PARSE_NONE);
 }
 
 /* log a debugging message (prefixed by "| ") */
@@ -200,7 +202,7 @@ void set_debugging(lset_t deb)
 int libreswan_DBG_log(const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
+	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
 	va_start(args, message);
 	vsnprintf(m, sizeof(m), message, args);
@@ -220,8 +222,8 @@ int libreswan_DBG_log(const char *message, ...)
 /* dump raw bytes in hex to stderr (for lack of any better destination) */
 void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 {
-#   define DUMP_LABEL_WIDTH 20  /* arbitrary modest boundary */
-#   define DUMP_WIDTH   (4 * (1 + 4 * 3) + 1)
+#define DUMP_LABEL_WIDTH 20	/* arbitrary modest boundary */
+#define DUMP_WIDTH   (4 * (1 + 4 * 3) + 1)
 	char buf[DUMP_LABEL_WIDTH + DUMP_WIDTH];
 	char *bp;
 	const unsigned char *cp = p;
@@ -240,7 +242,7 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 		} else {
 			strcpy(buf, label);
 			if (buf[llen - 1] == '\n') {
-				buf[llen - 1] = '\0'; /* get rid of newline */
+				buf[llen - 1] = '\0';	/* get rid of newline */
 				DBG_log("%s", buf);
 			} else if (llen < DUMP_LABEL_WIDTH) {
 				bp = buf + llen;

@@ -17,13 +17,14 @@
 #include "libreswan.h"
 
 /*
-   - keyblobtoid - generate a printable key ID from an RFC 2537/3110 key blob
+ * keyblobtoid - generate a printable key ID from an RFC 2537/3110 key blob
+ *
  * Current algorithm is just to use first nine base64 digits.
  */
 size_t keyblobtoid(src, srclen, dst, dstlen)
 const unsigned char *src;
 size_t srclen;
-char *dst;                      /* need not be valid if dstlen is 0 */
+char *dst;	/* need not be valid if dstlen is 0 */
 size_t dstlen;
 {
 	char buf[KEYID_BUF];
@@ -48,7 +49,8 @@ size_t dstlen;
 }
 
 /*
-   - splitkeytoid - generate a printable key ID from exponent/modulus pair
+ * splitkeytoid - generate a printable key ID from exponent/modulus pair
+ *
  * Just constructs the beginnings of a key blob and calls keyblobtoid().
  */
 size_t splitkeytoid(e, elen, m, mlen, dst, dstlen)
@@ -56,10 +58,10 @@ const unsigned char *e;
 size_t elen;
 const unsigned char *m;
 size_t mlen;
-char *dst;                      /* need not be valid if dstlen is 0 */
+char *dst;	/* need not be valid if dstlen is 0 */
 size_t dstlen;
 {
-	unsigned char buf[KEYID_BUF];   /* ample room */
+	unsigned char buf[KEYID_BUF];	/* ample room */
 	unsigned char *bufend = buf + sizeof(buf);
 	unsigned char *p;
 	size_t n;
@@ -126,7 +128,7 @@ char *argv[];
 		st = 1;
 	}
 	n = splitkeytoid(hexe, strlen(hexe), hexm, strlen(hexm), buf,
-			 sizeof(buf));
+			sizeof(buf));
 	if (n != bl) {
 		fprintf(stderr, "%s: splitkeytoid returned %d not %d\n",
 			argv[0], n, bl);

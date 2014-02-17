@@ -563,7 +563,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			    __func__));
 	}
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
 	family = that_client->addr.u.v4.sin_family;
@@ -581,8 +581,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 * as left/rightprotoport=icmp/2048. Now with NETKEY, icmp type and code
 	 * need to be passed as source and destination ports, respectively.
 	 * therefore, this code extracts upper 8 bits and lower 8 bits and puts
-	 * into source and destination ports before passing to NETKEY. */
-
+	 * into source and destination ports before passing to NETKEY.
+	 */
 	if ( transport_proto == IPPROTO_ICMP || transport_proto ==
 	     IPPROTO_ICMPV6) {
 		u_int16_t icmp_type;
@@ -665,7 +665,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		struct xfrm_user_tmpl tmpl[4];
 		int i;
 
-		memset(tmpl, 0, sizeof(tmpl));
+		zero(&tmpl);
 		for (i = 0; proto_info[i].proto; i++) {
 			tmpl[i].reqid = proto_info[i].reqid;
 			tmpl[i].id.proto = proto_info[i].proto;
@@ -764,7 +764,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	const struct aead_alg *aead;
 	int ret;
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = replace ? XFRM_MSG_UPDSA : XFRM_MSG_NEWSA;
 
@@ -789,7 +789,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	 * Tunnel mode ipsec with ipcomp is layered so that ipcomp tunnel is
 	 * protected with transport mode ipsec but in this case we shouldn't any
 	 * more add traffic selectors. Caller function will inform us if we
-	 * need or don't need selectors. */
+	 * need or don't need selectors.
+	 */
 	if (sa->add_selector) {
 		ip_subnet src_tmp;
 		ip_subnet dst_tmp;
@@ -798,7 +799,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 		/* With XFRM/NETKEY and transport mode with nat-traversal we need
 		 * to change outbound IPsec SA to point to exteral ip of the peer.
-		 * Here we substitute real client ip with NATD ip. */
+		 * Here we substitute real client ip with NATD ip.
+		 */
 		if (sa->inbound == 0) {
 			addrtosubnet(sa->dst, &dst_tmp);
 			dst = &dst_tmp;
@@ -825,8 +827,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * as left/rightprotoport=icmp/2048. Now with NETKEY, icmp type and code
 		 * need to be passed as source and destination ports, respectively.
 		 * therefore, this code extracts upper 8 bits and lower 8 bits and puts
-		 * into source and destination ports before passing to NETKEY. */
-
+		 * into source and destination ports before passing to NETKEY.
+		 */
 		if ( 1 == sa->transport_proto /*icmp*/ || 58 ==
 		     sa->transport_proto /*ipv6-icmp*/) {
 
@@ -990,7 +992,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		natt.encap_type = sa->natt_type;
 		natt.encap_sport = ntohs(sa->natt_sport);
 		natt.encap_dport = ntohs(sa->natt_dport);
-		memset(&natt.encap_oa, 0, sizeof(natt.encap_oa));
+		zero(&natt.encap_oa);
 
 		attr->rta_type = XFRMA_ENCAP;
 		attr->rta_len = RTA_LENGTH(sizeof(natt));
@@ -1047,7 +1049,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 		char data[1024];
 	} req;
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = XFRM_MSG_DELSA;
 
@@ -1641,7 +1643,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	} rsp;
 	static int get_cpi_bug;
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
 	req.n.nlmsg_type = XFRM_MSG_ALLOCSPI;
 
@@ -2207,7 +2209,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes)
 		char data[1024];
 	} rsp;
 
-	memset(&req, 0, sizeof(req));
+	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
 	req.n.nlmsg_type = XFRM_MSG_GETSA;
 

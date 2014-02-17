@@ -385,7 +385,6 @@ static void bsdkame_pfkey_register_response(const struct sadb_msg *msg)
 static void bsdkame_pfkey_acquire(struct sadb_msg *msg UNUSED)
 {
 	DBG_log("received acquire --- discarded");
-	return;
 }
 
 /* processs a pfkey message */
@@ -530,7 +529,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 		policy = IPSEC_POLICY_IPSEC;
 	}
 
-	memset(pbuf, 0, sizeof(pbuf));
+	zero(&pbuf);
 
 	/* this is sanity check that it got set properly */
 	passert(this_client->addr.u.v4.sin_len == sizeof(struct sockaddr_in));
@@ -734,7 +733,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 		snprintf(buf2, sizeof(buf2),
 			 "eroute_connection %s", opname);
 
-		memset(pbuf, 0, sizeof(pbuf));
+		zero(&pbuf);
 
 		/* XXX need to fix this for v6 */
 		mine->addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
@@ -1067,7 +1066,7 @@ static bool bsdkame_except_socket(int socketfd, int family)
 		return FALSE;
 	}
 
-	memset(&policy, 0, sizeof(policy));
+	zero(&policy);
 	policy.sadb_x_policy_len = PFKEY_UNIT64(sizeof(policy));
 	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	policy.sadb_x_policy_type = IPSEC_POLICY_BYPASS;

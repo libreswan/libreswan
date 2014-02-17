@@ -77,7 +77,7 @@
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "x509more.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
@@ -189,8 +189,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 			"aggr outR1 DH");
 		dh->md = md;
 		set_suspended(st, md);
-		pcrc_init(&dh->dh_pcrc);
-		dh->dh_pcrc.pcrc_func = aggr_inI1_outR1_continue2;
+		pcrc_init(&dh->dh_pcrc, aggr_inI1_outR1_continue2);
 		e = start_dh_secretiv(&dh->dh_pcrc, st,
 				      st->st_import,
 				      RESPONDER,
@@ -267,7 +266,8 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 	change_state(st, STATE_AGGR_R1);
 
 	/* until we have clue who this is, then be conservative about allocating
-	 * them any crypto bandwidth */
+	 * them any crypto bandwidth
+	 */
 	st->st_import = pcim_stranger_crypto;
 
 	st->st_policy |= POLICY_AGGRESSIVE;
@@ -355,13 +355,11 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		set_suspended(st, md);
 
 		if (!st->st_sec_in_use) {
-			pcrc_init(&ke->ke_pcrc);
-			ke->ke_pcrc.pcrc_func = aggr_inI1_outR1_continue1;
+			pcrc_init(&ke->ke_pcrc, aggr_inI1_outR1_continue1);
 			return build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 					st->st_import);
 		} else {
-			return aggr_inI1_outR1_tail(
-				(struct pluto_crypto_req_cont *)ke, NULL);
+			return aggr_inI1_outR1_tail(&ke->ke_pcrc, NULL);
 		}
 	}
 }
@@ -618,14 +616,12 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	 * NOW SEND VENDOR ID payloads
 	 */
 
-	/* Announce our ability to do RFC 3706 Dead Peer Detection to the peer
-	    if we have it enabled on this conn */
 	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
 		/* Set local policy for DPD to be on */
 		st->hidden_variables.st_dpd_local = 1;
 	}
 
-	/* send DPD VID */
+	/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
 	{
 		int np = ISAKMP_NEXT_NONE;
 
@@ -737,8 +733,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 		dh->md = md;
 
 		set_suspended(st, md);
-		pcrc_init(&dh->dh_pcrc);
-		dh->dh_pcrc.pcrc_func = aggr_inR1_outI2_crypto_continue;
+		pcrc_init(&dh->dh_pcrc, aggr_inR1_outI2_crypto_continue);
 		return start_dh_secretiv(&dh->dh_pcrc, st,
 					 st->st_import,
 					 INITIATOR,
@@ -929,11 +924,10 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	c->newest_isakmp_sa = st->st_serialno;
 
 	/* save last IV from phase 1 so it can be restored later so anything
-	 * between the end of phase 1 and the start of phase 2 ie mode config
-	 * payloads etc will not loose our IV
+	 * between the end of phase 1 and the start of phase 2 i.e. mode config
+	 * payloads etc. will not lose our IV
 	 */
-	memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
-	st->st_ph1_iv_len = st->st_new_iv_len;
+	set_ph1_iv_from_new(st);
 
 	return STF_OK;
 }
@@ -1013,7 +1007,8 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 	/**************** done input ****************/
 
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
-	 * are not supposed to be performed again during rekey */
+	 * are not supposed to be performed again during rekey
+	 */
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
 	    st->st_connection->remotepeertype == CISCO) {
@@ -1051,11 +1046,10 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 	update_iv(st);  /* Finalize our Phase 1 IV */
 
 	/* save last IV from phase 1 so it can be restored later so anything
-	 * between the end of phase 1 and the start of phase 2 ie mode config
-	 * payloads etc will not loose our IV
+	 * between the end of phase 1 and the start of phase 2 i.e. mode config
+	 * payloads etc. will not lose our IV
 	 */
-	memcpy(st->st_ph1_iv, st->st_new_iv, st->st_new_iv_len);
-	st->st_ph1_iv_len = st->st_new_iv_len;
+	set_ph1_iv_from_new(st);
 
 	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
 
@@ -1148,11 +1142,10 @@ stf_status aggr_outI1(int whack_sock,
 
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.xauth_name) {
-				/* ??? is this strncpy correct? */
-				strncpy(st->st_xauth_username,
-					sr->this.xauth_name,
-					sizeof(st->st_xauth_username));
+			if (sr->this.xauth_name != NULL) {
+				jam_str(st->st_xauth_username,
+					sizeof(st->st_xauth_username),
+					sr->this.xauth_name);
 				break;
 			}
 		}
@@ -1204,8 +1197,7 @@ stf_status aggr_outI1(int whack_sock,
 		set_suspended(st, ke->md);
 
 		if (!st->st_sec_in_use) {
-			pcrc_init(&ke->ke_pcrc);
-			ke->ke_pcrc.pcrc_func = aggr_outI1_continue;
+			pcrc_init(&ke->ke_pcrc, aggr_outI1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     importance);
 			if (e != STF_SUSPEND && e != STF_INLINE) {
@@ -1213,8 +1205,7 @@ stf_status aggr_outI1(int whack_sock,
 				delete_state(st);
 			}
 		} else {
-			e = aggr_outI1_tail((struct pluto_crypto_req_cont *)ke,
-					    NULL);
+			e = aggr_outI1_tail(&ke->ke_pcrc, NULL);
 		}
 
 		reset_globals();
@@ -1242,7 +1233,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	{
 		struct isakmp_hdr hdr;
 
-		memset(&hdr, '\0', sizeof(hdr)); /* default to 0 */
+		zero(&hdr); /* default to 0 */
 		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_SA;
@@ -1260,9 +1251,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	/* SA out */
 	{
 		u_char *sa_start = md->rbody.cur;
-		int policy_index = POLICY_ISAKMP(st->st_policy,
-						 c->spd.this.xauth_server,
-						 c->spd.this.xauth_client);
+		unsigned policy_index = POLICY_ISAKMP(st->st_policy, c);
 
 		if (!out_sa(&md->rbody,
 			    &oakley_am_sadb[policy_index], st,

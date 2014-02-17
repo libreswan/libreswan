@@ -67,7 +67,7 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 		ipi->attrs.transattrs.integ_hash);
 
 	passert(ipi->attrs.transattrs.ei != NULL);
-	memset(&childsacalc, 0, sizeof(childsacalc));
+	zero(&childsacalc);
 	childsacalc.prf_hasher = st->st_oakley.prf_hasher;
 
 	setchunk(childsacalc.ni, st->st_ni.ptr, st->st_ni.len);

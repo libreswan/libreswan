@@ -104,7 +104,6 @@ int netif_rx(struct sk_buff *skb)
 
 void ipsec_print_ip(struct iphdr *ip)
 {
-	return;
 }
 
 struct net_device *ipsec_get_device(int inst)
@@ -170,7 +169,6 @@ void ipsec_SAtest(void)
 	       SAref, IPsecSAref2SA(SAref),
 	       (&ips), IPsecSA2SAref((&ips))
 	       );
-	return;
 }
 
 int main(char *argv[], int argc)

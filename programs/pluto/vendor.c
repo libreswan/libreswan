@@ -730,15 +730,14 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	for (pvid = vid_tab; pvid->id; pvid++) {
 		if (pvid->vid && vid && pvid->vid_len && len) {
 			if (pvid->vid_len == len) {
-				if (memcmp(pvid->vid, vid, len) == 0) {
+				if (memeq(pvid->vid, vid, len)) {
 					handle_known_vendorid(md, vid,
 							      len, pvid, st);
 					return;
 				}
 			} else if ((pvid->vid_len < len)   &&
 				   (pvid->flags & VID_SUBSTRING)) {
-				if (memcmp(pvid->vid, vid,
-					   pvid->vid_len) == 0) {
+				if (memeq(pvid->vid, vid, pvid->vid_len)) {
 					handle_known_vendorid(md, vid, len,
 							      pvid, st);
 					return;
@@ -753,7 +752,8 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	{
 		char log_vid[2 * MAX_LOG_VID_LEN + 1];
 		size_t i;
-		memset(log_vid, 0, sizeof(log_vid));
+
+		zero(&log_vid);
 		for (i = 0; (i < len) && (i < MAX_LOG_VID_LEN); i++) {
 			log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
 			log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];

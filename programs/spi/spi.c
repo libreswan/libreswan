@@ -99,7 +99,6 @@ int replay_window = 0;
 char sa[SATOT_BUF];
 
 int pfkey_sock;
-lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
 enum life_severity {
 	life_soft = 0,
@@ -483,7 +482,7 @@ int main(int argc, char *argv[])
 
 	tool_init_log();
 
-	memset(&said, 0, sizeof(said));
+	zero(&said);
 	edst_opt = spi_opt = proto_opt = af_opt = said_opt = dst_opt =
 								     src_opt =
 									     NULL;

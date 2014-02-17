@@ -612,8 +612,6 @@ void __ipsec_sa_put(struct ipsec_sa *ips, const char *func, int line, int type)
 		/* it was zero */
 		ipsec_sa_wipe(ips);
 	}
-
-	return;
 }
 
 struct ipsec_sa *__ipsec_sa_get(struct ipsec_sa *ips, const char *func,

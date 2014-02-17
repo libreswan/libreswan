@@ -14,14 +14,14 @@ stf_status build_ke(struct pluto_crypto_req_cont *cn,
 		    enum crypto_importance importance)
 {
 	continuation = cn;
-	memset(&rd, 0, sizeof(rd));
+	zero(&rd);
 
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_build_kenonce;
 	r->pcr_pcim = importance;
 
-	pcr_init(r, pcr_build_kenonce, importance);
-	r->pcr_d.kn.oakley_group   = group->group;
+	pcr_nonce_init(r, pcr_build_kenonce, importance);
+	r->pcr_d.kn.oakley_group = group->group;
 
 	return STF_SUSPEND;
 }
@@ -33,13 +33,13 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 		       u_int16_t oakley_group2)
 {
 	continuation = cn;
-	memset(&rd, 0, sizeof(rd));
+	zero(&rd);
 
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_compute_dh_v2;
 	r->pcr_pcim = importance;
 
-	pcr_init(&r, pcr_compute_dh_v2, importance );
+	pcr_dh_init(&r, st, pcr_compute_dh_v2, importance );
 	r->pcr_d.kn.oakley_group   = oakley_group2;
 
 	return STF_SUSPEND;

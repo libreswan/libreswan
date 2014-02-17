@@ -77,15 +77,13 @@ typedef int bool;
 
 #define streq(a, b) (strcmp((a), (b)) == 0)             /* clearer shorthand */
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)     /* clearer shorthand */
-#define memeq(a, b, n) (memcmp(a, b, n) == 0)     /* clearer shorthand */
+#define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)	/* clearer shorthand */
 
-/* Jam a string into a buffer of limited size (truncation is silent).
- * This is somewhat like what people mistakenly think strncpy does
- * but the parameter order is like snprintf.
- * The result is a pointer to the NUL at the end.  This is unconventional but useful.
- * NOTE: Is it really wise to silently truncate?  Only the caller knows.
- */
+#define zero(x) memset((x), '\0', sizeof(*(x)))	/* zero all bytes */
+
+/* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
+extern char *add_str(char *buf, size_t size, char *hint, const char *src);
 
 /* set type with room for at least 64 elements for ALG opts
  * (was 32 in stock FS)

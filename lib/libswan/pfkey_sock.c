@@ -1,5 +1,6 @@
 /*
  * open a pfkey socket or dump a reason why it failed.
+ *
  * Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -11,7 +12,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
- *
  */
 #include <stdio.h>
 #include <errno.h>
@@ -42,7 +42,7 @@ int pfkey_open_sock_with_error(void)
 			fprintf(stderr, "access denied.  ");
 			if (getuid() == 0)
 				fprintf(stderr,
-					"Check permissions.  Should be 600.\n");
+					"Check permissions. Should be 600.\n");
 
 
 			else
@@ -62,7 +62,7 @@ int pfkey_open_sock_with_error(void)
 			break;
 		case EBUSY:
 			fprintf(stderr,
-				"KLIPS is busy.  Most likely a serious internal error occured in a previous command.  Please report as much detail as possible to development team.\n");
+				"KLIPS is busy.  Most likely a serious internal error occured in a previous command. Please report as much detail as possible to development team.\n");
 			break;
 		case EINVAL:
 			fprintf(stderr,
@@ -88,7 +88,7 @@ int pfkey_open_sock_with_error(void)
 			break;
 		default:
 			fprintf(stderr,
-				"Unknown file open error %d.  Please report as much detail as possible to development team.\n",
+				"Unknown file open error %d. Please report as much detail as possible to development team.\n",
 				errno);
 		}
 		exit(1);
