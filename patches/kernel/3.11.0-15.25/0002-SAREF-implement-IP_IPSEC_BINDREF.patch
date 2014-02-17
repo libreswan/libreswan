@@ -1,0 +1,164 @@
+commit b8bc979322dc60db392380935d5600d9ec341286
+Author: Simon Deziel <simon.deziel@gmail.com>
+Date:   Thu Feb 13 15:59:58 2014 -0500
+
+    SAref patch 0002 against Ubuntu 3.11.0-15.25
+
+diff --git a/include/net/sock.h b/include/net/sock.h
+index 04e148f..c104218 100644
+--- a/include/net/sock.h
++++ b/include/net/sock.h
+@@ -399,6 +399,7 @@ struct sock {
+ #endif
+ 	__u32			sk_mark;
+ 	u32			sk_classid;
++	__u32			sk_saref;
+ 	struct cg_proto		*sk_cgrp;
+ 	void			(*sk_state_change)(struct sock *sk);
+ 	void			(*sk_data_ready)(struct sock *sk, int bytes);
+diff --git a/include/net/xfrm.h b/include/net/xfrm.h
+index 994feec..b6c7f01 100644
+--- a/include/net/xfrm.h
++++ b/include/net/xfrm.h
+@@ -1029,6 +1029,21 @@ secpath_put(struct sec_path *sp)
+ 
+ extern struct sec_path *secpath_dup(struct sec_path *src);
+ 
++/*
++ * Attach IPsec SAref value to skb, if appropriate.
++ */
++static inline void skb_sec_assign_sk_saref(struct sk_buff *skb, struct sock *sk)
++{
++#if defined(CONFIG_XFRM)
++	if (sk->sk_saref) {
++		if (!skb->sp)
++			skb->sp = secpath_dup(NULL);
++		if (skb->sp)
++			skb->sp->ref = sk->sk_saref;
++	}
++#endif
++}
++
+ static inline void
+ secpath_reset(struct sk_buff *skb)
+ {
+diff --git a/include/uapi/linux/in.h b/include/uapi/linux/in.h
+index bd5783d..b38b08a 100644
+--- a/include/uapi/linux/in.h
++++ b/include/uapi/linux/in.h
+@@ -77,6 +77,7 @@ struct in_addr {
+ #define IP_PASSSEC	18
+ #define IP_TRANSPARENT	19
+ #define IP_IPSEC_REFINFO 30     /* used with CONFIG_INET_IPSEC_SAREF */
++#define IP_IPSEC_BINDREF 31
+ 
+ /* BSD compatibility */
+ #define IP_RECVRETOPTS	IP_RETOPTS
+diff --git a/net/core/sock.c b/net/core/sock.c
+index 8729d91..636d794 100644
+--- a/net/core/sock.c
++++ b/net/core/sock.c
+@@ -1752,6 +1752,9 @@ struct sk_buff *sock_alloc_send_pskb(struct sock *sk, unsigned long header_len,
+ 			if (skb) {
+ 				int i;
+ 
++				/* associate the skb with the socket's SAref */
++				skb_sec_assign_sk_saref(skb, sk);
++
+ 				/* No pages, we're done... */
+ 				if (!data_len)
+ 					break;
+diff --git a/net/ipv4/ip_sockglue.c b/net/ipv4/ip_sockglue.c
+index b01f36f..1cfd064 100644
+--- a/net/ipv4/ip_sockglue.c
++++ b/net/ipv4/ip_sockglue.c
+@@ -559,6 +559,7 @@ static int do_ip_setsockopt(struct sock *sk, int level,
+ 	case IP_RECVORIGDSTADDR:
+ #ifdef CONFIG_INET_IPSEC_SAREF
+ 	case IP_IPSEC_REFINFO:
++	case IP_IPSEC_BINDREF:
+ #endif
+ 		if (optlen >= sizeof(int)) {
+ 			if (get_user(val, (int __user *) optval))
+@@ -664,6 +665,9 @@ static int do_ip_setsockopt(struct sock *sk, int level,
+ 		else
+ 			inet->cmsg_flags &= ~IP_CMSG_IPSEC_REFINFO;
+ 		break;
++	case IP_IPSEC_BINDREF:
++		sk->sk_saref = val;
++		break;
+ #endif
+ 	case IP_TOS:	/* This sets both TOS and Precedence */
+ 		if (sk->sk_type == SOCK_STREAM) {
+@@ -1153,6 +1157,7 @@ int ip_setsockopt(struct sock *sk, int level,
+ 			optname != IP_XFRM_POLICY &&
+ #ifdef CONFIG_INET_IPSEC_SAREF
+ 			optname != IP_IPSEC_REFINFO &&
++			optname != IP_IPSEC_BINDREF &&
+ #endif
+ 			!ip_mroute_opt(optname)) {
+ 		lock_sock(sk);
+@@ -1185,6 +1190,7 @@ int compat_ip_setsockopt(struct sock *sk, int level, int optname,
+ 			optname != IP_XFRM_POLICY &&
+ #ifdef CONFIG_INET_IPSEC_SAREF
+ 			optname != IP_IPSEC_REFINFO &&
++			optname != IP_IPSEC_BINDREF &&
+ #endif
+ 			!ip_mroute_opt(optname)) {
+ 		lock_sock(sk);
+@@ -1273,6 +1279,9 @@ static int do_ip_getsockopt(struct sock *sk, int level, int optname,
+ 	case IP_IPSEC_REFINFO:
+ 		val = (inet->cmsg_flags & IP_CMSG_IPSEC_REFINFO) != 0;
+ 		break;
++	case IP_IPSEC_BINDREF:
++		val = sk->sk_saref;
++		break;
+ #endif
+ 	case IP_RECVORIGDSTADDR:
+ 		val = (inet->cmsg_flags & IP_CMSG_ORIGDSTADDR) != 0;
+diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
+index ec586e5..1d888b3 100644
+--- a/net/ipv4/tcp.c
++++ b/net/ipv4/tcp.c
+@@ -766,6 +766,9 @@ struct sk_buff *sk_stream_alloc_skb(struct sock *sk, int size, gfp_t gfp)
+ 	skb = alloc_skb_fclone(size + sk->sk_prot->max_header, gfp);
+ 	if (skb) {
+ 		if (sk_wmem_schedule(sk, skb->truesize)) {
++			/* associate the skb with the socket's SAref */
++			skb_sec_assign_sk_saref(skb, sk);
++
+ 			skb_reserve(skb, sk->sk_prot->max_header);
+ 			/*
+ 			 * Make sure that we have exactly size bytes
+diff --git a/net/ipv4/tcp_output.c b/net/ipv4/tcp_output.c
+index 28c0d6a..ebd7e0f 100644
+--- a/net/ipv4/tcp_output.c
++++ b/net/ipv4/tcp_output.c
+@@ -37,6 +37,7 @@
+ #define pr_fmt(fmt) "TCP: " fmt
+ 
+ #include <net/tcp.h>
++#include <net/xfrm.h>
+ 
+ #include <linux/compiler.h>
+ #include <linux/gfp.h>
+@@ -867,6 +868,9 @@ static int tcp_transmit_skb(struct sock *sk, struct sk_buff *skb, int clone_it,
+ 			return -ENOBUFS;
+ 	}
+ 
++	/* associate the skb with the socket's SAref */
++	skb_sec_assign_sk_saref(skb, sk);
++
+ 	inet = inet_sk(sk);
+ 	tp = tcp_sk(sk);
+ 	tcb = TCP_SKB_CB(skb);
+@@ -2953,6 +2957,9 @@ int tcp_connect(struct sock *sk)
+ 	if (unlikely(buff == NULL))
+ 		return -ENOBUFS;
+ 
++	/* associate the skb with the socket's SAref */
++	skb_sec_assign_sk_saref(buff, sk);
++
+ 	/* Reserve space for headers. */
+ 	skb_reserve(buff, MAX_TCP_HEADER);
+ 
