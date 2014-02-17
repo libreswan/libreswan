@@ -555,23 +555,19 @@ static int validate_end(struct ub_ctx *dnsctx,
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Calling unbound_resolve() for %snexthop value\n",
 					    leftright);
-				bool e =
-					unbound_resolve(dnsctx, value, strlen(
-								value), AF_INET,
-							&(end->nexthop));
-				if (!e)
-					e = unbound_resolve(dnsctx, value, strlen(
-								    value), AF_INET6,
-							    &(end->nexthop));
-				if (!e)
+				if (!unbound_resolve(dnsctx, value,
+						strlen(value), AF_INET,
+						&(end->nexthop)) &&
+				    !unbound_resolve(dnsctx, value,
+						strlen(value), AF_INET6,
+						&(end->nexthop)))
 					ERR_FOUND(
 						"bad value for %snexthop=%s\n",
 						leftright, value);
 #else
-				er =
-					ttoaddr(value, 0, family,
+				er = ttoaddr(value, 0, family,
 						&(end->nexthop));
-				if (er)
+				if (er != NULL)
 					ERR_FOUND(
 						"bad value for %snexthop=%s [%s]", leftright, value,
 						er);
@@ -640,14 +636,12 @@ static int validate_end(struct ub_ctx *dnsctx,
 			starter_log(LOG_LEVEL_DEBUG,
 				    "Calling unbound_resolve() for %ssourceip value\n",
 				    leftright);
-			bool e = unbound_resolve(dnsctx, value, strlen(
-							 value), AF_INET,
-						 &(end->sourceip));
-			if (!e)
-				e = unbound_resolve(dnsctx, value, strlen(
-							    value), AF_INET6,
-						    &(end->sourceip));
-			if (!e)
+			if (!unbound_resolve(dnsctx, value,
+					strlen(value), AF_INET,
+					&(end->sourceip)) &&
+			    !unbound_resolve(dnsctx, value,
+					strlen(value), AF_INET6,
+					&(end->sourceip)))
 				ERR_FOUND("bad value for %ssourceip=%s\n",
 					  leftright, value);
 #else
@@ -658,11 +652,9 @@ static int validate_end(struct ub_ctx *dnsctx,
 #endif
 		} else {
 			er = tnatoaddr(value, 0, family, &(end->sourceip));
-			if (er) {
-				ERR_FOUND(
-					"bad numerical addr %ssourceip=%s [%s]", leftright, value,
-					er);
-			}
+			if (er)
+				ERR_FOUND("bad numerical addr %ssourceip=%s [%s]",
+					leftright, value, er);
 		}
 		if (!end->has_client) {
 			starter_log(LOG_LEVEL_INFO,
@@ -703,10 +695,10 @@ static int validate_end(struct ub_ctx *dnsctx,
 
 	if (end->strings_set[KSCF_ADDRESSPOOL]) {
 		char *addresspool = end->strings[KSCF_ADDRESSPOOL];
+
 		if (end->strings_set[KSCF_SUBNET])
-			ERR_FOUND(
-				"cannot specify both %ssubnet= and %saddresspool=", leftright,
-				leftright);
+			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=",
+				leftright, leftright);
 		starter_log(LOG_LEVEL_DEBUG,
 			    "connection's  addresspool set to: %s",
 			    end->strings[KSCF_ADDRESSPOOL] );
@@ -1096,8 +1088,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 						     NULL;
 						     newalsoplace++) {
 							assert(conn != NULL);
-							assert(
-								conn->name !=
+							assert(conn->name !=
 								NULL);
 							starter_log(
 								LOG_LEVEL_DEBUG,
@@ -1185,8 +1176,6 @@ static int load_conn(struct ub_ctx *dnsctx,
 
 	KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KBF_PFS,  POLICY_PFS);
-
-	KW_POLICY_FLAG(KBF_ANONYMOUS,  POLICY_ANONYMOUS);
 
 	/* reset authby flags */
 	if (conn->options_set[KBF_AUTHBY]) {

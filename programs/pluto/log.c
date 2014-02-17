@@ -1000,8 +1000,7 @@ void log_state(struct state *st, enum state_kind new_state)
 	conn = st->st_connection;
 	if (!conn) {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log(
-			    "log_state() called without st->st_connection (this line cannot fire)"));
+		    DBG_log("log_state() called without st->st_connection (this line cannot fire)"));
 		return;
 	}
 
@@ -1018,16 +1017,14 @@ void log_state(struct state *st, enum state_kind new_state)
 	if (conn->statsval ==
 	    (IPsecSAref2NFmark(st->st_ref) | LOG_CONN_STATSVAL(&lc))) {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log(
-			    "log_state for connection %s state change signature (%d) matches last one - skip logging",
+		    DBG_log("log_state for connection %s state change signature (%d) matches last one - skip logging",
 			    conn->name, conn->statsval));
 		return;
 	}
 	conn->statsval = IPsecSAref2NFmark(st->st_ref) |
 			 LOG_CONN_STATSVAL(&lc);
 	DBG(DBG_CONTROLMORE,
-	    DBG_log(
-		    "log_state set state change signature for connection %s to %d",
+	    DBG_log("log_state set state change signature for connection %s to %d",
 		    conn->name, conn->statsval));
 
 	switch (lc.tunnel) {
@@ -1071,8 +1068,7 @@ void log_state(struct state *st, enum state_kind new_state)
 		break;
 	}
 	DBG(DBG_CONTROLMORE,
-	    DBG_log(
-		    "log_state calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
+	    DBG_log("log_state calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
 		    pluto_stats_binary, conn->name, tun, p1, p2));
 
 	snprintf(buf, sizeof(buf), "%s "

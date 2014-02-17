@@ -307,8 +307,7 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
 
 #if 0
 	DBG(DBG_CRYPT,
-	    DBG_log(
-		    "encrypting buf=%p size=%d keyptr: %p keysize: %d, iv: %p enc: %d",
+	    DBG_log("encrypting buf=%p size=%d keyptr: %p keysize: %d, iv: %p enc: %d",
 		    buf, size, st->st_enc_key.ptr,
 		    st->st_enc_key.len, st->st_new_iv, enc));
 #endif

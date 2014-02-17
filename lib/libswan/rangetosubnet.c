@@ -206,15 +206,13 @@ void regress()
 			       r->start, r->stop, oops);
 			status = 1;
 		} else if (r->output == NULL) {
-			printf(
-				"`%s'-`%s' rangetosubnet succeeded unexpectedly\n",
+			printf("`%s'-`%s' rangetosubnet succeeded unexpectedly\n",
 				r->start, r->stop);
 			status = 1;
 		} else {
 			n = subnettot(&sub, 0, buf, sizeof(buf));
 			if (n > sizeof(buf)) {
-				printf(
-					"`%s'-`%s' subnettot failed:  need %ld\n",
+				printf("`%s'-`%s' subnettot failed:  need %ld\n",
 					r->start, r->stop, (long)n);
 				status = 1;
 			} else if (strcmp(r->output, buf) != 0) {

@@ -321,7 +321,6 @@ const char *const sa_policy_bit_names[] = {
 	"IKE_FRAG",
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",
-	"ANONYMOUS", 
 	NULL
 };
 

@@ -117,6 +117,7 @@ const char *const debug_bit_names[] = {
 	"impair-minor-version-bump",            /* 29 */
 	"impair-retransmits",                   /* 30 */
 	"impair-send-bogus-isakmp-flag",        /* 31 */
+	"impair-send-ikev2-ke",                 /* 32 */
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -179,7 +180,8 @@ static const char *const payload_name_ikev2[] = {
 	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
 };
 
-static const char *const payload_name_ikev2_main[] = {
+/* dual-use: for enum_name and for bitnamesof */
+const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",        /* 33 */
 	"ISAKMP_NEXT_v2KE",
 	"ISAKMP_NEXT_v2IDi",
@@ -196,6 +198,7 @@ static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2E",
 	"ISAKMP_NEXT_v2CP",
 	"ISAKMP_NEXT_v2EAP",
+	NULL	/* termination for bitnamesof() */
 };
 
 static const char *const payload_name_ikev2_private_use[] = {
@@ -742,6 +745,7 @@ static enum_names auth_alg_names_stolen_use =
 { AUTH_ALGORITHM_NULL_KAME, AUTH_ALGORITHM_NULL_KAME, auth_alg_name_stolen_use,
   NULL };
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const auth_alg_name[] = {
 	"AUTH_ALGORITHM_NONE", /* our own value, not standard */
 	"AUTH_ALGORITHM_HMAC_MD5",
@@ -914,6 +918,7 @@ enum_names oakley_enc_names =
 /* Oakley Hash Algorithm attribute */
 /* http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6 */
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_hash_name[] = {
 	/* 0 - RESERVED */
 	"OAKLEY_MD5",
@@ -975,13 +980,6 @@ enum_names oakley_auth_names =
 
 /* ikev2 auth methods */
 
-static const char *const ikev2_auth_name_private_use[] = {
-	"IKEv2_AUTH_ANONYMOUS",
-};
-
-static enum_names ikev2_auth_names_private_use =
-{ IKEv2_AUTH_ANONYMOUS, IKEv2_AUTH_ANONYMOUS, ikev2_auth_name_private_use, NULL };
-
 static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_RSA", /* 1 */
 	"IKEv2_AUTH_SHARED",
@@ -997,7 +995,7 @@ static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
 };
 enum_names ikev2_auth_names =
-{ IKEv2_AUTH_RSA, IKEv2_AUTH_GSPM, ikev2_auth_name, &ikev2_auth_names_private_use };
+{ IKEv2_AUTH_RSA, IKEv2_AUTH_GSPM, ikev2_auth_name, NULL };
 
 /*
  * Oakley Group Description attribute
@@ -1005,6 +1003,7 @@ enum_names ikev2_auth_names =
  * be differences we need to care about)
  */
 
+/* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_group_name[] = {
 	"OAKLEY_GROUP_MODP768",
 	"OAKLEY_GROUP_MODP1024",
@@ -1302,14 +1301,14 @@ const char *const critical_names[] = {
  * IKEv2 Security Protocol Identifiers
  */
 static const char *const ikev2_sec_proto_id_name[] = {
-        /* 0 - Reserved */
-        "IKEv2_SEC_PROTO_IKE",
-        "IKEv2_SEC_PROTO_AH",
-        "IKEv2_SEC_PROTO_ESP",
-        "IKEv2_SEC_FC_ESP_HEADER", /* RFC 4595 */
-        "IKEv2_SEC_FC_CT_AUTHENTICATION", /* RFC 4595 */
-        /* 6 - 200 Unassigned */
-        /* 201 - 255 Private use */
+	/* 0 - Reserved */
+	"IKEv2_SEC_PROTO_IKE",
+	"IKEv2_SEC_PROTO_AH",
+	"IKEv2_SEC_PROTO_ESP",
+	"IKEv2_SEC_FC_ESP_HEADER", /* RFC 4595 */
+	"IKEv2_SEC_FC_CT_AUTHENTICATION", /* RFC 4595 */
+	/* 6 - 200 Unassigned */
+	/* 201 - 255 Private use */
 };
 enum_names ikev2_sec_proto_id_names =
 { IKEv2_SEC_PROTO_IKE, IKEv2_SEC_FC_CT_AUTHENTICATION, ikev2_sec_proto_id_name, NULL };
@@ -1432,8 +1431,8 @@ enum_names *ikev2_transid_val_descs[] = {
 	&ikev2_trans_type_esn_names,          /* 5 */
 };
 
-const unsigned int ikev2_transid_val_descs_size = elemsof(
-	ikev2_transid_val_descs);
+const unsigned int ikev2_transid_val_descs_size =
+	elemsof(ikev2_transid_val_descs);
 
 /* Transform Attributes */
 static const char *const ikev2_trans_attr_name[] = {

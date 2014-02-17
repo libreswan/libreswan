@@ -137,8 +137,7 @@ void unpack_KE(struct state *st,
 		clonetochunk(*g, wire_chunk_ptr(kn, &(kn->gi)),
 			     kn->gi.len, "saved gi value");
 		DBG(DBG_CRYPT,
-		    DBG_log(
-			    "saving DH priv (local secret) and pub key into state struc"));
+		    DBG_log("saving DH priv (local secret) and pub key into state struc"));
 		clonetochunk(st->st_sec_chunk,
 			     wire_chunk_ptr(kn,
 					    &(kn->secret)),

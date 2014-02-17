@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
  strongswan starter --debug-all
-Starting strongSwan 5.0.0 IPsec [starter]...
+Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev2'
   left=192.1.2.45
@@ -22,25 +22,44 @@ west #
  strongswan up westnet-eastnet-ikev2
 initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-received packet: from 192.1.2.23[500] to 192.1.2.45[500]
-parsed IKE_SA_INIT response 0 [ SA KE No V ]
-received unknown vendor ID: 4f:45:4e:71:47:53:6f:47:45:5b:52:51
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (924 bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (436 bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(MULT_AUTH) ]
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-
-BROKEN HERE
-
-retransmit 1 of request with message ID 1
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-retransmit 2 of request with message ID 1
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-retransmit 3 of request with message ID 1
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-retransmit 4 of request with message ID 1
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-retransmit 5 of request with message ID 1
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(MULT_AUTH) N(EAP_ONLY) ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (388 bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (228 bytes)
+parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr N(AUTH_LFT) N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) ]
+authentication of 'east' with pre-shared key successful
+IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+connection 'westnet-eastnet-ikev2' established successfully
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ echo done
+done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+west #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24 
+west #
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

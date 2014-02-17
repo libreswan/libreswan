@@ -125,7 +125,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	 */
 	ALG_INFO_IKE_FOREACH(ai, ike_info, i) {
 
-		if (ike_info->ike_default == FALSE) {
+		if (!ike_info->ike_default) {
 			struct db_attr  *enc, *hash, *auth, *grp, *enc_keylen,
 			*new_auth;
 			struct db_trans *trans;
@@ -218,8 +218,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			if (halg > 0)
 				hash->val = halg;
 
-			passert(
-				auth->type.oakley ==
+			passert(auth->type.oakley ==
 				OAKLEY_AUTHENTICATION_METHOD);
 			/* no setting for auth type for IKE */
 

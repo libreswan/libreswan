@@ -398,8 +398,7 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 		if (ugh == NULL) {
 			if (is_asn1(*blob)) {
 				DBG(DBG_PARSING,
-				    DBG_log(
-					    "  fetched blob coded in PEM format")
+				    DBG_log("  fetched blob coded in PEM format")
 				    );
 			} else {
 				ugh = "Blob coded in unknown format";

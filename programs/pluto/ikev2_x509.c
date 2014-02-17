@@ -88,16 +88,13 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 		    send_certreq ? "" : "not "));
 	if (!send_certreq) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "I did not send a certificate request (CERTREQ) because"));
+		    DBG_log("I did not send a certificate request (CERTREQ) because"));
 		if (!(c->policy & POLICY_RSASIG)) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "  RSA digital signatures are not being used. (PSK)"));
+			    DBG_log("  RSA digital signatures are not being used. (PSK)"));
 		} else if (has_preloaded_public_key(st)) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    " has a preloaded a public for that end in st"));
+			    DBG_log(" has a preloaded a public for that end in st"));
 		} else if (!(role == INITIATOR)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("  my role is not INITIATORi"));
@@ -106,8 +103,7 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 			    DBG_log("  no known CA for the other end"));
 		} else {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    " we reached an unexpected state - a bad day? I don't feel like sending a certificate request (CERTREQ)"));
+			    DBG_log(" we reached an unexpected state - a bad day? I don't feel like sending a certificate request (CERTREQ)"));
 		}
 
 	}
@@ -123,8 +119,7 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 	if (send_certreq) {
 		cert.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
-			libreswan_log(
-				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
+			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			cert.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 		cert.isac_np = ISAKMP_NEXT_v2CERTREQ;
@@ -183,8 +178,7 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 	} else {
 		generalName_t *ca = NULL;
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "connection->kind is not CK_PERMANENT (instance), so collect CAs"));
+		    DBG_log("connection->kind is not CK_PERMANENT (instance), so collect CAs"));
 
 		if (collect_rw_ca_candidates(md, &ca)) {
 			generalName_t *gn;
@@ -202,8 +196,7 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 			free_generalNames(ca, FALSE);
 		} else {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "Not a roadwarrior instance, sending empty CA in CERTREQ"));
+			    DBG_log("Not a roadwarrior instance, sending empty CA in CERTREQ"));
 			if (!build_and_ship_CR(CERT_X509_SIGNATURE,
 					       empty_chunk,
 					       outpbs, np))
@@ -259,8 +252,7 @@ bool doi_send_ikev2_cert_thinking(struct state *st)
 
 	DBG(DBG_CONTROL, {
 		    bool gotcertrequest = st->hidden_variables.st_got_certrequest;
-		    DBG_log(
-			    " sendcert: %s and I did%s get a certificate request ",
+		    DBG_log(" sendcert: %s and I did%s get a certificate request ",
 			    enum_show(&certpolicy_type_names,
 				      policy),
 			    gotcertrequest ? "" : " not");
@@ -272,16 +264,13 @@ bool doi_send_ikev2_cert_thinking(struct state *st)
 	if (!send_cert) {
 		if (!(c->policy & POLICY_RSASIG)) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "I did not send a certificate because digital signatures are not being used. (PSK)"));
+			    DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)"));
 		} else if (certtype == CERT_NONE) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "I did not send a certificate because I do not have one."));
+			    DBG_log("I did not send a certificate because I do not have one."));
 		} else if (policy == cert_sendifasked) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "I did not send my certificate because I was not asked to."));
+			    DBG_log("I did not send my certificate because I was not asked to."));
 		}
 	}
 

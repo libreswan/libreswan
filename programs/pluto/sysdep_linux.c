@@ -146,8 +146,7 @@ bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
 			if (errno == ENOSYS) {
 				/* Try system(), though it will not give us output */
 				system(cmd);
-				DBG_log(
-					"unable to popen(), falling back to system()");
+				DBG_log("unable to popen(), falling back to system()");
 				return TRUE;
 			}
 #endif
@@ -310,16 +309,14 @@ struct raw_iface *find_raw_ifaces4(void)
 			for (i = 0; i != pluto_ifn_roof; i++)
 				if (streq(ri.name, pluto_ifn[i])) {
 					DBG(DBG_CONTROLMORE,
-					    DBG_log(
-						    "interface name '%s' found in interfaces= line",
+					    DBG_log("interface name '%s' found in interfaces= line",
 						    ri.name));
 					break;
 				}
 
 			if (i == pluto_ifn_roof) {
 				DBG(DBG_CONTROLMORE,
-				    DBG_log(
-					    "interface name '%s' not present in interfaces= line - skipped",
+				    DBG_log("interface name '%s' not present in interfaces= line - skipped",
 					    ri.name));
 				continue; /* not found -- skip */
 			}
@@ -340,8 +337,7 @@ struct raw_iface *find_raw_ifaces4(void)
 		}
 		if (auxinfo.ifr_flags & IFF_SLAVE) {
 			DBG(DBG_CONTROLMORE,
-			    DBG_log(
-				    "Ignored interface %s - it is a slave interface",
+			    DBG_log("Ignored interface %s - it is a slave interface",
 				    ri.name));
 			continue; /* ignore slave interfaces; they share IPs with their master */
 		}

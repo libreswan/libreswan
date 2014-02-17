@@ -9,7 +9,7 @@ Date: Fri, 17 Jun 2005 12:31:23 +0200
 From: Stephan Scholz <sscholz@astaro.com>
 Subject: PSK and NAT-T option
 
-I have found a bug in Libreswan 2.3.1 concerning PSK and the NAT-Traversal
+I have found a bug in Openswan 2.3.1 concerning PSK and the NAT-Traversal
 option.
 If NAT-Traversal is disabled in ipsec.conf, then a roadwarrior PSK connection
 fails to establish - regardless of whether NAT-T is actually needed or not.

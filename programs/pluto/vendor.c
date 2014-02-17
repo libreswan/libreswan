@@ -625,8 +625,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 				md->quirks.nat_traversal_vid = vid->id;
 			} else {
 				DBG(DBG_NATT,
-				    DBG_log(
-					    "Ignoring older NAT-T Vendor ID paylad [%s]",
+				    DBG_log("Ignoring older NAT-T Vendor ID paylad [%s]",
 					    vid->descr));
 				vid_useful = FALSE;
 			}

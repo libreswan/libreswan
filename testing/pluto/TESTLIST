@@ -8,7 +8,7 @@
 # test-kind:
 #  umlplutotest - not yet converted, will not be run with 'make check'
 #  kvmplutotest - coverted to use KVM, will be run with 'make check'
-#  skip - skip this test
+#  skiptest - skip this test
 #  hwtest - connect to physical test machines, not KVM [FUTURE]
 
 # expectation:
@@ -250,6 +250,8 @@ umlXhost	nat-pluto-08		good
 # Test of NAT traversal, using vnet: syntax with an added subnet per-conn
 umlXhost	nat-pluto-09		good
 
+kvmplutotest	nat-pluto-10		good
+
 #
 # Test of NAT traversal w/DPD
 umlXhost	nat-dpd-pluto-01	good
@@ -285,8 +287,7 @@ umlXhost	x509-pluto-06		good
 #
 # a test case of PSK with aggressive mode
 kvmplutotest	psk-pluto-01		good
-
-umlXhost	psk-pluto-02		bad
+kvmplutotest	psk-pluto-02		bad
 
 kvmplutotest	xauth-pluto-03		good
 kvmplutotest	xauth-pluto-04		good
@@ -294,7 +295,9 @@ kvmplutotest	xauth-pluto-05		good
 kvmplutotest	xauth-pluto-06		good
 kvmplutotest	xauth-pluto-07		good
 kvmplutotest	xauth-pluto-08		good
-kvmplutotest	xauth-pluto-09		good
+
+umlplutotest	xauth-pluto-09		good
+
 umlXhost	xauth-pluto-10		good
 umlXhost	xauth-pluto-11		good
 kvmplutotest	xauth-pluto-12		good
@@ -302,7 +305,7 @@ kvmplutotest	xauth-pluto-13		good
 kvmplutotest	xauth-pluto-14		good
 kvmplutotest	xauth-pluto-15		good
 kvmplutotest	xauth-pluto-16		good
-skip		xauth-pluto-17		wip
+skiptest	xauth-pluto-17		wip
 kvmplutotest	xauth-pluto-18		good
 kvmplutotest	xauth-pluto-19		good
 
@@ -360,12 +363,10 @@ umlplutotest	fail-x509-12		good
 #
 kvmplutotest	pluto-rekey-02		good
 
-#
-# this tests psk with main mode.
-umlXhost	psk-pluto-03		good
-
-# this tests psk with main mode.
-umlXhost	psk-pluto-04		good
+kvmplutotest	psk-pluto-03		good
+kvmplutotest	psk-pluto-04		good
+kvmplutotest	psk-pluto-05		good
+kvmplutotest	psk-pluto-06		good
 
 #
 # tests using alternative ESP algorithms
@@ -481,6 +482,10 @@ umlplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-09-rw-rsa				good
 kvmplutotest	ikev2-11-simple-psk			good
 kvmplutotest	ikev2-12-x509-ikev1			bad
+kvmplutotest	ikev2-12-transport-psk			good
+kvmplutotest	ikev2-13-ah				good
+kvmplutotest	ikev2-14-missing-ke			good
+kvmplutotest	ikev2-15-fuzzer				good
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
@@ -506,6 +511,7 @@ kvmplutotest	ikev2-algo-ike-sha2-02			good
 kvmplutotest	ikev2-algo-ike-sha2-03			good
 kvmplutotest	ikev1-algo-ike-sha2-01			good
 kvmplutotest	ikev1-algo-ike-sha2-02			good
+kvmplutotest	ikev1-algo-ike-sha2-03			good
 
 # Various corner case tests for IKEv2
 kvmplutotest	ikev2-major-version-initiator		good
@@ -541,8 +547,8 @@ kvmplutotest	interop-ikev1-strongswan-04-psk-aes-ccm		good
 umlplutotest    interop-ikev2-strongswan-01-noconn		good
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
 kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
-umlplutotest    interop-ikev2-strongswan-04-x509-responder	good
-umlplutotest    interop-ikev2-strongswan-05-x509-initiator	good
+kvmplutotest    interop-ikev2-strongswan-04-x509-responder	good
+kvmplutotest	interop-ikev2-strongswan-05-psk-aes		good
 kvmplutotest	interop-ikev2-strongswan-05-psk-md5		good
 kvmplutotest	interop-ikev2-strongswan-06-aes192		good
 kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
@@ -551,9 +557,10 @@ kvmplutotest	interop-ikev2-strongswan-09-psk-aes-ccm		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-gcm		good
 kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
+kvmplutotest	interop-ikev2-strongswan-12-ah-initiator	good
 
-skip		interop-racoon-iphone4s-nonat		incomplete
-skip		interop-racoon-iphone5-nonat		incomplete
+skiptest	interop-racoon-iphone4s-nonat		incomplete
+skiptest	interop-racoon-iphone5-nonat		incomplete
 
 #################################################################
 # DNSSEC tests
@@ -575,3 +582,4 @@ umlplutotest	x509-pluto-frag-03			good
 umlplutotest	x509-pluto-frag-04			good
 
 kvmplutotest	replay-authip-01			good
+

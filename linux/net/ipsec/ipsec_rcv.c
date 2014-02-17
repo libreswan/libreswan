@@ -225,18 +225,19 @@ struct auth_alg ipsec_rcv_sha1[] = {
 static inline void ipsec_rcv_redodebug(struct ipsec_rcv_state *irs)
 {
 	if (lsw_ip_hdr_version(irs) == 4) {
-		inet_addrtot(AF_INET, &lsw_ip4_hdr(
-				     irs)->saddr, 0, irs->ipsaddr_txt,
+		inet_addrtot(AF_INET,
+			     &lsw_ip4_hdr(irs)->saddr,
+			     0, irs->ipsaddr_txt,
 			     sizeof(irs->ipsaddr_txt));
-		inet_addrtot(AF_INET, &lsw_ip4_hdr(
-				     irs)->daddr, 0, irs->ipdaddr_txt,
+		inet_addrtot(AF_INET, &lsw_ip4_hdr(irs)->daddr,
+			     0, irs->ipdaddr_txt,
 			     sizeof(irs->ipdaddr_txt));
 	} else if (lsw_ip_hdr_version(irs) == 6) {
-		inet_addrtot(AF_INET6, &lsw_ip6_hdr(
-				     irs)->saddr, 0, irs->ipsaddr_txt,
+		inet_addrtot(AF_INET6, &lsw_ip6_hdr(irs)->saddr,
+			     0, irs->ipsaddr_txt,
 			     sizeof(irs->ipsaddr_txt));
-		inet_addrtot(AF_INET6, &lsw_ip6_hdr(
-				     irs)->daddr, 0, irs->ipdaddr_txt,
+		inet_addrtot(AF_INET6, &lsw_ip6_hdr(irs)->daddr,
+			     0, irs->ipdaddr_txt,
 			     sizeof(irs->ipdaddr_txt));
 	} else {
 		snprintf(irs->ipsaddr_txt, sizeof(irs->ipsaddr_txt),
@@ -636,8 +637,8 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 			int nexthdroff;
 			nexthdroff = ipsec_ipv6_skip_exthdr(skb,
 							    ipsec_skb_offset(
-								    skb, ipp6 +
-								    1),
+								    skb,
+								    ipp6 + 1),
 							    &nexthdr,
 							    &frag_off);
 			skb_set_transport_header(skb,
@@ -1781,18 +1782,17 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 	ipsnext = irs->ipsp->ips_next;
 	if (sysctl_ipsec_inbound_policy_check) {
 		if (ipsnext) {
-			if (
-				irs->next_header != IPPROTO_AH &&
-				irs->next_header != IPPROTO_ESP
+			if (irs->next_header != IPPROTO_AH &&
+			    irs->next_header != IPPROTO_ESP &&
 #ifdef CONFIG_KLIPS_IPCOMP
-				&& irs->next_header != IPPROTO_COMP &&
-				(ipsnext->ips_said.proto != IPPROTO_COMP ||
-				 ipsnext->ips_next)
+			    irs->next_header != IPPROTO_COMP &&
+			    (ipsnext->ips_said.proto != IPPROTO_COMP ||
+			     ipsnext->ips_next) &&
 #endif                  /* CONFIG_KLIPS_IPCOMP */
-				&& irs->next_header != IPPROTO_IPIP &&
-				irs->next_header != IPPROTO_IPV6 &&
-				irs->next_header != IPPROTO_ATT_HEARTBEAT     /* heartbeats to AT&T SIG/GIG */
-				) {
+			    irs->next_header != IPPROTO_IPIP &&
+			    irs->next_header != IPPROTO_IPV6 &&
+			    irs->next_header != IPPROTO_ATT_HEARTBEAT     /* heartbeats to AT&T SIG/GIG */
+			   ) {
 				KLIPS_PRINT(debug_rcv,
 					    "packet with incomplete policy dropped, last successful SA:%s.\n",
 					    irs->sa_len ? irs->sa : " (error)");
@@ -1888,8 +1888,8 @@ static enum ipsec_rcv_value ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
 			lsw_ip4_hdr(irs)->check = ip_fast_csum(
 				(unsigned char *)irs->iph, lsw_ip4_hdr(
 					irs)->ihl);
-			KLIPS_PRINT(debug_rcv, "csum: %04x\n", lsw_ip4_hdr(
-					    irs)->check);
+			KLIPS_PRINT(debug_rcv, "csum: %04x\n",
+			            lsw_ip4_hdr(irs)->check);
 		}
 /*
  * This fails when both systems are behind NAT
@@ -1990,8 +1990,8 @@ static enum ipsec_rcv_value ipsec_rcv_complete(struct ipsec_rcv_state *irs)
 	 * pointers wind up a different for 2.6 vs 2.4, so we just fudge it here.
 	 */
 #ifdef NET_26
-	irs->skb->data = skb_push(irs->skb, skb_transport_header(
-					  irs->skb) -
+	irs->skb->data = skb_push(irs->skb,
+				  skb_transport_header(irs->skb) -
 				  skb_network_header(irs->skb));
 #else
 	irs->skb->data = skb_network_header(irs->skb);
@@ -2391,8 +2391,7 @@ int klips26_rcv_encap(struct sk_buff *skb, __u16 encap_type)
 
 	default:
 		if (printk_ratelimit()) {
-			printk(
-				KERN_INFO "KLIPS received unknown UDP-ESP encap type %u\n",
+			printk(KERN_INFO "KLIPS received unknown UDP-ESP encap type %u\n",
 				encap_type);
 		}
 		goto rcvleave;

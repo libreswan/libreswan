@@ -71,21 +71,37 @@ out:
  * @param len Length of Hash (eg: 256,512)
  * @return int Registered # of Hash ALG if loaded.
  */
-static int aalg_getbyname_ike(const char *const str, int len)
+static int aalg_getbyname_ike(const char *str, int len)
 {
 	int ret = -1;
-	unsigned num;
+	int num_read;
+	static const char sha2_256_aka[] = "sha2";
 
+	DBG_log("entering aalg_getbyname_ike()");
 	if (!str || !*str)
-		goto out;
+		return ret;
+
+	/* handle "sha2" as "sha2_256" */
+	if (len == sizeof(sha2_256_aka)-1 && strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
+		DBG_log("interpreting sha2 as sha2_256");
+		str = "sha2_256";
+		len = strlen(str);
+	}
+
 	ret = alg_enum_search_prefix(&oakley_hash_names, "OAKLEY_", str, len);
 	if (ret >= 0)
-		goto out;
-	sscanf(str, "id%d%n", &ret, &num);
-	if (ret >= 0 && num != strlen(str))
-		ret = -1;
-out:
-	return ret;
+		return ret;
+
+	/* Special value for no authentication since zero is already used. */
+	ret = INT_MAX;
+	if (strncasecmp(str, "null", len) == 0)
+		return ret;
+
+	/* support idXXX as syntax, matching iana numbers directly */
+	if (sscanf(str, "id%d%n", &ret, &num_read) >= 1 && num_read == len)
+		return ret;
+
+	return -1;
 }
 /**
  *      Search oakley_group_names for a match, eg:
@@ -194,13 +210,13 @@ static void alg_info_ike_add(struct alg_info *alg_info,
 		int i;
 
 		for (i=0; i != elemsof(default_ike_groups); i++)
-			per_group_alg_info_ike_add(alg_info, 
+			per_group_alg_info_ike_add(alg_info,
 				     ealg_id, ek_bits,
 				     aalg_id, ak_bits,
 				     default_ike_groups[i]);
 	} else {
 		/* group determined by caller */
-		per_group_alg_info_ike_add(alg_info, 
+		per_group_alg_info_ike_add(alg_info,
 			     ealg_id, ek_bits,
 			     aalg_id, ak_bits,
 			     modp_id);
@@ -314,8 +330,7 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 			       esp_info->esp_aalg_id, aklen);
 
 		if ( ret < 0 || (size_t)ret >= buflen) {
-			DBG_log(
-				"alg_info_snprint_ah: buffer too short for snprintf");
+			DBG_log("alg_info_snprint_ah: buffer too short for snprintf");
 			break;
 		}
 		ptr += ret;
@@ -386,8 +401,7 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 						"OAKLEY_GROUP_"),
 				       ike_info->ike_modp);
 			if ( ret < 0 || (size_t)ret >= buflen) {
-				DBG_log(
-					"alg_info_snprint_ike: buffer too short for snprintf");
+				DBG_log("alg_info_snprint_ike: buffer too short for snprintf");
 				break;
 			}
 			ptr += ret;
@@ -484,8 +498,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				       "requested kernel enc ealg_id=%d not present",
 				       ealg_i);
 			} else {
-				DBG_log(
-					"requested kernel enc ealg_id=%d not present",
+				DBG_log("requested kernel enc ealg_id=%d not present",
 					ealg_i);
 			}
 			return FALSE;
@@ -516,7 +529,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 
 		/*	add keylegth if specified in esp= string */
-		if (esp_info->esp_ealg_keylen) {  
+		if (esp_info->esp_ealg_keylen) {
 				db_attr_add_values(db_ctx,
 						   KEY_LENGTH,
 						   esp_info->esp_ealg_keylen );
@@ -589,7 +602,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 			thistime = kernel_alg_db_add(ctx_new,
 						     &tmp_esp_info,
 						     policy, logit);
-			if (thistime == FALSE)
+			if (!thistime)
 				success = FALSE;
 		}
 	} else {
@@ -606,7 +619,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 		}
 	}
 
-	if (success == FALSE) {
+	if (!success) {
 		/* NO algorithms were found. oops */
 		db_destroy(ctx_new);
 		return NULL;
@@ -833,8 +846,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 
 	if (!dbnew) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "failed to translate esp_info to proposal, returning empty"));
+		    DBG_log("failed to translate esp_info to proposal, returning empty"));
 		return NULL;
 	}
 
@@ -842,8 +854,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 
 	if (!p) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "failed to get proposal from context, returning empty"));
+		    DBG_log("failed to get proposal from context, returning empty"));
 		db_destroy(dbnew);
 		return NULL;
 	}

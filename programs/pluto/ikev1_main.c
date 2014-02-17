@@ -625,7 +625,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		/*
 		 * If there is XAUTH VID, copy it to policies.
 		 */
-		if (md->quirks.xauth_vid == TRUE)
+		if (md->quirks.xauth_vid)
 			policy |= POLICY_XAUTH;
 
 #endif
@@ -708,8 +708,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
 				"received on %s:%u "
 				"but \"%s\" forbids connection",
-				ip_str(
-					&md->iface->ip_addr), pluto_port,
+				ip_str(&md->iface->ip_addr), pluto_port,
 				c->name);
 			/* XXX notification is in order! */
 			return STF_IGNORE;
@@ -720,8 +719,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			 * His ID isn't declared yet.
 			 */
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"instantiating \"%s\" for initial "
+				DBG_log("instantiating \"%s\" for initial "
 					"Main Mode message received on %s:%u",
 					c->name,
 					ip_str(&md->iface->ip_addr),
@@ -736,8 +734,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 */
 		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"local endpoint has virt (vnet/vhost) "
+				DBG_log("local endpoint has virt (vnet/vhost) "
 					"set without wildcards - needs "
 					"instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
@@ -1009,7 +1006,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 			"outI2 KE");
 		ke->md = md;
 
-		passert(st->st_sec_in_use == FALSE);
+		passert(!st->st_sec_in_use);
 		pcrc_init(&ke->ke_pcrc);
 		ke->ke_pcrc.pcrc_func = main_inR1_outI2_continue;
 		set_suspended(st, md);
@@ -1219,7 +1216,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 		ke->md = md;
 		set_suspended(st, md);
 
-		passert(st->st_sec_in_use == FALSE);
+		passert(!st->st_sec_in_use);
 		pcrc_init(&ke->ke_pcrc);
 		ke->ke_pcrc.pcrc_func = main_inI2_outR2_continue;
 		return build_ke(&ke->ke_pcrc, st,
@@ -1408,8 +1405,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		passert(st->st_suspended_md == NULL);
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log(
-				"main inI2_outR2: starting async DH "
+			DBG_log("main inI2_outR2: starting async DH "
 				"calculation (group=%d)",
 				st->st_oakley.group->group));
 
@@ -1466,19 +1462,16 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 	if (!send_cert) {
 		if (auth == OAKLEY_PRESHARED_KEY) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"I did not send a certificate "
+				DBG_log("I did not send a certificate "
 					"because digital signatures are not "
 					"being used. (PSK)"));
 		} else if (certtype == CERT_NONE) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"I did not send a certificate because "
+				DBG_log("I did not send a certificate because "
 					"I do not have one."));
 		} else if (policy == cert_sendifasked) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"I did not send my certificate "
+				DBG_log("I did not send my certificate "
 					"because I was not asked to."));
 		}
 	}
@@ -2012,8 +2005,7 @@ void key_continue(struct adns_continuation *cr,
 		} else {
 
 #ifdef USE_KEYRR
-			passert(
-				kc->step == kos_his_txt || kc->step ==
+			passert(kc->step == kos_his_txt || kc->step ==
 				kos_his_key);
 #else
 			passert(kc->step == kos_his_txt);
@@ -2230,8 +2222,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
-			DBG_log(
-				"Skipping XAUTH for rekey for Cisco Peer "
+			DBG_log("Skipping XAUTH for rekey for Cisco Peer "
 				"compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
@@ -2308,16 +2299,14 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
-			DBG_log(
-				"Skipping XAUTH for rekey for Cisco Peer "
+			DBG_log("Skipping XAUTH for rekey for Cisco Peer "
 				"compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"Skipping ModeCFG for rekey for Cisco "
+				DBG_log("Skipping ModeCFG for rekey for Cisco "
 					"Peer compatibility."));
 			st->hidden_variables.st_modecfg_vars_set = TRUE;
 			st->hidden_variables.st_modecfg_started = TRUE;
@@ -2481,10 +2470,10 @@ stf_status send_isakmp_notification(struct state *st,
  * whether to send the notification, based on the type and the
  * destination, if we care to.
  */
-static void send_notification(struct state *sndst, u_int16_t type,
+static void send_notification(struct state *sndst, notification_t type,
 			struct state *encst,
 			msgid_t msgid, u_char *icookie, u_char *rcookie,
-			u_char *spi, size_t spisize, u_char protoid)
+			u_char protoid)
 {
 	u_char buffer[1024];
 	pb_stream pbs, r_hdr_pbs;
@@ -2497,8 +2486,8 @@ static void send_notification(struct state *sndst, u_int16_t type,
 	r_hash_start = NULL;
 
 	passert((sndst) && (sndst->st_connection));
-	switch (type) {
 
+	switch (type) {
 	case PAYLOAD_MALFORMED:
 		/* only send one per second. */
 		if (n == last_malformed)
@@ -2516,7 +2505,7 @@ static void send_notification(struct state *sndst, u_int16_t type,
 			return;
 		}
 
-		libreswan_DBG_dump("payload malformed after IV", sndst->st_iv,
+		libreswan_DBG_dump("payload malformed after possible IV", sndst->st_iv,
 				sndst->st_iv_len);
 
 		/*
@@ -2532,6 +2521,9 @@ static void send_notification(struct state *sndst, u_int16_t type,
 		 * send encrypted.
 		 */
 		encst = NULL;
+		break;
+	default:
+		/* quiet GCC warning */
 		break;
 	}
 
@@ -2570,8 +2562,7 @@ static void send_notification(struct state *sndst, u_int16_t type,
 					&hash_pbs))
 			impossible();
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(
-				encst->st_oakley.prf_hasher->hash_digest_len,
+		if (!out_zero(encst->st_oakley.prf_hasher->hash_digest_len,
 				&hash_pbs, "HASH(1)"))
 			impossible();
 		close_output_pbs(&hash_pbs);
@@ -2586,7 +2577,7 @@ static void send_notification(struct state *sndst, u_int16_t type,
 		isan.isan_doi = ISAKMP_DOI_IPSEC;
 		isan.isan_np = ISAKMP_NEXT_NONE;
 		isan.isan_type = type;
-		isan.isan_spisize = spisize;
+		isan.isan_spisize = 0;
 		isan.isan_protoid = protoid;
 
 		if (!out_struct(&isan, &isakmp_notification_desc,
@@ -2595,16 +2586,6 @@ static void send_notification(struct state *sndst, u_int16_t type,
 				"failed to build notification in send_"
 				"notification\n");
 			return;
-		}
-
-		if (spisize > 0) {
-			if (!out_raw(spi, spisize, &not_pbs, "spi")) {
-				libreswan_log(
-					"failed to build notification for "
-					"spisize=%d\n",
-					(int)spisize);
-				return;
-			}
 		}
 
 		close_output_pbs(&not_pbs);
@@ -2662,17 +2643,17 @@ static void send_notification(struct state *sndst, u_int16_t type,
 	}
 }
 
-void send_notification_from_state(struct state *st, enum state_kind state,
-				u_int16_t type)
+void send_notification_from_state(struct state *st, enum state_kind from_state,
+				notification_t type)
 {
 	struct state *p1st;
 
 	passert(st);
 
-	if (state == STATE_UNDEFINED)
-		state = st->st_state;
+	if (from_state == STATE_UNDEFINED)
+		from_state = st->st_state;
 
-	if (IS_QUICK(state)) {
+	if (IS_QUICK(from_state)) {
 		p1st = find_phase1_state(st->st_connection,
 					ISAKMP_SA_ESTABLISHED_STATES);
 		if ((p1st == NULL) ||
@@ -2681,24 +2662,22 @@ void send_notification_from_state(struct state *st, enum state_kind state,
 				"no Phase1 state for Quick mode notification");
 			return;
 		}
-		send_notification(st, type, p1st, generate_msgid(
-					p1st),
-				st->st_icookie, st->st_rcookie, NULL, 0,
+		send_notification(st, type, p1st, generate_msgid(p1st),
+				st->st_icookie, st->st_rcookie,
 				PROTO_ISAKMP);
-	} else if (IS_ISAKMP_ENCRYPTED(state)) {
-		send_notification(st, type, st, generate_msgid(
-					st),
-				st->st_icookie, st->st_rcookie, NULL, 0,
+	} else if (IS_ISAKMP_ENCRYPTED(from_state)) {
+		send_notification(st, type, st, generate_msgid(st),
+				st->st_icookie, st->st_rcookie,
 				PROTO_ISAKMP);
 	} else {
 		/* no ISAKMP SA established - don't encrypt notification */
-		send_notification(st, type, NULL, 0,
-				st->st_icookie, st->st_rcookie, NULL, 0,
+		send_notification(st, type, NULL, MAINMODE_MSGID,
+				st->st_icookie, st->st_rcookie,
 				PROTO_ISAKMP);
 	}
 }
 
-void send_notification_from_md(struct msg_digest *md, u_int16_t type)
+void send_notification_from_md(struct msg_digest *md, notification_t type)
 {
 	/*
 	 * Create a dummy state to be able to use send_ike_msg in
@@ -2725,7 +2704,7 @@ void send_notification_from_md(struct msg_digest *md, u_int16_t type)
 	st.st_interface = md->iface;
 
 	send_notification(&st, type, NULL, 0,
-			md->hdr.isa_icookie, md->hdr.isa_rcookie, NULL, 0,
+			md->hdr.isa_icookie, md->hdr.isa_rcookie,
 			PROTO_ISAKMP);
 }
 
@@ -3025,9 +3004,8 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			bool bogus;
 			struct state *dst = find_phase2_state_to_delete(st,
 							d->isad_protoid,
-							*(
-							ipsec_spi_t
-							*)spi, /* network order */
+							*(ipsec_spi_t*)
+							spi, /* network order */
 							&bogus);
 
 			if (dst == NULL) {

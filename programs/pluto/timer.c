@@ -448,7 +448,7 @@ static void liveness_check(struct state *st)
 	c = st->st_connection;
 
 	/* this should be called on a child sa */
-	if (st->st_clonedfrom != SOS_NOBODY) {
+	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (!pst) {
 			DBG(DBG_CONTROL,
@@ -484,10 +484,9 @@ static void liveness_check(struct state *st)
 	else
 		timeout = c->dpd_timeout;
 
-	if (pst->st_pend_liveness == TRUE && tm - last_liveness >= timeout) {
+	if (pst->st_pend_liveness && tm - last_liveness >= timeout) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "liveness_check - peer has not responded in %lu seconds,"
+		    DBG_log("liveness_check - peer has not responded in %lu seconds,"
 			    " with a timeout of %d, taking action",
 			    tm - last_liveness,
 			    timeout));
@@ -865,8 +864,7 @@ void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
 		for (ev = &evlist;; ev = &(*ev)->ev_next) {
 			if (*ev == NULL) {
 				DBG(DBG_DPD | DBG_CONTROL,
-				    DBG_log(
-					    "DPD event %s to be deleted not found",
+				    DBG_log("DPD event %s to be deleted not found",
 					    enum_show(&timer_event_names,
 						      st->st_dpd_event->ev_type)));
 				break;
@@ -956,8 +954,7 @@ void init_timer(void)
 	if (valstr) {
 		maximum_retransmissions_quick_r1 = atoi(valstr);
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1 set to '%d'",
+		    DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1 set to '%d'",
 			    maximum_retransmissions_quick_r1));
 	}
 }

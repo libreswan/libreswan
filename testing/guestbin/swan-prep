@@ -17,8 +17,9 @@ if os.path.isfile("/usr/sbin/ipsec") or os.path.isfile("/sbin/ipsec"):
 	if os.path.isfile("/usr/local/sbin/ipsec"):
 		sys.exit("ABORT: found a swan userland in the base system as well as /usr/local")
 
-
-
+# just in case a new copy was installed
+if os.path.isfile("/usr/local/sbin/ipsec") and os.path.isfile("/usr/sbin/restorecon"):
+	commands.getoutput("restorecon -Rv /usr/local/libexec/ipsec /usr/local/sbin/ipsec")
 
 ipv = 0
 ipv6 = 0
@@ -105,8 +106,11 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 	service = "".join(open("/lib/systemd/system/ipsec.service").readlines())
 	if "Restart=always" in service:
 		fp = open("/lib/systemd/system/ipsec.service","w")
-		fp.write("".join(service).replace("Restart=always","Restart=never"))
+		fp.write("".join(service).replace("Restart=always","Restart=no"))
 		commands.getoutput("/usr/bin/systemctl daemon-reload")
+
+# easy way to ensure we have the LOGDROP table for those OSes where we don't start a firewall with config
+commands.getoutput("iptables-restore /etc/sysconfig/iptables")
 
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
@@ -193,11 +197,11 @@ if userland == "shrew":
 
 if not args.ipv:
 	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
-	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
+	commands.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=1")
 
 if args.ipv6:
 	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
-	commands.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
+	commands.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=0")
 	commands.getoutput("/etc/init.d/network restart")
 
 # final prep - this kills any running userland
