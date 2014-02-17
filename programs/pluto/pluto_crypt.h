@@ -62,8 +62,12 @@ typedef unsigned int pcr_req_id;
  * within the struct.  This is managed within an arena.
  *
  * Because of two limitations of C typing, the actual space must
- * be created as an array of unsigned char of the required size
- * (reduced by 1) right after the arena.
+ * be created in two tranches: a fixed amount in the arena's
+ * "space" field and the remaining amount in a buffer "more_space"
+ * that follows the arena.  This odd arrangement allows all arenas
+ * to be the same type.  A little bit of space is wasted by
+ * alignment padding at the end of the arena struct; this could
+ * be fixed at the cost of complexity.
  *
  * The macros with uppercase names are magic: they know
  * the field names "arena" and "space" in a way that a function
@@ -78,10 +82,12 @@ typedef struct wire_arena {
 
 #define DECLARE_WIRE_ARENA(size) \
 	wire_arena_t arena; \
-	unsigned char space[(size) - 1]
+	unsigned char more_space[(size) - 1]
 
-#define INIT_WIRE_ARENA(parent) \
-	{ (parent).arena.next = 0; (parent).arena.roof = sizeof((parent).space) + 1; }
+#define INIT_WIRE_ARENA(parent) { \
+		(parent).arena.next = 0; \
+		(parent).arena.roof = sizeof((parent).arena.space) + sizeof((parent).more_space); \
+	}
 
 typedef struct wire_chunk {
 	unsigned int start;
@@ -121,8 +127,8 @@ extern void wire_clone_chunk(wire_arena_t *arena,
  * It is assumed that the memory for the wired_chunk will persist unchanged
  * during the life of the chunk.
  */
-#define setchunk_from_wire(chunk, parent, wire) \
-	setchunk(chunk, wire_chunk_ptr(&(parent)->arena, (wire)), (wire)->len)
+#define setchunk_from_wire(chunk, parent_ptr, wire) \
+	setchunk(chunk, wire_chunk_ptr(&(parent_ptr)->arena, (wire)), (wire)->len)
 
 /* end of wire_chunk definitions */
 

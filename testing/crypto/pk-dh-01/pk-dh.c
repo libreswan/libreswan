@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
 
 #define dumpdat(field) \
 	libreswan_DBG_dump(#field,      \
-			   wire_chunk_ptr(skq, &skq->field), \
+			   WIRE_CHUNK_PTR(*skq, field), \
 			   skq->field.len);
 
 	dumpdat(icookie);
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 	printf("\noutput:\n");
 
 	{
-		void *shared = wire_chunk_ptr(skr, &skr->shared);
+		void *shared = WIRE_CHUNK_PTR(*skr, shared);
 
 		libreswan_DBG_dump("shared", shared, skr->shared.len);
 	}

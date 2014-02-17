@@ -134,17 +134,17 @@ void unpack_KE(struct state *st,
 		st->st_sec_in_use = TRUE;
 		freeanychunk(*g); /* happens in odd error cases */
 
-		clonetochunk(*g, wire_chunk_ptr(kn, &kn->gi),
+		clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
 			     kn->gi.len, "saved gi value");
 		DBG(DBG_CRYPT,
 		    DBG_log("saving DH priv (local secret) and pub key into state struc"));
 		clonetochunk(st->st_sec_chunk,
-			     wire_chunk_ptr(kn, &kn->secret),
+			     WIRE_CHUNK_PTR(*kn, secret),
 			     kn->secret.len,
 			     "pointer to DH private key (secret)");
 
 		clonetochunk(st->pubk,
-			     wire_chunk_ptr(kn, &(kn->pubk)),
+			     WIRE_CHUNK_PTR(*kn, pubk),
 			     kn->pubk.len, "pointer to DH public key");
 	}
 }
@@ -182,7 +182,7 @@ void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	freeanychunk(*n);
-	clonetochunk(*n, wire_chunk_ptr(kn, &(kn->n)),
+	clonetochunk(*n, WIRE_CHUNK_PTR(*kn, n),
 		     DEFAULT_NONCE_SIZE, "initiator nonce");
 }
 

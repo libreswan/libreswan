@@ -121,14 +121,14 @@ void calc_ke(struct pluto_crypto_req *r)
 
 	ALLOC_WIRE_CHUNK(*kn, secret, sizeof(SECKEYPrivateKey *));
 	{
-		unsigned char *gip = wire_chunk_ptr(kn, &kn->secret);
+		unsigned char *gip = WIRE_CHUNK_PTR(*kn, secret);
 
 		memcpy(gip, &privk, sizeof(SECKEYPrivateKey *));
 	}
 
 	ALLOC_WIRE_CHUNK(*kn, gi, pubk->u.dh.publicValue.len);
 	{
-		unsigned char *gip = wire_chunk_ptr(kn, &kn->gi);
+		unsigned char *gip = WIRE_CHUNK_PTR(*kn, gi);
 
 		memcpy(gip, pubk->u.dh.publicValue.data,
 		       pubk->u.dh.publicValue.len);
@@ -136,23 +136,23 @@ void calc_ke(struct pluto_crypto_req *r)
 
 	ALLOC_WIRE_CHUNK(*kn, pubk, sizeof(SECKEYPublicKey *));
 	{
-		unsigned char *gip = wire_chunk_ptr(kn, &kn->pubk);
+		unsigned char *gip = WIRE_CHUNK_PTR(*kn, pubk);
 
 		memcpy(gip, &pubk, sizeof(SECKEYPublicKey *));
 	}
 
 	DBG(DBG_CRYPT, {
 		    DBG_dump("NSS: Local DH secret (pointer):\n",
-			     wire_chunk_ptr(kn, &kn->secret),
+			     WIRE_CHUNK_PTR(*kn, secret),
 			     sizeof(SECKEYPrivateKey*));
 		    DBG_dump("NSS: Public DH value sent(computed in NSS):\n",
-			     wire_chunk_ptr(kn, &kn->gi),
+			     WIRE_CHUNK_PTR(*kn, gi),
 			     pubk->u.dh.publicValue.len);
 	    });
 
 	DBG(DBG_CRYPT,
 	    DBG_dump("NSS: Local DH public value (pointer):\n",
-		     wire_chunk_ptr(kn, &kn->pubk),
+		     WIRE_CHUNK_PTR(*kn, pubk),
 		     sizeof(SECKEYPublicKey*)));
 
 	/* clean up after ourselves */
@@ -178,11 +178,11 @@ void calc_nonce(struct pluto_crypto_req *r)
 	struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	ALLOC_WIRE_CHUNK(*kn, n, DEFAULT_NONCE_SIZE);
-	get_rnd_bytes(wire_chunk_ptr(kn, &(kn->n)), DEFAULT_NONCE_SIZE);
+	get_rnd_bytes(WIRE_CHUNK_PTR(*kn, n), DEFAULT_NONCE_SIZE);
 
 	DBG(DBG_CRYPT,
 	    DBG_dump("Generated nonce:\n",
-		     wire_chunk_ptr(kn, &(kn->n)),
+		     WIRE_CHUNK_PTR(*kn, n),
 		     DEFAULT_NONCE_SIZE));
 }
 

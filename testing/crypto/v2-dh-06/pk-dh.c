@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 
 #define dumpdat(field) \
 	libreswan_DBG_dump(#field,      \
-			   wire_chunk_ptr(skq, &skq->field), \
+			   WIRE_CHUNK_PTR(*skq, field), \
 			   skq->field.len);
 
 	dumpdat(icookie);
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	fflush(stdout);
 	fflush(stderr);
 
-#define dumpskr(FOO) { void *FOO = wire_chunk_ptr(skr, &skr->FOO); \
+#define dumpskr(FOO) { void *FOO = WIRE_CHUNK_PTR(*skr, FOO); \
 		       libreswan_DBG_dump(#FOO, FOO, skr->FOO.len); \
 }
 

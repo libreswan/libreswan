@@ -41,7 +41,7 @@ static void perform_t2_test(void)
 
 #define dumpdat(field) \
 	libreswan_DBG_dump(#field,      \
-			   wire_chunk_ptr(skq, &skq->field), \
+			   WIRE_CHUNK_PTR(*skq, field), \
 			   skq->field.len);
 
 	dumpdat(icookie);
@@ -63,7 +63,7 @@ static void perform_t2_test(void)
 	fflush(stderr);
 
 	{
-		void *shared = wire_chunk_ptr(skr, &skr->shared);
+		void *shared = WIRE_CHUNK_PTR(*skr, shared);
 
 		libreswan_DBG_dump("shared", shared, skr->shared.len);
 	}
