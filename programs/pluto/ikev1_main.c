@@ -1260,7 +1260,6 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 			release_md(md);
 	}
 	reset_cur_state();
-	return;
 }
 
 stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,

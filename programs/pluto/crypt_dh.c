@@ -1083,8 +1083,6 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	freeanychunk(skeyid_e);
 	freeanychunk(new_iv);
 	freeanychunk(enc_key);
-
-	return;
 }
 
 /* MUST BE THREAD-SAFE */
@@ -1121,8 +1119,6 @@ void calc_dh(struct pluto_crypto_req *r)
 	/* now translate it back to wire chunks, freeing the chunks */
 	WIRE_CLONE_CHUNK(*skr, shared, shared);
 	freeanychunk(shared);
-
-	return;
 }
 
 /*
@@ -1555,6 +1551,4 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 	freeanychunk(SK_er);
 	freeanychunk(SK_pi);
 	freeanychunk(SK_pr);
-
-	return;
 }

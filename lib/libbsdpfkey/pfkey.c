@@ -183,7 +183,6 @@ void foreach_supported_alg(void (*algregister)(int satype, int extype,
 			p += sizeof(struct sadb_alg);
 		}
 	}
-	return;
 }
 
 static int setsupportedmap(const struct sadb_supported *sup, int properlen)
@@ -1658,7 +1657,6 @@ int so;
 	(void)close(so);
 
 	__ipsec_errcode = EIPSEC_NO_ERROR;
-	return;
 }
 
 /*

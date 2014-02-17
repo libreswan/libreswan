@@ -357,8 +357,6 @@ struct sadb_msg *m;
 
 	/* XXX DEBUG */
 	printf("refcnt=%u\n", m->sadb_msg_reserved);
-
-	return;
 }
 
 void pfkey_spdump(m)
@@ -480,8 +478,6 @@ struct sadb_msg *m;
 
 	/* XXX TEST */
 	printf("\trefcnt=%u\n", m->sadb_msg_reserved);
-
-	return;
 }
 
 /*

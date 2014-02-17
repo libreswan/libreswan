@@ -436,7 +436,6 @@ static void query(void)
 			}
 		}
 	}
-	return;
 }
 
 static void answer(struct worker_info *w)

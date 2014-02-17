@@ -811,7 +811,7 @@ unsigned char *hmac_sha1(const unsigned char *text, size_t text_len,
  */
 void sig_alarm(int signo)
 {
-	return; /* just interrupt the current system call */
+	/* just interrupt the current system call */
 }
 
 void utils_use_rcsid(void)

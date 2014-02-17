@@ -385,7 +385,6 @@ static void bsdkame_pfkey_register_response(const struct sadb_msg *msg)
 static void bsdkame_pfkey_acquire(struct sadb_msg *msg UNUSED)
 {
 	DBG_log("received acquire --- discarded");
-	return;
 }
 
 /* processs a pfkey message */
