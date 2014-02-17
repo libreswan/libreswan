@@ -85,36 +85,22 @@ static PK11SymKey *pk11_extract_derive_wrapper_lsw(PK11SymKey *base,
 			       operation, keySize);
 }
 
-/*
-   static CK_MECHANISM_TYPE nss_hmac_mech(const struct hash_desc *hasher)
-   {
-    CK_MECHANISM_TYPE mechanism;
-
-    switch(hasher->common.algo_id) {
-        case OAKLEY_MD5:   mechanism = CKM_MD5_HMAC; break;
-        case OAKLEY_SHA1:  mechanism = CKM_SHA_1_HMAC; break;
-        case OAKLEY_SHA2_256:  mechanism = CKM_SHA256_HMAC; break;
-        case OAKLEY_SHA2_384:  mechanism = CKM_SHA384_HMAC; break;
-        case OAKLEY_SHA2_512:  mechanism = CKM_SHA512_HMAC; break;
-        default: loglog(RC_LOG_SERIOUS,"NSS: undefined hmac mechanism"); break;
-    }
-    return mechanism;
-   }
- */
-
 static CK_MECHANISM_TYPE nss_encryption_mech(
 	const struct encrypt_desc *encrypter)
 {
 	CK_MECHANISM_TYPE mechanism = 0x80000000;
 
 	switch (encrypter->common.algo_id) {
-	case OAKLEY_3DES_CBC:   mechanism = CKM_DES3_CBC;
+	case OAKLEY_3DES_CBC:
+		mechanism = CKM_DES3_CBC;
 		break;
-	case OAKLEY_AES_CBC:  mechanism = CKM_AES_CBC;
+	case OAKLEY_AES_CBC:
+		mechanism = CKM_AES_CBC;
 		break;
-	default: loglog(RC_LOG_SERIOUS,
+	default:
+		loglog(RC_LOG_SERIOUS,
 			"NSS: Unsupported encryption mechanism");
-		break;                                                              /*should not reach here*/
+		break;
 	}
 	return mechanism;
 }
@@ -129,9 +115,8 @@ static void calc_dh_shared(chunk_t *shared, const chunk_t g,
 			   const struct oakley_group_desc *group,
 			   chunk_t pubk)
 {
-	struct timeval tv0, tv1;
-	unsigned long tv_diff;
-	SECKEYPublicKey   *remote_pubk, *local_pubk;
+	struct timeval tv0;
+	SECKEYPublicKey *remote_pubk, *local_pubk;
 	SECKEYPrivateKey *privk;
 	SECItem nss_g;
 	PK11SymKey *dhshared;
@@ -142,8 +127,8 @@ static void calc_dh_shared(chunk_t *shared, const chunk_t g,
 	memcpy(&local_pubk, pubk.ptr, pubk.len);
 	memcpy(&privk, secret.ptr, secret.len);
 
-	DBG(DBG_CRYPT, DBG_log(
-		    "Started DH shared-secret computation in NSS:\n"));
+	DBG(DBG_CRYPT,
+		DBG_log("Started DH shared-secret computation in NSS:\n"));
 
 	gettimeofday(&tv0, NULL);
 
@@ -218,13 +203,17 @@ static void calc_dh_shared(chunk_t *shared, const chunk_t g,
 	shared->ptr = alloc_bytes(shared->len, "calculated shared secret");
 	memcpy(shared->ptr, &dhshared, shared->len);
 
-	gettimeofday(&tv1, NULL);
-	tv_diff = (tv1.tv_sec  - tv0.tv_sec) * 1000000 +
-		  (tv1.tv_usec - tv0.tv_usec);
-	DBG(DBG_CRYPT, DBG_log("calc_dh_shared(): time elapsed (%s): %ld usec",
+	DBG(DBG_CRYPT, {
+		struct timeval tv1;
+		unsigned long tv_diff;
+
+		gettimeofday(&tv1, NULL);
+		tv_diff = (tv1.tv_sec  - tv0.tv_sec) * 1000000 +
+			  (tv1.tv_usec - tv0.tv_usec);
+		DBG_log("calc_dh_shared(): time elapsed (%s): %ld usec",
 			       enum_show(&oakley_group_names, group->group),
 			       tv_diff);
-	    );
+	});
 
 	SECKEY_DestroyPublicKey(remote_pubk);
 	DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret (pointer):\n", *shared);

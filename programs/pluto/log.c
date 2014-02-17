@@ -1028,19 +1028,26 @@ void log_state(struct state *st, enum state_kind new_state)
 		    conn->name, conn->statsval));
 
 	switch (lc.tunnel) {
-	case tun_phase1:  tun = "phase1";
+	case tun_phase1:
+		tun = "phase1";
 		break;
-	case tun_phase1up: tun = "phase1up";
+	case tun_phase1up:
+		tun = "phase1up";
 		break;
-	case tun_phase15: tun = "phase15";
+	case tun_phase15:
+		tun = "phase15";
 		break;
-	case tun_phase2:  tun = "phase2";
+	case tun_phase2:
+		tun = "phase2";
 		break;
-	case tun_up:      tun = "up";
+	case tun_up:
+		tun = "up";
 		break;
-	case tun_down:    tun = "down";
-		break;                            /* not set anywhere, default */
-	default:          tun = "unchanged";
+	case tun_down:
+		tun = "down";
+		break;
+	default:
+		tun = "unchanged";
 		break;
 	}
 

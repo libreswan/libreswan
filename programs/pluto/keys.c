@@ -124,13 +124,17 @@ static int print_secrets(struct secret *secret,
 	struct id_list *ids;
 
 	switch (pks->kind) {
-	case PPK_PSK: kind = "PSK";
+	case PPK_PSK:
+		kind = "PSK";
 		break;
-	case PPK_RSA: kind = "RSA";
+	case PPK_RSA:
+		kind = "RSA";
 		break;
-	case PPK_PIN: kind = "PIN";
+	case PPK_PIN:
+		kind = "PIN";
 		break;
-	case PPK_XAUTH: kind = "XAUTH";
+	case PPK_XAUTH:
+		kind = "XAUTH";
 		break;
 	default:
 		return 1;
