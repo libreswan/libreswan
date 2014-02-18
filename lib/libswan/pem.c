@@ -289,7 +289,7 @@ err_t pemtobin(chunk_t *blob)
 }
 
 void do_3des_nss(u_int8_t *buf, size_t buf_len,
-		u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc)
+		PK11SymKey *symkey, u_int8_t *iv, bool enc)
 {
 	u_int8_t *tmp_buf;
 	u_int8_t *new_iv;
@@ -297,7 +297,6 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 	CK_MECHANISM_TYPE ciphermech;
 	SECItem ivitem;
 	SECItem *secparam;
-	PK11SymKey *symkey = NULL;
 	PK11Context *enccontext = NULL;
 	SECStatus rv;
 	int outlen;
@@ -305,11 +304,9 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 	DBG(DBG_CRYPT,
 		DBG_log("NSS: do_3des init start");
 		);
-	passert(key != NULL);
 
 	ciphermech = CKM_DES3_CBC;	/* libreswan provides padding */
 
-	memcpy(&symkey, key, key_size);
 	if (symkey == NULL) {
 		loglog(RC_LOG_SERIOUS,
 			"do_3des: NSS derived enc key is NULL\n");

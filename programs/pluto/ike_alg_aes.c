@@ -36,8 +36,8 @@
 #include "lswconf.h"
 #include "lswlog.h"
 
-static void do_aes(u_int8_t *buf, size_t buf_len, u_int8_t *key,
-		   size_t key_size, u_int8_t *iv, bool enc)
+static void do_aes(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
+		   u_int8_t *iv, bool enc)
 {
 
 	u_int8_t iv_bak[AES_CBC_BLOCK_SIZE];
@@ -47,15 +47,12 @@ static void do_aes(u_int8_t *buf, size_t buf_len, u_int8_t *key,
 	CK_MECHANISM_TYPE ciphermech;
 	SECItem ivitem;
 	SECItem *secparam;
-	PK11SymKey *symkey = NULL;
 	PK11Context *enccontext;
 	SECStatus rv;
 	int outlen;
 
 	DBG(DBG_CRYPT, DBG_log("NSS do_aes: enter"));
 	ciphermech = CKM_AES_CBC; /*libreswan provides padding*/
-
-	memcpy(&symkey, key, key_size);
 
 	if (symkey == NULL) {
 		loglog(RC_LOG_SERIOUS,

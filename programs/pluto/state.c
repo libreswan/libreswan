@@ -559,14 +559,8 @@ void delete_state(struct state *st)
 	st->st_sadb = NULL;
 
 	if (st->st_sec_in_use) {
-		SECKEYPrivateKey *privk;
-		SECKEYPublicKey   *pubk;
-		memcpy(&pubk, st->pubk.ptr, st->pubk.len);
-		SECKEY_DestroyPublicKey(pubk);
-		freeanychunk(st->pubk);
-		memcpy(&privk, st->st_sec_chunk.ptr, st->st_sec_chunk.len);
-		SECKEY_DestroyPrivateKey(privk);
-		pfreeany(st->st_sec_chunk.ptr);
+		SECKEY_DestroyPublicKey(st->st_pubk_nss);
+		SECKEY_DestroyPrivateKey(st->st_sec_nss);
 	}
 
 	freeanychunk(st->st_firstpacket_me);
@@ -576,18 +570,19 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_p1isa);
 	freeanychunk(st->st_gi);
 	freeanychunk(st->st_gr);
-	freeanychunk(st->st_shared);
 	freeanychunk(st->st_ni);
 	freeanychunk(st->st_nr);
-	free_lsw_nss_symkey(st->st_skeyid);
-	free_lsw_nss_symkey(st->st_skey_d);
-	free_lsw_nss_symkey(st->st_skey_ai);
-	free_lsw_nss_symkey(st->st_skey_ar);
-	free_lsw_nss_symkey(st->st_skey_ei);
-	free_lsw_nss_symkey(st->st_skey_er);
-	free_lsw_nss_symkey(st->st_skey_pi);
-	free_lsw_nss_symkey(st->st_skey_pr);
-	free_lsw_nss_symkey(st->st_enc_key);
+
+	/* ??? free_lsw_nss_symkey(st->st_shared_nss); */
+	free_lsw_nss_symkey(st->st_skeyid_nss);
+	free_lsw_nss_symkey(st->st_skey_d_nss);
+	free_lsw_nss_symkey(st->st_skey_ai_nss);
+	free_lsw_nss_symkey(st->st_skey_ar_nss);
+	free_lsw_nss_symkey(st->st_skey_ei_nss);
+	free_lsw_nss_symkey(st->st_skey_er_nss);
+	free_lsw_nss_symkey(st->st_skey_pi_nss);
+	free_lsw_nss_symkey(st->st_skey_pr_nss);
+	free_lsw_nss_symkey(st->st_enc_key_nss);
 
 	if (st->st_ah.our_keymat != NULL)
 		memset(st->st_ah.our_keymat, 0, st->st_ah.keymat_len);
@@ -601,15 +596,6 @@ void delete_state(struct state *st)
 	if (st->st_esp.peer_keymat != NULL)
 		memset(st->st_esp.peer_keymat, 0, st->st_esp.keymat_len);
 
-	freeanychunk(st->st_skeyid);
-	freeanychunk(st->st_skey_d);
-	freeanychunk(st->st_skey_ai);
-	freeanychunk(st->st_skey_ar);
-	freeanychunk(st->st_skey_ei);
-	freeanychunk(st->st_skey_er);
-	freeanychunk(st->st_skey_pi);
-	freeanychunk(st->st_skey_pr);
-	freeanychunk(st->st_enc_key);
 	pfreeany(st->st_ah.our_keymat);
 	pfreeany(st->st_ah.peer_keymat);
 	pfreeany(st->st_esp.our_keymat);
@@ -985,43 +971,32 @@ struct state *duplicate_state(struct state *st)
 	nst->hidden_variables = st->hidden_variables;
 	nst->st_remoteaddr = st->st_remoteaddr;
 	nst->st_remoteport = st->st_remoteport;
-	nst->st_localaddr  = st->st_localaddr;
-	nst->st_localport  = st->st_localport;
-	nst->st_interface  = st->st_interface;
+	nst->st_localaddr = st->st_localaddr;
+	nst->st_localport = st->st_localport;
+	nst->st_interface = st->st_interface;
 	nst->st_clonedfrom = st->st_serialno;
-	nst->st_import     = st->st_import;
-	nst->st_ikev2      = st->st_ikev2;
-	nst->st_seen_fragvid  = st->st_seen_fragvid;
-	nst->st_seen_fragments  = st->st_seen_fragments;
-	nst->st_event      = NULL;
+	nst->st_import = st->st_import;
+	nst->st_ikev2 = st->st_ikev2;
+	nst->st_seen_fragvid = st->st_seen_fragvid;
+	nst->st_seen_fragments = st->st_seen_fragments;
+	nst->st_event = NULL;
 
+	dup_lsw_nss_symkey(st->st_skeyseed_nss);
+	dup_lsw_nss_symkey(st->st_skey_d_nss);
+	dup_lsw_nss_symkey(st->st_skey_ai_nss);
+	dup_lsw_nss_symkey(st->st_skey_ar_nss);
+	dup_lsw_nss_symkey(st->st_skey_ei_nss);
+	dup_lsw_nss_symkey(st->st_skey_er_nss);
+	dup_lsw_nss_symkey(st->st_skey_pi_nss);
+	dup_lsw_nss_symkey(st->st_skey_pr_nss);
+	dup_lsw_nss_symkey(st->st_enc_key_nss);
+
+	/* v2 duplication of state */
 #   define clone_chunk(ch, name) \
 	clonetochunk(nst->ch, st->ch.ptr, st->ch.len, name)
 
-	dup_lsw_nss_symkey(st->st_skeyseed);
-	dup_lsw_nss_symkey(st->st_skey_d);
-	dup_lsw_nss_symkey(st->st_skey_ai);
-	dup_lsw_nss_symkey(st->st_skey_ar);
-	dup_lsw_nss_symkey(st->st_skey_ei);
-	dup_lsw_nss_symkey(st->st_skey_er);
-	dup_lsw_nss_symkey(st->st_skey_pi);
-	dup_lsw_nss_symkey(st->st_skey_pr);
-	dup_lsw_nss_symkey(st->st_enc_key);
-
-	clone_chunk(st_enc_key,  "st_enc_key in duplicate_state");
-
-	/* v2 duplication of state */
-	clone_chunk(st_skeyseed, "st_skeyseed in duplicate_state");
-	clone_chunk(st_skey_d,   "st_skey_d in duplicate_state");
-	clone_chunk(st_skey_ai,  "st_skey_ai in duplicate_state");
-	clone_chunk(st_skey_ar,  "st_skey_ar in duplicate_state");
-	clone_chunk(st_skey_ei,  "st_skey_ei in duplicate_state");
-	clone_chunk(st_skey_er,  "st_skey_er in duplicate_state");
-	clone_chunk(st_skey_pi,  "st_skey_pi in duplicate_state");
-	clone_chunk(st_skey_pr,  "st_skey_pr in duplicate_state");
-	clone_chunk(st_ni,       "st_ni in duplicate_state");
-	clone_chunk(st_nr,       "st_nr in duplicate_state");
-
+	clone_chunk(st_ni, "st_ni in duplicate_state");
+	clone_chunk(st_nr, "st_nr in duplicate_state");
 #   undef clone_chunk
 
 	nst->st_oakley = st->st_oakley;

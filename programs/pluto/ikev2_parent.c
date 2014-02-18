@@ -761,11 +761,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 				delete_state(st);
 			}
 		} else {
-			e =
-				ikev2_parent_inI1outR1_tail((struct
-							     pluto_crypto_req_cont
-							     *)ke,
-							    NULL);
+			e = ikev2_parent_inI1outR1_tail(
+				(struct pluto_crypto_req_cont *)ke,
+				NULL);
 		}
 
 		reset_globals();
@@ -1209,17 +1207,17 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 {
 	struct state *st = md->st;
 	struct state *pst = st;
-	chunk_t *cipherkey, *authkey;
+	PK11SymKey *cipherkey, *authkey;
 
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	if (init == INITIATOR) {
-		cipherkey = &pst->st_skey_ei;
-		authkey   = &pst->st_skey_ai;
+		cipherkey = pst->st_skey_ei_nss;
+		authkey = pst->st_skey_ai_nss;
 	} else {
-		cipherkey = &pst->st_skey_er;
-		authkey   = &pst->st_skey_ar;
+		cipherkey = pst->st_skey_er_nss;
+		authkey = pst->st_skey_ar_nss;
 	}
 
 	/* encrypt the block */
@@ -1236,8 +1234,7 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 		/* now, encrypt */
 		(st->st_oakley.encrypter->do_crypt)(encstart,
 						    cipherlen,
-						    cipherkey->ptr,
-						    cipherkey->len,
+						    cipherkey,
 						    savediv, TRUE);
 
 		DBG(DBG_CRYPT,
@@ -1249,8 +1246,8 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 		struct hmac_ctx ctx;
 		DBG(DBG_PARSING, DBG_log("Inside authloc"));
 		DBG(DBG_CRYPT,
-		    DBG_dump("authkey value: ", authkey->ptr, authkey->len));
-		hmac_init_chunk(&ctx, pst->st_oakley.integ_hasher, *authkey);
+		    DBG_log("authkey pointer: %p", authkey));
+		hmac_init(&ctx, pst->st_oakley.integ_hasher, authkey);
 		DBG(DBG_PARSING, DBG_log("Inside authloc after init"));
 		hmac_update(&ctx, authstart, authloc - authstart);
 		DBG(DBG_PARSING, DBG_log("Inside authloc after update"));
@@ -1278,7 +1275,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	pb_stream     *e_pbs;
 	unsigned int np;
 	unsigned char *iv;
-	chunk_t       *cipherkey, *authkey;
+	PK11SymKey *cipherkey, *authkey;
 	unsigned char *authstart;
 	struct state *pst = st;
 
@@ -1286,11 +1283,11 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	if (init == INITIATOR) {
-		cipherkey = &pst->st_skey_er;
-		authkey   = &pst->st_skey_ar;
+		cipherkey = pst->st_skey_er_nss;
+		authkey = pst->st_skey_ar_nss;
 	} else {
-		cipherkey = &pst->st_skey_ei;
-		authkey   = &pst->st_skey_ai;
+		cipherkey = pst->st_skey_ei_nss;
+		authkey = pst->st_skey_ai_nss;
 	}
 
 	e_pbs = &md->chain[ISAKMP_NEXT_v2E]->pbs;
@@ -1306,7 +1303,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 			pst->st_oakley.integ_hasher->hash_digest_len);
 		struct hmac_ctx ctx;
 
-		hmac_init_chunk(&ctx, pst->st_oakley.integ_hasher, *authkey);
+		hmac_init(&ctx, pst->st_oakley.integ_hasher, authkey);
 		hmac_update(&ctx, authstart, encend - authstart);
 		hmac_final(b12, &ctx);
 
@@ -1345,8 +1342,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		/* now, decrypt */
 		(pst->st_oakley.encrypter->do_crypt)(encstart,
 						     enclen,
-						     cipherkey->ptr,
-						     cipherkey->len,
+						     cipherkey,
 						     iv, FALSE);
 
 		padlen = encstart[enclen - 1];
@@ -1523,8 +1519,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		unsigned char *id_start;
 		unsigned int id_len;
 
-		hmac_init_chunk(&id_ctx, pst->st_oakley.prf_hasher,
-				pst->st_skey_pi);
+		hmac_init(&id_ctx, pst->st_oakley.prf_hasher,
+				pst->st_skey_pi_nss);
 		build_id_payload((struct isakmp_ipsec_id *)&r_id, &id_b,
 				 &c->spd.this);
 		r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -1558,8 +1554,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		/* calculate hash of IDi for AUTH below */
 		id_len = e_pbs_cipher.cur - id_start;
-		DBG(DBG_CRYPT, DBG_dump_chunk("idhash calc pi",
-					      pst->st_skey_pi));
 		DBG(DBG_CRYPT, DBG_dump("idhash calc I2", id_start, id_len));
 		hmac_update(&id_ctx, id_start, id_len);
 		idhash = alloca(pst->st_oakley.prf_hasher->hash_digest_len);
@@ -1840,12 +1834,10 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		unsigned char *idstart = id_pbs->start + 4;
 		unsigned int idlen  = pbs_room(id_pbs) - 4;
 
-		hmac_init_chunk(&id_ctx, st->st_oakley.prf_hasher,
-				st->st_skey_pi);
+		hmac_init(&id_ctx, st->st_oakley.prf_hasher,
+				st->st_skey_pi_nss);
 
 		/* calculate hash of IDi for AUTH below */
-		DBG(DBG_CRYPT,
-		    DBG_dump_chunk("idhash verify pi", st->st_skey_pi));
 		DBG(DBG_CRYPT, DBG_dump("idhash verify I2", idstart, idlen));
 		hmac_update(&id_ctx, idstart, idlen);
 		idhash_in = alloca(st->st_oakley.prf_hasher->hash_digest_len);
@@ -1994,8 +1986,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			unsigned char *id_start;
 			unsigned int id_len;
 
-			hmac_init_chunk(&id_ctx, st->st_oakley.prf_hasher,
-					st->st_skey_pr);
+			hmac_init(&id_ctx, st->st_oakley.prf_hasher,
+					st->st_skey_pr_nss);
 			build_id_payload((struct isakmp_ipsec_id *)&r_id,
 					 &id_b,
 					 &c->spd.this);
@@ -2021,8 +2013,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 			/* calculate hash of IDi for AUTH below */
 			id_len = e_pbs_cipher.cur - id_start;
-			DBG(DBG_CRYPT,
-			    DBG_dump_chunk("idhash calc pr", st->st_skey_pr));
 			DBG(DBG_CRYPT,
 			    DBG_dump("idhash calc R2", id_start, id_len));
 			hmac_update(&id_ctx, id_start, id_len);
@@ -2186,12 +2176,10 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		unsigned char *idstart = id_pbs->start + 4;
 		unsigned int idlen  = pbs_room(id_pbs) - 4;
 
-		hmac_init_chunk(&id_ctx, pst->st_oakley.prf_hasher,
-				pst->st_skey_pr);
+		hmac_init(&id_ctx, pst->st_oakley.prf_hasher,
+				pst->st_skey_pr_nss);
 
 		/* calculate hash of IDr for AUTH below */
-		DBG(DBG_CRYPT,
-		    DBG_dump_chunk("idhash verify pr", pst->st_skey_pr));
 		DBG(DBG_CRYPT, DBG_dump("idhash auth R2", idstart, idlen));
 		hmac_update(&id_ctx, idstart, idlen);
 		idhash_in = alloca(pst->st_oakley.prf_hasher->hash_digest_len);

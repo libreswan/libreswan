@@ -711,9 +711,7 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role init)
 void ikev2_log_parentSA(struct state *st)
 {
 	const char *authalgo;
-	char authkeybuf[256];
 	char encalgo[128];
-	char enckeybuf[256];
 
 	if (st->st_oakley.integ_hasher == NULL ||
 	    st->st_oakley.encrypter == NULL)
@@ -732,11 +730,7 @@ void ikev2_log_parentSA(struct state *st)
 	}
 
 	if (DBGP(DBG_CRYPT)) {
-		datatot(st->st_skey_ei.ptr, st->st_skey_ei.len, 'x', enckeybuf,
-			256);
-		datatot(st->st_skey_ai.ptr, st->st_skey_ai.len, 'x',
-			authkeybuf, 256);
-		DBG_log("ikev2 I 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s:%s %s:%s",
+		DBG_log("ikev2 I 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s %s",
 			st->st_icookie[0], st->st_icookie[1],
 			st->st_icookie[2], st->st_icookie[3],
 			st->st_icookie[4], st->st_icookie[5],
@@ -746,15 +740,9 @@ void ikev2_log_parentSA(struct state *st)
 			st->st_rcookie[4], st->st_rcookie[5],
 			st->st_rcookie[6], st->st_rcookie[7],
 			authalgo,
-			authkeybuf,
-			encalgo,
-			enckeybuf);
+			encalgo);
 
-		datatot(st->st_skey_er.ptr, st->st_skey_er.len, 'x', enckeybuf,
-			256);
-		datatot(st->st_skey_ar.ptr, st->st_skey_ar.len, 'x',
-			authkeybuf, 256);
-		DBG_log("ikev2 R 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s:%s %s:%s",
+		DBG_log("ikev2 R 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s %s",
 			st->st_icookie[0], st->st_icookie[1],
 			st->st_icookie[2], st->st_icookie[3],
 			st->st_icookie[4], st->st_icookie[5],
@@ -764,9 +752,7 @@ void ikev2_log_parentSA(struct state *st)
 			st->st_rcookie[4], st->st_rcookie[5],
 			st->st_rcookie[6], st->st_rcookie[7],
 			authalgo,
-			authkeybuf,
-			encalgo,
-			enckeybuf);
+			encalgo);
 	}
 }
 

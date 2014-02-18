@@ -1770,7 +1770,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
 			return;
 		}
-		if (st->st_skey_ei.ptr == (u_char *) NULL) {
+		if (st->st_skey_ei_nss == NULL) {
 			loglog(RC_LOG_SERIOUS, "discarding encrypted message"
 			       " because we haven't yet negotiated keying material");
 			SEND_NOTIFICATION(INVALID_FLAGS);

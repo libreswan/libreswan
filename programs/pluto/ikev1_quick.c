@@ -331,11 +331,11 @@ static void compute_proto_keymat(struct state *st,
 		size_t needed_space; /* space needed for keying material (rounded up) */
 		size_t i;
 
-		hmac_init_chunk(&ctx_me, st->st_oakley.prf_hasher,
-				st->st_skeyid_d);
-		/*PK11Context * DigestContext makes hmac not allowable for copy*/
-		hmac_init_chunk(&ctx_peer, st->st_oakley.prf_hasher,
-				st->st_skeyid_d);
+		hmac_init(&ctx_me, st->st_oakley.prf_hasher,
+				st->st_skeyid_d_nss);
+		/* PK11Context * DigestContext makes hmac not allowable for copy */
+		hmac_init(&ctx_peer, st->st_oakley.prf_hasher,
+				st->st_skeyid_d_nss);
 		needed_space = needed_len + pad_up(needed_len,
 						   ctx_me.hmac_digest_len);
 		replace(pi->our_keymat,
@@ -346,18 +346,13 @@ static void compute_proto_keymat(struct state *st,
 				    "peer_keymat in quick_inI1_outR1()"));
 
 		for (i = 0;; ) {
-			if (st->st_shared.ptr != NULL) {
+			if (st->st_shared_nss != NULL) {
 				/* PFS: include the g^xy */
-				PK11SymKey *st_shared;
 				SECStatus s;
 
-				memcpy(&st_shared, st->st_shared.ptr,
-				       st->st_shared.len);
-
-				s = PK11_DigestKey(ctx_me.ctx_nss, st_shared);
+				s = PK11_DigestKey(ctx_me.ctx_nss, st->st_shared_nss);
 				PR_ASSERT(s == SECSuccess);
-				s = PK11_DigestKey(ctx_peer.ctx_nss,
-						       st_shared);
+				s = PK11_DigestKey(ctx_peer.ctx_nss, st->st_shared_nss);
 				PR_ASSERT(s == SECSuccess);
 			}
 			hmac_update(&ctx_me, &protoid, sizeof(protoid));
@@ -382,10 +377,10 @@ static void compute_proto_keymat(struct state *st,
 				break;
 
 			/* more keying material needed: prepare to go around again */
-			hmac_init_chunk(&ctx_me, st->st_oakley.prf_hasher,
-					st->st_skeyid_d);
-			hmac_init_chunk(&ctx_peer, st->st_oakley.prf_hasher,
-					st->st_skeyid_d);
+			hmac_init(&ctx_me, st->st_oakley.prf_hasher,
+					st->st_skeyid_d_nss);
+			hmac_init(&ctx_peer, st->st_oakley.prf_hasher,
+					st->st_skeyid_d_nss);
 
 			hmac_update(&ctx_me,
 				    pi->our_keymat + i - ctx_me.hmac_digest_len,
@@ -677,7 +672,7 @@ static size_t quick_mode_hash12(u_char *dest, const u_char *start,
 }
 	DBG_dump("hash key", st->st_skeyid_a.ptr, st->st_skeyid_a.len);
 #endif
-	hmac_init_chunk(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_a);
+	hmac_init(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const void *) msgid, sizeof(msgid_t));
 	if (hash2)
 		hmac_update_chunk(&ctx, st->st_ni); /* include Ni_b in the hash */
@@ -703,7 +698,7 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
 {
 	struct hmac_ctx ctx;
 
-	hmac_init_chunk(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_a);
+	hmac_init(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const u_char *)"\0", 1);
 	hmac_update(&ctx, (u_char *) &st->st_msgid, sizeof(st->st_msgid));
 	hmac_update_chunk(&ctx, st->st_ni);

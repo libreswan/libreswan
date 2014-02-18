@@ -50,13 +50,13 @@ static SECOidTag nss_hash_oid(const struct hash_desc *hasher);
 
 void hmac_init(struct hmac_ctx *ctx,
 	       const struct hash_desc *h,
-	       const u_char *key, size_t key_len)
+	       /*const*/ PK11SymKey *symkey)	/* NSS doesn't like const! */
 {
 	SECStatus status;
-	PK11SymKey *symkey = NULL,
+	PK11SymKey
 		*tkey1,
 		*tkey2;
-	unsigned int klen;
+	unsigned int klen = PK11_GetKeyLength(symkey);
 	chunk_t hmac_opad, hmac_ipad, hmac_pad;
 
 	ctx->h = h;
@@ -64,36 +64,34 @@ void hmac_init(struct hmac_ctx *ctx,
 
 	/* DBG(DBG_CRYPT, DBG_log("NSS: hmac init")); */
 
-	memcpy(&symkey, key, key_len);
-	klen =  PK11_GetKeyLength(symkey);
-
 	hmac_opad = hmac_pads(HMAC_OPAD, h->hash_block_size);
 	hmac_ipad = hmac_pads(HMAC_IPAD, h->hash_block_size);
 	hmac_pad  = hmac_pads(0x00, h->hash_block_size - klen);
 
 	if (klen > h->hash_block_size) {
-		tkey1 = PK11_Derive_lsw(symkey, nss_key_derivation_mech(
-						h),
-					NULL, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+		tkey1 = PK11_Derive_lsw(symkey, nss_key_derivation_mech(h),
+					NULL,
+					CKM_CONCATENATE_BASE_AND_DATA,
+					CKA_DERIVE,
 					0);
 	} else {
 		tkey1 = symkey;
 	}
 
-	tkey2 = pk11_derive_wrapper_lsw(tkey1,
-						    CKM_CONCATENATE_BASE_AND_DATA,
-						    hmac_pad, CKM_XOR_BASE_AND_DATA, CKA_DERIVE,
-						    h->hash_block_size);
+	tkey2 = pk11_derive_wrapper_lsw(tkey1, CKM_CONCATENATE_BASE_AND_DATA,
+					hmac_pad,
+					CKM_XOR_BASE_AND_DATA, CKA_DERIVE,
+					h->hash_block_size);
 	PR_ASSERT(tkey2 != NULL);
 
 	ctx->ikey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA,
 					    hmac_ipad, nss_hash_mech(h),
-						    CKA_DIGEST, 0);
+					    CKA_DIGEST, 0);
 	PR_ASSERT(ctx->ikey != NULL);
 
 	ctx->okey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA,
 					    hmac_opad, nss_hash_mech(h),
-						    CKA_DIGEST, 0);
+					    CKA_DIGEST, 0);
 	PR_ASSERT(ctx->okey != NULL);
 
 	if (tkey1 != symkey)
@@ -351,6 +349,7 @@ chunk_t hmac_pads(u_char val, unsigned int len)
 void nss_symkey_log(PK11SymKey *key, const char *msg)
 {
 	if (key == NULL) {
+		/* ??? should we print this even if !DBG_CRYPT? */
 		DBG_log("NULL key %s", msg);
 	} else {
 		DBG(DBG_CRYPT, {
@@ -359,15 +358,17 @@ void nss_symkey_log(PK11SymKey *key, const char *msg)
 
 			if (!PK11_IsFIPS()) {
 				SECStatus status = PK11_ExtractKeyValue(key);
-				SECItem *keydata;
 
-				PR_ASSERT(status == SECSuccess);
-				keydata = PK11_GetKeyData(key);
+				if (status == SECSuccess) {
+					SECItem *keydata = PK11_GetKeyData(key);
 
-				DBG_dump("value: ", keydata->data,
-					 keydata->len);
+					DBG_dump("value: ", keydata->data,
+						 keydata->len);
 
-				SECITEM_FreeItem(keydata, PR_TRUE);	/* ??? this was commented out.  Why? */
+					SECITEM_FreeItem(keydata, PR_TRUE);	/* ??? this was commented out.  Why? */
+				} else {
+					DBG_log("unobtainable key %s", msg);
+				}
 			}
 		});
 	}

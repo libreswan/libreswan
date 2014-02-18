@@ -91,14 +91,15 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
-	WIRE_CLONE_CHUNK(*dhq, secret, st->st_sec_chunk);
+
+	dhq->secret = st->st_sec_nss;
 
 	/*copying required encryption algo*/
 	/*dhq->encrypt_algo = st->st_oakley.encrypt;*/
 	dhq->encrypter = st->st_oakley.encrypter;
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
-	WIRE_CLONE_CHUNK(*dhq, pubk, st->pubk);
+	dhq->pubk = st->st_pubk_nss;
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -136,23 +137,16 @@ void finish_dh_secretiv(struct state *st,
 {
 	struct pcr_skeyid_r *dhr = &r->pcr_d.dhr;
 
-	clonetochunk(st->st_shared, WIRE_CHUNK_PTR(*dhr, shared),
-		     dhr->shared.len, "calculated shared secret");
-	clonetochunk(st->st_skeyid, WIRE_CHUNK_PTR(*dhr, skeyid),
-		     dhr->skeyid.len, "calculated skeyid secret");
-	clonetochunk(st->st_skeyid_d, WIRE_CHUNK_PTR(*dhr, skeyid_d),
-		     dhr->skeyid_d.len, "calculated skeyid_d secret");
-	clonetochunk(st->st_skeyid_a, WIRE_CHUNK_PTR(*dhr, skeyid_a),
-		     dhr->skeyid_a.len, "calculated skeyid_a secret");
-	clonetochunk(st->st_skeyid_e, WIRE_CHUNK_PTR(*dhr, skeyid_e),
-		     dhr->skeyid_e.len, "calculated skeyid_a secret");
-	clonetochunk(st->st_enc_key, WIRE_CHUNK_PTR(*dhr, enc_key),
-		     dhr->enc_key.len, "calculated key for phase 1");
+	st->st_shared_nss = dhr->shared;
+	st->st_skeyid_nss = dhr->skeyid;
+	st->st_skeyid_d_nss = dhr->skeyid_d;
+	st->st_skeyid_a_nss = dhr->skeyid_a;
+	st->st_skeyid_e_nss = dhr->skeyid_e;
+	st->st_enc_key_nss = dhr->enc_key;
 
 	passert(dhr->new_iv.len <= MAX_DIGEST_LEN);
 	passert(dhr->new_iv.len > 0);
-	memcpy(st->st_new_iv, WIRE_CHUNK_PTR(*dhr, new_iv),
-	       dhr->new_iv.len);
+	memcpy(st->st_new_iv, WIRE_CHUNK_PTR(*dhr, new_iv), dhr->new_iv.len);
 	st->st_new_iv_len = dhr->new_iv.len;
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;
@@ -187,14 +181,15 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
-	WIRE_CLONE_CHUNK(*dhq, secret, st->st_sec_chunk);
+
+	dhq->secret = st->st_sec_nss;
 
 	/*copying required encryption algo*/
 	/* XXX Avesh: you commented this out on purpose or by accident ?? */
 	/*dhq->encrypter = st->st_oakley.encrypter;*/
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
-	WIRE_CLONE_CHUNK(*dhq, pubk, st->pubk);
+	dhq->pubk = st->st_pubk_nss;
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -231,8 +226,7 @@ void finish_dh_secret(struct state *st,
 {
 	struct pcr_skeyid_r *dhr = &r->pcr_d.dhr;
 
-	clonetochunk(st->st_shared, WIRE_CHUNK_PTR(*dhr, shared),
-		     dhr->shared.len, "calculated shared secret");
+	st->st_shared_nss = dhr->shared;
 }
 
 /*
@@ -275,14 +269,15 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
-	WIRE_CLONE_CHUNK(*dhq, secret, st->st_sec_chunk);
+
+	dhq->secret = st->st_sec_nss;
 
 	/*copying required encryption algo*/
 	/*dhq->encrypt_algo = st->st_oakley.encrypter->common.algo_v2id;*/
 	dhq->encrypter = st->st_oakley.encrypter;
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
-	WIRE_CLONE_CHUNK(*dhq, pubk, st->pubk);
+	dhq->pubk = st->st_pubk_nss;
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -320,22 +315,14 @@ void finish_dh_v2(struct state *st,
 {
 	const struct pcr_skeycalc_v2_r *dhv2 = &r->pcr_d.dhv2;
 
-	clonetochunk(st->st_shared, WIRE_CHUNK_PTR(*dhv2, shared),
-		     dhv2->shared.len, "calculated shared secret");
-	clonetochunk(st->st_skey_d, WIRE_CHUNK_PTR(*dhv2, skeyid_d),
-		     dhv2->skeyid_d.len, "calculated skeyid secret");
-	clonetochunk(st->st_skey_ai, WIRE_CHUNK_PTR(*dhv2, skeyid_ai),
-		     dhv2->skeyid_ai.len, "calculated skeyid_ai secret");
-	clonetochunk(st->st_skey_ar, WIRE_CHUNK_PTR(*dhv2, skeyid_ar),
-		     dhv2->skeyid_ar.len, "calculated skeyid_ar secret");
-	clonetochunk(st->st_skey_pi, WIRE_CHUNK_PTR(*dhv2, skeyid_pi),
-		     dhv2->skeyid_pi.len, "calculated skeyid_pi secret");
-	clonetochunk(st->st_skey_pr, WIRE_CHUNK_PTR(*dhv2, skeyid_pr),
-		     dhv2->skeyid_pr.len, "calculated skeyid_pr secret");
-	clonetochunk(st->st_skey_ei, WIRE_CHUNK_PTR(*dhv2, skeyid_ei),
-		     dhv2->skeyid_ei.len, "calculated skeyid_ei secret");
-	clonetochunk(st->st_skey_er, WIRE_CHUNK_PTR(*dhv2, skeyid_er),
-		     dhv2->skeyid_er.len, "calculated skeyid_er secret");
+	st->st_shared_nss = dhv2->shared;
+	st->st_skey_d_nss = dhv2->skeyid_d;
+	st->st_skey_ai_nss = dhv2->skeyid_ai;
+	st->st_skey_ar_nss = dhv2->skeyid_ar;
+	st->st_skey_pi_nss = dhv2->skeyid_pi;
+	st->st_skey_pr_nss = dhv2->skeyid_pr;
+	st->st_skey_ei_nss = dhv2->skeyid_ei;
+	st->st_skey_er_nss = dhv2->skeyid_er;
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;
 }

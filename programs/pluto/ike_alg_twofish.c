@@ -35,14 +35,28 @@
 #define  TWOFISH_KEY_DEF_LEN    128
 #define  TWOFISH_KEY_MAX_LEN    256
 
-static void do_twofish(u_int8_t *buf, size_t buf_size, u_int8_t *key,
-		       size_t key_size, u_int8_t *iv, bool enc)
+static void do_twofish(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
+		       u_int8_t *iv, bool enc)
 {
 	twofish_context twofish_ctx;
 	char iv_bak[TWOFISH_CBC_BLOCK_SIZE];
 	char *new_iv = NULL;    /* logic will avoid copy to NULL */
+	u_int8_t *bare_key_ptr;
+	size_t bare_key_len;
 
-	twofish_set_key(&twofish_ctx, key, key_size);
+	/* unpack key from PK11SymKey (or crash!) */
+	{
+		SECStatus status = PK11_ExtractKeyValue(key);
+		SECItem *keydata;
+
+		passert(status == SECSuccess);
+		keydata = PK11_GetKeyData(key);
+		bare_key_ptr = keydata->data;
+		bare_key_len = keydata->len;
+		SECITEM_FreeItem(keydata, PR_TRUE);
+	}
+
+	twofish_set_key(&twofish_ctx, bare_key_ptr, bare_key_len);
 	/*
 	 *	my TWOFISH cbc does not touch passed IV (optimization for
 	 *	ESP handling), so I must "emulate" des-like IV

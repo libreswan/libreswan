@@ -1,6 +1,9 @@
 #ifndef _IKE_ALG_H
 #define _IKE_ALG_H
 
+#include <nss.h>
+#include <nss3/pk11pub.h>
+
 /* forward reference */
 struct connection;
 
@@ -24,8 +27,7 @@ struct encrypt_desc {
 	unsigned keyminlen;
 	void (*do_crypt)(u_int8_t *dat,
 			 size_t datasize,
-			 u_int8_t *key,
-			 size_t key_size,
+			 PK11SymKey *key,
 			 u_int8_t *iv,
 			 bool enc);
 };

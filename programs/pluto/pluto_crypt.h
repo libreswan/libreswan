@@ -143,10 +143,10 @@ struct pcr_kenonce {
 	u_int16_t oakley_group;
 
 	/* outputs */
-	wire_chunk_t secret;
+	SECKEYPrivateKey *secret;
+	SECKEYPublicKey *pubk;
 	wire_chunk_t gi;
 	wire_chunk_t n;
-	wire_chunk_t pubk;
 };
 
 #define DHCALC_SIZE 2560
@@ -168,38 +168,39 @@ struct pcr_skeyid_q {
 	wire_chunk_t nr;
 	wire_chunk_t icookie;
 	wire_chunk_t rcookie;
-	wire_chunk_t secret;
+	SECKEYPrivateKey *secret;
 	/* u_int16_t encrypt_algo; */
 	const struct encrypt_desc *encrypter;
-	wire_chunk_t pubk;
+	SECKEYPublicKey *pubk;
 };
 
 /* response */
 struct pcr_skeyid_r {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
-	wire_chunk_t shared;
-	wire_chunk_t skeyid;	/* output */
-	wire_chunk_t skeyid_d;	/* output */
-	wire_chunk_t skeyid_a;	/* output */
-	wire_chunk_t skeyid_e;	/* output */
+	PK11SymKey *shared;
+	PK11SymKey *skeyid;
+	PK11SymKey *skeyid_d;
+	PK11SymKey *skeyid_a;
+	PK11SymKey *skeyid_e;
+	PK11SymKey *enc_key;
+
 	wire_chunk_t new_iv;
-	wire_chunk_t enc_key;
 };
 
 /* response */
 struct pcr_skeycalc_v2_r {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
-	wire_chunk_t shared;
-	wire_chunk_t skeyseed;	/* output */
-	wire_chunk_t skeyid_d;	/* output */
-	wire_chunk_t skeyid_ai;	/* output */
-	wire_chunk_t skeyid_ar;	/* output */
-	wire_chunk_t skeyid_ei;	/* output */
-	wire_chunk_t skeyid_er;	/* output */
-	wire_chunk_t skeyid_pi;	/* output */
-	wire_chunk_t skeyid_pr;	/* output */
+	PK11SymKey *shared;
+	PK11SymKey *skeyseed;
+	PK11SymKey *skeyid_d;
+	PK11SymKey *skeyid_ai;
+	PK11SymKey *skeyid_ar;
+	PK11SymKey *skeyid_ei;
+	PK11SymKey *skeyid_er;
+	PK11SymKey *skeyid_pi;
+	PK11SymKey *skeyid_pr;
 };
 
 struct pluto_crypto_req {

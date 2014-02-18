@@ -67,8 +67,8 @@ static MP_INT generator_dh22,
        generator_dh24;
 
 #ifdef USE_3DES
-static void do_3des(u_int8_t *buf, size_t buf_len, u_int8_t *key,
-		    size_t key_size, u_int8_t *iv, bool enc);
+static void do_3des(u_int8_t *buf, size_t buf_len, PK11SymKey *key,
+		    u_int8_t *iv, bool enc);
 static struct encrypt_desc crypto_encrypter_3des =
 {
 	.common = { .name = "oakley_3des_cbc",
@@ -275,11 +275,11 @@ const struct oakley_group_desc *lookup_group(u_int16_t group)
  * See RFC 2409 "IKE" Appendix B
  */
 static void do_3des(u_int8_t *buf, size_t buf_len,
-		    u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc)
+		    PK11SymKey *key, u_int8_t *iv, bool enc)
 {
 	passert(key != NULL);
 
-	do_3des_nss(buf, buf_len, key, key_size, iv, enc);
+	do_3des_nss(buf, buf_len, key, iv, enc);
 }
 
 /* hash and prf routines */
@@ -307,16 +307,15 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
 
 #if 0
 	DBG(DBG_CRYPT,
-	    DBG_log("encrypting buf=%p size=%d keyptr: %p keysize: %d, iv: %p enc: %d",
-		    buf, size, st->st_enc_key.ptr,
-		    st->st_enc_key.len, st->st_new_iv, enc));
+	    DBG_log("encrypting buf=%p size=%d NSS keyptr: %p, iv: %p enc: %d",
+		    buf, size, st->st_enc_key_nss,
+		    st->st_new_iv, enc));
 #endif
 
-	e->do_crypt(buf, size, st->st_enc_key.ptr,
-		    st->st_enc_key.len, st->st_new_iv, enc);
+	e->do_crypt(buf, size, st->st_enc_key_nss, st->st_new_iv, enc);
 
 	/*
-	   e->set_key(&ctx, st->st_enc_key.ptr, st->st_enc_key.len);
+	   e->set_key(&ctx, st->st_enc_key_nss);
 	   e->cbc_crypt(&ctx, buf, size, st->st_new_iv, enc);
 	 */
 }

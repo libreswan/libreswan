@@ -324,23 +324,23 @@ struct state {
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
 
-	u_int8_t st_sec_in_use;                 /* bool: does st_sec hold a value */
-	MP_INT st_sec;                          /* Our local secret value */
-	chunk_t st_sec_chunk;                   /* copy of above */
-	/*DH public key*/
-	chunk_t pubk;
+	u_int8_t st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
 
-	chunk_t st_shared;                      /* Derived shared secret
-	                                         * Note: during Quick Mode,
-	                                         * presence indicates PFS
-	                                         * selected.
-	                                         */
+	SECKEYPrivateKey *st_sec_nss;	/* secret (owned by NSS) */
+
+	SECKEYPublicKey *st_pubk_nss;	/* DH public key (owned by NSS) */
+
+	PK11SymKey *st_shared_nss;	/* Derived shared secret
+	                                 * Note: during Quick Mode,
+					 * presence indicates PFS
+					 * selected.
+					 */
 	enum crypto_importance st_import;       /* relative priority of crypto
 	                                         * operations
 	                                         */
 
 	/* In a Phase 1 state, preserve peer's public key after authentication */
-	struct pubkey     *st_peer_pubkey;
+	struct pubkey *st_peer_pubkey;
 
 	enum state_kind st_state;               /* State of exchange */
 	u_int8_t st_retransmit;                 /* Number of retransmits */
@@ -361,18 +361,20 @@ struct state {
 	chunk_t st_p1isa;                       /* Phase 1 initiator SA
 	                                           (Payload) for HASH
 	                                         */
-#define st_skeyid   st_skeyseed
-	chunk_t st_skeyseed;                    /* Key material */
-#define st_skeyid_d st_skey_d
-	chunk_t st_skey_d;                      /* KM for non-ISAKMP key derivation */
-#define st_skeyid_a st_skey_ai
-	chunk_t st_skey_ai;                     /* KM for ISAKMP authentication */
-	chunk_t st_skey_ar;                     /* KM for ISAKMP authentication */
-#define st_skeyid_e st_skey_ei
-	chunk_t st_skey_ei;                     /* KM for ISAKMP encryption */
-	chunk_t st_skey_er;                     /* KM for ISAKMP encryption */
-	chunk_t st_skey_pi;                     /* KM for ISAKMP encryption */
-	chunk_t st_skey_pr;                     /* KM for ISAKMP encryption */
+	/* v1 names are aliases for subset of v2 fields (#define) */
+#define st_skeyid_nss   st_skeyseed_nss
+	PK11SymKey *st_skeyseed_nss;	/* Key material */
+#define st_skeyid_d_nss st_skey_d_nss
+	PK11SymKey *st_skey_d_nss;	/* KM for non-ISAKMP key derivation */
+#define st_skeyid_a_nss st_skey_ai_nss
+	PK11SymKey *st_skey_ai_nss;	/* KM for ISAKMP authentication */
+	PK11SymKey *st_skey_ar_nss;	/* KM for ISAKMP authentication */
+#define st_skeyid_e_nss st_skey_ei_nss
+	PK11SymKey *st_skey_ei_nss;	/* KM for ISAKMP encryption */
+	PK11SymKey *st_skey_er_nss;	/* KM for ISAKMP encryption */
+	PK11SymKey *st_skey_pi_nss;	/* KM for ISAKMP encryption */
+	PK11SymKey *st_skey_pr_nss;	/* KM for ISAKMP encryption */
+
 	struct connection *st_childsa;          /* connection included in AUTH */
 	struct traffic_selector st_ts_this, st_ts_that;
 
@@ -386,7 +388,7 @@ struct state {
 	unsigned int st_iv_len;
 	unsigned int st_ph1_iv_len;
 
-	chunk_t st_enc_key;                     /* Oakley Encryption key */
+	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
 	struct event      *st_event;            /* backpointer for certain
 	                                           events */
