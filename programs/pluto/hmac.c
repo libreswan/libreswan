@@ -84,17 +84,17 @@ void hmac_init(struct hmac_ctx *ctx,
 						    CKM_CONCATENATE_BASE_AND_DATA,
 						    hmac_pad, CKM_XOR_BASE_AND_DATA, CKA_DERIVE,
 						    h->hash_block_size);
-	PR_ASSERT(tkey2 != NULL);
+	passert(tkey2 != NULL);
 
 	ctx->ikey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA,
 					    hmac_ipad, nss_hash_mech(h),
 						    CKA_DIGEST, 0);
-	PR_ASSERT(ctx->ikey != NULL);
+	passert(ctx->ikey != NULL);
 
 	ctx->okey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA,
 					    hmac_opad, nss_hash_mech(h),
 						    CKA_DIGEST, 0);
-	PR_ASSERT(ctx->okey != NULL);
+	passert(ctx->okey != NULL);
 
 	if (tkey1 != symkey)
 		PK11_FreeSymKey(tkey1);
@@ -104,13 +104,13 @@ void hmac_init(struct hmac_ctx *ctx,
 	freeanychunk(hmac_ipad);
 	freeanychunk(hmac_pad);
 	ctx->ctx_nss = PK11_CreateDigestContext(nss_hash_oid(h));
-	PR_ASSERT(ctx->ctx_nss != NULL);
+	passert(ctx->ctx_nss != NULL);
 
 	status = PK11_DigestBegin(ctx->ctx_nss);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 
 	status = PK11_DigestKey(ctx->ctx_nss, ctx->ikey);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 }
 
 void hmac_update(struct hmac_ctx *ctx,
@@ -123,7 +123,7 @@ void hmac_update(struct hmac_ctx *ctx,
 		DBG(DBG_CRYPT, DBG_log("hmac_update: inside if"));
 		status = PK11_DigestOp(ctx->ctx_nss, data, data_len);
 		DBG(DBG_CRYPT, DBG_log("hmac_update: after digest"));
-		PR_ASSERT(status == SECSuccess);
+		passert(status == SECSuccess);
 		DBG(DBG_CRYPT, DBG_log("hmac_update: after assert"));
 	}
 }
@@ -135,27 +135,27 @@ void hmac_final(u_char *output, struct hmac_ctx *ctx)
 
 	status = PK11_DigestFinal(ctx->ctx_nss, output, &outlen,
 					    ctx->hmac_digest_len);
-	PR_ASSERT(status == SECSuccess);
-	PR_ASSERT(outlen == ctx->hmac_digest_len);
+	passert(status == SECSuccess);
+	passert(outlen == ctx->hmac_digest_len);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
 	ctx->ctx_nss = NULL;
 
 	ctx->ctx_nss = PK11_CreateDigestContext(nss_hash_oid(ctx->h));
-	PR_ASSERT(ctx->ctx_nss != NULL);
+	passert(ctx->ctx_nss != NULL);
 
 	status = PK11_DigestBegin(ctx->ctx_nss);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 
 	status = PK11_DigestKey(ctx->ctx_nss, ctx->okey);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 
 	status = PK11_DigestOp(ctx->ctx_nss, output, outlen);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 
 	status = PK11_DigestFinal(ctx->ctx_nss, output, &outlen,
 				  ctx->hmac_digest_len);
-	PR_ASSERT(status == SECSuccess);
-	PR_ASSERT(outlen == ctx->hmac_digest_len);
+	passert(status == SECSuccess);
+	passert(outlen == ctx->hmac_digest_len);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
 
 	if (ctx->ikey != NULL)
@@ -271,13 +271,13 @@ PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 		}
 
 		ctx = PK11_CreateDigestContext(oid);
-		PR_ASSERT(ctx != NULL);
+		passert(ctx != NULL);
 		status = PK11_DigestBegin(ctx);
-		PR_ASSERT(status == SECSuccess);
+		passert(status == SECSuccess);
 		status = PK11_DigestKey(ctx, base);
-		PR_ASSERT(status == SECSuccess);
+		passert(status == SECSuccess);
 		status = PK11_DigestFinal(ctx, dkey, &len, sizeof dkey);
-		PR_ASSERT(status == SECSuccess);
+		passert(status == SECSuccess);
 		PK11_DestroyContext(ctx, PR_TRUE);
 
 		dkey_chunk.ptr = dkey;
@@ -286,7 +286,7 @@ PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(base,
 							    CKM_CONCATENATE_DATA_AND_BASE, dkey_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 							    0);
-		PR_ASSERT(tkey1 != NULL);
+		passert(tkey1 != NULL);
 
 		bs = 0;
 		dkey_param.data = (unsigned char*)&bs;
@@ -295,7 +295,7 @@ PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 						CKM_EXTRACT_KEY_FROM_KEY,
 						&dkey_param, target, operation,
 						len);
-		PR_ASSERT(tkey2 != NULL);
+		passert(tkey2 != NULL);
 
 		if (tkey1 != NULL)
 			PK11_FreeSymKey(tkey1);
@@ -361,7 +361,7 @@ void nss_symkey_log(PK11SymKey *key, const char *msg)
 				SECStatus status = PK11_ExtractKeyValue(key);
 				SECItem *keydata;
 
-				PR_ASSERT(status == SECSuccess);
+				passert(status == SECSuccess);
 				keydata = PK11_GetKeyData(key);
 
 				DBG_dump("value: ", keydata->data,

@@ -47,8 +47,6 @@
  * (C)opyright 2012-2013 Paul Wouters <paul@libreswan.org>
  */
 
-#include <libreswan.h> /* for DEBUG for NSS PR_ASSERT() */
-
 #include <stddef.h>
 #include <string.h>
 #include <sys/types.h>  /* for u_int*_t */
@@ -148,9 +146,9 @@ MD5_CTX * context;                                        /* context */
 	SECStatus status;
 
 	context->ctx_nss = PK11_CreateDigestContext(SEC_OID_MD5);
-	PR_ASSERT(context->ctx_nss != NULL);
+	passert(context->ctx_nss != NULL);
 	status = PK11_DigestBegin(context->ctx_nss);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 }
 
 /* MD5 block update operation. Continues an MD5 message-digest
@@ -164,7 +162,7 @@ UINT4 inputLen;                                 /* length of input block */
 {
 	SECStatus status = PK11_DigestOp(context->ctx_nss, input, inputLen);
 
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 }
 
 /* MD5 finalization. Ends an MD5 message-digest operation, writing the
@@ -178,8 +176,8 @@ MD5_CTX *context;                                       /* context */
 	SECStatus status = PK11_DigestFinal(context->ctx_nss, digest, &length,
 				  MD5_DIGEST_SIZE);
 
-	PR_ASSERT(status == SECSuccess);
-	PR_ASSERT(length == MD5_DIGEST_SIZE);
+	passert(status == SECSuccess);
+	passert(length == MD5_DIGEST_SIZE);
 	PK11_DestroyContext(context->ctx_nss, PR_TRUE);
 }
 

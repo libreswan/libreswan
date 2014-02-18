@@ -17,9 +17,6 @@
 #ifndef _LIBRESWAN_H
 #define _LIBRESWAN_H    /* seen it, no need to see it again */
 
-/* Needed for NSS PR_ASSERT() */
-#define DEBUG 1
-
 /* you'd think this should be builtin to compiler... */
 #ifndef TRUE
 # define TRUE 1
