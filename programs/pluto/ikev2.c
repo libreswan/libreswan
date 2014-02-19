@@ -1037,13 +1037,10 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		/* start liveness checks if set, making sure we only schedule once when moving
 		 * from I2->I3 or R1->R2
 		 */
-		if ((c->dpd_action == DPD_ACTION_CLEAR || c->dpd_action ==
-		     DPD_ACTION_RESTART) &&
-		    IS_V2_ESTABLISHED(st->st_state) && st->st_state !=
-		    from_state) {
+		if (dpd_active_locally(st) && IS_V2_ESTABLISHED(st->st_state) &&
+					      st->st_state != from_state) {
 			DBG(DBG_DPD,
-			    DBG_log("dpd_action set, scheduling ikev2 liveness checks"));
-			st->hidden_variables.st_liveness = TRUE;
+			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
 			event_schedule(EVENT_v2_LIVENESS,
 				       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
 				       st);

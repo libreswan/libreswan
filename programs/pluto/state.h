@@ -158,9 +158,9 @@ struct hidden_variables {
 	bool st_got_certrequest;
 	bool st_modecfg_started;
 	bool st_skeyid_calculated;
-	bool st_liveness;			/* Liveness checks */
-	bool st_dpd;                            /* Peer supports DPD */
-	bool st_dpd_local;                      /* If we want DPD on this conn */
+	bool st_peer_supports_dpd;              /* Peer supports DPD/IKEv2 Liveness
+						 * NOTE: dpd_active_locally() tracks
+						 * the local enablement of DPD */
 	bool st_logged_p1algos;                 /* if we have logged algos */
 	u_int32_t st_nat_traversal;             /* bit field of permitted
 	                                         * methods. If non-zero, then
@@ -503,6 +503,7 @@ extern void set_state_ike_endpoints(struct state *st,
 
 extern void delete_cryptographic_continuation(struct state *st);
 extern void delete_states_dead_interfaces(void);
+extern bool dpd_active_locally(struct state *st);
 
 /*
  * use these to change state, this gives us a handle on all state changes

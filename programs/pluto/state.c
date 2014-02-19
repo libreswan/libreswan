@@ -480,6 +480,10 @@ void delete_state(struct state *st)
 	if (st->st_dpd_event != NULL)
 		delete_dpd_event(st);
 
+	/* clear any ikev2 liveness events */
+	if (st->st_ikev2)
+		delete_liveness_event(st);
+
 	/* if there is a suspended state transition, disconnect us */
 	if (st->st_suspended_md != NULL) {
 		passert(st->st_suspended_md->st == st);
@@ -1469,7 +1473,7 @@ void fmt_state(struct state *st, const time_t n,
 		snprintf(dpdbuf, sizeof(dpdbuf), "; isakmp#%lu",
 			 (unsigned long)st->st_clonedfrom);
 	} else {
-		if (st->hidden_variables.st_dpd) {
+		if (st->hidden_variables.st_peer_supports_dpd) {
 			time_t tn = time(NULL);
 
 			snprintf(dpdbuf, sizeof(dpdbuf),
@@ -1478,7 +1482,7 @@ void fmt_state(struct state *st, const time_t n,
 				 st->st_last_dpd : (long)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
-		} else if (st->hidden_variables.st_liveness) {
+		} else if (dpd_active_locally(st) && st->st_ikev2) {
 			struct state *pst;
 			time_t tn = time(NULL);
 
@@ -1913,4 +1917,10 @@ void set_state_ike_endpoints(struct state *st,
 	st->st_remoteport = c->spd.that.host_port;
 
 	st->st_interface = c->interface;
+}
+
+/* seems to be a good spot for now */
+bool dpd_active_locally(struct state *st)
+{
+	return st->st_connection->dpd_delay && st->st_connection->dpd_timeout;
 }
