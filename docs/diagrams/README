@@ -1,8 +1,0 @@
-
-This directory contains various useful diagrams
-
-Currently it contains:
-
-	klips-packetflow.jpg shows the packetflow for ESP/IP packets
-	(also applies to AH)
-	klips-packetflow.vsd is the corresponding Visio file 
