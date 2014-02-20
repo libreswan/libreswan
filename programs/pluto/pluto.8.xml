@@ -11,16 +11,15 @@
 
     <manvolnum>8</manvolnum>
 
-    <refmiscinfo class="date">25 February 2008</refmiscinfo>
+    <refmiscinfo class="date">19 February 2014</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
 
   <refnamediv id="name">
-    <refname>ipsec pluto</refname>
+    <refname>pluto</refname>
 
-    <refpurpose>ipsec whack : IPsec IKE keying daemon and control
-    interface</refpurpose>
+    <refpurpose>ipsec whack : IPsec IKE keying daemon and control interface</refpurpose>
   </refnamediv>
 
   <!-- body begins here -->
@@ -30,73 +29,42 @@
       <command>ipsec</command>
 
       <arg choice="plain"><replaceable>pluto</replaceable></arg>
-
       <arg choice="opt">--help</arg>
-
       <arg choice="opt">--version</arg>
-
+      <arg choice="opt">--config <replaceable>filename</replaceable></arg>
+      <arg choice="opt">--vendorid <replaceable>VID</replaceable></arg>
       <arg choice="opt">--nofork</arg>
-
       <arg choice="opt">--stderrlog</arg>
-
-      <arg choice="opt">--logfile
-      <replaceable>filename</replaceable></arg>
-
+      <arg choice="opt">----plutostderrlogtime</arg>
+      <arg choice="opt">--logfile <replaceable>filename</replaceable></arg>
       <arg choice="opt">--use-klips</arg>
-
       <arg choice="opt">--use-mast</arg>
-
       <arg choice="opt">--use-netkey</arg>
-
       <arg choice="opt">--use-nostack</arg>
-
       <arg choice="opt">--uniqueids</arg>
-
       <arg choice="opt">--nat_traversal</arg>
-
-      <arg choice="opt">--virtual_private
-      <replaceable>network_list</replaceable></arg>
-
-      <arg choice="opt">--keep_alive
-      <replaceable>delay_sec</replaceable></arg>
-
+      <arg choice="opt">--virtual_private <replaceable>network_list</replaceable></arg>
+      <arg choice="opt">--keep_alive <replaceable>delay_sec</replaceable></arg>
       <arg choice="opt">--force_busy</arg>
-
       <arg choice="opt">--disable_port_floating</arg>
-
       <arg choice="opt">--nocrsend</arg>
-
       <arg choice="opt">--strictcrlpolicy</arg>
-
       <arg choice="opt">--crlcheckinterval</arg>
-
-      <arg choice="opt">--interface
-      <replaceable>interfacename</replaceable></arg>
-
-      <arg choice="opt">--listen
-      <replaceable>ipaddr</replaceable></arg>
-
+      <arg choice="opt">--interface <replaceable>interfacename</replaceable></arg>
+      <arg choice="opt">--listen <replaceable>ipaddr</replaceable></arg>
       <arg choice="opt">--ikeport <replaceable>portnumber</replaceable></arg>
-
+      <arg choice="opt">--natikeport <replaceable>portnumber</replaceable></arg>
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
-
-      <arg choice="opt">--secretsfile
-      <replaceable>secrets-file</replaceable></arg>
-
+      <arg choice="opt">--secretsfile <replaceable>secrets-file</replaceable></arg>
       <arg choice="opt">--adns <replaceable>pathname</replaceable></arg>
-
       <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
-
       <arg choice="opt">--perpeerlog</arg>
-
-      <arg choice="opt">--perpeerlogbase
-      <replaceable>dirname</replaceable></arg>
-
+      <arg choice="opt">--perpeerlogbase <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
-
       <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
-
       <arg choice="opt">--noretransmits</arg>
+      <arg choice="opt">--statsbin <replaceable>filename</replaceable></arg>
+      <arg choice="opt">--secctx_attr_value <replaceable>number</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -115,36 +83,23 @@
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
       <arg choice="opt">--debug-none</arg>
-
       <arg choice="opt">--debug-all</arg>
-
       <arg choice="opt">--debug-raw</arg>
-
       <arg choice="opt">--debug-crypt</arg>
-
       <arg choice="opt">--debug-parsing</arg>
-
       <arg choice="opt">--debug-emitting</arg>
-
       <arg choice="opt">--debug-control</arg>
-
       <arg choice="opt">--debug-lifecycle</arg>
-
-      <arg choice="opt">--debug-klips</arg>
-
+      <arg choice="opt">--debug-kernel</arg>
       <arg choice="opt">--debug-pfkey</arg>
-
       <arg choice="opt">--debug-nat-t</arg>
-
       <arg choice="opt">--debug-dpd</arg>
-
       <arg choice="opt">--debug-dns</arg>
-
       <arg choice="opt">--debug-oppo</arg>
       <arg choice="opt">--debug-oppoinfo</arg>
       <arg choice="opt">--debug-whackwatch</arg>
-
       <arg choice="opt">--debug-private</arg>
+      <arg choice="opt">--debug-x509</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -1075,14 +1030,8 @@
       directory as specified by <option>--ipsecdir</option>.</para>
 
       <para>Pluto may core dump. It will normally do so into the current
-      working directory. The standard scripts have an option dumpdir=, which
-      can set the current directory to determine where the core dump will go.
-      In some cases, it may be more convenient to specify it on the command
-      line using --coredir. A third method is to set the environment variable
-      PLUTO_CORE_DIR. The command line argument takes precedence over the
-      environment variable. The option plutorestartoncrash can be set to no to
-      prevent multiple core files and a looping pluto process. Normally, when
-      pluto crashes, another pluto process is started.</para>
+      working directory. You can specify the --coredir option for pluto, or
+      specify the dumpdir= option in ipsec.conf.</para>
 
       <para>At times it may be desireable to turn off all timed events in
       <emphasis remap="B">pluto</emphasis>, this can be done with
