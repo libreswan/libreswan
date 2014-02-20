@@ -2,7 +2,7 @@ Libreswan tries its best to not include any restricted patented software,
 even though it is likely not bound by US patent law, since it is released
 and distributed in The Netherlands.
 
-- Elliptic Curves is a patent minefield, and will likely not be implemented
+- Elliptic Curves is a patent minefield, we will only use ECC functions from libraries
 - The NAT-T patent by Microsoft can be used freely, see:
    https://datatracker.ietf.org/ipr/691/
 - There have been rumors of patents on prime numbers
