@@ -159,7 +159,7 @@ stf_status dpd_init(struct state *st)
 	}
 
 	/* if it was enabled, and we haven't turned it on already */
-	if (p1st->hidden_variables.st_dpd) {
+	if (p1st->hidden_variables.st_peer_supports_dpd) {
 		time_t n = now();
 		libreswan_log("Dead Peer Detection (RFC 3706): enabled");
 
@@ -223,9 +223,9 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		    st->st_connection->name));
 
 	/* If no DPD, then get out of here */
-	if (!st->hidden_variables.st_dpd) {
+	if (!st->hidden_variables.st_peer_supports_dpd) {
 		DBG(DBG_DPD,
-		    DBG_log("DPD: no DPD active"));
+		    DBG_log("DPD: peer does not support dpd"));
 		return;
 	}
 

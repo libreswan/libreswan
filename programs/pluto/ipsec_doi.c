@@ -819,11 +819,8 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	b = b + strlen(b);
 
 	snprintf(b, sad_len - (b - sadetails) - 1,
-		 "%sDPD=%s",
-		 ini,
-		 (st->hidden_variables.st_dpd_local ||
-		  st->hidden_variables.st_liveness) ? /* note: confusing name */
-		 "active" : "passive");
+		 "%sDPD=%s", ini,
+		 dpd_active_locally(st) ? "active" : "passive");
 
 	ini = " ";
 	fin = "}";
