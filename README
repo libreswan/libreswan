@@ -5,21 +5,29 @@
 Libreswan is an IPsec implementation for Linux. It has support for most 
 of the extensions (RFC + IETF drafts) related to IPsec, including 
 IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
+Libreswan uses the native Linux IPsec stack (NETKEY/XFRM) per default.
+For more information about the alternative Libreswan kernel IPsec stack,
+see README.KLIPS.
 
-Libreswan has been forked from Openswan 2.6.38, which was forked from
-FreeS/WAN 1.99.
+Libreswan was forked from Openswan 2.6.38, which was forked from
+FreeS/WAN 1.99. See the CREDITS files for contributor acknowledgments.
 
-Download it from
+It can be downloaded from various locations:
 
     https://download.libreswan.org/
     ftp://ftp.libreswan.org/
+
+A git repository is available at:
+
+    https://github.com/libreswan/libreswan/
+
 
 #########################################################################
 # REQUIREMENTS
 #########################################################################
 
 A recent Linux distribution based on either Kernel 2.4.x, 2.6.x or 3.x
-are the currently supported platforms.
+are the currently supported platforms. Libreswan has been ported to BSD/OSX as well.
 
 Most recent distributions have package support for libreswan.  Unless
 a source based build is truly needed,  it is often best to use the pre-built
@@ -45,7 +53,7 @@ For Fedora/RHEL/CentOS
 
 Runtime requirements (usually already present on the system)
 
-	iproute2, iptables, sed, awk, bash, cut and possible other tools
+	nss, iproute2, iptables, sed, awk, bash, cut
 
 	(note: the busybox version of "ip" does not support 'ip xfrm', so
 	       ensure you enable the iproute(2) package for busybox)
@@ -53,95 +61,56 @@ Runtime requirements (usually already present on the system)
 	python is used for "ipsec verify", which helps debugging problems
 
 #########################################################################
-# HOW TO INSTALL on Kernel 2.6 and higher
+# Compiling the userland and IKE daemon
 #########################################################################
-
-NETKEY/XFRM (Native linux IPsec stack)
----------------------------------
-
-To use Libreswan with the linux native (builtin) IPsec stack,  the
-following steps should be all that are needed. Please use at least kernel
-version 2.6.9, as prior versions of the kernel have serious bugs in the
-native IPsec stack.  From the libreswan directory:
 
     make programs
     sudo make install
 
-Note: The ipsec-tools package or setkey is not needed. Instead iproute2 >= 2.6.8
-is required. Run 'ipsec verify' to determine if your system misses anything.
-of the requirements.
+Note: The ipsec-tools package or setkey is not needed. Instead the iproute2
+pacakge (>= 2.6.8) is required. Run 'ipsec verify' to determine if your
+system misses any of the requirements. This will also tell you if any of
+the kernel sysctl values needs changing.
 
-KLIPS/KLIPSNG (Libreswan IPsec stack)
-------------------------------------
+#########################################################################
+# Starting Libreswan
+#########################################################################
 
-To use the Libreswan KLIPS IPsec stack (ipsec0 devices) for Linux
-Kernels 2.4 and higher, the following steps should work.  From the
-libreswan directory:
+The install will detect the init system used (systemd, upstart, sysvinit, openrc)
+and should integrate with the linux distribution. The service name is called "ipsec".
+For example, on RHEL7, one would use:
 
-    make programs
-    make module
-    sudo make module_install
+    systemctl enable ipsec.service
+    systemctl start ipsec.service
 
-This builds a module against the running kernel. To compile a module for
-another kernel (for which the headers are installed), use:
+If unsure, the ipsec command can also be used to start/stop the ipsec service:
 
-    make KERNELSRC=/lib/modules/`uname -r`/build module 
-    sudo make KERNELSRC=/lib/modules/`uname -r`/build module_install
+    ipsec setup start
+    ipsec setup stop
 
-For Linux 2.6 Kernels before 2.6.23, including 2.4 linux systems, the kernel
-requires patching if NAT-T support or SAref tracking is required. Full kernel
-source will be required as the kernel sources are being patched, built and
-installed.  It is good practice to build and install an unpatched kernel
-before starting to ensure the process is correct.  See your distribution
-documentation on how to build and install a new kernel
+#########################################################################
+# Configuration
+#########################################################################
 
-    Determine the linux source directory,  for example /usr/src/linux on
-    most full source installs.  It may also be /usr/src/linux-2.[46].X
+Most of the libreswan configuration is done in /etc/ipsec.conf and
+/etc/ipsec.secrets.  See their respective man pages for more information.
 
-    Add NAT-T support (if required).
+#########################################################################
+# NSS initialisation
+#########################################################################
 
-        From the Libreswan source directory:
+Libreswan uses NSS to store private keys and X.509 certificates. The NSS
+database should have been initialised by the package installer. If not,
+the NSS database can be initialised using:
 
-          make KERNELSRC=/usr/src/linux nattpatch | patch -d /usr/src/linux -p1
+   ipsec initnss
 
-    Add SAref tracking support (if required).
+PKCS#12 certificates (.p12 files) can be imported using:
 
-        Premade patches for some distributions kernels can be found in
-        patches/kernel/  It is recommended that kernel 2.6.32 or higher is
-        used. Documentation on SAref/MAST can be found in docs/HACKING/Mast*
-        and doc/klips/mast.xml. To understand what SAref tracking does, see
-        doc/ipsecsaref.png and the overlapip= entry in the ipsec.conf man page.
+   ipsec import /path/to/your.p12
 
-        From the Libreswan source directory:
-
-          make KERNELSRC=/usr/src/linux sarefpatch | patch -d /usr/src/linux -p1
-
-    Add OCF HW offloading support
-
-        For OCF HW offloading support, you need also need a patched kernel
-        See: http://ocf-linux.sourceforge.net/ for more details.
-
-    Build and install a new kernel
-
-        See your distribution documentation on how to install a new kernel.
-        It should be something similar to:
-
-          cd /usr/src/linux
-          make oldconfig
-          make dep                    - this step is ignore on 2.6 systems)
-          make bzImage install
-
-    Build Libreswan
-
-        From the Libreswan source directory:
-
-            make programs
-            make KERNELSRC=/usr/src/linux module
-            sudo make KERNELSRC=/usr/src/linux install minstall
-
-The Libreswan configuration file can select which ipsec stack to use at
-runtime by using the "protostack=<klips|netkey|mast>" options in ipsec.conf.
-See the ipsec.conf man page for more information on configuration options.
+See README.NSS and 'certutil --help' for more details on using NSS and
+migrating from the old openswan /etc/ipsec.d/ directories to using NSS.
 
 #########################################################################
 # UPGRADING
@@ -180,13 +149,15 @@ Bugs with the package can be filed into our bug tracking system, at
 https://bugs.libreswan.org
 
 #########################################################################
-# SECURITY HOLES
+# SECURITY INFORMATION
 #########################################################################
 
-All security vulnerabilities found that require public disclosure will
-receive proper CVE tracking numbers (see http://mitre.org/) and co-ordinated
-via the vendor-sec (or successor) mailing list. A complete list of known
-security vulnerabilities is available at: https://www.libreswan.org/security/ 
+All security issues found that require public disclosure will
+receive proper CVE tracking numbers (see http://mitre.org/) and
+will be co-ordinated via the vendor-sec / oss-security lists. A
+complete list of known security vulnerabilities is available at:
+
+https://www.libreswan.org/security/
 
 #########################################################################
 # DEVELOPMENT
@@ -194,7 +165,7 @@ security vulnerabilities is available at: https://www.libreswan.org/security/
 
 Those interested in the development, patches, beta releases of Libreswan
 can join the development mailing list (http://lists.libreswan.org -
-dev@lists.libreswan.org) or join the development team on IRC in #swan
+swan-dev@lists.libreswan.org) or join the development team on IRC in #swan
 on irc.freenode.net
 
 For those who want to track things a bit more closely, the

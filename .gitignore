@@ -1,8 +1,10 @@
 *~
 OBJ.*
 *.rej
+*.orig
 *.bak
 TAGS
+tags
 modobj
 modobj24
 modobj26
