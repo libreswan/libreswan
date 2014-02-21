@@ -152,6 +152,17 @@ case "${1}" in
 	exit 0
 	;;
     initnss|--initnss)
+	if [ -n "${2}" ]; then
+	    # A lot of nss commands use -d or --configdir to specify NSS db location
+	    if [ "${2}" = "-d" -o "${2}" = "--configdir" ]; then
+	       IPSEC_CONFDDIR="${3}"
+            else
+	       IPSEC_CONFDDIR="${2}"
+	    fi
+	fi
+	if [ ! -d "${IPSEC_CONFDDIR}" ]; then
+	   mkdir -p ${IPSEC_CONFDDIR}
+	fi
 	if [ -f "${IPSEC_CONFDDIR}/cert8.db" -o -f "${IPSEC_CONFDDIR}/key3.db" -o -f "${IPSEC_CONFDDIR}/secmod.db" ]; then
 	    echo "NSS database already initialised - aborted"
 	    echo "To wipe the old NSS database, issue: rm ${IPSEC_CONFDDIR}/*.db"
