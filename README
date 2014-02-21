@@ -2,6 +2,8 @@
 #            Libreswan 3.X Release Notes
 #########################################################################
 
+The Libreswan Project   https://libreswan.org/
+
 Libreswan is an IPsec implementation for Linux. It has support for most 
 of the extensions (RFC + IETF drafts) related to IPsec, including 
 IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
@@ -21,17 +23,27 @@ A git repository is available at:
 
     https://github.com/libreswan/libreswan/
 
+#########################################################################
+# LICENSE
+#########################################################################
+
+The bulk of libreswan is licensed under the GNU General Public License
+version 2; see the LICENSE and CREDIT.* files. Some smaller parts have
+a different license.
 
 #########################################################################
 # REQUIREMENTS
 #########################################################################
 
 A recent Linux distribution based on either Kernel 2.4.x, 2.6.x or 3.x
-are the currently supported platforms. Libreswan has been ported to BSD/OSX as well.
+are the currently supported platforms. Libreswan has been ported to
+Win2k/BSD/OSX as well.
 
-Most recent distributions have package support for libreswan.  Unless
-a source based build is truly needed,  it is often best to use the pre-built
-distributions packaged version.
+Most distributions have native packaged support for libreswan. Libreswan is
+available for RHEL, Fedora, Ubuntu, Debian, Arch, openwrt and more.
+
+Unless a source based build is truly needed,  it is often best to use
+the pre-built version of the distribution you are using.
 
 There are a few packages required for Libreswan to compile from source:
 
@@ -76,14 +88,15 @@ the kernel sysctl values needs changing.
 # Starting Libreswan
 #########################################################################
 
-The install will detect the init system used (systemd, upstart, sysvinit, openrc)
-and should integrate with the linux distribution. The service name is called "ipsec".
-For example, on RHEL7, one would use:
+The install will detect the init system used (systemd, upstart, sysvinit,
+openrc) and should integrate with the linux distribution. The service
+name is called "ipsec".  For example, on RHEL7, one would use:
 
     systemctl enable ipsec.service
     systemctl start ipsec.service
 
-If unsure, the ipsec command can also be used to start/stop the ipsec service:
+If unsure, the "ipsec" command can also be used to start or stop the ipsec
+service:
 
     ipsec setup start
     ipsec setup stop
@@ -92,7 +105,7 @@ If unsure, the ipsec command can also be used to start/stop the ipsec service:
 # Configuration
 #########################################################################
 
-Most of the libreswan configuration is done in /etc/ipsec.conf and
+Most of the libreswan configuration is stored in /etc/ipsec.conf and
 /etc/ipsec.secrets.  See their respective man pages for more information.
 
 #########################################################################
@@ -116,12 +129,16 @@ migrating from the old openswan /etc/ipsec.d/ directories to using NSS.
 # UPGRADING
 #########################################################################
 
-1. If you are upgrading from FreeS/WAN 1.x or Openswan 2.x to Libreswan 3.x,
-   you might need to adjust your config files.  See 'man ipsec.conf.
-   details on what has changed.
+If you are upgrading from FreeS/WAN 1.x or Openswan 2.x to Libreswan 3.x,
+you might need to adjust your config files, although great care has been
+put into making the configuration files full backwards compatible.
 
-2. You can run 'make install' on top of your old version - it will not
-   overwrite your your /etc/ipsec.* config files
+See 'man ipsec.conf' for the list of options to find any new features.
+
+You can run 'make install' on top of your old version - it will not
+overwrite your your /etc/ipsec.* configuration files. The default install
+target installs in /usr/local. Ensure you do not install libreswan twice,
+one from a distribution package in /usr and once manually in /usr/local.
 
 #########################################################################
 # SUPPORT
@@ -129,12 +146,12 @@ migrating from the old openswan /etc/ipsec.d/ directories to using NSS.
 
 Mailing Lists:
 
-    https://lists.libreswan.org is home of the mailing lists
+    https://lists.libreswan.org/ is home of all our the mailing lists
 
 Wiki:
 
     https://libreswan.org is home to the Libreswan WIKI.  It has the most
-    up to date documentation, interop guides and other related information.
+    up to date documentation, interop guides and other useful information.
 
 IRC:
 
@@ -145,8 +162,8 @@ IRC:
 # BUGS
 #########################################################################
 
-Bugs with the package can be filed into our bug tracking system, at
-https://bugs.libreswan.org
+Bugs can be reported on the mailing list or using our bug tracking system,
+at https://bugs.libreswan.org/
 
 #########################################################################
 # SECURITY INFORMATION
@@ -163,19 +180,19 @@ https://www.libreswan.org/security/
 # DEVELOPMENT
 #########################################################################
 
-Those interested in the development, patches, beta releases of Libreswan
-can join the development mailing list (http://lists.libreswan.org -
-swan-dev@lists.libreswan.org) or join the development team on IRC in #swan
-on irc.freenode.net
+Those interested in the development, patches, and beta releases of
+Libreswan can join the development mailing list "swan-dev" or talk to the
+development team on IRC in #swan on irc.freenode.net
 
 For those who want to track things a bit more closely, the
-commits@lists.libreswan.org mailinglist will mail all the commit messages.
+commits@lists.libreswan.org mailinglist will mail all the commit messages
+when they happen. This list is quite busy during active development
+periods.
 
 #########################################################################
 # DOCUMENTATION
 #########################################################################
 
-The most up to date docs are in the man pages and at https://libreswan.org/
+The most up to date docs are in the man pages that come with the software
+and at https://libreswan.org/
 
-The bulk of this software is under the GNU General Public License; see
-LICENSE.  Some parts of it are not; see CREDITS for the details.
