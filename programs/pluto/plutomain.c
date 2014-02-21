@@ -1345,8 +1345,11 @@ int main(int argc, char **argv)
 
 	/* loading X.509 CRLs - must happen after CAs are loaded */
 	load_crls();
+
+#if 0
 	/* loading attribute certificates from disk (should prob be removed) */
 	load_acerts();
+#endif
 
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
