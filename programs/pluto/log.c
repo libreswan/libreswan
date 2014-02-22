@@ -585,7 +585,6 @@ void whack_log(int mess_no, const char *message, ...)
 		fmt_log(m + prelen, sizeof(m) - prelen, message, args);
 		va_end(args);
 
-#if DEBUG
 		if (dying_breath) {
 			/* status output copied to log */
 			if (log_to_stderr || (log_to_file && pluto_log_fd))
@@ -596,7 +595,6 @@ void whack_log(int mess_no, const char *message, ...)
 			if (log_to_perpeer)
 				peerlog("", m);
 		}
-#endif
 
 		if (wfd != NULL_FD) {
 			/* write to whack socket, but suppress possible SIGPIPE */
