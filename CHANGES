@@ -12,14 +12,13 @@ v3.9
 * pluto: Allow esp=idXXXX simiar to auth and modp [Paul]
 * pluto: Cleanup and document wire_chunk crypto helper code [Hugh]
 * pluto: rename program files using proper ikev[12]_* prefixes [Paul]
+* pluto: Don't load certs via load_acerts() from /etc/ipsec.d/acerts/ [Paul]
 * XAUTH: Cleanup code [Hugh]
 * IKEv2: liveness (DPD) fix msgid handling for Informational XCHG [Matt]
 * pluto/whack: Allow shutdown command for different MAGIC [Paul]
-* pluto: Changed PR_ASSERT() calls to passert() calls [Paul]
+* NSS: Changed PR_ASSERT() calls to passert() calls [Paul]
+* newhostkey: Return proper error codes, no longer allow stdin [Paul]
 * KLIPS: SAref patches for Ubuntu kernel 3.11.0-15.25 [Simon Deziel]
-
-
-
 
 v3.8 (January 15, 2014)
 * SECURITY: CVE-2013-6467 missing IKEv2 payloads causes restart [Iustina/Hugh]
