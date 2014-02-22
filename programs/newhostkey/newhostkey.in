@@ -1,6 +1,10 @@
 #! /bin/sh
+#
 # generate new key for this host
+#
 # Copyright (C) 2001, 2002  Henry Spencer.
+# Copyright (C) 2014 Paul Wouters <pwouters@redhat.com>
+# Copyright (C) 2014 Tuomo Soini <tis@foobar.fi>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -14,9 +18,8 @@
 #
 
 me="ipsec newhostkey"
-usage="Usage: $me [--output filename] [--random device] [--bits n] [--quiet] [--hostname host] [--configdir nssdbdir] [--password password] 
-         or
-       $me --output - [--random device] [--bits n] [--quiet] [--verbose] [--hostname host]  [--configdir nssdbdir] [--password password] >filename"
+usage="Usage: $me [--output filename] [--random device] [--bits n] \\
+    [--quiet] [--hostname host] [--configdir nssdbdir] [--password password] "
 
 bits=
 verbose=
@@ -25,56 +28,100 @@ random="--random /dev/random"
 output="@FINALCONFDIR@/ipsec.secrets"
 configdir="@FINALCONFDDIR@"
 password=
-for dummy
-do
-	case "$1" in
-	--bits)	bits="$2" ; shift	;;
-	--quiet)	verbose=	;;
-	--hostname)	host="--hostname $2" ; shift	;;
-	--output)	output="$2" ; shift		;;
-	--verbose)	verbose=--verbose 	;;
-	--version)	echo "$me $IPSEC_VERSION" ; exit 0	;;
-	--random)	random="--random $2" ; shift	;;
-    --configdir)    configdir="$2" ;    shift   ;;
-    --password)     password="--password $2" ;      shift   ;;
-	--help)	echo "$usage" ; exit 0	;;
-	--)	shift ; break		;;
-	-*)	echo "$me: unknown option \`$1'" >&2 ; exit 2	;;
-	*)	break			;;
-	esac
-	shift
+for dummy; do
+    case "$1" in
+	--bits)
+	    bits="${2}"
+	    shift
+	    ;;
+	--quiet)
+	    verbose=
+	    ;;
+	--hostname)
+	    host="--hostname ${2}"
+	    shift
+	    ;;
+	--output)
+	    output="${2}"
+	    shift
+	    ;;
+	--verbose)
+	    verbose="--verbose"
+ 	    ;;
+	--version)
+	    echo "$me $IPSEC_VERSION"
+	    exit 0
+	    ;;
+	--random)
+	    random="--random ${2}"
+	    shift
+	    ;;
+	--configdir)
+	    configdir="${2}"
+	    shift
+	    ;;
+	--password)
+	    password="--password ${2}"
+	    shift
+	    ;;
+	--help)
+	    echo "$usage"
+	    exit 0
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+	-*)
+	    echo "$me: unknown option \`$1'" >&2
+	    exit 2
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+    shift
 done
 
-if test " $verbose" != " " -a " $output" != " -" -a -s "$output"
-then
-	echo "$0: WARNING: file \`$output' exists, appending to it" >&2
+if [ -d "${output}" ]; then
+    echo "ERROR: output file should be a secrets file, not a directory"
+    exit 255
 fi
 
-if test ! -d $configdir
-then
-        echo "No such directory: $configdir"
-        exit 255
+if [ -s "${output}" ]; then
+    echo "${0}: WARNING: file \"${output}\" exists, appending to it" >&2
+fi
+
+if [ ! -d ${configdir} ]; then
+    echo "No such directory: ${configdir}"
+    exit 255
 fi
 
 certutil -L -d $configdir >/dev/null 2>/dev/null
 RETVAL=$?
-if [ $RETVAL -eq 255 ];
-then
-        echo "NSS database in $configdir not initialized. Please run 'ipsec initnss --configdir $configdir'"
-        exit 255
+if [ ${RETVAL} -eq 255 ]; then
+    echo "NSS database in $configdir not initialized."
+    echo "    Please run 'ipsec initnss --configdir $configdir'"
+    exit 255
 fi
 
-(
+key=$(ipsec rsasigkey ${verbose} ${random} --configdir ${configdir} ${password} ${host} ${bits})
+RETVAL=$?
+if [ ${RETVAL} -eq 0 ]; then
+    umask 077
+    TEMPFILE=$(/bin/mktemp ${output}.XXXXXXX)
+    (
 	echo ': RSA	{'
-	ipsec rsasigkey $verbose $random --configdir $configdir $password $host $bits 
+	echo "${key}"
 	echo '	}'
 	echo '# do not change the indenting of that "}"'
-) |
-if test " $output" = " -"
-then
-	cat
+    ) > ${TEMPFILE}
+    if [ -s "${output}" ]; then
+	cat ${TEMPFILE} >> ${output}
+	rm ${TEMPFILE}
+    else
+	mv ${TEMPFILE} ${output}
+    fi
 else
-	umask 077
-	cat >>$output.new
-	mv $output.new $output
+    exit ${RETVAL}
 fi
