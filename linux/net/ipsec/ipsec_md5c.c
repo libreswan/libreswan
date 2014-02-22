@@ -54,14 +54,14 @@
 #define S43 15
 #define S44 21
 
-static void MD5Transform PROTO_LIST((UINT4 [4], unsigned char [64]));
+static void MD5Transform(UINT4 [4], unsigned char [64]);
 
 #ifdef LITTLEENDIAN
 #define Encode MD5_memcpy
 #define Decode MD5_memcpy
 #else
-static void Encode PROTO_LIST((unsigned char *, UINT4 *, unsigned int));
-static void Decode PROTO_LIST((UINT4 *, unsigned char *, unsigned int));
+static void Encode(unsigned char *, UINT4 *, unsigned int);
+static void Decode(UINT4 *, unsigned char *, unsigned int);
 #endif
 
 #ifdef HAVEMEMCOPY
@@ -73,8 +73,8 @@ static void Decode PROTO_LIST((UINT4 *, unsigned char *, unsigned int));
 #define MD5_memcpy(_a, _b, _c) bcopy((_b), (_a), (_c))
 #define MD5_memset(_a, _b, _c) bzero((_a), (_c))
 #else
-static void MD5_memcpy PROTO_LIST((POINTER, POINTER, unsigned int));
-static void MD5_memset PROTO_LIST((POINTER, int, unsigned int));
+static void MD5_memcpy(POINTER, POINTER, unsigned int);
+static void MD5_memset(POINTER, int, unsigned int);
 #endif
 #endif
 static unsigned char PADDING[64] = {
