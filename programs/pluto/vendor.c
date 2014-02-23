@@ -588,10 +588,8 @@ static void handle_known_vendorid(struct msg_digest *md,
 
 	case VID_NATT_IETF_00:
 	case VID_NATT_IETF_01:
-		if (!nat_traversal_support_non_ike) {
-			vid_useful = FALSE;
+			vid_useful = FALSE; /* no longer supported */
 			break;
-		}
 		if (nat_traversal_enabled && !md->quirks.nat_traversal_vid)
 			md->quirks.nat_traversal_vid = vid->id;
 		break;
@@ -606,16 +604,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 	case VID_NATT_RFC:
-		if (!nat_traversal_support_port_floating) {
-			loglog(RC_LOG_SERIOUS,
-			       "ignoring received Vendor ID payload [%s] method=%s, "
-			       "because port floating is off",
-			       vid->descr,
-			       enum_name(&natt_method_names,
-					 nat_traversal_vid_to_method(
-						 vid->id)));
-			vid_useful = FALSE;
-		} else {
+		{
 			if (md->quirks.nat_traversal_vid < vid->id) {
 				DBG(DBG_NATT, DBG_log(" method set to=%s ",
 						      enum_name(&

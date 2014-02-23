@@ -195,23 +195,6 @@ add_entry:
 					if (fd < 0)
 						break;
 
-					DBG(DBG_NATT,
-					    DBG_log("NAT-T KLIPS: checking for nat_traversal_support_non_ike for IPv4"));
-					if (nat_traversal_support_non_ike &&
-					    addrtypeof(&ifp->addr) ==
-					    AF_INET) {
-						DBG(DBG_NATT,
-						    DBG_log("NAT-T KLIPS: found, calling nat_traversal_espinudp_socket"));
-						nat_traversal_espinudp_socket(fd, "IPv4",
-							ESPINUDP_WITH_NON_IKE);
-					} else {
-						DBG(DBG_NATT,
-						    DBG_log("NAT-T KLIPS: support not found, nat_traversal_support_non_ike = %s",
-							    nat_traversal_support_non_ike
-							    ?
-							    "TRUE" : "FALSE"));
-					}
-
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
 					id = alloc_thing(struct iface_dev,
@@ -248,20 +231,17 @@ add_entry:
 					 * the kernel did not support it, and gave an error
 					 * it one tried to turn it on.
 					 */
-					if (nat_traversal_support_port_floating
-					    &&
-					    addrtypeof(&ifp->addr) ==
+					if (addrtypeof(&ifp->addr) ==
 					    AF_INET) {
 						DBG(DBG_NATT,
-						    DBG_log("NAT-T KLIPS: found floating port, calling nat_traversal_espinudp_socket"));
+						    DBG_log("NAT-T KLIPS: calling nat_traversal_espinudp_socket"));
 						fd = create_socket(ifp,
 								   v->name,
 								   pluto_natt_float_port);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(
-							fd, "IPv4",
-							ESPINUDP_WITH_NON_ESP);
+							fd, "IPv4");
 						q = alloc_thing(
 							struct iface_port,
 							"struct iface_port");

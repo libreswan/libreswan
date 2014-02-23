@@ -1618,12 +1618,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		ip_address natt_oa;
 
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
-			if (st->hidden_variables.st_nat_traversal &
-			    NAT_T_WITH_PORT_FLOATING)
-				natt_type = ESPINUDP_WITH_NON_ESP;
-			else
-				natt_type = ESPINUDP_WITH_NON_IKE;
-
+			natt_type = ESPINUDP_WITH_NON_ESP;
 			if (inbound) {
 				natt_sport = st->st_remoteport;
 				natt_dport = st->st_localport;
@@ -1631,7 +1626,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				natt_sport = st->st_localport;
 				natt_dport = st->st_remoteport;
 			}
-
 			natt_oa = st->hidden_variables.st_nat_oa;
 		}
 

@@ -10,7 +10,7 @@
  * Copyright (C) 2011 Shinichi Furuso <Shinichi.Furuso@jp.sony.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2014 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -73,26 +73,16 @@
 #include "natt_defines.h"
 #include "nat_traversal.h"
 
+
 #define DEFAULT_KEEP_ALIVE_PERIOD  20
 
-bool nat_traversal_enabled = FALSE;
-bool nat_traversal_support_non_ike = FALSE;
-bool nat_traversal_support_port_floating = FALSE;
+bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support */
 
 static unsigned int nat_kap = 0;
 static unsigned int nat_kap_event = 0;
 
-void init_nat_traversal(bool activate, unsigned int keep_alive_period,
-			bool spf)
+void init_nat_traversal(unsigned int keep_alive_period)
 {
-	nat_traversal_enabled = activate;
-	nat_traversal_support_non_ike = activate;
-	nat_traversal_support_port_floating = activate ? spf : FALSE;
-	libreswan_log("Setting NAT-Traversal port-4500 floating to %s",
-		      nat_traversal_support_port_floating ? "on" : "off");
-	libreswan_log(
-		"   port floating activation criteria nat_t=%d/port_float=%d",
-		activate, spf);
 	{
 		FILE *f = fopen("/proc/net/ipsec/natt", "r");
 		if (f != NULL) {
@@ -100,8 +90,6 @@ void init_nat_traversal(bool activate, unsigned int keep_alive_period,
 
 			if (n == '0') {
 				nat_traversal_enabled = FALSE;
-				nat_traversal_support_non_ike = FALSE;
-				nat_traversal_support_port_floating = FALSE;
 				libreswan_log(
 					"  KLIPS does not have NAT-Traversal built in (see /proc/net/ipsec/natt)\n");
 			}
@@ -112,29 +100,9 @@ void init_nat_traversal(bool activate, unsigned int keep_alive_period,
 	nat_kap =
 		keep_alive_period ? keep_alive_period :
 		DEFAULT_KEEP_ALIVE_PERIOD;
-	libreswan_log("   NAT-Traversal support %s%s",
-	     activate ? " [enabled]" : " [disabled]",
-	     activate & !spf ? " [Port Floating disabled]" : "");
+	libreswan_log("   NAT-Traversal support %s",
+	     nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
-}
-
-static void disable_nat_traversal(int type)
-{
-	if (type == ESPINUDP_WITH_NON_IKE) {
-		nat_traversal_support_non_ike = FALSE;
-	} else {
-		libreswan_log("NAT-Traversal port floating turned off");
-		nat_traversal_support_port_floating = FALSE;
-	}
-
-	if (!nat_traversal_support_non_ike &&
-	    !nat_traversal_support_port_floating) {
-		libreswan_log(
-			"NAT-Traversal is turned OFF due to lack of KERNEL support: %d/%d",
-			nat_traversal_support_non_ike,
-			nat_traversal_support_port_floating);
-		nat_traversal_enabled = FALSE;
-	}
 }
 
 static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
@@ -149,7 +117,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 		DBG_log("natd_hash: Warning, rcookie is zero !!");
 
 	/**
-	 * draft-ietf-ipsec-nat-t-ike-01.txt
+	 * RFC 3947
 	 *
 	 *   HASH = HASH(CKY-I | CKY-R | IP | Port)
 	 *
@@ -200,11 +168,9 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs)
 	bool r = TRUE;
 
 	DBG(DBG_NATT,
-	    DBG_log("nat add vid. port: %d nonike: %d",
-		    nat_traversal_support_port_floating,
-		    nat_traversal_support_non_ike));
+	    DBG_log("nat add vid"));
 
-	if (nat_traversal_support_port_floating) {
+	{
 		if (r)
 			r =
 				out_vid(ISAKMP_NEXT_VID, outs,
@@ -216,13 +182,8 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs)
 			r = out_vid(ISAKMP_NEXT_VID, outs,
 				    VID_NATT_IETF_02_N);
 		if (r)
-			r = out_vid(
-				nat_traversal_support_non_ike ? ISAKMP_NEXT_VID : np,
-				outs, VID_NATT_IETF_02);
-	}
-	if (nat_traversal_support_non_ike) {
-		if (r)
-			r = out_vid(np, outs, VID_NATT_IETF_00);
+			r = out_vid(np, outs,
+				    VID_NATT_IETF_02);
 	}
 	return r;
 }
@@ -232,14 +193,14 @@ u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
 	switch (nat_t_vid) {
 	case VID_NATT_IETF_00:
 		DBG(DBG_NATT,
-		    DBG_log("returning NATT method NAT_TRAVERSAL_METHOD_IETF_00_01"));
-		return NAT_TRAVERSAL_METHOD_IETF_00_01;
+		    DBG_log("NAT_TRAVERSAL_METHOD_IETF_00_01 no longer supported"));
+		return 0;
 
 	case VID_NATT_IETF_02:
 	case VID_NATT_IETF_02_N:
 	case VID_NATT_IETF_03:
 		DBG(DBG_NATT,
-		    DBG_log("returning NATT method NAT_TRAVERSAL_METHOD_IETF_02_03"));
+		    DBG_log("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_02_03"));
 		return NAT_TRAVERSAL_METHOD_IETF_02_03;
 
 	case VID_NATT_IETF_04:
@@ -249,13 +210,15 @@ u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 		DBG(DBG_NATT,
-		    DBG_log("VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE assumed as VID_NATT_RFC"));
+		    DBG_log("NAT-T VID draft-ietf-ipsc-nat-t-ike-04 to 08 assumed to function as RFC 3947 "));
+		/* fall through */
 	case VID_NATT_RFC:
 		DBG(DBG_NATT,
-		    DBG_log("returning NATT method NAT_TRAVERSAL_METHOD_IETF_RFC"));
+		    DBG_log("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_RFC"));
 		return NAT_TRAVERSAL_METHOD_IETF_RFC;
+	default:
+		return 0;
 	}
-	return 0;
 }
 
 void nat_traversal_natd_lookup(struct msg_digest *md)
@@ -656,32 +619,15 @@ void nat_traversal_show_result(u_int32_t nt, u_int16_t sport)
 							       natt_method_names,
 							       NAT_TRAVERSAL_METHOD_IETF_RFC) :
 	       LHAS(nt,
-		    NAT_TRAVERSAL_METHOD_IETF_05) ? enum_name(&
-							      natt_method_names,
-							      NAT_TRAVERSAL_METHOD_IETF_05) :
-	       LHAS(nt,
 		    NAT_TRAVERSAL_METHOD_IETF_02_03) ? enum_name(&
 								 natt_method_names,
 								 NAT_TRAVERSAL_METHOD_IETF_02_03) :
-	       LHAS(nt,
-		    NAT_TRAVERSAL_METHOD_IETF_00_01) ? enum_name(&
-								 natt_method_names,
-								 NAT_TRAVERSAL_METHOD_IETF_00_01) :
-	       "unknown method",
-	       rslt ? rslt : "unknown result"
+	       "unknown or unsupported method",
+	       rslt ? rslt : "unknown or unsupported result"
 	       );
-	if ((nt & LELEM(NAT_TRAVERSAL_NAT_BHND_PEER)) &&
-	    (sport == IKE_UDP_PORT) &&
-	    ((nt & NAT_T_WITH_PORT_FLOATING) == 0)) {
-		loglog(RC_LOG_SERIOUS,
-		       "Warning: peer is NATed but source port is still udp/%d. "
-		       "IPsec-passthrough NAT device suspected -- NAT-T may not work.",
-		       IKE_UDP_PORT
-		       );
-	}
 }
 
-int nat_traversal_espinudp_socket(int sk, const char *fam, u_int32_t type)
+int nat_traversal_espinudp_socket(int sk, const char *fam )
 {
 	int r = -1;
 	struct ifreq ifr;
@@ -710,32 +656,33 @@ int nat_traversal_espinudp_socket(int sk, const char *fam, u_int32_t type)
 		break;
 	}
 	fdp[0] = sk;
-	fdp[1] = type;
+	fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
 	r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr);
 	if (r == -1) {
 		DBG(DBG_NATT,
 		    DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for "
 			    "new style NAT-T family %s (errno=%d)",
-			    type, fam, errno));
+			    ESPINUDP_WITH_NON_ESP, fam, errno));
 	} else {
 		DBG(DBG_NATT,
 		    DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for "
-			    "new style NAT-T family %s", type, fam));
+			    "new style NAT-T family %s", ESPINUDP_WITH_NON_ESP, fam));
 		return r;
 	}
 
 #if defined(KLIPS)
 	DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old style NAT-T"));
+	const int type = ESPINUDP_WITH_NON_ESP;
 	r = setsockopt(sk, SOL_UDP, UDP_ESPINUDP, &type, sizeof(type));
 	if (r == -1) {
 		DBG(DBG_NATT,
 		    DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for "
 			    "old style NAT-T family %s (errno=%d)",
-			    type, fam, errno));
+			    ESPINUDP_WITH_NON_ESP, fam, errno));
 	} else {
 		DBG(DBG_NATT,
 		    DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for "
-			    "new style NAT-T family %s", type, fam));
+			    "new style NAT-T family %s", ESPINUDP_WITH_NON_ESP, fam));
 		return r;
 	}
 # else
@@ -745,8 +692,9 @@ int nat_traversal_espinudp_socket(int sk, const char *fam, u_int32_t type)
 
 	loglog(RC_LOG_SERIOUS,
 	       "NAT-Traversal: ESPINUDP(%d) not supported by kernel for family %s",
-	       type, fam);
-	disable_nat_traversal(type);
+	       ESPINUDP_WITH_NON_ESP, fam);
+	libreswan_log("NAT-Traversal is turned OFF due to lack of KERNEL support");
+	nat_traversal_enabled = FALSE;
 	return -1;
 }
 
@@ -980,7 +928,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	}
 
 	/**
-	 * If we're initiator and NAT-T (with port floating) is detected, we
+	 * If we're initiator and NAT-T is detected, we
 	 * need to change port (MAIN_I3, QUICK_I1 or AGGR_I2)
 	 */
 	if ( ((st->st_state == STATE_MAIN_I3) ||
@@ -1123,9 +1071,8 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 void show_setup_natt()
 {
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "nat_traversal=%s, keep_alive=%d, nat_ikeport=%d, disable_port_floating=%s",
+	whack_log(RC_COMMENT, "nat_traversal=%s, keep_alive=%d, nat_ikeport=%d",
 		nat_traversal_enabled ? "yes" : "no",
 		nat_kap,
-		pluto_natt_float_port,
-		nat_traversal_support_port_floating ? "no" : "yes");
+		pluto_natt_float_port);
 }

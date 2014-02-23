@@ -139,12 +139,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					if (fd < 0)
 						break;
 
-					if (nat_traversal_support_non_ike &&
-					    addrtypeof(&ifp->addr) == AF_INET)
-						nat_traversal_espinudp_socket(
-							fd, "IPv4",
-							ESPINUDP_WITH_NON_IKE);
-
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
 					id = alloc_thing(struct iface_dev,
@@ -191,8 +185,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(
-							fd, "IPv4",
-							ESPINUDP_WITH_NON_ESP);
+							fd, "IPv4");
 						q = alloc_thing(
 							struct iface_port,
 							"struct iface_port");

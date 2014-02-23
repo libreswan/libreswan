@@ -191,9 +191,7 @@ static void usage(const char *mess)
 		" [ --debug-pfkey]"
 		" [ --debug-nat-t]"
 		" \\\n\t"
-		"[--nat_traversal] [--keep_alive <delay_sec>]"
-		" \\\n\t"
-		"[--disable_port_floating]"
+		"[--keep_alive <delay_sec>]"
 		" \\\n\t"
 		"[--virtual_private <network_list>]"
 		"\n"
@@ -433,9 +431,6 @@ int main(int argc, char **argv)
 	pluto_shared_secrets_file =
 		DISCARD_CONST(char *, SHARED_SECRETS_FILE);
 
-	/** Overridden by nat_traversal= in ipsec.conf */
-	bool nat_traversal = FALSE;
-	bool nat_t_spf = TRUE; /* support port floating */
 	unsigned int keep_alive = 0;
 
 	/** Overridden by virtual_private= in ipsec.conf */
@@ -514,10 +509,10 @@ int main(int argc, char **argv)
 			{ "ipsec_dir", required_argument, NULL, 'f' },
 			{ "foodgroupsdir", required_argument, NULL, 'f' },
 			{ "adns", required_argument, NULL, 'a' },
-			{ "nat_traversal", no_argument, NULL, '1' },
+			{ "nat_traversal", no_argument, NULL, '1' }, /* obsoleted, ignored */
 			{ "keep_alive", required_argument, NULL, '2' },
 			{ "force_keepalive", no_argument, NULL, '3' }, /* obsolete, ignored */
-			{ "disable_port_floating", no_argument, NULL, '4' },
+			{ "disable_port_floating", no_argument, NULL, '4' }, /* obsolete, ignored */
 			{ "debug-nat_t", no_argument, NULL, '5' },
 			{ "debug-nattraversal", no_argument, NULL, '5' },
 			{ "debug-nat-t", no_argument, NULL, '5' },
@@ -854,18 +849,17 @@ int main(int argc, char **argv)
 			log_to_perpeer = TRUE;
 			continue;
 
-		case '1': /* --nat_traversal */
-			nat_traversal = TRUE;
+		case '1': /* --nat_traversal has been obsoleted*/
+			libreswan_log("Ignored obsoleted option --nat_traversal");
 			continue;
 		case '2': /* --keep_alive */
 			keep_alive = atoi(optarg);
 			continue;
 		case '3': /* --force_keepalive has been obsoleted */
-			libreswan_log(
-				"Ignored obsoleted option --force_keepalive");
+			libreswan_log("Ignored obsoleted option --force_keepalive");
 			continue;
-		case '4': /* --disable_port_floating */
-			nat_t_spf = FALSE;
+		case '4': /* --disable_port_floating has been obsoleted */
+			libreswan_log("Ignored obsoleted option --disable_port_floating");
 			continue;
 		case '5': /* --debug-nat_t */
 			base_debugging |= DBG_NATT;
@@ -940,10 +934,7 @@ int main(int argc, char **argv)
 
 			pluto_natt_float_port =
 				cfg->setup.options[KBF_NATIKEPORT];
-			nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
 			keep_alive = cfg->setup.options[KBF_KEEPALIVE];
-			nat_t_spf =
-				!cfg->setup.options[KBF_DISABLEPORTFLOATING];
 
 			set_cfg_string(&virtual_private,
 				       cfg->setup.strings[KSF_VIRTUALPRIVATE]);
@@ -1310,7 +1301,7 @@ int main(int argc, char **argv)
 
 /** Initialize all of the various features */
 
-	init_nat_traversal(nat_traversal, keep_alive, nat_t_spf);
+	init_nat_traversal(keep_alive);
 
 	init_virtual_ip(virtual_private);
 	/* obsoletd by nss code init_rnd_pool(); */

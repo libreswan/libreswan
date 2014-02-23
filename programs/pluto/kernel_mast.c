@@ -307,12 +307,6 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				q->port = pluto_port;
 				q->ike_float = FALSE;
 
-				if (nat_traversal_support_non_ike &&
-				    addrtypeof(&ifp->addr) == AF_INET)
-					nat_traversal_espinudp_socket(fd,
-								      "IPv4",
-								      ESPINUDP_WITH_NON_IKE);
-
 				/* done with primary interface */
 				q->next = interfaces;
 				interfaces = q;
@@ -329,8 +323,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				 * the kernel did not support it, and gave an error
 				 * it one tried to turn it on.
 				 */
-				if (nat_traversal_support_port_floating &&
-				    addrtypeof(&ifp->addr) == AF_INET) {
+				if (addrtypeof(&ifp->addr) == AF_INET) {
 					fd = create_socket(ifp,
 							   q->ip_dev->id_vname,
 							   pluto_natt_float_port);
@@ -342,8 +335,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						break;
 					}
 					nat_traversal_espinudp_socket(fd,
-								      "IPv4",
-								      ESPINUDP_WITH_NON_ESP);
+								      "IPv4");
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
 					q->ip_dev = id;
