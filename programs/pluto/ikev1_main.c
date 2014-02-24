@@ -646,7 +646,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 			for (; d != NULL; d = d->hp_next) {
 				if (d->policy & POLICY_IKEV1_DISABLE) {
-					loglog(RC_LOG_SERIOUS,
+					DBG(DBG_CONTROL,DBG_log(
 						"discard matching conn %s for "
 						"I1 from %s:%u. %s %s %s has "
 						"ikev2=insist ", d->name,
@@ -657,7 +657,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 						" with policy=" : "",
 						(policy != LEMPTY) ?
 						bitnamesof(sa_policy_bit_names,
-							policy) : "");
+							policy) : ""));
 					d=NULL;
 					continue;
 				}
