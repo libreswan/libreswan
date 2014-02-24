@@ -515,8 +515,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-	if ((st->hidden_variables.st_nat_traversal &
-	     NAT_T_WITH_PORT_FLOATING) &&
+        if (st->hidden_variables.st_nat_traversal &&
 	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
 	    ((id->isaid_doi_specific_b == 0) ||
 	     (id->isaid_doi_specific_b == pluto_natt_float_port))) {
