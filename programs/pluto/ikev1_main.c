@@ -649,7 +649,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 					loglog(RC_LOG_SERIOUS,
 						"discard matching conn %s for "
 						"I1 from %s:%u. %s %s %s has "
-						"ikev2=insist ", c->name,
+						"ikev2=insist ", d->name,
 						ip_str(&md->iface->ip_addr),
 						ntohs(portof(&md->iface->ip_addr)),
 						d->name,
