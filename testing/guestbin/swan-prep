@@ -134,6 +134,10 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	# test specific files
 	ipsecconf = "/testing/pluto/%s/%s.conf"%(testname,hostname)
 	ipsecsecrets = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
+	xl2tpdconf = "/testing/pluto/%s/%s.xl2tpd.conf"%(testname,hostname)
+	pppoptions = "/testing/pluto/%s/%s.ppp-options.xl2tpd"%(testname,hostname)
+	chapfile = "/testing/pluto/%s/chap-secrets"%testname
+
 	if not os.path.isfile(ipsecconf):
 		ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf"%hostname
 	if not os.path.isfile(ipsecsecrets):
@@ -151,6 +155,13 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	shutil.copy(ipsecconf, dstconf)
 	shutil.copy(ipsecsecrets,dstsecrets);
 	os.chmod(dstsecrets, 0600)
+
+	if os.path.isfile(xl2tpdconf):
+		shutil.copyfile(xl2tpdconf, "/etc/xl2tpd/xl2tpd.conf")
+	if os.path.isfile(pppoptions):
+		shutil.copyfile(pppoptions, "/etc/ppp/options.xl2tpd")
+	if os.path.isfile(chapfile):
+		shutil.copyfile(chapfile, "/etc/ppp/chap-secrets")
     
 	if args.x509: 
 		if (userland == "libreswan" or userland == "openswan"):
