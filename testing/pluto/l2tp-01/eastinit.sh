@@ -7,6 +7,5 @@ ipsec auto --route north--east-pass
 # make sure that clear text does not get through
 iptables -A INPUT  -i eth1 -d 192.1.2.23 -p udp --dport 1701 -j REJECT
 iptables -A OUTPUT -o eth1 -s 192.1.2.23 -p udp --sport 1701 -j REJECT
-mount --bind /testing/pluto/l2tp-01 /etc/ppp
-(cd /tmp && xl2tpd -D 2>/tmp/l2tpd.log ) &
+(cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
 echo done

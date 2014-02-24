@@ -9,7 +9,6 @@ ipsec setup start
 ipsec auto --add north--east-l2tp
 ipsec auto --add north--east-pass
 ipsec auto --route north--east-pass
-mount --bind /testing/pluto/l2tp-01 /etc/ppp
-(cd /tmp && xl2tpd -D 2>/tmp/l2tpd.log ) &
+(cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
 ipsec auto --route north--east-l2tp
 echo done
