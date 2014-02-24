@@ -82,3 +82,6 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*Neither AVX nor SSSE3 is available.*$/d
 /^.*ipsec: module verification failed.*$/d
 /^.*ip6_tables: (C) 2000-2006 Netfilter Core Team$/d
+/^.*PPP generic driver version.*$/d
+/^.*NET: Registered protocol family 24$/d
+
