@@ -56,13 +56,6 @@
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
-/**
- * NAT-Traversal methods which use floating port
- */
-#define NAT_T_WITH_PORT_FLOATING \
-	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
-	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
-	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 
 /**
  * NAT-Traversal methods which use officials values (RFC)

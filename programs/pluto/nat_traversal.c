@@ -934,8 +934,6 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	if ( ((st->st_state == STATE_MAIN_I3) ||
 	      (st->st_state == STATE_QUICK_I1) ||
 	      (st->st_state == STATE_AGGR_I2)) &&
-	     (st->hidden_variables.st_nat_traversal &
-	      NAT_T_WITH_PORT_FLOATING) &&
 	     (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	     (st->st_localport != pluto_natt_float_port)) {
 		DBG(DBG_NATT,
