@@ -471,7 +471,6 @@ DEBUG_NO_STATIC void klips_header_cache_update(struct hh_cache *hh,
 		    "klips_debug:ipsec_tunnel: "
 		    "Revectored cache_update\n");
 	prv->dev->header_ops->cache_update(hh, prv->dev, haddr);
-	return;
 }
 
 const struct header_ops klips_header_ops ____cacheline_aligned = {
@@ -1368,7 +1367,6 @@ DEBUG_NO_STATIC void ipsec_tunnel_cache_update(struct hh_cache *hh,
 #else
 	prv->header_cache_update(hh, prv->dev, haddr);
 #endif
-	return;
 }
 
 #ifdef HAVE_NETDEV_HEADER_OPS

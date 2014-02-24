@@ -190,8 +190,8 @@ int main(int argc, char *argv[])
 	char virtname[64];
 	struct stat sts;
 
-	memset(&ifr, 0, sizeof(ifr));
-	memset(&shc, 0, sizeof(shc));
+	zero(&ifr);
+	zero(&shc);
 	virtname[0] = '\0';
 	progname = argv[0];
 
@@ -235,12 +235,12 @@ int main(int argc, char *argv[])
 		case 'C':
 			check_conflict(shc.cf_cmd, createdelete);
 			createdelete = SADB_X_PLUMBIF;
-			strncat(virtname, optarg, sizeof(virtname) - 1);
+			jam_str(virtname, sizeof(virtname), optarg);
 			break;
 		case 'D':
 			check_conflict(shc.cf_cmd, createdelete);
 			createdelete = SADB_X_UNPLUMBIF;
-			strncat(virtname, optarg, sizeof(virtname) - 1);
+			jam_str(virtname, sizeof(virtname), optarg);
 			break;
 
 		case 'V':

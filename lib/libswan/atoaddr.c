@@ -34,21 +34,21 @@ static const char *trydotted(const char *, size_t, struct in_addr *);
 static const char *getbyte(const char **, const char *, int *);
 
 /*
-   - atoaddr - convert ASCII name or dotted-decimal address to binary address
+ * atoaddr - convert ASCII name or dotted-decimal address to binary address
  */
-const char *                    /* NULL for success, else string literal */
+const char *	/* NULL for success, else string literal */
 atoaddr(src, srclen, addrp)
 const char *src;
-size_t srclen;                  /* 0 means "apply strlen" */
+size_t srclen;	/* 0 means "apply strlen" */
 struct in_addr *addrp;
 {
 	struct hostent *h;
 	struct netent *ne = NULL;
 	const char *oops;
-#       define  HEXLEN  10      /* strlen("0x11223344") */
-#       ifndef ATOADDRBUF
-#       define  ATOADDRBUF      100
-#       endif
+#define HEXLEN 10	/* strlen("0x11223344") */
+#ifndef ATOADDRBUF
+#define ATOADDRBUF 100
+#endif
 	char namebuf[ATOADDRBUF];
 	char *p = namebuf;
 	char *q;
@@ -68,10 +68,10 @@ struct in_addr *addrp;
 	/* try it as dotted decimal */
 	oops = trydotted(src, srclen, addrp);
 	if (oops == NULL)
-		return NULL;            /* it worked */
+		return NULL;	/* it worked */
 
 	if (*oops != '?')
-		return oops;            /* it *was* probably meant as a d.q. */
+		return oops;	/* it *was* probably meant as a d.q. */
 
 	/* try it as a name -- first, NUL-terminate it */
 	if (srclen > sizeof(namebuf) - 1) {
@@ -112,12 +112,12 @@ struct in_addr *addrp;
 }
 
 /*
-   - try8hosthex - try conversion as an eight-digit host-order hex number
+ * try8hosthex - try conversion as an eight-digit host-order hex number
  */
-const char *                    /* NULL for success, else string literal */
+const char *	/* NULL for success, else string literal */
 try8hosthex(src, srclen, addrp)
 const char *src;
-size_t srclen;                  /* should be 8 */
+size_t srclen;	/* should be 8 */
 struct in_addr *addrp;
 {
 	const char *oops;
@@ -135,12 +135,12 @@ struct in_addr *addrp;
 }
 
 /*
-   - try8hex - try conversion as an eight-digit network-order hex number
+ * try8hex - try conversion as an eight-digit network-order hex number
  */
-const char *                    /* NULL for success, else string literal */
+const char *	/* NULL for success, else string literal */
 try8hex(src, srclen, addrp)
 const char *src;
-size_t srclen;                  /* should be 8 */
+size_t srclen;	/* should be 8 */
 struct in_addr *addrp;
 {
 	const char *oops;
@@ -154,36 +154,36 @@ struct in_addr *addrp;
 }
 
 /*
-   - trydotted - try conversion as dotted decimal
+ * trydotted - try conversion as dotted decimal
  *
  * If the first char of a complaint is '?', that means "didn't look like
  * dotted decimal at all".
  */
-const char *                    /* NULL for success, else string literal */
+const char *	/* NULL for success, else string literal */
 trydotted(src, srclen, addrp)
 const char *src;
 size_t srclen;
 struct in_addr *addrp;
 {
-	const char *stop = src + srclen;        /* just past end */
+	const char *stop = src + srclen;	/* just past end */
 	int byte;
 	const char *oops;
 	unsigned long addr;
 	int i;
-#       define  NBYTES  4
-#       define  BYTE    8
+#define NBYTES 4
+#define BYTE 8
 
 	addr = 0;
 	for (i = 0; i < NBYTES && src < stop; i++) {
 		oops = getbyte(&src, stop, &byte);
 		if (oops != NULL) {
 			if (*oops != '?')
-				return oops;    /* bad number */
+				return oops;	/* bad number */
 
 			if (i > 1)
-				return oops + 1;        /* failed number */
+				return oops + 1;	/* failed number */
 
-			return oops;                    /* with leading '?' */
+			return oops;	/* with leading '?' */
 		}
 		addr = (addr << BYTE) | byte;
 		if (i < 3 && src < stop && *src++ != '.') {
@@ -193,7 +193,8 @@ struct in_addr *addrp;
 
 
 			else
-				return "syntax error in dotted-decimal address";
+				return
+					"syntax error in dotted-decimal address";
 
 
 		}
@@ -207,7 +208,8 @@ struct in_addr *addrp;
 }
 
 /*
-   - getbyte - try to scan a byte in dotted decimal
+ * getbyte - try to scan a byte in dotted decimal
+ *
  * A subtlety here is that all this arithmetic on ASCII digits really is
  * highly portable -- ANSI C guarantees that digits 0-9 are contiguous.
  * It's easier to just do it ourselves than set up for a call to atoul().
@@ -215,11 +217,11 @@ struct in_addr *addrp;
  * If the first char of a complaint is '?', that means "didn't look like a
  * number at all".
  */
-const char *                    /* NULL for success, else string literal */
+const char *	/* NULL for success, else string literal */
 getbyte(srcp, stop, retp)
-const char **srcp;              /* *srcp is updated */
-const char *stop;               /* first untouchable char */
-int *retp;                      /* return-value pointer */
+const char **srcp;	/* *srcp is updated */
+const char *stop;	/* first untouchable char */
+int *retp;	/* return-value pointer */
 {
 	char c;
 	const char *p;
@@ -240,7 +242,7 @@ int *retp;                      /* return-value pointer */
 
 
 
-#endif  /* NOLEADINGZEROS */
+#endif	/* NOLEADINGZEROS */
 
 	/* must be decimal, if it's numeric at all */
 	no = 0;

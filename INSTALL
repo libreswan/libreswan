@@ -3,31 +3,9 @@ Please read the documentation in docs or at https://libreswan.org/
 
 Specific vendors/distribution build instructions available in packaging/
 
-Building userland: 
-
-	make programs 
-	sudo make install
-
-You can enable/disable features in Makefile.inc
-
-Building KLIPS kernel module on Linux 2.6 or higher for the running kernel:
-
-	make module
-	sudo make minstall
-
-Build for a kernel different from the running kernel:
-
-	make KERNELSRC=//usr/src/linux/linux-9.42 module
-
-Building KLIPS kernel module for the old Linux 2.4 kernel
-
-	make module24 
-	sudo make minstall24
-
-
-Build requirements:
-bison flex redhat-rpm-config pkgconfig gcc make xmlto
-gmp-devel,  nss-devel, nspr-devel
+Build requirements
+------------------
+bison flex pkgconfig gcc make xmlto gmp-devel nss-devel nspr-devel
 
 for systemd: pkgconfig hostname systemd
 for pam/xauth: pam-devel
@@ -36,8 +14,27 @@ for FIPS support: fipscheck-devel
 for libcap-ng support: libcap-ng-devel
 for CRL fetching support: openldap-devel curl-devel
 
-KVM testing runtime requirements:
+Building userland
+-----------------
 
-kvm, qemu, libvirt, virt-manager, sudo, pexpect, python-setproctitle,
-sudo, bridge-utils, 9p fs with read-write support
+	make programs 
+	sudo make install
+
+You can enable/disable features in Makefile.inc
+
+Optional building alternative KLIPS IPsec stack:
+
+on Linux 2.6 or higher for the running kernel:
+
+	make module
+	sudo make module_install
+
+Build for a kernel different from the running kernel:
+
+	make KERNELSRC=//usr/src/kernel/linux-9.42 module
+
+Building KLIPS kernel module for the old Linux 2.4 kernel
+
+	make module24 
+	sudo make minstall24
 

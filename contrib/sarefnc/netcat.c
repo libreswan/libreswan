@@ -1127,7 +1127,7 @@ dol_noop:
 	errno = 0;
 	x = 0;          /* use as a flag... */
 	if (rad)        /* xxx: fix to go down the *list* if we have one? */
-		if (memcmp(rad, whozis->iaddrs, sizeof(SA)))
+		if (!memeq(rad, whozis->iaddrs, sizeof(SA)))
 			x = 1;
 	if (rp)
 		if (z != rp)

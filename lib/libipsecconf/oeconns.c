@@ -83,7 +83,7 @@ static const struct oe_conn oe_packet_default = {
 	.oe_sc = {
 		.policy = POLICY_TUNNEL | POLICY_RSASIG | POLICY_ENCRYPT |
 			  POLICY_PFS |
-			  POLICY_OPPO | POLICY_FAIL_PASS | POLICY_IKEV2_ALLOW,
+			  POLICY_OPPORTUNISTIC | POLICY_FAIL_PASS | POLICY_IKEV2_ALLOW,
 
 		.options[KBF_REKEY] = FALSE,
 		.options_set[KBF_REKEY] = TRUE,
@@ -181,7 +181,7 @@ static const struct oe_conn oe_clear_or_private = {
 	.oe_sc = {
 		.policy = POLICY_RSASIG | POLICY_ENCRYPT | POLICY_TUNNEL |
 			  POLICY_PFS |
-			  POLICY_DONT_REKEY | POLICY_OPPO | POLICY_GROUP |
+			  POLICY_DONT_REKEY | POLICY_OPPORTUNISTIC | POLICY_GROUP |
 			  POLICY_GROUTED |
 			  POLICY_SHUNT_PASS | POLICY_FAIL_PASS |
 			  POLICY_IKEV2_ALLOW,
@@ -239,7 +239,7 @@ static const struct oe_conn oe_private_or_clear = {
 	.oe_sc = {
 		.policy = POLICY_RSASIG | POLICY_ENCRYPT | POLICY_TUNNEL |
 			  POLICY_PFS |
-			  POLICY_DONT_REKEY | POLICY_OPPO | POLICY_GROUP |
+			  POLICY_DONT_REKEY | POLICY_OPPORTUNISTIC | POLICY_GROUP |
 			  POLICY_GROUTED |
 			  POLICY_FAIL_PASS | POLICY_IKEV2_ALLOW,
 
@@ -297,7 +297,7 @@ static const struct oe_conn oe_private = {
 	.oe_sc = {
 		.policy = POLICY_RSASIG | POLICY_ENCRYPT | POLICY_TUNNEL |
 			  POLICY_PFS |
-			  POLICY_OPPO | POLICY_GROUP | POLICY_GROUTED |
+			  POLICY_OPPORTUNISTIC | POLICY_GROUP | POLICY_GROUTED |
 			  POLICY_FAIL_DROP | POLICY_IKEV2_ALLOW,
 
 		.options[KBF_REKEY] = FALSE,    /* really want REKEY if used */

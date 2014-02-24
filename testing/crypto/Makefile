@@ -22,8 +22,8 @@ def:
 	@echo "Please read doc/intro.html or INSTALL before running make"
 	@false
 
-check: 	${LIBRESWANSRCDIR}/umlsetup.sh
-	. ${LIBRESWANSRCDIR}/umlsetup.sh; . ./setup.sh; . ${UTILS}/functions.sh; . ./TESTLIST
+check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
+	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ./setup.sh; . ${UTILS}/functions.sh; . ./TESTLIST
 
 install install_file_list checkprograms programs:
 	@true

@@ -393,7 +393,7 @@ bool collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
 
 	for (; d != NULL; d = d->hp_next) {
 		/* must be a road warrior connection */
-		if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPO) &&
+		if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPORTUNISTIC) &&
 		    d->spd.that.ca.ptr != NULL) {
 			generalName_t *gn;
 			bool new_entry = TRUE;

@@ -48,7 +48,7 @@
 #include "rnd.h"
 #include "timer.h"
 #include "whack.h"
-#include "dpd.h"
+#include "ikev1_dpd.h"
 #include "lswtime.h"
 #include "ikev2.h"
 
@@ -59,7 +59,6 @@
  * have information like event type, expiration time and a pointer
  * to event specific data (for example, to a state structure).
  */
-static void delete_liveness_event(struct state *st);	/* forward */
 
 static struct event *evlist = (struct event *) NULL;
 
@@ -460,7 +459,8 @@ static void liveness_check(struct state *st)
 	}
 
 	/* don't bother sending the check and reset
-	 * liveness stats if there has been incoming traffic */
+	 * liveness stats if there has been incoming traffic
+	 */
 	if (get_sa_info(st, TRUE, &last_msg)) {
 		if (last_msg < c->dpd_timeout) {
 			pst->st_pend_liveness = FALSE;
@@ -821,7 +821,7 @@ void delete_event(struct state *st)
 	}
 }
 
-static void delete_liveness_event(struct state *st)
+void delete_liveness_event(struct state *st)
 {
 	if (st->st_liveness_event != NULL) {
 		struct event **ev;

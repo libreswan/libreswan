@@ -588,10 +588,8 @@ static void handle_known_vendorid(struct msg_digest *md,
 
 	case VID_NATT_IETF_00:
 	case VID_NATT_IETF_01:
-		if (!nat_traversal_support_non_ike) {
-			vid_useful = FALSE;
+			vid_useful = FALSE; /* no longer supported */
 			break;
-		}
 		if (nat_traversal_enabled && !md->quirks.nat_traversal_vid)
 			md->quirks.nat_traversal_vid = vid->id;
 		break;
@@ -606,16 +604,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 	case VID_NATT_RFC:
-		if (!nat_traversal_support_port_floating) {
-			loglog(RC_LOG_SERIOUS,
-			       "ignoring received Vendor ID payload [%s] method=%s, "
-			       "because port floating is off",
-			       vid->descr,
-			       enum_name(&natt_method_names,
-					 nat_traversal_vid_to_method(
-						 vid->id)));
-			vid_useful = FALSE;
-		} else {
+		{
 			if (md->quirks.nat_traversal_vid < vid->id) {
 				DBG(DBG_NATT, DBG_log(" method set to=%s ",
 						      enum_name(&
@@ -730,15 +719,14 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	for (pvid = vid_tab; pvid->id; pvid++) {
 		if (pvid->vid && vid && pvid->vid_len && len) {
 			if (pvid->vid_len == len) {
-				if (memcmp(pvid->vid, vid, len) == 0) {
+				if (memeq(pvid->vid, vid, len)) {
 					handle_known_vendorid(md, vid,
 							      len, pvid, st);
 					return;
 				}
 			} else if ((pvid->vid_len < len)   &&
 				   (pvid->flags & VID_SUBSTRING)) {
-				if (memcmp(pvid->vid, vid,
-					   pvid->vid_len) == 0) {
+				if (memeq(pvid->vid, vid, pvid->vid_len)) {
 					handle_known_vendorid(md, vid, len,
 							      pvid, st);
 					return;
@@ -753,7 +741,8 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	{
 		char log_vid[2 * MAX_LOG_VID_LEN + 1];
 		size_t i;
-		memset(log_vid, 0, sizeof(log_vid));
+
+		zero(&log_vid);
 		for (i = 0; (i < len) && (i < MAX_LOG_VID_LEN); i++) {
 			log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
 			log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];

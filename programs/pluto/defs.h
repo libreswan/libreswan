@@ -42,9 +42,6 @@ extern void exit_pluto(int /*status*/) NEVER_RETURNS;
 
 typedef u_int32_t msgid_t;      /* Network order for ikev1, host order for ikev2 */
 
-/* zero all bytes */
-#define zero(x) memset((x), '\0', sizeof(*(x)))
-
 /* are all bytes 0? */
 extern bool all_zero(const unsigned char *m, size_t len);
 

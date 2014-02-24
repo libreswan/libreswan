@@ -413,7 +413,6 @@ DEBUG_NO_STATIC void pfkey_remove_socket(struct sock *sk)
 	pfkey_sock_list_grab();
 	sk_del_node_init(sk);
 	pfkey_sock_list_ungrab();
-	return;
 }
 #else
 
@@ -456,7 +455,6 @@ DEBUG_NO_STATIC void pfkey_remove_socket(struct sock *sk)
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_remove_socket: "
 		    "not found.\n");
-	return;
 }
 #endif
 

@@ -209,25 +209,19 @@ main(int argc, char *argv[]){
 		skq.prf_hash = rsasc[i].prf_hash;
 		skq.oakley_group = rsasc[i].oakley_group;
 		skq.keysize = rsasc[i].keysize;
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->ni,
-				       rsasc[i].ni);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->nr,
-				       rsasc[i].nr);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gi,
-				       rsasc[i].gi);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space, &dhq->gr,
-				       rsasc[i].gr);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space,
-				       &dhq->icookie, rsasc[i].icookie);
-		pluto_crypto_copychunk(&dhq->thespace, dhq->space,
-				       &dhq->rcookie, rsasc[i].rcookie);
+		WIRE_CLONE_CHUNK(*dhq, ni, rsasc[i].ni);
+		WIRE_CLONE_CHUNK(*dhq, nr, rsasc[i].nr);
+		WIRE_CLONE_CHUNK(*dhq, gi, rsasc[i].gi);
+		WIRE_CLONE_CHUNK(*dhq, gr, rsasc[i].gr);
+		WIRE_CLONE_CHUNK(*dhq, icookie, rsasc[i].icookie);
+		WIRE_CLONE_CHUNK(*dhq, rcookie, rsasc[i].rcookie);
 
-		memset(&skeyid, 0, sizeof(skeyid));
-		memset(&skeyid_d, 0, sizeof(skeyid_d));
-		memset(&skeyid_a, 0, sizeof(skeyid_a));
-		memset(&skeyid_e, 0, sizeof(skeyid_e));
-		memset(&new_iv,   0, sizeof(new_iv));
-		memset(&enc_key,  0, sizeof(enc_key));
+		zero(&skeyid);
+		zero(&skeyid_d);
+		zero(&skeyid_a);
+		zero(&skeyid_e);
+		zero(&new_iv);
+		zero(&enc_key);
 
 		calc_skeyids_iv(&skq,
 				rsasc[i].shared,

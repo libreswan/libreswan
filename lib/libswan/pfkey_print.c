@@ -1,5 +1,6 @@
 /*
  * RFC2367 PF_KEYv2 Key management API message parser
+ *
  * Copyright (C) 2003 Michael Richardson <mcr@freeswan.org>
  * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
  *
@@ -12,13 +13,10 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
-
 #include <sys/types.h>
 #include <stdio.h>
 #include <inttypes.h>
-
 #include <libreswan.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
@@ -41,11 +39,13 @@ void pfkey_print(struct sadb_msg *msg, FILE *out)
 	len = IPSEC_PFKEYv2_LEN(msg->sadb_msg_len);
 	len -= sizeof(struct sadb_msg);
 
-	se = (struct sadb_ext *)(&msg[1]);
+	se = (struct sadb_ext *) &msg[1];
 
 	while (len > sizeof(struct sadb_ext)) {
-		uint16_t ext_len = se->sadb_ext_len;	/* in units of IPSEC_PFKEYv2_ALIGN bytes */
-		unsigned elen = IPSEC_PFKEYv2_LEN(ext_len);	/* in units of bytes */
+		/* in units of IPSEC_PFKEYv2_ALIGN bytes */
+		uint16_t ext_len = se->sadb_ext_len;
+		/* in units of bytes */
+		unsigned elen = IPSEC_PFKEYv2_LEN(ext_len);
 		uint16_t ext_type = se->sadb_ext_type;
 		const char *too_small_for = NULL;
 
@@ -55,14 +55,19 @@ void pfkey_print(struct sadb_msg *msg, FILE *out)
 		if (elen > len) {
 			fprintf(out, "short-packet(%u<%u) ", len, elen);
 
-			/* truncate ext_len it to match len */
-			ext_len = IPSEC_PFKEYv2_WORDS(len);	/* partial words are ignored */
+			/*
+			 * truncate ext_len it to match len
+			 *
+			 * partial words are ignored
+			 */
+			ext_len = IPSEC_PFKEYv2_WORDS(len);
 			elen = IPSEC_PFKEYv2_LEN(ext_len);
 			ext_type = SADB_X_EXT_DEBUG;	/* force plain dump */
 		}
 
 		if (elen < sizeof(struct sadb_ext)) {
-			fprintf(out, "ext_len (%u) too small for sadb_ext header ", ext_len);
+			fprintf(out, "ext_len (%u) too small for sadb_ext header ",
+				ext_len);
 			break;
 		}
 
@@ -94,10 +99,14 @@ void pfkey_print(struct sadb_msg *msg, FILE *out)
 			if (elen < sizeof(struct sadb_address)) {
 				too_small_for = "struct sadb_address";
 			} else {
-				struct sadb_address *addr = (struct sadb_address *)se;
-				int alen = IPSEC_PFKEYv2_LEN(addr->sadb_address_len) -
-					   sizeof(struct sadb_address);
-				unsigned char *bytes = (unsigned char *)&addr[1];
+				struct sadb_address *addr =
+					(struct sadb_address *) se;
+				int alen =
+					IPSEC_PFKEYv2_LEN(addr->
+							sadb_address_len) -
+					sizeof(struct sadb_address);
+				unsigned char *bytes =
+					(unsigned char *)&addr[1];
 
 				fprintf(out, "proto=%u prefixlen=%u addr=0x",
 					addr->sadb_address_proto,
@@ -116,8 +125,10 @@ void pfkey_print(struct sadb_msg *msg, FILE *out)
 			if (elen < sizeof(struct sadb_protocol)) {
 				too_small_for = "struct sadb_protocol";
 			} else {
-				struct sadb_protocol *sp = (struct sadb_protocol *)se;
-				fprintf(out, "proto=%u direction=%u flags=%u } ",
+				struct sadb_protocol *sp =
+					(struct sadb_protocol *) se;
+				fprintf(out,
+					"proto=%u direction=%u flags=%u } ",
 					sp->sadb_protocol_proto,
 					sp->sadb_protocol_direction,
 					sp->sadb_protocol_flags);
@@ -134,7 +145,10 @@ void pfkey_print(struct sadb_msg *msg, FILE *out)
 					(struct sadb_lifetime *)se;
 
 				fprintf(out,
-					"allocations=%u bytes=%" PRIu64 " addtime=%" PRIu64 " usetime=%" PRIu64 " packets=%u",
+					"allocations=%u bytes=%" PRIu64
+					" addtime=%" PRIu64
+					" usetime=%" PRIu64
+					" packets=%u",
 					life->sadb_lifetime_allocations,
 					life->sadb_lifetime_bytes,
 					life->sadb_lifetime_addtime,
@@ -180,7 +194,7 @@ void pfkey_print(struct sadb_msg *msg, FILE *out)
 			fprintf(out, "too small for %s ", too_small_for);
 
 		/* skip to next extension header */
-		se = (struct sadb_ext *)(((unsigned char *)se) + elen);
+		se = (struct sadb_ext *) ((unsigned char *) se + elen);
 		len -= elen;
 	}
 

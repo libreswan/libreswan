@@ -664,7 +664,6 @@ DEBUG_NO_STATIC void ipsec_mast_cache_update(struct hh_cache *hh,
 	KLIPS_PRINT(debug_mast & DB_MAST_REVEC,
 		    "klips_debug:ipsec_mast: "
 		    "Revectored cache_update\n");
-	return;
 }
 #endif
 

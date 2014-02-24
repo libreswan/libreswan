@@ -1,0 +1,4 @@
+Interop testcase for libreswan initiator behind nat with virtual ip,
+that is no subnet lives on the road/libreswan side. East is running
+strongwan as responder
+

@@ -1,5 +1,6 @@
 /*
  * convert from binary form of SA ID to ASCII
+ *
  * Copyright (C) 1998, 1999, 2001  Henry Spencer.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +13,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-
 #include "internal.h"
 #include "libreswan.h"
 
@@ -20,32 +20,32 @@ static struct typename {
 	char type;
 	char *name;
 } typenames[] = {
-	{ SA_AH,        "ah" },
-	{ SA_ESP,       "esp" },
-	{ SA_IPIP,      "tun" },
-	{ SA_COMP,      "comp" },
-	{ SA_INT,       "int" },
-	{ 0,            NULL }
+	{ SA_AH, "ah" },
+	{ SA_ESP, "esp" },
+	{ SA_IPIP, "tun" },
+	{ SA_COMP, "comp" },
+	{ SA_INT, "int" },
+	{ 0, NULL }
 };
 
 /*
-   - satoa - convert SA to ASCII "ah507@1.2.3.4"
+ * satoa - convert SA to ASCII "ah507@1.2.3.4"
  */
-size_t                          /* space needed for full conversion */
+size_t	/* space needed for full conversion */
 satoa(sa, format, dst, dstlen)
 struct sa_id sa;
-int format;                     /* character */
-char *dst;                      /* need not be valid if dstlen is 0 */
+int format;	/* character */
+char *dst;	/* need not be valid if dstlen is 0 */
 size_t dstlen;
 {
-	size_t len = 0;         /* 0 means not handled yet */
+	size_t len = 0;	/* 0 means not handled yet */
 	int base;
 	struct typename *tn;
 	char buf[30 + ADDRTOA_BUF];
 
 	switch (format) {
 	case 0:
-		base = 16;      /* temporarily at least */
+		base = 16;	/* temporarily at least */
 		break;
 	case 'd':
 		base = 10;
@@ -63,8 +63,8 @@ size_t dstlen;
 		return 0;
 
 	if (strcmp(tn->name, PASSTHROUGHTYPE) == 0 &&
-	    sa.spi == PASSTHROUGHSPI &&
-	    sa.dst.s_addr == PASSTHROUGHDST) {
+		sa.spi == PASSTHROUGHSPI &&
+		sa.dst.s_addr == PASSTHROUGHDST) {
 		strcpy(buf, PASSTHROUGHNAME);
 		len = strlen(buf);
 	} else if (sa.proto == SA_INT && sa.dst.s_addr == 0) {
@@ -97,7 +97,7 @@ size_t dstlen;
 		len = strlen(buf);
 		len +=
 			ultoa(ntohl(sa.spi), base, buf + len, sizeof(buf) -
-			      len);
+				len);
 		*(buf + len - 1) = '@';
 		len += addrtoa(sa.dst, 0, buf + len, sizeof(buf) - len);
 	}

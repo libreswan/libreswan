@@ -1,5 +1,6 @@
 /*
  * convert from text form of unsigned long to binary
+ *
  * Copyright (C) 2000  Henry Spencer.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,18 +13,17 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-
 #include "internal.h"
 #include "libreswan.h"
 
 /*
-   - ttoul - convert text substring to unsigned long number
+ * ttoul - convert text substring to unsigned long number
  */
-const char *                    /* NULL for success, else string literal */
+const char *	/* NULL for success, else string literal */
 ttoul(src, srclen, base, resultp)
 const char *src;
-size_t srclen;                  /* 0 means strlen(src) */
-int base;                       /* 0 means figure it out */
+size_t srclen;	/* 0 means strlen(src) */
+int base;	/* 0 means figure it out */
 unsigned long *resultp;
 {
 	const char *stop;
@@ -43,7 +43,7 @@ unsigned long *resultp;
 
 	if (base == 0) {
 		if (srclen > 2 && *src == '0' &&
-		    (*(src + 1) == 'x' || *(src + 1) == 'X'))
+			(*(src + 1) == 'x' || *(src + 1) == 'X'))
 			return ttoul(src + 2, srclen - 2, 16, resultp);
 
 		if (srclen > 1 && *src == '0')

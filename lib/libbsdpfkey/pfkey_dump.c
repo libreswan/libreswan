@@ -357,8 +357,6 @@ struct sadb_msg *m;
 
 	/* XXX DEBUG */
 	printf("refcnt=%u\n", m->sadb_msg_reserved);
-
-	return;
 }
 
 void pfkey_spdump(m)
@@ -480,8 +478,6 @@ struct sadb_msg *m;
 
 	/* XXX TEST */
 	printf("\trefcnt=%u\n", m->sadb_msg_reserved);
-
-	return;
 }
 
 /*
@@ -531,7 +527,7 @@ u_int family, pref, port, ulp;
 		snprintf(prefbuf, sizeof(prefbuf), "/%u", pref);
 
 	if (ulp == IPPROTO_ICMPV6) {
-		memset(portbuf, 0, sizeof(portbuf));
+		zero(&portbuf);
 	} else {
 		if (port == IPSEC_PORT_ANY)
 			snprintf(portbuf, sizeof(portbuf), "[%s]", "any");

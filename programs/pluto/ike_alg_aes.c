@@ -46,9 +46,9 @@ static void do_aes(u_int8_t *buf, size_t buf_len, u_int8_t *key,
 
 	CK_MECHANISM_TYPE ciphermech;
 	SECItem ivitem;
-	SECItem*           secparam = NULL;
-	PK11SymKey*        symkey = NULL;
-	PK11Context*       enccontext = NULL;
+	SECItem *secparam;
+	PK11SymKey *symkey = NULL;
+	PK11Context *enccontext;
 	SECStatus rv;
 	int outlen;
 
@@ -79,7 +79,8 @@ static void do_aes(u_int8_t *buf, size_t buf_len, u_int8_t *key,
 	tmp_buf = PR_Malloc((PRUint32)buf_len);
 
 	if (!enc) {
-		memcpy(new_iv = iv_bak,
+		new_iv = iv_bak;
+		memcpy(new_iv,
 		       (char*) buf + buf_len - AES_CBC_BLOCK_SIZE,
 		       AES_CBC_BLOCK_SIZE);
 	}
@@ -93,8 +94,8 @@ static void do_aes(u_int8_t *buf, size_t buf_len, u_int8_t *key,
 		       PR_GetError());
 		abort();
 	}
-	rv =
-		PK11_CipherOp(enccontext, tmp_buf, &outlen, buf_len, buf,
+
+	rv = PK11_CipherOp(enccontext, tmp_buf, &outlen, buf_len, buf,
 			      buf_len);
 	if (rv != SECSuccess) {
 		loglog(RC_LOG_SERIOUS,
@@ -111,10 +112,9 @@ static void do_aes(u_int8_t *buf, size_t buf_len, u_int8_t *key,
 	memcpy(iv, new_iv, AES_CBC_BLOCK_SIZE);
 	PR_Free(tmp_buf);
 
-	if (secparam)
+	if (secparam != NULL)
 		SECITEM_FreeItem(secparam, PR_TRUE);
 	DBG(DBG_CRYPT, DBG_log("NSS do_aes: exit"));
-
 }
 
 struct encrypt_desc algo_aes =

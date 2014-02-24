@@ -428,8 +428,7 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username &&
-			    st->st_xauth_username[0] != '\0')
+			if (st->st_xauth_username[0] != '\0')
 				libreswan_log("%s XAUTHuser=%s", statebuf,
 					      st->st_xauth_username);
 			else
@@ -447,8 +446,7 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username &&
-			    st->st_xauth_username[0] != '\0')
+			if (st->st_xauth_username[0] != '\0')
 				libreswan_log("%s XAUTHuser=%s", statebuf,
 					      st->st_xauth_username);
 			else
@@ -466,8 +464,7 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username &&
-			    st->st_xauth_username[0] != '\0')
+			if (st->st_xauth_username[0] != '\0')
 				libreswan_log("%s XAUTHuser=%s", statebuf,
 					      st->st_xauth_username);
 			else
@@ -482,6 +479,10 @@ void delete_state(struct state *st)
 	/* If DPD is enabled on this state object, clear any pending events */
 	if (st->st_dpd_event != NULL)
 		delete_dpd_event(st);
+
+	/* clear any ikev2 liveness events */
+	if (st->st_ikev2)
+		delete_liveness_event(st);
 
 	/* if there is a suspended state transition, disconnect us */
 	if (st->st_suspended_md != NULL) {
@@ -777,7 +778,8 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	struct spd_route *sr;
 
 	/* save this connection's isakmp SA,
-	 * since it will get set to later SOS_NOBODY */
+	 * since it will get set to later SOS_NOBODY
+	 */
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
@@ -841,57 +843,13 @@ void delete_p2states_by_connection(struct connection *c)
 	enum connection_kind ck = c->kind;
 
 	/* save this connection's isakmp SA,
-	 * since it will get set to later SOS_NOBODY */
+	 * since it will get set to later SOS_NOBODY
+	 */
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
 	foreach_states_by_connection_func(c, same_phase1_no_phase2,
 					  delete_state_function,
-					  &parent_sa);
-	if (ck == CK_INSTANCE) {
-		c->kind = ck;
-		delete_connection(c, TRUE);
-	}
-}
-
-/*
- * rekey_p2states_by_connection - rekeys all the phase 2 of conn
- *
- * @c - the connection whose states need to be rekeyed
- *
- * This is like delete_states_by_connection with relations=TRUE,
- * but instead of removing the states, is scheduled them for rekey.
- */
-static void rekey_state_function(struct state *this,
-				 struct connection *c UNUSED,
-				 void *arg UNUSED)
-{
-	libreswan_log("rekeying state (%s)",
-		      enum_show(&state_names, this->st_state));
-
-	delete_event(this);
-	delete_dpd_event(this);
-	event_schedule(EVENT_SA_REPLACE, 0, this);
-
-	/*
-	 * but, remove the actual phase2 SA from the kernel, replacing
-	 * with a %trap.
-	 */
-	delete_ipsec_sa(this, FALSE);
-}
-
-void rekey_p2states_by_connection(struct connection *c)
-{
-	so_serial_t parent_sa = c->newest_isakmp_sa;
-	enum connection_kind ck = c->kind;
-
-	/* save this connection's isakmp SA,
-	 * since it will get set to later SOS_NOBODY */
-	if (ck == CK_INSTANCE)
-		c->kind = CK_GOING_AWAY;
-
-	foreach_states_by_connection_func(c, same_phase1_no_phase2,
-					  rekey_state_function,
 					  &parent_sa);
 	if (ck == CK_INSTANCE) {
 		c->kind = ck;
@@ -1026,9 +984,8 @@ struct state *duplicate_state(struct state *st)
 
 	nst->st_oakley = st->st_oakley;
 
-	/* ??? is this strncpy correct? */
-	strncpy(nst->st_xauth_username, st->st_xauth_username,
-		sizeof(nst->st_xauth_username));
+	jam_str(nst->st_xauth_username, sizeof(nst->st_xauth_username),
+		st->st_xauth_username);
 
 	return nst;
 }
@@ -1062,8 +1019,8 @@ struct state *find_state_ikev1(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    !st->st_ikev2) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
@@ -1098,8 +1055,8 @@ struct state *find_state_ikev1_loopback(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    !st->st_ikev2) {
 			DBG(DBG_CONTROL,
 			    DBG_log("loopback: v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
@@ -1108,8 +1065,8 @@ struct state *find_state_ikev1_loopback(const u_char *icookie,
 				    (long unsigned)ntohl(st->st_msgid)));
 			if (msgid == st->st_msgid &&
 			    !(st->st_tpacket.ptr &&
-			      memcmp(st->st_tpacket.ptr, md->packet_pbs.start,
-				     pbs_room(&md->packet_pbs)) == 0))
+			      memeq(st->st_tpacket.ptr, md->packet_pbs.start,
+				     pbs_room(&md->packet_pbs))))
 				break;
 		}
 		st = st->st_hashchain_next;
@@ -1138,8 +1095,8 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
@@ -1172,7 +1129,7 @@ struct state *find_state_ikev2_parent_init(const u_char *icookie)
 	struct state *st = *state_hash(icookie, zero_cookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
@@ -1206,8 +1163,8 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2 &&
 		    st->st_msgid == msgid) {
 			DBG(DBG_CONTROL,
@@ -1243,8 +1200,8 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2) {
 			struct ipsec_proto_info *pr = protoid ==
 						      PROTO_IPSEC_AH ?
@@ -1285,8 +1242,8 @@ struct state *find_info_state(const u_char *icookie,
 	struct state *st = *state_hash(icookie, rcookie);
 
 	while (st != (struct state *) NULL) {
-		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0) {
+		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("peer and cookies match on #%ld, provided msgid %08lx vs %08lx/%08lx",
 				    st->st_serialno,
@@ -1328,8 +1285,8 @@ struct state *find_sender(size_t packet_len, u_char *packet)
 			     st = st->st_hashchain_next)
 				if (st->st_tpacket.ptr != NULL &&
 				    st->st_tpacket.len == packet_len &&
-				    memcmp(st->st_tpacket.ptr, packet,
-					   packet_len) == 0)
+				    memeq(st->st_tpacket.ptr, packet,
+					   packet_len))
 					return st;
 	}
 
@@ -1470,7 +1427,7 @@ void fmt_state(struct state *st, const time_t n,
 		snprintf(dpdbuf, sizeof(dpdbuf), "; isakmp#%lu",
 			 (unsigned long)st->st_clonedfrom);
 	} else {
-		if (st->hidden_variables.st_dpd) {
+		if (st->hidden_variables.st_peer_supports_dpd) {
 			time_t tn = time(NULL);
 
 			snprintf(dpdbuf, sizeof(dpdbuf),
@@ -1479,7 +1436,7 @@ void fmt_state(struct state *st, const time_t n,
 				 st->st_last_dpd : (long)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
-		} else if (st->hidden_variables.st_liveness) {
+		} else if (dpd_active_locally(st) && st->st_ikev2) {
 			struct state *pst;
 			time_t tn = time(NULL);
 
@@ -1686,10 +1643,8 @@ void fmt_state(struct state *st, const time_t n,
 			 (unsigned long)st->st_ref,
 			 (unsigned long)st->st_refhim,
 			 traffic_buf,
-			 (st->st_xauth_username && st->st_xauth_username[0] !=
-			  '\0')  ? "XAUTHuser=" : "",
-			 (st->st_xauth_username && st->st_xauth_username[0] !=
-			  '\0')  ? st->st_xauth_username : ""
+			 (st->st_xauth_username[0] != '\0') ? "XAUTHuser=" : "",
+			 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : ""
 			 );
 
 #       undef add_said
@@ -1869,31 +1824,6 @@ startover:
 	return cpi;
 }
 
-/*
- * Immediately schedule a replace event for all states for a peer.
- */
-void replace_states_by_peer(const ip_address *peer)
-{
-	struct state *st = NULL;
-	int i;
-
-	/* struct event *ev;     currently unused */
-
-	for (i = 0; st == NULL && i < STATE_TABLE_SIZE; i++)
-		for (st = statetable[i]; st != NULL;
-		     st = st->st_hashchain_next)
-			/* Only replace if it already has a replace event. */
-			if (sameaddr(&st->st_connection->spd.that.host_addr,
-				     peer) &&
-			    (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||
-			     IS_IPSEC_SA_ESTABLISHED(st->st_state)) &&
-			    st->st_event->ev_type == EVENT_SA_REPLACE) {
-				delete_event(st);
-				delete_dpd_event(st);
-				event_schedule(EVENT_SA_REPLACE, 0, st);
-			}
-}
-
 void copy_quirks(struct isakmp_quirks *dq,
 		 struct isakmp_quirks *sq)
 {
@@ -1916,4 +1846,10 @@ void set_state_ike_endpoints(struct state *st,
 	st->st_remoteport = c->spd.that.host_port;
 
 	st->st_interface = c->interface;
+}
+
+/* seems to be a good spot for now */
+bool dpd_active_locally(struct state *st)
+{
+	return st->st_connection->dpd_delay && st->st_connection->dpd_timeout;
 }

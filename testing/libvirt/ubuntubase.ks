@@ -37,7 +37,7 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 ip link set eth0 mtu 1400
 
 # TODO: Do we need to configure universe/multiverse/everythingverse?
-apt-get install -y wget vim bison flex gcc make netcat strace python-pexpect
+apt-get install -y wget vim bison flex gcc make netcat-openbsd strace python-pexpect
 # racoon2 not available on ubuntu?
 apt-get install -y libnss3-tools libnss3-dev libunbound-dev libgmp-devel libldap-dev libcurl4-nss-dev libcap-ng-dev libpam-dev ipsec-tools
 # no package for fipscheck-devel?

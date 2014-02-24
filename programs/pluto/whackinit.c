@@ -225,8 +225,8 @@ static size_t get_secret(char *buf, size_t bufsize)
 	secret = getpass("Enter passphrase: ");
 	secret = (secret == NULL) ? "" : secret;
 
-	strncpy(buf, secret, bufsize-1);
-	buf[bufsize-1] = '\0';	/* ensure NUL termination */
+	buf[0] = '\0'
+	strncat(buf, secret, bufsize-1);
 
 	len = strlen(buf) + 1;
 
@@ -529,17 +529,21 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_XAUTHNAME:
-			gotxauthname = TRUE;
-			xauthname[0] = '\0';
-			strncat(xauthname, optarg, sizeof(xauthname));
-			xauthnamelen = strlen(xauthname) + 1;
+			{
+				char *p = jam_str(xauthname, sizeof(xauthname), optarg);
+
+				xauthnamelen = p - xauthname + 1;
+				gotxauthname = TRUE;
+			}
 			continue;
 
 		case OPT_XAUTHPASS:
-			gotxauthpass = TRUE;
-			xauthpass[0] = '\0';
-			strncat(xauthpass, optarg, sizeof(xauthpass));
-			xauthpasslen = strlen(xauthpass) + 1;
+			{
+				char *p = jam_str(xauthpass, sizeof(xauthpass), optarg);
+
+				xauthpasslen = p - xauthpass + 1;
+				gotxauthpass = TRUE;
+			}
 			continue;
 
 		default:

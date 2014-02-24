@@ -43,30 +43,29 @@
 #include "rnd.h"
 #include "pluto_crypt.h"
 
-void pluto_crypto_allocchunk(wire_chunk_t *space,
-			     wire_chunk_t *new,
-			     size_t howbig)
+void alloc_wire_chunk(wire_arena_t *arena,
+		      wire_chunk_t *new,
+		      size_t size)
 {
 	/*
 	 * passert for now, since we should be able to figure out what
 	 * the maximum is.
 	 */
-	passert(howbig < space->len - space->start);
+	passert(size <= arena->roof - arena->next);
 
-	new->start = space->start;
-	new->len   = howbig;
+	new->start = arena->next;
+	new->len = size;
 
-	space->start += howbig;
+	arena->next += size;
 }
 
-void pluto_crypto_copychunk(wire_chunk_t *spacetrack,
-			    unsigned char *space,
-			    wire_chunk_t *new,
-			    chunk_t data)
+void wire_clone_chunk(wire_arena_t *arena,
+		      wire_chunk_t *new,
+		      const chunk_t *chunk)
 {
 	/* allocate some space first */
-	pluto_crypto_allocchunk(spacetrack, new, data.len);
+	alloc_wire_chunk(arena, new, chunk->len);
 
-	/* copy data into it */
-	memcpy(space_chunk_ptr(space, new), data.ptr, data.len);
+	/* copy chunk into it */
+	memcpy(wire_chunk_ptr(arena, new), chunk->ptr, chunk->len);
 }

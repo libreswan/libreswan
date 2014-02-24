@@ -95,7 +95,6 @@ int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 
 void ipsec_print_ip(struct iphdr *ip)
 {
-	return;
 }
 
 struct net_device *ipsec_get_device(int inst)

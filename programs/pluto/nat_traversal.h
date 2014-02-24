@@ -83,8 +83,7 @@
 	( LELEM(NAT_TRAVERSAL_NAT_BHND_ME) | \
 	  LELEM(NAT_TRAVERSAL_NAT_BHND_PEER) )
 
-void init_nat_traversal(bool activate, unsigned int keep_alive_period,
-			bool spf);
+void init_nat_traversal(unsigned int keep_alive_period);
 
 extern bool nat_traversal_enabled;
 extern bool nat_traversal_support_non_ike;
@@ -114,9 +113,7 @@ void nat_traversal_ka_event(void);
 
 void nat_traversal_show_result(u_int32_t nt, u_int16_t sport);
 
-extern int nat_traversal_espinudp_socket(int sk,
-					 const char *fam,
-					 u_int32_t type);
+extern int nat_traversal_espinudp_socket(int sk, const char *fam);
 
 /**
  * Vendor ID

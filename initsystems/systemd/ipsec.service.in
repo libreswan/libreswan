@@ -1,6 +1,5 @@
 [Unit]
 Description=Internet Key Exchange (IKE) Protocol Daemon for IPsec
-After=syslog.target
 After=network.target
 #After=remote-fs.target
 

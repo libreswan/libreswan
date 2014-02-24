@@ -53,7 +53,6 @@
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"
-#include "dpd.h"
 #include "keys.h"
 
 #include <nss.h>
@@ -99,7 +98,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(shared,
 							    CKM_CONCATENATE_DATA_AND_BASE, *pss, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 							    0);
-		PR_ASSERT(tkey1 != NULL);
+		passert(tkey1 != NULL);
 
 		bs = 0;
 		param.data = (unsigned char*)&bs;
@@ -109,7 +108,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 						&param,
 						CKM_CONCATENATE_BASE_AND_DATA,
 						CKA_DERIVE, pss->len);
-		PR_ASSERT(tkey2 != NULL);
+		passert(tkey2 != NULL);
 
 		pss_chunk.len = sizeof(PK11SymKey *);
 		pss_chunk.ptr = alloc_bytes(pss_chunk.len,
@@ -158,7 +157,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(shared,
 							    CKM_CONCATENATE_DATA_AND_BASE, pp_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 							    0);
-		PR_ASSERT(tkey1 != NULL);
+		passert(tkey1 != NULL);
 
 		bs = 0;
 		param.data = (unsigned char*)&bs;
@@ -168,7 +167,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 						&param,
 						CKM_CONCATENATE_BASE_AND_DATA,
 						CKA_DERIVE, hash_len);
-		PR_ASSERT(tkey2 != NULL);
+		passert(tkey2 != NULL);
 
 		pps_chunk.len = sizeof(PK11SymKey *);
 		pps_chunk.ptr = alloc_bytes(pps_chunk.len,
@@ -259,10 +258,10 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 	    DBG_dump("Received PSK auth octets", sig_pbs->cur, sig_len);
 	    DBG_dump("Calculated PSK auth octets", calc_hash, hash_len));
 
-	if (memcmp(sig_pbs->cur, calc_hash, hash_len) ) {
+	if (memeq(sig_pbs->cur, calc_hash, hash_len) ) {
+		return STF_OK;
+	} else {
 		libreswan_log("AUTH mismatch: Received AUTH != computed AUTH");
 		return STF_FAIL;
-	} else {
-		return STF_OK;
 	}
 }

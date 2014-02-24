@@ -1,4 +1,6 @@
-/* identity representation, as in IKE ID Payloads (RFC 2407 DOI 4.6.2.1)
+/*
+ * identity representation, as in IKE ID Payloads (RFC 2407 DOI 4.6.2.1)
+ *
  * Copyright (C) 1999-2001  D. Hugh Redelmeier
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  *
@@ -11,7 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdlib.h>
@@ -22,8 +23,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#ifndef HOST_NAME_MAX           /* POSIX 1003.1-2001 says <unistd.h> defines this */
-# define HOST_NAME_MAX  255     /* upper bound, according to SUSv2 */
+#ifndef HOST_NAME_MAX	/* POSIX 1003.1-2001 says <unistd.h> defines this */
+#define HOST_NAME_MAX 255	/* upper bound, according to SUSv2 */
 #endif
 
 #include <libreswan.h>
@@ -38,24 +39,28 @@
 #include "x509.h"
 #include "certs.h"
 
-/*  Note that there may be as many as six IDs that are temporary at
- *  one time before unsharing the two ends of a connection. So we need
- *  at least six temporary buffers for DER_ASN1_DN IDs.
- *  We rotate them. Be careful!
+/*
+ * Note that there may be as many as six IDs that are temporary at
+ * one time before unsharing the two ends of a connection. So we need
+ * at least six temporary buffers for DER_ASN1_DN IDs.
+ * We rotate them. Be careful!
  */
-#define MAX_BUF         6
+#define MAX_BUF 6
 
 unsigned char*temporary_cyclic_buffer(void)
 {
-	static unsigned char buf[MAX_BUF][IDTOA_BUF];   /*MAX_BUF internal buffers */
-	static int counter = 0;                         /* cyclic counter */
+	/* MAX_BUF internal buffers */
+	static unsigned char buf[MAX_BUF][IDTOA_BUF];
+	static int counter;	/* cyclic counter */
 
 	if (++counter == MAX_BUF)
-		counter = 0;                    /* next internal buffer */
-	return buf[counter];                    /* assign temporary buffer */
+		counter = 0;	/* next internal buffer */
+	return buf[counter];	/* assign temporary buffer */
 }
 
-/* Convert textual form of id into a (temporary) struct id.
+/*
+ * Convert textual form of id into a (temporary) struct id.
+ *
  * Note that if the id is to be kept, unshare_id_content will be necessary.
  * This function should be split into parts so the boolean arguments can be
  * removed -- Paul
@@ -75,9 +80,12 @@ err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
 	} else if (!oe_only && strchr(src, '=') != NULL) {
 		/* we interpret this as an ASCII X.501 ID_DER_ASN1_DN */
 		id->kind = ID_DER_ASN1_DN;
-		id->name.ptr = temporary_cyclic_buffer(); /* assign temporary buffer */
+		/* assign temporary buffer */
+		id->name.ptr = temporary_cyclic_buffer();
 		id->name.len = 0;
-		/* convert from LDAP style or openssl x509 -subject style to ASN.1 DN
+		/*
+		 * convert from LDAP style or openssl x509 -subject style
+		 * to ASN.1 DN
 		 * discard optional @ character in front of DN
 		 */
 		ugh = atodn((*src == '@') ? src + 1 : src, &id->name);
@@ -86,12 +94,15 @@ err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
 			/* any ID will be accepted */
 			id->kind = ID_NONE;
 		} else {
-			/* !!! this test is not sufficient for distinguishing address families.
-			 * We need a notation to specify that a FQDN is to be resolved to IPv6.
+			/*
+			 * !!! this test is not sufficient for distinguishing
+			 * address families.
+			 * We need a notation to specify that a FQDN is to be
+			 * resolved to IPv6.
 			 */
 			const struct af_info *afi = strchr(src, ':') == NULL ?
-						    &af_inet4_info : &
-						    af_inet6_info;
+				&af_inet4_info : &
+				af_inet6_info;
 
 			id->kind = afi->id_addr;
 			ugh = ttoaddr(src, 0, afi->af, &id->ip_addr);
@@ -99,38 +110,44 @@ err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
 	} else {
 		if (*src == '@') {
 			if (!oe_only && *(src + 1) == '#') {
-				/* if there is a second specifier (#) on the line
-				 * we interprete this as ID_KEY_ID
+				/*
+				 * if there is a second specifier (#) on the
+				 * line we interprete this as ID_KEY_ID
 				 */
 				id->kind = ID_KEY_ID;
 				id->name.ptr = (unsigned char *)src;
 				/* discard @~, convert from hex to bin */
 				ugh = ttodata(src + 2, 0, 16,
-					      (char *)id->name.ptr,
-					      strlen(src), &id->name.len);
+					(char *)id->name.ptr,
+					strlen(src), &id->name.len);
 			} else if (!oe_only && *(src + 1) == '~') {
-				/* if there is a second specifier (~) on the line
-				 * we interprete this as a binary ID_DER_ASN1_DN
+				/*
+				 * if there is a second specifier (~) on the
+				 * line we interprete this as a binary
+				 * ID_DER_ASN1_DN
 				 */
 				id->kind = ID_DER_ASN1_DN;
 				id->name.ptr = (unsigned char *)src;
 				/* discard @~, convert from hex to bin */
 				ugh = ttodata(src + 2, 0, 16,
-					      (char *)id->name.ptr,
-					      strlen(src), &id->name.len);
+					(char *)id->name.ptr,
+					strlen(src), &id->name.len);
 			} else if (!oe_only && *(src + 1) == '[') {
-				/* if there is a second specifier ([) on the line
-				 * we interprete this as a text ID_KEY_ID, and we remove
-				 * a trailing ", if there is one.
+				/*
+				 * if there is a second specifier ([) on the
+				 * line we interprete this as a text ID_KEY_ID,
+				 * and we remove a trailing ", if there is one.
 				 */
 				int len = strlen(src + 2);
 
 				id->kind = ID_KEY_ID;
 				id->name.ptr = (unsigned char *)src + 2;
 
-				/* Start of name.ptr is srv+2 so len is 2 smaller than the
-				 * length of src and the terminator character is at
-				 * src[len+2].  Therefore, the last character is src[len+1]
+				/*
+				 * Start of name.ptr is srv+2 so len is 2
+				 * smaller than the length of src and the
+				 * terminator character is at src[len+2].
+				 * Therefore, the last character is src[len+1]
 				 */
 				if (src[len + 1] == ']') {
 					src[len + 1] = '\0';
@@ -139,11 +156,13 @@ err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
 				id->name.len = len;
 			} else {
 				id->kind = ID_FQDN;
-				id->name.ptr = (unsigned char *)src + 1; /* discard @ */
+				/* discard @ */
+				id->name.ptr = (unsigned char *)src + 1;
 				id->name.len = strlen(src) - 1;
 			}
 		} else {
-			/* We leave in @, as per DOI 4.6.2.4
+			/*
+			 * We leave in @, as per DOI 4.6.2.4
 			 * (but DNS wants . instead).
 			 */
 			id->kind = ID_USER_FQDN;
@@ -155,7 +174,7 @@ err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
 }
 
 /*
- *  Converts a binary key ID into hexadecimal format
+ * Converts a binary key ID into hexadecimal format
  */
 static int keyidtoa(char *dst, size_t dstlen, chunk_t keyid)
 {
@@ -209,11 +228,11 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 		break;
 	case ID_FQDN:
 		n = snprintf(dst, dstlen, "@%.*s", (int)id->name.len,
-			     id->name.ptr);
+			id->name.ptr);
 		break;
 	case ID_USER_FQDN:
 		n = snprintf(dst, dstlen, "%.*s", (int)id->name.len,
-			     id->name.ptr);
+			id->name.ptr);
 		break;
 	case ID_DER_ASN1_DN:
 		n = dntoa(dst, dstlen, id->name);
@@ -232,7 +251,8 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 		break;
 	}
 
-	/* "Sanitize" string so that log isn't endangered:
+	/*
+	 * "Sanitize" string so that log isn't endangered:
 	 * replace unprintable characters with '?'.
 	 */
 	if (n > 0) {
@@ -244,7 +264,8 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 	return n;
 }
 
-/* Replace the shell metacharacters ', \, ", `, and $ in a character string
+/*
+ * Replace the shell metacharacters ', \, ", `, and $ in a character string
  * by escape sequences consisting of their octal values
  */
 void escape_metachar(const char *src, char *dst, size_t dstlen)
@@ -278,16 +299,16 @@ void escape_metachar(const char *src, char *dst, size_t dstlen)
 /*
  * Remove all shell metacharacters ', \, ", `, and $ in a character string
  */
-void remove_metachar(const unsigned char *src, char *dst, size_t dstlen)
+void remove_metachar(const char *src, char *dst, size_t dstlen)
 {
 	bool changed = FALSE;
 
 	passert(dstlen >= 1);
 	while (*src != '\0' && dstlen > 1) {
 		if ((*src >= '0' && *src <= '9') ||
-		    (*src >= 'a' && *src <= 'z') ||
-		    (*src >= 'A' && *src <= 'Z') ||
-		    *src == '_') {
+			(*src >= 'a' && *src <= 'z') ||
+			(*src >= 'A' && *src <= 'Z') ||
+			*src == '_') {
 			*dst++ = *src;
 			dstlen--;
 		} else {
@@ -303,7 +324,8 @@ void remove_metachar(const unsigned char *src, char *dst, size_t dstlen)
 	}
 }
 
-/* Make private copy of string in struct id.
+/*
+ * Make private copy of string in struct id.
  * This is needed if the result of atoid is to be kept.
  */
 void unshare_id_content(struct id *id)
@@ -314,7 +336,7 @@ void unshare_id_content(struct id *id)
 	case ID_DER_ASN1_DN:
 	case ID_KEY_ID:
 		id->name.ptr = clone_bytes(id->name.ptr, id->name.len,
-					   "keep id name");
+					"keep id name");
 		/* Somehow assert we have a valid id here? */
 		break;
 	case ID_MYID:
@@ -401,21 +423,23 @@ bool same_id(const struct id *a, const struct id *b)
 
 	case ID_FQDN:
 	case ID_USER_FQDN:
-		/* assumptions:
+		/*
+		 * assumptions:
 		 * - case should be ignored
-		 * - trailing "." should be ignored (even if the only character?)
+		 * - trailing "." should be ignored
+		 *   (even if the only character?)
 		 */
 	{
 		size_t al = a->name.len,
-		       bl = b->name.len;
+			bl = b->name.len;
 
 		while (al > 0 && a->name.ptr[al - 1] == '.')
 			al--;
 		while (bl > 0 && b->name.ptr[bl - 1] == '.')
 			bl--;
 		return al == bl &&
-		       strncasecmp((char *)a->name.ptr,
-				   (char *)b->name.ptr, al) == 0;
+			strncasecmp((char *)a->name.ptr,
+				(char *)b->name.ptr, al) == 0;
 	}
 
 	case ID_DER_ASN1_DN:
@@ -423,7 +447,7 @@ bool same_id(const struct id *a, const struct id *b)
 
 	case ID_KEY_ID:
 		return a->name.len == b->name.len &&
-		       memcmp(a->name.ptr, b->name.ptr, a->name.len) == 0;
+			memeq(a->name.ptr, b->name.ptr, a->name.len);
 
 	default:
 		bad_case(a->kind);
@@ -450,18 +474,15 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 		match = same_id(a, b);
 	}
 
-	DBG(DBG_CONTROLMORE,
-	    {
-		    char abuf[IDTOA_BUF];
-		    char bbuf[IDTOA_BUF];
-
-		    idtoa(a, abuf, IDTOA_BUF);
-		    idtoa(b, bbuf, IDTOA_BUF);
-		    DBG_log("   match_id a=%s", abuf);
-		    DBG_log("            b=%s", bbuf);
-		    DBG_log("   results  %s", match ? "matched" : "fail");
-	    }
-	    );
+	DBG(DBG_CONTROLMORE, {
+			char abuf[IDTOA_BUF];
+			char bbuf[IDTOA_BUF];
+			idtoa(a, abuf, IDTOA_BUF);
+			idtoa(b, bbuf, IDTOA_BUF);
+			DBG_log("   match_id a=%s", abuf);
+			DBG_log("            b=%s", bbuf);
+			DBG_log("   results  %s", match ? "matched" : "fail");
+		});
 
 	return match;
 }
@@ -488,14 +509,17 @@ int id_count_wildcards(const struct id *id)
 
 	idtoa(id, idbuf, IDTOA_BUF);
 	DBG(DBG_CONTROL,
-	    DBG_log("counting wild cards for %s is %d",
-		    idbuf,
-		    count));
+		DBG_log("counting wild cards for %s is %d",
+			idbuf,
+			count);
+		);
 
 	return count;
 }
 
-/* ip_str: a simple to use variant of addrtot.
+/*
+ * ip_str: a simple to use variant of addrtot.
+ *
  * It stores its result in a static buffer -- NOT RE-ENTRANT.
  * This means that newer calls overwrite the storage of older calls.
  * Note: this is not used in any of the logging functions, so their

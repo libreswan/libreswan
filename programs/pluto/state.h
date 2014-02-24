@@ -158,9 +158,9 @@ struct hidden_variables {
 	bool st_got_certrequest;
 	bool st_modecfg_started;
 	bool st_skeyid_calculated;
-	bool st_liveness;			/* Liveness checks */
-	bool st_dpd;                            /* Peer supports DPD */
-	bool st_dpd_local;                      /* If we want DPD on this conn */
+	bool st_peer_supports_dpd;              /* Peer supports DPD/IKEv2 Liveness
+						 * NOTE: dpd_active_locally() tracks
+						 * the local enablement of DPD */
 	bool st_logged_p1algos;                 /* if we have logged algos */
 	u_int32_t st_nat_traversal;             /* bit field of permitted
 	                                         * methods. If non-zero, then
@@ -376,13 +376,14 @@ struct state {
 	struct connection *st_childsa;          /* connection included in AUTH */
 	struct traffic_selector st_ts_this, st_ts_that;
 
-	u_char st_iv[MAX_DIGEST_LEN];           /* IV for encryption */
-	u_char st_old_iv[MAX_DIGEST_LEN];       /* IV for encryption */
-	u_char st_new_iv[MAX_DIGEST_LEN];
-	u_char st_ph1_iv[MAX_DIGEST_LEN];       /* IV at end if phase 1 */
-	unsigned int st_iv_len;
-	unsigned int st_old_iv_len;
+	/* Initialization Vectors for IKE encryption */
+
+	u_char st_new_iv[MAX_DIGEST_LEN];	/* tentative IV (calculated from current packet) */
+	u_char st_iv[MAX_DIGEST_LEN];           /* accepted IV (after packet passes muster) */
+	u_char st_ph1_iv[MAX_DIGEST_LEN];       /* IV at end of phase 1 */
+
 	unsigned int st_new_iv_len;
+	unsigned int st_iv_len;
 	unsigned int st_ph1_iv_len;
 
 	chunk_t st_enc_key;                     /* Oakley Encryption key */
@@ -502,6 +503,7 @@ extern void set_state_ike_endpoints(struct state *st,
 
 extern void delete_cryptographic_continuation(struct state *st);
 extern void delete_states_dead_interfaces(void);
+extern bool dpd_active_locally(struct state *st);
 
 /*
  * use these to change state, this gives us a handle on all state changes

@@ -585,7 +585,6 @@ void whack_log(int mess_no, const char *message, ...)
 		fmt_log(m + prelen, sizeof(m) - prelen, message, args);
 		va_end(args);
 
-#if DEBUG
 		if (dying_breath) {
 			/* status output copied to log */
 			if (log_to_stderr || (log_to_file && pluto_log_fd))
@@ -596,7 +595,6 @@ void whack_log(int mess_no, const char *message, ...)
 			if (log_to_perpeer)
 				peerlog("", m);
 		}
-#endif
 
 		if (wfd != NULL_FD) {
 			/* write to whack socket, but suppress possible SIGPIPE */
@@ -1007,7 +1005,7 @@ void log_state(struct state *st, enum state_kind new_state)
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state called for state update for connection %s ",
 		    conn->name));
-	memset(&lc, 0, sizeof(lc));
+	zero(&lc);
 	lc.conn = conn;
 	save_state = st->st_state;
 	st->st_state = new_state;
@@ -1028,19 +1026,26 @@ void log_state(struct state *st, enum state_kind new_state)
 		    conn->name, conn->statsval));
 
 	switch (lc.tunnel) {
-	case tun_phase1:  tun = "phase1";
+	case tun_phase1:
+		tun = "phase1";
 		break;
-	case tun_phase1up: tun = "phase1up";
+	case tun_phase1up:
+		tun = "phase1up";
 		break;
-	case tun_phase15: tun = "phase15";
+	case tun_phase15:
+		tun = "phase15";
 		break;
-	case tun_phase2:  tun = "phase2";
+	case tun_phase2:
+		tun = "phase2";
 		break;
-	case tun_up:      tun = "up";
+	case tun_up:
+		tun = "up";
 		break;
-	case tun_down:    tun = "down";
-		break;                            /* not set anywhere, default */
-	default:          tun = "unchanged";
+	case tun_down:
+		tun = "down";
+		break;
+	default:
+		tun = "unchanged";
 		break;
 	}
 

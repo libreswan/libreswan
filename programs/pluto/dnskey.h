@@ -30,7 +30,28 @@ extern void handle_adns_answer(void);
 extern bool unsent_ADNS_queries;
 extern void send_unsent_ADNS_queries(void);
 
-/* (common prefix of) stuff remembered between async query and answer.
+/* The asynchronouse DNS continuation structure
+ *
+ * Pluto is an event-driven transaction system.
+ * Each transaction must take a very small slice of time.
+ * Those that cannot, must be broken into multiple
+ * transactions and the state carried between them
+ * cannot be on the stack or in simple global variables.
+ * A continuation is used to hold such state.
+ *
+ * NOTE: this struct is the used in an twisted way to implement
+ * something like specialization in object-oriented languages.
+ *
+ * In particular, struct adns_continuation appears as the first field
+ * several other structs.  Thus a pointer to one of those structs is
+ * also a pointer to a struct adns_continuation
+ * (of course the types must be finessed).
+ *
+ * The routines that appear to deal with struct adns_continuation
+ * objects are in fact dealing generically with either of those
+ * two specializations of it.
+ *
+ * (common prefix of) stuff remembered between async DNS query and answer.
  * Filled in by start_adns_query.
  * Freed by call to release_adns_continuation.
  */

@@ -17,13 +17,13 @@
 #include "libreswan.h"
 
 /*
-   - atoul - convert ASCII substring to unsigned long number
+ * atoul - convert ASCII substring to unsigned long number
  */
-const char *                    /* NULL for success, else string literal */
+const char *	/* NULL for success, else string literal */
 atoul(src, srclen, base, resultp)
 const char *src;
-size_t srclen;                  /* 0 means strlen(src) */
-int base;                       /* 0 means figure it out */
+size_t srclen;	/* 0 means strlen(src) */
+int base;	/* 0 means figure it out */
 unsigned long *resultp;
 {
 	const char *stop;

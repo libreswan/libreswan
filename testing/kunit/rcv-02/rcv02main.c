@@ -106,7 +106,6 @@ int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 
 void ipsec_print_ip(struct iphdr *ip)
 {
-	return;
 }
 
 int pfkey_expire(struct ipsec_sa *sa, int time)

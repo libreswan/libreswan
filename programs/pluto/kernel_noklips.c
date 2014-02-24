@@ -45,7 +45,6 @@
 
 static void init_noklips(void)
 {
-	return;
 }
 
 /* asynchronous messages from our queue */

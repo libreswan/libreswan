@@ -55,7 +55,6 @@
 char *progname;
 
 int pfkey_sock;
-lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
 
 struct said_af {
@@ -112,7 +111,7 @@ int main(int argc, char **argv)
 
 	progname = argv[0];
 	for (i = 0; i < 4; i++)
-		memset(&said_af_array[i], 0, sizeof(struct said_af));
+		zero(&said_af_array[i]);
 
 	if (argc > 1 && strcmp(argv[1], "--debug") == 0) {
 		debug = 1;

@@ -288,8 +288,8 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						"struct iface_port");
 				id = alloc_thing(struct iface_dev,
 						 "struct iface_dev");
-				memset(q, 0, sizeof(*q));
-				memset(id, 0, sizeof(*id));
+				zero(q);
+				zero(id);
 				if (firstq == NULL)
 					firstq = q;
 
@@ -307,12 +307,6 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				q->port = pluto_port;
 				q->ike_float = FALSE;
 
-				if (nat_traversal_support_non_ike &&
-				    addrtypeof(&ifp->addr) == AF_INET)
-					nat_traversal_espinudp_socket(fd,
-								      "IPv4",
-								      ESPINUDP_WITH_NON_IKE);
-
 				/* done with primary interface */
 				q->next = interfaces;
 				interfaces = q;
@@ -329,8 +323,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				 * the kernel did not support it, and gave an error
 				 * it one tried to turn it on.
 				 */
-				if (nat_traversal_support_port_floating &&
-				    addrtypeof(&ifp->addr) == AF_INET) {
+				if (addrtypeof(&ifp->addr) == AF_INET) {
 					fd = create_socket(ifp,
 							   q->ip_dev->id_vname,
 							   pluto_natt_float_port);
@@ -342,8 +335,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						break;
 					}
 					nat_traversal_espinudp_socket(fd,
-								      "IPv4",
-								      ESPINUDP_WITH_NON_ESP);
+								      "IPv4");
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
 					q->ip_dev = id;
@@ -515,7 +507,8 @@ static bool mast_sag_eroute_replace(struct state *st, struct spd_route *sr)
 
 	/* The state, st, has the new SAref values, but we need to remove
 	 * the rule based on the previous state with the old SAref values.
-	 * So we have to find it the hard way (it's a cpu hog). */
+	 * So we have to find it the hard way (it's a cpu hog).
+	 */
 	old_st = state_with_serialno(sr->eroute_owner);
 	if (!old_st)
 		old_st = st;
@@ -574,7 +567,8 @@ static bool mast_sag_eroute(struct state *st, struct spd_route *sr,
 			op);
 		if (addop)
 			/* If the pfkey op failed, and we were adding a new SA,
-			 * then it's OK to fail early. */
+			 * then it's OK to fail early.
+			 */
 			return FALSE;
 	}
 

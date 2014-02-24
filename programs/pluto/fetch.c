@@ -561,8 +561,8 @@ void add_distribution_points(const generalName_t *newPoints,
 		while (gn != NULL) {
 			if (gn->kind == newPoints->kind &&
 			    gn->name.len == newPoints->name.len &&
-			    memcmp(gn->name.ptr, newPoints->name.ptr,
-				   gn->name.len) == 0) {
+			    memeq(gn->name.ptr, newPoints->name.ptr,
+				   gn->name.len)) {
 				/* distribution point already present, skip to next entry */
 				add = FALSE;
 				break;

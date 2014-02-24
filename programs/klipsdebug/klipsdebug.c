@@ -61,7 +61,6 @@ __u32 bigbuf[1024];
 char *program_name;
 
 int pfkey_sock;
-lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
 
 char copyright[] =

@@ -67,7 +67,7 @@ ifconfig eth0 mtu 1400
 # TODO: if rhel/centos, we should install epel-release too
 yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools pexpect
 yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace unbound
-yum install -y pexpect strongswan net-tools bind-utils rpm-build
+yum install -y pexpect strongswan net-tools bind-utils rpm-build nc psmisc
 
 mkdir /testing /source
 
@@ -123,6 +123,21 @@ systemctl disable firewalld.service
 systemctl enable network.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
+
+cat << EOD > /etc/systemd/system/sshd-shutdown.service
+# work around for broken systemd/sshd interaction in fedora 20 causes VM hangs
+[Unit]
+Description=kill all sshd sessions
+Requires=mutil-user.target
+
+[Service]
+ExecStart=/usr/bin/killall sshd
+Type=oneshot
+
+[Install]
+WantedBy=shutdown.target reboot.target poweroff.target
+EOD
+systemctl enable sshd-shutdown.service
 
 # Needed for newer nss
 yum update -y 

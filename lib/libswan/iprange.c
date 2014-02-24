@@ -1,4 +1,5 @@
-/* more minor utilities for mask length calculations for IKEv2
+/*
+ * more minor utilities for mask length calculations for IKEv2
  * header: include/libswan.h
  *
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
@@ -168,7 +169,7 @@ int main(int argc, char *argv[])
 	n = ikev2_calc_iprangediff(high, low);
 
 	addrtot(&high, 0, bh, sizeof(bh));
-	addrtot(&low,  0, bl, sizeof(bl));
+	addrtot(&low, 0, bl, sizeof(bl));
 
 	printf("iprange between %s and %s => %d\n", bh, bl, n);
 
@@ -181,24 +182,24 @@ struct rtab {
 	char *high;
 	int range;
 } rtab[] = {
-	{ 4, "1.2.255.0",        "1.2.254.255",          1 },
-	{ 4, "1.2.3.0",          "1.2.3.7",              3 },
-	{ 4, "1.2.3.0",          "1.2.3.255",            8 },
-	{ 4, "1.2.3.240",        "1.2.3.255",            4 },
-	{ 4, "0.0.0.0",          "255.255.255.255",      32 },
-	{ 4, "1.2.3.4",          "1.2.3.4",              0 },
-	{ 4, "1.2.3.0",          "1.2.3.254",            8 },
-	{ 4, "1.2.3.0",          "1.2.3.126",            7 },
-	{ 4, "1.2.3.0",          "1.2.3.125",            7 },
-	{ 4, "1.2.0.0",          "1.2.255.255",          16 },
-	{ 4, "1.2.0.0",          "1.2.0.255",            8 },
-	{ 4, "1.2.255.0",                "1.2.255.255",  8 },
-	{ 4, "1.2.255.1",                "1.2.255.255",  8 },
-	{ 4, "1.2.0.1",          "1.2.255.255",          16 },
-	{ 6, "1:2:3:4:5:6:7:0",  "1:2:3:4:5:6:7:ffff",   16 },
-	{ 6, "1:2:3:4:5:6:7:0",  "1:2:3:4:5:6:7:fff",    12 },
-	{ 6, "1:2:3:4:5:6:7:f0", "1:2:3:4:5:6:7:ff",     4 },
-	{ 4, NULL,               NULL,                   0 },
+	{ 4, "1.2.255.0", "1.2.254.255", 1 },
+	{ 4, "1.2.3.0", "1.2.3.7", 3 },
+	{ 4, "1.2.3.0", "1.2.3.255", 8 },
+	{ 4, "1.2.3.240", "1.2.3.255", 4 },
+	{ 4, "0.0.0.0", "255.255.255.255", 32 },
+	{ 4, "1.2.3.4", "1.2.3.4", 0 },
+	{ 4, "1.2.3.0", "1.2.3.254", 8 },
+	{ 4, "1.2.3.0", "1.2.3.126", 7 },
+	{ 4, "1.2.3.0", "1.2.3.125", 7 },
+	{ 4, "1.2.0.0", "1.2.255.255", 16 },
+	{ 4, "1.2.0.0", "1.2.0.255", 8 },
+	{ 4, "1.2.255.0", "1.2.255.255", 8 },
+	{ 4, "1.2.255.1", "1.2.255.255", 8 },
+	{ 4, "1.2.0.1", "1.2.255.255", 16 },
+	{ 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:ffff", 16 },
+	{ 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:fff", 12 },
+	{ 6, "1:2:3:4:5:6:7:f0", "1:2:3:4:5:6:7:ff", 4 },
+	{ 4, NULL, NULL, 0 },
 };
 
 void regress()
@@ -225,10 +226,10 @@ void regress()
 		}
 		n = ikev2_calc_iprangediff(high, low);
 		if (n != -1 && r->range == -1) {
-		}                       /* okay, error expected */
-		else if (n == -1) {
+			/* okay, error expected */
+		} else if (n == -1) {
 			printf("`%s'-`%s' iprangediff failed.\n",
-			       r->high, r->low);
+				r->high, r->low);
 			status = 1;
 		} else if (r->range == -1) {
 			printf("`%s'-`%s' iprangediff succeeded unexpectedly\n",
@@ -236,7 +237,7 @@ void regress()
 			status = 1;
 		} else if (r->range != n) {
 			printf("`%s'-`%s' gave `%d', expected `%d'\n",
-			       r->high, r->low, n, r->range);
+				r->high, r->low, n, r->range);
 			status = 1;
 		}
 	}

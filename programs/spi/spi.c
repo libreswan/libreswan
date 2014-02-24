@@ -99,7 +99,6 @@ int replay_window = 0;
 char sa[SATOT_BUF];
 
 int pfkey_sock;
-lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
 enum life_severity {
 	life_soft = 0,
@@ -483,7 +482,7 @@ int main(int argc, char *argv[])
 
 	tool_init_log();
 
-	memset(&said, 0, sizeof(said));
+	zero(&said);
 	edst_opt = spi_opt = proto_opt = af_opt = said_opt = dst_opt =
 								     src_opt =
 									     NULL;
@@ -1024,8 +1023,6 @@ int main(int argc, char *argv[])
 		case 'N':  /* nat-type */
 			if (strcasecmp(optarg, "nonesp") == 0) {
 				natt = ESPINUDP_WITH_NON_ESP;
-			} else if (strcasecmp(optarg, "nonike") == 0) {
-				natt = ESPINUDP_WITH_NON_IKE;
 			} else if (strcasecmp(optarg, "none") == 0) {
 				natt = 0;
 			} else {
