@@ -110,8 +110,8 @@ The "ipsec newhostkey" and "ipsec rsasigkey" utilities are used for
 creating raw RSA keys. If a non-default NSS directory is used, this can
 be specified using the -d option.
 
-	ipsec newhostkey --configdir /etc/ipsec.d [--password password] --output \
-	/etc/ipsec.secrets 
+	ipsec newhostkey --configdir /etc/ipsec.d [--password password] \
+		--output /etc/ipsec.secrets 
 
 The password is only required if the NSS database is protected with a
 non-empty password.  All "private" compontents of the raw RSA key in
@@ -138,8 +138,8 @@ Below, we will be using the nss tools to generate certificates
 
 * To create a certificate authority (CA certficate):
 
-certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -w 12 \
- -d . -t "C,C,C" -x -d /etc/ipsec.d
+	certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -w 12 \
+		-d . -t "C,C,C" -x -d /etc/ipsec.d
 
 It creates a certificate with RSA keys (-k rsa) with the nick name
 "ExampleCA", and with common name "Example CA Inc". The option
@@ -152,14 +152,14 @@ certificate can be obtained from anywhere in the world.
 
 * To create a user certificate signed by the above CA
 
-certutil -S -k rsa -c "ExampleCA" -n "user1" \
- -s "CN=User Common Name" -w 12 -t "u,u,u" -d /etc/ipsec.d 
+	certutil -S -k rsa -c "ExampleCA" -n "user1" -s "CN=User Common Name" \
+		-w 12 -t "u,u,u" -d /etc/ipsec.d 
 
 It creates a user cert with nick name "user1" with attributes
 "u,u,u" signed by the CA cert "ExampleCA". 
 
-NOTE: You must provide a nick name when creating a user
-certificate, because pluto reads the user certificate from the NSS database based on
+NOTE: You must provide a nick name when creating a user certificate,
+because pluto reads the user certificate from the NSS database based on
 the user certificate's nickname. 
 
 
@@ -167,27 +167,33 @@ the user certificate's nickname.
 # Configuring certificates in ipsec.conf and ipsec.secrets
 #########################################################################
 
-In ipsec.conf, the leftcert= option takes a certificate nickname as argument. For
-example if the nickname of the user cert is "hugh", then it can be
+In ipsec.conf, the leftcert= option takes a certificate nickname as argument.
+For example if the nickname of the user cert is "hugh", then it can be
 "leftcert=hugh".
 
-NOTE: if you are migrating from openswan, you are used to specifying a filename for the leftcert= option. Filenames
+NOTE: if you are migrating from openswan, you are used to specifying
+a filename for the leftcert= option. Filenames
 are not valid for the left/rightcert= options in libreswan.
 
-In ipsec.secrets, we need to list the certificate nickname to inform pluto there is a certificate within the NSS db.
+In ipsec.secrets, we need to list the certificate nickname to inform pluto
+there is a certificate within the NSS db.
 This is specified using:
 
  : RSA nickname
 
-NOTE: In openswan and freeswan  it was required to specify a file name or password. With libreswan, this is not required.
-NOTE: openswan and freeswan stored private keys in /etc/ipsec.d/private/ This directory does not exist for libreswan.
+NOTE: In openswan and freeswan  it was required to specify a file name or
+password. With libreswan, this is not required.
+NOTE: openswan and freeswan stored private keys in /etc/ipsec.d/private/
+This directory does not exist for libreswan.
 
 The directories /etc/ipsec.d/cacerts/ and /etc/ipsec.d/crls/ can still be used.
 
-NOTE: the freeswan and openswan directories /etc/ipsec.d/aacerts/ and /etc/ipsec.d/acerts/ are not used with libreswan.
+NOTE: the freeswan and openswan directories /etc/ipsec.d/aacerts/ and
+/etc/ipsec.d/acerts/ are not used with libreswan.
 
-If you use an external CA certificate, you can either import it into the NSS db or place it in the /etc/ipsec.d/cacerts/
-directory. Note that the preferred method is to store it inside the NSS db.
+If you use an external CA certificate, you can either import it into
+the NSS db or place it in the /etc/ipsec.d/cacerts/ directory. Note that
+the preferred method is to store it inside the NSS db.
 
 #########################################################################
 # Importing third-party certificates into NSS
@@ -196,8 +202,8 @@ directory. Note that the preferred method is to store it inside the NSS db.
 If you do not have the third-party certificate in PKCS#12 format, use openssl
 to create a PKCS#12 file:
 
-	openssl pkcs12 -export -in cert.pem -inkey key.pem -certfile cacert.pem \
-	 -out certkey.p12   [-name YourName]
+	openssl pkcs12 -export -in cert.pem -inkey key.pem \
+		-certfile cacert.pem -out certkey.p12   [-name YourName]
 
 Now you can import the file into the NSS db:
 
@@ -205,8 +211,9 @@ Now you can import the file into the NSS db:
 
 NOTE: the ipsec command uses "pk12util -i certkey.p12 -d /etc/ipsec.d"
 
-If you did not pick a name using the -name option, you can use certutil -L -d /etc/ipsec.d
-to figure out the name NSS picked durnig the import.
+If you did not pick a name using the -name option, you can use
+certutil -L -d /etc/ipsec.d to figure out the name NSS picked durnig
+the import.
 
 Add following to /etc/ipsec.secrets file:
 
@@ -254,12 +261,13 @@ Required library: libcoolkey
 
 To make smartcard tokens visible through NSS
 
-modutil -add <module_name> -libfile libcoolkeypk11.so -dbdir \
- <nss_database_dir_name> -mechanisms  <mechanisms_separted_by_colons> 
+	modutil -add <module_name> -libfile libcoolkeypk11.so -dbdir \
+		<nss_database_dir_name> \
+		-mechanisms  <mechanisms_separted_by_colons> 
 
 An example of mechanisms can be
 RC2:RC4:DES:DH:SHA1:MD5:MD2:SSL:TLS:AES:CAMELLIA.
 
 To check whether the token is visible or not, please run
 
-modutil -list -dbdir <nss_database_dir_name>
+   modutil -list -dbdir <nss_database_dir_name>
