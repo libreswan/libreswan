@@ -139,7 +139,7 @@ Below, we will be using the nss tools to generate certificates
 * To create a certificate authority (CA certficate):
 
 	certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -w 12 \
-		-d . -t "C,C,C" -x -d /etc/ipsec.d
+		-t "C,C,C" -x -d /etc/ipsec.d
 
 It creates a certificate with RSA keys (-k rsa) with the nick name
 "ExampleCA", and with common name "Example CA Inc". The option
@@ -261,8 +261,8 @@ Required library: libcoolkey
 
 To make smartcard tokens visible through NSS
 
-	modutil -add <module_name> -libfile libcoolkeypk11.so -dbdir \
-		<nss_database_dir_name> \
+	modutil -add <module_name> -libfile libcoolkeypk11.so \
+		-dbdir <nss_database_dir_name> \
 		-mechanisms  <mechanisms_separted_by_colons> 
 
 An example of mechanisms can be
@@ -270,4 +270,4 @@ RC2:RC4:DES:DH:SHA1:MD5:MD2:SSL:TLS:AES:CAMELLIA.
 
 To check whether the token is visible or not, please run
 
-   modutil -list -dbdir <nss_database_dir_name>
+	modutil -list -dbdir <nss_database_dir_name>
