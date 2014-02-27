@@ -1261,8 +1261,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {
 	c->newest_isakmp_sa = serial;
 
-	if (uniqueIDs && (!c->spd.this.xauth_server)
-	    ) {
+	if (uniqueIDs && !c->spd.this.xauth_server) {
 		/*
 		 * for all connections: if the same Phase 1 IDs are used
 		 * for different IP addresses, unorient that connection.
@@ -1272,20 +1271,26 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 		struct connection *d;
 
 		for (d = connections; d != NULL; ) {
-			struct connection *next = d->ac_next; /* might move underneath us */
+			/* might move underneath us */
+			struct connection *next = d->ac_next;
 
-			if ( ((d->kind == CK_PERMANENT) ||
-			      (d->kind == CK_INSTANCE) ||
-			      (d->kind == CK_GOING_AWAY)) &&
-			     same_id(&c->spd.this.id, &d->spd.this.id) &&
-			     same_id(&c->spd.that.id, &d->spd.that.id) &&
-			     (!sameaddr(&c->spd.that.host_addr,
-					&d->spd.that.host_addr) ||
-			      (c->spd.that.host_port != d->spd.that.host_port))
-			     && !(c->dnshostname && d->dnshostname &&
-				  streq(c->dnshostname, d->dnshostname))
-			     ) {
-				/*  Paul and AA  tried to delete phase2 didn't really work.
+			if (((d->kind == CK_PERMANENT) ||
+				(d->kind == CK_INSTANCE) ||
+				(d->kind == CK_GOING_AWAY)) &&
+				same_id(&c->spd.this.id, &d->spd.this.id) &&
+				same_id(&c->spd.that.id, &d->spd.that.id) &&
+				(ip_address_family(&c->spd.that.host_addr) ==
+				ip_address_family(&d->spd.that.host_addr)) &&
+				(!sameaddr(&c->spd.that.host_addr,
+				&d->spd.that.host_addr) ||
+				(c->spd.that.host_port !=
+				d->spd.that.host_port)) &&
+				!(c->dnshostname && d->dnshostname &&
+					streq(c->dnshostname,
+						d->dnshostname))) {
+				/*
+				 * Paul and AA  tried to delete phase2
+				 * didn't really work.
 				 * delete_p2states_by_connection(d);
 				 */
 				release_connection(d, FALSE);
