@@ -7,3 +7,7 @@ fails to match the secret:
 
 %any %any 127.0.0.1: PSK "test"
 
+It will match:
+
+: PSK "test"
+
