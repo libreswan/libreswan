@@ -79,16 +79,4 @@ extern void set_exit_log_func(exit_log_func_t func);
 # include <dmalloc.h>
 #endif
 
-#define free_lsw_nss_symkey(p)  { \
-		if ((p) != NULL) { \
-			PK11_FreeSymKey(p); \
-			(p) = NULL; \
-		} \
-	}
-
-#define dup_lsw_nss_symkey(p)  { \
-		if ((p) != NULL) \
-			PK11_ReferenceSymKey(p); \
-	}
-
 #endif /* _LSW_ALLOC_H_ */

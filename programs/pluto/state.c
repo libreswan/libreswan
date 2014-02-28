@@ -573,16 +573,24 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_ni);
 	freeanychunk(st->st_nr);
 
-	/* ??? free_lsw_nss_symkey(st->st_shared_nss); */
-	free_lsw_nss_symkey(st->st_skeyid_nss);
-	free_lsw_nss_symkey(st->st_skey_d_nss);
-	free_lsw_nss_symkey(st->st_skey_ai_nss);
-	free_lsw_nss_symkey(st->st_skey_ar_nss);
-	free_lsw_nss_symkey(st->st_skey_ei_nss);
-	free_lsw_nss_symkey(st->st_skey_er_nss);
-	free_lsw_nss_symkey(st->st_skey_pi_nss);
-	free_lsw_nss_symkey(st->st_skey_pr_nss);
-	free_lsw_nss_symkey(st->st_enc_key_nss);
+
+#    define free_any_nss_symkey(p)  { \
+		if ((p) != NULL) { \
+			PK11_FreeSymKey(p); \
+			(p) = NULL; \
+		} \
+	}
+	/* ??? free_any_nss_symkey(st->st_shared_nss); */
+	free_any_nss_symkey(st->st_skeyseed_nss);	/* same as st_skeyid_nss */
+	free_any_nss_symkey(st->st_skey_d_nss);	/* same as st_skeyid_d_nss */
+	free_any_nss_symkey(st->st_skey_ai_nss);	/* same as st_skeyid_a_nss */
+	free_any_nss_symkey(st->st_skey_ar_nss);
+	free_any_nss_symkey(st->st_skey_ei_nss);	/* same as st_skeyid_e_nss */
+	free_any_nss_symkey(st->st_skey_er_nss);
+	free_any_nss_symkey(st->st_skey_pi_nss);
+	free_any_nss_symkey(st->st_skey_pr_nss);
+	free_any_nss_symkey(st->st_enc_key_nss);
+#   undef free_any_nss_symkey
 
 	if (st->st_ah.our_keymat != NULL)
 		memset(st->st_ah.our_keymat, 0, st->st_ah.keymat_len);
@@ -981,15 +989,21 @@ struct state *duplicate_state(struct state *st)
 	nst->st_seen_fragments = st->st_seen_fragments;
 	nst->st_event = NULL;
 
-	dup_lsw_nss_symkey(st->st_skeyseed_nss);
-	dup_lsw_nss_symkey(st->st_skey_d_nss);
-	dup_lsw_nss_symkey(st->st_skey_ai_nss);
-	dup_lsw_nss_symkey(st->st_skey_ar_nss);
-	dup_lsw_nss_symkey(st->st_skey_ei_nss);
-	dup_lsw_nss_symkey(st->st_skey_er_nss);
-	dup_lsw_nss_symkey(st->st_skey_pi_nss);
-	dup_lsw_nss_symkey(st->st_skey_pr_nss);
-	dup_lsw_nss_symkey(st->st_enc_key_nss);
+#   define clone_nss_symkey_field(field) { \
+		nst->field = st->field; \
+		if (nst->field != NULL) \
+			PK11_ReferenceSymKey(nst->field); \
+	}
+	clone_nss_symkey_field(st_skeyseed_nss);	/* same as st_skeyid_nss */
+	clone_nss_symkey_field(st_skey_d_nss);	/* same as st_skeyid_d_nss */
+	clone_nss_symkey_field(st_skey_ai_nss);	/* same as st_skeyid_a_nss */
+	clone_nss_symkey_field(st_skey_ar_nss);
+	clone_nss_symkey_field(st_skey_ei_nss);	/* same as st_skeyid_e_nss */
+	clone_nss_symkey_field(st_skey_er_nss);
+	clone_nss_symkey_field(st_skey_pi_nss);
+	clone_nss_symkey_field(st_skey_pr_nss);
+	clone_nss_symkey_field(st_enc_key_nss);
+#   undef clone_nss_symkey_field
 
 	/* v2 duplication of state */
 #   define clone_chunk(ch, name) \
