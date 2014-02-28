@@ -794,7 +794,6 @@ stf_status quick_outI1(int whack_sock,
 	struct state *st = duplicate_state(isakmp_sa);
 	struct qke_continuation *qke;
 	stf_status e;
-	const char *pfsgroupname;
 	char p2alg[256];
 
 	st->st_whack_sock = whack_sock;
@@ -834,33 +833,33 @@ stf_status quick_outI1(int whack_sock,
 					(struct alg_info_esp *)st->st_connection->alg_info_esp);
 	}
 
-	pfsgroupname = "no-pfs";
-	/*
-	 * See if pfs_group has been specified for this conn,
-	 * if not, fallback to old use-same-as-P1 behaviour
-	 */
-	if (st->st_connection) {
-		st->st_pfs_group = ike_alg_pfsgroup(st->st_connection,
-						    st->st_policy);
+	/* figure out PFS group, if any */
 
+	if (policy & POLICY_PFS ) {
+		/*
+		 * See if pfs_group has been specified for this conn,
+		 * use that group.
+		 * if not, fallback to old use-same-as-P1 behaviour
+		 */
+		if (st->st_connection != NULL)
+			st->st_pfs_group = ike_alg_pfsgroup(st->st_connection,
+							    st->st_policy);
+
+		/* otherwise, use the same group as during Phase 1:
+		 * since no negotiation is possible, we pick one that is
+		 * very likely supported.
+		 */
+		if (st->st_pfs_group == NULL)
+			st->st_pfs_group = isakmp_sa->st_oakley.group;
 	}
-
-	/* If PFS specified, use the same group as during Phase 1:
-	 * since no negotiation is possible, we pick one that is
-	 * very likely supported.
-	 */
-	if (!st->st_pfs_group) {
-		st->st_pfs_group = policy &
-				   POLICY_PFS ? isakmp_sa->st_oakley.group :
-				   NULL;
-	}
-
-	if (policy & POLICY_PFS && st->st_pfs_group)
-		pfsgroupname = enum_name(&oakley_group_names,
-					 st->st_pfs_group->group);
 
 	{
+		const char *pfsgroupname = "no-pfs";
 		char replacestr[32];
+
+		if ((policy & POLICY_PFS) != LEMPTY)
+			pfsgroupname = enum_name(&oakley_group_names,
+						 st->st_pfs_group->group);
 
 		replacestr[0] = '\0';
 		if (replacing != SOS_NOBODY)
@@ -869,8 +868,7 @@ stf_status quick_outI1(int whack_sock,
 
 		libreswan_log(
 			"initiating Quick Mode %s%s {using isakmp#%lu msgid:%08x proposal=%s pfsgroup=%s}",
-			prettypolicy(
-				policy),
+			prettypolicy(policy),
 			replacestr,
 			isakmp_sa->st_serialno, st->st_msgid, p2alg,
 			pfsgroupname);
