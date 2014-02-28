@@ -616,11 +616,6 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	 * NOW SEND VENDOR ID payloads
 	 */
 
-	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
-		/* Set local policy for DPD to be on */
-		st->hidden_variables.st_dpd_local = 1;
-	}
-
 	/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
 	{
 		int np = ISAKMP_NEXT_NONE;

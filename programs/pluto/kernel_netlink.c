@@ -2074,12 +2074,6 @@ add_entry:
 					if (fd < 0)
 						break;
 
-					if (nat_traversal_support_non_ike &&
-					    addrtypeof(&ifp->addr) == AF_INET)
-						nat_traversal_espinudp_socket(
-							fd, "IPv4",
-							ESPINUDP_WITH_NON_IKE);
-
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
 					id = alloc_thing(struct iface_dev,
@@ -2116,9 +2110,7 @@ add_entry:
 					 * the kernel did not support it, and gave an error
 					 * it one tried to turn it on.
 					 */
-					if (nat_traversal_support_port_floating
-					    &&
-					    addrtypeof(&ifp->addr) ==
+					if (addrtypeof(&ifp->addr) ==
 					    AF_INET) {
 						fd = create_socket(ifp,
 								   v->name,
@@ -2126,8 +2118,7 @@ add_entry:
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(
-							fd, "IPv4",
-							ESPINUDP_WITH_NON_ESP);
+							fd, "IPv4");
 						q = alloc_thing(
 							struct iface_port,
 							"struct iface_port");

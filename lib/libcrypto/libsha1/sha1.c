@@ -21,7 +21,7 @@
 /* #define LITTLE_ENDIAN * This should be #define'd already, if true. */
 /* #define SHA1HANDSOFF * Copies data before messing with it. */
 
-#include <libreswan.h> /* for DEBUG for NSS PR_ASSERT() */
+#include <libreswan.h> /* for DEBUG for NSS passert() */
 
 #include <pk11pub.h>
 #include "lswlog.h"
@@ -199,9 +199,9 @@ void SHA1Init(SHA1_CTX* context)
 	SECStatus status;
 
 	context->ctx_nss = PK11_CreateDigestContext(SEC_OID_SHA1);
-	PR_ASSERT(context->ctx_nss != NULL);
+	passert(context->ctx_nss != NULL);
 	status = PK11_DigestBegin(context->ctx_nss);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 }
 
 /* Run your data through this. */
@@ -210,7 +210,7 @@ void SHA1Update(SHA1_CTX* context, const unsigned char* data, u_int32_t len)
 {
 	SECStatus status = PK11_DigestOp(context->ctx_nss, data, len);
 
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 	/*loglog(RC_LOG_SERIOUS, "enter sha1 ctx update end");*/
 }
 
@@ -222,7 +222,7 @@ void SHA1Final(unsigned char digest[SHA1_DIGEST_SIZE], SHA1_CTX* context)
 	SECStatus status = PK11_DigestFinal(context->ctx_nss, digest, &length,
 				  SHA1_DIGEST_SIZE );
 
-	PR_ASSERT(status == SECSuccess);
-	PR_ASSERT(length == SHA1_DIGEST_SIZE);
+	passert(status == SECSuccess);
+	passert(length == SHA1_DIGEST_SIZE);
 	PK11_DestroyContext(context->ctx_nss, PR_TRUE);
 }

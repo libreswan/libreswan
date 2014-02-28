@@ -2242,15 +2242,13 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		st->st_seen_fragvid = TRUE;
 	}
 	/* If state has DPD support, import it */
-	if ( st && md->dpd && st->hidden_variables.st_dpd != md->dpd) {
+	if ( st && md->dpd &&
+		   st->hidden_variables.st_peer_supports_dpd != md->dpd) {
 		DBG(DBG_DPD, DBG_log("peer supports dpd"));
-		st->hidden_variables.st_dpd = md->dpd;
+		st->hidden_variables.st_peer_supports_dpd = md->dpd;
 
-		if (st->st_connection->dpd_delay &&
-		    st->st_connection->dpd_timeout) {
-			/* Set local policy for DPD to be on */
-			st->hidden_variables.st_dpd_local = 1;
-			DBG(DBG_DPD, DBG_log("enabling sending dpd"));
+		if (dpd_active_locally(st)) {
+			DBG(DBG_DPD, DBG_log("dpd is active locally"));
 		}
 	}
 	/* If state has VID_NORTEL, import it to activate workaround */

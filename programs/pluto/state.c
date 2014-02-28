@@ -480,6 +480,10 @@ void delete_state(struct state *st)
 	if (st->st_dpd_event != NULL)
 		delete_dpd_event(st);
 
+	/* clear any ikev2 liveness events */
+	if (st->st_ikev2)
+		delete_liveness_event(st);
+
 	/* if there is a suspended state transition, disconnect us */
 	if (st->st_suspended_md != NULL) {
 		passert(st->st_suspended_md->st == st);
@@ -846,52 +850,6 @@ void delete_p2states_by_connection(struct connection *c)
 
 	foreach_states_by_connection_func(c, same_phase1_no_phase2,
 					  delete_state_function,
-					  &parent_sa);
-	if (ck == CK_INSTANCE) {
-		c->kind = ck;
-		delete_connection(c, TRUE);
-	}
-}
-
-/*
- * rekey_p2states_by_connection - rekeys all the phase 2 of conn
- *
- * @c - the connection whose states need to be rekeyed
- *
- * This is like delete_states_by_connection with relations=TRUE,
- * but instead of removing the states, is scheduled them for rekey.
- */
-static void rekey_state_function(struct state *this,
-				 struct connection *c UNUSED,
-				 void *arg UNUSED)
-{
-	libreswan_log("rekeying state (%s)",
-		      enum_show(&state_names, this->st_state));
-
-	delete_event(this);
-	delete_dpd_event(this);
-	event_schedule(EVENT_SA_REPLACE, 0, this);
-
-	/*
-	 * but, remove the actual phase2 SA from the kernel, replacing
-	 * with a %trap.
-	 */
-	delete_ipsec_sa(this, FALSE);
-}
-
-void rekey_p2states_by_connection(struct connection *c)
-{
-	so_serial_t parent_sa = c->newest_isakmp_sa;
-	enum connection_kind ck = c->kind;
-
-	/* save this connection's isakmp SA,
-	 * since it will get set to later SOS_NOBODY
-	 */
-	if (ck == CK_INSTANCE)
-		c->kind = CK_GOING_AWAY;
-
-	foreach_states_by_connection_func(c, same_phase1_no_phase2,
-					  rekey_state_function,
 					  &parent_sa);
 	if (ck == CK_INSTANCE) {
 		c->kind = ck;
@@ -1469,7 +1427,7 @@ void fmt_state(struct state *st, const time_t n,
 		snprintf(dpdbuf, sizeof(dpdbuf), "; isakmp#%lu",
 			 (unsigned long)st->st_clonedfrom);
 	} else {
-		if (st->hidden_variables.st_dpd) {
+		if (st->hidden_variables.st_peer_supports_dpd) {
 			time_t tn = time(NULL);
 
 			snprintf(dpdbuf, sizeof(dpdbuf),
@@ -1478,7 +1436,7 @@ void fmt_state(struct state *st, const time_t n,
 				 st->st_last_dpd : (long)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
-		} else if (st->hidden_variables.st_liveness) {
+		} else if (dpd_active_locally(st) && st->st_ikev2) {
 			struct state *pst;
 			time_t tn = time(NULL);
 
@@ -1866,31 +1824,6 @@ startover:
 	return cpi;
 }
 
-/*
- * Immediately schedule a replace event for all states for a peer.
- */
-void replace_states_by_peer(const ip_address *peer)
-{
-	struct state *st = NULL;
-	int i;
-
-	/* struct event *ev;     currently unused */
-
-	for (i = 0; st == NULL && i < STATE_TABLE_SIZE; i++)
-		for (st = statetable[i]; st != NULL;
-		     st = st->st_hashchain_next)
-			/* Only replace if it already has a replace event. */
-			if (sameaddr(&st->st_connection->spd.that.host_addr,
-				     peer) &&
-			    (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||
-			     IS_IPSEC_SA_ESTABLISHED(st->st_state)) &&
-			    st->st_event->ev_type == EVENT_SA_REPLACE) {
-				delete_event(st);
-				delete_dpd_event(st);
-				event_schedule(EVENT_SA_REPLACE, 0, st);
-			}
-}
-
 void copy_quirks(struct isakmp_quirks *dq,
 		 struct isakmp_quirks *sq)
 {
@@ -1913,4 +1846,10 @@ void set_state_ike_endpoints(struct state *st,
 	st->st_remoteport = c->spd.that.host_port;
 
 	st->st_interface = c->interface;
+}
+
+/* seems to be a good spot for now */
+bool dpd_active_locally(struct state *st)
+{
+	return st->st_connection->dpd_delay && st->st_connection->dpd_timeout;
 }

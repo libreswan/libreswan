@@ -1023,8 +1023,6 @@ int main(int argc, char *argv[])
 		case 'N':  /* nat-type */
 			if (strcasecmp(optarg, "nonesp") == 0) {
 				natt = ESPINUDP_WITH_NON_ESP;
-			} else if (strcasecmp(optarg, "nonike") == 0) {
-				natt = ESPINUDP_WITH_NON_IKE;
 			} else if (strcasecmp(optarg, "none") == 0) {
 				natt = 0;
 			} else {

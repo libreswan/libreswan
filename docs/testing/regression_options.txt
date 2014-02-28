@@ -1,7 +1,0 @@
-/proc/sys/net/ipsec/pfkey_lossage
-	If set 1, then all pfkey Acquire messages will be lost silently
-	by KLIPS. This excersizes the code in Pluto to scan
-	/proc/net/ipsec_eroute for %hold.
-
-
-

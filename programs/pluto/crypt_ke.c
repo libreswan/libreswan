@@ -85,7 +85,7 @@ void calc_ke(struct pluto_crypto_req *r)
 				lsw_return_nss_password_file_info());
 	if (slot == NULL)
 		loglog(RC_LOG_SERIOUS, "NSS: slot for DH key gen is NULL");
-	PR_ASSERT(slot != NULL);
+	passert(slot != NULL);
 
 	for (;;) {
 		privk = PK11_GenerateKeyPair(slot, CKM_DH_PKCS_KEY_PAIR_GEN,
@@ -96,7 +96,7 @@ void calc_ke(struct pluto_crypto_req *r)
 			       "NSS: DH private key creation failed (err %d)",
 			       PR_GetError());
 		}
-		PR_ASSERT(privk != NULL);
+		passert(privk != NULL);
 
 		if (group->bytes == pubk->u.dh.publicValue.len) {
 			DBG(DBG_CRYPT,

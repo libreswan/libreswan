@@ -1813,16 +1813,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					       "NAT-Traversal is not detected",
 					       enum_name(&enc_mode_names,
 							 val));
-					/*
-					 * Accept it anyway because SSH-Sentinel does not
-					 * use UDP_TUNNEL or UDP_TRANSPORT for the diagnostic.
-					 *
-					 * remove when SSH-Sentinel is fixed
-					 */
-#ifdef I_DONT_CARE_OF_SSH_SENTINEL
 					return FALSE;
-
-#endif
 				}
 				attrs->encapsulation = val;
 				break;

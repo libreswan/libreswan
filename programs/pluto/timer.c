@@ -59,7 +59,6 @@
  * have information like event type, expiration time and a pointer
  * to event specific data (for example, to a state structure).
  */
-static void delete_liveness_event(struct state *st);	/* forward */
 
 static struct event *evlist = (struct event *) NULL;
 
@@ -822,7 +821,7 @@ void delete_event(struct state *st)
 	}
 }
 
-static void delete_liveness_event(struct state *st)
+void delete_liveness_event(struct state *st)
 {
 	if (st->st_liveness_event != NULL) {
 		struct event **ev;

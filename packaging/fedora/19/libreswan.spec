@@ -158,8 +158,8 @@ echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ips
 rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %files 
-%doc BUGS CHANGES COPYING CREDITS README LICENSE
-%doc docs/*.*
+%doc CHANGES COPYING CREDITS README* LICENSE
+%doc docs/*.* docs/examples
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
