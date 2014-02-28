@@ -585,3 +585,7 @@ umlplutotest	x509-pluto-frag-04			good
 
 kvmplutotest	replay-authip-01			good
 
+kvmplutotest	l2tp-01					good
+kvmplutotest	l2tp-02					good
+kvmplutotest	l2tp-02-netkey				good
+

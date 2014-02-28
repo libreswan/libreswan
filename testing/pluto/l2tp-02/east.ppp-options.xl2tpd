@@ -1,0 +1,13 @@
+ms-dns  192.1.2.254
+ms-dns  192.1.2.254
+noccp
+auth
+idle 1800
+mtu 1395
+mru 1395
+nodefaultroute
+debug
+lock
+proxyarp
+connect-delay 5000
+ppp debug
