@@ -19,6 +19,7 @@
 #define _NAT_TRAVERSAL_H_
 
 #include "demux.h"
+#include "lswalloc.h"
 
 /*
  *  NAT-Traversal defines for nat_traversal type from nat_traversal.h
@@ -130,6 +131,11 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *,
  */
 bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 			      bool in);
+/* NAT-T IKEv2 v2N */
+
+bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md);
+
+
 
 /**
  * Encapsulation mode macro (see demux.c)
