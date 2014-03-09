@@ -570,19 +570,12 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 						    0);
 		passert(tkey9 != NULL);
 
-<<<<<<< HEAD
-		skeyid_d =
-			PK11_Derive_lsw(tkey9, nss_key_derivation_mech(
-						hasher), NULL, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-					0);
-=======
 		skeyid_d = PK11_Derive_lsw(tkey9,
 					   nss_key_derivation_mech(hasher),
 					   NULL,
 					   CKM_CONCATENATE_BASE_AND_DATA,
 					   CKA_DERIVE,
 					   0);
->>>>>>> smoother-nss
 		passert(skeyid_d != NULL);
 		/* nss_symkey_log(skeyid_d, "skeyid_d"); */
 		/*****End of SKEYID_d derivation***************************************/
@@ -653,19 +646,12 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 						     0);
 		passert(tkey16 != NULL);
 
-<<<<<<< HEAD
-		skeyid_a =
-			PK11_Derive_lsw(tkey16, nss_key_derivation_mech(
-						hasher), NULL, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-					0);
-=======
 		skeyid_a = PK11_Derive_lsw(tkey16,
 					   nss_key_derivation_mech(hasher),
 					   NULL,
 					   CKM_CONCATENATE_BASE_AND_DATA,
 					   CKA_DERIVE,
 					   0);
->>>>>>> smoother-nss
 		passert(skeyid_a != NULL);
 		/* nss_symkey_log(skeyid_a, "skeyid_a"); */
 		/*****End of SKEYID_a derivation***************************************/
@@ -738,17 +724,11 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		param1.len = sizeof(bitstart);
 
 		if (keysize <= hasher->hash_digest_len) {
-<<<<<<< HEAD
-			skeyid_e = PK11_Derive_lsw(tkey23, nss_key_derivation_mech(
-							   hasher), NULL, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
-						   0);
-=======
 			skeyid_e = PK11_Derive_lsw(tkey23,
 						   nss_key_derivation_mech(hasher),
 						   NULL,
 						   CKM_EXTRACT_KEY_FROM_KEY,	/* note */
 						   CKA_DERIVE, 0);
->>>>>>> smoother-nss
 			passert(skeyid_e != NULL);
 			/* nss_symkey_log(skeyid_e, "skeyid_e"); */
 
@@ -764,17 +744,11 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 			size_t i = 0;
 			PK11SymKey *keymat;
 
-<<<<<<< HEAD
-			skeyid_e = PK11_Derive_lsw(tkey23, nss_key_derivation_mech(
-							   hasher), NULL, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						   0);
-=======
 			skeyid_e = PK11_Derive_lsw(tkey23,
 						   nss_key_derivation_mech(hasher),
 						   NULL,
 						   CKM_CONCATENATE_BASE_AND_DATA,	/* note */
 						   CKA_DERIVE, 0);
->>>>>>> smoother-nss
 			passert(skeyid_e != NULL);
 			/* nss_symkey_log(skeyid_e, "skeyid_e"); */
 
@@ -1307,11 +1281,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 								    CKA_DERIVE,
 								    0);
 			passert(tkey6 != NULL);
-<<<<<<< HEAD
-=======
 
 			chunk_t counter;
->>>>>>> smoother-nss
 
 			setchunk(counter, &vpss.counter[0], sizeof(vpss.counter[0]));
 			PK11SymKey *tkey7 = pk11_derive_wrapper_lsw(tkey6,
