@@ -351,9 +351,9 @@ static void compute_proto_keymat(struct state *st,
 				SECStatus s;
 
 				s = PK11_DigestKey(ctx_me.ctx_nss, st->st_shared_nss);
-				PR_ASSERT(s == SECSuccess);
+				passert(s == SECSuccess);
 				s = PK11_DigestKey(ctx_peer.ctx_nss, st->st_shared_nss);
-				PR_ASSERT(s == SECSuccess);
+				passert(s == SECSuccess);
 			}
 			hmac_update(&ctx_me, &protoid, sizeof(protoid));
 			hmac_update(&ctx_peer, &protoid, sizeof(protoid));
