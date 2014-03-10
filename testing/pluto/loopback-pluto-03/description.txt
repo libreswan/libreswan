@@ -4,3 +4,4 @@ This is used for MLS type labeling of connections on the same host
 
 This test also sets an SElinux  policy label
 
+(this fails on openswan)

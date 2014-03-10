@@ -912,7 +912,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		/* free previously transmitted packet */
 		freeanychunk(st->st_tpacket);
-		if (nat_traversal_enabled) {
+		if (nat_traversal_enabled && (from_state != STATE_PARENT_I1)) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}

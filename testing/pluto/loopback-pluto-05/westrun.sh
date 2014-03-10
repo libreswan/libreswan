@@ -1,18 +1,17 @@
-# this is not the best to sanitize :P
-/usr/sbin/tcpdump -i lo -s 0 -n -w /tmp/tcpdump-lo.pcap &
-sleep 2
+tcpdump -i lo -n -s 0 -w /tmp/tcpdump-lo.pcap 2> /dev/null &
+sleep 1
 echo PLAINTEXT | nc 127.0.0.1 22
-ping -c 1 127.0.0.2
+ping -n -c 1 127.0.0.2
 ipsec auto --up wide
-ip xfrm policy
+ipsec look
 echo ENCRYPTED | nc 127.0.0.1 666
 echo ENCRYPTED | nc 127.0.0.1 22
-ping -c 1 127.0.0.2
+ping -n -c 1 127.0.0.3
 ipsec auto --route narrow
-ip xfrm policy
+ipsec look
 echo ENCRYPTED | nc 127.0.0.1 666
 echo PLAINTEXT | nc 127.0.0.1 22
 sleep 1
 killall tcpdump
-tcpdump -r /tmp/tcpdump-lo.pcap -n src 127.0.0.1 or src 127.0.0.2
+tcpdump -r /tmp/tcpdump-lo.pcap -n src 127.0.0.1 or src 127.0.0.2 or src 127.0.0.3
 echo done

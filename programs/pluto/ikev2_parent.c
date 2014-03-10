@@ -7,7 +7,7 @@
  * Copyright (C) 2010,2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2012,2014 Antony Antony <antony@phenome.org>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
@@ -433,17 +433,10 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			   ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
-	/*
-	 * Check which Vendor ID's we need to send - there will be more soon
-	 * In IKEv2, DPD and NAT-T are no longer vendorid's
-	 */
-	if (c->send_vendorid) {
-		numvidtosend++;  /* if we need to send Libreswan VID */
-	}
-
+	
 	/* send NONCE */
 	{
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		int np = ISAKMP_NEXT_v2N; 
 		struct ikev2_generic in;
 		pb_stream pb;
 
@@ -461,6 +454,26 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb);
+	}
+
+	/*
+	 * Check which Vendor ID's we need to send - there will be more soon
+	 * In IKEv2, DPD and NAT-T are no longer vendorid's
+	 */
+
+	if (c->send_vendorid) {
+		numvidtosend++;  /* if we need to send Libreswan VID */
+	}
+
+        /* Send NAT-T Notify payloads */
+	{
+		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		struct ikev2_generic in;
+		memset(&in, 0, sizeof(in));
+		in.isag_np = np;
+		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+		ikev2_out_nat_v2n(np, &md->rbody, md);
+
 	}
 
 	/* Send Vendor VID if needed */
@@ -741,6 +754,14 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		}
 	}
+	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and 
+	 * v2N_NAT_DETECTION_SOURCE_IP
+	 */
+	{
+		if(md->chain[ISAKMP_NEXT_v2N]) {
+			ikev2_natd_lookup(md, FALSE);
+		}
+	}
 
 	/* now. we need to go calculate the nonce, and the KE */
 	{
@@ -917,7 +938,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* send NONCE */
 	unpack_nonce(&st->st_nr, r);
 	{
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		int np = ISAKMP_NEXT_v2N;
 		struct ikev2_generic in;
 		pb_stream pb;
 
@@ -935,6 +956,17 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb);
+	}
+
+	/* Send NAT-T Notify payloads */
+	{
+		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		struct ikev2_generic in;
+		memset(&in, 0, sizeof(in));
+		in.isag_np = np;
+		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+		ikev2_out_nat_v2n(np, &md->rbody, md);
+
 	}
 
 	/* Send VendrID if needed VID */
@@ -1085,6 +1117,16 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 	/* update state */
 	ikev2_update_counters(md);
+
+	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and 
+	 * v2N_NAT_DETECTION_SOURCE_IP
+	 */
+	{
+		if(md->chain[ISAKMP_NEXT_v2N]) {
+			ikev2_natd_lookup(md, TRUE);
+		}
+	}
+
 
 	/* now. we need to go calculate the g^xy */
 	{
@@ -1710,6 +1752,12 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 	 * the initiator sent us an encrypted payload. We need to calculate
 	 * our g^xy, and skeyseed values, and then decrypt the payload.
 	 */
+
+	
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("Antony %s new nat lookup ", __FUNCTION__));
+
+	nat_traversal_change_port_lookup(md, st);
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2"));
