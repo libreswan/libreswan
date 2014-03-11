@@ -1072,7 +1072,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	/* start of SA out */
 	{
 		struct isakmp_sa r_sa = sa_pd->payload.sa;
-		notification_t rn;
+		v2_notification_t rn;
 		pb_stream r_sa_pbs;
 
 		r_sa.isasa_np = ISAKMP_NEXT_v2TSi;
@@ -1084,7 +1084,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					       &sa_pd->payload.v2sa,
 					       &r_sa_pbs, st1, FALSE);
 
-		if (rn != NOTHING_WRONG)
+		if (rn != v2N_NOTHING_WRONG)
 			return STF_FAIL + rn; /* should we delete_state st1? */
 	}
 
