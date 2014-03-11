@@ -105,6 +105,7 @@ kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	good
+kvmplutotest	dpd-08-netkey	good
 
 # Delete SA test.
 kvmplutotest	delete-sa-01	good
