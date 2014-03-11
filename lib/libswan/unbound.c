@@ -124,7 +124,6 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		srclen = strlen(src);
 		if (srclen == 0) {
 			libreswan_log("empty hostname in host lookup\n");
-			ub_resolve_free(result);
 			return 0;
 		}
 	}
