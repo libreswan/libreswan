@@ -1212,5 +1212,5 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		return v2N_INVALID_SYNTAX; /* ??? */
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
-	return NOTHING_WRONG;
+	return v2N_NOTHING_WRONG;
 }
