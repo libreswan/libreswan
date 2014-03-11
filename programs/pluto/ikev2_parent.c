@@ -885,7 +885,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* start of SA out */
 	{
 		struct isakmp_sa r_sa = sa_pd->payload.sa;
-		v2_notification_t rn;
+		stf_status ret;
 		pb_stream r_sa_pbs;
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
@@ -900,13 +900,13 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			return STF_INTERNAL_ERROR;
 
 		/* SA body in and out */
-		rn = ikev2_parse_parent_sa_body(&sa_pd->pbs,
+		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
 						&sa_pd->payload.v2sa,
 						&r_sa_pbs, st, FALSE);
 
-		if (rn != v2N_NOTHING_WRONG) {
+		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE,DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
-			return STF_FAIL + rn;
+			return ret;
 		}
 	}
 
@@ -1103,16 +1103,16 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	{
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		v2_notification_t rn;
+		stf_status ret;
 
 		/* SA body in and out */
-		rn = ikev2_parse_parent_sa_body(&sa_pd->pbs,
+		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
 						&sa_pd->payload.v2sa,
 						NULL, st, FALSE);
 
-		if (rn != v2N_NOTHING_WRONG) {
+		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE,DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
-			return STF_FAIL + rn;
+			return ret;
 		}
 	}
 
@@ -2462,16 +2462,16 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	} /* end of TS check block */
 
 	{
-		v2_notification_t rn;
+		stf_status ret;
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
 
-		rn = ikev2_parse_child_sa_body(&sa_pd->pbs,
+		ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
 					       &sa_pd->payload.v2sa,
 					       NULL, st, FALSE);
 
-		if (rn != v2N_NOTHING_WRONG) {
-			return STF_FAIL + rn;
+		if (ret != STF_OK) {
+			return ret;
 		}
 	}
 

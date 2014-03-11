@@ -1567,7 +1567,7 @@ stf_status xauth_inR0(struct msg_digest *md)
 						"unsupported XAUTH_TYPE value %s received",
 						enum_show(&xauth_type_names,
 							  attr.isaat_lv));
-					return NO_PROPOSAL_CHOSEN;
+					return STF_FAIL + NO_PROPOSAL_CHOSEN;
 				}
 				break;
 
