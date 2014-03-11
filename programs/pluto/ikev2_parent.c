@@ -1095,7 +1095,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 	if (md->chain[ISAKMP_NEXT_v2SA] == NULL) {
 		libreswan_log("No responder SA proposal found");
-		return v2N_INVALID_SYNTAX;
+		return STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 
 	/* process and confirm the SA selected */
