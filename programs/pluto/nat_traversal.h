@@ -86,14 +86,16 @@ extern bool nat_traversal_support_port_floating;
 /**
  * NAT-D
  */
-void nat_traversal_natd_lookup(struct msg_digest *md);
-bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
-			    struct msg_digest *md);
+extern void nat_traversal_natd_lookup(struct msg_digest *md);
+extern bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
+				   struct msg_digest *md);
+extern void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie);
 
 /**
  * NAT-OA
  */
-struct hidden_variables;
+struct hidden_variables;	/* forward */
+
 void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv);
 bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,

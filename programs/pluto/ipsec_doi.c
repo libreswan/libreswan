@@ -137,15 +137,9 @@ void unpack_KE(struct state *st,
 		clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
 			     kn->gi.len, "saved gi value");
 		DBG(DBG_CRYPT,
-		    DBG_log("saving DH priv (local secret) and pub key into state struc"));
-		clonetochunk(st->st_sec_chunk,
-			     WIRE_CHUNK_PTR(*kn, secret),
-			     kn->secret.len,
-			     "pointer to DH private key (secret)");
-
-		clonetochunk(st->pubk,
-			     WIRE_CHUNK_PTR(*kn, pubk),
-			     kn->pubk.len, "pointer to DH public key");
+		    DBG_log("saving DH priv (local secret) and pub key into state struct"));
+		st->st_sec_nss = kn->secret;
+		st->st_pubk_nss = kn->pubk;
 	}
 }
 
