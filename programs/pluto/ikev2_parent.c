@@ -61,6 +61,7 @@
 #include "rnd.h"
 #include "pending.h"
 #include "kernel.h"
+#include "nat_traversal.h"
 
 #define SEND_NOTIFICATION_AA(t, d) \
 	if (st) \
