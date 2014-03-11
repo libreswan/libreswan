@@ -242,7 +242,7 @@ static void retransmit_v1_msg(struct state *st)
 
 			try++;
 			snprintf(story, sizeof(story), try_limit == 0 ?
-				 "starting keying attempt %ld of an unlimited number (%ld)" :
+				 "starting keying attempt %ld of an unlimited number" :
 				 "starting keying attempt %ld of at most %ld",
 				 try,
 				 try_limit);
@@ -358,7 +358,7 @@ static void retransmit_v2_msg(struct state *st)
 		char story[80]; /* arbitrary limit */
 
 		snprintf(story, sizeof(story), try_limit == 0 ?
-			 "starting keying attempt %ld of an unlimited number (%ld)" :
+			 "starting keying attempt %ld of an unlimited number" :
 			 "starting keying attempt %ld of at most %ld",
 			 try, try_limit);
 
