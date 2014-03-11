@@ -32,14 +32,14 @@
 #include <errno.h>
 
 /* DNSSEC root key */
-static char *rootanchor =
+static const char rootanchor[] =
 	". IN DNSKEY 257 3 8 AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjFFVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh/RStIoO8g0NfnfL2MTJRkxoXbfDaUeVPQuYEhg37NZWAJQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaDX6RS6CXpoY68LsvPVjR0ZSwzz1apAzvN9dlzEheX7ICJBBtuA6G3LQpzW5hOA2hzCTMjJPJ8LbqF6dsV6DoBQzgul0sGIcGOYl7OyQdXfZ57relSQageu+ipAdTTJ25AsRTAoub8ONGcLmqrAmRLKBP1dfwhYB4N7knNnulqQxA+Uk1ihz0=";
 
 /* DNSSEC DLV key, see http://dlv.isc.org/ */
-static char *dlvanchor =
+static const char dlvanchor[] =
 	"dlv.isc.org. IN DNSKEY 257 3 5 BEAAAAPHMu/5onzrEE7z1egmhg/WPO0+juoZrW3euWEn4MxDCE1+lLy2brhQv5rN32RKtMzX6Mj70jdzeND4XknW58dnJNPCxn8+jAGl2FZLK8t+1uq4W+nnA3qO2+DL+k6BD4mewMLbIYFwe0PG73Te9fZ2kJb56dhgMde5ymX4BI/oQ+cAK50/xvJv00Frf8kw6ucMTwFlgPe+jnGxPPEmHAte/URkY62ZfkLoBAADLHQ9IrS2tryAe7mbBZVcOwIeU/Rw/mRx/vwwMCTgNboMQKtUdvNXDrYJDSHZws3xiRXF1Rf+al9UmZfSav/4NWLKjHzpT59k/VStTDN0YUuWrBNh";
 
-int unbound_init(struct ub_ctx *dnsctx)
+bool unbound_init(struct ub_ctx *dnsctx)
 {
 	int ugh;
 
@@ -47,7 +47,7 @@ int unbound_init(struct ub_ctx *dnsctx)
 	dnsctx = ub_ctx_create();
 	if (!dnsctx) {
 		libreswan_log("error: could not create unbound context\n");
-		return 0;
+		return FALSE;
 	}
 	DBG(DBG_DNS,
 		ub_ctx_debuglevel(dnsctx, 5);
@@ -55,10 +55,11 @@ int unbound_init(struct ub_ctx *dnsctx)
 		);
 
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
-	if ( (ugh = ub_ctx_hosts(dnsctx, "/etc/hosts")) != 0) {
+	ugh = ub_ctx_hosts(dnsctx, "/etc/hosts");
+	if (ugh != 0) {
 		libreswan_log("error reading hosts: %s: %s\n",
 			ub_strerror(ugh), strerror(errno));
-		return 0;
+		return FALSE;
 	}
 	DBG(DBG_DNS,
 		DBG_log("/etc/hosts lookups activated\n");
@@ -69,10 +70,11 @@ int unbound_init(struct ub_ctx *dnsctx)
 	 * reconfigure this file if they need to work around DHCP DNS obtained
 	 * servers
 	 */
-	if ( (ugh = ub_ctx_resolvconf(dnsctx, "/etc/resolv.conf")) != 0) {
+	ugh = ub_ctx_resolvconf(dnsctx, "/etc/resolv.conf");
+	if (ugh != 0) {
 		libreswan_log("error reading resolv.conf: %s: %s\n",
 			ub_strerror(ugh), strerror(errno));
-		return 0;
+		return FALSE;
 	}
 	DBG(DBG_DNS,
 		DBG_log("/etc/resolv.conf usage activated\n");
@@ -89,7 +91,7 @@ int unbound_init(struct ub_ctx *dnsctx)
 	if (ugh != 0) {
 		libreswan_log("error adding the DNSSEC root key: %s: %s\n",
 			ub_strerror(ugh), strerror(errno));
-		return 0;
+		return FALSE;
 	}
 
 	/* Enable DLV */
@@ -100,18 +102,18 @@ int unbound_init(struct ub_ctx *dnsctx)
 	if (ugh != 0) {
 		libreswan_log("error adding the DLV key: %s: %s\n",
 			ub_strerror(ugh), strerror(errno));
-		return 0;
+		return FALSE;
 	}
 
-	return 1;
+	return TRUE;
 }
 
 /*
  * synchronous blocking resolving - simple replacement of ttoaddr()
- * src_len 0 means "apply strlen"
- * af 0 means "try both families
+ * src_len == 0 means "apply strlen"
+ * af == 0 means "try both families
  */
-int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
+bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		ip_address *ipaddr)
 {
 	/* 28 = AAAA record, 1 = A record */
@@ -124,7 +126,7 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		srclen = strlen(src);
 		if (srclen == 0) {
 			libreswan_log("empty hostname in host lookup\n");
-			return 0;
+			return FALSE;
 		}
 	}
 
@@ -134,7 +136,7 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		if (ugh != 0) {
 			libreswan_log("unbound error: %s", ub_strerror(ugh));
 			ub_resolve_free(result);
-			return 0;
+			return FALSE;
 		}
 	}
 
@@ -142,7 +144,7 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		libreswan_log("ERROR: %s failed DNSSEC valdation!\n",
 			result->qname);
 		ub_resolve_free(result);
-		return 0;
+		return FALSE;
 	}
 	if (!result->havedata) {
 		if (result->secure) {
@@ -157,7 +159,7 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 				);
 		}
 		ub_resolve_free(result);
-		return 0;
+		return FALSE;
 
 	} else if (!result->bogus) {
 		if (!result->secure) {
@@ -202,10 +204,10 @@ int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 				DBG_log("success for %s lookup",
 					(af == AF_INET) ? "IPv4" : "IPv6");
 				);
-			return 1;
+			return TRUE;
 		} else {
 			libreswan_log("tnatoaddr failed in unbound_resolve()");
-			return 0;
+			return FALSE;
 		}
 	}
 }
@@ -219,7 +221,6 @@ int main(int argc, char *argv[])
 	struct ub_ctx *test;
 	ip_address *addr;
 
-	unbound_resolve(&test, "libreswan.org", 0, 0, &addr);
-
+	return unbound_resolve(&test, "libreswan.org", 0, 0, &addr);
 }
 #endif
