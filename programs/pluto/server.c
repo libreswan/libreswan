@@ -1037,7 +1037,7 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 						 * enabled
 						 */
 					} else
-					libreswan_log((sender != NULL) + "~"
+					libreswan_log(
 						      "ERROR: asynchronous network error report on %s (sport=%d)"
 						      "%s"
 						      ", complainant %s"
