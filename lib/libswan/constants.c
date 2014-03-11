@@ -292,7 +292,7 @@ const char *const payload_name_ikev2_main[] = {
 };
 
 /*
- * Old IKEv1 method, different from               
+ * Old IKEv1 method, different from
  * draft-smyslov-ipsecme-ikev2-fragmentation-01
  */
 static const char *const payload_name_ikev2_private_use[] = {

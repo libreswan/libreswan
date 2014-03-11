@@ -61,6 +61,7 @@
 #include "rnd.h"
 #include "pending.h"
 #include "kernel.h"
+#include "nat_traversal.h"
 
 #define SEND_NOTIFICATION_AA(t, d) \
 	if (st) \
@@ -433,10 +434,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			   ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
-	
 	/* send NONCE */
 	{
-		int np = ISAKMP_NEXT_v2N; 
+		int np = ISAKMP_NEXT_v2N;
 		struct ikev2_generic in;
 		pb_stream pb;
 
@@ -473,7 +473,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		ikev2_out_nat_v2n(np, &md->rbody, md);
-
 	}
 
 	/* Send Vendor VID if needed */
@@ -754,14 +753,11 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		}
 	}
-	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and 
+	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and
 	 * v2N_NAT_DETECTION_SOURCE_IP
 	 */
-	{
-		if(md->chain[ISAKMP_NEXT_v2N]) {
-			ikev2_natd_lookup(md, FALSE);
-		}
-	}
+	if(md->chain[ISAKMP_NEXT_v2N] != NULL)
+		ikev2_natd_lookup(md, zero_cookie);
 
 	/* now. we need to go calculate the nonce, and the KE */
 	{
@@ -1116,15 +1112,11 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	/* update state */
 	ikev2_update_counters(md);
 
-	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and 
+	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and
 	 * v2N_NAT_DETECTION_SOURCE_IP
 	 */
-	{
-		if(md->chain[ISAKMP_NEXT_v2N]) {
-			ikev2_natd_lookup(md, TRUE);
-		}
-	}
-
+	if(md->chain[ISAKMP_NEXT_v2N] != NULL)
+		ikev2_natd_lookup(md, st->st_rcookie);
 
 	/* now. we need to go calculate the g^xy */
 	{
@@ -1747,7 +1739,6 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 	 * our g^xy, and skeyseed values, and then decrypt the payload.
 	 */
 
-	
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("Antony %s new nat lookup ", __FUNCTION__));
 
