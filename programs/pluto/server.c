@@ -1000,7 +1000,13 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					break;
 				}
 
-				{
+				
+				if (packet_len == 1 && buffer[0] == 0xff &&
+				    (cur_debugging & DBG_NATT) == 0) {
+					/* don't log NAT-T keepalive related errors unless NATT debug is
+					 * enabled
+					 */
+				} else {
 					struct state *old_state = cur_state;
 
 					cur_state = sender;
@@ -1008,16 +1014,7 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					/* note dirty trick to suppress ~ at start of format
 					 * if we know what state to blame.
 					 */
-					if ((packet_len == 1) &&
-					    (buffer[0] == 0xff)
-					    && ((cur_debugging & DBG_NATT) ==
-						0)
-					    ) {
-						/* don't log NAT-T keepalive related errors unless NATT debug is
-						 * enabled
-						 */
-					} else
-					libreswan_log(
+					libreswan_log((sender != NULL) + "~"
 						      "ERROR: asynchronous network error report on %s (sport=%d)"
 						      "%s"
 						      ", complainant %s"
