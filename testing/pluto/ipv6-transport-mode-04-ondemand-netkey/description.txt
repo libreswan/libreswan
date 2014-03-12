@@ -1,0 +1,2 @@
+Basic pluto test using IPv6 (and NETKEY) and on-demand keying
+in transport mode
