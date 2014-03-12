@@ -607,9 +607,14 @@ enum isakmp_xchg_types {
 	/* IKEv2 things */
 	ISAKMP_v2_SA_INIT = 34,
 	ISAKMP_v2_AUTH = 35,
-	ISAKMP_v2_CHILD_SA = 36,
+	ISAKMP_v2_CREATE_CHILD_SA = 36,
 	ISAKMP_v2_INFORMATIONAL = 37,
 	ISAKMP_v2_IKE_SESSION_RESUME = 38, /* RFC 5723 */
+	ISAKMP_v2_GSA_AUTH = 39, /* draft-yeung-g-ikev2 */
+	ISAKMP_v2_GSA_REGISTRATION = 40, /* draft-yeung-g-ikev2 */
+	ISAKMP_v2_GSA_REKEY = 41, /* draft-yeung-g-ikev2 */
+	/* 42 - 239 Unassigned */
+	/* 240 - 255 Private Use */
 
 	/* libreswan private use */
 	ISAKMP_XCHG_ECHOREQUEST_PRIVATE = 244, /* Private Echo Request */

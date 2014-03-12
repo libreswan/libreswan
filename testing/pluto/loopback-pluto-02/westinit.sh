@@ -1,4 +1,4 @@
-#/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep
 # confirm that the network is alive
 ping -n -c 4 127.0.0.1
 # make sure that clear text does not get through

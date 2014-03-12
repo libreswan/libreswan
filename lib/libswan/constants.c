@@ -385,9 +385,12 @@ static const char *const exchange_name_doi[] = {
 static const char *const exchange_name_ikev2[] = {
 	"ISAKMP_v2_SA_INIT",
 	"ISAKMP_v2_AUTH",
-	"ISAKMP_v2_CHILD_SA",
+	"ISAKMP_v2_CREATE_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
 	"ISAKMP_v2_IKE_SESSION_RESUME",
+	"ISAKMP_v2_GSA_AUTH",
+	"ISAKMP_v2_GSA_REGISTRATION",
+	"ISAKMP_v2_GSA_REKEY",
 };
 
 static const char *const exchange_name_private_use[] = {
