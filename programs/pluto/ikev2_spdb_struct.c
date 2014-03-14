@@ -1738,7 +1738,7 @@ stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,                         
 	}
 
 	DBG(DBG_CONTROLMORE,DBG_log("no winning proposal - parent ok but child is a problem"));
-	return STF_FAIL + v2N_NOTHING_WRONG;
+	return STF_OK;
 }
 
 stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
