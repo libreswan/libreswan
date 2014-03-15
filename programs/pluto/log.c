@@ -126,7 +126,7 @@ u_int16_t cur_from_port;                        /* host order */
 
 void pluto_init_log(void)
 {
-	set_exit_log_func(exit_log);
+	set_alloc_exit_log_func(exit_log);
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
 

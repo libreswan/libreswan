@@ -40,9 +40,9 @@ bool leak_detective = FALSE;	/* must not change after first alloc! */
 
 const chunk_t empty_chunk = { NULL, 0 };
 
-static exit_log_func_t exit_log_func;
+static exit_log_func_t exit_log_func = NULL;	/* allow for customer to customize */
 
-void set_exit_log_func(exit_log_func_t func)
+void set_alloc_exit_log_func(exit_log_func_t func)
 {
 	exit_log_func = func;
 }
@@ -98,10 +98,6 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 	}
 
 	if (p == NULL) {
-		if (getenv("LIBRESWAN_SNAPSHOT_MALLOC_FAIL")) {
-			if (fork() == 0)	/* in child */
-				lsw_abort();
-		}
 		if (exit_log_func != NULL) {
 			(*exit_log_func)("unable to malloc %lu bytes for %s",
 					(unsigned long) size, name);

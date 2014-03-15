@@ -73,7 +73,7 @@ typedef struct chunk chunk_t;
 extern const chunk_t empty_chunk;
 
 typedef void (*exit_log_func_t)(const char *message, ...);
-extern void set_exit_log_func(exit_log_func_t func);
+extern void set_alloc_exit_log_func(exit_log_func_t func);
 
 #ifdef DMALLOC
 # include <dmalloc.h>
