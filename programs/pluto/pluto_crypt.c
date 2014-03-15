@@ -205,10 +205,9 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 /* IN A HELPER THREAD */
 static void pluto_crypto_helper(int helper_fd, int helpernum)
 {
-	FILE *in  = fdopen(helper_fd, "rb");
+	FILE *in = fdopen(helper_fd, "rb");
 	FILE *out = fdopen(helper_fd, "wb");
-	long reqbuf[PCR_REQ_SIZE / sizeof(long)];
-	struct pluto_crypto_req *r;
+	struct pluto_crypto_req req;
 
 	/* OS X does not have pthread_setschedprio */
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
@@ -222,66 +221,65 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 	DBG(DBG_CONTROL, DBG_log("helper %d waiting on fd: %d",
 				 helpernum, fileno(in)));
 
-	zero(&reqbuf);
-	while (fread((char*)reqbuf, sizeof(r->pcr_len), 1, in) == 1) {
-		int restlen;
-		int actnum;
-		unsigned char *reqrest = ((unsigned char *)reqbuf) +
-					 sizeof(r->pcr_len);
+	passert(offsetof(struct pluto_crypto_req, pcr_len) == 0);
 
-		r = (struct pluto_crypto_req *)reqbuf;
-		restlen = r->pcr_len - sizeof(r->pcr_len);
+	for (;;) {
+		size_t sz;
 
-		passert(restlen < (signed)PCR_REQ_SIZE);
-		passert(restlen > 0);
+		zero(&req);
 
-		actnum = fread(reqrest, 1, restlen, in);
-		/* okay, got a basic size, read the rest of it */
+		sz = fread(&req, sizeof(char), sizeof(req), in);
 
-		DBG(DBG_CONTROL, DBG_log("helper %d read %d+4/%d bytes fd: %d",
-					 helpernum, actnum, (int)r->pcr_len,
+		if (sz == 0 && feof(in)) {
+			loglog(RC_LOG_SERIOUS,
+			       "pluto_crypto_helper: helper %d normal exit (EOF)\n",
+			       helpernum);
+			break;
+		} else if (sz != sizeof(req)) {
+			if (ferror(in) != 0) {
+				/* ??? is strerror(ferror(in)) correct? */
+				loglog(RC_LOG_SERIOUS,
+				       "pluto_crypto_helper: helper %d got read error: %s\n",
+				       helpernum, strerror(ferror(in)));
+			} else {
+				/* short read -- fatal */
+				loglog(RC_LOG_SERIOUS,
+				       "pluto_crypto_helper: helper %d got a short read error: %zu instead of %zu\n",
+				       helpernum, sz, sizeof(req));
+			}
+			break;
+		}
+
+		passert(req.pcr_len == sizeof(req));
+
+		DBG(DBG_CONTROL, DBG_log("helper %d read fd: %d",
+					 helpernum,
 					 fileno(in)));
 
-		if (actnum != restlen) {
-			/* faulty read. die, parent will restart us */
+		pluto_do_crypto_op(&req, helpernum);
 
-			loglog(RC_LOG_SERIOUS,
-			       "cryptographic helper(%d) fread(%d)=%d failed: %s\n",
-			       (int)pthread_self(), restlen, actnum,
-			       strerror(errno));
+		passert(req.pcr_len == sizeof(req));
 
-			loglog(RC_LOG_SERIOUS,
-			       "pluto_crypto_helper: helper (%d) is error exiting\n",
-			       helpernum);
-			goto error;
-		}
-
-		pluto_do_crypto_op(r, helpernum);
-
-		actnum = fwrite((unsigned char *)r, r->pcr_len, 1, out);
+		sz = fwrite(&req, sizeof(char), sizeof(req), out);
 		fflush(out);
 
-		if (actnum != 1) {
-			loglog(RC_LOG_SERIOUS, "failed to write answer: %d",
-			       actnum);
-			goto error;
+		if (sz != sizeof(req)) {
+			if (ferror(out) != 0) {
+				/* ??? is strerror(ferror(out)) correct? */
+				loglog(RC_LOG_SERIOUS,
+				       "helper %d failed to write answer: %s",
+				       helpernum, strerror(ferror(out)));
+			} else {
+				/* short write -- fatal */
+				loglog(RC_LOG_SERIOUS,
+				       "pluto_crypto_helper error: helper %d write truncated: %zu instead of %zu\n",
+				       helpernum, sz, sizeof(req));
+			}
+			break;
 		}
-		zero(&reqbuf);
 	}
 
-	if (!feof(in)) {
-		loglog(RC_LOG_SERIOUS, "helper %d got error: %s", helpernum,
-		       strerror(ferror(in)));
-		goto error;
-	}
-
-	/* probably normal EOF */
-	loglog(RC_LOG_SERIOUS,
-	       "pluto_crypto_helper: helper (%d) is  normal exiting\n",
-	       helpernum);
-
-error:
-	/* ??? we have no way to report this thread's problems. */
+	/* We have no way to report this thread's success or failure. */
 
 	fclose(in);
 	fclose(out);
@@ -290,37 +288,49 @@ error:
 
 /* send the request, make sure it all goes down. */
 static bool crypto_write_request(struct pluto_crypto_worker *w,
-				 struct pluto_crypto_req *r)
+				 const struct pluto_crypto_req *r)
 {
-	unsigned char *wdat = (unsigned char *)r;
-	int wlen = r->pcr_len;
-	int cnt;
+	const unsigned char *wdat = (unsigned char *)r;
+	size_t wlen = r->pcr_len;
+
+	passert(wlen == sizeof(*r));
 
 	DBG(DBG_CONTROL,
-	    DBG_log("asking helper %d to do %s op on seq: %u (len=%u, pcw_work=%d)",
+	    DBG_log("asking helper %d to do %s op on seq: %u (len=%zu, pcw_work=%d)",
 		    w->pcw_helpernum,
 		    enum_show(&pluto_cryptoop_names, r->pcr_type),
-		    r->pcr_id, (unsigned int)r->pcr_len, w->pcw_work + 1));
+		    r->pcr_id, r->pcr_len, w->pcw_work + 1));
 
-	do {
-		cnt = write(w->pcw_master_fd, wdat, wlen);
+	while (wlen > 0) {
+		ssize_t cnt = write(w->pcw_master_fd, wdat, wlen);
 
-		if (cnt <= 0) {
+		if (cnt < 0) {
 			libreswan_log(
-				"write to helper failed: cnt=%d err=%s\n",
-				cnt, strerror(errno));
+				"write to crypto helper %d failed: cnt=%d err=%s",
+				w->pcw_helpernum, (int)cnt, strerror(errno));
 			return FALSE;
 		}
-		/* ??? DBG_log should only be use conditionally on DBG_* */
-		if (DBGP(DBG_CONTROL) || cnt != wlen) {
-			DBG_log("crypto helper write of request: cnt=%d<wlen=%d. \n", cnt,
-				wlen);
+
+		if (cnt == 0) {
+			/* Not clear why this would happen.  Socket full? */
+			libreswan_log(
+				"write to crypto helper %d failed to write any bytes",
+				w->pcw_helpernum);
+			return FALSE;
 		}
+
+		if ((size_t)cnt != wlen) {
+			libreswan_log("short write to crypto helper %d (%zu of %zu bytes); will continue",
+				w->pcw_helpernum, (size_t)cnt, wlen);
+		}
+
+		DBG(DBG_CONTROL,
+			DBG_log("crypto helper write of request: cnt=%zu wlen=%zu",
+				(size_t)cnt, wlen));
 
 		wlen -= cnt;
 		wdat += cnt;
-
-	} while (wlen > 0);
+	}
 
 	return TRUE;
 }
@@ -440,7 +450,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 		return "failed to find any available worker";
 	}
 
-	/* w points to a work. Make sure it is live */
+	/* w points to a worker. Make sure it is live */
 	if (w->pcw_pid == -1) {
 		init_crypto_helper(w, pc_worker_num);
 		if (w->pcw_pid == -1) {
@@ -755,26 +765,25 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	w->pcw_helpernum = n;
 	w->pcw_master_fd = fds[0];
 	w->pcw_helper_fd = fds[1];
-	w->pcw_maxbasicwork  = 2;
-	w->pcw_maxcritwork   = 4;
-	w->pcw_work     = 0;
+	w->pcw_maxbasicwork = 2;
+	w->pcw_maxcritwork = 4;
+	w->pcw_work = 0;
 	w->pcw_reaped = FALSE;
-	w->pcw_dead   = FALSE;
+	w->pcw_dead = FALSE;
 	TAILQ_INIT(&w->pcw_active);
 
 	/* set the send/received queue length to be at least maxcritwork
 	 * times sizeof(pluto_crypto_req) in size
 	 */
 	{
-#warning what the heck is 10?
 		int qlen = w->pcw_maxcritwork *
-			   sizeof(struct pluto_crypto_req) + 10;
+			   sizeof(struct pluto_crypto_req);
 
 		if (setsockopt(fds[0], SOL_SOCKET, SO_SNDBUF, &qlen,
 			       sizeof(qlen)) == -1 ||
-		    setsockopt(fds[0], SOL_SOCKET, SO_SNDBUF, &qlen,
+		    setsockopt(fds[1], SOL_SOCKET, SO_SNDBUF, &qlen,
 			       sizeof(qlen)) == -1 ||
-		    setsockopt(fds[1], SOL_SOCKET, SO_RCVBUF, &qlen,
+		    setsockopt(fds[0], SOL_SOCKET, SO_RCVBUF, &qlen,
 			       sizeof(qlen)) == -1 ||
 		    setsockopt(fds[1], SOL_SOCKET, SO_RCVBUF, &qlen,
 			       sizeof(qlen)) == -1) {
