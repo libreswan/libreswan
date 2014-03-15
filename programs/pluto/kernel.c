@@ -2270,7 +2270,7 @@ void init_kernel(void)
 		break;
 
 	default:
-		libreswan_log("kernel interface '%s' not available",
+		libreswan_log("FATAL: kernel interface '%s' not available",
 			      enum_name(&kern_interface_names,
 					kern_interface));
 		exit_pluto(5);
