@@ -582,10 +582,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				       "peer ID is not a certificate type");
 				return FALSE;
 			}
-			if (!duplicate_id(&st->st_connection->spd.that.id, &peer)) {
-				loglog(RC_LOG_SERIOUS, "failed to copy ID");
-				return FALSE;
-			}
+			duplicate_id(&st->st_connection->spd.that.id, &peer);
 		}
 	} else {
 		struct connection *c = st->st_connection;
@@ -646,10 +643,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			unshare_id_content(&c->spd.that.id);
 		} else if (fc) {
 			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-			if (!duplicate_id(&r->spd.that.id, &peer)) {
-				loglog(RC_LOG_SERIOUS, "failed to copy ID");
-				return FALSE;
-			}
+			duplicate_id(&r->spd.that.id, &peer);
 		}
 	}
 
