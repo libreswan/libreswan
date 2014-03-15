@@ -333,7 +333,7 @@ static void get_internal_addresses(struct state *st, struct internal_addr *ia)
 	if (!isanyaddr(&c->spd.that.client.addr)) {
 		/** assumes IPv4, and also that the mask is ignored */
 
-		if (c->pool)
+		if (c->pool != NULL)
 			get_addr_lease(c, ia);
 		else
 			ia->ipaddr = c->spd.that.client.addr;

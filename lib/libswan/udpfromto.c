@@ -181,6 +181,7 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 #endif	/* defined(HAVE_IP_PKTINFO) || defined(HAVE_IP_RECVDSTADDR) */
 }
 
+#if 0	/* never used */
 static int sendfromto(int s, void *buf, size_t len, int flags,
 		struct sockaddr *from,
 		struct sockaddr *to, socklen_t tolen)
@@ -240,6 +241,7 @@ static int sendfromto(int s, void *buf, size_t len, int flags,
 
 #endif	/* defined(HAVE_IP_PKTINFO) || defined (HAVE_IP_SENDSRCADDR) */
 }
+#endif
 
 #ifdef UDPFROMTO_MAIN
 /*
