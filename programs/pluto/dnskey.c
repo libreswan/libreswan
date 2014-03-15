@@ -107,20 +107,19 @@ void init_adns(void)
 			 * so we use the sympolic link /proc/self/exe to
 			 * tell us of the path prefix.
 			 */
-			n =
-				readlink("/proc/self/exe", adns_path_space,
-					 sizeof(adns_path_space));
+			n = readlink("/proc/self/exe", adns_path_space,
+				      sizeof(adns_path_space));
 
-			if (n < 0)
+			if (n < 0) {
 # ifdef __uClibc__
 				/* on some nommu we have no proc/self/exe, try without path */
-				*adns_path_space = '\0', n = 0;
+				*adns_path_space = '\0';
+				n = 0;
 # else
 				exit_log_errno((e,
 						"readlink(\"/proc/self/exe\") failed in init_adns()"));
-
-
 # endif
+			}
 
 		}
 #else

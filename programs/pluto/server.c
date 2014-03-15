@@ -525,6 +525,7 @@ void call_server(void)
 		static const char addconn_name[] = "addconn";
 		char addconn_path_space[4096]; /* plenty long? */
 		ssize_t n = 0;
+
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 		{
 			/* The program will be in the same directory as Pluto,
@@ -533,16 +534,16 @@ void call_server(void)
 			 */
 			n = readlink("/proc/self/exe", addconn_path_space,
 				     sizeof(addconn_path_space));
-			if (n < 0)
+			if (n < 0) {
 # ifdef __uClibc__
 				/* on some nommu we have no proc/self/exe, try without path */
-				*addconn_path_space = '\0', n = 0;
+				*addconn_path_space = '\0';
+				n = 0;
 # else
 				exit_log_errno((e,
 						"readlink(\"/proc/self/exe\") failed in call_server()"));
-
-
 # endif
+			}
 		}
 #else
 		/* This is wrong. Should end up in a resource_dir on MacOSX -- Paul */
