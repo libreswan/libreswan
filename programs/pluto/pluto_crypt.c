@@ -228,6 +228,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 		zero(&req);
 
+		errno = 0;
 		sz = fread(&req, sizeof(char), sizeof(req), in);
 
 		if (sz == 0 && feof(in)) {
@@ -238,9 +239,12 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 		} else if (sz != sizeof(req)) {
 			if (ferror(in) != 0) {
 				/* ??? is strerror(ferror(in)) correct? */
+				char errbuf[100];	/* ??? how big is big enough? */
+
+				strerror_r(errno, errbuf, sizeof(errbuf));
 				loglog(RC_LOG_SERIOUS,
 				       "pluto_crypto_helper: helper %d got read error: %s\n",
-				       helpernum, strerror(ferror(in)));
+				       helpernum, errbuf);
 			} else {
 				/* short read -- fatal */
 				loglog(RC_LOG_SERIOUS,
@@ -260,15 +264,19 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 		passert(req.pcr_len == sizeof(req));
 
+		errno = 0;
 		sz = fwrite(&req, sizeof(char), sizeof(req), out);
 		fflush(out);
 
 		if (sz != sizeof(req)) {
 			if (ferror(out) != 0) {
 				/* ??? is strerror(ferror(out)) correct? */
+				char errbuf[100];	/* ??? how big is big enough? */
+
+				strerror_r(errno, errbuf, sizeof(errbuf));
 				loglog(RC_LOG_SERIOUS,
 				       "helper %d failed to write answer: %s",
-				       helpernum, strerror(ferror(out)));
+				       helpernum, errbuf);
 			} else {
 				/* short write -- fatal */
 				loglog(RC_LOG_SERIOUS,
@@ -477,9 +485,6 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 	}
 
 	if (!crypto_write_request(w, r)) {
-		/* ??? there is no reason that errno is appropriately set! */
-		libreswan_log("failed to write crypto request: %s\n",
-			      strerror(errno));
 		if (pbs_offset(&cn->pcrc_reply_stream))
 			pfree(cn->pcrc_reply_buffer);
 		cn->pcrc_reply_buffer = NULL;
