@@ -132,6 +132,7 @@ static st_jbuf_t *st_jbuf_mem = NULL;
 static pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Note: caller must have locked st_jbuf_mutex */
+/* IN AN AUTH THREAD */
 static void dealloc_st_jbuf(st_jbuf_t *ptr)
 {
 	st_jbuf_t *p;
@@ -976,6 +977,7 @@ stf_status modecfg_send_request(struct state *st)
  * @param status Status code
  * @return stf_status
  */
+/* IN AN AUTH THREAD */
 static stf_status xauth_send_status(struct state *st, int status)
 {
 	pb_stream reply;
@@ -1080,8 +1082,6 @@ static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 
 	reply = (struct pam_response *) alloc_bytes(
 			num_msg * sizeof(struct pam_response), "pam_response");
-	if (reply == NULL)
-		return PAM_CONV_ERR;
 
 	for (count = 0; count < num_msg; ++count) {
 		char *string = NULL;
@@ -1116,6 +1116,7 @@ static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
  *
  * @return bool success
  */
+/* IN AN AUTH THREAD */
 static bool do_pam_authentication(void *varg)
 {
 	struct thread_arg *arg = varg;
@@ -1199,6 +1200,7 @@ static bool do_pam_authentication(void *varg)
  *
  * @return bool success
  */
+/* IN AN AUTH THREAD */
 static bool do_file_authentication(void *varg)
 {
 	struct thread_arg *arg = varg;
@@ -1313,6 +1315,7 @@ static bool do_file_authentication(void *varg)
 /** Main authentication routine will then call the actual compiled-in
  *  method to verify the user/password
  */
+/* IN AN AUTH THREAD */
 static void *do_authentication(void *varg)
 {
 	struct thread_arg *arg = varg;
@@ -2090,23 +2093,19 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						 * concatenate new IP address string on end of
 						 * existing string, separated by ' '.
 						 */
-						size_t sz_old = strlen(
-							old);
+						size_t sz_old = strlen(old);
 						size_t sz_added =
-							strlen(caddr) +
-							1;
+							strlen(caddr) + 1;
 						char *new =
 							alloc_bytes(
 								sz_old + 1 + sz_added,
 								"cisco_dns_info+");
 
-						memcpy(new, old,
-						       sz_old);
+						memcpy(new, old, sz_old);
 						*(new + sz_old) = ' ';
 						memcpy(new + sz_old + 1, caddr,
 							sz_added);
-						c->cisco_dns_info =
-							new;
+						c->cisco_dns_info = new;
 						pfree(old);
 					}
 				}
