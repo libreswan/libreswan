@@ -2627,10 +2627,10 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	/* build and add v2N payload to the packet */
 	zero(&child_spi);
 	zero(&notify_data);
-	ship_v2N(ISAKMP_NEXT_v2NONE, DBGP(
-			 IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
-		 (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
-		 ISAKMP_PAYLOAD_NONCRITICAL, PROTO_ISAKMP,
+	ship_v2N(ISAKMP_NEXT_v2NONE,
+		 DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
+		   (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
+		   ISAKMP_PAYLOAD_NONCRITICAL, PROTO_ISAKMP,
 		 &child_spi,
 		 type, n_data, &rbody);
 

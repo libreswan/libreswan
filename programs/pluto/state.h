@@ -170,10 +170,11 @@ struct hidden_variables {
 	ip_address st_natd;
 };
 
-#define set_suspended(st, md) do { st->st_suspended_md = md; \
-				   st->st_suspended_md_func = __FUNCTION__; \
-				   st->st_suspended_md_line = __LINE__; \
-} while (0)
+#define set_suspended(st, md) { \
+	st->st_suspended_md = md; \
+	st->st_suspended_md_func = __FUNCTION__; \
+	st->st_suspended_md_line = __LINE__; \
+    }
 
 /* IKEv2, this struct will be mapped into a ikev2_ts1 payload  */
 struct traffic_selector {

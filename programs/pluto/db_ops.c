@@ -108,12 +108,10 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
 {
 	void *ptr = alloc_bytes(size, str);
 
-	if (ptr) {
-		st->st_curr_cnt++;
-		st->st_total_cnt++;
-		if (size > st->st_maxsz)
-			st->st_maxsz = size;
-	}
+	st->st_curr_cnt++;
+	st->st_total_cnt++;
+	if (size > st->st_maxsz)
+		st->st_maxsz = size;
 	return ptr;
 }
 #define ALLOC_BYTES_ST(z, s, st) alloc_bytes_st(z, s, &st);

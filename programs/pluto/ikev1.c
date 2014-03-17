@@ -1530,9 +1530,6 @@ void process_v1_packet(struct msg_digest **mdp)
 			     1) ? "(last)" : ""));
 
 		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
-		if (ike_frag == NULL)
-			return;
-
 		ike_frag->md = md;
 		ike_frag->index = fraghdr.isafrag_number;
 		ike_frag->last = (fraghdr.isafrag_flags & 1);

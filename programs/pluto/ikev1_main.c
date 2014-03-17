@@ -1773,9 +1773,6 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
 
 	dh = alloc_thing(struct dh_continuation, "aggr outR1 DH");
-	if (!dh)
-		return STF_FATAL;
-
 	dh->md = md;
 	set_suspended(st, md);
 	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);

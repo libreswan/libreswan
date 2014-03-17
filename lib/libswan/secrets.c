@@ -1010,9 +1010,9 @@ const struct RSA_private_key *lsw_get_x509_private_key(struct secret *secrets,
 	return pri;
 }
 
-static pthread_mutex_t certs_and_keys_mutex  = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static pthread_mutex_t authcert_list_mutex   = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t authcert_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * lock access to my certs and keys
@@ -1215,11 +1215,8 @@ static void lsw_process_secret_records(struct secret **psecrets, int verbose,
 							 */
 			}
 		} else {
-			struct secret *s;
-
 			/* expecting a list of indices and then the key info */
-			s = alloc_thing(struct secret, "secret");
-			passert(s != NULL);
+			struct secret *s = alloc_thing(struct secret, "secret");
 
 			s->ids = NULL;
 			s->pks.kind = PPK_PSK;	/* default */
