@@ -187,6 +187,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 		struct dh_continuation *dh = alloc_thing(
 			struct dh_continuation,
 			"aggr outR1 DH");
+
 		dh->md = md;
 		set_suspended(st, md);
 		pcrc_init(&dh->dh_pcrc, aggr_inI1_outR1_continue2);
@@ -351,6 +352,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		struct ke_continuation *ke = alloc_thing(
 			struct ke_continuation,
 			"outI2 KE");
+
 		ke->md = md;
 		set_suspended(st, md);
 
@@ -726,6 +728,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 		struct dh_continuation *dh = alloc_thing(
 			struct dh_continuation,
 			"aggr outR1 DH");
+
 		dh->md = md;
 
 		set_suspended(st, md);

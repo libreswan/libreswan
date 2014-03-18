@@ -247,16 +247,19 @@ typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
  * two specializations of it.
  */
 struct pluto_crypto_req_cont {
+	so_serial_t pcrc_serialno;	/* sponsoring state's serial number */
+	crypto_req_func pcrc_func;	/* function to continue with */
+
+	/* the rest of these fields are private to pluto_crypt.c */
+
 	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
-	struct pluto_crypto_req *pcrc_pcr;
-	so_serial_t pcrc_serialno;
+	struct pluto_crypto_req *pcrc_pcr;	/* owner iff on backlogqueue */
 	pcr_req_id pcrc_id;
-	crypto_req_func pcrc_func;
-	pb_stream pcrc_reply_stream;
-	u_int8_t *pcrc_reply_buffer;
+	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
+	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
 #ifdef IPSEC_PLUTO_PCRC_DEBUG
 	char *pcrc_function;
-	char *pcrc_file;
+	char *pcrc_filep;
 	int pcrc_line;
 #endif
 };
@@ -272,14 +275,14 @@ struct dh_continuation {
 	struct pluto_crypto_req_cont dh_pcrc;	/* MUST BE THE FIRST FIELD */
 	struct msg_digest *md;
 	so_serial_t serialno;			/* used for inter state
-						 * calculations on responder */
+						 * calculations on responder
+						 */
 };
 
 extern void init_crypto_helpers(int nhelpers);
 
-extern err_t send_crypto_helper_request(struct pluto_crypto_req *r,
-					struct pluto_crypto_req_cont *cn,
-					bool *toomuch);
+extern stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
+					struct pluto_crypto_req_cont *cn);
 
 extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
 
