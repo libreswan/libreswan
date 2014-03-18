@@ -516,5 +516,10 @@
 # define DEFINE_RWLOCK(x) rwlock_t x = RW_LOCK_UNLOCKED
 #endif
 
+/* CONFIG_USER_NS is now on in Fedora 20 kernels */
+#if defined(CONFIG_USER_NS)
+# define HAVE_USER_NS
+#endif
+
 #endif /* _LIBRESWAN_KVERSIONS_H */
 
