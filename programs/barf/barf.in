@@ -251,8 +251,6 @@ then
 	   cat $policy
 	done
 fi
-_________________________ ipsec/ls-libdir
-ls -l ${IPSEC_LIBDIR-/usr/local/lib/ipsec}
 _________________________ ipsec/ls-execdir
 ls -l ${IPSEC_EXECDIR-/usr/local/libexec/ipsec}
 _________________________ /proc/net/dev
