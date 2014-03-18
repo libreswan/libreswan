@@ -42,6 +42,16 @@ Loading conn 'westnet-eastnet-ikev2'
   authby=secret
   keyexchange=ikev2
   auto=add
+Loading conn 'westnet-eastnet-ikev2b'
+  left=192.1.2.45
+  leftid=@west
+  right=192.1.2.23
+  rightid=@east
+  rightsubnet=192.0.200.0/24
+  leftsubnet=192.0.100.0/24
+  authby=secret
+  keyexchange=ikev2
+  auto=add
 [ 00.00] NET: Registered protocol family 15
 found netkey IPsec stack
 west #
@@ -51,14 +61,14 @@ west #
  strongswan up westnet-eastnet-ikev2
 initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (924 bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (360 bytes)
-parsed IKE_SA_INIT response 0 [ SA KE No ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (396 bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (204 bytes)
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
 authentication of 'east' with pre-shared key successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
@@ -66,15 +76,19 @@ scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 connection 'westnet-eastnet-ikev2' established successfully
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ strongswan up westnet-eastnet-ikev2b
+establishing CHILD_SA westnet-eastnet-ikev2b
+generating CREATE_CHILD_SA request 2 [ SA No TSi TSr ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed CREATE_CHILD_SA response 2 [ N(NO_ADD_SAS) ]
+received NO_ADDITIONAL_SAS notify, no CHILD_SA built
+failed to establish CHILD_SA, keeping IKE_SA
+establishing connection 'westnet-eastnet-ikev2b' failed
+west #
+ # give failure time to happen
+west #
+ sleep 3
 west #
  echo done
 done

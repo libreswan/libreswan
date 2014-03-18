@@ -232,7 +232,7 @@ static struct vid_struct vid_tab[] = {
 	DEC_FSWAN_VID(FSWAN_2_00_X509_1_3_1_LDAP_VID,
 		      "Linux FreeS/WAN 2.00 X.509-1.3.1 LDAP PLUTO_SENDS_VENDORID",
 		      "FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)"),
-	DEC_FSWAN_VID(OPENSWAN2,
+	DEC_FSWAN_VID(LIBRESWAN2,
 		      "Openswan 2.2.0",
 		      "Openswan 2.2.0"),
 	{
