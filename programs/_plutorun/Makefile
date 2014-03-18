@@ -15,6 +15,5 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=_plutorun
-PROGRAMDIR=${LIBDIR}
 
 include ${srcdir}../Makefile.program
