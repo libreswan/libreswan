@@ -266,8 +266,8 @@ void delete_connection(struct connection *c, bool relations)
 						c->kind),
 				c->instance_serial,
 				c->pool->refcnt));
-		free_addresspool_entry(c->pool);
-		*&c->pool = NULL;
+		unreference_addresspool(c->pool);
+		c->pool = NULL;
 	}
 #endif
 
@@ -1341,13 +1341,11 @@ void add_connection(const struct whack_message *wm)
 
 		if (wm->left.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->left.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->left.pool_range);
 		}
 		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->right.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->right.pool_range);
 		}
 
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
