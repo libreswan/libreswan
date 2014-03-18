@@ -18,39 +18,30 @@
 #ifndef _ADDRESSPOOL_H
 #define _ADDRESSPOOL_H
 
-struct ip_pool_old {
-	unsigned refcnt;	/* reference counted! */
-	ip_address start;
-	ip_address end;
-	u_int32_t size;
-	struct lease_addr_list  *lease_list;
-
-};
-
-struct lease_addr {
-	u_int32_t index;	/* index in addresspool. The first address 0 */
-	struct id thatid;	/* from connection */
-	time_t starts;		/* first time it was leased to this id */
-	time_t ends;		/* 0 is never. > 0 is when it ended */
-
-	struct lease_addr *next;
-};
-
+/* 
+ * A pool is a range of IPv4 addresses to be individually allocated.
+ * A connection may have a pool.
+ * That pool may be shared with other connections (hence the reference count).
+ *
+ * A pool has a linked list of leases.
+ * This list is in monotonically increasing order.
+ */
 struct ip_pool {
-	unsigned refcnt;    /* reference counted! */
-	ip_address start;
-	ip_address end;
-	u_int32_t size;
-	u_int32_t used;
-	u_int32_t cached;
-	struct lease_addr *lease;
-	struct ip_pool *next;
+	unsigned refcnt;        /* reference counted! */
+	ip_address start;       /* start of IP range in pool */
+	ip_address end;         /* end of IP range in pool (included) */
+	u_int32_t size;         /* number of addresses within range */
+	u_int32_t used;         /* count, addresses in use */
+	u_int32_t lingering;    /* count, lingering addresses */
+	struct lease_addr *leases;      /* monotonically increasing index values */
+
+	struct ip_pool *next;   /* next pool */
 };
-struct ip_pool *pluto_pools;
-struct ip_pool *install_addresspool(const ip_range *pool_range,
-				struct ip_pool **head);
-err_t  get_addr_lease(struct connection *c, struct internal_addr *ia);
-int rel_lease_addr(struct connection *c);
-void unreference_addrespool(struct  ip_pool *pool);
-struct ip_pool *free_addresspool_entry(struct ip_pool *p);
+
+struct ip_pool *install_addresspool(const ip_range *pool_range);
+err_t get_addr_lease(const struct connection *c, struct internal_addr *ia /*result*/);
+void rel_lease_addr(const struct connection *c);
+
+extern void unreference_addresspool(struct ip_pool *pool);
+
 #endif /* _ADDRESSPOOL_H */
