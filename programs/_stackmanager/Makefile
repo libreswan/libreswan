@@ -16,6 +16,4 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=_stackmanager
 
-PROGRAMDIR=${LIBDIR}
-
 include ${srcdir}../Makefile.program
