@@ -306,7 +306,7 @@ int main(int argc, char **argv)
 	const char *errstr;
 	int s;
 	int listen_only;
-	int lport, dport;
+	int lport;
 	int afamily;
 	int pfamily;
 	int c;
@@ -320,7 +320,6 @@ int main(int argc, char **argv)
 	afamily = AF_INET;
 	pfamily = PF_INET;
 	lport = 500;
-	dport = 500;
 	waitTime = 3 * 1000;
 	verbose = 0;
 	natt = 0;
@@ -495,12 +494,12 @@ int main(int argc, char **argv)
 		while (optind < argc) {
 			char *port;
 			char *host;
+			int dport = 500;
 			char namebuf[128];
 
 			host = argv[optind];
 
 			port = strchr(host, '/');
-			dport = 500;
 			if (port) {
 				*port = '\0';
 				port++;

@@ -105,6 +105,7 @@ kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	good
+kvmplutotest	dpd-08-netkey	good
 
 # Delete SA test.
 kvmplutotest	delete-sa-01	good
@@ -559,6 +560,9 @@ kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	wip
 kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	wip
 kvmplutotest	interop-ikev2-strongswan-12-nat-responder	wip
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	wip
+kvmplutotest	interop-ikev2-strongswan-14-delete-sa		wip
+kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
+
 
 skiptest	interop-racoon-iphone4s-nonat		incomplete
 skiptest	interop-racoon-iphone5-nonat		incomplete

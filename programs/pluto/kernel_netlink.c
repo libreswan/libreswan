@@ -1400,20 +1400,14 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 			uctx = alloc_thing(struct xfrm_user_sec_ctx_ike,
 					   "struct xfrm_user_sec_ctx_ike");
+			uctx->len = xuctx->len;
+			uctx->exttype = xuctx->exttype;
+			uctx->ctx_alg = xuctx->ctx_alg;
+			uctx->ctx_doi = xuctx->ctx_doi;
+			uctx->ctx_len = xuctx->ctx_len; /*Length includes '\0'*/
 
-			if (uctx != NULL) {
-				uctx->len = xuctx->len;
-				uctx->exttype = xuctx->exttype;
-				uctx->ctx_alg = xuctx->ctx_alg;
-				uctx->ctx_doi = xuctx->ctx_doi;
-				uctx->ctx_len = xuctx->ctx_len; /*Length includes '\0'*/
-
-				memcpy(uctx->sec_ctx_value, (xuctx + 1),
-				       xuctx->ctx_len);
-			} else {
-				DBG(DBG_KERNEL,
-				    DBG_log("not enough memory for struct xfrm_user_sec_ctx_ike"));
-			}
+			memcpy(uctx->sec_ctx_value, (xuctx + 1),
+			       xuctx->ctx_len);
 		} else {
 			DBG(DBG_KERNEL,
 			    DBG_log("(should not reach here really) received security length=%d > MAX_SECCTX_LEN",

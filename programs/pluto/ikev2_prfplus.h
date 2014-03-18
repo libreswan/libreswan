@@ -3,7 +3,7 @@
 struct v2prf_stuff {
 	chunk_t t;
 	const struct hash_desc *prf_hasher;
-	chunk_t *skeyseed;
+	PK11SymKey *skeyseed;
 	chunk_t ni;
 	chunk_t nr;
 	chunk_t spii;

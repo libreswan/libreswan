@@ -4,12 +4,12 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry>
 <refentryinfo>
-  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+  <author><firstname>Henry</firstname><surname>Spencer</surname><authorblurb><para></para> </authorblurb></author>
 </refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>26 March 2002</refmiscinfo>
+<refmiscinfo class='date'>17 March 2014</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -30,22 +30,13 @@
     <arg choice='plain'>--version </arg>
     <sbr/>
     <arg choice='plain'><replaceable>ipsec</replaceable></arg>
-    <arg choice='plain'>--versioncode </arg>
-    <sbr/>
-    <arg choice='plain'><replaceable>ipsec</replaceable></arg>
-    <arg choice='plain'>--copyright </arg>
-    <sbr/>
-    <arg choice='plain'><replaceable>ipsec</replaceable></arg>
     <arg choice='plain'>--directory </arg>
-    <sbr/>
-    <arg choice='plain'><replaceable>ipsec</replaceable></arg>
-    <arg choice='plain'>--confdir </arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Ipsec</emphasis>
+<para><emphasis remap='I'>ipsec</emphasis>
 invokes any of several utilities involved in controlling the IPsec
 encryption/authentication system,
 running the specified
@@ -64,66 +55,52 @@ for
 <emphasis remap='I'>auto</emphasis>.</para>
 
 <para><userinput>ipsec --version</userinput>
-outputs version information about Linux FreeS/WAN.
+outputs the software version.
 A version code of the form ``U<emphasis remap='I'>xxx</emphasis>/K<emphasis remap='I'>yyy</emphasis>''
 indicates that the user-level utilities are version <emphasis remap='I'>xxx</emphasis>
 but the kernel portion appears to be version <emphasis remap='I'>yyy</emphasis>
-(this form is used only if the two disagree).</para>
-
-<para><userinput>ipsec --versioncode</userinput>
-outputs <emphasis remap='I'>just</emphasis> the version code,
-with none of
-<option>--version</option>'s
-supporting information,
-for use by scripts.</para>
-
-<para><userinput>ipsec --copyright</userinput>
-supplies boring copyright details.</para>
+(this form is used only if the two disagree). For the NETKEY/XFRM stack, the kernel version is used, always displaying the U/K split.</para>
 
 <para><userinput>ipsec --directory</userinput>
 reports where
 <command>ipsec</command>
-thinks the IPsec utilities are stored.</para>
+thinks the IPsec commands are stored.</para>
 
-<para><userinput>ipsec --confdir</userinput>
-reports where
-<command>ipsec</command>
-thinks the IPsec configuration files are stored.</para>
+</refsect1>
+
+<refsect1 id='commands'><title>COMMANDS</title>
+<para>To get a list of supported commands, use ipsec --help. A few of the
+commonly used commands are described below</para>
+
+<para><userinput>ipsec setup start|stop|restart</userinput> maps to the
+host init system. Supported init systems are sysv, systemd, upstart and openrc.
+</para>
+
+<para><userinput>ipsec barf</userinput> dumps the internal system status
+to stdout for debugging</para>
+
+<para><userinput>ipsec auto </userinput> is used to manually add, remove, up or down connections. For more information see 'man ipsec_auto </para>
+
+<para><userinput>ipsec whack</userinput> is used to communicate direct commands to the pluto daemon using the whack interface. For more information see 'man ipsec_pluto' </para>
+
+<para><userinput>ipsec initnss</userinput> initialises the NSS database that contains all the X.509 certificate information and private RSA keys</para>
+
+<para><userinput>ipsec import</userinput> is used to import PKCS#12 X.509 files into the NSS database</para>
+
+
 </refsect1>
 
 <refsect1 id='files'><title>FILES</title>
-<para>/usr/local/lib/ipsec	usual utilities directory</para>
+<para>/usr/local/libexec/ipsec	usual utilities directory</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<!-- .hy 0 -->
-<!-- .na -->
 <para>ipsec.<citerefentry><refentrytitle>conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, ipsec.<citerefentry><refentrytitle>secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>ipsec_barf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
-<!-- .ad -->
-<!-- .hy -->
 
-<para>HTML documentation shipped with the release, starting with
-<emphasis remap='I'>doc/index.html</emphasis>.
-<emphasis remap='I'>&lt;<ulink url='http://www.freeswan.org/doc.html'>http://www.freeswan.org/doc.html</ulink>&gt;</emphasis>
-may also be of use.</para>
 </refsect1>
 
-<refsect1 id='history'><title>HISTORY</title>
-<para>Written for Linux FreeS/WAN
-&lt;<ulink url='http://www.freeswan.org'>http://www.freeswan.org</ulink>&gt;
-by Henry Spencer.</para>
-</refsect1>
-
-<refsect1 id='bugs'><title>BUGS</title>
-<para>The provision of centralized services,
-while convenient,
-does compromise the original concept of making the utilities
-invocable directly as well as via
-<command>ipsec</command>.</para>
-</refsect1>
 </refentry>
 

@@ -1072,7 +1072,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	/* start of SA out */
 	{
 		struct isakmp_sa r_sa = sa_pd->payload.sa;
-		notification_t rn;
+		stf_status ret;
 		pb_stream r_sa_pbs;
 
 		r_sa.isasa_np = ISAKMP_NEXT_v2TSi;
@@ -1080,12 +1080,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		/* SA body in and out */
-		rn = ikev2_parse_child_sa_body(&sa_pd->pbs,
+		ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
 					       &sa_pd->payload.v2sa,
 					       &r_sa_pbs, st1, FALSE);
 
-		if (rn != NOTHING_WRONG)
-			return STF_FAIL + rn; /* should we delete_state st1? */
+		if (ret != STF_OK)
+			return ret;
 	}
 
 	ret = ikev2_calc_emit_ts(md, outpbs, role,

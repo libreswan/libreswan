@@ -621,7 +621,7 @@ int pfkey_ident_build(struct sadb_ext**     pfkey_ext,
 		SENDERR(EINVAL);
 	}
 
-	if ((ident_type == SADB_IDENTTYPE_RESERVED)) {
+	if (ident_type == SADB_IDENTTYPE_RESERVED) {
 		ERROR("pfkey_ident_build: "
 		      "ident_type must be non-zero.\n");
 		SENDERR(EINVAL);

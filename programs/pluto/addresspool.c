@@ -179,7 +179,7 @@ static bool  find_last_lease(struct connection *c, u_int32_t *index)
 {
 
 	struct lease_addr **pp = &c->pool->lease;
-	struct lease_addr *p = *pp;
+	struct lease_addr *p;
 	char thatid[IDTOA_BUF];
 
 	idtoa(&c->spd.that.id, thatid, sizeof(thatid));
@@ -212,7 +212,7 @@ err_t get_addr_lease(struct connection *c, struct internal_addr *ia)
 	u_int32_t size =  c->pool->size;
 	struct lease_addr **pp = &c->pool->lease;
 	struct lease_addr **head = &c->pool->lease;
-	struct lease_addr *p = *pp;
+	struct lease_addr *p;
 	struct lease_addr *h_p = *pp;
 	struct lease_addr *a;
 

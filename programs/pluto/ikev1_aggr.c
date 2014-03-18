@@ -628,13 +628,14 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	if (st->hidden_variables.st_nat_traversal) {
-		if (!nat_traversal_add_natd(ISAKMP_NEXT_VID, &md->rbody, md))
-			return STF_INTERNAL_ERROR;
-
-		if (!out_vid(ISAKMP_NEXT_NONE,
+		if (!out_vid((st->hidden_variables.st_nat_traversal) ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE,
 			     &md->rbody,
 			     md->quirks.nat_traversal_vid))
 			return STF_INTERNAL_ERROR;
+		if (st->hidden_variables.st_nat_traversal) {
+			if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
+				return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* finish message */

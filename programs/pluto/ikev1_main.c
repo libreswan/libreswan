@@ -372,7 +372,7 @@ main_mode_hash(struct state *st,
 {
 	struct hmac_ctx ctx;
 
-	hmac_init_chunk(&ctx, st->st_oakley.prf_hasher, st->st_skeyid);
+	hmac_init(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_nss);
 	main_mode_hash_body(st, hashi, idpl, &ctx, NULL);
 	hmac_final(hash_val, &ctx);
 	return ctx.hmac_digest_len;
@@ -1773,9 +1773,6 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
 
 	dh = alloc_thing(struct dh_continuation, "aggr outR1 DH");
-	if (!dh)
-		return STF_FATAL;
-
 	dh->md = md;
 	set_suspended(st, md);
 	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);
@@ -2403,8 +2400,9 @@ stf_status send_isakmp_notification(struct state *st,
 	{
 		/* finish computing HASH */
 		struct hmac_ctx ctx;
-		hmac_init_chunk(&ctx, st->st_oakley.prf_hasher,
-				st->st_skeyid_a);
+
+		hmac_init(&ctx, st->st_oakley.prf_hasher,
+				st->st_skeyid_a_nss);
 		hmac_update(&ctx, (const u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, rbody.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
@@ -2577,8 +2575,9 @@ static void send_notification(struct state *sndst, notification_t type,
 	/* calculate hash value and patch into Hash Payload */
 	if (encst) {
 		struct hmac_ctx ctx;
-		hmac_init_chunk(&ctx, encst->st_oakley.prf_hasher,
-				encst->st_skeyid_a);
+
+		hmac_init(&ctx, encst->st_oakley.prf_hasher,
+				encst->st_skeyid_a_nss);
 		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
@@ -2823,8 +2822,9 @@ void ikev1_delete_out(struct state *st)
 	/* calculate hash value and patch into Hash Payload */
 	{
 		struct hmac_ctx ctx;
-		hmac_init_chunk(&ctx, p1st->st_oakley.prf_hasher,
-				p1st->st_skeyid_a);
+
+		hmac_init(&ctx, p1st->st_oakley.prf_hasher,
+				p1st->st_skeyid_a_nss);
 		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);

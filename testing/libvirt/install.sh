@@ -28,6 +28,7 @@ fi
 
 touch /var/lib/libvirt/qemu/lswantest || (
 	echo "The qemu group needs write permissions in /var/lib/libvirt/qemu/"
+	echo "ensure your user's main group is qemu, or chmod 777 this directory"
 	exit 43
 )
 rm -f /var/lib/libvirt/qemu/lswantest

@@ -35,6 +35,8 @@ extern void complete_v2_state_transition(struct msg_digest **mdp,
 extern stf_status ikev2_send_informational(struct state *st);
 
 extern stf_status process_informational_ikev2(struct msg_digest *md);
+extern stf_status ikev2_in_create_child_sa(struct msg_digest *md);
+
 extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1outI2(struct msg_digest *md);
@@ -59,7 +61,7 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 	} \
 }
 
-extern v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                          /* body of input SA Payload */
+extern stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                          /* body of input SA Payload */
 						    const struct ikev2_sa *sa_prop UNUSED,      /* header of input SA Payload */
 						    pb_stream *r_sa_pbs,                        /* if non-NULL, where to emit winning SA */
 						    struct state *st,                           /* current state object */
@@ -67,7 +69,7 @@ extern v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,          
                                                                                                  * tranform can appear. */
 						    );
 
-extern v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                           /* body of input SA Payload */
+extern stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,                           /* body of input SA Payload */
 						   const struct ikev2_sa *sa_prop UNUSED,       /* header of input SA Payload */
 						   pb_stream *r_sa_pbs,                         /* if non-NULL, where to emit winning SA */
 						   struct state *st,                            /* current state object */

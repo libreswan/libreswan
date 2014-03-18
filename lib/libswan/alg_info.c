@@ -825,29 +825,26 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 	 */
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
+	char esp_buf[256];
+	int ret;
 
-	if (alg_info_esp != NULL) {
-		char esp_buf[256];
-		int ret;
+	strcpy(esp_buf, alg_str);	/*
+					 * ??? how do we know that
+					 * it fits?
+					 */
+	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf,
+						err_p))
+		return NULL;
 
-		strcpy(esp_buf, alg_str);	/*
-						 * ??? how do we know that
-						 * it fits?
-						 */
-		if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf,
-							err_p))
-			return NULL;
-
-		alg_info_esp->alg_info_protoid = PROTO_IPSEC_ESP;
-		ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
-					esp_buf, err_p,
-					parser_init_esp,
-					alg_info_esp_add,
-					NULL);
-		if (ret < 0) {
-			pfreeany(alg_info_esp);
-			alg_info_esp = NULL;
-		}
+	alg_info_esp->alg_info_protoid = PROTO_IPSEC_ESP;
+	ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
+				esp_buf, err_p,
+				parser_init_esp,
+				alg_info_esp_add,
+				NULL);
+	if (ret < 0) {
+		pfreeany(alg_info_esp);
+		alg_info_esp = NULL;
 	}
 
 	return alg_info_esp;

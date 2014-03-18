@@ -94,31 +94,38 @@ case "${1}" in
 	echo "Usage: ipsec <command> <argument ...>"
 	echo "where <command> is one of:"
 	echo ""
-	if [ -x /bin/printf -o -x /usr/bin/printf ]; then
-	    DOCOLS="1"
+	if [ "${IPSEC_LIBDIR}" = "${IPSEC_EXECDIR}" ]; then
+	    HELPDIRS="${IPSEC_EXECDIR}"
 	else
-	    DOCOLS=""
+	    HELPDIRS="${IPSEC_LIBDIR} ${IPSEC_EXECDIR}"
 	fi
-	for f in $(ls ${IPSEC_LIBDIR} ${IPSEC_EXECDIR} | egrep -v -i "${DONTMENTION}"); do
-	    if [ -x ${IPSEC_LIBDIR}/${f} -o -x ${IPSEC_EXECDIR}/${f} ]; then
-		if [ -z "${DOCOLS}" ]; then
-		    # we can only produce a simply list, which scrolls beyond 24 lines
-		    echo "	${f}"
-		elif [ -z "${GOTTWO}" ]; then
-		    # first of two entries
-		    GOTTWO=${f}
-		else
-		    # second of two entries, we can print
-		    printf "   %-10s   %15s\n" ${GOTTWO} ${f}
-		    GOTTWO=""
+	for dir in ${HELPDIRS}; do
+	    for f in $(ls ${dir} | egrep -v -i "${DONTMENTION}"); do
+		if [ -x ${dir}/${f} ]; then
+		    if [ -z "${GOTTWO}" ]; then
+			# first of two entries
+			GOTTWO=${f}
+		    else
+			# second of two entries, we can print
+			echo -e -n "\t${GOTTWO}"
+			if [ ${#GOTTWO} -ge 16 ]; then
+			    echo -e -n  "\t"
+			elif [ ${#GOTTWO} -ge 8 ]; then
+			    echo -e -n "\t\t"
+			else
+			    echo -e -n "\t\t\t"
+			fi
+			echo ${f}
+			unset GOTTWO
+		    fi
 		fi
-	    fi
+	    done
 	done
 	echo
 	echo "See also: ipsec <command> --help"
 	echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
 	echo "ipsec stop|start|restart is an alias for ipsec setup stop|start|restart"
-	echo "See <http://www.libreswan.org> for more general info."
+	echo "See <https://libreswan.org/> for more general info."
 	fixversion
 	echo "Linux Libreswan ${version}"
 	exit 0

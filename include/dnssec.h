@@ -9,8 +9,8 @@
 
 #include <unbound.h>
 
-extern int unbound_init(struct ub_ctx *dnsctx);
-extern int unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen,
+extern bool unbound_init(struct ub_ctx *dnsctx);
+extern bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen,
 			   int af, ip_address *ipaddr);
 
 #endif

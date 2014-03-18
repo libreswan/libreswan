@@ -1,5 +1,5 @@
 
-<network>
+<network ipv6='yes'>
   <name>swandefault</name>
   <forward mode='nat'/>
   <bridge name='virbr0' stp='on' delay='0'/>
