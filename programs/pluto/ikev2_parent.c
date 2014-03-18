@@ -2740,6 +2740,122 @@ static void v2_delete_my_family(struct state *pst)
 	delete_state(pst);
 }
 
+static stf_status ikev2_in_create_child_sa_refuse(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	struct state *pst = st;
+	{
+		unsigned char *authstart;
+		unsigned char *encstart;
+		unsigned char *iv;
+		int ivsize;
+		struct ikev2_generic e;
+		pb_stream e_pbs, e_pbs_cipher;
+		pb_stream request;
+
+		zero(&reply_buffer);
+		init_pbs(&request, reply_buffer, sizeof(reply_buffer),
+			 "create child SA exchange request response");
+		authstart = request.cur;
+
+		/* HDR out */
+		{
+			struct isakmp_hdr r_hdr;
+			zero(&r_hdr);
+			r_hdr.isa_version = build_ike_version();
+			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
+			       COOKIE_SIZE);
+			memcpy(r_hdr.isa_icookie, pst->st_icookie,
+			       COOKIE_SIZE);
+			r_hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
+			r_hdr.isa_np = ISAKMP_NEXT_v2E;
+			r_hdr.isa_flags |= ISAKMP_FLAGS_R;
+			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
+
+			/* encryption role based on original state not md state */
+			if (IS_V2_INITIATOR(pst->st_state))
+				md->role = INITIATOR;
+			else
+				md->role = RESPONDER;
+
+			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+					&request, &md->rbody)) {
+				libreswan_log("error initializing hdr for "
+						"CREATE_CHILD_SA  message");
+				return STF_FATAL;
+			}
+		} /* HDR done*/
+
+		/* insert an Encryption payload header */
+		e.isag_np = ISAKMP_NEXT_v2N;
+		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+		if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
+			return STF_FATAL;
+
+		/* IV */
+		iv = e_pbs.cur;
+		ivsize = pst->st_oakley.encrypter->iv_size;
+		if (!out_zero(ivsize, &e_pbs, "iv"))
+			return STF_FATAL;
+
+		get_rnd_bytes(iv, ivsize);
+
+		/* note where cleartext starts */
+		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
+			 "cleartext");
+		e_pbs_cipher.container = &e_pbs;
+		e_pbs_cipher.desc = NULL;
+		e_pbs_cipher.cur = e_pbs.cur;
+		encstart = e_pbs_cipher.cur;
+
+		chunk_t child_spi;
+		memset(&child_spi, 0, sizeof(child_spi));
+
+		ship_v2N(ISAKMP_NEXT_v2NONE,
+				ISAKMP_PAYLOAD_NONCRITICAL,
+				PROTO_ISAKMP,
+				&child_spi,
+				v2N_NO_ADDITIONAL_SAS, NULL,
+				&e_pbs_cipher);
+
+		ikev2_padup_pre_encrypt(md, &e_pbs_cipher);
+		close_output_pbs(&e_pbs_cipher);
+
+		{
+			stf_status ret;
+			unsigned char *authloc = ikev2_authloc(md, &e_pbs);
+
+			if (!authloc)
+				return STF_FATAL;
+
+			close_output_pbs(&e_pbs);
+			close_output_pbs(&md->rbody);
+			close_output_pbs(&request);
+
+			ret = ikev2_encrypt_msg(md, md->role,
+						authstart,
+						iv, encstart, authloc,
+						&e_pbs, &e_pbs_cipher);
+			if (ret != STF_OK)
+				return ret;
+		}
+
+		/* keep it for a retransmit if necessary */
+		freeanychunk(pst->st_tpacket);
+		clonetochunk(pst->st_tpacket, request.start,
+			     pbs_offset(&request),
+			     "reply packet for CREATE_CHILD_SA exchange");
+		send_ike_msg(pst, __FUNCTION__);
+	}
+
+	return STF_OK;
+}
+
+stf_status ikev2_in_create_child_sa(struct msg_digest *md) 
+{
+	return ikev2_in_create_child_sa_refuse(md);
+}
+
 stf_status process_informational_ikev2(struct msg_digest *md)
 {
 	enum phase1_role prole;

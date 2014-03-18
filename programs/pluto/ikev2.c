@@ -149,6 +149,31 @@ enum smf2_flags {
  *                                          TSi, TSr}
  * [Child SA established]
  *
+ *
+ * CREATE_CHILD_SA Exchanges:
+ *
+ * New Child SA
+ *
+ * HDR, SK {SA, Ni, [KEi],
+ *            TSi, TSr}  -->
+ *
+ *                              <--  HDR, SK {SA, Nr, [KEr],
+ *                                       TSi, TSr}
+ *
+ * Rekey Child SA
+ *
+ * HDR, SK {N(REKEY_SA), SA, Ni, [KEi],
+ *     TSi, TSr}   -->
+ *
+ *                    <--  HDR, SK {SA, Nr, [KEr],
+ *                             TSi, TSr}
+ *
+ * Rekey IKE SA (yes, IKE SA can be rekeyed using CREATE_CHILD_SA)
+ *
+ * HDR, SK {SA, Ni, KEi} -->
+ *
+ *                            <--  HDR, SK {SA, Nr, KEr}
+ *
  */
 
 /* Short forms for building payload type sets */
@@ -285,6 +310,36 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
+
+	/*
+	 * There are three different CREATE_CHILD_SA's invocations,
+	 * this is the combined write up (not in RFC). See above for
+	 * individual cases from RFC
+	 *
+	 * HDR, SK {SA, Ni, [KEi], [N(REKEY_SA)], [TSi, TSr]} -->
+	 *                <-- HDR, SK {N}
+	 *                <-- HDR, SK {SA, Nr, [KEr], [TSi, TSr]}
+	 */
+
+	/* Create Child SA Exchange*/
+	{ .state      = STATE_PARENT_I3,
+	  .next_state = STATE_PARENT_I3,
+	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
+	  .req_clear_payloads = P(E),
+	  .req_enc_payloads = P(SA) | P(Ni),
+	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
+	  .processor  = ikev2_in_create_child_sa,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
+
+	/* Create Child SA Exchange*/
+	{ .state      = STATE_PARENT_R2,
+	  .next_state = STATE_PARENT_R2,
+	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
+	  .req_clear_payloads = P(E),
+	  .req_enc_payloads = P(SA) | P(Ni),
+	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
+	  .processor  = ikev2_in_create_child_sa,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
 
 	/* Informational Exchange*/
 	{ .state      = STATE_PARENT_R2,
