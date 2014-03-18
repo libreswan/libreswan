@@ -78,7 +78,7 @@ extern void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl,
  * callers may use it.
  */
 extern const char *pluto_ip_str(const ip_address *src);
-extern bool duplicate_id(struct id *dst, struct id *src);
+extern void duplicate_id(struct id *dst, const struct id *src);
 
 #endif /* _ID_H */
 

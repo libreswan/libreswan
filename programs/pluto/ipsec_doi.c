@@ -137,15 +137,9 @@ void unpack_KE(struct state *st,
 		clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
 			     kn->gi.len, "saved gi value");
 		DBG(DBG_CRYPT,
-		    DBG_log("saving DH priv (local secret) and pub key into state struc"));
-		clonetochunk(st->st_sec_chunk,
-			     WIRE_CHUNK_PTR(*kn, secret),
-			     kn->secret.len,
-			     "pointer to DH private key (secret)");
-
-		clonetochunk(st->pubk,
-			     WIRE_CHUNK_PTR(*kn, pubk),
-			     kn->pubk.len, "pointer to DH public key");
+		    DBG_log("saving DH priv (local secret) and pub key into state struct"));
+		st->st_sec_nss = kn->secret;
+		st->st_pubk_nss = kn->pubk;
 	}
 }
 
@@ -588,10 +582,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				       "peer ID is not a certificate type");
 				return FALSE;
 			}
-			if (!duplicate_id(&st->st_connection->spd.that.id, &peer)) {
-				loglog(RC_LOG_SERIOUS, "failed to copy ID");
-				return FALSE;
-			}
+			duplicate_id(&st->st_connection->spd.that.id, &peer);
 		}
 	} else {
 		struct connection *c = st->st_connection;
@@ -652,10 +643,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			unshare_id_content(&c->spd.that.id);
 		} else if (fc) {
 			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-			if (!duplicate_id(&r->spd.that.id, &peer)) {
-				loglog(RC_LOG_SERIOUS, "failed to copy ID");
-				return FALSE;
-			}
+			duplicate_id(&r->spd.that.id, &peer);
 		}
 	}
 

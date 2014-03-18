@@ -525,6 +525,7 @@ void call_server(void)
 		static const char addconn_name[] = "addconn";
 		char addconn_path_space[4096]; /* plenty long? */
 		ssize_t n = 0;
+
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 		{
 			/* The program will be in the same directory as Pluto,
@@ -533,16 +534,16 @@ void call_server(void)
 			 */
 			n = readlink("/proc/self/exe", addconn_path_space,
 				     sizeof(addconn_path_space));
-			if (n < 0)
+			if (n < 0) {
 # ifdef __uClibc__
 				/* on some nommu we have no proc/self/exe, try without path */
-				*addconn_path_space = '\0', n = 0;
+				*addconn_path_space = '\0';
+				n = 0;
 # else
 				exit_log_errno((e,
 						"readlink(\"/proc/self/exe\") failed in call_server()"));
-
-
 # endif
+			}
 		}
 #else
 		/* This is wrong. Should end up in a resource_dir on MacOSX -- Paul */
@@ -686,27 +687,7 @@ void call_server(void)
 
 		DBG(DBG_CONTROL, DBG_log(" "));
 
-		/*
-		 * we log the time when we are about to do something so that
-		 * we know what time things happened, when not using syslog
-		 */
-		if (log_to_stderr || log_to_file) {
-			time_t n;
-
-			static time_t lastn = 0;
-
-			time(&n);
-
-			if (log_did_something) {
-				lastn = n;
-				log_did_something = FALSE;
-				if ((n - lastn) > 60)
-					DBG_log("time is %s (%lu)", ctime(
-							&n), (unsigned long)n);
-
-
-			}
-		}
+		log_mark_time();
 
 		/* figure out what is interesting */
 		/* do FD's before events are processed */
@@ -1020,7 +1001,13 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					break;
 				}
 
-				{
+				
+				if (packet_len == 1 && buffer[0] == 0xff &&
+				    (cur_debugging & DBG_NATT) == 0) {
+					/* don't log NAT-T keepalive related errors unless NATT debug is
+					 * enabled
+					 */
+				} else {
 					struct state *old_state = cur_state;
 
 					cur_state = sender;
@@ -1028,15 +1015,6 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					/* note dirty trick to suppress ~ at start of format
 					 * if we know what state to blame.
 					 */
-					if ((packet_len == 1) &&
-					    (buffer[0] == 0xff)
-					    && ((cur_debugging & DBG_NATT) ==
-						0)
-					    ) {
-						/* don't log NAT-T keepalive related errors unless NATT debug is
-						 * enabled
-						 */
-					} else
 					libreswan_log((sender != NULL) + "~"
 						      "ERROR: asynchronous network error report on %s (sport=%d)"
 						      "%s"

@@ -19,12 +19,11 @@ test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 # where the private directory and the config files are
 IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
-IPSEC_LIBDIR="${IPSEC_LIBDIR:-@IPSEC_LIBDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 IPSEC_CONFDDIR="${IPSEC_CONFDDIR:-@IPSEC_CONFDDIR@}"
 
-IPSEC_DIR="${IPSEC_LIBDIR}"
-export IPSEC_DIR IPSEC_LIBDIR IPSEC_EXECDIR IPSEC_CONF
+IPSEC_DIR="${IPSEC_EXECDIR}"
+export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
 
 # standardize PATH, and export it for everything else's benefit
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
@@ -94,23 +93,23 @@ case "${1}" in
 	echo "Usage: ipsec <command> <argument ...>"
 	echo "where <command> is one of:"
 	echo ""
-	if [ -x /bin/printf -o -x /usr/bin/printf ]; then
-	    DOCOLS="1"
-	else
-	    DOCOLS=""
-	fi
-	for f in $(ls ${IPSEC_LIBDIR} ${IPSEC_EXECDIR} | egrep -v -i "${DONTMENTION}"); do
-	    if [ -x ${IPSEC_LIBDIR}/${f} -o -x ${IPSEC_EXECDIR}/${f} ]; then
-		if [ -z "${DOCOLS}" ]; then
-		    # we can only produce a simply list, which scrolls beyond 24 lines
-		    echo "	${f}"
-		elif [ -z "${GOTTWO}" ]; then
+	for f in $(ls "${IPSEC_EXECDIR}" | egrep -v -i "${DONTMENTION}"); do
+	    if [ -x ${dir}/${f} ]; then
+		if [ -z "${GOTTWO}" ]; then
 		    # first of two entries
 		    GOTTWO=${f}
 		else
 		    # second of two entries, we can print
-		    printf "   %-10s   %15s\n" ${GOTTWO} ${f}
-		    GOTTWO=""
+		    echo -e -n "\t${GOTTWO}"
+		    if [ ${#GOTTWO} -ge 16 ]; then
+			echo -e -n  "\t"
+		    elif [ ${#GOTTWO} -ge 8 ]; then
+			echo -e -n "\t\t"
+		    else
+			echo -e -n "\t\t\t"
+		    fi
+		    echo ${f}
+		    unset GOTTWO
 		fi
 	    fi
 	done
@@ -118,7 +117,7 @@ case "${1}" in
 	echo "See also: ipsec <command> --help"
 	echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
 	echo "ipsec stop|start|restart is an alias for ipsec setup stop|start|restart"
-	echo "See <http://www.libreswan.org> for more general info."
+	echo "See <https://libreswan.org/> for more general info."
 	fixversion
 	echo "Linux Libreswan ${version}"
 	exit 0
@@ -192,7 +191,7 @@ shift
 path="${IPSEC_EXECDIR}/${cmd}"
 
 if [ ! -x "${path}" ]; then
-    path="${IPSEC_LIBDIR}/${cmd}"
+    path="${IPSEC_EXECDIR}/${cmd}"
     if [ ! -x "${path}" ]; then
 	echo "${0}: unknown IPsec command \"${cmd}\" (\"ipsec --help\" for list)" >&2
 	exit 1

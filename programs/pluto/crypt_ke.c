@@ -119,12 +119,8 @@ void calc_ke(struct pluto_crypto_req *r)
 		}
 	}
 
-	ALLOC_WIRE_CHUNK(*kn, secret, sizeof(SECKEYPrivateKey *));
-	{
-		unsigned char *gip = WIRE_CHUNK_PTR(*kn, secret);
-
-		memcpy(gip, &privk, sizeof(SECKEYPrivateKey *));
-	}
+	kn->secret = privk;
+	kn->pubk = pubk;
 
 	ALLOC_WIRE_CHUNK(*kn, gi, pubk->u.dh.publicValue.len);
 	{
@@ -134,39 +130,22 @@ void calc_ke(struct pluto_crypto_req *r)
 		       pubk->u.dh.publicValue.len);
 	}
 
-	ALLOC_WIRE_CHUNK(*kn, pubk, sizeof(SECKEYPublicKey *));
-	{
-		unsigned char *gip = WIRE_CHUNK_PTR(*kn, pubk);
-
-		memcpy(gip, &pubk, sizeof(SECKEYPublicKey *));
-	}
-
 	DBG(DBG_CRYPT, {
-		    DBG_dump("NSS: Local DH secret (pointer):\n",
-			     WIRE_CHUNK_PTR(*kn, secret),
-			     sizeof(SECKEYPrivateKey*));
+		    DBG_log("NSS: Local DH secret (pointer): %p\n",
+			     kn->secret);
 		    DBG_dump("NSS: Public DH value sent(computed in NSS):\n",
 			     WIRE_CHUNK_PTR(*kn, gi),
 			     pubk->u.dh.publicValue.len);
 	    });
 
 	DBG(DBG_CRYPT,
-	    DBG_dump("NSS: Local DH public value (pointer):\n",
-		     WIRE_CHUNK_PTR(*kn, pubk),
-		     sizeof(SECKEYPublicKey*)));
+	    DBG_log("NSS: Local DH public value (pointer): %p\n",
+		    kn->pubk));
 
 	/* clean up after ourselves */
 
 	if (slot != NULL)
 		PK11_FreeSlot(slot);
-
-#if 0	/* ??? currently broken.  Why?  A leak is better than a crash. */
-	if (privk != NULL)
-		SECKEY_DestroyPrivateKey(privk);
-
-	if (pubk != NULL)
-		SECKEY_DestroyPublicKey(pubk);
-#endif
 
 	freeanychunk(prime);
 	freeanychunk(base);

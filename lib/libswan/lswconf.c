@@ -79,12 +79,6 @@ static void lsw_conf_setdefault(void)
 	char *conffile   = IPSEC_CONF;
 	char *var_dir    = IPSEC_VARDIR;
 
-#if 0
-	char *exec_dir   = IPSEC_EXECDIR;
-	char *lib_dir    = IPSEC_LIBDIR;
-	char *sbin_dir   = IPSEC_SBINDIR;
-#endif
-
 	zero(&global_oco);
 
 	/* allocate them all to make it consistent */

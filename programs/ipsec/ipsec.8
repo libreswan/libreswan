@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: IPSEC
-.\"    Author: Paul Wouters
-.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/29/2012
+.\"    Author: Henry Spencer
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 03/17/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC" "8" "12/29/2012" "libreswan" "Executable programs"
+.TH "IPSEC" "8" "03/17/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -35,16 +35,10 @@ ipsec \- invoke IPsec utilities
 .br
 \fIipsec\fR \-\-version
 .br
-\fIipsec\fR \-\-versioncode
-.br
-\fIipsec\fR \-\-copyright
-.br
 \fIipsec\fR \-\-directory
-.br
-\fIipsec\fR \-\-confdir
 .SH "DESCRIPTION"
 .PP
-\fIIpsec\fR
+\fIipsec\fR
 invokes any of several utilities involved in controlling the IPsec encryption/authentication system, running the specified
 \fIcommand\fR
 with the specified
@@ -57,55 +51,48 @@ for
 \fIauto\fR\&.
 .PP
 \fBipsec \-\-version\fR
-outputs version information about Linux FreeS/WAN\&. A version code of the form ``U\fIxxx\fR/K\fIyyy\fR\*(Aq\*(Aq indicates that the user\-level utilities are version
+outputs the software version\&. A version code of the form ``U\fIxxx\fR/K\fIyyy\fR\*(Aq\*(Aq indicates that the user\-level utilities are version
 \fIxxx\fR
 but the kernel portion appears to be version
 \fIyyy\fR
-(this form is used only if the two disagree)\&.
-.PP
-\fBipsec \-\-versioncode\fR
-outputs
-\fIjust\fR
-the version code, with none of
-\fB\-\-version\fR\*(Aqs supporting information, for use by scripts\&.
-.PP
-\fBipsec \-\-copyright\fR
-supplies boring copyright details\&.
+(this form is used only if the two disagree)\&. For the NETKEY/XFRM stack, the kernel version is used, always displaying the U/K split\&.
 .PP
 \fBipsec \-\-directory\fR
 reports where
 \fBipsec\fR
-thinks the IPsec utilities are stored\&.
+thinks the IPsec commands are stored\&.
+.SH "COMMANDS"
 .PP
-\fBipsec \-\-confdir\fR
-reports where
-\fBipsec\fR
-thinks the IPsec configuration files are stored\&.
+To get a list of supported commands, use ipsec \-\-help\&. A few of the commonly used commands are described below
+.PP
+\fBipsec setup start|stop|restart\fR
+maps to the host init system\&. Supported init systems are sysv, systemd, upstart and openrc\&.
+.PP
+\fBipsec barf\fR
+dumps the internal system status to stdout for debugging
+.PP
+\fBipsec auto \fR
+is used to manually add, remove, up or down connections\&. For more information see \*(Aqman ipsec_auto
+.PP
+\fBipsec whack\fR
+is used to communicate direct commands to the pluto daemon using the whack interface\&. For more information see \*(Aqman ipsec_pluto\*(Aq
+.PP
+\fBipsec initnss\fR
+initialises the NSS database that contains all the X\&.509 certificate information and private RSA keys
+.PP
+\fBipsec import\fR
+is used to import PKCS#12 X\&.509 files into the NSS database
 .SH "FILES"
 .PP
-/usr/local/lib/ipsec usual utilities directory
+/usr/local/libexec/ipsec usual utilities directory
 .SH "SEE ALSO"
 .PP
 ipsec\&.\fBconf\fR(5), ipsec\&.\fBsecrets\fR(5),
 \fBipsec_auto\fR(8),
-\fBipsec_barf\fR(8),
 \fBipsec_setup\fR(8),
 \fBipsec_showhostkey\fR(8)
-.PP
-HTML documentation shipped with the release, starting with
-\fIdoc/index\&.html\fR\&.
-\fI<\fR\fI\m[blue]\fBhttp://www\&.freeswan\&.org/doc\&.html\fR\m[]\fR\fI>\fR
-may also be of use\&.
-.SH "HISTORY"
-.PP
-Written for Linux FreeS/WAN <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Henry Spencer\&.
-.SH "BUGS"
-.PP
-The provision of centralized services, while convenient, does compromise the original concept of making the utilities invocable directly as well as via
-\fBipsec\fR\&.
 .SH "AUTHOR"
 .PP
-\fBPaul Wouters\fR
+\fBHenry Spencer\fR
 .RS 4
-placeholder to suppress warning
 .RE

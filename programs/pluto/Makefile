@@ -44,7 +44,6 @@ BUILDER=${shell echo ${USER}@`hostname` }
 CPPFLAGS = $(HDRDIRS) $(DEFINES) \
 	-DSHARED_SECRETS_FILE=\"${FINALCONFDIR}/ipsec.secrets\" \
 	-DIPSEC_SBINDIR=\"${FINALSBINDIR}\" \
-	-DIPSEC_LIBDIR=\"${FINALLIBDIR}\" \
 	-DIPSEC_EXECDIR=\"${FINALLIBEXECDIR}\" \
 	-DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\" \
 	-DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\" \
@@ -187,7 +186,7 @@ install: doinstall
 endif
 
 doinstall: all
-	mkdir -p ${LIBEXECDIR} ${LIBDIR}
+	mkdir -p ${LIBEXECDIR}
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d/cacerts
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d/aacerts
@@ -216,7 +215,7 @@ doinstall: all
 
 install_file_list:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
-	@if $(USE_ADNS) ; then echo $(LIBDIR)/$(BINNAMEADNS) ; fi
+	@if $(USE_ADNS) ; then echo $(LIBEXECDIR)/$(BINNAMEADNS) ; fi
 	@echo $(LIBEXECDIR)/$(BINNAMEWHACK)
 	@echo $(PMANDIR)/ipsec_pluto.8
 	@sh ${LIBRESWANSRCDIR}/packaging/utils/manlink pluto.8 | \

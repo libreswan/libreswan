@@ -140,44 +140,35 @@ void init_virtual_ip(const char *private_list)
 
 	if (!ign) {
 		/** Allocate **/
-		if (private_net_ok_len) {
+		if (private_net_ok_len != 0) {
 			private_net_ok = (ip_subnet *)alloc_bytes(
 				(private_net_ok_len * sizeof(ip_subnet)),
 				"private_net_ok subnets");
 		}
-		if (private_net_ko_len) {
+		if (private_net_ko_len != 0) {
 			private_net_ko = (ip_subnet *)alloc_bytes(
 				(private_net_ko_len * sizeof(ip_subnet)),
 				"private_net_ko subnets");
 		}
-		if ((private_net_ok_len && !private_net_ok) ||
-		    (private_net_ko_len && !private_net_ko)) {
-			loglog(RC_LOG_SERIOUS,
-			       "can't alloc in init_virtual_ip");
-			pfreeany(private_net_ok);
-			private_net_ok = NULL;
-			pfreeany(private_net_ko);
-			private_net_ko = NULL;
-		} else {
-			/** Fill **/
-			str = private_list;
-			i_ok = 0;
-			i_ko = 0;
-			while (str) {
-				next = strchr(str, ',');
-				if (!next)
-					next = str + strlen(str);
-				if (_read_subnet(str, next - str,
-						 &(private_net_ok[i_ok]),
-						 &(private_net_ko[i_ko]),
-						 &ok)) {
-					if (ok)
-						i_ok++;
-					else
-						i_ko++;
-				}
-				str = *next ? next + 1 : NULL;
+
+		/** Fill **/
+		str = private_list;
+		i_ok = 0;
+		i_ko = 0;
+		while (str) {
+			next = strchr(str, ',');
+			if (!next)
+				next = str + strlen(str);
+			if (_read_subnet(str, next - str,
+					 &(private_net_ok[i_ok]),
+					 &(private_net_ko[i_ko]),
+					 &ok)) {
+				if (ok)
+					i_ok++;
+				else
+					i_ko++;
 			}
+			str = *next ? next + 1 : NULL;
 		}
 	} else {
 		loglog(RC_LOG_SERIOUS,
@@ -264,8 +255,6 @@ struct virtual_t
 	v = (struct virtual_t *)alloc_bytes(
 		sizeof(struct virtual_t) + (n_net * sizeof(ip_subnet)),
 		"virtual description");
-	if (!v)
-		goto fail;
 
 	v->flags = flags;
 	v->n_net = n_net;

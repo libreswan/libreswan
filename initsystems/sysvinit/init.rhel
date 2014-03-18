@@ -72,7 +72,6 @@ fi
 # where the private directory and the config files are
 IPSEC_CONF="${IPSEC_CONF:-/etc/ipsec.conf}"
 IPSEC_EXECDIR="${IPSEC_EXECDIR:-/usr/libexec/ipsec}"
-IPSEC_LIBDIR="${IPSEC_LIBDIR:-/usr/libexec/ipsec}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-/usr/sbin}"
 unset PLUTO_OPTIONS
 

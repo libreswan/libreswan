@@ -435,16 +435,14 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 	 */
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
 
-	if (alg_info_ike != NULL) {
-		alg_info_ike->alg_info_protoid = PROTO_ISAKMP;
-		if (alg_info_parse_str((struct alg_info *)alg_info_ike,
-				       alg_str, err_p,
-				       parser_init_ike,
-				       alg_info_ike_add,
-				       lookup_group) < 0) {
-			pfreeany(alg_info_ike);
-			alg_info_ike = NULL;
-		}
+	alg_info_ike->alg_info_protoid = PROTO_ISAKMP;
+	if (alg_info_parse_str((struct alg_info *)alg_info_ike,
+			       alg_str, err_p,
+			       parser_init_ike,
+			       alg_info_ike_add,
+			       lookup_group) < 0) {
+		pfreeany(alg_info_ike);
+		alg_info_ike = NULL;
 	}
 	return alg_info_ike;
 }

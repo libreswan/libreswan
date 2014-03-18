@@ -1,14 +1,54 @@
 #!/bin/sh
-#
+
+set -x
+
+set -ue
+
+# We use /tmp/... or /source/... for our build output.
+# /tmp is a tmpfs and is faster but disappears on reboot.
+# /source is a shared plan9 filesystem: persistant but slow
+# When /tmp is used, we make the contents persist with tar.
+
+# Note: for some reason modobj always lives in /source
+
+OBJDIR="${OBJDIR:-/tmp/lsw_build}"
+
+case "$OBJDIR" in
+/source/*)
+	;;
+/tmp/*)
+	;;
+*)
+	echo "$0: FATAL: OBJDIR does not start with /source/ or /tmp/" >&2
+	exit 1
+	;;
+esac
 
 cd /source
 
 # do don't trust all makefile dependancies, esp lib/
-rm -rf /tmp/lsw_build modobj*
+rm -rf "$OBJDIR" modobj
 
 # sometimes left behind - an error in "make check"
 rm -f lib/libipsecconf/lex.yy.c lib/libipsecconf/parser.dot lib/libipsecconf/parser.output lib/libipsecconf/parser.tab.c lib/libipsecconf/parser.tab.h
 
 # we use /tmp because it is on tmpfs and compiles much faster, even faster
 # than using ccache on the regular disk image files.
-make OBJDIR=/tmp/lsw_build programs module 2>&1 > compile-log.txt
+
+echo ">>> $0 on `hostname` at `date`" >>compile-log.txt
+
+if ! make OBJDIR="$OBJDIR" programs module >>compile-log.txt 2>&1
+then
+	echo '"make programs module"'" failed: $?; see compile-log.txt"
+fi
+
+case "$OBJDIR" in
+/source/*)
+	;;
+*)
+	# save ephemeral build results (for sharing with other machines)
+	tar czf lsw_build.tgz --absolute-names "$OBJDIR"
+	;;
+esac
+
+echo "$0 finished on `hostname` at `date`"

@@ -278,7 +278,7 @@ static int create_lock(void)
 	if (mkdir(ctlbase, 0755) != 0) {
 		if (errno != EEXIST) {
 			fprintf(stderr,
-				"pluto: unable to create lock dir: \"%s\": %s\n",
+				"pluto: FATAL: unable to create lock dir: \"%s\": %s\n",
 				ctlbase, strerror(errno));
 			exit_pluto(10);
 		}
@@ -293,7 +293,7 @@ static int create_lock(void)
 			if (!fork_desired) {
 				if (unlink(pluto_lock) == -1) {
 					fprintf(stderr,
-						"pluto: lock file \"%s\" already exists and could not be removed (%d %s)\n",
+						"pluto: FATAL: lock file \"%s\" already exists and could not be removed (%d %s)\n",
 						pluto_lock, errno,
 						strerror(errno));
 					exit_pluto(10);
@@ -303,13 +303,13 @@ static int create_lock(void)
 				}
 			} else {
 				fprintf(stderr,
-					"pluto: lock file \"%s\" already exists\n",
+					"pluto: FATAL: lock file \"%s\" already exists\n",
 					pluto_lock);
 				exit_pluto(10);
 			}
 		} else {
 			fprintf(stderr,
-				"pluto: unable to create lock file \"%s\" (%d %s)\n",
+				"pluto: FATAL: unable to create lock file \"%s\" (%d %s)\n",
 				pluto_lock, errno, strerror(errno));
 			exit_pluto(1);
 		}
@@ -380,8 +380,8 @@ static void pluto_init_nss(char *confddir)
 	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", confddir);
 	nss_init_status = NSS_Init(confddir);
 	if (nss_init_status != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "NSS readonly initialization failed (err %d)\n",
-		       PR_GetError());
+		loglog(RC_LOG_SERIOUS, "FATAL: NSS readonly initialization (\"%s\") failed (err %d)\n",
+		       confddir, PR_GetError());
 		exit_pluto(10);
 	} else {
 		libreswan_log("NSS Initialized");
@@ -996,8 +996,9 @@ int main(int argc, char **argv)
 		coredir = clone_str("/var/run/pluto", "coredir");
 	if (chdir(coredir) == -1) {
 		int e = errno;
-		libreswan_log("pluto: chdir() do dumpdir failed (%d: %s)\n",
-			      e, strerror(e));
+
+		libreswan_log("pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)\n",
+			      coredir, e, strerror(e));
 	}
 
 	oco = lsw_init_options();
@@ -1025,7 +1026,7 @@ int main(int argc, char **argv)
 		err_t ugh = init_ctl_socket();
 
 		if (ugh != NULL) {
-			fprintf(stderr, "pluto: %s", ugh);
+			fprintf(stderr, "pluto: FATAL: %s", ugh);
 			exit_pluto(1);
 		}
 	}
@@ -1039,7 +1040,7 @@ int main(int argc, char **argv)
 			if (pid < 0) {
 				int e = errno;
 
-				fprintf(stderr, "pluto: fork failed (%d %s)\n",
+				fprintf(stderr, "pluto: FATAL: fork failed (%d %s)\n",
 					errno, strerror(e));
 				exit_pluto(1);
 			}
@@ -1056,7 +1057,7 @@ int main(int argc, char **argv)
 			int e = errno;
 
 			fprintf(stderr,
-				"setsid() failed in main(). Errno %d: %s\n",
+				"FATAL: setsid() failed in main(). Errno %d: %s\n",
 				errno, strerror(e));
 			exit_pluto(1);
 		}
@@ -1115,8 +1116,8 @@ int main(int argc, char **argv)
 	int fips_files_check_ok = FIPSCHECK_verify_files(fips_package_files);
 
 	if (fips_mode == -1) {
-                        loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
-                        exit_pluto(10);
+		loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
+		exit_pluto(10);
 	}
 
 	if (fips_product == 1)
@@ -1130,15 +1131,15 @@ int main(int argc, char **argv)
 		/*
 		 * We ignore fips=1 kernel mode if we are not a 'fips product'
 		 */
-                if (fips_product && fips_kernel) {
-                        loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
-                        exit_pluto(10);
-                } else if (fips_product) {
-                        libreswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
-                } else if (fips_kernel) {
-                        libreswan_log("FIPS: not a FIPS product, kernel mode ignored - continuing");
-                } else {
-                        libreswan_log("FIPS: not a FIPS product and kernel not in FIPS mode - continuing");
+		if (fips_product && fips_kernel) {
+			loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
+			exit_pluto(10);
+		} else if (fips_product) {
+			libreswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
+		} else if (fips_kernel) {
+			libreswan_log("FIPS: not a FIPS product, kernel mode ignored - continuing");
+		} else {
+			libreswan_log("FIPS: not a FIPS product and kernel not in FIPS mode - continuing");
 		}
 	} else {
 		libreswan_log("FIPS HMAC integrity verification test passed");
@@ -1405,9 +1406,8 @@ void show_setup_plutomain()
 		coredir,
 		pluto_stats_binary ? pluto_stats_binary : "unset");
 
-	whack_log(RC_COMMENT, "sbindir=%s, libdir=%s, libexecdir=%s",
-		IPSEC_SBINDIR ,
-		IPSEC_LIBDIR ,
+	whack_log(RC_COMMENT, "sbindir=%s, libexecdir=%s",
+		IPSEC_SBINDIR,
 		IPSEC_EXECDIR );
 
 	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s",
