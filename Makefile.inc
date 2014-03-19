@@ -200,7 +200,7 @@ endif
 
 
 #INSTMANFLAGS?="-m 644"
-INSTCONFFLAGS?=
+INSTCONFFLAGS?="-m 644"
 # For OSX use
 #INSTBINFLAGS?=-b -B .old
 #INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old
