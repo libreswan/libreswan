@@ -476,6 +476,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	/* done parsing; initialize crypto  */
 
+	zero(reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -832,7 +833,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 
 	/* HASH_I or SIG_I out */
 	{
-		u_char buffer[1024];
+		u_char idbuf[1024]; /* fits all possible identity payloads? */
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
 		pb_stream id_pbs;
@@ -840,7 +841,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 		size_t hash_len;
 
 		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this);
-		init_pbs(&id_pbs, buffer, sizeof(buffer), "identity payload");
+		init_pbs(&id_pbs, idbuf, sizeof(idbuf), "identity payload");
 		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&id_pbs, NULL) ||
@@ -948,7 +949,7 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 {
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
-	u_char buffer[1024];	/* ??? enough room for reconstructed peer ID payload? */
+	u_char idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
 	struct payload_digest id_pd;
 
 	if (st->hidden_variables.st_nat_traversal) {
@@ -968,7 +969,7 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 		pb_stream id_pbs;
 
 		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that);
-		init_pbs(&pbs, buffer, sizeof(buffer), "identity payload");
+		init_pbs(&pbs, idbuf, sizeof(idbuf), "identity payload");
 		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 
 		/* interop ID for SoftRemote & maybe others ? */

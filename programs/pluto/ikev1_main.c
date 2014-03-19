@@ -1050,6 +1050,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 
 	/* Build output packet HDR;KE;Ni */
+	zero(reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 
@@ -2456,7 +2457,6 @@ static void send_notification(struct state *sndst, notification_t type,
 			msgid_t msgid, u_char *icookie, u_char *rcookie,
 			u_char protoid)
 {
-	u_char buffer[1024];
 	pb_stream pbs, r_hdr_pbs;
 	u_char *r_hashval, *r_hash_start;
 	static time_t last_malformed;
@@ -2517,8 +2517,8 @@ static void send_notification(struct state *sndst, notification_t type,
 		ip_str(&sndst->st_remoteaddr),
 		sndst->st_remoteport);
 
-	zero(buffer);
-	init_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
+	zero(reply_buffer);
+	init_pbs(&pbs, reply_buffer, sizeof(reply_buffer), "notification msg");
 
 	/* HDR* */
 	{
@@ -2695,7 +2695,6 @@ void ikev1_delete_out(struct state *st)
 	pb_stream reply_pbs;
 	pb_stream r_hdr_pbs;
 	msgid_t msgid;
-	u_char buffer[8192];
 	struct state *p1st;
 	ip_said said[EM_MAXRELSPIS];
 	ip_said *ns = said;
@@ -2741,8 +2740,8 @@ void ikev1_delete_out(struct state *st)
 
 	msgid = generate_msgid(p1st);
 
-	zero(buffer);
-	init_pbs(&reply_pbs, buffer, sizeof(buffer), "delete msg");
+	zero(reply_buffer);
+	init_pbs(&reply_pbs, reply_buffer, sizeof(reply_buffer), "delete msg");
 
 	/* HDR* */
 	{

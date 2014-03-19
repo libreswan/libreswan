@@ -2568,7 +2568,6 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 			  u_char *rcookie,
 			  chunk_t *n_data)
 {
-	u_char buffer[1024];
 	pb_stream reply;
 	pb_stream rbody;
 	chunk_t child_spi, notify_data;
@@ -2597,8 +2596,8 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	}
 #endif
 
-	zero(&buffer);
-	init_pbs(&reply, buffer, sizeof(buffer), "notification msg");
+	zero(&reply_buffer);
+	init_pbs(&reply, reply_buffer, sizeof(reply_buffer), "notification msg");
 
 	/* HDR out */
 	{
@@ -3319,12 +3318,11 @@ stf_status ikev2_send_informational(struct state *st)
 		pb_stream e_pbs, e_pbs_cipher;
 		pb_stream rbody;
 		pb_stream request;
-		u_char buffer[1024];
 
 		md.st = st;
 		md.pst = pst;
-		zero(&buffer);
-		init_pbs(&request, buffer, sizeof(buffer),
+		zero(&reply_buffer);
+		init_pbs(&request, reply_buffer, sizeof(reply_buffer),
 			 "informational exchange request packet");
 		authstart = request.cur;
 
