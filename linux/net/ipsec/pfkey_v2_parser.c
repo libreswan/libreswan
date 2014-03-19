@@ -1850,7 +1850,11 @@ int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 							   pfkey_msg_seq,
 							   sadb_msg ? sadb_msg
 							   ->sadb_msg_pid :
+#ifdef HAVE_USER_NS
+							   pfkey_kuid_to_uid(current_uid())),
+#else
 							   current_uid()),
+#endif
 			       extensions_reply) &&
 	      (alg_num_a ? pfkey_safe_build(error =
 						    pfkey_supported_build(&

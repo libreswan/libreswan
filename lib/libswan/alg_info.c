@@ -205,6 +205,7 @@ static int aalg_getbyname_esp(const char *str, int len)
 	int ret = -1;
 	unsigned num;
 	static const char sha2_256_aka[] = "sha2";
+	static const char sha1_aka[] = "sha";
 
 	DBG_log("entering aalg_getbyname_esp()");
 	if (!str || !*str)
@@ -215,6 +216,14 @@ static int aalg_getbyname_esp(const char *str, int len)
 		strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
 		DBG_log("interpreting ESP sha2 as sha2_256");
 		str = "sha2_256";
+		len = strlen(str);
+	}
+
+	/* now "sha" as "sha1" */
+	if (len == sizeof(sha1_aka)-1 &&
+	    strncasecmp(str, sha1_aka, sizeof(sha1_aka)-1) == 0) {
+		DBG_log("interpreting ESP sha as sha1");
+		str = "sha1";
 		len = strlen(str);
 	}
 
