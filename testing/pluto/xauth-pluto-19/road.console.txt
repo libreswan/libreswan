@@ -65,7 +65,7 @@ road #
 117 "modecfg-road-eastnet-psk" #2: STATE_QUICK_I1: initiate
 Tuomo: Look at this below!!!!!
 002 "modecfg-road-eastnet-psk" #2: up-client output: /usr/local/libexec/ipsec/_updown.klips: changesource "ip route change 192.0.2.0/24 dev ipsec0 src 192.0.2.209" failed (RTNETLINK answers: No such file or directory)
-004 "modecfg-road-eastnet-psk" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=none XAUTHuser=use3}
+004 "modecfg-road-eastnet-psk" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive XAUTHuser=use3}
 road #
  ipsec eroute
 0          192.0.2.209/32     -> 192.0.2.0/24       => tun0x1001@192.1.2.23
