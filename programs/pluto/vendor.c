@@ -605,15 +605,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 		/* Fall through */
 	case VID_NATT_RFC:
 		{
-			if (draftvid && st->st_connection->ikev1_natt == natt_rfc) {
-				DBG(DBG_NATT, DBG_log(" skip processing NATT draft VIDs"));
-				break;
-			}
-			if (!draftvid && st->st_connection->ikev1_natt == natt_drafts) {
-				DBG(DBG_NATT, DBG_log(" skip processing NATT RFC VID"));
-				break;
-			}
-
 			if (md->quirks.nat_traversal_vid < vid->id) {
 				DBG(DBG_NATT, DBG_log(" method set to=%s ",
 						      enum_name(&
