@@ -1680,7 +1680,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		pb_stream notify_pbs;
 		struct isakmp_notification isan;
 
-		libreswan_log("I am sending INITIAL_CONTACT");
+		libreswan_log("sending INITIAL_CONTACT");
 
 		isan.isan_np = ISAKMP_NEXT_NONE;
 		isan.isan_doi = ISAKMP_DOI_IPSEC;
@@ -1702,7 +1702,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		/* zero length data payload */
 		close_output_pbs(&notify_pbs);
 	} else {
-		libreswan_log("Not sending INITIAL_CONTACT");
+		DBG(DBG_CONTROL, DBG_log("Not sending INITIAL_CONTACT"));
 	}
 
 	/* encrypt message, except for fixed part of header */
