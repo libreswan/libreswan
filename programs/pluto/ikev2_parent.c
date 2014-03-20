@@ -3450,13 +3450,13 @@ void ikev2_delete_out(struct state *st)
 
 		md.st = st;
 		md.pst = pst;
-		/* beginning of data going out */
-		authstart = reply_stream.cur;
 
 		/* make sure HDR is at start of a clean buffer */
 		zero(reply_buffer);
 		init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 			 "information exchange request packet");
+		/* beginning of data going out */
+		authstart = reply_stream.cur;
 
 		/* HDR out */
 		{
