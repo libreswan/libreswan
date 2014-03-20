@@ -66,9 +66,9 @@ enum keyword_xauthfail {
  *   *
  *    */
 enum natt_method {
-	NAT_TRAVERSAL_METHOD_IETF_00_01     =1,
+	NAT_TRAVERSAL_METHOD_IETF_00_01     =1, /* no longer supported */
 	NAT_TRAVERSAL_METHOD_IETF_02_03     =2,
-	NAT_TRAVERSAL_METHOD_IETF_05        =3,
+	NAT_TRAVERSAL_METHOD_IETF_05        =3, /* same as RFC */
 	NAT_TRAVERSAL_METHOD_IETF_RFC       =4,
 
 	NAT_TRAVERSAL_NAT_BHND_ME           =30,
@@ -472,6 +472,12 @@ enum certpolicy {
 
 /* this is the default setting. */
 #define cert_defaultcertpolicy cert_alwayssend
+
+enum ikev1_natt_policy {
+	natt_both = 0, /* the default */
+	natt_rfc = 1,
+	natt_drafts = 2 /* Workaround for Cisco NAT-T bug */
+};
 
 enum four_options {
 	fo_never   = 0,         /* do not propose, do not permit */

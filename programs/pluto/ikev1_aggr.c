@@ -1316,7 +1316,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	if (nat_traversal_enabled) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!nat_traversal_insert_vid(np, &md->rbody)) {
+		if (!nat_traversal_insert_vid(np, &md->rbody, st)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
