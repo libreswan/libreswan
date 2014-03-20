@@ -1406,9 +1406,8 @@ void show_setup_plutomain()
 		coredir,
 		pluto_stats_binary ? pluto_stats_binary : "unset");
 
-	whack_log(RC_COMMENT, "sbindir=%s, libdir=%s, libexecdir=%s",
-		IPSEC_SBINDIR ,
-		IPSEC_LIBDIR ,
+	whack_log(RC_COMMENT, "sbindir=%s, libexecdir=%s",
+		IPSEC_SBINDIR,
 		IPSEC_EXECDIR );
 
 	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s",

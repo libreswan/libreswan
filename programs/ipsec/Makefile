@@ -17,6 +17,5 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 PROGRAM=ipsec
 PROGRAMDIR=${SBINDIR}
 MANPROGPREFIX:=./
-LIBFILES:=$(wildcard distro.txt)
 
 include ${srcdir}../Makefile.program

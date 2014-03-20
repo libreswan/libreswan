@@ -459,7 +459,7 @@ static void confwrite_conn(FILE *out,
 			dsn = "start";
 			break;
 		}
-		cwf("auto=", dsn);
+		cwf("auto", dsn);
 	}
 
 	if (conn->policy) {

@@ -569,10 +569,11 @@ static void handle_known_vendorid(struct msg_digest *md,
 				  const char *vidstr,
 				  size_t len,
 				  struct vid_struct *vid,
-				  struct state *st UNUSED)
+				  struct state *st)
 {
 	char vid_dump[128];
 	bool vid_useful = TRUE; /* tentatively TRUE */
+	bool draftvid = FALSE;
 
 	switch (vid->id) {
 	/**
@@ -600,8 +601,19 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_NATT_IETF_07:
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
+		draftvid = TRUE;
+		/* Fall through */
 	case VID_NATT_RFC:
 		{
+			if (draftvid && st->st_connection->ikev1_natt == natt_rfc) {
+				DBG(DBG_NATT, DBG_log(" skip processing NATT draft VIDs"));
+				break;
+			}
+			if (!draftvid && st->st_connection->ikev1_natt == natt_drafts) {
+				DBG(DBG_NATT, DBG_log(" skip processing NATT RFC VID"));
+				break;
+			}
+
 			if (md->quirks.nat_traversal_vid < vid->id) {
 				DBG(DBG_NATT, DBG_log(" method set to=%s ",
 						      enum_name(&

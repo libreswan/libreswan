@@ -130,6 +130,7 @@ enum keyword_numeric_config_field {
 	KBF_CISCO_UNITY,
 	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
 	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
+	KBF_IKEV1_NATT,		/* ikev1 NAT-T payloads to send/process */
 	KBF_MAX
 };
 

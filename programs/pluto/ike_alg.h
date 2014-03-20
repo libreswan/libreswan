@@ -2,7 +2,7 @@
 #define _IKE_ALG_H
 
 #include <nss.h>
-#include <nss3/pk11pub.h>
+#include <pk11pub.h>
 
 /* forward reference */
 struct connection;

@@ -104,7 +104,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
   USE_LIBCURL=%{USE_CRL_FETCHING} \
   USE_DNSSEC=%{USE_DNSSEC} \
   INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libexecdir}/ipsec \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
@@ -128,7 +127,6 @@ rm -rf %{buildroot}
   DESTDIR=%{buildroot} \
   INITSYSTEM=sysvinit \
   INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libexecdir}/ipsec \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \

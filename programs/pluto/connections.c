@@ -1394,6 +1394,7 @@ void add_connection(const struct whack_message *wm)
 
 		c->forceencaps = wm->forceencaps;
 		c->nat_keepalive = wm->nat_keepalive;
+		c->ikev1_natt = wm->ikev1_natt;
 		c->initial_contact = wm->initial_contact;
 		c->cisco_unity = wm->cisco_unity;
 		c->send_vendorid = wm->send_vendorid;
@@ -3773,14 +3774,17 @@ void show_one_connection(struct connection *c)
 	if (c->dpd_timeout > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   dpd: %s; delay:%lu; timeout:%lu; "
-			"nat-t: force_encaps:%s; nat_keepalive:%s;",
+			"nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
 			c->name,
 			instance,
 			enum_name(&dpd_action_names, c->dpd_action),
 			(unsigned long)c->dpd_delay,
 			(unsigned long)c->dpd_timeout,
 			(c->forceencaps) ? "yes" : "no",
-			(c->nat_keepalive) ? "yes" : "no");
+			(c->nat_keepalive) ? "yes" : "no",
+			(c->ikev1_natt == natt_both) ? "both" :
+			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts")
+		);
 	}
 
 	if (c->extra_debugging) {

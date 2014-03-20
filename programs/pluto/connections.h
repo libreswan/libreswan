@@ -219,6 +219,7 @@ struct connection {
 	bool cisco_unity;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool send_vendorid;           /* Send our vendorid? Security vs Debugging help */
 	bool sha2_truncbug;
+	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 
 	/*Network Manager support*/
 #ifdef HAVE_NM

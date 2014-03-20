@@ -3,39 +3,13 @@ set -x
 
 set -ue
 
-# We use /tmp/... or /source/... for build output.
-# /tmp is a tmpfs and is faster but disappears on reboot.
-# /source is a shared plan9 filesystem: persistant but slow
-# When /tmp is used, we make the contents persist with tar.
-
-# Note: for some reason modobj always lives in /source
-
-OBJDIR="${OBJDIR:-/tmp/lsw_build}"
-
 pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
 
 cd /source
 
-case "$OBJDIR" in
-/source/*)
-	;;
-/tmp/*)
-	# grab ephemeral build results
-	rm -rf "$OBJDIR"
-	tar xzf lsw_build.tgz --absolute-names
-	;;
-*)
-	echo "$0: OBJDIR does not start with /source/ or /tmp/" >&2
-	exit 1
-	;;
-esac
-
-# we use /tmp because it is on tmpfs and compiles much faster, even faster
-# than using ccache on the regular disk image files.
-
 echo ">>> $0 on `hostname` at `date`" >>compile-log.txt
 
-if ! make OBJDIR="$OBJDIR" install >>compile-log.txt 2>&1
+if ! make install >>compile-log.txt 2>&1
 then
 	echo '"make install"'" failed: $?; see compile-log.txt"
 fi

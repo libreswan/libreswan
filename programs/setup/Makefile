@@ -19,7 +19,6 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=setup
-PROGRAMDIR=${LIBDIR}
 
 include ${srcdir}../Makefile.program
 

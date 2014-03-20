@@ -66,9 +66,9 @@ enum keyword_xauthfail {
  *   *
  *    */
 enum natt_method {
-	NAT_TRAVERSAL_METHOD_IETF_00_01     =1,
+	NAT_TRAVERSAL_METHOD_IETF_00_01     =1, /* no longer supported */
 	NAT_TRAVERSAL_METHOD_IETF_02_03     =2,
-	NAT_TRAVERSAL_METHOD_IETF_05        =3,
+	NAT_TRAVERSAL_METHOD_IETF_05        =3, /* same as RFC */
 	NAT_TRAVERSAL_METHOD_IETF_RFC       =4,
 
 	NAT_TRAVERSAL_NAT_BHND_ME           =30,
@@ -398,23 +398,25 @@ enum phase1_role {
 				       LELEM(STATE_MODE_CFG_I1) | \
 				       LELEM(STATE_XAUTH_I0) | \
 				       LELEM(STATE_XAUTH_I1))
+/* IKEv1 or IKEv2 */
+#define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || \
+				    (s) == STATE_QUICK_R2 || \
+				    (s) == STATE_PARENT_I3 || \
+				    (s) == STATE_PARENT_R2)
 
-#define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || (s) == \
-				    STATE_QUICK_R2)
+/* Only relevant to IKEv1 */
 #define IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_R1)
 #define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
 
-/* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
-#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
-
+/* Only relevant to IKEv2 */
 #define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I2 || \
 				     (s) == STATE_PARENT_R1 || \
 				     (s) == STATE_IKESA_DEL)
-
 #define IS_V2_INITIATOR(s) ((s) == STATE_PARENT_I1 || \
 		            (s) == STATE_PARENT_I2 || \
 			    (s) == STATE_PARENT_I3)
-
+/* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
+#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 /*
  * ??? Issue here is that our child sa appears as a STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
  * So we fall back to checking if it is cloned, and therefore really a child.
@@ -470,6 +472,12 @@ enum certpolicy {
 
 /* this is the default setting. */
 #define cert_defaultcertpolicy cert_alwayssend
+
+enum ikev1_natt_policy {
+	natt_both = 0, /* the default */
+	natt_rfc = 1,
+	natt_drafts = 2 /* Workaround for Cisco NAT-T bug */
+};
 
 enum four_options {
 	fo_never   = 0,         /* do not propose, do not permit */

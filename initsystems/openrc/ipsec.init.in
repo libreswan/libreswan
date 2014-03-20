@@ -7,7 +7,7 @@ description="pluto is an IKE daemon that is used to setup IPSEC VPN connections.
 description_configtest="Run syntax tests for configuration files only."
 description_reload="reloads the configuration - does not affect existing connections"
 
-PLUTO_BINARY=${PLUTO_BINARY:-@FINALLIBDIR@/pluto}
+PLUTO_BINARY=${PLUTO_BINARY:-@FINALLIBEXECDIR@/pluto}
 PLUTO_CONFFILE=${PLUTO_CONFFILE:-@FINALCONFFILE@}
 IPSEC_BINARY=${IPSEC_BINARY:-@FINALSBINDIR@/ipsec}
 PLUTO_PIDFILE=${PLUTO_PIDFILE:-/var/run/pluto/pluto.pid}

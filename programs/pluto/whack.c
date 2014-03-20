@@ -115,7 +115,6 @@ static void help(void)
 		" [--overlapip]"
 		" [--tunnel]"
 		" [--pfs]"
-		" [--no-ikepad]"
 		" \\\n   "
 		" [--pfsgroup [modp1024] | [modp1536] | [modp2048] | [modp3072] | [modp4096] | [modp6144] | [modp8192]]"
 		" \\\n   "
@@ -163,6 +162,7 @@ static void help(void)
 		" [--aggrmode]"
 		" [--initialcontact] [--cisco_unity]"
 		" [--forceencaps] [--no-nat_keepalive]"
+		" [--ikev1natt <both|rfc|drafts>"
 		" \\\n   "
 		" [--dpddelay <seconds> --dpdtimeout <seconds>]"
 		" [--dpdaction (clear|hold|restart)]"
@@ -469,6 +469,7 @@ enum option_enums {
 	CD_DPDACTION,
 	CD_FORCEENCAPS,
 	CD_NO_NAT_KEEPALIVE,
+	CD_IKEV1_NATT,
 	CD_INITIAL_CONTACT,
 	CD_CISCO_UNITY,
 	CD_IKE,
@@ -652,6 +653,7 @@ static const struct option long_opts[] = {
 	PS("dontrekey", DONT_REKEY),
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT + OO },
 	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT },
 	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },
 
@@ -1528,6 +1530,17 @@ int main(int argc, char **argv)
 
 		case CD_NO_NAT_KEEPALIVE: /* --no-nat_keepalive */
 			msg.nat_keepalive = FALSE;
+			continue;
+
+		case CD_IKEV1_NATT: /* --ikev1_natt */
+			if ( streq(optarg, "both"))
+				msg.ikev1_natt = natt_both;
+			else if ( streq(optarg, "rfc"))
+				msg.ikev1_natt = natt_rfc;
+			else if ( streq(optarg, "drafts"))
+				msg.ikev1_natt = natt_drafts;
+			else 
+				diag("--ikev1_natt options are 'both', 'rfc' or 'drafts'");
 			continue;
 
 		case CD_INITIAL_CONTACT: /* --initialcontact */

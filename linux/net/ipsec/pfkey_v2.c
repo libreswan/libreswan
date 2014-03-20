@@ -552,6 +552,13 @@ DEBUG_NO_STATIC void pfkey_destroy_socket(struct sock *sk)
 		    "klips_debug:pfkey_destroy_socket: destroyed.\n");
 }
 
+#ifdef HAVE_USER_NS
+uint32_t pfkey_kuid_to_uid(kuid_t kuid)
+{
+	return from_kuid(&init_user_ns, kuid);
+}
+#endif
+
 int pfkey_upmsg(struct socket *sock, struct sadb_msg *pfkey_msg)
 {
 	struct sock *sk;
@@ -739,7 +746,11 @@ DEBUG_NO_STATIC int pfkey_create(struct socket *sock, int protocol)
 	sk->sk_family = PF_KEY;
 /*	sk->num = protocol; */
 	sk->sk_protocol = protocol;
+#ifdef HAVE_USER_NS
+	key_pid(sk) = pfkey_kuid_to_uid(current_uid());
+#else
 	key_pid(sk) = current_uid();
+#endif
 
 #ifdef HAVE_SOCKET_WQ
 	KLIPS_PRINT(debug_pfkey,
