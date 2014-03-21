@@ -855,7 +855,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			     &md->message_pbs), "saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -1497,7 +1497,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	authstart = reply_stream.cur;
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -1972,7 +1972,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		bool send_cert = FALSE;
 
 		/* make sure HDR is at start of a clean buffer */
-		zero(reply_buffer);
+		zero(&reply_buffer);
 		init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 			 "reply packet");
 
@@ -2909,7 +2909,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 			authstart = reply_stream.cur;
 
 			/* make sure HDR is at start of a clean buffer */
-			zero(reply_buffer);
+			zero(&reply_buffer);
 			init_pbs(&reply_stream, reply_buffer,
 				 sizeof(reply_buffer),
 				 "information exchange reply packet");
@@ -3452,7 +3452,7 @@ void ikev2_delete_out(struct state *st)
 		md.pst = pst;
 
 		/* make sure HDR is at start of a clean buffer */
-		zero(reply_buffer);
+		zero(&reply_buffer);
 		init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 			 "information exchange request packet");
 		/* beginning of data going out */

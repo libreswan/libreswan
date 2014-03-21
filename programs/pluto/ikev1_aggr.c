@@ -476,7 +476,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	/* done parsing; initialize crypto  */
 
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -809,7 +809,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -1222,7 +1222,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	/* the MD is already set up by alloc_md() */
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 

@@ -162,7 +162,7 @@ stf_status main_outI1(int whack_sock,
 			predecessor->st_serialno);
 
 	/* set up reply */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 
@@ -789,7 +789,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	 * We can't leave this to comm_handle() because we must
 	 * fill in the cookie.
 	 */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 	{
@@ -1050,7 +1050,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 
 	/* Build output packet HDR;KE;Ni */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 
@@ -2347,7 +2347,7 @@ stf_status send_isakmp_notification(struct state *st,
 
 	msgid = generate_msgid(st);
 
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"ISAKMP notify");
 
@@ -2517,7 +2517,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		ip_str(&sndst->st_remoteaddr),
 		sndst->st_remoteport);
 
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&pbs, reply_buffer, sizeof(reply_buffer), "notification msg");
 
 	/* HDR* */
@@ -2740,7 +2740,7 @@ void ikev1_delete_out(struct state *st)
 
 	msgid = generate_msgid(p1st);
 
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_pbs, reply_buffer, sizeof(reply_buffer), "delete msg");
 
 	/* HDR* */

@@ -79,6 +79,10 @@ typedef int bool;
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)     /* clearer shorthand */
 #define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)	/* clearer shorthand */
 
+/* zero an object given a pointer to it.
+ * Note: this won't work on an array without an explicit &
+ * (it will appear to work but it will only zero the first element).
+ */
 #define zero(x) memset((x), '\0', sizeof(*(x)))	/* zero all bytes */
 
 /* routines to copy C strings to fixed-length buffers */
