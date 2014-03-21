@@ -57,6 +57,7 @@ do
   if [ -z "`sudo virsh net-list --all |grep $net | awk '{ print $1}'`" ];
   then
 	sudo virsh net-define net/$net
+	sudo virsh net-autostart $net
 	echo $net created 
 	sudo virsh net-start $net
 	echo $net activated

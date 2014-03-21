@@ -95,7 +95,7 @@ case "${1}" in
 	echo ""
 	GOTTWO=""
 	for f in $(ls "${IPSEC_EXECDIR}" | egrep -v -i "${DONTMENTION}"); do
-	    if [ -x "${dir}/${f}" ]; then
+	    if [ -x "${IPSEC_EXECDIR}/${f}" ]; then
 		if [ -z "${GOTTWO}" ]; then
 		    # first of two entries
 		    GOTTWO="${f}"
