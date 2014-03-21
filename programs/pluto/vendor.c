@@ -573,7 +573,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 {
 	char vid_dump[128];
 	bool vid_useful = TRUE; /* tentatively TRUE */
-	bool draftvid = FALSE;
 
 	switch (vid->id) {
 	/**
@@ -601,7 +600,6 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_NATT_IETF_07:
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
-		draftvid = TRUE;
 		/* Fall through */
 	case VID_NATT_RFC:
 		{
