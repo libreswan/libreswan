@@ -1490,7 +1490,7 @@ rsasig_common:
  */
 
 /* XXX MCR. I suspect that actually all of this is redundent */
-bool init_am_st_oakley(struct state *st, lset_t policy)
+bool init_aggr_st_oakley(struct state *st, lset_t policy)
 {
 	struct trans_attrs ta;
 	struct db_attr  *enc, *hash, *auth, *grp;
