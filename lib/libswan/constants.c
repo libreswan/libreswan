@@ -972,7 +972,7 @@ static const char *const auth_alg_name[] = {
 
 enum_names auth_alg_names = {
 	AUTH_ALGORITHM_NONE,
-	AUTH_ALGORITHM_AES_CBC,
+	AUTH_ALGORITHM_AES_256_GMAC,
 	auth_alg_name,
 	&auth_alg_names_stolen_use
 };
