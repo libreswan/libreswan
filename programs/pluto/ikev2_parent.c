@@ -855,7 +855,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			     &md->message_pbs), "saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -1497,7 +1497,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	authstart = reply_stream.cur;
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -1972,7 +1972,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		bool send_cert = FALSE;
 
 		/* make sure HDR is at start of a clean buffer */
-		zero(reply_buffer);
+		zero(&reply_buffer);
 		init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 			 "reply packet");
 
@@ -2568,8 +2568,12 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 			  u_char *rcookie,
 			  chunk_t *n_data)
 {
-	pb_stream reply;
+	/* buffer in which to marshal our notification.
+	 * We don't use reply_buffer/reply_stream because they might be in use.
+	 */
+	u_char buffer[1024];	/* ??? large enough for any notification? */
 	pb_stream rbody;
+
 	chunk_t child_spi, notify_data;
 
 	/* this function is not generic enough yet just enough for 6msg
@@ -2588,7 +2592,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		      ip_str(&p1st->st_remoteaddr),
 		      p1st->st_remoteport);
 #if 0
-/* Empty notification data section should be fine? */
+	/* Empty notification data section should be fine? */
 	if (n_data == NULL) {
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("don't send packet when notification data empty"));
@@ -2596,8 +2600,8 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	}
 #endif
 
-	zero(&reply_buffer);
-	init_pbs(&reply, reply_buffer, sizeof(reply_buffer), "notification msg");
+	zero(&buffer);
+	init_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");
 
 	/* HDR out */
 	{
@@ -2613,7 +2617,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		n_hdr.isa_flags  |=  ISAKMP_FLAGS_R;
 #warning check msgid code here
 		/* PAUL: shouldn't we set n_hdr.isa_msgid = [htonl](p1st->st_msgid); */
-		if (!out_struct(&n_hdr, &isakmp_hdr_desc, &reply, &rbody)) {
+		if (!out_struct(&n_hdr, &isakmp_hdr_desc, &reply_stream, &rbody)) {
 			libreswan_log(
 				"error initializing hdr for notify message");
 			return;
@@ -2634,9 +2638,9 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		 type, n_data, &rbody);
 
 	close_message(&rbody, p1st);
-	close_output_pbs(&reply);
+	close_output_pbs(&reply_stream);
 
-	clonetochunk(p1st->st_tpacket, reply.start, pbs_offset(&reply),
+	clonetochunk(p1st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream),
 		     "notification packet");
 
 	send_ike_msg(p1st, __FUNCTION__);
@@ -2743,109 +2747,106 @@ static stf_status ikev2_in_create_child_sa_refuse(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct state *pst = st;
+	unsigned char *authstart;
+	unsigned char *encstart;
+	unsigned char *iv;
+	int ivsize;
+	struct ikev2_generic e;
+	pb_stream e_pbs, e_pbs_cipher;
+
+	zero(&reply_buffer);
+	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+		 "create child SA exchange request response");
+	authstart = reply_stream.cur;
+
+	/* HDR out */
 	{
-		unsigned char *authstart;
-		unsigned char *encstart;
-		unsigned char *iv;
-		int ivsize;
-		struct ikev2_generic e;
-		pb_stream e_pbs, e_pbs_cipher;
-		pb_stream request;
+		struct isakmp_hdr r_hdr;
+		zero(&r_hdr);
+		r_hdr.isa_version = build_ike_version();
+		memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
+		       COOKIE_SIZE);
+		memcpy(r_hdr.isa_icookie, pst->st_icookie,
+		       COOKIE_SIZE);
+		r_hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
+		r_hdr.isa_np = ISAKMP_NEXT_v2E;
+		r_hdr.isa_flags |= ISAKMP_FLAGS_R;
+		r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
-		zero(&reply_buffer);
-		init_pbs(&request, reply_buffer, sizeof(reply_buffer),
-			 "create child SA exchange request response");
-		authstart = request.cur;
+		/* encryption role based on original state not md state */
+		if (IS_V2_INITIATOR(pst->st_state))
+			md->role = INITIATOR;
+		else
+			md->role = RESPONDER;
 
-		/* HDR out */
-		{
-			struct isakmp_hdr r_hdr;
-			zero(&r_hdr);
-			r_hdr.isa_version = build_ike_version();
-			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
-			       COOKIE_SIZE);
-			memcpy(r_hdr.isa_icookie, pst->st_icookie,
-			       COOKIE_SIZE);
-			r_hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
-			r_hdr.isa_np = ISAKMP_NEXT_v2E;
-			r_hdr.isa_flags |= ISAKMP_FLAGS_R;
-			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
-
-			/* encryption role based on original state not md state */
-			if (IS_V2_INITIATOR(pst->st_state))
-				md->role = INITIATOR;
-			else
-				md->role = RESPONDER;
-
-			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
-					&request, &md->rbody)) {
-				libreswan_log("error initializing hdr for "
-						"CREATE_CHILD_SA  message");
-				return STF_FATAL;
-			}
-		} /* HDR done*/
-
-		/* insert an Encryption payload header */
-		e.isag_np = ISAKMP_NEXT_v2N;
-		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
+		if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+				&reply_stream, &md->rbody)) {
+			libreswan_log("error initializing hdr for "
+					"CREATE_CHILD_SA  message");
 			return STF_FATAL;
-
-		/* IV */
-		iv = e_pbs.cur;
-		ivsize = pst->st_oakley.encrypter->iv_size;
-		if (!out_zero(ivsize, &e_pbs, "iv"))
-			return STF_FATAL;
-
-		get_rnd_bytes(iv, ivsize);
-
-		/* note where cleartext starts */
-		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
-			 "cleartext");
-		e_pbs_cipher.container = &e_pbs;
-		e_pbs_cipher.desc = NULL;
-		e_pbs_cipher.cur = e_pbs.cur;
-		encstart = e_pbs_cipher.cur;
-
-		chunk_t child_spi;
-		memset(&child_spi, 0, sizeof(child_spi));
-
-		ship_v2N(ISAKMP_NEXT_v2NONE,
-				ISAKMP_PAYLOAD_NONCRITICAL,
-				PROTO_ISAKMP,
-				&child_spi,
-				v2N_NO_ADDITIONAL_SAS, NULL,
-				&e_pbs_cipher);
-
-		ikev2_padup_pre_encrypt(md, &e_pbs_cipher);
-		close_output_pbs(&e_pbs_cipher);
-
-		{
-			stf_status ret;
-			unsigned char *authloc = ikev2_authloc(md, &e_pbs);
-
-			if (!authloc)
-				return STF_FATAL;
-
-			close_output_pbs(&e_pbs);
-			close_output_pbs(&md->rbody);
-			close_output_pbs(&request);
-
-			ret = ikev2_encrypt_msg(md, md->role,
-						authstart,
-						iv, encstart, authloc,
-						&e_pbs, &e_pbs_cipher);
-			if (ret != STF_OK)
-				return ret;
 		}
+	} /* HDR done*/
 
-		/* keep it for a retransmit if necessary */
-		freeanychunk(pst->st_tpacket);
-		clonetochunk(pst->st_tpacket, request.start,
-			     pbs_offset(&request),
-			     "reply packet for CREATE_CHILD_SA exchange");
-		send_ike_msg(pst, __FUNCTION__);
+	/* insert an Encryption payload header */
+	e.isag_np = ISAKMP_NEXT_v2N;
+	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+	if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
+		return STF_FATAL;
+
+	/* IV */
+	iv = e_pbs.cur;
+	ivsize = pst->st_oakley.encrypter->iv_size;
+	if (!out_zero(ivsize, &e_pbs, "iv"))
+		return STF_FATAL;
+
+	get_rnd_bytes(iv, ivsize);
+
+	/* note where cleartext starts */
+	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
+		 "cleartext");
+	e_pbs_cipher.container = &e_pbs;
+	e_pbs_cipher.desc = NULL;
+	e_pbs_cipher.cur = e_pbs.cur;
+	encstart = e_pbs_cipher.cur;
+
+	chunk_t child_spi;
+	memset(&child_spi, 0, sizeof(child_spi));
+
+	ship_v2N(ISAKMP_NEXT_v2NONE,
+			ISAKMP_PAYLOAD_NONCRITICAL,
+			PROTO_ISAKMP,
+			&child_spi,
+			v2N_NO_ADDITIONAL_SAS, NULL,
+			&e_pbs_cipher);
+
+	ikev2_padup_pre_encrypt(md, &e_pbs_cipher);
+	close_output_pbs(&e_pbs_cipher);
+
+	{
+		stf_status ret;
+		unsigned char *authloc = ikev2_authloc(md, &e_pbs);
+
+		if (!authloc)
+			return STF_FATAL;
+
+		close_output_pbs(&e_pbs);
+		close_output_pbs(&md->rbody);
+		close_output_pbs(&reply_stream);
+
+		ret = ikev2_encrypt_msg(md, md->role,
+					authstart,
+					iv, encstart, authloc,
+					&e_pbs, &e_pbs_cipher);
+		if (ret != STF_OK)
+			return ret;
 	}
+
+	/* keep it for a retransmit if necessary */
+	freeanychunk(pst->st_tpacket);
+	clonetochunk(pst->st_tpacket, reply_stream.start,
+		     pbs_offset(&reply_stream),
+		     "reply packet for CREATE_CHILD_SA exchange");
+	send_ike_msg(pst, __FUNCTION__);
 
 	return STF_OK;
 }
@@ -2909,7 +2910,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 			authstart = reply_stream.cur;
 
 			/* make sure HDR is at start of a clean buffer */
-			zero(reply_buffer);
+			zero(&reply_buffer);
 			init_pbs(&reply_stream, reply_buffer,
 				 sizeof(reply_buffer),
 				 "information exchange reply packet");
@@ -3309,6 +3310,10 @@ stf_status ikev2_send_informational(struct state *st)
 	}
 
 	{
+		/* buffer in which to marshal our informational message.
+		 * We don't use reply_buffer/reply_stream because they might be in use.
+		 */
+		u_char buffer[1024];	/* ??? large enough for any informational? */
 		unsigned char *authstart;
 		unsigned char *encstart;
 		unsigned char *iv;
@@ -3317,14 +3322,14 @@ stf_status ikev2_send_informational(struct state *st)
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
 		pb_stream rbody;
-		pb_stream request;
+		pb_stream reply_stream;
 
 		md.st = st;
 		md.pst = pst;
-		zero(&reply_buffer);
-		init_pbs(&request, reply_buffer, sizeof(reply_buffer),
+		zero(&buffer);
+		init_pbs(&reply_stream, buffer, sizeof(buffer),
 			 "informational exchange request packet");
-		authstart = request.cur;
+		authstart = reply_stream.cur;
 
 		/* HDR out */
 		{
@@ -3347,7 +3352,7 @@ stf_status ikev2_send_informational(struct state *st)
 				md.role = RESPONDER;
 
 			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
-					&request, &rbody)) {
+					&reply_stream, &rbody)) {
 				libreswan_log(
 					"error initializing hdr for informational message");
 				return STF_FATAL;
@@ -3389,7 +3394,7 @@ stf_status ikev2_send_informational(struct state *st)
 
 			close_output_pbs(&e_pbs);
 			close_output_pbs(&rbody);
-			close_output_pbs(&request);
+			close_output_pbs(&reply_stream);
 
 			ret = ikev2_encrypt_msg(&md, md.role,
 						authstart,
@@ -3401,8 +3406,8 @@ stf_status ikev2_send_informational(struct state *st)
 
 		/* keep it for a retransmit if necessary */
 		freeanychunk(pst->st_tpacket);
-		clonetochunk(pst->st_tpacket, request.start,
-			     pbs_offset(&request),
+		clonetochunk(pst->st_tpacket, reply_stream.start,
+			     pbs_offset(&reply_stream),
 			     "reply packet for informational exchange");
 		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 		send_ike_msg(pst, __FUNCTION__);
@@ -3452,7 +3457,7 @@ void ikev2_delete_out(struct state *st)
 		md.pst = pst;
 
 		/* make sure HDR is at start of a clean buffer */
-		zero(reply_buffer);
+		zero(&reply_buffer);
 		init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 			 "information exchange request packet");
 		/* beginning of data going out */

@@ -162,7 +162,7 @@ stf_status main_outI1(int whack_sock,
 			predecessor->st_serialno);
 
 	/* set up reply */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 
@@ -789,7 +789,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	 * We can't leave this to comm_handle() because we must
 	 * fill in the cookie.
 	 */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 	{
@@ -1050,7 +1050,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 
 	/* Build output packet HDR;KE;Ni */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 
@@ -2347,7 +2347,7 @@ stf_status send_isakmp_notification(struct state *st,
 
 	msgid = generate_msgid(st);
 
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"ISAKMP notify");
 
@@ -2457,7 +2457,13 @@ static void send_notification(struct state *sndst, notification_t type,
 			msgid_t msgid, u_char *icookie, u_char *rcookie,
 			u_char protoid)
 {
-	pb_stream pbs, r_hdr_pbs;
+	/* buffer in which to marshal our notification.
+	 * We don't use reply_buffer/reply_stream because they might be in use.
+	 */
+	u_char buffer[1024];	/* ??? large enough for any notification? */
+	pb_stream pbs;
+
+	pb_stream r_hdr_pbs;
 	u_char *r_hashval, *r_hash_start;
 	static time_t last_malformed;
 	time_t n = time(NULL);
@@ -2517,8 +2523,8 @@ static void send_notification(struct state *sndst, notification_t type,
 		ip_str(&sndst->st_remoteaddr),
 		sndst->st_remoteport);
 
-	zero(reply_buffer);
-	init_pbs(&pbs, reply_buffer, sizeof(reply_buffer), "notification msg");
+	zero(&buffer);
+	init_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
 
 	/* HDR* */
 	{
@@ -2692,7 +2698,12 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
  */
 void ikev1_delete_out(struct state *st)
 {
+	/* buffer in which to marshal our deletion notification.
+	 * We don't use reply_buffer/reply_stream because they might be in use.
+	 */
+	u_char buffer[8192];	/* ??? large enough for any deletion notification? */
 	pb_stream reply_pbs;
+
 	pb_stream r_hdr_pbs;
 	msgid_t msgid;
 	struct state *p1st;
@@ -2740,8 +2751,8 @@ void ikev1_delete_out(struct state *st)
 
 	msgid = generate_msgid(p1st);
 
-	zero(reply_buffer);
-	init_pbs(&reply_pbs, reply_buffer, sizeof(reply_buffer), "delete msg");
+	zero(&buffer);
+	init_pbs(&reply_pbs, buffer, sizeof(buffer), "delete msg");
 
 	/* HDR* */
 	{

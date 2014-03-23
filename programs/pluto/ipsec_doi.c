@@ -108,7 +108,7 @@ void echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 	struct isakmp_hdr r_hdr = md->hdr; /* mostly same as incoming header */
 
 	/* make sure we start with a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 

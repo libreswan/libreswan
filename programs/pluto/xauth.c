@@ -633,7 +633,7 @@ static stf_status modecfg_resp(struct state *st,
 					}
 					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
 					unsigned char si[14];	/* 14 is magic */
-					zero(si);
+					zero(&si);
 					memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);	/* 4 is magic */
 					struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
 					memcpy(si + 4, &splitmask, 4);
