@@ -248,7 +248,7 @@ bool out_sa(pb_stream *outs,
 	    struct db_sa *sadb,
 	    struct state *st,
 	    bool oakley_mode,
-	    bool aggressive_mode UNUSED,
+	    bool aggressive_mode,
 	    u_int8_t np)
 {
 	pb_stream sa_pbs;
