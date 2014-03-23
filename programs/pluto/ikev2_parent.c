@@ -626,7 +626,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		c = rw_instantiate(c, &md->sender, NULL, NULL);
 
 	} else {
-		/* we found a non-wildcard conn. double check if it needs instantiation anyway (eg vnet=) */
+		/* We found a non-wildcard connection.
+		 * Double check whether it needs instantiation anyway (eg. vnet=)
+		 */
 		/* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
 		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
 			DBG(DBG_CONTROL,
@@ -642,7 +644,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	DBG_log("found connection: %s\n", c ? c->name : "<none>");
 
-	if (!st) {
+	if (st == NULL) {
 		st = new_state();
 		/* set up new state */
 		memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
@@ -659,10 +661,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		md->from_state = STATE_IKEv2_BASE;
 	}
 
-	/* check,as a responder, are we under dos attack or not
-	 * if yes go to 6 message exchange mode. it is a config option for now.
-	 * TBD set force_busy dynamically
-	 * Paul: Can we check for STF_TOOMUCHCRYPTO ?
+	/* Check: as a responder, are we under DoS attack or not?
+	 * If yes go to 6 message exchange mode. It is a config option for now.
+	 * TBD set force_busy dynamically.
+	 * Paul: Can we check for STF_TOOMUCHCRYPTO?
 	 */
 	if (force_busy) {
 		u_char dcookie[SHA1_DIGEST_SIZE];
@@ -672,7 +674,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		dc.ptr = dcookie;
 		dc.len = SHA1_DIGEST_SIZE;
 
-		/* check if I1 packet contian KE and a v2N payload with type COOKIE */
+		/* check if I1 packet contains KE and a v2N payload with type COOKIE */
 		if ( md->chain[ISAKMP_NEXT_v2KE] &&
 		     md->chain[ISAKMP_NEXT_v2N] &&
 		     (md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type ==
