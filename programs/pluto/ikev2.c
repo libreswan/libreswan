@@ -1171,7 +1171,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
                 break;
 
 	case STF_TOOMUCHCRYPTO:
-		/* well, this should never happen during a whack, since
+		/* ??? Why is this comment useful:
+		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
 		passert(st != NULL);

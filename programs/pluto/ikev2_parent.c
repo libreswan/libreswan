@@ -233,13 +233,6 @@ stf_status ikev2parent_outI1(int whack_sock,
 			pcrc_init(&ke->ke_pcrc, ikev2_parent_outI1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     importance);
-			if ((e != STF_SUSPEND && e != STF_INLINE) ||
-			    e == STF_TOOMUCHCRYPTO)
-			{
-				loglog(RC_CRYPTOFAILED,
-				       "system too busy - Enabling dcookies [TODO]");
-				delete_state(st);
-			}
 		} else {
 			e =ikev2_parent_outI1_tail(&ke->ke_pcrc, NULL);
 		}
@@ -775,10 +768,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			pcrc_init(&ke->ke_pcrc, ikev2_parent_inI1outR1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     pcim_stranger_crypto);
-			if (e != STF_SUSPEND && e != STF_INLINE) {
-				loglog(RC_CRYPTOFAILED, "system too busy");
-				delete_state(st);
-			}
 		} else {
 			e = ikev2_parent_inI1outR1_tail(
 				(struct pluto_crypto_req_cont *)ke,

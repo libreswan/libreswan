@@ -2687,7 +2687,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		break;
 
 	case STF_TOOMUCHCRYPTO:
-		/* well, this should never happen during a whack, since
+		/* ??? Why is this comment useful:
+		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
 		set_suspended(st, NULL);
