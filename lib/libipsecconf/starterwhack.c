@@ -545,8 +545,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		if (conn->options_set[KBF_DPDACTION])
 			msg.dpd_action = conn->options[KBF_DPDACTION];
 
-		if (conn->options_set[KBF_REKEY] && conn->options[KBF_REKEY] ==
-		    FALSE) {
+		if (conn->options_set[KBF_REKEY] && !conn->options[KBF_REKEY]) {
 			if (conn->options[KBF_DPDACTION] ==
 			      DPD_ACTION_RESTART) {
 				starter_log(LOG_LEVEL_ERR,
