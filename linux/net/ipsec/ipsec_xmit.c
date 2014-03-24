@@ -2440,7 +2440,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 		KLIPS_PRINT(debug_tunnel,
 			    "xmit: setting ND=%08x\n", natt_d);
 		ipp->daddr = natt_d;
-		ipp->check = 0;
+		ipp->check = 0; /* zeroed so we get the right checksum */
 		ipp->check = ip_fast_csum((unsigned char *)ipp, ipp->ihl);
 	}
 
