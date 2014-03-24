@@ -728,51 +728,22 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		}
 #ifdef CONFIG_KLIPS_IPV6
 		else if (ipp->version == 6) {
+			/* boilerplate macro for Bad Bits in address */
+#define BB(end, i) ((ipp6->end##addr.s6_addr32[0] & \
+		     ipsp->ips_mask_##end.u.v6.sin6_addr.s6_addr32[i]) ^ \
+		    ipsp->ips_flow_##end.u.v6.sin6_addr.s6_addr32[i])
+
 			if (ip_address_family(&ipsp->ips_flow_s) != AF_INET6)
 				failed_inbound_check = 1;
 			else if (ip_address_family(&ipsp->ips_flow_d) !=
 				 AF_INET6)
 				failed_inbound_check = 1;
-			else if (((ipp6->saddr.s6_addr32[0] &
-				   ipsp->ips_mask_s.u.v6.sin6_addr.s6_addr32[0])
-				  ^
-				  ipsp->ips_flow_s.u.v6.sin6_addr.s6_addr32[0])
-				 |
-				 ((ipp6->daddr.s6_addr32[0] &
-				   ipsp->ips_mask_d.u.v6.sin6_addr.s6_addr32[0])
-				  ^
-				  ipsp->ips_flow_d.u.v6.sin6_addr.s6_addr32[0]))
+			else if (BB(s, 0) | BB(d, 0) |
+				 BB(s, 1) | BB(d, 1) |
+				 BB(s, 2) | BB(d, 2) |
+				 BB(s, 3) | BB(d, 3))
 				failed_inbound_check = 1;
-			else if (((ipp6->saddr.s6_addr32[1] &
-				   ipsp->ips_mask_s.u.v6.sin6_addr.s6_addr32[1])
-				  ^
-				  ipsp->ips_flow_s.u.v6.sin6_addr.s6_addr32[1])
-				 |
-				 ((ipp6->daddr.s6_addr32[1] &
-				   ipsp->ips_mask_d.u.v6.sin6_addr.s6_addr32[1])
-				  ^
-				  ipsp->ips_flow_d.u.v6.sin6_addr.s6_addr32[1]))
-				failed_inbound_check = 1;
-			else if (((ipp6->saddr.s6_addr32[2] &
-				   ipsp->ips_mask_s.u.v6.sin6_addr.s6_addr32[2])
-				  ^
-				  ipsp->ips_flow_s.u.v6.sin6_addr.s6_addr32[2])
-				 |
-				 ((ipp6->daddr.s6_addr32[2] &
-				   ipsp->ips_mask_d.u.v6.sin6_addr.s6_addr32[2])
-				  ^
-				  ipsp->ips_flow_d.u.v6.sin6_addr.s6_addr32[2]))
-				failed_inbound_check = 1;
-			else if (((ipp6->saddr.s6_addr32[3] &
-				   ipsp->ips_mask_s.u.v6.sin6_addr.s6_addr32[3])
-				  ^
-				  ipsp->ips_flow_s.u.v6.sin6_addr.s6_addr32[3])
-				 |
-				 ((ipp6->daddr.s6_addr32[3] &
-				   ipsp->ips_mask_d.u.v6.sin6_addr.s6_addr32[3])
-				  ^
-				  ipsp->ips_flow_d.u.v6.sin6_addr.s6_addr32[3]))
-				failed_inbound_check = 1;
+#undef BB
 		}
 #endif          /* CONFIG_KLIPS_IPV6 */
 	}
