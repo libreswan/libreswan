@@ -961,17 +961,23 @@ typedef u_int16_t ipsec_auth_t;
  * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
  */
 
-#define OAKLEY_DES_CBC 1
-#define OAKLEY_IDEA_CBC 2
-#define OAKLEY_BLOWFISH_CBC 3
-#define OAKLEY_RC5_R16_B64_CBC 4
-#define OAKLEY_3DES_CBC 5
-#define OAKLEY_CAST_CBC 6
-#define OAKLEY_AES_CBC 7
-#define OAKLEY_CAMELLIA_CBC 8
-#define OAKLEY_SERPENT_CBC 65004
-#define OAKLEY_TWOFISH_CBC 65005
-#define OAKLEY_TWOFISH_CBC_SSH 65289
+enum ikev1_encr_attribute  {
+	OAKLEY_DES_CBC = 1,
+	OAKLEY_IDEA_CBC  = 2,
+	OAKLEY_BLOWFISH_CBC = 3,
+	OAKLEY_RC5_R16_B64_CBC = 4,
+	OAKLEY_3DES_CBC = 5,
+	OAKLEY_CAST_CBC = 6,
+	OAKLEY_AES_CBC = 7,
+	OAKLEY_CAMELLIA_CBC = 8,
+
+	OAKLEY_MARS_CBC = 65001,
+	OAKLEY_RC6_CBC = 65002,
+	OAKLEY_ID_65003 = 65003, /* unused - make enums easier */
+	OAKLEY_SERPENT_CBC = 65004,
+	OAKLEY_TWOFISH_CBC = 65005,
+	OAKLEY_TWOFISH_CBC_SSH = 65289,
+};
 
 #define OAKLEY_ENCRYPT_MAX 65535 /* pretty useless :) */
 
