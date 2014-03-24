@@ -250,17 +250,15 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 			if (transcnt > 0) {
 				if (transcnt == 1) {
-					loglog(RC_LOG_SERIOUS
-
-					       ,
-					       "multiple transforms were set in aggressive mode. Only first one used.");
+					loglog(RC_LOG_SERIOUS,
+					       "multiple transforms were set in aggressive mode (no modp set?). Only first one used.");
 				}
 
 				loglog(RC_LOG_SERIOUS,
-				       "transform (%d,%d,%d,%ld) ignored.",
-				       ike_info->ike_ealg,
-				       ike_info->ike_halg,
-				       ike_info->ike_modp,
+				       "transform (%s,%s,%s, key size %ld) ignored.",
+				       enum_name(&oakley_enc_names, ike_info->ike_ealg),
+				       enum_name(&oakley_hash_names, ike_info->ike_halg),
+				       enum_name(&oakley_group_names, ike_info->ike_modp),
 				       (long)ike_info->ike_eklen);
 			}
 
@@ -283,10 +281,10 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				}
 
 				loglog(RC_LOG_SERIOUS,
-				       "transform (%d,%d,%d,%ld) ignored.",
-				       ike_info->ike_ealg,
-				       ike_info->ike_halg,
-				       ike_info->ike_modp,
+				       "transform (%s,%s,%s keylen %ld) ignored.",
+				       enum_name(&oakley_enc_names, ike_info->ike_ealg),
+				       enum_name(&oakley_hash_names, ike_info->ike_halg),
+				       enum_name(&oakley_group_names, ike_info->ike_modp),
 				       (long)ike_info->ike_eklen);
 
 				wrong_modp++;
