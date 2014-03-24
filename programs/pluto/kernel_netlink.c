@@ -829,8 +829,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * therefore, this code extracts upper 8 bits and lower 8 bits and puts
 		 * into source and destination ports before passing to NETKEY.
 		 */
-		if ( 1 == sa->transport_proto /*icmp*/ || 58 ==
-		     sa->transport_proto /*ipv6-icmp*/) {
+		if (IPPROTO_ICMP == sa->transport_proto ||
+		    IPPROTO_ICMPV6 == sa->transport_proto) {
 
 			u_int16_t icmp_type;
 			u_int16_t icmp_code;
