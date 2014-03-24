@@ -856,12 +856,12 @@ void fmt_isakmp_sa_established(struct state *st, char *sadetails, int sad_len)
 	}
 
 	snprintf(b, sad_len - (b - sadetails) - 1,
-		 " {auth=%s cipher=%s_%d%s%s prf=%s group=modp%d}",
-		 authname,
+		 " {auth=%s cipher=%s_%d%s%s prf=%s group=%s}",
+		 strip_prefix(authname,"OAKLEY_"),
 		 st->st_oakley.encrypter->common.name,
 		 st->st_oakley.enckeylen,
 		 integstr, integname,
-		 st->st_oakley.prf_hasher->common.name,
-		 (int)st->st_oakley.group->bytes * 8);
+		 strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"),
+		 strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
 	st->hidden_variables.st_logged_p1algos = TRUE;
 }

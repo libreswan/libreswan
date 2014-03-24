@@ -1066,18 +1066,35 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_MODP1024 = 2,
 	OAKLEY_GROUP_GP155 = 3,
 	OAKLEY_GROUP_GP185 = 4,
-	OAKLEY_GROUP_MODP1536 = 5,
-
-	OAKLEY_GROUP_MODP2048 = 14,
-	OAKLEY_GROUP_MODP3072 = 15,
-	OAKLEY_GROUP_MODP4096 = 16,
-	OAKLEY_GROUP_MODP6144 = 17,
-	OAKLEY_GROUP_MODP8192 = 18,
-	OAKLEY_GROUP_DH22 = 22,
-	OAKLEY_GROUP_DH23 = 23,
-	OAKLEY_GROUP_DH24 = 24,
+	OAKLEY_GROUP_MODP1536 = 5, /* RFC 3526 */
+	OAKLEY_GROUP_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_MODP2048 = 14, /* RFC 3526 */
+	OAKLEY_GROUP_MODP3072 = 15, /* RFC 3526 */
+	OAKLEY_GROUP_MODP4096 = 16, /* RFC 3526 */
+	OAKLEY_GROUP_MODP6144 = 17, /* RFC 3526 */
+	OAKLEY_GROUP_MODP8192 = 18, /* RFC 3526 */
+	OAKLEY_GROUP_ECP_256 = 19, /* RFC 5903 */
+	OAKLEY_GROUP_ECP_384 = 20, /* RFC 5903 */
+	OAKLEY_GROUP_ECP_512 = 21, /* RFC 5903 */
+	OAKLEY_GROUP_DH22 = 22, /* RFC 5114 */
+	OAKLEY_GROUP_DH23 = 23, /* RFC 5114 */
+	OAKLEY_GROUP_DH24 = 24, /* RFC 5114 */
+	OAKLEY_GROUP_ECP_192 = 25, /* RFC 5114 */
+	OAKLEY_GROUP_ECP_224 = 26, /* RFC 5114 */
+	OAKLEY_GROUP_NON_IKE_27 = 27, /* RFC 6932 - not for use with IKE/IPsec */
+	OAKLEY_GROUP_NON_IKE_28 = 28, /* RFC 6932 - not for use with IKE/IPsec */
+	OAKLEY_GROUP_NON_IKE_29 = 29, /* RFC 6932 - not for use with IKE/IPsec */
+	OAKLEY_GROUP_NON_IKE_30 = 30, /* RFC 6932 - not for use with IKE/IPsec */
+	/* 31 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
 };
-
 /*
  * Oakley Group Type attribute
  * draft-ietf-ipsec-ike-01.txt appendix A

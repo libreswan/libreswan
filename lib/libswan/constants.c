@@ -1273,46 +1273,45 @@ enum_names ikev2_auth_names = {
 
 /* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_group_name[] = {
-	"OAKLEY_GROUP_MODP768",
+	"OAKLEY_GROUP_MODP768", /* 1 */
 	"OAKLEY_GROUP_MODP1024",
 	"OAKLEY_GROUP_GP155",
 	"OAKLEY_GROUP_GP185",
-	"OAKLEY_GROUP_MODP1536",
-};
-
-static const char *const oakley_group_name_rfc3526[] = {
-	"OAKLEY_GROUP_MODP2048",
-	"OAKLEY_GROUP_MODP3072",
-	"OAKLEY_GROUP_MODP4096",
-	"OAKLEY_GROUP_MODP6144",
-	"OAKLEY_GROUP_MODP8192"
-};
-
-static const char *const oakley_group_name_rfc5114[] = {
-	"OAKLEY_GROUP_DH22",
-	"OAKLEY_GROUP_DH23",
-	"OAKLEY_GROUP_DH24"
-};
-
-static enum_names oakley_group_names_rfc5114 = {
-	OAKLEY_GROUP_DH22,
-	OAKLEY_GROUP_DH24,
-	oakley_group_name_rfc5114,
-	NULL
-};
-
-static enum_names oakley_group_names_rfc3526 = {
-	OAKLEY_GROUP_MODP2048,
-	OAKLEY_GROUP_MODP8192,
-	oakley_group_name_rfc3526,
-	&oakley_group_names_rfc5114
+	"OAKLEY_GROUP_MODP1536", /* RFC 3526 */
+	"OAKLEY_GROUP_EC2N_2_1", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_2", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_3", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_4", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_5", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_6", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_7", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_8", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_MODP2048", /* RFC 3526 */
+	"OAKLEY_GROUP_MODP3072", /* RFC 3526 */
+	"OAKLEY_GROUP_MODP4096", /* RFC 3526 */
+	"OAKLEY_GROUP_MODP6144", /* RFC 3526 */
+	"OAKLEY_GROUP_MODP8192", /* RFC 3526 */
+	"OAKLEY_GROUP_ECP_256", /* RFC 5903 */
+	"OAKLEY_GROUP_ECP_384", /* RFC 5903 */
+	"OAKLEY_GROUP_ECP_512", /* RFC 5903 */
+	"OAKLEY_GROUP_DH22", /* RFC 5114 */
+	"OAKLEY_GROUP_DH23", /* RFC 5114 */
+	"OAKLEY_GROUP_DH24", /* RFC 5114 */
+	"OAKLEY_GROUP_ECP_192", /* RFC 5114 */
+	"OAKLEY_GROUP_ECP_224", /* RFC 5114 */
+	"OAKLEY_GROUP_NON_IKE_27", /* RFC 6932 - not for use with IKE/IPsec */
+	"OAKLEY_GROUP_NON_IKE_28", /* RFC 6932 - not for use with IKE/IPsec */
+	"OAKLEY_GROUP_NON_IKE_29", /* RFC 6932 - not for use with IKE/IPsec */
+	"OAKLEY_GROUP_NON_IKE_30", /* RFC 6932 - not for use with IKE/IPsec */
+	/* 31 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
 };
 
 enum_names oakley_group_names = {
 	OAKLEY_GROUP_MODP768,
-	OAKLEY_GROUP_MODP1536,
+	OAKLEY_GROUP_NON_IKE_30,
 	oakley_group_name,
-	&oakley_group_names_rfc3526
+	NULL
 };
 
 /* Oakley Group Type attribute */
