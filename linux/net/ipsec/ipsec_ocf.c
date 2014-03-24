@@ -772,9 +772,8 @@ enum ipsec_rcv_value ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
 	crp->crp_olen = irs->skb->len;  /* Total output length */
 	crp->crp_flags =
 		CRYPTO_F_SKBUF |
-		(ipsec_ocf_cbimm ? CRYPTO_F_BATCH : 0) |
-		(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0) |
-		0;
+		(ipsec_ocf_cbimm ? CRYPTO_F_CBIMM : 0) |
+		(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0);
 	crp->crp_buf = (caddr_t) irs->skb;
 	crp->crp_callback = ipsec_ocf_rcv_cb;
 	crp->crp_sid = ipsp->ocf_cryptoid;
@@ -1255,9 +1254,8 @@ enum ipsec_xmit_value ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 	crp->crp_olen = ixs->skb->len;  /* Total output length */
 	crp->crp_flags =
 		CRYPTO_F_SKBUF |
-		(ipsec_ocf_cbimm ? CRYPTO_F_BATCH : 0) |
-		(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0) |
-		0;
+		(ipsec_ocf_cbimm ? CRYPTO_F_CBIMM : 0) |
+		(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0);
 	crp->crp_buf = (caddr_t) ixs->skb;
 	crp->crp_callback = ipsec_ocf_xmit_cb;
 	crp->crp_sid = ipsp->ocf_cryptoid;
