@@ -71,10 +71,10 @@ static struct db_trans oakley_trans_empty[] = {
 };
 
 static struct db_prop oakley_pc_empty[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_empty) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_empty) } };
 
 static struct db_prop_conj oakley_props_empty[] =
-{ { AD_PC(oakley_pc_empty) } };
+	{ { AD_PC(oakley_pc_empty) } };
 
 static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
 

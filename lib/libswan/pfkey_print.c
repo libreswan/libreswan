@@ -102,8 +102,8 @@ void pfkey_print(struct sadb_msg *msg, FILE *out)
 				struct sadb_address *addr =
 					(struct sadb_address *) se;
 				int alen =
-					IPSEC_PFKEYv2_LEN(addr->
-							sadb_address_len) -
+					IPSEC_PFKEYv2_LEN(
+						addr->sadb_address_len) -
 					sizeof(struct sadb_address);
 				unsigned char *bytes =
 					(unsigned char *)&addr[1];

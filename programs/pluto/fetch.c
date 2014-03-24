@@ -263,16 +263,13 @@ static err_t parse_ldap_result(LDAP * ldap, LDAPMessage *result, chunk_t *blob)
 				}
 				ldap_value_free_len(values);
 			} else {
-				ugh =
-					ldap_err2string(ldap_result2error(ldap,
-									  entry,
-									  0));
+				ugh = ldap_err2string(
+					ldap_result2error(ldap, entry, 0));
 			}
 			ldap_memfree(attr);
 		} else {
-			ugh =
-				ldap_err2string(ldap_result2error(ldap, entry,
-								  0));
+			ugh = ldap_err2string(
+				ldap_result2error(ldap, entry, 0));
 		}
 		ber_free(ber, 0);
 	} else {
@@ -308,8 +305,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 
 		if (ldap != NULL) {
 			int ldap_version =
-				(LDAP_VER ==
-				 2) ? LDAP_VERSION2 : LDAP_VERSION3;
+				LDAP_VER == 2 ? LDAP_VERSION2 : LDAP_VERSION3;
 			struct timeval timeout;
 
 			timeout.tv_sec  = FETCH_CMD_TIMEOUT;

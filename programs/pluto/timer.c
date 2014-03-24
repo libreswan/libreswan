@@ -177,8 +177,8 @@ static void retransmit_v1_msg(struct state *st)
 
 	if (st->st_retransmit < maximum_retransmissions)
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
-	else if ((st->st_state == STATE_MAIN_I1 || st->st_state ==
-		  STATE_AGGR_I1) &&
+	else if ((st->st_state == STATE_MAIN_I1 ||
+		  st->st_state == STATE_AGGR_I1) &&
 		 c->sa_keying_tries == 0 &&
 		 st->st_retransmit < maximum_retransmissions_initial)
 		delay = event_retransmit_delay_0 << maximum_retransmissions;
@@ -560,17 +560,16 @@ void handle_next_timer_event(void)
 	DBG(DBG_CONTROL, DBG_log("handling event %s",
 				 enum_show(&timer_event_names, type)));
 
-	if (DBGP(DBG_CONTROL)) {
+	DBG(DBG_CONTROL, {
 		if (evlist != (struct event *) NULL) {
 			DBG_log("event after this is %s in %ld seconds",
 				enum_show(&timer_event_names, evlist->ev_type),
-				(long) (evlist->ev_time - tm);
-				);
+				(long) (evlist->ev_time - tm));
 		} else {
 			DBG_log("no more events are scheduled");
 		}
 
-	}
+	});
 
 	/*
 	 * for state-associated events, pick up the state pointer
@@ -679,17 +678,16 @@ void handle_next_timer_event(void)
 				libreswan_log(
 					"not replacing stale %s SA: inactive for %lus",
 					(IS_PHASE1(st->st_state) ||
-						IS_PHASE15(st->st_state )) ?
-					"ISAKMP" : "IPsec",
+					 IS_PHASE15(st->st_state )) ?
+						"ISAKMP" : "IPsec",
 					(unsigned long)(tm -
 						st->st_outbound_time)));
 		} else {
 			DBG(DBG_LIFECYCLE,
 				libreswan_log("replacing stale %s SA",
 					(IS_PHASE1(st->st_state) ||
-						IS_PHASE15(
-							st->st_state )) ?
-					"ISAKMP" : "IPsec"));
+					 IS_PHASE15(st->st_state)) ?
+						"ISAKMP" : "IPsec"));
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
 		delete_liveness_event(st);
@@ -707,7 +705,7 @@ void handle_next_timer_event(void)
 		passert(st != NULL);
 		c = st->st_connection;
 
-		if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state )) {
+		if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state)) {
 			satype = "ISAKMP";
 			latest = c->newest_isakmp_sa;
 		} else {
@@ -723,8 +721,7 @@ void handle_next_timer_event(void)
 		} else {
 			libreswan_log("%s SA expired (%s)", satype,
 				(c->policy & POLICY_DONT_REKEY) ?
-				"--dontrekey" :
-				"LATEST!"
+					"--dontrekey" : "LATEST!"
 				);
 		}
 	}

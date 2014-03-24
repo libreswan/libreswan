@@ -336,25 +336,25 @@ static struct {
 	int next_state;
 } rcv_state_table[] = {
 	[IPSEC_RSM_INIT]         =
-	{ ipsec_rcv_init,        IPSEC_RSM_DECAP_INIT },
+		{ ipsec_rcv_init,        IPSEC_RSM_DECAP_INIT },
 	[IPSEC_RSM_DECAP_INIT]   =
-	{ ipsec_rcv_decap_init,  IPSEC_RSM_DECAP_LOOKUP },
+		{ ipsec_rcv_decap_init,  IPSEC_RSM_DECAP_LOOKUP },
 	[IPSEC_RSM_DECAP_LOOKUP] =
-	{ ipsec_rcv_decap_lookup, IPSEC_RSM_AUTH_INIT },
+		{ ipsec_rcv_decap_lookup, IPSEC_RSM_AUTH_INIT },
 	[IPSEC_RSM_AUTH_INIT]    =
-	{ ipsec_rcv_auth_init,   IPSEC_RSM_AUTH_DECAP },
+		{ ipsec_rcv_auth_init,   IPSEC_RSM_AUTH_DECAP },
 	[IPSEC_RSM_AUTH_DECAP]   =
-	{ ipsec_rcv_auth_decap,  IPSEC_RSM_AUTH_CALC },
+		{ ipsec_rcv_auth_decap,  IPSEC_RSM_AUTH_CALC },
 	[IPSEC_RSM_AUTH_CALC]    =
-	{ ipsec_rcv_auth_calc,   IPSEC_RSM_AUTH_CHK },
+		{ ipsec_rcv_auth_calc,   IPSEC_RSM_AUTH_CHK },
 	[IPSEC_RSM_AUTH_CHK]     =
-	{ ipsec_rcv_auth_chk,    IPSEC_RSM_DECRYPT },
+		{ ipsec_rcv_auth_chk,    IPSEC_RSM_DECRYPT },
 	[IPSEC_RSM_DECRYPT]      =
-	{ ipsec_rcv_decrypt,     IPSEC_RSM_DECAP_CONT },
+		{ ipsec_rcv_decrypt,     IPSEC_RSM_DECAP_CONT },
 	[IPSEC_RSM_DECAP_CONT]   =
-	{ ipsec_rcv_decap_cont,  IPSEC_RSM_CLEANUP },
+		{ ipsec_rcv_decap_cont,  IPSEC_RSM_CLEANUP },
 	[IPSEC_RSM_CLEANUP]      =
-	{ ipsec_rcv_cleanup,     IPSEC_RSM_COMPLETE },
+		{ ipsec_rcv_cleanup,     IPSEC_RSM_COMPLETE },
 	[IPSEC_RSM_COMPLETE]     = { ipsec_rcv_complete,    IPSEC_RSM_DONE },
 
 	[IPSEC_RSM_DONE]         = { NULL,                  IPSEC_RSM_DONE },
@@ -445,13 +445,11 @@ struct sk_buff *ipsec_rcv_natt_decap(struct sk_buff *skb,
 					    &ip->saddr);
 				*udp_decap_ret_p = 0;
 				return NULL;
-			} else if ( (tp->esp_in_udp ==
-				     ESPINUDP_WITH_NON_IKE) &&
-				    (len >
-				     (2 * sizeof(__u32) +
-				      sizeof(struct esphdr))) &&
-				    (udpdata32[0] == 0) &&
-				    (udpdata32[1] == 0) ) {
+			} else if (tp->esp_in_udp == ESPINUDP_WITH_NON_IKE &&
+				   len > 2 * sizeof(__u32) +
+					sizeof(struct esphdr) &&
+				   udpdata32[0] == 0 &&
+				   udpdata32[1] == 0) {
 				/* ESP Packet with Non-IKE header */
 				KLIPS_PRINT(debug_rcv,
 					    "klips_debug:ipsec_rcv_natt_decap: "
@@ -460,10 +458,9 @@ struct sk_buff *ipsec_rcv_natt_decap(struct sk_buff *skb,
 				irs->natt_type = ESPINUDP_WITH_NON_IKE;
 				irs->natt_len = sizeof(struct udphdr) +
 						(2 * sizeof(__u32));
-			} else if ( (tp->esp_in_udp ==
-				     ESPINUDP_WITH_NON_ESP) &&
-				    (len > sizeof(struct esphdr)) &&
-				    (udpdata32[0] != 0) ) {
+			} else if (tp->esp_in_udp == ESPINUDP_WITH_NON_ESP &&
+				   len > sizeof(struct esphdr) &&
+				   udpdata32[0] != 0) {
 				/* ESP Packet without Non-ESP header */
 				irs->natt_type = ESPINUDP_WITH_NON_ESP;
 				irs->natt_len = sizeof(struct udphdr);
@@ -568,8 +565,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		    AF_INET6)
 			psin6 = (struct sockaddr_in6*)(ipsp->ips_addr_s);
 		else if (((struct sockaddr_in*)(ipsp->ips_addr_s))->sin_family
-			 ==
-			 AF_INET6)
+			 == AF_INET6)
 			psin = (struct sockaddr_in*)(ipsp->ips_addr_s);
 		if ((psin && ipp->saddr != psin->sin_addr.s_addr)
 #ifdef CONFIG_KLIPS_IPV6
@@ -871,9 +867,8 @@ static enum ipsec_rcv_value ipsec_rcv_init(struct ipsec_rcv_state *irs)
 	/* dev->hard_header_len is unreliable and should not be used */
 	/* klips26_rcv_encap will have already set hard_header_len for us */
 	if (irs->hard_header_len == 0) {
-		irs->hard_header_len =
-			skb_mac_header(skb) ? (skb_network_header(skb) -
-					       skb_mac_header(skb)) : 0;
+		irs->hard_header_len = skb_mac_header(skb) ?
+			(skb_network_header(skb) - skb_mac_header(skb)) : 0;
 		if ((irs->hard_header_len < 0) ||
 		    (irs->hard_header_len > skb_headroom(skb)))
 			irs->hard_header_len = 0;
@@ -1169,8 +1164,7 @@ static enum ipsec_rcv_value ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 		char sa_saddr_txt[ADDRTOA_BUF] = { 0, };
 
 		if (((struct sockaddr_in6*)(newipsp->ips_addr_s))->sin6_family
-		    ==
-		    AF_INET6)
+		    == AF_INET6)
 			psin6 = (struct sockaddr_in6*)(newipsp->ips_addr_s);
 		else if (((struct sockaddr_in*)(newipsp->ips_addr_s))->
 			 sin_family == AF_INET6)
@@ -1257,8 +1251,8 @@ static enum ipsec_rcv_value ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 				    "klips_debug:ipsec_rcv_auth_init: "
 				    "natt_type=%u tdbp->ips_natt_type=%u : %s\n",
 				    irs->natt_type, newipsp->ips_natt_type,
-				    (irs->natt_type ==
-				     newipsp->ips_natt_type) ? "ok" : "bad");
+				    (irs->natt_type == newipsp->ips_natt_type) ?
+					"ok" : "bad");
 			if (irs->natt_type != newipsp->ips_natt_type) {
 				KLIPS_PRINT(debug_rcv,
 					    "klips_debug:ipsec_rcv_auth_init: "
@@ -1375,12 +1369,10 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 	 * XXX we should ONLY update pluto if the SA passes all checks,
 	 *     which we clearly do not now.
 	 */
-	if ((irs->natt_type) &&
-	    ( (irs->ipp->saddr !=
-	       (((struct sockaddr_in*)(newipsp->ips_addr_s))->sin_addr.s_addr))
-	      ||
-	      (irs->natt_sport != newipsp->ips_natt_sport)
-	    )) {
+	if (irs->natt_type != 0 &&
+	    (irs->ipp->saddr !=
+	       ((struct sockaddr_in*)(newipsp->ips_addr_s))->sin_addr.s_addr ||
+	     irs->natt_sport != newipsp->ips_natt_sport)) {
 		struct sockaddr sipaddr;
 		struct sockaddr_in *psin =
 			(struct sockaddr_in*)(newipsp->ips_addr_s);
@@ -1451,12 +1443,10 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 	case AH_MD5:
 		irs->authlen = AHHMAC_HASHLEN;
 		irs->authfuncs = ipsec_rcv_md5;
-		irs->ictx =
-			(void *)&((struct md5_ctx*)(irs->ipsp->ips_key_a))->
-			ictx;
-		irs->octx =
-			(void *)&((struct md5_ctx*)(irs->ipsp->ips_key_a))->
-			octx;
+		irs->ictx = (void *)
+			&((struct md5_ctx*)(irs->ipsp->ips_key_a))->ictx;
+		irs->octx = (void *)
+			&((struct md5_ctx*)(irs->ipsp->ips_key_a))->octx;
 		irs->ictx_len =
 			sizeof(((struct md5_ctx*)(irs->ipsp->ips_key_a))->ictx);
 		irs->octx_len =
@@ -1467,12 +1457,10 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 	case AH_SHA:
 		irs->authlen = AHHMAC_HASHLEN;
 		irs->authfuncs = ipsec_rcv_sha1;
-		irs->ictx =
-			(void *)&((struct sha1_ctx*)(irs->ipsp->ips_key_a))->
-			ictx;
-		irs->octx =
-			(void *)&((struct sha1_ctx*)(irs->ipsp->ips_key_a))->
-			octx;
+		irs->ictx = (void *)
+			&((struct sha1_ctx*)(irs->ipsp->ips_key_a))->ictx;
+		irs->octx = (void *)
+			&((struct sha1_ctx*)(irs->ipsp->ips_key_a))->octx;
 		irs->ictx_len =
 			sizeof(((struct sha1_ctx*)(irs->ipsp->ips_key_a))->ictx);
 		irs->octx_len =
@@ -1700,10 +1688,9 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 		int nexthdroff;
 		nexthdroff =
 			ipsec_ipv6_skip_exthdr(irs->skb,
-					       ((void *)(lsw_ip6_hdr(
-								 irs) + 1)) -
-					       (void*)irs->skb->data, &nexthdr,
-					       &frag_off);
+					       (void *)(lsw_ip6_hdr(irs) + 1) -
+					         (void *)irs->skb->data,
+					       &nexthdr, &frag_off);
 		irs->iphlen = nexthdroff - (irs->iph - (void*)irs->skb->data);
 		skb_set_transport_header(skb,
 					 ipsec_skb_offset(skb,
@@ -1737,8 +1724,8 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 		lsw_ip4_hdr(irs)->protocol = irs->next_header;
 		lsw_ip4_hdr(irs)->check = 0;    /* NOTE: this will be included in checksum */
 		lsw_ip4_hdr(irs)->check =
-			ip_fast_csum((unsigned char *)ip_hdr(
-					     skb), irs->iphlen >> 2);
+			ip_fast_csum((unsigned char *)ip_hdr(skb),
+				     irs->iphlen >> 2);
 		skb->protocol = htons(ETH_P_IP);
 	}
 	irs->proto = irs->next_header; /* needed for decap_init recursion */
@@ -2243,8 +2230,8 @@ int klips26_udp_encap_rcv(struct sock *sk, struct sk_buff *skb)
 			KLIPS_PRINT(debug_rcv,
 				    "UDP_ENCAP_ESPINUDP: keepalive packet detected\n");
 			goto drop;
-		} else if (len > sizeof(struct ip_esp_hdr) && udpdata32[0] !=
-			   0) {
+		} else if (len > sizeof(struct ip_esp_hdr) &&
+			   udpdata32[0] != 0) {
 			KLIPS_PRINT(debug_rcv,
 				    "UDP_ENCAP_ESPINUDP: ESP IN UDP packet detected\n");
 			/* ESP Packet without Non-ESP header */

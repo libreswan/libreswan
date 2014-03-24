@@ -263,10 +263,8 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 
 		eklen = esp_info->esp_ealg_keylen;
 		if (!eklen) {
-			eklen =
-				kernel_alg_esp_enc_max_keylen(esp_info->esp_ealg_id)
-				*
-				BITS_PER_BYTE;
+			eklen = kernel_alg_esp_enc_max_keylen(esp_info->esp_ealg_id)
+				* BITS_PER_BYTE;
 		}
 		aklen = esp_info->esp_aalg_keylen;
 		if (!aklen)
@@ -481,7 +479,6 @@ static void kernel_alg_policy_algorithms(struct esp_info *esp_info)
 			 */
 			esp_info->esp_ealg_keylen =
 				esp_ealg[ealg_i].sadb_alg_maxbits;
-
 		}
 	}
 }

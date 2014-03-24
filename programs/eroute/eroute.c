@@ -180,18 +180,12 @@ int main(int argc, char **argv)
 	zero(&d_subnet);
 
 	eroute_af_opt = said_af_opt = edst_opt = spi_opt = proto_opt =
-								   said_opt =
-									   dst_opt
-										   =
-											   src_opt
-												   =
-													   NULL;
+		said_opt = dst_opt = src_opt = NULL;
 
-	while ((c =
-			getopt_long(argc, argv,
-				    "" /*"acdD:e:i:hprs:S:f:vl:+:g"*/,
-				    longopts,
-				    0)) != EOF) {
+	while ((c = getopt_long(argc, argv,
+				"" /*"acdD:e:i:hprs:S:f:vl:+:g"*/,
+				longopts,
+				0)) != EOF) {
 		switch (c) {
 		case 'g':
 			debug = 1;
@@ -551,11 +545,11 @@ int main(int argc, char **argv)
 		if (proto != 0) {
 			transport_proto = proto->p_proto;
 		} else {
-			transport_proto = strtoul(transport_proto_opt, &endptr,
-						  0);
+			transport_proto =
+				strtoul(transport_proto_opt, &endptr, 0);
 			if ((*endptr != '\0') ||
-			    (transport_proto == 0 && endptr ==
-			     transport_proto_opt)) {
+			    (transport_proto == 0 &&
+			     endptr == transport_proto_opt)) {
 				fprintf(stderr,
 					"%s: Invalid character in --transport-proto parameter: %s\n",
 					progname, transport_proto_opt);
@@ -644,16 +638,14 @@ int main(int argc, char **argv)
 			fprintf(stderr,
 				"%s: Error -- %s option '--src' is required.\n",
 				progname,
-				(action_type ==
-				 EMT_SETEROUTE) ? "add" : "del");
+				action_type == EMT_SETEROUTE ? "add" : "del");
 			exit(1);
 		}
 		if (!dst_opt) {
 			fprintf(stderr,
 				"%s: Error -- %s option '--dst' is required.\n",
 				progname,
-				(action_type ==
-				 EMT_SETEROUTE) ? "add" : "del");
+				action_type == EMT_SETEROUTE ? "add" : "del");
 			exit(1);
 		}
 	case EMT_CLREROUTE:
@@ -751,8 +743,7 @@ sa_build:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
 		anyaddr(said_af, &pfkey_address_s_ska);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_EXT_ADDRESS_SRC],
 						 SADB_EXT_ADDRESS_SRC,
 						 0,
@@ -774,8 +765,7 @@ sa_build:
 				progname);
 		}
 
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_EXT_ADDRESS_DST],
 						 SADB_EXT_ADDRESS_DST,
 						 0,
@@ -805,8 +795,7 @@ sa_build:
 	case EMT_DELEROUTE:
 		networkof(&s_subnet, &pfkey_address_sflow_ska); /* src flow */
 		add_port(eroute_af, &pfkey_address_sflow_ska, src_port);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_X_EXT_ADDRESS_SRC_FLOW
 						 ],
 						 SADB_X_EXT_ADDRESS_SRC_FLOW,
@@ -831,8 +820,7 @@ sa_build:
 
 		networkof(&d_subnet, &pfkey_address_dflow_ska); /* dst flow */
 		add_port(eroute_af, &pfkey_address_dflow_ska, dst_port);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_X_EXT_ADDRESS_DST_FLOW
 						 ],
 						 SADB_X_EXT_ADDRESS_DST_FLOW,
@@ -858,8 +846,7 @@ sa_build:
 		maskof(&s_subnet, &pfkey_address_smask_ska); /* src mask */
 		add_port(eroute_af, &pfkey_address_smask_ska,
 			 src_port ? ~0 : 0);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_X_EXT_ADDRESS_SRC_MASK
 						 ],
 						 SADB_X_EXT_ADDRESS_SRC_MASK,
@@ -885,8 +872,7 @@ sa_build:
 		maskof(&d_subnet, &pfkey_address_dmask_ska); /* dst mask */
 		add_port(eroute_af, &pfkey_address_dmask_ska,
 			 dst_port ? ~0 : 0);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_X_EXT_ADDRESS_DST_MASK
 						 ],
 						 SADB_X_EXT_ADDRESS_DST_MASK,
@@ -911,8 +897,7 @@ sa_build:
 	}
 
 	if (transport_proto != 0) {
-		if ((error =
-			     pfkey_x_protocol_build(&extensions[
+		if ((error = pfkey_x_protocol_build(&extensions[
 							    SADB_X_EXT_PROTOCOL
 						    ],
 						    transport_proto))) {
@@ -1005,8 +990,8 @@ sa_build:
 				"eroute already in use.  Delete old one first.\n");
 			break;
 		case ENOENT:
-			if (action_type == EMT_INEROUTE || action_type ==
-			    EMT_INREPLACEROUTE) {
+			if (action_type == EMT_INEROUTE ||
+			    action_type == EMT_INREPLACEROUTE) {
 				fprintf(stderr, "non-existant IPIP SA.\n");
 				break;
 			}

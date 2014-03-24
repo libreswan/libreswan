@@ -131,9 +131,8 @@ static PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 	arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	passert(arena != NULL);
 
-	remote_pubk =
-		(SECKEYPublicKey *) PORT_ArenaZAlloc(arena,
-						     sizeof(SECKEYPublicKey));
+	remote_pubk = (SECKEYPublicKey *)
+		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
 
 	remote_pubk->arena = arena;
 	remote_pubk->keyType = dhKey;
@@ -1153,9 +1152,9 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
 		    (long unsigned)keysize));
 
-	const struct hash_desc *hasher =
-		(struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
-						       skq->prf_hash);
+	const struct hash_desc *hasher = (struct hash_desc *)
+		ikev2_alg_find(IKE_ALG_HASH, skq->prf_hash);
+
 	passert(hasher != NULL);
 
 	const struct encrypt_desc *encrypter = skq->encrypter;

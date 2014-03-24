@@ -1541,11 +1541,9 @@ stf_status xauth_inR0(struct msg_digest *md)
 
 		/* XXX This needs checking with the proper RFC's - ISAKMP_CFG_ACK got added for Cisco interop */
 		if ( (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type
-		      !=
-		      ISAKMP_CFG_REPLY) &&
+		      != ISAKMP_CFG_REPLY) &&
 		     (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type
-		      !=
-		      ISAKMP_CFG_ACK) ) {
+		      != ISAKMP_CFG_ACK) ) {
 			libreswan_log(
 				"Expecting MODE_CFG_REPLY, got %s instead.",
 				enum_name(&attr_msg_type_names,
@@ -2179,9 +2177,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					tmp_spd->that.host_addr_name =
 						NULL;
 
-					ap =
-						(u_int32_t *)(strattr.
-							      cur);
+					ap = (u_int32_t *)(strattr.cur);
 					a.u.v4.sin_family = AF_INET;
 					memcpy(&a.u.v4.sin_addr.s_addr,
 					       ap,
@@ -2191,16 +2187,13 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					addrtosubnet(&a,
 						     &tmp_spd->that.client);
 
-					len -=
-						sizeof(a.u.v4.sin_addr.
+					len -= sizeof(a.u.v4.sin_addr.
 						       s_addr);
 					strattr.cur +=
 						sizeof(a.u.v4.sin_addr.
 						       s_addr);
 
-					ap =
-						(u_int32_t *)(strattr.
-							      cur);
+					ap = (u_int32_t *)(strattr.cur);
 					a.u.v4.sin_family = AF_INET;
 					memcpy(&a.u.v4.sin_addr.s_addr,
 					       ap,
@@ -2209,8 +2202,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 					tmp_spd->that.client.maskbits =
 						masktocount(&a);
-					len -=
-						sizeof(a.u.v4.sin_addr.
+					len -= sizeof(a.u.v4.sin_addr.
 						       s_addr);
 					strattr.cur +=
 						sizeof(a.u.v4.sin_addr.

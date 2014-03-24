@@ -228,8 +228,7 @@ err_t pemtobin(chunk_t *blob)
 				break;
 			}
 			if (state == PEM_MSG) {
-				state =
-					(memchr(line.ptr, ':',
+				state = (memchr(line.ptr, ':',
 						line.len) == NULL) ?
 					PEM_BODY : PEM_HEADER;
 			}

@@ -1980,7 +1980,7 @@ static struct keyword_enum_value kw_host_values[] = {
 };
 
 struct keyword_enum_values kw_host_list =
-{ kw_host_values, sizeof(kw_host_values) / sizeof(struct keyword_enum_value) };
+	{ kw_host_values, elemsof(kw_host_values) };
 
 /* look up enum names in an enum_names */
 const char *enum_name(enum_names *ed, unsigned long val)

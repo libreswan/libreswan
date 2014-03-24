@@ -251,13 +251,11 @@ void connect_to_host_pair(struct connection *c)
 			hp->me.addr = c->spd.this.host_addr;
 			hp->him.addr = c->spd.that.host_addr;
 			hp->me.host_port =
-				nat_traversal_enabled ? pluto_port : c->spd.
-				this.
-				host_port;
+				nat_traversal_enabled ?
+				    pluto_port : c->spd.this.host_port;
 			hp->him.host_port =
-				nat_traversal_enabled ? pluto_port : c->spd.
-				that.
-				host_port;
+				nat_traversal_enabled ?
+				    pluto_port : c->spd.that.host_port;
 			hp->connections = NULL;
 			hp->pending = NULL;
 			hp->next = host_pairs;

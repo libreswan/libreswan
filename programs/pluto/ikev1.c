@@ -1211,9 +1211,11 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-			if (st->st_state ==
-			    STATE_MODE_CFG_R2)                          /* Have we just given an IP address to peer? */
-				change_state(st, STATE_MAIN_R3);        /* ISAKMP is up... */
+			/* Have we just given an IP address to peer? */
+			if (st->st_state == STATE_MODE_CFG_R2) {
+				/* ISAKMP is up... */
+				change_state(st, STATE_MAIN_R3);
+			}
 
 #ifdef SOFTREMOTE_CLIENT_WORKAROUND
 			/* See: http://popoludnica.pl/?id=10100110 */
@@ -1525,8 +1527,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		    DBG_log("received IKE fragment id '%d', number '%u'%s",
 			    fraghdr.isafrag_id,
 			    fraghdr.isafrag_number,
-			    (fraghdr.isafrag_flags ==
-			     1) ? "(last)" : ""));
+			    (fraghdr.isafrag_flags == 1) ? "(last)" : ""));
 
 		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
 		ike_frag->md = md;
@@ -1599,8 +1600,9 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					/* Reassemble fragments in buffer */
 					frag = st->ike_frags;
-					while (frag && frag->index <=
-					       last_frag_index) {
+					while (frag &&
+					       frag->index <= last_frag_index)
+					{
 						passert(offset + frag->size <=
 							size);
 						memcpy(buffer + offset,
@@ -1800,8 +1802,8 @@ void process_packet_tail(struct msg_digest **mdp)
 		{
 			const struct encrypt_desc *e = st->st_oakley.encrypter;
 
-			if (pbs_left(&md->message_pbs) % e->enc_blocksize !=
-			    0) {
+			if (pbs_left(&md->message_pbs) % e->enc_blocksize != 0)
+			{
 				loglog(RC_LOG_SERIOUS,
 				       "malformed message: not a multiple of encryption blocksize");
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
@@ -1878,8 +1880,8 @@ void process_packet_tail(struct msg_digest **mdp)
 			 * is no negotiation of NAT-T method. Get it right.
 			 */
 			if (st != NULL && st->st_connection != NULL &&
-			    (st->st_connection->policy & POLICY_AGGRESSIVE) ==
-			    0) {
+			    (st->st_connection->policy & POLICY_AGGRESSIVE) == 0)
+			{
 				switch (np) {
 				case ISAKMP_NEXT_NATD_RFC:
 				case ISAKMP_NEXT_NATOA_RFC:
@@ -2084,8 +2086,8 @@ void process_packet_tail(struct msg_digest **mdp)
 			struct payload_digest *id = md->chain[ISAKMP_NEXT_ID];
 
 			if (id != NULL) {
-				if (id->next == NULL || id->next->next !=
-				    NULL) {
+				if (id->next == NULL ||
+				    id->next->next != NULL) {
 					loglog(RC_LOG_SERIOUS, "malformed Quick Mode message:"
 					       " if any ID payload is present,"
 					       " there must be exactly two");
@@ -2261,9 +2263,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	/*
 	 * we can only be in calculating state if state is ignore,
 	 * or suspended.
+	 * ??? this code says inline is OK too.  Which is it?
 	 */
-	passert(result == STF_INLINE || result == STF_IGNORE || result == STF_SUSPEND || st->st_calculating ==
-		FALSE);
+	passert(result == STF_INLINE || result == STF_IGNORE ||
+		result == STF_SUSPEND || !st->st_calculating);
 
 	switch (result) {
 	case STF_IGNORE:
@@ -2401,12 +2404,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					 */
 					delay = c->sa_ike_life_seconds;
 					if ((c->policy & POLICY_DONT_REKEY) ||
-					    delay >=
-					    st->st_oakley.life_seconds) {
+					    delay >= st->st_oakley.life_seconds)
+					{
 						agreed_time = TRUE;
 						delay =
-							st->st_oakley.
-							life_seconds;
+						    st->st_oakley.life_seconds;
 					}
 				} else {
 					/* Delay is min of up to four things:
@@ -2415,27 +2417,26 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					delay = c->sa_ipsec_life_seconds;
 					if (st->st_ah.present &&
 					    delay >=
-					    st->st_ah.attrs.life_seconds) {
+					      st->st_ah.attrs.life_seconds) {
 						agreed_time = TRUE;
 						delay =
-							st->st_ah.attrs.
-							life_seconds;
+						   st->st_ah.attrs.life_seconds;
 					}
 					if (st->st_esp.present &&
 					    delay >=
-					    st->st_esp.attrs.life_seconds) {
+					        st->st_esp.attrs.life_seconds)
+					{
 						agreed_time = TRUE;
 						delay =
-							st->st_esp.attrs.
-							life_seconds;
+						  st->st_esp.attrs.life_seconds;
 					}
 					if (st->st_ipcomp.present &&
 					    delay >=
-					    st->st_ipcomp.attrs.life_seconds) {
+					      st->st_ipcomp.attrs.life_seconds)
+					{
 						agreed_time = TRUE;
 						delay =
-							st->st_ipcomp.attrs.
-							life_seconds;
+						  st->st_ipcomp.attrs.life_seconds;
 					}
 				}
 

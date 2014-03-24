@@ -449,7 +449,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		    mycert.type != CERT_NONE &&
 		    ((st->st_connection->spd.this.sendcert ==
-		      cert_sendifasked &&
+		        cert_sendifasked &&
 		      st->hidden_variables.st_got_certrequest) ||
 		     st->st_connection->spd.this.sendcert == cert_alwayssend ||
 		     st->st_connection->spd.this.sendcert == cert_forcedtype);

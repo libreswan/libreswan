@@ -2364,8 +2364,8 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 #endif                  /* IPSEC_obey_DF */
 		}
 #ifdef CONFIG_KLIPS_IPV6
-		else if (ixs->cur_mtu < tot_len && lsw_ip_hdr_version(ixs) ==
-			 6) {
+		else if (ixs->cur_mtu < tot_len &&
+		         lsw_ip_hdr_version(ixs) == 6) {
 			IPSEC_FRAG_OFF_DECL(frag_off)
 			int nexthdroff;
 			unsigned char nexthdr = lsw_ip6_hdr(ixs)->nexthdr;
@@ -2449,9 +2449,8 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 			    "klips_debug:ipsec_xmit_init2: "
 			    "allocating %d bytes for hardheader.\n",
 			    ixs->hard_header_len);
-		if ((ixs->saved_header =
-			     kmalloc(ixs->hard_header_len,
-				     GFP_ATOMIC)) == NULL) {
+		if ((ixs->saved_header = kmalloc(ixs->hard_header_len,
+					         GFP_ATOMIC)) == NULL) {
 			printk(KERN_WARNING "klips_debug:ipsec_xmit_init2: "
 			       "Failed, tried to allocate %d bytes for temp hard_header.\n",
 			       ixs->hard_header_len);
@@ -2907,9 +2906,9 @@ static struct {
 } xmit_state_table[] = {
 	[IPSEC_XSM_INIT1]       = { ipsec_xmit_init1,       IPSEC_XSM_INIT2 },
 	[IPSEC_XSM_INIT2]       =
-	{ ipsec_xmit_init2,       IPSEC_XSM_ENCAP_INIT },
+		{ ipsec_xmit_init2,       IPSEC_XSM_ENCAP_INIT },
 	[IPSEC_XSM_ENCAP_INIT]  =
-	{ ipsec_xmit_encap_init,  IPSEC_XSM_ENCAP_SELECT },
+		{ ipsec_xmit_encap_init,  IPSEC_XSM_ENCAP_SELECT },
 	[IPSEC_XSM_ENCAP_SELECT] = { ipsec_xmit_encap_select, IPSEC_XSM_DONE },
 
 #ifdef CONFIG_KLIPS_ESP

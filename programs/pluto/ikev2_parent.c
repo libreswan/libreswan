@@ -553,12 +553,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		c = find_host_connection(&md->iface->ip_addr, pluto_port,
 					 (ip_address*)NULL, md->sender_port,
 					 policy);
-
 	}
 #endif
 
 	if (c == NULL) {
-
 		/* See if a wildcarded connection can be found.
 		 * We cannot pick the right connection, so we're making a guess.
 		 * All Road Warrior connections are fair game:
@@ -617,7 +615,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		c = rw_instantiate(c, &md->sender, NULL, NULL);
-
 	} else {
 		/* We found a non-wildcard connection.
 		 * Double check whether it needs instantiation anyway (eg. vnet=)
@@ -899,12 +896,12 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		chunk_t dc;
 		keyex_pbs = &md->chain[ISAKMP_NEXT_v2KE]->pbs;
 		/* KE in */
-		rn =
-			accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
-				  keyex_pbs);
+		rn = accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
+			       keyex_pbs);
 		if (rn != v2N_NOTHING_WRONG) {
 			u_int16_t group_number = htons(
 				st->st_oakley.group->group);
+
 			dc.ptr = (unsigned char *)&group_number;
 			dc.len = 2;
 			SEND_NOTIFICATION_AA(v2N_INVALID_KE_PAYLOAD, &dc);
@@ -1017,9 +1014,8 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	pb_stream *keyex_pbs;
 
 	/* check if the responder replied with v2N with DOS COOKIE */
-	if ( md->chain[ISAKMP_NEXT_v2N] &&
-	     md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type ==
-	     v2N_COOKIE) {
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL &&
+	    md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
 		u_int8_t spisize;
 		const pb_stream *dc_pbs;
 
@@ -2342,12 +2338,10 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				    DBG_log("bfit_n=ikev2_evaluate_connection_fit found better fit c %s",
 					    c->name));
 				int bfit_p =
-					ikev2_evaluate_connection_port_fit(c,
-									   sra,
-									   INITIATOR,
-									   tsi, tsr,
-									   tsi_n, tsr_n, &best_tsi_i,
-									   &best_tsr_i);
+					ikev2_evaluate_connection_port_fit(
+						c, sra, INITIATOR, tsi, tsr,
+						tsi_n, tsr_n, &best_tsi_i,
+						&best_tsr_i);
 				if (bfit_p > bestfit_p) {
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_evaluate_connection_port_fit found better fit c %s, tsi[%d],tsr[%d]",
@@ -2842,7 +2836,7 @@ static stf_status ikev2_in_create_child_sa_refuse(struct msg_digest *md)
 	return STF_OK;
 }
 
-stf_status ikev2_in_create_child_sa(struct msg_digest *md) 
+stf_status ikev2_in_create_child_sa(struct msg_digest *md)
 {
 	return ikev2_in_create_child_sa_refuse(md);
 }
@@ -3075,12 +3069,9 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					if (p->next != NULL)
 						v2del_tmp.isad_np =
 							ISAKMP_NEXT_v2D;
-
-
 					else
 						v2del_tmp.isad_np =
 							ISAKMP_NEXT_v2NONE;
-
 
 					v2del_tmp.isad_protoid =
 						v2del->isad_protoid;
@@ -3121,13 +3112,11 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				}
 
 				/* this will break from for loop*/
-				if (v2del->isad_protoid ==
-				    PROTO_ISAKMP)
+				if (v2del->isad_protoid == PROTO_ISAKMP)
 					break;
-
 			}
 
-			/*If there are no payloads or in other words empty payload in request
+			/* If there are no payloads or in other words empty payload in request
 			 * that means it is check for liveliness, so send an empty payload message
 			 * this will end up sending an empty payload
 			 */
@@ -3217,12 +3206,9 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 								*(ipsec_spi_t *)spi);
 
 						if (dst != NULL) {
-							struct
-							ipsec_proto_info
-							*pr =
-								v2del->isad_protoid
-								==
-								PROTO_IPSEC_AH ?
+							struct ipsec_proto_info
+								*pr =
+					v2del->isad_protoid == PROTO_IPSEC_AH ?
 								&dst->st_ah :
 								&dst->st_esp;
 							DBG(DBG_CONTROLMORE,
@@ -3255,8 +3241,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				 * If we just deleted the Parent SA, the Child SAs are being torn down as well,
 				 * so no point checking the other delete SA payloads here
 				 */
-				if (v2del->isad_protoid ==
-				    PROTO_ISAKMP)
+				if (v2del->isad_protoid == PROTO_ISAKMP)
 					break;
 
 			}       /* for */

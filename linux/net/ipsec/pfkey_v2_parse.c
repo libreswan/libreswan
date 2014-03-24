@@ -265,12 +265,12 @@ DEBUG_NO_STATIC int pfkey_lifetime_parse(struct sadb_ext  *pfkey_ext)
 		SENDERR(EINVAL);
 	}
 
-	if ((pfkey_lifetime->sadb_lifetime_exttype !=
-	     K_SADB_EXT_LIFETIME_HARD) &&
-	    (pfkey_lifetime->sadb_lifetime_exttype !=
-	     K_SADB_EXT_LIFETIME_SOFT) &&
-	    (pfkey_lifetime->sadb_lifetime_exttype !=
-	     K_SADB_EXT_LIFETIME_CURRENT)) {
+	switch (pfkey_lifetime->sadb_lifetime_exttype) {
+	case K_SADB_EXT_LIFETIME_HARD:
+	case K_SADB_EXT_LIFETIME_SOFT:
+	case K_SADB_EXT_LIFETIME_CURRENT:
+		break;	/* OK */
+	default:
 		DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
 			  "pfkey_lifetime_parse: "
 			  "unexpected ext_type=%d.\n",
@@ -562,9 +562,8 @@ DEBUG_NO_STATIC int pfkey_prop_parse(struct sadb_ext *pfkey_ext)
 	int error = 0;
 	int i, num_comb;
 	struct sadb_prop *pfkey_prop = (struct sadb_prop *)pfkey_ext;
-	struct k_sadb_comb *k_pfkey_comb =
-		(struct k_sadb_comb *)((char*)pfkey_ext +
-				       sizeof(struct sadb_prop));
+	struct k_sadb_comb *k_pfkey_comb = (struct k_sadb_comb *)
+		((char*)pfkey_ext + sizeof(struct sadb_prop));
 
 	/* sanity checks... */
 	if ((pfkey_prop->sadb_prop_len < sizeof(struct sadb_prop) /
@@ -600,13 +599,13 @@ DEBUG_NO_STATIC int pfkey_prop_parse(struct sadb_ext *pfkey_ext)
 	}
 
 	num_comb =
-		((pfkey_prop->sadb_prop_len *
-		  IPSEC_PFKEYv2_ALIGN) -
+		((pfkey_prop->sadb_prop_len * IPSEC_PFKEYv2_ALIGN) -
 		 sizeof(struct sadb_prop)) / sizeof(struct sadb_comb);
 
 	for (i = 0; i < num_comb; i++) {
 		struct sadb_comb *pfkey_comb =
 			(struct sadb_comb *)k_pfkey_comb;
+
 #if K_SADB_AALG_MAX < 255
 		if (pfkey_comb->sadb_comb_auth > K_SADB_AALG_MAX) {
 			DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
@@ -795,9 +794,8 @@ DEBUG_NO_STATIC int pfkey_supported_parse(struct sadb_ext *pfkey_ext)
 	unsigned int i, num_alg;
 	struct sadb_supported *pfkey_supported =
 		(struct sadb_supported *)pfkey_ext;
-	struct sadb_alg *pfkey_alg =
-		(struct sadb_alg*)((char*)pfkey_ext +
-				   sizeof(struct sadb_supported));
+	struct sadb_alg *pfkey_alg = (struct sadb_alg*)
+		((char*)pfkey_ext + sizeof(struct sadb_supported));
 
 	/* sanity checks... */
 	if ((pfkey_supported->sadb_supported_len <
@@ -823,8 +821,7 @@ DEBUG_NO_STATIC int pfkey_supported_parse(struct sadb_ext *pfkey_ext)
 	}
 
 	num_alg =
-		((pfkey_supported->sadb_supported_len *
-		  IPSEC_PFKEYv2_ALIGN) -
+		((pfkey_supported->sadb_supported_len * IPSEC_PFKEYv2_ALIGN) -
 		 sizeof(struct sadb_supported)) / sizeof(struct sadb_alg);
 
 	for (i = 0; i < num_alg; i++) {
@@ -1464,22 +1461,30 @@ next_ext:
 		SENDERR(EINVAL);
 	}
 
-	if ((dir == EXT_BITS_IN) &&
-	    (pfkey_msg->sadb_msg_type == K_SADB_X_DELFLOW) &&
-	    ((extensions_seen & K_SADB_X_EXT_ADDRESS_DELFLOW) !=
-	     K_SADB_X_EXT_ADDRESS_DELFLOW) &&
-	    (((extensions_seen & (1 << SADB_EXT_SA)) != (1 << SADB_EXT_SA)) ||
-	     ((((struct k_sadb_sa*)extensions[SADB_EXT_SA])->sadb_sa_flags &
-	       SADB_X_SAFLAGS_CLEARFLOW) !=
-	      SADB_X_SAFLAGS_CLEARFLOW))) {
+	if (dir == EXT_BITS_IN &&
+	    pfkey_msg->sadb_msg_type == K_SADB_X_DELFLOW &&
+	    (extensions_seen & K_SADB_X_EXT_ADDRESS_DELFLOW) !=
+	     K_SADB_X_EXT_ADDRESS_DELFLOW &&
+	    ((extensions_seen & (1 << SADB_EXT_SA)) == 0 ||
+	     (((struct k_sadb_sa*)extensions[SADB_EXT_SA])->sadb_sa_flags &
+	       SADB_X_SAFLAGS_CLEARFLOW) == 0)) {
 		DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
 			  "pfkey_msg_parse: "
 			  "required SADB_X_DELFLOW extensions missing: either %16llx must be present or %16llx must be present with SADB_X_SAFLAGS_CLEARFLOW set.\n",
 			  (unsigned long long)K_SADB_X_EXT_ADDRESS_DELFLOW -
-			  (extensions_seen & K_SADB_X_EXT_ADDRESS_DELFLOW),
-			  (unsigned long long)(1 <<
-					       SADB_EXT_SA) -
-			  (extensions_seen & (1 << SADB_EXT_SA)));
+			    (extensions_seen & K_SADB_X_EXT_ADDRESS_DELFLOW),
+			/* ??? the following looks to be confused.
+			 * If 1 << SADB_EXT_SA is in extensions_seen,
+			 *   the result will be simply 1 << SADB_EXT_SA
+			 *   (in which case printing SADB_EST_SA would be clearer)
+			 * otherwise,
+			 *	subtraction will produce a surprising result.
+			 *	(subtraction is probably the wrong operator
+			 *	OR this isn't a case that happens.
+			 *	In which case, this calculation is dumb.
+			 */
+			  (unsigned long long)(1 << SADB_EXT_SA) -
+			    (extensions_seen & (1 << SADB_EXT_SA)));
 		SENDERR(EINVAL);
 	}
 
@@ -1488,8 +1493,7 @@ next_ext:
 	case K_SADB_UPDATE:
 		/* check maturity */
 		if (((struct sadb_sa*)extensions[SADB_EXT_SA])->sadb_sa_state
-		    !=
-		    K_SADB_SASTATE_MATURE) {
+		    != K_SADB_SASTATE_MATURE) {
 			DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
 				  "pfkey_msg_parse: "
 				  "state=%d for add or update should be MATURE=%d.\n",
@@ -1502,31 +1506,28 @@ next_ext:
 		switch (((struct sadb_msg*)extensions[SADB_EXT_RESERVED])->
 			sadb_msg_satype) {
 		case SADB_SATYPE_AH:
-			if (!(((struct k_sadb_sa*)extensions[SADB_EXT_SA]) &&
-			      ((struct k_sadb_sa*)extensions[SADB_EXT_SA])->
-			      sadb_sa_auth !=
-			      SADB_AALG_NONE)) {
+			if ((struct k_sadb_sa*)extensions[SADB_EXT_SA] == NULL ||
+			    ((struct k_sadb_sa*)extensions[SADB_EXT_SA])->
+			      sadb_sa_auth == SADB_AALG_NONE) {
 				ERROR("pfkey_msg_parse: "
-				      "auth alg is zero, must be non-zero for AH SAs.\n");
+				      "auth alg is zero; must be non-zero for AH SAs.\n");
 				SENDERR(EINVAL);
 			}
 			if (((struct k_sadb_sa*)(extensions[SADB_EXT_SA]))->
-			    sadb_sa_encrypt !=
-			    SADB_EALG_NONE) {
+			    sadb_sa_encrypt != SADB_EALG_NONE) {
 				ERROR("pfkey_msg_parse: "
-				      "AH handed encalg=%d, must be zero.\n",
+				      "AH handed encalg=%d; must be zero.\n",
 				      ((struct k_sadb_sa*)(extensions[
 								   SADB_EXT_SA]))->sadb_sa_encrypt);
 				SENDERR(EINVAL);
 			}
 			break;
 		case SADB_SATYPE_ESP:
-			if (!(((struct k_sadb_sa*)extensions[SADB_EXT_SA]) &&
-			      ((struct k_sadb_sa*)extensions[SADB_EXT_SA])->
-			      sadb_sa_encrypt !=
-			      SADB_EALG_NONE)) {
+			if ((struct k_sadb_sa*)extensions[SADB_EXT_SA] == NULL ||
+			    ((struct k_sadb_sa*)extensions[SADB_EXT_SA])->
+			      sadb_sa_encrypt == SADB_EALG_NONE) {
 				ERROR("pfkey_msg_parse: "
-				      "encrypt alg=%d is zero, must be non-zero for ESP=%d SAs.\n",
+				      "encrypt alg=%d is zero; must be non-zero for ESP=%d SAs.\n",
 				      ((struct k_sadb_sa*)extensions[
 					       SADB_EXT_SA])->sadb_sa_encrypt,
 				      ((struct sadb_msg*)extensions[
@@ -1534,11 +1535,9 @@ next_ext:
 				SENDERR(EINVAL);
 			}
 			if ((((struct k_sadb_sa*)(extensions[SADB_EXT_SA]))->
-			     sadb_sa_encrypt ==
-			     SADB_EALG_NULL) &&
+			     sadb_sa_encrypt == SADB_EALG_NULL) &&
 			    (((struct k_sadb_sa*)(extensions[SADB_EXT_SA]))->
-			     sadb_sa_auth ==
-			     SADB_AALG_NONE) ) {
+			     sadb_sa_auth == SADB_AALG_NONE) ) {
 				ERROR("pfkey_msg_parse: "
 				      "ESP handed encNULL+authNONE, illegal combination.\n");
 				SENDERR(EINVAL);
@@ -1547,8 +1546,7 @@ next_ext:
 		case K_SADB_X_SATYPE_COMP:
 			if (!(((struct k_sadb_sa*)extensions[SADB_EXT_SA]) &&
 			      ((struct k_sadb_sa*)extensions[SADB_EXT_SA])->
-			      sadb_sa_encrypt !=
-			      SADB_EALG_NONE)) {
+			      sadb_sa_encrypt != SADB_EALG_NONE)) {
 				ERROR("pfkey_msg_parse: "
 				      "encrypt alg=%d is zero, must be non-zero for COMP=%d SAs.\n",
 				      ((struct k_sadb_sa*)extensions[
@@ -1558,8 +1556,7 @@ next_ext:
 				SENDERR(EINVAL);
 			}
 			if (((struct k_sadb_sa*)(extensions[SADB_EXT_SA]))->
-			    sadb_sa_auth !=
-			    SADB_AALG_NONE) {
+			    sadb_sa_auth != SADB_AALG_NONE) {
 				ERROR("pfkey_msg_parse: "
 				      "COMP handed auth=%d, must be zero.\n",
 				      ((struct k_sadb_sa*)(extensions[

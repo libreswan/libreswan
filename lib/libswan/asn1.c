@@ -255,7 +255,7 @@ time_t asn1totime(const chunk_t *utctime, asn1_t type)
 
 	/* is there a seconds field? */
 	if ((eot - (char *)utctime->ptr) ==
-		((type == ASN1_UTCTIME) ? 12 : 14)) {
+	    ((type == ASN1_UTCTIME) ? 12 : 14)) {
 		if (sscanf(eot - 2, "%2d", &t.tm_sec) != 1)
 			return 0; /* error in ss seconds field format */
 
@@ -406,11 +406,10 @@ bool extract_object(asn1Object_t const *objects,
 			ctx->loopAddr[obj.level] = *objectID + 1;
 		} else {
 			/* no items, advance directly to end of loop */
-			do
+			do {
 				(*objectID)++;
-			while (!((objects[*objectID].flags & ASN1_END) &&
-					(objects[*objectID].level ==
-						obj.level)));
+			} while ((objects[*objectID].flags & ASN1_END) == 0 ||
+			       objects[*objectID].level != obj.level);
 			return TRUE;
 		}
 	}

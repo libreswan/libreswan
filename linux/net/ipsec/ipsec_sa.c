@@ -122,9 +122,8 @@ static int ipsec_SAref_recycle(void)
 		    "recycling, continuing from SAref=%d (0p%p), table=%d, entry=%d.\n",
 		    ipsec_sadb.refFreeListCont,
 		    (ipsec_sadb.refTable[IPsecSAref2table(ipsec_sadb.
-							  refFreeListCont)] !=
-		     NULL) ?
-		     IPsecSAref2SA(ipsec_sadb.refFreeListCont) : NULL,
+		        refFreeListCont)] != NULL) ?
+			    IPsecSAref2SA(ipsec_sadb.refFreeListCont) : NULL,
 		    IPsecSAref2table(ipsec_sadb.refFreeListCont),
 		    IPsecSAref2entry(ipsec_sadb.refFreeListCont));
 
@@ -899,8 +898,7 @@ int ipsec_sadb_cleanup(__u8 proto)
 				    NULL) {
 					struct ipsec_sa *sa1 =
 						ipsec_sadb.refTable[table]->
-						entry[entry
-						];
+						entry[entry];
 					ipsec_sa_put(sa1, IPSEC_REFOTHER);
 					ipsec_sadb.refTable[table]->entry[entry
 					] = NULL;
@@ -950,14 +948,13 @@ int ipsec_sadb_free(void)
 				    NULL) {
 					struct ipsec_sa *sa1 =
 						ipsec_sadb.refTable[table]->
-						entry[entry
-						];
+						entry[entry];
 
 					BUG_ON(atomic_read(&sa1->ips_refcount) ==
 					       1);
 					ipsec_sa_put(sa1, IPSEC_REFSAADD);
-					ipsec_sadb.refTable[table]->entry[entry
-					] = NULL;
+					ipsec_sadb.refTable[table]->entry[entry]
+						= NULL;
 				}
 			}
 			kfree(ipsec_sadb.refTable[table]);
@@ -983,9 +980,8 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 		if (IPsecSAref2table(IPsecSA2SAref(ips)) <
 		    IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES &&
 		    ipsec_sadb.refTable != NULL)
-			subtable =
-				ipsec_sadb.refTable[IPsecSAref2table(
-							    IPsecSA2SAref(ips))];
+			subtable = ipsec_sadb.refTable[
+				IPsecSAref2table(IPsecSA2SAref(ips))];
 
 		sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa,
 				     sizeof(sa));
@@ -1450,10 +1446,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 					(unsigned long) sizeof(struct
 							       md5_ctx));
 				if ((ipsp->ips_key_a = (caddr_t)
-						       kmalloc(sizeof(struct
-								      md5_ctx),
-							       GFP_ATOMIC)) ==
-				    NULL) {
+					kmalloc(sizeof(struct md5_ctx),
+						GFP_ATOMIC)) == NULL) {
 					ipsp->ips_key_a = akp;
 					SENDERR(ENOMEM);
 				}
@@ -1465,8 +1459,7 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				for (; i < AHMD596_BLKLEN; i++)
 					kb[i] = HMAC_IPAD;
 
-				ictx =
-					&(((struct md5_ctx*)(ipsp->ips_key_a))
+				ictx = &(((struct md5_ctx*)(ipsp->ips_key_a))
 					  ->ictx);
 				osMD5Init(ictx);
 				osMD5Update(ictx, kb, AHMD596_BLKLEN);
@@ -1474,8 +1467,7 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				for (i = 0; i < AHMD596_BLKLEN; i++)
 					kb[i] ^= (HMAC_IPAD ^ HMAC_OPAD);
 
-				octx =
-					&(((struct md5_ctx*)(ipsp->ips_key_a))
+				octx = &(((struct md5_ctx*)(ipsp->ips_key_a))
 					  ->octx);
 				osMD5Init(octx);
 				osMD5Update(octx, kb, AHMD596_BLKLEN);
@@ -1542,10 +1534,8 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 					(unsigned long) sizeof(struct
 							       sha1_ctx));
 				if ((ipsp->ips_key_a = (caddr_t)
-						       kmalloc(sizeof(struct
-								      sha1_ctx),
-							       GFP_ATOMIC)) ==
-				    NULL) {
+					kmalloc(sizeof(struct sha1_ctx),
+						GFP_ATOMIC)) == NULL) {
 					ipsp->ips_key_a = akp;
 					SENDERR(ENOMEM);
 				}
@@ -1557,18 +1547,15 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				for (; i < AHMD596_BLKLEN; i++)
 					kb[i] = HMAC_IPAD;
 
-				ictx =
-					&(((struct sha1_ctx*)(ipsp->ips_key_a))
-					  ->
-					  ictx);
+				ictx = &(((struct sha1_ctx*)(ipsp->ips_key_a))
+					  ->ictx);
 				SHA1Init(ictx);
 				SHA1Update(ictx, kb, AHSHA196_BLKLEN);
 
 				for (i = 0; i < AHSHA196_BLKLEN; i++)
 					kb[i] ^= (HMAC_IPAD ^ HMAC_OPAD);
 
-				octx =
-					&((struct sha1_ctx*)(ipsp->ips_key_a))
+				octx = &((struct sha1_ctx*)(ipsp->ips_key_a))
 					->octx;
 				SHA1Init(octx);
 				SHA1Update(octx, kb, AHSHA196_BLKLEN);
@@ -1608,15 +1595,13 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 
 			ipsp->ips_iv_size =
 				ipsp->ips_alg_enc->ixt_common.ixt_support.
-				ias_ivlen /
-				8;
+				ias_ivlen / 8;
 
 			/* Create IV */
 			if (ipsp->ips_iv_size) {
-				if ((ipsp->ips_iv =
-					     (caddr_t)kmalloc(ipsp->ips_iv_size,
-							      GFP_ATOMIC)) ==
-				    NULL)
+				if ((ipsp->ips_iv = (caddr_t)
+					kmalloc(ipsp->ips_iv_size,
+						GFP_ATOMIC)) == NULL)
 					SENDERR(ENOMEM);
 				prng_bytes(&ipsec_prng, (char *)ipsp->ips_iv,
 					   ipsp->ips_iv_size);

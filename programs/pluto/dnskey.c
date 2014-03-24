@@ -1081,8 +1081,7 @@ static err_t process_answer_section(pb_stream *pbs,
 
 					if (!in_struct(&sr, &sig_rdata_desc,
 						       pbs, NULL))
-						ugh =
-							"failed to get fixed part of SIG Resource Record RDATA";
+						ugh = "failed to get fixed part of SIG Resource Record RDATA";
 
 
 					else if (sr.type_covered == type)
@@ -1838,9 +1837,8 @@ void handle_adns_answer(void)
 	ssize_t n;
 
 	passert(buflen < sizeof(buf));
-	n =
-		read(adns_afd, (unsigned char *)&buf + buflen,
-		     sizeof(buf) - buflen);
+	n = read(adns_afd, (unsigned char *)&buf + buflen,
+		 sizeof(buf) - buflen);
 
 	if (n < 0) {
 		if (errno != EINTR) {
@@ -1871,8 +1869,8 @@ void handle_adns_answer(void)
 
 	buflen += n;
 #ifndef USE_LWRES
-	while (buflen >=
-	       offsetof(struct adns_answer, ans) && buflen >= buf.len) {
+	while (buflen >= offsetof(struct adns_answer, ans) &&
+	       buflen >= buf.len) {
 		/* we've got a tasty answer -- process it */
 		err_t ugh;
 		struct adns_continuation *cr =

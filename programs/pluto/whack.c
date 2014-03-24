@@ -1539,7 +1539,7 @@ int main(int argc, char **argv)
 				msg.ikev1_natt = natt_rfc;
 			else if ( streq(optarg, "drafts"))
 				msg.ikev1_natt = natt_drafts;
-			else 
+			else
 				diag("--ikev1_natt options are 'both', 'rfc' or 'drafts'");
 			continue;
 
@@ -1879,8 +1879,6 @@ int main(int argc, char **argv)
 			if ((msg.policy & POLICY_SHUNT_MASK) ==
 			    POLICY_SHUNT_TRAP)
 				diag("non-shunt connection must have --psk or --rsasig or both");
-
-
 		} else {
 			/* not just a shunt: a real ipsec connection */
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY)
@@ -1934,6 +1932,7 @@ int main(int argc, char **argv)
 	update_ports(&msg);
 
 	/* tricky quick and dirty check for wild values */
+	/* ??? This is horrible. */
 	if (msg.sa_rekey_margin != 0 &&
 	    msg.sa_rekey_fuzz * msg.sa_rekey_margin * 4 / msg.sa_rekey_margin /
 	    4 !=
@@ -1956,13 +1955,15 @@ int main(int argc, char **argv)
 		diag("dpdtimeout specified, but dpddelay is zero, both should be specified");
 
 
-	if (msg.dpd_action != DPD_ACTION_CLEAR && msg.dpd_action !=
-	    DPD_ACTION_HOLD && msg.dpd_action != DPD_ACTION_RESTART) {
+	if (msg.dpd_action != DPD_ACTION_CLEAR &&
+	    msg.dpd_action != DPD_ACTION_HOLD &&
+	    msg.dpd_action != DPD_ACTION_RESTART) {
 		diag("dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
 		msg.dpd_action = DPD_ACTION_HOLD;
 	}
 
-	if (msg.remotepeertype != CISCO && msg.remotepeertype != NON_CISCO) {
+	if (msg.remotepeertype != CISCO &&
+	    msg.remotepeertype != NON_CISCO) {
 		diag("remote_peer_type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
 		msg.remotepeertype = NON_CISCO; /*NON_CISCO=0*/
 	}
@@ -2137,7 +2138,7 @@ int main(int argc, char **argv)
 
 						/* case RC_LOG_SERIOUS: */
 						default:
-							if ( msg.whack_async )
+							if (msg.whack_async)
 								exit_status =
 									0;
 							else

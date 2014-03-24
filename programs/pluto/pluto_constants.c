@@ -337,8 +337,8 @@ const char *prettypolicy(lset_t policy)
 		 pbitnamesbuf,
 		 shunt != 0 ? "+" : "",
 		 shunt != 0 ? policy_shunt_names[shunt] : "",
-		 fail != 0 ? "+failure" : "", fail !=
-		 0 ? policy_fail_names[fail] : "",
+		 fail != 0 ? "+failure" : "",
+		 fail != 0 ? policy_fail_names[fail] : "",
 		 NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "");
 	return buf;
 }
