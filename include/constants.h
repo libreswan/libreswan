@@ -100,7 +100,7 @@ typedef uint_fast64_t lset_t;
 #define LELEM(opt) ((lset_t)1 << (opt))
 #define LRANGE(lwb, upb) LRANGES(LELEM(lwb), LELEM(upb))
 #define LRANGES(first, last) (last - first + last)
-#define LHAS(set, elem)  ((LELEM(elem) & (set)) != LEMPTY)
+#define LHAS(set, elem)  (((set) & LELEM(elem)) != LEMPTY)
 #define LIN(subset, set)  (((subset) & (set)) == (subset))
 #define LDISJOINT(a, b)  (((a) & (b)) == LEMPTY)
 
