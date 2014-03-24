@@ -311,9 +311,10 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 		baseauth = OAKLEY_RSA_ENC;
 		break;
 
+	/* Not implemented */
 	case XAUTHInitRSARevisedEncryption:
 	case XAUTHRespRSARevisedEncryption:
-		baseauth = OAKLEY_RSA_ENC_REV;
+		baseauth = OAKLEY_RSA_REVISED_MODE;
 		break;
 	}
 

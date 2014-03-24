@@ -447,15 +447,13 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		skeyid = skeyid_digisig(ni, nr, shared, hasher);
 		break;
 
+	/* Not implemented */
 	case OAKLEY_DSS_SIG:
-	/* XXX */
-
 	case OAKLEY_RSA_ENC:
-	case OAKLEY_RSA_ENC_REV:
-	case OAKLEY_ELGAMAL_ENC:
-	case OAKLEY_ELGAMAL_ENC_REV:
-	/* XXX */
-
+	case OAKLEY_RSA_REVISED_MODE:
+	case OAKLEY_ECDSA_P256:
+	case OAKLEY_ECDSA_P384:
+	case OAKLEY_ECDSA_P521:
 	default:
 		bad_case(auth);
 	}

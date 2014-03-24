@@ -1186,25 +1186,29 @@ enum_names oakley_hash_names = {
 };
 
 /* Oakley Authentication Method attribute */
-static const char *const oakley_auth_name1[] = {
+static const char *const oakley_auth_name[] = {
 	"OAKLEY_PRESHARED_KEY",
 	"OAKLEY_DSS_SIG",
 	"OAKLEY_RSA_SIG",
 	"OAKLEY_RSA_ENC",
-	"OAKLEY_RSA_ENC_REV",
-	"OAKLEY_ELGAMAL_ENC",
-	"OAKLEY_ELGAMAL_ENC_REV",
+	"OAKLEY_RSA_REVISED_MODE",
+	"OAKLEY_RESERVED_6",
+	"OAKLEY_RESERVED_7",
+	"OAKLEY_RESERVED_8",
+	"OAKLEY_ECDSA_P256", /* RFC 4754 */
+	"OAKLEY_ECDSA_P384", /* RFC 4754 */
+	"OAKLEY_ECDSA_P521", /* RFC 4754 */
 };
 
-static const char *const oakley_auth_name2[] = {
-	"HybridInitRSA",
+static const char *const oakley_auth_name_private_use2[] = {
+	"HybridInitRSA", /* 64221 */
 	"HybridRespRSA",
 	"HybridInitDSS",
 	"HybridRespDSS",
 };
 
-static const char *const oakley_auth_name3[] = {
-	"XAUTHInitPreShared",
+static const char *const oakley_auth_name_private_use[] = {
+	"XAUTHInitPreShared", /* 65001 */
 	"XAUTHRespPreShared",
 	"XAUTHInitDSS",
 	"XAUTHRespDSS",
@@ -1213,29 +1217,30 @@ static const char *const oakley_auth_name3[] = {
 	"XAUTHInitRSAEncryption",
 	"XAUTHRespRSAEncryption",
 	"XAUTHInitRSARevisedEncryption",
-	"XAUTHRespRSARevisedEncryption",
+	"XAUTHRespRSARevisedEncryption", /* 65010 */
 };
 
-static enum_names oakley_auth_names1 = {
-	OAKLEY_PRESHARED_KEY,
-	OAKLEY_ELGAMAL_ENC_REV,
-	oakley_auth_name1,
+static enum_names oakley_auth_names_private_use2 = {
+	HybridInitRSA,
+	HybridRespDSS,
+	oakley_auth_name_private_use2,
 	NULL
 };
 
-static enum_names oakley_auth_names2 = {
-	HybridInitRSA,
-	HybridRespDSS,
-	oakley_auth_name2,
-	&oakley_auth_names1
+static enum_names oakley_auth_names_private_use = {
+	XAUTHInitPreShared,
+	XAUTHRespRSARevisedEncryption,
+	oakley_auth_name_private_use,
+	&oakley_auth_names_private_use2
 };
 
 enum_names oakley_auth_names = {
-	XAUTHInitPreShared,
-	XAUTHRespRSARevisedEncryption,
-	oakley_auth_name3,
-	&oakley_auth_names2
+	OAKLEY_PRESHARED_KEY,
+	OAKLEY_ECDSA_P521,
+	oakley_auth_name,
+	&oakley_auth_names_private_use
 };
+
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_name[] = {

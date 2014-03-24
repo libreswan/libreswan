@@ -1005,38 +1005,40 @@ typedef u_int16_t oakley_hash_t;
  * Goofy XAUTH extensions from draft-ietf-ipsec-isakmp-xauth-06.txt
  */
 
-#define OAKLEY_PRESHARED_KEY 1
-#define OAKLEY_DSS_SIG 2
-#define OAKLEY_RSA_SIG 3
-#define OAKLEY_RSA_ENC 4
-#define OAKLEY_RSA_ENC_REV 5
-#define OAKLEY_ELGAMAL_ENC 6
-#define OAKLEY_ELGAMAL_ENC_REV 7
+#define OAKLEY_AUTH_ROOF 5 /* We don't support Revised or ECDSA yet */
+enum ikev1_auth_method {
+	OAKLEY_PRESHARED_KEY = 1,
+	OAKLEY_DSS_SIG = 2,
+	OAKLEY_RSA_SIG = 3,
+	OAKLEY_RSA_ENC = 4, 
+	OAKLEY_RSA_REVISED_MODE = 5, /* Not implemented */
+	/* 6 - 8 Reserved */
+	OAKLEY_ECDSA_P256 = 9, /* RFC 4754 */
+	OAKLEY_ECDSA_P384 = 10, /* RFC 4754 */
+	OAKLEY_ECDSA_P521 = 11, /* RFC 4754 */
+	/* 12 - 65000 Unassigned */
 
-#define OAKLEY_AUTH_ROOF 8
+	/*
+	 * Note: the below xauth names are mapped via xauth_calcbaseauth()
+	 * to the base functions 1-4
+	 */
+	HybridInitRSA = 64221,
+	HybridRespRSA = 64222,
+	HybridInitDSS = 64223,
+	HybridRespDSS = 64224,
+	/* For XAUTH.  Don't actually store in st->st_oakley.auth (???) */
+	XAUTHInitPreShared = 65001,
+	XAUTHRespPreShared = 65002,
+	XAUTHInitDSS = 65003,
+	XAUTHRespDSS = 65004,
+	XAUTHInitRSA = 65005,
+	XAUTHRespRSA = 65006,
+	XAUTHInitRSAEncryption = 65007,
+	XAUTHRespRSAEncryption = 65008,
+	XAUTHInitRSARevisedEncryption = 65009,
+	XAUTHRespRSARevisedEncryption = 65010,
+};
 
-/*
- * Note: the below xauth names are mapped via xauth_calcbaseauth() to the
- * base functions 1-7
- * Note2: we don't support all of the below, or all of the below, so ROOF
- * comment is lying
- */
-#define HybridInitRSA 64221
-#define HybridRespRSA 64222
-#define HybridInitDSS 64223
-#define HybridRespDSS 64224
-
-/* For XAUTH.  Don't actually store in st->st_oakley.auth (???) */
-#define XAUTHInitPreShared 65001
-#define XAUTHRespPreShared 65002
-#define XAUTHInitDSS 65003
-#define XAUTHRespDSS 65004
-#define XAUTHInitRSA 65005
-#define XAUTHRespRSA 65006
-#define XAUTHInitRSAEncryption 65007
-#define XAUTHRespRSAEncryption 65008
-#define XAUTHInitRSARevisedEncryption 65009
-#define XAUTHRespRSARevisedEncryption 65010
 
 /* typedef to make our life easier */
 typedef u_int16_t oakley_auth_t;
