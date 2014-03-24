@@ -904,18 +904,25 @@ enum ikev1_ipsec_attr {
 #define ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS 61444
 
 /* Auth Algorithm attribute */
-
+/* https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xml#isakmp-registry-20 */
 enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_NONE = 0, /* our private designation */
 	AUTH_ALGORITHM_HMAC_MD5 = 1,
 	AUTH_ALGORITHM_HMAC_SHA1 = 2,
 	AUTH_ALGORITHM_DES_MAC = 3,
 	AUTH_ALGORITHM_KPDK = 4,
-	AUTH_ALGORITHM_HMAC_SHA2_256 = 5,
-	AUTH_ALGORITHM_HMAC_SHA2_384 = 6,
-	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,
-	AUTH_ALGORITHM_HMAC_RIPEMD = 8,
-	AUTH_ALGORITHM_AES_CBC = 9,
+	AUTH_ALGORITHM_HMAC_SHA2_256 = 5, /* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_SHA2_384 = 6, /* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,  /* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_RIPEMD = 8, /* RFC 2857 */
+	AUTH_ALGORITHM_AES_CBC = 9, /* RFC 3566 */
+	AUTH_ALGORITHM_SIG_RSA = 10, /* RFC 4359 */
+	AUTH_ALGORITHM_AES_128_GMAC = 11, /* RFC 4542 */
+	AUTH_ALGORITHM_AES_192_GMAC = 12, /* RFC 4542 */
+	AUTH_ALGORITHM_AES_256_GMAC =  13, /* RFC 4542 */
+	/* 14-61439 Unassigned */
+	/* 61440-65535 Reserved for private use */
+
 	AUTH_ALGORITHM_NULL_KAME = 251, /* why do we load this ? */
 	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG = 252,
 };
