@@ -262,10 +262,10 @@ static void retransmit_v1_msg(struct state *st)
 				loglog(RC_COMMENT, "%s", story);
 			}
 
-			if ((try % 3) == 0 &&
-			    ((c->policy &
-			      (POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE)) ==
-			     (POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE)) ) {
+			if (try % 3 == 0 &&
+			    LIN(POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE,
+			        c->policy))
+			{
 				/* so, let's retry with IKEv2, alternating every three messages */
 				c->failed_ikev2 = FALSE;
 				loglog(RC_COMMENT,

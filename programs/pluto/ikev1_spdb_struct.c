@@ -1302,16 +1302,13 @@ rsasig_common:
 				break;
 
 			case OAKLEY_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
-				if ((seen_attrs &
-				     LELEM(OAKLEY_ENCRYPTION_ALGORITHM)) ==
-				    0) {
-					ugh =
-						"OAKLEY_KEY_LENGTH attribute not preceded by OAKLEY_ENCRYPTION_ALGORITHM attribute";
+				if (!LHAS(seen_attrs,
+					  OAKLEY_ENCRYPTION_ALGORITHM)) {
+					ugh = "OAKLEY_KEY_LENGTH attribute not preceded by OAKLEY_ENCRYPTION_ALGORITHM attribute";
 					break;
 				}
 				if (ta.encrypter == NULL) {
-					ugh =
-						"NULL encrypter with seen OAKLEY_ENCRYPTION_ALGORITHM";
+					ugh = "NULL encrypter with seen OAKLEY_ENCRYPTION_ALGORITHM";
 					break;
 				}
 				/*
@@ -1322,9 +1319,7 @@ rsasig_common:
 						    c->alg_info_ike, NULL,
 						    ugh_buf,
 						    sizeof(ugh_buf)))
-					ugh =
-						"peer proposed key_len not valid for encrypt algo setup specified";
-
+					ugh = "peer proposed key_len not valid for encrypt algo setup specified";
 
 				ta.enckeylen = val;
 				break;
