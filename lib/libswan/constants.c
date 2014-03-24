@@ -1127,7 +1127,7 @@ static const char *const oakley_enc_name[] = {
 	/* 65001-65535 Reserved for private use */
 };
 
-static const char *const oakley_enc_name_draft_aes_cbc_02[] = {
+static const char *const oakley_enc_name_private_use[] = {
 	"OAKLEY_MARS_CBC"	/* 65001 */,
 	"OAKLEY_RC6_CBC"	/* 65002 */,
 	"OAKLEY_ID_65003"	/* 65003 */,
@@ -1135,29 +1135,29 @@ static const char *const oakley_enc_name_draft_aes_cbc_02[] = {
 	"OAKLEY_TWOFISH_CBC"	/* 65005 */,
 };
 
-static const char *const oakley_enc_name_ssh[] = {
+static const char *const oakley_enc_name_private_use_ssh[] = {
 	"OAKLEY_TWOFISH_CBC_SSH",	/* 65289 */
 };
 
-static enum_names oakley_enc_names_ssh = {
-	65289,
-	65289,
-	oakley_enc_name_ssh,
+static enum_names oakley_enc_names_private_use_ssh = {
+	OAKLEY_TWOFISH_CBC_SSH,
+	OAKLEY_TWOFISH_CBC_SSH,
+	oakley_enc_name_private_use_ssh,
 	NULL
 };
 
-static enum_names oakley_enc_names_draft_aes_cbc_02 = {
-	65001,
-	65005,
-	oakley_enc_name_draft_aes_cbc_02,
-	&oakley_enc_names_ssh
+static enum_names oakley_enc_names_private_use = {
+	OAKLEY_MARS_CBC,
+	OAKLEY_TWOFISH_CBC,
+	oakley_enc_name_private_use,
+	&oakley_enc_names_private_use_ssh
 };
 
 enum_names oakley_enc_names = {
 	OAKLEY_DES_CBC,
 	OAKLEY_CAMELLIA_CBC,
 	oakley_enc_name,
-	&oakley_enc_names_draft_aes_cbc_02
+	&oakley_enc_names_private_use
 };
 
 /*
