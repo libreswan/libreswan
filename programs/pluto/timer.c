@@ -642,8 +642,8 @@ void handle_next_timer_event(void)
 		passert(st != NULL);
 		c = st->st_connection;
 		newest = (IS_PHASE1(st->st_state) ||
-			IS_PHASE15(st->st_state )) ?
-			c->newest_isakmp_sa : c->newest_ipsec_sa;
+			  IS_PHASE15(st->st_state )) ?
+				c->newest_isakmp_sa : c->newest_ipsec_sa;
 
 		if (newest > st->st_serialno &&
 			newest != SOS_NOBODY) {
@@ -652,7 +652,7 @@ void handle_next_timer_event(void)
 				libreswan_log(
 					"not replacing stale %s SA: #%lu will do",
 					(IS_PHASE1(st->st_state) ||
-						IS_PHASE15(st->st_state )) ?
+					 IS_PHASE15(st->st_state )) ?
 					"ISAKMP" : "IPsec", newest));
 		} else if (type == EVENT_SA_REPLACE_IF_USED   &&
 			st->st_outbound_time <= tm - c->sa_rekey_margin) {
@@ -721,8 +721,7 @@ void handle_next_timer_event(void)
 		} else {
 			libreswan_log("%s SA expired (%s)", satype,
 				(c->policy & POLICY_DONT_REKEY) ?
-					"--dontrekey" : "LATEST!"
-				);
+					"--dontrekey" : "LATEST!");
 		}
 	}
 	/* FALLTHROUGH */
