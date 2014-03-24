@@ -1155,7 +1155,7 @@ static enum_names oakley_enc_names_draft_aes_cbc_02 = {
 
 enum_names oakley_enc_names = {
 	OAKLEY_DES_CBC,
-	OAKLEY_AES_CBC,
+	OAKLEY_CAMELLIA_CBC,
 	oakley_enc_name,
 	&oakley_enc_names_draft_aes_cbc_02
 };
