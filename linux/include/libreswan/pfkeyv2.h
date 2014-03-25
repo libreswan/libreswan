@@ -153,8 +153,8 @@ struct sadb_protocol {
 } __attribute__((packed));
 
 /*
- * NOTE that there is a limit of 31 extensions due to current implementation
- * in pfkeyv2_ext_bits.c
+ * NOTE that there is a limit of 31 extension types due to current
+ * implementation in pfkeyv2_ext_bits.c
  */
 enum sadb_extension_t {
 	K_SADB_EXT_RESERVED=SADB_RESERVED,
