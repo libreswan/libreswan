@@ -1471,17 +1471,24 @@ next_ext:
 		DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
 			  "pfkey_msg_parse: "
 			  "required SADB_X_DELFLOW extensions missing: either %16llx must be present or %16llx must be present with SADB_X_SAFLAGS_CLEARFLOW set.\n",
+			/*
+			 * ??? The following is a bit confused.
+			 *
+			 * - K_SADB_X_EXT_ADDRESS_DELFLOW must fit in an int
+			 *   (signed!) since its definition is clearly an int.
+			 *   So why cast it to unsigned long long?
+			 *
+			 * - arithmetic "-" is not a simple operation on
+			 *   ints representing sets.
+			 *
+			 * - the expression computes what this simpler one does:
+			 *	~extensions_seen & K_SADB_X_EXT_ADDRESS_DELFLOW
+			 */
 			  (unsigned long long)K_SADB_X_EXT_ADDRESS_DELFLOW -
 			    (extensions_seen & K_SADB_X_EXT_ADDRESS_DELFLOW),
-			/* ??? the following looks to be confused.
-			 * If 1 << SADB_EXT_SA is in extensions_seen,
-			 *   the result will be simply 1 << SADB_EXT_SA
-			 *   (in which case printing SADB_EST_SA would be clearer)
-			 * otherwise,
-			 *	subtraction will produce a surprising result.
-			 *	(subtraction is probably the wrong operator
-			 *	OR this isn't a case that happens.
-			 *	In which case, this calculation is dumb.
+			/*
+			 * ??? the following looks to be confused.
+			 * Same as above.
 			 */
 			  (unsigned long long)(1 << SADB_EXT_SA) -
 			    (extensions_seen & (1 << SADB_EXT_SA)));
