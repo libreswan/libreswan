@@ -216,7 +216,6 @@ int whack_get_value(char *buf, size_t bufsize)
 	int try;
 
 	fflush(stdout);
-	usleep(20000); /* give fflush time for flushing - has to go through awk */
 
 	try = 3;
 	len = 0;
@@ -228,7 +227,7 @@ int whack_get_value(char *buf, size_t bufsize)
 		if (fgets(buf, bufsize, stdin) != buf) {
 			if (errno == 0) {
 				fprintf(stderr,
-					"Can not read password from standard in\n");
+					"Can not read username from standard in\n");
 				exit(RC_WHACK_PROBLEM);
 			} else {
 				perror("fgets value");
@@ -257,7 +256,6 @@ size_t whack_get_secret(char *buf, size_t bufsize)
 	int len;
 
 	fflush(stdout);
-	usleep(20000); /* give fflush time for flushing */
 	/* ??? the function getpass(3) is obsolete! */
 	secret = getpass("Enter passphrase: ");
 	secret = (secret == NULL) ? "" : secret;
