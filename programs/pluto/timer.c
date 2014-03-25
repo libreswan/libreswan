@@ -74,7 +74,7 @@ static unsigned int maximum_retransmissions_quick_r1 =
 void event_schedule(enum event_type type, time_t tm, struct state *st)
 {
 	struct event *ev = alloc_thing(struct event,
-				       "struct event in event_schedule()");
+				"struct event in event_schedule()");
 
 	passert(tm >= 0);
 	ev->ev_type = type;
@@ -124,17 +124,17 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
 				break;
 
 		DBG(DBG_CONTROLMORE, {
-			    if (evt->ev_state == NULL) {
-				    DBG_log("event added after event %s",
-					    enum_show(&timer_event_names,
-						      evt->ev_type));
-			    } else {
-				    DBG_log("event added after event %s for #%lu",
-					    enum_show(&timer_event_names,
-						      evt->ev_type),
-					    evt->ev_state->st_serialno);
-			    }
-		    });
+				if (evt->ev_state == NULL) {
+					DBG_log("event added after event %s",
+						enum_show(&timer_event_names,
+							evt->ev_type));
+				} else {
+					DBG_log("event added after event %s for #%lu",
+						enum_show(&timer_event_names,
+							evt->ev_type),
+						evt->ev_state->st_serialno);
+				}
+			});
 
 		ev->ev_next = evt->ev_next;
 		evt->ev_next = ev;
@@ -172,18 +172,20 @@ static void retransmit_v1_msg(struct state *st)
 	try_limit = c->sa_keying_tries;
 
 	DBG(DBG_CONTROL,
-	    DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
-		    ip_str(&c->spd.that.host_addr), c->name, st->st_serialno));
+		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
+			ip_str(&c->spd.that.host_addr),
+			c->name, st->st_serialno);
+		);
 
 	if (st->st_retransmit < maximum_retransmissions)
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
 	else if ((st->st_state == STATE_MAIN_I1 ||
-		  st->st_state == STATE_AGGR_I1) &&
-		 c->sa_keying_tries == 0 &&
-		 st->st_retransmit < maximum_retransmissions_initial)
+			st->st_state == STATE_AGGR_I1) &&
+		c->sa_keying_tries == 0 &&
+		st->st_retransmit < maximum_retransmissions_initial)
 		delay = event_retransmit_delay_0 << maximum_retransmissions;
 	else if (st->st_state == STATE_QUICK_R1 &&
-		 st->st_retransmit < maximum_retransmissions_quick_r1)
+		st->st_retransmit < maximum_retransmissions_quick_r1)
 		delay = event_retransmit_delay_0 << maximum_retransmissions;
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
@@ -196,9 +198,9 @@ static void retransmit_v1_msg(struct state *st)
 	if (delay != 0) {
 		st->st_retransmit++;
 		whack_log(RC_RETRANSMISSION,
-			  "%s: retransmission; will wait %lus for response",
-			  enum_name(&state_names, st->st_state),
-			  (unsigned long)delay);
+			"%s: retransmission; will wait %lus for response",
+			enum_name(&state_names, st->st_state),
+			(unsigned long)delay);
 		resend_ike_v1_msg(st, "EVENT_RETRANSMIT");
 		event_schedule(EVENT_RETRANSMIT, delay, st);
 	} else {
@@ -224,10 +226,10 @@ static void retransmit_v1_msg(struct state *st)
 			break;
 		}
 		loglog(RC_NORETRANSMISSION,
-		       "max number of retransmissions (%d) reached %s%s",
-		       st->st_retransmit,
-		       enum_show(&state_names, st->st_state),
-		       details);
+			"max number of retransmissions (%d) reached %s%s",
+			st->st_retransmit,
+			enum_show(&state_names, st->st_state),
+			details);
 		if (try != 0 && try != try_limit) {
 			/*
 			 * A lot like EVENT_SA_REPLACE, but over again.
@@ -238,10 +240,9 @@ static void retransmit_v1_msg(struct state *st)
 
 			try++;
 			snprintf(story, sizeof(story), try_limit == 0 ?
-				 "starting keying attempt %ld of an unlimited number" :
-				 "starting keying attempt %ld of at most %ld",
-				 try,
-				 try_limit);
+				"starting keying attempt %ld of an unlimited number" :
+				"starting keying attempt %ld of at most %ld",
+				try, try_limit);
 
 			if (!DBGP(DBG_WHACKWATCH)) {
 				if (st->st_whack_sock != NULL_FD) {
@@ -250,8 +251,8 @@ static void retransmit_v1_msg(struct state *st)
 					 * will get bored.
 					 */
 					loglog(RC_COMMENT,
-					       "%s, but releasing whack",
-					       story);
+						"%s, but releasing whack",
+						story);
 					release_pending_whacks(st, story);
 				} else {
 					/* no whack: just log to syslog */
@@ -557,8 +558,10 @@ void handle_next_timer_event(void)
 	type = ev->ev_type;
 	st = ev->ev_state;
 
-	DBG(DBG_CONTROL, DBG_log("handling event %s",
-				 enum_show(&timer_event_names, type)));
+	DBG(DBG_CONTROL,
+		DBG_log("handling event %s",
+			enum_show(&timer_event_names, type));
+		);
 
 	DBG(DBG_CONTROL, {
 		if (evlist != (struct event *) NULL) {
@@ -642,8 +645,8 @@ void handle_next_timer_event(void)
 		passert(st != NULL);
 		c = st->st_connection;
 		newest = (IS_PHASE1(st->st_state) ||
-			  IS_PHASE15(st->st_state )) ?
-				c->newest_isakmp_sa : c->newest_ipsec_sa;
+			IS_PHASE15(st->st_state )) ?
+			c->newest_isakmp_sa : c->newest_ipsec_sa;
 
 		if (newest > st->st_serialno &&
 			newest != SOS_NOBODY) {
@@ -652,7 +655,7 @@ void handle_next_timer_event(void)
 				libreswan_log(
 					"not replacing stale %s SA: #%lu will do",
 					(IS_PHASE1(st->st_state) ||
-					 IS_PHASE15(st->st_state )) ?
+						IS_PHASE15(st->st_state )) ?
 					"ISAKMP" : "IPsec", newest));
 		} else if (type == EVENT_SA_REPLACE_IF_USED   &&
 			st->st_outbound_time <= tm - c->sa_rekey_margin) {
@@ -678,7 +681,7 @@ void handle_next_timer_event(void)
 				libreswan_log(
 					"not replacing stale %s SA: inactive for %lus",
 					(IS_PHASE1(st->st_state) ||
-					 IS_PHASE15(st->st_state )) ?
+						IS_PHASE15(st->st_state )) ?
 						"ISAKMP" : "IPsec",
 					(unsigned long)(tm -
 						st->st_outbound_time)));
@@ -686,8 +689,8 @@ void handle_next_timer_event(void)
 			DBG(DBG_LIFECYCLE,
 				libreswan_log("replacing stale %s SA",
 					(IS_PHASE1(st->st_state) ||
-					 IS_PHASE15(st->st_state)) ?
-						"ISAKMP" : "IPsec"));
+						IS_PHASE15(st->st_state)) ?
+					"ISAKMP" : "IPsec"));
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
 		delete_liveness_event(st);
@@ -807,8 +810,9 @@ long next_event(void)
  */
 void delete_event(struct state *st)
 {
-	DBG(DBG_CONTROLMORE, DBG_log("deleting event for #%ld",
-				     st->st_serialno));
+	DBG(DBG_CONTROLMORE,
+		DBG_log("deleting event for #%ld", st->st_serialno);
+		);
 	if (st->st_event != (struct event *) NULL) {
 		struct event **ev;
 
