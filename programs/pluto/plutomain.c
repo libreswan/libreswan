@@ -218,9 +218,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef HAVE_BROKEN_POPEN
 					    " BROKEN_POPEN"
 #endif
-#ifndef OPENSSL
 					    " NSS"
-#endif
 #ifdef DNSSEC
 					    " DNSSEC"
 #endif
@@ -1312,7 +1310,9 @@ int main(int argc, char **argv)
 	init_connections();
 	init_crypto();
 	init_crypto_helpers(nhelpers);
+#ifdef OPENSSL
 	load_lswcrypto();
+#endif
 	init_demux();
 	init_kernel();
 	init_adns();
