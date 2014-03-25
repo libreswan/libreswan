@@ -1924,7 +1924,7 @@ static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
 			*s = '?';
 		}
 	}
-	(void)sanitize_string(strbuf, sizeof(strbuf));
+	sanitize_string(strbuf, sizeof(strbuf));
 	libreswan_log("Received Cisco %s: %s", attr_name, strbuf);
 	return clone_str(strbuf, attr_name);
 }

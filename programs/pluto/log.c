@@ -195,7 +195,7 @@ static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 	ps = strlen(buf);
 	vsnprintf(buf + ps, buf_len - ps, fmt, ap);
 	if (!reproc)
-		(void)sanitize_string(buf, buf_len);
+		sanitize_string(buf, buf_len);
 }
 
 void close_peerlog(void)
@@ -715,7 +715,7 @@ int DBG_log(const char *message, ...)
 	va_end(args);
 
 	/* then sanitize anything else that is left. */
-	(void)sanitize_string(m, sizeof(m));
+	sanitize_string(m, sizeof(m));
 
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		if (log_with_timestamp) {
