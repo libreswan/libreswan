@@ -484,8 +484,7 @@ int main(int argc, char *argv[])
 
 	zero(&said);
 	edst_opt = spi_opt = proto_opt = af_opt = said_opt = dst_opt =
-								     src_opt =
-									     NULL;
+		src_opt = NULL;
 	{
 		int i, j;
 		for (i = 0; i < life_maxsever; i++) {
@@ -496,10 +495,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	while ((c =
-			getopt_long(argc, argv,
-				    "" /*"H:P:Z:46dcA:E:e:s:a:w:i:D:S:hvgl:+:f:"*/,
-				    longopts, 0)) != EOF) {
+	while ((c = getopt_long(argc, argv,
+				"" /*"H:P:Z:46dcA:E:e:s:a:w:i:D:S:hvgl:+:f:"*/,
+				longopts, 0)) != EOF) {
 		switch (c) {
 		case 'g':
 			debug = 1;
@@ -1261,8 +1259,9 @@ int main(int argc, char *argv[])
 	pfkey_extensions_init(extensions);
 
 	if ((error = pfkey_msg_hdr_build(&extensions[0],
-					 (alg == XF_DEL ? SADB_DELETE : alg ==
-					  XF_CLR ? SADB_FLUSH : SADB_ADD),
+					 (alg == XF_DEL ? SADB_DELETE :
+					   alg == XF_CLR ? SADB_FLUSH :
+					   SADB_ADD),
 					 proto2satype(proto),
 					 0,
 					 ++pfkey_seq,
@@ -1320,8 +1319,8 @@ int main(int argc, char *argv[])
 	default:
 		encryptalg = SADB_EALG_NONE;
 	}
-	if (!(alg ==
-	      XF_CLR /* IE: pfkey_msg->sadb_msg_type == SADB_FLUSH */)) {
+	/* IE: pfkey_msg->sadb_msg_type == SADB_FLUSH */
+	if (!(alg == XF_CLR)) {
 		sab.sa_base.sadb_sa_len        = 0;
 		sab.sa_base.sadb_sa_exttype    = SADB_EXT_SA;
 		sab.sa_base.sadb_sa_spi        = htonl(spi);
@@ -1345,8 +1344,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (saref_me || saref_him) {
-			error =
-				pfkey_saref_build(&extensions[
+			error = pfkey_saref_build(&extensions[
 							  K_SADB_X_EXT_SAREF],
 						  saref_me, saref_him);
 			if (error) {
@@ -1359,10 +1357,8 @@ int main(int argc, char *argv[])
 		}
 
 		if (outif != 0) {
-			if ((error =
-				     pfkey_outif_build(&extensions[
-							       SADB_X_EXT_PLUMBIF
-						       ],
+			if ((error = pfkey_outif_build(&extensions[
+							   SADB_X_EXT_PLUMBIF],
 						       outif))) {
 				fprintf(stderr,
 					"%s: Trouble building outif extension, error=%d.\n",
@@ -1403,22 +1399,15 @@ int main(int argc, char *argv[])
 		    life_opt[life_soft][life_addtime] != NULL ||
 		    life_opt[life_soft][life_usetime] != NULL ||
 		    life_opt[life_soft][life_packets] != NULL) {
-			if ((error =
-				     pfkey_lifetime_build(&extensions[
-								  SADB_EXT_LIFETIME_SOFT
-							  ],
-							  SADB_EXT_LIFETIME_SOFT,
-							  life[life_soft][
-								  life_alloc],          /*-1,*/		/*allocations*/
-							  life[life_soft][
-								  life_bytes],          /*-1,*/		/*bytes*/
-							  life[life_soft][
-								  life_addtime],        /*-1,*/		/*addtime*/
-							  life[life_soft][
-								  life_usetime],        /*-1,*/		/*usetime*/
-							  life[life_soft][
-								  life_packets] /*-1*/)))
-			{                                                                       /*packets*/
+			if ((error = pfkey_lifetime_build(
+				&extensions[SADB_EXT_LIFETIME_SOFT],
+				SADB_EXT_LIFETIME_SOFT,
+				life[life_soft][life_alloc],
+				life[life_soft][life_bytes],
+				life[life_soft][life_addtime],
+				life[life_soft][life_usetime],
+				life[life_soft][life_packets])))
+			{
 				fprintf(stderr,
 					"%s: Trouble building lifetime_s extension, error=%d.\n",
 					progname, error);
@@ -1437,22 +1426,15 @@ int main(int argc, char *argv[])
 		    life_opt[life_hard][life_addtime] != NULL ||
 		    life_opt[life_hard][life_usetime] != NULL ||
 		    life_opt[life_hard][life_packets] != NULL) {
-			if ((error =
-				     pfkey_lifetime_build(&extensions[
-								  SADB_EXT_LIFETIME_HARD
-							  ],
-							  SADB_EXT_LIFETIME_HARD,
-							  life[life_hard][
-								  life_alloc],          /*-1,*/		/*allocations*/
-							  life[life_hard][
-								  life_bytes],          /*-1,*/		/*bytes*/
-							  life[life_hard][
-								  life_addtime],        /*-1,*/		/*addtime*/
-							  life[life_hard][
-								  life_usetime],        /*-1,*/		/*usetime*/
-							  life[life_hard][
-								  life_packets] /*-1*/)))
-			{                                                                       /*packets*/
+			if ((error = pfkey_lifetime_build(
+				&extensions[SADB_EXT_LIFETIME_HARD],
+				SADB_EXT_LIFETIME_HARD,
+				life[life_hard][life_alloc],
+				life[life_hard][life_bytes],
+				life[life_hard][life_addtime],
+				life[life_hard][life_usetime],
+				life[life_hard][life_packets])))
+			{
 				fprintf(stderr,
 					"%s: Trouble building lifetime_h extension, error=%d.\n",
 					progname, error);
@@ -1473,8 +1455,7 @@ int main(int argc, char *argv[])
 				progname, ipaddr_txt);
 		}
 
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_EXT_ADDRESS_SRC],
 						 SADB_EXT_ADDRESS_SRC,
 						 0,
@@ -1488,8 +1469,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_EXT_ADDRESS_DST],
 						 SADB_EXT_ADDRESS_DST,
 						 0,
@@ -1505,8 +1485,7 @@ int main(int argc, char *argv[])
 
 #ifdef PFKEY_PROXY
 		anyaddr(address_family, &pfkey_address_p_ska);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_EXT_ADDRESS_PROXY
 						 ],
 						 SADB_EXT_ADDRESS_PROXY,
@@ -1534,8 +1513,7 @@ int main(int argc, char *argv[])
 		case XF_ESP3DESMD596:
 		case XF_AHHMACSHA1:
 		case XF_ESP3DESSHA196:
-			if ((error =
-				     pfkey_key_build(&extensions[
+			if ((error = pfkey_key_build(&extensions[
 							     SADB_EXT_KEY_AUTH],
 						     SADB_EXT_KEY_AUTH,
 						     authkeylen * 8,
@@ -1563,8 +1541,7 @@ int main(int argc, char *argv[])
 #ifdef KERNEL_ALG
 		case XF_OTHER_ALG:
 #endif                  /* KERNEL_ALG */
-			if ((error =
-				     pfkey_key_build(&extensions[
+			if ((error = pfkey_key_build(&extensions[
 							     SADB_EXT_KEY_ENCRYPT
 						     ],
 						     SADB_EXT_KEY_ENCRYPT,
@@ -1604,8 +1581,7 @@ int main(int argc, char *argv[])
 		    sizeof(pfkey_ident_s_ska) )
 			exit(1);
 
-		if ((error =
-			     pfkey_ident_build(&extensions[
+		if ((error = pfkey_ident_build(&extensions[
 						       SADB_EXT_IDENTITY_DST],
 					       SADB_EXT_IDENTITY_DST,
 					       SADB_IDENTTYPE_PREFIX,
@@ -1635,10 +1611,9 @@ int main(int argc, char *argv[])
 
 		int err;
 
-		err =
-			pfkey_x_nat_t_type_build(&extensions[
+		err = pfkey_x_nat_t_type_build(&extensions[
 							 K_SADB_X_EXT_NAT_T_TYPE],
-						 natt);
+					       natt);
 		success = pfkey_build(err,
 				      "pfkey_nat_t_type Add ESP SA",
 				      ipsaid_txt, extensions);
@@ -1825,8 +1800,7 @@ int main(int argc, char *argv[])
 		ssize_t readlen;
 		unsigned char pfkey_buf[PFKEYv2_MAX_MSGSIZE];
 
-		while ((readlen =
-				read(pfkey_sock, pfkey_buf,
+		while ((readlen = read(pfkey_sock, pfkey_buf,
 				     sizeof(pfkey_buf))) > 0) {
 			struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 			pfkey_extensions_init(extensions);

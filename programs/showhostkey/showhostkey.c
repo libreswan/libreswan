@@ -488,7 +488,6 @@ usage:
 
 	PK11_SetPasswordFunc(getNSSPassword);
 
-	load_lswcrypto();
 	lsw_load_preshared_secrets(&host_secrets, verbose > 0 ? TRUE : FALSE,
 				   secrets_file, &pass);
 

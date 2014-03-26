@@ -363,8 +363,7 @@ int main(int argc, char **argv)
 						);
 				}
 
-				if ((error =
-					     pfkey_x_satype_build(&extensions[
+				if ((error = pfkey_x_satype_build(&extensions[
 									  K_SADB_X_EXT_SATYPE2
 								  ],
 								  proto2satype(
@@ -382,8 +381,7 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if ((error =
-				     pfkey_sa_build(&extensions[!j ?
+			if ((error = pfkey_sa_build(&extensions[!j ?
 								K_SADB_EXT_SA :
 								K_SADB_X_EXT_SA2
 						    ],
@@ -407,8 +405,7 @@ int main(int argc, char **argv)
 			if (!j) {
 				anyaddr(said_af_array[i].af,
 					&pfkey_address_s_ska);                      /* Is the address family correct ?? */
-				if ((error =
-					     pfkey_address_build(&extensions[
+				if ((error = pfkey_address_build(&extensions[
 									 K_SADB_EXT_ADDRESS_SRC
 								 ],
 								 K_SADB_EXT_ADDRESS_SRC,
@@ -428,8 +425,7 @@ int main(int argc, char **argv)
 				}
 			}
 #endif
-			if ((error =
-				     pfkey_address_build(&extensions[!j ?
+			if ((error = pfkey_address_build(&extensions[!j ?
 								     SADB_EXT_ADDRESS_DST
 								     :
 								     SADB_X_EXT_ADDRESS_DST2
@@ -455,8 +451,7 @@ int main(int argc, char **argv)
 
 		}
 
-		if ((error =
-			     pfkey_msg_build(&pfkey_msg, extensions,
+		if ((error = pfkey_msg_build(&pfkey_msg, extensions,
 					     EXT_BITS_IN))) {
 			fprintf(stderr,
 				"%s: Trouble building pfkey message, error=%d.\n",

@@ -51,7 +51,7 @@ north #
 000 myid = (none)
 000 debug none
 000  
-000 nat_traversal=yes, keep_alive=20, nat_ikeport=4500, disable_port_floating=no
+000 nat_traversal=yes, keep_alive=20, nat_ikeport=4500
 000 virtual_private (%priv):
 000 - allowed 0 subnets: 
 000 - disallowed 0 subnets: 
@@ -129,7 +129,7 @@ north #
 003 "northnet-eastnet-nonat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): no NAT detected
 108 "northnet-eastnet-nonat" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nonat" #1: received Vendor ID payload [CAN-IKEv2]
-004 "northnet-eastnet-nonat" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
+004 "northnet-eastnet-nonat" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
 117 "northnet-eastnet-nonat" #2: STATE_QUICK_I1: initiate
 004 "northnet-eastnet-nonat" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 north #

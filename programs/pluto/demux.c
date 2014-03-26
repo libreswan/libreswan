@@ -387,7 +387,7 @@ static bool read_packet(struct msg_digest *md)
 	 */
 	{
 		static const u_int8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
-		{ 0x00, };
+			{ 0x00, };
 
 		if (md->iface->ike_float &&
 		    pbs_left(&md->packet_pbs) >= NON_ESP_MARKER_SIZE &&

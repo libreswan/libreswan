@@ -122,9 +122,8 @@ void init_nat_traversal(unsigned int keep_alive_period)
 		}
 	}
 
-	nat_kap =
-		keep_alive_period ? keep_alive_period :
-		DEFAULT_KEEP_ALIVE_PERIOD;
+	nat_kap = keep_alive_period ?
+		keep_alive_period : DEFAULT_KEEP_ALIVE_PERIOD;
 	libreswan_log("   NAT-Traversal support %s",
 	     nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
@@ -250,7 +249,7 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 {
 	DBG(DBG_NATT, DBG_log("nat add vid"));
 
-	/* 
+	/*
 	 * Some Cisco's have a broken NAT-T implementation where it
 	 * sends one NAT payload per draft, and one NAT payload for RFC.
 	 * ikev1_natt={both|drafts|rfc} helps us claim we only support the
@@ -374,16 +373,16 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 				     pbs_left(&p->pbs));
 		    });
 
-		if ( (pbs_left(&p->pbs) ==
-		      st->st_oakley.prf_hasher->hash_digest_len) &&
-		     (memeq(p->pbs.cur, hash_me,
-			     st->st_oakley.prf_hasher->hash_digest_len)))
+		if (pbs_left(&p->pbs) ==
+		        st->st_oakley.prf_hasher->hash_digest_len &&
+		    memeq(p->pbs.cur, hash_me,
+			  st->st_oakley.prf_hasher->hash_digest_len))
 			found_me = TRUE;
 
-		if ( (pbs_left(&p->pbs) ==
-		      st->st_oakley.prf_hasher->hash_digest_len) &&
-		     (memcmp(p->pbs.cur, hash_him,
-			     st->st_oakley.prf_hasher->hash_digest_len) == 0))
+		if (pbs_left(&p->pbs) ==
+		        st->st_oakley.prf_hasher->hash_digest_len &&
+		    memcmp(p->pbs.cur, hash_him,
+			   st->st_oakley.prf_hasher->hash_digest_len) == 0)
 			found_him = TRUE;
 
 		i++;

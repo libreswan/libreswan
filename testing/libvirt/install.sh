@@ -57,6 +57,7 @@ do
   if [ -z "`sudo virsh net-list --all |grep $net | awk '{ print $1}'`" ];
   then
 	sudo virsh net-define net/$net
+	sudo virsh net-autostart $net
 	echo $net created 
 	sudo virsh net-start $net
 	echo $net activated
@@ -79,8 +80,9 @@ then
 	cpu="--hvm"
 	grep vmx /proc/cpuinfo > /dev/null || cpu=""
 
-	# create the 8GB disk image ourselves so it has the right privs
-	#dd if=/dev/zero of=$POOLSPACE/swan"$OSTYPE"base.img bs=1024k count=8192
+	# create the 8GB disk image ourselves - latest virt-install won't create it
+	chmod ga+x ~ $POOLSPACE
+	dd if=/dev/zero of=$POOLSPACE/swan"$OSTYPE"base.img bs=1024k count=8192
 	# install base guest to obtain a file image that will be used as uml root
 	# For static networking add kernel args parameters ip=.... etc
 	# (network settings in kickstart are ignored by modern dracut)
@@ -90,7 +92,7 @@ then
 	   --extra-args="swanname=swan${OSTYPE}base ks=file:/${OSTYPE}base.ks \
 	   console=tty0 console=ttyS0,115200" \
 	   --name=swan"$OSTYPE"base \
-	   --disk $POOLSPACE/swan"$OSTYPE"base.img,size=8 \
+	   --disk path=$POOLSPACE/swan"$OSTYPE"base.img \
 	   --ram 1024 \
 	   --vcpus=1 \
 	   --check-cpu \

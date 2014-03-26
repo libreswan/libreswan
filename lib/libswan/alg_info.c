@@ -630,8 +630,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 
 	ealg_id = aalg_id = -1;
 	if (p_ctx->ealg_permit && *p_ctx->ealg_buf) {
-		ealg_id =
-			p_ctx->ealg_getbyname(p_ctx->ealg_buf,
+		ealg_id = p_ctx->ealg_getbyname(p_ctx->ealg_buf,
 					strlen(p_ctx->ealg_buf));
 #if 0
 		if (ealg_id == ESP_MAGIC_ID) {
@@ -670,8 +669,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			);
 	}
 	if (p_ctx->aalg_permit && *p_ctx->aalg_buf) {
-		aalg_id =
-			p_ctx->aalg_getbyname(p_ctx->aalg_buf,
+		aalg_id = p_ctx->aalg_getbyname(p_ctx->aalg_buf,
 					strlen(p_ctx->aalg_buf));
 		if (aalg_id < 0) {
 			p_ctx->err = "hash_alg not found";
@@ -684,8 +682,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			);
 	}
 	if (p_ctx->modp_getbyname && *p_ctx->modp_buf) {
-		modp_id =
-			p_ctx->modp_getbyname(p_ctx->modp_buf,
+		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf,
 					strlen(p_ctx->modp_buf));
 		if (modp_id < 0) {
 			p_ctx->err = "modp group not found";

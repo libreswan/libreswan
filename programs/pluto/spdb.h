@@ -172,7 +172,7 @@ extern notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,           /* body 
 					   struct state *st);           /* current state object */
 
 /* initialize a state with the aggressive mode parameters */
-extern int init_am_st_oakley(struct state *st, lset_t policy);
+extern int init_aggr_st_oakley(struct state *st, lset_t policy);
 
 extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body of input SA Payload */
 					  const struct isakmp_sa *sa,   /* header of input SA Payload */

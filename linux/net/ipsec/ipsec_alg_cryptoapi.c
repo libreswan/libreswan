@@ -378,9 +378,8 @@ static __u8 *_capi_new_key(struct ipsec_alg_enc *alg, const __u8 *key,
 	/*
 	 *	alloc tfm
 	 */
-	tfm =
-		crypto_blkcipher_tfm(crypto_alloc_blkcipher(cptr->ciphername,
-							    0, 0));
+	tfm = crypto_blkcipher_tfm(crypto_alloc_blkcipher(cptr->ciphername,
+							  0, 0));
 	if (!tfm) {
 		printk(KERN_ERR "_capi_new_key(): "
 		       "NULL tfm for \"%s\" cryptoapi (\"%s\") algo\n",

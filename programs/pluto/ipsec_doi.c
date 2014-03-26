@@ -108,7 +108,7 @@ void echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 	struct isakmp_hdr r_hdr = md->hdr; /* mostly same as incoming header */
 
 	/* make sure we start with a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -518,8 +518,8 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
 	} else
 
-	if (!(id->isaid_doi_specific_a == 0 && id->isaid_doi_specific_b ==
-	      0) &&
+	if (!(id->isaid_doi_specific_a == 0 &&
+	      id->isaid_doi_specific_b == 0) &&
 	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
 	      id->isaid_doi_specific_b == IKE_UDP_PORT)) {
 		loglog(RC_LOG_SERIOUS, "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d"
@@ -856,12 +856,12 @@ void fmt_isakmp_sa_established(struct state *st, char *sadetails, int sad_len)
 	}
 
 	snprintf(b, sad_len - (b - sadetails) - 1,
-		 " {auth=%s cipher=%s_%d%s%s prf=%s group=modp%d}",
-		 authname,
+		 " {auth=%s cipher=%s_%d%s%s prf=%s group=%s}",
+		 strip_prefix(authname,"OAKLEY_"),
 		 st->st_oakley.encrypter->common.name,
 		 st->st_oakley.enckeylen,
 		 integstr, integname,
-		 st->st_oakley.prf_hasher->common.name,
-		 (int)st->st_oakley.group->bytes * 8);
+		 strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"),
+		 strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
 	st->hidden_variables.st_logged_p1algos = TRUE;
 }

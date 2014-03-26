@@ -387,8 +387,7 @@ err_t is_virtual_net_allowed(const struct connection *c,
 		    !net_in_list(peer_net, private_net_ko, private_net_ko_len))
 			return NULL;
 
-		why =
-			"a private network virtual IP was required, but the proposed IP did not match our list (virtual_private=)";
+		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual_private=)";
 	}
 
 	if (c->spd.that.virt->n_net) {
@@ -396,8 +395,7 @@ err_t is_virtual_net_allowed(const struct connection *c,
 				c->spd.that.virt->n_net))
 			return NULL;
 
-		why =
-			"a specific network IP was required, but the proposed IP did not match our list (subnet=vhost:list)";
+		why = "a specific network IP was required, but the proposed IP did not match our list (subnet=vhost:list)";
 	}
 
 	if (c->spd.that.virt->flags & F_VIRTUAL_ALL) {

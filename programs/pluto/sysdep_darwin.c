@@ -255,9 +255,8 @@ struct raw_iface *find_raw_ifaces4(void)
 	   the union. See if.h */
 	for (bp = buf, j = 0;
 	     bp < (unsigned char *)buf + (size_t)ifconf.ifc_len;
-	     bp =
-		     (struct ifreq *) ((unsigned char *)bp +
-				       _SIZEOF_ADDR_IFREQ(*bp)),
+	     bp = (struct ifreq *)
+		((unsigned char *)bp +_SIZEOF_ADDR_IFREQ(*bp)),
 	     j++) {
 		struct raw_iface ri;
 		const struct sockaddr_in *rs =
@@ -495,8 +494,8 @@ bool do_command_darwin(struct connection *c, struct spd_route *sr,
 				   prettypolicy(c->policy),
 				   secure_xauth_username_str,
 				   srcip_str,
-				   sr->this.updown ==
-				   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+				   sr->this.updown == NULL ?
+				     DEFAULT_UPDOWN : sr->this.updown)) {
 			loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 			       verb_suffix);
 			return FALSE;

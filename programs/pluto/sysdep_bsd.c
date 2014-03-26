@@ -488,8 +488,8 @@ bool do_command_freebsd(struct connection *c, struct spd_route *sr,
 				   prettypolicy(c->policy),
 				   secure_xauth_username_str,
 				   srcip_str,
-				   sr->this.updown ==
-				   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+				   sr->this.updown == NULL ?
+					DEFAULT_UPDOWN : sr->this.updown)) {
 			loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 			       verb_suffix);
 			return FALSE;

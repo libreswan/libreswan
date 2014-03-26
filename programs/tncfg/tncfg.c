@@ -132,8 +132,7 @@ static int createdelete_virtual(int createdelete, char *virtname)
 		exit(1);
 	}
 
-	if ((error =
-		     pfkey_outif_build(&extensions[SADB_X_EXT_PLUMBIF],
+	if ((error = pfkey_outif_build(&extensions[SADB_X_EXT_PLUMBIF],
 				       vifnum))) {
 		fprintf(stderr,
 			"%s: Trouble building outif extension, error=%d.\n",
@@ -197,10 +196,8 @@ int main(int argc, char *argv[])
 
 	tool_init_log();
 
-	while ((c =
-			getopt_long_only(argc, argv, "" /*"adchvV:P:l:+:"*/,
-					 longopts,
-					 0)) != EOF) {
+	while ((c = getopt_long_only(argc, argv, "" /*"adchvV:P:l:+:"*/,
+				     longopts, 0)) != EOF) {
 		switch (c) {
 		case 'g':
 			debug = 1;

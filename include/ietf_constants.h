@@ -904,18 +904,25 @@ enum ikev1_ipsec_attr {
 #define ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS 61444
 
 /* Auth Algorithm attribute */
-
+/* https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xml#isakmp-registry-20 */
 enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_NONE = 0, /* our private designation */
 	AUTH_ALGORITHM_HMAC_MD5 = 1,
 	AUTH_ALGORITHM_HMAC_SHA1 = 2,
 	AUTH_ALGORITHM_DES_MAC = 3,
 	AUTH_ALGORITHM_KPDK = 4,
-	AUTH_ALGORITHM_HMAC_SHA2_256 = 5,
-	AUTH_ALGORITHM_HMAC_SHA2_384 = 6,
-	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,
-	AUTH_ALGORITHM_HMAC_RIPEMD = 8,
-	AUTH_ALGORITHM_AES_CBC = 9,
+	AUTH_ALGORITHM_HMAC_SHA2_256 = 5, /* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_SHA2_384 = 6, /* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,  /* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_RIPEMD = 8, /* RFC 2857 */
+	AUTH_ALGORITHM_AES_CBC = 9, /* RFC 3566 */
+	AUTH_ALGORITHM_SIG_RSA = 10, /* RFC 4359 */
+	AUTH_ALGORITHM_AES_128_GMAC = 11, /* RFC 4542 */
+	AUTH_ALGORITHM_AES_192_GMAC = 12, /* RFC 4542 */
+	AUTH_ALGORITHM_AES_256_GMAC =  13, /* RFC 4542 */
+	/* 14-61439 Unassigned */
+	/* 61440-65535 Reserved for private use */
+
 	AUTH_ALGORITHM_NULL_KAME = 251, /* why do we load this ? */
 	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG = 252,
 };
@@ -954,17 +961,23 @@ typedef u_int16_t ipsec_auth_t;
  * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
  */
 
-#define OAKLEY_DES_CBC 1
-#define OAKLEY_IDEA_CBC 2
-#define OAKLEY_BLOWFISH_CBC 3
-#define OAKLEY_RC5_R16_B64_CBC 4
-#define OAKLEY_3DES_CBC 5
-#define OAKLEY_CAST_CBC 6
-#define OAKLEY_AES_CBC 7
-#define OAKLEY_CAMELLIA_CBC 8
-#define OAKLEY_SERPENT_CBC 65004
-#define OAKLEY_TWOFISH_CBC 65005
-#define OAKLEY_TWOFISH_CBC_SSH 65289
+enum ikev1_encr_attribute  {
+	OAKLEY_DES_CBC = 1,
+	OAKLEY_IDEA_CBC  = 2,
+	OAKLEY_BLOWFISH_CBC = 3,
+	OAKLEY_RC5_R16_B64_CBC = 4,
+	OAKLEY_3DES_CBC = 5,
+	OAKLEY_CAST_CBC = 6,
+	OAKLEY_AES_CBC = 7,
+	OAKLEY_CAMELLIA_CBC = 8,
+
+	OAKLEY_MARS_CBC = 65001,
+	OAKLEY_RC6_CBC = 65002,
+	OAKLEY_ID_65003 = 65003, /* unused - make enums easier */
+	OAKLEY_SERPENT_CBC = 65004,
+	OAKLEY_TWOFISH_CBC = 65005,
+	OAKLEY_TWOFISH_CBC_SSH = 65289,
+};
 
 #define OAKLEY_ENCRYPT_MAX 65535 /* pretty useless :) */
 
@@ -992,38 +1005,40 @@ typedef u_int16_t oakley_hash_t;
  * Goofy XAUTH extensions from draft-ietf-ipsec-isakmp-xauth-06.txt
  */
 
-#define OAKLEY_PRESHARED_KEY 1
-#define OAKLEY_DSS_SIG 2
-#define OAKLEY_RSA_SIG 3
-#define OAKLEY_RSA_ENC 4
-#define OAKLEY_RSA_ENC_REV 5
-#define OAKLEY_ELGAMAL_ENC 6
-#define OAKLEY_ELGAMAL_ENC_REV 7
+#define OAKLEY_AUTH_ROOF 5 /* We don't support Revised or ECDSA yet */
+enum ikev1_auth_method {
+	OAKLEY_PRESHARED_KEY = 1,
+	OAKLEY_DSS_SIG = 2,
+	OAKLEY_RSA_SIG = 3,
+	OAKLEY_RSA_ENC = 4, 
+	OAKLEY_RSA_REVISED_MODE = 5, /* Not implemented */
+	/* 6 - 8 Reserved */
+	OAKLEY_ECDSA_P256 = 9, /* RFC 4754 */
+	OAKLEY_ECDSA_P384 = 10, /* RFC 4754 */
+	OAKLEY_ECDSA_P521 = 11, /* RFC 4754 */
+	/* 12 - 65000 Unassigned */
 
-#define OAKLEY_AUTH_ROOF 8 /* roof on auth values THAT WE SUPPORT */
+	/*
+	 * Note: the below xauth names are mapped via xauth_calcbaseauth()
+	 * to the base functions 1-4
+	 */
+	HybridInitRSA = 64221,
+	HybridRespRSA = 64222,
+	HybridInitDSS = 64223,
+	HybridRespDSS = 64224,
+	/* For XAUTH.  Don't actually store in st->st_oakley.auth (???) */
+	XAUTHInitPreShared = 65001,
+	XAUTHRespPreShared = 65002,
+	XAUTHInitDSS = 65003,
+	XAUTHRespDSS = 65004,
+	XAUTHInitRSA = 65005,
+	XAUTHRespRSA = 65006,
+	XAUTHInitRSAEncryption = 65007,
+	XAUTHRespRSAEncryption = 65008,
+	XAUTHInitRSARevisedEncryption = 65009,
+	XAUTHRespRSARevisedEncryption = 65010,
+};
 
-/*
- * Note: the below xauth names are mapped via xauth_calcbaseauth() to the
- * base functions 1-7
- * Note2: we don't support all of the below, or all of the below, so ROOF
- * comment is lying
- */
-#define HybridInitRSA 64221
-#define HybridRespRSA 64222
-#define HybridInitDSS 64223
-#define HybridRespDSS 64224
-
-/* For XAUTH.  Don't actually store in st->st_oakley.auth (???) */
-#define XAUTHInitPreShared 65001
-#define XAUTHRespPreShared 65002
-#define XAUTHInitDSS 65003
-#define XAUTHRespDSS 65004
-#define XAUTHInitRSA 65005
-#define XAUTHRespRSA 65006
-#define XAUTHInitRSAEncryption 65007
-#define XAUTHRespRSAEncryption 65008
-#define XAUTHInitRSARevisedEncryption 65009
-#define XAUTHRespRSARevisedEncryption 65010
 
 /* typedef to make our life easier */
 typedef u_int16_t oakley_auth_t;
@@ -1051,18 +1066,35 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_MODP1024 = 2,
 	OAKLEY_GROUP_GP155 = 3,
 	OAKLEY_GROUP_GP185 = 4,
-	OAKLEY_GROUP_MODP1536 = 5,
-
-	OAKLEY_GROUP_MODP2048 = 14,
-	OAKLEY_GROUP_MODP3072 = 15,
-	OAKLEY_GROUP_MODP4096 = 16,
-	OAKLEY_GROUP_MODP6144 = 17,
-	OAKLEY_GROUP_MODP8192 = 18,
-	OAKLEY_GROUP_DH22 = 22,
-	OAKLEY_GROUP_DH23 = 23,
-	OAKLEY_GROUP_DH24 = 24,
+	OAKLEY_GROUP_MODP1536 = 5, /* RFC 3526 */
+	OAKLEY_GROUP_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups */
+	OAKLEY_GROUP_MODP2048 = 14, /* RFC 3526 */
+	OAKLEY_GROUP_MODP3072 = 15, /* RFC 3526 */
+	OAKLEY_GROUP_MODP4096 = 16, /* RFC 3526 */
+	OAKLEY_GROUP_MODP6144 = 17, /* RFC 3526 */
+	OAKLEY_GROUP_MODP8192 = 18, /* RFC 3526 */
+	OAKLEY_GROUP_ECP_256 = 19, /* RFC 5903 */
+	OAKLEY_GROUP_ECP_384 = 20, /* RFC 5903 */
+	OAKLEY_GROUP_ECP_512 = 21, /* RFC 5903 */
+	OAKLEY_GROUP_DH22 = 22, /* RFC 5114 */
+	OAKLEY_GROUP_DH23 = 23, /* RFC 5114 */
+	OAKLEY_GROUP_DH24 = 24, /* RFC 5114 */
+	OAKLEY_GROUP_ECP_192 = 25, /* RFC 5114 */
+	OAKLEY_GROUP_ECP_224 = 26, /* RFC 5114 */
+	OAKLEY_GROUP_NON_IKE_27 = 27, /* RFC 6932 - not for use with IKE/IPsec */
+	OAKLEY_GROUP_NON_IKE_28 = 28, /* RFC 6932 - not for use with IKE/IPsec */
+	OAKLEY_GROUP_NON_IKE_29 = 29, /* RFC 6932 - not for use with IKE/IPsec */
+	OAKLEY_GROUP_NON_IKE_30 = 30, /* RFC 6932 - not for use with IKE/IPsec */
+	/* 31 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
 };
-
 /*
  * Oakley Group Type attribute
  * draft-ietf-ipsec-ike-01.txt appendix A

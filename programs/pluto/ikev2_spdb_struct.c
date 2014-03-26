@@ -687,23 +687,23 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 			switch (tr->transform_type) {
 			case IKEv2_TRANS_TYPE_ENCR:
 				encrid = tr->transid;
-				if (tr->transid == encr_transform && keylen ==
-				    encr_keylen)
+				if (tr->transid == encr_transform &&
+				    keylen == encr_keylen)
 					encr_matched = TRUE;
 				break;
 
 			case IKEv2_TRANS_TYPE_INTEG:
 				integid = tr->transid;
-				if (tr->transid == integ_transform && keylen ==
-				    integ_keylen)
+				if (tr->transid == integ_transform &&
+				    keylen == integ_keylen)
 					integ_matched = TRUE;
 				keylen = integ_keylen;
 				break;
 
 			case IKEv2_TRANS_TYPE_PRF:
 				prfid = tr->transid;
-				if (tr->transid == prf_transform && keylen ==
-				    prf_keylen)
+				if (tr->transid == prf_transform &&
+				    keylen == prf_keylen)
 					prf_matched = TRUE;
 				keylen = prf_keylen;
 				break;

@@ -399,6 +399,7 @@ umlplutotest    algo-pluto-07          good
 kvmplutotest    algo-pluto-08          good
 kvmplutotest    algo-pluto-09          good
 kvmplutotest    algo-pluto-10          good
+kvmplutotest    algo-pluto-11          good
 #
 # tests for usnig multiple subnets using conn aliases
 #

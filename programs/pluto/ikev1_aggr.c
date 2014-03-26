@@ -449,7 +449,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		    mycert.type != CERT_NONE &&
 		    ((st->st_connection->spd.this.sendcert ==
-		      cert_sendifasked &&
+		        cert_sendifasked &&
 		      st->hidden_variables.st_got_certrequest) ||
 		     st->st_connection->spd.this.sendcert == cert_alwayssend ||
 		     st->st_connection->spd.this.sendcert == cert_forcedtype);
@@ -476,7 +476,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	/* done parsing; initialize crypto  */
 
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -809,7 +809,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -1150,7 +1150,7 @@ stf_status aggr_outI1(int whack_sock,
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-	if (!init_am_st_oakley(st, policy)) {
+	if (!init_aggr_st_oakley(st, policy)) {
 		/*
 		 * This is only the case if NO IKE proposal was specified in the
 		 * configuration file.  It's not the case if there were multiple
@@ -1222,7 +1222,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	/* the MD is already set up by alloc_md() */
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 

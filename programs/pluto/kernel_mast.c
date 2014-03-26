@@ -437,8 +437,8 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 			   ( (c->policy & POLICY_SAREF_TRACK) ? "yes" : "no"),
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown ==
-			   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown == NULL ?
+			     DEFAULT_UPDOWN : sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
