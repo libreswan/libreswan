@@ -1,0 +1,10 @@
+Testing dh24, specifically rhbz#841511 which claimed:
+
+whenever I set ike to use DH24, I correctly see "calc_dh_shared(): time
+elapsed (OAKLEY_GROUP_DH24)" on both initiator and responder, but there
+is also incorrect "calc_dh_shared(): time elapsed (OAKLEY_GROUP_DH23)"
+in the responder log... which is really confusing for me (nevertheless,
+connection works fine).  this does not happen with dh22 or dh23
+
+This test shows DH24 properly
+
