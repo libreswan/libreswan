@@ -142,8 +142,8 @@ stf_status main_outI1(int whack_sock,
 
 	if (HAS_IPSEC_POLICY(policy)) {
 		add_pending(dup_any(whack_sock), st, c, policy, 1,
-			predecessor ==
-			NULL ? SOS_NOBODY : predecessor->st_serialno
+			predecessor == NULL ?
+			  SOS_NOBODY : predecessor->st_serialno
 #ifdef HAVE_LABELED_IPSEC
 			, uctx
 #endif
@@ -162,7 +162,7 @@ stf_status main_outI1(int whack_sock,
 			predecessor->st_serialno);
 
 	/* set up reply */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 
@@ -257,7 +257,7 @@ stf_status main_outI1(int whack_sock,
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		/* Add supported NAT-Traversal VID */
-		if (!nat_traversal_insert_vid(np, &md.rbody)) {
+		if (!nat_traversal_insert_vid(np, &md.rbody, st)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -789,7 +789,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	 * We can't leave this to comm_handle() because we must
 	 * fill in the cookie.
 	 */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 	{
@@ -891,9 +891,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		/* reply if NAT-Traversal draft is supported */
 		st->hidden_variables.st_nat_traversal =
 			LELEM(nat_traversal_vid_to_method(
-					md->
-					quirks.
-					nat_traversal_vid));
+					md->quirks.nat_traversal_vid));
 		if ((st->hidden_variables.st_nat_traversal) &&
 			(!out_vid(np, &
 				md->rbody, md->quirks.nat_traversal_vid)))
@@ -988,9 +986,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 	if (nat_traversal_enabled && md->quirks.nat_traversal_vid) {
 		st->hidden_variables.st_nat_traversal =
 			LELEM(nat_traversal_vid_to_method(
-					md->
-					quirks.
-					nat_traversal_vid));
+					md->quirks.nat_traversal_vid));
 		libreswan_log("enabling possible NAT-traversal with method %s",
 			enum_name(&natt_method_names,
 				nat_traversal_vid_to_method(md->quirks.
@@ -1050,6 +1046,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 
 	/* Build output packet HDR;KE;Ni */
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 
@@ -1341,10 +1338,9 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 							CERT_X509_SIGNATURE,
 							gn->name,
 							&md->rbody,
-							gn->next ==
-							NULL ?
-							ISAKMP_NEXT_NONE :
-							ISAKMP_NEXT_CR))
+							gn->next ==NULL ?
+							  ISAKMP_NEXT_NONE :
+							  ISAKMP_NEXT_CR))
 						return STF_INTERNAL_ERROR;
 				}
 				free_generalNames(ca, FALSE);
@@ -1509,13 +1505,10 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	 */
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		mycert.type != CERT_NONE &&
-		((st->st_connection->spd.this.sendcert ==
-			cert_sendifasked &&
-			st->hidden_variables.st_got_certrequest) ||
-			st->st_connection->spd.this.sendcert ==
-			cert_alwayssend ||
-			st->st_connection->spd.this.sendcert ==
-			cert_forcedtype);
+		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
+		  st->hidden_variables.st_got_certrequest) ||
+		 st->st_connection->spd.this.sendcert == cert_alwayssend ||
+		 st->st_connection->spd.this.sendcert == cert_forcedtype);
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
@@ -1590,10 +1583,10 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		id_hd.isaiid_np =
 			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
 		if (!out_struct(&id_hd,
-					&isakmp_ipsec_identification_desc,
-					&md->rbody,
-					&id_pbs) ||
-			!out_chunk(id_b, &id_pbs, "my identity"))
+				&isakmp_ipsec_identification_desc,
+				&md->rbody,
+				&id_pbs) ||
+		    !out_chunk(id_b, &id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&id_pbs);
@@ -1679,7 +1672,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		pb_stream notify_pbs;
 		struct isakmp_notification isan;
 
-		libreswan_log("I am sending INITIAL_CONTACT");
+		libreswan_log("sending INITIAL_CONTACT");
 
 		isan.isan_np = ISAKMP_NEXT_NONE;
 		isan.isan_doi = ISAKMP_DOI_IPSEC;
@@ -1701,7 +1694,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		/* zero length data payload */
 		close_output_pbs(&notify_pbs);
 	} else {
-		libreswan_log("Not sending INITIAL_CONTACT");
+		DBG(DBG_CONTROL, DBG_log("Not sending INITIAL_CONTACT"));
 	}
 
 	/* encrypt message, except for fixed part of header */
@@ -1871,9 +1864,8 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 			struct key_continuation *nkc =
 				alloc_thing(struct key_continuation,
 					"key continuation");
-			enum key_oppo_step step_done = kc ==
-				NULL ? kos_null : kc->
-				step;
+			enum key_oppo_step step_done =
+				kc == NULL ? kos_null : kc->step;
 			err_t ugh;
 
 			/* Record that state is used by a suspended md */
@@ -1994,8 +1986,8 @@ void key_continue(struct adns_continuation *cr,
 		} else {
 
 #ifdef USE_KEYRR
-			passert(kc->step == kos_his_txt || kc->step ==
-				kos_his_key);
+			passert(kc->step == kos_his_txt ||
+				kc->step == kos_his_key);
 #else
 			passert(kc->step == kos_his_txt);
 #endif
@@ -2073,11 +2065,9 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		mycert.type != CERT_NONE &&
-		((st->st_connection->spd.this.sendcert ==
-			cert_sendifasked &&
-			st->hidden_variables.st_got_certrequest) ||
-			st->st_connection->spd.this.sendcert ==
-			cert_alwayssend);
+		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
+		  st->hidden_variables.st_got_certrequest) ||
+		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
@@ -2295,8 +2285,8 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 
 	ISAKMP_SA_established(st->st_connection, st->st_serialno);
 
-	passert((st->st_policy & POLICY_PFS) == 0 || st->st_pfs_group !=
-		NULL );
+	passert((st->st_policy & POLICY_PFS) == 0 ||
+		st->st_pfs_group != NULL );
 
 	/*
 	 * save last IV from phase 1 so it can be restored later so anything
@@ -2346,7 +2336,7 @@ stf_status send_isakmp_notification(struct state *st,
 
 	msgid = generate_msgid(st);
 
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"ISAKMP notify");
 
@@ -2456,8 +2446,13 @@ static void send_notification(struct state *sndst, notification_t type,
 			msgid_t msgid, u_char *icookie, u_char *rcookie,
 			u_char protoid)
 {
-	u_char buffer[1024];
-	pb_stream pbs, r_hdr_pbs;
+	/* buffer in which to marshal our notification.
+	 * We don't use reply_buffer/reply_stream because they might be in use.
+	 */
+	u_char buffer[1024];	/* ??? large enough for any notification? */
+	pb_stream pbs;
+
+	pb_stream r_hdr_pbs;
 	u_char *r_hashval, *r_hash_start;
 	static time_t last_malformed;
 	time_t n = time(NULL);
@@ -2517,7 +2512,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		ip_str(&sndst->st_remoteaddr),
 		sndst->st_remoteport);
 
-	zero(buffer);
+	zero(&buffer);
 	init_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
 
 	/* HDR* */
@@ -2692,10 +2687,14 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
  */
 void ikev1_delete_out(struct state *st)
 {
+	/* buffer in which to marshal our deletion notification.
+	 * We don't use reply_buffer/reply_stream because they might be in use.
+	 */
+	u_char buffer[8192];	/* ??? large enough for any deletion notification? */
 	pb_stream reply_pbs;
+
 	pb_stream r_hdr_pbs;
 	msgid_t msgid;
-	u_char buffer[8192];
 	struct state *p1st;
 	ip_said said[EM_MAXRELSPIS];
 	ip_said *ns = said;
@@ -2741,7 +2740,7 @@ void ikev1_delete_out(struct state *st)
 
 	msgid = generate_msgid(p1st);
 
-	zero(buffer);
+	zero(&buffer);
 	init_pbs(&reply_pbs, buffer, sizeof(buffer), "delete msg");
 
 	/* HDR* */
@@ -3018,9 +3017,9 @@ void accept_delete(struct state *st, struct msg_digest *md,
 #define DELETE_SA_DELAY EVENT_RETRANSMIT_DELAY_0
 					if (dst->st_event != NULL &&
 						dst->st_event->ev_type ==
-						EVENT_SA_REPLACE &&
+						  EVENT_SA_REPLACE &&
 						dst->st_event->ev_time <=
-						DELETE_SA_DELAY + now()) {
+						  DELETE_SA_DELAY + now()) {
 						/*
 						 * Patch from Angus Lees to
 						 * ignore retransmited

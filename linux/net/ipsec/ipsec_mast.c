@@ -964,9 +964,8 @@ int ipsec_mast_createnum(int vifnum)
 	im = alloc_netdev(sizeof(struct mastpriv), name,
 			  ipsec_mast_netdev_setup);
 #else
-	im =
-		(struct net_device *)kmalloc(sizeof(struct net_device),
-					     GFP_KERNEL);
+	im = (struct net_device *)kmalloc(sizeof(struct net_device),
+					  GFP_KERNEL);
 #endif
 	if (im == NULL) {
 		printk(KERN_ERR "failed to allocate space for mast%d device\n",

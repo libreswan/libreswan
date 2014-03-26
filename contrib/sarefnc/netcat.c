@@ -690,9 +690,8 @@ newskt:
 		holler("nnetfd reuseaddr failed"); /* ??? */
 #ifdef SO_BROADCAST
 	if (o_allowbroad) {
-		rr =
-			setsockopt(nnetfd, SOL_SOCKET, SO_BROADCAST, &x,
-				   sizeof(x));
+		rr = setsockopt(nnetfd, SOL_SOCKET, SO_BROADCAST, &x,
+				sizeof(x));
 		if (rr == -1)
 			holler("nnetfd reuseaddr failed"); /* ??? */
 	}
@@ -711,9 +710,8 @@ newskt:
 #endif
 	if (o_keepalive) {
 		x = 1;
-		rr =
-			setsockopt(nnetfd, SOL_SOCKET, SO_KEEPALIVE, &x,
-				   sizeof(x));
+		rr = setsockopt(nnetfd, SOL_SOCKET, SO_KEEPALIVE, &x,
+				sizeof(x));
 		if (rr == -1)
 			holler("nnetfd set keepalive failed");
 	}
@@ -891,9 +889,8 @@ socklen_t *addrlen;
 	if (!requested_refinfo) {
 		int val = 1;
 
-		rc =
-			setsockopt(fd, IPPROTO_IP, IP_IPSEC_REFINFO, &val,
-				   sizeof(val));
+		rc = setsockopt(fd, IPPROTO_IP, IP_IPSEC_REFINFO, &val,
+				sizeof(val));
 		if (rc == -1)
 			bail("failed setting IPsec SAref cmsg info flag");
 		requested_refinfo = 1;
@@ -1644,10 +1641,8 @@ char ** argv;
 
 /* If your shitbox doesn't have getopt, step into the nineties already. */
 /* optarg, optind = next-argv-component [i.e. flag arg]; optopt = last-char */
-	while ((x =
-			getopt(argc, argv,
-			       "abc:e:g:G:hi:klno:p:q:rs:S:T:tuvw:z")) !=
-	       EOF) {
+	while ((x = getopt(argc, argv, "abc:e:g:G:hi:klno:p:q:rs:S:T:tuvw:z"))
+	       != EOF) {
 /* Debug (("in go: x now %c, optarg %x optind %d", x, optarg, optind)) */
 		switch (x) {
 		case 'a':

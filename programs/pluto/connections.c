@@ -428,10 +428,10 @@ void check_orientations(void)
 				for (hp = host_pairs; hp != NULL;
 					hp = hp->next) {
 					if (sameaddr(&hp->him.addr,
-							&i->ip_addr) &&
-						(kern_interface != NO_KERNEL ||
-							hp->him.host_port ==
-							pluto_port)) {
+						     &i->ip_addr) &&
+					    (kern_interface != NO_KERNEL ||
+					     hp->him.host_port == pluto_port))
+					{
 						/*
 						 * bad news: the whole chain of
 						 * connections hanging off this
@@ -451,8 +451,7 @@ void check_orientations(void)
 
 						hp->connections = NULL;
 						while (c != NULL) {
-							struct connection *nxt
-								=
+							struct connection *nxt =
 								c->hp_next;
 
 							c->interface = NULL;
@@ -1394,6 +1393,7 @@ void add_connection(const struct whack_message *wm)
 
 		c->forceencaps = wm->forceencaps;
 		c->nat_keepalive = wm->nat_keepalive;
+		c->ikev1_natt = wm->ikev1_natt;
 		c->initial_contact = wm->initial_contact;
 		c->cisco_unity = wm->cisco_unity;
 		c->send_vendorid = wm->send_vendorid;
@@ -1569,8 +1569,8 @@ void add_connection(const struct whack_message *wm)
 
 #ifdef HAVE_LABELED_IPSEC
 		if (c->loopback &&
-			portof(&c->spd.this.client.addr) !=
-			portof(&c->spd.that.client.addr) ) {
+		    portof(&c->spd.this.client.addr) !=
+		      portof(&c->spd.that.client.addr) ) {
 			struct spd_route *tmp_spd;
 			u_int16_t tmp_this_port, tmp_that_port;
 
@@ -1614,15 +1614,15 @@ void add_connection(const struct whack_message *wm)
 		passert(c->addr_family == addrtypeof(&c->spd.this.host_addr));
 		passert(c->addr_family ==
 			addrtypeof(&c->spd.this.host_nexthop));
-		passert((c->spd.this.has_client ? c->tunnel_addr_family : c->
-				addr_family) ==
+		passert((c->spd.this.has_client ?
+			  c->tunnel_addr_family : c-> addr_family) ==
 			subnettypeof(&c->spd.this.client));
 
 		passert(c->addr_family == addrtypeof(&c->spd.that.host_addr));
 		passert(c->addr_family ==
 			addrtypeof(&c->spd.that.host_nexthop));
-		passert((c->spd.that.has_client ? c->tunnel_addr_family : c->
-				addr_family) ==
+		passert((c->spd.that.has_client ?
+			  c->tunnel_addr_family : c->addr_family) ==
 			subnettypeof(&c->spd.that.client));
 #endif
 
@@ -2111,17 +2111,17 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					c->instance_initiation_ok) &&
 				addrinsubnet(our_client, &sr->this.client) &&
 				addrinsubnet(peer_client, &sr->that.client) &&
-				(!sr->this.protocol || transport_proto ==
-					sr->this.protocol) &&
+				(!sr->this.protocol ||
+				    transport_proto == sr->this.protocol) &&
 				(!sr->this.port || our_port == sr->this.port) &&
 				(!sr->that.port ||
 					peer_port == sr->that.port)) {
 
-				policy_prio_t prio = 8 *
-					(c->prio + (c->kind ==
-						CK_INSTANCE)) + 2 *
-					(sr->this.port == our_port) + 2 *
-					(sr->that.port == peer_port) +
+				policy_prio_t prio =
+					8 * (c->prio +
+					     (c->kind == CK_INSTANCE)) +
+					2 * (sr->this.port == our_port) +
+					2 * (sr->that.port == peer_port) +
 					(sr->this.protocol == transport_proto);
 
 				DBG(DBG_CONTROLMORE, {
@@ -2518,6 +2518,9 @@ struct connection *find_host_connection2(const char *func,
 			if ((c->policy & policy) == policy)
 				break;
 
+			/* ??? the following if doesn't do anything.
+			 * What's it supposed to do?
+			 */
 			if ((policy & POLICY_XAUTH) !=
 				(c->policy & POLICY_XAUTH))
 				continue;
@@ -2765,31 +2768,33 @@ struct connection *refine_host_connection(const struct state *st,
 			bool match3 = match_requested_ca(c->requested_ca,
 							d->spd.this.ca,
 							&our_pathlen);
-			bool match = match1 && match2 && match3;
 
 			DBG(DBG_CONTROLMORE,
 				DBG_log("refine_connection: checking %s "
 					"against %s, best=%s with "
 					"match=%d(id=%d/ca=%d/reqca=%d)",
-					c->name, d->name, best_found ?
-					best_found->name : "(none)", match,
+					c->name, d->name,
+					best_found ?
+						best_found->name : "(none)",
+					match1 && match2 && match3,
 					match1, match2, match3));
 
 			/* ignore group connections */
 			if (d->policy & POLICY_GROUP)
 				continue;
 
+			/* match2 and match3 are required */
+			if (!match2 || !match3)
+				continue;
 			/*
 			 * Check if peer_id matches, exactly or after
 			 * instantiation.
 			 * Check for the match but also check to see if it's
 			 * the %fromcert + peer id match result. - matt
 			 */
-			if (!match && !(*fromcert =
-						((id_kind(&d->spd.that.id) ==
-							ID_FROMCERT) &&
-							(!match1 && match2 &&
-								match3))))
+			if (!match1 &&
+			    !(*fromcert =
+				 id_kind(&d->spd.that.id) == ID_FROMCERT))
 				continue;
 
 			/* if initiator, our ID must match exactly */
@@ -2883,8 +2888,8 @@ struct connection *refine_host_connection(const struct state *st,
 			 * D has passed all the tests.
 			 * We'll go with it if the Peer ID was an exact match.
 			 */
-			if (match && wildcards == 0 && peer_pathlen == 0 &&
-				our_pathlen == 0)
+			if (match1 && wildcards == 0 && peer_pathlen == 0 &&
+			    our_pathlen == 0)
 				return d;
 
 			/*
@@ -3144,14 +3149,12 @@ static struct connection *fc_try(const struct connection *c,
 			if (sr->that.has_client) {
 				if (sr->that.has_client_wildcard) {
 					if (!subnetinsubnet(peer_net,
-								&sr->
-								that.client))
+							    &sr->that.client))
 						continue;
 				} else {
-					if ((!samesubnet(&sr->that.client,
-								peer_net)) &&
-						(!is_virtual_sr(sr))
-						) {
+					if (!samesubnet(&sr->that.client,
+							 peer_net) &&
+					    !is_virtual_sr(sr)) {
 						DBG(DBG_CONTROLMORE,
 							DBG_log("   their "
 								"client(%s) "
@@ -3161,19 +3164,18 @@ static struct connection *fc_try(const struct connection *c,
 						continue;
 					}
 
-					virtualwhy =
-						is_virtual_net_allowed(d,
-								peer_net,
-								&sr->
-								that.host_addr);
+					virtualwhy = is_virtual_net_allowed(
+							d,
+							peer_net,
+							&sr->that.host_addr);
 
-					if ((is_virtual_sr(sr)) &&
-						( (virtualwhy != NULL) ||
-							(is_virtual_net_used(d,
-								peer_net,
-								peer_id ?
-								peer_id : &
-								sr->that.id)) ))
+					if (is_virtual_sr(sr) &&
+					    (virtualwhy != NULL ||
+					     is_virtual_net_used(
+						d,
+						peer_net,
+						peer_id != NULL ?
+						    peer_id : &sr->that.id)))
 					{
 						DBG(DBG_CONTROLMORE,
 							DBG_log("   virtual "
@@ -3588,21 +3590,20 @@ static void show_one_sr(struct connection *c,
 			 * Both should not be set, but if they are, we want to
 			 * know
 			 */
-			(!sr->this.xauth_server &&
-				!sr->this.xauth_client) ? "none" :
-			(sr->this.xauth_server &&
-				sr->this.xauth_client) ? "both??" :
-			(sr->this.xauth_server) ? "server" : "client",
-			(!sr->that.xauth_server &&
-				!sr->that.xauth_client) ? "none" :
-			(sr->that.xauth_server &&
-				sr->that.xauth_client) ? "both??" :
-			(sr->that.xauth_server) ? "server" : "client",
+			sr->this.xauth_server ?
+				sr->this.xauth_client ? "both??" : "server" :
+				sr->this.xauth_client ? "client" : "none",
+			sr->that.xauth_server ?
+				sr->that.xauth_client ? "both??" : "server" :
+				sr->that.xauth_client ? "client" : "none",
 			/* should really be an enum name */
-			(sr->this.xauth_server) ? (c->xauthby ==
-						XAUTHBY_FILE) ? "method:file;" :
-			((c->xauthby == XAUTHBY_PAM) ?
-				"method:pam;" : "method:alwaysok;" ) : "",
+			sr->this.xauth_server ?
+				c->xauthby == XAUTHBY_FILE ?
+					"method:file;" :
+				c->xauthby == XAUTHBY_PAM ?
+					"method:pam;" :
+					"method:alwaysok;" :
+				"",
 			thisxauthsemi,
 			thatxauthsemi
 			);
@@ -3773,14 +3774,17 @@ void show_one_connection(struct connection *c)
 	if (c->dpd_timeout > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   dpd: %s; delay:%lu; timeout:%lu; "
-			"nat-t: force_encaps:%s; nat_keepalive:%s;",
+			"nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
 			c->name,
 			instance,
 			enum_name(&dpd_action_names, c->dpd_action),
 			(unsigned long)c->dpd_delay,
 			(unsigned long)c->dpd_timeout,
 			(c->forceencaps) ? "yes" : "no",
-			(c->nat_keepalive) ? "yes" : "no");
+			(c->nat_keepalive) ? "yes" : "no",
+			(c->ikev1_natt == natt_both) ? "both" :
+			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts")
+		);
 	}
 
 	if (c->extra_debugging) {

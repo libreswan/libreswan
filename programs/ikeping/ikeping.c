@@ -326,9 +326,8 @@ int main(int argc, char **argv)
 	listen_only = 0;
 	bzero(&laddr, sizeof(laddr));
 
-	while ((c =
-			getopt_long(argc, argv, "hVvsp:b:46E:M:m:L:l:w:", long_opts,
-				    0)) != EOF) {
+	while ((c = getopt_long(argc, argv, "hVvsp:b:46E:M:m:L:l:w:", long_opts,
+				0)) != EOF) {
 		switch (c) {
 		case 'h':               /* --help */
 			help();

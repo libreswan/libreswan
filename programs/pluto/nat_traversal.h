@@ -115,7 +115,7 @@ extern int nat_traversal_espinudp_socket(int sk, const char *fam);
  * Vendor ID
  */
 bool nat_traversal_add_vid(u_int8_t np, pb_stream *outs);
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs);
+bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *st);
 u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);

@@ -420,8 +420,7 @@ int main(int argc, char **argv)
 		 * by getopt_long, so we simply pass an empty string as
 		 * the list.  It could be "hp:d:c:o:eatfs" "NARXPECK".
 		 */
-		int c =
-			getopt_long(argc, argv, "", long_opts,
+		int c = getopt_long(argc, argv, "", long_opts,
 				    &long_index) - OPTION_OFFSET;
 		int aux = 0;
 

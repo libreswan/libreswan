@@ -109,7 +109,7 @@ install: build
 	dh_installdirs
 
 	mkdir -p $(MODDESTDIR)
-	cp modobj26/ipsec.ko $(MODDESTDIR)
+	cp modobj/ipsec.ko $(MODDESTDIR)
 
 
 # Build architecture-independent files here.

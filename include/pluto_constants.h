@@ -66,9 +66,9 @@ enum keyword_xauthfail {
  *   *
  *    */
 enum natt_method {
-	NAT_TRAVERSAL_METHOD_IETF_00_01     =1,
+	NAT_TRAVERSAL_METHOD_IETF_00_01     =1, /* no longer supported */
 	NAT_TRAVERSAL_METHOD_IETF_02_03     =2,
-	NAT_TRAVERSAL_METHOD_IETF_05        =3,
+	NAT_TRAVERSAL_METHOD_IETF_05        =3, /* same as RFC */
 	NAT_TRAVERSAL_METHOD_IETF_RFC       =4,
 
 	NAT_TRAVERSAL_NAT_BHND_ME           =30,
@@ -351,41 +351,37 @@ enum phase1_role {
 
 #define STATE_IKE_FLOOR STATE_MAIN_R0
 
-#define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | LELEM(STATE_MAIN_I2) \
-				  | LELEM(STATE_MAIN_I3) | LELEM(STATE_MAIN_I4) \
-				  | LELEM(STATE_AGGR_I1) | LELEM(STATE_AGGR_I2) \
-				  | LELEM(STATE_XAUTH_I0) | \
-				  LELEM(STATE_XAUTH_I1) \
-				  | LELEM(STATE_MODE_CFG_I1))
-#define IS_PHASE1_INIT(s)         ((s) == STATE_MAIN_I1 \
-				   || (s) == STATE_MAIN_I2 \
-				   || (s) == STATE_MAIN_I3 \
-				   || (s) == STATE_MAIN_I4 \
-				   || (s) == STATE_AGGR_I1 \
-				   || (s) == STATE_AGGR_I2 \
-				   || (s) == STATE_XAUTH_I0 \
-				   || (s) == STATE_XAUTH_I1 \
-				   || (s) == STATE_MODE_CFG_I1)
+#define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
+				  LELEM(STATE_MAIN_I2) | \
+				  LELEM(STATE_MAIN_I3) | \
+				  LELEM(STATE_MAIN_I4) | \
+				  LELEM(STATE_AGGR_I1) | \
+				  LELEM(STATE_AGGR_I2) | \
+				  LELEM(STATE_XAUTH_I0) | \
+				  LELEM(STATE_XAUTH_I1) | \
+				  LELEM(STATE_MODE_CFG_I1))
+
+#define IS_PHASE1_INIT(s) ((LELEM(s) & PHASE1_INITIATOR_STATES) != LEMPTY)
+
 #define IS_PHASE1(s) (STATE_MAIN_R0 <= (s) && (s) <= STATE_AGGR_R2)
+
 #define IS_PHASE15(s) (STATE_XAUTH_R0 <= (s) && (s) <= STATE_XAUTH_I1)
+
 #define IS_QUICK(s) (STATE_QUICK_R0 <= (s) && (s) <= STATE_QUICK_R2)
-#define IS_ISAKMP_ENCRYPTED(s)     (STATE_MAIN_R2 <= (s) && STATE_AGGR_R0 != \
-				    (s) && STATE_AGGR_I1 != (s) && \
-				    STATE_INFO != (s))
-#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) && STATE_AGGR_R0 != \
-				    (s) && STATE_AGGR_I1 != (s))
-#define IS_ISAKMP_SA_ESTABLISHED(s) ((s) == STATE_MAIN_R3 || (s) == \
-				     STATE_MAIN_I4 \
-				     || (s) == STATE_AGGR_I2 || (s) == \
-				     STATE_AGGR_R2 \
-				     || (s) == STATE_XAUTH_R0 || (s) == \
-				     STATE_XAUTH_R1 \
-				     || (s) == STATE_MODE_CFG_R0 || (s) == \
-				     STATE_MODE_CFG_R1 \
-				     || (s) == STATE_MODE_CFG_R2 || (s) == \
-				     STATE_MODE_CFG_I1 \
-				     || (s) == STATE_XAUTH_I0 || (s) == \
-				     STATE_XAUTH_I1)
+
+#define ISAKMP_ENCRYPTED_STATES  (LRANGE(STATE_MAIN_R2, STATE_MAIN_I4) | \
+				  LRANGE(STATE_AGGR_R1, STATE_AGGR_R2) | \
+				  LRANGE(STATE_QUICK_R0, STATE_QUICK_R2) | \
+				  LELEM(STATE_INFO_PROTECTED) | \
+				  LRANGE(STATE_XAUTH_R0, STATE_XAUTH_I1))
+
+#define IS_ISAKMP_ENCRYPTED(s) ((LELEM(s) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
+
+/* ??? Is this really authenticate?  Even in xauth case? In STATE_INFO case? */
+#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) \
+				    && STATE_AGGR_R0 != (s) \
+				    && STATE_AGGR_I1 != (s))
+
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
 				       LELEM(STATE_AGGR_I2) | \
@@ -399,13 +395,21 @@ enum phase1_role {
 				       LELEM(STATE_XAUTH_I0) | \
 				       LELEM(STATE_XAUTH_I1))
 
-#define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || (s) == \
-				    STATE_QUICK_R2)
+#define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+
+/* IKEv1 or IKEv2 */
+#define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || \
+				    (s) == STATE_QUICK_R2 || \
+				    (s) == STATE_PARENT_I3 || \
+				    (s) == STATE_PARENT_R2)
+
+/* Only relevant to IKEv1 */
+
 #define IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_R1)
+
 #define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
 
-/* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
-#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
+/* Only relevant to IKEv2 */
 
 #define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I2 || \
 				     (s) == STATE_PARENT_R1 || \
@@ -415,16 +419,22 @@ enum phase1_role {
 		            (s) == STATE_PARENT_I2 || \
 			    (s) == STATE_PARENT_I3)
 
+/* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
+
+#define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
+
 /*
- * ??? Issue here is that our child sa appears as a STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
+ * ??? Issue here is that our child SA appears as a
+ * STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
-#define IS_CHILD_SA_ESTABLISHED(st) ( (((st->st_state == STATE_PARENT_I3) || \
-					(st->st_state == STATE_PARENT_R2)) && \
-				       (st->st_clonedfrom != SOS_NOBODY)) || \
-				      (st->st_state == STATE_CHILDSA_DEL) )
+#define IS_CHILD_SA_ESTABLISHED(st) \
+    (((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) && \
+      st->st_clonedfrom != SOS_NOBODY) || \
+     st->st_state == STATE_CHILDSA_DEL)
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
+
 #define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
 
 /* kind of struct connection
@@ -470,6 +480,12 @@ enum certpolicy {
 
 /* this is the default setting. */
 #define cert_defaultcertpolicy cert_alwayssend
+
+enum ikev1_natt_policy {
+	natt_both = 0, /* the default */
+	natt_rfc = 1,
+	natt_drafts = 2 /* Workaround for Cisco NAT-T bug */
+};
 
 enum four_options {
 	fo_never   = 0,         /* do not propose, do not permit */

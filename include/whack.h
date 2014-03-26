@@ -140,6 +140,8 @@ struct whack_message {
 
 	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
 	bool nat_keepalive;
+	/* Option to tweak sending NATT drafts, rfc or both  */
+	enum ikev1_natt_policy ikev1_natt;
 
 	/* Option to allow sending INITIAL-CONTACT payload - default is disabled */
 	bool initial_contact;

@@ -199,8 +199,8 @@ INSTSUIDFLAGS=-m 0755 -g root -o root
 endif
 
 
-#INSTMANFLAGS?="-m 644"
-INSTCONFFLAGS?=
+#INSTMANFLAGS?=--mode=0644
+INSTCONFFLAGS?=--mode=0644
 # For OSX use
 #INSTBINFLAGS?=-b -B .old
 #INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old
@@ -387,10 +387,6 @@ USE_EXTRACRYPTO?=true
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
 
-# Do we have Openssl libraries available for BIGNUM support?
-# Required of HAVE_OCF support
-HAVE_OPENSSL?=false
-
 # Userland (IKE) Open Cryptographic Framework support (hw crypto offload)
 # For Kernel level OCF support, enable CONFIG_KLIPS_OCF on a kernel that
 # has support for OCF (inline or module)
@@ -486,15 +482,12 @@ LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
 LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
-LIBDESLITE:=${OBJDIRTOP}/lib/libcrypto/libdes/libdes.a
-LIBLSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liblswcrypto/liblswcrypto.a
-LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
 LIBMD5=${OBJDIRTOP}/lib/libcrypto/libmd5/libmd5.a
 LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
-CRYPTOLIBS=${LIBAES} ${LIBSHA1} ${LIBMD5} ${LIBDESLITE} ${LIBSHA2}
+CRYPTOLIBS=${LIBSHA1} ${LIBMD5} ${LIBSHA2}
 
 ifeq ($(USE_EXTRACRYPTO),true)
 CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH}
@@ -503,6 +496,10 @@ endif
 CRYPTOLIBS += ${LIBLSWCRYPTO}
 ifeq ($(HAVE_OCF),true)
 CRYPTOLIBS += -lcrypto
+LIBLSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liblswcrypto/liblswcrypto.a
+LIBDESLITE:=${OBJDIRTOP}/lib/libcrypto/libdes/libdes.a
+LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
+CRYPTOLIBS+=${LIBAES} ${LIBDESLITE}
 endif
 
 LIBPOLICYDIR=${LIBRESWANSRCDIR}/linux/lib/libipsecpolicy

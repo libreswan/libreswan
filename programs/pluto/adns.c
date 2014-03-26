@@ -225,14 +225,13 @@ static int worker(int qfd, int afd)
 				      a.ans, sizeof(a.ans));
 		a.h_errno_val = h_errno;
 
-		a.len =
-			offsetof(struct adns_answer,
+		a.len = offsetof(struct adns_answer,
 				 ans) + (a.result < 0 ? 0 : a.result);
 
-		if (((q.debugging & IMPAIR_DELAY_ADNS_KEY_ANSWER) && q.type ==
-		     ns_t_key) ||
-		    ((q.debugging & IMPAIR_DELAY_ADNS_TXT_ANSWER) && q.type ==
-		     ns_t_txt))
+		if (((q.debugging & IMPAIR_DELAY_ADNS_KEY_ANSWER) &&
+		     q.type == ns_t_key) ||
+		    ((q.debugging & IMPAIR_DELAY_ADNS_TXT_ANSWER) &&
+		     q.type == ns_t_txt))
 			sleep(30); /* delay the answer */
 
 		/* write answer, possibly a bit at a time */
@@ -497,11 +496,10 @@ static int master(void)
 		if (ndes == 0)
 			return HES_OK; /* done! */
 
-		do
-			ndes =
-				lsw_select(maxfd + 1, &readfds, NULL, NULL,
-					   NULL);
-		while (ndes == -1 && errno == EINTR);
+		do {
+			ndes = lsw_select(maxfd + 1, &readfds, NULL, NULL,
+					  NULL);
+		} while (ndes == -1 && errno == EINTR);
 		if (ndes == -1) {
 			syslog(LOG_ERR, "select(2) error: %s",
 			       strerror(errno));

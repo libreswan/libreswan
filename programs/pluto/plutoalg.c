@@ -74,15 +74,25 @@ static int aalg_getbyname_ike(const char *str, int len)
 	int ret = -1;
 	int num_read;
 	static const char sha2_256_aka[] = "sha2";
+	static const char sha1_aka[] = "sha";
 
 	DBG_log("entering aalg_getbyname_ike()");
 	if (str == NULL || str == '\0')
 		return ret;
 
 	/* handle "sha2" as "sha2_256" */
-	if (len == sizeof(sha2_256_aka)-1 && strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
+	if (len == sizeof(sha2_256_aka)-1 &&
+	    strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
 		DBG_log("interpreting sha2 as sha2_256");
 		str = "sha2_256";
+		len = strlen(str);
+	}
+
+	/* now "sha" as "sha1" */
+	if (len == sizeof(sha1_aka)-1 &&
+	    strncasecmp(str, sha1_aka, sizeof(sha1_aka)-1) == 0) {
+		DBG_log("interpreting sha as sha1");
+		str = "sha1";
 		len = strlen(str);
 	}
 
@@ -253,10 +263,8 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 
 		eklen = esp_info->esp_ealg_keylen;
 		if (!eklen) {
-			eklen =
-				kernel_alg_esp_enc_max_keylen(esp_info->esp_ealg_id)
-				*
-				BITS_PER_BYTE;
+			eklen = kernel_alg_esp_enc_max_keylen(esp_info->esp_ealg_id)
+				* BITS_PER_BYTE;
 		}
 		aklen = esp_info->esp_aalg_keylen;
 		if (!aklen)
@@ -471,7 +479,6 @@ static void kernel_alg_policy_algorithms(struct esp_info *esp_info)
 			 */
 			esp_info->esp_ealg_keylen =
 				esp_ealg[ealg_i].sadb_alg_maxbits;
-
 		}
 	}
 }

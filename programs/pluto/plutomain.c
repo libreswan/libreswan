@@ -218,9 +218,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef HAVE_BROKEN_POPEN
 					    " BROKEN_POPEN"
 #endif
-#ifndef OPENSSL
 					    " NSS"
-#endif
 #ifdef DNSSEC
 					    " DNSSEC"
 #endif
@@ -443,23 +441,6 @@ int main(int argc, char **argv)
 	leak_detective = FALSE;
 #endif
 
-#ifdef HAVE_LIBCAP_NG
-	/*
-	 * Drop capabilities - this generates a false positive valgrind warning
-	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
-	 */
-	capng_clear(CAPNG_SELECT_BOTH);
-
-	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
-		      CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
-		      CAP_IPC_LOCK, CAP_AUDIT_WRITE,
-		      CAP_SETGID, CAP_SETUID, /* for google authenticator pam */
-		      -1);
-	/* our children must be able to CAP_NET_ADMIN to change routes.
-	 */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1); /* DAC needed for google authenticator pam */
-	capng_apply(CAPNG_SELECT_BOTH);
-#endif
 
 	libreswan_passert_fail = passert_fail;
 
@@ -1031,6 +1012,27 @@ int main(int argc, char **argv)
 		}
 	}
 
+#ifdef HAVE_LIBCAP_NG
+	/*
+	 * Drop capabilities - this generates a false positive valgrind warning
+	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
+	 *
+	 * We drop these after creating the pluto socket or else we can't create
+	 * a socket if the parent dir is non-root
+	 */
+	capng_clear(CAPNG_SELECT_BOTH);
+
+	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
+		      CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
+		      CAP_IPC_LOCK, CAP_AUDIT_WRITE,
+		      CAP_SETGID, CAP_SETUID, /* for google authenticator pam */
+		      -1);
+	/* our children must be able to CAP_NET_ADMIN to change routes.
+	 */
+	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1); /* DAC needed for google authenticator pam */
+	capng_apply(CAPNG_SELECT_BOTH);
+#endif
+
 	/* If not suppressed, do daemon fork */
 
 	if (fork_desired) {
@@ -1312,7 +1314,9 @@ int main(int argc, char **argv)
 	init_connections();
 	init_crypto();
 	init_crypto_helpers(nhelpers);
+#ifdef OPENSSL
 	load_lswcrypto();
+#endif
 	init_demux();
 	init_kernel();
 	init_adns();

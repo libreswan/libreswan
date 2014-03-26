@@ -451,7 +451,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		    mycert.type != CERT_NONE &&
 		    ((st->st_connection->spd.this.sendcert ==
-		      cert_sendifasked &&
+		        cert_sendifasked &&
 		      st->hidden_variables.st_got_certrequest) ||
 		     st->st_connection->spd.this.sendcert == cert_alwayssend ||
 		     st->st_connection->spd.this.sendcert == cert_forcedtype);
@@ -478,6 +478,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	/* done parsing; initialize crypto  */
 
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -811,7 +812,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -835,7 +836,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 
 	/* HASH_I or SIG_I out */
 	{
-		u_char buffer[1024];
+		u_char idbuf[1024]; /* fits all possible identity payloads? */
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
 		pb_stream id_pbs;
@@ -843,7 +844,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 		size_t hash_len;
 
 		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this);
-		init_pbs(&id_pbs, buffer, sizeof(buffer), "identity payload");
+		init_pbs(&id_pbs, idbuf, sizeof(idbuf), "identity payload");
 		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&id_pbs, NULL) ||
@@ -951,7 +952,7 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 {
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
-	u_char buffer[1024];	/* ??? enough room for reconstructed peer ID payload? */
+	u_char idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
 	struct payload_digest id_pd;
 
 	if (st->hidden_variables.st_nat_traversal) {
@@ -971,7 +972,7 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 		pb_stream id_pbs;
 
 		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that);
-		init_pbs(&pbs, buffer, sizeof(buffer), "identity payload");
+		init_pbs(&pbs, idbuf, sizeof(idbuf), "identity payload");
 		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 
 		/* interop ID for SoftRemote & maybe others ? */
@@ -1152,7 +1153,7 @@ stf_status aggr_outI1(int whack_sock,
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-	if (!init_am_st_oakley(st, policy)) {
+	if (!init_aggr_st_oakley(st, policy)) {
 		/*
 		 * This is only the case if NO IKE proposal was specified in the
 		 * configuration file.  It's not the case if there were multiple
@@ -1224,7 +1225,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	/* the MD is already set up by alloc_md() */
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(reply_buffer);
+	zero(&reply_buffer);
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
 
@@ -1318,7 +1319,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	if (nat_traversal_enabled) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!nat_traversal_insert_vid(np, &md->rbody)) {
+		if (!nat_traversal_insert_vid(np, &md->rbody, st)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}

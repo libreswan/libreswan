@@ -276,9 +276,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		return "10" "NSS error: Not enough memory to create arena";
 	}
 
-	publicKey =
-		(SECKEYPublicKey *) PORT_ArenaZAlloc(arena,
-						     sizeof(SECKEYPublicKey));
+	publicKey = (SECKEYPublicKey *)
+		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
 	if (!publicKey) {
 		PORT_FreeArena(arena, PR_FALSE);
 		PORT_SetError(SEC_ERROR_NO_MEMORY);

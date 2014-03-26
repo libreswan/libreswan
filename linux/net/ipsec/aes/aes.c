@@ -593,38 +593,42 @@ static const u_int32_t rcon_tab[29] =
 
 #if defined(ONE_TABLE)
 static const u_int32_t ft_tab[256] =
-{   f_table };
+	{   f_table };
 #elif defined(FOUR_TABLES)
 static const u_int32_t ft_tab[4][256] =
-{   {   f_table },
+{
+	{   f_table },
 #undef  r
 #define r   r1
-    {   f_table },
+	{   f_table },
 #undef  r
 #define r   r2
-    {   f_table },
+	{   f_table },
 #undef  r
 #define r   r3
-    {   f_table } };
+	{   f_table }
+};
 #endif
 
 #undef  r
 #define r   r0
 #if defined(ONE_TABLE)
 static const u_int32_t it_tab[256] =
-{   i_table };
+	{   i_table };
 #elif defined(FOUR_TABLES)
 static const u_int32_t it_tab[4][256] =
-{   {   i_table },
+{
+	{   i_table },
 #undef  r
 #define r   r1
-    {   i_table },
+	{   i_table },
 #undef  r
 #define r   r2
-    {   i_table },
+	{   i_table },
 #undef  r
 #define r   r3
-    {   i_table } };
+	{   i_table }
+};
 #endif
 
 #endif
@@ -673,38 +677,42 @@ static const u_int32_t it_tab[4][256] =
 #define r(p, q, r, s)  w0(q)
 #if defined(ONE_LR_TABLE)
 static const u_int32_t fl_tab[256] =
-{   f_table     };
+	{   f_table     };
 #elif defined(FOUR_LR_TABLES)
 static const u_int32_t fl_tab[4][256] =
-{   {   f_table    },
+{
+	{   f_table    },
 #undef  r
 #define r(p, q, r, s)   w1(q)
-    {   f_table    },
+	{   f_table    },
 #undef  r
 #define r(p, q, r, s)   w2(q)
-    {   f_table    },
+	{   f_table    },
 #undef  r
 #define r(p, q, r, s)   w3(q)
-    {   f_table    } };
+	{   f_table    }
+};
 #endif
 
 #undef  w
 #define w   w0
 #if defined(ONE_LR_TABLE)
 static const u_int32_t il_tab[256] =
-{   li_table    };
+	{   li_table    };
 #elif defined(FOUR_LR_TABLES)
 static const u_int32_t il_tab[4][256] =
-{   {   li_table    },
+{
+	{   li_table    },
 #undef  w
 #define w   w1
-    {   li_table    },
+	{   li_table    },
 #undef  w
 #define w   w2
-    {   li_table    },
+	{   li_table    },
 #undef  w
 #define w   w3
-    {   li_table    } };
+	{   li_table    }
+};
 #endif
 
 #endif
@@ -846,19 +854,21 @@ static const u_int32_t il_tab[4][256] =
 
 #if defined(ONE_IM_TABLE)
 static const u_int32_t im_tab[256] =
-{   m_table };
+	{   m_table };
 #elif defined(FOUR_IM_TABLES)
 static const u_int32_t im_tab[4][256] =
-{   {   m_table },
+{
+	{   m_table },
 #undef  r
 #define r   r1
-    {   m_table },
+	{   m_table },
 #undef  r
 #define r   r2
-    {   m_table },
+	{   m_table },
 #undef  r
 #define r   r3
-    {   m_table } };
+	{   m_table }
+};
 #endif
 
 #endif
@@ -918,8 +928,9 @@ static unsigned char hibit(const u_int32_t x)
 
 static unsigned char FFinv(const unsigned char x)
 {
-	unsigned char p1 = x, p2 = 0x1b, n1 = hibit(x), n2 = 0x80, v1 = 1, v2 =
-		0;
+	unsigned char p1 = x, p2 = 0x1b,
+			n1 = hibit(x), n2 = 0x80,
+			v1 = 1, v2 = 0;
 
 	if (x < 2)
 		return x;

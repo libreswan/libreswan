@@ -246,11 +246,10 @@ static void compute_proto_keymat(struct state *st,
 			break;
 
 		default:
-			if ((needed_len =
-				     kernel_alg_esp_enc_max_keylen(pi->attrs.
-							       transattrs.
-							       encrypt)) > 0) {
-				/* XXX: check key_len "coupling with kernel.c's */
+			needed_len = kernel_alg_esp_enc_max_keylen(
+					pi->attrs.transattrs.encrypt);
+			if (needed_len > 0) {
+				/* XXX: check key_len coupling with kernel.c's */
 				if (pi->attrs.transattrs.enckeylen) {
 					needed_len =
 						pi->attrs.transattrs.enckeylen
@@ -498,9 +497,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			ughmsg = initaddr(id_pbs->cur + afi->ia_sz,
 					  afi->ia_sz, afi->af, &temp_mask);
 		if (ughmsg == NULL) {
-			ughmsg =
-				initsubnet(&temp_address, masktocount(
-						   &temp_mask),
+			ughmsg = initsubnet(&temp_address,
+					    masktocount(&temp_mask),
 					   '0', net);
 		}
 		if (ughmsg == NULL && subnetisnone(net))
@@ -1527,12 +1525,10 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 				ugh = "we don't know our own key";
 				break;
 			}
-			ugh =
-				"our client does not delegate us as its Security Gateway";
+			ugh = "our client does not delegate us as its Security Gateway";
 			for (gwp = ac->gateways_from_dns; gwp != NULL;
 			     gwp = gwp->next) {
-				ugh =
-					"our client delegates us as its Security Gateway but with the wrong public key";
+				ugh = "our client delegates us as its Security Gateway but with the wrong public key";
 				/* If there is no key in the TXT record,
 				 * we count it as a win, but we will have
 				 * to separately fetch and check the KEY record.
@@ -1572,8 +1568,7 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 					/* not an error yet, because we have to check KEY RR as well */
 					ugh = NULL;
 #else
-					ugh =
-						"our client delegation depends on our "
+					ugh = "our client delegation depends on our "
 						RRNAME
 						" record, but it has the wrong public key";
 #endif
@@ -1606,13 +1601,11 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 			{
 				struct pubkey_list *kp;
 
-				ugh =
-					"our client delegation depends on our missing "
+				ugh = "our client delegation depends on our missing "
 					RRNAME " record";
 				for (kp = ac->keys_from_dns; kp != NULL;
 				     kp = kp->next) {
-					ugh =
-						"our client delegation depends on our "
+					ugh = "our client delegation depends on our "
 						RRNAME
 						" record, but it has the wrong public key";
 					if (same_RSA_public_key(&pri->pub,
@@ -1646,8 +1639,7 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 			ugh = "peer's client does not delegate to peer";
 			for (gwp = ac->gateways_from_dns; gwp != NULL;
 			     gwp = gwp->next) {
-				ugh =
-					"peer and its client disagree about public key";
+				ugh = "peer and its client disagree about public key";
 				/* If there is a key from the TXT record,
 				 * we count it as a win if we match the key.
 				 * If there was no key, we claim a match since
@@ -1917,8 +1909,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		}
 	}
 
-	passert((p1st->st_policy & POLICY_PFS) == 0 || p1st->st_pfs_group !=
-		NULL );
+	passert((p1st->st_policy & POLICY_PFS) == 0 ||
+		p1st->st_pfs_group != NULL );
 
 	/* now that we are sure of our connection, create our new state, and
 	 * do any asynchronous cryptographic operations that we may need to
@@ -2300,8 +2292,8 @@ static stf_status quick_inI1_outR1_cryptotail(struct dh_continuation *dh,
 	if (st->st_pfs_group != NULL && r != NULL) {
 		if (!justship_KE(&st->st_gr,
 				 &md->rbody,
-				 id_pd !=
-				 NULL ? ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE))
+				 id_pd != NULL ?
+					ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE))
 			return STF_INTERNAL_ERROR;
 
 		finish_dh_secret(st, r);

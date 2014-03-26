@@ -1126,10 +1126,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	md->result = result;
 	result = md->result;
 
-	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
-		DBG(DBG_DPD, DBG_log("enabling sending dpd/liveness"));
-	}
-
 	/* advance the state */
 	DBG(DBG_CONTROL,
 	    DBG_log("complete v2 state transition with %s",
@@ -1175,7 +1171,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
                 break;
 
 	case STF_TOOMUCHCRYPTO:
-		/* well, this should never happen during a whack, since
+		/* ??? Why is this comment useful:
+		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
 		passert(st != NULL);
