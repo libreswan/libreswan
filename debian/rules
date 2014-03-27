@@ -36,7 +36,9 @@ build-stamp: patch
 			 PUBDIR=/usr/sbin \
 			 MANTREE=/usr/share/man \
 			 CONFDIR=$(CURDIR)/debian \
-			 USE_LDAP=true USE_LIBCURL=true \
+			 SYSVINIT_DEFAULT_START="2 3 4 5" \
+			 USE_LDAP=true
+			 USE_LIBCURL=true \
 			 USE_XAUTHPAM=true \
 			 USE_FIPSCHECK=false \
 			 USE_LIBCAP_NG=false \

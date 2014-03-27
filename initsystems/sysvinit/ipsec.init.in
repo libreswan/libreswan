@@ -5,7 +5,7 @@
 # Provides: ipsec
 # Required-Start: $network $remote_fs $syslog $named
 # Required-Stop: $syslog $remote_fs
-# Default-Start:
+# Default-Start: @SYSVINIT_DEFAULT_START@
 # Default-Stop: 0 1 6
 # Short-Description: Start Libreswan IPsec at boot time
 # Description: Enable automatic key management for IPsec (KLIPS and NETKEY)
