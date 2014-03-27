@@ -93,6 +93,12 @@ case "$1" in
 	    chmod 0600 $SECRETS_INC_FILE
 	fi
 
+	if [ ! -f /etc/ipsec.d/cert8.db ] ; then
+		echo > /tmp/libreswan-nss-pwd
+		certutil -N -f /tmp/libreswan-nss-pwd -d /etc/ipsec.d
+		rm /tmp/libreswan-nss-pwd
+	fi
+
 	db_get libreswan/install_x509_certificate
 	if [ "$RET" = "true" ]; then
 	    db_get libreswan/how_to_get_x509_certificate
