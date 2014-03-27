@@ -144,7 +144,7 @@ void remove_x509_public_key(/*const*/ x509cert_t *cert)
 /*
  * Decode the CERT payload of Phase 1.
  */
-void decode_cert(struct msg_digest *md)
+void ikev1_decode_cert(struct msg_digest *md)
 {
 	struct payload_digest *p;
 
@@ -249,7 +249,7 @@ void ikev2_decode_cert(struct msg_digest *md)
 /*
  * Decode the CR payload of Phase 1.
  */
-void decode_cr(struct msg_digest *md, generalName_t **requested_ca)
+void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 {
 	struct payload_digest *p;
 
@@ -341,7 +341,7 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 	}
 }
 
-bool build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np)
+bool ikev1_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np)
 {
 	pb_stream cr_pbs;
 	struct isakmp_cr cr_hd;

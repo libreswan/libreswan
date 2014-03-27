@@ -2216,7 +2216,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		/* should we check if we should accept a cert payload ?
 		 *  has_preloaded_public_key(st)
 		 */
-		/* in v1 code it is  decode_cert(struct msg_digest *md) */
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("has a v2_CERT payload going to decode it"));
 		ikev2_decode_cert(md);
