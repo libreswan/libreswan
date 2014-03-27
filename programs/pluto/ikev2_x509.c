@@ -185,7 +185,7 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 			    DBG_log("connection is RW, lookup CA candidates"));
 
 			for (gn = ca; gn != NULL; gn = gn->next) {
-				if (!build_and_ship_CR(CERT_X509_SIGNATURE,
+				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 						       gn->name, outpbs,
 						       gn->next == NULL ? np :
 						         ISAKMP_NEXT_v2CERTREQ))
@@ -195,7 +195,7 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 		} else {
 			DBG(DBG_CONTROL,
 			    DBG_log("Not a roadwarrior instance, sending empty CA in CERTREQ"));
-			if (!build_and_ship_CR(CERT_X509_SIGNATURE,
+			if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 					       empty_chunk,
 					       outpbs, np))
 				return STF_INTERNAL_ERROR;
