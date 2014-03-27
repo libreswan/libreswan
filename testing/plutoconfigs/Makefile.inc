@@ -371,26 +371,6 @@ USE_EXTRACRYPTO?=false
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
 
-# Do we have Openssl libraries available for BIGNUM support?
-# Required of HAVE_OCF support
-HAVE_OPENSSL?=false
-
-# Userland (IKE) Open Cryptographic Framework support (hw crypto offload)
-# For Kernel level OCF support, enable CONFIG_KLIPS_OCF on a kernel that
-# has support for OCF (inline or module)
-# Only enable this when compiling for embedded systems with very limited CPU
-# power, and only if there is actually some hardware accelerator present
-# for which there is an OCF kernel driver available.
-HAVE_OCF?=false
-
-ifeq ($(HAVE_OCF),true)
-HAVE_OPENSSL=true
-endif
-
-# Whether or not to include TaProoM (TCL Pluto Mix) into pluto.
-# you need at least swig 1.3.24, as well as tcl libraries and includes
-USE_TAPROOM?=false
-
 # Whether to use LEAK_DETECTIVE to find memory leaks.
 # disabled for now as it causes some pfree()s due to bad code
 USE_LEAK_DETECTIVE?=false
@@ -470,28 +450,16 @@ LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
 LSWLOGLIB=${OBJDIRTOP}/lib/libswan/liblswlog.a
 
-LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
-LIBDESLITE:=${OBJDIRTOP}/lib/libcrypto/libdes/libdes.a
-LIBLSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liblswcrypto/liblswcrypto.a
-LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
 LIBMD5=${OBJDIRTOP}/lib/libcrypto/libmd5/libmd5.a
 LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
-CRYPTOLIBS=${LIBAES} ${LIBSHA1} ${LIBMD5} ${LIBDESLITE} ${LIBSHA2}
+CRYPTOLIBS=${LIBSHA1} ${LIBMD5} ${LIBSHA2}
 
 ifeq ($(USE_EXTRACRYPTO),true)
-CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH} ${LIBBLOWFISH}
+CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH}
 endif
-
-CRYPTOLIBS += ${LIBLSWCRYPTO}
-ifeq ($(HAVE_OCF),true)
-CRYPTOLIBS += -lcrypto
-endif
-
-LIBPOLICYDIR=${LIBRESWANSRCDIR}/linux/lib/libipsecpolicy
-POLICYLIB=${OBJDIRTOP}/lib/libipsecpolicy/libipsecpolicy.a
 
 WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
@@ -499,10 +467,9 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
 export LIBRESWANLIB LSWLOGLIB 
-export LIBDESSRCDIR LIBDESLITE LIBAES
-export LIBMD5 LIBSHA1 LIBBLOWFISH LIBTWOFISH LIBSERPENT
-export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
-export LIBLSWCRYPTO NSSFLAGS NSSLIBS
+export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
+export LIBSHA2 CRYPTOLIBS WHACKLIB IPSECCONFLIB
+export NSSFLAGS NSSLIBS
 
 #KERNELBUILDMFLAGS=--debug=biv V=1 
 

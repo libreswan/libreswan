@@ -20,10 +20,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
- *
  */
 
 #include <stddef.h>
@@ -67,8 +63,6 @@
 
 #include "fetch.h"
 #include "x509more.h"
-
-#include "lswcrypto.h"
 
 #include "nat_traversal.h"
 

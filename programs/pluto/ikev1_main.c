@@ -25,9 +25,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
  */
 
 #include <stdio.h>
@@ -82,8 +79,6 @@
 #include "pluto_crypt.h"
 #include "ikev1.h"
 #include "ikev1_continuations.h"
-
-#include "lswcrypto.h"
 
 #include "xauth.h"
 

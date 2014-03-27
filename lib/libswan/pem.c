@@ -51,8 +51,6 @@
 #include <prerror.h>
 #include "lswconf.h"
 
-#include "lswcrypto.h"
-
 /*
  * check the presence of a pattern in a character string
  */

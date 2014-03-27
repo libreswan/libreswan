@@ -24,10 +24,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
- *
  */
 
 #include <stdio.h>
@@ -84,8 +80,6 @@
 #include "virtual.h"	/* needs connections.h */
 
 #include "nat_traversal.h"
-
-#include "lswcrypto.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -242,9 +236,6 @@ static const char compile_time_interop_options[] = ""
 #endif
 #ifdef LEAK_DETECTIVE
 					    " LEAK_DETECTIVE"
-#endif
-#ifdef HAVE_OCF
-					    " OCF"
 #endif
 #ifdef KLIPS_MAST
 					    " KLIPS_MAST"
@@ -1223,15 +1214,6 @@ int main(int argc, char **argv)
 	libreswan_log("LEAK_DETECTIVE support [disabled]");
 #endif
 
-#ifdef HAVE_OCF
-	if (access("/dev/crypto", R_OK | W_OK) != -1)
-		libreswan_log("OCF support for IKE via /dev/crypto [enabled]");
-	else
-		libreswan_log("OCF support for IKE via /dev/crypto [failed:%s]",
-				strerror(errno));
-#else
-	libreswan_log("OCF support for IKE [disabled]");
-#endif
 
 	/* Check for SAREF support */
 #ifdef KLIPS_MAST
@@ -1314,9 +1296,6 @@ int main(int argc, char **argv)
 	init_connections();
 	init_crypto();
 	init_crypto_helpers(nhelpers);
-#ifdef OPENSSL
-	load_lswcrypto();
-#endif
 	init_demux();
 	init_kernel();
 	init_adns();

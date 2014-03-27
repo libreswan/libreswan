@@ -162,10 +162,8 @@ cryptomodules() {
     # (OCF works for NETKEY and KLIPS/MAST)
     # OCF cryptosoft is for kernel acceleration (ESP/AH)
     @MODPROBE@ cryptosoft 2>/dev/null
-    # OCF cryptodev is for userland IKE acceleration - let user do this
-    # TODO: perhaps skip when on x86/x86_64 arch? It's really only
-    # useful on embedded systems
-    @MODPROBE@ cryptodev 2>/dev/null
+    # We skip cryptodev.ko because we no longer support /dev/crypto offloading
+    # (the overhead of cryptodev is not worth it even on embedded platforms)
 
     if [ -d /sys/module/ocf ]; then
 	# OCF tuning - If we have enough bogomips and RAM,
