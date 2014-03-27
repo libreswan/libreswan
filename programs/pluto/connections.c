@@ -2515,15 +2515,12 @@ struct connection *find_host_connection2(const char *func,
 			if (NEVER_NEGOTIATE(c->policy))
 				continue;
 
-			if ((c->policy & policy) == policy)
-				break;
-
-			/* ??? the following if doesn't do anything.
-			 * What's it supposed to do?
-			 */
 			if ((policy & POLICY_XAUTH) !=
 				(c->policy & POLICY_XAUTH))
 				continue;
+
+			if ((c->policy & policy) == policy)
+				break;
 		}
 
 	}
