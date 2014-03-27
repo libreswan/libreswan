@@ -41,10 +41,6 @@ endif
 
 CFLAGS +=-g ${WERROR}
 
-ifeq ($(HAVE_OCF),true)
-CFLAGS += -DHAVE_OCF
-endif
-
 # where to find klips headers and Libreswan headers
 # and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
 HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC) 
@@ -197,12 +193,6 @@ EXTRA_CRYPTO_OBJS=ike_alg_twofish.o ike_alg_serpent.o
 EXTRA_CRYPTO_LIBS=$(LIBTWOFISH) $(LIBSERPENT) 
 endif
 
-ifeq ($(HAVE_OPENSSL),true)
-OPENSSL_LIBS=-lcrypto
-EXTRA_CRYPTO_DEFS+=-DOPENSSL
-endif
-
-
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 SINGLE_CONF_DIR=-DSINGLE_CONF_DIR
 endif
@@ -232,17 +222,16 @@ DEFINES = $(EXTRA_DEFINES) \
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
-LIBSPLUTO+=$(LIBLSWCRYPTO)
-LIBSPLUTO+=$(LIBDESLITE) $(LIBAES) $(LIBRESWANLIB) $(LIBPLUTO)
-LIBSPLUTO+=${LIBSHA1} ${LIBMD5}
+LIBSPLUTO+=$(LIBRESWANLIB) $(LIBPLUTO)
+LIBSPLUTO+=${LIBSHA1} ${LIBMD5} $(LIBSHA2)
 LIBSPLUTO+=$(X509_LIBS) 
 LIBSPLUTO+=$(THREADS_LIBS)
 LIBSPLUTO+=${CURL_LIBS}
-LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} $(LIBSHA2) ${LABELED_IPSEC_LIBS}
+LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS}
 LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} ${NSSLIBS}
 PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS} 
 PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} ${NSSLIBS}
-PLUTOMINUSL+= ${OPENSSL_LIBS} ${LIBCRYPT} -lgmp #-lefence
+PLUTOMINUSL+= ${LIBCRYPT} -lgmp #-lefence
 
 # For avoiding implicit DSO linking
 LIBSPLUTO+= -lpthread

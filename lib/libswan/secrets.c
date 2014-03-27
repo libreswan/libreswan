@@ -106,17 +106,6 @@ static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 	}
 }
 
-#ifdef OPENSSL
-/* Not possible with NSS */
-static void RSA_show_private_key(struct RSA_private_key *k)
-{
-#ifdef FIPS_CHECK
-	if (!libreswan_fipsmode())
-#endif
-	RSA_show_key_fields(k, elemsof(RSA_private_field));
-}
-#endif
-
 static void RSA_show_public_key(struct RSA_public_key *k)
 {
 	/*
@@ -131,13 +120,6 @@ static const char *RSA_public_key_sanity(struct RSA_private_key *k)
 {
 	/* note that the *last* error found is reported */
 	err_t ugh = NULL;
-
-#ifdef OPENSSL
-# ifdef FIPS_CHECK
-	if (!libreswan_fipsmode())
-# endif
-	DBG(DBG_PRIVATE, RSA_show_public_key(&k->pub));
-#endif
 
 	/*
 	 * PKCS#1 1.5 section 6 requires modulus to have at least 12 octets.

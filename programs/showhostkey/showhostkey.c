@@ -48,7 +48,6 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
-#include "lswcrypto.h"
 #include "lswconf.h"
 #include "secrets.h"
 #include "mpzfuncs.h"

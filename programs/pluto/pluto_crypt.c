@@ -22,10 +22,6 @@
  *
  * This code was developed with the support of IXIA communications.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
- *
  */
 
 #include <pthread.h>    /* Must be the first include file */
@@ -66,7 +62,6 @@
 #include <nss.h>
 #include "lswconf.h"
 
-#include "lswcrypto.h"
 #include "lsw_select.h"
 
 TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
