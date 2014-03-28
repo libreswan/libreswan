@@ -290,8 +290,8 @@ startklips() {
 	# clear tables out in case dregs have been left over
 	ipsec eroute --clear
 	ipsec spi --clear
-	# remove any mastX interfaces, as we are using ipsecX
-	for device in $(ip -oneline link show | grep mast | cut -d: -f2 | sort -r)
+	# remove mast0 interface, as we are using ipsecX
+	for device in $(ip -oneline link show | grep mast0 | cut -d: -f2 | sort -r)
 	do
 	    ipsec tncfg --delete ${device}
 	done
