@@ -35,6 +35,10 @@ if [ -z "${action}" ]; then
 fi
 
 stopnetkey() {
+    wait=""
+    # Validate wait option
+    [ "${1}" = "--wait" -o "${1}" = "-w" ] && wait="${1}"
+
     if [ -f ${kamepfkey} ]; then
 	ip xfrm state flush
 	ip xfrm policy flush
@@ -52,12 +56,12 @@ stopnetkey() {
 	    do
 		if [ -n "$(egrep ^${mod} /proc/modules)" ]; then
 		    # echo "unloading module ${mod}" >&2
-		    rmmod ${mod}
+		    rmmod ${wait} ${mod} 2>/dev/null
 		fi
 	    done
 	fi
     fi
-    if [ -n "$(lsmod | grep ^esp)" ]; then
+    if [ -n "${wait}" -a -n "$(lsmod | grep ^esp)" ]; then
 	echo "FAILURE to unload NETKEY esp4/esp6 module" >&2
 	exit 1
     fi
@@ -206,7 +210,7 @@ startklips() {
     cryptomodules
     if [ -f ${kamepfkey} ]; then
 	echo -n "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
-	stopnetkey
+	stopnetkey --wait
 	if [ -f ${kamepfkey} ]; then
 	    echo "FAILURE to unload KLIPS/MAST module" >&2
 	    exit 1
