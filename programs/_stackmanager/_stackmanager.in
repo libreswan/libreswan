@@ -298,17 +298,23 @@ startklips() {
 	# detach all ipsecX devices
 	ipsec tncfg --clear
 
+	phys=$(ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/")
+
 	eval $(ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport |grep interfaces);
 	if [ -z "${interfaces}" ]; then
-	    interfaces="%defaultroute"
+		interfaces="%defaultroute"
+		if [ -z "$phys" ]; then
+			echo "ERROR: no default route found and no interfaces= option set"
+			exit 1
+		fi
 	fi
+
 	for iface in ${interfaces}; do
 	    if [ "${iface}" = "%none" ]; then
 		echo "ignoring obsolete interface %none" >&2
 		continue
 	    elif [ "${iface}" = "%defaultroute" ]; then
 		virt="ipsec0"
-		phys=$(ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/")
 	    else
 		virt="$(expr ${iface} : '\([^=]*\)=.*')"
 		phys="$(expr ${iface} : '[^=]*=\(.*\)')"
@@ -318,6 +324,7 @@ startklips() {
 		ipsec tncfg --create ${virt}
 	    fi
 	    ipsec tncfg --attach --virtual ${virt} --physical ${phys}
+
 	    # configure all the IPv4/IPv6 addresses (including point-to-point)
 	    ip addr show dev ${phys} | \
 		awk '$1 == "inet" || ($1 == "inet6" && !/ dynamic/) {
