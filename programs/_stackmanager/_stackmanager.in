@@ -209,7 +209,8 @@ startmast() {
 startklips() {
     cryptomodules
     if [ -f ${kamepfkey} ]; then
-	echo -n "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
+	echo "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
+	echo -n "         (this can take up to 1-2 minutes)" >&2
 	stopnetkey --wait
 	if [ -f ${kamepfkey} ]; then
 	    echo "FAILURE to unload KLIPS/MAST module" >&2
