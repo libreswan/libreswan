@@ -48,14 +48,18 @@ stopnetkey() {
 
 	if [ -f /proc/modules ]; then
 	    # netkey stack found, let's unload.
-	    # does this cause false positive for inline built?
 	    for mod in ipcomp ipcomp6 ip_vti xfrm6_tunnel xfrm6_mode_tunnel \
 		xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport \
 		xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel \
 		xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key xfrm_user
 	    do
+		# first try and unload the modules without the 10s wait pause
 		if [ -n "$(egrep ^${mod} /proc/modules)" ]; then
 		    # echo "unloading module ${mod}" >&2
+		    rmmod ${mod} 2>/dev/null
+		fi
+		if [ -n "$(egrep ^${mod} /proc/modules)" ]; then
+		    # echo "unloading module ${mod} using --wait" >&2
 		    rmmod ${wait} ${mod} 2>/dev/null
 		fi
 	    done
@@ -209,8 +213,7 @@ startmast() {
 startklips() {
     cryptomodules
     if [ -f ${kamepfkey} ]; then
-	echo "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
-	echo -n "         (this can take up to 1-2 minutes)" >&2
+	echo -n "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
 	stopnetkey --wait
 	if [ -f ${kamepfkey} ]; then
 	    echo "FAILURE to unload KLIPS/MAST module" >&2
@@ -399,9 +402,19 @@ esac
 
 case ${action} in
     stop)
-	# cleanup either stack, unload if module
-	# the user might have changed protostack=
-	stop
+	# We don't unload on stop - only when we detect a stack change. We do try and cleanup state
+	case ${stack} in
+	    netkey)
+		ip xfrm state flush
+		ip xfrm policy flush
+		;;
+	    klips)
+		ipsec eroute --clear
+		;;
+	    mast)
+		ipsec eroute --clear
+		;;
+	esac
 	;;
     start)
 	case ${stack} in
