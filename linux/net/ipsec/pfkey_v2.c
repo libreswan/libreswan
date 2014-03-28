@@ -147,24 +147,24 @@ static struct net_proto_family pfkey_family_ops = {
 struct proto_ops SOCKOPS_WRAPPED(pfkey_ops) =
 {
 #ifdef NET_26
-owner:          THIS_MODULE,
+	owner:          THIS_MODULE,
 #endif
-family:         PF_KEY,
-release:        pfkey_release,
-bind:           sock_no_bind,
-connect:        sock_no_connect,
-socketpair:     sock_no_socketpair,
-accept:         sock_no_accept,
-getname:        sock_no_getname,
-poll:           datagram_poll,
-ioctl:          sock_no_ioctl,
-listen:         sock_no_listen,
-shutdown:       pfkey_shutdown,
-setsockopt:     sock_no_setsockopt,
-getsockopt:     sock_no_getsockopt,
-sendmsg:        pfkey_sendmsg,
-recvmsg:        pfkey_recvmsg,
-mmap:           sock_no_mmap,
+	family:         PF_KEY,
+	release:        pfkey_release,
+	bind:           sock_no_bind,
+	connect:        sock_no_connect,
+	socketpair:     sock_no_socketpair,
+	accept:         sock_no_accept,
+	getname:        sock_no_getname,
+	poll:           datagram_poll,
+	ioctl:          sock_no_ioctl,
+	listen:         sock_no_listen,
+	shutdown:       pfkey_shutdown,
+	setsockopt:     sock_no_setsockopt,
+	getsockopt:     sock_no_getsockopt,
+	sendmsg:        pfkey_sendmsg,
+	recvmsg:        pfkey_recvmsg,
+	mmap:           sock_no_mmap,
 };
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
@@ -287,9 +287,8 @@ int pfkey_list_insert_socket(struct socket *socketp,
 		    (unsigned long) sizeof(struct socket_list),
 		    socketp);
 
-	if ((socket_listp =
-		     (struct socket_list *)kmalloc(sizeof(struct socket_list),
-						   GFP_KERNEL)) == NULL) {
+	if ((socket_listp = (struct socket_list *)
+	     kmalloc(sizeof(struct socket_list), GFP_KERNEL)) == NULL) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_list_insert_socket: "
 			    "memory allocation error.\n");
@@ -371,9 +370,8 @@ int pfkey_list_insert_supported(struct ipsec_alg_supported *supported,
 		    supported,
 		    supported_list);
 
-	supported_listp =
-		(struct supported_list *)kmalloc(sizeof(struct supported_list),
-						 GFP_KERNEL);
+	supported_listp = (struct supported_list *)
+		kmalloc(sizeof(struct supported_list), GFP_KERNEL);
 
 	if (supported_listp == NULL) {
 		KLIPS_PRINT(debug_pfkey,
@@ -552,6 +550,13 @@ DEBUG_NO_STATIC void pfkey_destroy_socket(struct sock *sk)
 		    "klips_debug:pfkey_destroy_socket: destroyed.\n");
 }
 
+#ifdef HAVE_USER_NS
+uint32_t pfkey_kuid_to_uid(kuid_t kuid)
+{
+	return from_kuid(&init_user_ns, kuid);
+}
+#endif
+
 int pfkey_upmsg(struct socket *sock, struct sadb_msg *pfkey_msg)
 {
 	struct sock *sk;
@@ -589,9 +594,8 @@ int pfkey_upmsgsk(struct sock *sk, struct sadb_msg *pfkey_msg)
 		    "klips_debug:pfkey_upmsg: "
 		    "allocating %d bytes...\n",
 		    (int)(pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN));
-	if (!(skb =
-		      alloc_skb(pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN,
-				GFP_ATOMIC) )) {
+	if (!(skb = alloc_skb(pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN,
+			      GFP_ATOMIC) )) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_upmsg: "
 			    "no buffers left to send up a message.\n");
@@ -739,7 +743,11 @@ DEBUG_NO_STATIC int pfkey_create(struct socket *sock, int protocol)
 	sk->sk_family = PF_KEY;
 /*	sk->num = protocol; */
 	sk->sk_protocol = protocol;
+#ifdef HAVE_USER_NS
+	key_pid(sk) = pfkey_kuid_to_uid(current_uid());
+#else
 	key_pid(sk) = current_uid();
+#endif
 
 #ifdef HAVE_SOCKET_WQ
 	KLIPS_PRINT(debug_pfkey,
@@ -988,9 +996,8 @@ pfkey_sendmsg(struct socket *sock, struct msghdr *msg, int len,
 			    "pfkey_msg_parse returns %d.\n",
 			    error);
 
-		if ((pfkey_reply =
-			     (struct sadb_msg*)kmalloc(sizeof(struct sadb_msg),
-						       GFP_KERNEL)) == NULL) {
+		if ((pfkey_reply = (struct sadb_msg*)
+		     kmalloc(sizeof(struct sadb_msg), GFP_KERNEL)) == NULL) {
 			KLIPS_PRINT(debug_pfkey,
 				    "klips_debug:pfkey_sendmsg: "
 				    "memory allocation error.\n");
@@ -1374,8 +1381,7 @@ int pfkey_init(void)
 		pfkey_supported_list[i] = NULL;
 	}
 
-	error |=
-		supported_add_all(K_SADB_SATYPE_AH, supported_init_ah,
+	error |= supported_add_all(K_SADB_SATYPE_AH, supported_init_ah,
 				  sizeof(supported_init_ah));
 	error |= supported_add_all(K_SADB_SATYPE_ESP, supported_init_esp,
 				   sizeof(supported_init_esp));

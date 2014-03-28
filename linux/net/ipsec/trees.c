@@ -123,13 +123,13 @@ struct static_tree_desc_s {
 };
 
 local static_tree_desc  static_l_desc =
-{static_ltree, extra_lbits, LITERALS+1, L_CODES, MAX_BITS};
+	{static_ltree, extra_lbits, LITERALS+1, L_CODES, MAX_BITS};
 
 local static_tree_desc  static_d_desc =
-{static_dtree, extra_dbits, 0,          D_CODES, MAX_BITS};
+	{static_dtree, extra_dbits, 0,          D_CODES, MAX_BITS};
 
 local static_tree_desc  static_bl_desc =
-{(const ct_data *)0, extra_blbits, 0,   BL_CODES, MAX_BL_BITS};
+	{(const ct_data *)0, extra_blbits, 0,   BL_CODES, MAX_BL_BITS};
 
 /* ===========================================================================
  * Local (static) routines in this file.

@@ -118,6 +118,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_IKEPAD] = TRUE;
 
+	cfg->conn_default.options[KBF_IKEV1_NATT] = natt_both;
+
 	/*Network Manager support*/
 #ifdef HAVE_NM
 	cfg->conn_default.options[KBF_NMCONFIGURED] = FALSE;
@@ -1376,9 +1378,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name,
 	conn = (struct starter_conn *)malloc(sizeof(struct starter_conn));
 	if (!conn) {
 		if (perr)
-			*perr =
-				xstrdup("can't allocate mem in confread_load()");
-
+			*perr = xstrdup("can't allocate mem in confread_load()");
 
 		return NULL;
 	}
@@ -1452,8 +1452,7 @@ struct starter_config *confread_load(const char *file,
 	cfg = (struct starter_config *)malloc(sizeof(struct starter_config));
 	if (!cfg) {
 		if (perr)
-			*perr =
-				xstrdup("can't allocate mem in confread_load()");
+			*perr = xstrdup("can't allocate mem in confread_load()");
 
 
 		parser_free_conf(cfgp);

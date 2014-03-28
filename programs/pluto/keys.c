@@ -20,10 +20,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
- *
  */
 
 #include <stddef.h>
@@ -67,8 +63,6 @@
 
 #include "fetch.h"
 #include "x509more.h"
-
-#include "lswcrypto.h"
 
 #include "nat_traversal.h"
 
@@ -276,9 +270,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		return "10" "NSS error: Not enough memory to create arena";
 	}
 
-	publicKey =
-		(SECKEYPublicKey *) PORT_ArenaZAlloc(arena,
-						     sizeof(SECKEYPublicKey));
+	publicKey = (SECKEYPublicKey *)
+		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
 	if (!publicKey) {
 		PORT_FreeArena(arena, PR_FALSE);
 		PORT_SetError(SEC_ERROR_NO_MEMORY);

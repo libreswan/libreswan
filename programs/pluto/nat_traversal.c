@@ -122,9 +122,8 @@ void init_nat_traversal(unsigned int keep_alive_period)
 		}
 	}
 
-	nat_kap =
-		keep_alive_period ? keep_alive_period :
-		DEFAULT_KEEP_ALIVE_PERIOD;
+	nat_kap = keep_alive_period ?
+		keep_alive_period : DEFAULT_KEEP_ALIVE_PERIOD;
 	libreswan_log("   NAT-Traversal support %s",
 	     nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
@@ -241,34 +240,45 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	return r;
 }
 
-/**
+/*
  * Add NAT-Traversal VIDs (supported ones)
  *
  * Used when we're Initiator
  */
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs)
+bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *st)
 {
-	bool r = TRUE;
+	DBG(DBG_NATT, DBG_log("nat add vid"));
 
-	DBG(DBG_NATT,
-	    DBG_log("nat add vid"));
-
-	{
-		if (r)
-			r =
-				out_vid(ISAKMP_NEXT_VID, outs,
-					VID_NATT_RFC);
-		if (r)
-			r = out_vid(ISAKMP_NEXT_VID, outs,
-				    VID_NATT_IETF_03);
-		if (r)
-			r = out_vid(ISAKMP_NEXT_VID, outs,
-				    VID_NATT_IETF_02_N);
-		if (r)
-			r = out_vid(np, outs,
-				    VID_NATT_IETF_02);
+	/*
+	 * Some Cisco's have a broken NAT-T implementation where it
+	 * sends one NAT payload per draft, and one NAT payload for RFC.
+	 * ikev1_natt={both|drafts|rfc} helps us claim we only support the
+	 * drafts, so we don't hit the bad Cisco code.
+	 */
+	switch(st->st_connection->ikev1_natt) {
+	case natt_rfc:
+		DBG(DBG_NATT, DBG_log("skipping VID_NATT drafts"));
+		if (!out_vid(np, outs, VID_NATT_RFC))
+			return FALSE;
+		break;
+	case natt_both:
+		DBG(DBG_NATT, DBG_log("sending draft and RFC NATT VIDs"));
+		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_RFC))
+			return FALSE;
+		/* Fall through */
+	case natt_drafts:
+		if (st->st_connection->ikev1_natt == natt_drafts) {
+			DBG(DBG_NATT, DBG_log("skipping VID_NATT_RFC"));
+		}
+		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_03))
+			return FALSE;
+		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_02_N))
+			return FALSE;
+		if (!out_vid(np, outs, VID_NATT_IETF_02))
+			return FALSE;
+		break;
 	}
-	return r;
+	return TRUE;
 }
 
 u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
@@ -363,16 +373,16 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 				     pbs_left(&p->pbs));
 		    });
 
-		if ( (pbs_left(&p->pbs) ==
-		      st->st_oakley.prf_hasher->hash_digest_len) &&
-		     (memeq(p->pbs.cur, hash_me,
-			     st->st_oakley.prf_hasher->hash_digest_len)))
+		if (pbs_left(&p->pbs) ==
+		        st->st_oakley.prf_hasher->hash_digest_len &&
+		    memeq(p->pbs.cur, hash_me,
+			  st->st_oakley.prf_hasher->hash_digest_len))
 			found_me = TRUE;
 
-		if ( (pbs_left(&p->pbs) ==
-		      st->st_oakley.prf_hasher->hash_digest_len) &&
-		     (memcmp(p->pbs.cur, hash_him,
-			     st->st_oakley.prf_hasher->hash_digest_len) == 0))
+		if (pbs_left(&p->pbs) ==
+		        st->st_oakley.prf_hasher->hash_digest_len &&
+		    memcmp(p->pbs.cur, hash_him,
+			   st->st_oakley.prf_hasher->hash_digest_len) == 0)
 			found_him = TRUE;
 
 		i++;

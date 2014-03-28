@@ -382,24 +382,21 @@ static void db_prop_print(struct db_prop *p)
 
 		for (ai = 0, a = t->attrs; ai < t->attr_cnt; ai++, a++) {
 			int i;
+
 			switch ( p->protoid) {
 			case PROTO_ISAKMP:
 				n_at = &oakley_attr_names;
 				i = a->type | ISAKMP_ATTR_AF_TV;
-				n_av =
-					oakley_attr_val_descs[(i) &
-							      ISAKMP_ATTR_RTYPE_MASK
-					];
+				n_av = oakley_attr_val_descs[
+					i & ISAKMP_ATTR_RTYPE_MASK];
 				break;
 
 			case PROTO_IPSEC_AH:
 			case PROTO_IPSEC_ESP:
 				n_at = &ipsec_attr_names;
 				i = a->type | ISAKMP_ATTR_AF_TV;
-				n_av =
-					ipsec_attr_val_descs[(i) &
-							     ISAKMP_ATTR_RTYPE_MASK
-					];
+				n_av = ipsec_attr_val_descs[
+					i & ISAKMP_ATTR_RTYPE_MASK];
 				break;
 			default:
 				continue;

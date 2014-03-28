@@ -1179,9 +1179,8 @@ DEBUG_NO_STATIC int ipsec_tunnel_hard_header(struct sk_buff *skb,
 	tmp = skb->dev;
 	skb->dev = prv->dev;
 #ifdef HAVE_NETDEV_HEADER_OPS
-	ret =
-		prv->header_ops->create(skb, prv->dev, type, (void *)daddr,
-					(void *)saddr, len);
+	ret = prv->header_ops->create(skb, prv->dev, type, (void *)daddr,
+				      (void *)saddr, len);
 #else
 	ret = prv->hard_header(skb, prv->dev, type, (void *)daddr,
 			       (void *)saddr, len);
@@ -1903,8 +1902,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 
 			priv = netdev_to_ipsecpriv(ipsec_dev);
 			if (priv) {
-				if (((struct net_device *)(priv->dev)) ==
-				    dev) {
+				if (((struct net_device *)(priv->dev)) == dev) {
 					/* dev_close(ipsec_dev); */
 					/* return */
 					ipsec_tunnel_detach(ipsec_dev);

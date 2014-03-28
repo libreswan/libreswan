@@ -607,9 +607,8 @@ static err_t dn_parse(chunk_t dn, chunk_t *str)
 		return ugh;
 
 	while (next) {
-		ugh =
-			get_next_rdn(&rdn, &attribute, &oid, &value, &type,
-				&next);
+		ugh = get_next_rdn(&rdn, &attribute, &oid, &value, &type,
+				   &next);
 
 		if (ugh != NULL)	/* a parsing error has occured */
 			return ugh;
@@ -648,9 +647,8 @@ int dn_count_wildcards(chunk_t dn)
 		return -1;
 
 	while (next) {
-		ugh =
-			get_next_rdn(&rdn, &attribute, &oid, &value, &type,
-				&next);
+		ugh = get_next_rdn(&rdn, &attribute, &oid, &value, &type,
+				   &next);
 
 		if (ugh != NULL)	/* a parsing error has occured */
 			return -1;
@@ -991,17 +989,17 @@ bool same_dn(chunk_t a, chunk_t b)
 		 * printableStrings and email RDNs require uppercase
 		 * comparison
 		 */
-		if (type_a == type_b && (type_a == ASN1_PRINTABLESTRING ||
-						(type_a == ASN1_IA5STRING &&
-							known_oid(oid_a) ==
-							OID_PKCS9_EMAIL))) {
+		if (type_a == type_b &&
+		    (type_a == ASN1_PRINTABLESTRING ||
+		     (type_a == ASN1_IA5STRING &&
+		      known_oid(oid_a) == OID_PKCS9_EMAIL))) {
 			if (strncasecmp((char *)value_a.ptr,
-						(char *)value_b.ptr,
-						value_b.len) != 0)
+					(char *)value_b.ptr,
+					value_b.len) != 0)
 				return FALSE;
 		} else {
 			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
-					value_b.len) != 0)
+				    value_b.len) != 0)
 				return FALSE;
 		}
 	}
@@ -1060,17 +1058,17 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		 * printableStrings and email RDNs require uppercase
 		 * comparison
 		 */
-		if (type_a == type_b && (type_a == ASN1_PRINTABLESTRING ||
-						(type_a == ASN1_IA5STRING &&
-							known_oid(oid_a) ==
-							OID_PKCS9_EMAIL))) {
+		if (type_a == type_b &&
+		    (type_a == ASN1_PRINTABLESTRING ||
+		     (type_a == ASN1_IA5STRING &&
+		      known_oid(oid_a) == OID_PKCS9_EMAIL))) {
 			if (strncasecmp((char *)value_a.ptr,
-						(char *)value_b.ptr,
-						value_b.len) != 0)
+					(char *)value_b.ptr,
+					value_b.len) != 0)
 				return FALSE;
 		} else {
 			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
-					value_b.len) != 0)
+				    value_b.len) != 0)
 				return FALSE;
 		}
 	}
@@ -1350,8 +1348,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 			return FALSE;
 		}
 
-		publicKey =
-			(SECKEYPublicKey *) PORT_ArenaZAlloc(arena,
+		publicKey = (SECKEYPublicKey *) PORT_ArenaZAlloc(arena,
 				sizeof(SECKEYPublicKey));
 		if (publicKey == NULL) {
 			PORT_FreeArena(arena, PR_FALSE);
@@ -1445,7 +1442,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 
 		/* Verifying RSA signature */
 		if (PK11_VerifyRecover(publicKey, &signature, &dsig,
-					lsw_return_nss_password_file_info()) ==
+				       lsw_return_nss_password_file_info()) ==
 			SECSuccess) {
 			DBG(DBG_X509 | DBG_CONTROL,
 				DBG_dump("NSS digest sig: ",
@@ -1694,6 +1691,7 @@ static generalName_t*parse_generalNames(chunk_t blob, int level0,
 		if (objectID == GENERAL_NAMES_GN) {
 			generalName_t *gn =
 				parse_generalName(object, level + 1);
+
 			if (gn != NULL) {
 				gn->next = top_gn;
 				top_gn = gn;
@@ -1860,7 +1858,7 @@ static void parse_authorityInfoAccess(chunk_t blob, int level0,
 			case OID_OCSP:
 				if (*object.ptr == ASN1_CONTEXT_S_6) {
 					if (asn1_length(&object) ==
-						ASN1_INVALID_LENGTH)
+					    ASN1_INVALID_LENGTH)
 						return;
 
 					DBG(DBG_PARSING,
@@ -2029,9 +2027,8 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 				);
 			break;
 		case X509_OBJ_SUBJECT_PUBLIC_KEY_ALGORITHM:
-			if (parse_algorithmIdentifier(object,
-							level) ==
-				OID_RSA_ENCRYPTION) {
+			if (parse_algorithmIdentifier(object, level) ==
+			    OID_RSA_ENCRYPTION) {
 				cert->subjectPublicKeyAlgorithm =
 					PUBKEY_ALG_RSA;
 			} else {
@@ -2041,7 +2038,7 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 			break;
 		case X509_OBJ_SUBJECT_PUBLIC_KEY:
 			if (ctx.blobs[4].len > 0 && *ctx.blobs[4].ptr ==
-				0x00) {
+			    0x00) {
 				/*
 				 * skip initial bit string octet defining
 				 * 0 unused bits
@@ -2084,12 +2081,12 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 			case OID_SUBJECT_KEY_ID:
 				cert->subjectKeyID =
 					parse_keyIdentifier(object, level,
-							FALSE);
+							    FALSE);
 				break;
 			case OID_SUBJECT_ALT_NAME:
 				cert->subjectAltName =
 					parse_generalNames(object, level,
-							FALSE);
+							   FALSE);
 				break;
 			case OID_BASIC_CONSTRAINTS:
 				cert->isCA =
@@ -2098,7 +2095,7 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 			case OID_CRL_DISTRIBUTION_POINTS:
 				cert->crlDistributionPoints =
 					parse_crlDistributionPoints(object,
-								level);
+								    level);
 				break;
 			case OID_AUTHORITY_KEY_ID:
 				parse_authorityKeyIdentifier(object, level,

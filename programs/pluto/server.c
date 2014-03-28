@@ -1001,7 +1001,6 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					break;
 				}
 
-				
 				if (packet_len == 1 && buffer[0] == 0xff &&
 				    (cur_debugging & DBG_NATT) == 0) {
 					/* don't log NAT-T keepalive related errors unless NATT debug is
@@ -1267,9 +1266,7 @@ static bool send_frags(struct state *st, const char *where)
 		    DBG_log("sending IKE fragment id '%d', number '%u'%s",
 			    1, /* hard coded for now, seems to be what all the cool implementations do */
 			    fragnum,
-			    (packet_remainder_len ==
-			     data_len) ? " (last)" : ""
-			    ));
+			    packet_remainder_len == data_len ? " (last)" : ""));
 
 		if (!send_packet(st, where, FALSE,
 				 frag_prefix, NSIZEOF_isakmp_hdr +
@@ -1297,8 +1294,8 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 	if (!st->st_ikev2 &&
 	    st->st_state != STATE_MAIN_I1 &&
 	    len + natt_bonus >=
-	    (st->st_connection->addr_family == AF_INET ?
-	     ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
+		(st->st_connection->addr_family == AF_INET ?
+		 ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
 	    ((resending &&
 	      (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
 	      st->st_seen_fragvid) ||

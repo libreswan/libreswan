@@ -91,7 +91,7 @@ static void fmt_log(char *buf, size_t buf_len,
 	}
 	vsnprintf(p, buf_len - (p - buf), fmt, ap);
 	if (!reproc)
-		(void)sanitize_string(buf, buf_len);
+		sanitize_string(buf, buf_len);
 }
 
 int libreswan_log(const char *message, ...)
@@ -209,7 +209,7 @@ int libreswan_DBG_log(const char *message, ...)
 	va_end(args);
 
 	/* then sanitize anything else that is left. */
-	(void)sanitize_string(m, sizeof(m));
+	sanitize_string(m, sizeof(m));
 
 	if (log_to_stderr)
 		fprintf(stderr, "| %s\n", m);

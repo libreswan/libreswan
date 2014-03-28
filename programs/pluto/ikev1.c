@@ -131,6 +131,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -190,9 +191,8 @@ struct state_microcode {
 #define SMF_ALL_AUTH    LRANGE(0, OAKLEY_AUTH_ROOF - 1)
 #define SMF_PSK_AUTH    LELEM(OAKLEY_PRESHARED_KEY)
 #define SMF_DS_AUTH     (LELEM(OAKLEY_DSS_SIG) | LELEM(OAKLEY_RSA_SIG))
-#define SMF_PKE_AUTH    (LELEM(OAKLEY_RSA_ENC) | LELEM(OAKLEY_ELGAMAL_ENC))
-#define SMF_RPKE_AUTH   (LELEM(OAKLEY_RSA_ENC_REV) | \
-			 LELEM(OAKLEY_ELGAMAL_ENC_REV))
+#define SMF_PKE_AUTH    LELEM(OAKLEY_RSA_ENC)
+#define SMF_RPKE_AUTH   LELEM(OAKLEY_RSA_REVISED_MODE)
 /* misc flags */
 
 #define SMF_INITIATOR   LELEM(OAKLEY_AUTH_ROOF + 0)
@@ -1212,9 +1212,11 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-			if (st->st_state ==
-			    STATE_MODE_CFG_R2)                          /* Have we just given an IP address to peer? */
-				change_state(st, STATE_MAIN_R3);        /* ISAKMP is up... */
+			/* Have we just given an IP address to peer? */
+			if (st->st_state == STATE_MODE_CFG_R2) {
+				/* ISAKMP is up... */
+				change_state(st, STATE_MAIN_R3);
+			}
 
 #ifdef SOFTREMOTE_CLIENT_WORKAROUND
 			/* See: http://popoludnica.pl/?id=10100110 */
@@ -1526,8 +1528,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		    DBG_log("received IKE fragment id '%d', number '%u'%s",
 			    fraghdr.isafrag_id,
 			    fraghdr.isafrag_number,
-			    (fraghdr.isafrag_flags ==
-			     1) ? "(last)" : ""));
+			    (fraghdr.isafrag_flags == 1) ? "(last)" : ""));
 
 		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
 		ike_frag->md = md;
@@ -1600,8 +1601,9 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					/* Reassemble fragments in buffer */
 					frag = st->ike_frags;
-					while (frag && frag->index <=
-					       last_frag_index) {
+					while (frag &&
+					       frag->index <= last_frag_index)
+					{
 						passert(offset + frag->size <=
 							size);
 						memcpy(buffer + offset,
@@ -1801,8 +1803,8 @@ void process_packet_tail(struct msg_digest **mdp)
 		{
 			const struct encrypt_desc *e = st->st_oakley.encrypter;
 
-			if (pbs_left(&md->message_pbs) % e->enc_blocksize !=
-			    0) {
+			if (pbs_left(&md->message_pbs) % e->enc_blocksize != 0)
+			{
 				loglog(RC_LOG_SERIOUS,
 				       "malformed message: not a multiple of encryption blocksize");
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
@@ -1879,8 +1881,8 @@ void process_packet_tail(struct msg_digest **mdp)
 			 * is no negotiation of NAT-T method. Get it right.
 			 */
 			if (st != NULL && st->st_connection != NULL &&
-			    (st->st_connection->policy & POLICY_AGGRESSIVE) ==
-			    0) {
+			    (st->st_connection->policy & POLICY_AGGRESSIVE) == 0)
+			{
 				switch (np) {
 				case ISAKMP_NEXT_NATD_RFC:
 				case ISAKMP_NEXT_NATOA_RFC:
@@ -2085,8 +2087,8 @@ void process_packet_tail(struct msg_digest **mdp)
 			struct payload_digest *id = md->chain[ISAKMP_NEXT_ID];
 
 			if (id != NULL) {
-				if (id->next == NULL || id->next->next !=
-				    NULL) {
+				if (id->next == NULL ||
+				    id->next->next != NULL) {
 					loglog(RC_LOG_SERIOUS, "malformed Quick Mode message:"
 					       " if any ID payload is present,"
 					       " there must be exactly two");
@@ -2262,9 +2264,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	/*
 	 * we can only be in calculating state if state is ignore,
 	 * or suspended.
+	 * ??? this code says inline is OK too.  Which is it?
 	 */
-	passert(result == STF_INLINE || result == STF_IGNORE || result == STF_SUSPEND || st->st_calculating ==
-		FALSE);
+	passert(result == STF_INLINE || result == STF_IGNORE ||
+		result == STF_SUSPEND || !st->st_calculating);
 
 	switch (result) {
 	case STF_IGNORE:
@@ -2402,12 +2405,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					 */
 					delay = c->sa_ike_life_seconds;
 					if ((c->policy & POLICY_DONT_REKEY) ||
-					    delay >=
-					    st->st_oakley.life_seconds) {
+					    delay >= st->st_oakley.life_seconds)
+					{
 						agreed_time = TRUE;
 						delay =
-							st->st_oakley.
-							life_seconds;
+						    st->st_oakley.life_seconds;
 					}
 				} else {
 					/* Delay is min of up to four things:
@@ -2416,27 +2418,26 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					delay = c->sa_ipsec_life_seconds;
 					if (st->st_ah.present &&
 					    delay >=
-					    st->st_ah.attrs.life_seconds) {
+					      st->st_ah.attrs.life_seconds) {
 						agreed_time = TRUE;
 						delay =
-							st->st_ah.attrs.
-							life_seconds;
+						   st->st_ah.attrs.life_seconds;
 					}
 					if (st->st_esp.present &&
 					    delay >=
-					    st->st_esp.attrs.life_seconds) {
+					        st->st_esp.attrs.life_seconds)
+					{
 						agreed_time = TRUE;
 						delay =
-							st->st_esp.attrs.
-							life_seconds;
+						  st->st_esp.attrs.life_seconds;
 					}
 					if (st->st_ipcomp.present &&
 					    delay >=
-					    st->st_ipcomp.attrs.life_seconds) {
+					      st->st_ipcomp.attrs.life_seconds)
+					{
 						agreed_time = TRUE;
 						delay =
-							st->st_ipcomp.attrs.
-							life_seconds;
+						  st->st_ipcomp.attrs.life_seconds;
 					}
 				}
 
@@ -2687,7 +2688,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		break;
 
 	case STF_TOOMUCHCRYPTO:
-		/* well, this should never happen during a whack, since
+		/* ??? Why is this comment useful:
+		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
 		set_suspended(st, NULL);
@@ -2763,4 +2765,162 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		break;
 	}
 
+}
+
+bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
+{
+	struct state *const st = md->st;
+	struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
+	const pb_stream *const id_pbs = &id_pld->pbs;
+	struct isakmp_id *const id = &id_pld->payload.id;
+	struct id peer;
+
+	/* I think that RFC2407 (IPSEC DOI) 4.6.2 is confused.
+	 * It talks about the protocol ID and Port fields of the ID
+	 * Payload, but they don't exist as such in Phase 1.
+	 * We use more appropriate names.
+	 * isaid_doi_specific_a is in place of Protocol ID.
+	 * isaid_doi_specific_b is in place of Port.
+	 * Besides, there is no good reason for allowing these to be
+	 * other than 0 in Phase 1.
+	 */
+        if (st->hidden_variables.st_nat_traversal &&
+	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
+	    ((id->isaid_doi_specific_b == 0) ||
+	     (id->isaid_doi_specific_b == pluto_natt_float_port))) {
+		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
+			"accepted with port_floating NAT-T",
+			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
+	} else
+
+	if (!(id->isaid_doi_specific_a == 0 &&
+	      id->isaid_doi_specific_b == 0) &&
+	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
+	      id->isaid_doi_specific_b == IKE_UDP_PORT)) {
+		loglog(RC_LOG_SERIOUS, "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d"
+		       " but are %d/%d (attempting to continue)",
+		       IPPROTO_UDP, IKE_UDP_PORT,
+		       id->isaid_doi_specific_a,
+		       id->isaid_doi_specific_b);
+		/* we have turned this into a warning because of bugs in other vendors
+		 * products. Specifically CISCO VPN3000.
+		 */
+		/* return FALSE; */
+	}
+
+	peer.kind = id->isaid_idtype;
+
+	if (!extract_peer_id(&peer, id_pbs))
+		return FALSE;
+
+	/*
+	 * For interop with SoftRemote/aggressive mode we need to remember some
+	 * things for checking the hash
+	 */
+	st->st_peeridentity_protocol = id->isaid_doi_specific_a;
+	st->st_peeridentity_port = ntohs(id->isaid_doi_specific_b);
+
+	{
+		char buf[IDTOA_BUF];
+
+		idtoa(&peer, buf, sizeof(buf));
+		libreswan_log("%s mode peer ID is %s: '%s'",
+			      aggrmode ? "Aggressive" : "Main",
+			      enum_show(&ident_names, id->isaid_idtype), buf);
+	}
+
+	/* check for certificates */
+	ikev1_decode_cert(md);
+
+	/* Now that we've decoded the ID payload, let's see if we
+	 * need to switch connections.
+	 * We must not switch horses if we initiated:
+	 * - if the initiation was explicit, we'd be ignoring user's intent
+	 * - if opportunistic, we'll lose our HOLD info
+	 */
+	if (initiator) {
+		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
+		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+			char expect[IDTOA_BUF],
+			     found[IDTOA_BUF];
+
+			idtoa(&st->st_connection->spd.that.id, expect,
+			      sizeof(expect));
+			idtoa(&peer, found, sizeof(found));
+			loglog(RC_LOG_SERIOUS,
+			       "we require peer to have ID '%s', but peer declares '%s'",
+			       expect, found);
+			return FALSE;
+		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
+			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+				loglog(RC_LOG_SERIOUS,
+				       "peer ID is not a certificate type");
+				return FALSE;
+			}
+			duplicate_id(&st->st_connection->spd.that.id, &peer);
+		}
+	} else {
+		struct connection *c = st->st_connection;
+		struct connection *r;
+		bool fc = 0;
+		/* check for certificate requests */
+		ikev1_decode_cr(md, &c->requested_ca);
+
+		r = refine_host_connection(st, &peer, initiator, aggrmode, &fc);
+
+		/* delete the collected certificate requests */
+		free_generalNames(c->requested_ca, TRUE);
+		c->requested_ca = NULL;
+
+		if (r == NULL) {
+			char buf[IDTOA_BUF];
+
+			idtoa(&peer, buf, sizeof(buf));
+			loglog(RC_LOG_SERIOUS,
+			       "no suitable connection for peer '%s'",
+			       buf);
+			return FALSE;
+		}
+
+		DBG(DBG_CONTROL, {
+			    char buf[IDTOA_BUF];
+
+			    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
+					  "%none");
+			    DBG_log("offered CA: '%s'", buf);
+		    });
+
+		if (r != c) {
+			/* apparently, r is an improvement on c -- replace */
+
+			libreswan_log("switched from \"%s\" to \"%s\"",
+				      c->name, r->name);
+			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+				/* instantiate it, filling in peer's ID */
+				r = rw_instantiate(r, &c->spd.that.host_addr,
+						   NULL,
+						   &peer);
+			}
+
+			st->st_connection = r; /* kill reference to c */
+
+			/* this ensures we don't move cur_connection from NULL to
+			 * something, requiring a reset_cur_connection()
+			 */
+			if (cur_connection == c)
+				set_cur_connection(r);
+
+			connection_discard(c);
+		} else if (c->spd.that.has_id_wildcards) {
+			free_id_content(&c->spd.that.id);
+			c->spd.that.id = peer;
+			c->spd.that.has_id_wildcards = FALSE;
+			unshare_id_content(&c->spd.that.id);
+		} else if (fc) {
+			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
+			duplicate_id(&r->spd.that.id, &peer);
+		}
+	}
+
+	return TRUE;
 }

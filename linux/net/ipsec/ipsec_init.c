@@ -261,8 +261,7 @@ int ipsec_klips_init(void)
 #else   /* CONFIG_XFRM_ALTERNATE_STACK */
 
 #ifdef CONFIG_KLIPS_ESP
-	error |=
-		libreswan_inet_add_protocol(&esp_protocol, IPPROTO_ESP, "ESP");
+	error |= libreswan_inet_add_protocol(&esp_protocol, IPPROTO_ESP, "ESP");
 	if (error)
 		goto error_libreswan_inet_add_protocol_esp;
 

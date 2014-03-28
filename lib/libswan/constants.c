@@ -972,7 +972,7 @@ static const char *const auth_alg_name[] = {
 
 enum_names auth_alg_names = {
 	AUTH_ALGORITHM_NONE,
-	AUTH_ALGORITHM_AES_CBC,
+	AUTH_ALGORITHM_AES_256_GMAC,
 	auth_alg_name,
 	&auth_alg_names_stolen_use
 };
@@ -1127,7 +1127,7 @@ static const char *const oakley_enc_name[] = {
 	/* 65001-65535 Reserved for private use */
 };
 
-static const char *const oakley_enc_name_draft_aes_cbc_02[] = {
+static const char *const oakley_enc_name_private_use[] = {
 	"OAKLEY_MARS_CBC"	/* 65001 */,
 	"OAKLEY_RC6_CBC"	/* 65002 */,
 	"OAKLEY_ID_65003"	/* 65003 */,
@@ -1135,29 +1135,29 @@ static const char *const oakley_enc_name_draft_aes_cbc_02[] = {
 	"OAKLEY_TWOFISH_CBC"	/* 65005 */,
 };
 
-static const char *const oakley_enc_name_ssh[] = {
+static const char *const oakley_enc_name_private_use_ssh[] = {
 	"OAKLEY_TWOFISH_CBC_SSH",	/* 65289 */
 };
 
-static enum_names oakley_enc_names_ssh = {
-	65289,
-	65289,
-	oakley_enc_name_ssh,
+static enum_names oakley_enc_names_private_use_ssh = {
+	OAKLEY_TWOFISH_CBC_SSH,
+	OAKLEY_TWOFISH_CBC_SSH,
+	oakley_enc_name_private_use_ssh,
 	NULL
 };
 
-static enum_names oakley_enc_names_draft_aes_cbc_02 = {
-	65001,
-	65005,
-	oakley_enc_name_draft_aes_cbc_02,
-	&oakley_enc_names_ssh
+static enum_names oakley_enc_names_private_use = {
+	OAKLEY_MARS_CBC,
+	OAKLEY_TWOFISH_CBC,
+	oakley_enc_name_private_use,
+	&oakley_enc_names_private_use_ssh
 };
 
 enum_names oakley_enc_names = {
 	OAKLEY_DES_CBC,
-	OAKLEY_AES_CBC,
+	OAKLEY_CAMELLIA_CBC,
 	oakley_enc_name,
-	&oakley_enc_names_draft_aes_cbc_02
+	&oakley_enc_names_private_use
 };
 
 /*
@@ -1186,25 +1186,29 @@ enum_names oakley_hash_names = {
 };
 
 /* Oakley Authentication Method attribute */
-static const char *const oakley_auth_name1[] = {
+static const char *const oakley_auth_name[] = {
 	"OAKLEY_PRESHARED_KEY",
 	"OAKLEY_DSS_SIG",
 	"OAKLEY_RSA_SIG",
 	"OAKLEY_RSA_ENC",
-	"OAKLEY_RSA_ENC_REV",
-	"OAKLEY_ELGAMAL_ENC",
-	"OAKLEY_ELGAMAL_ENC_REV",
+	"OAKLEY_RSA_REVISED_MODE",
+	"OAKLEY_RESERVED_6",
+	"OAKLEY_RESERVED_7",
+	"OAKLEY_RESERVED_8",
+	"OAKLEY_ECDSA_P256", /* RFC 4754 */
+	"OAKLEY_ECDSA_P384", /* RFC 4754 */
+	"OAKLEY_ECDSA_P521", /* RFC 4754 */
 };
 
-static const char *const oakley_auth_name2[] = {
-	"HybridInitRSA",
+static const char *const oakley_auth_name_private_use2[] = {
+	"HybridInitRSA", /* 64221 */
 	"HybridRespRSA",
 	"HybridInitDSS",
 	"HybridRespDSS",
 };
 
-static const char *const oakley_auth_name3[] = {
-	"XAUTHInitPreShared",
+static const char *const oakley_auth_name_private_use[] = {
+	"XAUTHInitPreShared", /* 65001 */
 	"XAUTHRespPreShared",
 	"XAUTHInitDSS",
 	"XAUTHRespDSS",
@@ -1213,29 +1217,30 @@ static const char *const oakley_auth_name3[] = {
 	"XAUTHInitRSAEncryption",
 	"XAUTHRespRSAEncryption",
 	"XAUTHInitRSARevisedEncryption",
-	"XAUTHRespRSARevisedEncryption",
+	"XAUTHRespRSARevisedEncryption", /* 65010 */
 };
 
-static enum_names oakley_auth_names1 = {
-	OAKLEY_PRESHARED_KEY,
-	OAKLEY_ELGAMAL_ENC_REV,
-	oakley_auth_name1,
+static enum_names oakley_auth_names_private_use2 = {
+	HybridInitRSA,
+	HybridRespDSS,
+	oakley_auth_name_private_use2,
 	NULL
 };
 
-static enum_names oakley_auth_names2 = {
-	HybridInitRSA,
-	HybridRespDSS,
-	oakley_auth_name2,
-	&oakley_auth_names1
+static enum_names oakley_auth_names_private_use = {
+	XAUTHInitPreShared,
+	XAUTHRespRSARevisedEncryption,
+	oakley_auth_name_private_use,
+	&oakley_auth_names_private_use2
 };
 
 enum_names oakley_auth_names = {
-	XAUTHInitPreShared,
-	XAUTHRespRSARevisedEncryption,
-	oakley_auth_name3,
-	&oakley_auth_names2
+	OAKLEY_PRESHARED_KEY,
+	OAKLEY_ECDSA_P521,
+	oakley_auth_name,
+	&oakley_auth_names_private_use
 };
+
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_name[] = {
@@ -1268,46 +1273,45 @@ enum_names ikev2_auth_names = {
 
 /* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_group_name[] = {
-	"OAKLEY_GROUP_MODP768",
+	"OAKLEY_GROUP_MODP768", /* 1 */
 	"OAKLEY_GROUP_MODP1024",
 	"OAKLEY_GROUP_GP155",
 	"OAKLEY_GROUP_GP185",
-	"OAKLEY_GROUP_MODP1536",
-};
-
-static const char *const oakley_group_name_rfc3526[] = {
-	"OAKLEY_GROUP_MODP2048",
-	"OAKLEY_GROUP_MODP3072",
-	"OAKLEY_GROUP_MODP4096",
-	"OAKLEY_GROUP_MODP6144",
-	"OAKLEY_GROUP_MODP8192"
-};
-
-static const char *const oakley_group_name_rfc5114[] = {
-	"OAKLEY_GROUP_DH22",
-	"OAKLEY_GROUP_DH23",
-	"OAKLEY_GROUP_DH24"
-};
-
-static enum_names oakley_group_names_rfc5114 = {
-	OAKLEY_GROUP_DH22,
-	OAKLEY_GROUP_DH24,
-	oakley_group_name_rfc5114,
-	NULL
-};
-
-static enum_names oakley_group_names_rfc3526 = {
-	OAKLEY_GROUP_MODP2048,
-	OAKLEY_GROUP_MODP8192,
-	oakley_group_name_rfc3526,
-	&oakley_group_names_rfc5114
+	"OAKLEY_GROUP_MODP1536", /* RFC 3526 */
+	"OAKLEY_GROUP_EC2N_2_1", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_2", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_3", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_4", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_5", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_6", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_7", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_EC2N_2_8", /* draft-ietf-ipsec-ike-ecc-groups */
+	"OAKLEY_GROUP_MODP2048", /* RFC 3526 */
+	"OAKLEY_GROUP_MODP3072", /* RFC 3526 */
+	"OAKLEY_GROUP_MODP4096", /* RFC 3526 */
+	"OAKLEY_GROUP_MODP6144", /* RFC 3526 */
+	"OAKLEY_GROUP_MODP8192", /* RFC 3526 */
+	"OAKLEY_GROUP_ECP_256", /* RFC 5903 */
+	"OAKLEY_GROUP_ECP_384", /* RFC 5903 */
+	"OAKLEY_GROUP_ECP_512", /* RFC 5903 */
+	"OAKLEY_GROUP_DH22", /* RFC 5114 */
+	"OAKLEY_GROUP_DH23", /* RFC 5114 */
+	"OAKLEY_GROUP_DH24", /* RFC 5114 */
+	"OAKLEY_GROUP_ECP_192", /* RFC 5114 */
+	"OAKLEY_GROUP_ECP_224", /* RFC 5114 */
+	"OAKLEY_GROUP_NON_IKE_27", /* RFC 6932 - not for use with IKE/IPsec */
+	"OAKLEY_GROUP_NON_IKE_28", /* RFC 6932 - not for use with IKE/IPsec */
+	"OAKLEY_GROUP_NON_IKE_29", /* RFC 6932 - not for use with IKE/IPsec */
+	"OAKLEY_GROUP_NON_IKE_30", /* RFC 6932 - not for use with IKE/IPsec */
+	/* 31 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
 };
 
 enum_names oakley_group_names = {
 	OAKLEY_GROUP_MODP768,
-	OAKLEY_GROUP_MODP1536,
+	OAKLEY_GROUP_NON_IKE_30,
 	oakley_group_name,
-	&oakley_group_names_rfc3526
+	NULL
 };
 
 /* Oakley Group Type attribute */
@@ -1975,7 +1979,7 @@ static struct keyword_enum_value kw_host_values[] = {
 };
 
 struct keyword_enum_values kw_host_list =
-{ kw_host_values, sizeof(kw_host_values) / sizeof(struct keyword_enum_value) };
+	{ kw_host_values, elemsof(kw_host_values) };
 
 /* look up enum names in an enum_names */
 const char *enum_name(enum_names *ed, unsigned long val)

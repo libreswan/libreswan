@@ -16,16 +16,15 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 srcdir?=$(shell pwd)/
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
-SUBDIRS=libaes libdes libmd5 libsha1 libsha2 
+SUBDIRS=libmd5 libsha1 libsha2
 
 ifeq ($(USE_EXTRACRYPTO),true)
 SUBDIRS+=libtwofish libserpent
 endif
 
-SUBDIRS+=liblswcrypto
 
 def:
-	@echo "Please read doc/intro.html or INSTALL before running make"
+	@echo "Please read INSTALL before running make"
 	@false
 
 # programs

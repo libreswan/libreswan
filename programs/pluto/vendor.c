@@ -600,6 +600,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_NATT_IETF_07:
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
+		/* Fall through */
 	case VID_NATT_RFC:
 		{
 			if (md->quirks.nat_traversal_vid < vid->id) {

@@ -123,8 +123,8 @@ static void confwrite_int(FILE *out,
 				int val = options[k->field];
 				fprintf(out, "\t%s%s=", side, k->keyname);
 
-				if (k->type == kt_loose_enum && val ==
-				    LOOSE_ENUM_OTHER) {
+				if (k->type == kt_loose_enum &&
+				    val == LOOSE_ENUM_OTHER) {
 					fprintf(out, "%s\n",
 						strings[k->field]);
 				} else {
@@ -459,7 +459,7 @@ static void confwrite_conn(FILE *out,
 			dsn = "start";
 			break;
 		}
-		cwf("auto=", dsn);
+		cwf("auto", dsn);
 	}
 
 	if (conn->policy) {

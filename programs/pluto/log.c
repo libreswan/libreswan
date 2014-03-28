@@ -195,7 +195,7 @@ static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 	ps = strlen(buf);
 	vsnprintf(buf + ps, buf_len - ps, fmt, ap);
 	if (!reproc)
-		(void)sanitize_string(buf, buf_len);
+		sanitize_string(buf, buf_len);
 }
 
 void close_peerlog(void)
@@ -715,7 +715,7 @@ int DBG_log(const char *message, ...)
 	va_end(args);
 
 	/* then sanitize anything else that is left. */
-	(void)sanitize_string(m, sizeof(m));
+	sanitize_string(m, sizeof(m));
 
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		if (log_with_timestamp) {
@@ -950,7 +950,8 @@ static void connection_state(struct state *st, void *data)
 {
 	struct log_conn_info *lc = data;
 
-	if (!st || st == lc->ignore || !st->st_connection || !lc->conn)
+	if (st == NULL || st == lc->ignore ||
+	    st->st_connection == NULL || lc->conn == NULL)
 		return;
 
 	if (st->st_connection != lc->conn) {
@@ -960,7 +961,7 @@ static void connection_state(struct state *st, void *data)
 		/* phase1 is shared with another connnection */
 	}
 
-	/* ignore undefined states (ie., just deleted) */
+	/* ignore undefined states (i.e. just deleted) */
 	if (st->st_state == STATE_UNDEFINED)
 		return;
 
@@ -974,8 +975,8 @@ static void connection_state(struct state *st, void *data)
 		} else {
 			if (lc->phase1 < p1_init)
 				lc->phase1 = p1_init;
-			if (IS_ISAKMP_ENCRYPTED(st->st_state) && lc->phase1 <
-			    p1_encrypt)
+			if (IS_ISAKMP_ENCRYPTED(st->st_state) &&
+			    lc->phase1 < p1_encrypt)
 				lc->phase1 = p1_encrypt;
 			if (IS_ISAKMP_AUTHENTICATED(st->st_state) &&
 			    lc->phase1 < p1_auth)

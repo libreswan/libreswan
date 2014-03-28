@@ -40,7 +40,7 @@ The contents of this LICENSE file are:
 
 Files with different copyrights/licenses:
 
- * lib/libcrypto/libserpent/serpent.c, lib/libipsecpolicy/version.in.c,
+ * lib/libcrypto/libserpent/serpent.c,
    lib/libswan/atoaddr.c, lib/libswan/atoasr.c,
    lib/libswan/atosubnet.c, lib/libswan/atoul.c,
    lib/libswan/initsaid.c, lib/libswan/initsubnet.c,

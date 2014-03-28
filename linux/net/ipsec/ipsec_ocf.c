@@ -483,9 +483,8 @@ static int ipsec_ocf_rcv_cb(struct cryptop *crp)
 		orig_len = irs->skb->len - sizeof(struct ipcomphdr);
 		decomp_len = crp->crp_olen;
 
-		newiph =
-			(struct iphdr*)((char*)irs->iph +
-					sizeof(struct ipcomphdr));
+		newiph = (struct iphdr*)
+			((char*)irs->iph + sizeof(struct ipcomphdr));
 
 		KLIPS_PRINT(debug_rcv,
 			    "comp results: olen: %u, inject: %u (len=%d) iph->totlen=%u\n",
@@ -772,9 +771,8 @@ enum ipsec_rcv_value ipsec_ocf_rcv(struct ipsec_rcv_state *irs)
 	crp->crp_olen = irs->skb->len;  /* Total output length */
 	crp->crp_flags =
 		CRYPTO_F_SKBUF |
-		(ipsec_ocf_cbimm ? CRYPTO_F_BATCH : 0) |
-		(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0) |
-		0;
+		(ipsec_ocf_cbimm ? CRYPTO_F_CBIMM : 0) |
+		(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0);
 	crp->crp_buf = (caddr_t) irs->skb;
 	crp->crp_callback = ipsec_ocf_rcv_cb;
 	crp->crp_sid = ipsp->ocf_cryptoid;
@@ -874,8 +872,7 @@ static int ipsec_ocf_xmit_cb(struct cryptop *crp)
 				    ixs->iphlen);
 
 			ptr_delta = ixs->pre_ipcomp_skb->data - ixs->skb->data;
-			ixs->iph           =
-				(void*)((char*)ixs->iph + ptr_delta);
+			ixs->iph = (void*)((char*)ixs->iph + ptr_delta);
 
 			/*
 			 * can not free it here, because we are under
@@ -947,9 +944,8 @@ static int ipsec_ocf_xmit_cb(struct cryptop *crp)
 					comp_len);
 		}
 
-		newiph =
-			(struct iphdr *)((char*)ixs->iph -
-					 sizeof(struct ipcomphdr));
+		newiph = (struct iphdr *)
+			((char*)ixs->iph - sizeof(struct ipcomphdr));
 		cmph = (struct ipcomphdr *)((char*)newiph + ixs->iphlen);
 
 		/* move the ip header to make room for the new ipcomp header */
@@ -978,20 +974,17 @@ static int ipsec_ocf_xmit_cb(struct cryptop *crp)
 
 		/* update the ip header to reflect the compression */
 		if (lsw_ip_hdr_version(ixs) == 6) {
-			lsw_ip6_hdr(ixs)->nexthdr     = IPPROTO_COMP;
-			lsw_ip6_hdr(ixs)->payload_len = htons(ixs->iphlen +
-							      sizeof(struct
-								     ipcomphdr) + comp_len -
-							      sizeof(struct
-								     ipv6hdr));
+			lsw_ip6_hdr(ixs)->nexthdr = IPPROTO_COMP;
+			lsw_ip6_hdr(ixs)->payload_len =
+				htons(ixs->iphlen + sizeof(struct ipcomphdr) +
+				      comp_len - sizeof(struct ipv6hdr));
 		} else {
-			lsw_ip4_hdr(ixs)->protocol    = IPPROTO_COMP;
-			lsw_ip4_hdr(ixs)->tot_len     = htons(ixs->iphlen +
-							      sizeof(struct
-								     ipcomphdr) +
-							      comp_len);
-			lsw_ip4_hdr(ixs)->check       = 0;
-			lsw_ip4_hdr(ixs)->check       =
+			lsw_ip4_hdr(ixs)->protocol = IPPROTO_COMP;
+			lsw_ip4_hdr(ixs)->tot_len =
+				htons(ixs->iphlen + sizeof(struct ipcomphdr) +
+				      comp_len);
+			lsw_ip4_hdr(ixs)->check = 0;
+			lsw_ip4_hdr(ixs)->check =
 				ip_fast_csum((char *) ixs->iph,
 					     lsw_ip4_hdr(ixs)->ihl);
 		}
@@ -1098,8 +1091,7 @@ enum ipsec_xmit_value ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 			    "duplicating the skb\n", payload_size);
 		ixs->pre_ipcomp_skb =
 			skb_copy_expand(ixs->skb, skb_headroom(ixs->skb),
-					skb_tailroom(
-						ixs->skb), GFP_ATOMIC);
+					skb_tailroom(ixs->skb), GFP_ATOMIC);
 		if (!ixs->pre_ipcomp_skb) {
 			/*
 			 * We can either drop the packet, but instead we try
@@ -1159,24 +1151,20 @@ enum ipsec_xmit_value ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 			crda->crd_skip = ((unsigned char *) ixs->iph) -
 					 ixs->skb->data;
 			if (lsw_ip_hdr_version(ixs) == 4) {
-				ixs->ttl                   =
-					lsw_ip4_hdr(ixs)->ttl;
-				ixs->check                 =
-					lsw_ip4_hdr(ixs)->check;
-				ixs->frag_off              =
-					lsw_ip4_hdr(ixs)->frag_off;
-				ixs->tos                   =
-					lsw_ip4_hdr(ixs)->tos;
+				ixs->ttl = lsw_ip4_hdr(ixs)->ttl;
+				ixs->check = lsw_ip4_hdr(ixs)->check;
+				ixs->frag_off = lsw_ip4_hdr(ixs)->frag_off;
+				ixs->tos = lsw_ip4_hdr(ixs)->tos;
 				lsw_ip4_hdr(ixs)->ttl      = 0;
 				lsw_ip4_hdr(ixs)->check    = 0;
 				lsw_ip4_hdr(ixs)->frag_off = 0;
 				lsw_ip4_hdr(ixs)->tos      = 0;
 			}
-			crda->crd_inject   =
-				(((struct ahhdr *)(ixs->dat +
-						   ixs->iphlen))->ah_data) -
+			crda->crd_inject =
+				((struct ahhdr *)(ixs->dat + ixs->iphlen))->
+						 ah_data -
 				ixs->skb->data;
-			crda->crd_len      = ixs->len - ixs->authlen;
+			crda->crd_len = ixs->len - ixs->authlen;
 			memset(ixs->skb->data + crda->crd_inject, 0, 12);
 		} else {
 			crda->crd_skip     = ((unsigned char *) ixs->espp) -
@@ -1236,11 +1224,11 @@ enum ipsec_xmit_value ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 						    ixs->iphlen);
 		/* compress all ip data */
 		if (lsw_ip_hdr_version(ixs) == 6)
-			crdc->crd_len    =
+			crdc->crd_len =
 				ntohs(lsw_ip6_hdr(ixs)->payload_len);
 		else
-			crdc->crd_len    = ntohs(lsw_ip4_hdr(ixs)->tot_len) -
-					   ixs->iphlen;
+			crdc->crd_len =
+				ntohs(lsw_ip4_hdr(ixs)->tot_len) - ixs->iphlen;
 		/* compress inplace (some hardware can only do inplace) */
 		crdc->crd_inject = crdc->crd_skip;
 
@@ -1255,9 +1243,8 @@ enum ipsec_xmit_value ipsec_ocf_xmit(struct ipsec_xmit_state *ixs)
 	crp->crp_olen = ixs->skb->len;  /* Total output length */
 	crp->crp_flags =
 		CRYPTO_F_SKBUF |
-		(ipsec_ocf_cbimm ? CRYPTO_F_BATCH : 0) |
-		(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0) |
-		0;
+		(ipsec_ocf_cbimm ? CRYPTO_F_CBIMM : 0) |
+		(ipsec_ocf_batch ? CRYPTO_F_BATCH : 0);
 	crp->crp_buf = (caddr_t) ixs->skb;
 	crp->crp_callback = ipsec_ocf_xmit_cb;
 	crp->crp_sid = ipsp->ocf_cryptoid;

@@ -311,9 +311,10 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 		baseauth = OAKLEY_RSA_ENC;
 		break;
 
+	/* Not implemented */
 	case XAUTHInitRSARevisedEncryption:
 	case XAUTHRespRSARevisedEncryption:
-		baseauth = OAKLEY_RSA_ENC_REV;
+		baseauth = OAKLEY_RSA_REVISED_MODE;
 		break;
 	}
 
@@ -633,7 +634,7 @@ static stf_status modecfg_resp(struct state *st,
 					}
 					DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
 					unsigned char si[14];	/* 14 is magic */
-					zero(si);
+					zero(&si);
 					memcpy(si, &st->st_connection->spd.this.client.addr.u.v4.sin_addr.s_addr, 4);	/* 4 is magic */
 					struct in_addr splitmask = bitstomask(st->st_connection->spd.this.client.maskbits);
 					memcpy(si + 4, &splitmask, 4);
@@ -1540,11 +1541,9 @@ stf_status xauth_inR0(struct msg_digest *md)
 
 		/* XXX This needs checking with the proper RFC's - ISAKMP_CFG_ACK got added for Cisco interop */
 		if ( (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type
-		      !=
-		      ISAKMP_CFG_REPLY) &&
+		      != ISAKMP_CFG_REPLY) &&
 		     (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type
-		      !=
-		      ISAKMP_CFG_ACK) ) {
+		      != ISAKMP_CFG_ACK) ) {
 			libreswan_log(
 				"Expecting MODE_CFG_REPLY, got %s instead.",
 				enum_name(&attr_msg_type_names,
@@ -1925,7 +1924,7 @@ static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
 			*s = '?';
 		}
 	}
-	(void)sanitize_string(strbuf, sizeof(strbuf));
+	sanitize_string(strbuf, sizeof(strbuf));
 	libreswan_log("Received Cisco %s: %s", attr_name, strbuf);
 	return clone_str(strbuf, attr_name);
 }
@@ -2150,8 +2149,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				struct spd_route *tmp_spd2 = &c->spd;
 
 				DBG_log("Received Cisco Split tunnel route(s)");
-				if ( FALSE ==
-				     tmp_spd2->that.has_client ) {
+				if (!tmp_spd2->that.has_client) {
 					ttosubnet("0.0.0.0/0.0.0.0", 0,
 						  AF_INET,
 						  &tmp_spd2->that.client);
@@ -2179,9 +2177,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					tmp_spd->that.host_addr_name =
 						NULL;
 
-					ap =
-						(u_int32_t *)(strattr.
-							      cur);
+					ap = (u_int32_t *)(strattr.cur);
 					a.u.v4.sin_family = AF_INET;
 					memcpy(&a.u.v4.sin_addr.s_addr,
 					       ap,
@@ -2191,16 +2187,13 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					addrtosubnet(&a,
 						     &tmp_spd->that.client);
 
-					len -=
-						sizeof(a.u.v4.sin_addr.
+					len -= sizeof(a.u.v4.sin_addr.
 						       s_addr);
 					strattr.cur +=
 						sizeof(a.u.v4.sin_addr.
 						       s_addr);
 
-					ap =
-						(u_int32_t *)(strattr.
-							      cur);
+					ap = (u_int32_t *)(strattr.cur);
 					a.u.v4.sin_family = AF_INET;
 					memcpy(&a.u.v4.sin_addr.s_addr,
 					       ap,
@@ -2209,8 +2202,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 					tmp_spd->that.client.maskbits =
 						masktocount(&a);
-					len -=
-						sizeof(a.u.v4.sin_addr.
+					len -= sizeof(a.u.v4.sin_addr.
 						       s_addr);
 					strattr.cur +=
 						sizeof(a.u.v4.sin_addr.

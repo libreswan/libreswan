@@ -24,10 +24,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
- *
  */
 
 #include <stdio.h>
@@ -84,8 +80,6 @@
 #include "virtual.h"	/* needs connections.h */
 
 #include "nat_traversal.h"
-
-#include "lswcrypto.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -218,9 +212,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef HAVE_BROKEN_POPEN
 					    " BROKEN_POPEN"
 #endif
-#ifndef OPENSSL
 					    " NSS"
-#endif
 #ifdef DNSSEC
 					    " DNSSEC"
 #endif
@@ -244,9 +236,6 @@ static const char compile_time_interop_options[] = ""
 #endif
 #ifdef LEAK_DETECTIVE
 					    " LEAK_DETECTIVE"
-#endif
-#ifdef HAVE_OCF
-					    " OCF"
 #endif
 #ifdef KLIPS_MAST
 					    " KLIPS_MAST"
@@ -443,23 +432,6 @@ int main(int argc, char **argv)
 	leak_detective = FALSE;
 #endif
 
-#ifdef HAVE_LIBCAP_NG
-	/*
-	 * Drop capabilities - this generates a false positive valgrind warning
-	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
-	 */
-	capng_clear(CAPNG_SELECT_BOTH);
-
-	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
-		      CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
-		      CAP_IPC_LOCK, CAP_AUDIT_WRITE,
-		      CAP_SETGID, CAP_SETUID, /* for google authenticator pam */
-		      -1);
-	/* our children must be able to CAP_NET_ADMIN to change routes.
-	 */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1); /* DAC needed for google authenticator pam */
-	capng_apply(CAPNG_SELECT_BOTH);
-#endif
 
 	libreswan_passert_fail = passert_fail;
 
@@ -1031,6 +1003,27 @@ int main(int argc, char **argv)
 		}
 	}
 
+#ifdef HAVE_LIBCAP_NG
+	/*
+	 * Drop capabilities - this generates a false positive valgrind warning
+	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
+	 *
+	 * We drop these after creating the pluto socket or else we can't create
+	 * a socket if the parent dir is non-root
+	 */
+	capng_clear(CAPNG_SELECT_BOTH);
+
+	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
+		      CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
+		      CAP_IPC_LOCK, CAP_AUDIT_WRITE,
+		      CAP_SETGID, CAP_SETUID, /* for google authenticator pam */
+		      -1);
+	/* our children must be able to CAP_NET_ADMIN to change routes.
+	 */
+	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1); /* DAC needed for google authenticator pam */
+	capng_apply(CAPNG_SELECT_BOTH);
+#endif
+
 	/* If not suppressed, do daemon fork */
 
 	if (fork_desired) {
@@ -1221,15 +1214,6 @@ int main(int argc, char **argv)
 	libreswan_log("LEAK_DETECTIVE support [disabled]");
 #endif
 
-#ifdef HAVE_OCF
-	if (access("/dev/crypto", R_OK | W_OK) != -1)
-		libreswan_log("OCF support for IKE via /dev/crypto [enabled]");
-	else
-		libreswan_log("OCF support for IKE via /dev/crypto [failed:%s]",
-				strerror(errno));
-#else
-	libreswan_log("OCF support for IKE [disabled]");
-#endif
 
 	/* Check for SAREF support */
 #ifdef KLIPS_MAST
@@ -1312,7 +1296,6 @@ int main(int argc, char **argv)
 	init_connections();
 	init_crypto();
 	init_crypto_helpers(nhelpers);
-	load_lswcrypto();
 	init_demux();
 	init_kernel();
 	init_adns();

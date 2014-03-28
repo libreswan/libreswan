@@ -309,7 +309,7 @@ static bool pfkey_get(pfkey_buf *buf)
 			     || (buf->msg.sadb_msg_type == SADB_REGISTER)
 			     || (buf->msg.sadb_msg_pid == 0 &&
 				 buf->msg.sadb_msg_type ==
-				 K_SADB_X_NAT_T_NEW_MAPPING)
+				   K_SADB_X_NAT_T_NEW_MAPPING)
 			     )) {
 			/* not for us: ignore */
 			DBG(DBG_KERNEL,
@@ -439,10 +439,10 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 	 */
 
 	if (buf->msg.sadb_msg_pid == 0 && /* we only wish to hear from kernel */
-	    !(ugh = src_proto ==
-		    dst_proto ? NULL : "src and dst protocols differ") &&
-	    !(ugh = addrtypeof(src) ==
-		    addrtypeof(dst) ? NULL : "conflicting address types") &&
+	    !(ugh = src_proto == dst_proto ?
+		NULL : "src and dst protocols differ") &&
+	    !(ugh = addrtypeof(src) == addrtypeof(dst) ?
+	        NULL : "conflicting address types") &&
 	    !(ugh = addrtosubnet(src, &ours)) &&
 	    !(ugh = addrtosubnet(dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, 0,
@@ -703,10 +703,9 @@ logerr:
 				 * If the caller wants it, response will point to space.
 				 */
 				pfkey_buf b;
-				pfkey_buf *bp = response !=
-						NULL ? response : &b;
-				int seq =
-					((struct sadb_msg *) extensions[0])->
+				pfkey_buf *bp = response != NULL ?
+					response : &b;
+				int seq = ((struct sadb_msg *) extensions[0])->
 					sadb_msg_seq;
 
 				if (!pfkey_get_response(bp, seq)) {
@@ -995,30 +994,26 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 		return FALSE;
 
 	if (sa->authkeylen != 0) {
-		success =
-			pfkey_build(pfkey_key_build(&extensions[
-							    K_SADB_EXT_KEY_AUTH
-						    ],
-						    K_SADB_EXT_KEY_AUTH,
-						    sa->authkeylen *
-						    BITS_PER_BYTE,
-						    sa->authkey),
-				    "pfkey_key_a Add SA",
-				    sa->text_said, extensions);
+		success = pfkey_build(pfkey_key_build(&extensions[
+							K_SADB_EXT_KEY_AUTH],
+						      K_SADB_EXT_KEY_AUTH,
+						      sa->authkeylen *
+							BITS_PER_BYTE,
+						      sa->authkey),
+				      "pfkey_key_a Add SA",
+				      sa->text_said, extensions);
 		if (!success)
 			return FALSE;
 	}
 
 #ifdef KLIPS_MAST
 	if (sa->ref != IPSEC_SAREF_NULL || sa->refhim != IPSEC_SAREF_NULL) {
-		success =
-			pfkey_build(pfkey_saref_build(&extensions[
-							      K_SADB_X_EXT_SAREF
-						      ],
-						      sa->ref,
-						      sa->refhim),
-				    "pfkey_key_sare Add SA",
-				    sa->text_said, extensions);
+		success = pfkey_build(pfkey_saref_build(&extensions[
+							   K_SADB_X_EXT_SAREF],
+							sa->ref,
+							sa->refhim),
+				      "pfkey_key_sare Add SA",
+				      sa->text_said, extensions);
 		if (!success)
 			return FALSE;
 	}
@@ -1035,16 +1030,14 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->enckeylen != 0) {
-		success =
-			pfkey_build(pfkey_key_build(&extensions[
-							    K_SADB_EXT_KEY_ENCRYPT
-						    ],
-						    K_SADB_EXT_KEY_ENCRYPT,
-						    sa->enckeylen *
-						    BITS_PER_BYTE,
-						    sa->enckey),
-				    "pfkey_key_e Add SA",
-				    sa->text_said, extensions);
+		success = pfkey_build(pfkey_key_build(&extensions[
+							K_SADB_EXT_KEY_ENCRYPT],
+						      K_SADB_EXT_KEY_ENCRYPT,
+						      sa->enckeylen *
+							BITS_PER_BYTE,
+						      sa->enckey),
+				      "pfkey_key_e Add SA",
+				      sa->text_said, extensions);
 		if (!success)
 			return FALSE;
 	}
@@ -1119,9 +1112,8 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 
 #ifdef KLIPS_MAST
 		if (replies[K_SADB_X_EXT_SAREF]) {
-			struct sadb_x_saref *sar =
-				(struct sadb_x_saref *)replies[
-					K_SADB_X_EXT_SAREF];
+			struct sadb_x_saref *sar = (struct sadb_x_saref *)
+				replies[K_SADB_X_EXT_SAREF];
 
 			sa->ref = sar->sadb_x_saref_me;
 			sa->refhim = sar->sadb_x_saref_him;
@@ -1910,8 +1902,7 @@ bool pfkey_plumb_mast_device(int mast_dev)
 					 ++pfkey_seq, pid)))
 		return FALSE;
 
-	if ((error =
-		     pfkey_outif_build(&extensions[K_SADB_X_EXT_PLUMBIF],
+	if ((error = pfkey_outif_build(&extensions[K_SADB_X_EXT_PLUMBIF],
 				       mast_dev)))
 		return FALSE;
 

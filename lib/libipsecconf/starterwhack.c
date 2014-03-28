@@ -204,8 +204,7 @@ static int starter_whack_read_reply(int sock,
 
 static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 {
-	struct sockaddr_un ctl_addr =
-	{ .sun_family = AF_UNIX };
+	struct sockaddr_un ctl_addr = { .sun_family = AF_UNIX };
 	int sock;
 	ssize_t len;
 	struct whackpacker wp;
@@ -267,9 +266,8 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 		char xauthname[XAUTH_MAX_NAME_LENGTH];
 		char xauthpass[XAUTH_MAX_PASS_LENGTH];
 
-		ret =
-			starter_whack_read_reply(sock, xauthname, xauthpass, 0,
-						 0);
+		ret = starter_whack_read_reply(sock, xauthname, xauthpass, 0,
+					       0);
 		close(sock);
 	}
 
@@ -545,8 +543,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		if (conn->options_set[KBF_DPDACTION])
 			msg.dpd_action = conn->options[KBF_DPDACTION];
 
-		if (conn->options_set[KBF_REKEY] && conn->options[KBF_REKEY] ==
-		    FALSE) {
+		if (conn->options_set[KBF_REKEY] && !conn->options[KBF_REKEY]) {
 			if (conn->options[KBF_DPDACTION] ==
 			      DPD_ACTION_RESTART) {
 				starter_log(LOG_LEVEL_ERR,
@@ -571,6 +568,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
 	else
 		msg.nat_keepalive = TRUE;
+	if (conn->options_set[KBF_IKEV1_NATT])
+		msg.ikev1_natt = conn->options[KBF_IKEV1_NATT];
+	else
+		msg.ikev1_natt = natt_both;
+
 
 	/* Activate sending out own vendorid */
 	if (conn->options_set[KBF_SEND_VENDORID])
