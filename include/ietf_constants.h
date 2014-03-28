@@ -1000,9 +1000,9 @@ typedef u_int16_t oakley_hash_t;
 
 /*
  * Oakley Authentication Method attribute
- * draft-ietf-ipsec-ike-01.txt appendix A
- * Goofy Hybrid extensions from draft-ietf-ipsec-isakmp-hybrid-auth-05.txt
- * Goofy XAUTH extensions from draft-ietf-ipsec-isakmp-xauth-06.txt
+ * IANA: https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-8
+ * XAUTH: https://tools.ietf.org/html/draft-ietf-ipsec-isakmp-xauth-06
+ * Hybrid: https://tools.ietf.org/html/draft-ietf-ipsec-isakmp-hybrid-auth-05
  */
 
 #define OAKLEY_AUTH_ROOF 5 /* We don't support Revised or ECDSA yet */
