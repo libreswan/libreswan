@@ -40,6 +40,7 @@ v3.9
 * KLIPS: SAref patches for Ubuntu kernel 3.11.0-15.25 [Simon Deziel]
 * KLIPS: Improved suport for various 3.x Linux kernels [various]
 * KLIPS: support for CONFIG_USER_NS [Matt]
+* _stackmanager: only unload stack when switching (rhbz#1025687) [Paul/Tuomo]
 * building: remove LIBDIR as we install all programs in LIBEXECDIR [Tuomo]
 * packaging: NSS fixups for deb packaging [mountaincat]
 * Bugtracker bugs fixed:
