@@ -60,13 +60,17 @@ stopnetkey() {
 		fi
 		if [ -n "$(egrep ^${mod} /proc/modules)" ]; then
 		    # echo "unloading module ${mod} using --wait" >&2
-		    rmmod ${wait} ${mod} 2>/dev/null
+		    # we start rmmod to backgroud so unloading one module won't block
+		    rmmod ${wait} ${mod} 2>/dev/null &
 		fi
 	    done
+	    # Finally we wait for background executed rmmods to complete
+	    wait
 	fi
     fi
+    # if we were executed with --wait or -w optio we inform about unload failure
     if [ -n "${wait}" -a -n "$(lsmod | grep ^esp)" ]; then
-	echo "FAILURE to unload NETKEY esp4/esp6 module" >&2
+	echo "FAIL" >&2
 	exit 1
     fi
 }
