@@ -2,8 +2,8 @@
 # STACK startup script
 # Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
-# Copyright (C) 2008-2013 Tuomo Soini <tis@foobar.fi>
-# Copyright (C) 2008-2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2008-2014 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -59,7 +59,7 @@ stopnetkey() {
 		fi
 	    fi
 	    # netkey stack found, let's unload.
-	    for mod in ipcomp ipcomp6 ip_vti xfrm6_tunnel xfrm6_mode_tunnel \
+	    for mod in xfrm_ipcomp ipcomp ipcomp6 ip_vti xfrm6_tunnel xfrm6_mode_tunnel \
 		xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport \
 		xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel \
 		xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key xfrm_user
@@ -87,7 +87,7 @@ stopnetkey() {
 	    fi
 	fi
     fi
-    # if we were executed with --wait or -w optio we inform about unload failure
+    # if we were executed with --wait or -w option we inform about unload failure
     if [ -n "${wait}" -a -n "$(lsmod | grep ^esp)" ]; then
 	echo "FAIL" >&2
 	exit 1
@@ -109,10 +109,10 @@ startnetkey() {
 	
     if [ -f /proc/modules ]; then
 	# load all NETKEY modules
-	for mod in ipcomp6 ipcomp xfrm6_tunnel xfrm6_mode_tunnel \
+	for mod in ipcomp6 xfrm_ipcomp ipcomp xfrm6_tunnel xfrm6_mode_tunnel \
 	    xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport \
 	    xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel \
-	    xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key
+	    xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key ip_vti
 	do
 	    # echo -n "${mod} " >&2
 	    @MODPROBE@ ${mod} 2>/dev/null
