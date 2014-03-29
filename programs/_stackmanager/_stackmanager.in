@@ -35,7 +35,9 @@ if [ -z "${action}" ]; then
 fi
 
 stopnetkey() {
+    local wait larval_drop
     wait=""
+    larval_drop=""
     # Validate wait option
     [ "${1}" = "--wait" -o "${1}" = "-w" ] && wait="${1}"
 
@@ -47,6 +49,15 @@ stopnetkey() {
 	fi
 
 	if [ -f /proc/modules ]; then
+	    # check if we can write our own settings
+	    if [ -n "${wait}" -a -w /proc/sys/net/core/xfrm_larval_drop ]; then
+		# read previous state so we can restore it
+		larval_drop=$(cat /proc/sys/net/core/xfrm_larval_drop)
+		if [ -n "${larval_drop}" ]; then
+		    # set to 0 so we can unload modules
+		    echo 0 >/proc/sys/net/core/xfrm_larval_drop
+		fi
+	    fi
 	    # netkey stack found, let's unload.
 	    for mod in ipcomp ipcomp6 ip_vti xfrm6_tunnel xfrm6_mode_tunnel \
 		xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport \
@@ -58,14 +69,22 @@ stopnetkey() {
 		    # echo "unloading module ${mod}" >&2
 		    rmmod ${mod} 2>/dev/null
 		fi
-		if [ -n "$(egrep ^${mod} /proc/modules)" ]; then
+		# We only run rmmod again with --wait if requested
+		if [ -n "${wait}" -a -n "$(egrep ^${mod} /proc/modules)" ]; then
 		    # echo "unloading module ${mod} using --wait" >&2
 		    # we start rmmod to backgroud so unloading one module won't block
 		    rmmod ${wait} ${mod} 2>/dev/null &
 		fi
 	    done
 	    # Finally we wait for background executed rmmods to complete
-	    wait
+	    if [ -n "${wait}" ]; then
+		wait
+		if [ -n "${larval_drop}" ]; then
+		    # restore original value of xfrm_larval_drop
+		    echo "${larval_drop}" >/proc/sys/net/core/xfrm_larval_drop
+		    larval_drop=""
+		fi
+	    fi
 	fi
     fi
     # if we were executed with --wait or -w optio we inform about unload failure
