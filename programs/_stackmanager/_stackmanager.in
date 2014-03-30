@@ -364,6 +364,7 @@ startklips() {
 		if ($1 == "inet")
 		    sub(" [^ ]+:[^ ]+"," ",$0)
 		    sub("/.*","",$2)
+		    sub("dynamic","",$7)
 		    for (i = 2; i < NF; i++) {
 			if ($i == "brd" || $i == "peer" || $i == "secondary")
 			    i++
@@ -372,7 +373,7 @@ startklips() {
 		    }
 		    if ($NF != phys)
 			cmd = cmd " " $NF
-			cmd = cmd " dev " virt ">/dev/null"
+			cmd = cmd " dev " virt ">/dev/null 2>/dev/null"
 			system(cmd)
 			}' phys=${phys} virt=${virt}
 	    ip link set up dev ${virt}
