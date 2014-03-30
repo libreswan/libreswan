@@ -82,7 +82,8 @@ stopnetkey() {
 	    # Finally we wait for background executed rmmods to complete
 	    if [ -n "${wait}" ]; then
 		wait
-		if [ -n "${larval_drop}" ]; then
+		if [ -n "${larval_drop}" -a \
+		    -w /proc/sys/net/core/xfrm_larval_drop ]; then
 		    # restore original value of xfrm_larval_drop
 		    echo "${larval_drop}" >/proc/sys/net/core/xfrm_larval_drop
 		    larval_drop=""
