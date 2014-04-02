@@ -48,7 +48,6 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
-#include "lswcrypto.h"
 #include "lswconf.h"
 #include "secrets.h"
 #include "mpzfuncs.h"
@@ -488,7 +487,6 @@ usage:
 
 	PK11_SetPasswordFunc(getNSSPassword);
 
-	load_lswcrypto();
 	lsw_load_preshared_secrets(&host_secrets, verbose > 0 ? TRUE : FALSE,
 				   secrets_file, &pass);
 

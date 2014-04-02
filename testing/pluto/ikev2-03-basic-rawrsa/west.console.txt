@@ -63,7 +63,7 @@ west #
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=yes, keep_alive=20, nat_ikeport=4500, disable_port_floating=no
+000 nat_traversal=yes, keep_alive=20, nat_ikeport=4500
 000 virtual_private (%priv):
 000 - allowed 3 subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
 000 - disallowed 2 subnets: 192.0.1.0/24, 2001:db8:0:1::/64
@@ -132,8 +132,8 @@ west #
  ipsec auto --up  westnet-eastnet-ikev2
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=oakley_sha group=modp2048}
-004 "westnet-eastnet-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=none}
+134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
+004 "westnet-eastnet-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

@@ -141,10 +141,7 @@ struct hmac_ctx {
 
 extern void hmac_init(struct hmac_ctx *ctx,
 		      const struct hash_desc *h,
-		      const u_char *key,
-		      size_t key_len);
-
-#define hmac_init_chunk(ctx, h, ch) hmac_init((ctx), (h), (ch).ptr, (ch).len)
+		      /*const*/ PK11SymKey *symkey);
 
 extern void hmac_update(struct hmac_ctx *ctx,
 			const u_char *data,

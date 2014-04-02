@@ -432,9 +432,8 @@ int ipsec_alg_auth_key_create(struct ipsec_sa *sa_p)
 	int ret = 0;
 	int keyminbits, keymaxbits;
 	caddr_t akp = NULL;
-	struct ipsec_alg_auth *ixt_a =
-		(struct ipsec_alg_auth *)ipsec_alg_get(IPSEC_ALG_TYPE_AUTH,
-						       sa_p->ips_authalg);
+	struct ipsec_alg_auth *ixt_a = (struct ipsec_alg_auth *)
+		ipsec_alg_get(IPSEC_ALG_TYPE_AUTH, sa_p->ips_authalg);
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:ipsec_alg_auth_key_create: "
@@ -596,8 +595,7 @@ static int check_auth(struct ipsec_alg_auth *ixt)
 	}
 	if (ixt->ixt_common.ixt_support.ias_keyminbits == 0 &&
 	    ixt->ixt_common.ixt_support.ias_keymaxbits == 0 &&
-	    ixt->ixt_a_keylen ==
-	    0)
+	    ixt->ixt_a_keylen == 0)
 		goto zero_key_ok;
 	if (ixt->ixt_common.ixt_support.ias_keyminbits == 0)
 		barf_out(KERN_ERR "invalid keyminbits=%d\n",
@@ -774,8 +772,7 @@ static int ipsec_alg_test_encrypt(int enc_alg, int test)
 		ret = tmp_key_e ? 0 : -EINVAL;
 	} else {
 		tmp_key_e = test_key_e;
-		ret =
-			ixt_e->ixt_e_set_key(ixt_e, test_key_e, test_key,
+		ret = ixt_e->ixt_e_set_key(ixt_e, test_key_e, test_key,
 					     keysize);
 	}
 	if (ret < 0)
@@ -803,8 +800,8 @@ static int ipsec_alg_test_encrypt(int enc_alg, int test)
 	printk(KERN_INFO
 	       "klips_info: ipsec_alg_test_encrypt: "
 	       "memcmp(dec,tmp) ret=%d: %s\n", ret,
-	       ret ==
-	       0 ? "OK. (encr->decr->SAME)" : "FAIL! (encr->decr->DIFFers)" );
+	       ret == 0 ?
+	           "OK. (encr->decr->SAME)" : "FAIL! (encr->decr->DIFFers)" );
 	{
 		/*	Shamelessly taken from drivers/md sources  O:)  */
 		unsigned long now;

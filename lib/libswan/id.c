@@ -533,13 +533,9 @@ const char *pluto_ip_str(const ip_address *src)
 	return buf;
 }
 
-/* this is a partial duplicate. ignores ip_addr */
-bool duplicate_id(struct id *dst, struct id *src)
+void duplicate_id(struct id *dst, const struct id *src)
 {
-	dst->kind =  src->kind;
+	dst->kind = src->kind;
 	dst->ip_addr = src->ip_addr;
-	dst->name.len = src->name.len;
-	dst->name.ptr =
-		clone_bytes(src->name.ptr, src->name.len, "copy of id");
-	return TRUE;
+	clonetochunk(dst->name, src->name.ptr, src->name.len, "copy of id");
 }

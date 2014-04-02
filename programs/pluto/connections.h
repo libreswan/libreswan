@@ -219,6 +219,7 @@ struct connection {
 	bool cisco_unity;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool send_vendorid;           /* Send our vendorid? Security vs Debugging help */
 	bool sha2_truncbug;
+	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 
 	/*Network Manager support*/
 #ifdef HAVE_NM
@@ -365,14 +366,8 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection
 *con_by_name(const char *nm, bool strict);
 
-#define find_host_connection(me, my_port, him, his_port, \
-			     policy) find_host_connection2(__FUNCTION__, me, \
-							   my_port, him, \
-							   his_port, \
-							   policy)
 extern struct connection
-	*find_host_connection2(const char *func,
-		       const ip_address *me, u_int16_t my_port,
+	*find_host_connection(const ip_address *me, u_int16_t my_port,
 		       const ip_address *him, u_int16_t his_port,
 		       lset_t policy),
 	*refine_host_connection(const struct state *st, const struct id *id,

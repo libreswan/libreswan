@@ -12,6 +12,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2014 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2014 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,6 +64,7 @@
 #include "whack.h"
 #include "timer.h"
 #include "ike_alg.h"
+#include "ikev2.h"
 
 #include "cookie.h"
 #include "sha1.h"
@@ -81,6 +83,29 @@ bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support *
 static unsigned int nat_kap = 0;
 static unsigned int nat_kap_event = 0;
 
+/* Copied hash_desc from crypto.c I don't know how to call SHA1 by name
+ * RFC 5996 2.23 only allow "SHA-1 digest of the SPIs (in the order they appear
+ * in the header), IP address, and port from which this packet was sent. "
+ */
+
+static struct hash_desc ikev2_natd_hasher =
+{
+	.common = { .name = "oakley_sha",
+		.officname = "sha1",
+		.algo_type = IKE_ALG_HASH,
+		.algo_id =   OAKLEY_SHA1,
+		.algo_v2id = IKEv2_PRF_HMAC_SHA1,
+		.algo_next = NULL, },
+	.hash_ctx_size = sizeof(SHA1_CTX),
+	.hash_key_size =   SHA1_DIGEST_SIZE,
+	.hash_digest_len = SHA1_DIGEST_SIZE,
+	.hash_integ_len = 0,    /*Not applicable*/
+	.hash_block_size = HMAC_BUFSIZE,
+	.hash_init = (void (*)(void *))SHA1Init,
+	.hash_update = (void (*)(void *, const u_int8_t *, size_t))SHA1Update,
+	.hash_final = (void (*)(u_char *, void *))SHA1Final,
+};
+
 void init_nat_traversal(unsigned int keep_alive_period)
 {
 	{
@@ -97,16 +122,15 @@ void init_nat_traversal(unsigned int keep_alive_period)
 		}
 	}
 
-	nat_kap =
-		keep_alive_period ? keep_alive_period :
-		DEFAULT_KEEP_ALIVE_PERIOD;
+	nat_kap = keep_alive_period ?
+		keep_alive_period : DEFAULT_KEEP_ALIVE_PERIOD;
 	libreswan_log("   NAT-Traversal support %s",
 	     nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
 }
 
 static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
-		       u_int8_t *icookie, u_int8_t *rcookie,
+		       const u_int8_t *icookie, const u_int8_t *rcookie,
 		       const ip_address *ip, u_int16_t port)
 {
 	union hash_ctx ctx;
@@ -159,33 +183,102 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 }
 
 /**
+ * Add  NAT-Traversal IKEv2 Notify payload (v2N)
+ *
+ */
+
+bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
+{
+	bool r = TRUE;
+	const ip_address *first, *second;
+	unsigned short firstport, secondport;
+	struct state *st = md->st;
+	chunk_t hash_me;
+	chunk_t hash_him;
+
+	DBG(DBG_NATT, DBG_log(" NAT-Traversal support %s add v2N payloads.",
+				nat_traversal_enabled ? " [enabled]" : " [disabled]"));
+
+	first = &st->st_localaddr;
+	firstport = ntohs(st->st_localport);
+	second = &st->st_remoteaddr;
+	secondport = ntohs(st->st_remoteport);
+
+	/*
+	 *  First one with sender IP & port
+	 */
+	hash_me.ptr = alloc_thing(SHA1_DIGEST_SIZE ,"nat-t hash me");
+	hash_me.len = SHA1_DIGEST_SIZE;
+	natd_hash(&ikev2_natd_hasher, hash_me.ptr, st->st_icookie,
+			is_zero_cookie(st->st_rcookie) ?
+			md->hdr.isa_rcookie : st->st_rcookie,
+			first, firstport);
+
+	chunk_t child_spi;
+	memset(&child_spi, 0, sizeof(child_spi));
+
+	ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL, /*PROTO_ISAKMP*/ 0,
+			&child_spi, v2N_NAT_DETECTION_SOURCE_IP,
+			&hash_me, outs);
+
+	/**
+	 * Second one with my IP & port
+	 */
+	hash_him.ptr = alloc_thing(SHA1_DIGEST_SIZE ,"nat-t hash him");
+	hash_him.len = SHA1_DIGEST_SIZE;
+	natd_hash(&ikev2_natd_hasher, hash_him.ptr,
+			st->st_icookie,
+			is_zero_cookie(
+				st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie,
+			second, secondport);
+
+	ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL, /*PROTO_ISAKMP*/ 0,
+			&child_spi, v2N_NAT_DETECTION_DESTINATION_IP,
+			&hash_him, outs);
+	pfree(hash_me.ptr);
+	pfree(hash_him.ptr);
+	return r;
+}
+
+/*
  * Add NAT-Traversal VIDs (supported ones)
  *
  * Used when we're Initiator
  */
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs)
+bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *st)
 {
-	bool r = TRUE;
+	DBG(DBG_NATT, DBG_log("nat add vid"));
 
-	DBG(DBG_NATT,
-	    DBG_log("nat add vid"));
-
-	{
-		if (r)
-			r =
-				out_vid(ISAKMP_NEXT_VID, outs,
-					VID_NATT_RFC);
-		if (r)
-			r = out_vid(ISAKMP_NEXT_VID, outs,
-				    VID_NATT_IETF_03);
-		if (r)
-			r = out_vid(ISAKMP_NEXT_VID, outs,
-				    VID_NATT_IETF_02_N);
-		if (r)
-			r = out_vid(np, outs,
-				    VID_NATT_IETF_02);
+	/*
+	 * Some Cisco's have a broken NAT-T implementation where it
+	 * sends one NAT payload per draft, and one NAT payload for RFC.
+	 * ikev1_natt={both|drafts|rfc} helps us claim we only support the
+	 * drafts, so we don't hit the bad Cisco code.
+	 */
+	switch(st->st_connection->ikev1_natt) {
+	case natt_rfc:
+		DBG(DBG_NATT, DBG_log("skipping VID_NATT drafts"));
+		if (!out_vid(np, outs, VID_NATT_RFC))
+			return FALSE;
+		break;
+	case natt_both:
+		DBG(DBG_NATT, DBG_log("sending draft and RFC NATT VIDs"));
+		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_RFC))
+			return FALSE;
+		/* Fall through */
+	case natt_drafts:
+		if (st->st_connection->ikev1_natt == natt_drafts) {
+			DBG(DBG_NATT, DBG_log("skipping VID_NATT_RFC"));
+		}
+		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_03))
+			return FALSE;
+		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_02_N))
+			return FALSE;
+		if (!out_vid(np, outs, VID_NATT_IETF_02))
+			return FALSE;
+		break;
 	}
-	return r;
+	return TRUE;
 }
 
 u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
@@ -280,16 +373,16 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 				     pbs_left(&p->pbs));
 		    });
 
-		if ( (pbs_left(&p->pbs) ==
-		      st->st_oakley.prf_hasher->hash_digest_len) &&
-		     (memeq(p->pbs.cur, hash_me,
-			     st->st_oakley.prf_hasher->hash_digest_len)))
+		if (pbs_left(&p->pbs) ==
+		        st->st_oakley.prf_hasher->hash_digest_len &&
+		    memeq(p->pbs.cur, hash_me,
+			  st->st_oakley.prf_hasher->hash_digest_len))
 			found_me = TRUE;
 
-		if ( (pbs_left(&p->pbs) ==
-		      st->st_oakley.prf_hasher->hash_digest_len) &&
-		     (memcmp(p->pbs.cur, hash_him,
-			     st->st_oakley.prf_hasher->hash_digest_len) == 0))
+		if (pbs_left(&p->pbs) ==
+		        st->st_oakley.prf_hasher->hash_digest_len &&
+		    memcmp(p->pbs.cur, hash_him,
+			   st->st_oakley.prf_hasher->hash_digest_len) == 0)
 			found_him = TRUE;
 
 		i++;
@@ -613,17 +706,16 @@ void nat_traversal_show_result(u_int32_t nt, u_int16_t sport)
 	}
 
 	loglog(RC_LOG_SERIOUS,
-	       "NAT-Traversal: Result using %s: %s",
-	       LHAS(nt,
-		    NAT_TRAVERSAL_METHOD_IETF_RFC) ? enum_name(&
-							       natt_method_names,
-							       NAT_TRAVERSAL_METHOD_IETF_RFC) :
-	       LHAS(nt,
-		    NAT_TRAVERSAL_METHOD_IETF_02_03) ? enum_name(&
-								 natt_method_names,
-								 NAT_TRAVERSAL_METHOD_IETF_02_03) :
-	       "unknown or unsupported method",
-	       rslt ? rslt : "unknown or unsupported result"
+	       "NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
+	           LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ?
+			enum_name(&natt_method_names,
+				NAT_TRAVERSAL_METHOD_IETF_RFC) :
+	           LHAS(nt,NAT_TRAVERSAL_METHOD_IETF_02_03) ?
+			enum_name(&natt_method_names,
+				NAT_TRAVERSAL_METHOD_IETF_02_03) :
+	           "unknown or unsupported method",
+	       sport,
+	       rslt != NULL ? rslt : "unknown or unsupported result"
 	       );
 }
 
@@ -927,6 +1019,12 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		}
 	}
 
+	DBG_log("nat_traversal & NAT_T_DETECTED %" PRIxLSET,
+			(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED));
+	DBG_log(" st_localport != pluto_natt_float_port (%" PRIu16 " != %" PRIu16 ")",
+			st->st_localport,
+			pluto_natt_float_port);
+
 	/**
 	 * If we're initiator and NAT-T is detected, we
 	 * need to change port (MAIN_I3, QUICK_I1 or AGGR_I2)
@@ -934,8 +1032,6 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	if ( ((st->st_state == STATE_MAIN_I3) ||
 	      (st->st_state == STATE_QUICK_I1) ||
 	      (st->st_state == STATE_AGGR_I2)) &&
-	     (st->hidden_variables.st_nat_traversal &
-	      NAT_T_WITH_PORT_FLOATING) &&
 	     (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	     (st->st_localport != pluto_natt_float_port)) {
 		DBG(DBG_NATT,
@@ -1075,4 +1171,116 @@ void show_setup_natt()
 		nat_traversal_enabled ? "yes" : "no",
 		nat_kap,
 		pluto_natt_float_port);
+}
+
+void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
+{
+	unsigned char hash_me[SHA1_DIGEST_SIZE];
+	unsigned char hash_him[SHA1_DIGEST_SIZE];
+	struct payload_digest *p;
+	struct state *st = md->st;
+	bool found_me = FALSE;
+	bool found_him = FALSE;
+	int i;
+
+	passert(st);
+	passert(md->iface);
+
+	/**
+	 * First one with my IP & port
+	 */
+	natd_hash(&ikev2_natd_hasher, hash_me,
+		   st->st_icookie, rcookie,
+		   &(md->iface->ip_addr),
+		   ntohs(md->iface->port));
+
+	/**
+	 * The others with sender IP & port
+	 */
+	natd_hash(&ikev2_natd_hasher, hash_him,
+		   st->st_icookie, rcookie,
+		   &(md->sender), ntohs(md->sender_port));
+
+	for (p = md->chain[ISAKMP_NEXT_v2N], i = 0;
+			p != NULL && (!found_me || !found_him);
+			p = p->next) {
+		if ((p->payload.v2n.isan_type !=  v2N_NAT_DETECTION_SOURCE_IP)
+				&& (p->payload.v2n.isan_type !=  v2N_NAT_DETECTION_DESTINATION_IP))
+			continue;
+
+		DBG(DBG_NATT, {
+				DBG_log("comparing received %s",
+					enum_name(&ikev2_notify_names,
+						p->payload.v2n.isan_type));
+				DBG_dump("received hash:",
+					p->pbs.cur,
+					pbs_left(&p->pbs));
+
+				DBG_dump("expected NAT-D(me):", hash_me,
+					SHA1_DIGEST_SIZE);
+				DBG_dump("expected NAT-D(him):", hash_him,
+					SHA1_DIGEST_SIZE);
+				});
+
+		if ( (pbs_left(&p->pbs) == SHA1_DIGEST_SIZE) &&
+				(memcmp(p->pbs.cur, hash_me, SHA1_DIGEST_SIZE)== 0))
+			found_me = TRUE;
+
+		if ( (pbs_left(&p->pbs) == SHA1_DIGEST_SIZE) &&
+				(memcmp(p->pbs.cur, hash_him, SHA1_DIGEST_SIZE)== 0))
+			found_him = TRUE;
+
+		i++;
+	}
+
+	DBG(DBG_NATT,
+	    DBG_log("NAT_TRAVERSAL hash=%d (me:%d) (him:%d)",
+		    i, found_me, found_him));
+
+	if (!found_me) {
+	DBG(DBG_NATT,
+	    DBG_log("NAT_TRAVERSAL this end is behind NAT"));
+		st->hidden_variables.st_nat_traversal |= LELEM(
+			NAT_TRAVERSAL_NAT_BHND_ME);
+		st->hidden_variables.st_natd = md->sender;
+	}
+
+	memset(&st->hidden_variables.st_natd, 0,
+	       sizeof(st->hidden_variables.st_natd));
+	anyaddr(AF_INET, &st->hidden_variables.st_natd);
+
+	if (!found_him) {
+		st->hidden_variables.st_nat_traversal |= LELEM(
+				NAT_TRAVERSAL_NAT_BHND_PEER);
+		st->hidden_variables.st_natd = md->sender;
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
+					ip_str(&md->sender)));
+	}
+
+	if (st->st_connection->forceencaps) {
+		DBG(DBG_NATT,
+		    DBG_log("NAT_TRAVERSAL forceencaps enabled"));
+
+		st->hidden_variables.st_nat_traversal |= LELEM(
+			NAT_TRAVERSAL_NAT_BHND_PEER);
+		st->hidden_variables.st_nat_traversal |= LELEM(
+			NAT_TRAVERSAL_NAT_BHND_ME);
+		st->hidden_variables.st_natd = md->sender;
+	}
+
+	if (st->st_connection->nat_keepalive) {
+		DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL nat_keepalive enabled %s",
+					ip_str(&md->sender)));
+	}
+	if ((st->st_state == STATE_PARENT_I1) &&
+			(st->hidden_variables.st_nat_traversal
+			 & NAT_T_DETECTED)) {
+		DBG(DBG_NATT,
+				DBG_log("NAT-T: floating to port %s:%d",
+				ip_str(&md->sender),pluto_natt_float_port));
+		st->st_localport  = pluto_natt_float_port;
+		st->st_remoteport = pluto_natt_float_port;
+
+		nat_traversal_change_port_lookup(NULL, st);
+	}
 }

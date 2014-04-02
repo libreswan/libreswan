@@ -7,3 +7,7 @@ connections are in use. We install a wide policy and check it is getting
 encrypted. Then we install a narrow passthrough policy on top and see if
 we properly send unencrypted
 
+It uses a weird track where 127.0.0.XXX works for any XXX so we can use these
+as markers in the tcpdump - they also are not encrypted because its not 127.0.0.1
+
+openswan fails this test because it does not properly prioritize passthrough connections ?

@@ -106,17 +106,6 @@ static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 	}
 }
 
-#ifdef OPENSSL
-/* Not possible with NSS */
-static void RSA_show_private_key(struct RSA_private_key *k)
-{
-#ifdef FIPS_CHECK
-	if (!libreswan_fipsmode())
-#endif
-	RSA_show_key_fields(k, elemsof(RSA_private_field));
-}
-#endif
-
 static void RSA_show_public_key(struct RSA_public_key *k)
 {
 	/*
@@ -131,13 +120,6 @@ static const char *RSA_public_key_sanity(struct RSA_private_key *k)
 {
 	/* note that the *last* error found is reported */
 	err_t ugh = NULL;
-
-#ifdef OPENSSL
-# ifdef FIPS_CHECK
-	if (!libreswan_fipsmode())
-# endif
-	DBG(DBG_PRIVATE, RSA_show_public_key(&k->pub));
-#endif
 
 	/*
 	 * PKCS#1 1.5 section 6 requires modulus to have at least 12 octets.
@@ -327,8 +309,7 @@ static int lsw_check_secret_byid(struct secret *secret UNUSED,
 	DBG(DBG_CONTROL,
 		DBG_log("searching for certificate %s:%s vs %s:%s",
 			enum_name(&ppk_names, pks->kind),
-			(pks->kind ==
-				PPK_RSA ?
+			(pks->kind == PPK_RSA ?
 				pks->u.RSA_private_key.pub.keyid : "N/A"),
 			enum_name(&ppk_names, sb->kind),
 			sb->my_public_key->u.rsa.keyid);
@@ -482,12 +463,11 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 					switch (kind) {
 					case PPK_PSK:
-						same =
-							s->pks.u.preshared_secret.len ==
-							best->pks.u.preshared_secret.len &&
-							memeq(s->pks.u.preshared_secret.ptr,
-								best->pks.u.preshared_secret.ptr,
-								s->pks.u.preshared_secret.len);
+						same = s->pks.u.preshared_secret.len ==
+						       best->pks.u.preshared_secret.len &&
+						       memeq(s->pks.u.preshared_secret.ptr,
+							     best->pks.u.preshared_secret.ptr,
+							     s->pks.u.preshared_secret.len);
 						break;
 					case PPK_RSA:
 						/*
@@ -801,12 +781,10 @@ static err_t lsw_process_psk_secret(chunk_t *psk)
 		size_t sz;
 		char diag_space[TTODATAV_BUF];
 
-		ugh =
-			ttodatav(flp->tok, flp->cur - flp->tok, 0, buf,
-				sizeof(buf),
-				&sz,
-				diag_space, sizeof(diag_space),
-				TTODATAV_SPACECOUNTS);
+		ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0, buf,
+			       sizeof(buf), &sz,
+			       diag_space, sizeof(diag_space),
+			       TTODATAV_SPACECOUNTS);
 		if (ugh != NULL) {
 			/* ttodata didn't like PSK data */
 			ugh = builddiag("PSK data malformed (%s): %s", ugh,
@@ -844,12 +822,10 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 		size_t sz;
 		char diag_space[TTODATAV_BUF];
 
-		ugh =
-			ttodatav(flp->tok, flp->cur - flp->tok, 0, buf,
-				sizeof(buf),
-				&sz,
-				diag_space, sizeof(diag_space),
-				TTODATAV_SPACECOUNTS);
+		ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0, buf,
+			       sizeof(buf), &sz,
+			       diag_space, sizeof(diag_space),
+			       TTODATAV_SPACECOUNTS);
 		if (ugh != NULL) {
 			/* ttodata didn't like PSK data */
 			ugh = builddiag("PSK data malformed (%s): %s", ugh,
@@ -1010,9 +986,9 @@ const struct RSA_private_key *lsw_get_x509_private_key(struct secret *secrets,
 	return pri;
 }
 
-static pthread_mutex_t certs_and_keys_mutex  = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static pthread_mutex_t authcert_list_mutex   = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t authcert_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * lock access to my certs and keys
@@ -1215,11 +1191,8 @@ static void lsw_process_secret_records(struct secret **psecrets, int verbose,
 							 */
 			}
 		} else {
-			struct secret *s;
-
 			/* expecting a list of indices and then the key info */
-			s = alloc_thing(struct secret, "secret");
-			passert(s != NULL);
+			struct secret *s = alloc_thing(struct secret, "secret");
 
 			s->ids = NULL;
 			s->pks.kind = PPK_PSK;	/* default */
@@ -1258,9 +1231,8 @@ static void lsw_process_secret_records(struct secret **psecrets, int verbose,
 					id.kind = ID_IPV6_ADDR;
 					ugh = anyaddr(AF_INET6, &id.ip_addr);
 				} else {
-					ugh =
-						atoid(flp->tok, &id, FALSE,
-							FALSE);
+					ugh = atoid(flp->tok, &id, FALSE,
+						    FALSE);
 				}
 
 				if (ugh != NULL) {

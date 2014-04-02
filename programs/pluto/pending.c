@@ -149,8 +149,8 @@ void release_pending_whacks(struct state *st, err_t story)
 			struct stat pst;
 
 			if (fstat(p->whack_sock, &pst) == 0 &&
-			    (stst.st_dev != pst.st_dev || stst.st_ino !=
-			     pst.st_ino)) {
+			    (stst.st_dev != pst.st_dev ||
+			     stst.st_ino != pst.st_ino)) {
 				passert(whack_log_fd == NULL_FD);
 				whack_log_fd = p->whack_sock;
 				whack_log(RC_COMMENT,
@@ -201,8 +201,7 @@ void unpend(struct state *st)
 	DBG(DBG_DPD,
 	    DBG_log("unpending state #%lu", st->st_serialno));
 
-	for (pp =
-		     host_pair_first_pending(st->st_connection);
+	for (pp = host_pair_first_pending(st->st_connection);
 	     (p = *pp) != NULL;
 	     ) {
 		if (p->isakmp_sa == st) {
@@ -243,8 +242,7 @@ struct connection *first_pending(struct state *st,
 	DBG(DBG_DPD,
 	    DBG_log("getting first pending from state #%lu", st->st_serialno));
 
-	for (pp =
-		     host_pair_first_pending(st->st_connection);
+	for (pp = host_pair_first_pending(st->st_connection);
 	     (p = *pp) != NULL;
 	     ) {
 		if (p->isakmp_sa == st) {

@@ -172,18 +172,18 @@ static sparse_names calg_list = {
 
 static const struct aead_alg aead_algs[] =
 {
-	{ .id = SADB_X_EALG_AES_CCM_ICV8, .icvlen = 8, .name =
-		  "rfc4309(ccm(aes))" },
-	{ .id = SADB_X_EALG_AES_CCM_ICV12, .icvlen = 12, .name =
-		  "rfc4309(ccm(aes))" },
-	{ .id = SADB_X_EALG_AES_CCM_ICV16, .icvlen = 16, .name =
-		  "rfc4309(ccm(aes))" },
-	{ .id = SADB_X_EALG_AES_GCM_ICV8, .icvlen = 8, .name =
-		  "rfc4106(gcm(aes))" },
-	{ .id = SADB_X_EALG_AES_GCM_ICV12, .icvlen = 12, .name =
-		  "rfc4106(gcm(aes))" },
-	{ .id = SADB_X_EALG_AES_GCM_ICV16, .icvlen = 16, .name =
-		  "rfc4106(gcm(aes))" },
+	{ .id = SADB_X_EALG_AES_CCM_ICV8, .icvlen = 8,
+		  .name = "rfc4309(ccm(aes))" },
+	{ .id = SADB_X_EALG_AES_CCM_ICV12, .icvlen = 12,
+		  .name = "rfc4309(ccm(aes))" },
+	{ .id = SADB_X_EALG_AES_CCM_ICV16, .icvlen = 16,
+		  .name = "rfc4309(ccm(aes))" },
+	{ .id = SADB_X_EALG_AES_GCM_ICV8, .icvlen = 8,
+		  .name = "rfc4106(gcm(aes))" },
+	{ .id = SADB_X_EALG_AES_GCM_ICV12, .icvlen = 12,
+		  .name = "rfc4106(gcm(aes))" },
+	{ .id = SADB_X_EALG_AES_GCM_ICV16, .icvlen = 16,
+		  .name = "rfc4106(gcm(aes))" },
 };
 
 static const struct aead_alg *get_aead_alg(int algid)
@@ -514,8 +514,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			break;
 		case SPI_TRAP:
 		case SPI_TRAPSUBNET:
-			if (sadb_op == ERO_ADD_INBOUND || sadb_op ==
-			    ERO_DEL_INBOUND)
+			if (sadb_op == ERO_ADD_INBOUND ||
+			    sadb_op == ERO_DEL_INBOUND)
 				return TRUE;
 
 			break;
@@ -583,8 +583,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 * therefore, this code extracts upper 8 bits and lower 8 bits and puts
 	 * into source and destination ports before passing to NETKEY.
 	 */
-	if ( transport_proto == IPPROTO_ICMP || transport_proto ==
-	     IPPROTO_ICMPV6) {
+	if (transport_proto == IPPROTO_ICMP ||
+	    transport_proto == IPPROTO_ICMPV6) {
 		u_int16_t icmp_type;
 		u_int16_t icmp_code;
 
@@ -670,8 +670,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			tmpl[i].reqid = proto_info[i].reqid;
 			tmpl[i].id.proto = proto_info[i].proto;
 			tmpl[i].optional =
-				proto_info[i].proto == IPPROTO_COMP && dir !=
-				XFRM_POLICY_OUT;
+				proto_info[i].proto == IPPROTO_COMP &&
+				dir != XFRM_POLICY_OUT;
 			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
 			tmpl[i].family = that_host->u.v4.sin_family;
 			tmpl[i].mode =
@@ -698,9 +698,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		if (policy_label) {
 			struct rtattr *attr;
 			struct xfrm_user_sec_ctx *uctx;
-			attr =
-				(struct rtattr *)((char *)&req +
-						  req.n.nlmsg_len);
+			attr = (struct rtattr *)
+				((char *)&req + req.n.nlmsg_len);
 			attr->rta_type = XFRMA_SEC_CTX;
 			/* Passing null terminated sec label (strlen + '\0') */
 			DBG_log("passing security label %s (len=%zu +1) to kernel",
@@ -829,8 +828,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * therefore, this code extracts upper 8 bits and lower 8 bits and puts
 		 * into source and destination ports before passing to NETKEY.
 		 */
-		if ( 1 == sa->transport_proto /*icmp*/ || 58 ==
-		     sa->transport_proto /*ipv6-icmp*/) {
+		if (IPPROTO_ICMP == sa->transport_proto ||
+		    IPPROTO_ICMPV6 == sa->transport_proto) {
 
 			u_int16_t icmp_type;
 			u_int16_t icmp_code;
@@ -888,9 +887,9 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			struct xfrm_algo_auth algo;
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			algo.alg_trunc_len =
-				(sa->authalg ==
-				 AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) ? 96 :
-				128;
+				sa->authalg ==
+				   AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG ?
+				96 : 128;
 			attr->rta_type = XFRMA_ALG_AUTH_TRUNC;
 			attr->rta_len = RTA_LENGTH(
 				sizeof(algo) + sa->authkeylen);
@@ -1400,20 +1399,14 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 			uctx = alloc_thing(struct xfrm_user_sec_ctx_ike,
 					   "struct xfrm_user_sec_ctx_ike");
+			uctx->len = xuctx->len;
+			uctx->exttype = xuctx->exttype;
+			uctx->ctx_alg = xuctx->ctx_alg;
+			uctx->ctx_doi = xuctx->ctx_doi;
+			uctx->ctx_len = xuctx->ctx_len; /*Length includes '\0'*/
 
-			if (uctx != NULL) {
-				uctx->len = xuctx->len;
-				uctx->exttype = xuctx->exttype;
-				uctx->ctx_alg = xuctx->ctx_alg;
-				uctx->ctx_doi = xuctx->ctx_doi;
-				uctx->ctx_len = xuctx->ctx_len; /*Length includes '\0'*/
-
-				memcpy(uctx->sec_ctx_value, (xuctx + 1),
-				       xuctx->ctx_len);
-			} else {
-				DBG(DBG_KERNEL,
-				    DBG_log("not enough memory for struct xfrm_user_sec_ctx_ike"));
-			}
+			memcpy(uctx->sec_ctx_value, (xuctx + 1),
+			       xuctx->ctx_len);
 		} else {
 			DBG(DBG_KERNEL,
 			    DBG_log("(should not reach here really) received security length=%d > MAX_SECCTX_LEN",
@@ -1437,8 +1430,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 	    !(ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
 	    !(ugh = add_port(family, &src, acquire->sel.sport)) &&
 	    !(ugh = add_port(family, &dst, acquire->sel.dport)) &&
-	    !(ugh = src_proto ==
-		    dst_proto ? NULL : "src and dst protocols differ") &&
+	    !(ugh = src_proto == dst_proto ?
+		NULL : "src and dst protocols differ") &&
 	    !(ugh = addrtosubnet(&src, &ours)) &&
 	    !(ugh = addrtosubnet(&dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, transport_proto
@@ -1890,22 +1883,21 @@ static bool netlink_shunt_eroute(struct connection *c,
 		snprintf(buf2, sizeof(buf2),
 			 "eroute_connection %s", opname);
 
-		if ( !netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,
-					 &sr->that.host_addr,
-					 &sr->that.client,
-					 htonl(spi),
-					 c->encapsulation ==
-					 ENCAPSULATION_MODE_TRANSPORT ? SA_ESP
-					 :
-					 SA_INT,
-					 sr->this.protocol,
-					 ET_INT,
-					 null_proto_info, 0, c->sa_priority,
-					 op, buf2
+		if (!netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,
+					&sr->that.host_addr,
+					&sr->that.client,
+					htonl(spi),
+					c->encapsulation ==
+					     ENCAPSULATION_MODE_TRANSPORT ?
+					   SA_ESP : SA_INT,
+					sr->this.protocol,
+					ET_INT,
+					null_proto_info, 0, c->sa_priority,
+					op, buf2
 #ifdef HAVE_LABELED_IPSEC
-					 , c->policy_label
+					, c->policy_label
 #endif
-					 ) )
+					))
 			return FALSE;
 
 		switch (op) {
@@ -2110,8 +2102,7 @@ add_entry:
 					 * the kernel did not support it, and gave an error
 					 * it one tried to turn it on.
 					 */
-					if (addrtypeof(&ifp->addr) ==
-					    AF_INET) {
+					if (addrtypeof(&ifp->addr) == AF_INET) {
 						fd = create_socket(ifp,
 								   v->name,
 								   pluto_natt_float_port);
@@ -2128,8 +2119,7 @@ add_entry:
 						q->ip_addr = ifp->addr;
 						setportof(htons(pluto_natt_float_port),
 							  &q->ip_addr);
-						q->port =
-							pluto_natt_float_port;
+						q->port = pluto_natt_float_port;
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;
@@ -2265,8 +2255,8 @@ static bool netkey_do_command(struct connection *c, struct spd_route *sr,
 			   "%s",        /* actual script */
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown ==
-			   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown == NULL ?
+			       DEFAULT_UPDOWN : sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;

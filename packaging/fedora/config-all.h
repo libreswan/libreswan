@@ -74,7 +74,7 @@
 #define CONFIG_KLIPS_ALG_AES #error
 
 #if 0
-/* off by default requiers kernel patch */
+/* off by default requires kernel patch */
 # ifndef CONFIG_KLIPS_OCF
 #  define CONFIG_KLIPS_OCF 0
 # endif

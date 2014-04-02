@@ -79,6 +79,10 @@ typedef int bool;
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)     /* clearer shorthand */
 #define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)	/* clearer shorthand */
 
+/* zero an object given a pointer to it.
+ * Note: this won't work on an array without an explicit &
+ * (it will appear to work but it will only zero the first element).
+ */
 #define zero(x) memset((x), '\0', sizeof(*(x)))	/* zero all bytes */
 
 /* routines to copy C strings to fixed-length buffers */
@@ -96,7 +100,7 @@ typedef uint_fast64_t lset_t;
 #define LELEM(opt) ((lset_t)1 << (opt))
 #define LRANGE(lwb, upb) LRANGES(LELEM(lwb), LELEM(upb))
 #define LRANGES(first, last) (last - first + last)
-#define LHAS(set, elem)  ((LELEM(elem) & (set)) != LEMPTY)
+#define LHAS(set, elem)  (((set) & LELEM(elem)) != LEMPTY)
 #define LIN(subset, set)  (((subset) & (set)) == (subset))
 #define LDISJOINT(a, b)  (((a) & (b)) == LEMPTY)
 

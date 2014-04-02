@@ -177,8 +177,8 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					 */
 					if (nat_traversal_support_port_floating
 					    &&
-					    addrtypeof(&ifp->addr) ==
-					    AF_INET) {
+					    addrtypeof(&ifp->addr) == AF_INET)
+					{
 						fd = create_socket(ifp,
 								   id->id_vname,
 								   pluto_natt_float_port);
@@ -195,8 +195,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						q->ip_addr = ifp->addr;
 						setportof(htons(pluto_natt_float_port),
 							  &q->ip_addr);
-						q->port =
-							pluto_natt_float_port;
+						q->port = pluto_natt_float_port;
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;
@@ -292,8 +291,8 @@ static bool bsdkame_do_command(struct connection *c, struct spd_route *sr,
 			   "%s",        /* actual script */
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown ==
-			   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown == NULL ?
+			       DEFAULT_UPDOWN : sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;

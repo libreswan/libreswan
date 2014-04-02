@@ -177,8 +177,8 @@ enum ipsec_rcv_value ipsec_rcv_ipcomp_decomp(struct ipsec_rcv_state *irs)
 		    irs->sa_len ? irs->sa : " (error)",
 		    (__u32)ntohl(irs->said.spi),
 		    ipsp != NULL ? (__u32)ntohl((ipsp->ips_said.spi)) : 0,
-		    ipsp !=
-		    NULL ? (__u16)(ntohl(ipsp->ips_said.spi) & 0x0000ffff) : 0,
+		    ipsp != NULL ?
+		      (__u16)(ntohl(ipsp->ips_said.spi) & 0x0000ffff) : 0,
 		    irs->next_header);
 	KLIPS_IP_PRINT(debug_rcv & DB_RX_PKTRX, irs->iph);
 

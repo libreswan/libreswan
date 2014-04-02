@@ -27,7 +27,7 @@
  * but this is only to protect against something that shouldn't be used.
  * Truncate resulting string to what fits in buffer.
  */
-size_t sanitize_string(char *buf, size_t size)
+void sanitize_string(char *buf, size_t size)
 {
 #define UGLY_WIDTH 4	/* width for ugly character: \OOO */
 	size_t len;
@@ -86,7 +86,7 @@ size_t sanitize_string(char *buf, size_t size)
 		snprintf(fmtd, sizeof(fmtd), "\\%03o", c);
 		memcpy(p + added, fmtd, UGLY_WIDTH);
 	}
-	return len;
+	return;
 
 #undef UGLY_WIDTH
 }

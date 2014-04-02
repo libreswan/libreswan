@@ -205,6 +205,7 @@ static int aalg_getbyname_esp(const char *str, int len)
 	int ret = -1;
 	unsigned num;
 	static const char sha2_256_aka[] = "sha2";
+	static const char sha1_aka[] = "sha";
 
 	DBG_log("entering aalg_getbyname_esp()");
 	if (!str || !*str)
@@ -215,6 +216,14 @@ static int aalg_getbyname_esp(const char *str, int len)
 		strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
 		DBG_log("interpreting ESP sha2 as sha2_256");
 		str = "sha2_256";
+		len = strlen(str);
+	}
+
+	/* now "sha" as "sha1" */
+	if (len == sizeof(sha1_aka)-1 &&
+	    strncasecmp(str, sha1_aka, sizeof(sha1_aka)-1) == 0) {
+		DBG_log("interpreting ESP sha as sha1");
+		str = "sha1";
 		len = strlen(str);
 	}
 
@@ -621,8 +630,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 
 	ealg_id = aalg_id = -1;
 	if (p_ctx->ealg_permit && *p_ctx->ealg_buf) {
-		ealg_id =
-			p_ctx->ealg_getbyname(p_ctx->ealg_buf,
+		ealg_id = p_ctx->ealg_getbyname(p_ctx->ealg_buf,
 					strlen(p_ctx->ealg_buf));
 #if 0
 		if (ealg_id == ESP_MAGIC_ID) {
@@ -661,8 +669,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			);
 	}
 	if (p_ctx->aalg_permit && *p_ctx->aalg_buf) {
-		aalg_id =
-			p_ctx->aalg_getbyname(p_ctx->aalg_buf,
+		aalg_id = p_ctx->aalg_getbyname(p_ctx->aalg_buf,
 					strlen(p_ctx->aalg_buf));
 		if (aalg_id < 0) {
 			p_ctx->err = "hash_alg not found";
@@ -675,8 +682,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			);
 	}
 	if (p_ctx->modp_getbyname && *p_ctx->modp_buf) {
-		modp_id =
-			p_ctx->modp_getbyname(p_ctx->modp_buf,
+		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf,
 					strlen(p_ctx->modp_buf));
 		if (modp_id < 0) {
 			p_ctx->err = "modp group not found";
@@ -825,29 +831,26 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 	 */
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
+	char esp_buf[256];
+	int ret;
 
-	if (alg_info_esp != NULL) {
-		char esp_buf[256];
-		int ret;
+	strcpy(esp_buf, alg_str);	/*
+					 * ??? how do we know that
+					 * it fits?
+					 */
+	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf,
+						err_p))
+		return NULL;
 
-		strcpy(esp_buf, alg_str);	/*
-						 * ??? how do we know that
-						 * it fits?
-						 */
-		if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf,
-							err_p))
-			return NULL;
-
-		alg_info_esp->alg_info_protoid = PROTO_IPSEC_ESP;
-		ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
-					esp_buf, err_p,
-					parser_init_esp,
-					alg_info_esp_add,
-					NULL);
-		if (ret < 0) {
-			pfreeany(alg_info_esp);
-			alg_info_esp = NULL;
-		}
+	alg_info_esp->alg_info_protoid = PROTO_IPSEC_ESP;
+	ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
+				esp_buf, err_p,
+				parser_init_esp,
+				alg_info_esp_add,
+				NULL);
+	if (ret < 0) {
+		pfreeany(alg_info_esp);
+		alg_info_esp = NULL;
 	}
 
 	return alg_info_esp;

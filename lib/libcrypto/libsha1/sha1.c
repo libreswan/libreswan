@@ -21,7 +21,6 @@
 /* #define LITTLE_ENDIAN * This should be #define'd already, if true. */
 /* #define SHA1HANDSOFF * Copies data before messing with it. */
 
-#include <libreswan.h> /* for DEBUG for NSS passert() */
 
 #include <pk11pub.h>
 #include "lswlog.h"

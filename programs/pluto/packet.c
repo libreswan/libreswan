@@ -60,7 +60,7 @@ static field_desc isa_fields[] = {
 };
 
 struct_desc isakmp_hdr_desc =
-{ "ISAKMP Message", isa_fields, sizeof(struct isakmp_hdr) };
+	{ "ISAKMP Message", isa_fields, sizeof(struct isakmp_hdr) };
 
 /* Generic portion of all ISAKMP payloads.
  * layout from RFC 2408 "ISAKMP" section 3.2
@@ -81,7 +81,7 @@ static field_desc isag_fields[] = {
 };
 
 static struct_desc isakmp_generic_desc =
-{ "ISAKMP Generic Payload", isag_fields, sizeof(struct isakmp_generic) };
+	{ "ISAKMP Generic Payload", isag_fields, sizeof(struct isakmp_generic) };
 
 /* ISAKMP Data Attribute (generic representation within payloads)
  * layout from RFC 2408 "ISAKMP" section 3.3
@@ -160,8 +160,8 @@ static field_desc isasa_fields[] = {
 };
 
 struct_desc isakmp_sa_desc =
-{ "ISAKMP Security Association Payload", isasa_fields,
-  sizeof(struct isakmp_sa) };
+	{ "ISAKMP Security Association Payload", isasa_fields,
+		sizeof(struct isakmp_sa) };
 
 static field_desc ipsec_sit_field[] = {
 	{ ft_set, 32 / BITS_PER_BYTE, "IPsec DOI SIT", &sit_bit_names },
@@ -169,7 +169,7 @@ static field_desc ipsec_sit_field[] = {
 };
 
 struct_desc ipsec_sit_desc =
-{ "IPsec DOI SIT", ipsec_sit_field, sizeof(u_int32_t) };
+	{ "IPsec DOI SIT", ipsec_sit_field, sizeof(u_int32_t) };
 
 /* ISAKMP Proposal Payload
  * layout from RFC 2408 "ISAKMP" section 3.5
@@ -197,7 +197,8 @@ static field_desc isap_fields[] = {
 };
 
 struct_desc isakmp_proposal_desc =
-{ "ISAKMP Proposal Payload", isap_fields, sizeof(struct isakmp_proposal) };
+	{ "ISAKMP Proposal Payload", isap_fields,
+	  sizeof(struct isakmp_proposal) };
 
 /* ISAKMP Transform Payload
  * layout from RFC 2408 "ISAKMP" section 3.6
@@ -297,7 +298,8 @@ struct_desc isakmp_ipcomp_transform_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 struct_desc isakmp_keyex_desc =
-{ "ISAKMP Key Exchange Payload", isag_fields, sizeof(struct isakmp_generic) };
+	{ "ISAKMP Key Exchange Payload", isag_fields,
+	  sizeof(struct isakmp_generic) };
 
 /* ISAKMP Identification Payload
  * layout from RFC 2408 "ISAKMP" section 3.8
@@ -327,7 +329,8 @@ static field_desc isaid_fields[] = {
 };
 
 struct_desc isakmp_identification_desc =
-{ "ISAKMP Identification Payload", isaid_fields, sizeof(struct isakmp_id) };
+	{ "ISAKMP Identification Payload", isaid_fields,
+	  sizeof(struct isakmp_id) };
 
 /* IPSEC Identification Payload Content
  * layout from RFC 2407 "IPsec DOI" section 4.6.2
@@ -355,8 +358,8 @@ static field_desc isaiid_fields[] = {
 };
 
 struct_desc isakmp_ipsec_identification_desc =
-{ "ISAKMP Identification Payload (IPsec DOI)", isaiid_fields,
-  sizeof(struct isakmp_ipsec_id) };
+	{ "ISAKMP Identification Payload (IPsec DOI)", isaiid_fields,
+	  sizeof(struct isakmp_ipsec_id) };
 
 /* ISAKMP Certificate Payload: oddball fixed field beyond the generic ones.
  * layout from RFC 2408 "ISAKMP" section 3.9
@@ -385,7 +388,8 @@ static field_desc isacert_fields[] = {
  * sizeof(struct isakmp_cert) because that will rounded up for padding.
  */
 struct_desc isakmp_ipsec_certificate_desc =
-{ "ISAKMP Certificate Payload", isacert_fields, ISAKMP_CERT_SIZE };
+	{ "ISAKMP Certificate Payload", isacert_fields, ISAKMP_CERT_SIZE };
+
 /* ISAKMP Certificate Request Payload: oddball field beyond the generic ones.
  * layout from RFC 2408 "ISAKMP" section 3.10
  * Variable length Certificate Types and Certificate Authorities follow.
@@ -413,7 +417,7 @@ static field_desc isacr_fields[] = {
  * sizeof(struct isakmp_cr) because that will rounded up for padding.
  */
 struct_desc isakmp_ipsec_cert_req_desc =
-{ "ISAKMP Certificate RequestPayload", isacr_fields, ISAKMP_CR_SIZE };
+	{ "ISAKMP Certificate RequestPayload", isacr_fields, ISAKMP_CR_SIZE };
 
 /* ISAKMP Hash Payload: no fixed fields beyond the generic ones.
  * layout from RFC 2408 "ISAKMP" section 3.11
@@ -430,7 +434,7 @@ struct_desc isakmp_ipsec_cert_req_desc =
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 struct_desc isakmp_hash_desc =
-{ "ISAKMP Hash Payload", isag_fields, sizeof(struct isakmp_generic) };
+	{ "ISAKMP Hash Payload", isag_fields, sizeof(struct isakmp_generic) };
 
 /* ISAKMP Signature Payload: no fixed fields beyond the generic ones.
  * layout from RFC 2408 "ISAKMP" section 3.12
@@ -447,7 +451,8 @@ struct_desc isakmp_hash_desc =
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 struct_desc isakmp_signature_desc =
-{ "ISAKMP Signature Payload", isag_fields, sizeof(struct isakmp_generic) };
+	{ "ISAKMP Signature Payload", isag_fields,
+	  sizeof(struct isakmp_generic) };
 
 /* ISAKMP Nonce Payload: no fixed fields beyond the generic ones.
  * layout from RFC 2408 "ISAKMP" section 3.13
@@ -464,7 +469,7 @@ struct_desc isakmp_signature_desc =
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 struct_desc isakmp_nonce_desc =
-{ "ISAKMP Nonce Payload", isag_fields, sizeof(struct isakmp_generic) };
+	{ "ISAKMP Nonce Payload", isag_fields, sizeof(struct isakmp_generic) };
 
 /* ISAKMP Notification Payload
  * layout from RFC 2408 "ISAKMP" section 3.14
@@ -501,8 +506,8 @@ static field_desc isan_fields[] = {
 };
 
 struct_desc isakmp_notification_desc =
-{ "ISAKMP Notification Payload", isan_fields,
-  sizeof(struct isakmp_notification) };
+	{ "ISAKMP Notification Payload", isan_fields,
+	  sizeof(struct isakmp_notification) };
 
 /* ISAKMP Delete Payload
  * layout from RFC 2408 "ISAKMP" section 3.15
@@ -534,7 +539,7 @@ static field_desc isad_fields[] = {
 };
 
 struct_desc isakmp_delete_desc =
-{ "ISAKMP Delete Payload", isad_fields, sizeof(struct isakmp_delete) };
+	{ "ISAKMP Delete Payload", isad_fields, sizeof(struct isakmp_delete) };
 
 /* ISAKMP Vendor ID Payload
  * layout from RFC 2408 "ISAKMP" section 3.15
@@ -551,7 +556,8 @@ struct_desc isakmp_delete_desc =
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 struct_desc isakmp_vendor_id_desc =
-{ "ISAKMP Vendor ID Payload", isag_fields, sizeof(struct isakmp_generic) };
+	{ "ISAKMP Vendor ID Payload", isag_fields,
+	  sizeof(struct isakmp_generic) };
 
 /* MODECFG */
 /*
@@ -597,7 +603,8 @@ static field_desc isaattr_fields[] = {
  */
 
 struct_desc isakmp_attr_desc =
-{ "ISAKMP Mode Attribute", isaattr_fields, sizeof(struct isakmp_mode_attr) };
+	{ "ISAKMP Mode Attribute", isaattr_fields,
+	  sizeof(struct isakmp_mode_attr) };
 
 /* ISAKMP NAT-Traversal NAT-D
  * layout from draft-ietf-ipsec-nat-t-ike-01.txt section 3.2
@@ -610,7 +617,8 @@ struct_desc isakmp_attr_desc =
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 struct_desc isakmp_nat_d =
-{ "ISAKMP NAT-D Payload", isag_fields, sizeof(struct isakmp_generic) };
+	{ "ISAKMP NAT-D Payload", isag_fields,
+	  sizeof(struct isakmp_generic) };
 
 /* ISAKMP NAT-Traversal NAT-OA
  * layout from draft-ietf-ipsec-nat-t-ike-01.txt section 4.2
@@ -635,7 +643,8 @@ static field_desc isanat_oa_fields[] = {
 };
 
 struct_desc isakmp_nat_oa =
-{ "ISAKMP NAT-OA Payload", isanat_oa_fields, sizeof(struct isakmp_nat_oa) };
+	{ "ISAKMP NAT-OA Payload", isanat_oa_fields,
+	  sizeof(struct isakmp_nat_oa) };
 
 /* ISAKMP IKE Fragmentation Payload
  * Cisco proprietary, undocumented
@@ -662,8 +671,8 @@ static field_desc isafrag_fields[] = {
 };
 
 struct_desc isakmp_ikefrag_desc =
-{ "ISAKMP IKE Fragment Payload", isafrag_fields,
-  sizeof(struct isakmp_ikefrag) };
+	{ "ISAKMP IKE Fragment Payload", isafrag_fields,
+	  sizeof(struct isakmp_ikefrag) };
 
 /*
  * GENERIC IKEv2 header.
@@ -892,7 +901,7 @@ static field_desc ikev2_cert_fields[] = {
 };
 
 struct_desc ikev2_certificate_desc =
-{ "IKEv2 Certificate Payload", ikev2_cert_fields, IKEV2_CERT_SIZE };
+	{ "IKEv2 Certificate Payload", ikev2_cert_fields, IKEV2_CERT_SIZE };
 
 /* section 3.7
  *
@@ -921,7 +930,8 @@ static field_desc ikev2_cert_req_fields[] = {
 };
 
 struct_desc ikev2_certificate_req_desc =
-{ "IKEv2 Certificate Request Payload", ikev2_cert_fields, IKEV2_CERT_SIZE };
+	{ "IKEv2 Certificate Request Payload", ikev2_cert_fields,
+	  IKEV2_CERT_SIZE };
 
 /*
  * 3.8.  Authentication Payload
@@ -1394,8 +1404,8 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 #if 0
 			DBG(DBG_PARSING, DBG_log("%d %s",
 						 (int) (cur - ins->cur),
-						 fp->name ==
-						 NULL ? "" : fp->name));
+						 fp->name == NULL ?
+						   "" : fp->name));
 #endif
 			switch (fp->field_type) {
 			case ft_zig: /* should be zero, ignore if not - liberal in what to receive, strict to send */
@@ -1585,8 +1595,8 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 	u_int8_t *cur = outs->cur;
 
 	DBG(DBG_EMITTING,
-	    DBG_prefix_print_struct(outs, "emit ", struct_ptr, sd, obj_pbs ==
-				    NULL));
+	    DBG_prefix_print_struct(outs, "emit ", struct_ptr, sd,
+				    obj_pbs == NULL));
 
 	if (outs->roof - cur < (ptrdiff_t)sd->size) {
 		ugh = builddiag(

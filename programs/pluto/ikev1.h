@@ -67,7 +67,7 @@ extern stf_status aggr_outI1(int whack_sock,
 
 extern void ikev1_delete_out(struct state *st);
 
-extern bool decode_peer_id(struct msg_digest *md, bool initiator,
+extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			   bool aggrmode);
 
 extern size_t RSA_sign_hash(struct connection *c,

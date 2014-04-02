@@ -45,8 +45,8 @@ struct in_addr addrsp[2];
 	stop = src + srclen;
 	for (punct = src; (punct = memchr(punct, '.', stop - punct)) != NULL;
 		punct++)
-		if (stop - punct > 3 && *(punct + 1) == '.' && *(punct + 2) ==
-			'.')
+		if (stop - punct > 3 && *(punct + 1) == '.' &&
+		    *(punct + 2) == '.')
 			break;	/* NOTE BREAK OUT */
 	if (punct == NULL) {
 		/* didn't find the range delimiter, must be plain address */

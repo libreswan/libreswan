@@ -298,8 +298,8 @@ void insert_state(struct state *st)
 {
 	struct state **p = state_hash(st->st_icookie, st->st_rcookie);
 
-	passert(st->st_hashchain_prev == NULL && st->st_hashchain_next ==
-		NULL);
+	passert(st->st_hashchain_prev == NULL &&
+		st->st_hashchain_next == NULL);
 
 	DBG(DBG_CONTROL,
 	    DBG_log("inserting state object #%lu",
@@ -563,14 +563,8 @@ void delete_state(struct state *st)
 	st->st_sadb = NULL;
 
 	if (st->st_sec_in_use) {
-		SECKEYPrivateKey *privk;
-		SECKEYPublicKey   *pubk;
-		memcpy(&pubk, st->pubk.ptr, st->pubk.len);
-		SECKEY_DestroyPublicKey(pubk);
-		freeanychunk(st->pubk);
-		memcpy(&privk, st->st_sec_chunk.ptr, st->st_sec_chunk.len);
-		SECKEY_DestroyPrivateKey(privk);
-		pfreeany(st->st_sec_chunk.ptr);
+		SECKEY_DestroyPublicKey(st->st_pubk_nss);
+		SECKEY_DestroyPrivateKey(st->st_sec_nss);
 	}
 
 	freeanychunk(st->st_firstpacket_me);
@@ -580,18 +574,27 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_p1isa);
 	freeanychunk(st->st_gi);
 	freeanychunk(st->st_gr);
-	freeanychunk(st->st_shared);
 	freeanychunk(st->st_ni);
 	freeanychunk(st->st_nr);
-	free_lsw_nss_symkey(st->st_skeyid);
-	free_lsw_nss_symkey(st->st_skey_d);
-	free_lsw_nss_symkey(st->st_skey_ai);
-	free_lsw_nss_symkey(st->st_skey_ar);
-	free_lsw_nss_symkey(st->st_skey_ei);
-	free_lsw_nss_symkey(st->st_skey_er);
-	free_lsw_nss_symkey(st->st_skey_pi);
-	free_lsw_nss_symkey(st->st_skey_pr);
-	free_lsw_nss_symkey(st->st_enc_key);
+
+
+#    define free_any_nss_symkey(p)  { \
+		if ((p) != NULL) { \
+			PK11_FreeSymKey(p); \
+			(p) = NULL; \
+		} \
+	}
+	/* ??? free_any_nss_symkey(st->st_shared_nss); */
+	free_any_nss_symkey(st->st_skeyseed_nss);	/* same as st_skeyid_nss */
+	free_any_nss_symkey(st->st_skey_d_nss);	/* same as st_skeyid_d_nss */
+	free_any_nss_symkey(st->st_skey_ai_nss);	/* same as st_skeyid_a_nss */
+	free_any_nss_symkey(st->st_skey_ar_nss);
+	free_any_nss_symkey(st->st_skey_ei_nss);	/* same as st_skeyid_e_nss */
+	free_any_nss_symkey(st->st_skey_er_nss);
+	free_any_nss_symkey(st->st_skey_pi_nss);
+	free_any_nss_symkey(st->st_skey_pr_nss);
+	free_any_nss_symkey(st->st_enc_key_nss);
+#   undef free_any_nss_symkey
 
 	if (st->st_ah.our_keymat != NULL)
 		memset(st->st_ah.our_keymat, 0, st->st_ah.keymat_len);
@@ -605,15 +608,6 @@ void delete_state(struct state *st)
 	if (st->st_esp.peer_keymat != NULL)
 		memset(st->st_esp.peer_keymat, 0, st->st_esp.keymat_len);
 
-	freeanychunk(st->st_skeyid);
-	freeanychunk(st->st_skey_d);
-	freeanychunk(st->st_skey_ai);
-	freeanychunk(st->st_skey_ar);
-	freeanychunk(st->st_skey_ei);
-	freeanychunk(st->st_skey_er);
-	freeanychunk(st->st_skey_pi);
-	freeanychunk(st->st_skey_pr);
-	freeanychunk(st->st_enc_key);
 	pfreeany(st->st_ah.our_keymat);
 	pfreeany(st->st_ah.peer_keymat);
 	pfreeany(st->st_esp.our_keymat);
@@ -688,8 +682,8 @@ static void foreach_states_by_connection_func(struct connection *c,
 				/* call comparison function */
 				if ((*comparefunc)(this, c, arg, pass)) {
 					struct state *old_cur_state =
-						cur_state ==
-						this ? NULL : cur_state;
+						cur_state == this ?
+						  NULL : cur_state;
 					lset_t old_cur_debugging =
 						cur_debugging;
 
@@ -747,8 +741,8 @@ void delete_states_dead_interfaces(void)
 		for (st = statetable[i]; st != NULL; ) {
 			struct state *this = st;
 			st = st->st_hashchain_next; /* before this is deleted */
-			if (this->st_interface && this->st_interface->change ==
-			    IFN_DELETE ) {
+			if (this->st_interface &&
+			    this->st_interface->change == IFN_DELETE) {
 				libreswan_log(
 					"deleting lasting state #%lu on interface (%s) which is shutting down",
 					this->st_serialno,
@@ -943,43 +937,38 @@ struct state *duplicate_state(struct state *st)
 	nst->hidden_variables = st->hidden_variables;
 	nst->st_remoteaddr = st->st_remoteaddr;
 	nst->st_remoteport = st->st_remoteport;
-	nst->st_localaddr  = st->st_localaddr;
-	nst->st_localport  = st->st_localport;
-	nst->st_interface  = st->st_interface;
+	nst->st_localaddr = st->st_localaddr;
+	nst->st_localport = st->st_localport;
+	nst->st_interface = st->st_interface;
 	nst->st_clonedfrom = st->st_serialno;
-	nst->st_import     = st->st_import;
-	nst->st_ikev2      = st->st_ikev2;
-	nst->st_seen_fragvid  = st->st_seen_fragvid;
-	nst->st_seen_fragments  = st->st_seen_fragments;
-	nst->st_event      = NULL;
+	nst->st_import = st->st_import;
+	nst->st_ikev2 = st->st_ikev2;
+	nst->st_seen_fragvid = st->st_seen_fragvid;
+	nst->st_seen_fragments = st->st_seen_fragments;
+	nst->st_event = NULL;
 
+#   define clone_nss_symkey_field(field) { \
+		nst->field = st->field; \
+		if (nst->field != NULL) \
+			PK11_ReferenceSymKey(nst->field); \
+	}
+	clone_nss_symkey_field(st_skeyseed_nss);	/* same as st_skeyid_nss */
+	clone_nss_symkey_field(st_skey_d_nss);	/* same as st_skeyid_d_nss */
+	clone_nss_symkey_field(st_skey_ai_nss);	/* same as st_skeyid_a_nss */
+	clone_nss_symkey_field(st_skey_ar_nss);
+	clone_nss_symkey_field(st_skey_ei_nss);	/* same as st_skeyid_e_nss */
+	clone_nss_symkey_field(st_skey_er_nss);
+	clone_nss_symkey_field(st_skey_pi_nss);
+	clone_nss_symkey_field(st_skey_pr_nss);
+	clone_nss_symkey_field(st_enc_key_nss);
+#   undef clone_nss_symkey_field
+
+	/* v2 duplication of state */
 #   define clone_chunk(ch, name) \
 	clonetochunk(nst->ch, st->ch.ptr, st->ch.len, name)
 
-	dup_lsw_nss_symkey(st->st_skeyseed);
-	dup_lsw_nss_symkey(st->st_skey_d);
-	dup_lsw_nss_symkey(st->st_skey_ai);
-	dup_lsw_nss_symkey(st->st_skey_ar);
-	dup_lsw_nss_symkey(st->st_skey_ei);
-	dup_lsw_nss_symkey(st->st_skey_er);
-	dup_lsw_nss_symkey(st->st_skey_pi);
-	dup_lsw_nss_symkey(st->st_skey_pr);
-	dup_lsw_nss_symkey(st->st_enc_key);
-
-	clone_chunk(st_enc_key,  "st_enc_key in duplicate_state");
-
-	/* v2 duplication of state */
-	clone_chunk(st_skeyseed, "st_skeyseed in duplicate_state");
-	clone_chunk(st_skey_d,   "st_skey_d in duplicate_state");
-	clone_chunk(st_skey_ai,  "st_skey_ai in duplicate_state");
-	clone_chunk(st_skey_ar,  "st_skey_ar in duplicate_state");
-	clone_chunk(st_skey_ei,  "st_skey_ei in duplicate_state");
-	clone_chunk(st_skey_er,  "st_skey_er in duplicate_state");
-	clone_chunk(st_skey_pi,  "st_skey_pi in duplicate_state");
-	clone_chunk(st_skey_pr,  "st_skey_pr in duplicate_state");
-	clone_chunk(st_ni,       "st_ni in duplicate_state");
-	clone_chunk(st_nr,       "st_nr in duplicate_state");
-
+	clone_chunk(st_ni, "st_ni in duplicate_state");
+	clone_chunk(st_nr, "st_nr in duplicate_state");
 #   undef clone_chunk
 
 	nst->st_oakley = st->st_oakley;
@@ -1203,9 +1192,9 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2) {
-			struct ipsec_proto_info *pr = protoid ==
-						      PROTO_IPSEC_AH ?
-						      &st->st_ah : &st->st_esp;
+			struct ipsec_proto_info *pr =
+				protoid == PROTO_IPSEC_AH ?
+					&st->st_ah : &st->st_esp;
 
 			if (pr->present) {
 				if (pr->attrs.spi == spi)
@@ -1250,8 +1239,8 @@ struct state *find_info_state(const u_char *icookie,
 				    (long unsigned)ntohl(msgid),
 				    (long unsigned)ntohl(st->st_msgid),
 				    (long unsigned)ntohl(st->st_msgid_phase15)));
-			if ((st->st_msgid_phase15 != 0 && msgid ==
-			     st->st_msgid_phase15) ||
+			if ((st->st_msgid_phase15 != 0 &&
+			     msgid == st->st_msgid_phase15) ||
 			    msgid == st->st_msgid)
 				break;
 		}
@@ -1307,13 +1296,12 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 		     st = st->st_hashchain_next) {
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
 			    p1st->st_connection->host_pair ==
-			    st->st_connection->host_pair &&
+			      st->st_connection->host_pair &&
 			    same_peer_ids(p1st->st_connection,
 					  st->st_connection, NULL)) {
-				struct ipsec_proto_info *pr = protoid ==
-							      PROTO_IPSEC_AH ?
-							      &st->st_ah : &st
-							      ->st_esp;
+				struct ipsec_proto_info *pr =
+					protoid == PROTO_IPSEC_AH ?
+						&st->st_ah : &st->st_esp;
 
 				if (pr->present) {
 					if (pr->attrs.spi == spi)
@@ -1518,69 +1506,63 @@ void fmt_state(struct state *st, const time_t n,
 #if defined(linux) && defined(NETKEY_SUPPORT)
 
 			if (get_sa_info(st, FALSE, &ago)) {
-				mbcp =
-					humanize_number(st->st_ah.peer_bytes,
-							mbcp,
-							traffic_buf +
-							sizeof(traffic_buf),
-							" AHin=");
+				mbcp = humanize_number(st->st_ah.peer_bytes,
+						       mbcp,
+						       traffic_buf +
+							  sizeof(traffic_buf),
+						       " AHin=");
 			}
 #endif
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
 				 SA_AH);
 #if defined(linux) && defined(NETKEY_SUPPORT)
 			if (get_sa_info(st, TRUE, &ago)) {
-				mbcp =
-					humanize_number(st->st_ah.our_bytes,
-							mbcp,
-							traffic_buf +
-							sizeof(traffic_buf),
-							" AHout=");
+				mbcp = humanize_number(st->st_ah.our_bytes,
+						       mbcp,
+						       traffic_buf +
+						         sizeof(traffic_buf),
+						       " AHout=");
 			}
 #endif
-			mbcp =
-				humanize_number(
+			mbcp = humanize_number(
 					(u_long)st->st_ah.attrs.life_kilobytes,
 					mbcp,
 					traffic_buf +
-					sizeof(traffic_buf),
+					  sizeof(traffic_buf),
 					"! AHmax=");
-/* needs proper fix, via kernel_ops? */
+/* ??? needs proper fix, via kernel_ops? */
 		}
 		if (st->st_esp.present) {
 			add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi,
 				 SA_ESP);
-/* needs proper fix, via kernel_ops? */
+/* ??? needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
 
 			if (get_sa_info(st, FALSE, &ago)) {
-				mbcp =
-					humanize_number(st->st_esp.peer_bytes,
-							mbcp,
-							traffic_buf +
-							sizeof(traffic_buf),
-							" ESPin=");
+				mbcp = humanize_number(st->st_esp.peer_bytes,
+						       mbcp,
+						       traffic_buf +
+							 sizeof(traffic_buf),
+						       " ESPin=");
 			}
 #endif
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 SA_ESP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
 			if (get_sa_info(st, TRUE, &ago)) {
-				mbcp =
-					humanize_number(st->st_esp.our_bytes,
-							mbcp,
-							traffic_buf +
-							sizeof(traffic_buf),
-							" ESPout=");
+				mbcp = humanize_number(st->st_esp.our_bytes,
+						       mbcp,
+						       traffic_buf +
+							 sizeof(traffic_buf),
+						       " ESPout=");
 			}
 #endif
 
-			mbcp =
-				humanize_number(
+			mbcp = humanize_number(
 					(u_long)st->st_esp.attrs.life_kilobytes,
 					mbcp,
 					traffic_buf +
-					sizeof(traffic_buf),
+					  sizeof(traffic_buf),
 					"! ESPmax=");
 		}
 		if (st->st_ipcomp.present) {
@@ -1589,12 +1571,11 @@ void fmt_state(struct state *st, const time_t n,
 #if defined(linux) && defined(NETKEY_SUPPORT)
 
 			if (get_sa_info(st, FALSE, &ago)) {
-				mbcp =
-					humanize_number(
+				mbcp = humanize_number(
 						st->st_ipcomp.peer_bytes,
 						mbcp,
 						traffic_buf +
-						sizeof(traffic_buf),
+						  sizeof(traffic_buf),
 						" IPCOMPin=");
 			}
 #endif
@@ -1602,31 +1583,29 @@ void fmt_state(struct state *st, const time_t n,
 				 SA_COMP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
 			if (get_sa_info(st, TRUE, &ago)) {
-				mbcp =
-					humanize_number(
+				mbcp = humanize_number(
 						st->st_ipcomp.our_bytes,
 						mbcp,
 						traffic_buf +
-						sizeof(traffic_buf),
+						  sizeof(traffic_buf),
 						" IPCOMPout=");
 			}
 #endif
 
-			mbcp =
-				humanize_number(
+			mbcp = humanize_number(
 					(u_long)st->st_ipcomp.attrs.life_kilobytes,
 					mbcp,
 					traffic_buf +
-					sizeof(traffic_buf),
+					  sizeof(traffic_buf),
 					"! IPCOMPmax=");
 		}
 #ifdef KLIPS
 		if (st->st_ah.attrs.encapsulation ==
-		    ENCAPSULATION_MODE_TUNNEL ||
+		      ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_esp.attrs.encapsulation ==
-		    ENCAPSULATION_MODE_TUNNEL ||
+		      ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_ipcomp.attrs.encapsulation ==
-		    ENCAPSULATION_MODE_TUNNEL) {
+		      ENCAPSULATION_MODE_TUNNEL) {
 			add_said(&c->spd.that.host_addr, st->st_tunnel_out_spi,
 				 SA_IPIP);
 			add_said(&c->spd.this.host_addr, st->st_tunnel_in_spi,
@@ -1763,16 +1742,13 @@ startover:
 							/* FAILURE */
 							*latest_cpi =
 								*first_busy_cpi
-									=
-										0;
+									= 0;
 							return;
 						}
 						base++;
 						if (base >
 						    IPCOMP_LAST_NEGOTIATED)
-							base =
-								IPCOMP_FIRST_NEGOTIATED;
-
+							base = IPCOMP_FIRST_NEGOTIATED;
 
 						goto startover; /* really a tail call */
 					}

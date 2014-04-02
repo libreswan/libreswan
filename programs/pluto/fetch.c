@@ -56,7 +56,7 @@
 typedef struct fetch_req fetch_req_t;
 
 struct fetch_req {
-	fetch_req_t   *next;
+	fetch_req_t *next;
 	time_t installed;
 	int trials;
 	chunk_t issuer;
@@ -75,10 +75,10 @@ static fetch_req_t empty_fetch_req = {
 static fetch_req_t *crl_fetch_reqs  = NULL;
 
 static pthread_t thread;
-static pthread_mutex_t crl_list_mutex        = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t crl_fetch_list_mutex  = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t fetch_wake_mutex      = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t fetch_wake_cond       = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t crl_list_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t fetch_wake_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t fetch_wake_cond = PTHREAD_COND_INITIALIZER;
 
 /* lock access to the chained crl list
  * ??? declared in x509.h
@@ -263,16 +263,13 @@ static err_t parse_ldap_result(LDAP * ldap, LDAPMessage *result, chunk_t *blob)
 				}
 				ldap_value_free_len(values);
 			} else {
-				ugh =
-					ldap_err2string(ldap_result2error(ldap,
-									  entry,
-									  0));
+				ugh = ldap_err2string(
+					ldap_result2error(ldap, entry, 0));
 			}
 			ldap_memfree(attr);
 		} else {
-			ugh =
-				ldap_err2string(ldap_result2error(ldap, entry,
-								  0));
+			ugh = ldap_err2string(
+				ldap_result2error(ldap, entry, 0));
 		}
 		ber_free(ber, 0);
 	} else {
@@ -308,8 +305,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 
 		if (ldap != NULL) {
 			int ldap_version =
-				(LDAP_VER ==
-				 2) ? LDAP_VERSION2 : LDAP_VERSION3;
+				LDAP_VER == 2 ? LDAP_VERSION2 : LDAP_VERSION3;
 			struct timeval timeout;
 
 			timeout.tv_sec  = FETCH_CMD_TIMEOUT;
@@ -518,7 +514,6 @@ void init_fetch(void)
 		if (status != 0)
 			libreswan_log("libcurl could not be initialized, status = %d",
 			     status);
-
 #endif
 		status = pthread_create( &thread, NULL, fetch_thread, NULL);
 		if (status != 0)

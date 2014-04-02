@@ -277,8 +277,8 @@ int resolve_defaultroute_one(struct starter_end *left,
 	} else if (right->addrtype == KH_IPADDR) { /* Peer IP is specified */
 		netlink_query_add(msgbuf, RTA_DST, &right->addr);
 		has_dst = 1;
-		if (parse_src && parse_gateway && left->addr_family ==
-		    AF_INET) {
+		if (parse_src && parse_gateway &&
+		    left->addr_family == AF_INET) {
 			/* If we have only peer IP and no gateway/src we must do two
 			 * queries:
 			 * 1) find out gateway for dst

@@ -305,8 +305,7 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg_buf, int buflen)
 			IPSEC_PFKEYv2_ALIGN;
 		DBG(DBG_KERNEL,
 			DBG_log("kernel_alg_register_pfkey(): SADB_SATYPE_%s: sadb_msg_len=%d sadb_supported_len=%d",
-				satype ==
-				SADB_SATYPE_ESP ? "ESP" : "AH",
+				satype == SADB_SATYPE_ESP ? "ESP" : "AH",
 				msg_buf->sadb_msg_len,
 				supp_len);
 			);

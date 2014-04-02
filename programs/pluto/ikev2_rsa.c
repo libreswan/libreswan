@@ -55,8 +55,6 @@
 #include "vendor.h"
 #include "keys.h"
 
-#include "lswcrypto.h"
-
 static u_char der_digestinfo[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
 	0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14
@@ -124,8 +122,8 @@ bool ikev2_calculate_rsa_sha1(struct state *st,
 				signed_octets + der_digestinfo_len);
 	signed_len = der_digestinfo_len + SHA1_DIGEST_SIZE;
 
-	passert(RSA_MIN_OCTETS <= sz && 4 + signed_len < sz && sz <=
-		RSA_MAX_OCTETS);
+	passert(RSA_MIN_OCTETS <= sz && 4 + signed_len < sz &&
+		sz <= RSA_MAX_OCTETS);
 
 	DBG(DBG_CRYPT,
 	    DBG_dump("v2rsa octets", signed_octets, signed_len));

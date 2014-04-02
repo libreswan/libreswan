@@ -233,8 +233,8 @@ static struct vid_struct vid_tab[] = {
 		      "Linux FreeS/WAN 2.00 X.509-1.3.1 LDAP PLUTO_SENDS_VENDORID",
 		      "FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)"),
 	DEC_FSWAN_VID(LIBRESWAN2,
-		      "Libreswan 2.2.0",
-		      "Libreswan 2.2.0"),
+		      "Openswan 2.2.0",
+		      "Openswan 2.2.0"),
 	{
 		/* always make sure to include ourself! */
 		VID_LIBRESWANSELF, VID_SELF, libreswan_vendorid, "Libreswan (this version)",
@@ -493,50 +493,47 @@ void init_vendorid(void)
 			vid->vid_len = strlen(vid->data);
 		} else if (vid->flags & VID_MD5HASH) {
 			/** VendorID is a string to hash with MD5 **/
-			unsigned char *vidm =  alloc_bytes(MD5_DIGEST_SIZE,
-							   "VendorID MD5");
-			vid->vid = (char *)vidm;
-			if (vidm) {
-				unsigned const char *d =
-					(unsigned const char *)vid->data;
-				MD5_CTX ctx;
+			unsigned char *vidm = alloc_bytes(MD5_DIGEST_SIZE,
+							 "VendorID MD5");
+			unsigned const char *d =
+				(unsigned const char *)vid->data;
+			MD5_CTX ctx;
 
-				osMD5Init(&ctx);
-				osMD5Update(&ctx, d, strlen(vid->data));
-				osMD5Final(vidm, &ctx);
-				vid->vid_len = MD5_DIGEST_SIZE;
-			}
+			vid->vid = (char *)vidm;
+
+			osMD5Init(&ctx);
+			osMD5Update(&ctx, d, strlen(vid->data));
+			osMD5Final(vidm, &ctx);
+			vid->vid_len = MD5_DIGEST_SIZE;
 		} else if (vid->flags & VID_FSWAN_HASH) {
 			/** FreeS/WAN 2.00+ specific hash **/
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
-			char *vidm =  alloc_bytes(FSWAN_VID_SIZE, "fswan VID");
+			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID");
+			MD5_CTX ctx;
+			int i;
 
 			vid->vid = vidm;
-			if (vidm) {
-				MD5_CTX ctx;
-				int i;
 
-				osMD5Init(&ctx);
-				osMD5Update(&ctx,
-					    (const unsigned char *)vid->data, strlen(
-						    vid->data));
-				osMD5Final(hash, &ctx);
-				vidm[0] = 'O';
-				vidm[1] = 'E';
+			osMD5Init(&ctx);
+			osMD5Update(&ctx,
+				    (const unsigned char *)vid->data, strlen(
+					    vid->data));
+			osMD5Final(hash, &ctx);
+			vidm[0] = 'O';
+			vidm[1] = 'E';
 #if FSWAN_VID_SIZE <= 2 + MD5_DIGEST_SIZE
-				memcpy(vidm + 2, hash, FSWAN_VID_SIZE - 2);	/* truncate hash */
+			memcpy(vidm + 2, hash, FSWAN_VID_SIZE - 2);	/* truncate hash */
 #else
-				memcpy(vidm + 2, hash, MD5_DIGEST_SIZE);
-				memset(vidm + 2 + MD5_DIGEST_SIZE, '\0',
-				       FSWAN_VID_SIZE - (2 + MD5_DIGEST_SIZE));	/* pad hash */
+			memcpy(vidm + 2, hash, MD5_DIGEST_SIZE);
+			memset(vidm + 2 + MD5_DIGEST_SIZE, '\0',
+			       FSWAN_VID_SIZE - (2 + MD5_DIGEST_SIZE));	/* pad hash */
 #endif
-				for (i = 2; i < FSWAN_VID_SIZE; i++) {
-					vidm[i] &= 0x7f;
-					vidm[i] |= 0x40;
-				}
-				vid->vid_len = FSWAN_VID_SIZE;
+			for (i = 2; i < FSWAN_VID_SIZE; i++) {
+				vidm[i] &= 0x7f;
+				vidm[i] |= 0x40;
 			}
+			vid->vid_len = FSWAN_VID_SIZE;
 #undef FSWAN_VID_SIZE
 		}
 
@@ -603,6 +600,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_NATT_IETF_07:
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
+		/* Fall through */
 	case VID_NATT_RFC:
 		{
 			if (md->quirks.nat_traversal_vid < vid->id) {

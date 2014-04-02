@@ -44,7 +44,6 @@ BUILDER=${shell echo ${USER}@`hostname` }
 CPPFLAGS = $(HDRDIRS) $(DEFINES) \
 	-DSHARED_SECRETS_FILE=\"${FINALCONFDIR}/ipsec.secrets\" \
 	-DIPSEC_SBINDIR=\"${FINALSBINDIR}\" \
-	-DIPSEC_LIBDIR=\"${FINALLIBDIR}\" \
 	-DIPSEC_EXECDIR=\"${FINALLIBEXECDIR}\" \
 	-DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\" \
 	-DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\" \
@@ -187,7 +186,7 @@ install: doinstall
 endif
 
 doinstall: all
-	mkdir -p ${LIBEXECDIR} ${LIBDIR}
+	mkdir -p ${LIBEXECDIR}
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d/cacerts
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d/aacerts
@@ -216,7 +215,7 @@ doinstall: all
 
 install_file_list:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
-	@if $(USE_ADNS) ; then echo $(LIBDIR)/$(BINNAMEADNS) ; fi
+	@if $(USE_ADNS) ; then echo $(LIBEXECDIR)/$(BINNAMEADNS) ; fi
 	@echo $(LIBEXECDIR)/$(BINNAMEWHACK)
 	@echo $(PMANDIR)/ipsec_pluto.8
 	@sh ${LIBRESWANSRCDIR}/packaging/utils/manlink pluto.8 | \
@@ -231,11 +230,11 @@ install_file_list:
 			echo $(FMANDIR)/$$to; \
 		done
 
-alg_info_test: alg_info_test.o ike_alg.o constants.o defs.o log.o db_ops.o crypto.o $(LIBDESLITE) $(LIBRESWANLIB)
+alg_info_test: alg_info_test.o ike_alg.o constants.o defs.o log.o db_ops.o crypto.o $(LIBRESWANLIB)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBSPLUTO)
 
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
-	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL} $(LIBDESLITE)
+	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
 
 $(BINNAMEADNS): $(OBJSADNS)
 	$(CC) -o $(BINNAMEADNS) $(LDFLAGS) $(OBJSADNS) $(USERLINK) $(LIBSADNS) ${ADNSMINUSL}

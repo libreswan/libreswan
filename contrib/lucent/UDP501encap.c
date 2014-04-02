@@ -118,8 +118,8 @@ int main(int argc, char **argv)
 				free(newPayload);
 			} else {
 				u16 ip_len =
-					(m->payload[2] << 8 &
-					 0xff00) + (m->payload[3] & 0xff);
+					(m->payload[2] << 8 & 0xff00) +
+					(m->payload[3] & 0xff);
 				ip_header_len = (m->payload[0] & 0xF) * 4;
 				u16 new_ip_len = ip_len + ip_header_len + 8;
 				newPayload = malloc(new_ip_len);

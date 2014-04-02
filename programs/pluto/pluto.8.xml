@@ -3559,10 +3559,9 @@
   <refsect1 id="environment">
     <title>ENVIRONMENT</title>
 
-    <para><emphasis remap="I">IPSEC_LIBDIR</emphasis> <!-- .br --> <emphasis
-    remap="I">IPSEC_EXECDIR</emphasis> <!-- .br --> <emphasis
-    remap="I">IPSECmyid</emphasis> <!-- .br --> <emphasis
-    remap="I">PLUTO_CORE_DIR</emphasis></para>
+    <para><emphasis remap="I">IPSEC_EXECDIR</emphasis> <!-- .br -->
+    <emphasis remap="I">IPSECmyid</emphasis> <!-- .br -->
+    <emphasis remap="I">PLUTO_CORE_DIR</emphasis></para>
   </refsect1>
 
   <refsect1 id="see_also">

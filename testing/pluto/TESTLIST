@@ -105,6 +105,7 @@ kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	good
+kvmplutotest	dpd-08-netkey	good
 
 # Delete SA test.
 kvmplutotest	delete-sa-01	good
@@ -398,6 +399,7 @@ umlplutotest    algo-pluto-07          good
 kvmplutotest    algo-pluto-08          good
 kvmplutotest    algo-pluto-09          good
 kvmplutotest    algo-pluto-10          good
+kvmplutotest    algo-pluto-11          good
 #
 # tests for usnig multiple subnets using conn aliases
 #
@@ -553,13 +555,15 @@ kvmplutotest	interop-ikev2-strongswan-05-psk-aes		good
 kvmplutotest	interop-ikev2-strongswan-05-psk-md5		good
 kvmplutotest	interop-ikev2-strongswan-06-aes192		good
 kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
-kvmplutotest	interop-ikev2-strongswan-08-nonat		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-ccm		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-gcm		good
 kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	wip
 kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	wip
 kvmplutotest	interop-ikev2-strongswan-12-nat-responder	wip
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	wip
+kvmplutotest	interop-ikev2-strongswan-14-delete-sa		wip
+kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
+
 
 skiptest	interop-racoon-iphone4s-nonat		incomplete
 skiptest	interop-racoon-iphone5-nonat		incomplete
@@ -584,4 +588,8 @@ umlplutotest	x509-pluto-frag-03			good
 umlplutotest	x509-pluto-frag-04			good
 
 kvmplutotest	replay-authip-01			good
+
+kvmplutotest	l2tp-01					good
+kvmplutotest	l2tp-02					good
+kvmplutotest	l2tp-02-netkey				good
 

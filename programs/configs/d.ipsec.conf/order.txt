@@ -21,6 +21,7 @@ d.ipsec.conf/ike.xml
 d.ipsec.conf/phase2.xml
 d.ipsec.conf/phase2alg.xml
 d.ipsec.conf/sha2_truncbug.xml
+d.ipsec.conf/ikev1_natt.xml
 d.ipsec.conf/esp.xml
 d.ipsec.conf/ah.xml
 d.ipsec.conf/ike_frag.xml

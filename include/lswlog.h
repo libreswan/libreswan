@@ -160,7 +160,7 @@ NEVER_RETURNS;
  */
 
 /* sanitize a string */
-extern size_t sanitize_string(char *buf, size_t size);
+extern void sanitize_string(char *buf, size_t size);
 
 #endif /* _LSWLOG_H_ */
 

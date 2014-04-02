@@ -246,11 +246,10 @@ static void compute_proto_keymat(struct state *st,
 			break;
 
 		default:
-			if ((needed_len =
-				     kernel_alg_esp_enc_max_keylen(pi->attrs.
-							       transattrs.
-							       encrypt)) > 0) {
-				/* XXX: check key_len "coupling with kernel.c's */
+			needed_len = kernel_alg_esp_enc_max_keylen(
+					pi->attrs.transattrs.encrypt);
+			if (needed_len > 0) {
+				/* XXX: check key_len coupling with kernel.c's */
 				if (pi->attrs.transattrs.enckeylen) {
 					needed_len =
 						pi->attrs.transattrs.enckeylen
@@ -331,11 +330,11 @@ static void compute_proto_keymat(struct state *st,
 		size_t needed_space; /* space needed for keying material (rounded up) */
 		size_t i;
 
-		hmac_init_chunk(&ctx_me, st->st_oakley.prf_hasher,
-				st->st_skeyid_d);
-		/*PK11Context * DigestContext makes hmac not allowable for copy*/
-		hmac_init_chunk(&ctx_peer, st->st_oakley.prf_hasher,
-				st->st_skeyid_d);
+		hmac_init(&ctx_me, st->st_oakley.prf_hasher,
+				st->st_skeyid_d_nss);
+		/* PK11Context * DigestContext makes hmac not allowable for copy */
+		hmac_init(&ctx_peer, st->st_oakley.prf_hasher,
+				st->st_skeyid_d_nss);
 		needed_space = needed_len + pad_up(needed_len,
 						   ctx_me.hmac_digest_len);
 		replace(pi->our_keymat,
@@ -346,18 +345,13 @@ static void compute_proto_keymat(struct state *st,
 				    "peer_keymat in quick_inI1_outR1()"));
 
 		for (i = 0;; ) {
-			if (st->st_shared.ptr != NULL) {
+			if (st->st_shared_nss != NULL) {
 				/* PFS: include the g^xy */
-				PK11SymKey *st_shared;
 				SECStatus s;
 
-				memcpy(&st_shared, st->st_shared.ptr,
-				       st->st_shared.len);
-
-				s = PK11_DigestKey(ctx_me.ctx_nss, st_shared);
+				s = PK11_DigestKey(ctx_me.ctx_nss, st->st_shared_nss);
 				passert(s == SECSuccess);
-				s = PK11_DigestKey(ctx_peer.ctx_nss,
-						       st_shared);
+				s = PK11_DigestKey(ctx_peer.ctx_nss, st->st_shared_nss);
 				passert(s == SECSuccess);
 			}
 			hmac_update(&ctx_me, &protoid, sizeof(protoid));
@@ -382,10 +376,10 @@ static void compute_proto_keymat(struct state *st,
 				break;
 
 			/* more keying material needed: prepare to go around again */
-			hmac_init_chunk(&ctx_me, st->st_oakley.prf_hasher,
-					st->st_skeyid_d);
-			hmac_init_chunk(&ctx_peer, st->st_oakley.prf_hasher,
-					st->st_skeyid_d);
+			hmac_init(&ctx_me, st->st_oakley.prf_hasher,
+					st->st_skeyid_d_nss);
+			hmac_init(&ctx_peer, st->st_oakley.prf_hasher,
+					st->st_skeyid_d_nss);
 
 			hmac_update(&ctx_me,
 				    pi->our_keymat + i - ctx_me.hmac_digest_len,
@@ -503,9 +497,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			ughmsg = initaddr(id_pbs->cur + afi->ia_sz,
 					  afi->ia_sz, afi->af, &temp_mask);
 		if (ughmsg == NULL) {
-			ughmsg =
-				initsubnet(&temp_address, masktocount(
-						   &temp_mask),
+			ughmsg = initsubnet(&temp_address,
+					    masktocount(&temp_mask),
 					   '0', net);
 		}
 		if (ughmsg == NULL && subnetisnone(net))
@@ -677,7 +670,7 @@ static size_t quick_mode_hash12(u_char *dest, const u_char *start,
 }
 	DBG_dump("hash key", st->st_skeyid_a.ptr, st->st_skeyid_a.len);
 #endif
-	hmac_init_chunk(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_a);
+	hmac_init(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const void *) msgid, sizeof(msgid_t));
 	if (hash2)
 		hmac_update_chunk(&ctx, st->st_ni); /* include Ni_b in the hash */
@@ -703,7 +696,7 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
 {
 	struct hmac_ctx ctx;
 
-	hmac_init_chunk(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_a);
+	hmac_init(&ctx, st->st_oakley.prf_hasher, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const u_char *)"\0", 1);
 	hmac_update(&ctx, (u_char *) &st->st_msgid, sizeof(st->st_msgid));
 	hmac_update_chunk(&ctx, st->st_ni);
@@ -799,7 +792,6 @@ stf_status quick_outI1(int whack_sock,
 	struct state *st = duplicate_state(isakmp_sa);
 	struct qke_continuation *qke;
 	stf_status e;
-	const char *pfsgroupname;
 	char p2alg[256];
 
 	st->st_whack_sock = whack_sock;
@@ -839,33 +831,33 @@ stf_status quick_outI1(int whack_sock,
 					(struct alg_info_esp *)st->st_connection->alg_info_esp);
 	}
 
-	pfsgroupname = "no-pfs";
-	/*
-	 * See if pfs_group has been specified for this conn,
-	 * if not, fallback to old use-same-as-P1 behaviour
-	 */
-	if (st->st_connection) {
-		st->st_pfs_group = ike_alg_pfsgroup(st->st_connection,
-						    st->st_policy);
+	/* figure out PFS group, if any */
 
+	if (policy & POLICY_PFS ) {
+		/*
+		 * See if pfs_group has been specified for this conn,
+		 * use that group.
+		 * if not, fallback to old use-same-as-P1 behaviour
+		 */
+		if (st->st_connection != NULL)
+			st->st_pfs_group = ike_alg_pfsgroup(st->st_connection,
+							    st->st_policy);
+
+		/* otherwise, use the same group as during Phase 1:
+		 * since no negotiation is possible, we pick one that is
+		 * very likely supported.
+		 */
+		if (st->st_pfs_group == NULL)
+			st->st_pfs_group = isakmp_sa->st_oakley.group;
 	}
-
-	/* If PFS specified, use the same group as during Phase 1:
-	 * since no negotiation is possible, we pick one that is
-	 * very likely supported.
-	 */
-	if (!st->st_pfs_group) {
-		st->st_pfs_group = policy &
-				   POLICY_PFS ? isakmp_sa->st_oakley.group :
-				   NULL;
-	}
-
-	if (policy & POLICY_PFS && st->st_pfs_group)
-		pfsgroupname = enum_name(&oakley_group_names,
-					 st->st_pfs_group->group);
 
 	{
+		const char *pfsgroupname = "no-pfs";
 		char replacestr[32];
+
+		if ((policy & POLICY_PFS) != LEMPTY)
+			pfsgroupname = enum_name(&oakley_group_names,
+						 st->st_pfs_group->group);
 
 		replacestr[0] = '\0';
 		if (replacing != SOS_NOBODY)
@@ -874,8 +866,7 @@ stf_status quick_outI1(int whack_sock,
 
 		libreswan_log(
 			"initiating Quick Mode %s%s {using isakmp#%lu msgid:%08x proposal=%s pfsgroup=%s}",
-			prettypolicy(
-				policy),
+			prettypolicy(policy),
 			replacestr,
 			isakmp_sa->st_serialno, st->st_msgid, p2alg,
 			pfsgroupname);
@@ -1534,12 +1525,10 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 				ugh = "we don't know our own key";
 				break;
 			}
-			ugh =
-				"our client does not delegate us as its Security Gateway";
+			ugh = "our client does not delegate us as its Security Gateway";
 			for (gwp = ac->gateways_from_dns; gwp != NULL;
 			     gwp = gwp->next) {
-				ugh =
-					"our client delegates us as its Security Gateway but with the wrong public key";
+				ugh = "our client delegates us as its Security Gateway but with the wrong public key";
 				/* If there is no key in the TXT record,
 				 * we count it as a win, but we will have
 				 * to separately fetch and check the KEY record.
@@ -1579,8 +1568,7 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 					/* not an error yet, because we have to check KEY RR as well */
 					ugh = NULL;
 #else
-					ugh =
-						"our client delegation depends on our "
+					ugh = "our client delegation depends on our "
 						RRNAME
 						" record, but it has the wrong public key";
 #endif
@@ -1613,13 +1601,11 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 			{
 				struct pubkey_list *kp;
 
-				ugh =
-					"our client delegation depends on our missing "
+				ugh = "our client delegation depends on our missing "
 					RRNAME " record";
 				for (kp = ac->keys_from_dns; kp != NULL;
 				     kp = kp->next) {
-					ugh =
-						"our client delegation depends on our "
+					ugh = "our client delegation depends on our "
 						RRNAME
 						" record, but it has the wrong public key";
 					if (same_RSA_public_key(&pri->pub,
@@ -1653,8 +1639,7 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 			ugh = "peer's client does not delegate to peer";
 			for (gwp = ac->gateways_from_dns; gwp != NULL;
 			     gwp = gwp->next) {
-				ugh =
-					"peer and its client disagree about public key";
+				ugh = "peer and its client disagree about public key";
 				/* If there is a key from the TXT record,
 				 * we count it as a win if we match the key.
 				 * If there was no key, we claim a match since
@@ -1924,8 +1909,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		}
 	}
 
-	passert((p1st->st_policy & POLICY_PFS) == 0 || p1st->st_pfs_group !=
-		NULL );
+	passert((p1st->st_policy & POLICY_PFS) == 0 ||
+		p1st->st_pfs_group != NULL );
 
 	/* now that we are sure of our connection, create our new state, and
 	 * do any asynchronous cryptographic operations that we may need to
@@ -2307,8 +2292,8 @@ static stf_status quick_inI1_outR1_cryptotail(struct dh_continuation *dh,
 	if (st->st_pfs_group != NULL && r != NULL) {
 		if (!justship_KE(&st->st_gr,
 				 &md->rbody,
-				 id_pd !=
-				 NULL ? ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE))
+				 id_pd != NULL ?
+					ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE))
 			return STF_INTERNAL_ERROR;
 
 		finish_dh_secret(st, r);

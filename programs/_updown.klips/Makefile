@@ -15,7 +15,6 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=_updown.klips
-PROGRAMDIR=${LIBDIR}
 
 include ${srcdir}../Makefile.program
 

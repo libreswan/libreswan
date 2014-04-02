@@ -589,9 +589,8 @@ struct sockaddr *src, *dst;
 u_int32_t spi;
 {
 	int len;
-	if ((len =
-		     pfkey_send_x2(so, SADB_DELETE, satype, mode, src, dst,
-				   spi)) < 0)
+	if ((len = pfkey_send_x2(so, SADB_DELETE, satype, mode, src, dst, spi))
+	     < 0)
 		return -1;
 
 	return len;
@@ -694,9 +693,8 @@ struct sockaddr *src, *dst;
 u_int32_t spi;
 {
 	int len;
-	if ((len =
-		     pfkey_send_x2(so, SADB_GET, satype, mode, src, dst,
-				   spi)) < 0)
+	if ((len = pfkey_send_x2(so, SADB_GET, satype, mode, src, dst, spi))
+	    < 0)
 		return -1;
 
 	return len;

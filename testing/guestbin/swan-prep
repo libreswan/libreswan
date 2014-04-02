@@ -15,7 +15,10 @@ except ImportError , e:
 # prevent double installs from going unnoticed
 if os.path.isfile("/usr/sbin/ipsec") or os.path.isfile("/sbin/ipsec"):
 	if os.path.isfile("/usr/local/sbin/ipsec"):
-		sys.exit("ABORT: found a swan userland in the base system as well as /usr/local")
+		sys.exit("\n\n---------------------------------------------------------------------\n"
+                             "ABORT: found a swan userland in the base system as well as /usr/local\n"
+			     "---------------------------------------------------------------------\n")    
+
 
 # just in case a new copy was installed
 if os.path.isfile("/usr/local/sbin/ipsec") and os.path.isfile("/usr/sbin/restorecon"):
@@ -134,6 +137,10 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	# test specific files
 	ipsecconf = "/testing/pluto/%s/%s.conf"%(testname,hostname)
 	ipsecsecrets = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
+	xl2tpdconf = "/testing/pluto/%s/%s.xl2tpd.conf"%(testname,hostname)
+	pppoptions = "/testing/pluto/%s/%s.ppp-options.xl2tpd"%(testname,hostname)
+	chapfile = "/testing/pluto/%s/chap-secrets"%testname
+
 	if not os.path.isfile(ipsecconf):
 		ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf"%hostname
 	if not os.path.isfile(ipsecsecrets):
@@ -151,7 +158,18 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	shutil.copy(ipsecconf, dstconf)
 	shutil.copy(ipsecsecrets,dstsecrets);
 	os.chmod(dstsecrets, 0600)
-    
+
+	if os.path.isfile(xl2tpdconf):
+		shutil.copyfile(xl2tpdconf, "/etc/xl2tpd/xl2tpd.conf")
+	if os.path.isfile(pppoptions):
+		shutil.copyfile(pppoptions, "/etc/ppp/options.xl2tpd")
+	if os.path.isfile(chapfile):
+		shutil.copyfile(chapfile, "/etc/ppp/chap-secrets")
+
+	dbfiles = glob.glob("/etc/ipsec.d/*db")
+	for dbfile in dbfiles:
+		os.chown(dbfile,0,0)
+
 	if args.x509: 
 		if (userland == "libreswan" or userland == "openswan"):
 			print "Preparing X.509 files"

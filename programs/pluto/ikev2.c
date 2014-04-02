@@ -149,6 +149,31 @@ enum smf2_flags {
  *                                          TSi, TSr}
  * [Child SA established]
  *
+ *
+ * CREATE_CHILD_SA Exchanges:
+ *
+ * New Child SA
+ *
+ * HDR, SK {SA, Ni, [KEi],
+ *            TSi, TSr}  -->
+ *
+ *                              <--  HDR, SK {SA, Nr, [KEr],
+ *                                       TSi, TSr}
+ *
+ * Rekey Child SA
+ *
+ * HDR, SK {N(REKEY_SA), SA, Ni, [KEi],
+ *     TSi, TSr}   -->
+ *
+ *                    <--  HDR, SK {SA, Nr, [KEr],
+ *                             TSi, TSr}
+ *
+ * Rekey IKE SA (yes, IKE SA can be rekeyed using CREATE_CHILD_SA)
+ *
+ * HDR, SK {SA, Ni, KEi} -->
+ *
+ *                            <--  HDR, SK {SA, Nr, KEr}
+ *
  */
 
 /* Short forms for building payload type sets */
@@ -285,6 +310,36 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
+
+	/*
+	 * There are three different CREATE_CHILD_SA's invocations,
+	 * this is the combined write up (not in RFC). See above for
+	 * individual cases from RFC
+	 *
+	 * HDR, SK {SA, Ni, [KEi], [N(REKEY_SA)], [TSi, TSr]} -->
+	 *                <-- HDR, SK {N}
+	 *                <-- HDR, SK {SA, Nr, [KEr], [TSi, TSr]}
+	 */
+
+	/* Create Child SA Exchange*/
+	{ .state      = STATE_PARENT_I3,
+	  .next_state = STATE_PARENT_I3,
+	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
+	  .req_clear_payloads = P(E),
+	  .req_enc_payloads = P(SA) | P(Ni),
+	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
+	  .processor  = ikev2_in_create_child_sa,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
+
+	/* Create Child SA Exchange*/
+	{ .state      = STATE_PARENT_R2,
+	  .next_state = STATE_PARENT_R2,
+	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
+	  .req_clear_payloads = P(E),
+	  .req_enc_payloads = P(SA) | P(Ni),
+	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
+	  .processor  = ikev2_in_create_child_sa,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
 
 	/* Informational Exchange*/
 	{ .state      = STATE_PARENT_R2,
@@ -711,9 +766,7 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role init)
 void ikev2_log_parentSA(struct state *st)
 {
 	const char *authalgo;
-	char authkeybuf[256];
 	char encalgo[128];
-	char enckeybuf[256];
 
 	if (st->st_oakley.integ_hasher == NULL ||
 	    st->st_oakley.encrypter == NULL)
@@ -732,11 +785,7 @@ void ikev2_log_parentSA(struct state *st)
 	}
 
 	if (DBGP(DBG_CRYPT)) {
-		datatot(st->st_skey_ei.ptr, st->st_skey_ei.len, 'x', enckeybuf,
-			256);
-		datatot(st->st_skey_ai.ptr, st->st_skey_ai.len, 'x',
-			authkeybuf, 256);
-		DBG_log("ikev2 I 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s:%s %s:%s",
+		DBG_log("ikev2 I 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s %s",
 			st->st_icookie[0], st->st_icookie[1],
 			st->st_icookie[2], st->st_icookie[3],
 			st->st_icookie[4], st->st_icookie[5],
@@ -746,15 +795,9 @@ void ikev2_log_parentSA(struct state *st)
 			st->st_rcookie[4], st->st_rcookie[5],
 			st->st_rcookie[6], st->st_rcookie[7],
 			authalgo,
-			authkeybuf,
-			encalgo,
-			enckeybuf);
+			encalgo);
 
-		datatot(st->st_skey_er.ptr, st->st_skey_er.len, 'x', enckeybuf,
-			256);
-		datatot(st->st_skey_ar.ptr, st->st_skey_ar.len, 'x',
-			authkeybuf, 256);
-		DBG_log("ikev2 R 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s:%s %s:%s",
+		DBG_log("ikev2 R 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s %s",
 			st->st_icookie[0], st->st_icookie[1],
 			st->st_icookie[2], st->st_icookie[3],
 			st->st_icookie[4], st->st_icookie[5],
@@ -764,9 +807,7 @@ void ikev2_log_parentSA(struct state *st)
 			st->st_rcookie[4], st->st_rcookie[5],
 			st->st_rcookie[6], st->st_rcookie[7],
 			authalgo,
-			authkeybuf,
-			encalgo,
-			enckeybuf);
+			encalgo);
 	}
 }
 
@@ -912,7 +953,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		/* free previously transmitted packet */
 		freeanychunk(st->st_tpacket);
-		if (nat_traversal_enabled) {
+		if (nat_traversal_enabled && (from_state != STATE_PARENT_I1)) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
@@ -1085,10 +1126,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	md->result = result;
 	result = md->result;
 
-	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
-		DBG(DBG_DPD, DBG_log("enabling sending dpd/liveness"));
-	}
-
 	/* advance the state */
 	DBG(DBG_CONTROL,
 	    DBG_log("complete v2 state transition with %s",
@@ -1134,7 +1171,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
                 break;
 
 	case STF_TOOMUCHCRYPTO:
-		/* well, this should never happen during a whack, since
+		/* ??? Why is this comment useful:
+		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
 		passert(st != NULL);
@@ -1212,5 +1250,5 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		return v2N_INVALID_SYNTAX; /* ??? */
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
-	return NOTHING_WRONG;
+	return v2N_NOTHING_WRONG;
 }

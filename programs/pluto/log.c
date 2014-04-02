@@ -74,13 +74,10 @@ static void perpeer_logclose(struct connection *c);     /* forward */
 
 bool
 	log_to_stderr = TRUE,           /* should log go to stderr? */
-	log_to_file = TRUE,             /* should log go to logfile? */
 	log_to_syslog = TRUE,           /* should log go to syslog? */
 	log_to_perpeer = FALSE,         /* should log go to per-IP file? */
-	log_did_something = TRUE,       /* set if we wrote something recently */
 	log_with_timestamp = FALSE;     /* some people want timestamps, but we
                                             don't want those in our test output */
-static FILE *pluto_log_fd;
 
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
@@ -90,13 +87,18 @@ bool
 	logged_myid_fqdn_txt_warning = FALSE,
 	logged_myid_ip_txt_warning   = FALSE;
 
-char *pluto_log_file = NULL;
+char *pluto_log_file = NULL;	/* pathname */
+static FILE *pluto_log_fp = NULL;
+
 char *base_perpeer_logdir = NULL;
 char *pluto_stats_binary = NULL;
 static int perpeer_count = 0;
 
 /* what to put in front of debug output */
 static const char debug_prefix = '|';
+
+/* set if we wrote something since last log_mark_time() */
+static bool log_did_something = TRUE;
 
 /*
  * used in some messages to distiguish
@@ -124,18 +126,19 @@ u_int16_t cur_from_port;                        /* host order */
 
 void pluto_init_log(void)
 {
-	set_exit_log_func(exit_log);
+	set_alloc_exit_log_func(exit_log);
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
 
-	if (log_to_file && (pluto_log_file != NULL))
-		pluto_log_fd =  fopen(pluto_log_file, "w");
-	if (pluto_log_fd == NULL) {
-		fprintf(stderr, "Cannot open logfile '%s': %s", pluto_log_file, strerror(
-				errno));
-		log_to_file = FALSE;
-	} else {
-		setbuf(pluto_log_fd, NULL);
+	if (pluto_log_file != NULL) {
+		pluto_log_fp = fopen(pluto_log_file, "w");
+		if (pluto_log_fp == NULL) {
+			fprintf(stderr,
+				"Cannot open logfile '%s': %s\n",
+				pluto_log_file, strerror(errno));
+		} else {
+			setbuf(pluto_log_fp, NULL);
+		}
 	}
 
 	if (log_to_syslog)
@@ -192,7 +195,7 @@ static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 	ps = strlen(buf);
 	vsnprintf(buf + ps, buf_len - ps, fmt, ap);
 	if (!reproc)
-		(void)sanitize_string(buf, buf_len);
+		sanitize_string(buf, buf_len);
 }
 
 void close_peerlog(void)
@@ -211,8 +214,10 @@ void close_log(void)
 	if (log_to_syslog)
 		closelog();
 
-	if (log_to_file && pluto_log_fd)
-		(void)fclose(pluto_log_fd);
+	if (pluto_log_fp != NULL) {
+		(void)fclose(pluto_log_fp);
+		pluto_log_fp = NULL;
+	}
 
 	close_peerlog();
 }
@@ -415,7 +420,7 @@ int libreswan_log(const char *message, ...)
 
 	log_did_something = TRUE;
 
-	if (log_to_stderr || (log_to_file && pluto_log_fd)) {
+	if (log_to_stderr || pluto_log_fp != NULL) {
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
@@ -423,11 +428,11 @@ int libreswan_log(const char *message, ...)
 			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
-			fprintf(log_to_stderr ? stderr : pluto_log_fd,
+			fprintf(log_to_stderr ? stderr : pluto_log_fp,
 				"%s: %s\n", fmt, m);
 		} else {
-			fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s\n",
-				m);
+			fprintf(log_to_stderr ? stderr : pluto_log_fp,
+				"%s\n", m);
 		}
 	}
 	if (log_to_syslog)
@@ -453,7 +458,7 @@ void loglog(int mess_no, const char *message, ...)
 
 	log_did_something = TRUE;
 
-	if (log_to_stderr || (log_to_file  && pluto_log_fd)) {
+	if (log_to_stderr || pluto_log_fp != NULL) {
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
@@ -461,11 +466,11 @@ void loglog(int mess_no, const char *message, ...)
 			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
-			fprintf(log_to_stderr ? stderr : pluto_log_fd,
+			fprintf(log_to_stderr ? stderr : pluto_log_fp,
 				"%s: %s\n", fmt, m);
 		} else {
-			fprintf(log_to_stderr ? stderr : pluto_log_fd, "%s\n",
-				m);
+			fprintf(log_to_stderr ? stderr : pluto_log_fp,
+				"%s\n", m);
 		}
 	}
 	if (log_to_syslog)
@@ -488,8 +493,8 @@ void libreswan_log_errno_routine(int e, const char *message, ...)
 
 	log_did_something = TRUE;
 
-	if (log_to_stderr || (log_to_file && pluto_log_fd))
-		fprintf(log_to_stderr ? stderr : pluto_log_fd,
+	if (log_to_stderr || pluto_log_fp != NULL)
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
 			"ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
 	if (log_to_syslog)
 		syslog(LOG_ERR, "ERROR: %s. Errno %d: %s", m, e, strerror(e));
@@ -511,8 +516,8 @@ void exit_log(const char *message, ...)
 
 	log_did_something = TRUE;
 
-	if (log_to_stderr || (log_to_file && pluto_log_fd))
-		fprintf(log_to_stderr ? stderr : pluto_log_fd,
+	if (log_to_stderr || pluto_log_fp != NULL)
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
 			"FATAL ERROR: %s\n", m);
 	if (log_to_syslog)
 		syslog(LOG_ERR, "FATAL ERROR: %s", m);
@@ -535,8 +540,8 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 
 	log_did_something = TRUE;
 
-	if (log_to_stderr || (log_to_file && pluto_log_fd))
-		fprintf(log_to_stderr ? stderr : pluto_log_fd,
+	if (log_to_stderr || pluto_log_fp != NULL)
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
 			"FATAL ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
 	if (log_to_syslog)
 		syslog(LOG_ERR, "FATAL ERROR: %s. Errno %d: %s", m, e, strerror(
@@ -587,8 +592,8 @@ void whack_log(int mess_no, const char *message, ...)
 
 		if (dying_breath) {
 			/* status output copied to log */
-			if (log_to_stderr || (log_to_file && pluto_log_fd))
-				fprintf(log_to_stderr ? stderr : pluto_log_fd,
+			if (log_to_stderr || pluto_log_fp != NULL)
+				fprintf(log_to_stderr ? stderr : pluto_log_fp,
 					"%s\n", m + prelen);
 			if (log_to_syslog)
 				syslog(LOG_WARNING, "%s", m + prelen);
@@ -710,9 +715,9 @@ int DBG_log(const char *message, ...)
 	va_end(args);
 
 	/* then sanitize anything else that is left. */
-	(void)sanitize_string(m, sizeof(m));
+	sanitize_string(m, sizeof(m));
 
-	if (log_to_stderr || (log_to_file && pluto_log_fd)) {
+	if (log_to_stderr || pluto_log_fp != NULL) {
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
@@ -720,10 +725,10 @@ int DBG_log(const char *message, ...)
 			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
-			fprintf(log_to_stderr ? stderr : pluto_log_fd,
+			fprintf(log_to_stderr ? stderr : pluto_log_fp,
 				"%c %s: %s\n", debug_prefix, fmt, m);
 		} else {
-			fprintf(log_to_stderr ? stderr : pluto_log_fd,
+			fprintf(log_to_stderr ? stderr : pluto_log_fp,
 				"%c %s\n", debug_prefix, m);
 		}
 	}
@@ -872,6 +877,31 @@ void daily_log_event(void)
 }
 
 /*
+ * we log the time when we are about to do something so that
+ * we know what time things happened, when not using syslog
+ */
+void log_mark_time(void)
+{
+	if (log_to_stderr || pluto_log_fp != NULL) {
+		time_t n;
+
+		static time_t lastn = 0;
+
+		time(&n);
+
+		if (log_did_something) {
+			lastn = n;
+			log_did_something = FALSE;
+			if ((n - lastn) > 60)
+				DBG_log("time is %s (%lu)", ctime(
+						&n), (unsigned long)n);
+
+
+		}
+	}
+}
+
+/*
  * we store runtime info for stats/status this way,
  * you may be able to do something similar using these hooks
  */
@@ -920,7 +950,8 @@ static void connection_state(struct state *st, void *data)
 {
 	struct log_conn_info *lc = data;
 
-	if (!st || st == lc->ignore || !st->st_connection || !lc->conn)
+	if (st == NULL || st == lc->ignore ||
+	    st->st_connection == NULL || lc->conn == NULL)
 		return;
 
 	if (st->st_connection != lc->conn) {
@@ -930,7 +961,7 @@ static void connection_state(struct state *st, void *data)
 		/* phase1 is shared with another connnection */
 	}
 
-	/* ignore undefined states (ie., just deleted) */
+	/* ignore undefined states (i.e. just deleted) */
 	if (st->st_state == STATE_UNDEFINED)
 		return;
 
@@ -944,8 +975,8 @@ static void connection_state(struct state *st, void *data)
 		} else {
 			if (lc->phase1 < p1_init)
 				lc->phase1 = p1_init;
-			if (IS_ISAKMP_ENCRYPTED(st->st_state) && lc->phase1 <
-			    p1_encrypt)
+			if (IS_ISAKMP_ENCRYPTED(st->st_state) &&
+			    lc->phase1 < p1_encrypt)
 				lc->phase1 = p1_encrypt;
 			if (IS_ISAKMP_AUTHENTICATED(st->st_state) &&
 			    lc->phase1 < p1_auth)

@@ -19,6 +19,7 @@
 #define _NAT_TRAVERSAL_H_
 
 #include "demux.h"
+#include "lswalloc.h"
 
 /*
  *  NAT-Traversal defines for nat_traversal type from nat_traversal.h
@@ -56,13 +57,6 @@
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
-/**
- * NAT-Traversal methods which use floating port
- */
-#define NAT_T_WITH_PORT_FLOATING \
-	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
-	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
-	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 
 /**
  * NAT-Traversal methods which use officials values (RFC)
@@ -92,14 +86,16 @@ extern bool nat_traversal_support_port_floating;
 /**
  * NAT-D
  */
-void nat_traversal_natd_lookup(struct msg_digest *md);
-bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
-			    struct msg_digest *md);
+extern void nat_traversal_natd_lookup(struct msg_digest *md);
+extern bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
+				   struct msg_digest *md);
+extern void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie);
 
 /**
  * NAT-OA
  */
-struct hidden_variables;
+struct hidden_variables;	/* forward */
+
 void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv);
 bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
@@ -119,7 +115,7 @@ extern int nat_traversal_espinudp_socket(int sk, const char *fam);
  * Vendor ID
  */
 bool nat_traversal_add_vid(u_int8_t np, pb_stream *outs);
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs);
+bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *st);
 u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
@@ -137,6 +133,11 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *,
  */
 bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 			      bool in);
+/* NAT-T IKEv2 v2N */
+
+bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md);
+
+
 
 /**
  * Encapsulation mode macro (see demux.c)

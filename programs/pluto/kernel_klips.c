@@ -231,8 +231,7 @@ add_entry:
 					 * the kernel did not support it, and gave an error
 					 * it one tried to turn it on.
 					 */
-					if (addrtypeof(&ifp->addr) ==
-					    AF_INET) {
+					if (addrtypeof(&ifp->addr) == AF_INET) {
 						DBG(DBG_NATT,
 						    DBG_log("NAT-T KLIPS: calling nat_traversal_espinudp_socket"));
 						fd = create_socket(ifp,
@@ -251,8 +250,7 @@ add_entry:
 						q->ip_addr = ifp->addr;
 						setportof(htons(pluto_natt_float_port),
 							  &q->ip_addr);
-						q->port =
-							pluto_natt_float_port;
+						q->port = pluto_natt_float_port;
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;
@@ -348,8 +346,8 @@ static bool klips_do_command(struct connection *c, struct spd_route *sr,
 			   "%s",        /* actual script */
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown ==
-			   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown == NULL ?
+			     DEFAULT_UPDOWN : sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;

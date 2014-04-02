@@ -1670,10 +1670,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				    ei->transid, ei->enckeylen, ei->auth));
 
 			if (st->st_esp.attrs.transattrs.encrypt ==
-			    ei->transid &&
+			      ei->transid &&
 			    (st->st_esp.attrs.transattrs.enckeylen == 0 ||
 			     st->st_esp.attrs.transattrs.enckeylen ==
-			     ei->enckeylen * BITS_PER_BYTE) &&
+			       ei->enckeylen * BITS_PER_BYTE) &&
 			    st->st_esp.attrs.transattrs.integ_hash == ei->auth)
 				break;
 		}
@@ -1792,7 +1792,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->outif   = -1;
 #ifdef KLIPS_MAST
 		if (st->st_esp.attrs.encapsulation ==
-		    ENCAPSULATION_MODE_TRANSPORT && useful_mastno != -1)
+		      ENCAPSULATION_MODE_TRANSPORT &&
+		    useful_mastno != -1)
 			said_next->outif = MASTTRANSPORT_OFFSET +
 					   useful_mastno;
 
@@ -2270,7 +2271,7 @@ void init_kernel(void)
 		break;
 
 	default:
-		libreswan_log("kernel interface '%s' not available",
+		libreswan_log("FATAL: kernel interface '%s' not available",
 			      enum_name(&kern_interface_names,
 					kern_interface));
 		exit_pluto(5);
@@ -2494,8 +2495,8 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 		ero = NULL;
 
 	for (ero2 = ero; ero2 != NULL; ero2 = ero->policy_next)
-		if ((ero2->kind == CK_TEMPLATE || ero2->kind ==
-		     CK_SECONDARY) &&
+		if ((ero2->kind == CK_TEMPLATE ||
+		     ero2->kind == CK_SECONDARY) &&
 		    streq(ero2->name, c->name))
 			break;
 #endif
@@ -2914,8 +2915,8 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 						(c->policy &
 						 POLICY_FAIL_MASK) ==
 						POLICY_FAIL_NONE ?
-						RT_ROUTED_PROSPECTIVE :
-						RT_ROUTED_FAILURE;
+						  RT_ROUTED_PROSPECTIVE :
+						  RT_ROUTED_FAILURE;
 
 					if (sr == &c->spd &&
 					    c->remotepeertype == CISCO)
@@ -2956,8 +2957,8 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 #endif
 		}
 #ifdef HAVE_LABELED_IPSEC
-		if (!st->st_connection->loopback || st->st_state ==
-		    STATE_QUICK_I2) {
+		if (!st->st_connection->loopback ||
+		    st->st_state == STATE_QUICK_I2) {
 #endif
 		(void) teardown_half_ipsec_sa(st, TRUE);
 #ifdef HAVE_LABELED_IPSEC
@@ -2996,9 +2997,9 @@ static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
 
 	u_int16_t
 		natt_sport =
-		inbound ? c->spd.that.host_port : c->spd.this.host_port,
+		    inbound ? c->spd.that.host_port : c->spd.this.host_port,
 		natt_dport =
-		inbound ? c->spd.this.host_port : c->spd.that.host_port;
+		    inbound ? c->spd.this.host_port : c->spd.that.host_port;
 
 	set_text_said(text_said, &dst, esp_spi, SA_ESP);
 

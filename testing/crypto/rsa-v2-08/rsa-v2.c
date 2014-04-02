@@ -125,7 +125,6 @@ int main(int argc, char *argv[])
 
 	/* initialize list of moduli */
 	init_crypto();
-	load_lswcrypto();
 
 	readwhackmsg("../../lib/libpluto/lib-parentI1/ikev2.record");
 	c1 = con_by_name("westnet--eastnet-ikev2", TRUE);

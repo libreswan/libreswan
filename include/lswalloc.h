@@ -73,21 +73,10 @@ typedef struct chunk chunk_t;
 extern const chunk_t empty_chunk;
 
 typedef void (*exit_log_func_t)(const char *message, ...);
-extern void set_exit_log_func(exit_log_func_t func);
+extern void set_alloc_exit_log_func(exit_log_func_t func);
 
 #ifdef DMALLOC
 # include <dmalloc.h>
 #endif
-
-#define free_lsw_nss_symkey(ch)  \
-	do { PK11SymKey *ptr = 0; \
-	     if ((ch).ptr != NULL) { memcpy(&ptr, (ch).ptr, (ch).len); \
-				     memset((ch).ptr, 0, (ch).len ); } \
-	     if (ptr != NULL) { PK11_FreeSymKey(ptr); } } while (0)
-
-#define dup_lsw_nss_symkey(ch)  \
-	do { PK11SymKey *ptr = 0; \
-	     if ((ch).ptr != NULL) { memcpy(&ptr, (ch).ptr, (ch).len); } \
-	     if (ptr != NULL) { PK11_ReferenceSymKey(ptr); } } while (0)
 
 #endif /* _LSW_ALLOC_H_ */
