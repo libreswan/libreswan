@@ -82,7 +82,8 @@ stopnetkey() {
 	    # Finally we wait for background executed rmmods to complete
 	    if [ -n "${wait}" ]; then
 		wait
-		if [ -n "${larval_drop}" ]; then
+		if [ -n "${larval_drop}" -a \
+		    -w /proc/sys/net/core/xfrm_larval_drop ]; then
 		    # restore original value of xfrm_larval_drop
 		    echo "${larval_drop}" >/proc/sys/net/core/xfrm_larval_drop
 		    larval_drop=""
@@ -363,6 +364,7 @@ startklips() {
 		if ($1 == "inet")
 		    sub(" [^ ]+:[^ ]+"," ",$0)
 		    sub("/.*","",$2)
+		    sub("dynamic","",$7)
 		    for (i = 2; i < NF; i++) {
 			if ($i == "brd" || $i == "peer" || $i == "secondary")
 			    i++
@@ -371,7 +373,7 @@ startklips() {
 		    }
 		    if ($NF != phys)
 			cmd = cmd " " $NF
-			cmd = cmd " dev " virt ">/dev/null"
+			cmd = cmd " dev " virt ">/dev/null 2>/dev/null"
 			system(cmd)
 			}' phys=${phys} virt=${virt}
 	    ip link set up dev ${virt}

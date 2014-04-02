@@ -563,6 +563,8 @@ void call_server(void)
 					addconn_path));
 
 		char *newargv[] = { DISCARD_CONST(char *, "addconn"),
+				    DISCARD_CONST(char *, "--ctlbase"),
+				    DISCARD_CONST(char *, ctl_addr.sun_path),
 				    DISCARD_CONST(char *, "--autoall"), NULL };
 		char *newenv[] = { NULL };
 #ifdef HAVE_NO_FORK
