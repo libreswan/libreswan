@@ -50,7 +50,6 @@
 #include "pluto_crypt.h"
 #include "lswlog.h"
 #include "log.h"
-#include "timer.h"
 
 #include "lswcrypto.h"
 

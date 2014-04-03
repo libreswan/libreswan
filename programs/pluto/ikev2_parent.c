@@ -223,18 +223,20 @@ stf_status ikev2parent_outI1(int whack_sock,
 			"ikev2_outI1 KE");
 		stf_status e;
 
-		ke->md = alloc_md();
-		ke->md->from_state = STATE_IKEv2_BASE;
-		ke->md->svm = &ikev2_parent_firststate_microcode;
-		ke->md->st = st;
-		set_suspended(st, ke->md);
+		/* ??? fake an md since we aren't based on one */
+		ke->ke_md = alloc_md();
+		ke->ke_md->from_state = STATE_IKEv2_BASE;
+		ke->ke_md->svm = &ikev2_parent_firststate_microcode;
+		ke->ke_md->st = st;
+		set_suspended(st, ke->ke_md);
 
 		if (!st->st_sec_in_use) {
 			pcrc_init(&ke->ke_pcrc, ikev2_parent_outI1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     importance);
 		} else {
-			e =ikev2_parent_outI1_tail(&ke->ke_pcrc, NULL);
+			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
+			e = ikev2_parent_outI1_tail(&ke->ke_pcrc, NULL);
 		}
 
 		reset_globals();
@@ -248,7 +250,7 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 					err_t ugh)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -259,17 +261,20 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (ke->md)
-			release_md(ke->md);
+		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 		return;
 	}
+
+	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
 	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->md);
+	passert(st->st_suspended_md == ke->ke_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -278,10 +283,10 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = ikev2_parent_outI1_tail(pcrc, r);
 
-	if (ke->md != NULL) {
-		complete_v2_state_transition(&ke->md, e);
-		if (ke->md)
-			release_md(ke->md);
+	if (ke->ke_md != NULL) {
+		complete_v2_state_transition(&ke->ke_md, e);
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 	}
 	reset_cur_state();
 	reset_globals();
@@ -339,8 +344,10 @@ static stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 					  struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
+
+	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	unpack_v2KE(st, r, &st->st_gi);
 	unpack_nonce(&st->st_ni, r);
@@ -758,14 +765,15 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			"ikev2_inI1outR1 KE");
 		stf_status e;
 
-		ke->md = md;
-		set_suspended(st, ke->md);
+		ke->ke_md = md;
+		set_suspended(st, ke->ke_md);
 
 		if (!st->st_sec_in_use) {
 			pcrc_init(&ke->ke_pcrc, ikev2_parent_inI1outR1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     pcim_stranger_crypto);
 		} else {
+			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			e = ikev2_parent_inI1outR1_tail(
 				(struct pluto_crypto_req_cont *)ke,
 				NULL);
@@ -782,7 +790,7 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 					    err_t ugh)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -793,17 +801,20 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (ke->md)
-			release_md(ke->md);
+		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 		return;
 	}
+
+	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
 	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->md);
+	passert(st->st_suspended_md == ke->ke_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -812,10 +823,10 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = ikev2_parent_inI1outR1_tail(pcrc, r);
 
-	if (ke->md != NULL) {
-		complete_v2_state_transition(&ke->md, e);
-		if (ke->md)
-			release_md(ke->md);
+	if (ke->ke_md != NULL) {
+		complete_v2_state_transition(&ke->ke_md, e);
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 	}
 	reset_globals();
 }
@@ -825,12 +836,14 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 	pb_stream *keyex_pbs;
 	int numvidtosend = 0;
+
+	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	if (c->send_vendorid) {
 		numvidtosend++; /* we send Libreswan VID */
@@ -1112,8 +1125,9 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 			"ikev2_inR1outI2 KE");
 		stf_status e;
 
-		dh->md = md;
-		set_suspended(st, dh->md);
+		dh->dh_md = md;
+		set_suspended(st, dh->dh_md);
+		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 
 		pcrc_init(&dh->dh_pcrc, ikev2_parent_inR1outI2_continue);
 		e = start_dh_v2(&dh->dh_pcrc, st, st->st_import, INITIATOR,
@@ -1134,7 +1148,7 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 					    err_t ugh)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->md;
+	struct msg_digest *md = dh->dh_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -1145,17 +1159,20 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (dh->md)
-			release_md(dh->md);
+		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 		return;
 	}
+
+	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
 	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == dh->md);
+	passert(st->st_suspended_md == dh->dh_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -1164,10 +1181,10 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = ikev2_parent_inR1outI2_tail(pcrc, r);
 
-	if (dh->md != NULL) {
-		complete_v2_state_transition(&dh->md, e);
-		if (dh->md)
-			release_md(dh->md);
+	if (dh->dh_md != NULL) {
+		complete_v2_state_transition(&dh->dh_md, e);
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 	}
 	reset_globals();
 }
@@ -1442,7 +1459,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->md;
+	struct msg_digest *md = dh->dh_md;
 	struct state *st      = md->st;
 	struct connection *c  = st->st_connection;
 	struct ikev2_generic e;
@@ -1748,8 +1765,9 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 			"ikev2_inI2outR2 KE");
 		stf_status e;
 
-		dh->md = md;
-		set_suspended(st, dh->md);
+		dh->dh_md = md;
+		set_suspended(st, dh->dh_md);
+		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 
 		pcrc_init(&dh->dh_pcrc, ikev2_parent_inI2outR2_continue);
 		e = start_dh_v2(&dh->dh_pcrc, st, st->st_import, RESPONDER,
@@ -1770,7 +1788,7 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 					    err_t ugh)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->md;
+	struct msg_digest *md = dh->dh_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -1781,17 +1799,20 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (dh->md)
-			release_md(dh->md);
+		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 		return;
 	}
+
+	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
 	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == dh->md);
+	passert(st->st_suspended_md == dh->dh_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -1809,10 +1830,10 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 			enum_name(&stfstatus_name, e));
 	}
 
-	if (dh->md != NULL) {
-		complete_v2_state_transition(&dh->md, e);
-		if (dh->md)
-			release_md(dh->md);
+	if (dh->dh_md != NULL) {
+		complete_v2_state_transition(&dh->dh_md, e);
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 	}
 	reset_globals();
 }
@@ -1822,7 +1843,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md  = dh->md;
+	struct msg_digest *md  = dh->dh_md;
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 	unsigned char *idhash_in, *idhash_out;
@@ -2601,7 +2622,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		n_hdr.isa_flags &= ~ISAKMP_FLAGS_I;
 		n_hdr.isa_flags  |=  ISAKMP_FLAGS_R;
 #warning check msgid code here
-		/* PAUL: shouldn't we set n_hdr.isa_msgid = [htonl](p1st->st_msgid); */
+		/* ??? PAUL: shouldn't we set n_hdr.isa_msgid = [htonl](p1st->st_msgid); */
 		if (!out_struct(&n_hdr, &isakmp_hdr_desc, &reply_stream, &rbody)) {
 			libreswan_log(
 				"error initializing hdr for notify message");

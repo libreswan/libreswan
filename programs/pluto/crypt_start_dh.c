@@ -48,14 +48,13 @@
 #include "pluto_crypt.h"
 #include "lswlog.h"
 #include "log.h"
-#include "timer.h"
 #include "ike_alg.h"
 #include "id.h"
 #include "secrets.h"
 #include "keys.h"
 
 /*
- * invoke helper to do DH work.
+ * invoke helper to do DH work (IKEv1)
  */
 stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 			     struct state *st,

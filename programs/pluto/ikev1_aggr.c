@@ -99,7 +99,7 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 				      err_t ugh)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->md;
+	struct msg_digest *md = dh->dh_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -110,17 +110,20 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (dh->md != NULL)
-			release_md(dh->md);
+		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 		return;
 	}
+
+	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
 	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == dh->md);
+	passert(st->st_suspended_md == dh->dh_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -128,10 +131,10 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 
 	e = aggr_inI1_outR1_tail(pcrc, r);
 
-	if (dh->md != NULL) {
-		complete_v1_state_transition(&dh->md, e);
-		if (dh->md != NULL)
-			release_md(dh->md);
+	if (dh->dh_md != NULL) {
+		complete_v1_state_transition(&dh->dh_md, e);
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 	}
 	reset_cur_state();
 }
@@ -147,7 +150,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 				      err_t ugh)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -158,8 +161,8 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (ke->md != NULL)
-			release_md(ke->md);
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 		return;
 	}
 
@@ -168,7 +171,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->md);
+	passert(st->st_suspended_md == ke->ke_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -188,8 +191,9 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 			struct dh_continuation,
 			"aggr outR1 DH");
 
-		dh->md = md;
+		dh->dh_md = md;
 		set_suspended(st, md);
+		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 		pcrc_init(&dh->dh_pcrc, aggr_inI1_outR1_continue2);
 		e = start_dh_secretiv(&dh->dh_pcrc, st,
 				      st->st_import,
@@ -197,10 +201,10 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 				      st->st_oakley.group->group);
 
 		if (e != STF_SUSPEND) {
-			if (dh->md != NULL) {
-				complete_v1_state_transition(&dh->md, e);
-				if (dh->md != NULL)
-					release_md(dh->md);
+			if (dh->dh_md != NULL) {
+				complete_v1_state_transition(&dh->dh_md, e);
+				if (dh->dh_md != NULL)
+					release_md(dh->dh_md);
 			}
 		}
 
@@ -353,7 +357,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 			struct ke_continuation,
 			"outI2 KE");
 
-		ke->md = md;
+		ke->ke_md = md;
 		set_suspended(st, md);
 
 		if (!st->st_sec_in_use) {
@@ -361,6 +365,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 			return build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 					st->st_import);
 		} else {
+			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			return aggr_inI1_outR1_tail(&ke->ke_pcrc, NULL);
 		}
 	}
@@ -419,7 +424,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 				       struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *st = md->st;
 	bool send_cert = FALSE;
 	bool send_cr = FALSE;
@@ -730,9 +735,10 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 			struct dh_continuation,
 			"aggr outR1 DH");
 
-		dh->md = md;
-
+		dh->dh_md = md;
 		set_suspended(st, md);
+		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
+
 		pcrc_init(&dh->dh_pcrc, aggr_inR1_outI2_crypto_continue);
 		return start_dh_secretiv(&dh->dh_pcrc, st,
 					 st->st_import,
@@ -746,7 +752,7 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 					    err_t ugh)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->md;
+	struct msg_digest *md = dh->dh_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -757,8 +763,8 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (dh->md != NULL)
-			release_md(dh->md);
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 		return;
 	}
 
@@ -767,7 +773,7 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == dh->md);
+	passert(st->st_suspended_md == dh->dh_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -777,10 +783,10 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = aggr_inR1_outI2_tail(md, NULL);
 
-	if (dh->md != NULL) {
-		complete_v1_state_transition(&dh->md, e);
-		if (dh->md != NULL)
-			release_md(dh->md);
+	if (dh->dh_md != NULL) {
+		complete_v1_state_transition(&dh->dh_md, e);
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 	}
 	reset_cur_state();
 }
@@ -1068,7 +1074,7 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 				err_t ugh)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -1079,17 +1085,20 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (ke->md != NULL)
-			release_md(ke->md);
+		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 		return;
 	}
+
+	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
 	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->md);
+	passert(st->st_suspended_md == ke->ke_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -1098,10 +1107,10 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = aggr_outI1_tail(pcrc, r);
 
-	if (ke->md != NULL) {
-		complete_v1_state_transition(&ke->md, e);
-		if (ke->md != NULL)
-			release_md(ke->md);
+	if (ke->ke_md != NULL) {
+		complete_v1_state_transition(&ke->ke_md, e);
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 	}
 	reset_globals();
 
@@ -1192,9 +1201,9 @@ stf_status aggr_outI1(int whack_sock,
 			"aggr_outI1 KE");
 		stf_status e;
 
-		ke->md = alloc_md();
-		ke->md->st = st;
-		set_suspended(st, ke->md);
+		ke->ke_md = alloc_md();
+		ke->ke_md->st = st;
+		set_suspended(st, ke->ke_md);
 
 		if (!st->st_sec_in_use) {
 			pcrc_init(&ke->ke_pcrc, aggr_outI1_continue);
@@ -1205,6 +1214,7 @@ stf_status aggr_outI1(int whack_sock,
 				delete_state(st);
 			}
 		} else {
+			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			e = aggr_outI1_tail(&ke->ke_pcrc, NULL);
 		}
 
@@ -1218,9 +1228,11 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 				  struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
+
+	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* the MD is already set up by alloc_md() */
 
