@@ -117,19 +117,6 @@ LC_ALL=C export LC_ALL
 #       PLUTO_SA_REQID
 #               When using KAME or XFRM/NETKEY, the IPsec SA reqid value
 
-# check interface version
-case "$PLUTO_VERSION" in
-1.*)	# Older Pluto?!?  Play it safe, script may be using new features.
-	echo "$0: obsolete interface version \`$PLUTO_VERSION'," >&2
-	echo "$0: 	called by obsolete Pluto?" >&2
-	exit 2
-	;;
-2.*)	;;
-*)	echo "$0: unknown interface version \`$PLUTO_VERSION'" >&2
-	exit 2
-	;;
-esac
-
 # check parameter(s)
 case "$1:$*" in
 ':')			# no parameters
