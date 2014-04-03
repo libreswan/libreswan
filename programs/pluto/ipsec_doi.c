@@ -222,18 +222,16 @@ void close_message(pb_stream *pbs, struct state *st)
 static initiator_function *pick_initiator(struct connection *c UNUSED,
 					  lset_t policy)
 {
-	if ((policy & POLICY_IKEV1_DISABLE) == 0 &&
-	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == 0))) {
+	if ((policy & POLICY_IKEV1_DISABLE) == LEMPTY &&
+	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == LEMPTY))) {
 		if (policy & POLICY_AGGRESSIVE) {
 			return aggr_outI1;
 		} else {
 			return main_outI1;
 		}
-
 	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
 		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
 		return ikev2parent_outI1;
-
 	} else {
 		libreswan_log("Neither IKEv1 nor IKEv2 allowed");
 		/*
@@ -269,7 +267,7 @@ void ipsecdoi_initiate(int whack_sock,
 	if (st == NULL) {
 		initiator_function *initiator = pick_initiator(c, policy);
 
-		if (initiator) {
+		if (initiator != NULL) {
 			(void) initiator(whack_sock, c, NULL, policy, try, importance
 #ifdef HAVE_LABELED_IPSEC
 					 , uctx
