@@ -101,9 +101,9 @@ initdone
 road #
  ipsec auto --up road-eastnet-psk
 003 "road-eastnet-psk" #1: multiple DH groups were set in aggressive mode. Only first one used.
-003 "road-eastnet-psk" #1: transform (5,2,2,0) ignored.
+003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 003 "road-eastnet-psk" #1: multiple DH groups were set in aggressive mode. Only first one used.
-003 "road-eastnet-psk" #1: transform (5,2,2,0) ignored.
+003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "road-eastnet-psk" #1: STATE_AGGR_I1: initiate
 003 "road-eastnet-psk" #1: received Vendor ID payload [Dead Peer Detection]
 003 "road-eastnet-psk" #1: received Hash Payload does not match computed value
