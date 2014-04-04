@@ -287,9 +287,9 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 
 	hdr->nlmsg_seq = ++seq;
 	len = hdr->nlmsg_len;
-	do
+	do {
 		r = write(netlinkfd, hdr, len);
-	while (r < 0 && errno == EINTR);
+	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
 		log_errno((e,
 			   "netlink write() of %s message"
