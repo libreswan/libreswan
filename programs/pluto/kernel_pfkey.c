@@ -247,9 +247,9 @@ static bool pfkey_input_ready(void)
 	LSW_FD_ZERO(&readfds);  /* we only care about pfkeyfd */
 	LSW_FD_SET(pfkeyfd, &readfds);
 
-	do
+	do {
 		ndes = lsw_select(pfkeyfd + 1, &readfds, NULL, NULL, &tm);
-	while (ndes == -1 && errno == EINTR);
+	} while (ndes == -1 && errno == EINTR);
 
 	if (ndes < 0) {
 		log_errno((e, "select() failed in pfkey_get()"));
