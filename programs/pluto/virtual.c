@@ -467,18 +467,6 @@ void show_virtual_private()
 			whack_log(RC_COMMENT,
 				"WARNING: some virtual_private entries were not shown, do you really need that many?");
 
-		if (!truncok && !truncko && !strlen(all_ok)) {
-			whack_log(RC_COMMENT,
-			  "WARNING: Either virtual_private= is not specified, or there is a syntax\n");
-			whack_log(RC_COMMENT,
-			  "         error in that line. 'left/rightsubnet=vhost:%%priv' will not work!");
-		}
-		if (!truncok && !truncko && !strlen(all_ko)) {
-			whack_log(RC_COMMENT,
-			  "WARNING: Disallowed subnets in virtual_private= is empty. If you have\n");
-			whack_log(RC_COMMENT,
-			  "         private address space in internal use, it should be excluded!");
-		}
 	}
 	whack_log(RC_COMMENT, " ");     /* spacer */
 }

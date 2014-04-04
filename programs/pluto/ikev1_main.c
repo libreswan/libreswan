@@ -1172,7 +1172,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
-	decode_cr(md, &st->st_connection->requested_ca);
+	ikev1_decode_cr(md, &st->st_connection->requested_ca);
 
 	if (st->st_connection->requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -1318,7 +1318,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 	/* CR out */
 	if (send_cr) {
 		if (st->st_connection->kind == CK_PERMANENT) {
-			if (!build_and_ship_CR(CERT_X509_SIGNATURE,
+			if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
 						st->st_connection->spd.that.ca,
 						&md->rbody, ISAKMP_NEXT_NONE))
 				return STF_INTERNAL_ERROR;
@@ -1329,7 +1329,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 				generalName_t *gn;
 
 				for (gn = ca; gn != NULL; gn = gn->next) {
-					if (!build_and_ship_CR(
+					if (!ikev1_build_and_ship_CR(
 							CERT_X509_SIGNATURE,
 							gn->name,
 							&md->rbody,
@@ -1340,7 +1340,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 				}
 				free_generalNames(ca, FALSE);
 			} else {
-				if (!build_and_ship_CR(CERT_X509_SIGNATURE,
+				if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
 							empty_chunk,
 							&md->rbody,
 							ISAKMP_NEXT_NONE))
@@ -1488,7 +1488,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	finish_dh_secretiv(st, r);
 
 	/* decode certificate requests */
-	decode_cr(md, &requested_ca);
+	ikev1_decode_cr(md, &requested_ca);
 
 	if (requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -1618,7 +1618,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	/* CR out */
 	if (send_cr) {
 		libreswan_log("I am sending a certificate request");
-		if (!build_and_ship_CR(mycert.type,
+		if (!ikev1_build_and_ship_CR(mycert.type,
 					st->st_connection->spd.that.ca,
 					&md->rbody, ISAKMP_NEXT_SIG))
 			return STF_INTERNAL_ERROR;
@@ -1809,7 +1809,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 	 * ID Payload in.
 	 * Note: this may switch the connection being used!
 	 */
-	if (!aggrmode && !decode_peer_id(md, initiator, FALSE))
+	if (!aggrmode && !ikev1_decode_peer_id(md, initiator, FALSE))
 		return STF_FAIL + INVALID_ID_INFORMATION;
 
 	/*

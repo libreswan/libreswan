@@ -2,8 +2,8 @@
 # STACK startup script
 # Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
-# Copyright (C) 2008-2013 Tuomo Soini <tis@foobar.fi>
-# Copyright (C) 2008-2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2008-2014 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -35,6 +35,12 @@ if [ -z "${action}" ]; then
 fi
 
 stopnetkey() {
+    local wait larval_drop
+    wait=""
+    larval_drop=""
+    # Validate wait option
+    [ "${1}" = "--wait" -o "${1}" = "-w" ] && wait="${1}"
+
     if [ -f ${kamepfkey} ]; then
 	ip xfrm state flush
 	ip xfrm policy flush
@@ -43,22 +49,52 @@ stopnetkey() {
 	fi
 
 	if [ -f /proc/modules ]; then
+	    # check if we can write our own settings
+	    if [ -n "${wait}" -a -w /proc/sys/net/core/xfrm_larval_drop ]; then
+		# read previous state so we can restore it
+		larval_drop=$(cat /proc/sys/net/core/xfrm_larval_drop)
+		if [ -n "${larval_drop}" ]; then
+		    # set to 0 so we can unload modules
+		    echo 0 >/proc/sys/net/core/xfrm_larval_drop
+		fi
+	    fi
 	    # netkey stack found, let's unload.
-	    # does this cause false positive for inline built?
-	    for mod in ipcomp ipcomp6 ip_vti xfrm6_tunnel xfrm6_mode_tunnel \
-		xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport \
-		xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel \
-		xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key xfrm_user
+	    for mod in xfrm_ipcomp ipcomp ipcomp6 ip_vti xfrm6_tunnel \
+		xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
+		xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel \
+		xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key \
+		xfrm_user
 	    do
+		# first try and unload the modules without the 10s wait pause
 		if [ -n "$(egrep ^${mod} /proc/modules)" ]; then
 		    # echo "unloading module ${mod}" >&2
-		    rmmod ${mod}
+		    rmmod ${mod} 2>/dev/null
+		fi
+		# We only run rmmod again with --wait if requested
+		if [ -n "${wait}" -a \
+		    -n "$(egrep ^${mod} /proc/modules)" ]; then
+		    # echo "unloading module ${mod} using --wait" >&2
+		    # we start rmmod to backgroud so unloading one module
+		    # won't block
+		    rmmod ${wait} ${mod} 2>/dev/null &
 		fi
 	    done
+	    # Finally we wait for background executed rmmods to complete
+	    if [ -n "${wait}" ]; then
+		wait
+		if [ -n "${larval_drop}" -a \
+		    -w /proc/sys/net/core/xfrm_larval_drop ]; then
+		    # restore original value of xfrm_larval_drop
+		    echo "${larval_drop}" >/proc/sys/net/core/xfrm_larval_drop
+		    larval_drop=""
+		fi
+	    fi
 	fi
     fi
-    if [ -n "$(lsmod | grep ^esp)" ]; then
-	echo "FAILURE to unload NETKEY esp4/esp6 module" >&2
+    # if we were executed with --wait or -w option we inform about unload
+    # failure
+    if [ -n "${wait}" -a -n "$(lsmod | grep ^esp)" ]; then
+	echo "FAIL" >&2
 	exit 1
     fi
 }
@@ -78,10 +114,10 @@ startnetkey() {
 	
     if [ -f /proc/modules ]; then
 	# load all NETKEY modules
-	for mod in ipcomp6 ipcomp xfrm6_tunnel xfrm6_mode_tunnel \
+	for mod in ipcomp6 xfrm_ipcomp ipcomp xfrm6_tunnel xfrm6_mode_tunnel \
 	    xfrm6_mode_beet xfrm6_mode_ro xfrm6_mode_transport \
 	    xfrm4_mode_transport xfrm4_mode_tunnel xfrm4_tunnel \
-	    xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key
+	    xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key ip_vti
 	do
 	    # echo -n "${mod} " >&2
 	    @MODPROBE@ ${mod} 2>/dev/null
@@ -206,7 +242,7 @@ startklips() {
     cryptomodules
     if [ -f ${kamepfkey} ]; then
 	echo -n "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
-	stopnetkey
+	stopnetkey --wait
 	if [ -f ${kamepfkey} ]; then
 	    echo "FAILURE to unload KLIPS/MAST module" >&2
 	    exit 1
@@ -286,25 +322,31 @@ startklips() {
 	# clear tables out in case dregs have been left over
 	ipsec eroute --clear
 	ipsec spi --clear
-	# remove any mastX interfaces, as we are using ipsecX
-	for device in $(ip -oneline link show | grep mast | cut -d: -f2 | sort -r)
+	# remove mast0 interface, as we are using ipsecX
+	for device in $(ip -oneline link show | grep mast0 | cut -d: -f2 | sort -r)
 	do
 	    ipsec tncfg --delete ${device}
 	done
 	# detach all ipsecX devices
 	ipsec tncfg --clear
 
+	phys=$(ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/")
+
 	eval $(ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport |grep interfaces);
 	if [ -z "${interfaces}" ]; then
-	    interfaces="%defaultroute"
+		interfaces="%defaultroute"
+		if [ -z "$phys" ]; then
+			echo "ERROR: no default route found and no interfaces= option set"
+			exit 1
+		fi
 	fi
+
 	for iface in ${interfaces}; do
 	    if [ "${iface}" = "%none" ]; then
 		echo "ignoring obsolete interface %none" >&2
 		continue
 	    elif [ "${iface}" = "%defaultroute" ]; then
 		virt="ipsec0"
-		phys=$(ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/")
 	    else
 		virt="$(expr ${iface} : '\([^=]*\)=.*')"
 		phys="$(expr ${iface} : '[^=]*=\(.*\)')"
@@ -314,6 +356,7 @@ startklips() {
 		ipsec tncfg --create ${virt}
 	    fi
 	    ipsec tncfg --attach --virtual ${virt} --physical ${phys}
+
 	    # configure all the IPv4/IPv6 addresses (including point-to-point)
 	    ip addr show dev ${phys} | \
 		awk '$1 == "inet" || ($1 == "inet6" && !/ dynamic/) {
@@ -321,6 +364,7 @@ startklips() {
 		if ($1 == "inet")
 		    sub(" [^ ]+:[^ ]+"," ",$0)
 		    sub("/.*","",$2)
+		    sub("dynamic","",$7)
 		    for (i = 2; i < NF; i++) {
 			if ($i == "brd" || $i == "peer" || $i == "secondary")
 			    i++
@@ -329,7 +373,7 @@ startklips() {
 		    }
 		    if ($NF != phys)
 			cmd = cmd " " $NF
-			cmd = cmd " dev " virt ">/dev/null"
+			cmd = cmd " dev " virt ">/dev/null 2>/dev/null"
 			system(cmd)
 			}' phys=${phys} virt=${virt}
 	    ip link set up dev ${virt}
@@ -387,9 +431,19 @@ esac
 
 case ${action} in
     stop)
-	# cleanup either stack, unload if module
-	# the user might have changed protostack=
-	stop
+	# We don't unload on stop - only when we detect a stack change. We do try and cleanup state
+	case ${stack} in
+	    netkey)
+		ip xfrm state flush
+		ip xfrm policy flush
+		;;
+	    klips)
+		ipsec eroute --clear
+		;;
+	    mast)
+		ipsec eroute --clear
+		;;
+	esac
 	;;
     start)
 	case ${stack} in

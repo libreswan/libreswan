@@ -52,7 +52,7 @@ west #
 000 "passthrough":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "passthrough":   policy: PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG+PASS+NEVER_NEGOTIATE; 
 000 "passthrough":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "passthrough":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "passthrough":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "passthrough":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 west #
  echo "initdone"

@@ -32,7 +32,7 @@ east #
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
-000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
+000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx_attr_value=XXXX
@@ -89,7 +89,7 @@ east #
 000 "west-east":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "west-east":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
 000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "west-east":   dpd: action:restart; delay:5; timeout:15; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "west-east":   dpd: action:restart; delay:5; timeout:15; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east":   newest ISAKMP SA: #0; newest IPsec SA: #4; 
 000 "west-east":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000  

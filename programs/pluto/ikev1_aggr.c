@@ -274,7 +274,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 
 	st->st_oakley.auth = authtype;
 
-	if (!decode_peer_id(md, FALSE, TRUE)) {
+	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
 
 		(void) idtoa(&st->st_connection->spd.that.id, buf,
@@ -436,7 +436,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	finish_dh_secretiv(st, r);
 
 	/* decode certificate requests */
-	decode_cr(md, &requested_ca);
+	ikev1_decode_cr(md, &requested_ca);
 
 	if (requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -570,7 +570,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	/* CR out */
 	if (send_cr) {
 		libreswan_log("I am sending a certificate request");
-		if (!build_and_ship_CR(mycert.type,
+		if (!ikev1_build_and_ship_CR(mycert.type,
 				       st->st_connection->spd.that.ca,
 				       &md->rbody, ISAKMP_NEXT_SIG))
 			return STF_INTERNAL_ERROR;
@@ -663,7 +663,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 
 	st->st_policy |= POLICY_AGGRESSIVE;
 
-	if (!decode_peer_id(md, FALSE, TRUE)) {
+	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
 
 		(void) idtoa(&st->st_connection->spd.that.id, buf,

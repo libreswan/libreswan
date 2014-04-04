@@ -2473,8 +2473,7 @@ struct connection *route_owner(struct connection *c,
  * We don't know enough to chose amongst those available.
  * ??? no longer usefully different from find_host_pair_connections
  */
-struct connection *find_host_connection2(const char *func,
-					const ip_address *me,
+struct connection *find_host_connection(const ip_address *me,
 					u_int16_t my_port,
 					const ip_address *him,
 					u_int16_t his_port, lset_t policy)
@@ -2484,9 +2483,8 @@ struct connection *find_host_connection2(const char *func,
 	DBG(DBG_CONTROLMORE, {
 			char mebuf[ADDRTOT_BUF];
 			char himbuf[ADDRTOT_BUF];
-			DBG_log("find_host_connection2 called from %s, "
+			DBG_log("find_host_connection "
 				"me=%s:%d him=%s:%d policy=%s",
-				func,
 				(addrtot(me, 0, mebuf,
 					sizeof(mebuf)), mebuf), my_port,
 				him ? (addrtot(him, 0, himbuf,
@@ -2515,15 +2513,12 @@ struct connection *find_host_connection2(const char *func,
 			if (NEVER_NEGOTIATE(c->policy))
 				continue;
 
-			if ((c->policy & policy) == policy)
-				break;
-
-			/* ??? the following if doesn't do anything.
-			 * What's it supposed to do?
-			 */
 			if ((policy & POLICY_XAUTH) !=
 				(c->policy & POLICY_XAUTH))
 				continue;
+
+			if ((c->policy & policy) == policy)
+				break;
 		}
 
 	}
@@ -2531,7 +2526,7 @@ struct connection *find_host_connection2(const char *func,
 	for (; c != NULL && NEVER_NEGOTIATE(c->policy); c = c->hp_next) ;
 
 	DBG(DBG_CONTROLMORE,
-		DBG_log("find_host_connection2 returns %s",
+		DBG_log("find_host_connection returns %s",
 			c ? c->name : "empty"));
 	return c;
 }
