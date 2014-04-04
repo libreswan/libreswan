@@ -1248,7 +1248,7 @@ static bool do_file_authentication(void *varg)
 
 		/* get userid */
 		userid = line;
-		p = strchr(p, ':');	/* find end */
+		p = strchr(line, ':');	/* find end */
 		if (p == NULL) {
 			/* no end: skip line */
 			libreswan_log("XAUTH: %s:%d missing password hash field", pwdfile, lineno);
@@ -1259,7 +1259,7 @@ static bool do_file_authentication(void *varg)
 
 		/* get password hash */
 		passwdhash = p;
-		p = strchr(p, ':');	/* find end */
+		p = strchr(passwdhash, ':');	/* find end */
 		if (p != NULL) {
 			/* optional connectionname */
 			*p++ ='\0';	/* terminate password string by overwriting : */
