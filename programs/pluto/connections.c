@@ -1568,8 +1568,8 @@ void add_connection(const struct whack_message *wm)
 							"updown");
 			tmp_spd->this.cert_filename = NULL;
 			tmp_spd->that.cert_filename = NULL;
-			tmp_spd->this.cert.type = 0;
-			tmp_spd->that.cert.type = 0;
+			tmp_spd->this.cert.ty = 0;
+			tmp_spd->that.cert.ty = 0;
 			tmp_spd->this.ca.ptr = NULL;
 			tmp_spd->that.ca.ptr = NULL;
 			tmp_spd->this.groups = NULL;
