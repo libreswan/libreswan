@@ -154,7 +154,6 @@
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "ikev1_dpd.h"
-#include "udpfromto.h"
 #include "hostpair.h"
 
 #ifdef HAVE_NM

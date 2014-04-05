@@ -48,13 +48,6 @@ SRCS+=sanitizestring.c pfkey_print.c pfkey_sock.c pfkey_error.c
 
 ifeq ($(USE_KLIPS),true)
 KLIPS_DEFS=-DKLIPS 
-# Linux always supports udpfromto
-UDPFROMTO_SRCS=udpfromto.c
-endif
-
-ifeq ($(USE_BSDKAME),true)
-# BSD always supports udpfromto
-UDPFROMTO_SRCS=udpfromto.c
 endif
 
 ifeq ($(USE_PFKEYv2),true)
@@ -81,7 +74,7 @@ CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 LOGSRCS=lswlog.c lswid.c
 
 
-OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} ${UDPFROMTO_SRCS:.c=.o} version.o
+OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} version.o
 LOGOBJS=${LOGSRCS:.c=.o}
 
 KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
