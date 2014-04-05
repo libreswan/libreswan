@@ -22,8 +22,7 @@
 #include <limits.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
-
+#include "ietf_constants.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
@@ -39,6 +38,7 @@
 #include <nss.h>
 #include <pk11pub.h>
 #include <cert.h>
+
 
 /*
  * extracts the certificate to be sent to the peer

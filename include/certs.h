@@ -22,8 +22,6 @@
 #ifndef _CERTS_H
 #define _CERTS_H
 
-#include "libreswan/ipsec_policy.h"
-
 #include "secrets.h"
 #include "x509.h"
 
@@ -49,7 +47,7 @@ struct rsa_privkey {
  * currently X.509 certificates are supported
  */
 typedef struct {
-	enum ipsec_cert_type ty;
+	enum ike_cert_type ty;
 	union {
 		/* some day we may support more */
 		x509cert_t *x509;	/* CERT_X509_SIGNATURE */

@@ -25,7 +25,6 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "libreswan/ipsec_policy.h"
 #include "lswtime.h"
 #include "defs.h"
 #include "log.h"
