@@ -27,7 +27,6 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 #include "lswconf.h"
-#include "lswtime.h"
 #include "asn1.h"
 #include "id.h"
 #include "x509.h"

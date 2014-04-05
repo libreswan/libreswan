@@ -40,7 +40,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"

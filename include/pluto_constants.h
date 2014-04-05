@@ -800,3 +800,10 @@ enum PrivateKeyKind {
 #define XAUTH_MAX_PASS_LENGTH 128
 
 #define MIN_LIVENESS 1
+
+/* no time set in time_t */
+#define UNDEFINED_TIME  0
+
+/* size of timetoa string buffer */
+#define TIMETOA_BUF     30
+
