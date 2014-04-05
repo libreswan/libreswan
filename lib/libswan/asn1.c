@@ -473,19 +473,28 @@ bool extract_object(const asn1Object_t *const objects,
 bool is_asn1(chunk_t blob)
 {
 	u_int len;
-	u_char tag = *blob.ptr;
 
-	if (tag != ASN1_SEQUENCE && tag != ASN1_SET) {
+	if (blob.len < 1) {
 		DBG(DBG_PARSING,
-			DBG_log("  file content is not binary ASN.1");
-			);
+			DBG_log("  cert blob is empty: not binary ASN.1"));
 		return FALSE;
 	}
+
+	switch (blob.ptr[0]) {
+	case ASN1_SEQUENCE:
+	case ASN1_SET:
+		break;	/* looks OK */
+	default:
+		DBG(DBG_PARSING,
+			DBG_log("  cert blob content is not binary ASN.1"));
+		return FALSE;
+	}
+
 	len = asn1_length(&blob);
 	if (len != blob.len) {
 		DBG(DBG_PARSING,
-			DBG_log("  file size does not match ASN.1 coded length");
-			);
+			DBG_log("  cert blob size (%zu) does not match ASN.1 coded length (%u)",
+				blob.len, len));
 		return FALSE;
 	}
 	return TRUE;
