@@ -42,6 +42,7 @@
 #include "ac.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "log.h"
 #include "whack.h"
@@ -778,7 +779,7 @@ void load_acerts(void)
 		int n;
 
 		libreswan_log("Changing to directory '%s'", oco->acerts_dir);
-		n = scandir(oco->acerts_dir, &filelist, (void *) file_select,
+		n = scandir(oco->acerts_dir, &filelist, (void *) filter_dotfiles,
 			    alphasort);
 
 		if (n > 0) {

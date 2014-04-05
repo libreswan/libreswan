@@ -175,63 +175,6 @@ void add_authcert(x509cert_t *cert, u_char auth_flags)
 	unlock_authcert_list("add_authcert");
 }
 
-/*
- *  Loads authority certificates
- */
-void load_authcerts(const char *type, const char *path, u_char auth_flags)
-{
-	struct dirent **filelist;
-	char buf[ASN1_BUF_LEN];
-	char *save_dir;
-	int n;
-
-	/* change directory to specified path */
-	save_dir = getcwd(buf, ASN1_BUF_LEN);
-
-	if (chdir(path)) {
-		libreswan_log("Could not change to directory '%s': %s",
-			path, strerror(errno));
-	} else {
-		DBG(DBG_CONTROL,
-			DBG_log("Changed path to directory '%s'", path);
-			);
-		n = scandir(".", &filelist, (void *) file_select, alphasort);
-
-		if (n < 0) {
-			char buff[256];
-			strerror_r(errno, buff, 256);
-			libreswan_log("  scandir() ./ error: %s", buff);
-		} else {
-			while (n--) {
-				cert_t cert;
-
-				if (load_cert(filelist[n]->d_name,
-#ifdef SINGLE_CONF_DIR
-						FALSE,	/*
-							 * too verbose in
-							 * single conf dir
-							 */
-#else
-						TRUE,
-#endif
-						type, &cert))
-					add_authcert(cert.u.x509, auth_flags);
-
-				free(filelist[n]);
-			}
-			free(filelist);
-		}
-
-		/* restore directory path */
-		if (chdir(save_dir) != 0) {
-			char buff[256];
-			strerror_r(errno, buff, 256);
-			libreswan_log("  chdir() ./ error: %s", buff);
-		}
-	}
-
-}
-
 /********************** auth cert lists **********/
 
 /*

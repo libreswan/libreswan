@@ -381,7 +381,7 @@ void load_crls(void)
 	} else {
 		DBG(DBG_CONTROL,
 		    DBG_log("Changing to directory '%s'", oco->crls_dir));
-		n = scandir(oco->crls_dir, &filelist, (void *) file_select,
+		n = scandir(oco->crls_dir, &filelist, (void *) filter_dotfiles,
 			    alphasort);
 
 		if (n > 0) {

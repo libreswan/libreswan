@@ -28,6 +28,7 @@
 #include <dirent.h>
 #include <time.h>
 #include <sys/types.h>
+#include <errno.h>
 
 #include <libreswan.h>
 
@@ -427,4 +428,74 @@ bool collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
 		}
 	}
 	return *top != NULL;
+}
+
+/*
+ * Filter eliminating the directory entries starting with .,
+*/
+int filter_dotfiles(
+#ifdef SCANDIR_HAS_CONST
+	const
+#endif
+	struct dirent *entry)
+{
+	return entry->d_name[0] != '.';
+
+}
+
+/*
+ *  Loads authority certificates
+ */
+void load_authcerts(const char *type, const char *path, u_char auth_flags)
+{
+	struct dirent **filelist;
+	char buf[ASN1_BUF_LEN];
+	char *save_dir;
+	int n;
+
+	/* change directory to specified path */
+	save_dir = getcwd(buf, ASN1_BUF_LEN);
+
+	if (chdir(path)) {
+		libreswan_log("Could not change to directory '%s': %s",
+			path, strerror(errno));
+	} else {
+		DBG(DBG_CONTROL,
+			DBG_log("Changed path to directory '%s'", path);
+			);
+		n = scandir(".", &filelist, (void *) filter_dotfiles, alphasort);
+
+		if (n < 0) {
+			char buff[256];
+			strerror_r(errno, buff, 256);
+			libreswan_log("  scandir() ./ error: %s", buff);
+		} else {
+			while (n--) {
+				cert_t cert;
+
+				if (load_cert(filelist[n]->d_name,
+#ifdef SINGLE_CONF_DIR
+						FALSE,	/*
+							 * too verbose in
+							 * single conf dir
+							 */
+#else
+						TRUE,
+#endif
+						type, &cert))
+					add_authcert(cert.u.x509, auth_flags);
+
+				free(filelist[n]);
+			}
+			free(filelist);
+		}
+
+		/* restore directory path */
+		if (chdir(save_dir) != 0) {
+			char buff[256];
+			strerror_r(errno, buff, 256);
+			libreswan_log("  chdir() ./ error: %s", buff);
+		}
+	}
+
 }

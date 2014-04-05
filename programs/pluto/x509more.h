@@ -37,4 +37,12 @@ extern bool ikev1_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
 			      u_int8_t np);
 extern bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
 				    u_int8_t np);
+extern void load_authcerts(const char *type, const char *path,
+                           u_char auth_flags);
+extern int filter_dotfiles(
+#ifdef SCANDIR_HAS_CONST
+        const
+#endif
+        dirent_t *entry);
+
 #endif /* _X509MORE_H */
