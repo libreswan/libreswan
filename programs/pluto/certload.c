@@ -158,26 +158,6 @@ bool load_cert(const char *filename,
 }
 
 /*
- * establish equality of two certificates
- */
-bool same_cert(const cert_t *a, const cert_t *b)
-{
-	if (a->ty != b->ty)
-		return FALSE;
-
-	switch (a->ty) {
-	case CERT_NONE:
-	case CERT_X509_SIGNATURE:
-		/* note: the certs are tested for being identical,
-		 * not just equal!
-		 */
-		return a->u.x509 == b->u.x509;
-	default:
-		bad_case(a->ty);
-	}
-}
-
-/*
  * For each link pointing to the certificate increase the count by one
  * Currently, only one cert type is supported.
  * This function is called even when no certificates are involved

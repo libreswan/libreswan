@@ -60,7 +60,6 @@ extern bool load_cert(const char *filename,
 		      int verbose,
 		      const char *label, cert_t *cert);
 
-extern bool same_cert(const cert_t *a, const cert_t *b);
 extern void share_cert(cert_t cert);
 extern void release_cert(cert_t cert);
 extern void list_certs(bool utc);
