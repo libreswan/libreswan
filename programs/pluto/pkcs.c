@@ -88,40 +88,6 @@ static const asn1Object_t signedDataObjects[] = {
 #define PKCS7_SIGNED_CERT 5
 #define PKCS7_SIGNED_ROOF 11
 
-/*
- * Parses a PKCS#1 private key
- */
-bool parse_pkcs1_private_key(chunk_t blob, rsa_privkey_t *key)
-{
-	asn1_ctx_t ctx;
-	chunk_t object;
-	u_int level;
-	u_int objectID = 0;
-
-	asn1_init(&ctx, blob, 0, FALSE, DBG_PRIVATE);
-
-	while (objectID < PKCS1_PRIV_KEY_ROOF) {
-
-		if (!extract_object(privkeyObjects, &objectID, &object, &level,
-					&ctx))
-			return FALSE;
-
-		if (objectID == PKCS1_PRIV_KEY_OBJECT) {
-			key->keyobject = object;
-		} else if (objectID == PKCS1_PRIV_KEY_VERSION) {
-			if (*object.ptr != 0) {
-				libreswan_log(
-					"  wrong PKCS#1 private key version");
-				return FALSE;
-			}
-		} else if (objectID >= PKCS1_PRIV_KEY_MODULUS &&
-			objectID <= PKCS1_PRIV_KEY_COEFF) {
-			key->field[objectID - PKCS1_PRIV_KEY_MODULUS] = object;
-		}
-		objectID++;
-	}
-	return TRUE;
-}
 
 /*
  * Parse PKCS#7 wrapped X.509 certificates

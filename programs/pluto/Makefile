@@ -138,7 +138,8 @@ DISTSRC = \
 	${XAUTH_DIST_SRCS} \
 	${AGGRESSIVE_DIST_SRCS} \
 	${LABELED_IPSEC_DIST_SRCS} \
-	packet.c pluto_constants.c readwhackmsg.c
+	packet.c pluto_constants.c readwhackmsg.c \
+	certload.c pem.c pkcs.c 
 
 DIST = $(DISTMISC) $(DISTSRC)
 
@@ -167,6 +168,7 @@ OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
 OBJSPLUTO += ${OBJSLIBPLUTO}
 OBJSPLUTO += ${SYSDEP_OBJ}
 OBJSPLUTO += packet.o pluto_constants.o readwhackmsg.o
+OBJSPLUTO += certload.o pem.o pkcs.o
 
 OBJSADNS = adns.o
 
