@@ -45,7 +45,7 @@
  */
 chunk_t get_mycert(cert_t cert)
 {
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_NONE:
 		return empty_chunk; /* quietly forget about it */
 
@@ -53,9 +53,7 @@ chunk_t get_mycert(cert_t cert)
 		return cert.u.x509->certificate;
 
 	default:
-		loglog(RC_LOG_SERIOUS, "get_mycert: Unknown certificate type: %s (%d)",
-			enum_show(&cert_type_names, cert.type), cert.type);
-		return empty_chunk;
+		bad_case(cert.ty);
 	}
 }
 
@@ -139,7 +137,6 @@ bool load_cert(const char *filename,
 	chunk_t blob = empty_chunk;
 
 	/* initialize cert struct */
-	cert->forced = FALSE;
 	cert->u.x509 = NULL;
 
 	if (load_coded_file(filename, verbose, label, &blob)) {
@@ -153,8 +150,7 @@ bool load_cert(const char *filename,
 				filename);
 			free_x509cert(x509cert);
 		} else {
-			cert->forced = FALSE;
-			cert->type = CERT_X509_SIGNATURE;
+			cert->ty = CERT_X509_SIGNATURE;
 			cert->u.x509 = x509cert;
 			return TRUE;
 		}
@@ -167,7 +163,19 @@ bool load_cert(const char *filename,
  */
 bool same_cert(const cert_t *a, const cert_t *b)
 {
-	return a->type == b->type && a->u.x509 == b->u.x509;
+	if (a->ty != b->ty)
+		return FALSE;
+
+	switch (a->ty) {
+	case CERT_NONE:
+	case CERT_X509_SIGNATURE:
+		/* note: the certs are tested for being identical,
+		 * not just equal!
+		 */
+		return a->u.x509 == b->u.x509;
+	default:
+		bad_case(a->ty);
+	}
 }
 
 /*
@@ -177,16 +185,14 @@ bool same_cert(const cert_t *a, const cert_t *b)
  */
 void share_cert(cert_t cert)
 {
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_NONE:
 		break; /* quietly forget about it */
 	case CERT_X509_SIGNATURE:
 		share_x509cert(cert.u.x509);
 		break;
 	default:
-		loglog(RC_LOG_SERIOUS,"share_cert: Unexpected certificate type: %s (%d)",
-			enum_show(&cert_type_names, cert.type), cert.type);
-		break;
+		bad_case(cert.ty);
 	}
 }
 
@@ -204,7 +210,7 @@ bool cert_exists_in_nss(const char *nickname)
 	return TRUE;
 }
 
-bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
+bool load_cert_from_nss(const char *nssHostCertNickName,
 			int verbose,
 			const char *label, cert_t *cert)
 {
@@ -212,7 +218,6 @@ bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 	CERTCertificate *nssCert;
 
 	/* initialize cert struct */
-	cert->forced = forcedtype;
 	cert->u.x509 = NULL;
 
 	nssCert = PK11_FindCertFromNickname(nssHostCertNickName,
@@ -226,8 +231,7 @@ bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 	} else {
 		DBG(DBG_CRYPT,
 			DBG_log("Found pointer to cert %s now giving it to further processing",
-				nssHostCertNickName);
-			);
+				nssHostCertNickName));
 	}
 
 
@@ -235,19 +239,12 @@ bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 	blob.ptr = alloc_bytes(blob.len, label);
 	memcpy(blob.ptr, nssCert->derCert.data, blob.len);
 
-	if (forcedtype) {
-		cert->u.blob = blob;
-		memcpy(blob.ptr, nssCert->derCert.data, blob.len);
-		return TRUE;	/* success! */
-	}
-
 	if (!is_asn1(blob)) {
 		if (verbose)
 			libreswan_log("  cert read from NSS db is not in DER format");
 	} else {
 		DBG(DBG_PARSING,
-			DBG_log("file coded in DER format");
-			);
+			DBG_log("file coded in DER format"));
 
 		x509cert_t *x509cert = alloc_thing(x509cert_t, "x509cert");
 
@@ -257,8 +254,7 @@ bool load_cert_from_nss(bool forcedtype, const char *nssHostCertNickName,
 			libreswan_log("  error in X.509 certificate");
 			free_x509cert(x509cert);
 		} else {
-			cert->forced = FALSE;
-			cert->type = CERT_X509_SIGNATURE;
+			cert->ty = CERT_X509_SIGNATURE;
 			cert->u.x509 = x509cert;
 			return TRUE;	/* success! */
 		}
@@ -284,7 +280,7 @@ void load_authcerts_from_nss(const char *type, u_char auth_flags)
 			/*
 			 * too verbose in single conf dir
 			 */
-			if (load_cert_from_nss(FALSE, node->cert->nickname,
+			if (load_cert_from_nss(node->cert->nickname,
 #ifdef SINGLE_CONF_DIR
 						FALSE,
 #else

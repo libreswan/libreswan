@@ -155,11 +155,11 @@ static void release_x509cert(x509cert_t *cert)
 }
 
 /*  release of a certificate decreases the count by one
-   "  the certificate is freed when the counter reaches zero
+ *  the certificate is freed when the counter reaches zero
  */
 void release_cert(cert_t cert)
 {
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_NONE:
 		/* quietly forget about it */
 		break;
@@ -167,9 +167,7 @@ void release_cert(cert_t cert)
 		release_x509cert(cert.u.x509);
 		break;
 	default:
-		loglog(RC_LOG_SERIOUS,"Unknown certificate type: %s (%d)",
-		       enum_show(&cert_type_names, cert.type), cert.type);
-		break;
+		bad_case(cert.ty);
 	}
 }
 
@@ -701,7 +699,7 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 
 			cert_t c;
 
-			c.type = CERT_X509_SIGNATURE;
+			c.ty = CERT_X509_SIGNATURE;
 			c.u.x509 = cert;
 
 			whack_log(RC_COMMENT, "%s, count: %d",

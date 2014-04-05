@@ -2238,8 +2238,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					tmp_spd->that.cert_filename =
 						NULL;
 
-					tmp_spd->this.cert.type = 0;
-					tmp_spd->that.cert.type = 0;
+					tmp_spd->this.cert.ty = CERT_NONE;
+					tmp_spd->that.cert.ty = CERT_NONE;
 
 					tmp_spd->this.ca.ptr = NULL;
 					tmp_spd->that.ca.ptr = NULL;

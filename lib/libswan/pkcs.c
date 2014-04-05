@@ -125,17 +125,20 @@ bool parse_pkcs1_private_key(chunk_t blob, rsa_privkey_t *key)
 
 /*
  * Parse PKCS#7 wrapped X.509 certificates
+ *
+ * Allocates space for each cert found and links it onto *cert.
+ * Returns FALSE for failure (but certs might have been added).
  */
 static bool parse_pkcs7_signedData(chunk_t blob, int level0, x509cert_t **cert)
 {
 	asn1_ctx_t ctx;
-	chunk_t object;
-	u_int level;
-	u_int objectID = 0;
+	u_int objectID;
 
 	asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
-	while (objectID < PKCS7_SIGNED_ROOF) {
+	for (objectID = 0; objectID < PKCS7_SIGNED_ROOF; objectID++) {
+		chunk_t object;
+		u_int level;
 
 		if (!extract_object(signedDataObjects, &objectID, &object,
 					&level, &ctx))
@@ -158,7 +161,6 @@ static bool parse_pkcs7_signedData(chunk_t blob, int level0, x509cert_t **cert)
 				free_x509cert(newcert);
 			}
 		}
-		objectID++;
 	}
 	return TRUE;
 }
@@ -169,13 +171,13 @@ static bool parse_pkcs7_signedData(chunk_t blob, int level0, x509cert_t **cert)
 bool parse_pkcs7_cert(chunk_t blob, x509cert_t **cert)
 {
 	asn1_ctx_t ctx;
-	chunk_t object;
-	u_int level;
-	u_int objectID = 0;
+	u_int objectID;
 
 	asn1_init(&ctx, blob, 0, FALSE, DBG_RAW);
 
-	while (objectID < PKCS7_INFO_ROOF) {
+	for (objectID = 0; objectID < PKCS7_INFO_ROOF; 	objectID++) {
+		chunk_t object;
+		u_int level;
 
 		if (!extract_object(contentInfoObjects, &objectID, &object,
 					&level, &ctx))
@@ -187,9 +189,9 @@ bool parse_pkcs7_cert(chunk_t blob, x509cert_t **cert)
 				return FALSE;
 			}
 		} else if (objectID == PKCS7_INFO_CONTENT) {
-			parse_pkcs7_signedData(object, level + 1, cert);
+			if (!parse_pkcs7_signedData(object, level + 1, cert))
+				return FALSE;
 		}
-		objectID++;
 	}
 	return TRUE;
 }

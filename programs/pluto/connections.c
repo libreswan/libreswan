@@ -667,7 +667,6 @@ size_t format_end(char *buf,
 			p = add_str(endopts, sizeof(endopts), p, "+XC");
 		{
 			const char *send_cert = "+UNKNOWN";
-			char s[32];
 
 			switch (this->sendcert) {
 			case cert_neversend:
@@ -678,10 +677,6 @@ size_t format_end(char *buf,
 				break;
 			case cert_alwayssend:
 				send_cert = "+S=C";
-				break;
-			case cert_forcedtype:
-				snprintf(s, sizeof(s), "+S%d", this->cert.type);
-				send_cert = s;
 				break;
 			}
 			p = add_str(endopts, sizeof(endopts), p, send_cert);
@@ -739,9 +734,9 @@ static void unshare_connection_end_strings(struct end *e)
 	unshare_id_content(&e->id);
 	e->updown = clone_str(e->updown, "updown");
 
-	if(e->cert.type != CERT_NONE) {
+	if(e->cert.ty != CERT_NONE)
 		share_cert(e->cert);
-	}
+
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
@@ -798,7 +793,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	zero(&dst->cert);
 
 	/* initialize end certificate */
-	dst->cert.type = CERT_NONE;
+	dst->cert.ty = CERT_NONE;
 
 	if (filename == NULL)
 		return;
@@ -808,7 +803,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 
 	{
 		/* load cert from file */
-		bool valid_cert = load_cert_from_nss(FALSE, filename, TRUE,
+		bool valid_cert = load_cert_from_nss(filename, TRUE,
 						"host cert", &cert);
 		if (!valid_cert) {
 			whack_log(RC_FATAL,
@@ -820,7 +815,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 		}
 	}
 
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_X509_SIGNATURE:
 		if (dst->id.kind == ID_FROMCERT || dst->id.kind == ID_NONE)
 			select_x509cert_id(cert.u.x509, &dst->id);
@@ -837,7 +832,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 				);
 			add_x509_public_key(&dst->id, cert.u.x509, valid_until,
 					DAL_LOCAL);
-			dst->cert.type = cert.type;
+			dst->cert.ty = cert.ty;
 			dst->cert.u.x509 = add_x509cert(cert.u.x509);
 
 			/* if no CA is defined, use issuer as default */
@@ -845,13 +840,8 @@ static void load_end_certificate(const char *filename, struct end *dst)
 				dst->ca = dst->cert.u.x509->issuer;
 		}
 		break;
-	case CERT_PGP:
-		whack_log(RC_FATAL,"PGP certificates not supported");
-		return;
 	default:
-		whack_log(RC_FATAL,"Unknown certificate type (%d) not "
-			"supported", cert.type);
-		return;
+		bad_case(cert.ty);
 	}
 
 }
@@ -894,18 +884,9 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 		}
 	}
 
-	if (src->sendcert == cert_forcedtype) {
-		/* certificate is a blob */
-		dst->cert.forced = TRUE;
-		dst->cert.type = src->certtype;
-		load_cert_from_nss(TRUE, src->cert, TRUE, "forced cert",
-				&dst->cert);
-		/* ??? what should we do on load_cert_from_nss failure? */
-	} else {
-		/* load local end certificate and extract ID, if any */
-		load_end_certificate(src->cert, dst);
-		/* ??? what should we do on load_end_certificate failure? */
-	}
+	/* load local end certificate and extract ID, if any */
+	load_end_certificate(src->cert, dst);
+	/* ??? what should we do on load_end_certificate failure? */
 
 	/* does id has wildcards? */
 	dst->has_id_wildcards = id_count_wildcards(&dst->id) > 0;

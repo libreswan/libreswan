@@ -618,12 +618,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    enum_name(&ppk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PPK_RSA &&
-	    c->spd.this.sendcert != cert_forcedtype &&
-	    (c->spd.this.cert.type == CERT_X509_SIGNATURE ||
-	     c->spd.this.cert.type == CERT_PKCS7_WRAPPED_X509)) {
+	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE) {
 		struct pubkey *my_public_key = allocate_RSA_public_key(
 			c->spd.this.cert);
+
 		passert(my_public_key != NULL);
 
 		best = lsw_find_secret_by_public_key(pluto_secrets,

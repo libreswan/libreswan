@@ -1499,15 +1499,14 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	 * to always send one.
 	 */
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.type != CERT_NONE &&
+		mycert.ty != CERT_NONE &&
 		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
 		  st->hidden_variables.st_got_certrequest) ||
-		 st->st_connection->spd.this.sendcert == cert_alwayssend ||
-		 st->st_connection->spd.this.sendcert == cert_forcedtype);
+		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
-			mycert.type,
+			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
 			send_cert);
@@ -1594,7 +1593,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		struct isakmp_cert cert_hd;
 		cert_hd.isacert_np =
 			(send_cr) ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.type;
+		cert_hd.isacert_type = mycert.ty;
 
 		libreswan_log("I am sending my cert");
 
@@ -1604,21 +1603,16 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 					&cert_pbs))
 			return STF_INTERNAL_ERROR;
 
-		if (mycert.forced) {
-			if (!out_chunk(mycert.u.blob, &cert_pbs,
-					"forced CERT"))
-				return STF_INTERNAL_ERROR;
-		} else {
-			if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
-				return STF_INTERNAL_ERROR;
-		}
+		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
+			return STF_INTERNAL_ERROR;
+
 		close_output_pbs(&cert_pbs);
 	}
 
 	/* CR out */
 	if (send_cr) {
 		libreswan_log("I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(mycert.type,
+		if (!ikev1_build_and_ship_CR(mycert.ty,
 					st->st_connection->spd.that.ca,
 					&md->rbody, ISAKMP_NEXT_SIG))
 			return STF_INTERNAL_ERROR;
@@ -2059,14 +2053,14 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	mycert = st->st_connection->spd.this.cert;
 
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.type != CERT_NONE &&
+		mycert.ty != CERT_NONE &&
 		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
 		  st->hidden_variables.st_got_certrequest) ||
 		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
-			mycert.type,
+			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
 			send_cert);
@@ -2118,7 +2112,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 		struct isakmp_cert cert_hd;
 		cert_hd.isacert_np = ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.type;
+		cert_hd.isacert_type = mycert.ty;
 
 		libreswan_log("I am sending my cert");
 

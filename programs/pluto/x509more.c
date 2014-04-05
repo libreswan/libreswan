@@ -65,7 +65,7 @@ void add_x509_public_key(struct id *keyid,
 {
 	generalName_t *gn;
 	struct pubkey *pk;
-	cert_t c = { FALSE, CERT_X509_SIGNATURE, { cert } };
+	const cert_t c = { CERT_X509_SIGNATURE, { cert } };
 
 	/* we support RSA only */
 	if (cert->subjectPublicKeyAlgorithm != PUBKEY_ALG_RSA)
@@ -119,7 +119,7 @@ void add_x509_public_key(struct id *keyid,
  */
 void remove_x509_public_key(/*const*/ x509cert_t *cert)
 {
-	const cert_t c = { FALSE, CERT_X509_SIGNATURE, { cert } };
+	const cert_t c = { CERT_X509_SIGNATURE, { cert } };
 	struct pubkey_list *p, **pp;
 	struct pubkey *revoked_pk;
 
@@ -154,8 +154,11 @@ void ikev1_decode_cert(struct msg_digest *md)
 		time_t valid_until;
 		blob.ptr = p->pbs.cur;
 		blob.len = pbs_left(&p->pbs);
-		if (cert->isacert_type == CERT_X509_SIGNATURE) {
+		switch (cert->isacert_type) {
+		case CERT_X509_SIGNATURE:
+		{
 			x509cert_t cert2 = empty_x509cert;
+
 			if (parse_x509cert(blob, 0, &cert2)) {
 				if (verify_x509cert(&cert2, strict_crl_policy,
 						    &valid_until)) {
@@ -174,7 +177,10 @@ void ikev1_decode_cert(struct msg_digest *md)
 			} else {
 				libreswan_log("Syntax error in X.509 certificate");
 			}
-		} else if (cert->isacert_type == CERT_PKCS7_WRAPPED_X509) {
+			break;
+		}
+		case CERT_PKCS7_WRAPPED_X509:
+		{
 			x509cert_t *cert2 = NULL;
 
 			if (parse_pkcs7_cert(blob, &cert2))
@@ -182,9 +188,9 @@ void ikev1_decode_cert(struct msg_digest *md)
 			else
 				libreswan_log(
 					"Syntax error in PKCS#7 wrapped X.509 certificates");
-
-
-		} else {
+			break;
+		}
+		default:
 			loglog(RC_LOG_SERIOUS,
 			       "ignoring %s certificate payload",
 			       enum_show(&cert_type_names,
@@ -206,8 +212,11 @@ void ikev2_decode_cert(struct msg_digest *md)
 		time_t valid_until;
 		blob.ptr = p->pbs.cur;
 		blob.len = pbs_left(&p->pbs);
-		if (v2cert->isac_enc == CERT_X509_SIGNATURE) {
+		switch (v2cert->isac_enc) {
+		case CERT_X509_SIGNATURE:
+		{
 			x509cert_t cert2 = empty_x509cert;
+
 			if (parse_x509cert(blob, 0, &cert2)) {
 				if (verify_x509cert(&cert2, strict_crl_policy,
 						    &valid_until)) {
@@ -226,7 +235,10 @@ void ikev2_decode_cert(struct msg_digest *md)
 			} else {
 				libreswan_log("Syntax error in X.509 certificate");
 			}
-		} else if (v2cert->isac_enc == CERT_PKCS7_WRAPPED_X509) {
+			break;
+		}
+		case CERT_PKCS7_WRAPPED_X509:
+		{
 			x509cert_t *cert2 = NULL;
 
 			if (parse_pkcs7_cert(blob, &cert2))
@@ -234,9 +246,9 @@ void ikev2_decode_cert(struct msg_digest *md)
 			else
 				libreswan_log(
 					"Syntax error in PKCS#7 wrapped X.509 certificates");
-
-
-		} else {
+			break;
+		}
+		default:
 			loglog(RC_LOG_SERIOUS,
 			       "ignoring %s certificate payload",
 			       enum_show(&ikev2_cert_type_names,

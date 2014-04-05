@@ -49,11 +49,10 @@ struct rsa_privkey {
  * currently X.509 certificates are supported
  */
 typedef struct {
-	bool forced;
-	enum ipsec_cert_type type;
+	enum ipsec_cert_type ty;
 	union {
-		x509cert_t *x509;
-		chunk_t blob;
+		/* some day we may support more */
+		x509cert_t *x509;	/* CERT_X509_SIGNATURE */
 	} u;
 } cert_t;
 
@@ -73,8 +72,7 @@ extern bool load_coded_file(const char *filename,
 			    int verbose,
 			    const char *type, chunk_t *blob);
 extern bool cert_exists_in_nss(const char *nickname);
-extern bool load_cert_from_nss(bool forcedtype,
-			       const char *nssHostCertNickName,
+extern bool load_cert_from_nss(const char *nssHostCertNickName,
 			       int verbose, const char *label, cert_t *cert);
 extern void load_authcerts_from_nss(const char *type, u_char auth_flags);
 

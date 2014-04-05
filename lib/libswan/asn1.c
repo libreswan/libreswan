@@ -301,8 +301,10 @@ void asn1_init(asn1_ctx_t *ctx, chunk_t blob, u_int level0,
 /*
  * Parses and extracts the next ASN.1 object
  */
-bool extract_object(asn1Object_t const *objects,
-		u_int *objectID, chunk_t *object, u_int *level,
+bool extract_object(const asn1Object_t *const objects,
+		u_int *objectID,	/* IN/OUT */
+		chunk_t *object,	/* OUT */
+		u_int *level,	/* OUT */
 		asn1_ctx_t *ctx)
 {
 	asn1Object_t obj = objects[*objectID];
@@ -345,10 +347,9 @@ bool extract_object(asn1Object_t const *objects,
 	if ((obj.flags & ASN1_OPT) &&
 		(blob->len == 0 || *start_ptr != obj.type)) {
 		/* advance to end of missing option field */
-		do
-
+		do {
 			(*objectID)++;
-		while (!((objects[*objectID].flags & ASN1_END) &&
+		} while (!((objects[*objectID].flags & ASN1_END) &&
 				(objects[*objectID].level == obj.level)));
 		return TRUE;
 	}
@@ -422,6 +423,7 @@ bool extract_object(asn1Object_t const *objects,
 			);
 	} else if (obj.flags & ASN1_BODY) {
 		int oid;
+
 		*object = *blob1;
 
 		switch (obj.type) {
@@ -460,8 +462,7 @@ bool extract_object(asn1Object_t const *objects,
 			break;
 		}
 		DBG(ctx->cond,
-			DBG_dump_chunk("", *object);
-			);
+			DBG_dump_chunk("", *object));
 	}
 	return TRUE;
 }

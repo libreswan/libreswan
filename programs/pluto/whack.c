@@ -1345,8 +1345,6 @@ int main(int argc, char **argv)
 				msg.right.sendcert = cert_neversend;
 			} else if (streq(optarg, "ifasked")) {
 				msg.right.sendcert = cert_sendifasked;
-			} else if (streq(optarg, "forced")) {
-				msg.right.sendcert = cert_forcedtype;
 			} else {
 				diagq("whack sendcert value is not legal",
 				      optarg);
