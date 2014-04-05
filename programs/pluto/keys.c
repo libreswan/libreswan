@@ -41,7 +41,6 @@
 #endif
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -935,7 +934,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 						       TRUE));
 
 				whack_log(RC_COMMENT, "       %s '%s'",
-					  enum_show(&ident_names,
+					  enum_show(&ike_idtype_names,
 						    key->id.kind), id_buf);
 
 				if (key->issuer.len > 0) {

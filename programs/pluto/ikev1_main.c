@@ -40,7 +40,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
@@ -1419,7 +1418,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 
 static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 				u_int16_t auth,
-				enum ipsec_cert_type certtype,
+				enum ike_cert_type certtype,
 				enum certpolicy policy,
 				bool gotcertrequest,
 				bool send_cert)
@@ -1432,7 +1431,7 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 
 		DBG_log("  I have RSA key: %s cert.type: %s ",
 			enum_showb(&oakley_auth_names, auth, esb, sizeof(esb)),
-			enum_show(&cert_type_names, certtype));
+			enum_show(&ike_cert_type_names, certtype));
 	});
 
 	DBG(DBG_CONTROL,

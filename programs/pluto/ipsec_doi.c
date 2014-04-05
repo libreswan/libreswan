@@ -35,7 +35,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
@@ -422,19 +421,20 @@ bool has_preloaded_public_key(struct state *st)
 bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 {
 	switch (peer->kind) {
+	/* ident types mostly match between IKEv1 and IKEv2 */
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		/* failure mode for initaddr is probably inappropriate address length */
 	{
-		err_t ugh = initaddr(id_pbs->cur, pbs_left(
-					     id_pbs),
-				     peer->kind == ID_IPV4_ADDR ? AF_INET : AF_INET6,
-				     &peer->ip_addr);
+		err_t ugh = initaddr(id_pbs->cur, pbs_left(id_pbs),
+				peer->kind == ID_IPV4_ADDR ? AF_INET : AF_INET6,
+				&peer->ip_addr);
 
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,
-			       "improper %s identification payload: %s",
-			       enum_show(&ident_names, peer->kind), ugh);
+				"improper %s identification payload: %s",
+				enum_show(&ike_idtype_names, peer->kind),
+				ugh);
 			/* XXX Could send notification back */
 			return FALSE;
 		}
@@ -444,17 +444,17 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 	case ID_USER_FQDN:
 		if (memchr(id_pbs->cur, '@', pbs_left(id_pbs)) == NULL) {
 			loglog(RC_LOG_SERIOUS,
-			       "peer's ID_USER_FQDN contains no @: %.*s",
-			       (int) pbs_left(id_pbs),
-			       id_pbs->cur);
+				"peer's ID_USER_FQDN contains no @: %.*s",
+				(int) pbs_left(id_pbs),
+				id_pbs->cur);
 			/* return FALSE; */
 		}
 	/* FALLTHROUGH */
 	case ID_FQDN:
 		if (memchr(id_pbs->cur, '\0', pbs_left(id_pbs)) != NULL) {
 			loglog(RC_LOG_SERIOUS,
-			       "Phase 1 ID Payload of type %s contains a NUL",
-			       enum_show(&ident_names, peer->kind));
+				"Phase 1 (Parent)ID Payload of type %s contains a NUL",
+				enum_show(&ike_idtype_names, peer->kind));
 			return FALSE;
 		}
 
@@ -478,8 +478,8 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 	default:
 		/* XXX Could send notification back */
 		loglog(RC_LOG_SERIOUS,
-		       "Unacceptable identity type (%s) in Phase 1 ID Payload",
-		       enum_show(&ident_names, peer->kind));
+			"Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
+			enum_show(&ike_idtype_names, peer->kind));
 		return FALSE;
 	}
 

@@ -22,8 +22,7 @@
 #include <limits.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
-
+#include "ietf_constants.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
@@ -40,6 +39,7 @@
 #include <pk11pub.h>
 #include <cert.h>
 
+
 /*
  * extracts the certificate to be sent to the peer
  */
@@ -54,7 +54,7 @@ chunk_t get_mycert(cert_t cert)
 
 	default:
 		loglog(RC_LOG_SERIOUS, "get_mycert: Unknown certificate type: %s (%d)",
-			enum_show(&cert_type_names, cert.type), cert.type);
+			enum_show(&ike_cert_type_names, cert.type), cert.type);
 		return empty_chunk;
 	}
 }
@@ -185,7 +185,7 @@ void share_cert(cert_t cert)
 		break;
 	default:
 		loglog(RC_LOG_SERIOUS,"share_cert: Unexpected certificate type: %s (%d)",
-			enum_show(&cert_type_names, cert.type), cert.type);
+			enum_show(&ike_cert_type_names, cert.type), cert.type);
 		break;
 	}
 }

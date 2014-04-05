@@ -22,8 +22,6 @@
 #ifndef _CERTS_H
 #define _CERTS_H
 
-#include "libreswan/ipsec_policy.h"
-
 #include "secrets.h"
 #include "x509.h"
 
@@ -50,7 +48,7 @@ struct rsa_privkey {
  */
 typedef struct {
 	bool forced;
-	enum ipsec_cert_type type;
+	enum ike_cert_type type;
 	union {
 		x509cert_t *x509;
 		chunk_t blob;

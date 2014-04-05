@@ -22,7 +22,7 @@
 #define _WHACK_H
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
+#include "ietf_constants.h"
 
 /* Since the message remains on one host, native representation is used.
  * Think of this as horizontal microcode: all selected operations are
@@ -76,7 +76,7 @@ struct whack_end {
 	bool modecfg_client;
 	unsigned int tundev;
 	enum certpolicy sendcert;
-	enum ipsec_cert_type certtype;
+	enum ike_cert_type certtype;
 
 	char *host_addr_name;   /* DNS name for host, of hosttype==IPHOSTNAME*/
 	                        /* pluto will convert to IP address again,

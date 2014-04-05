@@ -2826,7 +2826,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("%s mode peer ID is %s: '%s'",
 			      aggrmode ? "Aggressive" : "Main",
-			      enum_show(&ident_names, id->isaid_idtype), buf);
+			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
 	}
 
 	/* check for certificates */

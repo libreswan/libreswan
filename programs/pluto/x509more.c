@@ -30,7 +30,6 @@
 #include <sys/types.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -187,7 +186,7 @@ void ikev1_decode_cert(struct msg_digest *md)
 		} else {
 			loglog(RC_LOG_SERIOUS,
 			       "ignoring %s certificate payload",
-			       enum_show(&cert_type_names,
+			       enum_show(&ike_cert_type_names,
 					 cert->isacert_type));
 			DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
 		}
@@ -239,7 +238,7 @@ void ikev2_decode_cert(struct msg_digest *md)
 		} else {
 			loglog(RC_LOG_SERIOUS,
 			       "ignoring %s certificate payload",
-			       enum_show(&ikev2_cert_type_names,
+			       enum_show(&ike_cert_type_names,
 					 v2cert->isac_enc));
 			DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
 		}
@@ -288,7 +287,7 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 		} else {
 			loglog(RC_LOG_SERIOUS,
 			       "ignoring %s certificate request payload",
-			       enum_show(&cert_type_names, cr->isacr_type));
+			       enum_show(&ike_cert_type_names, cr->isacr_type));
 		}
 	}
 }
@@ -335,7 +334,7 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 		} else {
 			loglog(RC_LOG_SERIOUS,
 			       "ignoring %s certificate request payload",
-			       enum_show(&ikev2_cert_type_names,
+			       enum_show(&ike_cert_type_names,
 					 cr->isacertreq_enc));
 		}
 	}

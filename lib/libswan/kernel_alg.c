@@ -32,8 +32,6 @@
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 
-#include <libreswan/ipsec_policy.h>
-
 #include "constants.h"
 #include "alg_info.h"
 #include "kernel_alg.h"

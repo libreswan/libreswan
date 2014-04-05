@@ -33,7 +33,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -423,7 +422,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	 * that may be recycled, but only if the type is not known.
 	 * That case is disposed of very early -- in the first switch.
 	 */
-	const char *idtypename = enum_show(&ident_names, id->isaiid_idtype);
+	const char *idtypename = enum_show(&ike_idtype_names, id->isaiid_idtype);
 
 	switch (id->isaiid_idtype) {
 	case ID_IPV4_ADDR:

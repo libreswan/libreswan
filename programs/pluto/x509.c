@@ -35,7 +35,6 @@
 #include <sys/types.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "lswconf.h"
@@ -168,7 +167,7 @@ void release_cert(cert_t cert)
 		break;
 	default:
 		loglog(RC_LOG_SERIOUS,"Unknown certificate type: %s (%d)",
-		       enum_show(&cert_type_names, cert.type), cert.type);
+		       enum_show(&ike_cert_type_names, cert.type), cert.type);
 		break;
 	}
 }

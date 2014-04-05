@@ -214,7 +214,7 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 
      doi_log_cert_thinking(struct msg_digest *md UNUSED
                       , u_int16_t auth
-                      , enum ipsec_cert_type certtype
+                      , enum ike_cert_type certtype
                       , enum certpolicy policy
                       , bool gotcertrequest
                       , bool send_cert)
@@ -223,7 +223,7 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 bool doi_send_ikev2_cert_thinking(struct state *st)
 {
 	cert_t mycert = st->st_connection->spd.this.cert;
-	enum ipsec_cert_type certtype = mycert.type;
+	enum ike_cert_type certtype = mycert.type;
 	enum certpolicy policy = st->st_connection->spd.this.sendcert;
 	bool send_cert = FALSE;
 
