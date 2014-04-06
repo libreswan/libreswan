@@ -45,21 +45,6 @@
 #include "pkcs.h"
 #include "paths.h"
 
-/*
- * Filter eliminating the directory entries starting with .,
- * and also "CVS" (thus eliminating '.' and '..')
- */
-int file_select(
-#ifdef SCANDIR_HAS_CONST
-	const
-#endif
-	struct dirent *entry)
-{
-	return entry->d_name[0] != '.' &&
-		strcmp(entry->d_name, "CVS") != 0 &&
-		strcmp(entry->d_name, "RCS") != 0;
-
-}
 
 /*
  * AUTH CERTIFICATE chains
@@ -176,71 +161,6 @@ void add_authcert(x509cert_t *cert, u_char auth_flags)
 }
 
 /********************** auth cert lists **********/
-
-/*
- * Checks if CA a is trusted by CA b
- */
-bool trusted_ca(chunk_t a, chunk_t b, int *pathlen)
-{
-	bool match = FALSE;
-	char abuf[ASN1_BUF_LEN], bbuf[ASN1_BUF_LEN];
-
-	dntoa(abuf, ASN1_BUF_LEN, a);
-	dntoa(bbuf, ASN1_BUF_LEN, b);
-
-	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("  trusted_ca called with a=%s b=%s", abuf, bbuf);
-		);
-
-	/* no CA b specified -> any CA a is accepted */
-	if (b.ptr == NULL) {
-		*pathlen = (a.ptr == NULL) ? 0 : MAX_CA_PATH_LEN;
-		return TRUE;
-	}
-
-	/* no CA a specified -> trust cannot be established */
-	if (a.ptr == NULL) {
-		*pathlen = MAX_CA_PATH_LEN;
-		return FALSE;
-	}
-
-	*pathlen = 0;
-
-	/* CA a equals CA b -> we have a match */
-	if (same_dn(a, b))
-		return TRUE;
-
-	/* CA a might be a subordinate CA of b */
-	lock_authcert_list("trusted_ca");
-
-	while ((*pathlen)++ < MAX_CA_PATH_LEN) {
-		x509cert_t *cacert = get_authcert(a, empty_chunk, empty_chunk,
-						AUTH_CA);
-
-		/* cacert not found or self-signed root cacert-> exit */
-		if (cacert == NULL || same_dn(cacert->issuer, a))
-			break;
-
-		/* does the issuer of CA a match CA b? */
-		match = same_dn(cacert->issuer, b);
-
-		/* we have a match and exit the loop */
-		if (match)
-			break;
-
-		/* go one level up in the CA chain */
-		a = cacert->issuer;
-	}
-
-	unlock_authcert_list("trusted_ca");
-
-	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("  trusted_ca returning with %s",
-			match ? "match" : "failed");
-		);
-
-	return match;
-}
 
 /*
  * Checks if the current certificate is revoked. It goes through the
