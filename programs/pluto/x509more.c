@@ -57,7 +57,7 @@
 /* extract id and public key from x.509 certificate and
  * insert it into a pubkeyrec
  */
-void add_x509_public_key(struct id *keyid,
+void add_x509_public_key(const struct id *keyid,
 			 x509cert_t *cert,
 			 time_t until,
 			 enum dns_auth_level dns_auth_level)
@@ -150,7 +150,7 @@ void ikev1_decode_cert(struct msg_digest *md)
 	for (p = md->chain[ISAKMP_NEXT_CERT]; p != NULL; p = p->next) {
 		struct isakmp_cert *const cert = &p->payload.cert;
 		chunk_t blob;
-		time_t valid_until;
+
 		blob.ptr = p->pbs.cur;
 		blob.len = pbs_left(&p->pbs);
 		switch (cert->isacert_type) {
@@ -159,11 +159,12 @@ void ikev1_decode_cert(struct msg_digest *md)
 			x509cert_t cert2 = empty_x509cert;
 
 			if (parse_x509cert(blob, 0, &cert2)) {
+				time_t valid_until;
+
 				if (verify_x509cert(&cert2, strict_crl_policy,
 						    &valid_until)) {
 					DBG(DBG_X509 | DBG_PARSING,
-					    DBG_log("Public key validated")
-					    );
+					    DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,
 							    valid_until,
 							    DAL_SIGNED);
@@ -208,7 +209,7 @@ void ikev2_decode_cert(struct msg_digest *md)
 	for (p = md->chain[ISAKMP_NEXT_v2CERT]; p != NULL; p = p->next) {
 		struct ikev2_cert *const v2cert = &p->payload.v2cert;
 		chunk_t blob;
-		time_t valid_until;
+
 		blob.ptr = p->pbs.cur;
 		blob.len = pbs_left(&p->pbs);
 		switch (v2cert->isac_enc) {
@@ -217,11 +218,12 @@ void ikev2_decode_cert(struct msg_digest *md)
 			x509cert_t cert2 = empty_x509cert;
 
 			if (parse_x509cert(blob, 0, &cert2)) {
+				time_t valid_until;
+
 				if (verify_x509cert(&cert2, strict_crl_policy,
 						    &valid_until)) {
 					DBG(DBG_X509 | DBG_PARSING,
-					    DBG_log("Public key validated")
-					    );
+					    DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,
 							    valid_until,
 							    DAL_SIGNED);

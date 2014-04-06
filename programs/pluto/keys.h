@@ -43,7 +43,7 @@ extern const struct RSA_private_key *get_x509_private_key(
         /*const*/ x509cert_t *cert);
 
 extern bool has_private_key(cert_t cert);
-extern void add_x509_public_key(struct id *keyid,
+extern void add_x509_public_key(const struct id *keyid,
 				x509cert_t *cert, time_t until,
 				enum dns_auth_level dns_auth_level);
 extern void remove_x509_public_key(/*const*/ x509cert_t *cert);
