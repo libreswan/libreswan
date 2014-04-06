@@ -469,9 +469,10 @@ err_t check_validity(const x509cert_t *cert, time_t *until)
 	if (current_time > cert->notAfter) {
 		char tbuf[TIMETOA_BUF];
 
-		DBG_log("  aftercheck : %ld > %ld",
-			(unsigned long)current_time,
-			(unsigned long)cert->notAfter);
+		DBG(DBG_X509 | DBG_PARSING,
+			DBG_log("  aftercheck : %ld > %ld",
+				(unsigned long)current_time,
+				(unsigned long)cert->notAfter));
 		return builddiag(
 			"X.509 certificate expired at %s (it is now %s)",
 			timetoa(&cert->notAfter, TRUE, tbuf,
