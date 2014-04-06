@@ -1713,13 +1713,13 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 							      b->his.proto,
 							      b->his.port);
 
-		if ( (p1st->hidden_variables.st_nat_traversal &
+		if ((p1st->hidden_variables.st_nat_traversal &
 		      NAT_T_DETECTED) &&
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
 		     (p1st->hidden_variables.st_nat_traversal &
 		      (LELEM(NAT_TRAVERSAL_NAT_BHND_ME) |
-		       LELEM(NAT_TRAVERSAL_NAT_BHND_PEER)) ) &&
-		     (p == NULL) ) {
+		       LELEM(NAT_TRAVERSAL_NAT_BHND_PEER))) &&
+		     p == NULL) {
 			p = c;
 			DBG(DBG_CONTROL,
 			    DBG_log("using (something - hopefully the IP we or they are"

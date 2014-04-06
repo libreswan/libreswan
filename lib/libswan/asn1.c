@@ -75,8 +75,7 @@ size_t asn1_length(chunk_t *blob)
 	if ((n & 0x80) == 0) { /* single length octet */
 		if (n > blob->len) {
 			DBG(DBG_PARSING,
-				DBG_log("number of length octets is larger than ASN.1 object");
-				);
+				DBG_log("number of length octets is larger than ASN.1 object"));
 			return ASN1_INVALID_LENGTH;
 		}
 		return n;
@@ -87,16 +86,14 @@ size_t asn1_length(chunk_t *blob)
 
 	if (n > blob->len) {
 		DBG(DBG_PARSING,
-			DBG_log("number of length octets is larger than ASN.1 object");
-			);
+			DBG_log("number of length octets is larger than ASN.1 object"));
 		return ASN1_INVALID_LENGTH;
 	}
 
 	if (n > sizeof(len)) {
 		DBG(DBG_PARSING,
 			DBG_log("number of length octets is larger than limit of %d octets",
-				(int) sizeof(len));
-			);
+				(int) sizeof(len)));
 		return ASN1_INVALID_LENGTH;
 	}
 
@@ -108,8 +105,7 @@ size_t asn1_length(chunk_t *blob)
 	}
 	if (len > blob->len) {
 		DBG(DBG_PARSING,
-			DBG_log("length is larger than remaining blob size");
-			);
+			DBG_log("length is larger than remaining blob size"));
 		return ASN1_INVALID_LENGTH;
 	}
 
@@ -336,8 +332,7 @@ bool extract_object(const asn1Object_t *const objects,
 		(blob->len == 0 || *start_ptr != obj.type)) {
 		/* field is missing */
 		DBG(DBG_PARSING,
-			DBG_log("L%d - %s:", *level, obj.name);
-			);
+			DBG_log("L%d - %s:", *level, obj.name));
 		if (obj.type & ASN1_CONSTRUCTED)
 			(*objectID)++; /* skip context-specific tag */
 		return TRUE;
@@ -358,8 +353,7 @@ bool extract_object(const asn1Object_t *const objects,
 	if (blob->len < 2) {
 		DBG(DBG_PARSING,
 			DBG_log("L%d - %s:  ASN.1 object smaller than 2 octets",
-				ctx->level0 + obj.level, obj.name);
-			);
+				ctx->level0 + obj.level, obj.name));
 		return FALSE;
 	}
 
@@ -368,8 +362,7 @@ bool extract_object(const asn1Object_t *const objects,
 	if (blob1->len == ASN1_INVALID_LENGTH) {
 		DBG(DBG_PARSING,
 			DBG_log("L%d - %s:  length of ASN1 object invalid or too large",
-				*level, obj.name);
-			);
+				*level, obj.name));
 		return FALSE;
 	}
 
@@ -380,8 +373,7 @@ bool extract_object(const asn1Object_t *const objects,
 	/* return raw ASN.1 object without prior type checking */
 	if (obj.flags & ASN1_RAW) {
 		DBG(DBG_PARSING,
-			DBG_log("L%d - %s:", *level, obj.name);
-			);
+			DBG_log("L%d - %s:", *level, obj.name));
 		object->ptr = start_ptr;
 		object->len = (size_t)(blob->ptr - start_ptr);
 		return TRUE;
@@ -397,8 +389,7 @@ bool extract_object(const asn1Object_t *const objects,
 	}
 
 	DBG(DBG_PARSING,
-		DBG_log("L%d - %s:", ctx->level0 + obj.level, obj.name);
-		);
+		DBG_log("L%d - %s:", ctx->level0 + obj.level, obj.name));
 
 	/* In case of "SEQUENCE OF" or "SET OF" start a loop */
 	if (obj.flags & ASN1_LOOP) {
@@ -419,8 +410,7 @@ bool extract_object(const asn1Object_t *const objects,
 		object->ptr = start_ptr;
 		object->len = (size_t)(blob->ptr - start_ptr);
 		DBG(ctx->cond,
-			DBG_dump_chunk("", *object);
-			);
+			DBG_dump_chunk("", *object));
 	} else if (obj.flags & ASN1_BODY) {
 		int oid;
 
@@ -431,8 +421,7 @@ bool extract_object(const asn1Object_t *const objects,
 			oid = known_oid(*object);
 			if (oid != OID_UNKNOWN) {
 				DBG(DBG_PARSING,
-					DBG_log("  '%s'", oid_names[oid].name);
-					);
+					DBG_log("  '%s'", oid_names[oid].name));
 				return TRUE;
 			}
 			break;
@@ -443,8 +432,7 @@ bool extract_object(const asn1Object_t *const objects,
 		case ASN1_VISIBLESTRING:
 			DBG(DBG_PARSING,
 				DBG_log("  '%.*s'",
-					(int)object->len, object->ptr);
-				);
+					(int)object->len, object->ptr));
 			return TRUE;
 
 		case ASN1_UTCTIME:

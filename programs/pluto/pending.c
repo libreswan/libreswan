@@ -86,7 +86,7 @@ void add_pending(int whack_sock,
 	/* look for duplicate pending phase #2, skip add operation */
 	pp = host_pair_first_pending(c);
 
-	for ( p = pp ? *pp : NULL; p != NULL; p = p->next) {
+	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->isakmp_sa == isakmp_sa) {
 			DBG(DBG_CONTROL,
 			    DBG_log("Ignored already queued up pending Quick Mode with %s \"%s\"",

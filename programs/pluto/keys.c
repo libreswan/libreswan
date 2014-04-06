@@ -631,7 +631,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	}
 
 	if (his_id_was_instantiated(c) && (!(c->policy & POLICY_AGGRESSIVE)) &&
-	    isanyaddr(&c->spd.that.host_addr) ) {
+	    isanyaddr(&c->spd.that.host_addr)) {
 		DBG(DBG_CONTROL,
 		    DBG_log("instantiating him to 0.0.0.0"));
 
@@ -642,9 +642,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 			      &rw_id.ip_addr));
 		his_id = &rw_id;
 		idtoa(his_id, idhim2, IDTOA_BUF);
-	}
-
-	else if ( (c->policy & POLICY_PSK) &&
+	} else if ((c->policy & POLICY_PSK) &&
 		  (kind == PPK_PSK) &&
 		  (((c->kind == CK_TEMPLATE) &&
 		    (c->spd.that.id.kind == ID_NONE)) ||
