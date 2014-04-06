@@ -1942,6 +1942,10 @@ static generalName_t *parse_crlDistributionPoints(chunk_t blob, int level0)
 
 /*
  *  Parses an X.509v3 certificate
+ *
+ * On success, returns TRUE and the blob's memory is owned by the cert
+ * (so caller must not free the blob in that case!).
+ * Returns FALSE on failure.
  */
 bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 {
