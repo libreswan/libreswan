@@ -725,7 +725,7 @@ int nat_traversal_espinudp_socket(int sk, const char *fam )
 	switch (kern_interface) {
 	case USE_MASTKLIPS:
 		/* using mast0 will break it! */
-		strcpy(ifr.ifr_name, "ipsec0");        
+		strcpy(ifr.ifr_name, "ipsec0");
 		break;
 	case USE_KLIPS:
 		strcpy(ifr.ifr_name, "ipsec0");
@@ -1021,11 +1021,10 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	DBG(DBG_NATT,
 		DBG_log("nat_traversal & NAT_T_DETECTED %" PRIxLSET,
 			(st->hidden_variables.st_nat_traversal &
-				NAT_T_DETECTED)));
-	DBG(DBG_NATT,
+				NAT_T_DETECTED));
 		DBG_log(" st_localport != pluto_natt_float_port (%" PRIu16 " != %" PRIu16 ")",
 			st->st_localport,
-			pluto_natt_float_port));
+			pluto_natt_float_port););
 
 	/*
 	 * If we're initiator and NAT-T is detected, we
