@@ -1018,11 +1018,14 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		}
 	}
 
-	DBG_log("nat_traversal & NAT_T_DETECTED %" PRIxLSET,
-			(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED));
-	DBG_log(" st_localport != pluto_natt_float_port (%" PRIu16 " != %" PRIu16 ")",
+	DBG(DBG_NATT,
+		DBG_log("nat_traversal & NAT_T_DETECTED %" PRIxLSET,
+			(st->hidden_variables.st_nat_traversal &
+				NAT_T_DETECTED)));
+	DBG(DBG_NATT,
+		DBG_log(" st_localport != pluto_natt_float_port (%" PRIu16 " != %" PRIu16 ")",
 			st->st_localport,
-			pluto_natt_float_port);
+			pluto_natt_float_port));
 
 	/*
 	 * If we're initiator and NAT-T is detected, we
