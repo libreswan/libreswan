@@ -19,7 +19,7 @@
 #define _ADDRESSPOOL_H
 
 struct ip_pool_old {
-	unsigned refcnt;    /* reference counted! */
+	unsigned refcnt;	/* reference counted! */
 	ip_address start;
 	ip_address end;
 	u_int32_t size;
@@ -28,10 +28,10 @@ struct ip_pool_old {
 };
 
 struct lease_addr {
-	u_int32_t index;        /* index in addresspool. The first address 0 */
-	struct id thatid;       /* from connection */
-	time_t starts;          /* first time it was leased to this id */
-	time_t ends;            /* 0 is never. > 0 is when it ended */
+	u_int32_t index;	/* index in addresspool. The first address 0 */
+	struct id thatid;	/* from connection */
+	time_t starts;		/* first time it was leased to this id */
+	time_t ends;		/* 0 is never. > 0 is when it ended */
 
 	struct lease_addr *next;
 };
@@ -48,7 +48,7 @@ struct ip_pool {
 };
 struct ip_pool *pluto_pools;
 struct ip_pool *install_addresspool(const ip_range *pool_range,
-				    struct ip_pool **head);
+				struct ip_pool **head);
 err_t  get_addr_lease(struct connection *c, struct internal_addr *ia);
 int rel_lease_addr(struct connection *c);
 void unreference_addrespool(struct  ip_pool *pool);
