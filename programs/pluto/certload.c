@@ -213,7 +213,6 @@ bool load_cert_from_nss(const char *nssHostCertNickName,
 				nssHostCertNickName));
 	}
 
-
 	blob.len = nssCert->derCert.len;
 	blob.ptr = alloc_bytes(blob.len, label);
 	memcpy(blob.ptr, nssCert->derCert.data, blob.len);
@@ -221,6 +220,8 @@ bool load_cert_from_nss(const char *nssHostCertNickName,
 	if (!is_asn1(blob)) {
 		if (verbose)
 			libreswan_log("  cert read from NSS db is not in DER format");
+		pfree(blob.ptr);
+		/* failure */
 	} else {
 		DBG(DBG_PARSING,
 			DBG_log("file coded in DER format"));
@@ -239,8 +240,6 @@ bool load_cert_from_nss(const char *nssHostCertNickName,
 		}
 	}
 
-	/* failure */
-	pfree(blob.ptr);
 	return FALSE;
 }
 
