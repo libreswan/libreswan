@@ -1,0 +1,7 @@
+This test is to ensure that pluto handles an unsupported cert (ECDSA)
+gracefully. charon on west sends east pluto the cert for auth. pluto
+responds with:
+
+"westnet-eastnet-ikev1-eccert" #1: Pluto does not support OAKLEY_ECDSA_P384 authentication.  Attribute OAKLEY_AUTHENTICATION_METHOD
+"westnet-eastnet-ikev1-eccert" #1: no acceptable Oakley Transform
+"westnet-eastnet-ikev1-eccert" #1: sending notification NO_PROPOSAL_CHOSEN to 192.1.2.45:500

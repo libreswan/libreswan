@@ -113,7 +113,7 @@ EOF
 done
 
 #Generate EC CA
-openssl ecparam -out keys/curveca.key -name secp384r1 -genkey
+openssl ecparam -out keys/curveca.key -name secp384r1 -genkey -noout
 $EXPECT  <<EOF
 spawn openssl req -x509 -new -key keys/curveca.key -out cacerts/curveca.crt -days 3650
 expect "Country Name"
@@ -168,7 +168,7 @@ done
 #Generate EC machine keys/certs
 for machine in east west
 do
-openssl ecparam -out keys/$machine-ec.key -name secp384r1 -genkey
+openssl ecparam -out keys/$machine-ec.key -name secp384r1 -genkey -noout
 $EXPECT  <<EOF
 spawn openssl req -new -nodes -key keys/$machine-ec.key -out reqs/$machine-ec.req
 expect "Country Name"
