@@ -1,4 +1,6 @@
-/* Support of X.509 attribute certificates
+/*
+ * Support of X.509 attribute certificates
+ *
  * Copyright (C) 2002 Ueli Gallizzi, Ariane Seiler
  * Copyright (C) 2003 Martin Berner, Lukas Suter
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
@@ -16,7 +18,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdlib.h>
@@ -50,7 +51,7 @@
 
 /* chained list of X.509 attribute certificates */
 
-static x509acert_t *x509acerts   = NULL;
+static x509acert_t *x509acerts = NULL;
 
 /* chained list of ietfAttributes */
 
@@ -58,220 +59,164 @@ static ietfAttrList_t *ietfAttributes = NULL;
 
 /* ASN.1 definition of ietfAttrSyntax */
 
-static const asn1Object_t ietfAttrSyntaxObjects[] =
-{
-	{ 0, "ietfAttrSyntax",                ASN1_SEQUENCE,
-	  ASN1_NONE },                                                          /*  0 */
-	{ 1,   "policyAuthority",             ASN1_CONTEXT_C_0,     ASN1_OPT |
-	  ASN1_BODY },                                                          /*  1 */
-	{ 1,   "end opt",                     ASN1_EOC,
-	  ASN1_END  },                                                          /*  2 */
-	{ 1,   "values",                      ASN1_SEQUENCE,
-	  ASN1_LOOP },                                                          /*  3 */
-	{ 2,     "octets",                    ASN1_OCTET_STRING,    ASN1_OPT |
-	  ASN1_BODY },                                                          /*  4 */
-	{ 2,     "end choice",                ASN1_EOC,
-	  ASN1_END  },                                                          /*  5 */
-	{ 2,     "oid",                       ASN1_OID,             ASN1_OPT |
-	  ASN1_BODY },                                                          /*  6 */
-	{ 2,     "end choice",                ASN1_EOC,
-	  ASN1_END  },                                                          /*  7 */
-	{ 2,     "string",                    ASN1_UTF8STRING,      ASN1_OPT |
-	  ASN1_BODY },                                                          /*  8 */
-	{ 2,     "end choice",                ASN1_EOC,
-	  ASN1_END  },                                                          /*  9 */
-	{ 1,   "end loop",                    ASN1_EOC,             ASN1_END  } /* 10 */
+static const asn1Object_t ietfAttrSyntaxObjects[] = {
+	{ 0, "ietfAttrSyntax", ASN1_SEQUENCE, ASN1_NONE },	/* 0 */
+	{ 1, "policyAuthority", ASN1_CONTEXT_C_0,
+		ASN1_OPT | ASN1_BODY },				/* 1 */
+	{ 1, "end opt", ASN1_EOC, ASN1_END },			/* 2 */
+	{ 1, "values", ASN1_SEQUENCE, ASN1_LOOP },		/* 3 */
+	{ 2, "octets", ASN1_OCTET_STRING,
+		ASN1_OPT | ASN1_BODY },				/* 4 */
+	{ 2, "end choice", ASN1_EOC, ASN1_END },		/* 5 */
+	{ 2, "oid", ASN1_OID, ASN1_OPT | ASN1_BODY },		/* 6 */
+	{ 2, "end choice", ASN1_EOC, ASN1_END },		/* 7 */
+	{ 2, "string", ASN1_UTF8STRING, ASN1_OPT | ASN1_BODY },	/* 8 */
+	{ 2, "end choice", ASN1_EOC, ASN1_END },		/* 9 */
+	{ 1, "end loop", ASN1_EOC, ASN1_END }			/* 10 */
 };
 
-#define IETF_ATTR_OCTETS         4
-#define IETF_ATTR_OID            6
-#define IETF_ATTR_STRING         8
-#define IETF_ATTR_ROOF          11
+#define IETF_ATTR_OCTETS 4
+#define IETF_ATTR_OID 6
+#define IETF_ATTR_STRING 8
+#define IETF_ATTR_ROOF 11
 
 /* ASN.1 definition of roleSyntax */
 
-static const asn1Object_t roleSyntaxObjects[] =
-{
-	{ 0, "roleSyntax",                    ASN1_SEQUENCE,
-	  ASN1_NONE },                                                          /*  0 */
-	{ 1,   "roleAuthority",               ASN1_CONTEXT_C_0,     ASN1_OPT |
-	  ASN1_OBJ  },                                                          /*  1 */
-	{ 1,   "end opt",                     ASN1_EOC,
-	  ASN1_END  },                                                          /*  2 */
-	{ 1,   "roleName",                    ASN1_CONTEXT_C_1,     ASN1_OBJ  } /*  3 */
+static const asn1Object_t roleSyntaxObjects[] = {
+	{ 0, "roleSyntax", ASN1_SEQUENCE, ASN1_NONE },	/* 0 */
+	{ 1, "roleAuthority", ASN1_CONTEXT_C_0,
+		ASN1_OPT | ASN1_OBJ },			/* 1 */
+	{ 1, "end opt", ASN1_EOC, ASN1_END },		/* 2 */
+	{ 1, "roleName", ASN1_CONTEXT_C_1, ASN1_OBJ }	/* 3 */
 };
 
-#define ROLE_ROOF               4
+#define ROLE_ROOF 4
 
 /* ASN.1 definition of an X509 attribute certificate */
 
-static const asn1Object_t acObjects[] =
-{
-	{ 0, "AttributeCertificate",          ASN1_SEQUENCE,
-	  ASN1_OBJ  },                                                          /*  0 */
-	{ 1,   "AttributeCertificateInfo",    ASN1_SEQUENCE,
-	  ASN1_OBJ  },                                                          /*  1 */
-	{ 2,     "version",                   ASN1_INTEGER,         ASN1_DEF |
-	  ASN1_BODY },                                                          /*  2 */
-	{ 2,     "holder",                    ASN1_SEQUENCE,
-	  ASN1_NONE },                                                          /*  3 */
-	{ 3,       "baseCertificateID",       ASN1_CONTEXT_C_0,
-	  ASN1_OPT  },                                                          /*  4 */
-	{ 4,         "issuer",                ASN1_SEQUENCE,
-	  ASN1_OBJ  },                                                          /*  5 */
-	{ 4,         "serial",                ASN1_INTEGER,
-	  ASN1_BODY },                                                          /*  6 */
-	{ 4,         "issuerUID",             ASN1_BIT_STRING,      ASN1_OPT |
-	  ASN1_BODY },                                                          /*  7 */
-	{ 4,         "end opt",               ASN1_EOC,
-	  ASN1_END  },                                                          /*  8 */
-	{ 3,       "end opt",                 ASN1_EOC,
-	  ASN1_END  },                                                          /*  9 */
-	{ 3,       "entityName",              ASN1_CONTEXT_C_1,     ASN1_OPT |
-	  ASN1_OBJ  },                                                          /* 10 */
-	{ 3,       "end opt",                 ASN1_EOC,
-	  ASN1_END  },                                                          /* 11 */
-	{ 3,       "objectDigestInfo",        ASN1_CONTEXT_C_2,
-	  ASN1_OPT  },                                                          /* 12 */
-	{ 4,         "digestedObjectType",    ASN1_ENUMERATED,
-	  ASN1_BODY },                                                          /* 13*/
-	{ 4,         "otherObjectTypeID",     ASN1_OID,             ASN1_OPT |
-	  ASN1_BODY },                                                          /* 14 */
-	{ 4,         "end opt",               ASN1_EOC,
-	  ASN1_END  },                                                          /* 15*/
-	{ 4,         "digestAlgorithm",       ASN1_EOC,
-	  ASN1_RAW  },                                                          /* 16 */
-	{ 3,       "end opt",                 ASN1_EOC,
-	  ASN1_END  },                                                          /* 17 */
-	{ 2,     "v2Form",                    ASN1_CONTEXT_C_0,
-	  ASN1_NONE },                                                          /* 18 */
-	{ 3,       "issuerName",              ASN1_SEQUENCE,        ASN1_OPT |
-	  ASN1_OBJ  },                                                          /* 19 */
-	{ 3,       "end opt",                 ASN1_EOC,
-	  ASN1_END  },                                                          /* 20 */
-	{ 3,       "baseCertificateID",       ASN1_CONTEXT_C_0,
-	  ASN1_OPT  },                                                          /* 21 */
-	{ 4,         "issuerSerial",          ASN1_SEQUENCE,
-	  ASN1_NONE },                                                          /* 22 */
-	{ 5,           "issuer",              ASN1_SEQUENCE,
-	  ASN1_OBJ  },                                                          /* 23 */
-	{ 5,           "serial",              ASN1_INTEGER,
-	  ASN1_BODY },                                                          /* 24 */
-	{ 5,           "issuerUID",           ASN1_BIT_STRING,      ASN1_OPT |
-	  ASN1_BODY },                                                          /* 25 */
-	{ 5,           "end opt",             ASN1_EOC,
-	  ASN1_END  },                                                          /* 26 */
-	{ 3,       "end opt",                 ASN1_EOC,
-	  ASN1_END  },                                                          /* 27 */
-	{ 3,       "objectDigestInfo",        ASN1_CONTEXT_C_1,
-	  ASN1_OPT  },                                                          /* 28 */
-	{ 4,         "digestInfo",            ASN1_SEQUENCE,
-	  ASN1_OBJ  },                                                          /* 29 */
-	{ 5,           "digestedObjectType",  ASN1_ENUMERATED,
-	  ASN1_BODY },                                                          /* 30 */
-	{ 5,           "otherObjectTypeID",   ASN1_OID,             ASN1_OPT |
-	  ASN1_BODY },                                                          /* 31 */
-	{ 5,           "end opt",             ASN1_EOC,
-	  ASN1_END  },                                                          /* 32 */
-	{ 5,           "digestAlgorithm",     ASN1_EOC,
-	  ASN1_RAW  },                                                          /* 33 */
-	{ 3,       "end opt",                 ASN1_EOC,
-	  ASN1_END  },                                                          /* 34 */
-	{ 2,     "signature",                 ASN1_EOC,
-	  ASN1_RAW  },                                                          /* 35 */
-	{ 2,     "serialNumber",              ASN1_INTEGER,
-	  ASN1_BODY },                                                          /* 36 */
-	{ 2,     "attrCertValidityPeriod",    ASN1_SEQUENCE,
-	  ASN1_NONE },                                                          /* 37 */
-	{ 3,       "notBeforeTime",           ASN1_GENERALIZEDTIME,
-	  ASN1_BODY },                                                          /* 38 */
-	{ 3,       "notAfterTime",            ASN1_GENERALIZEDTIME,
-	  ASN1_BODY },                                                          /* 39 */
-	{ 2,     "attributes",                ASN1_SEQUENCE,
-	  ASN1_LOOP },                                                          /* 40 */
-	{ 3,       "attribute",               ASN1_SEQUENCE,
-	  ASN1_NONE },                                                          /* 41 */
-	{ 4,         "type",                  ASN1_OID,
-	  ASN1_BODY },                                                          /* 42 */
-	{ 4,         "values",                ASN1_SET,
-	  ASN1_LOOP },                                                          /* 43 */
-	{ 5,           "value",               ASN1_SEQUENCE,
-	  ASN1_OBJ  },                                                          /* 44 */
-	{ 4,         "end loop",              ASN1_EOC,
-	  ASN1_END  },                                                          /* 45 */
-	{ 2,     "end loop",                  ASN1_EOC,
-	  ASN1_END  },                                                          /* 46 */
-	{ 2,     "extensions",                ASN1_SEQUENCE,
-	  ASN1_LOOP },                                                          /* 47 */
-	{ 3,       "extension",               ASN1_SEQUENCE,
-	  ASN1_NONE },                                                          /* 48 */
-	{ 4,         "extnID",                ASN1_OID,
-	  ASN1_BODY },                                                          /* 49 */
-	{ 4,         "critical",              ASN1_BOOLEAN,         ASN1_DEF |
-	  ASN1_BODY },                                                          /* 50 */
-	{ 4,         "extnValue",             ASN1_OCTET_STRING,
-	  ASN1_BODY },                                                          /* 51 */
-	{ 2,     "end loop",                  ASN1_EOC,
-	  ASN1_END  },                                                          /* 52 */
-	{ 1,   "signatureAlgorithm",          ASN1_EOC,
-	  ASN1_RAW  },                                                          /* 53 */
-	{ 1,   "signatureValue",              ASN1_BIT_STRING,      ASN1_BODY } /* 54 */
+static const asn1Object_t acObjects[] = {
+	{ 0, "AttributeCertificate", ASN1_SEQUENCE, ASN1_OBJ },	/* 0 */
+	{ 1, "AttributeCertificateInfo", ASN1_SEQUENCE,
+	ASN1_OBJ },						/* 1 */
+	{ 2, "version", ASN1_INTEGER, ASN1_DEF | ASN1_BODY },	/* 2 */
+	{ 2, "holder", ASN1_SEQUENCE, ASN1_NONE },		/* 3 */
+	{ 3, "baseCertificateID", ASN1_CONTEXT_C_0, ASN1_OPT },	/* 4 */
+	{ 4, "issuer", ASN1_SEQUENCE, ASN1_OBJ },		/* 5 */
+	{ 4, "serial", ASN1_INTEGER, ASN1_BODY },		/* 6 */
+	{ 4, "issuerUID", ASN1_BIT_STRING,
+		ASN1_OPT | ASN1_BODY },				/* 7 */
+	{ 4, "end opt", ASN1_EOC, ASN1_END },			/* 8 */
+	{ 3, "end opt", ASN1_EOC, ASN1_END },			/* 9 */
+	{ 3, "entityName", ASN1_CONTEXT_C_1,
+		ASN1_OPT | ASN1_OBJ },				/* 10 */
+	{ 3, "end opt", ASN1_EOC, ASN1_END },			/* 11 */
+	{ 3, "objectDigestInfo", ASN1_CONTEXT_C_2, ASN1_OPT },	/* 12 */
+	{ 4, "digestedObjectType", ASN1_ENUMERATED, ASN1_BODY },	/* 13*/
+	{ 4, "otherObjectTypeID", ASN1_OID,
+		ASN1_OPT | ASN1_BODY },				/* 14 */
+	{ 4, "end opt", ASN1_EOC, ASN1_END },			/* 15*/
+	{ 4, "digestAlgorithm", ASN1_EOC, ASN1_RAW },		/* 16 */
+	{ 3, "end opt", ASN1_EOC, ASN1_END },			/* 17 */
+	{ 2, "v2Form", ASN1_CONTEXT_C_0, ASN1_NONE },		/* 18 */
+	{ 3, "issuerName", ASN1_SEQUENCE,
+		ASN1_OPT | ASN1_OBJ },				/* 19 */
+	{ 3, "end opt", ASN1_EOC, ASN1_END },			/* 20 */
+	{ 3, "baseCertificateID", ASN1_CONTEXT_C_0, ASN1_OPT },	/* 21 */
+	{ 4, "issuerSerial", ASN1_SEQUENCE, ASN1_NONE },	/* 22 */
+	{ 5, "issuer", ASN1_SEQUENCE, ASN1_OBJ },		/* 23 */
+	{ 5, "serial", ASN1_INTEGER, ASN1_BODY },		/* 24 */
+	{ 5, "issuerUID", ASN1_BIT_STRING,
+		ASN1_OPT | ASN1_BODY },				/* 25 */
+	{ 5, "end opt", ASN1_EOC, ASN1_END },			/* 26 */
+	{ 3, "end opt", ASN1_EOC, ASN1_END },			/* 27 */
+	{ 3, "objectDigestInfo", ASN1_CONTEXT_C_1, ASN1_OPT },	/* 28 */
+	{ 4, "digestInfo", ASN1_SEQUENCE, ASN1_OBJ },		/* 29 */
+	{ 5, "digestedObjectType", ASN1_ENUMERATED,
+		ASN1_BODY },					/* 30 */
+	{ 5, "otherObjectTypeID", ASN1_OID,
+		ASN1_OPT | ASN1_BODY },				/* 31 */
+	{ 5, "end opt", ASN1_EOC, ASN1_END },			/* 32 */
+	{ 5, "digestAlgorithm", ASN1_EOC, ASN1_RAW },		/* 33 */
+	{ 3, "end opt", ASN1_EOC, ASN1_END },			/* 34 */
+	{ 2, "signature", ASN1_EOC, ASN1_RAW },			/* 35 */
+	{ 2, "serialNumber", ASN1_INTEGER, ASN1_BODY },		/* 36 */
+	{ 2, "attrCertValidityPeriod", ASN1_SEQUENCE,
+		ASN1_NONE },					/* 37 */
+	{ 3, "notBeforeTime", ASN1_GENERALIZEDTIME,
+		ASN1_BODY },					/* 38 */
+	{ 3, "notAfterTime", ASN1_GENERALIZEDTIME, ASN1_BODY },	/* 39 */
+	{ 2, "attributes", ASN1_SEQUENCE, ASN1_LOOP },		/* 40 */
+	{ 3, "attribute", ASN1_SEQUENCE, ASN1_NONE },		/* 41 */
+	{ 4, "type", ASN1_OID, ASN1_BODY },			/* 42 */
+	{ 4, "values", ASN1_SET, ASN1_LOOP },			/* 43 */
+	{ 5, "value", ASN1_SEQUENCE, ASN1_OBJ },		/* 44 */
+	{ 4, "end loop", ASN1_EOC, ASN1_END },			/* 45 */
+	{ 2, "end loop", ASN1_EOC, ASN1_END },			/* 46 */
+	{ 2, "extensions", ASN1_SEQUENCE, ASN1_LOOP },		/* 47 */
+	{ 3, "extension", ASN1_SEQUENCE, ASN1_NONE },		/* 48 */
+	{ 4, "extnID", ASN1_OID, ASN1_BODY },			/* 49 */
+	{ 4, "critical", ASN1_BOOLEAN, ASN1_DEF | ASN1_BODY },	/* 50 */
+	{ 4, "extnValue", ASN1_OCTET_STRING, ASN1_BODY },	/* 51 */
+	{ 2, "end loop", ASN1_EOC, ASN1_END },			/* 52 */
+	{ 1, "signatureAlgorithm", ASN1_EOC, ASN1_RAW },	/* 53 */
+	{ 1, "signatureValue", ASN1_BIT_STRING, ASN1_BODY }	/* 54 */
 };
 
-#define AC_OBJ_CERTIFICATE               0
-#define AC_OBJ_CERTIFICATE_INFO          1
-#define AC_OBJ_VERSION                   2
-#define AC_OBJ_HOLDER_ISSUER             5
-#define AC_OBJ_HOLDER_SERIAL             6
-#define AC_OBJ_ENTITY_NAME              10
-#define AC_OBJ_ISSUER_NAME              19
-#define AC_OBJ_ISSUER                   23
-#define AC_OBJ_SIG_ALG                  35
-#define AC_OBJ_SERIAL_NUMBER            36
-#define AC_OBJ_NOT_BEFORE               38
-#define AC_OBJ_NOT_AFTER                39
-#define AC_OBJ_ATTRIBUTE_TYPE           40
-#define AC_OBJ_ATTRIBUTE_VALUE          44
-#define AC_OBJ_EXTN_ID                  49
-#define AC_OBJ_CRITICAL                 50
-#define AC_OBJ_EXTN_VALUE               51
-#define AC_OBJ_ALGORITHM                53
-#define AC_OBJ_SIGNATURE                54
-#define AC_OBJ_ROOF                     55
+#define AC_OBJ_CERTIFICATE 0
+#define AC_OBJ_CERTIFICATE_INFO 1
+#define AC_OBJ_VERSION 2
+#define AC_OBJ_HOLDER_ISSUER 5
+#define AC_OBJ_HOLDER_SERIAL 6
+#define AC_OBJ_ENTITY_NAME 10
+#define AC_OBJ_ISSUER_NAME 19
+#define AC_OBJ_ISSUER 23
+#define AC_OBJ_SIG_ALG 35
+#define AC_OBJ_SERIAL_NUMBER 36
+#define AC_OBJ_NOT_BEFORE 38
+#define AC_OBJ_NOT_AFTER 39
+#define AC_OBJ_ATTRIBUTE_TYPE 40
+#define AC_OBJ_ATTRIBUTE_VALUE 44
+#define AC_OBJ_EXTN_ID 49
+#define AC_OBJ_CRITICAL 50
+#define AC_OBJ_EXTN_VALUE 51
+#define AC_OBJ_ALGORITHM 53
+#define AC_OBJ_SIGNATURE 54
+#define AC_OBJ_ROOF 55
 
 static const x509acert_t empty_ac = {
-	NULL,           /* *next */
-	0,              /* installed */
-	{ NULL, 0 },    /* certificate */
-	{ NULL, 0 },    /*   certificateInfo */
-	1,              /*     version */
-	                /*     holder */
-	                /*       baseCertificateID */
-	{ NULL, 0 },    /*         holderIssuer */
-	{ NULL, 0 },    /*         holderSerial */
-	                /*       entityName */
-	{ NULL, 0 },    /*         generalNames */
-	                /*     v2Form */
-	{ NULL, 0 },    /*       issuerName */
-	                /*     signature */
-	OID_UNKNOWN,    /*       sigAlg */
-	{ NULL, 0 },    /*     serialNumber */
-	                /*     attrCertValidityPeriod */
-	0,              /*       notBefore */
-	0,              /*       notAfter */
-	                /*     attributes */
-	NULL,           /*       charging */
-	NULL,           /*       groups */
-	                /*     extensions */
-	{ NULL, 0 },    /*       authKeyID */
-	{ NULL, 0 },    /*       authKeySerialNumber */
-	FALSE,          /*       noRevAvail */
-	                /*   signatureAlgorithm */
-	OID_UNKNOWN,    /*     algorithm */
-	{ NULL, 0 },    /*   signature */
+	NULL,		/* *next */
+	0,		/* installed */
+	{ NULL, 0 },	/* certificate */
+	{ NULL, 0 },	/*   certificateInfo */
+	1,		/*     version */
+			/*     holder */
+			/*	 baseCertificateID */
+	{ NULL, 0 },	/*	   holderIssuer */
+	{ NULL, 0 },	/*	   holderSerial */
+			/*	 entityName */
+	{ NULL, 0 },	/*	   generalNames */
+			/*     v2Form */
+	{ NULL, 0 },	/*	 issuerName */
+			/*     signature */
+	OID_UNKNOWN,	/*	 sigAlg */
+	{ NULL, 0 },	/*     serialNumber */
+			/*     attrCertValidityPeriod */
+	0,		/*	 notBefore */
+	0,		/*	 notAfter */
+			/*     attributes */
+	NULL,		/*	 charging */
+	NULL,		/*	 groups */
+			/*     extensions */
+	{ NULL, 0 },	/*	 authKeyID */
+	{ NULL, 0 },	/*	 authKeySerialNumber */
+	FALSE,		/*	 noRevAvail */
+			/*   signatureAlgorithm */
+	OID_UNKNOWN,	/*     algorithm */
+	{ NULL, 0 },	/*   signature */
 };
 
-/*  compare two ietfAttributes, returns zero if a equals b
+/*
+ *  compare two ietfAttributes, returns zero if a equals b
  *  negative/positive if a is earlier/later in the alphabet than b
  */
 static int cmp_ietfAttr(ietfAttr_t *a, ietfAttr_t *b)
@@ -317,7 +262,7 @@ static ietfAttr_t*add_ietfAttr(ietfAttr_t *attr)
 
 		/* new attribute, unshare value */
 		attr->value.ptr = clone_bytes(attr->value.ptr, attr->value.len,
-					      "attr value");
+					"attr value");
 		attr->count = 1;
 		time(&attr->installed);
 
@@ -358,7 +303,7 @@ void decode_groups(char *groups, ietfAttrList_t **listp)
 			ietfAttr_t *attr   =
 				alloc_thing(ietfAttr_t, "ietfAttr");
 			ietfAttrList_t *el = alloc_thing(ietfAttrList_t,
-							 "ietfAttrList");
+							"ietfAttrList");
 
 			attr->kind  = IETF_ATTRIBUTE_STRING;
 			attr->value.ptr = (unsigned char *)groups;
@@ -390,7 +335,7 @@ static ietfAttrList_t*parse_ietfAttrSyntax(chunk_t blob, int level0)
 
 	while (objectID < IETF_ATTR_ROOF) {
 		if (!extract_object(ietfAttrSyntaxObjects, &objectID, &object,
-				    &level, &ctx))
+					&level, &ctx))
 			return NULL;
 
 		switch (objectID) {
@@ -401,7 +346,7 @@ static ietfAttrList_t*parse_ietfAttrSyntax(chunk_t blob, int level0)
 			ietfAttr_t *attr   =
 				alloc_thing(ietfAttr_t, "ietfAttr");
 			ietfAttrList_t *el = alloc_thing(ietfAttrList_t,
-							 "ietfAttrList");
+							"ietfAttrList");
 
 			attr->kind  = (objectID - IETF_ATTR_OCTETS) / 2;
 			attr->value = object;
@@ -434,7 +379,7 @@ static void parse_roleSyntax(chunk_t blob, int level0)
 
 	while (objectID < ROLE_ROOF) {
 		if (!extract_object(roleSyntaxObjects, &objectID, &object,
-				    &level, &ctx))
+					&level, &ctx))
 			return;
 
 		switch (objectID) {
@@ -463,7 +408,7 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 	while (objectID < AC_OBJ_ROOF) {
 
 		if (!extract_object(acObjects, &objectID, &object, &level,
-				    &ctx))
+					&ctx))
 			return FALSE;
 
 		/* those objects which will parsed further need the next higher level */
@@ -480,8 +425,8 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 			ac->version =
 				(object.len) ? (1 + (u_int) * object.ptr) : 1;
 			DBG(DBG_PARSING,
-			    DBG_log("  v%d", ac->version);
-			    );
+				DBG_log("  v%d", ac->version);
+				);
 			if (ac->version != 2) {
 				libreswan_log(
 					"v%d attribute certificates are not supported",
@@ -491,7 +436,7 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 			break;
 		case AC_OBJ_HOLDER_ISSUER:
 			ac->holderIssuer = get_directoryName(object, level,
-							     FALSE);
+							FALSE);
 			break;
 		case AC_OBJ_HOLDER_SERIAL:
 			ac->holderSerial = object;
@@ -512,7 +457,7 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 			break;
 		case AC_OBJ_NOT_BEFORE:
 			ac->notBefore = asn1totime(&object,
-						   ASN1_GENERALIZEDTIME);
+						ASN1_GENERALIZEDTIME);
 			break;
 		case AC_OBJ_NOT_AFTER:
 			ac->notAfter =
@@ -528,17 +473,15 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 			switch (type_oid) {
 			case OID_AUTHENTICATION_INFO:
 				DBG(DBG_PARSING,
-				    DBG_log("  need to parse authenticationInfo")
-				    );
+					DBG_log("  need to parse authenticationInfo"));
 				break;
 			case OID_ACCESS_IDENTITY:
 				DBG(DBG_PARSING,
-				    DBG_log("  need to parse accessIdentity")
-				    );
+					DBG_log("  need to parse accessIdentity"));
 				break;
 			case OID_CHARGING_IDENTITY:
 				ac->charging = parse_ietfAttrSyntax(object,
-								    level);
+								level);
 				break;
 			case OID_GROUP:
 				ac->groups =
@@ -558,8 +501,7 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 		case AC_OBJ_CRITICAL:
 			critical = object.len && *object.ptr;
 			DBG(DBG_PARSING,
-			    DBG_log("  %s", (critical) ? "TRUE" : "FALSE");
-			    );
+				DBG_log("  %s", (critical) ? "TRUE" : "FALSE"));
 			break;
 		case AC_OBJ_EXTN_VALUE:
 		{
@@ -568,18 +510,16 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 			switch (extn_oid) {
 			case OID_CRL_DISTRIBUTION_POINTS:
 				DBG(DBG_PARSING,
-				    DBG_log("  need to parse crlDistributionPoints")
-				    );
+					DBG_log("  need to parse crlDistributionPoints"));
 				break;
 			case OID_AUTHORITY_KEY_ID:
 				parse_authorityKeyIdentifier(object, level,
-							     &ac->authKeyID,
-							     &ac->authKeySerialNumber);
+							&ac->authKeyID,
+							&ac->authKeySerialNumber);
 				break;
 			case OID_TARGET_INFORMATION:
 				DBG(DBG_PARSING,
-				    DBG_log("  need to parse targetInformation")
-				    );
+					DBG_log("  need to parse targetInformation"));
 				break;
 			case OID_NO_REV_AVAIL:
 				ac->noRevAvail = TRUE;
@@ -612,8 +552,7 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 static bool same_x509acert(x509acert_t *a, x509acert_t *b)
 {
 	return a->signature.len == b->signature.len &&
-	       memeq(a->signature.ptr, b->signature.ptr,
-		      b->signature.len);
+		memeq(a->signature.ptr, b->signature.ptr, b->signature.len);
 }
 
 /*
@@ -672,8 +611,8 @@ static void add_acert(x509acert_t *acert)
 	x509acert_t *ac = x509acerts;
 
 	while (ac != NULL) {
-		if (same_x509acert(acert,
-				   ac)) /* already in chain, free cert */
+		/* already in chain, free cert */
+		if (same_x509acert(acert, ac))
 			free_acert(acert);
 		ac = ac->next;
 	}
@@ -692,15 +631,18 @@ static err_t check_ac_validity(const x509acert_t *ac)
 
 	time(&current_time);
 	DBG(DBG_CONTROL | DBG_PARSING, {
-		    char tbuf[TIMETOA_BUF];
+			char tbuf[TIMETOA_BUF];
 
-		    DBG_log("  not before  : %s",
-			    timetoa(&ac->notBefore, TRUE, tbuf, sizeof(tbuf)));
-		    DBG_log("  current time: %s",
-			    timetoa(&current_time, TRUE, tbuf, sizeof(tbuf)));
-		    DBG_log("  not after   : %s",
-			    timetoa(&ac->notAfter, TRUE, tbuf, sizeof(tbuf)));
-	    });
+			DBG_log("  not before  : %s",
+				timetoa(&ac->notBefore, TRUE,
+					tbuf, sizeof(tbuf)));
+			DBG_log("  current time: %s",
+				timetoa(&current_time, TRUE,
+					tbuf, sizeof(tbuf)));
+			DBG_log("  not after   : %s",
+				timetoa(&ac->notAfter, TRUE,
+					tbuf, sizeof(tbuf)));
+		});
 
 	if (current_time < ac->notBefore)
 		return "attribute certificate is not valid yet";
@@ -721,12 +663,12 @@ static bool verify_x509acert(x509acert_t *ac, bool strict)
 	time_t valid_until = ac->notAfter;
 
 	DBG(DBG_CONTROL, {
-		    u_char buf[ASN1_BUF_LEN];
-		    dntoa((char *)buf, ASN1_BUF_LEN, ac->entityName);
-		    DBG_log("holder: '%s'", buf);
-		    dntoa((char *)buf, ASN1_BUF_LEN, ac->issuerName);
-		    DBG_log("issuer: '%s'", buf);
-	    });
+			u_char buf[ASN1_BUF_LEN];
+			dntoa((char *)buf, ASN1_BUF_LEN, ac->entityName);
+			DBG_log("holder: '%s'", buf);
+			dntoa((char *)buf, ASN1_BUF_LEN, ac->issuerName);
+			DBG_log("issuer: '%s'", buf);
+		});
 
 	ugh = check_ac_validity(ac);
 
@@ -735,12 +677,11 @@ static bool verify_x509acert(x509acert_t *ac, bool strict)
 		return FALSE;
 	}
 	DBG(DBG_CONTROL,
-	    DBG_log("attribute certificate is valid")
-	    );
+		DBG_log("attribute certificate is valid"));
 
 	lock_authcert_list("verify_x509acert");
 	aacert = get_authcert(ac->issuerName, ac->authKeySerialNumber,
-			      ac->authKeyID, AUTH_AA);
+			ac->authKeyID, AUTH_AA);
 	unlock_authcert_list("verify_x509acert");
 
 	if (aacert == NULL) {
@@ -748,17 +689,15 @@ static bool verify_x509acert(x509acert_t *ac, bool strict)
 		return FALSE;
 	}
 	DBG(DBG_CONTROL,
-	    DBG_log("issuer aacert found")
-	    );
+		DBG_log("issuer aacert found"));
 
 	if (!check_signature(ac->certificateInfo, ac->signature,
-			     ac->algorithm, aacert)) {
+				ac->algorithm, aacert)) {
 		libreswan_log("attribute certificate signature is invalid");
 		return FALSE;
 	}
 	DBG(DBG_CONTROL,
-	    DBG_log("attribute certificate signature is valid");
-	    );
+		DBG_log("attribute certificate signature is valid"));
 
 	return verify_x509cert(aacert, strict, &valid_until);
 }
@@ -779,8 +718,8 @@ void load_acerts(void)
 		int n;
 
 		libreswan_log("Changing to directory '%s'", oco->acerts_dir);
-		n = scandir(oco->acerts_dir, &filelist, (void *) filter_dotfiles,
-			    alphasort);
+		n = scandir(oco->acerts_dir, &filelist,
+			(void *) filter_dotfiles, alphasort);
 
 		if (n > 0) {
 			while (n--) {
@@ -788,19 +727,23 @@ void load_acerts(void)
 
 				if (load_coded_file(filelist[n]->d_name,
 #ifdef SINGLE_CONF_DIR
-						    FALSE, /* too verbose in a shared dir */
+							/*
+							 * too verbose in
+							 * a shared dir
+							 */
+							FALSE,
 #else
-						    TRUE,
+							TRUE,
 #endif
-						    "acert", &blob)) {
+							"acert", &blob)) {
 					x509acert_t *ac = alloc_thing(
 						x509acert_t, "x509acert");
 
 					*ac = empty_ac;
 
 					if (parse_ac(blob, ac) &&
-					    verify_x509acert(ac,
-							     strict_crl_policy))
+						verify_x509acert(ac,
+							strict_crl_policy))
 						add_acert(ac);
 					else
 						free_acert(ac);
@@ -853,7 +796,7 @@ void list_acerts(bool utc)
 		char tbuf[TIMETOA_BUF];
 
 		whack_log(RC_COMMENT, "%s",
-			  timetoa(&ac->installed, utc, tbuf, sizeof(tbuf)));
+			timetoa(&ac->installed, utc, tbuf, sizeof(tbuf)));
 		if (ac->entityName.ptr != NULL) {
 			dntoa(buf, ASN1_BUF_LEN, ac->entityName);
 			whack_log(RC_COMMENT, "       holder:  '%s'", buf);
@@ -886,9 +829,9 @@ void list_acerts(bool utc)
 
 				if (attr->kind != IETF_ATTRIBUTE_OID) {
 					snprintf(pos, end - pos, "%s%.*s",
-						 (first ? "" : ", "),
-						 (int)attr->value.len,
-						 attr->value.ptr);
+						(first ? "" : ", "),
+						(int)attr->value.len,
+						attr->value.ptr);
 					pos += strlen(pos);
 					first = FALSE;
 				}
@@ -899,14 +842,14 @@ void list_acerts(bool utc)
 		}
 
 		whack_log(RC_COMMENT, "       validity: not before %s %s",
-			  timetoa(&ac->notBefore, utc, tbuf,
-				  sizeof(tbuf)),
-			  (ac->notBefore <
-			   tnow) ? "ok" : "fatal (not valid yet)");
+			timetoa(&ac->notBefore, utc, tbuf,
+				sizeof(tbuf)),
+			(ac->notBefore < tnow) ?
+			"ok" : "fatal (not valid yet)");
 		whack_log(RC_COMMENT, "                 not after  %s %s",
-			  timetoa(&ac->notAfter, utc, tbuf, sizeof(tbuf)),
-			  check_expiry(ac->notAfter, ACERT_WARNING_INTERVAL,
-				       TRUE));
+			timetoa(&ac->notAfter, utc, tbuf, sizeof(tbuf)),
+			check_expiry(ac->notAfter, ACERT_WARNING_INTERVAL,
+				TRUE));
 
 		ac = ac->next;
 	}
@@ -930,14 +873,14 @@ void list_groups(bool utc)
 		char tbuf[TIMETOA_BUF];
 
 		whack_log(RC_COMMENT, "%s, count: %d",
-			  timetoa(&attr->installed, utc, tbuf, sizeof(tbuf)),
-			  attr->count);
+			timetoa(&attr->installed, utc, tbuf, sizeof(tbuf)),
+			attr->count);
 
 		switch (attr->kind) {
 		case IETF_ATTRIBUTE_OCTETS:
 		case IETF_ATTRIBUTE_STRING:
 			whack_log(RC_COMMENT, "       %.*s",
-				  (int)attr->value.len, attr->value.ptr);
+				(int)attr->value.len, attr->value.ptr);
 			break;
 		case IETF_ATTRIBUTE_OID:
 			whack_log(RC_COMMENT, "       OID");
