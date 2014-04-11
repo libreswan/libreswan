@@ -1366,6 +1366,7 @@ void exit_pluto(int status)
 	free_md_pool();         /* free the md pool */
 	NSS_Shutdown();
 	delete_lock();          /* delete any lock files */
+	free_virtual_ip();	/* virtual_private= */
 #ifdef LEAK_DETECTIVE
 	report_leaks();         /* report memory leaks now, after all free()s */
 #endif /* LEAK_DETECTIVE */
