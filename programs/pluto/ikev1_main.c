@@ -83,9 +83,6 @@
 
 #include "vendor.h"
 #include "nat_traversal.h"
-#ifdef VIRTUAL_IP
-#include "virtual.h"	/* needs connections.h */
-#endif
 #include "ikev1_dpd.h"
 #include "x509more.h"
 
