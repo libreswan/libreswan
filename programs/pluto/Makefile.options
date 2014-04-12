@@ -240,11 +240,6 @@ DEFINES+=-DFIPS_CHECK
 LIBSPLUTO+= -lfipscheck
 endif
 
-ifeq ($(USE_DMALLOC),true)
-DEFINES+=-DDMALLOC
-LIBSPLUTO+= -ldmalloc
-endif
-
 ifeq ($(USE_LIBCAP_NG),true)
 DEFINES+=-DHAVE_LIBCAP_NG
 LIBSPLUTO+= -lcap-ng
