@@ -121,7 +121,6 @@ void lsw_conf_free_oco(void)
 	pfree(global_oco.private_dir);
 	pfree(global_oco.certs_dir);
 	pfree(global_oco.aacerts_dir);
-	pfree(global_oco.ctlbase);
 }
 
 const struct lsw_conf_options *lsw_init_options(void)
