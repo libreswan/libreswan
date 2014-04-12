@@ -2598,8 +2598,6 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		n_hdr.isa_np = ISAKMP_NEXT_v2N;
 		n_hdr.isa_flags &= ~ISAKMP_FLAGS_I;
 		n_hdr.isa_flags  |=  ISAKMP_FLAGS_R;
-#warning check msgid code here
-		/* PAUL: shouldn't we set n_hdr.isa_msgid = [htonl](p1st->st_msgid); */
 		if (!out_struct(&n_hdr, &isakmp_hdr_desc, &reply_stream, &rbody)) {
 			libreswan_log(
 				"error initializing hdr for notify message");
