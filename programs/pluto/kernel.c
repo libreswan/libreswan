@@ -57,6 +57,8 @@
 #include "kernel_bsdkame.h"
 #include "packet.h"
 #include "x509.h"
+#include "x509more.h"
+#include "certs.h"
 #include "log.h"
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */

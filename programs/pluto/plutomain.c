@@ -51,6 +51,7 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "ac.h"
 #include "connections.h"        /* needs id.h */
