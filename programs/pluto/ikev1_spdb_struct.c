@@ -2414,8 +2414,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case ESP_AES:
 					case ESP_3DES:
 						break;
-#ifdef SUPPORT_ESP_NULL                         /* should be about as secure as AH-only */
-#warning "Building with ESP-Null"
 					case ESP_NULL:
 						if (esp_attrs.transattrs.
 							integ_hash ==
@@ -2435,7 +2433,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							continue; /* try another */
 						}
 						break;
-#endif
 
 					case ESP_DES: /* NOT safe */
 						loglog(RC_LOG_SERIOUS,
