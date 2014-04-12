@@ -1675,7 +1675,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		val = a.isaat_lv;
 
-		vdesc = ipsec_attr_val_descs[a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK
+		vdesc = ipsec_attr_val_descs[(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK)
 #ifdef HAVE_LABELED_IPSEC
 		/* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
 		/* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
