@@ -118,7 +118,7 @@ static int nhelpers = -1;
 
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
 
-static free_pluto_main()
+static void free_pluto_main()
 {
 	/* Can be NULL if not specified as pluto argument */
 	pfreeany(ipsecconf);
