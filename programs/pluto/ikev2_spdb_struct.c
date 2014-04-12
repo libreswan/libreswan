@@ -1487,7 +1487,6 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 	 * now that we have a list of all the possibilities, see if any
 	 * of them fit.
 	 */
-#warning fixme with less code duplication
 	if (ipprotoid == PROTO_v2_ESP) {
 		for (itl->encr_i = 0; itl->encr_i < itl->encr_trans_next; itl->encr_i++) {
 			for (itl->integ_i = 0; itl->integ_i < itl->integ_trans_next; itl->integ_i++) {
