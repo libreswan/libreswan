@@ -110,7 +110,24 @@ static bool fork_desired = TRUE;
 static char *ipsecconf = NULL;
 static char *ipsecdir = NULL;
 
+/* pulled from main for show_setup_plutomain() */
+static const struct lsw_conf_options *oco;
+static char *coredir;
+static char *pluto_vendorid;
+static int nhelpers = -1;
+
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
+
+static free_pluto_main()
+{
+	/* Can be NULL if not specified as pluto argument */
+	pfreeany(ipsecconf);
+	pfreeany(ipsecdir);
+	pfreeany(coredir);
+	pfreeany(pluto_stats_binary);
+	pfreeany(pluto_listen);
+	pfreeany(pluto_vendorid);
+}
 
 /** usage - print help messages
  *
@@ -393,12 +410,6 @@ enum kernel_interface kern_interface = USE_NETKEY; /* new default */
 #ifdef HAVE_LABELED_IPSEC
 u_int16_t secctx_attr_value = SECCTX;
 #endif
-
-/* pulled from main for show_setup_plutomain() */
-static const struct lsw_conf_options *oco;
-static char *coredir;
-static char *pluto_vendorid;
-static int nhelpers = -1;
 
 int main(int argc, char **argv)
 {
@@ -1367,6 +1378,7 @@ void exit_pluto(int status)
 	NSS_Shutdown();
 	delete_lock();          /* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
+	free_pluto_main();	/* our static chars */
 #ifdef LEAK_DETECTIVE
 	report_leaks();         /* report memory leaks now, after all free()s */
 #endif /* LEAK_DETECTIVE */
