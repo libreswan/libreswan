@@ -1180,6 +1180,7 @@ void free_generalNames(generalName_t *gn, bool free_name)
 {
 	while (gn != NULL) {
 		generalName_t *gn_top = gn;
+
 		if (free_name)
 			pfree(gn->name.ptr);
 		gn = gn->next;
@@ -1977,8 +1978,9 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 			cert->tbsCertificate = object;
 			break;
 		case X509_OBJ_VERSION:
+			/* ??? why do we think that object.len is 0 or 1? */
 			cert->version =
-				(object.len) ? (1 + (u_int) * object.ptr) : 1;
+				(object.len) ? (1 + (u_int) *object.ptr) : 1;
 			DBG(DBG_PARSING,
 				DBG_log("  v%d", cert->version));
 			break;
