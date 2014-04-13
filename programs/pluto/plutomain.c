@@ -120,15 +120,13 @@ libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
 
 static void free_pluto_main()
 {
-	/* Can be NULL if not specified as pluto argument */
-	DBG(DBG_CONTROLMORE, DBG_log("free_pluto_main going to free globals"));
+	/* Some values can be NULL if not specified as pluto argument */
 	pfreeany(ipsecconf);
 	pfreeany(ipsecdir);
 	pfree(coredir);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
 	pfreeany(pluto_vendorid);
-	DBG(DBG_CONTROLMORE, DBG_log("free_pluto_main done"));
 }
 
 /** usage - print help messages
@@ -144,8 +142,9 @@ static void usage(const char *mess)
 		" [--help]"
 		" [--version]"
 		" \\\n\t"
-		"[--config <filename>]"
-		"[--vendorid <vendorid>]"
+		"[--leak_detective]"
+		" [--config <filename>]"
+		" [--vendorid <vendorid>]"
 		" [--nofork]"
 		" [--stderrlog]"
 		" [--logfile <filename>]"
@@ -252,9 +251,6 @@ static const char compile_time_interop_options[] = ""
 #endif
 #ifdef HAVE_NM
 					    " NETWORKMANAGER"
-#endif
-#ifdef LEAK_DETECTIVE
-					    " LEAK_DETECTIVE"
 #endif
 #ifdef KLIPS_MAST
 					    " KLIPS_MAST"
@@ -427,13 +423,16 @@ int main(int argc, char **argv)
 	bool log_to_stderr_desired = FALSE;
 	bool log_to_file_desired = FALSE;
 
-	/* MUST BE BEFORE ANY allocs */
-#ifdef LEAK_DETECTIVE
-	leak_detective = TRUE;
-#else
-	leak_detective = FALSE;
-#endif
+	{
+		int i;
 
+		/* MUST BE BEFORE ANY allocs */
+		for (i = 0; i < argc; ++i) {
+			if (streq(argv[i], "--leak_detective"))
+				leak_detective = TRUE;
+		}
+	}
+   
 	coredir = clone_str("/var/run/pluto", "coredir in main()");
 
 	/* set up initial defaults that need a cast */
@@ -459,6 +458,7 @@ int main(int argc, char **argv)
 			/* name, has_arg, flag, val */
 			{ "help", no_argument, NULL, 'h' },
 			{ "version", no_argument, NULL, 'v' },
+			{ "leak_detective", no_argument, NULL, 'X' },
 			{ "config", required_argument, NULL, 'z' },
 			{ "nofork", no_argument, NULL, 'd' },
 			{ "stderrlog", no_argument, NULL, 'e' },
@@ -598,6 +598,14 @@ int main(int argc, char **argv)
 			usage(NULL);
 			break;  /* not actually reached */
 
+		case 'X': /* --leak_detective */
+			/*
+			 * Was already enabled at the start of main() because
+			 * we need to enable it before the first alloc()
+			 * We just need to eat the option here
+			 */
+			continue;
+			
 		case 'C': /* --coredir */
 			pfree(coredir);
 			coredir = clone_str(optarg, "coredir via getopt");
@@ -1219,12 +1227,10 @@ int main(int argc, char **argv)
 	if (pluto_shared_secrets_file)
 		libreswan_log("secrets file: %s", pluto_shared_secrets_file);
 
-#ifdef LEAK_DETECTIVE
-	libreswan_log("LEAK_DETECTIVE support [enabled]");
-#else
-	libreswan_log("LEAK_DETECTIVE support [disabled]");
-#endif
-
+	if (leak_detective)
+		libreswan_log("leak_detective support [enabled]");
+	else
+		libreswan_log("leak_detective support [disabled]");
 
 	/* Check for SAREF support */
 #ifdef KLIPS_MAST
@@ -1376,9 +1382,10 @@ void exit_pluto(int status)
 	delete_lock();          /* delete any lock files */
 	free_virtual_ip();	/* virtual_private= */
 	free_pluto_main();	/* our static chars */
-#ifdef LEAK_DETECTIVE
-	report_leaks();         /* report memory leaks now, after all free()s */
-#endif /* LEAK_DETECTIVE */
+
+	if(leak_detective)
+		report_leaks(); /* report memory leaks now, after all free()s */
+
 	close_log();            /* close the logfiles */
 	exit(status);           /* exit, with our error code */
 }
