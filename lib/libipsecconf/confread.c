@@ -1571,10 +1571,9 @@ static void confread_free_conn(struct starter_conn *conn)
 	FREE_STR(conn->connalias);
 	FREE_STR(conn->name);
 
-#ifdef ALG_PATCH
 	FREE_STR(conn->esp);
 	FREE_STR(conn->ike);
-#endif
+
 	FREE_STR(conn->modecfg_dns1);
 	FREE_STR(conn->modecfg_dns2);
 

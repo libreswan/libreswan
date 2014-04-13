@@ -32,7 +32,6 @@
 
 /*
  * To obsolete or convert to runtime options:
- * ALG_PATCH
  * ALLOW_MICROSOFT_BAD_PROPOSAL
  * EMIT_ISAKMP_SPI
  * IPSEC_CONNECTION_LIMIT
