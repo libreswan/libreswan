@@ -225,12 +225,17 @@ cryptomodules() {
     @MODPROBE@ padlock-sha 2>/dev/null
     # load the most common ciphers/algo's
     # aes-x86_64 has higher priority in via crypto api
-    for crypto in aesni-intel aes-x86_64 geode-aes aes aes_generic des sha512 \
+    # kernel directory does not match uname -m on x86_64 :(
+    modules=$(ls /lib/modules/$(uname -r)/kernel/arch/*/crypto/* 2>/dev/null)
+    modules="aesni-intel aes-x86_64 geode-aes aes aes_generic des sha512 \
 	sha256 md5 cbc xcbc ecb twofish blowfish serpent ccm gcm ctr cts \
-	deflate cast5 cast6 lzo sha256_generic sha512_generic camellia
+	deflate cast5 cast6 lzo sha256_generic sha512_generic camellia \
+	${modules}"
+    for module in ${modules}
     do
-	# echo -n "${crypto} " >&2
-	@MODPROBE@ ${crypto} 2>/dev/null
+	module=$(basename ${module} | sed "s/\.ko$//")
+	# echo -n "${module} " >&2
+	@MODPROBE@ ${module} 2>/dev/null
     done
 }
 

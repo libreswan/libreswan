@@ -15,6 +15,7 @@
  * for more details.
  */
 
+#include <pthread.h>	/* pthread.h must be first include file */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -76,6 +77,9 @@ union mhdr {
 	unsigned long junk;	/* force maximal alignment */
 };
 
+/* protects updates to the leak-detective linked list */
+static pthread_mutex_t leak_detective_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 static union mhdr *allocs = NULL;
 
 static void *alloc_bytes_raw(size_t size, const char *name)
@@ -108,12 +112,16 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 	if (leak_detective) {
 		p->i.name = name;
 		p->i.size = size;
-		p->i.older = allocs;
-		if (allocs != NULL)
-			allocs->i.newer = p;
-		allocs = p;
-		p->i.newer = NULL;
 		p->i.magic = LEAK_MAGIC;
+		p->i.newer = NULL;
+		{
+			pthread_mutex_lock(&leak_detective_mutex);
+			p->i.older = allocs;
+			if (allocs != NULL)
+				allocs->i.newer = p;
+			allocs = p;
+			pthread_mutex_unlock(&leak_detective_mutex);
+		}
 		return p + 1;
 	} else {
 		return p;
@@ -129,16 +137,20 @@ void pfree(void *ptr)
 		passert(ptr != NULL);
 		p = ((union mhdr *)ptr) - 1;
 		passert(p->i.magic == LEAK_MAGIC);
-		if (p->i.older != NULL) {
-			passert(p->i.older->i.newer == p);
-			p->i.older->i.newer = p->i.newer;
-		}
-		if (p->i.newer == NULL) {
-			passert(p == allocs);
-			allocs = p->i.older;
-		} else {
-			passert(p->i.newer->i.older == p);
-			p->i.newer->i.older = p->i.older;
+		{
+			pthread_mutex_lock(&leak_detective_mutex);
+			if (p->i.older != NULL) {
+				passert(p->i.older->i.newer == p);
+				p->i.older->i.newer = p->i.newer;
+			}
+			if (p->i.newer == NULL) {
+				passert(p == allocs);
+				allocs = p->i.older;
+			} else {
+				passert(p->i.newer->i.older == p);
+				p->i.newer->i.older = p->i.older;
+			}
+			pthread_mutex_unlock(&leak_detective_mutex);
 		}
 		p->i.magic = ~LEAK_MAGIC;
 		free(p);
@@ -150,13 +162,14 @@ void pfree(void *ptr)
 #ifdef LEAK_DETECTIVE
 void report_leaks(void)
 {
-	union mhdr
-	*p = allocs,
-	*pprev = NULL;
+	union mhdr *p,
+		*pprev = NULL;
 	unsigned long n = 0;
 	unsigned long numleaks = 0;
 	unsigned long total = 0;
 
+	pthread_mutex_lock(&leak_detective_mutex);
+	p = allocs;
 	while (p != NULL) {
 		passert(p->i.magic == LEAK_MAGIC);
 		passert(pprev == p->i.newer);
@@ -175,6 +188,8 @@ void report_leaks(void)
 			n = 0;
 		}
 	}
+	pthread_mutex_unlock(&leak_detective_mutex);
+
 	if (numleaks != 0)
 		libreswan_log("leak detective found %lu leaks, total size %lu",
 			numleaks, total);

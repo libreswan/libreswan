@@ -165,8 +165,6 @@ extern bool same_serial(chunk_t a, chunk_t b);
 extern bool same_keyid(chunk_t a, chunk_t b);
 extern bool same_dn(chunk_t a, chunk_t b);
 #define MAX_CA_PATH_LEN         7
-extern bool match_requested_ca(generalName_t *requested_ca,
-			       chunk_t our_ca, int *our_pathlen);
 extern bool match_dn(chunk_t a, chunk_t b, int *wildcards);
 extern int dn_count_wildcards(chunk_t dn);
 extern int dntoa(char *dst, size_t dstlen, chunk_t dn);

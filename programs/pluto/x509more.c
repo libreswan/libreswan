@@ -1,4 +1,6 @@
-/* Support of X.509 keys
+/*
+ * Support of X.509 keys
+ *
  * Copyright (C) 2000 Andreas Hess, Patric Lichtsteiner, Roger Wegmann
  * Copyright (C) 2001 Marco Bertossa, Andreas Schleiss
  * Copyright (C) 2002 Mario Strasser
@@ -18,7 +20,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdlib.h>
@@ -45,7 +46,7 @@
 #include "certs.h"
 #include "keys.h"
 #include "packet.h"
-#include "demux.h"      /* needs packet.h */
+#include "demux.h"	/* needs packet.h */
 #include "connections.h"
 #include "state.h"
 #include "md5.h"
@@ -55,13 +56,14 @@
 #include "pkcs.h"
 #include "x509more.h"
 
-/* extract id and public key from x.509 certificate and
+/*
+ * extract id and public key from x.509 certificate and
  * insert it into a pubkeyrec
  */
 void add_x509_public_key(const struct id *keyid,
-			 x509cert_t *cert,
-			 time_t until,
-			 enum dns_auth_level dns_auth_level)
+			x509cert_t *cert,
+			time_t until,
+			enum dns_auth_level dns_auth_level)
 {
 	generalName_t *gn;
 	struct pubkey *pk;
@@ -101,8 +103,8 @@ void add_x509_public_key(const struct id *keyid,
 	}
 
 	if (keyid != NULL &&
-	    keyid->kind != ID_DER_ASN1_DN &&
-	    keyid->kind != ID_DER_ASN1_GN) {
+		keyid->kind != ID_DER_ASN1_DN &&
+		keyid->kind != ID_DER_ASN1_GN) {
 		pk = allocate_RSA_public_key(c);
 		pk->id = *keyid;
 
@@ -114,7 +116,8 @@ void add_x509_public_key(const struct id *keyid,
 	}
 }
 
-/*  when a X.509 certificate gets revoked, all instances of
+/*
+ *  when a X.509 certificate gets revoked, all instances of
  *  the corresponding public key must be removed
  */
 void remove_x509_public_key(/*const*/ x509cert_t *cert)
@@ -124,15 +127,15 @@ void remove_x509_public_key(/*const*/ x509cert_t *cert)
 	struct pubkey *revoked_pk;
 
 	revoked_pk = allocate_RSA_public_key(c);
-	p          = pluto_pubkeys;
-	pp         = &pluto_pubkeys;
+	p = pluto_pubkeys;
+	pp = &pluto_pubkeys;
 
 	while (p != NULL) {
 		if (same_RSA_public_key(&p->key->u.rsa, &revoked_pk->u.rsa)) {
 			/* remove p from list and free memory */
 			*pp = free_public_keyentry(p);
 			loglog(RC_LOG_SERIOUS,
-			       "invalid RSA public key deleted");
+				"invalid RSA public key deleted");
 		} else {
 			pp = &p->next;
 		}
@@ -163,18 +166,18 @@ void ikev1_decode_cert(struct msg_digest *md)
 				time_t valid_until;
 
 				if (verify_x509cert(&cert2, strict_crl_policy,
-						    &valid_until)) {
+							&valid_until)) {
 					DBG(DBG_X509 | DBG_PARSING,
-					    DBG_log("Public key validated"));
+						DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,
-							    valid_until,
-							    DAL_SIGNED);
+							valid_until,
+							DAL_SIGNED);
 				} else {
 					libreswan_log("X.509 certificate rejected");
 				}
 				free_generalNames(cert2.subjectAltName, FALSE);
 				free_generalNames(cert2.crlDistributionPoints,
-						  FALSE);
+						FALSE);
 			} else {
 				libreswan_log("Syntax error in X.509 certificate");
 			}
@@ -193,9 +196,9 @@ void ikev1_decode_cert(struct msg_digest *md)
 		}
 		default:
 			loglog(RC_LOG_SERIOUS,
-			       "ignoring %s certificate payload",
-			       enum_show(&ike_cert_type_names,
-					 cert->isacert_type));
+				"ignoring %s certificate payload",
+				enum_show(&ike_cert_type_names,
+					cert->isacert_type));
 			DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
 		}
 	}
@@ -222,18 +225,18 @@ void ikev2_decode_cert(struct msg_digest *md)
 				time_t valid_until;
 
 				if (verify_x509cert(&cert2, strict_crl_policy,
-						    &valid_until)) {
+							&valid_until)) {
 					DBG(DBG_X509 | DBG_PARSING,
-					    DBG_log("Public key validated"));
+						DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,
-							    valid_until,
-							    DAL_SIGNED);
+							valid_until,
+							DAL_SIGNED);
 				} else {
 					libreswan_log("X.509 certificate rejected");
 				}
 				free_generalNames(cert2.subjectAltName, FALSE);
 				free_generalNames(cert2.crlDistributionPoints,
-						  FALSE);
+						FALSE);
 			} else {
 				libreswan_log("Syntax error in X.509 certificate");
 			}
@@ -252,9 +255,9 @@ void ikev2_decode_cert(struct msg_digest *md)
 		}
 		default:
 			loglog(RC_LOG_SERIOUS,
-			       "ignoring %s certificate payload",
-			       enum_show(&ike_cert_type_names,
-					 v2cert->isac_enc));
+				"ignoring %s certificate payload",
+				enum_show(&ike_cert_type_names,
+					v2cert->isac_enc));
 			DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
 		}
 	}
@@ -286,7 +289,7 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 
 				gn = alloc_thing(generalName_t, "generalName");
 				clonetochunk(ca_name, ca_name.ptr, ca_name.len,
-					     "ca name");
+					"ca name");
 				gn->kind = GN_DIRECTORY_NAME;
 				gn->name = ca_name;
 				gn->next = *requested_ca;
@@ -294,15 +297,16 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 			}
 
 			DBG(DBG_PARSING | DBG_CONTROL, {
-				    char buf[IDTOA_BUF];
-				    dntoa_or_null(buf, IDTOA_BUF, ca_name,
-						  "%any");
-				    DBG_log("requested CA: '%s'", buf);
-			    });
+					char buf[IDTOA_BUF];
+					dntoa_or_null(buf, IDTOA_BUF, ca_name,
+						"%any");
+					DBG_log("requested CA: '%s'", buf);
+				});
 		} else {
 			loglog(RC_LOG_SERIOUS,
-			       "ignoring %s certificate request payload",
-			       enum_show(&ike_cert_type_names, cr->isacr_type));
+				"ignoring %s certificate request payload",
+				enum_show(&ike_cert_type_names,
+					cr->isacr_type));
 		}
 	}
 }
@@ -333,7 +337,7 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 
 				gn = alloc_thing(generalName_t, "generalName");
 				clonetochunk(ca_name, ca_name.ptr, ca_name.len,
-					     "ca name");
+					"ca name");
 				gn->kind = GN_DIRECTORY_NAME;
 				gn->name = ca_name;
 				gn->next = *requested_ca;
@@ -341,16 +345,16 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 			}
 
 			DBG(DBG_PARSING | DBG_CONTROL, {
-				    char buf[IDTOA_BUF];
-				    dntoa_or_null(buf, IDTOA_BUF, ca_name,
-						  "%any");
-				    DBG_log("requested CA: '%s'", buf);
-			    });
+					char buf[IDTOA_BUF];
+					dntoa_or_null(buf, IDTOA_BUF, ca_name,
+						"%any");
+					DBG_log("requested CA: '%s'", buf);
+				});
 		} else {
 			loglog(RC_LOG_SERIOUS,
-			       "ignoring %s certificate request payload",
-			       enum_show(&ike_cert_type_names,
-					 cr->isacertreq_enc));
+				"ignoring %s certificate request payload",
+				enum_show(&ike_cert_type_names,
+					cr->isacertreq_enc));
 		}
 	}
 }
@@ -377,7 +381,7 @@ bool ikev1_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_
 }
 
 bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
-			     u_int8_t np)
+			u_int8_t np)
 {
 	pb_stream cr_pbs;
 	struct ikev2_certreq cr_hd;
@@ -401,14 +405,13 @@ bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
 bool collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
 {
 	struct connection *d = find_host_connection(&md->iface->ip_addr,
-						    pluto_port,
-						    (ip_address*)NULL,
-						    md->sender_port, LEMPTY);
+						pluto_port, (ip_address *)NULL,
+						md->sender_port, LEMPTY);
 
 	for (; d != NULL; d = d->hp_next) {
 		/* must be a road warrior connection */
 		if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPORTUNISTIC) &&
-		    d->spd.that.ca.ptr != NULL) {
+			d->spd.that.ca.ptr != NULL) {
 			generalName_t *gn;
 			bool new_entry = TRUE;
 
@@ -475,10 +478,11 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 
 				if (load_cert(filelist[n]->d_name,
 #ifdef SINGLE_CONF_DIR
-						FALSE,	/*
-							 * too verbose in
-							 * single conf dir
-							 */
+						/*
+						 * too verbose in
+						 * single conf dir
+						 */
+						FALSE,
 #else
 						TRUE,
 #endif
@@ -565,3 +569,28 @@ bool trusted_ca(chunk_t a, chunk_t b, int *pathlen)
 	return match;
 }
 
+/*
+ * does our CA match one of the requested CAs?
+ */
+bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
+			int *our_pathlen)
+{
+	/* if no ca is requested than any ca will match */
+	if (requested_ca == NULL) {
+		*our_pathlen = 0;
+		return TRUE;
+	}
+
+	*our_pathlen = MAX_CA_PATH_LEN + 1;
+
+	while (requested_ca != NULL) {
+		int pathlen;
+
+		if (trusted_ca(our_ca, requested_ca->name, &pathlen) &&
+			pathlen < *our_pathlen)
+			*our_pathlen = pathlen;
+		requested_ca = requested_ca->next;
+	}
+
+	return *our_pathlen <= MAX_CA_PATH_LEN;
+}

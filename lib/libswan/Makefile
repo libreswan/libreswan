@@ -97,10 +97,6 @@ ifeq ($(USE_SINGLE_CONF_DIR),true)
 CFLAGS+= -DSINGLE_CONF_DIR=1
 endif
 
-ifeq ($(USE_DMALLOC),true)
-CFLAGS+= -DDMALLOC
-endif
-
 ifeq ($(USE_LABELED_IPSEC),true)
 CFLAGS+=-DHAVE_LABELED_IPSEC
 endif

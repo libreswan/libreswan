@@ -22,15 +22,15 @@
  */
 
 /*
- * this is an internal interface from a master pluto process
- * and a cryptographic helper child.
+ * This is an internal interface between a master pluto process
+ * and a cryptographic helper thread.
  *
- * the child performs the heavy lifting of cryptographic functions
+ * The helper performs the heavy lifting of cryptographic functions
  * for pluto. It does this to avoid head-of-queue problems with aggressive
- * mode, to deal with the asynchronous nature of hardware offload,
- * and to compartamentalize lookups to LDAP/HTTP/FTP for CRL fetching
- * and checking.
+ * mode, to deal with the asynchronous nature of hardware offload.
  *
+ * (Unrelated code compartamentalize lookups to LDAP/HTTP/FTP for CRL fetching
+ * and checking.)
  */
 
 #ifndef _PLUTO_CRYPT_H
@@ -131,6 +131,18 @@ extern void wire_clone_chunk(wire_arena_t *arena,
 	setchunk(chunk, wire_chunk_ptr(&(parent_ptr)->arena, (wire)), (wire)->len)
 
 /* end of wire_chunk definitions */
+
+/*
+ * Pluto Crypto Request: struct pluto_crypto_req
+ *
+ * This travels over a "wire" both ways:
+ * - to a helper, specifying what it is to do
+ * - from a helper, with the result.
+ *
+ * struct pluto_crypto_req contains a union with different
+ * information for different kinds of queries and responses.
+ * First we define structs for each of these.
+ */
 
 #define KENONCE_SIZE 1280
 
@@ -245,41 +257,63 @@ typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
  * The routines that appear to deal with struct pluto_crypto_req_cont
  * objects are in fact dealing generically with either of those
  * two specializations of it.
+ *
+ * A struct pluto_crypto_req_cont (or variant) is heap-allocated
+ * by code that wants to delegate cryptographic work.  It fills
+ * in parts of the struct, and "fires and forgets" the work.
+ * Unless the firing fails, a case that must be handled.
+ * This struct stays on the master side: it isn't sent to the helper.
+ * It is used to keep track of in-process work and what to do
+ * when the work is complete.
  */
 struct pluto_crypto_req_cont {
-	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
-	struct pluto_crypto_req *pcrc_pcr;
+
+	crypto_req_func pcrc_func;	/* function to continue with */
+	/*
+	 * Sponsoring state's serial number and state pointer.
+	 * Currently a mish-mash but will transition
+	 * to central management by send_crypto_helper_request
+	 * and friends.
+	 */
 	so_serial_t pcrc_serialno;
+
+	/* the rest of these fields are private to pluto_crypt.c */
+
+	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
+	struct pluto_crypto_req *pcrc_pcr;	/* owner iff on backlogqueue */
 	pcr_req_id pcrc_id;
-	crypto_req_func pcrc_func;
-	pb_stream pcrc_reply_stream;
-	u_int8_t *pcrc_reply_buffer;
+	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
+	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
 #ifdef IPSEC_PLUTO_PCRC_DEBUG
 	char *pcrc_function;
-	char *pcrc_file;
+	char *pcrc_filep;
 	int pcrc_line;
 #endif
 };
 
-/* these two structs are specializations of struct pluto_crypto_req_cont */
+/* these three structs are specializations of struct pluto_crypto_req_cont */
+
+/* IKEv1 Quick Mode Key Exchange */
+struct qke_continuation {
+	struct pluto_crypto_req_cont qke_pcrc;	/* MUST BE THE FIRST FIELD */
+	so_serial_t qke_replacing;
+	struct msg_digest *qke_md;	/* used in responder */
+};
 
 struct ke_continuation {
 	struct pluto_crypto_req_cont ke_pcrc;	/* MUST BE THE FIRST FIELD */
-	struct msg_digest *md;
+	struct msg_digest *ke_md;
 };
 
 struct dh_continuation {
 	struct pluto_crypto_req_cont dh_pcrc;	/* MUST BE THE FIRST FIELD */
-	struct msg_digest *md;
-	so_serial_t serialno;			/* used for inter state
-						 * calculations on responder */
+	struct msg_digest *dh_md;
 };
 
 extern void init_crypto_helpers(int nhelpers);
 
-extern err_t send_crypto_helper_request(struct pluto_crypto_req *r,
-					struct pluto_crypto_req_cont *cn,
-					bool *toomuch);
+extern stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
+					struct pluto_crypto_req_cont *cn);
 
 extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
 

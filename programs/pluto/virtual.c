@@ -109,6 +109,13 @@ static bool _read_subnet(const char *src, size_t len, ip_subnet *dst,
 	return TRUE;
 }
 
+void free_virtual_ip()
+{
+       /* These might be NULL if empty in ipsec.conf */
+       pfreeany(private_net_ok);
+       pfreeany(private_net_ko);
+}
+
 /** Initialize Virtual IP Support
  *
  * @param private_list String (contents of virtual_private= from ipsec.conf)

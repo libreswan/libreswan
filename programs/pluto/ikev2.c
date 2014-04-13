@@ -566,7 +566,6 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 			/* update lastrecv later on */
 		}
-
 	} else {
 		/* then I am the initiator, and this is a reply */
 
@@ -636,7 +635,6 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	ix = md->hdr.isa_xchg;
 	if (st != NULL) {
-
 		from_state = st->st_state;
 		DBG(DBG_CONTROL,
 		    DBG_log("state found and its state is (%s)",
@@ -683,6 +681,8 @@ void process_v2_packet(struct msg_digest **mdp)
 		return;
 	}
 
+	if (st != NULL)
+		set_cur_state(st);
 	md->svm = svm;
 	md->from_state = from_state;
 	md->st = st;

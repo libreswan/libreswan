@@ -391,12 +391,6 @@ IPSEC_CONNECTION_LIMIT?=250
 # disabled for now as it causes some pfree()s due to bad code
 USE_LEAK_DETECTIVE?=false
 
-# Use dmalloc. Requires USE_LEAK_DETECTIVE
-USE_DMALLOC?=false
-ifeq ($(USE_DMALLOC),true)
-USE_LEAK_DETECTIVE=true
-endif
-
 # For Angstrom linux with broken popen() set to true. See bug #1067
 HAVE_BROKEN_POPEN?=false
 

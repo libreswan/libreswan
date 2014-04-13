@@ -47,14 +47,13 @@
 #include "pluto_crypt.h"
 #include "lswlog.h"
 #include "log.h"
-#include "timer.h"
 #include "ike_alg.h"
 #include "id.h"
 #include "secrets.h"
 #include "keys.h"
 
 /*
- * invoke helper to do DH work.
+ * invoke helper to do DH work (IKEv1)
  */
 stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 			     struct state *st,
@@ -65,8 +64,6 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	struct pluto_crypto_req r;
 	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
-	err_t e;
-	bool toomuch = FALSE;
 
 	pcr_dh_init(&r, pcr_compute_dh_iv, importance);
 
@@ -109,26 +106,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	       st->st_rcookie, COOKIE_SIZE);
 
 	passert(dhq->oakley_group != 0);
-	e = send_crypto_helper_request(&r, cn, &toomuch);
-
-	if (e != NULL) {
-		loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
-		if (toomuch)
-			return STF_TOOMUCHCRYPTO;
-		else
-			return STF_FAIL;
-	} else if (!toomuch) {
-		st->st_calculating = TRUE;
-		delete_event(st);
-		event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY,
-			       st);
-		return STF_SUSPEND;
-	} else {
-		/* we must have run the continuation directly, so
-		 * complete_state_transition already got called.
-		 */
-		return STF_INLINE;
-	}
+	return send_crypto_helper_request(&r, cn);
 }
 
 void finish_dh_secretiv(struct state *st,
@@ -160,8 +138,6 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	struct pluto_crypto_req r;
 	struct pcr_skeyid_q *const dhq= &r.pcr_d.dhq;
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
-	err_t e;
-	bool toomuch = FALSE;
 
 	pcr_dh_init(&r, pcr_compute_dh, importance);
 
@@ -198,26 +174,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
-	e = send_crypto_helper_request(&r, cn, &toomuch);
-
-	if (e != NULL) {
-		loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
-		if (toomuch)
-			return STF_TOOMUCHCRYPTO;
-		else
-			return STF_FAIL;
-	} else if (!toomuch) {
-		st->st_calculating = TRUE;
-		delete_event(st);
-		event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY,
-			       st);
-		return STF_SUSPEND;
-	} else {
-		/* we must have run the continuation directly, so
-		 * complete_state_transition already got called.
-		 */
-		return STF_INLINE;
-	}
+	return send_crypto_helper_request(&r, cn);
 }
 
 void finish_dh_secret(struct state *st,
@@ -239,8 +196,6 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 {
 	struct pluto_crypto_req r;
 	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
-	err_t e;
-	bool toomuch = FALSE;
 
 	pcr_dh_init(&r, pcr_compute_dh_v2, importance);
 
@@ -287,26 +242,7 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 	       st->st_rcookie, COOKIE_SIZE);
 
 	passert(dhq->oakley_group != 0);
-	e = send_crypto_helper_request(&r, cn, &toomuch);
-
-	if (e != NULL) {
-		loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
-		if (toomuch)
-			return STF_TOOMUCHCRYPTO;
-		else
-			return STF_FAIL;
-	} else if (!toomuch) {
-		st->st_calculating = TRUE;
-		delete_event(st);
-		event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY,
-			       st);
-		return STF_SUSPEND;
-	} else {
-		/* we must have run the continuation directly, so
-		 * complete_state_transition already got called.
-		 */
-		return STF_INLINE;
-	}
+	return send_crypto_helper_request(&r, cn);
 }
 
 void finish_dh_v2(struct state *st,

@@ -45,7 +45,6 @@
 #include "pluto_crypt.h"
 #include "lswlog.h"
 #include "log.h"
-#include "timer.h"
 
 #include <nss.h>
 #include <nspr.h>
@@ -164,33 +163,12 @@ stf_status build_ke(struct pluto_crypto_req_cont *cn,
 		    enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
-	err_t e;
-	bool toomuch = FALSE;
 
 	pcr_nonce_init(&rd, pcr_build_kenonce, importance);
 	rd.pcr_d.kn.oakley_group = group->group;
 
 	cn->pcrc_serialno = st->st_serialno;
-	e = send_crypto_helper_request(&rd, cn, &toomuch);
-
-	if (e != NULL) {
-		loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
-		if (toomuch)
-			return STF_TOOMUCHCRYPTO;
-		else
-			return STF_FAIL;
-	} else if (!toomuch) {
-		st->st_calculating = TRUE;
-		delete_event(st);
-		event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY,
-			       st);
-		return STF_SUSPEND;
-	} else {
-		/* we must have run the continuation directly, so
-		 * complete_v1_state_transition already got called.
-		 */
-		return STF_INLINE;
-	}
+	return send_crypto_helper_request(&rd, cn);
 }
 
 stf_status build_nonce(struct pluto_crypto_req_cont *cn,
@@ -198,30 +176,9 @@ stf_status build_nonce(struct pluto_crypto_req_cont *cn,
 		       enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
-	err_t e;
-	bool toomuch = FALSE;
 
 	pcr_nonce_init(&rd, pcr_build_nonce, importance);
 
 	cn->pcrc_serialno = st->st_serialno;
-	e = send_crypto_helper_request(&rd, cn, &toomuch);
-
-	if (e != NULL) {
-		loglog(RC_LOG_SERIOUS, "can not start crypto helper: %s", e);
-		if (toomuch)
-			return STF_TOOMUCHCRYPTO;
-		else
-			return STF_FAIL;
-	} else if (!toomuch) {
-		st->st_calculating = TRUE;
-		delete_event(st);
-		event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY,
-			       st);
-		return STF_SUSPEND;
-	} else {
-		/* we must have run the continuation directly, so
-		 * complete_v1_state_transition already got called.
-		 */
-		return STF_INLINE;
-	}
+	return send_crypto_helper_request(&rd, cn);
 }

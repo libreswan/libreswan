@@ -18,6 +18,7 @@
 extern void show_virtual_private(void);
 
 extern void init_virtual_ip(const char *private_list);
+extern void free_virtual_ip();
 
 extern struct virtual_t *create_virtual(const struct connection *c,
 					const char *string);

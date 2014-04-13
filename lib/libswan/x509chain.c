@@ -346,28 +346,3 @@ err_t check_validity(const x509cert_t *cert, time_t *until)
 	}
 }
 
-/*
- * does our CA match one of the requested CAs?
- */
-bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
-			int *our_pathlen)
-{
-	/* if no ca is requested than any ca will match */
-	if (requested_ca == NULL) {
-		*our_pathlen = 0;
-		return TRUE;
-	}
-
-	*our_pathlen = MAX_CA_PATH_LEN + 1;
-
-	while (requested_ca != NULL) {
-		int pathlen;
-
-		if (trusted_ca(our_ca, requested_ca->name, &pathlen) &&
-			pathlen < *our_pathlen)
-			*our_pathlen = pathlen;
-		requested_ca = requested_ca->next;
-	}
-
-	return *our_pathlen <= MAX_CA_PATH_LEN;
-}
