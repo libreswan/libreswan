@@ -78,7 +78,7 @@ ikev2-delete-02]# 000 using kernel interface: klips
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
-000 "west-east-delete1":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "west-east-delete1":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
 000 "west-east-delete1":   IKE algorithm newest: _128-SHA1-MODP2048
 000 "west-east-delete1":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>

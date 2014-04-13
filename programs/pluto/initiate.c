@@ -39,7 +39,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 #include "kameipsec.h"
 
@@ -194,7 +193,7 @@ static int initiate_a_connection(struct connection *c,
 	} else if (NEVER_NEGOTIATE(c->policy)) {
 		loglog(RC_INITSHUNT,
 		       "cannot initiate an authby=never connection");
-	} else if ( (c->kind != CK_PERMANENT) &&
+	} else if ((c->kind != CK_PERMANENT) &&
 		    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {

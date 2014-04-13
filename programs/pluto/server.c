@@ -420,9 +420,9 @@ void show_ifaces_status(void)
 	struct iface_port *p;
 
 	for (p = interfaces; p != NULL; p = p->next)
-		whack_log(RC_COMMENT, "interface %s/%s %s",
+		whack_log(RC_COMMENT, "interface %s/%s %s:%d",
 			  p->ip_dev->id_vname, p->ip_dev->id_rname,
-			  ip_str(&p->ip_addr));
+			  ip_str(&p->ip_addr), p->port);
 }
 
 void show_debug_status(void)
@@ -563,6 +563,8 @@ void call_server(void)
 					addconn_path));
 
 		char *newargv[] = { DISCARD_CONST(char *, "addconn"),
+				    DISCARD_CONST(char *, "--ctlbase"),
+				    DISCARD_CONST(char *, ctl_addr.sun_path),
 				    DISCARD_CONST(char *, "--autoall"), NULL };
 		char *newenv[] = { NULL };
 #ifdef HAVE_NO_FORK

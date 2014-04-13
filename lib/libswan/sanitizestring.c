@@ -30,7 +30,6 @@
 void sanitize_string(char *buf, size_t size)
 {
 #define UGLY_WIDTH 4	/* width for ugly character: \OOO */
-	size_t len;
 	size_t added = 0;
 	char *p;
 
@@ -64,7 +63,6 @@ void sanitize_string(char *buf, size_t size)
 	 */
 
 	p[added] = '\0';
-	len = &p[added] - buf;
 
 	/*
 	 * scan backwards, copying characters to their new home

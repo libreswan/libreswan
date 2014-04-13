@@ -41,7 +41,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "lswlog.h"
 #include "md5.h"
 #include "pem.h"
@@ -50,8 +49,6 @@
 #include <prmem.h>
 #include <prerror.h>
 #include "lswconf.h"
-
-#include "lswcrypto.h"
 
 /*
  * check the presence of a pattern in a character string

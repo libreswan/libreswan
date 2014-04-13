@@ -17,10 +17,6 @@
  *
  * This code was developed with the support of IXIA communications.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
- *
  */
 
 #include <stdlib.h>
@@ -37,7 +33,6 @@
 #include <signal.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -50,8 +45,6 @@
 #include "pluto_crypt.h"
 #include "lswlog.h"
 #include "log.h"
-
-#include "lswcrypto.h"
 
 #include <nss.h>
 #include <nspr.h>

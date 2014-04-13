@@ -159,22 +159,6 @@ fi
 LIBRESWAN_RESOLV_CONF=@FINALVARDIR@/run/pluto/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
-# check interface version
-case "${PLUTO_VERSION}" in
-    1.*)
-	# Older Pluto?!?  Play it safe, script may be using new features.
-	echo "${0}: obsolete interface version \"${PLUTO_VERSION}\"," >&2
-	echo "${0}: 	called by obsolete Pluto?" >&2
-	exit 2
-	;;
-    2.*)
-	;;
-    *)
-	echo "${0}: unknown interface version \"${PLUTO_VERSION}\"" >&2
-	exit 2
-	;;
-esac
-
 # check parameter(s)
 case "${1}:$*" in
     ':')

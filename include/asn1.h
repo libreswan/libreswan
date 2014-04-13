@@ -111,7 +111,7 @@ extern bool is_printablestring(chunk_t str);
 extern time_t asn1totime(const chunk_t *utctime, asn1_t type);
 extern void asn1_init(asn1_ctx_t *ctx, chunk_t blob,
 		      u_int level0, bool implicit, u_int cond);
-extern bool extract_object(asn1Object_t const *objects,
+extern bool extract_object(const asn1Object_t *const objects,
 			   u_int *objectID, chunk_t *object, u_int *level,
 			   asn1_ctx_t *ctx);
 extern bool is_asn1(chunk_t blob);

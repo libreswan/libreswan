@@ -27,7 +27,6 @@
 #include <arpa/inet.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
@@ -895,8 +894,6 @@ static bool ikev2_match_transform_list_parent(struct db_sa *sadb,
 	 * of them fit.
 	 */
 
-#warning FIXME for less code duplucation
-
 	for (itl->encr_i = 0; itl->encr_i < itl->encr_trans_next;
 	     itl->encr_i++) {
 		for (itl->integ_i = 0; itl->integ_i < itl->integ_trans_next;
@@ -1241,12 +1238,11 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                        
 
 			winning_prop = proposal;
 			gotmatch = TRUE;
-#warning gotmatch is always true - this code needs to be verified
-			if (selection && !gotmatch && lp == v2_PROPOSAL_NON_LAST) {
-				libreswan_log(
-					"More than 1 proposal received from responder, ignoring rest. First one did not match");
-				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-			}
+		}
+
+		if (selection && !gotmatch && lp == v2_PROPOSAL_NON_LAST) {
+			libreswan_log("More than 1 proposal received from responder, ignoring rest. First one did not match");
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 	}
 
@@ -1491,7 +1487,6 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 	 * now that we have a list of all the possibilities, see if any
 	 * of them fit.
 	 */
-#warning fixme with less code duplication
 	if (ipprotoid == PROTO_v2_ESP) {
 		for (itl->encr_i = 0; itl->encr_i < itl->encr_trans_next; itl->encr_i++) {
 			for (itl->integ_i = 0; itl->integ_i < itl->integ_trans_next; itl->integ_i++) {
@@ -1662,15 +1657,11 @@ stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,                         
 						     itl)) {
 			gotmatch = TRUE;
 			winning_prop = proposal;
+		}
 
-#warning gotmatch is always true - this code needs to be verified
-			if (selection && !gotmatch && lp == v2_PROPOSAL_NON_LAST) {
-				libreswan_log(
-					"More than 1 proposal received from responder, ignoring rest. First one did not match");
-				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-			}
-		} else {
-			libreswan_log("ikev2_match_transform_list_child() failed, we should have aborted???");
+		if (selection && !gotmatch && lp == v2_PROPOSAL_NON_LAST) {
+			libreswan_log("More than 1 proposal received from responder, ignoring rest. First one did not match");
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 	}
 

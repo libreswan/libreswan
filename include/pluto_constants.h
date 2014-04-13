@@ -475,7 +475,6 @@ enum certpolicy {
 	cert_neversend   = 1,
 	cert_sendifasked = 2,   /* the default */
 	cert_alwayssend  = 3,
-	cert_forcedtype  = 4,   /* send a Cert payload with given type */
 };
 
 /* this is the default setting. */
@@ -801,3 +800,10 @@ enum PrivateKeyKind {
 #define XAUTH_MAX_PASS_LENGTH 128
 
 #define MIN_LIVENESS 1
+
+/* no time set in time_t */
+#define UNDEFINED_TIME  0
+
+/* size of timetoa string buffer */
+#define TIMETOA_BUF     30
+

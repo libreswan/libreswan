@@ -33,7 +33,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -423,7 +422,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	 * that may be recycled, but only if the type is not known.
 	 * That case is disposed of very early -- in the first switch.
 	 */
-	const char *idtypename = enum_show(&ident_names, id->isaiid_idtype);
+	const char *idtypename = enum_show(&ike_idtype_names, id->isaiid_idtype);
 
 	switch (id->isaiid_idtype) {
 	case ID_IPV4_ADDR:
@@ -1720,13 +1719,13 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 							      b->his.proto,
 							      b->his.port);
 
-		if ( (p1st->hidden_variables.st_nat_traversal &
+		if ((p1st->hidden_variables.st_nat_traversal &
 		      NAT_T_DETECTED) &&
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
 		     (p1st->hidden_variables.st_nat_traversal &
 		      (LELEM(NAT_TRAVERSAL_NAT_BHND_ME) |
-		       LELEM(NAT_TRAVERSAL_NAT_BHND_PEER)) ) &&
-		     (p == NULL) ) {
+		       LELEM(NAT_TRAVERSAL_NAT_BHND_PEER))) &&
+		     p == NULL) {
 			p = c;
 			DBG(DBG_CONTROL,
 			    DBG_log("using (something - hopefully the IP we or they are"

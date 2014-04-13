@@ -295,7 +295,6 @@ static const struct keyword_enum_value kw_sendcert_values[] = {
 	{ "sendifasked",  cert_sendifasked },
 	{ "alwayssend",   cert_alwayssend },
 	{ "always",       cert_alwayssend },
-	{ "forcedtype",   cert_forcedtype },
 };
 
 static const struct keyword_enum_values kw_sendcert_list = VALUES_INITIALIZER(kw_sendcert_values);

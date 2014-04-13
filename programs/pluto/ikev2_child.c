@@ -42,6 +42,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -58,7 +59,6 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 #include "vendor.h"
-#include "udpfromto.h"
 #include "kernel.h"
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"

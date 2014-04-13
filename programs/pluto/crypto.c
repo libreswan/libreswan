@@ -39,8 +39,6 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 
-#include "lswcrypto.h"
-
 #include "pem.h"
 
 /* moduli and generator. */

@@ -33,7 +33,6 @@
 #include <gmp.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -2237,7 +2236,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		/* should we check if we should accept a cert payload ?
 		 *  has_preloaded_public_key(st)
 		 */
-		/* in v1 code it is  decode_cert(struct msg_digest *md) */
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("has a v2_CERT payload going to decode it"));
 		ikev2_decode_cert(md);
@@ -2621,8 +2619,6 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		n_hdr.isa_np = ISAKMP_NEXT_v2N;
 		n_hdr.isa_flags &= ~ISAKMP_FLAGS_I;
 		n_hdr.isa_flags  |=  ISAKMP_FLAGS_R;
-#warning check msgid code here
-		/* ??? PAUL: shouldn't we set n_hdr.isa_msgid = [htonl](p1st->st_msgid); */
 		if (!out_struct(&n_hdr, &isakmp_hdr_desc, &reply_stream, &rbody)) {
 			libreswan_log(
 				"error initializing hdr for notify message");

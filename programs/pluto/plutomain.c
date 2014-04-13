@@ -24,10 +24,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
- *
  */
 
 #include <stdio.h>
@@ -55,6 +51,7 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "ac.h"
 #include "connections.h"        /* needs id.h */
@@ -85,8 +82,6 @@
 
 #include "nat_traversal.h"
 
-#include "lswcrypto.h"
-
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
 #endif
@@ -116,7 +111,24 @@ static bool fork_desired = TRUE;
 static char *ipsecconf = NULL;
 static char *ipsecdir = NULL;
 
+/* pulled from main for show_setup_plutomain() */
+static const struct lsw_conf_options *oco;
+static char *coredir;
+static char *pluto_vendorid;
+static int nhelpers = -1;
+
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
+
+static void free_pluto_main()
+{
+	/* Can be NULL if not specified as pluto argument */
+	pfreeany(ipsecconf);
+	pfreeany(ipsecdir);
+	pfreeany(coredir);
+	pfreeany(pluto_stats_binary);
+	pfreeany(pluto_listen);
+	pfreeany(pluto_vendorid);
+}
 
 /** usage - print help messages
  *
@@ -242,9 +254,6 @@ static const char compile_time_interop_options[] = ""
 #endif
 #ifdef LEAK_DETECTIVE
 					    " LEAK_DETECTIVE"
-#endif
-#ifdef HAVE_OCF
-					    " OCF"
 #endif
 #ifdef KLIPS_MAST
 					    " KLIPS_MAST"
@@ -402,12 +411,6 @@ enum kernel_interface kern_interface = USE_NETKEY; /* new default */
 #ifdef HAVE_LABELED_IPSEC
 u_int16_t secctx_attr_value = SECCTX;
 #endif
-
-/* pulled from main for show_setup_plutomain() */
-static const struct lsw_conf_options *oco;
-static char *coredir;
-static char *pluto_vendorid;
-static int nhelpers = -1;
 
 int main(int argc, char **argv)
 {
@@ -1012,27 +1015,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-#ifdef HAVE_LIBCAP_NG
-	/*
-	 * Drop capabilities - this generates a false positive valgrind warning
-	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
-	 *
-	 * We drop these after creating the pluto socket or else we can't create
-	 * a socket if the parent dir is non-root
-	 */
-	capng_clear(CAPNG_SELECT_BOTH);
-
-	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
-		      CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
-		      CAP_IPC_LOCK, CAP_AUDIT_WRITE,
-		      CAP_SETGID, CAP_SETUID, /* for google authenticator pam */
-		      -1);
-	/* our children must be able to CAP_NET_ADMIN to change routes.
-	 */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1); /* DAC needed for google authenticator pam */
-	capng_apply(CAPNG_SELECT_BOTH);
-#endif
-
 	/* If not suppressed, do daemon fork */
 
 	if (fork_desired) {
@@ -1099,6 +1081,30 @@ int main(int argc, char **argv)
 	pluto_init_log();
 	pluto_init_nss(oco->confddir);
 
+#ifdef HAVE_LIBCAP_NG
+	/*
+	 * Drop capabilities - this generates a false positive valgrind warning
+	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
+	 *
+	 * We drop these after creating the pluto socket or else we can't create
+	 * a socket if the parent dir is non-root
+	 */
+	capng_clear(CAPNG_SELECT_BOTH);
+
+	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE | CAPNG_PERMITTED,
+		      CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
+		      CAP_IPC_LOCK, CAP_AUDIT_WRITE,
+		      CAP_SETGID, CAP_SETUID, /* for google authenticator pam */
+		      -1);
+	/* our children must be able to CAP_NET_ADMIN to change routes.
+	 */
+	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1); /* DAC needed for google authenticator pam */
+	capng_apply(CAPNG_SELECT_BOTH);
+	libreswan_log("libcap-ng support [enabled]");
+#else
+	libreswan_log("libcap-ng support [disabled]");
+#endif
+
 #ifdef FIPS_CHECK
 	/*
 	 * FIPS Kernel mode: fips=1 kernel boot parameter
@@ -1156,12 +1162,6 @@ int main(int argc, char **argv)
 	}
 #else
 	libreswan_log("FIPS HMAC integrity support [disabled]");
-#endif
-
-#ifdef HAVE_LIBCAP_NG
-	libreswan_log("libcap-ng support [enabled]");
-#else
-	libreswan_log("libcap-ng support [disabled]");
 #endif
 
 #ifdef USE_LINUX_AUDIT
@@ -1223,15 +1223,6 @@ int main(int argc, char **argv)
 	libreswan_log("LEAK_DETECTIVE support [disabled]");
 #endif
 
-#ifdef HAVE_OCF
-	if (access("/dev/crypto", R_OK | W_OK) != -1)
-		libreswan_log("OCF support for IKE via /dev/crypto [enabled]");
-	else
-		libreswan_log("OCF support for IKE via /dev/crypto [failed:%s]",
-				strerror(errno));
-#else
-	libreswan_log("OCF support for IKE [disabled]");
-#endif
 
 	/* Check for SAREF support */
 #ifdef KLIPS_MAST
@@ -1314,9 +1305,6 @@ int main(int argc, char **argv)
 	init_connections();
 	init_crypto();
 	init_crypto_helpers(nhelpers);
-#ifdef OPENSSL
-	load_lswcrypto();
-#endif
 	init_demux();
 	init_kernel();
 	init_adns();
@@ -1390,6 +1378,8 @@ void exit_pluto(int status)
 	free_md_pool();         /* free the md pool */
 	NSS_Shutdown();
 	delete_lock();          /* delete any lock files */
+	free_virtual_ip();	/* virtual_private= */
+	free_pluto_main();	/* our static chars */
 #ifdef LEAK_DETECTIVE
 	report_leaks();         /* report memory leaks now, after all free()s */
 #endif /* LEAK_DETECTIVE */

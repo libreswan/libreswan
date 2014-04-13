@@ -165,9 +165,6 @@ extern bool same_serial(chunk_t a, chunk_t b);
 extern bool same_keyid(chunk_t a, chunk_t b);
 extern bool same_dn(chunk_t a, chunk_t b);
 #define MAX_CA_PATH_LEN         7
-extern bool trusted_ca(chunk_t a, chunk_t b, int *pathlen);
-extern bool match_requested_ca(generalName_t *requested_ca,
-			       chunk_t our_ca, int *our_pathlen);
 extern bool match_dn(chunk_t a, chunk_t b, int *wildcards);
 extern int dn_count_wildcards(chunk_t dn);
 extern int dntoa(char *dst, size_t dstlen, chunk_t dn);
@@ -199,8 +196,6 @@ extern void store_x509certs(x509cert_t **firstcert, bool strict);
 extern void add_authcert(x509cert_t *cert, u_char auth_flags);
 extern bool trust_authcert_candidate(const x509cert_t *cert,
 				     const x509cert_t *alt_chain);
-extern void load_authcerts(const char *type, const char *path,
-			   u_char auth_flags);
 extern void load_crls(void);
 extern bool insert_crl(chunk_t blob, chunk_t crl_uri);
 extern void list_authcerts(const char *caption, u_char auth_flags, bool utc);
@@ -235,11 +230,5 @@ extern void unlock_authcert_list(const char *who);	/* in secrets.c */
 
 /* filter eliminating the directory entries '.' and '..' */
 typedef struct dirent dirent_t;
-
-extern int file_select(
-#ifdef SCANDIR_HAS_CONST
-	const
-#endif
-	dirent_t *entry);
 
 #endif /* _X509_H */

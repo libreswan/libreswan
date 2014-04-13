@@ -79,6 +79,19 @@ ifeq ($(USE_LINUX_AUDIT),true)
 LIBSPLUTO += -laudit
 endif
 
+ifeq ($(USE_KLIPS),true)
+# Linux always supports udpfromto
+UDPFROMTO_SRCS=udpfromto.c
+endif
+ifeq ($(USE_NETKEY),true)
+# Linux always supports udpfromto
+UDPFROMTO_SRCS=udpfromto.c
+endif
+ifeq ($(USE_BSDKAME),true)
+# BSD always supports udpfromto
+UDPFROMTO_SRCS=udpfromto.c
+endif
+
 # Solaris needs -lsocket -lnsl
 LIBSWHACK = ${WHACKLIB} ${LIBRESWANLIB}
 
@@ -138,7 +151,9 @@ DISTSRC = \
 	${XAUTH_DIST_SRCS} \
 	${AGGRESSIVE_DIST_SRCS} \
 	${LABELED_IPSEC_DIST_SRCS} \
-	packet.c pluto_constants.c readwhackmsg.c
+	packet.c pluto_constants.c readwhackmsg.c \
+	certload.c pem.c pkcs.c \
+	${UDPFROMTO_SRCS}
 
 DIST = $(DISTMISC) $(DISTSRC)
 
@@ -167,6 +182,8 @@ OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
 OBJSPLUTO += ${OBJSLIBPLUTO}
 OBJSPLUTO += ${SYSDEP_OBJ}
 OBJSPLUTO += packet.o pluto_constants.o readwhackmsg.o
+OBJSPLUTO += certload.o pem.o pkcs.o
+OBJSPLUTO += ${UDPFROMTO_SRCS:.c=.o}
 
 OBJSADNS = adns.o
 
@@ -230,11 +247,11 @@ install_file_list:
 			echo $(FMANDIR)/$$to; \
 		done
 
-alg_info_test: alg_info_test.o ike_alg.o constants.o defs.o log.o db_ops.o crypto.o $(LIBDESLITE) $(LIBRESWANLIB)
+alg_info_test: alg_info_test.o ike_alg.o constants.o defs.o log.o db_ops.o crypto.o $(LIBRESWANLIB)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBSPLUTO)
 
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
-	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL} $(LIBDESLITE)
+	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
 
 $(BINNAMEADNS): $(OBJSADNS)
 	$(CC) -o $(BINNAMEADNS) $(LDFLAGS) $(OBJSADNS) $(USERLINK) $(LIBSADNS) ${ADNSMINUSL}

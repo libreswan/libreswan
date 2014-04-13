@@ -38,13 +38,11 @@
 
 #include <gmp.h>
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "lswlog.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "secrets.h"
@@ -106,17 +104,6 @@ static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 	}
 }
 
-#ifdef OPENSSL
-/* Not possible with NSS */
-static void RSA_show_private_key(struct RSA_private_key *k)
-{
-#ifdef FIPS_CHECK
-	if (!libreswan_fipsmode())
-#endif
-	RSA_show_key_fields(k, elemsof(RSA_private_field));
-}
-#endif
-
 static void RSA_show_public_key(struct RSA_public_key *k)
 {
 	/*
@@ -131,13 +118,6 @@ static const char *RSA_public_key_sanity(struct RSA_private_key *k)
 {
 	/* note that the *last* error found is reported */
 	err_t ugh = NULL;
-
-#ifdef OPENSSL
-# ifdef FIPS_CHECK
-	if (!libreswan_fipsmode())
-# endif
-	DBG(DBG_PRIVATE, RSA_show_public_key(&k->pub));
-#endif
 
 	/*
 	 * PKCS#1 1.5 section 6 requires modulus to have at least 12 octets.
@@ -242,32 +222,32 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 
 struct pubkey *allocate_RSA_public_key(const cert_t cert)
 {
-	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
-	chunk_t e, n;
-
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_X509_SIGNATURE:
+	{
+		struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
+		chunk_t e, n;
+
 		e = cert.u.x509->publicExponent;
 		n = cert.u.x509->modulus;
-		break;
+
+		n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
+		n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
+
+		form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
+
+		DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
+
+		pk->alg = PUBKEY_ALG_RSA;
+		pk->id  = empty_id;
+		pk->issuer = empty_chunk;
+
+		return pk;
+	}
 	default:
 		libreswan_log("RSA public key allocation error");
-		pfreeany(pk);
 		return NULL;
 	}
-
-	n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
-	n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
-
-	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
-
-	DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
-
-	pk->alg = PUBKEY_ALG_RSA;
-	pk->id  = empty_id;
-	pk->issuer = empty_chunk;
-
-	return pk;
 }
 
 void free_RSA_public_content(struct RSA_public_key *rsa)
@@ -983,8 +963,7 @@ const struct RSA_private_key *lsw_get_x509_private_key(struct secret *secrets,
 	cert_t c;
 	struct pubkey *pubkey;
 
-	c.forced = FALSE;
-	c.type   = CERT_X509_SIGNATURE;
+	c.ty = CERT_X509_SIGNATURE;
 	c.u.x509 = cert;
 
 	pubkey = allocate_RSA_public_key(c);

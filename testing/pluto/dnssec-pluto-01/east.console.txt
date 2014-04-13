@@ -29,7 +29,7 @@ east #
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp
-000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
+000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
 000 pluto_version=v3.5-245-gbaca49f-dirty-master, pluto_vendorid=OE-Libreswan-v3.5-245
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
@@ -82,7 +82,7 @@ east #
 000 "westnet-eastnet":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
 000 "westnet-eastnet":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "westnet-eastnet":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both ikev1_natt:both
 000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-etc-hosts-auto-add": 192.0.2.0/24===192.1.2.23<east-from-hosts-file>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-etc-hosts-auto-add":     oriented; my_ip=unset; their_ip=unset;
@@ -92,7 +92,7 @@ east #
 000 "westnet-eastnet-etc-hosts-auto-add":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-etc-hosts-auto-add":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
 000 "westnet-eastnet-etc-hosts-auto-add":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "westnet-eastnet-etc-hosts-auto-add":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet-etc-hosts-auto-add":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both ikev1_natt:both
 000 "westnet-eastnet-etc-hosts-auto-add":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 2, active 0

@@ -387,27 +387,9 @@ USE_EXTRACRYPTO?=true
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
 
-# Userland (IKE) Open Cryptographic Framework support (hw crypto offload)
-# For Kernel level OCF support, enable CONFIG_KLIPS_OCF on a kernel that
-# has support for OCF (inline or module)
-# Only enable this when compiling for embedded systems with very limited CPU
-# power, and only if there is actually some hardware accelerator present
-# for which there is an OCF kernel driver available.
-HAVE_OCF?=false
-
-ifeq ($(HAVE_OCF),true)
-HAVE_OPENSSL=true
-endif
-
 # Whether to use LEAK_DETECTIVE to find memory leaks.
 # disabled for now as it causes some pfree()s due to bad code
 USE_LEAK_DETECTIVE?=false
-
-# Use dmalloc. Requires USE_LEAK_DETECTIVE
-USE_DMALLOC?=false
-ifeq ($(USE_DMALLOC),true)
-USE_LEAK_DETECTIVE=true
-endif
 
 # For Angstrom linux with broken popen() set to true. See bug #1067
 HAVE_BROKEN_POPEN?=false
@@ -493,28 +475,16 @@ ifeq ($(USE_EXTRACRYPTO),true)
 CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH}
 endif
 
-CRYPTOLIBS += ${LIBLSWCRYPTO}
-ifeq ($(HAVE_OCF),true)
-CRYPTOLIBS += -lcrypto
-LIBLSWCRYPTO=${OBJDIRTOP}/lib/libcrypto/liblswcrypto/liblswcrypto.a
-LIBDESLITE:=${OBJDIRTOP}/lib/libcrypto/libdes/libdes.a
-LIBAES=${OBJDIRTOP}/lib/libcrypto/libaes/libaes.a
-CRYPTOLIBS+=${LIBAES} ${LIBDESLITE}
-endif
-
-LIBPOLICYDIR=${LIBRESWANSRCDIR}/linux/lib/libipsecpolicy
-POLICYLIB=${OBJDIRTOP}/lib/libipsecpolicy/libipsecpolicy.a
-
 WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
 export LIBRESWANLIB LSWLOGLIB 
-export LIBDESSRCDIR LIBDESLITE LIBAES
+export LIBDESSRCDIR
 export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
-export LIBSHA2 CRYPTOLIBS LIBPOLICYDIR POLICYLIB WHACKLIB IPSECCONFLIB
-export LIBLSWCRYPTO NSSFLAGS NSSLIBS
+export LIBSHA2 CRYPTOLIBS WHACKLIB IPSECCONFLIB
+export NSSFLAGS NSSLIBS
 
 #KERNELBUILDMFLAGS=--debug=biv V=1 
 

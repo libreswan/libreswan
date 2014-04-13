@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if ( ((stat("/proc/net/pfkey", &sts)) == 0) ) {
+	if (stat("/proc/net/pfkey", &sts) == 0) {
 		fprintf(stderr,
 			"%s: NETKEY does not support virtual interfaces.\n",
 			progname);

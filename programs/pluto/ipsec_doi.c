@@ -20,10 +20,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
- *
  */
 
 #include <stdio.h>
@@ -39,7 +35,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
@@ -226,18 +221,16 @@ void close_message(pb_stream *pbs, struct state *st)
 static initiator_function *pick_initiator(struct connection *c UNUSED,
 					  lset_t policy)
 {
-	if ((policy & POLICY_IKEV1_DISABLE) == 0 &&
-	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == 0))) {
+	if ((policy & POLICY_IKEV1_DISABLE) == LEMPTY &&
+	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == LEMPTY))) {
 		if (policy & POLICY_AGGRESSIVE) {
 			return aggr_outI1;
 		} else {
 			return main_outI1;
 		}
-
 	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
 		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
 		return ikev2parent_outI1;
-
 	} else {
 		libreswan_log("Neither IKEv1 nor IKEv2 allowed");
 		/*
@@ -273,7 +266,7 @@ void ipsecdoi_initiate(int whack_sock,
 	if (st == NULL) {
 		initiator_function *initiator = pick_initiator(c, policy);
 
-		if (initiator) {
+		if (initiator != NULL) {
 			(void) initiator(whack_sock, c, NULL, policy, try, importance
 #ifdef HAVE_LABELED_IPSEC
 					 , uctx
@@ -428,19 +421,20 @@ bool has_preloaded_public_key(struct state *st)
 bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 {
 	switch (peer->kind) {
+	/* ident types mostly match between IKEv1 and IKEv2 */
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		/* failure mode for initaddr is probably inappropriate address length */
 	{
-		err_t ugh = initaddr(id_pbs->cur, pbs_left(
-					     id_pbs),
-				     peer->kind == ID_IPV4_ADDR ? AF_INET : AF_INET6,
-				     &peer->ip_addr);
+		err_t ugh = initaddr(id_pbs->cur, pbs_left(id_pbs),
+				peer->kind == ID_IPV4_ADDR ? AF_INET : AF_INET6,
+				&peer->ip_addr);
 
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,
-			       "improper %s identification payload: %s",
-			       enum_show(&ident_names, peer->kind), ugh);
+				"improper %s identification payload: %s",
+				enum_show(&ike_idtype_names, peer->kind),
+				ugh);
 			/* XXX Could send notification back */
 			return FALSE;
 		}
@@ -450,17 +444,17 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 	case ID_USER_FQDN:
 		if (memchr(id_pbs->cur, '@', pbs_left(id_pbs)) == NULL) {
 			loglog(RC_LOG_SERIOUS,
-			       "peer's ID_USER_FQDN contains no @: %.*s",
-			       (int) pbs_left(id_pbs),
-			       id_pbs->cur);
+				"peer's ID_USER_FQDN contains no @: %.*s",
+				(int) pbs_left(id_pbs),
+				id_pbs->cur);
 			/* return FALSE; */
 		}
 	/* FALLTHROUGH */
 	case ID_FQDN:
 		if (memchr(id_pbs->cur, '\0', pbs_left(id_pbs)) != NULL) {
 			loglog(RC_LOG_SERIOUS,
-			       "Phase 1 ID Payload of type %s contains a NUL",
-			       enum_show(&ident_names, peer->kind));
+				"Phase 1 (Parent)ID Payload of type %s contains a NUL",
+				enum_show(&ike_idtype_names, peer->kind));
 			return FALSE;
 		}
 
@@ -484,167 +478,9 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 	default:
 		/* XXX Could send notification back */
 		loglog(RC_LOG_SERIOUS,
-		       "Unacceptable identity type (%s) in Phase 1 ID Payload",
-		       enum_show(&ident_names, peer->kind));
+			"Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
+			enum_show(&ike_idtype_names, peer->kind));
 		return FALSE;
-	}
-
-	return TRUE;
-}
-
-bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
-{
-	struct state *const st = md->st;
-	struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
-	const pb_stream *const id_pbs = &id_pld->pbs;
-	struct isakmp_id *const id = &id_pld->payload.id;
-	struct id peer;
-
-	/* I think that RFC2407 (IPSEC DOI) 4.6.2 is confused.
-	 * It talks about the protocol ID and Port fields of the ID
-	 * Payload, but they don't exist as such in Phase 1.
-	 * We use more appropriate names.
-	 * isaid_doi_specific_a is in place of Protocol ID.
-	 * isaid_doi_specific_b is in place of Port.
-	 * Besides, there is no good reason for allowing these to be
-	 * other than 0 in Phase 1.
-	 */
-        if (st->hidden_variables.st_nat_traversal &&
-	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
-	    ((id->isaid_doi_specific_b == 0) ||
-	     (id->isaid_doi_specific_b == pluto_natt_float_port))) {
-		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
-			"accepted with port_floating NAT-T",
-			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
-	} else
-
-	if (!(id->isaid_doi_specific_a == 0 &&
-	      id->isaid_doi_specific_b == 0) &&
-	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
-	      id->isaid_doi_specific_b == IKE_UDP_PORT)) {
-		loglog(RC_LOG_SERIOUS, "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d"
-		       " but are %d/%d (attempting to continue)",
-		       IPPROTO_UDP, IKE_UDP_PORT,
-		       id->isaid_doi_specific_a,
-		       id->isaid_doi_specific_b);
-		/* we have turned this into a warning because of bugs in other vendors
-		 * products. Specifically CISCO VPN3000.
-		 */
-		/* return FALSE; */
-	}
-
-	peer.kind = id->isaid_idtype;
-
-	if (!extract_peer_id(&peer, id_pbs))
-		return FALSE;
-
-	/*
-	 * For interop with SoftRemote/aggressive mode we need to remember some
-	 * things for checking the hash
-	 */
-	st->st_peeridentity_protocol = id->isaid_doi_specific_a;
-	st->st_peeridentity_port = ntohs(id->isaid_doi_specific_b);
-
-	{
-		char buf[IDTOA_BUF];
-
-		idtoa(&peer, buf, sizeof(buf));
-		libreswan_log("%s mode peer ID is %s: '%s'",
-			      aggrmode ? "Aggressive" : "Main",
-			      enum_show(&ident_names, id->isaid_idtype), buf);
-	}
-
-	/* check for certificates */
-	decode_cert(md);
-
-	/* Now that we've decoded the ID payload, let's see if we
-	 * need to switch connections.
-	 * We must not switch horses if we initiated:
-	 * - if the initiation was explicit, we'd be ignoring user's intent
-	 * - if opportunistic, we'll lose our HOLD info
-	 */
-	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
-		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
-			char expect[IDTOA_BUF],
-			     found[IDTOA_BUF];
-
-			idtoa(&st->st_connection->spd.that.id, expect,
-			      sizeof(expect));
-			idtoa(&peer, found, sizeof(found));
-			loglog(RC_LOG_SERIOUS,
-			       "we require peer to have ID '%s', but peer declares '%s'",
-			       expect, found);
-			return FALSE;
-		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-			if (id_kind(&peer) != ID_DER_ASN1_DN) {
-				loglog(RC_LOG_SERIOUS,
-				       "peer ID is not a certificate type");
-				return FALSE;
-			}
-			duplicate_id(&st->st_connection->spd.that.id, &peer);
-		}
-	} else {
-		struct connection *c = st->st_connection;
-		struct connection *r;
-		bool fc = 0;
-		/* check for certificate requests */
-		decode_cr(md, &c->requested_ca);
-
-		r = refine_host_connection(st, &peer, initiator, aggrmode, &fc);
-
-		/* delete the collected certificate requests */
-		free_generalNames(c->requested_ca, TRUE);
-		c->requested_ca = NULL;
-
-		if (r == NULL) {
-			char buf[IDTOA_BUF];
-
-			idtoa(&peer, buf, sizeof(buf));
-			loglog(RC_LOG_SERIOUS,
-			       "no suitable connection for peer '%s'",
-			       buf);
-			return FALSE;
-		}
-
-		DBG(DBG_CONTROL, {
-			    char buf[IDTOA_BUF];
-
-			    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
-					  "%none");
-			    DBG_log("offered CA: '%s'", buf);
-		    });
-
-		if (r != c) {
-			/* apparently, r is an improvement on c -- replace */
-
-			libreswan_log("switched from \"%s\" to \"%s\"",
-				      c->name, r->name);
-			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
-				/* instantiate it, filling in peer's ID */
-				r = rw_instantiate(r, &c->spd.that.host_addr,
-						   NULL,
-						   &peer);
-			}
-
-			st->st_connection = r; /* kill reference to c */
-
-			/* this ensures we don't move cur_connection from NULL to
-			 * something, requiring a reset_cur_connection()
-			 */
-			if (cur_connection == c)
-				set_cur_connection(r);
-
-			connection_discard(c);
-		} else if (c->spd.that.has_id_wildcards) {
-			free_id_content(&c->spd.that.id);
-			c->spd.that.id = peer;
-			c->spd.that.has_id_wildcards = FALSE;
-			unshare_id_content(&c->spd.that.id);
-		} else if (fc) {
-			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-			duplicate_id(&r->spd.that.id, &peer);
-		}
 	}
 
 	return TRUE;

@@ -136,6 +136,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
  * structures to change lots.
  */
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
@@ -366,14 +367,8 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection
 *con_by_name(const char *nm, bool strict);
 
-#define find_host_connection(me, my_port, him, his_port, \
-			     policy) find_host_connection2(__FUNCTION__, me, \
-							   my_port, him, \
-							   his_port, \
-							   policy)
 extern struct connection
-	*find_host_connection2(const char *func,
-		       const ip_address *me, u_int16_t my_port,
+	*find_host_connection(const ip_address *me, u_int16_t my_port,
 		       const ip_address *him, u_int16_t his_port,
 		       lset_t policy),
 	*refine_host_connection(const struct state *st, const struct id *id,

@@ -432,9 +432,10 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 			   "%s",        /* actual script */
 			   ref,
 			   refhim,
-			   (c->policy &
-			    POLICY_SAREF_TRACK_CONNTRACK) ? "conntrack" :
-			   ( (c->policy & POLICY_SAREF_TRACK) ? "yes" : "no"),
+			   (c->policy & POLICY_SAREF_TRACK_CONNTRACK) ?
+			     "conntrack" :
+			   (c->policy & POLICY_SAREF_TRACK) ?
+			     "yes" : "no",
 			   verb, verb_suffix,
 			   common_shell_out_str,
 			   sr->this.updown == NULL ?

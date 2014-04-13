@@ -64,7 +64,6 @@
 
 #include "nat_traversal.h"
 #include "vendor.h"
-#include "udpfromto.h"
 
 #define SEND_NOTIFICATION(t) { \
 		if (st != NULL) \
@@ -748,7 +747,7 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role init)
 
 		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			      enum_show(&ident_names, id->isai_type), buf);
+			      enum_show(&ike_idtype_names, id->isai_type), buf);
 	}
 
 	return TRUE;

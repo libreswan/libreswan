@@ -25,9 +25,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
  */
 
 #include <stdio.h>
@@ -43,7 +40,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
@@ -82,8 +78,6 @@
 #include "pluto_crypt.h"
 #include "ikev1.h"
 #include "ikev1_continuations.h"
-
-#include "lswcrypto.h"
 
 #include "xauth.h"
 
@@ -567,26 +561,8 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
  * HDR;SA --> HDR;SA
  */
 
-#ifdef DMALLOC
-static unsigned long dm_mark = 0;
-static unsigned long dm_initialized = 0;
-#endif
-
 stf_status main_inI1_outR1(struct msg_digest *md)
 {
-#ifdef DMALLOC
-	if (dm_initialized != 0) {
-		/*
-		 * log unfreed pointers that have been added to the heap
-		 * since mark
-		 */
-		dmalloc_log_changed(dm_mark, 1, 0, 1);
-		dmalloc_log_stats();
-	}
-	dm_mark = dmalloc_mark();
-	dm_initialized = 1;
-#endif
-
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	struct state *st;
 	struct connection *c;
@@ -1183,7 +1159,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
-	decode_cr(md, &st->st_connection->requested_ca);
+	ikev1_decode_cr(md, &st->st_connection->requested_ca);
 
 	if (st->st_connection->requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -1329,7 +1305,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 	/* CR out */
 	if (send_cr) {
 		if (st->st_connection->kind == CK_PERMANENT) {
-			if (!build_and_ship_CR(CERT_X509_SIGNATURE,
+			if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
 						st->st_connection->spd.that.ca,
 						&md->rbody, ISAKMP_NEXT_NONE))
 				return STF_INTERNAL_ERROR;
@@ -1340,7 +1316,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 				generalName_t *gn;
 
 				for (gn = ca; gn != NULL; gn = gn->next) {
-					if (!build_and_ship_CR(
+					if (!ikev1_build_and_ship_CR(
 							CERT_X509_SIGNATURE,
 							gn->name,
 							&md->rbody,
@@ -1351,7 +1327,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 				}
 				free_generalNames(ca, FALSE);
 			} else {
-				if (!build_and_ship_CR(CERT_X509_SIGNATURE,
+				if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
 							empty_chunk,
 							&md->rbody,
 							ISAKMP_NEXT_NONE))
@@ -1430,7 +1406,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 
 static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 				u_int16_t auth,
-				enum ipsec_cert_type certtype,
+				enum ike_cert_type certtype,
 				enum certpolicy policy,
 				bool gotcertrequest,
 				bool send_cert)
@@ -1443,7 +1419,7 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 
 		DBG_log("  I have RSA key: %s cert.type: %s ",
 			enum_showb(&oakley_auth_names, auth, esb, sizeof(esb)),
-			enum_show(&cert_type_names, certtype));
+			enum_show(&ike_cert_type_names, certtype));
 	});
 
 	DBG(DBG_CONTROL,
@@ -1499,7 +1475,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	finish_dh_secretiv(st, r);
 
 	/* decode certificate requests */
-	decode_cr(md, &requested_ca);
+	ikev1_decode_cr(md, &requested_ca);
 
 	if (requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
@@ -1510,15 +1486,14 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	 * to always send one.
 	 */
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.type != CERT_NONE &&
+		mycert.ty != CERT_NONE &&
 		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
 		  st->hidden_variables.st_got_certrequest) ||
-		 st->st_connection->spd.this.sendcert == cert_alwayssend ||
-		 st->st_connection->spd.this.sendcert == cert_forcedtype);
+		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
-			mycert.type,
+			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
 			send_cert);
@@ -1605,7 +1580,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		struct isakmp_cert cert_hd;
 		cert_hd.isacert_np =
 			(send_cr) ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.type;
+		cert_hd.isacert_type = mycert.ty;
 
 		libreswan_log("I am sending my cert");
 
@@ -1615,21 +1590,16 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 					&cert_pbs))
 			return STF_INTERNAL_ERROR;
 
-		if (mycert.forced) {
-			if (!out_chunk(mycert.u.blob, &cert_pbs,
-					"forced CERT"))
-				return STF_INTERNAL_ERROR;
-		} else {
-			if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
-				return STF_INTERNAL_ERROR;
-		}
+		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
+			return STF_INTERNAL_ERROR;
+
 		close_output_pbs(&cert_pbs);
 	}
 
 	/* CR out */
 	if (send_cr) {
 		libreswan_log("I am sending a certificate request");
-		if (!build_and_ship_CR(mycert.type,
+		if (!ikev1_build_and_ship_CR(mycert.ty,
 					st->st_connection->spd.that.ca,
 					&md->rbody, ISAKMP_NEXT_SIG))
 			return STF_INTERNAL_ERROR;
@@ -1825,7 +1795,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 	 * ID Payload in.
 	 * Note: this may switch the connection being used!
 	 */
-	if (!aggrmode && !decode_peer_id(md, initiator, FALSE))
+	if (!aggrmode && !ikev1_decode_peer_id(md, initiator, FALSE))
 		return STF_FAIL + INVALID_ID_INFORMATION;
 
 	/*
@@ -2075,14 +2045,14 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	mycert = st->st_connection->spd.this.cert;
 
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.type != CERT_NONE &&
+		mycert.ty != CERT_NONE &&
 		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
 		  st->hidden_variables.st_got_certrequest) ||
 		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
-			mycert.type,
+			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
 			send_cert);
@@ -2134,7 +2104,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 		struct isakmp_cert cert_hd;
 		cert_hd.isacert_np = ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.type;
+		cert_hd.isacert_type = mycert.ty;
 
 		libreswan_log("I am sending my cert");
 
