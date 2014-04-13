@@ -182,7 +182,7 @@ static bool find_last_lease(struct connection *c, u_int32_t *index)
 		DBG_log("in %s:%d find old addresspool lease for '%s'",
 			__func__, __LINE__, thatid));
 
-	while ( (p = *pp) !=  NULL) {
+	while ((p = *pp) !=  NULL) {
 		if ((p->thatid.kind != ID_NONE) &&
 			same_id(&p->thatid, &c->spd.that.id)) {
 			DBG(DBG_CONTROLMORE,
@@ -234,7 +234,7 @@ err_t get_addr_lease(struct connection *c, struct internal_addr *ia)
 
 	r = find_last_lease(c, &i);
 	if (!r) {
-		while ( (p = *pp) !=  NULL) {
+		while ((p = *pp) !=  NULL) {
 			i = p->index;
 			if (i - i_p > 1)
 				break;
