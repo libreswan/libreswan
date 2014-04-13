@@ -53,7 +53,6 @@
 #include "x509.h"
 #include "x509more.h"
 #include "certs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "packet.h"
@@ -122,12 +121,14 @@ libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
 static void free_pluto_main()
 {
 	/* Can be NULL if not specified as pluto argument */
+	DBG(DBG_CONTROLMORE, DBG_log("free_pluto_main going to free globals"));
 	pfreeany(ipsecconf);
 	pfreeany(ipsecdir);
-	pfreeany(coredir);
+	pfree(coredir);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
 	pfreeany(pluto_vendorid);
+	DBG(DBG_CONTROLMORE, DBG_log("free_pluto_main done"));
 }
 
 /** usage - print help messages
@@ -426,7 +427,14 @@ int main(int argc, char **argv)
 	bool log_to_stderr_desired = FALSE;
 	bool log_to_file_desired = FALSE;
 
-	coredir = NULL;
+	/* MUST BE BEFORE ANY allocs */
+#ifdef LEAK_DETECTIVE
+	leak_detective = TRUE;
+#else
+	leak_detective = FALSE;
+#endif
+
+	coredir = clone_str("/var/run/pluto", "coredir in main()");
 
 	/* set up initial defaults that need a cast */
 	pluto_shared_secrets_file =
@@ -437,12 +445,6 @@ int main(int argc, char **argv)
 	/** Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
 
-	/* MUST BE BEFORE ANY allocs */
-#ifdef LEAK_DETECTIVE
-	leak_detective = TRUE;
-#else
-	leak_detective = FALSE;
-#endif
 
 
 	libreswan_passert_fail = passert_fail;
@@ -597,7 +599,8 @@ int main(int argc, char **argv)
 			break;  /* not actually reached */
 
 		case 'C': /* --coredir */
-			coredir = clone_str(optarg, "coredir");
+			pfree(coredir);
+			coredir = clone_str(optarg, "coredir via getopt");
 			continue;
 
 		case 'S': /* --statsdir */
@@ -900,7 +903,10 @@ int main(int argc, char **argv)
 				       cfg->setup.strings[KSF_PERPEERDIR]);     /* --perpeerlogbase */
 			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];    /* --perpeerlog */
 			no_retransmits = !cfg->setup.options[KBF_RETRANSMITS];  /* --noretransmits */
-			set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
+			if(cfg->setup.strings[KSF_DUMPDIR]) {
+				pfree(coredir);
+				coredir = clone_str(cfg->setup.strings[KSF_DUMPDIR], "coredir via --config"); /* --dumpdir */
+			}
 			set_cfg_string(&pluto_vendorid, cfg->setup.strings[KSF_MYVENDORID]); /* --vendorid */
 			/* no config option: pluto_adns_option */
 
@@ -975,9 +981,6 @@ int main(int argc, char **argv)
 	nhelpers = 0;
 #endif
 
-	/* default coredir to location compatible with SElinux */
-	if (!coredir)
-		coredir = clone_str("/var/run/pluto", "coredir");
 	if (chdir(coredir) == -1) {
 		int e = errno;
 
@@ -1212,8 +1215,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (coredir)
-		libreswan_log("core dump dir: %s", coredir);
+	libreswan_log("core dump dir: %s", coredir);
 	if (pluto_shared_secrets_file)
 		libreswan_log("secrets file: %s", pluto_shared_secrets_file);
 
@@ -1315,25 +1317,20 @@ int main(int argc, char **argv)
 	init_fetch();
 #endif
 
-	/* loading X.509 CA certificates from disk (/etc/ipsec.d/cacerts/) */
+	/*
+	 * Loading X.509 CA certificates from disk (/etc/ipsec.d/cacerts/)
+	 * This method will go away in favor of NSS CAcerts only
+	 */
 	load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
 
-#if 0
-	/* unused */
-	/* loading X.509 AA certificates */
-	load_authcerts("AA cert", oco->aacerts_dir, AUTH_AA);
-#endif
-
-	/*Loading CA certs from NSS DB*/
+	/* Loading CA certs from NSS DB */
 	load_authcerts_from_nss("CA cert",  AUTH_CA);
 
-	/* loading X.509 CRLs - must happen after CAs are loaded */
+	/* 
+	 * Loading X.509 CRLs - must happen after CAs are loaded
+	 * This method will go away in favor of NSS CRLs only
+	 */
 	load_crls();
-
-#if 0
-	/* loading attribute certificates from disk (should prob be removed) */
-	load_acerts();
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
@@ -1367,7 +1364,6 @@ void exit_pluto(int status)
 #endif
 	free_authcerts();       /* free chain of X.509 authority certificates */
 	free_crls();            /* free chain of X.509 CRLs */
-	free_acerts();          /* free chain of X.509 attribute certificates */
 
 	lsw_conf_free_oco();    /* free global_oco containing path names */
 

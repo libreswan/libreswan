@@ -39,7 +39,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "log.h"

@@ -48,7 +48,6 @@
 #include "x509.h"
 #include "x509more.h"
 #include "certs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "whack.h"              /* needs connections.h */
@@ -430,14 +429,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 		load_authcerts_from_nss("CA cert", AUTH_CA);
 	}
 
-	if (msg.whack_reread & REREAD_AACERTS)
-		load_authcerts("AA cert", oco->aacerts_dir, AUTH_AA);
-
-	if (msg.whack_reread & REREAD_ACERTS)
-		load_acerts();
-
 	if (msg.whack_reread & REREAD_CRLS)
-
 		load_crls();
 
 	if (msg.whack_list & LIST_PSKS)
@@ -445,15 +437,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_list & LIST_CERTS)
 		list_certs(msg.whack_utc);
-
-	if (msg.whack_list & LIST_AACERTS)
-		list_authcerts("AA", AUTH_AA, msg.whack_utc);
-
-	if (msg.whack_list & LIST_ACERTS)
-		list_acerts(msg.whack_utc);
-
-	if (msg.whack_list & LIST_GROUPS)
-		list_groups(msg.whack_utc);
 
 	if (msg.whack_list & LIST_CACERTS)
 		list_authcerts("CA", AUTH_CA, msg.whack_utc);

@@ -52,7 +52,6 @@
 #include "secrets.h"
 
 #include "defs.h"
-#include "ac.h"
 #include "connections.h" /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -84,24 +83,6 @@
 struct connection *connections = NULL;
 
 struct connection *unoriented_connections = NULL;
-
-
-static void unshare_ietfAttrList(ietfAttrList_t **listp)
-{
-	ietfAttrList_t *list = *listp;
-
-	while (list != NULL) {
-		ietfAttrList_t *el =
-			alloc_thing(ietfAttrList_t, "ietfAttrList");
-
-		el->attr = list->attr;
-		el->attr->count++;
-		el->next = NULL;
-		*listp = el;
-		listp = &el->next;
-		list = list->next;
-	}
-}
 
 /*
  * Find a connection by name.
@@ -218,7 +199,6 @@ static void delete_end(struct end *e)
 	pfreeany(e->updown);
 	freeanychunk(e->ca);
 	release_cert(e->cert);
-	free_ietfAttrList(e->groups);
 	pfreeany(e->host_addr_name);
 }
 
@@ -888,9 +868,6 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 	/* does id has wildcards? */
 	dst->has_id_wildcards = id_count_wildcards(&dst->id) > 0;
-
-	/* decode group attributes, if any */
-	decode_groups(src->groups, &dst->groups);
 
 	/* the rest is simple copying of corresponding fields */
 	dst->host_type = src->host_type;
@@ -1571,8 +1548,6 @@ void add_connection(const struct whack_message *wm)
 			tmp_spd->that.cert.ty = CERT_NONE;
 			tmp_spd->this.ca.ptr = NULL;
 			tmp_spd->that.ca.ptr = NULL;
-			tmp_spd->this.groups = NULL;
-			tmp_spd->that.groups = NULL;
 			tmp_spd->this.virt = NULL;
 			tmp_spd->that.virt = NULL;
 			tmp_spd->next = NULL;
@@ -1728,8 +1703,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		d->spd.that.has_id_wildcards = FALSE;
 	}
 	unshare_connection_strings(d);
-	unshare_ietfAttrList(&d->spd.this.groups);
-	unshare_ietfAttrList(&d->spd.that.groups);
 
 	d->kind = CK_INSTANCE;
 
