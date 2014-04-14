@@ -306,8 +306,7 @@ static bool load_setup(struct starter_config *cfg,
 			/* all treated as strings for now */
 			assert(kw->keyword.keydef->field <
 			       sizeof(cfg->setup.strings));
-			if (cfg->setup.strings[kw->keyword.keydef->field])
-				free(cfg->setup.strings[kw->keyword.keydef->
+			pfreeany(cfg->setup.strings[kw->keyword.keydef->
 							field]);
 			cfg->setup.strings[kw->keyword.keydef->field] =
 				clone_str(kw->string, "kt_loose_enum kw->string");
@@ -437,8 +436,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		assert(end->strings[KSCF_IP] != NULL);
 
 		if (end->strings[KSCF_IP][0] == '%') {
-			if (end->iface)
-				free(end->iface);
+			pfree(end->iface);
 			end->iface = clone_str(end->strings[KSCF_IP] + 1, "KH_IPADDR end->iface");
 			if (!starter_iface_find(end->iface, family,
 					       &end->addr,
