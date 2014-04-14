@@ -58,47 +58,56 @@ chunk_t get_mycert(cert_t cert)
 
 /*
  * load a coded key or certificate file with autodetection
- * of binary DER or base64 PEM ASN.1 formats
+ * of binary DER or base64 PEM ASN.1 formats.
+ * ??? Some error messages are suppressed if !verbose.
+ * On success, returns TRUE, leaving a dynamically allocated blob in *blob.
+ * On failure, returns FALSE.
  */
 bool load_coded_file(const char *filename,
-		int verbose,
+		bool verbose,
 		const char *type, chunk_t *blob)
 {
 	err_t ugh = NULL;
-	FILE *fd;
+	FILE *fd = fopen(filename, "r");
 
-	fd = fopen(filename, "r");
-	if (fd) {
-		size_t bytes;
+	if (fd == NULL) {
+		libreswan_log("  could not open %s file '%s'", type, filename);
+	} else {
+		long sz_ftell;
+		size_t sz_fread;
+
 		fseek(fd, 0, SEEK_END);
-		blob->len = ftell(fd);
+		sz_ftell = ftell(fd);
 
-		if (blob->len <= 0) {
+		/* a cert file larger than 50K seems wrong */
+		if (sz_ftell <= 0 || sz_ftell > 50000) {
 			if (verbose) {
-				libreswan_log("  discarded %s file '%s', bad size %zu bytes",
-					type, filename, blob->len);
+				libreswan_log("  discarded %s file '%s', bad size %lu bytes",
+					type, filename, sz_ftell);
 			}
 			fclose(fd);
 			return FALSE;
 		}
 
 		rewind(fd);
-		blob->ptr = alloc_bytes(blob->len, type);
-		bytes = fread(blob->ptr, 1, blob->len, fd);
-		if (bytes != blob->len) {
-			libreswan_log("  WARNING: could not fully read certificate-blob filename '%s'\n", filename);
-		}
+		setchunk(*blob, alloc_bytes(sz_ftell, type), sz_ftell);
+		sz_fread = fread(blob->ptr, 1, blob->len, fd);
 		fclose(fd);
+		if (sz_fread != blob->len) {
+			libreswan_log("  could not read complete certificate-blob from %s file '%s'\n",
+				type, filename);
+			freeanychunk(*blob);
+			return FALSE;
+		}
 
 		if (verbose)
-			libreswan_log("  loaded %s file '%s' (%zu bytes)",
-				type, filename, bytes);
+			libreswan_log("  loaded %s file '%s' (%ld bytes)",
+				type, filename, sz_ftell);
 
 		/* try DER format */
 		if (is_asn1(*blob)) {
 			DBG(DBG_PARSING,
-				DBG_log("  file coded in DER format");
-				);
+				DBG_log("  file coded in DER format"));
 			return TRUE;
 		}
 
@@ -108,8 +117,7 @@ bool load_coded_file(const char *filename,
 		if (ugh == NULL) {
 			if (is_asn1(*blob)) {
 				DBG(DBG_PARSING,
-					DBG_log("  file coded in PEM format");
-					);
+					DBG_log("  file coded in PEM format"));
 				return TRUE;
 			}
 			ugh = "file coded in unknown format, discarded";
@@ -118,19 +126,17 @@ bool load_coded_file(const char *filename,
 		/* a conversion error has occured */
 		if (verbose)
 			libreswan_log("  %s", ugh);
-		pfree(blob->ptr);
-		*blob = empty_chunk;
-	} else {
-		libreswan_log("  could not open %s file '%s'", type, filename);
+		freeanychunk(*blob);
 	}
 	return FALSE;
 }
 
 /*
  *  Loads a X.509 or certificate
+ * ??? Some error messages are suppressed if !verbose.
  */
 bool load_cert(const char *filename,
-	int verbose,
+	bool verbose,
 	const char *label, cert_t *cert)
 {
 	chunk_t blob = empty_chunk;
@@ -207,40 +213,40 @@ bool load_cert_from_nss(const char *nssHostCertNickName,
 			"    could not open %s with nick name '%s' in NSS DB",
 			label, nssHostCertNickName);
 		return FALSE;
-	} else {
-		DBG(DBG_CRYPT,
-			DBG_log("Found pointer to cert %s now giving it to further processing",
-				nssHostCertNickName));
 	}
 
-	blob.len = nssCert->derCert.len;
-	blob.ptr = alloc_bytes(blob.len, label);
-	memcpy(blob.ptr, nssCert->derCert.data, blob.len);
+	DBG(DBG_CRYPT,
+		DBG_log("Found pointer to cert %s now giving it to further processing",
+			nssHostCertNickName));
+
+	/* blob's memory will be owned by cert (if successful) */
+	clonetochunk(blob, nssCert->derCert.data, nssCert->derCert.len, label);
 
 	if (!is_asn1(blob)) {
 		if (verbose)
 			libreswan_log("  cert read from NSS db is not in DER format");
-		pfree(blob.ptr);
 		/* failure */
+		pfree(blob.ptr);
+		return FALSE;
 	} else {
+		x509cert_t *x509cert = alloc_thing(x509cert_t, "x509cert");
+
 		DBG(DBG_PARSING,
 			DBG_log("file coded in DER format"));
 
-		x509cert_t *x509cert = alloc_thing(x509cert_t, "x509cert");
-
 		*x509cert = empty_x509cert;
 
-		if (!parse_x509cert(blob, 0, x509cert)) {
+		if (!parse_x509cert(blob, 0, x509cert /* ownership! */)) {
 			libreswan_log("  error in X.509 certificate");
+			/* free blob and *x509cert and any dangly bits */
 			free_x509cert(x509cert);
+			return FALSE;	/* failure */
 		} else {
 			cert->ty = CERT_X509_SIGNATURE;
 			cert->u.x509 = x509cert;
 			return TRUE;	/* success! */
 		}
 	}
-
-	return FALSE;
 }
 
 void load_authcerts_from_nss(const char *type, u_char auth_flags)
