@@ -196,10 +196,12 @@ void update_host_pairs(struct connection *c)
 static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
-	pfreeany(e->updown);
 	freeanychunk(e->ca);
 	release_cert(e->cert);
+	pfreeany(e->updown);
+	pfreeany(e->cert_filename);
 	pfreeany(e->host_addr_name);
+	pfreeany(e->xauth_password);
 	pfreeany(e->xauth_name);
 }
 
