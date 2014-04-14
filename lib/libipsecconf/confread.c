@@ -1320,12 +1320,12 @@ static void conn_default(struct starter_conn *conn,
 
 	conn->left.iface = clone_str(def->left.iface, "conn default left iface");
 	conn->left.id = clone_str(def->left.id, "conn default leftid");
-	conn->left.rsakey1 = clone_str(def->left.rsakey1, "conn default left rsakey1");
-	conn->left.rsakey2 = clone_str(def->left.rsakey2, "conn default left rsakey2");
+	conn->left.rsakey1 = clone_thing(def->left.rsakey1, "conn default left rsakey1");
+	conn->left.rsakey2 = clone_thing(def->left.rsakey2, "conn default left rsakey2");
 	conn->right.iface = clone_str(def->right.iface, "conn default right iface");
 	conn->right.id = clone_str(def->right.id, "conn default rightid");
-	conn->right.rsakey1 = clone_str(def->right.rsakey1, "conn default right rsakey1");
-	conn->right.rsakey2 = clone_str(def->right.rsakey2, "conn default right rsakey2");
+	conn->right.rsakey1 = clone_thing(def->right.rsakey1, "conn default right rsakey1");
+	conn->right.rsakey2 = clone_thing(def->right.rsakey2, "conn default right rsakey2");
 
 	for (i = 0; i < KSCF_MAX; i++) {
 		conn->left.strings[i] = clone_str(def->left.strings[i], "conn default left item");
