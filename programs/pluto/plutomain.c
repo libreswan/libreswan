@@ -605,6 +605,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'S': /* --statsdir */
+			pfreeany(pluto_stats_binary);
 			pluto_stats_binary = clone_str(optarg, "statsbin");
 			continue;
 
@@ -626,27 +627,21 @@ int main(int argc, char **argv)
 				    count < -1)
 					usage("<nhelpers> must be a positive number, 0 or -1");
 
-
 				nhelpers = count;
 			}
 			continue;
 
 #ifdef HAVE_LABELED_IPSEC
-		case 'w': /* --secctx_attr_value*/
-			if (optarg == NULL || !isdigit(optarg[0]))
-				usage("missing (positive integer) value of secctx_attr_value (needed only if using labeled ipsec)");
-
-
+		case 'w': /* --secctx_attr_value */
 			{
 				char *endptr;
 				long value = strtol(optarg, &endptr, 0);
 
 				if (*endptr != '\0' || endptr == optarg ||
-				    (value != SECCTX && value != 10) )
-					usage("<secctx_attr_value> must be a positive number (32001 by default, 10 for backward compatibility, or any other future number assigned by IANA)");
+				    (value != SECCTX && value != 10))
+					usage("<secctx_attr_value> must be a positive number (32001 by default, 10 for backward compatibility)");
 
-
-				secctx_attr_value = (u_int16_t)value;
+				secctx_attr_value = value & ISAKMP_ATTR_RTYPE_MASK;
 			}
 			continue;
 #endif
@@ -683,7 +678,7 @@ int main(int argc, char **argv)
 			ip_address lip;
 			err_t e = ttoaddr(optarg, 0, 0, &lip);
 
-			if (e) {
+			if (e != NULL) {
 				libreswan_log(
 					"invalid listen argument ignored: %s\n",
 					e);
@@ -737,7 +732,6 @@ int main(int argc, char **argv)
 				    interval <= 0)
 					usage("<interval-time> must be a positive number");
 
-
 				crl_check_interval = interval;
 			}
 			continue;
@@ -767,7 +761,6 @@ int main(int argc, char **argv)
 				    port <= 0 || port > 0x10000)
 					usage("<port-number> must be a number between 1 and 65535");
 
-
 				pluto_port = port;
 			}
 			continue;
@@ -783,24 +776,32 @@ int main(int argc, char **argv)
 				    port <= 0 || port > 0x10000)
 					usage("<port-number> must be a number between 1 and 65535");
 
-
 				pluto_natt_float_port = port;
 			}
 			continue;
 
 		case 'b': /* --ctlbase <path> */
+			/*
+			 * ??? work to be done here:
+			 *
+			 * snprintf returns the required space if there
+			 * isn't enough, not -1.
+			 * -1 indicates another kind of error.
+			 *
+			 * This appears to be the only place where the
+			 * ctlbase value is used yet it is set elsewhere.
+			 * (This isn't clear -- it may be OK.)
+			 */
 			ctlbase = optarg;
 			if (snprintf(ctl_addr.sun_path,
 				     sizeof(ctl_addr.sun_path),
 				     "%s%s", ctlbase, CTL_SUFFIX) == -1)
 				usage("<path>" CTL_SUFFIX " too long for sun_path");
 
-
 			if (snprintf(info_addr.sun_path,
 				     sizeof(info_addr.sun_path),
 				     "%s%s", ctlbase, INFO_SUFFIX) == -1)
 				usage("<path>" INFO_SUFFIX " too long for sun_path");
-
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
 				     "%s%s", ctlbase, LOCK_SUFFIX) == -1)
@@ -863,7 +864,7 @@ int main(int argc, char **argv)
 			struct starter_config *cfg = read_cfg_file(optarg);
 
 			set_cfg_string(&pluto_log_file,
-				       cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
+				       cfg->setup.strings[KSF_PLUTOSTDERRLOG]);	/* leak */
 
 			fork_desired = cfg->setup.options[KBF_PLUTOFORK]; /* plutofork= */
 			log_with_timestamp =
@@ -925,8 +926,10 @@ int main(int argc, char **argv)
 			secctx_attr_value = cfg->setup.options[KBF_SECCTX];
 #endif
 			base_debugging = cfg->setup.options[KBF_PLUTODEBUG];
+
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
-			if (protostack == NULL || *protostack == 0) {
+
+			if (protostack == NULL || *protostack == '\0') {
 				kern_interface = USE_NETKEY;
 			} else if (streq(protostack, "none")) {
 				kern_interface = NO_KERNEL;
@@ -1384,7 +1387,7 @@ void show_setup_plutomain()
 		pluto_shared_secrets_file,
 		oco->confddir,
 		coredir,
-		pluto_stats_binary ? pluto_stats_binary : "unset");
+		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
 	whack_log(RC_COMMENT, "sbindir=%s, libexecdir=%s",
 		IPSEC_SBINDIR,
