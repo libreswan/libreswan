@@ -107,7 +107,7 @@ const struct lsw_conf_options *lsw_init_options(void)
 }
 
 /* This is only used in testing/crypto (and formerly in testing/lib/libpluto) */
-const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir)
+void lsw_init_rootdir(const char *root_dir)
 {
 	if (!setup)
 		lsw_conf_setdefault();
@@ -115,11 +115,9 @@ const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir)
 	global_oco.rootdir = clone_str(root_dir, "override /");
 	lsw_conf_calculate(&global_oco);
 	setup = TRUE;
-
-	return &global_oco;
 }
 
-const struct lsw_conf_options *lsw_init_ipsecdir(const char *ipsec_dir)
+void lsw_init_ipsecdir(const char *ipsec_dir)
 {
 	if (!setup)
 		lsw_conf_setdefault();
@@ -128,8 +126,6 @@ const struct lsw_conf_options *lsw_init_ipsecdir(const char *ipsec_dir)
 	setup = TRUE;
 
 	libreswan_log("adjusting ipsec.d to %s", global_oco.confddir);
-
-	return &global_oco;
 }
 
 secuPWData *lsw_return_nss_password_file_info(void)

@@ -106,10 +106,6 @@ const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 static bool fork_desired = TRUE;
 
-/* used for 'ipsec status' */
-static char *ipsecconf = NULL;
-static char *ipsecdir = NULL;
-
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
@@ -121,8 +117,6 @@ libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
 static void free_pluto_main()
 {
 	/* Some values can be NULL if not specified as pluto argument */
-	pfreeany(ipsecconf);
-	pfreeany(ipsecdir);
 	pfree(coredir);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
@@ -427,12 +421,12 @@ int main(int argc, char **argv)
 		int i;
 
 		/* MUST BE BEFORE ANY allocs */
-		for (i = 0; i < argc; ++i) {
+		for (i = 1; i < argc; ++i) {
 			if (streq(argv[i], "--leak_detective"))
 				leak_detective = TRUE;
 		}
 	}
-   
+
 	coredir = clone_str("/var/run/pluto", "coredir in main()");
 
 	/* set up initial defaults that need a cast */
@@ -443,8 +437,6 @@ int main(int argc, char **argv)
 
 	/** Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
-
-
 
 	libreswan_passert_fail = passert_fail;
 
@@ -604,8 +596,9 @@ int main(int argc, char **argv)
 			 * we need to enable it before the first alloc()
 			 * We just need to eat the option here
 			 */
+			passert(leak_detective);
 			continue;
-			
+
 		case 'C': /* --coredir */
 			pfree(coredir);
 			coredir = clone_str(optarg, "coredir via getopt");
@@ -819,9 +812,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'f': /* --ipsecdir <ipsec-dir> */
-			(void)lsw_init_ipsecdir(optarg);
-			/* Keep a copy of the filename so we can show it in ipsec status */
-			ipsecdir = clone_str(optarg, "ipsecdir filename");
+			lsw_init_ipsecdir(optarg);
 			continue;
 
 		case 'a': /* --adns <pathname> */
@@ -865,9 +856,6 @@ int main(int argc, char **argv)
 
 		case 'z': /* --config */
 		{
-			/* Keep a copy of the filename so we can show it in ipsec status */
-			ipsecconf = clone_str(optarg, "ipsecconf filename");
-
 			/* Config struct to variables mapper. This will overwrite
 			 * all previously set options. Keep this in the same order as
 			 * long_opts[] is.
@@ -901,12 +889,7 @@ int main(int argc, char **argv)
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
 			    *cfg->setup.strings[KSF_IPSECDIR] != 0) {
 				lsw_init_ipsecdir(cfg->setup.strings[KSF_IPSECDIR]);       /* --ipsecdir */
-				/* Keep a copy of the filename so we can show it in ipsec status */
-				ipsecdir = alloc_bytes(strlen(cfg->setup.strings[KSF_IPSECDIR])+1,
-							"ipsecdir filename");
-				strncpy(ipsecdir,cfg->setup.strings[KSF_IPSECDIR],
-					strlen(cfg->setup.strings[KSF_IPSECDIR]));
-				}
+			}
 			set_cfg_string(&base_perpeer_logdir,
 				       cfg->setup.strings[KSF_PERPEERDIR]);     /* --perpeerlogbase */
 			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];    /* --perpeerlog */
@@ -1332,7 +1315,7 @@ int main(int argc, char **argv)
 	/* Loading CA certs from NSS DB */
 	load_authcerts_from_nss("CA cert",  AUTH_CA);
 
-	/* 
+	/*
 	 * Loading X.509 CRLs - must happen after CAs are loaded
 	 * This method will go away in favor of NSS CRLs only
 	 */

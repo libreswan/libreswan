@@ -48,8 +48,8 @@ typedef struct {
 
 extern const struct lsw_conf_options *lsw_init_options(void);
 extern void lsw_conf_free_oco(void);
-extern const struct lsw_conf_options *lsw_init_ipsecdir(const char *ipsec_dir);
-extern const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir);
+extern void lsw_init_ipsecdir(const char *ipsec_dir);
+extern void lsw_init_rootdir(const char *root_dir);
 
 extern secuPWData *lsw_return_nss_password_file_info(void);
 extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);
