@@ -29,12 +29,6 @@
 #include "constants.h"
 #include "lswlog.h"
 
-/*
- * leave enabled so support functions are always in libswan, and
- * pluto can be recompiled with just the leak detective changes
- * ??? this seems dangerous and stupid
- */
-#define LEAK_DETECTIVE
 #include "lswalloc.h"
 
 bool leak_detective = FALSE;	/* must not change after first alloc! */
@@ -51,7 +45,7 @@ void set_alloc_exit_log_func(exit_log_func_t func)
 /*
  * memory allocation
  *
- * LEAK_DETECTIVE puts a wrapper around each allocation and maintains
+ * --leak_detective puts a wrapper around each allocation and maintains
  * a list of live ones.  If a dead one is freed, an assertion MIGHT fail.
  * If the live list is currupted, that will often be detected.
  * In the end, report_leaks() is called, and the names of remaining
@@ -159,7 +153,6 @@ void pfree(void *ptr)
 	}
 }
 
-#ifdef LEAK_DETECTIVE
 void report_leaks(void)
 {
 	union mhdr *p,
@@ -197,7 +190,6 @@ void report_leaks(void)
 		libreswan_log("leak detective found no leaks");
 
 }
-#endif	/* !LEAK_DETECTIVE */
 
 void *alloc_bytes(size_t size, const char *name)
 {

@@ -52,7 +52,6 @@
 #include "secrets.h"
 
 #include "defs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"

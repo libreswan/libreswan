@@ -174,7 +174,6 @@ struct end {
 	cert_t cert;                    /* end certificate */
 
 	chunk_t ca;                     /* CA distinguished name */
-	struct ietfAttrList *groups;    /* access control groups */
 
 	struct virtual_t *virt;
 

@@ -25,11 +25,6 @@
 # include <nss.h>
 # include <pk11pub.h>
 
-struct paththing {
-	char    *path;
-	size_t path_space;
-};
-
 struct lsw_conf_options {
 	char *rootdir;                  /* default is "" --- used for testing */
 	char *confdir;                  /* "/etc" */
@@ -37,12 +32,8 @@ struct lsw_conf_options {
 	char *confddir;                 /* "/etc/ipsec.d" */
 	char *vardir;                   /* "/var/run/pluto" */
 	char *policies_dir;             /* "/etc/ipsec.d/policies" */
-	char *acerts_dir;               /* "/etc/ipsec.d/acerts" */
 	char *cacerts_dir;              /* "/etc/ipsec.d/cacerts" */
 	char *crls_dir;                 /* "/etc/ipsec.d/crls" */
-	char *private_dir;              /* "/etc/ipsec.d/private" */
-	char *certs_dir;                /* "/etc/ipsec.d/certs" */
-	char *aacerts_dir;              /* "/etc/ipsec.d/aacerts" */
 };
 
 typedef struct {

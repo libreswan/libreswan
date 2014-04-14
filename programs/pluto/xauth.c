@@ -2271,9 +2271,6 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					tmp_spd->this.ca.ptr = NULL;
 					tmp_spd->that.ca.ptr = NULL;
 
-					tmp_spd->this.groups = NULL;
-					tmp_spd->that.groups = NULL;
-
 					tmp_spd->this.virt = NULL;
 					tmp_spd->that.virt = NULL;
 

@@ -32,7 +32,6 @@
 
 /*
  * To obsolete or convert to runtime options:
- * ALG_PATCH
  * ALLOW_MICROSOFT_BAD_PROPOSAL
  * EMIT_ISAKMP_SPI
  * IPSEC_CONNECTION_LIMIT
@@ -49,7 +48,6 @@
  * TEST_INDECENT_PROPOSAL
  * USE_3DES USE_AES USE_MD5 USE_SERPENT USE_SHA1 USE_SHA2 USE_TWOFISH
  * USE_KEYRR
- * VIRTUAL_IP
  */
 
 static const char *const kern_interface_name[] = {
