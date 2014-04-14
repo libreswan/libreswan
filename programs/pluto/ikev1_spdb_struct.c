@@ -196,7 +196,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 static bool out_attr(int type,
 	      unsigned long val,
 	      struct_desc *attr_desc,
-	      enum_names **attr_val_descs,
+	      enum_names *const *attr_val_descs,
 	      pb_stream *pbs)
 {
 	struct isakmp_attribute attr;
@@ -358,7 +358,7 @@ bool out_sa(pb_stream *outs,
 			struct isakmp_proposal proposal;
 			struct_desc *trans_desc;
 			struct_desc *attr_desc;
-			enum_names **attr_val_descs;
+			enum_names *const *attr_val_descs;
 			unsigned int tn;
 			bool tunnel_mode;
 

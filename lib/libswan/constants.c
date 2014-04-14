@@ -747,7 +747,7 @@ enum_names oakley_attr_names = {
 static enum_names oakley_prf_names;	/* forward declaration */
 static enum_names oakley_group_type_names;	/* forward declaration */
 
-enum_names *oakley_attr_val_descs[] = {
+enum_names *const oakley_attr_val_descs[] = {
 	NULL,	/* (none) */
 	&oakley_enc_names,	/* OAKLEY_ENCRYPTION_ALGORITHM */
 	&oakley_hash_names,	/* OAKLEY_HASH_ALGORITHM */
@@ -767,7 +767,7 @@ enum_names *oakley_attr_val_descs[] = {
 	NULL,	/* OAKLEY_GROUP_ORDER */
 };
 
-const unsigned int oakley_attr_val_descs_size = elemsof(oakley_attr_val_descs);
+const unsigned int oakley_attr_val_descs_roof = elemsof(oakley_attr_val_descs);
 
 /* IPsec DOI attributes (RFC 2407 "IPsec DOI" section 4.5) */
 static const char *const ipsec_attr_name[] = {
@@ -854,7 +854,7 @@ enum_names ipsec_attr_names = {
 };
 
 /* for each IPsec attribute, which enum_names describes its values? */
-enum_names *ipsec_attr_val_descs[] = {
+enum_names *const ipsec_attr_val_descs[] = {
 	NULL,	/* (none) */
 	&sa_lifetime_names,	/* SA_LIFE_TYPE */
 	NULL,	/* SA_LIFE_DURATION */
@@ -869,7 +869,8 @@ enum_names *ipsec_attr_val_descs[] = {
 	NULL,	/*ECN_TUNNEL*/
 #endif
 };
-const unsigned int ipsec_attr_val_descs_size = elemsof(ipsec_attr_val_descs);
+
+const unsigned int ipsec_attr_val_descs_roof = elemsof(ipsec_attr_val_descs);
 
 /* SA Lifetime Type attribute */
 static const char *const sa_lifetime_name[] = {
@@ -1745,8 +1746,8 @@ enum_names ikev2_trans_type_names = {
 	NULL
 };
 
-/* for each IKEv2 transform attribute,which enum_names describes its values? */
-enum_names *ikev2_transid_val_descs[] = {
+/* for each IKEv2 transform attribute, which enum_names describes its values? */
+enum_names *const ikev2_transid_val_descs[] = {
 	NULL,
 	&ikev2_trans_type_encr_names,         /* 1 */
 	&ikev2_trans_type_prf_names,          /* 2 */
@@ -1755,7 +1756,7 @@ enum_names *ikev2_transid_val_descs[] = {
 	&ikev2_trans_type_esn_names,          /* 5 */
 };
 
-const unsigned int ikev2_transid_val_descs_size =
+const unsigned int ikev2_transid_val_descs_roof =
 	elemsof(ikev2_transid_val_descs);
 
 /* Transform Attributes */
@@ -1770,7 +1771,7 @@ enum_names ikev2_trans_attr_descs = {
 };
 
 /* for each IKEv2 attribute, which enum_names describes its values? */
-enum_names *ikev2_trans_attr_val_descs[] = {
+enum_names *const ikev2_trans_attr_val_descs[] = {
 	NULL,	/* 0 */
 	NULL,	/* 1 */
 	NULL,	/* 2 */
