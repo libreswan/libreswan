@@ -903,14 +903,14 @@ int main(int argc, char **argv)
 			/* no config option: pluto_adns_option */
 
 			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
-				set_cfg_string(&pluto_stats_binary, /* --statsbinary */
+				if (access(cfg->setup.strings[KSF_STATSBINARY], X_OK) == 0) {
+						pfreeany(pluto_stats_binary);
+						set_cfg_string(&pluto_stats_binary, /* --statsbinary */
 					       cfg->setup.strings[KSF_STATSBINARY]);
-				if (access(pluto_stats_binary, X_OK) == 0) {
 					libreswan_log("statsbinary set to %s", pluto_stats_binary);
 				} else {
-					libreswan_log("statsbinary '%s' ignored - file does not exist or is not executable",
+					libreswan_log("statsbinary= '%s' ignored - file does not exist or is not executable",
 						      pluto_stats_binary);
-					pluto_stats_binary = NULL;
 				}
 			}
 
