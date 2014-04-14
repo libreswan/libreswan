@@ -78,10 +78,6 @@ void init_id(void)
 			myid_str[s] = NULL;
 		}
 	}
-	/* XXX Isn't this supposed to take it from the myid= in 'config setup' ? */
-	set_myid(MYID_SPECIFIED, getenv("IPSECmyid"));
-
-	set_myid(MYID_IP, getenv("defaultrouteaddr"));
 	set_myFQDN();
 }
 
@@ -91,6 +87,7 @@ static void calc_myid_str(enum myid_state s)
 	char buf[IDTOA_BUF];
 
 	idtoa(&myids[s], buf, IDTOA_BUF);
+	/* replace() uses pfreeany() */
 	replace(myid_str[s], clone_str(buf, "myid string"));
 }
 
@@ -147,8 +144,11 @@ void set_myFQDN(void)
 
 void free_myFQDN(void)
 {
+	int i;
 	free_id_content(&myids[MYID_HOSTNAME]);
-	/* wrong leak magic? pfree(myid_str); */
+	for (i = 0; i < MYID_SPECIFIED; i++) {
+		pfreeany(myid_str[i]);
+	}
 }
 
 /* build an ID payload
