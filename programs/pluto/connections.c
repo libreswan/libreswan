@@ -200,6 +200,7 @@ static void delete_end(struct end *e)
 	freeanychunk(e->ca);
 	release_cert(e->cert);
 	pfreeany(e->host_addr_name);
+	pfreeany(e->xauth_name);
 }
 
 static void delete_sr(struct spd_route *sr)
