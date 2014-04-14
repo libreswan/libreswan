@@ -2368,7 +2368,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			clonetochunk(st->st_tpacket, reply_stream.start,
 				     pbs_offset(&reply_stream),
-				     "reply packet");
+				     "reply packet for complete_v1_state_transition");
 
 			/* actually send the packet
 			 * Note: this is a great place to implement "impairments"
