@@ -398,7 +398,6 @@ void add_any_oeconns(struct starter_config *cfg,
 	bool found_conns[OE_MAX];
 	struct section_list *sconn;
 	const struct oe_conn *const *oc;
-	err_t perr;
 	int i;
 
 	for (i = 0; i < OE_MAX; i++)
@@ -427,11 +426,11 @@ void add_any_oeconns(struct starter_config *cfg,
 				    "did not find conn: %s, loading implicit\n",
 				    (*oc)->oe_cn);
 
-			conn = alloc_add_conn(cfg, (*oc)->oe_cn, &perr);
+			conn = alloc_add_conn(cfg, (*oc)->oe_cn);
 			if (conn == NULL) {
 				starter_log(LOG_LEVEL_INFO,
-					    "Can not create conn %s:%s\n",
-					    (*oc)->oe_cn, perr);
+					    "Can not create conn %s\n",
+					    (*oc)->oe_cn);
 				continue;
 			}
 
