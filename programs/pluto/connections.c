@@ -202,7 +202,7 @@ static void delete_end(struct end *e)
 	pfreeany(e->cert_filename);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
-	pfreeany(e->xauth_name);
+	// double free? pfreeany(e->xauth_name);
 }
 
 static void delete_sr(struct spd_route *sr)
@@ -721,6 +721,7 @@ static void unshare_connection_end_strings(struct end *e)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
 	e->updown = clone_str(e->updown, "updown");
+	/* e->xauth_name  is not NULL, we cannot pfreeany this later ?? */
 	e->xauth_name = clone_str(e->xauth_name, "xauth name");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
