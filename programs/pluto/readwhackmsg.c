@@ -1,5 +1,8 @@
 /* Read Whack Message
  * Header: readwhackmsg.h
+ *
+ * This is only used for test cases in lib/cryto and formerly liblibpluto
+ *
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  */

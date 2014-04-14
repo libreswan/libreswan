@@ -895,8 +895,8 @@ int main(int argc, char **argv)
 	*af_used_by = NULL,
 	*tunnel_af_used_by = NULL;
 
-	char xauthname[128];
-	char xauthpass[128];
+	char xauthname[XAUTH_MAX_NAME_LENGTH];
+	char xauthpass[XAUTH_MAX_PASS_LENGTH];
 	int xauthnamelen = 0, xauthpasslen = 0;
 	bool gotxauthname = FALSE, gotxauthpass = FALSE;
 	const char *ugh;

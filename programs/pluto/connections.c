@@ -196,11 +196,13 @@ void update_host_pairs(struct connection *c)
 static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
-	pfreeany(e->updown);
 	freeanychunk(e->ca);
 	release_cert(e->cert);
+	pfreeany(e->updown);
+	pfreeany(e->cert_filename);
 	pfreeany(e->host_addr_name);
-	pfreeany(e->xauth_name);
+	pfreeany(e->xauth_password);
+	// double free? pfreeany(e->xauth_name);
 }
 
 static void delete_sr(struct spd_route *sr)
@@ -711,7 +713,6 @@ static void unshare_connection_end_strings(struct end *e)
 {
 	/* do "left" */
 	unshare_id_content(&e->id);
-	e->updown = clone_str(e->updown, "updown");
 
 	if(e->cert.ty != CERT_NONE)
 		share_cert(e->cert);
@@ -719,11 +720,12 @@ static void unshare_connection_end_strings(struct end *e)
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
-	if (e->xauth_name != NULL)
-		e->xauth_name = clone_str(e->xauth_name, "xauth name");
-
-	if (e->host_addr_name)
-		e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	e->updown = clone_str(e->updown, "updown");
+	/* e->xauth_name  is not NULL, we cannot pfreeany this later ?? */
+	e->xauth_name = clone_str(e->xauth_name, "xauth name");
+	e->xauth_password = clone_str(e->xauth_password, "xauth password");
+	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	e->cert_filename = clone_str(e->cert_filename, "cert_filename");
 }
 
 static void unshare_connection_strings(struct connection *c)

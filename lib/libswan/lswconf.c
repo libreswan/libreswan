@@ -90,6 +90,7 @@ void lsw_conf_free_oco(void)
 	pfree(global_oco.policies_dir);
 	pfree(global_oco.cacerts_dir);
 	pfree(global_oco.crls_dir);
+	pfree(NSSPassword.data);
 }
 
 const struct lsw_conf_options *lsw_init_options(void)
