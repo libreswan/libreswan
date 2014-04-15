@@ -68,7 +68,7 @@ union mhdr {
 		unsigned long magic;
 		unsigned long size;
 	} i;	/* info */
-	unsigned long junk;	/* force maximal alignment */
+	unsigned long long junk;	/* force maximal alignment */
 };
 
 /* protects updates to the leak-detective linked list */
