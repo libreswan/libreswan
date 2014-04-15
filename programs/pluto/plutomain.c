@@ -1249,10 +1249,8 @@ int main(int argc, char **argv)
 	if (pluto_shared_secrets_file)
 		libreswan_log("secrets file: %s", pluto_shared_secrets_file);
 
-	if (leak_detective)
-		libreswan_log("leak_detective enabled");
-	else
-		libreswan_log("leak_detective disabled");
+	libreswan_log(leak_detective ?
+		"leak_detective enabled" : "leak_detective disabled");
 
 	/* Check for SAREF support */
 #ifdef KLIPS_MAST
