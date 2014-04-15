@@ -120,14 +120,13 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 	} else {
 		return p;
 	}
-
 }
 
 void pfree(void *ptr)
 {
-	union mhdr *p;
-
 	if (leak_detective) {
+		union mhdr *p;
+
 		passert(ptr != NULL);
 		p = ((union mhdr *)ptr) - 1;
 		passert(p->i.magic == LEAK_MAGIC);
@@ -188,7 +187,6 @@ void report_leaks(void)
 			numleaks, total);
 	else
 		libreswan_log("leak detective found no leaks");
-
 }
 
 void *alloc_bytes(size_t size, const char *name)
