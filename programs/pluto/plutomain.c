@@ -897,7 +897,7 @@ int main(int argc, char **argv)
 			no_retransmits = !cfg->setup.options[KBF_RETRANSMITS];  /* --noretransmits */
 			if(cfg->setup.strings[KSF_DUMPDIR]) {
 				pfree(coredir);
-				coredir = clone_str(cfg->setup.strings[KSF_DUMPDIR], "coredir via --config"); /* --dumpdir */
+				coredir = clone_str(cfg->setup.strings[KSF_DUMPDIR], "coredir via --config"); /* dumpdir= */
 			}
 			set_cfg_string(&pluto_vendorid, cfg->setup.strings[KSF_MYVENDORID]); /* --vendorid */
 			/* no config option: pluto_adns_option */
@@ -905,8 +905,7 @@ int main(int argc, char **argv)
 			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
 				if (access(cfg->setup.strings[KSF_STATSBINARY], X_OK) == 0) {
 						pfreeany(pluto_stats_binary);
-						set_cfg_string(&pluto_stats_binary, /* --statsbinary */
-					       cfg->setup.strings[KSF_STATSBINARY]);
+						pluto_stats_binary = clone_str(cfg->setup.strings[KSF_STATSBINARY], "statsbin via --config"); /* statsbin= */
 					libreswan_log("statsbinary set to %s", pluto_stats_binary);
 				} else {
 					libreswan_log("statsbinary= '%s' ignored - file does not exist or is not executable",
