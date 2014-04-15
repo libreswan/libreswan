@@ -169,15 +169,20 @@ void report_leaks(void)
 		p = p->i.older;
 		n++;
 		if (p == NULL || pprev->i.name != p->i.name) {
-			if (n != 1)
-				libreswan_log("leak: %lu * %s, item size: %lu",
-					n, pprev->i.name, pprev->i.size);
-			else
-				libreswan_log("leak: %s, item size: %lu",
-					pprev->i.name, pprev->i.size);
-			numleaks += n;
-			total += pprev->i.size;
-			n = 0;
+			/* filter out one-time leaks we prefer to not fix */
+			if (strstr(pprev->i.name, "(ignore)") == NULL) {
+				if (n != 1)
+					libreswan_log("leak: %lu * %s, item size: %lu",
+						n, pprev->i.name, pprev->i.size);
+				else
+					libreswan_log("leak: %s, item size: %lu",
+						pprev->i.name, pprev->i.size);
+				numleaks += n;
+				total += pprev->i.size;
+				n = 0;
+			} else {
+				n = 0;
+			}
 		}
 	}
 	pthread_mutex_unlock(&leak_detective_mutex);
