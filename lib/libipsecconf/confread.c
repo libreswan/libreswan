@@ -60,8 +60,6 @@ static char tmp_err[512];
 				   STARTUP_ONDEMAND) { conn->options[KBF_AUTO] = \
 							    STARTUP_POLICY; }
 
-static void free_list(char **list);
-static char **new_list(char *value);
 
 #ifdef DNSSEC
 # include <unbound.h>
@@ -216,6 +214,7 @@ static bool error_append(char **perr, const char *fmt, ...)
 		  conn->policy &= ~fl; \
 	  } }
 
+#define FREE_LIST(v) { if ((v) != NULL) { free_list(v); (v) = NULL; } }
 /**
  * Free the pointer list
  *
@@ -226,9 +225,9 @@ static void free_list(char **list)
 {
 	char **s;
 
-	for (s = list; *s; s++)
-		free(*s);
-	free(list);
+	for (s = list ; *s; s++)
+		pfreeany(*s);
+	pfree(list);
 }
 
 /**
@@ -381,7 +380,7 @@ static bool load_setup(struct starter_config *cfg,
 
 	/* interfaces has to be chopped up */
 	if (cfg->setup.interfaces)
-		free_list(cfg->setup.interfaces);
+		FREE_LIST(cfg->setup.interfaces);
 	cfg->setup.interfaces = new_list(cfg->setup.strings[KSF_INTERFACES]);
 
 	return err;
@@ -967,7 +966,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 
 	/* now, process the also's */
 	if (conn->alsos)
-		free_list(conn->alsos);
+		FREE_LIST(conn->alsos);
 	conn->alsos = new_list(conn->strings[KSF_ALSO]);
 
 	if (alsoprocessing && conn->alsos != NULL) {
@@ -1066,7 +1065,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 						alsos[alsosize] = NULL;
 					}
 
-					free_list(newalsos);
+					FREE_LIST(newalsos);
 				}
 			}
 			alsoplace++;
@@ -1512,7 +1511,6 @@ struct starter_config *confread_load(const char *file,
 	return cfg;
 }
 
-#define FREE_LST(v) { if (v) { free_list(v); v = NULL; } }
 static void confread_free_conn(struct starter_conn *conn)
 {
 	int i;
@@ -1550,7 +1548,7 @@ void confread_free(struct starter_config *cfg)
 	int i;
 	struct starter_conn *conn, *c;
 
-	FREE_LST(cfg->setup.interfaces);
+	FREE_LIST(cfg->setup.interfaces);
 	pfreeany(cfg->setup.virtual_private);
 	pfreeany(cfg->setup.listen);
 	pfree(cfg->ctlbase);
