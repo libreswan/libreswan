@@ -10,7 +10,7 @@ selectors. This option is ignored for IKEv1.</para>
 <para>There are security implications in allowing narrowing down the
 proposal. For one, what should be done with packets that we hoped to
 tunnel, but cannot. Should these be dropped or send in the clear? Second,
-this could cause thousands of narrowed down Child SA's to be created
+this could cause thousands of narrowed down Child SAs to be created
 if the conn has a broad policy (eg 0/0 to 0/0).  One possible good use
 case scenario is that a remote end (that you fully trust) allows you to
 define a 0/0 to them, while adjusting what traffic you route via them,
