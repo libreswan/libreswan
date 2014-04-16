@@ -1139,16 +1139,11 @@ void add_connection(const struct whack_message *wm)
 		return;
 	}
 
-	if ( (wm->policy & POLICY_AUTHENTICATE) &&
-		(wm->policy & POLICY_ENCRYPT)) {
+	switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
+	case LEMPTY:
+	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 		loglog(RC_NOALGO,
-			"Can only do AH, or ESP, not AH+ESP\n");
-		return;
-	}
-	if ( !(wm->policy & POLICY_AUTHENTICATE) &&
-		!(wm->policy & POLICY_ENCRYPT)) {
-		loglog(RC_NOALGO,
-			"Must do at AH or ESP, not neither.\n");
+			"Must specify either AH or ESP.\n");
 		return;
 	}
 
