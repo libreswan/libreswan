@@ -262,10 +262,9 @@ static char **new_list(char *value)
 		return NULL;
 	}
 
-	nlist = (char **)alloc_bytes((count + 1) * sizeof(char *),"new_list nlist");
+	nlist = (char **)alloc_bytes((count + 1) * sizeof(char *), "new_list nlist");
 	for (b = val, count = 0; b < end; ) {
-		for (e = b; (*e != '\0'); e++)
-			;
+		e = b + strlen(b);
 		if (e != b)
 			nlist[count++] = clone_str(b, "new_list item");
 		b = e + 1;
@@ -313,29 +312,6 @@ static bool load_setup(struct starter_config *cfg,
 				TRUE;
 			break;
 
-		case kt_appendstring:
-		case kt_appendlist:
-			assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
-			if (!cfg->setup.strings[kw->keyword.keydef->field]) {
-				cfg->setup.strings[kw->keyword.keydef->field] =
-					clone_str(kw->string, "kt_appendlist kw->string");
-				cfg->setup.strings_set[kw->keyword.keydef->
-						       field] = TRUE;
-			} else {
-				unsigned int kf = kw->keyword.keydef->field;
-				char *s = cfg->setup.strings[kf];
-				size_t old_len = strlen(s) + 1;	/* includes '\0' */
-				size_t add_len = 1 + strlen(kw->string);	/* includes ' ' */
-
-				pfreeany(s);
-				s = alloc_bytes(old_len + add_len,"kt_appendlist new len");
-				s[old_len - 1] = ' ';	/* overwrite '\0' */
-				memcpy(&s[old_len], kw->string, add_len - 1 + 1);	/* includes '\0' */
-				cfg->setup.strings[kf] = s;
-				cfg->setup.strings_set[kf] = TRUE;
-			}
-			break;
-
 		case kt_list:
 		case kt_bool:
 		case kt_invertbool:
@@ -363,6 +339,7 @@ static bool load_setup(struct starter_config *cfg,
 
 		case kt_comment:
 			break;
+
 		case kt_obsolete:
 			starter_log(LOG_LEVEL_INFO,
 				    "Warning: ignored obsolete keyword '%s'",
@@ -373,6 +350,9 @@ static bool load_setup(struct starter_config *cfg,
 				    "Warning: ignored obsolete keyword '%s'",
 				    kw->keyword.keydef->keyname);
 			break;
+		default:
+		    /* NEVER HAPPENS */
+		    break;
 		}
 	}
 
@@ -806,20 +786,22 @@ static bool translate_conn(struct starter_conn *conn,
 
 		case kt_appendstring:
 		case kt_appendlist:
-			/* implicitely, this field can have multiple values */
+			/* implicitly, this field can have multiple values */
 			assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
-			if (!(*the_strings)[field]) {
+			if ((*the_strings)[field] == NULL) {
 				(*the_strings)[field] = clone_str(kw->string, "kt_appendlist kw->string");
 			} else {
 				char *s = (*the_strings)[field];
-				size_t old_len = strlen(s) + 1;	/* includes '\0' */
-				size_t add_len = 1 + strlen(kw->string);	/* includes ' ' */
+				size_t old_len = strlen(s);	/* excludes '\0' */
+				size_t new_len = strlen(kw->string);
+				char *n;
 
-				pfreeany(s);
-				s = alloc_bytes(old_len + add_len, "kt_appendlist");
-				s[old_len - 1] = ' ';	/* overwrite '\0' */
-				memcpy(&s[old_len], kw->string, add_len - 1 + 1);	/* includes '\0' */
-				(*the_strings)[field] = s;
+				n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
+				memcpy(n, s, old_len);
+				n[old_len] = ' ';
+				memcpy(n + old_len + 1, kw->string, new_len + 1);	/* includes '\0' */
+				(*the_strings)[field] = n;
+				pfree(s);
 			}
 			(*set_strings)[field] = TRUE;
 			break;
@@ -970,13 +952,13 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	conn->alsos = new_list(conn->strings[KSF_ALSO]);
 
 	if (alsoprocessing && conn->alsos != NULL) {
-		int alsoplace;
-		int alsosize;
 		struct section_list *sl1;
 		/* note: for the duration of this loop body
 		 * conn->alsos is migrated to local variable alsos.
 		 */
 		char **alsos = conn->alsos;
+		int alsosize;
+		int alsoplace;
 
 		conn->alsos = NULL;
 
@@ -1022,12 +1004,13 @@ static bool load_conn(struct ub_ctx *dnsctx,
 				/* translate things, but do not replace earlier settings!*/
 				err |= translate_conn(conn, sl1, k_set, perr);
 
-				if (conn->strings[KSF_ALSO]) {
+				if (conn->strings[KSF_ALSO] != NULL) {
 					/* now, check out the KSF_ALSO, and extend list if we need to */
 					char **newalsos = new_list(
 						conn->strings[KSF_ALSO]);
 
-					if (newalsos && newalsos[0] != NULL) {
+					if (newalsos != NULL) {
+						char **ra;
 						int newalsoplace;
 
 						/* count them */
@@ -1037,13 +1020,14 @@ static bool load_conn(struct ub_ctx *dnsctx,
 						     newalsoplace++)
 							;
 
-						/* extend conn->alsos */
-						pfreeany(alsos);
-						alsos = alloc_bytes( (alsosize +
-								  newalsoplace
-								  + 1) *
-								 sizeof(char *),
-								"conn->alsos");
+						/* extend conn->alss */
+						ra = alloc_bytes((alsosize +
+							newalsoplace + 1) *
+							sizeof(char *),
+							"conn->alsos");
+						memcpy(ra, alsos, alsosize * sizeof(char *));
+						pfree(alsos);
+						alsos = ra;
 						for (newalsoplace = 0;
 						     newalsos[newalsoplace] !=
 						     NULL;
@@ -1055,8 +1039,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 								LOG_LEVEL_DEBUG,
 								"\twhile processing section '%s' added also=%s",
 								sl1->name,
-								newalsos[
-									newalsoplace]);
+								newalsos[newalsoplace]);
 
 							alsos[alsosize++] =
 								clone_str(newalsos[newalsoplace],
