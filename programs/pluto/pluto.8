@@ -2,12 +2,12 @@
 .\"     Title: IPSEC_PLUTO
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 04/13/2014
+.\"      Date: 04/16/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_PLUTO" "8" "04/13/2014" "libreswan" "Executable programs"
+.TH "IPSEC_PLUTO" "8" "04/16/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -332,7 +332,7 @@ exits \- this prevents multiple
 \fBpluto\fR
 will run\&.
 \fBpluto\fR
-writes its pid into this file so that scripts can find it\&. This lock will not function properly if it is on an NFS volume (but sharing locks on multiple machines doesn\*(Aqt make sense anyway)\&.
+writes its PID into this file so that scripts can find it\&. This lock will not function properly if it is on an NFS volume (but sharing locks on multiple machines doesn\*(Aqt make sense anyway)\&.
 .PP
 \fBpluto\fR
 then forks and the parent exits\&. This is the conventional \(lqdaemon fork\(rq\&. It can make debugging awkward, so there is an option to suppress this fork\&. In certain configurations, pluto might also launch helper programs to assist with DNS queries or to offload cryptographic operations\&.
@@ -369,7 +369,7 @@ Pluto supports
 .PP
 Pluto may core dump\&. It will normally do so into the current working directory\&. You can specify the \-\-coredir option for pluto, or specify the dumpdir= option in ipsec\&.conf\&.
 .PP
-At times it may be desireable to turn off all timed events in
+At times it may be desirable to turn off all timed events in
 \fBpluto\fR, this can be done with
 \fB\-\-noretransmits\fR\&.
 .PP
@@ -564,7 +564,7 @@ the access control groups used\&.
 .PP
 \fB\-\-sendcert\fR\ \&\fIyes|forced|always|ifasked|no|never\fR
 .RS 4
-Wether or not to send our X\&.509 certificate credentials\&. This could potentially give an attacker too much information about which identities are allowed to connect to this host\&. The default is to use
+Whether or not to send our X\&.509 certificate credentials\&. This could potentially give an attacker too much information about which identities are allowed to connect to this host\&. The default is to use
 \fBifasked\fR
 when we are a Responder, and to use
 \fByes\fR
@@ -701,7 +701,7 @@ brings up or down a connection\&. The script is used to build a shell command, s
 .PP
 \fB\-\-to\fR
 .RS 4
-separates the specification of the left and right ends of the connection\&. Pluto tries to decide wether it is
+separates the specification of the left and right ends of the connection\&. Pluto tries to decide whether it is
 \fIleft\fR
 or
 \fIright\fR
@@ -824,7 +824,7 @@ Pull the Mode Config network information from the peer\&.
 .PP
 \fB\-\-dpddelay\fR\ \&\fIseconds\fR
 .RS 4
-Set the delay (in seconds) between Dead Peer Dectection (RFC 3706) keepalives (R_U_THERE, R_U_THERE_ACK) that are sent for this connection (default 30 seconds)\&.
+Set the delay (in seconds) between Dead Peer Detection (RFC 3706) keepalives (R_U_THERE, R_U_THERE_ACK) that are sent for this connection (default 30 seconds)\&.
 .RE
 .PP
 \fB\-\-timeout\fR\ \&\fIseconds\fR
@@ -1102,7 +1102,7 @@ Ending an connection
 .RS 4
 the terminate form tells
 \fIpluto\fR
-to delete any sas that use the specified connection and to stop any negotiations in process\&. it does not prevent new negotiations from starting (the delete form has this effect)\&.
+to delete any SAs that use the specified connection and to stop any negotiations in process\&. it does not prevent new negotiations from starting (the delete form has this effect)\&.
 .RE
 .PP
 \fB\-\-crash\fR\ \&\fIip\-address\fR
@@ -1791,7 +1791,7 @@ Diffie Hellman Groups MODP 1024 and MODP 1536 (2 and 5) are supported\&. Group M
 .PP
 \(bu
 .RS 4
-Host authetication can be done by RSA Signatures or Pre\-Shared Secrets\&.
+Host authentication can be done by RSA Signatures or Pre\-Shared Secrets\&.
 .RE
 .PP
 \(bu
@@ -1848,7 +1848,7 @@ by issuing a suggestion that ``\fBwhack\fR
 \-\-listen\*(Aq\*(Aq might have been intended\&.
 .PP
 \fBPluto\fR
-exits when it recieves
+exits when it receives
 \fBSIGTERM\fR\&.
 .SH "EXIT STATUS"
 .PP
@@ -1908,16 +1908,16 @@ RFC2408 Internet Security Association and Key Management Protocol (ISAKMP)
 .PP
 RFC2407 The Internet IP Security Domain of Interpretation for ISAKMP
 .PP
-The Libreswan web site <htp://www\&.libreswan\&.org> and the mailing lists described there\&.
+The Libreswan web site <https://libreswan\&.org> and the mailing lists described there\&.
 .SH "HISTORY"
 .PP
 This code is released under the GPL terms\&. See the accompanying files COPYING and CREDITS for more details\&. The GPL does NOT apply to those pieces of code written by others which are included in this distribution, except as noted by the individual authors\&.
 .PP
 This software was originally written for the FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]>, founded by John Gilmore and managed by Hugh Daniel\&. It was written by Angelos D\&. Keromytis (angelos@dsl\&.cis\&.upenn\&.edu), in May/June 1997, in Athens, Greece\&. Thanks go to John Ioannidis for his help\&.
 .PP
-It is currently maintained and extended by Xelerance Corporation, in Canada under the Libreswan name\&. See CHANGES for details\&.
+It is currently maintained and extended by the Libreswan Team under the Libreswan name\&. See CHANGES for details\&.
 .PP
-FreeS/WAN was developed/maintained from 2000\-2004 by D\&. Hugh Redelmeier (hugh@mimosa\&.com), in Canada\&. The regulations of Greece and Canada allow the code to be freely redistributable\&.
+FreeS/WAN\*(Aqs Pluto was developed/maintained from 2000\-2004 by D\&. Hugh Redelmeier (hugh@mimosa\&.com), in Canada\&. The regulations of Greece and Canada allow the code to be freely redistributable\&.
 .PP
 Kai Martius (admin@imib\&.med\&.tu\-dresden\&.de) contributed the initial version of the code supporting PFS\&.
 .PP
@@ -1940,7 +1940,7 @@ does not check that the SA returned by the Responder is actually one that was pr
 .PP
 There is no good way for a connection to be automatically terminated\&. This is a problem for Road Warrior and Opportunistic connections\&. The
 \fB\-\-dontrekey\fR
-option does prevent the SAs from being rekeyed on expiry\&. Additonally, if a Road Warrior connection has a client subnet with a fixed IP address, a negotiation with that subnet will cause any other connection instantiations with that same subnet to be unoriented (deleted, in effect)\&. See also the \-\-uniqueids option for an extension of this\&.
+option does prevent the SAs from being rekeyed on expiry\&. Additionally, if a Road Warrior connection has a client subnet with a fixed IP address, a negotiation with that subnet will cause any other connection instantiations with that same subnet to be unoriented (deleted, in effect)\&. See also the \-\-uniqueids option for an extension of this\&.
 .PP
 When
 \fBpluto\fR
