@@ -2251,15 +2251,6 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						"Received subnet %s, maskbits %d", caddr,
 						tmp_spd->that.client.maskbits);
 
-					tmp_spd->this.updown =
-						clone_str(
-							tmp_spd->this.updown,
-							"updown");
-					tmp_spd->that.updown =
-						clone_str(
-							tmp_spd->that.updown,
-							"updown");
-
 					tmp_spd->this.cert_filename =
 						NULL;
 					tmp_spd->that.cert_filename =
@@ -2273,6 +2264,9 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 					tmp_spd->this.virt = NULL;
 					tmp_spd->that.virt = NULL;
+
+					unshare_connection_end_strings(&tmp_spd->this);
+					unshare_connection_end_strings(&tmp_spd->that);
 
 					tmp_spd->next = NULL;
 					tmp_spd2->next = tmp_spd;
