@@ -95,8 +95,6 @@ static void help(void)
 		" [--sendcert]"
 		" [--sendcerttype number]"
 		" \\\n   "
-		" [--ikeport <port-number>]"
-		" \\\n   "
 		" [--nexthop <ip-address>]"
 		" \\\n   "
 		" [--client <subnet> | --clientwithin <address range>]"
