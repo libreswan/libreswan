@@ -143,7 +143,6 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
 struct virtual_t;
 
-struct ietfAttr;        /* forward declaration of ietfAttr defined in ac.h */
 struct host_pair;       /* opaque type */
 
 struct end {
