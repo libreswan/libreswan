@@ -83,9 +83,11 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*ipsec: module verification failed.*$/d
 /^.*ip6_tables: (C) 2000-2006 Netfilter Core Team$/d
 /^.*NET: Registered protocol family 24$/d
+/^.*NET: Registered protocol family 15$/d
 /^.*PPP generic driver version.*$/d
 /^.*PPP BSD Compression module registered$/d
 /^.*PPP Deflate Compression module registered$/d
 /^.*l2tp_core: L2TP core driver, V.*$/d
 /^.*l2tp_netlink: L2TP netlink interface/d
 /^.*l2tp_ppp: PPPoL2TP kernel driver, V.*$/d
+/^.*PCLMULQDQ-NI instructions are not detected.*$/d

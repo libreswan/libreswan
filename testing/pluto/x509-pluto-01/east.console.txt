@@ -36,7 +36,7 @@ east #
 000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
+000 nat_traversal=no, keep_alive=20, nat_ikeport=4500
 000 virtual_private (%priv):
 000 - allowed 0 subnets: 
 000 - disallowed 0 subnets: 
@@ -87,7 +87,7 @@ east #
 000 "westnet-eastnet-x509":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "westnet-eastnet-x509":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-x509":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "westnet-eastnet-x509":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "westnet-eastnet-x509":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-x509":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "westnet-eastnet-x509":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both ikev1_natt:both
 000 "westnet-eastnet-x509":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -120,7 +120,7 @@ east #
 000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
+000 nat_traversal=no, keep_alive=20, nat_ikeport=4500
 000 virtual_private (%priv):
 000 - allowed 0 subnets: 
 000 - disallowed 0 subnets: 
@@ -171,7 +171,7 @@ east #
 000 "westnet-eastnet-x509":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "westnet-eastnet-x509":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-x509":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "westnet-eastnet-x509":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "westnet-eastnet-x509":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-x509":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "westnet-eastnet-x509":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both ikev1_natt:both
 000 "westnet-eastnet-x509":   newest ISAKMP SA: #1; newest IPsec SA: #2; 

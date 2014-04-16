@@ -39,7 +39,7 @@ east #
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
+000 nat_traversal=no, keep_alive=20, nat_ikeport=4500
 000  
 000 ESP algorithms supported:
 000  
@@ -87,7 +87,7 @@ east #
 000 "west-east":    policy_label:unset; 
 000 "west-east":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "west-east":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "west-east":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "west-east":   dpd: action:restart; delay:5; timeout:15; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east":   newest ISAKMP SA: #0; newest IPsec SA: #4; 

@@ -186,7 +186,7 @@ while(<>) {
 	$rest = &sanitize_sadata($rest);
 	
 	$key=$esp1.$spinum."@".$spiip;
-	$espline=$esp1."SPISPIK@".$spiip.$rest;
+	$espline=$esp1."SPISPI@".$spiip.$rest;
 	$xname="esp";
 	
 	&sourcerecord($rest,$key,$xname);
@@ -204,7 +204,7 @@ while(<>) {
 	$rest = &sanitize_sadata($rest);
 	
 	$key=$ah1.$spinum."@".$spiip;
-	$ahline=$ah1."SPISPIK@".$spiip.$rest;
+	$ahline=$ah1."SPISPI@".$spiip.$rest;
 	$xname="ah";
 	
 	&sourcerecord($rest,$key,"ah");
