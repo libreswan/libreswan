@@ -655,9 +655,21 @@ static bool validate_end(struct ub_ctx *dnsctx,
 			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=",
 				leftright, leftright);
 		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  addresspool set to: %s",
-			    end->strings[KSCF_ADDRESSPOOL] );
-		ttorange(addresspool, 0, AF_INET, &end->pool_range);
+			    "connection's  %saddresspool set to: %s",
+			    leftright, end->strings[KSCF_ADDRESSPOOL] );
+
+		er = ttorange(addresspool, 0, AF_INET, &end->pool_range);
+		if (er) 
+			ERR_FOUND("bad %saddresspool=%s [%s]", leftright, 
+					addresspool, er);
+		if (ip_address_isany(&end->pool_range.start))
+			ERR_FOUND("bad start in %saddresspool=%s", 
+					leftright, addresspool);
+		if (ip_address_isany(&end->pool_range.end))
+			ERR_FOUND("bad end in %addresspool=%s", 
+					leftright, 
+					addresspool);
+
 	}
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||
